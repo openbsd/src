@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.15 2004/08/05 21:17:20 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.16 2004/09/30 17:37:54 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -441,8 +441,10 @@ struct rl_chain_data {
 	u_int16_t		cur_rx;
 	caddr_t			rl_rx_buf;
 	caddr_t			rl_rx_buf_ptr;
+	bus_addr_t		rl_rx_buf_pa;
 
 	struct mbuf		*rl_tx_chain[RL_TX_LIST_CNT];
+	bus_dmamap_t		rl_tx_dmamap[RL_TX_LIST_CNT];
 	u_int8_t		last_tx;
 	u_int8_t		cur_tx;
 };
@@ -580,9 +582,11 @@ struct rl_stats {
 #define RL_CUR_TXADDR(x)	((x->rl_cdata.cur_tx * 4) + RL_TXADDR0)
 #define RL_CUR_TXSTAT(x)	((x->rl_cdata.cur_tx * 4) + RL_TXSTAT0)
 #define RL_CUR_TXMBUF(x)	(x->rl_cdata.rl_tx_chain[x->rl_cdata.cur_tx])
+#define RL_CUR_TXMAP(x)		(x->rl_cdata.rl_tx_dmamap[x->rl_cdata.cur_tx])
 #define RL_LAST_TXADDR(x)	((x->rl_cdata.last_tx * 4) + RL_TXADDR0)
 #define RL_LAST_TXSTAT(x)	((x->rl_cdata.last_tx * 4) + RL_TXSTAT0)
 #define RL_LAST_TXMBUF(x)	(x->rl_cdata.rl_tx_chain[x->rl_cdata.last_tx])
+#define RL_LAST_TXMAP(x)	(x->rl_cdata.rl_tx_dmamap[x->rl_cdata.last_tx])
 
 struct rl_type {
 	u_int16_t		rl_vid;
@@ -637,7 +641,9 @@ struct rl_softc {
 	bus_space_handle_t	rl_bhandle;	/* bus space handle */
 	bus_space_tag_t		rl_btag;	/* bus space tag */
 	bus_dma_tag_t		sc_dmat;
-	struct arpcom		sc_arpcom;		/* interface info */
+	bus_dma_segment_t 	sc_rx_seg;
+	bus_dmamap_t		sc_rx_dmamap;
+	struct arpcom		sc_arpcom;	/* interface info */
 	struct mii_data		sc_mii;		/* MII information */
 	u_int8_t		rl_type;
 	int			rl_eecmd_read;

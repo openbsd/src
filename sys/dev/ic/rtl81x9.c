@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.30 2004/09/30 14:58:02 jason Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.31 2004/09/30 17:37:54 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -114,7 +114,7 @@
 #include <net/bpf.h>
 #endif
 
-#include <uvm/uvm_extern.h>	/* for vtophys */
+#include <uvm/uvm_extern.h>
 #include <machine/bus.h>
 
 #include <dev/mii/mii.h>
@@ -613,6 +613,8 @@ rl_rxeof(sc)
 		max_bytes = limit - cur_rx;
 
 	while((CSR_READ_1(sc, RL_COMMAND) & RL_CMD_EMPTY_RXBUF) == 0) {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dmamap,
+		    0, sc->sc_rx_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		rxbufpos = sc->rl_cdata.rl_rx_buf + cur_rx;
 		rxstat = *(u_int32_t *)rxbufpos;
 
@@ -624,12 +626,20 @@ rl_rxeof(sc)
 		 * datasheet makes absolutely no mention of this and
 		 * RealTek should be shot for this.
 		 */
-		if ((u_int16_t)(rxstat >> 16) == RL_RXSTAT_UNFINISHED)
+		rxstat = htole32(rxstat);
+		if ((u_int16_t)(rxstat >> 16) == RL_RXSTAT_UNFINISHED) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dmamap,
+			    0, sc->sc_rx_dmamap->dm_mapsize,
+			    BUS_DMASYNC_PREREAD);
 			break;
+		}
 
 		if (!(rxstat & RL_RXSTAT_RXOK)) {
 			ifp->if_ierrors++;
 			rl_init(sc);
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dmamap,
+			    0, sc->sc_rx_dmamap->dm_mapsize,
+			    BUS_DMASYNC_PREREAD);
 			return;
 		}
 
@@ -650,8 +660,12 @@ rl_rxeof(sc)
 		 * Avoid trying to read more bytes than we know
 		 * the chip has prepared for us.
 		 */
-		if (rx_bytes > max_bytes)
+		if (rx_bytes > max_bytes) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dmamap,
+			    0, sc->sc_rx_dmamap->dm_mapsize,
+			    BUS_DMASYNC_PREREAD);
 			break;
+		}
 
 		rxbufpos = sc->rl_cdata.rl_rx_buf +
 			((cur_rx + sizeof(u_int32_t)) % RL_RXBUFLEN);
@@ -692,8 +706,12 @@ rl_rxeof(sc)
 		cur_rx = (cur_rx + 3) & ~3;
 		CSR_WRITE_2(sc, RL_CURRXADDR, cur_rx - 16);
 
-		if (m == NULL)
+		if (m == NULL) {
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dmamap,
+			    0, sc->sc_rx_dmamap->dm_mapsize,
+			    BUS_DMASYNC_PREREAD);
 			continue;
+		}
 
 		ifp->if_ipackets++;
 
@@ -705,6 +723,9 @@ rl_rxeof(sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 		ether_input_mbuf(ifp, m);
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dmamap,
+		    0, sc->sc_rx_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 	}
 }
 
@@ -736,6 +757,10 @@ void rl_txeof(sc)
 		ifp->if_collisions += (txstat & RL_TXSTAT_COLLCNT) >> 24;
 
 		if (RL_LAST_TXMBUF(sc) != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, RL_LAST_TXMAP(sc),
+			    0, RL_LAST_TXMAP(sc)->dm_mapsize,
+			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, RL_LAST_TXMAP(sc));
 			m_freem(RL_LAST_TXMBUF(sc));
 			RL_LAST_TXMBUF(sc) = NULL;
 		}
@@ -821,7 +846,7 @@ int rl_encap(sc, m_head)
 	struct rl_softc		*sc;
 	struct mbuf		*m_head;
 {
-	struct mbuf		*m_new = NULL;
+	struct mbuf		*m_new;
 
 	/*
 	 * The RealTek is brain damaged and wants longword-aligned
@@ -842,26 +867,32 @@ int rl_encap(sc, m_head)
 	}
 	m_copydata(m_head, 0, m_head->m_pkthdr.len, mtod(m_new, caddr_t));
 	m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
-	m_freem(m_head);
-	m_head = m_new;
 
 	/* Pad frames to at least 60 bytes. */
-	if (m_head->m_pkthdr.len < RL_MIN_FRAMELEN) {
+	if (m_new->m_pkthdr.len < RL_MIN_FRAMELEN) {
 		/*
 		 * Make security-conscious people happy: zero out the
 		 * bytes in the pad area, since we don't know what
 		 * this mbuf cluster buffer's previous user might
 		 * have left in it.
 		 */
-		bzero(mtod(m_head, char *) + m_head->m_pkthdr.len,
-		    RL_MIN_FRAMELEN - m_head->m_pkthdr.len);
-		m_head->m_pkthdr.len +=
-		    (RL_MIN_FRAMELEN - m_head->m_pkthdr.len);
-		m_head->m_len = m_head->m_pkthdr.len;
+		bzero(mtod(m_new, char *) + m_new->m_pkthdr.len,
+		    RL_MIN_FRAMELEN - m_new->m_pkthdr.len);
+		m_new->m_pkthdr.len +=
+		    (RL_MIN_FRAMELEN - m_new->m_pkthdr.len);
+		m_new->m_len = m_new->m_pkthdr.len;
 	}
 
-	RL_CUR_TXMBUF(sc) = m_head;
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, RL_CUR_TXMAP(sc),
+	    m_new, BUS_DMA_NOWAIT) != 0) {
+		m_freem(m_new);
+		return (1);
+	}
+	m_freem(m_head);
 
+	RL_CUR_TXMBUF(sc) = m_new;
+	bus_dmamap_sync(sc->sc_dmat, RL_CUR_TXMAP(sc), 0,
+	    RL_CUR_TXMAP(sc)->dm_mapsize, BUS_DMASYNC_PREWRITE);
 	return(0);
 }
 
@@ -900,10 +931,10 @@ void rl_start(ifp)
 		 * Transmit the frame.
 		 */
 		CSR_WRITE_4(sc, RL_CUR_TXADDR(sc),
-		    vtophys(mtod(RL_CUR_TXMBUF(sc), vaddr_t)));
+		    RL_CUR_TXMAP(sc)->dm_segs[0].ds_addr);
 		CSR_WRITE_4(sc, RL_CUR_TXSTAT(sc),
 		    RL_TXTHRESH(sc->rl_txthresh) |
-		    RL_CUR_TXMBUF(sc)->m_pkthdr.len);
+		    RL_CUR_TXMAP(sc)->dm_segs[0].ds_len);
 
 		RL_INC(sc->rl_cdata.cur_tx);
 	}
@@ -945,7 +976,7 @@ void rl_init(xsc)
 	}
 
 	/* Init the RX buffer pointer register. */
-	CSR_WRITE_4(sc, RL_RXADDR, vtophys((vaddr_t)sc->rl_cdata.rl_rx_buf));
+	CSR_WRITE_4(sc, RL_RXADDR, sc->rl_cdata.rl_rx_buf_pa);
 
 	/* Init TX descriptors. */
 	rl_list_tx_init(sc);
@@ -1153,6 +1184,12 @@ void rl_stop(sc)
 	 */
 	for (i = 0; i < RL_TX_LIST_CNT; i++) {
 		if (sc->rl_cdata.rl_tx_chain[i] != NULL) {
+			bus_dmamap_sync(sc->sc_dmat,
+			    sc->rl_cdata.rl_tx_dmamap[i], 0,
+			    sc->rl_cdata.rl_tx_dmamap[i]->dm_mapsize,
+			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat,
+			    sc->rl_cdata.rl_tx_dmamap[i]);
 			m_freem(sc->rl_cdata.rl_tx_chain[i]);
 			sc->rl_cdata.rl_tx_chain[i] = NULL;
 			CSR_WRITE_4(sc, RL_TXADDR0 + (i * sizeof(u_int32_t)),
@@ -1168,9 +1205,7 @@ rl_attach(sc)
 	struct rl_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	bus_dma_segment_t seg;
-	bus_dmamap_t dmamap;
-	int rseg;
+	int rseg, i;
 	u_int16_t rl_id, rl_did;
 	caddr_t kva;
 	int addr_len;
@@ -1210,38 +1245,53 @@ rl_attach(sc)
 	}
 
 	if (bus_dmamem_alloc(sc->sc_dmat, RL_RXBUFLEN + 32, PAGE_SIZE, 0,
-	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    &sc->sc_rx_seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("\n%s: can't alloc rx buffers\n", sc->sc_dev.dv_xname);
 		return (1);
 	}
-	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, RL_RXBUFLEN + 32, &kva,
-	    BUS_DMA_NOWAIT)) {
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_rx_seg, rseg,
+	    RL_RXBUFLEN + 32, &kva, BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		    sc->sc_dev.dv_xname, RL_RXBUFLEN + 32);
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_rx_seg, rseg);
 		return (1);
 	}
 	if (bus_dmamap_create(sc->sc_dmat, RL_RXBUFLEN + 32, 1,
-	    RL_RXBUFLEN + 32, 0, BUS_DMA_NOWAIT, &dmamap)) {
+	    RL_RXBUFLEN + 32, 0, BUS_DMA_NOWAIT, &sc->sc_rx_dmamap)) {
 		printf("%s: can't create dma map\n", sc->sc_dev.dv_xname);
 		bus_dmamem_unmap(sc->sc_dmat, kva, RL_RXBUFLEN + 32);
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_rx_seg, rseg);
 		return (1);
 	}
-	if (bus_dmamap_load(sc->sc_dmat, dmamap, kva, RL_RXBUFLEN + 32,
-	    NULL, BUS_DMA_NOWAIT)) {
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_rx_dmamap, kva,
+	    RL_RXBUFLEN + 32, NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: can't load dma map\n", sc->sc_dev.dv_xname);
-		bus_dmamap_destroy(sc->sc_dmat, dmamap);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_rx_dmamap);
 		bus_dmamem_unmap(sc->sc_dmat, kva, RL_RXBUFLEN + 32);
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_rx_seg, rseg);
 		return (1);
 	}
 	sc->rl_cdata.rl_rx_buf = kva;
+	sc->rl_cdata.rl_rx_buf_pa = sc->sc_rx_dmamap->dm_segs[0].ds_addr;
+
 	bzero(sc->rl_cdata.rl_rx_buf, RL_RXBUFLEN + 32);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dmamap,
+	    0, sc->sc_rx_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
+
+	for (i = 0; i < RL_TX_LIST_CNT; i++) {
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
+		    BUS_DMA_NOWAIT, &sc->rl_cdata.rl_tx_dmamap[i]) != 0) {
+			printf("%s: can't create tx maps\n");
+			/* XXX free any allocated... */
+			return (1);
+		}
+	}
 
 	/* Leave a few bytes before the start of the RX ring buffer. */
 	sc->rl_cdata.rl_rx_buf_ptr = sc->rl_cdata.rl_rx_buf;
 	sc->rl_cdata.rl_rx_buf += sizeof(u_int64_t);
+	sc->rl_cdata.rl_rx_buf_pa += sizeof(u_int64_t);
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
