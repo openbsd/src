@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.252 2003/06/07 20:05:12 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.253 2003/06/07 20:27:56 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1367,15 +1367,40 @@ pass in proto tcp to port 25 queue mail
 pass in proto tcp to port 22 queue(ssh_bulk, ssh_prio)
 .Ed
 .It Ar tag <string>
-A tag will be assigned to packets matching this rule.
-Subsequent rules can match on that tag using the
-.Ar tagged
-keyword, even on another interface.
-The tag is set on every matching rule, not just the last one.
-There is one tag per packet, subsequent matches replace it.
+Packets matching this rule will be tagged with the
+specified string.
+The tag acts as an internal marker that can be used to
+identify these packets later on.
+This can be used, for example, to provide trust between
+interfaces and to determine if packets have been
+processed by translation rules.
+Tags are
+.Qq sticky ,
+meaning that the packet will be tagged even if the rule
+is not the last matching rule.
+Further matching rules can replace the tag with a
+new one but will not remove a previously applied tag.
+A packet is only ever assigned one tag at a time.
+.Ar pass
+rules that use the
+.Ar tag
+keyword must also use
+.Ar keep state .
+Packet tagging can be done during
+.Ar nat ,
+.Ar rdr ,
+or
+.Ar binat
+rules in addition to filter rules.
 .It Ar tagged <string>
-This rule applies only to packets that have been tagged with the given
-tag.
+Used with filter rules to specify that packets must already
+be tagged with the given tag in order to match the rule.
+Inverse tag matching can also be done
+by specifying the
+.Cm !
+operator before the
+.Ar tagged
+keyword.
 .El
 .Sh ROUTING
 If a packet matches a rule with a route option set, the packet filter will
@@ -2092,6 +2117,30 @@ pass in on $ext_if proto tcp from any to any port { ssh, smtp, domain, \e
 # (see ftp-proxy(8) for details)
 pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 49152 \e
       flags S/SA keep state
+
+# Packet Tagging
+
+# three interfaces: $int_if, $ext_if, and $wifi_if (wireless). NAT is
+# being done on $ext_if for all outgoing packets. tag packets in on
+# $int_if and pass those tagged packets out on $ext_if.  all other
+# outgoing packets (i.e., packets from the wireless network) are only
+# permitted to access port 80.
+
+pass in on $int_if from any to any tag INTNET keep state
+pass in on $wifi_if from any to any keep state
+
+block out on $ext_if from any to any
+pass out quick on $ext_if tagged INTNET keep state
+pass out on $ext_if from any to any port 80 keep state
+
+# tag incoming packets as they are redirected to spamd(8). use the tag
+# to pass those packets through the packet filter.
+
+rdr on $ext_if inet proto tcp from <spammers> to port smtp \e
+	tag SPAMD -> 127.0.0.1 port spamd
+
+block in on $ext_if
+pass in on $ext_if inet proto tcp tagged SPAMD keep state
 .Ed
 .Sh GRAMMAR
 Syntax for
