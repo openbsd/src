@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecoffrdsetroot.c,v 1.1 1997/05/07 12:46:49 niklas Exp $	*/
+/*	$OpenBSD: ecoffrdsetroot.c,v 1.2 1997/05/07 21:43:04 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Milller
@@ -39,6 +39,7 @@
 #include <unistd.h>
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/exec_ecoff.h>
@@ -50,21 +51,21 @@ struct ecoff_exechdr head;
 char *file;
 
 /* Virtual addresses of the symbols we frob. */
-long rd_root_image_va, rd_root_size_va;
+u_long rd_root_image_va, rd_root_size_va;
 
 /* Offsets relative to start of data segment. */
-long rd_root_image_off, rd_root_size_off;
+off_t rd_root_image_off, rd_root_size_off;
 
 /* value in the location at rd_root_size_off */
-int rd_root_size_val;
+u_int32_t rd_root_size_val;
 
 /* pointers to pieces of mapped file */
-char *dataseg;
+caddr_t dataseg;
 
 /* and lengths */
-int data_len;
-int data_off;
-int data_pgoff;
+size_t data_len;
+off_t data_off;
+u_int data_pgoff;
 
 /*
  * To find locations of the symbols to patch.
@@ -81,8 +82,7 @@ main(argc,argv)
 	char **argv;
 {
 	int fd, n;
-	int *ip;
-	char *cp;
+	u_int32_t *ip;
 
 	if (argc < 2)
 		errx(1, "missing file name");
@@ -100,22 +100,22 @@ main(argc,argv)
 		errx(1, "%s: bad magic number (0%o)", file, head.a.magic);
 
 #ifdef	DEBUG
-	(void)printf("ecoff header\n");
-	(void)printf(" nscns:  %9ld\n", head.f.f_nscns); */
-	(void)printf("timdat:  %9ld\n", head.f.f_timdat); */
-	(void)printf("symptr:  %9ld\n", head.f.f_symptr); */
-	(void)printf(" nsyms:  %9ld\n", head.f.f_nsyms); */
-	(void)printf("opthdr:  %9ld\n", head.f.f_opthdr); */
-	(void)printf(" flags:  %9ld\n", head.f.f_flags); */
-	(void)printf("a.out header\n");
-	(void)printf("vstamp:  %9ld\n", head.a.vstamp);
-	(void)printf(" tsize:  %9ld\n", head.a.tsize);
-	(void)printf(" dsize:  %9ld\n", head.a.dsize);
-	(void)printf(" bsize:  %9ld\n", head.a.bsize);
-	(void)printf(" entry:  0x%08X\n", head.a.entry);
-	(void)printf("  text:  %9ld\n", head.a.text_start);
-	(void)printf("  data:  %9ld\n", head.a.data_start);
-	(void)printf("   bss:  %9ld\n", head.a.bss_start);
+	printf("ecoff header\n");
+	printf(" nscns:  %9ld\n", head.f.f_nscns);
+	printf("timdat:  %9ld\n", head.f.f_timdat);
+	printf("symptr:  %9ld\n", head.f.f_symptr);
+	printf(" nsyms:  %9ld\n", head.f.f_nsyms);
+	printf("opthdr:  %9ld\n", head.f.f_opthdr);
+	printf(" flags:  %9ld\n", head.f.f_flags);
+	printf("a.out header\n");
+	printf("vstamp:  %9ld\n", head.a.vstamp);
+	printf(" tsize:  %9ld\n", head.a.tsize);
+	printf(" dsize:  %9ld\n", head.a.dsize);
+	printf(" bsize:  %9ld\n", head.a.bsize);
+	printf(" entry:  0x%016lx\n", head.a.entry);
+	printf("  text:  0x%016lx\n", head.a.text_start);
+	printf("  data:  0x%016lx\n", head.a.data_start);
+	printf("   bss:  0x%016lx\n", head.a.bss_start);
 #endif
 
 	if (head.f.f_nsyms <= 0)
@@ -129,56 +129,59 @@ main(argc,argv)
 	 */
 	data_off = ECOFF_DATOFF(&head);
 	data_len = head.a.dsize;
-#if 0
+
 	/* align... */
-	data_pgoff = N_PAGSIZ(head) - 1;
+	data_pgoff = NBPG - 1;
 	data_pgoff &= data_off;
+
+#ifdef	DEBUG
+	printf("data parameters\n");
+	printf(" data_off:  0x%016lx\n", data_off);
+	printf(" data_len:  0x%016lx\n", data_len);
+	printf(" data_pgoff:  0x%08x\n", data_pgoff);
+#endif
+
 	data_off -= data_pgoff;
 	data_len += data_pgoff;
+
+#ifdef	DEBUG
+	printf("adjusted parameters\n");
+	printf(" data_off:  0x%016lx\n", data_off);
+	printf(" data_len:  0x%016lx\n", data_len);
 #endif
-	/* map in in... */
-	dataseg = mmap(NULL,	/* any address is ok */
-				   data_len, /* length */
-				   PROT_READ | PROT_WRITE,
-				   MAP_SHARED,
-				   fd, data_off);
+	/* Map it in... */
+	dataseg = mmap(NULL, data_len, PROT_READ | PROT_WRITE,
+	    MAP_FILE | MAP_SHARED, fd, data_off);
 
 	if ((long)dataseg == -1)
 		err(1, "%s: can not map data seg", file);
-#if 0
+
 	dataseg += data_pgoff;
-#endif
 
 	/*
 	 * Find value in the location: rd_root_size
 	 */
-	ip = (int *) (dataseg + rd_root_size_off);
+	ip = (u_int32_t *)(dataseg + rd_root_size_off);
 	rd_root_size_val = *ip;
 #ifdef	DEBUG
-	(void)printf("rd_root_size  val: 0x%08X (%d blocks)\n",
-		rd_root_size_val, (rd_root_size_val >> 9));
+	printf("rd_root_size  val: 0x%08x (%d blocks)\n",
+	    rd_root_size_val, (rd_root_size_val >> 9));
 #endif
 
 	/*
-	 * Copy the symbol table and string table.
+	 * Copy the root image
 	 */
 #ifdef	DEBUG
-	(void)printf("copying root image...\n");
+	printf("copying root image...\n");
 #endif
 	n = read(0, dataseg + rd_root_image_off, rd_root_size_val);
 	if (n < 0)
 		err(1, "read root image");
 
-	msync(dataseg - data_pgoff, data_len
-#ifdef	sun
-		  ,0
-#endif
-		  );
-
 #ifdef	DEBUG
-	(void)printf("...copied %d bytes\n", n);
+	printf("...copied %d bytes\n", n);
 #endif
-	(void)close(fd);
+	close(fd);
 	exit(0);
 }
 
@@ -193,13 +196,13 @@ find_rd_root_image(file)
 		errx(1, "%s: no rd_root_image symbols?", file);
 
 	rd_root_size_off = wantsyms[0].n_value - data_va;
-	rd_root_image_off     = wantsyms[1].n_value - data_va;
+	rd_root_image_off = wantsyms[1].n_value - data_va;
 #ifdef	DEBUG
-	(void)printf(".data segment  va: 0x%08X\n", data_va);
-	(void)printf("rd_root_size   va: 0x%08X\n", wantsyms[0].n_value);
-	(void)printf("rd_root_image  va: 0x%08X\n", wantsyms[1].n_value);
-	(void)printf("rd_root_size  off: 0x%08X\n", rd_root_size_off);
-	(void)printf("rd_root_image off: 0x%08X\n", rd_root_image_off);
+	printf(".data segment  va: 0x%016lx\n", data_va);
+	printf("rd_root_size   va: 0x%016lx\n", wantsyms[0].n_value);
+	printf("rd_root_image  va: 0x%016lx\n", wantsyms[1].n_value);
+	printf("rd_root_size  off: 0x%016lx\n", rd_root_size_off);
+	printf("rd_root_image off: 0x%016lx\n", rd_root_image_off);
 #endif
 
 	/*
