@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.43 2004/06/28 12:34:20 mickey Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.44 2004/08/04 15:02:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -462,13 +462,9 @@ void dc_pci_attach(parent, self, aux)
 	/* Save the cache line size. */
 	if (DC_IS_DAVICOM(sc))
 		sc->dc_cachesize = 0;
-	else {
+	else
 		sc->dc_cachesize = pci_conf_read(pc, pa->pa_tag,
 		    DC_PCI_CFLT) & 0xFF;
-#ifdef __hppa__
-		sc->dc_cachesize = 16;
-#endif
-	}
 
 	/* Reset the adapter. */
 	dc_reset(sc);
