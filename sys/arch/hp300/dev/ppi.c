@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppi.c,v 1.12 2005/01/15 21:13:08 miod Exp $	*/
+/*	$OpenBSD: ppi.c,v 1.13 2005/02/13 23:13:25 mickey Exp $	*/
 /*	$NetBSD: ppi.c,v 1.13 1997/04/02 22:37:33 scottr Exp $	*/
 
 /*
@@ -315,7 +315,6 @@ again:
 		/*
 		 * Check if we timed out during sleep or uiomove
 		 */
-		(void) spllowersoftclock();
 		if ((sc->sc_flags & PPIF_UIO) == 0) {
 #ifdef DEBUG
 			if (ppidebug & PDB_IO)
@@ -329,7 +328,6 @@ again:
 			splx(s);
 			break;
 		}
-		splx(s);
 		/*
 		 * Perform the operation
 		 */
@@ -337,7 +335,6 @@ again:
 			cnt = hpibsend(ctlr, slave, sc->sc_sec, cp, len);
 		else
 			cnt = hpibrecv(ctlr, slave, sc->sc_sec, cp, len);
-		s = splbio();
 		hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
 #ifdef DEBUG
 		if (ppidebug & PDB_IO)
@@ -345,22 +342,24 @@ again:
 			       uio->uio_rw == UIO_READ ? "recv" : "send",
 			       ctlr, slave, sc->sc_sec, cp, len, cnt);
 #endif
-		splx(s);
 		if (uio->uio_rw == UIO_READ) {
 			if (cnt) {
 				error = uiomove(cp, cnt, uio);
-				if (error)
+				if (error) {
+					splx(s);
 					break;
+				}
 				gotdata++;
 			}
 			/*
 			 * Didn't get anything this time, but did in the past.
 			 * Consider us done.
 			 */
-			else if (gotdata)
+			else if (gotdata) {
+				splx(s);
 				break;
+			}
 		}
-		s = splsoftclock();
 		/*
 		 * Operation timeout (or non-blocking), quit now.
 		 */
@@ -384,7 +383,6 @@ again:
 				break;
 			}
 		}
-		splx(s);
 		/*
 		 * Must not call uiomove again til we've used all data
 		 * that we already grabbed.
@@ -393,10 +391,11 @@ again:
 			cp += cnt;
 			len -= cnt;
 			cnt = 0;
+			splx(s);
 			goto again;
 		}
+		splx(s);
 	}
-	s = splsoftclock();
 	if (sc->sc_flags & PPIF_TIMO) {
 		timeout_del(&sc->sc_to);
 		sc->sc_flags &= ~PPIF_TIMO;
@@ -405,7 +404,6 @@ again:
 		timeout_del(&sc->sc_start_to);
 		sc->sc_flags &= ~PPIF_DELAY;
 	}
-	splx(s);
 	/*
 	 * Adjust for those chars that we uiomove'ed but never wrote
 	 */
