@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.20 2001/11/08 07:40:25 fgsch Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.21 2002/02/14 04:25:32 fgsch Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -974,14 +974,17 @@ lookup(name, src_map, strong)
 	int		strong;
 {
 	long			common_size = 0;
-	struct so_map		*smp;
+	struct so_map		*smp, *weak_smp;
 	struct rt_symbol	*rtsp;
+	struct nzlist		*weak_np = 0;
 
 	if ((rtsp = lookup_rts(name)) != NULL) {
 		/* Common symbol is not a member of particular shlib. */
 		*src_map = NULL;
 		return rtsp->rt_sp;
 	}
+
+	weak_smp = NULL; /* XXX - gcc! */
 
 	/*
 	 * Search all maps for a definition of NAME
@@ -1072,9 +1075,19 @@ restart:
 				continue;
 			}
 		}
+		if (N_BIND(&np->nlist) == BIND_WEAK && weak_np == 0) {
+			weak_np = np;
+			weak_smp = smp;
+			continue;
+		}
 
 		*src_map = smp;
 		return np;
+	}
+
+	if (weak_np) {
+		*src_map = weak_smp;
+		return weak_np;
 	}
 
 	if (common_size == 0)
