@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
 	
 	if(errs || argc != 1) {
 		fprintf(stderr, "usage: "
-			"mouse [-l key][-m key][-r key][-a acctime][-s 0|1] "
+			"mcon [-l key] [-m key] [-r key] [-a acctime] [-s 0|1] "
 			"mousedev\n");
 		return 2;
 	}

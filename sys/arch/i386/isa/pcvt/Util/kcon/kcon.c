@@ -239,8 +239,7 @@ char *argv[];
 void
 usage() 
 {
-	fprintf(stderr, "\nkcon: keyboard control and remapping utility for pcvt video driver\n");
-	fprintf(stderr, "usage: [-R] [-d delay] [-l] [-m map] [-o] [-p] [-r rate] [-t +/-] [-x]\n");
+	fprintf(stderr, "usage: [-lopxR] [-d delay] [-m map] [-r rate] [-t +/-]\n");
 	fprintf(stderr, "       -R   full reset of keyboard\n");
 	fprintf(stderr, "       -d   delay until a key is repeated (range: 0...3 => 250...1000ms)\n");
 	fprintf(stderr, "       -l   produce listing of current keyboard mapping\n");
@@ -250,7 +249,7 @@ usage()
 	fprintf(stderr, "       -r   chars/second repeat value (range: 0...31 => 30...2 chars/sec)\n");
 	fprintf(stderr, "       -s   show, display the current keyboard typematic values\n");
 	fprintf(stderr, "       -t   switch repeat on(+) or off(-)\n");	
-	fprintf(stderr, "       -x   set hexadecimal output for listing\n\n");
+	fprintf(stderr, "       -x   set hexadecimal output for listing\n");
 	exit(1);
 }
 
@@ -466,9 +465,9 @@ int kbfd;
 	delay = ((cur_typemat_val & 0x60) >> 5);
 	rate = cur_typemat_val & 0x1f;
 
-	printf("\nDisplaying the current keyboard typematic values:\n\n");
+	printf("Displaying the current keyboard typematic values:\n");
 	printf("The delay-until-repeat time is [ %s ] milliseconds\n",delaytab[delay]);
-	printf("The repeat-rate is [ %s ] characters per second\n\n",ratetab[rate]);
+	printf("The repeat-rate is [ %s ] characters per second\n",ratetab[rate]);
 }
 
 /*---------------------------------------------------------------------------*

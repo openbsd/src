@@ -536,9 +536,8 @@ success:
 
 void usage()
 {
-	fprintf(stderr,"\nscon - screen control utility for the pcvt video driver\n");
-	fprintf(stderr,"usage: scon -a -l -m -v -c [n] -d [dev] -f [on|off] -V -H -s [n]\n");
-	fprintf(stderr,"usage: scon -p [default | list | i,r,g,b] | -t [sec] | -1 | -8\n");
+	fprintf(stderr,"usage: scon [-almvVH18] [-c n] [-d dev] [-f [on|off] [-s n]\n");
+	fprintf(stderr,"    [-p [default | list | i,r,g,b]] | [-t sec]\n");
 	fprintf(stderr,"       -a              list video adaptor type (MDA,CGA,EGA or VGA)\n");
 	fprintf(stderr,"       -c <screen no>  switch current virtual screen to <screen no>\n");
 	fprintf(stderr,"       -d <device>     set parameters(-V|-H|-s) for virtual device\n");
@@ -556,7 +555,6 @@ void usage()
 	fprintf(stderr,"       -8              set 80 columns mode\n");
 	fprintf(stderr,"       -v              verbose mode\n");
 	fprintf(stderr,"       -V              set pure VT220 emulation for a virtual screen\n");
-	fprintf(stderr,"       -?              display help (this message)\n\n");
 	exit(1);
 }
 
@@ -694,7 +692,7 @@ int fd;
 		exit(1);
 	}
 
-	printf( "\nVideo Adaptor Type           = ");
+	printf( "Video Adaptor Type           = ");
 	
 	switch(screeninfo.adaptor_type)
 	{
@@ -788,7 +786,7 @@ int fd;
 	printf( "Force 24 Lines               = %s",
 			screeninfo.force_24lines ? "Yes" : "No");
 
-	printf("\n\n");
+	printf("\n");
 }
 
 static const char *findname(unsigned idx)
