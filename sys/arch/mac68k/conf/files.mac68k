@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.13 1997/03/08 16:16:47 briggs Exp $
+#	$OpenBSD: files.mac68k,v 1.14 1997/03/12 13:24:16 briggs Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -58,8 +58,11 @@ attach	ite at grf
 file	arch/mac68k/dev/ite.c		ite needs-flag
 
 device	sn: ifnet, ether
-attach	sn at obio_norm
-file	arch/mac68k/dev/if_sn.c		sn needs-flag
+attach	sn at obio_norm with sn_obio
+attach	sn at nubus with sn_nubus
+file	arch/mac68k/dev/if_sn.c		sn
+file	arch/mac68k/dev/if_sn_obio.c	sn_obio
+file	arch/mac68k/dev/if_sn_nubus.c	sn_nubus
 
 include "../../../scsi/files.scsi"
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 1997/03/08 16:16:46 briggs Exp $
+#	$OpenBSD: GENERIC,v 1.16 1997/03/12 13:24:15 briggs Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERIC
@@ -62,7 +62,7 @@ options		HWDIRECT
 config		bsd	swap generic
 options		GENERIC
 
-sn0		at obio?	# SONIC ethernet (68040)
+sn*		at obio?	# Internal ethernet
 
 asc0		at obio?	# ASC/EASC audio
 intvid0		at obio?	# Internal video hardware
@@ -70,6 +70,7 @@ intvid0		at obio?	# Internal video hardware
 nubus0		at mainbus?
 
 ae*		at nubus?
+sn*		at nubus?
 macvid*		at nubus?
 
 # Attach grf semantics to all video hardware as it is found

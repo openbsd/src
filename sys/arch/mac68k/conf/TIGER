@@ -1,4 +1,4 @@
-#	$OpenBSD: TIGER,v 1.2 1997/02/23 06:04:50 briggs Exp $
+#	$OpenBSD: TIGER,v 1.3 1997/03/12 13:24:16 briggs Exp $
 #	$NetBSD: GENERIC,v 1.43 1996/09/22 06:49:09 scottr Exp $
 #
 # Allen's Q700
@@ -48,7 +48,7 @@ options		ZS_CONSOLE_ABORT
 config		bsd	swap generic
 options		GENERIC
 
-sn0		at obio?	# SONIC ethernet (68040)
+sn*		at obio?	# SONIC ethernet (68040)
 
 # no internal video, but need interrupts, etc.
 intvid*		at obio?
