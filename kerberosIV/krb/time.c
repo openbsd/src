@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.1 1998/05/18 00:54:01 art Exp $	*/
+/*	$OpenBSD: time.c,v 1.2 1998/06/23 11:49:36 art Exp $	*/
 /*	$KTH: time.c,v 1.1 1998/02/19 19:12:55 joda Exp $	*/
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
@@ -64,8 +64,8 @@ krb_kdctimeofday(struct timeval *tv)
 {
     gettimeofday(tv, NULL);
     if(krb_debug) 
-	krb_warning("Machine time: %s", ctime(&tv->tv_sec));
+	krb_warning("Machine time: %s", ctime((time_t *)&tv->tv_sec));
     tv->tv_sec += krb_get_kdc_time_diff();
     if(krb_debug) 
-	krb_warning("Correcting to %s", ctime(&tv->tv_sec));
+	krb_warning("Correcting to %s", ctime((time_t *)&tv->tv_sec));
 }
