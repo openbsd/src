@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.46 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.47 2002/02/12 17:19:41 provos Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -597,4 +597,16 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
+}
+
+/*
+ * Round up a size to how much malloc would actually allocate.
+ */
+size_t
+malloc_roundup(size_t sz)
+{
+	if (sz > MAXALLOCSAVE)
+		return round_page(sz);
+
+	return (1 << BUCKETINDX(sz));
 }
