@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.11 1996/12/09 12:00:15 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.12 1996/12/09 12:02:16 deraadt Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.11 1996/12/09 12:00:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.12 1996/12/09 12:02:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -605,7 +605,8 @@ tar_options(argc, argv)
 	/*
 	 * process option flags
 	 */
-	while ((c = getoldopt(argc, argv, "b:cef:hmoprutvwxzBC:HLPXZ014578")) 
+	while ((c = getoldopt(argc, argv,
+	    "b:cef:hmopruts:vwxzBC:HLPXZ014578")) 
 	    != EOF)  {
 		switch(c) {
 		case 'b':
@@ -676,6 +677,15 @@ tar_options(argc, argv)
 			 * append to the archive
 			 */
 			act = APPND;
+			break;
+		case 's':
+			/*
+			 * file name substitution name pattern
+			 */
+			if (rep_add(optarg) < 0) {
+				tar_usage();
+				break;
+			}
 			break;
 		case 't':
 			/*
@@ -1178,9 +1188,10 @@ void
 tar_usage()
 #endif
 {
-	(void)fputs("usage: tar -{txru}[cevfbmopwzBHLPXZ014578] [tapefile] ",
+	(void)fputs("usage: tar -{txru}[cevfbmopswzBHLPXZ014578] [tapefile] ",
 		 stderr);
-	(void)fputs("[blocksize] [-C directory] file1 file2...\n", stderr);
+	(void)fputs("[blocksize] [replstr] [-C directory] file1 file2...\n",
+	    stderr);
 	exit(1);
 }
 

@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.3 1996/10/27 06:45:14 downsj Exp $
+.\"	$OpenBSD: tar.1,v 1.4 1996/12/09 12:02:17 deraadt Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -43,6 +43,9 @@
 .\" XXX how to do this right?
 .No [-C
 .Ar directory
+.No ]
+.No [-s
+.Ar replstr
 .No ]
 .Ar file1
 .Op Ar file2...
@@ -98,6 +101,51 @@ Do not create directories.
 .It Fl p
 Preserve user id, group id, file mode, access and modification
 times.
+.It Fl s Ar replstr
+Modify the file or archive member names specified by the
+.Ar pattern
+or
+.Ar file
+operands according to the substitution expression
+.Ar replstr ,
+using the syntax of the
+.Xr ed 1
+utility regular expressions.
+The format of these regular expressions are:
+.Dl /old/new/[gp]
+As in
+.Xr ed 1 ,
+.Cm old
+is a basic regular expression and
+.Cm new
+can contain an ampersand (&), \\n (where n is a digit) back-references,
+or subexpression matching.
+The
+.Cm old
+string may also contain
+.Dv <newline>
+characters.
+Any non-null character can be used as a delimiter (/ is shown here).
+Multiple
+.Fl s
+expressions can be specified.
+The expressions are applied in the order they are specified on the
+command line, terminating with the first successful substitution.
+The optional trailing
+.Cm g
+continues to apply the substitution expression to the pathname substring
+which starts with the first character following the end of the last successful
+substitution. The first unsuccessful substitution stops the operation of the
+.Cm g
+option.
+The optional trailing
+.Cm p
+will cause the final result of a successful substitution to be written to
+.Dv standard error
+in the following format:
+.Dl <original pathname> >> <new pathname>
+File or archive member names that substitute to the empty string
+are not selected and will be skipped.
 .It Fl v
 Verbose operation mode.
 .It Fl w
