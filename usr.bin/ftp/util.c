@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.14 1997/09/11 01:55:16 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.15 1997/09/15 04:57:54 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.14 1997/09/11 01:55:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.15 1997/09/15 04:57:54 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -547,8 +547,10 @@ remotemodtime(file, noisy)
 {
 	int overbose;
 	time_t rtime;
+	int ocode;
 
 	overbose = verbose;
+	ocode = code;
 	rtime = -1;
 	if (debug == 0)
 		verbose = -1;
@@ -575,6 +577,8 @@ remotemodtime(file, noisy)
 		fputc('\n', ttyout);
 	}
 	verbose = overbose;
+	if (rtime == -1)
+		code = ocode;
 	return (rtime);
 }
 
