@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_ptrace.c,v 1.3 1996/08/02 20:34:47 niklas Exp $	*/
+/*	$OpenBSD: freebsd_ptrace.c,v 1.4 2001/02/03 02:45:31 mickey Exp $	*/
 /*	$NetBSD: freebsd_ptrace.c,v 1.2 1996/05/03 17:03:12 christos Exp $	*/
 
 /*-
@@ -55,6 +55,7 @@
 #include <machine/reg.h>
 #include <machine/freebsd_machdep.h>
 
+#include <compat/freebsd/freebsd_signal.h>
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_util.h>
 #include <compat/freebsd/freebsd_ptrace.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_misc.c,v 1.6 1999/02/10 08:05:21 deraadt Exp $	*/
+/*	$OpenBSD: freebsd_misc.c,v 1.7 2001/02/03 02:45:31 mickey Exp $	*/
 /*	$NetBSD: freebsd_misc.c,v 1.2 1996/05/03 17:03:10 christos Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 
 #include <sys/syscallargs.h>
 
+#include <compat/freebsd/freebsd_signal.h>
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_util.h>
 #include <compat/freebsd/freebsd_rtprio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_file.c,v 1.9 2000/05/01 19:14:23 millert Exp $	*/
+/*	$OpenBSD: freebsd_file.c,v 1.10 2001/02/03 02:45:31 mickey Exp $	*/
 /*	$NetBSD: freebsd_file.c,v 1.3 1996/05/03 17:03:09 christos Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 
 #include <sys/syscallargs.h>
 
+#include <compat/freebsd/freebsd_signal.h>
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_util.h>
 
