@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 1998/04/25 08:27:23 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.33 1998/04/25 22:19:48 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.94 1997/06/12 15:46:29 mrg Exp $	*/
 
 /*
@@ -857,7 +857,7 @@ dumpsys()
 #ifdef HP300_NEWKVM
 	kcore_seg_t *kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
-	char    dump_hdr[dbtob(1)];     /* XXX assume hdr fits in 1 block */
+	char dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
 #endif	/* HP300_NEWKVM */
 
 	/* XXX initialized here because of gcc lossage */
