@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.3 1996/09/15 21:56:11 millert Exp $	*/
+/*	$OpenBSD: chio.c,v 1.4 1996/11/02 03:47:10 deraadt Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -68,20 +68,20 @@ static	int do_status __P((char *, int, char **));
 
 /* Valid changer element types. */
 const struct element_type elements[] = {
-	{ "picker",		CHET_MT },
-	{ "slot",		CHET_ST },
-	{ "portal",		CHET_IE },
 	{ "drive",		CHET_DT },
+	{ "picker",		CHET_MT },
+	{ "portal",		CHET_IE },
+	{ "slot",		CHET_ST },
 	{ NULL,			0 },
 };
 
 /* Valid commands. */
 const struct changer_command commands[] = {
-	{ "move",		do_move },
 	{ "exchange",		do_exchange },
-	{ "position",		do_position },
-	{ "params",		do_params },
 	{ "getpicker",		do_getpicker },
+	{ "move",		do_move },
+	{ "params",		do_params },
+	{ "position",		do_position },
 	{ "setpicker",		do_setpicker },
 	{ "status",		do_status },
 	{ NULL,			0 },
@@ -139,6 +139,13 @@ main(argc, argv)
 	for (i = 0; commands[i].cc_name != NULL; ++i)
 		if (strcmp(*argv, commands[i].cc_name) == 0)
 			break;
+	if (commands[i].cc_name == NULL) {
+		/* look for abbreviation */
+		for (i = 0; commands[i].cc_name != NULL; ++i)
+			if (strncmp(*argv, commands[i].cc_name,
+			    strlen(*argv)) == 0)
+				break;
+	}
 	if (commands[i].cc_name == NULL)
 		errx(1, "unknown command: %s", *argv);
 
@@ -659,7 +666,13 @@ cleanup()
 static void
 usage()
 {
+	int i;
 
-	fprintf(stderr, "usage: %s command arg1 arg2 ...\n", __progname);
+	fprintf(stderr, "usage: %s [-f device] command [args ...]\n",
+	    __progname);
+	fprintf(stderr, "commands:");
+	for (i = 0; commands[i].cc_name; i++)
+		fprintf(stderr, " %s", commands[i].cc_name);
+	fprintf(stderr, "\n");
 	exit(1);
 }
