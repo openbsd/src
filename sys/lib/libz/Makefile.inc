@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 1997/02/06 02:56:48 downsj Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 1997/02/07 13:14:59 mickey Exp $
 #	$NetBSD: Makefile.inc,v 1.2 1997/01/23 22:29:09 cgd Exp $
 #
 #	Configuration variables (default values are below):
@@ -29,11 +29,11 @@ ZLIB_PROF=	${ZDST}/libz_p.a
 
 ZMAKE= \
 	cd ${ZDIR} && MAKEOBJDIR=${ZDST} ${MAKE} \
-	    CC=${CC} CFLAGS=${CFLAGS} \
-	    AS=${AS} AFLAGS=${AFLAGS} \
+	    CC=${CC} CFLAGS="${CFLAGS}" \
+	    AS=${AS} AFLAGS="${AFLAGS}" \
 	    LD=${LD} STRIP=${STRIP} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH} \
-	    ZCPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g} \
+	    ZCPPFLAGS="${CPPFLAGS:S@^-I.@-I../../.@g}" \
 	    ${ZMISCMAKEFLAGS}
 
 ${ZLIB}:		.NOTMAIN __always_make_zlib
