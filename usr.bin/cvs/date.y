@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.1 2005/03/23 20:00:18 jfb Exp $	*/
+/*	$OpenBSD: date.y,v 1.2 2005/03/24 03:07:04 jfb Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -19,6 +19,7 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -78,6 +79,12 @@ static time_t	yyYear;
 static MERIDIAN	yyMeridian;
 static time_t	yyRelMonth;
 static time_t	yyRelSeconds;
+
+
+static int   yyerror   (const char *, ...);
+static int   yylex     (void);
+static int   yyparse   (void);
+
 
 %}
 
@@ -488,9 +495,14 @@ static TABLE const MilitaryTable[] = {
 
 /* ARGSUSED */
 static int
-yyerror(char *s)
+yyerror(const char *fmt, ...)
 {
-	cvs_log(LP_ERR, "%s", s);
+	va_list vap;
+
+	va_start(vap, fmt);
+	cvs_vlog(LP_ERR, fmt, vap);
+	va_end(vap);
+
 	return (0);
 }
 
@@ -804,9 +816,7 @@ get_date(char *p, struct timeb *now)
 {
 	struct tm	*tm, gmt;
 	struct timeb	ftz;
-	time_t		Start;
-	time_t		tod;
-	time_t nowtime;
+	time_t		Start, tod, nowtime;
 
 	yyInput = p;
 	if (now == NULL) {
