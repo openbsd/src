@@ -17,13 +17,13 @@ SL = /
 install_dir = s:${SL}gnu${SL}util
 
 # srcdir is usually "."
-srcdir     = ../../ccvs/os2
+srcdir     = .
 
 # top_srcdir is usually ".."
-top_srcdir = ../../ccvs
+top_srcdir = ..
 
-lib_dir     = ../../ccvs${SL}lib
-cvs_srcdir = ../../ccvs${SL}src
+lib_dir     = ..${SL}lib
+cvs_srcdir = ..${SL}src
 
 # Do we need these?
 # prefix = /usr/local

@@ -1,5 +1,5 @@
-This is Info file cvs.info, produced by Makeinfo-1.55 from the input
-file ../../ccvs/doc/cvs.texinfo.
+This is Info file cvs.info, produced by Makeinfo-1.63 from the input
+file ./cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -22,12 +22,12 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
-File: cvs.info,  Node: Top,  Next: Preface,  Prev: (DIR),  Up: (DIR)
+File: cvs.info,  Node: Top,  Next: Preface,  Up: (dir)
 
 
 
-   This info manual describes how to use and administer CVS and is
-updated to release 1.4 or something similar.
+   This info manual describes how to use and administer CVS version
+1.8.1.
 
 * Menu:
 
@@ -46,6 +46,7 @@ updated to release 1.4 or something similar.
 * Tracking sources::            Tracking third-party sources
 * Moving files::                Moving and renaming files
 * Moving directories::          Moving and renaming directories
+* History browsing::            Viewing the history of files in various ways
 * Keyword substitution::        CVS can include the revision inside the file
 * Binary files::                CVS can handle binary files
 * Revision management::         Policy questions for revision management
@@ -214,7 +215,7 @@ exactly which change caused the bug.  This can sometimes be a big help.
 
    You could of course save every version of every file you have ever
 created.  This would however waste an enormous amount of disk space.
-cVS stores all the versions of a file in a single file in a clever way
+CVS stores all the versions of a file in a single file in a clever way
 that only stores the differences between versions.
 
    CVS also helps you if you are part of a group of people working on
@@ -245,15 +246,6 @@ enhancements to CVS take place.  To submit a message to the list, write
 to <info-cvs@prep.ai.mit.edu>.  To subscribe or unsubscribe, write to
 <info-cvs-request@prep.ai.mit.edu>. Please be specific about your email
 address.
-
-   Work is in progress on creating a newsgroup for CVS-related topics.
-It will appear somewhere under the `gnu.' hierarchy.  Gateways to and
-from the mailing list will be set up.
-
-   The FTP site think.com has some CVS material in the `/pub/cvs'
-subdirectory.  Currently (late summer 1993) it contains an excellent
-FAQ (Frequently Asked Questions, with answers), and an improved (but
-unofficial) version of CVS.
 
 CVS is not...
 =============
@@ -1032,9 +1024,8 @@ access to the repository, she can execute programs on the server system
 through a variety of means.  Thus, repository access implies fairly
 broad system access as well.  It might be possible to modify CVS to
 prevent that, but no one has done so as of this writing.  Furthermore,
-there may be other security problems with CVS; it is not a simple
-program and determining how people might use it to gain access to a
-system is difficult.
+there may be other ways in which having access to CVS allows people to
+gain more general access to the system; noone has done a careful audit.
 
    In summary, anyone who gets the password gets repository access, and
 some measure of general system access as well.  The password is
@@ -1102,11 +1093,12 @@ can be done in a couple of different ways.
 
 * From files::                  This method is useful with old projects
                                 where files already exists.
-
+* From other version control systems::  Old projects where you want to
+                                        preserve history from another system.
 * From scratch::                Creating a module from scratch.
 
 
-File: cvs.info,  Node: From files,  Next: From scratch,  Up: Setting up the files
+File: cvs.info,  Node: From files,  Next: From other version control systems,  Up: Setting up the files
 
 Creating a module from a number of files
 ----------------------------------------
@@ -1150,7 +1142,43 @@ directories inside `$CVSROOT' are reasonable, and that they belong to
 the proper groups.  *Note File permissions::.
 
 
-File: cvs.info,  Node: From scratch,  Prev: From files,  Up: Setting up the files
+File: cvs.info,  Node: From other version control systems,  Next: From scratch,  Prev: From files,  Up: Setting up the files
+
+Creating Files From Other Version Control Systems
+-------------------------------------------------
+
+   If you have a project which you are maintaining with another version
+control system, such as RCS, you may wish to put the files from that
+project into CVS, and preserve the revision history of the files.
+
+From RCS
+     If you have been using RCS, find the RCS files--usually a file
+     named `foo.c' will have its RCS file in `RCS/foo.c,v' (but it
+     could be other places; consult the RCS documentation for details).
+     Then create the appropriate directories in CVS if they do not
+     already exist.  Then copy the files into the appropriate
+     directories in the CVS repository (the name in the repository must
+     be the name of the source file with `,v' added; the files go
+     directly in the appopriate directory of the repository, not in an
+     `RCS' subdirectory).  This is one of the few times when it is a
+     good idea to access the CVS repository directly, rather than using
+     CVS commands.  Then you are ready to check out a new working
+     directory.
+
+From another version control system
+     Many version control systems have the ability to export RCS files
+     in the standard format.  If yours does, export the RCS files and
+     then follow the above instructions.
+
+From SCCS
+     There is a script in the `contrib' directory of the CVS source
+     distribution called `sccs2rcs' which converts SCCS files to RCS
+     files.  Note: you must run it on a machine which has both SCCS and
+     RCS installed, and like everything else in contrib it is
+     unsupported (your mileage may vary).
+
+
+File: cvs.info,  Node: From scratch,  Prev: From other version control systems,  Up: Setting up the files
 
 Creating a module from scratch
 ------------------------------
@@ -1244,29 +1272,4 @@ to use CVS.
 * Informing others::            To cooperate you must inform
 * Concurrency::                 Simultaneous repository access
 * Watches::                     Mechanisms to track who is editing files
-
-
-File: cvs.info,  Node: File status,  Next: Updating a file,  Up: Multiple developers
-
-File status
-===========
-
-   After you have checked out a file out from CVS, it is in one of
-these four states:
-
-Up-to-date
-     The file is identical with the latest revision in the repository.
-
-Locally modified
-     You have edited the file, and not yet committed your changes.
-
-Needing update
-     Someone else has committed a newer revision to the repository.
-
-Needing merge
-     Someone else have committed a newer revision to the repository,
-     and you have also made modifications to the file.
-
-   You can use the `status' command to find out the status of a given
-file.  *Note status::.
 

@@ -1,25 +1,76 @@
-This is Info file cvsclient.info, produced by Makeinfo-1.55 from the
-input file ../../ccvs/doc/cvsclient.texi.
+This is Info file cvsclient.info, produced by Makeinfo-1.63 from the
+input file ./cvsclient.texi.
 
 
-File: cvsclient.info,  Node: Top,  Next: Goals,  Prev: (DIR),  Up: (DIR)
+File: cvsclient.info,  Node: Top,  Next: Introduction,  Up: (dir)
 
 CVS Client/Server
 *****************
 
-   This manual describes the client/server protocol used by CVS.  It
+   This document describes the client/server protocol used by CVS.  It
 does not describe how to use or administer client/server CVS; see the
-regular CVS manual for that.
+regular CVS manual for that.  This is version 1.8.1 of the protocol
+specification--*Note Introduction:: for more on what this version number
+means.
 
 * Menu:
 
+* Introduction::      What is CVS and what is the client/server protocol for?
 * Goals::             Basic design decisions, requirements, scope, etc.
 * Notes::             Notes on the current implementation
 * Protocol Notes::    Possible enhancements, limitations, etc. of the protocol
+* Connection and Authentication::  Various ways to connect to the server
 * Protocol::          Complete description of the protocol
 
 
-File: cvsclient.info,  Node: Goals,  Next: Notes,  Prev: Top,  Up: Top
+File: cvsclient.info,  Node: Introduction,  Next: Goals,  Prev: Top,  Up: Top
+
+Introduction
+************
+
+   CVS is a version control system (with some additional configuration
+management functionality).  It maintains a central "repository" which
+stores files (often source code), including past versions, information
+about who modified them and when, and so on.  People who wish to look
+at or modify those files, known as "developers", use CVS to "check out"
+a "working directory" from the repository, to "check in" new versions
+of files to the repository, and other operations such as viewing the
+modification history of a file.  If developers are connected to the
+repository by a network, particularly a slow or flaky one, the most
+efficient way to use the network is with the CVS-specific protocol
+described in this document.
+
+   Developers, using the machine on which they store their working
+directory, run the CVS "client" program.  To perform operations which
+cannot be done locally, it connects to the CVS "server" program, which
+maintains the repository.  For more information on how to connect see
+*Note Connection and Authentication::.
+
+   This document describes the CVS protocol.  Unfortunately, it does not
+yet completely document one aspect of the protocol--the detailed
+operation of each CVS command and option--and one must look at the CVS
+user documentation, `cvs.texinfo', for that information.  The protocol
+is non-proprietary (anyone who wants to is encouraged to implement it)
+and an implementation, known as CVS, is available under the GNU Public
+License.  The CVS distribution, containing this implementation,
+`cvs.texinfo', and a copy (possibly more or less up to date than what
+you are reading now) of this document, `cvsclient.texi', can be found
+at the usual GNU FTP sites, with a filename such as
+`cvs-VERSION.tar.gz'.
+
+   This is version 1.8.1 of the protocol specification.  This version
+number is intended only to aid in distinguishing different versions of
+this specification.  Although the specification is currently maintained
+in conjunction with the CVS implementation, and carries the same
+version number, it also intends to document what is involved with
+interoperating with other implementations (such as other versions of
+CVS); see *Note Requirements::.  This version number should not be used
+by clients or servers to determine what variant of the protocol to
+speak; they should instead use the `valid-requests' and
+`Valid-responses' mechanism (*note Protocol::.), which is more flexible.
+
+
+File: cvsclient.info,  Node: Goals,  Next: Notes,  Prev: Introduction,  Up: Top
 
 Goals
 *****
@@ -82,7 +133,7 @@ experimental code (see `SERVER_FLOWCONTROL' in options.h) which should
 help significantly.
 
 
-File: cvsclient.info,  Node: Protocol Notes,  Next: Protocol,  Prev: Notes,  Up: Top
+File: cvsclient.info,  Node: Protocol Notes,  Next: Connection and Authentication,  Prev: Notes,  Up: Top
 
 Notes on the Protocol
 *********************
@@ -117,7 +168,56 @@ Notes on the Protocol
      rcsmerge is done by the client.
 
 
-File: cvsclient.info,  Node: Protocol,  Prev: Protocol Notes,  Up: Top
+File: cvsclient.info,  Node: Connection and Authentication,  Next: Protocol,  Prev: Protocol Notes,  Up: Top
+
+How to Connect to and Authenticate Oneself to the CVS server
+************************************************************
+
+   Connection and authentication occurs before the CVS protocol itself
+is started.  There are several ways to connect.
+
+rsh
+     If the client has a way to execute commands on the server, and
+     provide input to the commands and output from them, then it can
+     connect that way.  This could be the usual rsh (port 514)
+     protocol, Kerberos rsh, SSH, or any similar mechanism.  The client
+     may allow the user to specify the name of the server program; the
+     default is `cvs'.  It is invoked with one argument, `server'.
+     Once it invokes the server, the client proceeds to start the cvs
+     protocol.
+
+kserver
+     The kerberized server listens on a port (in the current
+     implementation, by having inetd call "cvs kserver") which defaults
+     to 1999.  The client connects, sends the usual kerberos
+     authentication information, and then starts the cvs protocol.
+     Note: port 1999 is officially registered for another use, and in
+     any event one cannot register more than one port for CVS, so the
+     kerberized client and server should be changed to use port 2401
+     (see below), and send a different string in place of `BEGIN AUTH
+     REQUEST' to identify the authentication method in use.  However,
+     noone has yet gotten around to implementing this.
+
+pserver
+     The password authenticated server listens on a port (in the current
+     implementation, by having inetd call "cvs pserver") which defaults
+     to 2401 (this port is officially registered).  The client
+     connects, sends the string `BEGIN AUTH REQUEST', a linefeed, the
+     cvs root, a linefeed, the username, a linefeed, the password
+     trivially encoded (see scramble.c in the cvs sources), a linefeed,
+     the string `END AUTH REQUEST', and a linefeed.  The server
+     responds with `I LOVE YOU' and a linefeed if the authentication is
+     successful or `I HATE YOU' and a linefeed if the authentication
+     fails.  After receiving `I LOVE YOU', the client proceeds with the
+     cvs protocol.  If the client wishes to merely authenticate without
+     starting the cvs protocol, the procedure is the same, except
+     `BEGIN AUTH REQUEST' is replaced with `BEGIN VERIFICATION
+     REQUEST', `END AUTH REQUEST' is replaced with `END VERIFICATION
+     REQUEST', and upon receipt of `I LOVE YOU' the connection is
+     closed rather than continuing.
+
+
+File: cvsclient.info,  Node: Protocol,  Prev: Connection and Authentication,  Up: Top
 
 The CVS client/server protocol
 ******************************
@@ -228,6 +328,11 @@ compressed form) ends with a newline.
 
 `Root PATHNAME \n'
      Response expected: no.  Tell the server which `CVSROOT' to use.
+     PATHNAME must already exist; if creating a new root, use the
+     `init' request, not `Root'.  PATHNAME does not include the
+     hostname of the server, how to access the server, etc.; by the time
+     the CVS protocol is in use, connection, authentication, etc., are
+     already taken care of.
 
 `Valid-responses REQUEST-LIST \n'
      Response expected: no.  Tell the server what responses the client
@@ -351,6 +456,13 @@ compressed form) ends with a newline.
      server sends responses, send (in a `M' response) `?' followed by
      the directory and filename.
 
+`Case \n'
+     Tell the server that filenames should be matched against ignore
+     patterns in a case-insensitive fashion.  Note that this does not
+     apply to other comparisons--for example the filenames given in
+     `Entry' and `Modified' requests for the same file must match in
+     case regardless of whether the `Case' request is sent.
+
 `Argument TEXT \n'
      Response expected: no.  Save argument for use in a subsequent
      command.  Arguments accumulate until an argument-using command is
@@ -392,12 +504,18 @@ compressed form) ends with a newline.
 `history \n'
 `watchers \n'
 `editors \n'
+`annotate \n'
      Response expected: yes.  Actually do a cvs command.  This uses any
      previous `Argument', `Repository', `Entry', `Modified', or `Lost'
      requests, if they have been sent.  The last `Repository' sent
      specifies the working directory at the time of the operation.  No
      provision is made for any input from the user.  This means that
      `ci' must use a `-m' argument if it wants to specify a log message.
+
+`init ROOT-NAME \n'
+     Response expected: yes.  If it doesn't already exist, create a CVS
+     repository ROOT-NAME.  The `Root' request need not have been
+     previously sent.
 
 `update \n'
      Response expected: yes.  Actually do a `cvs update' command.  This
@@ -582,6 +700,14 @@ the response is over.
 `Clear-sticky PATHNAME \n'
      Clear any sticky tag or date set by `Set-sticky'.
 
+`Template PATHNAME \n'
+     Additional data: file transmission (note: compressed file
+     transmissions are not supported).  PATHNAME ends in a slash; its
+     purpose is to specify a directory, not a file within a directory.
+     Tell the client to store the file transmission as the template log
+     message, and then use that template in the future when prompting
+     the user for a log message.
+
 `Set-checkin-prog DIR \n'
      Additional data: PROG \n.  Tell the client to set a checkin
      program, which should be supplied with the `Checkin-prog' request
@@ -703,17 +829,19 @@ communicating with a server which supports Directory and UseUnchanged.
 
 
 Tag Table:
-Node: Top112
-Node: Goals672
-Node: Notes2169
-Node: Protocol Notes3413
-Node: Protocol5095
-Node: Entries Lines5479
-Node: Modes6187
-Node: Filenames7710
-Node: Requests8461
-Node: Responses20390
-Node: Example27452
-Node: Requirements29398
+Node: Top99
+Node: Introduction924
+Node: Goals3458
+Node: Notes4964
+Node: Protocol Notes6208
+Node: Connection and Authentication7911
+Node: Protocol10514
+Node: Entries Lines10913
+Node: Modes11621
+Node: Filenames13144
+Node: Requests13895
+Node: Responses26668
+Node: Example34133
+Node: Requirements36079
 
 End Tag Table

@@ -1,5 +1,5 @@
-This is Info file cvs.info, produced by Makeinfo-1.55 from the input
-file ../../ccvs/doc/cvs.texinfo.
+This is Info file cvs.info, produced by Makeinfo-1.63 from the input
+file ./cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -22,20 +22,161 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
+File: cvs.info,  Node: user-defined logging,  Next: annotate,  Prev: history database,  Up: History browsing
+
+User-defined logging
+====================
+
+   You can customize CVS to log various kinds of actions, in whatever
+manner you choose.  These mechanisms operate by executing a script at
+various times.  The script might append a message to a file listing the
+information and the programmer who created it, or send mail to a group
+of developers, or, perhaps, post a message to a particular newsgroup.
+To log commits, use the `loginfo' file (*note loginfo::.).  To log
+commits, checkouts, exports, and tags, respectively, you can also use
+the `-i', `-o', `-e', and `-t' options in the modules file.  For a more
+flexible way of giving notifications to various users, which requires
+less in the way of keeping centralized scripts up to date, use the `cvs
+watch add' command (*note Getting Notified::.); this command is useful
+even if you are not using `cvs watch on'.
+
+   The `taginfo' file defines programs to execute when someone executes
+a `tag' or `rtag' command.  The `taginfo' file has the standard form
+for administrative files (*note Administrative files::.), where each
+line is a regular expression followed by a command to execute.  The
+arguments passed to the command are, in order, the TAGNAME, OPERATION
+(`add' for `tag', `mov' for `tag -F', and `del' for `tag -d'),
+REPOSITORY, and any remaining are pairs of FILENAME REVISION.  A
+non-zero exit of the filter program will cause the tag to be aborted.
+
+
+File: cvs.info,  Node: annotate,  Prev: user-defined logging,  Up: History browsing
+
+Annotate command
+================
+
+ - Command: cvs annotate [`-l'] FILES ...
+     For each file in FILES, print the head revision of the trunk,
+     together with information on the last modification for each line.
+     The `-l' option means to process the local directory only, not to
+     recurse (*note Common options::.).  For example:
+
+          $ cvs annotate ssfile
+          Annotations for ssfile
+          ***************
+          1.1          (mary     27-Mar-96): ssfile line 1
+          1.2          (joe      28-Mar-96): ssfile line 2
+
+     The file `ssfile' currently contains two lines.  The `ssfile line
+     1' line was checked in by `mary' on March 27.  Then, on March 28,
+     `joe' added a line `ssfile line 2', without modifying the `ssfile
+     line 1' line.  This report doesn't tell you anything about lines
+     which have been deleted or replaced; you need to use `cvs diff'
+     for that (*note diff::.).
+
+
+
+File: cvs.info,  Node: Keyword substitution,  Next: Binary files,  Prev: History browsing,  Up: Top
+
+Keyword substitution
+********************
+
+   As long as you edit source files inside your working copy of a
+module you can always find out the state of your files via `cvs status'
+and `cvs log'.  But as soon as you export the files from your
+development environment it becomes harder to identify which revisions
+they are.
+
+   RCS uses a mechanism known as "keyword substitution" (or "keyword
+expansion") to help identifying the files.  Embedded strings of the form
+`$KEYWORD$' and `$KEYWORD:...$' in a file are replaced with strings of
+the form `$KEYWORD:VALUE$' whenever you obtain a new revision of the
+file.
+
+* Menu:
+
+* Keyword list::                RCS Keywords
+* Using keywords::              Using keywords
+* Avoiding substitution::       Avoiding substitution
+* Substitution modes::          Substitution modes
+* Log keyword::                 Problems with the $Log: cvs.info-3,v $
+* Log keyword::                 Problems with the Revision 1.1.1.4  1996/05/06 22:27:16  tholo
+* Log keyword::                 Problems with the Files missed by previous import
+* Log keyword::                 Problems with the keyword.
+
+
+File: cvs.info,  Node: Keyword list,  Next: Using keywords,  Up: Keyword substitution
+
+RCS Keywords
+============
+
+   This is a list of the keywords that RCS currently (in release
+5.6.0.1) supports:
+
+`$Author: tholo $'
+     The login name of the user who checked in the revision.
+
+`$Date: 1996/05/06 22:27:16 $'
+     The date and time (UTC) the revision was checked in.
+
+`$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-3,v 1.1.1.4 1996/05/06 22:27:16 tholo Exp $'
+     A standard header containing the full pathname of the RCS file,
+     the revision number, the date (UTC), the author, the state, and
+     the locker (if locked).  Files will normally never be locked when
+     you use CVS.
+
+`$Id: cvs.info-3,v 1.1.1.4 1996/05/06 22:27:16 tholo Exp $'
+     Same as `$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-3,v 1.1.1.4 1996/05/06 22:27:16 tholo Exp $', except that the RCS filename is without a path.
+
+`$Locker:  $'
+     The login name of the user who locked the revision (empty if not
+     locked, and thus almost always useless when you are using CVS).
+
+`$Log: cvs.info-3,v $
+`Revision 1.1.1.4  1996/05/06 22:27:16  tholo
+`Files missed by previous import
+`'
+     The log message supplied during commit, preceded by a header
+     containing the RCS filename, the revision number, the author, and
+     the date (UTC).  Existing log messages are *not* replaced.
+     Instead, the new log message is inserted after `$Log: cvs.info-3,v $
+     Instead, the new log message is inserted after `Revision 1.1.1.4  1996/05/06 22:27:16  tholo
+     Instead, the new log message is inserted after `Files missed by previous import
+     Instead, the new log message is inserted after `'.  Each
+     new line is prefixed with a "comment leader" which RCS guesses
+     from the file name extension.  It can be changed with `cvs admin
+     -c'.  *Note admin options::.  This keyword is useful for
+     accumulating a complete change log in a source file, but for
+     several reasons it can be problematic.  *Note Log keyword::.
+
+`$RCSfile: cvs.info-3,v $'
+     The name of the RCS file without a path.
+
+`$Revision: 1.1.1.4 $'
+     The revision number assigned to the revision.
+
+`$Source: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-3,v $'
+     The full pathname of the RCS file.
+
+`$State: Exp $'
+     The state assigned to the revision.  States can be assigned with
+     `cvs admin -s'--*Note admin options::.
+
+
 File: cvs.info,  Node: Using keywords,  Next: Avoiding substitution,  Prev: Keyword list,  Up: Keyword substitution
 
 Using keywords
 ==============
 
    To include a keyword string you simply include the relevant text
-string, such as `$Id: cvs.info-3,v 1.1.1.3 1996/04/27 20:02:43 tholo Exp $', inside the file, and commit the file.  CVS will
+string, such as `$Id: cvs.info-3,v 1.1.1.4 1996/05/06 22:27:16 tholo Exp $', inside the file, and commit the file.  CVS will
 automatically expand the string as part of the commit operation.
 
-   It is common to embed `$Id: cvs.info-3,v 1.1.1.3 1996/04/27 20:02:43 tholo Exp $' string in the C source code.  This
+   It is common to embed `$Id: cvs.info-3,v 1.1.1.4 1996/05/06 22:27:16 tholo Exp $' string in the C source code.  This
 example shows the first few lines of a typical file, after keyword
 substitution has been performed:
 
-     static char *rcsid="$Id: cvs.info-3,v 1.1.1.3 1996/04/27 20:02:43 tholo Exp $";
+     static char *rcsid="$Id: cvs.info-3,v 1.1.1.4 1996/05/06 22:27:16 tholo Exp $";
      /* The following lines will prevent `gcc' version 2.X
         from issuing an "unused variable" warning. */
      #if __GNUC__ == 2
@@ -55,11 +196,11 @@ binary files.
 
      $ ident samp.c
      samp.c:
-          $Id: cvs.info-3,v 1.1.1.3 1996/04/27 20:02:43 tholo Exp $
+          $Id: cvs.info-3,v 1.1.1.4 1996/05/06 22:27:16 tholo Exp $
      $ gcc samp.c
      $ ident a.out
      a.out:
-          $Id: cvs.info-3,v 1.1.1.3 1996/04/27 20:02:43 tholo Exp $
+          $Id: cvs.info-3,v 1.1.1.4 1996/05/06 22:27:16 tholo Exp $
 
    SCCS is another popular revision control system.  It has a command,
 `what', which is very similar to `ident' and used for the same purpose.
@@ -68,7 +209,7 @@ character sequence `@(#)' it is easy to include keywords that are
 detected by either command.  Simply prefix the RCS keyword with the
 magic SCCS phrase, like this:
 
-     static char *id="@(#) $Id: cvs.info-3,v 1.1.1.3 1996/04/27 20:02:43 tholo Exp $";
+     static char *id="@(#) $Id: cvs.info-3,v 1.1.1.4 1996/05/06 22:27:16 tholo Exp $";
 
 
 File: cvs.info,  Node: Avoiding substitution,  Next: Substitution modes,  Prev: Using keywords,  Up: Keyword substitution
@@ -97,9 +238,11 @@ File: cvs.info,  Node: Substitution modes,  Next: Log keyword,  Prev: Avoiding s
 Substitution modes
 ==================
 
-   You can control how RCS expands keywords through the use of the `-k'
-option (*note Common options::.).  The `-k' option is available with the
-`add', `checkout', `diff' and `update' commands.
+   Each file has a stored default substitution mode, and each working
+directory copy of a file also has a substitution mode.  The former is
+set by the `-k' option to `cvs add' and `cvs admin'; the latter is set
+by the -k or -A options to `cvs checkout' or `cvs update'.  `cvs diff'
+also has a `-k' option.  For some examples, *Note Binary files::.
 
    The modes available are:
 
@@ -115,15 +258,15 @@ option (*note Common options::.).  The `-k' option is available with the
 `-kk'
      Generate only keyword names in keyword strings; omit their values.
      For example, for the `Revision' keyword, generate the string
-     `$Revision: 1.1.1.3 $' instead of `$Revision: 1.1.1.3 $'.  This option is useful
+     `$Revision: 1.1.1.4 $' instead of `$Revision: 1.1.1.4 $'.  This option is useful
      to ignore differences due to keyword substitution when comparing
      different revisions of a file.
 
 `-ko'
      Generate the old keyword string, present in the working file just
      before it was checked in.  For example, for the `Revision'
-     keyword, generate the string `$Revision: 1.1.1.3 $' instead of
-     `$Revision: 1.1.1.3 $' if that is how the string appeared when the
+     keyword, generate the string `$Revision: 1.1.1.4 $' instead of
+     `$Revision: 1.1.1.4 $' if that is how the string appeared when the
      file was checked in.
 
 `-kb'
@@ -137,9 +280,9 @@ option (*note Common options::.).  The `-k' option is available with the
 `-kv'
      Generate only keyword values for keyword strings.  For example,
      for the `Revision' keyword, generate the string `5.7' instead of
-     `$Revision: 1.1.1.3 $'.  This can help generate files in programming
+     `$Revision: 1.1.1.4 $'.  This can help generate files in programming
      languages where it is hard to strip keyword delimiters like
-     `$Revision: 1.1.1.3 $' from a string.  However, further keyword
+     `$Revision: 1.1.1.4 $' from a string.  However, further keyword
      substitution cannot be performed once the keyword names are
      removed, so this option should be used with care.
 
@@ -151,25 +294,25 @@ option (*note Common options::.).  The `-k' option is available with the
 File: cvs.info,  Node: Log keyword,  Prev: Substitution modes,  Up: Keyword substitution
 
 Problems with the $Log: cvs.info-3,v $
-Problems with the Revision 1.1.1.3  1996/04/27 20:02:43  tholo
-Problems with the Some files missed by initial import
+Problems with the Revision 1.1.1.4  1996/05/06 22:27:16  tholo
+Problems with the Files missed by previous import
 Problems with the keyword.
 ================================
 
    The `$Log: cvs.info-3,v $
-   The `Revision 1.1.1.3  1996/04/27 20:02:43  tholo
-   The `Some files missed by initial import
+   The `Revision 1.1.1.4  1996/05/06 22:27:16  tholo
+   The `Files missed by previous import
    The `' keyword is somewhat controversial.  As long as you are
 working on your development system the information is easily accessible
 even if you do not use the `$Log: cvs.info-3,v $
-even if you do not use the `Revision 1.1.1.3  1996/04/27 20:02:43  tholo
-even if you do not use the `Some files missed by initial import
+even if you do not use the `Revision 1.1.1.4  1996/05/06 22:27:16  tholo
+even if you do not use the `Files missed by previous import
 even if you do not use the `' keyword--just do a `cvs log'.  Once
 you export the file the history information might be useless anyhow.
 
    A more serious concern is that RCS is not good at handling `$Log: cvs.info-3,v $
-   A more serious concern is that RCS is not good at handling `Revision 1.1.1.3  1996/04/27 20:02:43  tholo
-   A more serious concern is that RCS is not good at handling `Some files missed by initial import
+   A more serious concern is that RCS is not good at handling `Revision 1.1.1.4  1996/05/06 22:27:16  tholo
+   A more serious concern is that RCS is not good at handling `Files missed by previous import
    A more serious concern is that RCS is not good at handling `'
 entries when a branch is merged onto the main trunk.  Conflicts often
 result from the merging operation.
@@ -180,8 +323,8 @@ information from `cvs log' will not be consistent with the information
 inside the file.  This may or may not be a problem in real life.
 
    It has been suggested that the `$Log: cvs.info-3,v $
-   It has been suggested that the `Revision 1.1.1.3  1996/04/27 20:02:43  tholo
-   It has been suggested that the `Some files missed by initial import
+   It has been suggested that the `Revision 1.1.1.4  1996/05/06 22:27:16  tholo
+   It has been suggested that the `Files missed by previous import
    It has been suggested that the `' keyword should be inserted
 *last* in the file, and not in the files header, if it is to be used at
 all.  That way the long list of change messages will not interfere with
@@ -214,26 +357,25 @@ which supports `-kb'.
    Here is an example of how you can create a new file using the `-kb'
 flag:
 
-     $ echo '$Id: cvs.info-3,v 1.1.1.3 1996/04/27 20:02:43 tholo Exp $' > kotest
+     $ echo '$Id: cvs.info-3,v 1.1.1.4 1996/05/06 22:27:16 tholo Exp $' > kotest
      $ cvs add -kb -m"A test file" kotest
      $ cvs ci -m"First checkin; contains a keyword" kotest
 
    If a file accidentally gets added without `-kb', one can use the
 `cvs admin' command to recover.  For example:
 
-     $ echo '$Id: cvs.info-3,v 1.1.1.3 1996/04/27 20:02:43 tholo Exp $' > kotest
+     $ echo '$Id: cvs.info-3,v 1.1.1.4 1996/05/06 22:27:16 tholo Exp $' > kotest
      $ cvs add -m"A test file" kotest
      $ cvs ci -m"First checkin; contains a keyword" kotest
      $ cvs admin -kb kotest
-     $ rm kotest
-     $ cvs update kotest
+     $ cvs update -A kotest
 
    When you check in the file `kotest' the keywords are expanded.  (Try
 the above example, and do a `cat kotest' after every command).  The `cvs
 admin -kb' command sets the default keyword substitution method for
 this file, but it does not alter the working copy of the file that you
-have.  The easiest way to get the unexpanded version of `kotest' is to
-remove it and check it out again.
+have.  The easiest way to get the unexpanded version of `kotest' is
+`cvs update -A'.
 
 
 File: cvs.info,  Node: Revision management,  Next: Invoking CVS,  Prev: Binary files,  Up: Top
@@ -391,6 +533,14 @@ be in unidiff format.  `cvs diff -c foobar' will provide context diffs,
 as usual.  Getting "old" format diffs would be slightly more
 complicated, because `diff' doesn't have an option to specify use of
 the "old" format, so you would need `cvs -f diff foobar'.
+
+   In place of the command name you can use `cvs' to specify global
+options (*note Global options::.).  For example the following line in
+`.cvsrc'
+
+     cvs -z6
+
+   causes CVS to use compression level 6
 
 
 File: cvs.info,  Node: Global options,  Next: Common options,  Prev: ~/.cvsrc,  Up: Invoking CVS
@@ -799,8 +949,8 @@ than RCS.
      Useful with CVS.  Sets the comment leader to STRING.  The comment
      leader is printed before every log message line generated by the
      keyword `$Log: cvs.info-3,v $
-     keyword `Revision 1.1.1.3  1996/04/27 20:02:43  tholo
-     keyword `Some files missed by initial import
+     keyword `Revision 1.1.1.4  1996/05/06 22:27:16  tholo
+     keyword `Files missed by previous import
      keyword `' (*note Keyword substitution::.).  This is useful
      for programming languages without multi-line comments.  RCS
      initially guesses the value of the comment leader from the file
@@ -897,10 +1047,13 @@ than RCS.
      and `Rel' (for released).  By default, the state of a new revision
      is set to `Exp' when it is created.  The state is visible in the
      output from CVS LOG (*note log::.), and in the `$Log: cvs.info-3,v $
-     output from CVS LOG (*note log::.), and in the `Revision 1.1.1.3  1996/04/27 20:02:43  tholo
-     output from CVS LOG (*note log::.), and in the `Some files missed by initial import
+     output from CVS LOG (*note log::.), and in the `Revision 1.1.1.4  1996/05/06 22:27:16  tholo
+     output from CVS LOG (*note log::.), and in the `Files missed by previous import
      output from CVS LOG (*note log::.), and in the `' and
-     `$State: Exp $' keywords (*note Keyword substitution::.).
+     `$State: Exp $' keywords (*note Keyword substitution::.).  Note that CVS
+     uses the `dead' state for its own purposes; to take a file to or
+     from the `dead' state use commands like `cvs remove' and `cvs
+     add', not `cvs admin -s'.
 
 `-t[FILE]'
      Useful with CVS.  Write descriptive text from the contents of the
@@ -974,8 +1127,8 @@ Comment leaders
 ...............
 
    If you use the `$Log: cvs.info-3,v $
-   If you use the `Revision 1.1.1.3  1996/04/27 20:02:43  tholo
-   If you use the `Some files missed by initial import
+   If you use the `Revision 1.1.1.4  1996/05/06 22:27:16  tholo
+   If you use the `Files missed by previous import
    If you use the `' keyword and you do not agree with the guess
 for comment leader that CVS has done, you can enforce your will with
 `cvs admin -c'.  This might be suitable for `nroff' source:
@@ -1147,109 +1300,4 @@ checkout examples
    Get a copy of the module `tc' as it looked one day ago:
 
      $ cvs checkout -D yesterday tc
-
-
-File: cvs.info,  Node: commit,  Next: diff,  Prev: checkout,  Up: Invoking CVS
-
-commit--Check files into the repository
-=======================================
-
-   * Version 1.3 Synopsis: commit [-lnR] [-m 'log_message' | -f file]
-     [-r revision] [files...]
-
-   * Version 1.3.1 Synopsis: commit [-lnRf] [-m 'log_message' | -F
-     file] [-r revision] [files...]
-
-   * Requires: working directory, repository.
-
-   * Changes: repository.
-
-   * Synonym: ci
-
-   *Warning:* The `-f FILE' option will probably be renamed to `-F
-FILE', and `-f' will be given a new behavior in future releases of CVS.
-
-   Use `commit' when you want to incorporate changes from your working
-source files into the source repository.
-
-   If you don't specify particular files to commit, all of the files in
-your working current directory are examined.  `commit' is careful to
-change in the repository only those files that you have really changed.
-By default (or if you explicitly specify the `-R' option), files in
-subdirectories are also examined and committed if they have changed;
-you can use the `-l' option to limit `commit' to the current directory
-only.
-
-   `commit' verifies that the selected files are up to date with the
-current revisions in the source repository; it will notify you, and
-exit without committing, if any of the specified files must be made
-current first with `update' (*note update::.).  `commit' does not call
-the `update' command for you, but rather leaves that for you to do when
-the time is right.
-
-   When all is well, an editor is invoked to allow you to enter a log
-message that will be written to one or more logging programs (*note
-modules::., and *note loginfo::.) and placed in the RCS history file
-inside the repository.  This log message can be retrieved with the
-`log' command; *Note log::.  You can specify the log message on the
-command line with the `-m MESSAGE' option, and thus avoid the editor
-invocation, or use the `-f FILE' option to specify that the argument
-file contains the log message.
-
-* Menu:
-
-* commit options::              commit options
-* commit examples::             commit examples
-
-
-File: cvs.info,  Node: commit options,  Next: commit examples,  Up: commit
-
-commit options
---------------
-
-   These standard options are supported by `commit' (*note Common
-options::., for a complete description of them):
-
-`-l'
-     Local; run only in current working directory.
-
-`-n'
-     Do not run any module program.
-
-`-R'
-     Commit directories recursively.  This is on by default.
-
-`-r REVISION'
-     Commit to REVISION.  REVISION must be either a branch, or a
-     revision on the main trunk that is higher than any existing
-     revision number.  You cannot commit to a specific revision on a
-     branch.
-
-   `commit' also supports these options:
-
-`-F FILE'
-     This option is present in CVS releases 1.3-s3 and later.  Read the
-     log message from FILE, instead of invoking an editor.
-
-`-f'
-     This option is present in CVS 1.3-s3 and later releases of CVS.
-     Note that this is not the standard behavior of the `-f' option as
-     defined in *Note Common options::.
-
-     Force CVS to commit a new revision even if you haven't made any
-     changes to the file.  If the current revision of FILE is 1.7, then
-     the following two commands are equivalent:
-
-          $ cvs commit -f FILE
-          $ cvs commit -r 1.8 FILE
-
-`-f FILE'
-     This option is present in CVS releases 1.3, 1.3-s1 and 1.3-s2.
-     Note that this is not the standard behavior of the `-f' option as
-     defined in *Note Common options::.
-
-     Read the log message from FILE, instead of invoking an editor.
-
-`-m MESSAGE'
-     Use MESSAGE as the log message, instead of invoking an editor.
 

@@ -1,5 +1,5 @@
-This is Info file cvs.info, produced by Makeinfo-1.55 from the input
-file ../../ccvs/doc/cvs.texinfo.
+This is Info file cvs.info, produced by Makeinfo-1.63 from the input
+file ./cvs.texinfo.
 
    Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
 Free Software Foundation, Inc.
@@ -20,6 +20,31 @@ manual into another language, under the above conditions for modified
 versions, except that the section entitled "GNU General Public License"
 and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
+
+
+File: cvs.info,  Node: File status,  Next: Updating a file,  Up: Multiple developers
+
+File status
+===========
+
+   After you have checked out a file out from CVS, it is in one of
+these four states:
+
+Up-to-date
+     The file is identical with the latest revision in the repository.
+
+Locally modified
+     You have edited the file, and not yet committed your changes.
+
+Needing update
+     Someone else has committed a newer revision to the repository.
+
+Needing merge
+     Someone else have committed a newer revision to the repository,
+     and you have also made modifications to the file.
+
+   You can use the `status' command to find out the status of a given
+file.  *Note status::.
 
 
 File: cvs.info,  Node: Updating a file,  Next: Conflicts example,  Prev: File status,  Up: Multiple developers
@@ -507,7 +532,12 @@ source files that make up RCS 5.6 have the following revision numbers:
    You can use the `tag' command to give a symbolic name to a certain
 revision of a file.  You can use the `-v' flag to the `status' command
 to see all tags that a file has, and which revision numbers they
-represent.
+represent.  Tag names can contain uppercase and lowercase letters,
+digits, `-', and `_'.  The two tag names `BASE' and `HEAD' are reserved
+for use by CVS.  It is expected that future names which are special to
+CVS will contain characters such as `%' or `=', rather than being named
+analogously to `BASE' and `HEAD', to avoid conflicts with actual tag
+names.
 
    The following example shows how you can add a tag to a file.  The
 commands must be issued inside your working copy of the module.  That
@@ -1099,10 +1129,10 @@ repository:
 
      $ tar xfz wdiff-0.04.tar.gz
      $ cd wdiff-0.04
-     $ cvs import -m "Import of FSF v. 0.04" fsf/wdiff FSF WDIFF_0_04
+     $ cvs import -m "Import of FSF v. 0.04" fsf/wdiff FSF_DIST WDIFF_0_04
 
-   The vendor tag is named `FSF' in the above example, and the only
-release tag assigned is `WDIFF_0_04'.
+   The vendor tag is named `FSF_DIST' in the above example, and the
+only release tag assigned is `WDIFF_0_04'.
 
 
 File: cvs.info,  Node: Update imports,  Prev: First import,  Up: Tracking sources
@@ -1117,20 +1147,20 @@ a different release tag this time.
 
      $ tar xfz wdiff-0.05.tar.gz
      $ cd wdiff-0.05
-     $ cvs import -m "Import of FSF v. 0.05" fsf/wdiff FSF WDIFF_0_05
+     $ cvs import -m "Import of FSF v. 0.05" fsf/wdiff FSF_DIST WDIFF_0_05
 
    For files that have not been modified locally, the newly created
 revision becomes the head revision.  If you have made local changes,
 `import' will warn you that you must merge the changes into the main
 trunk, and tell you to use `checkout -j' to do so.
 
-     $ cvs checkout -jFSF:yesterday -jFSF wdiff
+     $ cvs checkout -jFSF_DIST:yesterday -jFSF_DIST wdiff
 
 The above command will check out the latest revision of `wdiff',
-merging the changes made on the vendor branch `FSF' since yesterday
-into the working copy.  If any conflicts arise during the merge they
-should be resolved in the normal way (*note Conflicts example::.).
-Then, the modified files may be committed.
+merging the changes made on the vendor branch `FSF_DIST' since
+yesterday into the working copy.  If any conflicts arise during the
+merge they should be resolved in the normal way (*note Conflicts
+example::.).  Then, the modified files may be committed.
 
    Using a date, as suggested above, assumes that you do not import
 more than one release of a product per day. If you do, you can always
@@ -1259,7 +1289,7 @@ Disadvantages:
      NEW is committed its revision numbers will start at 1.0 again.
 
 
-File: cvs.info,  Node: Moving directories,  Next: Keyword substitution,  Prev: Moving files,  Up: Top
+File: cvs.info,  Node: Moving directories,  Next: History browsing,  Prev: Moving files,  Up: Top
 
 Moving and renaming directories
 *******************************
@@ -1300,89 +1330,41 @@ unlikely to be able to retrieve old releases correctly, since they
 probably depend on the name of the directories.
 
 
-File: cvs.info,  Node: Keyword substitution,  Next: Binary files,  Prev: Moving directories,  Up: Top
+File: cvs.info,  Node: History browsing,  Next: Keyword substitution,  Prev: Moving directories,  Up: Top
 
-Keyword substitution
-********************
+History browsing
+****************
 
-   As long as you edit source files inside your working copy of a
-module you can always find out the state of your files via `cvs status'
-and `cvs log'.  But as soon as you export the files from your
-development environment it becomes harder to identify which revisions
-they are.
-
-   RCS uses a mechanism known as "keyword substitution" (or "keyword
-expansion") to help identifying the files.  Embedded strings of the form
-`$KEYWORD$' and `$KEYWORD:...$' in a file are replaced with strings of
-the form `$KEYWORD:VALUE$' whenever you obtain a new revision of the
-file.
+   Once you have used CVS to store a version control history--what
+files have changed when, how, and by whom, there are a variety of
+mechanisms for looking through the history.
 
 * Menu:
 
-* Keyword list::                RCS Keywords
-* Using keywords::              Using keywords
-* Avoiding substitution::       Avoiding substitution
-* Substitution modes::          Substitution modes
-* Log keyword::                 Problems with the $Log: cvs.info-2,v $
-* Log keyword::                 Problems with the Revision 1.1.1.3  1996/04/27 20:02:41  tholo
-* Log keyword::                 Problems with the Some files missed by initial import
-* Log keyword::                 Problems with the keyword.
+* log messages::                Log messages
+* history database::            The history database
+* user-defined logging::        User-defined logging
+* annotate::                    What revision modified each line of a file?
 
 
-File: cvs.info,  Node: Keyword list,  Next: Using keywords,  Up: Keyword substitution
+File: cvs.info,  Node: log messages,  Next: history database,  Up: History browsing
 
-RCS Keywords
+Log messages
 ============
 
-   This is a list of the keywords that RCS currently (in release
-5.6.0.1) supports:
+   Whenever you commit a file you specify a log message.
 
-`$Author: tholo $'
-     The login name of the user who checked in the revision.
+   To look through the log messages which have been specified for every
+revision which has been committed, use the `cvs log' command (*note
+log::.).
 
-`$Date: 1996/04/27 20:02:41 $'
-     The date and time (UTC) the revision was checked in.
+
+File: cvs.info,  Node: history database,  Next: user-defined logging,  Prev: log messages,  Up: History browsing
 
-`$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-2,v 1.1.1.3 1996/04/27 20:02:41 tholo Exp $'
-     A standard header containing the full pathname of the RCS file,
-     the revision number, the date (UTC), the author, the state, and
-     the locker (if locked).  Files will normally never be locked when
-     you use CVS.
+The history database
+====================
 
-`$Id: cvs.info-2,v 1.1.1.3 1996/04/27 20:02:41 tholo Exp $'
-     Same as `$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-2,v 1.1.1.3 1996/04/27 20:02:41 tholo Exp $', except that the RCS filename is without a path.
-
-`$Locker:  $'
-     The login name of the user who locked the revision (empty if not
-     locked, and thus almost always useless when you are using CVS).
-
-`$Log: cvs.info-2,v $
-`Revision 1.1.1.3  1996/04/27 20:02:41  tholo
-`Some files missed by initial import
-`'
-     The log message supplied during commit, preceded by a header
-     containing the RCS filename, the revision number, the author, and
-     the date (UTC).  Existing log messages are *not* replaced.
-     Instead, the new log message is inserted after `$Log: cvs.info-2,v $
-     Instead, the new log message is inserted after `Revision 1.1.1.3  1996/04/27 20:02:41  tholo
-     Instead, the new log message is inserted after `Some files missed by initial import
-     Instead, the new log message is inserted after `'.  Each
-     new line is prefixed with a "comment leader" which RCS guesses
-     from the file name extension.  It can be changed with `cvs admin
-     -c'.  *Note admin options::.  This keyword is useful for
-     accumulating a complete change log in a source file, but for
-     several reasons it can be problematic.  *Note Log keyword::.
-
-`$RCSfile: cvs.info-2,v $'
-     The name of the RCS file without a path.
-
-`$Revision: 1.1.1.3 $'
-     The revision number assigned to the revision.
-
-`$Source: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-2,v $'
-     The full pathname of the RCS file.
-
-`$State: Exp $'
-     The state assigned to the revision.  States can be assigned with
-     `cvs admin -s'--*Note admin options::.
+   You can use the history file (*note history file::.) to log various
+CVS actions.  To retrieve the information from the history file, use
+the `cvs history' command (*note history::.).
 
