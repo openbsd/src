@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigreturn.S,v 1.3 2003/01/02 21:40:46 miod Exp $	*/
+/*	$OpenBSD: sigreturn.S,v 1.4 2003/01/07 22:01:35 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,12 +37,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.data
-	/*.asciz "from: @(#)sigreturn.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$OpenBSD: sigreturn.S,v 1.3 2003/01/02 21:40:46 miod Exp $"
-	.text
-#endif /* LIBC_SCCS and not lint */
+	.string "$OpenBSD: sigreturn.S,v 1.4 2003/01/07 22:01:35 miod Exp $"
+#endif /* LIBC_SCCS */
 
 #include "SYS.h"
 
@@ -52,3 +50,4 @@
  */
 
 SYSENTRY(sigreturn)
+	jmp	r1	/* XXX gross */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.S,v 1.2 2000/03/01 17:31:21 todd Exp $	*/
+/*	$OpenBSD: reboot.S,v 1.3 2003/01/07 22:01:35 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,15 +37,13 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.data
-	/*.asciz "from: @(#)reboot.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$OpenBSD: reboot.S,v 1.2 2000/03/01 17:31:21 todd Exp $"
-	.text
-#endif /* LIBC_SCCS and not lint */
+	.string "$OpenBSD: reboot.S,v 1.3 2003/01/07 22:01:35 miod Exp $"
+#endif /* LIBC_SCCS */
 
 #include "SYS.h"
 
 SYSCALL(reboot)
-	or	r9,r0,0x63
+	or	r9,r0,0x63	/* MVMEPROM_EXIT */
 	tb0	0,r0,496	/* call bug trap */

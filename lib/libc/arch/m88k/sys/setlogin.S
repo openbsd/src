@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlogin.S,v 1.2 2000/03/01 17:31:21 todd Exp $	*/
+/*	$OpenBSD: setlogin.S,v 1.3 2003/01/07 22:01:35 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -33,12 +33,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.data
-	/*.asciz "from: @(#)setlogin.s	5.1 (Berkeley) 5/6/91"*/
-	.asciz "$OpenBSD: setlogin.S,v 1.2 2000/03/01 17:31:21 todd Exp $"
-	.text
-#endif /* LIBC_SCCS and not lint */
+	.string "$OpenBSD: setlogin.S,v 1.3 2003/01/07 22:01:35 miod Exp $"
+#endif /* LIBC_SCCS */
 
 #include "SYS.h"
 

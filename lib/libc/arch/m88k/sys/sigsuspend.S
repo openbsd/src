@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.4 2003/01/02 21:40:46 miod Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.5 2003/01/07 22:01:35 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,12 +37,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.data
-	/*.asciz "from: @(#)sigsuspend.s	5.2 (Berkeley) 6/6/90"*/
-	.asciz "$OpenBSD: sigsuspend.S,v 1.4 2003/01/02 21:40:46 miod Exp $"
-	.text
-#endif /* LIBC_SCCS and not lint */
+	.string "$OpenBSD: sigsuspend.S,v 1.5 2003/01/07 22:01:35 miod Exp $"
+#endif /* LIBC_SCCS */
 
 #include "SYS.h"
 
@@ -59,4 +57,4 @@ SYSENTRY(sigsuspend)
 	tb0	0,r0,128
 	br	__cerror
 	jmp.n	r1
-	or	r2,r0,0
+	 or	r2,r0,0

@@ -29,8 +29,8 @@
  */
 
 #if defined(LIBC_SCCS)
-	.text
-	.string "$OpenBSD: sigsetjmp.S,v 1.4 2003/01/04 00:13:11 miod Exp $\0"
+	.data
+	.string "$OpenBSD: sigsetjmp.S,v 1.5 2003/01/07 22:01:29 miod Exp $"
 #endif /* LIBC_SCCS */
 
 #include "SYS.h"
@@ -45,15 +45,15 @@
  * by restoring registers from the stack,
  * The previous signal state is restored if 'm' was non-zero.
  *
- * For m88k, we define our jmp_buf length 
+ * For m88k, we define our jmp_buf length
  * to be the size of 22 longs.  <machine/setjmp.h>
  * The buffer's usage is as follows:
- * 
+ *
  * jmp_buf[0]		return address
  * jmp_buf[1]		signal set (if used)
  * jmp_buf[2 to 19]	r14 to r31
  * jmp_buf[20]		'used' flag
- * jmp_buf[21]		setjmp type 
+ * jmp_buf[21]		setjmp type
  *
  */
 

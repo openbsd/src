@@ -1,4 +1,4 @@
-/*	$OpenBSD: htonl.S,v 1.2 2000/03/01 17:31:21 todd Exp $	*/
+/*	$OpenBSD: htonl.S,v 1.3 2003/01/07 22:01:35 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,15 +37,14 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)htonl.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$OpenBSD: htonl.S,v 1.2 2000/03/01 17:31:21 todd Exp $"
-#endif /* LIBC_SCCS and not lint */
-
-/* netorder = htonl(hostorder) */
+#if defined(LIBC_SCCS)
+	.data
+	.string "$OpenBSD: htonl.S,v 1.3 2003/01/07 22:01:35 miod Exp $"
+#endif /* LIBC_SCCS */
 
 #include "DEFS.h"
+
+/* netorder = htonl(hostorder) */
 
 ENTRY(htonl)
 	jmp	r1

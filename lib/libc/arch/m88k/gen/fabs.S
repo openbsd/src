@@ -28,7 +28,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#if defined(LIBC_SCCS)
+	.data
+	.string "$OpenBSD: fabs.S,v 1.3 2003/01/07 22:01:29 miod Exp $"
+#endif /* LIBC_SCCS */
+
+#include "DEFS.h"
+
 /*
  * Will work only if the argument passed is in IEEE format!
  */
@@ -41,4 +47,4 @@ ENTRY(fabs)
 	st.b	r4,r31,32
 	ld.d	r2,r31,32
 	jmp.n	r1
-	addu	r31,r31,40
+	 addu	r31,r31,40

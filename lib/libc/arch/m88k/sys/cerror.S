@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.3 2003/01/02 20:25:31 miod Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.4 2003/01/07 22:01:35 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,12 +37,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.data
-	/*.asciz "from: @(#)cerror.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$OpenBSD: cerror.S,v 1.3 2003/01/02 20:25:31 miod Exp $"
-	.text
-#endif /* LIBC_SCCS and not lint */
+	.string "$OpenBSD: cerror.S,v 1.4 2003/01/07 22:01:35 miod Exp $"
+#endif /* LIBC_SCCS */
 
 #include "SYS.h"
 
@@ -53,4 +51,4 @@ __cerror:
 	st	r2,r4,lo16(_errno)
 	sub	r2,r0,0x1
 	jmp.n	r1
-	sub	r3,r0,0x1
+	 sub	r3,r0,0x1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.3 2003/01/02 20:25:31 miod Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.4 2003/01/07 22:01:35 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,12 +37,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.data
-	/*.asciz "from: @(#)sigpending.s	5.2 (Berkeley) 8/6/90"*/
-	.asciz "$OpenBSD: sigpending.S,v 1.3 2003/01/02 20:25:31 miod Exp $"
-	.text
-#endif /* LIBC_SCCS and not lint */
+	.string "$OpenBSD: sigpending.S,v 1.4 2003/01/07 22:01:35 miod Exp $"
+#endif /* LIBC_SCCS */
 
 #include "SYS.h"
 
@@ -53,4 +51,4 @@ ENTRY(sigpending)
 	br	__cerror
 	st	r2,r4,0
 	jmp.n	r1
-	or	r2,r0,0
+	 or	r2,r0,0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork.S,v 1.1 2002/02/17 23:40:57 deraadt Exp $	*/
+/*	$OpenBSD: rfork.S,v 1.2 2003/01/07 22:01:35 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,12 +37,10 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.data
-	/*.asciz "from: @(#)rfork.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$OpenBSD: rfork.S,v 1.1 2002/02/17 23:40:57 deraadt Exp $"
-	.text
-#endif /* LIBC_SCCS and not lint */
+	.string "$OpenBSD: rfork.S,v 1.2 2003/01/07 22:01:35 miod Exp $"
+#endif /* LIBC_SCCS */
 
 #include "SYS.h"
 
