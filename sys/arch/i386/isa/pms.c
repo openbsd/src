@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.11 1996/10/13 00:55:49 downsj Exp $	*/
+/*	$OpenBSD: pms.c,v 1.12 1996/10/13 04:25:12 downsj Exp $	*/
 /*	$NetBSD: pms.c,v 1.29 1996/05/12 23:12:42 mycroft Exp $	*/
 
 /*-
@@ -120,6 +120,11 @@ struct cfdriver pms_cd = {
 
 #define	PMSUNIT(dev)	(minor(dev) / 2)
 #define PMSTYPE(dev)	(minor(dev) % 2)
+
+#define	FLUSHQ(q) {							\
+	if ((q)->c_cc)							\
+		ndflush(q, (q)->c_cc);					\
+}
 
 static __inline void pms_flush __P((void));
 static __inline void pms_dev_cmd __P((u_char));
@@ -351,6 +356,7 @@ pmsioctl(dev, cmd, addr, flag, p)
 	int s;
 	int error;
 
+	error = 0;
 	switch (cmd) {
 	case MOUSEIOCREAD:
 		s = spltty();
@@ -383,10 +389,16 @@ pmsioctl(dev, cmd, addr, flag, p)
 		error = copyout(&info, addr, sizeof(struct mouseinfo));
 		break;
 	case MOUSEIOCSRAW:
-		sc->sc_flags |= PMS_RAW;
+		if (!(sc->sc_flags & PMS_RAW)) {
+			FLUSHQ(&sc->sc_q);
+			sc->sc_flags |= PMS_RAW;
+		}
 		break;
 	case MOUSEIOCSCOOKED:
-		sc->sc_flags &= ~PMS_RAW;
+		if (sc->sc_flags & PMS_RAW) {
+			FLUSHQ(&sc->sc_q);
+			sc->sc_flags &= ~PMS_RAW;
+		}
 		break;
 	default:
 		error = EINVAL;
