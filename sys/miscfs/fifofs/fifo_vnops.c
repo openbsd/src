@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.7 1997/11/06 05:58:34 csapuntz Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.8 2000/11/15 23:21:42 provos Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -186,8 +186,7 @@ fifo_open(v)
 			if (fip->fi_writers > 0)
 				wakeup((caddr_t)&fip->fi_writers);
 		}
-	}
-	if (ap->a_mode & FWRITE) {
+	} else if (ap->a_mode & FWRITE) {
 		if (fip->fi_writers++ == 0) {
 			fip->fi_readsock->so_state &= ~SS_CANTRCVMORE;
 			if (fip->fi_readers > 0)
@@ -206,8 +205,7 @@ fifo_open(v)
 					goto bad;
 			}
 		}
-	}
-	if (ap->a_mode & FWRITE) {
+	} else if (ap->a_mode & FWRITE) {
 		if (ap->a_mode & O_NONBLOCK) {
 			if (fip->fi_readers == 0) {
 				error = ENXIO;
@@ -363,8 +361,7 @@ fifo_select(v)
 		ready = soo_select(&filetmp, ap->a_which, ap->a_p);
 		if (ready)
 			return (ready);
-	}
-	if (ap->a_fflags & FWRITE) {
+	} else if (ap->a_fflags & FWRITE) {
 		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_writesock;
 		ready = soo_select(&filetmp, ap->a_which, ap->a_p);
 		if (ready)
