@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.69 2002/03/23 13:28:33 espie Exp $ */
+/* $OpenBSD: machdep.c,v 1.70 2002/04/25 00:53:58 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -896,17 +896,17 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("total memory = %d (%dK)\n", ptoa(totalphysmem),
-	    ptoa(totalphysmem) / 1024);
-	printf("(%d reserved for PROM, ", ptoa(resvmem));
-	printf("%d used by OpenBSD)\n", ptoa(physmem));
+	printf("total memory = %ld (%ldK)\n", (long)ptoa(totalphysmem),
+	    (long)ptoa(totalphysmem) / 1024);
+	printf("(%ld reserved for PROM, ", (long)ptoa(resvmem));
+	printf("%ld used by OpenBSD)\n", (long)ptoa(physmem));
 	if (unusedmem) {
-		printf("WARNING: unused memory = %d (%dK)\n", ptoa(unusedmem),
-		    ptoa(unusedmem) / 1024);
+		printf("WARNING: unused memory = %ld (%ldK)\n",
+		    (long)ptoa(unusedmem), (long)ptoa(unusedmem) / 1024);
 	}
 	if (unknownmem) {
-		printf("WARNING: %d (%dK) of memory with unknown purpose\n",
-		    ptoa(unknownmem), ptoa(unknownmem) / 1024);
+		printf("WARNING: %ld (%ldK) of memory with unknown purpose\n",
+		    (long)ptoa(unknownmem), (long)ptoa(unknownmem) / 1024);
 	}
 
 	/*
@@ -964,8 +964,8 @@ cpu_startup()
 #if defined(DEBUG)
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail memory = %d (%dK)\n", ptoa(uvmexp.free),
-	    ptoa(uvmexp.free) / 1024);
+	printf("avail memory = %ld (%ldK)\n", (long)ptoa(uvmexp.free),
+	    (long)ptoa(uvmexp.free) / 1024);
 #if 0
 	{
 		extern u_long pmap_pages_stolen;
@@ -973,8 +973,8 @@ cpu_startup()
 		printf("stolen memory for VM structures = %d\n", pmap_pages_stolen * PAGE_SIZE);
 	}
 #endif
-	printf("using %ld buffers containing %d bytes (%dK) of memory\n",
-	    (long)nbuf, bufpages * NBPG, bufpages * (NBPG / 1024));
+	printf("using %ld buffers containing %ld bytes (%ldK) of memory\n",
+	    (long)nbuf, (long)bufpages * NBPG, (long)bufpages * (NBPG / 1024));
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
