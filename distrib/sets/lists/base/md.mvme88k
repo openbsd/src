@@ -1489,7 +1489,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/asm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/asm_macro.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/autoconf.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/board.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/bug.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/bugio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/bus.ph

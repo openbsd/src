@@ -154,7 +154,6 @@
 ./usr/include/mvme88k/asm.h
 ./usr/include/mvme88k/asm_macro.h
 ./usr/include/mvme88k/autoconf.h
-./usr/include/mvme88k/board.h
 ./usr/include/mvme88k/bug.h
 ./usr/include/mvme88k/bugio.h
 ./usr/include/mvme88k/bus.h
