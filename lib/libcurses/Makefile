@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 1999/05/11 16:21:05 millert Exp $
+#	$OpenBSD: Makefile,v 1.39 1999/11/17 04:15:21 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -75,24 +75,28 @@ MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_attr.3 attroff.3 curs_attr.3 wattroff.3 curs_attr.3 attron.3 \
 	curs_attr.3 wattron.3 curs_attr.3 attrset.3 curs_attr.3 wattrset.3 \
 	curs_attr.3 standend.3 curs_attr.3 wstandend.3 curs_attr.3 standout.3 \
-	curs_attr.3 wstandout.3 curs_beep.3 beep.3 curs_beep.3 flash.3 \
-	curs_bkgd.3 bkgdset.3 curs_bkgd.3 wbkgdset.3 curs_bkgd.3 bkgd.3 \
-	curs_bkgd.3 wbkgd.3 curs_border.3 border.3 curs_border.3 wborder.3 \
-	curs_border.3 box.3 curs_border.3 hline.3 curs_border.3 whline.3 \
-	curs_border.3 vline.3 curs_border.3 wvline.3 curs_clear.3 erase.3 \
-	curs_clear.3 werase.3 curs_clear.3 clear.3 curs_clear.3 wclear.3 \
-	curs_clear.3 clrtobot.3 curs_clear.3 wclrtobot.3 curs_clear.3 \
-	clrtoeol.3 curs_clear.3 wclrtoeol.3 curs_color.3 start_color.3 \
-	curs_color.3 init_pair.3 curs_color.3 init_color.3 curs_color.3 \
-	has_colors.3 curs_color.3 can_change_color.3 curs_color.3 \
-	color_content.3 curs_color.3 pair_content.3 curs_delch.3 delch.3 \
-	curs_delch.3 wdelch.3 curs_delch.3 mvdelch.3 curs_delch.3 mvwdelch.3 \
-	curs_deleteln.3 deleteln.3 curs_deleteln.3 wdeleteln.3 curs_deleteln.3 \
-	insdelln.3 curs_deleteln.3 winsdelln.3 curs_deleteln.3 insertln.3 \
-	curs_deleteln.3 winsertln.3 curs_getch.3 getch.3 curs_getch.3 wgetch.3 \
-	curs_getch.3 mvgetch.3 curs_getch.3 mvwgetch.3 curs_getch.3 ungetch.3 \
-	curs_getstr.3 getstr.3 curs_getstr.3 wgetstr.3 curs_getstr.3 \
-	mvgetstr.3 curs_getstr.3 mvwgetstr.3 curs_getstr.3 wgetnstr.3 \
+	curs_attr.3 wstandout.3 curs_attr.3 color_set.3 curs_attr.3 \
+	wcolor_set.3 curs_attr.3 attr_get.3 curs_attr.3 wattr_get.3 \
+	curs_attr.3 wattr_off.3 curs_attr.3 chgat.3 curs_attr.3 wchgat.3 \
+	curs_attr.3 mvchgat.3 curs_attr.3 mvwchgat.3 curs_beep.3 beep.3 \
+	curs_beep.3 flash.3 curs_bkgd.3 bkgdset.3 curs_bkgd.3 wbkgdset.3 \
+	curs_bkgd.3 bkgd.3 curs_bkgd.3 wbkgd.3 curs_border.3 border.3 \
+	curs_border.3 wborder.3 curs_border.3 box.3 curs_border.3 hline.3 \
+	curs_border.3 whline.3 curs_border.3 vline.3 curs_border.3 wvline.3 \
+	curs_clear.3 erase.3 curs_clear.3 werase.3 curs_clear.3 clear.3 \
+	curs_clear.3 wclear.3 curs_clear.3 clrtobot.3 curs_clear.3 \
+	wclrtobot.3 curs_clear.3 clrtoeol.3 curs_clear.3 wclrtoeol.3 \
+	curs_color.3 start_color.3 curs_color.3 init_pair.3 curs_color.3 \
+	init_color.3 curs_color.3 has_colors.3 curs_color.3 can_change_color.3 \
+	curs_color.3 color_content.3 curs_color.3 pair_content.3 \
+	curs_delch.3 delch.3 curs_delch.3 wdelch.3 curs_delch.3 mvdelch.3 \
+	curs_delch.3 mvwdelch.3 curs_deleteln.3 deleteln.3 curs_deleteln.3 \
+	wdeleteln.3 curs_deleteln.3 insdelln.3 curs_deleteln.3 winsdelln.3 \
+	curs_deleteln.3 insertln.3 curs_deleteln.3 winsertln.3 curs_getch.3 \
+	getch.3 curs_getch.3 wgetch.3 curs_getch.3 mvgetch.3 curs_getch.3 \
+	mvwgetch.3 curs_getch.3 ungetch.3 curs_getstr.3 getstr.3 \
+	curs_getstr.3 wgetstr.3 curs_getstr.3 mvgetstr.3 curs_getstr.3 \
+	mvwgetstr.3 curs_getstr.3 mvwgetnstr.3 curs_getstr.3 wgetnstr.3 \
 	curs_getyx.3 getyx.3 curs_getyx.3 getparyx.3 curs_getyx.3 getbegyx.3 \
 	curs_getyx.3 getmaxyx.3 curs_inch.3 inch.3 curs_inch.3 winch.3 \
 	curs_inch.3 mvinch.3 curs_inch.3 mvwinch.3 curs_inchstr.3 inchstr.3 \
