@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.17 2001/01/23 05:48:05 csapuntz Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.18 2001/07/10 11:07:25 espie Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
 
 /*
@@ -1119,6 +1119,7 @@ ibcs2_sys_sysfs(p, v, retval)
 	case IBCS2_GETFSIND:
 	case IBCS2_GETFSTYP:
 	case IBCS2_GETNFSTYP:
+		break;
 	}
 	return EINVAL;		/* XXX - TODO */
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.6 2001/04/14 04:48:01 aaron Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.7 2001/07/10 11:07:25 espie Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -536,6 +536,7 @@ wsemul_vt100_handle_csi(edp, c)
 #ifdef VT100_PRINTUNKNOWN
 				printf("CSI%dm unknown\n", ARG(n));
 #endif
+				break;
 			}
 		}
 		if (vt100_selectattribute(edp, flags, fgcol, bgcol, &attr,

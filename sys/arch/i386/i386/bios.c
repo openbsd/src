@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.43 2001/05/05 23:25:34 art Exp $	*/
+/*	$OpenBSD: bios.c,v 1.44 2001/07/10 11:07:26 espie Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -344,6 +344,7 @@ bios_getopt()
 			printf(" unsupported arg (%d) %p", q->ba_type,
 			    q->ba_arg);
 #endif
+			break;
 		}
 	}
 	printf("\n");
