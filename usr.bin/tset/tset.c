@@ -103,7 +103,7 @@ char *ttyname(int fd);
 #include <curses.h>	/* for bool typedef */
 #include <dump_entry.h>
 
-MODULE_ID("$From: tset.c,v 0.34 1998/09/05 22:02:19 tom Exp $")
+MODULE_ID("$From: tset.c,v 0.35 1999/01/02 19:57:24 tom Exp $")
 
 extern char **environ;
 
@@ -340,7 +340,7 @@ add_mapping(const char *port, char *arg)
 	char *base = 0;
 
 	copy = strdup(arg);
-	mapp = malloc((u_int)sizeof(MAP));
+	mapp = malloc(sizeof(MAP));
 	if (copy == 0 || mapp == 0)
 		failed("malloc");
 	mapp->next = 0;
@@ -592,7 +592,7 @@ found:	if ((p = getenv("TERMCAP")) != 0 && *p != '/') {
 			ttype = askuser(0);
 	}
 	/* Find the terminfo entry.  If it doesn't exist, ask the user. */
-	while ((rval = setupterm(ttype, STDOUT_FILENO, &errret)) != OK) {
+	while ((rval = setupterm((NCURSES_CONST char *)ttype, STDOUT_FILENO, &errret)) != OK) {
 		if (errret == 0) {
 			(void)fprintf(stderr, "tset: unknown terminal type %s\n",
 			    ttype);
@@ -965,10 +965,10 @@ set_tabs()
  * Tell the user if a control key has been changed from the default value.
  */
 static void
-report(const char *name, int which, u_int def)
+report(const char *name, int which, unsigned def)
 {
 #ifdef TERMIOS
-	u_int older, newer;
+	unsigned older, newer;
 	char *p;
 
 	newer = mode.c_cc[which];
@@ -986,7 +986,7 @@ report(const char *name, int which, u_int def)
 	if (newer == 0177)
 		(void)fprintf(stderr, "delete.\n");
 	else if ((p = key_backspace) != 0
-	 && newer == (u_int)p[0]
+	 && newer == (unsigned char)p[0]
 	 && p[1] == '\0')
 		(void)fprintf(stderr, "backspace.\n");
 	else if (newer < 040) {
@@ -1054,10 +1054,10 @@ main(int argc, char **argv)
 	struct winsize win;
 #endif
 	int ch, noinit, noset, quiet, Sflag, sflag, showterm;
-	const char *p, *t;
+	const char *p;
 	const char *ttype;
 #ifdef __OpenBSD__
-	char tcapbuf[1024];
+	char tcapbuf[1024], *t;
 	int tcgetent(char *, const char *);
 	void wrtermcap (char *);
 #endif

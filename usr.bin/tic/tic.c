@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.3 1998/12/28 05:54:44 millert Exp $	*/
+/*	$OpenBSD: tic.c,v 1.4 1999/01/18 18:57:52 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,7 +44,7 @@
 #include <dump_entry.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: tic.c,v 1.38 1998/10/18 00:27:14 tom Exp $")
+MODULE_ID("$Id: tic.c,v 1.4 1999/01/18 18:57:52 millert Exp $")
 
 const char *_nc_progname = "tic";
 
@@ -488,6 +488,26 @@ bool	check_only = FALSE;
 	debug_level = (v_opt > 0) ? v_opt : (v_opt == 0);
 	_nc_tracing = (1 << debug_level) - 1;
 
+#ifndef HAVE_BIG_CORE
+	/*
+	 * Aaargh! immedhook seriously hoses us!
+	 *
+	 * One problem with immedhook is it means we can't do -e.  Problem
+	 * is that we can't guarantee that for each terminal listed, all the
+	 * terminals it depends on will have been kept in core for reference
+	 * resolution -- in fact it's certain the primitive types at the end
+	 * of reference chains *won't* be in core unless they were explicitly
+	 * in the select list themselves.
+	 */
+	if (namelst && (!infodump && !capdump))
+	{
+	    (void) fprintf(stderr,
+			   "Sorry, -e can't be used without -I or -C\n");
+	    cleanup();
+	    return EXIT_FAILURE;
+	}
+#endif /* HAVE_BIG_CORE */
+
 	if (optind < argc) {
 		source_file = argv[optind++];
 		if (optind < argc) {
@@ -565,26 +585,6 @@ bool	check_only = FALSE;
 		return EXIT_FAILURE;
 	    }
 	}
-
-#ifndef HAVE_BIG_CORE
-	/*
-	 * Aaargh! immedhook seriously hoses us!
-	 *
-	 * One problem with immedhook is it means we can't do -e.  Problem
-	 * is that we can't guarantee that for each terminal listed, all the
-	 * terminals it depends on will have been kept in core for reference
-	 * resolution -- in fact it's certain the primitive types at the end
-	 * of reference chains *won't* be in core unless they were explicitly
-	 * in the select list themselves.
-	 */
-	if (namelst && (!infodump && !capdump))
-	{
-	    (void) fprintf(stderr,
-			   "Sorry, -e can't be used without -I or -C\n");
-	    cleanup();
-	    return EXIT_FAILURE;
-	}
-#endif /* HAVE_BIG_CORE */
 
 	/* length check */
 	if (check_only && (capdump || infodump))

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tic.1,v 1.2 1998/07/24 19:52:53 millert Exp $
+.\" $OpenBSD: tic.1,v 1.3 1999/01/18 18:57:52 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: tic.1m,v 1.21 1998/05/17 00:23:46 tom Exp $
+.\" $From: tic.1m,v 1.23 1998/12/26 01:47:41 tom Exp $
 .TH tic 1 ""
 .ds n 5
 .ds d /usr/share/terminfo
@@ -36,7 +36,7 @@
 \fBtic\fR - the \fIterminfo\fR entry-description compiler
 .SH SYNOPSIS
 \fBtic\fR
-[\fB-\
+[\fB\-\
 1\
 C\
 I\
@@ -158,6 +158,10 @@ contains a '/'.
 Display complex terminfo strings which contain if/then/else/endif expressions
 indented for readability.
 .TP
+\fB-g\fR
+Display constant character literals in quoted form
+rather than their decimal equivalents.
+.TP
 \fB-s\fR
 Summarize the compile by showing the directory into which entries
 are written, and the number of entries which are compiled.
@@ -240,7 +244,19 @@ compiled entries.
 The error messages from this \fBtic\fR have the same format as GNU C
 error messages, and can be parsed by GNU Emacs's compile facility.
 
-The -o, -I, -C, -N, -R, -e, -f, -T, -r and -s options
+The
+\fB-o\fR,
+\fB-I\fR,
+\fB-C\fR,
+\fB-N\fR,
+\fB-R\fR,
+\fB-e\fR,
+\fB-f\fR,
+\fB-g\fR,
+\fB-T\fR,
+\fB-r\fR and
+\fB-s\fR
+options
 are not supported under SVr4.
 The SVr4 -c mode does not report bad use links.
 

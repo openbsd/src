@@ -5,6 +5,8 @@
 # The output of this script is C source for nine arrays that list three sort
 # orders for each of the three different classes of terminfo capabilities.
 #
+# $OpenBSD: MKtermsort.sh,v 1.2 1999/01/18 18:57:52 millert Exp $
+#
 AWK=${1-awk}
 DATA=${2-../include/Caps}
 

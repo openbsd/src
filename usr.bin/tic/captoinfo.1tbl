@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: captoinfo.1tbl,v 1.3 1998/11/03 21:59:53 millert Exp $
+.\" $OpenBSD: captoinfo.1tbl,v 1.4 1999/01/18 18:57:52 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,14 +29,14 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: captoinfo.1m,v 1.11 1998/08/27 21:21:04 Rick.Ohnemus Exp $
+.\" $From: captoinfo.1m,v 1.13 1998/12/26 19:57:11 tom Exp $
 .TH captoinfo 1 ""
 .ds n 5
 .ds d /usr/share/terminfo
 .SH NAME
 \fBcaptoinfo\fR - convert a \fItermcap\fR description into a \fIterminfo\fR description
 .SH SYNOPSIS
-\fBcaptoinfo\fR [\fB-v\fIn\fR \fIwidth\fR]  [\fB-V\fR] [\fB-1\fR] [\fB-w\fR \fIwidth\fR] \fIfile\fR . . .
+\fBcaptoinfo\fR [\fB-v\fR\fIn\fR \fIwidth\fR]  [\fB-V\fR] [\fB-1\fR] [\fB-w\fR \fIwidth\fR] \fIfile\fR . . .
 .SH DESCRIPTION
 \fBcaptoinfo\fR looks in \fIfile\fR for \fBtermcap\fR descriptions.  For each
 one found, an equivalent \fBterminfo\fR description is written to standard
@@ -49,7 +49,7 @@ the terminal whose name is specified in the environment variable \fBTERM\fR is
 extracted from that file.  If the environment variable \fBTERMCAP\fR is not
 set, then the file \fB\*d\fR is read.
 .TP 5
-\fB-v\fR 
+\fB-v\fR
 print out tracing information on standard error as the program runs.
 .TP 5
 \fB-V\fR
@@ -86,7 +86,7 @@ BO	mr	AT&T	enter_reverse_mode
 CI	vi	AT&T	cursor_invisible
 CV	ve	AT&T	cursor_normal
 DS	mh	AT&T	enter_dim_mode
-EE	me	AT&T	exit_attribute_mode	
+EE	me	AT&T	exit_attribute_mode
 FE	LF	AT&T	label_on
 FL	LO	AT&T	label_off
 XS	mk	AT&T	enter_secure_mode
@@ -170,7 +170,7 @@ font3	s3ds
 Additionally, the AIX \fBbox1\fR capability will be automatically translated to
 an \fBacsc\fR string.
 .PP
-Hewlett-Packard's terminfo library supports two nonstandard terminfo 
+Hewlett-Packard's terminfo library supports two nonstandard terminfo
 capabilities \fBmeml\fR (memory lock) and \fBmemu\fR (memory unlock).
 These will be discarded with a warning message.
 .SH NOTES
