@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.9 1997/04/04 08:59:41 deraadt Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.10 1997/04/27 13:11:38 downsj Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: rdate.c,v 1.9 1997/04/04 08:59:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rdate.c,v 1.10 1997/04/27 13:11:38 downsj Exp $";
 #endif
 #endif				/* lint */
 
@@ -50,11 +50,13 @@ static char rcsid[] = "$OpenBSD: rdate.c,v 1.9 1997/04/04 08:59:41 deraadt Exp $
 #include <sys/param.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <err.h>
 #include <string.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <unistd.h>
 #include <util.h>
 #include <time.h>
 
