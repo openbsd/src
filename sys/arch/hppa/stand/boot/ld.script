@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.2 1999/04/20 20:02:37 mickey Exp $	*/
+/*	$OpenBSD: ld.script,v 1.3 2002/02/02 21:28:07 mickey Exp $	*/
 
 OUTPUT_FORMAT("elf32-hppa")
 OUTPUT_ARCH(hppa)
@@ -10,11 +10,12 @@ SECTIONS {
 	. = + SIZEOF_HEADERS;
 	.text : {
 		*(.text)
+		*(.text.*)
 		*(.rodata)
 		*(.rodata1)
 		*($CODE$)
-		etext = ABSOLUTE(.);
-	} = 0x08000240 /* nop */
+		etext = .;
+	} = 0x08000240
 
 	/* Read-write sections, merged into data segment: */
 	.data : {
