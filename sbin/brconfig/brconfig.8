@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.10 2000/05/02 18:43:09 jason Exp $
+.\"	$OpenBSD: brconfig.8,v 1.11 2000/05/02 18:51:04 jason Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -301,7 +301,6 @@ Note:  It is possible to put all the following commands the
 and
 .Xr bridgename.if 8
 files, using the ! operator.
-.Pp
 .Sh SEE ALSO
 .Xr bridge 4 ,
 .Xr enc 4 ,
@@ -333,3 +332,9 @@ TI ThunderLAN (see
 which receives its own transmissions (this renders the address learning
 cache useless).
 Most other chipsets work fine though.
+.Pp
+The SAs used on the
+.Xr enc 4
+interfaces should not cause transmission over one of the "real" ethernet
+member interfaces of the bridge, or else an infinite packet forwarding loop
+will occur.
