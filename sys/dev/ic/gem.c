@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.29 2002/11/26 06:01:27 nate Exp $	*/
+/*	$OpenBSD: gem.c,v 1.30 2003/01/23 22:55:52 jason Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -625,7 +625,6 @@ gem_meminit(struct gem_softc *sc)
 	/*
 	 * Initialize the transmit descriptor ring.
 	 */
-	memset((void *)sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
 	for (i = 0; i < GEM_NTXDESC; i++) {
 		sc->sc_txdescs[i].gd_flags = 0;
 		sc->sc_txdescs[i].gd_addr = 0;
@@ -936,13 +935,9 @@ gem_rint(sc)
 	struct gem_rxsoft *rxs;
 	struct mbuf *m;
 	u_int64_t rxstat;
-	u_int32_t rxcomp;
 	int i, len;
 
-	DPRINTF(sc, ("gem_rint: sc->rxptr %d, complete %d\n",
-		sc->sc_rxptr, bus_space_read_4(t, h, GEM_RX_COMPLETION)));
-	rxcomp = bus_space_read_4(t, h, GEM_RX_COMPLETION);
-	for (i = sc->sc_rxptr; i != rxcomp; i = GEM_NEXTRX(i)) {
+	for (i = sc->sc_rxptr;; i = GEM_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
 
 		GEM_CDRXSYNC(sc, i,
@@ -1125,9 +1120,19 @@ gem_intr(v)
 		int rxstat = bus_space_read_4(t, seb, GEM_MAC_RX_STATUS);
 
 		rxstat &= ~(GEM_MAC_RX_DONE | GEM_MAC_RX_FRAME_CNT);
-		if (rxstat != 0)
+		if (rxstat & GEM_MAC_RX_OVERFLOW) {
+			struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+			gem_init(ifp);
+			ifp->if_ierrors++;
+		} else {
+			/*
+			 * Leave this in here until I figure out what to do
+			 * about other errors.
+			 */
 			printf("%s: MAC rx fault, status %x\n",
 			    sc->sc_dev.dv_xname, rxstat);
+		}
 	}
 	return (r);
 }
