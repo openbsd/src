@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.85 2004/10/17 08:58:56 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.86 2004/10/17 17:50:48 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -792,12 +792,16 @@ wdcattach(chp)
 	if (!chp->_vtbl)
 		chp->_vtbl = &wdc_default_vtbl;
 
-	if (wdcprobe(chp) == 0) {
-		/* If no drives, abort attach here. */
+	if (chp->wdc->drv_probe != NULL) {
+		chp->wdc->drv_probe(chp);
+	} else {
+		if (wdcprobe(chp) == 0) {
+			/* If no drives, abort attach here. */
 #ifndef __OpenBSD__
-		wdc_delref(chp);
+			wdc_delref(chp);
 #endif
-		return;
+			return;
+		}
 	}
 
 	/* ATAPI drives need settling time. Give them 250ms */
