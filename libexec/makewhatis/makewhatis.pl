@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
+# ex:ts=4 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.1 2000/02/03 18:10:48 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.2 2000/02/05 22:15:16 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -76,39 +77,78 @@ sub handle_unformated
 	close $cmd;
 }
 
-# $line = handle_formated($file)
+sub add_subject
+{
+	my $lines = shift;
+	local $_ = shift;
+	my $section = shift;
+
+	if (m/-/) {
+		# some twits underline the command name
+		while (s/_\cH//g || s/(.)\cH\1/$1/g)
+			{}
+		s/([-+.\w\d,])\s+/$1 /g;
+		s/([a-z][A-z])-\s+/$1/g;
+		# some twits use: func -- description
+		if (m/^[^-+.\w\d]*(.*) -(?:-?)\s+(.*)$/) {
+			my ($func, $descr) = ($1, $2);
+			$func =~ s/,\s*$//;
+			push(@$lines, "$func ($section) - $descr");
+			return;
+		}
+	}
+	print STDERR "Weird subject line $_ in ", shift, "\n";
+}
+
+# $lines = handle_formated($file)
 #
 #	handle a formatted manpage in $file
+#
+# 	may return several subjects, perl(3p) do !
 #
 sub handle_formated
 {
 	my $file = shift;
+	my $filename = shift;
 	local $_;
 	my ($section, $subject);
+	my @lines=();
 	while (<$file>) {
+		next if /^$/;
 		chomp;
-		last if m/^N\cHNA\cHAM\cHME\cHE/;
-		if (m/\w[-+.\w\d]*\(([\/\-+.\w\d]+)\)/) {
+		# Remove boldface and underlining
+		while (s/_\cH//g || s/(.)\cH\1/$1/g)
+			{}
+		if (m/\w[-+.\w\d]*\(([-+.\w\d\/]+)\)/) {
 			$section = $1;
 		}
+		# Not all man pages are in english
+		if (m/^(?:NAME|NAMN)\s*$/) {
+			unless (defined $section) {
+				print STDERR "Can't find section in $filename\n";
+				$section='??';
+			}
+			while (<$file>) {
+			    chomp;
+			    # perl agregates several subjects in one manpage
+				if (m/^$/) {
+					add_subject(\@lines, $subject, $section, $filename) 
+						if defined $subject;
+					$subject = undef;
+				} elsif (m/^\S/ || m/^\s+\*{3,}\s*$/) {
+					add_subject(\@lines, $subject, $section, $filename) 
+						if defined $subject;
+					last;
+				} else {
+					$subject.=$_;
+				}
+			}
+		last;
+		}
 	}
-	while (<$file>) {
-	    chomp;
-	    last if m/^\S/;
-	    # some twits underline the command name
-	    s/_\cH//g;
-	    $subject.=$_;
-	}
-	$_ = $subject;
-	if (defined $_ and m/-/) {
-		s/.\cH//g;
-		s/([-+.,\w\d])\s+/$1 /g;
-		s/([a-z][A-z])-\s+/$1/g;
-		s/^[^-+.\w\d]*(.*) - (.*)$/$1 ($section) - $2/;
-		return $_;
-	} else {
-		return undef;
-	}
+
+	print STDERR "Can't parse $filename (not a manpage ?)\n" if @lines == 0;
+	return \@lines;
 }
 
 # $list = find_manpages($dir)
@@ -144,7 +184,7 @@ sub scan_manpages
 	$done=[];
 
 	for (@$list) {
-	    my ($file, $line);
+	    my ($file, $subjects);
 	    if (m/\.[1-9]$/) {
 		    push(@todo, $_);
 		    if (@todo > 5000) {
@@ -158,8 +198,8 @@ sub scan_manpages
 		    $file = new IO::File $_ or die "$0: Can't read $_\n";
 	    }
 
-	    $line = handle_formated($file);
-	    push @$done, $line if defined $line;
+	    $subjects = handle_formated($file, $_);
+	    push @$done, @$subjects;
 	}
 	if (@todo > 0) {
 		handle_unformated($done, \@todo);
