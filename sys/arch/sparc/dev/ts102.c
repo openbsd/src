@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.2 2003/06/24 22:54:54 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.3 2003/06/24 22:55:43 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -374,6 +374,8 @@ int
 tslot_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start, bus_size_t size,
     bus_size_t align, struct pcmcia_io_handle *pih)
 {
+	struct tslot_data *td = (struct tslot_data *)pch;
+
 #ifdef TSLOT_DEBUG
 	printf("[io alloc %x]", size);
 #endif
