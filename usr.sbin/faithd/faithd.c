@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.6 2000/06/29 00:21:52 deraadt Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.7 2000/07/05 17:23:13 deraadt Exp $	*/
 /*	$KAME: faithd.c,v 1.18 2000/05/31 03:06:07 itojun Exp $	*/
 
 /*
@@ -303,7 +303,7 @@ play_service(int s_wld)
 	 * Wait, accept, fork, faith....
 	 */
 again:
-	setproctitle(procname);
+	setproctitle("%s", procname);
 
 	FD_ZERO(&rfds);
 	FD_SET(s_wld, &rfds);
