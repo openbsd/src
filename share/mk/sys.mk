@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.7 1996/04/22 01:28:38 deraadt Exp $
+#	$OpenBSD: sys.mk,v 1.8 1996/11/23 00:28:38 niklas Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -66,6 +66,8 @@ SHELL?=		sh
 YACC?=		yacc
 YFLAGS?=	-d
 YACC.y?=	${YACC} ${YFLAGS}
+
+INSTALL?=	install
 
 # C
 .c:
