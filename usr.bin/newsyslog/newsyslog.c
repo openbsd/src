@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.62 2003/01/25 05:16:50 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.63 2003/02/12 19:17:36 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -86,7 +86,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.62 2003/01/25 05:16:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.63 2003/02/12 19:17:36 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -132,6 +132,7 @@ static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.62 2003/01/25 05:16:50 mi
 					/* status messages */
 #define CE_MONITOR	0x08		/* Monitory for changes */
 #define CE_FOLLOW	0x10		/* Follow symbolic links */
+#define CE_TRIMAT	0x20		/* trim at a specific time */
 
 #define	MIN_PID		4		/* Don't touch pids lower than this */
 #define	MIN_SIZE	256		/* Don't rotate if smaller (in bytes) */
@@ -147,6 +148,7 @@ struct conf_entry {
 	int     numlogs;	/* Number of logs to keep */
 	off_t   size;		/* Size cutoff to trigger trimming the log */
 	int     hours;		/* Hours between log trimming */
+	time_t  trim_at;	/* Specific time at which to do trimming */
 	int     permissions;	/* File permissions on the log */
 	int	signal;		/* Signal to send (defaults to SIGHUP) */
 	int     flags;		/* Flags (CE_COMPACT & CE_BINARY)  */
@@ -192,6 +194,8 @@ void run_command(char *);
 void send_signal(char *, int);
 char *lstat_log(char *, size_t, int);
 int stat_suffix(char *, size_t, char *, struct stat *, int (*)());
+time_t parse8601(char *);
+time_t parseDWM(char *);
 
 int
 main(int argc, char **argv)
@@ -324,6 +328,16 @@ do_entry(struct conf_entry *ent)
 	if (size < 0) {
 		DPRINTF(("does not exist.\n"));
 	} else {
+		if (ent->flags & CE_TRIMAT && !force) {
+			if (timenow < ent->trim_at ||
+			    difftime(timenow, ent->trim_at) >= 60 * 60) {
+				DPRINTF(("--> will trim at %s",
+				    ctime(&ent->trim_at)));
+				return;
+			} else if (verbose && ent->hours <= 0) {
+				DPRINTF(("--> time is up\n"));
+			}
+		}
 		if (ent->size > 0)
 			DPRINTF(("size (KB): %.2f [%d] ", size / 1024.0,
 			    (int)(ent->size / 1024)));
@@ -333,6 +347,7 @@ do_entry(struct conf_entry *ent)
 			DPRINTF(("--> monitored\n"));
 		else if (!monitormode &&
 		    (force || (ent->size > 0 && size >= ent->size) ||
+		    (ent->hours <= 0 && (ent->flags & CE_TRIMAT)) ||
 		    (ent->hours > 0 && (modtime >= ent->hours || modtime < 0)
 		    && ((ent->flags & CE_BINARY) || size >= MIN_SIZE)))) {
 			DPRINTF(("--> trimming log....\n"));
@@ -471,8 +486,9 @@ struct conf_entry *
 parse_file(int *nentries)
 {
 	FILE *f;
-	char line[BUFSIZ], *parse, *q, *errline, *group, *tmp;
+	char line[BUFSIZ], *parse, *q, *errline, *group, *tmp, *ep;
 	int lineno;
+	unsigned long ul;
 	struct conf_entry *first = NULL;
 	struct conf_entry *working = NULL;
 	struct passwd *pwd;
@@ -516,7 +532,8 @@ parse_file(int *nentries)
 
 		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
-		if ((group = strchr(q, '.')) != NULL) {
+		if ((group = strchr(q, ':')) != NULL ||
+		    (group = strrchr(q, '.')) != NULL)  {
 			*group++ = '\0';
 			if (*q) {
 				if (!(isnumberstr(q))) {
@@ -564,14 +581,38 @@ parse_file(int *nentries)
 		else
 			working->size = -1;
 		
+		working->flags = 0;
 		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
-		if (isdigit(*q))
-			working->hours = atoi(q);
-		else
-			working->hours = -1;
+		ul = strtoul(q, &ep, 10);
+		if (ul > INT_MAX)
+			errx(1, "%s:%d: interval out of range: %s", conf,
+			    lineno, q);
+		working->hours = (int)ul;
+		switch (*ep) {
+		case '\0':
+			break;
+		case '@':
+			working->trim_at = parse8601(ep + 1);
+			if (working->trim_at == (time_t) - 1)
+				errx(1, "%s:%d: bad time: %s", conf, lineno, q);
+			working->flags |= CE_TRIMAT;
+			break;
+		case '$':
+			working->trim_at = parseDWM(ep + 1);
+			if (working->trim_at == (time_t) - 1)
+				errx(1, "%s:%d: bad time: %s", conf, lineno, q);
+			working->flags |= CE_TRIMAT;
+			break;
+		case '*':
+			if (q == ep)
+				break;
+			/* FALLTHROUGH */
+		default:
+			errx(1, "%s:%d: bad interval/at: %s", conf, lineno, q);
+			break;
+		}
 
-		working->flags = 0;
 		q = sob(++parse);	/* Optional field */
 		if (*q == 'Z' || *q == 'z' || *q == 'B' || *q == 'b' ||
 		    *q == 'M' || *q == 'm') {
@@ -1092,4 +1133,200 @@ lstat_log(char *file, size_t size, int flags)
 
 	}
 	return (NULL);
+}
+
+/*
+ * Parse a limited subset of ISO 8601. The specific format is as follows:
+ *
+ * [CC[YY[MM[DD]]]][THH[MM[SS]]]	(where `T' is the literal letter)
+ *
+ * We don't accept a timezone specification; missing fields (including timezone)
+ * are defaulted to the current date but time zero.
+ */
+time_t
+parse8601(char *s)
+{
+	char *t;
+	struct tm tm, *tmp;
+	unsigned long ul;
+
+	tmp = localtime(&timenow);
+	tm = *tmp;
+
+	tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
+
+	ul = strtoul(s, &t, 10);
+	if (*t != '\0' && *t != 'T')
+		return (-1);
+
+	/*
+	 * Now t points either to the end of the string (if no time was
+	 * provided) or to the letter `T' which separates date and time in
+	 * ISO 8601.  The pointer arithmetic is the same for either case.
+	 */
+	switch (t - s) {
+	case 8:
+		tm.tm_year = ((ul / 1000000) - 19) * 100;
+		ul = ul % 1000000;
+	case 6:
+		tm.tm_year -= tm.tm_year % 100;
+		tm.tm_year += ul / 10000;
+		ul = ul % 10000;
+	case 4:
+		tm.tm_mon = (ul / 100) - 1;
+		ul = ul % 100;
+	case 2:
+		tm.tm_mday = ul;
+	case 0:
+		break;
+	default:
+		return (-1);
+	}
+
+	/* sanity check */
+	if (tm.tm_year < 70 || tm.tm_mon < 0 || tm.tm_mon > 12
+	    || tm.tm_mday < 1 || tm.tm_mday > 31)
+		return (-1);
+
+	if (*t != '\0') {
+		s = ++t;
+		ul = strtoul(s, &t, 10);
+		if (*t != '\0' && !isspace(*t))
+			return (-1);
+
+		switch (t - s) {
+		case 6:
+			tm.tm_sec = ul % 100;
+			ul /= 100;
+		case 4:
+			tm.tm_min = ul % 100;
+			ul /= 100;
+		case 2:
+			tm.tm_hour = ul;
+		case 0:
+			break;
+		default:
+			return (-1);
+		}
+
+		/* sanity check */
+		if (tm.tm_sec < 0 || tm.tm_sec > 60 || tm.tm_min < 0
+		    || tm.tm_min > 59 || tm.tm_hour < 0 || tm.tm_hour > 23)
+			return (-1);
+	}
+	return (mktime(&tm));
+}
+
+/*-
+ * Parse a cyclic time specification, the format is as follows:
+ *
+ *	[Dhh] or [Wd[Dhh]] or [Mdd[Dhh]]
+ *
+ * to rotate a logfile cyclic at
+ *
+ *	- every day (D) within a specific hour (hh)	(hh = 0...23)
+ *	- once a week (W) at a specific day (d)     OR	(d = 0..6, 0 = Sunday)
+ *	- once a month (M) at a specific day (d)	(d = 1..31,l|L)
+ *
+ * We don't accept a timezone specification; missing fields
+ * are defaulted to the current date but time zero.
+ */
+time_t
+parseDWM(char *s)
+{
+	char *t;
+	struct tm tm, *tmp;
+	long l;
+	int nd;
+	static int mtab[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	int WMseen = 0;
+	int Dseen = 0;
+
+	tmp = localtime(&timenow);
+	tm = *tmp;
+
+	/* set no. of days per month */
+
+	nd = mtab[tm.tm_mon];
+
+	if (tm.tm_mon == 1) {
+		if (((tm.tm_year + 1900) % 4 == 0) &&
+		    ((tm.tm_year + 1900) % 100 != 0) &&
+		    ((tm.tm_year + 1900) % 400 == 0)) {
+			nd++;	/* leap year, 29 days in february */
+		}
+	}
+	tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
+
+	for (;;) {
+		switch (*s) {
+		case 'D':
+			if (Dseen)
+				return (-1);
+			Dseen++;
+			s++;
+			l = strtol(s, &t, 10);
+			if (l < 0 || l > 23)
+				return (-1);
+			tm.tm_hour = l;
+			break;
+
+		case 'W':
+			if (WMseen)
+				return (-1);
+			WMseen++;
+			s++;
+			l = strtol(s, &t, 10);
+			if (l < 0 || l > 6)
+				return (-1);
+			if (l != tm.tm_wday) {
+				int save;
+
+				if (l < tm.tm_wday) {
+					save = 6 - tm.tm_wday;
+					save += (l + 1);
+				} else {
+					save = l - tm.tm_wday;
+				}
+
+				tm.tm_mday += save;
+
+				if (tm.tm_mday > nd) {
+					tm.tm_mon++;
+					tm.tm_mday = tm.tm_mday - nd;
+				}
+			}
+			break;
+
+		case 'M':
+			if (WMseen)
+				return (-1);
+			WMseen++;
+			s++;
+			if (tolower(*s) == 'l') {
+				tm.tm_mday = nd;
+				s++;
+				t = s;
+			} else {
+				l = strtol(s, &t, 10);
+				if (l < 1 || l > 31)
+					return (-1);
+
+				if (l > nd)
+					return (-1);
+				tm.tm_mday = l;
+			}
+			break;
+
+		default:
+			return (-1);
+			break;
+		}
+
+		if (*t == '\0' || isspace(*t))
+			break;
+		else
+			s = t;
+	}
+	return (mktime(&tm));
 }
