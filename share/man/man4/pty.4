@@ -1,4 +1,4 @@
-.\"	$NetBSD: pty.4,v 1.3 1994/11/30 16:22:30 jtc Exp $
+.\"	$NetBSD: pty.4,v 1.4 1998/03/21 03:14:30 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -139,6 +139,24 @@ to implement a remote-echoed, locally
 flow-controlled
 remote login with proper back-flushing of output; it can be
 used by other similar programs.
+.It Dv TIOCPKT_IOCTL
+When this bit is set, the slave has changed the
+.Xr termios 4
+structure (TTY state), and the remainder of the data read from
+the master side of the
+.Nm
+is a copy of the new
+.Xr termios 4
+structure.
+.Pp
+This is used by
+.Xr telnetd 8
+to implement TELNET "line mode" - it allows the 
+.Xr telnetd 8
+to detect
+.Xr tty 4
+state changes by the slave, and negotiate the appropriate TELNET
+protocol equivalents with the remote peer.
 .El
 .It Dv TIOCUCNTL
 Enable/disable a mode that allows a small number of simple user
