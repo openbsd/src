@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 1999/01/04 13:48:16 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 1999/02/17 03:51:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -427,9 +427,16 @@ cpu_startup()
 		for (bip = hppa_knownboards;
 		     bip->bi_id >= 0 && bip->bi_id != i; bip++);
 		if (bip->bi_id >= 0) {
+			char *p;
+			switch(pdc_model.arch_rev) {
+			case  0:  p = "1.0";	break;
+			case  4:  p = "1.1";	break;
+			case  8:  p = "2.0";	break;
+			default:  p = "?.?";	break;
+			}
 			/* my babe said: 6010, 481, 0, 0, 77b657b1, 0, 4 */
-			sprintf(cpu_model, "HP9000/%s rev %x",
-				bip->bi_name, pdc_model.arch_rev);
+			sprintf(cpu_model, "HP9000/%s PA-RISC %s",
+				bip->bi_name, p);
 		} else
 			sprintf(cpu_model, "HP9000/(UNKNOWN %x)", i);
 		printf("%s\n", cpu_model);
@@ -821,8 +828,9 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 	return 0;
 }
 
+#if 0
 void
-bus_space_barrier(tag, h, off, l, op)
+flush_cache(tag, h, off, l, op)
 	bus_space_tag_t tag;
 	bus_space_handle_t h;
         bus_addr_t off;
@@ -843,6 +851,7 @@ bus_space_barrier(tag, h, off, l, op)
 		sync_caches();
 	}
 }
+#endif
 
 void
 boot(howto)
