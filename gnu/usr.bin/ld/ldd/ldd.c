@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.12 2002/09/07 01:25:34 marc Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.13 2002/12/08 16:26:58 millert Exp $	*/
 /*	$NetBSD: ldd.c,v 1.12 1995/10/09 00:14:41 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -64,7 +64,7 @@ main(int argc, char *argv[])
 	int		rval;
 	int		c;
 
-	while ((c = getopt(argc, argv, "f:")) != EOF) {
+	while ((c = getopt(argc, argv, "f:")) != -1) {
 		switch (c) {
 		case 'f':
 			if (fmt1) {
