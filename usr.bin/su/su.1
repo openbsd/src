@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.11 2001/05/01 17:58:04 aaron Exp $
+.\"	$OpenBSD: su.1,v 1.12 2001/05/29 21:40:36 millert Exp $
 .\"
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -41,7 +41,8 @@
 .Nd substitute user identity
 .Sh SYNOPSIS
 .Nm su
-.Op Fl Kflm
+.Op Fl fKlm
+.Op Fl a Ar auth-type
 .Op Fl c Ar login-class
 .Op Ar login Op Ar "shell arguments"
 .Sh DESCRIPTION
@@ -66,17 +67,12 @@ is executed by root, no password is requested and a shell
 with the appropriate user ID is executed; no additional Kerberos tickets
 are obtained.
 .Pp
-Alternately, if the user enters the password "s/key", they will be
-authenticated using the S/Key one-time password system as described in
-.Xr skey 1 .
-S/Key is a Trademark of Bellcore.
-.Pp
 By default, the environment is unmodified with the exception of
 .Ev LOGNAME ,
-.Ev USER ,
 .Ev HOME ,
+.Ev SHELL ,
 and
-.Ev SHELL .
+.Ev USER .
 .Ev HOME
 and
 .Ev SHELL
@@ -84,16 +80,35 @@ are set to the target login's default values.
 .Ev LOGNAME
 and
 .Ev USER
-are set to the target login, unless the target login has a user ID of 0,
+are set to the target login, unless the target login has a user ID of 0
+and the
+.Fl l
+flag was not specified,
 in which case it is unmodified.
 The invoked shell is the target login's.
 This is the traditional behavior of
 .Nm su .
 .Pp
+If not using
+.Fl m
+and the target login has a user ID of 0 then the
+.Ev PATH
+variable and umask value
+(see 
+.Xr umask 2 )
+are always set according to the
+.Pa /etc/login.conf
+file (see
+.Xr login.conf 5 ) .
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl K
-Do not attempt to use Kerberos to authenticate the user.
+.It Fl a
+Specify an authentication type such as
+.Dq skey ,
+.Dq securid ,
+or
+.Dq kerberos .
 .It Fl c
 Specify a login class.
 You may only override the default class if you're already root.
@@ -103,6 +118,8 @@ If the invoked shell is
 this option prevents it from reading the
 .Dq Pa .cshrc
 file.
+.It Fl K
+Do not attempt to use Kerberos to authenticate the user.
 .It Fl l
 Simulate a full login.
 The environment is discarded except for
@@ -122,8 +139,10 @@ and
 .Ev USER
 are set to the target login.
 .Ev PATH
-is set to
-.Dq Pa /usr/bin:/bin .
+is set to the value specified by the
+.Dq path
+entry in
+.Xr login.conf 5 .
 .Ev TERM
 is imported from your current environment.
 The invoked shell is the target login's, and
@@ -205,15 +224,15 @@ Pretend a login for user
 .It Ev HOME
 Default home directory of real user ID unless modified as
 specified above.
+.It Ev LOGNAME
+The user ID is always the effective ID (the target user ID) after an
+.Nm
+unless the user ID is 0 (root).
 .It Ev PATH
 Default search path of real user ID unless modified as specified above.
 .It Ev TERM
 Provides terminal type which may be retained for the substituted
 user ID.
-.It Ev LOGNAME
-The user ID is always the effective ID (the target user ID) after an
-.Nm
-unless the user ID is 0 (root).
 .It Ev USER
 Same as
 .Ev LOGNAME .
@@ -235,7 +254,7 @@ A
 .Nm
 command appeared in
 .At v7 .
-The version described
-here is an adaptation of the
-.Tn MIT
-Athena Kerberos command.
+.Sh BUGS
+There is no direct way to force a particular shell to be used.
+.Pp
+The login name is not optional for root if there are shell arguments.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.35 2000/12/02 22:44:49 hin Exp $	*/
+/*	$OpenBSD: su.c,v 1.36 2001/05/29 21:40:36 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.35 2000/12/02 22:44:49 hin Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.36 2001/05/29 21:40:36 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,31 +59,20 @@ static char rcsid[] = "$OpenBSD: su.c,v 1.35 2000/12/02 22:44:49 hin Exp $";
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <fcntl.h>
-
-#ifdef  SKEY
-#include <skey.h>                                                       
-#endif                                                                       
-
-#ifdef KERBEROS
-#include <des.h>
-#include <kerberosIV/krb.h>
-#include <netdb.h>
-
-int kerberos __P((char *username, char *user, int uid));
-
-#define	ARGSTR	"-Kc:flm"
-
-int use_kerberos = 1;
-char krbtkfile[MAXPATHLEN];
-char lrealm[REALM_SZ];
-int ksettkfile(char *);
+#ifdef __STDC__
+#include <stdarg.h>
 #else
-#define	ARGSTR	"-c:flm"
+#include <varargs.h>
 #endif
+#include <bsd_auth.h>
+
+#define	ARGSTR	"-a:c:fKlm"
 
 char   *ontty __P((void));
 int	chshell __P((char *));
+void	usage __P((void));
+void	auth_err __P((auth_session_t *, int, const char *, ...));
+void	auth_errx __P((auth_session_t *, int, const char *, ...));
 
 int
 main(argc, argv)
@@ -91,31 +80,39 @@ main(argc, argv)
 	char **argv;
 {
 	extern char **environ;
-	register struct passwd *pwd;
-	register char *p, **g;
+	enum { UNSET, YES, NO } iscsh;
+	struct passwd *pwd;
 	struct group *gr;
 	uid_t ruid;
 	login_cap_t *lc;
-	int asme, ch, asthem, fastlogin, prio;
-	enum { UNSET, YES, NO } iscsh;
-	char *user, *shell, *avshell, *username, *class, **np;
+	auth_session_t *as;
+	int asme, asthem, authok, ch, fastlogin, prio;
+	char *class, *style, *p, **g;
+	char *user, *shell, *avshell, *username, **np, *fullname;
 	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
 
 	iscsh = UNSET;
-	shell = class = NULL;
+	class = shell = style = NULL;
 	asme = asthem = fastlogin = 0;
 	while ((ch = getopt(argc, argv, ARGSTR)) != -1)
-		switch((char)ch) {
-#ifdef KERBEROS
-		case 'K':
-			use_kerberos = 0;
+		switch(ch) {
+		case 'a':
+			if (style)
+				usage();
+			style = optarg;
 			break;
-#endif
 		case 'c':
+			if (class)
+				usage();
 			class = optarg;
 			break;
 		case 'f':
 			fastlogin = 1;
+			break;
+		case 'K':
+			if (style)
+				usage();
+			style = "passwd";
 			break;
 		case '-':
 		case 'l':
@@ -128,10 +125,7 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			(void)fprintf(stderr,
-			    "usage: su [%s] [login [shell arguments]]\n",
-			    ARGSTR);
-			exit(1);
+			usage();
 		}
 	argv += optind;
 
@@ -142,6 +136,11 @@ main(argc, argv)
 	(void)setpriority(PRIO_PROCESS, 0, -2);
 	openlog("su", LOG_CONS, 0);
 
+	if ((as = auth_open()) == NULL) {
+		syslog(LOG_ERR, "auth_open: %m");
+		err(1, "unable to begin authentication");
+	}
+
 	/* get current login name and shell */
 	ruid = getuid();
 	username = getlogin();
@@ -149,13 +148,13 @@ main(argc, argv)
 	    pwd->pw_uid != ruid)
 		pwd = getpwuid(ruid);
 	if (pwd == NULL)
-		errx(1, "who are you?");
+		auth_errx(as, 1, "who are you?");
 	if ((username = strdup(pwd->pw_name)) == NULL)
-		err(1, "can't allocate memory");
+		auth_err(as, 1, "can't allocate memory");
 	if (asme) {
 		if (pwd->pw_shell && *pwd->pw_shell) {
-			shell = strncpy(shellbuf, pwd->pw_shell, sizeof(shellbuf) - 1);
-			shellbuf[sizeof(shellbuf) - 1] = '\0';
+			strlcpy(shellbuf, pwd->pw_shell, sizeof(shellbuf));
+			shell = shellbuf;
 		} else {
 			shell = _PATH_BSHELL;
 			iscsh = NO;
@@ -164,72 +163,72 @@ main(argc, argv)
 
 	/* get target login information, default to root */
 	user = *argv ? *argv : "root";
-	np = *argv ? argv : argv-1;
+	np = *argv ? argv : argv - 1;
 
 	if ((pwd = getpwnam(user)) == NULL)
-		errx(1, "unknown login %s", user);
+		auth_errx(as, 1, "unknown login %s", user);
 	if ((user = strdup(pwd->pw_name)) == NULL)
-		err(1, "can't allocate memory");
+		auth_err(as, 1, "can't allocate memory");
 
 	/* If the user specified a login class and we are root, use it */
 	if (ruid && class)
-		errx(1, "only the superuser may specify a login class");
+		auth_errx(as, 1, "only the superuser may specify a login class");
 	if (class)
 		pwd->pw_class = class;
 	if ((lc = login_getclass(pwd->pw_class)) == NULL)
-		errx(1, "no such login class: %s",
+		auth_errx(as, 1, "no such login class: %s",
 		    class ? class : LOGIN_DEFCLASS);
 
-#if KERBEROS
-	if (ksettkfile(user))
-		use_kerberos = 0;
-#endif
-
 	if (ruid) {
-#ifdef KERBEROS
-	    if (!use_kerberos || kerberos(username, user, pwd->pw_uid))
-#endif
-	    {
-		/* only allow those in group zero to su to root. */
+		/*
+		 * If we are trying to become root and the default style
+		 * is being used, don't bother to look it up (we might be
+		 * be su'ing up to fix /etc/login.conf)
+		 */
+		if ((pwd->pw_uid || !style || strcmp(style, LOGIN_DEFSTYLE)) &&
+		    (style = login_getstyle(lc, style, "auth-su")) == NULL)
+			auth_errx(as, 1, "invalid authentication type");
+		if (pwd->pw_uid || strcmp(user, "root") != 0)
+			fullname = user;
+		else {
+			if ((fullname =
+			    malloc(strlen(username) + 6)) == NULL)
+				auth_err(as, 1, NULL);
+			(void)sprintf(fullname, "%s.root", username);
+		}
+		/*
+		 * Let the authentication program know whether they are
+		 * in group wheel or not (if trying to become super user)
+		 */
 		if (pwd->pw_uid == 0 && (gr = getgrgid((gid_t)0))
-		    && gr->gr_mem && *(gr->gr_mem))
-			for (g = gr->gr_mem;; ++g) {
-				if (!*g)
-					errx(1, "you are not in the correct group to su %s.", user);
-				if (strcmp(username, *g) == 0)
+		    && gr->gr_mem && *(gr->gr_mem)) {
+			for (g = gr->gr_mem; *g; ++g) {
+				if (strcmp(username, *g) == 0) {
+					auth_setoption(as, "wheel", "yes");
 					break;
-		}
-		/* if target requires a password, verify it */
-		if (*pwd->pw_passwd) {
-			p = getpass("Password:");
-#ifdef SKEY
-			if (strcasecmp(p, "s/key") == 0) {
-				if (skey_authenticate(user))
-					goto badlogin;
-			} else
-#endif
-			if (strcmp(pwd->pw_passwd, crypt(p, pwd->pw_passwd))) {
-badlogin:
-				fprintf(stderr, "Sorry\n");
-				syslog(LOG_AUTH|LOG_WARNING,
-					"BAD SU %s to %s%s", username,
-					user, ontty());
-				exit(1);
+				}
 			}
+			if (!*g)
+				auth_setoption(as, "wheel", "no");
 		}
-	    }
-	    if (pwd->pw_expire && time(NULL) >= pwd->pw_expire) {
-		    fprintf(stderr, "Sorry - account expired\n");
-		    syslog(LOG_AUTH|LOG_WARNING, "BAD SU %s to %s%s", username,
-			    user, ontty());
-		    exit(1);
-	    }
+
+		auth_verify(as, style, fullname, lc->lc_class, NULL);
+		authok = auth_getstate(as);
+		if ((authok & AUTH_ALLOW) == 0) {
+			if ((p = auth_getvalue(as, "errormsg")) != NULL)
+				fprintf(stderr, "%s\n", p);
+			fprintf(stderr, "Sorry\n");
+			syslog(LOG_AUTH|LOG_WARNING,
+				"BAD SU %s to %s%s", username, user, ontty());
+			auth_close(as);
+			exit(1);
+		}
 	}
 
 	if (asme) {
 		/* if asme and non-standard target shell, must be root */
 		if (!chshell(pwd->pw_shell) && ruid)
-			errx(1, "permission denied (shell).");
+			auth_errx(as, 1, "permission denied (shell).");
 	} else if (pwd->pw_shell && *pwd->pw_shell) {
 		shell = pwd->pw_shell;
 		iscsh = UNSET;
@@ -251,42 +250,32 @@ badlogin:
 		if (asthem) {
 			p = getenv("TERM");
 			if ((environ = calloc(1, sizeof (char *))) == NULL)
-				errx(1, "calloc");
+				auth_errx(as, 1, "calloc");
 			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH))
-				err(1, "unable to set user context");
-			if (p) {
-				if (setenv("TERM", p, 1) == -1)
-					err(1, "unable to set environment");
-			}
+				auth_err(as, 1, "unable to set user context");
+			if (p && setenv("TERM", p, 1) == -1)
+				auth_err(as, 1, "unable to set environment");
 
 			seteuid(pwd->pw_uid);
 			setegid(pwd->pw_gid);
 			if (chdir(pwd->pw_dir) < 0)
-				err(1, "%s", pwd->pw_dir);
+				auth_err(as, 1, "%s", pwd->pw_dir);
 			seteuid(0);
 			setegid(0);	/* XXX use a saved gid instead? */
 		} else if (pwd->pw_uid == 0) {
-			/* XXX - this seems questionable to me */
 			if (setusercontext(lc,
 			    pwd, pwd->pw_uid, LOGIN_SETPATH|LOGIN_SETUMASK))
-				err(1, "unable to set user context");
+				auth_err(as, 1, "unable to set user context");
 		}
 		if (asthem || pwd->pw_uid) {
 			if (setenv("LOGNAME", pwd->pw_name, 1) == -1 ||
 			    setenv("USER", pwd->pw_name, 1) == -1)
-				err(1, "unable to set environment");
+				auth_err(as, 1, "unable to set environment");
 		}
 		if (setenv("HOME", pwd->pw_dir, 1) == -1 ||
 		    setenv("SHELL", shell, 1) == -1)
-			err(1, "unable to set environment");
+			auth_err(as, 1, "unable to set environment");
 	}
-
-#ifdef KERBEROS
-	if (*krbtkfile) {
-		if (setenv("KRBTKFILE", krbtkfile, 1) == -1)
-			err(1, "unable to set environment");
-	}
-#endif
 
 	if (iscsh == YES) {
 		if (fastlogin)
@@ -297,14 +286,12 @@ badlogin:
 
 	if (asthem) {
 		avshellbuf[0] = '-';
-		strncpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 2);
-		avshellbuf[sizeof(avshellbuf) - 1] = '\0';
+		strlcpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
 		avshell = avshellbuf;
 	} else if (iscsh == YES) {
 		/* csh strips the first character... */
 		avshellbuf[0] = '_';
-		strncpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 2);
-		avshellbuf[sizeof(avshellbuf) - 1] = '\0';
+		strlcpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
 		avshell = avshellbuf;
 	}
 			
@@ -318,7 +305,10 @@ badlogin:
 	if (setusercontext(lc, pwd, pwd->pw_uid,
 	    (asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
 	    LOGIN_SETRESOURCES | LOGIN_SETGROUP | LOGIN_SETUSER))
-		err(1, "unable to set user context");
+		auth_err(as, 1, "unable to set user context");
+	if (pwd->pw_uid && auth_approval(as, lc, pwd->pw_name, "su") <= 0)
+		auth_err(as, 1, "approval failure");
+	auth_close(as);
 
 	execv(shell, np);
 	err(1, "%s", shell);
@@ -328,7 +318,7 @@ int
 chshell(sh)
 	char *sh;
 {
-	register char *cp;
+	char *cp;
 
 	while ((cp = getusershell()) != NULL)
 		if (strcmp(cp, sh) == 0)
@@ -339,8 +329,8 @@ chshell(sh)
 char *
 ontty()
 {
-	char *p, *ttyname();
 	static char buf[MAXPATHLEN + 4];
+	char *p;
 
 	buf[0] = 0;
 	if ((p = ttyname(STDERR_FILENO)))
@@ -348,166 +338,64 @@ ontty()
 	return (buf);
 }
 
-#ifdef KERBEROS
-int koktologin __P((char *, char *, char *));
-
-int
-kerberos(username, user, uid)
-	char *username, *user;
-	int uid;
+void
+usage()
 {
-	KTEXT_ST ticket;
-	AUTH_DAT authdata;
-	struct hostent *hp;
-	int kerno, fd;
-	in_addr_t faddr;
-	char hostname[MAXHOSTNAMELEN], savehost[MAXHOSTNAMELEN];
-	char *ontty(), *krb_get_phost();
+	extern char *__progname;
 
-	/* Don't bother with Kerberos if there is no srvtab file */
-	if ((fd = open(KEYFILE, O_RDONLY, 0)) < 0)
-		return (1);
-	close(fd);
-
-	if (koktologin(username, lrealm, user) && !uid) {
-		(void)fprintf(stderr, "kerberos su: not in %s's ACL.\n", user);
-		return (1);
-	}
-	(void)krb_set_tkt_string(krbtkfile);
-
-	/*
-	 * Set real as well as effective ID to 0 for the moment,
-	 * to make the kerberos library do the right thing.
-	 */
-	if (setuid(0) < 0) {
-		warn("setuid");
-		return (1);
-	}
-
-	/*
-	 * Little trick here -- if we are su'ing to root,
-	 * we need to get a ticket for "xxx.root", where xxx represents
-	 * the name of the person su'ing.  Otherwise (non-root case),
-	 * we need to get a ticket for "yyy.", where yyy represents
-	 * the name of the person being su'd to, and the instance is null
-	 */
-
-	printf("%s%s@%s's ", (uid == 0 ? username : user), 
-	       (uid == 0 ? ".root" : ""), lrealm);
-	fflush(stdout);
-	kerno = krb_get_pw_in_tkt((uid == 0 ? username : user),
-		(uid == 0 ? "root" : ""), lrealm,
-	    	"krbtgt", lrealm, DEFAULT_TKT_LIFE, 0);
-
-	if (kerno != KSUCCESS) {
-		if (kerno == KDC_PR_UNKNOWN) {
-			warnx("kerberos principal unknown: %s.%s@%s",
-				(uid == 0 ? username : user),
-				(uid == 0 ? "root" : ""), lrealm);
-			return (1);
-		}
-		warnx("unable to su: %s", krb_err_txt[kerno]);
-		syslog(LOG_NOTICE|LOG_AUTH,
-		    "BAD Kerberos SU: %s to %s%s: %s",
-		    username, user, ontty(), krb_err_txt[kerno]);
-		return (1);
-	}
-
-	/*
-	 * Set the owner of the ticket file to root but bail if someone
-	 * has nefariously swapped a link in place of the file.
-	 */
-	fd = open(krbtkfile, O_RDWR|O_NOFOLLOW, 0);
-	if (fd == -1) {
-		warn("unable to open ticket file");
-		(void)unlink(krbtkfile);
-		return (1);
-	}
-	if (fchown(fd, uid, -1) < 0) {
-		warn("fchown");
-		(void)unlink(krbtkfile);
-		return (1);
-	}
-	close(fd);
-
-	(void)setpriority(PRIO_PROCESS, 0, -2);
-
-	if (gethostname(hostname, sizeof(hostname)) == -1) {
-		warn("gethostname");
-		dest_tkt();
-		return (1);
-	}
-
-	(void)strncpy(savehost, krb_get_phost(hostname), sizeof(savehost) - 1);
-	savehost[sizeof(savehost) - 1] = '\0';
-
-	kerno = krb_mk_req(&ticket, "rcmd", savehost, lrealm, 33);
-
-	if (kerno == KDC_PR_UNKNOWN) {
-		warnx("Warning: TGT not verified.");
-		syslog(LOG_NOTICE|LOG_AUTH,
-		    "%s to %s%s, TGT not verified (%s); %s.%s not registered?",
-		    username, user, ontty(), krb_err_txt[kerno],
-		    "rcmd", savehost);
-	} else if (kerno != KSUCCESS) {
-		warnx("Unable to use TGT: %s", krb_err_txt[kerno]);
-		syslog(LOG_NOTICE|LOG_AUTH, "failed su: %s to %s%s: %s",
-		    username, user, ontty(), krb_err_txt[kerno]);
-		dest_tkt();
-		return (1);
-	} else {
-		if (!(hp = gethostbyname(hostname))) {
-			warnx("can't get addr of %s", hostname);
-			dest_tkt();
-			return (1);
-		}
-		(void)memcpy((void *)&faddr, (void *)hp->h_addr, sizeof(faddr));
-
-		if ((kerno = krb_rd_req(&ticket, "rcmd", savehost, faddr,
-		    &authdata, "")) != KSUCCESS) {
-			warnx("unable to verify rcmd ticket: %s",
-			      krb_err_txt[kerno]);
-			syslog(LOG_NOTICE|LOG_AUTH,
-			    "failed su: %s to %s%s: %s", username,
-			     user, ontty(), krb_err_txt[kerno]);
-			dest_tkt();
-			return (1);
-		}
-	}
-	return (0);
+	(void)fprintf(stderr, "usage: %s [%s] [-a auth-type] %s ",
+	    "[-c login-class] [login [argument ...]]\n", __progname, ARGSTR);
+	exit(1);
 }
 
-int
-koktologin(name, realm, toname)
-	char *name, *realm, *toname;
-{
-	register AUTH_DAT *kdata;
-	AUTH_DAT kdata_st;
-
-	memset((void *)&kdata_st, 0, sizeof(kdata_st));
-	kdata = &kdata_st;
-
-	(void)strncpy(kdata->pname, name, sizeof(kdata->pname) - 1);
-	kdata->pname[sizeof(kdata->pname) - 1] = '\0';
-
-	(void)strncpy(kdata->pinst,
-	    ((strcmp(toname, "root") == 0) ? "root" : ""), sizeof(kdata->pinst) - 1);
-	kdata->pinst[sizeof(kdata->pinst) -1] = '\0';
-
-	(void)strncpy(kdata->prealm, realm, sizeof(kdata->prealm) - 1);
-	kdata->prealm[sizeof(kdata->prealm) -1] = '\0';
-
-	return (kuserok(kdata, toname));
-}
-
-int
-ksettkfile(user)
-	char *user;
-{
-	if (krb_get_lrealm(lrealm, 1) != KSUCCESS)
-		return (1);
-	(void)snprintf(krbtkfile, sizeof(krbtkfile), "%s_%s_%u", TKT_ROOT,
-		user, getuid());
-	return (0);
-}
+void
+#ifdef __STDC__
+auth_err(auth_session_t *as, int eval, const char *fmt, ...)
+#else
+auth_err(va_alist)
+	va_dcl
 #endif
+{
+	va_list ap;
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	auth_session_t *as;
+	int eval;
+	const char *fmt;
+
+	va_start(ap);
+	as = va_arg(ap, auth_session_t *);
+	eval = va_arg(ap, int);
+	fmt = va_arg(ap, const char *);
+#endif
+	verr(eval, fmt, ap);
+	auth_close(as);
+	va_end(ap);
+}
+
+void
+#ifdef __STDC__
+auth_errx(auth_session_t *as, int eval, const char *fmt, ...)
+#else
+auth_errx(va_alist)
+	va_dcl
+#endif
+{
+	va_list ap;
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	auth_session_t *as;
+	int eval;
+	const char *fmt;
+
+	va_start(ap);
+	as = va_arg(ap, auth_session_t *);
+	eval = va_arg(ap, int);
+	fmt = va_arg(ap, const char *);
+#endif
+	verrx(eval, fmt, ap);
+	auth_close(as);
+	va_end(ap);
+}
