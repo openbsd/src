@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.3 1997/08/26 13:50:44 niklas Exp $	*/
+/*	$OpenBSD: show.c,v 1.4 1997/10/02 02:10:57 angelos Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.3 1997/08/26 13:50:44 niklas Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.4 1997/10/02 02:10:57 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,8 @@ static char *rcsid = "$OpenBSD: show.c,v 1.3 1997/08/26 13:50:44 niklas Exp $";
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netns/ns.h>
+#include <net/encap.h>
+#include <arpa/inet.h>
 
 #include <sys/sysctl.h>
 
@@ -97,7 +99,9 @@ static void p_rtentry __P((struct rt_msghdr *));
 static void p_sockaddr __P((struct sockaddr *, int, int));
 static void p_flags __P((int, char *));
 static void pr_rthdr __P((void));
+static void pr_encaphdr __P((void));
 static void pr_family __P((int));
+static void encap_print __P((struct rt_msghdr *));                   
 
 /*
  * Print routing tables.
@@ -187,7 +191,14 @@ p_rtentry(rtm)
 	if (old_af != af) {
 		old_af = af;
 		pr_family(af);
-		pr_rthdr();
+		if (af != AF_ENCAP)
+		  pr_rthdr();
+		else
+		  pr_encaphdr();
+	}
+	if (af == AF_ENCAP) {
+		encap_print(rtm);
+		return;
 	}
 	if (rtm->rtm_addrs == RTA_DST)
 		p_sockaddr(sa, 0, 36);
@@ -202,6 +213,16 @@ p_rtentry(rtm)
 	putchar('\n');
 }
 
+/*                    
+ * Print header for AF_ENCAP entries.
+ */                              
+void                  
+pr_encaphdr()             
+{
+        printf("%-31s %-5s %-31s %-5s %-5s %-26s\n",
+            "Source address/netmask", "Port", "Destination address/netmask",
+            "Port", "Proto", "SA(Address/SPI/Proto)");
+}
 
 /*
  * Print address family header before a section of the routing table.
@@ -227,6 +248,9 @@ pr_family(af)
 		break;
 	case AF_CCITT:
 		afname = "X.25";
+		break;
+	case AF_ENCAP:
+		afname = "IPsec";
 		break;
 	default:
 		afname = NULL;
@@ -333,3 +357,35 @@ p_flags(f, format)
 	printf(format, name);
 }
 
+static void
+encap_print(rtm)
+        register struct rt_msghdr *rtm;
+{
+        struct sockaddr_encap *sen1 = (struct sockaddr_encap *)(rtm + 1);
+        struct sockaddr_encap *sen3 = (struct sockaddr_encap *)
+				      ((u_char *)sen1 + sizeof(*sen1));
+	struct sockaddr_encap *sen2 = (struct sockaddr_encap *)
+				      ((u_char *)sen3 + sizeof(*sen1));
+        u_char buffer[32];
+        int i;
+
+        bzero(buffer, 32);
+        strncpy(buffer, inet_ntoa(sen1->sen_ip_src), 15);
+        i = strlen(buffer);
+        strncpy(buffer + i, "/", 1);
+        i++;
+        strncpy(buffer + i, inet_ntoa(sen2->sen_ip_src), 15);
+
+        printf("%-31s %-5u ", buffer, sen1->sen_sport);
+
+        bzero(buffer, 32);
+        strncpy(buffer, inet_ntoa(sen1->sen_ip_dst), 15);
+        i = strlen(buffer);
+        strncpy(buffer + i, "/", 1);
+        i++;
+        strncpy(buffer + i, inet_ntoa(sen2->sen_ip_dst), 15);
+
+        printf("%-31s %-5u %-5u ", buffer, sen1->sen_dport, sen1->sen_proto);
+        printf("%s/%08x/%-lu\n", inet_ntoa(sen3->sen_ipsp_dst),
+               ntohl(sen3->sen_ipsp_spi), sen3->sen_ipsp_sproto);
+}
