@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.6 1996/08/06 18:38:48 deraadt Exp $	*/
+/*	$OpenBSD: quota.c,v 1.7 1996/08/07 14:08:52 etheisen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: quota.c,v 1.6 1996/08/06 18:38:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: quota.c,v 1.7 1996/08/07 14:08:52 etheisen Exp $";
 #endif /* not lint */
 
 /*
@@ -505,7 +505,7 @@ ufshasquota(fs, type, qfnamep)
 		    qfextension[GRPQUOTA], qfname);
 		initname = 1;
 	}
-	strncpy(buf, sizeof buf, fs->fs_mntops);
+	strncpy(buf, fs->fs_mntops, sizeof buf);
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
 		if (cp = index(opt, '='))
 			*cp++ = '\0';
