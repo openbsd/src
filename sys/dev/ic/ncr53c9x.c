@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.24 2004/09/29 19:17:43 miod Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.25 2004/10/28 08:11:09 xsa Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -2495,7 +2495,7 @@ printf("<<RESELECT CONT'd>>");
 		break;
 	default:
 		/* Don't panic: reset. */
-		printf("%s: invalid state: %d",
+		printf("%s: invalid state: %d\n",
 		      sc->sc_dev.dv_xname,
 		      sc->sc_state);
 		ncr53c9x_scsi_reset(sc);
