@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.18 2004/01/31 00:09:41 deraadt Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.19 2004/02/03 08:42:19 deraadt Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -421,3 +421,25 @@
 #define	PMC6_SEG_RENAME_STALLS		0xd4	/* P-II and P-III only */
 #define	PMC6_SEG_REG_RENAMES		0xd5	/* P-II and P-III only */
 #define	PMC6_RET_SEG_RENAMES		0xd6	/* P-II and P-III only */
+
+/* VIA C3 xcrypt-* instruction context control options */
+#define	C3_CRYPT_CWLO_ROUND_M		0x0000000f
+#define	C3_CRYPT_CWLO_ALG_M		0x00000070
+#define	C3_CRYPT_CWLO_ALG_AES		0x00000000
+#define	C3_CRYPT_CWLO_KEYGEN_M		0x00000080
+#define	C3_CRYPT_CWLO_KEYGEN_HW		0x00000000
+#define	C3_CRYPT_CWLO_KEYGEN_SW		0x00000080
+#define	C3_CRYPT_CWLO_NORMAL		0x00000000
+#define	C3_CRYPT_CWLO_INTERMEDIATE	0x00000100
+#define	C3_CRYPT_CWLO_ENCRYPT		0x00000000
+#define	C3_CRYPT_CWLO_DECRYPT		0x00000200
+#define	C3_CRYPT_CWLO_KEY128		0x0000000a	/* 128bit, 10 rds */
+#define	C3_CRYPT_CWLO_KEY192		0x0000040c	/* 192bit, 12 rds */
+#define	C3_CRYPT_CWLO_KEY256		0x0000080e	/* 256bit, 15 rds */
+
+/* VIA C3 xcrypt-* opcodes */
+#define	VIAC3_CRYPTOP_RNG	0xc0		/* rng */
+#define	VIAC3_CRYPTOP_ECB	0xc8		/* aes-ecb */
+#define	VIAC3_CRYPTOP_CBC	0xd0		/* aes-cbc */
+#define	VIAC3_CRYPTOP_CFB	0xe0		/* aes-cfb */
+#define	VIAC3_CRYPTOP_OFB	0xe8		/* aes-ofb */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.273 2004/02/02 01:15:58 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.274 2004/02/03 08:42:19 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1186,29 +1186,8 @@ struct viac3_softc {
 #define VIAC3_SESSION(sid)		((sid) & 0x0fffffff)
 #define	VIAC3_SID(crd,ses)		(((crd) << 28) | ((ses) & 0x0fffffff))
 
-#define	C3_CRYPT_CWLO_ROUND_M		0x0000000f
-#define	C3_CRYPT_CWLO_ALG_M		0x00000070
-#define	C3_CRYPT_CWLO_ALG_AES		0x00000000
-#define	C3_CRYPT_CWLO_KEYGEN_M		0x00000080
-#define	C3_CRYPT_CWLO_KEYGEN_HW		0x00000000
-#define	C3_CRYPT_CWLO_KEYGEN_SW		0x00000080
-#define	C3_CRYPT_CWLO_NORMAL		0x00000000
-#define	C3_CRYPT_CWLO_INTERMEDIATE	0x00000100
-#define	C3_CRYPT_CWLO_ENCRYPT		0x00000000
-#define	C3_CRYPT_CWLO_DECRYPT		0x00000200
-#define	C3_CRYPT_CWLO_KEY128		0x0000000a	/* 128bit, 10 rds */
-#define	C3_CRYPT_CWLO_KEY192		0x0000040c	/* 192bit, 12 rds */
-#define	C3_CRYPT_CWLO_KEY256		0x0000080e	/* 256bit, 15 rds */
-
 static struct viac3_softc *vc3_sc;
 int viac3_crypto_present;
-
-/* Opcodes */
-#define	VIAC3_CRYPTOP_RNG	0xc0		/* rng */
-#define	VIAC3_CRYPTOP_ECB	0xc8		/* aes-ecb */
-#define	VIAC3_CRYPTOP_CBC	0xd0		/* aes-cbc */
-#define	VIAC3_CRYPTOP_CFB	0xe0		/* aes-cfb */
-#define	VIAC3_CRYPTOP_OFB	0xe8		/* aes-ofb */
 
 void viac3_crypto_setup(void);
 int viac3_crypto_newsession(u_int32_t *, struct cryptoini *);
