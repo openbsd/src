@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.78 2002/02/16 08:18:57 chris Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.79 2002/03/01 20:01:35 chris Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -3610,7 +3610,8 @@ hpt_pci_intr(arg)
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
-		if ((dmastat & IDEDMA_CTL_INTR) == 0)
+		if((dmastat & ( IDEDMA_CTL_ACT | IDEDMA_CTL_INTR)) !=
+		    IDEDMA_CTL_INTR)
 		    continue;
 		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->wdc_channel;	       
