@@ -50,9 +50,6 @@ SYMLINK	/instbin		usr/bin/chgrp
 SYMLINK	/instbin		usr/bin/cut
 SYMLINK	/instbin		usr/bin/ftp
 SYMLINK	/instbin		usr/bin/grep
-SYMLINK	/instbin		usr/bin/gunzip
-SYMLINK	/instbin		usr/bin/gzcat
-SYMLINK	/instbin		usr/bin/gzip
 SYMLINK	/instbin		usr/bin/more
 SYMLINK	/instbin		usr/bin/netstat
 SYMLINK	/instbin		usr/bin/rsh

@@ -42,9 +42,6 @@ LINK	instbin			sbin/slattach
 LINK	instbin			sbin/umount
 LINK	instbin			usr/bin/chgrp
 LINK	instbin			usr/bin/ftp
-LINK	instbin			usr/bin/gunzip
-LINK	instbin			usr/bin/gzcat
-LINK	instbin			usr/bin/gzip
 LINK	instbin			usr/bin/more
 LINK	instbin			usr/bin/printf
 LINK	instbin			usr/bin/sed

@@ -46,9 +46,6 @@ SYMLINK	/bin/cat		usr/bin/cksum
 SYMLINK	/bin/cat		usr/bin/cmp
 SYMLINK	/bin/cat		usr/bin/cut
 SYMLINK	/bin/cat		usr/bin/ftp
-SYMLINK	/bin/cat		usr/bin/gunzip
-SYMLINK	/bin/cat		usr/bin/gzcat
-SYMLINK	/bin/cat		usr/bin/gzip
 SYMLINK	/bin/cat		usr/bin/grep
 SYMLINK	/bin/cat		usr/bin/more
 SYMLINK	/bin/cat		usr/bin/printf
