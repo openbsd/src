@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.27 2001/05/14 10:35:42 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.28 2001/05/14 10:51:26 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -671,10 +671,13 @@ pipe_select(fp, which, p)
 }
 
 int
-pipe_stat(pipe, ub)
-	struct pipe *pipe;
+pipe_stat(fp, ub, p)
+	struct file *fp;
 	struct stat *ub;
+	struct proc *p;
 {
+	struct pipe *pipe = (struct pipe *)fp->f_data;
+
 	bzero((caddr_t)ub, sizeof (*ub));
 	ub->st_mode = S_IFIFO;
 	ub->st_blksize = pipe->pipe_buffer.size;

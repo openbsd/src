@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.10 2001/01/23 07:06:23 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.11 2001/05/14 10:51:26 art Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ compat_43_sys_fstat(p, v, retval)
 
 #ifndef OLD_PIPE
 	case DTYPE_PIPE:
-		error = pipe_stat((struct pipe *)fp->f_data, &ub);
+		error = pipe_stat(fp, &ub, p);
 		break;
 #endif
 

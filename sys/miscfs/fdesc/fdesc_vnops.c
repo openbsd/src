@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.16 1999/10/13 06:32:23 art Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.17 2001/05/14 10:51:27 art Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -492,7 +492,7 @@ fdesc_attr(fd, vap, cred, p)
 #ifdef OLD_PIPE
 		error = 0;
 #else
-		error = pipe_stat((struct pipe *)fp->f_data, &stb);
+		error = pipe_stat(fp, &stb, p);
 		if (error == 0) {
 			vattr_null(vap);
 			vap->va_type = VFIFO;
