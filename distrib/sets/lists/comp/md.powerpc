@@ -1,3 +1,4 @@
+./usr/bin/gdb
 ./usr/bin/c++filt
 ./usr/bin/dlltool
 ./usr/bin/gasp
@@ -117,5 +118,6 @@
 ./usr/powerpc-unknown-openbsd2.3/lib/ldscripts/elf32ppc.xr
 ./usr/powerpc-unknown-openbsd2.3/lib/ldscripts/elf32ppc.xs
 ./usr/powerpc-unknown-openbsd2.3/lib/ldscripts/elf32ppc.xu
+./usr/share/man/cat1/gdb.0
 ./usr/share/man/cat1/objcopy.0
 ./usr/share/man/cat1/objdump.0
