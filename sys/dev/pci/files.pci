@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.101 2001/04/08 02:16:52 jason Exp $
+#	$OpenBSD: files.pci,v 1.102 2001/04/09 22:05:00 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -230,7 +230,7 @@ attach	tl at pci
 file	dev/pci/if_tl.c			tl
 
 # 3Com 3c990
-device	txp: ether, ifnet, mii, ifmedia
+device	txp: ether, ifnet, ifmedia
 attach	txp at pci
 file	dev/pci/if_txp.c		txp
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.9 2001/04/09 05:36:17 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.10 2001/04/09 22:05:00 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -457,8 +457,8 @@ struct txp_softc {
 	void *			sc_ih;
 	struct timeout		sc_tick_tmo;
 	struct ifmedia		sc_ifmedia;
-	mii_data_t		sc_mii;		/* mii bus */
 	u_int16_t		sc_xcvr;
+	u_int16_t		sc_seq;
 	struct txp_dma_alloc	sc_boot_dma, sc_host_dma, sc_zero_dma;
 	struct txp_dma_alloc	sc_rxhiring_dma, sc_rxloring_dma;
 	struct txp_dma_alloc	sc_txhiring_dma, sc_txloring_dma;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.8 2001/04/09 05:36:16 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.9 2001/04/09 22:04:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -107,13 +107,13 @@ int txp_dma_malloc __P((struct txp_softc *, bus_size_t, struct txp_dma_alloc *))
 int txp_cmd_desc_numfree __P((struct txp_softc *));
 int txp_command __P((struct txp_softc *, u_int16_t, u_int16_t, u_int32_t,
     u_int32_t, u_int16_t *, u_int32_t *, u_int32_t *, int));
-int txp_response __P((struct txp_softc *, u_int32_t, u_int16_t,
+int txp_response __P((struct txp_softc *, u_int32_t, u_int16_t, u_int16_t,
     struct txp_rsp_desc **));
+void txp_rsp_fixup __P((struct txp_softc *, struct txp_rsp_desc *));
 
 void txp_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int txp_ifmedia_upd __P((struct ifnet *));
-int txp_miibus_readreg __P((struct device *, int, int));
-void txp_miibus_writereg __P((struct device *, int, int, int));
+void txp_show_descriptor __P((void *));
 
 struct cfattach txp_ca = {
 	sizeof(struct txp_softc), txp_probe, txp_attach,
@@ -233,13 +233,6 @@ txp_attach(parent, self, aux)
 	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO);
 	txp_command(sc, TXP_CMD_XCVR_SELECT, TXP_XCVR_AUTO, 0, 0,
 	    NULL, NULL, NULL, 0);
-
-#if 0
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = txp_miibus_readreg;
-	sc->sc_mii.mii_writereg = txp_miibus_writereg;
-	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
-#endif
 
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
@@ -860,6 +853,7 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 	struct txp_cmd_desc *cmd;
 	struct txp_rsp_desc *rsp = NULL;
 	u_int32_t idx, i;
+	u_int16_t seq;
 
 	if (txp_cmd_desc_numfree(sc) == 0) {
 		printf(": no free cmd descriptors\n");
@@ -871,13 +865,15 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 	bzero(cmd, sizeof(*cmd));
 
 	cmd->cmd_numdesc = 0;
-	cmd->cmd_seq = 0x11;
+	cmd->cmd_seq = seq = sc->sc_seq++;
 	cmd->cmd_id = id;
 	cmd->cmd_par1 = in1;
 	cmd->cmd_par2 = in2;
 	cmd->cmd_par3 = in3;
 	cmd->cmd_flags = CMD_FLAGS_TYPE_CMD |
 	    (wait ? CMD_FLAGS_RESP : 0) | CMD_FLAGS_VALID;
+
+	txp_show_descriptor(cmd);
 
 	idx += sizeof(struct txp_cmd_desc);
 	if (idx == sc->sc_cmdring.size)
@@ -893,7 +889,7 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 		idx = hv->hv_resp_read_idx;
 		if (idx != hv->hv_resp_write_idx) {
 			rsp = NULL;
-			if (txp_response(sc, idx, cmd->cmd_id, &rsp))
+			if (txp_response(sc, idx, cmd->cmd_id, seq, &rsp))
 				return (-1);
 			if (rsp != NULL)
 				break;
@@ -921,27 +917,29 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 }
 
 int
-txp_response(sc, ridx, id, rspp)
+txp_response(sc, ridx, id, seq, rspp)
 	struct txp_softc *sc;
 	u_int32_t ridx;
 	u_int16_t id;
+	u_int16_t seq;
 	struct txp_rsp_desc **rspp;
 {
 	struct txp_hostvar *hv = sc->sc_hostvar;
 	struct txp_rsp_desc *rsp;
 
-again:
 	while (ridx != hv->hv_resp_write_idx) {
 		rsp = (struct txp_rsp_desc *)(((u_int8_t *)sc->sc_rspring.base) + ridx);
 
-		if (id == rsp->rsp_id) {
+		txp_show_descriptor(rsp);
+
+		if (id == rsp->rsp_id && rsp->rsp_seq == seq) {
 			*rspp = rsp;
 			return (0);
 		}
 
 		if (rsp->rsp_flags & RSP_FLAGS_ERROR) {
 			printf(": response error!\n");
-			/* XXX fixup */
+			txp_rsp_fixup(sc, rsp);
 			ridx = hv->hv_resp_read_idx;
 			continue;
 		}
@@ -951,22 +949,40 @@ again:
 			printf(": stats\n");
 			break;
 		case TXP_CMD_MEDIA_STATUS_READ:
-			printf(": mediastatus\n");
 			break;
 		case TXP_CMD_HELLO_RESPONSE:
 			printf(": hello\n");
 			break;
 		default:
 			printf(": unknown id(0x%x)\n", rsp->rsp_id);
-			/* XXX fixup */
-			ridx = hv->hv_resp_read_idx;
-			goto again;
 		}
 
+		txp_rsp_fixup(sc, rsp);
+		ridx = hv->hv_resp_read_idx;
 		hv->hv_resp_read_idx = ridx;
 	}
 
 	return (0);
+}
+
+void
+txp_rsp_fixup(sc, rsp)
+	struct txp_softc *sc;
+	struct txp_rsp_desc *rsp;
+{
+	struct txp_hostvar *hv = sc->sc_hostvar;
+	u_int32_t i, ridx;
+
+	ridx = hv->hv_resp_read_idx;
+
+	for (i = 0; i < rsp->rsp_numdesc + 1; i++) {
+		ridx += sizeof(struct txp_rsp_desc);
+		if (ridx == sc->sc_rspring.size)
+			ridx = 0;
+		sc->sc_rspring.lastwrite = hv->hv_resp_read_idx = ridx;
+	}
+	
+	hv->hv_resp_read_idx = ridx;
 }
 
 int
@@ -1048,68 +1064,95 @@ txp_ifmedia_sts(ifp, ifmr)
 	struct ifmediareq *ifmr;
 {
 	struct txp_softc *sc = ifp->if_softc;
-	u_int16_t p1;
+	struct ifmedia *ifm = &sc->sc_ifmedia;
+	u_int16_t bmsr, bmcr, anlpar;
 
-	switch (sc->sc_xcvr) {
-	case TXP_XCVR_10_HDX:
-		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_HDX;
-		break;
-	case TXP_XCVR_10_FDX:
-		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_FDX;
-		break;
-	case TXP_XCVR_100_HDX:
-		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_HDX;
-		break;
-	case TXP_XCVR_100_FDX:
-		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_HDX;
-		break;
-	case TXP_XCVR_AUTO:
-		ifmr->ifm_active = IFM_ETHER | IFM_AUTO;
-		break;
-	default:
-		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
-		break;
+	ifmr->ifm_status = IFM_AVALID;
+	ifmr->ifm_active = IFM_ETHER;
+
+	if (txp_command(sc, TXP_CMD_PHY_MGMT_READ, 0, MII_BMSR, 0,
+	    &bmsr, NULL, NULL, 1))
+		goto bail;
+	if (txp_command(sc, TXP_CMD_PHY_MGMT_READ, 0, MII_BMSR, 0,
+	    &bmsr, NULL, NULL, 1))
+		goto bail;
+
+	if (txp_command(sc, TXP_CMD_PHY_MGMT_READ, 0, MII_BMCR, 0,
+	    &bmcr, NULL, NULL, 1))
+		goto bail;
+
+	if (txp_command(sc, TXP_CMD_PHY_MGMT_READ, 0, MII_ANLPAR, 0,
+	    &anlpar, NULL, NULL, 1))
+		goto bail;
+
+	if (bmsr & BMSR_LINK)
+		ifmr->ifm_status |= IFM_ACTIVE;
+
+	if (bmcr & BMCR_ISO) {
+		ifmr->ifm_active |= IFM_NONE;
+		ifmr->ifm_status = 0;
+		printf("isolated!\n");
+		return;
 	}
 
-	/* XXX determine real speed/duplex status */
+	if (bmcr & BMCR_LOOP)
+		ifmr->ifm_active |= IFM_LOOP;
 
-	if (txp_command(sc, TXP_CMD_MEDIA_STATUS_READ, 0, 0, 0,
-	    &p1, NULL, NULL, 1))
-		ifmr->ifm_status &= ~IFM_AVALID;
-	else {
-		ifmr->ifm_status |= IFM_AVALID;
-		if ((p1 & TXP_MEDIA_NOLINK) == 0)
-			ifmr->ifm_status |= IFM_ACTIVE;
-	}
+	if (bmcr & BMCR_AUTOEN) {
+		if ((bmsr & BMSR_ACOMP) == 0) {
+			ifmr->ifm_active |= IFM_NONE;
+			printf("acomp!\n");
+			return;
+		}
+
+		if (anlpar & ANLPAR_T4)
+			ifmr->ifm_active |= IFM_100_T4;
+		else if (anlpar & ANLPAR_TX_FD)
+			ifmr->ifm_active |= IFM_100_TX|IFM_FDX;
+		else if (anlpar & ANLPAR_TX)
+			ifmr->ifm_active |= IFM_100_TX;
+		else if (anlpar & ANLPAR_10_FD)
+			ifmr->ifm_active |= IFM_10_T|IFM_FDX;
+		else if (anlpar & ANLPAR_10)
+			ifmr->ifm_active |= IFM_10_T;
+		else
+			ifmr->ifm_active |= IFM_NONE;
+	} else
+		ifmr->ifm_active = ifm->ifm_cur->ifm_media;
+	return;
+
+bail:
+	ifmr->ifm_active |= IFM_NONE;
+	ifmr->ifm_status &= ~IFM_AVALID;
 }
 
 void
-txp_miibus_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+txp_show_descriptor(d)
+	void *d;
 {
-	struct txp_softc *sc = (struct txp_softc *)self;
+#if 0
+	struct txp_cmd_desc *cmd = d;
+	struct txp_rsp_desc *rsp = d;
 
-	if (phy != 0)
-		return;
-
-	txp_command(sc, TXP_CMD_PHY_MGMT_WRITE, val, reg, 0,
-	    NULL, NULL, NULL, 0);
-}
-
-int
-txp_miibus_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
-{
-	struct txp_softc *sc = (struct txp_softc *)self;
-	u_int16_t dat;
-
-	if (phy != 0)
-		return (0);
-
-	if (txp_command(sc, TXP_CMD_PHY_MGMT_READ, 0, reg, 0,
-	    &dat, NULL, NULL, 1))
-		return (0);
-	return (dat);
+	switch (cmd->cmd_flags & CMD_FLAGS_TYPE_M) {
+	case CMD_FLAGS_TYPE_CMD:
+		/* command descriptor */
+		printf("[cmd flags 0x%x num %d id %d seq %d par1 0x%x par2 0x%x par3 0x%x]\n",
+		    cmd->cmd_flags, cmd->cmd_numdesc, cmd->cmd_id, cmd->cmd_seq,
+		    cmd->cmd_par1, cmd->cmd_par2, cmd->cmd_par3);
+		break;
+	case CMD_FLAGS_TYPE_RESP:
+		/* response descriptor */
+		printf("[rsp flags 0x%x num %d id %d seq %d par1 0x%x par2 0x%x par3 0x%x]\n",
+		    rsp->rsp_flags, rsp->rsp_numdesc, rsp->rsp_id, rsp->rsp_seq,
+		    rsp->rsp_par1, rsp->rsp_par2, rsp->rsp_par3);
+		break;
+	default:
+		printf("[unknown(%x) flags 0x%x num %d id %d seq %d par1 0x%x par2 0x%x par3 0x%x]\n",
+		    cmd->cmd_flags & CMD_FLAGS_TYPE_M,
+		    cmd->cmd_flags, cmd->cmd_numdesc, cmd->cmd_id, cmd->cmd_seq,
+		    cmd->cmd_par1, cmd->cmd_par2, cmd->cmd_par3);
+		break;
+	}
+#endif
 }
