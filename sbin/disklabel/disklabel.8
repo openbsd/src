@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.35 2000/03/18 22:55:55 aaron Exp $
+.\"	$OpenBSD: disklabel.8,v 1.36 2000/04/04 16:29:27 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -408,6 +408,11 @@ If any changes have been made, the user will be
 asked whether or not to save the changes to the on-disk label.
 .It x
 Exit the editor without saving any changes to the label.
+.It X
+Toggle
+.Dq expert mode .
+By default, some settings are reserved for experts only (such as the
+block and fragment size on ffs partitions).
 .El
 .Pp
 In the restore form of the command, the prototype file used to create

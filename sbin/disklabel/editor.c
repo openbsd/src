@@ -1,7 +1,7 @@
-/*	$OpenBSD: editor.c,v 1.68 2000/03/23 01:24:28 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.69 2000/04/04 16:29:27 millert Exp $	*/
 
 /*
- * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.68 2000/03/23 01:24:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.69 2000/04/04 16:29:27 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,7 +91,7 @@ char	*getstring __P((char *, char *, char *));
 u_int32_t getuint __P((struct disklabel *, int, char *, char *, u_int32_t, u_int32_t, u_int32_t, int));
 int	has_overlap __P((struct disklabel *, u_int32_t *, int));
 void	make_contiguous __P((struct disklabel *));
-u_int32_t next_offset __P((struct disklabel *, struct partition *));
+u_int32_t next_offset __P((struct disklabel *, u_int32_t *));
 int	partition_cmp __P((const void *, const void *));
 struct partition **sort_partitions __P((struct disklabel *, u_int16_t *));
 void	getdisktype __P((struct disklabel *, char *, char *));
@@ -114,6 +114,7 @@ void	set_geometry __P((struct disklabel *, struct disklabel *, struct disklabel 
 
 static u_int32_t starting_sector;
 static u_int32_t ending_sector;
+static int expert;
 
 /* from disklabel.c */
 int	checklabel __P((struct disklabel *));
@@ -406,6 +407,12 @@ editor(lp, f, dev, fstabfile)
 				*lp = label;
 			break;
 
+		case 'X':
+			expert = !expert;
+			printf("%s expert mode\n", expert ? "Entering" :
+			    "Exiting");
+			break;
+
 		case 'x':
 			return(1);
 			break;
@@ -505,12 +512,12 @@ editor_add(lp, mp, freep, p)
 	if (partno >= lp->d_npartitions)
 		lp->d_npartitions = partno + 1;
 	memset(pp, 0, sizeof(*pp));
+	pp->p_size = *freep;
+	pp->p_offset = next_offset(lp, &pp->p_size);
 	pp->p_fstype = partno == 1 ? FS_SWAP : FS_BSDFFS;
 	pp->p_fsize = 1024;
 	pp->p_frag = 8;
 	pp->p_cpg = 16;
-	pp->p_size = *freep;
-	pp->p_offset = next_offset(lp, pp);	/* must be computed last */
 #if NUMBOOT == 1
 	/* Don't clobber boot blocks */
 	if (pp->p_offset == 0) {
@@ -562,7 +569,7 @@ getoff1:
 		return;
 	}
 
-	if (pp->p_fstype == FS_BSDFFS) {
+	if (expert && pp->p_fstype == FS_BSDFFS) {
 		/* Get fsize, bsize, and cpg */
 		if (get_fsize(lp, partno) != 0 || get_bsize(lp, partno) != 0 ||
 		    get_cpg(lp, partno) != 0) {
@@ -707,7 +714,7 @@ getoff2:
 		return;
 	}
 
-	if (pp->p_fstype == FS_BSDFFS || pp->p_fstype == FS_UNUSED) {
+	if (expert && (pp->p_fstype == FS_BSDFFS || pp->p_fstype == FS_UNUSED)){
 		/* get fsize */
 		if (get_fsize(lp, partno) != 0) {
 			*pp = origpart;		/* undo changes */
@@ -841,9 +848,9 @@ editor_display(lp, mp, freep, unit)
  * Assumes there is a least one free sector left (returns 0 if not).
  */
 u_int32_t
-next_offset(lp, pp)
+next_offset(lp, sizep)
 	struct disklabel *lp;
-	struct partition *pp;
+	u_int32_t *sizep;
 {
 	struct partition **spp;
 	struct diskchunk *chunks;
@@ -853,14 +860,10 @@ next_offset(lp, pp)
 
 	/* Get a sorted list of the partitions */
 	if ((spp = sort_partitions(lp, &npartitions)) == NULL)
-		return(0);
+		return(starting_sector);
 	
 	new_offset = starting_sector;
 	for (i = 0; i < npartitions; i++ ) {
-		/* Skip the partition for which we are finding an offset */
-		if (pp == spp[i])
-			continue;
-
 		/*
 		 * Is new_offset inside this partition?  If so,
 		 * make it the next sector after the partition ends.
@@ -868,15 +871,15 @@ next_offset(lp, pp)
 		if (spp[i]->p_offset + spp[i]->p_size < ending_sector &&
 		    ((new_offset >= spp[i]->p_offset &&
 		    new_offset < spp[i]->p_offset + spp[i]->p_size) ||
-		    (new_offset + pp->p_size >= spp[i]->p_offset && new_offset
-		    + pp->p_size <= spp[i]->p_offset + spp[i]->p_size)))
+		    (new_offset + *sizep >= spp[i]->p_offset && new_offset
+		    + *sizep <= spp[i]->p_offset + spp[i]->p_size)))
 			new_offset = spp[i]->p_offset + spp[i]->p_size;
 	}
 
 	/* Did we find a suitable offset? */
 	for (good_offset = 1, i = 0; i < npartitions; i++ ) {
-		if (new_offset + pp->p_size >= spp[i]->p_offset &&
-		    new_offset + pp->p_size <= spp[i]->p_offset + spp[i]->p_size) {
+		if (new_offset + *sizep >= spp[i]->p_offset &&
+		    new_offset + *sizep <= spp[i]->p_offset + spp[i]->p_size) {
 			/* Nope */
 			good_offset = 0;
 			break;
@@ -894,7 +897,7 @@ next_offset(lp, pp)
 			}
 		}
 		/* XXX - should do something intelligent if new_size == 0 */
-		pp->p_size = new_size;
+		*sizep = new_size;
 	}
 
 	(void)free(spp);
@@ -1633,7 +1636,7 @@ free_chunks(lp)
 
 	/* If there are no partitions, it's all free. */
 	if (spp == NULL) {
-		chunks[0].start = 0;
+		chunks[0].start = starting_sector;
 		chunks[0].stop = ending_sector;
 		chunks[1].start = chunks[1].stop = 0;
 		return(chunks);
@@ -1642,7 +1645,7 @@ free_chunks(lp)
 	/* Find chunks of free space */
 	numchunks = 0;
 	if (spp && spp[0]->p_offset > 0) {
-		chunks[0].start = 0;
+		chunks[0].start = starting_sector;
 		chunks[0].stop = spp[0]->p_offset;
 		numchunks++;
 	}
@@ -1902,6 +1905,7 @@ editor_help(arg)
 		puts("\tw         - write label to disk.");
 		puts("\tq         - quit and save changes.");
 		puts("\tx         - exit without saving changes.");
+		puts("\tX         - toggle expert mode.");
 		puts("\t? [cmnd]  - this message or command specific help.");
 		puts(
 "Numeric parameters may use suffixes to indicate units:\n\t"
