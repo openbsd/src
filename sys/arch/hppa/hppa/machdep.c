@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 1999/01/03 17:55:13 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 1999/01/04 13:48:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -829,18 +829,19 @@ bus_space_barrier(tag, h, off, l, op)
 	bus_size_t l;
 	int op;
 {
-	register u_int32_t p = h + off; 
+	if (l) {
+		register u_int32_t p = h + off; 
 
-	l += p & dcache_line_mask;
-	l = (l + dcache_line_mask) & ~dcache_line_mask;
-	p &= ~dcache_line_mask;
-
-	do {
-		__asm __volatile ("pdc %%r0(%%sr0,%0)":: "r" (p));
-		__asm __volatile ("fic %%r0(%%sr0,%0)":: "r" (p));
-		p += dcache_line_mask + 1;
-		l -= dcache_line_mask + 1;
-	} while (l);
+		do {
+			if (op == BUS_SPACE_BARRIER_READ)
+				__asm __volatile ("pdc (%%sr0,%0)":: "r" (p));
+			else
+				__asm __volatile ("fdc (%%sr0,%0)":: "r" (p));
+			__asm __volatile ("fic,m %2(%%sr0,%0)": "=r" (p)
+					  : "0" (p), "r" (dcache_stride));
+		} while (p < (h + off + l));
+		sync_caches();
+	}
 }
 
 void
