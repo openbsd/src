@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.3 2000/09/20 17:29:47 niklas Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.4 2000/10/16 16:24:36 mickey Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -255,7 +255,7 @@ pciaddr_resource_manage(pc, tag, func)
 		/* reservation/allocation phase */
 		error += (*func) (pc, tag, mapreg, ex, type, &addr, size);
 
-		PCIBIOS_PRINTV(("\n\t%02xh %s 0x%08x 0x%08x", 
+		PCIBIOS_PRINTV(("\t%02xh %s 0x%08x 0x%08x\n", 
 				mapreg, type ? "port" : "mem ", 
 				(unsigned int)addr, (unsigned int)size));
 	}
@@ -273,7 +273,7 @@ pciaddr_resource_manage(pc, tag, func)
 	if (error)
 		pciaddr.nbogus++;
 
-	PCIBIOS_PRINTV(("\n\t\t[%s]\n", error ? "NG" : "OK"));
+	PCIBIOS_PRINTV(("\t\t[%s]\n", error ? "NG" : "OK"));
 }
 
 int
