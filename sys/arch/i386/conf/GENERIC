@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.325 2002/11/30 19:29:29 nate Exp $
+#	$OpenBSD: GENERIC,v 1.326 2002/12/10 23:37:03 miod Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -420,7 +420,7 @@ mpu*	at isapnp?
 mpu*	at isa? port 0x300 			# generic MPU, Yamaha SW60XG
 #aria0	at isa? port 0x280 irq 10 drq 0 flags 0x1 # Prometheus Aria 16
 
-# OPL[23] FM syntheziers
+# OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at eso?
 opl*	at sb?
