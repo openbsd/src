@@ -4,10 +4,9 @@ NOMAN=
 # No installation.
 install:
 
-# If REGRESSTARGETS is defined and PROG is not defined, set a dummy
-# PROG
+# If REGRESSTARGETS is defined and PROG is not defined, set NOPROG
 .if defined(REGRESSTARGETS) && !defined(PROG)
-PROG=
+NOPROG=
 .endif
 
 .include <bsd.prog.mk>
