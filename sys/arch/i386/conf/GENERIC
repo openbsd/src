@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.61 1998/02/17 23:49:28 matthieu Exp $
+#	$OpenBSD: GENERIC,v 1.62 1998/03/20 05:59:38 dgregor Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -154,6 +154,7 @@ ed3	at isa? port 0x240 iomem 0xd8000 irq 9
 eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+ep*	at isapnp?				# 3C509 PnP ethernet cards
 ep*	at isa? port ? irq ?			# 3C509 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
