@@ -1,11 +1,7 @@
-.\"	$OpenBSD: biosboot.8,v 1.2 1997/03/31 03:12:00 weingart Exp $
-.\"	$NetBSD: boot_i386.8,v 1.3 1995/04/23 10:33:35 cgd Exp $
+.\"	$OpenBSD: biosboot.8,v 1.3 1997/09/05 17:59:27 mickey Exp $
 .\"
-.\" Copyright (c) 1991, 1993
-.\"	The Regents of the University of California.  All rights reserved.
-.\"
-.\" This code is derived from software written and contributed
-.\" to Berkeley by William Jolitz.
+.\" Copyright (c) 1997 Michael Shalayeff
+.\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -17,15 +13,13 @@
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
 .\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
+.\"	This product includes software developed by Michael Shalayeff.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 .\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
 .\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 .\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
@@ -35,96 +29,88 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
-.\"
-.Dd April 19, 1994
-.Dt BOOT 8 i386
+.Dd September 1, 1997
+.Dt BIOSBOOT 8 i386
 .Os
 .Sh NAME
-.Nm boot
+.Nm biosboot
 .Nd
-system bootstrapping procedures
+primary system bootstrap program
 .Sh DESCRIPTION
-.Sy Power fail and crash recovery.
-Normally, the system will reboot itself at power-up or after crashes.
-An automatic consistency check of the file systems will be performed,
-and unless this fails, the system will resume multi-user operations.
+This small program (about of 256 bytes of code) is responsible for
+loading second stage
+.Xr boot 8
+program, which in turn, will load the kernel.
+It is small, robust and takes neither input nor options.
+Location of the
+.Xr boot 8
+program is stored in the block table inside of the
+.Nm
+by the
+.Xr installboot 8
+program, and is very machine dependant. So, you have to run
+.Xr installboot 8
+program every time you are moving your disk between machines and/or
+controllers.
 .Pp
-.Sy Cold starts.
-The 386
-.Tn "PC AT"
-clones attempt to boot the floppy disk drive A (otherwise known as drive
-0) first, and failing that, attempt to boot the hard disk C (otherwise
-known as hard disk controller 1, drive 0).
-The automatic boot will attempt to load
-.Pa bsd
-from partition A of either the floppy or the hard disk.
-This boot may be aborted by typing any character on the keyboard repeatedly
-(four or five times at least) during the operating system load phase, after
-which the bootstrap will prompt for the file that you wish to load instead.
+When it receives control from either BIOS or MBR it will print message:
 .Pp
-One exception to this is the
-.Ql d
-key, which will not abort the load but instead silently force the
-.Dv DEBUG
-boot flags.
-The boot flags for an autoboot are 0, and 3 for the successive boot after
-an aborted autoboot sequence.
-No other provison is made for setting boot flags (yet).
-A specific device or bootstrap file may be used; for example,
+.Dl loading /boot
 .Pp
-The file specifications used for the boostrap
-when loaded with the
-.Dq askme
-flag
-(e.g. an aborted autoboot)
-are of the form:
-.Pp
-.Dl device unit partition:
-.Pp
-where
-.Ar device
-is the type of the device, assumed to be on the ISA bus, to be searched,
-.Ar unit
-is the unit number of the disk or tape,
-and
-.Ar partition
-is the disk partition or tape file number.
-Normal line editing characters can be used when typing the file specification.
-The following list of supported devices may vary from installation to
-installation:
-.Bd -unfilled -offset indent
-wd	ST506, IDE, ESDI, RLL disks on a WD100[2367] or lookalike
-	controller
-fd	5 1/4" or 3 1/2" High density floppies
-.Ed
-.Pp
-For example,
-to boot from a file system which starts at cylinder 0
-of unit 0 of an IDE disk, type
-.Dq Li wd(0,a)/bsd
-to the boot prompt;
-.Dq Li fd(0,a)/bsd
-would specify a 3 1/2" floppy drive 0 .
-.Pp
-In an emergency, the bootstrap methods described in the paper
-.%T "Installing and Operating 4.3 BSD-Reno UNIX on the AT/386"
-can be used
-to boot from a distribution tape.
+followed by a dot for every successfully loaded block,
+and then put cursor on the next line right before switching into the
+protected mode and transferring control to the just loaded /boot program.
+.Sh DIAGNOSTICS
+Diagnostics consist of two error messages:
+.Bl -tag -width read_error_
+.It Er Read error
+Some kind of error returned by the BIOS read call. This might be
+any media error.
+.It Er Bad magic
+Just loaded /boot image contains bad magic in it's header.
+This might indicate some kind of hardware problem.
+This may also means that
+.Ar boot
+argument for
+.Xr installboot 8
+program was actually not a valid /boot program.
+.El
+Other common reason for those errors to appear is a wrong BIOS geometry
+had been used in
+.Xr installboot 8
+for the device you are booting from.
 .Sh FILES
-.Bl -tag -width /bsdxx -compact
+.Bl -tag -width /usr/mdec/biosbootxx -compact
+.It Pa /usr/mdec/mbr
+Master Boot Record block
+.It Pa /usr/mdec/biosboot
+primary bootstrap
 .It Pa /boot
 system bootstrap
 .It Pa /bsd
 system code
 .El
 .Sh SEE ALSO
-.Xr boot 8 ,
-.Xr halt 8 ,
-.Xr reboot 8 ,
-.Xr shutdown 8
+.Xr boot_i386 8 ,
+.Xr fdisk 8 ,
+.Xr installboot 8 ,
+.Xr boot 8 .
 .Sh BUGS
-The disklabel format used by this version of
-.Bx
-is quite
-different from that of other architectures.
+It contains fake fdisk table and the stuff, that it should not.
+.Pp
+It should check checksum over the loaded /boot image.
+.Pp
+There is neither BIOS error number reported nor the error location.
+.Pp
+There is a lot of strange behaviour with different BIOSes, the one of well
+known lobotomy cases is a wrong boot drive number passed to boot program
+by BIOS.
+.Pp
+You can pick your motherboard, and you can pick your BIOS,
+but you can't pick your motherboard's BIOS.
+.Sh HISTORY
+This program was written by Michael Shalayeff for
+.Ox 2.1 .
+However it's based on bootstrap code from older versions of this
+operating system, other operating systems, other programs, and
+other people's works.
