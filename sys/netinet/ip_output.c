@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.85 2000/12/03 19:56:20 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.86 2001/03/07 23:19:54 aaron Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -314,11 +314,6 @@ ip_output(m0, va_alist)
 			goto done;
 		}
 	} else {
-	        /* We need to do IPsec */
-	        bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
-		sspi = tdb->tdb_spi;
-		sproto = tdb->tdb_sproto;
-
 		/*
 		 * If the socket has set the bypass flags and SA
 		 * destination matches the IP destination, skip
@@ -331,10 +326,16 @@ ip_output(m0, va_alist)
 		    (inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS)
 		    && (sdst.sa.sa_family == AF_INET) &&
 		    (sdst.sin.sin_addr.s_addr == ip->ip_dst.s_addr)) {
-		        splx(s);
+			splx(s);
 			sproto = 0; /* mark as no-IPsec-needed */
 			goto done_spd;
 		}
+
+	        /* We need to do IPsec */
+	        bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
+		sspi = tdb->tdb_spi;
+		sproto = tdb->tdb_sproto;
+		splx(s);
 
 		/* If it's not a multicast packet, try to fast-path */
 		if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
