@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.43 1999/07/25 16:51:58 jason Exp $
+#	$OpenBSD: files.pci,v 1.44 1999/08/04 23:38:03 niklas Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -48,6 +48,14 @@ file	dev/pci/bha_pci.c		bha_pci
 device	eap: audio, auconv, mulaw
 attach	eap at pci
 file	dev/pci/eap.c			eap
+
+# ESS Solo-1 PCI AudioDrive
+device	eso { }: audio, auconv, mulaw, midibus
+attach	eso at pci
+file	dev/pci/eso.c			eso
+
+attach	opl at eso with opl_eso
+file	dev/pci/opl_eso.c		opl_eso
 
 # Qlogic ISP 10x0 (PCI) family
 # device declaration in sys/conf/files
