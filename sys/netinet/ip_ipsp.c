@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.113 2001/04/06 04:42:08 csapuntz Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.114 2001/05/05 00:31:19 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -293,7 +293,8 @@ gettdb(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
  * the desired IDs.
  */
 struct tdb *
-gettdbbyaddr(union sockaddr_union *dst, u_int8_t proto, struct mbuf *m, int af)
+gettdbbyaddr(union sockaddr_union *dst, struct ipsec_policy *ipo,
+	     struct mbuf *m, int af)
 {
     u_int32_t hashval;
     struct tdb *tdbp;
@@ -301,10 +302,10 @@ gettdbbyaddr(union sockaddr_union *dst, u_int8_t proto, struct mbuf *m, int af)
     if (tdbaddr == NULL)
       return (struct tdb *) NULL;
 
-    hashval = tdb_hash(0, dst, proto);
+    hashval = tdb_hash(0, dst, ipo->ipo_sproto);
 
     for (tdbp = tdbaddr[hashval]; tdbp != NULL; tdbp = tdbp->tdb_anext)
-      if ((tdbp->tdb_sproto == proto) &&
+      if ((tdbp->tdb_sproto == ipo->ipo_sproto) &&
 	  ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 	  (!bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa))))
       {
@@ -312,14 +313,65 @@ gettdbbyaddr(union sockaddr_union *dst, u_int8_t proto, struct mbuf *m, int af)
 	   * If the IDs are not set, this was probably a manually-keyed
 	   * SA, so it can be used for any type of traffic.
 	   */
-	  if ((tdbp->tdb_srcid == NULL) && (tdbp->tdb_dstid == NULL))
-	    break;
+	  if (tdbp->tdb_srcid != NULL)
+	  {
+	      if (ipo->ipo_srcid != NULL)
+	      {
+		  if ((tdbp->tdb_srcid_type != ipo->ipo_srcid_type) ||
+		      (tdbp->tdb_srcid_len != ipo->ipo_srcid_len) ||
+		      (bcmp(tdbp->tdb_srcid, ipo->ipo_srcid,
+			    ipo->ipo_srcid_len)))
+		    continue;
+	      }
 
-	  /* Sanity */
-	  if ((m == NULL) || (af == 0))
-	    continue;
+	      /* Otherwise, this is fine */
+	  }
+	  else
+	    if (ipo->ipo_srcid != NULL)
+	      continue;
 
-	  /* XXX Check the IDs ? */
+	  if (tdbp->tdb_dstid != NULL)
+	  {
+	      if (ipo->ipo_dstid != NULL)
+	      {
+		  if ((tdbp->tdb_dstid_type != ipo->ipo_dstid_type) ||
+		      (tdbp->tdb_dstid_len != ipo->ipo_dstid_len) ||
+		      (bcmp(tdbp->tdb_dstid, ipo->ipo_dstid,
+			    ipo->ipo_dstid_len)))
+		    continue;
+	      }
+
+	      /* Otherwise, this is fine */
+	  }
+	  else
+	    if (ipo->ipo_dstid != NULL)
+	      continue;
+
+	  /* Check for credential matches */
+	  if (tdbp->tdb_local_cred != NULL)
+	  {
+	      if (ipo->ipo_local_cred != NULL)
+	      {
+		  if ((tdbp->tdb_local_cred_type !=
+		       ipo->ipo_local_cred_type) ||
+		      (tdbp->tdb_local_cred_len != ipo->ipo_local_cred_len) ||
+		      (bcmp(tdbp->tdb_local_cred, ipo->ipo_local_cred,
+			    ipo->ipo_local_cred_len)))
+		    continue;
+	      }
+	      else
+		continue; /* If no credential was used in the TDB, try
+			   * to establish a new SA with the given
+			   * credential, since some type of access control
+			   * may be done on the other side based on that
+			   * credential.
+			   */
+	  }
+	  else
+	    if (ipo->ipo_local_cred != NULL)
+	      continue;
+
+	  /* XXX Check for filter matches */
 	  break;
       }
 
@@ -331,7 +383,8 @@ gettdbbyaddr(union sockaddr_union *dst, u_int8_t proto, struct mbuf *m, int af)
  * the desired IDs.
  */
 struct tdb *
-gettdbbysrc(union sockaddr_union *src, u_int8_t proto, struct mbuf *m, int af)
+gettdbbysrc(union sockaddr_union *src, struct ipsec_policy *ipo,
+	    struct mbuf *m, int af)
 {
     u_int32_t hashval;
     struct tdb *tdbp;
@@ -339,10 +392,10 @@ gettdbbysrc(union sockaddr_union *src, u_int8_t proto, struct mbuf *m, int af)
     if (tdbsrc == NULL)
       return (struct tdb *) NULL;
 
-    hashval = tdb_hash(0, src, proto);
+    hashval = tdb_hash(0, src, ipo->ipo_sproto);
 
     for (tdbp = tdbsrc[hashval]; tdbp != NULL; tdbp = tdbp->tdb_snext)
-      if ((tdbp->tdb_sproto == proto) &&
+      if ((tdbp->tdb_sproto == ipo->ipo_sproto) &&
 	  ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
 	  (!bcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa))))
       {
@@ -350,10 +403,65 @@ gettdbbysrc(union sockaddr_union *src, u_int8_t proto, struct mbuf *m, int af)
 	   * If the IDs are not set, this was probably a manually-keyed
 	   * SA, so it can be used for any type of traffic.
 	   */
-	  if ((tdbp->tdb_srcid == NULL) && (tdbp->tdb_dstid == NULL))
-	    break;
+	  if (tdbp->tdb_srcid != NULL)
+	  {
+	      if (ipo->ipo_srcid != NULL)
+	      {
+		  if ((tdbp->tdb_srcid_type != ipo->ipo_srcid_type) ||
+		      (tdbp->tdb_srcid_len != ipo->ipo_srcid_len) ||
+		      (bcmp(tdbp->tdb_srcid, ipo->ipo_srcid,
+			    ipo->ipo_srcid_len)))
+		    continue;
+	      }
 
-	  /* XXX Check the IDs ? */
+	      /* Otherwise, this is fine */
+	  }
+	  else
+	    if (ipo->ipo_srcid != NULL)
+	      continue;
+
+	  if (tdbp->tdb_dstid != NULL)
+	  {
+	      if (ipo->ipo_dstid != NULL)
+	      {
+		  if ((tdbp->tdb_dstid_type != ipo->ipo_dstid_type) ||
+		      (tdbp->tdb_dstid_len != ipo->ipo_dstid_len) ||
+		      (bcmp(tdbp->tdb_dstid, ipo->ipo_dstid,
+			    ipo->ipo_dstid_len)))
+		    continue;
+	      }
+
+	      /* Otherwise, this is fine */
+	  }
+	  else
+	    if (ipo->ipo_dstid != NULL)
+	      continue;
+
+	  /* Check for credential matches */
+	  if (tdbp->tdb_local_cred != NULL)
+	  {
+	      if (ipo->ipo_local_cred != NULL)
+	      {
+		  if ((tdbp->tdb_local_cred_type !=
+		       ipo->ipo_local_cred_type) ||
+		      (tdbp->tdb_local_cred_len != ipo->ipo_local_cred_len) ||
+		      (bcmp(tdbp->tdb_local_cred, ipo->ipo_local_cred,
+			    ipo->ipo_local_cred_len)))
+		    continue;
+	      }
+	      else
+		continue; /* If no credential was used in the TDB, try
+			   * to establish a new SA with the given
+			   * credential, since some type of access control
+			   * may be done on the other side based on that
+			   * credential.
+			   */
+	  }
+	  else
+	    if (ipo->ipo_local_cred != NULL)
+	      continue;
+
+	  /* XXX Check for filter matches */
 	  break;
       }
 
@@ -700,26 +808,26 @@ tdb_delete(struct tdb *tdbp)
 
     if (tdbp->tdb_srcid)
     {
-      	FREE(tdbp->tdb_srcid, M_XDATA);
+      	FREE(tdbp->tdb_srcid, M_CREDENTIALS);
 	tdbp->tdb_srcid = NULL;
     }
 
     if (tdbp->tdb_dstid)
     {
-      	FREE(tdbp->tdb_dstid, M_XDATA);
+      	FREE(tdbp->tdb_dstid, M_CREDENTIALS);
 	tdbp->tdb_dstid = NULL;
     }
 
-    if (tdbp->tdb_src_credentials)
+    if (tdbp->tdb_local_cred)
     {
-	FREE(tdbp->tdb_src_credentials, M_XDATA);
-	tdbp->tdb_src_credentials = NULL;
+	FREE(tdbp->tdb_local_cred, M_CREDENTIALS);
+	tdbp->tdb_local_cred = NULL;
     }
 
-    if (tdbp->tdb_dst_credentials)
+    if (tdbp->tdb_remote_cred)
     {
-	FREE(tdbp->tdb_dst_credentials, M_XDATA);
-	tdbp->tdb_dst_credentials = NULL;
+	FREE(tdbp->tdb_remote_cred, M_CREDENTIALS);
+	tdbp->tdb_local_cred = NULL;
     }
 
     if ((tdbp->tdb_onext) && (tdbp->tdb_onext->tdb_inext == tdbp))
@@ -1164,4 +1272,32 @@ ipsp_copy_ident(void *arg)
     tdbii->proto = tdbi->proto;
     tdbii->spi = tdbi->spi;
     return (void *) tdbii;
+}
+
+/* Check whether an IP{4,6} address is unspecified */
+int
+ipsp_is_unspecified(union sockaddr_union addr)
+{
+    switch (addr.sa.sa_family)
+    {
+#ifdef INET
+	case AF_INET:
+	    if (addr.sin.sin_addr.s_addr == INADDR_ANY)
+	      return 1;
+	    else
+	      return 0;
+#endif /* INET */
+
+#ifdef INET6
+	case AF_INET6:
+	    if (IN6_IS_ADDR_UNSPECIFIED(&addr.sin6.sin6_addr))
+	      return 1;
+	    else
+	      return 0;
+#endif /* INET6 */
+
+	case 0: /* No family set */
+	default:
+	    return 1;
+    }
 }
