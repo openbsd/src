@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma_sbus.c,v 1.11 2003/07/03 20:36:07 jason Exp $	*/
+/*	$OpenBSD: dma_sbus.c,v 1.12 2005/03/03 01:41:45 miod Exp $	*/
 /*	$NetBSD: dma_sbus.c,v 1.5 2000/07/09 20:57:42 pk Exp $ */
 
 /*-
@@ -230,7 +230,8 @@ dmaattach_sbus(parent, self, aux)
 
 	sbus_establish(&dsc->sc_sd, &sc->sc_dev);
 	sbt = dma_alloc_bustag(dsc);
-	lsi64854_attach(sc);
+	if (lsi64854_attach(sc) != 0)
+		return;
 
 	/* Attach children */
 	for (node = firstchild(sa->sa_node); node; node = nextsibling(node)) {

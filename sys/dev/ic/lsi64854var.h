@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsi64854var.h,v 1.4 2002/06/14 21:34:59 todd Exp $	*/
+/*	$OpenBSD: lsi64854var.h,v 1.5 2005/03/03 01:41:44 miod Exp $	*/
 /*	$NetBSD: lsi64854var.h,v 1.4 2001/03/29 02:58:39 petrov Exp $ */
 
 /*-
@@ -102,7 +102,7 @@ struct lsi64854_softc {
 } while (0)
 
 
-void	lsi64854_attach(struct lsi64854_softc *);
+int	lsi64854_attach(struct lsi64854_softc *);
 int	lsi64854_scsi_intr(void *);
 int	lsi64854_enet_intr(void *);
 int	lsi64854_pp_intr(void *);

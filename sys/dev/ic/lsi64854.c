@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsi64854.c,v 1.5 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: lsi64854.c,v 1.6 2005/03/03 01:41:44 miod Exp $	*/
 /*	$NetBSD: lsi64854.c,v 1.18 2001/06/04 20:56:51 mrg Exp $ */
 
 /*-
@@ -88,11 +88,12 @@ int lsi64854debug = 0;
  *	sc_channel (one of SCSI, ENET, PP)
  *	sc_client (one of SCSI, ENET, PP `soft_c' pointers)
  */
-void
+int
 lsi64854_attach(sc)
 	struct lsi64854_softc *sc;
 {
 	u_int32_t csr;
+	int rc;
 
 	/* Indirect functions */
 	switch (sc->sc_channel) {
@@ -112,10 +113,10 @@ lsi64854_attach(sc)
 	sc->reset = lsi64854_reset;
 
 	/* Allocate a dmamap */
-	if (bus_dmamap_create(sc->sc_dmatag, MAX_DMA_SZ, 1, MAX_DMA_SZ,
-			      0, BUS_DMA_WAITOK, &sc->sc_dmamap) != 0) {
-		printf("%s: dma map create failed\n", sc->sc_dev.dv_xname);
-		return;
+	if ((rc = bus_dmamap_create(sc->sc_dmatag, MAX_DMA_SZ, 1, MAX_DMA_SZ,
+			      0, BUS_DMA_WAITOK, &sc->sc_dmamap)) != 0) {
+		printf(": dma map create failed\n");
+		return (rc);
 	}
 
 	printf(": dma rev ");
@@ -146,6 +147,8 @@ lsi64854_attach(sc)
 
 	DPRINTF(LDB_ANY, (", burst 0x%x, csr 0x%x", sc->sc_burst, csr));
 	printf("\n");
+
+	return (0);
 }
 
 /*
