@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.17 1998/09/27 19:51:16 fgsch Exp $
+#	$OpenBSD: pnpdevs,v 1.18 1998/09/30 09:06:40 fgsch Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -357,6 +357,8 @@ com	BDP0356 #Best Data 56x2
 pccom	BDP0356	#Best Data 56x2
 com	GWY6290 #Telepath with x2 Technology
 pccom	GWY6290 #Telepath with x2 Technology
+com	GVC0303 #MaxTech 33.6 PnP D/F/V
+pccom	GVC0303 #MaxTech 33.6 PnP D/F/V
 
 # Ethernet:
 #le	BRI1001	#BOCALANcard COMBO	(PNP8200)
