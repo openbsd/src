@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.2 2000/04/26 21:35:39 jakob Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.3 2000/10/03 14:15:55 ho Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -40,6 +40,7 @@
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
+#include <arpa/inet.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -281,7 +282,7 @@ decode_prefix4(const u_char *pd, char *buf, int buflen)
 		((u_char *)&addr)[(plen + 7) / 8 - 1] &=
 			((0xff00 >> (plen % 8)) & 0xff);
 	}
-	snprintf(buf, buflen, "%s/%d", getname((char *)&addr), plen);
+	snprintf(buf, buflen, "%s/%d", inet_ntoa(addr), plen);
 	return 1 + (plen + 7) / 8;
 }
 
@@ -317,6 +318,9 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 	int tlen;
 	const u_char *p;
 	char buf[256];
+	u_int16_t ss;
+	u_int32_t ll;
+	struct in_addr aa;
 
 	p = dat;
 
@@ -343,8 +347,9 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 				printf("confed");
 			printf("%s", (p[0] & 1) ? "{" : "");
 			for (i = 0; i < p[1]; i += 2) {
+				memcpy((void *)&ss, (void *)&p[2+i], sizeof(ss));
 				printf("%s%u", i == 0 ? "" : " ",
-					ntohs(*(u_int16_t *)&p[2 + i]));
+							ntohs(ss));
 			}
 			printf("%s", (p[0] & 1) ? "}" : "");
 			p += 2 + p[1] * 2;
@@ -353,15 +358,19 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 	case BGPTYPE_NEXT_HOP:
 		if (len != 4)
 			printf(" invalid len");
-		else
-			printf(" %s", getname(p));
+		else {
+			memcpy((void *)&aa.s_addr, (void *)&p[0], sizeof(aa.s_addr));
+			printf(" %s", inet_ntoa(aa));
+		}
 		break;
 	case BGPTYPE_MULTI_EXIT_DISC:
 	case BGPTYPE_LOCAL_PREF:
 		if (len != 4)
 			printf(" invalid len");
-		else
-			printf(" %u", (u_int32_t)ntohl(*(u_int32_t *)p));
+		else {
+			memcpy((void *)&ll, (void *)&p[0], sizeof(ll));
+			printf(" %u", (u_int32_t)ntohl(ll));
+		}
 		break;
 	case BGPTYPE_ATOMIC_AGGREGATE:
 		if (len != 0)
@@ -372,8 +381,9 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			printf(" invalid len");
 			break;
 		}
-		printf(" AS #%u, origin %s", ntohs(*(u_int16_t *)p),
-			getname(p + 2));
+		memcpy((void *)&ss, (void *)&p[0], sizeof(ss));
+		memcpy((void *)&aa.s_addr, (void *)&p[2], sizeof(aa.s_addr));
+		printf(" AS #%u, origin %s", ntohs(ss), inet_ntoa(aa));
 		break;
 	case BGPTYPE_COMMUNITIES:
 		if (len % 4) {
@@ -382,7 +392,8 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		}
 		for (i = 0; i < len; i += 4) {
 			u_int32_t comm;
-			comm = (u_int32_t)ntohl(*(u_int32_t *)&p[i]);
+			memcpy((void *)&ll,(void *)&p[0+i],sizeof(ll));
+			comm = (u_int32_t)ntohl(ll);
 			switch (comm) {
 			case BGP_COMMUNITY_NO_EXPORT:
 				printf(" NO_EXPORT");
@@ -401,7 +412,8 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		}
 		break;
 	case BGPTYPE_MP_REACH_NLRI:
-		af = ntohs(*(u_int16_t *)p);
+		memcpy((void *)&ss, (void *)&p[0], sizeof(ss));
+		af = ntohs(ss);
 		safi = p[2];
 		if (safi >= 128)
 			printf(" %s vendor specific,", af_name(af));
@@ -423,16 +435,18 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		tlen = p[0];
 		if (tlen) {
 			printf(" nexthop");
-			if (af == AFNUM_INET)
-				advance = 4;
 #ifdef INET6
-			else if (af == AFNUM_INET6)
+			if (af == AFNUM_INET6)
 				advance = 16;
+			else
 #endif
+				advance = 4; /* AFNUM_INET */
 
 			for (i = 0; i < tlen; i += advance) {
-				if (af == AFNUM_INET)
-					printf(" %s", getname(p + 1 + i));
+				if (af == AFNUM_INET) {
+				    memcpy((void *)&aa.s_addr, (void *)&p[1+i], sizeof(aa.s_addr));
+				    printf(" %s", inet_ntoa(aa));
+				}
 #ifdef INET6
 				else if (af == AFNUM_INET6)
 					printf(" %s", getname6(p + 1 + i));
@@ -455,12 +469,12 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 
 		printf(" NLRI");
 		while (len - (p - dat) > 0) {
-			if (af == AFNUM_INET)
-				advance = decode_prefix4(p, buf, sizeof(buf));
 #ifdef INET6
-			else if (af == AFNUM_INET6)
+			if (af == AFNUM_INET6)
 				advance = decode_prefix6(p, buf, sizeof(buf));
+			else
 #endif
+				advance = decode_prefix4(p, buf, sizeof(buf));
 			printf(" %s", buf);
 
 			p += advance;
@@ -469,7 +483,8 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		break;
 
 	case BGPTYPE_MP_UNREACH_NLRI:
-		af = ntohs(*(u_int16_t *)p);
+		memcpy((void *)&ss, (void *)&p[0], sizeof(ss));
+		af = ntohs(ss);
 		safi = p[2];
 		if (safi >= 128)
 			printf(" %s vendor specific,", af_name(af));
@@ -481,12 +496,13 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 
 		printf(" Withdraw");
 		while (len - (p - dat) > 0) {
-			if (af == AFNUM_INET)
-				advance = decode_prefix4(p, buf, sizeof(buf));
 #ifdef INET6
-			else if (af == AFNUM_INET6)
+			if (af == AFNUM_INET6)
 				advance = decode_prefix6(p, buf, sizeof(buf));
+			else
 #endif
+				advance = decode_prefix4(p, buf, sizeof(buf));
+
 			printf(" %s", buf);
 
 			p += advance;
@@ -512,7 +528,7 @@ bgp_open_print(const u_char *dat, int length)
 	printf(": Version %d,", bgpo.bgpo_version);
 	printf(" AS #%u,", ntohs(bgpo.bgpo_myas));
 	printf(" Holdtime %u,", ntohs(bgpo.bgpo_holdtime));
-	printf(" ID %s,", getname((char *)&bgpo.bgpo_id));
+	printf(" ID %s,", getname((const u_char *)&bgpo.bgpo_id));
 	printf(" Option length %u", bgpo.bgpo_optlen);
 
 	/* ugly! */
@@ -542,6 +558,7 @@ bgp_update_print(const u_char *dat, int length)
 	int len;
 	int i;
 	int newline;
+	u_int16_t ss;
 
 	memcpy(&bgp, dat, sizeof(bgp));
 	hlen = ntohs(bgp.bgp_len);
@@ -549,13 +566,15 @@ bgp_update_print(const u_char *dat, int length)
 	printf(":");
 
 	/* Unfeasible routes */
-	len = ntohs(*(u_int16_t *)p);
+	memcpy((void *)&ss, (void *)&p[0], sizeof(ss));
+	len = ntohs(ss);
 	if (len) {
 		printf(" (Withdrawn routes: %d bytes)", len);
 	}
 	p += 2 + len;
 
-	len = ntohs(*(u_int16_t *)p);
+	memcpy((void *)&ss, (void *)&p[0], sizeof(ss));
+	len = ntohs(ss);
 	if (len) {
 		/* do something more useful!*/
 		i = 2;
