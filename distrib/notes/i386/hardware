@@ -147,7 +147,7 @@ Supported devices {:-include-:}:
 		Serial mice (uses serial port driver)
 	Sound Cards:
 		SoundBlaster [*] [+]
-		Gravis Ulrasound and Ultrasound Max [*] [+]
+		Gravis Ultrasound and Ultrasound Max [*] [+]
 			[The following drivers are not extensively tested]
 		Personal Sound System [*] [+]
 		Windows Sound System [*] [+]
