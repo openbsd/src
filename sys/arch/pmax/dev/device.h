@@ -54,7 +54,7 @@ struct pmax_driver {
 				/* routine to start operation */
 	void	(*d_start) __P((struct ScsiCmd *cmd));
 				/* routine to call when operation complete */
-	void	(*d_done) __P((void));
+	void	(*d_done) __P((int, int, int, int));
 				/* routine to call when interrupt is seen */
 	int	(*d_intr) __P((void* sc));
 };
