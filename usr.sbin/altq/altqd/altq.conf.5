@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altq.conf.5,v 1.7 2002/03/01 11:07:25 kjc Exp $
+.\"	$OpenBSD: altq.conf.5,v 1.8 2002/11/17 02:46:30 kjc Exp $
 .\"	$KAME: altq.conf.5,v 1.11 2001/07/25 10:40:15 kjc Exp $
 .\"
 .\" Copyright (C) 2000
@@ -1146,7 +1146,7 @@ interface fxp0 bandwidth 100M priq
 class priq fxp0 high_class NULL priority 2
         filter fxp0 high_class 0 0 0 0 1
 class priq fxp0 med_class NULL priority 1
-        filter fxp0 high_class 0 0 0 0 6
+        filter fxp0 med_class 0 0 0 0 6
 class priq fxp0 low_class NULL priority 0 default
 .Ed
 .Ss WFQ Example
