@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.4 1995/12/19 21:25:28 deraadt Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.5 1995/12/20 18:39:20 deraadt Exp $
 
 MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8 man/cvsinit.8 man/mkmodules.1
 
@@ -14,7 +14,8 @@ config.status:
 	sh ${.CURDIR}/configure --prefix=/usr
 
 install: maninstall
-	${MAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info install
+	${MAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info \
+	    INSTALL_MAN= install
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
