@@ -1,4 +1,4 @@
-.\"       $OpenBSD: extattrctl.8,v 1.2 2002/03/27 19:17:11 drahn Exp $
+.\"       $OpenBSD: extattrctl.8,v 1.3 2002/11/14 02:57:28 deraadt Exp $
 .\"-
 .\" Copyright (c) 2000, 2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -133,26 +133,26 @@ most have been enabled using
 .Cm enable .
 .El
 .Sh EXAMPLES
-.Dl extattrctl start /
+.Dl # extattrctl start /
 .Pp
 Start extended attributes on the root file system.
 .Pp
-.Dl extattrctl initattr 17 /.attribute/md5
+.Dl # extattrctl initattr 17 /.attribute/md5
 .Pp
 Create an attribute backing file in /.attribute/md5, and set the maximum
 size of each attribute to 17 bytes, with a sparse file used for storing
 the attributes.
 .Pp
-.Dl extattrctl enable / system md5 /.attribute/md5
+.Dl # extattrctl enable / system md5 /.attribute/md5
 .Pp
 Enable an attribute named md5 on the root file system, backed from the file
 /.attribute/md5.
 .Pp
-.Dl extattrctl disable / md5
+.Dl # extattrctl disable / md5
 .Pp
 Disable the attribute named md5 on the root file system.
 .Pp
-.Dl extattrctl stop /
+.Dl # extattrctl stop /
 .Pp
 Stop extended attributes on the root file system.
 .Sh SEE ALSO

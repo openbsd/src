@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbhidaction.1,v 1.1 2002/05/10 00:09:17 nate Exp $
+.\" $OpenBSD: usbhidaction.1,v 1.2 2002/11/14 02:57:28 deraadt Exp $
 .\" $NetBSD: usbhidaction.1,v 1.6 2002/01/18 14:38:59 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ Consumer:Consumer_Control.Consumer:Channel_Top.Microsoft:Base_Down 1
 .Pp
 A sample invocation using this configuration would be
 .Bd -literal -offset indent
-usbhidaction -f /dev/uhid1 -c conf /dev/mixer1
+$ usbhidaction -f /dev/uhid1 -c conf /dev/mixer1
 .Ed
 .Sh SEE ALSO
 .Xr usbhidctl 1 ,

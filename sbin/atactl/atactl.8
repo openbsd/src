@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.17 2002/08/04 14:11:41 gluk Exp $
+.\"	$OpenBSD: atactl.8,v 1.18 2002/11/14 02:57:27 deraadt Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,22 +69,22 @@ the
 command is implied.
 .Sh COMMANDS
 .Pp
-.Cm identify
+.Cm # atactl identify
 .Pp
 Identify the specified device, displaying the device's vendor, product,
 revision strings, supported capabilities and enabled capabilities.
 .Pp
-.Cm idle
+.Cm # atactl idle
 .Pp
 Place the specified device into Idle mode.
 This mode may consume less power than Active mode.
 .Pp
-.Cm standby
+.Cm # atactl standby
 .Pp
 Place the specified device into Standby mode.
 This mode will consume less power than Idle mode.
 .Pp
-.Cm sleep
+.Cm # atactl sleep
 .Pp
 Place the specified device into Sleep mode.
 This mode will consume less power than Standby mode,
@@ -94,7 +94,7 @@ Typically the
 driver performs this reset automatically, but this should still be
 used with caution.
 .Pp
-.Cm setidle
+.Cm # atactl setidle
 .Ar standby-timer
 .Pp
 Places the specified device into Idle mode, and sets the Standby timer
@@ -103,7 +103,7 @@ to
 seconds.
 A value of 0 will disable the Standby timer.
 .Pp
-.Cm setstandby
+.Cm # atactl setstandby
 .Ar standby-timer
 .Pp
 Places the specified device into Standby mode, and sets the Standby timer
@@ -112,12 +112,12 @@ to
 seconds.
 A value of 0 will disable the Standby timer.
 .Pp
-.Cm checkpower
+.Cm # atactl checkpower
 .Pp
 Will print out if the device is in Active, Idle, or Standby power
 management mode.
 .Pp
-.Cm apmset
+.Cm # atactl apmset
 .Ar power-management-level
 .Pp
 Enables and sets the advanced power management level to the requested
@@ -142,7 +142,7 @@ in the output of the
 .Cm identify
 command.
 .Pp
-.Cm apmdisable
+.Cm # atactl apmdisable
 .Pp
 Disables support for advanced power management on the specified device.
 Note that devices supporting advanced powermanagement may refuse to
@@ -150,7 +150,7 @@ disable it, resulting in an
 .Sq ATA device returned Aborted Command
 warning.
 .Pp
-.Cm acousticset
+.Cm # atactl acousticset
 .Ar acoustic-management-level
 .Pp
 Enables and sets the automatic acoustic management level to the requested
@@ -165,7 +165,7 @@ in the output of the
 .Cm identify
 command.
 .Pp
-.Cm acousticdisable
+.Cm # atactl acousticdisable
 .Pp
 Disables support for automatic acoustic management on the specified device.
 Note that devices supporting automatic acoustic management may refuse to
@@ -173,17 +173,17 @@ disable it, resulting in an
 .Sq ATA device returned Aborted Command
 warning.
 .Pp
-.Cm podenable
+.Cm # atactl podenable
 .Pp
 Allows the specified device to revert to power-on default (pod) settings
 after a reset.
 .Pp
-.Cm poddisable
+.Cm # atactl poddisable
 .Pp
 Disallows the specified device to revert to power-on default (pod) settings
 after a reset.
 .Pp
-.Cm puisenable
+.Cm # atactl puisenable
 .Pp
 Enables power-up in standby (puis) on the specified device, causing the
 device to wait with spinning up the disks after power-up.
@@ -199,7 +199,7 @@ in the output of the
 .Cm identify
 command.
 .Pp
-.Cm puisdisable
+.Cm # atactl puisdisable
 .Pp
 Disables power-up in standby (puis) on the specified device, causing the
 device to spin up the disks after power-up.
@@ -207,12 +207,12 @@ This should be the factory
 default setting of the device and it is recommended to leave this
 setting disabled.
 .Pp
-.Cm puisspinup
+.Cm # atactl puisspinup
 .Pp
 Explicitly spins up the device if it powered-up into standby mode (i.e.
 power-up in standby was enabled).
 .Pp
-.Cm readaheadenable
+.Cm # atactl readaheadenable
 .Pp
 Enables read look-ahead on the specified device.
 This may increase performance.
@@ -223,7 +223,7 @@ in the output of the
 .Cm identify
 command.
 .Pp
-.Cm readaheaddisable
+.Cm # atactl readaheaddisable
 .Pp
 Disables read look-ahead on the specified device.
 This may decrease performance.
@@ -234,11 +234,11 @@ behaviour in implementing this, so it is
 recommended to issue this command on a disk containing any currently
 mounted filesystems.
 .Pp
-.Cm secsetpass
+.Cm # atactl secsetpass
 .Ar user
 .Ar high | maximum
 .br
-.Cm secsetpass
+.Cm # atactl secsetpass
 .Ar master
 .Pp
 Sets password and security level for the specified device.
@@ -274,7 +274,7 @@ Execution of the
 .Cm secerase
 command erases all user data on the device.
 .Pp
-.Cm secunlock
+.Cm # atactl secunlock
 .Ar user | master
 .Pp
 Unlocks the specified device with user or master password.
@@ -286,7 +286,7 @@ If the security level was set to maximum during the last
 .Cm secsetpass
 command, the device won't unlock if the master password is received.
 .Pp
-.Cm secerase
+.Cm # atactl secerase
 .Ar user | master
 .Op Ar enhanced
 .Pp
@@ -308,7 +308,7 @@ This command will disable the device lock mode, however, the master password
 will still be stored internally within the device and may be reactivated later
 when a new user password is set.
 .Pp
-.Cm secfreeze
+.Cm # atactl secfreeze
 .Pp
 Prevents changes to passwords until a following power cycle.
 The purpose of this command is to prevent password setting attacks on the
@@ -316,7 +316,7 @@ security system.
 After command completion any other commands that update the device lock mode
 will be aborted.
 .Pp
-.Cm secdisablepass
+.Cm # atactl secdisablepass
 .Ar user | master
 .Pp
 Disables the lock mode for the specified device with user or master password.
@@ -336,7 +336,7 @@ If you lose the user and master passwords the device will not be accessible
 at all.
 Don't use it unless the implications are completely understood.
 .Pp
-.Cm smartenable
+.Cm # atactl smartenable
 .Pp
 Enables SMART (Self-Monitoring, Analysis, and Reporting Technology) on the
 specified device (if supported).
@@ -348,7 +348,7 @@ in the output of the
 .Cm identify
 command.
 .Pp
-.Cm smartdisable
+.Cm # atactl smartdisable
 .Pp
 Disables support for SMART on the specified device.
 Note that this means that the device will no longer record any SMART
@@ -359,7 +359,7 @@ Note that SMART
 be enabled while executing the next described commands or the device will
 return an error.
 .Pp
-.Cm smartstatus
+.Cm # atactl smartstatus
 .Pp
 Reads the reliability status of the specified device.
 If the device reports
@@ -368,12 +368,12 @@ failure), the warning
 .Sq SMART threshold exceeded!
 is printed to stderr and a status of 2 is returned.
 .Pp
-.Cm smartautosave
+.Cm # atactl smartautosave
 .Ar enable | disable
 .Pp
 Enables/disables attribute autosave feature on the specified device.
 .Pp
-.Cm smartoffline
+.Cm # atactl smartoffline
 .Ar subcommand
 .Pp
 Causes the specified device to immediately initiate the optional set of
@@ -404,12 +404,12 @@ This option is therefore
 .Em not recommended
 unless the implications are understood.
 .Pp
-.Cm smartread
+.Cm # atactl smartread
 .Pp
 Reads various SMART information from the specified device and prints it to
 stdout.
 .Pp
-.Cm smartreadlog
+.Cm # atactl smartreadlog
 .Ar log
 .Pp
 Reads specified
@@ -429,7 +429,7 @@ comprehensive error log;
 self-test log.
 .El
 .Pp
-.Cm readattr
+.Cm # atactl readattr
 .Pp
 Displays attributes thresholds and values for the specified device.
 Besides attributes values device vendor can provide additional information
@@ -444,7 +444,7 @@ SMART commands and
 command are for experts only.
 If you can't understand its meaning don't ask us, read ATA working drafts.
 .Pp
-.Cm writecachedisable
+.Cm # atactl writecachedisable
 .Pp
 Disable the write cache on the specified device (if supported).
 This may decrease performance.
@@ -454,7 +454,7 @@ in the output of the
 .Cm identify
 command.
 .Pp
-.Cm writecacheenable
+.Cm # atactl writecacheenable
 .Pp
 Enables the write cache on the specified device (if supported).
 This may increase performance, however data still in the device's cache at

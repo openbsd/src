@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.1,v 1.12 2001/05/01 17:58:02 aaron Exp $
+.\" $OpenBSD: audioctl.1,v 1.13 2002/11/14 02:57:27 deraadt Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,17 +85,17 @@ Suppress printing of the variable name.
 .Sh EXAMPLES
 To set the playing sampling rate to 11025 you can enter
 .Pp
-.Dl audioctl -w play.sample_rate=11025
+.Dl $ audioctl -w play.sample_rate=11025
 .Pp
 Note that many of the variables that can be inspected and changed
 are reset when the device is opened.
 This can be circumvented like so:
 .Pp
-.Dl (cat file.au; audioctl -f /dev/stdout -a) > /dev/audio
+.Dl $ (cat file.au; audioctl -f /dev/stdout -a) > /dev/audio
 .Pp
 or
 .Pp
-.Dl (audioctl -f /dev/stdout -w blocksize=1024; cat file.au) > /dev/audio
+.Dl $ (audioctl -f /dev/stdout -w blocksize=1024; cat file.au) > /dev/audio
 .Sh ENVIRONMENT
 .Bl -tag -width AUDIOCTLDEVICE
 .It Ev AUDIOCTLDEVICE

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lam.1,v 1.2 1996/06/26 05:34:49 deraadt Exp $
+.\"	$OpenBSD: lam.1,v 1.3 2002/11/14 02:57:27 deraadt Exp $
 .\"	$NetBSD: lam.1,v 1.2 1994/11/14 20:27:40 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -109,22 +109,22 @@ To print files simultaneously for easy viewing use
 .PP
 The command
 .IC
-lam file1 file2 file3 file4
+$ lam file1 file2 file3 file4
 .NC
 joins 4 files together along each line.
 To merge the lines from four different files use
 .IC
-lam file1 \-S "\\
+$ lam file1 \-S "\\
 .br
 " file2 file3 file4
 .NC
 Every 2 lines of a file may be joined on one line with
 .IC
-lam \- \- < file
+$ lam \- \- < file
 .NC
 and a form letter with substitutions keyed by `@' can be done with
 .IC
-lam \-t @ letter changes
+$ lam \-t @ letter changes
 .NC
 .SH SEE ALSO
 join(1), pr(1), printf(3)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.35 2002/05/17 15:04:32 millert Exp $
+.\"	$OpenBSD: find.1,v 1.36 2002/11/14 02:57:27 deraadt Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -498,21 +498,21 @@ to be a separate argument to
 .Sh EXAMPLES
 The following examples are shown as given to the shell:
 .Bl -tag -width findx
-.It Li "find  /  \e!  -name  \*q*.c\*q  -print"
+.It Li "$ find  /  \e!  -name  \*q*.c\*q  -print"
 Print out a list of all the files whose names do not end in
 .Dq \&.c .
-.It Li "find  /  -newer  ttt  -user  wnj  -print"
+.It Li "$ find  /  -newer  ttt  -user  wnj  -print"
 Print out a list of all the files owned by user
 .Dq wnj
 that are newer
 than the file
 .Dq ttt .
-.It Li "find  /  \e!  \e(  -newer  ttt  -user  wnj  \e)  -print"
+.It Li "$ find  /  \e!  \e(  -newer  ttt  -user  wnj  \e)  -print"
 Print out a list of all the files which are not both newer than
 .Dq ttt
 and owned by
 .Dq wnj .
-.It Li "find  /  \e(  -newer  ttt  -or  -user wnj  \e)  -print"
+.It Li "$ find  /  \e(  -newer  ttt  -or  -user wnj  \e)  -print"
 Print out a list of all the files that are either owned by
 .Dq wnj
 or

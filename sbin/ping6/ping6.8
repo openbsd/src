@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.24 2002/05/26 13:22:40 itojun Exp $
+.\"	$OpenBSD: ping6.8,v 1.25 2002/11/14 02:57:27 deraadt Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -399,7 +399,7 @@ works just like
 would work; the following will send ICMPv6 echo request to
 .Li dst.foo.com .
 .Bd -literal -offset indent
-ping6 -n dst.foo.com
+$ ping6 -n dst.foo.com
 .Ed
 .Pp
 The following will probe hostnames for all nodes on the network link attached to
@@ -410,13 +410,13 @@ The address
 is named the link-local all-node multicast address, and the packet would
 reach every node on the network link.
 .Bd -literal -offset indent
-ping6 -w ff02::1%wi0
+$ ping6 -w ff02::1%wi0
 .Ed
 .Pp
 The following will probe addresses assigned to the destination node,
 .Li dst.foo.com .
 .Bd -literal -offset indent
-ping6 -a agl dst.foo.com
+$ ping6 -a agl dst.foo.com
 .Ed
 .Sh SEE ALSO
 .Xr netstat 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.45 2002/09/18 07:33:47 deraadt Exp $
+.\"	$OpenBSD: disklabel.8,v 1.46 2002/11/14 02:57:27 deraadt Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -507,12 +507,12 @@ with the
 flag and paste any entries you want from the default label into the real
 one.
 .Sh EXAMPLES
-.Dl disklabel sd0
+.Cm # disklabel sd0
 .Pp
 Display the in-core label for sd0 as obtained via
 .Pa /dev/rsd0c .
 .Pp
-.Dl disklabel -w -r /dev/rsd0c sd2212 foo
+.Cm # disklabel -w -r /dev/rsd0c sd2212 foo
 .Pp
 Create a label for sd0 based on information for
 .Dq sd2212
@@ -523,7 +523,7 @@ Any existing bootstrap code will be clobbered.
 .Fl r
 flag though.)
 .Pp
-.Dl disklabel -e -r sd0
+.Cm # disklabel -e -r sd0
 .Pp
 Read the on-disk label for sd0, edit it and reinstall in-core as
 well as on-disk.
@@ -533,13 +533,13 @@ flag
 though.)
 Existing bootstrap code is unaffected.
 .Pp
-.Dl disklabel -R sd0 mylabel
+.Cm # disklabel -R sd0 mylabel
 .Pp
 Restore the on-disk and in-core label for sd0 from information in
 .Pa mylabel .
 Existing bootstrap code is unaffected.
 .Pp
-.Dl disklabel -B sd0
+.Cm # disklabel -B sd0
 .Pp
 Install a new bootstrap on sd0.
 The boot code comes from
@@ -550,7 +550,7 @@ On-disk and in-core labels are unchanged, but on some systems other
 information may be destroyed.
 Use with care.
 .Pp
-.Dl disklabel -w -B /dev/rsd0c -b newboot sd2212
+.Cm # disklabel -w -B /dev/rsd0c -b newboot sd2212
 .Pp
 Install a new label and bootstrap.
 The label is derived from disktab information for

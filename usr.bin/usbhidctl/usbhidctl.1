@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbhidctl.1,v 1.4 2002/05/10 00:09:17 nate Exp $
+.\" $OpenBSD: usbhidctl.1,v 1.5 2002/11/14 02:57:28 deraadt Exp $
 .\" $NetBSD: usbhidctl.1,v 1.14 2001/12/28 17:49:32 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ An item can generally be named by omitting one or more of the page names.  For
 example the
 .Qq button 2
 item would usually just be referred to on the command line as:
-.Dl usbhidctl -f /dev/mouse Mouse.Pointer.Button_2
+.Dl $ usbhidctl -f /dev/mouse Mouse.Pointer.Button_2
 .Pp
 Items can also be named by referring to parts of the item name with the
 numeric representation of the native HID usage identifiers.  This is most
@@ -173,7 +173,7 @@ page is 1, and the usage identifier for the usage
 is 2, so the following can be used to refer to the
 .Qq button 2
 item:
-.Dl usbhidctl -f /dev/mouse 1:Mouse.1:Pointer.Button:2
+.Dl $ usbhidctl -f /dev/mouse 1:Mouse.1:Pointer.Button:2
 .Pp
 Devices with human interface outputs can be manipulated with the
 .Fl w
@@ -181,7 +181,7 @@ option.  For example, some USB mice have a Light Emitting Diode under software
 control as usage 2 under page 0xffff, in the
 .Qq Mouse
 collection.  The following can be used to switch this LED off:
-.Dl usbhidctl -f /dev/mouse -w Mouse.0xffff:2=0
+.Dl $ usbhidctl -f /dev/mouse -w Mouse.0xffff:2=0
 .Sh SEE ALSO
 .Xr usbhidaction 1 ,
 .Xr usbhid 3 ,

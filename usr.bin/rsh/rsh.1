@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsh.1,v 1.11 2002/05/06 22:50:03 millert Exp $
+.\"	$OpenBSD: rsh.1,v 1.12 2002/11/14 02:57:28 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -126,7 +126,7 @@ Shell meta-characters which are not quoted are interpreted on local machine,
 while quoted meta-characters are interpreted on the remote machine.
 For example, the command
 .Pp
-.Dl rsh otherhost cat remotefile >> localfile
+.Dl $ rsh otherhost cat remotefile >> localfile
 .Pp
 appends the remote file
 .Ar remotefile
@@ -134,7 +134,7 @@ to the local file
 .Ar localfile ,
 while
 .Pp
-.Dl rsh otherhost cat remotefile \&">>\&" other_remotefile
+.Dl $ rsh otherhost cat remotefile \&">>\&" other_remotefile
 .Pp
 appends
 .Ar remotefile

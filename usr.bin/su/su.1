@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.16 2002/10/16 01:06:32 millert Exp $
+.\"	$OpenBSD: su.1,v 1.17 2002/11/14 02:57:28 deraadt Exp $
 .\"
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -218,22 +218,22 @@ prompt is set to
 to remind one of its awesome power.
 .Sh EXAMPLES
 .Bl -tag -width 5n -compact
-.It Li "su bin -c makewhatis"
+.It Li "$ su bin -c makewhatis"
 Runs the command
 .Li makewhatis
 as user
 .Li bin .
 You will be asked for bin's password unless your real UID is 0.
 .Pp
-.It Li "su bin -c 'makewhatis /usr/local/man'"
+.It Li "$ su bin -c 'makewhatis /usr/local/man'"
 Same as above, but the target command consists of more than a
 single word.
 .Pp
-.It Li "su -l foo"
+.It Li "$ su -l foo"
 Pretend a login for user
 .Li foo .
 .Pp
-.It Li "su -a skey -l foo"
+.It Li "$ su -a skey -l foo"
 Same as above, but use S/Key for authentication.
 .El
 .Sh ENVIRONMENT

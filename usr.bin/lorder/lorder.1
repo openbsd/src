@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lorder.1,v 1.5 2000/11/10 05:10:32 aaron Exp $
+.\"	$OpenBSD: lorder.1,v 1.6 2002/11/14 02:57:27 deraadt Exp $
 .\"	$NetBSD: lorder.1,v 1.5 1995/08/31 22:42:44 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -61,7 +61,7 @@ object modules so that all references may be resolved in a single
 pass of the loader.
 .Sh EXAMPLES
 .Bd -literal
-ar cr library.a `lorder ${OBJS} | tsort`
+$ ar cr library.a `lorder ${OBJS} | tsort`
 .Ed
 .Sh SEE ALSO
 .Xr ar 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpcinfo.8,v 1.8 2000/11/09 17:52:34 aaron Exp $
+.\"	$OpenBSD: rpcinfo.8,v 1.9 2002/11/14 02:57:28 deraadt Exp $
 .\"	from: @(#)rpcinfo.8c	2.2 88/08/03 4.0 RPCSRC; from 1.24 88/02/25 SMI
 .\"
 .Dd December 17, 1987
@@ -141,7 +141,7 @@ To show all of the
 .Tn RPC
 services registered on the local machine use:
 .Pp
-.Dl example% rpcinfo -p
+.Dl $ rpcinfo -p
 .Pp
 To show all of the
 .Tn RPC
@@ -149,12 +149,12 @@ services registered on the machine named
 .Ar klaxon
 use:
 .Pp
-.Dl example% rpcinfo -p klaxon
+.Dl $ rpcinfo -p klaxon
 .Pp
 To show all machines on the local net that are running the Yellow Pages
 service use:
 .Pp
-.Dl example% rpcinfo -b ypserv 'version' | uniq
+.Dl $ rpcinfo -b ypserv 'version' | uniq
 .Pp
 where 'version' is the current Yellow Pages version obtained from the
 results of the
@@ -165,7 +165,7 @@ To delete the registration for version 1 of the
 .Nm walld
 service use:
 .Pp
-.Dl example% rpcinfo -d walld 1
+.Dl $ rpcinfo -d walld 1
 .Sh SEE ALSO
 .Xr rpc 5 ,
 .Xr portmap 8

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.30 2002/08/30 02:17:34 stevesk Exp $
+.\"	$OpenBSD: traceroute.8,v 1.31 2002/11/14 02:57:28 deraadt Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -249,7 +249,7 @@ flag).
 .Pp
 A sample use and output might be:
 .Bd -literal
-[yak 71]% traceroute nis.nsf.net.
+$ traceroute nis.nsf.net.
 traceroute to nis.nsf.net (35.1.1.48), 64 hops max, 56 byte packet
 1  helios.ee.lbl.gov (128.3.112.1)  19 ms  19 ms  0 ms
 2  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  39 ms  19 ms
@@ -279,7 +279,7 @@ doesn't supply address-to-name translations for its
 .Pp
 A more interesting example is:
 .Bd -literal
-[yak 72]% traceroute allspice.lcs.mit.edu.
+$ traceroute allspice.lcs.mit.edu.
 traceroute to allspice.lcs.mit.edu (18.26.0.115), 64 hops max
 1  helios.ee.lbl.gov (128.3.112.1)  0 ms  0 ms  0 ms
 2  lilac-dmc.Berkeley.EDU (128.32.216.1)  19 ms  19 ms  19 ms
@@ -390,12 +390,12 @@ If almost all the probes result in some kind of unreachable,
 will give up and exit.
 .Pp
 .Bd -literal
-traceroute \-g 10.3.0.5 128.182.0.0
+$ traceroute \-g 10.3.0.5 128.182.0.0
 
 .Ed
 will show the path from the Cambridge Mailbridge to PSC, while
 .Bd -literal
-traceroute \-g 192.5.146.4 \-g 10.3.0.5 35.0.0.0
+$ traceroute \-g 192.5.146.4 \-g 10.3.0.5 35.0.0.0
 
 .Ed
 will show the path from the Cambridge Mailbridge to Merit, using PSC to

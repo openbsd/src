@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chio.1,v 1.18 2002/02/11 18:43:50 mpech Exp $
+.\"	$OpenBSD: chio.1,v 1.19 2002/11/14 02:57:27 deraadt Exp $
 .\"	$NetBSD: chio.1,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -88,7 +88,7 @@ the first robotic arm in the changer, the ET would be
 and the EU would be
 .Dq 0 .
 .Sh SUPPORTED COMMANDS
-.Cm chio move
+.Cm # chio move
 .Aq Ar from ET
 .Aq Ar from EU
 .Aq Ar to ET
@@ -103,7 +103,7 @@ If the optional modifier
 .Pa inv
 is specified, the media unit will be inverted before insertion.
 .Pp
-.Cm chio exchange
+.Cm # chio exchange
 .Aq Ar src ET
 .Aq Ar src EU
 .Aq Ar dst1 ET
@@ -144,7 +144,7 @@ Note that not all medium changers support the
 operation; the changer must have multiple free pickers or emulate
 multiple free pickers with transient storage.
 .Pp
-.Cm chio position
+.Cm # chio position
 .Aq Ar to ET
 .Aq Ar to EU
 .Op Ar inv
@@ -157,22 +157,22 @@ is specified, the media unit will be inverted before insertion.
 .Pp
 Note that not all changers behave as expected when issued this command.
 .Pp
-.Cm chio params
+.Cm # chio params
 .Pp
 Report the number of slots, drives, pickers, and portals in the changer,
 and which picker unit the changer is currently configured to use.
 .Pp
-.Cm chio getpicker
+.Cm # chio getpicker
 .Pp
 Report which picker unit the changer is currently configured to use.
 .Pp
-.Cm chio setpicker
+.Cm # chio setpicker
 .Aq Ar unit
 .Pp
 Configure the changer to use picker
 .Aq Ar unit .
 .Pp
-.Cm chio status
+.Cm # chio status
 .Op Aq Ar type
 .Pp
 Report the status of all elements in the changer.

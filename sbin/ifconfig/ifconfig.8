@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.58 2002/06/14 09:14:24 itojun Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.59 2002/11/14 02:57:27 deraadt Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -545,24 +545,24 @@ for that interface will be printed.
 Only the superuser may modify the configuration of a network interface.
 .Sh EXAMPLES
 .Bl -tag -width ifconfig
-.It Cm ifconfig fxp0 inet 192.168.1.10 netmask 255.255.255.0
+.It Cm # ifconfig fxp0 inet 192.168.1.10 netmask 255.255.255.0
 Assign the inet(4) address of 192.168.1.10 with a network mask of
 255.255.255.0 to interface fxp0.
 .Pp
-.It Cm ifconfig fxp0 ipx 12625920
+.It Cm # ifconfig fxp0 ipx 12625920
 Assign the ipx(3) address of 12625920 specified in decimal to interface fxp0.
 .Pp
-.It Cm ifconfig fxp0 atalk 39108.128 range 39107-39109 phase 2
+.It Cm # ifconfig fxp0 atalk 39108.128 range 39107-39109 phase 2
 Assign the AppleTalk network 39108 and server node 128 with a network
 range of 39107-39109 to interface fxp0 on a phase 2 AppleTalk network.
 .Pp
-.It Cm ifconfig xl0 media 10baseT
+.It Cm # ifconfig xl0 media 10baseT
 Configure the xl0 interface to use 10baseT.
 .Pp
-.It Cm ifconfig xl0 media 100baseTX mediaopt full-duplex
+.It Cm # ifconfig xl0 media 100baseTX mediaopt full-duplex
 Configure the xl0 interface to use 100baseTX, full duplex.
 .Pp
-.It Cm ifconfig vlan0 192.168.254.1 vlan 4 vlandev fxp0
+.It Cm # ifconfig vlan0 192.168.254.1 vlan 4 vlandev fxp0
 Configure the vlan0 interface for IP address 192.168.254.1, vlan tag 4,
 and vlan parent device fxp0.
 .El
