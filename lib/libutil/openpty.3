@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openpty.3,v 1.2 1996/09/07 10:41:41 downsj Exp $
+.\"	$OpenBSD: openpty.3,v 1.3 1996/11/24 23:53:12 millert Exp $
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -34,7 +34,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 14, 1995
+.Dd November 4, 1996
 .Dt OPENPTY 3
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ The
 .Fn openpty ,
 .Fn login_tty ,
 and
-.Fn login_tty
+.Fn forkpty
 functions perform manipulations on ttys and pseudo-ttys.
 .Pp
 The
@@ -117,10 +117,17 @@ If a call to
 .Fn openpty ,
 .Fn login_tty ,
 or
-.fn forkpty
+.Fn forkpty
 is not successful, -1 is returned and
 .Va errno
-is set to indicate the error.  Otherwise, they return 0.
+is set to indicate the error.  Otherwise,
+.Fn openpty ,
+.Fn login_tty ,
+and the child process of
+.Fn forkpty
+return 0, and the parent process of
+.Fn forkpty
+returns the process ID of the child process.
 .Sh ERRORS
 .Fn openpty
 will fail if:
@@ -145,6 +152,8 @@ fails.
 .Bl -tag -width /dev/[pt]ty[pqrstuwxyzPQRST][0123456789abcdef] -compact
 .It Pa /dev/[pt]ty[pqrstuwxyzPQRST][0123456789abcdef]
 .El
+.Sh SEE ALSO
+.Xr fork 2
 .Sh BUGS
 The names of the virtual consoles for the i386 PCVT console driver
 conflict with what would be the seventh group of pseudo-ttys, so
