@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.15 1998/08/24 18:52:17 downsj Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.16 1998/08/28 22:28:51 downsj Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -123,6 +123,8 @@
 #include <pci/if_fxpvar.h>
 
 #endif /* __NetBSD__ || __OpenBSD__ */
+
+#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 
 /*
  * NOTE!  On the Alpha, we have an alignment constraint.  The
@@ -983,13 +985,14 @@ fxp_intr(arg)
 		 */
 		if (statack & (FXP_SCB_STATACK_FR | FXP_SCB_STATACK_RNR)) {
 			struct mbuf *m;
-			struct fxp_rfa *rfa;
+			u_int8_t *rfap;
 rcvloop:
 			m = sc->rfa_headm;
-			rfa = (struct fxp_rfa *)(m->m_ext.ext_buf +
-			    RFA_ALIGNMENT_FUDGE);
+			rfap = m->m_ext.ext_buf + RFA_ALIGNMENT_FUDGE;
 
-			if (rfa->rfa_status & FXP_RFA_STATUS_C) {
+			if (*(u_int16_t *)(rfap +
+			    offsetof(struct fxp_rfa, rfa_status)) &
+			    FXP_RFA_STATUS_C) {
 				/*
 				 * Remove first packet from the chain.
 				 */
@@ -1005,7 +1008,9 @@ rcvloop:
 					struct ether_header *eh;
 					u_int16_t total_len;
 
-					total_len = rfa->actual_size &
+					total_len = *(u_int16_t *)(rfap +
+					    offsetof(struct fxp_rfa,
+					    actual_size)) &
 					    (MCLBYTES - 1);
 					if (total_len <
 					    sizeof(struct ether_header)) {
@@ -1028,7 +1033,9 @@ rcvloop:
 						 */
 						if ((ifp->if_flags &
 						    IFF_PROMISC) &&
-						    (rfa->rfa_status &
+						    (*(u_int16_t *)(rfap +
+						    offsetof(struct fxp_rfa,
+						    rfa_status)) &
 						    FXP_RFA_STATUS_IAMATCH) &&
 						    (eh->ether_dhost[0] & 1)
 						    == 0) {
@@ -1152,7 +1159,7 @@ fxp_stats_update(arg)
  * Stop the interface. Cancels the statistics updater and resets
  * the interface.
  */
-static void
+void
 fxp_stop(sc)
 	struct fxp_softc *sc;
 {
@@ -1209,7 +1216,7 @@ fxp_stop(sc)
  * received before the timeout. This usually indicates that the
  * card has wedged for some reason.
  */
-static void
+void
 fxp_watchdog(ifp)
 	struct ifnet *ifp;
 {
@@ -1221,7 +1228,7 @@ fxp_watchdog(ifp)
 	fxp_init(sc);
 }
 
-static void
+void
 fxp_init(xsc)
 	void *xsc;
 {
@@ -1463,14 +1470,14 @@ fxp_init(xsc)
  * The RFA struct is stuck at the beginning of mbuf cluster and the
  * data pointer is fixed up to point just past it.
  */
-static int
+int
 fxp_add_rfabuf(sc, oldm)
 	struct fxp_softc *sc;
 	struct mbuf *oldm;
 {
 	u_int32_t v;
 	struct mbuf *m;
-	struct fxp_rfa *rfa, *p_rfa;
+	u_int8_t *rfap;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m != NULL) {
@@ -1499,34 +1506,39 @@ fxp_add_rfabuf(sc, oldm)
 	 * Get a pointer to the base of the mbuf cluster and move
 	 * data start past it.
 	 */
-	rfa = mtod(m, struct fxp_rfa *);
+	rfap = m->m_data;
 	m->m_data += sizeof(struct fxp_rfa);
-	rfa->size = MCLBYTES - sizeof(struct fxp_rfa) - RFA_ALIGNMENT_FUDGE;
+	*(u_int16_t *)(rfap + offsetof(struct fxp_rfa, size)) =
+	    MCLBYTES - sizeof(struct fxp_rfa) - RFA_ALIGNMENT_FUDGE;
 
 	/*
 	 * Initialize the rest of the RFA.  Note that since the RFA
 	 * is misaligned, we cannot store values directly.  Instead,
 	 * we use an optimized, inline copy.
 	 */
-	rfa->rfa_status = 0;
-	rfa->rfa_control = FXP_RFA_CONTROL_EL;
-	rfa->actual_size = 0;
+	*(u_int16_t *)(rfap + offsetof(struct fxp_rfa, rfa_status)) = 0;
+	*(u_int16_t *)(rfap + offsetof(struct fxp_rfa, rfa_control)) =
+	    FXP_RFA_CONTROL_EL;
+	*(u_int16_t *)(rfap + offsetof(struct fxp_rfa, actual_size)) = 0;
 
 	v = -1;
-	fxp_lwcopy(&v, &rfa->link_addr);
-	fxp_lwcopy(&v, &rfa->rbd_addr);
+	fxp_lwcopy(&v,
+	    (u_int32_t *)(rfap + offsetof(struct fxp_rfa, link_addr)));
+	fxp_lwcopy(&v,
+	    (u_int32_t *)(rfap + offsetof(struct fxp_rfa, rbd_addr)));
 
 	/*
 	 * If there are other buffers already on the list, attach this
 	 * one to the end by fixing up the tail to point to this one.
 	 */
 	if (sc->rfa_headm != NULL) {
-		p_rfa = (struct fxp_rfa *) (sc->rfa_tailm->m_ext.ext_buf +
-		    RFA_ALIGNMENT_FUDGE);
 		sc->rfa_tailm->m_next = m;
-		v = vtophys(rfa);
-		fxp_lwcopy(&v, &p_rfa->link_addr);
-		p_rfa->rfa_control &= ~FXP_RFA_CONTROL_EL;
+		v = vtophys(rfap);
+		rfap = sc->rfa_tailm->m_ext.ext_buf + RFA_ALIGNMENT_FUDGE;
+		fxp_lwcopy(&v,
+		    (u_int32_t *)(rfap + offsetof(struct fxp_rfa, link_addr)));
+		*(u_int16_t *)(rfap + offsetof(struct fxp_rfa, rfa_control)) &=
+		    ~FXP_RFA_CONTROL_EL;
 	} else {
 		sc->rfa_headm = m;
 	}
@@ -1535,7 +1547,7 @@ fxp_add_rfabuf(sc, oldm)
 	return (m == oldm);
 }
 
-static volatile int
+volatile int
 fxp_mdi_read(sc, phy, reg)
 	struct fxp_softc *sc;
 	int phy;
@@ -1558,7 +1570,7 @@ fxp_mdi_read(sc, phy, reg)
 	return (value & 0xffff);
 }
 
-static void
+void
 fxp_mdi_write(sc, phy, reg, value)
 	struct fxp_softc *sc;
 	int phy;
@@ -1580,7 +1592,7 @@ fxp_mdi_write(sc, phy, reg, value)
 		    FXP_ARGS(sc));
 }
 
-static int
+int
 fxp_ioctl(ifp, command, data)
 	struct ifnet *ifp;
 	FXP_IOCTLCMD_TYPE command;
