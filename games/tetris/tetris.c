@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.7 1999/03/22 07:38:28 pjanzen Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.8 2000/01/03 23:22:45 pjanzen Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -63,6 +63,16 @@ static char copyright[] =
 #include "scores.h"
 #include "screen.h"
 #include "tetris.h"
+
+cell	board[B_SIZE];
+int	Rows, Cols;
+struct shape *curshape;
+struct shape *nextshape;
+long	fallrate;
+int	score;
+gid_t	gid, egid;
+char	key_msg[100];
+int	showpreview;
 
 static void	elide __P((void));
 static void	setup_board __P((void));

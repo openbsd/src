@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_7.c,v 1.2 1999/01/18 06:20:53 pjanzen Exp $	*/
+/*	$OpenBSD: pl_7.c,v 1.3 2000/01/03 23:22:41 pjanzen Exp $	*/
 /*	$NetBSD: pl_7.c,v 1.6 1995/04/22 10:37:17 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_7.c,v 1.2 1999/01/18 06:20:53 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: pl_7.c,v 1.3 2000/01/03 23:22:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,22 @@ static char sc_hasprompt;
 static const char *sc_prompt;
 static const char *sc_buf;
 static int sc_line;
+
+WINDOW *view_w;
+WINDOW *slot_w;
+WINDOW *scroll_w;
+WINDOW *stat_w;
+WINDOW *turn_w;
+
+char done_curses;
+char loaded, fired, changed, repaired;
+char dont_adjust;
+int viewrow, viewcol;
+char movebuf[sizeof SHIP(0)->file->movebuf];
+int player;
+struct ship *ms;		/* memorial structure, &cc->ship[player] */
+struct File *mf;		/* ms->file */
+struct shipspecs *mc;		/* ms->specs */
 
 void
 initscreen()

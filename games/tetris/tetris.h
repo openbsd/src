@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.h,v 1.4 1999/03/22 07:38:30 pjanzen Exp $	*/
+/*	$OpenBSD: tetris.h,v 1.5 2000/01/03 23:22:45 pjanzen Exp $	*/
 /*	$NetBSD: tetris.h,v 1.2 1995/04/22 07:42:48 cgd Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@
 #define	B_SIZE	(B_ROWS * B_COLS)
 
 typedef unsigned char cell;
-cell	board[B_SIZE];		/* 1 => occupied, 0 => empty */
+extern cell	board[B_SIZE];	/* 1 => occupied, 0 => empty */
 
 	/* the displayed area (rows) */
 #define	D_FIRST	1
@@ -75,7 +75,7 @@ cell	board[B_SIZE];		/* 1 => occupied, 0 => empty */
 #define	MINROWS	23
 #define	MINCOLS	40
 
-int	Rows, Cols;		/* current screen size */
+extern int	Rows, Cols;	/* current screen size */
 
 /*
  * Translations from board coordinates to display coordinates.
@@ -132,8 +132,8 @@ struct shape {
 
 extern struct shape shapes[];
 
-struct shape *curshape;
-struct shape *nextshape;
+extern struct shape *curshape;
+extern struct shape *nextshape;
 
 /*
  * Shapes fall at a rate faster than once per second.
@@ -145,7 +145,7 @@ struct shape *nextshape;
  * The value eventually reaches a limit, and things stop going faster,
  * but by then the game is utterly impossible.
  */
-long	fallrate;		/* less than 1 million; smaller => faster */
+extern long	fallrate;	/* less than 1 million; smaller => faster */
 #define	faster() (fallrate -= fallrate / 3000)
 
 /*
@@ -169,11 +169,11 @@ long	fallrate;		/* less than 1 million; smaller => faster */
  */
 #define PRE_PENALTY 0.75
 
-int	score;			/* the obvious thing */
-gid_t	gid, egid;
+extern int	score;		/* the obvious thing */
+extern gid_t	gid, egid;
 
-char	key_msg[100];
-int	showpreview;
+extern char	key_msg[100];
+extern int	showpreview;
 
 int	fits_in __P((struct shape *, int));
 void	place __P((struct shape *, int, int));
