@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.77 2003/06/26 07:27:32 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.78 2003/07/30 01:42:47 pvalchev Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.77 2003/06/26 07:27:32 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.78 2003/07/30 01:42:47 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -530,13 +530,13 @@ main(int argc, char *argv[])
 			if (errno == EADDRNOTAVAIL && (doalias >= 0)) {
 				/* means no previous address for interface */
 			} else
-				warn("SIOCDIFADDR");
+				err(1, "SIOCDIFADDR");
 		}
 	}
 	if (newaddr) {
 		(void) strlcpy(rafp->af_addreq, name, sizeof(ifr.ifr_name));
 		if (ioctl(s, rafp->af_aifaddr, rafp->af_addreq) < 0)
-			warn("SIOCAIFADDR");
+			err(1, "SIOCAIFADDR");
 	}
 	exit(0);
 }
