@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.5 2000/04/04 15:31:06 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.6 2000/04/12 20:46:18 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -223,6 +223,9 @@ sub handle_formated
     while (<$file>) {
 	next if /^$/;
 	chomp;
+	# Remove boldface from wide characters
+	while (s/(..)\cH\cH\1/$1/g)
+	    {}
 	# Remove boldface and underlining
 	while (s/_\cH//g || s/(.)\cH\1/$1/g)
 	    {}
@@ -234,7 +237,8 @@ sub handle_formated
 	    }
 	}
 	# Not all man pages are in english
-	if (m/^(?:NAME|NAMN|Name)\s*$/) {
+	# weird hex is `Namae' in japanese
+	if (m/^(?:NAME|NAMN|Name|\xbe\xcc\xce\xbe)\s*$/) {
 	    unless (defined $section) {
 		print STDERR "Can't find section in $filename\n";
 		$section='??';
