@@ -1,55 +1,25 @@
-#	$OpenBSD: GENERIC,v 1.7 1996/05/27 21:48:08 chuck Exp $
+#	$OpenBSD: GENERIC,v 1.8 1996/06/30 17:39:38 deraadt Exp $
 
 machine		mvme68k m68k
 
-#options	"M68060"	# support for 060
-options		"M68040"	# support for 040
-options		FPSP		# MC68040 floating point support
-options		"M68030"	# support for 030
-options		FPCOPROC	# Support for MC6888[12] (Required)
+include "../../../conf/GENERIC"
 
-options		MVME147		# (requires M68030)
-options		MVME162		# (requires M68040, FPSP)
-options		MVME167		# includes 166 (requires M68040, FPSP)
-#options	MVME177		# (requires M68060, ...)
+#option		M68060		# support for 060
+option		M68040		# support for 040
+option		FPSP		# MC68040 floating point support
+option		M68030		# support for 030
+option		FPCOPROC	# Support for MC6888[12] (Required)
 
-maxusers	6
+option		MVME147		# (requires M68030)
+option		MVME162		# (requires M68040, FPSP)
+option		MVME167		# includes 166 (requires M68040, FPSP)
+#option		MVME177		# (requires M68060, ...)
 
-# obsolete timezone spec
-options		TIMEZONE=0, DST=0
+option		COMPAT_SUNOS
 
-#options	DIAGNOSTIC, DEBUG
-options		DDB
-options		FFS
-options		NFSCLIENT
-options		NFSSERVER
-options		SYSVSEM,SYSVMSG,SYSVSHM
-options 	KTRACE
-options 	COMPAT_43
-options 	FIFO
-#options	MFS
-options		DEVPAGER, SWAPPAGER, VNODEPAGER
-#options	MSDOSFS
-
-options		COMPAT_SUNOS
-
-# Networking options
-options		INET
-options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-options		GATEWAY		# IP packet forwarding
-#options	ISO		# OSI networking
-#options	TPIP
-#options	EON
-#options	COMPAT_09, COMPAT_10
+maxusers	32
 
 config		bsd		swap generic
-
-pseudo-device	sl 2
-pseudo-device	ppp 2
-pseudo-device	loop
-pseudo-device	bpfilter
-pseudo-device	pty
-pseudo-device	rd 2
 
 mainbus0 at root
 
@@ -108,3 +78,9 @@ cd*	at scsibus? target ? lun ?
 ch*	at scsibus? target ? lun ?
 ss*	at scsibus? target ? lun ?
 uk*	at scsibus? target ? lun ?
+
+pseudo-device	rd 2
+
+#si0	at vmes0 addr 0xff200000 ipl 2 vec 0x40
+#nxdc0	at vmes0 addr 0xff00ee80 ipl 2 vec 0x44
+#xd*	at xdc? target ?

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.5 1996/05/27 21:48:08 chuck Exp $
+#	$OpenBSD: files.mvme68k,v 1.6 1996/06/30 17:39:44 deraadt Exp $
 
 # config file for mvme68k
 
@@ -104,7 +104,7 @@ file	arch/mvme68k/dev/vmes.c			vmes needs-count
 file	arch/mvme68k/dev/vmel.c			vmel needs-count
 
 device xdc {target = -1}
-attach xdc at vmel
+attach xdc at vmes
 device xd: disk
 attach xd at xdc
 file	arch/mvme68k/dev/xd.c			xd needs-flag

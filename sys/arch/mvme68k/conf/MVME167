@@ -1,44 +1,44 @@
-#	$OpenBSD: MVME167,v 1.6 1996/05/27 22:47:57 deraadt Exp $
+#	$OpenBSD: MVME167,v 1.7 1996/06/30 17:39:42 deraadt Exp $
 
 machine		mvme68k m68k
 
-options		"M68040"	# support for 040
-options		FPSP		# MC68040 floating point support
-#options	"M68030"	# support for 030
-#options	FPCOPROC	# Support for MC6888[12] (Required)
+option		"M68040"	# support for 040
+option		FPSP		# MC68040 floating point support
+#option		"M68030"	# support for 030
+#option		FPCOPROC	# Support for MC6888[12] (Required)
 
-#options	MVME147		# (requires M68030)
-#options	MVME162		# (requires M68040)
-options		MVME167		# includes 166 (requires M68040)
+#option		MVME147		# (requires M68030)
+#option		MVME162		# (requires M68040)
+option		MVME167		# includes 166 (requires M68040)
 
 maxusers	6
 
 # obsolete timezone spec
-options		TIMEZONE=0, DST=0
+option		TIMEZONE=0, DST=0
 
-#options	DIAGNOSTIC, DEBUG
-options		DDB
-options		FFS
-options		NFSCLIENT
-options		NFSSERVER
-options		SYSVSEM,SYSVMSG,SYSVSHM
-options 	KTRACE
-options 	COMPAT_43
-options 	FIFO
-#options	MFS
-options		DEVPAGER, SWAPPAGER, VNODEPAGER
-#options	MSDOSFS
+#option		DIAGNOSTIC, DEBUG
+option		DDB
+option		FFS
+option		NFSCLIENT
+option		NFSSERVER
+option		SYSVSEM,SYSVMSG,SYSVSHM
+option 		KTRACE
+option 		COMPAT_43
+option 		FIFO
+#option		MFS
+option		DEVPAGER, SWAPPAGER, VNODEPAGER
+#option		MSDOSFS
 
-options		COMPAT_SUNOS
+option		COMPAT_SUNOS
 
-# Networking options
-options		INET
-options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-options		GATEWAY		# IP packet forwarding
-#options	ISO		# OSI networking
-#options	TPIP
-#options	EON
-#options	COMPAT_09, COMPAT_10
+# Networking option
+option		INET
+option		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+option		GATEWAY		# IP packet forwarding
+#option		ISO		# OSI networking
+#option		TPIP
+#option		EON
+#option		COMPAT_09, COMPAT_10
 
 config		bsd	swap generic
 
