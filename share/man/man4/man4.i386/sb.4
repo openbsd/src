@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sb.4,v 1.5 1996/08/08 17:11:29 deraadt Exp $
+.\"	$OpenBSD: sb.4,v 1.6 1997/01/03 17:07:35 millert Exp $
 .\"	$NetBSD: sb.4,v 1.4 1996/03/16 17:21:58 jtk Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,7 +71,8 @@ use of extra I/O ports not in the base port range.
 .Pp
 .Sh BUGS
 The driver has not been extensively tested on original SoundBlaster,
-SoundBlaster 16, or newer cards.
+SoundBlaster 16, or newer cards.  The driver currently treats the
+SoundBlaster 16 as if it were an 8-bit SoundBlaster Pro.
 .Pp
 The FM synthesizer, joystick and MIDI port interfaces are not supported.
 .Sh SEE ALSO
