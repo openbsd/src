@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.21 2000/07/06 15:33:31 ho Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.22 2000/07/07 15:19:04 art Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -212,12 +212,12 @@ sys_nanosleep(p, v, retval)
 	s = splclock();
 	timeradd(&atv,&time,&atv);
 	timo = hzto(&atv);
+	splx(s);
 	/* 
 	 * Avoid inadvertantly sleeping forever
 	 */
-	if (timo == 0)
+	if (timo <= 0)
 		timo = 1;
-	splx(s);
 
 	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
 	if (error == ERESTART)
@@ -470,6 +470,7 @@ sys_setitimer(p, v, retval)
 	struct itimerval aitv;
 	register const struct itimerval *itvp;
 	int s, error;
+	int timo;
 
 	if (SCARG(uap, which) > ITIMER_PROF)
 		return (EINVAL);
@@ -489,7 +490,10 @@ sys_setitimer(p, v, retval)
 		timeout_del(&p->p_realit_to);
 		if (timerisset(&aitv.it_value)) {
 			timeradd(&aitv.it_value, &time, &aitv.it_value);
-			timeout_add(&p->p_realit_to, hzto(&aitv.it_value));
+			timo = hzto(&aitv.it_value);
+			if (timo <= 0)
+				timo = 1;
+			timeout_add(&p->p_realit_to, timo);
 		}
 		p->p_realtimer = aitv;
 	} else
@@ -511,7 +515,7 @@ realitexpire(arg)
 	void *arg;
 {
 	register struct proc *p;
-	int s;
+	int s, timo;
 
 	p = (struct proc *)arg;
 	psignal(p, SIGALRM);
@@ -524,8 +528,10 @@ realitexpire(arg)
 		timeradd(&p->p_realtimer.it_value,
 		    &p->p_realtimer.it_interval, &p->p_realtimer.it_value);
 		if (timercmp(&p->p_realtimer.it_value, &time, >)) {
-			timeout_add(&p->p_realit_to,
-				    hzto(&p->p_realtimer.it_value));
+			timo = hzto(&p->p_realtimer.it_value);
+			if (timo <= 0)
+				timo = 1;
+			timeout_add(&p->p_realit_to, timo);
 			splx(s);
 			return;
 		}
@@ -545,6 +551,7 @@ itimerfix(tv)
 	if (tv->tv_sec < 0 || tv->tv_sec > 100000000 ||
 	    tv->tv_usec < 0 || tv->tv_usec >= 1000000)
 		return (EINVAL);
+
 	return (0);
 }
 
