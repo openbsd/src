@@ -1,4 +1,4 @@
-/*	$NetBSD: mdef.h,v 1.6 1995/09/28 05:37:39 tls Exp $	*/
+/*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -104,6 +104,7 @@
 #define STRSPMAX        4096            /* size of string space    */
 #define MAXTOK          MAXSTR          /* maximum chars in a tokn */
 #define HASHSIZE        199             /* maximum size of hashtab */
+#define MAXCCHARS	5		/* max size of comment/quote delim */
  
 #define ALL             1
 #define TOP             0

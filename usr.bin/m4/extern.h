@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 1995/09/28 05:37:34 tls Exp $	*/
+/*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -85,14 +85,14 @@ extern char *bp;		/* first available character */
 extern char buf[];		/* push-back buffer */
 extern char *bufbase;		/* buffer base for this ilevel */
 extern char *bbase[];		/* buffer base per ilevel */
-extern char ecommt;		/* end character for comment */
+extern char ecommt[];		/* end character for comment */
 extern char *endest;		/* end of string space */
 extern char *endpbb;		/* end of push-back buffer */
 extern char *ep;		/* first free char in strspace */
-extern char lquote;		/* left quote character (`) */
+extern char lquote[];		/* left quote character (`) */
 extern char *m4temp;		/* filename for diversions */
 extern char *m4wraps;		/* m4wrap string default. */
 extern char *null;		/* as it says.. just a null. */
 extern char *progname;		/* program name */
-extern char rquote;		/* right quote character (') */
-extern char scommt;		/* start character for comment */
+extern char rquote[];		/* right quote character (') */
+extern char scommt[];		/* start character for comment */

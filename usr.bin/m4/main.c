@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1995/09/29 00:27:51 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.11 1996/01/13 23:25:26 pk Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.10 1995/09/29 00:27:51 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.11 1996/01/13 23:25:26 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,10 +89,10 @@ int oindex = 0; 		/* diversion index..	       */
 char *null = "";                /* as it says.. just a null..  */
 char *m4wraps = "";             /* m4wrap string default..     */
 char *progname;			/* name of this program        */
-char lquote = LQUOTE;		/* left quote character  (`)   */
-char rquote = RQUOTE;		/* right quote character (')   */
-char scommt = SCOMMT;		/* start character for comment */
-char ecommt = ECOMMT;		/* end character for comment   */
+char lquote[MAXCCHARS+1] = {LQUOTE};	/* left quote character  (`)   */
+char rquote[MAXCCHARS+1] = {RQUOTE};	/* right quote character (')   */
+char scommt[MAXCCHARS+1] = {SCOMMT};	/* start character for comment */
+char ecommt[MAXCCHARS+1] = {ECOMMT};	/* end character for comment   */
 
 struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 	"include",      INCLTYPE,
@@ -243,6 +243,38 @@ main(argc,argv)
 ndptr inspect();
 
 /*
+ * Look ahead (at most MAXCCHARS characters) for `token'.
+ * (on input `t == token[0]')
+ * Used for comment and quoting delimiters.
+ * Returns 1 if `token' present; copied to output.
+ *         0 if `token' not found; all characters pushed back
+ */
+int
+do_look_ahead(t, token)
+	int	t;
+	char	*token;
+{
+	int i;
+
+	if (t != token[0])
+		oops("internal error", "");
+
+	for (i = 1; *++token; i++) {
+		t = gpbc();
+		if (t == EOF || t != *token) {
+			if (t != EOF)
+				putback(t);
+			while (--i)
+				putback(*--token);
+			return 0;
+		}
+	}
+	return 1;
+}
+
+#define LOOK_AHEAD(t, token) ((t)==(token)[0] && do_look_ahead(t,token))
+
+/*
  * macro - the work horse..
  */
 void
@@ -254,7 +286,8 @@ macro() {
 	register int  nlpar;
 
 	cycle {
-		if ((t = gpbc()) == '_' || isalpha(t)) {
+		t = gpbc();
+		if (t == '_' || isalpha(t)) {
 			putback(t);
 			if ((p = inspect(s = token)) == nil) {
 				if (sp < 0)
@@ -300,12 +333,13 @@ macro() {
 	 * non-alpha single-char token seen..
 	 * [the order of else if .. stmts is important.]
 	 */
-		else if (t == lquote) { 		/* strip quotes */
+		else if (LOOK_AHEAD(t,lquote)) {	/* strip quotes */
 			nlpar = 1;
 			do {
-				if ((l = gpbc()) == rquote)
+				l = gpbc();
+				if (LOOK_AHEAD(l,rquote))
 					nlpar--;
-				else if (l == lquote)
+				else if (LOOK_AHEAD(l,lquote))
 					nlpar++;
 				else if (l == EOF)
 					oops("missing right quote", "");
@@ -319,12 +353,26 @@ macro() {
 			while (nlpar != 0);
 		}
 
-		else if (sp < 0) {		/* not in a macro at all */
-			if (t == scommt) {	/* comment handling here */
+		else if (sp < 0 && LOOK_AHEAD(t, scommt)) {
+			int i;
+			for (i = 0; i < MAXCCHARS && scommt[i]; i++)
+				putc(scommt[i], active);
+
+			for(;;) {
+				t = gpbc();
+				if (LOOK_AHEAD(t, ecommt)) {
+					for (i = 0; i < MAXCCHARS && ecommt[i];
+					     i++)
+						putc(ecommt[i], active);
+					break;
+				}
+				if (t == EOF)
+					break;
 				putc(t, active);
-				while ((t = gpbc()) != ecommt)
-					putc(t, active);
 			}
+		}
+
+		else if (sp < 0) {		/* not in a macro at all */
 			putc(t, active);	/* output directly..	 */
 		}
 

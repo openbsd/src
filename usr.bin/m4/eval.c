@@ -1,4 +1,4 @@
-/*      $NetBSD: eval.c,v 1.4 1995/09/28 05:37:28 tls Exp $      */
+/*      $NetBSD: eval.c,v 1.5 1996/01/13 23:25:23 pk Exp $      */
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: eval.c,v 1.4 1995/09/28 05:37:28 tls Exp $";
+static char rcsid[] = "$NetBSD: eval.c,v 1.5 1996/01/13 23:25:23 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -236,15 +236,24 @@ register int td;
 	 * argv[2])
 	 */
 		if (argc > 3) {
+			int k;
 			for (n = argc - 1; n > 3; n--) {
-				putback(rquote);
+				k = strlen(rquote);
+				while (k--)
+					putback(rquote[k]);
 				pbstr(argv[n]);
-				putback(lquote);
+				k = strlen(lquote);
+				while (k--)
+					putback(lquote[k]);
 				putback(',');
 			}
-			putback(rquote);
+			k = strlen(rquote);
+			while (k--)
+				putback(rquote[k]);
 			pbstr(argv[3]);
-			putback(lquote);
+			k = strlen(lquote);
+			while (k--)
+				putback(lquote[k]);
 		}
 		break;
 
@@ -473,9 +482,13 @@ char *name;
 	register ndptr p;
 
 	if ((p = lookup(name)) != nil && p->defn != null) {
-		putback(rquote);
+		int n = strlen(rquote);
+		while (n--)
+			putback(rquote[n]);
 		pbstr(p->defn);
-		putback(lquote);
+		n = strlen(lquote);
+		while (n--)
+			putback(lquote[n]);
 	}
 }
 
@@ -605,17 +618,17 @@ register int argc;
 {
 	if (argc > 2) {
 		if (*argv[2])
-			lquote = *argv[2];
+			strncpy(lquote, argv[2], MAXCCHARS);
 		if (argc > 3) {
 			if (*argv[3])
-				rquote = *argv[3];
+				strncpy(rquote, argv[3], MAXCCHARS);
 		}
 		else
-			rquote = lquote;
+			strcpy(rquote, lquote);
 	}
 	else {
-		lquote = LQUOTE;
-		rquote = RQUOTE;
+		lquote[0] = LQUOTE, lquote[1] = '\0';
+		rquote[0] = RQUOTE, rquote[1] = '\0';
 	}
 }
 
@@ -629,17 +642,17 @@ register int argc;
 {
 	if (argc > 2) {
 		if (*argv[2])
-			scommt = *argv[2];
+			strncpy(scommt, argv[2], MAXCCHARS);
 		if (argc > 3) {
 			if (*argv[3])
-				ecommt = *argv[3];
+				strncpy(ecommt, argv[3], MAXCCHARS);
 		}
 		else
-			ecommt = ECOMMT;
+			ecommt[0] = ECOMMT, ecommt[1] = '\0';
 	}
 	else {
-		scommt = SCOMMT;
-		ecommt = ECOMMT;
+		scommt[0] = SCOMMT, scommt[1] = '\0';
+		ecommt[0] = ECOMMT, ecommt[1] = '\0';
 	}
 }
 
