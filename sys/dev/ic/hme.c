@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.9 2001/10/02 21:39:35 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.10 2001/10/04 19:17:59 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -344,7 +344,7 @@ hme_stop(sc)
 			sc->sc_txd[n].sd_map = NULL;
 		}
 		if (sc->sc_txd[n].sd_mbuf != NULL) {
-			m_free(sc->sc_txd[n].sd_mbuf);
+			m_freem(sc->sc_txd[n].sd_mbuf);
 			sc->sc_txd[n].sd_mbuf = NULL;
 		}
 	}
@@ -672,7 +672,7 @@ hme_tint(sc)
 			sd->sd_map = NULL;
 		}
 		if (sd->sd_mbuf != NULL) {
-			m_free(sd->sd_mbuf);
+			m_freem(sd->sd_mbuf);
 			sd->sd_mbuf = NULL;
 		}
 
@@ -1203,7 +1203,7 @@ hme_encap(sc, mhead, bixp)
 	int *bixp;
 {
 	struct hme_sxd *sd;
-	struct mbuf *m, *mx;
+	struct mbuf *m;
 	int frag, cur, cnt = 0;
 	u_int32_t flags;
 	struct hme_ring *hr = &sc->sc_rb;
@@ -1211,13 +1211,9 @@ hme_encap(sc, mhead, bixp)
 	cur = frag = *bixp;
 	sd = &sc->sc_txd[frag];
 
-	m = mhead;
-	while (m != NULL) {
-		if (m->m_len == 0) {
-			mx = m_free(m);
-			m = mx;
+	for (m = mhead; m != NULL; m = m->m_next) {
+		if (m->m_len == 0)
 			continue;
-		}
 
 		if ((HME_TX_RING_SIZE - (sc->sc_tx_cnt + cnt)) < 5)
 			goto err;
@@ -1238,7 +1234,7 @@ hme_encap(sc, mhead, bixp)
 		bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
-		sd->sd_mbuf = m;
+		sd->sd_mbuf = NULL;
 
 		flags = HME_XD_ENCODE_TSIZE(m->m_len);
 		if (cnt == 0)
@@ -1257,14 +1253,13 @@ hme_encap(sc, mhead, bixp)
 			sd = sc->sc_txd;
 		} else
 			sd++;
-
-		m = m->m_next;
 	}
 
 	/* Set end of packet on last descriptor. */
 	flags = HME_XD_GETFLAGS(sc->sc_pci, hr->rb_txd, cur);
 	flags |= HME_XD_EOP;
 	HME_XD_SETFLAGS(sc->sc_pci, hr->rb_txd, cur, flags);
+	sc->sc_txd[cur].sd_mbuf = mhead;
 
 	/* Give first frame over to the hardware. */
 	flags = HME_XD_GETFLAGS(sc->sc_pci, hr->rb_txd, (*bixp));
@@ -1298,10 +1293,10 @@ err:
 }
 
 int
-hme_newbuf(sc, d, f)
+hme_newbuf(sc, d, freeit)
 	struct hme_softc *sc;
 	struct hme_sxd *d;
-	int f;
+	int freeit;
 {
 	bus_dmamap_t map = NULL;
 	struct mbuf *m;
@@ -1333,10 +1328,8 @@ hme_newbuf(sc, d, f)
 	bus_dmamap_sync(sc->sc_dmatag, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	if (d->sd_mbuf != NULL && f) {
-		if (f)
-			m_freem(d->sd_mbuf);
-	}
+	if ((d->sd_mbuf != NULL) && freeit)
+		m_freem(d->sd_mbuf);
 	if (d->sd_map != NULL) {
 		bus_dmamap_sync(sc->sc_dmatag, d->sd_map,
 		    0, d->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
