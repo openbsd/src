@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.87 2003/03/07 13:27:12 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.88 2003/03/07 15:16:33 cedric Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -461,8 +461,8 @@ For tables which are part of the
 .Ar active
 tableset.
 Tables without this flag do not really exist, cannot contain addresses, and are
-not listed if no
-.Fl v
+only listed if the
+.Fl g
 flag is given.
 .It i
 For tables which are part of the

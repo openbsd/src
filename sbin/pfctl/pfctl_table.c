@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.35 2003/02/14 17:17:27 henning Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.36 2003/03/07 15:16:33 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -57,7 +57,7 @@
 extern void	usage(void);
 static int	pfctl_table(int, char *[], char *, char *, char *, int);
 static void	grow_buffer(size_t, int);
-static void	print_table(struct pfr_table *, int);
+static void	print_table(struct pfr_table *, int, int);
 static void	print_tstats(struct pfr_tstats *, int);
 static void	load_addr(int, char *[], char *, int);
 static int	next_token(char [], FILE *);
@@ -171,10 +171,11 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 		for (i = 0; i < size; i++)
 			if (opts & PF_OPT_VERBOSE2)
 				print_tstats(buffer.tstats+i,
-				    opts & PF_OPT_VERBOSE);
+				    opts & PF_OPT_DEBUG);
 			else
 				print_table(buffer.tables+i,
-				    opts & PF_OPT_VERBOSE);
+				    opts & PF_OPT_VERBOSE,
+				    opts & PF_OPT_DEBUG);
 	} else if (!strcmp(command, "kill")) {
 		if (argc || file != NULL)
 			usage();
@@ -330,11 +331,11 @@ grow_buffer(size_t bs, int minsize)
 }
 
 void
-print_table(struct pfr_table *ta, int all)
+print_table(struct pfr_table *ta, int verbose, int debug)
 {
-	if (!all && !(ta->pfrt_flags & PFR_TFLAG_ACTIVE))
+	if (!debug && !(ta->pfrt_flags & PFR_TFLAG_ACTIVE))
 		return;
-	if (all) {
+	if (verbose) {
 		printf("%c%c%c%c%c\t%s\n",
 		    (ta->pfrt_flags & PFR_TFLAG_CONST) ? 'c' : '-',
 		    (ta->pfrt_flags & PFR_TFLAG_PERSIST) ? 'p' : '-',
@@ -347,14 +348,14 @@ print_table(struct pfr_table *ta, int all)
 }
 
 void
-print_tstats(struct pfr_tstats *ts, int all)
+print_tstats(struct pfr_tstats *ts, int debug)
 {
 	time_t	time = ts->pfrts_tzero;
 	int	dir, op;
 
-	if (!all && !(ts->pfrts_flags & PFR_TFLAG_ACTIVE))
+	if (!debug && !(ts->pfrts_flags & PFR_TFLAG_ACTIVE))
 		return;
-	print_table(&ts->pfrts_t, all);
+	print_table(&ts->pfrts_t, 1, debug);
 	printf("\tAddresses:   %d\n", ts->pfrts_cnt);
 	printf("\tReferences:  %d\n", ts->pfrts_refcnt);
 	printf("\tCleared:     %s", ctime(&time));
