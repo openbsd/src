@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.79 2003/09/23 03:04:16 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.80 2003/09/24 21:12:12 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.79 2003/09/23 03:04:16 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.80 2003/09/24 21:12:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -655,7 +655,7 @@ printif(struct ifreq *ifrm, int ifaliases)
 		exit(1);
 	}
 #else
-	char *inbuf = NULL;
+	char *inbuf = NULL, *inb;
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifrp;
 	int i, siz, len = 8192;
@@ -667,9 +667,13 @@ printif(struct ifreq *ifrm, int ifaliases)
 		err(1, "socket");
 	while (1) {
 		ifc.ifc_len = len;
-		ifc.ifc_buf = inbuf = realloc(inbuf, len);
-		if (inbuf == NULL)
+		inb = realloc(inbuf, len);
+		if (inb == NULL) {
+			if (inbuf)
+				free(inbuf)
 			err(1, "malloc");
+		}
+		ifc.ifc_buf = inbuf = inb;
 		if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
 			err(1, "SIOCGIFCONF");
 		if (ifc.ifc_len + sizeof(ifreq) < len)
