@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.4 2001/12/06 10:04:11 mickey Exp $ */
+/* $OpenBSD: radioctl.c,v 1.5 2001/12/18 18:42:19 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -27,10 +27,7 @@
  */
 
 #include <sys/ioctl.h>
-#include "/sys/sys/radioio.h"
-#if 0
 #include <sys/radioio.h>
-#endif
 
 #include <err.h>
 #include <fcntl.h>
