@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.65 1997/09/03 23:44:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.66 1997/09/03 23:50:55 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -158,8 +158,6 @@ distribution-etc-root-var: distrib-dirs
 		${DESTDIR}/var/msgs/bounds
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/run/utmp
-	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    fstab.* ${DESTDIR}/etc)
 .if (${MACHINE_ARCH} == "mips")
 	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ld.so.conf ${DESTDIR}/etc)

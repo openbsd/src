@@ -1,3 +1,0 @@
-/dev/ofdisk3a	/	ffs	rw 1 1
-/dev/ofdisk3b	none	swap	sw 0 0
-/dev/ofdisk3h	/usr	ffs	rw 1 2

@@ -1,9 +1,0 @@
-/dev/sd5a	/	ffs	rw	1	1
-/dev/sd5d	/usr	ffs	rw	1	1
-#/dev/sd5f	/usr/local ffs	rw	1	1
-#/dev/sd5b	/tmp	mfs	rw	1	1
-#/dev/sd5e	/home	ffs	rw	1	1
-#/dev/sd5h	/usr/X11R6 ffs	rw	1	1
-#/dev/sd0g	/usr2	ffs	rw	1	1
-/dev/cd0a	/cdrom	cd9660	ro	1	1
-#kern		/kern	kernfs	rw	1	1

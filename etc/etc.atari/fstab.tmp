@@ -1,9 +1,0 @@
-#
-#	$NetBSD: fstab.tmp,v 1.2 1995/08/22 19:52:31 jtc Exp $
-#
-/dev/sd0a	/	ffs	rw		1	1
-/dev/sd0d	/usr	ffs	rw		1	2	
-#/dev/sd0b	/tmp	mfs	rw,-s10240
-#/dev/sd0e	/atari	msdos	rw
-#procfs	/proc	procfs	ro
-#kernfs	/kern	kernfs	ro

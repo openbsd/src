@@ -1,2 +1,0 @@
-nfs-server:/export/root/vme187	/       nfs     rw,-P           0 0
-nfs-server:/export/exec/mvme88k	/usr    nfs     rw,-P           0 0

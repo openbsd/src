@@ -1,6 +1,0 @@
-/dev/sd0a	/		ffs	rw		1 1
-/dev/sd0e	/var		ffs	rw		1 2
-/dev/sd0f	/usr		ffs	rw		1 2
-/kern		/kern		kernfs	ro		0 0
-/proc		/proc		procfs	ro		0 0
-fdesc		/dev		fdesc	ro,-o=union	0 0
