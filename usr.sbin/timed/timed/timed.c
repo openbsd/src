@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.5 $"
+#ident "$Revision: 1.6 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -434,7 +434,7 @@ main(int argc, char **argv)
 			continue;
 		}
 
-
+		((struct sockaddr_in *)&ifr->ifr_addr)->sin_addr = ntp->my_addr;
 		if (ioctl(sock, SIOCGIFNETMASK, (char *)&ifreq) < 0) {
 			perror("get netmask");
 			continue;
@@ -443,6 +443,8 @@ main(int argc, char **argv)
 			&ifreq.ifr_addr)->sin_addr.s_addr;
 
 		if (ifreqf.ifr_flags & IFF_BROADCAST) {
+			((struct sockaddr_in *)&ifr->ifr_addr)->sin_addr =
+				ntp->my_addr;
 			if (ioctl(sock, SIOCGIFBRDADDR, (char *)&ifreq) < 0) {
 				perror("get broadaddr");
 				continue;
@@ -452,7 +454,9 @@ main(int argc, char **argv)
 			 * So we cannot just mask ntp->dest_addr.  */
 			ntp->net = ntp->my_addr;
 			ntp->net.s_addr &= ntp->mask;
-		} else {
+		} else { 
+			((struct sockaddr_in *)&ifr->ifr_addr)->sin_addr =
+				ntp->my_addr;
 			if (ioctl(sock, SIOCGIFDSTADDR,
 						(char *)&ifreq) < 0) {
 				perror("get destaddr");
