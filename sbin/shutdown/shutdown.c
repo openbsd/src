@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.30 2003/07/30 20:56:19 avsm Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.31 2004/01/24 19:14:09 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.30 2003/07/30 20:56:19 avsm Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.31 2004/01/24 19:14:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,15 +116,15 @@ void usage(void);
 int
 main(int argc, char *argv[])
 {
-	char *p, *endp;
+	int arglen, ch, len, readstdin = 0;
 	struct passwd *pw;
-	int arglen, ch, len, readstdin;
+	char *p, *endp;
+	pid_t forkpid;
 
 #ifndef DEBUG
 	if (geteuid())
 		errx(1, "NOT super-user");
 #endif
-	readstdin = 0;
 	while ((ch = getopt(argc, argv, "dfhknpr-")) != -1)
 		switch (ch) {
 		case '-':
@@ -151,7 +151,6 @@ main(int argc, char *argv[])
 		case 'r':
 			doreboot = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}
@@ -198,7 +197,8 @@ main(int argc, char *argv[])
 		for (;;) {
 			if (!fgets(p, endp - p + 1, stdin))
 				break;
-			for (; *p &&  p < endp; ++p);
+			for (; *p &&  p < endp; ++p)
+				;
 			if (p == endp) {
 				*p = '\n';
 				*++p = '\0';
@@ -220,16 +220,13 @@ main(int argc, char *argv[])
 	(void)putc('\n', stdout);
 #else
 	(void)setpriority(PRIO_PROCESS, 0, PRIO_MIN);
-	{
-		pid_t forkpid;
 
-		forkpid = fork();
-		if (forkpid == -1)
-			err(1, "fork");
-		if (forkpid) {
-			(void)printf("shutdown: [pid %ld]\n", (long)forkpid);
-			exit(0);
-		}
+	forkpid = fork();
+	if (forkpid == -1)
+		err(1, "fork");
+	if (forkpid) {
+		(void)printf("shutdown: [pid %ld]\n", (long)forkpid);
+		exit(0);
 	}
 	setsid();
 #endif
@@ -248,8 +245,7 @@ loop(void)
 	if (offset <= NOLOG_TIME) {
 		logged = 1;
 		nolog();
-	}
-	else
+	} else
 		logged = 0;
 	tp = tlist;
 	if (tp->timeleft < offset)
@@ -290,11 +286,11 @@ static char *restricted_environ[] = {
 void
 timewarn(int timeleft)
 {
-	static int first;
 	static char hostname[MAXHOSTNAMELEN];
-	FILE *pf;
 	char wcmd[MAXPATHLEN + 4];
 	extern char **environ;
+	static int first;
+	FILE *pf;
 
 	if (!first++)
 		(void)gethostname(hostname, sizeof(hostname));
@@ -431,9 +427,9 @@ void
 getoffset(char *timearg)
 {
 	struct tm *lt;
-	char *p;
-	time_t now;
 	int this_year;
+	time_t now;
+	char *p;
 
 	if (!strcasecmp(timearg, "now")) {		/* now */
 		offset = 0;
@@ -464,7 +460,7 @@ getoffset(char *timearg)
 	unsetenv("TZ");					/* OUR timezone */
 	lt = localtime(&now);				/* current time val */
 
-	switch(strlen(timearg)) {
+	switch (strlen(timearg)) {
 	case 10:
 		this_year = lt->tm_year;
 		lt->tm_year = ATOI2(timearg);
