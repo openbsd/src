@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2003/05/15 04:16:10 hin Exp $
+# $OpenBSD: Makefile,v 1.4 2003/05/15 05:32:54 hin Exp $
 
 KRB5DIR=	${.CURDIR}/../../kerberosV
 .include "Makefile.common.inc"
@@ -14,7 +14,6 @@ LIB	= krb5
 .include "Makefile.krb5.inc"
 
 includes:
-	pwd
 	@for i in $(INCLUDE_FILES); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/kerberosV/$$i || \
 		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
@@ -24,5 +23,16 @@ includes:
 	    eval "$$j"; \
 	done
 
+SHLIB_LINKS	= kafs asn1
+ALIB_LINKS	= $(SHLIB_LINKS) hdb
+
+afterinstall:
+	for f in $(SHLIB_LINKS); do \
+		ln -f lib$(LIB).so.$(SHLIB_MAJOR).$(SHLIB_MINOR) \
+		$(DESTDIR)$(LIBDIR)/lib$$f.so.$(SHLIB_MAJOR).$(SHLIB_MINOR) ;\
+	done
+	for f in $(ALIB_LINKS); do \
+		ln -f lib$(LIB).a $(DESTDIR)$(LIBDIR)/lib$$f.a ; \
+	done
 
 .include <bsd.lib.mk>
