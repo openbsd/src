@@ -45,7 +45,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.23 2000/01/04 00:07:59 markus Exp $");
+RCSID("$Id: scp.c,v 1.24 2000/01/04 16:57:16 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -945,7 +945,7 @@ void
 usage()
 {
 	(void) fprintf(stderr,
-		       "usage: scp [-pqrvC] [-P port] [-c cipher] [-i identity] f1 f2; or:\n       scp [options] f1 ... fn directory\n");
+		       "usage: scp [-pqrvC46] [-P port] [-c cipher] [-i identity] f1 f2; or:\n       scp [options] f1 ... fn directory\n");
 	exit(1);
 }
 
@@ -1006,7 +1006,7 @@ run_err(const char *fmt,...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.23 2000/01/04 00:07:59 markus Exp $
+ *	$Id: scp.c,v 1.24 2000/01/04 16:57:16 markus Exp $
  */
 
 char *

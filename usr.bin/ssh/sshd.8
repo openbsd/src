@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.28 2000/01/04 00:08:00 markus Exp $
+.\" $Id: sshd.8,v 1.29 2000/01/04 16:57:16 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -19,7 +19,7 @@
 .Nd secure shell daemon
 .Sh SYNOPSIS
 .Nm sshd
-.Op Fl diqQ
+.Op Fl diqQ46
 .Op Fl b Ar bits
 .Op Fl f Ar config_file
 .Op Fl g Ar login_grace_time
@@ -173,6 +173,14 @@ When this options is specified
 assumes the client has sent the given version string
 and skips the
 Protocol Version Identification Exchange.
+.It Fl 4
+Forces
+.Nm
+to use IPv4 addresses only.
+.It Fl 6
+Forces
+.Nm
+to use IPv6 addresses only.
 .El
 .Sh CONFIGURATION FILE
 .Nm
