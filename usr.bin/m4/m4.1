@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.32 2003/06/10 09:12:10 jmc Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.33 2003/06/27 21:22:52 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,7 @@ Macro calls have the form name(argument1[, argument2, ..., argumentN]).
 .Pp
 There cannot be any space following the macro name and the open
 parenthesis
-.Pq Ql ( .
+.Pq Sq ( .
 If the macro name is not followed by an open
 parenthesis it is processed with no arguments.
 .Pp
@@ -71,11 +71,12 @@ valid macro names match the pattern
 .Dq [a-zA-Z_][a-zA-Z0-9_]* .
 .Pp
 In arguments to macros, leading unquoted space, tab, and newline
-.Pq Ql \en
+.Pq Sq \en
 characters are ignored.
-To quote strings, use left and right single
-quotes (e.g.,
-.Ql "\ this is a string with a leading space" ) .
+To quote strings, use left and right single quotes
+.Po e.g.,\ \&
+.Sq "\ this is a string with a leading space"
+.Pc .
 You can change the quote characters with the
 .Ic changequote
 built-in macro.
@@ -153,7 +154,7 @@ Calls a built-in by its name, overriding possible redefinitions.
 .It Ic changecom
 Change the start and end comment sequences.
 The default is the pound sign
-.Pq Ql #
+.Pq Sq #
 and the newline character.
 With no arguments comments are turned off.
 The maximum length for a comment marker is five characters.
@@ -169,22 +170,22 @@ The argument must be a valid numeric string.
 Define a new macro named by the first argument to have the
 value of the second argument.
 Each occurrence of
-.Ql $n
+.Sq $n
 (where
 .Ar n
 is 0 through 9) is replaced by the
 .Ar n Ns 'th
 argument.
-.Ql $0
+.Sq $0
 is the name of the calling macro.
 Undefined arguments are replaced by a null string.
-.Ql $#
+.Sq $#
 is replaced by the number of arguments;
-.Ql $*
+.Sq $*
 is replaced by all arguments comma separated;
-.Ql $@
+.Sq $@
 is the same as
-.Ql $*
+.Sq $*
 but all arguments are quoted against further expansion.
 .It Ic defn
 Returns the quoted definition for each argument.
@@ -212,7 +213,7 @@ Prints the first argument on the standard error output stream.
 .It Ic esyscmd
 Passes its first argument to a shell and returns the shell's standard output.
 Note that the shell shares its standard input and standard error with
-.Nm
+.Nm m4 .
 .It Ic eval
 Computes the first argument as an arithmetic expression using 32-bit
 arithmetic.
@@ -294,12 +295,12 @@ included.
 .It Ic patsubst
 Substitutes a regular expression in a string with a replacement string.
 Usual substitution patterns apply: an ampersand
-.Pq Ql &
+.Pq Sq \&&
 is replaced by the string matching the regular expression.
 The string
-.Ql \e# ,
+.Sq \e# ,
 where
-.Ql #
+.Sq #
 is a digit, is replaced by the corresponding back-reference.
 .It Ic popdef
 Restores the
