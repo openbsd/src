@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee_test.3,v 1.7 2000/03/02 00:29:50 todd Exp $
+.\"	$OpenBSD: ieee_test.3,v 1.8 2003/02/27 00:10:58 jason Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -71,11 +71,17 @@ a signed integer converted to double\-precision floating\-point.
 = +\*(If;
 .Fn logb 0
 = -\*(If with a division by zero exception.
+.Fn logbf
+is the single precision form of
+.Fn logb .
 .Pp
-.Fn scalbn x n
+.Fn scalb x n
 returns
 .Fa x Ns \(**(2** Ns Fa n )
 computed by exponent manipulation.
+.Fn scalbf
+is the single precision form of
+.Fn scalb .
 .Pp
 .Fn significand x
 returns
@@ -91,6 +97,9 @@ with 1 \(<=
 is not defined when
 .Fa x
 is 0, \*(Pm\*(If, or \*(Na.
+.Fn significandf
+is the single precision for of
+.Fn significand .
 .Sh SEE ALSO
 .Xr ieee 3 ,
 .Xr math 3
