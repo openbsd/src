@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.55 2002/07/04 22:23:49 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.56 2002/07/09 14:31:45 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -486,14 +486,6 @@ message_validate_delete (struct message *msg, struct payload *p)
 static int
 message_validate_hash (struct message *msg, struct payload *p)
 {
-  if (!msg->exchange)
-    {
-      /* We should have an exchange at this point.  */
-      log_print ("message_validate_hash: payload out of sequence");
-      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
-      return -1;
-    }
-
   /* XXX Not implemented yet.  */
   return 0;
 }
