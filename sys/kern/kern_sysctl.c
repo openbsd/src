@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.53 2001/06/27 07:21:27 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.54 2001/07/13 23:46:12 mickey Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -370,7 +370,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if (!msgbufp || msgbufp->msg_magic != MSG_MAGIC)
 			return (ENXIO);
 		return (sysctl_rdstruct(oldp, oldlenp, newp, msgbufp,
-		    msgbufp->msg_bufs + sizeof(*msgbufp) - 1));
+		    msgbufp->msg_bufs + offsetof(struct msgbuf, msg_bufc)));
 	case KERN_MALLOCSTATS:
 		return (sysctl_malloc(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen, p));
