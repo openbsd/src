@@ -1486,11 +1486,13 @@
 ./usr/share/man/cat4/sparc64/ledma.0
 ./usr/share/man/cat4/sparc64/magma.0
 ./usr/share/man/cat4/sparc64/mem.0
+./usr/share/man/cat4/sparc64/mgx.0
 ./usr/share/man/cat4/sparc64/openprom.0
 ./usr/share/man/cat4/sparc64/pcons.0
 ./usr/share/man/cat4/sparc64/psycho.0
 ./usr/share/man/cat4/sparc64/qe.0
 ./usr/share/man/cat4/sparc64/qec.0
+./usr/share/man/cat4/sparc64/rfx.0
 ./usr/share/man/cat4/sparc64/sab.0
 ./usr/share/man/cat4/sparc64/sabtty.0
 ./usr/share/man/cat4/sparc64/schizo.0
@@ -1501,6 +1503,7 @@
 ./usr/share/man/cat4/sparc64/zs.0
 ./usr/share/man/cat4/sparc64/zskbd.0
 ./usr/share/man/cat4/sparc64/zstty.0
+./usr/share/man/cat4/sparc64/zx.0
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sppp.0
 ./usr/share/man/cat4/sqphy.0

@@ -1299,6 +1299,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sbus/stp4020reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sbus/stp4020var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sbus/uperf_sbusreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/sbus/zxreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/std
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/std/ieee1212reg.ph
@@ -1774,7 +1775,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/netiso/tp_trace.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netiso/tp_user.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netiso/tp_var.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/netiso/tuba_table.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netnatm
 ./usr/libdata/perl5/site_perl/arm-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/netns

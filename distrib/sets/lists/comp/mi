@@ -647,6 +647,7 @@
 ./usr/include/dev/sbus/stp4020reg.h
 ./usr/include/dev/sbus/stp4020var.h
 ./usr/include/dev/sbus/uperf_sbusreg.h
+./usr/include/dev/sbus/zxreg.h
 ./usr/include/dev/sequencervar.h
 ./usr/include/dev/std
 ./usr/include/dev/std/ieee1212reg.h
@@ -1048,7 +1049,6 @@
 ./usr/include/netiso/tp_trace.h
 ./usr/include/netiso/tp_user.h
 ./usr/include/netiso/tp_var.h
-./usr/include/netiso/tuba_table.h
 ./usr/include/netnatm
 ./usr/include/netnatm/natm.h
 ./usr/include/netns
