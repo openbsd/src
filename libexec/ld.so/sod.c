@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.11 2002/05/25 02:34:45 drahn Exp $	*/
+/*	$OpenBSD: sod.c,v 1.12 2002/05/25 02:46:09 drahn Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -230,7 +230,7 @@ _dl_findhint(name, major, minor, prefered_path)
 			if (bp->hi_major == major &&
 				(bp->hi_ndewey < 2 || bp->hi_minor >= minor)) {
 					if (prefered_path == NULL ||
-					    strncmp(prefered_path,
+					    _dl_strncmp(prefered_path,
 					    hstrtab + bp->hi_pathx,
 					    _dl_strlen(prefered_path)) == 0)
 						return hstrtab + bp->hi_pathx;
