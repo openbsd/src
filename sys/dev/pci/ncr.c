@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.34 1998/01/05 13:35:21 deraadt Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.35 1998/01/07 11:03:31 deraadt Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1461,7 +1461,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.34 1998/01/05 13:35:21 deraadt Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.35 1998/01/07 11:03:31 deraadt Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3668,14 +3668,14 @@ ncr_attach(parent, self, aux)
 	retval = pci_mem_find(pc, pa->pa_tag, 0x14, &np->paddr,
 	    &memsize, &cacheable);
 	if (retval) {
-		printf("\n%s: couldn't find memory region\n", self->dv_xname);
+		printf(": couldn't find memory region\n");
 		return;
 	}
 
 	/* Map the memory.  Note that we never want it to be cacheable. */
 	retval = bus_space_map(pa->pa_memt, np->paddr, memsize, 0, &np->sc_sh);
 	if (retval) {
-		printf("\n%s: couldn't map memory region\n", self->dv_xname);
+		printf(": couldn't map memory region\n");
 		return;
 	}
 
@@ -3685,14 +3685,14 @@ ncr_attach(parent, self, aux)
 	retval = pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &intrhandle);
 	if (retval) {
-		printf("\n%s: couldn't map interrupt\n", self->dv_xname);
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, intrhandle);
 	np->sc_ih = pci_intr_establish(pc, intrhandle, IPL_BIO,
 	    ncr_intr, np, self->dv_xname);
 	if (np->sc_ih == NULL) {
-		printf("\n%s: couldn't establish interrupt", self->dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -3701,9 +3701,9 @@ ncr_attach(parent, self, aux)
 
 	i = ncr_chip_lookup(pa->pa_id, rev);
 	if (intrstr != NULL)
-		printf(" %s, %s\n", ncr_chip_table[i].name, intrstr);
+		printf(": %s, %s\n", ncr_chip_table[i].name, intrstr);
 	else
-		printf(" %s\n", ncr_chip_table[i].name);
+		printf(": %s\n", ncr_chip_table[i].name);
 
 #else /* !__OpenBSD__ */
 

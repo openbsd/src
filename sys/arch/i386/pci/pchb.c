@@ -186,13 +186,13 @@ pchbattach(parent, self, aux)
 			pbnum = PCISET_PCI_BUS_NUMBER(bcreg);
 			switch (bdnum & PCISET_BRIDGETYPE_MASK) {
 			default:
-				printf(", bdnum=%x (reserved)\n", bdnum);
+				printf(": bdnum=%x (reserved)\n", bdnum);
 				break;
 			case PCISET_TYPE_COMPAT:
-				printf(", Compatibility PB (bus %d)\n", pbnum);
+				printf(": Compatibility PB (bus %d)\n", pbnum);
 				break;
 			case PCISET_TYPE_AUX:
-				printf(", Auxiliary PB (bus %d)\n", pbnum);
+				printf(": Auxiliary PB (bus %d)\n", pbnum);
 				/*
 				 * This host bridge has a second PCI bus.
 				 * Configure it.

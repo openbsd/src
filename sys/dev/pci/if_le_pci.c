@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_pci.c,v 1.8 1998/01/05 13:35:20 deraadt Exp $	*/
+/*	$OpenBSD: if_le_pci.c,v 1.9 1998/01/07 11:03:30 deraadt Exp $	*/
 /*	$NetBSD: if_le_pci.c,v 1.13 1996/10/25 21:33:32 cgd Exp $	*/
 
 /*-
@@ -168,14 +168,12 @@ le_pci_attach(parent, self, aux)
 		break;
 	}
 
-	printf("\n");
-
 	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
-		printf("%s: can't find I/O base\n", sc->sc_dev.dv_xname);
+		printf(": can't find I/O base\n");
 		return;
 	}
 	if (bus_space_map(iot, iobase, iosize, 0, &ioh)) {
-		printf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
+		printf(": can't map I/O space\n");
 		return;
 	}
 
@@ -187,10 +185,11 @@ le_pci_attach(parent, self, aux)
 
 	sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_mem == 0) {
-		printf("%s: couldn't allocate memory for card\n",
-		    sc->sc_dev.dv_xname);
+		printf(": couldn't allocate memory for card\n");
 		return;
 	}
+
+	printf("\n");
 
 	lesc->sc_iot = iot;
 	lesc->sc_ioh = ioh;

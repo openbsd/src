@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fpa.c,v 1.10 1996/11/28 23:28:06 niklas Exp $	*/
+/*	$OpenBSD: if_fpa.c,v 1.11 1998/01/07 11:03:28 deraadt Exp $	*/
 /*	$NetBSD: if_fpa.c,v 1.15 1996/10/21 22:56:40 thorpej Exp $	*/
 
 /*-
@@ -409,21 +409,21 @@ pdq_pci_attach(
 #ifdef PDQ_IOMAPPED
     sc->sc_csrtag = pa->pa_iot;
     if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO, &csrbase, &csrsize)) {
-	printf("\n%s: can't find I/O space!\n", sc->sc_dev.dv_xname);
+	printf(": can't find I/O space!\n");
 	return;
     }
 #else
     sc->sc_csrtag = pa->pa_memt;
     if (pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_CBMA, &csrbase, &csrsize,
       &cacheable)) {
-	printf("\n%s: can't find memory space!\n", sc->sc_dev.dv_xname);
+	printf(": can't find memory space!\n");
 	return;
     }
 #endif
 
     if (bus_space_map(sc->sc_csrtag, csrbase, csrsize, cacheable,
       &sc->sc_csrhandle)) {
-	printf("\n%s: can't map CSRs!\n", sc->sc_dev.dv_xname);
+	printf(": can't map CSRs!\n");
 	return;
     }
 
@@ -431,7 +431,7 @@ pdq_pci_attach(
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFPA);
     if (sc->sc_pdq == NULL) {
-	printf("%s: initialization failed\n", sc->sc_dev.dv_xname);
+	printf(": initialization failed\n");
 	return;
     }
 
@@ -440,14 +440,14 @@ pdq_pci_attach(
 
     if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 		     pa->pa_intrline, &intrhandle)) {
-	printf("%s: couldn't map interrupt\n", self->dv_xname);
+	printf(": couldn't map interrupt\n");
 	return;
     }
     intrstr = pci_intr_string(pa->pa_pc, intrhandle);
     sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET, pdq_pci_ifintr,
 	sc, self->dv_xname);
     if (sc->sc_ih == NULL) {
-	printf("%s: couldn't establish interrupt", self->dv_xname);
+	printf(": couldn't establish interrupt");
 	if (intrstr != NULL)
 	    printf(" at %s", intrstr);
 	printf("\n");
@@ -458,7 +458,7 @@ pdq_pci_attach(
     if (sc->sc_ats == NULL)
 	printf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
     if (intrstr != NULL)
-	printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
+	printf(": %s\n", intrstr);
 }
 
 struct cfattach fpa_ca = {

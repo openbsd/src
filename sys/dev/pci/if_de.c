@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.27 1998/01/05 13:35:19 deraadt Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.28 1998/01/07 11:03:26 deraadt Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -5338,7 +5338,7 @@ tulip_pci_attach(
 		printf("\n");
 		return;
 	    }
-	    printf(", %s\n", intrstr);
+	    printf(": %s\n", intrstr);
 	}
 	sc->tulip_ats = shutdownhook_establish(tulip_shutdown, sc);
 	if (sc->tulip_ats == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_en_pci.c,v 1.5 1997/05/07 00:17:40 niklas Exp $	*/
+/*	$OpenBSD: if_en_pci.c,v 1.6 1998/01/07 11:03:27 deraadt Exp $	*/
 
 /*
  *
@@ -204,8 +204,6 @@ void *aux;
   const char *intrstr;
   int retval;
 
-  printf("\n");
-
   sc->en_memt = pa->pa_memt;
   sc->is_adaptec = (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADP) ? 1 : 0;
   scp->en_pc = pa->pa_pc;
@@ -216,20 +214,19 @@ void *aux;
 
   if (pci_intr_map(scp->en_pc, pa->pa_intrtag, pa->pa_intrpin, 
 					pa->pa_intrline, &ih)) {
-    printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+    printf(": couldn't map interrupt\n");
     return;
   }
   intrstr = pci_intr_string(scp->en_pc, ih);
   scp->sc_ih = pci_intr_establish(scp->en_pc, ih, IPL_NET, en_intr, sc,
       sc->sc_dev.dv_xname);
   if (scp->sc_ih == NULL) {
-    printf("%s: couldn't establish interrupt\n", sc->sc_dev.dv_xname);
+    printf(": couldn't establish interrupt\n");
     if (intrstr != NULL)
       printf(" at %s", intrstr);
     printf("\n");
     return;
   }
-  printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
   sc->ipl = 1; /* XXX */
 
   /*
@@ -243,9 +240,11 @@ void *aux;
       &sc->en_base);
  
   if (retval) {
-    printf("%s: couldn't map memory\n", sc->sc_dev.dv_xname);
+    printf(": couldn't map memory\n");
     return;
   }
+
+  printf(": %s\n", intrstr);
 
   /*
    * set up pci bridge

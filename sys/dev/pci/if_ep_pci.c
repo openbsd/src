@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.11 1997/11/07 08:07:27 niklas Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.12 1998/01/07 11:03:28 deraadt Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -179,19 +179,18 @@ ep_pci_attach(parent, self, aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf(", couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, epintr,
 	    sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf(" %s\n", intrstr);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.8 1998/01/05 13:35:20 deraadt Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.9 1998/01/07 11:03:29 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -323,8 +323,6 @@ fxp_attach(parent, self, aux)
 	bus_size_t iosize;
 #endif
 
-	printf("\n");
-
 #ifndef __OpenBSD__
 	/*
 	 * Map control/status registers.
@@ -347,14 +345,16 @@ fxp_attach(parent, self, aux)
 	sc->sc_st = iot;
 #endif
 
+
 	/*
 	 * Allocate our interrupt.
 	 */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf(": couldn't map interrupt\n");
 		return;
 	}
+
 	intrstr = pci_intr_string(pc, ih);
 #ifdef __OpenBSD__
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc,
@@ -363,14 +363,13 @@ fxp_attach(parent, self, aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc);
 #endif
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf(": %s\n", intrstr);
 
 	/* Do generic parts of attach. */
 	if (fxp_attach_common(sc, enaddr)) {
@@ -378,8 +377,8 @@ fxp_attach(parent, self, aux)
 		return;
 	}
 
-	printf("%s: Ethernet address %s%s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(enaddr), sc->phy_10Mbps_only ? ", 10Mbps" : "");
+	printf(": Ethernet address %s%s, %s\n", ether_sprintf(enaddr),
+	    sc->phy_10Mbps_only ? ", 10Mbps" : "", intrstr);
 
 #ifdef __OpenBSD__
 	ifp = &sc->arpcom.ac_if;

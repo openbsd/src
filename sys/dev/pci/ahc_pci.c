@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.8 1998/01/05 13:35:18 deraadt Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.9 1998/01/07 11:03:25 deraadt Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -452,7 +452,7 @@ ahc_pci_attach(parent, self, aux)
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
-		printf(", couldn't map interrupt\n");
+		printf(": couldn't map interrupt\n");
 		ahc_free(ahc);
 		return;
 	}
@@ -464,7 +464,7 @@ ahc_pci_attach(parent, self, aux)
 	    ahc->sc_dev.dv_xname);
 #endif
 	if (ahc->sc_ih == NULL) {
-		printf(", couldn't establish interrupt");
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -472,7 +472,7 @@ ahc_pci_attach(parent, self, aux)
 		return;
 	}
 	if (intrstr != NULL)
-		printf(", %s\n", intrstr);
+		printf(": %s\n", intrstr);
 #endif
 	/*
 	 * Protect ourself from spurrious interrupts during
