@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.12 1998/01/09 02:11:07 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.13 1998/01/09 15:16:20 csapuntz Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -147,8 +147,6 @@ namei(ndp)
 		dp = fdp->fd_cdir;
 		VREF(dp);
 	}
-
-
 	for (;;) {
 		cnp->cn_nameptr = cnp->cn_pnbuf;
 		ndp->ni_startdir = dp;
@@ -290,14 +288,9 @@ lookup(ndp)
 	ndp->ni_startdir = NULLVP;
 	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY, p);
 
-	/* Make sure the current node is a directory */
-	if (dp->v_type != VDIR) {
-		error = ENOTDIR;
-		goto bad;
-	}
-
 	/*
-	 * If we have a leading string of slashes, remove them.
+	 * If we have a leading string of slashes, remove them, and just make
+	 * sure the current node is a directory.
 	 */
 	cp = cnp->cn_nameptr;
 	if (*cp == '/') {
@@ -307,6 +300,10 @@ lookup(ndp)
 		ndp->ni_pathlen -= cp - cnp->cn_nameptr;
 		cnp->cn_nameptr = cp;
 
+		if (dp->v_type != VDIR) {
+			error = ENOTDIR;
+			goto bad;
+		}
 
 		/*
 		 * If we've exhausted the path name, then just return the
@@ -445,13 +442,14 @@ unionlookup:
 
 		if (error != EJUSTRETURN)
 			goto bad;
-
-#ifdef DIAGNOSTIC
-		if (!(cnp->cn_flags & ISLASTCN)) {
-			printf ("Just got an EJUSTRETURN for something which wasn't the last component. Bad news\n");
+		/*
+		 * If this was not the last component, or there were trailing
+		 * slashes, then the name must exist.
+		 */
+		if (cnp->cn_flags & REQUIREDIR) {
+			error = ENOENT;
+			goto bad;
 		}
-#endif
-
 		/*
 		 * If creating and at end of pathname, then can consider
 		 * allowing file to be created.
