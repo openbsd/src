@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.23 2001/02/03 06:45:34 mickey Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.24 2001/02/03 07:46:11 mickey Exp $ */
 /*	$NetBSD: usb_port.h,v 1.35 2000/09/23 04:32:23 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -175,6 +175,7 @@ __CONCAT(dname,_detach)(self, flags) \
 	(config_found_sm(parent, args, print, sub))
 
 #elif defined(__OpenBSD__)
+#include <sys/timeout.h>
 /*
  * OpenBSD
  */
