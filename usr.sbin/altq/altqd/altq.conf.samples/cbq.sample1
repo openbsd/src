@@ -1,0 +1,18 @@
+interface en0 bandwidth 135M cbq
+class cbq en0 root_class NULL pbandwidth 100
+class cbq en0 def_class root_class borrow pbandwidth 95 default 
+# tcp, udp, mcast
+class cbq en0 tcp_class def_class borrow pbandwidth  40
+	filter en0 tcp_class 0 0 0 0 6
+class cbq en0 udp_class def_class borrow pbandwidth 40
+	filter en0 udp_class 0 0 0 0 17
+class cbq en0 mcast_class def_class pbandwidth 10
+	filter en0 mcast_class 224.0.0.0 netmask 0xf0000000 0 0 0 17
+# http ftp
+class cbq en0 http_class tcp_class borrow pbandwidth  10
+	filter en0 http_class 0 0 0 80 6
+class cbq en0 ftp_class tcp_class borrow pbandwidth  10
+	filter en0 ftp_class 0 0 0 20 6
+	filter en0 ftp_class 0 20 0 0 6
+
+

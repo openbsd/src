@@ -1,0 +1,36 @@
+#
+# this is the setting used for the link-sharing test (Fig. 10, 11)
+# in the ALTQ paper
+#
+#
+# WRR for cbq two Agency link sharing test
+#	
+interface pvc0 bandwidth 134M cbq
+class cbq pvc0 root_class NULL priority 0 pbandwidth 100
+class cbq pvc0 ctl_class root_class pbandwidth 0
+#
+# Create Agency A classes
+#
+class cbq pvc0 agencyA root_class priority 2 pbandwidth 70 borrow default
+class cbq pvc0 dataA_class agencyA priority 3 pbandwidth 40 borrow
+class cbq pvc0 vidA_class agencyA priority 4 pbandwidth 30 borrow
+#
+# Create Agency B class
+#
+class cbq pvc0 agencyB root_class priority 2 pbandwidth 30 borrow
+class cbq pvc0 dataB_class agencyB priority 3 pbandwidth 20 borrow
+class cbq pvc0 vidB_class agencyB priority 4 pbandwidth 10 borrow
+#
+# Filters
+#
+# dataA - 172.16.4.176/6760
+# vidA - 172.16.4.176/6761
+#
+filter pvc0 dataA_class 0 0 172.16.3.178 6760 6
+filter pvc0 vidA_class 0 0 172.16.3.178 6761 6
+#
+# data B - 172.16.3.178/6762
+# vid B - 172.16.3.178/6763
+#
+filter pvc0 dataB_class 0 0 172.16.4.176 6760 6
+filter pvc0 vidB_class 0 0 172.16.4.176 6761 6

@@ -1,0 +1,59 @@
+#
+# sample diffedge configuration using HFSC
+#
+
+# input interface
+#
+interface pvc1
+#
+# EF conditioner
+#
+conditioner pvc1 ef_cdnr <tbmeter 6M 64K <mark 0xb8><drop>>
+	filter pvc1 ef_cdnr 0 0 172.16.4.174 0 0
+#
+# AF conditioners
+#
+conditioner pvc1 af1x_cdnr \
+	<trtcm 3M 32K 10M 64K <mark 0x28><mark 0x30><mark 0x38> colorblind>
+conditioner pvc1 af2x_cdnr \
+	<trtcm 3M 32K 10M 64K <mark 0x48><mark 0x50><mark 0x58> colorblind>
+conditioner pvc1 af3x_cdnr \
+	<trtcm 3M 32K 10M 64K <mark 0x68><mark 0x70><mark 0x78> colorblind>
+# tswtcm
+conditioner pvc1 af4x_cdnr \
+	<tswtcm 3M 10M 500 <mark 0x88><mark 0x90><mark 0x98>>
+
+	filter pvc1 af1x_cdnr 0 0 172.16.4.176 0 0
+	filter pvc1 af2x_cdnr 0 0 172.16.4.177 0 0
+	filter pvc1 af3x_cdnr 0 0 172.16.4.178 0 0
+	filter pvc1 af4x_cdnr 0 0 172.16.4.179 0 0
+
+#
+# output interface
+#
+interface pvc0 bandwidth 45M hfsc
+class hfsc pvc0 def_class root pshare 10 default 
+#
+# EF class
+#	real-time: 6Mbps
+#	link-sharing: 0%
+#
+class hfsc pvc0 ef_class root grate 6M
+	filter pvc0 ef_class 0 0 0 0 0 tos 0xb8 tosmask 0xfc
+#
+# AF classes
+#	real-time: 3Mbps
+#	link-sharing: 10% (4.5Mbps)
+#
+# rio threshold values
+rio 40 50 10 20 30 10 5 15 10
+#
+class hfsc pvc0 af1x_class root grate 3M pshare 10 rio
+class hfsc pvc0 af2x_class root grate 3M pshare 10 rio
+class hfsc pvc0 af3x_class root grate 3M pshare 10 rio cleardscp
+class hfsc pvc0 af4x_class root grate 3M pshare 10 rio
+
+	filter pvc0 af1x_class 0 0 0 0 0 tos 0x20 tosmask 0xe4
+	filter pvc0 af2x_class 0 0 0 0 0 tos 0x40 tosmask 0xe4
+	filter pvc0 af3x_class 0 0 0 0 0 tos 0x60 tosmask 0xe4
+	filter pvc0 af4x_class 0 0 0 0 0 tos 0x80 tosmask 0xe4
