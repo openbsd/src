@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.370 2001/02/22 03:04:08 chris Exp $
+	$OpenBSD: pcidevs,v 1.371 2001/03/02 09:36:22 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1233,13 +1233,15 @@ product LMC SSI			0x0005	SSI
 product LMC DS1			0x0006	DS1
 
 /* Lava */
-product LAVA PARALLEL		0x8000	Parallel
+product LAVA TWOSP_1P		0x8000	Parallel
 product LAVA PARALLEL2		0x8001	Dual Parallel
 product LAVA PARALLEL2A		0x8002	Dual Parallel
 product LAVA PARALLELB		0x8003	Dual Parallel B
-product LAVA SERIAL		0x0100	Dual Serial
-product LAVA SERIAL1		0x0110	Serial
-product LAVA SERIAL2		0x0111	Serial
+product LAVA TWOSP_2S		0x0100	Dual Serial
+product LAVA IOFLEX_2S_0	0x0110	Serial
+product LAVA IOFLEX_2S_1	0x0111	Serial
+product LAVA OCTOPUS950_0	0x0180	Quad Serial
+product LAVA OCTOPUS950_1	0x0181	Quad Serial
 
 /* LeadTek Research */
 product LEADTEK S3_805		0x0000	S3 805
