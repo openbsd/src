@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1996/07/04 20:34:34 tholo Exp $
+#	$OpenBSD: Makefile,v 1.12 1996/07/16 07:36:16 pefo Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
@@ -13,7 +13,7 @@ SUBDIR=	apply apropos arch asa at awk banner basename bdes biff cal calendar \
 	nohup oldrdist pagesize passwd paste patch pr printenv printf quota \
 	rdist rdistd renice rev rlogin rpcgen rpcinfo rs \
 	rsh rup ruptime rusers rwall rwho \
-	script sed shar showmount skey skeyinit soelim split strings \
+	script sed shar showmount skey skeyinit soelim split \
 	su sup systat tail talk tcopy tee telnet tftp time \
 	tip tn3270 touch tput tr true tset tsort tty ul uname unexpand \
 	unifdef uniq units unvis users uudecode uuencode \
@@ -23,7 +23,7 @@ SUBDIR=	apply apropos arch asa at awk banner basename bdes biff cal calendar \
 
 # Don't use the standard tool chain on the alpha or mips.
 .if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips")
-SUBDIR+= ar gprof nm ranlib size strip
+SUBDIR+= ar gprof nm ranlib size strip strings
 .endif
 
 .include <bsd.subdir.mk>
