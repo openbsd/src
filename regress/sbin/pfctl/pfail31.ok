@@ -1,0 +1,9 @@
+stdin:4: unknown interface nothere0
+stdin:5: queue has no parent
+stdin:6: queue has no parent
+pfctl: Syntax error in file: pf rules not loaded
+lan_if = "lo0"
+ext_if = "nothere0"
+altq on lo0 cbq bandwidth 512Kb tbrsize 33224 queue { q_lan_std }
+queue q_lan_std cbq( default ) { q_lan_p2p }
+queue q_lan_p2p bandwidth 25% cbq( red ecn ) 
