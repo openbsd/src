@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.161 2004/11/02 02:45:37 reyk Exp $
+#	$OpenBSD: files.pci,v 1.162 2004/11/18 21:02:42 damien Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -421,7 +421,7 @@ attach	an at pci with an_pci
 file	dev/pci/if_an_pci.c		an_pci
 
 # Intel PRO/Wireless 2100
-device  ipw: ifnet, wlan
+device  ipw: ifnet, wlan, firmload
 attach  ipw at pci
 file    dev/pci/if_ipw.c                ipw
 

@@ -1,4 +1,4 @@
-/*      $Id: if_ipwvar.h,v 1.3 2004/10/27 21:21:16 damien Exp $ */
+/*      $Id: if_ipwvar.h,v 1.4 2004/11/18 21:02:42 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -28,10 +28,11 @@
  */
 
 struct ipw_firmware {
-	void	*main;
-	int	main_size;
-	void	*ucode;
-	int	ucode_size;
+	u_char	*data;
+	u_char	*main;
+	size_t	main_size;
+	u_char	*ucode;
+	size_t	ucode_size;
 };
 
 struct ipw_soft_bd {
@@ -88,10 +89,8 @@ struct ipw_softc {
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
 
-	struct ipw_firmware		fw;
 	u_int32_t			flags;
-#define IPW_FLAG_FW_CACHED	(1 << 0)
-#define IPW_FLAG_FW_INITED	(1 << 1)
+#define IPW_FLAG_FW_INITED	(1 << 0)
 
 	struct resource			*irq;
 	struct resource			*mem;
@@ -157,7 +156,5 @@ struct ipw_softc {
 #endif
 };
 
-#define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
-#define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)
 #define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
 #define SIOCGTABLE1	_IOWR('i', 140, struct ifreq)

@@ -1,4 +1,4 @@
-.\" $Id: ipwcontrol.8,v 1.2 2004/10/20 21:01:38 deraadt Exp $
+.\" $Id: ipwcontrol.8,v 1.3 2004/11/18 21:02:31 damien Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -34,8 +34,6 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl i Ar interface
-.Op Fl f Ar firmware
-.Op Fl k
 .Op Fl r
 .Sh DESCRIPTION
 The
@@ -54,29 +52,8 @@ The options are as follows:
 .Bl -tag -width indent
 .It Fl i Ar interface
 Display adapter's internal statistics.
-.It Fl f Ar firmware
-Download firmware binary image
-.Ar firmware
-to the driver.
-.It Fl k
-Kill (remove) the firmware and reset the adapter.
 .It Fl r
 Display the radio switch state (on or off).
-.El
-.Sh FILES
-The firmware is not shipped with OpenBSD; install the
-.Pa ipw-firmware
-package.
-The original archive is available from Intel at:
-.Pa http://ipw2100.sourceforge.net/firmware.php?fid=3 .
-.Pp
-.Bl -tag -width ipw2100-1.2-i.fw -compact
-.It Pa ipw2100-1.2.fw
-BSS mode (connection to an access point) firmware
-.It Pa ipw2100-1.2-i.fw
-IBSS mode (point-to-point connection) firmware
-.It Pa ipw2100-1.2-p.fw
-Monitor mode firmware
 .El
 .Sh SEE ALSO
 .Xr ipw 4 ,

@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.24 2004/11/03 17:14:31 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.25 2004/11/18 21:02:42 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -43,6 +43,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -112,8 +113,7 @@ void ipw_stop_master(struct ipw_softc *);
 int ipw_reset(struct ipw_softc *);
 int ipw_load_ucode(struct ipw_softc *, u_char *, int);
 int ipw_load_firmware(struct ipw_softc *, u_char *, int);
-int ipw_cache_firmware(struct ipw_softc *, void *);
-void ipw_free_firmware(struct ipw_softc *);
+int ipw_read_firmware(struct ipw_softc *, struct ipw_firmware *);
 int ipw_config(struct ipw_softc *);
 int ipw_init(struct ifnet *);
 void ipw_stop(struct ifnet *, int);
@@ -305,7 +305,6 @@ ipw_detach(struct device* self, int flags)
 
 	ipw_stop(ifp, 1);
 	ipw_dmamem_stop(sc);
-	ipw_free_firmware(sc);
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);
@@ -1087,24 +1086,6 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ipw_get_radio(sc, (int *)ifr->ifr_data);
 		break;
 
-	case SIOCSLOADFW:
-		/* only super-user can do that! */
-		if ((error = suser(curproc, 0)) != 0)
-			break;
-
-		ifr = (struct ifreq *)data;
-		error = ipw_cache_firmware(sc, ifr->ifr_data);
-		break;
-
-	case SIOCSKILLFW:
-		/* only super-user can do that! */
-		if ((error = suser(curproc, 0)) != 0)
-			break;
-
-		ipw_stop(ifp, 1);
-		ipw_free_firmware(sc);
-		break;
-
 	case SIOCG80211AUTH:
 		((struct ieee80211_auth *)data)->i_authtype = sc->authmode;
 		break;
@@ -1667,6 +1648,8 @@ ipw_load_ucode(struct ipw_softc *sc, u_char *uc, int size)
 	MEM_WRITE_1(sc, 0x210000, 0x00);
 	MEM_WRITE_1(sc, 0x210000, 0x80);
 
+	free(uc, M_DEVBUF);
+
 	for (ntries = 0; ntries < 100; ntries++) {
 		if (MEM_READ_1(sc, 0x210000) & 1)
 			break;
@@ -1734,68 +1717,59 @@ ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 	return 0;
 }
 
-/*
- * Store firmware into kernel memory so we can download it when we need to,
- * e.g when the adapter wakes up from suspend mode.
- */
 int
-ipw_cache_firmware(struct ipw_softc *sc, void *data)
+ipw_read_firmware(struct ipw_softc *sc, struct ipw_firmware *fw)
 {
-	struct ipw_firmware *fw = &sc->fw;
-	struct ipw_firmware_hdr hdr;
-	u_char *p = data;
+	struct ipw_firmware_hdr *hdr;
+	const char *name;
+	u_char *p;
+	size_t size;
 	int error;
 
-	ipw_free_firmware(sc);
+	switch (sc->sc_ic.ic_opmode) {
+	case IEEE80211_M_STA:
+	case IEEE80211_M_HOSTAP:
+		name = "ipw-bss";
+		break;
 
-	if ((error = copyin(data, &hdr, sizeof hdr)) != 0)
-		goto fail1;
+	case IEEE80211_M_IBSS:
+	case IEEE80211_M_AHDEMO:
+		name = "ipw-ibss";
+		break;
 
-	fw->main_size  = letoh32(hdr.main_size);
-	fw->ucode_size = letoh32(hdr.ucode_size);
-	p += sizeof hdr;
-
-	fw->main = malloc(fw->main_size, M_DEVBUF, M_NOWAIT);
-	if (fw->main == NULL) {
-		error = ENOMEM;
-		goto fail1;
+	case IEEE80211_M_MONITOR:
+		name = "ipw-monitor";
+		break;
 	}
 
-	fw->ucode = malloc(fw->ucode_size, M_DEVBUF, M_NOWAIT);
-	if (fw->ucode == NULL) {
-		error = ENOMEM;
-		goto fail2;
+	if ((error = loadfirmware(name, &fw->data, &size)) != 0)
+		return error;
+
+	if (size < sizeof (struct ipw_firmware_hdr)) {
+		error = EINVAL;
+		goto fail;
 	}
 
-	if ((error = copyin(p, fw->main, fw->main_size)) != 0)
-		goto fail3;
+	p = fw->data;
+	hdr = (struct ipw_firmware_hdr *)p;
+	fw->main_size = letoh32(hdr->main_size);
+	fw->ucode_size = letoh32(hdr->ucode_size);
 
-	p += fw->main_size;
-	if ((error = copyin(p, fw->ucode, fw->ucode_size)) != 0)
-		goto fail3;
+	p += sizeof (struct ipw_firmware_hdr);
+	size -= sizeof (struct ipw_firmware_hdr);
 
-	DPRINTF(("Firmware cached: main %u, ucode %u\n", fw->main_size,
-	    fw->ucode_size));
+	if (size < fw->main_size + fw->ucode_size) {
+		error = EINVAL;
+		goto fail;
+	}
 
-	sc->flags |= IPW_FLAG_FW_CACHED;
+	fw->main = p;
+	fw->ucode = p + fw->main_size;
 
 	return 0;
 
-fail3:	free(fw->ucode, M_DEVBUF);
-fail2:	free(fw->main, M_DEVBUF);
-fail1:	return error;
-}
-
-void
-ipw_free_firmware(struct ipw_softc *sc)
-{
-	if (!(sc->flags & IPW_FLAG_FW_CACHED))
-		return;
-
-	free(sc->fw.main, M_DEVBUF);
-	free(sc->fw.ucode, M_DEVBUF);
-
-	sc->flags &= ~IPW_FLAG_FW_CACHED;
+fail:	free(fw->data, M_DEVBUF);
+	return error;
 }
 
 int
@@ -2000,25 +1974,24 @@ int
 ipw_init(struct ifnet *ifp)
 {
 	struct ipw_softc *sc = ifp->if_softc;
-	struct ipw_firmware *fw = &sc->fw;
+	struct ipw_firmware fw;
 	int error;
-
-	/* exit immediately if firmware has not been ioctl'd */
-	if (!(sc->flags & IPW_FLAG_FW_CACHED)) {
-		ifp->if_flags &= ~IFF_UP;
-		return EIO;
-	}
 
 	ipw_stop(ifp, 0);
 
 	if ((error = ipw_reset(sc)) != 0) {
 		printf("%s: could not reset adapter\n", sc->sc_dev.dv_xname);
-		goto fail;
+		goto fail1;
 	}
 
-	if ((error = ipw_load_ucode(sc, fw->ucode, fw->ucode_size)) != 0) {
+	if ((error = ipw_read_firmware(sc, &fw)) != NULL) {
+		printf("%s: could not read firmware\n", sc->sc_dev.dv_xname);
+		goto fail1;
+	}
+
+	if ((error = ipw_load_ucode(sc, fw.ucode, fw.ucode_size)) != 0) {
 		printf("%s: could not load microcode\n", sc->sc_dev.dv_xname);
-		goto fail;
+		goto fail2;
 	}
 
 	ipw_stop_master(sc);
@@ -2026,18 +1999,18 @@ ipw_init(struct ifnet *ifp)
 	if ((error = ipw_rx_init(sc)) != 0) {
 		printf("%s: could not initialize rx queue\n",
 		    sc->sc_dev.dv_xname);
-		goto fail;
+		goto fail2;
 	}
 
 	if ((error = ipw_tx_init(sc)) != 0) {
 		printf("%s: could not initialize tx queue\n",
 		    sc->sc_dev.dv_xname);
-		goto fail;
+		goto fail2;
 	}
 
-	if ((error = ipw_load_firmware(sc, fw->main, fw->main_size)) != 0) {
+	if ((error = ipw_load_firmware(sc, fw.main, fw.main_size)) != 0) {
 		printf("%s: could not load firmware\n", sc->sc_dev.dv_xname);
-		goto fail;
+		goto fail2;
 	}
 
 	sc->flags |= IPW_FLAG_FW_INITED;
@@ -2051,7 +2024,7 @@ ipw_init(struct ifnet *ifp)
 	if ((error = ipw_config(sc)) != 0) {
 		printf("%s: device configuration failed\n",
 		    sc->sc_dev.dv_xname);
-		goto fail;
+		goto fail2;
 	}
 
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -2059,7 +2032,8 @@ ipw_init(struct ifnet *ifp)
 
 	return 0;
 
-fail:	ipw_stop(ifp, 0);
+fail2:	free(fw.data, M_DEVBUF);
+fail1:	ipw_stop(ifp, 0);
 
 	return error;
 }

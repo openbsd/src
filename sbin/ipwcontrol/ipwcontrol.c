@@ -1,4 +1,4 @@
-/*	$Id: ipwcontrol.c,v 1.6 2004/11/03 17:40:49 damien Exp $	*/
+/*	$Id: ipwcontrol.c,v 1.7 2004/11/18 21:02:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -28,14 +28,12 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ipwcontrol.c,v 1.6 2004/11/03 17:40:49 damien Exp $";
+static char rcsid[] = "$Id: ipwcontrol.c,v 1.7 2004/11/18 21:02:32 damien Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/mman.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
 
 #include <net/if.h>
 
@@ -48,8 +46,6 @@ static char rcsid[] = "$Id: ipwcontrol.c,v 1.6 2004/11/03 17:40:49 damien Exp $"
 #include <sysexits.h>
 #include <unistd.h>
 
-#define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
-#define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)
 #define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
 #define SIOCGTABLE1	_IOWR('i', 140, struct ifreq)
 
@@ -58,8 +54,6 @@ extern int optind;
 
 static void usage(void);
 static int do_req(char *, unsigned long, void *);
-static void load_firmware(char *, char *);
-static void kill_firmware(char *);
 static void get_radio_state(char *);
 static void get_statistics(char *);
 
@@ -76,20 +70,12 @@ main(int argc, char **argv)
 		optind = 2;
 	}
 
-	while ((ch = getopt(argc, argv, "hf:i:kr")) != -1) {
+	while ((ch = getopt(argc, argv, "hi:r")) != -1) {
 		switch (ch) {
 		case 'i':
 			if (!ifspecified)
 				iface = optarg;
 			break;
-
-		case 'f':
-			load_firmware(iface, optarg);
-			return EX_OK;
-
-		case 'k':
-			kill_firmware(iface);
-			return EX_OK;
 
 		case 'r':
 			get_radio_state(iface);
@@ -111,9 +97,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr,
-	    "usage: %s [interface] [-f firmware] [-kr]\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [interface] [-r]\n", __progname);
 
 	exit(EX_USAGE);
 }
@@ -136,36 +120,6 @@ do_req(char *iface, unsigned long req, void *data)
 	(void)close(s);
 
 	return error;
-}
-
-static void
-load_firmware(char *iface, char *firmware)
-{
-	int fd;
-	struct stat st;
-	void *map;
-
-	if ((fd = open(firmware, O_RDONLY)) == -1)
-		err(EX_OSERR, "%s", firmware);
-
-	if (fstat(fd, &st) == -1)
-		err(EX_OSERR, "Unable to stat %s", firmware);
-
-	if ((map = mmap(NULL, st.st_size, PROT_READ, 0, fd, 0)) == NULL)
-		err(EX_OSERR, "Can't map %s into memory", firmware);
-
-	if (do_req(iface, SIOCSLOADFW, map) == -1)
-		err(EX_OSERR, "Can't load %s to driver", firmware);
-
-	(void)munmap(map, st.st_size);
-	(void)close(fd);
-}
-
-static void
-kill_firmware(char *iface)
-{
-	if (do_req(iface, SIOCSKILLFW, NULL) == -1)
-		err(EX_OSERR, "Can't kill firmware");
 }
 
 static void
