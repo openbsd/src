@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_configure.h,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
+/*	$OpenBSD: rf_configure.h,v 1.4 2002/05/22 21:22:32 tdeval Exp $	*/
 /*	$NetBSD: rf_configure.h,v 1.4 1999/03/02 03:18:49 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -70,8 +70,9 @@ struct RF_Config_s {
 						 * not used in kernel */
 	char    maxOutstandingDiskReqs;	/* # concurrent reqs to be sent to a
 					 * disk.  not used in kernel. */
-	char    debugVars[RF_MAXDBGV][50];	/* space for specifying debug
-						 * variables & their values */
+	char    debugVars[RF_MAXDBGV][RF_MAXDBGVLEN];	/* space for specifying
+							 * debug variables &
+							 * their values */
 	unsigned int layoutSpecificSize;	/* size in bytes of
 						 * layout-specific info */
 	void   *layoutSpecific;	/* a pointer to a layout-specific structure to
