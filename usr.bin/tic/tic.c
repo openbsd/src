@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.2 1998/11/03 21:59:53 millert Exp $	*/
+/*	$OpenBSD: tic.c,v 1.3 1998/12/28 05:54:44 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -57,7 +57,8 @@ static	const	char usage_string[] = "[-h] [-v[n]] [-e names] [-CILNRTcfrsw1] sour
 
 static void cleanup(void)
 {
-	fclose(tmp_fp);
+	if (tmp_fp != 0)
+		fclose(tmp_fp);
 	if (to_remove != 0)
 		remove(to_remove);
 }
