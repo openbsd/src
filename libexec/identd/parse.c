@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.23 2001/04/15 23:48:16 hugh Exp $	*/
+/*	$OpenBSD: parse.c,v 1.24 2001/04/16 00:26:21 fgsch Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -77,8 +77,10 @@ getuserident(homedir, buf, len)
 		return 0;
 	if ((fd = open(path, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < 0)
 		return 0;
-	if (fstat(fd, &st) != 0 || !S_ISREG(st.st_mode))
+	if (fstat(fd, &st) != 0 || !S_ISREG(st.st_mode)) {
+		close(fd);
 		return 0;
+	}
 
 	if ((nread = read(fd, buf, len - 1)) <= 0) {
 		close(fd);
