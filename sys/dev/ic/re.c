@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.4 2005/02/25 12:32:50 jsg Exp $	*/
+/*	$OpenBSD: re.c,v 1.5 2005/03/15 16:11:38 henning Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -622,7 +622,7 @@ re_diag(sc)
 
 	CSR_WRITE_2(sc, RL_ISR, 0xFFFF);
 	s = splnet();
-	IF_ENQUEUE(&ifp->if_snd, m0);
+	IFQ_ENQUEUE(&ifp->if_snd, m0, NULL, error);
 	re_start(ifp);
 	splx(s);
 	m0 = NULL;
@@ -891,7 +891,7 @@ re_attach_common(struct rl_softc *sc)
 		ifp->if_baudrate = 1000000000;
 	else
 		ifp->if_baudrate = 100000000;
-	ifp->if_snd.ifq_maxlen = RL_IFQ_MAXLEN;
+	IFQ_SET_MAXLEN(&ifp->if_snd, RL_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	timeout_set(&sc->timer_handle, re_tick, sc);
@@ -1347,7 +1347,7 @@ re_poll (struct ifnet *ifp, enum poll_cmd cmd, int count)
 	re_rxeof(sc);
 	re_txeof(sc);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		(*ifp->if_start)(ifp);
 
 	if (cmd == POLL_AND_CHECK_STATUS) { /* also check status register */
@@ -1432,7 +1432,7 @@ re_intr(arg)
 		}
 	}
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		(*ifp->if_start)(ifp);
 
 #ifdef DEVICE_POLLING
@@ -1582,7 +1582,7 @@ re_start(ifp)
 
 	idx = sc->rl_ldata.rl_tx_prodidx;
 	while (sc->rl_ldata.rl_tx_mbuf[idx] == NULL) {
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
