@@ -1,0 +1,130 @@
+#!/bin/ksh
+#
+#	$OpenBSD: torture,v 1.1 2003/07/22 18:32:08 otto Exp $
+#
+# Copyright (c) 2003 Otto Moerbeek <otto@drijf.net>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+# Usage: torture file or directory
+#
+# Run a diff/patch/cmp regression on all available cvs revisisons of a
+# file or recursively on all files in a cvs checkout directory.
+#
+# Run this script on a freshly checked out cvs dir. Local modifications
+# should not be touched, but this is not tested.
+#
+# Make sure you have $CVSROOT setup properly, preferably on a local
+# cvs mirror. This shell script puts a lot of stress on your cvs
+# server. It also can take very long to run, since it compares all
+# pairs of available revisions of a file.
+#
+# The program appends run and failure information to the file torture.log
+# in the startup directory. This log can be used to rerun failing tests.
+#
+
+DIFF=diff
+DIFFOPTIONS=-au
+PATCH=patch
+PATCHOPTIONS=-s
+
+TMP=/tmp/torture$$
+trap 'rm -rf "$TMP"; exit 0' HUP INT QUIT PIPE TERM
+
+FAILLOG="$PWD/$(basename $0).log"
+
+revisions() {
+    cvs log "$1" | awk '/^revision/ { print $2 }'
+}
+
+getrevs() {
+    BASE=$(basename "$1")
+    REVS=$(revisions "$1")
+
+    for i in $REVS ; do
+	cvs up -pr $i "$1" > "$TMP/$BASE.$i"
+    done
+}
+
+dodiffs() {
+    typeset pwd="$PWD"
+    cd $TMP
+    for i in $REVS ; do
+	print -n "$BASE.$i "
+	for j in $REVS ; do
+	    $DIFF $DIFFOPTIONS "$BASE.$i" "$BASE.$j" > "diff-$i-$j"
+	    cp "$BASE.$i" "$BASE.$i.copy"
+	    $PATCH $PATCHOPTIONS "$BASE.$i.copy" < "diff-$i-$j" 2> /dev/null
+	    cmp "$BASE.$i.copy" "$BASE.$j"
+	    if [[ $? = 0 ]] ; then
+		print -n .
+	    else
+		print " $j FAILED"
+		print "# $pwd/$BASE.$i vs $j failed" >> "$FAILLOG"
+		print "$0 $pwd/$BASE" >> "$FAILLOG"
+	    fi
+	    rm -f "$BASE.$i.copy" "diff-$i-$j"
+	done
+	print
+    done
+    cd "$pwd"
+}
+
+dofile() {
+    typeset pwd="$PWD"
+    typeset arg=$(basename "$1")
+
+    cd $(dirname "$1")
+    print $0 "$PWD/$arg"
+    mkdir -p "$TMP"
+
+    getrevs "$arg"
+    dodiffs
+
+    rm -rf "$TMP"
+    cd "$pwd"
+}
+
+dodir() {
+    typeset pwd="$PWD"
+    cd "$1"
+    print $0 "$PWD"
+    list=$('ls' -A)
+    for i in $list ; do
+	if [[ "$i" != CVS ]] ; then
+	   main "$i"
+	fi
+    done
+    cd $pwd
+}
+
+print -n "# $0 $1: run started at " >> "$FAILLOG"
+date >> "$FAILLOG"
+
+main() {
+    if [[ -f "$1" ]] ; then
+	dofile "$1"
+    elif [[ -d "$1" ]] ; then
+	dodir "$1"
+    fi
+}
+
+if [[ $# != 1 ]] ; then
+    print Usage: $0 file or directory
+    exit 1
+fi
+
+main "$1"
+
+print -n "# $0 $1: run done at " >> "$FAILLOG"
+date >> "$FAILLOG"
