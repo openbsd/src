@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.25 1999/09/30 08:28:52 downsj Exp $
+.\"	$OpenBSD: ftpd.8,v 1.26 1999/12/03 01:22:46 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -410,7 +410,7 @@ with other
 .Nm ftpd
 implementations.
 .Sh FILES
-.Bl -tag -width /etc/ftpwelcome -compact
+.Bl -tag -width /var/run/ftpd.pid -compact
 .It Pa /etc/ftpusers
 List of unwelcome/restricted users.
 .It Pa /etc/ftpchroot
@@ -423,6 +423,8 @@ Welcome notice after login.
 Displayed and access refused.
 .It Pa /var/run/utmp
 List of users on the system.
+.It Pa /var/run/ftpd.pid
+Process id if running in daemon mode.
 .It Pa /var/log/ftpd
 Log file for anonymous downloads.
 .El

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.61 1999/12/02 17:34:08 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.62 1999/12/03 01:22:46 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ main(argc, argv, envp)
 {
 	int addrlen, ch, on = 1, tos;
 	char *cp, line[LINE_MAX];
-	FILE *fd;
+	FILE *fp;
 	struct hostent *hp;
 
 	tzset();	/* in case no timezone database in ~ftp */
@@ -393,6 +393,14 @@ main(argc, argv, envp)
 			syslog(LOG_ERR, "control listen: %m");
 			exit(1);
 		}
+		/* Stash pid in pidfile */
+		if ((fp = fopen(_PATH_FTPDPID, "w")) == NULL)
+			syslog(LOG_ERR, "can't open %s: %m", _PATH_FTPDPID);
+		else {
+			fprintf(fp, "%d\n", getpid());
+			fchmod(fileno(fp), S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+			fclose(fp);
+		}
 		/*
 		 * Loop forever accepting connection requests and forking off
 		 * children to handle them.
@@ -471,25 +479,25 @@ main(argc, argv, envp)
 	tmpline[0] = '\0';
 
 	/* If logins are disabled, print out the message. */
-	if ((fd = fopen(_PATH_NOLOGIN,"r")) != NULL) {
-		while (fgets(line, sizeof(line), fd) != NULL) {
+	if ((fp = fopen(_PATH_NOLOGIN, "r")) != NULL) {
+		while (fgets(line, sizeof(line), fp) != NULL) {
 			if ((cp = strchr(line, '\n')) != NULL)
 				*cp = '\0';
 			lreply(530, "%s", line);
 		}
 		(void) fflush(stdout);
-		(void) fclose(fd);
+		(void) fclose(fp);
 		reply(530, "System not available.");
 		exit(0);
 	}
-	if ((fd = fopen(_PATH_FTPWELCOME, "r")) != NULL) {
-		while (fgets(line, sizeof(line), fd) != NULL) {
+	if ((fp = fopen(_PATH_FTPWELCOME, "r")) != NULL) {
+		while (fgets(line, sizeof(line), fp) != NULL) {
 			if ((cp = strchr(line, '\n')) != NULL)
 				*cp = '\0';
 			lreply(220, "%s", line);
 		}
 		(void) fflush(stdout);
-		(void) fclose(fd);
+		(void) fclose(fp);
 		/* reply(220,) must follow */
 	}
 	(void) gethostname(hostname, sizeof(hostname));
@@ -694,12 +702,12 @@ checkuser(fname, name)
 	char *fname;
 	char *name;
 {
-	FILE *fd;
+	FILE *fp;
 	int found = 0;
 	char *p, line[BUFSIZ];
 
-	if ((fd = fopen(fname, "r")) != NULL) {
-		while (fgets(line, sizeof(line), fd) != NULL)
+	if ((fp = fopen(fname, "r")) != NULL) {
+		while (fgets(line, sizeof(line), fp) != NULL)
 			if ((p = strchr(line, '\n')) != NULL) {
 				*p = '\0';
 				if (line[0] == '#')
@@ -709,7 +717,7 @@ checkuser(fname, name)
 					break;
 				}
 			}
-		(void) fclose(fd);
+		(void) fclose(fp);
 	}
 	return (found);
 }
@@ -741,7 +749,7 @@ pass(passwd)
 	char *passwd;
 {
 	int rval;
-	FILE *fd;
+	FILE *fp;
 	static char homedir[MAXPATHLEN];
 	char rootdir[MAXPATHLEN];
 	sigset_t allsigs;
@@ -894,16 +902,16 @@ skip:
 	 * Display a login message, if it exists.
 	 * N.B. reply(230,) must follow the message.
 	 */
-	if ((fd = fopen(_PATH_FTPLOGINMESG, "r")) != NULL) {
+	if ((fp = fopen(_PATH_FTPLOGINMESG, "r")) != NULL) {
 		char *cp, line[LINE_MAX];
 
-		while (fgets(line, sizeof(line), fd) != NULL) {
+		while (fgets(line, sizeof(line), fp) != NULL) {
 			if ((cp = strchr(line, '\n')) != NULL)
 				*cp = '\0';
 			lreply(230, "%s", line);
 		}
 		(void) fflush(stdout);
-		(void) fclose(fd);
+		(void) fclose(fp);
 	}
 	if (guest) {
 		if (ident != NULL)
