@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.8 1997/03/26 08:32:45 downsj Exp $	*/
-/*	$NetBSD: vm_machdep.c,v 1.34 1997/03/16 09:59:40 thorpej Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.9 1997/04/16 11:56:32 downsj Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.35 1997/04/01 03:12:33 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,12 +53,15 @@
 #include <sys/core.h>
 #include <sys/exec.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
+#include <machine/frame.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/reg.h>
+
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+
+void	setredzone __P((pt_entry_t *, caddr_t));
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -71,13 +74,13 @@
  */
 void
 cpu_fork(p1, p2)
-	register struct proc *p1, *p2;
+	struct proc *p1, *p2;
 {
-	register struct pcb *pcb = &p2->p_addr->u_pcb;
-	register struct trapframe *tf;
-	register struct switchframe *sf;
+	void child_return __P((struct proc *, struct frame));
+	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
 	extern struct pcb *curpcb;
-	extern void proc_trampoline(), child_return();
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
@@ -196,10 +199,10 @@ cpu_coredump(p, vp, cred, chdr)
  */
 void
 pagemove(from, to, size)
-	register caddr_t from, to;
+	caddr_t from, to;
 	size_t size;
 {
-	register vm_offset_t pa;
+	vm_offset_t pa;
 
 #ifdef DEBUG
 	if (size & CLOFSET)
@@ -228,12 +231,13 @@ pagemove(from, to, size)
  * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
  * are specified by `prot'.
  */ 
+void
 physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;
-	register int size, prot;
+	int size, prot;
 {
-	register pt_entry_t *pte;
-	register u_int page;
+	pt_entry_t *pte;
+	u_int page;
 
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
@@ -244,11 +248,12 @@ physaccess(vaddr, paddr, size, prot)
 	TBIAS();
 }
 
+void
 physunaccess(vaddr, size)
 	caddr_t vaddr;
-	register int size;
+	int size;
 {
-	register pt_entry_t *pte;
+	pt_entry_t *pte;
 
 	pte = kvtopte(vaddr);
 	for (size = btoc(size); size; size--)
@@ -268,6 +273,7 @@ physunaccess(vaddr, size)
  * Look at _lev6intr in locore.s for more details.
  */
 /*ARGSUSED*/
+void
 setredzone(pte, vaddr)
 	pt_entry_t *pte;
 	caddr_t vaddr;
@@ -277,8 +283,9 @@ setredzone(pte, vaddr)
 /*
  * Convert kernel VA to physical address
  */
+int
 kvtop(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
 	vm_offset_t va;
 
@@ -301,16 +308,16 @@ extern vm_map_t phys_map;
 /*ARGSUSED*/
 void
 vmapbuf(bp, sz)
-	register struct buf *bp;
+	struct buf *bp;
 	vm_size_t sz;
 {
-	register int npf;
-	register caddr_t addr;
-	register long flags = bp->b_flags;
+	int npf;
+	caddr_t addr;
+	long flags = bp->b_flags;
 	struct proc *p;
 	int off;
 	vm_offset_t kva;
-	register vm_offset_t pa;
+	vm_offset_t pa;
 
 	if ((flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -338,11 +345,11 @@ vmapbuf(bp, sz)
 /*ARGSUSED*/
 void
 vunmapbuf(bp, sz)
-	register struct buf *bp;
+	struct buf *bp;
 	vm_size_t sz;
 {
-	register caddr_t addr;
-	register int npf;
+	caddr_t addr;
+	int npf;
 	vm_offset_t kva;
 
 	if ((bp->b_flags & B_PHYS) == 0)

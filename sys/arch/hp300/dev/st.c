@@ -1,5 +1,5 @@
-/*	$OpenBSD: st.c,v 1.7 1997/03/26 08:41:42 downsj Exp $	*/
-/*	$NetBSD: st.c,v 1.20 1997/03/22 00:17:59 mycroft Exp $	*/
+/*	$OpenBSD: st.c,v 1.8 1997/04/16 11:56:17 downsj Exp $	*/
+/*	$NetBSD: st.c,v 1.22 1997/04/02 22:37:38 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -90,63 +90,7 @@
 
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
-
 #include <hp300/dev/stvar.h>
-
-struct st_xsense {
-	struct	scsi_xsense sc_xsense;	/* data from sense */
-	struct	exb_xsense exb_xsense;	/* additional info from exabyte */
-};
-
-struct	st_softc {
-	struct	device sc_dev;
-	struct	scsiqueue sc_sq;
-	long	sc_blkno;       /* (possible block device support?) */
-	long	sc_resid;	/* (possible block device support?) */
-	int	sc_flags;
-	int	sc_blklen;	/* 0 = variable len records */
-	int	sc_filepos;	/* file position on tape */
-	long	sc_numblks;	/* number of blocks on tape */
-	short	sc_type;	/* ansi scsi type */
-	int	sc_target;
-	int	sc_lun;
-	short	sc_tapeid;	/* tape drive id */
-	char	sc_datalen[32];	/* additional data length on some commands */
-	short	sc_tticntdwn;	/* interrupts between TTi display updates */
-	tpr_t	sc_ctty;
-	struct	buf *sc_bp;
-	u_char	sc_cmd;
-	struct st_xsense sc_sense;
-	struct scsi_fmt_cdb sc_cmdstore;
-	struct buf sc_tab;	/* buffer queue */
-	struct buf sc_bufstore;	/* XXX buffer storage */
-};
-
-/* softc flags */
-#define STF_ALIVE	0x0001
-#define STF_OPEN	0x0002
-#define STF_WMODE	0x0004
-#define STF_WRTTN	0x0008
-#define STF_CMD		0x0010
-#define STF_LEOT	0x0020
-#define STF_MOVED	0x0040
-
-int	stmatch __P((struct device *, void *, void *));
-void	stattach __P((struct device *, struct device *, void *));
-
-struct cfattach st_ca = {
-	sizeof(struct st_softc), stmatch, stattach
-};
-
-struct cfdriver st_cd = {
-	NULL, "st", DV_TAPE
-};
-
-void	stustart __P((int));
-
-void	ststart __P((void *));
-void	stgo __P((void *));
-void	stintr __P((void *, int));
 
 static struct scsi_fmt_cdb st_read_cmd = { 6, CMD_READ };
 static struct scsi_fmt_cdb st_write_cmd = { 6, CMD_WRITE };
@@ -218,7 +162,39 @@ int st_extti = 0x01;		/* bitmask of unit numbers, do extra */
 				/* sensing so TTi display gets updated */
 #endif
 
-int
+/* bdev_decl(st); */
+/* cdev_decl(st); */
+/* XXX we should use macros to do these... */
+int	stopen __P((dev_t, int, int, struct proc *));
+int	stclose __P((dev_t, int, int, struct proc *));
+
+int	stioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	stread __P((dev_t, struct uio *, int));
+int	stwrite __P((dev_t, struct uio *, int));
+
+void	ststrategy __P((struct buf *));
+int	stdump __P((dev_t));
+
+#ifdef DEBUG
+void	dumpxsense __P((struct st_xsense *));
+void	prtmodsel __P((struct mode_select_data *, int));
+void	prtmodstat __P((struct mode_sense *));
+#endif /* DEBUG */
+
+static void	stfinish __P((struct st_softc *, struct buf *));
+static void	sterror __P((struct st_softc *, int));
+static int	stmatch __P((struct device *, void *, void *));
+static void	stattach __P((struct device *, struct device *, void *));
+
+struct cfattach st_ca = {
+	sizeof(struct st_softc), stmatch, stattach
+};
+
+struct cfdriver st_cd = {
+	NULL, "st", DV_TAPE
+};
+
+static int
 stmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
@@ -243,7 +219,7 @@ stmatch(parent, match, aux)
 	return (1);
 }
 
-void
+static void
 stattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -343,15 +319,16 @@ stattach(parent, self, aux)
 	sc->sc_flags = STF_ALIVE;
 }
 
+int
 stopen(dev, flag, type, p)
 	dev_t dev;
 	int flag, type;
 	struct proc *p;
 {
-	register struct st_softc *sc;
-	register struct st_xsense *xsense;
-	register int count;
-	register int stat;
+	struct st_softc *sc;
+	struct st_xsense *xsense;
+	int count;
+	int stat;
 	int ctlr, slave, unit;
 	struct mode_select_data msd;
 	struct mode_sense mode;
@@ -359,11 +336,11 @@ stopen(dev, flag, type, p)
 	int error;
 	static struct scsi_fmt_cdb modsel = {
 		6,
-		CMD_MODE_SELECT, 0, 0, 0, sizeof(msd), 0
+		{ CMD_MODE_SELECT, 0, 0, 0, sizeof(msd), 0 }
 	};
 	static struct scsi_fmt_cdb modsense = {
 		6,
-		CMD_MODE_SENSE, 0, 0, 0, sizeof(mode), 0
+		{ CMD_MODE_SENSE, 0, 0, 0, sizeof(mode), 0 }
 	};
 
 	if (UNIT(dev) > st_cd.cd_ndevs ||
@@ -527,8 +504,8 @@ retryselect:
 			uprintf("SCSI bus timeout\n");
 			return(EBUSY);
 		}
-		if (error = tsleep((caddr_t)&lbolt, PZERO | PCATCH, 
-		    "st_scsiwait", 0))
+		if ((error = tsleep((caddr_t)&lbolt, PZERO | PCATCH, 
+		    "st_scsiwait", 0)))
 			return (error);
 		goto retryselect;
 	}
@@ -640,12 +617,14 @@ retryselect:
 }
 
 /*ARGSUSED*/
-stclose(dev, flag)
+int
+stclose(dev, flag, mode, p)
 	dev_t dev;
-	int flag;
+	int flag, mode;
+	struct proc *p;
 {
 	struct st_softc *sc = st_cd.cd_devs[UNIT(dev)];
-	register int hit = 0;
+	int hit = 0;
 
 	if ((sc->sc_flags & (STF_WMODE|STF_WRTTN)) == (STF_WMODE|STF_WRTTN)) {
 		/*
@@ -679,7 +658,7 @@ stclose(dev, flag)
 
 void
 ststrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
 	struct st_softc *sc;
 	struct buf *dp;
@@ -726,8 +705,8 @@ stgo(arg)
 	void *arg;
 {
 	struct st_softc *sc = arg;
-	register struct scsi_fmt_cdb *cmd;
-	register struct buf *bp = sc->sc_tab.b_actf;
+	struct scsi_fmt_cdb *cmd;
+	struct buf *bp = sc->sc_tab.b_actf;
 	int pad, stat;
 	long nblks;
 
@@ -780,7 +759,7 @@ stgo(arg)
 	if (bp->b_bcount & 1) {
 #ifdef DEBUG
 		if (st_debug & ST_ODDIO)
-			printf("%s: stgo: odd count %d using manual transfer\n",
+			printf("%s: stgo: odd count %ld using manual transfer\n",
 			       sc->sc_dev.dv_xname, bp->b_bcount);
 #endif
 		stat = scsi_tt_oddio(sc->sc_dev.dv_parent->dv_unit,
@@ -803,14 +782,15 @@ stgo(arg)
 	}
 }
 
+static void
 stfinish(sc, bp)
 	struct st_softc *sc;
 	struct buf *bp;
 {
-	register struct buf *dp;
+	struct buf *dp;
 
 	sc->sc_tab.b_errcnt = 0;
-	if (dp = bp->b_actf)
+	if ((dp = bp->b_actf))
 		dp->b_actb = bp->b_actb;
 	else
 		sc->sc_tab.b_actb = bp->b_actb;
@@ -845,6 +825,7 @@ stwrite(dev, uio, flags)
 }
 
 /*ARGSUSED*/
+int
 stdump(dev)
 	dev_t dev;
 {
@@ -852,19 +833,20 @@ stdump(dev)
 }
 
 /*ARGSUSED*/
+int
 stioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data; 
 	int flag;
 	struct proc *p;
 {
 	struct st_softc *sc = st_cd.cd_devs[UNIT(dev)];
-	register int cnt;
-	register struct mtget *mtget;
-	register struct st_xsense *xp = &sc->sc_sense;
-	register struct mtop *op;
-	long resid;
+	int cnt;
+	struct mtget *mtget;
+	struct st_xsense *xp = &sc->sc_sense;
+	struct mtop *op;
+	long resid = 0;	/* XXX compiler complains needlessly :-( */
 
 	switch (cmd) {
 
@@ -944,10 +926,9 @@ stintr(arg, stat)
 	void *arg;
 	int stat;
 {
-	register struct st_softc *sc = arg;
-	int unit = sc->sc_dev.dv_unit;
-	register struct st_xsense *xp = &sc->sc_sense;
-	register struct buf *bp = sc->sc_tab.b_actf;
+	struct st_softc *sc = arg;
+	struct st_xsense *xp = &sc->sc_sense;
+	struct buf *bp = sc->sc_tab.b_actf;
 
 #ifdef DEBUG
 	if (bp == NULL) {
@@ -992,7 +973,7 @@ stintr(arg, stat)
 			 */
 			if (sc->sc_blklen) {
 				tprintf(sc->sc_ctty,
-					"%s: Incorrect Length Indicator, blkcnt diff %d\n",
+					"%s: Incorrect Length Indicator, blkcnt diff %ld\n",
 					sc->sc_dev.dv_xname,
 					sc->sc_blklen - bp->b_resid);
 				bp->b_flags |= B_ERROR;
@@ -1019,7 +1000,7 @@ stintr(arg, stat)
 				 */
 				if (!st_dmaoddretry) {
 					tprintf(sc->sc_ctty,
-						"%s: Odd length read %d\n", 
+						"%s: Odd length read %ld\n", 
 						sc->sc_dev.dv_xname,
 						bp->b_bcount - bp->b_resid);
 					bp->b_error = EIO;
@@ -1031,7 +1012,7 @@ stintr(arg, stat)
 				 */
 #ifdef DEBUG
 				if (st_debug & ST_ODDIO)
-					printf("%s: stintr odd count %d, do BSR then oddio\n",
+					printf("%s: stintr odd count %ld, do BSR then oddio\n",
 					       sc->sc_dev.dv_xname,
 					       bp->b_bcount - bp->b_resid);
 #endif
@@ -1073,7 +1054,7 @@ stintr(arg, stat)
 	}
 #ifdef DEBUG
 	if ((st_debug & ST_BRESID) && bp->b_resid != 0)
-		printf("b_resid %d b_flags 0x%x b_error 0x%x\n", 
+		printf("b_resid %ld b_flags 0x%lx b_error 0x%x\n", 
 		       bp->b_resid, bp->b_flags, bp->b_error);
 #endif
 	/* asked for more filemarks then on tape */
@@ -1085,7 +1066,7 @@ stintr(arg, stat)
 	}
 
 #ifdef TTI
-	if (st_extti & (1<<unit) &&
+	if (st_extti & (1 << sc->sc_dev.dv_unit) &&
 	    sc->sc_type == MT_ISEXABYTE) /* to make display lit up */
 		/*
 		 * XXX severe performance penality for this.
@@ -1102,16 +1083,16 @@ stintr(arg, stat)
 	stfinish(sc, bp);
 }
 
+void
 stcommand(dev, command, cnt)
 	dev_t dev;
 	u_int command;
 	int cnt;
 {
 	struct st_softc *sc = st_cd.cd_devs[UNIT(dev)];
-	register struct buf *bp = &sc->sc_bufstore;
-	register struct scsi_fmt_cdb *cmd = &sc->sc_cmdstore;
-	register cmdcnt;
-	int s;
+	struct buf *bp = &sc->sc_bufstore;
+	struct scsi_fmt_cdb *cmd = &sc->sc_cmdstore;
+	int cmdcnt, s;
 
 	cmd->len = 6; /* all tape commands are cdb6 */
 	cmd->cdb[1] = sc->sc_lun;
@@ -1224,6 +1205,7 @@ again:
 	sc->sc_flags &= ~(STF_CMD|STF_WRTTN);
 }
 
+static void
 sterror(sc, stat)
 	struct st_softc *sc;
 	int stat;
@@ -1240,22 +1222,22 @@ sterror(sc, stat)
 		sc->sc_filepos--;
 }
 
+void
 stxsense(ctlr, slave, unit, sc)
 	int ctlr, slave, unit;
 	struct st_softc *sc;
 {
-	u_char *sensebuf;
 	unsigned len;
 
-	sensebuf = (u_char *)&sc->sc_sense;
 	len = sc->sc_datalen[CMD_REQUEST_SENSE];
-	scsi_request_sense(ctlr, slave, unit, sensebuf, len);
+	scsi_request_sense(ctlr, slave, unit, (u_char *)&sc->sc_sense, len);
 }
 
+void
 prtkey(sc)
 	struct st_softc *sc;
 {
-	register struct st_xsense *xp = &sc->sc_sense;
+	struct st_xsense *xp = &sc->sc_sense;
 
 	switch (xp->sc_xsense.key) {
 	case XSK_NOSENCE:
@@ -1366,7 +1348,7 @@ prtkey(sc)
 }
 
 #ifdef DEBUG
-
+void
 dumpxsense(sensebuf)
 	struct st_xsense *sensebuf;
 {
@@ -1409,6 +1391,7 @@ dumpxsense(sensebuf)
 			(xp->exb_xsense.tplft0)) );
 }
 
+void
 prtmodsel(msd, modlen)
 	struct mode_select_data *msd;
 	int modlen;
@@ -1422,6 +1405,7 @@ prtmodsel(msd, modlen)
 	       msd->vupb,msd->rsvd5,msd->p5,msd->motionthres,msd->reconthres,msd->gapthres);
 }
 
+void
 prtmodstat(mode)
 	struct mode_sense *mode;
 {

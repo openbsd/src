@@ -1,5 +1,5 @@
-/*	$OpenBSD: hd.c,v 1.3 1997/02/10 06:43:32 downsj Exp $	*/
-/*	$NetBSD: rd.c,v 1.27 1997/01/30 09:14:17 thorpej Exp $	*/
+/*	$OpenBSD: hd.c,v 1.4 1997/04/16 11:56:06 downsj Exp $	*/
+/*	$NetBSD: rd.c,v 1.30 1997/04/09 20:01:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -51,13 +51,14 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/stat.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
-#include <sys/ioctl.h>
-#include <sys/fcntl.h>
-#include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/stat.h>
 
 #include <hp300/dev/hpibvar.h>
 
@@ -72,32 +73,6 @@
 #include <vm/lock.h>
 #include <vm/vm_prot.h>
 #include <vm/pmap.h>
-
-int	hdmatch __P((struct device *, void *, void *));
-void	hdattach __P((struct device *, struct device *, void *));
-
-struct cfattach hd_ca = {
-	sizeof(struct hd_softc), hdmatch, hdattach
-};
-
-struct cfdriver hd_cd = {
-	NULL, "hd", DV_DISK
-};
-
-int	hdident __P((struct device *, struct hd_softc *,
-	    struct hpibbus_attach_args *));
-void	hdreset __P((struct hd_softc *));
-void	hdustart __P((struct hd_softc *));
-int	hdgetinfo __P((dev_t));
-void	hdrestart __P((void *));
-struct buf *hdfinish __P((struct hd_softc *, struct buf *));
-
-void	hdstart __P((void *));
-void	hdinterupt __P((void *));
-void	hdgo __P((void *));
-
-bdev_decl(hd);
-cdev_decl(hd);
 
 int	hderrthresh = HDRETRY-1;	/* when to start reporting errors */
 
@@ -242,6 +217,37 @@ struct hdidentinfo hdidentinfo[] = {
 };
 int numhdidentinfo = sizeof(hdidentinfo) / sizeof(hdidentinfo[0]);
 
+bdev_decl(hd);
+cdev_decl(hd);
+
+int	hdident __P((struct device *, struct hd_softc *,
+	    struct hpibbus_attach_args *));
+void	hdreset __P((struct hd_softc *));
+void	hdustart __P((struct hd_softc *));
+int	hdgetinfo __P((dev_t));
+void	hdrestart __P((void *));
+struct buf *hdfinish __P((struct hd_softc *, struct buf *));
+
+void	hdstart __P((void *));
+void	hdinterupt __P((void *));
+void	hdgo __P((void *));
+int	hdstatus __P((struct hd_softc *));
+int	hderror __P((int));
+#ifdef DEBUG
+void	hdprinterr __P((char *, short, char **));
+#endif
+
+int	hdmatch __P((struct device *, void *, void *));
+void	hdattach __P((struct device *, struct device *, void *));
+
+struct cfattach hd_ca = {
+	sizeof(struct hd_softc), hdmatch, hdattach
+};
+
+struct cfdriver hd_cd = {
+	NULL, "hd", DV_DISK
+};
+
 int
 hdmatch(parent, match, aux)
 	struct device *parent;
@@ -318,7 +324,6 @@ hdident(parent, sc, ha)
 	struct hd_softc *sc;
 	struct hpibbus_attach_args *ha;
 {
-	struct hd_softc rsc;
 	struct hd_describe *desc = sc != NULL ? &sc->sc_hddesc : NULL;
 	u_char stat, cmd[3];
 	char name[7];
@@ -430,7 +435,7 @@ hdident(parent, sc, ha)
 
 void
 hdreset(rs)
-	register struct hd_softc *rs;
+	struct hd_softc *rs;
 {
 	int ctlr = rs->sc_dev.dv_parent->dv_unit;
 	int slave = rs->sc_slave;
@@ -473,9 +478,9 @@ hdgetinfo(dev)
 {
 	int unit = hdunit(dev);
 	struct hd_softc *rs = hd_cd.cd_devs[unit];
-	register struct disklabel *lp = rs->sc_dkdev.dk_label;
-	register struct partition *pi;
-	char *msg, *readdisklabel();
+	struct disklabel *lp = rs->sc_dkdev.dk_label;
+	struct partition *pi;
+	char *msg;
 
 	/*
 	 * Set some default values to use while reading the label
@@ -497,7 +502,7 @@ hdgetinfo(dev)
 	 */
 	msg = readdisklabel(hdlabdev(dev), hdstrategy, lp, NULL);
 	if (msg == NULL)
-		return(0);
+		return (0);
 
 	pi = lp->d_partitions;
 	printf("%s: WARNING: %s, defining `c' partition as entire disk\n",
@@ -515,8 +520,8 @@ hdopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	register int unit = hdunit(dev);
-	register struct hd_softc *rs;
+	int unit = hdunit(dev);
+	struct hd_softc *rs;
 	int error, mask, part;
 
 	if (unit >= hd_cd.cd_ndevs ||
@@ -576,7 +581,7 @@ hdclose(dev, flag, mode, p)
 {
 	int unit = hdunit(dev);
 	struct hd_softc *rs = hd_cd.cd_devs[unit];
-	register struct disk *dk = &rs->sc_dkdev;
+	struct disk *dk = &rs->sc_dkdev;
 	int mask, s;
 
 	mask = 1 << hdpart(dev);
@@ -608,19 +613,19 @@ hdclose(dev, flag, mode, p)
 
 void
 hdstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
 	int unit = hdunit(bp->b_dev);
 	struct hd_softc *rs = hd_cd.cd_devs[unit];
-	register struct buf *dp = &rs->sc_tab;
-	register struct partition *pinfo;
-	register daddr_t bn;
-	register int sz, s;
+	struct buf *dp = &rs->sc_tab;
+	struct partition *pinfo;
+	daddr_t bn;
+	int sz, s;
 	int offset;
 
 #ifdef DEBUG
 	if (hddebug & HDB_FOLLOW)
-		printf("hdstrategy(%x): dev %x, bn %x, bcount %x, %c\n",
+		printf("hdstrategy(%x): dev %x, bn %x, bcount %lx, %c\n",
 		       bp, bp->b_dev, bp->b_blkno, bp->b_bcount,
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
@@ -692,7 +697,7 @@ void
 hdustart(rs)
 	struct hd_softc *rs;
 {
-	register struct buf *bp;
+	struct buf *bp;
 
 	bp = rs->sc_tab.b_actf;
 	rs->sc_addr = bp->b_un.b_addr;
@@ -703,10 +708,10 @@ hdustart(rs)
 
 struct buf *
 hdfinish(rs, bp)
-	register struct hd_softc *rs;
-	register struct buf *bp;
+	struct hd_softc *rs;
+	struct buf *bp;
 {
-	register struct buf *dp = &rs->sc_tab;
+	struct buf *dp = &rs->sc_tab;
 
 	dp->b_errcnt = 0;
 	dp->b_actf = bp->b_actf;
@@ -728,8 +733,8 @@ hdstart(arg)
 	void *arg;
 {
 	struct hd_softc *rs = arg;
-	register struct buf *bp = rs->sc_tab.b_actf;
-	register int part, ctlr, slave;
+	struct buf *bp = rs->sc_tab.b_actf;
+	int part, ctlr, slave;
 
 	ctlr = rs->sc_dev.dv_parent->dv_unit;
 	slave = rs->sc_slave;
@@ -737,7 +742,7 @@ hdstart(arg)
 again:
 #ifdef DEBUG
 	if (hddebug & HDB_FOLLOW)
-		printf("hdstart(%s): bp %x, %c\n", sc->sc_dev.dv_xname, bp,
+		printf("hdstart(%s): bp %p, %c\n", rs->sc_dev.dv_xname, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
 	part = hdpart(bp->b_dev);
@@ -753,7 +758,7 @@ again:
 	rs->sc_ioc.c_cmd = bp->b_flags & B_READ ? C_READ : C_WRITE;
 #ifdef DEBUG
 	if (hddebug & HDB_IO)
-		printf("hdstart: hpibsend(%x, %x, %x, %x, %x)\n",
+		printf("hdstart: hpibsend(%x, %x, %x, %p, %x)\n",
 		       ctlr, slave, C_CMD,
 		       &rs->sc_ioc.c_unit, sizeof(rs->sc_ioc)-2);
 #endif
@@ -779,7 +784,7 @@ again:
 	 */
 #ifdef DEBUG
 	if (hddebug & HDB_ERROR)
-		printf("%s: hdstart: cmd %x adr %d blk %d len %d ecnt %d\n",
+		printf("%s: hdstart: cmd %x adr %lx blk %d len %d ecnt %ld\n",
 		       rs->sc_dev.dv_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 		       bp->b_blkno, rs->sc_resid, rs->sc_tab.b_errcnt);
 	rs->sc_stats.hdretries++;
@@ -788,7 +793,7 @@ again:
 	hdreset(rs);
 	if (rs->sc_tab.b_errcnt++ < HDRETRY)
 		goto again;
-	printf("%s: hdstart err: cmd 0x%x sect %d blk %d len %d\n",
+	printf("%s: hdstart err: err: cmd 0x%x sect %ld blk %d len %d\n",
 	       rs->sc_dev.dv_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 	       bp->b_blkno, rs->sc_resid);
 	bp->b_flags |= B_ERROR;
@@ -830,9 +835,9 @@ void
 hdinterupt(arg)
 	void *arg;
 {
-	register struct hd_softc *rs = arg;
+	struct hd_softc *rs = arg;
 	int unit = rs->sc_dev.dv_unit;
-	register struct buf *bp = rs->sc_tab.b_actf;
+	struct buf *bp = rs->sc_tab.b_actf;
 	u_char stat = 13;	/* in case hpibrecv fails */
 	int rv, restart, ctlr, slave;
 
@@ -841,7 +846,7 @@ hdinterupt(arg)
 
 #ifdef DEBUG
 	if (hddebug & HDB_FOLLOW)
-		printf("hdinterupt(%d): bp %x, %c, flags %x\n", unit, bp,
+		printf("hdinterupt(%d): bp %p, %c, flags %x\n", unit, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W', rs->sc_flags);
 	if (bp == NULL) {
 		printf("%s: bp == NULL\n", rs->sc_dev.dv_xname);
@@ -897,9 +902,9 @@ hdinterupt(arg)
 
 int
 hdstatus(rs)
-	register struct hd_softc *rs;
+	struct hd_softc *rs;
 {
-	register int c, s;
+	int c, s;
 	u_char stat;
 	int rv;
 
@@ -950,7 +955,7 @@ hderror(unit)
 	int unit;
 {
 	struct hd_softc *rs = hd_cd.cd_devs[unit];
-	register struct hd_stat *sp;
+	struct hd_stat *sp;
 	struct buf *bp;
 	daddr_t hwbn, pbn;
 
@@ -1034,28 +1039,28 @@ hderror(unit)
 		hdprinterr("access", sp->c_aef, err_access);
 		hdprinterr("info", sp->c_ief, err_info);
 		printf("    block: %d, P1-P10: ", hwbn);
-		printf("%s", hexstr(*(u_int *)&sp->c_raw[0], 8));
-		printf("%s", hexstr(*(u_int *)&sp->c_raw[4], 8));
-		printf("%s\n", hexstr(*(u_short *)&sp->c_raw[8], 4));
+		printf("0x%x", *(u_int *)&sp->c_raw[0]);
+		printf("0x%x", *(u_int *)&sp->c_raw[4]);
+		printf("0x%x\n", *(u_short *)&sp->c_raw[8]);
 		/* command */
 		printf("    ioc: ");
-		printf("%s", hexstr(*(u_int *)&rs->sc_ioc.c_pad, 8));
-		printf("%s", hexstr(*(u_short *)&rs->sc_ioc.c_hiaddr, 4));
-		printf("%s", hexstr(*(u_int *)&rs->sc_ioc.c_addr, 8));
-		printf("%s", hexstr(*(u_short *)&rs->sc_ioc.c_nop2, 4));
-		printf("%s", hexstr(*(u_int *)&rs->sc_ioc.c_len, 8));
-		printf("%s\n", hexstr(*(u_short *)&rs->sc_ioc.c_cmd, 4));
-		return(1);
+		printf("0x%x", *(u_int *)&rs->sc_ioc.c_pad);
+		printf("0x%x", *(u_short *)&rs->sc_ioc.c_hiaddr);
+		printf("0x%x", *(u_int *)&rs->sc_ioc.c_addr);
+		printf("0x%x", *(u_short *)&rs->sc_ioc.c_nop2);
+		printf("0x%x", *(u_int *)&rs->sc_ioc.c_len);
+		printf("0x%x\n", *(u_short *)&rs->sc_ioc.c_cmd);
+		return (1);
 	}
 #endif
 	printf(" v%d u%d, R0x%x F0x%x A0x%x I0x%x\n",
 	       (sp->c_vu>>4)&0xF, sp->c_vu&0xF,
 	       sp->c_ref, sp->c_fef, sp->c_aef, sp->c_ief);
 	printf("P1-P10: ");
-	printf("%s", hexstr(*(u_int *)&sp->c_raw[0], 8));
-	printf("%s", hexstr(*(u_int *)&sp->c_raw[4], 8));
-	printf("%s\n", hexstr(*(u_short *)&sp->c_raw[8], 4));
-	return(1);
+	printf("0x%x", *(u_int *)&sp->c_raw[0]);
+	printf("0x%x", *(u_int *)&sp->c_raw[4]);
+	printf("0x%x\n", *(u_short *)&sp->c_raw[8]);
+	return (1);
 }
 
 int
@@ -1088,7 +1093,7 @@ hdioctl(dev, cmd, data, flag, p)
 {
 	int unit = hdunit(dev);
 	struct hd_softc *sc = hd_cd.cd_devs[unit];
-	register struct disklabel *lp = sc->sc_dkdev.dk_label;
+	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	int error, flags;
 
 	switch (cmd) {
@@ -1142,7 +1147,7 @@ int
 hdsize(dev)
 	dev_t dev;
 {
-	register int unit = hdunit(dev);
+	int unit = hdunit(dev);
 	struct hd_softc *rs;
 	int psize, didopen = 0;
 
@@ -1168,17 +1173,18 @@ hdsize(dev)
 }
 
 #ifdef DEBUG
+void
 hdprinterr(str, err, tab)
 	char *str;
 	short err;
-	char *tab[];
+	char **tab;
 {
-	register int i;
+	int i;
 	int printed;
 
 	if (err == 0)
 		return;
-	printf("    %s error field:", str, err);
+	printf("    %s error %d field:", str, err);
 	printed = 0;
 	for (i = 0; i < 16; i++)
 		if (err & (0x8000 >> i))

@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpibvar.h,v 1.5 1997/02/03 04:47:34 downsj Exp $	*/
-/*	$NetBSD: hpibvar.h,v 1.9 1997/01/30 09:06:52 thorpej Exp $	*/
+/*	$OpenBSD: hpibvar.h,v 1.6 1997/04/16 11:56:09 downsj Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.10 1997/03/31 07:34:25 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -176,11 +176,20 @@ extern	int hpibdmathresh;
 void	hpibreset __P((int));
 int	hpibsend __P((int, int, int, void *, int));
 int	hpibrecv __P((int, int, int, void *, int));
+int	hpibustart __P((int));
+void	hpibstart __P((void *));
 void	hpibgo __P((int, int, int, void *, int, int, int));
+void	hpibdone __P((void *));
+int	hpibpptest __P((int, int));
 void	hpibppclear __P((int));
+void	hpibawait __P((int));
+int	hpibswait __P((int, int));
+int	hpibid __P((int, int));
 
 int	hpibreq __P((struct device *, struct hpibqueue *));
 void	hpibfree __P((struct device *, struct hpibqueue *));
+int	hpibbus_alloc __P((struct hpibbus_softc *, int, int));
+void	hpibbus_free __P((struct hpibbus_softc *, int, int));
 
 int	hpibintr __P((void *));
 int	hpibdevprint __P((void *, const char *));

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite_subr.c,v 1.3 1997/01/12 15:12:51 downsj Exp $	*/
-/*	$NetBSD: ite_subr.c,v 1.7 1996/12/17 08:41:17 thorpej Exp $	*/
+/*	$OpenBSD: ite_subr.c,v 1.4 1997/04/16 11:56:11 downsj Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.8 1997/03/31 07:37:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -130,7 +130,7 @@ ite_writeglyph(ip, fbmem, glyphp)
 	struct ite_data *ip;
 	u_char *fbmem, *glyphp;
 {
-	register int bn;
+	int bn;
 	int l, b;
 
 	for (l = 0; l < ip->ftheight; l++) {

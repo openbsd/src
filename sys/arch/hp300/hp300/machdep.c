@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.21 1997/03/26 08:32:43 downsj Exp $	*/
-/*	$NetBSD: machdep.c,v 1.83 1997/03/16 09:12:13 thorpej Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.22 1997/04/16 11:56:28 downsj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89 1997/04/09 20:05:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,24 +45,27 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
-#include <sys/kernel.h>
-#include <sys/map.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/callout.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
+#include <sys/clist.h>
+#include <sys/conf.h>
+#include <sys/exec.h>
+#include <sys/file.h>
 #include <sys/ioctl.h>
-#include <sys/tty.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/map.h>
+#include <sys/mbuf.h>
 #include <sys/mount.h>
+#include <sys/msgbuf.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/signalvar.h>
+#include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
@@ -76,17 +79,32 @@
 #include <sys/shm.h>
 #endif
 
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 
+#ifdef notyet
+#include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
+#endif
+
 #include <dev/cons.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_kern.h>
 #include <vm/vm_param.h>
+
+#include <arch/hp300/dev/hilreg.h>
+#include <arch/hp300/dev/hilioctl.h>
+#include <arch/hp300/dev/hilvar.h>
+#ifdef USELEDS
+#include <arch/hp300/hp300/led.h>
+#endif /* USELEDS */
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "hp300";		/* cpu "architecture" */
@@ -207,8 +225,8 @@ void
 cpu_startup()
 {
 	extern char *etext;
-	register unsigned i;
-	register caddr_t v;
+	unsigned i;
+	caddr_t v;
 	int base, residual, sz;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
@@ -306,7 +324,7 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
@@ -365,7 +383,7 @@ cpu_startup()
  */
 caddr_t
 allocsys(v)
-	register caddr_t v;
+	caddr_t v;
 {
 
 #define	valloc(name, type, num)	\
@@ -426,7 +444,7 @@ allocsys(v)
  */
 void
 setregs(p, pack, stack, retval)
-	register struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
 	register_t *retval;
@@ -555,10 +573,11 @@ identifycpu()
 #ifndef HP330
 	case HP_330:
 #endif
-#if !defined(HP340) && !defined(HP360) && !defined(HP370)
+#if !defined(HP340) && !defined(HP360) && !defined(HP370) && !defined(HP375)
 	case HP_340:
 	case HP_360:
 	case HP_370:
+	case HP_375:
 #endif
 #if !defined(HP380)
 	case HP_380:
@@ -604,8 +623,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 #ifdef USELEDS
-#include <hp300/hp300/led.h>
-
 int inledcontrol = 0;	/* 1 if we are in ledcontrol already, cheap mutex */
 char *ledaddr;
 
@@ -633,10 +650,10 @@ ledinit()
  */
 void
 ledcontrol(ons, offs, togs)
-	register int ons, offs, togs;
+	int ons, offs, togs;
 {
 	static char currentleds;
-	register char leds;
+	char leds;
 
 	inledcontrol = 1;
 	leds = currentleds;
@@ -656,13 +673,16 @@ int	waittime = -1;
 
 void
 boot(howto)
-	register int howto;
+	int howto;
 {
 	extern int cold;
 
+#if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
+	(void)&howto;
+#endif
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)
-		savectx(curproc->p_addr);
+		savectx(&curproc->p_addr->u_pcb);
 
 	/* If system is cold, just halt. */
 	if (cold) {
@@ -778,6 +798,10 @@ dumpsys()
 	vm_offset_t maddr;	/* PA being dumped */
 	int error;		/* error code from (*dump)() */
 
+	/* XXX initialized here because of gcc lossage */
+	maddr = lowram;
+	pg = 0;
+
 	/* Don't put dump messages in msgbuf. */
 	msgbufmapped = 0;
 
@@ -794,7 +818,7 @@ dumpsys()
 	dump = bdevsw[major(dumpdev)].d_dump;
 	blkno = dumplo;
 
-	printf("\ndumping to dev 0x%x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev 0x%x, offset %ld\n", dumpdev, dumplo);
 
 	printf("dump ");
 	maddr = lowram;
@@ -878,9 +902,9 @@ int	*nofault;
 
 int
 badaddr(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	register int i;
+	int i;
 	label_t	faultbuf;
 
 	nofault = (int *) &faultbuf;
@@ -895,9 +919,9 @@ badaddr(addr)
 
 int
 badbaddr(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	register int i;
+	int i;
 	label_t	faultbuf;
 
 	nofault = (int *) &faultbuf;
@@ -1065,8 +1089,8 @@ parityerrorfind()
 	static label_t parcatch;
 	static int looking = 0;
 	volatile int pg, o, s;
-	register volatile int *ip;
-	register int i;
+	volatile int *ip;
+	int i;
 	int found;
 
 #ifdef lint

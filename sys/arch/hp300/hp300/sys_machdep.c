@@ -1,5 +1,5 @@
-/*	$OpenBSD: sys_machdep.c,v 1.3 1997/01/12 15:13:27 downsj Exp $	*/
-/*	$NetBSD: sys_machdep.c,v 1.13 1995/12/11 17:09:17 thorpej Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.4 1997/04/16 11:56:31 downsj Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.15 1997/04/06 21:40:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -61,7 +61,7 @@ sys_vtrace(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_vtrace_args /* {
+	struct sys_vtrace_args /* {
 		syscallarg(int) request;
 		syscallarg(int) value;
 	} */ *uap = v;
@@ -101,8 +101,8 @@ sys_vtrace(p, v, retval)
 vdoualarm(arg)
 	void *arg;
 {
-	register int pid = (int)arg;
-	register struct proc *p;
+	int pid = (int)arg;
+	struct proc *p;
 
 	p = pfind(pid);
 	if (p)
@@ -131,6 +131,7 @@ vdoualarm(arg)
  * do pages, above that we do the entire cache.
  */
 /*ARGSUSED1*/
+int
 cachectl(req, addr, len)
 	int req;
 	caddr_t	addr;
@@ -140,9 +141,9 @@ cachectl(req, addr, len)
 
 #if defined(M68040)
 	if (mmutype == MMU_68040) {
-		register int inc = 0;
+		int inc = 0;
 		int pa = 0, doall = 0;
-		caddr_t end;
+		caddr_t end = 0;
 #ifdef COMPAT_HPUX
 		extern struct emul emul_hpux;
 
@@ -152,7 +153,7 @@ cachectl(req, addr, len)
 #endif
 
 		if (addr == 0 ||
-		    (req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG)
+		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
 			doall = 1;
 
 		if (!doall) {
@@ -228,7 +229,7 @@ cachectl(req, addr, len)
 	switch (req) {
 	case CC_EXTPURGE|CC_PURGE:
 	case CC_EXTPURGE|CC_FLUSH:
-#if defined(HP370)
+#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375)
 		if (ectype == EC_PHYS)
 			PCIA();
 		/* fall into... */
@@ -238,7 +239,7 @@ cachectl(req, addr, len)
 		DCIU();
 		break;
 	case CC_EXTPURGE|CC_IPURGE:
-#if defined(HP370)
+#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375)
 		if (ectype == EC_PHYS)
 			PCIA();
 		else
@@ -261,10 +262,12 @@ sys_sysarch(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0 /* unused */
 	struct sys_sysarch_args /* {
 		syscallarg(int) op; 
 		syscallarg(char *) parms;
 	} */ *uap = v;
+#endif
 
 	return ENOSYS;
 }

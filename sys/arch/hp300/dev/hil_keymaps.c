@@ -1,5 +1,5 @@
-/*	$OpenBSD: hil_keymaps.c,v 1.3 1997/01/12 15:12:42 downsj Exp $	*/
-/*	$NetBSD: hil_keymaps.c,v 1.6 1995/12/06 22:13:23 thorpej Exp $	*/
+/*	$OpenBSD: hil_keymaps.c,v 1.4 1997/04/16 11:56:07 downsj Exp $	*/
+/*	$NetBSD: hil_keymaps.c,v 1.7 1997/03/31 07:34:22 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -322,23 +322,18 @@ char	se_ctrlshiftmap[] = {
  * Lookup is by hardware returned language code.
  */
 struct kbdmap kbd_map[] = {
-	KBD_US,		"US ASCII",
-	us_keymap,	us_shiftmap,	us_ctrlmap,	us_ctrlshiftmap,
-	us_stringmap,
+	{ KBD_US, "US ASCII",
+	    us_keymap, us_shiftmap, us_ctrlmap, us_ctrlshiftmap, us_stringmap },
 
 #ifdef UK_KEYBOARD
-	KBD_UK,		"United Kingdom",
-	uk_keymap,	uk_shiftmap,	uk_ctrlmap,	uk_ctrlshiftmap,
-	us_stringmap,
+	{ KBD_UK,  "United Kingdom",
+	    uk_keymap, uk_shiftmap, uk_ctrlmap, uk_ctrlshiftmap, us_stringmap },
 #endif
 
 #ifdef SE_KEYBOARD
-	KBD_SE,		"Swedish",
-	se_keymap,	se_shiftmap,	se_ctrlmap,	se_ctrlshiftmap,
-	us_stringmap,
+	{ KBD_SE,  "Swedish",
+	    se_keymap, se_shiftmap, se_ctrlmap, se_ctrlshiftmap, us_stringmap },
 #endif
 
-	0,		NULL,
-	NULL,		NULL,		NULL,		NULL,
-	NULL,
+	{ 0,  NULL, NULL,  NULL,  NULL,  NULL, NULL },
 };

@@ -1,5 +1,5 @@
-/*	$OpenBSD: scsi.c,v 1.7 1997/03/11 09:54:09 downsj Exp $	*/
-/*	$NetBSD: scsi.c,v 1.16 1997/03/10 08:37:31 thorpej Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.8 1997/04/16 11:56:14 downsj Exp $	*/
+/*	$NetBSD: scsi.c,v 1.19 1997/04/14 02:33:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -52,7 +52,9 @@
 #include <sys/buf.h>
 #include <sys/device.h>
 
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
@@ -60,10 +62,8 @@
 
 #include <hp300/dev/dmavar.h>
 
-#include <hp300/dev/scsivar.h>
 #include <hp300/dev/scsireg.h>
-
-#include <hp300/hp300/isr.h>
+#include <hp300/dev/scsivar.h>
 
 struct scsi_softc {
 	struct	device sc_dev;		/* generic device glue */
@@ -95,12 +95,28 @@ struct scsi_softc {
 #define	SCSI_DATA_WAIT	10000	/* wait per data in/out step */
 #define	SCSI_INIT_WAIT	50000	/* wait per step (both) during init */
 
-void	scsidone __P((void *));
-void	scsistart __P((void *));
-int	scsiintr __P((void *));
+static void	scsiabort __P((int, struct scsi_softc *,
+				volatile struct scsidevice *, char *));
+static void	scsierror __P((struct scsi_softc *,
+				volatile struct scsidevice *, u_char));
+static int	issue_select __P((volatile struct scsidevice *,
+				u_char, u_char));
+static int	wait_for_select __P((volatile struct scsidevice *));
+static int	ixfer_start __P((volatile struct scsidevice *,
+				int, u_char, int));
+static int	ixfer_out __P((volatile struct scsidevice *, int, u_char *));
+static void	ixfer_in __P((volatile struct scsidevice *, int, u_char *));
+static int	mxfer_in __P((volatile struct scsidevice *,
+				int, u_char *, u_char));
+static int	scsiicmd __P((struct scsi_softc *, int, u_char *, int,
+				u_char *, int, u_char));
+static void	finishxfer __P((struct scsi_softc *,
+				volatile struct scsidevice *, int));
 
 int	scsimatch __P((struct device *, void *, void *));
 void	scsiattach __P((struct device *, struct device *, void *));
+void	scsi_attach_children __P((struct scsi_softc *));
+int	scsisubmatch __P((struct device *, void *, void *));
 
 struct cfattach oscsi_ca = {
 	sizeof(struct scsi_softc), scsimatch, scsiattach
@@ -109,9 +125,6 @@ struct cfattach oscsi_ca = {
 struct cfdriver oscsi_cd = {
 	NULL, "oscsi", DV_DULL
 };
-
-int	scsisubmatch __P((struct device *, void *, void *));
-void	scsi_attach_children __P((struct scsi_softc *));
 
 int scsi_cmd_wait = SCSI_CMD_WAIT;
 int scsi_data_wait = SCSI_DATA_WAIT;
@@ -145,8 +158,8 @@ u_int	sgo_wait[MAXWAIT+2];
 static void
 scsiabort(target, hs, hd, where)
 	int target;
-	register struct scsi_softc *hs;
-	volatile register struct scsidevice *hd;
+	struct scsi_softc *hs;
+	volatile struct scsidevice *hd;
 	char *where;
 {
 	int len;
@@ -305,7 +318,7 @@ scsiattach(parent, self, aux)
 	hs->sc_regs = hd;
 
 	/* Establish the interrupt handler. */
-	(void) isrlink(scsiintr, hs, ipl, ISRPRI_BIO);
+	(void) intr_establish(scsiintr, hs, ipl, IPL_BIO);
 	dmacomputeipl();
 
 	/* Reset the controller. */
@@ -463,7 +476,7 @@ scsireset(unit)
 	int unit;
 {
 	struct scsi_softc *hs = oscsi_cd.cd_devs[unit];
-	volatile register struct scsidevice *hd = hs->sc_regs;
+	volatile struct scsidevice *hd = hs->sc_regs;
 	u_int i;
 
 	if (hs->sc_flags & SCSI_ALIVE)
@@ -531,11 +544,10 @@ scsireset(unit)
 
 static void
 scsierror(hs, hd, ints)
-	register struct scsi_softc *hs;
-	volatile register struct scsidevice *hd;
+	struct scsi_softc *hs;
+	volatile struct scsidevice *hd;
 	u_char ints;
 {
-	int unit = hs->sc_dev.dv_unit;
 	char *sep = "";
 
 	printf("%s: ", hs->sc_dev.dv_xname);
@@ -590,7 +602,7 @@ scsierror(hs, hd, ints)
 
 static int
 issue_select(hd, target, our_addr)
-	volatile register struct scsidevice *hd;
+	volatile struct scsidevice *hd;
 	u_char target, our_addr;
 {
 	if (hd->scsi_ssts & (SSTS_INITIATOR|SSTS_TARGET|SSTS_BUSY))
@@ -612,7 +624,7 @@ issue_select(hd, target, our_addr)
 
 static int
 wait_for_select(hd)
-	volatile register struct scsidevice *hd;
+	volatile struct scsidevice *hd;
 {
 	u_char ints;
 
@@ -624,10 +636,10 @@ wait_for_select(hd)
 
 static int
 ixfer_start(hd, len, phase, wait)
-	volatile register struct scsidevice *hd;
+	volatile struct scsidevice *hd;
 	int len;
 	u_char phase;
-	register int wait;
+	int wait;
 {
 
 	hd->scsi_tch = len >> 16;
@@ -656,11 +668,11 @@ ixfer_start(hd, len, phase, wait)
 
 static int
 ixfer_out(hd, len, buf)
-	volatile register struct scsidevice *hd;
+	volatile struct scsidevice *hd;
 	int len;
-	register u_char *buf;
+	u_char *buf;
 {
-	register int wait = scsi_data_wait;
+	int wait = scsi_data_wait;
 
 	for (; len > 0; --len) {
 		while (hd->scsi_ssts & SSTS_DREG_FULL) {
@@ -683,11 +695,11 @@ ixfer_out(hd, len, buf)
 
 static void
 ixfer_in(hd, len, buf)
-	volatile register struct scsidevice *hd;
+	volatile struct scsidevice *hd;
 	int len;
-	register u_char *buf;
+	u_char *buf;
 {
-	register int wait = scsi_data_wait;
+	int wait = scsi_data_wait;
 
 	for (; len > 0; --len) {
 		while (hd->scsi_ssts & SSTS_DREG_EMPTY) {
@@ -713,13 +725,13 @@ ixfer_in(hd, len, buf)
 
 static int
 mxfer_in(hd, len, buf, phase)
-	volatile register struct scsidevice *hd;
-	register int len;
-	register u_char *buf;
-	register u_char phase;
+	volatile struct scsidevice *hd;
+	int len;
+	u_char *buf;
+	u_char phase;
 {
-	register int wait = scsi_cmd_wait;
-	register int i;
+	int wait = scsi_cmd_wait;
+	int i;
 
 	hd->scsi_tmod = 0;
 	for (i = 0; i < len; ++i) {
@@ -799,9 +811,9 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 	int len;
 	u_char xferphase;
 {
-	volatile register struct scsidevice *hd = hs->sc_regs;
+	volatile struct scsidevice *hd = hs->sc_regs;
 	u_char phase, ints;
-	register int wait;
+	int wait;
 
 	/* select the SCSI bus (it's an error if bus isn't free) */
 	if (issue_select(hd, target, hs->sc_scsi_addr))
@@ -906,7 +918,7 @@ out:
 static void
 finishxfer(hs, hd, target)
 	struct scsi_softc *hs;
-	volatile register struct scsidevice *hd;
+	volatile struct scsidevice *hd;
 	int target;
 {
 	u_char phase, ints;
@@ -958,14 +970,14 @@ finishxfer(hs, hd, target)
 		switch (phase) {
 
 		case STATUS_PHASE:
-			if (mxfer_in(hd, sizeof(hs->sc_stat), hs->sc_stat,
-				     phase) <= 0)
+			if (mxfer_in(hd, sizeof(hs->sc_stat),
+			    (u_char *)hs->sc_stat, phase) <= 0)
 				goto abort;
 			break;
 
 		case MESG_IN_PHASE:
-			if (mxfer_in(hd, sizeof(hs->sc_msg), hs->sc_msg,
-				     phase) < 0)
+			if (mxfer_in(hd, sizeof(hs->sc_msg),
+			    (u_char *)hs->sc_msg, phase) < 0)
 				goto abort;
 			break;
 
@@ -977,7 +989,7 @@ finishxfer(hs, hd, target)
 				hs->sc_dev.dv_xname, phase, target);
 			goto abort;
 		}
-		if (ints = hd->scsi_ints) {
+		if ((ints = hd->scsi_ints)) {
 			hd->scsi_ints = ints;
 			if (ints & INTS_DISCON)
 				return;
@@ -1002,22 +1014,23 @@ scsi_test_unit_rdy(ctlr, slave, unit)
 	static struct scsi_cdb6 cdb = { CMD_TEST_UNIT_READY };
 
 	cdb.lun = unit;
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), (u_char *)0, 0,
-			 STATUS_PHASE));
+	return (scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb),
+	    (u_char *)0, 0, STATUS_PHASE));
 }
 
 int
 scsi_request_sense(ctlr, slave, unit, buf, len)
 	int ctlr, slave, unit;
 	u_char *buf;
-	unsigned len;
+	u_int len;
 {
 	struct scsi_softc *hs = oscsi_cd.cd_devs[ctlr];
 	static struct scsi_cdb6 cdb = { CMD_REQUEST_SENSE };
 
 	cdb.lun = unit;
 	cdb.len = len;
-	return (scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len, DATA_IN_PHASE));
+	return (scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb),
+	    buf, len, DATA_IN_PHASE));
 }
 
 int
@@ -1064,7 +1077,8 @@ scsi_tt_read(ctlr, slave, unit, buf, len, blk, bshift)
 	cdb.lbal = blk;
 	cdb.lenh = len >> (8 + DEV_BSHIFT + bshift);
 	cdb.lenl = len >> (DEV_BSHIFT + bshift);
-	stat = scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len, DATA_IN_PHASE);
+	stat = scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb),
+	    buf, len, DATA_IN_PHASE);
 	scsi_data_wait = old_wait;
 	return (stat);
 }
@@ -1094,7 +1108,8 @@ scsi_tt_write(ctlr, slave, unit, buf, len, blk, bshift)
 	cdb.lbal = blk;
 	cdb.lenh = len >> (8 + DEV_BSHIFT + bshift);
 	cdb.lenl = len >> (DEV_BSHIFT + bshift);
-	stat = scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len, DATA_OUT_PHASE);
+	stat = scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb),
+	    buf, len, DATA_OUT_PHASE);
 	scsi_data_wait = old_wait;
 	return (stat);
 }
@@ -1149,7 +1164,7 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
 	int pad;
 {
 	struct scsi_softc *hs = oscsi_cd.cd_devs[ctlr];
-	volatile register struct scsidevice *hd = hs->sc_regs;
+	volatile struct scsidevice *hd = hs->sc_regs;
 	int i, dmaflags;
 	u_char phase, ints, cmd;
 
@@ -1177,7 +1192,7 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
 	 */
 	phase = CMD_PHASE;
 	while (1) {
-		register int wait = scsi_cmd_wait;
+		int wait = scsi_cmd_wait;
 
 		switch (phase) {
 
@@ -1278,7 +1293,7 @@ out:
 #ifdef DEBUG
 		hs->sc_flags |= SCSI_PAD;
 		if (i & 1)
-			printf("%s: odd byte count: %d bytes @ %d\n",
+			printf("%s: odd byte count: %d bytes @ %ld\n",
 				hs->sc_dev.dv_xname, i, bp->b_cylin);
 #endif
 	} else
@@ -1303,7 +1318,7 @@ scsidone(arg)
 	void *arg;
 {
 	struct scsi_softc *hs = arg;
-	volatile register struct scsidevice *hd = hs->sc_regs;
+	volatile struct scsidevice *hd = hs->sc_regs;
 
 #ifdef DEBUG
 	if (scsi_debug)
@@ -1317,11 +1332,10 @@ int
 scsiintr(arg)
 	void *arg;
 {
-	register struct scsi_softc *hs = arg;
-	volatile register struct scsidevice *hd = hs->sc_regs;
-	register u_char ints;
-	register struct scsiqueue *sq;
-	int unit = hs->sc_dev.dv_unit;
+	struct scsi_softc *hs = arg;
+	volatile struct scsidevice *hd = hs->sc_regs;
+	u_char ints;
+	struct scsiqueue *sq;
 
 	if ((hd->scsi_csr & (CSR_IE|CSR_IR)) != (CSR_IE|CSR_IR))
 		return (0);
@@ -1396,8 +1410,8 @@ scsi_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
 	int stat;
 
 #ifdef DEBUG
-	if (freedma && (hs->sc_flags & SCSI_HAVEDMA) == 0 ||
-	    !freedma && (hs->sc_flags & SCSI_HAVEDMA))
+	if ((freedma && (hs->sc_flags & SCSI_HAVEDMA) == 0) ||
+	    (!freedma && (hs->sc_flags & SCSI_HAVEDMA)))
 		printf("oddio: freedma (%d) inconsistency (flags=%x)\n",
 		       freedma, hs->sc_flags);
 #endif
@@ -1407,7 +1421,7 @@ scsi_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
 	 */
 	if (freedma) {
 		hs->sc_flags &=~ SCSI_HAVEDMA;
-		dmafree(hs->sc_dq);
+		dmafree(&hs->sc_dq);
 	}
 	/*
 	 * Initialize command block
@@ -1433,7 +1447,8 @@ scsi_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
 	 * Perform command (with very long delays)
 	 */
 	scsi_delay(30000000);
-	stat = scsiicmd(hs, slave, &cdb, sizeof(cdb), buf, len, iphase);
+	stat = scsiicmd(hs, slave, (u_char *)&cdb, sizeof(cdb),
+	    buf, len, iphase);
 	scsi_delay(0);
 	return (stat);
 }
@@ -1469,7 +1484,7 @@ scsi_probe_device(ctlr, targ, lun, inqbuf, inqlen)
 	int inqlen;
 {
 	static struct scsi_fmt_cdb inq = {
-		6, CMD_INQUIRY, 0, 0, 0, 0, 0
+		6, { CMD_INQUIRY, 0, 0, 0, 0, 0 }
 	};
 	int i, tries = 10, isrm = 0;
 
@@ -1492,7 +1507,7 @@ scsi_probe_device(ctlr, targ, lun, inqbuf, inqlen)
 			struct scsi_xsense *sp =
 			    (struct scsi_xsense *)sensebuf;
 
-			scsi_request_sense(ctlr, targ, lun, sensebuf,
+			scsi_request_sense(ctlr, targ, lun, (u_char *)sensebuf,
 			    sizeof(sensebuf));
 			if (sp->class == 7) {
 				switch (sp->key) {

@@ -1,7 +1,8 @@
-/*	$OpenBSD: hil.c,v 1.3 1997/02/03 04:48:03 downsj Exp $	*/
-/*	$NetBSD: hil.c,v 1.6 1997/01/30 10:32:53 thorpej Exp $	*/
+/*	$OpenBSD: hil.c,v 1.4 1997/04/16 11:56:38 downsj Exp $	*/
+/*	$NetBSD: hil.c,v 1.2 1997/04/14 19:00:10 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,12 +45,10 @@
  */
 
 /*
- * Keyboard routines for the standalone ITE.
+ * HIL keyboard routines for the standalone ITE.
  */
 
-#include "samachdep.h"
-
-#ifdef ITECONSOLE
+#if defined(ITECONSOLE) && defined(HIL_KEYBOARD)
 
 #include <sys/param.h>
 #include <sys/device.h>			/* XXX */
@@ -57,13 +56,16 @@
 #include <hp300/dev/kbdmap.h>
 #include <hp300/dev/itevar.h>
 
+#include "samachdep.h"
+#include "kbdvar.h"
+
 #ifndef SMALL
 
 /*
  * HIL cooked keyboard keymaps.
  * Supports only unshifted, shifted and control keys.
  */
-char	us_keymap[] = {
+char	hil_us_keymap[] = {
 	NULL,	'`',	'\\',	ESC,	NULL,	DEL,	NULL,	NULL,  
 	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
 	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
@@ -82,7 +84,7 @@ char	us_keymap[] = {
 	'z',	'x',	'c',	'v',	'b',	'n',	NULL,	NULL
 };
 
-char	us_shiftmap[] = {
+char	hil_us_shiftmap[] = {
 	NULL,	'~',	'|',	DEL,	NULL,	DEL,	NULL,	NULL,
 	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
 	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
@@ -101,7 +103,7 @@ char	us_shiftmap[] = {
 	'Z',	'X',	'C',	'V',	'B',	'N',	NULL,	NULL
 };
 
-char	us_ctrlmap[] = {
+char	hil_us_ctrlmap[] = {
 	NULL,	'`',	'\034',	ESC,	NULL,	DEL,	NULL,	NULL,
 	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
 	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
@@ -121,7 +123,7 @@ char	us_ctrlmap[] = {
 };
 
 #ifdef UK_KEYBOARD
-char	uk_keymap[] = {
+char	hil_uk_keymap[] = {
 	NULL,	'`',	'<',	ESC,	NULL,	DEL,	NULL,	NULL,  
 	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
 	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,  
@@ -140,7 +142,7 @@ char	uk_keymap[] = {
 	'z',	'x',	'c',	'v',	'b',	'n',	NULL,	NULL
 };
 
-char	uk_shiftmap[] = {
+char	hil_uk_shiftmap[] = {
 	NULL,	'~',	'>',	DEL,	NULL,	DEL,	NULL,	NULL,
 	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
 	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
@@ -159,7 +161,7 @@ char	uk_shiftmap[] = {
 	'Z',	'X',	'C',	'V',	'B',	'N',	NULL,	NULL
 };
 
-char	uk_ctrlmap[] = {
+char	hil_uk_ctrlmap[] = {
 	NULL,	'`',	'<',	ESC,	NULL,	DEL,	NULL,	NULL,
 	'\n',	'\t',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
 	NULL,	'\n',	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,
@@ -183,27 +185,28 @@ char	uk_ctrlmap[] = {
  * The keyboard map table.
  * Lookup is by hardware returned language code.
  */
-struct kbdmap kbd_map[] = {
+struct kbdmap hilkbd_map[] = {
 	KBD_US,		NULL,
-	us_keymap,	us_shiftmap,	us_ctrlmap,	NULL,	NULL,
+	hil_us_keymap,	hil_us_shiftmap,	hil_us_ctrlmap,	NULL,	NULL,
 
 #ifdef UK_KEYBOARD
 	KBD_UK,		NULL,
-	uk_keymap,	uk_shiftmap,	uk_ctrlmap,	NULL,	NULL,
+	hil_uk_keymap,	hil_uk_shiftmap,	hil_uk_ctrlmap,	NULL,	NULL,
 #endif
 
 	0,		NULL,
 	NULL,		NULL,		NULL,		NULL,	NULL,
 };
 
-char	*kbd_keymap = us_keymap;
-char	*kbd_shiftmap = us_shiftmap;
-char	*kbd_ctrlmap = us_ctrlmap;
+char	*hilkbd_keymap = hil_us_keymap;
+char	*hilkbd_shiftmap = hil_us_shiftmap;
+char	*hilkbd_ctrlmap = hil_us_ctrlmap;
 
-kbdgetc()
+int
+hilkbd_getc()
 {
-	register int status, c;
-	register struct hil_dev *hiladdr = HILADDR;
+	int status, c;
+	struct hil_dev *hiladdr = HILADDR;
 
 	status = hiladdr->hil_stat;
 	if ((status & HIL_DATA_RDY) == 0)
@@ -211,13 +214,13 @@ kbdgetc()
 	c = hiladdr->hil_data;
 	switch ((status>>KBD_SSHIFT) & KBD_SMASK) {
 	case KBD_SHIFT:
-		c = kbd_shiftmap[c & KBD_CHARMASK];
+		c = hilkbd_shiftmap[c & KBD_CHARMASK];
 		break;
 	case KBD_CTRL:
-		c = kbd_ctrlmap[c & KBD_CHARMASK];
+		c = hilkbd_ctrlmap[c & KBD_CHARMASK];
 		break;
 	case KBD_KEY:
-		c = kbd_keymap[c & KBD_CHARMASK];
+		c = hilkbd_keymap[c & KBD_CHARMASK];
 		break;
 	default:
 		c = 0;
@@ -225,11 +228,12 @@ kbdgetc()
 	}
 	return(c);
 }
-#endif
+#endif /* SMALL */
 
-kbdnmi()
+void
+hilkbd_nmi()
 {
-	register struct hil_dev *hiladdr = HILADDR;
+	struct hil_dev *hiladdr = HILADDR;
 
 	HILWAIT(hiladdr);
 	hiladdr->hil_cmd = HIL_CNMT;
@@ -239,11 +243,22 @@ kbdnmi()
 	printf("\nboot interrupted\n");
 }
 
-kbdinit()
+int
+hilkbd_init()
 {
-	register struct hil_dev *hiladdr = HILADDR;
-	register struct kbdmap *km;
+	struct hil_dev *hiladdr = HILADDR;
+	struct kbdmap *km;
 	u_char lang;
+
+	/*
+	 * Determine the existence of a HIL keyboard.
+	 */
+	HILWAIT(hiladdr);
+	hiladdr->hil_cmd = HIL_READKBDSADR;
+	HILDATAWAIT(hiladdr);
+	lang = hiladdr->hil_data;
+	if (lang == 0)
+		return (0);
 
 	HILWAIT(hiladdr);
 	hiladdr->hil_cmd = HIL_SETARR;
@@ -253,13 +268,14 @@ kbdinit()
 	hiladdr->hil_cmd = HIL_READKBDLANG;
 	HILDATAWAIT(hiladdr);
 	lang = hiladdr->hil_data;
-	for (km = kbd_map; km->kbd_code; km++)
+	for (km = hilkbd_map; km->kbd_code; km++) {
 		if (km->kbd_code == lang) {
-			kbd_keymap = km->kbd_keymap;
-			kbd_shiftmap = km->kbd_shiftmap;
-			kbd_ctrlmap = km->kbd_ctrlmap;
+			hilkbd_keymap = km->kbd_keymap;
+			hilkbd_shiftmap = km->kbd_shiftmap;
+			hilkbd_ctrlmap = km->kbd_ctrlmap;
 		}
+	}
 	HILWAIT(hiladdr);
 	hiladdr->hil_cmd = HIL_INTON;
 }
-#endif
+#endif /* ITECONSOLE && HIL_KEYBOARD */

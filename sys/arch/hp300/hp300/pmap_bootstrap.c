@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.3 1997/01/12 15:13:26 downsj Exp $	*/
-/*	$NetBSD: pmap_bootstrap.c,v 1.10 1996/10/14 08:05:37 thorpej Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.4 1997/04/16 11:56:31 downsj Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.11 1997/04/01 03:12:29 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -42,12 +42,17 @@
 
 #include <sys/param.h>
 #include <sys/msgbuf.h>
-#include <machine/pte.h>
-#include <hp300/hp300/clockreg.h>
-#include <machine/vmparam.h>
+#include <sys/proc.h>
+
+#include <machine/frame.h>
 #include <machine/cpu.h>
+#include <machine/vmparam.h>
+#include <machine/pte.h>
+
+#include <hp300/hp300/clockreg.h>
 
 #include <vm/vm.h>
+#include <vm/pmap.h>
 
 #define RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
 
@@ -66,6 +71,8 @@ extern int protection_codes[];
 #ifdef M68K_MMU_HP
 extern int pmap_aliasmask;
 #endif
+
+void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -93,12 +100,12 @@ struct msgbuf	*msgbufp;
 void
 pmap_bootstrap(nextpa, firstpa)
 	vm_offset_t nextpa;
-	register vm_offset_t firstpa;
+	vm_offset_t firstpa;
 {
 	vm_offset_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
-	register st_entry_t protoste, *ste;
-	register pt_entry_t protopte, *pte, *epte;
+	st_entry_t protoste, *ste;
+	pt_entry_t protopte, *pte, *epte;
 
 	/*
 	 * Calculate important physical addresses:
@@ -176,7 +183,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * likely be insufficient in the future (at least for the kernel).
 	 */
 	if (RELOC(mmutype, int) == MMU_68040) {
-		register int num;
+		int num;
 
 		/*
 		 * First invalidate the entire "segment table" pages
@@ -453,7 +460,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * absolute "jmp" table.
 	 */
 	{
-		register int *kp;
+		int *kp;
 
 		kp = &RELOC(protection_codes, int);
 		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
@@ -486,7 +493,7 @@ pmap_bootstrap(nextpa, firstpa)
 		 *	MAXKL2SIZE-1:	maps last-page page table
 		 */
 		if (RELOC(mmutype, int) == MMU_68040) {
-			register int num;
+			int num;
 			
 			kpm->pm_stfree = ~l2tobm(0);
 			num = roundup((nptpages + 1) * (NPTEPG / SG4_LEV3SIZE),

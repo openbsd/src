@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_subr.c,v 1.4 1997/02/05 16:01:15 downsj Exp $	*/
-/*	$NetBSD: grf_subr.c,v 1.3 1997/01/31 21:16:50 carrel Exp $	*/
+/*	$OpenBSD: grf_subr.c,v 1.5 1997/04/16 11:56:05 downsj Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.4 1997/03/31 07:34:18 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ grfdevprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	struct grfdev_attach_args *ga = aux;
+	/* struct grfdev_attach_args *ga = aux; */
 
 	/* Only grf's can attach to grfdev's... easy. */
 	if (pnp)

@@ -1,5 +1,5 @@
-#	$OpenBSD: files.hp300,v 1.8 1997/03/26 08:32:38 downsj Exp $
-#	$NetBSD: files.hp300,v 1.23 1997/03/17 19:46:43 gwr Exp $
+#	$OpenBSD: files.hp300,v 1.9 1997/04/16 11:55:55 downsj Exp $
+#	$NetBSD: files.hp300,v 1.25 1997/04/14 02:28:53 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -170,7 +170,7 @@ file	arch/hp300/hp300/dkbad.c
 file	arch/hp300/hp300/kgdb_glue.c		kgdb compile-with "${NORMAL_C} -fno-defer-pop"
 file	arch/hp300/hp300/kgdb_stub.c		kgdb
 file	arch/hp300/hp300/machdep.c
-file	arch/hp300/hp300/isr.c
+file	arch/hp300/hp300/intr.c
 file	arch/hp300/hp300/mem.c
 file	arch/hp300/hp300/pmap.c
 file	arch/hp300/hp300/pmap_bootstrap.c

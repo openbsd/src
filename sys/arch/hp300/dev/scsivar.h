@@ -1,5 +1,5 @@
-/*	$OpenBSD: scsivar.h,v 1.4 1997/02/03 04:47:45 downsj Exp $	*/
-/*	$NetBSD: scsivar.h,v 1.6 1997/01/30 09:08:56 thorpej Exp $	*/
+/*	$OpenBSD: scsivar.h,v 1.5 1997/04/16 11:56:15 downsj Exp $	*/
+/*	$NetBSD: scsivar.h,v 1.7 1997/03/31 07:40:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -70,18 +70,26 @@ struct oscsi_attach_args {
 	struct	scsi_inquiry *osa_inqbuf;
 };
 
-int	scsi_probe_device __P((int, int, int, struct scsi_inquiry *, int));
+#ifdef _KERNEL
 int	scsi_print __P((void *, const char *));
 
+void	scsi_delay __P((int));
+void	scsistart __P((void *));
 void	scsireset __P((int));
-int	scsireq __P((struct device *, struct scsiqueue *));
-void	scsifree __P((struct device *, struct scsiqueue *));
-int	scsigo __P((int, int, int, struct buf *, struct scsi_fmt_cdb *, int));
-int	scsi_request_sense __P((int, int, int, u_char *, u_int));
-int	scsiustart __P((int));
-int	scsi_tt_write __P((int, int, int, u_char *, u_int, daddr_t, int));
-int	scsi_tt_oddio __P((int, int, int, u_char *, u_int, int, int));
-int	scsi_immed_command __P((int, int, int, struct scsi_fmt_cdb *,
-	    u_char *, u_int, int));
-void	scsi_str __P((char *, char *, size_t));
 int	scsi_test_unit_rdy __P((int, int, int));
+int	scsi_request_sense __P((int, int, int, u_char *, u_int));
+int	scsi_immed_command __P((int, int, int, struct scsi_fmt_cdb *,
+				u_char *, u_int, int));
+int	scsi_tt_read __P((int, int, int, u_char *, u_int, daddr_t, int));
+int	scsi_tt_write __P((int, int, int, u_char *, u_int, daddr_t, int));
+int	scsireq __P((struct device *, struct scsiqueue *));
+int	scsiustart __P((int));
+void	scsistart __P((void *));
+int	scsigo __P((int, int, int, struct buf *, struct scsi_fmt_cdb *, int));
+void	scsidone __P((void *));
+int	scsiintr __P((void *));
+void	scsifree __P((struct device *, struct scsiqueue *));
+int	scsi_tt_oddio __P((int, int, int, u_char *, u_int, int, int));
+void	scsi_str __P((char *, char *, size_t));
+int	scsi_probe_device __P((int, int, int, struct scsi_inquiry *, int));
+#endif

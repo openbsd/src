@@ -1,5 +1,5 @@
-/*	$OpenBSD: ac.c,v 1.5 1997/02/03 04:47:11 downsj Exp $
-/*	$NetBSD: ac.c,v 1.7 1997/01/30 09:14:10 thorpej Exp $	*/
+/*	$OpenBSD: ac.c,v 1.6 1997/04/16 11:55:56 downsj Exp $
+/*	$NetBSD: ac.c,v 1.9 1997/04/02 22:37:21 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -54,21 +54,27 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/device.h>
 
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
-
 #include <hp300/dev/acioctl.h>
 #include <hp300/dev/acvar.h>
 
-int	acmatch __P((struct device *, void *, void *));
-void	acattach __P((struct device *, struct device *, void *));
+/* cdev_decl(ac); */
+/* XXX we should use macros to do these... */
+int	acopen __P((dev_t, int, int, struct proc *));
+int	acclose __P((dev_t, int, int, struct proc *));
+int	acioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+
+static int	acmatch __P((struct device *, void *, void *));
+static void	acattach __P((struct device *, struct device *, void *));
 
 struct cfattach ac_ca = {
 	sizeof(struct ac_softc), acmatch, acattach
@@ -88,7 +94,7 @@ int ac_debug = 0x0000;
 #define ACD_OPEN	0x0002
 #endif
 
-int
+static int
 acmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
@@ -102,7 +108,7 @@ acmatch(parent, match, aux)
 	return (1);
 }
 
-void
+static void
 acattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -137,14 +143,14 @@ acattach(parent, self, aux)
 }
 
 /*ARGSUSED*/
+int
 acopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
 {
-	register int unit = minor(dev);
+	int unit = minor(dev);
 	struct ac_softc *sc;
-	int error = 0;
 
 	if (unit >= ac_cd.cd_ndevs ||
 	    (sc = ac_cd.cd_devs[unit]) == NULL ||
@@ -166,6 +172,7 @@ acopen(dev, flag, mode, p)
 }
 
 /*ARGSUSED*/
+int
 acclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -181,9 +188,10 @@ acclose(dev, flag, mode, p)
 	(8 + (ep)->nmte*12 + (ep)->nse*12 + (ep)->niee*12 + (ep)->ndte*20)
 
 /*ARGSUSED*/
+int
 acioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data; 
 	int flag;
 	struct proc *p;
@@ -258,6 +266,7 @@ acioctl(dev, cmd, data, flag, p)
 	return(error);
 }
 
+int
 accommand(dev, command, bufp, buflen)
 	dev_t dev;
 	int command;
@@ -266,13 +275,13 @@ accommand(dev, command, bufp, buflen)
 {
 	int unit = minor(dev);
 	struct ac_softc *sc = ac_cd.cd_devs[unit];
-	register struct buf *bp = sc->sc_bp;
-	register struct scsi_fmt_cdb *cmd = sc->sc_cmd;
+	struct buf *bp = sc->sc_bp;
+	struct scsi_fmt_cdb *cmd = sc->sc_cmd;
 	int error;
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("accommand(dev=%x, cmd=%x, buf=%x, buflen=%x)\n",
+		printf("accommand(dev=%x, cmd=%x, buf=%p, buflen=%x)\n",
 		       dev, command, bufp, buflen);
 #endif
 	if (sc->sc_flags & ACF_ACTIVE)
@@ -336,7 +345,7 @@ acstart(arg)
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("acstart(unit=%x)\n", unit);
+		printf("acstart(unit=%x)\n", sc->sc_dev.dv_unit);
 #endif
 	if (scsiustart(sc->sc_dev.dv_parent->dv_unit))
 		acgo(arg);
@@ -347,12 +356,12 @@ acgo(arg)
 	void *arg;
 {
 	struct ac_softc *sc = arg;
-	register struct buf *bp = sc->sc_bp;
+	struct buf *bp = sc->sc_bp;
 	int stat;
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("acgo(unit=%x): ", unit);
+		printf("acgo(unit=%x): ", sc->sc_dev.dv_unit);
 #endif
 	stat = scsigo(sc->sc_dev.dv_parent->dv_unit, sc->sc_target,
 	    sc->sc_lun, bp, sc->sc_cmd, 0);
@@ -373,15 +382,14 @@ acintr(arg, stat)
 	void *arg;
 	int stat;
 {
-	register struct ac_softc *sc = arg;
-	register struct buf *bp = sc->sc_bp;
+	struct ac_softc *sc = arg;
+	struct buf *bp = sc->sc_bp;
 	u_char sensebuf[78];
 	struct scsi_xsense *sp;
-	int unit = sc->sc_dev.dv_unit;
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("acintr(unit=%x, stat=%x)\n", unit, stat);
+		printf("acintr(unit=%x, stat=%x)\n", sc->sc_dev.dv_unit, stat);
 #endif
 	switch (stat) {
 	case 0:
@@ -405,11 +413,12 @@ acintr(arg, stat)
 	scsifree(sc->sc_dev.dv_parent, &sc->sc_sq);
 }
 
+int
 acgeteinfo(dev)
 	dev_t dev;
 {
 	struct ac_softc *sc = ac_cd.cd_devs[minor(dev)];
-	register char *bp;
+	char *bp;
 	char msbuf[48];
 	int error;
 
@@ -438,23 +447,24 @@ acgeteinfo(dev)
 	return(EIO);
 }
 
+void
 acconvert(sbuf, dbuf, ne)
 	char *sbuf, *dbuf;
 	int ne;
 {
-	register struct aceltstat *ep = (struct aceltstat *)dbuf;
-	register struct ac_restatphdr *phdr;
-	register struct ac_restatdb *dbp;
+	struct aceltstat *ep = (struct aceltstat *)dbuf;
+	struct ac_restatphdr *phdr;
+	struct ac_restatdb *dbp;
 	struct ac_restathdr *hdr;
 #ifdef DEBUG
-	register int bcount;
+	int bcount;
 #endif
 
 	hdr = (struct ac_restathdr *)&sbuf[0];
 	sbuf += sizeof *hdr;
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
-		printf("element status: first=%d, num=%d, len=%d\n",
+		printf("element status: first=%d, num=%d, len=%ld\n",
 		       hdr->ac_felt, hdr->ac_nelt, hdr->ac_bcount);
 	if (hdr->ac_nelt != ne) {
 		printf("acconvert: # of elements, %d != %d\n",

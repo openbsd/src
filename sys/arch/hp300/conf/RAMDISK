@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.1 1997/02/23 01:19:08 downsj Exp $
+#	$OpenBSD: RAMDISK,v 1.2 1997/04/16 11:55:54 downsj Exp $
 #
 # Ram disk kernel.
 #
@@ -44,6 +44,10 @@ option	 	SE_KEYBOARD	# include Swedish HIL keymap
 # Verbose descriptions of unconfigured DIO devices
 # (Warning: this compiles in a large string table)
 option	 	DIOVERBOSE	# recognize "unknown" DIO devices
+
+# Options for the ramdisk.
+option		MINIROOTSIZE=4096
+option		RAMDISK_HOOKS
 
 config		bsd root rd0 swap rd0
 
@@ -107,7 +111,3 @@ oscsi*		at dio? scode ?		# Old HP SCSI
 sd*		at oscsi? target ? lun ?	# SCSI disks
 st*		at oscsi? target ? lun ?	# SCSI tapes
 ac*		at oscsi? target ? lun ?	# SCSI changers
-
-option		MINIROOTSIZE=4096
-option		RAMDISK_HOOKS
-pseudo-device	rd 2

@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.4 1997/03/26 08:32:41 downsj Exp $	*/
-/*	$NetBSD: hpux_machdep.c,v 1.9 1997/03/16 10:00:45 thorpej Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.5 1997/04/16 11:56:23 downsj Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.12 1997/04/02 22:41:34 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -45,27 +45,30 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
-#include <sys/kernel.h>
-#include <sys/filedesc.h>
-#include <sys/proc.h> 
 #include <sys/buf.h>
-#include <sys/wait.h> 
-#include <sys/file.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/exec.h>
-#include <sys/namei.h>
-#include <sys/vnode.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/ioctl.h>
+#include <sys/ipc.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/mman.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/namei.h>
+#include <sys/poll.h> 
+#include <sys/proc.h> 
 #include <sys/ptrace.h>
+#include <sys/signalvar.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
-#include <sys/malloc.h>
-#include <sys/mount.h>
-#include <sys/ipc.h>
-#include <sys/namei.h>
+#include <sys/tty.h>
 #include <sys/user.h>
-#include <sys/mman.h>
-#include <sys/conf.h>
+#include <sys/vnode.h>
+#include <sys/wait.h> 
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -76,12 +79,17 @@
 #include <vm/vm_param.h>
 #include <vm/vm_map.h> 
 
-#include <machine/cpu.h> 
-#include <machine/reg.h>
+#include <arch/hp300/dev/grfreg.h>
+#include <arch/hp300/dev/grfioctl.h>
+#include <arch/hp300/dev/grfvar.h>
+#include <arch/hp300/dev/hilreg.h>
+#include <arch/hp300/dev/hilioctl.h>
+#include <arch/hp300/dev/hilvar.h>
 
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
+#include <compat/hpux/hpux_sig.h>
 #include <compat/hpux/hpux_util.h>
 #include <compat/hpux/hpux_syscall.h>
 #include <compat/hpux/hpux_syscallargs.h>
@@ -156,11 +164,12 @@ hpux_cpu_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct hpux_exec *hpux_ep = epp->ep_hdr;
+	/* struct hpux_exec *hpux_ep = epp->ep_hdr; */
 
 	/* set up command for exec header */
 	NEW_VMCMD(&epp->ep_vmcmds, hpux_cpu_vmcmd,
 	    sizeof(struct hpux_exec), (long)epp->ep_hdr, NULLVP, 0, 0);
+	return (0);
 }
 
 /*
@@ -189,7 +198,7 @@ hpux_cpu_vmcmd(p, ev)
 			p->p_md.md_flags &= ~MDP_CCBDATA;
 
 		if (execp->ha_trsize & HPUXM_STKWT)
-			p->p_md.md_flags & ~MDP_CCBSTACK;
+			p->p_md.md_flags &= ~MDP_CCBSTACK;
 	}
 
 	return (0);
@@ -313,7 +322,7 @@ hpux_sys_getcontext(p, v, retval)
 {
 	struct hpux_sys_getcontext_args *uap = v;
 	int l, i, error = 0;
-	register int len; 
+	int len; 
 
 	for (i = 0; context_table[i].str != NULL; i++)
 		if (context_table[i].val == fputype)
@@ -345,10 +354,10 @@ hpux_to_bsd_uoff(off, isps, p)
 	int *off, *isps; 
 	struct proc *p;
 {
-	register int *ar0 = p->p_md.md_regs;
+	int *ar0 = p->p_md.md_regs;
 	struct hpux_fp *hp; 
 	struct bsdfp *bp;
-	register u_int raddr;
+	u_int raddr;
 
 	*isps = 0;
 
@@ -461,11 +470,11 @@ hpux_sendsig(catcher, sig, mask, code, type, val)
 	int type;
 	union sigval val;
 {
-	register struct proc *p = curproc;
-	register struct hpuxsigframe *kfp, *fp;
-	register struct frame *frame;
-	register struct sigacts *psp = p->p_sigacts;
-	register short ft;
+	struct proc *p = curproc;
+	struct hpuxsigframe *kfp, *fp;
+	struct frame *frame;
+	struct sigacts *psp = p->p_sigacts;
+	short ft;
 	int oonstack, fsize;
 	extern char sigcode[], esigcode[];
 
@@ -493,8 +502,8 @@ hpux_sendsig(catcher, sig, mask, code, type, val)
 
 #ifdef DEBUG
 	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
-		printf("hpux_sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
-		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
+		printf("hpux_sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
+		       p->p_pid, sig, &oonstack, fp, &fp->hsf_sc, ft);
 #endif
 
 	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
@@ -569,10 +578,11 @@ hpux_sendsig(catcher, sig, mask, code, type, val)
 	}
 
 #ifdef DEBUG
-	if ((hpuxsigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
-		printf("hpux_sendsig(%d): copy out FP state (%x) to %x\n",
-		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
-		       &kfp->sf_state.ss_fpstate);
+	if ((hpuxsigdebug & SDB_FPSTATE) &&
+	    *(char *)&kfp->hsf_sigstate.hss_fpstate)
+		printf("hpux_sendsig(%d): copy out FP state (%x) to %p\n",
+		       p->p_pid, *(u_int *)&kfp->hsf_sigstate.hss_fpstate,
+		       &kfp->hsf_sigstate.hss_fpstate);
 #endif
 
 	/*
@@ -597,9 +607,9 @@ hpux_sendsig(catcher, sig, mask, code, type, val)
 #ifdef DEBUG
 	if (hpuxsigdebug & SDB_FOLLOW) {
 		printf(
-		  "hpux_sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
-		   p->p_pid, sig, kfp->sf_scp, fp,
-		   kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
+		  "hpux_sendsig(%d): sig %d scp %p fp %p sc_sp %x sc_ap %x\n",
+		   p->p_pid, sig, kfp->hsf_scp, fp,
+		   kfp->hsf_sc.hsc_sp, kfp->hsf_sc._hsc_ap);
 	}
 #endif
 
@@ -635,9 +645,9 @@ hpux_sys_sigreturn(p, v, retval)
 	struct hpux_sys_sigreturn_args /* {
 		syscallarg(struct hpuxsigcontext *) sigcntxp;
 	} */ *uap = v;
-	register struct hpuxsigcontext *scp;
-	register struct frame *frame;
-	register int rf;
+	struct hpuxsigcontext *scp;
+	struct frame *frame;
+	int rf;
 	struct hpuxsigcontext tsigc;
 	struct hpuxsigstate tstate;
 	int flags;
@@ -645,7 +655,7 @@ hpux_sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (hpuxsigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
 		return (EINVAL);
@@ -702,9 +712,9 @@ hpux_sys_sigreturn(p, v, retval)
 		return (EJUSTRETURN);
 #ifdef DEBUG
 	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
-		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
-		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
-		       (flags & HSS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
+		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n",
+		       p->p_pid, &flags, scp->hsc_sp, SCARG(uap, sigcntxp),
+		       (flags & HSS_RTEFRAME) ? tstate.hss_frame.f_format : -1);
 #endif
 	/*
 	 * Restore most of the users registers except for A6 and SP
@@ -720,7 +730,7 @@ hpux_sys_sigreturn(p, v, retval)
 	 * the sigcontext structure.
 	 */
 	if (flags & HSS_RTEFRAME) {
-		register int sz;
+		int sz;
 		
 		/* grab frame type and validate */
 		sz = tstate.hss_frame.f_format;
@@ -734,7 +744,7 @@ hpux_sys_sigreturn(p, v, retval)
 #ifdef DEBUG
 		if (hpuxsigdebug & SDB_FOLLOW)
 			printf("sigreturn(%d): copy in %d of frame type %d\n",
-			       p->p_pid, sz, tstate.ss_frame.f_format);
+			       p->p_pid, sz, tstate.hss_frame.f_format);
 #endif
 	}
 
@@ -745,10 +755,10 @@ hpux_sys_sigreturn(p, v, retval)
 		m68881_restore(&tstate.hss_fpstate);
 
 #ifdef DEBUG
-	if ((hpuxsigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
-		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
-		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
-		       &tstate.ss_fpstate);
+	if ((hpuxsigdebug & SDB_FPSTATE) && *(char *)&tstate.hss_fpstate)
+		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
+		       p->p_pid, *(u_int *)&tstate.hss_fpstate,
+		       &tstate.hss_fpstate);
 
 	if ((hpuxsigdebug & SDB_FOLLOW) ||
 	    ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid))
@@ -763,7 +773,7 @@ hpux_sys_sigreturn(p, v, retval)
  */
 void
 hpux_setregs(p, pack, stack, retval)
-	register struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
 	register_t *retval;

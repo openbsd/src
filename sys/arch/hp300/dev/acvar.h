@@ -1,5 +1,5 @@
-/*	$OpenBSD: acvar.h,v 1.3 1997/02/03 04:47:11 downsj Exp $	*/
-/*	$NetBSD: acvar.h,v 1.3 1997/01/30 09:14:11 thorpej Exp $	*/
+/*	$OpenBSD: acvar.h,v 1.4 1997/04/16 11:55:56 downsj Exp $	*/
+/*	$NetBSD: acvar.h,v 1.4 1997/03/31 07:32:15 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -87,3 +87,14 @@ struct	ac_restatdb {
 		ac_imp:1,	/* 1 == user inserted medium (IEE only) */
 		ac_full:1;	/* element contains media */
 };
+
+#ifdef _KERNEL
+int	accommand __P((dev_t, int, char *, int));
+
+void	acstart __P((void *));
+void	acgo __P((void *));
+void	acintr __P((void *, int));
+
+int	acgeteinfo __P((dev_t));
+void	acconvert __P((char *, char *, int));
+#endif /* _KERNEL */

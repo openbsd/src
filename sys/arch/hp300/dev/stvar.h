@@ -1,5 +1,5 @@
-/*	$OpenBSD: stvar.h,v 1.2 1997/01/12 15:13:06 downsj Exp $	*/
-/*	$NetBSD: stvar.h,v 1.4 1994/10/26 07:25:14 cgd Exp $	*/
+/*	$OpenBSD: stvar.h,v 1.3 1997/04/16 11:56:17 downsj Exp $	*/
+/*	$NetBSD: stvar.h,v 1.6 1997/04/02 22:37:40 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -44,7 +44,6 @@
 /*
  * stvar.h scsi tape driver
  */
-
 struct exb_xsense {
 	u_char  reserved8;
 	u_char  reserved9;
@@ -174,3 +173,52 @@ struct mode_sense {
 "\20\20VAL\17FMK\16EOM\15ILI\14KEY3\13KEY2\12KEY1\11KEY0\
 \10RETRY7\7RETRY6\6RETRY5\5RETRY4\4RETRY3\3RETRY2\2RETRY1\1RETRY0"
 
+struct st_xsense {
+	struct scsi_xsense sc_xsense;	/* data from sense */
+	struct exb_xsense exb_xsense;	/* additional info from exabyte */
+};
+
+struct st_softc {
+	struct	device sc_dev;
+	struct	scsiqueue sc_sq;
+	long	sc_blkno;       /* (possible block device support?) */
+	long	sc_resid;	/* (possible block device support?) */
+	int	sc_flags;
+	int	sc_blklen;	/* 0 = variable len records */
+	int	sc_filepos;	/* file position on tape */
+	long	sc_numblks;	/* number of blocks on tape */
+	short	sc_type;	/* ansi scsi type */
+	int	sc_target;
+	int	sc_lun;
+	short	sc_tapeid;	/* tape drive id */
+	char	sc_datalen[32];	/* additional data length on some commands */
+	short	sc_tticntdwn;	/* interrupts between TTi display updates */
+	tpr_t	sc_ctty;
+	struct	buf *sc_bp;
+	u_char	sc_cmd;
+	struct st_xsense sc_sense;
+	struct scsi_fmt_cdb sc_cmdstore;
+	struct buf sc_tab;	/* buffer queue */
+	struct buf sc_bufstore;	/* XXX buffer storage */
+};
+
+/* softc flags */
+#define STF_ALIVE	0x0001
+#define STF_OPEN	0x0002
+#define STF_WMODE	0x0004
+#define STF_WRTTN	0x0008
+#define STF_CMD		0x0010
+#define STF_LEOT	0x0020
+#define STF_MOVED	0x0040
+
+#ifdef _KERNEL
+void	stcommand __P((dev_t, u_int, int));
+void	stustart __P((int));
+
+void	ststart __P((void *));
+void	stgo __P((void *));
+void	stintr __P((void *, int));
+
+void	stxsense __P((int, int, int, struct st_softc *));
+void	prtkey __P((struct st_softc *));
+#endif /* _KERNEL */

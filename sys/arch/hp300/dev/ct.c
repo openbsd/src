@@ -1,5 +1,5 @@
-/*	$OpenBSD: ct.c,v 1.6 1997/02/03 04:47:12 downsj Exp $	*/
-/*	$NetBSD: ct.c,v 1.19 1997/01/30 09:14:12 thorpej Exp $	*/
+/*	$OpenBSD: ct.c,v 1.7 1997/04/16 11:55:57 downsj Exp $	*/
+/*	$NetBSD: ct.c,v 1.21 1997/04/02 22:37:23 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -52,13 +52,14 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
-#include <sys/tprintf.h>
 #include <sys/proc.h>
-#include <sys/device.h>
-#include <sys/conf.h>
+#include <sys/tprintf.h>
 
 #include <hp300/dev/hpibvar.h>
 
@@ -142,11 +143,11 @@ struct	ctinfo {
 	short	punit;
 	char	*desc;
 } ctinfo[] = {
-	CT7946ID,	1,	"7946A",
-	CT7912PID,	1,	"7912P",
-	CT7914PID,	1,	"7914P",
-	CT9144ID,	0,	"9144",
-	CT9145ID,	0,	"9145",
+	{ CT7946ID,	1,	"7946A"	},
+	{ CT7912PID,	1,	"7912P"	},
+	{ CT7914PID,	1,	"7914P"	},
+	{ CT9144ID,	0,	"9144"	},
+	{ CT9145ID,	0,	"9145"	},
 };
 int	nctinfo = sizeof(ctinfo) / sizeof(ctinfo[0]);
 
@@ -405,11 +406,11 @@ void
 ctcommand(dev, cmd, cnt)
 	dev_t dev;
 	int cmd;
-	register int cnt;
+	int cnt;
 {
 	struct ct_softc *sc = ct_cd.cd_devs[UNIT(dev)];
-	register struct buf *bp = &sc->sc_bufstore;
-	register struct buf *nbp = 0;
+	struct buf *bp = &sc->sc_bufstore;
+	struct buf *nbp = 0;
 
 	if (cmd == MTBSF && sc->sc_eofp == EOFS - 1) {
 		cnt = sc->sc_eofs[EOFS - 1] - cnt;
@@ -457,10 +458,10 @@ ctcommand(dev, cmd, cnt)
 
 void
 ctstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register struct buf *dp;
-	register int s, unit;
+	struct buf *dp;
+	int s, unit;
 	struct ct_softc *sc;
 
 	unit = UNIT(bp->b_dev);
@@ -483,7 +484,7 @@ void
 ctustart(sc)
 	struct ct_softc *sc;
 {
-	register struct buf *bp;
+	struct buf *bp;
 
 	bp = sc->sc_tab.b_actf;
 	sc->sc_addr = bp->b_un.b_addr;
@@ -497,7 +498,7 @@ ctstart(arg)
 	void *arg;
 {
 	struct ct_softc *sc = arg;
-	struct buf *bp, *dp;
+	struct buf *bp;
 	int i, ctlr, slave;
 
 	ctlr = sc->sc_dev.dv_parent->dv_unit;
@@ -611,7 +612,7 @@ ctgo(arg)
 	void *arg;
 {
 	struct ct_softc *sc = arg;
-	register struct buf *bp;
+	struct buf *bp;
 	int rw;
 
 	bp = sc->sc_tab.b_actf;
@@ -625,8 +626,8 @@ ctgo(arg)
  */
 void
 cteof(sc, bp)
-	register struct ct_softc *sc;
-	register struct buf *bp;
+	struct ct_softc *sc;
+	struct buf *bp;
 {
 	long blks;
 
@@ -647,7 +648,7 @@ cteof(sc, bp)
 	blks = sc->sc_stat.c_blk - sc->sc_blkno - 1;
 #ifdef DEBUG
 	if (ctdebug & CDB_FILES)
-		printf("cteof: bc %d oblk %d nblk %d read %d, resid %d\n",
+		printf("cteof: bc %ld oblk %d nblk %ld read %ld, resid %ld\n",
 		       bp->b_bcount, sc->sc_blkno, sc->sc_stat.c_blk,
 		       blks, bp->b_bcount - CTKTOB(blks));
 #endif
@@ -673,7 +674,7 @@ cteof(sc, bp)
 	 * we are now after EOF.
 	 */
 	else if ((sc->sc_flags & CTF_BEOF) ||
-		 (sc->sc_flags & CTF_CMD) && sc->sc_cmd == MTFSF) {
+		 ((sc->sc_flags & CTF_CMD) && sc->sc_cmd == MTFSF)) {
 		sc->sc_flags |= CTF_AEOF;
 		sc->sc_flags &= ~CTF_BEOF;
 	}
@@ -701,8 +702,8 @@ void
 ctintr(arg)
 	void *arg;
 {
-	register struct ct_softc *sc = arg;
-	register struct buf *bp;
+	struct ct_softc *sc = arg;
+	struct buf *bp;
 	u_char stat;
 	int ctlr, slave, unit;
 
@@ -743,7 +744,7 @@ ctintr(arg)
 		hpibrecv(ctlr, slave, C_QSTAT, &stat, 1);
 #ifdef DEBUG
 		if (ctdebug & CDB_FILES)
-			printf("ctintr: return stat 0x%x, A%x F%x blk %d\n",
+			printf("ctintr: return stat 0x%x, A%x F%x blk %ld\n",
 			       stat, sc->sc_stat.c_aef,
 			       sc->sc_stat.c_fef, sc->sc_stat.c_blk);
 #endif
@@ -776,7 +777,7 @@ ctintr(arg)
 						"%s: write protect\n",
 						sc->sc_dev.dv_xname);
 			} else {
-				printf("%s err: v%d u%d ru%d bn%d, ",
+				printf("%s err: v%d u%d ru%d bn%ld, ",
 				       sc->sc_dev.dv_xname,
 				       (sc->sc_stat.c_vu>>4)&0xF,
 				       sc->sc_stat.c_vu&0xF,
@@ -844,9 +845,9 @@ done:
 void
 ctdone(sc, bp)
 	struct ct_softc *sc;
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register struct buf *dp;
+	struct buf *dp;
 
 	if ((dp = bp->b_actf) != NULL)
 		dp->b_actb = bp->b_actb;
@@ -890,8 +891,8 @@ ctioctl(dev, cmd, data, flag, p)
 	caddr_t data;
 	struct proc *p;
 {
-	register struct mtop *op;
-	register int cnt;
+	struct mtop *op;
+	int cnt;
 
 	switch (cmd) {
 

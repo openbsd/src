@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/02/16 19:16:27 downsj Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/04/16 11:56:36 downsj Exp $
 #	$NetBSD: Makefile,v 1.22 1996/10/18 06:03:25 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -11,6 +11,7 @@ NOMAN=	noman
 RELOC=	FFF00000
 
 CONS=	-DDCACONSOLE -DITECONSOLE -DDCMCONSOLE
+CONS+=	-DHIL_KEYBOARD -DUK_KEYBOARD -DDOMAIN_KEYBOARD
 DEFS=	-DSTANDALONE -DCOMPAT_NOLABEL ${CONS} -Dhp300 # -DROMPRF
 #DEFS+=	-DNETIF_DEBUG -DRPC_DEBUG -DNFS_DEBUG -DRARP_DEBUG -DNET_DEBUG
 #DEFS+=	-DLE_DEBUG
@@ -18,9 +19,9 @@ CFLAGS=	-O3 ${INCPATH} ${DEFS}
 
 SRCS=   autoconf.c cons.c devopen.c machdep.c prf.c
 OBJS=	${SRCS:N*.h:R:S/$/.o/g}
-DSRCS=	ct.c dca.c dcm.c fhpib.c hd.c hil.c hpib.c if_le.c \
+DSRCS=	ct.c dca.c dcm.c dnkbd.c fhpib.c hd.c hil.c hpib.c if_le.c \
 	ite.c ite_dv.c ite_gb.c ite_rb.c ite_subr.c ite_tc.c ite_hy.c \
-	nhpib.c scsi.c sd.c
+	kbd.c kbdconf.c kbdvar.h nhpib.c scsi.c sd.c
 DOBJS=	${DSRCS:N*.h:R:S/$/.o/g}
 
 S=	${.CURDIR}/../../..

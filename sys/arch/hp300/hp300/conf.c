@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.14 1997/02/16 14:37:11 downsj Exp $	*/
-/*	$NetBSD: conf.c,v 1.34 1996/12/17 08:41:20 thorpej Exp $	*/
+/*	$OpenBSD: conf.c,v 1.15 1997/04/16 11:56:21 downsj Exp $	*/
+/*	$NetBSD: conf.c,v 1.38 1997/04/01 03:12:10 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -207,6 +207,7 @@ dev_t	swapdev = makedev(3, 0);
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -217,6 +218,7 @@ iskmemdev(dev)
 /*
  * Returns true if dev is /dev/zero.
  */
+int
 iszerodev(dev)
 	dev_t dev;
 {
@@ -267,6 +269,7 @@ static int chrtoblktbl[] = {
 /*
  * Convert a character device number to a block device number.
  */
+dev_t
 chrtoblk(dev)
 	dev_t dev;
 {

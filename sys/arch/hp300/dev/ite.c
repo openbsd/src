@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite.c,v 1.9 1997/02/05 16:01:19 downsj Exp $	*/
-/*	$NetBSD: ite.c,v 1.37 1997/02/02 09:40:31 thorpej Exp $	*/
+/*	$OpenBSD: ite.c,v 1.10 1997/04/16 11:56:10 downsj Exp $	*/
+/*	$NetBSD: ite.c,v 1.38 1997/03/31 07:37:25 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -65,8 +65,13 @@
 
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
+#include <hp300/dev/hilioctl.h>
+#include <hp300/dev/hilvar.h>
 #include <hp300/dev/itevar.h>
 #include <hp300/dev/kbdmap.h>
+
+/* prototypes for devsw entry points */
+cdev_decl(ite);
 
 #define set_attr(ip, attr)	((ip)->attribute |= (attr))
 #define clr_attr(ip, attr)	((ip)->attribute &= ~(attr))
@@ -392,7 +397,7 @@ itetty(dev)
 int
 iteioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
@@ -413,9 +418,9 @@ iteioctl(dev, cmd, addr, flag, p)
 
 void
 itestart(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register int cc, s;
+	int cc, s;
 	int hiwat = 0, hadcursor = 0;
 	struct ite_softc *sc;
 	struct ite_data *ip;
@@ -475,12 +480,12 @@ itestart(tp)
 	splx(s);
 }
 
-void
+int
 itestop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-
+	return (0);
 }
 
 void
@@ -489,7 +494,7 @@ itefilter(stat, c)
 {
 	static int capsmode = 0;
 	static int metamode = 0;
-  	register char code, *str;
+	char code, *str;
 	struct tty *kbd_tty = kbd_ite->tty;
 
 	if (kbd_tty == NULL)
@@ -513,7 +518,7 @@ itefilter(stat, c)
 
 	c &= KBD_CHARMASK;
 	switch ((stat>>KBD_SSHIFT) & KBD_SMASK) {
-
+	default:
 	case KBD_KEY:
 	        if (!capsmode) {
 			code = kbd_keymap[c];
@@ -534,7 +539,7 @@ itefilter(stat, c)
 		break;
         }
 
-	if (code == NULL && (str = kbd_stringmap[c]) != NULL) {
+	if (code == '\0' && (str = kbd_stringmap[c]) != '\0') {
 		while (*str)
 			(*linesw[kbd_tty->t_line].l_rint)(*str++, kbd_tty);
 	} else {
@@ -926,6 +931,7 @@ ite_major()
 	/* locate the major number */
 	for (itemaj = 0; itemaj < nchrdev; itemaj++)
 		if (cdevsw[itemaj].d_open == iteopen)
+			break;
 
 	return (itemaj);
 }
@@ -940,7 +946,6 @@ itecninit(gp, isw)
 	struct grf_data *gp;
 	struct itesw *isw;
 {
-	extern void kbdcninit __P((void));	/* XXX */
 	struct ite_data *ip = &ite_cn;
 
 	/*
@@ -965,7 +970,7 @@ int
 itecngetc(dev)
 	dev_t dev;
 {
-	register int c;
+	int c;
 	int stat;
 
 	c = kbdgetc(&stat);

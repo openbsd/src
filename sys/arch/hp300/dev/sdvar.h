@@ -1,5 +1,5 @@
-/*	$OpenBSD: sdvar.h,v 1.7 1997/02/10 01:33:58 downsj Exp $	*/
-/*	$NetBSD: sdvar.h,v 1.6 1997/01/30 09:14:22 thorpej Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.8 1997/04/16 11:56:16 downsj Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.7 1997/03/31 07:40:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -81,3 +81,18 @@ struct	sd_softc {
 #define	b_cylin		b_resid
 
 #define	SDRETRY		2
+
+#ifdef _KERNEL
+/* sd.c */
+void	sdustart __P((int));
+
+void	sdstart __P((void *));
+void	sdgo __P((void *));
+void	sdintr __P((void *, int));
+
+int	sdgetcapacity __P((struct sd_softc *, dev_t));
+int	sdgetinfo __P((dev_t));
+
+/* sd_compat.c */
+void	sdmakedisklabel __P((int, struct disklabel *));
+#endif /* _KERNEL */

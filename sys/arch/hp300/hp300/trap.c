@@ -1,5 +1,5 @@
-/*	$OpenBSD: trap.c,v 1.9 1997/03/26 08:32:45 downsj Exp $	*/
-/*	$NetBSD: trap.c,v 1.48 1997/03/15 23:34:32 thorpej Exp $	*/
+/*	$OpenBSD: trap.c,v 1.10 1997/04/16 11:56:32 downsj Exp $	*/
+/*	$NetBSD: trap.c,v 1.52 1997/04/14 02:28:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
@@ -86,14 +86,19 @@
 #include <sys/ktrace.h>
 #endif
 
+#include <m68k/frame.h>
+
+#include <machine/db_machdep.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/mtpr.h>
+#include <machine/intr.h>
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
+
+#include <dev/cons.h>
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
@@ -108,6 +113,7 @@ extern struct emul emul_sunos;
 int	writeback __P((struct frame *fp, int docachepush));
 void	trap __P((int type, u_int code, u_int v, struct frame frame));
 void	syscall __P((register_t code, struct frame frame));
+void	child_return __P((struct proc *, struct frame));
 
 #ifdef DEBUG
 void	dumpssw __P((u_short));
@@ -199,8 +205,8 @@ int mmupid = -1;
  */
 static inline void
 userret(p, fp, oticks, faultaddr, fromtrap)
-	register struct proc *p;
-	register struct frame *fp;
+	struct proc *p;
+	struct frame *fp;
 	u_quad_t oticks;
 	u_int faultaddr;
 	int fromtrap;
@@ -260,7 +266,7 @@ again:
 		"pid %d(%s): writeback aborted in sigreturn, pc=%x\n",
 				    p->p_pid, p->p_comm, fp->f_pc, faultaddr);
 #endif
-		} else if (sig = writeback(fp, fromtrap)) {
+		} else if ((sig = writeback(fp, fromtrap))) {
 			beenhere = 1;
 			oticks = p->p_sticks;
 			trapsignal(p, sig, T_MMUFLT, SEGV_MAPERR,
@@ -282,14 +288,14 @@ void
 trap(type, code, v, frame)
 	int type;
 	unsigned code;
-	register unsigned v;
+	unsigned v;
 	struct frame frame;
 {
 	extern char fubail[], subail[];
-	register struct proc *p;
-	register int i, s;
+	struct proc *p;
+	int i, s;
 	u_int ucode;
-	u_quad_t sticks;
+	u_quad_t sticks = 0 /* XXX initializer works around compiler bug */;
 	int typ = 0;
 
 	cnt.v_trap++;
@@ -328,9 +334,11 @@ trap(type, code, v, frame)
 			goto kgdb_cont;
 #endif
 #ifdef DDB
-		(void) kdb_trap(type, &frame);
+		(void)kdb_trap(type, (db_regs_t *)&frame);
 #endif
+#ifdef KGDB
 	kgdb_cont:
+#endif
 		splx(s);
 		if (panicstr) {
 			printf("trap during panic!\n");
@@ -403,12 +411,12 @@ trap(type, code, v, frame)
 
 	case T_FPERR|T_USER:	/* 68881 exceptions */
 	/*
-	 * We pass along the 68881 status register which locore stashed
+	 * We pass along the 68881 status which locore stashed
 	 * in code for us.  Note that there is a possibility that the
-	 * bit pattern of this register will conflict with one of the
+	 * bit pattern of this will conflict with one of the
 	 * FPE_* codes defined in signal.h.  Fortunately for us, the
 	 * only such codes we use are all in the range 1-7 and the low
-	 * 3 bits of the status register are defined as 0 so there is
+	 * 3 bits of the status are defined as 0 so there is
 	 * no clash.
 	 */
 		typ = FPE_FLTRES;
@@ -562,6 +570,7 @@ trap(type, code, v, frame)
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
 		if (ssir & SIR_NET) {
+			void netintr __P((void));
 			siroff(SIR_NET);
 			cnt.v_soft++;
 			netintr();
@@ -597,9 +606,9 @@ trap(type, code, v, frame)
 
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
-		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map;
+		vm_offset_t va;
+		struct vmspace *vm = p->p_vmspace;
+		vm_map_t map;
 		int rv;
 		vm_prot_t ftype, vftype;
 		extern vm_map_t kernel_map;
@@ -640,6 +649,7 @@ trap(type, code, v, frame)
 
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(va)) {
+			int pmap_mapmulti __P((pmap_t, vm_offset_t));
 			vm_offset_t bva;
 
 			rv = pmap_mapmulti(map->pmap, va);
@@ -654,7 +664,7 @@ trap(type, code, v, frame)
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 #endif
 		/*
@@ -688,7 +698,7 @@ trap(type, code, v, frame)
 		if (type == T_MMUFLT) {
 			if (p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
@@ -731,8 +741,8 @@ writeback(fp, docachepush)
 	struct frame *fp;
 	int docachepush;
 {
-	register struct fmt7 *f = &fp->f_fmt7;
-	register struct proc *p = curproc;
+	struct fmt7 *f = &fp->f_fmt7;
+	struct proc *p = curproc;
 	int err = 0;
 	u_int fa;
 	caddr_t oonfault = p->p_addr->u_pcb.pcb_onfault;
@@ -815,8 +825,8 @@ writeback(fp, docachepush)
 		 * Writeback #1.
 		 * Position the "memory-aligned" data and write it out.
 		 */
-		register u_int wb1d = f->f_wb1d;
-		register int off;
+		u_int wb1d = f->f_wb1d;
+		int off;
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
@@ -963,7 +973,7 @@ writeback(fp, docachepush)
 #ifdef DEBUG
 void
 dumpssw(ssw)
-	register u_short ssw;
+	u_short ssw;
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -994,7 +1004,7 @@ dumpwb(num, s, a, d)
 	u_short s;
 	u_int a, d;
 {
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	vm_offset_t pa;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",
@@ -1005,7 +1015,7 @@ dumpwb(num, s, a, d)
 	if (pa == 0)
 		printf("<invalid address>");
 	else
-		printf("%x, current value %x", pa, fuword((caddr_t)a));
+		printf("%lx, current value %lx", pa, fuword((caddr_t)a));
 	printf("\n");
 }
 #endif
@@ -1019,9 +1029,9 @@ syscall(code, frame)
 	register_t code;
 	struct frame frame;
 {
-	register caddr_t params;
-	register struct sysent *callp;
-	register struct proc *p;
+	caddr_t params;
+	struct sysent *callp;
+	struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
 	register_t args[8], rval[2];

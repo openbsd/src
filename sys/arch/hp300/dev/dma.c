@@ -1,5 +1,5 @@
-/*	$OpenBSD: dma.c,v 1.6 1997/02/04 07:15:24 downsj Exp $	*/
-/*	$NetBSD: dma.c,v 1.12 1997/01/31 23:01:25 carrel Exp $	*/
+/*	$OpenBSD: dma.c,v 1.7 1997/04/16 11:56:00 downsj Exp $	*/
+/*	$NetBSD: dma.c,v 1.17 1997/04/14 02:33:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -49,15 +49,12 @@
 #include <sys/proc.h>
 #include <sys/device.h>
 
+#include <machine/frame.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <hp300/dev/dmareg.h>
 #include <hp300/dev/dmavar.h>
-
-#include <hp300/hp300/isr.h>
-
-extern u_int kvtop();
-extern void PCIA();
 
 /*
  * The largest single request will be MAXPHYS bytes which will require
@@ -202,14 +199,14 @@ dmacomputeipl()
 	struct dma_softc *sc = &Dma_softc;
 
 	if (sc->sc_ih != NULL)
-		isrunlink(sc->sc_ih);
+		intr_disestablish(sc->sc_ih);
 
 	/*
 	 * Our interrupt level must be as high as the highest
 	 * device using DMA (i.e. splbio).
 	 */
 	sc->sc_ipl = PSLTOIPL(hp300_bioipl);
-	sc->sc_ih = isrlink(dmaintr, sc, sc->sc_ipl, ISRPRI_BIO);
+	sc->sc_ih = intr_establish(dmaintr, sc, sc->sc_ipl, IPL_BIO);
 }
 
 int
@@ -277,7 +274,7 @@ dmafree(dq)
 #endif
 
 	DMA_CLEAR(dc);
-#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP380)
+#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375) || defined(HP380)
 	/*
 	 * XXX we may not always go thru the flush code in dmastop()
 	 */
@@ -327,14 +324,14 @@ dmafree(dq)
 void
 dmago(unit, addr, count, flags)
 	int unit;
-	register char *addr;
-	register int count;
-	register int flags;
+	char *addr;
+	int count;
+	int flags;
 {
 	struct dma_softc *sc = &Dma_softc;
-	register struct dma_channel *dc = &sc->sc_chan[unit];
-	register char *dmaend = NULL;
-	register int seg, tcount;
+	struct dma_channel *dc = &sc->sc_chan[unit];
+	char *dmaend = NULL;
+	int seg, tcount;
 
 	if (count > MAXPHYS)
 		panic("dmago: count > MAXPHYS");
@@ -344,7 +341,7 @@ dmago(unit, addr, count, flags)
 #endif
 #ifdef DEBUG
 	if (dmadebug & DDB_FOLLOW)
-		printf("dmago(%d, %x, %x, %x)\n",
+		printf("dmago(%d, %p, %x, %x)\n",
 		       unit, addr, count, flags);
 	if (flags & DMAGO_LWORD)
 		dmalword[unit]++;
@@ -363,7 +360,7 @@ dmago(unit, addr, count, flags)
 		 * Push back dirty cache lines
 		 */
 		if (mmutype == MMU_68040)
-			DCFP(dc->dm_chain[seg].dc_addr);
+			DCFP((vm_offset_t)dc->dm_chain[seg].dc_addr);
 #endif
 		if (count < (tcount = NBPG - ((int)addr & PGOFSET)))
 			tcount = count;
@@ -426,7 +423,7 @@ dmago(unit, addr, count, flags)
 	if (mmutype == MMU_68040 && (flags & DMAGO_READ))
 		dc->dm_flags |= DMAF_PCFLUSH;
 #endif
-#if defined(HP340) || defined(HP360) || defined(HP370)
+#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375)
 	/*
 	 * Remember if we need to flush external physical cache when
 	 * DMA is done.  We only do this if we are reading (writing memory).
@@ -450,12 +447,12 @@ dmago(unit, addr, count, flags)
 	}
 #ifdef DEBUG
 	if (dmadebug & DDB_IO) {
-		if ((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD) ||
-		    (dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD)) {
+		if (((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD)) ||
+		    ((dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD))) {
 			printf("dmago: cmd %x, flags %x\n",
 			       dc->dm_cmd, dc->dm_flags);
 			for (seg = 0; seg <= dc->dm_last; seg++)
-				printf("  %d: %d@%x\n", seg,
+				printf("  %d: %d@%p\n", seg,
 				    dc->dm_chain[seg].dc_count,
 				    dc->dm_chain[seg].dc_addr);
 		}
@@ -467,11 +464,10 @@ dmago(unit, addr, count, flags)
 
 void
 dmastop(unit)
-	register int unit;
+	int unit;
 {
 	struct dma_softc *sc = &Dma_softc;
-	register struct dma_channel *dc = &sc->sc_chan[unit];
-	struct dmaqueue *dq;
+	struct dma_channel *dc = &sc->sc_chan[unit];
 
 #ifdef DEBUG
 	if (dmadebug & DDB_FOLLOW)
@@ -479,7 +475,7 @@ dmastop(unit)
 	dmatimo[unit] = 0;
 #endif
 	DMA_CLEAR(dc);
-#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP380)
+#if defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375) || defined(HP380)
 	if (dc->dm_flags & DMAF_PCFLUSH) {
 		PCIA();
 		dc->dm_flags &= ~DMAF_PCFLUSH;
@@ -514,8 +510,8 @@ dmaintr(arg)
 	void *arg;
 {
 	struct dma_softc *sc = arg;
-	register struct dma_channel *dc;
-	register int i, stat;
+	struct dma_channel *dc;
+	int i, stat;
 	int found = 0;
 
 #ifdef DEBUG
@@ -530,8 +526,8 @@ dmaintr(arg)
 		found++;
 #ifdef DEBUG
 		if (dmadebug & DDB_IO) {
-			if ((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD) ||
-			    (dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD))
+			if (((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD)) ||
+			    ((dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD)))
 			  printf("dmaintr: flags %x unit %d stat %x next %d\n",
 			   dc->dm_flags, i, stat, dc->dm_cur + 1);
 		}
@@ -567,7 +563,7 @@ void
 dmatimeout(arg)
 	void *arg;
 {
-	register int i, s;
+	int i, s;
 	struct dma_softc *sc = arg;
 
 	for (i = 0; i < NDMACHAN; i++) {

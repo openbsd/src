@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_le.c,v 1.8 1997/03/07 23:44:40 downsj Exp $	*/
-/*	$NetBSD: if_le.c,v 1.37 1997/01/30 09:18:53 thorpej Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.9 1997/04/16 11:56:10 downsj Exp $	*/
+/*	$NetBSD: if_le.c,v 1.41 1997/04/14 02:33:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -58,9 +58,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/mtpr.h>
-
-#include <hp300/hp300/isr.h>
+#include <machine/intr.h>
 
 #ifdef USELEDS
 #include <hp300/hp300/led.h>
@@ -95,8 +93,8 @@ lewrcsr(sc, port, val)
 	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
-	register struct lereg0 *ler0 = ((struct le_softc *)sc)->sc_r0;
-	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
+	struct lereg0 *ler0 = ((struct le_softc *)sc)->sc_r0;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
 	do {
 		ler1->ler1_rap = port;
@@ -111,8 +109,8 @@ lerdcsr(sc, port)
 	struct am7990_softc *sc;
 	u_int16_t port;
 {
-	register struct lereg0 *ler0 = ((struct le_softc *)sc)->sc_r0;
-	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
+	struct lereg0 *ler0 = ((struct le_softc *)sc)->sc_r0;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
 
 	do {
@@ -147,7 +145,7 @@ leattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct lereg0 *ler0;
+	struct lereg0 *ler0;
 	struct dio_attach_args *da = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
 	caddr_t addr;
@@ -199,7 +197,7 @@ leattach(parent, self, aux)
 	am7990_config(sc);
 
 	/* Establish the interrupt handler. */
-	(void) isrlink(leintr, sc, ipl, ISRPRI_NET);
+	(void) intr_establish(leintr, sc, ipl, IPL_NET);
 	ler0->ler0_status = LE_IE;
 }
 

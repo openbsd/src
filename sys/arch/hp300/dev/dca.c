@@ -1,8 +1,8 @@
-/*	$OpenBSD: dca.c,v 1.7 1997/02/03 04:47:13 downsj Exp $	*/
-/*	$NetBSD: dca.c,v 1.32 1997/01/30 09:18:34 thorpej Exp $	*/
+/*	$OpenBSD: dca.c,v 1.8 1997/04/16 11:55:58 downsj Exp $	*/
+/*	$NetBSD: dca.c,v 1.34 1997/04/14 02:33:16 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
+ * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -63,6 +63,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <dev/cons.h>
 
@@ -70,7 +71,6 @@
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/dcareg.h>
-#include <hp300/hp300/isr.h>
 
 struct	dca_softc {
 	struct device		sc_dev;		/* generic device glue */
@@ -100,11 +100,26 @@ struct cfdriver dca_cd = {
 	NULL, "dca", DV_TTY
 };
 
-void	dcastart();
-int	dcaparam();
-int	dcaintr __P((void *));
 int	dcadefaultrate = TTYDEF_SPEED;
 int	dcamajor;
+
+cdev_decl(dca);
+
+int	dcaintr __P((void *));
+void	dcaeint __P((struct dca_softc *, int));
+void	dcamint __P((struct dca_softc *));
+
+int	dcaparam __P((struct tty *, struct termios *));
+void	dcastart __P((struct tty *));
+int	dcastop __P((struct tty *, int));
+int	dcamctl __P((struct dca_softc *, int, int));
+void	dcainit __P((struct dcadevice *, int));
+
+int	dca_console_scan __P((int, caddr_t, void *));
+void	dcacnprobe __P((struct consdev *));
+void	dcacninit __P((struct consdev *));
+int	dcacngetc __P((dev_t));
+void	dcacnputc __P((dev_t, int));
 
 /*
  * Stuff for DCA console support.
@@ -113,23 +128,23 @@ static	struct dcadevice *dca_cn = NULL;	/* pointer to hardware */
 static	int dcaconsinit;			/* has been initialized */
 
 struct speedtab dcaspeedtab[] = {
-	0,	0,
-	50,	DCABRD(50),
-	75,	DCABRD(75),
-	110,	DCABRD(110),
-	134,	DCABRD(134),
-	150,	DCABRD(150),
-	200,	DCABRD(200),
-	300,	DCABRD(300),
-	600,	DCABRD(600),
-	1200,	DCABRD(1200),
-	1800,	DCABRD(1800),
-	2400,	DCABRD(2400),
-	4800,	DCABRD(4800),
-	9600,	DCABRD(9600),
-	19200,	DCABRD(19200),
-	38400,	DCABRD(38400),
-	-1,	-1
+	{	0,	0		},
+	{	50,	DCABRD(50)	},
+	{	75,	DCABRD(75)	},
+	{	110,	DCABRD(110)	},
+	{	134,	DCABRD(134)	},
+	{	150,	DCABRD(150)	},
+	{	200,	DCABRD(200)	},
+	{	300,	DCABRD(300)	},
+	{	600,	DCABRD(600)	},
+	{	1200,	DCABRD(1200)	},
+	{	1800,	DCABRD(1800)	},
+	{	2400,	DCABRD(2400)	},
+	{	4800,	DCABRD(4800)	},
+	{	9600,	DCABRD(9600)	},
+	{	19200,	DCABRD(19200)	},
+	{	38400,	DCABRD(38400)	},
+	{	-1,	-1		},
 };
 
 #ifdef KGDB
@@ -216,8 +231,8 @@ dcaattach(parent, self, aux)
 		sc->sc_flags |= DCA_HASFIFO;
 
 	/* Establish interrupt handler. */
-	(void) isrlink(dcaintr, sc, ipl,
-	    (sc->sc_flags & DCA_HASFIFO) ? ISRPRI_TTY : ISRPRI_TTYNOBUF);
+	(void) intr_establish(dcaintr, sc, ipl,
+	    (sc->sc_flags & DCA_HASFIFO) ? IPL_TTY : IPL_TTYNOBUF);
 
 	sc->sc_flags |= DCA_ACTIVE;
 	if (self->dv_cfdata->cf_flags)
@@ -368,9 +383,9 @@ dcaclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	struct dca_softc *sc;
-	register struct tty *tp;
-	register struct dcadevice *dca;
-	register int unit;
+	struct tty *tp;
+	struct dcadevice *dca;
+	int unit;
 	int s;
  
 	unit = DCAUNIT(dev);
@@ -455,10 +470,12 @@ dcaintr(arg)
 	void *arg;
 {
 	struct dca_softc *sc = arg;
+#ifdef KGDB
 	int unit = sc->sc_dev.dv_unit;
-	register struct dcadevice *dca = sc->sc_dca;
-	register struct tty *tp = sc->sc_tty;
-	register u_char code;
+#endif
+	struct dcadevice *dca = sc->sc_dca;
+	struct tty *tp = sc->sc_tty;
+	u_char code;
 	int iflowdone = 0;
 
 	/*
@@ -500,7 +517,7 @@ dcaintr(arg)
 			RCVBYTE();
 			if (sc->sc_flags & DCA_HASFIFO) {
 #ifdef DEBUG
-				register int fifocnt = 1;
+				int fifocnt = 1;
 #endif
 				while ((code = dca->dca_lsr) & LSR_RCV_MASK) {
 					if (code == LSR_RXRDY) {
@@ -547,6 +564,7 @@ dcaintr(arg)
 	}
 }
 
+void
 dcaeint(sc, stat)
 	struct dca_softc *sc;
 	int stat;
@@ -575,6 +593,7 @@ dcaeint(sc, stat)
 	(*linesw[tp->t_line].l_rint)(c, tp);
 }
 
+void
 dcamint(sc)
 	struct dca_softc *sc;
 {
@@ -611,7 +630,7 @@ dcamint(sc)
 int
 dcaioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -702,8 +721,8 @@ dcaioctl(dev, cmd, data, flag, p)
 
 int
 dcaparam(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+	struct tty *tp;
+	struct termios *t;
 {
 	int unit = DCAUNIT(tp->t_dev);
 	struct dca_softc *sc = dca_cd.cd_devs[unit];
@@ -730,6 +749,7 @@ dcaparam(tp, t)
 		break;
 
 	case CS8:
+	default:	/* XXX gcc whines about cfcr being unitialized... */
 		cfcr = CFCR_8BITS;
 		break;
 	}
@@ -779,7 +799,7 @@ dcaparam(tp, t)
  
 void
 dcastart(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
 	int s, c, unit = DCAUNIT(tp->t_dev);
 	struct dca_softc *sc = dca_cd.cd_devs[unit];
@@ -821,20 +841,22 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
-void
+int
 dcastop(tp, flag)
-	register struct tty *tp;
+	struct tty *tp;
 	int flag;
 {
-	register int s;
+	int s;
 
 	s = spltty();
 	if (tp->t_state & TS_BUSY)
 		if ((tp->t_state & TS_TTSTOP) == 0)
 			tp->t_state |= TS_FLUSH;
 	splx(s);
+	return (0);
 }
  
+int
 dcamctl(sc, bits, how)
 	struct dca_softc *sc;
 	int bits, how;
@@ -1030,7 +1052,7 @@ dcacngetc(dev)
 void
 dcacnputc(dev, c)
 	dev_t dev;
-	register int c;
+	int c;
 {
 	int timo;
 	u_char stat;

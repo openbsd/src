@@ -1,5 +1,5 @@
-/*	$OpenBSD: maskbits.h,v 1.2 1997/01/12 15:12:53 downsj Exp $	*/
-/*	$NetBSD: maskbits.h,v 1.2 1994/10/26 07:24:43 cgd Exp $	*/
+/*	$OpenBSD: maskbits.h,v 1.3 1997/04/16 11:56:12 downsj Exp $	*/
+/*	$NetBSD: maskbits.h,v 1.3 1997/03/31 07:37:28 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -76,7 +76,7 @@ and the number of whole longwords between the ends.
 
 #define getandputrop(psrc, srcbit, dstbit, width, pdst, rop) \
 { \
-  register unsigned int _tmpsrc, _tmpdst; \
+  unsigned int _tmpsrc, _tmpdst; \
   FASTGETBITS(pdst, dstbit, width, _tmpdst); \
   FASTGETBITS(psrc, srcbit, width, _tmpsrc); \
   DoRop(_tmpdst, rop, _tmpsrc, _tmpdst); \
@@ -87,7 +87,7 @@ and the number of whole longwords between the ends.
     	getandputrop(psrc, srcbit, 0, width, pdst, rop)
 
 #define getunalignedword(psrc, x, dst) { \
-        register int _tmp; \
+        int _tmp; \
         FASTGETBITS(psrc, x, 32, _tmp); \
         dst = _tmp; \
 }

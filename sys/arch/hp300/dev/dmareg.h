@@ -1,5 +1,5 @@
-/*	$OpenBSD: dmareg.h,v 1.4 1997/02/03 04:47:22 downsj Exp $	*/
-/*	$NetBSD: dmareg.h,v 1.8 1997/01/30 09:04:34 thorpej Exp $	*/
+/*	$OpenBSD: dmareg.h,v 1.5 1997/04/16 11:56:00 downsj Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.10 1997/04/01 03:10:58 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -109,18 +109,21 @@ struct	dmareg {
  *		look at the 98620C status to get the extended bits.
  * DMA_ARM:	Load address, count and kick-off DMA.
  */
-#define	DMA_CLEAR(dc)	{ v_int dmaclr = (int) dc->dm_Bhwaddr->dmaB_addr; }
+#define	DMA_CLEAR(dc) do {					\
+		v_int dmaclr;					\
+		dmaclr = (int)dc->dm_Bhwaddr->dmaB_addr;	\
+	} while (0);
 #define	DMA_STAT(dc)	dc->dm_Bhwaddr->dmaB_stat
 
 #if defined(HP320)
 #define	DMA_ARM(dc)	\
 	if (dc->dm_softc->sc_type == DMA_B) { \
-		register struct dmaBdevice *dma = dc->dm_Bhwaddr; \
+		struct dmaBdevice *dma = dc->dm_Bhwaddr; \
 		dma->dmaB_addr = dc->dm_chain[dc->dm_cur].dc_addr; \
 		dma->dmaB_count = dc->dm_chain[dc->dm_cur].dc_count - 1; \
 		dma->dmaB_cmd = dc->dm_cmd; \
 	} else { \
-		register struct dmadevice *dma = dc->dm_hwaddr; \
+		struct dmadevice *dma = dc->dm_hwaddr; \
 		dma->dma_addr = dc->dm_chain[dc->dm_cur].dc_addr; \
 		dma->dma_count = dc->dm_chain[dc->dm_cur].dc_count - 1; \
 		dma->dma_cmd = dc->dm_cmd; \
@@ -128,7 +131,7 @@ struct	dmareg {
 #else
 #define	DMA_ARM(dc)	\
 	{ \
-		register struct dmadevice *dma = dc->dm_hwaddr; \
+		struct dmadevice *dma = dc->dm_hwaddr; \
 		dma->dma_addr = dc->dm_chain[dc->dm_cur].dc_addr; \
 		dma->dma_count = dc->dm_chain[dc->dm_cur].dc_count - 1; \
 		dma->dma_cmd = dc->dm_cmd; \

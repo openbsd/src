@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.5 1997/01/12 15:13:33 downsj Exp $	*/
-/*	$NetBSD: cpu.h,v 1.21 1996/10/07 06:29:30 thorpej Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 1997/04/16 11:56:34 downsj Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 1997/04/14 02:28:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,6 +56,11 @@
 #include <m68k/cpu.h>
 
 /*
+ * Get interrupt glue.
+ */
+#include <machine/intr.h>
+
+/*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
@@ -109,19 +114,6 @@ struct clockframe {
 
 int	astpending;		/* need to trap before returning to user mode */
 int	want_resched;		/* resched() was called */
-
-
-/*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
 
 /*
  * CTL_MACHDEP definitions.
@@ -209,9 +201,40 @@ extern	int cpuspeed;		/* CPU speed, in MHz */
 extern	char *intiobase, *intiolimit;
 extern	void (*vectab[]) __P((void));
 
-struct	frame;
+struct frame;
+struct fpframe;
+struct pcb;
 
 /* locore.s functions */
+void	m68881_save __P((struct fpframe *));
+void	m68881_restore __P((struct fpframe *));
+u_long	getdfc __P((void));
+u_long	getsfc __P((void));
+void	DCIA __P((void));
+void	DCIS __P((void));
+void	DCIU __P((void));
+void	ICIA __P((void));
+void	ICPA __P((void));
+void	PCIA __P((void));
+void	TBIA __P((void));
+void	TBIS __P((vm_offset_t));
+void	TBIAS __P((void));
+void	TBIAU __P((void));
+#if defined(M68040)
+void	DCFA __P((void));
+void	DCFP __P((vm_offset_t));
+void	DCFL __P((vm_offset_t));
+void	DCPL __P((vm_offset_t));
+void	DCPP __P((vm_offset_t));
+void	ICPL __P((vm_offset_t));
+void	ICPP __P((vm_offset_t));
+#endif
+int	suline __P((caddr_t, caddr_t));
+void	savectx __P((struct pcb *));
+void	switch_exit __P((struct proc *));
+void	proc_trampoline __P((void));
+void	loadustp __P((int));
+
 void	doboot __P((void))
 	__attribute__((__noreturn__));
 void	ecacheon __P((void));
@@ -221,6 +244,15 @@ void	ecacheoff __P((void));
 int	badaddr __P((caddr_t));
 int	badbaddr __P((caddr_t));
 void	regdump __P((struct frame *, int));
+void	dumpconf __P((void));
+
+/* sys_machdep.c functions */
+int	cachectl __P((int, caddr_t, int));
+
+/* vm_machdep.c functions */
+void	physaccess __P((caddr_t, caddr_t, int, int));
+void	physunaccess __P((caddr_t, int));
+int	kvtop __P((caddr_t));
 
 /* what is this supposed to do? i.e. how is it different than startrtclock? */
 #define	enablertclock()

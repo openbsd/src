@@ -1,5 +1,5 @@
-/*	$OpenBSD: nhpib.c,v 1.6 1997/02/03 04:47:40 downsj Exp $	*/
-/*	$NetBSD: nhpib.c,v 1.14 1997/01/30 09:06:54 thorpej Exp $	*/
+/*	$OpenBSD: nhpib.c,v 1.7 1997/04/16 11:56:13 downsj Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.16 1997/04/14 02:33:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -48,8 +48,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-
-#include <hp300/hp300/isr.h>
+#include <machine/intr.h>
 
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
@@ -178,7 +177,7 @@ nhpibattach(parent, self, aux)
 	printf(" ipl %d: %s\n", ipl, desc);
 
 	/* Establish the interrupt handler. */
-	(void) isrlink(nhpibintr, sc, ipl, ISRPRI_BIO);
+	(void) intr_establish(nhpibintr, sc, ipl, IPL_BIO);
 	dmacomputeipl();
 
 	ha.ha_ops = &nhpib_controller;
@@ -217,7 +216,7 @@ nhpibreset(hs)
 
 void
 nhpibifc(hd)
-	register struct nhpibdevice *hd;
+	struct nhpibdevice *hd;
 {
 	hd->hpib_acr = AUX_TCA;
 	hd->hpib_acr = AUX_CSRE;
@@ -397,8 +396,8 @@ nhpibreadtimo(arg)
 	int s = splbio();
 
 	if (hs->sc_flags & HPIBF_IO) {
-		register struct nhpibdevice *hd = sc->sc_regs;
-		register struct hpibqueue *hq;
+		struct nhpibdevice *hd = sc->sc_regs;
+		struct hpibqueue *hq;
 
 		hd->hpib_mim = 0;
 		hd->hpib_acr = AUX_TCA;
@@ -512,10 +511,10 @@ int nhpibreporttimo = 0;
 
 int
 nhpibwait(hd, x)
-	register struct nhpibdevice *hd;
+	struct nhpibdevice *hd;
 	int x;
 {
-	register int timo = hpibtimeout;
+	int timo = hpibtimeout;
 
 	while ((hd->hpib_mis & x) == 0 && --timo)
 		DELAY(1);

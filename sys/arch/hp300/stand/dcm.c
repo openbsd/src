@@ -1,5 +1,5 @@
-/*	$OpenBSD: dcm.c,v 1.4 1997/02/03 04:48:02 downsj Exp $	*/
-/*	$NetBSD: dcm.c,v 1.10 1997/01/30 10:32:52 thorpej Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.5 1997/04/16 11:56:37 downsj Exp $	*/
+/*	$NetBSD: dcm.c,v 1.2 1997/04/14 05:58:32 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,7 +53,7 @@
 
 struct dcmdevice *dcmcnaddr = NULL;
 
-#define	DCMCONUNIT	0	/* XXX */
+#define	DCMCONUNIT	1	/* XXX */
 
 void
 dcmprobe(cp)
@@ -72,6 +72,9 @@ dcmprobe(cp)
 	}
 	dcmcnaddr = (struct dcmdevice *) hw->hw_kva;
 
+#ifdef FORCEDCMCONSOLE
+	cp->cn_pri = CN_REMOTE;
+#else
 	dcm = dcmcnaddr;
 	switch (dcm->dcm_rsid) {
 	case DCMID:
@@ -86,6 +89,7 @@ dcmprobe(cp)
 	}
 
 	curcons_scode = hw->hw_sc;
+#endif
 }
 
 void

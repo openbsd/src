@@ -1,5 +1,5 @@
-/*	$OpenBSD: mt.c,v 1.5 1997/02/03 04:47:39 downsj Exp $	*/
-/*	$NetBSD: mt.c,v 1.7 1997/01/30 09:14:14 thorpej Exp $	*/
+/*	$OpenBSD: mt.c,v 1.6 1997/04/16 11:56:13 downsj Exp $	*/
+/*	$NetBSD: mt.c,v 1.8 1997/03/31 07:37:29 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -55,10 +55,10 @@ struct	mtinfo {
 	u_short	hwid;
 	char	*desc;
 } mtinfo[] = {
-	MT7978ID,	"7978",
-	MT7979AID,	"7979A",
-	MT7980ID,	"7980",
-	MT7974AID,	"7974A",
+	{ MT7978ID,	"7978"	},
+	{ MT7979AID,	"7979A"	},
+	{ MT7980ID,	"7980"	},
+	{ MT7974AID,	"7974A"	},
 };
 int	nmtinfo = sizeof(mtinfo) / sizeof(mtinfo[0]);
 
@@ -268,9 +268,9 @@ mtopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register int unit = UNIT(dev);
+	int unit = UNIT(dev);
 	struct mt_softc *sc;
-	register int req_den;
+	int req_den;
 	int error;
 
 	if (unit >= mt_cd.cd_ndevs ||
@@ -425,12 +425,12 @@ mtcommand(dev, cmd, cnt)
  */
 void
 mtstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register struct mt_softc *sc;
-	register struct buf *dp;
-	register int unit;
-	register int s;
+	struct mt_softc *sc;
+	struct buf *dp;
+	int unit;
+	int s;
 
 	unit = UNIT(bp->b_dev);
 	sc = mt_cd.cd_devs[unit];
@@ -460,9 +460,11 @@ mtstrategy(bp)
 		}
 		if (bp->b_bcount > s) {
 			tprintf(sc->sc_ttyp,
-				"%s: write record (%d) too big: limit (%d)\n",
+				"%s: write record (%ld) too big: limit (%d)\n",
 				sc->sc_dev.dv_xname, bp->b_bcount, s);
+#if 0 /* XXX see above */
 	    error:
+#endif
 			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			iodone(bp);
@@ -519,7 +521,7 @@ mtstart(arg)
 	void *arg;
 {
 	struct mt_softc *sc = arg;
-	register struct buf *bp, *dp;
+	struct buf *bp, *dp;
 	short	cmdcount = 1;
 	u_char	cmdbuf[2];
 
@@ -651,7 +653,7 @@ mtstart(arg)
 				goto fatalerror;
 			}
 			timeout(spl_mtintr, sc, 4 * hz);
-			hpibawait(sc->sc_hpibno, sc->sc_slave);
+			hpibawait(sc->sc_hpibno);
 			return;
 
 		    case MTSET800BPI:
@@ -705,7 +707,7 @@ errdone:
 done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
 	iodone(bp);
-	if (dp = bp->b_actf)
+	if ((dp = bp->b_actf))
 		dp->b_actb = bp->b_actb;
 	else
 		sc->sc_tab.b_actb = bp->b_actb;
@@ -865,7 +867,8 @@ mtintr(arg)
 	} else {
 		i = hpibrecv(sc->sc_hpibno, sc->sc_slave, MTT_BCNT, cmdbuf, 2);
 		if (i != 2) {
-			log(LOG_ERR, "mt%d intr: can't get xfer length\n");
+			log(LOG_ERR, "%s intr: can't get xfer length\n",
+			    sc->sc_dev.dv_xname);
 			goto error;
 		}
 		i = (int) *((u_short *) cmdbuf);
@@ -873,11 +876,11 @@ mtintr(arg)
 			if (i == 0)
 				sc->sc_flags |= MTF_HITEOF;
 			bp->b_resid = bp->b_bcount - i;
-			dlog(LOG_DEBUG, "%s intr: bcount %d, resid %d",
+			dlog(LOG_DEBUG, "%s intr: bcount %ld, resid %ld",
 			    sc->sc_dev.dv_xname, bp->b_bcount, bp->b_resid);
 		} else {
 			tprintf(sc->sc_ttyp,
-				"%s: record (%d) larger than wanted (%d)\n",
+				"%s: record (%d) larger than wanted (%ld)\n",
 				sc->sc_dev.dv_xname, i, bp->b_bcount);
     error:
 			sc->sc_flags &= ~MTF_IO;
@@ -893,7 +896,7 @@ mtintr(arg)
 	(void) hpibsend(sc->sc_hpibno, sc->sc_slave, MTL_ECMD, cmdbuf, 1);
 	bp->b_flags &= ~B_CMD;
 	iodone(bp);
-	if (dp = bp->b_actf)
+	if ((dp = bp->b_actf))
 		dp->b_actb = bp->b_actb;
 	else
 		sc->sc_tab.b_actb = bp->b_actb;
@@ -941,7 +944,7 @@ mtioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct mtop *op;
+	struct mtop *op;
 	int cnt;
 
 	switch (cmd) {

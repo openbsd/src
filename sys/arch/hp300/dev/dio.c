@@ -1,5 +1,5 @@
-/*	$OpenBSD: dio.c,v 1.3 1997/02/03 04:47:17 downsj Exp $	*/
-/*	$NetBSD: dio.c,v 1.3 1997/01/30 09:18:37 thorpej Exp $	*/
+/*	$OpenBSD: dio.c,v 1.4 1997/04/16 11:55:59 downsj Exp $	*/
+/*	$NetBSD: dio.c,v 1.5 1997/04/04 09:53:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -123,7 +123,8 @@ dioattach(parent, self, aux)
 		else {
 			va = iomap(pa, NBPG);
 			if (va == NULL) {
-				printf("%s: can't map scode %d\n", scode);
+				printf("%s: can't map scode %d\n",
+				    self->dv_xname, scode);
 				scode++;
 				continue;
 			}
@@ -262,7 +263,9 @@ dio_devinfo(da, buf, buflen)
 	char *buf;
 	size_t buflen;
 {
+#ifdef DIOVERBOSE
 	int i;
+#endif
 
 	bzero(buf, buflen);
 

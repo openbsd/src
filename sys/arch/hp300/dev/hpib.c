@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpib.c,v 1.6 1997/02/03 04:47:33 downsj Exp $	*/
-/*	$NetBSD: hpib.c,v 1.13 1997/01/30 09:06:51 thorpej Exp $	*/
+/*	$OpenBSD: hpib.c,v 1.7 1997/04/16 11:56:09 downsj Exp $	*/
+/*	$NetBSD: hpib.c,v 1.15 1997/04/14 02:31:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -52,7 +52,6 @@
 #include <hp300/dev/hpibvar.h>
 
 #include <machine/cpu.h>
-#include <hp300/hp300/isr.h>
 
 int	hpibbusmatch __P((struct device *, void *, void *));
 void	hpibbusattach __P((struct device *, struct device *, void *));
@@ -247,7 +246,7 @@ hpibdevprint(aux, pnp)
 
 void
 hpibreset(unit)
-	register int unit;
+	int unit;
 {
 	struct hpibbus_softc *sc = hpibbus_cd.cd_devs[unit];
 
@@ -329,7 +328,7 @@ hpibrecv(unit, slave, sec, addr, cnt)
 
 int
 hpibpptest(unit, slave)
-	register int unit;
+	int unit;
 	int slave;
 {
 	struct hpibbus_softc *sc = hpibbus_cd.cd_devs[unit];
@@ -346,6 +345,7 @@ hpibppclear(unit)
 	sc->sc_flags &= ~HPIBF_PPOLL;
 }
 
+void
 hpibawait(unit)
 	int unit;
 {
@@ -357,12 +357,12 @@ hpibawait(unit)
 
 int
 hpibswait(unit, slave)
-	register int unit;
+	int unit;
 	int slave;
 {
 	struct hpibbus_softc *sc = hpibbus_cd.cd_devs[unit];
-	register int timo = hpibtimeout;
-	register int mask, (*ppoll) __P((struct hpibbus_softc *));
+	int timo = hpibtimeout;
+	int mask, (*ppoll) __P((struct hpibbus_softc *));
 
 	ppoll = sc->sc_ops->hpib_ppoll;
 	mask = 0x80 >> slave;
@@ -395,7 +395,7 @@ hpibstart(arg)
 	void *arg;
 {
 	struct hpibbus_softc *sc = arg;
-	register struct hpibqueue *hq;
+	struct hpibqueue *hq;
 
 	hq = sc->sc_queue.tqh_first;
 	(*hq->hq_go)(hq->hq_softc);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.c,v 1.14 1997/02/20 18:13:37 downsj Exp $	*/
-/*	$NetBSD: autoconf.c,v 1.33 1997/02/05 20:56:29 thorpej Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.15 1997/04/16 11:56:20 downsj Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36 1997/04/14 02:28:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -66,33 +66,35 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/disklabel.h>
-#include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/dmap.h>
-#include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/dmap.h>
+#include <sys/malloc.h>
+#include <sys/map.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
+#include <sys/reboot.h>
+#include <sys/tty.h>
 
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pte.h>
-
-#include <hp300/hp300/isr.h>
 
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 
+#include <hp300/dev/dmavar.h>
 #include <hp300/dev/grfreg.h>
 #include <hp300/dev/hilreg.h>
+#include <hp300/dev/hilioctl.h>
+#include <hp300/dev/hilvar.h>
 
 #include <hp300/dev/hpibvar.h>
 #include <hp300/dev/scsivar.h>
@@ -245,9 +247,6 @@ configure()
 	LIST_INIT(&dev_data_list_hpib);
 	LIST_INIT(&dev_data_list_scsi);
 
-	/* Initialize the interrupt system. */
-	isrinit();
-
 	/*
 	 * XXX Enable interrupts.  We have to do this now so that the
 	 * XXX HIL configures.
@@ -266,7 +265,7 @@ configure()
 		panic("no mainbus found");
 	(void)spl0();
 
-	isrprintlevels();
+	intr_printlevels();
 
 	/*
 	 * Find boot device.

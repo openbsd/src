@@ -1,5 +1,5 @@
-/*	$OpenBSD: dmavar.h,v 1.3 1997/02/03 04:47:23 downsj Exp $	*/
-/*	$NetBSD: dmavar.h,v 1.7 1997/01/30 09:04:35 thorpej Exp $	*/
+/*	$OpenBSD: dmavar.h,v 1.4 1997/04/16 11:56:01 downsj Exp $	*/
+/*	$NetBSD: dmavar.h,v 1.9 1997/04/01 03:10:59 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -70,7 +70,10 @@ struct dmaqueue {
 };
 
 #ifdef _KERNEL
-extern void	dmago(), dmafree();
-extern int	dmareq();
-extern void	dmacomputeipl __P((void));
-#endif
+void	dmainit __P((void));
+void	dmago __P((int, char *, int, int));
+void	dmastop __P((int));
+void	dmafree __P((struct dmaqueue *));
+int	dmareq __P((struct dmaqueue *));
+void	dmacomputeipl __P((void));
+#endif /* _KERNEL */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ppi.c,v 1.5 1997/02/03 04:47:41 downsj Exp $	*/
-/*	$NetBSD: ppi.c,v 1.11 1997/01/30 09:14:16 thorpej Exp $	*/
+/*	$OpenBSD: ppi.c,v 1.6 1997/04/16 11:56:14 downsj Exp $	*/
+/*	$NetBSD: ppi.c,v 1.13 1997/04/02 22:37:33 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -43,11 +43,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
-#include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/errno.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
 
 #include <hp300/dev/hpibvar.h>
 
@@ -165,7 +166,7 @@ ppiopen(dev, flags, fmt, p)
 	int flags, fmt;
 	struct proc *p;
 {
-	register int unit = UNIT(dev);
+	int unit = UNIT(dev);
 	struct ppi_softc *sc;
 
 	if (unit >= ppi_cd.cd_ndevs ||
@@ -194,7 +195,7 @@ ppiclose(dev, flags, fmt, p)
 	int flags, fmt;
 	struct proc *p;
 {
-	register int unit = UNIT(dev);
+	int unit = UNIT(dev);
 	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
 
 #ifdef DEBUG
@@ -214,7 +215,7 @@ ppistart(arg)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppistart(%x)\n", unit);
+		printf("ppistart(%x)\n", sc->sc_dev.dv_unit);
 #endif
 	sc->sc_flags &= ~PPIF_DELAY;
 	wakeup(sc);
@@ -243,7 +244,7 @@ ppiread(dev, uio, flags)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppiread(%x, %x)\n", dev, uio);
+		printf("ppiread(%x, %p)\n", dev, uio);
 #endif
 	return (ppirw(dev, uio));
 }
@@ -257,7 +258,7 @@ ppiwrite(dev, uio, flags)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppiwrite(%x, %x)\n", dev, uio);
+		printf("ppiwrite(%x, %p)\n", dev, uio);
 #endif
 	return (ppirw(dev, uio));
 }
@@ -265,12 +266,12 @@ ppiwrite(dev, uio, flags)
 int
 ppirw(dev, uio)
 	dev_t dev;
-	register struct uio *uio;
+	struct uio *uio;
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
-	register int s, len, cnt;
-	register char *cp;
+	int s, len, cnt;
+	char *cp;
 	int error = 0, gotdata = 0;
 	int buflen, ctlr, slave;
 	char *buf;
@@ -283,7 +284,7 @@ ppirw(dev, uio)
 
 #ifdef DEBUG
 	if (ppidebug & (PDB_FOLLOW|PDB_IO))
-		printf("ppirw(%x, %x, %c): burst %d, timo %d, resid %x\n",
+		printf("ppirw(%x, %p, %c): burst %d, timo %d, resid %x\n",
 		       dev, uio, uio->uio_rw == UIO_READ ? 'R' : 'W',
 		       sc->sc_burst, sc->sc_timo, uio->uio_resid);
 #endif
@@ -294,6 +295,7 @@ ppirw(dev, uio)
 		sc->sc_flags |= PPIF_TIMO;
 		timeout(ppitimo, sc, sc->sc_timo);
 	}
+	len = cnt = 0;
 	while (uio->uio_resid > 0) {
 		len = min(buflen, uio->uio_resid);
 		cp = buf;
@@ -336,7 +338,7 @@ again:
 		hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
 #ifdef DEBUG
 		if (ppidebug & PDB_IO)
-			printf("ppirw: %s(%d, %d, %x, %x, %d) -> %d\n",
+			printf("ppirw: %s(%d, %d, %x, %p, %d) -> %d\n",
 			       uio->uio_rw == UIO_READ ? "recv" : "send",
 			       ctlr, slave, sc->sc_sec, cp, len, cnt);
 #endif
@@ -373,7 +375,7 @@ again:
 		if (sc->sc_delay > 0) {
 			sc->sc_flags |= PPIF_DELAY;
 			timeout(ppistart, sc, sc->sc_delay);
-			error = tsleep(sc, PCATCH|PZERO+1, "hpib", 0);
+			error = tsleep(sc, (PCATCH|PZERO) + 1, "hpib", 0);
 			if (error) {
 				splx(s);
 				break;
@@ -464,7 +466,7 @@ ppihztoms(h)
 	int h;
 {
 	extern int hz;
-	register int m = h;
+	int m = h;
 
 	if (m > 0)
 		m = m * 1000 / hz;
@@ -476,7 +478,7 @@ ppimstohz(m)
 	int m;
 {
 	extern int hz;
-	register int h = m;
+	int h = m;
 
 	if (h > 0) {
 		h = h * hz / 1000;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: param.h,v 1.6 1997/02/04 06:21:33 downsj Exp $	*/
-/*	$NetBSD: param.h,v 1.28 1997/02/02 09:34:26 thorpej Exp $	*/
+/*	$OpenBSD: param.h,v 1.7 1997/04/16 11:56:35 downsj Exp $	*/
+/*	$NetBSD: param.h,v 1.32 1997/04/14 02:28:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,11 @@
 #define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
 #define	MID_MACHINE	MID_M68K
+
+/*
+ * Interrupt glue.
+ */
+#include <machine/intr.h>
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
@@ -141,74 +146,11 @@
 #define hp300_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define hp300_ptob(x)		((unsigned)(x) << PGSHIFT)
 
-/*
- * spl functions; all but spl0 are done in-line
- */
-#include <machine/psl.h>
-
-#define _spl(s) \
-({ \
-        register int _spl_r; \
-\
-        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
-                "&=d" (_spl_r) : "di" (s)); \
-        _spl_r; \
-})
-
-#define	_splraise(s) \
-({ \
-	register int _spl_r; \
-\
-	__asm __volatile ("clrl %0; movew sr,%0;" : "&=d" (_spl_r) : ); \
-	if ((_spl_r & PSL_IPL) < ((s) & PSL_IPL)) \
-		__asm __volatile ("movew %0,sr;" : : "di" (s)); \
-	_spl_r; \
-})
-
-/* spl0 requires checking for software interrupts */
-#define spl1()  _spl(PSL_S|PSL_IPL1)
-#define spl2()  _spl(PSL_S|PSL_IPL2)
-#define spl3()  _spl(PSL_S|PSL_IPL3)
-#define spl4()  _spl(PSL_S|PSL_IPL4)
-#define spl5()  _spl(PSL_S|PSL_IPL5)
-#define spl6()  _spl(PSL_S|PSL_IPL6)
-#define spl7()  _spl(PSL_S|PSL_IPL7)
-
 #if defined(_KERNEL) && !defined(_LOCORE)
-/*
- * These four globals contain the appropriate PSL_S|PSL_IPL? values
- * to raise interrupt priority to the requested level.
- */
-extern	unsigned short hp300_bioipl;
-extern	unsigned short hp300_netipl;
-extern	unsigned short hp300_ttyipl;
-extern	unsigned short hp300_impipl;
-#endif /* _KERNEL && !_LOCORE */
-
-/* These spl calls are _not_ to be used by machine-independent code. */
-#define splhil()	_splraise(PSL_S|PSL_IPL1)
-#define splkbd()	splhil()
-
-/* These spl calls are used by machine-independent code. */
-#define splsoftclock()	spl1()
-#define splsoftnet()	spl1()
-#define splbio()	_splraise(hp300_bioipl)
-#define splnet()	_splraise(hp300_netipl)
-#define spltty()	_splraise(hp300_ttyipl)
-#define splimp()	_splraise(hp300_impipl)
-#define splclock()	spl6()
-#define splstatclock()	spl6()
-#define splvm()		spl6()
-#define splhigh()	spl7()
-#define splsched()	spl7()
-
-/* watch out for side effects */
-#define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
-
-#if defined(_KERNEL) && !defined(_LOCORE)
-extern void _delay __P((u_int));
 #define	delay(us)	_delay((us) << 8)
 #define DELAY(us)	delay(us)
+
+void	_delay __P((u_int));
 #endif /* _KERNEL && !_LOCORE */
 
 #ifdef COMPAT_HPUX
