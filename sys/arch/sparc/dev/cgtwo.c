@@ -71,12 +71,10 @@
 #endif
 
 #include <machine/cgtworeg.h>
-#include <sparc/dev/sbusvar.h>
 
 /* per-display variables */
 struct cgtwo_softc {
 	struct	device sc_dev;		/* base device */
-	struct	sbusdev sc_sd;		/* sbus device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
 	caddr_t	sc_phys;		/* display RAM (phys addr) */
 	volatile struct cg2statusreg *sc_reg;	/* CG2 control registers */
@@ -87,13 +85,13 @@ struct cgtwo_softc {
 };
 
 /* autoconfiguration driver */
-static void	cgtwoattach(struct device *, struct device *, void *);
-static int	cgtwomatch(struct device *, void *, void *);
+static void	cgtwoattach __P((struct device *, struct device *, void *));
+static int	cgtwomatch __P((struct device *, void *, void *));
 int		cgtwoopen __P((dev_t, int, int, struct proc *));
 int		cgtwoclose __P((dev_t, int, int, struct proc *));
 int		cgtwoioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		cgtwommap __P((dev_t, int, int));
-static void	cgtwounblank(struct device *);
+static void	cgtwounblank __P((struct device *));
 
 struct cfdriver cgtwocd = {
 	NULL, "cgtwo", cgtwomatch, cgtwoattach,
@@ -107,8 +105,6 @@ static struct fbdriver cgtwofbdriver = {
 
 extern int fbnode;
 extern struct tty *fbconstty;
-extern int nullop();
-static int cgtwo_cnputc();
 
 static void cgtwoloadcmap __P((struct cgtwo_softc *, int, int));
 
@@ -126,9 +122,6 @@ cgtwomatch(parent, vcf, aux)
 	int probe;
 	caddr_t tmp;
 
-	if (ca->ca_bustype != BUS_VME16)
-		return (0);
-
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
@@ -142,7 +135,7 @@ cgtwomatch(parent, vcf, aux)
 	if (probeget(tmp, 2) != -1)
 		return 1;
 #endif
-	return 0;
+	return (0);
 }
 
 /*
@@ -155,26 +148,14 @@ cgtwoattach(parent, self, args)
 {
 	register struct cgtwo_softc *sc = (struct cgtwo_softc *)self;
 	register struct confargs *ca = args;
-	register int node, i;
+	register int node = 0, i;
 	register struct cgtwo_all *p;
 	int isconsole;
-	int sbus = 1;
 	char *nam;
 
 	sc->sc_fb.fb_driver = &cgtwofbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN2COLOR;
-
-	switch (ca->ca_bustype) {
-	case BUS_VME16:
-		sbus = node = 0;
-		nam = "cgtwo";
-		break;
-
-	default:
-		panic("cgtwoattach: impossible bustype");
-		/* NOTREACHED */
-	}
 
 	sc->sc_fb.fb_type.fb_depth = 8;
 	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
@@ -182,8 +163,8 @@ cgtwoattach(parent, self, args)
 
 	sc->sc_fb.fb_type.fb_cmsize = 256;
 	sc->sc_fb.fb_type.fb_size = roundup(CG2_MAPPED_SIZE, NBPG);
-	printf(": %s, %d x %d", nam,
-	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
+	printf(": cgtwo, %d x %d", sc->sc_fb.fb_type.fb_width,
+	    sc->sc_fb.fb_type.fb_height);
 
 	/*
 	 * When the ROM has mapped in a cgtwo display, the address
@@ -203,10 +184,6 @@ cgtwoattach(parent, self, args)
 		else
 			isconsole = 0;
 	}
-#endif
-#if defined(SUN4C) || defined(SUN4M)
-	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-		isconsole = node == fbnode && fbconstty != NULL;
 #endif
 	sc->sc_phys = (caddr_t)ca->ca_ra.ra_paddr;
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
@@ -235,8 +212,6 @@ cgtwoattach(parent, self, args)
 #endif
 	} else
 		printf("\n");
-	if (sbus)
-		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	if (node == fbnode)
 		fb_attach(&sc->sc_fb);
 }
@@ -322,6 +297,7 @@ cgtwounblank(dev)
 	struct device *dev;
 {
 	struct cgtwo_softc *sc = (struct cgtwo_softc *)dev;
+
 	sc->sc_reg->video_enab = 1;
 }
 
