@@ -1,4 +1,4 @@
-/*	$OpenBSD: vidputs.c,v 1.3 1996/09/21 19:22:29 tholo Exp $	*/
+/*	$OpenBSD: _vidattr.c,v 1.1 1996/09/21 19:22:26 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,17 +31,15 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: vidputs.c,v 1.3 1996/09/21 19:22:29 tholo Exp $";
+static char rcsid[] = "$OpenBSD: _vidattr.c,v 1.1 1996/09/21 19:22:26 tholo Exp $";
 #endif
 
-#include <sys/cdefs.h>
+#include <stdlib.h>
+#include "term.h"
 
-#ifdef __indr_reference
-__indr_reference(_vidputs, vidputs);
-#else
-
-#define _vidputs	vidputs
-#define rcsid		_rcsid
-#include "_vidputs.c"
-
-#endif
+int
+_vidattr(attrs)
+    chtype attrs;
+{
+    return vidputs(attrs, _ti_outc);
+}
