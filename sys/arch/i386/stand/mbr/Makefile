@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1997/03/31 03:12:19 weingart Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/04/07 09:00:10 deraadt Exp $
 #
 
 PROG=	mbr
@@ -12,7 +12,6 @@ STRIP=
 #CPPFLAGS+=-DSERIAL=0
 
 all:
-	# XXX access(2) says X_OK to root even w/o the x bit set !!!
 	@if [ -x ${.OBJDIR}/${PROG} ]; then \
 		dd if=${.OBJDIR}/${PROG} of=${.OBJDIR}/.tmp ibs=32 skip=1; \
 		mv -f ${.OBJDIR}/.tmp ${.OBJDIR}/${PROG}; \
