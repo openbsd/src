@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.23 1998/09/28 01:23:38 mickey Exp $
+#	$OpenBSD: files.sparc,v 1.24 1998/10/19 05:43:30 jason Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -113,9 +113,9 @@ device	be: ifnet, ether, ifmedia
 attach	be at qec
 file	arch/sparc/dev/be.c		be
 
-device	me {}
-attach	me at qec
-file	arch/sparc/dev/me.c		me
+device	qe: ifnet, ether
+attach	qe at qec
+file	arch/sparc/dev/qe.c		qe
 
 # HappyMeal (hme) ethernet
 device hme: ifnet, ether, mii, ifmedia

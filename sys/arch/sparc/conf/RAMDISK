@@ -1,3 +1,4 @@
+# 	$OpenBSD: RAMDISK,v 1.17 1998/10/19 05:43:30 jason Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -162,6 +163,11 @@ hme*	at sbus? slot ? offset ?
 # Media Independent Interface (mii) drivers (required for hme)
 nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
+
+# Quad-ethernet glue device, and sub-devices
+qec*	at sbus0 slot ? offset ?
+qe*	at qec?
+be*	at qec?
 
 ie1	at vmes0 addr 0xffe88000 level 5 vect 0x75
 ie2	at vmes0 addr 0xff31ff02 level 5 vect 0x76

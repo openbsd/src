@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC_SCSI3,v 1.23 1998/09/16 23:13:51 jason Exp $
+#	$OpenBSD: GENERIC_SCSI3,v 1.24 1998/10/19 05:43:29 jason Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -154,6 +154,11 @@ hme*	at sbus? slot ? offset ?
 # Media Independent Interface (mii) drivers (required by hme)
 nsphy*	at mii? phy ?				# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
+
+# Quad-ethernet glue device, and sub-devices
+qec*	at sbus0 slot ? offset ?
+qe*	at qec?
+be*	at qec?
 
 # Xylogics 753 or 7053 VME SMD disk controllers and disks, found
 # on sun4 systems.
