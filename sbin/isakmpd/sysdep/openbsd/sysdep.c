@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.20 2001/08/23 19:07:00 niklas Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.21 2001/10/26 12:23:46 ho Exp $	*/
 /*	$EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -79,6 +79,13 @@ char *
 sysdep_progname ()
 {
   return __progname;
+}
+
+/* Return the length of the sockaddr struct.  */
+u_int8_t
+sysdep_sa_len (struct sockaddr *sa)
+{
+  return sa->sa_len;
 }
 
 /* As regress/ use this file I protect the sysdep_app_* stuff like this.  */
