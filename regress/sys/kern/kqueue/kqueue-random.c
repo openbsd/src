@@ -1,5 +1,5 @@
-/*	$OpenBSD: kqueue-random.c,v 1.2 2003/06/12 04:52:40 mickey Exp $	*/
-/*	Copyright (c) 2002 Michael Shalayeff, Public Domain	*/
+/*	$OpenBSD: kqueue-random.c,v 1.3 2003/07/31 03:23:41 mickey Exp $	*/
+/*	Written by Michael Shalayeff, 2002, Public Domain	*/
 
 #include <stdlib.h>
 #include <stdio.h>

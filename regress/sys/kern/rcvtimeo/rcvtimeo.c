@@ -1,6 +1,6 @@
-/*	$OpenBSD: rcvtimeo.c,v 1.1 2002/11/26 18:31:59 mickey Exp $	*/
+/*	$OpenBSD: rcvtimeo.c,v 1.2 2003/07/31 03:23:41 mickey Exp $	*/
 
-/*	Copyright (c) 2002 Michael Shalayeff. Public Domain */
+/*	Written by Michael Shalayeff, 2002, Public Domain */
 
 #include <sys/param.h>
 #include <sys/socket.h>

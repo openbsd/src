@@ -1,6 +1,6 @@
-/*	$OpenBSD: kqueue-pty.c,v 1.3 2003/06/12 18:36:47 mickey Exp $	*/
+/*	$OpenBSD: kqueue-pty.c,v 1.4 2003/07/31 03:23:41 mickey Exp $	*/
 
-/*	Copyright (c) 2003 Michael Shalayeff, Public Domain	*/
+/*	Written by Michael Shalayeff, 2003, Public Domain	*/
 
 #include <sys/types.h>
 #include <sys/time.h>

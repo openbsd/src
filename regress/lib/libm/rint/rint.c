@@ -1,6 +1,6 @@
-/*	$OpenBSD: rint.c,v 1.1 2003/02/12 07:05:34 mickey Exp $	*/
+/*	$OpenBSD: rint.c,v 1.2 2003/07/31 03:23:41 mickey Exp $	*/
 
-/*	Copyright (c) 2003 Michael Shalayeff. Public domain.	*/
+/*	Written by Michael Shalayeff, 2003,  Public domain.	*/
 
 #include <stdio.h>
 #include <signal.h>

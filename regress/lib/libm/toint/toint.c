@@ -1,6 +1,6 @@
-/*	$OpenBSD: toint.c,v 1.1 2003/02/12 07:08:44 mickey Exp $	*/
+/*	$OpenBSD: toint.c,v 1.2 2003/07/31 03:23:41 mickey Exp $	*/
 
-/*	Copyright (c) 2003 Michael Shalayeff. Publci domain.	*/
+/*	Written by Michael Shalayeff, 2003, Public domain.	*/
 
 #include <stdio.h>
 #include <signal.h>
