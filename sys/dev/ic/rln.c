@@ -1,4 +1,4 @@
-/*	$OpenBSD: rln.c,v 1.9 2001/02/20 19:39:37 mickey Exp $	*/
+/*	$OpenBSD: rln.c,v 1.10 2001/06/23 23:17:35 fgsch Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -497,7 +497,6 @@ rlnread(sc, hdr, len)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
-	struct ether_header *eh;
 	u_int8_t data[1538];
 	u_int8_t  *buf;
 	size_t	  buflen;
@@ -593,11 +592,8 @@ rlnread(sc, hdr, len)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-		/* Split the ether header from the mbuf */
-		eh = mtod(m, struct ether_header *);
-		m_adj(m, sizeof *eh);
 
-		ether_input(ifp, eh, m);
+		ether_input_mbuf(ifp, m);
 		return;
 	}
 

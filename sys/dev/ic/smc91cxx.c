@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.9 2001/06/23 21:54:46 fgsch Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.10 2001/06/23 23:17:35 fgsch Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -846,7 +846,6 @@ smc91cxx_read(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	struct ether_header *eh;
 	struct mbuf *m;
 	u_int16_t status, packetno, packetlen;
 	u_int8_t *data;
@@ -912,7 +911,6 @@ smc91cxx_read(sc)
 	/*
 	 * Pull the packet off the interface.
 	 */
-	eh = mtod(m, struct ether_header *);
 	data = mtod(m, u_int8_t *);
 	bus_space_read_multi_2(bst, bsh, DATA_REG_W, (u_int16_t *)data,
 	    packetlen >> 1);
@@ -932,13 +930,7 @@ smc91cxx_read(sc)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 
-	/*
-	 * Strip the ethernet header.
-	 */
-	m->m_pkthdr.len = m->m_len = packetlen - sizeof(struct ether_header);
-	m->m_data += sizeof(struct ether_header);
-
-	ether_input(ifp, eh, m);
+	ether_input_mbuf(ifp, m);
 
  out:
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.27 2001/04/13 15:56:10 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.28 2001/06/23 23:17:35 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2020,7 +2020,6 @@ int dc_rx_resync(sc)
 void dc_rxeof(sc)
 	struct dc_softc		*sc;
 {
-	struct ether_header	*eh;
 	struct mbuf		*m;
 	struct ifnet		*ifp;
 	struct dc_desc		*cur_rx;
@@ -2099,16 +2098,12 @@ void dc_rxeof(sc)
 		m = m0;
 
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-
-		/* Remove header from mbuf and pass it on. */
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp, eh, m);
+		ether_input_mbuf(ifp, m);
 	}
 
 	sc->dc_cdata.dc_rx_prod = i;

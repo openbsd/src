@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.3 2001/05/22 11:35:16 mickey Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.4 2001/06/23 23:17:35 fgsch Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -626,7 +626,6 @@ int rl_list_tx_init(sc)
 void rl_rxeof(sc)
 	struct rl_softc		*sc;
 {
-        struct ether_header	*eh;
         struct mbuf		*m;
         struct ifnet		*ifp;
 	int			total_len = 0;
@@ -731,7 +730,6 @@ void rl_rxeof(sc)
 		if (m == NULL)
 			continue;
 
-		eh = mtod(m, struct ether_header *);
 		ifp->if_ipackets++;
 
 #if NBPFILTER > 0
@@ -741,9 +739,7 @@ void rl_rxeof(sc)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-		/* Remove header from mbuf and pass it on. */
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp, eh, m);
+		ether_input_mbuf(ifp, m);
 	}
 
 	return;

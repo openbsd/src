@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.18 2001/06/13 23:19:17 jason Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.19 2001/06/23 23:17:35 fgsch Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -838,7 +838,6 @@ rcvloop:
 				 * instead.
 				 */
 				if (fxp_add_rfabuf(sc, m) == 0) {
-					struct ether_header *eh;
 					u_int16_t total_len;
 
 					total_len = *(u_int16_t *)(rfap +
@@ -854,18 +853,12 @@ rcvloop:
 					}
 					m->m_pkthdr.rcvif = ifp;
 					m->m_pkthdr.len = m->m_len =
-					    total_len -
-					    sizeof(struct ether_header);
-					eh = mtod(m, struct ether_header *);
+					    total_len;
 #if NBPFILTER > 0
 					if (ifp->if_bpf)
-						bpf_tap(ifp->if_bpf,
-						    mtod(m, caddr_t),
-						    total_len); 
+						bpf_mtap(ifp->if_bpf, m);
 #endif /* NBPFILTER > 0 */
-					m->m_data +=
-					    sizeof(struct ether_header);
-					ether_input(ifp, eh, m);
+					ether_input_mbuf(ifp, m);
 				}
 				goto rcvloop;
 			}
