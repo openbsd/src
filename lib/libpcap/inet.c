@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.9 1998/08/14 21:30:33 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.10 1998/08/27 22:36:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -163,15 +163,16 @@ pcap_lookupdev(errbuf)
 			mp = ifrp;
 		}
 	}
-	free(ibuf);
 	(void)close(fd);
 	if (mp == NULL) {
 		(void)strcpy(errbuf, "no suitable device found");
+		free(ibuf);
 		return (NULL);
 	}
 
 	(void)strncpy(device, mp->ifr_name, sizeof(device) - 1);
 	device[sizeof(device) - 1] = '\0';
+	free(ibuf);
 	return (device);
 }
 
