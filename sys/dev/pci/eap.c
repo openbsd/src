@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.20 2003/05/14 05:18:48 jason Exp $ */
+/*      $OpenBSD: eap.c,v 1.21 2004/03/18 01:24:41 tedu Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -136,8 +136,11 @@ struct eap_softc {
 
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;	
+
+	int flags;
 };
 
+enum	ac97_host_flags eap_flags_codec(void *);
 int	eap_allocmem(struct eap_softc *, size_t, size_t, struct eap_dma *);
 int	eap_freemem(struct eap_softc *, struct eap_dma *);
 
@@ -654,7 +657,9 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 		sc->host_if.read = eap1371_read_codec;
 		sc->host_if.write = eap1371_write_codec;
 		sc->host_if.reset = eap1371_reset_codec;
-		
+		sc->host_if.flags = eap_flags_codec;
+		sc->flags = AC97_HOST_DONT_READ;
+	
 		if (ac97_attach(&sc->host_if) == 0) {
 			/* Interrupt enable */
 			EWRITE4(sc, EAP_SIC, EAP_P2_INTR_EN | EAP_R1_INTR_EN);
@@ -1627,4 +1632,12 @@ eap_get_props(void *addr)
 {
 	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | 
 		AUDIO_PROP_FULLDUPLEX);
+}
+
+enum ac97_host_flags
+eap_flags_codec(void *v)
+{
+      struct eap_softc *sc = v;
+
+      return (sc->flags);
 }
