@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/02/24 14:19:55 niklas Exp $
+#	$OpenBSD: Makefile,v 1.8 2000/04/08 05:50:52 aaron Exp $
 
 # Makefile for kernel tags files, init_sysent, etc.
 
@@ -33,8 +33,8 @@ DGEN=	adosfs \
 	compat/linux compat/osf1 compat/sunos compat/svr4 compat/ultrix \
 	conf \
 	ddb \
-	dev dev/eisa dev/ic dev/isa dev/pci dev/pcmcia dev/rcons dev/sun \
-	dev/tc \
+	dev dev/eisa dev/ic dev/isa dev/pci dev/pcmcia dev/cardbus dev/rcons \
+	dev/sun dev/tc \
 	gnu \
 	isofs isofs/cd9660 \
 	kern \

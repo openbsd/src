@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.156 2000/04/03 01:02:00 mickey Exp $
+#	$OpenBSD: files,v 1.157 2000/04/08 05:50:50 aaron Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -116,6 +116,9 @@ file	dev/ic/rlnsubr.c	rln
 device	le: ether, ifnet, ifmedia
 file	dev/ic/am7990.c		le
 
+device	xl: ether, ifnet, ifmedia, mii
+file	dev/ic/xl.c		xl
+
 # SMC 91Cxx Ethernet Controller
 device	sm: ether, ifnet, ifmedia
 file	dev/ic/smc91cxx.c	sm
@@ -170,9 +173,11 @@ file	dev/ic/font_8x16.c	vgafb & (vgafb_isa | vgafb_pci)
 define	isabus { }			# ISA attachment
 define	eisabus { }			# EISA attachment
 define	pcibus {[bus = -1]}		# PCI attachment
-define	pcmciabus { }			# PCMCIA attachment
 define	tcbus { }			# TurboChannel attachment
 define	usbus { }			# USB attachment
+define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA attachment
+define	cbbus {[slot = -1]}		# CardBus attachment
+define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
 
 # UHCI USB controller
 device	uhci: usbus

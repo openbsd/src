@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.128 2000/03/23 09:59:54 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.129 2000/04/08 05:50:50 aaron Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2384,6 +2384,29 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 	}
 
 	return (error);
+}
+
+int
+_bus_space_map(t, bpa, size, cacheable, bshp)
+	bus_space_tag_t t;
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	/*
+	 * For I/O space, that's all she wrote.
+	 */
+	if (t == I386_BUS_SPACE_IO) {
+		*bshp = bpa;
+		return (0);
+	}
+
+	/*
+	 * For memory space, map the bus physical address to
+	 * a kernel virtual address.
+	 */
+	return (bus_mem_add_mapping(bpa, size, cacheable, bshp));
 }
 
 int

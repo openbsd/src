@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.10 1999/08/11 12:02:07 niklas Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.11 2000/04/08 05:50:53 aaron Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -192,7 +192,8 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	void *arg;
 {
 	struct pcic_handle *h = (struct pcic_handle *)pch;
-	isa_chipset_tag_t ic = h->sc->intr_est;
+	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
+	isa_chipset_tag_t ic = sc->intr_est;
 	int irq, ist;
 	void *ih;
 
@@ -203,7 +204,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	else
 		ist = IST_LEVEL;
 
-	irq = pcic_intr_find(h->sc, ist);
+	irq = pcic_intr_find(sc, ist);
 	if (!irq)
 		return (NULL);
 
@@ -226,7 +227,8 @@ pcic_isa_chip_intr_disestablish(pch, ih)
 	void *ih;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
-	isa_chipset_tag_t ic = h->sc->intr_est;
+	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
+	isa_chipset_tag_t ic = sc->intr_est;
 	int reg;
 
 	h->ih_irq = 0;

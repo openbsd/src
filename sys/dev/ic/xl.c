@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.38 2000/02/15 13:47:52 jason Exp $	*/
+/*	$OpenBSD: xl.c,v 1.1 2000/04/08 05:50:50 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -56,6 +56,7 @@
  * 3Com 3c450-TX	10/100Mbps/RJ-45 (Tornado ASIC)
  * 3Com 3c980-TX	10/100Mbps server adapter (Hurricane ASIC)
  * 3Com 3c980C-TX	10/100Mbps server adapter (Tornado ASIC)
+ * 3Com 3CCFE575CT	10/100Mbps LAN CardBus PC Card
  * 3Com 3cSOHO100-TX	10/100Mbps/RJ-45 (Hurricane ASIC)
  * Dell Optiplex GX1 on-board 3c918 10/100Mbps/RJ-45
  * Dell on-board 3c920	10/100Mbps/RJ-45
@@ -123,6 +124,7 @@
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -134,22 +136,7 @@
 #include <vm/vm.h>              /* for vtophys */
 #include <vm/pmap.h>            /* for vtophys */
 
-/*
- * The following #define causes the code to use PIO to access the
- * chip's registers instead of memory mapped mode. The reason PIO mode
- * is on by default is that the Etherlink XL manual seems to indicate
- * that only the newer revision chips (3c905B) support both PIO and
- * memory mapped access. Since we want to be compatible with the older
- * bus master chips, we use PIO here. If you comment this out, the
- * driver will use memory mapped I/O, which may be faster but which
- * might not work on some devices.
- */
-#define XL_USEIOSPACE
-
-#include <dev/pci/if_xlreg.h>
-
-int xl_probe		__P((struct device *, void *, void *));
-void xl_attach		__P((struct device *, struct device *, void *));
+#include <dev/ic/xlreg.h>
 
 int xl_newbuf		__P((struct xl_softc *, struct xl_chain_onefrag *));
 void xl_stats_update	__P((void *));
@@ -450,7 +437,7 @@ xl_miibus_readreg(self, phy, reg)
 	struct xl_softc *sc = (struct xl_softc *)self;
 	struct xl_mii_frame	frame;
 
-	if (phy != 24)
+	if (sc->xl_bustype != XL_BUS_CARDBUS && phy != 24)
 		return (0);
 
 	bzero((char *)&frame, sizeof(frame));
@@ -470,7 +457,7 @@ xl_miibus_writereg(self, phy, reg, data)
 	struct xl_softc *sc = (struct xl_softc *)self;
 	struct xl_mii_frame	frame;
 
-	if (phy != 24)
+	if (sc->xl_bustype != XL_BUS_CARDBUS && phy != 24)
 		return;
 
 	bzero((char *)&frame, sizeof(frame));
@@ -542,7 +529,14 @@ int xl_read_eeprom(sc, dest, off, cnt, swap)
 		return(1);
 
 	for (i = 0; i < cnt; i++) {
-		CSR_WRITE_2(sc, XL_W0_EE_CMD, XL_EE_READ | (off + i));
+		switch (sc->xl_bustype) {
+		case XL_BUS_PCI:
+			CSR_WRITE_2(sc, XL_W0_EE_CMD, XL_EE_READ | (off + i));
+			break;
+		case XL_BUS_CARDBUS:
+			CSR_WRITE_2(sc, XL_W0_EE_CMD, 0x230 + (off + i));
+			break;
+		}
 		err = xl_eeprom_wait(sc);
 		if (err)
 			break;
@@ -863,41 +857,6 @@ void xl_reset(sc, hard)
         return;
 }
 
-int
-xl_probe(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
-{
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_3COM)
-		return (0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_3COM_3CSOHO100TX:
-	case PCI_PRODUCT_3COM_3C900TPO:
-	case PCI_PRODUCT_3COM_3C900COMBO:
-	case PCI_PRODUCT_3COM_3C900B:
-	case PCI_PRODUCT_3COM_3C900BCOMBO:
-	case PCI_PRODUCT_3COM_3C900BTPC:
-	case PCI_PRODUCT_3COM_3C900BFL:
-	case PCI_PRODUCT_3COM_3C905TX:
-	case PCI_PRODUCT_3COM_3C905T4:
-	case PCI_PRODUCT_3COM_3C905BTX:
-	case PCI_PRODUCT_3COM_3C905BT4:
-	case PCI_PRODUCT_3COM_3C905BCOMBO:
-	case PCI_PRODUCT_3COM_3C905BFX:
-	case PCI_PRODUCT_3COM_3C980TX:
-	case PCI_PRODUCT_3COM_3C980CTX:
-	case PCI_PRODUCT_3COM_3C905CTX:
-	case PCI_PRODUCT_3COM_3C450:
-		return (1);
-	}
-					
-	return (0);
-}
-
 /*
  * This routine is a kludge to work around possible hardware faults
  * or manufacturing defects that can cause the media options register
@@ -1020,6 +979,10 @@ void xl_choose_xcvr(sc, verbose)
 		if (verbose)
 			printf("xl%d: guessing 10/100 plus BNC/AUI\n",
 			    sc->xl_unit);
+		break;
+	case TC_DEVICEID_3CCFE575CT_CARDBUS:
+		sc->xl_media = XL_MEDIAOPT_MII;
+		sc->xl_xcvr = XL_XCVR_MII;
 		break;
 	default:
 		printf("xl%d: unknown device ID: %x -- "
@@ -1465,6 +1428,9 @@ int xl_intr(arg)
 
 		CSR_WRITE_2(sc, XL_COMMAND,
 		    XL_CMD_INTR_ACK|(status & XL_INTRS));
+
+		if (sc->xl_bustype == XL_BUS_CARDBUS)
+			bus_space_write_4(sc->xl_funct,sc->xl_funch, 4, 0x8000);
 
 		if (status & XL_STAT_UP_COMPLETE) {
 			int curpkts;
@@ -2042,6 +2008,10 @@ void xl_init(xsc)
 	 * Enable interrupts.
 	 */
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ACK|0xFF);
+
+	if (sc->xl_bustype == XL_BUS_CARDBUS)
+		bus_space_write_4(sc->xl_funct, sc->xl_funch, 4, 0x8000);
+
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_STAT_ENB|XL_INTRS);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ENB|XL_INTRS);
 
@@ -2342,6 +2312,9 @@ void xl_stop(sc)
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_STAT_ENB|0);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ENB|0);
 
+	if (sc->xl_bustype == XL_BUS_CARDBUS)
+		bus_space_write_4(sc->xl_funct, sc->xl_funch, 4, 0x8000);
+
 	/* Stop the stats updater. */
 	untimeout(xl_stats_update, sc);
 
@@ -2374,135 +2347,17 @@ void xl_stop(sc)
 }
 
 void
-xl_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+xl_attach(sc)
+	struct xl_softc *sc;
 {
-	struct xl_softc *sc = (struct xl_softc *)self;
-	struct pci_attach_args *pa = aux;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pci_intr_handle_t ih;
-	const char *intrstr = NULL;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	bus_addr_t iobase;
-	bus_size_t iosize;
-	u_int32_t command;
 	caddr_t roundptr;
 	u_int round;
 	int i, media = IFM_ETHER|IFM_100_TX|IFM_FDX;
 	struct ifmedia *ifm;
 
 	sc->xl_unit = sc->sc_dev.dv_unit;
-
-	/*
-	 * If this is a 3c905B, we have to check one extra thing.
-	 * The 905B supports power management and may be placed in
-	 * a low-power mode (D3 mode), typically by certain operating
-	 * systems which shall not be named. The PCI BIOS is supposed
-	 * to reset the NIC and bring it out of low-power mode, but  
-	 * some do not. Consequently, we have to see if this chip    
-	 * supports power management, and if so, make sure it's not  
-	 * in low-power mode. If power management is available, the  
-	 * capid byte will be 0x01.
-	 * 
-	 * I _think_ that what actually happens is that the chip
-	 * loses its PCI configuration during the transition from
-	 * D3 back to D0; this means that it should be possible for
-	 * us to save the PCI iobase, membase and IRQ, put the chip
-	 * back in the D0 state, then restore the PCI config ourselves.
-	 */
-	command = pci_conf_read(pc, pa->pa_tag, XL_PCI_CAPID) & 0xff;
-	if (command == 0x01) {
-
-		command = pci_conf_read(pc, pa->pa_tag,
-		    XL_PCI_PWRMGMTCTRL);
-		if (command & XL_PSTATE_MASK) {
-			u_int32_t io, mem, irq;
-
-			/* Save PCI config */
-			io = pci_conf_read(pc, pa->pa_tag, XL_PCI_LOIO);
-			mem = pci_conf_read(pc, pa->pa_tag, XL_PCI_LOMEM);
-			irq = pci_conf_read(pc, pa->pa_tag, XL_PCI_INTLINE);
-
-			/* Reset the power state. */
-			printf("%s: chip is in D%d power mode "
-			    "-- setting to D0\n",
-			    sc->sc_dev.dv_xname, command & XL_PSTATE_MASK);
-			command &= 0xFFFFFFFC;
-			pci_conf_write(pc, pa->pa_tag,
-			    XL_PCI_PWRMGMTCTRL, command);
-
-			pci_conf_write(pc, pa->pa_tag, XL_PCI_LOIO, io);
-			pci_conf_write(pc, pa->pa_tag, XL_PCI_LOMEM, mem);
-			pci_conf_write(pc, pa->pa_tag, XL_PCI_INTLINE, irq);
-		}
-	}
-
-	/*
-	 * Map control/status registers.
-	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE |
-		   PCI_COMMAND_MEM_ENABLE |
-		   PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-#ifdef XL_USEIOSPACE
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf("%s: failed to enable i/o ports\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-	/*
-	 * Map control/status registers.
-	 */
-	if (pci_io_find(pc, pa->pa_tag, XL_PCI_LOIO, &iobase, &iosize)) {
-		printf(": can't find i/o space\n");
-		return;
-	}
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->xl_bhandle)) {
-		printf(": can't map i/o space\n");
-		return;
-	}
-	sc->xl_btag = pa->pa_iot;
-#else
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		return;
-	}
-	if (pci_mem_find(pc, pa->pa_tag, XL_PCI_LOMEM, &iobase, &iosize, NULL)){
-		printf(": can't find mem space\n");
-		return;
-	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->xl_bhandle)) {
-		printf(": can't map mem space\n");
-		return;
-	}
-	sc->xl_btag = pa->pa_memt;
-#endif
-
-	/*
-	 * Allocate our interrupt.
-	 */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
-		printf(": couldn't map interrupt\n");
-		return;
-	}
-
-	intrstr = pci_intr_string(pc, ih);
-	sc->xl_intrhand = pci_intr_establish(pc, ih, IPL_NET, xl_intr, sc,
-	    self->dv_xname);
-	if (sc->xl_intrhand == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		return;
-	}
-	printf(": %s", intrstr);
-
 	xl_reset(sc, 1);
 
 	/*
@@ -2516,6 +2371,22 @@ xl_attach(parent, self, aux)
 	bcopy(enaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
 	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
+
+	if (sc->xl_bustype == XL_BUS_CARDBUS) {
+		u_int16_t devid;
+		u_int16_t n;
+
+		XL_SEL_WIN(2);
+		n = CSR_READ_2(sc, 12);
+		xl_read_eeprom(sc, (caddr_t)&devid, XL_EE_PRODID, 1, 0);
+
+		if (devid != 0x5257)
+			n |= 0x0010;
+		if (devid == 0x5257 || devid == 0x6560 || devid == 0x6562)
+			n |= 0x4000;
+
+		CSR_WRITE_2(sc, 12, n);
+	}
 
 	sc->xl_ldata_ptr = malloc(sizeof(struct xl_list_data) + 8,
 	    M_DEVBUF, M_NOWAIT);
@@ -2573,7 +2444,19 @@ xl_attach(parent, self, aux)
 	sc->xl_xcvr &= XL_ICFG_CONNECTOR_MASK;
 	sc->xl_xcvr >>= XL_ICFG_CONNECTOR_BITS;
 
+	if (sc->xl_bustype == XL_BUS_CARDBUS) {
+		XL_SEL_WIN(2);
+		CSR_WRITE_2(sc, 12, 0x4000 | CSR_READ_2(sc, 12));
+	}
+	DELAY(100000);
+
 	xl_mediacheck(sc);
+
+	if (sc->xl_bustype == XL_BUS_CARDBUS) {
+		XL_SEL_WIN(2);
+		CSR_WRITE_2(sc, 12, 0x4000 | CSR_READ_2(sc, 12));
+	}
+	DELAY(100000);
 
 	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BTX
 	    || sc->xl_media & XL_MEDIAOPT_BT4) {
@@ -2585,7 +2468,7 @@ xl_attach(parent, self, aux)
 		sc->sc_mii.mii_writereg = xl_miibus_writereg;
 		sc->sc_mii.mii_statchg = xl_miibus_statchg;
 		xl_setcfg(sc);
-		mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+		mii_phy_probe((struct device *)sc, &sc->sc_mii, 0xffffffff);
 
 		if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 			ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE,
@@ -2713,10 +2596,6 @@ xl_shutdown(v)
 	xl_stop(sc);
 }
 
-struct cfattach xl_ca = {
-	sizeof(struct xl_softc), xl_probe, xl_attach,
-};
-      
 struct cfdriver xl_cd = {
 	0, "xl", DV_IFNET
 };

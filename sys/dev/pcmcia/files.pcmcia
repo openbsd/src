@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.28 2000/04/03 01:02:00 mickey Exp $
+#	$OpenBSD: files.pcmcia,v 1.29 2000/04/08 05:50:51 aaron Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -10,7 +10,7 @@ file	dev/pcmcia/pcmcia_cis.c			pcmcia
 file	dev/pcmcia/pcmcia_cis_quirks.c		pcmcia
 
 # device declaration in sys/conf/files
-attach	pcmcia at pcic
+attach pcmcia at pcmciabus
 
 # 3Com 3c589 Ethernet, 3c562 multifunction Ethernet, and 3CXEM556
 # multifunction Ethernet controllers

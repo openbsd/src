@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.63 2000/03/26 22:38:32 mickey Exp $
+#	$OpenBSD: files.i386,v 1.64 2000/04/08 05:50:49 aaron Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -255,6 +255,12 @@ file	arch/i386/i386/apmcall.S	apm
 
 file	arch/i386/i386/bios32.c		bios32
 
+#
+# CARDBUS
+#
+include	"dev/cardbus/files.cardbus"
+file	arch/i386/i386/rbus_machdep.c	cardbus
+
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it
 # needs to be before its isa and pci attachments.  This answer is
@@ -264,7 +270,7 @@ file	arch/i386/i386/bios32.c		bios32
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-device	pcic {[controller = -1], [socket = -1]}
+device	pcic: pcmciabus
 file	dev/ic/i82365.c			pcic
 
 # PCIC pcmcia controller on ISA bus.

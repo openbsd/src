@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcmciachip.h,v 1.2 1999/08/08 01:00:14 niklas Exp $	*/
-/*	$NetBSD: pcmciachip.h,v 1.2 1997/10/16 23:27:36 thorpej Exp $	*/
+/*	$OpenBSD: pcmciachip.h,v 1.3 2000/04/08 05:50:51 aaron Exp $ */
+/*	$NetBSD: pcmciachip.h,v 1.5 2000/01/13 08:58:51 joda Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -48,6 +48,11 @@ typedef int pcmcia_mem_handle_t;
 #define	PCMCIA_MEM_ATTR		1
 #define	PCMCIA_MEM_COMMON	2
 
+#define	PCMCIA_WIDTH_MEM8	8
+#define	PCMCIA_WIDTH_MEM16	16
+
+#define	PCMCIA_WIDTH_MEM_MASK	24
+
 #define	PCMCIA_WIDTH_AUTO	0
 #define	PCMCIA_WIDTH_IO8	1
 #define	PCMCIA_WIDTH_IO16	2
@@ -84,6 +89,9 @@ struct pcmcia_chip_functions {
 	/* card enable/disable */
 	void	(*socket_enable) __P((pcmcia_chipset_handle_t));
 	void	(*socket_disable) __P((pcmcia_chipset_handle_t));
+
+	/* card detection */
+	int (*card_detect) __P((pcmcia_chipset_handle_t));  
 };
 
 /* Memory space functions. */
@@ -130,6 +138,7 @@ struct pcmcia_chip_functions {
 	((*(tag)->socket_disable)((handle)))
 
 struct pcmciabus_attach_args {
+	char *paa_busname;	/* Bus name */
 	pcmcia_chipset_tag_t pct;
 	pcmcia_chipset_handle_t pch;
 	bus_addr_t iobase;		/* start i/o space allocation here */

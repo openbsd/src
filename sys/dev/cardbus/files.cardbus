@@ -1,0 +1,51 @@
+#	$OpenBSD: files.cardbus,v 1.1 2000/04/08 05:50:52 aaron Exp $
+#	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
+#
+# files.cardbus
+#
+
+device	cardslot: cbbus, pcmciabus
+attach	cardslot at pcmciaslot
+file	dev/cardbus/cardslot.c		cardslot	needs-flag
+
+device	cardbus {[dev = -1], [function = -1]}
+attach	cardbus at cbbus
+file	dev/cardbus/cardbus.c		cardbus		needs-flag
+file	dev/cardbus/cardbus_map.c	cardbus
+file	dev/cardbus/cardbus_exrom.c	cardbus
+file	dev/cardbus/rbus.c		cardbus
+
+#
+# 3Com 3C575TX, 3C575BTX, and 3C575CTX
+#
+attach	xl at cardbus with xl_cardbus
+file	dev/cardbus/if_xl_cardbus.c		xl_cardbus
+
+#
+# Intel PRO/100 8255x based CardBus cards.
+#
+#attach	fxp at cardbus with fxp_cardbus
+#file	dev/cardbus/if_fxp_cardbus.c		fxp_cardbus
+
+#
+#
+#attach	com at cardbus with com_cardbus
+#file	dev/cardbus/com_cardbus.c		com_cardbus
+
+#
+# DECchip 21143 and clones.
+#
+#attach	tlp at cardbus with tlp_cardbus
+#file	dev/cardbus/if_tlp_cardbus.c		tlp_cardbus
+
+#
+# OHCI USB controller
+#
+#attach	ohci at cardbus with ohci_cardbus
+#file	dev/cardbus/ohci_cardbus.c		ohci_cardbus
+
+#
+# Adaptec ADP-1480 SCSI controller
+#
+#attach	ahc at cardbus with ahc_cardbus: ahc_seeprom, smc93cx6
+#file	dev/cardbus/ahc_cardbus.c		ahc_cardbus

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xlreg.h,v 1.17 1999/12/16 22:15:45 deraadt Exp $	*/
+/*	$OpenBSD: xlreg.h,v 1.1 2000/04/08 05:50:50 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -33,6 +33,9 @@
  *
  *	$FreeBSD: if_xlreg.h,v 1.17 1999/05/30 18:09:17 wpaul Exp $
  */
+
+#define XL_BUS_PCI	0x00
+#define XL_BUS_CARDBUS	0x01
 
 #define XL_EE_READ	0x0080	/* read, 5 bit address */
 #define XL_EE_WRITE	0x0040	/* write, 5 bit address */
@@ -280,6 +283,7 @@
 #define XL_XCVR_MII		0x06
 #define XL_XCVR_RSVD_1		0x07
 #define XL_XCVR_AUTO		0x08	/* 3c905B only */
+#define XL_XCVR_NWAY		0x09	/* 3CCFE575CT CardBus */
 
 #define XL_MACCTRL_DEFER_EXT_END	0x0001
 #define XL_MACCTRL_DEFER_0		0x0002
@@ -557,6 +561,8 @@ struct xl_softc {
 	mii_data_t		sc_mii;		/* mii bus */
 	bus_space_handle_t	xl_bhandle;
 	bus_space_tag_t		xl_btag;
+	bus_space_handle_t	xl_funch;
+	bus_space_tag_t		xl_funct;
 	struct xl_type		*xl_info;	/* 3Com adapter info */
 	u_int8_t		xl_hasmii;	/* whether we have mii or not */
 	u_int8_t		xl_unit;	/* interface number */
@@ -566,10 +572,12 @@ struct xl_softc {
 	u_int16_t		xl_caps;
 	u_int8_t		xl_stats_no_timeout;
 	u_int16_t		xl_tx_thresh;
+	u_int8_t		xl_bustype;	/* i.e., PCI or CardBus? */
 	int			xl_if_flags;
 	caddr_t			xl_ldata_ptr;
 	struct xl_list_data	*xl_ldata;
 	struct xl_chain_data	xl_cdata;
+	void (*intr_ack)	__P((struct xl_softc *));
 };
 
 #define xl_rx_goodframes(x) \
@@ -642,6 +650,7 @@ struct xl_stats {
 #define TC_DEVICEID_HURRICANE_10_100BT_SERV	0x9800
 #define TC_DEVICEID_TORNADO_10_100BT_SERV	0x9805
 #define TC_DEVICEID_HURRICANE_SOHO100TX		0x7646
+#define TC_DEVICEID_3CCFE575CT_CARDBUS		0x5257
 
 /*
  * PCI low memory base and low I/O base register, and
@@ -688,3 +697,6 @@ struct xl_stats {
 #ifndef ETHER_ALIGN
 #define ETHER_ALIGN 2
 #endif
+
+extern int xl_intr __P((void *));
+extern void xl_attach __P((struct xl_softc *));
