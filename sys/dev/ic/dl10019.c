@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl10019.c,v 1.1 2001/03/29 01:26:47 aaron Exp $	*/
+/*	$OpenBSD: dl10019.c,v 1.2 2001/06/16 22:43:12 fgsch Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -113,17 +113,19 @@ void
 dl10019_mii_reset(struct dp8390_softc *sc)
 {
 	struct ne2000_softc *nsc = (void *) sc;
+	int i;
 
 	if (nsc->sc_type != NE2000_TYPE_DL10022)
 		return;
 
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, NEDL_DL0_GPIO, 0x08);
-	DELAY(1);
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, NEDL_DL0_GPIO, 0x0c);
-	DELAY(1);
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, NEDL_DL0_GPIO, 0x08);
-	DELAY(1);
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, NEDL_DL0_GPIO, 0x0c);
+	for (i = 0; i < 2; i++) {
+		bus_space_write_1(sc->sc_regt, sc->sc_regh, NEDL_DL0_GPIO,
+		    0x08);
+		DELAY(1);
+		bus_space_write_1(sc->sc_regt, sc->sc_regh, NEDL_DL0_GPIO,
+		    0x0c);
+		DELAY(1);
+	}
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, NEDL_DL0_GPIO, 0x00);
 }
 
@@ -211,31 +213,24 @@ int
 dl10019_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct ne2000_softc *nsc = (void *) self;
-	int val;
+	const struct mii_bitbang_ops *ops;
 
-	if (nsc->sc_type == NE2000_TYPE_DL10022) {
-		val = mii_bitbang_readreg(self, &dl10022_mii_bitbang_ops,
-		    phy, reg);
-	} else {
-		val = mii_bitbang_readreg(self, &dl10019_mii_bitbang_ops,
-		    phy, reg);
-	}
+	ops = (nsc->sc_type == NE2000_TYPE_DL10022) ?
+	    &dl10022_mii_bitbang_ops : &dl10019_mii_bitbang_ops;
 
-	return (val);
+	return (mii_bitbang_readreg(self, ops, phy, reg));
 }
 
 void
 dl10019_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct ne2000_softc *nsc = (void *) self;
+	const struct mii_bitbang_ops *ops;
 	
-	if (nsc->sc_type == NE2000_TYPE_DL10022) {
-		mii_bitbang_writereg(self, &dl10022_mii_bitbang_ops,
-		    phy, reg, val);
-	} else {
-		mii_bitbang_writereg(self, &dl10019_mii_bitbang_ops,
-		    phy, reg, val);
-	}
+	ops = (nsc->sc_type == NE2000_TYPE_DL10022) ?
+	    &dl10022_mii_bitbang_ops : &dl10019_mii_bitbang_ops;
+
+	mii_bitbang_writereg(self, ops, phy, reg, val);
 }
 
 void
