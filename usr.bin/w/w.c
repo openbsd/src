@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.27 1999/06/05 17:04:59 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.28 1999/08/12 19:26:39 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.27 1999/06/05 17:04:59 deraadt Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.28 1999/08/12 19:26:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ main(argc, argv)
 		p = "hiflM:N:asuw";
 	} else if (!strcmp(p, "uptime")) {
 		wcmd = 0;
-		p = "";
+		p = "M:N:";
 	} else
 		errx(1,
 		 "this program should be invoked only as \"w\" or \"uptime\"");
