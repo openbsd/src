@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.46 2000/03/22 07:34:27 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.47 2000/09/09 15:44:59 ericj Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -53,7 +53,7 @@
 # Terminal ports:
 #	ttyB?	DEC 3000 ZS8530 ("scc") serial ports
 #	ttyC?	AlphaStation NS16550 ("com") serial ports
-#	ttyE?	Workstation console (framebuffer & keyboard) tty emulators
+#	ttyE?	Workstation console ("wscons") tty emulators
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -149,11 +149,12 @@ all)
 	sh $this ccd0 ccd1 ccd2 ccd3 wd0 wd1 wd2 wd3
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this tun0 tun1 tun2 tun3
-	sh $this ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
-	sh $this mmclock kbd mouse lpa0 lpt0 random ipl
+	sh $this ttyB0 ttyB1 ttyC0 ttyC1 lkm
+	sh $this mmclock lpa0 lpt0 random ipl
 	sh $this uk0 uk1 ss0 ss1
 	sh $this ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7
 	sh $this local xfs0
+	sh $this wscons
 	;;
 
 raminst)
@@ -162,7 +163,23 @@ raminst)
 	sh $this cd0
 	sh $this rd0 bpf0
 	sh $this ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 pty0
+	sh $this wsmouse0 wskbd0
 	;;
+
+wscons)
+	sh $this ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	sh $this wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	sh $this wskbd0 wskbd1 wskbd2 wskbd3
+	sh $this wsmux
+	;;
+
+wsmux|wskbd|wsmouse)
+        rm -f wsmouse wskbd
+        mknod wsmouse c 56 0
+        mknod wskbd c 56 1
+        chown root.wheel wsmouse wskbd
+        chmod 600 wsmouse wskbd
+        ;;
 
 std)
 	rm -f console drum mem kmem null zero io tty klog stdin stdout stderr ksyms
@@ -422,16 +439,20 @@ mmclock)
 	chmod 444 mmclock
 	;;
 
-kbd)
-	rm -f kbd
-	mknod kbd c 29 0
-	chmod 666 kbd
+wskbd*)
+	unit=${i#wskbd}
+	wskbd=wskbd$unit
+	rm -f $wskbd
+	mknod $wskbd c 29 $unit
+	chmod 600 $wskbd
 	;;
 
-mouse)
-	rm -f mouse
-	mknod mouse c 30 0
-	chmod 666 mouse
+wsmouse*)
+	unit=${i#wsmouse}
+	wsmouse=wsmouse$unit
+	rm -f $wsmouse
+	mknod $wsmouse c 30 $unit
+	chmod 600 $wsmouse
 	;;
 
 lpt*|lpa*)
