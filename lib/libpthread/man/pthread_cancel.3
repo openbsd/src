@@ -1,20 +1,14 @@
-.\" $OpenBSD: pthread_cancel.3,v 1.7 2001/06/24 18:17:30 jasoni Exp $
+.\" $OpenBSD: pthread_cancel.3,v 1.8 2001/12/07 15:47:44 fgsch Exp $
 .Dd January 17, 1999
 .Dt PTHREAD_CANCEL 3
 .Os
 .Sh NAME
-.Nm pthread_cancel ,
-.Nm pthread_setcancelstate ,
-.Nm pthread_setcanceltype
+.Nm pthread_cancel
 .Nd cancel execution of a thread
 .Sh SYNOPSIS
 .Fd #include <pthread.h>
 .Ft int
 .Fn pthread_cancel "pthread_t thread"
-.Ft int
-.Fn pthread_setcancelstate "int state" "int *oldstate"
-.Ft int
-.Fn pthread_setcanceltype "int type" "int *oldtype"
 .Sh DESCRIPTION
 The
 .Fn pthread_cancel
@@ -66,10 +60,7 @@ thread ID.
 .Xr pthread_setcanceltype 3 ,
 .Xr pthread_testcancel 3
 .Sh STANDARDS
-.Fn pthread_cancel ,
-.Fn pthread_setcancelstate ,
-and
-.Fn pthread_setcanceltype
+.Fn pthread_cancel
 conform to ISO/IEC 9945-1 ANSI/IEEE
 .Pq Dq Tn POSIX
 Std 1003.1 Second Edition 1996-07-12.
