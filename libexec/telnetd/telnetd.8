@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnetd.8,v 1.7 1998/09/06 22:23:18 aaron Exp $
+.\"	$OpenBSD: telnetd.8,v 1.8 1998/12/16 03:05:35 aaron Exp $
 .\"	$NetBSD: telnetd.8,v 1.8 1996/03/20 04:25:55 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 .Tn TELNET
 protocol server
 .Sh SYNOPSIS
-.Nm /usr/libexec/telnetd
+.Nm telnetd
 .Op Fl Uhlkn
 .Op Fl D Ar debugmode
 .Op Fl I Ns Ar initid
@@ -57,13 +57,13 @@ protocol server
 .Op Fl debug Op Ar port
 .Sh DESCRIPTION
 The
-.Nm telnetd
+.Nm
 command is a server which supports the
 .Tn DARPA
 standard
 .Tn TELNET
 virtual terminal protocol.
-.Nm Telnetd
+.Nm
 is normally invoked by the internet server (see
 .Xr inetd 8 )
 for requests to connect to the
@@ -75,26 +75,26 @@ file (see
 The
 .Fl debug
 option may be used to start up
-.Nm telnetd
+.Nm
 manually, instead of through
 .Xr inetd 8 .
 If started up this way, 
 .Ar port
 may be specified to run
-.Nm telnetd
+.Nm
 on an alternate
 .Tn TCP
 port number.
 .Pp
 The
-.Nm telnetd
+.Nm
 command accepts the following options:
 .Bl -tag -width "-a authmode"
 .It Fl a Ar authmode
 This option may be used for specifying what mode should
 be used for authentication.
 Note that this option is only useful if
-.Nm telnetd
+.Nm
 has been compiled with support for the
 .Dv AUTHENTICATION
 option.
@@ -142,10 +142,10 @@ program.
 .It Fl D Ar debugmode
 This option may be used for debugging purposes.
 This allows
-.Nm telnetd
+.Nm
 to print out debugging information
 to the connection, allowing the user to see what
-.Nm telnetd
+.Nm
 is doing.
 There are several possible values for 
 .Ar debugmode:
@@ -161,7 +161,7 @@ information, plus some additional information
 about what processing is going on.
 .It Cm netdata
 Displays the data stream received by
-.Nm telnetd.
+.Nm telnetd .
 .It Cm ptydata
 Displays data written to the pty.
 .It Cm exercise
@@ -169,14 +169,14 @@ Has not been implemented yet.
 .El
 .It Fl debug
 Enables debugging on each socket created by
-.Nm telnetd
+.Nm
 (see
 .Dv SO_DEBUG
 in
 .Xr socket 2 ) .
 .It Fl edebug
 If
-.Nm telnetd
+.Nm
 has been compiled with support for data encryption, then the
 .Fl edebug
 option may be used to enable encryption debugging code.
@@ -203,7 +203,7 @@ is
 .Dv fe.
 .It Fl k
 This option is only useful if
-.Nm telnetd
+.Nm
 has been compiled with both linemode and kludge linemode
 support.  If the
 .Fl k
@@ -211,7 +211,7 @@ option is specified, then if the remote client does not
 support the
 .Dv LINEMODE
 option, then
-.Nm telnetd
+.Nm
 will operate in character at a time mode.
 It will still support kludge linemode, but will only
 go into kludge linemode if the remote client requests
@@ -240,7 +240,7 @@ into kludge linemode.
 Disable
 .Dv TCP
 keep-alives.  Normally
-.Nm telnetd
+.Nm
 enables the
 .Tn TCP
 keep-alive mechanism to probe connections that
@@ -250,7 +250,7 @@ from machines that have crashed or can no longer
 be reached may be cleaned up.
 .It Fl r Ar lowpty-highpty
 This option is only enabled when
-.Nm telnetd
+.Nm
 is compiled for
 .Dv UNICOS.
 It specifies an inclusive range of pseudo-terminal devices to
@@ -266,7 +266,7 @@ may be omitted to allow changing
 either end of the search range.  If
 .Ar lowpty
 is omitted, the - character is still required so that
-.Nm telnetd
+.Nm
 can differentiate
 .Ar highpty
 from
@@ -290,7 +290,7 @@ should be put into the
 file.
 .It Fl U
 This option causes
-.Nm telnetd
+.Nm
 to refuse connections from addresses that
 cannot be mapped back into a symbolic name
 via the
@@ -298,7 +298,7 @@ via the
 routine.
 .It Fl X Ar authtype
 This option is only valid if
-.Nm telnetd
+.Nm
 has been built with support for the authentication option.
 It disables the use of
 .Ar authtype
@@ -308,7 +308,7 @@ a specific authentication type without having to recompile
 .Nm telnetd .
 .El
 .Pp
-.Nm Telnetd
+.Nm
 operates by allocating a pseudo-terminal device (see
 .Xr pty 4 )
 for a client, then creating a login process which has
@@ -317,7 +317,7 @@ the slave side of the pseudo-terminal as
 .Dv stdout
 and
 .Dv stderr .
-.Nm Telnetd
+.Nm
 manipulates the master side of the pseudo-terminal,
 implementing the
 .Tn TELNET
@@ -327,7 +327,7 @@ between the remote client and the login process.
 When a
 .Tn TELNET
 session is started up, 
-.Nm telnetd
+.Nm
 sends
 .Tn TELNET
 options to the client side indicating
@@ -359,7 +359,7 @@ to operate in \*(lqcooked\*(rq mode, and with
 enabled (see
 .Xr tty 4 ) .
 .Pp
-.Nm Telnetd
+.Nm
 has support for enabling locally the following
 .Tn TELNET
 options:
@@ -414,13 +414,13 @@ is sent in response, and the
 session is shut down.
 .It "WILL ENCRYPT"
 Only sent if
-.Nm telnetd
+.Nm
 is compiled with support for data encryption, and
 indicates a willingness to decrypt
 the data stream.
 .El
 .Pp
-.Nm Telnetd
+.Nm
 has support for enabling remotely the following
 .Tn TELNET
 options:
@@ -470,12 +470,12 @@ Indicates a desire to be able to request environment
 variable information, as described in RFC 1408.
 .It "DO LINEMODE"
 Only sent if
-.Nm telnetd
+.Nm
 is compiled with support for linemode, and
 requests that the client do line by line processing.
 .It "DO TIMING-MARK"
 Only sent if
-.Nm telnetd
+.Nm
 is compiled with support for both linemode and
 kludge linemode, and the client responded with
 .Dv WONT LINEMODE.
@@ -488,29 +488,28 @@ Note that the
 option can be used to disable this.
 .It "DO AUTHENTICATION"
 Only sent if
-.Nm telnetd
+.Nm
 is compiled with support for authentication, and
 indicates a willingness to receive authentication
 information for automatic login.
 .It "DO ENCRYPT"
 Only sent if
-.Nm telnetd
+.Nm
 is compiled with support for data encryption, and
 indicates a willingness to decrypt
 the data stream.
-.Sh ENVIRONMENT
+.\" .Sh ENVIRONMENT
 .Sh FILES
-.Pa /etc/services
-.br
-.Pa /etc/inittab
+.Bl -tag -width /etc/services -compact
+.It Pa /etc/services
+.It Pa /etc/inittab
 (UNICOS systems only)
-.br
-.Pa /etc/iptos
+.It Pa /etc/iptos
 (if supported)
-.br
-.Sh "SEE ALSO"
-.Xr telnet 1 ,
+.El
+.Sh SEE ALSO
 .Xr login 1 ,
+.Xr telnet 1
 .Sh STANDARDS
 .Bl -tag -compact -width RFC-1572
 .It Cm RFC-854
@@ -563,7 +562,7 @@ commands are only partially implemented.
 .Pp
 Because of bugs in the original 4.2 BSD
 .Xr telnet 1 ,
-.Nm telnetd
+.Nm
 performs some dubious protocol exchanges to try to discover if the remote
 client is, in fact, a 4.2 BSD
 .Xr telnet 1 .
@@ -575,7 +574,7 @@ has no common interpretation except between similar operating systems
 The terminal type name received from the remote client is converted to
 lower case.
 .Pp
-.Nm Telnetd
+.Nm
 never sends
 .Tn TELNET
 .Dv IAC GA

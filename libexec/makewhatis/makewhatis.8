@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makewhatis.8,v 1.2 1997/11/13 04:40:14 millert Exp $
+.\"	$OpenBSD: makewhatis.8,v 1.3 1998/12/16 03:05:34 aaron Exp $
 .\"	$NetBSD: makewhatis.8,v 1.2.2.1 1997/11/10 19:57:45 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 .Nm makewhatis
 .Nd create a whatis.db database
 .Sh SYNOPSIS
-.Nm /usr/libexec/makewhatis
+.Nm makewhatis
 .Op Ar manpath
 .Sh DESCRIPTION
 .Nm
@@ -59,7 +59,8 @@ If
 .Ar manpath
 is unspecified,
 .Nm
-by default creates a database for /usr/share/man.
+by default creates a database for
+.Pa /usr/share/man .
 Man pages compressed with
 .Xr compress 1
 and
@@ -69,7 +70,8 @@ will be processed by
 .Xr getNAME 8 .
 .Sh BUGS
 .Nm
-should find its search paths using /etc/man.conf
+should find its search paths using
+.Pa /etc/man.conf .
 .Sh SEE ALSO
 .Xr man 1 ,
 .Xr man.conf 5 ,

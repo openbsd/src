@@ -1,4 +1,4 @@
-.\"	$OpenBSD: safe_finger.8,v 1.2 1997/07/08 09:47:04 deraadt Exp $
+.\"	$OpenBSD: safe_finger.8,v 1.3 1998/12/16 03:05:35 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -36,10 +36,10 @@
 .Sh NAME
 .Nm safe_finger
 .Sh SYNOPSIS
-.Nm /usr/libexec/safe_finger
+.Nm safe_finger
 .Op Ar arguments
 .Sh DECRIPTION
-.Nm safe_finger
+.Nm
 is simply a wrapper around the
 .Xr finger 1
 program, meant for use in
@@ -48,7 +48,7 @@ rulesets.  It accepts exactly the same arguments as
 .Xr finger 1 .
 .Sh SEE ALSO
 .Xr finger 1 ,
-.Xr tcpd 8 .
+.Xr tcpd 8
 .Sh AUTHOR
 .Bd -unfilled -offset indent
 Wietse Venema (wietse@wzv.win.tue.nl),
