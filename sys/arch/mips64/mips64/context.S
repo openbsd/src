@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.6 2004/09/10 09:32:13 pefo Exp $ */
+/*	$OpenBSD: context.S,v 1.7 2004/09/27 17:41:56 pefo Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -154,6 +154,7 @@ END(remrunqueue)
  *   Idle, this is where we spend time when nothing to do.
  */
 LEAF(idle, 0)
+_idle:
 	PTR_S	zero, curproc		# set curproc NULL for stats
 	sw	zero, cpl		# lower to spl0
 
@@ -250,7 +251,7 @@ NON_LEAF(cpu_switch, FRAMESZ(CF_SZ), ra)
 	lw	t1, whichqs			# look for non-empty queue
 #	addu	t2, t2, 1
 #	sw	t2, cnt+V_SWTCH
-	beq	t1, zero, idle			# if none, idle
+	beq	t1, zero, _idle			# if none, idle
 	nop
 sw1:
 	mfc0	v0, COP_0_STATUS_REG
@@ -260,7 +261,7 @@ sw1:
 	ITLBNOPFIX
 	lw	t0, whichqs			# look for non-empty queue
 	li	t2, -1				# t2 = lowest bit set
-	beq	t0, zero, idle			# if none, idle
+	beq	t0, zero, _idle			# if none, idle
 	move	t3, t0				# t3 = saved whichqs
 1:
 	addu	t2, t2, 1
@@ -311,9 +312,9 @@ sw1:
 	LA	t1, (VM_MIN_KERNEL_ADDRESS)
 	PTR_SUBU t2, t3, t1
 	bltz	t2, ctx3			# not mapped.
+	PTR_SRL	t2, PGSHIFT+1
 	PTR_L	t1, Sysmap
 	tlbp
-	PTR_SRL	t2, PGSHIFT+1
 	PTR_SLL	t2, 3
 	PTR_ADDU t1, t2				# t1 now points at ptes.
 	mfc0	t0, COP_0_TLB_INDEX
