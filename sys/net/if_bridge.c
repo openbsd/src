@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.54 2001/03/22 02:00:36 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.55 2001/05/11 04:56:15 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1936,6 +1936,8 @@ bridge_filter(sc, ifp, eh, m)
 
 	/* Finally, we get to filter the packet! */
 	if (fr_checkp && (*fr_checkp)(ip, hlen, ifp, 0, &m))
+		return (NULL);
+	if (m == NULL)		/* in case of 'fastroute' */
 		return (NULL);
 
 	/* Rebuild the IP header */
