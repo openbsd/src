@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.26 1999/01/11 16:38:00 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.27 1999/01/24 10:25:53 downsj Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -50,7 +50,9 @@ install:	maninstall
 
 clean cleandir:
 	rm -f ${CLEANFILES}
-	-@if [ -e Makefile ]; then ${FSFMAKE} distclean; fi
+	-@if [ -e Makefile ]; then \
+		${MAKE} SUBDIRS="${SUBDIRS}" ${GNUCFLAGS} ${INFODIR} \
+			${INFOPATH} distclean; fi
 
 depend:
 	# Nothing here so far...
