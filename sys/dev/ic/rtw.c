@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.20 2005/02/25 12:18:27 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.21 2005/02/27 09:32:46 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -208,8 +208,8 @@ int rtw_txring_choose(struct rtw_softc *, struct rtw_txsoft_blk **,
 struct mbuf *rtw_80211_dequeue(struct rtw_softc *, struct ifqueue *, int,
     struct rtw_txsoft_blk **, struct rtw_txdesc_blk **,
     struct ieee80211_node **, short *);
-void rtw_recv_beacon(struct rtw_softc *, struct mbuf *,
-    struct ieee80211_node *, int, int, uint32_t);
+uint64_t rtw_tsf_extend(struct rtw_regs *, u_int32_t);
+void rtw_ibss_merge(struct rtw_softc *, struct ieee80211_node *, u_int32_t);
 
 void rtw_led_attach(struct rtw_softc *);
 void rtw_led_init(struct rtw_regs *);
@@ -3363,11 +3363,30 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	return (*sc->sc_mtbl.mt_newstate)(ic, nstate, arg);
 }
 
-void
-rtw_recv_beacon(struct rtw_softc *sc, struct mbuf *m,
-    struct ieee80211_node *ni, int subtype, int rssi, uint32_t rstamp)
+/* Extend a 32-bit TSF timestamp to a 64-bit timestamp. */
+uint64_t
+rtw_tsf_extend(struct rtw_regs *regs, u_int32_t rstamp)
 {
-	(*sc->sc_mtbl.mt_recv_mgmt)(&sc->sc_ic, m, ni, subtype, rssi, rstamp);
+	u_int32_t tsftl, tsfth;
+
+	tsfth = RTW_READ(regs, RTW_TSFTRH);
+	tsftl = RTW_READ(regs, RTW_TSFTRL);
+	if (tsftl < rstamp)	/* Compensate for rollover. */
+		tsfth--;
+	return ((u_int64_t)tsfth << 32) | rstamp;
+}
+
+void
+rtw_ibss_merge(struct rtw_softc *sc, struct ieee80211_node *ni,
+    u_int32_t rstamp)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (ieee80211_ibss_merge(ic, ni,
+	    rtw_tsf_extend(&sc->sc_regs, rstamp)) == ENETRESET) {
+		rtw_join_bss(sc, ic->ic_bss->ni_bssid, ic->ic_opmode,
+		    ic->ic_bss->ni_intval);
+	}
 	return;
 }
 
@@ -3377,16 +3396,17 @@ rtw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 {
 	struct rtw_softc *sc = (struct rtw_softc*)ic->ic_softc;
 
+	(*sc->sc_mtbl.mt_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
+
 	switch (subtype) {
-	case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
-		/* do nothing: hardware answers probe request XXX */
-		break;
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
 	case IEEE80211_FC0_SUBTYPE_BEACON:
-		rtw_recv_beacon(sc, m, ni, subtype, rssi, rstamp);
+		if (ic->ic_opmode != IEEE80211_M_IBSS ||
+		    ic->ic_state != IEEE80211_S_RUN)
+			return;
+		rtw_ibss_merge(sc, ni, rstamp);
 		break;
 	default:
-		(*sc->sc_mtbl.mt_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
 		break;
 	}
 	return;
