@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.22 2002/06/21 16:37:11 millert Exp $	*/
+/*	$OpenBSD: util.h,v 1.23 2003/05/15 01:26:26 ian Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -71,6 +71,11 @@
 #define UU_LOCK_OWNER_ERR (-7)
 
 /*
+ * fmt_scaled(3) specific flags.
+ */
+#define	FMT_SCALED_STRSIZE	7	/* minus sign, 4 digits, suffix, null byte */
+
+/*
  * stub struct definitions.
  */
 struct __sFILE;
@@ -113,6 +118,8 @@ const char *uu_lockerr(int _uu_lockresult);
 int     uu_lock(const char *_ttyname);
 int	uu_lock_txfr(const char *_ttyname, pid_t _pid);
 int     uu_unlock(const char *_ttyname);
+int	fmt_scaled(long long number, char *result);
+int	scan_scaled(char *scaled, long long *result);
 __END_DECLS
 
 #endif /* !_UTIL_H_ */
