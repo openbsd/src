@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.60 1999/12/25 04:48:16 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.61 2000/01/09 22:53:16 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -410,8 +410,8 @@ sendit:
 				ip = mtod(m, struct ip *);
 			}
 			udp = (struct udphdr *) (mtod(m, u_char *) + hlen);
-			ddst->sen_sport = ntohs(udp->uh_sport);
-			ddst->sen_dport = ntohs(udp->uh_dport);
+			ddst->sen_sport = udp->uh_sport;
+			ddst->sen_dport = udp->uh_dport;
 			break;
 
 		case IPPROTO_TCP:
@@ -422,8 +422,8 @@ sendit:
 				ip = mtod(m, struct ip *);
 			}
 			tcp = (struct tcphdr *) (mtod(m, u_char *) + hlen);
-			ddst->sen_sport = ntohs(tcp->th_sport);
-			ddst->sen_dport = ntohs(tcp->th_dport);
+			ddst->sen_sport = tcp->th_sport;
+			ddst->sen_dport = tcp->th_dport;
 			break;
 
 		default:
