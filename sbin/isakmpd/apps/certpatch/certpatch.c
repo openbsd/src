@@ -1,5 +1,5 @@
-/*	$OpenBSD: certpatch.c,v 1.7 2000/02/01 02:46:17 niklas Exp $	*/
-/*	$EOM: certpatch.c,v 1.6 2000/01/31 22:33:50 niklas Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.8 2000/03/08 08:42:27 niklas Exp $	*/
+/*	$EOM: certpatch.c,v 1.7 2000/03/08 02:47:45 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Niels Provos.  All rights reserved.
@@ -58,9 +58,19 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <ssl/rsa.h>
-#include <ssl/x509.h>
-#include <ssl/pem.h>
+#include "sysdep.h"
+
+#ifdef KAME
+#  ifdef CRYPTO
+#    include <openssl/rsa.h>
+#  endif
+#  include <openssl/x509.h>
+#  include <openssl/pem.h>
+#else
+#  include <ssl/rsa.h>
+#  include <ssl/x509.h>
+#  include <ssl/pem.h>
+#endif
 
 #include "conf.h"
 #include "log.h"
