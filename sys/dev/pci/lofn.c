@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.18 2002/05/10 15:25:39 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.19 2002/05/10 15:45:18 jason Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Jason L. Wright (jason@thought.net)
@@ -333,8 +333,9 @@ lofn_modexp_start(sc, q)
 	struct lofn_q *q;
 {
 	struct cryptkop *krp = q->q_krp;
-	int ip = 0, bits, err = 0;
+	int ip = 0, err = 0;
 	int mshift, eshift, nshift;
+	int mbits, ebits, nbits;
 
 	if (krp->krp_param[LOFN_MODEXP_PAR_M].crp_nbits > 1024) {
 		err = ERANGE;
@@ -347,75 +348,23 @@ lofn_modexp_start(sc, q)
 	lofn_zero_reg(sc, 2);
 	lofn_zero_reg(sc, 3);
 
-	/* Write out M... */
-	bits = lofn_norm_sigbits(krp->krp_param[LOFN_MODEXP_PAR_M].crp_p,
-	    krp->krp_param[LOFN_MODEXP_PAR_M].crp_nbits);
-	if (bits > 1024) {
-		err = E2BIG;
-		goto errout;
-	}
-	bzero(&sc->sc_tmp, sizeof(sc->sc_tmp));
-	bcopy(krp->krp_param[LOFN_MODEXP_PAR_M].crp_p, &sc->sc_tmp,
-	    (bits + 7) / 8);
-	lofn_write_reg(sc, 0, &sc->sc_tmp);
-
-	mshift = 1024 - bits;
-	WRITE_REG(sc, LOFN_LENADDR(LOFN_WIN_2, 0), 1024);
-	if (mshift != 0) {
-		WRITE_REG(sc, LOFN_REL_INSTR + ip,
-		    LOFN_INSTR2(0, OP_CODE_SL, 0, 0, mshift));
-		ip += 4;
-
-		WRITE_REG(sc, LOFN_REL_INSTR + ip,
-		    LOFN_INSTR2(0, OP_CODE_TAG, 0, 0, bits));
-		ip += 4;
-	}
-
-	/* Write out E... */
-	bits = lofn_norm_sigbits(krp->krp_param[LOFN_MODEXP_PAR_E].crp_p,
-	    krp->krp_param[LOFN_MODEXP_PAR_E].crp_nbits);
-	if (bits > 1024) {
-		err = E2BIG;
-		goto errout;
-	}
-	if (bits < 1) {
-		err = ERANGE;
-		goto errout;
-	}
-	bzero(&sc->sc_tmp, sizeof(sc->sc_tmp));
-	bcopy(krp->krp_param[LOFN_MODEXP_PAR_E].crp_p, &sc->sc_tmp,
-	    (bits + 7) / 8);
-	lofn_write_reg(sc, 1, &sc->sc_tmp);
-
-	eshift = 1024 - bits;
-	WRITE_REG(sc, LOFN_LENADDR(LOFN_WIN_2, 1), 1024);
-	if (eshift != 0) {
-		WRITE_REG(sc, LOFN_REL_INSTR + ip,
-		    LOFN_INSTR2(0, OP_CODE_SL, 1, 1, eshift));
-		ip += 4;
-
-		WRITE_REG(sc, LOFN_REL_INSTR + ip,
-		    LOFN_INSTR2(0, OP_CODE_TAG, 1, 1, bits));
-		ip += 4;
-	}
-
 	/* Write out N... */
-	bits = lofn_norm_sigbits(krp->krp_param[LOFN_MODEXP_PAR_N].crp_p,
+	nbits = lofn_norm_sigbits(krp->krp_param[LOFN_MODEXP_PAR_N].crp_p,
 	    krp->krp_param[LOFN_MODEXP_PAR_N].crp_nbits);
-	if (bits > 1024) {
+	if (nbits > 1024) {
 		err = E2BIG;
 		goto errout;
 	}
-	if (bits < 5) {
+	if (nbits < 5) {
 		err = ERANGE;
 		goto errout;
 	}
 	bzero(&sc->sc_tmp, sizeof(sc->sc_tmp));
 	bcopy(krp->krp_param[LOFN_MODEXP_PAR_N].crp_p, &sc->sc_tmp,
-	    (bits + 7) / 8);
+	    (nbits + 7) / 8);
 	lofn_write_reg(sc, 2, &sc->sc_tmp);
 
-	nshift = 1024 - bits;
+	nshift = 1024 - nbits;
 	WRITE_REG(sc, LOFN_LENADDR(LOFN_WIN_2, 2), 1024);
 	if (nshift != 0) {
 		WRITE_REG(sc, LOFN_REL_INSTR + ip,
@@ -423,7 +372,59 @@ lofn_modexp_start(sc, q)
 		ip += 4;
 
 		WRITE_REG(sc, LOFN_REL_INSTR + ip,
-		    LOFN_INSTR2(0, OP_CODE_TAG, 2, 2, bits));
+		    LOFN_INSTR2(0, OP_CODE_TAG, 2, 2, nbits));
+		ip += 4;
+	}
+
+	/* Write out M... */
+	mbits = lofn_norm_sigbits(krp->krp_param[LOFN_MODEXP_PAR_M].crp_p,
+	    krp->krp_param[LOFN_MODEXP_PAR_M].crp_nbits);
+	if (mbits > 1024 || mbits > nbits) {
+		err = E2BIG;
+		goto errout;
+	}
+	bzero(&sc->sc_tmp, sizeof(sc->sc_tmp));
+	bcopy(krp->krp_param[LOFN_MODEXP_PAR_M].crp_p, &sc->sc_tmp,
+	    (mbits + 7) / 8);
+	lofn_write_reg(sc, 0, &sc->sc_tmp);
+
+	mshift = 1024 - nbits;
+	WRITE_REG(sc, LOFN_LENADDR(LOFN_WIN_2, 0), 1024);
+	if (mshift != 0) {
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR2(0, OP_CODE_SL, 0, 0, mshift));
+		ip += 4;
+
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR2(0, OP_CODE_TAG, 0, 0, nbits));
+		ip += 4;
+	}
+
+	/* Write out E... */
+	ebits = lofn_norm_sigbits(krp->krp_param[LOFN_MODEXP_PAR_E].crp_p,
+	    krp->krp_param[LOFN_MODEXP_PAR_E].crp_nbits);
+	if (ebits > 1024 || ebits > nbits) {
+		err = E2BIG;
+		goto errout;
+	}
+	if (ebits < 1) {
+		err = ERANGE;
+		goto errout;
+	}
+	bzero(&sc->sc_tmp, sizeof(sc->sc_tmp));
+	bcopy(krp->krp_param[LOFN_MODEXP_PAR_E].crp_p, &sc->sc_tmp,
+	    (ebits + 7) / 8);
+	lofn_write_reg(sc, 1, &sc->sc_tmp);
+
+	eshift = 1024 - nbits;
+	WRITE_REG(sc, LOFN_LENADDR(LOFN_WIN_2, 1), 1024);
+	if (eshift != 0) {
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR2(0, OP_CODE_SL, 1, 1, eshift));
+		ip += 4;
+
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR2(0, OP_CODE_TAG, 1, 1, nbits));
 		ip += 4;
 	}
 
@@ -441,7 +442,7 @@ lofn_modexp_start(sc, q)
 		ip += 4;
 
 		WRITE_REG(sc, LOFN_REL_INSTR + ip,
-		    LOFN_INSTR2(OP_DONE, OP_CODE_TAG, 3, 3, bits));
+		    LOFN_INSTR2(OP_DONE, OP_CODE_TAG, 3, 3, nbits));
 		ip += 4;
 	}
 
