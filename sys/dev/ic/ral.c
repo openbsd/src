@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.19 2005/03/11 19:49:29 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.20 2005/03/11 19:53:54 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -901,14 +901,16 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		break;
 
 	case IEEE80211_S_RUN:
-		ral_set_bssid(sc, ic->ic_bss->ni_bssid);
-
-		ral_enable_tsf_sync(sc);
+		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+			ral_set_bssid(sc, ic->ic_bss->ni_bssid);
+			ral_enable_tsf_sync(sc);
+		}
 
 		if (sc->led_mode != RAL_LED_MODE_SINGLE)
 			ral_update_led(sc, 1, 0);
 
-		timeout_add(&sc->rssadapt_ch, hz / 10);
+		if (ic->ic_opmode != IEEE80211_M_MONITOR)
+			timeout_add(&sc->rssadapt_ch, hz / 10);
 
 		sc->sc_newstate(ic, nstate, arg);
 		break;
@@ -2419,7 +2421,9 @@ ral_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
 
-	if (ic->ic_opmode != IEEE80211_M_MONITOR)
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+	else
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 
 	return 0;
