@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchgen.c,v 1.9 1997/01/31 19:40:42 rahnds Exp $	*/
+/*	$OpenBSD: crunchgen.c,v 1.10 1997/04/04 21:52:40 mickey Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -340,7 +340,7 @@ void add_prog(char *progname)
     for(p1 = NULL, p2 = progs; p2 != NULL; p1 = p2, p2 = p2->next)
 	if(!strcmp(p2->name, progname)) return;
 
-    p2 = malloc(sizeof(prog_t));
+    p2 = calloc(1, sizeof(prog_t));
     if(p2) p2->name = strdup(progname);
     if(!p2 || !p2->name) 
 	out_of_memory();
@@ -884,7 +884,7 @@ void add_string(strlst_t **listp, char *str)
     for(p1 = NULL, p2 = *listp; p2 != NULL; p1 = p2, p2 = p2->next)
 	if(!strcmp(p2->str, str)) return;
 
-    p2 = malloc(sizeof(strlst_t));
+    p2 = calloc(1,sizeof(strlst_t));
     if(p2) p2->str = strdup(str);
     if(!p2 || !p2->str)
 	out_of_memory();

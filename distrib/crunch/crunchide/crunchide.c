@@ -135,7 +135,7 @@ void add_to_keep_list(char *symbol)
     if(curp && cmp == 0)
 	return;	/* already in table */
 
-    newp = (struct keep *) malloc(sizeof(struct keep));
+    newp = (struct keep *) calloc(1,sizeof(struct keep));
     if(newp) newp->sym = strdup(symbol);
     if(newp == NULL || newp->sym == NULL) {
 	fprintf(stderr, "%s: out of memory for keep list\n", pname);
@@ -263,7 +263,7 @@ void hide_syms(char *filename)
      * read the header and from TRELOFF to the end of the file.
      */
 
-    if((aoutdata = (char *) malloc(infstat.st_size)) == NULL) {
+    if((aoutdata = (char *) calloc(1,infstat.st_size)) == NULL) {
 	fprintf(stderr, "%s: too big to read into memory\n", filename);
 	close(inf);
 	return;
