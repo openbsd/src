@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.26 1998/11/12 16:33:37 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.27 1998/11/12 20:40:03 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -227,13 +227,13 @@ ep	PNP80F8		#3Com Generic Etherlink Plug and Play Device
 #	PNP8113	#Racal NI6510
 #	PNP811C	#Ungermann-Bass NIUpc
 #	PNP8120	#Ungermann-Bass NIUpc/EOTP
-ed	PNP8123		#SMC StarCard PLUS (WD/8003S)
-ed	PNP8124		#SMC StarCard PLUS With On Board Hub (WD/8003SH)
-ed	PNP8125		#SMC EtherCard PLUS (WD/8003E)
-ed	PNP8126		#SMC EtherCard PLUS With Boot ROM Socket (WD/8003EBT)
-ed	PNP8127		#SMC EtherCard PLUS With Boot ROM Socket (WD/8003EB)
-ed	PNP8128		#SMC EtherCard PLUS TP (WD/8003WT)
-ed	PNP812A		#SMC EtherCard PLUS 16 With Boot ROM Socket (WD/8013EBT)
+we	PNP8123		#SMC StarCard PLUS (WD/8003S)
+we	PNP8124		#SMC StarCard PLUS With On Board Hub (WD/8003SH)
+we	PNP8125		#SMC EtherCard PLUS (WD/8003E)
+we	PNP8126		#SMC EtherCard PLUS With Boot ROM Socket (WD/8003EBT)
+we	PNP8127		#SMC EtherCard PLUS With Boot ROM Socket (WD/8003EB)
+we	PNP8128		#SMC EtherCard PLUS TP (WD/8003WT)
+we	PNP812A		#SMC EtherCard PLUS 16 With Boot ROM Socket (WD/8013EBT)
 #	PNP812D	#Intel EtherExpress 16 or 16TP
 #	PNP812F	#Intel TokenExpress 16/4
 #	PNP8130	#Intel TokenExpress MCA 16/4
@@ -253,12 +253,12 @@ ed	PNP812A		#SMC EtherCard PLUS 16 With Boot ROM Socket (WD/8013EBT)
 #	PNP816A	#NCR Token-Ring 4 Mbs ISA
 #	PNP816D	#NCR Token-Ring 16/4 Mbs ISA
 #	PNP8191	#Olicom 16/4 Token-Ring Adapter
-ed	PNP81C3		#SMC EtherCard PLUS Elite (WD/8003EP)
-ed	PNP81C4		#SMC EtherCard PLUS 10T (WD/8003W)
-ed	PNP81C5		#SMC EtherCard PLUS Elite 16 (WD/8013EP)
-ed	PNP81C6		#SMC EtherCard PLUS Elite 16T (WD/8013W)
-ed	PNP81C7		#SMC EtherCard PLUS Elite 16 Combo (WD/8013EW or 8013EWC)
-ed	PNP81C8		#SMC EtherElite Ultra 16
+we	PNP81C3		#SMC EtherCard PLUS Elite (WD/8003EP)
+we	PNP81C4		#SMC EtherCard PLUS 10T (WD/8003W)
+we	PNP81C5		#SMC EtherCard PLUS Elite 16 (WD/8013EP)
+we	PNP81C6		#SMC EtherCard PLUS Elite 16T (WD/8013W)
+we	PNP81C7		#SMC EtherCard PLUS Elite 16 Combo (WD/8013EW or 8013EWC)
+we	PNP81C8		#SMC EtherElite Ultra 16
 #	PNP81E4	#Pure Data PDI9025-32 (Token Ring)
 #	PNP81E6	#Pure Data PDI508+ (ArcNet)
 #	PNP81E7	#Pure Data PDI516+ (ArcNet)
@@ -365,6 +365,8 @@ com	USR0006 #USR modem
 pccom	USR0006 #USR modem
 com	SUP1380 #SupraExpress 288i PnP Voice Modem
 pccom	SUP1380 #SupraExpress 288i PnP Voice Modem
+com	SUP1381 #SupraExpress 336i PnP Voice Modem
+pccom	SUP1381 #SupraExpress 336i PnP Voice Modem
 com	GVC5000 #some GVC modem
 pccom	GVC5000 #some GVC modem
 
@@ -385,6 +387,6 @@ sb	@X@0001	#CMI8330. Audio Adapter
 ym	@@@1001 #ALS100+
 ym	YMH0021 #
 sb	ESS1868	#
-ed	SMC8416 #SMC EtherEZ
+we	SMC8416 #SMC EtherEZ
 joy	@P@1001	#ALS100+
 ne	@@@1980	#OvisLink LE-8019R
