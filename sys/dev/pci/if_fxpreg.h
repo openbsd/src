@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_fxpreg.h,v 1.2 1997/07/06 16:05:03 niklas Exp $	*/
 /*	$NetBSD: if_fxpreg.h,v 1.2 1997/06/05 02:01:57 thorpej Exp $	*/
 
 /*
