@@ -1,8 +1,8 @@
-/*	$OpenBSD: mii_physubr.c,v 1.1 1998/11/11 19:34:47 jason Exp $	*/
-/*	$NetBSD: mii_physubr.c,v 1.2 1998/11/04 23:28:15 thorpej Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.2 1999/07/16 14:59:07 jason Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.2.6.1 1999/04/23 15:40:26 perry Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,7 +45,9 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/socket.h>
+#include <sys/errno.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -53,28 +55,72 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
+void	mii_phy_auto_timeout __P((void *));
+
 int
-mii_phy_auto(mii)
+mii_phy_auto(mii, waitfor)
 	struct mii_softc *mii;
 {
 	int bmsr, i;
 
-	PHY_WRITE(mii, MII_ANAR,
-	    BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA);
-	PHY_WRITE(mii, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
-
-	/* Wait 500ms for it to complete. */
-	for (i = 0; i < 500; i++) {
-		if ((bmsr = PHY_READ(mii, MII_BMSR)) & BMSR_ACOMP)
-			return (1);
-		delay(1000);
+	if ((mii->mii_flags & MIIF_DOINGAUTO) == 0) {
+		PHY_WRITE(mii, MII_ANAR,
+		    BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA);
+		PHY_WRITE(mii, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	}
+
+	if (waitfor) {
+		/* Wait 500ms for it to complete. */
+		for (i = 0; i < 500; i++) {
+			if ((bmsr = PHY_READ(mii, MII_BMSR)) & BMSR_ACOMP)
+				return (0);
+			delay(1000);
+#if 0
+		if ((bmsr & BMSR_ACOMP) == 0)
+			printf("%s: autonegotiation failed to complete\n",
+			    mii->mii_dev.dv_xname);
+#endif
+		}
+
+		/*
+		 * Don't need to worry about clearing MIIF_DOINGAUTO.
+		 * If that's set, a timeout is pending, and it will
+		 * clear the flag.
+		 */
+		return (EIO);
+	}
+
+	/*
+	 * Just let it finish asynchronously.  This is for the benefit of
+	 * the tick handler driving autonegotiation.  Don't want 500ms
+	 * delays all the time while the system is running!
+	 */
+	if ((mii->mii_flags & MIIF_DOINGAUTO) == 0) {
+		mii->mii_flags |= MIIF_DOINGAUTO;
+		timeout(mii_phy_auto_timeout, mii, hz >> 1);
+	}
+	return (EJUSTRETURN);
+}
+
+void
+mii_phy_auto_timeout(arg)
+	void *arg;
+{
+	struct mii_softc *mii = arg;
+	int s, bmsr;
+
+	s = splnet();
+	mii->mii_flags &= ~MIIF_DOINGAUTO;
+	bmsr = PHY_READ(mii, MII_BMSR);
 #if 0
 	if ((bmsr & BMSR_ACOMP) == 0)
 		printf("%s: autonegotiation failed to complete\n",
-		    mii->mii_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 #endif
-	return (0);
+
+	/* Update the media status. */
+	(void) (*mii->mii_service)(mii, mii->mii_pdata, MII_POLLSTAT);
+	splx(s);
 }
 
 void

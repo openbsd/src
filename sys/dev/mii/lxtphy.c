@@ -1,8 +1,8 @@
-/*	$OpenBSD: lxtphy.c,v 1.1 1998/11/11 19:34:46 jason Exp $	*/
-/*	$NetBSD: lxtphy.c,v 1.9 1998/11/05 04:08:02 thorpej Exp $	*/
+/*	$OpenBSD: lxtphy.c,v 1.2 1999/07/16 14:59:06 jason Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.9.6.1 1999/04/23 15:41:43 perry Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -78,6 +78,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
+#include <sys/errno.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -207,7 +208,7 @@ lxtphy_service(sc, mii, cmd)
 			 */
 			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
 				return (0);
-			(void) mii_phy_auto(sc);
+			(void) mii_phy_auto(sc, 1);
 			break;
 		case IFM_100_T4:
 			/*
@@ -262,7 +263,8 @@ lxtphy_service(sc, mii, cmd)
 
 		sc->mii_ticks = 0;
 		mii_phy_reset(sc);
-		(void) mii_phy_auto(sc);
+		if (mii_phy_auto(sc, 0) == EJUSTRETURN)
+			return (0);
 		break;
 	}
 

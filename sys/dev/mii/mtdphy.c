@@ -1,7 +1,7 @@
-/*	$OpenBSD: mtdphy.c,v 1.1 1998/12/28 03:37:55 jason Exp $	*/
+/*	$OpenBSD: mtdphy.c,v 1.2 1999/07/16 14:59:07 jason Exp $	*/
 
 /*
- * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
+ * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
+#include <sys/errno.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -152,7 +153,7 @@ mtdphy_service(sc, mii, cmd)
 			 */
 			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
 				return (0);
-			(void) mii_phy_auto(sc);
+			(void) mii_phy_auto(sc, 1);
 			break;
 
 		case IFM_100_TX:

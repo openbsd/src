@@ -1,8 +1,8 @@
-/*	$OpenBSD: tlphy.c,v 1.2 1998/11/11 19:34:50 jason Exp $	*/
-/*	$NetBSD: tlphy.c,v 1.16 1998/11/05 00:19:32 thorpej Exp $	*/
+/*	$OpenBSD: tlphy.c,v 1.3 1999/07/16 14:59:07 jason Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.16.6.1 1999/04/23 15:40:13 perry Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -76,6 +76,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
+#include <sys/errno.h>
 
 #ifdef __NetBSD__
 #include <machine/bus.h>
@@ -105,6 +106,7 @@
 struct tlphy_softc {
 	struct mii_softc sc_mii;		/* generic PHY */
 	int sc_tlphycap;
+	int sc_need_acomp;
 };
 
 #ifdef __NetBSD__
@@ -125,7 +127,8 @@ struct cfattach tlphy_ca = {
 };
 
 int	tlphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	tlphy_auto __P((struct tlphy_softc *));
+int	tlphy_auto __P((struct tlphy_softc *, int));
+void	tlphy_acomp __P((struct tlphy_softc *));
 void	tlphy_status __P((struct tlphy_softc *));
 
 int
@@ -227,6 +230,9 @@ tlphy_service(self, mii, cmd)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
 
+	if ((sc->sc_mii.mii_flags & MIIF_DOINGAUTO) == 0 && sc->sc_need_acomp)
+		tlphy_acomp(sc);
+
 	switch (cmd) {
 	case MII_POLLSTAT:
 		/*
@@ -260,7 +266,7 @@ tlphy_service(self, mii, cmd)
 			 * an autonegotiation cycle, so there's no such
 			 * thing as "already in auto mode".
 			 */
-			tlphy_auto(sc);
+			(void) tlphy_auto(sc, 1);
 			break;
 		case IFM_10_2:
 		case IFM_10_5:
@@ -316,7 +322,8 @@ tlphy_service(self, mii, cmd)
 
 		sc->sc_mii.mii_ticks = 0;
 		mii_phy_reset(&sc->sc_mii);
-		tlphy_auto(sc);
+		if (tlphy_auto(sc, 0) == EJUSTRETURN)
+			return (0);
 		break;
 	}
 
@@ -383,14 +390,41 @@ tlphy_status(sc)
 	mii->mii_media_active |= IFM_10_T;
 }
 
+int
+tlphy_auto(sc, waitfor)
+	struct tlphy_softc *sc;
+	int waitfor;
+{
+	int error;
+
+	switch ((error = mii_phy_auto(&sc->sc_mii, waitfor))) {
+	case EIO:
+		/*
+		 * Just assume we're not in full-duplex mode.
+		 * XXX Check link and try AUI/BNC?
+		 */
+		PHY_WRITE(&sc->sc_mii, MII_BMCR, 0);
+		break;
+
+	case EJUSTRETURN:
+		/* Flag that we need to program when it completes. */
+		sc->sc_need_acomp = 1;
+		break;
+
+	default:
+		tlphy_acomp(sc);
+	}
+
+	return (error);
+}
+
 void
-tlphy_auto(sc)
+tlphy_acomp(sc)
 	struct tlphy_softc *sc;
 {
 	int aner, anlpar;
 
-	if (mii_phy_auto(&sc->sc_mii) == 0)
-		goto dflt;
+	sc->sc_need_acomp = 0;
 
 	/*
 	 * Grr, braindead ThunderLAN PHY doesn't self-configure
@@ -407,11 +441,4 @@ tlphy_auto(sc)
 			return;
 		}
 	}
-
- dflt:
-	/*
-	 * Just assume we're not in full-duplex mode.
-	 * XXX Check link and try AUI/BNC?
-	 */
-	PHY_WRITE(&sc->sc_mii, MII_BMCR, 0);
 }
