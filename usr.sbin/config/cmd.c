@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.6 2001/12/05 10:11:23 deraadt Exp $ */
+/*	$OpenBSD: cmd.c,v 1.7 2002/02/17 23:01:19 maja Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: cmd.c,v 1.6 2001/12/05 10:11:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmd.c,v 1.7 2002/02/17 23:01:19 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -64,6 +64,9 @@ cmd_table_t cmd_table[] = {
 	{"exit",   Xexit,	"\t\t",		"Exit, without saving changes"},
 	{"quit",   Xquit,	"\t\t",		"Quit, saving current changes"},
 	{"timezone", Xtimezone,	"[mins [dst]]\t",	"Show/change timezone"},
+	{"nmbclust", Xnmbclusters, "[number]\t",	"Show/change NMBCLUSTERS"},
+	{"cachepct", Xbufcachepct, "[number]\t",	"Show/change BUFCACHEPERCENT"},
+	{"nkmempg", Xnkmempg,	"[number]\t",	"Show/change NKMEMPAGES"},
 	{NULL,     NULL,	NULL,		NULL}
 };
 
@@ -291,5 +294,88 @@ Xtimezone(cmd)
 		} else
 			printf("Unknown argument\n");
 	}
+	return (CMD_CONT);
+}
+int
+Xnmbclusters(cmd)
+	cmd_t *cmd;
+{
+	int *pnmbclusters,num;
+
+	if (nl[I_NMBCLUSTERS].n_type != 0) {
+		ukc_mod_kernel = 1;
+
+		pnmbclusters = (int *)adjust((caddr_t)(nl[I_NMBCLUSTERS].
+	                n_value));
+
+		if (strlen(cmd->args) == 0) {
+			printf("nmbclusters = %d\n", *pnmbclusters);
+		} else {
+			if (number(cmd->args, &num) == 0) {
+				*pnmbclusters = num;
+				printf("nmbclusters = %d\n", *pnmbclusters);
+			} else
+				printf("Unknown argument\n");
+		}
+	} else
+		printf("\
+This kernel does not support modification of NMBCLUSTERS.\n");
+
+	return (CMD_CONT);
+}
+
+int
+Xbufcachepct(cmd)
+	cmd_t *cmd;
+{
+	int *pbufcachepct,num;
+
+	if (nl[I_BUFCACHEPCT].n_type != 0) {
+		ukc_mod_kernel = 1;
+
+		pbufcachepct = (int *)adjust((caddr_t)(nl[I_BUFCACHEPCT].
+		                n_value));
+
+		if (strlen(cmd->args) == 0) {
+			printf("bufcachepercent = %d\n", *pbufcachepct);
+		} else {
+			if (number(cmd->args, &num) == 0) {
+				*pbufcachepct = num;
+				printf("bufcachepercent = %d\n", *pbufcachepct);
+			} else
+				printf("Unknown argument\n");
+		}
+	} else
+		printf("\
+This kernel does not support modification of BUFCACHEPERCENT.\n");
+
+	return (CMD_CONT);
+}
+
+int
+Xnkmempg(cmd)
+	cmd_t *cmd;
+{
+	int *pnkmempg,num;
+
+	if (nl[I_NKMEMPG].n_type != 0) {
+		ukc_mod_kernel = 1;
+
+		pnkmempg = (int *)adjust((caddr_t)(nl[I_NKMEMPG].
+			    n_value));
+
+		if (strlen(cmd->args) == 0) {
+			printf("nkmempages = %d\n", *pnkmempg);
+		} else {
+			if (number(cmd->args, &num) == 0) {
+				*pnkmempg = num;
+				printf("nkmempages = %d\n", *pnkmempg);
+			} else
+				printf("Unknown argument\n");
+		}
+	} else
+		printf("\
+This kernel does not support modification of NKMEMPAGES.\n");
+
 	return (CMD_CONT);
 }

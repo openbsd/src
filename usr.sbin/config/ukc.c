@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.7 2002/02/16 21:28:01 millert Exp $ */
+/*	$OpenBSD: ukc.c,v 1.8 2002/02/17 23:01:19 maja Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukc.c,v 1.7 2002/02/16 21:28:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: ukc.c,v 1.8 2002/02/17 23:01:19 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -139,6 +139,18 @@ WARNING the commands add and change might not work.\n");
 WARNING this kernel doesn't support pseudo devices.\n");
 		nopdev = 1;
 	}
+
+	if (nl[I_NMBCLUSTERS].n_type == 0)
+		printf("\
+WARNING this kernel doesn't support modification of NMCLUSTERS.\n");
+
+	if (nl[I_BUFCACHEPCT].n_type == 0)
+		printf("\
+WARNING this kernel doesn't support modification of BUFCACHEPERCENT.\n");
+
+	if (nl[I_NKMEMPG].n_type == 0)
+		printf("\
+WARNING this kernel doesn't support modification of NKMEMPAGES.\n");
 
 	init();
 
