@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.34 2002/02/14 22:46:44 art Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.35 2002/08/23 00:53:51 pvalchev Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -363,12 +363,14 @@ sys_mmap(p, v, retval)
 	if ((flags & MAP_ANON) == 0) {
 
 		if ((fp = fd_getfile(fdp, fd)) == NULL)
-			return(EBADF);
+			return (EBADF);
 
 		FREF(fp);
 
-		if (fp->f_type != DTYPE_VNODE)
-			return (ENODEV);		/* only mmap vnodes! */
+		if (fp->f_type != DTYPE_VNODE) {
+			error = ENODEV;		/* only mmap vnodes! */
+			goto out;
+		}
 		vp = (struct vnode *)fp->f_data;	/* convert to vnode */
 
 		if (vp->v_type != VREG && vp->v_type != VCHR &&
@@ -443,11 +445,13 @@ sys_mmap(p, v, retval)
 			if (fp->f_flag & FWRITE) {
 				if ((error =
 				    VOP_GETATTR(vp, &va, p->p_ucred, p)))
-					return (error);
+					goto out;
 				if ((va.va_flags & (IMMUTABLE|APPEND)) == 0)
 					maxprot |= VM_PROT_WRITE;
-				else if (prot & PROT_WRITE)
-					return (EPERM);
+				else if (prot & PROT_WRITE) {
+					error = EPERM;
+					goto out;
+				}
 			} else if (prot & PROT_WRITE) {
 				error = EACCES;
 				goto out;
@@ -467,8 +471,10 @@ sys_mmap(p, v, retval)
 		/*
 		 * XXX What do we do about (MAP_SHARED|MAP_PRIVATE) == 0?
 		 */
-		if (fd != -1)
-			return (EINVAL);
+		if (fd != -1) {
+			error = EINVAL;
+			goto out;
+		}
 
  is_anon:		/* label for SunOS style /dev/zero */
 		handle = NULL;
