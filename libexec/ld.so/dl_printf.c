@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_printf.c,v 1.7 2002/05/24 01:53:58 deraadt Exp $	*/
+/*	$OpenBSD: dl_printf.c,v 1.8 2002/05/28 00:22:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -71,8 +71,8 @@ static void putchar(int);
 static void
 putchar(int c)
 {
-	char b;
-	b = c;
+	char b = c;
+
 	_dl_write(2, &b, 1);
 }
 
@@ -95,10 +95,9 @@ _dl_vprintf(const char *fmt, va_list ap)
 static void
 kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 {
-	char *p;
-	int ch;
 	unsigned long ul;
-	int lflag;
+	int lflag, ch;
+	char *p;
 
 	for (;;) {
 		while ((ch = *fmt++) != '%') {
@@ -115,6 +114,7 @@ reswitch:
 		case 'b':
 		{
 			int set, n;
+
 			ul = va_arg(ap, int);
 			p = va_arg(ap, char *);
 			kprintn(put, ul, *p++);
@@ -137,7 +137,7 @@ reswitch:
 			break;
 		case 'c':
 			ch = va_arg(ap, int);
-				put(ch & 0x7f);
+			put(ch & 0x7f);
 			break;
 		case 's':
 			p = va_arg(ap, char *);
@@ -171,6 +171,7 @@ reswitch:
 		case 'X':
 		{
 			int l = 28;
+
 			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
 			while (l >= 0) {
 				put("0123456789abcdef"[(ul >> l) & 0xf]);
@@ -191,7 +192,7 @@ reswitch:
 static void
 kprintn(void (*put)(int), unsigned long ul, int base)
 {
-					/* hold a long in base 8 */
+	/* hold a long in base 8 */
 	char *p, buf[(sizeof(long) * NBBY / 3) + 1];
 
 	p = buf;

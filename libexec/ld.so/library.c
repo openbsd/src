@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.13 2002/05/24 18:37:38 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.14 2002/05/28 00:22:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -65,12 +65,10 @@ char	*_dl_findhint(char *name, int major, int minor, char *prefered_path);
 elf_object_t *
 _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 {
-	char	lp[PATH_MAX + 10];
-	char	*path = lp;
-	const char *pp;
+	char lp[PATH_MAX + 10], *hint, *path = lp;
 	elf_object_t *object;
+	const char *pp;
 	struct sod sodp;
-	char *hint;
 
 	if (_dl_strchr(libname, '/')) {
 		object = _dl_tryload_shlib(libname, type);
@@ -98,11 +96,10 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 			if (object)
 				return(object);
 		}
-		if (*pp) {	/* Try curdir if ':' at end */
+		if (*pp)	/* Try curdir if ':' at end */
 			pp++;
-		} else {
+		else
 			pp = 0;
-		}
 	}
 
 	/*
@@ -115,6 +112,7 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 		path = lp;
 		while (path < lp + PATH_MAX && *pp && *pp != ':')
 			*path++ = *pp++;
+
 		/* Make sure '/' after dir path */
 		if (*(path - 1) != '/')
 			*path++ = '/';
@@ -126,11 +124,10 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 			if (object)
 				return(object);
 		}
-		if (*pp) {	/* Try curdir if ':' at end */
+		if (*pp)	/* Try curdir if ':' at end */
 			pp++;
-		} else {
+		else
 			pp = 0;
-		}
 	}
 
 	_dl_build_sod(libname, &sodp);
@@ -140,20 +137,17 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 		return(object);
 	}
 
-
 	/*
 	 *  Check '/usr/lib'
 	 */
-
 	_dl_strlcpy(lp, "/usr/lib/", sizeof(lp));
 	path = lp + sizeof("/usr/lib/") - 1;
 	while (path < lp + PATH_MAX && (*path++ = *libname++))
 		;
 	if (path < lp + PATH_MAX) {
 		object = _dl_tryload_shlib(lp, type);
-		if (object) {
+		if (object)
 			return(object);
-		}
 	}
 	_dl_errno = DL_NOT_FOUND;
 	return(0);
@@ -185,19 +179,15 @@ _dl_unload_shlib(elf_object_t *object)
 elf_object_t *
 _dl_tryload_shlib(const char *libname, int type)
 {
-	int	libfile;
-	int	i;
+	int	libfile, i, align = _dl_pagesz - 1;
+	load_list_t *next_load, *load_list = NULL;
+	Elf_Addr maxva = 0, minva = 0x7fffffff;	/* XXX Correct for 64bit? */
+	Elf_Addr libaddr, loff;
+	elf_object_t *object;
 	char	hbuf[4096];
+	Elf_Dyn *dynp = 0;
 	Elf_Ehdr *ehdr;
 	Elf_Phdr *phdp;
-	Elf_Dyn *dynp = 0;
-	Elf_Addr maxva = 0;
-	Elf_Addr minva = 0x7fffffff;	/* XXX Correct for 64bit? */
-	Elf_Addr libaddr;
-	Elf_Addr loff;
-	int	align = _dl_pagesz - 1;
-	elf_object_t *object;
-	load_list_t *next_load, *load_list = NULL;
 
 	object = _dl_lookup_object(libname);
 	if (object) {
@@ -214,7 +204,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	_dl_read(libfile, hbuf, sizeof(hbuf));
 	ehdr = (Elf_Ehdr *)hbuf;
 	if (_dl_strncmp(ehdr->e_ident, ELFMAG, SELFMAG) ||
-	   ehdr->e_type != ET_DYN || ehdr->e_machine != MACHID) {
+	    ehdr->e_type != ET_DYN || ehdr->e_machine != MACHID) {
 		_dl_close(libfile);
 		_dl_errno = DL_NOT_ELF;
 		return(0);
@@ -224,23 +214,18 @@ _dl_tryload_shlib(const char *libname, int type)
 	 *  Alright, we might have a winner!
 	 *  Figure out how much VM space we need.
 	 */
-
 	phdp = (Elf_Phdr *)(hbuf + ehdr->e_phoff);
 	for (i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		switch (phdp->p_type) {
 		case PT_LOAD:
-			if (phdp->p_vaddr < minva) {
+			if (phdp->p_vaddr < minva)
 				minva = phdp->p_vaddr;
-			}
-			if (phdp->p_vaddr + phdp->p_memsz > maxva) {
+			if (phdp->p_vaddr + phdp->p_memsz > maxva)
 				maxva = phdp->p_vaddr + phdp->p_memsz;
-			}
 			break;
-
 		case PT_DYNAMIC:
 			dynp = (Elf_Dyn *)phdp->p_vaddr;
 			break;
-
 		default:
 			break;
 		}
@@ -253,7 +238,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	 *  space required. Map it unaccessible to start with.
 	 */
 	libaddr = (Elf_Addr)_dl_mmap(0, maxva - minva, PROT_NONE,
-					MAP_PRIVATE|MAP_ANON, -1, 0);
+	    MAP_PRIVATE|MAP_ANON, -1, 0);
 	if (_dl_check_error(libaddr)) {
 		_dl_printf("%s: rtld mmap failed mapping %s.\n",
 		    _dl_progname, libname);
@@ -267,9 +252,9 @@ _dl_tryload_shlib(const char *libname, int type)
 
 	for (i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		if (phdp->p_type == PT_LOAD) {
-			int res;
 			char *start = (char *)(phdp->p_vaddr & ~align) + loff;
 			int size = (phdp->p_vaddr & align) + phdp->p_filesz;
+			int res;
 
 			res = _dl_mmap(start, size, PFLAGS(phdp->p_flags),
 			    MAP_FIXED|MAP_PRIVATE, libfile,
@@ -299,8 +284,7 @@ _dl_tryload_shlib(const char *libname, int type)
 				size = phdp->p_memsz - size;
 				res = _dl_mmap(start, size,
 				    PFLAGS(phdp->p_flags),
-				    MAP_FIXED|MAP_PRIVATE|MAP_ANON,
-				    -1, 0);
+				    MAP_FIXED|MAP_PRIVATE|MAP_ANON, -1, 0);
 				if (_dl_check_error(res)) {
 					_dl_printf("%s: rtld mmap failed mapping %s.\n",
 					    _dl_progname, libname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.9 2002/05/24 04:17:00 deraadt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.10 2002/05/28 00:22:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -49,7 +49,6 @@ elf_object_t *_dl_last_object;
  *	Initialize and add a new dynamic object to the object list.
  *	Perform necessary relocations of pointers.
  */
-
 elf_object_t *
 _dl_add_object(const char *objname, Elf_Dyn *dynp, const u_long *dl_data,
 	const int objtype, const long laddr, const long loff)
@@ -73,13 +72,12 @@ _dl_add_object(const char *objname, Elf_Dyn *dynp, const u_long *dl_data,
 
 	object->load_dyn = dynp;
 	while (dynp->d_tag != DT_NULL) {
-		if (dynp->d_tag < DT_NUM) {
+		if (dynp->d_tag < DT_NUM)
 			object->Dyn.info[dynp->d_tag] = dynp->d_un.d_val;
-		} else if (dynp->d_tag >= DT_LOPROC &&
-			    dynp->d_tag < DT_LOPROC + DT_NUM) {
-			object->Dyn.info[dynp->d_tag + DT_NUM - DT_LOPROC] = dynp->
-d_un.d_val;
-		}
+		else if (dynp->d_tag >= DT_LOPROC &&
+		    dynp->d_tag < DT_LOPROC + DT_NUM)
+			object->Dyn.info[dynp->d_tag + DT_NUM - DT_LOPROC] =
+			    dynp->d_un.d_val;
 		if (dynp->d_tag == DT_TEXTREL)
 			object->dyn.textrel = 1;
 		if (dynp->d_tag == DT_SYMBOLIC)
@@ -177,20 +175,19 @@ _dl_lookup_object(const char *name)
 
 Elf_Addr
 _dl_find_symbol(const char *name, elf_object_t *startlook,
-			const Elf_Sym **ref, int myself, int warnnotfound)
+    const Elf_Sym **ref, int myself, int warnnotfound)
 {
+	const Elf_Sym *weak_sym = 0;
+	Elf_Addr weak_offs = 0;
 	unsigned long h = 0;
 	const char *p = name;
 	elf_object_t *object;
-	const Elf_Sym *weak_sym = 0;
-	Elf_Addr weak_offs = 0;
 
 	while (*p) {
 		unsigned long g;
 		h = (h << 4) + *p++;
-		if ((g = h & 0xf0000000)) {
+		if ((g = h & 0xf0000000))
 			h ^= g >> 24;
-		}
 		h &= ~g;
 	}
 
