@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.7 2000/06/12 19:50:35 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.8 2000/06/13 00:38:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -127,8 +127,8 @@ ubsec_attach(parent, self, aux)
 
 	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601) ||
-	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601)) {
+	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805)) {
 		sc->sc_intrmask |= BS_CTRL_MCR2INT;
 		sc->sc_5601 = 1;
 	}
