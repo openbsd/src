@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.39 2004/08/03 09:22:03 otto Exp $	*/
+/*	$OpenBSD: part.c,v 1.40 2004/11/10 17:29:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -119,6 +119,7 @@ static const struct part_type {
 	{ 0xAB, "MacOS X boot"},   /* MacOS X boot partition */
 	{ 0xB7, "BSDI filesy*"},   /* BSDI BSD/386 filesystem */
 	{ 0xB8, "BSDI swap   "},   /* BSDI BSD/386 swap */
+	{ 0xBF, "Solaris     "},   /* Solaris */
 	{ 0xC0, "CTOS        "},   /* CTOS */
 	{ 0xC1, "DRDOSs FAT12"},   /* DRDOS/sec (FAT-12) */
 	{ 0xC4, "DRDOSs < 32M"},   /* DRDOS/sec (FAT-16, < 32M) */
