@@ -97,6 +97,7 @@ int
 pfkey_sendup(struct socket *socket, struct mbuf *packet, int more)
 {
   struct mbuf *packet2;
+  int s;
 
   if (more) {
     if (!(packet2 = m_copym(packet, 0, M_COPYALL, M_DONTWAIT)))
@@ -104,10 +105,13 @@ pfkey_sendup(struct socket *socket, struct mbuf *packet, int more)
   } else
     packet2 = packet;
 
+  s = spltdb();
   if (!sbappendaddr(&socket->so_rcv, &pfkey_addr, packet2, NULL)) {
     m_freem(packet2);
-    return 0;
+    splx(s);
+    return ENOBUFS;
   }
+  splx(s);
 
   sorwakeup(socket);
   return 0;
