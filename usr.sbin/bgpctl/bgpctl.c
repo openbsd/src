@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.73 2005/02/02 18:52:32 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.74 2005/02/09 12:35:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -221,10 +221,12 @@ main(int argc, char *argv[])
 		memcpy(&net.prefix, &res->addr, sizeof(res->addr));
 		net.prefixlen = res->prefixlen;
 		/* attribute sets are not supported */
-		if (res->action == NETWORK_ADD)
+		if (res->action == NETWORK_ADD) {
 			imsg_compose(ibuf, IMSG_NETWORK_ADD, 0, 0, -1,
 			    &net, sizeof(net));
-		else
+			imsg_compose(ibuf, IMSG_NETWORK_DONE, 0, 0, -1,
+			    NULL, 0);
+		} else
 			imsg_compose(ibuf, IMSG_NETWORK_REMOVE, 0, 0, -1,
 			    &net, sizeof(net));
 		printf("request sent.\n");
