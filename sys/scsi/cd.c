@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.91 1996/04/22 01:46:00 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.92 1996/05/05 19:52:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -262,7 +262,7 @@ cdopen(dev, flag, fmt, p)
 
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
-	    cd_cd.cd_ndevs, part));
+	    cd_cd.cd_ndevs, CDPART(dev)));
 
 	if ((error = cdlock(cd)) != 0)
 		return error;
@@ -410,7 +410,7 @@ cdstrategy(bp)
 
 	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdstrategy "));
 	SC_DEBUG(cd->sc_link, SDEV_DB1,
-	    ("%d bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
+	    ("%ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
 	/*
 	 * The transfer must be a whole number of blocks.
 	 */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ss.c,v 1.4 1996/05/07 09:34:31 niklas Exp $	*/
-/*	$NetBSD: ss.c,v 1.9 1996/03/30 21:47:00 christos Exp $	*/
+/*	$OpenBSD: ss.c,v 1.5 1996/05/10 12:31:39 deraadt Exp $	*/
+/*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -320,7 +320,7 @@ ssstrategy(bp)
 	int s;
 
 	SC_DEBUG(ss->sc_link, SDEV_DB1,
-	    ("ssstrategy %d bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
+	    ("ssstrategy %ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
 
 	if (bp->b_bcount > ss->sio.scan_window_size)
 		bp->b_bcount = ss->sio.scan_window_size;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ss_mustek.c,v 1.4 1996/05/07 09:34:32 niklas Exp $	*/
-/*	$NetBSD: ss_mustek.c,v 1.3 1996/03/30 21:47:04 christos Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.5 1996/05/10 12:31:40 deraadt Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -261,11 +261,11 @@ mustek_minphys(ss, bp)
 	struct scsi_link *sc_link = ss->sc_link;
 #endif
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_minphys: before: %d\n",
+	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_minphys: before: %ld\n",
 	    bp->b_bcount));
 	bp->b_bcount -= bp->b_bcount %
 	    ((ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8);
-	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_minphys: after:  %d\n",
+	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_minphys: after:  %ld\n",
 	    bp->b_bcount));
 }
 
@@ -476,7 +476,7 @@ mustek_read(ss, bp)
 	/* instead of the bytes, the mustek wants the number of lines */
 	lines_to_read = bp->b_bcount /
 	    ((ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8);
-	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_read: read %d lines\n",
+	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_read: read %ld lines\n",
 	    lines_to_read));
 	_lto3b(lines_to_read, cmd.length);
 
@@ -548,7 +548,7 @@ mustek_get_status(ss, timeout, update)
 		    ("mustek_get_size: bpl=%ld, lines=%ld\n",
 		    (ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8,
 		    ss->sio.scan_lines));
-		SC_DEBUG(sc_link, SDEV_DB1, ("window size = %d\n",
+		SC_DEBUG(sc_link, SDEV_DB1, ("window size = %ld\n",
 		    ss->sio.scan_window_size));
 	}
 
