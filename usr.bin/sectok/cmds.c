@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.17 2001/10/02 16:22:40 rees Exp $ */
+/* $Id: cmds.c,v 1.18 2002/03/14 21:11:50 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -77,9 +77,11 @@ struct dispatchtable dispatch_table[] = {
     { "isearch", "", isearch },
     { "csearch", "", csearch },
     { "class", "[ class ]", class },
-    { "read", "[ -x ] filesize", dread },
+    { "read", "[ -x ] [ filesize ]", dread },
     { "write", "input-filename", dwrite },
     { "challenge", "[ size ]", challenge },
+    { "pin", "[ -k keyno ] [ PIN ]", vfypin },
+    { "chpin", "[ -k keyno ]", chpin },
 
     /* Cyberflex commands */
     { "ls", "[ -l ]", ls },
@@ -513,5 +515,63 @@ int challenge(int ac, char *av[])
     }
 
     sectok_dump_reply(buf, n, sw);
+    return 0;
+}
+
+int vfypin(int ac, char *av[])
+{
+    int keyno = 1, i, sw;
+    char *pin;
+
+    optind = optreset = 1;
+
+    while ((i = getopt(ac, av, "k:")) != -1) {
+	switch (i) {
+	case 'k':
+	    keyno = atoi(optarg);
+	    break;
+	}
+    }
+
+    if (ac - optind >= 1)
+	pin = av[optind++];
+    else
+	pin = getpass("Enter PIN: ");
+
+    sectok_apdu(fd, cla, 0x20, 0, keyno, strlen(pin), pin, 0, NULL, &sw);
+    bzero(pin, strlen(pin));
+
+    if (!sectok_swOK(sw)) {
+	printf("VerifyCHV: %s\n", sectok_get_sw(sw));
+	return -1;
+    }
+    return 0;
+}
+
+int chpin(int ac, char *av[])
+{
+    int keyno = 1, i, sw;
+    char pin[255];
+
+    optind = optreset = 1;
+
+    while ((i = getopt(ac, av, "k:")) != -1) {
+	switch (i) {
+	case 'k':
+	    keyno = atoi(optarg);
+	    break;
+	}
+    }
+
+    strcpy(pin, getpass("Enter Old PIN: "));
+    strcat(pin, getpass("Enter New PIN: "));
+
+    sectok_apdu(fd, cla, 0x24, 0, keyno, strlen(pin), pin, 0, NULL, &sw);
+    bzero(pin, strlen(pin));
+
+    if (!sectok_swOK(sw)) {
+	printf("UpdateCHV: %s\n", sectok_get_sw(sw));
+	return -1;
+    }
     return 0;
 }
