@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.11 2001/03/08 22:24:59 miod Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.12 2001/07/26 22:30:21 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -74,6 +74,7 @@ static __inline__ m88k_psr_type disable_interrupts_return_psr(void)
 static __inline__ void set_psr(m88k_psr_type psr)
 {
 	__asm__ __volatile__ ("stcr %0, cr1" :: "r" (psr));
+	__asm__ __volatile__ ("tcnd ne0, r0, 0");
 }
 
 /*
@@ -85,6 +86,7 @@ static __inline__ m88k_psr_type enable_interrupts_return_psr(void)
 	__asm__ __volatile__ ("ldcr %0, cr1" : "=r" (oldpsr));
 	__asm__ __volatile__ ("clr  %1, %0, 1<1>" : "=r" (oldpsr), "=r" (temp));
 	__asm__ __volatile__ ("stcr %0, cr1" : "=r" (temp));
+	__asm__ __volatile__ ("tcnd ne0, r0, 0");
 	return oldpsr;
 }
 #define enable_interrupt() (void)enable_interrupts_return_psr()
