@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.189 2003/03/02 12:37:49 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.190 2003/03/02 12:44:42 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -579,9 +579,6 @@ Packets not matched by another queue are assigned to this one.
 Exactly one default queue is required.
 .It Ar borrow
 The queue can borrow bandwidth from the parent.
-.It Ar control
-Control-class packets (RSVP, IGMP, ICMP) are assigned to this queue.
-Must not be identical to the default queue.
 .It Ar red
 Enable RED (Random Early Detection) on this queue.
 RED drops packets with a probability proportional to the average
@@ -1985,8 +1982,7 @@ subqueue       = string | { queue-list }
 queue-list     = string [ [ , ] string ]
 cbq-def        = cbq [ ( cbq-opt [ [ , ] cbq-opt ] ) ]
 priq-def       = priq [ ( priq-opt [ [ , ] priq-opt ] ) ]
-cbq-opt        = ( default | control | borrow |
-                 red | ecn | rio )
+cbq-opt        = ( default | borrow | red | ecn | rio )
 priq-opt       = ( default | red | ecn | rio )
 .Ed
 .Sh FILES
