@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2004/04/23 21:36:14 avsm Exp $
+# $OpenBSD: Makefile,v 1.6 2004/04/23 21:50:08 avsm Exp $
 
 C_MODULES?=	strlcpy strlcat getcwd memcpy fread memcpy declare \
 		sscanf vararray md builtins
@@ -51,7 +51,7 @@ generate:
 .PHONY:	${REGRESS_TARGETS} generate regress
 
 .include <bsd.regress.mk>
-.if defined(USE_GCC3)
+.if ${USE_GCC3:L:Myes}
 EXP=		.exp.gcc3
 .else
 EXP=		.exp
