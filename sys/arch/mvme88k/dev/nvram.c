@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.24 2004/04/15 21:35:59 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.25 2004/04/24 19:51:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -54,10 +54,11 @@
 
 struct nvramsoftc {
 	struct device           sc_dev;
-	void *      sc_paddr;
-	void *      sc_vaddr;
-	int         sc_len;
-	void *      sc_regs;
+	paddr_t			sc_base;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	bus_addr_t		sc_regs;
+	size_t			sc_len;
 };
 
 void    nvramattach(struct device *, struct device *, void *);
@@ -79,24 +80,27 @@ nvrammatch(parent, vcf, args)
 	void *vcf, *args;
 {
 #if 0
-	int ret;
-#endif
 	struct confargs *ca = args;
+	bus_space_handle_t ioh;
+	int rc;
+#endif
 	struct mvmeprom_time rtc;
-	ca->ca_vaddr = ca->ca_paddr;   /* map 1:1 */
-/*X*/	if (ca->ca_vaddr == (void *)-1)
-/*X*/		return (1);
 
+	bugrtcrd(&rtc);
 #if 0
-	bugrtcrd(&rtc);
-	if (badvaddr(IIOV(ca->ca_vaddr), 1)) {
-		printf("==> nvram: address 0x%x failed check\n", ca->ca_vaddr);
+	if (bus_space_map(ca->ca_iot, ca->ca_paddr, PAGE_SIZE, 0, &ioh) != 0)
 		return (0);
+	if (badvaddr(bus_space_vaddr(ca->ca_iot, ioh), 1)) {
+#ifdef DEBUG
+		printf("==> nvram: address 0x%x failed check\n", ca->ca_paddr);
+#endif
+		rc = 0;
 	} else
-		return (1);
+		rc = 1;
+	bus_space_unmap(ca->ca_iot, ioh, PAGE_SIZE);
+	return rc;
 #else
-	bugrtcrd(&rtc);
-	return (1);
+	return 1;
 #endif
 }
 
@@ -106,31 +110,29 @@ nvramattach(parent, self, args)
 	void *args;
 {
 	struct confargs *ca = args;
-	struct nvramsoftc       *sc = (struct nvramsoftc *)self;
-
-	sc->sc_paddr = ca->ca_paddr;
-	sc->sc_vaddr = ca->ca_vaddr;
+	struct nvramsoftc *sc = (struct nvramsoftc *)self;
+	bus_space_handle_t ioh;
 
 	if (brdtyp == BRD_188) {
 		sc->sc_len = MK48T02_SIZE;
+		sc->sc_regs = M188_NVRAM_TOD_OFF;
 	} else {
 		sc->sc_len = MK48T08_SIZE;
+		sc->sc_regs = SBC_NVRAM_TOD_OFF;
 	}
 
-/*X*/	if (sc->sc_vaddr == (void *)-1)
-/*X*/		sc->sc_vaddr = mapiodev((void *)sc->sc_paddr,
-/*X*/		max(sc->sc_len, NBPG));
-/*X*/	if (sc->sc_vaddr == NULL)
-/*X*/		panic("failed to map!");
+	sc->sc_iot = ca->ca_iot;
+	sc->sc_base = ca->ca_paddr;
 
-	if (brdtyp != BRD_188) {
-		sc->sc_regs = (void *)(sc->sc_vaddr + sc->sc_len -
-				       sizeof(struct clockreg));
-	} else {
-		sc->sc_regs = (void *)(sc->sc_vaddr + M188_NVRAM_TOD_OFF);
+	if (bus_space_map(sc->sc_iot, sc->sc_base, round_page(sc->sc_len),
+	    0, &ioh) != 0) {
+		printf(": can't map memory!\n");
+		return;
 	}
 
-	printf(": MK48T0%d len %d\n", sc->sc_len / 1024, sc->sc_len);
+	sc->sc_ioh = ioh;
+
+	printf(": MK48T0%d\n", sc->sc_len / 1024);
 }
 
 /*
@@ -303,27 +305,51 @@ inittodr(base)
 		base = 21*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
 	}
-	if (brdtyp != BRD_188) {
-		struct clockreg *cl = (struct clockreg *)sc->sc_regs;
-		cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
-		sec = cl->cl_sec;
-		min = cl->cl_min;
-		hour = cl->cl_hour;
-		day = cl->cl_mday;
-		mon = cl->cl_month;
-		year = cl->cl_year;
-		cl->cl_csr &= ~CLK_READ;	/* time wears on... */
-	} else { /* CPU_188 */
-		struct m188_clockreg *cl = (struct m188_clockreg *)sc->sc_regs;
-		cl->cl_csr |= CLK_READ;		/* enable read (stop time) */
-		sec = cl->cl_sec & 0xff;
-		min = cl->cl_min & 0xff;
-		hour = cl->cl_hour & 0xff;
-		day = cl->cl_mday & 0xff;
-		mon = cl->cl_month & 0xff;
-		year = cl->cl_year & 0xff;
-		cl->cl_csr &= ~CLK_READ;	/* time wears on... */
+
+	if (brdtyp == BRD_188) {
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_CSR << 2), CLK_READ |
+		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		      sc->sc_regs + (CLK_CSR << 2)));
+		sec = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_SEC << 2)) & 0xff;
+		min = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_MIN << 2)) & 0xff;
+		hour = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_HOUR << 2)) & 0xff;
+		day = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_DAY << 2)) & 0xff;
+		mon = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_MONTH << 2)) & 0xff;
+		year = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_YEAR << 2)) & 0xff;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_CSR << 2),
+		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		      sc->sc_regs + (CLK_CSR << 2)) & ~CLK_READ);
+	} else {
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_CSR, CLK_READ |
+		    bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		      sc->sc_regs + CLK_CSR));
+		sec = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_SEC);
+		min = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_MIN);
+		hour = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_HOUR);
+		day = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_DAY);
+		mon = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_MONTH);
+		year = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_YEAR);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_CSR,
+		    bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		      sc->sc_regs + CLK_CSR) & ~CLK_READ);
 	}
+
 	if ((time.tv_sec = chiptotime(sec, min, hour, day, mon, year)) == 0) {
 		printf("WARNING: bad date in nvram");
 #ifdef DEBUG
@@ -362,36 +388,57 @@ resettodr()
 {
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
 	struct chiptime c;
-	if (brdtyp != BRD_188) {
-		struct clockreg *cl = (struct clockreg *)sc->sc_regs;
 
-		if (!time.tv_sec || cl == NULL)
-			return;
-		timetochip(&c);
-		cl->cl_csr |= CLK_WRITE;	/* enable write */
-		cl->cl_sec = c.sec;
-		cl->cl_min = c.min;
-		cl->cl_hour = c.hour;
-		cl->cl_wday = c.wday;
-		cl->cl_mday = c.day;
-		cl->cl_month = c.mon;
-		cl->cl_year = c.year;
-		cl->cl_csr &= ~CLK_WRITE;	/* load them up */
-	} else { /* CPU_188 */
-		struct m188_clockreg *cl = (struct m188_clockreg *)sc->sc_regs;
+	if (!time.tv_sec || sc == NULL)
+		return;
+	timetochip(&c);
 
-		if (!time.tv_sec || cl == NULL)
-			return;
-		timetochip(&c);
-		cl->cl_csr |= CLK_WRITE;	/* enable write */
-		cl->cl_sec = c.sec;
-		cl->cl_min = c.min;
-		cl->cl_hour = c.hour;
-		cl->cl_wday = c.wday;
-		cl->cl_mday = c.day;
-		cl->cl_month = c.mon;
-		cl->cl_year = c.year;
-		cl->cl_csr &= ~CLK_WRITE;	/* load them up */
+	if (brdtyp == BRD_188) {
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_CSR << 2), CLK_WRITE |
+		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		      sc->sc_regs + (CLK_CSR << 2)));
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_SEC << 2), c.sec);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_MIN << 2), c.min);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_HOUR << 2), c.hour);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_WDAY << 2), c.wday);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_DAY << 2), c.day);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_MONTH << 2), c.mon);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_YEAR << 2), c.year);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + (CLK_CSR << 2),
+		    bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		      sc->sc_regs + (CLK_CSR << 2)) & ~CLK_WRITE);
+	} else {
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_CSR, CLK_WRITE |
+		    bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		      sc->sc_regs + CLK_CSR));
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_SEC, c.sec);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_MIN, c.min);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_HOUR, c.hour);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_WDAY, c.wday);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_DAY, c.day);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_MONTH, c.mon);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_YEAR, c.year);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    sc->sc_regs + CLK_CSR,
+		    bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		      sc->sc_regs + CLK_CSR) & ~CLK_WRITE);
 	}
 }
 
@@ -452,12 +499,13 @@ nvramrw(dev, uio, flags)
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
 
-	return (memdevrw(sc->sc_vaddr, sc->sc_len, uio, flags));
+	return (memdevrw(bus_space_vaddr(sc->sc_iot, sc->sc_ioh),
+	    sc->sc_len, uio, flags));
 }
 
 /*
  * If the NVRAM is of the 2K variety, an extra 2K of who-knows-what
- * will also be mmap'd, due to NBPG being 4K. On the MVME147 the NVRAM
+ * will also be mmap'd, due to PAGE_SIZE being 4K. Usually, the NVRAM
  * repeats, so userland gets two copies back-to-back.
  */
 paddr_t
@@ -475,5 +523,5 @@ nvrammmap(dev, off, prot)
 	/* allow access only in RAM */
 	if (off < 0 || off > sc->sc_len)
 		return (-1);
-	return (atop(sc->sc_paddr + off));
+	return (atop(sc->sc_base + off));
 }

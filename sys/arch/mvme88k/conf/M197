@@ -1,4 +1,4 @@
-#	$OpenBSD: M197,v 1.21 2003/12/27 23:58:08 miod Exp $
+#	$OpenBSD: M197,v 1.22 2004/04/24 19:51:44 miod Exp $
 
 machine mvme88k
 
@@ -25,7 +25,7 @@ bugtty0 at mainbus0
 bussw0  at mainbus0 addr 0xfff00000
 
 # ----------------------------- busswitch devices -----------------------
-pcctwo0 at bussw0 offset 0x42000
+pcctwo0 at bussw0 offset 0x00000
 
 # ------------------------------ pcctwo devices -------------------------
 clock0	at pcctwo0 ipl 5
@@ -43,19 +43,19 @@ vmes0	at vme0
 vmel0	at vme0
 
 # ------------------------------ vmes0 devices -------------------------
-vx0	at vmes0 addr 0xff780000 ipl 3 len 0x10000
-vx1	at vmes0 addr 0xff790000 ipl 3 len 0x10000
-vx2	at vmes0 addr 0xff7a0000 ipl 3 len 0x10000
-vx3	at vmes0 addr 0xff7b0000 ipl 3 len 0x10000
-le0	at vmes0 addr 0xffff1200 ipl 1 len 0x100
-le1	at vmes0 addr 0xffff1400 ipl 1 len 0x100
-le2	at vmes0 addr 0xffff1600 ipl 1 len 0x100
-vs0	at vmes0 addr 0xffff9000 ipl 2 len 0x800
-vs1	at vmes0 addr 0xffff9800 ipl 2 len 0x800
-vs2	at vmes0 addr 0xffff4800 ipl 2 len 0x800
-vs3	at vmes0 addr 0xffff5800 ipl 2 len 0x800
-vs4	at vmes0 addr 0xffff7000 ipl 2 len 0x800
-vs5	at vmes0 addr 0xffff7800 ipl 2 len 0x800
+vx0	at vmes0 addr 0xff780000 ipl 3
+vx1	at vmes0 addr 0xff790000 ipl 3
+vx2	at vmes0 addr 0xff7a0000 ipl 3
+vx3	at vmes0 addr 0xff7b0000 ipl 3
+le0	at vmes0 addr 0xffff1200 ipl 1
+le1	at vmes0 addr 0xffff1400 ipl 1
+le2	at vmes0 addr 0xffff1600 ipl 1
+vs0	at vmes0 addr 0xffff9000 ipl 2
+vs1	at vmes0 addr 0xffff9800 ipl 2
+vs2	at vmes0 addr 0xffff4800 ipl 2
+vs3	at vmes0 addr 0xffff5800 ipl 2
+vs4	at vmes0 addr 0xffff7000 ipl 2
+vs5	at vmes0 addr 0xffff7800 ipl 2
 
 # ------------------------------- vs0 devices --------------------------
 scsibus* at vs?

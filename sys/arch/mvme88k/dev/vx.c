@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.28 2004/04/16 23:36:27 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.29 2004/04/24 19:51:48 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/* This card lives in D16 space */
+#define	__BUS_SPACE_RESTRICT_D16__
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -65,14 +68,13 @@ struct vxsoftc {
 	struct evcnt      sc_intrcnt;
 	struct vx_info  sc_info[NVXPORTS];
 	struct vxreg    *vx_reg;
-	unsigned int      board_addr;
+	vaddr_t		board_addr;
 	struct channel    *channel;
 	char              channel_number;
 	struct packet     sc_bppwait_pkt;
 	void              *sc_bppwait_pktp;
 	struct intrhand   sc_ih_c;
 	struct intrhand   sc_ih_s;
-	int               sc_ipl;
 	int               sc_vec;
 	struct envelope   *elist_head, *elist_tail;
 	struct packet     *plist_head, *plist_tail;
@@ -152,13 +154,17 @@ vxmatch(struct device *parent, void *self, void *aux)
 {
 	struct vxreg *vx_reg;
 	struct confargs *ca = aux;
+	bus_space_tag_t iot = ca->ca_iot;
+	bus_space_handle_t ioh;
+	int rc;
 
-	ca->ca_ipl = IPL_TTY;
-	ca->ca_len = 0x10000;	/* we know this */
+	if (bus_space_map(iot, ca->ca_paddr, 0x10000, 0, &ioh) != 0)
+		return 0;
+	vx_reg = (struct vxreg *)bus_space_vaddr(iot, ioh);
+	rc = badvaddr((vaddr_t)&vx_reg->ipc_cr, 1);
+	bus_space_unmap(iot, ioh, 0x10000);
 
-	vx_reg = (struct vxreg *)ca->ca_vaddr;
-
-	return (!badvaddr((vaddr_t)&vx_reg->ipc_cr, 1));
+	return rc == 0;
 }
 
 void
@@ -166,6 +172,8 @@ vxattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vxsoftc *sc = (struct vxsoftc *)self;
 	struct confargs *ca = aux;
+	bus_space_tag_t iot = ca->ca_iot;
+	bus_space_handle_t ioh;
 
 	if (ca->ca_vec < 0) {
 		printf(": no more interrupts!\n");
@@ -174,11 +182,15 @@ vxattach(struct device *parent, struct device *self, void *aux)
 	if (ca->ca_ipl < 0)
 		ca->ca_ipl = IPL_TTY;
 
+	if (bus_space_map(iot, ca->ca_paddr, 0x10000, 0, &ioh) != 0) {
+		printf(": can't map registers!\n");
+		return;
+	}
+
 	/* set up dual port memory and registers and init */
-	sc->board_addr = (unsigned int)ca->ca_vaddr;
+	sc->board_addr = (vaddr_t)bus_space_vaddr(iot, ioh);
 	sc->vx_reg = (struct vxreg *)sc->board_addr;
 	sc->channel = (struct channel *)(sc->board_addr + 0x0100);
-	sc->sc_ipl = ca->ca_ipl;
 	sc->sc_vec = ca->ca_vec;
 
 	printf("\n");
@@ -197,7 +209,7 @@ vxattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih_c.ih_fn = vx_intr;
 	sc->sc_ih_c.ih_arg = sc;
 	sc->sc_ih_c.ih_wantframe = 0;
-	sc->sc_ih_c.ih_ipl = ca->ca_ipl;
+	sc->sc_ih_c.ih_ipl = IPL_TTY;
 
 	vmeintr_establish(ca->ca_vec, &sc->sc_ih_c);
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
@@ -1242,7 +1254,7 @@ create_channels(struct vxsoftc *sc)
 		    sc->channel->status_pipe_head_ptr_h;
 		sc->channel->status_pipe_tail_ptr_l =
 		    sc->channel->status_pipe_head_ptr_l;
-		sc->channel->interrupt_level = sc->sc_ipl;
+		sc->channel->interrupt_level = IPL_TTY;
 		sc->channel->interrupt_vec = sc->sc_vec;
 		sc->channel->channel_priority = 0;
 		sc->channel->channel_number = 0;
@@ -1472,7 +1484,7 @@ vx_init(struct vxsoftc *sc)
 	init.command_pipe_number = sc->channel_number;
 	/* return status on the same channel */
 	init.status_pipe_number = sc->channel_number;
-	init.interrupt_level = sc->sc_ipl;
+	init.interrupt_level = IPL_TTY;
 	init.interrupt_vec = sc->sc_vec;
 	init.init_info_ptr_h = HI(INIT_INFO_AREA);
 	init.init_info_ptr_l = LO(INIT_INFO_AREA);

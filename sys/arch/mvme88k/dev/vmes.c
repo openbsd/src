@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmes.c,v 1.17 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: vmes.c,v 1.18 2004/04/24 19:51:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -32,6 +32,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
@@ -44,8 +45,9 @@
  * functions will decide how many address bits are relevant.
  */
 
-void vmesattach(struct device *, struct device *, void *);
-int  vmesmatch(struct device *, void *, void *);
+void	vmesattach(struct device *, struct device *, void *);
+int	vmesmatch(struct device *, void *, void *);
+int	vmesscan(struct device *, void *, void *);
 
 struct cfattach vmes_ca = {
         sizeof(struct device), vmesmatch, vmesattach
@@ -55,7 +57,9 @@ struct cfdriver vmes_cd = {
         NULL, "vmes", DV_DULL
 };
 
-int vmesscan(struct device *, void *, void *);
+/*
+ * Configuration glue
+ */
 
 int
 vmesmatch(parent, cf, args)
@@ -160,50 +164,11 @@ vmesmmap(dev, off, prot)
 	struct device *sc = (struct device *)vmes_cd.cd_devs[unit];
 	void * pa;
 
-	pa = vmepmap(sc->dv_parent, off, NBPG, BUS_VMES);
+	pa = vmepmap(sc->dv_parent, off, BUS_VMES);
 #ifdef DEBUG
 	printf("vmes %llx pa %p\n", off, pa);
 #endif
 	if (pa == NULL)
 		return (-1);
 	return (atop(pa));
-}
-
-/*
- * Specific D16 access functions
- *
- * D16 cards will trigger bus errors on attempting to read or write more
- * than 16 bits on the bus. Given how the m88k processor works, this means
- * basically that all long (D32) accesses must be carefully taken care of.
- *
- * Since the kernels bcopy() and bzero() routines will use 32 bit accesses
- * for performance, here are specific D16-compatible routines. They expect
- * pointers to be 16-bit aligned.
- */
-
-void
-d16_bcopy(const void *src, void *dst, size_t len)
-{
-	const u_int16_t *s = (const u_int16_t *)src;
-	u_int16_t *d = (u_int16_t *)dst;
-	size_t l = len;
-
-	l >>= 1;
-	while (l-- != 0)
-		*d++ = *s++;
-	if (len & 1)
-		*(u_int8_t *)d = *(u_int8_t *)s;
-}
-
-void
-d16_bzero(void *dst, size_t len)
-{
-	u_int16_t *d = (u_int16_t *)dst;
-	size_t l = len;
-
-	l >>= 1;
-	while (l-- != 0)
-		*d++ = 0;
-	if (len & 1)
-		*(u_int8_t *)d = 0;
 }

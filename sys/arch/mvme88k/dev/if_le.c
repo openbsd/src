@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.3 2003/12/30 21:25:59 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.4 2004/04/24 19:51:48 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -31,7 +31,8 @@
  *	@(#)if_le.c	8.2 (Berkeley) 10/30/93
  */
 
-#include "bpfilter.h"
+/* This card lives in D16 space */
+#define	__BUS_SPACE_RESTRICT_D16__
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,8 +247,16 @@ lematch(parent, vcf, args)
 	void *vcf, *args;
 {
 	struct confargs *ca = args;
+	bus_space_tag_t iot = ca->ca_iot;
+	bus_space_handle_t ioh;
+	int rc;
 
-	return (!badvaddr((vaddr_t)ca->ca_vaddr, 2));
+	if (bus_space_map(iot, ca->ca_paddr, PAGE_SIZE, 0, &ioh) != 0)
+		return 0;
+	rc = badvaddr((vaddr_t)bus_space_vaddr(iot, ioh), 2);
+	bus_space_unmap(iot, ioh, PAGE_SIZE);
+
+	return rc == 0;
 }
 
 /*
@@ -266,6 +275,20 @@ leattach(parent, self, aux)
 	struct confargs *ca = aux;
 	caddr_t addr;
 	int card;
+	bus_space_tag_t iot = ca->ca_iot;
+	bus_space_handle_t ioh;
+
+	if (ca->ca_vec < 0) {
+		printf(": no more interrupts!\n");
+		return;
+	}
+	if (ca->ca_ipl < 0)
+		ca->ca_ipl = IPL_NET;
+
+	if (bus_space_map(iot, ca->ca_paddr, PAGE_SIZE, 0, &ioh) != 0) {
+		printf(": can't map registers!\n");
+		return;
+	}
 
 	/* Are we the boot device? */
 	if (ca->ca_paddr == bootaddr)
@@ -278,7 +301,7 @@ leattach(parent, self, aux)
 	 * at any other address.
 	 * XXX These physical addresses should be mapped in extio!!!
 	 */
-	switch ((int)ca->ca_paddr) {
+	switch (ca->ca_paddr) {
 	case 0xffff1200:
 		card = 0;
 		break;
@@ -316,7 +339,7 @@ leattach(parent, self, aux)
 		return;
 	}
 
-	lesc->sc_r1 = (void *)ca->ca_vaddr;
+	lesc->sc_r1 = (void *)bus_space_vaddr(iot, ioh);
 	lesc->sc_ipl = ca->ca_ipl;
 	lesc->sc_vec = ca->ca_vec;
 	sc->sc_memsize = VLEMEMSIZE;

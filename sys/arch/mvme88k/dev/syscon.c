@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.18 2004/04/16 23:36:48 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.19 2004/04/24 19:51:48 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -39,46 +39,26 @@
 #include <machine/board.h>
 #include <machine/frame.h>
 
-#include <mvme88k/dev/sysconfunc.h>
 #include <mvme88k/dev/sysconreg.h>
-
-struct sysconreg syscon_reg = {
-   (unsigned int *volatile)IEN0_REG,	(unsigned int *volatile)IEN1_REG,
-   (unsigned int *volatile)IEN2_REG,	(unsigned int *volatile)IEN3_REG,
-   (unsigned int *volatile)IENALL_REG,	(unsigned int *volatile)IST_REG,
-   (unsigned int *volatile)SETSWI_REG,	(unsigned int *volatile)CLRSWI_REG,
-   (unsigned int *volatile)ISTATE_REG,	(unsigned int *volatile)CLRINT_REG,
-   (unsigned char *volatile)GLB0,	(unsigned char *volatile)GLB1,
-   (unsigned char *volatile)GLB2,	(unsigned char *volatile)GLB3,
-   (unsigned int *volatile)UCSR_REG,	(unsigned int *volatile)GLBRES_REG,
-   (unsigned int *volatile)CCSR_REG,	(unsigned int *volatile)ERROR_REG,
-   (unsigned int *volatile)PCNFA_REG,	(unsigned int *volatile)PCNFB_REG,
-   (unsigned int *volatile)EXTAD_REG,	(unsigned int *volatile)EXTAM_REG,
-   (unsigned int *volatile)WHOAMI_REG,	(unsigned int *volatile)WMAD_REG,
-   (unsigned int *volatile)RMAD_REG,	(unsigned int *volatile)WVAD_REG,
-   (unsigned int *volatile)RVAD_REG,	(unsigned int *volatile)CIO_PORTC,
-   (unsigned int *volatile)CIO_PORTB,	(unsigned int *volatile)CIO_PORTA,
-   (unsigned int *volatile)CIO_CTRL
-   };
 
 struct sysconsoftc {
 	struct device	sc_dev;
-	void		*sc_vaddr;	/* Utility I/O space */
-	void		*sc_paddr;
-	struct sysconreg *sc_syscon;	/* the actual registers */
+
 	struct intrhand sc_abih;	/* `abort' switch */
 	struct intrhand sc_acih;	/* `ac fail' */
 	struct intrhand sc_sfih;	/* `sys fail' */
 	struct intrhand sc_m188ih;	/* `m188 interrupt' */
 };
 
-void sysconattach(struct device *, struct device *, void *);
-int  sysconmatch(struct device *, void *, void *);
-void setupiackvectors(void);
-int  sysconabort(void *);
-int  sysconacfail(void *);
-int  sysconsysfail(void *);
-int  sysconm188(void *);
+void	sysconattach(struct device *, struct device *, void *);
+int	sysconmatch(struct device *, void *, void *);
+
+int	syscon_print(void *, const char *);
+int	syscon_scan(struct device *, void *, void *);
+int	sysconabort(void *);
+int	sysconacfail(void *);
+int	sysconsysfail(void *);
+int	sysconm188(void *);
 
 struct cfattach syscon_ca = {
 	sizeof(struct sysconsoftc), sysconmatch, sysconattach
@@ -88,32 +68,15 @@ struct cfdriver syscon_cd = {
 	NULL, "syscon", DV_DULL
 };
 
-struct sysconreg *sys_syscon;
-
-int syscon_print(void *args, const char *bus);
-int syscon_scan(struct device *parent, void *child, void *args);
-
 int
 sysconmatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	struct confargs *ca = args;
-	struct sysconreg *syscon;
-
 	/* Don't match if wrong cpu */
 	if (brdtyp != BRD_188)
 		return (0);
 
-	/* Only allow one instance */
-	if (sys_syscon != NULL)
-		return (0);
-
-	/*
-	 * Uh, MVME188 better have on of these, so always match if it
-	 * is a MVME188...
-	 */
-	syscon = (struct sysconreg *)(IIOV(ca->ca_paddr));
 	return (1);
 }
 
@@ -137,21 +100,18 @@ syscon_scan(parent, child, args)
 	void *child, *args;
 {
 	struct cfdata *cf = child;
-	struct sysconsoftc *sc = (struct sysconsoftc *)parent;
-	struct confargs oca;
+	struct confargs oca, *ca = args;
 
 	bzero(&oca, sizeof oca);
+	oca.ca_iot = ca->ca_iot;
 	oca.ca_offset = cf->cf_loc[0];
 	oca.ca_ipl = cf->cf_loc[1];
-	if ((oca.ca_offset != -1) && ISIIOVA(sc->sc_vaddr + oca.ca_offset)) {
-		oca.ca_vaddr = sc->sc_vaddr + oca.ca_offset;
-		oca.ca_paddr = sc->sc_paddr + oca.ca_offset;
+	if (oca.ca_offset != -1) {
+		oca.ca_paddr = ca->ca_paddr + oca.ca_offset;
 	} else {
-		oca.ca_vaddr = (void *)-1;
-		oca.ca_paddr = (void *)-1;
+		oca.ca_paddr = -1;
 	}
 	oca.ca_bustype = BUS_SYSCON;
-	oca.ca_master = (void *)sc->sc_syscon;
 	oca.ca_name = cf->cf_driver->cd_name;
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
 		return (0);
@@ -164,17 +124,7 @@ sysconattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
-	struct confargs *ca = args;
 	struct sysconsoftc *sc = (struct sysconsoftc *)self;
-
-	/*
-	 * since we know ourself to land in intiobase land,
-	 * we must adjust our address
-	 */
-	sc->sc_paddr = ca->ca_paddr;
-	sc->sc_vaddr = (void *)IIOV(sc->sc_paddr);
-	sc->sc_syscon = &syscon_reg;
-	sys_syscon = sc->sc_syscon;
 
 	printf("\n");
 
@@ -215,11 +165,11 @@ sysconintr_establish(vec, ih)
 	struct intrhand *ih;
 {
 #ifdef DIAGNOSTIC
-	if (vec < SYSCON_VECT || vec >= SYSCON_VECT + SYSCON_NVEC)
+	if (vec < 0 || vec >= SYSCON_NVEC)
 		panic("sysconintr_establish: illegal vector 0x%x\n", vec);
 #endif
 
-	return (intr_establish(vec, ih));
+	return (intr_establish(SYSCON_VECT + vec, ih));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmel.c,v 1.14 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: vmel.c,v 1.15 2004/04/24 19:51:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -44,8 +44,9 @@
  * functions will decide how many address bits are relevant.
  */
 
-void vmelattach(struct device *, struct device *, void *);
-int  vmelmatch(struct device *, void *, void *);
+void	vmelattach(struct device *, struct device *, void *);
+int	vmelmatch(struct device *, void *, void *);
+int	vmelscan(struct device *, void *, void *);
 
 struct cfattach vmel_ca = {
         sizeof(struct device), vmelmatch, vmelattach
@@ -54,8 +55,6 @@ struct cfattach vmel_ca = {
 struct cfdriver vmel_cd = {
         NULL, "vmel", DV_DULL
 };
-
-int vmelscan(struct device *, void *, void *);
 
 int
 vmelmatch(parent, cf, args)
@@ -160,7 +159,7 @@ vmelmmap(dev, off, prot)
 	struct device *sc = (struct device *)vmel_cd.cd_devs[unit];
 	void * pa;
 
-	pa = vmepmap(sc->dv_parent, off, NBPG, BUS_VMEL);
+	pa = vmepmap(sc->dv_parent, off, BUS_VMEL);
 #ifdef DEBUG
 	printf("vmel %llx pa %p\n", off, pa);
 #endif

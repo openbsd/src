@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.26 2004/03/26 00:04:51 miod Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.27 2004/04/24 19:51:48 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -49,6 +49,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/cmmu.h>
 #include <machine/pmap.h>
@@ -61,11 +62,8 @@
 #include <mvme88k/dev/sshreg.h>
 #include <mvme88k/dev/sshvar.h>
 
-#include "pcctwo.h"
-#if NPCCTWO > 0
-#include <mvme88k/dev/pcctwofunc.h>
 #include <mvme88k/dev/pcctworeg.h>
-#endif
+#include <mvme88k/dev/pcctwovar.h>
 
 int	sshmatch(struct device *, void *, void *);
 void	sshattach(struct device *, struct device *, void *);
@@ -211,7 +209,7 @@ sshmatch(pdp, vcf, args)
 {
 	struct confargs *ca = args;
 
-	if (badvaddr((vaddr_t)IIOV(ca->ca_vaddr), 4) == 0)
+	if (badvaddr(ca->ca_paddr, 4) == 0)
 		return (1);
 
 	/*
@@ -233,7 +231,7 @@ sshmatch(pdp, vcf, args)
 		dio.blk_cnt = 1;
 		bugdiskrd(&dio);
 
-		if (badvaddr((vaddr_t)IIOV(ca->ca_vaddr), 4) == 0)
+		if (badvaddr(ca->ca_paddr, 4) == 0)
 			return (1);
 	}
 
@@ -251,7 +249,7 @@ sshattach(parent, self, auxp)
 	int tmp;
 	extern int cpuspeed;
 
-	sc->sc_sshp = rp = ca->ca_vaddr;
+	sc->sc_sshp = rp = (void *)ca->ca_paddr;
 
 	/*
 	 * ssh uses sc_clock_freq to define the dcntl & ctest7 reg values
@@ -287,30 +285,24 @@ sshattach(parent, self, auxp)
 	sc->sc_ih.ih_wantframe = 0;
 	sc->sc_ih.ih_ipl = ca->ca_ipl;
 
-	sshinitialize(sc);
+	sshinitialize(sc);	/* XXX move later? */
 
-	switch (ca->ca_bustype) {
-#if NPCCTWO > 0
-	case BUS_PCCTWO:
-	    {
-		/*
-		 * Disable caching for the softc. Actually, I want
-		 * to disable cache for acb structures, but they are
-		 * part of softc, and I am disabling the entire softc
-		 * just in case.
-		 */
+	pcctwointr_establish(PCC2V_SCSI, &sc->sc_ih);
 
-		struct pcctworeg *pcc2 = (struct pcctworeg *)ca->ca_master;
+	/*
+	 * Disable caching for the softc. Actually, I want to disable cache
+	 * for acb structures, but they are part of softc, and I am disabling
+	 * the entire softc just in case.
+	 */
+	pmap_cache_ctrl(pmap_kernel(), trunc_page((vaddr_t)sc),
+	    round_page((vaddr_t)sc + sizeof(*sc)), CACHE_INH);
 
-		pmap_cache_ctrl(pmap_kernel(), trunc_page((vaddr_t)sc),
-		    round_page((vaddr_t)sc + sizeof(*sc)), CACHE_INH);
+	/* enable device interrupts */
+	{
+		struct pcctwosoftc *pcctwo = (struct pcctwosoftc *)parent;
 
-		pcctwointr_establish(PCC2V_NCR, &sc->sc_ih);
-		/* enable interrupts at ca_ipl */
-		pcc2->pcc2_ncrirq = ca->ca_ipl | PCC2_IRQ_IEN;
-		break;
-	    }
-#endif
+		bus_space_write_1(pcctwo->sc_iot, pcctwo->sc_ioh,
+		    PCCTWO_SCSIICR, PCC2_IRQ_IEN | (ca->ca_ipl & PCC2_IRQ_IPL));
 	}
 
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
@@ -363,6 +355,7 @@ ssh_dmaintr(arg)
 	sc->sc_intrcnt.ev_count++;
 	return (1);
 }
+
 /*
  * dummy routine to debug while loops
  */
@@ -776,7 +769,7 @@ sshinitialize(sc)
 		sc->sc_tcp[0] = 3000 / sc->sc_clock_freq;
 #endif
 
-	sshreset (sc);
+	sshreset(sc);
 }
 
 void
@@ -1518,8 +1511,10 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 #endif
 		/* XXX assumes it was not select */
 		if (sc->sc_nexus == NULL) {
+#if 0
 			printf("%s: reselect interrupted, sc_nexus == NULL\n",
 			    sc->sc_dev.dv_xname);
+#endif
 #if 0
 			ssh_dump(sc);
 #ifdef DDB

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.24 2004/01/12 07:46:16 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.25 2004/04/24 19:51:48 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -85,30 +85,6 @@ struct clockframe {
  * Get interrupt glue.
  */
 #include <machine/intr.h>
-
-/*
- * Internal IO space (iiomapsize).
- *
- * Internal IO space is mapped in the kernel from ``OBIO_START'' to
- * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
- * conversion between physical and kernel virtual addresses is easy.
- */
-
-#ifdef VIRTMAP
-/* This will do non 1:1 phys/virt memory mapping in the future - SPM */
-#define	ISIIOVA(va) \
-	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
-#define	IIOV(pa)	((int)(pa)-(int)iiomapbase+(int)intiobase)
-#define	IIOP(va)	((int)(va)-(int)intiobase+(int)iiomapbase)
-#define	IIOPOFF(pa)	((int)(pa)-(int)iiomapbase)
-
-#else
-
-#define	ISIIOVA(va) 1
-#define	IIOV(pa)	((pa))
-#define	IIOP(va)	((va))
-#define	IIOPOFF(pa)	((int)(pa)-(int)OBIO_START)
-#endif
 
 #define SIR_NET		1
 #define SIR_CLOCK	2

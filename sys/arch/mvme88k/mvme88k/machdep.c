@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.140 2004/04/16 23:35:53 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.141 2004/04/24 19:51:49 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1064,26 +1064,26 @@ m188_reset()
 {
 	volatile int cnt;
 
-	*sys_syscon->ien0 = 0;
-	*sys_syscon->ien1 = 0;
-	*sys_syscon->ien2 = 0;
-	*sys_syscon->ien3 = 0;
+	*(volatile u_int32_t *)IEN0_REG = 0;
+	*(volatile u_int32_t *)IEN1_REG = 0;
+	*(volatile u_int32_t *)IEN2_REG = 0;
+	*(volatile u_int32_t *)IEN3_REG = 0;
 
-	if (*sys_syscon->global1 & M188_SYSCONNEG) {
+	if ((*(volatile u_int8_t *)GLB1) & M188_SYSCONNEG) {
 		/* Force only a local reset */
-		*sys_syscon->global1 |= M188_LRST;
+		*(volatile u_int8_t *)GLB1 |= M188_LRST;
 	} else {
 		/* Force a complete VMEbus reset */
-		*sys_syscon->glbres = 1;
+		*(volatile u_int32_t *)GLBRES_REG = 1;
 	}
 
-	*sys_syscon->ucsr |= 0x2000; /* clear SYSFAIL* */
+	*(volatile u_int32_t *)UCSR_REG |= 0x2000;	/* clear SYSFAIL */
 	for (cnt = 0; cnt < 5*1024*1024; cnt++)
 		;
-	*sys_syscon->ucsr |= 0x2000; /* clear SYSFAIL* */
+	*(volatile u_int32_t *)UCSR_REG |= 0x2000;	/* clear SYSFAIL */
 
 	printf("reset failed\n");
-	for (;;);	/* just in case we survived... */
+	for (;;);
 	/* NOTREACHED */
 }
 #endif   /* MVME188 */
@@ -1414,7 +1414,8 @@ intr_establish(int vec, struct intrhand *ihand)
 	if ((intr = intr_handlers[vec]) != NULL) {
 		if (intr->ih_ipl != ihand->ih_ipl) {
 #if DIAGNOSTIC
-			panic("intr_establish: there are other handlers with vec (0x%x) at ipl %x, but you want it at %x",
+			panic("intr_establish: there are other handlers with "
+			    "vec (0x%x) at ipl %x, but you want it at %x",
 			      intr->ih_ipl, vec, ihand->ih_ipl);
 #endif /* DIAGNOSTIC */
 			return (INTR_EST_BADIPL);
@@ -1449,8 +1450,7 @@ intr_establish(int vec, struct intrhand *ihand)
  */
 
 /* Hard coded vector table for onboard devices. */
-
-unsigned obio_vec[32] = {
+const unsigned int obio_vec[32] = {
 	0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,
         0,SYSCV_SCC,0,0,SYSCV_SYSF,SYSCV_TIMER2,0,0,
@@ -1541,13 +1541,13 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		/* find the first bit set in the current mask */
 		intbit = ff1(cur_mask);
 		if (OBIO_INTERRUPT_MASK & (1 << intbit)) {
-			vec = obio_vec[intbit];
+			vec = SYSCON_VECT + obio_vec[intbit];
 			if (vec == 0) {
 				panic("unknown onboard interrupt: mask = 0x%b",
 				    1 << intbit, IST_STRING);
 			}
 		} else if (HW_FAILURE_MASK & (1 << intbit)) {
-			vec = obio_vec[intbit];
+			vec = SYSCON_VECT + obio_vec[intbit];
 			if (vec == 0) {
 				panic("unknown hardware failure: mask = 0x%b",
 				    1 << intbit, IST_STRING);

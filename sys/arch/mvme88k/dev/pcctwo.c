@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctwo.c,v 1.23 2004/04/16 23:36:48 miod Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.24 2004/04/24 19:51:48 miod Exp $ */
 /*
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
@@ -45,20 +45,13 @@
 
 #include <dev/cons.h>
 
-#include <mvme88k/dev/pcctwofunc.h>
 #include <mvme88k/dev/pcctworeg.h>
+#include <mvme88k/dev/pcctwovar.h>
 
 #include "bussw.h"
 
-struct pcctwosoftc {
-	struct device	sc_dev;
-	void		*sc_vaddr;	/* PCC2 space */
-	void		*sc_paddr;
-	struct pcctworeg *sc_pcc2;	/* the actual registers */
-};
-
-void pcctwoattach(struct device *, struct device *, void *);
-int  pcctwomatch(struct device *, void *, void *);
+void	pcctwoattach(struct device *, struct device *, void *);
+int	pcctwomatch(struct device *, void *, void *);
 
 struct cfattach pcctwo_ca = {
 	sizeof(struct pcctwosoftc), pcctwomatch, pcctwoattach
@@ -68,12 +61,8 @@ struct cfdriver pcctwo_cd = {
 	NULL, "pcctwo", DV_DULL
 };
 
-struct pcctworeg *sys_pcc2 = NULL;
-
-int pcc2bus;
-
-int pcctwo_print(void *args, const char *bus);
-int pcctwo_scan(struct device *parent, void *child, void *args);
+int	pcctwo_print(void *args, const char *bus);
+int	pcctwo_scan(struct device *parent, void *child, void *args);
 
 int
 pcctwomatch(parent, vcf, args)
@@ -81,31 +70,73 @@ pcctwomatch(parent, vcf, args)
 	void *vcf, *args;
 {
 	struct confargs *ca = args;
-	struct pcctworeg *pcc2;
+	bus_space_handle_t ioh;
+	int rc;
+	u_int8_t chipid;
 
 	/* Bomb if wrong cpu */
 	switch (brdtyp) {
 	case BRD_187:
 	case BRD_8120:
-		pcc2 = (struct pcctworeg *)(IIOV(ca->ca_paddr) + PCC2_PCC2CHIP_OFF);
-		break;
-	case BRD_197: /* pcctwo is a child of buswitch XXX smurph */
-		pcc2 = (struct pcctworeg *)(IIOV(ca->ca_paddr));
+	case BRD_197:
 		break;
 	default:
-		/* Bomb if wrong board */
-		return (0);
+		return 0;
 	}
 
-	if (badvaddr((vaddr_t)pcc2, 4)) {
-		printf("==> pcctwo: failed address check.\n");
-		return (0);
+	if (bus_space_map(ca->ca_iot, ca->ca_paddr + PCC2_BASE, PCC2_SIZE,
+	    0, &ioh) != 0)
+		return 0;
+	rc = badvaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 4);
+	if (rc == 0) {
+		chipid = bus_space_read_1(ca->ca_iot, ioh, PCCTWO_CHIPID);
+		if (chipid != PCC2_ID) {
+#ifdef DEBUG
+			printf("==> pcctwo: wrong chip id %x.\n", chipid);
+			rc = -1;
+#endif
+		}
 	}
-	if (pcc2->pcc2_chipid != PCC2_CHIPID) {
-		printf("==> pcctwo: wrong chip id %x.\n", pcc2->pcc2_chipid);
-		return (0);
+	bus_space_unmap(ca->ca_iot, ioh, PCC2_SIZE);
+
+	return rc == 0;
+}
+
+void
+pcctwoattach(parent, self, args)
+	struct device *parent, *self;
+	void *args;
+{
+	struct confargs *ca = args;
+	struct pcctwosoftc *sc = (struct pcctwosoftc *)self;
+	bus_space_handle_t ioh;
+	u_int8_t genctl;
+
+	sc->sc_base = ca->ca_paddr + PCC2_BASE;
+
+	if (bus_space_map(ca->ca_iot, sc->sc_base, PCC2_SIZE, 0, &ioh) != 0) {
+		printf(": can't map registers!\n");
+		return;
 	}
-	return (1);
+
+	sc->sc_iot = ca->ca_iot;
+	sc->sc_ioh = ioh;
+
+	bus_space_write_1(sc->sc_iot, ioh, PCCTWO_VECBASE, PCC2_VECBASE);
+	genctl = bus_space_read_1(sc->sc_iot, ioh, PCCTWO_GENCTL);
+#if NBUSSW > 0
+	if (ca->ca_bustype == BUS_BUSSWITCH) {
+                /* Make sure the bus is mc68040 compatible */
+		genctl |= PCC2_GENCTL_C040;
+	}
+#endif
+	genctl |= PCC2_GENCTL_IEN;	/* global irq enable */
+	bus_space_write_1(sc->sc_iot, ioh, PCCTWO_GENCTL, genctl);
+
+	printf(": rev %d\n",
+	    bus_space_read_1(sc->sc_iot, ioh, PCCTWO_CHIPREV));
+
+	config_search(pcctwo_scan, self, args);
 }
 
 int
@@ -132,70 +163,21 @@ pcctwo_scan(parent, child, args)
 	struct confargs oca;
 
 	bzero(&oca, sizeof oca);
+	oca.ca_iot = sc->sc_iot;
 	oca.ca_offset = cf->cf_loc[0];
 	oca.ca_ipl = cf->cf_loc[1];
-	if (((int)oca.ca_offset != -1) && ISIIOVA(sc->sc_vaddr + oca.ca_offset)) {
-		oca.ca_vaddr = sc->sc_vaddr + oca.ca_offset;
-		oca.ca_paddr = sc->sc_paddr + oca.ca_offset;
+	if (oca.ca_offset != -1) {
+		/* offset locator for pcctwo children is relative to segment */
+		oca.ca_paddr = sc->sc_base - PCC2_BASE + oca.ca_offset;
 	} else {
-		oca.ca_vaddr = (void *)-1;
-		oca.ca_paddr = (void *)-1;
+		oca.ca_paddr = -1;
 	}
 	oca.ca_bustype = BUS_PCCTWO;
-	oca.ca_master = (void *)sc->sc_pcc2;
 	oca.ca_name = cf->cf_driver->cd_name;
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
 		return (0);
 	config_attach(parent, cf, &oca, pcctwo_print);
 	return (1);
-}
-
-void
-pcctwoattach(parent, self, args)
-struct device *parent, *self;
-void *args;
-{
-	struct confargs *ca = args;
-	struct pcctwosoftc *sc = (struct pcctwosoftc *)self;
-
-	if (sys_pcc2)
-		panic("pcc2 already attached!");
-
-	/*
-	 * since we know ourself to land in intiobase land,
-	 * we must adjust our address
-	 */
-	sc->sc_paddr = ca->ca_paddr;
-	sc->sc_vaddr = (void *)IIOV(sc->sc_paddr);
-
-	pcc2bus = ca->ca_bustype;
-
-	switch (pcc2bus) {
-	case BUS_MAIN:
-		sc->sc_pcc2 = (struct pcctworeg *)(sc->sc_vaddr + PCC2_PCC2CHIP_OFF);
-		break;
-#if NBUSSW > 0
-	case BUS_BUSSWITCH:
-		sc->sc_pcc2 = (struct pcctworeg *)sc->sc_vaddr;
-		/*
-		 * fake up our address so that pcc2 child devices
-		 * are offset of 0xFFF00000 - XXX smurph
-		 */
-                sc->sc_paddr -= PCC2_PCC2CHIP_OFF;
-                sc->sc_vaddr -= PCC2_PCC2CHIP_OFF;
-                /* make sure the bus is mc68040 compatible */
-		sc->sc_pcc2->pcc2_genctl |= PCC2_GENCTL_C040;
-		break;
-#endif
-	}
-	sys_pcc2 = sc->sc_pcc2;
-
-	printf(": rev %d\n", sc->sc_pcc2->pcc2_chiprev);
-
-	sc->sc_pcc2->pcc2_vecbase = PCC2_VECBASE;
-	sc->sc_pcc2->pcc2_genctl |= PCC2_GENCTL_IEN;	/* global irq enable */
-
-	config_search(pcctwo_scan, self, args);
 }
 
 /*

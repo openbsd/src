@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.12 2004/04/14 20:18:17 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.13 2004/04/24 19:51:48 miod Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -37,21 +37,19 @@
 #ifndef _MVME88K_AUTOCONF_H_
 #define _MVME88K_AUTOCONF_H_
 
+#include <machine/bus.h>
+
 struct confargs {
-	int	ca_bustype;
-	void	*ca_vaddr;
-	void	*ca_paddr;
-	int	ca_offset;
-	int	ca_len;
-	int	ca_ipl;
-	int	ca_vec;
-	char	*ca_name;
-	void	*ca_master;	/* points to bus-dependent data */
+	bus_space_tag_t	ca_iot;		/* bus access */
+	int		ca_bustype;	/* bus type */
+	paddr_t		ca_paddr;	/* physical address */
+	int		ca_offset;	/* offset from parent */
+	int		ca_ipl;		/* interrupt level */
+	int		ca_vec;		/* mandatory interrupt vector */
+	const char	*ca_name;	/* device name */
 };
 
 #define BUS_MAIN      0
-#define BUS_MC        1
-#define BUS_PCC       2
 #define BUS_PCCTWO    3
 #define BUS_VMES      4
 #define BUS_VMEL      5
@@ -59,7 +57,7 @@ struct confargs {
 #define BUS_BUSSWITCH 7
 
 /* the following are from the prom/bootblocks */
-extern void	*bootaddr;	/* PA of boot device */
+extern paddr_t	bootaddr;	/* PA of boot device */
 extern int	bootpart;	/* boot partition (disk) */
 
 extern	struct device *bootdv; /* boot device */

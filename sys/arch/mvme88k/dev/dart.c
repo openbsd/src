@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.32 2004/04/16 23:32:44 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.33 2004/04/24 19:51:47 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -143,19 +143,19 @@ const struct dart_s {
 	{B4800,		BD4800	},	/* 4800 baud */
 	{B9600,		BD9600	},	/* 9600 baud */
 	{B19200,	BD19200	},	/* 19200 baud */
-	{0xFFFF,	NOBAUD	},	/* anything more is uncivilized */
+	{-1,		NOBAUD	},	/* anything more is uncivilized */
 };
 
 int
 dart_speed(speed)
 	int speed;
 {
-	const struct dart_s *ds = dart_speeds;
-	while (ds->kspeed != 0xFFFF) {
+	const struct dart_s *ds;
+
+	for (ds = dart_speeds; ds->kspeed != -1; ds++)
 		if (ds->kspeed == speed)
 			return ds->dspeed;
-		ds++;
-	}
+
 	return NOBAUD;
 }
 
@@ -183,14 +183,18 @@ dartmatch(parent, vcf, args)
 	union dartreg *addr;
 
 	/* Don't match if wrong cpu */
-	if (brdtyp != BRD_188) return (0);
-	ca->ca_vaddr = ca->ca_paddr; /* 1:1 */
-	addr = (union dartreg *)ca->ca_vaddr;
+	if (brdtyp != BRD_188)
+		return (0);
+
+	addr = (union dartreg *)ca->ca_paddr;
 
 	if (badvaddr((vaddr_t)addr, 2)) {
+#ifdef DEBUG
 		printf("==> dart: failed address check.\n");
+#endif
 		return (0);
 	}
+
 	return (1);
 }
 
@@ -206,10 +210,6 @@ dartattach(parent, self, aux)
 	union dart_pt_io *ptaddr; /* pointer to port regs */
 	int port;	/* port index */
 
-	if (ca->ca_vec < 0) {
-		printf(": no more interrupts!\n");
-		return;
-	}
 	if (ca->ca_ipl < 0)
 		ca->ca_ipl = IPL_TTY;
 
@@ -298,7 +298,7 @@ dartattach(parent, self, aux)
 	addr->write.wr_acr  = dart_sv_reg.sv_acr;
 	addr->write.wr_imr  = dart_sv_reg.sv_imr;
 	addr->write.wr_opcr = OPSET;
-	addr->write.wr_ivr = SYSCV_SCC;	/* hard coded vector */
+	addr->write.wr_ivr = SYSCON_VECT + SYSCV_SCC;	/* hard coded vector */
 
 	/* enable interrupts */
 	sc->sc_ih.ih_fn = dartintr;
@@ -306,7 +306,7 @@ dartattach(parent, self, aux)
 	sc->sc_ih.ih_wantframe = 0;
 	sc->sc_ih.ih_ipl = ca->ca_ipl;
 
-	intr_establish(ca->ca_vec, &sc->sc_ih);
+	sysconintr_establish(SYSCV_SCC, &sc->sc_ih);
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 	printf("\n");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.30 2004/04/16 23:35:50 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.31 2004/04/24 19:51:48 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -36,6 +36,9 @@
 /*
  * MVME328S scsi adaptor driver
  */
+
+/* This card lives in D16 space */
+#define	__BUS_SPACE_RESTRICT_D16__
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +115,16 @@ vsmatch(pdp, vcf, args)
 	void *vcf, *args;
 {
 	struct confargs *ca = args;
+	bus_space_tag_t iot = ca->ca_iot;
+	bus_space_handle_t ioh;
+	int rc;
 
-	return (!badvaddr((unsigned)ca->ca_vaddr, 1));
+	if (bus_space_map(iot, ca->ca_paddr, PAGE_SIZE, 0, &ioh) != 0)
+		return 0;
+	rc = badvaddr((vaddr_t)bus_space_vaddr(iot, ioh), 1);
+	bus_space_unmap(iot, ioh, PAGE_SIZE);
+
+	return rc == 0;
 }
 
 void
@@ -126,6 +137,8 @@ vsattach(parent, self, args)
 	struct vsreg *rp;
 	int evec;
 	int tmp;
+	bus_space_tag_t iot = ca->ca_iot;
+	bus_space_handle_t ioh;
 
 	/* get the next available vector for the error interrupt */
 	evec = vme_findvec(ca->ca_vec);
@@ -137,9 +150,14 @@ vsattach(parent, self, args)
 	if (ca->ca_ipl < 0)
 		ca->ca_ipl = IPL_BIO;
 
+	if (bus_space_map(iot, ca->ca_paddr, PAGE_SIZE, 0, &ioh) != 0) {
+		printf(": can't map registers!\n");
+		return;
+	}
+
 	printf(" vec 0x%x", evec);
 
-	sc->sc_vsreg = rp = ca->ca_vaddr;
+	sc->sc_vsreg = rp = (void *)bus_space_vaddr(iot, ioh);
 
 	sc->sc_ipl = ca->ca_ipl;
 	sc->sc_nvec = ca->ca_vec;

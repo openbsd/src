@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.25 2004/01/13 21:29:21 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.26 2004/04/24 19:51:44 miod Exp $
 #
 maxpartitions 16
 
@@ -27,12 +27,11 @@ file	arch/mvme88k/dev/memc.c				memc
 
 device sram
 attach sram at mainbus
+file	arch/mvme88k/dev/sram.c				sram needs-count
 
 device nvram
 attach nvram at pcctwo, syscon
-file	arch/mvme88k/dev/sram.c				sram needs-count
 file	arch/mvme88k/dev/nvram.c			nvram needs-count
-file	arch/mvme88k/dev/memdevs.c			nvram | sram
 
 device cl: tty
 attach cl at pcctwo
@@ -61,9 +60,9 @@ file	arch/mvme88k/dev/ssh.c				ssh
 
 device vme { }
 attach vme at pcctwo, syscon
-device vmes { [addr = -1], [len = -1], [vec = -1], [ipl = 0] }
+device vmes { [addr = -1], [vec = -1], [ipl = 0] }
 attach vmes at vme
-device vmel { [addr = -1], [len = -1], [vec = -1], [ipl = 0] }
+device vmel { [addr = -1], [vec = -1], [ipl = 0] }
 attach vmel at vme
 file	arch/mvme88k/dev/vme.c			vme | vmes | vmel
 file	arch/mvme88k/dev/vmes.c			vmes needs-count
@@ -103,8 +102,9 @@ file	arch/mvme88k/ddb/db_disasm.c			ddb
 file	arch/mvme88k/ddb/db_interface.c			ddb
 file	arch/mvme88k/ddb/db_sstep.c			ddb
 file	arch/mvme88k/ddb/db_trace.c			ddb
-file	arch/mvme88k/dev/mainbus.c
 file	arch/mvme88k/dev/bugio.c
+file	arch/mvme88k/dev/mainbus.c
+file	arch/mvme88k/dev/memdevs.c			nvram | sram
 
 attach ie at pcctwo: ifnet, ether
 file    arch/mvme88k/dev/if_ie.c			ie

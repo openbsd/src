@@ -1,9 +1,6 @@
-/*	$OpenBSD: sysconreg.h,v 1.6 2004/04/24 19:51:48 miod Exp $ */
-
+/*	$OpenBSD: pcctwovar.h,v 1.1 2004/04/24 19:51:48 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
- * Copyright (c) 1999 Steve Murphree, Jr.
- * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,19 +24,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Map syscon interrupts a la PCC2
- */
-#define	SYSCON_VECT	0x50
-#define	SYSCON_NVEC	0x10
+#ifndef _MVME88K_PCCTWOVAR_H_
+#define _MVME88K_PCCTWOVAR_H_
 
-#define SYSCV_ABRT	0x02
-#define SYSCV_SYSF	0x03
-#define SYSCV_ACF 	0x04
-#define SYSCV_SCC 	0x05
-#define SYSCV_TIMER4    0x06
-#define SYSCV_TIMER3    0x07
-#define SYSCV_TIMER2    0x08
-#define SYSCV_TIMER1    0x09
+struct pcctwosoftc {
+	struct device		sc_dev;
 
-int sysconintr_establish(int, struct intrhand *);
+	paddr_t			sc_base;
+
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+};
+
+int pcctwointr_establish(int vec, struct intrhand *ih);
+
+#endif	/* _MVME88K_PCCTWOVAR_H_ */

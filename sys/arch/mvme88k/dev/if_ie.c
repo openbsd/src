@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.27 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.28 2004/04/24 19:51:48 miod Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -127,15 +127,16 @@ Mode of operation:
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/board.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
-#include "pcctwo.h"
-#include <mvme88k/dev/pcctworeg.h>
-#include <mvme88k/dev/pcctwofunc.h>
+
 #include <mvme88k/dev/if_ie.h>
 #include <mvme88k/dev/i82596.h>
-#include <machine/board.h>
+#include <mvme88k/dev/pcctworeg.h>
+#include <mvme88k/dev/pcctwovar.h>
 
 static struct mbuf *last_not_for_us;
 struct vm_map *ie_map; /* for obio */
@@ -226,12 +227,7 @@ struct ie_softc {
 #ifdef IEDEBUG
 	int sc_debug;
 #endif
-#if NMC > 0
-	struct mcreg *sc_mc;
-#endif
-#if NPCCTWO > 0
-	struct pcctworeg *sc_pcc2;
-#endif
+	struct pcctwosoftc	*sc_pcctwo;
 };
 
 void ie_obreset(struct ie_softc *);
@@ -350,9 +346,10 @@ iematch(parent, vcf, args)
 {
 	struct confargs *ca = args;
 
-	if (badvaddr((unsigned)IIOV(ca->ca_vaddr), 1)){
+	if (badvaddr(ca->ca_paddr, 1)) {
 		return(0);
 	}
+
 	return(1);
 }
 
@@ -396,9 +393,6 @@ ie_obrun(sc)
 {
 }
 
-/*
- * Taken almost exactly from Bill's if_is.c, then modified beyond recognition.
- */
 void
 ieattach(parent, self, aux)
 	struct device *parent, *self;
@@ -408,17 +402,17 @@ ieattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	extern void myetheraddr(u_char *);	/* should be elsewhere */
-	int     pri = ca->ca_ipl;
 	struct ieob *volatile ieo;
 	paddr_t pa;
 
+	sc->sc_pcctwo = (struct pcctwosoftc *)parent;
 	sc->reset_596 = ie_obreset;
 	sc->chan_attn = ie_obattend;
 	sc->run_596 = ie_obrun;
 	sc->memcopy = bcopy;
 	sc->memzero = bzero;
 	sc->sc_msize = etherlen;
-	sc->sc_reg = ca->ca_vaddr;
+	sc->sc_reg = (void *)ca->ca_paddr;
 	ieo = (struct ieob *volatile) sc->sc_reg;
 
         /* Are we the boot device? */
@@ -427,12 +421,17 @@ ieattach(parent, self, aux)
 
 	/* get the first available etherbuf */
 	sc->sc_maddr = etherbuf;	/* maddr = vaddr */
-	if (sc->sc_maddr == NULL) panic("ie: too many ethernet boards");
-	if (pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr, &pa) == FALSE)
-		panic("ie: pmap_extract");
-	sc->sc_iobase = (caddr_t)pa;	/* iobase = paddr (24 bit) */
+	if (sc->sc_maddr == NULL) {
+		printf(": too many ethernet boards\n");
+		return;
+	} else
+		etherbuf = NULL;	/* XXX */
 
-	/*printf("maddrP %x iobaseV %x\n", sc->sc_maddr, sc->sc_iobase);*/
+	if (pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr, &pa) == FALSE) {
+		printf(": pmap_extract() failed!\n");
+		return;
+	}
+	sc->sc_iobase = (caddr_t)pa;	/* iobase = paddr (24 bit) */
 
 	(sc->memzero)(sc->sc_maddr, sc->sc_msize);
 	sc->iscp = (struct ie_int_sys_conf_ptr *volatile)
@@ -441,7 +440,6 @@ ieattach(parent, self, aux)
 	    roundup((int)sc->iscp + sizeof(struct ie_int_sys_conf_ptr), 16);
 	sc->scp = (struct ie_sys_conf_ptr *)
 	    roundup((int)sc->scb + sizeof(struct ie_sys_ctl_block), 16);
-	/*printf("scpV %x iscpV %x scbV %x\n", sc->scp, sc->iscp, sc->scb);*/
 
 	sc->scp->ie_bus_use = 0x44;
 	pmap_extract(pmap_kernel(), (vaddr_t)sc->iscp, &pa);
@@ -478,19 +476,23 @@ ieattach(parent, self, aux)
 	sc->sc_ih.ih_fn = ieintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_wantframe = 0;
-	sc->sc_ih.ih_ipl = pri;
+	sc->sc_ih.ih_ipl = ca->ca_ipl;
+
 	sc->sc_failih.ih_fn = iefailintr;
 	sc->sc_failih.ih_arg = sc;
 	sc->sc_failih.ih_wantframe = 0;
-	sc->sc_failih.ih_ipl = pri;
+	sc->sc_failih.ih_ipl = ca->ca_ipl;
 
 	pcctwointr_establish(PCC2V_IE, &sc->sc_ih);
-	sc->sc_pcc2 = (struct pcctworeg *)ca->ca_master;
-	sc->sc_pcc2->pcc2_ieirq = pri | PCC2_SC_SNOOP |
-	    PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
 	pcctwointr_establish(PCC2V_IEFAIL, &sc->sc_failih);
-	sc->sc_pcc2->pcc2_iefailirq = pri | PCC2_IRQ_IEN |
-	    PCC2_IRQ_ICLR;
+
+	/* enable device interrupts */
+	bus_space_write_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
+	    PCCTWO_IEICR, PCC2_SC_SNOOP | PCC2_IRQ_IEN | PCC2_IRQ_ICLR |
+	      (ca->ca_ipl & PCC2_IRQ_IPL));
+	bus_space_write_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
+	    PCCTWO_IEBERR, PCC2_IRQ_IEN | PCC2_IRQ_ICLR |
+	      (ca->ca_ipl & PCC2_IRQ_IPL));
 
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 }
@@ -513,13 +515,23 @@ iewatchdog(ifp)
 
 int
 iefailintr(v)
-void *v;
+	void *v;
 {
 	struct ie_softc *sc = v;
 
-	sc->sc_pcc2->pcc2_ieirq |= PCC2_IRQ_ICLR;	/* safe: clear irq */
-	sc->sc_pcc2->pcc2_iefailirq |= PCC2_IRQ_ICLR;	/* clear failure */
-	sc->sc_pcc2->pcc2_ieerr = PCC2_IEERR_SCLR;	/* reset error */
+	/* safe: clear irq */
+	bus_space_write_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
+	    PCCTWO_IEICR, PCC2_IRQ_ICLR |
+	    bus_space_read_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
+	      PCCTWO_IEICR));
+	/* clear failure */
+	bus_space_write_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
+	    PCCTWO_IEBERR, PCC2_IRQ_ICLR |
+	    bus_space_read_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
+	      PCCTWO_IEBERR));
+	/* reset error */
+	bus_space_write_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
+	    PCCTWO_IEERR, PCC2_IEERR_SCLR);
 
 	iereset(sc);
 	return (1);
@@ -536,12 +548,15 @@ ieintr(v)
 	u_short status;
 
 	status = sc->scb->ie_status;
-/*printf("I");*/
 
 loop:
 	/* Ack interrupts FIRST in case we receive more during the ISR. */
 	ie_ack(sc, IE_ST_WHENCE & status);
-	sc->sc_pcc2->pcc2_ieirq |= PCC2_IRQ_ICLR;	/* clear irq */
+	/* clear irq */
+	bus_space_write_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
+	    PCCTWO_IEICR, PCC2_IRQ_ICLR |
+	    bus_space_read_1(sc->sc_pcctwo->sc_iot, sc->sc_pcctwo->sc_ioh,
+	      PCCTWO_IEICR));
 
 	if (status & (IE_ST_RECV | IE_ST_RNR)) {
 #ifdef IEDEBUG

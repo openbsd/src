@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.29 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.30 2004/04/24 19:51:47 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -86,16 +86,15 @@
 
 #include "pcctwo.h"
 #if NPCCTWO > 0
-#include <mvme88k/dev/pcctwofunc.h>
+#include <mvme88k/dev/pcctwovar.h>
 #include <mvme88k/dev/pcctworeg.h>
-extern struct vme2reg *sys_vme2;
 #endif
 
 #include "syscon.h"
 #if NSYSCON > 0
-#include <mvme88k/dev/sysconfunc.h>
 #include <mvme88k/dev/sysconreg.h>
 #endif
+
 #include <mvme88k/dev/vme.h>
 
 #include "bugtty.h"
@@ -134,8 +133,10 @@ int	sbc_statintr(void *);
 int	m188_clockintr(void *);
 int	m188_statintr(void *);
 
+#if NPCCTWO > 0
 u_int8_t prof_reset;
 u_int8_t stat_reset;
+#endif
 
 struct simplelock cio_lock;
 
@@ -236,11 +237,14 @@ sbc_initclock(void)
 	}
 
 	/* profclock */
-	sys_pcc2->pcc2_t1ctl = 0;
-	sys_pcc2->pcc2_t1cmp = pcc2_timer_us2lim(tick);
-	sys_pcc2->pcc2_t1count = 0;
-	sys_pcc2->pcc2_t1ctl = PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
-	sys_pcc2->pcc2_t1irq = prof_reset;
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1CTL) = 0;
+	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1CMP) =
+	    pcc2_timer_us2lim(tick);
+	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1COUNT) = 0;
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1CTL) =
+	    PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1ICR) =
+	    prof_reset;
 
 }
 
@@ -250,7 +254,8 @@ sbc_initclock(void)
 int
 sbc_clockintr(void *eframe)
 {
-	sys_pcc2->pcc2_t1irq = prof_reset;
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1ICR) =
+	    prof_reset;
 
 	intrcnt[M88K_CLK_IRQ]++;
 	hardclock(eframe);
@@ -283,11 +288,14 @@ sbc_initstatclock(void)
 		statvar >>= 1;
 
 	/* statclock */
-	sys_pcc2->pcc2_t2ctl = 0;
-	sys_pcc2->pcc2_t2cmp = pcc2_timer_us2lim(statint);
-	sys_pcc2->pcc2_t2count = 0;
-	sys_pcc2->pcc2_t2ctl = PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
-	sys_pcc2->pcc2_t2irq = stat_reset;
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) = 0;
+	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CMP) =
+	    pcc2_timer_us2lim(tick);
+	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2COUNT) = 0;
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) =
+	    PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2ICR) =
+	    stat_reset;
 
 	statmin = statint - (statvar >> 1);
 }
@@ -297,7 +305,8 @@ sbc_statintr(void *eframe)
 {
 	u_long newint, r, var;
 
-	sys_pcc2->pcc2_t2irq = stat_reset;
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2ICR) =
+	    stat_reset;
 
 	/* increment intr counter */
 	intrcnt[M88K_SCLK_IRQ]++;
@@ -315,11 +324,14 @@ sbc_statintr(void *eframe)
 	} while (r == 0);
 	newint = statmin + r;
 
-	sys_pcc2->pcc2_t2ctl = 0;
-	sys_pcc2->pcc2_t2cmp = pcc2_timer_us2lim(newint);
-	sys_pcc2->pcc2_t2count = 0;		/* should I? */
-	sys_pcc2->pcc2_t2irq = stat_reset;
-	sys_pcc2->pcc2_t2ctl = PCC2_TCTL_CEN | PCC2_TCTL_COC;
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) = 0;
+	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CMP) =
+	    pcc2_timer_us2lim(tick);
+	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2COUNT) = 0;
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2ICR) =
+	    stat_reset;
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) =
+	    PCC2_TCTL_CEN | PCC2_TCTL_COC;
 	return (1);
 }
 
@@ -375,9 +387,9 @@ m188_timer_init(unsigned period)
 	int counter;
 
 	/* make sure the counter range is proper. */
-	if ( period < 9 )
+	if (period < 9)
 		counter = 2;
-	else if ( period > 284421 )
+	else if (period > 284421)
 		counter = 65535;
 	else
 		counter	= period / 4.34;
@@ -396,7 +408,8 @@ m188_timer_init(unsigned period)
 
 	*((int *volatile)DART_CTUR) = counter / 256;	/* set counter MSB */
 	*((int *volatile)DART_CTLR) = counter % 256;	/* set counter LSB */
-	*((int *volatile)DART_IVR) = SYSCV_TIMER1;	/* set interrupt vec */
+	/* set interrupt vec */
+	*((int *volatile)DART_IVR) = SYSCON_VECT + SYSCV_TIMER1;
 
 	/* give the start counter/timer command */
 	/* (yes, this is supposed to be a read) */
@@ -417,7 +430,7 @@ m188_statintr(void *eframe)
 	intrcnt[M88K_SCLK_IRQ]++;
 
 	statclock((struct clockframe *)eframe);
-	write_cio(CIO_CSR1, CIO_GCB|CIO_CIP);  /* Ack the interrupt */
+	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
 
 	/*
 	 * Compute new randomized interval.  The intervals are uniformly
@@ -435,7 +448,7 @@ m188_statintr(void *eframe)
 	write_cio(CIO_CT1LSB, newint & 0xff);
 
 	/* Start CTC #1 running */
-	write_cio(CIO_CSR1, CIO_GCB|CIO_CIP);
+	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);
 
 	CIO_UNLOCK;
 	return (1);
@@ -566,31 +579,27 @@ m188_cio_init(unsigned p)
 void
 delay(int us)
 {
-
-#if NPCCTWO > 0
-	/*
-	 * On MVME187 and MVME197, we use the vme system controller for
-	 * the delay clock.
-	 * Do not go to the real timer until the vme device is attached.
-	 * We could directly access the chip, but oh well, who cares.
-	 */
-	if (sys_vme2 != NULL) {
-		sys_vme2->vme2_t1cmp = 0xffffffff;
-		sys_vme2->vme2_t1count = 0;
-		sys_vme2->vme2_tctl |= VME2_TCTL1_CEN;
-
-		while (sys_vme2->vme2_t1count < us)
-			;
-		sys_vme2->vme2_tctl &= ~VME2_TCTL1_CEN;
-	} else
-#endif
-
-	/*
-	 * If we can't use a real timer, use a tight loop.
-	 */
-	{
+	if (brdtyp == BRD_188) {
+		/*
+		 * Unable to use a real timer, use a tight loop.
+		 */
 		volatile int c = (25 * us) / 3;	/* XXX not accurate! */
 		while (--c > 0)
 			;
+	} else {
+		/*
+		 * On MVME187 and MVME197, use the VMEchip for the
+		 * delay clock.
+		 */
+		*(volatile u_int32_t *)(VME2_BASE + VME2_T1CMP) = 0xffffffff;
+		*(volatile u_int32_t *)(VME2_BASE + VME2_T1COUNT) = 0;
+		*(volatile u_int32_t *)(VME2_BASE + VME2_TCTL) |=
+		    VME2_TCTL1_CEN;
+
+		while ((*(volatile u_int32_t *)(VME2_BASE + VME2_T1COUNT)) <
+		    (u_int32_t)us)
+			;
+		*(volatile u_int32_t *)(VME2_BASE + VME2_TCTL) &=
+		    ~VME2_TCTL1_CEN;
 	}
 }

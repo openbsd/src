@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvramreg.h,v 1.6 2003/10/11 22:08:57 miod Exp $ */
+/*	$OpenBSD: nvramreg.h,v 1.7 2004/04/24 19:51:48 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,41 +59,31 @@
  *	1ff8-1fff	TOD clock
  */
 
-struct clockreg {
-	volatile u_char	cl_csr;		/* control register */
-	volatile u_char	cl_sec;		/* seconds (0..59; BCD) */
-	volatile u_char	cl_min;		/* minutes (0..59; BCD) */
-	volatile u_char	cl_hour;	/* hour (0..23; BCD) */
-	volatile u_char	cl_wday;	/* weekday (1..7) */
-	volatile u_char	cl_mday;	/* day in month (1..31; BCD) */
-	volatile u_char	cl_month;	/* month (1..12; BCD) */
-	volatile u_char	cl_year;	/* year (0..99; BCD) */
-};
+/*
+ * On MVME188, these offsets need shifting two bits, as they are 32 bit
+ * registers.
+ */
+#define	CLK_CSR		0		/* control register */
+#define	CLK_SEC		1		/* seconds (0..59; BCD) */
+#define	CLK_MIN		2		/* minutes (0..59; BCD) */
+#define	CLK_HOUR	3		/* hour (0..23; BCD) */
+#define	CLK_WDAY	4		/* weekday (1..7) */
+#define	CLK_DAY		5		/* day in month (1..31; BCD) */
+#define	CLK_MONTH	6		/* month (1..12; BCD) */
+#define	CLK_YEAR	7		/* year (0..99; BCD) */
+#define	CLK_NREG	8
 
-struct m188_clockreg {
-	volatile u_long	cl_csr;		/* control register */
-	volatile u_long	cl_sec;		/* seconds (0..59; BCD) */
-	volatile u_long	cl_min;		/* minutes (0..59; BCD) */
-	volatile u_long	cl_hour;	/* hour (0..23; BCD) */
-	volatile u_long	cl_wday;	/* weekday (1..7) */
-	volatile u_long	cl_mday;	/* day in month (1..31; BCD) */
-	volatile u_long	cl_month;	/* month (1..12; BCD) */
-	volatile u_long	cl_year;	/* year (0..99; BCD) */
-};
-
-/* bits in cl_csr */
+/* csr bits */
 #define	CLK_WRITE	0x80		/* want to write */
 #define	CLK_READ	0x40		/* want to read (freeze clock) */
 
 /*
- * Motorola chose the year `1900' as their base count.
- * XXX what happens when it wraps?
+ * Motorola chose the year `1900' as their base count. It has already
+ * wrapped by now...
  */
 #define	YEAR0	00
 
-#define NVRAMSIZE	0x8000
-#define SBC_NVRAM_TOD_OFF	0x1FF8 /* offset of tod in NVRAM space */
-#define M188_NVRAM_TOD_OFF	0x1FE0 /* offset of tod in NVRAM space */
-#define MK48T02_SIZE	2*1024
-#define MK48T08_SIZE	8*1024
-
+#define SBC_NVRAM_TOD_OFF	0x1ff8 /* offset of tod in NVRAM space */
+#define M188_NVRAM_TOD_OFF	0x1fe0 /* offset of tod in NVRAM space */
+#define MK48T02_SIZE	2 * 1024
+#define MK48T08_SIZE	8 * 1024
