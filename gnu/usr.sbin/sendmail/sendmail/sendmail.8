@@ -1,4 +1,4 @@
-.\" Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+.\" Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
 .\" Copyright (c) 1983, 1997 Eric P. Allman.  All rights reserved.
 .\" Copyright (c) 1988, 1991, 1993
@@ -9,9 +9,9 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: sendmail.8,v 8.49 2001/03/23 22:10:00 ca Exp $
+.\"     $Sendmail: sendmail.8,v 8.51 2002/05/24 15:42:13 ca Exp $
 .\"
-.Dd March 23, 2001
+.Dd May 24, 2002
 .Dt SENDMAIL 8
 .Os
 .Sh NAME
@@ -86,8 +86,7 @@ Also,
 the ``From:'' and ``Sender:''
 fields are examined for the name of the sender.
 .It Fl bd
-Run as a daemon.  This requires Berkeley
-.Tn IPC .
+Run as a daemon.
 .Nm Sendmail
 will fork and run in background
 listening on socket 25 for incoming

@@ -6,9 +6,9 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"	$Sendmail: mailstats.8,v 8.28 2002/03/19 00:23:23 gshapiro Exp $
+.\"	$Sendmail: mailstats.8,v 8.30 2002/04/12 00:42:33 ca Exp $
 .\"
-.Dd April 18, 2001
+.Dd April 12, 2002
 .Dt MAILSTATS 1
 .Os
 .Sh NAME
@@ -16,6 +16,7 @@
 .Nd display mail statistics
 .Sh SYNOPSIS
 .Nm mailstats
+.Op Fl c
 .Op Fl o
 .Op Fl p
 .Op Fl P
@@ -66,6 +67,10 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl C
 Read the specified file instead of the default
+.Nm sendmail
+configuration file.
+.It Fl c
+Try to use submit.cf instead of the default
 .Nm sendmail
 configuration file.
 .It Fl f

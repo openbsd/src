@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 2001/09/11 19:02:49 millert Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/06/03 17:25:46 millert Exp $
 
 LIB=	sm
 SRCS=	assert.c debug.c errstring.c exc.c heap.c match.c rpool.c strdup.c \
-	strerror.c strl.c clrerr.c fclose.c feof.c ferror.c fflush.c fget.c \
+	strl.c clrerr.c fclose.c feof.c ferror.c fflush.c fget.c \
 	fpos.c findfp.c flags.c fopen.c fprintf.c fpurge.c fput.c fread.c \
 	fscanf.c fseek.c fvwrite.c fwalk.c fwrite.c get.c makebuf.c put.c \
 	refill.c rewind.c setvbuf.c smstdio.c snprintf.c sscanf.c stdio.c \

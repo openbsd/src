@@ -6,7 +6,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	$Sendmail: sm_os_freebsd.h,v 1.10 2002/03/10 22:41:03 gshapiro Exp $
+ *	$Sendmail: sm_os_freebsd.h,v 1.11 2002/04/15 17:17:05 gshapiro Exp $
  */
 
 /*
@@ -31,11 +31,7 @@
 #endif
 
 #ifndef SM_CONF_SHM
-# ifdef __sparc64__
-#  define SM_CONF_SHM	0
-# else /* __sparc64__ */
-#  define SM_CONF_SHM	1
-# endif /* __sparc64__ */
+# define SM_CONF_SHM	1
 #endif /* SM_CONF_SHM */
 #ifndef SM_CONF_SEM
 # define SM_CONF_SEM	1

@@ -25,7 +25,7 @@ SM_UNUSED(static char copyright[]) =
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* ! lint */
 
-SM_RCSID("@(#)$Sendmail: main.c,v 8.876 2002/02/27 23:49:52 ca Exp $")
+SM_RCSID("@(#)$Sendmail: main.c,v 8.882 2002/05/10 16:20:55 ca Exp $")
 
 
 #if NETINET || NETINET6
@@ -642,6 +642,8 @@ main(argc, argv, envp)
 	(void) sm_signal(SIGPIPE, SIG_IGN);
 	OldUmask = umask(022);
 	FullName = getextenv("NAME");
+	if (FullName != NULL)
+		FullName = newstr(FullName);
 
 	/*
 	**  Initialize name server if it is going to be used.
@@ -2695,6 +2697,13 @@ main(argc, argv, envp)
 			/* NOTREACHED */
 			return -1;
 		}
+
+		/* set message size */
+		(void) sm_snprintf(buf, sizeof buf, "%ld",
+				   MainEnvelope.e_msgsize);
+		macdefine(&MainEnvelope.e_macro, A_TEMP,
+			  macid("{msg_size}"), buf);
+
 		Errors = savederrors;
 		MainEnvelope.e_flags |= savedflags;
 	}
@@ -2800,6 +2809,7 @@ finis(drop, cleanup, exitstat)
 	bool cleanup;
 	volatile int exitstat;
 {
+
 	/* Still want to process new timeouts added below */
 	sm_clear_events();
 	(void) sm_releasesignal(SIGALRM);

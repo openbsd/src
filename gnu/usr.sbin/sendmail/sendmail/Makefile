@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2002/04/18 00:49:28 millert Exp $
+#	$OpenBSD: Makefile,v 1.17 2002/06/03 17:25:46 millert Exp $
 
 PROG=	sendmail
 
@@ -30,7 +30,7 @@ ENVDEF+= -D_FFR_USE_SETLOGIN
 SRCS=	main.c alias.c arpadate.c bf.c collect.c conf.c control.c convtime.c \
 	daemon.c deliver.c domain.c envelope.c err.c headers.c macro.c map.c \
 	mci.c milter.c mime.c parseaddr.c queue.c readcf.c recipient.c \
-	savemail.c sasl.c sfsasl.c shmticklib.c sm_resolve.c srvrsmtp.c stab.c \
+	sasl.c savemail.c sfsasl.c shmticklib.c sm_resolve.c srvrsmtp.c stab.c \
 	stats.c sysexits.c timers.c tls.c trace.c udb.c usersmtp.c util.c \
 	version.c
 MAN=	aliases.5 mailq.8 newaliases.8 sendmail.8
