@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.20 1999/06/05 04:16:06 aaron Exp $
+.\"	$OpenBSD: ftpd.8,v 1.21 1999/06/14 00:16:56 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -100,6 +100,12 @@ for anonymous transfers, a directory matching the fully qualified name of
 the IP number the client connected to, and located inside
 .Pa ~ftp
 is used instead.
+.It Fl p
+Disable passive mode ftp connections.  This is useful if you are behind
+a firewall that refuses connections to arbitrary high numbered ports.
+Many ftp clients try passive mode first and do not always react gracefully
+to a server that refuses connections to the port it asked the client to
+connect to.
 .It Fl P
 Permit illegal port numbers or addresses for PORT command initiated connects.
 By default
@@ -315,10 +321,11 @@ and unwritable by anyone (mode 555).
 Make this directory owned by
 .Dq root
 and unwritable by anyone (mode 511).
-The program
+This directory is optional unless you have commands you wish
+the anonymous ftp user to be able to run (the
 .Xr ls 1
-must be present to support the list command.
-This program should be mode 111 (executable only).
+command exists as a builtin).
+Any programs in this directory should be mode 111 (executable only).
 .It Pa ~ftp/etc
 Make this directory owned by
 .Dq root
