@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_krbrlm.c,v 1.12 1997/12/22 15:02:06 art Exp $	*/
+/*	$OpenBSD: get_krbrlm.c,v 1.13 1998/02/20 02:51:35 art Exp $	*/
 /* $KTH: get_krbrlm.c,v 1.16 1997/05/02 01:26:22 assar Exp $ */
 
 /*
@@ -74,6 +74,8 @@ krb_get_lrealm(char *r, int n)
     
     if (n > 1)
 	return(KFAILURE);		/* Temporary restriction */
+
+    r[0] = '#';
     
     for (i = 0; krb_get_krbconf(i, file, sizeof(file)) == 0; i++)
 	if (krb_get_lrealm_f(r, n, file) == KSUCCESS)
