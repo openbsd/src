@@ -1,4 +1,4 @@
-#	$OpenBSD: na.phone,v 1.22 2001/07/13 20:32:15 mickey Exp $
+#	$OpenBSD: na.phone,v 1.23 2001/07/13 20:50:00 brad Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -94,7 +94,7 @@
 284::British Virgin Islands:
 289:Hamilton:Ontario:ON
 289:Mississauga:Ontario:ON
-289:Niagra Falls:Ontario:ON
+289:Niagara Falls:Ontario:ON
 297:Madisonville:Kentucky:KY
 301:Bethesda:Maryland:MD
 301:Hagerstown:Maryland:MD
@@ -691,7 +691,7 @@
 904:Jacksonville:Florida:FL
 905:Hamilton:Ontario:ON
 905:Mississauga:Ontario:ON
-905:Niagra Falls:Ontario:ON
+905:Niagara Falls:Ontario:ON
 906:Escanaba:Michigan:MI
 906:Marquette:Michigan:MI
 906:Sault Ste. Marie:Michigan:MI
