@@ -1,99 +1,16 @@
-#	$OpenBSD: GENERIC,v 1.25 1998/03/01 19:07:31 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.26 1998/03/25 11:49:56 pefo Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
 
 machine		arc mips
 
-# XXX when we have DDB
-#include "../../../conf/GENERIC"
-#	$OpenBSD: GENERIC,v 1.25 1998/03/01 19:07:31 niklas Exp $
-#
-#	Machine-independent option; used by all architectures for their
-#	GENERIC kernel
+include "../../../conf/GENERIC"
 
-#option		INSECURE	# default to secure
-
-option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight savings time used by RTC
-
-option		SWAPPAGER	# paging; REQUIRED
-option		DEVPAGER	# mmap() of devices
-
-#option		DDB		# in-kernel debugger
-#makeoption	DEBUG="-g"	# compile full symbol table
-option		DIAGNOSTIC	# internal consistency checks
-option		KTRACE		# system call tracing, a la ktrace(1)
-
-option		SYSVMSG		# System V-like message queues
-option		SYSVSEM		# System V-like semaphores
-option		SYSVSHM		# System V-like memory sharing
-#option		SHMMAXPGS=1024	# 1024 pages is the default
-
-option		COMPAT_09	# Kernel compatibility with NetBSD 0.9,
-option		COMPAT_10	# NetBSD 1.0,
-option		COMPAT_11	# NetBSD 1.1,
-option		COMPAT_43	# and 4.3BSD
-#option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
-
-option		LKM		# loadable kernel modules
-
-option		FFS		# UFS
-option		QUOTA		# UFS quotas
-#option		LFS		# log-structured file system
-option		EXT2FS		# Second Extended Filesystem
-option		MFS		# memory file system
-
-
-option		NFSCLIENT	# Network File System client
-option		NFSSERVER	# Network File System server
-
-option		CD9660		# ISO 9660 + Rock Ridge file system
-option		MSDOSFS		# MS-DOS file system
-option		FDESC		# /dev/fd
-option		FIFO		# FIFOs; RECOMMENDED
-option		KERNFS		# /kern
-option		NULLFS		# loopback file system
-option		PORTAL		# dynamically created filesystem objects
-option		PROCFS		# /proc
-option		UMAPFS		# NULLFS + uid and gid remapping
-option		UNION		# union file system
-
-#option		GATEWAY		# packet forwarding
-option		INET		# IP + ICMP + TCP + UDP
-option		IPSEC		# IPsec
-#option		NS		# XNS
-#option		NSIP		# XNS tunneling over IP
-#option		IPX		# IPX+SPX
-#option		IPXIP		# IPX tunneling over IP
-#option		ISO,TPIP	# OSI
-#option		EON		# OSI tunneling over IP
-#option		CCITT,LLC,HDLC	# X.25
-option		IPFILTER	# IP packet filter for security
-option		IPFILTER_LOG	# use /dev/ipl to log IPF
-option		PPP_BSDCOMP	# PPP BSD compression
-option		PPP_DEFLATE
-
-pseudo-device	loop	2	# network loopback
-pseudo-device	bpfilter 8	# packet filter
-pseudo-device	sl	2	# CSLIP
-pseudo-device	ppp	2	# PPP
-pseudo-device	tun	2	# network tunneling over tty
-pseudo-device	enc	1	# encryption device
-#pseudo-device	strip	1	# Starmode Radio IP interface
-
-pseudo-device	pty	64	# pseudo-terminals
-pseudo-device	tb	1	# tablet line discipline
-pseudo-device	vnd	4	# paging to files
-pseudo-device	ccd	4	# concatenated disk devices
-
-option		BOOT_CONFIG	# add support for boot -c
-#XXX end of include
 maxusers	32
 
 # MD options
 option		NATIVE_ELF	# Arc systems uses ELF as native format
-option		MDB		# mini-debugger
 
 # Specify storage configuration (its a joke..)
 config		bsd	swap generic
