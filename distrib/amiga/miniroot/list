@@ -1,19 +1,19 @@
-#	$OpenBSD: list,v 1.13 2002/04/29 17:13:38 deraadt Exp $
+#	$OpenBSD: list,v 1.14 2002/04/30 01:31:19 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Amiga extra's
-LINK	instbin			sbin/disklabel
-LINK	instbin			sbin/mount_msdos
-LINK	instbin			usr/bin/cksum usr/bin/sum
-LINK	instbin			usr/bin/grep usr/bin/egrep usr/bin/fgrep
-LINK	instbin			usr/bin/tset usr/bin/reset
-LINK	instbin			usr/bin/less usr/bin/more
+LINK	instbin				sbin/disklabel
+LINK	instbin				sbin/mount_msdos
+LINK	instbin				usr/bin/cksum usr/bin/sum
+LINK	instbin				usr/bin/grep usr/bin/egrep usr/bin/fgrep
+LINK	instbin				usr/bin/tset usr/bin/reset
+LINK	instbin				usr/bin/less usr/bin/more
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
 
 # copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
+SCRIPT	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV all
 
 TERMCAP	vt100,vt200,dumb		usr/share/misc/termcap
@@ -29,4 +29,4 @@ SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
 
 # and the installation tools
-SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -ks`/" < ${ARCHDIR}/../install.md > install.md
+SCRIPT	${ARCHDIR}/../install.md	install.md

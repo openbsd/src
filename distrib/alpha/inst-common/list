@@ -1,70 +1,70 @@
 #
-#	$OpenBSD: list,v 1.24 2002/04/29 17:13:38 deraadt Exp $
+#	$OpenBSD: list,v 1.25 2002/04/30 01:31:19 deraadt Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
-COPY	${OBJDIR}/raminst	raminst
-LINK	raminst			bin/cat
-LINK	raminst			bin/chmod bin/chgrp sbin/chown
-LINK	raminst			bin/cp
-LINK	raminst			bin/cpio
-LINK	raminst			bin/dd
-LINK	raminst			bin/df
-LINK	raminst			bin/ed
-#LINK	raminst			bin/expr
-LINK	raminst			bin/ln
-LINK	raminst			bin/ls
-LINK	raminst			bin/mkdir
-LINK	raminst			bin/mv
-LINK	raminst			bin/ksh bin/sh
-ARGVLINK ksh			-sh
-LINK	raminst			bin/rm
-LINK	raminst			bin/stty
-LINK	raminst			bin/sleep
-LINK	raminst			bin/tar
-LINK	raminst			sbin/disklabel
-LINK	raminst			sbin/dmesg
-LINK	raminst			sbin/hostname
-LINK	raminst			sbin/fsck
-LINK	raminst			sbin/halt
-#LINK	raminst			sbin/dhclient
-LINK	raminst			sbin/ifconfig
-LINK	raminst			sbin/init
-LINK	raminst			sbin/mknod
-LINK	raminst			sbin/mount
-#LINK	raminst			sbin/mount_cd9660
-LINK	raminst			sbin/mount_ffs
-LINK	raminst			sbin/mount_mfs
-LINK	raminst			sbin/newfs
-LINK	raminst			sbin/reboot
-LINK	raminst			sbin/route
-LINK	raminst			sbin/umount
-LINK	raminst			usr/bin/ftp
-LINK	raminst			usr/bin/egrep
-LINK	raminst			usr/bin/fgrep
-LINK	raminst			usr/bin/grep
-LINK	raminst			usr/bin/gzip
-LINK	raminst			usr/bin/less
-LINK	raminst			usr/bin/more
-LINK	raminst			usr/bin/sed
-LINK	raminst			usr/bin/pax
-#LINK	raminst			usr/mdec/installboot
+COPY	${OBJDIR}/raminst		raminst
+LINK	raminst				bin/cat
+LINK	raminst				bin/chmod bin/chgrp sbin/chown
+LINK	raminst				bin/cp
+LINK	raminst				bin/cpio
+LINK	raminst				bin/dd
+LINK	raminst				bin/df
+LINK	raminst				bin/ed
+#LINK	raminst				bin/expr
+LINK	raminst				bin/ln
+LINK	raminst				bin/ls
+LINK	raminst				bin/mkdir
+LINK	raminst				bin/mv
+LINK	raminst				bin/ksh bin/sh
+ARGVLINK ksh				-sh
+LINK	raminst				bin/rm
+LINK	raminst				bin/stty
+LINK	raminst				bin/sleep
+LINK	raminst				bin/tar
+LINK	raminst				sbin/disklabel
+LINK	raminst				sbin/dmesg
+LINK	raminst				sbin/hostname
+LINK	raminst				sbin/fsck
+LINK	raminst				sbin/halt
+#LINK	raminst				sbin/dhclient
+LINK	raminst				sbin/ifconfig
+LINK	raminst				sbin/init
+LINK	raminst				sbin/mknod
+LINK	raminst				sbin/mount
+#LINK	raminst				sbin/mount_cd9660
+LINK	raminst				sbin/mount_ffs
+LINK	raminst				sbin/mount_mfs
+LINK	raminst				sbin/newfs
+LINK	raminst				sbin/reboot
+LINK	raminst				sbin/route
+LINK	raminst				sbin/umount
+LINK	raminst				usr/bin/ftp
+LINK	raminst				usr/bin/egrep
+LINK	raminst				usr/bin/fgrep
+LINK	raminst				usr/bin/grep
+LINK	raminst				usr/bin/gzip
+LINK	raminst				usr/bin/less
+LINK	raminst				usr/bin/more
+LINK	raminst				usr/bin/sed
+LINK	raminst				usr/bin/pax
+#LINK	raminst				usr/mdec/installboot
 SPECIAL	/bin/rm raminst
 
 # copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
 # we need the contents of /usr/mdec XXX - no it's not necessary and won't fit.
-#COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot
-#COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec/bootxx
+#COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
+#COPY	${DESTDIR}/usr/mdec/bootxx		usr/mdec/bootxx
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/group		etc/group
+COPY	${DESTDIR}/etc/group			etc/group
 COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
 COPY	${CURDIR}/../../miniroot/services	etc/services
-COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
-TERMCAP	vt100,vt200,dumb		usr/share/misc/termcap
+COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
+TERMCAP	vt100,vt200,dumb			usr/share/misc/termcap
 
 # so DNS can work
-SYMLINK /tmp/resolv.conf.shadow		etc/resolv.conf
+SYMLINK /tmp/resolv.conf.shadow			etc/resolv.conf

@@ -1,12 +1,12 @@
-#	$OpenBSD: list,v 1.15 2002/04/29 17:13:39 deraadt Exp $
+#	$OpenBSD: list,v 1.16 2002/04/30 01:31:20 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
-LINK	instbin			sbin/disklabel
-LINK	instbin			usr/bin/grep usr/bin/egrep usr/bin/fgrep
-LINK	instbin			usr/bin/tset usr/bin/reset
-LINK	instbin			usr/bin/less usr/bin/more
-LINK	instbin			usr/sbin/installboot
+LINK	instbin				sbin/disklabel
+LINK	instbin				usr/bin/grep usr/bin/egrep usr/bin/fgrep
+LINK	instbin				usr/bin/tset usr/bin/reset
+LINK	instbin				usr/bin/less usr/bin/more
+LINK	instbin				usr/sbin/installboot
 SPECIAL /bin/rm instbin
 
 SRCDIRS	sys/arch/sparc/stand
@@ -15,12 +15,12 @@ SRCDIRS	sys/arch/sparc/stand
 SYMLINK	/tmp	var/tmp
 
 # copy the MAKEDEV script and make some devices
-SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${DESTDIR}/dev/MAKEDEV	 > dev/MAKEDEV
+SCRIPT	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
 # we need the contents of /usr/mdec (but not boot or binstall)
-COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
-SPECIAL	rm -f usr/mdec/binstall usr/mdec/installboot
+COPYDIR	${DESTDIR}/usr/mdec		usr/mdec
+SPECIAL	rm -f usr/mdec/binstall		usr/mdec/installboot
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
@@ -31,4 +31,4 @@ SYMLINK	/tmp/hosts			etc/hosts
 TERMCAP	vt100,vt220,dumb,sun		usr/share/misc/termcap
 
 # and the installation tools
-SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -ks`/" < ${ARCHDIR}/../install.md	 > install.md
+SCRIPT	${ARCHDIR}/../install.md	install.md
