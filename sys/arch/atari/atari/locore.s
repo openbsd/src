@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.12 1995/12/11 02:38:01 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.13 1995/12/16 21:40:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -598,7 +598,22 @@ _lev1intr:
 	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
 	jra	rei
 
-_lev7intr:	/* Should never occur */
+	/*
+	 * Should never occur, except when special hardware modification
+	 * is installed. In this case, one expects to be dropped into
+	 * the debugger.
+	 */
+_lev7intr:
+#ifdef DDB
+	/*
+	 * Note that the nmi has to be turned off while handling it because
+	 * the hardware modification has no de-bouncing logic....
+	 */
+	movb	SYSMASK_ADDR, sp@-	|  save current sysmask
+	movb	#0, 0xff8e01		|  disable all interrupts
+	trap	#15			|  drop into the debugger
+	movb	sp@+, SYSMASK_ADDR	|  restore sysmask
+#endif
 	addql	#1,_intrcnt+28		|  add another nmi interrupt
 	rte				|  all done
 

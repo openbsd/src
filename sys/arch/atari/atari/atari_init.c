@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.8 1995/08/17 20:31:31 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.9 1995/12/16 21:40:28 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -481,6 +481,13 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 		 * MFP (ipl6) and softints (ipl1).
 		 */
 		SCU->sys_mask = SCU_MFP | SCU_SCC | SCU_SYS_SOFT;
+#ifdef DDB
+		/*
+		 * This allows people with the correct hardware modification
+		 * to drop into the debugger from an NMI.
+		 */
+		SCU->sys_mask |= SCU_IRQ7;
+#endif
 	}
 	else machineid |= ATARI_FALCON;
 
