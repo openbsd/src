@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.12 2002/02/19 18:38:02 mpech Exp $	*/
+/*	$OpenBSD: timed.c,v 1.13 2002/02/19 18:57:42 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.12 $"
+#ident "$Revision: 1.13 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -351,9 +351,8 @@ main(int argc, char **argv)
 
 	/* choose a unique seed for random number generation */
 	(void)gettimeofday(&ntime, 0);
-	srandom(ntime.tv_sec + ntime.tv_usec);
 
-	sequence = random();     /* initial seq number */
+	sequence = arc4random();     /* initial seq number */
 
 #ifndef sgi
 	/* rounds kernel variable time to multiple of 5 ms. */
