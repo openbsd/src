@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.62 2002/02/19 21:11:22 miod Exp $
+.\" $OpenBSD: vpn.8,v 1.63 2002/05/23 09:30:35 mpech Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -697,16 +697,16 @@ range, such as when tunnelling private (RFC 1918) networks over the Internet,
 .Xr isakmpd 8
 or manual keying must be used.
 .Sh SEE ALSO
+.Xr openssl 1 ,
 .Xr enc 4 ,
 .Xr ipsec 4 ,
+.Xr keynote 4 ,
 .Xr options 4 ,
-.Xr pf.conf 5 ,
-.Xr pfctl 8 ,
-.Xr ipsecadm 8 ,
-.Xr sysctl 8 ,
-.Xr openssl 1 ,
-.Xr isakmpd 8 ,
 .Xr isakmpd.conf 5 ,
 .Xr isakmpd.policy 5 ,
-.Xr keynote 4 ,
-.Xr photurisd 8
+.Xr pf.conf 5 ,
+.Xr ipsecadm 8 ,
+.Xr isakmpd 8 ,
+.Xr pfctl 8 ,
+.Xr photurisd 8 ,
+.Xr sysctl 8
