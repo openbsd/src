@@ -1,4 +1,4 @@
-/* 	$OpenBSD: compat_util.c,v 1.6 2000/07/27 18:32:35 ericj Exp $	*/
+/* 	$OpenBSD: compat_util.c,v 1.7 2000/09/07 17:56:39 ericj Exp $	*/
 /* 	$NetBSD: compat_util.c,v 1.4 1996/03/14 19:31:45 christos Exp $	*/
 
 /*
@@ -152,7 +152,14 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 	else {
 		sz = &ptr[len] - buf;
 		*pbuf = stackgap_alloc(sgp, sz + 1);
-		error = copyout(buf, *pbuf, sz);
+		if (*pbuf == NULL) {
+			error = ENAMETOOLONG;
+			goto bad;
+		}
+		if ((error = copyout(buf, *pbuf, sz)) != 0) {
+			*pbuf = path;
+			goto bad;
+		}
 		free(buf, M_TEMP);
 	}
 
@@ -208,8 +215,13 @@ stackgap_alloc(sgp, sz)
         caddr_t *sgp;
         size_t sz;
 {
-        void *p = (void *) *sgp;
+	caddr_t nsgp;
 
-        *sgp += ALIGN(sz);
-        return p;
+	struct emul *e = curproc->p_emul;	/* XXX */
+	int sigsize = e->e_esigcode - e->e_sigcode;
+
+	nsgp = *sgp + ALIGN(sz);
+	if (nsgp > (((caddr_t)PS_STRINGS) - sigsize))
+		return NULL;
+	return (void *)nsgp;
 }
