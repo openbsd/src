@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.117 1999/10/03 04:22:42 deraadt Exp $
+#	$OpenBSD: rc,v 1.118 1999/10/06 04:41:46 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -330,15 +330,15 @@ fi
 
 # vi file recovery
 vidir=/var/tmp/vi.recover
-if [ -L $vidir ]; then
+if [ ! -e $vidir ]; then
+	mkdir $vidir
+	chmod 1777 $vidir
+elif [ -L $vidir ]; then
 	echo "Warning! $vidir is a symbolic link! (ignoring)"
 elif [ ! -O $vidir ]; then
 	echo "Warning! $vidir is not owned by root! (ignoring)"
 elif [ ! -d $vidir -a -e $vidir ]; then
 	echo "Warning!  $vidir is not a directory! (ignoring)"
-elif [ ! -d $vidir ]; then
-	mkdir $vidir
-	chmod 1777 $vidir
 else
 	vibackup=$vidir/vi.*
 	for i in $vibackup; do
