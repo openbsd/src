@@ -1,9 +1,11 @@
-/*	$OpenBSD: auconv.h,v 1.1 1997/10/07 14:07:46 niklas Exp $	*/
-/*	$NetBSD: auconv.h,v 1.2 1997/08/24 22:20:25 augustss Exp $	*/
+/*	$NetBSD: auconv.h,v 1.5 1999/11/01 18:12:19 augustss Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,8 +26,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -36,11 +38,29 @@
 
 /* Convert between signed and unsigned. */
 extern void change_sign8 __P((void *, u_char *, int));
-extern void change_sign16 __P((void *, u_char *, int));
+extern void change_sign16_le __P((void *, u_char *, int));
+extern void change_sign16_be __P((void *, u_char *, int));
 /* Convert between little and big endian. */
 extern void swap_bytes __P((void *, u_char *, int));
-extern void swap_bytes_change_sign16 __P((void *, u_char *, int));
-extern void change_sign16_swap_bytes __P((void *, u_char *, int));
+extern void swap_bytes_change_sign16_le __P((void *, u_char *, int));
+extern void swap_bytes_change_sign16_be __P((void *, u_char *, int));
+extern void change_sign16_swap_bytes_le __P((void *, u_char *, int));
+extern void change_sign16_swap_bytes_be __P((void *, u_char *, int));
 /* Byte expansion/contraction */
-extern void linear8_to_linear16 __P((void *, u_char *, int));
-extern void linear16_to_linear8 __P((void *, u_char *, int));
+extern void linear8_to_linear16_le __P((void *, u_char *, int));
+extern void linear8_to_linear16_be __P((void *, u_char *, int));
+extern void linear16_to_linear8_le __P((void *, u_char *, int));
+extern void linear16_to_linear8_be __P((void *, u_char *, int));
+
+/* backwards compat for now */
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define change_sign16 change_sign16_le
+#define change_sign16_swap_bytes swap_bytes_change_sign16_le
+#define swap_bytes_change_sign16 swap_bytes_change_sign16_le
+#define linear8_to_linear16 linear8_to_linear16_le
+#else
+#define change_sign16 change_sign16_be
+#define change_sign16_swap_bytes swap_bytes_change_sign16_be
+#define swap_bytes_change_sign16 swap_bytes_change_sign16_be
+#define linear8_to_linear16 linear8_to_linear16_be
+#endif
