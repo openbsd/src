@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.43 2000/12/30 21:56:44 angelos Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.44 2001/01/18 04:46:03 itojun Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.43 2000/12/30 21:56:44 angelos Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.44 2001/01/18 04:46:03 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -310,6 +310,7 @@ void	init_current_media __P((void));
  */
 void	in_status __P((int));
 void 	in_getaddr __P((char *, int));
+void 	in_getprefix __P((char *, int));
 #ifdef INET6
 void	in6_fillscopeid __P((struct sockaddr_in6 *sin6));
 void	in6_alias __P((struct in6_ifreq *));
@@ -340,7 +341,7 @@ const struct afswtch {
 	caddr_t af_addreq;
 } afs[] = {
 #define C(x) ((caddr_t) &x)
-	{ "inet", AF_INET, in_status, in_getaddr, NULL,
+	{ "inet", AF_INET, in_status, in_getaddr, in_getprefix,
 	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
 #ifdef INET6
 	{ "inet6", AF_INET6, in6_status, in6_getaddr, in6_getprefix,
@@ -1957,6 +1958,30 @@ in_getaddr(s, which)
 		else
 			errx(1, "%s: bad value", s);
 	}
+}
+
+void
+in_getprefix(plen, which)
+	char *plen;
+	int which;
+{
+	register struct sockaddr_in *sin = sintab[which];
+	register u_char *cp;
+	int len = strtol(plen, (char **)NULL, 10);
+
+	if ((len < 0) || (len > 32))
+		errx(1, "%s: bad value", plen);
+	sin->sin_len = sizeof(*sin);
+	if (which != MASK)
+		sin->sin_family = AF_INET;
+	if ((len == 0) || (len == 32)) {
+		memset(&sin->sin_addr, 0xff, sizeof(struct in_addr));
+		return;
+	}
+	memset((void *)&sin->sin_addr, 0x00, sizeof(sin->sin_addr));
+	for (cp = (u_char *)&sin->sin_addr; len > 7; len -= 8)
+		*cp++ = 0xff;
+	*cp = 0xff << (8 - len);
 }
 
 /*
