@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.36 2004/08/04 09:08:37 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.37 2004/08/04 13:16:14 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -110,8 +110,6 @@
  */
 #define BROKEN_MMU_MASK
 
-#undef	SHADOW_BATC		/* don't use BATCs for now XXX nivas */
-
 u_int max_cmmus;
 
 void m8820x_cmmu_init(void);
@@ -211,15 +209,7 @@ struct m8820x_cmmu {
 #define	DATA_CMMU	0x02
 	vaddr_t		cmmu_addr;	/* address range */
 	vaddr_t		cmmu_addr_mask;	/* address mask */
-#ifdef SHADOW_BATC
-	unsigned batc[BATC_MAX];
-#endif
 };
-
-#ifdef SHADOW_BATC
-/* CMMU(cpu,data) is the cmmu struct for the named cpu's indicated cmmu.  */
-#define CMMU(cpu, data) cpu_cmmu[(cpu)].pair[(data) ? DATA_CMMU : INST_CMMU]
-#endif
 
 /*
  * Structure for accessing MMUS properly
@@ -238,10 +228,6 @@ struct m8820x_cmmu m8820x_cmmu[MAX_CMMUS] = {
 	{ NULL, -1, INST_CMMU, 0, 0 },
 	{ NULL, -1, DATA_CMMU, 0, 0 }
 };
-
-struct cpu_cmmu {
-	struct m8820x_cmmu *pair[2];
-} cpu_cmmu[MAX_CPUS];
 
 unsigned int cmmu_shift;
 
@@ -655,19 +641,10 @@ m8820x_cmmu_init()
 	u_int32_t apr;
 	volatile unsigned *cr;
 
-	for (cpu = 0; cpu < max_cpus; cpu++) {
-		cpu_cmmu[cpu].pair[INST_CMMU] = 0;
-		cpu_cmmu[cpu].pair[DATA_CMMU] = 0;
-	}
-
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
 		if (m8820x_cmmu[cmmu_num].cmmu_type != NO_CMMU) {
 			cr = m8820x_cmmu[cmmu_num].cmmu_regs;
 			type = CMMU_TYPE(cr[CMMU_IDR]);
-
-			cpu_cmmu[m8820x_cmmu[cmmu_num].cmmu_cpu].
-			  pair[m8820x_cmmu[cmmu_num].cmmu_type] =
-			    &m8820x_cmmu[cmmu_num];
 
 			/*
 			 * Reset cache
@@ -696,16 +673,6 @@ m8820x_cmmu_init()
 			    ((0x00000 << PG_BITS) | CACHE_WT | CACHE_GLOBAL |
 			    CACHE_INH) & ~APR_V;
 
-#ifdef SHADOW_BATC
-			m8820x_cmmu[cmmu_num].batc[0] =
-			m8820x_cmmu[cmmu_num].batc[1] =
-			m8820x_cmmu[cmmu_num].batc[2] =
-			m8820x_cmmu[cmmu_num].batc[3] =
-			m8820x_cmmu[cmmu_num].batc[4] =
-			m8820x_cmmu[cmmu_num].batc[5] =
-			m8820x_cmmu[cmmu_num].batc[6] =
-			m8820x_cmmu[cmmu_num].batc[7] = 0;
-#endif
 			cr[CMMU_BWP0] = cr[CMMU_BWP1] =
 			cr[CMMU_BWP2] = cr[CMMU_BWP3] =
 			cr[CMMU_BWP4] = cr[CMMU_BWP5] =
@@ -885,13 +852,7 @@ m8820x_cmmu_set_pair_batc_entry(unsigned cpu, unsigned entry_no, unsigned value)
 	CMMU_LOCK;
 
 	m8820x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL, cpu, DATA_CMMU, 0);
-#ifdef SHADOW_BATC
-	CMMU(cpu,DATA_CMMU)->batc[entry_no] = value;
-#endif
 	m8820x_cmmu_set(CMMU_BWP(entry_no), value, MODE_VAL, cpu, INST_CMMU, 0);
-#ifdef SHADOW_BATC
-	CMMU(cpu,INST_CMMU)->batc[entry_no] = value;
-#endif
 
 	CMMU_UNLOCK;
 }
@@ -967,10 +928,6 @@ m8820x_cmmu_pmap_activate(unsigned cpu, unsigned uapr, u_int32_t i_batc[],
 		    MODE_VAL, cpu, INST_CMMU, 0);
 		m8820x_cmmu_set(CMMU_BWP(entry_no), d_batc[entry_no],
 		    MODE_VAL, cpu, DATA_CMMU, 0);
-#ifdef SHADOW_BATC
-		CMMU(cpu,INST_CMMU)->batc[entry_no] = i_batc[entry_no];
-		CMMU(cpu,DATA_CMMU)->batc[entry_no] = d_batc[entry_no];
-#endif
 	}
 
 	/*
@@ -1373,52 +1330,42 @@ m8820x_dma_cachectl_pa(paddr_t pa, psize_t size, int op)
 
 #ifdef DDB
 /*
- * Show (for debugging) how the given CMMU translates the given ADDRESS.
- * If cmmu == -1, the data cmmu for the current cpu is used.
- *
- * XXX this cmmu == -1 case does not work correctly on 4:1 and 8:1 systems.
+ * Show (for debugging) how the current CPU translates the given ADDRESS
+ * (as DATA).
  */
 void
 m8820x_cmmu_show_translation(unsigned address, unsigned supervisor_flag,
-    unsigned verbose_flag, int cmmu_num)
+    unsigned verbose_flag, int unused __attribute__ ((unused)))
 {
-	/*
-	 * A virtual address is split into three fields. Two are used as
-	 * indicies into tables (segment and page), and one is an offset into
-	 * a page of memory.
-	 */
-	vaddr_t va;
+	int cpu = cpu_number();
+	vaddr_t va = address;
+	int cmmu_num;
 	u_int32_t value;
 
 	/*
-	 * Find the correct CMMU if necessary...
+	 * Find the correct data CMMU.
 	 */
-	if (cmmu_num == -1) {
-		int cpu = cpu_number();
-
-		if (cpu_cmmu[cpu].pair[DATA_CMMU] == 0) {
-			db_printf("ack! can't figure my own data cmmu number.\n");
-			return;
-		}
-		cmmu_num = cpu_cmmu[cpu].pair[DATA_CMMU] - m8820x_cmmu;
-		if (verbose_flag)
-			db_printf("The data cmmu for cpu#%d is cmmu#%d.\n",
-			    0, cmmu_num);
-	} else if (cmmu_num < 0 || cmmu_num >= max_cmmus) {
-		db_printf("invalid cpu number [%d]... must be in range [0..%d]\n",
-		    cmmu_num, max_cmmus - 1);
-
+	for (cmmu_num = cpu << cmmu_shift;
+	    cmmu_num < (cpu + 1) << cmmu_shift; cmmu_num++) {
+		if (m8820x_cmmu[cmmu_num].cmmu_type != DATA_CMMU)
+			continue;
+		if (m8820x_cmmu[cmmu_num].cmmu_addr_mask == 0 ||
+		    (va & m8820x_cmmu[cmmu_num].cmmu_addr_mask) ==
+		     m8820x_cmmu[cmmu_num].cmmu_addr)
+			break;
+	}
+	if (cmmu_num == (cpu + 1) << cmmu_shift) {
+		db_printf("No matching cmmu for VA %08x\n", address);
 		return;
 	}
+
+	if (verbose_flag != 0)
+		db_printf("VA %08x is managed by CMMU#%d.\n",
+		    address, cmmu_num);
 
 	/*
 	 * Perform some sanity checks.
 	 */
-	if (m8820x_cmmu[cmmu_num].cmmu_type == NO_CMMU) {
-		db_printf("warning: cmmu %d is not alive.\n", cmmu_num);
-		return;
-	}
-
 	if (verbose_flag == 0) {
 		if ((m8820x_cmmu[cmmu_num].cmmu_regs[CMMU_SCTR] &
 		    CMMU_SCTR_SE) == 0)
@@ -1428,8 +1375,7 @@ m8820x_cmmu_show_translation(unsigned address, unsigned supervisor_flag,
 		int i;
 
 		for (i = 0; i < max_cmmus; i++)
-			if ((i == cmmu_num ||
-			     m8820x_cmmu[i].cmmu_type != NO_CMMU) &&
+			if (m8820x_cmmu[i].cmmu_type != NO_CMMU &&
 			    (verbose_flag > 1 ||
 			     (m8820x_cmmu[i].cmmu_regs[CMMU_SCTR] &
 			      CMMU_SCTR_SE) == 0)) {
@@ -1440,44 +1386,6 @@ m8820x_cmmu_show_translation(unsigned address, unsigned supervisor_flag,
 				     CMMU_SCTR_SE) ? "on":"OFF");
 			}
 	}
-
-	if (supervisor_flag)
-		value = m8820x_cmmu[cmmu_num].cmmu_regs[CMMU_SAPR];
-	else
-		value = m8820x_cmmu[cmmu_num].cmmu_regs[CMMU_UAPR];
-
-#ifdef SHADOW_BATC
-	/*
-	 * Check for a valid BATC translation.
-	 */
-	{
-		int i;
-		u_int32_t batc;
-		for (i = 0; i < 8; i++) {
-			batc = m8820x_cmmu[cmmu_num].batc[i];
-			if ((batc & BATC_V) == 0) {
-				if (verbose_flag > 1)
-					db_printf("cmmu #%d batc[%d] invalid.\n",
-					    cmmu_num, i);
-			} else {
-				db_printf("cmmu#%d batc[%d] v%08x p%08x",
-				    cmmu_num, i,
-				    ((batc >> BATC_VSHIFT) & BATC_BLKMASK),
-				    ((batc >> BATC_PSHIFT) & BATC_BLKMASK));
-				if (batc & BATC_SO)
-					db_printf(", supervisor");
-				if (batc & BATC_WT)
-					db_printf(", wt.th");
-				if (batc & BATC_GLOBAL)
-					db_printf(", global");
-				if (batc & BATC_INH)
-					db_printf(", cache inhibit");
-				if (batc & BATC_PROT)
-					db_printf(", write protect");
-			}
-		}
-	}
-#endif	/* SHADOW_BATC */
 
 	/*
 	 * Ask for a CMMU probe and report its result.
@@ -1491,49 +1399,62 @@ m8820x_cmmu_show_translation(unsigned address, unsigned supervisor_flag,
 		    supervisor_flag ? CMMU_PROBE_SUPER : CMMU_PROBE_USER;
 		ssr = cmmu_regs[CMMU_SSR];
 
-		if (verbose_flag > 1)
+		switch (verbose_flag) {
+		case 2:
 			db_printf("probe of 0x%08x returns ssr=0x%08x\n",
 			    address, ssr);
-		if (ssr & CMMU_SSR_V)
-			db_printf("PROBE of 0x%08x returns phys=0x%x",
-			    address, cmmu_regs[CMMU_SAR]);
-		else
-			db_printf("PROBE fault at 0x%x", cmmu_regs[CMMU_PFAR]);
-		if (ssr & CMMU_SSR_CE)
-			db_printf(", copyback err");
-		if (ssr & CMMU_SSR_BE)
-			db_printf(", bus err");
-		if (ssr & CACHE_WT)
-			db_printf(", writethrough");
-		if (ssr & CMMU_SSR_SO)
-			db_printf(", sup prot");
-		if (ssr & CACHE_GLOBAL)
-			db_printf(", global");
-		if (ssr & CACHE_INH)
-			db_printf(", cache inhibit");
-		if (ssr & CMMU_SSR_M)
-			db_printf(", modified");
-		if (ssr & CMMU_SSR_U)
-			db_printf(", used");
-		if (ssr & CMMU_SSR_PROT)
-			db_printf(", write prot");
-		if (ssr & CMMU_SSR_BH)
-			db_printf(", BATC");
-		db_printf(".\n");
+			/* FALLTHROUGH */
+		case 1:
+			if (ssr & CMMU_SSR_V)
+				db_printf("PROBE of 0x%08x returns phys=0x%x",
+				    address, cmmu_regs[CMMU_SAR]);
+			else
+				db_printf("PROBE fault at 0x%x",
+				    cmmu_regs[CMMU_PFAR]);
+			if (ssr & CMMU_SSR_CE)
+				db_printf(", copyback err");
+			if (ssr & CMMU_SSR_BE)
+				db_printf(", bus err");
+			if (ssr & CACHE_WT)
+				db_printf(", writethrough");
+			if (ssr & CMMU_SSR_SO)
+				db_printf(", sup prot");
+			if (ssr & CACHE_GLOBAL)
+				db_printf(", global");
+			if (ssr & CACHE_INH)
+				db_printf(", cache inhibit");
+			if (ssr & CMMU_SSR_M)
+				db_printf(", modified");
+			if (ssr & CMMU_SSR_U)
+				db_printf(", used");
+			if (ssr & CMMU_SSR_PROT)
+				db_printf(", write prot");
+			if (ssr & CMMU_SSR_BH)
+				db_printf(", BATC");
+			db_printf(".\n");
+			break;
+		}
 	}
 
 	/*
 	 * Interpret area descriptor.
 	 */
-	{
-		if (verbose_flag > 1) {
-			db_printf("CMMU#%d", cmmu_num);
-			db_printf(" %cAPR is 0x%08x\n",
-				  supervisor_flag ? 'S' : 'U', value);
-		}
+
+	if (supervisor_flag)
+		value = m8820x_cmmu[cmmu_num].cmmu_regs[CMMU_SAPR];
+	else
+		value = m8820x_cmmu[cmmu_num].cmmu_regs[CMMU_UAPR];
+
+	switch (verbose_flag) {
+	case 2:
+		db_printf("CMMU#%d", cmmu_num);
+		db_printf(" %cAPR is 0x%08x\n",
+		    supervisor_flag ? 'S' : 'U', value);
+		/* FALLTHROUGH */
+	case 1:
 		db_printf("CMMU#%d", cmmu_num);
 		db_printf(" %cAPR: SegTbl: 0x%x000p",
-			  supervisor_flag ? 'S' : 'U', PG_PFNUM(value));
+		    supervisor_flag ? 'S' : 'U', PG_PFNUM(value));
 		if (value & CACHE_WT)
 			db_printf(", WTHRU");
 		if (value & CACHE_GLOBAL)
@@ -1543,18 +1464,15 @@ m8820x_cmmu_show_translation(unsigned address, unsigned supervisor_flag,
 		if (value & APR_V)
 			db_printf(", VALID");
 		db_printf("\n");
-
-		/* if not valid, done now */
-		if ((value & APR_V) == 0) {
-			db_printf("<would report an error, valid bit not set>\n");
-
-			return;
-		}
-
-		value &= PG_FRAME;	/* now point to seg page */
+		break;
 	}
 
-	va = address;
+	if ((value & APR_V) == 0) {
+		db_printf("VA 0x%08x -> apr 0x%08x not valid\n", va, value);
+		return;
+	}
+
+	value &= PG_FRAME;	/* now point to seg page */
 
 	/*
 	 * Walk segment and page tables to find our page.
@@ -1568,32 +1486,38 @@ m8820x_cmmu_show_translation(unsigned address, unsigned supervisor_flag,
 		value |= SDTIDX(va) * sizeof(sdt_entry_t);
 
 		if (badwordaddr((vaddr_t)value)) {
-			db_printf("ERROR: unable to access page at 0x%08x.\n", value);
+			db_printf("VA 0x%08x -> segment table @0x%08x not accessible\n",
+			    va, value);
 			return;
 		}
 
 		sdt = *(sdt_entry_t *)value;
-		if (verbose_flag > 1)
+		switch (verbose_flag) {
+		case 2:
 			db_printf("SEG DESC @0x%x is 0x%08x\n", value, sdt);
-		db_printf("SEG DESC @0x%x: PgTbl: 0x%x000",
-		    value, PG_PFNUM(sdt));
-		if (sdt & CACHE_WT)
-			db_printf(", WTHRU");
-		if (sdt & SG_SO)
-			db_printf(", S-PROT");
-		if (sdt & CACHE_GLOBAL)
-			db_printf(", GLOBAL");
-		if (sdt & CACHE_INH)
-			db_printf(", $INHIBIT");
-		if (sdt & SG_PROT)
-			db_printf(", W-PROT");
-		if (sdt & SG_V)
-			db_printf(", VALID");
-		db_printf(".\n");
+			/* FALLTHROUGH */
+		case 1:
+			db_printf("SEG DESC @0x%x: PgTbl: 0x%x000",
+			    value, PG_PFNUM(sdt));
+			if (sdt & CACHE_WT)
+				db_printf(", WTHRU");
+			if (sdt & SG_SO)
+				db_printf(", S-PROT");
+			if (sdt & CACHE_GLOBAL)
+				db_printf(", GLOBAL");
+			if (sdt & CACHE_INH)
+				db_printf(", $INHIBIT");
+			if (sdt & SG_PROT)
+				db_printf(", W-PROT");
+			if (sdt & SG_V)
+				db_printf(", VALID");
+			db_printf(".\n");
+			break;
+		}
 
-		/* if not valid, done now */
 		if ((sdt & SG_V) == 0) {
-			db_printf("<would report an error, STD entry not valid>\n");
+			db_printf("VA 0x%08x -> segment entry 0x%8x @0x%08x not valid\n",
+			    va, sdt, value);
 			return;
 		}
 
@@ -1609,54 +1533,50 @@ m8820x_cmmu_show_translation(unsigned address, unsigned supervisor_flag,
 		value |= PDTIDX(va) * sizeof(pt_entry_t);
 
 		if (badwordaddr((vaddr_t)value)) {
-			db_printf("error: unable to access page at 0x%08x.\n", value);
-
+			db_printf("VA 0x%08x -> page table entry @0x%08x not accessible\n",
+			    va, value);
 			return;
 		}
 
 		pte = *(pt_entry_t *)value;
-		if (verbose_flag > 1)
+		switch (verbose_flag) {
+		case 2:
 			db_printf("PAGE DESC @0x%x is 0x%08x.\n", value, pte);
-		db_printf("PAGE DESC @0x%x: page @%x000",
-			  value, PG_PFNUM(pte));
-		if (pte & PG_W)
-			db_printf(", WIRE");
-		if (pte & CACHE_WT)
-			db_printf(", WTHRU");
-		if (pte & PG_SO)
-			db_printf(", S-PROT");
-		if (pte & CACHE_GLOBAL)
-			db_printf(", GLOBAL");
-		if (pte & CACHE_INH)
-			db_printf(", $INHIBIT");
-		if (pte & PG_M)
-			db_printf(", MOD");
-		if (pte & PG_U)
-			db_printf(", USED");
-		if (pte & PG_PROT)
-			db_printf(", W-PROT");
-		if (pte & PG_V)
-			db_printf(", VALID");
-		db_printf(".\n");
+			/* FALLTHROUGH */
+		case 1:
+			db_printf("PAGE DESC @0x%x: page @%x000",
+			    value, PG_PFNUM(pte));
+			if (pte & PG_W)
+				db_printf(", WIRE");
+			if (pte & CACHE_WT)
+				db_printf(", WTHRU");
+			if (pte & PG_SO)
+				db_printf(", S-PROT");
+			if (pte & CACHE_GLOBAL)
+				db_printf(", GLOBAL");
+			if (pte & CACHE_INH)
+				db_printf(", $INHIBIT");
+			if (pte & PG_M)
+				db_printf(", MOD");
+			if (pte & PG_U)
+				db_printf(", USED");
+			if (pte & PG_PROT)
+				db_printf(", W-PROT");
+			if (pte & PG_V)
+				db_printf(", VALID");
+			db_printf(".\n");
+			break;
+		}
 
-		/* if not valid, done now */
 		if ((pte & PG_V) == 0) {
-			db_printf("<would report an error, PTE entry not valid>\n");
+			db_printf("VA 0x%08x -> page table entry 0x%08x @0x%08x not valid\n",
+			    va, pte, value);
 			return;
 		}
 
-		value = ptoa(PG_PFNUM(pte));
-		if (verbose_flag)
-			db_printf("will follow to byte %d of page at 0x%x...\n",
-			    va & PAGE_MASK, value);
-		value |= (va & PAGE_MASK);
-
-		if (badwordaddr((vaddr_t)value)) {
-			db_printf("error: unable to access page at 0x%08x.\n", value);
-			return;
-		}
+		value = ptoa(PG_PFNUM(pte)) | (va & PAGE_MASK);
 	}
 
-	db_printf("WORD at 0x%x is 0x%08x.\n", value, *(unsigned *)value);
+	db_printf("VA 0x%08x -> PA 0x%08x\n", va, value);
 }
 #endif /* DDB */
