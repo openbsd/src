@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.18 1998/08/08 05:27:59 downsj Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.19 1998/09/08 11:03:15 pefo Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -79,6 +79,16 @@ Xreinit(cmd, disk, mbr, tt, offset)
 
 	/* Fix up start/length fields */
 	PRT_fix_BN(disk, &mbr->part[3]);
+
+#if defined(__powerpc__)
+	/* Now fix up for the MS-DOS boot partition on PowerPC. */
+	mbr->part[0].flag = DOSACTIVE;	/* Boot from dos part */
+	mbr->part[3].flag = 0;
+	mbr->part[3].ns += mbr->part[3].bs;
+	mbr->part[3].bs = mbr->part[0].bs + mbr->part[0].ns;
+	mbr->part[3].ns -= mbr->part[3].bs;
+	PRT_fix_CHS(disk, &mbr->part[3]);
+#endif
 
 	/* Tell em we did something */
 	printf("In memory copy is initialized to:\n");

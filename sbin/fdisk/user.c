@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.12 1997/12/23 23:53:02 deraadt Exp $	*/
+/*	$OpenBSD: user.c,v 1.13 1998/09/08 11:03:16 pefo Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -95,6 +95,15 @@ USER_init(disk, tt)
 	/* Fix up start/length fields */
 	PRT_fix_BN(disk, &tt->part[3]);
 
+#if defined(__powerpc__)
+	/* Now fix up for the MS-DOS boot partition on PowerPC. */
+	tt->part[0].flag = DOSACTIVE;  /* Boot from dos part */
+	tt->part[3].flag = 0;
+	tt->part[3].ns += tt->part[3].bs;
+	tt->part[3].bs = tt->part[0].bs + tt->part[0].ns;
+	tt->part[3].ns -= tt->part[3].bs;
+	PRT_fix_CHS(disk, &tt->part[3]);
+#endif
 	/* Write sector 0 */
 	printf("\a\n"
 	   "\t-----------------------------------------------------\n"
