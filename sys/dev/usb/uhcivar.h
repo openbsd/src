@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhcivar.h,v 1.9 2000/07/04 11:44:23 fgsch Exp $ */
-/*	$NetBSD: uhcivar.h,v 1.28 2000/04/06 23:44:21 augustss Exp $	*/
+/*	$OpenBSD: uhcivar.h,v 1.10 2000/11/08 18:10:38 aaron Exp $ */
+/*	$NetBSD: uhcivar.h,v 1.32 2000/08/13 16:18:09 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -141,10 +141,14 @@ typedef struct uhci_softc {
 	usb_dma_t sc_dma;
 	struct uhci_vframe sc_vframes[UHCI_VFRAMELIST_COUNT];
 
-	uhci_soft_qh_t *sc_ctl_start;	/* dummy QH for control */
-	uhci_soft_qh_t *sc_ctl_end;	/* last control QH */
+	uhci_soft_qh_t *sc_lctl_start;	/* dummy QH for low speed control */
+	uhci_soft_qh_t *sc_lctl_end;	/* last control QH */
+	uhci_soft_qh_t *sc_hctl_start;	/* dummy QH for high speed control */
+	uhci_soft_qh_t *sc_hctl_end;	/* last control QH */
 	uhci_soft_qh_t *sc_bulk_start;	/* dummy QH for bulk */
 	uhci_soft_qh_t *sc_bulk_end;	/* last bulk transfer */
+	uhci_soft_qh_t *sc_last_qh;	/* dummy QH at the end */
+	u_int32_t sc_loops;		/* number of QHs that wants looping */
 
 	uhci_soft_td_t *sc_freetds;	/* TD free list */
 	uhci_soft_qh_t *sc_freeqhs;	/* QH free list */
@@ -177,10 +181,10 @@ typedef struct uhci_softc {
 	device_ptr_t sc_child;		/* /dev/usb# device */
 } uhci_softc_t;
 
-usbd_status	uhci_init __P((uhci_softc_t *));
-int		uhci_intr __P((void *));
+usbd_status	uhci_init(uhci_softc_t *);
+int		uhci_intr(void *);
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-int		uhci_detach __P((uhci_softc_t *, int));
-int		uhci_activate __P((device_ptr_t, enum devact));
+int		uhci_detach(uhci_softc_t *, int);
+int		uhci_activate(device_ptr_t, enum devact);
 #endif
 

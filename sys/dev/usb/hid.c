@@ -1,5 +1,5 @@
-/*	$OpenBSD: hid.c,v 1.8 2000/07/04 11:44:21 fgsch Exp $ */
-/*	$NetBSD: hid.c,v 1.14 2000/04/06 22:58:32 augustss Exp $	*/
+/*	$OpenBSD: hid.c,v 1.9 2000/11/08 18:10:37 aaron Exp $ */
+/*	$NetBSD: hid.c,v 1.16 2000/06/01 14:28:57 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -60,7 +60,7 @@ extern int usbdebug;
 #define DPRINTFN(n,x)
 #endif
 
-Static void hid_clear_local __P((struct hid_item *));
+Static void hid_clear_local(struct hid_item *);
 
 #define MAXUSAGE 100
 struct hid_data {
@@ -77,8 +77,7 @@ struct hid_data {
 };
 
 Static void
-hid_clear_local(c)
-	struct hid_item *c;
+hid_clear_local(struct hid_item *c)
 {
 
 	c->usage = 0;
@@ -94,10 +93,7 @@ hid_clear_local(c)
 }
 
 struct hid_data *
-hid_start_parse(d, len, kindset)
-	void *d;
-	int len;
-	int kindset;
+hid_start_parse(void *d, int len, int kindset)
 {
 	struct hid_data *s;
 
@@ -110,8 +106,7 @@ hid_start_parse(d, len, kindset)
 }
 
 void
-hid_end_parse(s)
-	struct hid_data *s;
+hid_end_parse(struct hid_data *s)
 {
 
 	while (s->cur.next != NULL) {
@@ -123,9 +118,7 @@ hid_end_parse(s)
 }
 
 int
-hid_get_item(s, h)
-	struct hid_data *s;
-	struct hid_item *h;
+hid_get_item(struct hid_data *s, struct hid_item *h)
 {
 	struct hid_item *c = &s->cur;
 	unsigned int bTag, bType, bSize;
@@ -374,11 +367,7 @@ hid_get_item(s, h)
 }
 
 int
-hid_report_size(buf, len, k, idp)
-	void *buf;
-	int len;
-	enum hid_kind k;
-	u_int8_t *idp;
+hid_report_size(void *buf, int len, enum hid_kind k, u_int8_t *idp)
 {
 	struct hid_data *d;
 	struct hid_item h;
@@ -399,13 +388,8 @@ hid_report_size(buf, len, k, idp)
 }
 
 int
-hid_locate(desc, size, u, k, loc, flags)
-	void *desc;
-	int size;
-	u_int32_t u;
-	enum hid_kind k;
-	struct hid_location *loc;
-	u_int32_t *flags;
+hid_locate(void *desc, int size, u_int32_t u, enum hid_kind k,
+	   struct hid_location *loc, u_int32_t *flags)
 {
 	struct hid_data *d;
 	struct hid_item h;
@@ -426,9 +410,7 @@ hid_locate(desc, size, u, k, loc, flags)
 }
 
 u_long
-hid_get_data(buf, loc)
-	u_char *buf;
-	struct hid_location *loc;
+hid_get_data(u_char *buf, struct hid_location *loc)
 {
 	u_int hpos = loc->pos;
 	u_int hsize = loc->size;
@@ -455,10 +437,7 @@ hid_get_data(buf, loc)
 }
 
 int
-hid_is_collection(desc, size, usage)
-	void *desc;
-	int size;
-	u_int32_t usage;
+hid_is_collection(void *desc, int size, u_int32_t usage)
 {
 	struct hid_data *hd;
 	struct hid_item hi;

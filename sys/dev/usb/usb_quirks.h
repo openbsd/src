@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_quirks.h,v 1.5 2000/07/04 11:44:25 fgsch Exp $ */
-/*	$NetBSD: usb_quirks.h,v 1.10 1999/11/18 23:32:31 augustss Exp $	*/
+/*	$OpenBSD: usb_quirks.h,v 1.6 2000/11/08 18:10:39 aaron Exp $ */
+/*	$NetBSD: usb_quirks.h,v 1.15 2000/10/24 14:56:09 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
 /*
@@ -41,16 +41,19 @@
 
 struct usbd_quirks {
 	u_int32_t uq_flags;	/* Device problems: */
-#define UQ_NO_SET_PROTO	0x01	/* cannot handle SET PROTOCOL. */
-#define UQ_SWAP_UNICODE	0x02	/* has some Unicode strings swapped. */
-#define UQ_MS_REVZ	0x04	/* mouse has Z-axis reversed */
-#define UQ_NO_STRINGS	0x08	/* string descriptors are broken. */
-#define UQ_BAD_ADC	0x10	/* bad audio spec version number. */
-#define UQ_BUS_POWERED	0x20	/* device is bus powered, despite claim */
-#define UQ_BAD_AUDIO	0x40	/* device claims audio class, but isn't */
-#define UQ_SPUR_BUT_UP	0x80	/* spurious mouse button up events */
+#define UQ_NO_SET_PROTO	0x0001	/* cannot handle SET PROTOCOL. */
+#define UQ_SWAP_UNICODE	0x0002	/* has some Unicode strings swapped. */
+#define UQ_MS_REVZ	0x0004	/* mouse has Z-axis reversed */
+#define UQ_NO_STRINGS	0x0008	/* string descriptors are broken. */
+#define UQ_BAD_ADC	0x0010	/* bad audio spec version number. */
+#define UQ_BUS_POWERED	0x0020	/* device is bus powered, despite claim */
+#define UQ_BAD_AUDIO	0x0040	/* device claims audio class, but isn't */
+#define UQ_SPUR_BUT_UP	0x0080	/* spurious mouse button up events */
+#define UQ_NO_XU	0x0100	/* audio device has broken extension unit */
+#define UQ_ASSUME_CM_OVER_DATA 0x0200 /* modem device breaks on cm over data */
+#define UQ_POWER_CLAIM	0x0400	/* hub lies about power status */
 };
 
 extern struct usbd_quirks usbd_no_quirk;
 
-struct usbd_quirks *usbd_find_quirk __P((usb_device_descriptor_t *));
+struct usbd_quirks *usbd_find_quirk(usb_device_descriptor_t *);

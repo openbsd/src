@@ -1,5 +1,5 @@
-/*	$NetBSD: ums.c,v 1.44 2000/06/01 14:29:01 augustss Exp $	*/
-/*	$OpenBSD: ums.c,v 1.2 2000/09/07 22:17:48 matthieu Exp $ */
+/*	$OpenBSD: ums.c,v 1.3 2000/11/08 18:10:38 aaron Exp $ */
+/*	$NetBSD: ums.c,v 1.45 2000/10/08 20:52:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ USB_ATTACH(ums)
 				hid_input, &loc_btn, 0))
 			break;
 	sc->nbuttons = i - 1;
-	sc->sc_loc_btn = malloc(sizeof(struct hid_location)*sc->nbuttons, 
+	sc->sc_loc_btn = malloc(sizeof(struct hid_location) * sc->nbuttons, 
 				M_USBDEV, M_NOWAIT);
 	if (!sc->sc_loc_btn) {
 		printf("%s: no memory\n", USBDEVNAME(sc->sc_dev));
@@ -269,8 +269,8 @@ USB_ATTACH(ums)
 	}
 
 	printf("%s: %d button%s%s\n", USBDEVNAME(sc->sc_dev),
-	       sc->nbuttons, sc->nbuttons == 1 ? "" : "s", 
-	       sc->flags & UMS_Z ? " and Z dir." : "");
+	    sc->nbuttons, sc->nbuttons == 1 ? "" : "s",
+	    sc->flags & UMS_Z ? " and Z dir." : "");
 
 	for (i = 1; i <= sc->nbuttons; i++)
 		hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, i),

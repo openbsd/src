@@ -1,5 +1,5 @@
-/*	$OpenBSD: umodem.c,v 1.4 2000/07/04 11:44:24 fgsch Exp $ */
-/*	$NetBSD: umodem.c,v 1.27 2000/04/14 14:21:55 augustss Exp $	*/
+/*	$OpenBSD: umodem.c,v 1.5 2000/11/08 18:10:38 aaron Exp $ */
+/*	$NetBSD: umodem.c,v 1.31 2000/10/22 08:20:09 explorer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,25 +115,22 @@ struct umodem_softc {
 	u_char			sc_dying;	/* disconnecting */
 };
 
-Static void	*umodem_get_desc
-		__P((usbd_device_handle dev, int type, int subtype));
-Static usbd_status umodem_set_comm_feature
-		__P((struct umodem_softc *sc, int feature, int state));
-Static usbd_status umodem_set_line_coding
-		__P((struct umodem_softc *sc, usb_cdc_line_state_t *state));
+Static void	*umodem_get_desc(usbd_device_handle dev, int type, int subtype);
+Static usbd_status umodem_set_comm_feature(struct umodem_softc *sc,
+					   int feature, int state);
+Static usbd_status umodem_set_line_coding(struct umodem_softc *sc,
+					  usb_cdc_line_state_t *state);
 
-Static void	umodem_get_caps	__P((usbd_device_handle, int *, int *));
+Static void	umodem_get_caps(usbd_device_handle, int *, int *);
 
-Static void	umodem_get_status
-		__P((void *, int portno, u_char *lsr, u_char *msr));
-Static void	umodem_set	__P((void *, int, int, int));
-Static void	umodem_dtr	__P((struct umodem_softc *, int));
-Static void	umodem_rts	__P((struct umodem_softc *, int));
-Static void	umodem_break	__P((struct umodem_softc *, int));
-Static void	umodem_set_line_state __P((struct umodem_softc *));
-Static int	umodem_param	__P((void *, int, struct termios *));
-Static int	umodem_ioctl	__P((void *, int, u_long, caddr_t, int,
-				     struct proc *));
+Static void	umodem_get_status(void *, int portno, u_char *lsr, u_char *msr);
+Static void	umodem_set(void *, int, int, int);
+Static void	umodem_dtr(struct umodem_softc *, int);
+Static void	umodem_rts(struct umodem_softc *, int);
+Static void	umodem_break(struct umodem_softc *, int);
+Static void	umodem_set_line_state(struct umodem_softc *);
+Static int	umodem_param(void *, int, struct termios *);
+Static int	umodem_ioctl(void *, int, u_long, caddr_t, int, struct proc *);
 
 Static struct ucom_methods umodem_methods = {
 	umodem_get_status,
@@ -153,7 +150,7 @@ USB_MATCH(umodem)
 	USB_MATCH_START(umodem, uaa);
 	usb_interface_descriptor_t *id;
 	int cm, acm;
-	
+
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 
@@ -163,7 +160,7 @@ USB_MATCH(umodem)
 	    id->bInterfaceSubClass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
 	    id->bInterfaceProtocol != UIPROTO_CDC_AT)
 		return (UMATCH_NONE);
-	
+
 	umodem_get_caps(uaa->device, &cm, &acm);
 	if (!(cm & USB_CDC_CM_DOES_CM) ||
 	    !(cm & USB_CDC_CM_OVER_DATA) ||
@@ -262,17 +259,20 @@ USB_ATTACH(umodem)
 		goto bad;
 	}
 
-	if (sc->sc_cm_cap & USB_CDC_CM_OVER_DATA) {
-		err = umodem_set_comm_feature(sc, UCDC_ABSTRACT_STATE,
-					      UCDC_DATA_MULTIPLEXED);
-		if (err) {
-			printf("%s: could not set data multiplex mode\n",
-			       USBDEVNAME(sc->sc_dev));
-			goto bad;
-		}
+	if (usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_ASSUME_CM_OVER_DATA) {
 		sc->sc_cm_over_data = 1;
+	} else {
+		if (sc->sc_cm_cap & USB_CDC_CM_OVER_DATA) {
+			err = umodem_set_comm_feature(sc, UCDC_ABSTRACT_STATE,
+						      UCDC_DATA_MULTIPLEXED);
+			if (err) {
+				printf("%s: could not set data multiplex mode\n",
+				       USBDEVNAME(sc->sc_dev));
+				goto bad;
+			}
+			sc->sc_cm_over_data = 1;
+		}
 	}
-
 	sc->sc_dtr = -1;
 
 	uca.portno = UCOM_UNK_PORTNO;
@@ -280,7 +280,7 @@ USB_ATTACH(umodem)
 	uca.ibufsize = UMODEMIBUFSIZE;
 	uca.obufsize = UMODEMOBUFSIZE;
 	uca.ibufsizepad = UMODEMIBUFSIZE;
-	uca.obufsizepad = UMODEMOBUFSIZE;
+	uca.opkthdrlen = 0;
 	uca.device = sc->sc_udev;
 	uca.iface = sc->sc_data_iface;
 	uca.methods = &umodem_methods;
@@ -300,9 +300,7 @@ USB_ATTACH(umodem)
 }
 
 void
-umodem_get_caps(dev, cm, acm)
-	usbd_device_handle dev;
-	int *cm, *acm;
+umodem_get_caps(usbd_device_handle dev, int *cm, int *acm)
 {
 	usb_cdc_cm_descriptor_t *cmd;
 	usb_cdc_acm_descriptor_t *cad;
@@ -325,10 +323,7 @@ umodem_get_caps(dev, cm, acm)
 } 
 
 void
-umodem_get_status(addr, portno, lsr, msr)
-	void *addr;
-	int portno;
-	u_char *lsr, *msr;
+umodem_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 {
 	DPRINTF(("umodem_get_status:\n"));
 
@@ -339,10 +334,7 @@ umodem_get_status(addr, portno, lsr, msr)
 }
 
 int
-umodem_param(addr, portno, t)
-	void *addr;
-	int portno;
-	struct termios *t;
+umodem_param(void *addr, int portno, struct termios *t)
 {
 	struct umodem_softc *sc = addr;
 	usbd_status err;
@@ -386,13 +378,8 @@ umodem_param(addr, portno, t)
 }
 
 int
-umodem_ioctl(addr, portno, cmd, data, flag, p)
-	void *addr;
-	int portno;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
+	     struct proc *p)
 {
 	struct umodem_softc *sc = addr;
 	int error = 0;
@@ -423,9 +410,7 @@ umodem_ioctl(addr, portno, cmd, data, flag, p)
 }
 
 void
-umodem_dtr(sc, onoff)
-	struct umodem_softc *sc;
-	int onoff;
+umodem_dtr(struct umodem_softc *sc, int onoff)
 {
 	DPRINTF(("umodem_modem: onoff=%d\n", onoff));
 
@@ -437,9 +422,7 @@ umodem_dtr(sc, onoff)
 }
 
 void
-umodem_rts(sc, onoff)
-	struct umodem_softc *sc;
-	int onoff;
+umodem_rts(struct umodem_softc *sc, int onoff)
 {
 	DPRINTF(("umodem_modem: onoff=%d\n", onoff));
 
@@ -451,8 +434,7 @@ umodem_rts(sc, onoff)
 }
 
 void
-umodem_set_line_state(sc)
-	struct umodem_softc *sc;
+umodem_set_line_state(struct umodem_softc *sc)
 {
 	usb_device_request_t req;
 	int ls;
@@ -470,9 +452,7 @@ umodem_set_line_state(sc)
 }
 
 void
-umodem_break(sc, onoff)
-	struct umodem_softc *sc;
-	int onoff;
+umodem_break(struct umodem_softc *sc, int onoff)
 {
 	usb_device_request_t req;
 
@@ -491,11 +471,7 @@ umodem_break(sc, onoff)
 }
 
 void
-umodem_set(addr, portno, reg, onoff)
-	void *addr;
-	int portno;
-	int reg;
-	int onoff;
+umodem_set(void *addr, int portno, int reg, int onoff)
 {
 	struct umodem_softc *sc = addr;
 
@@ -515,9 +491,7 @@ umodem_set(addr, portno, reg, onoff)
 }
 
 usbd_status
-umodem_set_line_coding(sc, state)
-	struct umodem_softc *sc;
-	usb_cdc_line_state_t *state;
+umodem_set_line_coding(struct umodem_softc *sc, usb_cdc_line_state_t *state)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -550,10 +524,7 @@ umodem_set_line_coding(sc, state)
 }
 
 void *
-umodem_get_desc(dev, type, subtype)
-	usbd_device_handle dev;
-	int type;
-	int subtype;
+umodem_get_desc(usbd_device_handle dev, int type, int subtype)
 {
 	usb_descriptor_t *desc;
 	usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
@@ -572,10 +543,7 @@ umodem_get_desc(dev, type, subtype)
 }
 
 usbd_status
-umodem_set_comm_feature(sc, feature, state)
-	struct umodem_softc *sc;
-	int feature;
-	int state;
+umodem_set_comm_feature(struct umodem_softc *sc, int feature, int state)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -602,9 +570,7 @@ umodem_set_comm_feature(sc, feature, state)
 }
 
 int
-umodem_activate(self, act)
-	device_ptr_t self;
-	enum devact act;
+umodem_activate(device_ptr_t self, enum devact act)
 {
 	struct umodem_softc *sc = (struct umodem_softc *)self;
 	int rv = 0;

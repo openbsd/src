@@ -1,5 +1,5 @@
-/*	$OpenBSD: ulpt.c,v 1.4 2000/07/04 11:44:24 fgsch Exp $ */
-/*	$NetBSD: ulpt.c,v 1.36 2000/04/14 14:12:11 augustss Exp $	*/
+/*	$OpenBSD: ulpt.c,v 1.5 2000/11/08 18:10:38 aaron Exp $ */
+/*	$NetBSD: ulpt.c,v 1.38 2000/06/01 14:29:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -144,14 +144,14 @@ Static struct cdevsw ulpt_cdevsw = {
 };
 #endif
 
-void ulpt_disco __P((void *));
+void ulpt_disco(void *);
 
-int ulpt_do_write __P((struct ulpt_softc *, struct uio *uio, int));
-int ulpt_status __P((struct ulpt_softc *));
-void ulpt_reset __P((struct ulpt_softc *));
-int ulpt_statusmsg __P((u_char, struct ulpt_softc *));
+int ulpt_do_write(struct ulpt_softc *, struct uio *uio, int);
+int ulpt_status(struct ulpt_softc *);
+void ulpt_reset(struct ulpt_softc *);
+int ulpt_statusmsg(u_char, struct ulpt_softc *);
 
-void ieee1284_print_id __P((char *));
+void ieee1284_print_id(char *);
 
 #define	ULPTUNIT(s)	(minor(s) & 0x1f)
 #define	ULPTFLAGS(s)	(minor(s) & 0xe0)
@@ -275,9 +275,7 @@ USB_ATTACH(ulpt)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-ulpt_activate(self, act)
-	device_ptr_t self;
-	enum devact act;
+ulpt_activate(device_ptr_t self, enum devact act)
 {
 	struct ulpt_softc *sc = (struct ulpt_softc *)self;
 
@@ -341,8 +339,7 @@ USB_DETACH(ulpt)
 }
 
 int
-ulpt_status(sc)
-	struct ulpt_softc *sc;
+ulpt_status(struct ulpt_softc *sc)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -362,8 +359,7 @@ ulpt_status(sc)
 }
 
 void
-ulpt_reset(sc)
-	struct ulpt_softc *sc;
+ulpt_reset(struct ulpt_softc *sc)
 {
 	usb_device_request_t req;
 
@@ -380,11 +376,7 @@ ulpt_reset(sc)
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-ulptopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+ulptopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	u_char flags = ULPTFLAGS(dev);
 	struct ulpt_softc *sc;
@@ -441,9 +433,7 @@ ulptopen(dev, flag, mode, p)
 }
 
 int
-ulpt_statusmsg(status, sc)
-	u_char status;
-	struct ulpt_softc *sc;
+ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 {
 	u_char new;
 
@@ -462,11 +452,7 @@ ulpt_statusmsg(status, sc)
 }
 
 int
-ulptclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+ulptclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ulpt_softc *sc;
 
@@ -486,10 +472,7 @@ ulptclose(dev, flag, mode, p)
 }
 
 int
-ulpt_do_write(sc, uio, flags)
-	struct ulpt_softc *sc;
-	struct uio *uio;
-	int flags;
+ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 {
 	u_int32_t n;
 	int error = 0;
@@ -526,10 +509,7 @@ ulpt_do_write(sc, uio, flags)
 }
 
 int
-ulptwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+ulptwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct ulpt_softc *sc;
 	int error;
@@ -547,12 +527,7 @@ ulptwrite(dev, uio, flags)
 }
 
 int
-ulptioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ulptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error = 0;
 
@@ -570,8 +545,7 @@ ulptioctl(dev, cmd, data, flag, p)
  * Print select parts of a IEEE 1284 device ID.
  */
 void
-ieee1284_print_id(str)
-	char *str;
+ieee1284_print_id(char *str)
 {
 	char *p, *q;
 

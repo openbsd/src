@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdi_util.h,v 1.6 2000/07/04 11:44:26 fgsch Exp $ */
-/*	$NetBSD: usbdi_util.h,v 1.19 1999/11/18 23:32:37 augustss Exp $	*/
+/*	$OpenBSD: usbdi_util.h,v 1.7 2000/11/08 18:10:39 aaron Exp $ */
+/*	$NetBSD: usbdi_util.h,v 1.22 2000/06/01 14:37:52 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.h,v 1.9 1999/11/17 22:33:50 n_hibma Exp $	*/
 
 /*
@@ -39,57 +39,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-usbd_status	usbd_get_desc __P((usbd_device_handle dev, int type, 
-				   int index, int len, void *desc));
-usbd_status	usbd_get_config_desc __P((usbd_device_handle, int, 
-					  usb_config_descriptor_t *));
-usbd_status	usbd_get_config_desc_full __P((usbd_device_handle, int, 
-					       void *, int));
-usbd_status	usbd_get_device_desc __P((usbd_device_handle dev,
-					  usb_device_descriptor_t *d));
-usbd_status	usbd_set_address __P((usbd_device_handle dev, int addr));
-usbd_status	usbd_get_port_status __P((usbd_device_handle, 
-				      int, usb_port_status_t *));
-usbd_status	usbd_set_hub_feature __P((usbd_device_handle dev, int));
-usbd_status	usbd_clear_hub_feature __P((usbd_device_handle, int));
-usbd_status	usbd_set_port_feature __P((usbd_device_handle dev, int, int));
-usbd_status	usbd_clear_port_feature __P((usbd_device_handle, int, int));
-usbd_status	usbd_get_device_status __P((usbd_device_handle,usb_status_t*));
-usbd_status	usbd_get_hub_status __P((usbd_device_handle dev,
-					 usb_hub_status_t *st));
-usbd_status	usbd_set_protocol __P((usbd_interface_handle dev, int report));
-usbd_status	usbd_get_report_descriptor
-	__P((usbd_device_handle dev, int ifcno, int repid, int size, void *d));
-struct usb_hid_descriptor *usbd_get_hid_descriptor 
-	__P((usbd_interface_handle ifc));
-usbd_status	usbd_set_report 
-	__P((usbd_interface_handle iface,int type,int id,void *data,int len));
-usbd_status	usbd_set_report_async
-	__P((usbd_interface_handle iface,int type,int id,void *data,int len));
-usbd_status	usbd_get_report 
-	__P((usbd_interface_handle iface,int type,int id,void *data,int len));
-usbd_status	usbd_set_idle 
-	__P((usbd_interface_handle iface, int duration, int id));
-usbd_status	usbd_alloc_report_desc
-	__P((usbd_interface_handle ifc, void **descp, int *sizep,
-	     usb_malloc_type mem));
-usbd_status	usbd_get_config
-	__P((usbd_device_handle dev, u_int8_t *conf));
-usbd_status	usbd_get_string_desc
-	__P((usbd_device_handle dev, int sindex, int langid, 
-	     usb_string_descriptor_t *sdesc));
-void		usbd_delay_ms __P((usbd_device_handle, u_int));
+usbd_status	usbd_get_desc(usbd_device_handle dev, int type, 
+			      int index, int len, void *desc);
+usbd_status	usbd_get_config_desc(usbd_device_handle, int, 
+				     usb_config_descriptor_t *);
+usbd_status	usbd_get_config_desc_full(usbd_device_handle, int, void *, int);
+usbd_status	usbd_get_device_desc(usbd_device_handle dev,
+				     usb_device_descriptor_t *d);
+usbd_status	usbd_set_address(usbd_device_handle dev, int addr);
+usbd_status	usbd_get_port_status(usbd_device_handle, 
+				     int, usb_port_status_t *);
+usbd_status	usbd_set_hub_feature(usbd_device_handle dev, int);
+usbd_status	usbd_clear_hub_feature(usbd_device_handle, int);
+usbd_status	usbd_set_port_feature(usbd_device_handle dev, int, int);
+usbd_status	usbd_clear_port_feature(usbd_device_handle, int, int);
+usbd_status	usbd_get_device_status(usbd_device_handle,usb_status_t*);
+usbd_status	usbd_get_hub_status(usbd_device_handle, usb_hub_status_t *);
+usbd_status	usbd_set_protocol(usbd_interface_handle dev, int report);
+usbd_status	usbd_get_report_descriptor(usbd_device_handle dev, int ifcno,
+					   int repid, int size, void *d);
+struct usb_hid_descriptor *usbd_get_hid_descriptor(usbd_interface_handle ifc);
+usbd_status	usbd_set_report(usbd_interface_handle iface, int type, int id,
+				void *data,int len);
+usbd_status	usbd_set_report_async(usbd_interface_handle iface, int type,
+				      int id, void *data, int len);
+usbd_status	usbd_get_report(usbd_interface_handle iface, int type, int id,
+				void *data, int len);
+usbd_status	usbd_set_idle(usbd_interface_handle iface, int duration,int id);
+usbd_status	usbd_alloc_report_desc(usbd_interface_handle ifc, void **descp,
+				       int *sizep, usb_malloc_type mem);
+usbd_status	usbd_get_config(usbd_device_handle dev, u_int8_t *conf);
+usbd_status	usbd_get_string_desc(usbd_device_handle dev, int sindex,
+				     int langid,usb_string_descriptor_t *sdesc);
+void		usbd_delay_ms(usbd_device_handle, u_int);
 
 
-usbd_status usbd_set_config_no
-	__P((usbd_device_handle dev, int no, int msg));
-usbd_status usbd_set_config_index
-	__P((usbd_device_handle dev, int index, int msg));
+usbd_status usbd_set_config_no(usbd_device_handle dev, int no, int msg);
+usbd_status usbd_set_config_index(usbd_device_handle dev, int index, int msg);
 
-usbd_status usbd_bulk_transfer
-	__P((usbd_xfer_handle xfer, usbd_pipe_handle pipe, u_int16_t flags,
-	     u_int32_t timeout, void *buf, u_int32_t *size, char *lbl));
+usbd_status usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
+			       u_int16_t flags, u_int32_t timeout, void *buf,
+			       u_int32_t *size, char *lbl);
 
-void usb_detach_wait __P((device_ptr_t));
-void usb_detach_wakeup __P((device_ptr_t));
+void usb_detach_wait(device_ptr_t);
+void usb_detach_wakeup(device_ptr_t);
 

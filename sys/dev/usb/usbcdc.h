@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbcdc.h,v 1.3 2000/07/04 11:44:25 fgsch Exp $ */
-/*	$NetBSD: usbcdc.h,v 1.5 1999/11/18 23:32:32 augustss Exp $	*/
+/*	$OpenBSD: usbcdc.h,v 1.4 2000/11/08 18:10:39 aaron Exp $ */
+/*	$NetBSD: usbcdc.h,v 1.7 2000/05/30 10:10:18 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbcdc.h,v 1.7 1999/11/17 22:33:48 n_hibma Exp $	*/
 
 /*

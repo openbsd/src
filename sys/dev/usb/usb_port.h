@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.28 2000/03/30 08:53:31 augustss Exp $	*/
+/*	$OpenBSD: usb_port.h,v 1.19 2000/11/08 18:10:39 aaron Exp $ */
+/*	$NetBSD: usb_port.h,v 1.35 2000/09/23 04:32:23 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include "opt_usbverbose.h"
 
 #ifdef USB_DEBUG
+#define UKBD_DEBUG 1
 #define UHID_DEBUG 1
 #define OHCI_DEBUG 1
 #define UGEN_DEBUG 1
@@ -69,6 +70,7 @@
 #define UZCOM_DEBUG 1
 #define URIO_DEBUG 1
 #define UFTDI_DEBUG 1
+#define USCANNER_DEBUG 1
 #define Static
 #else
 #define Static static
@@ -105,10 +107,10 @@ typedef int usb_malloc_type;
 #define logprintf printf
 
 #define USB_DECLARE_DRIVER(dname)  \
-int __CONCAT(dname,_match) __P((struct device *, struct cfdata *, void *)); \
-void __CONCAT(dname,_attach) __P((struct device *, struct device *, void *)); \
-int __CONCAT(dname,_detach) __P((struct device *, int)); \
-int __CONCAT(dname,_activate) __P((struct device *, enum devact)); \
+int __CONCAT(dname,_match)(struct device *, struct cfdata *, void *); \
+void __CONCAT(dname,_attach)(struct device *, struct device *, void *); \
+int __CONCAT(dname,_detach)(struct device *, int); \
+int __CONCAT(dname,_activate)(struct device *, enum devact); \
 \
 extern struct cfdriver __CONCAT(dname,_cd); \
 \
@@ -162,7 +164,7 @@ __CONCAT(dname,_detach)(self, flags) \
 	if (unit >= __CONCAT(dname,_cd).cd_ndevs) \
 		return (ENXIO); \
 	sc = __CONCAT(dname,_cd).cd_devs[unit]; \
-	if (!sc) \
+	if (sc == NULL) \
 		return (ENXIO)
 
 #define USB_GET_SC(dname, unit, sc) \
@@ -176,6 +178,7 @@ __CONCAT(dname,_detach)(self, flags) \
  * OpenBSD
  */
 #ifdef USB_DEBUG
+#define UKBD_DEBUG 1
 #define UHID_DEBUG 1
 #define OHCI_DEBUG 1
 #define UGEN_DEBUG 1
@@ -194,6 +197,7 @@ __CONCAT(dname,_detach)(self, flags) \
 #define UZCOM_DEBUG 1
 #define URIO_DEBUG 1
 #define UFTDI_DEBUG 1
+#define USCANNER_DEBUG 1
 #endif
 
 #define Static
@@ -221,16 +225,6 @@ __CONCAT(dname,_detach)(self, flags) \
 #define	memset(d, v, l)		bzero((d),(l))
 #define bswap32(x)		swap32(x)
 #define bswap16(x)		swap16(x)
-
-/*
- * The UHCI/OHCI controllers are little endian, so on big endian machines
- * the data strored in memory needs to be swapped.
- */
-
-#if defined(letoh32)
-#define le32toh(x) letoh32(x)
-#define le16toh(x) letoh16(x)
-#endif
 
 #define usb_kthread_create1	kthread_create
 #define usb_kthread_create	kthread_create_deferred
@@ -266,7 +260,7 @@ typedef int usb_malloc_type;
 #define change_sign16_le change_sign16
 
 #define realloc usb_realloc
-void *usb_realloc __P((void *, u_int, int, int));
+void *usb_realloc(void *, u_int, int, int);
 
 extern int cold;
 
@@ -291,10 +285,10 @@ typedef char usb_callout_t;
 #define usb_uncallout(h, f, d) untimeout((f), (d))
 
 #define USB_DECLARE_DRIVER(dname)  \
-int __CONCAT(dname,_match) __P((struct device *, void *, void *)); \
-void __CONCAT(dname,_attach) __P((struct device *, struct device *, void *)); \
-int __CONCAT(dname,_detach) __P((struct device *, int)); \
-int __CONCAT(dname,_activate) __P((struct device *, enum devact)); \
+int __CONCAT(dname,_match)(struct device *, void *, void *); \
+void __CONCAT(dname,_attach)(struct device *, struct device *, void *); \
+int __CONCAT(dname,_detach)(struct device *, int); \
+int __CONCAT(dname,_activate)(struct device *, enum devact); \
 \
 struct cfdriver __CONCAT(dname,_cd) = { \
 	NULL, #dname, DV_DULL \
@@ -350,7 +344,7 @@ __CONCAT(dname,_detach)(self, flags) \
 	if (unit >= __CONCAT(dname,_cd).cd_ndevs) \
 		return (ENXIO); \
 	sc = __CONCAT(dname,_cd).cd_devs[unit]; \
-	if (!sc) \
+	if (sc == NULL) \
 		return (ENXIO)
 
 #define USB_GET_SC(dname, unit, sc) \
@@ -459,7 +453,7 @@ __CONCAT(dname,_detach)(device_t self)
 
 #define USB_GET_SC_OPEN(dname, unit, sc) \
 	sc = devclass_get_softc(__CONCAT(dname,_devclass), unit); \
-	if (!sc) \
+	if (sc == NULL) \
 		return (ENXIO)
 
 #define USB_GET_SC(dname, unit, sc) \

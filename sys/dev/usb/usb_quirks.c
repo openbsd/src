@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_quirks.c,v 1.6 2000/07/04 11:44:25 fgsch Exp $ */
-/*	$NetBSD: usb_quirks.c,v 1.24 2000/03/27 12:33:58 augustss Exp $	*/
+/*	$OpenBSD: usb_quirks.c,v 1.7 2000/11/08 18:10:39 aaron Exp $ */
+/*	$NetBSD: usb_quirks.c,v 1.31 2000/10/24 14:57:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -58,26 +58,30 @@ Static struct usbd_quirk_entry {
 	struct usbd_quirks quirks;
 } usb_quirks[] = {
  { USB_VENDOR_KYE, USB_PRODUCT_KYE_NICHE,	    0x100, { UQ_NO_SET_PROTO}},
- { USB_VENDOR_INSIDEOUT,USB_PRODUCT_INSIDEOUT_EDGEPORT4, 
+ { USB_VENDOR_INSIDEOUT, USB_PRODUCT_INSIDEOUT_EDGEPORT4, 
    						    0x094, { UQ_SWAP_UNICODE}},
  { USB_VENDOR_BTC, USB_PRODUCT_BTC_BTC7932,	    0x100, { UQ_NO_STRINGS }},
  { USB_VENDOR_ADS, USB_PRODUCT_ADS_UBS10BT,	    0x002, { UQ_NO_STRINGS }},
  { USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1, 0x101, { UQ_NO_STRINGS }},
  { USB_VENDOR_WACOM, USB_PRODUCT_WACOM_CT0405U,     0x101, { UQ_NO_STRINGS }},
  { USB_VENDOR_DALLAS, USB_PRODUCT_DALLAS_J6502,	    0x0a2, { UQ_BAD_ADC }},
+ { USB_VENDOR_DALLAS, USB_PRODUCT_DALLAS_J6502,	    0x0a2, { UQ_NO_XU }},
  { USB_VENDOR_ALTEC, USB_PRODUCT_ALTEC_ADA70,	    0x103, { UQ_BAD_ADC }},
  { USB_VENDOR_ALTEC, USB_PRODUCT_ALTEC_ASC495,      0x000, { UQ_BAD_AUDIO }},
  { USB_VENDOR_QTRONIX, USB_PRODUCT_QTRONIX_980N,    0x110, { UQ_SPUR_BUT_UP }},
+ { USB_VENDOR_ALCOR2, USB_PRODUCT_ALCOR2_KBD_HUB,   0x001, { UQ_SPUR_BUT_UP }},
  { USB_VENDOR_MCT, USB_PRODUCT_MCT_HUB0100,         0x102, { UQ_BUS_POWERED }},
  { USB_VENDOR_MCT, USB_PRODUCT_MCT_USB232,          0x102, { UQ_BUS_POWERED }},
+ { USB_VENDOR_METRICOM, USB_PRODUCT_METRICOM_RICOCHET_GS,
+ 	0x100, { UQ_ASSUME_CM_OVER_DATA | UQ_NO_STRINGS }},
+ { USB_VENDOR_TI, USB_PRODUCT_TI_UTUSB41,	    0x110, { UQ_POWER_CLAIM }},
  { 0, 0, 0, { 0 } }
 };
 
 struct usbd_quirks usbd_no_quirk = { 0 };
 
 struct usbd_quirks *
-usbd_find_quirk(d)
-	usb_device_descriptor_t *d;
+usbd_find_quirk(usb_device_descriptor_t *d)
 {
 	struct usbd_quirk_entry *t;
 

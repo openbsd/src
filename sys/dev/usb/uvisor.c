@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvisor.c,v 1.1 2000/07/04 11:34:31 fgsch Exp $	*/
-/*	$NetBSD: uvisor.c,v 1.7 2000/06/01 14:29:03 augustss Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.2 2000/11/08 18:10:39 aaron Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.8 2000/09/03 19:15:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -241,7 +241,7 @@ USB_ATTACH(uvisor)
 	uca.ibufsize = UVISORIBUFSIZE;
 	uca.obufsize = UVISOROBUFSIZE;
 	uca.ibufsizepad = UVISORIBUFSIZE;
-	uca.obufsizepad = UVISOROBUFSIZE;
+	uca.opkthdrlen = 0;
 	uca.device = dev;
 	uca.iface = iface;
 	uca.methods = &uvisor_methods;

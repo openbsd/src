@@ -1,5 +1,5 @@
-/*	$OpenBSD: ucomvar.h,v 1.4 2000/07/04 11:44:22 fgsch Exp $ */
-/*	$NetBSD: ucomvar.h,v 1.5 2000/04/14 14:21:55 augustss Exp $	*/
+/*	$OpenBSD: ucomvar.h,v 1.5 2000/11/08 18:10:38 aaron Exp $ */
+/*	$NetBSD: ucomvar.h,v 1.8 2000/09/03 19:15:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,21 +54,19 @@
 struct	ucom_softc;
 
 struct ucom_methods {
-	void (*ucom_get_status)__P((void *sc, int portno, 
-				    u_char *lsr, u_char *msr));
-	void (*ucom_set)__P((void *sc, int portno, int reg, int onoff));
+	void (*ucom_get_status)(void *sc, int portno, u_char *lsr, u_char *msr);
+	void (*ucom_set)(void *sc, int portno, int reg, int onoff);
 #define UCOM_SET_DTR 1
 #define UCOM_SET_RTS 2
 #define UCOM_SET_BREAK 3
-	int (*ucom_param)__P((void *sc, int portno, struct termios *));
-	int (*ucom_ioctl)__P((void *sc, int portno, u_long cmd, 
-			      caddr_t data, int flag, struct proc *p));
-	int (*ucom_open)__P((void *sc, int portno));
-	void (*ucom_close)__P((void *sc, int portno));
-	void (*ucom_read)__P((void *sc, int portno, u_char **ptr, 
-			      u_int32_t *count));
-	void (*ucom_write)__P((void *sc, int portno, u_char *to, u_char *from,
-			       u_int32_t *count));
+	int (*ucom_param)(void *sc, int portno, struct termios *);
+	int (*ucom_ioctl)(void *sc, int portno, u_long cmd,
+			  caddr_t data, int flag, struct proc *p);
+	int (*ucom_open)(void *sc, int portno);
+	void (*ucom_close)(void *sc, int portno);
+	void (*ucom_read)(void *sc, int portno, u_char **ptr, u_int32_t *count);
+	void (*ucom_write)(void *sc, int portno, u_char *to, u_char *from,
+			   u_int32_t *count);
 };
 
 /* modem control register */
@@ -104,17 +102,17 @@ struct ucom_attach_args {
 	u_int ibufsize;
 	u_int ibufsizepad;
 	u_int obufsize;
-	u_int obufsizepad;
+	u_int opkthdrlen;
 	usbd_device_handle device;
 	usbd_interface_handle iface;
 	struct ucom_methods *methods;
 	void *arg;
 };
 
-int ucomprint __P((void *aux, const char *pnp));
+int ucomprint(void *aux, const char *pnp);
 #if defined(__OpenBSD__)
-int ucomsubmatch __P((struct device *parent, void *match, void *aux));
+int ucomsubmatch(struct device *parent, void *cf, void *aux);
 #else
-int ucomsubmatch __P((struct device *parent, struct cfdata *cf, void *aux));
+int ucomsubmatch(struct device *parent, struct cfdata *cf, void *aux);
 #endif
-void ucom_status_change __P((struct ucom_softc *));
+void ucom_status_change(struct ucom_softc *);

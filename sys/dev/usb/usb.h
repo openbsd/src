@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb.h,v 1.10 2000/07/04 11:44:24 fgsch Exp $ */
-/*	$NetBSD: usb.h,v 1.44 2000/04/03 13:40:05 augustss Exp $	*/
+/*	$OpenBSD: usb.h,v 1.11 2000/11/08 18:10:39 aaron Exp $ */
+/*	$NetBSD: usb.h,v 1.50 2000/06/01 15:43:32 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*

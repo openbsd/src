@@ -1,8 +1,10 @@
 Some things that need to be done:
 ---------------------------------
 
-Before 1.5:
------------
+High priority:
+--------------
+
+On a short control transfer the status phase needs to be executed anyway.
 
 Allow interrupt out endpoints. (USB 1.1)
 
@@ -26,16 +28,12 @@ mel kravitz's problem, lockups with disk and printer
 
 Aaron's problem: Test aue with ohci.
 
-Y-E data floppy doesn't work.
-
 
 General:
 --------
 
 Figure out why uvisor is so slow.
 Try to get specs, and check if Linux driver is really right.
-
-Translate UFI commands?
 
 Add lots of bus_dmamap_sync().
 
@@ -86,8 +84,6 @@ be a hiddev to which hid with different IDs can attach?
 Get rid of hcpriv.
 
 Keyspan serial driver
-
-Factor out comon code in network drivers.
 
 
 Documentation:

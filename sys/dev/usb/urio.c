@@ -1,5 +1,5 @@
-/*	$OpenBSD: urio.c,v 1.3 2000/09/14 15:19:46 jakob Exp $	*/
-/*	$NetBSD: urio.c,v 1.4 2000/09/14 03:13:21 augustss Exp $	*/
+/*	$OpenBSD: urio.c,v 1.4 2000/11/08 18:10:38 aaron Exp $	*/
+/*	$NetBSD: urio.c,v 1.5 2000/10/24 14:53:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ USB_ATTACH(urio)
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
-	err = usbd_set_config_no(dev, URIO_CONFIG_NO, 0);
+	err = usbd_set_config_no(dev, URIO_CONFIG_NO, 1);
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->sc_dev));
