@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.40 2000/06/18 03:07:25 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.41 2000/06/18 08:23:46 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -345,7 +345,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		if (m->m_len <= skip)
 		{
 		    MALLOC(ptr, unsigned char *, skip - sizeof(struct ip6_hdr),
-			   M_XDATA, M_DONTWAIT);
+			   M_XDATA, M_NOWAIT);
 		    if (ptr == NULL)
 		    {
 			DPRINTF(("ah_massage_headers(): failed to allocate memory for IPv6 headers\n"));
@@ -576,7 +576,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
     /* Allocate IPsec-specific opaque crypto info */
     MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
-	   M_XDATA, M_DONTWAIT);
+	   M_XDATA, M_NOWAIT);
     if (tc == NULL)
     {
 	m_freem(m);
@@ -591,7 +591,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
      * AH header.
      */
     MALLOC(tc->tc_ptr, caddr_t, skip + rplen + ahx->authsize,
-	   M_XDATA, M_DONTWAIT);
+	   M_XDATA, M_NOWAIT);
     if (tc->tc_ptr == 0)
     {
 	m_freem(m);
@@ -1019,7 +1019,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
     /* Allocate IPsec-specific opaque crypto info */
     MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto), M_XDATA,
-	   M_DONTWAIT);
+	   M_NOWAIT);
     if (tc == NULL)
     {
 	m_freem(m);
@@ -1030,7 +1030,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     }
 
     /* Save the skipped portion of the packet */
-    MALLOC(tc->tc_ptr, caddr_t, skip, M_XDATA, M_DONTWAIT);
+    MALLOC(tc->tc_ptr, caddr_t, skip, M_XDATA, M_NOWAIT);
     if (tc->tc_ptr == 0)
     {
 	FREE(tc, M_XDATA);

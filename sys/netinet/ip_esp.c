@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.47 2000/06/18 03:07:25 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.48 2000/06/18 08:23:48 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -380,7 +380,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
     /* Get IPsec-specific opaque pointer */
     MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
-           M_XDATA, M_DONTWAIT);
+           M_XDATA, M_NOWAIT);
     if (tc == NULL)
     {
 	m_freem(m);
@@ -405,7 +405,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	crda->crd_klen = tdb->tdb_amxkeylen * 8;
 
 	/* Keep a copy of the authenticator */
-	MALLOC(tc->tc_ptr, caddr_t, alen, M_XDATA, M_DONTWAIT);
+	MALLOC(tc->tc_ptr, caddr_t, alen, M_XDATA, M_NOWAIT);
 	if (tc->tc_ptr == 0)
 	{
 	    FREE(tc, M_XDATA);
@@ -947,7 +947,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
     /* IPsec-specific opaque crypto info */
     MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
-           M_XDATA, M_DONTWAIT);
+           M_XDATA, M_NOWAIT);
     if (tc == NULL)
     {
 	m_freem(m);
