@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.16 1998/03/20 02:45:28 angelos Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.17 1998/07/07 07:26:15 deraadt Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.16 1998/03/20 02:45:28 angelos Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.17 1998/07/07 07:26:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -932,7 +932,7 @@ at_getaddr(addr, which)
 	sat->sat_family = AF_APPLETALK;
 	sat->sat_len = sizeof(*sat);    
 	if (which == MASK)
-		errx(1, "AppleTalk does not use netmasks\n");
+		errx(1, "AppleTalk does not use netmasks");
 	if (sscanf(addr, "%u.%u", &net, &node) != 2 ||
 	    net == 0 || net > 0xffff || node == 0 || node > 0xfe)
 		errx(1, "%s: illegal address", addr);
@@ -1064,9 +1064,9 @@ setnsellength(val)
 {
 	nsellength = atoi(val);
 	if (nsellength < 0)
-		errx(1, "Negative NSEL length is absurd");
+		errx(1, "negative NSEL length is absurd");
 	if (afp == 0 || afp->af_af != AF_ISO)
-		errx(1, "Setting NSEL length valid only for iso");
+		errx(1, "setting NSEL length valid only for iso");
 }
 
 void
