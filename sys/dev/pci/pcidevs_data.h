@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.110 1998/12/25 19:53:13 tholo Exp 
+ *	OpenBSD: pcidevs,v 1.111 1998/12/25 20:18:13 tholo Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -5712,6 +5712,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_KOFAX, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Kofax Image Products",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_RISCOM, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "RISCom",
 	    NULL,
 	},
 	{
