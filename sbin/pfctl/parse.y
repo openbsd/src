@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.78 2002/06/07 23:30:39 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.79 2002/06/08 00:23:41 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -113,8 +113,9 @@ int	yyparse(void);
 void	ipmask(struct pf_addr *, u_int8_t);
 void	expand_label_addr(const char *, char *, u_int8_t, struct node_host *);
 void	expand_label_port(const char *, char *, u_int8_t, struct node_port *);
+void	expand_label_proto(const char *, char *, u_int8_t);
 void	expand_label(char *, u_int8_t, struct node_host *, struct node_port *,
-    struct node_host *, struct node_port *);
+    struct node_host *, struct node_port *, u_int8_t);
 void	expand_rule(struct pf_rule *, struct node_if *, struct node_proto *,
     struct node_host *, struct node_port *, struct node_host *,
     struct node_port *, struct node_uid *, struct node_gid *,
@@ -1708,14 +1709,38 @@ expand_label_port(const char *name, char *label, u_int8_t af,
 }
 
 void
+expand_label_proto(const char *name, char *label, u_int8_t proto)
+{
+	char tmp[PF_RULE_LABEL_SIZE];
+	char *p;
+	struct protoent *pe;
+
+	while ((p = strstr(label, name)) != NULL) {
+		tmp[0] = 0; 
+		strlcat(tmp, label, p-label+1);
+		pe = getprotobynumber(proto);
+		if (pe != NULL)
+		    strlcat(tmp, pe->p_name, PF_RULE_LABEL_SIZE);
+		else
+		    snprintf(tmp+strlen(tmp), PF_RULE_LABEL_SIZE-strlen(tmp),
+			"%u", proto);
+		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
+		strncpy(label, tmp, PF_RULE_LABEL_SIZE);
+	}
+}
+
+
+void
 expand_label(char *label, u_int8_t af,
     struct node_host *src_host, struct node_port *src_port,
-    struct node_host *dst_host, struct node_port *dst_port)
+    struct node_host *dst_host, struct node_port *dst_port,
+    u_int8_t proto)
 {
 	expand_label_addr("$srcaddr", label, af, src_host);
 	expand_label_addr("$dstaddr", label, af, dst_host);
 	expand_label_port("$srcport", label, af, src_port);
 	expand_label_port("$dstport", label, af, dst_port);
+	expand_label_proto("$proto", label, proto);
 }
 
 void
@@ -1778,7 +1803,7 @@ expand_rule(struct pf_rule *r,
 
 		strlcpy(r->label, label, PF_RULE_LABEL_SIZE);
 		expand_label(r->label, r->af, src_host, src_port,
-		    dst_host, dst_port);
+		    dst_host, dst_port, proto->proto);
 		r->proto = proto->proto;
 		r->src.addr = src_host->addr;
 		r->src.mask = src_host->mask;
