@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.28 2000/10/07 07:01:04 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.56 2000/09/28 12:53:27 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.29 2000/10/13 13:42:50 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.57 2000/10/13 13:04:16 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -272,6 +272,9 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 #ifdef USE_X509
       /* Otherwise, try X.509 */
       keyfile = conf_get_str ("X509-certificates", "Private-key");
+
+      if (check_file_secrecy (keyfile, NULL))
+	return 0;
 
       if ((keyh = LC (BIO_new, (LC (BIO_s_file, ())))) == NULL)
 	{

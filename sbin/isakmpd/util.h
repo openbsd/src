@@ -1,5 +1,5 @@
-/*	$OpenBSD: util.h,v 1.4 1999/08/05 22:40:37 niklas Exp $	*/
-/*	$EOM: util.h,v 1.7 1999/08/05 15:00:04 niklas Exp $	*/
+/*	$OpenBSD: util.h,v 1.5 2000/10/13 13:42:50 niklas Exp $	*/
+/*	$EOM: util.h,v 1.8 2000/10/13 13:04:16 ho Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -52,5 +52,6 @@ extern void encode_32 (u_int8_t *, u_int32_t);
 extern u_int8_t *getrandom (u_int8_t *, size_t);
 extern int hex2raw (char *, u_int8_t *, size_t);
 extern int zero_test (const u_int8_t *, size_t);
+extern int check_file_secrecy (char *, off_t *);
 
 #endif /* _UTIL_H_ */
