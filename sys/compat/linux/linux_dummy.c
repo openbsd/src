@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_dummy.c,v 1.2 2000/12/22 07:34:02 jasoni Exp $ */
+/*	$OpenBSD: linux_dummy.c,v 1.3 2001/01/29 07:23:54 jasoni Exp $ */
 
 /*-
  * Copyright (c) 1994-1995 Søren Schmidt
@@ -115,4 +115,3 @@ DUMMY(sendfile);		/* #187 */
 DUMMY(getpmsg);			/* #188 */
 DUMMY(putpmsg);			/* #189 */
 DUMMY(mmap2);			/* #192 */
-DUMMY(ftruncate64);		/* #194 */
