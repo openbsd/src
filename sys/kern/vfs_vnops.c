@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.21 1999/07/18 01:20:22 deraadt Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.22 1999/08/26 08:07:10 art Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ vn_open(ndp, fmode, cmode)
 				error = EEXIST;
 				goto bad;
 			}
-			if ((ndp->ni_vp->v_type == VLNK) &
+			if ((ndp->ni_vp->v_type == VLNK) &&
 			    ((fmode & FNOSYMLINK) != 0)) {
 				error = EFTYPE;
 				goto bad;
