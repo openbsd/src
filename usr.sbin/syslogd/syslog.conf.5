@@ -46,7 +46,9 @@ The
 file is the configuration file for the
 .Xr syslogd 8
 program.
-It consists of lines with two fields: the
+It consists of blocks of lines separated by
+.Em program
+specifications, with each line containing two fields: the
 .Em selector
 field which specifies the types of messages and priorities to which the
 line applies, and an
@@ -99,6 +101,16 @@ similar
 values specified to the
 .Xr syslog
 library routine.
+.Pp 
+Each block of lines is separated from the previous block by a tag. The tag
+is a line beginning with 
+.Em #!prog
+or
+.Em !prog
+(the former is for compatibility with the previous syslogd, if one is sharing
+syslog.conf files, for example)
+and each block will be associated with calls to syslog from that specific
+program.
 .Pp
 See
 .Xr syslog 3
@@ -106,13 +118,22 @@ for a further descriptions of both the
 .Em facility
 and
 .Em level
-keywords and their significance.
+keywords and their significance. It's preferred that selections be made on
+.Em facility
+rather than
+.Em program ,
+since the latter can easily vary in a networked environment. In some cases,
+though, an appropriate
+.Em facility
+simply doesn't exist.
 .Pp
 If a received message matches the specified
 .Em facility
 and is of the specified
 .Em level
 .Em (or a higher level) ,
+and the first word in the message after the date matches the
+.Em program ,
 the action specified in the
 .Em action
 field will be taken.
@@ -133,9 +154,11 @@ may be specified for a single
 by separating them with comma (``,'') characters.
 .Pp
 An asterisk (``*'') can be used to specify all
-.Em facilities
+.Em facilities ,
+all
+.Em levels
 or all
-.Em levels .
+.Em programs .
 .Pp
 The special
 .Em facility
@@ -176,7 +199,11 @@ Selected messages are written to all logged-in users.
 .El
 .Pp
 Blank lines and lines whose first non-blank character is a hash (``#'')
-character are ignored.
+character are ignored with the exception of lines beginning with (``#!'').
+These lines are treated as section headers in the same way as lines
+beginning with (``!'').  This allows
+.Nm
+files to be shared with systems that don't recognise the (``!'') syntax.
 .Sh EXAMPLES
 .Pp
 A configuration file might appear as follows:
@@ -208,6 +235,10 @@ mail.*							/var/log/maillog
 # Save mail and news errors of level err and higher in a
 # special file.
 uucp,news.crit						/var/log/spoolerr
+  
+# Save ftpd transactions along with mail and news
+!ftpd
+*.*                                                     /var/log/spoolerr
 .Ed
 .Sh FILES
 .Bl -tag -width /etc/syslog.conf -compact
