@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.41 2001/05/31 20:29:49 angelos Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.42 2001/06/05 05:08:26 angelos Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -553,10 +553,10 @@ rsa_sig_decode_hash (struct message *msg)
   struct exchange *exchange = msg->exchange;
   struct ipsec_exch *ie = exchange->data;
   struct payload *p;
-  void *cert;
+  void *cert = 0;
   u_int8_t *rawcert = NULL;
   u_int32_t rawcertlen;
-  RSA *key;
+  RSA *key = 0;
   size_t hashsize = ie->hash->hashsize;
   char header[80];
   int len;
@@ -782,6 +782,12 @@ rsa_sig_decode_hash (struct message *msg)
       free (rawkey);
     }
 #endif /* USE_DNSSEC */
+
+  if (!found)
+    {
+      log_print ("rsa_sig_decode_hash: no public key found");
+      return -1;
+    }
 
   p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_SIG]);
   if (!p)
