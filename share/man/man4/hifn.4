@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.39 2003/09/26 03:15:07 jason Exp $
+.\"	$OpenBSD: hifn.4,v 1.40 2003/10/09 03:55:35 jason Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -69,18 +69,32 @@ This is really a Hifn 7751 which only supports compression.
 .El
 .Pp
 The
-.Nm
-driver registers itself to accelerate DES, Triple-DES, ARC4, MD5,
+.Tn Hifn 7751 ,
+.Tn Hifn 7811 , 
+.Tn Hifn 7951 ,
+.Tn Hifn 7955 ,
+and
+.Tn Hifn 7956
+chips all support acceleration of DES, Triple-DES, ARC4, MD5,
 MD5-HMAC, SHA1, SHA1-HMAC, and LZS operations for
 .Xr ipsec 4
 and
-.Xr crypto 4 ,
-except for the Hifn 9751 which only registers to support LZS.
+.Xr crypto 4 .
+The
+.Tn Hifn 7955
+and
+.Tn Hifn 7956
+chips additionally support AES-CBC.
+The
+.Tn Hifn 9751
+only supports LZS.
 .Pp
 The
-.Tn Hifn 7951
+.Tn Hifn 7811 ,
+.Tn Hifn 7951 ,
+.Tn Hifn 7955 ,
 and
-.Tn Hifn 7811
+.Tn Hifn 7956
 will also supply data to the kernel
 .Xr random 4
 subsystem.
@@ -104,5 +118,5 @@ It is possible for vendors to make boards which have a lock ID not known
 to the driver, but all vendors currently just use the obvious ID which is
 13 bytes of 0.
 .Pp
-The 7955 and 7956 have support for AES and public key operations,
-neither of which are supported yet.
+The 7951, 7955 and 7956 have support for public key operations
+which are not yet supported.
