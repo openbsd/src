@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mec.c,v 1.1 2004/08/10 07:30:57 mickey Exp $ */
+/* $OpenBSD: if_mec.c,v 1.2 2004/08/10 13:47:45 pefo Exp $ */
 /* $NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -105,8 +105,6 @@
 #include <mips64/archtype.h>
 #include <mips64/arcbios.h>
 #include <sgi/dev/if_mecreg.h>
-
-#define MEC_DEBUG
 
 #ifdef MEC_DEBUG
 #define MEC_DEBUG_RESET		0x01
@@ -333,8 +331,6 @@ int	mec_mii_wait(struct mec_softc *);
 void	mec_statchg(struct device *);
 void	mec_mediastatus(struct ifnet *, struct ifmediareq *);
 int	mec_mediachange(struct ifnet *);
-
-static void	enaddr_aton(const char *, uint8_t *);
 
 int	mec_init(struct ifnet * ifp);
 void	mec_start(struct ifnet *);
@@ -641,39 +637,6 @@ mec_mediachange(struct ifnet *ifp)
 		return 0;
 
 	return mii_mediachg(&sc->sc_mii);
-}
-
-/*
- * XXX
- * maybe this function should be moved to common part
- * (sgimips/machdep.c or elsewhere) for all on-board network devices.
- */
-static void
-enaddr_aton(const char *str, uint8_t *eaddr)
-{
-	int i;
-	char c;
-
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		if (*str == ':')
-			str++;
-
-		c = *str++;
-		if ('0' <= c && c <= '9')
-			eaddr[i] = (c - '0');
-		else if ('A' <= c && c <= 'F')
-			eaddr[i] = c + 10 - 'A';
-		else if ('a' <= c && c <= 'f')
-			eaddr[i] = c + 10 - 'a';
-
-		c = *str++;
-		if ('0' <= c && c <= '9')
-			eaddr[i] = (eaddr[i] << 4) | (c - '0');
-		else if ('A' <= c && c <= 'F')
-			eaddr[i] = (eaddr[i] << 4) | (c + 10 - 'A');
-		else if ('a' <= c && c <= 'f')
-			eaddr[i] = (eaddr[i] << 4) | (c + 10 - 'a');
-	}
 }
 
 int
