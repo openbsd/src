@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt,v 1.4 2001/07/15 20:54:20 pvalchev Exp $	*/
+/*	$OpenBSD: getopt,v 1.5 2001/12/05 09:59:16 deraadt Exp $	*/
 /*
  * Main/getopt(3) fragment.
  *
@@ -6,7 +6,6 @@
  */
 
 #include <sys/types.h>
-
 #include <stdlib.h>
 
 void usage __P((void));
@@ -18,7 +17,7 @@ main(argc, argv)
 {
 	int ch;
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	while ((ch = getopt(argc, argv, "abcf:")) != -1)
 		switch (ch) {
 		case '':
 			break;
@@ -31,9 +30,10 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
+
 	(void)fprintf(stderr, "usage: %s [-abc] [-f file]\n", __progname);
 	exit(1);
 }
