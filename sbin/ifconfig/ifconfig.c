@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.13 1998/03/17 08:10:21 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.14 1998/03/20 02:13:28 angelos Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.13 1998/03/17 08:10:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.14 1998/03/20 02:13:28 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -586,7 +586,7 @@ void
 in_status(force)
 	int force;
 {
-	struct sockaddr_in *sin;
+	struct sockaddr_in *sin, sin2;
 	char *inet_ntoa();
 
 	getsock(AF_INET);
@@ -597,6 +597,7 @@ in_status(force)
 	}
 	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 	sin = (struct sockaddr_in *)&ifr.ifr_addr;
+        bcopy(&ifr.ifr_addr, &sin2, sizeof(sin2));
 	printf("\tinet %s ", inet_ntoa(sin->sin_addr));
 	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 	if (ioctl(s, SIOCGIFNETMASK, (caddr_t)&ifr) < 0) {
@@ -619,6 +620,7 @@ in_status(force)
 	}
 	printf("netmask 0x%x ", ntohl(netmask.sin_addr.s_addr));
 	if (flags & IFF_BROADCAST) {
+		bcopy(&sin2, &ifr.ifr_addr, sizeof(sin2));
 		if (ioctl(s, SIOCGIFBRDADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
 			    memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
