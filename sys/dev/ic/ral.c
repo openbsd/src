@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.31 2005/03/11 20:41:06 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.32 2005/03/11 20:47:59 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -373,8 +373,8 @@ ral_attach(struct ral_softc *sc)
 
 	/* set device capabilities */
 	ic->ic_caps = IEEE80211_C_MONITOR | IEEE80211_C_IBSS |
-	    IEEE80211_C_SHPREAMBLE | IEEE80211_C_PMGT | IEEE80211_C_TXPMGT |
-	    IEEE80211_C_WEP;
+	    IEEE80211_C_HOSTAP | IEEE80211_C_SHPREAMBLE | IEEE80211_C_PMGT |
+	    IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
 
 	if (sc->rf_rev == RAL_RF_5222) {
 		/* set supported .11a rates */
@@ -1060,22 +1060,24 @@ ral_tx_intr(struct ral_softc *sc)
 		switch (letoh32(desc->flags) & RAL_TX_RESULT_MASK) {
 		case RAL_TX_SUCCESS:
 			DPRINTFN(10, ("data frame sent successfully\n"));
-			ieee80211_rssadapt_raise_rate(ic, &rn->rssadapt,
-			    &data->id);
+			if (data->id.id_node != NULL) {
+				ieee80211_rssadapt_raise_rate(ic,
+				    &rn->rssadapt, &data->id);
+			}
 			break;
 
 		case RAL_TX_SUCCESS_RETRY:
 			DPRINTFN(9, ("data frame sent after %u retries\n",
 			    (letoh32(desc->flags) >> 5) & 0x7));
-			ieee80211_rssadapt_lower_rate(ic, data->ni,
-			    &rn->rssadapt, &data->id);
 			break;
 
 		case RAL_TX_FAIL_RETRY:
 			DPRINTFN(9, ("sending data frame failed (too much "
 			    "retries)\n"));
-			ieee80211_rssadapt_lower_rate(ic, data->ni,
-			    &rn->rssadapt, &data->id);
+			if (data->id.id_node != NULL) {
+				ieee80211_rssadapt_lower_rate(ic, data->ni,
+				    &rn->rssadapt, &data->id);
+			}
 			break;
 
 		case RAL_TX_FAIL_INVALID:
@@ -1598,29 +1600,14 @@ ral_setup_tx_desc(struct ral_softc *sc, struct ral_tx_desc *desc,
 int
 ral_tx_bcn(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	struct ral_tx_desc *desc;
 	struct ral_tx_data *data;
-	struct ieee80211_frame *wh;
-	struct ieee80211_duration d0, dn;
-	int rate, npkt, error;
+	int rate, error;
 
 	desc = &sc->bcnq.desc[sc->bcnq.cur];
 	data = &sc->bcnq.data[sc->bcnq.cur];
 
-	wh = mtod(m0, struct ieee80211_frame *);
-
 	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
-
-	error = ieee80211_compute_duration(wh, m0->m_pkthdr.len,
-	    ic->ic_flags & ~IEEE80211_F_WEPON, ic->ic_fragthreshold, rate, &d0,
-	    &dn, &npkt, ifp->if_flags & IFF_DEBUG);
-	if (error != 0) {
-		printf("%s: could not compute duration\n", sc->sc_dev.dv_xname);
-		m_freem(m0);
-		return error;
-	}
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
@@ -1634,30 +1621,15 @@ ral_tx_bcn(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	data->m = m0;
 	data->ni = ni;
 
-	desc->physaddr = htole32(data->map->dm_segs->ds_addr);
-
-	desc->flags = htole32(RAL_TX_VALID | RAL_TX_BUSY |
-	    RAL_TX_INSERT_TIMESTAMP | RAL_TX_IFS_NEW_BACKOFF);
-	desc->flags |= htole32(m0->m_pkthdr.len << 16);
-
-	desc->wme = htole32(
-	    8 << RAL_WME_CWMAX_BITS_SHIFT |
-	    3 << RAL_WME_CWMIN_BITS_SHIFT |
-	    2 << RAL_WME_AIFSN_BITS_SHIFT);
-
-	desc->plcp_length = htole16(d0.d_plcp_len);
-	desc->plcp_service = 4;
-	desc->plcp_signal = ral_plcp_signal(rate);
-	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
-		desc->plcp_signal |= 0x8;
+	ral_setup_tx_desc(sc, desc, RAL_TX_IFS_NEW_BACKOFF |
+	    RAL_TX_INSERT_TIMESTAMP, m0->m_pkthdr.len, rate, 0,
+	    data->map->dm_segs->ds_addr);
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, sc->bcnq.map,
 	    sc->bcnq.cur * RAL_TX_DESC_SIZE, RAL_TX_DESC_SIZE,
 	    BUS_DMASYNC_PREWRITE);
-
-	sc->bcnq.cur = (sc->bcnq.cur + 1) % RAL_BEACON_RING_COUNT;
 
 	return 0;
 }
@@ -1666,28 +1638,17 @@ int
 ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &ic->ic_if;
 	struct ral_tx_desc *desc;
 	struct ral_tx_data *data;
 	struct ieee80211_frame *wh;
-	struct ieee80211_duration d0, dn;
-	int rate, npkt, error;
+	uint16_t dur;
+	uint32_t flags = 0;
+	int rate, error;
 
 	desc = &sc->prioq.desc[sc->prioq.cur];
 	data = &sc->prioq.data[sc->prioq.cur];
 
-	wh = mtod(m0, struct ieee80211_frame *);
-
 	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
-
-	error = ieee80211_compute_duration(wh, m0->m_pkthdr.len,
-	    ic->ic_flags & ~IEEE80211_F_WEPON, ic->ic_fragthreshold, rate, &d0,
-	    &dn, &npkt, ifp->if_flags & IFF_DEBUG);
-	if (error != 0) {
-		printf("%s: could not compute duration\n", sc->sc_dev.dv_xname);
-		m_freem(m0);
-		return error;
-	}
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
@@ -1721,33 +1682,24 @@ ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	data->m = m0;
 	data->ni = ni;
 
-	desc->physaddr = htole32(data->map->dm_segs->ds_addr);
-
-	desc->flags = htole32(RAL_TX_VALID | RAL_TX_BUSY);
-	desc->flags |= htole32(m0->m_pkthdr.len << 16);
+	wh = mtod(m0, struct ieee80211_frame *);
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		desc->flags |= htole32(RAL_TX_NEED_ACK);
+		flags |= RAL_TX_NEED_ACK;
 
-		*(uint16_t *)wh->i_dur = htole16(d0.d_data_dur);
+		dur = ral_txtime(RAL_ACK_SIZE, rate, ic->ic_flags) + RAL_SIFS;
+		*(uint16_t *)wh->i_dur = htole16(dur);
 
+		/* tell hardware to add timestamp for probe responses */
 		if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
 		    IEEE80211_FC0_TYPE_MGT &&
 		    (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
 		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
-			desc->flags |= htole32(RAL_TX_INSERT_TIMESTAMP);
+			flags |= RAL_TX_INSERT_TIMESTAMP;
 	}
 
-	desc->wme = htole32(
-	    8 << RAL_WME_CWMAX_BITS_SHIFT |
-	    3 << RAL_WME_CWMIN_BITS_SHIFT |
-	    2 << RAL_WME_AIFSN_BITS_SHIFT);
-
-	desc->plcp_length = htole16(d0.d_plcp_len);
-	desc->plcp_service = 4;
-	desc->plcp_signal = ral_plcp_signal(rate);
-	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
-		desc->plcp_signal |= 0x8;
+	ral_setup_tx_desc(sc, desc, flags, m0->m_pkthdr.len, rate, 0,
+	    data->map->dm_segs->ds_addr);
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
@@ -1755,8 +1707,8 @@ ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    sc->prioq.cur * RAL_TX_DESC_SIZE, RAL_TX_DESC_SIZE,
 	    BUS_DMASYNC_PREWRITE);
 
-	DPRINTFN(10, ("sending mgt frame len=%u idx=%u duration=%u plcp=%u\n",
-	    m0->m_pkthdr.len, sc->prioq.cur, d0.d_data_dur, d0.d_plcp_len));
+	DPRINTFN(10, ("sending mgt frame len=%u idx=%u rate=%u\n",
+	    m0->m_pkthdr.len, sc->prioq.cur, rate));
 
 	/* kick prio */
 	sc->prioq.queued++;
@@ -1806,10 +1758,10 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct ral_tx_data *data;
 	struct ral_node *rn;
 	struct ieee80211_frame *wh;
-	struct ieee80211_frame_rts *rts;
-	struct ieee80211_duration d0, dn;
-	struct mbuf *m, *mnew;
-	int rate, npkt, error;
+	struct mbuf *mnew;
+	uint16_t dur;
+	uint32_t flags = 0;
+	int rate, error;
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
@@ -1818,43 +1770,37 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    wh, m0->m_pkthdr.len, ic->ic_fixed_rate, NULL, 0);
 	rate = ni->ni_rates.rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL;
 
-	error = ieee80211_compute_duration(wh, m0->m_pkthdr.len, ic->ic_flags,
-	    ic->ic_fragthreshold, rate, &d0, &dn, &npkt,
-	    ifp->if_flags & IFF_DEBUG);
-	if (error != 0) {
-		printf("%s: could not compute duration\n", sc->sc_dev.dv_xname);
-		m_freem(m0);
-		return error;
-	}
-
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
 		if (m0 == NULL)
 			return ENOBUFS;
 	}
 
-	if (m0->m_pkthdr.len > ic->ic_rtsthreshold) {
+	/*
+	 * IEEE Std 802.11-1999, pp 82: "A STA shall use an RTS/CTS exchange
+	 * for directed frames only when the length of the MPDU is greater
+	 * than the length threshold indicated by [...]" ic_rtsthreshold.
+	 */
+	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    m0->m_pkthdr.len > ic->ic_rtsthreshold) {
+		struct mbuf *m;
+		uint16_t dur;
+		int rtsrate, ackrate;
+
+		rtsrate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+		ackrate = ral_ack_rate(rate);
+
+		dur = ral_txtime(m0->m_pkthdr.len + 4, rate, ic->ic_flags) +
+		      ral_txtime(RAL_CTS_SIZE, rtsrate, ic->ic_flags) +
+		      ral_txtime(RAL_ACK_SIZE, ackrate, ic->ic_flags) +
+		      3 * RAL_SIFS;
+
+		m = ral_get_rts(sc, wh, dur);
+
 		desc = &sc->txq.desc[sc->txq.cur_encrypt];
 		data = &sc->txq.data[sc->txq.cur_encrypt];
 
-		/* switch to long retry */
-		/* switch to frame gap SIFS */
-
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL) {
-			printf("%s: could not allocate RTS/CTS frame\n",
-			    sc->sc_dev.dv_xname);
-			return ENOMEM;
-		}
-
-		rts = mtod(m, struct ieee80211_frame_rts *);
-		rts->i_fc[0] = IEEE80211_FC0_TYPE_CTL |
-		    IEEE80211_FC0_SUBTYPE_RTS;
-		*(uint16_t *)rts->i_dur = htole16(d0.d_rts_dur);
-		memcpy(rts->i_ra, wh->i_addr1, IEEE80211_ADDR_LEN);
-		memcpy(rts->i_ta, wh->i_addr2, IEEE80211_ADDR_LEN);
-
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
 			printf("%s: could not map mbuf (error %d)\n",
@@ -1864,19 +1810,34 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 			return error;
 		}
 
+		/* avoid multiple free() of the same node for each fragment */
+		ieee80211_ref_node(ni);
+
 		data->m = m;
 		data->ni = ni;
 
+		/* RTS frames are not taken into account for rssadapt */
+		data->id.id_node = NULL;
+
+		ral_setup_tx_desc(sc, desc, RAL_TX_NEED_ACK | RAL_TX_NOT_LAST,
+		    m->m_pkthdr.len, rtsrate, 1, data->map->dm_segs->ds_addr);
+
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
 		    data->map->dm_mapsize, BUS_DMASYNC_PREWRITE);
-
-		desc->flags = htole32(RAL_TX_VALID | RAL_TX_BUSY);
-
-		desc->physaddr = htole32(data->map->dm_segs->ds_addr);
+		bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
+		    sc->txq.cur_encrypt * RAL_TX_DESC_SIZE, RAL_TX_DESC_SIZE,
+		    BUS_DMASYNC_PREWRITE);
 
 		sc->txq.queued++;
 		sc->txq.cur_encrypt =
 		    (sc->txq.cur_encrypt + 1) % RAL_TX_RING_COUNT;
+
+		/*
+		 * IEEE Std 802.11-1999: when an RTS/CTS exchange is used, the
+		 * asynchronous data frame shall be transmitted after the CTS
+		 * frame and a SIFS period.
+		 */
+		flags |= RAL_TX_LONG_RETRY | RAL_TX_IFS_SIFS;
 	}
 
 	data = &sc->txq.data[sc->txq.cur_encrypt];
@@ -1951,29 +1912,16 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	data->id.id_node = ni;
 	data->id.id_rssi = ni->ni_rssi;
 
-	desc->physaddr = htole32(data->map->dm_segs->ds_addr);
-
-	desc->flags = htole32(RAL_TX_CIPHER_BUSY);
-	desc->flags |= htole32(m0->m_pkthdr.len << 16);
-
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		desc->flags |= htole32(RAL_TX_NEED_ACK);
+		flags |= RAL_TX_NEED_ACK;
 
-		*(uint16_t *)wh->i_dur = htole16(d0.d_data_dur);
+		dur = ral_txtime(RAL_ACK_SIZE, ral_ack_rate(rate),
+		    ic->ic_flags) + RAL_SIFS;
+		*(uint16_t *)wh->i_dur = htole16(dur);
 	}
 
-	desc->wme = htole32(
-	    8 << RAL_WME_CWMAX_BITS_SHIFT |
-	    3 << RAL_WME_CWMIN_BITS_SHIFT |
-	    2 << RAL_WME_AIFSN_BITS_SHIFT);
-
-	desc->plcp_length = htole16(d0.d_plcp_len);
-	desc->plcp_service = 4;
-	if (d0.d_residue != 0)
-		desc->plcp_service |= RAL_PLCP_LENGEXT;
-	desc->plcp_signal = ral_plcp_signal(rate);
-	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
-		desc->plcp_signal |= 0x8;
+	ral_setup_tx_desc(sc, desc, flags, m0->m_pkthdr.len, rate, 1,
+	    data->map->dm_segs->ds_addr);
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
@@ -1981,9 +1929,8 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    sc->txq.cur_encrypt * RAL_TX_DESC_SIZE, RAL_TX_DESC_SIZE,
 	    BUS_DMASYNC_PREWRITE);
 
-	DPRINTFN(10, ("sending data frame len=%u idx=%u phys=%x plcp=%u "
-	    "residue=%u\n", m0->m_pkthdr.len, sc->txq.cur_encrypt,
-	    d0.d_data_dur, d0.d_plcp_len, d0.d_residue));
+	DPRINTFN(10, ("sending data frame len=%u idx=%u rate=%u\n",
+	    m0->m_pkthdr.len, sc->txq.cur_encrypt, rate));
 
 	/* kick encrypt */
 	sc->txq.queued++;
@@ -2044,6 +1991,7 @@ ral_start(struct ifnet *ifp)
 			if (ral_tx_data(sc, m0, ni) != 0) {
 				if (ni != NULL)
 					ieee80211_release_node(ic, ni);
+				ifp->if_oerrors++;
 				break;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ralreg.h,v 1.1 2005/02/15 20:51:21 damien Exp $  */
+/*	$OpenBSD: ralreg.h,v 1.2 2005/03/11 20:47:59 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -190,6 +190,8 @@ struct ral_tx_desc {
 #define RAL_TX_IFS_NEW_BACKOFF	(2 << 13)
 #define RAL_TX_IFS_NONE		(3 << 13)
 
+#define RAL_TX_LONG_RETRY	(1 << 15)
+
 #define RAL_TX_CIPHER_MASK	0xe0000000
 #define RAL_TX_CIPHER_NONE	(0 << 29)
 #define RAL_TX_CIPHER_WEP40	(1 << 29)
@@ -239,7 +241,6 @@ struct ral_rx_desc {
 	uint8_t		key[IEEE80211_KEYBUF_SIZE];
 	uint32_t	reserved[2];
 } __packed;
-
 
 #define RAL_RF1	0
 #define RAL_RF2	2
