@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.19 2003/11/04 17:16:24 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.20 2003/11/04 18:10:41 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -669,11 +669,10 @@ carp_send_ad(void *v)
 
 
 #ifdef INET
-	/* MGETHDR(m, M_DONTWAIT, MT_HEADER); */
 	if (sc->sc_ia) {
 		struct ip *ip;
 
-		m = m_gethdr(M_DONTWAIT, MT_HEADER);
+		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == NULL) {
 			sc->sc_ac.ac_if.if_oerrors++;
 			carpstats.carps_onomem++;
@@ -722,11 +721,10 @@ carp_send_ad(void *v)
 	}
 #endif /* INET */
 #ifdef INET6
-	/* MGETHDR(m, M_DONTWAIT, MT_HEADER); */
 	if (sc->sc_ia6) {
 		struct ip6_hdr *ip6;
 
-		m = m_gethdr(M_DONTWAIT, MT_HEADER);
+		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == NULL) {
 			sc->sc_ac.ac_if.if_oerrors++;
 			carpstats.carps_onomem++;
