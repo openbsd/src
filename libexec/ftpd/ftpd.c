@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.111 2001/12/17 23:02:53 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.112 2001/12/18 00:27:57 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.111 2001/12/17 23:02:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.112 2001/12/18 00:27:57 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -484,6 +484,15 @@ main(argc, argv, envp)
 	/* set this here so klogin can use it... */
 	(void)snprintf(ttyline, sizeof(ttyline), "ftp%d", getpid());
 
+	sa.sa_handler = SIG_IGN;
+	(void) sigaction(SIGCHLD, &sa, NULL);
+
+	sa.sa_handler = sigurg;
+	sa.sa_flags = 0;		/* don't restart syscalls for SIGURG */
+	(void) sigaction(SIGURG, &sa, NULL);
+
+	sigfillset(&sa.sa_mask);	/* block all signals in handler */
+	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = sigquit;
 	(void) sigaction(SIGHUP, &sa, NULL);
 	(void) sigaction(SIGINT, &sa, NULL);
@@ -492,13 +501,6 @@ main(argc, argv, envp)
 
 	sa.sa_handler = lostconn;
 	(void) sigaction(SIGPIPE, &sa, NULL);
-
-	sa.sa_handler = SIG_IGN;
-	(void) sigaction(SIGCHLD, &sa, NULL);
-
-	sa.sa_handler = sigurg;
-	sa.sa_flags = 0;		/* don't restart syscalls for SIGURG */
-	(void) sigaction(SIGURG, &sa, NULL);
 
 	addrlen = sizeof(ctrl_addr);
 	if (getsockname(0, (struct sockaddr *)&ctrl_addr, &addrlen) < 0) {
@@ -627,7 +629,6 @@ lostconn(signo)
 {
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
-	sigprocmask(SIG_BLOCK, &allsigs, NULL);
 	if (debug)
 		syslog_r(LOG_DEBUG, &sdata, "lost connection");
 	dologout(1);
@@ -639,7 +640,6 @@ sigquit(signo)
 {
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
-	sigprocmask(SIG_BLOCK, &allsigs, NULL);
 	syslog_r(LOG_ERR, &sdata, "got signal %s", sys_signame[signo]);
 	dologout(1);
 }
@@ -1592,15 +1592,18 @@ receive_data(instr, outstr)
 {
 	int c;
 	int cnt;
-	volatile int bare_lfs = 0;
 	char buf[BUFSIZ];
+	struct sigaction sa;
+	volatile int bare_lfs = 0;
 
 	transflag++;
 	switch (type) {
 
 	case TYPE_I:
 	case TYPE_L:
-		signal (SIGALRM, lostconn);
+		sigfillset(&sa.sa_mask);
+		sa.sa_flags = SA_RESTART;
+		sigaction(SIGALRM, &sa, NULL);
 
 		do {
 			(void) alarm ((unsigned) timeout);
