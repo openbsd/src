@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.65 2003/10/21 05:24:40 jmc Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.66 2003/11/03 18:24:28 tedu Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -593,6 +593,17 @@ arc4random(void)
 	arc4maybeinit();
 	return ((arc4_getbyte() << 24) | (arc4_getbyte() << 16)
 		| (arc4_getbyte() << 8) | arc4_getbyte());
+}
+
+void
+arc4random_bytes(void *buf, size_t n)
+{
+	u_int8_t *cp = buf;
+	u_int8_t *end = cp + n;
+
+	arc4maybeinit();
+	while (cp < end)
+		*cp++ = arc4_getbyte();
 }
 
 void
