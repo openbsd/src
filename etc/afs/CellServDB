@@ -5,8 +5,6 @@
 >hephy.at                  # hephy-vienna
 193.170.243.10                  #mougli.oeaw.ac.at
 193.170.243.12                  #balu.oeaw.ac.at
->jrc.flinders.edu.au       # Flinders School of Info. Sci. and Tech. - Australia
-129.96.31.2			#degas.jrc.flinders.edu.au
 >glade.yorku.ca           #York U, Canada
 130.63.241.16                   #aqua.glade.yorku.ca
 >writer.yorku.ca          #York U, Canada
@@ -642,9 +640,13 @@
 >thekeep.org              #Dan Root
 128.2.35.108                    #afs.thekeep.org
 >rhic                      #Relativistic Heavy Ion Collider
-130.199.24.7		        #ribm03f.rhic.bnl.gov
+130.199.80.92		        #rafs01.rhic.bnl.gov
 >cs.chalmers.se           #Chalmers University of Technology - Comp. Sci. Dept
 129.16.2.22                     #undis.cs.chalmers.se
+>md.chalmers.se         #Chalmers, School of Mathematical and Computing Sciences
+129.16.226.145                  #hamal5.cs.chalmers.se
+129.16.227.140                  #rowlf.cs.chalmers.se
+129.16.225.140                  #fuzzy.cs.chalmers.se
 >others.chalmers.se        # Chalmers University of Technology - General users
 129.16.19.11			#vice1.utc.chalmers.se
 129.16.19.12			#vice2.utc.chalmers.se
@@ -659,9 +661,9 @@
 130.237.206.29                  #afsdb2.isk.kth.se
 130.237.209.141                 #afsdb3.isk.kth.se
 >it.kth.se		   # Royal Institute of Technology, IT
-130.237.212.6			#gaia.it.kth.se
-130.237.215.3			#tristan.it.kth.se
-130.237.214.3			#isolde.it.kth.se
+130.237.212.15                  #ptah.it.kth.se
+130.237.214.7                   #toth.it.kth.se
+130.237.215.7                   #isis.it.kth.se
 >mech.kth.se		   # Royal Institute of Technology, MECH
 130.237.233.142			#eiger.mech.kth.se
 >nada.kth.se               # Royal Institute of Technology, NADA
@@ -677,7 +679,7 @@
 >blubb.pdc.kth.se		# blubb
 193.10.159.47			#blubb.pdc.kth.se
 >mr-afs.pdc.kth.se	   # PDC, MR-AFS
-193.10.159.250			#frog.pdc.kth.se
+130.237.232.70			#frog.pdc.kth.se
 >stacken.kth.se                 # Stacken Computer Club
 130.237.234.43    #hot.stacken.kth.se
 130.237.234.44    #dog.stacken.kth.se
