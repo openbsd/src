@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.141 1999/11/28 11:53:23 downsj Exp $
+#	$OpenBSD: GENERIC,v 1.142 1999/11/28 12:17:04 downsj Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -107,6 +107,8 @@ pccom*	at ast? slave ?
 #pccom*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #pccom*	at rtfps? slave ?
+#hsq0	at isa? port 0x140 irq 10	# Hostess 4-port serial card
+#pccom*	at hsq? slave ?
 pccom*	at pcmcia? function ?		# PCMCIA modems/serial ports
 pccom*	at isapnp?
 pccom*	at puc? port ?
