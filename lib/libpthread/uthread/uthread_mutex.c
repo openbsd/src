@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_mutex.c,v 1.12 2001/11/12 02:24:30 marc Exp $	*/
+/*	$OpenBSD: uthread_mutex.c,v 1.13 2001/11/12 21:13:34 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -438,10 +438,6 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 				/* Lock the mutex for this thread: */
 				(*mutex)->m_owner = _thread_run;
 
-				/* if recursive, increment the lock count */
-				if ((*mutex)->m_type == PTHREAD_MUTEX_RECURSIVE)
-					(*mutex)->m_data.m_count++;
-
 				/* Add to the list of owned mutexes: */
 				_MUTEX_ASSERT_NOT_OWNED(*mutex);
 				TAILQ_INSERT_TAIL(&_thread_run->mutexq,
@@ -480,10 +476,6 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 			if ((*mutex)->m_owner == NULL) {
 				/* Lock the mutex for this thread: */
 				(*mutex)->m_owner = _thread_run;
-
-				/* if recursive, increment the lock count */
-				if ((*mutex)->m_type == PTHREAD_MUTEX_RECURSIVE)
-					(*mutex)->m_data.m_count++;
 
 				/* Track number of priority mutexes owned: */
 				_thread_run->priority_mutex_count++;
@@ -548,10 +540,6 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 				 * thread:
 				 */
 				(*mutex)->m_owner = _thread_run;
-
-				/* if recursive, increment the lock count */
-				if ((*mutex)->m_type == PTHREAD_MUTEX_RECURSIVE)
-					(*mutex)->m_data.m_count++;
 
 				/* Track number of priority mutexes owned: */
 				_thread_run->priority_mutex_count++;
@@ -751,7 +739,7 @@ mutex_unlock_common(pthread_mutex_t * mutex, int add_reference)
 				ret = EPERM;
 			}
 			else if (((*mutex)->m_type == PTHREAD_MUTEX_RECURSIVE) &&
-			    ((*mutex)->m_data.m_count > 1)) {
+			    ((*mutex)->m_data.m_count > 0)) {
 				/* Decrement the count: */
 				(*mutex)->m_data.m_count--;
 			} else {
@@ -810,7 +798,7 @@ mutex_unlock_common(pthread_mutex_t * mutex, int add_reference)
 				ret = EPERM;
 			}
 			else if (((*mutex)->m_type == PTHREAD_MUTEX_RECURSIVE) &&
-			    ((*mutex)->m_data.m_count > 1)) {
+			    ((*mutex)->m_data.m_count > 0)) {
 				/* Decrement the count: */
 				(*mutex)->m_data.m_count--;
 			} else {
@@ -919,7 +907,7 @@ mutex_unlock_common(pthread_mutex_t * mutex, int add_reference)
 				ret = EPERM;
 			}
 			else if (((*mutex)->m_type == PTHREAD_MUTEX_RECURSIVE) &&
-			    ((*mutex)->m_data.m_count > 1)) {
+			    ((*mutex)->m_data.m_count > 0)) {
 				/* Decrement the count: */
 				(*mutex)->m_data.m_count--;
 			} else {
