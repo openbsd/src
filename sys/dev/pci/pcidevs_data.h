@@ -3111,6 +3111,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "900 10/100BaseTX",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7016,
+	    0,
+	    "SIS",
+	    "7016 10/100BaseTX",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5511,
 	    0,
 	    "SIS",
