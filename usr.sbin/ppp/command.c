@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: command.c,v 1.21 1998/01/10 21:50:56 brian Exp $
+ * $Id: command.c,v 1.22 1998/01/11 17:54:46 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -520,7 +520,7 @@ static int
 ShowInitialMRU(struct cmdargs const *arg)
 {
   if (VarTerm)
-    fprintf(VarTerm, " Initial MRU: %ld\n", VarMRU);
+    fprintf(VarTerm, " Initial MRU: %d\n", VarMRU);
   return 0;
 }
 
@@ -529,7 +529,7 @@ ShowPreferredMTU(struct cmdargs const *arg)
 {
   if (VarTerm)
     if (VarPrefMTU)
-      fprintf(VarTerm, " Preferred MTU: %ld\n", VarPrefMTU);
+      fprintf(VarTerm, " Preferred MTU: %d\n", VarPrefMTU);
     else
       fprintf(VarTerm, " Preferred MTU: unspecified\n");
   return 0;

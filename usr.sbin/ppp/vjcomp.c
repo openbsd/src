@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: vjcomp.c,v 1.2 1997/12/06 12:09:06 brian Exp $
+ * $Id: vjcomp.c,v 1.3 1998/01/11 17:54:49 brian Exp $
  *
  *  TODO:
  */
@@ -155,11 +155,11 @@ VjCompInput(struct mbuf * bp, int proto)
 }
 
 const char *
-vj2asc(u_long val)
+vj2asc(u_int32_t val)
 {
   static char asc[50];
 
-  sprintf(asc, "%ld VJ slots %s slot compression",
-          ((val>>8)&15)+1, val & 1 ?  "with" : "without");
+  sprintf(asc, "%d VJ slots %s slot compression",
+          (int)((val>>8)&15)+1, val & 1 ?  "with" : "without");
   return asc;
 }
