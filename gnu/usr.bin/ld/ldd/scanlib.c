@@ -1,4 +1,4 @@
-/* $OpenBSD: scanlib.c,v 1.1 2001/04/17 21:44:38 espie Exp $ */
+/* $OpenBSD: scanlib.c,v 1.2 2001/10/25 22:22:22 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -36,15 +36,24 @@
 #include <link.h>
 
 void
-scan_library(fd, hdr, name)
+scan_library(fd, hdr, name, fmt1, fmt2)
     int fd;
     struct exec *hdr;
     const char *name;
+    const char *fmt1;
+    const char *fmt2;
 {
 	struct _dynamic			dyn;
 	struct section_dispatch_table	sdt;
+	const char *fmt;
+	char c;
 
-	printf("%s:\n", name);
+	if (!fmt1 && !fmt2)
+		printf("%s:\n", name);
+	if (!fmt1)
+		fmt1="\t-l%o.%m => %p (%x)\n";
+	if (!fmt2)
+		fmt2="\t%o (%x)\n";
 	/* Assumes DYNAMIC structure starts data segment */
 	if (lseek(fd, N_DATOFF(*hdr), SEEK_SET) == -1) {
 		warn("%s: lseek", name);
@@ -100,10 +109,62 @@ scan_library(fd, hdr, name)
 			/* make sure this is terminated */
 			entry[MAXPATHLEN-1] = '\0';
 			if (sod.sod_library)
-				printf("\t-l%s.%d.%d\n", entry, 
-				    sod.sod_major, sod.sod_minor);
+				fmt = fmt1;
 			else
-				printf("\t%s\n", name);
+				fmt = fmt2;
+			while ((c = *fmt++) != '\0') {
+				switch(c) {
+				default:
+					putchar(c);
+					continue;
+				case '\\':
+					switch (c = *fmt) {
+					case '\0':
+						continue;
+					case 'n':
+						putchar('\n');
+						break;
+					case 't':
+						putchar('\t');
+						break;
+					}
+					fmt++;
+					break;
+				case '%':
+					switch (c = *fmt) {
+					case '\0':
+						continue;
+					case '%':
+					default:
+						putchar(c);
+						break;
+					case 'A':
+						printf("%s", name);
+						break;
+					case 'a':
+						printf("%s", name);
+						break;
+					case 'o':
+						printf("%s", entry);
+						break;
+					case 'm':
+						printf("%d", sod.sod_major);
+						break;
+					case 'n':
+						printf("%d", sod.sod_minor);
+						break;
+					case 'p':
+						putchar('?');
+						break;
+					case 'x':
+						putchar('?');
+						break;
+					}
+					++fmt;
+					break;
+				}
+			}
+
 		}
 	}
 }

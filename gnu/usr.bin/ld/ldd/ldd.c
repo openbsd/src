@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.8 2001/07/09 07:04:36 deraadt Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.9 2001/10/25 22:22:22 espie Exp $	*/
 /*	$NetBSD: ldd.c,v 1.12 1995/10/09 00:14:41 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -45,7 +45,7 @@
 #include <string.h>
 #include <unistd.h>
 
-extern void scan_library(int, struct exec *, const char *);
+extern void scan_library(int, struct exec *, const char *, const char *, const char *);
 
 void
 usage()
@@ -118,7 +118,7 @@ char	*argv[];
 			continue;
 		}
 		if ((N_GETFLAG(hdr) & EX_DPMASK) == (EX_DYNAMIC | EX_PIC)) {
-			scan_library(fd, &hdr, *argv);
+			scan_library(fd, &hdr, *argv, fmt1, fmt2);
 			(void)close(fd);
 			argv++;
 			continue;
