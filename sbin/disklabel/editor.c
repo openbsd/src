@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.20 1997/10/20 06:26:53 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.21 1997/10/20 07:09:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.20 1997/10/20 06:26:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.21 1997/10/20 07:09:43 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -84,7 +84,9 @@ static u_int32_t ending_sector;
 /* from disklabel.c */
 int	checklabel __P((struct disklabel *));
 void	display __P((FILE *, struct disklabel *));
-void	display_partition __P((FILE *, struct disklabel *, int, char));
+void	display_partition __P((FILE *, struct disklabel *, int, char, int));
+int	width_partition __P((struct disklabel *, int));
+
 struct disklabel *readlabel __P((int));
 struct disklabel *makebootarea __P((char *, struct disklabel *, int));
 int	writelabel __P((int, char *, struct disklabel *));
@@ -883,6 +885,7 @@ editor_display(lp, freep, unit)
 	char unit;
 {
 	int i;
+	int width;
 
 	printf("device: %s\n", specname);
 	printf("type: %s\n", dktypenames[lp->d_type]);
@@ -897,9 +900,11 @@ editor_display(lp, freep, unit)
 	printf("free sectors: %u\n", *freep);
 	printf("rpm: %ld\n", (long)lp->d_rpm);
 	printf("\n%d partitions:\n", lp->d_npartitions);
-	printf("#        size   offset    fstype   [fsize bsize   cpg]\n");
+	width = width_partition(lp, unit);
+	printf("#    %*.*s %*.*s    fstype   [fsize bsize   cpg]\n",
+		width, width, "size", width, width, "offset");
 	for (i = 0; i < lp->d_npartitions; i++)
-		display_partition(stdout, lp, i, unit);
+		display_partition(stdout, lp, i, unit, width);
 }
 
 /*
@@ -1286,8 +1291,8 @@ has_overlap(lp, freep, resolve)
 				printf("\nError, partitions %c and %c overlap:\n",
 				    'a' + i, 'a' + j);
 				puts("         size   offset    fstype   [fsize bsize   cpg]");
-				display_partition(stdout, lp, i, 0);
-				display_partition(stdout, lp, j, 0);
+				display_partition(stdout, lp, i, 0, 0);
+				display_partition(stdout, lp, j, 0, 0);
 
 				/* Did they ask us to resolve it ourselves? */
 				if (resolve != 1) {
@@ -1721,7 +1726,7 @@ find_bounds(lp)
 	if (numchunks > 1) {
 		printf("#        size   offset    fstype   [fsize bsize   cpg]\n");
 		for (i = 0; i < lp->d_npartitions; i++)
-			display_partition(stdout, lp, i, 0);
+			display_partition(stdout, lp, i, 0, 0);
 		puts("Several chunks of unused or BSD space exist, which one is for OpenBSD?");
 		if (ourchunk != -1)
 			printf("It looks like the OpenBSD portion is chunk "

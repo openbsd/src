@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.44 1997/10/17 07:30:03 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.45 1997/10/20 07:09:41 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.44 1997/10/17 07:30:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.45 1997/10/20 07:09:41 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -123,7 +123,8 @@ void	l_perror __P((char *));
 struct disklabel *readlabel __P((int));
 struct disklabel *makebootarea __P((char *, struct disklabel *, int));
 void	display __P((FILE *, struct disklabel *));
-void	display_partition __P((FILE *, struct disklabel *, int, char));
+void	display_partition __P((FILE *, struct disklabel *, int, char, int));
+int	width_partition __P((struct disklabel *, int));
 int	editor __P((struct disklabel *, int));
 int	edit __P((struct disklabel *, int));
 int	editit __P((void));
@@ -832,35 +833,59 @@ makebootarea(boot, dp, f)
 	return (lp);
 }
 
+int
+width_partition(lp, unit)
+	struct disklabel *lp;
+{
+	unit = toupper(unit);
+	switch (unit) {
+	case 'K':
+		return 10;
+	}
+	return 8;
+}
+
 /*
  * Display a particular partion.
  */
 void
-display_partition(f, lp, i, unit)
+display_partition(f, lp, i, unit, width)
 	FILE *f;
 	struct disklabel *lp;
 	int i;
 	char unit;
+	int width;
 {
 	struct partition *pp = &lp->d_partitions[i];
-	double p_size;
+	double p_size, p_offset;
 
-	unit = tolower(unit);
+	if (width == 0)
+		width = 8;
+	unit = toupper(unit);
 	switch (unit) {
-	case 'b':
+	case 'B':
 		p_size = (double)pp->p_size * lp->d_secsize;
+		p_offset = (double)pp->p_offset * lp->d_secsize;
 		break;
 
-	case 'c':
+	case 'C':
 		p_size = (double)pp->p_size / lp->d_secpercyl;
+		p_offset = (double)pp->p_offset / lp->d_secpercyl;
 		break;
 
-	case 'k':
+	case 'K':
 		p_size = (double)pp->p_size / (1024 / lp->d_secsize);
+		p_offset = (double)pp->p_offset / (1024 / lp->d_secsize);
 		break;
 
-	case 'm':
-		p_size = (double)pp->p_size / (1048576 / lp->d_secsize);
+	case 'M':
+		p_size = (double)pp->p_size / ((1024*1024) / lp->d_secsize);
+		p_offset = (double)pp->p_offset / ((1024*1024) / lp->d_secsize);
+		break;
+
+	case 'G':
+		p_size = (double)pp->p_size / ((1024*1024*1024) / lp->d_secsize);
+		p_offset = (double)pp->p_offset / ((1024*1024*1024) / lp->d_secsize);
 		break;
 
 	default:
@@ -870,11 +895,11 @@ display_partition(f, lp, i, unit)
 
 	if (pp->p_size) {
 		if (p_size < 0)
-			fprintf(f, "  %c: %8u %8u  ", 'a' + i,
-			    pp->p_size, pp->p_offset);
+			fprintf(f, "  %c: %*u %*u  ", 'a' + i,
+			    width, pp->p_size, width, pp->p_offset);
 		else
-			fprintf(f, "  %c: %8.2f%c %8u  ", 'a' + i,
-			    p_size, unit, pp->p_offset);
+			fprintf(f, "  %c: %*.1lf%c %*.1lf%c  ", 'a' + i,
+			    width-1, p_size, unit, width-1, p_offset, unit);
 		if ((unsigned) pp->p_fstype < FSMAXTYPES)
 			fprintf(f, "%8.8s", fstypenames[pp->p_fstype]);
 		else
@@ -921,6 +946,7 @@ display(f, lp)
 	struct disklabel *lp;
 {
 	int i, j;
+	int width;
 
 	fprintf(f, "# %s:\n", specname);
 	if ((unsigned) lp->d_type < DKMAXTYPES)
@@ -960,10 +986,12 @@ display(f, lp)
 	for (j = 0; j <= i; j++)
 		fprintf(f, "%d ", lp->d_drivedata[j]);
 	fprintf(f, "\n\n%d partitions:\n", lp->d_npartitions);
+	width = width_partition(lp, 0);
 	fprintf(f,
-	    "#        size   offset    fstype   [fsize bsize   cpg]\n");
+	    "#    %*.*s %*.*s    fstype   [fsize bsize   cpg]\n",
+	    width, width, "size", width, width, "offset");
 	for (i = 0; i < lp->d_npartitions; i++)
-		display_partition(f, lp, i, 0);
+		display_partition(f, lp, i, 0, width);
 	fflush(f);
 }
 
