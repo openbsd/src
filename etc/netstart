@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.76 2001/02/06 23:05:45 todd Exp $
+#	$OpenBSD: netstart,v 1.77 2001/03/13 21:15:09 deraadt Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -50,7 +50,7 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	# disallow link-local unicast dest without outgoing scope identifiers.
 	route add -inet6 fe80:: -prefixlen 10 ::1 -reject > /dev/null
 
-	# disallow site-local unicast dest without outgoing scope identifiers..
+	# disallow site-local unicast dest without outgoing scope identifiers.
 	# If you configure site-locals without scope id (it is permissible
 	# config for routers that are not on scope boundary), you may want
 	# to comment the line out.
@@ -74,15 +74,15 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	# Completely disallow packets to IPv4 compatible prefix.
 	# This may conflict with RFC1933 under following circumstances:
 	# (1) An IPv6-only KAME node tries to originate packets to IPv4
-	#     comatible destination.  The KAME node has no IPv4 compatible
+	#     compatible destination.  The KAME node has no IPv4 compatible
 	#     support.  Under RFC1933, it should transmit native IPv6
 	#     packets toward IPv4 compatible destination, hoping it would
 	#     reach a router that forwards the packet toward auto-tunnel
 	#     interface.
-	# (2) An IPv6-only node originates a packet to IPv4 compatible
+	# (2) An IPv6-only node originates a packet to an IPv4 compatible
 	#     destination.  A KAME node is acting as an IPv6 router, and
 	#     asked to forward it.
-	# Due to rare use of IPv4 compatible address, and security issues
+	# Due to rare use of IPv4 compatible addresses, and security issues
 	# with it, we disable it by default.
 	route add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject > /dev/null
 
