@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2004/12/18 21:04:52 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2004/12/18 21:08:44 millert Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -27,11 +27,9 @@ static const char initifs[] = "IFS= \t\n";
 
 static const char initsubs[] = "${PS2=> } ${PS3=#? } ${PS4=+ }";
 
-static const char version_param[] = "KSH_VERSION";
-
-static const char *const initcoms [] = {
+static const char *initcoms [] = {
+	"typeset", "-r", "KSH_VERSION", NULL,
 	"typeset", "-x", "SHELL", "PATH", "HOME", NULL,
-	"typeset", "-r", version_param, NULL,
 	"typeset", "-i", "PPID", NULL,
 	"typeset", "-i", "OPTIND=1", NULL,
 	"eval", "typeset -i RANDOM MAILCHECK=\"${MAILCHECK-600}\" SECONDS=\"${SECONDS-0}\" TMOUT=\"${TMOUT-0}\"", NULL,
@@ -62,6 +60,8 @@ static const char *const initcoms [] = {
 	  NULL,
 	NULL
 };
+
+#define version_param  (initcoms[2])
 
 int
 main(int argc, char *argv[])
@@ -172,8 +172,10 @@ main(int argc, char *argv[])
 
 	/* Check to see if we're /bin/sh. */
 	if (!strcmp(&kshname[strlen(kshname) - 3], "/sh")
-	    || !strcmp(kshname, "sh") || !strcmp(kshname, "-sh"))
+	    || !strcmp(kshname, "sh") || !strcmp(kshname, "-sh")) {
 		Flag(FSH) = 1;
+		version_param = "SH_VERSION";
+	}
 
 	/* Set edit mode to emacs by default, may be overridden
 	 * by the environment or the user.  Also, we want tab completion
