@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.15 2000/04/19 08:35:37 art Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.16 2000/04/19 10:13:22 art Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -194,6 +194,12 @@ ktrgenio(vp, fd, rw, iov, len, error)
 
 	buflen -= sizeof(struct ktr_genio);
 	while (resid > 0) {
+		/*
+		 * Don't allow this process to hog the cpu when doing
+		 * huge I/O.
+		 */
+		if (p->p_schedflags & PSCHED_SHOULDYIELD)
+			preempt(NULL);
 		cnt = min(iov->iov_len, buflen);
 		if (copyin(iov->iov_base, cp, cnt))
 			goto done;
