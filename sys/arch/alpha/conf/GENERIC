@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.48 2000/07/03 17:57:24 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.49 2000/07/03 19:38:17 mickey Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -156,10 +156,12 @@ ch*	at	scsibus? target ? lun ?
 uk*	at	scsibus? target ? lun ?
 
 # Workstation Console attachments
-wscons*	at	cfb?
-wscons*	at	vga?
-wscons*	at	sfb?
-wscons*	at	tga?
+#wscons*	at	cfb?
+#wscons*	at	vga?
+#wscons*	at	sfb?
+wsdisplay*	at	tga?
+wskbd*		at	pckbd?
+wsmouse*	at	pms?
 
 # for IPv6
 pseudo-device	gif		4
