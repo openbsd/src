@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.2 2004/04/13 01:22:30 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.3 2004/04/20 03:52:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -72,7 +72,6 @@
 #include <unistd.h>
 
 #include "dhcp.h"
-#include "tree.h"
 
 #define	LOCAL_PORT	68
 #define	REMOTE_PORT	67
