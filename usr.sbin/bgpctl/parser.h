@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.4 2004/05/21 11:52:32 claudio Exp $ */
+/*	$OpenBSD: parser.h,v 1.5 2004/08/20 15:49:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,7 @@ enum actions {
 	NEIGHBOR,
 	NEIGHBOR_UP,
 	NEIGHBOR_DOWN,
+	NEIGHBOR_CLEAR,
 	NETWORK_ADD,
 	NETWORK_REMOVE,
 	NETWORK_FLUSH,
