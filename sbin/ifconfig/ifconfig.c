@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.71 2002/11/24 17:39:04 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.72 2002/11/24 20:39:28 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.71 2002/11/24 17:39:04 henning Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.72 2002/11/24 20:39:28 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -997,7 +997,7 @@ setia6eui64(cmd, val)
 		}
 	}
 	if (!lladdr)
-		errx(1, "could not determine link local address"); 
+		errx(1, "could not determine link local address");
 
  	memcpy(&in6->s6_addr[8], &lladdr->s6_addr[8], 8);
 

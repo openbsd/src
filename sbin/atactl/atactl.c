@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.21 2002/10/16 13:00:51 gluk Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.22 2002/11/24 20:36:11 henning Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -482,7 +482,7 @@ device_dump(int argc, char *argv[])
 
 	write(1, agt.buf, agt.bytes_copied);
 	fprintf(stderr, "%d bytes written\n", agt.bytes_copied);
-	
+
 	return;
 }
 
