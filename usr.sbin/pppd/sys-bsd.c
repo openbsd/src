@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.22 2003/08/19 22:19:07 itojun Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.23 2004/05/26 14:22:54 otto Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -78,7 +78,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.22 2003/08/19 22:19:07 itojun Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.23 2004/05/26 14:22:54 otto Exp $";
 #endif
 #endif
 
@@ -247,10 +247,8 @@ ppp_available()
     close(s);
 
     no_ppp_msg = "\
-This system lacks kernel support for PPP.  To include PPP support\n\
-in the kernel, please add a line\n\
-\tpseudo-device ppp 1\n\
-to your kernel config file and build a new kernel.\n";
+PPP device not available. Make sure the device is created with\n\
+ifconfig and that the kernel supports PPP. See ifconfig(8) and ppp(4).";
     return ok;
 }
 
