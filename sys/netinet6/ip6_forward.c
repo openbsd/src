@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_forward.c,v 1.7 2000/06/03 13:42:33 itojun Exp $	*/
-/*	$KAME: ip6_forward.c,v 1.37 2000/05/28 12:17:19 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.8 2000/06/30 19:45:36 itojun Exp $	*/
+/*	$KAME: ip6_forward.c,v 1.38 2000/06/22 21:02:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -188,7 +188,7 @@ ip6_forward(m, srcrt)
 		/* no need to do IPsec. */
 		key_freesp(sp);
 		goto skip_ipsec;
-	
+
 	case IPSEC_POLICY_IPSEC:
 		if (sp->req == NULL) {
 			/* XXX should be panic ? */
@@ -286,7 +286,7 @@ ip6_forward(m, srcrt)
 			/* this probably fails but give it a try again */
 			rtalloc((struct route *)&ip6_forward_rt);
 		}
-		
+
 		if (ip6_forward_rt.ro_rt == 0) {
 			ip6stat.ip6s_noroute++;
 			/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */
@@ -441,10 +441,15 @@ ip6_forward(m, srcrt)
 		 *      to a loopback interface? I don't think so, and thus
 		 *      I bark here. (jinmei@kame.net)
 		 * XXX: it is common to route invalid packets to loopback.
-		 *	(itojun)
+		 *	also, the codepath will be visited on use of ::1 in
+		 *	rthdr. (itojun)
 		 */
-
-		if ((rt->rt_flags & (RTF_BLACKHOLE|RTF_REJECT)) == 0) {
+#if 1
+		if (0)
+#else
+		if ((rt->rt_flags & (RTF_BLACKHOLE|RTF_REJECT)) == 0)
+#endif
+		{
 			printf("ip6_forward: outgoing interface is loopback. "
 			       "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",
 			       ip6_sprintf(&ip6->ip6_src),
@@ -452,7 +457,7 @@ ip6_forward(m, srcrt)
 			       ip6->ip6_nxt, if_name(m->m_pkthdr.rcvif),
 			       if_name(rt->rt_ifp));
 		}
-		       
+
 		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
 			origifp = ifindex2ifnet[ntohs(ip6->ip6_src.s6_addr16[1])];
 		else if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
