@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.404 2005/03/05 23:58:43 tdeval Exp $
+#	$OpenBSD: GENERIC,v 1.405 2005/03/16 20:24:55 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -175,6 +175,7 @@ udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
 #ubt*	at uhub?		# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
+ural*	at uhub?		# Ralink RT2500
 
 puc*	at pci?			# PCI "universal" communication device
 
