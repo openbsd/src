@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.59 1999/05/22 21:22:25 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.60 1999/05/23 06:55:06 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -2733,7 +2733,13 @@ get_mapping(void)
 		}
 	}
 	if (i == nbnumranges) {
-		if (0x60000000 <= videoaddr && videoaddr < 0x70000000) {
+		if (0xfee00000 <= videoaddr && videoaddr < 0xfee10000) {
+			/*
+			 * Kludge for Classic II video.
+			 */
+			check_video("Classic II video (0xfee09a80)",
+					21888, 21888);
+		} else if (0x60000000 <= videoaddr && videoaddr < 0x70000000) {
 			printf("Checking for Internal Video ");
 			/*
 			 * Kludge for IIvx internal video (60b0 0000).
