@@ -1,1 +1,2 @@
-machine.domain
+#	$OpenBSD: hosts.lpd,v 1.2 1996/07/20 00:28:28 deraadt Exp $
+# as described in lpd(8), place one legal access hostname per line
