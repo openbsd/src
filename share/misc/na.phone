@@ -1,33 +1,26 @@
-#	$OpenBSD: na.phone,v 1.23 2001/07/13 20:50:00 brad Exp $
+	$OpenBSD: na.phone,v 1.24 2001/07/13 21:31:18 krw Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
 201:Ashbury Park:New Jersey:NJ
-201:Newark:New Jersey:NJ
-201:Hackensack:New Jersey:NJ
 201:Bayone:New Jersey:NJ
+201:Hackensack:New Jersey:NJ
+201:Newark:New Jersey:NJ
 202::District of Columbia:DC
 203:Bridgeport:Connecticut:CT
 203:New Haven:Connecticut:CT
 203:Stamford:Connecticut:CT
 204::Manitoba:MB
-204::Winnipeg:MB
-204::Winkler:MB
 205:Birmingham:Alabama:AL
 205:Fairfield:Alabama:AL
 205:Tuscaloosa:Alabama:AL
 206:Seattle:Washington:WA
-207:Portland:Maine:ME
-207:Augusta:Maine:ME
-207:Auburn:Maine:ME
-207:Bangor:Maine:ME
-208:Pocatello:Idaho:ID
-208:Idaho Falls:Idaho:ID
-208:Boise:Idaho:ID
-209:Stockton:California:CA
-209:Merced:California:CA
+207::Maine:ME
+208::Idaho:ID
 209:Lodi:California:CA
+209:Merced:California:CA
 209:Modesto:California:CA
+209:Stockton:California:CA
 210:Gonzales:Texas:TX
 210:San Antonio:Texas:TX
 212:Manhattan:New York:NY
@@ -38,44 +31,62 @@
 215:Abington:Pennsylvania:PA
 215:Horsham:Pennsylvania:PA
 215:Philadelphia:Pennsylvania:PA
+216:Bedford:Ohio:OH
 216:Cleveland:Ohio:OH
 216:Lakewood:Ohio:OH
-216:Bedford:Ohio:OH
-217:Springfield:Illinois:IL
 217:Decatur:Illinois:IL
+217:Springfield:Illinois:IL
 217:Urbana:Illinois:IL
-218:Duluth:Minnesota:MN
 218:Brainerd:Minnesota:MN
-219:Gary:Indiana:IN
+218:Duluth:Minnesota:MN
 219:Fort Wayne:Indiana:IN
+219:Gary:Indiana:IN
 219:South Bend:Indiana:IN
 225::Louisiana:LA
 228::Mississippi:MS
 229::Georgia:GA
-231:Grand Rapids:Michigan:MI
-231:Traverse City:Michigan:MI
-231:Muskegon:Michigan:MI
 231:Cheboyhan:Michigan:MI
-240:Silver Spring:Maryland:MD
-240:Frederick:Maryland:MD
+231:Grand Rapids:Michigan:MI
+231:Muskegon:Michigan:MI
+231:Traverse City:Michigan:MI
 240:Bethesda:Maryland:MD
+240:Frederick:Maryland:MD
+240:Silver Spring:Maryland:MD
 242::Bahamas:BS
 246::Barbados:BB
 248:Detroit:Michigan:MI
 248:Pontiac:Michigan:MI
 248:Southfield:Michigan:MI
+250:150 Mile House:British Columbia:BC
+250:Cache Creek:British Columbia:BC
+250:Campbell River:British Columbia:BC
 250:Cranbrook:British Columbia:BC
+250:Fort Nelson:British Columbia:BC
+250:Kelowna:British Columbia:BC
+250:Ladysmith:British Columbia:BC
+250:Nanaimo:British Columbia:BC
+250:Nelson:British Columbia:BC
+250:North Kamloops:British Columbia:BC
+250:Penticton:British Columbia:BC
+250:Port Alberni:British Columbia:BC
+250:Prince George:British Columbia:BC
+250:Prince Rupert:British Columbia:BC
+250:Quesnel:British Columbia:BC
+250:Revelstoke:British Columbia:BC
+250:Saanich:British Columbia:BC
+250:South Kamloops:British Columbia:BC
+250:Vernon:British Columbia:BC
 250:Victoria:British Columbia:BC
-252:Rocky Mount:North Carolina:NC
 252:Greenville:North Carolina:NC
+252:Rocky Mount:North Carolina:NC
 252:Wilson:North Carolina:NC
-253:Tacoma:Washington:WA
 253:Federal Way:Washington:WA
 253:Kent:Washington:WA
-256:Huntsville:Alabama:AL
+253:Tacoma:Washington:WA
+256:Decatur:Alabama:AL
 256:Florence:Alabama:AL
 256:Gadsden:Alabama:AL
-256:Decatur:Alabama:AL
+256:Huntsville:Alabama:AL
 262:Kenosha:Wisconsin:WI
 262:Ozaukee:Wisconsin:WI
 262:Racine:Wisconsin:WI
@@ -83,45 +94,44 @@
 262:Washington:Wisconsin:WI
 262:Waukesha:Wisconsin:WI
 264::Anguilla:
-267:Philadelphia:Pennsylvania:PA
-267:Levittown:Pennsylvania:PA
 267:Bensalem:Pennsylvania:PA
+267:Levittown:Pennsylvania:PA
+267:Philadelphia:Pennsylvania:PA
 268::Antigua and Barbuda:AG
 270:Bowling Green:Kentucky:KY
-270:Paducah:Kentucky:KY
 270:Owensboro:Kentucky:KY
+270:Paducah:Kentucky:KY
 281:Houston Cellular and Pagers:Texas:TX
 284::British Virgin Islands:
+289:Cobourg:Ontario:ON
+289:Cooksville:Ontario:ON
 289:Hamilton:Ontario:ON
 289:Mississauga:Ontario:ON
+289:Newmarket:Ontario:ON
 289:Niagara Falls:Ontario:ON
+289:St. Catharines:Ontario:ON
+289:Unionville:Ontario:ON
 297:Madisonville:Kentucky:KY
 301:Bethesda:Maryland:MD
 301:Hagerstown:Maryland:MD
 301:Rockville:Maryland:MD
-302:Wilmington:Delaware:DE
 302:Dover:Delaware:DE
 302:Newark:Delaware:DE
+302:Wilmington:Delaware:DE
 303:Aurora:Colorado:CO
 303:Boulder:Colorado:CO
 303:Denver:Colorado:CO
 303:Longmont:Colorado:CO
 304::West Virginia:WV
+304:Charlestown:West Virginia:WV
 304:Huntington:West Virginia:WV
 304:Wheeling:West Virginia:WV
-304:Charlestown:West Virginia:WV
-305:Hollywood:Florida:FL
 305:Hialeah:Florida:FL
+305:Hollywood:Florida:FL
 305:Miami Beach:Florida:FL
 305:Miami:Florida:FL
-306:Saskatchewan:Saskatchewan:SK
-306:Saskatoon:Saskatchewan:SK
-306:Humboldt:Saskatchewan:SK
-306:Moose Jaw:Saskatchewan:SK
-307:Casper:Wyoming:WY
-307:Cheyenne:Wyoming:WY
-307:Laramie:Wyoming:WY
-307:Gillette:Wyoming:WY
+306::Saskatchewan:SK
+307::Wyoming:WY
 308:Grand Island:Nebraska:NE
 308:Kearney:Nebraska:NE
 308:North Platte:Nebraska:NE
@@ -129,10 +139,10 @@
 309:Moline:Illinois:IL
 309:Peoria:Illinois:IL
 309:Rock Island:Illinois:IL
-310:West LA:California:LA
-310:Torrance:California:LA
-310:Santa Monica:California:LA
-310:Compton:California:LA
+310:Compton:California:CA
+310:Santa Monica:California:CA
+310:Torrance:California:CA
+310:West LA:California:CA
 312:Chicago:Illinois:IL
 313:Dearborn:Michigan:MI
 313:Detroit:Michigan:MI
@@ -157,23 +167,23 @@
 319:Davenport:Iowa:IA
 319:Iowa City:Iowa:IA
 319:Waterloo:Iowa:IA
-320:St. Cloud:Minnesota:MN
 320:Alexandria:Minnesota:MN
+320:St. Cloud:Minnesota:MN
 321:Cape Canaveral:Florida:FL
+321:Melbourne:Florida:FL
 321:Orlando:Florida:FL
 321:Palm Bay:Florida:FL
-321:Melbourne:Florida:FL
 323:Los Angeles:California:CA
-323:West Hollywood:California:CA
 323:South Gate:California:CA
+323:West Hollywood:California:CA
 330:Akron:Ohio:OH
 330:Canton:Ohio:OH
 330:Youngstown:Ohio:OH
 334:Auburn:Alabama:AL
 334:Mobile:Alabama:AL
 334:Montgomery:Alabama:AL
-336:Greensboro:North Carolina:NC
 336:Burlington:North Carolina:NC
+336:Greensboro:North Carolina:NC
 336:Winston Salem:North Carolina:NC
 337:Lafayette:Louisiana:LA
 337:Lake Charles:Louisiana:LA
@@ -182,18 +192,18 @@
 340:St John:US Virgin Islands:
 340:St Thomas:US Virgin Islands:
 345::Cayman Islands:
-347:The Bronx:New York:NY
 347:Brooklyn:New York:NY
 347:Queens:New York:NY
 347:Staten Island:New York:NY
+347:The Bronx:New York:NY
 352:Gainsville:Florida:FL
 352:Leesburg:Florida:FL
 352:Ocala:Florida:FL
 360:Bellingham:Washington:WA
 360:Kent:Washington:WA
 360:Olympia:Washington:WA
-361:Corpus Christi:Texas:TX
 361:Alice:Texas:TX
+361:Corpus Christi:Texas:TX
 361:Kingsville:Texas:TX
 386:Daytona Beach:Florida:FL
 386:Deland:Florida:FL
@@ -207,9 +217,13 @@
 402:Omaha:Nebraska:NE
 403:Banff:Alberta:AB
 403:Calgary:Alberta:AB
+403:Canmore:Alberta:AB
+403:Crowsnest Pass:Alberta:AB
+403:Drumheller:Alberta:AB
+403:Lake Louise:Alberta:AB
+403:Lethbridge:Alberta:AB
 403:Medicine Hat:Alberta:AB
-403:Whitehorse:Yukon:YT
-403:Yellowknife:Northwest Territories:NT
+403:Red Deer:Alberta:AB
 404:Atlanta(metro):Georgia:GA
 404:Decatur:Georgia:GA
 404:Scottsdale:Georgia:GA
@@ -251,8 +265,20 @@
 417:Joplin:Missouri:MO
 417:Lebanon:Missouri:MO
 417:Springfield:Missouri:MO
-418:Quebec:Quebec:PQ
+418:Alma:Quebec:PQ
+418:Chicoutimi:Quebec:PQ
+418:Dolbeau:Quebec:PQ
+418:La Malbaie:Quebec:PQ
 418:Levis:Quebec:PQ
+418:Loretteville:Quebec:PQ
+418:Montmagny:Quebec:PQ
+418:Portneuf:Quebec:PQ
+418:Quebec City:Quebec:PQ
+418:Rimouski:Quebec:PQ
+418:Riviere-du-loup:Quebec:PQ
+418:Sept-Iles:Quebec:PQ
+418:Ste-Anne-de-Beaupre:Quebec:PQ
+418:Thetford Mines:Quebec:PQ
 419:Mansfield:Ohio:OH
 419:Sandusky:Ohio:OH
 419:Toledo:Ohio:OH
@@ -274,7 +300,23 @@
 443:Columbia:Maryland:MD
 443:Ocean City:Maryland:MD
 445:Philadelphia:Pennsylvania:PA
-450:Quebec outside Montreal, Laval, Mirabel:Quebec:PQ
+450:Beauharnios:Quebec:PQ
+450:Bedford:Quebec:PQ
+450:Cowansville:Quebec:PQ
+450:Granby:Quebec:PQ
+450:Hemmingford:Quebec:PQ
+450:Howick:Quebec:PQ
+450:Hudson:Quebec:PQ
+450:Huntingdon:Quebec:PQ
+450:Joliette:Quebec:PQ
+450:Laval:Quebec:PQ
+450:Longueuil:Quebec:PQ
+450:Marieville:Quebec:PQ
+450:Sorel:Quebec:PQ
+450:St-Hyacinthe:Quebec:PQ
+450:St-Jean:Quebec:PQ
+450:St-Jerome:Quebec:PQ
+450:Ste-Rose:Quebec:PQ
 456::Inbound International:
 469:Dallas:Texas:TX
 469:Irving:Texas:TX
@@ -329,8 +371,11 @@
 513:Cincinnati:Ohio:OH
 513:Fairfield:Ohio:OH
 513:Middletown:Ohio:OH
+514:Dorval:Quebec:PQ
+514:Lachine:Quebec:PQ
 514:Montreal:Quebec:PQ
 514:Pointe Claire:Quebec:PQ
+514:Roxboro:Quebec:PQ
 515:Ames:Iowa:IA
 515:Des Moines:Iowa:IA
 515:Fort Dodge:Iowa:IA
@@ -344,18 +389,74 @@
 518:Albany:New York:NY
 518:Schenectady:New York:NY
 518:Troy:New York:NY
+519:Acton:Ontario:ON
+519:Alvinston:Ontario:ON
+519:Aylmer:Ontario:ON
+519:Belle River:Ontario:ON
+519:Blenheim:Ontario:ON
+519:Brantford:Ontario:ON
+519:Caledon:Ontario:ON
+519:Cambridge:Ontario:ON
+519:Chatham:Ontario:ON
+519:Cottam:Ontario:ON
+519:Delhi:Ontario:ON
+519:Dresden:Ontario:ON
+519:Durham:Ontario:ON
+519:Dutton:Ontario:ON
+519:Elmira:Ontario:ON
+519:Elora:Ontario:ON
+519:Erin:Ontario:ON
+519:Goderich:Ontario:ON
+519:Grand Bend:Ontario:ON
+519:Grand Valley:Ontario:ON
+519:Guelph:Ontario:ON
+519:Halton Hills (Acton):Ontario:ON
+519:Ipperwash:Ontario:ON
+519:Jarvis:Ontario:ON
+519:Kincardine:Ontario:ON
+519:Kingsville:Ontario:ON
+519:Kitchener:Ontario:ON
+519:Leamington:Ontario:ON
+519:Listowal:Ontario:ON
 519:London:Ontario:ON
+519:McGregor:Ontario:ON
+519:Milverton:Ontario:ON
+519:Orangeville:Ontario:ON
+519:Owen Sound:Ontario:ON
+519:Paris:Ontario:ON
+519:Pelee Island:Ontario:ON
+519:Petrolia:Ontario:ON
+519:Point Pelee:Ontario:ON
+519:Port Elgin:Ontario:ON
+519:Ridgetown:Ontario:ON
+519:Sarnia:Ontario:ON
+519:Sauble Beach:Ontario:ON
+519:Shelburne:Ontario:ON
+519:Simcoe:Ontario:ON
+519:St. Thomas:Ontario:ON
 519:Stratford:Ontario:ON
+519:Tecumseh:Ontario:ON
+519:Thamesford:Ontario:ON
+519:Tilbury:Ontario:ON
+519:Walkerton:Ontario:ON
+519:Wallaceburg:Ontario:ON
+519:Waterford:Ontario:ON
+519:Waterloo:Ontario:ON
+519:Watford:Ontario:ON
+519:West Lorne:Ontario:ON
+519:Wheatley:Ontario:ON
 519:Windsor:Ontario:ON
+519:Wingham:Ontario:ON
+519:Woodstock:Ontario:ON
 520:Flagstaff:Arizona:AZ
 520:Tucson:Arizona:AZ
 520:Yuma:Arizona:AZ
 525:Mexico City area:Mexico:MX
 530:Chico:California:CA
-530:Redding:California:CA
+530:Davis:California:CA
 530:Marysville:California:CA
 530:Nevada City:California:CA
-530:Davis:California:CA
+530:Redding:California:CA
 540:Fredericksburg:Virginia:VA
 540:Roanoke:Virginia:VA
 540:Salem:Virginia:VA
@@ -364,26 +465,26 @@
 541:Eugene:Oregon:OR
 541:Medford:Oregon:OR
 541:Pendleton:Oregon:OR
-559:Fresno:California:CA
 559:Clovis:California:CA
+559:Fresno:California:CA
 561:Boca Raton:Florida:FL
 561:Miami:Florida:FL
 561:Sebastian:Florida:FL
+562:Lakewood:California:CA
 562:Long Beach:California:CA
 562:Norwalk:California:CA
-562:Lakewood:California:CA
 570:Camp Hill:Pennsylvania:PA
 570:Scranton:Pennsylvania:PA
 570:Wikes-Barre:Pennsylvania:PA
+571:Annandale:Virginia:VA
 571:Arlington:Virginia:VA
 571:McLean:Virginia:VA
 571:Tysons Corner:Virginia:VA
-571:Annandale:Virginia:VA
 573:Cape Girardeau:Missouri:MO
 573:Columbia:Missouri:MO
 573:Hannibal:Missouri:MO
-580:Lawton:Oklahoma:OK
 580:Enid:Oklahoma:OK
+580:Lawton:Oklahoma:OK
 580:Ponca City:Oklahoma:OK
 600::Canadian Services:
 601:Clinton:Mississippi:MS
@@ -393,7 +494,17 @@
 603:Concord:New Hampshire:NH
 603:Dover:New Hampshire:NH
 603:Manchester:New Hampshire:NH
+604:Abbotsford:British Columbia:BC
+604:Chilliwack:British Columbia:BC
+604:Fort Langley:British Columbia:BC
+604:Langley:British Columbia:BC
+604:New Westminster:British Columbia:BC
+604:Port Coquitlam:British Columbia:BC
+604:Port Moody:British Columbia:BC
+604:Powell River:British Columbia:BC
 604:Richmond:British Columbia:BC
+604:Sardis:British Columbia:BC
+604:Squamish:British Columbia:BC
 604:Vancouver:British Columbia:BC
 605::South Dakota:SD
 606:Ashland:Kentucky:KY
@@ -413,8 +524,33 @@
 610:Chester:Pennsylvania:PA
 610:Reading:Pennsylvania:PA
 612:Minneapolis:Minnesota:MN
+613:Arnprior:Ontario:ON
+613:Bancroft:Ontario:ON
+613:Barry's Bay:Ontario:ON
+613:Bath:Ontario:ON
+613:Belleville:Ontario:ON
+613:Brockville:Ontario:ON
+613:Cardinal:Ontario:ON
+613:Carleton Place:Ontario:ON
 613:Cornwall:Ontario:ON
+613:Deep River:Ontario:ON
+613:Deseronto:Ontario:ON
+613:Frankford:Ontario:ON
+613:Gananoque:Ontario:ON
+613:Gloucester:Ontario:ON
+613:Harrowsmith:Ontario:ON
+613:Ingleside:Ontario:ON
+613:Kemptville:Ontario:ON
+613:Kingston:Ontario:ON
+613:Orleans:Ontario:ON
 613:Ottawa:Ontario:ON
+613:Pembroke:Ontario:ON
+613:Perth:Ontario:ON
+613:Petawawa:Ontario:ON
+613:Picton:Ontario:ON
+613:Prescott:Ontario:ON
+613:Renfrew:Ontario:ON
+613:Trenton:Ontario:ON
 614:Columbus:Ohio:OH
 614:Grove City:Ohio:OH
 614:Westerville:Ohio:OH
@@ -440,8 +576,8 @@
 623:Glendale:Arizona:AZ
 623:Phoenix:Arizona:AZ
 623:Sun City:Arizona:AZ
-626:Pasadena:California:CA
 626:Alhambra:California:CA
+626:Pasadena:California:CA
 626:West Covina:California:CA
 630:Chicago Suburbs (Cellular and Pagers):Illinois:IL
 646:Manhattan:New York:NY
@@ -472,8 +608,8 @@
 682:Arlington:Texas:TX
 682:Bedford:Texas:TX
 682:Fort Worth:Texas:TX
-684:Pago Pago:American Samoa:AS
-691:Yap, Chuuk:Federated Micronesia:FM
+684::American Samoa:AS
+691::Federated Micronesia:FM
 692:Ebeye:Marshal Islands:MH
 700::Interexchange Carrier Services:
 701::North Dakota:ND
@@ -485,8 +621,54 @@
 704:Charlotte:North Carolina:NC
 704:Concord:North Carolina:NC
 704:Gastonia:North Carolina:NC
+705:Algoma Mills:Ontario:ON
+705:Algonquin Park:Ontario:ON
+705:Alliston:Ontario:ON
+705:Barrie:Ontario:ON
+705:Beaverton:Ontario:ON
+705:Blind River:Ontario:ON
+705:Bobcaygeon:Ontario:ON
+705:Bracebridge:Ontario:ON
+705:Campbellford:Ontario:ON
+705:Cobalt:Ontario:ON
+705:Cochrane:Ontario:ON
+705:Collingwood:Ontario:ON
+705:Elliot Lake:Ontario:ON
+705:Elmvale:Ontario:ON
+705:Espanola:Ontario:ON
+705:Fenelon Falls:Ontario:ON
+705:Garson:Ontario:ON
+705:Gravenhurst:Ontario:ON
+705:Hastings:Ontario:ON
+705:Havelock:Ontario:ON
+705:Hearst:Ontario:ON
+705:Honey Harbour:Ontario:ON
+705:Huntsville:Ontario:ON
+705:Iroquois Falls:Ontario:ON
+705:Kapuskasing:Ontario:ON
+705:Killarney:Ontario:ON
+705:Kirkland Lake:Ontario:ON
+705:Lakefield:Ontario:ON
+705:Larder Lake:Ontario:ON
+705:Lindsay:Ontario:ON
+705:Manitoulin Island:Ontario:ON
+705:Massey:Ontario:ON
+705:Midland:Ontario:ON
+705:Minden:Ontario:ON
+705:New Liskeard:Ontario:ON
 705:North Bay:Ontario:ON
+705:Orillia:Ontario:ON
+705:Parry Sound:Ontario:ON
+705:Pefferlaw:Ontario:ON
+705:Penetanguishene:Ontario:ON
+705:Peterborough:Ontario:ON
 705:Sault Ste. Marie:Ontario:ON
+705:Sturgeon Falls:Ontario:ON
+705:Sudbury:Ontario:ON
+705:Timmins:Ontario:ON
+705:Victoria Harbour:Ontario:ON
+705:Waubaushene:Ontario:ON
+705:Wawa:Ontario:ON
 706:Athens:Georgia:GA
 706:Augusta:Georgia:GA
 706:Columbus:Georgia:GA
@@ -510,10 +692,10 @@
 716:Rochester:New York:NY
 717:Harrisburg:Pennsylvania:PA
 717:Lancaster:Pennsylvania:PA
-718:The Bronx:New York:NY
 718:Brooklyn:New York:NY
 718:Queens:New York:NY
 718:Staten Island:New York:NY
+718:The Bronx:New York:NY
 719:Burlington:Colorado:CO
 719:Colorado Springs:Colorado:CO
 719:Fairplay:Colorado:CO
@@ -526,13 +708,13 @@
 724:New Castle:Pennsylvania:PA
 724:Uniontown:Pennsylvania:PA
 724:Washington:Pennsylvania:PA
-727:Tampa:Florida:FL
-727:Saint Petersburg:Florida:FL
 727:Clearwater:Florida:FL
 727:Pinellas:Florida:FL
+727:Saint Petersburg:Florida:FL
+727:Tampa:Florida:FL
+731:Brownsville:Tennessee:TN
 731:Jackson:Tennessee:TN
 731:Union City:Tennessee:TN
-731:Brownsville:Tennessee:TN
 732:Bound Brook:New Jersey:NJ
 732:Edison:New Jersey:NJ
 732:New Brunswick:New Jersey:NJ
@@ -540,18 +722,18 @@
 734:Ann Arbor:Michigan:MI
 734:Canton:Michigan:MI
 734:Monroe:Michigan:MI
-740:Marion:Ohio:OH
 740:Delaware:Ohio:OH
 740:Lancaster:Ohio:OH
+740:Marion:Ohio:OH
 757:Norfolk:Virginia:VI
 758::St Lucia:LC
-760:Oceanside:California:CA
-760:Escondido:California:CA
 760:Carlsbad:California:CA
+760:Escondido:California:CA
+760:Oceanside:California:CA
 760:Vista:California:CA
-763:Elk River:Minnesota:MN
 763:Andover:Minnesota:MN
 763:Anoka:Minnesota:MN
+763:Elk River:Minnesota:MN
 765:Kokomo:Indiana:IN
 765:Lafayette:Indiana:IN
 767::Dominica:
@@ -563,8 +745,14 @@
 775:Carson City:Nevada:NV
 775:Elko:Nevada:NV
 775:Sparks:Nevada:NV
+780:Cold Lake:Alberta:AB
 780:Edmonton:Alberta:AB
+780:Fort Assiniboine:Alberta:AB
+780:Fort McMurray:Alberta:AB
+780:Grande Prairie:Alberta:AB
 780:Jasper:Alberta:AB
+780:Lloydminster:Alberta:AB
+780:Swan Hills:Alberta:AB
 781:Lynn:Massachusetts:MA
 781:Waltham:Massachusetts:MA
 781:Weymouth:Massachusetts:MA
@@ -573,9 +761,9 @@
 785:Manhattan:Kansas:KS
 785:Salina:Kansas:KS
 785:Topeka:Kansas:KS
-786:Miami:Florida:FL
 786:Hialeah:Florida:FL
 786:Homestead:Florida:FL
+786:Miami:Florida:FL
 787::Puerto Rico:PR
 800::Toll-Free:
 801:Ogden:Utah:UT
@@ -595,6 +783,16 @@
 805:Thousand Oaks:California:CA
 806:Amarillo:Texas:TX
 806:Lubbock:Texas:TX
+807:Armstrong:Ontario:ON
+807:Atikokan:Ontario:ON
+807:Dryden:Ontario:ON
+807:Fort Francis:Ontario:ON
+807:Geraldton:Ontario:ON
+807:Hudson:Ontario:ON
+807:Ignace:Ontario:ON
+807:Keewatin:Ontario:ON
+807:Kenora:Ontario:ON
+807:Marathon:Ontario:ON
 807:Thunder Bay:Ontario:ON
 808::Hawaii:HI
 809::Anguilla:AI
@@ -629,15 +827,40 @@
 818:Pasadena:California:CA
 818:San Fernando:California:CA
 818:Van Nuys:California:CA
+819:Aylmer:Quebec:PQ
+819:Buckingham:Quebec:PQ
+819:Cambell's Bay:Quebec:PQ
+819:Coaticook:Quebec:PQ
+819:Drummondville:Quebec:PQ
+819:Gatineau:Quebec:PQ
+819:Gracefield:Quebec:PQ
+819:Hull:Quebec:PQ
+819:Low:Quebec:PQ
+819:Luskville:Quebec:PQ
+819:Magog:Quebec:PQ
+819:Maniwaki:Quebec:PQ
+819:Montebello:Quebec:PQ
+819:Richmond:Quebec:PQ
+819:Rock Island:Quebec:PQ
+819:Rouyn-Noranda:Quebec:PQ
+819:Shawinigan:Quebec:PQ
+819:Shawville:Quebec:PQ
 819:Sherbrooke:Quebec:PQ
+819:St-Jovite:Quebec:PQ
+819:Ste-Agathe:Quebec:PQ
+819:Temiscaming:Quebec:PQ
+819:Trois Rivieres:Quebec:PQ
+819:Val d'Or:Quebec:PQ
+819:Victoriaville:Quebec:PQ
+819:Wakefield:Quebec:PQ
 828:Asheville:Carolina:NC
-828:Hickory:Carolina:NC
 828:Boone:Carolina:NC
-830:Eagle Pass:Texas:TX
+828:Hickory:Carolina:NC
 830:Del Rio:Texas:TX
+830:Eagle Pass:Texas:TX
 830:Kerrville:Texas:TX
-831:Santa Cruz:California:CA
 831:Monterey:California:CA
+831:Santa Cruz:California:CA
 831:Seaside:California:CA
 832:Houston:Texas:TX
 832:Spring:Texas:TX
@@ -647,12 +870,12 @@
 843:Charleston:South Carolina:SC
 843:Myrtle Beach:South Carolina:SC
 847:Arlington Heights:Illinois:IL
-850:Tallahassee:Florida:FL
-850:Pensacola:Florida:FL
 850:Panama City:Florida:FL
+850:Pensacola:Florida:FL
+850:Tallahassee:Florida:FL
 856:Camden:Jersey:NJ
-856:Vineland:Jersey:NJ
 856:Cherry Hill:Jersey:NJ
+856:Vineland:Jersey:NJ
 858:Del Mar:California:CA
 858:La Jolla:California:CA
 858:Rancho Santa Fe:California:CA
@@ -667,7 +890,9 @@
 865:Knoxville:Tennessee:TN
 865:Maryville:Tennessee:TN
 866::Toll-Free:
-867:Yukon and Northwest Territories:Yukon:YT
+867::Northwest Territories:NT
+867::Nunavit:NU
+867::Yukon:YT
 868::Trinidad and Tobago:
 869::St Kitts and Nevis:KN
 870:Pine Bluff:Arkansas:AR
@@ -689,9 +914,71 @@
 903:Tyler:Texas:TX
 904:Daytona Beach:Florida:FL
 904:Jacksonville:Florida:FL
+905:Ajax-Pickering:Ontario:ON
+905:Ancaster:Ontario:ON
+905:Aurora:Ontario:ON
+905:Beamsville:Ontario:ON
+905:Beeton:Ontario:ON
+905:Bolton:Ontario:ON
+905:Bowmanville:Ontario:ON
+905:Bradford:Ontario:ON
+905:Brampton:Ontario:ON
+905:Brooklin:Ontario:ON
+905:Burlington:Ontario:ON
+905:Caledon East:Ontario:ON
+905:Caledonia:Ontario:ON
+905:Castlemore:Ontario:ON
+905:Claremont:Ontario:ON
+905:Clarkson:Ontario:ON
+905:Cobourg:Ontario:ON
+905:Colborne:Ontario:ON
+905:Cooksville:Ontario:ON
+905:Dundas:Ontario:ON
+905:Dunnville:Ontario:ON
+905:Fort Erie:Ontario:ON
+905:Freelton:Ontario:ON
+905:Georgetown:Ontario:ON
+905:Grimsby:Ontario:ON
+905:Halton Hills (Georgetown):Ontario:ON
 905:Hamilton:Ontario:ON
+905:Keswick:Ontario:ON
+905:King City:Ontario:ON
+905:Kleinburg:Ontario:ON
+905:Malton:Ontario:ON
+905:Maple:Ontario:ON
+905:Markham:Ontario:ON
+905:Milton:Ontario:ON
 905:Mississauga:Ontario:ON
+905:Newmarket:Ontario:ON
 905:Niagara Falls:Ontario:ON
+905:Niagara-on-the-Lake:Ontario:ON
+905:Nobleton:Ontario:ON
+905:Oak Ridges:Ontario:ON
+905:Oakville:Ontario:ON
+905:Orono:Ontario:ON
+905:Oshawa:Ontario:ON
+905:Palgrave:Ontario:ON
+905:Pelham:Ontario:ON
+905:Port Colborne:Ontario:ON
+905:Port Credit:Ontario:ON
+905:Port Hope:Ontario:ON
+905:Richmond Hill:Ontario:ON
+905:Ridgeway:Ontario:ON
+905:St. Catharines:Ontario:ON
+905:Stoney Creek:Ontario:ON
+905:Stouffville:Ontario:ON
+905:Streetsville:Ontario:ON
+905:Sutton:Ontario:ON
+905:Thornhill:Ontario:ON
+905:Thorold:Ontario:ON
+905:Unionville:Ontario:ON
+905:Uxbridge:Ontario:ON
+905:Vineland:Ontario:ON
+905:Waterdown:Ontario:ON
+905:Welland:Ontario:ON
+905:Whitby:Ontario:ON
+905:Winona:Ontario:ON
+905:Woodbridge:Ontario:ON
 906:Escanaba:Michigan:MI
 906:Marquette:Michigan:MI
 906:Sault Ste. Marie:Michigan:MI
@@ -712,9 +999,9 @@
 913:Kansas City:Kansas:KS
 913:Leavenworth:Kansas:KS
 913:Olathe:Kansas:KS
+914:Mount Vernon:New York:NY
 914:New Rochelle:New York:NY
 914:Peekskill:New York:NY
-914:Mount Vernon:New York:NY
 914:White Plains:New York:NY
 914:Yonkers:New York:NY
 915:Abilene:Texas:TX
@@ -750,8 +1037,8 @@
 949:Costa Mesa:California:CA
 949:Irvine:California:CA
 949:Mission Viejo:California:CA
-952:Minnetonka:Minnesota:MN
 952:Eden Prairie:Minnesota:MN
+952:Minnetonka:Minnesota:MN
 954:Fort Lauderdale:Florida:FL
 956:Brownsville:Texas:TX
 956:Laredo:Texas:TX
