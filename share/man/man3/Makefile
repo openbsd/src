@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2003/02/20 03:20:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2004/02/09 19:21:51 espie Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	assert.3 bitstring.3 dlfcn.3 end.3 intro.3 queue.3 stdarg.3 \
@@ -40,11 +40,12 @@ MLINKS+=queue.3 CIRCLEQ_ENTRY.3 queue.3 CIRCLEQ_HEAD.3 \
 	queue.3 CIRCLEQ_EMPTY.3
 MLINKS+=queue.3 SLIST_ENTRY.3 queue.3 SLIST_HEAD.3 \
 	queue.3 SLIST_HEAD_INITIALIZER.3 queue.3 SLIST_FIRST.3 \
-	queue.3 SLIST_NEXT.3 queue.3 SLIST_END.3 \
-	queue.3 SLIST_EMPTY.3 queue.3 SLIST_FOREACH.3 \
-	queue.3 SLIST_INIT.3 queue.3 SLIST_INSERT_AFTER.3 \
-	queue.3 SLIST_INSERT_HEAD.3 queue.3 SLIST_REMOVE_HEAD.3 \
-	queue.3 SLIST_REMOVE.3
+	queue.3 SLIST_FOREACH_PREVPTR.3 queue.3 SLIST_NEXT.3 \
+	queue.3 SLIST_END.3 queue.3 SLIST_EMPTY.3 \
+	queue.3 SLIST_FOREACH.3 queue.3 SLIST_INIT.3 \
+	queue.3 SLIST_INSERT_AFTER.3 queue.3 SLIST_INSERT_HEAD.3 \
+	queue.3 SLIST_REMOVE_HEAD.3 queue.3 SLIST_REMOVE.3 \
+	queue.3 SLIST_REMOVE_NEXT.3
 MLINKS+=stdarg.3 varargs.3 stdarg.3 va_arg.3 stdarg.3 va_end.3
 MLINKS+=stdarg.3 va_start.3 stdarg.3 va_copy.3
 MLINKS+=dlfcn.3 dlopen.3 dlfcn.3 dlclose.3 dlfcn.3 dlsym.3 dlfcn.3 dlctl.3 \

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.76 2003/07/25 03:29:39 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.77 2004/02/09 19:21:52 espie Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -106,6 +106,7 @@ MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_free.9 extent.9 extent_print.9
 MLINKS+=file.9 falloc.9 file.9 fdrelease.9 file.9 FREF.9 file.9 FRELE.9 \
 	file.9 fd_getfile.9 file.9 getvnode.9 file.9 getsock.9
+MLINKS+=getdevvp.9 bdevvp.9 getdevvp.9 cdevvp.9
 MLINKS+=hook_establish.9 hook_disestablish.9
 MLINKS+=hz.9 tick.9 hz.9 tickadj.9 hz.9 stathz.9 hz.9 profhz.9
 MLINKS+=knote.9 KNOTE.9
@@ -153,11 +154,15 @@ MLINKS+=pmap.9 pmap_init.9 pmap.9 pmap_enter.9 pmap.9 pmap_remove.9 \
 	pmap.9 pmap_copy.9 pmap.9 pmap_kenter_pa.9 pmap.9 pmap_kremove.9
 MLINKS+=pool.9 pool_init.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_put.9 pool.9 pool_prime.9 pool.9 pool_sethiwat.9 \
-	pool.9 pool_setlowat.9
+	pool.9 pool_setlowat.9 pool.9 pool_cache_init.9 \
+	pool.9 pool_cache_destroy.9 pool.9 pool_cache_get.9 \
+	pool.9 pool_cache_put.9 pool.9 pool_cache_destruct_object.9 \
+	pool.9 pool_cache_invalidate.9
 MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=printf.9 snprintf.9 printf.9 vsnprintf.9 printf.9 vprintf.9 \
 	printf.9 uprintf.9 printf.9 ttyprintf.9 printf.9 db_printf.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
+MLINKS+=rasops.9 rasops_init.9 rasops.9 rasops_reconfig.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=sleep.9 tsleep.9 sleep.9 wakeup.9
 MLINKS+=spl.9 spl0.9 spl.9 splassert.9 spl.9 splbio.9 spl.9 splclock.9 \
