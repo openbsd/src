@@ -1,4 +1,4 @@
-/*	$OpenBSD: consinit.c,v 1.3 2001/09/05 22:23:52 art Exp $	*/
+/*	$OpenBSD: consinit.c,v 1.4 2001/09/20 22:17:49 jason Exp $	*/
 /*	$NetBSD: consinit.c,v 1.9 2000/10/20 05:32:35 mrg Exp $	*/
 
 /*-
@@ -218,7 +218,7 @@ consinit()
 #endif
 		consname = "keyboard/display";
 	} else if (fbnode && 
-		   (OF_instance_to_path(stdin, buffer, sizeof(buffer) >= 0))) {
+		   (OF_instance_to_path(stdin, buffer, sizeof(buffer)) >= 0)) {
 		consname = buffer;
 	}
 	printf("console is %s\n", consname);
