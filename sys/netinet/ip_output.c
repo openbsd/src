@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.121 2001/06/25 01:59:29 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.122 2001/06/25 02:03:18 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -573,9 +573,8 @@ sendit:
 		 */
 #if NPF > 0
 		{
-			void *ifp = (void *)&encif[0].sc_if;
 			struct mbuf *m1 = m;
-			if (pf_test(PF_OUT, ifp, &m1) != PF_PASS) {
+			if (pf_test(PF_OUT, &encif[0].sc_if, &m1) != PF_PASS) {
 				error = EHOSTUNREACH;
 				splx(s);
 				m_freem(m1);
