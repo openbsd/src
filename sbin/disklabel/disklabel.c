@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.37 1997/09/14 10:37:40 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.38 1997/09/26 04:10:28 millert Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.37 1997/09/14 10:37:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.38 1997/09/26 04:10:28 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,7 +60,6 @@ static char rcsid[] = "$OpenBSD: disklabel.c,v 1.37 1997/09/14 10:37:40 deraadt 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <unistd.h>
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
@@ -124,6 +123,7 @@ void	l_perror __P((char *));
 struct disklabel *readlabel __P((int));
 struct disklabel *makebootarea __P((char *, struct disklabel *, int));
 void	display __P((FILE *, struct disklabel *));
+void	display_partition __P((FILE *, struct disklabel *, int));
 int	edit __P((struct disklabel *, int));
 int	editit __P((void));
 char	*skip __P((char *));
@@ -696,7 +696,9 @@ makebootarea(boot, dp, f)
 	int b;
 #if NUMBOOT > 0
 	char *dkbasename;
+#if NUMBOOT == 1
 	struct stat sb;
+#endif
 #endif
 
 	/* XXX */
@@ -815,21 +817,74 @@ makebootarea(boot, dp, f)
 	return (lp);
 }
 
+/*
+ * Display a particular partion.
+ */
+void
+display_partition(f, lp, i)
+	FILE *f;
+	struct disklabel *lp;
+	int i;
+{
+	struct partition *pp = &lp->d_partitions[i];
+
+	if (pp->p_size) {
+		fprintf(f, "  %c: %8d %8d  ", 'a' + i,
+		    pp->p_size, pp->p_offset);
+		if ((unsigned) pp->p_fstype < FSMAXTYPES)
+			fprintf(f, "%8.8s", fstypenames[pp->p_fstype]);
+		else
+			fprintf(f, "%8d", pp->p_fstype);
+		switch (pp->p_fstype) {
+
+		case FS_UNUSED:				/* XXX */
+			fprintf(f, "    %5d %5d %5.5s ",
+			    pp->p_fsize, pp->p_fsize * pp->p_frag, "");
+			break;
+
+		case FS_BSDFFS:
+			fprintf(f, "    %5d %5d %5d ",
+			    pp->p_fsize, pp->p_fsize * pp->p_frag,
+			    pp->p_cpg);
+			break;
+
+		default:
+			fprintf(f, "%20.20s", "");
+			break;
+		}
+		if (lp->d_secpercyl) {
+			fprintf(f, "\t# (Cyl. %4d",
+			    pp->p_offset / lp->d_secpercyl);
+			if (pp->p_offset % lp->d_secpercyl)
+				putc('*', f);
+			else
+				putc(' ', f);
+			fprintf(f, "- %d",
+			    (pp->p_offset + 
+			    pp->p_size + lp->d_secpercyl - 1) /
+			    lp->d_secpercyl - 1);
+			if (pp->p_size % lp->d_secpercyl)
+				putc('*', f);
+			putc(')', f);
+		}
+		putc('\n', f);
+	}
+}
+
 void
 display(f, lp)
 	FILE *f;
 	struct disklabel *lp;
 {
 	int i, j;
-	struct partition *pp;
 
 	fprintf(f, "# %s:\n", specname);
 	if ((unsigned) lp->d_type < DKMAXTYPES)
 		fprintf(f, "type: %s\n", dktypenames[lp->d_type]);
 	else
 		fprintf(f, "type: %d\n", lp->d_type);
-	fprintf(f, "disk: %.*s\n", sizeof(lp->d_typename), lp->d_typename);
-	fprintf(f, "label: %.*s\n", sizeof(lp->d_packname), lp->d_packname);
+	fprintf(f, "disk: %.*s\n", (int)sizeof(lp->d_typename), lp->d_typename);
+	fprintf(f, "label: %.*s\n", (int)sizeof(lp->d_packname), lp->d_packname);
 	fprintf(f, "flags:");
 	if (lp->d_flags & D_REMOVABLE)
 		fprintf(f, " removable");
@@ -837,7 +892,7 @@ display(f, lp)
 		fprintf(f, " ecc");
 	if (lp->d_flags & D_BADSECT)
 		fprintf(f, " badsect");
-	fprintf(f, "\n");
+	putc('\n', f);
 	fprintf(f, "bytes/sector: %ld\n", (long)lp->d_secsize);
 	fprintf(f, "sectors/track: %ld\n", (long)lp->d_nsectors);
 	fprintf(f, "tracks/cylinder: %ld\n", (long)lp->d_ntracks);
@@ -863,50 +918,8 @@ display(f, lp)
 	fprintf(f, "\n\n%d partitions:\n", lp->d_npartitions);
 	fprintf(f,
 	    "#        size   offset    fstype   [fsize bsize   cpg]\n");
-	pp = lp->d_partitions;
-	for (i = 0; i < lp->d_npartitions; i++, pp++) {
-		if (pp->p_size) {
-			fprintf(f, "  %c: %8d %8d  ", 'a' + i,
-			    pp->p_size, pp->p_offset);
-			if ((unsigned) pp->p_fstype < FSMAXTYPES)
-				fprintf(f, "%8.8s", fstypenames[pp->p_fstype]);
-			else
-				fprintf(f, "%8d", pp->p_fstype);
-			switch (pp->p_fstype) {
-
-			case FS_UNUSED:				/* XXX */
-				fprintf(f, "    %5d %5d %5.5s ",
-				    pp->p_fsize, pp->p_fsize * pp->p_frag, "");
-				break;
-
-			case FS_BSDFFS:
-				fprintf(f, "    %5d %5d %5d ",
-				    pp->p_fsize, pp->p_fsize * pp->p_frag,
-				    pp->p_cpg);
-				break;
-
-			default:
-				fprintf(f, "%20.20s", "");
-				break;
-			}
-			if (lp->d_secpercyl) {
-				fprintf(f, "\t# (Cyl. %4d",
-				    pp->p_offset / lp->d_secpercyl);
-				if (pp->p_offset % lp->d_secpercyl)
-					putc('*', f);
-				else
-					putc(' ', f);
-				fprintf(f, "- %d",
-				    (pp->p_offset + 
-				    pp->p_size + lp->d_secpercyl - 1) /
-				    lp->d_secpercyl - 1);
-				if (pp->p_size % lp->d_secpercyl)
-					putc('*', f);
-				fprintf(f, ")");
-			}
-			fprintf(f, "\n");
-		}
-	}
+	for (i = 0; i < lp->d_npartitions; i++)
+		display_partition(f, lp, i);
 	fflush(f);
 }
 
