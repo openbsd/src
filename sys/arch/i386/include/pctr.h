@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.h,v 1.7 1997/09/08 21:21:42 dm Exp $	*/
+/*	$OpenBSD: pctr.h,v 1.8 1997/09/16 07:52:35 deraadt Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -13,15 +13,17 @@
 #ifndef _I386_PCTR_H_
 #define _I386_PCTR_H_
 
+#include <sys/ioccom.h>
+
 typedef u_quad_t pctrval;
 
 #define PCTR_NUM 2
 
 struct pctrst {
-  u_int pctr_fn[PCTR_NUM];    /* Current settings of hardware counters */
-  pctrval pctr_tsc;           /* Free-running 64-bit cycle counter */
-  pctrval pctr_hwc[PCTR_NUM]; /* Values of the hardware counters */
-  pctrval pctr_idl;           /* Iterations of the idle loop */
+	u_int pctr_fn[PCTR_NUM];	/* Current settings of hardware counters */
+	pctrval pctr_tsc;		/* Free-running 64-bit cycle counter */
+	pctrval pctr_hwc[PCTR_NUM];	/* Values of the hardware counters */
+	pctrval pctr_idl;		/* Iterations of the idle loop */
 };
 
 /* Bit values in fn fields and PIOCS ioctl's */
@@ -51,7 +53,6 @@ struct pctrst {
 #define PCIOCS1 _IOW('c', 9, unsigned int)    /* Set counter 1 function */
 
 #define _PATH_PCTR "/dev/pctr"
-
 
 #define __cpuid()				\
 ({						\

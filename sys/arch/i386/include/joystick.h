@@ -1,17 +1,16 @@
-/*	$OpenBSD: joystick.h,v 1.3 1996/05/30 09:30:10 deraadt Exp $ */
+/*	$OpenBSD: joystick.h,v 1.4 1997/09/16 07:52:33 deraadt Exp $ */
 /*	$NetBSD: joystick.h,v 1.1 1996/03/27 19:18:56 perry Exp $	*/
 
 #ifndef _JOY_IOCTL_H_
 #define _JOY_IOCTL_H_
 
-#include <sys/types.h>
-#include <sys/ioctl.h>
+#include <sys/ioccom.h>
 
 struct joystick {
-    int x;
-    int y;
-    int b1;
-    int b2;
+	int x;
+	int y;
+	int b1;
+	int b2;
 };
 
 #define JOY_SETTIMEOUT    _IOW('J', 1, int)    /* set timeout */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioctl_fd.h,v 1.2 1996/06/20 07:56:10 downsj Exp $	*/
+/*	$OpenBSD: ioctl_fd.h,v 1.3 1997/09/16 07:52:31 deraadt Exp $	*/
 /*	from: ioctl_fd.h,v 1.4 1995/06/29 03:49:32 jtk Exp 	*/
 
 /*
@@ -32,6 +32,8 @@
 
 #ifndef _I386_IOCTL_FD_H_
 #define _I386_IOCTL_FD_H_
+
+#include <sys/ioccom.h>
 
 #define FD_FORMAT_VERSION 110	/* used to validate before formatting */
 #define FD_MAX_NSEC 36		/* highest known number of spt - allow for */

@@ -30,6 +30,8 @@
 #ifndef __I386_APM_H__
 #define __I386_APM_H__
 
+#include <sys/ioccom.h>
+
 /* Advanced Power Management (v1.0 and v1.1 specification)
  * functions/defines/etc.
  */
@@ -199,10 +201,10 @@
 
 /* filled in by apmcall */ 
 struct apmregs {
-    u_short ax;
-    u_short bx;
-    u_short cx;
-    u_short dx;
+	u_short ax;
+	u_short bx;
+	u_short cx;
+	u_short dx;
 };
 
 struct apm_connect_info {

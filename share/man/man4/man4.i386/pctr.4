@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pctr.4,v 1.3 1997/09/13 09:35:49 deraadt Exp $
+.\"	$OpenBSD: pctr.4,v 1.4 1997/09/16 07:52:17 deraadt Exp $
 .\"
 .\" Pentium performance counter driver for OpenBSD.
 .\" Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
@@ -33,7 +33,6 @@ call to program the function of each counter.  All require the
 following includes:
 .Bd -literal -offset indent
 #include <sys/types.h>
-#include <sys/ioccom.h>
 #include <machine/cpu.h>
 #include <machine/pctr.h>
 .Ed
