@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.80 2004/05/10 05:32:16 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.81 2004/07/11 17:21:21 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -72,7 +72,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.80 2004/05/10 05:32:16 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.81 2004/07/11 17:21:21 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -182,6 +182,7 @@ void	child_killer(int);
 void	compress_log(struct conf_entry *);
 void	do_entry(struct conf_entry *);
 void	dotrim(struct conf_entry *);
+void	rotate(struct conf_entry *, const char *);
 void	parse_args(int, char **);
 void	run_command(char *);
 void	send_signal(char *, int);
@@ -279,7 +280,8 @@ main(int argc, char **argv)
 
 	/* Step 4, compress the log.0 file if configured to do so and free */
 	while (p) {
-		if ((p->flags & CE_COMPACT) && (p->flags & CE_ROTATED))
+		if ((p->flags & CE_COMPACT) && (p->flags & CE_ROTATED) &&
+		    p->numlogs > 0)
 			compress_log(p);
 		q = p;
 		p = p->next;
@@ -749,18 +751,10 @@ missing_field(char *p, char *errline, int lineno)
 }
 
 void
-dotrim(struct conf_entry *ent)
+rotate(struct conf_entry *ent, const char *oldlog)
 {
-	char    file1[MAXPATHLEN], file2[MAXPATHLEN];
-	char    oldlog[MAXPATHLEN], *suffix;
-	int	numdays = ent->numlogs, fd;
-
-	/* Is there a separate backup dir? */
-	if (ent->backdir != NULL)
-		snprintf(oldlog, sizeof(oldlog), "%s/%s", ent->backdir,
-		    ent->logbase);
-	else
-		strlcpy(oldlog, ent->log, sizeof(oldlog));
+	char file1[MAXPATHLEN], file2[MAXPATHLEN], *suffix;
+	int numdays = ent->numlogs;
 
 	/* Remove oldest log (may not exist) */
 	(void)snprintf(file1, sizeof(file1), "%s.%d", oldlog, numdays);
@@ -800,8 +794,25 @@ dotrim(struct conf_entry *ent)
 				warn("can't chown %s", file2);
 		}
 	}
+}
+
+void
+dotrim(struct conf_entry *ent)
+{
+	char file1[MAXPATHLEN], file2[MAXPATHLEN], oldlog[MAXPATHLEN];
+	int fd;
+
+	/* Is there a separate backup dir? */
+	if (ent->backdir != NULL)
+		snprintf(oldlog, sizeof(oldlog), "%s/%s", ent->backdir,
+		    ent->logbase);
+	else
+		strlcpy(oldlog, ent->log, sizeof(oldlog));
+
+	if (ent->numlogs > 0)
+		rotate(ent, oldlog);
 	if (!noaction && !(ent->flags & CE_BINARY))
-		(void)log_trim(ent->log);  /* Report the trimming to the old log */
+		(void)log_trim(ent->log);
 
 	(void)snprintf(file2, sizeof(file2), "%s.XXXXXXXXXX", ent->log);
 	if (noaction)  {
