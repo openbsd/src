@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.24 2004/01/14 20:50:48 miod Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.25 2004/03/04 23:02:23 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -474,7 +474,6 @@ ssh_poll(sc, acb)
 	for (;;) {
 		/* use cmd_wait values? */
 		i = 50000;
-		spl0();
 		while (((istat = rp->ssh_istat) &
 		    (SSH_ISTAT_SIP | SSH_ISTAT_DIP)) == 0) {
 			if (--i <= 0) {

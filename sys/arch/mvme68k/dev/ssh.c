@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.7 2003/12/20 00:34:28 miod Exp $ */
+/*	$OpenBSD: ssh.c,v 1.8 2004/03/04 23:02:22 miod Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -220,7 +220,6 @@ struct ssh_acb *acb;
 	for (;;) {
 		/* use cmd_wait values? */
 		i = 50000;
-		spl0();
 		while (((istat = rp->ssh_istat) &
 				  (SSH_ISTAT_SIP | SSH_ISTAT_DIP)) == 0) {
 			if (--i <= 0) {
