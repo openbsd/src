@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.2 2002/06/09 05:53:54 todd Exp $
+#	$OpenBSD: dot.profile,v 1.3 2002/08/29 01:53:37 krw Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -55,7 +55,9 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# Installing or upgrading?
 	_forceloop=""
 	while [ "X$_forceloop" = X"" ]; do
-		echo -n '(I)nstall, (U)pgrade or (S)hell? '
+		echo -n '(I)nstall'
+		[ -f upgrade ] && echo -n ', (U)pgrade'
+		echo -n ' or (S)hell? '
 		read _forceloop
 		case "$_forceloop" in
 		i*|I*)	/install

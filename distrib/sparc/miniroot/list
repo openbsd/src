@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.22 2002/05/01 19:21:28 mickey Exp $
+#	$OpenBSD: list,v 1.23 2002/08/29 01:53:37 krw Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -33,8 +33,9 @@ SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
 TERMCAP	vt100,vt220,dumb,sun		usr/share/misc/termcap
 
-# and the installation tools
+# and the installation tools (no upgrade from 3.1 to 3.2)
 SCRIPT	${ARCHDIR}/../install.md	install.md
+REMOVE	upgrade
 
 COPY	${DESTDIR}/usr/mdec/boot	boot
 SPECIAL sync; ${DESTDIR}/usr/mdec/binstall -v ffs ${TARGDIR}
