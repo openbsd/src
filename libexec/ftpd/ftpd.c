@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.50 1998/11/18 23:30:08 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.51 1998/12/29 07:00:58 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -231,9 +231,9 @@ void	 logxfer __P((char *, off_t, time_t));
 static char *
 curdir()
 {
-	static char path[MAXPATHLEN+1+1];	/* path + '/' + '\0' */
+	static char path[MAXPATHLEN+1];	/* path + '/' */
 
-	if (getcwd(path, sizeof(path)-2) == NULL)
+	if (getcwd(path, sizeof(path)-1) == NULL)
 		return ("");
 	if (path[1] != '\0')		/* special case for root dir. */
 		strcat(path, "/");
@@ -1719,9 +1719,9 @@ removedir(name)
 void
 pwd()
 {
-	char path[MAXPATHLEN + 1];
+	char path[MAXPATHLEN];
 
-	if (getwd(path) == (char *)NULL)
+	if (getcwd(path, sizeof path) == (char *)NULL)
 		reply(550, "%s.", path);
 	else
 		replydirname(path, "is current directory.");
