@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.39 1998/11/27 08:49:10 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.40 1998/11/30 02:33:16 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -363,6 +363,8 @@ com	GVC0303 #MaxTech 33.6 PnP D/F/V
 pccom	GVC0303 #MaxTech 33.6 PnP D/F/V
 com	GWY0038 #Telepath with v.90
 pccom	GWY0038	#Telepath with v.90
+com	USR0001 #U.S. Robotics Inc., Sportster W
+pccom	USR0001 #U.S. Robotics Inc., Sportster W
 com	USR0006 #USR modem
 pccom	USR0006 #USR modem
 com	SUP1380 #SupraExpress 288i PnP Voice Modem
