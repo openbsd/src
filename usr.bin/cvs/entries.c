@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.5 2004/07/25 03:18:53 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.6 2004/07/26 16:53:58 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -137,7 +137,7 @@ cvs_ent_close(CVSENTRIES *ep)
 	struct cvs_ent *ent;
 
 	if (ep->cef_file != NULL)
-		(void)fclose(ep);
+		(void)fclose(ep->cef_file);
 	if (ep->cef_path != NULL)
 		free(ep->cef_path);
 
