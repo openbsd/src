@@ -1,4 +1,5 @@
-/*	$OpenBSD: linux_mount.c,v 1.1 1996/04/28 07:38:23 etheisen Exp $	*/
+/*	$OpenBSD: linux_mount.c,v 1.2 1996/08/03 12:24:25 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1996 Erik Theisen
  * All rights reserved.
@@ -25,6 +26,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/malloc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+
+#include <sys/syscallargs.h>
+
+#include <compat/linux/linux_types.h>
 #include <compat/linux/linux_errno.h>
 
 /*
@@ -37,24 +51,27 @@
  * emulation that mounts FSs.
  */
 int
-linux_sys_mount(specialfile, dir, filesystemtype, rwflag, data)
-        char *specialfile;
-        char *dir;
-        char *filesystemtype;
-        long  rwflag;
-        void *data;
+linux_sys_mount(p, uap, retval)
+	struct proc *p;
+	struct linux_sys_mount_args /* {
+		syscallarg(char *) specialfile;
+		syscallarg(char *) dir;
+		syscallarg(char *) filesystemtype;
+		syscallarg(long) rwflag;
+		syscallarg(void *) data;
+	} */ *uap;
+	register_t *retval;
 {
-        return(LINUX_EPERM);
+        return EPERM;
 }
 
 int
-linux_sys_umount(specialfile)
-        char *specialfile;
+linux_sys_umount(p, uap, retval)
+	struct proc *p;
+	struct linux_sys_umount_args /* {
+		syscallarg(char *) specialfile;
+	} */ *uap;
+	register_t *retval;
 {
-        return(LINUX_EPERM);
+        return EPERM;
 }
-
-        
-
-        
-        
