@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.16 2001/09/18 20:27:48 jason Exp 
+ *	OpenBSD: eisadevs,v 1.17 2003/01/15 18:39:58 mickey Exp 
  */
 
 /*
@@ -54,6 +54,16 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "ADP0100",
+	    EISA_PRODUCT_ADP0100,
+	},
+	{
+	    0,
+	    "ADP0200",
+	    EISA_PRODUCT_ADP0200,
+	},
+	{
+	    0,
 	    "ADP0400",
 	    EISA_PRODUCT_ADP0400,
 	},
@@ -79,8 +89,58 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "AMI15C1",
+	    EISA_PRODUCT_AMI15C1,
+	},
+	{
+	    0,
+	    "AMI15D1",
+	    EISA_PRODUCT_AMI15D1,
+	},
+	{
+	    0,
+	    "AMI15E1",
+	    EISA_PRODUCT_AMI15E1,
+	},
+	{
+	    0,
+	    "AMI16B1",
+	    EISA_PRODUCT_AMI16B1,
+	},
+	{
+	    0,
+	    "AMI2509",
+	    EISA_PRODUCT_AMI2509,
+	},
+	{
+	    0,
+	    "AMI25B1",
+	    EISA_PRODUCT_AMI25B1,
+	},
+	{
+	    0,
+	    "AMI28A1",
+	    EISA_PRODUCT_AMI28A1,
+	},
+	{
+	    0,
+	    "AMI44C1",
+	    EISA_PRODUCT_AMI44C1,
+	},
+	{
+	    0,
+	    "AMI44D2",
+	    EISA_PRODUCT_AMI44D2,
+	},
+	{
+	    0,
 	    "AMI4801",
 	    EISA_PRODUCT_AMI4801,
+	},
+	{
+	    0,
+	    "AMI68B1",
+	    EISA_PRODUCT_AMI68B1,
 	},
 	{
 	    0,
@@ -109,8 +169,58 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
-	    "DEC4250",
-	    EISA_PRODUCT_DEC4250,
+	    "DEC1011",
+	    EISA_PRODUCT_DEC1011,
+	},
+	{
+	    0,
+	    "DEC1021",
+	    EISA_PRODUCT_DEC1021,
+	},
+	{
+	    0,
+	    "DEC1031",
+	    EISA_PRODUCT_DEC1031,
+	},
+	{
+	    0,
+	    "DEC2030",
+	    EISA_PRODUCT_DEC2030,
+	},
+	{
+	    0,
+	    "DEC2040",
+	    EISA_PRODUCT_DEC2040,
+	},
+	{
+	    0,
+	    "DEC2050",
+	    EISA_PRODUCT_DEC2050,
+	},
+	{
+	    0,
+	    "DEC2400",
+	    EISA_PRODUCT_DEC2400,
+	},
+	{
+	    0,
+	    "DEC2500",
+	    EISA_PRODUCT_DEC2500,
+	},
+	{
+	    0,
+	    "DEC2A01",
+	    EISA_PRODUCT_DEC2A01,
+	},
+	{
+	    0,
+	    "DEC2E00",
+	    EISA_PRODUCT_DEC2E00,
+	},
+	{
+	    0,
+	    "DEC2F00",
+	    EISA_PRODUCT_DEC2F00,
 	},
 	{
 	    0,
@@ -134,8 +244,78 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "DEC4220",
+	    EISA_PRODUCT_DEC4220,
+	},
+	{
+	    0,
+	    "DEC4250",
+	    EISA_PRODUCT_DEC4250,
+	},
+	{
+	    0,
+	    "DEC5000",
+	    EISA_PRODUCT_DEC5000,
+	},
+	{
+	    0,
+	    "DEC5100",
+	    EISA_PRODUCT_DEC5100,
+	},
+	{
+	    0,
+	    "DEC5301",
+	    EISA_PRODUCT_DEC5301,
+	},
+	{
+	    0,
+	    "DEC6000",
+	    EISA_PRODUCT_DEC6000,
+	},
+	{
+	    0,
+	    "DEC6400",
+	    EISA_PRODUCT_DEC6400,
+	},
+	{
+	    0,
+	    "DEC8101",
+	    EISA_PRODUCT_DEC8101,
+	},
+	{
+	    0,
+	    "DEC8102",
+	    EISA_PRODUCT_DEC8102,
+	},
+	{
+	    0,
+	    "DEC8103",
+	    EISA_PRODUCT_DEC8103,
+	},
+	{
+	    0,
+	    "DEC8300",
+	    EISA_PRODUCT_DEC8300,
+	},
+	{
+	    0,
+	    "DEC8301",
+	    EISA_PRODUCT_DEC8301,
+	},
+	{
+	    0,
 	    "DTI0000",
 	    EISA_PRODUCT_DTI0000,
+	},
+	{
+	    0,
+	    "DTI2000",
+	    EISA_PRODUCT_DTI2000,
+	},
+	{
+	    0,
+	    "DTI2002",
+	    EISA_PRODUCT_DTI2002,
 	},
 	{
 	    0,
@@ -154,13 +334,143 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "IBM0001",
+	    EISA_PRODUCT_IBM0001,
+	},
+	{
+	    0,
+	    "IBM1000",
+	    EISA_PRODUCT_IBM1000,
+	},
+	{
+	    0,
+	    "IBM1060",
+	    EISA_PRODUCT_IBM1060,
+	},
+	{
+	    0,
+	    "IBM1061",
+	    EISA_PRODUCT_IBM1061,
+	},
+	{
+	    0,
+	    "INP0010",
+	    EISA_PRODUCT_INP0010,
+	},
+	{
+	    0,
 	    "INP25D0",
 	    EISA_PRODUCT_INP25D0,
 	},
 	{
 	    0,
+	    "INP5000",
+	    EISA_PRODUCT_INP5000,
+	},
+	{
+	    0,
+	    "INT0000",
+	    EISA_PRODUCT_INT0000,
+	},
+	{
+	    0,
+	    "INT0081",
+	    EISA_PRODUCT_INT0081,
+	},
+	{
+	    0,
+	    "INT0701",
+	    EISA_PRODUCT_INT0701,
+	},
+	{
+	    0,
+	    "INT0703",
+	    EISA_PRODUCT_INT0703,
+	},
+	{
+	    0,
+	    "INT0902",
+	    EISA_PRODUCT_INT0902,
+	},
+	{
+	    0,
+	    "INT0B01",
+	    EISA_PRODUCT_INT0B01,
+	},
+	{
+	    0,
+	    "INT1000",
+	    EISA_PRODUCT_INT1000,
+	},
+	{
+	    0,
 	    "INT1010",
 	    EISA_PRODUCT_INT1010,
+	},
+	{
+	    0,
+	    "INT1030",
+	    EISA_PRODUCT_INT1030,
+	},
+	{
+	    0,
+	    "INT1031",
+	    EISA_PRODUCT_INT1031,
+	},
+	{
+	    0,
+	    "INT1060",
+	    EISA_PRODUCT_INT1060,
+	},
+	{
+	    0,
+	    "INT1201",
+	    EISA_PRODUCT_INT1201,
+	},
+	{
+	    0,
+	    "INT3061",
+	    EISA_PRODUCT_INT3061,
+	},
+	{
+	    0,
+	    "INT3079",
+	    EISA_PRODUCT_INT3079,
+	},
+	{
+	    0,
+	    "INT3089",
+	    EISA_PRODUCT_INT3089,
+	},
+	{
+	    0,
+	    "INT30A1",
+	    EISA_PRODUCT_INT30A1,
+	},
+	{
+	    0,
+	    "INT30A9",
+	    EISA_PRODUCT_INT30A9,
+	},
+	{
+	    0,
+	    "INT30D1",
+	    EISA_PRODUCT_INT30D1,
+	},
+	{
+	    0,
+	    "INT30F1",
+	    EISA_PRODUCT_INT30F1,
+	},
+	{
+	    0,
+	    "INT3132",
+	    EISA_PRODUCT_INT3132,
+	},
+	{
+	    0,
+	    "INT31A0",
+	    EISA_PRODUCT_INT31A0,
 	},
 	{
 	    0,
@@ -174,6 +484,156 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "MDG0010",
+	    EISA_PRODUCT_MDG0010,
+	},
+	{
+	    0,
+	    "MDG0020",
+	    EISA_PRODUCT_MDG0020,
+	},
+	{
+	    0,
+	    "MDG2000",
+	    EISA_PRODUCT_MDG2000,
+	},
+	{
+	    0,
+	    "MDG2010",
+	    EISA_PRODUCT_MDG2010,
+	},
+	{
+	    0,
+	    "MLX0010",
+	    EISA_PRODUCT_MLX0010,
+	},
+	{
+	    0,
+	    "MLX0011",
+	    EISA_PRODUCT_MLX0011,
+	},
+	{
+	    0,
+	    "MLX0020",
+	    EISA_PRODUCT_MLX0020,
+	},
+	{
+	    0,
+	    "MLX0021",
+	    EISA_PRODUCT_MLX0021,
+	},
+	{
+	    0,
+	    "MLX0022",
+	    EISA_PRODUCT_MLX0022,
+	},
+	{
+	    0,
+	    "MLX0030",
+	    EISA_PRODUCT_MLX0030,
+	},
+	{
+	    0,
+	    "MLX0040",
+	    EISA_PRODUCT_MLX0040,
+	},
+	{
+	    0,
+	    "MLX0050",
+	    EISA_PRODUCT_MLX0050,
+	},
+	{
+	    0,
+	    "MLX0070",
+	    EISA_PRODUCT_MLX0070,
+	},
+	{
+	    0,
+	    "MLX0071",
+	    EISA_PRODUCT_MLX0071,
+	},
+	{
+	    0,
+	    "MLX0072",
+	    EISA_PRODUCT_MLX0072,
+	},
+	{
+	    0,
+	    "MLX0073",
+	    EISA_PRODUCT_MLX0073,
+	},
+	{
+	    0,
+	    "MLX0074",
+	    EISA_PRODUCT_MLX0074,
+	},
+	{
+	    0,
+	    "MLX0075",
+	    EISA_PRODUCT_MLX0075,
+	},
+	{
+	    0,
+	    "MLX0076",
+	    EISA_PRODUCT_MLX0076,
+	},
+	{
+	    0,
+	    "MLX0077",
+	    EISA_PRODUCT_MLX0077,
+	},
+	{
+	    0,
+	    "MLX0101",
+	    EISA_PRODUCT_MLX0101,
+	},
+	{
+	    0,
+	    "MLXFD01",
+	    EISA_PRODUCT_MLXFD01,
+	},
+	{
+	    0,
+	    "MLXFE01",
+	    EISA_PRODUCT_MLXFE01,
+	},
+	{
+	    0,
+	    "MLXFF01",
+	    EISA_PRODUCT_MLXFF01,
+	},
+	{
+	    0,
+	    "MLXFF02",
+	    EISA_PRODUCT_MLXFF02,
+	},
+	{
+	    0,
+	    "HWP0000",
+	    EISA_PRODUCT_HWP0000,
+	},
+	{
+	    0,
+	    "HWP0010",
+	    EISA_PRODUCT_HWP0010,
+	},
+	{
+	    0,
+	    "HWP0020",
+	    EISA_PRODUCT_HWP0020,
+	},
+	{
+	    0,
+	    "HWP0030",
+	    EISA_PRODUCT_HWP0030,
+	},
+	{
+	    0,
+	    "HWP0070",
+	    EISA_PRODUCT_HWP0070,
+	},
+	{
+	    0,
 	    "HWP0C70",
 	    EISA_PRODUCT_HWP0C70,
 	},
@@ -184,8 +644,93 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "HWP1400",
+	    EISA_PRODUCT_HWP1400,
+	},
+	{
+	    0,
+	    "HWP1410",
+	    EISA_PRODUCT_HWP1410,
+	},
+	{
+	    0,
+	    "HWP1420",
+	    EISA_PRODUCT_HWP1420,
+	},
+	{
+	    0,
+	    "HWP1440",
+	    EISA_PRODUCT_HWP1440,
+	},
+	{
+	    0,
+	    "HWP1450",
+	    EISA_PRODUCT_HWP1450,
+	},
+	{
+	    0,
+	    "HWP1460",
+	    EISA_PRODUCT_HWP1460,
+	},
+	{
+	    0,
+	    "HWP1461",
+	    EISA_PRODUCT_HWP1461,
+	},
+	{
+	    0,
+	    "HWP1801",
+	    EISA_PRODUCT_HWP1801,
+	},
+	{
+	    0,
+	    "HWP1810",
+	    EISA_PRODUCT_HWP1810,
+	},
+	{
+	    0,
+	    "HWP1811",
+	    EISA_PRODUCT_HWP1811,
+	},
+	{
+	    0,
+	    "HWP1820",
+	    EISA_PRODUCT_HWP1820,
+	},
+	{
+	    0,
+	    "HWP1832",
+	    EISA_PRODUCT_HWP1832,
+	},
+	{
+	    0,
+	    "HWP1840",
+	    EISA_PRODUCT_HWP1840,
+	},
+	{
+	    0,
 	    "HWP1850",
 	    EISA_PRODUCT_HWP1850,
+	},
+	{
+	    0,
+	    "HWP18A0",
+	    EISA_PRODUCT_HWP18A0,
+	},
+	{
+	    0,
+	    "HWP18C0",
+	    EISA_PRODUCT_HWP18C0,
+	},
+	{
+	    0,
+	    "HWP18E0",
+	    EISA_PRODUCT_HWP18E0,
+	},
+	{
+	    0,
+	    "HWP1940",
+	    EISA_PRODUCT_HWP1940,
 	},
 	{
 	    0,
@@ -194,8 +739,28 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "HWP1990",
+	    EISA_PRODUCT_HWP1990,
+	},
+	{
+	    0,
+	    "HWP1C00",
+	    EISA_PRODUCT_HWP1C00,
+	},
+	{
+	    0,
+	    "HWP2002",
+	    EISA_PRODUCT_HWP2002,
+	},
+	{
+	    0,
 	    "HWP2051",
 	    EISA_PRODUCT_HWP2051,
+	},
+	{
+	    0,
+	    "HWP2080",
+	    EISA_PRODUCT_HWP2080,
 	},
 	{
 	    0,
@@ -226,6 +791,21 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "HWPC0E1",
 	    EISA_PRODUCT_HWPC0E1,
+	},
+	{
+	    0,
+	    "TCM3190",
+	    EISA_PRODUCT_TCM3190,
+	},
+	{
+	    0,
+	    "TCM5030",
+	    EISA_PRODUCT_TCM5030,
+	},
+	{
+	    0,
+	    "TCM5070",
+	    EISA_PRODUCT_TCM5070,
 	},
 	{
 	    0,
@@ -284,8 +864,8 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
-	    "SMC8010",
-	    EISA_PRODUCT_SMC8010,
+	    "TCM7700",
+	    EISA_PRODUCT_TCM7700,
 	},
 	{
 	    0,
@@ -294,8 +874,133 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "SMC03E0",
+	    EISA_PRODUCT_SMC03E0,
+	},
+	{
+	    0,
+	    "SMC13E0",
+	    EISA_PRODUCT_SMC13E0,
+	},
+	{
+	    0,
+	    "SMC8003",
+	    EISA_PRODUCT_SMC8003,
+	},
+	{
+	    0,
+	    "SMC8010",
+	    EISA_PRODUCT_SMC8010,
+	},
+	{
+	    0,
+	    "SMC8013",
+	    EISA_PRODUCT_SMC8013,
+	},
+	{
+	    0,
+	    "SMC8216",
+	    EISA_PRODUCT_SMC8216,
+	},
+	{
+	    0,
+	    "SMCA010",
+	    EISA_PRODUCT_SMCA010,
+	},
+	{
+	    0,
+	    "USC0120",
+	    EISA_PRODUCT_USC0120,
+	},
+	{
+	    0,
+	    "USC0125",
+	    EISA_PRODUCT_USC0125,
+	},
+	{
+	    0,
+	    "USC0140",
+	    EISA_PRODUCT_USC0140,
+	},
+	{
+	    0,
+	    "USC0220",
+	    EISA_PRODUCT_USC0220,
+	},
+	{
+	    0,
+	    "USC0225",
+	    EISA_PRODUCT_USC0225,
+	},
+	{
+	    0,
 	    "USC0240",
 	    EISA_PRODUCT_USC0240,
+	},
+	{
+	    0,
+	    "USC0340",
+	    EISA_PRODUCT_USC0340,
+	},
+	{
+	    0,
+	    "WDC0101",
+	    EISA_PRODUCT_WDC0101,
+	},
+	{
+	    0,
+	    "WDC0102",
+	    EISA_PRODUCT_WDC0102,
+	},
+	{
+	    0,
+	    "WDC0300",
+	    EISA_PRODUCT_WDC0300,
+	},
+	{
+	    0,
+	    "WDC0301",
+	    EISA_PRODUCT_WDC0301,
+	},
+	{
+	    0,
+	    "WDC03E0",
+	    EISA_PRODUCT_WDC03E0,
+	},
+	{
+	    0,
+	    "WDC03E1",
+	    EISA_PRODUCT_WDC03E1,
+	},
+	{
+	    0,
+	    "WDC03E2",
+	    EISA_PRODUCT_WDC03E2,
+	},
+	{
+	    0,
+	    "WDC03E3",
+	    EISA_PRODUCT_WDC03E3,
+	},
+	{
+	    0,
+	    "WDC03E4",
+	    EISA_PRODUCT_WDC03E4,
+	},
+	{
+	    0,
+	    "WDC0510",
+	    EISA_PRODUCT_WDC0510,
+	},
+	{
+	    0,
+	    "WDC1009",
+	    EISA_PRODUCT_WDC1009,
+	},
+	{
+	    0,
+	    "WDC13E0",
+	    EISA_PRODUCT_WDC13E0,
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,
@@ -376,6 +1081,11 @@ static const struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "USC",
 	    "UltraStor",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "WDC",
+	    "Western Digital",
 	},
 	{ 0, NULL, NULL, }
 };
