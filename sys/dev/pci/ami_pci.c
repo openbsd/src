@@ -1,7 +1,7 @@
-/*	$OpenBSD: ami_pci.c,v 1.4 2001/06/12 15:40:30 niklas Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.5 2001/06/19 16:09:24 mickey Exp $	*/
 
 /*
- * Copyright (c) 2000 Michael Shalayeff
+ * Copyright (c) 2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -123,6 +123,9 @@ ami_pci_match(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 	const struct ami_pci_device *pami;
 
+	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_I2O_STANDARD)
+		return (0);
+
 	for (pami = ami_pci_devices; pami->vendor; pami++) {
 		if (pami->vendor == PCI_VENDOR(pa->pa_id) &&
 		    pami->product == PCI_PRODUCT(pa->pa_id) &&
@@ -210,6 +213,9 @@ ami_pci_attach(parent, self, aux)
 			model = "AMI 434";
 			break;
 		}
+
+	/* XXX 438 is netraid 3si for hp cards, but we get to know
+	   they are hp too late in md code */
 
 	if (!model) {
 		const struct ami_pci_vendor *vp;
