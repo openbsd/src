@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.16 1996/06/11 22:28:18 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.17 1996/08/19 00:14:08 niklas Exp $
 #	$NetBSD: files.amiga,v 1.48 1996/05/19 21:04:50 veego Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -163,7 +163,7 @@ file	arch/amiga/dev/mfc.c		mfcs | mfcp needs-count
 
 include "../../../scsi/files.scsi"
 
-# wd 33c93 contrllers
+# wd 33c93 controllers
 define	sbic 
 file	arch/amiga/dev/sbic.c		sbic
 
@@ -265,7 +265,6 @@ file	arch/amiga/dev/idesc.c		idesc needs-flag
 #
 # Machine-independent ATAPI drivers
 #
-
 include "../../../dev/atapi/files.atapi"
 
 #
@@ -288,6 +287,8 @@ define	pci { }
 define	pcmcia {}
 
 include	"../../../dev/isa/files.isa"
+
+file	arch/amiga/isa/isadma.c		isadma needs-flag
 
 # XXX should really use if_ed instead, but can't for the moment due to
 # name clashes with the amiga variant.
@@ -314,11 +315,14 @@ file	arch/amiga/amiga/cc.c
 file	arch/amiga/amiga/db_memrw.c	ddb
 file	arch/m68k/m68k/copy.s
 
+major	{wd = 0}
+major	{fd = 2}
 major	{sd = 4}
 major	{st = 5}
 major	{vnd = 6}
 major	{cd = 7}
 major	{ccd = 8}
+major	{acd = 15}
 
 # Compatibility modules
 
