@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.39 2004/04/09 21:52:17 henning Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.40 2004/05/24 14:15:43 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2340,12 +2340,9 @@ void sk_init_yukon(sc_if)
 		SK_YU_WRITE_2(sc_if, YUKON_SAL2 + i * 4, reg);
 	}
 
-	/* clear all Multicast filter hash registers */
+	/* Set multicast filter */
 	DPRINTFN(6, ("sk_init_yukon: 11\n"));
-	SK_YU_WRITE_2(sc_if, YUKON_MCAH1, 0);
-	SK_YU_WRITE_2(sc_if, YUKON_MCAH2, 0);
-	SK_YU_WRITE_2(sc_if, YUKON_MCAH3, 0);
-	SK_YU_WRITE_2(sc_if, YUKON_MCAH4, 0);
+	sk_setmulti(sc_if);
 
 	/* enable interrupt mask for counter overflows */
 	DPRINTFN(6, ("sk_init_yukon: 12\n"));
