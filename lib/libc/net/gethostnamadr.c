@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.50 2002/07/29 10:15:30 itojun Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.51 2002/07/30 00:45:19 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -276,7 +276,7 @@ getanswer(answer, anslen, qname, qtype)
 				had_error++;
 				continue;
 			}
-			strcpy(bp, tbuf);
+			strlcpy(bp, tbuf, ep - bp);
 			host.h_name = bp;
 			bp += n;
 			continue;
@@ -298,7 +298,7 @@ getanswer(answer, anslen, qname, qtype)
 				had_error++;
 				continue;
 			}
-			strcpy(bp, tbuf);
+			strlcpy(bp, tbuf, ep - bp);
 			tname = bp;
 			bp += n;
 			continue;
@@ -414,7 +414,7 @@ getanswer(answer, anslen, qname, qtype)
 			n = strlen(qname) + 1;	/* for the \0 */
 			if (n > ep - bp)
 				goto try_again;
-			strcpy(bp, qname);
+			strlcpy(bp, qname, ep - bp);
 			host.h_name = bp;
 			bp += n;
 		}
