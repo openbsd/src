@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.3 1998/04/30 13:46:18 provos Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.4 1998/07/15 22:10:47 deraadt Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -89,7 +89,8 @@ struct field {
 	{ "config",		&adev.config,		STRING, READONLY },
 	{ "encodings",		encbuf,			STRING, READONLY },
 	{ "properties",		&properties,		PROPS,	READONLY },
-	{ "full_duplex",	&fullduplex,		INT,    0 },
+	{ "full_duplex",	&fullduplex,		UINT,	0 },
+	{ "fullduplex",		&fullduplex,		UINT,	0 },
 	{ "blocksize",		&info.blocksize,	UINT,	0 },
 	{ "hiwat",		&info.hiwat,		UINT,	0 },
 	{ "lowat",		&info.lowat,		UINT,	0 },
