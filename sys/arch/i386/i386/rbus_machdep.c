@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.7 2001/01/25 01:00:52 mickey Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.8 2001/05/01 03:15:43 mickey Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 
 #include <dev/pci/pcivar.h>
 #include <arch/i386/pci/pcibiosvar.h>
-
 
 
 /**********************************************************************
@@ -155,7 +154,7 @@ rbus_pccbb_parent_mem(pa)
 		extern struct extent *iomem_ex;
 		ex = iomem_ex;
 		start = ex->ex_start;
-		
+
 		/* XXX: unfortunately, iomem_ex cannot be used for the
 		 * dynamic bus_space allocatoin.  There are some
 		 * hidden memory (or some obstacles which do not
@@ -167,11 +166,11 @@ rbus_pccbb_parent_mem(pa)
 		 * area which is not recognised by the kernel are
 		 * already reserved.
 		 */
-		
+
 		if (start < RBUS_MEM_START) {
 			start = RBUS_MEM_START;	/* 1GB */
 		}
-		
+
 		size = ex->ex_end - start;
 	}
 
