@@ -1,4 +1,4 @@
-#	$OpenBSD: AXPPCI33,v 1.6 2000/07/05 21:55:37 ericj Exp $
+#	$OpenBSD: AXPPCI33,v 1.7 2000/09/09 01:46:15 ericj Exp $
 #
 # Generic Alpha AXPPCI33 (NoName) kernel.
 # Enough to get booted, etc., but not much more.
@@ -62,6 +62,7 @@ option		LKM
 option		PCIVERBOSE		# recognize "unknown" PCI devices
 #option		TCVERBOSE		# recognize "unknown" TC devices
 
+option		WSEMUL_VT100		# wscons VT100 emulation
 config		bsd	swap generic
 #config		bsd	root on sd0 swap on sd0
 #config		bsd	root nfs swap nfs
@@ -152,9 +153,9 @@ uk*	at	scsibus? target ? lun ?
 
 # Workstation Console attachments
 #wscons*	at	cfb?
-wscons*	at	vga?
+wsdisplay*	at	vga?
 #wscons*	at	sfb?
-#wscons*	at	tga?
+wsdisplay*	at	tga?
 
 pseudo-device	bpfilter	16
 pseudo-device	loop

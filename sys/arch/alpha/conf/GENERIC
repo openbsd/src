@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.52 2000/08/04 17:00:45 ericj Exp $
+#	$OpenBSD: GENERIC,v 1.53 2000/09/09 01:46:15 ericj Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -28,6 +28,8 @@ option		DISKLABEL_ALL	# All of the ones mentined below
 option		EISAVERBOSE		# recognize "unknown" EISA devices
 option		PCIVERBOSE		# recognize "unknown" PCI devices
 option		TCVERBOSE		# recognize "unknown" TC devices
+
+option		WSEMUL_VT100		# wscons VT100 emulation
 
 config		bsd	swap generic
 
@@ -156,9 +158,9 @@ ch*	at	scsibus? target ? lun ?
 uk*	at	scsibus? target ? lun ?
 
 # Workstation Console attachments
-wsdisplay*	at	cfb?
+#wsdisplay*	at	cfb?
 #wsdisplay*	at	vga?
-wsdisplay*	at	sfb?
+#wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
 #wskbd*		at	pckbd?
 #wsmouse*	at	pms?

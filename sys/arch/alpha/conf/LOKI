@@ -1,4 +1,4 @@
-#	$OpenBSD: LOKI,v 1.9 1999/09/12 14:15:16 kstailey Exp $
+#	$OpenBSD: LOKI,v 1.10 2000/09/09 01:46:15 ericj Exp $
 #
 # LOKI, an Alpha AXPPCI33 (NoName) kernel.
 #
@@ -70,6 +70,8 @@ option		LKM
 option		PCIVERBOSE		# recognize "unknown" PCI devices
 #option		TCVERBOSE		# recognize "unknown" TC devices
 
+option		WSEMUL_VT100		# wscons VT100 emulation
+
 #config		bsd	swap generic
 config		bsd	root on sd0 swap on sd0 dumps on sd0
 #config		bsd	root nfs swap nfs
@@ -124,7 +126,7 @@ st*	at	scsibus? target ? lun ?
 uk*	at	scsibus? target ? lun ?
 
 # Workstation Console attachments
-wscons*	at	vga?
+wsdisplay*	at	vga?
 
 pseudo-device	bpfilter	8	# Berkeley Packet Filter
 pseudo-device	loop			# network loopback

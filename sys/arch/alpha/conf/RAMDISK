@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.29 2000/07/05 21:55:36 ericj Exp $
+#	$OpenBSD: RAMDISK,v 1.30 2000/09/09 01:46:16 ericj Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -66,6 +66,8 @@ option		INET		# Internet protocol suite
 #option		PCIVERBOSE		# recognize "unknown" PCI devices
 #option		TCVERBOSE		# recognize "unknown" TC devices
 option		SCSITERSE		# less verbose scsi error messages
+
+option		WSEMUL_VT100		# wscons VT100 emulation
 
 config		bsd	swap generic
 #config		bsd	root on sd0 swap on sd0
@@ -180,10 +182,10 @@ sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # Workstation Console attachments
-#wscons*	at	cfb?
-wscons*	at	vga?
-#wscons*	at	sfb?
-wscons*	at	tga?
+#wsdisplay*	at	cfb?
+wsdisplay*	at	vga?
+#wsdisplay*	at	sfb?
+wsdisplay*	at	tga?
 
 pseudo-device	bpfilter	1
 pseudo-device	loop
