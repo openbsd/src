@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.2 1996/06/26 05:33:36 deraadt Exp $
+.\" 	$OpenBSD: ftp.1,v 1.3 1996/09/13 03:21:18 deraadt Exp $
 .\" 	$NetBSD: ftp.1,v 1.11 1995/09/08 01:06:24 tls Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -51,6 +51,12 @@ file transfer program
 .Op Fl n
 .Op Fl g
 .Op Ar host
+.Nm ftp
+.Ar http://host/path/file.html
+.Nm ftp
+.Ar ftp://host/path/file.tar.gz
+.Nm ftp
+.Ar host:/path/file.tar.gz
 .Sh DESCRIPTION
 .Nm Ftp
 is the user interface to the
@@ -58,6 +64,10 @@ is the user interface to the
 standard File Transfer Protocol.
 The program allows a user to transfer files to and from a
 remote network site.
+.Pp
+The latter three usage formats will fetch a file using either the
+HTTP or FTP protocols into the current directory.
+This is ideal for scripts.
 .Pp
 Options may be specified at the command line, or to the
 command interpreter.
