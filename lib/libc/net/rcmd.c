@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.33 2000/01/27 05:18:47 itojun Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.34 2000/01/30 05:17:49 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -140,9 +140,14 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 			else
 				(void)fprintf(stderr, "rcmd: socket: %s\n",
 				    strerror(errno));
-			sigsetmask(oldmask);
-			freeaddrinfo(res);
-			return (-1);
+			if (r->ai_next) {
+				r = r->ai_next;
+				continue;
+			} else {
+				sigsetmask(oldmask);
+				freeaddrinfo(res);
+				return (-1);
+			}
 		}
 		fcntl(s, F_SETOWN, pid);
 		if (connect(s, r->ai_addr, r->ai_addrlen) >= 0)
