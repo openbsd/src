@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.3 2000/04/04 09:51:16 deraadt Exp $
+.\"	$OpenBSD: hifn.4,v 1.4 2000/04/05 12:37:33 jason Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -43,6 +43,12 @@ boards sold by
 and others.
 The Invertex AEON card is also supported, though that company no longer
 exists.
+.Pp
+The
+.Nm
+driver works registers itself to accelerate DES, Triple-DES, MD5-HMAC96,
+and SHA1-HMAC96 operations in
+.Xr ipsec 4 .
 .Sh BUGS
 The 7751 chip starts out at initialization by only supporting compression.
 A proprietary algorithm, which has been reverse engineered, is required to
@@ -50,7 +56,8 @@ unlock the cryptographic functionality of the chip.  It is possible for
 vendors to make boards which have an lock ID not known to the driver, but
 all vendors just use the obvious ID which is 13 bytes of 0.
 .Sh SEE ALSO
-.Xr crypt 3
+.Xr crypt 3 ,
+.Xr ipsec 4
 .Sh HISTORY
 The
 .Nm
