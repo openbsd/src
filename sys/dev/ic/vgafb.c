@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.4 1998/10/09 02:00:51 rahnds Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.5 1998/10/10 06:26:20 rahnds Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -169,12 +169,10 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
         if (bus_space_map(vc->vc_memt, membase, memsize, 0, &vc->vc_memh))
 		panic("vgafb_common_setup: couldn't map memory"); 
 
-	printf("iosize %x\n", iosize);
 	if (iosize != 0) {
 		/* CR1 - Horiz. Display End */
 		bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x1);
 		width = bus_space_read_1(iot, vc->vc_ioh_d, 5);
-		printf (",w %d", width);
 		/* (stored value + 1) * depth -> pixel width */
 		width = ( width + 1 ) * 8;   
 
@@ -184,11 +182,9 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 			u_int8_t t1, t2, t3;
 			bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x12);
 			t1 = bus_space_read_1(iot, vc->vc_ioh_d, 5);
-			printf (",t1 %d", t1);
 
 			bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x7);
 			t2 = bus_space_read_1(iot, vc->vc_ioh_d, 5);
-			printf (",t2 %d", t2);
 			height = t1 + ((t2&0x40) << 3) 
 				    + ((t2&0x02) << 7) + 1; 
 			bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x17);
