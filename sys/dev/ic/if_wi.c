@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.107 2004/03/15 21:50:26 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.108 2004/03/18 16:16:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.107 2004/03/15 21:50:26 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.108 2004/03/18 16:16:10 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -301,6 +301,8 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 			sc->wi_flags |= WI_FLAGS_HAS_IBSS;
 			sc->wi_flags |= WI_FLAGS_HAS_CREATE_IBSS;
 		}
+		if (sc->sc_sta_firmware_ver >= 10603)
+			sc->wi_flags |= WI_FLAGS_HAS_ENH_SECURITY;
 		sc->wi_ibss_port = htole16(0);
 		break;
 	case WI_SYMBOL:
@@ -1516,6 +1518,9 @@ wi_setdef(sc, wreq)
 	case WI_RID_SYMBOL_DIVERSITY:
 		sc->wi_diversity = letoh16(wreq->wi_val[0]);
 		break;
+	case WI_RID_CNF_ENH_SECURITY:
+		sc->wi_enh_security = letoh16(wreq->wi_val[0]);
+		break;
 	case WI_RID_ENCRYPTION:
 		sc->wi_use_wep = letoh16(wreq->wi_val[0]);
 		break;
@@ -1751,6 +1756,7 @@ wi_ioctl(ifp, command, data)
 		case WI_RID_CREATE_IBSS:
 		case WI_RID_MICROWAVE_OVEN:
 		case WI_RID_OWN_SSID:
+		case WI_RID_CNF_ENH_SECURITY:
 			/*
 			 * Check for features that may not be supported
 			 * (must be just before default case).
@@ -1763,6 +1769,8 @@ wi_ioctl(ifp, command, data)
 			    !(sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)) ||
 			    (wreq.wi_type == WI_RID_MICROWAVE_OVEN &&
 			    !(sc->wi_flags & WI_FLAGS_HAS_MOR)) ||
+			    (wreq.wi_type == WI_RID_CNF_ENH_SECURITY &&
+			    !(sc->wi_flags & WI_FLAGS_HAS_ENH_SECURITY)) ||
 			    (wreq.wi_type == WI_RID_OWN_SSID &&
 			    wreq.wi_len != 0))
 				break;
@@ -1904,6 +1912,10 @@ wi_init_io(sc)
 
 	/* Power Management Max Sleep */
 	WI_SETVAL(WI_RID_MAX_SLEEP, sc->wi_max_sleep);
+
+	/* Set Enhanced Security if supported. */
+	if (sc->wi_flags & WI_FLAGS_HAS_ENH_SECURITY)
+		WI_SETVAL(WI_RID_CNF_ENH_SECURITY, sc->wi_enh_security);
 
 	/* Set Roaming Mode unless this is a Symbol card. */
 	if (sc->wi_flags & WI_FLAGS_HAS_ROAMING)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.23 2004/03/02 21:59:29 millert Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.24 2004/03/18 16:16:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -79,6 +79,7 @@ struct wi_softc	{
 	struct ieee80211_nwid	wi_ibss_name;
 
 	int			wi_use_wep;
+	int			wi_enh_security;
 	int			wi_crypto_algorithm;
 	int			wi_tx_key;
 	struct wi_ltv_keys	wi_keys;
@@ -135,6 +136,7 @@ struct wi_softc	{
 #define WI_FLAGS_HAS_HOSTAP		0x0100
 #define WI_FLAGS_BUS_PCMCIA		0x0200
 #define WI_FLAGS_BUS_USB		0x0400
+#define WI_FLAGS_HAS_ENH_SECURITY	0x0800
 
 #define WI_PRT_FMT "%s"
 #define WI_PRT_ARG(sc)	(sc)->sc_dev.dv_xname

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.47 2003/06/03 13:16:09 jmc Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.48 2004/03/18 16:16:11 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -59,6 +59,7 @@
 .Op Fl f Ar frequency
 .Op Fl A Ar 1|2|3
 .Op Fl D Ar 0|1|2
+.Op Fl E Ar 0|1|2|3
 .Op Fl F Ar 0|1
 .Op Fl M Ar 0|1
 .Op Fl P Ar 0|1
@@ -334,6 +335,16 @@ with the best reception.
 .El
 .Pp
 The default is 0 (Autoselect).
+.It Fl E Ar 0|1|2|3
+[Prism only] Sets the enhanced security mode.
+A value of 0 disables enhanced security mode.
+A value of 1 hides the SSID name in beacon frames
+(defeats passive AP scanning).
+A value of 2 prevents responses to probe packets with an unspecified SSID.
+A value of 3 enables both enhanced security modes.
+This option is only available on Prism cards with station firmware >= 1.6.3
+and is really only useful in HostAP mode.
+The default is 0.
 .It Fl F Ar 0|1
 [Prism2 only]
 Enable or disable processing of 802.11b frames.

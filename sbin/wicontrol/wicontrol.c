@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.47 2003/07/29 18:38:36 deraadt Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.48 2004/03/18 16:16:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.47 2003/07/29 18:38:36 deraadt Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.48 2004/03/18 16:16:11 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -597,6 +597,7 @@ struct wi_table wi_table[] = {
 	{ WI_RID_SYSTEM_SCALE, WI_WORDS, "Access point density:\t\t\t" },
 	{ WI_RID_PM_ENABLED, WI_BOOL, "Power Management:\t\t\t" },
 	{ WI_RID_MAX_SLEEP, WI_WORDS, "Max sleep time:\t\t\t\t" },
+	{ WI_RID_CNF_ENH_SECURITY, WI_WORDS, "Enhanced Security mode:\t\t\t" },
 	{ WI_RID_PRISM2, WI_WORDS, "Intersil Prism2-based card:\t\t" },
 	{ WI_RID_STA_IDENTITY, WI_CARDINFO, "Card info:\t\t\t\t" },
 	{ 0, NULL }
@@ -844,6 +845,7 @@ struct wi_func wi_opt[] = {
 	{ 'x', wi_setword, WI_FRID_CRYPTO_ALG, NULL },
 	{ 'A', wi_setword, WI_RID_CNFAUTHMODE, NULL },
 	{ 'D', wi_setword, WI_RID_SYMBOL_DIVERSITY, NULL },
+	{ 'E', wi_setword, WI_RID_CNF_ENH_SECURITY, NULL },
 	{ 'M', wi_setword, WI_RID_MICROWAVE_OVEN, NULL },
 	{ 'P', wi_setword, WI_RID_PM_ENABLED, NULL },
 	{ 'R', wi_setword, WI_RID_ROAMING_MODE, NULL },
@@ -876,7 +878,7 @@ main(int argc, char *argv[])
 	}
 
 	while ((ch = getopt(argc, argv,
-	    "a:c:d:e:f:hi:k:lm:n:op:q:r:s:t:v:x:A:D:F:LM:S:P:R:T:")) != -1) {
+	    "a:c:d:e:f:hi:k:lm:n:op:q:r:s:t:v:x:A:D:E:F:LM:S:P:R:T:")) != -1) {
 		for (p = 0; ch && wi_opt[p].key; p++)
 			if (ch == wi_opt[p].key) {
 				if (ch == 'p' && !isdigit(*optarg))
