@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.119 2004/07/13 17:57:20 jaredy Exp $ */
+/*	$OpenBSD: parse.y,v 1.120 2004/07/27 13:27:42 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -62,12 +62,17 @@ int	 lungetc(int);
 int	 findeol(void);
 int	 yylex(void);
 
+struct filter_peers_l {
+	struct filter_peers_l	*next;
+	struct filter_peers	 p;
+};
+
 struct peer	*alloc_peer(void);
 struct peer	*new_peer(void);
 struct peer	*new_group(void);
 int		 add_mrtconfig(enum mrt_type, char *, time_t, struct peer *);
 int		 get_id(struct peer *);
-int		 expand_rule(struct filter_rule *, struct filter_peers *,
+int		 expand_rule(struct filter_rule *, struct filter_peers_l *,
 		    struct filter_match *, struct filter_set *);
 int		 str2key(char *, char *, size_t);
 int		 neighbor_consistent(struct peer *);
@@ -93,7 +98,7 @@ typedef struct {
 		char			*string;
 		struct bgpd_addr	 addr;
 		u_int8_t		 u8;
-		struct filter_peers	 filter_peers;
+		struct filter_peers_l	*filter_peers;
 		struct filter_match	 filter_match;
 		struct filter_set	 filter_set;
 		struct {
@@ -131,7 +136,7 @@ typedef struct {
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
 %type	<v.u8>			action quick direction
-%type	<v.filter_peers>	filter_peer
+%type	<v.filter_peers>	filter_peer filter_peer_l filter_peer_h
 %type	<v.filter_match>	filter_match prefixlenop
 %type	<v.filter_set>		filter_set filter_set_l filter_set_opt
 %type	<v.u8>			unaryop binaryop filter_as
@@ -734,7 +739,7 @@ encspec		: /* nada */	{
 		}
 		;
 
-filterrule	: action quick direction filter_peer filter_match filter_set
+filterrule	: action quick direction filter_peer_h filter_match filter_set
 		{
 			struct filter_rule	r;
 
@@ -748,7 +753,7 @@ filterrule	: action quick direction filter_peer filter_match filter_set
 			r.quick = $2;
 			r.dir = $3;
 
-			if (expand_rule(&r, &$4, &$5, &$6) == -1)
+			if (expand_rule(&r, $4, &$5, &$6) == -1)
 				YYERROR;
 		}
 		;
@@ -766,32 +771,57 @@ direction	: FROM		{ $$ = DIR_IN; }
 		| TO		{ $$ = DIR_OUT; }
 		;
 
-filter_peer	: ANY		{ $$.peerid = $$.groupid = 0; }
+filter_peer_h	: filter_peer
+		| '{' filter_peer_l '}'		{ $$ = $2; }
+		;
+
+filter_peer_l	: filter_peer				{ $$ = $1; }
+		| filter_peer_l comma filter_peer	{
+			$3->next = $1;
+			$$ = $3;
+		}
+		;
+
+filter_peer	: ANY		{
+			if (($$ = calloc(1, sizeof(struct filter_peers_l))) ==
+			    NULL)
+				fatal(NULL);
+			$$->p.peerid = $$->p.groupid = 0;
+			$$->next = NULL;
+		}
 		| address	{
 			struct peer *p;
 
-			$$.groupid = $$.peerid = 0;
+			if (($$ = calloc(1, sizeof(struct filter_peers_l))) ==
+			    NULL)
+				fatal(NULL);
+			$$->p.groupid = $$->p.peerid = 0;
+			$$->next = NULL;
 			for (p = peer_l; p != NULL; p = p->next)
 				if (!memcmp(&p->conf.remote_addr,
 				    &$1, sizeof(p->conf.remote_addr))) {
-					$$.peerid = p->conf.id;
+					$$->p.peerid = p->conf.id;
 					break;
 				}
-			if ($$.peerid == 0) {
+			if ($$->p.peerid == 0) {
 				yyerror("no such peer: %s", log_addr(&$1));
 				YYERROR;
 			}
 		}
-		| GROUP string	{
+		| GROUP STRING	{
 			struct peer *p;
 
-			$$.peerid = 0;
+			if (($$ = calloc(1, sizeof(struct filter_peers_l))) ==
+			    NULL)
+				fatal(NULL);
+			$$->p.peerid = 0;
+			$$->next = NULL;
 			for (p = peer_l; p != NULL; p = p->next)
 				if (!strcmp(p->conf.group, $2)) {
-					$$.groupid = p->conf.groupid;
+					$$->p.groupid = p->conf.groupid;
 					break;
 				}
-			if ($$.groupid == 0) {
+			if ($$->p.groupid == 0) {
 				yyerror("no such group: \"%s\"", $2);
 				free($2);
 				YYERROR;
@@ -1651,22 +1681,36 @@ get_id(struct peer *newpeer)
 }
 
 int
-expand_rule(struct filter_rule *rule, struct filter_peers *peer,
+expand_rule(struct filter_rule *rule, struct filter_peers_l *peer,
     struct filter_match *match, struct filter_set *set)
 {
 	struct filter_rule	*r;
+	struct filter_peers_l	*p, *next;
 
-	if ((r = calloc(1, sizeof(struct filter_rule))) == NULL) {
-		log_warn("expand_rule");
-		return (-1);
-	}
+	p = peer;
 
-	memcpy(r, rule, sizeof(struct filter_rule));
-	memcpy(&r->peer, peer, sizeof(struct filter_peers));
-	memcpy(&r->match, match, sizeof(struct filter_match));
-	memcpy(&r->set, set, sizeof(struct filter_set));
+	do {
+		if ((r = calloc(1, sizeof(struct filter_rule))) == NULL) {
+			log_warn("expand_rule");
+			return (-1);
+		}
 
-	TAILQ_INSERT_TAIL(filter_l, r, entry);
+		memcpy(r, rule, sizeof(struct filter_rule));
+		memcpy(&r->match, match, sizeof(struct filter_match));
+		memcpy(&r->set, set, sizeof(struct filter_set));
+
+		if (p != NULL)
+			memcpy(&r->peer, &p->p, sizeof(struct filter_peers));
+
+		TAILQ_INSERT_TAIL(filter_l, r, entry);
+
+		if (p != NULL) {
+			next = p->next;
+			free(p);
+			p = next;
+		} else
+			p = NULL;
+	} while (p != NULL);
 
 	return (0);
 }
