@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page_i.h,v 1.6 2001/07/18 10:47:05 art Exp $	*/
-/*	$NetBSD: uvm_page_i.h,v 1.11 1999/09/12 01:17:38 chs Exp $	*/
+/*	$OpenBSD: uvm_page_i.h,v 1.7 2001/08/06 14:03:05 art Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.12 2000/03/26 20:54:47 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -124,7 +124,7 @@ uvm_unlock_fpageq(s)
 struct vm_page *
 uvm_pagelookup(obj, off)
 	struct uvm_object *obj;
-	vaddr_t off;
+	voff_t off;
 {
 	struct vm_page *pg;
 	struct pglist *buck;

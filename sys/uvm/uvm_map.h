@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map.h,v 1.7 2001/03/22 03:05:55 smart Exp $	*/
-/*	$NetBSD: uvm_map.h,v 1.15 1999/06/21 17:25:11 thorpej Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.8 2001/08/06 14:03:05 art Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.16 2000/03/26 20:54:47 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -142,7 +142,7 @@ vm_map_t	uvm_map_create __P((pmap_t, vaddr_t, vaddr_t, int));
 int		uvm_map_extract __P((vm_map_t, vaddr_t, vsize_t, 
 			vm_map_t, vaddr_t *, int));
 vm_map_entry_t	uvm_map_findspace __P((vm_map_t, vaddr_t, vsize_t, vaddr_t *,
-			struct uvm_object *, vaddr_t, boolean_t));
+			struct uvm_object *, voff_t, boolean_t));
 int		uvm_map_inherit __P((vm_map_t, vaddr_t, vaddr_t, vm_inherit_t));
 int		uvm_map_advice __P((vm_map_t, vaddr_t, vaddr_t, int));
 void		uvm_map_init __P((void));

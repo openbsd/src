@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map.c,v 1.21 2001/07/18 14:38:07 art Exp $	*/
-/*	$NetBSD: uvm_map.c,v 1.69 1999/09/12 01:17:37 chs Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.22 2001/08/06 14:03:04 art Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.70 2000/03/26 20:54:47 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -469,7 +469,7 @@ uvm_map(map, startp, size, uobj, uoffset, flags)
 	vaddr_t *startp;	/* IN/OUT */
 	vsize_t size;
 	struct uvm_object *uobj;
-	vaddr_t uoffset;
+	voff_t uoffset;
 	uvm_flag_t flags;
 {
 	vm_map_entry_t prev_entry, new_entry;
@@ -798,7 +798,7 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, fixed)
 	vsize_t length;
 	vaddr_t *result; /* OUT */
 	struct uvm_object *uobj;
-	vaddr_t uoffset;
+	voff_t uoffset;
 	boolean_t fixed;
 {
 	vm_map_entry_t entry, next, tmp;
@@ -3235,9 +3235,9 @@ uvm_map_printit(map, full, pr)
 		return;
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
-		(*pr)(" - %p: 0x%lx->0x%lx: obj=%p/0x%x, amap=%p/%d\n",
+		(*pr)(" - %p: 0x%lx->0x%lx: obj=%p/0x%llx, amap=%p/%d\n",
 		    entry, entry->start, entry->end, entry->object.uvm_obj,
-		    entry->offset, entry->aref.ar_amap, entry->aref.ar_pageoff);
+		    (long long)entry->offset, entry->aref.ar_amap, entry->aref.ar_pageoff);
 		(*pr)(
 "\tsubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, wc=%d, adv=%d\n",
 		    (entry->etype & UVM_ET_SUBMAP) ? 'T' : 'F',

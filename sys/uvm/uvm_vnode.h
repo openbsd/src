@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_vnode.h,v 1.7 2001/03/22 03:05:57 smart Exp $	*/
-/*	$NetBSD: uvm_vnode.h,v 1.8 1999/06/21 17:25:12 thorpej Exp $	*/
+/*	$OpenBSD: uvm_vnode.h,v 1.8 2001/08/06 14:03:05 art Exp $	*/
+/*	$NetBSD: uvm_vnode.h,v 1.9 2000/03/26 20:54:48 kleink Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ struct uvm_vnode {
 	struct uvm_object u_obj;	/* the actual VM object */
 	int u_flags;			/* flags */
 	int u_nio;			/* number of running I/O requests */
-	vsize_t u_size;			/* size of object */
+	voff_t u_size;			/* size of object */
 
 	/* the following entry is locked by uvn_wl_lock */
 	LIST_ENTRY(uvm_vnode) u_wlist;	/* list of writeable vnode objects */

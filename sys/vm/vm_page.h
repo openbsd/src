@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_page.h,v 1.15 2001/07/25 14:47:58 art Exp $	*/
-/*	$NetBSD: vm_page.h,v 1.24 1998/02/10 14:09:03 mrg Exp $	*/
+/*	$OpenBSD: vm_page.h,v 1.16 2001/08/06 14:03:05 art Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.35 2000/03/26 20:54:48 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -117,10 +117,10 @@ struct vm_page {
   TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
   TAILQ_ENTRY(vm_page)	listq;		/* pages in same object (O)*/
 
-  vaddr_t		offset;		/* offset into object (O,P) */
-
-  struct uvm_object	*uobject;	/* object (O,P) */
   struct vm_anon	*uanon;		/* anon (O,P) */
+  struct uvm_object	*uobject;	/* object (O,P) */
+  voff_t		offset;		/* offset into object (O,P) */
+
   u_short		flags;		/* object flags [O] */
   u_short		version;	/* version count [O] */
   u_short		wire_count;	/* wired down map refs [P] */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_map.h,v 1.15 2001/06/27 04:52:39 art Exp $	*/
-/*	$NetBSD: vm_map.h,v 1.11 1995/03/26 20:39:10 jtc Exp $	*/
+/*	$OpenBSD: vm_map.h,v 1.16 2001/08/06 14:03:05 art Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.35 2000/03/26 20:54:48 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -107,7 +107,7 @@ struct vm_map_entry {
 	vaddr_t			start;		/* start address */
 	vaddr_t			end;		/* end address */
 	union vm_map_object	object;		/* object I point to */
-	vsize_t			offset;		/* offset into object */
+	voff_t			offset;		/* offset into object */
 	/* etype is a bitmap that replaces the following 4 items */
 	int			etype;		/* entry type */
 		/* Only in task maps: */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page.h,v 1.7 2001/03/22 03:05:56 smart Exp $	*/
-/*	$NetBSD: uvm_page.h,v 1.13 1999/06/21 17:25:12 thorpej Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.8 2001/08/06 14:03:05 art Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.14 2000/03/26 20:54:47 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -117,7 +117,7 @@ vaddr_t uvm_pageboot_alloc __P((vsize_t));
 PAGE_INLINE void uvm_pagecopy __P((struct vm_page *, struct vm_page *));
 PAGE_INLINE void uvm_pagedeactivate __P((struct vm_page *));
 void uvm_pagefree __P((struct vm_page *));
-PAGE_INLINE struct vm_page *uvm_pagelookup __P((struct uvm_object *, vaddr_t));
+PAGE_INLINE struct vm_page *uvm_pagelookup __P((struct uvm_object *, voff_t));
 void uvm_pageremove __P((struct vm_page *));
 /* uvm_pagerename: not needed */
 PAGE_INLINE void uvm_pageunwire __P((struct vm_page *));

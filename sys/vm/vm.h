@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm.h,v 1.14 2001/07/05 07:25:54 art Exp $	*/
-/*	$NetBSD: vm.h,v 1.13 1994/06/29 06:47:52 cgd Exp $	*/
+/*	$OpenBSD: vm.h,v 1.15 2001/08/06 14:03:05 art Exp $	*/
+/*	$NetBSD: vm.h,v 1.22 2000/03/26 20:54:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,7 +39,8 @@
 #ifndef VM_H
 #define VM_H
 
-typedef int vm_inherit_t;		/* XXX: inheritance codes */
+typedef int		vm_inherit_t;	/* XXX: inheritance codes */
+typedef off_t           voff_t;		/* XXX: offset within a uvm_object */
 
 union vm_map_object;
 typedef union vm_map_object vm_map_object_t;

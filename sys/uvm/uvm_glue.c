@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_glue.c,v 1.17 2001/07/25 13:25:33 art Exp $	*/
-/*	$NetBSD: uvm_glue.c,v 1.30 1999/11/13 00:24:38 thorpej Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.18 2001/08/06 14:03:04 art Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.31 2000/03/26 20:54:47 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -189,7 +189,7 @@ uvm_useracc(addr, len, rw)
 
 	vm_map_lock_read(map);
 	rv = uvm_map_checkprot(map, trunc_page((vaddr_t)addr),
-		round_page((vaddr_t)addr+len), prot);
+	    round_page((vaddr_t)addr+len), prot);
 	vm_map_unlock_read(map);
 
 	return(rv);

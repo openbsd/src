@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.17 2001/07/25 14:47:59 art Exp $	*/
-/*	$NetBSD: uvm_mmap.c,v 1.37 1999/12/11 05:38:41 thorpej Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.18 2001/08/06 14:03:05 art Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.38 2000/03/26 20:54:47 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -345,18 +345,6 @@ sys_mmap(p, v, retval)
 		return (EINVAL);
 
 	/*
-	 * make sure that the newsize fits within a vaddr_t
-	 * XXX: need to revise addressing data types
-	 */
-	if (pos + size > (vaddr_t)-PAGE_SIZE) {
-#ifdef DEBUG
-		printf("mmap: pos=%qx, size=%lx too big\n", (long long)pos,
-		       (long)size);
-#endif
-		return (EINVAL);
-	}
-
-	/*
 	 * align file position and save offset.  adjust size.
 	 */
 
@@ -392,8 +380,9 @@ sys_mmap(p, v, retval)
 		 * not fixed: make sure we skip over the largest possible heap.
 		 * we will refine our guess later (e.g. to account for VAC, etc)
 		 */
-		if (addr < round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ))
-			addr = round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
+		if (addr < round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ))
+			addr = round_page((vaddr_t)p->p_vmspace->vm_daddr +
+			    MAXDSIZ);
 	}
 
 	/*
@@ -1113,7 +1102,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	vm_prot_t prot, maxprot;
 	int flags;
 	caddr_t handle;		/* XXX: VNODE? */
-	vaddr_t foff;
+	voff_t foff;
 	vsize_t locklimit;
 {
 	struct uvm_object *uobj;

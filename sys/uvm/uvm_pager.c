@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pager.c,v 1.12 2001/07/26 19:37:13 art Exp $	*/
-/*	$NetBSD: uvm_pager.c,v 1.25 2000/01/11 06:57:50 chs Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.13 2001/08/06 14:03:05 art Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.26 2000/03/26 20:54:47 kleink Exp $	*/
 
 /*
  *
@@ -250,10 +250,10 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	struct uvm_object *uobj;	/* IN */
 	struct vm_page **pps, *center;  /* IN/OUT, IN */
 	int *npages, flags;		/* IN/OUT, IN */
-	vaddr_t mlo, mhi;		/* IN (if !PGO_ALLPAGES) */
+	voff_t mlo, mhi;		/* IN (if !PGO_ALLPAGES) */
 {
 	struct vm_page **ppsp, *pclust;
-	vaddr_t lo, hi, curoff;
+	voff_t lo, hi, curoff;
 	int center_idx, forward;
 	UVMHIST_FUNC("uvm_mk_pcluster"); UVMHIST_CALLED(maphist);
 
@@ -375,7 +375,7 @@ uvm_shareprot(entry, prot)
 {
 	struct uvm_object *uobj = entry->object.uvm_obj;
 	struct vm_page *pp;
-	vaddr_t start, stop;
+	voff_t start, stop;
 	UVMHIST_FUNC("uvm_shareprot"); UVMHIST_CALLED(maphist);
 
 	if (UVM_ET_ISSUBMAP(entry)) 
@@ -441,7 +441,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 	struct vm_page *pg, ***ppsp_ptr;/* IN, IN/OUT */
 	int *npages;			/* IN/OUT */
 	int flags;			/* IN */
-	vaddr_t start, stop;		/* IN, IN */
+	voff_t start, stop;		/* IN, IN */
 {
 	int result;
 	daddr_t swblk;
