@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.6 2003/10/01 18:19:08 miod Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.7 2004/09/14 22:19:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(list)
-static char rcsid[] = "$OpenBSD: stack_protector.c,v 1.6 2003/10/01 18:19:08 miod Exp $";
+static char rcsid[] = "$OpenBSD: stack_protector.c,v 1.7 2004/09/14 22:19:30 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -65,8 +65,10 @@ __guard_setup(void)
 
 	if (i < sizeof(__guard) / 4) {
 		/* If sysctl was unsuccessful, use the "terminator canary". */
-		((char *)__guard)[0] = 0; ((char*)__guard)[1] = 0;
-		((char *)__guard)[2] = '\n'; ((char *)__guard)[3] = 255;
+		((unsigned char *)__guard)[0] = 0;
+		((unsigned char *)__guard)[1] = 0;
+		((unsigned char *)__guard)[2] = '\n';
+		((unsigned char *)__guard)[3] = 255;
 	}
 }
 
