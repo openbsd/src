@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.5 1999/06/13 18:09:16 pjanzen Exp $
+/ $OpenBSD: units.lib,v 1.6 2000/04/20 23:50:53 pjanzen Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -26,6 +26,7 @@ myria-			1e4
 kilo-			1e3
 hecto-			1e2
 deka-			1e1
+deca-			deka
 deci-			1e-1
 centi-			1e-2
 milli-			1e-3
@@ -35,6 +36,7 @@ pico-			1e-12
 femto-			1e-15
 atto-			1e-18
 zopto-			1e-21
+zepto-			zopto
 yocto-			1e-24
 
 semi-			.5
@@ -257,6 +259,7 @@ britainpound		1.60 $
 canadadollar		.68 $
 chilepeso		.002 $
 chinarenminbi		.1208 $
+chinayuan		chinarenminbi
 colombiapeso		.000596 $
 czechkoruna		.028 $
 denmarkkrone		.14 $
@@ -304,7 +307,7 @@ francefranc		1|6.55957 euro
 germanymark		1|1.95583 euro
 irelandpunt		1|0.787564 euro
 italylira		1|1936.27 euro
-netherlandguilder	1|2.20371 euro
+netherlandsguilder	1|2.20371 euro
 portugalescudo		1|200.482 euro
 spainpeseta		1|166.386 euro
 
@@ -326,10 +329,63 @@ markka			finlandmarkka
 sucre			ecuadorsucre
 poundsterling		britainpound
 
+/ ISO 4217 and then some
+AED			unitedarabdirham
+ARP			argentinapeso
+ATS			austriaschilling
+AUD			australiadollar
+BEF			belgiumfranc
+BRR			brazilreal
+CAD			canadadollar
+CHF			switzerlandfranc
+CLP			chilepeso
+CNY			chinarenminbi
+COP			colombiapeso
+CSK			czechkoruna
+DEM			germanymark
+DKK			denmarkkrone
+ECS			ecuadorsucre
+EUR			euro
+FIM			finlandmarkka
+FRF			francefranc
+GBP			britainpound
+GRD			greecedrachma
+HKD			hongkongdollar
+HUF			hungaryforint
+IDR			indonesiarupiah
+INR			indiarupee
+ILS			israelshekel
+ITL			italylira
+JOD			jordandinar
+JPY			japanyen
+KRW			southkoreawon
+KWD			kuwaitdinar
+LBP			lebanonpound
+MTL			maltalira
+MXP			mexicopeso
+MYR			malaysiaringgit
+NLG			netherlandsguilder
+NOK			norwaykrone
+NZD			newzealanddollar
+PEN			perunewsol
+PHP			philippinespeso
+PKR			pakistanrupee
+PLZ			polandzloty
+SAR			saudiarabiariyal
+SEK			swedenkrona
+SGD			singaporedollar
+THB			thailandbaht
+TRL			turkeylira
+TWD			taiwandollar
+USD			dollar
+ZAR			southafricarand
+
 / computer
 
 baud			bit/sec
 byte			8 bit
+/ Not necessarily true on all systems!
+word			2 byte
 block			512 byte
 kbyte			1024 byte
 megabyte		1024 kbyte
@@ -357,7 +413,7 @@ bar			1e+5 nt/m2
 barie			1e-1 nt/m2
 barleycorn		1|3 in
 barn			1e-28 m2
-\ oil barrel, nothing else
+/ oil barrel, nothing else
 barrel			42 gal
 barye			1e-1 nt/m2
 baryl			microbar
@@ -365,6 +421,7 @@ bev			1e+9 e-volt
 biot			10 amp
 blondel			cd/pi-m2
 boardfoot		144 in3
+/ Defn of bolt is also an area, but depends on type of cloth
 bolt			40 yd
 bottommeasure		1|40 in
 britishthermalunit	1.05506e+3 joule fuzz
@@ -445,10 +502,13 @@ homestead		1|4 mi2
 / horsepower is not uniquely defined
 horsepower		735.50 watt
 hp			horsepower
+hubble			1e9 ly
 hyl			gm force sec2/m
 hz			/sec
 imaginarycubicfoot	1.4 ft3
+jansky			1e-26 W/m2-Hz
 jeroboam		4|5 gal
+Jy			jansky
 karat			1|24
 kcal			kilocal
 kcalorie		kilocal
@@ -496,6 +556,7 @@ oersted			2.5e+2 amp/m/pi
 Oe			oersted
 pace			36 in
 palm			3 in
+pair			2
 parasang		3.5 mi
 parsec			AU-radian/arcsec
 pascal			nt/m2
@@ -538,6 +599,7 @@ rydbergconst		0.5 electronmass-c-alpha2/planck
 rydberg			rydbergconst-planck-c
 sabin			1 ft2
 sack			3 bu
+score			20
 seam			8 bu
 section			mi2
 shippington		40 ft3
@@ -548,6 +610,7 @@ sigma			microsec
 skein			120 yd
 skot			1e-3 apostilb
 slug			lb-g-sec2/ft
+smoot			67 in
 span			9 in
 spat			4 pi sr
 spindle			14400 yd
@@ -575,7 +638,11 @@ tonne			1e+6 gm
 torr			mm hg
 township		36 mi2
 tun			8 barrel
+verst			1066.8 m
+arshin			1|1500 verst
 water			gram g / cc
+/ pumps are often in "feet head", assuming feet of water
+head			water
 wey			40 bu
 weymass			252 lb
 Xunit			1.00206e-13 m
