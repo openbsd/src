@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.1 2001/09/01 15:55:17 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.2 2001/09/13 13:38:45 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -166,11 +166,11 @@ vgafb_common_probe(iot, memt, iobase, iosize, membase, memsize, mmiobase, mmiosi
 		membase, memsize, memt);
 #endif
 
+#if 0
 	if (bus_space_map(memt, membase, memsize, 0, &memh))
 		goto bad;
 	gotmem = 1;
 
-#if 0
 	/* CR1 - Horiz. Display End */
 	bus_space_write_1(iot, ioh_d, 4, 0x1);
 	width = bus_space_read_1(iot, ioh_d, 5);
@@ -183,14 +183,14 @@ vgafb_common_probe(iot, memt, iobase, iosize, membase, memsize, mmiobase, mmiosi
 	}
 #endif
 
-	#if 0
+#if 0
 	vgadata = bus_space_read_2(memt, memh, 0);
 	bus_space_write_2(memt, memh, 0, 0xa55a);
 	rv = (bus_space_read_2(memt, memh, 0) == 0xa55a);
 	bus_space_write_2(memt, memh, 0, vgadata);
-	#else
+#else
 	rv = 1;
-	#endif
+#endif
 
 
 bad:
@@ -235,6 +235,8 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 #if 0
 	printf("commons setup mapping mem base %x size %x\n", membase, memsize);
 #endif
+	/* memsize  should only be visable region for console */
+	memsize = cons_height * cons_linebytes;
         if (bus_space_map(vc->vc_memt, membase, memsize, 0, &vc->vc_memh))
 		panic("vgafb_common_setup: couldn't map memory"); 
 	cons_display_mem_h = vc->vc_memh;
