@@ -1,4 +1,4 @@
-/*	$OpenBSD: percent_m.c,v 1.1 1997/02/26 03:06:54 downsj Exp $	*/
+/*	$OpenBSD: percent_m.c,v 1.2 2001/11/07 18:48:48 deraadt Exp $	*/
 
  /*
   * Replace %m by system error message.
@@ -10,7 +10,7 @@
 #if 0
 static char sccsid[] = "@(#) percent_m.c 1.1 94/12/28 17:42:37";
 #else
-static char rcsid[] = "$OpenBSD: percent_m.c,v 1.1 1997/02/26 03:06:54 downsj Exp $";
+static char rcsid[] = "$OpenBSD: percent_m.c,v 1.2 2001/11/07 18:48:48 deraadt Exp $";
 #endif
 #endif
 
@@ -31,13 +31,15 @@ char   *ibuf;
 {
     char   *bp = obuf;
     char   *cp = ibuf;
+    int len = BUFSIZ;
 
     while ((*bp = *cp)) {
 	if (*cp == '%' && cp[1] == 'm') {
+	    len = BUFSIZ - (bp - obuf);
 	    if (errno < sys_nerr && errno > 0) {
-		strcpy(bp, sys_errlist[errno]);
+		strlcpy(bp, sys_errlist[errno], len);
 	    } else {
-		sprintf(bp, "Unknown error %d", errno);
+		snprintf(bp, len, "Unknown error %d", errno);
 	    }
 	    bp += strlen(bp);
 	    cp += 2;
