@@ -1,4 +1,4 @@
-/*	$OpenBSD: tgoto.c,v 1.1 1998/07/23 21:10:28 millert Exp $	*/
+/*	$OpenBSD: tgoto.c,v 1.2 2003/04/04 18:39:12 millert Exp $	*/
 /*	$NetBSD: tgoto.c,v 1.5 1995/06/05 19:45:54 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: tgoto.c,v 1.1 1998/07/23 21:10:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: tgoto.c,v 1.2 2003/04/04 18:39:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -175,19 +175,19 @@ setwhich:
 			 * because some terminals use ^I for other things,
 			 * like nondestructive space.
 			 */
-			if (which == 0 || which == CTRL('d') || /* which == '\t' || */ which == '\n') {
-				if (oncol || UP) /* Assumption: backspace works */
-					/*
-					 * Loop needed because newline happens
-					 * to be the successor of tab.
-					 */
-					do {
-						if (strlen(added) + 1 >= sizeof(added))
-							goto toohard;
-						strcat(added, oncol ? (BC ? BC : "\b") : UP);
-						which++;
-					} while (which == '\n');
-			}
+			if ((which == 0 || which == CTRL('d') || which == '\n')
+			    && (oncol || UP)) /* Assumption: backspace works */
+				/*
+				 * Loop needed because newline happens
+				 * to be the successor of tab.
+				 */
+				do {
+					if (strlcat(added, oncol ?
+					    (BC ? BC : "\b") : UP,
+					    sizeof(added)) >= sizeof(added))
+						goto toohard;
+					which++;
+				} while (which == '\n');
 			if (dp >= &result[MAXRETURNSIZE])
 				goto toohard;
 			*dp++ = which;
@@ -225,8 +225,8 @@ setwhich:
 			goto toohard;
 		}
 	}
-	if (dp - result + strlen(added) >= MAXRETURNSIZE - 1)
+	if (strlcpy(dp, added, sizeof(result) - (dp - result))
+	    >= sizeof(result) - (dp - result))
 		goto toohard;
-	strcpy(dp, added);
 	return (result);
 }
