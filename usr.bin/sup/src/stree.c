@@ -1,4 +1,4 @@
-/*	$OpenBSD: stree.c,v 1.5 1997/09/16 11:01:18 deraadt Exp $	*/
+/*	$OpenBSD: stree.c,v 1.6 1999/01/09 19:32:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -87,20 +87,22 @@ char *p;
 {
 	register TREE *t;
 	t = (TREE *) malloc (sizeof (TREE));
-	t->Tname = (p == NULL) ? NULL : salloc (p);
-	t->Tflags = 0;
-	t->Tuid = 0;
-	t->Tgid = 0;
-	t->Tuser = NULL;
-	t->Tgroup = NULL;
-	t->Tmode = 0;
-	t->Tctime = 0;
-	t->Tmtime = 0;
-	t->Tlink = NULL;
-	t->Texec = NULL;
-	t->Tbf = 0;
-	t->Tlo = NULL;
-	t->Thi = NULL;
+	if (t != NULL) {
+		t->Tname = (p == NULL) ? NULL : salloc (p);
+		t->Tflags = 0;
+		t->Tuid = 0;
+		t->Tgid = 0;
+		t->Tuser = NULL;
+		t->Tgroup = NULL;
+		t->Tmode = 0;
+		t->Tctime = 0;
+		t->Tmtime = 0;
+		t->Tlink = NULL;
+		t->Texec = NULL;
+		t->Tbf = 0;
+		t->Tlo = NULL;
+		t->Thi = NULL;
+	}
 	return (t);
 }
 
@@ -195,8 +197,8 @@ int *dh;
 	int deltah;
 
 	if (*t == NULL) {
-	    *t = Tmake (p);
-	    *dh = 1;
+	    if ((*t = Tmake (p)) != NULL)
+	    	*dh = 1;
 	    return (*t);
 	}
 	if ((cmp = strcmp(p, (*t)->Tname)) == 0) {
