@@ -1,4 +1,4 @@
-.\" $OpenBSD: io.4,v 1.3 2004/01/15 18:24:41 mickey Exp $
+.\" $OpenBSD: io.4,v 1.4 2004/01/15 19:37:52 jmc Exp $
 .\"
 .\" Copyright (c) 2003,2004 Paul Weissmann
 .\" All rights reserved.
@@ -74,7 +74,8 @@ machines.
 .It "SAIC" "	LW" "	SE" "	CA" "	Artist" "	PCMCIA"
 .El
 .Pp
-The MBA column denotes the bus adapters in use Ta 
+The MBA column denotes the bus adapters in use:
+.Pp
 .Bl -tag -width XXXX -compact -offset indent
 .It A
 .Xr asp 4
@@ -87,7 +88,7 @@ The MBA column denotes the bus adapters in use Ta
 .El
 .Pp
 The trailing characters in the SCSI row denote the
-SCSI bus configuration
+SCSI bus configuration:
 .Pp
 .Bl -tag -width XXXX -compact -offset indent
 .It SE
@@ -105,7 +106,7 @@ SCSI bus configuration
 .El
 .Pp
 The trailing digits in the Network row denote the
-interface speed Ta 
+interface speed:
 .Pp
 .Bl -tag -width XXXXX -compact -offset indent
 .It CA
@@ -126,7 +127,6 @@ Formac+ FDDI,
 .It TR
 4Mb/s or 16Mb/s TokenRing.
 .El
-.Pp
 .Sh SEE ALSO
 .Xr asp 4 ,
 .Xr dc 4 ,
