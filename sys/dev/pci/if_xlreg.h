@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xlreg.h,v 1.15 1999/09/26 17:50:07 jason Exp $	*/
+/*	$OpenBSD: if_xlreg.h,v 1.16 1999/12/07 20:19:37 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -94,9 +94,11 @@
 #define XL_TX_FREE		0x1C
 #define XL_DMACTL		0x20
 #define XL_DOWNLIST_PTR		0x24
+#define XL_DOWN_POLL		0x2D	/* 3c90xB only */
 #define XL_TX_FREETHRESH	0x2F
 #define XL_UPLIST_PTR		0x38
 #define XL_UPLIST_STATUS	0x30
+#define XL_UP_POLL		0x3D	/* 3c90xB only */
 
 #define XL_PKTSTAT_UP_STALLED		0x00002000
 #define XL_PKTSTAT_UP_ERROR		0x00004000
@@ -442,6 +444,7 @@ struct xl_list_onefrag {
 #define XL_RX_LIST_CNT		32
 #define XL_TX_LIST_CNT		32
 #define XL_MIN_FRAMELEN		60
+#define XL_INC(x, y)		(x) = (x + 1) % (y)
 
 struct xl_list_data {
 	struct xl_list_onefrag	xl_rx_list[XL_RX_LIST_CNT];
@@ -453,6 +456,8 @@ struct xl_chain {
 	struct xl_list		*xl_ptr;
 	struct mbuf		*xl_mbuf;
 	struct xl_chain		*xl_next;
+	struct xl_chain		*xl_prev;
+	u_int32_t		xl_phys;
 };
 
 struct xl_chain_onefrag {
@@ -467,9 +472,15 @@ struct xl_chain_data {
 
 	struct xl_chain_onefrag	*xl_rx_head;
 
+	/* 3c90x "boomerang" queuing stuff */
 	struct xl_chain		*xl_tx_head;
 	struct xl_chain		*xl_tx_tail;
 	struct xl_chain		*xl_tx_free;
+
+	/* 3c90xB "cyclone/hurricane/tornade" stuff */
+	int			xl_tx_prod;
+	int			xl_tx_cons;
+	int			xl_tx_cnt;
 };
 
 #define XL_RXSTAT_LENMASK	0x00001FFF
@@ -497,10 +508,11 @@ struct xl_chain_data {
 #define XL_TXSTAT_IPCKSUM	0x02000000	/* 3c905B only */
 #define XL_TXSTAT_TCPCKSUM	0x04000000	/* 3c905B only */
 #define XL_TXSTAT_UDPCKSUM	0x08000000	/* 3c905B only */
+#define XL_TXSTAT_RND_DEFEAT	0x10000000	/* 3c905B only */
+#define XL_TXSTAT_EMPTY		0x20000000	/* 3c905B only */
 #define XL_TXSTAT_DL_INTR	0x80000000
 
 #define XL_CAPABILITY_BM	0x20
-
 
 struct xl_type {
 	u_int16_t		xl_vid;
@@ -530,13 +542,16 @@ struct xl_mii_frame {
  * take advantage of, namely the multicast hash filter. With older
  * chips, you only have the option of turning on reception of all
  * multicast frames, which is kind of lame.
+ *
+ * We also use this to decide on a transmit strategy. For the 3c90xB
+ * cards, we can use polled descriptor mode, which reduces CPU overhead.
  */
 #define XL_TYPE_905B	1
 #define XL_TYPE_90X	2
 
 struct xl_softc {
 	struct device		sc_dev;		/* generic device structure */
-	void *			sc_ih;		/* interrupt handler cookie */
+	void *			xl_intrhand;	/* interrupt handler cookie */
 	struct arpcom		arpcom;		/* interface info */
 	struct ifmedia		ifmedia;	/* media info */
 	mii_data_t		sc_mii;		/* mii bus */
@@ -551,6 +566,7 @@ struct xl_softc {
 	u_int16_t		xl_caps;
 	u_int8_t		xl_stats_no_timeout;
 	u_int16_t		xl_tx_thresh;
+	int			xl_if_flags;
 	caddr_t			xl_ldata_ptr;
 	struct xl_list_data	*xl_ldata;
 	struct xl_chain_data	xl_cdata;
@@ -666,4 +682,8 @@ struct xl_stats {
 #ifdef __alpha__
 #undef vtophys
 #define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
+#endif
+
+#ifndef ETHER_ALIGN
+#define ETHER_ALIGN 2
 #endif
