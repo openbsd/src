@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.10 2002/09/04 15:46:27 jason Exp $
+dnl	$OpenBSD: hardware,v 1.11 2002/10/20 18:40:27 pvalchev Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
 as PowerBook and iBook machines.
 
@@ -51,6 +51,13 @@ Supported devices {:-include-:}:
 		HME PCI Quad Fast Ethernet (hme)
 		Onboard Older iMac 10-100Mbs (bm) Ethernet
 		Onboard G4/PowerBook/Newer iMac (gm) ethernet
+		Intel i8255x-based (except the i82556) PCI adapters (fxp),
+		including:
+			Intel EtherExpress PRO/10+
+			Intel EtherExpress PRO/100, PRO/100B, and PRO/100+
+			Intel EtherExpress PRO/100+ "Management Adapter"
+			Intel EtherExpress PRO/100 Dual Port
+			Intel PRO/100 VE, PRO/100 VM, and PRO/100 S
 
 	Wireless Ethernet Adapters
 		Aironet 802.11DS PCMCIA and PCI
