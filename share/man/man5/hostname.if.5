@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.13 2000/01/10 02:32:55 todd Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.14 2000/01/10 03:00:55 todd Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -55,13 +55,7 @@ such as
 or
 .Pa bridgename.bridge0 .
 However, a configuration file is not needed for lo0.
-Note that multiple entries can be used per configuration file,
-that we support comments (lines that begin with ``#''), and
-arbitrary commands (lines that begin with ``!'').  Most of the
-time it will be useful to use things like the network interface
-name while using arbitrary commands, this can be accomplished
-by placing ``\e$if'' at the appropriate place in the command.
-There is an example below for clarity.
+Note that multiple entries can be used per configuration file.
 .Pp
 The following three formats are valid for
 .Nm hostname.*
@@ -95,9 +89,6 @@ inet alias 10.0.1.16 0xffffffff
 # ipv6 lines
 inet6 alias fec0::1 64
 inet6 alias fec0::2 64 anycast
-# Below we set the mac address
-# for a wavelan interface
-!wicontrol \e$if -m C0:01:00:00:D4:d3
 !wicontrol \e$if -t 2  # Set to 2Mbps
 .Ed
 .Pp
@@ -134,7 +125,7 @@ The optional broadcast address for the interface, i.e.,
 .It Va options
 Optional miscellaneous options to set on the interface, i.e.,
 .Dq media 100baseTX mediaopt full-duplex .
-.It Li dest
+.It Li Va dest
 If the interface needs a destination address address set, this is
 the literal text
 .Dq dest .
@@ -150,6 +141,15 @@ library routines.
 .It Va prefixlen
 The prefixlen number, or number of bits in the netmask, to be set on
 the interface, such as 64.
+.It Va #
+Comments are allowed.  Anything following a comment 
+character is treated as a comment.
+.It Va !
+Arbitrary commands allow interface specific configuration to
+take place like setting wavelan parameters with 
+.Xr wicontrol 8 .  It is worth note that using
+.Dq \e$if
+will cause this value to be replaced by the interface name.
 .El
 .Pp
 A DHCP-configured network interface setup consists of
