@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.4 2002/05/24 04:21:27 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.5 2002/06/05 23:13:55 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -54,7 +54,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	numrel = object->Dyn.info[relsz] / sizeof(Elf32_Rel);
 	relocs = (Elf32_Rel *)(object->Dyn.info[rel]);
 
-	if ((object->status & STAT_RELOC_DONE) || !relocs)
+	if (relocs == NULL)
 		return(0);
 
 	for (i = 0; i < numrel; i++, relocs++) {
@@ -102,7 +102,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			_dl_exit(1);
 		}
 	}
-	object->status |= STAT_RELOC_DONE;
+
 	return(fails);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.9 2002/06/05 19:34:44 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.10 2002/06/05 23:13:55 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -78,7 +78,7 @@ _dl_printf("object relocation size %x, numrela %x\n",
 	object->Dyn.info[relasz], numrela);
 #endif
 
-	if ((object->status & STAT_RELOC_DONE) || !relas)
+	if (relas == NULL)
 		return(0);
 
 	/* for plt relocation usage */
@@ -383,7 +383,6 @@ _dl_printf(" found other symbol at %x size %d\n",
 			_dl_exit(1);
 		}
 	}
-	object->status |= STAT_RELOC_DONE;
 	load_list = object->load_list;
 	while (load_list != NULL) {
 		_dl_mprotect(load_list->start, load_list->size, load_list->prot);

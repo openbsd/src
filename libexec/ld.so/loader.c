@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.35 2002/05/28 00:34:53 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.36 2002/06/05 23:13:55 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -468,6 +468,9 @@ _dl_rtld(elf_object_t *object)
 {
 	if (object->next)
 		_dl_rtld(object->next);
+
+	if (object->status & STAT_RELOC_DONE)
+		return;
 
 	/*
 	 * Do relocation information first, then GOT.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.15 2002/06/05 19:34:44 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.16 2002/06/05 23:13:55 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -229,7 +229,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	numrela = object->Dyn.info[relasz] / sizeof(Elf64_Rela);
 	relas = (Elf64_Rela *)(object->Dyn.info[rel]);
 
-	if ((object->status & STAT_RELOC_DONE) || !relas)
+	if (relas == NULL)
 		return(0);
 
 	/*
