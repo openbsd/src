@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 2000/06/15 03:13:59 rahnds Exp $ */
+/*	$OpenBSD: cpu.c,v 1.4 2000/09/14 18:26:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -80,8 +80,6 @@ cpuattach(parent, dev, aux)
 	int cpu, pvr;
 	char name[32];
 
-	printf(": ");
-
 	__asm__ ("mfpvr %0" : "=r"(pvr));
 	cpu = pvr >> 16;
 	switch (cpu) {
@@ -120,7 +118,6 @@ cpuattach(parent, dev, aux)
 		break;
 	}
 	sprintf(cpu_model + strlen(cpu_model), " (Revision %x)", pvr & 0xffff);
-	printf(" %s", cpu_model);
-	printf("\n");
+	printf(": %s\n", cpu_model);
 }
 
