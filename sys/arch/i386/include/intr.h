@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.21 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: intr.h,v 1.22 2004/06/16 18:27:26 grange Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -58,6 +58,16 @@ extern int splraise(int);
 extern int spllower(int);
 extern void splx(int);
 extern void softintr(int, int);
+
+/*
+ * compiler barrier: prevent reordering of instructions.
+ * XXX something similar will move to <sys/cdefs.h>
+ * or thereabouts.
+ * This prevents the compiler from reordering code around
+ * this "instruction", acting as a sequence point for code generation.
+ */
+
+#define	__splbarrier() __asm __volatile("":::"memory")
 
 /* SPL asserts */
 #ifdef DIAGNOSTIC
