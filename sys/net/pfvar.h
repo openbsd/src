@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.8 2001/06/25 09:31:07 art Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.9 2001/06/25 10:07:15 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -38,7 +38,7 @@
 enum	{ PF_IN=0, PF_OUT=1 };
 enum	{ PF_PASS=0, PF_DROP=1, PF_DROP_RST=2 };
 
-struct rule_addr {
+struct pf_rule_addr {
 	u_int32_t	addr;
 	u_int32_t	mask;
 	u_int16_t	port[2];
@@ -49,8 +49,8 @@ struct rule_addr {
 struct pf_rule {
 	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
-	struct rule_addr src;
-	struct rule_addr dst;
+	struct pf_rule_addr src;
+	struct pf_rule_addr dst;
 	struct pf_rule	*next;
 
 	u_int8_t	 action;
@@ -67,12 +67,12 @@ struct pf_rule {
 	u_int8_t	 flagset;
 };
 
-struct state_host {
+struct pf_state_host {
 	u_int32_t	addr;
 	u_int16_t	port;
 };
 
-struct state_peer {
+struct pf_state_peer {
 	u_int32_t	seqlo;
 	u_int32_t	seqhi;
 	u_int8_t	state;
@@ -80,11 +80,11 @@ struct state_peer {
 
 struct pf_state {
 	struct pf_state	*next;
-	struct state_host lan;
-	struct state_host gwy;
-	struct state_host ext;
-	struct state_peer src;
-	struct state_peer dst;
+	struct pf_state_host lan;
+	struct pf_state_host gwy;
+	struct pf_state_host ext;
+	struct pf_state_peer src;
+	struct pf_state_peer dst;
 	u_int32_t	 creation;
 	u_int32_t	 expire;
 	u_int32_t	 packets;

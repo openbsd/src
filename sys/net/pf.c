@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.30 2001/06/25 09:57:08 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.31 2001/06/25 10:07:14 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1341,7 +1341,7 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 	if (s != NULL) {
 		u_int16_t len = h->ip_len - off - (th->th_off << 2);
 		u_int32_t seq = ntohl(th->th_seq), ack = ntohl(th->th_ack);
-		struct state_peer *src, *dst;
+		struct pf_state_peer *src, *dst;
 
 		if (direction == s->direction) {
 			src = &s->src;
@@ -1447,7 +1447,7 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 
 		u_int16_t len = h->ip_len - off - 8;
 
-		struct state_peer *src, *dst;
+		struct pf_state_peer *src, *dst;
 		if (direction == s->direction) {
 			src = &s->src;
 			dst = &s->dst;
@@ -1564,7 +1564,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			u_int32_t seq;
 			struct pf_state *s;
 			struct pf_tree_key key;
-			struct state_peer *src;
+			struct pf_state_peer *src;
 
 			th = pull_hdr(ifp, m, off, off2, sizeof(*th), h2,
 			    &dummy);
