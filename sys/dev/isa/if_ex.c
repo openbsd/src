@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.10 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.11 2005/04/02 03:20:26 brad Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -874,15 +874,14 @@ ex_ioctl(ifp, cmd, data)
     bcopy((caddr_t) sc->sc_addr, (caddr_t) &ifr->ifr_data, sizeof(sc->sc_addr));
     break;
 #endif
-#if 0						/* XXX can we do this? */
   case SIOCSIFMTU:
     DODEBUG(Start_End, printf("SIOCSIFMTU"););
-    if (ifr->if_mtu > ETHERMTU)
+    if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
       error = EINVAL;
-    else
+    } else if (ifp->if_mtu != ifr->ifr_mtu) {
       ifp->if_mtu = ifr->ifr_mtu;
+    }
     break;
-#endif 
   case SIOCADDMULTI:
     DODEBUG(Start_End, printf("SIOCADDMULTI"););
   case SIOCDELMULTI:
