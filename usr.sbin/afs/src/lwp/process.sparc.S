@@ -1,4 +1,4 @@
-/* $Id: process.sparc.S,v 1.1 2000/09/11 14:41:09 art Exp $ */
+/* $Id: process.sparc.S,v 1.2 2001/09/11 14:10:09 jason Exp $ */
 
 /*
 ****************************************************************************
@@ -72,7 +72,7 @@ ENTRY(savecontext)
 	/* The following 3 lines do the equivalent of: _PRE_Block = 1 */
 #ifdef	AFS_SUN5_ENV
 	
-#ifdef	__sparcv9	
+#if defined(__sparcv9) || defined(__sparcv9__)
 	sethi	%hh(PRE_Block),%l0
 	or	%l0,%hm(PRE_Block),%l0
 	sethi	%lm(PRE_Block),%g1
@@ -89,7 +89,7 @@ ENTRY(savecontext)
 	mov	1,%l1
 	stb	%l1, [%l0]
 
-#ifdef	__sparcv9
+#if defined(__sparcv9) || defined(__sparcv9__)
 	
 topstack	= 0
 globals = 8
@@ -323,7 +323,7 @@ L1:	call	%i0			! call f()
 ENTRY(returnto)
 	ta	ST_FLUSH_WINDOWS		! FLush all other active windows
 
-#ifdef	__sparcv9
+#if defined(__sparcv9) || defined(__sparcv9__)
 
 #ifdef	save_allregs
 	ldx	[%i1 + globals + 64 + 0], %f0
@@ -509,7 +509,7 @@ ENTRY(returnto)
 
 	/* The following 3 lines are equivalent to: _PRE_Block = 0 */
 #ifdef	AFS_SUN5_ENV
-#ifdef	__sparcv9	
+#if defined(__sparcv9) || defined(__sparcv9__)
 	sethi	%hh(_C_LABEL(PRE_Block)),%l0
 	or	%l0,%hm(_C_LABEL(PRE_Block)),%l0
 	sethi	%lm(_C_LABEL(PRE_Block)),%g1
