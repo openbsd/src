@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.5 1996/06/01 09:34:30 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.6 1996/09/25 11:20:13 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -78,13 +78,13 @@ readdisklabel(dev, strat, lp, osdep)
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	struct dos_partition *dp = osdep->dosparts;
+	struct dos_partition *dp = osdep->dosparts, *dp2;
 	struct partition *pp;
 	struct dkbad *bdp = &osdep->bad;
 	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
-	int dospartoff, cyl, i, *ip;
+	int dospartoff, cyl, i, *ip, ourpart = -1;
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secsize == 0)
@@ -119,40 +119,40 @@ readdisklabel(dev, strat, lp, osdep)
 		if (biowait(bp)) {
 			msg = "dos partition I/O error";
 			goto done;
-		} else {
-			/* XXX how do we check veracity/bounds of this? */
-			bcopy(bp->b_data + DOSPARTOFF, dp,
-			    NDOSPART * sizeof(*dp));
-			for (i = 0; i < NDOSPART; i++, dp++) {
-				/* Install in partition e, f, g, or h. */
-				pp = &lp->d_partitions[RAW_PART + 1 + i];
-				pp->p_offset = dp->dp_start;
-				pp->p_size = dp->dp_size;
-				for (ip = fat_types; *ip != -1; ip++) {
-				    if (dp->dp_typ == *ip)
-					pp->p_fstype = FS_MSDOS;
-				}
+		}
 
-				/* is this ours? */
-				if (dp->dp_size && dp->dp_typ == DOSPTYP_386BSD
-				    && dospartoff == 0) {
-					/* need sector address for SCSI/IDE,
-					   cylinder for ESDI/ST506/RLL */
-					dospartoff = dp->dp_start;
-					cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
+		/* XXX how do we check veracity/bounds of this? */
+		bcopy(bp->b_data + DOSPARTOFF, dp, NDOSPART * sizeof(*dp));
 
-					/* update disklabel with details */
-					lp->d_partitions[0].p_size =
-					    dp->dp_size;
-					lp->d_partitions[0].p_offset = 
-					    dp->dp_start;
-					lp->d_ntracks = dp->dp_ehd + 1;
-					lp->d_nsectors = DPSECT(dp->dp_esect);
-					lp->d_secpercyl =
-					    lp->d_ntracks * lp->d_nsectors;
-				}
-			}
-			lp->d_npartitions = RAW_PART + 1 + i;
+		/*
+		 * Search for our MBR partition
+		 */
+		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
+			if (dp2->dp_size && dp2->dp_typ == DOSPTYP_OPENBSD)
+				ourpart = i;
+		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
+			if (dp2->dp_size && dp2->dp_typ == DOSPTYP_386BSD)
+				ourpart = i;
+
+		if (ourpart != -1) {
+			dp = &dp[i];
+
+			/*
+			 * This is our MBR partition.
+			 * need sector address for SCSI/IDE,
+			 * cylinder for ESDI/ST506/RLL
+			 */
+			dospartoff = dp->dp_start;
+			cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
+
+			/* XXX build a temporary disklabel */
+			lp->d_partitions[0].p_size = dp->dp_size;
+			lp->d_partitions[0].p_offset = dp->dp_start;
+			lp->d_partitions[RAW_PART].p_size = dp->dp_size;
+			lp->d_partitions[RAW_PART].p_offset = dp->dp_start;
+			lp->d_ntracks = dp->dp_ehd + 1;
+			lp->d_nsectors = DPSECT(dp->dp_esect);
+			lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 		}
 	}
 	
@@ -165,6 +165,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 	/* if successful, locate disk label within block and validate */
 	if (biowait(bp)) {
+		/* XXX we return the faked label built so far */
 		msg = "disk label I/O error";
 		goto done;
 	}
