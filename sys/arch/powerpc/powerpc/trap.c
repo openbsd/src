@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 1997/10/13 13:43:01 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 1998/04/06 20:21:11 pefo Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -63,6 +63,7 @@ trap(frame)
 	struct proc *p = curproc;
 	int type = frame->exc;
 	u_quad_t sticks;
+	union sigval sv;
 
 	if (frame->srr1 & PSL_PR) {
 		type |= EXC_USER;
@@ -123,8 +124,8 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 			    == KERN_SUCCESS)
 				break;
 printf("dsi on addr %x iar %x\n", frame->dar, frame->srr0);
-			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR,
-			    frame->dar);
+			sv.sival_int = frame->dar;
+			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
 		}
 		break;
 	case EXC_ISI|EXC_USER:
@@ -138,8 +139,8 @@ printf("dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 				break;
 		}
 printf("isi iar %x\n", frame->srr0);
-		trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR,
-		    frame->srr0);
+		sv.sival_int = frame->srr0;
+		trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR, sv);
 		break;
 	case EXC_SC|EXC_USER:
 		{
@@ -264,7 +265,8 @@ mpc_print_pci_stat();
 
 	case EXC_PGM|EXC_USER:
 printf("pgm iar %x\n", frame->srr0);
-		trapsignal(p, SIGILL, 0, ILL_ILLOPC, frame->srr0);
+		sv.sival_int = frame->srr0;
+		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 		break;
 	case EXC_AST|EXC_USER:
 		/* This is just here that we trap */
