@@ -1,4 +1,4 @@
-/*	$OpenBSD: t3000.c,v 1.6 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: t3000.c,v 1.7 2001/09/09 19:26:53 millert Exp $	*/
 /*	$NetBSD: t3000.c,v 1.5 1997/02/11 09:24:18 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: t3000.c,v 1.6 2001/09/04 23:35:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: t3000.c,v 1.7 2001/09/09 19:26:53 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -57,7 +57,7 @@ static	int timeout = 0;
 static	int connected = 0;
 static	jmp_buf timeoutbuf, intbuf;
 static	int t3000_sync(), t3000_connect(), t3000_swallow();
-static	void t3000_napx();
+static	void t3000_nap();
 
 t3000_dialer(num, acu)
 	register char *num;
