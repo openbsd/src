@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.751 2004/07/18 04:26:18 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.752 2004/07/20 05:07:12 david Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2317,6 +2317,7 @@
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC97	0x060f		/* ToPIC97 CardBus */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC100	0x0617		/* ToPIC100 CardBus */
 #define	PCI_PRODUCT_TOSHIBA2_TFIRO	0x0701		/* Fast Infrared Type O */
+#define	PCI_PRODUCT_TOSHIBA2_SDCARD	0x0805		/* SD Controller */
 
 /* Transmeta products */
 #define	PCI_PRODUCT_TRANSMETA_NORTHBRIDGE	0x0395		/* Virtual Northbridge */
