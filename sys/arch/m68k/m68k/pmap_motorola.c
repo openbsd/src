@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.31 2003/12/14 19:06:59 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.32 2003/12/26 18:54:24 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -872,8 +872,11 @@ pmap_protect(pmap, sva, eva, prot)
 {
 	vaddr_t nssva;
 	pt_entry_t *pte;
-	boolean_t firstpage, needtflush;
+	boolean_t needtflush;
 	int isro;
+#ifdef M68K_MMU_HP
+	boolean_t firstpage;
+#endif
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_PROTECT,
 	    ("pmap_protect(%p, %lx, %lx, %x)\n",
@@ -886,7 +889,9 @@ pmap_protect(pmap, sva, eva, prot)
 
 	isro = pte_prot(prot);
 	needtflush = active_pmap(pmap);
+#ifdef M68K_MMU_HP
 	firstpage = TRUE;
+#endif
 	while (sva < eva) {
 		nssva = m68k_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
@@ -933,7 +938,9 @@ pmap_protect(pmap, sva, eva, prot)
 				pmap_pte_set_prot(pte, isro);
 				if (needtflush)
 					TBIS(sva);
+#ifdef M68K_MMU_HP
 				firstpage = FALSE;
+#endif
 			}
 			pte++;
 			sva += PAGE_SIZE;
