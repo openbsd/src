@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.35 2004/07/30 00:24:33 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.36 2004/07/31 10:27:14 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
 
 /*
@@ -81,7 +81,9 @@ void	siop_scsicmd_end(struct siop_cmd *);
 void	siop_start(struct siop_softc *);
 void 	siop_timeout(void *);
 int	siop_scsicmd(struct scsi_xfer *);
+#ifdef DUMP_SCRIPT
 void	siop_dump_script(struct siop_softc *);
+#endif
 void	siop_morecbd(struct siop_softc *);
 struct siop_lunsw *siop_get_lunsw(struct siop_softc *);
 void	siop_add_reselsw(struct siop_softc *, int);
@@ -1685,6 +1687,7 @@ siop_timeout(v)
 	return;
 }
 
+#ifdef DUMP_SCRIPT
 void
 siop_dump_script(sc)
 	struct siop_softc *sc;
@@ -1702,6 +1705,7 @@ siop_dump_script(sc)
 		printf("\n");
 	}
 }
+#endif
 
 void
 siop_morecbd(sc)
