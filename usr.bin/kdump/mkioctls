@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.13 2003/06/26 21:44:26 deraadt Exp $
+#	$OpenBSD: mkioctls,v 1.14 2003/07/02 20:54:17 deraadt Exp $
 
 #
 # Copyright (c) 1994
@@ -82,6 +82,7 @@ BEGIN {
 	print "#include <scsi/ses.h>"
 	print "#define COMPAT_43"
 	print "#include <sys/ioctl.h>"
+	print "#include \"kdump.h\""
 	print ""
 	print "const char *"
 	print "ioctlname(unsigned long val)"

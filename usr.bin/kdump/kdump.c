@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.21 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.22 2003/07/02 20:54:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.21 2003/06/03 02:56:09 millert Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.22 2003/07/02 20:54:17 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -61,6 +61,7 @@ static char *rcsid = "$OpenBSD: kdump.c,v 1.21 2003/06/03 02:56:09 millert Exp $
 #include <vis.h>
 
 #include "ktrace.h"
+#include "kdump.h"
 #include "extern.h"
 
 int timestamp, decimal, fancy = 1, tail, maxdata;
