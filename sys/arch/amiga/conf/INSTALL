@@ -1,10 +1,10 @@
-#	$OpenBSD: INSTALL,v 1.6 1996/10/04 15:05:40 niklas Exp $
+#	$OpenBSD: INSTALL,v 1.7 1996/10/08 21:10:37 niklas Exp $
 #	$NetBSD: INSTALL,v 1.2.2.1 1996/05/30 21:25:49 is Exp $
 
 #
-# GENERIC AMIGA
+# AMIGA install kernel
 #
-# This configuration file contains all possible options
+# This configuration file contains useful stuff for making an install
 #
 
 include "std.amiga"
@@ -113,6 +113,7 @@ option		PANICWAIT	# Require keystroke to dump/reboot
 # Amiga specific options
 #
 option		MACHINE_NONCONTIG # Non-contiguous memory support
+option		IPL_REMAP_1	# Remapping interrupt system (needed for ISA)
 
 option		RETINACONSOLE	# enable code to allow retina to be console
 option		ULOWELLCONSOLE	# enable code to allow a2410 to be console
@@ -141,6 +142,12 @@ option		GRF_CL5426	# Cirrus board support
 #option		RH_64BIT_SPRITE
 # enables fast scroll code appears to now work on 040 systems.
 #option		RETINA_SPEED_HACK
+
+ggbus*	at zbus0			# Goldengate bridge
+isa*	at ggbus?
+
+cross*	at zbus0			# CrossLink bridge
+isa*	at cross?
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
@@ -179,6 +186,10 @@ qn0		at zbus0		# quicknet ethernet
 ae0		at zbus0		# Ariadne ethernet
 bah0		at zbus0		# C= arcnet
 
+# XXX should be ed but clashes with Zorro ed device
+isaed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
+isaed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
+isaed2	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # scsi stuff, all possible
 gvpbus*		at zbus0
