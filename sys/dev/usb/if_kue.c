@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.34 2005/01/03 22:45:52 brad Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.35 2005/01/15 03:53:36 jsg Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -178,6 +178,7 @@ Static const struct usb_devno kue_devs[] = {
 	{ USB_VENDOR_PORTSMITH, USB_PRODUCT_PORTSMITH_EEA },
 	{ USB_VENDOR_SHARK, USB_PRODUCT_SHARK_PA },
 	{ USB_VENDOR_SILICOM, USB_PRODUCT_SILICOM_U2E },
+	{ USB_VENDOR_SILICOM, USB_PRODUCT_SILICOM_GPE },
 	{ USB_VENDOR_SMC, USB_PRODUCT_SMC_2102USB },
 };
 #define kue_lookup(v, p) (usb_lookup(kue_devs, v, p))
