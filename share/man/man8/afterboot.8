@@ -11,10 +11,13 @@ to check and set up after the installation and first complete boot of the
 system.
 The idea is to create a list of items that can be checked off so that you have
 a warm fuzzy feeling that something obvious has not been missed.
+A basic knowledge of
+.Ux
+is assumed.
 .Pp
 Complete instructions for correcting and fixing items is not provided.
-There are man pages and other methodologies available for doing that.
-For example, to view the manual page on the
+There are manual pages and other methodologies available for doing that.
+For example, to view the man page for the
 .Xr ls 1
 command, type:
 .Ic man 1 ls .
@@ -23,21 +26,62 @@ command, type:
 .\"
 .Ss Errata
 By the time that you have installed your system, it is quite likely that
-bugs in the release have been found.  All significant and easily fixed
-problems will be reported at
+bugs in the release have been found.
+All significant and easily fixed problems will be reported at
 .Pa http://www.openbsd.org/errata.html .
-The web page will mention if a problem is security related.  And it
-is good advice to check this page regularly.
+The web page will mention if a problem is security related.
+It is recommended that you check this page regularly.
 .Ss Login
 Login on the console as
 .Dq Ic root .
-You will not be able to login over the network \(em only on the console. This
-behavior is controlled through the
+You will not be able to login over the network \(em only on the console.
+This behavior is controlled through the
 .Pa /etc/ttys
-file. See
+file.
+See
 .Xr ttys 5
 for more information.
-.Ss System Date
+.Pp
+Upon successful login, you may see the message
+.Dq Don't login as root, use su .
+For security reasons, it is bad practice to login as root during regular use
+and maintenance of the system.
+Instead, administrators are encouraged to add a
+.Dq regular
+user, add said user to the
+.Dq wheel
+group, then use the
+.Ic su
+and
+.Ic sudo
+commands when root privileges are required.
+This process is described in more detail later.
+.Ss Root password
+Change the password for the root user.
+(Note that throughout the documentation, the term
+.Dq superuser
+is a synonym for the root user.)
+Choose a password that has numbers, digits, and special characters (not space)
+as well as from the upper and lower case alphabet.
+Do not choose any word in any language.
+It is common for an intruder to use dictionary attacks.
+Type the command
+.Ic /usr/bin/passwd
+to change it.
+.Pp
+It is a good idea to always specify the full path name for both the
+.Xr passwd 1
+and
+.Xr su 1
+commands as this inhibits the possibility of files placed in your execution
+.Ev PATH
+for most shells.
+Furthermore, the superuser's
+.Ev PATH
+should never contain the current directory
+.Po Dq \&.
+.Pc .
+.Ss System date
 Check the system date with the
 .Xr date 1
 command.
@@ -54,38 +98,17 @@ Set the current date to January 27th, 1999 3:04pm.
 .It Cm ln -fs /usr/share/zoneinfo/Canada/Atlantic /etc/localtime
 Set the time zone to Atlantic Standard Time.
 .El
-.Ss Root password
-Check the password for the root user.
-Choose a password that has numbers, digits, and special characters (not space)
-as well as from the upper and lower case alphabet.
-Do not choose any word in any
-language.  It is common for an intruder to use dictionary attacks.
-Type the command
-.Ic /usr/bin/passwd
-to change it.
-.Pp
-It is a good idea to always specify the full path name for both the
-.Xr passwd 1
-and
-.Xr su 1
-commands as this inhibits the possibility of files placed in your execution
-.Ev PATH
-for most shells. Furthermore, the super-user's
-.Ev PATH
-should never contain the current directory
-.Po Dq \&.
-.Pc .
 .Ss Check hostname
 Use the
-.Xr hostname 1
+.Ic hostname
 command to verify that the name of your machine is correct.
 See the man page for
-.Xr hostname
-if you need to change it.
+.Xr hostname 1
+if it needs to be changed.
 You will also need to edit the
 .Pa /etc/myname
 file to have it stick around for the next reboot.
-.Ss Verify network interfaces configured correctly
+.Ss Verify network interface configuration
 The first thing to do is an
 .Ic ifconfig -a
 to see if the network interfaces are properly configured.
@@ -93,22 +116,24 @@ Correct by editing
 .Pa /etc/hostname. Ns Ar interface
 (where
 .Ar interface
-is the interface name, e.g.
+is the interface name, e.g.,
 .Dq le0 )
 and then using
 .Xr ifconfig 8
 to manually configure it
-if you do not wish to reboot. Read the 
+if you do not wish to reboot.
+Read the 
 .Xr hostname.if 5
-for more information on the format of the
-.Pa /etc/hostname. Ns Ar interface .
+man page for more information on the format of
+.Pa /etc/hostname. Ns Ar interface
+files.
 The loopback interface will look something like:
 .Bd -literal -offset indent
 lo0: flags=8009<UP,LOOPBACK,MULTICAST>
 	inet 127.0.0.1 netmask 0xff000000
 .Ed
 .Pp
-an ethernet interface something like:
+an Ethernet interface something like:
 .Bd -literal -offset indent
 le0: flags=9863<UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST>
 	inet 192.168.4.52 netmask 0xffffff00 broadcast 192.168.4.255
@@ -119,9 +144,6 @@ and, a PPP interface something like:
 ppp0: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST>
         inet 203.3.131.108 --> 198.181.0.253 netmask 0xffff0000
 .Ed
-\!\"--------------------------------------------------------------------------
-\!\" Will someone else fill in the slip interface.
-\!\"--------------------------------------------------------------------------
 .Pp
 If you wish to turn on multicast routing, see the section titled 
 .Dq Multicast routing.
@@ -131,10 +153,11 @@ in
 See
 .Xr dhcp 8
 for instructions on configuring interfaces with DHCP.
-.Ss Check for correct routing
-Do a
+.Ss Check routing tables
+Issue a
 .Ic netstat -r -n
-command.  The output will look something like:
+command.
+The output will look something like:
 .Bd -literal -offset indent
 Routing tables
 
@@ -149,32 +172,43 @@ default        192.168.4.254     UGS      0 11098028    -  le0
 192.168.4.254  0:60:3e:99:67:ea  UHL      1        0    -  le0
 .Ed
 .Pp
-Fix by editing the file
+The default gateway address is stored in the
 .Pa /etc/mygate
-and using
-.Ic route delete
-and
+file.
+If you need to edit this file, a painless way to reconfigure the network
+afterwards is
+.Ic route flush
+followed by a
+.Ic sh -x /etc/netstart
+command.
+Or, you may prefer to manually configure using a series of
 .Ic route add
-if you do not wish to reboot.
-See
-.Xr route 8 .
+and
+.Ic route delete
+commands (see
+.Xr route 8 ) .
 .Pp
-If you wish to route packets between interfaces put
+If you wish to route packets between interfaces, add the directive
 .Bd -literal -offset indent
 net.inet.ip.forwarding=1
 .Ed
 .Pp
-in
+to
 .Pa /etc/sysctl.conf ,
-or by compiling a new kernel with the GATEWAY option.
+or by compiling a new kernel with the
+.Cm GATEWAY
+option.
 Packets are not forwarded by default, due to RFC requirements.
 .Pp
-You can add new "virtual interfaces" by adding the required entries to
+You can add new
+.Dq virtual interfaces
+by adding the required entries to
 .Pa /etc/ifaliases .
 .Ss BIND Name Server (DNS)
 If you are using the BIND Name Server, check the
 .Pa /etc/resolv.conf
-file.  It may look something like:
+file.
+It may look something like:
 .Bd -literal -offset indent
 domain nts.umn.edu
 nameserver 128.101.101.101
@@ -192,16 +226,19 @@ and create the
 file in the appropriate place for
 .Xr named 8 .
 The same holds true if the machine is going to be a
-name server for your domain.  In both these cases, make sure that
+name server for your domain.
+In both these cases, make sure that
 .Xr named 8
 is running
 (otherwise there are long waits for resolver timeouts).
 .Ss YP verification (NIS)
 Check the YP domain name with the
 .Xr domainname 1
-command. If necessary, correct it by editing the
+command.
+If necessary, correct it by editing the
 .Pa /etc/defaultdomain
-file. The
+file.
+The
 .Pa /etc/netstart
 script reads this file on bootup to determine and set the domain name.
 You may also set the running system's domain name with the
@@ -227,14 +264,14 @@ once this is done, you'll need to run
 .Ic pwd_mkdb /etc/master.passwd
 to regenerate the password databases.
 .Pp
-There are many more YP man pages available to help you. You can find more
-information by starting with
+There are many more YP man pages available to help you.
+You can find more information by starting with
 .Xr yp 8 .
-.Ss Check disks are mounted correctly
+.Ss Check disk mounts
 Check that the disks are mounted correctly by
-comparing the file
+comparing the
 .Pa /etc/fstab
-against the output of the
+file against the output of the
 .Xr mount 8
 and
 .Xr df 1
@@ -273,21 +310,24 @@ and use the
 and
 .Xr umount 8
 commands as appropriate.
+Refer to the above example and
+.Xr fstab 5
+for information on the format of this file.
 .Pp
 You may wish to do NFS partitions now too, or you can do them later.
 .Ss Concatenated disks (ccd)
 If you are using
 .Xr ccd 4
 concatenated disks, edit
-.Pa /etc/ccd.conf
-and use the
+.Pa /etc/ccd.conf .
+Use the
 .Ic ccdconfig -U
-command to unload, and the
+command to unload and the
 .Ic ccdconfig -C
 command to create tables internal to the kernel for the concatenated disks.
 You then
 .Xr mount 8 ,
-.Xr umount 8
+.Xr umount 8 ,
 and edit
 .Pa /etc/fstab
 as needed.
@@ -320,54 +360,66 @@ and
 Due to patent licensing reasons, those libraries may not be included
 on the CD -- instead the base distribution contains libraries which have had
 the troublesome code removed -- the programs listed above will not be fully
-functional as a result.  Libraries which _include_ the troublesome routines
+functional as a result.
+Libraries which _include_ the troublesome routines
 are available and can be FTP installed, as long as you meet the following
 (legal) criteria:
 .Ss Outside the USA, no restrictions apply
-Since the RSA algorithm patent by RSA inc. only applies in the United States
+Since the RSA algorithm patent by RSA Inc. only applies in the United States
 you can use the free
 .Pa ssl26.tgz
-package. System install scripts on machine architectures that support
+package.
+System install scripts on machine architectures that support
 shared libraries will offer to let you install this package when you
 are installing your system.
-To see if you have it installed, type
-.Bl -tag -width pkg_add
-.It pkg_info ssl26
+To see if you have it installed, type:
+.Bl -tag -width Ds
+.It Ic pkg_info ssl26
 .El
 .Pp
 If the
 .Pa ssl26
 package is not installed, 
 .Xr pkg_info 8 
-will display a message that it can't find package `ssl26'. If you did
-not install the package when you installed your system, 
+will display a message that it can't find package `ssl26'.
+If you did not install the package when you installed your system, 
 You can install it with a 
 .Xr pkg_add 8
-command similar to: 
-.Bl -tag -width pkg_add
-.It pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/<a>/ssl26.tgz
+command similar to:
+.Bl -tag -width Ds
+.It Ic pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/<a>/ssl26.tgz
 .El
-
-replacing <a> with your machine architechture, e.g. i386.
-.Ss Inside the USA, non-commercial use of RSAREF is permitted.
+.Pp
+replacing
+.Dq <a>
+with your machine architechture, e.g.,
+.Dq i386
+for Intel-based machines.
+.Ss Inside the USA, non-commercial use of RSAREF is permitted
 Non-commercial entities in the USA may install the
 .Pa sslUSA26.tgz
-package, which uses RSAREF. You install this with a 
+package, which uses RSAREF.
+You install this with a 
 .Xr pkg_add 8
 command similar to: 
-.Bl -tag -width pkg_add
-.It pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/<a>/sslUSA26.tgz
+.Bl -tag -width Ds
+.It Ic pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/<a>/sslUSA26.tgz
 .El
-replacing <a> with your machine architechture, e.g. i386.
+.Pp
+replacing
+.Dq <a>
+with your machine architechture, e.g.,
+.Dq i386
+for Intel-based machines.
 .Ss "Commercial entities in the USA are left in the cold."
-While unfortunate, this is due to the way RSA inc. licences their patent
+While unfortunate, this is due to the way RSA Inc. licences their patent
 in the USA. (This is how the USA crypto export policy feels to the
 rest of the world).
-.Ss Shared Library Support is Required.
+.Ss Shared library support is required
 These packages update your system by installing shared libraries in
 .Pa /usr/local/lib. 
 This only works if your machine architecture supports shared libraries.
-the
+The
 .Pa ssl26
 and 
 .Pa sslUSA26
@@ -377,20 +429,24 @@ did, consider donating hardware, cash, or quality time to the project
 to assist developers in supporting your platform better.
 .Sh CHANGING /ETC FILES
 The system should be usable now, but you may wish to do more customizing,
-such as adding users, etc.  Many of the following sections may be skipped
+such as adding users, etc.
+Many of the following sections may be skipped
 if you are not using that package (for example, skip the
 .Sx Kerberos
-section if you won't be using Kerberos). We suggest that you
+section if you won't be using Kerberos).
+We suggest that you
 .Ic cd /etc
 and edit most of the files in that directory.
 .Ss /etc/motd
 Edit
 .Pa motd
 to make lawyers comfortable and make sure that no mention
-of the word "Welcome" appears.  (Some U.S. lawyers have stated that
+of the word "Welcome" appears.
+(Some U.S. lawyers have stated that
 the word "Welcome" is an invitation to come on in.)
 .Ss Add new users
-Add users.  There is an
+Add users.
+There is an
 .Xr adduser 8
 script.
 You may use
@@ -406,7 +462,8 @@ The manual page for
 tells you to make sure to put people in
 the
 .Sq wheel
-group if they need root access (non-Kerberos).  For example:
+group if they need root access (non-Kerberos).
+For example:
 .Bd -literal -offset indent
 wheel:*:0:root,myself
 .Ed
@@ -417,15 +474,20 @@ if using
 Kerberos
 for authentication.
 .Ss rc.conf, netstart, rc.local, rc.securelevel
-Check for any local changes needed in the files:
-.Pa /etc/rc.conf , /etc/netstart , /etc/rc.local , rc.securelevel .
+Check for any local changes needed in the files
+.Pa /etc/rc.conf ,
+.Pa /etc/netstart ,
+.Pa /etc/rc.local ,
+and
+.Pa rc.securelevel .
 Turning on something like the Network Time Protocol in
-.Pa /etc/rc.securelevel
+.Pa /etc/rc.conf
 requires making sure the package is installed.
 .Pp
 If you've installed X, you may want to turn on
 .Xr xdm 1 ,
-the X Display Manager. To do this, change the value of xdm_flags in
+the X Display Manager.
+To do this, change the value of xdm_flags in
 .Pa /etc/rc.conf .
 .Ss Printers
 Edit
@@ -444,14 +506,19 @@ You might wish to tighten up security more by editing
 as when installing X.
 In
 .Pa /etc/inetd.conf
-turn off extra stuff that you do not need,
+comment out any extra entries you do not need,
 and only add things that are really needed.
+Note that by default the
+.Xr telnetd 8
+and
+.Xr ftpd 8
+daemons are not enabled in favor of SSH (Secure Shell).
 .Ss Kerberos
 If you are going to use
 .Xr kerberos 1
 for authentication, and you already have a
 Kerberos
-master, go into the directory
+master, change directory to
 .Pa /etc/kerberosIV
 and configure.
 Remember to get a
@@ -491,7 +558,8 @@ If this is a
 BOOTP
 server, edit
 .Pa /etc/bootptab
-as needed.  You will have to turn it on in
+as needed.
+You will have to turn it on in
 .Pa /etc/inetd.conf
 or run
 .Xr bootpd 8
@@ -516,12 +584,13 @@ Edit
 .Pa /etc/rbootd.config
 if needed for remote booting.
 If you do not have HP computers doing remote booting, do not enable this.
-.Ss Daily, Weekly, Monthly scripts
+.Ss Daily, weekly, monthly scripts
 Look at and possibly edit the
 .Pa /etc/daily , /etc/weekly ,
 and
 .Pa /etc/monthly
-scripts.  Your site specific things should go into
+scripts.
+Your site specific things should go into
 .Pa /etc/daily.local , /etc/weekly.local ,
 and
 .Pa /etc/monthly.local .
@@ -547,7 +616,9 @@ Check what is running by typing
 .Ic crontab -l
 as root
 and see if anything unexpected is present.
-Do you need anything else?  Do you wish to change things?  e.g. if you do not
+Do you need anything else?
+Do you wish to change things?
+e.g., if you do not
 like root getting standard output of the daily scripts, and want only
 the security scripts that are mailed internally, you can type
 .Ic crontab -e
@@ -562,8 +633,9 @@ See
 .Xr crontab 5 .
 .Ss Next day cleanup
 After the first night's security run, change ownerships and permissions
-on files, directories, and devices;  root should have received email
-with subject: "<hostname> daily insecurity output.". This email contains 
+on files, directories, and devices; root should have received mail
+with subject: "<hostname> daily insecurity output.".
+This mail contains 
 a set of security recommendations, presented as a list looking like this:
 .Bd -literal -offset indent
 var/mail:
@@ -572,13 +644,14 @@ etc/daily:
         user (0, 3)
 .Ed
 .Pp
-The best bet is to follow the advice in that list. The
-recommended setting is the first item in parentheses, while
-the current setting is the second one. This list is generated by
+The best bet is to follow the advice in that list.
+The recommended setting is the first item in parentheses, while
+the current setting is the second one.
+This list is generated by
 .Xr mtree 8 
 using
-.Ic /etc/mtree/special 
-.  Use
+.Pa /etc/mtree/special .
+Use
 .Xr chmod 1 ,
 .Xr chgrp 1 ,
 and
@@ -588,35 +661,37 @@ as needed.
 Install your own packages.
 The simple way is to copy source and compile and link/load.
 .Pp
-Copy vendor binaries and install them.  You will need to install any
-shared libraries, etc.
+Copy vendor binaries and install them.
+You will need to install any shared libraries, etc.
 (Hint:
 .Ic man -k compat
 to find out how to install and use compatibility mode.)
 .Pp
 Install any of a large group of Third-Party Software that is available
-in source form.  See
+in source form.
+See
 .Pa http://www.openbsd.org
 under
 .Sq Ports: a Nice Way to Get Third-Party Software .
 .Pp
 You may have some difficulty installing due to various compiling errors.
-Don't get discouraged easily!  Sometimes checking the mailing lists for
+Don't get discouraged easily!
+Sometimes checking the mailing lists for
 past problems that people have encountered will result in a fix posted.
 One recent item says to delete
 .Pa -lcrypt
 from
-.Pa Makefile
-.Ns s
+.Pa Makefile Ns No s
 as the crypt routines are now present in the standard libraries.
 .Sh COMPILING A KERNEL
 First, review the system message buffer using the
 .Xr dmesg 8
 command to find out information on your system's devices as probed by the
-kernel at boot. In particular, note which devices were not configured. This
-information will prove useful when editing kernel configuration files.
+kernel at boot.
+In particular, note which devices were not configured.
+This information will prove useful when editing kernel configuration files.
 .Pp
-To compile your own kernel off a CDROM do the following:
+To compile your own kernel off a CD-ROM do the following:
 .Sm off
 .Bd -literal -offset indent
 .Li #\  Xo
@@ -719,7 +794,7 @@ OpenBSD 2.6-beta (GENERIC.rz0) #0: Mon Oct  4 03:57:22 MEST 1999
 Enter 'help' for information
 ukc>
 .Pp
-Additionally, you can permantly save the changes made with UKC during boot
+Additionally, you can permanently save the changes made with UKC during boot
 time in the kernel image. 
 .Ed
 .Sh SEE ALSO
