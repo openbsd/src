@@ -1,0 +1,110 @@
+.\"	$NetBSD: boot_x68k.8,v 1.1 1996/06/15 18:54:22 oki Exp $
+.\"
+.\" Copyright (c) 1980, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	@(#)boot_x68k.8	8.2 (Berkeley) 4/19/94
+.\"
+.Dd Jun 16, 1996
+.Dt BOOT_X68K 8 x68k
+.Os
+.Sh NAME
+.Nm boot
+.Nd
+system bootstrapping procedures
+.Sh DESCRIPTION
+.Sy Power fail and crash recovery.
+Normally, the system will reboot itself at power-up or after crashes.
+An automatic consistency check of the file systems will be performed,
+and unless this fails, the system will resume multi-user operations.
+.Pp
+.Sy Cold starts.
+The X68000/X68030 system boots from the device
+which is determined by the configuration of
+battery-backuped SRAM.
+By default, the boot rom attempt to boot from
+floppy disk drive (from 0 to 3) first,
+and then attempt to boot from hard disk (SASI or SCSI).
+On the NetBSD/X68k, booting from partition A of SCSI disks (sd?a) 
+and 2HD floppy disks (fd?a, fd?c) is currently supported.
+.Pp
+First, the initial program loader of IOCS ROM or SCSI disk
+(or equivalent) reads
+.Pa boot
+program at the top of the disk,
+and then the boot program loads the NetBSD kernel
+.Pa /netbsd
+which is in the same partition of the disk.
+If you press
+.Pa [SHIFT]
+key when booting, the boot program enables you to change
+boot flag
+.Dv RB_SINGLE
+with the
+.Pa [SHIFT]
+key, and to choose which kernel
+to be used with arrow keys.
+If the LED of
+.Pa [HIRAGANA]
+key is turned on, the boot program adds
+.Dv RB_KDB
+flag and tries to boot the system in debug mode; see
+.Xr ddb 8
+for details.
+.Pp
+Note for X68030+MC68030 systems:
+Nothing special to be attended to; you can boot NetBSD just like as
+other operating systems such as Human68k and OS-9.
+.Pp
+Note for X68030/040turbo(68040 accelerator by BEEPs) systems:
+NetBSD can boot under 040 mode.
+It can also boot under 030 mode if you have MC68030 on the board.
+.Pp
+Note for X68000/Xellent30(68030 accelerator by TSR)+MC68030 systems:
+In order to boot NetBSD, you must choose 030 mode by using
+.Pa CH30.SYS ,
+which must reside in the battery-backuped SRAM.
+.Pp
+Note for X68000/Jupiter-X(68040/060 accelerator by FTZ-net) systems:
+The system must be in 040/060 processor mode.
+.Sh FILES
+.Bl -tag -width /usr/mdec/xxbootxx -compact
+.It Pa /netbsd
+system code
+.It Pa /usr/mdec/xxboot
+boot program, xx is disk type
+.El
+.Sh SEE ALSO
+.Xr reboot 2 ,
+.Xr disklabel 8 ,
+.Xr halt 8 ,
+.Xr reboot 8 ,
+.Xr shutdown 8
