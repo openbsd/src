@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.11 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.12 2004/04/14 19:53:04 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/05/10 23:16:34 thorpej Exp $	*/
 
 /*-
@@ -72,6 +72,7 @@ int	 cmdnetstat(char *, char *);
 struct	 cmdtab *lookup(char *);
 void	 command(char *);
 void	 sigdie(int);
+void	 sigtstp(int);
 void	 die(void);
 void	 sigdisplay(int);
 void	 display(void);
@@ -117,12 +118,12 @@ void	 shownetstat(void);
 void	 showpigs(void);
 void	 showswap(void);
 void	 status(void);
-void	 suspend(int);
 void	 gethz(void);
 
 extern volatile sig_atomic_t gotdie;
 extern volatile sig_atomic_t gotdisplay;
 extern volatile sig_atomic_t gotwinch;
+extern volatile sig_atomic_t gottstp;
 
 extern double dellave;
 extern WINDOW *wload;
