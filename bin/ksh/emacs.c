@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.12 1999/11/14 22:04:02 d Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.13 2000/01/24 03:12:12 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -318,6 +318,7 @@ static	struct x_defbindings const x_defbindings[] = {
 	 * entries.
 	 */
         { XFUNC_meta2,			1,	'['  },
+        { XFUNC_meta2,			1,	'O'  },
 	{ XFUNC_prev_com,		2,	'A'  },
 	{ XFUNC_next_com,		2,	'B'  },
 	{ XFUNC_mv_forw,		2,	'C'  },
