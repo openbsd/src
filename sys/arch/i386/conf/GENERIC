@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.271 2001/07/13 17:29:41 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.272 2001/07/17 01:39:09 jason Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -153,6 +153,8 @@ ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
 pccom*	at ast? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
 #pccom*	at boca? slave ?
+#addcom0	at isa? port 0x108 irq 5	# Addonics FlexPort
+#pccom*	at addcom? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #pccom*	at rtfps? slave ?
 #hsq0	at isa? port 0x140 irq 10	# Hostess 4-port serial card
