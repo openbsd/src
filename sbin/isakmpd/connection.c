@@ -1,5 +1,5 @@
-/*	$OpenBSD: connection.c,v 1.6 2000/02/25 17:23:39 niklas Exp $	*/
-/*	$EOM: connection.c,v 1.19 2000/02/20 19:58:36 niklas Exp $	*/
+/*	$OpenBSD: connection.c,v 1.7 2000/04/07 22:05:29 niklas Exp $	*/
+/*	$EOM: connection.c,v 1.20 2000/04/04 13:52:43 provos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -220,6 +220,9 @@ connection_passive_lookup_by_ids (u_int8_t *id1, u_int8_t *id2)
   for (conn = TAILQ_FIRST (&connections_passive); conn;
        conn = TAILQ_NEXT (conn, link))
     {
+      if (conn->remote_id == NULL)
+	continue;
+
       /*
        * If both IDs match what we have saved, return the name.  Don't bother
        * in which order they are.
@@ -232,6 +235,25 @@ connection_passive_lookup_by_ids (u_int8_t *id1, u_int8_t *id2)
 	  LOG_DBG ((LOG_MISC, 60,
 		    "connection_passive_lookup_by_ids: returned \"%s\"",
 		    conn->name));
+	  return conn->name;
+	}
+    }
+
+  /* In the road warrior case, we do not know the remote ID. In that
+   * case we will just match against the local ID.
+   */
+  for (conn = TAILQ_FIRST (&connections_passive); conn;
+       conn = TAILQ_NEXT (conn, link))
+    {
+      if (conn->remote_id != NULL)
+	continue;
+      
+      if (compare_ids (id1, conn->local_id, conn->local_sz) == 0 ||
+	  compare_ids (id2, conn->local_id, conn->local_sz) == 0)
+	{
+	  LOG_DBG ((LOG_MISC, 60,
+		    "connection passive_lookup_by_ids: returned \"%s\""
+		    " only matched local id", conn->name));
 	  return conn->name;
 	}
     }
@@ -310,14 +332,16 @@ connection_record_passive (char *name)
     }
   
   local_id = conf_get_str (name, "Local-ID");
-  remote_id = conf_get_str (name, "Remote-ID");
-  if (!local_id || !remote_id)
+  if (!local_id)
     {
       log_print ("connection_record_passive: "
 		 "\"Local-ID\" or \"Remote-ID\" is missing from section [%s]",
 		 name);
       return -1;
     }
+
+  /* If the remote id lookup fails we defer it to later */
+  remote_id = conf_get_str (name, "Remote-ID");
 
   conn = calloc (1, sizeof *conn);
   if (!conn)
@@ -339,9 +363,14 @@ connection_record_passive (char *name)
   if (!conn->local_id)
     goto fail;
 
-  conn->remote_id = ipsec_build_id (remote_id, &conn->remote_sz);
-  if (!conn->remote_id)
-    goto fail;
+  if (remote_id) 
+    {
+      conn->remote_id = ipsec_build_id (remote_id, &conn->remote_sz);
+      if (!conn->remote_id)
+	goto fail;
+    }
+  else
+    conn->remote_id = NULL;
 
   TAILQ_INSERT_TAIL (&connections_passive, conn, link);
   
