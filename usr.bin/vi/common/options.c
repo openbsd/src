@@ -124,11 +124,11 @@ OPTLIST const optlist[] = {
 /* O_MSGCAT	  4.4BSD */
 	{"msgcat",	f_msgcat,	OPT_STR,	0},
 /* O_NOPRINT	  4.4BSD */
-	{"noprint",	f_print,	OPT_STR,	0},
+	{"noprint",	f_print,	OPT_STR,	OPT_EARLYSET},
 /* O_NUMBER	    4BSD */
 	{"number",	f_reformat,	OPT_0BOOL,	0},
 /* O_OCTAL	  4.4BSD */
-	{"octal",	f_print,	OPT_0BOOL,	0},
+	{"octal",	f_print,	OPT_0BOOL,	OPT_EARLYSET},
 /* O_OPEN	    4BSD */
 	{"open",	NULL,		OPT_1BOOL,	0},
 /* O_OPTIMIZE	    4BSD */
@@ -138,7 +138,7 @@ OPTLIST const optlist[] = {
 /* O_PATH	  4.4BSD */
 	{"path",	NULL,		OPT_STR,	0},
 /* O_PRINT	  4.4BSD */
-	{"print",	f_print,	OPT_STR,	0},
+	{"print",	f_print,	OPT_STR,	OPT_EARLYSET},
 /* O_PROMPT	    4BSD */
 	{"prompt",	NULL,		OPT_1BOOL,	0},
 /* O_READONLY	    4BSD (undocumented) */
@@ -561,6 +561,14 @@ opts_set(sp, argv, usage)
 						break;
 				}
 
+			if (F_ISSET(op, OPT_EARLYSET)) {
+			    /* Set the value. */
+			    if (turnoff)
+				O_CLR(sp, offset);
+			    else
+				O_SET(sp, offset);
+			}
+
 			/* Report to subsystems. */
 			if (op->func != NULL &&
 			    op->func(sp, spo, NULL, &turnoff) ||
@@ -571,11 +579,13 @@ opts_set(sp, argv, usage)
 				break;
 			}
 
-			/* Set the value. */
-			if (turnoff)
+			if (!F_ISSET(op, OPT_EARLYSET)) {
+			    /* Set the value. */
+			    if (turnoff)
 				O_CLR(sp, offset);
-			else
+			    else
 				O_SET(sp, offset);
+			}
 			break;
 		case OPT_NUM:
 			if (turnoff) {
@@ -646,6 +656,14 @@ badnum:				p = msg_print(sp, name, &nf);
 			    O_VAL(sp, offset) == value)
 				break;
 
+			if (F_ISSET(op, OPT_EARLYSET)) {
+			    /* Set the value. */
+			    if (o_set(sp, offset, 0, NULL, value)) {
+				rval = 1;
+				break;
+			    }
+			}
+
 			/* Report to subsystems. */
 			if (op->func != NULL &&
 			    op->func(sp, spo, sep, &value) ||
@@ -656,9 +674,11 @@ badnum:				p = msg_print(sp, name, &nf);
 				break;
 			}
 
-			/* Set the value. */
-			if (o_set(sp, offset, 0, NULL, value))
+			if (!F_ISSET(op, OPT_EARLYSET)) {
+			    /* Set the value. */
+			    if (o_set(sp, offset, 0, NULL, value))
 				rval = 1;
+			}
 			break;
 		case OPT_STR:
 			if (turnoff) {
@@ -683,6 +703,14 @@ badnum:				p = msg_print(sp, name, &nf);
 			    !strcmp(O_STR(sp, offset), sep))
 				break;
 
+			if (F_ISSET(op, OPT_EARLYSET)) {
+			    /* Set the value. */
+			    if (o_set(sp, offset, OS_STRDUP, sep, 0)) {
+				rval = 1;
+				break;
+			    }
+			}
+
 			/* Report to subsystems. */
 			if (op->func != NULL &&
 			    op->func(sp, spo, sep, NULL) ||
@@ -693,9 +721,11 @@ badnum:				p = msg_print(sp, name, &nf);
 				break;
 			}
 
-			/* Set the value. */
-			if (o_set(sp, offset, OS_STRDUP, sep, 0))
+			if (!F_ISSET(op, OPT_EARLYSET)) {
+			    /* Set the value. */
+			    if (o_set(sp, offset, OS_STRDUP, sep, 0))
 				rval = 1;
+			}
 			break;
 		default:
 			abort();

@@ -89,6 +89,7 @@ struct _optlist {
 #define	OPT_NOSET	0x010		/* Option may not be set. */
 #define	OPT_NOUNSET	0x020		/* Option may not be unset. */
 #define	OPT_NOZERO	0x040		/* Option may not be set to 0. */
+#define	OPT_EARLYSET	0x080		/* Func called after value is set */
 	u_int8_t flags;
 };
 
