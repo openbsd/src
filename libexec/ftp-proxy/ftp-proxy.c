@@ -1,4 +1,4 @@
-/* $OpenBSD: ftp-proxy.c,v 1.9 2001/08/19 17:33:12 beck Exp $ */
+/* $OpenBSD: ftp-proxy.c,v 1.10 2001/08/19 18:24:13 beck Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -599,6 +599,15 @@ out:
 			exit(EX_DATAERR);
 		}
 
+		for (i=0; i<6; i++)
+			if (values[i] > 255) {
+				syslog(LOG_INFO, 
+				    "malformed PORT command (%s)",
+				     client->line_buffer);
+				exit(EX_DATAERR);
+			}
+
+
 		client_listen_sa.sin_family = AF_INET;
 		client_listen_sa.sin_addr.s_addr = htonl((values[0] << 24) |
 		    (values[1] << 16) | (values[2] <<  8) |
@@ -684,7 +693,7 @@ do_server_reply(struct csiob *server, struct csiob *client)
 	}
 	if (code == 227 && !NatMode) {
 		unsigned int values[6];
-		u_char ch, *tailptr;
+		u_char *tailptr;
 		int byte_number;
 
 		debuglog(1, "Got a PASV reply\n");
@@ -696,46 +705,25 @@ do_server_reply(struct csiob *server, struct csiob *client)
 			exit(EX_DATAERR);
 		}
 
-		tailptr += 1;	/* Move past the open-parentheses */
 		byte_number = 0;
 		values[0] = 0;
-		while ((ch = *tailptr) == ',' || isdigit(ch)) {
-			if (isdigit(ch)) {
-				values[byte_number] = values[byte_number]
-				    * 10 + ch - '0';
-				if (values[byte_number] > 255) {
-					syslog(LOG_NOTICE,
-					    "malformed 227 reply");
-					exit(EX_DATAERR);
-				}
-			} else if (ch == ',') {
-				byte_number += 1;
-				if (byte_number < 6) {
-					values[byte_number] = 0;
-				} else {
-					syslog(LOG_NOTICE,
-					    "malformed 227 reply");
-					exit(EX_DATAERR);
-				}
+
+
+		i = sscanf(tailptr, "(%u,%u,%u,%u,%u,%u)", &values[0],
+		    &values[1], &values[2], &values[3], &values[4],
+		    &values[5]);
+		if (i != 6) { 
+			syslog(LOG_INFO, "malformed PASV reply (%s)", 
+			    client->line_buffer);
+			exit(EX_DATAERR);
+		}
+		for (i=0; i<6; i++)
+			if (values[i] > 255) {
+				syslog(LOG_INFO, 
+				    "malformed PASV reply(%s)",
+				     client->line_buffer);
+				exit(EX_DATAERR);
 			}
-			tailptr += 1;
-		}
-
-		/*
-		 * The PASV reply should be terminated by a closing
-		 * parentheses.
-		 */
-		if (ch != ')') {
-			syslog(LOG_INFO, "malformed 227 reply, junk at end");
-			exit(EX_DATAERR);
-		}
-
-		/* we need the righr number of bytes for ipv4 and port here */
-		if (byte_number != 5) {
-			syslog(LOG_NOTICE,
-			    "malformed 227 reply, missing bytes");
-			exit(EX_DATAERR);
-		}
 
 		server_listen_sa.sin_family = AF_INET;
 		server_listen_sa.sin_addr.s_addr = htonl((values[0] << 24) |
@@ -755,7 +743,7 @@ do_server_reply(struct csiob *server, struct csiob *client)
 		    htons(client_listen_sa.sin_port));
 
 		snprintf(tbuf, sizeof(tbuf),
-		    "227 Entering Passive Mode (%u,%u,%u,%u,%u,%u\r\n",
+		    "227 Entering Passive Mode (%u,%u,%u,%u,%u,%u)\r\n",
 		    ((u_char *)iap)[0], ((u_char *)iap)[1],
 		    ((u_char *)iap)[2], ((u_char *)iap)[3],
 		    ((u_char *)&client_listen_sa.sin_port)[0],
