@@ -1,4 +1,4 @@
-/*	$OpenBSD: failedlogin.c,v 1.11 2002/02/16 21:27:48 millert Exp $	*/
+/*	$OpenBSD: failedlogin.c,v 1.12 2002/07/02 01:15:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -27,9 +27,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: failedlogin.c,v 1.11 2002/02/16 21:27:48 millert Exp $";
-#endif /* not lint */                                                        
+#ifndef lint
+static char rcsid[] = "$OpenBSD: failedlogin.c,v 1.12 2002/07/02 01:15:08 deraadt Exp $";
+#endif /* not lint */
 
 /*
  * failedlogin.c
@@ -65,9 +65,7 @@ int	 check_failedlogin(uid_t);
  * Log a bad login to the failedlogin file.
  */
 void
-log_failedlogin(uid, host, name, tty)
-	uid_t uid;
-	char *host, *name, *tty;
+log_failedlogin(uid_t uid, char *host, char *name, char *tty)
 {
 	struct badlogin failedlogin;
 	int fd;
@@ -106,12 +104,10 @@ log_failedlogin(uid, host, name, tty)
  * user has been validated.
  */
 int
-check_failedlogin(uid)
-	uid_t uid;
+check_failedlogin(uid_t uid)
 {
-	int fd;
 	struct badlogin failedlogin;
-	int was_bad = 0;
+	int fd, was_bad = 0;
 
 	(void)memset((void *)&failedlogin, 0, sizeof(failedlogin));
 
@@ -129,7 +125,7 @@ check_failedlogin(uid)
 				(char *)ctime(&failedlogin.bl_time));
 			(void)printf(" on %.*s",
 			    (int)sizeof(failedlogin.bl_line),
-			    failedlogin.bl_line); 
+			    failedlogin.bl_line);
 			if (*failedlogin.bl_host != '\0') {
 				if (*failedlogin.bl_name != '\0')
 					(void)printf(" from %.*s@%.*s",
