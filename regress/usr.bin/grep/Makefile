@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile,v 1.9 2004/02/04 05:53:49 millert Exp $
+# $OpenBSD: Makefile,v 1.10 2004/05/07 19:10:06 otto Exp $
 
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 \
+	t18 t19 t20
 
 t1:
 	grep t.s ${.CURDIR}/in | diff - ${.CURDIR}/t1.out
@@ -56,6 +57,28 @@ t17:
 t18:
 	grep -w '^foo$$' ${.CURDIR}/t17.in | diff - ${.CURDIR}/t17.out
 
-.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18
+t19:
+	grep  -w 'a.' ${.CURDIR}/t19.in | diff - ${.CURDIR}/t19.out
+	fgrep -w -e 'aa' -e 'a_' ${.CURDIR}/t19.in | diff - ${.CURDIR}/t19.out
+
+t20:
+	echo '='   | grep  -w  '='  | diff - /dev/null
+	echo '='   | fgrep -w  '='  | diff - /dev/null
+	echo 'a='  | grep  -w  'a=' | diff - /dev/null
+	echo 'a='  | fgrep -w  'a=' | diff - /dev/null
+	echo '=b'  | grep  -w  '=b' | diff - /dev/null
+	echo '=b'  | fgrep -w  '=b' | diff - /dev/null
+	echo 'a=b' | grep  -qw 'a=b'
+	echo 'a=b' | fgrep -qw 'a=b'
+	echo '+'   | grep  -w  '+'  | diff - /dev/null
+	echo '+'   | fgrep -w  '+'  | diff - /dev/null
+	echo 'a+'  | grep  -w  'a+' | diff - /dev/null
+	echo 'a+'  | fgrep -w  'a+' | diff - /dev/null
+	echo '+b'  | grep  -w  '+b' | diff - /dev/null
+	echo '+b'  | fgrep -w  '+b' | diff - /dev/null
+	echo 'a+b' | grep  -qw 'a+b'
+	echo 'a+b' | fgrep -qw 'a+b'
+
+.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20
 
 .include <bsd.regress.mk>
