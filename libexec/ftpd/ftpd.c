@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.124 2002/03/16 19:15:12 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.125 2002/03/30 22:01:51 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.124 2002/03/16 19:15:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.125 2002/03/30 22:01:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -888,8 +888,10 @@ pass(passwd)
 			/* Sleep between 1 and 3 seconds to emulate a crypt. */
 			us = arc4random() % 3000000;
 			usleep(us);
-			if (as != NULL)
+			if (as != NULL) {
 				auth_close(as);
+				as = NULL;
+			}
 		} else {
 			authok = auth_userresponse(as, passwd, 0);
 			as = NULL;
