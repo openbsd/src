@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.37 2004/02/02 08:40:48 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.38 2004/06/20 20:50:41 pvalchev Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -154,7 +154,7 @@ gem_config(sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmatag,
 	    sizeof(struct gem_control_data), PAGE_SIZE, 0, &sc->sc_cdseg,
 	    1, &sc->sc_cdnseg, 0)) != 0) {
-		printf("%s: unable to allocate control data, error = %d\n",
+		printf("\n%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_0;
 	}
@@ -163,7 +163,7 @@ gem_config(sc)
 	if ((error = bus_dmamem_map(sc->sc_dmatag, &sc->sc_cdseg, sc->sc_cdnseg,
 	    sizeof(struct gem_control_data), (caddr_t *)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map control data, error = %d\n",
+		printf("\n%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
@@ -171,7 +171,7 @@ gem_config(sc)
 	if ((error = bus_dmamap_create(sc->sc_dmatag,
 	    sizeof(struct gem_control_data), 1,
 	    sizeof(struct gem_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
-		printf("%s: unable to create control data DMA map, "
+		printf("\n%s: unable to create control data DMA map, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		goto fail_2;
 	}
@@ -179,7 +179,7 @@ gem_config(sc)
 	if ((error = bus_dmamap_load(sc->sc_dmatag, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct gem_control_data), NULL,
 	    0)) != 0) {
-		printf("%s: unable to load control data DMA map, error = %d\n",
+		printf("\n%s: unable to load control data DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_3;
 	}
@@ -190,7 +190,7 @@ gem_config(sc)
 	for (i = 0; i < GEM_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			printf("%s: unable to create rx DMA map %d, "
+			printf("\n%s: unable to create rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
 		}
@@ -203,7 +203,7 @@ gem_config(sc)
 		if ((error = bus_dmamap_create(sc->sc_dmatag, MCLBYTES,
 		    GEM_NTXSEGS, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_txd[i].sd_map)) != 0) {
-			printf("%s: unable to create tx DMA map %d, "
+			printf("\n%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_6;
 		}
@@ -217,8 +217,7 @@ gem_config(sc)
 	 */
 
 	/* Announce ourselves. */
-	printf("%s: address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->sc_enaddr));
 
 	/* Get RX FIFO size */
 	sc->sc_rxfifosize = 64 *

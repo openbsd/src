@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.13 2003/12/29 23:06:55 brad Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.14 2004/06/20 20:50:41 pvalchev Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -161,30 +161,25 @@ gem_attach_pci(parent, self, aux)
 
 	sc->sc_burst = 16;	/* XXX */
 
-	printf("\n");
-	/*
-	 * call the main configure
-	 */
-	gem_config(sc);
-
 	if (pci_intr_map(pa, &intrhandle) != 0) {
-		printf("%s: couldn't map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		printf(": couldn't map interrupt\n");
 		return;	/* bus_unmap ? */
 	}	
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 	gsc->gsc_ih = pci_intr_establish(pa->pa_pc,
 	    intrhandle, IPL_NET, gem_intr, sc, self->dv_xname);
 	if (gsc->gsc_ih != NULL) {
-		printf("%s: using %s for interrupt\n",
-		    sc->sc_dev.dv_xname,
-		    intrstr ? intrstr : "unknown interrupt");
+		printf(": %s", intrstr ? intrstr : "unknown interrupt");
 	} else {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;	/* bus_unmap ? */
 	}
+
+	/*
+	 * call the main configure
+	 */
+	gem_config(sc);
 }
