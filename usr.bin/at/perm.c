@@ -1,9 +1,8 @@
-/*	$OpenBSD: panic.c,v 1.4 1997/03/01 23:40:09 millert Exp $	*/
-/*	$NetBSD: panic.c,v 1.2 1995/03/25 18:13:33 glass Exp $	*/
+/*	$OpenBSD: perm.c,v 1.1 1997/03/01 23:40:12 millert Exp $	*/
 
-/*
- * panic.c - terminate fast in case of error
- * Copyright (c) 1993 by Thomas Koenig
+/* 
+ * perm.c - check user permission for at(1)
+ * Copyright (C) 1994  Thomas Koenig
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,77 +27,95 @@
 
 /* System Headers */
 
+#include <sys/types.h>
 #include <errno.h>
+#include <pwd.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 /* Local headers */
 
-#include "panic.h"
 #include "at.h"
+#include "panic.h"
+#include "pathnames.h"
 #include "privs.h"
 
 /* File scope variables */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: panic.c,v 1.4 1997/03/01 23:40:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: perm.c,v 1.1 1997/03/01 23:40:12 millert Exp $";
 #endif
 
-/* External variables */
+/* Function declarations */
+
+static int check_for_user __P((FILE *, const char *));
+
+/* Local functions */
+
+static int
+check_for_user(fp, name)
+	FILE *fp;
+	const char *name;
+{
+	char *buffer;
+	size_t len;
+	int found = 0;
+
+	len = strlen(name);
+	if ((buffer = malloc(len + 2)) == NULL)
+		panic("Insufficient virtual memory");
+
+	while (fgets(buffer, len + 2, fp) != NULL) {
+		if (strncmp(name, buffer, len) == 0 && buffer[len] == '\n') {
+			found = 1;
+			break;
+		}
+	}
+	(void)fclose(fp);
+	free(buffer);
+	return (found);
+}
+
 
 /* Global functions */
 
-void
-panic(a)
-	char *a;
+int
+check_permission()
 {
-	/*
-	 * Something fatal has happened, print error message and exit.
-	 */
-	(void)fprintf(stderr, "%s: %s\n", namep, a);
-	if (fcreated) {
-		PRIV_START
-		unlink(atfile);
-		PRIV_END
+	FILE *fp;
+	uid_t uid = geteuid();
+	struct passwd *pentry;
+
+	if (uid==0)
+		return 1;
+
+	if ((pentry = getpwuid(uid)) == NULL) {
+		perror("Cannot access user database");
+		exit(EXIT_FAILURE);
 	}
 
-	exit(EXIT_FAILURE);
-}
+	PRIV_START
 
-void
-perr(a)
-	char *a;
-{
-	/*
-	 * Some operating system error; print error message and exit.
-	 */
-	perror(a);
-	if (fcreated) {
+	fp = fopen(_PATH_AT_ALLOW, "r");
+
+	PRIV_END
+
+	if (fp != NULL) {
+		return (check_for_user(fp, pentry->pw_name));
+	} else {
 		PRIV_START
-		unlink(atfile);
+
+		fp = fopen(_PATH_AT_DENY, "r");
+
 		PRIV_END
+
+		if (fp != NULL)
+			return (!check_for_user(fp, pentry->pw_name));
+		else
+			perror(_PATH_AT_DENY);
 	}
-
-	exit(EXIT_FAILURE);
-}
-
-void 
-perr2(a, b)
-	char *a, *b;
-{
-	(void)fputs(a, stderr);
-	perr(b);
-}
-
-void
-usage(void)
-{
-	/* Print usage and exit.  */
-	(void)fprintf(stderr,   "Usage: at [-V] [-q x] [-f file] [-m] time\n"
-				"       at [-V] -c job [job ...]\n"
-				"       atq [-V] [-q x] [-v]\n"
-				"       atrm [-V] job [job ...]\n"
-				"       batch [-V] [-f file] [-m]\n");
-	exit(EXIT_FAILURE);
+	return (0);
 }

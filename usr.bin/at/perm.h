@@ -1,9 +1,6 @@
-/*	$OpenBSD: parsetime.h,v 1.3 1997/03/01 23:40:11 millert Exp $	*/
-/*	$NetBSD: parsetime.h,v 1.2 1995/03/25 18:13:37 glass Exp $	*/
-
-/*
- *  parsetime.h -  header for at(1)
- *  Copyright (c) 1993  Thomas Koenig
+/* 
+ *  perm.h -  header for at(1)
+ *  Copyright (C) 1994  Thomas Koenig
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,7 +21,6 @@
  * THEORY OF LIABILITY, WETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-time_t parsetime	__P((int, char **));
+int check_permission __P((void));

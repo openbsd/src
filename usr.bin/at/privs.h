@@ -1,10 +1,9 @@
-/*	$OpenBSD: privs.h,v 1.3 1996/12/22 03:39:24 tholo Exp $	*/
+/*	$OpenBSD: privs.h,v 1.4 1997/03/01 23:40:12 millert Exp $	*/
 /*	$NetBSD: privs.h,v 1.3 1995/03/25 18:13:41 glass Exp $	*/
 
-/*
- * privs.h - header for privileged operations
- * Copyright (c) 1993 by Thomas Koenig
- * All rights reserved.
+/* 
+ *  privs.h - header for privileged operations 
+ *  Copyright (C) 1993  Thomas Koenig
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -18,14 +17,13 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #ifndef _PRIVS_H
@@ -33,23 +31,19 @@
 
 #include <unistd.h>
 
-/* Relinquish privileges temporarily for a setuid program
- * with the option of getting them back later.  This is done by swapping
- * the real and effective userid BSD style.  Call RELINQUISH_PRIVS once
+/* Relinquish privileges temporarily for a setuid or setgid program
+ * with the option of getting them back later.  This is done by
+ * utilizing POSIX saved user and groups ids.  Call RELINQUISH_PRIVS once
  * at the beginning of the main program.  This will cause all operatons
  * to be executed with the real userid.  When you need the privileges
- * of the setuid invocation, call PRIV_START; when you no longer
+ * of the setuid/setgid invocation, call PRIV_START; when you no longer
  * need it, call PRIV_END.  Note that it is an error to call PRIV_START
  * and not PRIV_END within the same function.
  *
- * Use RELINQUISH_PRIVS_ROOT(a) if your program started out running
+ * Use RELINQUISH_PRIVS_ROOT(a,b) if your program started out running
  * as root, and you want to drop back the effective userid to a
  * and the effective group id to b, with the option to get them back
  * later.
- *
- * If you no longer need root privileges, but those of some other
- * userid, you can call REDUCE_PRIV(a) when your effective
- * is the user's.
  *
  * Problems: Do not use return between PRIV_START and PRIV_END; this
  * will cause the program to continue running in an unprivileged
@@ -67,28 +61,37 @@ extern
 #endif
 uid_t real_uid, effective_uid;
 
+#ifndef MAIN 
+extern
+#endif
+gid_t real_gid, effective_gid;
+
 #define RELINQUISH_PRIVS { \
-	real_uid = getuid(); \
-	effective_uid = geteuid(); \
-	seteuid(real_uid); \
+      real_uid = getuid(); \
+      effective_uid = geteuid(); \
+      real_gid = getgid(); \
+      effective_gid = getegid(); \
+      setegid(real_gid); \
+      seteuid(real_uid); \
 }
 
-#define RELINQUISH_PRIVS_ROOT(a) { \
+#define RELINQUISH_PRIVS_ROOT(a, b) { \
 	real_uid = (a); \
 	effective_uid = geteuid(); \
+	real_gid = (b); \
+	effective_gid = getegid(); \
+	setegid(real_gid); \
 	seteuid(real_uid); \
 }
 
 #define PRIV_START { \
-	seteuid(effective_uid);
+	seteuid(effective_uid); \
+	setegid(effective_gid); \
+}
 
-#define PRIV_END \
+#define PRIV_END { \
+	setegid(real_gid); \
 	seteuid(real_uid); \
 }
 
-#define REDUCE_PRIV(a) { \
-	real_uid = effective_uid = (a); \
-	seteuid(effective_uid); \
-	setuid(real_uid); \
-}
 #endif
