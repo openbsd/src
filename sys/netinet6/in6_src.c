@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6_src.c,v 1.6 2000/06/18 04:49:32 itojun Exp $	*/
-/*	$KAME: in6_src.c,v 1.23 2000/06/12 08:15:27 itojun Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.7 2000/06/18 17:02:59 itojun Exp $	*/
+/*	$KAME: in6_src.c,v 1.26 2000/06/18 06:31:40 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -244,7 +244,11 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 			ro->ro_dst.sin6_family = AF_INET6;
 			ro->ro_dst.sin6_len = sizeof(struct sockaddr_in6);
 			ro->ro_dst.sin6_addr = *dst;
-			if (!IN6_IS_ADDR_MULTICAST(dst)) {
+			ro->ro_dst.sin6_scope_id = dstsock->sin6_scope_id;
+			if (IN6_IS_ADDR_MULTICAST(dst)) {
+				ro->ro_rt = rtalloc1(&((struct route *)ro)
+						     ->ro_dst, 0);
+			} else {
 				rtalloc((struct route *)ro);
 			}
 		}
