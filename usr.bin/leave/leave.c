@@ -1,4 +1,4 @@
-/*	$OpenBSD: leave.c,v 1.4 2000/05/08 16:15:29 espie Exp $	*/
+/*	$OpenBSD: leave.c,v 1.5 2000/09/20 21:57:37 pjanzen Exp $	*/
 /*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)leave.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: leave.c,v 1.4 2000/05/08 16:15:29 espie Exp $";
+static char rcsid[] = "$OpenBSD: leave.c,v 1.5 2000/09/20 21:57:37 pjanzen Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -83,7 +83,9 @@ main(argc, argv)
 		cp = fgets(buf, sizeof(buf), stdin);
 		if (cp == NULL || *cp == '\n')
 			exit(0);
-	} else
+	} else if (argc > 2)
+		usage();
+	else
 		cp = argv[1];
 
 	if (*cp == '+') {
