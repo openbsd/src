@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.13 2001/10/28 01:52:11 marc Exp $
+.\" $OpenBSD: pthreads.3,v 1.14 2001/10/30 23:41:05 marc Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -243,3 +243,13 @@ This means that using
 to alter the process virtual timer will have undefined effects. The
 .Dv SIGVTALRM
 will never be delivered to threads in a process.
+.Pp
+Some pthread functions fail to work correctly when linked using the
+.Fl g
+option to
+.Xr cc 1
+or
+.Xr gcc 1 .
+The problems do not occur when linked using the
+.Fl ggdb
+option.
