@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.2 1997/08/22 07:16:31 downsj Exp $	*/
+/*	$OpenBSD: utils.c,v 1.3 1998/09/20 06:19:14 niklas Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -276,16 +276,16 @@ int percentages(cnt, out, new, old, diffs)
 
 int cnt;
 int *out;
-register int *new;
-register int *old;
-int *diffs;
+register long *new;
+register long *old;
+long *diffs;
 
 {
     register int i;
-    register int change;
-    register int total_change;
-    register int *dp;
-    int half_total;
+    register long change;
+    register long total_change;
+    register long *dp;
+    long half_total;
 
     /* initialization */
     total_change = 0;

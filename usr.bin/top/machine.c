@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.12 1998/09/20 05:58:54 niklas Exp $	*/
+/*	$OpenBSD: machine.c,v 1.13 1998/09/20 06:19:14 niklas Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -143,9 +143,9 @@ static          int hz;
 static unsigned long cp_time_offset;
 
 /* these are for calculating cpu state percentages */
-static int cp_time[CPUSTATES];
-static int cp_old[CPUSTATES];
-static int cp_diff[CPUSTATES];
+static long cp_time[CPUSTATES];
+static long cp_old[CPUSTATES];
+static long cp_diff[CPUSTATES];
 
 /* these are for detailing the process states */
 
