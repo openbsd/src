@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.2 1997/09/02 22:42:26 weingart Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.3 1997/09/02 22:43:17 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -53,7 +53,7 @@ Xdiskinfo()
 
 	for(i = 0x80; i < 0x85; i++){
 		di = biosdinfo(i);
-		printf("\t0x%x => Heads %d, Sectors %d\n",
+		printf("\tDisk 0x%x => Heads %d, Sectors %d\n",
 			i, BIOSNHEADS(di), BIOSNSECTS(di));
 	}
 
