@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 2000/06/29 07:39:45 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 2001/02/04 02:51:24 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -53,8 +53,6 @@
  * Being purged from the character file does not cause the scoreboard
  * to be updated.
  */
-
-/**/
 
 /*
  * main.c	Main routines for Phantasia
@@ -196,7 +194,7 @@ main(argc, argv)
 		Timeout = TRUE;
 
 	/* update some important player statistics */
-	strcpy(Player.p_login, Login);
+	strlcpy(Player.p_login, Login, MAXLOGNAME);
 	time(&seconds);
 	Player.p_lastused = localtime(&seconds)->tm_yday;
 	Player.p_status = S_PLAYING;
@@ -345,6 +343,17 @@ initialstate()
 	Windows = FALSE;
 	Echo = TRUE;
 
+	/* setup login name */
+	if ((Login = getlogin()) == NULL) {
+		struct passwd *gpwd;
+
+		gpwd = getpwuid(getuid());
+		if (gpwd != NULL)
+			Login = gpwd->pw_name;
+		else
+			errx(1, "Who are you?");
+	}
+
 #ifdef TERMIOS
 	/* setup terminal keys */
 	if (tcgetattr(0, &tty) == 0) {
@@ -358,10 +367,6 @@ initialstate()
 	Ch_Erase = CH_ERASE;
 	Ch_Kill = CH_KILL;
 #endif
-
-	/* setup login name */
-	if ((Login = getlogin()) == NULL)
-		Login = getpwuid(getuid())->pw_name;
 
 	/* open some files */
 	if ((Playersfp = fopen(_PATH_PEOPLE, "r+")) == NULL)

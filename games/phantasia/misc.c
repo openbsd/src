@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.6 2000/06/29 07:39:45 pjanzen Exp $	*/
+/*	$OpenBSD: misc.c,v 1.7 2001/02/04 02:51:25 pjanzen Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
@@ -1392,7 +1392,7 @@ readmessage()
 /
 / FUNCTION NAME: error()
 /
-/ FUNCTION: process evironment error
+/ FUNCTION: process environment error
 /
 / AUTHOR: E. A. Estes, 12/4/85
 /
