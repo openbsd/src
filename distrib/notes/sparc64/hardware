@@ -73,7 +73,7 @@ Supported devices {:-include-:}:
 
 	Miscellaneous devices:
 		EBus beeper (beeper)
-
+		performance counters/system controller (uperf)
 
 Hardware the we do NOT currently support, but get many questions about:
 
