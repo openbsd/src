@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.34 2003/12/26 20:52:14 jakob Exp $ */
+/*	$OpenBSD: rde.c,v 1.35 2003/12/26 21:33:14 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -555,7 +555,7 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 
 	kr.prefix = p->prefix->prefix.s_addr;
 	kr.prefixlen = p->prefix->prefixlen;
-	kr.nexthop = p->aspath->flags.nexthop.s_addr;
+	kr.nexthop = p->aspath->nexthop->true_nexthop.s_addr;
 
 	if (imsg_compose(&ibuf_main, type, 0, &kr, sizeof(kr)) == -1)
 		fatal("imsg_compose error");
