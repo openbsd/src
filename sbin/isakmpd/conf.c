@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.14 2000/05/02 14:35:54 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.26 2000/05/01 23:35:37 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.15 2000/05/03 13:47:15 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.28 2000/05/03 13:24:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -505,14 +505,14 @@ conf_reinit (void)
       log_error ("conf_reinit: fstat (%d, &st) failed", fd);
       goto fail;
     }
-  if (st.st_uid != geteuid() && st.st_uid != getuid())
+  if (st.st_uid != geteuid () && st.st_uid != getuid ())
     {
       log_print ("conf_reinit: not loading %s - file owner is not process "
 		 "user", conf_path);
       close (fd);
       return;
     } 
-  if ((st.st_mode & (S_IRWXG|S_IRWXO)) != 0)
+  if ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0)
     {
       log_print ("conf_reinit: not loading %s - too open permissions",
 		 conf_path);
@@ -1003,7 +1003,7 @@ conf_report (void)
   char *current_section = (char *)0;
   struct dumper *dumper, *dnode;
 
-  dumper = dnode = (struct dumper *)calloc (1, sizeof (struct dumper));
+  dumper = dnode = (struct dumper *)calloc (1, sizeof *dumper);
   if (!dumper)
     goto mem_fail;
   
@@ -1017,29 +1017,29 @@ conf_report (void)
 	  {
 	    /* Dump this entry */
 	    if (!current_section || strcmp (cb->section, current_section))
-	    {
-	      if (current_section)
-		{
-		  dnode->s = malloc (strlen (current_section) + 3);
-		  if (!dnode->s)
-		    goto mem_fail;
+	      {
+		if (current_section)
+		  {
+		    dnode->s = malloc (strlen (current_section) + 3);
+		    if (!dnode->s)
+		      goto mem_fail;
 
-		  sprintf (dnode->s, "[%s]", current_section);
-		  dnode->next = 
-		    (struct dumper *)calloc (1, sizeof (struct dumper));
-		  dnode = dnode->next;
-		  if (!dnode)
-		    goto mem_fail;
+		    sprintf (dnode->s, "[%s]", current_section);
+		    dnode->next
+		      = (struct dumper *)calloc (1, sizeof (struct dumper));
+		    dnode = dnode->next;
+		    if (!dnode)
+		      goto mem_fail;
 
-		  dnode->s = "";
-		  dnode->next = 
-		    (struct dumper *)calloc (1, sizeof (struct dumper));
-		  dnode = dnode->next;
-		  if (!dnode)
-		    goto mem_fail;		  
-		}
-	      current_section = cb->section;
-	    }
+		    dnode->s = "";
+		    dnode->next
+		      = (struct dumper *)calloc (1, sizeof (struct dumper));
+		    dnode = dnode->next;
+		    if (!dnode)
+		      goto mem_fail;		  
+		  }
+		current_section = cb->section;
+	      }
 	    dnode->s = cb->tag;
 	    dnode->v = cb->value;
 	    dnode->next = (struct dumper *)calloc (1, sizeof (struct dumper));
@@ -1065,11 +1065,11 @@ conf_report (void)
  mem_fail:
   LOG_DBG ((LOG_REPORT, 0, "conf_report: memory allocation failure."));
   while ((dnode = dumper) != NULL)
-  {
-    dumper = dumper->next;
-    if (dnode->s)
-      free (dnode->s);
-    free (dnode);
-  }
+    {
+      dumper = dumper->next;
+      if (dnode->s)
+	free (dnode->s);
+      free (dnode);
+    }
   return;
 }
