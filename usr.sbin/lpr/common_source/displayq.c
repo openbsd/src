@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.6 1997/01/17 16:10:52 millert Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.7 1997/07/17 09:14:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: displayq.c,v 1.6 1997/01/17 16:10:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: displayq.c,v 1.7 1997/07/17 09:14:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ displayq(format)
 	if (cgetstr(bp, "st", &ST) < 0)
 		ST = DEFSTAT;
 	cgetstr(bp, "rm", &RM);
-	if (cp = checkremote())
+	if ((cp = checkremote()))
 		printf("Warning: %s\n", cp);
 
 	/*

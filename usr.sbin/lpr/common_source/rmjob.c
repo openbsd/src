@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmjob.c,v 1.5 1997/01/17 16:11:37 millert Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.6 1997/07/17 09:14:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: rmjob.c,v 1.5 1997/01/17 16:11:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: rmjob.c,v 1.6 1997/07/17 09:14:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ rmjob()
 	if (cgetstr(bp,"lo", &LO) < 0)
 		LO = DEFLOCK;
 	cgetstr(bp, "rm", &RM);
-	if (cp = checkremote())
+	if ((cp = checkremote()))
 		printf("Warning: %s\n", cp);
 
 	/*
