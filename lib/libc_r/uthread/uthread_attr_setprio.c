@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_attr_setprio.c,v 1.4 2001/08/10 14:37:20 fgsch Exp $	*/
+/*	$OpenBSD: uthread_attr_setprio.c,v 1.5 2002/11/07 02:56:20 marc Exp $	*/
 /*
  * Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -37,7 +37,8 @@
 #include <pthread.h>
 #include "pthread_private.h"
 
-int pthread_attr_setprio(pthread_attr_t *attr, int priority)
+int
+pthread_attr_setprio(pthread_attr_t *attr, int priority)
 {
 	int	ret;
 	if (attr == NULL || *attr == NULL) {

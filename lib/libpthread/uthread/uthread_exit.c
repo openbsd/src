@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_exit.c,v 1.16 2002/10/30 19:11:56 marc Exp $	*/
+/*	$OpenBSD: uthread_exit.c,v 1.17 2002/11/07 02:56:20 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -42,7 +42,8 @@
 #include <pthread.h>
 #include "pthread_private.h"
 
-void _exit(int status)
+void
+_exit(int status)
 {
 	int		flags;
 	int             i;
