@@ -1,5 +1,5 @@
 /* $NetBSD: ibm561.c,v 1.1 2001/12/12 07:46:48 elric Exp $ */
-/* $OpenBSD: ibm561.c,v 1.2 2002/08/02 16:13:07 millert Exp $ */
+/* $OpenBSD: ibm561.c,v 1.3 2002/11/09 22:51:48 miod Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -275,22 +275,29 @@ ibm561_set_cmap(rc, cmapp)
 {
 	struct ibm561data *data = (struct ibm561data *)rc;
 	u_int count, index;
+	int error;
 	int s;
 
-	if (cmapp->index >= IBM561_NCMAP_ENTRIES ||
-	    cmapp->count > IBM561_NCMAP_ENTRIES - cmapp->index)
-		return (EINVAL);
-	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
-	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||
-	    !uvm_useracc(cmapp->blue, cmapp->count, B_READ))
-		return (EFAULT);
-
-	s = spltty();
 	index = cmapp->index;
 	count = cmapp->count;
-	copyin(cmapp->red, &data->cmap_r[index], count);
-	copyin(cmapp->green, &data->cmap_g[index], count);
-	copyin(cmapp->blue, &data->cmap_b[index], count);
+
+	if (index >= IBM561_NCMAP_ENTRIES ||
+	    count > IBM561_NCMAP_ENTRIES - index)
+		return (EINVAL);
+
+	s = spltty();
+	if ((error = copyin(cmapp->red, &data->cmap_r[index], count)) != 0) {
+		splx(s);
+		return (error);
+	}
+	if ((error = copyin(cmapp->green, &data->cmap_g[index], count)) != 0) {
+		splx(s);
+		return (error);
+	}
+	if ((error = copyin(cmapp->blue, &data->cmap_b[index], count)) != 0) {
+		splx(s);
+		return (error);
+	}
 	data->changed |= CHANGED_CMAP;
 	data->ramdac_sched_update(data->cookie, ibm561_update);
 	splx(s);

@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.18 2002/10/12 01:09:44 krw Exp $ */
+/* $OpenBSD: tga.c,v 1.19 2002/11/09 22:51:48 miod Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -895,10 +895,6 @@ tga_builtin_set_cursor(dc, cursorp)
 		if ((u_int)cursorp->size.x != 64 ||
 		    (u_int)cursorp->size.y > 64)
 			return (EINVAL);
-		/* The cursor is 2 bits deep, and there is no mask */
-		count = (cursorp->size.y * 64 * 2) / NBBY;
-		if (!uvm_useracc(cursorp->image, count, B_READ))
-			return (EFAULT);
 	}
 	if (v & WSDISPLAY_CURSOR_DOHOT)		/* not supported */
 		return EINVAL;
@@ -921,12 +917,13 @@ tga_builtin_set_cursor(dc, cursorp)
 		dcrf->ramdac_set_curcmap(dcrc, cursorp);
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
-		count = ((64 * 2) / NBBY) * cursorp->size.y;
+		/* The cursor is 2 bits deep, and there is no mask */
+		count = (cursorp->size.y * 64 * 2) / NBBY;
 		TGAWREG(dc, TGA_REG_CCBR,
 		    (TGARREG(dc, TGA_REG_CCBR) & ~0xfc00) | (cursorp->size.y << 10));
-		copyin(cursorp->image, (char *)(dc->dc_vaddr +
-		    (TGARREG(dc, TGA_REG_CCBR) & 0x3ff)),
-		    count);				/* can't fail. */
+		if ((error = copyin(cursorp->image,(char *)(dc->dc_vaddr +
+		    (TGARREG(dc, TGA_REG_CCBR) & 0x3ff)), count)) != 0)
+			return (error);
 	}
 	return (0);
 }

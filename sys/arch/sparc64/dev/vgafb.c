@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.28 2002/09/15 14:29:29 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.29 2002/11/09 22:51:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -357,25 +357,27 @@ vgafb_putcmap(sc, cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
-	int i;
+	u_int i;
+	int error;
 	u_char *r, *g, *b;
 
 	if (index >= 256 || count > 256 - index)
 		return (EINVAL);
-	if (!uvm_useracc(cm->red, cm->count, B_READ) ||
-	    !uvm_useracc(cm->green, cm->count, B_READ) ||
-	    !uvm_useracc(cm->blue, cm->count, B_READ))
-		return (EFAULT);
-	copyin(cm->red, &sc->sc_cmap_red[index], count);
-	copyin(cm->green, &sc->sc_cmap_green[index], count);
-	copyin(cm->blue, &sc->sc_cmap_blue[index], count);
+
+	if ((error = copyin(cm->red, &sc->sc_cmap_red[index], count)) != 0)
+		return (error);
+	if ((error = copyin(cm->green, &sc->sc_cmap_green[index], count)) != 0)
+		return (error);
+	if ((error = copyin(cm->blue, &sc->sc_cmap_blue[index], count)) != 0)
+		return (error);
 
 	r = &sc->sc_cmap_red[index];
 	g = &sc->sc_cmap_green[index];
 	b = &sc->sc_cmap_blue[index];
 
 	for (i = 0; i < count; i++) {
-		OF_call_method("color!", sc->sc_ofhandle, 4, 0, *r, *g, *b, index);
+		OF_call_method("color!", sc->sc_ofhandle, 4, 0, *r, *g, *b,
+		    index);
 		r++, g++, b++, index++;
 	}
 	return (0);
