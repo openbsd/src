@@ -41,7 +41,9 @@
 .Dt STDARG 3
 .Os
 .Sh NAME
-.Nm stdarg
+.Nm va_start ,
+.Nm va_arg ,
+.Nm va_end
 .Nd variable argument lists
 .Sh SYNOPSIS
 .Fd #include <stdarg.h>
@@ -83,12 +85,12 @@ and must be called first.
 The parameter
 .Fa last
 is the name of the last parameter before the variable argument list,
-i.e. the last parameter of which the calling function knows the type.
+i.e., the last parameter of which the calling function knows the type.
 .Pp
 Because the address of this parameter is used in the
 .Fn va_start
-macro, it should not be declared as a register variable, or as a
-function or an array type.
+macro, it should not be declared as a register variable, nor as a
+function, nor an array type.
 .Pp
 The
 .Fn va_start
@@ -113,7 +115,8 @@ The parameter
 .Fa type
 is a type name specified so that the type of a pointer to an
 object that has the specified type can be obtained simply by 
-adding a *
+adding a
+.Dq \&*
 to
 .Fa type .
 .Pp
@@ -143,7 +146,7 @@ The
 macro returns no value.
 .Sh EXAMPLES
 The function
-.Em foo
+.Fn foo
 takes a string of format characters and prints out the argument
 associated with each format character based on the type.
 .Bd -literal -offset indent

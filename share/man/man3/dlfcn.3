@@ -53,11 +53,11 @@
 .Sh DESCRIPTION
 These functions provide an interface to the run-time linker
 .Xr ld.so .
-They allow new shared objects to be loaded into the process's address space
+They allow new shared objects to be loaded into a process's address space
 under program control.
 The
 .Fn dlopen
-function takes a name of a shared object as the first argument. The
+function takes a name of a shared object as its first argument. The
 shared object is mapped into the address space, relocated and its external
 references are resolved in the same way as is done with the implicitly loaded
 shared libraries at program startup. The argument can either be an absolute
@@ -70,7 +70,7 @@ pathname or it can be of the form
 in which case the same library search rules apply that are used for
 .Dq intrinsic
 shared library searches.
-The second argument has currently no effect, but should be set to
+The second argument currently has no effect, but should be set to
 .Dv DL_LAZY
 for future compatibility.
 .Fn dlopen
