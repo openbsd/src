@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.2 2002/01/11 22:14:13 millert Exp $
+.\" $OpenBSD: starttls.8,v 1.3 2002/03/20 21:18:53 millert Exp $
 .Dd January 11, 2002
 .Dt STARTTLS 8
 .Sh NAME
@@ -248,7 +248,7 @@ listed along with the other options.
 If so, congratulations, sendmail will now use TLS to encrypt your mail
 traffic when the remote server supports it.
 If not, check
-.Pa /var/log/mail
+.Pa /var/log/maillog
 to see whether sendmail has reported any security problems or other errors.
 .Ss Uses for TLS-Equipped sendmail
 The most obvious use of a cryptographically enabled sendmail installation
