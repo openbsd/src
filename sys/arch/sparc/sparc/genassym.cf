@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.5 2000/02/19 22:00:34 art Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2000/02/21 17:08:36 art Exp $
 #	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
 
 #
@@ -112,8 +112,9 @@ define	V_FAULTS	offsetof(struct vmmeter, v_faults)
 endif
 
 # CPU info structure
-define	CPUINFO_FAULTSTATUS	offsetof(struct cpu_softc, get_faultstatus)
-define	CPUINFO_MEMERR		offsetof(struct cpu_softc, memerr)
+define  CPUINFO_GETSYNCFLT      offsetof(struct cpu_softc, get_syncflt)
+define  CPUINFO_GETASYNCFLT     offsetof(struct cpu_softc, get_asyncflt)
+define  CPUINFO_SYNCFLTDUMP     offsetof(struct cpu_softc, syncfltdump)
 define	CPUINFO_PURE_VCACHE_FLS	offsetof(struct cpu_softc, pure_vcache_flush)
 
 # PTE bits and related information

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.33 2000/02/19 22:08:50 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.34 2000/02/21 17:08:36 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -1264,21 +1264,31 @@ Lpanic_red:
 #define	PTE_OF_ADDR4M(addr, pte, bad, page_offset) \
 	andn	addr, page_offset, pte
 
+/*
+ * After obtaining the PTE through ASI_SRMMUFP, we read the Sync Fault
+ * Status register. This is necessary on Hypersparcs which stores and
+ * locks the fault address and status registers if the translation
+ * fails (thanks to Chris Torek for finding this quirk).
+ */
 /* note: pmap currently does not use the PPROT_R_R and PPROT_RW_RW cases */
-#define CMP_PTE_USER_READ4M(pte) \
+#define CMP_PTE_USER_READ4M(pte, tmp) \
 	or	pte, ASI_SRMMUFP_L3, pte; \
 	lda	[pte] ASI_SRMMUFP, pte; \
+	set	SRMMU_SFSR, tmp; \
 	and	pte, (SRMMU_TETYPE | SRMMU_PROT_MASK), pte; \
 	cmp	pte, (SRMMU_TEPTE | PPROT_RWX_RWX); \
-	be	8f; nop; \
+	be	8f; \
+	 lda	[tmp] ASI_SRMMU, %g0; \
 	cmp	pte, (SRMMU_TEPTE | PPROT_RX_RX); \
 8:
 
 
 /* note: PTE bit 4 set implies no user writes */
-#define CMP_PTE_USER_WRITE4M(pte) \
+#define CMP_PTE_USER_WRITE4M(pte, tmp) \
 	or	pte, ASI_SRMMUFP_L3, pte; \
 	lda	[pte] ASI_SRMMUFP, pte; \
+	set	SRMMU_SFSR, tmp; \
+	lda	[tmp] ASI_SRMMU, %g0; \
 	and	pte, (SRMMU_TETYPE | 0x14), pte; \
 	cmp	pte, (SRMMU_TEPTE | PPROT_WRITE)
 #endif /* 4m */
@@ -1287,8 +1297,8 @@ Lpanic_red:
 
 #define PTE_OF_ADDR(addr, pte, bad, page_offset, label) \
 	PTE_OF_ADDR4M(addr, pte, bad, page_offset)
-#define CMP_PTE_USER_WRITE(pte, tmp, label)	CMP_PTE_USER_WRITE4M(pte)
-#define CMP_PTE_USER_READ(pte, tmp, label)	CMP_PTE_USER_READ4M(pte)
+#define CMP_PTE_USER_WRITE(pte, tmp, label)	CMP_PTE_USER_WRITE4M(pte,tmp)
+#define CMP_PTE_USER_READ(pte, tmp, label)	CMP_PTE_USER_READ4M(pte,tmp)
 
 #elif (defined(SUN4C) || defined(SUN4)) && !defined(SUN4M)
 
@@ -1309,7 +1319,7 @@ label:	b,a	2f; \
 
 #define CMP_PTE_USER_READ(pte, tmp, label) \
 label:	b,a	1f; \
-	CMP_PTE_USER_READ4M(pte); \
+	CMP_PTE_USER_READ4M(pte,tmp); \
 	b,a	2f; \
 1: \
 	CMP_PTE_USER_READ4_4C(pte); \
@@ -1317,7 +1327,7 @@ label:	b,a	1f; \
 
 #define CMP_PTE_USER_WRITE(pte, tmp, label) \
 label:	b,a	1f; \
-	CMP_PTE_USER_WRITE4M(pte); \
+	CMP_PTE_USER_WRITE4M(pte,tmp); \
 	b,a	2f; \
 1: \
 	CMP_PTE_USER_WRITE4_4C(pte); \
@@ -1869,6 +1879,14 @@ memfault_sun4c:
 
 #if defined(SUN4M)
 memfault_sun4m:
+	! DANGER: we use the fact that %lo(CPUINFO_VA) is zero
+.if CPUINFO_VA & 0x1fff
+BARF
+.endif
+	sethi	%hi(CPUINFO_VA), %l4
+	ld	[%l4 + %lo(CPUINFO_VA+CPUINFO_GETSYNCFLT)], %l5
+	jmpl	%l5, %l7
+	 or	%l4, %lo(CPUINFO_SYNCFLTDUMP), %l4
 	TRAP_SETUP(-CCFSZ-80)
 #if defined(UVM)
 	INCR(_uvmexp+V_FAULTS)		! cnt.v_faults++ (clobbers %o0,%o1)
@@ -1881,12 +1899,12 @@ memfault_sun4m:
 
 	std	%g2, [%sp + CCFSZ + 24]	! save g2, g3
 	std	%g4, [%sp + CCFSZ + 32]	! save g4, g5
+	std	%g6, [%sp + CCFSZ + 40]	! save g6, g7
 
-	! get fault status/address
-	set	CPUINFO_VA+CPUINFO_FAULTSTATUS, %o0
-	ld	[%o0], %o0
-	jmpl	%o0, %o7
-	 std	%g6, [%sp + CCFSZ + 40]	! sneak in g6, g7
+	! retrieve sync fault status/address
+	sethi	%hi(CPUINFO_VA+CPUINFO_SYNCFLTDUMP), %o0
+	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_SYNCFLTDUMP)], %o1
+	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_SYNCFLTDUMP+4)], %o2
 
 	wr	%l0, PSR_ET, %psr	! reenable traps
 
@@ -1899,9 +1917,8 @@ memfault_sun4m:
 	std	%i2, [%sp + CCFSZ + 56]
 	std	%i4, [%sp + CCFSZ + 64]
 	std	%i6, [%sp + CCFSZ + 72]
-	call	_mem_access_fault4m	! mem_access_fault(type, sfsr, sfva,
-					!		afsr, afva, &tf);
-	 add	%sp, CCFSZ, %o5		! (argument: &tf)
+	call	_mem_access_fault4m	! mem_access_fault(type,sfsr,sfva,&tf);
+	 add	%sp, CCFSZ, %o3		! (argument: &tf)
 
 	ldd	[%sp + CCFSZ + 0], %l0	! load new values
 	ldd	[%sp + CCFSZ + 8], %l2
@@ -2586,6 +2603,9 @@ nmi_sun4m:
 	INCR(_cnt+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
 #endif
 	/*
+	 * XXX - we don't handle soft nmi, yet.
+	 */
+	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
 	 * disable all interrupts to prevent recursion.
 	 */
@@ -2603,23 +2623,15 @@ nmi_sun4m:
 
 	std	%g2, [%sp + CCFSZ + 0]	! save g2, g3
 	rd	%y, %l4			! save y
-
-	! now read sync error registers
-	set	CPUINFO_VA+CPUINFO_FAULTSTATUS, %o0
-	ld	[%o0], %o0
-	jmpl	%o0, %o7
-	 std	%g4, [%sp + CCFSZ + 8]	! save g4,g5
+	std	%g4, [%sp + CCFSZ + 8]	! save g4,g5
 
 	/* Finish stackframe, call C trap handler */
 	mov	%g1, %l5		! save g1,g6,g7
 	mov	%g6, %l6
 	mov	%g7, %l7
-	clr	%o5
 
-	set     CPUINFO_VA+CPUINFO_MEMERR, %o0
-	ld      [%o0], %o0
-	jmpl    %o0, %o7		! memerr(0, ser, sva, 0, 0)
-	 clr	%o0
+	call	_nmi_hard
+	 clr	%o5
 
 	mov	%l5, %g1		! restore g1 through g7
 	ldd	[%sp + CCFSZ + 0], %g2
@@ -5762,81 +5774,75 @@ ENTRY(raise)
 
 
 /*
- * Read Fault Status registers.
- * On entry: %l1 == PC, %l3 == fault type
- * On exit: %o1 == sync fault status, %o2 == sync fault address
- *	    %o3 == async fault status, %o4 == async fault address
+ * Read Synchronous Fault Status registers.
+ * On entry: %l1 == PC, %l3 == fault type, %l4 == storage, %l7 == return address
+ * Only use %l5 and %l6.
+ * Note: not C callable.
  */
-ALTENTRY(srmmu_get_fltstatus)
-	set	SRMMU_SFAR, %o2
-	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
-	set	SRMMU_SFSR, %o1
-	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
+ALTENTRY(srmmu_get_syncflt)
+ALTENTRY(hypersparc_get_syncflt)
+	set	SRMMU_SFAR, %l5
+	lda	[%l5] ASI_SRMMU, %l5	! sync virt addr; must be read first
+	st	%l5, [%l4 + 4]		! => dump.sfva
+	set	SRMMU_SFSR, %l5
+	lda	[%l5] ASI_SRMMU, %l5	! get sync fault status register
+	jmp	%l7 + 8			! return to caller
+	 st	%l5, [%l4]		! => dump.sfsr
 
-	 clr	%o3			! clear %o3 and %o4
-	retl
-	 clr	%o4
-
-ALTENTRY(viking_get_fltstatus)
+ALTENTRY(viking_get_syncflt)
+ALTENTRY(ms1_get_syncflt)
+ALTENTRY(swift_get_syncflt)
+ALTENTRY(turbosparc_get_syncflt)
+ALTENTRY(cypress_get_syncflt)
 	cmp	%l3, T_TEXTFAULT
 	be,a	1f
-	 mov	%l1, %o2		! use PC if type == T_TEXTFAULT
+	 mov	%l1, %l5		! use PC if type == T_TEXTFAULT
 
-	set	SRMMU_SFAR, %o2
-	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
+	set	SRMMU_SFAR, %l5
+	lda	[%l5] ASI_SRMMU, %l5	! sync virt addr; must be read first
 1:
-	set	SRMMU_SFSR, %o1
-	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
+	st	%l5, [%l4 + 4]		! => dump.sfva
 
-	 clr	%o3			! clear %o3 and %o4
+	set	SRMMU_SFSR, %l5
+	lda	[%l5] ASI_SRMMU, %l5	! get sync fault status register
+	jmp	%l7 + 8			! return to caller
+	 st	%l5, [%l4]		! => dump.sfsr
+
+
+/*
+ * Read Asynchronous Fault Status registers.
+ * On entry: %o0 == &afsr, %o1 == &afar
+ * Return 0 if async register are present.
+ */
+ALTENTRY(srmmu_get_asyncflt)
+	set	SRMMU_AFAR, %o4
+	lda	[%o4] ASI_SRMMU, %o4	! get async fault address
+	set	SRMMU_AFSR, %o3	!
+	st	%o4, [%o1]
+	lda	[%o3] ASI_SRMMU, %o3	! get async fault status
+	st	%o3, [%o0]
 	retl
-	 clr	%o4
+	 clr	%o0			! return value
 
-ALTENTRY(ms1_get_fltstatus)
-ALTENTRY(swift_get_fltstatus)
-ALTENTRY(turbosparc_get_fltstatus)
-	cmp	%l3, T_TEXTFAULT
-	be,a	1f
-	 mov	%l1, %o2		! use PC if type == T_TEXTFAULT
-
-	set	SRMMU_SFAR, %o2
-	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
-1:
-	set	SRMMU_SFSR, %o1
-	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
-
-	 clr	%o3			! clear %o3 and %o4
-	retl
-	 clr	%o4
-
-ALTENTRY(cypress_get_fltstatus)
-	cmp	%l3, T_TEXTFAULT
-	be,a	1f
-	 mov	%l1, %o2		! use PC if type == T_TEXTFAULT
-
-	set	SRMMU_SFAR, %o2
-	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
-1:
-	set	SRMMU_SFSR, %o1
-	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
-
+ALTENTRY(cypress_get_asyncflt)
+ALTENTRY(hypersparc_get_asyncflt)
 	set	SRMMU_AFSR, %o3		! must read status before fault on HS
 	lda	[%o3] ASI_SRMMU, %o3	! get async fault status
+	st	%o3, [%o0]
+	btst	AFSR_AFO, %o3		! and only read fault address
+	bz	1f			! if valid.
 	set	SRMMU_AFAR, %o4
+	lda	[%o4] ASI_SRMMU, %o4	! get async fault address
+	clr	%o0			! return value
 	retl
-	 lda	[%o4] ASI_SRMMU, %o4	! get async fault address
-
-ALTENTRY(hypersparc_get_fltstatus)
-	set	SRMMU_SFAR, %o2
-	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
-	set	SRMMU_SFSR, %o1
-	lda	[%o1] ASI_SRMMU, %o1	! get sync fault status register
-
-	set	SRMMU_AFSR, %o3		! must read status before fault on HS
-	lda	[%o3] ASI_SRMMU, %o3	! get async fault status
-	set	SRMMU_AFAR, %o4
+	 st	%o4, [%o1]
+1:
 	retl
-	 lda	[%o4] ASI_SRMMU, %o4	! get async fault address
+	 clr	%o0			! return value
+
+ALTENTRY(no_asyncflt_regs)
+	retl
+	 mov	1, %o0			! return value
 
 ALTENTRY(hypersparc_pure_vcache_flush)
 	/*

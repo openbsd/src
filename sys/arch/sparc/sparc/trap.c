@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2000/01/31 16:06:59 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2000/02/21 17:08:37 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -200,7 +200,7 @@ static __inline void userret __P((struct proc *, int,  u_quad_t));
 void trap __P((unsigned, int, int, struct trapframe *));
 static __inline void share_fpu __P((struct proc *, struct trapframe *));
 void mem_access_fault __P((unsigned, int, u_int, int, int, struct trapframe *));
-void mem_access_fault4m __P((unsigned, u_int, u_int, u_int, u_int, struct trapframe *));
+void mem_access_fault4m __P((unsigned, u_int, u_int, struct trapframe *));
 void syscall __P((register_t, struct trapframe *, register_t));
 
 int ignore_bogus_traps = 0;
@@ -815,12 +815,10 @@ int dfdebug = 0;
 #endif
 
 void
-mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
+mem_access_fault4m(type, sfsr, sfva, tf)
 	unsigned type;
 	u_int sfsr;
 	u_int sfva;
-	u_int afsr;
-	u_int afva;
 	struct trapframe *tf;
 {
 	int pc, psr;
@@ -857,9 +855,9 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 	 * user's guide for more info, and for a possible solution which we
 	 * don't implement here.
 	 */
-	if ((afsr & AFSR_AFO) != 0 || type == T_STOREBUFFAULT ||
+	if (type == T_STOREBUFFAULT ||
 	    (type == T_DATAFAULT && !(sfsr & SFSR_FAV))) {
-		(*cpuinfo.memerr)(type, sfsr, sfva, afsr, afva, tf);
+		(*cpuinfo.memerr)(type, sfsr, sfva, tf);
 		/*
 		 * If we get here, exit the trap handler and wait for the
 		 * trap to re-occur.
@@ -916,7 +914,8 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 		if ((lda((sfva & 0xFFFFF000) | ASI_SRMMUFP_LN, ASI_SRMMUFP) &
 		    SRMMU_TETYPE) != SRMMU_TEPTE)
 			goto fault;	/* Translation bad */
-		else goto out;	/* Translation OK, retry operation */
+		lda(SRMMU_SFSR, ASI_SRMMU);
+		goto out;	/* Translation OK, retry operation */
 	}
 
 	va = trunc_page(sfva);
@@ -1018,7 +1017,7 @@ kfault:
 			    (int)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
-				printf("data fault: pc=0x%x addr=0x%x sfsr=%b\n",
+				printf("data fault: pc=0x%x sfva=0x%x sfsr=%b\n",
 				       pc, sfva, sfsr, SFSR_BITS);
 				panic("kernel fault");
 				/* NOTREACHED */

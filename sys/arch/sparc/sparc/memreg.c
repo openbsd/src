@@ -1,4 +1,4 @@
-/*	$OpenBSD: memreg.c,v 1.8 2000/01/31 16:06:59 art Exp $	*/
+/*	$OpenBSD: memreg.c,v 1.9 2000/02/21 17:08:37 art Exp $	*/
 /*	$NetBSD: memreg.c,v 1.21 1997/07/29 09:42:08 fair Exp $ */
 
 /*
@@ -74,7 +74,7 @@ struct cfdriver memreg_cd = {
 };
 
 #if defined(SUN4M)
-void hardmemerr4m __P((u_int, u_int, u_int, u_int));
+void hardmemerr4m __P((unsigned int, u_int, u_int, u_int, u_int));
 #endif
 
 /*
@@ -142,22 +142,20 @@ memerr4_4c(issync, ser, sva, aer, ava, tf)
 #if defined(SUN4M)
 /*
  * hardmemerr4m: called upon fatal memory error. Print a message and panic.
- * Note that issync is not really an indicator of whether or not the error
- * was synchronous; if it is set, it means that the fsr/faddr pair correspond
- * to the MMU's fault status register; if clear, they correspond to the
- * HyperSPARC asynchronous error register. If issync==2, then both decodings
- * of the error register are printed.
  */
 
 void
-hardmemerr4m(sfsr, sfva, afsr, afva)
+hardmemerr4m(type, sfsr, sfva, afsr, afva)
+	unsigned int type;
 	u_int sfsr, sfva, afsr, afva;
 {
 	printf("memory error:");
 	printf("sfsr=%b sfva=0x%x", sfsr, SFSR_BITS, sfva);
 	printf("afsr=%b afva=0x%x", afsr, AFSR_BITS, afva);
+
 	if ((sfsr & SFSR_FT) == SFSR_FT_NONE  && (afsr & AFSR_AFO) == 0)
 		return;
+
 	panic("hard memory error");
 }
 
@@ -173,40 +171,43 @@ static int addroldtop = (int)0xdeadbeef;
 static int oldtype = -1;
 
 void
-hypersparc_memerr(type, sfsr, sfva, afsr, afva, tf)
+hypersparc_memerr(type, sfsr, sfva, tf)
 	unsigned int type;
 	u_int sfsr;
 	u_int sfva;
-	u_int afsr;
-	u_int afva;
 	struct trapframe *tf;
 {
+	u_int afsr;
+	u_int afva;
+
+	(*cpuinfo.get_asyncflt)(&afsr, &afva);
 	if ((afsr & AFSR_AFO) != 0) {	/* HS async fault! */
 
-		printf("HyperSPARC async cache memory failure at phys 0x%x%x. "
-		       "Ignoring.\n", (afsr & AFSR_AFA) >> AFSR_AFA_RSHIFT,
-		       afva);
+		printf("HyperSPARC async cache memory failure at phys 0x%x%x\n",
+		       (afsr & AFSR_AFA) >> AFSR_AFA_RSHIFT, afva);
 
 		if (afva == addrold && (afsr & AFSR_AFA) == addroldtop)
-			hardmemerr4m(sfsr, sfva, afsr, afva);
+			goto hard;
 
 		oldtype = -1;
 		addrold = afva;
 		addroldtop = afsr & AFSR_AFA;
 		return;
 	}
-	memerr4m(type, sfsr, sfva, afsr, afva, tf);
+hard:
+	hardmemerr4m(type, sfsr, sfva, afsr, afva);
 }
 
 void
-viking_memerr(type, sfsr, sfva, afsr, afva, tf)
+viking_memerr(type, sfsr, sfva, tf)
 	unsigned int type;
 	u_int sfsr;
 	u_int sfva;
-	u_int afsr;
-	u_int afva;
 	struct trapframe *tf;
 {
+	u_int afsr = 0;
+	u_int afva = 0;
+
 	if (type == T_STOREBUFFAULT) {
 		/*
 		 * On Supersparc, we try to reenable the store buffers
@@ -216,8 +217,7 @@ viking_memerr(type, sfsr, sfva, afsr, afva, tf)
 		       sfva);
 
 		if (oldtype == T_STOREBUFFAULT || addrold == sfva)
-			hardmemerr4m(sfsr, sfva, afsr, afva);
-			/* NOTREACHED */
+			goto hard;
 
 		oldtype = T_STOREBUFFAULT;
 		addrold = sfva;
@@ -226,45 +226,40 @@ viking_memerr(type, sfsr, sfva, afsr, afva, tf)
 		sta(SRMMU_PCR, ASI_SRMMU,
 		    lda(SRMMU_PCR, ASI_SRMMU) | VIKING_PCR_SB);
 
-	} else if (type == T_DATAFAULT && !(sfsr & SFSR_FAV)) {
+	} else if (type == T_DATAFAULT && (sfsr & SFSR_FAV) == 0) {
+		/*
+		 * bizarre.
+		 * XXX: Should handle better. See SuperSPARC manual pg. 9-35
+		 */
+		printf("warning: got data fault with no faulting address."
+		       " Ignoring.\n");
+
+		if (oldtype == T_DATAFAULT)
+			goto hard;
+		oldtype = T_DATAFAULT;
 		return;
 	}
-	memerr4m(type, sfsr, sfva, afsr, afva, tf);
+hard:
+	hardmemerr4m(type, sfsr, sfva, afsr, afva);
 }
 
 void
-memerr4m(type, sfsr, sfva, afsr, afva, tf)
+memerr4m(type, sfsr, sfva, tf)
 	unsigned int type;
 	u_int sfsr;
 	u_int sfva;
-	u_int afsr;
-	u_int afva;
 	struct trapframe *tf;
 {
-	if (type == T_DATAFAULT && !(sfsr & SFSR_FAV)) { /* bizarre */
-		/* XXX: Should handle better. See SuperSPARC manual pg. 9-35 */
-                printf("warning: got data fault with no faulting address."
-                       " Ignoring.\n");
+	u_int afsr;
+	u_int afva;
 
-		if (oldtype == T_DATAFAULT)
-			hardmemerr4m(sfsr, sfva, afsr, afva);
-                oldtype = T_DATAFAULT;
+	/*
+	 * No known special cases.
+	 * Just get async registers, if any, and report the unhandled case.
+	 */
+	if ((*cpuinfo.get_asyncflt)(&afsr, &afva) != 0)
+		afsr = afva = 0;
 
-	} else if (type == 0) {	/* NMI */
-		printf("ERROR: got NMI with sfsr=0x%b, sfva=0x%x, ",
-		       sfsr, SFSR_BITS, sfva);
-		printf("afsr=0x%b, afaddr=0x%x. Retrying...\n",
-		       afsr, AFSR_BITS, afva);
-		if (oldtype == 0 || addrold == sfva)
-			hardmemerr4m(sfsr, sfva, afsr, afva);
-
-		oldtype = 0;
-		addrold = sfva;
-	} else 	{
-		/* something we don't know about?!? */
-		hardmemerr4m(sfsr, sfva, afsr, afva);
-	}
-
-	return;
+	hardmemerr4m(type, sfsr, sfva, afsr, afva);
 }
 #endif /* 4m */

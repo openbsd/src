@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.77 2000/02/19 22:08:51 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.78 2000/02/21 17:08:37 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -673,6 +673,8 @@ VA2PA(addr)
 	/* Try each level in turn until we find a valid pte. Otherwise panic */
 
 	pte = lda(((u_int)addr & ~0xfff) | ASI_SRMMUFP_L3, ASI_SRMMUFP);
+	/* Unlock fault status; required on Hypersparc modules */
+	(void)lda(SRMMU_SFSR, ASI_SRMMU);
 	if ((pte & SRMMU_TETYPE) == SRMMU_TEPTE)
 	    return (((pte & SRMMU_PPNMASK) << SRMMU_PPNPASHIFT) |
 		    ((u_int)addr & 0xfff));
