@@ -63,8 +63,7 @@ static char rcsid[] = "$NetBSD: boot.c,v 1.6 1994/10/27 04:21:49 cgd Exp $";
  * or if an error is encounter, try alternate files.
  */
 
-char *files[] = { "netbsd", "onetbsd", "netbsd.old",
-		  "386bsd", "o386bsd", "386bsd.old",
+char *files[] = { "bsd", "obsd", "bsd.old",
 		  "vmunix", "ovmunix", "vmunix.old",
 		  "boot", 0};
 int	retry = 0;

@@ -307,10 +307,8 @@ static char name_set[][9] = {
 };
 
 static char *ext_set[] = {
-  ".netbsd",
-  ".netbsd.old",
-  ".386bsd",
-  ".386bsd.old",
+  ".bsd",
+  ".bsd.old",
   ".vmunix",
   ".vmunix.old",
 };
