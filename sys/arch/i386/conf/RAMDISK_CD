@@ -1,0 +1,233 @@
+#	$OpenBSD: RAMDISK_CD,v 1.1 1999/08/06 20:43:17 deraadt Exp $
+#	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
+#
+#	Install kernels no longer support X.
+#
+
+machine		i386		# architecture, used by config; REQUIRED
+
+option		SCSITERSE
+option		APM_NOPRINT
+
+option		I386_CPU	# CPU classes; at least one is REQUIRED
+option		I486_CPU
+option		I586_CPU
+option		I686_CPU
+option		GPL_MATH_EMULATE	# floating point emulation
+
+# Some BIOSes don't get the size of extended memory right.  If you
+# have a broken BIOS, uncomment the following and set the value
+# properly for your system.
+#option		EXTMEM_SIZE=... # size of extended memory
+
+#option		DUMMY_NOPS	# speed hack; recommended
+
+maxusers	4		# estimated number of users
+option		TIMEZONE=0	# time zone to adjust RTC time by
+option		DST=0		# daylight savings time used by RTC
+
+option		SWAPPAGER	# paging; REQUIRED
+option		DEVPAGER	# mmap() of devices
+
+#makeoptions	DEBUG="-g"	# compile full symbol table
+
+option		FFS		# UFS
+option		EXT2FS		# Linux ext2fs
+
+option		NFSCLIENT	# Network File System client
+
+option		CD9660		# ISO 9660 + Rock Ridge file system
+option		MSDOSFS		# MS-DOS file system
+option		FIFO		# FIFOs; RECOMMENDED
+option		KERNFS		# /kern
+
+option		INET		# IP + ICMP + TCP + UDP
+
+option		BOOT_CONFIG	# boot-time kernel config
+
+option		RAMDISK_HOOKS
+option		MINIROOTSIZE=3560
+
+config		bsd	root on rd0a swap on rd0b and wd0b and sd0b
+
+mainbus0 at root
+
+bios0	at mainbus0
+apm0	at bios0
+#option	APMDEBUG
+
+isa0	at mainbus0
+eisa0	at mainbus0
+pci*	at mainbus0
+
+option		PCIVERBOSE
+#option		EISAVERBOSE
+
+pchb*	at pci? dev ? function ?	# PCI-Host bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
+pci*	at pchb? bus ?
+
+# ISA PCMCIA controllers
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
+pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
+
+# PCMCIA bus support
+pcmcia*	at pcic? controller ? socket ?
+
+npx0	at isa? port 0xf0 irq 13	# math coprocessor
+isadma0	at isa?
+isapnp0	at isa?
+
+#pc0	at isa? port 0x60 irq 1		# generic PC console device
+vt0	at isa? port 0x60 irq 1
+
+pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+pccom1	at isa? port 0x2f8 irq 3
+pccom2	at isa? port 0x3e8 irq 5
+#pccom3	at isa? port 0x2e8 irq 9
+#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
+#pccom*	at ast? slave ?
+#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
+#pccom*	at boca? slave ?
+#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
+#pccom*	at rtfps? slave ?
+pccom*	at pcmcia? function ?		# PCMCIA modem cards
+pccom*	at isapnp?
+
+# option for using CD1400 handshaking for incoming data
+# requires a special cable that exchanges the RTS and DTR lines
+# options CY_HW_RTS
+#cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
+#cy*	at pci?				# PCI cyclom card
+
+#lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+#lpt1	at isa? port 0x278
+#lpt2	at isa? port 0x3bc
+
+bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+#bt2	at isa? port ? irq ?
+scsibus* at bt?
+aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
+aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
+aha*	at isapnp?
+scsibus* at aha?
+ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
+scsibus* at ahb?
+ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI controllers
+ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
+ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
+scsibus* at ahc?
+isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
+scsibus* at isp?
+aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
+scsibus* at aic?
+ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
+scsibus* at ncr?
+adv*	at pci? dev ? function ?	# AdvanSys 1200A/B and ULTRA SCSI
+scsibus* at adv?
+adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI
+scsibus* at adw?
+sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
+scsibus* at sea?
+uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
+uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
+uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
+scsibus* at uha?
+wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
+#wds1	at isa? port 0x358 irq 11 drq 5
+scsibus* at wds?
+
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#ch*	at scsibus? target ? lun ?	# SCSI autochangers
+#uk*	at scsibus? target ? lun ?	# SCSI unknown devices
+
+fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+#fdc1	at isa? port 0x370 irq ? drq ?
+fd*	at fdc? drive ?
+
+#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
+
+# IDE controllers
+pciide* at pci ? dev ? function ? flags 0x0000
+
+wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? port 0x170 irq 15 flags 0x00
+wdc*	at pcmcia? function ?
+wdc*	at isapnp?
+
+# IDE hard drives
+wd*	at wdc? channel ? drive ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0000
+
+# ATAPI<->SCSI
+atapiscsi* at wdc? channel ?
+atapiscsi* at pciide? channel ?
+scsibus* at atapiscsi?
+
+#wt0	at isa? port 0x308 irq 5 drq 1		# Archive/Wangtek QIC tapes
+
+we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
+we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
+we*	at isapnp?
+ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet card
+ne0	at isa? port 0x240 irq 9		# NE[12]000 ethernet card
+ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet card
+ne2	at isa? port 0x280 irq 9		# NE[12]000 ethernet
+ne*	at isapnp?				# NE[12]000 PnP ethernet cards
+#eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet cards
+#el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
+ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+ep*	at isa? port ? irq ?			# 3C509 ethernet cards
+ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
+ie1	at isa? port 0x300 irq 10		# EtherExpress
+le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
+ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
+ep0	at eisa? slot ?
+ep*	at eisa? slot ?				# 3C579 ethernet cards
+ef*	at isapnp?				# 3C515 ethernet cards
+#fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
+le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
+ep*	at isapnp?				# 3C509 PnP ethernet cards
+le*	at isapnp?
+de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
+fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
+ep0	at pci? dev ? function ?		# 3C59x ethernet cards
+ep*	at pci? dev ? function ?		# 3C59x ethernet cards
+ne*	at pci? dev ? function ?		# NE2000-compat ethernet cards
+ne*	at pcmcia? function ?			# PCMCIA based NE2000 cards
+ep*	at pcmcia? function ?			# PCMCIA based 3c5xx cards
+#sm*	at pcmcia? function ?			# PCMCIA based sm cards
+xe*	at pcmcia? function ?			# Xircom ethernet
+fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
+xl*	at pci? dev ? function ?		# 3C9xx ethernet cards
+rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
+tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
+tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet cards
+mx*	at pci? dev ? function ?		# Macronix PMAC ethernet
+vr*	at pci? dev ? function ?		# VIA Rhine ethernet
+pn*	at pci? dev ? function ?		# Lite-On PNIC ethernet
+wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
+ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
+
+# Media Independent Interface (mii) drivers
+#exphy*	at mii? phy ?				# 3Com internal PHYs
+inphy*	at mii? phy ?				# Intel 82555 PHYs
+icsphy*	at mii? phy ?				# ICS 1890 PHYs
+#lxtphy*	at mii? phy ?			# Level1 LXT970 PHYs
+nsphy*	at mii? phy ?				# NS and compatible PHYs
+#qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
+#sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
+rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
+#mtdphy*	at mii? phy ?			# Myson MTD972 PHYs
+ukphy*	at mii? phy ?				# "unknown" PHYs
+
+pseudo-device	loop	1		# network loopback
+#pseudo-device	sl	1		# CSLIP
+#pseudo-device	ppp	1		# PPP
+#pseudo-device	pty	16		# pseudo-terminals
+pseudo-device	bpfilter 1		# packet filter
+pseudo-device	rd	1		# ramdisk
