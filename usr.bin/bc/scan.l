@@ -1,0 +1,207 @@
+%{
+/*      $OpenBSD: scan.l,v 1.1 2003/09/25 19:32:44 otto Exp $	*/
+
+/*
+ * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: scan.l,v 1.1 2003/09/25 19:32:44 otto Exp $";
+#endif /* not lint */
+
+#include <err.h>
+#include <stdbool.h>
+#include <string.h>
+
+#include "extern.h"
+#include "y.tab.h"
+
+int		lineno;
+
+static char 	*strbuf = NULL;
+static size_t	strbuf_sz = 1;
+static bool	dot_seen;
+
+static void	init_strbuf(void);
+static void	add_str(const char *);
+
+%}
+
+DIGIT		[0-9A-F]
+%x		comment string number
+
+%%
+
+"/*"		BEGIN(comment);
+<comment>{
+	"*/"	BEGIN(INITIAL);
+	\n	lineno++;
+	\*	;
+	[^*\n]+	;
+}
+
+\"		BEGIN(string); init_strbuf();
+<string>{
+	[^"\n]+	add_str(yytext);
+	\n	add_str("\n"); lineno++;
+	\"	BEGIN(INITIAL); yylval.str = strbuf; return STRING;
+}
+
+{DIGIT}+	{
+			BEGIN(number);
+			dot_seen = false;
+			init_strbuf();
+			add_str(yytext);
+		}
+\.		{
+			BEGIN(number);
+			dot_seen = true;
+			init_strbuf();
+			add_str(".");
+		}
+<number>{
+	{DIGIT}+	add_str(yytext);
+	\.	{
+			if (dot_seen) {
+				BEGIN(INITIAL);
+				yylval.str = strbuf;
+				unput('.');
+				return NUMBER;
+			} else {
+				dot_seen = true;
+				add_str(".");
+			}
+		}
+	\\\n[ \t]*	lineno++;
+	[^0-9A-F\.]	{
+			if (strcmp(strbuf, ".") == 0) {
+				warnx("unexpected ascii char 0x%x at line %d",
+				    yytext[0], lineno);
+				BEGIN(INITIAL);
+				REJECT;
+			}
+			else {
+				BEGIN(INITIAL);
+				yylval.str = strbuf;
+				unput(yytext[0]);
+				return NUMBER;
+			}
+		}
+}
+
+"auto"		return AUTO;
+"break" 	return BREAK;
+"define"	return DEFINE;
+"ibase"		return IBASE;
+"if"		return IF;
+"for"		return FOR;
+"length"	return LENGTH;
+"obase"		return OBASE;
+"quit"		return QUIT;
+"return"	return RETURN;
+"scale"		return SCALE;
+"sqrt"		return SQRT;
+"while"		return WHILE;
+
+"^"		return EXPONENT;
+"*"		return MULTIPLY;
+"/"		return DIVIDE;
+"%"		return REMAINDER;
+
+"+"		return PLUS;
+"-"		return MINUS;
+
+"++"		return INCR;
+"--"		return DECR;
+
+"="		yylval.str = "";  return ASSIGN_OP;
+"+="		yylval.str = "+"; return ASSIGN_OP;
+"-="		yylval.str = "-"; return ASSIGN_OP;
+"*="		yylval.str = "*"; return ASSIGN_OP;
+"/="		yylval.str = "/"; return ASSIGN_OP;
+"%="		yylval.str = "%"; return ASSIGN_OP;
+"^="		yylval.str = "^"; return ASSIGN_OP;
+
+"=="		return EQUALS;
+"<="		return LESS_EQ;
+">="		return GREATER_EQ;
+"!="		return UNEQUALS;
+"<"		return LESS;
+">"		return GREATER;
+
+","		return COMMA;
+";"		return SEMICOLON;
+
+"("		return LPAR;
+")"		return RPAR;
+
+"["		return LBRACKET;
+"]"		return RBRACKET;
+
+"{"		return LBRACE;
+"}"		return RBRACE;
+
+[a-z]		yylval.str = yytext; return LETTER;
+
+\\\n		lineno++;
+\n		lineno++; return NEWLINE;
+
+[ \t]		;
+.		warnx("unexpected character %c at line %d", yytext[0], lineno);
+
+%%
+
+static void
+init_strbuf(void)
+{
+	if (strbuf == NULL) {
+		strbuf = malloc(strbuf_sz);
+		if (strbuf == NULL)
+			err(1, "cannot allocate string buffer");
+	}
+	strbuf[0] = '\0';
+}
+
+static void
+add_str(const char *str)
+{
+	size_t arglen;
+
+	arglen = strlen(str);
+
+	if (strlen(strbuf) + arglen + 1> strbuf_sz) {
+		size_t newsize;
+		char * p;
+
+		newsize = strbuf_sz + arglen + 1;
+		p = realloc(strbuf, newsize);
+		if (p == NULL) {
+			free(strbuf);
+			err(1, "cannot realloc string buffer");
+		}
+		strbuf_sz = newsize;
+		strbuf = p;
+	}
+	strlcat(strbuf, str, strbuf_sz);
+}
+
+void
+abort_line(int sig)
+{
+	if (isatty(fileno(yyin))) {
+		YY_FLUSH_BUFFER;
+		printf("[\n]P\n");
+	}
+}
