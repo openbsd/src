@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.35 2002/01/20 19:56:53 ericj Exp $	*/
+/*	$OpenBSD: audio.c,v 1.36 2002/02/04 20:42:25 fgsch Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -2717,7 +2717,7 @@ audiosetinfo(sc, ai)
 		ct.type = AUDIO_MIXER_VALUE;
 		ct.un.value.num_channels = 1;
 		ct.un.value.level[AUDIO_MIXER_LEVEL_MONO] = ai->monitor_gain;
-		error = sc->hw_if->get_port(sc->hw_hdl, &ct);
+		error = sc->hw_if->set_port(sc->hw_hdl, &ct);
 		if (error)
 			return(error);
 	}
