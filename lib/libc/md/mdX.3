@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.12 1999/07/09 13:35:14 aaron Exp $
+.\" 	$OpenBSD: mdX.3,v 1.13 1999/10/06 14:55:29 espie Exp $
 .\"
 .Dd October 9, 1996
 .Dt MDX 3
@@ -103,8 +103,9 @@ If the
 .Ar buf
 argument is non-null it must point to at least 33 characters of buffer space.
 .Sh SEE ALSO
-.Xr md4 3 ,
-.Xr md5 3
+.Xr mdY 3 ,
+.Xr rmd160 3 ,
+.Xr sha1 3
 .Rs
 .%A B. Kaliski
 .%T The MD2 Message-Digest Algorithm

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 1998/11/20 11:18:42 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 1999/10/06 14:55:29 espie Exp $
 
 .PATH: ${LIBCSRCDIR}/md
 
@@ -15,11 +15,11 @@ CLEANFILES+=	md[45]hl.c md[45].3
 all:	md4.3 md5.3
 
 md4.3:	mdX.3
-	sed -e 's/mdX/md4/g' -e 's/MDX/MD4/g' $> > $@
+	sed -e 's/mdX/md4/g' -e 's/mdY/md5/g' -e 's/MDX/MD4/g' $> > $@
 	cat ${>:H}/md4.copyright >> $@
 
 md5.3:	mdX.3
-	sed -e 's/mdX/md5/g' -e 's/MDX/MD5/g' $> > $@
+	sed -e 's/mdX/md5/g' -e 's/mdY/md4/g' -e 's/MDX/MD5/g' $> > $@
 	cat ${>:H}/md5.copyright >> $@
 .endif
 
