@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.1 1999/05/29 04:41:44 smurph Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.2 1999/09/27 18:43:26 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -96,11 +96,13 @@ vsmatch(pdp, vcf, args)
 	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	if (!badvaddr(ca->ca_vaddr, 1)) {
+      /*
       if (ca->ca_vec & 0x03) {
          printf("vs: bad vector 0x%x\n", ca->ca_vec);
          return (0);
       }
-		return(1);
+		*/
+      return(1);
    } else {
 		return (0);
 	}	    

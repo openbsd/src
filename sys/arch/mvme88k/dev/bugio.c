@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.3 1999/05/29 04:41:42 smurph Exp $ */
+/*	$OpenBSD: bugio.c,v 1.4 1999/09/27 18:43:21 smurph Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 #include <machine/bugio.h>
 
@@ -64,13 +64,15 @@ buginit()
 char
 buginchr(void)
 {
-	register int cc asm("r2");
+	register int cc;
+   int ret;
 	BUGCTXT();
 	asm volatile ("or r9,r0," INCHR);
 	asm volatile ("tb0 0,r0,0x1F0");
 	asm volatile ("or %0,r0,r2" : "=r" (cc) : );
-	OSCTXT();
-	return ((char)cc & 0xFF);
+   ret = cc;
+   OSCTXT();
+	return ((char)ret & 0xFF);
 }
 
 bugoutchr(unsigned char c)

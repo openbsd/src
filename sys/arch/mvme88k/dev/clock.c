@@ -1,6 +1,6 @@
-/*	$OpenBSD: clock.c,v 1.5 1999/05/29 04:41:43 smurph Exp $ */
-
+/*	$OpenBSD: clock.c,v 1.6 1999/09/27 18:43:23 smurph Exp $ */
 /*
+ * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -77,10 +77,11 @@
  */
 
 /*
- * Clock driver. Has both interval timer as well as statistics timer.
+ * interval clock driver.
  */
 
 #include <sys/param.h>
+#include <sys/simplelock.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #ifdef GPROF
@@ -91,30 +92,27 @@
 #include <machine/autoconf.h>
 #include <machine/bugio.h>
 #include <machine/cpu.h>
-
-#include <mvme88k/dev/pcctworeg.h>
-#include <mvme88k/dev/vme.h>
 #include "pcctwo.h"
-extern struct vme2reg *sys_vme2;
+#if NPCCTWO > 0 
+#include <mvme88k/dev/pcctworeg.h>
+#endif
+#include "syscon.h"
+#if NSYSCON > 0 
+#include <mvme88k/dev/sysconreg.h>
+#endif
+#include <mvme88k/dev/vme.h>
 
-/*
- * Statistics clock interval and variance, in usec.  Variance must be a
- * power of two.  Since this gives us an even number, not an odd number,
- * we discard one case and compensate.  That is, a variance of 4096 would
- * give us offsets in [0..4095].  Instead, we take offsets in [1..4095].
- * This is symmetric about the point 2048, or statvar/2, and thus averages
- * to that value (assuming uniform random numbers).
- */
-int statvar = 8192;
-int statmin;			/* statclock interval - 1/2*variance */
+extern struct vme2reg *sys_vme2;
 int timerok = 0;
 
 u_long delay_factor = 1;
 
 static int	clockmatch __P((struct device *, void *, void *));
 static void	clockattach __P((struct device *, struct device *, void *));
-/*int		clockintr __P((void *, void *));*/
-/*#int		statintr __P((void *, void *));*/
+
+void sbc_initclock(void);
+void m188_initclock(void);
+void m188_timer_init __P((unsigned));
 
 struct clocksoftc {
 	struct device			sc_dev;
@@ -130,16 +128,18 @@ struct cfdriver clock_cd = {
         NULL, "clock", DV_DULL, 0
 }; 
 
-int	clockintr __P((void *));
-int	statintr __P((void *));
+int	sbc_clockintr __P((void *));
+int	sbc_statintr __P((void *));
+int   m188_clockintr __P((void *));
+int   m188_statintr __P((void *));
 
 int	clockbus;
-u_char	stat_reset, prof_reset;
+u_char	prof_reset;
 
-	/*
+/*
  * Every machine must have a clock tick device of some sort; for this
  * platform this file manages it, no matter what form it takes.
-	 */
+ */
 int
 clockmatch(parent, vcf, args)
 	struct device *parent;
@@ -148,8 +148,7 @@ clockmatch(parent, vcf, args)
 	register struct confargs *ca = args;
 	register struct cfdata *cf = vcf;
 
-	if (ca->ca_bustype != BUS_PCCTWO ||
-		strcmp(cf->cf_driver->cd_name, "clock")) {
+	if (strcmp(cf->cf_driver->cd_name, "clock")) {
 		return (0);
 	}
 
@@ -174,67 +173,50 @@ clockattach(parent, self, args)
 	struct confargs *ca = args;
 	struct clocksoftc *sc = (struct clocksoftc *)self;
 
-	sc->sc_profih.ih_fn = clockintr;
-	sc->sc_profih.ih_arg = 0;
-	sc->sc_profih.ih_wantframe = 1;
-	sc->sc_profih.ih_ipl = ca->ca_ipl;
-
-	sc->sc_statih.ih_fn = statintr;
-	sc->sc_statih.ih_arg = 0;
-	sc->sc_statih.ih_wantframe = 1;
-	sc->sc_statih.ih_ipl = ca->ca_ipl;
-
 	clockbus = ca->ca_bustype;
-	prof_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
-	stat_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
-	pcctwointr_establish(PCC2V_TIMER1, &sc->sc_profih);
-	pcctwointr_establish(PCC2V_TIMER2, &sc->sc_statih);
-
+   
+   switch (clockbus) {
+#if NPCCTWO > 0 
+   case BUS_PCCTWO:
+	   sc->sc_profih.ih_fn = sbc_clockintr;
+      sc->sc_profih.ih_arg = 0;
+      sc->sc_profih.ih_wantframe = 1;
+      sc->sc_profih.ih_ipl = ca->ca_ipl;
+      prof_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
+   	pcctwointr_establish(PCC2V_TIMER1, &sc->sc_profih);
+      mdfp.clock_init_func = &sbc_initclock;
+      printf(": VME1x7");
+      break;
+#endif /* NPCCTWO */
+#if NSYSCON > 0 
+   case BUS_SYSCON:
+      sc->sc_profih.ih_fn = m188_clockintr;
+      sc->sc_profih.ih_arg = 0;
+      sc->sc_profih.ih_wantframe = 1;
+      sc->sc_profih.ih_ipl = ca->ca_ipl;
+      sysconintr_establish(SYSCV_TIMER1, &sc->sc_profih);
+      mdfp.clock_init_func = &m188_initclock;
+      printf(": VME188");
+      break;
+#endif /* NSYSCON */
+   }         
 	printf("\n");
 }
 
-	/*
- * clockintr: ack intr and call hardclock
-	 */
-int
-clockintr(arg)
-	void *arg;
-{
-	sys_pcc2->pcc2_t1irq = prof_reset;
-	hardclock(arg);
-#include "bugtty.h"
-#if NBUGTTY > 0
-	bugtty_chkinput();
-#endif /* NBUGTTY */
-	timerok = 1;
-	return (1);
-}
-
-/*
- * Set up real-time clock; we don't have a statistics clock at
- * present.
- */
-cpu_initclocks()
+#if NPCCTWO > 0 
+void
+sbc_initclock(void)
 {
 	register int statint, minint;
 
+#ifdef DEBUG
+   printf("SBC clock init\n");
+#endif 
 	if (1000000 % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 		tick = 1000000 / hz;
 	}
-	if (stathz == 0)
-		stathz = hz;
-	if (1000000 % stathz) {
-		printf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
-		stathz = 100;
-	}
-	profhz = stathz;		/* always */
-
-	statint = 1000000 / stathz;
-	minint = statint / 2 + 100;
-	while (statvar > minint)
-		statvar >>= 1;
 
 	/* profclock */
 	sys_pcc2->pcc2_t1ctl = 0;
@@ -244,53 +226,25 @@ cpu_initclocks()
 	    PCC2_TCTL_COVF;
 	sys_pcc2->pcc2_t1irq = prof_reset;
 
-	/* statclock */
-	sys_pcc2->pcc2_t2ctl = 0;
-	sys_pcc2->pcc2_t2cmp = pcc2_timer_us2lim(statint);
-	sys_pcc2->pcc2_t2count = 0;
-	sys_pcc2->pcc2_t2ctl = PCC2_TCTL_CEN | PCC2_TCTL_COC |
-	    PCC2_TCTL_COVF;
-	sys_pcc2->pcc2_t2irq = stat_reset;
-
-	statmin = statint - (statvar >> 1);
 }
 
-void
-setstatclockrate(newhz)
-	int newhz;
-{
-}
-
+/*
+ * clockintr: ack intr and call hardclock
+ */
 int
-statintr(cap)
-	void *cap;
+sbc_clockintr(arg)
+	void *arg;
 {
-	register u_long newint, r, var;
-
-	sys_pcc2->pcc2_t2irq = stat_reset;
-
-	statclock((struct clockframe *)cap);
-
-	/*
-	 * Compute new randomized interval.  The intervals are uniformly
-	 * distributed on [statint - statvar / 2, statint + statvar / 2],
-	 * and therefore have mean statint, giving a stathz frequency clock.
-	 */
-	var = statvar;
-	do {
-		r = random() & (var - 1);
-	} while (r == 0);
-	newint = statmin + r;
-
-	sys_pcc2->pcc2_t2ctl = 0;
-	sys_pcc2->pcc2_t2cmp = pcc2_timer_us2lim(newint);
-	sys_pcc2->pcc2_t2count = 0;		/* should I? */
-	sys_pcc2->pcc2_t2irq = stat_reset;
-	sys_pcc2->pcc2_t2ctl = PCC2_TCTL_CEN | PCC2_TCTL_COC;
-
-	return (1);
+	sys_pcc2->pcc2_t1irq = prof_reset;
+	hardclock(arg);
+#include "bugtty.h"
+#if NBUGTTY > 0
+	bugtty_chkinput();
+#endif /* NBUGTTY */
+	timerok = 1;
+   return (1);
 }
-
+#endif /* NPCCTWO */
 
 delay(us)
 	register int us;
@@ -299,10 +253,11 @@ delay(us)
 	unsigned long st;
 	/*
 	 * We use the vme system controller for the delay clock.
-	 * Do not go to the real timer until vme device is present
+	 * Do not go to the real timer until vme device is present.
+    * Or, in the case of MVME188, not at all.
 	 */
-	if (sys_vme2 == NULL) {
-	    c = 5 * us;
+	if (sys_vme2 == NULL || cputyp == CPU_188) {
+	    c = 3 * us;
 	    while (--c > 0);
 	    return(0);
 	}
@@ -311,10 +266,93 @@ delay(us)
    sys_vme2->vme2_tctl |= (VME2_TCTL1_CEN | VME2_TCTL1_COVF);
 
    while (sys_vme2->vme2_t1count < us)
-      ;
+		;
    sys_vme2->vme2_tctl &= ~(VME2_TCTL1_CEN | VME2_TCTL1_COVF);
-   return (0);	    
+	return (0);
 }
 
+#if NSYSCON > 0 
+int counter = 0;
 
+int
+m188_clockintr(arg)
+	void *arg;
+{
+   volatile int tmp;
+   /* acknowledge the timer interrupt */
+   /* clear the counter/timer output OP3 while we program the DART */
+   *((volatile int *) DART_OPCR) = 0x00;
 
+   /* do the stop counter/timer command */
+   tmp = *((volatile int *) DART_STOPC);
+
+   /* set counter/timer to counter mode, clock/16 */
+   *((volatile int *) DART_ACR) = 0x30;
+   
+   *((volatile int *) DART_CTUR) = counter / 256;	/* set counter MSB */
+   *((volatile int *) DART_CTLR) = counter % 256;	/* set counter LSB */
+   *((volatile int *) DART_IVR) = SYSCV_TIMER1;      /* set interrupt vec */
+
+	hardclock(arg);
+#include "bugtty.h"
+#if NBUGTTY > 0
+	bugtty_chkinput();
+#endif /* NBUGTTY */
+   /* give the start counter/timer command */
+   tmp = *((volatile int *) DART_STARTC);
+   *((volatile int *) DART_OPCR) = 0x04;
+	return (1);
+}
+
+void
+m188_initclock(void)
+{
+	register int statint, minint;
+
+#ifdef DEBUG
+   printf("VME188 clock init\n");
+#endif
+	if (1000000 % hz) {
+		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
+		hz = 100;
+		tick = 1000000 / hz;
+	}
+	m188_timer_init(tick);
+}
+
+void 
+m188_timer_init(unsigned period)
+{
+    int imr;
+
+    /* make sure the counter range is proper. */
+    if ( period < 9 )
+        counter = 2;
+    else if ( period > 284421 )
+        counter = 65535;
+    else
+        counter = period / 4.34;
+#ifdef DEBUG
+    printf("tick == %d, period == %d\n", tick, period);
+    printf("timer will interrupt every %d usec\n", (int) (counter * 4.34));
+#endif
+    /* clear the counter/timer output OP3 while we program the DART */
+    *((volatile int *) DART_OPCR) = 0x00;
+
+    /* do the stop counter/timer command */
+    imr = *((volatile int *) DART_STOPC);
+
+    /* set counter/timer to counter mode, clock/16 */
+    *((volatile int *) DART_ACR) = 0x30;
+    
+    *((volatile int *) DART_CTUR) = counter / 256;	/* set counter MSB */
+    *((volatile int *) DART_CTLR) = counter % 256;	/* set counter LSB */
+    *((volatile int *) DART_IVR) = SYSCV_TIMER1;      /* set interrupt vec */
+    /* give the start counter/timer command */
+    /* (yes, this is supposed to be a read) */
+    imr = *((volatile int *) DART_STARTC);
+
+    /* set the counter/timer output OP3 */
+    *((volatile int *) DART_OPCR) = 0x04;
+}
+#endif /* NSYSCON */

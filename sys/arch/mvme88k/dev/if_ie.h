@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.h,v 1.2 1998/12/15 05:52:30 smurph Exp $ */
+/*	$OpenBSD: if_ie.h,v 1.3 1999/09/27 18:43:24 smurph Exp $ */
 
 /* Copyright (c) 1998 Steve Murphree, Jr. 
  * Copyright (c) 1995 Theo de Raadt
@@ -50,8 +50,8 @@
  * generic:
  *	the generic stuff of the ie chip is all done with data structures
  * 	that live in the chip's memory address space.   the chip expects
- * 	its main data structure (the sys conf ptr -- SCP) to be at a fixed
- * 	address in its 24 bit space: 0xfffff4
+ * 	its main data structure (the sys conf ptr -- SCP) to be at a
+ * 	address loaded into the chip at init.
  *
  *      the SCP points to another structure called the ISCP.
  *      the ISCP points to another structure called the SCB.
@@ -69,14 +69,6 @@
  *
  * 	to get data from the chip you program it to interrupt...
  *
- *
- * sun issues:
- *
- *      there are 3 kinds of sun "ie" interfaces:
- *        1 - a VME/multibus card
- *        2 - an on-board interface (sun3's, sun-4/100's, and sun-4/200's)
- *        3 - another VME board called the 3E
- *
  * 	the VME boards lives in vme16 space.   only 16 and 8 bit accesses
  * 	are allowed, so functions that copy data must be aware of this.
  *
@@ -85,37 +77,6 @@
  * 	so, constants described in the intel docs are swapped for the sun.
  * 	that means that any buffer pointers you give the chip must be
  * 	swapped to intel format.   yuck.
- *
- *   VME/multibus interface:
- * 	for the multibus interface the board ignores the top 4 bits
- * 	of the chip address.   the multibus interface seems to have its
- * 	own MMU like page map (without protections or valid bits, etc).
- * 	there are 256 pages of physical memory on the board (each page
- * 	is 1024 bytes).   there are 1024 slots in the page map.  so,
- * 	a 1024 byte page takes up 10 bits of address for the offset,
- * 	and if there are 1024 slots in the page that is another 10 bits
- * 	of the address.   that makes a 20 bit address, and as stated
- * 	earlier the board ignores the top 4 bits, so that accounts
- * 	for all 24 bits of address.
- *
- * 	note that the last entry of the page map maps the top of the
- * 	24 bit address space and that the SCP is supposed to be at
- * 	0xfffff4 (taking into account allignment).   so,
- *	for multibus, that entry in the page map has to be used for the SCP.
- *
- * 	the page map effects BOTH how the ie chip sees the
- * 	memory, and how the host sees it.
- *
- * 	the page map is part of the "register" area of the board
- *
- *   on-board interface:
- *
- *	<fill in useful info later>
- *
- *
- *   VME3E interface:
- *
- *	<fill in useful info later>
  *
  */
 
@@ -190,3 +151,4 @@ struct ieob {
 /*
  * not supported (yet?)
  */
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.1 1999/05/29 04:41:44 smurph Exp $ */
+/*	$OpenBSD: vsreg.h,v 1.2 1999/09/27 18:43:26 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,7 @@
 
 #if !defined(_M328REG_H_)
 #define _M328REG_H_
+
 
 typedef struct LONGV
 {
@@ -161,6 +162,52 @@ typedef struct mcsb
 
 /**************** END Master Control Status Block (MCSB) *******************/
 
+/****************     Scater/Gather Stuff                *******************/
+
+typedef struct {
+   union {
+      unsigned short bytes :16;
+   #define MAX_SG_BLOCK_SIZE	(1<<16)	/* the size *has* to be always *smaller* */
+      struct {
+         unsigned short :8;
+         unsigned short gather :8;
+      } scatter;
+   } count;
+   LONGV           address;
+   unsigned short  link :1;
+   unsigned short  :3;
+   unsigned short  transfer_type :2;
+   /* 				0x0 is reserved */
+   #define SHORT_TREANSFER 		0x1	
+   #define LONG_TRANSFER			0x2	
+   #define SCATTER_GATTER_LIST_IN_SHORT_IO	0x3	
+   unsigned short  memory_type :2;
+   #define NORMAL_TYPE			0x0	
+   #define BLOCK_MODE			0x1	
+   /*				0x2 is reserved */
+   /*				0x3 is reserved */
+   unsigned short  address_modifier :8;
+}sg_list_element_t;
+
+typedef sg_list_element_t * scatter_gather_list_t;
+
+#define MAX_SG_ELEMENTS 64
+
+struct m328_sg {
+   struct m328_sg  *up;
+   int                     elements;
+   int                     level;
+   struct m328_sg  *down[MAX_SG_ELEMENTS];
+   sg_list_element_t list[MAX_SG_ELEMENTS];
+};
+
+typedef struct m328_sg *M328_SG;
+
+typedef struct {
+   struct scsi_xfer  *xs;
+   M328_SG           top_sg_list;
+} M328_CMD;
+/**************** END Scater/Gather Stuff                *******************/
 
 /****************     Host Semaphore Block (HSB)         *******************/
 
@@ -388,6 +435,7 @@ typedef struct csb
 #define M_ADR_TRANS             0x0C00  /* transfer type */
 #define M_ADR_MEMT              0x0300  /* memory type */
 #define M_ADR_MOD               0x00FF  /* VME address modifier */
+#define M_ADR_SG_LINK           0x8000  /* Scatter/Gather Link bit */
 
 /*
  * defines for IOPB Unit Address on SCSI Bus
@@ -412,8 +460,7 @@ typedef struct short_iopb
     volatile u_short      iopb_ADDR;      /* IOPB Address type and modifer */
     volatile LONGV        iopb_BUFF;      /* IOPB Buffer Address */
     volatile LONGV        iopb_LENGTH;    /* IOPB Max-Transfer Length */
-    volatile u_short      iopb_RES2;      /* IOPB Reserved word */
-    volatile u_short      iopb_RES3;      /* IOPB Reserved word */
+    volatile LONGV        iopb_SGTTL;     /* IOPB Scatter/Gather Total Transfer len */
     volatile u_short      iopb_RES4;      /* IOPB Reserved word */
     volatile u_short      iopb_UNIT;      /* IOPB Unit address on SCSI bus */
 } M328_short_IOPB;
@@ -431,8 +478,7 @@ typedef struct iopb
     volatile u_short      iopb_ADDR;      /* IOPB Address type and modifer */
     volatile LONGV        iopb_BUFF;      /* IOPB Buffer Address */
     volatile LONGV        iopb_LENGTH;    /* IOPB Max-Transfer Length */
-    volatile u_short      iopb_RES2;      /* IOPB Reserved word */
-    volatile u_short      iopb_RES3;      /* IOPB Reserved word */
+    volatile LONGV        iopb_SGTTL;     /* IOPB Scatter/Gather Total Transfer len */
     volatile u_short      iopb_RES4;      /* IOPB Reserved word */
     volatile u_short      iopb_UNIT;      /* IOPB Unit address on SCSI bus */
     u_short      iopb_SCSI[S_IOPB_RES/2]; /* IOPB SCSI words for pass thru */
@@ -596,6 +642,7 @@ typedef struct ipsg
 #define CNTR_ISSUE_ABORT    0x4E        /* An abort has been issued */
 #define CNTR_DOWNLOAD_FIRMWARE 0x4F     /* Download firmware (COUGAR) */
 
+
 /*
  *  Memory types
  */
@@ -691,5 +738,19 @@ typedef struct ipsg
 #define BLOCK_MOD       ( (TT_BLOCK << 10) | (MEMTYPE << 8) | ADRM_EXT_S_BM )
 #define D64_MOD         ( (TT_D64 << 10) | (MEMTYPE << 8) | ADRM_EXT_S_D64 )
 #define SHIO_MOD        ( (TT_NORMAL << 10) | (MEMT_SHIO << 8) | ADRM_SHT_N_IO)
+
+/*
+ * Scatter/gather functions
+ */
+
+M328_SG vs_alloc_scatter_gather __P((void));
+void    vs_dealloc_scatter_gather __P((M328_SG sg));
+void    vs_link_scatter_gather_element __P((sg_list_element_t *element,
+                                            register vm_offset_t phys_add,
+                                            register int len));
+void    vs_link_scatter_gather_list __P((sg_list_element_t *list,
+                                         register vm_offset_t phys_add,
+                                         register int elements));
+M328_SG vs_build_memory_structure __P((struct scsi_xfer *xs, M328_IOPB *iopb));
 
 #endif /* _M328REG_H_ */

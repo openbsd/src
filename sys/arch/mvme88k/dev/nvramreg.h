@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvramreg.h,v 1.2 1998/12/15 05:52:30 smurph Exp $ */
+/*	$OpenBSD: nvramreg.h,v 1.3 1999/09/27 18:43:24 smurph Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,11 +74,23 @@ struct clockreg {
 	volatile u_char	cl_year;	/* year (0..99; BCD) */
 };
 
+struct m188_clockreg {
+	volatile u_long	cl_csr;		/* control register */
+	volatile u_long	cl_sec;		/* seconds (0..59; BCD) */
+	volatile u_long	cl_min;		/* minutes (0..59; BCD) */
+	volatile u_long	cl_hour;	/* hour (0..23; BCD) */
+	volatile u_long	cl_wday;	/* weekday (1..7) */
+	volatile u_long	cl_mday;	/* day in month (1..31; BCD) */
+	volatile u_long	cl_month;	/* month (1..12; BCD) */
+	volatile u_long	cl_year;	/* year (0..99; BCD) */
+};
+
 /* bits in cl_csr */
 #define	CLK_WRITE	0x80		/* want to write */
 #define	CLK_READ	0x40		/* want to read (freeze clock) */
 
 struct clockreg *clockreg;
+struct m188_clockreg *m188_clockreg;
 
 /*
  * Motorola chose the year `1900' as their base count.
@@ -87,7 +99,8 @@ struct clockreg *clockreg;
 #define	YEAR0	00
 
 #define NVRAMSIZE	0x8000
-#define NVRAM_TOD_OFF	0x1ff8 /* offset of tod in NVRAM space */
+#define SBC_NVRAM_TOD_OFF	0x1FF8 /* offset of tod in NVRAM space */
+#define M188_NVRAM_TOD_OFF	0x1FE0 /* offset of tod in NVRAM space */
 #define MK48T02_SIZE	2*1024
 #define MK48T08_SIZE	8*1024
 

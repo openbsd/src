@@ -1,6 +1,6 @@
-/*	$OpenBSD: vme.c,v 1.3 1999/05/29 04:41:44 smurph Exp $ */
-
+/*	$OpenBSD: vme.c,v 1.4 1999/09/27 18:43:25 smurph Exp $ */
 /*
+ * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
  *
@@ -52,22 +52,22 @@
 #include "machine/pmap.h"
 
 #include "pcctwo.h"
+#include "syscon.h"
 
 #include <mvme88k/dev/vme.h>
+#if NSYSCON > 0 
+#include <mvme88k/dev/sysconreg.h>
+#endif
 
 int  vmematch __P((struct device *, void *, void *));
 void vmeattach __P((struct device *, struct device *, void *));
 
-int vme1chip_init __P((struct vmesoftc *sc));
 int vme2chip_init __P((struct vmesoftc *sc));
 u_long vme2chip_map __P((u_long base, int len, int dwidth));
 int vme2abort __P((struct frame *frame));
+int sysconabort __P((struct frame *frame));
 
 static int vmebustype;
-volatile vm_offset_t master1va;
-volatile vm_offset_t master2va;
-volatile vm_offset_t master3va;
-volatile vm_offset_t master4va;
 struct vme2reg *sys_vme2 = NULL;
 
 struct cfattach vme_ca = {
@@ -85,36 +85,8 @@ vmematch(parent, cf, args)
 	void *args;
 {
 	struct confargs *ca = args;
-
-#if NMC > 0
-	if (ca->ca_bustype == BUS_MC) {
-		struct mcreg *mc = (struct mcreg *)ca->ca_master;
-
-		if (mc->mc_ver & MC_VER_NOVME)
-			return (0);
-	}
-#endif
 	return (1);
 }
-
-#ifndef BUGMAP
-/*
- * make local addresses 1G-2G correspond to VME addresses 3G-4G,
- * as D32
- */
-#define VME2_D32STARTPHYS	(1*1024*1024*1024UL)
-#define VME2_D32ENDPHYS		(2*1024*1024*1024UL)
-#define VME2_D32STARTVME	(3*1024*1024*1024UL)
-#define VME2_D32BITSVME		(3*1024*1024*1024UL)
-
-/*
- * make local addresses 3G-3.75G correspond to VME addresses 3G-3.75G,
- * as D16
- */
-#define VME2_D16STARTPHYS	(3*1024*1024*1024UL)
-#define VME2_D16ENDPHYS		(3*1024*1024*1024UL + 768*1024*1024UL)
-
-#else
 
 /*
  * make local addresses 1G-2G correspond to VME addresses 3G-4G,
@@ -135,8 +107,6 @@ vmematch(parent, cf, args)
 #define VME2_A32D16STARTPHYS	(0xFF000000UL)
 #define VME2_A32D16ENDPHYS		(0xFF7FFFFFUL)
 
-#endif
-
 
 /*
  * Returns a physical address mapping for a VME address & length.
@@ -155,43 +125,9 @@ vmepmap(sc, vmeaddr, len, bustype)
 
 	len = roundup(len, NBPG);
 	switch (vmebustype) {
-#if NPCC > 0
-	case BUS_PCC:
-		switch (bustype) {
-		case BUS_VMES:
-			printf("base 0x%8x/0x%8x len 0x%x\n",
-				vmeaddr, base, len);
-			if (base > VME1_A16BASE &&
-			    (base+len - VME1_A16BASE) < VME1_A16D16LEN) {
-				base = base - VME1_A16BASE + VME1_A16D16BASE;
-				printf("vmes1: base = 0x%8x\n", base); /* 1:1 */
-			} else if (base > VME1_A32D16BASE &&
-			    base+len < VME1_A16BASE) {
-				/* 1:1 mapped */
-				printf("vmes2: base = 0x%8x\n", base);
-			} else {
-				printf("%s: cannot map pa 0x%x len 0x%x\n",
-				    sc->sc_dev.dv_xname, base, len);
-				return (NULL);
-			}
-			break;
-		case BUS_VMEL:
-			if (base >= physmem && (base+len) < VME1_A32D32LEN)
-				base = base + VME1_A32D32BASE;
-			else if (base+len < VME1_A32D16LEN)		/* HACK! */
-				base = base + VME1_A32D16BASE;
-			else {
-				printf("%s: cannot map pa 0x%x len 0x%x\n",
-				    sc->sc_dev.dv_xname, base, len);
-				return (NULL);
-			}
-			break;
-		}
-		break;
-#endif
-#if NMC > 0 || NPCCTWO > 0
-	case BUS_MC:
+#if NPCCTWO > 0 || NSYSCON > 0
 	case BUS_PCCTWO:
+	case BUS_SYSCON:
 		switch (bustype) {
 		case BUS_VMES:		/* D16 VME Transfers */
 			/*printf("base 0x%8x/0x%8x len 0x%x\n", vmeaddr, base, len);*/
@@ -357,6 +293,7 @@ vmeattach(parent, self, args)
 	struct vme1reg *vme1;
 	struct vme2reg *vme2;
 	int scon;
+   char sconc;
 
 	/* XXX any initialization to do? */
 
@@ -364,22 +301,22 @@ vmeattach(parent, self, args)
 
 	vmebustype = ca->ca_bustype;
 	switch (ca->ca_bustype) {
-#if NPCC > 0
-	case BUS_PCC:
-		vme1 = (struct vme1reg *)sc->sc_vaddr;
-		scon = (vme1->vme1_scon & VME1_SCON_SWITCH);
-		printf(": %ssystem controller\n", scon ? "" : "not ");
-		vme1chip_init(sc);
-		break;
-#endif
-#if (NMC > 0) || (NPCCTWO > 0)
-	case BUS_MC:
+#if NPCCTWO > 0
 	case BUS_PCCTWO:
 		vme2 = (struct vme2reg *)sc->sc_vaddr;
 		scon = (vme2->vme2_tctl & VME2_TCTL_SCON);
 		printf(": %ssystem controller\n", scon ? "" : "not ");
       if (scon) sys_vme2 = vme2;
 		vme2chip_init(sc);
+		break;
+#endif
+#if NSYSCON > 0
+	case BUS_SYSCON:
+		vme2 = (struct vme2reg *)sc->sc_vaddr;
+      sconc = *(char *)GLOBAL1;
+      sconc &= M188_SYSCON;
+		printf(": %ssystem controller\n", scon ? "" : "not ");
+		vmesyscon_init(sc);
 		break;
 #endif
 	}
@@ -406,152 +343,38 @@ vmeintr_establish(vec, ih)
 	struct intrhand *ih;
 {
 	struct vmesoftc *sc = (struct vmesoftc *) vme_cd.cd_devs[0];
-#if NPCC > 0
-	struct vme1reg *vme1;
-#endif
-#if NMC > 0 || NPCCTWO > 0
+#if NPCCTWO > 0
 	struct vme2reg *vme2;
+#endif
+#if NSYSCON > 0
+	struct sysconreg *syscon;
 #endif
 	int x;
 
 	x = (intr_establish(vec, ih));
 
 	switch (vmebustype) {
-#if NPCC > 0
-	case BUS_PCC:
-		vme1 = (struct vme1reg *)sc->sc_vaddr;
-		vme1->vme1_irqen = vme1->vme1_irqen |
-		    VME1_IRQ_VME(ih->ih_ipl);
-		break;
-#endif
-#if NMC > 0 || NPCCTWO > 0
-	case BUS_MC:
+#if NPCCTWO > 0
 	case BUS_PCCTWO:
 		vme2 = (struct vme2reg *)sc->sc_vaddr;
 		vme2->vme2_irqen = vme2->vme2_irqen |
 		    VME2_IRQ_VME(ih->ih_ipl);
 		break;
 #endif
+#if NSYSCON > 0 
+	case BUS_SYSCON:
+		syscon = (struct sysconreg *)sc->sc_vaddr;
+		/*
+      syscon->vme2_irqen = vme2->vme2_irqen |
+		    VMES_IRQ_VME(ih->ih_ipl);
+      */
+		break;
+#endif
 	}
 	return (x);
 }
 
-#if defined(MVME147)
-int
-vme1chip_init(sc)
-	struct vmesoftc *sc;
-{
-	struct vme1reg *vme1 = (struct vme1reg *)sc->sc_vaddr;
-
-	vme1->vme1_scon &= ~VME1_SCON_SYSFAIL;	/* XXX doesn't work */
-}
-#endif
-
-
-#ifndef BUGMAP
-
-/*
- * XXX what AM bits should be used for the D32/D16 mappings?
- */
-int
-vme2chip_init(sc)
-	struct vmesoftc *sc;
-{
-	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
-	u_long ctl;
-
-	/* turn off SYSFAIL LED */
-	vme2->vme2_tctl &= ~VME2_TCTL_SYSFAIL;
-
-	ctl = vme2->vme2_masterctl;
-
-	/* unused decoders 1 */
-	vme2->vme2_master1 = 0;
-	ctl &= ~(VME2_MASTERCTL_ALL << VME2_MASTERCTL_1SHIFT);
-	printf("%s: 1phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
-	    sc->sc_dev.dv_xname,
-	    vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000,
-	    vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000);
-
-	/* unused decoders 2 */
-	vme2->vme2_master2 = 0;
-	ctl &= ~(VME2_MASTERCTL_ALL << VME2_MASTERCTL_2SHIFT);
-	printf("%s: 2phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
-	    sc->sc_dev.dv_xname,
-	    vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000,
-	    vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000);
-
-	/* setup a A24D16 space */
-	vme2->vme2_master3 = ((VME2_D16ENDPHYS-1) & 0xffff0000) |
-	    (VME2_D16STARTPHYS >> 16);
-	ctl &= ~(VME2_MASTERCTL_ALL << VME2_MASTERCTL_3SHIFT);
-	ctl |= (VME2_MASTERCTL_D16 | VME2_MASTERCTL_AM24UD) <<
-	    VME2_MASTERCTL_3SHIFT;
-	printf("%s: 3phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
-	    sc->sc_dev.dv_xname,
-	    vme2->vme2_master3 << 16, vme2->vme2_master3 & 0xffff0000,
-	    vme2->vme2_master3 << 16, vme2->vme2_master3 & 0xffff0000);
-
-	/* setup a A32D32 space */
-	vme2->vme2_master4 = ((VME2_D32ENDPHYS-1) & 0xffff0000) |
-	    (VME2_D32STARTPHYS >> 16);
-	vme2->vme2_master4mod = (VME2_D32STARTVME & 0xffff0000) |
-	    (VME2_D32BITSVME >> 16);
-	ctl &= ~(VME2_MASTERCTL_ALL << VME2_MASTERCTL_4SHIFT);
-	ctl |= (VME2_MASTERCTL_AM32UD) <<
-	    VME2_MASTERCTL_4SHIFT;
-	printf("%s: 4phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
-	    sc->sc_dev.dv_xname,
-	    vme2->vme2_master4 << 16, vme2->vme2_master4 & 0xffff0000,
-	    vme2->vme2_master4 << 16, vme2->vme2_master4 & 0xffff0000);
-
-	vme2->vme2_masterctl = ctl;
-	ctl = vme2->vme2_gcsrctl;
-
-	/* enable A16 short IO map decoder (0xffffxxxx) */
-	ctl &= ~(VME2_GCSRCTL_I1EN | VME2_GCSRCTL_I1D16 | VME2_GCSRCTL_I1WP |
-	    VME2_GCSRCTL_I1SU);
-	ctl |= VME2_GCSRCTL_I1EN | VME2_GCSRCTL_I1D16 | VME2_GCSRCTL_I1SU;
-
-	/* enable A24D16 (0xf0xxxxxx) and A32D16 (0xf[1-e]xxxxxx) decoders */
-	ctl &= ~(VME2_GCSRCTL_I2EN | VME2_GCSRCTL_I2WP | VME2_GCSRCTL_I2SU |
-	    VME2_GCSRCTL_I2PD);
-	ctl |= VME2_GCSRCTL_I2EN | VME2_GCSRCTL_I2SU | VME2_GCSRCTL_I2PD;
-
-	/* map decoders 3 & 4 which were just configured */
-	ctl &= ~(VME2_GCSRCTL_MDEN4 | VME2_GCSRCTL_MDEN3 | VME2_GCSRCTL_MDEN1 |
-	    VME2_GCSRCTL_MDEN2);
-	ctl |= VME2_GCSRCTL_MDEN4 | VME2_GCSRCTL_MDEN3;
-
-	vme2->vme2_gcsrctl = ctl;
-
-	/*
-	 * Map the VME irq levels to the cpu levels 1:1.
-	 * This is rather inflexible, but much easier.
-	 */
-	vme2->vme2_irql4 = (7 << VME2_IRQL4_VME7SHIFT) |
-	    (6 << VME2_IRQL4_VME6SHIFT) | (5 << VME2_IRQL4_VME5SHIFT) |
-	    (4 << VME2_IRQL4_VME4SHIFT) | (3 << VME2_IRQL4_VME3SHIFT) |
-	    (2 << VME2_IRQL4_VME2SHIFT) | (1 << VME2_IRQL4_VME1SHIFT);
-	printf("%s: vme2_irql4 = 0x%08x\n",	sc->sc_dev.dv_xname,
-	    vme2->vme2_irql4);
-
 #if NPCCTWO > 0
-	if (vmebustype == BUS_PCCTWO) {
-		sc->sc_abih.ih_fn = vme2abort;
-		sc->sc_abih.ih_arg = 0;
-		sc->sc_abih.ih_ipl = 7;
-		sc->sc_abih.ih_wantframe = 1;
-
-		intr_establish(110, &sc->sc_abih);	/* XXX 110 */
-		vme2->vme2_irqen |= VME2_IRQ_AB;
-	}
-#endif
-	vme2->vme2_irqen = vme2->vme2_irqen | VME2_IRQ_ACF;
-}
-
-#else /* BUGMAP */
-
 int
 vme2chip_init(sc)
 	struct vmesoftc *sc;
@@ -601,7 +424,6 @@ vme2chip_init(sc)
 	printf("%s: vme2_irql4 = 0x%08x\n",	sc->sc_dev.dv_xname,
 	    vme2->vme2_irql4);
 	*/
-#if NPCCTWO > 0
 	if (vmebustype == BUS_PCCTWO){
 		/* 
 		 * pseudo driver, abort interrupt handler
@@ -610,24 +432,56 @@ vme2chip_init(sc)
 		sc->sc_abih.ih_arg = 0;
 		sc->sc_abih.ih_ipl = IPL_NMI;
 		sc->sc_abih.ih_wantframe = 1;
-#if 0
-		printf("inserting vme_ab handler\n");
-#endif
 		intr_establish(110, &sc->sc_abih);
 		vme2->vme2_irqen |= VME2_IRQ_AB;
 	}
-#endif
 	vme2->vme2_irqen = vme2->vme2_irqen | VME2_IRQ_ACF;
 }
-#endif /* BUGMAP */
+#endif /* NPCCTWO */
 
-#if defined(MVME162) || defined(MVME167) || defined(MVME177) || defined (MVME187) || defined (MVME188)
+#if NSYSCON > 0
+int
+vmesyscon_init(sc)
+	struct vmesoftc *sc;
+{
+	struct sysconreg *syscon = (struct sysconreg *)sc->sc_vaddr;
+	u_long ctl, addr, vasize;
+
+#ifdef TODO
+	/* turn off SYSFAIL LED */
+	vme2->vme2_tctl &= ~VME2_TCTL_SYSFAIL;
+
+	ctl = vme2->vme2_masterctl;
+	printf("%s: using BUG parameters\n", sc->sc_dev.dv_xname);
+   printf("%s: 1phys 0x%08x-0x%08x to VME 0x%08x-0x%08x master\n",
+	    sc->sc_dev.dv_xname,
+	    vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000,
+	    vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000);
+	printf("%s: 2phys 0x%08x-0x%08x to VME 0x%08x-0x%08x slave\n",
+	    sc->sc_dev.dv_xname,
+	    vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000,
+	    vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000);
+
+   /* 
+    * pseudo driver, abort interrupt handler
+    */
+   sc->sc_abih.ih_fn = sysconabort;
+   sc->sc_abih.ih_arg = 0;
+   sc->sc_abih.ih_ipl = IPL_NMI;
+   sc->sc_abih.ih_wantframe = 1;
+   intr_establish(110, &sc->sc_abih);
+#endif /* TODO */
+}
+#endif /* NSYSCON */
+
+#if defined(MVME162) || defined(MVME167) || defined(MVME177) || defined (MVME187) || defined (MVME197)
 
 /*
- * A32 accesses on the MVME1[678]x require setting up mappings in
+ * A32 accesses on the MVME1[6789]x require setting up mappings in
  * the VME2 chip.
  * XXX VME address must be between 2G and 4G
  * XXX We only support D32 at the moment..
+ * XXX smurph - This is bogus, get rid of it! Should check vme/syson for offsets.
  */
 u_long
 vme2chip_map(base, len, dwidth)
@@ -654,7 +508,7 @@ vme2abort(frame)
 	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
 
 	if (vme2->vme2_irqstat & VME2_IRQ_AB == 0) {
-		printf("%s: vme2chip irq not set\n", sc->sc_dev.dv_xname);
+		printf("%s: abort irq not set\n", sc->sc_dev.dv_xname);
 		return (0);
 	}
 	vme2->vme2_irqclr = VME2_IRQ_AB;

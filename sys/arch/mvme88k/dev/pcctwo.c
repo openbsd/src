@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: pcctwo.c,v 1.6 1999/05/29 04:41:44 smurph Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.7 1999/09/27 18:43:24 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -87,13 +87,19 @@ pcctwomatch(parent, vcf, args)
 	struct pcctworeg *pcc2;
 
 	/* Bomb if wrong cpu */
-	if (!(cputyp == CPU_187 || cputyp == CPU_188)){
-	    printf("==> pcctwo: wrong CPU type %x.\n", cputyp);
-	    return (0);
-	}
-
-	pcc2 = (struct pcctworeg *)(IIOV(ca->ca_paddr) + PCC2_PCC2CHIP_OFF);
-	if (badvaddr(pcc2, 4) <= 0){
+	switch (cputyp) {
+   case CPU_187:
+      pcc2 = (struct pcctworeg *)(IIOV(ca->ca_paddr) + PCC2_PCC2CHIP_OFF);
+      break;
+   case CPU_197: /* pcctwo is a child of buswitch XXX smurph */
+      pcc2 = (struct pcctworeg *)(IIOV(ca->ca_paddr));
+      break;
+   default:
+	   /* Bomb if wrong cpu */
+      return (0);
+   }
+	
+   if (badvaddr(pcc2, 4) <= 0){
 	    printf("==> pcctwo: failed address check.\n");
 	    return (0);
 	}
@@ -170,7 +176,14 @@ pcctwoattach(parent, self, args)
 	 */
 	sc->sc_paddr = ca->ca_paddr;
 	sc->sc_vaddr = (void *)IIOV(sc->sc_paddr);
-	sc->sc_pcc2 = (struct pcctworeg *)(sc->sc_vaddr + PCC2_PCC2CHIP_OFF);
+	switch (cputyp) {
+   case CPU_187:
+      sc->sc_pcc2 = (struct pcctworeg *)(sc->sc_vaddr + PCC2_PCC2CHIP_OFF);
+      break;
+   case CPU_197: /* pcctwo is a child of buswitch XXX smurph */
+      sc->sc_pcc2 = (struct pcctworeg *)sc->sc_vaddr;
+      break;
+   }
 	sys_pcc2 = sc->sc_pcc2;
 
 	printf(": rev %d\n", sc->sc_pcc2->pcc2_chiprev);
@@ -183,12 +196,6 @@ pcctwoattach(parent, self, args)
 	 */
 	pcc2intr_ipl = (u_char *)&(sc->sc_pcc2->pcc2_ipl);
 	pcc2intr_mask = (u_char *)&(sc->sc_pcc2->pcc2_mask);
-
-#ifdef MVME187
-	printf("setting interrupt ack vectors.\n");
-	setupiackvectors();
-#endif /* MVME187 */
-
 	config_search(pcctwo_scan, self, args);
 }
 
