@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.11 2001/02/17 17:15:23 pjanzen Exp $
+.\"	$OpenBSD: syslog.3,v 1.12 2001/07/27 16:41:20 marc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Nd control system log
 .Sh SYNOPSIS
 .Fd #include <syslog.h>
-.Fd #include <varargs.h>
+.Fd #include <stdarg.h>
 .Ft void
 .Fn syslog "int priority" "const char *message" "..."
 .Ft void
