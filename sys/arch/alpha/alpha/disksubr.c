@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.32 2001/02/13 16:05:34 art Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.33 2002/02/19 02:46:39 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -367,6 +367,8 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 		while (wander && n < 8 && loop < 8) {
 		        loop++;
 			wander = 0;
+			if (part_blkno < extoff)
+				part_blkno = extoff;
 
 			/* read boot record */
 			bp->b_blkno = part_blkno;

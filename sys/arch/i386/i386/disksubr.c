@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.40 2000/10/18 21:00:35 mickey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.41 2002/02/19 02:46:40 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -123,6 +123,8 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 		while (wander && n < 8 && loop < 8) {
 		        loop++;
 			wander = 0;
+			if (part_blkno < extoff)
+				part_blkno = extoff;
 
 			/* read boot record */
 			bp->b_blkno = part_blkno;
@@ -229,8 +231,10 @@ donot:
 				case DOSPTYP_EXTEND:
 				case DOSPTYP_EXTENDL:
 					part_blkno = get_le(&dp2->dp_start) + extoff;
-					if (!extoff)
+					if (!extoff) {
 						extoff = get_le(&dp2->dp_start);
+						part_blkno = 0;
+					}
 					wander = 1;
 					break;
 				default:
