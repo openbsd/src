@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.6 2000/01/06 02:52:51 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.7 2000/01/08 04:49:22 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -156,7 +156,6 @@ ip6_init()
 {
 	register struct ip6protosw *pr;
 	register int i;
-	struct timeval tv;
 
 	pr = (struct ip6protosw *)pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)
@@ -174,13 +173,7 @@ ip6_init()
 #ifdef IPV6FIREWALL
 	ip6_fw_init();
 #endif
-	/*
-	 * in many cases, random() here does NOT return random number
-	 * as initialization during bootstrap time occur in fixed order.
-	 */
-	microtime(&tv);
-	ip6_flow_seq = random() ^ tv.tv_usec;
-
+	ip6_flow_seq = arc4random();
 	ip6_init2((void *)0);
 }
 

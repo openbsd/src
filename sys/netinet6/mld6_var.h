@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6_var.h,v 1.1 1999/12/08 06:50:23 itojun Exp $	*/
+/*	$OpenBSD: mld6_var.h,v 1.2 2000/01/08 04:49:22 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -34,7 +34,7 @@
 
 #ifdef _KERNEL
 
-#define MLD6_RANDOM_DELAY(X) (random() % (X) + 1)
+#define MLD6_RANDOM_DELAY(X) (arc4random() % (X) + 1)
 
 /*
  * States for MLD stop-listening processing
