@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.30 1995/10/09 12:42:16 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.32 1995/12/13 14:30:29 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -78,8 +78,6 @@
  */
 #define NZS     1               /* XXX */
 
-/* #include "ser.h" */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -110,6 +108,9 @@
 #define	isr_soft_request(x) setsoftserial()
 #define isr_add_autovect(x, y, z)
 #define ZS_CHAN(x)	(volatile struct zschan *)(((long)addr)+x*2)
+#define	ZS_CONS_A	(volatile struct zschan *)1
+#define	ZS_CONS_B	(volatile struct zschan *)2
+/* magic cookies for console stuff. If zsconschan is one of these, we look at sccA all the time */
 #define zsopen seropen
 #define zsclose serclose
 #define zsioctl serioctl
@@ -123,17 +124,16 @@
 #undef DEBUG
 
 #define ZSMAJOR 12              /* XXX */
-/* Conveniently, this is the major number for Mac ser devices. :-) */
 
 #define ZSHARD_PRI      4       /* Wired on the CPU board... */
 #define ZSSOFT_PRI      3       /* Want tty pri (4) but this is OK. */
 
 #define ZS_KBD          2       /* XXX */
 #define ZS_MOUSE        3       /* XXX */
+#define	ZSDEF_CFLAG	(CREAD | CS8 | HUPCL )
 
 /*
- * Above calculation gets us to the chip clock value.
- * Needed as there are /16's scattered all over.
+ * Below calculation gets us to the chip clock value.
  */
 #define	PCLK	(mac68k_machine.sccClkConst*2)
 
@@ -151,28 +151,26 @@ struct zsinfo {
 
 static struct tty *zs_tty[NZS * 2];     /* XXX should be dynamic */
 
+extern int matchbyname();
+static void serinit(int);
+
 /* Definition of the driver for autoconfig. */
 static int      zs_match(struct device *, void *, void *);
 static void     zs_attach(struct device *, struct device *, void *);
 
-/* struct cfdriver zscd = {
-        NULL, "zs", zs_match, zs_attach,
-        DV_TTY, sizeof(struct zsinfo) }; */
-#define	zscd	sercd
-/* HACK until finished cleaning up configuration stuff */
-
-extern int matchbyname();
-
 struct cfdriver sercd = {
 	NULL, "ser", matchbyname, zs_attach, DV_TTY, sizeof(struct zsinfo)
 };
+
+#define	zscd	sercd
+/* HACK until finished cleaning up configuration stuff */
 
 /* Interrupt handlers. */
 int      zshard(int);
 int      zssoft(int);
 void	zsinit(void);
 
-struct zs_chanstate *zslist;
+struct zs_chanstate *zslist = 0;
 
 volatile unsigned char *sccA = 0;
 
@@ -198,7 +196,7 @@ static u_char zs_write(volatile struct zschan *, u_char, u_char);
 static void	zs_restart(struct zs_chanstate *, volatile struct zschan *);
 
 /* Console stuff. */
-static volatile struct zschan *zs_conschan;
+volatile struct zschan *zs_conschan = 0;
 
 #ifdef KGDB
 /* KGDB stuff.  Must reboot to change zs_kgdbunit. */
@@ -208,11 +206,15 @@ static void zs_checkkgdb(int, struct zs_chanstate *, struct tty *);
 #endif
 
 static int initted = 0;
-static int serdefaultrate = TTYDEF_SPEED;
+static int serdefaultrate = 9600;
 
 static int zsinitted = 0;
 
 extern struct tty *constty;
+
+#define	UNIT(x)		minor(x)
+/* #define SER_TTY(unit) \
+	(((struct ser_softc *) sercd.cd_devs[unit])->sc_tty) */
 
 /*
  * Console keyboard L1-A processing is done in the hardware interrupt code,
@@ -242,7 +244,8 @@ static u_char zs_init_reg[16] = {
         0x18 + ZSHARD_PRI,      /* IVECT */
         ZSWR3_RX_8 | ZSWR3_RX_ENABLE,
         ZSWR4_CLK_X16 | ZSWR4_ONESB | ZSWR4_EVENP,
-        ZSWR5_TX_8 | ZSWR5_TX_ENABLE,
+        /* ZSWR5_TX_8 | ZSWR5_TX_ENABLE | ZSWR5_RTS, */
+        ZSWR5_TX_8 | ZSWR5_TX_ENABLE | ZSWR5_RTS | ZSWR5_DTR,
         0,      /* 6: TXSYNC/SYNCLO */
         0,      /* 7: RXSYNC/SYNCHI */
         0,      /* 8: alias for data port */
@@ -253,7 +256,8 @@ static u_char zs_init_reg[16] = {
         0,      /*13: BAUDHI (later) */
 /*        ZSWR14_BAUD_FROM_PCLK | ZSWR14_BAUD_ENA, */
 	ZSWR14_BAUD_ENA,
-        ZSWR15_BREAK_IE | ZSWR15_DCD_IE | ZSWR15_CTS_IE,
+/*        ZSWR15_BREAK_IE | ZSWR15_DCD_IE | ZSWR15_CTS_IE, */
+        ZSWR15_DCD_IE | ZSWR15_CTS_IE,
 };
 
 /* Find PROM mappings (for console support). */
@@ -323,10 +327,9 @@ zs_attach(struct device *parent, struct device *self, void *args)
 #ifdef DEBUG
 	printf(" softpri %d\n", ZSSOFT_PRI);
 #endif
+	if (self->dv_unit != 0) {printf("\n"); return;}	/* Hack for now */
 
-	if (!zsinitted)
-		zsinit();
-
+	if (!zsinitted) zsinit();
 	if (zsaddr[zs] == NULL)
 		panic("zs_attach: zs%d not mapped\n", zs);
 	addr = zsaddr[zs];
@@ -336,6 +339,13 @@ zs_attach(struct device *parent, struct device *self, void *args)
 		/* On the mac, these are not used. */
 		isr_add_autovect(zssoft, NULL, ZSSOFT_PRI);
 		isr_add_autovect(zshard, NULL, ZSHARD_PRI);
+	}
+
+	if ((zs_conschan == ZS_CONS_A) || (zs_conschan == ZS_CONS_B)) {
+		volatile struct zsdevice *addr;
+		addr = (volatile struct zsdevice *)sccA;
+		zs_conschan = ((zs_conschan == ZS_CONS_A) ? (ZS_CHAN(ZS_CHAN_A)):(ZS_CHAN(ZS_CHAN_B)));
+	/* the IO mapping won't be changing after here, so we can solidify the address */
 	}
 
 	zi = (struct zsinfo *)self;
@@ -377,17 +387,20 @@ zs_attach(struct device *parent, struct device *self, void *args)
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
-	if (cs->cs_zc == zs_conschan) {
+	if ((cs->cs_zc == zs_conschan) && (mac68k_machine.serial_console & 0x01)) {
 #ifdef DEBUG
 		printf("We got a console!, unit %d\n",unit);
 #endif
 		/* This unit is the console. */
 		cs->cs_consio = 1;
-		cs->cs_brkabort = 1;
+		cs->cs_brkabort = /* 1 */ 0;
 		cs->cs_softcar = 1;
 		/* Call zsparam so interrupts get enabled. */
 		tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
-		tp->t_cflag = TTYDEF_CFLAG;
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_cflag = ZSDEF_CFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
 		(void) zsparam(tp, &tp->t_termios);
 	} else {
 		/* Can not run kgdb on the console? */
@@ -436,16 +449,19 @@ zs_attach(struct device *parent, struct device *self, void *args)
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
-	if (cs->cs_zc == zs_conschan) {
+	if ((cs->cs_zc == zs_conschan) && (mac68k_machine.serial_console & 0x01)) {
 #ifdef DEBUG
 		printf("We got a console!, unit %d\n",unit);
 #endif
 		/* This unit is the console. */
 		cs->cs_consio = 1;
-		cs->cs_brkabort = 1;
+		cs->cs_brkabort = 0;
 		cs->cs_softcar = 1;
 		tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
-		tp->t_cflag = TTYDEF_CFLAG;
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_cflag = ZSDEF_CFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
 		(void) zsparam(tp, &tp->t_termios);
 	} else {
 		/* Can not run kgdb on the console? */
@@ -470,6 +486,11 @@ zs_attach(struct device *parent, struct device *self, void *args)
 		/* zsparam called by zsiopen */
 		/* ms_serial(tp, zsiopen, zsiclose); HACK */
 	}
+	if (mac68k_machine.serial_boot_echo) {
+		if (self->dv_unit == 0)
+			printf(" (serial boot echo is on)");
+	}
+	printf("\n");
 }
 
 /*
@@ -501,8 +522,10 @@ zs_reset(zc, inten, speed)
 	u_char reg[16];
 
 	bcopy(zs_init_reg, reg, 16);
-	if (inten)
+	if (inten) {
+		reg[1] |= ZSWR1_RIE | ZSWR1_TIE | ZSWR1_SIE;
 		reg[9] |= ZSWR9_MASTER_IE;
+	}
 
 	tconst = BPS_TO_TCONST(PCLK , speed);
 	reg[12] = tconst;
@@ -580,8 +603,14 @@ zs_set_conschan(unit, ab)
 {
 	volatile struct zsdevice *addr;
 
+#ifndef mac68k
 	addr = zsaddr[unit];
 	zs_conschan = ((ab == 0) ? (ZS_CHAN(ZS_CHAN_A)):(ZS_CHAN(ZS_CHAN_B)));
+#else
+	zs_conschan = ((ab == 0) ? (ZS_CONS_A) : (ZS_CONS_B));
+	/* use tokens for now */
+#endif
+
 }
 
 /* Attach as console.  Also set zs_conschan */
@@ -598,7 +627,7 @@ zscninit(struct consdev *cn)
  * Polled console input putchar.
  */
 int
-zscngetc(dev)
+sercngetc(dev)
 	dev_t dev;
 {
 	register volatile struct zschan *zc = zs_conschan;
@@ -606,6 +635,12 @@ zscngetc(dev)
 
 	if (zc == NULL)
 		return (0);
+	if ((zc == ZS_CONS_A) || (zc == ZS_CONS_B)) {
+		volatile struct zsdevice *addr;
+		addr = (volatile struct zsdevice *)sccA;
+		zc = ((zc == ZS_CONS_A) ? (ZS_CHAN(ZS_CHAN_A)):(ZS_CHAN(ZS_CHAN_B)));
+		/* if zs_conschan points at one of the magic values, re-direct it to the real chip */
+	}
 
 	s = splhigh();
 
@@ -631,12 +666,13 @@ zscngetc(dev)
  * Polled console output putchar.
  */
 int
-zscnputc(dev, c)
+sercnputc(dev, c)
 	dev_t dev;
 	int c;
 {
 	register volatile struct zschan *zc = zs_conschan;
 	register int s, rr0;
+	register long	wait = 0;
 
 	if (zc == NULL) {
 		s = splhigh();
@@ -645,12 +681,18 @@ zscnputc(dev, c)
 		return (0);
 	}
 	s = splhigh();
+	if ((zc == ZS_CONS_A) || (zc == ZS_CONS_B)) {
+		volatile struct zsdevice *addr;
+		addr = (volatile struct zsdevice *)sccA;
+		zc = ((zc == ZS_CONS_A) ? (ZS_CHAN(ZS_CHAN_A)):(ZS_CHAN(ZS_CHAN_B)));
+		/* if zs_conschan points at one of the magic values, re-direct it to the real chip */
+	}
 
 	/* Wait for transmitter to become ready. */
 	do {
 		rr0 = zc->zc_csr;
 		ZS_DELAY();
-	} while ((rr0 & ZSRR0_TX_READY) == 0);
+	} while (((rr0 & ZSRR0_TX_READY) == 0) && (wait ++ < 100000));
 
 	zc->zc_data = c;
 	ZS_DELAY();
@@ -913,6 +955,7 @@ zshard(intrarg)
 	static long zssint(struct zs_chanstate *, volatile struct zschan *);
 
 	if (!sccA) return;
+	if (zslist == 0) return;
 
 	for (a = zslist; a != NULL; a = b->cs_next) {
 		rr3 = ZS_READ(a->cs_zc, 3);
@@ -1055,11 +1098,16 @@ zsxint(cs, zc)
 		ZS_DELAY();
 		zc->zc_csr = ZSWR0_CLR_INTR;
 		ZS_DELAY();
-		cs->cs_tiu = 0;
+		if (cs->cs_tiu !=0) {
+		/* We only want to post a transmitter's empty if we've
+		  actually put something in it. We also get here after zscnputc
+		  outputs a byte, but we shouldn't post to the ring */
+			cs->cs_tiu = 0;
 #ifdef DEBUG
-		printf("Td ");
+			printf("Td ");
 #endif
-		return (ZRING_MAKE(ZRING_XINT, 0));
+			return (ZRING_MAKE(ZRING_XINT, 0));
+		} else {return (0);}
 	}
 #ifdef DEBUGTX
 	printf(" t%x ",(u_char)*cs->cs_tba);
@@ -1233,7 +1281,7 @@ again:
 		unit = cs->cs_unit;	/* set up to handle interrupts */
 		zc = cs->cs_zc;
 		tp = cs->cs_ttyp;
-		line = &linesw[tp->t_line];
+		if (tp != NULL) line = &linesw[tp->t_line];
 		/*
 		 * Compute the number of interrupts in the receive ring.
 		 * If the count is overlarge, we lost some events, and
@@ -1267,13 +1315,9 @@ again:
 				 * this should be done through
 				 * bstreams	XXX gag choke
 				 */
-				/* if (unit == ZS_KBD)
-					kbd_rint(cc);
-				else if (unit == ZS_MOUSE)
-					ms_rint(cc);
-				else */
-					if ((tp->t_state & TS_ISOPEN) != 0)
-						line->l_rint(cc, tp);
+				if (tp != NULL) {
+					line->l_rint(cc, tp);
+				} else {printf("tp == NULL!");}
 				break;
 
 			case ZRING_XINT:
@@ -1300,14 +1344,15 @@ again:
 						goto again;
 					}
 				}
-				tp->t_state &= ~TS_BUSY;
-				if (tp->t_state & TS_FLUSH)
-					tp->t_state &= ~TS_FLUSH;
-				else
-					ndflush(&tp->t_outq, cs->cs_tba -
-						(caddr_t) tp->t_outq.c_cf);
-				if ((tp->t_state & TS_ISOPEN) != 0)
+				if (tp != NULL) {
+					tp->t_state &= ~TS_BUSY;
+					if (tp->t_state & TS_FLUSH)
+						tp->t_state &= ~TS_FLUSH;
+					else
+						ndflush(&tp->t_outq, cs->cs_tba -
+							(caddr_t) tp->t_outq.c_cf);
 					line->l_start(tp);
+				} else {printf("Trans. tp == NULL!");}
 				break;
 
 			case ZRING_SINT:
@@ -1319,7 +1364,7 @@ again:
 				c = ZRING_VALUE(c);
 				if ((c ^ cs->cs_rr0) & ZSRR0_DCD) {
 					cc = (c & ZSRR0_DCD) != 0;
-					if (line->l_modem(tp, cc) == 0)
+					if (tp != NULL) if (line->l_modem(tp, cc) == 0)
 						zs_modem(cs, cc);
 				}
 				cs->cs_rr0 = c;
@@ -1603,6 +1648,7 @@ zsparam(tp, t)
 	bcopy(zs_init_reg, cs->cs_preg, 16);
 	cs->cs_preg[12] = tmp & 255;
 	cs->cs_preg[13] = tmp >> 8;
+	cs->cs_preg[1] |= ZSWR1_RIE | ZSWR1_TIE | ZSWR1_SIE;
 	cs->cs_preg[9] |= ZSWR9_MASTER_IE;
 	switch (cflag & CSIZE) {
 	case CS5:
@@ -1640,11 +1686,13 @@ zsparam(tp, t)
 		ZS_DELAY();
 	    }
 	} else {
-		tmpx = (cs->cs_SFC ? cs->cs_holdSFC : 0); /* (cs_SFC !=0) && (cs_holdSFC !=0) */
+		/* (cs_SFC !=0) && (cs_holdSFC !=0) */
+		tmpx = (cs->cs_SFC ? cs->cs_holdSFC : 0);
 		cs->cs_SFC = 0;
 		cs->cs_holdSFC = 0;
 		if (tmpx)
-			zs_restart(cs, cs->cs_zc); /* we were waiting because of SFC, but now we don't */
+			/* we were waiting because of SFC, but now we don't */
+			zs_restart(cs, cs->cs_zc);
 	}
 
 	cs->cs_preg[3] = tmp;
@@ -1673,10 +1721,10 @@ zsparam(tp, t)
 	}
 	splx(s);
 #ifdef DEBUG
-	printf("My zsparam tty is %x, my termios is %x, iflag %x, oflag %x, cflag %x\n",tp,t, \
-		t->c_iflag, t->c_oflag, t->c_cflag);
-	printf("Stored values are: iflag %x, oflag %x, cflag %x, ospeed %x\n",tp->t_iflag, tp->t_oflag,\
-		tp->t_cflag, tp->t_ospeed);
+printf("My zsparam tty is %x, my termios is %x, iflag %x, oflag %x, cflag %x\n",
+	tp,t, t->c_iflag, t->c_oflag, t->c_cflag);
+printf("Stored values are: iflag %x, oflag %x, cflag %x, ospeed %x\n",
+	tp->t_iflag, tp->t_oflag, tp->t_cflag, tp->t_ospeed);
 #endif
 	return (0);
 }
@@ -1775,9 +1823,10 @@ zs_loadchannelregs(zc, reg)
 	/* char size, enable (RX/TX)*/
 	ZS_WRITE(zc, 3, reg[3]);
 	ZS_WRITE(zc, 5, reg[5]);
-#ifdef DEBUG
-	printf("Params %x %x %x %x %x %x %x %x %x %x %x %x %x\n", reg[0], reg[1], reg[2], reg[3], \
-			reg[4], reg[5], reg[9], reg[10], reg[11], reg[12], reg[13], reg[14], reg[15]);
+#ifdef DEBUG2
+	printf("Params %x %x %x %x %x %x %x %x %x %x %x %x %x\n",
+		reg[0], reg[1], reg[2], reg[3], reg[4], reg[5], reg[9],
+		reg[10], reg[11], reg[12], reg[13], reg[14], reg[15]);
 #endif
 }
 
@@ -1891,12 +1940,35 @@ void	zsinit(void)
 	volatile struct zschan	*zc;
 	u_char  ch;
 
-	zsaddr[0] = (struct zsdevice *)sccA;	/* get the base address of the chip */
+	/* get the base address of the chip */
+	zsaddr[0] = (struct zsdevice *)sccA;
 	zsinitted = 1;
 
 	zc=(volatile struct zschan *)zsaddr[0];
 	ch=zc->zc_csr;
 	ch=zc->zc_csr;
+}
+
+static void
+serinit(int running_interrupts)
+{
+	int     bcount;
+	int     i, s, spd, im;
+
+	if (!sccA)
+		panic("sccA offset not set!\n");
+
+	im=mac68k_machine.serial_console & 0x03;
+
+	/* note: the HACKed routine doesn't do a lot of the pleasantries in the
+		old mac routine. Oh well. This is still a hacked version */
+	/* zs_reset doesn't turn on interrupts! */
+	zs_reset((volatile struct zschan *)&sccA[0],
+		 (running_interrupts && (im!=3)), serdefaultrate);
+	zs_reset((volatile struct zschan *)&sccA[2],
+		 (running_interrupts && (im!=1)), serdefaultrate);
+
+	return;
 }
 
 /*
@@ -1906,74 +1978,58 @@ dev_t   mac68k_serdev;
 
 sercnprobe(struct consdev * cp)
 {
+	extern u_long	IOBase;
 	int     maj, unit;
 
-/*****
 	for (maj = 0; maj < nchrdev; maj++) {
 		if (cdevsw[maj].d_open == seropen) {
 			break;
 		}
 	}
-	if (maj == nchrdev)
-		goto nosercon;
+	if (maj == nchrdev) {
+		/* no console entry for us */
+		if (mac68k_machine.serial_boot_echo) {
+			/* major number doesn't really matter. */
+			mac68k_serdev = makedev(maj, 0);
+			mac68k_set_io_offsets(IOBase);
+			zs_conschan = (volatile struct zschan *)ZS_CONS_B;
+			serinit(0);
+		}
+		return 0;
+	}
 
-	cp->cn_pri = CN_NORMAL;	/* Lower than CN_INTERNAL *\
-	if (mac68k_machine.serial_console & 0x01)
-		cp->cn_pri = CN_REMOTE;	/* Higher than CN_INTERNAL *\
+	cp->cn_pri = CN_NORMAL;			/* Lower than CN_INTERNAL */
+	if (mac68k_machine.serial_console & 0x01) {
+		cp->cn_pri = CN_REMOTE;		/* Higher than CN_INTERNAL */
+		mac68k_machine.serial_boot_echo =0;
+	}
 
 	unit = (mac68k_machine.serial_console & 0x02) ? 1 : 0;
 
 	cp->cn_dev = makedev(maj, unit);
 
-	mac68k_machine.serial_boot_echo = 0;
-	return 0;
-
-nosercon:
 	if (mac68k_machine.serial_boot_echo) {
-		/* major number doesn't really matter. *\
-		mac68k_serdev = makedev(maj, 0);
+		/*
+		 * at this point, we know that we don't have a serial
+		 * console, but are doing echo
+		 */
+		mac68k_set_io_offsets(IOBase);
+		zs_conschan = (volatile struct zschan *)ZS_CONS_B;
 		serinit(0);
 	}
 	return 0;
-*****/
 }
 
 sercninit(struct consdev * cp)
 {
 	extern u_long	IOBase;
 
-/*****
 	mac68k_set_io_offsets(IOBase);
+	/*
+	 * zsinit(); This is not the right time to zsinit as
+	 * the IO mapping will move.
+	 */
+	zscninit(cp);
 	serinit(0);
-*****/
-}
-
-sercngetc(dev_t dev)
-{
-	return zscngetc(dev);
-/*****
-	int     unit, c;
-
-	unit = UNIT(dev);
-
-	while (!(SER_STATUS(unit, 0) & ZSRR0_RX_READY));
-	c = SCCRDWR(unit);
-	SER_STATUS(unit, 0) = ZSWR0_RESET_STATUS;
-
-	return c;
-*****/
-}
-
-sercnputc(dev_t dev, int c)
-{
-	return zscnputc(dev, c);
-/*****
-	int     unit;
-
-
-	unit = UNIT(dev);
-
-	while (!(SER_STATUS(unit, 0) & ZSRR0_TX_READY));
-	SCCRDWR(unit) = c;
-*****/
+	printf("Whee! we are the console!\n");
 }
