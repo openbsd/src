@@ -1,4 +1,4 @@
-.\"	$NetBSD: tset.1,v 1.4 1994/12/07 05:08:13 jtc Exp $
+.\"	$NetBSD: tset.1,v 1.4.2.1 1995/12/05 02:53:34 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,7 +72,7 @@ argument specified on the command line.
 .It
 The value of the
 .Ev TERM
-environmental variable.
+environment variable.
 .It
 The terminal type associated with the standard error output device in the
 .Pa /etc/ttys
@@ -185,7 +185,7 @@ option is specified, the commands to enter the information into the
 shell's environment are written to the standard output.
 If the
 .Ev SHELL
-environmental variable ends in ``csh'', the commands are for the
+environment variable ends in ``csh'', the commands are for the
 .Nm csh ,
 otherwise, they are for
 .Xr sh .
@@ -222,7 +222,7 @@ information is incorrect) the terminal type derived from the
 .Pa /etc/ttys
 file or the
 .Ev TERM
-environmental variable is often something generic like
+environment variable is often something generic like
 .Dq network ,
 .Dq dialup ,
 or
