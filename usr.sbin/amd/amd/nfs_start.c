@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.2 1997/01/31 14:42:01 graichen Exp $
+ *	$Id: nfs_start.c,v 1.3 1997/12/17 20:37:37 deraadt Exp $
  */
 
 #include "am.h"
@@ -162,31 +162,44 @@ static int rpc_pending_now()
 	struct timeval tvv;
 	int nsel;
 #ifdef FD_SET
-	fd_set readfds;
+	fd_set *fdsp;
+	int fdsn;
 
-	FD_ZERO(&readfds);
-	FD_SET(fwd_sock, &readfds);
+	fdsn = howmany(max_fds+1, NFDBITS) * sizeof(fd_mask);
+	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
+		return(0);
+	memset(fdsp, 0, fdsn);
+	FD_SET(fwd_sock, fdsp);
 #else
+	int *fdsp;
 	int readfds = (1 << fwd_sock);
+	fdsp = (int *)malloc(sizeof readfds);
+	memcpy(fdsp, &readfds, sizeof readfds);
 #endif /* FD_SET */
 
 	tvv.tv_sec = tvv.tv_usec = 0;
-	nsel = select(max_fds+1, &readfds, (int *) 0, (int *) 0, &tvv);
-	if (nsel < 1)
+	nsel = select(max_fds+1, fdsp, (int *) 0, (int *) 0, &tvv);
+	if (nsel < 1) {
+		free(fdsp);
 		return(0);
+	}
 #ifdef FD_SET
-	if (FD_ISSET(fwd_sock, &readfds))
+	if (FD_ISSET(fwd_sock, fdsp)) {
+		free(fdsp);
 		return(1);
+	}
 #else
-	if (readfds & (1 << fwd_sock))
+	if (readfds & (1 << fwd_sock)) {
+		free(fdsp);
 		return(1);
+	}
 #endif
+	free(fdsp);
 	return(0);
 }
 
 static serv_state run_rpc(P_void)
 {
-	int dtbsz = max_fds + 1;
 	int smask = sigblock(MASKED_SIGS);
 
 	next_softclock = clocktime();
@@ -203,9 +216,29 @@ static serv_state run_rpc(P_void)
 		int nsel;
 		time_t now;
 #ifdef RPC_4
-		fd_set readfds;
-		readfds = svc_fdset;
-		FD_SET(fwd_sock, &readfds);
+#ifdef __OpenBSD__
+		extern int __svc_fdsetsize;
+		extern fd_set *__svc_fdset;
+		fd_set *fdsp;
+		int fdsn = __svc_fdsetsize;
+		int bytes;
+
+		if (fwd_sock > fdsn)
+			fdsn = fwd_sock;
+		bytes = howmany(fdsn, NFDBITS) * sizeof(fd_mask);
+
+		fdsp = malloc(bytes);
+		memset(fdsp, 0, bytes);
+		memcpy(fdsp, __svc_fdset, bytes);
+		FD_SET(fwd_sock, fdsp);
+#else
+		fd_set *fdsp;
+		int fdsn = FDSETSIZE;
+		bytes = howmany(fdsn, NFDBITS) * sizeof(fd_mask);
+		fdsp = malloc(bytes);
+		memcpy(fdsp, &svc_fdset, bytes);
+		FD_SET(fwd_sock, fdsp);
+#endif
 #else
 #ifdef FD_SET
 		fd_set readfds;
@@ -249,7 +282,7 @@ static serv_state run_rpc(P_void)
 			dlog("Select waits for Godot");
 #endif /* DEBUG */
 
-		nsel = do_select(smask, dtbsz, &readfds, &tvv);
+		nsel = do_select(smask, fdsn + 1, fdsp, &tvv);
 
 
 		switch (nsel) {
@@ -274,17 +307,22 @@ static serv_state run_rpc(P_void)
 			   having responses queue up as a consequence of
 			   retransmissions. */
 #ifdef FD_SET
-			if (FD_ISSET(fwd_sock, &readfds)) {
-				FD_CLR(fwd_sock, &readfds);
-#else
-			if (readfds & (1 << fwd_sock)) {
-				readfds &= ~(1 << fwd_sock);
-#endif
+			if (FD_ISSET(fwd_sock, fdsp)) {
+				FD_CLR(fwd_sock, fdsp);
 				--nsel;	
 				do {
 					fwd_reply();
 				} while (rpc_pending_now() > 0);
 			}
+#else
+			if (readfds & (1 << fwd_sock)) {
+				readfds &= ~(1 << fwd_sock);
+				--nsel;	
+				do {
+					fwd_reply();
+				} while (rpc_pending_now() > 0);
+			}
+#endif
 
 			if (nsel) {
 				/*
@@ -292,7 +330,11 @@ static serv_state run_rpc(P_void)
 				 * RPC request.
 				 */
 #ifdef RPC_4
-				svc_getreqset(&readfds);
+#ifdef __OpenBSD__
+				svc_getreqset2(fdsp, fdsn);
+#else
+				svc_getreqset(fdsp);
+#endif
 #else
 #ifdef FD_SET
 				svc_getreq(readfds.fds_bits[0]);
@@ -303,6 +345,7 @@ static serv_state run_rpc(P_void)
 			}
 			break;
 		}
+		free(fdsp);
 	}
 
 	(void) sigsetmask(smask);
