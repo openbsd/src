@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.33 2001/01/10 19:48:29 angelos Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.34 2001/01/10 21:29:04 angelos Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1312,7 +1312,7 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 
       if (spisz != sizeof (u_int32_t))
         {
-	    LOG_DBG ((LOG_SA, 40,
+	    LOG_DBG ((LOG_SA, 50,
 		      "ipsec_handle_leftover_payload: SPI size %d in DELETE "
 		      "payload unsupported", spisz));
 	    return -1;
@@ -1320,7 +1320,7 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 
       if (nspis == 0)
         {
-	  LOG_DBG ((LOG_SA, 40, "ipsec_handle_leftover_payload: message "
+	  LOG_DBG ((LOG_SA, 60, "ipsec_handle_leftover_payload: message "
 		    "specified zero SPIs, ignoring"));
 	  return -1;
 	}
@@ -1328,7 +1328,7 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
       spis = (u_int32_t *) malloc (nspis * spisz);
       if (spis == NULL)
         {
-	  LOG_DBG ((LOG_SA, 70,
+	  LOG_DBG ((LOG_SA, 50,
 		    "ipsec_handle_leftover_payload: "
 		    "DELETE failed to allocate %d SPIs of %d bytes each",
 		    nspis, spisz));
@@ -1344,7 +1344,7 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 				  spis[i], proto);
 	    if (sa == NULL)
 	      {
-		LOG_DBG ((LOG_SA, 30, "ipsec_handle_leftover_payload: "
+		LOG_DBG ((LOG_SA, 40, "ipsec_handle_leftover_payload: "
 			  "could not locate SA (SPI %08x, proto %u)",
 			  spis[i], proto));
 		continue;
