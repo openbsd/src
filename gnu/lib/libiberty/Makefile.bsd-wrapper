@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 2003/11/24 16:55:59 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 2003/11/25 21:24:30 espie Exp $
 
 LIB=		iberty
 CPPFLAGS+=	-DHAVE_CONFIG_H -I$(.CURDIR) -I$(.CURDIR)/include -I$(.OBJDIR)
@@ -7,11 +7,16 @@ HOST_FILES!=	cat $(.OBJDIR)/needed-list 2>/dev/null||true
 
 .PATH: ${.CURDIR}/src
 
-SRCS=		argv.c choose-temp.c concat.c cplus-dem.c dyn-string.c \
+SRCS=		argv.c choose-temp.c concat.c cplus-dem.c cp-demangle.c \
+		dyn-string.c \
 		fdmatch.c getopt.c getopt1.c getpwd.c getruntime.c \
-		hashtab.c hex.c floatformat.c objalloc.c obstack.c \
-		pexecute.c spaces.c splay-tree.c strerror.c strsignal.c \
-		xatexit.c xexit.c xmalloc.c xstrerror.c xstrdup.c \
+		hashtab.c hex.c fibheap.c partition.c \
+		floatformat.c make-temp-file.c make-relative-prefix.c \
+		objalloc.c obstack.c oldhashtab.c \
+		pexecute.c safe-ctype.c spaces.c splay-tree.c \
+		strerror.c strsignal.c \
+		xatexit.c xexit.c xmalloc.c xmemdup xstrerror.c xstrdup.c \
+		physmem.c lbasename.c \
 		$(HOST_FILES)
 
 #		choose-temp.c fnmatch.c objalloc.c pexecute.c xstrdup.c \
@@ -38,5 +43,14 @@ config.status: Makefile.in configure
 	/bin/sh ${.CURDIR}/src/configure \
 		--prefix=/usr --with-local-prefix=/usr ${CF} \
 		&& touch config.status
+
+all:	libiberty.info
+
+libiberty.info:
+	makeinfo --no-split -I${.CURDIR}/src ${.CURDIR}/src/libiberty.texi
+
+afterinstall:
+	${INSTALL} ${INSTALL_COPY} -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} \
+	    libiberty.info $(DESTDIR)/usr/share/info
 
 .include <bsd.lib.mk>
