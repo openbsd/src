@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.26 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: malloc.9,v 1.27 2003/06/21 00:57:43 tedu Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -263,6 +263,8 @@ Packet-attached information tags.
 IEEE 1394 control structures.
 .It Dv M1394DATA
 IEEE 1394 data buffers.
+.It Dv M_EMULDATA
+Per process emulation data.
 .It Dv M_IP6OPT
 IPv6 options.
 .It Dv M_IP6NDP
@@ -273,6 +275,24 @@ IPv6 router renumbering prefix.
 IPv6 router renumbering interface identifiers.
 .It Dv M_TEMP
 Miscellaneous temporary data buffers.
+.It Dv M_NTFSMNT
+NTFS mount structures.
+.It Dv M_NTFSNTNODE
+NTFS ntnode information.
+.It Dv M_NTFSNODE
+NTFS fnode information.
+.It Dv M_NTFSDIR
+NTFS directory buffers.
+.It Dv M_NTFSHASH
+NTFS ntnode hash tables.
+.It Dv M_NTFSVATTR
+NTFS file attribute information.
+.It Dv M_NTFSRDATA
+NTFS resident data.
+.It Dv M_NTFSDECOMP
+NTFS decompression temporary storage.
+.It Dv M_NTFSRUN
+NTFS vrun storage.
 .El
 .Pp
 Statistics based on the
