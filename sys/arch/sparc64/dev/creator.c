@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.6 2002/05/22 01:45:12 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.7 2002/05/22 03:15:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -118,7 +118,7 @@ struct wsdisplay_accessops creator_accessops = {
 struct creator_softc {
 	struct device sc_dv;
 	bus_space_tag_t sc_bt;
-	bus_space_handle_t sc_regs[FFB_NREGS];
+	bus_space_handle_t sc_pixel_h;
 	bus_addr_t sc_addrs[FFB_NREGS];
 	bus_size_t sc_sizes[FFB_NREGS];
 	int sc_height, sc_width, sc_linebytes, sc_depth;
@@ -178,17 +178,17 @@ creator_attach(parent, self, aux)
 
 	printf("\n");
 
+	if (bus_space_map2(sc->sc_bt, 0, ma->ma_reg[FFB_REG_DFB32].ur_paddr,
+	    ma->ma_reg[FFB_REG_DFB32].ur_len, 0, NULL, &sc->sc_pixel_h)) {
+		printf("%s: failed to map dfb32\n", sc->sc_dv.dv_xname);
+		goto fail;
+	}
+
 	for (i = 0; i < ma->ma_nreg; i++) {
-		if (bus_space_map2(sc->sc_bt, 0,
-		    ma->ma_reg[i].ur_paddr, ma->ma_reg[i].ur_len,
-		    0, NULL, &sc->sc_regs[i])) {
-			printf(": failed to map register set %d\n", i);
-			goto fail;
-		}
 		sc->sc_addrs[i] = ma->ma_reg[i].ur_paddr;
 		sc->sc_sizes[i] = ma->ma_reg[i].ur_len;
-		sc->sc_nreg = i + 1;
 	}
+	sc->sc_nreg = ma->ma_nreg;
 
 	console = (fbnode == ma->ma_node);
 
@@ -201,7 +201,8 @@ creator_attach(parent, self, aux)
 	sc->sc_rasops.ri_stride = sc->sc_linebytes;
 	sc->sc_rasops.ri_flg = RI_CENTER;
 	sc->sc_rasops.ri_bits = (void *)bus_space_vaddr(sc->sc_bt,
-	    sc->sc_regs[FFB_REG_DFB32]);
+	    sc->sc_pixel_h);
+
 	sc->sc_rasops.ri_width = sc->sc_width;
 	sc->sc_rasops.ri_height = sc->sc_height;
 	sc->sc_rasops.ri_hw = sc;
@@ -238,10 +239,9 @@ creator_attach(parent, self, aux)
 	return;
 
 fail:
-	for (i = 0; i < sc->sc_nreg; i++)
-		if (sc->sc_regs[i] != 0)
-			bus_space_unmap(sc->sc_bt, sc->sc_regs[i],
-			    ma->ma_reg[i].ur_len);
+	if (sc->sc_pixel_h != 0)
+		bus_space_unmap(sc->sc_bt, sc->sc_pixel_h,
+		    ma->ma_reg[FFB_REG_DFB32].ur_len);
 }
 
 int
