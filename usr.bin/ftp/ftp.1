@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.3 1996/09/13 03:21:18 deraadt Exp $
+.\" 	$OpenBSD: ftp.1,v 1.4 1996/10/31 14:36:55 mickey Exp $
 .\" 	$NetBSD: ftp.1,v 1.11 1995/09/08 01:06:24 tls Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -50,6 +50,7 @@ file transfer program
 .Op Fl i
 .Op Fl n
 .Op Fl g
+.Op Fl r Ar seconds
 .Op Ar host
 .Nm ftp
 .Ar http://host/path/file.html
@@ -101,6 +102,10 @@ multiple file transfers.
 Enables debugging.
 .It Fl g
 Disables file name globbing.
+.It Fl r Ar number
+Retry to connect if failed, pausing for
+.Ar number
+of seconds.
 .El
 .Pp
 The client host with which

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ftp.c,v 1.5 1996/08/02 05:56:23 deraadt Exp $      */
+/*      $OpenBSD: ftp.c,v 1.6 1996/10/31 14:36:56 mickey Exp $      */
 /*      $NetBSD: ftp.c,v 1.13 1995/09/16 22:32:59 pk Exp $      */
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.5 1996/08/02 05:56:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.6 1996/10/31 14:36:56 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -372,8 +372,11 @@ getreply(expecteof)
 				code = 421;
 				return (4);
 			}
-			if (c != '\r' && (verbose > 0 ||
-			    (verbose > -1 && n == '5' && dig > 4))) {
+			if (n == 0)
+				n = c;
+			if (c != '\r' && (n < '5' || !retry_connect) &&
+			    (verbose > 0 ||
+			      (verbose > -1 && n == '5' && dig > 4))) {
 				if (proxflag &&
 				   (dig == 1 || dig == 5 && verbose == 0))
 					printf("%s:",hostname);
@@ -398,12 +401,11 @@ getreply(expecteof)
 					code = 0;
 				continuation++;
 			}
-			if (n == 0)
-				n = c;
 			if (cp < &reply_string[sizeof(reply_string) - 1])
 				*cp++ = c;
 		}
-		if (verbose > 0 || verbose > -1 && n == '5') {
+		if ((verbose > 0 || (verbose > -1 && n == '5')) &&
+		    (n < '5' || !retry_connect)) {
 			(void) putchar(c);
 			(void) fflush (stdout);
 		}

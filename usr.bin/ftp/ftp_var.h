@@ -1,4 +1,4 @@
-/*      $OpenBSD: ftp_var.h,v 1.3 1996/06/26 05:33:37 deraadt Exp $      */
+/*      $OpenBSD: ftp_var.h,v 1.4 1996/10/31 14:36:56 mickey Exp $      */
 /*      $NetBSD: ftp_var.h,v 1.7 1995/09/15 00:32:35 pk Exp $      */
 
 /*
@@ -87,6 +87,7 @@ int	mode;			/* file transfer mode */
 char	bytename[32];		/* local byte size in ascii */
 int	bytesize;		/* local byte size in binary */
 int	anonftp;		/* force an anonftp login */
+int	retry_connect;		/* retry connect if failed */
 
 char	*hostname;		/* name of host connected to */
 int	unix_server;		/* server is unix, can use binary for ascii */

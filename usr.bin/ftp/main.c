@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1996/09/03 18:00:06 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1996/10/31 14:36:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 1996/09/03 18:00:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 1996/10/31 14:36:57 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ main(argc, argv)
 	interactive = 1;
 	autologin = 1;
 
-	while ((ch = getopt(argc, argv, "p:dgintv")) != EOF) {
+	while ((ch = getopt(argc, argv, "p:r:dgintv")) != EOF) {
 		switch (ch) {
 		case 'd':
 			options |= SO_DEBUG;
@@ -110,6 +110,18 @@ main(argc, argv)
 			force_port = atoi(optarg);
 			break;
 
+		case 'r':
+			if (isdigit(*optarg))
+				retry_connect = atoi(optarg);
+			else {
+				extern char *__progname;
+				(void)fprintf(stderr,
+					"%s: -r requires numeric argument\n",
+					__progname);
+				exit(1);
+			}
+			break;
+
 		case 't':
 			trace++;
 			break;
@@ -119,8 +131,8 @@ main(argc, argv)
 			break;
 
 		default:
-			(void)fprintf(stderr,
-				"usage: ftp [-dgintv] [host [port]]\n");
+			(void)fprintf(stderr, "usage: "
+				"ftp [-dgintv] [-r<seconds>] [host [port]]\n");
 			exit(1);
 		}
 	}
@@ -191,14 +203,13 @@ main(argc, argv)
 			}
 
 			xargv[1] = host;
-			xargv[2] = NULL;
 			xargc = 2;
 			if (force_port) {
-				xargv[2] = portstr;
+				xargv[xargc++] = portstr;
 				snprintf(portstr, sizeof portstr, "%d",
 				    force_port);
-				xargc++;
 			}
+			xargv[xargc] = NULL;
 			setpeer(xargc, xargv);
 			if (!connected) {
 				printf("failed to connect to %s\n", host);
@@ -247,7 +258,16 @@ bail:
 		xargv[2] = argv[1];
 		xargv[3] = argv[2];
 		xargv[4] = NULL;
-		setpeer(argc+1, xargv);
+		do {
+			setpeer(argc+1, xargv);
+			if (!retry_connect)
+				break;
+			if (!connected) {
+				macnum = 0;
+				printf("Retrying...\n");
+				sleep(retry_connect);
+			}
+		} while (!connected);
 	}
 	top = setjmp(toplevel) == 0;
 	if (top) {
