@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.2 2001/01/28 01:20:00 hugh Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.3 2001/01/30 17:05:02 hugh Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -186,10 +186,13 @@ dz_ibus_attach(parent, self, aux)
 	sc->sc_dr.dr_break = 13;	/* untested */
 	sc->sc_dr.dr_tbuf = 12;		/* correct  */
 	sc->sc_dr.dr_tcr = 8;		/* correct  */
-	sc->sc_dr.dr_dcd = 11;		/* works    */
+	sc->sc_dr.dr_dcd = 13;		/* works    */
 	sc->sc_dr.dr_ring = 13;		/* untested */
 
 	sc->sc_type = DZ_DC;
+
+	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
+
 	scb_vecalloc(0x154, dzxint, sc, SCB_ISTACK);
 	scb_vecalloc(0x150, dzrint, sc, SCB_ISTACK);
 
