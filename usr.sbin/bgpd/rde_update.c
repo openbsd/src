@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.27 2004/08/06 12:04:08 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.28 2004/08/10 12:57:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -627,11 +627,17 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	wlen += r; len -= r;
 
 	/*
-	 * The MED of other peers MUST not be announced to others.
-	 * Currently we just dump it. Possibilities are setting the MED via
-	 * a filter or set it to local-pref. struct attr_flags probably needs
-	 * a med_in and a med_out field.
+	 * The old MED from other peers MUST not be announced to others
+	 * unless the MED is originating from us or the peer is a IBGP one.
 	 */
+	if (a->flags & F_ATTR_MED && (peer->conf.ebgp == 0 ||
+	    a->flags & F_ATTR_MED_ANNOUNCE)) {
+		tmp32 = htonl(a->lpref);
+		if ((r = attr_write(up_attr_buf + wlen, len, ATTR_OPTIONAL,
+		    ATTR_MED, &tmp32, 4)) == -1)
+			return (-1);
+		wlen += r; len -= r;
+	}
 
 	if (peer->conf.ebgp == 0) {
 		/* local preference, only valid for ibgp */

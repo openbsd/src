@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.16 2004/08/06 12:04:08 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.17 2004/08/10 12:57:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -67,8 +67,10 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set *set)
 
 	if (set->flags & SET_LOCALPREF)
 		asp->lpref = set->localpref;
-	if (set->flags & SET_MED)
+	if (set->flags & SET_MED) {
+		asp->flags |= F_ATTR_MED | F_ATTR_MED_ANNOUNCE;
 		asp->med = set->med;
+	}
 
 	/* XXX and uglier */
 	bzero(&addr, sizeof(addr));

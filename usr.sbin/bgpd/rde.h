@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.51 2004/08/06 12:04:08 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.52 2004/08/10 12:57:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -135,12 +135,13 @@ LIST_HEAD(prefix_head, prefix);
 #define	F_ATTR_NEXTHOP		0x004
 #define	F_ATTR_LOCALPREF	0x008
 #define	F_ATTR_MED		0x010
-#define	F_ATTR_MP_REACH		0x020
-#define	F_ATTR_MP_UNREACH	0x040
-#define	F_PREFIX_ANNOUNCED	0x080
-#define	F_NEXTHOP_REJECT	0x100
-#define	F_NEXTHOP_BLACKHOLE	0x200
-#define	F_ATTR_LINKED		0x400
+#define	F_ATTR_MED_ANNOUNCE	0x020
+#define	F_ATTR_MP_REACH		0x040
+#define	F_ATTR_MP_UNREACH	0x080
+#define	F_PREFIX_ANNOUNCED	0x100
+#define	F_NEXTHOP_REJECT	0x200
+#define	F_NEXTHOP_BLACKHOLE	0x400
+#define	F_ATTR_LINKED		0x800
 
 #define ORIGIN_IGP		0
 #define ORIGIN_EGP		1
