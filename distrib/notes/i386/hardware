@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.153 2004/04/19 22:54:07 pvalchev Exp $
+dnl	$OpenBSD: hardware,v 1.154 2004/06/03 17:20:07 grange Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -49,6 +49,7 @@ Supported hardware {:-include-:}:
 		Both 16-bit PCMCIA Cards and newer 32-bit CardBus
 		support
 		Universal Serial Bus (USB)
+		Inter IC (I2C) bus
 		The MCA bus found in various IBM PS/2 machines is not
 		supported.
 	Bus Interfaces
@@ -785,7 +786,7 @@ Supported hardware {:-include-:}:
 		    VideoLogic Captivator PCI
 		    Zoltrix TV
 		Hardware monitoring sensors, including: [G]
-		    National Semiconductor LM78, LM78-J, LM79
+		    National Semiconductor LM75, LM77, LM78, LM78-J, LM79
 		    Winbond W83697HF, W83627HF, W83627THF, W83781D, W83782D
 		    VIA VT82C686A, VT8231
 		    ITE IT8705F, IT8712F
