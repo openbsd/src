@@ -1,4 +1,4 @@
-/*	$OpenBSD: C.c,v 1.5 2000/07/25 19:28:30 deraadt Exp $	*/
+/*	$OpenBSD: C.c,v 1.6 2000/07/26 17:46:52 espie Exp $	*/
 /*	$NetBSD: C.c,v 1.3 1995/03/26 20:14:02 glass Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: C.c,v 1.5 2000/07/25 19:28:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: C.c,v 1.6 2000/07/26 17:46:52 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -246,12 +246,10 @@ endtok:			if (sp > tok) {
 				sp = tok;
 			}
 			else if (sp != tok || begtoken(c)) {
-				if (sp >= tok + sizeof tok) {
-					/* hell... truncate it */
-					if (sp == tok + sizeof(tok))
-						*sp = '\0';
-					sp++;
-				} else
+				/* hell... truncate it */
+				if (sp == tok + sizeof tok - 1)
+					*sp = EOS;
+				else 
 					*sp++ = c;
 				token = YES;
 			}
@@ -353,12 +351,10 @@ hash_entry()
 			return;
 		if (iswhite(c))
 			break;
-		if (sp >= tok + sizeof(tok)) {
-			/* hell... truncate it */
-			if (sp == tok + sizeof(tok))
-				*sp = '\0';
-			sp++;
-		} else		
+		/* hell... truncate it */
+		if (sp == tok + sizeof tok - 1)
+			*sp = EOS;
+		else 
 			*sp++ = c;
 	}
 	*sp = EOS;
@@ -371,12 +367,10 @@ hash_entry()
 			break;
 	}
 	for (sp = tok;;) {		/* get next token */
-		if (sp >= tok + sizeof tok) {
-			/* hell... truncate it */
-			if (sp == tok + sizeof(tok))
-				*sp = '\0';
-			sp++;
-		} else
+		/* hell... truncate it */
+		if (sp == tok + sizeof tok - 1)
+			*sp = EOS;
+		else 
 			*sp++ = c;
 		if (GETC(==, EOF))
 			return;
@@ -419,12 +413,10 @@ str_entry(c)
 	if (c == '{')		/* it was "struct {" */
 		return (YES);
 	for (sp = tok;;) {		/* get next token */
-		if (sp >= tok + sizeof tok) {
-			/* hell... truncate it */
-			if (sp == tok + sizeof(tok))
-				*sp = '\0';
-			sp++;
-		} else
+		/* hell... truncate it */
+		if (sp == tok + sizeof tok - 1)
+			*sp = EOS;
+		else 
 			*sp++ = c;
 		if (GETC(==, EOF))
 			return (NO);
