@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.88 2004/01/28 23:31:28 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.89 2004/02/01 19:46:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -118,6 +118,7 @@ struct buf_read {
 };
 
 enum announce_type {
+	ANNOUNCE_UNDEF,
 	ANNOUNCE_SELF,
 	ANNOUNCE_NONE,
 	ANNOUNCE_ALL
