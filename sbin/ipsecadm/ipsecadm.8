@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.34 2000/11/06 18:20:00 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.35 2000/11/11 04:52:57 angelos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -614,7 +614,7 @@ ipsecadm new esp -enc blf -auth md5 -spi 1002 -dst 169.20.12.3 \e\
 Setup an ingress flow on for the inbound SA:
 .Bd -literal
 ipsecadm flow -addr 10.0.0.0 255.0.0.0 10.1.1.0 255.255.255.0 \e\ 
-	-dst 169.20.12.2 -spi 1002 -proto esp -in -require
+	-dst 169.20.12.2 -proto esp -in -require
 .Ed
 .Pp
 Setup a bypass flow:
