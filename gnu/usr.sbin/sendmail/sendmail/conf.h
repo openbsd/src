@@ -972,6 +972,7 @@ typedef int		pid_t;
 #  define SPT_TYPE	SPT_BUILTIN	/* setproctitle is in libc */
 #  define HASSETLOGIN	1	/* has setlogin(2) */
 #  define HASSRANDOMDEV	1	/* has srandomdev(3) */
+#  define HASSETUSERCONTEXT 1	/* has setusercontext(3) */
 #  if OpenBSD < 199912
 #   define HASSTRL	0	/* strlcat(3) is broken in 2.5 and earlier */
 #  else /* OpenBSD < 199912 */
