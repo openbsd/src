@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.61 2003/12/23 23:36:44 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.62 2003/12/24 15:30:13 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -418,6 +418,8 @@ user_fault:
 			break;
 		default:
 			result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+			if (result == EACCES)
+				result = EFAULT;
 			break;
 		}
 
@@ -426,8 +428,7 @@ user_fault:
 				nss = btoc(USRSTACK - va);/* XXX check this */
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
-			} else if (result == EACCES)
-				result = EFAULT;
+			}
 		}
 
 		/*
@@ -893,6 +894,8 @@ m88110_user_fault:
 			if (frame->dsr & (CMMU_DSR_SI | CMMU_DSR_PI)) {
 				/* segment or page fault */
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+				if (result == EACCES)
+					result = EFAULT;
 #ifdef DEBUG
 				if (result != 0)
 					printf("Data Access Error @ 0x%x\n", va);
@@ -936,6 +939,8 @@ m88110_user_fault:
 					    *pte);
 #endif
 					result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+					if (result == EACCES)
+						result = EFAULT;
 				}
 			} else {
 #ifdef DEBUG
@@ -943,12 +948,16 @@ m88110_user_fault:
 				    frame->dsr);
 #endif
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+				if (result == EACCES)
+					result = EFAULT;
 			}
 		} else {
 			/* instruction faults */
 			if (frame->isr & (CMMU_ISR_SI | CMMU_ISR_PI)) {
 				/* segment or page fault */
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+				if (result == EACCES)
+					result = EFAULT;
 			} else
 			if (frame->isr &
 			    (CMMU_ISR_BE | CMMU_ISR_SP | CMMU_ISR_TBE)) {
@@ -960,6 +969,8 @@ m88110_user_fault:
 				    frame->isr);
 #endif
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+				if (result == EACCES)
+					result = EFAULT;
 			}
 		}
 
@@ -968,8 +979,7 @@ m88110_user_fault:
 				nss = btoc(USRSTACK - va);/* XXX check this */
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
-			} else if (result == EACCES)
-				result = EFAULT;
+			}
 		}
 
 		/*
