@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.57 2001/06/25 03:19:42 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.58 2001/06/25 18:24:28 nate Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -157,7 +157,7 @@ all)
 	sh $this ccd0 ccd1 ccd2 ccd3 wd0 wd1 wd2 wd3
 	sh $this raid0 raid1 raid2 raid3
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh $this pf tun0 tun1 tun2 tun3
+	sh $this pf audio0 tun0 tun1 tun2 tun3
 	sh $this ttyB0 ttyB1 tty00 tty01 lkm
 	sh $this mmclock lpa0 lpt0 random
 	sh $this uk0 uk1 ss0 ss1
