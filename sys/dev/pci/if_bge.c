@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.9 2002/04/08 21:46:23 nate Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.10 2002/04/26 18:42:49 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2281,12 +2281,14 @@ bge_start(ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		pkts++;
 
+#if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m_head);
+#endif
 	}
 	if (pkts == 0)
 		return;
