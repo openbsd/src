@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.82 2002/09/10 18:29:43 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.83 2002/09/10 22:25:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -855,14 +855,16 @@ pmap_remove(pmap, sva, eva)
 
 	simple_lock(&pmap->pm_obj.vmobjlock);
 
-	for (pdemask = sva + 1; sva < eva; sva += PAGE_SIZE) {
+	for (batch = 0, pdemask = sva + 1; sva < eva; sva += PAGE_SIZE) {
 		if (pdemask != (sva & PDE_MASK)) {
 			pdemask = sva & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
 				sva += ~PDE_MASK + 1 - PAGE_SIZE;
 				continue;
 			}
+			/* XXX not until ptp acct works
 			batch = pdemask == sva && sva + ~PDE_MASK + 1 < eva;
+			*/
 		}
 
 		if ((pte = pmap_pte_get(pde, sva))) {
