@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.5 1999/10/03 13:06:30 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.6 1999/10/04 12:37:17 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -841,7 +841,7 @@ int ti_newbuf_jumbo(sc, i, m)
 		m_new->m_ext.ext_size = TI_JUMBO_FRAMELEN;
 	}
 
-	m->m_ext.ext_handle = sc;
+	m_new->m_ext.ext_handle = sc;
 
 	m_adj(m_new, ETHER_ALIGN);
 	/* Set up the descriptor. */
