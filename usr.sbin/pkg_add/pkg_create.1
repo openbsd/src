@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.10 2004/08/06 16:45:51 millert Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.11 2004/08/10 12:50:14 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -198,6 +198,27 @@ begins with @.
 .Ar filename
 is always a relative path, relative to the current
 .Cm @cwd .
+.It Cm @man Ar filename
+Specialized version of
+.Cm @file ,
+to handle manual pages.
+.It Cm @info Ar filename
+Specialized version of
+.Cm @file ,
+to handle GNU info files.
+Automatically grab
+.Pa filename-*
+chapter files, run
+.Xr install-info 1
+as needed.
+.It Cm @lib Ar filename
+Specialized version of
+.Cm @file ,
+to handle shared libraries.
+Satisfy LIB_DEPENDS,
+run
+.Xr ldconfig 8
+as needed.
 .It Cm @arch Ar arches
 List of architectures for which this package is intended.
 .It Cm @cwd Ar pathname
@@ -314,17 +335,40 @@ to be deleted at deinstall time.
 Deprecated, use
 .Dl directoryname/
 instead, as it handles proper directory creation as well.
-.It Cm @extra Ar file
+.It Cm @mandir Ar directoryname
+Specialized version of
+.Cm @dir ,
+to handle manual directories: instruct user to add/remove the
+directory to 
+.Xr man.conf 5 ,
+remove
+.Xr apropos 1
+database when needed.
+.It Cm @fontdir Ar directoryname
+Specialized version of
+.Cm @dir ,
+to handle font directories: create
+.Pa font.alias
+from
+.Pa font.alias-*
+fragments, execute
+.Xr mkfontdir 1 ,
+.Xr fc-cache 1
+when needed.
+Delete extra files at
+.Xr pkg_delete 1
+time.
+.It Cm @extra Ar filename
 Declare extra file
-.Pa file
+.Pa filename
 to be deleted at deinstall time, if user sets
 .Fl c
 option.
 Those files are extra configuration files that are normally not deleted.
-.Ar file
+.Ar filename
 can be an absolute path.
 If
-.Pa file
+.Pa filename
 ends with a slash, it is a directory.
 .It Cm @extraunexec Ar command
 Extra
