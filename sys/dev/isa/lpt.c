@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.16 1996/06/27 21:15:51 shawn Exp $ */
+/*	$OpenBSD: lpt.c,v 1.17 1996/06/27 21:19:45 deraadt Exp $ */
 /*	$NetBSD: lpt.c,v 1.39 1996/05/12 23:53:06 mycroft Exp $	*/
 
 /*
@@ -472,22 +472,20 @@ pushbytes(sc)
 	} else {
 		int s;
 
-		s = spltty();
 		while (sc->sc_count > 0) {
 			/* if the printer is ready for a char, give it one */
 			if ((sc->sc_state & LPT_OBUSY) == 0) {
 				LPRINTF(("%s: write %d\n", sc->sc_dev.dv_xname,
 				    sc->sc_count));
+				s = spltty();
 				(void) lptintr(sc);
+				splx(s);
 			}
 			error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
 			    "lptwrite2", 0);
-			if (error) {
-				splx(s);
+			if (error)
 				return error;
-			}
 		}
-		splx(s);
 	}
 	return 0;
 }
@@ -535,8 +533,7 @@ lptintr(arg)
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 
-	if (((sc->sc_state & LPT_OPEN) == 0 && sc->sc_count == 0) ||
-	    (sc->sc_flags & LPT_NOINTR))
+	if (((sc->sc_state & LPT_OPEN) == 0 && sc->sc_count == 0) || (sc->sc_flags & LPT_NOINTR))
 		return 0;
 
 	/* is printer online and ready for output */
