@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.96 2004/07/21 13:48:25 jaredy Exp $
+.\"	$OpenBSD: afterboot.8,v 1.97 2004/07/23 17:27:40 jaredy Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -302,7 +302,8 @@ Check the YP domain name with the
 command.
 If necessary, correct it by editing the
 .Pa /etc/defaultdomain
-file.
+file (see
+.Xr defaultdomain 5 ) .
 The
 .Pa /etc/netstart
 script reads this file on bootup to determine and set the domain name.
@@ -865,6 +866,7 @@ boot time in the kernel image.
 .Xr ccd 4 ,
 .Xr aliases 5 ,
 .Xr crontab 5 ,
+.Xr defaultdomain 5 ,
 .Xr dhcpd.conf 5 ,
 .Xr exports 5 ,
 .Xr fbtab 5 ,
