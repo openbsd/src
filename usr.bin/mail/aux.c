@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.8 1997/07/25 21:05:33 mickey Exp $	*/
+/*	$OpenBSD: aux.c,v 1.9 1997/07/28 15:20:28 millert Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.8 1997/07/25 21:05:33 mickey Exp $";
+static char rcsid[] = "$OpenBSD: aux.c,v 1.9 1997/07/28 15:20:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -462,16 +462,16 @@ skin(name)
 	register char *cp, *cp2;
 	char *bufend;
 	int gotlt, lastsp;
-	char nbuf[BUFSIZ];
 
 	if (name == NULL)
 		return(NULL);
 	if (strchr(name, '(') == NULL && strchr(name, '<') == NULL
 	    && strchr(name, ' ') == NULL)
 		return(name);
+	if ((bufend = (char *)malloc(strlen(name) + 1)) == NULL)
+		panic("Out of memory");
 	gotlt = 0;
 	lastsp = 0;
-	bufend = nbuf;
 	for (cp = name, cp2 = bufend; (c = *cp++) != '\0'; ) {
 		switch (c) {
 		case '(':
@@ -552,7 +552,9 @@ skin(name)
 	}
 	*cp2 = 0;
 
-	return(savestr(nbuf));
+	if ((bufend = realloc(bufend, strlen(bufend) + 1)) == NULL)
+		panic("Out of memory");
+	return(bufend);
 }
 
 /*

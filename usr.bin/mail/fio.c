@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.10 1997/07/24 17:27:11 millert Exp $	*/
+/*	$OpenBSD: fio.c,v 1.11 1997/07/28 15:20:30 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.10 1997/07/24 17:27:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: fio.c,v 1.11 1997/07/28 15:20:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ makemessage(f, omsgCount)
 	} else {
 		if (message != 0)
 			(void)free(message);
-		if ((message = (struct message *)malloc(size)) == 0)
+		if ((message = (struct message *)malloc(size)) == NULL)
 			panic("Insufficient memory for %d messages", msgCount);
 		dot = message;
 	}
