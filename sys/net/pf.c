@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.306 2003/01/21 22:23:49 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.307 2003/01/23 13:36:17 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -939,7 +939,7 @@ pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
     u_int16_t *ic, u_int16_t *hc, u_int8_t u, sa_family_t af)
 {
 	struct pf_addr	oia, ooa;
-	u_int32_t	opc, oh2c = *h2c;
+	u_int32_t	opc;
 	u_int16_t	oip = *ip;
 
 	PF_ACPY(&oia, ia, af);
@@ -958,14 +958,18 @@ pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
 	/* Change inner ip address, fix inner ipv4 and icmp checksums. */
 	switch (af) {
 #ifdef INET
-	case AF_INET:
+	case AF_INET: {
+		u_int32_t	 oh2c = *h2c;
+
 		*h2c = pf_cksum_fixup(pf_cksum_fixup(*h2c,
 		    oia.addr16[0], ia->addr16[0], 0),
 		    oia.addr16[1], ia->addr16[1], 0);
 		*ic = pf_cksum_fixup(pf_cksum_fixup(*ic,
 		    oia.addr16[0], ia->addr16[0], 0),
 		    oia.addr16[1], ia->addr16[1], 0);
+		*ic = pf_cksum_fixup(*ic, oh2c, *h2c, 0);
 		break;
+	}
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
@@ -983,7 +987,6 @@ pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
 		break;
 #endif /* INET6 */
 	}
-	*ic = pf_cksum_fixup(*ic, oh2c, *h2c, 0);
 	/* Change outer ip address, fix outer ipv4 or icmpv6 checksum. */
 	PF_ACPY(oa, na, af);
 	switch (af) {
