@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.13 2002/06/11 18:15:48 ho Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.14 2002/07/11 16:14:52 stevesk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.13 2002/06/11 18:15:48 ho Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.14 2002/07/11 16:14:52 stevesk Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -423,7 +423,7 @@ ipsec_id_print (u_char *buf, int len, u_char doi)
 	case IPSEC_ID_FQDN:
 	case IPSEC_ID_USER_FQDN:
 		printf("\"");
-		for(p = buf + 4; (int)(p - buf) < len; p++)
+		for(p = buf + 4; (int)(p - buf) < len - 4; p++)
 			printf("%c",(isprint(*p) ? *p : '.'));
 		printf("\"");
 		break;
