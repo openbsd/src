@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.48 2002/06/11 05:58:17 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.49 2003/04/10 02:04:24 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ malloc(size, type, flags)
 #ifdef KMEMSTATS
 	register struct kmemstats *ksp = &kmemstats[type];
 
-	if (((unsigned long)type) > M_LAST)
+	if (((unsigned long)type) >= M_LAST)
 		panic("malloc - bogus type");
 #endif
 
@@ -524,6 +524,7 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	struct kmembuckets kb;
+	char *strp, *endp;
 	int i, siz;
 
 	if (namelen != 2 && name[0] != KERN_MALLOC_BUCKETS &&
@@ -536,12 +537,19 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if (buckstring_init == 0) {
 			buckstring_init = 1;
 			bzero(buckstring, sizeof(buckstring));
-			for (siz = 0, i = MINBUCKET; i < MINBUCKET + 16; i++)
-			    siz += sprintf(buckstring + siz,
-			    "%d,", (u_int)(1<<i));
+			strp = buckstring;
+			endp = strp + sizeof(buckstring) - 1;
+			siz = 0;
+			for (i = MINBUCKET; i < MINBUCKET + 16; i++) {
+				siz = snprintf(strp, (endp - strp), "%d,",
+				    (u_int)(1<<i));
+				if (strp + siz >= endp)
+					break;
+				strp += siz;
+			}
 			/* Remove trailing comma */
 			if (siz)
-				buckstring[siz - 1] = '\0';
+				*(strp - 1) = '\0';
 		}
 		return (sysctl_rdstring(oldp, oldlenp, newp, buckstring));
 
@@ -575,13 +583,20 @@ sysctl_malloc(name, namelen, oldp, oldlenp, newp, newlen, p)
 			}
 			memall = malloc(totlen + M_LAST, M_SYSCTL, M_WAITOK);
 			bzero(memall, totlen + M_LAST);
-			for (siz = 0, i = 0; i < M_LAST; i++)
-				siz += sprintf(memall + siz, "%s,",
+			strp = memall;
+			endp = memall + totlen + M_LAST;
+			siz = 0;
+			for (i = 0; i < M_LAST; i++) {
+				siz = snprintf(strp, (endp - strp), "%s,",
 				    memname[i] ? memname[i] : "");
+				if (strp + siz >= endp)
+					break;
+				strp += siz;
+			}
 
 			/* Remove trailing comma */
 			if (siz)
-				memall[siz - 1] = '\0';
+				*(strp - 1) = '\0';
 
 			/* Now, convert all spaces to underscores */
 			for (i = 0; i < totlen; i++)
