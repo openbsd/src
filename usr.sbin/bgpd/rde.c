@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.58 2004/01/11 21:57:58 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.59 2004/01/11 22:06:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -597,7 +597,6 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 		kr.nexthop = p->aspath->nexthop->true_nexthop.v4.s_addr;
 	}
 
-	/* XXX switch struct kroute to bgpd_addr too */
 	kr.prefix = p->prefix->prefix.v4.s_addr;
 	kr.prefixlen = p->prefix->prefixlen;
 
