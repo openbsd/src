@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.35 2005/03/13 22:07:49 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.36 2005/03/13 22:50:34 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -634,14 +634,13 @@ rcs_sym_getrev(RCSFILE *file, const char *sym)
 	struct rcs_sym *symp;
 
 	num = NULL;
-
 	TAILQ_FOREACH(symp, &(file->rf_symbols), rs_list)
 		if (strcmp(symp->rs_name, sym) == 0)
 			break;
 
-	if (symp == NULL) {
-		/* XXX set error */
-	} else if (((num = rcsnum_alloc()) != NULL) &&
+	if (symp == NULL)
+		rcs_errno = RCS_ERR_NOENT;
+	else if (((num = rcsnum_alloc()) != NULL) &&
 	    (rcsnum_cpy(symp->rs_num, num, 0) < 0)) {
 		rcsnum_free(num);
 		num = NULL;
