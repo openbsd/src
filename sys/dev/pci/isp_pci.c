@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.9 1999/11/22 12:52:46 mjacob Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.10 1999/12/16 05:19:50 mjacob Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -147,6 +147,10 @@ static struct ispmdvec mdvec_2200 = {
 #define	PCI_PRODUCT_QLOGIC_ISP1240	0x1240
 #endif
 
+#ifndef	PCI_PRODUCT_QLOGIC_ISP1280
+#define	PCI_PRODUCT_QLOGIC_ISP1280	0x1280
+#endif
+
 #ifndef	PCI_PRODUCT_QLOGIC_ISP2100
 #define	PCI_PRODUCT_QLOGIC_ISP2100	0x2100
 #endif
@@ -162,6 +166,9 @@ static struct ispmdvec mdvec_2200 = {
 
 #define	PCI_QLOGIC_ISP1240	\
 	((PCI_PRODUCT_QLOGIC_ISP1240 << 16) | PCI_VENDOR_QLOGIC)
+
+#define	PCI_QLOGIC_ISP1280	\
+	((PCI_PRODUCT_QLOGIC_ISP1280 << 16) | PCI_VENDOR_QLOGIC)
 
 #define	PCI_QLOGIC_ISP2100	\
 	((PCI_PRODUCT_QLOGIC_ISP2100 << 16) | PCI_VENDOR_QLOGIC)
@@ -222,10 +229,9 @@ isp_pci_probe(parent, match, aux)
 #endif
 #ifndef	ISP_DISABLE_1080_SUPPORT
 	case PCI_QLOGIC_ISP1080:
-#if	0
-	case PCI_QLOGIC_ISP1240:	/* 1240 not ready yet */
+	case PCI_QLOGIC_ISP1240:
+	case PCI_QLOGIC_ISP1280:
 		return (1);
-#endif
 #endif
 #ifndef	ISP_DISABLE_2100_SUPPORT
 	case PCI_QLOGIC_ISP2100:
@@ -348,6 +354,34 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_mdvec = &mdvec_1080;
 		isp->isp_type = ISP_HA_SCSI_1080;
 		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
+		if (isp->isp_param == NULL) {
+			printf("%s: couldn't allocate sdparam table\n",
+			       isp->isp_name);
+			return;
+		}
+		bzero(isp->isp_param, sizeof (sdparam));
+		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
+		    ISP1080_DMA_REGS_OFF;
+	}
+	if (pa->pa_id == PCI_QLOGIC_ISP1240) {
+		isp->isp_mdvec = &mdvec_1080;
+		isp->isp_type = ISP_HA_SCSI_1240;
+		isp->isp_param = malloc(2 * sizeof (sdparam),
+		    M_DEVBUF, M_NOWAIT);
+		if (isp->isp_param == NULL) {
+			printf("%s: couldn't allocate sdparam table\n",
+			       isp->isp_name);
+			return;
+		}
+		bzero(isp->isp_param, sizeof (sdparam));
+		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
+		    ISP1080_DMA_REGS_OFF;
+	}
+	if (pa->pa_id == PCI_QLOGIC_ISP1280) {
+		isp->isp_mdvec = &mdvec_1080;
+		isp->isp_type = ISP_HA_SCSI_1280;
+		isp->isp_param = malloc(2 * sizeof (sdparam),
+		    M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
 			printf("%s: couldn't allocate sdparam table\n",
 			       isp->isp_name);
@@ -528,12 +562,14 @@ isp_pci_rd_reg(isp, regoff)
 		 */
 		oldconf = isp_pci_rd_reg(isp, BIU_CONF1);
 		isp_pci_wr_reg(isp, BIU_CONF1, oldconf | BIU_PCI_CONF1_SXP);
+		delay(250);
 	}
 	offset = pcs->pci_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
 	offset += (regoff & 0xff);
 	rv = bus_space_read_2(pcs->pci_st, pcs->pci_sh, offset);
 	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
 		isp_pci_wr_reg(isp, BIU_CONF1, oldconf);
+		delay(250);
 	}
 	return (rv);
 }
@@ -553,12 +589,14 @@ isp_pci_wr_reg(isp, regoff, val)
 		 */
 		oldconf = isp_pci_rd_reg(isp, BIU_CONF1);
 		isp_pci_wr_reg(isp, BIU_CONF1, oldconf | BIU_PCI_CONF1_SXP);
+		delay(250);
 	}
 	offset = pcs->pci_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
 	offset += (regoff & 0xff);
 	bus_space_write_2(pcs->pci_st, pcs->pci_sh, offset, val);
 	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
 		isp_pci_wr_reg(isp, BIU_CONF1, oldconf);
+		delay(250);
 	}
 }
 
@@ -568,26 +606,39 @@ isp_pci_rd_reg_1080(isp, regoff)
 	struct ispsoftc *isp;
 	int regoff;
 {
-	u_int16_t rv;
+	u_int16_t rv, oc = 0;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
-	int offset, oc = 0;
+	int offset;
 
-	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK ||
+	    (regoff & _BLK_REG_MASK) == (SXP_BLOCK|SXP_BANK1_SELECT)) {
+		u_int16_t tc;
 		/*
 		 * We will assume that someone has paused the RISC processor.
 		 */
 		oc = isp_pci_rd_reg(isp, BIU_CONF1);
-		isp_pci_wr_reg(isp, BIU_CONF1, oc | BIU_PCI1080_CONF1_SXP);
+		tc = oc & ~(BIU_PCI1080_CONF1_DMA|BIU_PCI_CONF1_SXP);
+		if (IS_12X0(isp)) {
+			if (regoff & SXP_BANK1_SELECT)
+				tc |= BIU_PCI1080_CONF1_SXP0;
+			else
+				tc |= BIU_PCI1080_CONF1_SXP1;
+		} else {
+			tc |= BIU_PCI1080_CONF1_SXP0;
+		}
+		isp_pci_wr_reg(isp, BIU_CONF1, tc);
+		delay(250);
 	} else if ((regoff & _BLK_REG_MASK) == DMA_BLOCK) {
 		oc = isp_pci_rd_reg(isp, BIU_CONF1);
 		isp_pci_wr_reg(isp, BIU_CONF1, oc | BIU_PCI1080_CONF1_DMA);
+		delay(250);
 	}
 	offset = pcs->pci_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
 	offset += (regoff & 0xff);
 	rv = bus_space_read_2(pcs->pci_st, pcs->pci_sh, offset);
-	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK ||
-	    ((regoff & _BLK_REG_MASK) == DMA_BLOCK)) {
+	if (oc) {
 		isp_pci_wr_reg(isp, BIU_CONF1, oc);
+		delay(250);
 	}
 	return (rv);
 }
@@ -598,25 +649,39 @@ isp_pci_wr_reg_1080(isp, regoff, val)
 	int regoff;
 	u_int16_t val;
 {
+	u_int16_t oc = 0;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
-	int offset, oc = 0;
+	int offset;
 
-	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK ||
+	    (regoff & _BLK_REG_MASK) == (SXP_BLOCK|SXP_BANK1_SELECT)) {
+		u_int16_t tc;
 		/*
 		 * We will assume that someone has paused the RISC processor.
 		 */
 		oc = isp_pci_rd_reg(isp, BIU_CONF1);
-		isp_pci_wr_reg(isp, BIU_CONF1, oc | BIU_PCI1080_CONF1_SXP);
+		tc = oc & ~(BIU_PCI1080_CONF1_DMA|BIU_PCI_CONF1_SXP);
+		if (IS_12X0(isp)) {
+			if (regoff & SXP_BANK1_SELECT)
+				tc |= BIU_PCI1080_CONF1_SXP0;
+			else
+				tc |= BIU_PCI1080_CONF1_SXP1;
+		} else {
+			tc |= BIU_PCI1080_CONF1_SXP0;
+		}
+		isp_pci_wr_reg(isp, BIU_CONF1, tc);
+		delay(250);
 	} else if ((regoff & _BLK_REG_MASK) == DMA_BLOCK) {
 		oc = isp_pci_rd_reg(isp, BIU_CONF1);
 		isp_pci_wr_reg(isp, BIU_CONF1, oc | BIU_PCI1080_CONF1_DMA);
+		delay(250);
 	}
 	offset = pcs->pci_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
 	offset += (regoff & 0xff);
 	bus_space_write_2(pcs->pci_st, pcs->pci_sh, offset, val);
-	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK ||
-	    ((regoff & _BLK_REG_MASK) == DMA_BLOCK)) {
+	if (oc) {
 		isp_pci_wr_reg(isp, BIU_CONF1, oc);
+		delay(250);
 	}
 }
 #endif
