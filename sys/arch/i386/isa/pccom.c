@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.21 1998/02/22 21:35:31 niklas Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.22 1998/02/23 11:40:32 downsj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -554,6 +554,7 @@ comattach(parent, self, aux)
 	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
 	int	*hayespp;
 #endif
+	u_int8_t lcr;
 
 	/*
 	 * XXX should be broken out into functions for isa attach and
@@ -645,22 +646,115 @@ comattach(parent, self, aux)
 	if (*hayespp == 0) {
 #endif
 
-	sc->sc_fifolen = 1;
-	/* look for a NS 16550AF UART with FIFOs */
-	bus_space_write_1(iot, ioh, com_fifo,
-	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_14);
+	/*
+	 * Probe for all known forms of UART.
+	 */
+	lcr = bus_space_read_1(iot, ioh, com_lcr);
+
+	bus_space_write_1(iot, ioh, com_lcr, 0xbf);
+	bus_space_write_1(iot, ioh, com_efr, 0);
+	bus_space_write_1(iot, ioh, com_lcr, 0);
+
+	bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE);
 	delay(100);
-	if (ISSET(bus_space_read_1(iot, ioh, com_iir), IIR_FIFO_MASK) ==
-	    IIR_FIFO_MASK) {
-		if (ISSET(bus_space_read_1(iot, ioh, com_fifo),
-		    FIFO_TRIGGER_14) == FIFO_TRIGGER_14) {
-			SET(sc->sc_hwflags, COM_HW_FIFO);
-			printf(": ns16550a, working fifo\n");
-			sc->sc_fifolen = 16;
-		} else
-			printf(": ns16550, broken fifo\n");
-	} else
-		printf(": ns8250 or ns16450, no fifo\n");
+
+	switch(bus_space_read_1(iot, ioh, com_iir) >> 6) {
+	case 0:
+		sc->sc_uarttype = COM_UART_16450;
+		break;
+	case 2:
+		sc->sc_uarttype = COM_UART_16550;
+		break;
+	case 3:
+		sc->sc_uarttype = COM_UART_16550A;
+		break;
+	default:
+		sc->sc_uarttype = COM_UART_UNKNOWN;
+		break;
+	}
+
+	if (sc->sc_uarttype == COM_UART_16550A) { /* Probe for ST16650s */
+		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
+		if (bus_space_read_1(iot, ioh, com_efr) == 0) {
+			sc->sc_uarttype = COM_UART_ST16650;
+		} else {
+			bus_space_write_1(iot, ioh, com_lcr, 0xbf);
+			if (bus_space_read_1(iot, ioh, com_efr) == 0)
+				sc->sc_uarttype = COM_UART_ST16650V2;
+		}
+	}
+
+#ifdef notyet
+	if (sc->sc_uarttype == COM_UART_16550A) { /* Probe for TI16750s */
+		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
+		bus_space_write_1(iot, ioh, com_fifo,
+		    FIFO_ENABLE | FIFO_ENABLE_64BYTE);
+		if ((bus_space_read_1(iot, ioh, com_iir) >> 5) == 7) {
+			bus_space_write_1(iot, ioh, com_lcr, 0);
+			if ((bus_space_read_1(iot, ioh, com_iir) >> 5) == 6)
+				sc->sc_uarttype = COM_UART_TI16750;
+		}
+		bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE);
+	}
+#endif
+
+	bus_space_write_1(iot, ioh, com_lcr, lcr);
+	if (sc->sc_uarttype == COM_UART_16450) { /* Probe for 8250 */
+		u_int8_t scr0, scr1, scr2;
+
+		scr0 = bus_space_read_1(iot, ioh, com_scratch);
+		bus_space_write_1(iot, ioh, com_scratch, 0xa5);
+		scr1 = bus_space_read_1(iot, ioh, com_scratch);
+		bus_space_write_1(iot, ioh, com_scratch, 0x5a);
+		scr2 = bus_space_read_1(iot, ioh, com_scratch);
+		bus_space_write_1(iot, ioh, com_scratch, scr0);
+
+		if ((scr1 != 0xa5) || (scr2 != 0x5a))
+			sc->sc_uarttype = COM_UART_8250;
+	}
+
+	/*
+	 * Print UART type and initialize ourself.
+	 */
+	sc->sc_fifolen = 1;	/* default */
+	switch (sc->sc_uarttype) {
+	case COM_UART_UNKNOWN:
+		printf(": unknown uart\n");
+		break;
+	case COM_UART_8250:
+		printf(": ns8250, no fifo\n");
+		break;
+	case COM_UART_16450:
+		printf(": ns16450, no fifo\n");
+		break;
+	case COM_UART_16550:
+		printf(": ns16550, no working fifo\n");
+		break;
+	case COM_UART_16550A:
+		printf(": ns16550a, 16 byte fifo\n");
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		sc->sc_fifolen = 16;
+		break;
+	case COM_UART_ST16650:
+		printf(": st16650, no working fifo\n");
+		break;
+	case COM_UART_ST16650V2:
+		printf(": st16650, 32 byte fifo\n");
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		sc->sc_fifolen = 32;
+		break;
+	case COM_UART_TI16750:
+		printf(": ti16750, 64 byte fifo\n");
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		sc->sc_fifolen = 64;
+		break;
+	default:
+		panic("comattach: bad fifo type\n");
+	}
+
+	/* clear and disable fifo */
+	bus_space_write_1(iot, ioh, com_fifo, FIFO_RCV_RST | FIFO_XMT_RST);
+	(void)bus_space_read_1(iot, ioh, com_data);
 	bus_space_write_1(iot, ioh, com_fifo, 0);
 #ifdef COM_HAYESP
 	}
@@ -768,6 +862,24 @@ comopen(dev, flag, mode, p)
 
 		iot = sc->sc_iot;
 		ioh = sc->sc_ioh;
+
+		/*
+		 * Wake up the sleepy heads.
+		 */
+		switch (sc->sc_uarttype) {
+		case COM_UART_ST16650:
+		case COM_UART_ST16650V2:
+			bus_space_write_1(iot, ioh, com_lcr, 0xbf);
+			bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
+			bus_space_write_1(iot, ioh, com_ier, 0);
+			bus_space_write_1(iot, ioh, com_efr, 0);
+			bus_space_write_1(iot, ioh, com_lcr, 0);
+			break;
+		case COM_UART_TI16750:
+			bus_space_write_1(iot, ioh, com_ier, 0);
+			break;
+		}
+
 #ifdef COM_HAYESP
 		/* Setup the ESP board */
 		if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
@@ -801,6 +913,20 @@ comopen(dev, flag, mode, p)
 		} else
 #endif
 		if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
+			u_int8_t fifo = FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST;
+			u_int8_t lcr;
+
+			if (tp->t_ispeed <= 1200)
+				fifo |= FIFO_TRIGGER_1;
+			else
+				fifo |= FIFO_TRIGGER_8;
+			if (sc->sc_uarttype == COM_UART_TI16750) {
+				fifo |= FIFO_ENABLE_64BYTE;
+				lcr = bus_space_read_1(iot, ioh, com_lcr);
+				bus_space_write_1(iot, ioh, com_lcr,
+				    lcr | LCR_DLAB);
+			}
+
 			/*
 			 * (Re)enable and drain FIFOs.
 			 *
@@ -816,15 +942,15 @@ comopen(dev, flag, mode, p)
 			 	bus_space_write_1(iot, ioh, com_fifo, 0);
 				delay(100);
 				(void) bus_space_read_1(iot, ioh, com_data);
-				bus_space_write_1(iot, ioh, com_fifo,
-				    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
-				    (tp->t_ispeed <= 1200 ?
-				    FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
+				bus_space_write_1(iot, ioh, com_fifo, fifo |
+				    FIFO_RCV_RST | FIFO_XMT_RST);
 				delay(100);
 				if(!ISSET(bus_space_read_1(iot, ioh,
 				    com_lsr), LSR_RXRDY))
 				    	break;
 			}
+			if (sc->sc_uarttype == COM_UART_TI16750)
+				bus_space_write_1(iot, ioh, com_lcr, lcr);
 		}
 
 		/* flush any pending I/O */
@@ -921,12 +1047,31 @@ comclose(dev, flag, mode, p)
 			/* XXX perhaps only clear DTR */
 			bus_space_write_1(iot, ioh, com_mcr, 0);
 		}
+
+		/*
+	 	 * Turn FIFO off; enter sleep mode if possible.
+	 	 */
+		bus_space_write_1(iot, ioh, com_fifo, 0);
+		delay(100);
+		(void) bus_space_read_1(iot, ioh, com_data);
+		delay(100);
+		bus_space_write_1(iot, ioh, com_fifo,
+		    FIFO_RCV_RST | FIFO_XMT_RST);
+
+		switch (sc->sc_uarttype) {
+		case COM_UART_ST16650:
+		case COM_UART_ST16650V2:
+			bus_space_write_1(iot, ioh, com_lcr, 0xbf);
+			bus_space_write_1(iot, ioh, com_efr, EFR_ECB);
+			bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
+			bus_space_write_1(iot, ioh, com_lcr, 0);
+			break;
+		case COM_UART_TI16750:
+			bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
+			break;
+		}
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
-/*
- * FIFO off
- */
-	bus_space_write_1(iot, ioh, com_fifo, 0);
 	sc->sc_cua = 0;
 	splx(s);
 	ttyclose(tp);
@@ -1200,7 +1345,7 @@ comparam(tp, t)
 			 * Make sure the transmit FIFO is empty before
 			 * proceeding.  If we don't do this, some revisions
 			 * of the UART will hang.  Interestingly enough,
-			 * even if we do this will the last character is
+			 * even if we do this while the last character is
 			 * still being pushed out, they don't hang.  This
 			 * seems good enough.
 			 */
@@ -1228,10 +1373,19 @@ comparam(tp, t)
 			bus_space_write_1(iot, ioh, com_lcr, lcr);
 
 		if (!ISSET(sc->sc_hwflags, COM_HW_HAYESP) &&
-		    ISSET(sc->sc_hwflags, COM_HW_FIFO))
-			bus_space_write_1(iot, ioh, com_fifo,
-			    FIFO_ENABLE |
-			    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
+		    ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
+			if (sc->sc_uarttype == COM_UART_TI16750) {
+				bus_space_write_1(iot, ioh, com_lcr,
+				    lcr | LCR_DLAB);
+				bus_space_write_1(iot, ioh, com_fifo,
+				    FIFO_ENABLE | FIFO_ENABLE_64BYTE |
+				    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
+				bus_space_write_1(iot, ioh, com_lcr, lcr);
+			} else
+				bus_space_write_1(iot, ioh, com_fifo,
+				    FIFO_ENABLE |
+				    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
+		}
 	} else
 		bus_space_write_1(iot, ioh, com_lcr, lcr);
 
@@ -1331,7 +1485,6 @@ comhwiflow(tp, block)
 	splx(s);
 	return 1;
 }
-
 
 void
 comstart(tp)
@@ -1551,6 +1704,9 @@ comintr(arg)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char	lsr;
 	u_int	rxput;
+
+	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT) || !sc->sc_tty)
+		return (0);	/* can't do squat. */
 
 	if (ISSET(bus_space_read_1(iot, ioh, com_iir), IIR_NOPEND))
 		return (0);

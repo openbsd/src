@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccomvar.h,v 1.4 1997/07/07 17:08:05 niklas Exp $	*/
+/*	$OpenBSD: pccomvar.h,v 1.5 1998/02/23 11:40:33 downsj Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -61,6 +61,16 @@ struct com_softc {
 	bus_space_handle_t sc_ioh;
 	bus_space_handle_t sc_hayespioh;
 	isa_chipset_tag_t sc_ic;
+
+	u_char sc_uarttype;
+#define COM_UART_UNKNOWN	0x00		/* unknown */
+#define COM_UART_8250		0x01		/* no fifo */
+#define COM_UART_16450		0x02		/* no fifo */
+#define COM_UART_16550		0x03		/* no working fifo */
+#define COM_UART_16550A		0x04		/* 16 byte fifo */
+#define COM_UART_ST16650	0x05		/* no working fifo */
+#define COM_UART_ST16650V2	0x06		/* 32 byte fifo */
+#define COM_UART_TI16750	0x07		/* 64 byte fifo */
 
 	u_char sc_hwflags;
 #define	COM_HW_NOIEN	0x01
