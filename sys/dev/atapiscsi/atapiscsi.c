@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.60 2002/05/10 16:26:28 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.61 2002/05/21 08:42:03 espie Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -150,11 +150,12 @@ int	atapiscsi_match(struct device *, void *, void *);
 void	atapiscsi_attach(struct device *, struct device *, void *);
 int     atapi_to_scsi_sense(struct scsi_xfer *, u_int8_t);
 
+enum atapi_state { as_none, as_data, as_completed };
+
 struct atapiscsi_softc {
 	struct device  sc_dev;
 	struct  scsi_link  sc_adapterlink;
 	struct channel_softc *chp;
-	enum atapi_state { as_none, as_data, as_completed };
 	enum atapi_state protocol_phase;
 
 	int drive;
