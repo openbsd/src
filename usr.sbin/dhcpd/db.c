@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.4 2004/04/15 21:57:04 henning Exp $	*/
+/*	$OpenBSD: db.c,v 1.5 2004/04/15 23:20:23 henning Exp $	*/
 
 /*
  * Persistent database management routines for DHCPD.
@@ -204,34 +204,27 @@ commit_leases(void)
 void
 db_startup(void)
 {
+	int db_fd;
+
+	/* open lease file. once we dropped privs it has to stay open */
+	db_fd = open(path_dhcpd_db, O_WRONLY|O_TRUNC|O_CREAT, 0664);
+	if (db_fd == -1)
+		error("Can't create new lease file: %m");
+	if ((db_file = fdopen(db_fd, "w")) == NULL)
+		error("Can't fdopen new lease file!");
+
 	/* Read in the existing lease file... */
 	read_leases();
 	time(&write_time);
+
 	new_lease_file();
 }
 
 void
 new_lease_file()
 {
-	char newfname [MAXPATHLEN];
-	char backfname [MAXPATHLEN];
-	time_t t;
-	int db_fd;
-
-	/* If we already have an open database, close it. */
-	if (db_file)
-		fclose(db_file);
-
-	/* Make a temporary lease file... */
-	time(&t);
-	snprintf(newfname, sizeof(newfname), "%s.%d", path_dhcpd_db,
-	    (int)t);
-
-	db_fd = open (newfname, O_WRONLY | O_TRUNC | O_CREAT, 0664);
-	if (db_fd == -1)
-		error("Can't create new lease file: %m");
-	if ((db_file = fdopen(db_fd, "w")) == NULL)
-		error("Can't fdopen new lease file!");
+	fflush(db_file);
+	rewind(db_file);
 
 	/*
 	 * Write an introduction so people don't complain about time being off.
@@ -245,19 +238,9 @@ new_lease_file()
 	counting = 0;
 	write_leases();
 
-	/* Get the old database out of the way... */
-	snprintf(backfname, sizeof(backfname), "%s~", path_dhcpd_db);
-	if (unlink(backfname) == -1 && errno != ENOENT)
-		error("Can't remove old lease database backup %s: %m",
-		    backfname);
-	if (link(path_dhcpd_db, backfname) == -1)
-		error("Can't backup lease database %s to %s: %m",
-		    path_dhcpd_db, backfname);
-
-	/* Move in the new file... */
-	if (rename(newfname, path_dhcpd_db) == -1)
-		error("Can't install new lease database %s to %s: %m",
-		    newfname, path_dhcpd_db);
+	fflush(db_file);
+	ftruncate(fileno(db_file), ftell(db_file));
+	fsync(fileno(db_file));
 
 	counting = 1;
 }
