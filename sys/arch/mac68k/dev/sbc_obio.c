@@ -163,12 +163,10 @@ sbc_obio_attach(parent, self, args)
 	/*
 	 * Fill in the prototype scsi_link.
 	 */
-	ncr_sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &sbc_ops;
 	ncr_sc->sc_link.device = &sbc_dev;
-	ncr_sc->sc_link.max_target = 7;
 
 	/*
 	 * Initialize fields used by the MI code
@@ -226,8 +224,9 @@ sbc_obio_attach(parent, self, args)
 		sc->sc_clrintr = NULL;
 
 	if (sc->sc_options)
-		printf(": options=%s", bitmask_snprintf(sc->sc_options,
-		    SBC_OPTIONS_BITS, bits, sizeof(bits)));
+		printf(": options=0x%x", sc->sc_options);
+/*		printf(": options=%s", bitmask_snprintf(sc->sc_options,
+		    SBC_OPTIONS_BITS, bits, sizeof(bits))); */
 	printf("\n");
 
 	/* Now enable SCSI interrupts through VIA2, if appropriate */
