@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.14 2002/06/09 14:38:39 itojun Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.15 2002/07/20 23:00:33 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -578,7 +578,6 @@ rip6_usrreq(so, req, m, nam, control, p)
 	struct in6pcb *in6p = sotoin6pcb(so);
 	int s;
 	int error = 0;
-/*	extern	struct socket *ip6_mrouter; */ /* xxx */
 	int priv;
 
 	priv = 0;
