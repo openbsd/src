@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth1.c,v 1.13 2001/01/21 19:05:43 markus Exp $");
+RCSID("$OpenBSD: auth1.c,v 1.14 2001/01/22 23:06:39 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -252,7 +252,7 @@ do_authloop(Authctxt *authctxt)
 
 		case SSH_CMSG_AUTH_TIS:
 			debug("rcvd SSH_CMSG_AUTH_TIS");
-			if (options.skey_authentication == 1) {
+			if (options.challenge_reponse_authentication == 1) {
 				char *challenge = get_challenge(authctxt, authctxt->style);
 				if (challenge != NULL) {
 					debug("sending challenge '%s'", challenge);
@@ -266,7 +266,7 @@ do_authloop(Authctxt *authctxt)
 			break;
 		case SSH_CMSG_AUTH_TIS_RESPONSE:
 			debug("rcvd SSH_CMSG_AUTH_TIS_RESPONSE");
-			if (options.skey_authentication == 1) {
+			if (options.challenge_reponse_authentication == 1) {
 				char *response = packet_get_string(&dlen);
 				debug("got response '%s'", response);
 				packet_integrity_check(plen, 4 + dlen, type);
