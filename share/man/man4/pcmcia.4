@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.4 1999/07/09 13:35:47 aaron Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.5 1999/07/23 22:22:37 niklas Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,8 +56,11 @@ drivers, sorted by function and driver name:
 .Pp
 .Ss Serial interfaces and modems
 .Bl -tag -width speaker -offset indent -compact
+.It com
+8250/16450/16550-compatible PCMCIA serial cards and modems.
 .It pccom
 8250/16450/16550-compatible PCMCIA serial cards and modems.
+i386-specific driver.
 .El
 .\"
 .Pp
@@ -69,8 +72,14 @@ drivers, sorted by function and driver name:
 .\"Ethernet card based on the Fujitsu MB86960A/MB86965A chipset.
 .It ne
 NE2000 compatible cards.
+.It rln
+Proxim RangeLAN2 PC-Card
 .It sm
 Megahertz Ethernet card.
+.It xe
+Xircom 16bit ethernet cards.
+.It wi
+WaveLAN IEEE 802.11-compatible cards
 .El
 .\"
 .Pp
@@ -79,22 +88,26 @@ Megahertz Ethernet card.
 .It aic
 Adaptec APA-14[56]0 SCSI controller card.
 .El
-.\".Ss IDE controllers
-.\".Bl -tag -width speaker -offset indent -compact
-.\".It wdc
-.\"Digital Hinote Ultra Mobile Media Adapter
-.\".El
+.Ss IDE controllers
+.Bl -tag -width speaker -offset indent -compact
+.It wdc
+Digital Hinote Ultra Mobile Media Adapter.
+Flash memory cards.
+.El
 .\"
 .Pp
 The supported PCMCIA controllers are those that are i82365 compatible.
 .Sh SEE ALSO
 .Xr aic 4 ,
+.Xr com 4 ,
 .Xr ep 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr ne 4 ,
 .Xr pccom 4 ,
-.Xr sm 4
+.Xr sm 4 ,
+.Xr wi 4 ,
+.Xr xe 4
 .Sh HISTORY
 The
 .Nm
