@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.8 1999/05/19 03:17:15 alex Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.9 1999/05/20 00:05:39 alex Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -52,7 +52,7 @@ char buffer[_PASSWORD_LEN];
 
 void usage()
 {
-    fprintf(stderr, "usage: %s [-k] [-b rounds] [-m] [-s salt] [string]\n",
+    fprintf(stderr, "usage: %s [-k] [-b rounds] [-m] [-s salt] [-p | string]\n",
 	progname);
     exit(1);
 }
@@ -127,6 +127,7 @@ int main(argc, argv)
 {
     int opt;
     int operation = -1;
+    int prompt = 0;
     int rounds;
     void *extra;                       /* Store salt or number of rounds */
 
@@ -138,7 +139,7 @@ int main(argc, argv)
     if (strcmp(progname, "makekey") == 0)
 	 operation = DO_MAKEKEY;
 
-    while ((opt = getopt(argc, argv, "kms:b:")) != -1) {
+    while ((opt = getopt(argc, argv, "kmps:b:")) != -1) {
     	switch (opt) {
 	case 'k':                       /* Stdin/Stdout Unix crypt */
 	    if (operation != -1)
@@ -146,9 +147,14 @@ int main(argc, argv)
 	    operation = DO_MAKEKEY;
 	    break;
 	case 'm':                       /* MD5 password hash */
-	    if (operation != -1)
+	    if (operation != -1 || prompt)
 		 usage();
 	    operation = DO_MD5;
+	    break;
+	case 'p':
+	    if (operation != -1)
+		 usage();
+	    prompt = 1;
 	    break;
 	case 's':                       /* Unix crypt (DES) */
 	    if (operation != -1)
@@ -173,23 +179,33 @@ int main(argc, argv)
     if (((argc - optind) < 1) || operation == DO_MAKEKEY) {
     	char line[BUFSIZ], *string;
 
-    	/* Encrypt stdin to stdout. */
-	while (!feof(stdin) && (fgets(line, sizeof(line), stdin) != NULL)) {
-	    /* Kill the whitesapce. */
-	    string = trim(line);
-	    if (*string == '\0')
-	    	continue;
-	    
+	if (prompt) {
+	    string = getpass("Enter string: ");
 	    print_passwd(string, operation, extra);
-
-	    if (operation == DO_MAKEKEY) {
-	        fflush(stdout);
-		break;
-	    }
 	    fputc('\n', stdout);
+	} else {
+	    /* Encrypt stdin to stdout. */
+	    while (!feof(stdin) && (fgets(line, sizeof(line), stdin) != NULL)) {
+		/* Kill the whitesapce. */
+		string = trim(line);
+		if (*string == '\0')
+		    continue;
+		
+		print_passwd(string, operation, extra);
+
+		if (operation == DO_MAKEKEY) {
+		    fflush(stdout);
+		    break;
+		}
+		fputc('\n', stdout);
+	    }
 	}
     } else {
     	char *string;
+
+	/* can't combine -p with a supplied string */
+	if (prompt)
+	    usage();
 
     	/* Perhaps it isn't worth worrying about, but... */
     	string = strdup(argv[optind]);
