@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.22 2003/06/03 21:09:00 deraadt Exp $
+.\"	$OpenBSD: identd.8,v 1.23 2003/06/07 19:30:07 henning Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -117,6 +117,14 @@ server should
 switch to after binding itself to the
 .Tn TCP/IP
 port if running as a stand-alone daemon.
+.Nm
+runs as user
+.Qq _identd
+by default and falls back to
+.Qq nobody
+if the
+.Qq _identd
+user does not exist.
 .It Fl g Ar gid
 Specify a group ID number or group name which the
 .Nm
