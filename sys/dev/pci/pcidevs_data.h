@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.79 1998/08/13 07:46:51 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.80 1998/08/17 17:43:09 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -115,6 +115,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ACC Microelectronics",
 	    "ACCM 2188 VL-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2051_HB,
+	    0,
+	    "ACC Microelectronics",
+	    "2051 PCI Single Chip Solution (host bridge)",
+	},
+	{
+	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2051_ISA,
+	    0,
+	    "ACC Microelectronics",
+	    "2051 PCI Single Chip Solution (ISA bridge)",
 	},
 	{
 	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435,
