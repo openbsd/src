@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.31 1999/02/19 17:15:45 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.32 1999/02/26 05:17:43 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -67,6 +67,10 @@
 #include <sys/sysctl.h>
 
 #include <miscfs/specfs/specdev.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 enum vtype iftovt_tab[16] = {
 	VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,
@@ -457,6 +461,9 @@ getnewvnode(tag, mp, vops, vpp)
 	*vpp = vp;
 	vp->v_usecount = 1;
 	vp->v_data = 0;
+#ifdef UVM
+	simple_lock_init(&vp->v_uvm.u_obj.vmobjlock);
+#endif
 	return (0);
 }
 
@@ -981,8 +988,12 @@ vclean(vp, flags, p)
 	if (vp->v_flag & VXLOCK)
 		panic("vclean: deadlock");
 	vp->v_flag |= VXLOCK;
-
-	
+#ifdef UVM
+	/*
+	 * clean out any VM data associated with the vnode.
+	 */
+	uvm_vnp_terminate(vp);
+#endif
 	/*
 	 * Even if the count is zero, the VOP_INACTIVE routine may still
 	 * have the object locked while it cleans it out. The VOP_LOCK
@@ -1726,7 +1737,9 @@ vfs_shutdown()
 
 	if (panicstr == 0) {
 		/* Release inodes held by texts before update. */
+#if !defined(UVM)
 		vnode_pager_umount(NULL);
+#endif
 #ifdef notdef
 		vnshutdown();
 #endif
