@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.53 1998/07/12 08:44:33 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.54 1998/07/20 20:00:30 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1502,7 +1502,7 @@ spool		mode=0700
 ..
 
 # ./var/backups
-backups
+backups		mode=0700
 # ./var/backups
 ..
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.19 1998/07/03 03:53:04 angelos Exp $
+#	$OpenBSD: special,v 1.20 1998/07/20 20:00:35 deraadt Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -113,7 +113,7 @@ at		type=dir mode=0755 uname=root gname=daemon ignore
 ..	#var/at
 yp		type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#var/yp
-backups		type=dir mode=0755 uname=root gname=wheel ignore
+backups		type=dir mode=0700 uname=root gname=wheel ignore
 ..	#var/backups
 cron		type=dir mode=0555 uname=root gname=wheel
 log		type=file mode=0600 uname=root gname=wheel
