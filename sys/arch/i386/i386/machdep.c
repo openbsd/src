@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.237 2003/07/07 03:07:19 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.238 2003/07/25 17:41:19 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1259,6 +1259,12 @@ intel686_cpu_setup(cpu_device, model, step)
 	 */
 	if ((model == 1) && (step < 3))
 		cpu_feature &= ~CPUID_SYS2;
+
+	/*
+	 * Make sure SYSENTER is disabled.
+	 */
+	if (cpu_feature & CPUID_SYS2)
+		wrmsr(MSR_SYSENTER_CS, 0);
 
 	/*
 	 * Disable the Pentium3 serial number.

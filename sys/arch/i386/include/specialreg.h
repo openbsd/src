@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.14 2003/06/06 11:11:54 andreas Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.15 2003/07/25 17:41:18 tedu Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -160,6 +160,9 @@
 #define	MSR_BBL_CR_TRIG		0x11a	/* PII+ only */
 #define	MSR_BBL_CR_BUSY		0x11b	/* PII+ only */
 #define	MSR_BBL_CR_CTR3		0x11e	/* PII+ only */
+#define MSR_SYSENTER_CS		0x174
+#define MSR_SYSENTER_ESP	0x175
+#define MSR_SYSENTER_EIP	0x176
 #define MSR_MCG_CAP		0x179
 #define MSR_MCG_STATUS		0x17a
 #define MSR_MCG_CTL		0x17b
