@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.95 2002/06/10 09:13:26 itojun Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.96 2002/06/11 04:27:11 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1358,6 +1358,8 @@ bridge_broadcast(sc, ifp, eh, m)
 	struct mbuf *mc;
 	struct ifnet *dst_if;
 	int len = m->m_pkthdr.len, used = 0;
+
+	splassert(IPL_NET);
 
 	LIST_FOREACH(p, &sc->sc_iflist, next) {
 		/*
