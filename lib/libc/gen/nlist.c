@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.18 1997/01/09 03:49:38 rahnds Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.19 1997/01/10 18:29:48 etheisen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -393,12 +393,16 @@ __elf_fdnlist(fd, list)
 			if (soff == 0)
 				continue;
 			for (p = list; !ISLAST(p); p++) {
-				/*
-				 * ELF ports do not use the leading
-				 * underscore that is given with "standard"
-				 * nlist calls as a.out format does.
-				 */
-				if (!strcmp(&strtab[soff], p->n_un.n_name+1)) {
+                                /*
+                                 * XXX - ABI crap, they
+                                 * really fucked this up
+                                 * for MIPS and PowerPC
+                                 */
+				if (!strcmp(&strtab[soff],
+				    ((ehdr.e_machine == EM_MIPS) ||
+				     (ehdr.e_machine == EM_PPC)) ? 
+				    p->n_un.n_name+1 :
+				    p->n_un.n_name)) {
 					p->n_value = s->st_value;
 
                                         /* XXX - type conversion */
