@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.20 1999/10/29 14:08:49 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.21 1999/11/21 17:40:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -462,7 +462,8 @@ pipe_write(fp, uio, cred)
 		if ((space < uio->uio_resid) && (orig_resid <= PIPE_BUF))
 			space = 0;
 
-		if (space > 0 && (wpipe->pipe_buffer.cnt < PIPE_SIZE)) {
+		if (space > 0 &&
+		    (wpipe->pipe_buffer.cnt < wpipe->pipe_buffer.size)) {
 			/*
 			 * This set the maximum transfer as a segment of
 			 * the buffer.
