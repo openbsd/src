@@ -1,6 +1,6 @@
-.\"	$OpenBSD: random.9,v 1.6 1999/12/15 16:13:20 ericj Exp $
+.\"	$OpenBSD: random.9,v 1.7 2000/04/11 21:00:47 mickey Exp $
 .\"
-.\" Copyright (c) 1996	Michael Shalayeff
+.\" Copyright (c) 1996,2000 Michael Shalayeff
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -37,21 +37,47 @@
 .Sh SYNOPSIS
 .Fd #include <dev/rndvar.h>
 .Ft void 
-.Fn add_mouse_randomness "u_int32_t"
+.Fn add_true_randomness "int"
+.Ft void 
+.Fn add_timer_randomness "int"
+.Ft void 
+.Fn add_mouse_randomness "int"
 .Ft void
 .Fn add_tty_randomness "int"
 .Ft void 
-.Fn add_net_randomness "int isr"
+.Fn add_net_randomness "int"
 .Ft void 
-.Fn add_blkdev_randomness "u_int32_t"
+.Fn add_disk_randomness "int"
+.Ft void 
+.Fn add_audio_randomness "int"
 .Ft void
 .Fn get_random_bytes "void *buf" "size_t nbytes"
+.Ft u_int8_t 
+.Fn arc4random_8 "void"
 .Ft u_int32_t 
 .Fn arc4random "void"
 .br
 .Sh DESCRIPTION
-add_{mouse,tty,net,blkdev}_randomness routines used to supply data
-for the random data source device for future processing.
+.Nm add_mouse_randomness ,
+.Nm add_tty_randomness ,
+.Nm add_net_randomness ,
+.Nm add_disk_randomness ,
+.Nm add_audio_randomness
+routines are used to
+supply data for the random data source device for futher processing.
+The processing involves calculating inter-event time delta and measurirg
+entropy contained in the resulting delta-T, supplied in argument data
+is just mixed into the pool and does not increase entropy counter.
+.br
+.Nm add_true_randomness
+does not involve usuall timing calculations
+and cause passed data argument to added to the entropy pool
+increasing the entropy counter by 32 bits.
+.br
+.Nm add_timer_randomness
+will not cause entropy counter to rise, it
+is used to change the state of the pool periodically mostly
+by meaning of timing random driver's operations.
 .Pp
 .Nm get_random_bytes
 may be used to retrieve strong random data, just
@@ -59,9 +85,11 @@ as it would by
 .Xr srandom 4
 device.
 .br
-.Nm arc4random
-will give random 32 bit numbers hashed with the aRC4 algorithm,
-which appears to be faster.
+.Nm arc4random ,
+.Nm arc4random_8
+will give random 32 and 8 respectively bit numbers hashed with
+the aRC4 algorithm, which appears to be faster and less abusive
+to the entropy pool.
 .Sh SEE ALSO
 .Xr arc4random 3 ,
 .Xr random 4
