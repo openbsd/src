@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.44 2001/06/25 02:35:11 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.45 2001/06/25 02:57:46 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -443,8 +443,8 @@ void _sk_mclget(struct mbuf *, int);
  * from must have M_PKTHDR set, and to must be empty.
  */
 #define	M_COPY_PKTHDR(to, from) { \
-	M_COPY_HDR((to), (from)); \
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
+	M_COPY_HDR((to), (from)); \
 	(to)->m_data = (to)->m_pktdat; \
 }
 
