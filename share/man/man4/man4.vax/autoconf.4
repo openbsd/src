@@ -1,4 +1,4 @@
-.\"	$OpenBSD: autoconf.4,v 1.6 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: autoconf.4,v 1.7 2002/09/26 22:11:49 miod Exp $
 .\"	$NetBSD: autoconf.4,v 1.3 1996/03/03 17:13:13 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -39,16 +39,15 @@
 .Os
 .Sh NAME
 .Nm autoconf
-.Nd "diagnostics from the autoconfiguration code"
+.Nd diagnostics from the autoconfiguration code
 .Sh DESCRIPTION
 When
 .Ox
 bootstraps it probes the innards of the machine
-on which it is running and
-locates controllers, drives, and other devices.
-Each item found is recorded on the console.
-This procedure is driven by a system
-configuration table which is processed by
+on which it is running
+and locates controllers, drives, and other devices, printing out
+what it finds on the console.
+This procedure is driven by a system configuration table which is processed by
 .Xr config 8
 and compiled into each kernel.
 .Pp
@@ -104,16 +103,6 @@ then the name of the root device is read from the console terminal at boot
 time, and any available device may be used.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It cpu type %d not configured.
-You tried to boot
-.Ox
-on a
-.Tn CPU
-type which it doesn't (or at least this compiled version of
-.Ox
-doesn't)
-understand.
-.Pp
 .It mba%d at tr%d.
 A
 .Tn MASSBUS
@@ -246,7 +235,7 @@ The device did not present
 a valid interrupt vector, rather presented 0 (a passive release condition)
 to the adapter.
 .Pp
-.It %s%d at uba%d csr %o didn't interrupt.
+.It "%s%d at uba%d csr %o didn't interrupt."
 The device did not interrupt,
 likely because it is broken, hung, or not the kind of device it is advertised
 to be.
@@ -267,7 +256,7 @@ case.
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr boot 8 ,
+.Xr boot_vax 8 ,
 .Xr config 8
 .Sh HISTORY
 The

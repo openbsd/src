@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: autoconf.4,v 1.3 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: autoconf.4,v 1.4 2002/09/26 22:11:49 miod Exp $
 .\"	$NetBSD: autoconf.4,v 1.2 1997/10/13 11:23:30 lukem Exp $
 .\"
 .Dd July 17, 1997
@@ -40,7 +40,7 @@
 .Nd diagnostics from the autoconfiguration code
 .Sh DESCRIPTION
 When
-.Tn OpenBSD
+.Ox
 bootstraps it probes the innards of the machine
 on which it is running
 and locates controllers, drives, and other devices, printing out
@@ -58,45 +58,7 @@ All
 slots are probed,
 and information about any cards found is reported even if the card
 is not currently configured.
-.Sh DIAGNOSTICS
-.Bl -diag
-.\"
-.\" The following doesn't seem to happen on the mac68k port, but
-.\" keep here waiting until I know for sure --Colin
-.\"
-.\".It CPU class not configured.
-.\"You tried to boot
-.\".Tn OpenBSD
-.\"on a class of
-.\".Tn CPU
-.\"type which it doesn't
-.\"(or at least this compiled version of
-.\".Tn OpenBSD
-.\"doesn't) understand.a
-.It %s%d at obio0: %s.
-The system is configuring an onboard I/O controller.
-.It  addr %x not configured.
-An onboard I/O controller was encountered that is not configured into the
-kernel.
-.It %s at nubus%d slot %x.
-The system is configuring a NuBus expansion card in slot %x.
-.It %s at nubus%d slot %x: %s (Vendor: %s, Part: %s Type: %x %x %x %x) not configured.
-A NuBus expansion card was encountered that is not configured into the
-kernel.
-.Sq Vendor
-is the manufacturer of the board,
-.Sq Part
-is the name of the board, and
-.Sq Type
-is the Apple-defined type.
-.It %s: channel %d not configured.
-A serial device channel was encountered that is not configured into the
-kernel.
-.It %s at %s not configured.
-A device which was configured into the kernel was unable to properly
-initialize itself.
-.El
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr boot 8 ,
+.Xr boot_mac68k 8 ,
 .Xr config 8

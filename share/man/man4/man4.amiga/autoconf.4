@@ -1,4 +1,4 @@
-.\"	$OpenBSD: autoconf.4,v 1.6 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: autoconf.4,v 1.7 2002/09/26 22:11:44 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nd diagnostics from the autoconfiguration code
 .Sh DESCRIPTION
 When
-.Tn OpenBSD
+.Ox
 bootstraps it probes the innards of the machine
 on which it is running
 and locates controllers, drives, and other devices, printing out
@@ -47,49 +47,7 @@ This procedure is driven by a system configuration table which is processed by
 and compiled into each kernel.
 Devices which exist in the machine but are not configured into the
 kernel are not detected.
-.Sh DIAGNOSTICS
-.Bl -diag
-.It CPU class not configured.
-You tried to boot
-.Tn OpenBSD
-on a class of
-.Tn CPU
-type which it doesn't
-(or at least this compiled version of
-.Tn OpenBSD
-doesn't) understand.
-.Pp
-.It %s at mainbus0.
-An Amiga internal device
-.Ql %s
-was configured
-.Pp  not configured.
-If this line follows the
-.Ql fd0 at fdc0
-configuration line, this diagnostic
-indicates that a second floppy drive was detected, but was not configured
-into the kernel.
-.Pp
-.It zbus0 at mainbus0 [mem 0x%x-0x%x].
-The kernel is configuring AutoConfigured expansion boards.
-If any Zorro II memory was detected, the virtual address of the space
-reserved for DMA bounce buffers is printed.
-.Pp
-.It %s at zbus0: rom 0x%x man/prod %d/%d.
-A Zorro expansion board was configured.
-.Ql Rom 0x%0x
-is the physical address the board was configured at.
-.Ql Man/prod &d/%d
-is the manufacturer/product codes.
-.Pp
-.It %s at zbus0: rom 0x%x man/prod %d/%d not configured.
-A Zorro expansion board located at
-.Ql rom 0x%0x
-with a manufacturer/product code
-.Ql %d/%d
-was found that is not configured into the kernel.
-.El
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr boot 8 ,
+.Xr boot_amiga 8 ,
 .Xr config 8
