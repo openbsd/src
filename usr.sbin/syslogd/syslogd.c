@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.67 2003/09/19 08:15:55 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.68 2003/12/29 22:05:11 djm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.67 2003/09/19 08:15:55 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.68 2003/12/29 22:05:11 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,7 @@ static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.67 2003/09/19 08:15:55 dera
 #include <err.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -179,13 +180,13 @@ char	*TypeNames[7] = {
 struct	filed *Files;
 struct	filed consfile;
 
+int	nfunix = 1;		/* Number of Unix domain sockets requested */
+char	*funixn[MAXFUNIX] = { _PATH_LOG }; /* Paths to Unix domain sockets */
 int	Debug;			/* debug flag */
 int	Startup = 1;		/* startup flag */
 char	LocalHostName[MAXHOSTNAMELEN];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
 int	InetInuse = 0;		/* non-zero if INET sockets are being used */
-int	finet = -1;		/* Internet datagram socket */
-int	fklog = -1;		/* Kernel log device socket */
 int	LogPort;		/* port number for INET connections */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 
@@ -193,6 +194,8 @@ int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
 int	SecureMode = 1;		/* when true, speak only unix domain socks */
 int	NoDNS = 0;		/* when true, will refrain from doing DNS lookups */
+
+struct pollfd pfd[N_PFD];
 
 volatile sig_atomic_t MarkSet;
 volatile sig_atomic_t WantDie;
@@ -218,20 +221,13 @@ void	usage(void);
 void	wallmsg(struct filed *, struct iovec *);
 int	getmsgbufsize(void);
 
-#define MAXFUNIX	21
-
-int nfunix = 1;
-char *funixn[MAXFUNIX] = { _PATH_LOG };
-int funix[MAXFUNIX];
-
 int
 main(int argc, char *argv[])
 {
-	int ch, i, linesize, fdsrmax = 0;
+	int ch, i, linesize, fd;
 	struct sockaddr_un sunx, fromunix;
 	struct sockaddr_in sin, frominet;
 	socklen_t slen, len;
-	fd_set *fdsr = NULL;
 	char *p, *line;
 	char resolve[MAXHOSTNAMELEN];
 	int lockpipe[2], nullfd = -1;
@@ -264,8 +260,8 @@ main(int argc, char *argv[])
 			break;
 		case 'a':
 			if (nfunix >= MAXFUNIX)
-				fprintf(stderr,
-				    "syslogd: out of descriptors, ignoring %s\n",
+				fprintf(stderr, "syslogd: "
+				    "out of descriptors, ignoring %s\n",
 				    optarg);
 			else if (strlen(optarg) >= sizeof(sunx.sun_path))
 				fprintf(stderr,
@@ -299,19 +295,22 @@ main(int argc, char *argv[])
 	linesize++;
 	line = malloc(linesize);
 
+	/* Clear poll array, set all fds to ignore */
+	for (i = 0; i < N_PFD; i++) {
+		pfd[i].fd = -1;
+		pfd[i].events = 0;
+	}
+
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
 	for (i = 0; i < nfunix; i++) {
 		(void)unlink(funixn[i]);
-
 		memset(&sunx, 0, sizeof(sunx));
 		sunx.sun_family = AF_UNIX;
 		(void)strlcpy(sunx.sun_path, funixn[i], sizeof(sunx.sun_path));
-		funix[i] = socket(AF_UNIX, SOCK_DGRAM, 0);
-		if (funix[i] < 0 ||
-		    bind(funix[i], (struct sockaddr *)&sunx,
-		    SUN_LEN(&sunx)) < 0 ||
+		if ((fd = socket(AF_UNIX, SOCK_DGRAM, 0)) == -1 ||
+		    bind(fd, (struct sockaddr *)&sunx, SUN_LEN(&sunx)) == -1 ||
 		    chmod(funixn[i], 0666) < 0) {
 			(void)snprintf(line, linesize, "cannot create %s",
 			    funixn[i]);
@@ -319,19 +318,22 @@ main(int argc, char *argv[])
 			dprintf("cannot create %s (%d)\n", funixn[i], errno);
 			if (i == 0)
 				die(0);
-		}
-		/* double socket receive buffer size */
-		if (getsockopt(funix[i], SOL_SOCKET, SO_RCVBUF, &len,
-		    &slen) == 0) {
-			len *= 2;
-			(void)setsockopt(funix[i], SOL_SOCKET, SO_RCVBUF, &len,
-			    slen);
+		} else {
+			/* double socket receive buffer size */
+			if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &len, 
+			    &slen) == 0) {
+				len *= 2;
+				(void)setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &len, slen);
+			}
+			pfd[PFD_UNIX_0 + i].fd = fd;
+			pfd[PFD_UNIX_0 + i].events = POLLIN;
 		}
 	}
-	finet = socket(AF_INET, SOCK_DGRAM, 0);
-	if (finet >= 0) {
+
+	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) != -1) {
 		struct servent *sp;
 
+		/* XXX use getaddrinfo */
 		sp = getservbyname("syslog", "udp");
 		if (sp == NULL) {
 			errno = 0;
@@ -342,23 +344,29 @@ main(int argc, char *argv[])
 		sin.sin_len = sizeof(sin);
 		sin.sin_family = AF_INET;
 		sin.sin_port = LogPort = sp->s_port;
-		if (bind(finet, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+		if (bind(fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 			logerror("bind");
 			if (!Debug)
 				die(0);
 		} else {
 			InetInuse = 1;
 			/* double socket receive buffer size */
-			if (getsockopt(finet, SOL_SOCKET, SO_RCVBUF, &len,
+			if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &len,
 			    &slen) == 0) {
 				len *= 2;
-				(void)setsockopt(finet, SOL_SOCKET,
+				(void)setsockopt(fd, SOL_SOCKET,
 				    SO_RCVBUF, &len, slen);
 			}
+			pfd[PFD_INET].fd = fd;
+			pfd[PFD_INET].events = POLLIN;
 		}
 	}
-	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0)
+	if ((fd = open(_PATH_KLOG, O_RDONLY, 0)) == -1) {
 		dprintf("can't open %s (%d)\n", _PATH_KLOG, errno);
+	} else {
+		pfd[PFD_KLOG].fd = fd;
+		pfd[PFD_KLOG].events = POLLIN;
+	}
 
 	dprintf("off & running....\n");
 
@@ -427,20 +435,6 @@ main(int argc, char *argv[])
 	(void)signal(SIGALRM, domark);
 	(void)alarm(TIMERINTVL);
 
-	if (fklog != -1 && fklog > fdsrmax)
-		fdsrmax = fklog;
-	if (finet != -1 && finet > fdsrmax)
-		fdsrmax = finet;
-	for (i = 0; i < nfunix; i++) {
-		if (funix[i] != -1 && funix[i] > fdsrmax)
-			fdsrmax = funix[i];
-	}
-
-	fdsr = (fd_set *)calloc(howmany(fdsrmax+1, NFDBITS),
-	    sizeof(fd_mask));
-	if (fdsr == NULL)
-		errx(1, "calloc fd_set");
-
 	for (;;) {
 		if (MarkSet)
 			markit();
@@ -452,47 +446,36 @@ main(int argc, char *argv[])
 			DoInit = 0;
 		}
 
-		bzero(fdsr, howmany(fdsrmax+1, NFDBITS) *
-		    sizeof(fd_mask));
-
-		if (fklog != -1)
-			FD_SET(fklog, fdsr);
-		if (finet != -1)
-			FD_SET(finet, fdsr);
-		for (i = 0; i < nfunix; i++) {
-			if (funix[i] != -1)
-				FD_SET(funix[i], fdsr);
-		}
-
-		switch (select(fdsrmax+1, fdsr, NULL, NULL, NULL)) {
+		switch (poll(pfd, PFD_UNIX_0 + nfunix, -1)) {
 		case 0:
 			continue;
 		case -1:
 			if (errno != EINTR)
-				logerror("select");
+				logerror("poll");
 			continue;
 		}
-
-		if (fklog != -1 && FD_ISSET(fklog, fdsr)) {
-			i = read(fklog, line, linesize - 1);
+		if ((pfd[PFD_KLOG].revents & POLLIN) != 0) {
+			i = read(pfd[PFD_KLOG].fd, line, linesize - 1);
 			if (i > 0) {
 				line[i] = '\0';
 				printsys(line);
 			} else if (i < 0 && errno != EINTR) {
 				logerror("klog");
-				fklog = -1;
+				pfd[PFD_KLOG].fd = -1;
+				pfd[PFD_KLOG].events = 0;
 			}
 		}
-		if (finet != -1 && FD_ISSET(finet, fdsr)) {
+		if ((pfd[PFD_INET].revents & POLLIN) != 0) {
 			len = sizeof(frominet);
-			i = recvfrom(finet, line, MAXLINE, 0,
+			i = recvfrom(pfd[PFD_INET].fd, line, MAXLINE, 0,
 			    (struct sockaddr *)&frominet, &len);
 			if (SecureMode) {
 				/* silently drop it */
 			} else {
 				if (i > 0) {
 					line[i] = '\0';
-					cvthname(&frominet, resolve, sizeof resolve);
+					cvthname(&frominet, resolve,
+					    sizeof resolve);
 					dprintf("cvthname res: %s\n", resolve);
 					printline(resolve, line);
 				} else if (i < 0 && errno != EINTR)
@@ -501,10 +484,11 @@ main(int argc, char *argv[])
 		}
 
 		for (i = 0; i < nfunix; i++) {
-			if (funix[i] != -1 && FD_ISSET(funix[i], fdsr)) {
+			if ((pfd[PFD_UNIX_0 + i].revents & POLLIN) != 0) {
 				len = sizeof(fromunix);
-				len = recvfrom(funix[i], line, MAXLINE, 0,
-				    (struct sockaddr *)&fromunix, &len);
+				len = recvfrom(pfd[PFD_UNIX_0 + i].fd, line, 
+				    MAXLINE, 0, (struct sockaddr *)&fromunix, 
+				    &len);
 				if (len > 0) {
 					line[len] = '\0';
 					printline(LocalHostName, line);
@@ -513,8 +497,9 @@ main(int argc, char *argv[])
 			}
 		}
 	}
-	if (fdsr)
-		free(fdsr);
+	/* NOTREACHED */
+	free(pfd);
+	return (0);
 }
 
 void
@@ -800,7 +785,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		    f->f_prevpri, (char *)iov[0].iov_base,
 		    (char *)iov[4].iov_base)) >= sizeof(line) || l == -1)
 			l = strlen(line);
-		if (sendto(finet, line, l, 0,
+		if (sendto(pfd[PFD_INET].fd, line, l, 0,
 		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
 		    sizeof(f->f_un.f_forw.f_addr)) != l) {
 			f->f_type = F_UNUSED;
@@ -1409,3 +1394,4 @@ markit(void)
 	MarkSet = 0;
 	(void)alarm(TIMERINTVL);
 }
+

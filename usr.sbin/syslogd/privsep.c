@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.9 2003/10/26 18:21:49 avsm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.10 2003/12/29 22:05:10 djm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <paths.h>
+#include <poll.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -163,12 +164,12 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 
 	/* Close descriptors that only the unpriv child needs */
 	for (i = 0; i < nfunix; i++)
-		if (funix[i] != -1)
-			close(funix[i]);
-	if (finet != -1)
-		close(finet);
-	if (fklog != -1)
-		close(fklog);
+		if (pfd[PFD_UNIX_0 + i].fd != -1)
+			close(pfd[PFD_UNIX_0 + i].fd);
+	if (pfd[PFD_INET].fd != -1)
+		close(pfd[PFD_INET].fd);
+	if (pfd[PFD_KLOG].fd)
+		close(pfd[PFD_KLOG].fd);
 
 	/* Save the config file specified by the child process */
 	if (strlcpy(config_file, conf, sizeof config_file) >= sizeof(config_file))
@@ -308,7 +309,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 
 	/* Unlink any domain sockets that have been opened */
 	for (i = 0; i < nfunix; i++)
-		if (funixn[i] && funix[i] != -1)
+		if (funixn[i] && pfd[PFD_UNIX_0 + i].fd != -1)
 			(void)unlink(funixn[i]);
 
 	if (restart) {
