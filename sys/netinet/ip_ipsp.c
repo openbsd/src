@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.142 2001/09/05 19:22:23 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.143 2001/10/03 02:08:41 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -330,8 +330,7 @@ gettdbbyaddr(union sockaddr_union *dst, struct ipsec_policy *ipo,
 					tdbp->tdb_srcid))
 					continue;
 				/* Otherwise, this is fine. */
-			} else if (ipo->ipo_srcid != NULL)
-				continue;
+			}
 
 			if (tdbp->tdb_dstid != NULL) {
 				if (ipo->ipo_dstid != NULL &&
@@ -339,8 +338,7 @@ gettdbbyaddr(union sockaddr_union *dst, struct ipsec_policy *ipo,
 					tdbp->tdb_dstid))
 					continue;
 				/* Otherwise, this is fine. */
-			} else if (ipo->ipo_dstid != NULL)
-				continue;
+			}
 
 			/* Check for credential matches. */
 			if (tdbp->tdb_local_cred != NULL) {
@@ -397,8 +395,7 @@ gettdbbysrc(union sockaddr_union *src, struct ipsec_policy *ipo,
 					tdbp->tdb_srcid))
 					continue;
 				/* Otherwise, this is fine. */
-			} else if (ipo->ipo_dstid != NULL)
-				continue;
+			}
 
 			if (tdbp->tdb_dstid != NULL) {
 				if (ipo->ipo_srcid != NULL &&
@@ -406,8 +403,7 @@ gettdbbysrc(union sockaddr_union *src, struct ipsec_policy *ipo,
 					tdbp->tdb_dstid))
 					continue;
 				/* Otherwise, this is fine. */
-			} else if (ipo->ipo_srcid != NULL)
-				continue;
+			}
 
 			/* XXX Check for filter matches. */
 			break;
