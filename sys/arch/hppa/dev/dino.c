@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.7 2004/06/17 06:06:18 mickey Exp $	*/
+/*	$OpenBSD: dino.c,v 1.8 2004/06/30 15:25:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -1439,19 +1439,24 @@ dinoattach(parent, self, aux)
 	}
 
 	sc->sc_regs = r = (volatile struct dino_regs *)sc->sc_bh;
+	r->pciror = 0;
+	r->pciwor = 0;
+	r->io_addr_en = 0;
+	r->gmask &= ~1;	/* allow GSC bus req */
+#ifdef notyet_card_mode
 	r->io_control = 0x80;
 	r->pamr = 0;
 	r->papr = 0;
 	r->io_fbb_en |= 1;
-	r->io_addr_en = 0;
 	r->damode = 0;
-	r->gmask &= ~1;	/* allow GSC bus req */
-	r->pciror = 0;
-	r->pciwor = 0;
-	r->brdg_feat = 0xc0000000;
+	r->brdg_feat = 0xc0000000 XXX;
+	r->mltim = 0x40;	/* 64 clocks */
+	r->tltim = 0x8c;	/* 12 clocks */
 
 	/* PCI reset */
 	r->pcicmd = 0x6f;
+	DELAY(10000);		/* 10ms for reset to settle */
+#endif
 
 	snprintf(sc->sc_ioexname, sizeof(sc->sc_ioexname),
 	    "%s_io", sc->sc_dv.dv_xname);
