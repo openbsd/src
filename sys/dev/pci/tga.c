@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.12 2002/03/14 03:16:06 millert Exp $ */
+/* $OpenBSD: tga.c,v 1.13 2002/04/01 11:17:47 matthieu Exp $ */
 /* $NetBSD: tga.c,v 1.31 2001/02/11 19:34:58 nathanw Exp $ */
 
 /*
@@ -668,8 +668,11 @@ tga_intr(v)
 			return 0;
 		}
 	}
-	dc->dc_ramdac_intr(dcrc);
-	dc->dc_ramdac_intr = NULL;
+	/* if we have something to do, do it */
+	if (dc->dc_ramdac_intr) {
+		dc->dc_ramdac_intr(dcrc);
+		dc->dc_ramdac_intr = NULL;
+	}
 	TGAWREG(dc, TGA_REG_SISR, 0x00000001);
 	TGAREGWB(dc, TGA_REG_SISR, 1);
 	return (1);
