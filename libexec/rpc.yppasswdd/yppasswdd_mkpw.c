@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.4 1996/06/26 22:11:27 maja Exp $";
+static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.5 1996/08/08 16:14:50 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -50,6 +50,18 @@ extern int make;
 extern char make_arg[];
 
 int
+badchar(base, match)
+	char *base, *match;
+{
+	char *s = match;
+
+	while (*s)
+		if (strchr(base, *s++))
+			return 1;
+	return 0;
+}
+
+int
 make_passwd(argp)
 	yppasswd *argp;
 {
@@ -61,6 +73,13 @@ make_passwd(argp)
 		return (1);
 
 	if (strcmp(crypt(argp->oldpass, pw->pw_passwd), pw->pw_passwd) != 0)
+		return (1);
+
+	if (!nopw && badchar(argp->newpw.pw_passwd, ":\n\t"))
+		return (1);
+	if (!nogecos && badchar(argp->newpw.pw_gecos, ":\n\t"))
+		return (1);
+	if (!nogecos && badchar(argp->newpw.pw_shell, ":\n\t"))
 		return (1);
 
 	pw_init();
