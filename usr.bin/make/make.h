@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.28 2000/11/24 14:27:19 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.29 2000/11/24 14:36:35 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -90,6 +90,34 @@
 #include "config.h"
 #include "buf.h"
 
+#ifdef USE_TIMESPEC
+#include <sys/time.h>
+typedef struct timespec TIMESTAMP;
+#define set_out_of_date(t)	(t).tv_sec = INT_MIN, (t).tv_nsec = 0
+#define is_out_of_date(t)	((t).tv_sec == INT_MIN && (t).tv_nsec == 0)
+#define grab_stat(s, t) \
+do { \
+	(t).tv_sec = (s).st_mtime; \
+	(t).tv_nsec = (s).st_mtimensec; \
+	if (is_out_of_date(t)) \
+		(t).tv_nsec++; \
+} while (0)
+#define is_before(t1, t2)	timespeccmp(&(t1), &(t2), <)
+#define grab_date(d, t) \
+do { \
+	(t).tv_sec = d; \
+	(t).tv_nsec = 0; \
+	if (is_out_of_date(t)) \
+		(t).tv_nsec++; \
+} while (0)
+#define grab(n) \
+do { \
+	struct timeval tv; \
+	gettimeofday(&tv, NULL); \
+	TIMEVAL_TO_TIMESPEC(&(tv), &n); \
+} while (0)
+#define timestamp2time_t(t)	((t).tv_sec)
+#else
 typedef time_t TIMESTAMP;
 #define is_out_of_date(t)	((t) == INT_MIN)
 #define set_out_of_date(t)	(t) = INT_MIN
@@ -108,8 +136,7 @@ do { \
 } while (0)
 #define grab(n) time(&(n))
 #define timestamp2time_t(t)	(t)
-
-#define OUT_OF_DATE INT_MIN
+#endif
 
 /* Variables that are kept in local GNodes.  */
 #define TARGET_INDEX	0
@@ -191,8 +218,8 @@ typedef struct GNode_ {
 				 * made */
     int             unmade;    	/* The number of unmade children */
 
-    time_t          mtime;     	/* Its modification time */
-    time_t     	    cmtime;    	/* The modification time of its youngest
+    TIMESTAMP       mtime;     	/* Its modification time */
+    TIMESTAMP 	    cmtime;    	/* The modification time of its youngest
 				 * child */
 
     LIST     	    iParents;  	/* Links to parents for which this is an
@@ -395,7 +422,7 @@ extern char    	var_Error[];   	/* Value returned by Var_Parse when an error
 				 * an empty string, so naive callers needn't
 				 * worry about it. */
 
-extern time_t 	now;	    	/* The time at the start of this whole
+extern TIMESTAMP now;	    	/* The time at the start of this whole
 				 * process */
 
 extern Boolean	oldVars;    	/* Do old-style variable substitution */

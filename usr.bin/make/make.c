@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.23 2000/09/14 13:52:42 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.24 2000/11/24 14:36:34 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -82,7 +82,7 @@
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: make.c,v 1.23 2000/09/14 13:52:42 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.24 2000/11/24 14:36:34 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,9 +107,6 @@ static void MakePrintStatus __P((void *, void *));
  *	Set the cmtime field of a parent node based on the mtime stamp in its
  *	child. Called from MakeOODate via Lst_ForEach.
  *
- * Results:
- *	Always returns 0.
- *
  * Side Effects:
  *	The cmtime of the parent node will be changed if the mtime
  *	field of the child is greater than it.
@@ -120,10 +117,11 @@ Make_TimeStamp(pgn, cgn)
     GNode *pgn;	/* the current parent */
     GNode *cgn;	/* the child we've just examined */
 {
-    if (cgn->mtime > pgn->cmtime)
+    if (is_before(pgn->cmtime, cgn->mtime))
 	pgn->cmtime = cgn->mtime;
 }
 
+/* Wrapper to call Make_TimeStamp from a forEach loop */
 static void
 MakeTimeStamp(pgn, cgn)
     void *pgn;	/* the current parent */
@@ -204,7 +202,7 @@ Make_OODate (gn)
 	 */
 
 	oodate = Arch_LibOODate (gn) ||
-	    (gn->cmtime == OUT_OF_DATE && (gn->type & OP_DOUBLEDEP));
+	    (is_out_of_date(gn->cmtime) && (gn->type & OP_DOUBLEDEP));
     } else if (gn->type & OP_JOIN) {
 	/*
 	 * A target with the .JOIN attribute is only considered
@@ -229,9 +227,9 @@ Make_OODate (gn)
 	    }
 	}
 	oodate = TRUE;
-    } else if (gn->mtime < gn->cmtime ||
-	       (gn->cmtime == OUT_OF_DATE &&
-		(gn->mtime == OUT_OF_DATE || (gn->type & OP_DOUBLEDEP))))
+    } else if (is_before(gn->mtime, gn->cmtime) ||
+	       (is_out_of_date(gn->cmtime) &&
+		(is_out_of_date(gn->mtime) || (gn->type & OP_DOUBLEDEP))))
     {
 	/*
 	 * A node whose modification time is less than that of its
@@ -241,9 +239,9 @@ Make_OODate (gn)
 	 * it.
 	 */
 	if (DEBUG(MAKE)) {
-	    if (gn->mtime < gn->cmtime) {
+	    if (is_before(gn->mtime, gn->cmtime)) {
 		printf("modified before source...");
-	    } else if (gn->mtime == OUT_OF_DATE) {
+	    } else if (is_out_of_date(gn->mtime)) {
 		printf("non-existent and no sources...");
 	    } else {
 		printf(":: operator and no sources...");
@@ -480,11 +478,11 @@ Make_Update (cgn)
 	    if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
 		if (cgn->made == MADE) {
 		    pgn->childMade = TRUE;
-		    if (pgn->cmtime < cgn->mtime) {
+		    if (is_before(pgn->cmtime, cgn->mtime)) {
 			pgn->cmtime = cgn->mtime;
 		    }
 		} else {
-		    (void)Make_TimeStamp (pgn, cgn);
+		    (void)Make_TimeStamp(pgn, cgn);
 		}
 	    }
 	    if (pgn->unmade == 0) {
@@ -572,8 +570,8 @@ MakeAddAllSrc(cgnp, pgnp)
 	if (pgn->type & OP_JOIN) {
 	    if (cgn->made == MADE)
 		Varq_Append(OODATE_INDEX, child, pgn);
-	} else if ((pgn->mtime < cgn->mtime) ||
-		   (cgn->mtime >= now && cgn->made == MADE))
+	} else if (is_before(pgn->mtime, cgn->mtime) ||
+		   (!is_before(cgn->mtime, now) && cgn->made == MADE))
 	{
 	    /*
 	     * It goes in the OODATE variable if the parent is younger than the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.35 2000/11/24 14:29:55 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.36 2000/11/24 14:36:34 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -139,7 +139,7 @@ extern Boolean Targ_Silent __P((GNode *));
 extern Boolean Targ_Precious __P((GNode *));
 extern void Targ_SetMain __P((GNode *));
 extern void Targ_PrintCmd __P((void *));
-extern char *Targ_FmtTime __P((time_t));
+extern char *Targ_FmtTime __P((TIMESTAMP));
 extern void Targ_PrintType __P((int));
 extern void Targ_PrintGraph __P((int));
 

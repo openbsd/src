@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.36 2000/10/13 08:30:49 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.37 2000/11/24 14:36:33 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -108,7 +108,7 @@
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: arch.c,v 1.36 2000/10/13 08:30:49 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.37 2000/11/24 14:36:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -580,7 +580,7 @@ ArchMTimeMember(archive, member, hash)
 	 arch = ArchFindMember(archive, member, &sarh, "r");
 
 	if (arch == NULL)
-	    return NULL;
+	    return result;
 	else {
 	    fclose(arch);
 	    grab_date( (time_t)strtol(sarh.ar_date, NULL, 10), result);
@@ -594,7 +594,7 @@ ArchMTimeMember(archive, member, hash)
      */
     arch = fopen(archive, "r");
     if (arch == NULL)
-	return (NULL);
+	return result;
 
     /*
      * We use the ARMAG string to make sure this is an archive we
@@ -603,7 +603,7 @@ ArchMTimeMember(archive, member, hash)
     if ((fread(magic, SARMAG, 1, arch) != 1) ||
     	(strncmp(magic, ARMAG, SARMAG) != 0)) {
 	    fclose(arch);
-	    return NULL;
+	    return result;
     }
 
     ar = (Arch *)emalloc(sizeof (Arch));
@@ -990,7 +990,7 @@ Arch_Touch (gn)
     arch = ArchFindMember(Varq_Value(ARCHIVE_INDEX, gn),
 			  Varq_Value(MEMBER_INDEX, gn),
 			  &arh, "r+");
-    sprintf(arh.ar_date, "%-12ld", (long) now);
+    sprintf(arh.ar_date, "%-12ld", (long) timestamp2time_t(now));
 
     if (arch != NULL) {
 	(void)fwrite ((char *)&arh, sizeof (struct ar_hdr), 1, arch);
@@ -1020,17 +1020,15 @@ Arch_TouchLib (gn)
 #ifdef RANLIBMAG
     FILE *	    arch;	/* Stream open to archive */
     struct ar_hdr   arh;      	/* Header describing table of contents */
-    struct utimbuf  times;	/* Times for utime() call */
 
     arch = ArchFindMember (gn->path, RANLIBMAG, &arh, "r+");
-    sprintf(arh.ar_date, "%-12ld", (long) now);
+    sprintf(arh.ar_date, "%-12ld", (long) timestamp2time_t(now));
 
     if (arch != NULL) {
 	(void)fwrite ((char *)&arh, sizeof (struct ar_hdr), 1, arch);
 	fclose (arch);
 
-	times.actime = times.modtime = now;
-	utime(gn->path, &times);
+	set_times(gn->path);
     }
 #endif
 }
@@ -1072,48 +1070,37 @@ Arch_MemMTime (gn)
     GNode   	  *gn;
 {
     LstNode 	  ln;
-    GNode   	  *pgn;
-    char    	  *nameStart,
-		  *nameEnd;
 
-    Lst_Open(&gn->parents);
-    while ((ln = Lst_Next(&gn->parents)) != NULL) {
+    for (ln = Lst_First(&gn->parents); ln != NULL; ln = Lst_Adv(ln)) {
+	GNode	*pgn;
+	char	*nameStart,
+		*nameEnd;
+
 	pgn = (GNode *)Lst_Datum(ln);
 
 	if (pgn->type & OP_ARCHV) {
-	    /*
-	     * If the parent is an archive specification and is being made
+	    /* If the parent is an archive specification and is being made
 	     * and its member's name matches the name of the node we were
 	     * given, record the modification time of the parent in the
 	     * child. We keep searching its parents in case some other
-	     * parent requires this child to exist...
-	     */
-		 /* OpenBSD: less ugly check for nameStart == NULL */
-	    if ((nameStart = strchr (pgn->name, '(') ) != NULL) {
+	     * parent requires this child to exist...  */
+	    if ((nameStart = strchr(pgn->name, '(') ) != NULL) {
 	    	nameStart++;
-	        nameEnd = strchr (nameStart, ')');
+	        nameEnd = strchr(nameStart, ')');
 	    } else
 	    	nameEnd = NULL;
 
 	    if (pgn->make && nameEnd != NULL &&
-		strncmp(nameStart, gn->name, nameEnd - nameStart) == 0) {
-		    if (Arch_MTime(pgn))
-			gn->mtime = pgn->mtime;
-		    else
-		    	gn->mtime = OUT_OF_DATE;
-	    }
+		strncmp(nameStart, gn->name, nameEnd - nameStart) == 0 &&
+		gn->name[nameEnd-nameStart] == '\0')
+		    gn->mtime = Arch_MTime(pgn);
 	} else if (pgn->make) {
-	    /*
-	     * Something which isn't a library depends on the existence of
-	     * this target, so it needs to exist.
-	     */
-	    gn->mtime = OUT_OF_DATE;
+	    /* Something which isn't a library depends on the existence of
+	     * this target, so it needs to exist.  */
+ 	    set_out_of_date(gn->mtime);
 	    break;
 	}
     }
-
-    Lst_Close(&gn->parents);
-
     return gn->mtime;
 }
 
@@ -1198,36 +1185,32 @@ Boolean
 Arch_LibOODate (gn)
     GNode   	  *gn;  	/* The library's graph node */
 {
-    Boolean 	  oodate;
+    TIMESTAMP	modTimeTOC;	/* mod time of __.SYMDEF */
 
-    if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->children)) {
-	oodate = FALSE;
-    } else if (gn->mtime > now || gn->mtime < gn->cmtime || 
-    	gn->mtime == OUT_OF_DATE) {
-	    oodate = TRUE;
-    } else {
+    if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->children)) 
+	return FALSE;
+    if (is_before(now, gn->mtime) || is_before(gn->mtime, gn->cmtime) ||
+    	is_out_of_date(gn->mtime))
+	return TRUE;
 #ifdef RANLIBMAG
-	time_t 	  	modTimeTOC; /* The table-of-contents's mod time */
+    /* non existent libraries are always out-of-date.  */
+    if (gn->path == NULL)
+    	return TRUE;
 
-	modTimeTOC = ArchMTimeMember(gn->path, RANLIBMAG, FALSE);
+    modTimeTOC = ArchMTimeMember(gn->path, RANLIBMAG, FALSE);
 
-	if (!is_out_of_date(modTimeTOC)) {
-	    if (DEBUG(ARCH) || DEBUG(MAKE))
-		printf("%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));
-	    oodate = is_before(modTimeTOC, gn->cmtime);
-	} else {
-	    /*
-	     * A library w/o a table of contents is out-of-date
-	     */
-	    if (DEBUG(ARCH) || DEBUG(MAKE))
-		printf("No t.o.c....");
-	    oodate = TRUE;
-	}
-#else
-	oodate = FALSE;
-#endif
+    if (!is_out_of_date(modTimeTOC)) {
+	if (DEBUG(ARCH) || DEBUG(MAKE))
+	    printf("%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));
+	return is_before(modTimeTOC, gn->cmtime);
     }
-    return (oodate);
+    /* A library w/o a table of contents is out-of-date */
+    if (DEBUG(ARCH) || DEBUG(MAKE))
+	printf("No t.o.c....");
+    return TRUE;
+#else
+    return FALSE;
+#endif
 }
 
 /*-

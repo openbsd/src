@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.44 2000/10/13 08:29:20 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2000/11/24 14:36:34 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: main.c,v 1.44 2000/10/13 08:29:20 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.45 2000/11/24 14:36:34 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.44 2000/10/13 08:29:20 espie Exp $";
 #define	MAKEFLAGS	".MAKEFLAGS"
 
 LIST			create;		/* Targets to be made */
-time_t			now = OUT_OF_DATE;/* Time at start of make */
+TIMESTAMP		now;		/* Time at start of make */
 GNode			*DEFAULT;	/* .DEFAULT node */
 Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
 
@@ -530,6 +530,7 @@ main(argc, argv)
 					/* avoid faults on read-only strings */
 	static char syspath[] = _PATH_DEFSYSPATH;
 
+	set_out_of_date(now);
 #ifdef RLIMIT_NOFILE
 	/*
 	 * get rid of resource limit on file descriptors
@@ -716,7 +717,7 @@ main(argc, argv)
 	Suff_Init();
 
 	DEFAULT = NULL;
-	(void)time(&now);
+	grab(now);
 
 	/*
 	 * Set up the .TARGETS variable to contain the list of targets to be

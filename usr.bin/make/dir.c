@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.28 2000/11/24 14:27:19 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.29 2000/11/24 14:36:33 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -96,7 +96,7 @@
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: dir.c,v 1.28 2000/11/24 14:27:19 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.29 2000/11/24 14:36:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -874,7 +874,7 @@ Dir_FindFile(name, path)
 		/* Save the modification time so if it's needed, we don't have
 		 * to fetch it again.  */
 		if (DEBUG(DIR))
-		    printf("Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
+		    printf("Caching %s for %s\n", Targ_FmtTime(mtime),
 			    file);
 		record_stamp(file, mtime);
 		nearmisses += 1;
@@ -938,7 +938,7 @@ Dir_FindFile(name, path)
 
 	grab_stat(stb, mtime);
 	if (DEBUG(DIR))
-	    printf("Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
+	    printf("Caching %s for %s\n", Targ_FmtTime(mtime),
 		    name);
 	record_stamp(name, mtime);
 	return estrdup(name);
@@ -1004,7 +1004,7 @@ Dir_MTime(gn)
 	if (gn->type & OP_MEMBER) {
 	    if (fullName != gn->path)
 		free(fullName);
-	    return Arch_MemMTime (gn);
+	    return Arch_MemMTime(gn);
 	} else
 	    set_out_of_date(mtime);
     }
@@ -1271,4 +1271,26 @@ Dir_PrintPath(path)
     Lst	path;
 {
     Lst_Every(path, DirPrintDir);
+}
+
+#ifndef USE_TIMESPEC
+#include <sys/types.h>
+#include <utime.h>
+#endif
+int
+set_times(f)
+    const char *f;
+{
+#ifdef USE_TIMESPEC
+    struct timeval tv[2];
+
+    TIMESPEC_TO_TIMEVAL(&tv[0], &now);
+    TIMESPEC_TO_TIMEVAL(&tv[1], &now);
+    return utimes(f, tv);
+#else
+    struct utimbuf times;
+
+    times.actime = times.modtime = now;
+    return utime(f, &times);
+#endif
 }

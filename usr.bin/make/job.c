@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.37 2000/09/14 13:52:42 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.38 2000/11/24 14:36:34 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -126,7 +126,7 @@
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: job.c,v 1.37 2000/09/14 13:52:42 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.38 2000/11/24 14:36:34 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1009,7 +1009,6 @@ Job_Touch(gn, silent)
     Boolean 	  silent;   	/* TRUE if should not print messages */
 {
     int		  streamID;   	/* ID of stream opened to do the touch */
-    struct utimbuf times;	/* Times for utime() call */
 
     if (gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_OPTIONAL)) {
 	/*
@@ -1035,8 +1034,7 @@ Job_Touch(gn, silent)
     } else {
 	char	*file = gn->path ? gn->path : gn->name;
 
-	times.actime = times.modtime = now;
-	if (utime(file, &times) < 0){
+	if (set_times(file) == -1) {
 	    streamID = open(file, O_RDWR | O_CREAT, 0666);
 
 	    if (streamID >= 0) {

@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.23 2000/09/14 13:56:14 espie Exp $
+#	$OpenBSD: Makefile,v 1.24 2000/11/24 14:36:33 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR} -Wall -Wno-char-subscripts -Wstrict-prototypes
 
+CFLAGS+=-DUSE_TIMESPEC
 .if (${MACHINE_ARCH} == "m88k")
 CFLAGS+=-O0
 .endif
