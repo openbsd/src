@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.18 1997/01/02 12:20:40 mickey Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.19 1997/01/25 00:27:31 dm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1258,6 +1258,9 @@ sys_stat(p, v, retval)
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
+	/* Don't let non-root see generation numbers (for NFS security) */
+	if (suser(p->p_ucred, &p->p_acflag))
+		sb.st_gen = 0;
 	error = copyout((caddr_t)&sb, (caddr_t)SCARG(uap, ub), sizeof (sb));
 	return (error);
 }
@@ -1288,6 +1291,9 @@ sys_lstat(p, v, retval)
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
+	/* Don't let non-root see generation numbers (for NFS security) */
+	if (suser(p->p_ucred, &p->p_acflag))
+		sb.st_gen = 0;
 	error = copyout((caddr_t)&sb, (caddr_t)SCARG(uap, ub), sizeof (sb));
 	return (error);
 }
