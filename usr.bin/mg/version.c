@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.4 2001/01/29 01:58:10 niklas Exp $	*/
+/*	$OpenBSD: version.c,v 1.5 2001/05/23 22:24:26 mickey Exp $	*/
 
 /*
  * This file contains the string that get written
@@ -7,7 +7,7 @@
 
 #include "def.h"
 
-char	version[] = "Mg 2a";
+const char	version[] = "Mg 2a";
 
 /*
  * Display the version. All this does
