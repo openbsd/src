@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.10 2002/03/11 13:02:56 vincent Exp $	*/
+/*	$OpenBSD: dired.c,v 1.11 2003/06/26 23:04:10 vincent Exp $	*/
 
 /* dired module for mg 2a	 */
 /* by Robert A. Larson		 */
@@ -7,6 +7,8 @@
 #include "kbd.h"
 
 #ifndef NO_DIRED
+
+int d_findfile(int, int);
 
 static PF dired_pf[] = {
 	d_findfile,

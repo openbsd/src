@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2003/05/05 11:12:07 vincent Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2003/06/26 23:04:10 vincent Exp $	*/
 
 /*
  *	Mainline.
@@ -108,7 +108,7 @@ notnum:
 				(void)showbuffer(curbp, curwp, 0);
 				(void)readin(cp);
 				if (init_fcn_name)
-					init_fcn();
+					init_fcn(0, 1);
 			}
 		}
 		argc--;
@@ -178,7 +178,7 @@ edinit(PF init_fcn)
 	wp->w_flag = WFMODE | WFHARD;		/* Full.		 */
 
 	if (init_fcn)
-		init_fcn();
+		init_fcn(0, 1);
 }
 
 /*

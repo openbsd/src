@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.46 2003/05/05 11:12:07 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.47 2003/06/26 23:04:10 vincent Exp $	*/
 
 #include <sys/queue.h>
 
@@ -21,7 +21,7 @@
 #endif
 #endif
 
-typedef int	(*PF)();	/* generally useful type */
+typedef int	(*PF)(int, int);	/* generally useful type */
 
 /*
  * Table sizes, etc.
@@ -368,7 +368,7 @@ int	 delwind(int, int);
 MGWIN   *wpopup(void);
 
 /* buffer.c */
-int	 togglereadonly(void);
+int	 togglereadonly(int, int);
 BUFFER  *bfind(const char *, int);
 int	 poptobuffer(int, int);
 int	 killbuffer(int, int);
@@ -579,7 +579,7 @@ int	 cntnonmatchlines(int, int);
 
 /* undo.c X */
 void	 free_undo_record(struct undo_rec *);
-int	 undo_dump(void);
+int	 undo_dump(int, int);
 int	 undo_enable(int);
 int	 undo_add_custom(int, int, LINE *, int, void *, int);
 int	 undo_add_boundary(void);
