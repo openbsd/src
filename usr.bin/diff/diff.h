@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.5 2003/06/25 07:26:59 tedu Exp $	*/
+/*	$OpenBSD: diff.h,v 1.6 2003/06/25 17:49:22 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -40,12 +40,14 @@
  * diff - common declarations
  */
 
-#include <stdio.h>
-#include <ctype.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/dir.h>
+
+#include <ctype.h>
+#include <err.h>
 #include <signal.h>
+#include <stdio.h>
 
 /*
  * Output format options
@@ -56,8 +58,9 @@ int	opt;
 #define	D_EDIT		-1	/* Editor script out */
 #define	D_REVERSE	1	/* Reverse editor script */
 #define	D_CONTEXT	2	/* Diff with context */
-#define	D_IFDEF		3	/* Diff with merged #ifdef's */
-#define	D_NREVERSE	4	/* Reverse ed script with numbered
+#define	D_UNIFIED	3	/* Unified context diff */
+#define	D_IFDEF		4	/* Diff with merged #ifdef's */
+#define	D_NREVERSE	5	/* Reverse ed script with numbered
 				   lines and no trailing . */
 
 int	tflag;			/* expand tabs on output */
@@ -117,10 +120,10 @@ void	*talloc(size_t);
 void	*ralloc(void *, size_t);
 char	*splice(char *, char *);
 char	*copytemp(void);
-void	done(int);
 void	diffdir(char **);
 void	diffreg(void);
 int	max(int, int);
 int	min(int, int);
+__dead void done(int);
 
 extern	char diffh[], diff[], pr[];

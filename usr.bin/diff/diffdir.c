@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.10 2003/06/25 03:50:27 deraadt Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.11 2003/06/25 17:49:22 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -91,13 +91,10 @@ diffdir(char **argv)
 	struct dir *d1, *d2;
 	int i, cmp;
 
-	if (opt == D_IFDEF) {
-		fprintf(stderr, "diff: can't specify -I with directories\n");
-		done(0);
-	}
+	if (opt == D_IFDEF)
+		warnx("can't specify -I with directories");
 	if (opt == D_EDIT && (sflag || lflag))
-		fprintf(stderr,
-		    "diff: warning: shouldn't give -s or -l with -e\n");
+		warnx("warning: shouldn't give -s or -l with -e");
 	strlcpy(title, "diff ", sizeof title);
 	for (i = 1; diffargv[i + 2]; i++) {
 		if (!strcmp(diffargv[i], "-"))
@@ -230,8 +227,7 @@ setupdir(char *cp)
 
 	dirp = opendir(cp);
 	if (dirp == NULL) {
-		fprintf(stderr, "diff: ");
-		perror(cp);
+		warn("%s", cp);
 		done(0);
 	}
 	nitems = 0;
@@ -370,7 +366,7 @@ calldiff(char *wantpr)
 		pipe(pv);
 		pid = fork();
 		if (pid == -1) {
-			fprintf(stderr, "No more processes");
+			warnx("No more processes");
 			done(0);
 		}
 		if (pid == 0) {
@@ -386,7 +382,7 @@ calldiff(char *wantpr)
 	}
 	pid = fork();
 	if (pid == -1) {
-		fprintf(stderr, "diff: No more processes\n");
+		warnx("No more processes");
 		done(0);
 	}
 	if (pid == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.14 2003/06/25 07:26:59 tedu Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.15 2003/06/25 17:49:22 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -231,52 +231,45 @@ diffreg(void)
 	if (hflag) {
 		diffargv[0] = "diffh";
 		execv(diffh, diffargv);
-		fprintf(stderr, "diff: ");
-		perror(diffh);
+		warn("%s", diffh);
 		done(0);
 	}
 	chrtran = (iflag ? cup2low : clow2low);
 	if ((stb1.st_mode & S_IFMT) == S_IFDIR) {
 		file1 = splice(file1, file2);
 		if (stat(file1, &stb1) < 0) {
-			fprintf(stderr, "diff: ");
-			perror(file1);
+			warn("%s", file1);
 			done(0);
 		}
 	} else if ((stb2.st_mode & S_IFMT) == S_IFDIR) {
 		file2 = splice(file2, file1);
 		if (stat(file2, &stb2) < 0) {
-			fprintf(stderr, "diff: ");
-			perror(file2);
+			warn("%s", file2);
 			done(0);
 		}
 	} else if ((stb1.st_mode & S_IFMT) != S_IFREG || !strcmp(file1, "-")) {
 		if (!strcmp(file2, "-")) {
-			fprintf(stderr, "diff: can't specify - -\n");
+			warnx("can't specify - -");
 			done(0);
 		}
 		file1 = copytemp();
 		if (stat(file1, &stb1) < 0) {
-			fprintf(stderr, "diff: ");
-			perror(file1);
+			warn("%s", file1);
 			done(0);
 		}
 	} else if ((stb2.st_mode & S_IFMT) != S_IFREG || !strcmp(file2, "-")) {
 		file2 = copytemp();
 		if (stat(file2, &stb2) < 0) {
-			fprintf(stderr, "diff: ");
-			perror(file2);
+			warn("%s", file2);
 			done(0);
 		}
 	}
 	if ((f1 = fopen(file1, "r")) == NULL) {
-		fprintf(stderr, "diff: ");
-		perror(file1);
+		warn("%s", file1);
 		done(0);
 	}
 	if ((f2 = fopen(file2, "r")) == NULL) {
-		fprintf(stderr, "diff: ");
-		perror(file2);
+		warn("%s", file2);
 		fclose(f1);
 		done(0);
 	}
@@ -360,14 +353,12 @@ copytemp(void)
 	signal(SIGTERM, done);
 	f = mkstemp(tempfile);
 	if (f < 0) {
-		fprintf(stderr, "diff: ");
-		perror(tempfile);
+		warn("%s", tempfile);
 		done(0);
 	}
 	while ((i = read(0, buf, BUFSIZ)) > 0)
 		if (write(f, buf, i) != i) {
-			fprintf(stderr, "diff: ");
-			perror(tempfile);
+			warn("%s", tempfile);
 			done(0);
 		}
 	close(f);
@@ -380,7 +371,7 @@ splice(char *dir, char *file)
 	char *tail, buf[BUFSIZ];
 
 	if (!strcmp(file, "-")) {
-		fprintf(stderr, "diff: can't specify - with other arg directory\n");
+		warnx("can't specify - with other arg directory");
 		done(0);
 	}
 	tail = strrchr(file, '/');
