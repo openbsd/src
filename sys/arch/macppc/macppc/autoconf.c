@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.10 2003/06/02 23:27:50 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.11 2003/09/06 17:13:17 drahn Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.10 2003/06/02 23:27:50 millert Exp $
+ *      $Id: autoconf.c,v 1.11 2003/09/06 17:13:17 drahn Exp $
  */
 
 /*
@@ -55,7 +55,8 @@
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
-
+#include <dev/cons.h>
+#include <uvm/uvm_extern.h>
 #include <machine/autoconf.h>
 
 struct  device *parsedisk(char *, int, int, dev_t *);
@@ -314,6 +315,7 @@ setroot()
 	struct device *dv;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128];
+	int s;
 
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
@@ -364,7 +366,12 @@ setroot()
 					bootdv->dv_class == DV_DISK
 						? 'a' : ' ');
 			printf(": ");
+			s = splimp();
+			cnpollc(TRUE);
 			len = getsn(buf, sizeof(buf));
+
+			cnpollc(FALSE);
+			splx(s);
 			if (len == 0 && bootdv != NULL) {
 				strlcpy(buf, bootdv->dv_xname, sizeof buf);
 				len = strlen(buf);
@@ -398,7 +405,11 @@ setroot()
 					bootdv->dv_xname,
 					bootdv->dv_class == DV_DISK?'b':' ');
 			printf(": ");
+			s = splimp();
+			cnpollc(TRUE);
 			len = getsn(buf, sizeof(buf));
+			cnpollc(FALSE);
+			splx(s);
 			if (len == 0 && bootdv != NULL) {
 				switch (bootdv->dv_class) {
 				case DV_IFNET:
