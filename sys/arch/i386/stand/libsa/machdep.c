@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 1997/08/05 12:58:20 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.7 1997/08/07 11:51:02 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -54,7 +54,7 @@ machdep()
 #ifdef DEBUG
 	*(u_int16_t*)0xb8148 = 0x4732;
 #endif
-	cons_probe();	/* call console init before any io */
+	cons_probe();	/* call console init before doing any io */
 #ifdef DEBUG
 	*(u_int16_t*)0xb8148 = 0x4733;
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.2 1997/08/01 18:39:45 weingart Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.3 1997/08/07 11:49:59 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -120,7 +120,7 @@ reloc:
 	 * HD #2, and still get (%dl & 0x80) == 0x00,
 	 * these type of systems will loose.  I don't
 	 * know of any like this, but I've come to the
-	 * conclusion, that if it can exists, it will,
+	 * conclusion, that if it can exist, it will,
 	 * someplace in the PC world.  If anyone knows
 	 * how to fix this, speak up!
 	 *
