@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.22 2001/11/21 20:41:55 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.23 2003/05/15 02:47:47 pjanzen Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: cmd1.c,v 1.22 2001/11/21 20:41:55 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmd1.c,v 1.23 2003/05/15 02:47:47 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -192,6 +192,7 @@ printhead(int mesg)
 {
 	struct message *mp;
 	char headline[LINESIZE], wcount[LINESIZE], *subjline, dispc, curind;
+	char visline[LINESIZE];
 	char pbuf[BUFSIZ];
 	struct headline hl;
 	int subjlen;
@@ -240,14 +241,15 @@ printhead(int mesg)
 		subjline="";
 		subjlen=0;
 	}
+	printf("%c%c%3d ", curind, dispc, mesg);
+	strnvis(visline, name, sizeof(visline), VIS_SAFE|VIS_NOSLASH);
 	if (name == to)
-		printf("%c%c%3d TO %-14.14s  %16.16s %s %.*s\n",
-			curind, dispc, mesg, name, hl.l_date, wcount,
-			subjlen, subjline);
+		printf("TO %-14.14s", visline);
 	else
-		printf("%c%c%3d %-17.17s  %16.16s %s %.*s\n",
-			curind, dispc, mesg, name, hl.l_date, wcount,
-			subjlen, subjline);
+		printf("%-17.17s", visline);
+	/* hl.l_date was sanity-checked when read in.  wcount we just made. */
+	strnvis(visline, subjline, sizeof(visline), VIS_SAFE|VIS_NOSLASH);
+	printf("  %16.16s %s %.*s\n", hl.l_date, wcount, subjlen, visline);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.15 2001/11/28 01:26:35 millert Exp $	*/
+/*	$OpenBSD: send.c,v 1.16 2003/05/15 02:47:47 pjanzen Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: send.c,v 1.15 2001/11/28 01:26:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: send.c,v 1.16 2003/05/15 02:47:47 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,17 +67,20 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 	int count;
 	FILE *ibuf;
 	char line[LINESIZE];
+	char visline[4 * LINESIZE - 3];
 	int ishead, infld, ignoring = 0, dostat, firstline;
 	char *cp, *cp2;
 	int c = 0;
 	int length;
 	int prefixlen = 0;
 	int rval;
+	int dovis;
 	struct sigaction act, saveint;
 	sigset_t oset;
 
 	sendsignal = 0;
 	rval = -1;
+	dovis = isatty(fileno(obuf));
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_RESTART;
 	act.sa_handler = sendint;
@@ -199,7 +202,11 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 					(void)fwrite(prefix, sizeof(*prefix),
 							prefixlen, obuf);
 			}
-			(void)fwrite(line, sizeof(*line), length, obuf);
+			if (dovis) {
+				length = strvis(visline, line, VIS_SAFE|VIS_NOSLASH);
+				(void)fwrite(visline, sizeof(*visline), length, obuf);
+			} else
+				(void)fwrite(line, sizeof(*line), length, obuf);
 			if (ferror(obuf))
 				goto out;
 		}
@@ -236,7 +243,11 @@ sendmessage(struct message *mp, FILE *obuf, struct ignoretab *doign,
 		 */
 		if (strncmp(line, "From ", 5) == 0)
 			(void)fwrite(">", 1, 1, obuf); /* '>' before 'From ' */
-		(void)fwrite(line, sizeof(*line), c, obuf);
+		if (dovis) {
+			length = strvis(visline, line, VIS_SAFE|VIS_NOSLASH);
+			(void)fwrite(visline, sizeof(*visline), length, obuf);
+		} else
+			(void)fwrite(line, sizeof(*line), c, obuf);
 		if (ferror(obuf) || sendsignal == SIGINT)
 			goto out;
 	}
