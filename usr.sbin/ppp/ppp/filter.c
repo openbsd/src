@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: filter.c,v 1.14 2000/03/29 09:32:26 brian Exp $
+ * $OpenBSD: filter.c,v 1.15 2000/03/30 10:46:18 brian Exp $
  *
  *	TODO: Should send ICMP error message when we discard packets.
  */
@@ -113,7 +113,7 @@ ParseAddr(struct ipcp *ipcp, const char *data,
     strncpy(s, data, len);
     s[len] = '\0';
     *paddr = GetIpAddr(s);
-    if (paddr->s_addr == INADDR_ANY || paddr->s_addr == INADDR_NONE) {
+    if (paddr->s_addr == INADDR_NONE) {
       log_Printf(LogWARN, "ParseAddr: %s: Bad address\n", s);
       return 0;
     }
