@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.43 2001/08/12 02:45:33 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.44 2002/01/06 21:59:15 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.43 2001/08/12 02:45:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.44 2002/01/06 21:59:15 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -472,9 +472,7 @@ main(argc, argv)
 		/*
 		 * If we do not have the force flag authenticate the user
 		 */
-		if (fflag)
-			authok = AUTH_SECURE;
-		else {
+		if (!fflag) {
 			lastchance =
 			    login_getcaptime(lc, "password-dead", 0, 0) != 0;
 			if (lastchance)
@@ -509,14 +507,12 @@ main(argc, argv)
 		if (pwd == 0)
 			goto failed;
 
-		authok &= AUTH_SECURE;
-
 		/*
 		 * If trying to log in as root on an insecure terminal,
 		 * refuse the login attempt unless the authentication
 		 * style explicitly says a root login is okay.
 		 */
-		if (authok == 0 && pwd && rootlogin && !rootterm(tty))
+		if (pwd && rootlogin && !rootterm(tty))
 			goto failed;
 
 		if (fflag) {
