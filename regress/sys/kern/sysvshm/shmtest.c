@@ -170,7 +170,7 @@ main(argc, argv)
 	/*
 	 * Write the test pattern into the shared memory buffer.
 	 */
-	strcpy(shm_buf, m_str);
+	strlcpy(shm_buf, m_str, pgsize);
 
 	switch ((child_pid = fork())) {
 	case -1:

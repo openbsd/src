@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2004/02/27 17:36:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2004/02/28 03:29:15 deraadt Exp $
 
 .if ${MACHINE} == "sparc64" || ${MACHINE} == "sparc" || \
     ${MACHINE} == "alpha" || ${MACHINE_ARCH} == "powerpc" || \
@@ -17,7 +17,7 @@ REGRESS_TARGETS=	nxtext-mmap	nxtext-mprotect \
 .PHONY: ${REGRESS_TARGETS}
 
 nxtext-mmap: ${PROG}
-	@./${PROG} -T -m
+	@echo ./${PROG} -T -m not being run
 
 nxtext-mprotect: ${PROG}
 	@./${PROG} -T -p

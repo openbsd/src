@@ -1,4 +1,4 @@
-/*	$OpenBSD: accept.c,v 1.3 2003/07/31 21:48:08 deraadt Exp $	*/
+/*	$OpenBSD: accept.c,v 1.4 2004/02/28 03:29:15 deraadt Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org>, 2002 Public Domain.
  */
@@ -39,7 +39,7 @@ main(int argc, char *argv[])
 	unlink(SOCK_NAME);
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_LOCAL;
-	strcpy(sun.sun_path, SOCK_NAME);
+	strlcpy(sun.sun_path, SOCK_NAME, sizeof sun.sun_path);
 	sun.sun_len = SUN_LEN(&sun);
 
 
@@ -95,7 +95,7 @@ child()
 
 	(void) memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_LOCAL;
-	(void) strcpy(sun.sun_path, SOCK_NAME);
+	(void) strlcpy(sun.sun_path, SOCK_NAME, sizeof sun.sun_path);
 	sun.sun_len = SUN_LEN(&sun);
 
 	if (connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgtest.c,v 1.4 2002/06/23 03:11:09 deraadt Exp $	*/
+/*	$OpenBSD: msgtest.c,v 1.5 2004/02/28 03:29:15 deraadt Exp $	*/
 /*	$NetBSD: msgtest.c,v 1.6 2001/02/19 22:44:41 cgd Exp $	*/
 
 /*-
@@ -190,7 +190,7 @@ main(int argc, char **argv)
 	 * Send the first message to the receiver and wait for the ACK.
 	 */
 	m.mtype = MTYPE_1;
-	strcpy(m.mtext, m1_str);
+	strlcpy(m.mtext, m1_str, sizeof m.mtext);
 	if (msgsnd(sender_msqid, &m, sizeof(m), 0) == -1)
 		err(1, "sender: msgsnd 1");
 
@@ -204,7 +204,7 @@ main(int argc, char **argv)
 	 * Send the second message to the receiver and wait for the ACK.
 	 */
 	m.mtype = MTYPE_2;
-	strcpy(m.mtext, m2_str);
+	strlcpy(m.mtext, m2_str, sizeof m.mtext);
 	if (msgsnd(sender_msqid, &m, sizeof(m), 0) == -1)
 		err(1, "sender: msgsnd 2");
 
