@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1996/08/02 10:26:48 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1996/08/02 10:29:10 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/03/15 22:39:32 scottr Exp $	*/
 
 /*-
@@ -440,9 +440,9 @@ main(argc, argv)
 	for (i = 0; i < ntrec; i++)
 		writeheader(maxino - 1);
 	if (pipeout)
-		msg("DUMP: %ld tape blocks\n",spcl.c_tapea);
+		msg("%ld tape blocks\n", spcl.c_tapea);
 	else
-		msg("DUMP: %ld tape blocks on %d volume%s\n",
+		msg("%ld tape blocks on %d volume%s\n",
 		    spcl.c_tapea, spcl.c_volume,
 		    spcl.c_volume > 1 ? "s" : "");
 	putdumptime();
