@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.12 2003/04/04 00:21:20 deraadt Exp $	*/
+/*	$OpenBSD: apply.c,v 1.13 2003/04/06 23:22:43 deraadt Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: apply.c,v 1.12 2003/04/04 00:21:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: apply.c,v 1.13 2003/04/06 23:22:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,7 @@ main(argc, argv)
 		/* Expand command argv references. */
 		for (p = cmd, q = c; *p != '\0'; ++p)
 			if (p[0] == magic && isdigit(p[1]) && p[1] != '0') {
-				sprintf(q, "%s", argv[(++p)[0] - '0']);
+				strlcpy(q, argv[(++p)[0] - '0'], c + clen - q);
 				q += strlen(q);
 			} else
 				*q++ = *p;
