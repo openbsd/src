@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.1 2002/07/15 19:13:29 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.2 2002/07/15 22:16:41 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: atrun.c,v 1.1 2002/07/15 19:13:29 millert Exp $";
+static const char rcsid[] = "$OpenBSD: atrun.c,v 1.2 2002/07/15 22:16:41 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -456,8 +456,8 @@ run_job(atjob *job, char *atfile)
 				_exit(ERROR_EXIT);
 			}
 			auth_close(as);
-			login_close(lc);
 # endif /* BSD_AUTH */
+			login_close(lc);
 		}
 #else
 		setgid(pw->pw_gid);
