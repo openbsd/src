@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.12 2003/06/03 20:22:11 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.13 2003/06/27 05:13:19 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -35,6 +35,7 @@
 	.globl	_C_LABEL(edata)
 	.globl	_C_LABEL(boot)
 	.globl	_C_LABEL(_rtt)
+	.globl	_C_LABEL(bios_bootdev)
 	.globl	_ASM_LABEL(pmm_init)
 	.globl	Gdtr
 
@@ -69,6 +70,7 @@ _start:
 	mov	%ax,%gs
 	movl	$BOOTSTACK,%esp
 	pushl	%edx
+	movl	%edx, _C_LABEL(bios_bootdev)
 
 	/* Now do it all */
 	call	_ASM_LABEL(pmm_init)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.58 2003/06/03 20:22:11 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.59 2003/06/27 05:13:19 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -46,6 +46,7 @@ static int CHS_rw (int, int, int, int, int, int, void *);
 static int EDD_rw (int, int, u_int64_t, u_int32_t, void *);
 
 extern int debug;
+int bios_bootdev;
 
 #if 0
 struct biosdisk {
@@ -88,7 +89,7 @@ bios_getdiskinfo(dev, pdi)
 	int dev;
 	bios_diskinfo_t *pdi;
 {
-	u_int rv, secl, sech;
+	u_int rv;
 
 	/* Just reset, don't check return code */
 	rv = biosdreset(dev);
@@ -122,22 +123,6 @@ bios_getdiskinfo(dev, pdi)
 	pdi->bios_cylinders &= 0x3ff;
 	pdi->bios_cylinders++;
 
-	/*
-	 * NOTE: This seems to hang on certain machines.  Use function #8
-	 * first, and verify with #21 IFF #8 succeeds first.
-	 * Do not try this for floppy 0 (to support CD-ROM boot).
-	 */
-	if (dev) {
-		__asm __volatile (DOINT(0x13) ";setc %b0"
-				: "=a" (rv), "=d" (secl), "=c" (sech)
-				: "0" (0x15FF), "1" (dev), "2" (0xFFFF)
-				: "cc");
-		if (!(rv & 0xff00))
-			return (1);
-		if (rv & 0xff)
-			return (1);
-	}
-
 	/* NOTE:
 	 * This currently hangs/reboots some machines
 	 * The IBM Thinkpad 750ED for one.
@@ -148,7 +133,7 @@ bios_getdiskinfo(dev, pdi)
 	 * Future hangs (when reported) can be "fixed"
 	 * with getSYSCONFaddr() and an exceptions list.
 	 */
-	if (dev & 0x80) {
+	if (dev & 0x80 && (dev == 0x80 || dev == 0x81 || dev == bios_bootdev)) {
 		int bm;
 		/* EDD support check */
 		__asm __volatile(DOINT(0x13) "; setc %b0"
