@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.288 2000/07/20 23:05:15 ho Exp $
+	$OpenBSD: pcidevs,v 1.289 2000/07/25 16:47:11 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1301,6 +1301,13 @@ product RCC CIOB30		0x0010	CIOB30
 product RCC CMIC_HE		0x0011	CMIC_HE Host
 /* product RCC UNKNOWN		0x0211	IDE */
 /* product RCC UNKNOWN		0x0220	USB */
+
+/* Picopower */
+product PICOPOWER PT80C826	0x0000	PT80C826
+product PICOPOWER PT86C521	0x0001	PT86C521
+product PICOPOWER PT86C523	0x0002	PT86C523
+product PICOPOWER PC87550	0x0005	PC87550
+product PICOPOWER PT86C523	0x8002	PT86C523
 
 /* Pijnenburg */
 product PIJNENBURG PCC_ISES	0x0001	PCC-ISES
