@@ -11,7 +11,7 @@
 LIBC_R?=	/usr/lib/libc_r.a
 LIBPTHREAD?=	/usr/lib/libpthread.a
 
-.if ${MACHINE_ARCH} != "i386"
+.if 1 # ${MACHINE_ARCH} != "i386"
 PTHREAD=	-pthread
 DPADD +=	${LIBC_R}
 .else
@@ -31,7 +31,8 @@ TESTS = test_create test_pthread_join test_switch test_sleep test_readdir \
 	test_sock_1 test_sock_2 test_stdio_1 test_pthread_mutex \
 	test_pthread_cond_timedwait test_netdb test_pw test_cwd \
 	test_sock_2a test_cancel test_sigsuspend test_sigwait \
-	test_select test_poll test_signal test_stdarg test_close
+	test_select test_poll test_signal test_stdarg test_close \
+	test_group
 
 SRCS =		${TESTS:=.c}
 CLEANFILES +=	${TESTS} 
