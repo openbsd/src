@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC_SCSI3,v 1.29 1999/06/06 04:48:24 jason Exp $
+#	$OpenBSD: GENERIC_SCSI3,v 1.30 1999/09/06 03:46:16 jason Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -254,6 +254,9 @@ tcx*	at sbus? slot ? offset ?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen0	at obio0			# sun4m
+
+# Weitek p9100 found on Tadpole 3GS/3GX
+pnozz0	at sbus? slot ? offset ?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
