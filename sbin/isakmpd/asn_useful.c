@@ -1,5 +1,5 @@
-/*	$OpenBSD: asn_useful.c,v 1.5 1998/11/17 11:10:07 niklas Exp $	*/
-/*	$EOM: asn_useful.c,v 1.8 1998/08/21 13:47:58 provos Exp $	*/
+/*	$OpenBSD: asn_useful.c,v 1.6 1999/02/26 03:32:50 niklas Exp $	*/
+/*	$EOM: asn_useful.c,v 1.10 1999/02/25 16:19:36 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -36,33 +36,40 @@
 
 #include <sys/param.h>
 
+#include "sysdep.h"
+
 #include "asn.h"
 #include "asn_useful.h"
 
 struct norm_type AlgorithmIdentifier[] = {
-  {TAG_OBJECTID, UNIVERSAL, "algorithm", 0, NULL},
-  {TAG_ANY, UNIVERSAL, "parameters", 0, NULL},
-  {TAG_STOP, UNIVERSAL, NULL, 0, NULL}};
+  { TAG_OBJECTID, UNIVERSAL, "algorithm", 0, 0 },
+  { TAG_ANY, UNIVERSAL, "parameters", 0, 0 },
+  { TAG_STOP, UNIVERSAL, 0, 0, 0 }
+};
 
 struct norm_type Signed[] = {
-  {TAG_RAW, UNIVERSAL, "data", 0, NULL},
+  { TAG_RAW, UNIVERSAL, "data", 0, 0},
   SEQ("algorithm", AlgorithmIdentifier),
-  {TAG_BITSTRING, UNIVERSAL, "encrypted", 0, NULL},
-  {TAG_STOP, UNIVERSAL, NULL, 0, NULL}};
+  { TAG_BITSTRING, UNIVERSAL, "encrypted", 0, 0 },
+  { TAG_STOP, UNIVERSAL, 0, 0, 0 }
+};
 
 struct norm_type Validity[] = {
-  {TAG_UTCTIME, UNIVERSAL, "notBefore", 0, NULL},
-  {TAG_UTCTIME, UNIVERSAL, "notAfter", 0, NULL},
-  {TAG_STOP, UNIVERSAL, NULL, 0, NULL}};
+  { TAG_UTCTIME, UNIVERSAL, "notBefore", 0, 0 },
+  { TAG_UTCTIME, UNIVERSAL, "notAfter", 0, 0 },
+  { TAG_STOP, UNIVERSAL, 0, 0, 0 }
+};
 
 struct norm_type AttributeValueAssertion[] = {
-  {TAG_OBJECTID, UNIVERSAL, "AttributeType", 0, NULL},
-  {TAG_ANY, UNIVERSAL, "AttributeValue", 0, NULL},
-  {TAG_STOP, UNIVERSAL, NULL, 0, NULL}};
+  { TAG_OBJECTID, UNIVERSAL, "AttributeType", 0, 0 },
+  { TAG_ANY, UNIVERSAL, "AttributeValue", 0, 0 },
+  { TAG_STOP, UNIVERSAL, 0, 0, 0 }
+};
 
 struct norm_type RelativeDistinguishedName[] = {
   SEQ ("AttributeValueAssertion", AttributeValueAssertion),
-  {TAG_STOP}};
+  { TAG_STOP }
+};
 
 /* 
  * For decoding this structure is dynamically resized, we add two Names
@@ -71,59 +78,66 @@ struct norm_type RelativeDistinguishedName[] = {
 struct norm_type RDNSequence[] = {
   SETOF ("RelativeDistinguishedName", RelativeDistinguishedName),
   SETOF ("RelativeDistinguishedName", RelativeDistinguishedName),
-  {TAG_STOP}};
+  { TAG_STOP }
+};
 
 struct norm_type SubjectPublicKeyInfo[] = {
   SEQ ("algorithm", AlgorithmIdentifier),
-  {TAG_BITSTRING, UNIVERSAL, "subjectPublicKey", 0, NULL},
-  {TAG_STOP}};
+  { TAG_BITSTRING, UNIVERSAL, "subjectPublicKey", 0, 0 },
+  { TAG_STOP }
+};
 
 struct norm_type Extension[] = {
-  {TAG_OBJECTID, UNIVERSAL, "extnId", 0, NULL},
-  {TAG_BOOL, UNIVERSAL, "critical", 0, NULL},
-  {TAG_OCTETSTRING, UNIVERSAL, "extnValue", 0, NULL},
-  {TAG_STOP}};
+  { TAG_OBJECTID, UNIVERSAL, "extnId", 0, 0 },
+  { TAG_BOOL, UNIVERSAL, "critical", 0, 0 },
+  { TAG_OCTETSTRING, UNIVERSAL, "extnValue", 0, 0 },
+  { TAG_STOP }
+};
 
 struct norm_type Extensions[] = {
   SEQ ("extension", Extension),
-  {TAG_STOP}};
+  { TAG_STOP }
+};
 
 struct norm_type Certificate[] = {
   /* We need to add an explicit tag, HACK XXX */
-  {TAG_INTEGER, ADD_EXP(0, UNIVERSAL), "version", 0, NULL},
-  {TAG_INTEGER, UNIVERSAL, "serialNumber", 0, NULL},
+  { TAG_INTEGER, ADD_EXP(0, UNIVERSAL), "version", 0, 0 },
+  { TAG_INTEGER, UNIVERSAL, "serialNumber", 0, 0 },
   SEQ ("signature", AlgorithmIdentifier),
   SEQOF ("issuer", RDNSequence),
   SEQ ("validity", Validity),
   SEQOF ("subject", RDNSequence),
   SEQ ("subjectPublicKeyInfo", SubjectPublicKeyInfo),
-  {TAG_RAW, UNIVERSAL, "extension", 0, NULL},
-  {TAG_STOP}};
+  { TAG_RAW, UNIVERSAL, "extension", 0, 0 },
+  { TAG_STOP }
+};
 
 struct norm_type DigestInfo[] = {
   SEQ ("digestAlgorithm", AlgorithmIdentifier),
-  {TAG_OCTETSTRING, UNIVERSAL, "digest", 0, NULL},
-  {TAG_STOP}};
+  { TAG_OCTETSTRING, UNIVERSAL, "digest", 0, 0 },
+  { TAG_STOP }
+};
 
 struct asn_objectid asn_ids[] = {
-  {"AttributeType", ASN_ID_ATTRIBUTE_TYPE},
-  {"CountryName", ASN_ID_COUNTRY_NAME},
-  {"LocalityName", ASN_ID_LOCALITY_NAME},
-  {"StateOrProvinceName", ASN_ID_STATE_NAME},
-  {"OrganizationName", ASN_ID_ORGANIZATION_NAME},
-  {"OrganizationUnitName", ASN_ID_ORGUNIT_NAME},
-  {"CommonUnitName", ASN_ID_COMMONUNIT_NAME},
-  {"pkcs-1", ASN_ID_PKCS},
-  {"rsaEncryption", ASN_ID_RSAENCRYPTION},
-  {"md2WithRSAEncryption", ASN_ID_MD2WITHRSAENC},
-  {"md4WithRSAEncryption", ASN_ID_MD4WITHRSAENC},
-  {"md5WithRSAEncryption", ASN_ID_MD5WITHRSAENC},
-  {"md2", ASN_ID_MD2},
-  {"md4", ASN_ID_MD4},
-  {"md5", ASN_ID_MD5},
-  {"emailAddress", ASN_ID_EMAILADDRESS},
-  {"id-ce", ASN_ID_CE},
-  {"subjectAltName", ASN_ID_SUBJECT_ALT_NAME},
-  {"issuerAltName", ASN_ID_ISSUER_ALT_NAME},
-  {"basicConstraints", ASN_ID_BASIC_CONSTRAINTS},
-  {NULL, NULL} };
+  { "AttributeType", ASN_ID_ATTRIBUTE_TYPE },
+  { "CountryName", ASN_ID_COUNTRY_NAME },
+  { "LocalityName", ASN_ID_LOCALITY_NAME },
+  { "StateOrProvinceName", ASN_ID_STATE_NAME },
+  { "OrganizationName", ASN_ID_ORGANIZATION_NAME },
+  { "OrganizationUnitName", ASN_ID_ORGUNIT_NAME },
+  { "CommonUnitName", ASN_ID_COMMONUNIT_NAME },
+  { "pkcs-1", ASN_ID_PKCS },
+  { "rsaEncryption", ASN_ID_RSAENCRYPTION },
+  { "md2WithRSAEncryption", ASN_ID_MD2WITHRSAENC },
+  { "md4WithRSAEncryption", ASN_ID_MD4WITHRSAENC },
+  { "md5WithRSAEncryption", ASN_ID_MD5WITHRSAENC },
+  { "md2", ASN_ID_MD2 },
+  { "md4", ASN_ID_MD4 },
+  { "md5", ASN_ID_MD5 },
+  { "emailAddress", ASN_ID_EMAILADDRESS },
+  { "id-ce", ASN_ID_CE },
+  { "subjectAltName", ASN_ID_SUBJECT_ALT_NAME },
+  { "issuerAltName", ASN_ID_ISSUER_ALT_NAME },
+  { "basicConstraints", ASN_ID_BASIC_CONSTRAINTS },
+  { 0, 0 }
+};
