@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.7 2004/01/13 16:53:36 fgsch Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.8 2004/02/27 17:30:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -224,6 +224,7 @@ const struct wi_usb_type {
 	{{ USB_VENDOR_INTEL, USB_PRODUCT_INTEL_I2011B }, 0 },
 	{{ USB_VENDOR_INTERSIL, USB_PRODUCT_INTERSIL_PRISM_2X }, 0 },
 	{{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBWNB11 }, 0 },
+	{{ USB_VENDOR_JVC, USB_PRODUCT_JVC_MP_XP7250_WL }, 0 },
 	{{ USB_VENDOR_LINKSYS, USB_PRODUCT_LINKSYS_WUSB12_11 }, 0 },
 	{{ USB_VENDOR_MELCO, USB_PRODUCT_MELCO_S11 }, 0 },
 	{{ USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_MN510 }, 0 },
