@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.30 2003/06/02 18:32:41 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.31 2003/06/17 19:47:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -633,13 +633,13 @@ cgthree_reset(sc)
 	BT_WRITE(sc, BT_ADDR, BT_CR);
 	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
 	BT_WRITE(sc, BT_CTRL,
-	    (BTCR_MPLX_4 | BTCR_RAMENA | BTCR_BLINK_6464) << 24);
+	    (BTCR_MPLX_4 | BTCR_RAMENA | BTCR_BLINK_6464));
 	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
 
 	/* disable the D/A read pins */
-	BT_WRITE(sc, BT_ADDR, BT_CTR << 24);
+	BT_WRITE(sc, BT_ADDR, BT_CTR);
 	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
-	BT_WRITE(sc, BT_CTRL, 0x00 << 24);
+	BT_WRITE(sc, BT_CTRL, 0x00);
 	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
 }
 
