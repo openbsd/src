@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.41 1997/10/17 04:31:18 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.42 1997/10/17 08:13:58 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -466,7 +466,7 @@ configure_ifs() {
 	# Get netmask
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
-		echo -n "Netmask? [$_interface_mask] "
+		echo -n "Netmask (ie. 255.255.255.0)? [$_interface_mask] "
 		getresp "$_interface_mask"
 		_interface_mask=$resp
 	done
@@ -619,7 +619,7 @@ install_url() {
 	if [ "X${_proxy_host}" = X"" ]; then
 		_proxy_host=none
 	fi
-	echo -n "http/ftp proxy URL? [${_proxy_host}] "
+	echo -n "http/ftp proxy URL? (none if you do not use a proxy) [${_proxy_host}] "
 	getresp "${_proxy_host}"
 	if [ "X${resp}" = X"none" ]; then
 		unset _proxy_host ftp_proxy http_proxy
