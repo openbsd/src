@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.36 2003/06/08 09:41:08 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.37 2003/06/08 10:32:35 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1148,10 +1148,10 @@ pfr_get_tables(struct pfr_table *filter, struct pfr_table *tbl, int *size,
 	int flags)
 {
 	struct pfr_ktable	*p;
-	int			 n;
+	int			 n, nn;
 
 	ACCEPT_FLAGS(PFR_FLAG_ALLRSETS);
-	n = pfr_table_count(filter, flags);
+	n = nn = pfr_table_count(filter, flags);
 	if (n < 0)
 		return (ENOENT);
 	if (n > *size) {
@@ -1170,7 +1170,7 @@ pfr_get_tables(struct pfr_table *filter, struct pfr_table *tbl, int *size,
 		printf("pfr_get_tables: corruption detected (%d).\n", n);
 		return (ENOTTY);
 	}
-	*size = pfr_ktable_cnt;
+	*size = nn;
 	return (0);
 }
 
@@ -1180,12 +1180,12 @@ pfr_get_tstats(struct pfr_table *filter, struct pfr_tstats *tbl, int *size,
 {
 	struct pfr_ktable	*p;
 	struct pfr_ktableworkq	 workq;
-	int			 s, n;
+	int			 s, n, nn;
 	long			 tzero = time.tv_sec;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC|PFR_FLAG_ALLRSETS);
 					/* XXX PFR_FLAG_CLSTATS disabled */
-	n = pfr_table_count(filter, flags);
+	n = nn = pfr_table_count(filter, flags);
 	if (n < 0)
 		return (ENOENT);
 	if (n > *size) {
@@ -1219,7 +1219,7 @@ pfr_get_tstats(struct pfr_table *filter, struct pfr_tstats *tbl, int *size,
 		printf("pfr_get_tstats: corruption detected (%d).\n", n);
 		return (ENOTTY);
 	}
-	*size = pfr_ktable_cnt;
+	*size = nn;
 	return (0);
 }
 
