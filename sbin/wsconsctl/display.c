@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.3 2001/06/30 02:12:57 mickey Exp $	*/
+/*	$OpenBSD: display.c,v 1.4 2001/07/06 04:11:26 pvalchev Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -71,9 +71,10 @@ display_get_values(pre, fd)
 			err(1, "WSDISPLAYIO_GTYPE");
 
 	gscr.idx = -1;
-	if (field_by_value(display_field_tab, &focus)->flags & FLG_GET)
+	if (field_by_value(display_field_tab, &focus)->flags & FLG_GET) {
 		if (ioctl(fd, WSDISPLAYIO_GETSCREEN, &gscr) < 0)
 			err(1, "WSDISPLAYIO_GETSCREEN");
+	}
 	else
 		focus = gscr.idx;
 
