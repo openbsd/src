@@ -1,9 +1,9 @@
-/*	$OpenBSD: ui.c,v 1.18 2001/04/09 21:21:57 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.19 2001/04/30 12:16:44 ho Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
- * Copyright (c) 1999, 2000 Håkan Olsson.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -108,6 +108,7 @@ ui_connect (char *cmd)
       log_print ("ui_connect: command \"%s\" malformed", cmd);
       return;
     }
+  log_print ("ui_connect: setup connection \"%s\"", name);
   connection_setup (name);
 }
 
@@ -123,6 +124,7 @@ ui_teardown (char *cmd)
       log_print ("ui_teardown: command \"%s\" malformed", cmd);
       return;
     }
+  log_print ("ui_teardown: teardown connection \"%s\"", name);
   connection_teardown (name);
   while ((sa = sa_lookup_by_name (name, 2)) != 0)
     sa_delete (sa, 1);
@@ -165,6 +167,7 @@ ui_config (char *cmd)
   else
     goto fail;
 
+  log_print ("ui_config: \"%s\"", cmd);
   conf_end (trans, 1);
   return;
 
@@ -207,6 +210,8 @@ ui_delete (char *cmd)
       log_print ("ui_delete: command \"%s\" found no SA", cmd);
       return;
     }
+  log_print ("ui_delete: deleting SA for cookie \"%s\" msgid \"%s\"",
+	     cookies_str, message_id_str);
   sa_delete (sa, 1);
 }
 
