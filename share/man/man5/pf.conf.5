@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.293 2004/03/31 11:13:03 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.294 2004/04/04 19:40:43 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -935,8 +935,8 @@ the packet filter for evaluation.
 .Pp
 Since translation occurs before filtering the filter
 engine will see packets as they look after any
-addresses and ports have been translated. Filter rules
-will therefore have to filter based on the translated
+addresses and ports have been translated.
+Filter rules will therefore have to filter based on the translated
 address and port number.
 Packets that match a translation rule are only automatically passed if
 the
@@ -1855,13 +1855,14 @@ Prevent state changes for states created by this rule from appearing on the
 interface.
 .It Ar <timeout> <seconds>
 Changes the timeout values used for states created by this rule.
+.El
 .Pp
 When the
 .Ar source-track
 keyword is specified, the number of states per source IP is tracked.
 The following limits can be set:
 .Pp
-.Bl  -tag -width xxxx -compact
+.Bl -tag -width xxxx -compact
 .It Ar max-src-nodes
 Limits the maximum number of source addresses which can simultaneously
 have state table entries.
@@ -1869,6 +1870,7 @@ have state table entries.
 Limits the maximum number of simultaneous state entries that a single
 source address can create with this rule.
 .El
+.Pp
 For a list of all valid timeout names, see
 .Sx OPTIONS
 above.
@@ -1880,7 +1882,6 @@ pass in proto tcp from any to any \e
       (max 100, source-track rule, max-src-nodes 75, \e
       max-src-states 3, tcp.established 60, tcp.closing 5)
 .Ed
-.El
 .Sh OPERATING SYSTEM FINGERPRINTING
 Passive OS Fingerprinting is a mechanism to inspect nuances of a TCP
 connection's initial SYN packet and guess at the host's operating system.
