@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.80 2001/06/23 16:15:56 fgsch Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.81 2001/06/23 18:45:29 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -342,7 +342,8 @@ ipv4_input(m)
 
 		ipstat.ips_inhwcsum++;
 		m->m_pkthdr.csum &= ~M_IPV4_CSUM_IN_OK;
-	}
+	} else
+		ipstat.ips_inhwcsum++;
 
 	/*
 	 * Convert fields to host representation.
