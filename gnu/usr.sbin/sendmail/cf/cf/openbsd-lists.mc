@@ -5,7 +5,7 @@ divert(-1)
 # This machine handles all mail for openbsd.{org,com,net}
 #
 
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.1 2000/04/02 19:48:13 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.2 2000/04/02 21:22:35 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -23,12 +23,6 @@ define(`confMAX_HOP', `30')dnl
 dnl
 dnl Always use fully qualified domains
 FEATURE(always_add_domain)
-dnl
-dnl Treat mail to openbsd.{org,net,com} as local
-Cw openbsd.org
-Cw openbsd.net
-Cw openbsd.com
-Cw anonopenbsd.cs.colorado.edu
 dnl
 dnl Need to add domo and mailman as "trusted users" to rewrite From lines
 define(`confTRUSTED_USERS', `domo mailman')
@@ -57,6 +51,11 @@ MAILER(smtp)dnl
 dnl
 dnl Finally, we have the local cf-style goo
 LOCAL_CONFIG
+# Treat mail to openbsd.{org,net,com} as local
+Cw openbsd.org
+Cw openbsd.net
+Cw openbsd.com
+Cw anonopenbsd.cs.colorado.edu
 #
 #  Regular expression to reject:
 #    * numeric-only localparts from aol.com and msn.com
