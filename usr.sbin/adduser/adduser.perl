@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.1 1996/09/28 05:58:35 downsj Exp $
+#	$OpenBSD: adduser.perl,v 1.2 1996/12/08 13:57:07 downsj Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -26,7 +26,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $From: adduser.perl,v 1.19 1996/09/17 19:34:56 wosch Exp $
+# $From: adduser.perl,v 1.22 1996/12/07 21:25:12 ache Exp $
 
 
 # read variables
@@ -257,7 +257,7 @@ sub passwd_read {
 	print "User $p_username: illegal shell: ``$sh''\n"
 	    if ($verbose && $sh &&
 		!$shell{&basename($sh)} &&
-		$p_username !~ /^(bin|uucp|falcon|nobody)$/ &&
+		$p_username !~ /^(news|xten|bin|nobody|uucp)$/ &&
 		$sh !~ /\/(pppd|sliplogin)$/);
 	$uid{$p_uid} = $p_username;
 	$pwgid{$p_gid} = $p_username;
@@ -309,7 +309,7 @@ sub new_users_name {
     local($name);
 
     while(1) {
-	$name = &confirm_list("Enter username", 1, "a-z0-9", "");
+	$name = &confirm_list("Enter username", 1, "A-Za-z0-9_", "");
 	if (length($name) > 8) {
 	    warn "Username is longer than 8 chars\a\n";
 	    next;
@@ -1188,8 +1188,8 @@ sub message_create {
 
 \$fullname,
 
-your account ``\$name'' was created. Your password is ``\$password''.
-Please expire your password. Have fun!
+your account ``\$name'' was created.
+Have fun!
 
 See also chpass(1), finger(1), passwd(1)
 EOF
