@@ -1433,7 +1433,6 @@
 ./usr/include/vm/vm_inherit.h
 ./usr/include/vm/vm_kern.h
 ./usr/include/vm/vm_map.h
-./usr/include/vm/vm_object.h
 ./usr/include/vm/vm_page.h
 ./usr/include/vm/vm_pager.h
 ./usr/include/vm/vm_param.h
