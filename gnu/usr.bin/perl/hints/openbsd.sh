@@ -71,9 +71,9 @@ case "$openbsd_distribution" in
 	prefix='/usr'
 	prefixexp='/usr'
 	sysman='/usr/share/man/man1'
-	# Never look for things in /usr/local
-	glibpth='/usr/lib'
-	libpth='/usr/lib'
+	# Ports installs non-std libs in /usr/local/lib so look there too
+	glibpth='/usr/lib /usr/local/lib'
+	libpth='/usr/lib /usr/local/lib'
 	locincpth=''
 	loclibpth=''
 	# Link perl with shared libperl
