@@ -1,4 +1,4 @@
-/*	$OpenBSD: usage.c,v 1.4 2002/06/19 07:12:42 deraadt Exp $	*/
+/*	$OpenBSD: usage.c,v 1.5 2003/12/20 18:33:41 matthieu Exp $	*/
 /*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -90,10 +90,10 @@ hid_init(const char *hidname)
 			;
 		if (!*p)
 			continue;
-		if (sscanf(line, " * %[^\n]", name) == 1)
+		if (sscanf(line, " * %99[^\n]", name) == 1)
 			no = -1;
-		else if (sscanf(line, " 0x%x %[^\n]", &no, name) != 2 &&
-			 sscanf(line, " %d %[^\n]", &no, name) != 2)
+		else if (sscanf(line, " 0x%x %99[^\n]", &no, name) != 2 &&
+			 sscanf(line, " %d %99[^\n]", &no, name) != 2)
 			errx(1, "file %s, line %d, syntax error",
 			     hidname, lineno);
 		for (p = name; *p; p++)
