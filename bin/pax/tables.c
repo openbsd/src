@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.21 2003/08/16 17:31:55 deraadt Exp $	*/
+/*	$OpenBSD: tables.c,v 1.22 2004/11/29 16:23:22 otto Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: tables.c,v 1.21 2003/08/16 17:31:55 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tables.c,v 1.22 2004/11/29 16:23:22 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,8 +76,9 @@ static FTM **ftab = NULL;	/* file time table for updating arch */
 static NAMT **ntab = NULL;	/* interactive rename storage table */
 static DEVT **dtab = NULL;	/* device/inode mapping tables */
 static ATDIR **atab = NULL;	/* file tree directory time reset table */
-static int dirfd = -1;		/* storage for setting created dir time/mode */
-static u_long dircnt;		/* entries in dir time/mode storage */
+static DIRDATA *dirp = NULL;	/* storage for setting created dir time/mode */
+static size_t dirsize;		/* size of dirp table */
+static long dircnt = 0;		/* entries in dir time/mode storage */
 static int ffd = -1;		/* tmp file for file time table name storage */
 
 static DEVT *chk_dev(dev_t, int);
@@ -1092,21 +1093,15 @@ get_atdir(dev_t dev, ino_t ino, time_t *mtime, time_t *atime)
 int
 dir_start(void)
 {
-
-	if (dirfd != -1)
+	if (dirp != NULL)
 		return(0);
 
-	/*
-	 * unlink the file so it goes away at termination by itself
-	 */
-	memcpy(tempbase, _TFILE_BASE, sizeof(_TFILE_BASE));
-	if ((dirfd = mkstemp(tempfile)) >= 0) {
-		(void)unlink(tempfile);
-		return(0);
+	dirsize = DIRP_SIZE;
+	if ((dirp = malloc(dirsize * sizeof(DIRDATA))) == NULL) {
+		paxwarn(1, "Unable to allocate memory for directory times");
+		return(-1);
 	}
-	paxwarn(1, "Unable to create temporary file for directory times: %s",
-	    tempfile);
-	return(-1);
+	return(0);
 }
 
 /*
@@ -1123,38 +1118,34 @@ dir_start(void)
  */
 
 void
-add_dir(char *name, int nlen, struct stat *psb, int frc_mode)
+add_dir(char *name, struct stat *psb, int frc_mode)
 {
-	DIRDATA dblk;
+	DIRDATA *dblk;
 
-	if (dirfd < 0)
+	if (dirp == NULL)
 		return;
 
-	/*
-	 * get current position (where file name will start) so we can store it
-	 * in the trailer
-	 */
-	if ((dblk.npos = lseek(dirfd, 0L, SEEK_CUR)) < 0) {
-		paxwarn(1,"Unable to store mode and times for directory: %s",name);
+	if (dircnt == dirsize) {
+		dblk = realloc(dirp, 2 * dirsize * sizeof(DIRDATA));
+		if (dblk == NULL) {
+			paxwarn(1, "Unable to store mode and times for created"
+			    " directory: %s", name);
+			return;
+		}
+		dirp = dblk;
+		dirsize *= 2;
+	}
+	dblk = &dirp[dircnt];
+	if ((dblk->name = strdup(name)) == NULL) {
+		paxwarn(1, "Unable to store mode and times for created"
+		    " directory: %s", name);
 		return;
 	}
-
-	/*
-	 * write the file name followed by the trailer
-	 */
-	dblk.nlen = nlen + 1;
-	dblk.mode = psb->st_mode & 0xffff;
-	dblk.mtime = psb->st_mtime;
-	dblk.atime = psb->st_atime;
-	dblk.frc_mode = frc_mode;
-	if ((write(dirfd, name, dblk.nlen) == dblk.nlen) &&
-	    (write(dirfd, (char *)&dblk, sizeof(dblk)) == sizeof(dblk))) {
-		++dircnt;
-		return;
-	}
-
-	paxwarn(1,"Unable to store mode and times for created directory: %s",name);
-	return;
+	dblk->mode = psb->st_mode & 0xffff;
+	dblk->mtime = psb->st_mtime;
+	dblk->atime = psb->st_atime;
+	dblk->frc_mode = frc_mode;
+	++dircnt;
 }
 
 /*
@@ -1166,46 +1157,31 @@ add_dir(char *name, int nlen, struct stat *psb, int frc_mode)
 void
 proc_dir(void)
 {
-	char name[PAXPATHLEN+1];
-	DIRDATA dblk;
-	u_long cnt;
+	DIRDATA *dblk;
+	long cnt;
 
-	if (dirfd < 0)
+	if (dirp == NULL)
 		return;
 	/*
 	 * read backwards through the file and process each directory
 	 */
-	for (cnt = 0; cnt < dircnt; ++cnt) {
-		/*
-		 * read the trailer, then the file name, if this fails
-		 * just give up.
-		 */
-		if (lseek(dirfd, -((off_t)sizeof(dblk)), SEEK_CUR) < 0)
-			break;
-		if (read(dirfd,(char *)&dblk, sizeof(dblk)) != sizeof(dblk))
-			break;
-		if (lseek(dirfd, dblk.npos, SEEK_SET) < 0)
-			break;
-		if (read(dirfd, name, dblk.nlen) != dblk.nlen)
-			break;
-		if (lseek(dirfd, dblk.npos, SEEK_SET) < 0)
-			break;
-
+	cnt = dircnt;
+	while (--cnt >= 0) {
 		/*
 		 * frc_mode set, make sure we set the file modes even if
 		 * the user didn't ask for it (see file_subs.c for more info)
 		 */
-		if (pmode || dblk.frc_mode)
-			set_pmode(name, dblk.mode);
+		dblk = &dirp[cnt];
+		if (pmode || dblk->frc_mode)
+			set_pmode(dblk->name, dblk->mode);
 		if (patime || pmtime)
-			set_ftime(name, dblk.mtime, dblk.atime, 0);
+			set_ftime(dblk->name, dblk->mtime, dblk->atime, 0);
+		free(dblk->name);
 	}
 
-	(void)close(dirfd);
-	dirfd = -1;
-	if (cnt != dircnt)
-		paxwarn(1,"Unable to set mode and times for created directories");
-	return;
+	free(dirp);
+	dirp = NULL;
+	dircnt = 0;
 }
 
 /*

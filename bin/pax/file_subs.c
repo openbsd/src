@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.27 2004/04/16 22:50:23 deraadt Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.28 2004/11/29 16:23:22 otto Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.27 2004/04/16 22:50:23 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.28 2004/11/29 16:23:22 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -508,9 +508,9 @@ badlink:
 			 * we have to force the mode to what was set here,
 			 * since we changed it from the default as created.
 			 */
-			add_dir(nm, strlen(nm), &(arcn->sb), 1);
+			add_dir(nm, &(arcn->sb), 1);
 		} else if (pmode || patime || pmtime)
-			add_dir(nm, strlen(nm), &(arcn->sb), 0);
+			add_dir(nm, &(arcn->sb), 0);
 	}
 
 	if (patime || pmtime)
@@ -645,7 +645,7 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
 		if ((access(name, R_OK | W_OK | X_OK) < 0) &&
 		    (lstat(name, &sb) == 0)) {
 			set_pmode(name, ((sb.st_mode & FILEBITS) | S_IRWXU));
-			add_dir(name, spt - name, &sb, 1);
+			add_dir(name, &sb, 1);
 		}
 		*(spt++) = '/';
 		continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.h,v 1.6 2003/10/20 06:22:27 jmc Exp $	*/
+/*	$OpenBSD: tables.h,v 1.7 2004/11/29 16:23:22 otto Exp $	*/
 /*	$NetBSD: tables.h,v 1.3 1995/03/21 09:07:47 cgd Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@
 #define D_TAB_SZ	317		/* unique device mapping table */
 #define A_TAB_SZ	317		/* ftree dir access time reset table */
 #define MAXKEYLEN	64		/* max number of chars for hash */
+#define DIRP_SIZE	64		/* initial size of created dir table */
 
 /*
  * file hard link structure (hashed by dev/ino and chained) used to find the
@@ -157,15 +158,13 @@ typedef struct atdir {
  * times and/or modes). We must reset time in the reverse order of creation,
  * because entries are added  from the top of the file tree to the bottom.
  * We MUST reset times from leaf to root (it will not work the other
- * direction).  Entries are recorded into a spool file to make reverse
- * reading faster.
+ * direction).
  */
 
 typedef struct dirdata {
-	int nlen;	/* length of the directory name (includes \0) */
-	off_t npos;	/* position in file where this dir name starts */
-	mode_t mode;	/* file mode to restore */
+	char *name;	/* file name */
 	time_t mtime;	/* mtime to set */
 	time_t atime;	/* atime to set */
-	int frc_mode;	/* do we force mode settings? */
+	u_int16_t mode;	/* file mode to restore */
+	u_int16_t frc_mode;	/* do we force mode settings? */
 } DIRDATA;
