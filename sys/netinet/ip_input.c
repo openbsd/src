@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.39 1999/04/12 03:17:09 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.40 1999/04/23 15:18:03 provos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -259,6 +259,7 @@ ipv4_input(struct mbuf *m, ...)
 {
 	register struct ip *ip;
 	register struct ipq *fp;
+	struct in_ifaddr *ia;
 	struct ipqent *ipqe;
 	int hlen, mff;
 	va_list ap;
@@ -371,7 +372,8 @@ ipv4_input(struct mbuf *m, ...)
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
 	 */
-	if (in_iawithaddr(ip->ip_dst, m))
+	if ((ia = in_iawithaddr(ip->ip_dst, m)) != NULL &&
+	    (ia->ia_ifp->if_flags & IFF_UP))
 		goto ours;
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
