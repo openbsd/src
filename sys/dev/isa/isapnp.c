@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.12 1997/12/21 14:41:24 downsj Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.13 1997/12/25 09:22:38 downsj Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -41,11 +41,10 @@
 
 #include <machine/bus.h>
 
+#include <dev/isa/isapnpreg.h>
+
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-
-#include <dev/isa/isapnpreg.h>
-#include <dev/isa/isapnpvar.h>
 
 #include <dev/isa/pnpdevs.h>
 
@@ -57,13 +56,13 @@ int isapnp_alloc_region __P((bus_space_tag_t, struct isapnp_region *));
 int isapnp_alloc_irq __P((isa_chipset_tag_t, struct isapnp_pin *));
 int isapnp_alloc_drq __P((struct device *, struct isapnp_pin *));
 int isapnp_testconfig __P((bus_space_tag_t, bus_space_tag_t,
-    struct isapnp_attach_args *, int));
-struct isapnp_attach_args *isapnp_bestconfig __P((struct device *, 
-    struct isapnp_softc *, struct isapnp_attach_args **));
+    struct isa_attach_args *, int));
+struct isa_attach_args *isapnp_bestconfig __P((struct device *, 
+    struct isapnp_softc *, struct isa_attach_args **));
 void isapnp_print_region __P((const char *, struct isapnp_region *,
     size_t));
 void isapnp_configure __P((struct isapnp_softc *,
-    const struct isapnp_attach_args *));
+    const struct isa_attach_args *));
 void isapnp_print_pin __P((const char *, struct isapnp_pin *, size_t));
 int isapnp_print __P((void *, const char *));
 #ifdef _KERNEL
@@ -72,6 +71,12 @@ int isapnp_submatch __P((struct device *, void *, void *));
 int isapnp_find __P((struct isapnp_softc *, int));
 int isapnp_match __P((struct device *, void *, void *));
 void isapnp_attach __P((struct device *, struct device *, void *));
+
+#ifdef DEBUG_ISAPNP
+# define DPRINTF(a) printf a
+#else
+# define DPRINTF(a)
+#endif
 
 struct cfattach isapnp_ca = {
 	sizeof(struct isapnp_softc), isapnp_match, isapnp_attach
@@ -190,6 +195,9 @@ isapnp_free_region(t, r)
 	bus_space_tag_t t;
 	struct isapnp_region *r;
 {
+	if (r->length == 0)
+		return;
+
 #ifdef _KERNEL
 	bus_space_unmap(t, r->h, r->length);
 #endif
@@ -205,6 +213,9 @@ isapnp_alloc_region(t, r)
 	struct isapnp_region *r;
 {
 	int error = 0;
+
+	if (r->length == 0)
+		return 0;
 
 	for (r->base = r->minbase; r->base <= r->maxbase;
 	     r->base += r->align) {
@@ -273,7 +284,7 @@ isapnp_alloc_drq(isa, i)
 int
 isapnp_testconfig(iot, memt, ipa, alloc)
 	bus_space_tag_t iot, memt;
-	struct isapnp_attach_args *ipa;
+	struct isa_attach_args *ipa;
 	int alloc;
 {
 	int nio = 0, nmem = 0, nmem32 = 0, nirq = 0, ndrq = 0;
@@ -302,13 +313,13 @@ isapnp_testconfig(iot, memt, ipa, alloc)
 	}
 
 	for (; nirq < ipa->ipa_nirq; nirq++) {
-		error = isapnp_alloc_irq(ipa->ipa_ic, &ipa->ipa_irq[nirq]);
+		error = isapnp_alloc_irq(ipa->ia_ic, &ipa->ipa_irq[nirq]);
 		if (error)
 			goto bad;
 	}
 
 	for (; ndrq < ipa->ipa_ndrq; ndrq++) {
-		error = isapnp_alloc_drq(ipa->ipa_isa, &ipa->ipa_drq[ndrq]);
+		error = isapnp_alloc_drq(ipa->ia_isa, &ipa->ipa_drq[ndrq]);
 		if (error)
 			goto bad;
 	}
@@ -344,7 +355,7 @@ bad:
 int
 isapnp_config(iot, memt, ipa)
 	bus_space_tag_t iot, memt;
-	struct isapnp_attach_args *ipa;
+	struct isa_attach_args *ipa;
 {
 	return isapnp_testconfig(iot, memt, ipa, 1);
 }
@@ -356,7 +367,7 @@ isapnp_config(iot, memt, ipa)
 void
 isapnp_unconfig(iot, memt, ipa)
 	bus_space_tag_t iot, memt;
-	struct isapnp_attach_args *ipa;
+	struct isa_attach_args *ipa;
 {
 	int i;
 
@@ -383,13 +394,13 @@ isapnp_unconfig(iot, memt, ipa)
  *	Return the best configuration for each logical device, remove and
  *	free all other configurations.
  */
-struct isapnp_attach_args *
+struct isa_attach_args *
 isapnp_bestconfig(isa, sc, ipa)
 	struct device *isa;
 	struct isapnp_softc *sc;
-	struct isapnp_attach_args **ipa;
+	struct isa_attach_args **ipa;
 {
-	struct isapnp_attach_args *c, *best, *f = *ipa;
+	struct isa_attach_args *c, *best, *f = *ipa;
 	int error;
 
 	for (;;) {
@@ -406,7 +417,7 @@ isapnp_bestconfig(isa, sc, ipa)
 				best = c;
 		}
 
-		best->ipa_isa = isa;
+		best->ia_isa = isa;
 		/* Test the best config */
 		error = isapnp_testconfig(sc->sc_iot, sc->sc_memt, best, 0);
 
@@ -436,7 +447,7 @@ isapnp_bestconfig(isa, sc, ipa)
 		}
 		else {
 			/* Remove all other configs for this device */
-			struct isapnp_attach_args *l = NULL, *n = NULL, *d;
+			struct isa_attach_args *l = NULL, *n = NULL, *d;
 
 			for (c = f; c; ) {
 				if (c == best)
@@ -543,7 +554,7 @@ isapnp_print(aux, str)
 	void *aux;
 	const char *str;
 {
-	struct isapnp_attach_args *ipa = aux;
+	struct isa_attach_args *ipa = aux;
 
 	if (str != NULL)
 		printf("%s: <%s, %s, %s, %s>",
@@ -570,7 +581,7 @@ isapnp_submatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-	struct isapnp_attach_args *ipa = aux;
+	struct isa_attach_args *ipa = aux;
 	const char *dname;
 	int i;
 
@@ -587,7 +598,7 @@ isapnp_submatch(parent, match, aux)
 			 * We found a match.  Configure the card and call the
 			 * ISA probe...
 			 */
-			if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
+			if (isapnp_config(ipa->ia_iot, ipa->ia_memt, ipa)) {
 				printf ("%s: error in region allocation\n",
 				    cf->cf_driver->cd_name);
 				return (0);
@@ -651,7 +662,7 @@ isapnp_find(sc, all)
 void
 isapnp_configure(sc, ipa)
 	struct isapnp_softc *sc;
-	const struct isapnp_attach_args *ipa;
+	const struct isa_attach_args *ipa;
 {
 	int i;
 	static u_char isapnp_mem_range[] = ISAPNP_MEM_DESC;
@@ -664,8 +675,8 @@ isapnp_configure(sc, ipa)
 	struct isapnp_region rz;
 	struct isapnp_pin pz;
 
-	memset(&pz, 0, sizeof(pz));
-	memset(&rz, 0, sizeof(rz));
+	bzero(&pz, sizeof(pz));
+	bzero(&rz, sizeof(rz));
 
 #define B0(a) ((a) & 0xff)
 #define B1(a) (((a) >> 8) & 0xff)
@@ -839,7 +850,7 @@ isapnp_attach(parent, self, aux)
 	printf(": read port 0x%x\n", sc->sc_read_port);
 
 	for (c = 0; c < sc->sc_ncards; c++) {
-		struct isapnp_attach_args *ipa, *lpa;
+		struct isa_attach_args *ipa, *lpa;
 
 		/* Good morning card c */
 		isapnp_write_reg(sc, ISAPNP_WAKE, c + 1);
@@ -854,7 +865,7 @@ isapnp_attach(parent, self, aux)
 			isapnp_configure(sc, lpa);
 #ifdef DEBUG_ISAPNP
 			{
-				struct isapnp_attach_args pa;
+				struct isa_attach_args pa;
 
 				isapnp_get_config(sc, &pa);
 				isapnp_print_config(&pa);
@@ -875,10 +886,10 @@ isapnp_attach(parent, self, aux)
 				continue;
 			}
 
-			lpa->ipa_ic = ia->ia_ic;
-			lpa->ipa_iot = ia->ia_iot;
-			lpa->ipa_memt = ia->ia_memt;
-			lpa->ipa_delaybah = ia->ia_delaybah;
+			lpa->ia_ic = ia->ia_ic;
+			lpa->ia_iot = ia->ia_iot;
+			lpa->ia_memt = ia->ia_memt;
+			lpa->ia_delaybah = ia->ia_delaybah;
 
 			isapnp_write_reg(sc, ISAPNP_ACTIVATE, 1);
 #ifdef _KERNEL

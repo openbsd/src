@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpres.c,v 1.1 1997/12/21 14:41:26 downsj Exp $	*/
+/*	$OpenBSD: isapnpres.c,v 1.2 1997/12/25 09:22:42 downsj Exp $	*/
 /*	$NetBSD: isapnpres.c,v 1.7.4.1 1997/11/20 07:46:13 mellon Exp $	*/
 
 /*
@@ -41,25 +41,28 @@
 
 #include <machine/bus.h>
 
+#include <dev/isa/isapnpreg.h>
+
 #include <dev/isa/isavar.h>
 
-#include <dev/isa/isapnpreg.h>
-#include <dev/isa/isapnpvar.h>
-
-
 int isapnp_wait_status __P((struct isapnp_softc *));
-struct isapnp_attach_args *
-    isapnp_newdev __P((struct isapnp_attach_args *));
-struct isapnp_attach_args *
-    isapnp_newconf __P((struct isapnp_attach_args *));
-void isapnp_merge __P((struct isapnp_attach_args *,
-    const struct isapnp_attach_args *));
-struct isapnp_attach_args *
-    isapnp_flatten __P((struct isapnp_attach_args *));
+struct isa_attach_args *
+    isapnp_newdev __P((struct isa_attach_args *));
+struct isa_attach_args *
+    isapnp_newconf __P((struct isa_attach_args *));
+void isapnp_merge __P((struct isa_attach_args *,
+    const struct isa_attach_args *));
+struct isa_attach_args *
+    isapnp_flatten __P((struct isa_attach_args *));
 int isapnp_process_tag __P((u_char, u_char, u_char *,
-    struct isapnp_attach_args **, struct isapnp_attach_args **,
-    struct isapnp_attach_args **));
+    struct isa_attach_args **, struct isa_attach_args **,
+    struct isa_attach_args **));
 
+#ifdef DEBUG_ISAPNP
+# define DPRINTF(a) printf a
+#else
+# define DPRINTF(a)
+#endif
 
 /* isapnp_wait_status():
  *	Wait for the next byte of resource data to become available
@@ -84,13 +87,13 @@ isapnp_wait_status(sc)
  *	Add a new logical device to the current card; expand the configuration
  *	resources of the current card if needed.
  */
-struct isapnp_attach_args *
+struct isa_attach_args *
 isapnp_newdev(card)
-	struct isapnp_attach_args *card;
+	struct isa_attach_args *card;
 {
-	struct isapnp_attach_args *ipa, *dev = ISAPNP_MALLOC(sizeof(*dev));
+	struct isa_attach_args *ipa, *dev = ISAPNP_MALLOC(sizeof(*dev));
 
-	memset(dev, 0, sizeof(*dev));
+	bzero(dev, sizeof(*dev));
 
 	dev->ipa_pref = ISAPNP_DEP_ACCEPTABLE;
 	memcpy(dev->ipa_devident, card->ipa_devident,
@@ -113,13 +116,13 @@ isapnp_newdev(card)
 /* isapnp_newconf():
  *	Add a new alternate configuration to a logical device
  */
-struct isapnp_attach_args *
+struct isa_attach_args *
 isapnp_newconf(dev)
-	struct isapnp_attach_args *dev;
+	struct isa_attach_args *dev;
 {
-	struct isapnp_attach_args *ipa, *conf = ISAPNP_MALLOC(sizeof(*conf));
+	struct isa_attach_args *ipa, *conf = ISAPNP_MALLOC(sizeof(*conf));
 
-	memset(conf, 0, sizeof(*conf));
+	bzero(conf, sizeof(*conf));
 
 	memcpy(conf->ipa_devident, dev->ipa_devident,
 	    sizeof(conf->ipa_devident));
@@ -148,8 +151,8 @@ isapnp_newconf(dev)
  */
 void
 isapnp_merge(c, d)
-	struct isapnp_attach_args *c;
-	const struct isapnp_attach_args *d;
+	struct isa_attach_args *c;
+	const struct isa_attach_args *d;
 {
 	int i;
 
@@ -173,11 +176,11 @@ isapnp_merge(c, d)
 /* isapnp_flatten():
  *	Flatten the tree to a list of config entries.
  */
-struct isapnp_attach_args *
+struct isa_attach_args *
 isapnp_flatten(card)
-	struct isapnp_attach_args *card;
+	struct isa_attach_args *card;
 {
-	struct isapnp_attach_args *dev, *conf, *d, *c, *pa;
+	struct isa_attach_args *dev, *conf, *d, *c, *pa;
 
 	dev = card->ipa_child;
 	ISAPNP_FREE(card);
@@ -222,12 +225,12 @@ isapnp_flatten(card)
 int
 isapnp_process_tag(tag, len, buf, card, dev, conf)
 	u_char tag, len, *buf;
-	struct isapnp_attach_args **card, **dev, **conf;
+	struct isa_attach_args **card, **dev, **conf;
 {
 	char str[64];
 	struct isapnp_region *r;
 	struct isapnp_pin *p;
-	struct isapnp_attach_args *pa;
+	struct isa_attach_args *pa;
 
 #define COPY(a, b) strncpy((a), (b), sizeof(a)), (a)[sizeof(a) - 1] = '\0'
 
@@ -433,7 +436,7 @@ isapnp_process_tag(tag, len, buf, card, dev, conf)
 /* isapnp_get_resource():
  *	Read the resources for card c
  */
-struct isapnp_attach_args *
+struct isa_attach_args *
 isapnp_get_resource(sc, c)
 	struct isapnp_softc *sc;
 	int c;
@@ -442,13 +445,13 @@ isapnp_get_resource(sc, c)
 	u_short len;
 	int i;
 	int warned = 0;
-	struct isapnp_attach_args *card, *dev = NULL, *conf = NULL;
+	struct isa_attach_args *card, *dev = NULL, *conf = NULL;
 	u_char buf[ISAPNP_MAX_TAGSIZE], *p;
 
-	memset(buf, 0, sizeof(buf));
+	bzero(buf, sizeof(buf));
 
 	card = ISAPNP_MALLOC(sizeof(*card));
-	memset(card, 0, sizeof(*card));
+	bzero(card, sizeof(*card));
 
 #define NEXT_BYTE \
 		if (isapnp_wait_status(sc)) \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpreg.h,v 1.3 1997/12/21 14:41:26 downsj Exp $	*/
+/*	$OpenBSD: isapnpreg.h,v 1.4 1997/12/25 09:22:41 downsj Exp $	*/
 /*	$NetBSD: isapnpreg.h,v 1.5 1997/08/12 07:34:34 mikel Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_ISA_ISAPNPREG_H_
+#define _DEV_ISA_ISAPNPREG_H_
 
 /*
  * ISA Plug and Play register definitions;
@@ -171,3 +174,5 @@
 #define ISAPNP_TAG_VENDOR_DEFINED			0x84
 #define ISAPNP_TAG_MEM32_RANGE_DESC			0x85
 #define ISAPNP_TAG_FIXED_MEM32_RANGE_DESC		0x86
+
+#endif	/* _DEV_ISA_ISAPNPREG_H_ */

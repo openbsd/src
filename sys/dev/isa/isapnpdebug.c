@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpdebug.c,v 1.1 1997/12/21 14:41:25 downsj Exp $	*/
+/*	$OpenBSD: isapnpdebug.c,v 1.2 1997/12/25 09:22:40 downsj Exp $	*/
 /*	$NetBSD: isapnpdebug.c,v 1.4 1997/08/03 08:12:23 mikel Exp $	*/
 
 /*
@@ -38,10 +38,9 @@
 
 #include <machine/bus.h>
 
-#include <dev/isa/isavar.h>
-
 #include <dev/isa/isapnpreg.h>
-#include <dev/isa/isapnpvar.h>
+
+#include <dev/isa/isavar.h>
 
 /* isapnp_print_mem():
  *	Print a memory tag
@@ -218,7 +217,7 @@ isapnp_print_dep_start(str, pref)
 
 void
 isapnp_print_attach(pa)
-	const struct isapnp_attach_args *pa;
+	const struct isa_attach_args *pa;
 {
 	int i;
 
@@ -249,7 +248,7 @@ isapnp_print_attach(pa)
 void
 isapnp_get_config(sc, pa)
 	struct isapnp_softc *sc;
-	struct isapnp_attach_args *pa;
+	struct isa_attach_args *pa;
 {
 	int i;
 	u_char v0, v1, v2, v3;
@@ -261,7 +260,7 @@ isapnp_get_config(sc, pa)
 	struct isapnp_region *r;
 	struct isapnp_pin *p;
 
-	memset(pa, 0, sizeof(*pa));
+	bzero(pa, sizeof(*pa));
 
 	for (i = 0; i < sizeof(isapnp_io_range); i++) {
 		r = &pa->ipa_io[i];
@@ -370,7 +369,7 @@ isapnp_get_config(sc, pa)
  */
 void
 isapnp_print_config(pa)
-	const struct isapnp_attach_args *pa;
+	const struct isa_attach_args *pa;
 {
 	int i;
 	const struct isapnp_region *r;
