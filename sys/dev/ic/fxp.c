@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.26 2001/08/27 22:06:52 jason Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.27 2001/09/17 16:24:49 jason Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -93,12 +93,6 @@
 #include <dev/ic/fxpreg.h>
 #include <dev/ic/fxpvar.h>
 
-#ifdef __alpha__		/* XXX */
-/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
-#undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
-#endif /* __alpha__ */
-
 /*
  * NOTE!  On the Alpha, we have an alignment constraint.  The
  * card DMAs the packet immediately following the RFA.  However,
@@ -108,7 +102,7 @@
  * aligns the packet after the Ethernet header at a 32-bit
  * boundary.  HOWEVER!  This means that the RFA is misaligned!
  */
-#define	RFA_ALIGNMENT_FUDGE	2
+#define	RFA_ALIGNMENT_FUDGE	(2 + sizeof(bus_dmamap_t))
 
 /*
  * Inline function to copy a 16-bit aligned 32-bit quantity.
@@ -199,12 +193,6 @@ static int tx_threshold = 64;
 #define FXP_TXCB_MASK	(FXP_NTXCB - 1)
 
 /*
- * Number of receive frame area buffers. These are large so chose
- * wisely.
- */
-#define FXP_NRFABUFS	64
-
-/*
  * Maximum number of seconds that the receiver can be idle before we
  * assume it's dead and attempt to reset it by reprogramming the
  * multicast filter. This is part of a work-around for a bug in the
@@ -291,6 +279,8 @@ fxp_attach_common(sc, enaddr, intrstr)
 	const char *intrstr;
 {
 	struct ifnet *ifp;
+	struct mbuf *m;
+	bus_dmamap_t rxmap;
 	u_int16_t data;
 	int i, err;
 
@@ -342,11 +332,18 @@ fxp_attach_common(sc, enaddr, intrstr)
 	/*
 	 * Pre-allocate our receive buffers.
 	 */
+	sc->sc_rxfree = 0;
 	for (i = 0; i < FXP_NRFABUFS; i++) {
-		if (fxp_add_rfabuf(sc, NULL) != 0) {
+		if ((err = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+		    MCLBYTES, 0, 0, &sc->sc_rxmaps[i])) != 0) {
+			printf("%s: unable to create tx dma map %d, error %d\n",
+			    sc->sc_dev.dv_xname, i, err);
 			goto fail;
 		}
 	}
+	for (i = 0; i < FXP_NRFABUFS; i++)
+		if (fxp_add_rfabuf(sc, NULL) != 0)
+			goto fail;
 
 	/*
 	 * Find out how large of an SEEPROM we have.
@@ -452,10 +449,13 @@ fxp_attach_common(sc, enaddr, intrstr)
 		    sizeof(struct fxp_cb_tx) * FXP_NTXCB);
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_cb_seg, sc->sc_cb_nseg);
 	}
-	/* frees entire chain */
-	if (sc->rfa_headm)
-		m_freem(sc->rfa_headm);
-
+	m = sc->rfa_headm;
+	while (m != NULL) {
+		rxmap = *((bus_dmamap_t *)m->m_ext.ext_buf);
+		bus_dmamap_unload(sc->sc_dmat, rxmap);
+		FXP_RXMAP_PUT(sc, rxmap);
+		m = m_free(m);
+	}
 	return (ENOMEM);
 }
 
@@ -806,10 +806,15 @@ fxp_intr(arg)
 		 */
 		if (statack & (FXP_SCB_STATACK_FR | FXP_SCB_STATACK_RNR)) {
 			struct mbuf *m;
+			bus_dmamap_t rxmap;
 			u_int8_t *rfap;
 rcvloop:
 			m = sc->rfa_headm;
 			rfap = m->m_ext.ext_buf + RFA_ALIGNMENT_FUDGE;
+			rxmap = *((bus_dmamap_t *)m->m_ext.ext_buf);
+			fxp_bus_dmamap_sync(sc->sc_dmat, rxmap,
+			    0, MCLBYTES, BUS_DMASYNC_POSTREAD |
+			    BUS_DMASYNC_POSTWRITE);
 
 			if (*(u_int16_t *)(rfap +
 			    offsetof(struct fxp_rfa, rfa_status)) &
@@ -854,9 +859,12 @@ rcvloop:
 				goto rcvloop;
 			}
 			if (rnr) {
+				rxmap = *((bus_dmamap_t *)
+				    sc->rfa_headm->m_ext.ext_buf);
 				fxp_scb_wait(sc);
 				CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
-				    vtophys((vaddr_t)sc->rfa_headm->m_ext.ext_buf) + RFA_ALIGNMENT_FUDGE);
+				    rxmap->dm_segs[0].ds_addr +
+				    RFA_ALIGNMENT_FUDGE);
 				fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
 			}
 		}
@@ -1002,11 +1010,19 @@ fxp_stop(sc, drain)
 	sc->sc_cbt_cnt = 0;
 
 	if (drain) {
+		bus_dmamap_t rxmap;
+		struct mbuf *m;
+
 		/*
 		 * Free all the receive buffers then reallocate/reinitialize
 		 */
-		if (sc->rfa_headm != NULL)
-			m_freem(sc->rfa_headm);
+		m = sc->rfa_headm;
+		while (m != NULL) {
+			rxmap = *((bus_dmamap_t *)m->m_ext.ext_buf);
+			bus_dmamap_unload(sc->sc_dmat, rxmap);
+			FXP_RXMAP_PUT(sc, rxmap);
+			m = m_free(m);
+		}
 		sc->rfa_headm = NULL;
 		sc->rfa_tailm = NULL;
 		for (i = 0; i < FXP_NRFABUFS; i++) {
@@ -1065,6 +1081,7 @@ fxp_init(xsc)
 	struct fxp_cb_config *cbp;
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_cb_tx *txp;
+	bus_dmamap_t rxmap;
 	int i, prm, allm, s;
 
 	s = splimp();
@@ -1218,8 +1235,9 @@ fxp_init(xsc)
 	 * Initialize receiver buffer area - RFA.
 	 */
 	fxp_scb_wait(sc);
+	rxmap = *((bus_dmamap_t *)sc->rfa_headm->m_ext.ext_buf);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
-	    vtophys((vaddr_t)sc->rfa_headm->m_ext.ext_buf) + RFA_ALIGNMENT_FUDGE);
+	    rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE);
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
 
 	/*
@@ -1281,6 +1299,7 @@ fxp_add_rfabuf(sc, oldm)
 	u_int32_t v;
 	struct mbuf *m;
 	u_int8_t *rfap;
+	bus_dmamap_t rxmap = NULL;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m != NULL) {
@@ -1292,11 +1311,28 @@ fxp_add_rfabuf(sc, oldm)
 			m = oldm;
 			m->m_data = m->m_ext.ext_buf;
 		}
+		if (oldm == NULL) {
+			rxmap = FXP_RXMAP_GET(sc);
+			*((bus_dmamap_t *)m->m_ext.ext_buf) = rxmap;
+			bus_dmamap_load(sc->sc_dmat, rxmap,
+			    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
+			    BUS_DMA_NOWAIT);
+		} else if (oldm == m)
+			rxmap = *((bus_dmamap_t *)oldm->m_ext.ext_buf);
+		else {
+			rxmap = *((bus_dmamap_t *)oldm->m_ext.ext_buf);
+			bus_dmamap_unload(sc->sc_dmat, rxmap);
+			bus_dmamap_load(sc->sc_dmat, rxmap,
+			    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
+			    BUS_DMA_NOWAIT);
+			*mtod(m, bus_dmamap_t *) = rxmap;
+		}
 	} else {
 		if (oldm == NULL)
 			return 1;
 		m = oldm;
 		m->m_data = m->m_ext.ext_buf;
+		rxmap = *mtod(m, bus_dmamap_t *);
 	}
 
 	/*
@@ -1336,16 +1372,19 @@ fxp_add_rfabuf(sc, oldm)
 	 */
 	if (sc->rfa_headm != NULL) {
 		sc->rfa_tailm->m_next = m;
-		v = vtophys((vaddr_t)rfap);
+		v = rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE;
 		rfap = sc->rfa_tailm->m_ext.ext_buf + RFA_ALIGNMENT_FUDGE;
 		fxp_lwcopy(&v,
 		    (u_int32_t *)(rfap + offsetof(struct fxp_rfa, link_addr)));
 		*(u_int16_t *)(rfap + offsetof(struct fxp_rfa, rfa_control)) &=
 		    ~FXP_RFA_CONTROL_EL;
-	} else {
+	} else
 		sc->rfa_headm = m;
-	}
+
 	sc->rfa_tailm = m;
+
+	fxp_bus_dmamap_sync(sc->sc_dmat, rxmap, 0, MCLBYTES,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return (m == oldm);
 }

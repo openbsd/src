@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.8 2001/08/25 14:55:14 jason Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.9 2001/09/17 16:24:49 jason Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -44,6 +44,12 @@
  * This must be a power of two.
  */
 #define FXP_NTXCB	128
+
+/*
+ * Number of receive frame area buffers. These are large so chose
+ * wisely.
+ */
+#define FXP_NRFABUFS	64
 
 /*
  * NOTE: Elements are ordered for optimal cacheline behavior, and NOT
@@ -98,6 +104,8 @@ struct fxp_softc {
 	bus_dma_segment_t sc_cb_seg;
 	int sc_cb_nseg;
 	struct fxp_ctrl *sc_ctrl;
+	bus_dmamap_t sc_rxmaps[FXP_NRFABUFS];
+	int sc_rxfree;
 };
 
 /* Macros to ease CSR access. */
@@ -117,6 +125,9 @@ struct fxp_softc {
 extern int fxp_intr __P((void *));
 extern int fxp_attach_common __P((struct fxp_softc *, u_int8_t *, const char *));
 extern int fxp_detach __P((struct fxp_softc *));
+
+#define	FXP_RXMAP_GET(sc)	((sc)->sc_rxmaps[(sc)->sc_rxfree++])
+#define	FXP_RXMAP_PUT(sc,map)	((sc)->sc_rxmaps[--(sc)->sc_rxfree] = (map))
 
 #ifdef __HAS_NEW_BUS_DMAMAP_SYNC
 #define	fxp_bus_dmamap_sync(t, m, o, l, p)	\
