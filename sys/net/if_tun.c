@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.11 1996/05/27 07:57:59 deraadt Exp $	*/
+o/*	$OpenBSD: if_tun.c,v 1.12 1996/06/02 16:27:44 niklas Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
 #include "tun.h"
 #if NTUN > 0
 
-/* #define	TUN_DEBUG	9 /* */
+/* #define	TUN_DEBUG	9 */
 
 #include <sys/param.h>
 #include <sys/kernel.h>
