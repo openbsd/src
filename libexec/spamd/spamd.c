@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.42 2003/09/04 01:20:33 tedu Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.43 2003/09/18 23:33:44 avsm Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -137,13 +137,19 @@ grow_obuf(struct con *cp, int off)
 	if (!cp->obufalloc)
 		cp->obuf = NULL;
 	tmp = realloc(cp->obuf, cp->osize + 8192);
-	if (tmp != NULL) {
+	if (tmp == NULL) {
+		if (cp->obuf)
+			free(cp->obuf);
+		cp->obuf = NULL;
+		cp->osize = 0;
+		cp->obufalloc = 0;
+		return (NULL);
+	} else {
 		cp->osize += 8192;
 		cp->obuf = tmp;
 		cp->obufalloc = 1;
 		return (cp->obuf + off);
-	}
-	return (NULL);
+	}	
 }
 
 
@@ -201,8 +207,13 @@ parse_configline(char *line)
 			char **tmp;
 
 			tmp = realloc(av, (ac + 2048) * sizeof(char *));
-			if (tmp == NULL)
+			if (tmp == NULL) {
+				if (av)
+					free(av);
+				av = NULL;
+				ac = 0;
 				return (-1);
+			}
 			av = tmp;
 			ac += 2048;
 		}
@@ -332,7 +343,7 @@ append_error_string(struct con *cp, size_t off, char *fmt, int af, void *ia)
 		if (i >= len - 46) {
 			c = grow_obuf(cp, off);
 			if (c == NULL)
-				goto no_mem;
+				return (-1);
 			len = cp->osize - (off + i);
 		}
 
@@ -389,13 +400,6 @@ append_error_string(struct con *cp, size_t off, char *fmt, int af, void *ia)
 		s++;
 	}
 	return (i);
-no_mem:
-	/* Out of memory, free obuf and bail, caller must deal */
-	if (cp->osize)
-		free(cp->obuf);
-	cp->obuf = NULL;
-	cp->osize = 0;
-	return (-1);
 }
 
 
@@ -440,13 +444,8 @@ build_reply(struct con *cp)
 		if (cp->obuf[off - 1] != '\n') {
 			if (left < 1) {
 				c = grow_obuf(cp, off);
-				if (c == NULL) {
-					if (cp->osize)
-						free(cp->obuf);
-					cp->obuf = NULL;
-					cp->osize = 0;
+				if (c == NULL)
 					goto bad;
-				}
 			}
 			cp->obuf[off++] = '\n';
 			cp->obuf[off] = '\0';
