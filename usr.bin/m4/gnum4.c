@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.6 2000/04/10 17:16:30 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.7 2000/06/28 10:01:27 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -445,7 +445,8 @@ dopatsubst(argv, argc)
 		exit_regerror(error, &re);
 	
 	pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1));
-	do_subst(argv[2], &re, argv[4] != NULL ? argv[4] : "", pmatch);
+	do_subst(argv[2], &re, 
+	    argc != 4 && argv[4] != NULL ? argv[4] : "", pmatch);
 	pbstr(getstring());
 	free(pmatch);
 	regfree(&re);
@@ -461,7 +462,7 @@ doregexp(argv, argc)
 	regmatch_t *pmatch;
 
 	if (argc <= 3) {
-		warnx("Too few arguments to patsubst");
+		warnx("Too few arguments to regexp");
 		return;
 	}
 	error = regcomp(&re, mimic_gnu ? twiddle(argv[3]) : argv[3], 
@@ -470,7 +471,7 @@ doregexp(argv, argc)
 		exit_regerror(error, &re);
 	
 	pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1));
-	if (argv[4] == NULL)
+	if (argv[4] == NULL || argc == 4)
 		do_regexpindex(argv[2], &re, pmatch);
 	else
 		do_regexp(argv[2], &re, argv[4], pmatch);
