@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_usrreq.c,v 1.8 2003/06/28 01:52:18 tedu Exp $	*/
+/*	$OpenBSD: db_usrreq.c,v 1.9 2004/02/06 22:19:21 tedu Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <ddb/db_var.h>
 
-int	db_log;
+int	db_log = 1;
 
 int
 ddb_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
