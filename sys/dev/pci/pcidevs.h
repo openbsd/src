@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.441 2001/09/06 22:01:56 provos Exp 
+ *		OpenBSD: pcidevs,v 1.442 2001/09/06 22:20:44 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1560,6 +1560,7 @@
 #define	PCI_PRODUCT_NUMBER9_I128	0x2309		/* Imagine-128 */
 #define	PCI_PRODUCT_NUMBER9_I128_2	0x2339		/* Imagine-128 II */
 #define	PCI_PRODUCT_NUMBER9_I128_T2R	0x493d		/* Imagine-128 T2R */
+#define	PCI_PRODUCT_NUMBER9_I128_T2R4	0x5348		/* Imagine-128 T2R4 */
 
 /* NVidia products */
 #define	PCI_PRODUCT_NVIDIA_NV1	0x0008		/* NV1 */

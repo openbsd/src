@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.441 2001/09/06 22:01:56 provos Exp 
+ *		OpenBSD: pcidevs,v 1.442 2001/09/06 22:20:44 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3057,6 +3057,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_I128_T2R,
 	    "Imagine-128 T2R",
+	},
+	{
+	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_I128_T2R4,
+	    "Imagine-128 T2R4",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NV1,
