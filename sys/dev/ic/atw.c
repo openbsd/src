@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.17 2004/07/15 15:39:40 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.60 2004/07/15 07:20:46 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.18 2004/07/15 15:50:51 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.63 2004/07/15 07:25:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.60 2004/07/15 07:20:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.63 2004/07/15 07:25:40 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -861,34 +861,65 @@ void
 atw_reset(struct atw_softc *sc)
 {
 	int i;
+	uint32_t lpc;
+
+	ATW_WRITE(sc, ATW_NAR, 0x0);
+	DELAY(20 * 1000);
+
+	/* Reference driver has a cryptic remark indicating that this might
+	 * power-on the chip.  I know that it turns off power-saving....
+	 */
+	ATW_WRITE(sc, ATW_FRCTL, 0x0);
 
 	ATW_WRITE(sc, ATW_PAR, ATW_PAR_SWR);
 
-	for (i = 0; i < 10000; i++) {
-		if (ATW_ISSET(sc, ATW_PAR, ATW_PAR_SWR) == 0)
+	for (i = 0; i < 50; i++) {
+		if (ATW_READ(sc, ATW_PAR) == 0)
 			break;
-		DELAY(1);
+		DELAY(1000);
 	}
+
+	/* ... and then pause 100ms longer for good measure. */
+	DELAY(100 * 1000);
 
 	DPRINTF2(sc, ("%s: atw_reset %d iterations\n", sc->sc_dev.dv_xname, i));
 
 	if (ATW_ISSET(sc, ATW_PAR, ATW_PAR_SWR))
 		printf("%s: reset failed to complete\n", sc->sc_dev.dv_xname);
 
-	/* Turn off maximum power saving. */
-	ATW_CLR(sc, ATW_FRCTL, ATW_FRCTL_MAXPSP);
+	/*
+	 * Initialize the PCI Access Register.
+	 */
+	sc->sc_busmode = ATW_PAR_PBL_8DW;
+
+	ATW_WRITE(sc, ATW_PAR, sc->sc_busmode);
+	DPRINTF(sc, ("%s: ATW_PAR %08x busmode %08x\n", sc->sc_dev.dv_xname,
+	    ATW_READ(sc, ATW_PAR), sc->sc_busmode));
+
+	/* Turn off maximum power saving, etc.
+	 *
+	 * XXX Following example of reference driver, should I set
+	 * an AID of 1?  It didn't seem to help....
+	 */
+	ATW_WRITE(sc, ATW_FRCTL, 0x0);
+
+	DELAY(100 * 1000);
 
 	/* Recall EEPROM. */
 	ATW_SET(sc, ATW_TEST0, ATW_TEST0_EPRLD);
 
 	DELAY(10 * 1000);
 
+	lpc = ATW_READ(sc, ATW_LPC);
+
+	DPRINTF(sc, ("%s: ATW_LPC %#08x\n", __func__, lpc));
+
 	/* A reset seems to affect the SRAM contents, so put them into
 	 * a known state.
 	 */
 	atw_clear_sram(sc);
 
-	memset(sc->sc_bssid, 0, sizeof(sc->sc_bssid));
+	memset(sc->sc_bssid, 0xff, sizeof(sc->sc_bssid));
 }
 
 void
