@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.19 1997/10/17 04:39:17 deraadt Exp $
+#	$OpenBSD: install.md,v 1.20 1997/10/17 08:57:43 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -120,40 +120,27 @@ md_prep_fdisk()
 	_disk=$1
 
 	_done=0
-	while [ $_done = 0 ]; do
-		echo
-		cat << \__md_prep_fdisk_1
-A single OpenBSD partition with id "A6" should exist in the MBR.
-It should be the only partition marked as active.  (Unless you are using
-a multiple-OS booter.)  Furthermore, the MBR partitions must NOT overlap
-each others.  fdisk will be started in edit mode, and you will be able
-to add this information as needed.  If you make a mistake, exit fdisk
-without storing the new information, and you will be allowed to start over.
+	echo
+	cat << \__md_prep_fdisk_1
+A single OpenBSD partition with id "A6" should exist in the MBR.  All the
+of your OpenBSD partitions will be contained _within_ this partition,
+including your swap space.  In the normal case it should be the only
+partition marked as active.  (Unless you are using a multiple-OS booter, but
+you can adjust that later.)  Furthermore, the MBR partitions must NOT overlap
+each others.
 
 __md_prep_fdisk_1
-		echo "Current partition information is:"
-		fdisk ${_disk}
+	echo "Current partition information is:"
+	fdisk ${_disk}
 
-		fdisk -e ${_disk}
+	fdisk -e ${_disk}
 
-		echo
-		echo "The new partition information is:"
-		fdisk ${_disk}
-
-		echo
-		echo "Is this information correct (if not, you will be permitted to "
-		echo -n "edit it again)? [n] "
-		getresp "n"
-
-		case "$resp" in
-		n*|N*) ;;
-		*) _done=1 ;;
-		esac
-	done
-
+	echo "Here is the partition information you chose:"
 	echo
-	echo "Please take note of the offset and size of the OpenBSD BIOS partition"
-	echo "of the disk, as you will need that for the OpenBSD disk label."
+	fdisk ${_disk}
+	echo
+	echo "Please take note of the offset and size of the BIOS OpenBSD partition"
+	echo "of the disk, as you will may need that for the OpenBSD disk label."
 	echo -n "Press [Enter] to continue "
 	getresp ""
 	echo
