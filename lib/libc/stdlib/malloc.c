@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.29 1997/08/23 10:43:25 pefo Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.30 1998/01/02 05:32:49 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -268,7 +268,7 @@ static char *malloc_func;
 
 /* Macro for mmap */
 #define MMAP(size) \
-	mmap((caddr_t)0, (size), PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, \
+	mmap((void *)0, (size), PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, \
 	    MMAP_FD, (off_t)0);
 
 /*
@@ -391,7 +391,7 @@ malloc_exit()
 /*
  * Allocate a number of pages from the OS
  */
-static caddr_t
+static void *
 map_pages(pages)
     int pages;
 {
@@ -466,7 +466,7 @@ extend_pgdir(index)
     page_dir = new;
 
     /* Now free the old stuff */
-    munmap((caddr_t)old, oldlen);
+    munmap(old, oldlen);
     return 1;
 }
 

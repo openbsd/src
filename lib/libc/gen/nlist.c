@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.22 1997/12/15 10:19:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.23 1998/01/02 05:32:47 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -65,7 +65,7 @@ __aout_fdnlist(fd, list)
 	register struct nlist *list;
 {
 	register struct nlist *p, *s;
-	register caddr_t strtab;
+	register void * strtab;
 	register off_t stroff, symoff;
 	register u_long symsize;
 	register int nent, cc;
@@ -97,7 +97,7 @@ __aout_fdnlist(fd, list)
 	strsize = st.st_size - stroff;
 	strtab = mmap(NULL, (size_t)strsize, PROT_READ, MAP_COPY|MAP_FILE,
 	    fd, stroff);
-	if (strtab == (char *)-1)
+	if (strtab == MAP_FAILED)
 		return (-1);
 	/*
 	 * clean out any left-over information for all valid entries.
@@ -179,7 +179,7 @@ __ecoff_fdnlist(fd, list)
 	mappedsize = st.st_size;
 	mappedfile = mmap(NULL, mappedsize, PROT_READ, MAP_COPY|MAP_FILE,
 	    fd, 0);
-	if (mappedfile == (char *)-1)
+	if (mappedfile == MAP_FAILED)
 		BAD;
 
 	if (check(0, sizeof *exechdrp))

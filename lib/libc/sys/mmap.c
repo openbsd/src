@@ -32,7 +32,7 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mmap.c,v 1.7 1997/11/14 21:24:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mmap.c,v 1.8 1998/01/02 05:32:50 deraadt Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,7 +47,7 @@ quad_t __syscall(quad_t, ...);
  * This function provides 64-bit offset padding that
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
-caddr_t
+void *
 mmap(addr, len, prot, flags, fd, offset)
 	void	*addr;
 	size_t	len;
@@ -57,6 +57,6 @@ mmap(addr, len, prot, flags, fd, offset)
 	off_t	offset;
 {
 
-	return((caddr_t)(long)__syscall((quad_t)SYS_mmap, addr, len, prot,
+	return((void *)(long)__syscall((quad_t)SYS_mmap, addr, len, prot,
 	    flags, fd, 0, offset));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.5 1997/11/14 20:56:06 deraadt Exp $	*/
+/*	$OpenBSD: mman.h,v 1.6 1998/01/02 05:32:52 deraadt Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -63,6 +63,11 @@
 #define	MAP_HASSEMAPHORE 0x0200	/* region may contain semaphores */
 
 /*
+ * Error return from mmap()
+ */
+#define MAP_FAILED	((void *)-1)
+
+/*
  * Mapping type
  */
 #define	MAP_FILE	0x0000	/* map from file (default) */
@@ -90,7 +95,7 @@
 
 __BEGIN_DECLS
 /* Some of these int's should probably be size_t's */
-caddr_t	mmap __P((void *, size_t, int, int, int, off_t));
+void *	mmap __P((void *, size_t, int, int, int, off_t));
 int	mprotect __P((void *, size_t, int));
 int	munmap __P((void *, size_t));
 int	msync __P((void *, size_t, int));

@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.19 1997/11/14 20:56:03 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.20 1998/01/02 05:32:51 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -349,7 +349,7 @@
 195	STD		{ int sys_setrlimit(u_int which, struct rlimit *rlp); }
 196	STD		{ int sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
-197	STD		{ caddr_t sys_mmap(void *addr, size_t len, \
+197	STD		{ void *sys_mmap(void *addr, size_t len, \
 			    int prot, int flags, int fd, long pad, \
 			    off_t pos); }
 198	STD		{ int sys_nosys(void); } __syscall
