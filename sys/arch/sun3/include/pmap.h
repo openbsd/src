@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.11 2001/11/28 16:13:29 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.12 2001/12/05 00:11:51 millert Exp $	*/
 /*	$NetBSD: pmap.h,v 1.18 1997/01/27 19:41:06 gwr Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@ extern void pmap_prefer(vm_offset_t, vm_offset_t *);
 extern segsz_t pmap_resident_pages(pmap_t);
 #define	pmap_resident_count(pmap)	pmap_resident_pages(pmap)
 
-#define pmap_update()		/* nothing */
+#define pmap_update(pmap)	/* nothing (yet) */
 
 /*
  * Since PTEs also contain type bits, we have to have some way

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.19 2001/11/28 16:13:28 art Exp $ */
+/*	$OpenBSD: pmap.h,v 1.20 2001/12/05 00:11:51 millert Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -75,7 +75,7 @@ extern	caddr_t		vmmap;
 /* Used in builtin/device_pager.c */
 #define pmap_phys_address(frame)        ((vm_offset_t) (ptoa(frame)))
 
-#define pmap_update()		/* nothing */
+#define pmap_update(pmap)	/* nothing (yet) */
 
 #define PMAP_ACTIVATE(proc)	pmap_activate(proc)
 #define PMAP_DEACTIVATE(proc)	pmap_deactivate(proc)

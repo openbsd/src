@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.2 2001/12/02 02:01:52 millert Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.3 2001/12/05 00:11:51 millert Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -730,7 +730,7 @@ pmap_map(va, spa, epa, prot)
 		va += PAGE_SIZE;
 		spa += PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return (va);
 }
 
@@ -1768,7 +1768,7 @@ pmap_collect(pmap)
 		 * all necessary locking.
 		 */
 		pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
-		pmap_update();
+		pmap_update(pmap);
 	}
 
 #ifdef notyet
@@ -2731,7 +2731,7 @@ pmap_enter_ptpage(pmap, va)
 			pmap_changebit(ptpa, PG_CI, 1);
 		}
 #endif
-		pmap_update();
+		pmap_update(pmap);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE)) {
 			int ix = pmap_ste(pmap, va) - pmap_ste(pmap, 0);
@@ -2767,7 +2767,7 @@ pmap_enter_ptpage(pmap, va)
 		pmap_enter(pmap_kernel(), va, ptpa,
 		    VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-		pmap_update();
+		pmap_update(pmap_kernel());
 	}
 #if defined(M68040) || defined(M68060)
 	/*
