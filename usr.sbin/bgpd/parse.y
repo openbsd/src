@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.51 2004/02/06 20:18:18 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.52 2004/02/06 20:37:53 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -87,7 +87,7 @@ typedef struct {
 	union {
 		u_int32_t		 number;
 		char			*string;
-		struct in_addr		 addr;
+		struct bgpd_addr	 addr;
 		u_int8_t		 u8;
 		struct filter_peers	 filter_peers;
 		struct filter_match	 filter_match;
@@ -173,7 +173,11 @@ conf_main	: AS number		{
 			conf->as = $2;
 		}
 		| ROUTERID address		{
-			conf->bgpid = $2.s_addr;
+			if ($2.af != AF_INET) {
+				yyerror("router-id must be an IPv4 address");
+				YYERROR;
+			}
+			conf->bgpid = $2.v4.s_addr;
 		}
 		| HOLDTIME number	{
 			if ($2 < MIN_HOLDTIME) {
@@ -192,7 +196,11 @@ conf_main	: AS number		{
 			conf->min_holdtime = $3;
 		}
 		| LISTEN ON address	{
-			conf->listen_addr.sin_addr.s_addr = $3.s_addr;
+			if ($3.af != AF_INET) {
+				yyerror("listen-on takes an IPv4 address");
+				YYERROR;
+			}
+			conf->listen_addr.sin_addr.s_addr = $3.v4.s_addr;
 		}
 		| FIBUPDATE yesno		{
 			if ($2 == 0)
@@ -226,8 +234,7 @@ conf_main	: AS number		{
 
 			if ((n = calloc(1, sizeof(struct network))) == NULL)
 				fatal("new_network");
-			n->net.prefix.af = AF_INET;
-			n->net.prefix.v4 = $2;
+			memcpy(&n->net.prefix, &$2, sizeof(n->net.prefix));
 			if ($4 > 32) {
 				yyerror("invalid netmask");
 				YYERROR;
@@ -240,7 +247,9 @@ conf_main	: AS number		{
 address		: STRING		{
 			int	n;
 
-			if ((n = inet_pton(AF_INET, $1, &$$)) == -1) {
+			bzero(&$$, sizeof($$));
+			$$.af = AF_INET;
+			if ((n = inet_pton(AF_INET, $1, &$$.v4)) == -1) {
 				yyerror("inet_pton: %s", strerror(errno));
 				YYERROR;
 			}
@@ -266,7 +275,8 @@ optnumber	: /* empty */		{ $$ = 0; }
 neighbor	: {	curpeer = new_peer(); }
 		    NEIGHBOR address optnl '{' optnl {
 			curpeer->conf.remote_addr.af = AF_INET;
-			curpeer->conf.remote_addr.v4.s_addr = $3.s_addr;
+			memcpy(&curpeer->conf.remote_addr, &$3,
+			    sizeof(curpeer->conf.remote_addr));
 			if (get_id(curpeer)) {
 				yyerror("get_id failed");
 				YYERROR;
@@ -330,8 +340,8 @@ peeropts	: REMOTEAS number	{
 			free($2);
 		}
 		| LOCALADDR address	{
-			curpeer->conf.local_addr.af = AF_INET;
-			curpeer->conf.local_addr.v4.s_addr = $2.s_addr;
+			memcpy(&curpeer->conf.local_addr, &$2,
+			    sizeof(curpeer->conf.local_addr));
 		}
 		| MULTIHOP number	{
 			if ($2 < 2 || $2 > 255) {
@@ -445,13 +455,13 @@ filter_peer	: ANY		{ $$.peerid = $$.groupid = 0; }
 
 			$$.groupid = $$.peerid = 0;
 			for (p = peer_l; p != NULL; p = p->next)
-				if (!memcmp(&p->conf.remote_addr.v4,
-				    &$1, sizeof(p->conf.remote_addr.v4))) {
+				if (!memcmp(&p->conf.remote_addr,
+				    &$1, sizeof(p->conf.remote_addr))) {
 					$$.peerid = p->conf.id;
 					break;
 				}
 			if ($$.peerid == 0) {
-				yyerror("no such peer: %s", inet_ntoa($1));
+				yyerror("no such peer: %s", log_addr(&$1));
 				YYERROR;
 			}
 		}
@@ -474,8 +484,7 @@ filter_peer	: ANY		{ $$.peerid = $$.groupid = 0; }
 filter_match	: /* empty */			{ bzero(&$$, sizeof($$)); }
 		| PREFIX address '/' number	{
 			bzero(&$$, sizeof($$));
-			$$.prefix.addr.af = AF_INET;
-			$$.prefix.addr.v4.s_addr = $2.s_addr;
+			memcpy(&$$.prefix.addr, &$2, sizeof($$.prefix.addr));
 			if ($4 > 32) {
 				yyerror("prefixlength must be <= 32");
 				YYERROR;
@@ -543,8 +552,13 @@ filter_set_opt	: LOCALPREF number		{
 			$$.med = $2;
 		}
 		| NEXTHOP address		{
-			$$.flags = SET_NEXTHOP;
-			$$.nexthop.s_addr = $2.s_addr;
+			if ($2.af == AF_INET) {
+				$$.flags = SET_NEXTHOP;
+				$$.nexthop.s_addr = $2.v4.s_addr;
+			} else {
+				yyerror("king bula sez: AF_INET only for now");
+				YYERROR;
+			}
 		}
 		| PREPEND number		{
 			$$.flags = SET_PREPEND;
