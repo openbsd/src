@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.27 1999/12/08 06:50:24 itojun Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.28 2000/06/06 20:21:49 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -171,6 +171,8 @@
 
 #define M_MEMDESC	105	/* Memory range */
 
+#define M_DEBUG		106	/* MALLOC_DEBUG structures */
+
 #define	M_TEMP		127	/* misc temporary data buffers */
 #define M_LAST          128     /* Must be last type + 1 */
 
@@ -282,7 +284,7 @@
 	"USB HC",	/* 103 M_USBHC */ \
 	"pipe", 	/* 104 M_PIPE */ \
 	"memdesc",	/* 105 M_MEMDESC */ \
-	NULL, \
+	"malloc debug",	/* 105 M_DEBUG */ \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
