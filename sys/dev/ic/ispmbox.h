@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispmbox.h,v 1.12 2001/02/12 23:48:29 mjacob Exp $ */
+/*	$OpenBSD: ispmbox.h,v 1.13 2001/04/04 22:09:16 mjacob Exp $ */
 /*
  * Mailbox and Queue Entry Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -109,6 +109,9 @@
 
 #define	MBOX_ENABLE_TARGET_MODE		0x55
 #define		ENABLE_TARGET_FLAG	0x8000
+#define		ENABLE_TQING_FLAG	0x0004
+#define		ENABLE_MANDATORY_DISC	0x0002
+#define	MBOX_GET_TARGET_STATUS		0x56
 
 /* These are for the ISP2100 FC cards */
 #define	MBOX_GET_LOOP_ID		0x20
@@ -482,6 +485,16 @@ typedef struct {
 #endif
 
 /*
+ * About Firmware returns an 'attribute' word in mailbox 6.
+ */
+#define	ISP_FW_ATTR_TMODE	0x01
+#define	ISP_FW_ATTR_SCCLUN	0x02
+#define	ISP_FW_ATTR_FABRIC	0x04
+#define	ISP_FW_ATTR_CLASS2	0x08
+#define	ISP_FW_ATTR_FCTAPE	0x10
+#define	ISP_FW_ATTR_IP		0x20
+
+/*
  * FC (ISP2100) specific data structures
  */
 
@@ -537,7 +550,7 @@ typedef struct isp_icb {
 #define	ICBOPT_PREVLOOP		0x0800
 #define	ICBOPT_STOP_ON_QFULL	0x1000
 #define	ICBOPT_FULL_LOGIN	0x2000
-#define	ICBOPT_USE_PORTNAME	0x4000
+#define	ICBOPT_BOTH_WWNS	0x4000
 #define	ICBOPT_EXTENDED		0x8000
 
 #define	ICBXOPT_CLASS2_ACK0	0x0200
