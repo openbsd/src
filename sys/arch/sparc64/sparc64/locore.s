@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.41 2003/07/09 15:52:53 jason Exp $	*/
+/*	$OpenBSD: locore.s,v 1.42 2003/07/24 18:17:50 jason Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -59,9 +59,9 @@
 #undef HORRID_III_HACK	/* define this to make a locore.s for usIII */
 #ifdef HORRID_III_HACK
 #define	NO_VCACHE		/* Map w/D$ disabled */
-#else
+#else	/* HORRID_III_HACK */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
-#endif
+#endif	/* HORRID_III_HACK */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #undef	NO_TSB			/* Don't use TSB */
@@ -272,7 +272,7 @@
 	.endm
 
 /*
- * Weve saved our possible fpstate, now disable the fpu
+ * We've saved our possible fpstate, now disable the fpu
  * and continue with life.
  */
 
@@ -287,7 +287,7 @@
 	brz,pt	%l3, 1f				! Skip if no fpstate
 	 stx	%l6, [%l5 + P_FPSTATE]		! Restore old fpstate
 
-	call	_C_LABEL(loadfpstate)		! Re-load orig fpstate
+	call	_C_LABEL(loadfpstate)		! Reload orig fpstate
 	 mov	%l3, %o0
 1:
 	.endm
@@ -471,9 +471,9 @@ _C_LABEL(cold):
 #ifdef DEBUG
 #if 0	/* for henric, but not yet */
 	wrpr	%g0, 0x1ff - \n, %tt
-#else
+#else	/* 0 */
 	wrpr	%g0, 0x1ff, %tt
-#endif
+#endif	/* 0 */
 #endif	/* DEBUG */
 	.endm
 
@@ -595,7 +595,7 @@ _C_LABEL(cold):
 	TA32
 	.endm
 /*
- * Here are some oft repeated traps as macros.
+ * Here are some often repeated traps as macros.
  */
 
 	! spill a 64-bit register window
@@ -686,7 +686,7 @@ _C_LABEL(trapbase):
 	UTRAP 0x005		! 005 = RED state exception
 	UTRAP 0x006; UTRAP 0x007
 	VTRAP T_INST_EXCEPT, textfault	! 008 = instr. access exept
-	VTRAP T_TEXTFAULT, textfault	! 009 = instr access MMU miss
+	VTRAP T_TEXTFAULT, textfault	! 009 = instr. access MMU miss
 	VTRAP T_INST_ERROR, textfault	! 00a = instr. access err
 	UTRAP 0x00b; UTRAP 0x00c; UTRAP 0x00d; UTRAP 0x00e; UTRAP 0x00f
 	TRAP T_ILLINST			! 010 = illegal instruction
@@ -848,7 +848,7 @@ trapbase_priv:
 	UTRAP 0x006; UTRAP 0x007
 ktextfault:
 	VTRAP T_INST_EXCEPT, textfault	! 008 = instr. access exept
-	VTRAP T_TEXTFAULT, textfault	! 009 = instr access MMU miss -- no MMU
+	VTRAP T_TEXTFAULT, textfault	! 009 = instr. access MMU miss -- no MMU
 	VTRAP T_INST_ERROR, textfault	! 00a = instr. access err
 	UTRAP 0x00b; UTRAP 0x00c; UTRAP 0x00d; UTRAP 0x00e; UTRAP 0x00f
 	TRAP T_ILLINST			! 010 = illegal instruction
@@ -943,7 +943,7 @@ TABLE/**/sfill:
 TABLE/**/kfill:
 	FILL64 1,ASI_AIUS	! 0x0e0 fill_0_other -- used to fill user windows when running nucleus mode -- will we ever use this?
 	FILL32 2,ASI_AIUS	! 0x0e4 fill_1_other
-	FILLBOTH 1b,2b,ASI_AIUS! 0x0e8 fill_2_other
+	FILLBOTH 1b,2b,ASI_AIUS	! 0x0e8 fill_2_other
 	UTRAP 0x0ec; TA32	! 0x0ec fill_3_other
 	UTRAP 0x0f0; TA32	! 0x0f0 fill_4_other
 	UTRAP 0x0f4; TA32	! 0x0f4 fill_5_other
@@ -990,7 +990,7 @@ TABLE/**/syscall:
 	UTRAP 0x1f8; UTRAP 0x1f9; UTRAP 0x1fa; UTRAP 0x1fb; UTRAP 0x1fc; UTRAP 0x1fd; UTRAP 0x1fe; UTRAP 0x1ff
 
 /*
- * If the cleanwin trap handler detects an overfow we come here.
+ * If the cleanwin trap handler detects an overflow we come here.
  * We need to fix up the window registers, switch to the interrupt
  * stack, and then trap to the debugger.
  */
@@ -1076,7 +1076,7 @@ pmap_edumparea:
 	.text
 pmap_screwup:
 	rd	%pc, %g3
-	sub	%g3, (pmap_edumparea-pmap_dumparea), %g3! pc relative addressing 8^)
+	sub	%g3, (pmap_edumparea-pmap_dumparea), %g3	! pc relative addressing 8^)
 	ldstub	[%g3+( 0*0x8)], %g3
 	tst	%g3		! Semaphore set?
 	tnz	%xcc, 1; nop		! Then trap
@@ -1277,7 +1277,7 @@ _C_LABEL(trap_trace_end):
   * physical addressing, or flush the D$.
   *
   * We could identify certain registers to hold address fault info.
-  * this means that these registers need to be preserved across all
+  * This means that these registers need to be preserved across all
   * fault handling.  But since we only have 7 useable globals, that
   * really puts a cramp in our style.
   *
@@ -1358,8 +1358,8 @@ intr_setup_msg:
  * go to the interrupt stack if (a) we came from user mode or (b) we
  * came from kernel mode on the kernel stack.
  *
- * We don't guarantee any registers are preserved during this operation.
- * So we can be more efficient.
+ * We don't guarantee that any registers are preserved during this operation,
+ * so we can be more efficient.
  */
 	.macro	INTR_SETUP stackspace
 	rdpr	%wstate, %g7			! Find if we're from user mode
@@ -1549,7 +1549,7 @@ dmmu_write_fault:
 	sub	%g3, %g5, %g5
 	cmp	%g5, %g2
 	tlu	%xcc, 1; nop
-	blu,pn	%xcc, winfix				! Next insn in delay slot is unimportant
+	blu,pn	%xcc, winfix				! Next instruction in delay slot is unimportant
 0:
 #endif	/* DEBUG */
 	/* Need to check for and handle large pages. */
@@ -1633,7 +1633,7 @@ data_miss:
 	mov	6, %g6		! debug
 	stb	%g6, [%g7+0x20]	! debug
 	tlu	%xcc, 1; nop
-	blu,pn	%xcc, winfix				! Next insn in delay slot is unimportant
+	blu,pn	%xcc, winfix				! Next instruction in delay slot is unimportant
 	 mov	7, %g6		! debug
 	stb	%g6, [%g7+0x20]	! debug
 1:	
@@ -1796,7 +1796,7 @@ winfixfill:
 	and	%g4, CWP, %g5		! %g4 = %cwp of trap
 	wrpr	%g7, 0, %tt
 	bz,a,pt	%icc, datafault		! We were in user mode -- normal fault
-	 wrpr	%g5, %cwp		! Restore cwp from before fill trap -- regs should now be consisent
+	 wrpr	%g5, %cwp		! Restore cwp from before fill trap -- regs should now be consistent
 
 	/*
 	 * We're in a pickle here.  We were trying to return to user mode
@@ -1814,7 +1814,7 @@ winfixfill:
 	 */
 
 #if 0 /* Need to switch over to new stuff to fix WDR bug */
-	wrpr	%g5, %cwp				! Restore cwp from before fill trap -- regs should now be consisent
+	wrpr	%g5, %cwp				! Restore cwp from before fill trap -- regs should now be consistent
 	wrpr	%g2, %g0, %tl				! Restore trap level -- we need to reuse it
 	set	return_from_trap, %g4
 	set	CTX_PRIMARY, %g7
@@ -2364,7 +2364,7 @@ instr_miss:
 	sethi	%hi(DATA_START), %g7
 	stb	%g6, [%g7+0x30]	! debug
 	tlu	%xcc, 1; nop
-	blu,pn	%xcc, textfault				! Next insn in delay slot is unimportant
+	blu,pn	%xcc, textfault				! Next instruction in delay slot is unimportant
 	 mov	7, %g6		! debug
 	stb	%g6, [%g7+0x30]	! debug
 1:	
@@ -3289,7 +3289,7 @@ _C_LABEL(sparc_interrupt):
 	stx	%g6, [%sp + CC64FSZ + BIAS + TF_G + ( 6*8)]
 	stx	%g7, [%sp + CC64FSZ + BIAS + TF_G + ( 7*8)]
 
-	flushw			! Do not remove this insn -- causes interrupt loss
+	flushw			! Do not remove this instruction -- causes interrupt loss
 	rd	%y, %l6
 	INCR _C_LABEL(uvmexp)+V_INTR	! cnt.v_intr++; (clobbers %o0,%o1,%o2)
 	rdpr	%tt, %l5		! Find out our current IPL
@@ -3345,7 +3345,7 @@ sparc_intr_retry:
 	add	%l2, %l4, %l4
 
 1:
-	membar	#StoreLoad		! Make sure any failed casxa insns complete
+	membar	#StoreLoad		! Make sure any failed casxa instructions complete
 	ldx	[%l4], %l2		! Check a slot
 	brz,pn	%l2, intrcmplt		! Empty list?
 
@@ -3575,7 +3575,7 @@ rft_kernel:
 	CLRTT
 #if	0
 	wrpr	%g0, 0, %cleanwin	! DEBUG
-#endif	/*  */
+#endif	/* 0 */
 	retry					! We should allow some way to distinguish retry/done
 	NOTREACHED
 /*
@@ -3995,7 +3995,7 @@ dostart:
 	andn	%o1, MCCR_DCACHE_EN, %o1
 #ifdef HORRID_III_HACK
 	andn	%o1, MCCR_ICACHE_EN, %o1	! and Icache...
-#endif
+#endif	/* HORRID_III_HACK */
 	stxa	%o1, [%g0] ASI_MCCR
 	membar	#Sync
 #endif	/* 0 */
@@ -4052,10 +4052,10 @@ _C_LABEL(cpu_initialize):
 	bclr	MCCR_DCACHE_EN, %g1
 #ifdef HORRID_III_HACK
 	andn	%o1, MCCR_ICACHE_EN, %o1	! and Icache...
-#endif
+#endif	/* HORRID_III_HACK */
 	stxa	%g1, [%g0] ASI_LSU_CONTROL_REGISTER
 	membar	#Sync
-#endif	/*  */
+#endif	/* NO_VCACHE */
 
 	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
 	sethi	%hi(KERNBASE), %l0		! Find our xlation
@@ -4415,7 +4415,7 @@ _C_LABEL(cpu_initialize):
 	andn	%l0, %l2, %l0			! Mask off size and split bits
 	or	%l0, %l1, %l0			! Make a TSB pointer
 	set	TSB, %l2
-	stxa	%l0, [%l2] ASI_IMMU		! Install insn TSB pointer
+	stxa	%l0, [%l2] ASI_IMMU		! Install instruction TSB pointer
 	membar	#Sync				! We may need more membar #Sync in here
 
 	/* Change the trap base register */
@@ -4469,7 +4469,7 @@ _C_LABEL(openfirmware):
 	sethi	%hi(romp), %o4
 	andcc	%sp, 1, %g0
 	bz,pt	%icc, 1f
-	 ldx	[%o4+%lo(romp)], %o4		! v9 stack, just load the addr and callit
+	 ldx	[%o4+%lo(romp)], %o4		! v9 stack, just load the addr and call it
 	save	%sp, -CC64FSZ, %sp
 	rdpr	%pil, %i2
 	mov	PIL_HIGH, %i3
@@ -4931,7 +4931,7 @@ _C_LABEL(sigcode):
 	membar	#Sync
 
 	restore	%g0, SYS_sigreturn, %g1 ! get registers back & set syscall #
-	add	%sp, BIAS + 128 + 16, %o0! compute scp
+	add	%sp, BIAS + 128 + 16, %o0	! compute scp
 !	andn	%o0, 0x0f, %o0
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
@@ -5929,7 +5929,7 @@ Lsw_load:
 
 	ldx	[%l1 + PCB_SP], %i6
 	ldx	[%l1 + PCB_PC], %i7
-	wrpr	%g0, 0, %otherwin	! These two insns should be redundant
+	wrpr	%g0, 0, %otherwin	! These two instructions should be redundant
 	wrpr	%g0, 0, %canrestore
 	rdpr	%ver, %l7
 	and	%l7, CWP, %l7
@@ -6522,7 +6522,7 @@ ENTRY(pseg_find)
 
 
 /*
- * Use block_disable to turn off block insns for
+ * Use block_disable to turn off block instructions for
  * bcopy/memset
  */
 	.data
@@ -7308,7 +7308,7 @@ Lbcopy_block_aligned64:
 	!! Isolate the word offset, which just happens to be
 	!! the slot in our jump table.
 	!!
-	!! This is 6 insns, most of which cannot be paired,
+	!! This is 6 instructions, most of which cannot be paired,
 	!! which is about the same as the above version.
 	!!
 	rd	%pc, %o4
@@ -8264,7 +8264,7 @@ Lbzero_internal:
 	 */
 	andcc	%o1, 0x0ff, %o1		! No need to extend zero
 	bz,pt	%icc, 1f
-	 sllx	%o1, 8, %o3		! sigh.  all dependent insns.
+	 sllx	%o1, 8, %o3		! sigh.  all dependent instructions.
 	or	%o1, %o3, %o1
 	sllx	%o1, 16, %o3
 	or	%o1, %o3, %o1
@@ -8274,8 +8274,8 @@ Lbzero_internal:
 #if 0
 	!! Now we are 64-bit aligned
 	cmp	%o2, 256		! Use block clear if len > 256
-	bge,pt	%xcc, Lbzero_block	! use block store insns
-#endif		/* 0 */
+	bge,pt	%xcc, Lbzero_block	! use block store instructions
+#endif	/* 0 */
 	 deccc	8, %o2
 Lbzero_longs:
 	bl,pn	%xcc, Lbzero_cleanup	! Less than 8 bytes left
