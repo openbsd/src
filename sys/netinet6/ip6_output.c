@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.39 2001/05/28 06:45:32 angelos Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.40 2001/05/30 12:31:09 angelos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -567,8 +567,7 @@ skip_ipsec2:;
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 
 		/* Callee frees mbuf */
-		/* XXX Should use last argument */
-		error = ipsp_process_packet(m, tdb, AF_INET6, 0, NULL);
+		error = ipsp_process_packet(m, tdb, AF_INET6, 0);
 		splx(s);
 		return error;  /* Nothing more to be done */
 	}

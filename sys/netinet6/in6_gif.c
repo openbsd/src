@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.13 2001/05/11 17:20:12 aaron Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.14 2001/05/30 12:31:09 angelos Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ in6_gif_output(ifp, family, m, rt)
 
 	/* encapsulate into IPv6 packet */
 	mp = NULL;
-	error = ipip_output(m, &tdb, &mp, hlen, poff, NULL);
+	error = ipip_output(m, &tdb, &mp, hlen, poff);
 	if (error)
 	        return error;
 	else if (mp == NULL)
