@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 1999/08/03 00:53:30 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.19 1999/08/03 15:35:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -545,6 +545,17 @@ pmap_remove_pv(pmap, va, pv)
 	 * may be called at interrupt time).
 	 */
 	s = splimp();
+
+	/*
+	 * Clear it from cache and TLB
+	 */
+	ficache(pv->pv_space, pv->pv_va, PAGE_SIZE);
+	pitlb(pv->pv_space, pv->pv_va);
+
+	fdcache(pv->pv_space, pv->pv_va, PAGE_SIZE);
+	pdtlb(pv->pv_space, pv->pv_va);
+
+	pmap_clear_va(pv->pv_space, pv->pv_va);
 
 	/*
 	 * If it is the first entry on the list, it is actually
