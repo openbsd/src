@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.10 2001/06/24 17:05:26 miod Exp $ */
+/* $OpenBSD: intr.h,v 1.11 2001/07/09 18:55:22 millert Exp $ */
 /* $NetBSD: intr.h,v 1.25 2000/05/23 05:12:56 thorpej Exp $ */
 
 /*
@@ -84,7 +84,7 @@ _splraise(s)
 /*
  * simulated software interrupt register
  */
-extern u_int64_t ssir;
+extern u_long ssir;
 
 #define	SIR_NET		0x1
 #define	SIR_CLOCK	0x2

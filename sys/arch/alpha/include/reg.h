@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.3 1996/10/30 22:39:25 niklas Exp $	*/
+/*	$OpenBSD: reg.h,v 1.4 2001/07/09 18:55:22 millert Exp $	*/
 /*	$NetBSD: reg.h,v 1.2 1995/03/28 18:14:07 jtc Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #define	R_ZERO	31
 
 struct reg {
-	u_int64_t	r_regs[32];
+	u_long	r_regs[32];
 };
 
 /*
@@ -87,8 +87,8 @@ struct reg {
  * That array has to look exactly like 'struct reg' though.
  */
 struct fpreg {
-	u_int64_t	fpr_regs[32];
-	u_int64_t	fpr_cr;
+	u_long	fpr_regs[32];
+	u_long	fpr_cr;
 };
 
 #ifdef _KERNEL

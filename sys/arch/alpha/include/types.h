@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.8 2000/11/16 04:33:47 ericj Exp $	*/
+/*	$OpenBSD: types.h,v 1.9 2001/07/09 18:55:22 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.6 1996/12/05 00:13:47 cgd Exp $	*/
 
 /*-
@@ -73,11 +73,11 @@ typedef	unsigned short		 uint16_t;
 typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
 typedef	unsigned int		 uint32_t;
-typedef	long			  int64_t;
-typedef	unsigned long		u_int64_t;
-typedef	unsigned long		 uint64_t;
+typedef	long long		  int64_t;
+typedef	unsigned long long	u_int64_t;
+typedef	unsigned long long	 uint64_t;
 
-typedef int64_t			register_t;
+typedef long			register_t;
 
 #define	__BROKEN_INDIRECT_CONFIG
 

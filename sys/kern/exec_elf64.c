@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf64.c,v 1.15 2001/06/22 14:14:07 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf64.c,v 1.16 2001/07/09 18:55:21 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -106,7 +106,7 @@ int elf64_check_header __P((Elf64_Ehdr *, int));
 int olf64_check_header __P((Elf64_Ehdr *, int, u_int8_t *));
 int elf64_read_from __P((struct proc *, struct vnode *, u_long, caddr_t, int));
 void elf64_load_psection __P((struct exec_vmcmd_set *, struct vnode *,
-    Elf64_Phdr *, u_long *, u_long *, int *));
+    Elf64_Phdr *, u_int64_t *, u_int64_t *, int *));
 
 int exec_elf64_fixup __P((struct proc *, struct exec_package *));
 
@@ -256,8 +256,8 @@ elf64_load_psection(vcset, vp, ph, addr, size, prot)
 	struct exec_vmcmd_set *vcset;
 	struct vnode *vp;
 	Elf64_Phdr *ph;
-	u_long *addr;
-	u_long *size;
+	u_int64_t *addr;
+	u_int64_t *size;
 	int *prot;
 {
 	u_long uaddr, msize, psize, rm, rf;
@@ -366,7 +366,7 @@ elf64_load_file(p, path, epp, ap, last)
 	Elf64_Phdr *ph = NULL;
 	u_long phsize;
 	char *bp = NULL;
-	u_long addr = *last;
+	u_int64_t addr = *last;
 	struct vnode *vp;
 	u_int8_t os;			/* Just a dummy in this routine */
 
@@ -414,7 +414,7 @@ elf64_load_file(p, path, epp, ap, last)
 	 * Load all the necessary sections
 	 */
 	for (i = 0; i < eh.e_phnum; i++) {
-		u_long size = 0;
+		u_int64_t size = 0;
 		int prot = 0;
 #if defined(__mips__)
 		if (*last == ELF64_NO_ADDR)

@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.25 2001/01/20 20:27:40 art Exp $ */
+/* $OpenBSD: trap.c,v 1.26 2001/07/09 18:55:21 millert Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -602,8 +602,8 @@ syscall(code, framep)
 	int error, numsys;
 	u_int64_t opc;
 	u_quad_t sticks;
-	u_int64_t rval[2];
-	u_int64_t args[10];					/* XXX */
+	u_long rval[2];
+	u_long args[10];					/* XXX */
 	u_int hidden, nargs;
 #ifdef COMPAT_OSF1
 	extern struct emul emul_osf1;
@@ -661,7 +661,7 @@ syscall(code, framep)
 		if (nargs > 10)		/* XXX */
 			panic("syscall: too many args (%d)", nargs);
 		error = copyin((caddr_t)(alpha_pal_rdusp()), &args[6],
-		    (nargs - 6) * sizeof(u_int64_t));
+		    (nargs - 6) * sizeof(u_long));
 	case 6:	
 		args[5] = framep->tf_regs[FRAME_A5];
 	case 5:	
