@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.133 2004/02/11 19:25:15 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.134 2004/03/02 16:41:58 markus Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1030,6 +1030,7 @@ The currently defined protocols and names are:
 .It tcp	keepinittime	integer	yes
 .It tcp	keepintvl	integer	yes
 .It tcp	mssdflt	integer	yes
+.It tcp	reasslimit	integer	yes
 .It tcp	recvspace	integer	yes
 .It tcp	rfc1323	integer	yes
 .It tcp	rfc3390	integer	yes
@@ -1366,6 +1367,10 @@ See also tcp.slowhz.
 .It Li tcp.mssdflt
 The maximum segment size that is used as default for non-local connections.
 The default value is 512.
+.It Li tcp.reasslimit
+The maximum number of out-of-order
+.Tn TCP
+segments the system will store for reassembly.
 .It Li tcp.recvspace
 Returns the default
 .Tn TCP
