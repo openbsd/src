@@ -1,4 +1,4 @@
-.\"	$OpenBSD: suexec.8,v 1.9 2004/12/20 15:23:46 jaredy Exp $
+.\"	$OpenBSD: suexec.8,v 1.10 2004/12/21 16:09:34 jmc Exp $
 .\" ====================================================================
 .\" The Apache Software License, Version 1.1
 .\"
@@ -71,15 +71,17 @@ is the
 .Dq wrapper
 support program for the
 .Em suexec
-behaviour for the Apache HTTP server.
+behaviour for the Apache
+.Xr httpd 8
+server.
 It is run from within the server automatically to switch the user when
 an external program has to be run under a different user.
 For more information about
 .Nm ,
 see the online document
-.Dq Apache suexec Support
-on the Apache project's Web site at
-.Pa http://httpd.apache.org/docs/suexec.html .
+.Dq Apache suEXEC Support
+at
+.Pa /var/www/htdocs/manual/suexec.html.en .
 .Pp
 The options are as follows:
 .Bl -tag -width indent

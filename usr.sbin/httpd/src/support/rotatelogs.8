@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rotatelogs.8,v 1.7 2004/12/20 15:23:46 jaredy Exp $
+.\"	$OpenBSD: rotatelogs.8,v 1.8 2004/12/21 16:09:34 jmc Exp $
 .\" ====================================================================
 .\" The Apache Software License, Version 1.1
 .\"
@@ -67,8 +67,9 @@
 .Ar logfile rotationtime Op Ar offset
 .Sh DESCRIPTION
 .Nm
-is a simple program for use in conjunction with Apache's piped logfile
-feature which can be used like this:
+is a simple program for use in conjunction with
+.Xr httpd 8 Ns 's
+piped logfile feature which can be used like this:
 .Bd -literal -offset indent
 TransferLog "| rotatelogs /path/to/logs/access_log 86400"
 .Ed
@@ -79,7 +80,7 @@ where
 .Em nnnn
 is the system time at which the log nominally starts (this time will
 always be a multiple of the rotation time, so you can synchronize
-.Xr cron 1
+.Xr cron 8
 scripts with it).
 At the end of each rotation time (here, after 24 hours), a new log is
 started.
@@ -106,6 +107,7 @@ For example, to use local time in the zone UTC \-5 hours, specify a
 value of \-300 for this argument.
 .El
 .Sh SEE ALSO
-.Xr cron 1 ,
 .Xr strftime 3 ,
-.Xr httpd 8
+.Xr cron 8 ,
+.Xr httpd 8 ,
+.Xr logresolve 8

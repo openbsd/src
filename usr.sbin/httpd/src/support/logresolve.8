@@ -1,4 +1,4 @@
-.\"	$OpenBSD: logresolve.8,v 1.7 2004/12/20 15:23:46 jaredy Exp $
+.\"	$OpenBSD: logresolve.8,v 1.8 2004/12/21 16:09:34 jmc Exp $
 .\" ====================================================================
 .\" The Apache Software License, Version 1.1
 .\"
@@ -66,14 +66,15 @@
 .Nm logresolve
 .Op Fl c
 .Op Fl s Ar filename
-< 
+\*(Lt
 .Ar access_log
->
+\*(Gt
 .Ar access_log.new
 .Sh DESCRIPTION
 .Nm
-is a post-processing program to resolve IP adresses in Apache's access
-logfiles.
+is a post-processing program to resolve IP adresses in
+.Xr httpd 8 Ns 's
+access logfiles.
 To minimize impact on the nameserver,
 .Nm
 has its very own internal hash-table cache.
@@ -81,18 +82,19 @@ This means that each IP number will only be looked up the first time it
 is found in the log file.
 .Pp
 The following options are supported:
-.Bl -tag -width "-s filename"
-.It Fl s Ar filename
-Specifies the
-.Ar filename
-to record statistics.
+.Bl -tag -width "-s filenameXX"
 .It Fl c
-This causes 
+This causes
 .Nm
 to apply some DNS checks:
 after finding the hostname from the IP address, it looks up the IP
 addresses for the hostname and checks that one of them matches the
 original address.
+.It Fl s Ar filename
+Specifies the
+.Ar filename
+to record statistics.
 .El
 .Sh SEE ALSO
-.Xr httpd 8
+.Xr httpd 8 ,
+.Xr rotatelogs 8
