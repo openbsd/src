@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.22 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.23 2004/08/30 18:37:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -57,6 +57,7 @@
 /* gecko optional graphics */
 #define	STI_GOPT1_REV	0x17
 #define	STI_GOPT2_REV	0x70
+#define	STI_GOPT3_REV	0xd0
 
 /* internal EG */
 #define	STI_INEG_REV	0x60
@@ -87,8 +88,9 @@ sti_sgc_getrom(int unit, struct confargs *ca)
 	if (unit) {
 		if (ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC &&
 		    (ca->ca_type.iodc_revision == STI_GOPT1_REV ||
-		     ca->ca_type.iodc_revision == STI_GOPT2_REV))
-			/* these two share the onboard's prom */ ;
+		     ca->ca_type.iodc_revision == STI_GOPT2_REV ||
+		     ca->ca_type.iodc_revision == STI_GOPT3_REV))
+			/* these three share the onboard's prom */ ;
 		else
 			rom = 0;
 	}
