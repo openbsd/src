@@ -1,4 +1,4 @@
-#	$OpenBSD: NEWATA,v 1.2 1999/07/20 21:27:08 fgsch Exp $
+#	$OpenBSD: NEWATA,v 1.3 1999/07/21 02:28:12 deraadt Exp $
 #
 #	NEWATA - Generic 07/17/99 with new ATA stuff
 #
@@ -257,6 +257,7 @@ wss*	at isapnp?
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis UltraSound (drq2 is record drq)
 ym*	at isapnp?
+mpu*	at isapnp?
 
 # OPL[23] FM syntheziers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
@@ -266,6 +267,8 @@ opl*	at sb?
 midi*	at pcppi?		# MIDI interface to the PC speaker
 midi*	at sb?			# SB MPU401 port
 midi*	at opl?			# OPL FM synth
+midi*	at ym?
+midi*	at mpu?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
