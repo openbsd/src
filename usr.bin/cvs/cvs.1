@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.58 2005/03/04 11:56:57 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.59 2005/03/06 18:56:34 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -259,9 +259,127 @@ By default, no log message is required.
 Aliases:
 .Ic ad ,
 .Ic new .
-.It Ic admin
-Administration front-end for
-.Xr rcs 1 .
+.It Xo Ic admin
+.Op Fl Iq
+.Op Fl b Ar branch
+.Op Fl k Ar mode
+.OP Fl m Ar rev : Ns Ar msg
+.Oo Fl N Ar tag Ns
+.Op : Ns Ar rev Oc
+.Oo Fl n Ar tag Ns
+.Op : Ns Ar rev Oc
+.Op Fl o Ar rev
+.Oo Fl s Ar state Ns
+.Op : Ns Ar rev Oc
+.Oo Fl t Ar file \*(Ba
+.Ar str Oc
+.Xc
+The
+.Ic admin
+command is used to directly modify the RCS files.
+.Pp
+The
+.Ic admin
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl b Ar branch
+Set the default branch to
+.Ar branch .
+.It Fl I
+Command is interactive.
+.It Fl k
+Specify the keyword substitution mode.
+.It Fl m Ar rev : Ns Ar msg
+Change the log message of a revision.
+.It Xo Fl N
+.Ar tag Ns Op : Ns Ar rev
+.Xc
+Same as
+.Fl n ,
+but override tag if it already exists.
+.It Xo Fl n
+.Ar tag Ns Op : Ns Ar rev
+.Xc
+Associate the
+.Ar tag
+with the
+.Ar rev
+or the branch given as argument.
+If the revision or the branch is not specified, the tag is deleted.
+The
+.Sq \&:
+character means the association of the tag and the latest revision of
+the default branch.
+A branch number ending with the
+.Sq \&.
+character means the current latest revision in the branch.
+This option is functionally the same as the
+.Ic rtag
+command, but it avoids the check of the tags done with the
+.Pa CVSROOT/taginfo
+file.
+.It Fl o Ar rev
+Delete one or more revisions.
+The specifications of the values or revisions are as follows:
+.Bl -tag -width "XXXXXXXXXXXX"
+.It rev
+Specific revision.
+.It rev1:rev2
+Delete all revisions of a branch between
+.Ar rev1
+and
+.Ar rev2 .
+.It rev1::rev2
+Delete all revisions of a branch between
+.Ar rev1
+and
+.Ar rev2
+without deleting revisions
+.Ar rev1
+and
+.Ar rev2 .
+.It :rev
+Delete all revisions of the branch until revision
+.Ar rev .
+.It rev:
+Delete all revisions of the branch from revision
+.Ar rev
+until the last revision of the branch.
+.El
+.It Fl q
+Quiet mode.
+.It Xo Fl s
+.Ar state Ns Op : Ns Ar rev
+.Xc
+Change state of a revision.
+If the revision is not specified, the last revision of the default
+branch changes state.
+The
+.Ic state
+is a string of characters of your choice.
+The state of a revision can be modified without having to
+.Ic commit
+a new revision.
+The default
+.Ic state
+is
+.Sq Exp
+(Experimental).
+For instance, you could also use
+.Sq Dev
+or
+.Sq Reviewed .
+.It Fl t Ar file \*(Ba Ar str
+Change the descriptive text.
+The descriptive text is taken from the
+.Ar file
+specified as argument or from the string
+.Ar str
+given as argument if it is preceded by the
+.Sq -
+character.
+If no argument is used, the descriptive text is taken from standard input.
+.El
 .Pp
 Aliases:
 .Ic adm ,
