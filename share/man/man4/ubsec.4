@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubsec.4,v 1.15 2002/09/03 20:14:58 jason Exp $
+.\"	$OpenBSD: ubsec.4,v 1.16 2002/09/04 15:21:44 jason Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 The
 .Nm
 driver supports cards containing any of the following chips:
-.Bl -tag -width namenamenamena -offset indent
+.Bl -tag -width "Broadcom BCM5821" -offset indent
 .It Bluesteel 5501
 The original chipset, no longer made.  This extremely rare unit
 was not very fast, lacked a RNG, and had a number of other bugs.
@@ -49,14 +49,16 @@ was not very fast, lacked a RNG, and had a number of other bugs.
 A faster and fixed version of the original, with a random number
 unit and large number engine added.
 .It Broadcom BCM5801
-Slower (cheaper) version of the 5805.
+A BCM5805 without public key or random number generator.
 .It Broadcom BCM5802
-Slower (cheaper) version of the 5805.
+A slower version of the BCM5805.
 .It Broadcom BCM5805
-Faster version of the above chip.
+Faster version of Bluesteel 5601.
 .It Broadcom BCM5820
 64 bit version of the chip, and significantly more advanced.
 .It Broadcom BCM5821
+Faster version of the BCM5820.
+.It Broadcom BCM5822
 Faster version of the BCM5820.
 .El
 .Pp
@@ -65,8 +67,8 @@ The
 driver registers itself to accelerate DES, Triple-DES, MD5-HMAC,
 and SHA1-HMAC operations in
 .Xr ipsec 4 .
-On all models except the Bluesteel 5501, the driver also registers
-itself to provide random data to the
+On all models except the Bluesteel 5501 and Broadcom 5801, the driver
+also registers itself to provide random data to the
 .Xr random 4
 subsystem.
 .Sh SEE ALSO
@@ -79,3 +81,5 @@ The
 .Nm
 device driver appeared in
 .Ox 2.8 .
+.Sh BUGS
+The BCM5801, BCM5802, and BCM5822 have not actually been tested.
