@@ -270,6 +270,8 @@ getrequests(e)
 		{
 			if (timenow < Daemons[idx].d_refuse_connections_until)
 				continue;
+			if (bitnset(D_DISABLE, Daemons[idx].d_flags))
+				continue;
 			if (refuseconnections(Daemons[idx].d_name, e, idx))
 			{
 				if (Daemons[idx].d_socket >= 0)
@@ -880,6 +882,14 @@ opendaemonsocket(d, firsttime)
 			{
 				save_errno = errno;
 				syserr("opendaemonsocket: daemon %s: can't create server SMTP socket", d->d_name);
+				if (bitnset(D_OPTIONAL, d->d_flags) &&
+				    (save_errno == EAFNOSUPPORT ||
+				     save_errno == EPROTONOSUPPORT))
+				{
+					syserr("opendaemonsocket: daemon %s: optional socket disabled", d->d_name);
+					setbitn(D_DISABLE, d->d_flags);
+					return -1;
+				}
 			  severe:
 				if (LogLevel > 0)
 					sm_syslog(LOG_ALERT, NOQID,

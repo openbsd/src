@@ -1444,6 +1444,8 @@ struct termescape
 #define D_NOCANON	'C'	/* no canonification (cf) */
 #define D_NOETRN	'E'	/* no ETRN (MSA) */
 #define D_ETRNONLY	((char)0x01)	/* allow only ETRN (disk low) */
+#define D_OPTIONAL	'O'	/* optional socket */
+#define D_DISABLE	((char)0x02)	/* optional socket disabled */
 
 /* Flags for submitmode */
 #define SUBMIT_UNKNOWN	0x0000	/* unknown agent type */
