@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.1 2002/07/12 20:17:03 mickey Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.2 2003/03/19 20:06:28 millert Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -153,5 +153,21 @@
 #define AGP_I810_DRT_UNPOPULATED 0x00
 #define AGP_I810_DRT_POPULATED	0x01
 #define AGP_I810_GTT		0x10000
+
+/*
+ * Config registers for i830MG device 0
+ */
+#define AGP_I830_GCC0                   0x50
+#define AGP_I830_GCC1                   0x52
+#define AGP_I830_GCC1_DEV2              0x08
+#define AGP_I830_GCC1_DEV2_ENABLED      0x00
+#define AGP_I830_GCC1_DEV2_DISABLED     0x08
+#define AGP_I830_GCC1_GMS               0x70
+#define AGP_I830_GCC1_GMS_STOLEN_512    0x20
+#define AGP_I830_GCC1_GMS_STOLEN_1024   0x30
+#define AGP_I830_GCC1_GMS_STOLEN_8192   0x40
+#define AGP_I830_GCC1_GMASIZE           0x01
+#define AGP_I830_GCC1_GMASIZE_64        0x01
+#define AGP_I830_GCC1_GMASIZE_128       0x00
 
 #endif /* !_PCI_AGPREG_H_ */
