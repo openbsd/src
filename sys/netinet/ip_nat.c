@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_nat.c,v 1.8 1997/02/11 22:23:25 kstailey Exp $	*/
+/*	$OpenBSD: ip_nat.c,v 1.9 1997/02/12 15:16:02 kstailey Exp $	*/
 /*
  * (C)opyright 1995-1996 by Darren Reed.
  *
@@ -899,8 +899,10 @@ void
 ip_natexpire()
 {
 	register struct nat *nat, **natp;
+	int s;
 
 	MUTEX_ENTER(&ipf_nat);
+	SPLNET(s);
 	for (natp = &nat_instances; (nat = *natp); natp = &nat->nat_next) {
 		if (--nat->nat_age)
 			continue;
@@ -908,5 +910,6 @@ ip_natexpire()
 		nat_delete(nat);
 		nat_stats.ns_expire++;
 	}
+	SPLX(s);
 	MUTEX_EXIT(&ipf_nat);
 }
