@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.54 2001/10/07 11:03:57 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.55 2001/10/07 11:36:09 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -632,7 +632,7 @@ Flags used for all make invocations, except for the
 stage, which uses
 .Ev FAKE_FLAGS ,
 and for the regress stage, which uses 
-.Ar REGRESS_FLAGS .
+.Ev REGRESS_FLAGS .
 .It Ev MAKE_FILE
 Name of the Makefile used for ports building.
 Defaults to Makefile.
@@ -858,6 +858,10 @@ Regress dependencies are only checked if the regress stage is invoked.
 .It Ev REGRESS_FLAGS
 Flags to pass to ${MAKE_PROGRAM} to run the regression tests.
 Defaults to ${MAKE_FLAGS}.
+.It Ev REGRESS_IS_INTERACTIVE
+Set to
+.Sq Yes
+if port needs human interaction to run its tests.
 .It Ev REGRESS_TARGET
 Target to run regression tests.
 Defaults to
