@@ -4,6 +4,12 @@ partition table such that partition 'c' encompasses the entire drive,
 and not only the OpenBSD partition.  Finally, partition 'd' is no
 longer special and can be used for any purpose whatsoever.
 
+Also, OpenBSD now uses partition ID 0xA6 (166 decimal), but will
+continue to work with 0xA5 for compatibility reasons.  However, if
+you change the partition ID to 0xA6, you will be able to share the
+disk with 386BSD, FreeBSD or NetBSD.  Note that the latter three can
+NOT easily share the disk with each others.
+
 To do the upgrade, you must have the appropriate kernel-copy floppy
 image on a disk, and the upgr20.fs floppy image on another.  You must
 also have at least the "base20" binary distribution set available,
