@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.7 1998/01/25 21:54:49 niklas Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.8 1998/09/26 09:04:43 deraadt Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.7 1998/01/25 21:54:49 niklas Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.8 1998/09/26 09:04:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ main(argc, argv)
 			if ((set = setmode(optarg)) == NULL)
 				errx(1, "invalid file mode: %s", optarg);
 			mode = getmode(set, S_IRWXU | S_IRWXG | S_IRWXO);
+			free(set);
 			break;
 		default:
 			usage();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.15 1997/12/01 21:17:28 chuck Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.16 1998/09/26 09:04:43 deraadt Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.15 1997/12/01 21:17:28 chuck Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.16 1998/09/26 09:04:43 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -124,6 +124,7 @@ main(argc, argv)
 			if (!(set = setmode(optarg)))
 				errx(EX_USAGE, "%s: invalid file mode", optarg);
 			mode = getmode(set, 0);
+			free(set);
 			break;
 		case 'o':
 			owner = optarg;

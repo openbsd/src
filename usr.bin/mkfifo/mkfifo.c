@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfifo.c,v 1.4 1996/08/30 07:04:33 etheisen Exp $	*/
+/*	$OpenBSD: mkfifo.c,v 1.5 1998/09/26 09:04:43 deraadt Exp $	*/
 /*	$NetBSD: mkfifo.c,v 1.7 1994/12/23 07:16:56 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkfifo.c	8.2 (Berkeley) 1/5/94";
 #endif
-static char rcsid[] = "$OpenBSD: mkfifo.c,v 1.4 1996/08/30 07:04:33 etheisen Exp $";
+static char rcsid[] = "$OpenBSD: mkfifo.c,v 1.5 1998/09/26 09:04:43 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -82,10 +82,14 @@ main(argc, argv)
 				errx(1, "invalid file mode.");
 				/* NOTREACHED */
 			}
-			/* In symbolic mode strings, the + and - operators are
-			   interpreted relative to an assumed initial mode of
-			   a=rw. */
+
+			/*
+			 * In symbolic mode strings, the + and - operators are
+			 * interpreted relative to an assumed initial mode of
+			 * a=rw.
+			 */
 			mode = getmode (set, 0666);
+			free(set);
 			break;
 		case '?':
 		default:
