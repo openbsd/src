@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.3 2001/12/05 00:11:51 millert Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.4 2001/12/06 01:03:58 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  *
  * Supports:
  *	68020 with HP MMU
- *    	68020 with 68551 MMU
+ *    	68020 with 68851 MMU
  *	68030 with on-chip MMU
  *	68040 with on-chip MMU
  *	68060 with on-chip MMU
@@ -122,7 +122,7 @@
  *	We assume TLB entries don't have process tags (except for the
  *	supervisor/user distinction) so we only invalidate TLB entries
  *	when changing mappings for the current (or kernel) pmap.  This is
- *	technically not true for the 68551 but we flush the TLB on every
+ *	technically not true for the 68851 but we flush the TLB on every
  *	context switch, so it effectively winds up that way.
  *
  *	Bitwise and/or operations are significantly faster than bitfield
