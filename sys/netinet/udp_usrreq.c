@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.82 2002/06/26 16:37:58 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.83 2002/06/26 17:38:12 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ udp_check_ipsec(m, inp, srcsa, iphlen)
 	}
 
 	/* Latch SA only if the socket is connected. */
-	if (inp->inp_tdb_in != tdb &&
+	if (inp->inp_tdb_in != tdb && inp->inp_socket != NULL &&
 	    (inp->inp_socket->so_state & SS_ISCONNECTED)) {
 		if (tdb) {
 			tdb_add_inp(tdb, inp, 1);
