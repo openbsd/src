@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_extern.h,v 1.28 2001/11/06 18:41:10 art Exp $	*/
-/*	$NetBSD: uvm_extern.h,v 1.48 2000/08/12 22:41:55 thorpej Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.29 2001/11/07 01:18:01 art Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.49 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
  *
@@ -486,7 +486,8 @@ void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
 
 /* uvm_map.c */
 int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,
-				struct uvm_object *, voff_t, uvm_flag_t));
+				struct uvm_object *, voff_t, vsize_t,
+				uvm_flag_t));
 int			uvm_map_pageable __P((vm_map_t, vaddr_t, 
 				vaddr_t, boolean_t, int));
 int			uvm_map_pageable_all __P((vm_map_t, int, vsize_t));

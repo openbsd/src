@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_km.c,v 1.18 2001/11/06 13:36:52 art Exp $	*/
-/*	$NetBSD: uvm_km.c,v 1.38 2000/07/24 20:10:53 jeffs Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.19 2001/11/07 01:18:01 art Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.39 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -235,7 +235,7 @@ uvm_km_init(start, end)
 	uvm_map_setup(&kernel_map_store, base, end, VM_MAP_PAGEABLE);
 	kernel_map_store.pmap = pmap_kernel();
 	if (uvm_map(&kernel_map_store, &base, start - base, NULL,
-	    UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
+	    UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 	    UVM_INH_NONE, UVM_ADV_RANDOM,UVM_FLAG_FIXED)) != KERN_SUCCESS)
 		panic("uvm_km_init: could not reserve space for kernel");
 	
@@ -273,7 +273,7 @@ uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
 	 * first allocate a blank spot in the parent map
 	 */
 
-	if (uvm_map(map, min, size, NULL, UVM_UNKNOWN_OFFSET, 
+	if (uvm_map(map, min, size, NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, mapflags)) != KERN_SUCCESS) {
 	       panic("uvm_km_suballoc: unable to allocate space in parent map");
@@ -539,7 +539,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 	 */
 
 	if (__predict_false(uvm_map(map, &kva, size, obj, UVM_UNKNOWN_OFFSET,
-	      UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+	      0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 			  UVM_ADV_RANDOM, (flags & UVM_KMF_TRYLOCK))) 
 			!= KERN_SUCCESS)) {
 		UVMHIST_LOG(maphist, "<- done (no VM)",0,0,0,0);
@@ -684,7 +684,7 @@ uvm_km_alloc1(map, size, zeroit)
 	 */
 
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
-	      UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
+	      UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 					      UVM_INH_NONE, UVM_ADV_RANDOM,
 					      0)) != KERN_SUCCESS)) {
 		UVMHIST_LOG(maphist,"<- done (no VM)",0,0,0,0);
@@ -785,7 +785,7 @@ uvm_km_valloc(map, size)
 	 */
 
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
-	    UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
+	    UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 					    UVM_INH_NONE, UVM_ADV_RANDOM,
 					    0)) != KERN_SUCCESS)) {
 		UVMHIST_LOG(maphist, "<- done (no VM)", 0,0,0,0);
@@ -833,7 +833,7 @@ uvm_km_valloc_prefer_wait(map, size, prefer)
 		 */
 
 		if (__predict_true(uvm_map(map, &kva, size, uvm.kernel_object,
-		    prefer, UVM_MAPFLAG(UVM_PROT_ALL,
+		    prefer, 0, UVM_MAPFLAG(UVM_PROT_ALL,
 		    UVM_PROT_ALL, UVM_INH_NONE, UVM_ADV_RANDOM, 0))
 		    == KERN_SUCCESS)) {
 			UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);

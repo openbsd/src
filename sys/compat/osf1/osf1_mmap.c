@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_mmap.c,v 1.4 2001/11/06 19:53:17 miod Exp $ */
+/* $OpenBSD: osf1_mmap.c,v 1.5 2001/11/07 01:18:00 art Exp $ */
 /* $NetBSD: osf1_mmap.c,v 1.5 2000/04/11 05:26:27 chs Exp $ */
 
 /*
@@ -183,14 +183,14 @@ osf1_sys_mmap(p, v, retval)
 		/* if non-NULL address given, start looking there */
 		/* XXX - UVM */
 		if (addr != 0 && uvm_map_findspace(&p->p_vmspace->vm_map,
-		    addr, size, &addr, NULL, 0, 0) != NULL) {
+		    addr, size, &addr, NULL, 0, 0, 0) != NULL) {
 			fixed = 1;
 			goto done;
 		}
 
 		/* didn't find anything.  take it again from the top. */
 		if (uvm_map_findspace(&p->p_vmspace->vm_map, NBPG, size, &addr,
-		    NULL, 0, 0) != NULL) {
+		    NULL, 0, 0, 0) != NULL) {
 			fixed = 1;
 			goto done;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 2001/11/06 02:49:23 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.31 2001/11/07 01:18:00 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -406,6 +406,8 @@ extern int pmap_page_index __P((paddr_t));
 extern u_int pmap_free_pages __P((void));
 extern int pmap_next_page __P((vm_offset_t *));
 
+void pmap_pinit __P((struct pmap *));
+void pmap_release __P((struct pmap *));
 
 /*
  * Debugging support.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.34 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.35 2001/11/07 01:18:00 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -312,7 +312,7 @@ vmapbuf(bp, sz)
 	 */
 	while (1) {
 		kva = vm_map_min(kernel_map);
-		if (uvm_map(kernel_map, &kva, size, NULL, uva,
+		if (uvm_map(kernel_map, &kva, size, NULL, uva, 0,
 		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 		    UVM_INH_NONE, UVM_ADV_RANDOM, 0)) == KERN_SUCCESS)
 			break;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map.h,v 1.12 2001/11/06 13:36:52 art Exp $	*/
-/*	$NetBSD: uvm_map.h,v 1.21 2000/08/16 16:32:06 thorpej Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.13 2001/11/07 01:18:01 art Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.22 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -330,7 +330,7 @@ vm_map_t	uvm_map_create __P((pmap_t, vaddr_t, vaddr_t, int));
 int		uvm_map_extract __P((vm_map_t, vaddr_t, vsize_t, 
 			vm_map_t, vaddr_t *, int));
 vm_map_entry_t	uvm_map_findspace __P((vm_map_t, vaddr_t, vsize_t, vaddr_t *,
-			struct uvm_object *, voff_t, boolean_t));
+			struct uvm_object *, voff_t, vsize_t, int));
 int		uvm_map_inherit __P((vm_map_t, vaddr_t, vaddr_t, vm_inherit_t));
 int		uvm_map_advice __P((vm_map_t, vaddr_t, vaddr_t, int));
 void		uvm_map_init __P((void));
@@ -339,7 +339,8 @@ MAP_INLINE
 void		uvm_map_reference __P((vm_map_t));
 int		uvm_map_replace __P((vm_map_t, vaddr_t, vaddr_t,
 			vm_map_entry_t, int));
-int		uvm_map_reserve __P((vm_map_t, vsize_t, vaddr_t, vaddr_t *));
+int		uvm_map_reserve __P((vm_map_t, vsize_t, vaddr_t, vsize_t,
+			vaddr_t *));
 void		uvm_map_setup __P((vm_map_t, vaddr_t, vaddr_t, int));
 int		uvm_map_submap __P((vm_map_t, vaddr_t, vaddr_t, vm_map_t));
 MAP_INLINE

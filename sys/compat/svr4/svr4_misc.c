@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.36 2001/11/06 19:53:18 miod Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.37 2001/11/07 01:18:01 art Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -675,7 +675,7 @@ svr4_sys_break(p, v, retval)
 
 	if (diff > 0) {
 		rv = uvm_map(&vm->vm_map, &old, diff, NULL, UVM_UNKNOWN_OFFSET,
-			UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
+			0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 				    UVM_ADV_NORMAL,
 				    UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
 				    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));

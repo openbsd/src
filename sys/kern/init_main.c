@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.82 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.83 2001/11/07 01:18:01 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -499,7 +499,7 @@ start_init(arg)
 	addr = USRSTACK - PAGE_SIZE;
 #endif
 	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE, 
-	    NULL, UVM_UNKNOWN_OFFSET, 
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 	    UVM_ADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW))
 	    != KERN_SUCCESS)

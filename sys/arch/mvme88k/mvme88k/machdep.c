@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.63 2001/11/06 19:53:15 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.64 2001/11/07 01:18:00 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -501,7 +501,7 @@ cpu_startup()
 	 */
 	uarea_pages = UADDR;
 	uvm_map(kernel_map, (vaddr_t *)&uarea_pages, USPACE,
-		NULL, UVM_UNKNOWN_OFFSET,UVM_MAPFLAG(UVM_PROT_NONE, 
+		NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, 
 						     UVM_PROT_NONE,
 						     UVM_INH_NONE,
 						     UVM_ADV_NORMAL, 0));
@@ -528,7 +528,7 @@ cpu_startup()
 		bugromva = BUGROM_START;
 
 		uvm_map(kernel_map, (vaddr_t *)&bugromva, BUGROM_SIZE,
-			NULL, UVM_UNKNOWN_OFFSET,UVM_MAPFLAG(UVM_PROT_NONE, 
+			NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, 
 							     UVM_PROT_NONE,
 							     UVM_INH_NONE,
 							     UVM_ADV_NORMAL, 0));
@@ -542,7 +542,7 @@ cpu_startup()
 		 */
 		sramva = SRAM_START;
 		uvm_map(kernel_map, (vaddr_t *)&sramva, SRAM_SIZE,
-			NULL, UVM_UNKNOWN_OFFSET,UVM_MAPFLAG(UVM_PROT_NONE, 
+			NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, 
 							     UVM_PROT_NONE,
 							     UVM_INH_NONE,
 							     UVM_ADV_NORMAL, 0));
@@ -557,7 +557,7 @@ cpu_startup()
 		 */
 		obiova = OBIO_START;
 		uvm_map(kernel_map, (vaddr_t *)&obiova, OBIO_SIZE,
-			NULL, UVM_UNKNOWN_OFFSET,UVM_MAPFLAG(UVM_PROT_NONE, 
+			NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, 
 							     UVM_PROT_NONE,
 							     UVM_INH_NONE,
 							     UVM_ADV_NORMAL, 0));
@@ -574,7 +574,7 @@ cpu_startup()
 		 */
 		utilva = MVME188_UTILITY;
 		uvm_map(kernel_map, (vaddr_t *)&utilva, MVME188_UTILITY_SIZE,
-			NULL, UVM_UNKNOWN_OFFSET,UVM_MAPFLAG(UVM_PROT_NONE, 
+			NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, 
 							     UVM_PROT_NONE,
 							     UVM_INH_NONE,
 							     UVM_ADV_NORMAL, 0));
@@ -592,7 +592,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate VM for buffers");

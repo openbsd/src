@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.21 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.22 2001/11/07 01:18:01 art Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -253,7 +253,7 @@ sys_shmat(p, v, retval)
 	shm_handle = shmseg->shm_internal;
 	uao_reference(shm_handle->shm_object);
 	rv = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
-	    shm_handle->shm_object, 0, UVM_MAPFLAG(prot, prot,
+	    shm_handle->shm_object, 0, 0, UVM_MAPFLAG(prot, prot,
 	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
 	if (rv != KERN_SUCCESS) {
 	    return ENOMEM;

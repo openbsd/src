@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pager.c,v 1.18 2001/11/06 01:35:04 art Exp $	*/
-/*	$NetBSD: uvm_pager.c,v 1.32 2000/06/27 17:29:32 mrg Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.19 2001/11/07 01:18:01 art Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.33 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
  *
@@ -153,7 +153,7 @@ ReStart:
 	kva = 0;			/* let system choose VA */
 
 	if (uvm_map(pager_map, &kva, size, NULL, 
-	      UVM_UNKNOWN_OFFSET, UVM_FLAG_NOMERGE) != KERN_SUCCESS) {
+	      UVM_UNKNOWN_OFFSET, 0, UVM_FLAG_NOMERGE) != KERN_SUCCESS) {
 		if ((flags & UVMPAGER_MAPIN_WAITOK) == 0) {
 			if (aio)
 				FREE(aio, M_TEMP);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.23 2001/11/06 01:35:04 art Exp $	*/
-/*	$NetBSD: uvm_mmap.c,v 1.43 2000/06/27 17:29:28 mrg Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.24 2001/11/07 01:18:01 art Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.44 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1211,7 +1211,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	 * do it!
 	 */
 
-	retval = uvm_map(map, addr, size, uobj, foff, uvmflag);
+	retval = uvm_map(map, addr, size, uobj, foff, 0, uvmflag);
 
 	if (retval == KERN_SUCCESS) {
 		/*

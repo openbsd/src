@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.29 2001/11/06 02:15:31 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.30 2001/11/07 01:18:00 art Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -346,15 +346,15 @@ pmap_init()
 	addr = (vaddr_t) intiobase;
 	if (uvm_map(kernel_map, &addr,
 		    m68k_ptob(iiomapsize+EIOMAPSIZE),
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != KERN_SUCCESS)
 		goto bogons;
 	addr = (vaddr_t) Sysmap;
 	if (uvm_map(kernel_map, &addr, M68K_MAX_PTSIZE,
-			    NULL, UVM_UNKNOWN_OFFSET,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != KERN_SUCCESS) {
 		/*
@@ -443,7 +443,7 @@ pmap_init()
 	 * we already have kernel PT pages.
 	 */
 	addr = 0;
-	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET,
+	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET, 0,
 		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
 	if (rv != KERN_SUCCESS || (addr + s) >= (vaddr_t)Sysmap)
