@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.22 2004/11/14 11:58:43 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.23 2004/11/14 12:04:19 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -329,12 +329,17 @@ Keyword denoting that the script is to perform any actions needed
 after the package has been installed.
 .El
 .It
-After installation is complete, a copy of the packing list,
+After installation is complete, a copy of all package files
+such as the packing-list, the
+.Ar install
+and
 .Ar deinstall
-script, description, and display files are copied into
+scripts, the description file is made into
 .Pa /var/db/pkg/<pkg-name>
 for subsequent possible use by
-.Xr pkg_delete 1 .
+.Xr pkg_delete 1
+and
+.Xr pkg_info 1 .
 Any package dependencies are recorded in the other packages'
 .Pa /var/db/pkg/<other-pkg>/+REQUIRED_BY
 file
