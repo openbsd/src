@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.25 2004/07/26 09:20:14 jmc Exp $
+.\" $OpenBSD: gre.4,v 1.26 2004/08/16 03:37:47 jaredy Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -53,11 +53,11 @@ are enabled with the following
 variables respectively in
 .Pa /etc/sysctl.conf :
 .Bl -tag -width "net.inet.mobileip.allow"
-.It net.inet.gre.allow
+.It Va net.inet.gre.allow
 Allow GRE packets in and out of the system.
-.It net.inet.gre.wccp
+.It Va net.inet.gre.wccp
 Allow WCCPv1-style GRE packets into the system (depends on the above).
-.It net.inet.mobileip.allow
+.It Va net.inet.mobileip.allow
 Allow MobileIP packets in and out of the system.
 .El
 .Sh DESCRIPTION
@@ -69,7 +69,7 @@ the Mobile-IP (RFC 2004) encapsulation protocols.
 A
 .Nm
 interface can be created at runtime using the
-.Ic ifconfig greN create
+.Ic ifconfig gre Ns Ar N Ic create
 command or by setting up a
 .Xr hostname.if 5
 configuration file for
@@ -84,7 +84,7 @@ and thus allows for tunneling other protocols than IP like
 e.g. AppleTalk.
 GRE mode is the default tunnel mode on Cisco routers.
 This is also the default mode of operation of the
-.Sy gre Ns Ar X
+.Nm
 interfaces.
 .It MOBILE encapsulation (IP protocol number 55).
 Datagrams are encapsulated into IP, but with a much smaller
@@ -94,35 +94,41 @@ for use with mobile IP.
 .El
 .Pp
 The network interfaces are named
-.Sy gre Ns Ar 0 ,
-.Sy gre Ns Ar 1 ,
+.Li gre0 ,
+.Li gre1 ,
 etc.
 The number of interfaces is given by the corresponding
-.Sy pseudo-device
-line in the system config file.
+.Ic pseudo-device
+line in the system configuration file.
 .Nm gre
 interfaces support the following
 .Xr ioctl 2 Ns s :
-.Bl -tag -width aaa
-.It GRESADDRS:
+.Bl -tag -width Ds
+.It Dv GRESADDRS Fa "struct ifreq *"
 Set the IP address of the local tunnel end.
-.It GRESADDRD:
+.It Dv GRESADDRD Fa "struct ifreq *"
 Set the IP address of the remote tunnel end.
-.It GREGADDRS:
+.It Dv GREGADDRS Fa "struct ifreq *"
 Query the IP address that is set for the local tunnel end.
-.It GREGADDRD:
+.It Dv GREGADDRD Fa "struct ifreq *"
 Query the IP address that is set for the remote tunnel end.
-.It GRESPROTO:
+.It Dv GRESPROTO Fa "struct ifreq *"
 Set the operation mode to the specified IP protocol value.
-The protocol is passed to the interface in (struct ifreq)->ifr_flags.
-The operation mode can also be given as
-.Bl -tag -width bbb
-.It link0
-IPPROTO_GRE
-.It -link0
-IPPROTO_MOBILE
+The protocol is passed to the interface in the
+.Va ifr_flags
+field of the
+.Vt ifreq
+structure.
+The operation mode can also be set with the following modifiers to
+.Xr ifconfig 8 :
+.Pp
+.Bl -tag -width "-link0" -offset indent -compact
+.It Cm link0
+.Dv IPPROTO_GRE
+.It Cm -link0
+.Dv IPPROTO_MOBILE
 .El
-.It GREGPROTO:
+.It Dv GREGPROTO Fa "struct ifreq *"
 Query operation mode.
 .El
 .Pp
@@ -134,14 +140,12 @@ encapsulating AppleTalk.
 .Sh EXAMPLES
 Configuration example:
 .Bd -literal
-
-
-Host X-- Host A  ----------------tunnel---------- Cisco D------Host E
-          \\                                          |
-           \\                                        /
-             +------Host B----------Host C----------+
-
+Host X ---- Host A ------------ tunnel ------------ Cisco D ---- Host E
+               \e                                      /
+                \e                                    /
+                 +------ Host B ------ Host C ------+
 .Ed
+.Pp
 On Host A (OpenBSD):
 .Bd -literal -offset indent
 # route add default B
@@ -172,10 +176,13 @@ On Host D (OpenBSD):
 # ifconfig greN tunnel D A
 .Ed
 .Pp
-To reach Host A over the tunnel (from host D), there has to be an
+To reach Host A over the tunnel (from Host D), there has to be an
 alias on Host A for the Ethernet interface:
-.Dl ifconfig <etherif> alias Y
-and on the Cisco
+.Pp
+.Dl # ifconfig <etherif> alias Y
+.Pp
+and on the Cisco:
+.Pp
 .Dl ip route Y mask tunnelX
 .Sh NOTE
 For correct operation, the
@@ -187,8 +194,9 @@ does not run over the tunnel, as this would create a loop.)
 .Pp
 In order for
 .Xr ifconfig 8
-to actually mark the interface as up, the keyword ``up'' must be given
-last on its command line.
+to actually mark the interface as up, the keyword
+.Cm up
+must be given last on its command line.
 .Pp
 The kernel must be set to forward datagrams by issuing the appropriate
 option to
@@ -210,30 +218,46 @@ these packets.
 .Xr ifconfig 8 ,
 .Xr netstart 8 ,
 .Xr sysctl 8
-.Pp
-A description of GRE encapsulation can be found in RFC 1701, RFC 1702.
-.Pp
-A description of MOBILE encapsulation can be found in RFC 2004.
-.Pp
-A description of WCCPv1 can be found in draft-ietf-wrec-web-pro-00.txt,
-and WCCPv2 in draft-wilson-wrec-wccp-v2-00.txt.
-Both of these documents
-can be found at http://www.wrec.org/ (at the time of this writing).
+.Rs
+.%R RFC 1701
+.%T Generic Routing Encapsulation
+.Re
+.Rs
+.%R RFC 1702
+.%T Generic Routing Encapsulation over IPv4 networks
+.Re
+.Rs
+.%R RFC 2004
+.%T Minimal Encapsulation within IP
+.Re
+.Rs
+.%O http://www.wrec.org/Drafts/draft-ietf-wrec-web-pro-00.txt
+.%T Web Cache Coordination Protocol V1.0
+.Re
+.Rs
+.%O http://www.wrec.org/Drafts/draft-wilson-wrec-wccp-v2-00.txt
+.%T Web Cache Coordination Protocol V2.0
+.Re
 .Sh AUTHORS
 .An Heiko W.Rupp Aq hwr@pilhuhn.de
 .Sh BUGS
-The compute_route() code in
-.Pa net/if_gre.c
-toggles the last bit of the IP-address to provoke the search for a less
+The
+.Fn compute_route
+code in
+.Pa sys/net/if_gre.c
+toggles the last bit of the IP address to provoke the search for a less
 specific route than the one directly over the tunnel to prevent loops.
 This is possibly not the best solution.
 .Pp
-To avoid the address munging described above, turn on the link1 flag
-on the ifconfig command line.
+To avoid the address munging described above, turn on the
+.Cm link1
+flag on the
+.Xr ifconfig 8
+command line.
 This implies that the GRE packet destination and the remote host are not
 the same IP addresses, and that the GRE destination does not route over
 the
-.Sy gre Ns Ar X
+.Nm Ns Ar X
 interface itself.
 .Pp
 GRE RFC not yet fully implemented (no GRE options).
