@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptosoft.c,v 1.14 2000/08/19 13:43:23 nate Exp $ */
+/* $OpenBSD: cryptosoft.c,v 1.15 2000/10/15 01:12:24 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -460,6 +460,11 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 
 	    case CRYPTO_SKIPJACK_CBC:
 		txf = &enc_xform_skipjack;
+                goto enccommon;
+
+            case CRYPTO_RIJNDAEL128_CBC:
+                txf = &enc_xform_rijndael128;
+                goto enccommon;
 
 	enccommon:
 		txf->setkey(&((*swd)->sw_kschedule), cri->cri_key,
@@ -603,6 +608,7 @@ swcr_freesession(u_int64_t tid)
 	    case CRYPTO_BLF_CBC:
 	    case CRYPTO_CAST_CBC:
 	    case CRYPTO_SKIPJACK_CBC:
+            case CRYPTO_RIJNDAEL128_CBC:
 		txf = swd->sw_exf;
 
 		if (swd->sw_kschedule)
@@ -720,6 +726,7 @@ swcr_process(struct cryptop *crp)
 	    case CRYPTO_BLF_CBC:
 	    case CRYPTO_CAST_CBC:
 	    case CRYPTO_SKIPJACK_CBC:
+	    case CRYPTO_RIJNDAEL128_CBC:
 		if ((crp->crp_etype = swcr_encdec(crd, sw, crp->crp_buf,
 						  type)) != 0)
 		  goto done;
