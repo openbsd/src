@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.86 2004/04/28 00:28:43 mcbride Exp $	*/
+/*	$OpenBSD: if.c,v 1.87 2004/04/28 01:20:29 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1134,8 +1134,8 @@ ifioctl(so, cmd, data, p)
 		if ((error = suser(p, 0)) != 0)
 			return (error);
 		return ((cmd == SIOCIFCREATE) ?
-			if_clone_create(ifr->ifr_name) :
-			if_clone_destroy(ifr->ifr_name));
+		    if_clone_create(ifr->ifr_name) :
+		    if_clone_destroy(ifr->ifr_name));
 	case SIOCIFGCLONERS:
 		return (if_clone_list((struct if_clonereq *)data));
 	}
