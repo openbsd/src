@@ -1,4 +1,4 @@
-/* $OpenBSD: raw_ipv6.c,v 1.11 1999/12/21 15:41:08 itojun Exp $ */
+/* $OpenBSD: raw_ipv6.c,v 1.12 2000/01/05 17:30:52 itojun Exp $ */
 /*
 %%% copyright-nrl-95
 This software is Copyright 1995-1998 by Randall Atkinson, Ronald Lee,
@@ -43,7 +43,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.11 1999/12/21 15:41:08 itojun Exp $
+ *	$Id: raw_ipv6.c,v 1.12 2000/01/05 17:30:52 itojun Exp $
  */
 
 #include <sys/param.h>
@@ -490,7 +490,7 @@ rip6_ctloutput (op, so, level, optname, m)
 {
   register struct inpcb *inp = sotoinpcb(so);
 
-  if ((level != IPPROTO_IP) && (level != IPPROTO_IPV6) && (level != IPPROTO_ICMPV6)) {
+  if ((level != IPPROTO_IPV6) && (level != IPPROTO_ICMPV6)) {
       if (op == PRCO_SETOPT && *m)
 	(void)m_free(*m);
       return(EINVAL);
@@ -499,12 +499,13 @@ rip6_ctloutput (op, so, level, optname, m)
   switch (optname) {
     case IPV6_CHECKSUM:
       if (op == PRCO_SETOPT || op == PRCO_GETOPT) {
-        if (!m || !*m || (*m)->m_len != sizeof(int))
-	  return(EINVAL);
         if (op == PRCO_SETOPT) {
+          if (!m || !*m || (*m)->m_len != sizeof(int))
+	    return(EINVAL);
           inp->inp_csumoffset = *(mtod(*m, int *));
           m_freem(*m);
         } else {
+	  *m = m_get(M_WAIT, MT_SOOPTS);
           (*m)->m_len = sizeof(int);
           *(mtod(*m, int *)) = inp->inp_csumoffset;
         };
@@ -513,13 +514,14 @@ rip6_ctloutput (op, so, level, optname, m)
       break;
     case ICMP6_FILTER:
       if (op == PRCO_SETOPT || op == PRCO_GETOPT) {
-        if (!m || !*m || (*m)->m_len != sizeof(struct icmp6_filter))
-	  return(EINVAL);
         if (op == PRCO_SETOPT) {
+          if (!m || !*m || (*m)->m_len != sizeof(struct icmp6_filter))
+	    return(EINVAL);
 	  bcopy(mtod(*m, struct icmp6_filter *), inp->inp_icmp6filt,
 		sizeof(struct icmp6_filter));
           m_freem(*m);
         } else {
+	  *m = m_get(M_WAIT, MT_SOOPTS);
           (*m)->m_len = sizeof(struct icmp6_filter);
           *mtod(*m, struct icmp6_filter *) = *inp->inp_icmp6filt;
         };
@@ -527,61 +529,9 @@ rip6_ctloutput (op, so, level, optname, m)
       };
       break;
 
-/* Should this be obsoleted? */
-    case IP_HDRINCL:
-      if (op == PRCO_SETOPT || op == PRCO_GETOPT)
-	{
-	  if (m == 0 || *m == 0 || (*m)->m_len != sizeof(int))
-	    return(EINVAL);
-	  if (op == PRCO_SETOPT)
-	    {
-	      if (*mtod(*m, int *))
-		inp->inp_flags |= INP_HDRINCL;
-	      else inp->inp_flags &= ~INP_HDRINCL;
-	      m_free(*m);
-	    }
-	  else
-	    {
-	      (*m)->m_len = sizeof(int);
-	      *(mtod(*m, int *)) = (inp->inp_flags & INP_HDRINCL) ? 1 : 0;
-	    }
-	  return 0;
-	}
-      break;
-
-#ifdef MRT_INIT
     default:
-      if (optname >= MRT_INIT) {
-#else /* MRT_INIT */
-    case DVMRP_INIT:
-    case DVMRP_DONE:
-    case DVMRP_ADD_VIF:
-    case DVMRP_DEL_VIF:
-    case DVMRP_ADD_LGRP:
-    case DVMRP_DEL_LGRP:
-    case DVMRP_ADD_MRT:
-    case DVMRP_DEL_MRT:
-      {
-#endif /* MRT_INIT */
-#ifdef MROUTING
-/* Be careful here! */
-/*      if (op == PRCO_SETOPT)
-	{
-	  error = ipv6_mrouter_cmd(optname, so, *m);
-	  if (*m)
-	    (void)m_free(*m);
-	}
-      else error = EINVAL;
-      return (error);*/
-	return(EOPNOTSUPP);
-#else /* MROUTING */
-      if (op == PRCO_SETOPT && *m)
-	(void)m_free(*m);
-      return(EOPNOTSUPP);
-#endif /* MROUTING */
-      };
+      break;
   }
-
   return ip6_ctloutput(op, so, level, optname, m);
 }
 
