@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.25 2000/11/25 23:22:33 millert Exp $
+#	$OpenBSD: adduser.perl,v 1.26 2000/11/26 02:18:06 millert Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -89,7 +89,7 @@ sub variables {
     $group = "/etc/group";
     $pwd_mkdb = "pwd_mkdb -p";	# program for building passwd database
     $encryptionmethod = "blowfish";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.25 2000/11/25 23:22:33 millert Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.26 2000/11/26 02:18:06 millert Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -285,7 +285,7 @@ sub home_partition_valid {
 
 # check for valid passwddb
 sub passwd_check {
-    system("$pwd_mkdb -c $etc_passwd");
+    system(split(/\s+/, "$pwd_mkdb -c $etc_passwd"));
     die "\nInvalid $etc_passwd - cannot add any users!\n" if $?;
 }
 
@@ -602,8 +602,10 @@ EOF
 # make password database
 sub new_users_pwdmkdb {
     local($last) = @_;
+    local($user);
 
-    system("$pwd_mkdb $etc_passwd");
+    $user = (split(/:/, $last))[0];
+    system(split(/\s+/, "$pwd_mkdb  -u $user $etc_passwd"));
     if ($?) {
 	warn "$last\n";
 	warn "``$pwd_mkdb'' failed\n";
@@ -706,14 +708,14 @@ sub new_users_password {
     local($password);
 
     while(1) {
-	system("stty -echo");
+	system("stty", "-echo");
 	$password = &confirm_list("Enter password", 1, "", "");
-	system("stty echo");
+	system("stty", "echo");
 	print "\n";
 	if ($password ne "") {
-	    system("stty -echo");
+	    system("stty", "-echo");
 	    $newpass = &confirm_list("Enter password again", 1, "", "");
-	    system("stty echo");
+	    system("stty", "echo");
 	    print "\n";
 	    last if $password eq $newpass;
 	    print "They didn't match, please try again\n";
@@ -1100,9 +1102,9 @@ sub home_create {
     # copy files from  $dotdir to $homedir
     # rename 'dot.foo' files to '.foo'
     print "Copy files from $dotdir to $homedir\n" if $verbose;
-    system("cp -r $dotdir $homedir");
-    system("chmod -R u+wrX,go-w $homedir");
-    system("chown -R $name:$group $homedir");
+    system("cp", "-r", $dotdir, $homedir);
+    system("chmod", "-R", "u+wrX,go-w", $homedir);
+    system("chown", "-R", "$name:$group", $homedir);
 
     # security
     opendir(D, $homedir);
