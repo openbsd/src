@@ -1149,7 +1149,9 @@
 ./usr/share/man/cat4/hppa/gsc.0
 ./usr/share/man/cat4/hppa/ie.0
 ./usr/share/man/cat4/hppa/intro.0
+./usr/share/man/cat4/hppa/io.0
 ./usr/share/man/cat4/hppa/lasi.0
+./usr/share/man/cat4/hppa/phantomas.0
 ./usr/share/man/cat4/hsq.0
 ./usr/share/man/cat4/i386
 ./usr/share/man/cat4/i386/apm.0
