@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.49 2002/07/25 21:13:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.50 2002/07/29 10:15:30 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -713,7 +713,6 @@ gethostbyaddr(addr, len, af)
 			qp += sprintf(qp, "%x.%x.",
 			    uaddr[n] & 0xf, (uaddr[n] >> 4) & 0xf);
 		}
-		strcpy(qp, "ip6.int");
 		break;
 	}
 
@@ -732,8 +731,15 @@ gethostbyaddr(addr, len, af)
 			break;
 #endif
 		case 'b':
+			if (af == AF_INET6)
+				strcpy(qp, "ip6.arpa");
 			n = res_query(qbuf, C_IN, T_PTR, (u_char *)buf.buf,
 			    sizeof buf.buf);
+			if (n < 0 && af == AF_INET6) {
+				strcpy(qp, "ip6.int");
+				n = res_query(qbuf, C_IN, T_PTR,
+				    (u_char *)buf.buf, sizeof buf.buf);
+			}
 			if (n < 0) {
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
