@@ -1,19 +1,22 @@
-# $OpenBSD: Makefile.inc,v 1.4 2002/04/20 00:15:36 art Exp $
+# $OpenBSD: Makefile.inc,v 1.5 2002/06/17 04:48:24 marc Exp $
 # Copyright (c) 1993 Chris Provenzano, proven@athena.mit.edu
 
 LIBC_R?=	/usr/lib/libc_r.a
 LIBPTHREAD?=	/usr/lib/libpthread.a
+USELIBPTHREAD?=	no
 
-.if 1 # ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "sparc"
+.if ${USELIBPTHREAD:L} == yes
+# this tests using libpthread/libc
 LDADD+=		-lpthread
 DPADD+=		${LIBPTHREAD}
 .else
+# This tests using libc_r
 LDADD+=		-pthread
 DPADD+=		${LIBC_R}
 .endif
 
 CFLAGS+=	-Wall # -Werror
-DEBUG=		-ggdb
+#DEBUG=		-ggdb
 CFLAGS+=	-DSRCDIR='"${.CURDIR}"'
 CFLAGS+=	-I${.CURDIR}/../include
 
