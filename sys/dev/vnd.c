@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.26 2000/06/26 19:00:25 provos Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.27 2000/07/05 07:27:12 niklas Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -781,14 +781,14 @@ vndioctl(dev, cmd, addr, flag, p)
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, p);
 		if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
 			vndunlock(vnd);
-			return(error);
+			return (error);
 		}
 		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
 		if (error) {
 			VOP_UNLOCK(nd.ni_vp, 0, p);
 			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
 			vndunlock(vnd);
-			return(error);
+			return (error);
 		}
 		VOP_UNLOCK(nd.ni_vp, 0, p);
 		vnd->sc_vp = nd.ni_vp;
@@ -796,7 +796,7 @@ vndioctl(dev, cmd, addr, flag, p)
 		if ((error = vndsetcred(vnd, p->p_ucred)) != 0) {
 			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
 			vndunlock(vnd);
-			return(error);
+			return (error);
 		}
 
 		if (vio->vnd_keylen) {
@@ -808,7 +808,7 @@ vndioctl(dev, cmd, addr, flag, p)
 				(void) vn_close(nd.ni_vp, FREAD|FWRITE,
 						p->p_ucred, p);
 				vndunlock(vnd);
-				return(error);
+				return (error);
 			}
 
 			vnd->sc_keyctx = malloc(sizeof(blf_ctx), M_DEVBUF,
@@ -886,7 +886,7 @@ vndioctl(dev, cmd, addr, flag, p)
 		if ((vnd->sc_flags & VNF_HAVELABEL) == 0)
 			return (ENOTTY);
 		*(struct disklabel *)addr = *(vnd->sc_dk.dk_label);
-		return 0;
+		return (0);
 
 	case DIOCGPART:
 		if ((vnd->sc_flags & VNF_HAVELABEL) == 0)
@@ -894,17 +894,17 @@ vndioctl(dev, cmd, addr, flag, p)
 		((struct partinfo *)addr)->disklab = vnd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
 		    &vnd->sc_dk.dk_label->d_partitions[DISKPART(dev)];
-		return 0;
+		return (0);
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 		if ((vnd->sc_flags & VNF_HAVELABEL) == 0)
 			return (ENOTTY);
 		if ((flag & FWRITE) == 0)
-			return EBADF;
+			return (EBADF);
 
 		if ((error = vndlock(vnd)) != 0)
-			return error;
+			return (error);
 		vnd->sc_flags |= VNF_LABELLING;
 
 		error = setdisklabel(vnd->sc_dk.dk_label,
@@ -920,19 +920,19 @@ vndioctl(dev, cmd, addr, flag, p)
 
 		vnd->sc_flags &= ~VNF_LABELLING;
 		vndunlock(vnd);
-		return error;
+		return (error);
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
+			return (EBADF);
 		if (*(int *)addr)
 			vnd->sc_flags |= VNF_WLABEL;
 		else
 			vnd->sc_flags &= ~VNF_WLABEL;
-		return 0;
+		return (0);
 
 	default:
-		return(ENOTTY);
+		return (ENOTTY);
 	}
 
 	return (0);
@@ -1035,8 +1035,8 @@ vndsize(dev)
 	register struct vnd_softc *vnd = &vnd_softc[unit];
 
 	if (unit >= numvnd || (vnd->sc_flags & VNF_INITED) == 0)
-		return(-1);
-	return(vnd->sc_size);
+		return (-1);
+	return (vnd->sc_size);
 }
 
 int
@@ -1048,7 +1048,7 @@ vnddump(dev, blkno, va, size)
 {
 
 	/* Not implemented. */
-	return ENXIO;
+	return (ENXIO);
 }
 
 /*
