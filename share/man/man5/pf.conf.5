@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.108 2002/11/19 11:34:12 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.109 2002/11/19 22:18:50 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -546,6 +546,15 @@ expands to
 .Ed
 .Pp
 Note that evaluation takes place at parse time.
+.Ss queue <string>
+Packets matching this rule will be assigned to the specified queue.
+See QUEUE RULES for setup details.
+.Pp
+Example:
+.Pp
+.Bd -literal
+    pass in proto tcp from any to any port 25 queue mail
+.Ed
 .Sh NO
 The
 .Sq no
@@ -822,6 +831,85 @@ of their ruleset to pass all traffic on lo0:
 pass in quick on lo0 all
 pass out quick on lo0 all
 .Ed
+.Sh QUEUE RULES
+Filtering rules can also assign packets to a queue.
+At least two rules are required to configure queues, which are referenced in
+.Em pass
+or
+.Em block
+rules.
+.Pp
+.Em altq on
+specifies on which interface queues will be set up.
+The
+.Em scheduler
+type is required where currently only CBQ is supported.
+.Em bandwidth
+is optional and specifies the maximum rate for all queues on this interface.
+All queues for this interface have to be listed after
+.Em queue .
+.Pp
+For example, the interface
+.Pa dc0
+should queue up to 5 Mbit/s in two queues using CBQ.
+.Bd -literal
+    altq on dc0 scheduler cbq bandwidth 5Mb queue { qname1, qname2 }
+.Ed
+.Pp
+Parameters for the queues are specified in
+.Em queue
+rules. The queuename must match the definition in the
+.Em altq
+rule.
+.Em bandwidth
+sets the maximum bitrate that can be processed by this queue.
+The value must not exceed the value of the parent queue and can be specified
+in absolute and percentage values.
+Between queues a
+.Em priority
+level can be set.
+The range is 0..7 with a default of 1.
+Queues with a higher priority level are preferred in the case of overload.
+The scheduler can get additional parameters with
+.Em cbq( <parameters> ) .
+Parameters are as follows:
+.Pp
+.Bl -tag -width Fl
+.It Em default
+Packets not matched by another queue are assigned to this one.
+Exactly one default queue is required.
+.It Em borrow
+The queue can borrow bandwidth from the parent.
+.It Em control
+Control class packets (RSVP, IGMP, ICMP) are assigned to this queue.
+.It Em red
+Enables RED (Random Early Detection) on this queue.
+RED drops packets with a probability proportional to the average
+queue length.
+.It Em rio
+Enables RIO on this queue. RIO is RED with IN/OUT, thus running
+RED two times more then RED would do.
+.It Em ecn
+Enables ECN (Explicit Congestion Notification) on this queue.
+ECN implies RED.
+.El
+.Pp
+Furthermore child queues can be specified like in an
+.Em altq
+rule.
+.Pp
+Following the previous example, this would specify the two referenced
+queues, plus one child queue:
+.Pp
+.Bd -literal
+    queue qname1 bandwidth 50% cbq(default ecn) queue { qname1a }
+    queue  qname1a bandwidth 1Mb cbq(borrow)
+    queue qname2 bandwidth 1000 priority 3
+.Ed
+.Pp
+Please note that child queues must not exceed the bandwidth definition
+of the parent.
+Relative values are calculated against the bandwidth of the parent queue.
 .Sh FRAGMENT HANDLING
 The size of IP datagrams (packets) can be significantly larger than the
 the maximum transmission unit (MTU) of the network.
