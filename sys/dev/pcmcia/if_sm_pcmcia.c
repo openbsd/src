@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.9 1999/08/16 16:51:20 deraadt Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.10 1999/10/01 04:05:11 downsj Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -121,10 +121,8 @@ struct sm_pcmcia_product {
 	{ PCMCIA_VENDOR_NEWMEDIA,	PCMCIA_PRODUCT_NEWMEDIA_BASICS,
 	  0 },
 
-#if 0
-	{ PCMCIA_VENDOR_SMC,		PCMCIA_PRODUCT_SMC_8020BT,
+	{ PCMCIA_VENDOR_SMC,		PCMCIA_PRODUCT_SMC_8020,
 	  0 }
-#endif
 };
 
 int
