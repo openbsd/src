@@ -1,4 +1,4 @@
-/*	$OpenBSD: impys.S,v 1.10 2003/04/10 17:27:58 mickey Exp $	*/
+/*	$OpenBSD: impys.S,v 1.11 2005/01/23 18:01:30 mickey Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -30,16 +30,16 @@
 ;
 ; Definitions - General registers
 ;
-gr0	.equ		0		; General register zero
-pu	.equ		3		; upper part of product
-pl	.equ		4		; lower part of product
-op2	.equ		4		; multiplier
-op1	.equ		5		; multiplicand
-cnt	.equ		6		; count in multiply
-brindex	.equ		7		; index into the br. table
-sign	.equ		8		; sign of product
-pc	.equ		9		; carry bit of product, = 00...01
-pm	.equ	       10		; value of -1 used in shifting
+gr0	.reg		%r0		; General register zero
+pu	.reg		%r3		; upper part of product
+pl	.reg		%r4		; lower part of product
+op2	.reg		%r4		; multiplier
+op1	.reg		%r5		; multiplicand
+cnt	.reg		%r6		; count in multiply
+brindex	.reg		%r7		; index into the br. table
+sign	.reg		%r8		; sign of product
+pc	.reg		%r9		; carry bit of product, = 00...01
+pm	.reg		%r10		; value of -1 used in shifting
 
 ;*****************************************************************************
 	.text

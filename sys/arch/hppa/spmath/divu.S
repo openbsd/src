@@ -1,4 +1,4 @@
-/*	$OpenBSD: divu.S,v 1.9 2003/01/23 20:25:21 mickey Exp $	*/
+/*	$OpenBSD: divu.S,v 1.10 2005/01/23 18:01:30 mickey Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -28,11 +28,11 @@
 ;
 ;	General registers
 ;
-gr0	.equ		0		; General register zero
-rem	.equ		3		; remainder and upper part of dividend
-quo	.equ		4		; quotient and lower part of dividend
-dvr	.equ		5		; divisor
-tp	.equ		6		; temp. reg.
+gr0	.reg		%r0		; General register zero
+rem	.reg		%r3		; remainder and upper part of dividend
+quo	.reg		%r4		; quotient and lower part of dividend
+dvr	.reg		%r5		; divisor
+tp	.reg		%r6		; temp. reg.
 
 ;******************************************************************************
 	.text
