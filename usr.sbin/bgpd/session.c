@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.153 2004/04/27 03:53:43 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.154 2004/04/27 04:06:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1026,7 +1026,12 @@ session_open(struct peer *p)
 		errs += buf_add(buf, &capa_mp_v4.afi, sizeof(capa_mp_v4.afi));
 		errs += buf_add(buf, &capa_mp_v4.pad, sizeof(capa_mp_v4.pad));
 		errs += buf_add(buf, &capa_mp_v4.safi, sizeof(capa_mp_v4.safi));
+
 		/* route refresh, RFC 2918 */
+		capa_code = CAPA_REFRESH;
+		capa_len = 0;
+		errs += buf_add(buf, &capa_code, sizeof(capa_code));
+		errs += buf_add(buf, &capa_len, sizeof(capa_len));
 	}
 
 	if (errs == 0) {
@@ -1771,6 +1776,9 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 			default:			/* ignore */
 				break;
 			}
+			break;
+		case CAPA_REFRESH:
+			peer->capa.refresh = 1;
 			break;
 		default:
 			break;
