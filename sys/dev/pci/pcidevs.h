@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.560 2002/11/07 18:49:56 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.561 2002/11/07 19:00:12 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1802,6 +1802,7 @@
 
 /* Nortel Networks products */
 #define	PCI_PRODUCT_NORTEL_BS21	0x1211		/* BS21 10/100 */
+#define	PCI_PRODUCT_NORTEL_211818A	0x8030		/* E-mobility Wireless */
 
 /* Number Nine products */
 #define	PCI_PRODUCT_NUMBER9_I128	0x2309		/* Imagine-128 */
