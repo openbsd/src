@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.26 1997/07/09 01:08:47 millert Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.27 1998/02/11 02:26:15 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -417,7 +417,8 @@ __ivaliduser(hostf, raddrl, luser, ruser)
 		/* Skip lines that are too long. */
 		if (strchr(p, '\n') == NULL) {
 			while ((ch = getc(hostf)) != '\n' && ch != EOF)
-				;
+				if (!isprint(ch))
+					goto bail;
 			continue;
 		}
 		if (*p == '#')
@@ -434,8 +435,11 @@ __ivaliduser(hostf, raddrl, luser, ruser)
 				p++;
 			user = p;
 			while (*p != '\n' && *p != ' ' &&
-			    *p != '\t' && *p != '\0')
+			    *p != '\t' && *p != '\0') {
+				if (!isprint(*p))
+					goto bail;
 				p++;
+			}
 		} else
 			user = p;
 		*p = '\0';
