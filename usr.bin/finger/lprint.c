@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprint.c,v 1.7 2003/06/10 22:20:46 deraadt Exp $	*/
+/*	$OpenBSD: lprint.c,v 1.8 2004/03/15 02:50:29 tedu Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lprint.c	5.13 (Berkeley) 10/31/90";*/
-static char rcsid[] = "$OpenBSD: lprint.c,v 1.7 2003/06/10 22:20:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: lprint.c,v 1.8 2004/03/15 02:50:29 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -258,7 +258,7 @@ demi_print(char *str, int oddfield)
 		(void)printf("%s", str);
 	oddfield = !oddfield;			/* toggle odd/even marker */
 	lenlast = lenthis;
-	return(oddfield);
+	return (oddfield);
 }
 
 int
@@ -270,14 +270,14 @@ show_text(char *directory, char *file_name, char *header)
 	lastc = 0;
 	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", directory, file_name);
 	if ((fp = fopen(tbuf, "r")) == NULL)
-		return(0);
+		return (0);
 	(void)printf("%s\n", header);
 	while ((ch = getc(fp)) != EOF)
 		vputc(lastc = ch);
 	if (lastc != '\n')
 		(void)putchar('\n');
 	(void)fclose(fp);
-	return(1);
+	return (1);
 }
 
 void

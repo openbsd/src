@@ -1,4 +1,4 @@
-/* *	$OpenBSD: finger.h,v 1.5 2003/06/25 21:10:55 deraadt Exp $*/
+/* *	$OpenBSD: finger.h,v 1.6 2004/03/15 02:50:29 tedu Exp $*/
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -75,5 +75,5 @@ typedef struct where {
 #define	HSIZE	(1 << 8)		/* hash table size */
 #define	HMASK	(HSIZE - 1)		/* hash code mask */
 
-PERSON *htab[HSIZE];			/* the buckets */
-PERSON *phead, *ptail;			/* the linked list of all people */
+extern PERSON *htab[HSIZE];		/* the buckets */
+extern PERSON *phead, *ptail;		/* the linked list of all people */

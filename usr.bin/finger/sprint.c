@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprint.c,v 1.9 2003/07/10 00:06:50 david Exp $	*/
+/*	$OpenBSD: sprint.c,v 1.10 2004/03/15 02:50:29 tedu Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static char rcsid[] = "$OpenBSD: sprint.c,v 1.9 2003/07/10 00:06:50 david Exp $";
+static const char rcsid[] = "$OpenBSD: sprint.c,v 1.10 2004/03/15 02:50:29 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -143,13 +143,13 @@ sort(void)
 	for (lp = list, pn = phead; pn != NULL; pn = pn->next)
 		*lp++ = pn;
 	(void)qsort(list, entries, sizeof(PERSON *), psort);
-	return(list);
+	return (list);
 }
 
 int
 psort(const void *p, const void *t)
 {
-	return(strcmp((*(PERSON **)p)->name, (*(PERSON **)t)->name));
+	return (strcmp((*(PERSON **)p)->name, (*(PERSON **)t)->name));
 }
 
 void
@@ -158,15 +158,16 @@ stimeprint(WHERE *w)
 	struct tm *delta;
 
 	delta = gmtime(&w->idletime);
-	if (!delta->tm_yday)
-		if (!delta->tm_hour)
+	if (!delta->tm_yday) {
+		if (!delta->tm_hour) {
 			if (!delta->tm_min)
 				(void)printf("    -");
 			else
 				(void)printf("%5d", delta->tm_min);
-		else
+		 } else {
 			(void)printf("%2d:%02d",
 			    delta->tm_hour, delta->tm_min);
-	else
+		 }
+	} else
 		(void)printf("%4dd", delta->tm_yday);
 }

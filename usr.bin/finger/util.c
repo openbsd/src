@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.19 2003/07/02 21:04:10 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.20 2004/03/15 02:50:29 tedu Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$OpenBSD: util.c,v 1.19 2003/07/02 21:04:10 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.20 2004/03/15 02:50:29 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -140,12 +140,12 @@ match(struct passwd *pw, char *user)
 
 	/* ampersands get replaced by the login name */
 	if (!(p = strtok(p, ",")))
-		return(0);
+		return (0);
 	expandusername(p, pw->pw_name, name, sizeof(name));
 	for (t = name; (p = strtok(t, "\t ")) != NULL; t = NULL)
 		if (!strcasecmp(p, user))
-			return(1);
-	return(0);
+			return (1);
+	return (0);
 }
 
 /* inspired by usr.sbin/sendmail/util.c::buildfname */
@@ -248,8 +248,8 @@ enter_person(struct passwd *pw)
 	PERSON *pn, **pp;
 
 	for (pp = htab + hash(pw->pw_name);
-	     *pp != NULL && strcmp((*pp)->name, pw->pw_name) != 0;
-	     pp = &(*pp)->hlink)
+	    *pp != NULL && strcmp((*pp)->name, pw->pw_name) != 0;
+	    pp = &(*pp)->hlink)
 		;
 	if ((pn = *pp) == NULL) {
 		pn = palloc();
@@ -266,7 +266,7 @@ enter_person(struct passwd *pw)
 		userinfo(pn, pw);
 		pn->whead = NULL;
 	}
-	return(pn);
+	return (pn);
 }
 
 PERSON *
@@ -276,10 +276,10 @@ find_person(char *name)
 
 	/* name may be only UT_NAMESIZE long and not terminated */
 	for (pn = htab[hash(name)];
-	     pn != NULL && strncmp(pn->name, name, UT_NAMESIZE) != 0;
-	     pn = pn->hlink)
+	    pn != NULL && strncmp(pn->name, name, UT_NAMESIZE) != 0;
+	    pn = pn->hlink)
 		;
-	return(pn);
+	return (pn);
 }
 
 int
@@ -291,7 +291,7 @@ hash(char *name)
 	/* name may be only UT_NAMESIZE long and not terminated */
 	for (i = UT_NAMESIZE; --i >= 0 && *name;)
 		h = ((h << 2 | h >> (HBITS - 2)) ^ *name++) & HMASK;
-	return(h);
+	return (h);
 }
 
 PERSON *
@@ -301,7 +301,7 @@ palloc(void)
 
 	if ((p = (PERSON *)malloc((u_int) sizeof(PERSON))) == NULL)
 		err(1, "malloc");
-	return(p);
+	return (p);
 }
 
 WHERE *
@@ -318,7 +318,7 @@ walloc(PERSON *pn)
 		pn->wtail = w;
 	}
 	w->next = NULL;
-	return(w);
+	return (w);
 }
 
 char *
@@ -331,10 +331,10 @@ prphone(char *num)
 	/* don't touch anything if the user has their own formatting */
 	for (p = num; *p; ++p)
 		if (!isdigit(*p))
-			return(num);
+			return (num);
 	len = p - num;
 	p = pbuf;
-	switch(len) {
+	switch (len) {
 	case 11:			/* +0-123-456-7890 */
 		*p++ = '+';
 		*p++ = *num++;
@@ -357,7 +357,7 @@ prphone(char *num)
 		*p++ = *num++;
 		break;
 	default:
-		return(num);
+		return (num);
 	}
 	if (len != 4) {
 		*p++ = '-';
@@ -367,7 +367,7 @@ prphone(char *num)
 	*p++ = *num++;
 	*p++ = *num++;
 	*p = '\0';
-	return(pbuf);
+	return (pbuf);
 }
 
 /* Like strvis(), but use malloc() to get the space and return a pointer
@@ -384,5 +384,5 @@ vs(char *src)
 		err(1, "malloc failed");
 
 	strvis(dst, src, VIS_SAFE|VIS_NOSLASH);
-	return(dst);
+	return (dst);
 }
