@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.13 2001/01/17 06:01:23 fgsch Exp $	*/
+/*	$OpenBSD: misc.c,v 1.14 2001/01/30 04:31:02 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -46,7 +46,7 @@
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
-#include <netinet/ip_compat.h>
+#include <netinet/ip_fil_compat.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_fil.h>
 #include "ipf.h"

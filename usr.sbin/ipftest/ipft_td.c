@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipft_td.c,v 1.15 2001/01/17 06:01:22 fgsch Exp $	*/
+/*	$OpenBSD: ipft_td.c,v 1.16 2001/01/30 04:31:01 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -55,7 +55,7 @@ tcpdump -nqte
 #include <netinet/ip_icmp.h>
 #include <net/if.h>
 #include <netdb.h>
-#include <netinet/ip_compat.h>
+#include <netinet/ip_fil_compat.h>
 #include <netinet/tcpip.h>
 #include "ipf.h"
 #include "ipt.h"
