@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.11 1997/07/23 21:04:06 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.12 1997/12/18 10:12:00 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -697,10 +697,14 @@ pwnam_netgrp:
 
 	bf[0] = _PW_KEYBYNAME;
 	len = strlen(name);
-	bcopy(name, bf + 1, MIN(len, UT_NAMESIZE));
-	key.data = (u_char *)bf;
-	key.size = MIN(len, UT_NAMESIZE) + 1;
-	rval = __hashpw(&key);
+	if (len > UT_NAMESIZE)
+		rval = 0;
+	else {
+		bcopy(name, bf + 1, MIN(len, UT_NAMESIZE));
+		key.data = (u_char *)bf;
+		key.size = MIN(len, UT_NAMESIZE) + 1;
+		rval = __hashpw(&key);
+	}
 
 	if (!_pw_stayopen) {
 		(void)(_pw_db->close)(_pw_db);
