@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.15 2000/03/29 23:11:12 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.16 2000/04/24 17:39:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -70,8 +70,8 @@
 #define hptbtop(b) ((b) >> 17)
 
 /* Get space register for an address */
-static __inline u_int ldsid(vaddr_t p) {
-	register u_int ret;
+static __inline register_t ldsid(vaddr_t p) {
+	register_t ret;
 	__asm __volatile("ldsid (%1),%0" : "=r" (ret) : "r" (p));
 	return ret;
 }
@@ -86,8 +86,8 @@ static __inline u_int ldsid(vaddr_t p) {
 #define rsm(v,r) __asm __volatile("rsm %1,%0": "=r" (r): "i" (v))
 
 /* Move to system mask. Old value of system mask is returned. */
-static __inline u_int mtsm(u_int mask) {
-	register u_int ret;
+static __inline register_t mtsm(register_t mask) {
+	register_t ret;
 	__asm __volatile("ssm 0,%0\n\t"
 			 "mtsm %1": "=&r" (ret) : "r" (mask));
 	return ret;
@@ -95,7 +95,7 @@ static __inline u_int mtsm(u_int mask) {
 
 static __inline register_t get_psw(void)
 {
-	register u_int ret;
+	register_t ret;
 	__asm __volatile("break %1, %2\n\tcopy %%ret0, %0" : "=r" (ret)
 		: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_GET_PSW)
 		: "r28");
@@ -104,7 +104,7 @@ static __inline register_t get_psw(void)
 
 static __inline register_t set_psw(register_t psw)
 {
-	register u_int ret;
+	register_t ret;
 	__asm __volatile("copy	%0, %%arg0\n\tbreak %1, %2\n\tcopy %%ret0, %0"
 		: "=r" (ret)
 		: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_SET_PSW), "0" (psw)
@@ -122,7 +122,7 @@ static __inline void
 ficache(pa_space_t sp, vaddr_t va, vsize_t size)
 {
 	extern int icache_stride;
-	register vaddr_t eva = (va + size + icache_stride-1) & ~(icache_stride-1);
+	vaddr_t eva = (va + size + icache_stride - 1) & ~(icache_stride - 1);
 
 	mtsp(sp, 1);
 	while (va < eva)
@@ -134,7 +134,7 @@ static __inline void
 fdcache(pa_space_t sp, vaddr_t va, vsize_t size)
 {
 	extern int dcache_stride;
-	register vaddr_t eva = (va + size + dcache_stride-1) & ~(dcache_stride-1);
+	vaddr_t eva = (va + size + dcache_stride-1) & ~(dcache_stride - 1);
 
 	mtsp(sp, 1);
 	while (va < eva)
@@ -146,7 +146,7 @@ static __inline void
 pdcache(pa_space_t sp, vaddr_t va, vsize_t size)
 {
 	extern int dcache_stride;
-	register vaddr_t eva = (va + size + dcache_stride-1) & ~(dcache_stride-1);
+	vaddr_t eva = (va + size + dcache_stride - 1) & ~(dcache_stride - 1);
 
 	mtsp(sp, 1);
 	while (va < eva)
