@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.8 1996/09/06 08:36:13 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.9 1996/09/29 16:42:00 dm Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -330,6 +330,24 @@ static int	rnd_sleep = 0;
 #ifndef MIN
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #endif
+
+/* Arcfour random stream generator.  This code is derived from section
+ * 17.1 of Applied Cryptography, second edition, which describes a
+ * stream cipher allegedly compatible with RSA Labs "RC4" cipher (the
+ * actual description of which is a trade secret).  The same algorithm
+ * is used as a stream cipher called "arcfour" in Tatu Ylonen's ssh
+ * package.
+ *
+ * The initialization function here has been modified not to discard
+ * old state, and its input always includes the time of day in
+ * microseconds.  Moreover, bytes from the stream may at any point be
+ * diverted to multiple processes or even kernel functions desiring
+ * random numbers.  This increases the strenght of the random stream,
+ * but makes it impossible to use this code for encryption--There is
+ * no way ever to reproduce the same stream of random bytes.
+ *
+ * RC4 is a registered trademark of RSA Laboratories.
+ */
 
 static void
 arc4_init (struct arc4_stream *as, u_char *data, int len)
