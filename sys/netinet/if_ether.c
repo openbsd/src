@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.35 2001/12/08 06:15:15 jason Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.36 2002/02/15 15:27:17 jason Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -43,6 +43,8 @@
  */
 
 #ifdef INET
+
+#include "bridge.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,7 +452,10 @@ in_arpinput(m)
 	struct ether_header *eh;
 	register struct llinfo_arp *la = 0;
 	register struct rtentry *rt;
-	struct in_ifaddr *ia, *maybe_ia = 0;
+	struct in_ifaddr *ia;
+#if NBRIDGE > 0
+	struct in_ifaddr *bridge_ia = NULL;
+#endif
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
@@ -467,21 +472,51 @@ in_arpinput(m)
 		goto out;
 	}
 #endif
-	bcopy((caddr_t)ea->arp_spa, (caddr_t)&isaddr, sizeof(isaddr));
+
 	bcopy((caddr_t)ea->arp_tpa, (caddr_t)&itaddr, sizeof(itaddr));
+	bcopy((caddr_t)ea->arp_spa, (caddr_t)&isaddr, sizeof(isaddr));
+
 	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-		if (ia->ia_ifp == &ac->ac_if ||
-		    (ia->ia_ifp->if_bridge &&
-		    ia->ia_ifp->if_bridge == ac->ac_if.if_bridge)) {
-			maybe_ia = ia;
-			if (itaddr.s_addr == ia->ia_addr.sin_addr.s_addr ||
-			    isaddr.s_addr == ia->ia_addr.sin_addr.s_addr)
+		if (itaddr.s_addr != ia->ia_addr.sin_addr.s_addr)
+			continue;
+
+		if (ia->ia_ifp == m->m_pkthdr.rcvif)
+			break;
+#if NBRIDGE > 0
+		/*
+		 * If the interface we received the packet on
+		 * is part of a bridge, check to see if we need
+		 * to "bridge" the packet to ourselves at this
+		 * layer.  Note we still prefer a perfect match,
+		 * but allow this weaker match if necessary.
+		 */
+		if (m->m_pkthdr.rcvif->if_bridge != NULL &&
+		    m->m_pkthdr.rcvif->if_bridge == ia->ia_ifp->if_bridge)
+			bridge_ia = ia;
+#endif
+	}
+
+#if NBRIDGE > 0
+	if (ia == NULL && bridge_ia != NULL) {
+		ia = bridge_ia;
+		ac = (struct arpcom *)bridge_ia->ia_ifp;
+	}
+#endif
+
+	if (ia == NULL) {
+		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+			if (itaddr.s_addr != ia->ia_addr.sin_addr.s_addr)
+				continue;
+			if (ia->ia_ifp == m->m_pkthdr.rcvif)
 				break;
 		}
 	}
-	if (maybe_ia == 0)
+
+	if (ia == NULL)
 		goto out;
-	myaddr = ia ? ia->ia_addr.sin_addr : maybe_ia->ia_addr.sin_addr;
+
+	myaddr = ia->ia_addr.sin_addr;
+
 	if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)ac->ac_enaddr,
 	    sizeof (ea->arp_sha)))
 		goto out;	/* it's from me, ignore it. */
