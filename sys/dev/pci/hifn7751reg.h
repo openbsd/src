@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.22 2001/06/23 00:25:38 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.23 2001/06/23 19:50:47 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -257,6 +257,7 @@ typedef struct hifn_desc {
 #define	HIFN_DMAIER_C_DONE	0x00000010	/* Command Ring Done */
 #define	HIFN_DMAIER_C_LAST	0x00000008	/* Command Ring Last */
 #define	HIFN_DMAIER_C_WAIT	0x00000004	/* Command Ring Waiting */
+#define	HIFN_DMAIER_PUBDONE	0x00000002	/* public op done (7951 only */
 #define	HIFN_DMAIER_ENGINE	0x00000001	/* Engine IRQ */
 
 /* DMA Configuration Register (HIFN_1_DMA_CNFG) */
@@ -271,6 +272,32 @@ typedef struct hifn_desc {
 
 /* Public key reset register (HIFN_1_PUB_RESET) */
 #define	HIFN_PUBRST_RESET	0x00000001	/* reset public/rng unit */
+
+/* Public operation register (HIFN_1_PUB_OP) */
+#define	HIFN_PUBOP_AOFFSET	0x0000007e	/* A offset */
+#define	HIFN_PUBOP_BOFFSET	0x00000f80	/* B offset */
+#define	HIFN_PUBOP_MOFFSET	0x0003f000	/* M offset */
+#define	HIFN_PUBOP_OP_MASK	0x003c0000	/* Opcode: */
+#define	HIFN_PUBOP_OP_NOP	0x00000000	/*  NOP */
+#define	HIFN_PUBOP_OP_ADD	0x00040000	/*  ADD */
+#define	HIFN_PUBOP_OP_ADDC	0x00080000	/*  ADD w/carry */
+#define	HIFN_PUBOP_OP_SUB	0x000c0000	/*  SUB */
+#define	HIFN_PUBOP_OP_SUBC	0x00100000	/*  SUB w/carry */
+#define	HIFN_PUBOP_OP_MODADD	0x00140000	/*  Modular ADD */
+#define	HIFN_PUBOP_OP_MODSUB	0x00180000	/*  Modular SUB */
+#define	HIFN_PUBOP_OP_INCA	0x001c0000	/*  INC A */
+#define	HIFN_PUBOP_OP_DECA	0x00200000	/*  DEC A */
+#define	HIFN_PUBOP_OP_MULT	0x00240000	/*  MULT */
+#define	HIFN_PUBOP_OP_MODMULT	0x00280000	/*  Modular MULT */
+#define	HIFN_PUBOP_OP_MODRED	0x002c0000	/*  Modular Red */
+#define	HIFN_PUBOP_OP_MODEXP	0x00300000	/*  Modular Exp */
+
+/* Public status register (HIFN_1_PUB_STATUS) */
+#define	HIFN_PUBSTS_DONE	0x00000001	/* operation done */
+#define	HIFN_PUBSTS_CARRY	0x00000002	/* carry */
+
+/* Public interrupt enable register (HIFN_1_PUB_IEN) */
+#define	HIFN_PUBIEN_DONE	0x00000001	/* operation done interrupt */
 
 /* Random number generator config register (HIFN_1_RNG_CONFIG) */
 #define	HIFN_RNGCFG_ENA		0x00000001	/* enable rng */
