@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.10 1999/10/11 21:07:37 markus Exp $
+.\" $Id: sshd.8,v 1.11 1999/10/11 21:48:29 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -173,6 +173,17 @@ The following keywords are possible.
 .It Cm AFSTokenPassing
 Specifies whether an AFS token may be forwarded to the server. Default is
 .Dq yes .
+.It Cm AllowGroups
+This keyword can be followed by a number of group names, separated
+by spaces.  If specified, login is allowed only for users whose primary
+group matches one of the patterns.
+.Ql \&*
+and
+.Ql ?
+can be used as
+wildcards in the patterns.  Only group names are valid, a numerical group
+id isn't recognized.  By default login is allowed regardless of
+the primary group.
 .Pp
 .It Cm AllowHosts
 This keyword can be followed by any number of host name patterns,
@@ -192,16 +203,52 @@ Note that
 can also be configured to use tcp_wrappers using the
 .Sy LIBWARP
 compile-time option.
+.It Cm AllowUsers
+This keyword can be followed by a number of user names, separated
+by spaces.  If specified, login is allowed only for users names that
+match one of the patterns.
+.Ql \&*
+and
+.Ql ?
+can be used as
+wildcards in the patterns.  Only user names are valid, a numerical user
+id isn't recognized.  By default login is allowed regardless of
+the user name.
+.Pp
 .It Cm CheckMail
 Specifies whether
 .Nm
 should check for new mail for interactive logins.
 The default is
 .Dq no .
+.It Cm DenyGroups
+This keyword can be followed by a number of group names, separated
+by spaces.  Users whose primary group matches one of the patterns
+aren't allowed to log in.
+.Ql \&*
+and
+.Ql ?
+can be used as
+wildcards in the patterns.  Only group names are valid, a numerical group
+id isn't recognized.  By default login is allowed regardless of
+the primary group.
+.Pp
 .It Cm DenyHosts
 This keyword can be followed by any number of host name patterns,
 separated by spaces.  If specified, login is disallowed from the hosts
 whose name matches any of the patterns.
+.It Cm DenyUsers
+This keyword can be followed by a number of user names, separated
+by spaces.  Login is allowed disallowed for user names that match
+one of the patterns.
+.Ql \&*
+and
+.Ql ?
+can be used as
+wildcards in the patterns.  Only user names are valid, a numerical user
+id isn't recognized.  By default login is allowed regardless of
+the user name.
+.Pp
 .It Cm FascistLogging
 Specifies whether to use verbose logging.  Verbose logging violates
 the privacy of users and is not recommended.  The argument must be

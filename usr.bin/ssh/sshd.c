@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.27 1999/10/11 21:07:37 markus Exp $");
+RCSID("$Id: sshd.c,v 1.28 1999/10/11 21:48:29 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -934,6 +934,84 @@ void do_connection(int privileged_port)
   do_authentication(user, privileged_port);
 }
 
+/* Check if the user is allowed to log in via ssh. If user is listed in
+   DenyUsers or user's primary group is listed in DenyGroups, false will
+   be returned. If AllowUsers isn't empty and user isn't listed there, or
+   if AllowGroups isn't empty and user isn't listed there, false will be
+   returned. Otherwise true is returned.
+   XXX This function should also check if user has a valid shell */
+
+static int
+allowed_user(struct passwd *pw)
+{
+  struct group *grp;
+  int i;
+
+  /* Shouldn't be called if pw is NULL, but better safe than sorry... */
+  if (!pw)
+    return 0;
+
+  /* XXX Should check for valid login shell */
+
+  /* Return false if user is listed in DenyUsers */
+  if (options.num_deny_users > 0)
+    {
+      if (!pw->pw_name)
+	return 0;
+      for (i = 0; i < options.num_deny_users; i++)
+	if (match_pattern(pw->pw_name, options.deny_users[i]))
+	  return 0;
+    }
+
+  /* Return false if AllowUsers isn't empty and user isn't listed there */
+  if (options.num_allow_users > 0)
+    {
+      if (!pw->pw_name)
+	return 0;
+      for (i = 0; i < options.num_allow_users; i++)
+	if (match_pattern(pw->pw_name, options.allow_users[i]))
+	  break;
+      /* i < options.num_allow_users iff we break for loop */
+      if (i >= options.num_allow_users)
+	return 0;
+    }
+
+  /* Get the primary group name if we need it. Return false if it fails */
+  if (options.num_deny_groups > 0 || options.num_allow_groups > 0 )
+    {
+      grp = getgrgid(pw->pw_gid);
+      if (!grp)
+	return 0;
+
+      /* Return false if user's group is listed in DenyGroups */
+      if (options.num_deny_groups > 0)
+        {
+          if (!grp->gr_name)
+	    return 0;
+          for (i = 0; i < options.num_deny_groups; i++)
+	    if (match_pattern(grp->gr_name, options.deny_groups[i]))
+	      return 0;
+        }
+
+      /* Return false if AllowGroups isn't empty and user's group isn't
+	 listed there */
+      if (options.num_allow_groups > 0)
+        {
+          if (!grp->gr_name)
+	    return 0;
+          for (i = 0; i < options.num_allow_groups; i++)
+	    if (match_pattern(grp->gr_name, options.allow_groups[i]))
+	      break;
+          /* i < options.num_allow_groups iff we break for loop */
+          if (i >= options.num_allow_groups)
+	    return 0;
+        }
+    }
+
+  /* We found no reason not to let this user try to log on... */
+  return 1;
+}
+
 /* Performs authentication of an incoming connection.  Session key has already
    been exchanged and encryption is enabled.  User is the user name to log
    in as (received from the clinet).  Privileged_port is true if the
@@ -963,9 +1041,10 @@ do_authentication(char *user, int privileged_port)
        
   /* Verify that the user is a valid user. */
   pw = getpwnam(user);
-  if (!pw)
+  if (!pw || !allowed_user(pw))
     {
-      /* The user does not exist. */
+      /* The user does not exist or access is denied,
+         but fake indication that authentication is needed. */
       packet_start(SSH_SMSG_FAILURE);
       packet_send();
       packet_write_wait();

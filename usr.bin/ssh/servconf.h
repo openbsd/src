@@ -13,13 +13,17 @@ Definitions for server configuration data and for the functions reading it.
 
 */
 
-/* RCSID("$Id: servconf.h,v 1.7 1999/10/11 21:07:37 markus Exp $"); */
+/* RCSID("$Id: servconf.h,v 1.8 1999/10/11 21:48:29 markus Exp $"); */
 
 #ifndef SERVCONF_H
 #define SERVCONF_H
 
 #define MAX_ALLOW_HOSTS		256 /* Max # hosts on allow list. */
 #define MAX_DENY_HOSTS		256 /* Max # hosts on deny list. */
+#define MAX_ALLOW_USERS		256 /* Max # users on allow list. */
+#define MAX_DENY_USERS		256 /* Max # users on deny list. */
+#define MAX_ALLOW_GROUPS	256 /* Max # groups on allow list. */
+#define MAX_DENY_GROUPS		256 /* Max # groups on deny list. */
 
 typedef struct
 {
@@ -64,6 +68,14 @@ typedef struct
   char *allow_hosts[MAX_ALLOW_HOSTS];
   unsigned int num_deny_hosts;
   char *deny_hosts[MAX_DENY_HOSTS];
+  unsigned int num_allow_users;
+  char *allow_users[MAX_ALLOW_USERS];
+  unsigned int num_deny_users;
+  char *deny_users[MAX_DENY_USERS];
+  unsigned int num_allow_groups;
+  char *allow_groups[MAX_ALLOW_GROUPS];
+  unsigned int num_deny_groups;
+  char *deny_groups[MAX_DENY_GROUPS];
 } ServerOptions;
 
 /* Initializes the server options to special values that indicate that they

@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.12 1999/10/11 21:07:37 markus Exp $");
+RCSID("$Id: servconf.c,v 1.13 1999/10/11 21:48:29 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -60,6 +60,10 @@ void initialize_server_options(ServerOptions *options)
   options->use_login = -1;
   options->num_allow_hosts = 0;
   options->num_deny_hosts = 0;
+  options->num_allow_users = 0;
+  options->num_deny_users = 0;
+  options->num_allow_groups = 0;
+  options->num_deny_groups = 0;
 }
 
 void fill_default_server_options(ServerOptions *options)
@@ -157,7 +161,8 @@ typedef enum
   sPasswordAuthentication, sAllowHosts, sDenyHosts, sListenAddress,
   sPrintMotd, sIgnoreRhosts, sX11Forwarding, sX11DisplayOffset,
   sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail,
-  sUseLogin
+  sUseLogin, sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups
+
 } ServerOpCodes;
 
 /* Textual representation of the tokens. */
@@ -205,6 +210,10 @@ static struct
   { "uselogin", sUseLogin },
   { "randomseed", sRandomSeedFile },
   { "keepalive", sKeepAlives },
+  { "allowusers", sAllowUsers },
+  { "denyusers", sDenyUsers },
+  { "allowgroups", sAllowGroups },
+  { "denygroups", sDenyGroups },
   { NULL, 0 }
 };
 
@@ -496,6 +505,58 @@ void read_server_config(ServerOptions *options, const char *filename)
 		  exit(1);
 		}
 	      options->deny_hosts[options->num_deny_hosts++] = xstrdup(cp);
+	    }
+	  break;
+
+	case sAllowUsers:
+	  while ((cp = strtok(NULL, WHITESPACE)))
+	    {
+	      if (options->num_allow_users >= MAX_ALLOW_USERS)
+		{
+		  fprintf(stderr, "%s line %d: too many allow users.\n",
+			  filename, linenum);
+		  exit(1);
+		}
+	      options->allow_users[options->num_allow_users++] = xstrdup(cp);
+	    }
+	  break;
+
+	case sDenyUsers:
+	  while ((cp = strtok(NULL, WHITESPACE)))
+	    {
+	      if (options->num_deny_users >= MAX_DENY_USERS)
+		{
+		  fprintf(stderr, "%s line %d: too many deny users.\n",
+			  filename, linenum);
+		  exit(1);
+		}
+	      options->deny_users[options->num_deny_users++] = xstrdup(cp);
+	    }
+	  break;
+
+	case sAllowGroups:
+	  while ((cp = strtok(NULL, WHITESPACE)))
+	    {
+	      if (options->num_allow_groups >= MAX_ALLOW_GROUPS)
+		{
+		  fprintf(stderr, "%s line %d: too many allow groups.\n",
+			  filename, linenum);
+		  exit(1);
+		}
+	      options->allow_groups[options->num_allow_groups++] = xstrdup(cp);
+	    }
+	  break;
+
+	case sDenyGroups:
+	  while ((cp = strtok(NULL, WHITESPACE)))
+	    {
+	      if (options->num_deny_groups >= MAX_DENY_GROUPS)
+		{
+		  fprintf(stderr, "%s line %d: too many deny groups.\n",
+			  filename, linenum);
+		  exit(1);
+		}
+	      options->deny_groups[options->num_deny_groups++] = xstrdup(cp);
 	    }
 	  break;
 
