@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_io.c,v 1.7 2001/09/19 20:50:59 mickey Exp $	*/
+/*	$OpenBSD: uvm_io.c,v 1.8 2001/09/20 02:07:43 art Exp $	*/
 /*	$NetBSD: uvm_io.c,v 1.10 2000/06/02 12:02:44 pk Exp $	*/
 
 /*
@@ -132,8 +132,6 @@ uvm_io(map, uio)
 		if (sz > togo)
 			sz = togo;
 		error = uiomove((caddr_t) (kva + pageoffset), sz, uio);
-		if (error)
-			break;
 		togo -= sz;
 		baseva += chunksz;
 
@@ -149,6 +147,13 @@ uvm_io(map, uio)
 
 		if (dead_entries != NULL)
 			uvm_unmap_detach(dead_entries, AMAP_REFALL);
+
+		/*
+		 * We defer checking the error return from uiomove until
+		 * here so that we won't leak memory.
+		 */
+		if (error)
+			break;
 	}
 
 	/*
