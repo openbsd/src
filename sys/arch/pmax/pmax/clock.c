@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 1995/08/10 10:50:58 jonathan Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 1996/01/07 15:38:44 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -253,8 +253,22 @@ setstatclockrate(newhz)
 /*
  * This is the amount to add to the value stored in the clock chip
  * to get the current year.
+ *
+ * Experimentation (and passing years) show that Decstation PROMS
+ * assume the kernel uses the clock chip as a time-of-year clock.
+ * The PROM assumes the clock is always set to 1972 or 1973, and contains
+ * time-of-year in seconds.   The PROM checks the clock at boot time,
+ * and if it's outside that range, sets it to 1972-01-01.
  */
+#if 1		/* testing, until we write time-of-year code as aboce */
+#define YR_OFFSET	24	/* good til dec 31, 1997 */
+#define DAY_OFFSET	/*1*/ 0
+#else
 #define YR_OFFSET	22
+#define DAY_OFFSET	1
+#endif
+
+#define	BASE_YEAR	1972
 
 /*
  * This code is defunct after 2099.
@@ -288,17 +302,34 @@ inittodr(base)
 		badbase = 0;
 
 	c = Mach_clock_addr;
-	/* don't read clock registers while they are being updated */
+
+	/*
+	 * Don't read clock registers while they are being updated,
+	 * and make sure we don't re-read the clock's registers
+	 * too often while waiting.
+	 */
 	s = splclock();
-	while ((c->rega & REGA_UIP) == 1)
-		;
+	while ((c->rega & REGA_UIP) == 1) {
+		splx(s);
+		DELAY(10);
+		s = splx();
+	}
+
 	sec = c->sec;
 	min = c->min;
 	hour = c->hour;
-	day = c->day + 1;
+	day = c->day;
 	mon = c->mon;
-	year = c->year + YR_OFFSET;
+	year = c->year;
+
 	splx(s);
+
+#ifdef	DEBUG_CLOCK
+	printf("inittodr(): todr hw yy/mm/dd= %d/%d/%d\n", year, mon, day);
+#endif
+	/* convert from PROM time-of-year convention to actual time */
+	day  += DAY_OFFSET;
+	year += YR_OFFSET;
 
 	/* simple sanity checks */
 	if (year < 70 || mon < 1 || mon > 12 || day < 1 || day > 31 ||
@@ -352,11 +383,14 @@ resettodr()
 {
 	register volatile struct chiptime *c;
 	register int t, t2;
-	int sec, min, hour, day, mon, year;
+	int sec, min, hour, day, dow, mon, year;
 	int s;
 
-	/* compute the year */
+	/* compute the day of week. */
 	t2 = time.tv_sec / SECDAY;
+	dow = (t2 + 4) % 7;	/* 1/1/1970 was thursday */
+
+	/* compute the year */
 	year = 69;
 	while (t2 >= 0) {	/* whittle off years */
 		t = t2;
@@ -382,19 +416,37 @@ resettodr()
 	sec = t % 60;
 
 	c = Mach_clock_addr;
+
+	/* convert to the  format the PROM uses */
+	day  -= DAY_OFFSET;
+ 	year -= YR_OFFSET;
+
 	s = splclock();
-	t = c->regb;
-	c->regb = t | REGB_SET_TIME;
+	t = c->regd;				/* reset VRT */
+	c->regb = REGB_SET_TIME | REGB_DATA_MODE | REGB_HOURS_FORMAT;
 	MachEmptyWriteBuffer();
+	c->rega = 0x70;				/* reset time base */
+	MachEmptyWriteBuffer();
+
 	c->sec = sec;
 	c->min = min;
 	c->hour = hour;
-	c->day = day - 1;
+	/*c->dayw = dow;*/
+	c->day = day;
 	c->mon = mon;
-	c->year = year - YR_OFFSET;
-	c->regb = t;
+	c->year = year;
+	MachEmptyWriteBuffer();
+
+	c->rega = REGA_TIME_BASE | SELECTED_RATE;
+	c->regb = REGB_PER_INT_ENA | REGB_DATA_MODE | REGB_HOURS_FORMAT;
 	MachEmptyWriteBuffer();
 	splx(s);
+#ifdef	DEBUG_CLOCK
+	printf("resettodr(): todr hw yy/mm/dd= %d/%d/%d\n", year, mon, day);
+#endif
+
+	c->nvram[48*4] |= 1;		/* Set PROM time-valid bit */
+	MachEmptyWriteBuffer();
 }
 
 /*XXX*/
