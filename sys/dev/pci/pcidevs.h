@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	MOpenBSD: pcidevs,v 1.201 1999/12/10 01:47:51 jason Exp 
+ *	MOpenBSD: pcidevs,v 1.202 1999/12/13 06:18:53 csapuntz Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -833,6 +833,7 @@
 /* Creative Labs */
 #define	PCI_PRODUCT_CREATIVELABS_SBLIVE	0x0002		/* SoundBlaster Live */
 #define	PCI_PRODUCT_CREATIVELABS_DIGIN	0x7002		/* SoundBlaster Digital Input */
+#define	PCI_PRODUCT_CREATIVELABS_EV1938	0x8938		/* Ectiva 1938 */
 
 /* Cyclades products */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMY_1	0x0100		/* Cyclom-Y below 1M */
@@ -892,6 +893,7 @@
 /* Ensoniq products */
 #define	PCI_PRODUCT_ENSONIQ_AUDIOPCI97	0x1371		/* AudioPCI97 */
 #define	PCI_PRODUCT_ENSONIQ_AUDIOPCI	0x5000		/* AudioPCI */
+#define	PCI_PRODUCT_ENSONIQ_CT5880	0x5880		/* CT5880 */
 
 /* ESS Technology Inc products */
 #define	PCI_PRODUCT_ESSTECH_MAESTROII	0x1968		/* Maestro II */

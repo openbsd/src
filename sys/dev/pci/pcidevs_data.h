@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	MOpenBSD: pcidevs,v 1.201 1999/12/10 01:47:51 jason Exp 
+ *	MOpenBSD: pcidevs,v 1.202 1999/12/13 06:18:53 csapuntz Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1263,6 +1263,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "SoundBlaster Digital Input",
 	},
 	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_EV1938,
+	    0,
+	    "Creative Labs",
+	    "Ectiva 1938",
+	},
+	{
 	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_1,
 	    0,
 	    "Cyclades",
@@ -1471,6 +1477,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Ensoniq",
 	    "AudioPCI",
+	},
+	{
+	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_CT5880,
+	    0,
+	    "Ensoniq",
+	    "CT5880",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTROII,
