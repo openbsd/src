@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.17 1997/04/15 09:02:54 deraadt Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.18 1997/04/17 12:31:46 provos Exp $	*/
 /*	$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fdisk.c,v 1.17 1997/04/15 09:02:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fdisk.c,v 1.18 1997/04/17 12:31:46 provos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -338,8 +338,8 @@ print_partinfo(pp, lead, off)
 	}
 	leader(lead);
 	printf("    start %d, size %d (%d MB), flag 0x%02x\n",
-	    extoff+getlong(&pp->dp_start) + 
-	    (pp->dp_typ != DOSPTYP_EXTEND ? off : 0), 
+	    getlong(&pp->dp_start) + 
+	    (pp->dp_typ != DOSPTYP_EXTEND ? off : extoff),
 	    getlong(&pp->dp_size),
 	    getlong(&pp->dp_size) * 512 / (1024 * 1024), pp->dp_flag);
 	leader(lead);
@@ -356,14 +356,9 @@ print_partinfo(pp, lead, off)
 		u_int32_t off2;
 		int i;
 
-		/*
-		 * XXX not positive if the extended partition label should
-		 * should be found at the dp_start or at dp_s{cyl,hd,sect}
-		 */
+		off2 = extoff+getlong(&pp->dp_start);
 
-		off2 = getlong(&pp->dp_start);
-
-		if (read_disk(extoff+off2, data.bootinst) == -1) {
+		if (read_disk(off2, data.bootinst) == -1) {
 			leader(lead+4);
 			printf("uhm, disk read error...\n");
 			return;
@@ -377,10 +372,6 @@ print_partinfo(pp, lead, off)
 			    "warning: invalid fdisk partition table found!\n");
 			return;
 		}
-
-		/* XXX - I dont quite understand why this needs to be like
-		 * that.
-		 */
 
 		for (i = 0; i < 4; i++) {
 			pp = &data.parts[i];
