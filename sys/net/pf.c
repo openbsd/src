@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.2 2001/06/24 20:47:37 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.3 2001/06/24 20:49:40 itojun Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1618,8 +1618,10 @@ pull_hdr(struct ifnet *ifp, struct mbuf **m, struct ip *h, int *action,
 		print_ip(ifp, h);
 		return NULL;
 	}
-	if (hl + len > (*m)->m_pkthdr.len)
+	if (hl + len > (*m)->m_pkthdr.len) {
+		*action = PF_DROP;
 		return NULL;
+	}
 	m_copydata(*m, hl, len, header);
 	return header;
 }
