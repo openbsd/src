@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.38 2001/03/23 18:42:06 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.39 2001/03/25 18:09:18 csapuntz Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -375,7 +375,7 @@ void	swapin __P((struct proc *));
 int	tsleep __P((void *chan, int pri, char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void    wakeup_n __P((void *chan, int));
-#define wakeup(c)  wakeup_n((c), -1)
+void    wakeup __P((void *chan));
 #define wakeup_one(c) wakeup_n((c), 1)
 void	reaper __P((void));
 void	exit1 __P((struct proc *, int));
