@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: hostfile.c,v 1.11 2000/01/04 00:07:59 markus Exp $");
+RCSID("$OpenBSD: hostfile.c,v 1.12 2000/02/16 13:18:51 markus Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -179,7 +179,7 @@ check_host_in_hostfile(const char *filename, const char *host,
 	FILE *f;
 	char line[8192];
 	int linenum = 0;
-	unsigned int bits, kbits, hostlen;
+	unsigned int kbits, hostlen;
 	char *cp, *cp2;
 	HostStatus end_return;
 
@@ -197,9 +197,6 @@ check_host_in_hostfile(const char *filename, const char *host,
 	 * not found the proper one.
 	 */
 	end_return = HOST_NEW;
-
-	/* size of modulus 'n' */
-	bits = BN_num_bits(n);
 
 	/* Go trough the file. */
 	while (fgets(line, sizeof(line), f)) {
