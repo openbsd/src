@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.5 2005/02/28 20:18:02 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.6 2005/03/05 18:43:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -58,7 +58,7 @@ int
 cvs_import(int argc, char **argv)
 {
 	int ch, flags;
-	char *branch, *ep;
+	char *branch;
 	struct cvsroot *root;
 	RCSNUM *bnum;
 
@@ -69,14 +69,12 @@ cvs_import(int argc, char **argv)
 		switch (ch) {
 		case 'b':
 			branch = optarg;
-			if ((bnum = rcsnum_alloc()) == NULL)
-				return (-1);
-			if ((rcsnum_aton(branch, &ep, bnum) < 0) ||
-			    (*ep != '\0')) {
+			if ((bnum = rcsnum_parse(branch)) == NULL) {
 				cvs_log(LP_ERR, "%s is not a numeric branch",
 				    branch);
 				return (EX_USAGE);
 			}
+			rcsnum_free(bnum);
 			break;
 		case 'd':
 			break;
