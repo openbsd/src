@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ndp.8,v 1.11 2002/05/29 09:13:22 itojun Exp $
-.\"	$KAME: ndp.8,v 1.20 2002/05/29 07:37:51 itojun Exp $
+.\"	$OpenBSD: ndp.8,v 1.12 2002/06/03 03:33:53 itojun Exp $
+.\"	$KAME: ndp.8,v 1.25 2002/06/03 03:30:16 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .Dd May 17, 1998
 .Dt NDP 8
-.Os
+.Os KAME
 .\"
 .Sh NAME
 .Nm ndp
@@ -38,27 +38,26 @@
 .\"
 .Sh SYNOPSIS
 .Nm ndp
+.Op Fl nt
 .Fl a
-.Op Fl nt
 .Nm ndp
+.Op Fl nt
 .Fl A Ar wait
-.Op Fl nt
 .Nm ndp
+.Op Fl nt
 .Fl c
-.Op Fl nt
 .Nm ndp
-.Fl d
 .Op Fl nt
-.Ar hostname
+.Fl d Ar hostname
 .Nm ndp
-.Fl f
 .Op Fl nt
-.Ar filename
+.Fl f Ar filename
 .Nm ndp
 .Fl H
 .Nm ndp
-.Fl I
-.Op delete \(ba Ar interface
+.Fl I Ar interface
+.Nm ndp
+.Fl I Li delete
 .Nm ndp
 .Fl i
 .Ar interface
@@ -72,10 +71,8 @@
 .Nm ndp
 .Fl R
 .Nm ndp
-.Fl s
 .Op Fl nt
-.Ar nodename
-.Ar ether_addr
+.Fl s Ar nodename ether_addr
 .Op Li temp
 .Op Li proxy
 .\"
@@ -83,12 +80,12 @@
 The
 .Nm
 command manipulates the address mapping table
-used by Neighbor Discovery Protocol (NDP).
+used by the Neighbor Discovery Protocol (NDP).
 .Bl -tag -width Ds
 .It Fl a
 Dump the currently existing NDP entries.
 The following information will be printed:
-.Bl -tag -width Ds
+.Bl -tag -width NeighborXX
 .It Neighbor
 IPv6 address of the neighbor.
 .It Linklayer Address
@@ -99,17 +96,32 @@ when the address is not available.
 .It Netif
 Network interface associated with the neighbor cache entry.
 .It Expire
-The time until the expiry of the entry.
+The time until expiry of the entry.
 The entry could become
-.Dq Li permanent
-when it will never expire.
+.Dq Li permanent ,
+in which case it will never expire.
 .It S
-State of the neighbor cache entry, in a single letter.
-They are:
-Nostate, Waitdelete, Incomplete, Reachable, Stale, Delay and Probe.
-.Dq Li ?
-indicates unknown state, which should never happen.
-.It Flgs
+State of the neighbor cache entry, as a single letter:
+.Bl -tag -width indent -compact
+.Pp
+.It N
+Nostate
+.It W
+Waitdelete
+.It I
+Incomplete
+.It R
+Reachable
+.It S
+Stale
+.It D
+Deay
+.It P
+Probe
+.It ?
+Unknown state (should never happen).
+.El
+.It Flags
 Flags on the neighbor cache entry, in a single letter.
 They are: Router, proxy neighbor advertisement
 .Pq Dq p .
@@ -133,17 +145,17 @@ Parse the file specified by
 .It Fl H
 Harmonize consistency between the routing table and the default router
 list; install the top entry of the list into the kernel routing table.
-.It Fl I Op delete \(ba Ar interface
+.It Fl I Ar interface
 Shows or specifies the default interface used as the default route when
 there is no default router.
-If no argument is given to the option,
-the current default interface will be shown.
-If an
+If a valid
 .Ar interface
 is specified, the interface will be used as the default.
-If a special keyword
-.Ic delete
-is specified, the current default interface will be deleted from the kernel.
+If
+.Ar interface
+is not a valid interface name, the current setting will be presented.
+.It Fl I Li delete
+The current default interface will be deleted from the kernel.
 .It Fl i Ar interface Op Ar flags ...
 View ND information for the specified interface.
 If additional arguments
@@ -158,6 +170,7 @@ special character
 .Ql - ,
 which means the flag should be cleared.
 .\"
+.Pp
 .Bl -tag -width Ds -compact
 .It Xo
 .Ic nud
@@ -165,9 +178,31 @@ which means the flag should be cleared.
 turn on or off NUD (Neighbor Unreachability Detection) on the
 interface.
 NUD is usually turned on by default.
+.It Xo
+.Ic accept_rtadv
+.Xc
+specify whether or not to accept Router Advertisement messages
+received on the
+.Ar interface .
+Note that the kernel does not accept Router Advertisement messages
+unless the
+.Li net.inet6.ip6.accept_rtadv
+variable is non-0, even if the flag is on.
+This flag is set to 1 by default.
+.It Xo
+.Ic prefer_source
+.Xc
+prefer addresses on the
+.Ar interface
+as candidates of the source address for outgoing packets.
+The default value of this flag is off.
+For more details about the entire algorithm of source address
+selection, see the
+.Pa IMPLEMENTATION
+file supplied with the KAME kit.
 .El
 .It Fl n
-Do not try to resolve numeric address to hostname.
+Do not try to resolve numeric addresses to hostnames.
 .It Fl p
 Show prefix list.
 .It Fl P
@@ -179,17 +214,17 @@ Flush all the entries in the default router list.
 .It Fl s
 Register an NDP entry for a node.
 The entry will be permanent unless the word
-.Li temp
+.Ic temp
 is given in the command.
 If the word
-.Li proxy
+.Ic proxy
 is given, this system will act as an proxy NDP server,
 responding to requests for
 .Ar hostname
 even though the host address is not its own.
 .It Fl t
-Print timestamp on each entries,
-to make it possible to merge output with
+Print timestamp on each entry,
+making it possible to merge output with
 .Xr tcpdump 8 .
 Most useful when used with
 .Fl A .

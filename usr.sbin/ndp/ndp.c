@@ -1,5 +1,5 @@
-/*	$OpenBSD: ndp.c,v 1.20 2002/06/02 15:23:30 itojun Exp $	*/
-/*	$KAME: ndp.c,v 1.86 2002/05/26 01:16:10 itojun Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.21 2002/06/03 03:33:53 itojun Exp $	*/
+/*	$KAME: ndp.c,v 1.97 2002/06/03 03:31:25 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -118,7 +118,6 @@
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static pid_t pid;
-static int cflag;
 static int nflag;
 static int tflag;
 static int32_t thiszone;	/* time difference with gmt */
@@ -135,13 +134,13 @@ void getsocket(void);
 int set(int, char **);
 void get(char *);
 int delete(char *);
-void dump(struct in6_addr *);
+void dump(struct in6_addr *, int);
 static struct in6_nbrinfo *getnbrinfo(struct in6_addr *, int, int);
 static char *ether_str(struct sockaddr_dl *);
 int ndp_ether_aton(char *, u_char *);
 void usage(void);
 int rtmsg(int);
-void ifinfo(int, char **);
+void ifinfo(char *, int, char **);
 void rtrlist(void);
 void plist(void);
 void pfx_flush(void);
@@ -165,82 +164,63 @@ static char *rtpref_str[] = {
 };
 #endif
 
+int mode = 0;
+char *arg = NULL;
+
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	int ch;
-	int aflag = 0, dflag = 0, sflag = 0, Hflag = 0;
-	int pflag = 0, rflag = 0, Pflag = 0, Rflag = 0;
 
 	pid = getpid();
 	thiszone = gmt2local(0);
-	while ((ch = getopt(argc, argv, "acndfIilprstA:HPR")) != -1)
-		switch ((char)ch) {
+	while ((ch = getopt(argc, argv, "acd:f:I:i:nprstA:HPR")) != -1)
+		switch (ch) {
 		case 'a':
-			aflag = 1;
-			break;
 		case 'c':
-			cflag = 1;
+		case 'p':
+		case 'r':
+		case 'H':
+		case 'P':
+		case 'R':
+		case 's':
+			if (mode) {
+				usage();
+				/*NOTREACHED*/
+			}
+			mode = ch;
+			arg = NULL;
 			break;
 		case 'd':
-			dflag = 1;
-			break;
+		case 'f':
 		case 'I':
-#ifdef SIOCSDEFIFACE_IN6	/* XXX: check SIOCGDEFIFACE_IN6 as well? */
-			if (argc > 2)
-				setdefif(argv[2]);
-			getdefif(); /* always call it to print the result */
-			exit(0);
-#else
-			errx(1, "not supported yet");
-			/*NOTREACHED*/
-#endif
 		case 'i' :
-			argc -= optind;
-			argv += optind;
-			if (argc < 1)
+			if (mode) {
 				usage();
-			ifinfo(argc, argv);
-			exit(0);
+				/*NOTREACHED*/
+			}
+			mode = ch;
+			arg = optarg;
+			break;
 		case 'n':
 			nflag = 1;
-			continue;
-		case 'p':
-			pflag = 1;
-			break;
-		case 'f' :
-			if (argc != 3)
-				usage();
-			file(argv[2]);
-			exit(0);
-		case 'l' :
-			/* obsolete, ignored */
-			break;
-		case 'r' :
-			rflag = 1;
-			break;
-		case 's':
-			sflag = 1;
 			break;
 		case 't':
 			tflag = 1;
 			break;
 		case 'A':
-			aflag = 1;
-			repeat = atoi(optarg);
-			if (repeat < 0)
+			if (mode) {
 				usage();
-			break;
-		case 'H' :
-			Hflag = 1;
-			break;
-		case 'P':
-			Pflag = 1;
-			break;
-		case 'R':
-			Rflag = 1;
+				/*NOTREACHED*/
+			}
+			mode = 'a';
+			repeat = atoi(optarg);
+			if (repeat < 0) {
+				usage();
+				/*NOTREACHED*/
+			}
 			break;
 		default:
 			usage();
@@ -249,45 +229,86 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (aflag || cflag) {
-		dump(0);
-		exit(0);
-	}
-	if (dflag) {
-		if (argc != 1)
+	switch (mode) {
+	case 'a':
+	case 'c':
+		if (argc != 0) {
 			usage();
-		delete(argv[0]);
-		exit(0);
-	}
-	if (pflag) {
+			/*NOTREACHED*/
+		}
+		dump(0, mode == 'c');
+		break;
+	case 'd':
+		if (argc != 0) {
+			usage();
+			/*NOTREACHED*/
+		}
+		delete(arg);
+		break;
+	case 'I':
+#ifdef SIOCSDEFIFACE_IN6	/* XXX: check SIOCGDEFIFACE_IN6 as well? */
+		if (argc != 0) {
+			usage();
+			/*NOTREACHED*/
+		}
+		if (strcmp(arg, "default") == 0 || if_nametoindex(arg))
+			setdefif(arg);
+		getdefif(); /* always call it to print the result */
+		break;
+#else
+		errx(1, "not supported yet");
+		/*NOTREACHED*/
+#endif
+	case 'p':
+		if (argc != 0) {
+			usage();
+			/*NOTREACHED*/
+		}
 		plist();
-		exit(0);
-	}
-	if (rflag) {
+		break;
+	case 'i':
+		ifinfo(arg, argc, argv);
+		break;
+	case 'r':
+		if (argc != 0) {
+			usage();
+			/*NOTREACHED*/
+		}
 		rtrlist();
-		exit(0);
-	}
-	if (sflag) {
+		break;
+	case 's':
 		if (argc < 2 || argc > 4)
 			usage();
 		exit(set(argc, argv) ? 1 : 0);
-	}
-	if (Hflag) {
+	case 'H':
+		if (argc != 0) {
+			usage();
+			/*NOTREACHED*/
+		}
 		harmonize_rtr();
-		exit(0);
-	}
-	if (Pflag) {
+		break;
+	case 'P':
+		if (argc != 0) {
+			usage();
+			/*NOTREACHED*/
+		}
 		pfx_flush();
-		exit(0);
-	}
-	if (Rflag) {
+		break;
+	case 'R':
+		if (argc != 0) {
+			usage();
+			/*NOTREACHED*/
+		}
 		rtr_flush();
-		exit(0);
+		break;
+	case 0:
+		if (argc != 1) {
+			usage();
+			/*NOTREACHED*/
+		}
+		get(argv[0]);
+		break;
 	}
-
-	if (argc != 1)
-		usage();
-	get(argv[0]);
 	exit(0);
 }
 
@@ -408,10 +429,12 @@ set(argc, argv)
 	if (IN6_ARE_ADDR_EQUAL(&sin->sin6_addr, &sin_m.sin6_addr)) {
 		if (sdl->sdl_family == AF_LINK &&
 		    (rtm->rtm_flags & RTF_LLINFO) &&
-		    !(rtm->rtm_flags & RTF_GATEWAY)) switch (sdl->sdl_type) {
-		case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
-		case IFT_ISO88024: case IFT_ISO88025:
-			goto overwrite;
+		    !(rtm->rtm_flags & RTF_GATEWAY)) {
+			switch (sdl->sdl_type) {
+			case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
+			case IFT_ISO88024: case IFT_ISO88025:
+				goto overwrite;
+			}
 		}
 		/*
 		 * IPv4 arp command retries with sin_other = SIN_PROXY here.
@@ -457,7 +480,7 @@ get(host)
 		    htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
 	}
 #endif
-	dump(&sin->sin6_addr);
+	dump(&sin->sin6_addr, 0);
 	if (found_entry == 0) {
 		getnameinfo((struct sockaddr *)sin, sin->sin6_len, host_buf,
 		    sizeof(host_buf), NULL ,0,
@@ -549,8 +572,9 @@ delete:
  * Dump the entire neighbor cache
  */
 void
-dump(addr)
+dump(addr, cflag)
 	struct in6_addr *addr;
+	int cflag;
 {
 	int mib[6];
 	size_t needed;
@@ -569,9 +593,9 @@ dump(addr)
 
 	/* Print header */
 	if (!tflag && !cflag)
-		printf("%-*.*s %-*.*s %*.*s %-9.9s %1s %4s\n",
+		printf("%-*.*s %-*.*s %*.*s %-9.9s %1s %5s\n",
 		    W_ADDR, W_ADDR, "Neighbor", W_LL, W_LL, "Linklayer Address",
-		    W_IF, W_IF, "Netif", "Expire", "S", "Flgs");
+		    W_IF, W_IF, "Netif", "Expire", "S", "Flags");
 
 again:;
 	mib[0] = CTL_NET;
@@ -634,9 +658,8 @@ again:;
 #endif
 		}
 		getnameinfo((struct sockaddr *)sin, sin->sin6_len, host_buf,
-			    sizeof(host_buf), NULL, 0,
-			    (nflag ? NI_NUMERICHOST : 0));
-		if (cflag == 1) {
+		    sizeof(host_buf), NULL, 0, (nflag ? NI_NUMERICHOST : 0));
+		if (cflag) {
 #ifdef RTF_WASCLONED
 			if (rtm->rtm_flags & RTF_WASCLONED)
 				delete(host_buf);
@@ -819,14 +842,15 @@ void
 usage()
 {
 	printf("usage: ndp hostname\n");
-	printf("       ndp -a[nt]\n");
+	printf("       ndp [-nt] -a\n");
 	printf("       ndp [-nt] -A wait\n");
-	printf("       ndp -c[nt]\n");
-	printf("       ndp -d[nt] hostname\n");
-	printf("       ndp -f[nt] filename\n");
+	printf("       ndp [-nt]- c\n");
+	printf("       ndp [-nt] -d hostname\n");
+	printf("       ndp [-nt] -f filename\n");
 	printf("       ndp -i interface [flags...]\n");
 #ifdef SIOCSDEFIFACE_IN6
-	printf("       ndp -I [interface|delete]\n");
+	printf("       ndp -I interface\n");
+	printf("       ndp -I delete\n");
 #endif
 	printf("       ndp -p\n");
 	printf("       ndp -r\n");
@@ -903,13 +927,13 @@ doit:
 }
 
 void
-ifinfo(argc, argv)
+ifinfo(ifname, argc, argv)
+	char *ifname;
 	int argc;
 	char **argv;
 {
 	struct in6_ndireq nd;
 	int i, s;
-	char *ifname = argv[0];
 	u_int32_t newflags;
 #ifdef IPV6CTL_USETEMPADDR
 	u_int8_t nullbuf[8];
@@ -927,7 +951,7 @@ ifinfo(argc, argv)
 	}
 #define ND nd.ndi
 	newflags = ND.flags;
-	for (i = 1; i < argc; i++) {
+	for (i = 0; i < argc; i++) {
 		int clear = 0;
 		char *cp = argv[i];
 
