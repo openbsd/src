@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbox.c,v 1.7 2005/01/24 21:36:39 miod Exp $	*/
+/*	$OpenBSD: rbox.c,v 1.8 2005/01/27 21:24:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -366,6 +366,7 @@ rbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 	volatile struct rboxfb *rb = (struct rboxfb *)fb->regkva;
 
 	rb_waitbusy(rb);
+
 	rb->rep_rule = RBOX_DUALROP(rop);
 	rb->source_y = sy;
 	rb->source_x = sx;
@@ -374,6 +375,8 @@ rbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 	rb->wheight = cy;
 	rb->wwidth  = cx;
 	rb->wmove = 1;
+
+	rb_waitbusy(rb);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvbox.c,v 1.7 2005/01/24 21:36:39 miod Exp $	*/
+/*	$OpenBSD: dvbox.c,v 1.8 2005/01/27 21:24:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -403,6 +403,7 @@ dvbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 	volatile struct dvboxfb *db = (struct dvboxfb *)fb->regkva;
 
 	db_waitbusy(db);
+
 	db->rep_rule = DVBOX_DUALROP(rop);
 	db->source_y = sy;
 	db->source_x = sx;
@@ -411,6 +412,8 @@ dvbox_windowmove(struct diofb *fb, u_int16_t sx, u_int16_t sy,
 	db->wheight = cy;
 	db->wwidth = cx;
 	db->wmove = 1;
+
+	db_waitbusy(db);
 }
 
 /*
