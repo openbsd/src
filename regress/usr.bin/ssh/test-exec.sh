@@ -1,8 +1,7 @@
-#	$OpenBSD: test-exec.sh,v 1.25 2004/12/06 10:49:56 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.26 2005/01/14 04:21:18 david Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
-SUDO=
 #SUDO=sudo
 
 if [ ! -z "$TEST_SSH_PORT" ]; then
