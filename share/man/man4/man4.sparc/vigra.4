@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vigra.4,v 1.9 2003/05/14 06:48:14 miod Exp $
+.\"	$OpenBSD: vigra.4,v 1.10 2003/05/25 21:43:08 miod Exp $
 .\" Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 .Cd "wsdisplay* at vigra?"
 .Sh DESCRIPTION
 The
-.Tn "Vigra VS10 and VS12"
+.Tn "Vigra VS10, VS11 and VS12"
 are 8 bit color frame buffers with user-selectable video modes, and a
 VGA-compatible connector.
 .Pp
@@ -47,9 +47,9 @@ but makes its functions available via the internal
 .Xr wsdisplay 4
 interface.
 .Pp
-On VS10 and VS12 adapters, the resolution and signal synchronization modes are
+The video resolution and signal synchronization modes are
 selected with four dip switches on the back of the card.
-.Ss VS10 Switch Settings:
+.Ss VS10 and VS12 Switch Settings:
 .Bl -column "Switches" "Resolution" "Refresh"
 .It Li Switches Ta Resolution Ta Refresh Ta Description
 .It Li "1 2 3 4" Ta "" Ta "Rate"
@@ -78,6 +78,31 @@ The VS12 supports all of these modes, as well as a few high resolution settings.
 .It Li "U D U U" Ta 1280x1024 Ta 60Hz Ta "NEC xD, composite sync"
 .It Li "D U U U" Ta 1280x1024 Ta 60Hz Ta "NEC xD, sync-on-green"
 .It Li "U U U U" Ta 1280x1024 Ta 67Hz Ta "Sun SPARCstation, composite sync"
+.El
+.Pp
+The VS11 supports a similar set of modes as the VS12, but with higher refresh
+rates.
+.Ss VS11 Switch Settings:
+.Bl -column "Switches" "Resolution" "Refresh"
+.It Li Switches Ta Resolution Ta Refresh Ta Description
+.It Li "1 2 3 4" Ta "" Ta "Rate"
+.It " "
+.It Li "D D D D" Ta 640x480 Ta 60Hz Ta "Standard VGA, negative separate sync"
+.It Li "U D D D" Ta 800x600 Ta 72Hz Ta "VESA, negative separate sync"
+.It Li "D U D D" Ta 1024x768 Ta 60Hz Ta "VESA, negative separate sync"
+.It Li "U U D D" Ta 1024x768 Ta 60Hz Ta "VESA, composite sync"
+.It Li "D D U D" Ta 1024x768 Ta 60Hz Ta "VESA, sync-on-green"
+.It Li "U D U D" Ta 1024x768 Ta 66Hz Ta "Sun 386i, composite sync"
+.It Li "D U U D" Ta 1152x900 Ta 66Hz Ta "Sun SPARCstation, composite sync"
+.It Li "U U U D" Ta 1152x900 Ta 76Hz Ta "Sun SPARCstation, composite sync"
+.It Li "D D D U" Ta 1280x1024 Ta 67Hz Ta "Sun SPARCstation, composite sync"
+.It Li "U D D U" Ta 1280x1024 Ta 60Hz Ta "NEC xFG, negative separate sync"
+.It Li "D U D U" Ta 1280x1024 Ta 60Hz Ta "NEC xFG, composite sync"
+.It Li "U U D U" Ta 1280x1024 Ta 60Hz Ta "NEC xFG, sync-on-green"
+.It Li "D D U U" Ta 1280x1024 Ta 74Hz Ta "NEC xFG, composite sync"
+.It Li "U D U U" Ta 1280x1024 Ta 74Hz Ta "NEC xFG, sync-on-green"
+.It Li "D U U U" Ta 1280x1024 Ta 72Hz Ta "HP A1097, composite sync"
+.It Li "U U U U" Ta 1280x1024 Ta 72Hz Ta "Special, composite sync"
 .El
 .Sh SEE ALSO
 .Xr agten 4 ,

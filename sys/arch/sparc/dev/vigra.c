@@ -1,7 +1,8 @@
-/*	$OpenBSD: vigra.c,v 1.6 2003/04/06 16:59:33 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.7 2003/05/25 21:43:09 miod Exp $	*/
 
 /*
- * Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
+ * Copyright (c) 2002, 2003, Miodrag Vallat.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,10 +30,8 @@
 /*
  * Driver for the Vigra VS series of SBus framebuffers.
  *
- * The VS10 and VS12 models are supported. VS10-EK should also work.
- *
- * The VS11 uses an INMOS G335 dac instead of the G300 found in VS10/12, and
- * should be relatively easy to support once the dac diffs are sorted out.
+ * The VS10, VS11 and VS12 models are supported. VS10-EK should also work
+ * (but it might be driven by the regular cgthree driver?)
  *
  * The monochrome VS14, 16 grays VS15, and color VS18 are not supported.
  */
@@ -63,29 +62,109 @@
 #include <sparc/dev/sbusvar.h>
 
 /*
- * INMOS G300 registers (very incomplete...)
+ * The hardware information below has been gathered through experiments, as
+ * well as the debug information of the SunOS 4.x vigfb driver.
  */
 
-struct g300regs {
-	u_int32_t	unknown00;
-	u_int32_t	unknown04;
-	u_int32_t	disable;
-	u_int32_t	unknown0c;
-	u_int32_t	status;
-#define	G300S_INTR	0x0001
-	u_int32_t	intr;
-	u_int32_t	unknown18;
-	u_int32_t	unknown1c;
+/*
+ * Control and status registers
+ */
+
+struct csregs {
+	u_int32_t	sosr;
+	u_int32_t	g3rr;
+	u_int32_t	bcr;	/* board control register */
+	u_int32_t	spr;
+	u_int32_t	g3sr;	/* ramdac status register */
+#define	STATUS_INTR	0x0001
+	u_int32_t	imr;	/* interrupt mode register */
+	u_int32_t	ewcr;
+	u_int32_t	ssr;
+};
+
+/*
+ * G300 layout
+ */
+
+struct g300dac {
+	u_int32_t	cmap[256];
+	u_int32_t	g3null;
+	u_int32_t	unused1[32];
+	u_int32_t	half_sync;
+	u_int32_t	back_porch;
+	u_int32_t	display;
+	u_int32_t	short_display;
+	u_int32_t	broad_pulse;
+	u_int32_t	vsync;
+	u_int32_t	vblank;
+	u_int32_t	vdisplay;
+	u_int32_t	line_time;
+	u_int32_t	tos1;
+	u_int32_t	mem_init;
+	u_int32_t	transfer_delay;
+	u_int32_t	unused2[19];
+	u_int32_t	mask;
+	u_int32_t	unused3[31];
+	u_int32_t	cr;
+	u_int32_t	unused4[31];
+	u_int32_t	tos2;
+	u_int32_t	unused5[31];
+	u_int32_t	boot_location;
+};
+
+/*
+ * G335 layout
+ */
+
+struct g335dac {
+	u_int32_t	boot_location;
+	u_int32_t	unused1[32];
+	u_int32_t	half_sync;
+	u_int32_t	back_porch;
+	u_int32_t	display;
+	u_int32_t	short_display;
+	u_int32_t	broad_pulse;
+	u_int32_t	vsync;
+	u_int32_t	vpre_equalize;
+	u_int32_t	vpost_equalize;
+	u_int32_t	vblank;
+	u_int32_t	vdisplay;
+	u_int32_t	line_time;
+	u_int32_t	tos1;
+	u_int32_t	mem_init;
+	u_int32_t	transfer_delay;
+	u_int32_t	unused2[17];
+	u_int32_t	mask;
+	u_int32_t	unused3[31];
+	u_int32_t	cra;
+	u_int32_t	unused4[15];
+	u_int32_t	crb;
+	u_int32_t	unused5[15];
+	u_int32_t	tos2;
+	u_int32_t	unused6[32];
+	u_int32_t	cursor_palette[3];
+	u_int32_t	unused7[28];
+	u_int32_t	checksum[3];
+	u_int32_t	unused8[4];
+	u_int32_t	cursor_position;
+	u_int32_t	unused9[56];
+	u_int32_t	cmap[256];
+	u_int32_t	cursor_store[512];
+};
+
+union dac {
+	struct g300dac	g300;
+	struct g335dac	g335;
 };
 
 /*
  * SBUS register mappings
  */
-#define	VIGRA_REG_CMAP	1
-#define	VIGRA_REG_G300	2
-#define	VIGRA_REG_VRAM	3
+#define	VIGRA_REG_RAMDAC	1	/* either G300 or G335 */
+#define	VIGRA_REG_CSR		2
+#define	VIGRA_REG_VRAM		3
 
-#define	VIGRA_NREG	4
+#define	VIGRA_NREG		4
 
 union vigracmap {
 	u_char		cm_map[256][4];	/* 256 R/G/B entries plus pad */
@@ -97,9 +176,10 @@ struct vigra_softc {
 	struct	sunfb sc_sunfb;		/* common base part */
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	rom_reg	sc_phys;	/* phys address description */
-	volatile struct	g300regs *sc_regs;	/* ramdac registers */
-	volatile u_int32_t *sc_physcmap;	/* ramdac palette */
+	volatile struct	csregs *sc_regs;/* control registers */
+	volatile union dac *sc_ramdac;	/* ramdac registers */
 	union	vigracmap sc_cmap;	/* current colormap */
+	int	sc_g300;
 	struct	intrhand sc_ih;
 	int	sc_nscreens;
 };
@@ -125,8 +205,8 @@ int vigra_show_screen(void *, void *, int, void (*cb)(void *, int, int),
     void *);
 paddr_t vigra_mmap(void *, off_t, int);
 void vigra_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-int vigra_getcmap(union vigracmap *, struct wsdisplay_cmap *);
-int vigra_putcmap(union vigracmap *, struct wsdisplay_cmap *);
+int vigra_getcmap(union vigracmap *, struct wsdisplay_cmap *, int);
+int vigra_putcmap(union vigracmap *, struct wsdisplay_cmap *, int);
 void vigra_loadcmap_immediate(struct vigra_softc *, int, int);
 static __inline__ void vigra_loadcmap_deferred(struct vigra_softc *,
     u_int, u_int);
@@ -157,12 +237,10 @@ struct cfdriver vigra_cd = {
 };
 
 /*
- * Match a vigra.
+ * Match a supported vigra card.
  */
 int
-vigramatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+vigramatch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
@@ -173,22 +251,19 @@ vigramatch(parent, vcf, aux)
 	 */
 	cf->cf_flags &= FB_USERMASK;
 
-	if (strcmp("vs10", ra->ra_name) && strcmp("vs12", ra->ra_name))
-		return (0);
-
-	if (ca->ca_bustype != BUS_SBUS)
+	if (strcmp("vs10", ra->ra_name) != 0 &&
+	    strcmp("vs11", ra->ra_name) != 0 &&
+	    strcmp("vs12", ra->ra_name) != 0)
 		return (0);
 
 	return (1);
 }
 
 /*
- * Attach a display.
+ * Attach and initialize a vigra display, as well as a child wsdisplay.
  */
 void
-vigraattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+vigraattach(struct device *parent, struct device *self, void *args)
 {
 	struct vigra_softc *sc = (struct vigra_softc *)self;
 	struct confargs *ca = args;
@@ -212,10 +287,16 @@ vigraattach(parent, self, args)
 		return;
 	}
 
-	sc->sc_regs = mapiodev(&ca->ca_ra.ra_reg[VIGRA_REG_G300], 0,
-	    sizeof(*sc->sc_regs));
-	sc->sc_physcmap = mapiodev(&ca->ca_ra.ra_reg[VIGRA_REG_CMAP], 0,
-	    256 * sizeof(u_int32_t));
+	/*
+	 * Check whether we are using an G300 or an G335 chip.
+	 * The VS10 and VS12 use the G300, while the VS11 uses a G335.
+	 */
+	sc->sc_g300 = strncmp(nam, "VIGRA,vs11", strlen("VIGRA,vs11"));
+
+	sc->sc_regs = mapiodev(&ca->ca_ra.ra_reg[VIGRA_REG_CSR], 0,
+	    ca->ca_ra.ra_reg[VIGRA_REG_CSR].rr_len);
+	sc->sc_ramdac = mapiodev(&ca->ca_ra.ra_reg[VIGRA_REG_RAMDAC], 0,
+	    ca->ca_ra.ra_reg[VIGRA_REG_RAMDAC].rr_len);
 	sc->sc_phys = ca->ca_ra.ra_reg[VIGRA_REG_VRAM];
 
 	sc->sc_ih.ih_fun = vigra_intr;
@@ -242,9 +323,13 @@ vigraattach(parent, self, args)
 	 *   choose to clear the screen rather than keeping old prom output in
 	 *   the margins.
 	 * XXX there should be a rasops "clear margins" feature
+	 *
+	 * Also, in 1280x1024 resolution, the PROM display is not centered
+	 * vertically (why? no other frame buffer does this in such a mode!),
+	 * so be lazy and clear the screen here too anyways...
 	 */
-	fbwscons_init(&sc->sc_sunfb,
-	    isconsole && (sc->sc_sunfb.sf_width != 800));
+	fbwscons_init(&sc->sc_sunfb, isconsole &&
+	    (sc->sc_sunfb.sf_width != 800 && sc->sc_sunfb.sf_width != 1280));
 	fbwscons_setcolormap(&sc->sc_sunfb, vigra_setcolor);
 
 	vigra_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
@@ -258,6 +343,7 @@ vigraattach(parent, self, args)
 			row = vigra_stdscreen.nrows - 1;
 			break;
 		case 800:
+		case 1280:
 			row = 0;	/* screen has been cleared above */
 			break;
 		default:
@@ -279,12 +365,7 @@ vigraattach(parent, self, args)
 }
 
 int
-vigra_ioctl(v, cmd, data, flags, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+vigra_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct vigra_softc *sc = v;
 	struct wsdisplay_cmap *cm;
@@ -308,13 +389,13 @@ vigra_ioctl(v, cmd, data, flags, p)
 
 	case WSDISPLAYIO_GETCMAP:
 		cm = (struct wsdisplay_cmap *)data;
-		error = vigra_getcmap(&sc->sc_cmap, cm);
+		error = vigra_getcmap(&sc->sc_cmap, cm, sc->sc_g300);
 		if (error)
 			return (error);
 		break;
 	case WSDISPLAYIO_PUTCMAP:
 		cm = (struct wsdisplay_cmap *)data;
-		error = vigra_putcmap(&sc->sc_cmap, cm);
+		error = vigra_putcmap(&sc->sc_cmap, cm, sc->sc_g300);
 		if (error)
 			return (error);
 		vigra_loadcmap_deferred(sc, cm->index, cm->count);
@@ -335,12 +416,8 @@ vigra_ioctl(v, cmd, data, flags, p)
 }
 
 int
-vigra_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+vigra_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *attrp)
 {
 	struct vigra_softc *sc = v;
 
@@ -357,9 +434,7 @@ vigra_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 void
-vigra_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+vigra_free_screen(void *v, void *cookie)
 {
 	struct vigra_softc *sc = v;
 
@@ -367,12 +442,8 @@ vigra_free_screen(v, cookie)
 }
 
 int
-vigra_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+vigra_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 	return (0);
 }
@@ -382,10 +453,7 @@ vigra_show_screen(v, cookie, waitok, cb, cbarg)
  * offset, allowing for the given protection, or return -1 for error.
  */
 paddr_t
-vigra_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+vigra_mmap(void *v, off_t offset, int prot)
 {
 	struct vigra_softc *sc = v;
 
@@ -400,25 +468,26 @@ vigra_mmap(v, offset, prot)
 }
 
 void
-vigra_setcolor(v, index, r, g, b)
-	void *v;
-	u_int index;
-	u_int8_t r, g, b;
+vigra_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
 	struct vigra_softc *sc = v;
 
-	sc->sc_cmap.cm_map[index][3] = r;
-	sc->sc_cmap.cm_map[index][2] = g;
-	sc->sc_cmap.cm_map[index][1] = b;
+	if (sc->sc_g300) {
+		sc->sc_cmap.cm_map[index][3] = r;
+		sc->sc_cmap.cm_map[index][2] = g;
+		sc->sc_cmap.cm_map[index][1] = b;
+	} else {
+		sc->sc_cmap.cm_map[index][3] = b;
+		sc->sc_cmap.cm_map[index][2] = g;
+		sc->sc_cmap.cm_map[index][1] = r;
+	}
 	sc->sc_cmap.cm_map[index][0] = 0;	/* no alpha channel */
 
 	vigra_loadcmap_immediate(sc, index, 1);
 }
 
 int
-vigra_getcmap(cm, rcm)
-	union vigracmap *cm;
-	struct wsdisplay_cmap *rcm;
+vigra_getcmap(union vigracmap *cm, struct wsdisplay_cmap *rcm, int g300)
 {
 	u_int index = rcm->index, count = rcm->count, i;
 	int error;
@@ -426,24 +495,36 @@ vigra_getcmap(cm, rcm)
 	if (index >= 256 || count > 256 - index)
 		return (EINVAL);
 
+	if (g300) {
+		for (i = 0; i < count; i++) {
+			if ((error = copyout(&cm->cm_map[index + i][3],
+			    &rcm->red[i], 1)) != 0)
+				return (error);
+			if ((error = copyout(&cm->cm_map[index + i][1],
+			    &rcm->blue[i], 1)) != 0)
+				return (error);
+		}
+	} else {
+		for (i = 0; i < count; i++) {
+			if ((error = copyout(&cm->cm_map[index + i][1],
+			    &rcm->red[i], 1)) != 0)
+				return (error);
+			if ((error = copyout(&cm->cm_map[index + i][3],
+			    &rcm->blue[i], 1)) != 0)
+				return (error);
+		}
+	}
+
 	for (i = 0; i < count; i++) {
-		if ((error = copyout(&cm->cm_map[index + i][3],
-		    &rcm->red[i], 1)) != 0)
-			return (error);
 		if ((error = copyout(&cm->cm_map[index + i][2],
 		    &rcm->green[i], 1)) != 0)
-			return (error);
-		if ((error = copyout(&cm->cm_map[index + i][1],
-		    &rcm->blue[i], 1)) != 0)
 			return (error);
 	}
 	return (0);
 }
 
 int
-vigra_putcmap(cm, rcm)
-	union vigracmap *cm;
-	struct wsdisplay_cmap *rcm;
+vigra_putcmap(union vigracmap *cm, struct wsdisplay_cmap *rcm, int g300)
 {
 	u_int index = rcm->index, count = rcm->count, i;
 	int error;
@@ -451,15 +532,29 @@ vigra_putcmap(cm, rcm)
 	if (index >= 256 || count > 256 - index)
 		return (EINVAL);
 
+	if (g300) {
+		for (i = 0; i < count; i++) {
+			if ((error = copyin(&rcm->red[i],
+			    &cm->cm_map[index + i][3], 1)) != 0)
+				return (error);
+			if ((error = copyin(&rcm->blue[i],
+			    &cm->cm_map[index + i][1], 1)) != 0)
+				return (error);
+		}
+	} else {
+		for (i = 0; i < count; i++) {
+			if ((error = copyin(&rcm->red[i],
+			    &cm->cm_map[index + i][1], 1)) != 0)
+				return (error);
+			if ((error = copyin(&rcm->blue[i],
+			    &cm->cm_map[index + i][3], 1)) != 0)
+				return (error);
+		}
+	}
+
 	for (i = 0; i < count; i++) {
-		if ((error = copyin(&rcm->red[i],
-		    &cm->cm_map[index + i][3], 1)) != 0)
-			return (error);
 		if ((error = copyin(&rcm->green[i],
 		    &cm->cm_map[index + i][2], 1)) != 0)
-			return (error);
-		if ((error = copyin(&rcm->blue[i],
-		    &cm->cm_map[index + i][1], 1)) != 0)
 			return (error);
 		cm->cm_map[index + i][0] = 0;	/* no alpha channel */
 	}
@@ -467,12 +562,15 @@ vigra_putcmap(cm, rcm)
 }
 
 void
-vigra_loadcmap_immediate(sc, start, ncolors)
-	struct vigra_softc *sc;
-	int start, ncolors;
+vigra_loadcmap_immediate(struct vigra_softc *sc, int start, int ncolors)
 {
 	u_int32_t *colp = &sc->sc_cmap.cm_chip[start];
-	volatile u_int32_t *lutp = &sc->sc_physcmap[start];
+	volatile u_int32_t *lutp;
+       
+	if (sc->sc_g300)
+		lutp = &(sc->sc_ramdac->g300.cmap[start]);
+	else
+		lutp = &(sc->sc_ramdac->g335.cmap[start]);
 
 	while (--ncolors >= 0)
 		*lutp++ = *colp++;
@@ -482,37 +580,34 @@ static __inline__ void
 vigra_loadcmap_deferred(struct vigra_softc *sc, u_int start, u_int ncolors)
 {
 
-	sc->sc_regs->intr = 1;
+	sc->sc_regs->imr = 1;
 }
 
 void
-vigra_burner(v, on, flags)
-	void *v;
-	u_int on, flags;
+vigra_burner(void *v, u_int on, u_int flags)
 {
 	struct vigra_softc *sc = v;
 
 	if (on) {
-		sc->sc_regs->disable = 0;
+		sc->sc_regs->bcr = 0;
 	} else {
-		sc->sc_regs->disable = 1;
+		sc->sc_regs->bcr = 1;
 	}
 }
 
 int
-vigra_intr(v)
-	void *v;
+vigra_intr(void *v)
 {
 	struct vigra_softc *sc = v;
 
-	if (sc->sc_regs->intr == 0 ||
-	    !ISSET(sc->sc_regs->status, G300S_INTR)) {
+	if (sc->sc_regs->imr == 0 ||
+	    !ISSET(sc->sc_regs->g3sr, STATUS_INTR)) {
 		/* Not expecting an interrupt, it's not for us. */
 		return (0);
 	}
 
 	/* Acknowledge the interrupt and disable it. */
-	sc->sc_regs->intr = 0;
+	sc->sc_regs->imr = 0;
 
 	vigra_loadcmap_immediate(sc, 0, 256);
 
