@@ -35,6 +35,8 @@
  */
 
 #include "includes.h"
+RCSID("$OpenBSD: serverloop.c,v 1.33 2000/10/16 09:38:44 djm Exp $");
+
 #include "xmalloc.h"
 #include "ssh.h"
 #include "packet.h"
