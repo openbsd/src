@@ -1,6 +1,6 @@
-/*	$OpenBSD: ts102.c,v 1.11 2004/05/04 16:59:31 grange Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.12 2004/05/09 22:02:38 miod Exp $	*/
 /*
- * Copyright (c) 2003, Miodrag Vallat.
+ * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -67,7 +67,6 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 
@@ -99,23 +98,6 @@
 struct	tslot_softc;
 
 /*
- * Slot event structure
- */
-struct	tslot_event {
-	SIMPLEQ_ENTRY(tslot_event) te_q;
-	int	te_what;
-	int	te_slot;
-};
-
-#define	TSLOT_EVENT_INSERT	0
-#define	TSLOT_EVENT_REMOVE	1
-
-const char *tslot_event_descr[] = {
-	"insertion",
-	"removal"
-};
-
-/*
  * Per-slot data
  */
 struct	tslot_data {
@@ -145,7 +127,7 @@ struct	tslot_softc {
 	pcmcia_chipset_tag_t sc_pct;
 
 	struct proc	*sc_thread;			/* event thread */
-	SIMPLEQ_HEAD(, tslot_event) sc_events;
+	unsigned int	sc_events;	/* sockets with pending events */
 
 	struct tslot_data sc_slot[TS102_NUM_SLOTS];
 };
@@ -171,7 +153,7 @@ int	tslot_mem_map(pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t,
     struct pcmcia_mem_handle *, bus_addr_t *, int *);
 void	tslot_mem_unmap(pcmcia_chipset_handle_t, int);
 int	tslot_print(void *, const char *);
-int	tslot_queue_event(struct tslot_softc *, int, int);
+void	tslot_queue_event(struct tslot_softc *, int);
 void	tslot_reset(struct tslot_data *, u_int32_t);
 void	tslot_slot_disable(pcmcia_chipset_handle_t);
 void	tslot_slot_enable(pcmcia_chipset_handle_t);
@@ -269,7 +251,7 @@ tslot_attach(struct device *parent, struct device *self, void *args)
 	/*
 	 * Setup asynchronous event handler
 	 */
-	SIMPLEQ_INIT(&sc->sc_events);
+	sc->sc_events = 0;
 	kthread_create_deferred(tslot_create_event_thread, sc);
 
 	sc->sc_pct = (pcmcia_chipset_tag_t)&tslot_functions;
@@ -404,7 +386,8 @@ tslot_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
 #endif
 
 	pih->iot = &td->td_rr;
-	pih->ioh = (bus_space_handle_t)(td->td_space[TS102_RANGE_IO]);
+	bus_space_subregion(&td->td_rr, td->td_space[TS102_RANGE_IO],
+	    offset, size, &pih->ioh);
 	*windowp = TS102_RANGE_IO;
 
 #ifdef TSLOT_DEBUG
@@ -464,7 +447,8 @@ tslot_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t addr,
 	addr += pmh->addr;
 
 	pmh->memt = &td->td_rr;
-	pmh->memh = (bus_space_handle_t)(td->td_space[slot] + addr);
+	bus_space_subregion(&td->td_rr, td->td_space[slot],
+	    addr, size, &pmh->memh);
 	pmh->realsize = TS102_ARBITRARY_MAP_SIZE - addr;
 	*offsetp = 0;
 	*windowp = slot;
@@ -517,7 +501,7 @@ tslot_slot_enable(pcmcia_chipset_handle_t pch)
 	    td->td_parent->sc_dev.dv_xname, td->td_slot);
 #endif
 
-	/* Pover down the socket to reset it */
+	/* Power down the socket to reset it */
 	status = TSLOT_READ(td, TS102_REG_CARD_A_STS);
 	TSLOT_WRITE(td, TS102_REG_CARD_A_STS, status | TS102_CARD_STS_VCCEN);
 
@@ -568,6 +552,7 @@ tslot_slot_enable(pcmcia_chipset_handle_t pch)
 	 */
 	for (i = 30000; i != 0; i--) {
 		status = TSLOT_READ(td, TS102_REG_CARD_A_STS);
+		/* If the card has been removed, abort */
 		if ((status & TS102_CARD_STS_PRES) == 0) {
 			tslot_slot_disable(pch);
 			return;
@@ -619,47 +604,46 @@ tslot_event_thread(void *v)
 {
 	struct tslot_softc *sc = v;
 	struct tslot_data *td;
-	struct tslot_event *te;
-	int s;
+	int s, status;
+	unsigned int socket;
 
 	for (;;) {
 		s = splhigh();
 
-		if ((te = SIMPLEQ_FIRST(&sc->sc_events)) == NULL) {
+		if ((socket = ffs(sc->sc_events)) == 0) {
 			splx(s);
 			tsleep(&sc->sc_events, PWAIT, "tslot_event", 0);
 			continue;
 		}
-
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_events, te_q);
+		socket--;
+		sc->sc_events &= ~(1 << socket);
 		splx(s);
 
-		if (te->te_slot >= TS102_NUM_SLOTS) {
+		if (socket >= TS102_NUM_SLOTS) {
+#ifdef DEBUG
 			printf("%s: invalid slot number %d\n",
 			    sc->sc_dev.dv_xname, te->te_slot);
+#endif
+			continue;
+		}
+
+		td = &sc->sc_slot[socket];
+		status = TSLOT_READ(td, TS102_REG_CARD_A_STS);
+
+		if (status & TS102_CARD_STS_PRES) {
+			/* Card insertion */
+			if ((td->td_status & TS_CARD) == 0) {
+				td->td_status |= TS_CARD;
+				pcmcia_card_attach(td->td_pcmcia);
+			}
 		} else {
-			td = &sc->sc_slot[te->te_slot];
-			switch (te->te_what) {
-			case TSLOT_EVENT_INSERT:
-				if ((td->td_status & TS_CARD) == 0) {
-					td->td_status |= TS_CARD;
-					pcmcia_card_attach(td->td_pcmcia);
-				}
-				break;
-			case TSLOT_EVENT_REMOVE:
-				if ((td->td_status & TS_CARD) != 0) {
-					td->td_status &= ~TS_CARD;
-					pcmcia_card_detach(td->td_pcmcia,
-					    DETACH_FORCE);
-				}
-				break;
-			default:
-				printf("%s: invalid event type %d on slot %d\n",
-				    sc->sc_dev.dv_xname,
-				    te->te_slot, te->te_what);
+			/* Card removal */
+			if ((td->td_status & TS_CARD) != 0) {
+				td->td_status &= ~TS_CARD;
+				pcmcia_card_detach(td->td_pcmcia,
+				    DETACH_FORCE);
 			}
 		}
-		free(te, M_TEMP);
 	}
 }
 
@@ -717,38 +701,27 @@ tslot_intr(void *v)
 	return (rc);
 }
 
-int
-tslot_queue_event(struct tslot_softc *sc, int slot, int what)
+void
+tslot_queue_event(struct tslot_softc *sc, int slot)
 {
-	struct tslot_event *te;
 	int s;
 
-	te = malloc(sizeof(*te), M_TEMP, M_NOWAIT);
-	if (te == NULL) {
-		printf("%s: %s event lost on slot %d\n",
-		    sc->sc_dev.dv_xname, tslot_event_descr[what], slot);
-		return (ENOMEM);
-	}
-
-	te->te_what = what;
-	te->te_slot = slot;
 	s = splhigh();
-	SIMPLEQ_INSERT_TAIL(&sc->sc_events, te, te_q);
+	sc->sc_events |= (1 << slot);
 	splx(s);
 	wakeup(&sc->sc_events);
-
-	return (0);
 }
 
 void
 tslot_slot_intr(struct tslot_data *td, int intreg)
 {
+	struct tslot_softc *sc = td->td_parent;
 	int status, sockstat;
 
 	status = TSLOT_READ(td, TS102_REG_CARD_A_STS);
 #ifdef TSLOT_DEBUG
 	printf("%s: interrupt on socket %d ir %x sts %x\n",
-	    td->td_parent->sc_dev.dv_xname, td->td_slot, intreg, status);
+	    sc->sc_dev.dv_xname, td->td_slot, intreg, status);
 #endif
 
 	sockstat = td->td_status;
@@ -763,17 +736,10 @@ tslot_slot_intr(struct tslot_data *td, int intreg)
 
 	if ((intreg & TS102_CARD_INT_STATUS_CARDDETECT_STATUS_CHANGED) != 0 &&
 	    (intreg & TS102_CARD_INT_MASK_CARDDETECT_STATUS) != 0) {
-		if (status & TS102_CARD_STS_PRES) {
-			tslot_queue_event(td->td_parent,
-			    td->td_slot, TSLOT_EVENT_INSERT);
-		} else {
-			tslot_queue_event(td->td_parent, td->td_slot,
-			    TSLOT_EVENT_REMOVE);
-		}
+		tslot_queue_event(sc, td->td_slot);
 #ifdef TSLOT_DEBUG
 		printf("%s: slot %d status changed from %d to %d\n",
-		    td->td_parent->sc_dev.dv_xname,
-		    td->td_slot, sockstat, td->td_status);
+		    sc->sc_dev.dv_xname, td->td_slot, sockstat, td->td_status);
 #endif
 		/*
 		 * Ignore extra interrupt bits, they are part of the change.
@@ -783,9 +749,13 @@ tslot_slot_intr(struct tslot_data *td, int intreg)
 
 	if ((intreg & TS102_CARD_INT_STATUS_IRQ) != 0 &&
 	    (intreg & TS102_CARD_INT_MASK_IRQ) != 0) {
-		if (sockstat != TS_CARD) {
+		/* ignore interrupts if we have a pending state change */
+		if (sc->sc_events & (1 << td->td_slot))
+			return;
+
+		if ((sockstat & TS_CARD) == 0) {
 			printf("%s: spurious interrupt on slot %d isr %x\n",
-			    td->td_parent->sc_dev.dv_xname, td->td_slot, intreg);
+			    sc->sc_dev.dv_xname, td->td_slot, intreg);
 			return;
 		}
 
