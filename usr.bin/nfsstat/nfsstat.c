@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.9 2000/04/18 20:17:54 mickey Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.10 2000/05/01 19:48:04 provos Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.9 2000/04/18 20:17:54 mickey Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.10 2000/05/01 19:48:04 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ main(argc, argv)
 			break;
 		case 'w':
 			interval = (u_int)strtol(optarg, &p, 0);
-			if (*optarg != '\0' && *p == '\0')
+			if (*optarg == '\0' || *p != '\0')
 				errx(1, "invalid interval");
 			break;
 		case 's':
