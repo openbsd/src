@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.41 2004/10/05 19:35:49 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.42 2004/10/05 19:44:15 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -502,7 +502,7 @@ sub add
 		$plist->{state}->{nochecksum} = 1;
 		return undef;
 	} else {
-		return $class->SUPER::add(@args);
+		return $class->SUPER::add($plist, @args);
 	}
 }
 
@@ -571,15 +571,13 @@ our @ISA=qw(OpenBSD::PackingElement::Meta);
 __PACKAGE__->setKeyword('option');
 sub keyword() { 'option' }
 
-sub add
+sub new
 {
-	my ($class, $plist, @args) = @_;
+	my ($class, @args) = @_;
 	if ($args[0] eq 'no-default-conflict') {
-		shift;
-		return OpenBSD::PackingElement::NoDefaultConflict->add($plist);
+		return OpenBSD::PackingElement::NoDefaultConflict->new();
 	} elsif ($args[0] eq 'manual-installation') {
-		shift;
-		return OpenBSD::PackingElement::ManualInstallation->add($plist);
+		return OpenBSD::PackingElement::ManualInstallation->new();
 	} else {
 		die "Unknown option: $args[0]";
 	}
