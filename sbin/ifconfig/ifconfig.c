@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.25 1999/12/27 03:14:39 angelos Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.26 1999/12/27 04:19:42 angelos Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.25 1999/12/27 03:14:39 angelos Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.26 1999/12/27 04:19:42 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,9 @@ void 	setsnpaoffset __P((char *));
 void	setipxframetype __P((char *, int));
 void    setatrange __P((char *, int));
 void    setatphase __P((char *, int));  
-void	setsa __P((char *));
+void	dstsa __P((char *));
+void	srcsa __P((char *));
+void	clearsa __P((char *));
 #ifdef INET6
 void 	setia6flags __P((char *, int));
 void	setia6pltime __P((char *, int));
@@ -247,7 +249,9 @@ struct	cmd {
 	{ "snap",	ETHERTYPE_SNAP,	0,		setipxframetype },
 	{ "EtherII",	ETHERTYPE_II,	0,		setipxframetype },
 #endif	/* INET_ONLY */
-	{ "setsa",	NEXTARG,	0,		setsa } ,
+	{ "dstsa",	NEXTARG,	0,		dstsa } ,
+	{ "srcsa",	NEXTARG,	0,		srcsa } ,
+	{ "clearsa",	NEXTARG,	0,		clearsa } ,
 	{ "link0",	IFF_LINK0,	0,		setifflags } ,
 	{ "-link0",	-IFF_LINK0,	0,		setifflags } ,
 	{ "link1",	IFF_LINK1,	0,		setifflags } ,
@@ -639,8 +643,9 @@ setifaddr(addr, param)
 	(*afp->af_getaddr)(addr, (doalias >= 0 ? ADDR : RIDADDR));
 }
 
-void
-setsa(sa)
+static void
+handlesa(cmd, sa)
+        int cmd;
 	char *sa;
 {
 	char *p1, *p2, *p;
@@ -694,8 +699,42 @@ setsa(sa)
 	if ((p == NULL) || (*p != '\0'))
 		errx(1, "bad security protocol");
 
-	if (ioctl(s, SIOCSENCSA, (caddr_t)&ifsa) < 0)
-		warn("SIOCSENCSA");
+	if (ioctl(s, cmd, (caddr_t)&ifsa) < 0)
+	  switch (cmd)
+	  {
+	      case SIOCSENCDSTSA:
+		  warn("SIOCSENCDSTSA");
+		  break;
+
+	      case SIOCSENCSRCSA:
+		  warn("SIOCSENCSRCSA");
+		  break;
+
+	      case SIOCSENCCLEARSA:
+		  warn("SIOCSENCCLEARSA");
+		  break;
+	  }
+}
+
+void
+dstsa(sa)
+        char *sa;
+{
+        handlesa(SIOCSENCDSTSA, sa);
+}
+
+void
+srcsa(sa)
+        char *sa;
+{
+        handlesa(SIOCSENCSRCSA, sa);
+}
+
+void
+clearsa(sa)
+        char *sa;
+{
+        handlesa(SIOCSENCCLEARSA, sa);
 }
 
 void
@@ -1967,7 +2006,9 @@ usage()
 		"[ netmask mask ] ]\n"
 		"\t[media media_type] [mediaopt media_option]\n"
 		"\t[ metric n ]\n"
-		"\t[ setsa address/spi/protocol ]\n"
+		"\t[ dstsa address/spi/protocol ]\n"
+		"\t[ srcsa address/spi/protocol ]\n"
+		"\t[ clearsa address/spi/protocol ]\n"
 		"\t[ arp | -arp ]\n"
 		"\t[ -802.2 | -802.3 | -802.2tr | -snap | -EtherII ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"

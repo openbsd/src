@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.31 1999/12/27 03:25:19 angelos Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.32 1999/12/27 04:19:42 angelos Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -145,7 +145,7 @@ for example,
 The following parameters may be set with
 .Nm ifconfig :
 .Bl -tag -width dest_addressxx
-.It Cm setsa
+.It Cm dstsa
 Bind an
 .Xr ipsec 4
 Security Association (SA) to an
@@ -166,14 +166,43 @@ for ESP, 51 for AH, or 4 for IP-in-IP). The SA must exist for the
 operation to be successfully completed. Typically, such SAs would be
 established via
 .Xr ipsecadm 1 .
+This SA will be used to send packets to a remote host via
+.Xr ipsec 4 .
 If the
 .Ar 0.0.0.0/0/0
 or
 .Ar ::/0/0
 SA is specified, any existing binding between the corresponding
 .Xr enc 4
-interface and an SA is cleared (in fact, just the SPI and the protocol
-part of the SA have to be set to zero).
+interface and the SA is cleared (in fact, just the SPI and the protocol
+part of the SA have to be set to zero). Only one SA may be bound to an
+.Xr enc 4
+interface at a time.
+.It Cm srcsa
+Similar to
+.Cm dstsa ,
+this operation binds an
+.Xr ipsec 4
+SA to an
+.Xr enc 4
+interface. The SAs bound via this operation are receiving SAs. Any
+packets received over one of these SAs, will be made to appear as if
+it arrived by the corresponding
+.Xr enc 4
+interface. If the interface is part of a bridge, the packets will be
+delivered to the bridge. Contrary to the
+.Cm dstsa
+flag, multiple SAs may be bound to an
+.Xr enc 4
+interface via this operation.
+.It Cm clearsa
+Remove the binding between an SA and an
+.Xr enc 4
+interface, such as established with the
+.Cm srcsa
+or
+.Cm dstsa
+flags.
 .It Cm alias
 Establish an additional network address for this interface.
 This is sometimes useful when changing network numbers, and
