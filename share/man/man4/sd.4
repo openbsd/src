@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sd.4,v 1.8 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: sd.4,v 1.9 2002/10/01 07:10:39 miod Exp $
 .\"	$NetBSD: sd.4,v 1.3 1996/10/20 23:15:23 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -113,10 +113,10 @@ On many systems
 .Xr disklabel 8
 is used to partition the drive into filesystems.
 On some systems the
-.Nx
+.Ox
 portion of the disk resides within a native partition, and another
 program is used to create the
-.Nx
+.Ox
 portion.
 .Pp
 For example, the i386 port uses
@@ -147,7 +147,7 @@ calls apply to
 .Tn SCSI
 disks as well as to other disks.
 They are defined in the header file
-.Aq Pa disklabel.h .
+.Aq Pa sys/disklabel.h .
 .Pp
 .Bl -tag -width DIOCSDINFO
 .\".It Dv DIOCSBAD
