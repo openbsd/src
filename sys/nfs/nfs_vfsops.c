@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.33 2001/05/16 12:48:32 ho Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.34 2001/06/24 21:16:20 csapuntz Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -679,9 +679,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	struct vnode **vpp;
 {
 	register struct nfsmount *nmp;
-	struct nfsnode *np;
 	int error;
-	struct vattr attrs;
 
 	if (mp->mnt_flag & MNT_UPDATE) {
 		nmp = VFSTONFS(mp);
@@ -749,19 +747,6 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	 * point.
 	 */
 	mp->mnt_stat.f_iosize = NFS_MAXDGRAMDATA;
-	/*
-	 * A reference count is needed on the nfsnode representing the
-	 * remote root.  If this object is not persistent, then backward
-	 * traversals of the mount point (i.e. "..") will not work if
-	 * the nfsnode gets flushed out of the cache. Ufs does not have
-	 * this problem, because one can identify root inodes by their
-	 * number == ROOTINO (2).
-	 */
-	error = nfs_nget(mp, (nfsfh_t *)nmp->nm_fh, nmp->nm_fhsize, &np);
-	if (error)
-		goto bad;
-	*vpp = NFSTOV(np);
-	VOP_GETATTR(*vpp, &attrs, curproc->p_ucred, curproc);	/* XXX */
 
 	return (0);
 bad:
@@ -781,8 +766,6 @@ nfs_unmount(mp, mntflags, p)
 	struct proc *p;
 {
 	register struct nfsmount *nmp;
-	struct nfsnode *np;
-	struct vnode *vp;
 	int error, flags = 0;
 
 	if (mntflags & MNT_FORCE)
@@ -790,26 +773,11 @@ nfs_unmount(mp, mntflags, p)
 	nmp = VFSTONFS(mp);
 	/*
 	 * Goes something like this..
-	 * - Check for activity on the root vnode (other than ourselves).
 	 * - Call vflush() to clear out vnodes for this file system,
 	 *   except for the root vnode.
-	 * - Decrement reference on the vnode representing remote root.
 	 * - Close the socket
 	 * - Free up the data structures
 	 */
-	/*
-	 * We need to decrement the ref. count on the nfsnode representing
-	 * the remote root.  See comment in mountnfs().  The VFS unmount()
-	 * has done vput on this vnode, otherwise we would get deadlock!
-	 */
-	error = nfs_nget(mp, (nfsfh_t *)nmp->nm_fh, nmp->nm_fhsize, &np);
-	if (error)
-		return(error);
-	vp = NFSTOV(np);
-	if (vp->v_usecount > 2) {
-		vput(vp);
-		return (EBUSY);
-	}
 
 	/*
 	 * Must handshake with nqnfs_clientd() if it is active.
@@ -817,9 +785,8 @@ nfs_unmount(mp, mntflags, p)
 	nmp->nm_flag |= NFSMNT_DISMINPROG;
 	while (nmp->nm_inprog != NULLVP)
 		(void) tsleep((caddr_t)&lbolt, PSOCK, "nfsdism", 0);
-	error = vflush(mp, vp, flags);
+	error = vflush(mp, NULL, flags);
 	if (error) {
-		vput(vp);
 		nmp->nm_flag &= ~NFSMNT_DISMINPROG;
 		return (error);
 	}
@@ -831,12 +798,6 @@ nfs_unmount(mp, mntflags, p)
 	if (nmp->nm_flag & (NFSMNT_NQNFS | NFSMNT_KERB))
 		nmp->nm_flag |= NFSMNT_DISMNT;
 
-	/*
-	 * There are two reference counts to get rid of here.
-	 */
-	vrele(vp);
-	vrele(vp);
-	vgone(vp);
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
 
@@ -853,7 +814,6 @@ nfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
 {
-	register struct vnode *vp;
 	struct nfsmount *nmp;
 	struct nfsnode *np;
 	int error;
@@ -862,11 +822,7 @@ nfs_root(mp, vpp)
 	error = nfs_nget(mp, (nfsfh_t *)nmp->nm_fh, nmp->nm_fhsize, &np);
 	if (error)
 		return (error);
-	vp = NFSTOV(np);
-	if (vp->v_type == VNON)
-		vp->v_type = VDIR;
-	vp->v_flag = VROOT;
-	*vpp = vp;
+	*vpp = NFSTOV(np);
 	return (0);
 }
 

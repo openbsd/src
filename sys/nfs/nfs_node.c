@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.13 1999/04/28 09:28:17 art Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.14 2001/06/24 21:16:19 csapuntz Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -136,6 +136,21 @@ loop:
 	MALLOC(np, struct nfsnode *, sizeof *np, M_NFSNODE, M_WAITOK);
 	bzero((caddr_t)np, sizeof *np);
 	vp->v_data = np;
+
+	/* 
+	 * Are we getting the root? If so, make sure the vnode flags
+	 * are correct 
+	 */
+	{
+		struct nfsmount *nmp = VFSTONFS(mntp);
+		if ((fhsize == nmp->nm_fhsize) &&
+		    !bcmp(fhp, nmp->nm_fh, fhsize)) {
+			if (vp->v_type == VNON)
+				vp->v_type = VDIR;
+			vp->v_flag |= VROOT;
+		}
+	}
+
 	np->n_vnode = vp;
 	/*
 	 * Insert the nfsnode in the hash queue for its new file handle
