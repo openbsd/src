@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.2 2001/08/12 17:53:16 fgsch Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.3 2001/08/13 06:32:18 pvalchev Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -83,7 +83,6 @@ int nodaemon = FALSE;
 int background = FALSE;
 int identify = FALSE;
 char *pidfile = "/var/run/wsmoused.pid";
-static sigjmp_buf env;
 
 mouse_t mouse = {
     flags : 0, 
@@ -567,7 +566,7 @@ main(int argc, char **argv)
 				wsmouse_identify();
 			else 
 				printf("serial mouse: %s type\n",
-						mouse_name(mouse.proto));
+						(char *)mouse_name(mouse.proto));
 			return (0);
 		}
 

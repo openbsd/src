@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.c,v 1.2 2001/08/12 17:53:16 fgsch Exp $ */
+/* $OpenBSD: mouse_protocols.c,v 1.3 2001/08/13 06:32:18 pvalchev Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -164,18 +164,6 @@ static symtab_t pnpprod[] = {
     { NULL, -1 },
 };
 	
-static char *
-gettokenname(symtab_t *tab, int val)
-{
-    int i;
-
-    for (i = 0; tab[i].name != NULL; ++i) {
-	if (tab[i].val == val)
-	    return tab[i].name;
-    }
-    return NULL;
-}
-
 static symtab_t *
 gettoken(symtab_t *tab, char *s, int len)
 {
@@ -339,7 +327,6 @@ FlushInput(int fd)
 static int
 pnpgets(int mouse_fd, char *buf)
 {
-    struct timeval timeout;
     struct pollfd pfd[1];
     int i;
     char c;
@@ -906,9 +893,6 @@ mouse_protocol(u_char rBuf, mousestatus_t *act)
     };
     static int           pBufP = 0;
     static unsigned char pBuf[8];
-    static int		 prev_x, prev_y;
-    static int		 on = FALSE;
-    int			 x, y;
 
     debug("received char 0x%x",(int)rBuf);
 
