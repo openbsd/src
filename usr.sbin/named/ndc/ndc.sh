@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: ndc.sh,v 1.11 1998/07/07 22:05:15 millert Exp $
+#	$OpenBSD: ndc.sh,v 1.12 2003/01/24 15:56:18 mpech Exp $
 
 USAGE='echo \
 	"usage: $0 \
@@ -26,7 +26,7 @@ if [ -r /etc/rc.conf ]; then
 	fi
 
 	NAMED_FLAGS=`. /etc/rc.conf ; echo "$named_flags"`
-	if [ "X${NAMED_FLAGS}" != "X" ]; then
+	if [ "X${NAMED_FLAGS}" != X"NO" ]; then
 		NAMED_CMD="${NAMED_CMD} ${NAMED_FLAGS}"
 	fi
 else
