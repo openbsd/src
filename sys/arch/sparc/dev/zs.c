@@ -80,7 +80,7 @@
 #include <machine/remote-sl.h>
 #endif
 
-#define	ZSMAJOR	12		/* XXX */
+#define	ZSMAJOR		12	/* XXX */
 
 #define	ZS_KBD		2	/* XXX */
 #define	ZS_MOUSE	3	/* XXX */
@@ -155,7 +155,7 @@ static void zs_checkkgdb __P((int, struct zs_chanstate *, struct tty *));
 #endif
 
 extern void *findzs __P((int));
-volatile static struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
+static volatile struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
 
 /*
  * Console keyboard L1-A processing is done in the hardware interrupt code,
@@ -316,6 +316,8 @@ zsattach(parent, dev, aux)
 		/*
 		 * Mouse: tell /dev/mouse driver how to talk to us.
 		 */
+		tp->t_ispeed = tp->t_ospeed = 1200;
+		tp->t_cflag = CS8;
 		ms_serial(tp, zsiopen, zsiclose);
 	}
 }
@@ -1495,7 +1497,7 @@ zs_kgdb_getc(arg)
 	void *arg;
 {
 	register volatile struct zschan *zc = (volatile struct zschan *)arg;
-	int c;
+	u_char c;
 
 	while ((zc->zc_csr & ZSRR0_RX_READY) == 0)
 		ZS_DELAY();

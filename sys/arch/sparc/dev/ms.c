@@ -249,15 +249,6 @@ msopen(dev, flags, mode, p)
 	ms_softc.ms_events.ev_io = p;
 	ev_init(&ms_softc.ms_events);	/* may cause sleep */
 
-#if defined(SUN4)
-	if (cputyp == CPU_SUN4) {
-		/* We need to set the baud rate on the mouse. */
-		ms_softc.ms_mouse->t_ispeed =
-		    ms_softc.ms_mouse->t_ospeed = 1200;
-		ms_softc.ms_mouse->t_cflag = CS8;
-	}
-#endif
-
 	(*ms_softc.ms_open)(ms_softc.ms_mouse);
 	ms_softc.ms_ready = 1;		/* start accepting events */
 	return (0);
