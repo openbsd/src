@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_ioctl.h,v 1.2 1996/04/21 22:18:22 deraadt Exp $	*/
+/*	$OpenBSD: svr4_ioctl.h,v 1.3 1996/08/01 00:50:52 niklas Exp $	*/
 /*	$NetBSD: svr4_ioctl.h,v 1.5 1996/04/11 12:54:43 christos Exp $	 */
 
 /*
@@ -38,6 +38,8 @@
 
 #define	SVR4_IOC(inout,group,num,len) \
 	(inout | ((len & 0xff) << 16) | ((group) << 8) | (num))
+
+#define SVR4_XIOC	('X' << 8)
 
 #define	SVR4_IO(g,n)		SVR4_IOC(SVR4_IOC_VOID,	(g), (n), 0)
 #define	SVR4_IOR(g,n,t)		SVR4_IOC(SVR4_IOC_OUT,	(g), (n), sizeof(t))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_ioctl.c,v 1.5 1996/04/21 22:18:20 deraadt Exp $	 */
+/*	$OpenBSD: svr4_ioctl.c,v 1.6 1996/08/01 00:50:52 niklas Exp $	 */
 /*	$NetBSD: svr4_ioctl.c,v 1.16 1996/04/11 12:54:41 christos Exp $	 */
 
 /*
@@ -103,8 +103,8 @@ svr4_sys_ioctl(p, v, retval)
 
 	svr4_decode_cmd(SCARG(uap, com), dir, &c, &num, &argsiz);
 
-	printf("svr4_ioctl(%d, _IO%s(%c, %d, %d), %p);\n", SCARG(uap, fd),
-	       dir, c, num, argsiz, SCARG(uap, data));
+	uprintf("svr4_ioctl(%d, _IO%s(%c, %d, %d), %p);\n", SCARG(uap, fd),
+	    dir, c, num, argsiz, SCARG(uap, data));
 #endif
 	fdp = p->p_fd;
 	cmd = SCARG(uap, com);
@@ -117,7 +117,7 @@ svr4_sys_ioctl(p, v, retval)
 		return EBADF;
 
 	switch (cmd & 0xff00) {
-  	case SVR4_tIOC:
+	case SVR4_tIOC:
 		fun = svr4_ttold_ioctl;
 		break;
 
@@ -136,6 +136,10 @@ svr4_sys_ioctl(p, v, retval)
 	case SVR4_SIOC:
 		fun = svr4_sock_ioctl;
 		break;
+
+	case SVR4_XIOC:
+		/* We do not support those */
+		return EINVAL;
 
 	default:
 		DPRINTF(("Unimplemented ioctl %lx\n", cmd));

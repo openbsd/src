@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.4 1996/04/17 05:24:18 mickey Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.5 1996/08/01 00:50:53 niklas Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.36 1996/03/30 22:38:02 christos Exp $	 */
 
 /*
@@ -911,8 +911,13 @@ svr4_setinfo(p, st, s)
 
 	if (p) {
 		i.si_pid = p->p_pid;
-		i.si_stime = p->p_ru->ru_stime.tv_sec;
-		i.si_utime = p->p_ru->ru_utime.tv_sec;
+		if (p->p_stat == SZOMB) {
+			i.si_stime = p->p_ru->ru_stime.tv_sec;
+			i.si_utime = p->p_ru->ru_utime.tv_sec;
+		} else {
+			i.si_stime = p->p_stats->p_ru.ru_stime.tv_sec;
+			i.si_utime = p->p_stats->p_ru.ru_utime.tv_sec;
+		}
 	}
 
 	if (WIFEXITED(st)) {

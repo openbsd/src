@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stropts.h,v 1.2 1996/04/21 22:18:31 deraadt Exp $	*/
+/*	$OpenBSD: svr4_stropts.h,v 1.3 1996/08/01 00:50:55 niklas Exp $	*/
 /*	$NetBSD: svr4_stropts.h,v 1.6 1996/04/11 12:50:31 christos Exp $	 */
 
 /*
@@ -129,5 +129,7 @@ struct svr4_netaddr_un {
 };
 
 #define SVR4_ADDROF(sc) (void *) (((char *) (sc)) + (sc)->offs)
+
+struct svr4_strm *svr4_stream_get __P((struct file *fp));
 
 #endif /* !_SVR4_STROPTS */

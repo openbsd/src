@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_net.c,v 1.6 1996/04/21 22:18:23 deraadt Exp $	 */
+/*	$OpenBSD: svr4_net.c,v 1.7 1996/08/01 00:50:53 niklas Exp $	 */
 /*	$NetBSD: svr4_net.c,v 1.9 1996/04/11 12:52:41 christos Exp $	 */
 
 /*
@@ -44,6 +44,8 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/protosw.h>
+#include <sys/domain.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <sys/proc.h>
@@ -108,7 +110,6 @@ svr4_netopen(dev, flag, mode, p)
 	struct socket *so;
 	int error;
 	int family;
-	struct svr4_strm *st;
 
 	DPRINTF(("netopen("));
 
@@ -179,12 +180,9 @@ svr4_netopen(dev, flag, mode, p)
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_ops = &svr4_netops;
 
-	st = malloc(sizeof(struct svr4_strm), M_NETADDR, M_WAITOK);
-	/* XXX: This is unused; ask for a field and make this legal */
-	st->s_family = family;
-	so->so_internal = st;
-	st->s_cmd = ~0;
 	fp->f_data = (caddr_t)so;
+	(void) svr4_stream_get(fp);
+
 	DPRINTF(("ok);\n"));
 
 	p->p_dupfd = fd;
@@ -200,4 +198,29 @@ svr4_soo_close(fp, p)
 	svr4_delete_socket(p, fp);
 	free(so->so_internal, M_NETADDR);
 	return soo_close(fp, p);
+}
+
+struct svr4_strm *
+svr4_stream_get(fp)
+	struct file *fp;
+{
+	struct socket *so;
+	struct svr4_strm *st;
+
+	if (fp == NULL || fp->f_type != DTYPE_SOCKET)
+		return NULL;
+
+	so = (struct socket *) fp->f_data;
+
+	if (so->so_internal)
+		return so->so_internal;
+
+	/* Allocate a new one. */
+	fp->f_ops = &svr4_netops;
+	st = malloc(sizeof(struct svr4_strm), M_NETADDR, M_WAITOK);
+	st->s_family = so->so_proto->pr_domain->dom_family;
+	st->s_cmd = ~0;
+	so->so_internal = st;
+
+	return st;
 }

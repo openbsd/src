@@ -197,21 +197,28 @@ struct svr4_winsize {
 };
 
 
-#define SVR4_B0		0
-#define SVR4_B50	1
-#define SVR4_B75	2
-#define SVR4_B110	3
-#define SVR4_B134	4
-#define SVR4_B150	5
-#define SVR4_B200	6
-#define SVR4_B300	7
-#define SVR4_B600	8
-#define SVR4_B1200	9
+#define	SVR4_B0		0
+#define	SVR4_B50	1
+#define	SVR4_B75	2
+#define	SVR4_B110	3
+#define	SVR4_B134	4
+#define	SVR4_B150	5
+#define	SVR4_B200	6
+#define	SVR4_B300	7
+#define	SVR4_B600	8
+#define	SVR4_B1200	9
 #define	SVR4_B1800	10
-#define SVR4_B2400	11
-#define SVR4_B4800	12
-#define SVR4_B9600	13
-#define SVR4_B19200	14
-#define SVR4_B38400	15
+#define	SVR4_B2400	11
+#define	SVR4_B4800	12
+#define	SVR4_B9600	13
+#define	SVR4_B19200	14
+#define	SVR4_B38400	15
+#define	SVR4_B57600	16
+#define	SVR4_B76800	17
+#define	SVR4_B115200	18
+#define	SVR4_B153600	19
+#define	SVR4_B230400	20
+#define	SVR4_B307200	21
+#define	SVR4_B460800	22
 
 #endif /* !_SVR4_TERMIOS_H_ */

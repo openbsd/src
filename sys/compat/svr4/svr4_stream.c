@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stream.c,v 1.5 1996/05/22 11:45:00 deraadt Exp $	 */
+/*	$OpenBSD: svr4_stream.c,v 1.6 1996/08/01 00:50:54 niklas Exp $	 */
 /*	$NetBSD: svr4_stream.c,v 1.14 1996/05/13 16:57:50 christos Exp $	 */
 /*
  * Copyright (c) 1994, 1996 Christos Zoulas.  All rights reserved.
@@ -71,7 +71,7 @@
 
 /* Utils */
 static int clean_pipe __P((struct proc *, const char *));
-static void getparm __P((struct socket *, struct svr4_si_sockparms *));
+static void getparm __P((struct file *, struct svr4_si_sockparms *));
 
 /* Address Conversions */
 static void sockaddr_to_netaddr_in __P((struct svr4_strmcmd *,
@@ -125,8 +125,8 @@ show_ioc(str, ioc)
 	int error;
 	int i;
 
-	printf("%s cmd = %ld, timeout = %d, len = %d, buf = %p { ",
-	       str, ioc->cmd, ioc->timeout, ioc->len, ioc->buf);
+	uprintf("%s cmd = %ld, timeout = %d, len = %d, buf = %p { ",
+	    str, ioc->cmd, ioc->timeout, ioc->len, ioc->buf);
 
 	if ((error = copyin(ioc->buf, ptr, ioc->len)) != 0) {
 		free((char *) ptr, M_TEMP);
@@ -134,9 +134,9 @@ show_ioc(str, ioc)
 	}
 
 	for (i = 0; i < ioc->len; i++)
-		printf("%x ", (unsigned char) ptr[i]);
+		uprintf("%x ", (unsigned char) ptr[i]);
 
-	printf("}\n");
+	uprintf("}\n");
 
 	free((char *) ptr, M_TEMP);
 	return 0;
@@ -168,12 +168,12 @@ show_strbuf(str)
 	    }
 	}
 
-	printf(", { %d, %d, %p=[ ", str->maxlen, str->len, str->buf);
+	uprintf(", { %d, %d, %p=[ ", str->maxlen, str->len, str->buf);
 
 	for (i = 0; i < len; i++)
-		printf("%x ", (unsigned char) ptr[i]);
+		uprintf("%x ", (unsigned char) ptr[i]);
 
-	printf("]}");
+	uprintf("]}");
 
 	if (ptr)
 		free((char *) ptr, M_TEMP);
@@ -193,14 +193,14 @@ show_msg(str, fd, ctl, dat, flags)
 	struct svr4_strbuf	buf;
 	int error;
 
-	printf("%s(%d", str, fd);
+	uprintf("%s(%d", str, fd);
 	if (ctl != NULL) {
 		if ((error = copyin(ctl, &buf, sizeof(buf))) != 0)
 			return;
 		show_strbuf(&buf);
 	}
 	else 
-		printf(", NULL");
+		uprintf(", NULL");
 
 	if (dat != NULL) {
 		if ((error = copyin(dat, &buf, sizeof(buf))) != 0)
@@ -208,9 +208,9 @@ show_msg(str, fd, ctl, dat, flags)
 		show_strbuf(&buf);
 	}
 	else 
-		printf(", NULL");
+		uprintf(", NULL");
 
-	printf(", %x);\n", flags);
+	uprintf(", %x);\n", flags);
 }
 
 
@@ -221,13 +221,13 @@ show_strmcmd(str, cmd)
 {
 	int i;
 
-	printf("%s cmd = %ld, len = %ld, offs = %ld { ",
-	       str, cmd->cmd, cmd->len, cmd->offs);
+	uprintf("%s cmd = %ld, len = %ld, offs = %ld { ",
+	    str, cmd->cmd, cmd->len, cmd->offs);
 
 	for (i = 0; i < sizeof(cmd->pad) / sizeof(cmd->pad[0]); i++)
-		printf("%lx ", cmd->pad[i]);
+		uprintf("%lx ", cmd->pad[i]);
 
-	printf("}\n");
+	uprintf("}\n");
 }
 #endif /* DEBUG_SVR4 */
 
@@ -364,11 +364,16 @@ netaddr_to_sockaddr_un(saun, sc)
 
 
 static void
-getparm(so, pa)
-	struct socket *so;
+getparm(fp, pa)
+	struct file *fp;
 	struct svr4_si_sockparms *pa;
 {
-	struct svr4_strm *st = (struct svr4_strm *) so->so_internal;
+	struct svr4_strm *st = svr4_stream_get(fp);
+	struct socket *so = (struct socket *) fp->f_data;
+
+	if (st == NULL)
+		return;
+
 	pa->family = st->s_family;
 
 	switch (so->so_type) {
@@ -405,7 +410,6 @@ si_ogetudata(fp, fd, ioc, p)
 	int error;
 	struct svr4_si_oudata ud;
 	struct svr4_si_sockparms pa;
-	struct socket *so = (struct socket *) fp->f_data;
 
 	if (ioc->len != sizeof(ud) && ioc->len != sizeof(ud) - sizeof(int)) {
 		DPRINTF(("SI_OGETUDATA: Wrong size %d != %d\n",
@@ -416,7 +420,7 @@ si_ogetudata(fp, fd, ioc, p)
 	if ((error = copyin(ioc->buf, &ud, sizeof(ud))) != 0)
 		return error;
 
-	getparm(so, &pa);
+	getparm(fp, &pa);
 
 	switch (pa.family) {
 	case AF_INET:
@@ -460,10 +464,9 @@ si_sockparams(fp, fd, ioc, p)
 	struct svr4_strioctl	*ioc;
 	struct proc		*p;
 {
-	struct socket *so = (struct socket *) fp->f_data;
 	struct svr4_si_sockparms pa;
 
-	getparm(so, &pa);
+	getparm(fp, &pa);
 	return copyout(&pa, ioc->buf, sizeof(pa));
 }
 
@@ -476,8 +479,7 @@ si_listen(fp, fd, ioc, p)
 	struct proc		*p;
 {
 	int error;
-	struct socket *so = (struct socket *) fp->f_data;
-	struct svr4_strm *st = (struct svr4_strm *) so->so_internal;
+	struct svr4_strm *st = svr4_stream_get(fp);
 	register_t retval;
 #if 0
 	struct sockaddr_in sain;
@@ -488,6 +490,9 @@ si_listen(fp, fd, ioc, p)
 #endif
 	struct svr4_strmcmd lst;
 	struct sys_listen_args la;
+
+	if (st == NULL)
+		return EINVAL;
 
 	if ((error = copyin(ioc->buf, &lst, ioc->len)) != 0)
 		return error;
@@ -581,7 +586,6 @@ si_getudata(fp, fd, ioc, p)
 {
 	int error;
 	struct svr4_si_udata ud;
-	struct socket *so = (struct socket *) fp->f_data;
 
 	if (sizeof(ud) != ioc->len) {
 		DPRINTF(("SI_GETUDATA: Wrong size %d != %d\n",
@@ -592,7 +596,7 @@ si_getudata(fp, fd, ioc, p)
 	if ((error = copyin(ioc->buf, &ud, sizeof(ud))) != 0)
 		return error;
 
-	getparm(so, &ud.sockparms);
+	getparm(fp, &ud.sockparms);
 
 	switch (ud.sockparms.family) {
 	case AF_INET:
@@ -731,8 +735,7 @@ ti_bind(fp, fd, ioc, p)
 	struct proc		*p;
 {
 	int error;
-	struct socket *so = (struct socket *) fp->f_data;
-	struct svr4_strm *st = (struct svr4_strm *) so->so_internal;
+	struct svr4_strm *st = svr4_stream_get(fp);
 	struct sockaddr_in sain;
 	struct sockaddr_un saun;
 	register_t retval;
@@ -741,6 +744,9 @@ ti_bind(fp, fd, ioc, p)
 	int sasize;
 	struct svr4_strmcmd bnd;
 	struct sys_bind_args ba;
+
+	if (st == NULL)
+		return EINVAL;
 
 	if ((error = copyin(ioc->buf, &bnd, ioc->len)) != 0)
 		return error;
@@ -860,8 +866,7 @@ svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, dat)
 	caddr_t dat;
 {
 	struct svr4_strbuf skb, *sub = (struct svr4_strbuf *) dat;
-	struct socket *so = (struct socket *) fp->f_data;
-	struct svr4_strm *st = (struct svr4_strm *) so->so_internal;
+	struct svr4_strm *st = svr4_stream_get(fp);
 	int error;
 	void *skp, *sup;
 	struct sockaddr_in sain;
@@ -870,6 +875,9 @@ svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, dat)
 	int sasize;
 	caddr_t sg;
 	int *lenp;
+
+	if (st == NULL)
+		return EINVAL;
 
 	sc.offs = 0x10;
 	
@@ -1245,7 +1253,6 @@ svr4_sys_putmsg(p, v, retval)
 	struct sockaddr_un saun;
 	void *skp, *sup;
 	int sasize;
-	struct socket *so;
 	struct svr4_strm *st;
 	int error;
 	caddr_t sg;
@@ -1280,14 +1287,10 @@ svr4_sys_putmsg(p, v, retval)
 	/*
 	 * Only for sockets for now.
 	 */
-	if (fp == NULL || fp->f_type != DTYPE_SOCKET) {
+	if ((st = svr4_stream_get(fp)) == NULL) {
 		DPRINTF(("putmsg: bad file type\n"));
 		return EINVAL;
 	}
-
-	so = (struct socket *)  fp->f_data;
-	st = (struct svr4_strm *) so->so_internal;
-
 
 	if (ctl.len > sizeof(sc)) {
 		DPRINTF(("putmsg: Bad control size %d != %d\n", ctl.len,
@@ -1389,7 +1392,6 @@ svr4_sys_getmsg(p, v, retval)
 	struct sockaddr_un saun;
 	void *skp, *sup;
 	int sasize;
-	struct socket *so;
 	struct svr4_strm *st;
 	int *flen;
 	int fl;
@@ -1431,13 +1433,10 @@ svr4_sys_getmsg(p, v, retval)
 	/*
 	 * Only for sockets for now.
 	 */
-	if (fp == NULL || fp->f_type != DTYPE_SOCKET) {
+	if ((st = svr4_stream_get(fp)) == NULL) {
 		DPRINTF(("getmsg: bad file type\n"));
 		return EINVAL;
 	}
-
-	so = (struct socket *)  fp->f_data;
-	st = (struct svr4_strm *) so->so_internal;
 
 	if (ctl.maxlen == -1 || dat.maxlen == -1) {
 		DPRINTF(("getmsg: Cannot handle -1 maxlen (yet)\n"));
