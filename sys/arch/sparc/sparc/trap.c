@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 1999/04/22 18:43:53 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 1999/04/22 19:02:49 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -716,8 +716,13 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
+#if defined(UVM)
+			if (uvm_fault(kernel_map, va, 0, ftype) == KERN_SUCCESS)
+				return;
+#else
 			if (vm_fault(kernel_map, va, ftype, 0) == KERN_SUCCESS)
 				return;
+#endif
 			goto kfault;
 		}
 	} else
@@ -737,7 +742,11 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		goto out;
 
 	/* alas! must call the horrible vm code */
+#if defined(UVM)
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, ftype);
+#else
 	rv = vm_fault(&vm->vm_map, (vm_offset_t)va, ftype, FALSE);
+#endif
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -960,8 +969,13 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
+#if defined(UVM)
+			if (uvm_fault(kernel_map, va, 0, ftype) == KERN_SUCCESS)
+				return;
+#else
 			if (vm_fault(kernel_map, va, ftype, 0) == KERN_SUCCESS)
 				return;
+#endif
 			goto kfault;
 		}
 	} else
@@ -970,8 +984,11 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 	vm = p->p_vmspace;
 
 	/* alas! must call the horrible vm code */
+#if defined(UVM)
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, ftype);
+#else
 	rv = vm_fault(&vm->vm_map, (vm_offset_t)va, ftype, FALSE);
-
+#endif
 	/*
 	 * If this was a stack access we keep track of the maximum
 	 * accessed stack size.  Also, if vm_fault gets a protection
