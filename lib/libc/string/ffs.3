@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: ffs.3,v 1.2 1996/08/19 08:34:01 tholo Exp $
+.\"	$OpenBSD: ffs.3,v 1.3 2000/04/21 15:24:19 aaron Exp $
 .\"
 .Dd April 19, 1991
 .Dt FFS 3
@@ -46,12 +46,10 @@
 .Sh DESCRIPTION
 The
 .Fn ffs
-function
-finds the first bit set in
+function finds the first bit set in
 .Fa value
 and returns the index of that bit.
-Bits are numbered starting from 1, starting at the right-most
-bit.
+Bits are numbered starting from 1, starting at the rightmost bit.
 A return value of 0 means that the argument was zero.
 .Sh SEE ALSO
 .Xr bitstring 3

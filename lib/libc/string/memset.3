@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: memset.3,v 1.3 1997/08/24 21:56:45 deraadt Exp $
+.\"	$OpenBSD: memset.3,v 1.4 2000/04/21 15:24:19 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt MEMSET 3
@@ -48,18 +48,18 @@
 .Sh DESCRIPTION
 The
 .Fn memset
-function
-writes
+function writes
 .Fa len
 bytes of value
 .Fa c
-(converted to an unsigned char) to the string
+(converted to an
+.Li unsigned char )
+to the string
 .Fa b .
 .Sh RETURN VALUES
 The
 .Fn memset
-function
-returns the original value of
+function returns the original value of
 .Fa b .
 .Sh SEE ALSO
 .Xr bzero 3 ,
@@ -67,6 +67,5 @@ returns the original value of
 .Sh STANDARDS
 The
 .Fn memset
-function
-conforms to
+function conforms to
 .St -ansiC .

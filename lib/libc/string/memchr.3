@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: memchr.3,v 1.4 1999/09/21 16:44:01 espie Exp $
+.\"	$OpenBSD: memchr.3,v 1.5 2000/04/21 15:24:19 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt MEMCHR 3
@@ -48,18 +48,16 @@
 .Sh DESCRIPTION
 The
 .Fn memchr
-function
-locates the first occurrence of
+function locates the first occurrence of
 .Fa c
-(converted to an unsigned char)
+(converted to an
+.Li unsigned char )
 in string
 .Fa b .
 .Sh RETURN VALUES
 The
 .Fn memchr
-function
-returns a pointer to the byte located,
-or
+function returns a pointer to the byte located, or
 .Dv NULL
 if no such byte exists within
 .Fa len
@@ -76,6 +74,5 @@ bytes.
 .Sh STANDARDS
 The
 .Fn memchr
-function
-conforms to
+function conforms to
 .St -ansiC .

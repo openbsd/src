@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strrchr.3,v 1.5 1999/09/21 16:44:01 espie Exp $
+.\"	$OpenBSD: strrchr.3,v 1.6 2000/04/21 15:24:20 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRRCHR 3
@@ -55,7 +55,9 @@ function locates the last occurrence of the character
 .Fa c
 in the string
 .Fa s .
-The terminating NUL character is considered part of the string.
+The terminating
+.Tn NUL
+character is considered part of the string.
 If
 .Fa c
 is
@@ -98,8 +100,7 @@ p = strrchr(s, 'o');
 .Sh STANDARDS
 The
 .Fn strrchr
-function
-conforms to
+function conforms to
 .St -ansiC .
 .Pp
 The

@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strpbrk.3,v 1.4 1999/09/21 16:44:01 espie Exp $
+.\"	$OpenBSD: strpbrk.3,v 1.5 2000/04/21 15:24:20 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRPBRK 3
@@ -48,8 +48,7 @@
 .Sh DESCRIPTION
 The
 .Fn strpbrk
-function
-locates in the null-terminated string
+function locates in the null-terminated string
 .Fa s
 the first occurrence of any character in the string
 .Fa charset
@@ -57,7 +56,7 @@ and returns a pointer to this character.
 If no characters from
 .Fa charset
 occur anywhere in
-.Fa s
+.Fa s ,
 .Fn strpbrk
 returns
 .Dv NULL .
@@ -73,6 +72,5 @@ returns
 .Sh STANDARDS
 The
 .Fn strpbrk
-function
-conforms to
+function conforms to
 .St -ansiC .

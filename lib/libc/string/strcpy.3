@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcpy.3,v 1.9 1999/06/29 18:01:33 aaron Exp $
+.\"	$OpenBSD: strcpy.3,v 1.10 2000/04/21 15:24:20 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRCPY 3
@@ -53,8 +53,7 @@ The
 .Fn strcpy
 and
 .Fn strncpy
-functions
-copy the string
+functions copy the string
 .Fa src
 to
 .Fa dst
@@ -87,8 +86,7 @@ The
 .Fn strcpy
 and
 .Fn strncpy
-functions
-return
+functions return
 .Fa dst .
 .Sh EXAMPLES
 The following sets
@@ -120,7 +118,8 @@ The following copies as many characters from
 .Va input
 to
 .Va buf
-as will fit and null terminates the result.  Because
+as will fit and null terminates the result.
+Because
 .Fn strncpy
 does
 .Em not
@@ -134,7 +133,8 @@ buf[sizeof(buf) - 1] = '\e0';
 .Pp
 Note that
 .Xr strlcpy 3
-is a better choice for this kind of operation.  The equivalent using
+is a better choice for this kind of operation.
+The equivalent using
 .Xr strlcpy 3
 is simply:
 .Bd -literal -offset indent
@@ -151,6 +151,5 @@ The
 .Fn strcpy
 and
 .Fn strncpy
-functions
-conform to
+functions conform to
 .St -ansiC .

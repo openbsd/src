@@ -1,4 +1,4 @@
-.\" $OpenBSD: strlcpy.3,v 1.6 1999/09/04 02:22:46 pjanzen Exp $
+.\" $OpenBSD: strlcpy.3,v 1.7 2000/04/21 15:24:20 aaron Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -43,7 +43,8 @@ The
 .Fn strlcpy
 and
 .Fn strlcat
-functions copy and concatenate strings respectively.  They are designed
+functions copy and concatenate strings respectively.
+They are designed
 to be safer, more consistent, and less error prone replacements for
 .Xr strncpy 3
 and
@@ -55,7 +56,8 @@ and
 take the full size of the buffer (not just the length) and guarantee to
 NUL-terminate the result (as long as
 .Fa size
-is larger than 0).  Note that you should include a byte for the NUL in
+is larger than 0).
+Note that you should include a byte for the NUL in
 .Fa size .
 .Pp
 The
@@ -82,8 +84,8 @@ The
 .Fn strlcpy
 and
 .Fn strlcat
-functions return the total length of the string they tried to
-create.  For
+functions return the total length of the string they tried to create.
+For
 .Fn strlcpy
 that means the length of
 .Fa src .

@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcat.3,v 1.7 1999/06/06 06:57:52 pjanzen Exp $
+.\"	$OpenBSD: strcat.3,v 1.8 2000/04/21 15:24:19 aaron Exp $
 .\"
 .Dd July 8, 1997
 .Dt STRCAT 3
@@ -53,8 +53,7 @@ The
 .Fn strcat
 and
 .Fn strncat
-functions
-append a copy of the null-terminated string
+functions append a copy of the null-terminated string
 .Fa append
 to the end of the null-terminated string
 .Fa s ,
@@ -66,8 +65,7 @@ must have sufficient space to hold the result.
 .Pp
 The
 .Fn strncat
-function
-appends not more than
+function appends not more than
 .Fa count
 characters where space for the terminating
 .Ql \e0
@@ -78,8 +76,7 @@ The
 .Fn strcat
 and
 .Fn strncat
-functions
-return the pointer
+functions return the pointer
 .Fa s .
 .Sh EXAMPLES
 The following appends
@@ -109,9 +106,10 @@ The above will copy as many characters from
 .Dq Li input
 to
 .Dq Li buf
-as will
-fit.  It then appends as many characters from suffix as will fit (or none
-if there is no space).  For operations like this, the
+as will fit.
+It then appends as many characters from suffix as will fit (or none
+if there is no space).
+For operations like this, the
 .Xr strlcpy 3
 and
 .Xr strlcat 3
@@ -133,6 +131,5 @@ The
 .Fn strcat
 and
 .Fn strncat
-functions
-conform to
+functions conform to
 .St -ansiC .

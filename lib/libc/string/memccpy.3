@@ -1,4 +1,4 @@
-.\" $OpenBSD: memccpy.3,v 1.5 1999/06/29 18:01:32 aaron Exp $
+.\" $OpenBSD: memccpy.3,v 1.6 2000/04/21 15:24:19 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,14 +46,15 @@
 .Sh DESCRIPTION
 The
 .Fn memccpy
-function
-copies bytes from string
+function copies bytes from string
 .Fa src
 to string
 .Fa dst .
 If the character
 .Fa c
-(as converted to an unsigned char) occurs in the string
+(as converted to an
+.Li unsigned char )
+occurs in the string
 .Fa src ,
 the copy stops and a pointer to the byte after the copy of
 .Fa c

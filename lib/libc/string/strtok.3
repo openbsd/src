@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtok.3,v 1.10 1999/11/09 11:20:13 art Exp $
+.\"	$OpenBSD: strtok.3,v 1.11 2000/04/21 15:24:20 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRTOK 3
@@ -55,8 +55,7 @@ This interface is obsoleted by
 .Pp
 The
 .Fn strtok
-function
-is used to isolate sequential tokens in a null-terminated string,
+function is used to isolate sequential tokens in a null-terminated string,
 .Fa str .
 These tokens are separated in the string by at least one of the
 characters in
@@ -81,9 +80,8 @@ The
 .Fn strtok
 and
 .Fn strtok_r
-functions
-return a pointer to the beginning of each subsequent token in the string,
-after replacing the separator character itself with an
+functions return a pointer to the beginning of each subsequent token
+in the string, after replacing the separator character itself with an
 .Tn ASCII NUL
 character.
 When no more tokens remain, a null pointer is returned.
@@ -116,13 +114,19 @@ for ((p = strtok_r(s, " ", &last)); p; (p = strtok_r(NULL, " ", &last)), i++) {
 tokens[i] = '\e0';
 .Ed
 .Pp
-That is, tokens[0] will point to
+That is,
+.Li tokens[0]
+will point to
 .Qq cat ,
-tokens[1] will point to
+.Li tokens[1]
+will point to
 .Qq dog ,
-tokens[2] will point to
+.Li tokens[2]
+will point to
 .Qq horse ,
-and tokens[3] will point to
+and
+.Li tokens[3]
+will point to
 .Qq cow .
 .Sh SEE ALSO
 .Xr memchr 3 ,
@@ -136,8 +140,7 @@ and tokens[3] will point to
 .Sh STANDARDS
 The
 .Fn strtok
-function
-conforms to
+function conforms to
 .St -ansiC .
 .Sh BUGS
 The System V

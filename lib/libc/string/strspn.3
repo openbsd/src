@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strspn.3,v 1.5 1999/09/21 16:44:01 espie Exp $
+.\"	$OpenBSD: strspn.3,v 1.6 2000/04/21 15:24:20 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRSPN 3
@@ -48,8 +48,7 @@
 .Sh DESCRIPTION
 The
 .Fn strspn
-function
-spans the initial part of the null-terminated string
+function spans the initial part of the null-terminated string
 .Fa s
 as long as the characters from
 .Fa s
@@ -58,8 +57,7 @@ occur in string
 .Sh RETURN VALUES
 The
 .Fn strspn
-function
-returns the number of characters spanned.
+function returns the number of characters spanned.
 .Sh EXAMPLES
 The following call to
 .Fn strspn
@@ -86,6 +84,5 @@ span = strspn(s, charset);
 .Sh STANDARDS
 The
 .Fn strspn
-function
-conforms to
+function conforms to
 .St -ansiC .

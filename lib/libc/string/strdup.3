@@ -1,4 +1,4 @@
-.\" $OpenBSD: strdup.3,v 1.7 1999/06/04 19:14:56 aaron Exp $
+.\" $OpenBSD: strdup.3,v 1.8 2000/04/21 15:24:20 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,13 +46,10 @@
 .Sh DESCRIPTION
 The
 .Fn strdup
-function
-allocates sufficient memory for a copy
-of the string
+function allocates sufficient memory for a copy of the string
 .Fa s ,
 does the copy, and returns a pointer to it.
-The pointer may subsequently be used as an
-argument to the function
+The pointer may subsequently be used as an argument to the function
 .Xr free 3 .
 .Pp
 If insufficient memory is available,
