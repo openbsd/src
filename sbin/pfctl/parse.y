@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.210 2002/11/24 13:12:36 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.211 2002/11/24 17:33:57 pb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -70,7 +70,8 @@ enum {
 	PFCTL_STATE_OPTION = 1,
 	PFCTL_STATE_SCRUB = 2,
 	PFCTL_STATE_NAT = 3,
-	PFCTL_STATE_FILTER = 4
+	PFCTL_STATE_QUEUE = 4,
+	PFCTL_STATE_FILTER = 5
 };
 
 enum pfctl_iflookup_mode {
@@ -523,6 +524,9 @@ altqif		: ALTQ interface SCHEDULER schedtype bandwidth tbrsize
 		  QUEUE qassign	{
 			struct	pf_altq a;
 
+			if (check_rulestate(PFCTL_STATE_QUEUE))
+				YYERROR;
+
 			memset(&a, 0, sizeof(a));
 			if ($4.qtype == ALTQT_NONE) {
 				yyerror("no scheduler specified!");
@@ -569,6 +573,9 @@ qassign_item	: STRING			{
 
 queuespec	: QUEUE STRING bandwidth priority qlimit schedtype qassign {
 			struct	pf_altq a;
+
+			if (check_rulestate(PFCTL_STATE_QUEUE))
+				YYERROR;
 
 			memset(&a, 0, sizeof(a));
 
@@ -2872,7 +2879,7 @@ check_rulestate(int desired_state)
 {
 	if (require_order && (rulestate > desired_state)) {
 		yyerror("Rules must be in order: options, normalization, "
-		    "translation, filter");
+		    "translation, queue, filter");
 		return (1);
 	}
 	rulestate = desired_state;
