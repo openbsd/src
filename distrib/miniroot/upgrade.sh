@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.43 2002/10/03 00:56:44 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.44 2002/11/01 00:39:19 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -153,7 +153,7 @@ fi
 mount_fs
 
 # Install sets.
-install_sets $THESETS
+install_sets
 
 # Perform final steps common to both an install and an upgrade.
 finish_up
