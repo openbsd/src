@@ -67,6 +67,25 @@
 #					(if any).  The first word may be
 #					preceeded by a ! to strip the trailing
 #					newline in a symlink.
+#	file-result		    mps Used to verify a file, symlink or
+#					directory is created correctly.
+#					The first word is either
+#					file, dir or symlink; second word is
+#					expected permissions; third word
+#					is user-id; fourth is group-id; 
+#					fifth is "exact" or "pattern"
+#					indicating whether the file contents
+#					which follow is to be matched exactly
+#					or if it is a regular expression.
+#					The fifth argument is the quoted name
+#					of the file that should be created.
+#					The end-quote should be followed
+#					by a newline, then the file data
+#					(if any).  The first word may be
+#					preceeded by a ! to strip the trailing
+#					newline in the file contents.
+#					The permissions, user and group fields
+#					may be * meaning accept any value.
 #	time-limit		    	Time limit - the program is sent a
 #					SIGKILL N seconds.  Default is no
 #					limit.
@@ -147,6 +166,7 @@ EOF
 	    'perl-cleanup',		'm',
 	    'env-setup',		'M',
 	    'file-setup',		'mps',
+	    'file-result',		'mps',
 	    'time-limit',		'',
 	    'expected-fail',		'',
 	    'expected-exit',		'',
@@ -544,6 +564,13 @@ run_test
 	$why .= $tmp;
     }
 
+    $tmp = &check_file_result(*test);
+    return undef if !defined $tmp;
+    if ($tmp ne '') {
+	$failed = 1;
+	$why .= $tmp;
+    }
+
     if (defined $test{'perl-cleanup'}) {
 	eval $test{'perl-cleanup'};
 	if ($@ ne '') {
@@ -665,6 +692,15 @@ check_output
 	$got .= $_;
     }
     close(TEMP);
+    return compare_output($name, $what, $expect, $expect_pat, $got);
+}
+
+sub
+compare_output
+{
+    local($name, $what, $expect, $expect_pat, $got) = @_;
+    local($why) = '';
+
     if (defined $expect_pat) {
 	$_ = $got;
 	$ret = eval "$expect_pat";
@@ -881,7 +917,7 @@ read_test
 		    "$prog:$file:$.: bad file type for file-setup: $type\n";
 			return undef;
 		    }
-		    if ($perm !~ /\d+/) {
+		    if ($perm !~ /^\d+$/) {
 			print STDERR
 		    "$prog:$file:$.: bad permissions for file-setup: $type\n";
 			return undef;
@@ -889,7 +925,7 @@ read_test
 		    $c = substr($rest, 0, 1);
 		    if (($len = index($rest, $c, 1) - 1) <= 0) {
 			print STDERR
-    "$prog:$file:$.: missing end quote for file name in file-setup: $type\n";
+    "$prog:$file:$.: missing end quote for file name in file-setup: $rest\n";
 			return undef;
 		    }
 		    $name = substr($rest, 1, $len);
@@ -899,6 +935,60 @@ read_test
 			# outside the test directory.
 			print STDERR
 "$prog:$file:$.: file name in file-setup is absolute or contains ..: $name\n";
+			return undef;
+		    }
+		}
+		if ($field eq 'file-result') {
+		    local($type, $perm, $uid, $gid, $matchType,
+		    	  $rest, $c, $len, $name);
+		    #
+		    # format is: type perm uid gid matchType "name"
+		    #
+		    if ($val !~ /^\s*(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S.*)/) {
+			print STDERR
+		    "$prog:$file:$.: bad paramter line for file-result field\n";
+			return undef;
+		    }
+		    ($type, $perm, $uid, $gid, $matchType, $rest)
+			= ($1, $2, $3, $4, $5, $6);
+		    if ($type !~ /^(file|dir|symlink)$/) {
+			print STDERR
+		    "$prog:$file:$.: bad file type for file-result: $type\n";
+			return undef;
+		    }
+		    if ($perm !~ /^\d+$/ && $perm ne '*') {
+			print STDERR
+		    "$prog:$file:$.: bad permissions for file-result: $perm\n";
+			return undef;
+		    }
+		    if ($uid !~ /^\d+$/ && $uid ne '*') {
+			print STDERR
+		    "$prog:$file:$.: bad user-id for file-result: $uid\n";
+			return undef;
+		    }
+		    if ($gid !~ /^\d+$/ && $gid ne '*') {
+			print STDERR
+		    "$prog:$file:$.: bad group-id for file-result: $gid\n";
+			return undef;
+		    }
+		    if ($matchType !~ /^(exact|pattern)$/) {
+			print STDERR
+		"$prog:$file:$.: bad match type for file-result: $matchType\n";
+			return undef;
+		    }
+		    $c = substr($rest, 0, 1);
+		    if (($len = index($rest, $c, 1) - 1) <= 0) {
+			print STDERR
+    "$prog:$file:$.: missing end quote for file name in file-result: $rest\n";
+			return undef;
+		    }
+		    $name = substr($rest, 1, $len);
+		    if ($name =~ /^\// || $name =~ /(^|\/)\.\.(\/|$)/) {
+			# Note: this is not a security thing - just a sanity
+			# check - a test can still use symlinks to get at files
+			# outside the test directory.
+			print STDERR
+"$prog:$file:$.: file name in file-result is absolute or contains ..: $name\n";
 			return undef;
 		    }
 		}
@@ -1024,4 +1114,91 @@ never_called_funcs
 	&catch_sigalrm();
 	$old_env{'foo'} = 'bar';
 	$internal_test_fields{'foo'} = 'bar';
+}
+
+sub
+check_file_result
+{
+    local(*test) = @_;
+
+    return '' if (!defined $test{'file-result'});
+
+    local($why) = '';
+    local($i);
+    local($type, $perm, $uid, $gid, $rest, $c, $len, $name);
+    local(@stbuf);
+
+    for ($i = 0; $i < $test{'file-result'}; $i++) {
+	$val = $test{"file-result:$i"};
+	#
+	# format is: type perm "name"
+	#
+	($type, $perm, $uid, $gid, $matchType, $rest) =
+	    split(' ', $val, 6);
+	$c = substr($rest, 0, 1);
+	$len = index($rest, $c, 1) - 1;
+	$name = substr($rest, 1, $len);
+	$rest = substr($rest, 2 + $len);
+	$perm = oct($perm) if $perm =~ /^\d+$/;
+
+	@stbuf = lstat($name);
+	if (!@stbuf) {
+	    $why .= "\texpected $type \"$name\" not created\n";
+	    next;
+	}
+	if ($perm ne '*' && ($stbuf[2] & 07777) != $perm) {
+	    $why .= "\t$type \"$name\" has unexpected permissions\n";
+	    $why .= sprintf("\t\texpected 0%o, found 0%o\n",
+		    $perm, $stbuf[2] & 07777);
+	}
+	if ($uid ne '*' && $stbuf[4] != $uid) {
+	    $why .= "\t$type \"$name\" has unexpected user-id\n";
+	    $why .= sprintf("\t\texpected %d, found %d\n",
+		    $uid, $stbuf[4]);
+	}
+	if ($gid ne '*' && $stbuf[5] != $gid) {
+	    $why .= "\t$type \"$name\" has unexpected group-id\n";
+	    $why .= sprintf("\t\texpected %d, found %d\n",
+		    $gid, $stbuf[5]);
+	}
+
+	if ($type eq 'file') {
+	    if (-l _ || ! -f _) {
+		$why .= "\t$type \"$name\" is not a regular file\n";
+	    } else {
+		local $tmp = &check_output($test{'long-name'}, $name,
+			    "$type contents in \"$name\"",
+			    $matchType eq 'exact' ? $rest : undef
+			    $matchType eq 'pattern' ? $rest : undef);
+		return undef if (!defined $tmp);
+		$why .= $tmp;
+	    }
+	} elsif ($type eq 'dir') {
+	    if ($rest !~ /^\s*$/) {
+		print STDERR "$prog:$test{':long-name'}: file-result test for directory $name should not have content specified\n";
+		return undef;
+	    }
+	    if (-l _ || ! -d _) {
+		$why .= "\t$type \"$name\" is not a directory\n";
+	    }
+	} elsif ($type eq 'symlink') {
+	    if (!-l _) {
+		$why .= "\t$type \"$name\" is not a symlink\n";
+	    } else {
+		local $content = readlink($name);
+		if (!defined $content) {
+		    print STDERR "$prog:$test{':long-name'}: file-result test for $type $name failed - could not readlink - $!\n";
+		    return undef;
+		}
+		local $tmp = &compare_output($test{'long-name'},
+			    "$type contents in \"$name\"",
+			    $matchType eq 'exact' ? $rest : undef
+			    $matchType eq 'pattern' ? $rest : undef);
+		return undef if (!defined $tmp);
+		$why .= $tmp;
+	    }
+	}
+    }
+
+    return $why;
 }

@@ -1076,3 +1076,4 @@ expected-stdout:
 	parent last
 	parent exit
 ---
+

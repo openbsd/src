@@ -142,3 +142,190 @@ expected-stdout:
 	done
 ---
 
+name: heredoc-tmpfile-1
+description:
+	Check that heredoc temp files aren't removed too soon or too late.
+	Heredoc in simple command.
+stdin:
+	TMPDIR=$PWD
+	eval '
+		cat <<- EOF
+		hi
+		EOF
+		for i in a b ; do
+			cat <<- EOF
+			more
+			EOF
+		done
+	    ' &
+	sleep 1
+	echo Left overs: *
+expected-stdout:
+	hi
+	more
+	more
+	Left overs: *
+---
+
+name: heredoc-tmpfile-2
+description:
+	Check that heredoc temp files aren't removed too soon or too late.
+	Heredoc in function, multiple calls to function.
+stdin:
+	TMPDIR=$PWD
+	eval '
+		foo() {
+			cat <<- EOF
+			hi
+			EOF
+		}
+		foo
+		foo
+	    ' &
+	sleep 1
+	echo Left overs: *
+expected-stdout:
+	hi
+	hi
+	Left overs: *
+---
+
+name: heredoc-tmpfile-3
+description:
+	Check that heredoc temp files aren't removed too soon or too late.
+	Heredoc in function in loop, multiple calls to function.
+stdin:
+	TMPDIR=$PWD
+	eval '
+		foo() {
+			cat <<- EOF
+			hi
+			EOF
+		}
+		for i in a b; do
+			foo
+			foo() {
+				cat <<- EOF
+				folks $i
+				EOF
+			}
+		done
+		foo
+	    ' &
+	sleep 1
+	echo Left overs: *
+expected-stdout:
+	hi
+	folks b
+	folks b
+	Left overs: *
+---
+
+name: heredoc-tmpfile-4
+description:
+	Check that heredoc temp files aren't removed too soon or too late.
+	Backgrounded simple command with here doc
+stdin:
+	TMPDIR=$PWD
+	eval '
+		cat <<- EOF &
+		hi
+		EOF
+	    ' &
+	sleep 1
+	echo Left overs: *
+expected-stdout:
+	hi
+	Left overs: *
+---
+
+name: heredoc-tmpfile-5
+description:
+	Check that heredoc temp files aren't removed too soon or too late.
+	Backgrounded subshell command with here doc
+stdin:
+	TMPDIR=$PWD
+	eval '
+	      (
+		sleep 1	# so parent exits
+		echo A
+		cat <<- EOF
+		hi
+		EOF
+		echo B
+	      ) &
+	    ' &
+	sleep 2
+	echo Left overs: *
+expected-stdout:
+	A
+	hi
+	B
+	Left overs: *
+---
+
+name: heredoc-tmpfile-6
+description:
+	Check that heredoc temp files aren't removed too soon or too late.
+	Heredoc in pipeline.
+stdin:
+	TMPDIR=$PWD
+	eval '
+		cat <<- EOF | sed "s/hi/HI/"
+		hi
+		EOF
+	    ' &
+	sleep 1
+	echo Left overs: *
+expected-stdout:
+	HI
+	Left overs: *
+---
+
+name: heredoc-tmpfile-7
+description:
+	Check that heredoc temp files aren't removed too soon or too late.
+	Heredoc in backgrounded pipeline.
+stdin:
+	TMPDIR=$PWD
+	eval '
+		cat <<- EOF | sed 's/hi/HI/' &
+		hi
+		EOF
+	    ' &
+	sleep 1
+	echo Left overs: *
+expected-stdout:
+	HI
+	Left overs: *
+---
+
+name: heredoc-tmpfile-8
+description:
+	Check that heredoc temp files aren't removed too soon or too late.
+	Heredoc in function, backgrounded call to function.
+stdin:
+	TMPDIR=$PWD
+	# Background eval so main shell doesn't do parsing
+	eval '
+		foo() {
+			cat <<- EOF
+			hi
+			EOF
+		}
+		foo
+		# sleep so eval can die
+		(sleep 1; foo) &
+		(sleep 1; foo) &
+		foo
+	    ' &
+	sleep 2
+	echo Left overs: *
+expected-stdout:
+	hi
+	hi
+	hi
+	hi
+	Left overs: *
+---
+
