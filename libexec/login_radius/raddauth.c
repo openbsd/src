@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.2 2001/07/08 20:26:51 millert Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.3 2001/07/09 18:59:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -419,7 +419,7 @@ int
 rad_recv(char *state, char *challenge)
 {
 	auth_hdr_t auth;
-	size_t salen;
+	socklen_t salen;
 	struct sockaddr_in sin;
 
 	salen = sizeof(sin);
