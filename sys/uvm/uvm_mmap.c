@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.46 2003/05/17 14:02:06 grange Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.47 2003/07/01 22:18:09 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -201,78 +201,6 @@ again:
 		}
 		error = 0;
 		*retval = (register_t)(vaddr);
-	}
-done:
-	if (fp != NULL)
-		FRELE(fp);
-	return (error);
-}
-
-/* ARGSUSED */
-int
-sys_omquery(struct proc *p, void *v, register_t *retval)
-{
-	struct sys_omquery_args /* {
-		syscallarg(int) flags;
-		syscallarg(void **) addr;
-		syscallarg(size_t) size;
-		syscallarg(int) fd;
-		syscallarg(off_t) off;
-	} */ *uap = v;
-	struct file *fp;
-	struct uvm_object *uobj;
-	voff_t uoff;
-	int error;
-	vaddr_t vaddr;
-	int flags = 0;
-	vm_prot_t prot = SCARG(uap, flags) & VM_PROT_ALL;
-
-	if (SCARG(uap, flags) & MAP_FIXED)
-		flags |= UVM_FLAG_FIXED;
-
-	if ((error = copyin(SCARG(uap, addr), &vaddr, sizeof(void *))) != 0)
-		return (error);
-
-	if (SCARG(uap, fd) >= 0) {
-		if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
-			return (error);
-		uobj = &((struct vnode *)fp->f_data)->v_uvm.u_obj;
-		uoff = SCARG(uap, off);
-	} else {
-		fp = NULL;
-		uobj = NULL;
-		uoff = 0;
-	}
-
-	if (vaddr == 0)
-		vaddr = uvm_map_hint(p, prot);
-
-	/* prevent a user requested address from falling in heap space */
-	if ((vaddr + SCARG(uap, size) > (vaddr_t)p->p_vmspace->vm_daddr) &&
-	    (vaddr < (vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ)) {
-		if (flags & UVM_FLAG_FIXED) {
-			error = EINVAL;
-			goto done;
-		}
-		vaddr = round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
-	}
-
-	if (uvm_map_findspace(&p->p_vmspace->vm_map, vaddr, SCARG(uap, size),
-	    &vaddr, uobj, uoff, 0, flags) == NULL) {
-		if (flags & UVM_FLAG_FIXED)
-			error = EINVAL;
-		else
-			error = ENOMEM;
-	} else {
-		/*
-		 * XXX?
-		 * is it possible for uvm_map_findspace() to return
-		 * an address in vm_addr - vm_addr+MAXDSIZ ?
-		 * if all of the memory below 1G (i386) is used, 
-		 * this could occur. In this case, could this loop
-		 * changing the hint to above daddr in that case?
-		 */
-		error = copyout(&vaddr, SCARG(uap, addr), sizeof(void *));
 	}
 done:
 	if (fp != NULL)
