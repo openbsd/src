@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.21 2004/02/16 19:00:57 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.22 2004/02/20 19:10:12 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -26,8 +26,8 @@ _TITLE(dis)
 _DEV(ccd, 27, 7)
 _DEV(cd, 13, 3)
 _DEV(flo, 37, 4)
-_DEV(rd, 28, 6)
 _DEV(raid, 43, 16)
+_DEV(rd, 28, 6)
 _DEV(sd, 8, 8)
 _DEV(vnd, 9, 9)
 _DEV(wd, 36, 0)
@@ -65,7 +65,6 @@ _DEV(bpf, 11)
 _DEV(fdesc, 10)
 _DEV(iop, 54)
 _DEV(lkm, 16)
-_DEV(mmcl)
 _DEV(music, 42)
 _DEV(pci, 52)
 _DEV(pf, 35)
@@ -97,10 +96,6 @@ ttyB*|ttyc*)
 	esac
 	M tty$type$U c $major $minor 660 dialer uucp
 	M cua$type$U c $major Add($minor, 128) 660 dialer uucp
-	;;
-
-mmclock)
-	M mmclock c 28 0 444
 	;;
 dnl
 dnl *** alpha specific targets
