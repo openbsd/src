@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.362 2005/03/08 17:56:00 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.363 2005/03/14 02:29:33 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1429,7 +1429,7 @@ get_fqdn() {
 }
 
 donetconfig() {
-	local _dn _ns
+	local _dn _ns _n
 
 	configure_ifs
 
@@ -1440,8 +1440,13 @@ donetconfig() {
 	# or not, during the rest of the install.
 	if [ -f /tmp/resolv.conf.shadow ]; then
 		mv /tmp/resolv.conf.shadow /tmp/resolv.conf
-		# Get nameserver address(es).
-		_ns=$(sed -ne '/^nameserver /s///p' /tmp/resolv.conf)
+		# Get nameserver address(es). Store as a blank separated list.
+		for _n in $(grep '^nameserver ' /tmp/resolv.conf); do
+			[[ $_n == nameserver ]] || _ns="$_ns$_n "
+		done
+		# Zap trailing space in _ns.
+		set -- $_ns
+		_ns=$*
 		# Get default fully qualified domain name from *first* domain
 		# given on *last* search or domain statement.
 		_dn=$(sed -n \
