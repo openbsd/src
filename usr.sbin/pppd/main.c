@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1996/05/11 15:41:24 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1996/06/17 07:20:53 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 1996/05/11 15:41:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 1996/06/17 07:20:53 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -177,9 +177,9 @@ main(argc, argv)
     progname = *argv;
 
     if (!options_from_file(_PATH_SYSOPTIONS, REQ_SYSOPTIONS, 0) ||
-	!options_for_tty() ||
 	!options_from_user() ||
-	!parse_args(argc-1, argv+1))
+	!parse_args(argc-1, argv+1) ||
+	!options_for_tty() )
 	exit(1);
 
     if (!ppp_available()) {
