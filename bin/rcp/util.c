@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 1998/08/15 20:14:08 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 2001/01/15 19:32:13 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.2 1995/03/21 08:19:08 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: util.c,v 1.6 1998/08/15 20:14:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.7 2001/01/15 19:32:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,5 +173,5 @@ lostconn(signo)
 {
 	if (!iamremote)
 		warnx("lost connection");
-	exit(1);
+	_exit(1);
 }
