@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.1 2001/06/25 23:04:45 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.2 2001/06/26 03:54:31 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -102,17 +102,12 @@ lofn_attach(parent, self, aux)
 	u_int32_t cmd;
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
+	cmd |= PCI_COMMAND_MEM_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 	if (!(cmd & PCI_COMMAND_MEM_ENABLE)) {
 		printf(": failed to enable memory mapping\n");
-		return;
-	}
-
-	if (!(cmd & PCI_COMMAND_MASTER_ENABLE)) {
-		printf(": failed to enable bus mastering\n");
 		return;
 	}
 
@@ -139,6 +134,8 @@ lofn_attach(parent, self, aux)
 		printf("\n");
 		goto fail_io;
 	}
+
+	printf("\n");
 
 	return;
 
