@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.187 1999/10/09 19:41:07 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.188 1999/10/26 04:15:39 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2223,6 +2223,228 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Universe VME",
 	},
 	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1000,
+	    0,
+	    "SIIG",
+	    "Serial PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1001,
+	    0,
+	    "SIIG",
+	    "Serial PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1002,
+	    0,
+	    "SIIG",
+	    "Serial PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1010,
+	    0,
+	    "SIIG",
+	    "I/O PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1011,
+	    0,
+	    "SIIG",
+	    "I/O PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1012,
+	    0,
+	    "SIIG",
+	    "I/O PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1020,
+	    0,
+	    "SIIG",
+	    "Parallel PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1021,
+	    0,
+	    "SIIG",
+	    "Parallel Dual PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1030,
+	    0,
+	    "SIIG",
+	    "Serial Dual PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1031,
+	    0,
+	    "SIIG",
+	    "Serial Dual PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1032,
+	    0,
+	    "SIIG",
+	    "Serial Dual PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1034,
+	    0,
+	    "SIIG",
+	    "2S1P PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1035,
+	    0,
+	    "SIIG",
+	    "2S1P PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1036,
+	    0,
+	    "SIIG",
+	    "2S1P PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1050,
+	    0,
+	    "SIIG",
+	    "4S PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1051,
+	    0,
+	    "SIIG",
+	    "4S PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1052,
+	    0,
+	    "SIIG",
+	    "4S PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2000,
+	    0,
+	    "SIIG",
+	    "Serial PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2001,
+	    0,
+	    "SIIG",
+	    "Serial PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2002,
+	    0,
+	    "SIIG",
+	    "Serial PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2010,
+	    0,
+	    "SIIG",
+	    "I/O PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2011,
+	    0,
+	    "SIIG",
+	    "I/O PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2012,
+	    0,
+	    "SIIG",
+	    "I/O PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2020,
+	    0,
+	    "SIIG",
+	    "Parallel PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2021,
+	    0,
+	    "SIIG",
+	    "Parallel Dual PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2030,
+	    0,
+	    "SIIG",
+	    "Serial Dual PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2031,
+	    0,
+	    "SIIG",
+	    "Serial Dual PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2032,
+	    0,
+	    "SIIG",
+	    "Serial Dual PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2040,
+	    0,
+	    "SIIG",
+	    "2P1S PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2041,
+	    0,
+	    "SIIG",
+	    "2P1S PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2042,
+	    0,
+	    "SIIG",
+	    "2P1S PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2050,
+	    0,
+	    "SIIG",
+	    "4S PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2051,
+	    0,
+	    "SIIG",
+	    "4S PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2052,
+	    0,
+	    "SIIG",
+	    "4S PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2060,
+	    0,
+	    "SIIG",
+	    "2S1P PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2061,
+	    0,
+	    "SIIG",
+	    "2S1P PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2062,
+	    0,
+	    "SIIG",
+	    "2S1P PCI",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810,
 	    0,
 	    "Symbios Logic",
@@ -2425,6 +2647,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Pequr Technology",
 	    "PCI",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_1076,
+	    0,
+	    "PLX Technology",
+	    "I/O PCI",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,
+	    0,
+	    "PLX Technology",
+	    "I/O PCI",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_DC5030,
@@ -6432,6 +6666,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DIAMOND2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Diamond Multimedia (2nd ID)",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SIIG, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "SIIG",
 	    NULL,
 	},
 	{
