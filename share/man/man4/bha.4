@@ -1,4 +1,5 @@
-.\"	$OpenBSD: bt.4,v 1.3 2000/10/13 18:56:50 aaron Exp $
+.\"	$OpenBSD: bha.4,v 1.1 2002/01/24 22:43:55 mickey Exp $
+.\"	$NetBSD: bha.4,v 1.10 1999/12/17 16:23:21 abs Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -23,35 +24,56 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd November 29, 1994
-.Dt BT 4
+.Dt BHA 4
 .Os
 .Sh NAME
+.Nm bha ,
 .Nm bt
 .Nd Buslogic SCSI adapter driver
 .Sh SYNOPSIS
-.Cd "bt0 at isa? port 0x330 irq ? drq ?"
-.Cd "scsibus* at bt?"
-.Sh DESCRIPTION
+.Cd "bha0 at isa? port 0x330 irq ? drq ?"
+.Cd "bha* at eisa? slot ?"
+.Cd "bha* at pci? dev ? function ?"
+.Cd "scsibus* at bha?"
+.Sh HARDWARE
 The
-.Nm
-driver supports the following Buslogic SCSI adapters:
+.Nm bha
+driver supports the following
+.Tn Buslogic
+.Tn SCSI
+adapters:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It Buslogic BT-445		VLB
-.It Buslogic BT-74x		EISA
-.It Buslogic BT-9[45][68]	PCI
+.It Tn Buslogic ISA BT-445
+.It Tn Buslogic EISA BT-74x
+.It Tn Buslogic PCI BT-9[45][68]
 .El
-.Pp
-The Buslogic BT-930 is not supported.
-.Pp
-The PCI versions of this card will require the Buslogic BIOS
-"Advanced Options" suboption called "Set ISA Compatible IO Port"
-to be set to the value "Primary" or "Alternate".
-Some cards have an option called "Set host adapter IO port address as default"
-instead; for those boards you should set the value to "false".
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,
+.Xr eisa 4 ,
 .Xr intro 4 ,
+.Xr isa 4 ,
+.Xr pci 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4
+.Sh HISTORY
+In
+.Ox 3.0
+and earlier, this driver was named
+.Nm bt
+but was renamed to
+.Nm bha
+in later releases.
+.Sh BUGS
+The
+.Tn Buslogic
+BT-930 is not supported in this driver.
+.Pp
+The
+.Tn Buslogic
+BT-445S has a problem in early hardware and firmware revisions
+which prevents proper operation on a system with more than 16MB of RAM.
+Hardware revision D and firmware revision 3.37 should be considered minimum
+requirements for using this board on systems configured in this manner.
