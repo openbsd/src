@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.4 1996/12/14 12:18:01 mickey Exp $	*/
+/*	$OpenBSD: ln.c,v 1.5 2001/08/09 00:03:12 millert Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -35,16 +35,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1987, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
+static const char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-static char rcsid[] = "$OpenBSD: ln.c,v 1.4 1996/12/14 12:18:01 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: ln.c,v 1.5 2001/08/09 00:03:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static char rcsid[] = "$OpenBSD: ln.c,v 1.4 1996/12/14 12:18:01 mickey Exp $";
 
 int	dirflag;			/* Undocumented directory flag. */
 int	fflag;				/* Unlink existing files. */
+int	hflag;				/* Check new name for symlink first. */
 int	sflag;				/* Symbolic, not hard, link. */
 					/* System link call. */
 int (*linkf) __P((const char *, const char *));
@@ -76,13 +77,17 @@ main(argc, argv)
 	int ch, exitval;
 	char *sourcedir;
 
-	while ((ch = getopt(argc, argv, "Ffs")) != -1)
+	while ((ch = getopt(argc, argv, "Ffhns")) != -1)
 		switch (ch) {
 		case 'F':
 			dirflag = 1;	/* XXX: deliberately undocumented. */
 			break;
 		case 'f':
 			fflag = 1;
+			break;
+		case 'h':
+		case 'n':
+			hflag = 1;
 			break;
 		case 's':
 			sflag = 1;
@@ -122,6 +127,7 @@ linkit(target, source, isdir)
 {
 	struct stat sb;
 	char *p, path[MAXPATHLEN];
+	int (*statf) __P((const char *, struct stat *));
 
 	if (!sflag) {
 		/* If target doesn't exist, quit now. */
@@ -135,6 +141,8 @@ linkit(target, source, isdir)
 			return (1);
 		}
 	}
+
+	statf = hflag ? lstat : stat;
 
 	/* If the source is a directory, append the target's name. */
 	if (isdir || (!stat(source, &sb) && S_ISDIR(sb.st_mode))) {
@@ -162,8 +170,10 @@ linkit(target, source, isdir)
 void
 usage()
 {
+	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "usage:\tln [-fs] file1 file2\n\tln [-fs] file ... directory\n");
+	    "usage: %s [-fhns] file1 file2\n\tln [-fhns] file ... directory\n",
+	    __progname);
 	exit(1);
 }
