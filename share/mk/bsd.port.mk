@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.82 1999/04/02 06:55:56 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.83 1999/04/06 19:14:41 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.82 1999/04/02 06:55:56 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.83 1999/04/06 19:14:41 marc Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -1282,7 +1282,17 @@ mirror-distfiles:
 # use is		make ECHO_MSG=: list-distfiles | tee some-file
 #
 list-distfiles:
-	@for file in ${DISTFILES} ${PATCHFILES}; do ${ECHO} $$file; done
+	@echo "${PKGNAME}"
+	@for file in ${DISTFILES} ${PATCHFILES}; do \
+		if [ "$$file" != "${EXTRACT_SUFX}" ]; then \
+			if [ -z "${DIST_SUBDIR}" ]; then \
+				printf "\t$$file\n"; \
+			else \
+				printf "\t${DIST_SUBDIR}/$$file\n"; \
+			fi \
+		fi \
+	 done
+	@echo ""
 
 # Obj
 #
@@ -2061,7 +2071,7 @@ lib-depends:
 .if !defined(NO_DEPENDS)
 .if defined(NO_SHARED_LIBS)
 	@for i in ${LIB_DEPENDS}; do \
-		lib=`${ECHO} $$i | ${SED} -e 's/:.*//' -e 's|\([^\\]\)\.|\1\\\\.|g'`; \
+		lib=`${ECHO} $$i | ${SED} -e 's/:.*//' -e 's|\([^\\]\)[\\\.].*|\1|'`; \
 		dir=`${ECHO} $$i | ${SED} -e 's/[^:]*://'`; \
 		if ${EXPR} "$$dir" : '.*:' > /dev/null; then \
 			target=`${ECHO} $$dir | ${SED} -e 's/.*://'`; \
