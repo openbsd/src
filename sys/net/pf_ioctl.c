@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.60 2003/04/30 12:30:27 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.61 2003/05/12 00:02:32 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -45,6 +45,7 @@
 #include <sys/time.h>
 #include <sys/timeout.h>
 #include <sys/pool.h>
+#include <sys/malloc.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
