@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.1 1997/09/13 22:16:59 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.2 1997/09/16 00:18:39 mickey Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -100,7 +100,9 @@ option	APM_NOIDLE
 
 isa0	at mainbus0
 #eisa0	at mainbus0
+option	EISAVERBOSE
 pci0	at mainbus0 bus ?
+option	PCIVERBOSE
 
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
