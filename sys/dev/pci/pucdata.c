@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.20 2002/04/29 22:30:34 mickey Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.21 2002/05/27 07:08:12 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -926,14 +926,14 @@ const struct puc_device_description puc_devices[] = {
 	    {   PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_4065A,		0, 0	},
 	    {	0xffff,	0xffff,						0, 0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x1A, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x1A, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x1A, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x1A, 0x00, COM_FREQ * 8 },
 	    },
 	},
 
