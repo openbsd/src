@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.6 1997/05/21 22:50:04 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/10/15 14:07:53 pefo Exp $
 #	$NetBSD: Makefile,v 1.1 1996/09/30 16:34:59 ws Exp $
 
-SUBDIR=	boot boot.mac ofwboot
+#SUBDIR=	boot boot.mac ofwboot mbr
+SUBDIR=	ofwboot mbr
 
 SAREL=
 KERNREL=

@@ -186,7 +186,7 @@ search_label(devp, off, buf, lp, off0)
 	u_long off0;
 {
 	size_t read;
-	struct mbr_partition *p;
+	struct dos_partition *p;
 	int i;
 	u_long poff;
 	static int recursion;
@@ -200,10 +200,11 @@ search_label(devp, off, buf, lp, off0)
 
 	if (recursion++ <= 1)
 		off0 += off;
-	for (p = (struct mbr_partition *)(buf + MBRPARTOFF), i = 4;
+	for (p = (struct dos_partition *)(buf + DOSPARTOFF), i = 4;
 	     --i >= 0; p++) {
-		if (p->mbr_type == MBR_NETBSD) {
-			poff = get_long(&p->mbr_start) + off0;
+		if (p->dp_typ == DOSPTYP_OPENBSD ||
+		    p->dp_typ == DOSPTYP_NETBSD) {
+			poff = get_long(&p->dp_start) + off0;
 			if (strategy(devp, F_READ, poff + LABELSECTOR,
 				     DEV_BSIZE, buf, &read) == 0
 			    && read == DEV_BSIZE) {
@@ -217,8 +218,8 @@ search_label(devp, off, buf, lp, off0)
 				recursion--;
 				return ERDLAB;
 			}
-		} else if (p->mbr_type == MBR_EXTENDED) {
-			poff = get_long(&p->mbr_start);
+		} else if (p->dp_typ == DOSPTYP_EXTEND) {
+			poff = get_long(&p->dp_start);
 			if (!search_label(devp, poff, buf, lp, off0)) {
 				recursion--;
 				return 0;

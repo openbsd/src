@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.9 1997/10/13 13:42:58 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.10 1997/10/15 14:07:52 pefo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -52,6 +52,15 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
+#ifdef SYSVSHM
+#include <sys/shm.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
 #include <net/netisr.h>
 
 #include <machine/bat.h>
