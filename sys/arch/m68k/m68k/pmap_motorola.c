@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.17 2002/03/14 01:26:35 millert Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.18 2002/04/16 20:49:49 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -324,8 +324,6 @@ void		 pmap_enter_ptpage(pmap_t, vaddr_t);
 void		 pmap_ptpage_addref(vaddr_t);
 int		 pmap_ptpage_delref(vaddr_t);
 void		 pmap_collect1(pmap_t, paddr_t, paddr_t);
-void		 pmap_pinit(pmap_t);
-void		 pmap_release(pmap_t);
 
 
 #ifdef DEBUG
@@ -760,24 +758,6 @@ pmap_create()
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
-	pmap_pinit(pmap);
-	return (pmap);
-}
-
-/*
- * pmap_pinit:
- *
- *	Initialize a preallocated and zeroed pmap structure.
- *
- *	Note: THIS FUNCTION SHOULD BE MOVED INTO pmap_create()!
- */
-void
-pmap_pinit(pmap)
-	struct pmap *pmap;
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW|PDB_CREATE,
-	    ("pmap_pinit(%p)\n", pmap));
 
 	/*
 	 * No need to allocate page table space yet but we do need a
@@ -793,6 +773,8 @@ pmap_pinit(pmap)
 #endif
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
+
+	return pmap;
 }
 
 /*
@@ -812,42 +794,19 @@ pmap_destroy(pmap)
 	count = --pmap->pm_count;
 	simple_unlock(&pmap->pm_lock);
 	if (count == 0) {
-		pmap_release(pmap);
+		if (pmap->pm_ptab) {
+			pmap_remove(pmap_kernel(), (vaddr_t)pmap->pm_ptab,
+			    (vaddr_t)pmap->pm_ptab + MACHINE_MAX_PTSIZE);
+			pmap_update(pmap_kernel());
+			uvm_km_pgremove(uvm.kernel_object,
+			    (vaddr_t)pmap->pm_ptab,
+			    (vaddr_t)pmap->pm_ptab + MACHINE_MAX_PTSIZE);
+			uvm_km_free_wakeup(pt_map, (vaddr_t)pmap->pm_ptab,
+					   MACHINE_MAX_PTSIZE);
+		}
+		KASSERT(pmap->pm_stab == Segtabzero);
 		pool_put(&pmap_pmap_pool, pmap);
 	}
-}
-
-/*
- * pmap_release:
- *
- *	Release the resources held by a pmap.
- *
- *	Note: THIS FUNCTION SHOULD BE MOVED INTO pmap_destroy().
- */
-void
-pmap_release(pmap)
-	struct pmap *pmap;
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_release(%p)\n", pmap));
-
-#ifdef notdef /* DIAGNOSTIC */
-	/* count would be 0 from pmap_destroy... */
-	simple_lock(&pmap->pm_lock);
-	if (pmap->pm_count != 1)
-		panic("pmap_release count");
-#endif
-
-	if (pmap->pm_ptab) {
-		pmap_remove(pmap_kernel(), (vaddr_t)pmap->pm_ptab,
-		    (vaddr_t)pmap->pm_ptab + MACHINE_MAX_PTSIZE);
-		pmap_update(pmap_kernel());
-		uvm_km_pgremove(uvm.kernel_object, (vaddr_t)pmap->pm_ptab,
-		    (vaddr_t)pmap->pm_ptab + MACHINE_MAX_PTSIZE);
-		uvm_km_free_wakeup(pt_map, (vaddr_t)pmap->pm_ptab,
-				   MACHINE_MAX_PTSIZE);
-	}
-	KASSERT(pmap->pm_stab == Segtabzero);
 }
 
 /*
