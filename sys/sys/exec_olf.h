@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_olf.h,v 1.4 1996/11/06 20:12:12 etheisen Exp $	*/
+/*	$OpenBSD: exec_olf.h,v 1.5 1996/11/06 20:56:12 etheisen Exp $	*/
 /*
  * Copyright (c) 1996 Erik Theisen.  All rights reserved.
  *
@@ -121,8 +121,8 @@
 #define ODYNAMIC	1		/* Dynamically linked */
 
 /* e_ident[] strip */
-#define OSTRIP_N	0		/* NOT Stripped */
-#define OSTRIP		1		/* Stripped */
+#define OSTRIP		0		/* Stripped */
+#define OSTRIP_N	1		/* Not Stripped */
 
 /* e_ident */
 #define IS_OLF(ehdr) ((ehdr).e_ident[OI_MAG0] == OLFMAG0 && \
