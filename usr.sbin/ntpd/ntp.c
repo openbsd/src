@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.36 2004/10/13 12:22:39 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.37 2004/10/13 14:02:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -373,12 +373,18 @@ ntp_adjtime(void)
 	qsort(peers, offset_cnt, sizeof(struct ntp_peer *), offset_compare);
 
 	if (offset_cnt > 0) {
-		if (offset_cnt > 1 && offset_cnt % 2 == 0)
+		if (offset_cnt > 1 && offset_cnt % 2 == 0) {
 			offset_median =
 			    (peers[offset_cnt / 2 - 1]->update.offset +
 			    peers[offset_cnt / 2]->update.offset) / 2;
-		else
+			conf->status.rootdelay =
+			    (peers[offset_cnt / 2 - 1]->update.delay +
+			    peers[offset_cnt / 2]->update.delay) / 2;
+		} else {
 			offset_median = peers[offset_cnt / 2]->update.offset;
+			conf->status.rootdelay =
+			    peers[offset_cnt / 2]->update.delay;
+		}
 
 		imsg_compose(ibuf_main, IMSG_ADJTIME, 0, 0,
 		    &offset_median, sizeof(offset_median));
