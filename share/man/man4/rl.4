@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rl.4,v 1.16 2003/04/03 11:02:36 jmc Exp $
+.\"	$OpenBSD: rl.4,v 1.17 2003/05/05 13:51:58 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm rl
-.Nd RealTek 8129/8139 Fast Ethernet driver
+.Nd Realtek 8129/8139 Fast Ethernet driver
 .Sh SYNOPSIS
 .Cd "rl* at pci? dev ? function ?"
 .Cd "rl* at cardbus? dev ? function ?"
@@ -45,7 +45,7 @@
 The
 .Nm
 driver provides support for PCI Ethernet adapters and embedded
-controllers based on the RealTek 8129 and 8139 Fast Ethernet controller
+controllers based on the Realtek 8129 and 8139 Fast Ethernet controller
 chips.
 This includes, among others, the following cards:
 .Pp
@@ -76,7 +76,7 @@ Accton MPX5030 CardBus
 Corega FEther CB-TXD 10/100 Ethernet
 .El
 .Pp
-The RealTek controllers use bus master DMA but do not use a
+The Realtek controllers use bus master DMA but do not use a
 descriptor-based data transfer mechanism.
 The receiver uses a single fixed size ring buffer from which packets must be
 copied into mbufs.
@@ -100,7 +100,7 @@ driver supports the following media types:
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
 .It autoselect
 Enable autoselection of the media type and options.
-This is only supported if the PHY chip attached to the RealTek controller
+This is only supported if the PHY chip attached to the Realtek controller
 supports NWAY autonegotiation.
 The user can manually override the autoselected mode by adding media options
 to the appropriate
@@ -185,7 +185,7 @@ the card should be configured correctly.
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs
-.%B The RealTek 8129 and 8139 datasheets
+.%B The Realtek 8129 and 8139 datasheets
 .%O ftp.realtek.com.tw:/lancard/data sheet
 .Re
 .Sh HISTORY
@@ -213,7 +213,7 @@ longword aligned by definition.
 The driver probably should not be
 depending on this characteristic.
 .Pp
-The RealTek data sheets are of especially poor quality: the grammar
+The Realtek data sheets are of especially poor quality: the grammar
 and spelling are awful and there is a lot of information missing,
 particularly concerning the receiver operation.
 One particularly important fact that the data sheets fail to mention
@@ -234,4 +234,4 @@ frame will have the magic length of 0xFFF0.
 When the driver encounters this value, it knows that it has finished
 processing all currently available packets.
 Neither this magic value nor its significance are
-documented anywhere in the RealTek data sheets.
+documented anywhere in the Realtek data sheets.

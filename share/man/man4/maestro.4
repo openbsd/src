@@ -1,4 +1,4 @@
-.\"   $OpenBSD: maestro.4,v 1.10 2002/09/26 07:55:40 miod Exp $
+.\"   $OpenBSD: maestro.4,v 1.11 2003/05/05 13:51:57 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie.
 .\" All rights reserved.
@@ -38,7 +38,7 @@ The
 driver supports ESS maestro 1, 2 and 2E, including OEM products that
 identify as NEC Versa, or NEC VersaProNX VA26D, as long as they use
 an AC97 compliant codec, which is always the case, except for very
-early models. 
+early models.
 It does not support maestro 3 cards, which are entirely different and
 supported by the
 .Xr esa 4
@@ -49,7 +49,7 @@ mono and stereo, 8 bit signed and unsigned mono and stereo.
 Other encodings are emulated in software.
 Sampling range is 4000 - 48000 Hz, with roughly a 2 Hz resolution.
 .Pp
-Maestro cards have some DSP and dolby digital 5:1 hardware, but this driver
+Maestro cards have some DSP and Dolby Digital 5.1 hardware, but this driver
 does not support it.
 .Pp
 Other functions of maestro cards (modem, joystick) are not supported.

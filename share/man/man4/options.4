@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.120 2003/04/03 06:47:59 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.121 2003/05/05 13:51:58 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -294,7 +294,7 @@ Most machines need this if they are not running diskless.
 .It Cd option ADOSFS
 Includes code implementing the AmigaDOS Fast File System
 .Em ( ADOSFS ) .
-Note that the Professional and Smart File Systems are 
+Note that the Professional and Smart File Systems are
 .Em not
 supported.
 See
@@ -373,7 +373,7 @@ Note that this facility is redundant, and thus unneeded on most
 .Ox
 systems, since the
 .Xr fd 4
-pseudodevice driver already provides identical functionality.
+pseudo-device driver already provides identical functionality.
 On most systems, instances of
 .Xr fd 4
 are mknoded under
@@ -535,15 +535,15 @@ Makes the boot process more verbose for PCMCIA peripherals.
 .It Cd option MACOBIOVERBOSE
 Makes the boot process more verbose for Mac OBIO peripherals.
 .It Cd option APERTURE
-Provide in-kernel support for controlling VGA framebuffer mapping 
+Provide in-kernel support for controlling VGA framebuffer mapping
 and PCI configuration registers by user-processes
 (such as an X Window System server).
-This option is supported on the 
+This option is supported on the
 .Va alpha Ns ,
 .Va i386 Ns ,
-.Va macppc 
+.Va macppc
 and
-.Va sparc64 
+.Va sparc64
 architectures.
 .It Cd option LKM
 Enables support for loadable kernel modules.
@@ -946,15 +946,15 @@ Number of semaphore identifiers (also called semaphore handles
 and semaphore sets) available in the system.
 Default value is 10.
 The kernel allocates memory for the control structures at startup,
-so arbitrarily large values should be avoided. 
+so arbitrarily large values should be avoided.
 .It Cd option SEMMNS=value
 Maximum number of semaphores in all sets in the system.
 Default value is 60.
 .It Cd option SEMMNU=value
 Maximum number of semaphore undo structures in the system.
-Default value is 30. 
+Default value is 30.
 .It Cd option SEMUME=value
-Maximum number of per-process undo operation entries in the 
+Maximum number of per-process undo operation entries in the
 system.
 Semaphore undo operations are invoked by the kernel when
 .Xr semop 2
@@ -968,7 +968,7 @@ Default value is 10.
 Size of kernel mbuf cluster map,
 .Em mb_map ,
 in MCLBYTES-sized logical pages.
-Defaults to 2048 on i386, to 1024 on powerc and sparc64, and to 512 on
+Defaults to 2048 on i386, to 1024 on powerpc and sparc64, and to 512 on
 other architectures (doubled when using
 .Dq option GATEWAY
 except on i386).
@@ -1032,7 +1032,7 @@ For instance, if hardware realtime clock is set to Tokyo time,
 should be
 .Li \&-540
 as Tokyo local time is 9 hours ahead of UTC.
-Doublequote is needed when specifying a negative
+Double quotes are needed when specifying a negative
 .Ar value .
 .El
 .\" The following requests should be uncommented and used where appropriate.

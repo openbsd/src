@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hilkbd.4,v 1.4 2003/03/16 10:18:44 jmc Exp $
+.\"	$OpenBSD: hilkbd.4,v 1.5 2003/05/05 13:51:57 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Miodrag Vallat.
 .\" All rights reserved.
@@ -79,7 +79,7 @@ The supported key mappings are at this time:
 ) English / US keyboard mapping.
 .El
 .Sh EXAMPLES
-To set a swedish keyboard mapping, use
+To set a Swedish keyboard mapping, use
 .Ic wsconsctl -w keyboard.encoding=sv .
 To set it at kernel build time, regardless of what keyboard is plugged, add
 .Em option HILKBD_LAYOUT="KB_SV"

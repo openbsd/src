@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.11 2003/04/02 21:10:41 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.12 2003/05/05 13:51:58 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -190,7 +190,7 @@ sys: never bundled
 ldst + ldst is also possible under certain circumstances, which is then 
 called "double word load/store".
 .Pp
-The following restructions are placed upon the superscalar execution:
+The following restrictions are placed upon the superscalar execution:
 .Pp
 .Bl -bullet -compact
 .It

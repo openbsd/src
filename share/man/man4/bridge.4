@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.47 2003/02/26 08:26:01 jmc Exp $
+.\"	$OpenBSD: bridge.4,v 1.48 2003/05/05 13:51:57 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -592,8 +592,8 @@ are filtered statefully.
 If an IP packet is too large for the outgoing interface the bridge
 will perform IP fragmentation.
 This can happen when bridge members
-have different mtu's or when IP fragments are reassembled by
-.Xr pf 4 . 
+have different MTUs or when IP fragments are reassembled by
+.Xr pf 4 .
 Non-IP packets which are too large for the outgoing interface will be
 dropped.
 .Pp
