@@ -27,6 +27,9 @@ Supported devices include:
 	sun4c and sun4m SBus video: 
 		cgsix, cgthree, and bwtwo frame buffers
 
+        sun4m on-board machine specific video:
+                TCX, cgfourteen (aka SX)
+
 	sun4 video (not thoroughly tested...): 
 		P4  -- on-board bwtwo, cgfour, cgsix, cgeight
                 VME -- cgtwo, cgthree, cgsix 
@@ -75,9 +78,7 @@ about:
         SBus cgeight framebuffers
         SBus GS framebuffer (aka cgtwelve)
         SBus GT framebuffer ("Graphics Tower")
-        SS20 SX framebuffer (aka cgfourteen)
         SBus ZX framebuffer (aka Leo)
-        S24 (ss5 only) framebuffer
 
 
 *** Note: sun4m and general sparc caveats
