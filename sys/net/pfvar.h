@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.21 2001/06/26 22:56:03 dugsong Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.22 2001/06/27 04:29:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -139,15 +139,25 @@ struct pf_rdr {
 	NULL \
 }
 
+#define FCNT_STATE_SEARCH	0
+#define FCNT_STATE_INSERT	1
+#define FCNT_STATE_REMOVALS	2
+#define FCNT_MAX		4
+
+#define FCNT_NAMES { \
+	"state searches", \
+	"state inserts", \
+	"state removals", \
+	NULL \
+}
+
 struct pf_status {
 	quad_t		counters[PFRES_MAX];
+	quad_t		fcounters[FCNT_MAX];
+	quad_t		pcounters[2][3];
+	quad_t		bcounters[2];
 	u_int32_t	running;
-	u_int32_t	bytes[2];
-	u_int32_t	packets[2][2];
 	u_int32_t	states;
-	u_int32_t	state_inserts;
-	u_int32_t	state_removals;
-	u_int32_t	state_searches;
 	u_int32_t	since;
 };
 
