@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmjob.c,v 1.6 1997/07/17 09:14:11 deraadt Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.7 1997/07/18 20:57:27 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: rmjob.c,v 1.6 1997/07/17 09:14:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rmjob.c,v 1.7 1997/07/18 20:57:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -216,6 +216,8 @@ process(file)
 	while (getline(cfp)) {
 		switch (line[0]) {
 		case 'U':  /* unlink associated files */
+			if (strchr(line+1, '/') || strncmp(line+1, "df", 2))
+				break;
 			do_unlink(line+1);
 		}
 	}
