@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.23 2002/03/14 01:26:50 millert Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.24 2002/08/09 01:03:25 fgsch Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -284,6 +284,7 @@ linux_accept(p, v, retval)
 	} */ *uap = v;
 	struct linux_accept_args laa;
 	struct compat_43_sys_accept_args baa;
+	struct sys_fcntl_args fca;
 	int error;
 
 	if ((error = copyin((caddr_t) uap, (caddr_t) &laa, sizeof laa)))
@@ -293,7 +294,21 @@ linux_accept(p, v, retval)
 	SCARG(&baa, name) = (caddr_t) laa.addr;
 	SCARG(&baa, anamelen) = laa.namelen;
 
-	return compat_43_sys_accept(p, &baa, retval);
+	error = compat_43_sys_accept(p, &baa, retval);
+	if (error)
+		return (error);
+
+	/*
+	 * linux appears not to copy flags from the parent socket to the
+	 * accepted one, so we must clear the flags in the new descriptor.
+	 * Ignore any errors, because we already have an open fd.
+	 */
+	SCARG(&fca, fd) = *retval;
+	SCARG(&fca, cmd) = F_SETFL;
+	SCARG(&fca, arg) = 0;
+	(void)sys_fcntl(p, &fca, retval);
+	*retval = SCARG(&fca, fd);
+	return (0);
 }
 
 int
