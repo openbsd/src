@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.3 1997/03/13 19:11:49 downsj Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.4 1997/04/05 20:58:28 millert Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -93,13 +93,13 @@ struct	hostent {
 
 /*
  * Assumption here is that a network number
- * fits in an unsigned long -- probably a poor one.
+ * fits in an in_addr_t -- probably a poor one.
  */
 struct	netent {
 	char		*n_name;	/* official name of net */
 	char		**n_aliases;	/* alias list */
 	int		n_addrtype;	/* net address type */
-	unsigned long	n_net;		/* network # */
+	in_addr_t	n_net;		/* network # */
 };
 
 struct	servent {
@@ -137,7 +137,7 @@ struct hostent	*gethostbyaddr __P((const char *, int, int));
 struct hostent	*gethostbyname __P((const char *));
 struct hostent	*gethostbyname2 __P((const char *, int));
 struct hostent	*gethostent __P((void));
-struct netent	*getnetbyaddr __P((unsigned long, int));
+struct netent	*getnetbyaddr __P((in_addr_t, int));
 struct netent	*getnetbyname __P((const char *));
 struct netent	*getnetent __P((void));
 struct protoent	*getprotobyname __P((const char *));
