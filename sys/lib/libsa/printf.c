@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.11 1998/04/18 07:39:59 deraadt Exp $	*/
+/*	$OpenBSD: printf.c,v 1.12 1998/04/18 18:00:13 deraadt Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -139,7 +139,7 @@ kdoprnt(put, fmt, ap)
 	register char *p;
 	register int ch;
 	unsigned long ul;
-	int lflag, zpad;
+	int lflag;
 
 	for (;;) {
 		while ((ch = *fmt++) != '%') {
@@ -147,11 +147,8 @@ kdoprnt(put, fmt, ap)
 				return;
 			put(ch);
 		}
-		zpad = lflag = 0;
+		lflag = 0;
 reswitch:	switch (ch = *fmt++) {
-		case '0':
-			zpad = 1;
-			goto reswitch;
 		case 'l':
 			lflag = 1;
 			goto reswitch;
@@ -201,7 +198,7 @@ reswitch:	switch (ch = *fmt++) {
 		case 'o':
 			ul = lflag ?
 			    va_arg(ap, u_long) : va_arg(ap, u_int);
-			kprintn(put, ul, (zpad? -8:8));
+			kprintn(put, ul, 8);
 			break;
 		case 'u':
 			ul = lflag ?
@@ -209,14 +206,13 @@ reswitch:	switch (ch = *fmt++) {
 			kprintn(put, ul, 10);
 			break;
 		case 'p':
-			put('0');
-			put('x');
-			zpad = 1;
+			putchar('0');
+			putchar('x');
 			lflag += sizeof(void *)==sizeof(u_long)? 1 : 0;
 		case 'x':
 			ul = lflag ?
 			    va_arg(ap, u_long) : va_arg(ap, u_int);
-			kprintn(put, ul, (zpad? -16: 16));
+			kprintn(put, ul, 16);
 			break;
 		default:
 			put('%');
@@ -234,19 +230,13 @@ kprintn(put, ul, base)
 	unsigned long ul;
 	int base;
 {
-#define	NDIGITS(blog)	((sizeof(long) * NBBY + blog - 1) / blog)
-	char *p, buf[NDIGITS(3) + 1];	/* hold a long in base 8 */
-	int zpad = (base==-8)? NDIGITS(3) : ((base==-16)? NDIGITS(4) : 0);
+					/* hold a long in base 8 */
+	char *p, buf[(sizeof(long) * NBBY / 3) + 1];
 
-	if (base < 0)
-		base = -base;
 	p = buf;
 	do {
 		*p++ = "0123456789abcdef"[ul % base];
 	} while (ul /= base);
-	if (zpad)
-		while((p - buf) < zpad)
-			*p++ = '0';
 	do {
 		put(*--p);
 	} while (p > buf);
