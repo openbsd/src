@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.9 1998/03/28 23:40:52 millert Exp $
+#	$OpenBSD: list,v 1.10 1998/04/14 20:07:29 millert Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
@@ -89,5 +89,7 @@ COPY	dot.instutils			.instutils
 COPY	install.md			install.md
 COPY	${CURDIR}/../../miniroot/install.sh	install
 SPECIAL	sed -e "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
-
 SPECIAL	chmod 755 install
+
+# so DNS can work
+SYMLINK /tmp/resolv.conf.shadow		etc/resolv.conf
