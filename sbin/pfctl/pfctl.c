@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.149 2003/02/14 17:17:27 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.150 2003/02/17 06:58:27 mpech Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1118,7 +1118,7 @@ pfctl_set_logif(struct pfctl *pf, char *ifname)
 					errx(1, "pfctl_set_logif: strlcpy");
 			}
 			if (ioctl(pf->dev, DIOCSETSTATUSIF, &pi))
-				return (1);
+				err(1, "DIOCSETSTATUSIF");
 		}
 	}
 	return (0);
