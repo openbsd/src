@@ -400,8 +400,10 @@ loop:
 			       p->p_pid, p->p_comm, p->p_addr,
 			       ppri, cnt.v_free_count);
 #endif
-		vm_map_pageable(kernel_map, p->p_addr,
-		    p->p-addr + size, FALSE);
+#ifdef pica
+		vm_map_pageable(kernel_map, (vm_offset_t)p->p_addr,
+		    (vm_offset_t)p->p_addr + atop(USPACE), FALSE);
+#endif
 		swapin(p);
 		goto loop;
 	}
