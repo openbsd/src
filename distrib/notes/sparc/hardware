@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.66 2005/03/06 12:53:25 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.67 2005/03/08 10:58:50 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -172,56 +172,59 @@ Supported devices {:-include-:}:
 	  + Sun SBus PCMCIA bridge (stp)
 	  + Tadpole PCMCIA controller (tslot)
 	- Wireless Ethernet adapters (wi)
-	  + Compact Flash Adapters (will show up as PCMCIA adapters)
+	  + Intersil PRISM-2-3 based 802.11b Compact Flash adapters
+	    (will be detected as PCMCIA adapters)
 	      Buffalo AirStation
 	      D-Link DCF-660W
 	      ELSA XI800
 	      Linksys WCF12
 	      Netgear MA701
-	  + PCMCIA Adapters
-	      3Com AirConnect 3CRWE737A PCMCIA
-	      ACTIONTEC HWC01170 PCMCIA
-	      Addtron AWP-100 PCMCIA
-	      Agere Orinoco PCMCIA
-	      BUFFALO AirStation PCMCIA
-	      Cabletron RoamAbout PCMCIA
-	      Compaq Agency NC5004 PCMCIA
-	      Contec FLEXLAN/FX-DS110-PCC PCMCIA
-	      Corega PCC-11 PCMCIA
-	      Corega PCCA-11 PCMCIA
-	      Corega PCCB-11 PCMCIA
-	      Corega CGWLPCIA11 PCMCIA
-	      Dlink DWL650 PCMCIA
-	      ELSA XI300 PCMCIA
-	      ELSA XI325 PCMCIA
-	      ELSA XI325H PCMCIA
-	      EMTAC A2424i PCMCIA
-	      Ericsson Wireless LAN CARD C11 PCMCIA
-	      Gemtek WL-311 PCMCIA
-	      Hawking Technology WE110P PCMCIA
-	      I-O DATA WN-B11/PCM PCMCIA
-	      Intel PRO/Wireless 2011 PCMCIA
-	      Intersil Prism II PCMCIA
-	      Linksys Instant Wireless WPC11 PCMCIA
-	      Linksys Instant Wireless WPC11 2.5 PCMCIA
-	      Linksys Instant Wireless WPC11 3.0 PCMCIA
-	      Lucent WaveLAN PCMCIA
-	      NANOSPEED ROOT-RZ2000 PCMCIA
-	      NEC CMZ-RT-WP PCMCIA
-	      Netgear MA401 PCMCIA
-	      Netgear MA401RA PCMCIA
-	      Nokia C020 Wireless LAN PCMCIA
-	      Nokia C110/C111 Wireless LAN PCMCIA
-	      NTT-ME 11Mbps Wireless LAN PCMCIA
-	      Planex GW-NS11H Wireless LAN PCMCIA
-	      Proxim Harmony PCMCIA
-	      Proxim RangeLAN-DS PCMCIA
-	      Samsung MagicLAN SWL-2000N PCMCIA
-	      SMC 2632 EZ Connect PCMCIA
-	      Symbol Spectrum24 PCMCIA
-	      TDK LAK-CD011WL PCMCIA
-	      US Robotics 2410 PCMCIA
-	      US Robotics 2445 PCMCIA
+	  + Intersil PRISM 2-3, Lucent Hermes and Symbol Spectrum 24
+	    based PCMCIA 802.11b adapters
+	      3Com AirConnect 3CRWE737A
+	      ACTIONTEC HWC01170
+	      Addtron AWP-100
+	      Agere Orinoco
+	      ARtem Onair
+	      BUFFALO AirStation
+	      Cabletron RoamAbout
+	      Compaq Agency NC5004
+	      Contec FLEXLAN/FX-DS110-PCC
+	      Corega PCC-11
+	      Corega PCCA-11
+	      Corega PCCB-11
+	      Corega CGWLPCIA11
+	      D-Link DWL-650 revisions A1-J3
+	      ELSA XI300
+	      ELSA XI325
+	      ELSA XI325H
+	      EMTAC A2424i
+	      Ericsson Wireless LAN CARD C11
+	      Gemtek WL-311
+	      Hawking Technology WE110P
+	      I-O DATA WN-B11/PCM
+	      Intel PRO/Wireless 2011
+	      Intersil Prism II
+	      Linksys Instant Wireless WPC11
+	      Linksys Instant Wireless WPC11 2.5
+	      Linksys Instant Wireless WPC11 3.0
+	      Lucent WaveLAN
+	      NANOSPEED ROOT-RZ2000
+	      NEC CMZ-RT-WP
+	      Netgear MA401
+	      Netgear MA401RA
+	      Nokia C020 Wireless LAN
+	      Nokia C110/C111 Wireless LAN
+	      NTT-ME 11Mbps Wireless LAN
+	      Planex GW-NS11H Wireless LAN
+	      Proxim Harmony
+	      Proxim RangeLAN-DS
+	      Samsung MagicLAN SWL-2000N
+	      SMC 2632 EZ Connect
+	      Symbol Spectrum24
+	      TDK LAK-CD011WL
+	      US Robotics 2410
+	      US Robotics 2445
 	- NE2000-based Ethernet Adapters
 	    Accton EN2212, EN2216
 	    Allied Telesis LA-PCM

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.183 2005/03/06 12:53:25 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.184 2005/03/08 10:58:50 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -487,74 +487,136 @@ Supported hardware {:-include-:}:
 		    Trendware TE100-PCIE
 		    Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
-		Compact Flash Adapters (will show up as PCMCIA adapters)
-		    Buffalo AirStation CF [A] [B] [C]
-		    D-Link DCF-660W [A] [B] [C]
-		    ELSA XI800 CF [A] [B] [C]
-		    Linksys WCF12 [A] [B] [C]
-		    Netgear MA701 [A] [B] [C]
-		PCMCIA Adapters
-		    3Com AirConnect 3CRWE737A PCMCIA [A] [B] [C]
-		    ACTIONTEC HWC01170 PCMCIA [A] [B] [C]
-		    Addtron AWP-100 PCMCIA [A] [B] [C]
-		    Agere Orinoco PCMCIA [A] [B] [C]
-		    Aironet 4500/4800 802.11B ISA PnP, PCMCIA and PCI [A] [B]
-		    BUFFALO AirStation PCMCIA [A] [B] [C]
-		    Cabletron RoamAbout PCMCIA [A] [B] [C]
-		    Cisco 340/350 802.11B PCMCIA and PCI [A] [B]
-		    Compaq Agency NC5004 PCMCIA [A] [B] [C]
-		    Contec FLEXLAN/FX-DS110-PCC PCMCIA [A] [B] [C]
-		    Corega PCC-11 PCMCIA [A] [B] [C]
-		    Corega PCCA-11 PCMCIA [A] [B] [C]
-		    Corega PCCB-11 PCMCIA [A] [B] [C]
-		    Corega CGWLPCIA11 PCMCIA [A] [B] [C]
-		    Dlink DWL650 PCMCIA [A] [B] [C]
-		    ELSA XI300 PCMCIA [A] [B] [C]
-		    ELSA XI325 PCMCIA [A] [B] [C]
-		    ELSA XI325H PCMCIA [A] [B] [C]
-		    EMTAC A2424i PCMCIA [A] [B] [C]
-		    Ericsson Wireless LAN CARD C11 PCMCIA [A] [B] [C]
-		    Gemtek WL-311 PCMCIA [A] [B] [C]
-		    Hawking Technology WE110P PCMCIA [A] [B] [C]
-		    I-O DATA WN-B11/PCM PCMCIA [A] [B] [C]
-		    Intel PRO/Wireless 2011 PCMCIA [A] [B] [C]
-		    Intersil Prism II PCMCIA [A] [B] [C]
-		    Linksys Instant Wireless WPC11 PCMCIA [A] [B] [C]
-		    Linksys Instant Wireless WPC11 2.5 PCMCIA
-		      [A] [B] [C]
-		    Linksys Instant Wireless WPC11 3.0 PCMCIA
-		      [A] [B] [C]
-		    Lucent WaveLAN PCMCIA [A] [B] [C]
-		    NANOSPEED ROOT-RZ2000 PCMCIA [A] [B] [C]
-		    NEC CMZ-RT-WP PCMCIA [A] [B] [C]
-		    Netgear MA401 PCMCIA [A] [B] [C]
-		    Netgear MA401RA PCMCIA [A] [B] [C]
-		    Nokia C020 Wireless LAN PCMCIA [A] [B] [C]
-		    Nokia C110/C111 Wireless LAN PCMCIA [A] [B] [C]
-		    NTT-ME 11Mbps Wireless LAN PCMCIA [A] [B] [C]
-		    Planex GW-NS11H Wireless LAN PCMCIA [A] [B] [C]
-		    Proxim Harmony PCMCIA [A] [B] [C]
-		    Proxim RangeLAN-DS PCMCIA [A] [B] [C]
-		    RayLink Aviator2.4/Pro 802.11FH PCMCIA [A] [B]
-		    Samsung MagicLAN SWL-2000N PCMCIA [A] [B] [C]
-		    SMC 2632 EZ Connect PCMCIA [A] [B] [C]
-		    Symbol Spectrum24 PCMCIA [A] [B] [C]
-		    TDK LAK-CD011WL PCMCIA [A] [B] [C]
-		    US Robotics 2410 PCMCIA [A] [B] [C]
-		    US Robotics 2445 PCMCIA [A] [B] [C]
-		PCI Adapters
-		    3Com AirConnect 3CRWE777A PCI
+		ADMtek ADM8211 based 802.11b CardBus/PCI adapters [G]
+		Aironet 4500/4800 802.11b ISA PnP, PCMCIA and PCI [A] [B]
+		Atheros AR521x based CardBus 802.11a/b/g adapters [G]
+		    3Com 3CRPAG175
+		    Aztech WL830PC
+		    D-Link DWL-A650
+		    D-Link DWL-AB650
+		    D-Link DWL-AG650
+		    D-Link DWL-G650B
+		    Elecom LD-WL54AG
+		    Elecom LD-WL54
+		    Fujitsu E5454
+		    Fujitsu FMV-JW481
+		    Fujitsu E5454
+		    I/O Data WN-AB
+		    I/O Data WN-AG
+		    I/O Data WN-A54
+		    Linksys WPC51AB
+		    Linksys WPC55AG
+		    NEC PA-WL/54AG
+		    Netgear WAB501
+		    Netgear WAG511
+		    Netgear WG511T
+		    Orinoco 8480
+		    Orinoco 8470WD
+		    Proxim Skyline 4030
+		    Samsung SWL-5200N
+		    SMC SMC2735W
+		    Sony PCWA-C700
+		    Sony PCWA-C300S
+		    Sony PCWA-C500
+		Atheros AR521x based PCI 802.11a/b/g adapters [G]
+		    D-Link DWL-A520
+		    D-Link DWL-AG520
+		    D-Link DWL-G520
+		    HP NC4000
+		    Linksys WMP55AG
+		    Netgear WAG311
+		    Netgear WG311
+		    Proxim Skyline 4032
+		    Senao NL-5354MP
+		Atmel AT76C50x based USB 802.11b adapters [G]
+		    Acer Peripherals AWL300
+		    Acer Peripherals AWL400
+		    Aincomm AWU2000B
+		    Bluetake BW002
+		    D-Link DWL-120
+		    Geowave GW-US11S
+		    Linksys WUSB11
+		    Linksys WUSB11-V28
+		    Netgear MA101 rev B
+		    OQO model 01 builtin wireless
+		    Ovislink AirLive WL-1120USB
+		    OvisLink AirLive WL-1130USB
+		    SMC 2662W-AR
+		    SMC 2662W-V4
+		Intel PRO/Wireless 2100 802.11b adapters [G]
+		Intel PRO/Wireless 2200BG/2225BG/2915ABG
+		  802.11a/b/g adapters [G]
+		Intersil PRISM-2-3 based 802.11b Compact Flash adapters
+		(will be detected as PCMCIA adapters) [A] [B]
+		    Buffalo AirStation
+		    D-Link DCF-660W
+		    ELSA XI800
+		    Linksys WCF12
+		    Netgear MA701
+		Intersil PRISM 2-3, Lucent Hermes and Symbol Spectrum 24
+		  based PCMCIA 802.11b adapters [A] [B]
+		    3Com AirConnect 3CRWE737A
+		    ACTIONTEC HWC01170
+		    Addtron AWP-100
+		    Agere Orinoco
+		    ARtem Onair
+		    BUFFALO AirStation
+		    Cabletron RoamAbout
+		    Compaq Agency NC5004
+		    Contec FLEXLAN/FX-DS110-PCC
+		    Corega PCC-11
+		    Corega PCCA-11
+		    Corega PCCB-11
+		    Corega CGWLPCIA11
+		    D-Link DWL-650 revisions A1-J3
+		    ELSA XI300
+		    ELSA XI325
+		    ELSA XI325H
+		    EMTAC A2424i
+		    Ericsson Wireless LAN CARD C11
+		    Gemtek WL-311
+		    Hawking Technology WE110P
+		    I-O DATA WN-B11/PCM
+		    Intel PRO/Wireless 2011
+		    Intersil Prism II
+		    Linksys Instant Wireless WPC11
+		    Linksys Instant Wireless WPC11 2.5
+		    Linksys Instant Wireless WPC11 3.0
+		    Lucent WaveLAN
+		    NANOSPEED ROOT-RZ2000
+		    NEC CMZ-RT-WP
+		    Netgear MA401
+		    Netgear MA401RA
+		    Nokia C020 Wireless LAN
+		    Nokia C110/C111 Wireless LAN
+		    NTT-ME 11Mbps Wireless LAN
+		    Planex GW-NS11H Wireless LAN
+		    Proxim Harmony
+		    Proxim RangeLAN-DS
+		    Samsung MagicLAN SWL-2000N
+		    SMC 2632 EZ Connect
+		    Symbol Spectrum24
+		    TDK LAK-CD011WL
+		    US Robotics 2410
+		    US Robotics 2445
+		Intersil PRISM 2-3 and Symbol Spectrum24 based PCI
+		  802.11b adapters [A] [B]
+		    3Com AirConnect 3CRWE777A
 		    Belkin F5D6000 PCI (a rebadged WL11000P)
-		    Eumitcom WL11000P PCI
-		    Dlink DWL520 PCI
-		    Global Sun Technology GL24110P PCI (untested)
-		    Global Sun Technology GL24110P02 PCI
+		    Corega CGWLPCIA11
+		    Eumitcom WL11000P
+		    D-Link DWL-520 revisions A and B
+		    Global Sun Technology GL24110P (untested)
+		    Global Sun Technology GL24110P02
 		    Intersil Mini-PCI
-		    LinkSys WDT11 PCI (a rebadged GL24110P02)
-		    NDC/Sohoware NCP130 PCI
-		    Netgear MA301 PCI
-		    US Robotics 2415 PCI (rebadged WL11000P)
-		USB Adapters
+		    LinkSys WDT11 (a rebadged GL24110P02)
+		    NDC/Sohoware NCP130
+		    Netgear MA301
+		    Netgear MA311
+		    US Robotics 2415 (rebadged WL11000P)
+		    Nortel E-mobility 211818-A
+		    Symbol LA4123
+		Intersil PRISM 2.5/3 based USB 802.11b adapters [A] [B]
 		    Acer Warplink USB-400
 		    Actiontec HWU01170
 		    AirVast WM168b
@@ -586,6 +648,14 @@ Supported hardware {:-include-:}:
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
+		Ralink RT2500 based CardBus 802.11b/g adapters [G]
+		    MSI CB54G2
+		    Surecom EP-9428-g
+		Ralink RT2500 based PCI 802.11b/g adapters [G]
+		    ASUS WL-130g
+		    Minitar MN54GPC-R
+		Raytheon Raylink PCMCIA 802.11 FH adapters [A] [B]
+		Realtek RTL8180L based CardBus 802.11b adapters [G]
 	Gigabit Ethernet Adapters
 		Alteon Tigon I/II PCI Gigabit Ethernet boards, including: [A]
 		  [B] [C]

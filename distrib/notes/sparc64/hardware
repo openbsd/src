@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.86 2005/03/06 12:53:25 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.87 2005/03/08 10:58:50 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -190,68 +190,91 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		    Linksys USB100M
 
 	Wireless Ethernet Adapters
-		Compact Flash Adapters (will show up as PCMCIA adapters)
+		Atmel AT76C50x based USB 802.11b adapters
+		    Acer Peripherals AWL300
+		    Acer Peripherals AWL400
+		    Aincomm AWU2000B
+		    Bluetake BW002
+		    D-Link DWL-120
+		    Geowave GW-US11S
+		    Linksys WUSB11
+		    Linksys WUSB11-V28
+		    Netgear MA101 rev B
+		    Ovislink AirLive WL-1120USB
+		    OvisLink AirLive WL-1130USB
+		    SMC 2662W-AR
+		    SMC 2662W-V4
+		Intersil PRISM-2-3 based 802.11b Compact Flash adapters
+		  (will be detected as PCMCIA adapters)
 		    Buffalo AirStation
 		    D-Link DCF-660W
 		    ELSA XI800
 		    Linksys WCF12
 		    Netgear MA701
-		PCMCIA Adapters
-		    3Com AirConnect 3CRWE737A PCMCIA
-		    ACTIONTEC HWC01170 PCMCIA
-		    Addtron AWP-100 PCMCIA
-		    Agere Orinoco PCMCIA
-		    BUFFALO AirStation PCMCIA
-		    Cabletron RoamAbout PCMCIA
-		    Compaq Agency NC5004 PCMCIA
-		    Contec FLEXLAN/FX-DS110-PCC PCMCIA
-		    Corega PCC-11 PCMCIA
-		    Corega PCCA-11 PCMCIA
-		    Corega PCCB-11 PCMCIA
-		    Corega CGWLPCIA11 PCMCIA
-		    Dlink DWL650 PCMCIA
-		    ELSA XI300 PCMCIA
-		    ELSA XI325 PCMCIA
-		    ELSA XI325H PCMCIA
-		    EMTAC A2424i PCMCIA
-		    Ericsson Wireless LAN CARD C11 PCMCIA
-		    Gemtek WL-311 PCMCIA
-		    Hawking Technology WE110P PCMCIA
-		    I-O DATA WN-B11/PCM PCMCIA
-		    Intel PRO/Wireless 2011 PCMCIA
-		    Intersil Prism II PCMCIA
-		    Linksys Instant Wireless WPC11 PCMCIA
-		    Linksys Instant Wireless WPC11 2.5 PCMCIA
-		    Linksys Instant Wireless WPC11 3.0 PCMCIA
-		    Lucent WaveLAN PCMCIA
-		    NANOSPEED ROOT-RZ2000 PCMCIA
-		    NEC CMZ-RT-WP PCMCIA
-		    Netgear MA401 PCMCIA
-		    Netgear MA401RA PCMCIA
-		    Nokia C020 Wireless LAN PCMCIA
-		    Nokia C110/C111 Wireless LAN PCMCIA
-		    NTT-ME 11Mbps Wireless LAN PCMCIA
-		    Planex GW-NS11H Wireless LAN PCMCIA
-		    Proxim Harmony PCMCIA
-		    Proxim RangeLAN-DS PCMCIA
-		    Samsung MagicLAN SWL-2000N PCMCIA
-		    SMC 2632 EZ Connect PCMCIA
-		    Symbol Spectrum24 PCMCIA
-		    TDK LAK-CD011WL PCMCIA
-		    US Robotics 2410 PCMCIA
-		    US Robotics 2445 PCMCIA
-		PCI Adapters
-		    3Com AirConnect 3CRWE777A PCI
+		Intersil PRISM 2-3, Lucent Hermes and Symbol Spectrum 24
+		  based PCMCIA 802.11b adapters
+		    3Com AirConnect 3CRWE737A
+		    ACTIONTEC HWC01170
+		    Addtron AWP-100
+		    Agere Orinoco
+		    ARtem Onair
+		    BUFFALO AirStation
+		    Cabletron RoamAbout
+		    Compaq Agency NC5004
+		    Contec FLEXLAN/FX-DS110-PCC
+		    Corega PCC-11
+		    Corega PCCA-11
+		    Corega PCCB-11
+		    Corega CGWLPCIA11
+		    D-Link DWL-650 revisions A1-J3
+		    ELSA XI300
+		    ELSA XI325
+		    ELSA XI325H
+		    EMTAC A2424i
+		    Ericsson Wireless LAN CARD C11
+		    Gemtek WL-311
+		    Hawking Technology WE110P
+		    I-O DATA WN-B11/PCM
+		    Intel PRO/Wireless 2011
+		    Intersil Prism II
+		    Linksys Instant Wireless WPC11
+		    Linksys Instant Wireless WPC11 2.5
+		    Linksys Instant Wireless WPC11 3.0
+		    Lucent WaveLAN
+		    NANOSPEED ROOT-RZ2000
+		    NEC CMZ-RT-WP
+		    Netgear MA401
+		    Netgear MA401RA
+		    Nokia C020 Wireless LAN
+		    Nokia C110/C111 Wireless LAN
+		    NTT-ME 11Mbps Wireless LAN
+		    Planex GW-NS11H Wireless LAN
+		    Proxim Harmony
+		    Proxim RangeLAN-DS
+		    Samsung MagicLAN SWL-2000N
+		    SMC 2632 EZ Connect
+		    Symbol Spectrum24
+		    TDK LAK-CD011WL
+		    US Robotics 2410
+		    US Robotics 2445
+		Intersil PRISM 2-3 and Symbol Spectrum24 based PCI
+		  802.11b adapters [A] [B]
+		    3Com AirConnect 3CRWE777A
 		    Belkin F5D6000 PCI (a rebadged WL11000P)
-		    Eumitcom WL11000P PCI
-		    Dlink DWL520 PCI
-		    Global Sun Technology GL24110P PCI (untested)
-		    Global Sun Technology GL24110P02 PCI
-		    LinkSys WDT11 PCI (a rebadged GL24110P02)
-		    NDC/Sohoware NCP130 PCI
-		    Netgear MA301 PCI
-		    US Robotics 2415 PCI (rebadged WL11000P)
-		USB Adapters
+		    Corega CGWLPCIA11
+		    Eumitcom WL11000P
+		    D-Link DWL-520 revisions A and B
+		    Global Sun Technology GL24110P (untested)
+		    Global Sun Technology GL24110P02
+		    Intersil Mini-PCI
+		    LinkSys WDT11 (a rebadged GL24110P02)
+		    NDC/Sohoware NCP130
+		    Netgear MA301
+		    Netgear MA311
+		    US Robotics 2415 (rebadged WL11000P)
+		    Nortel E-mobility 211818-A
+		    Symbol LA4123
+		Intersil PRISM 2.5/3 based USB 802.11b adapters
 		    Acer Warplink USB-400
 		    Actiontec HWU01170
 		    AirVast WM168b

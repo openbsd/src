@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.37 2005/03/06 12:53:25 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.38 2005/03/08 10:58:50 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -390,72 +390,38 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Trendware TE100-PCIE
 		    Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
-dnl		Compact Flash Adapters (will show up as PCMCIA adapters)
-dnl		    Buffalo AirStation CF
-dnl		    D-Link DCF-660W
-dnl		    ELSA XI800 CF
-dnl		    Linksys WCF12
-dnl		    Netgear MA701
-dnl		PCMCIA Adapters
-dnl		    3Com AirConnect 3CRWE737A PCMCIA
-dnl		    ACTIONTEC HWC01170 PCMCIA
-dnl		    Addtron AWP-100 PCMCIA
-dnl		    Agere Orinoco PCMCIA
-dnl		    Aironet 4500/4800 802.11B PCMCIA and PCI
-dnl		    BUFFALO AirStation PCMCIA
-dnl		    Cabletron RoamAbout PCMCIA
-dnl		    Cisco 340/350 802.11B PCMCIA and PCI
-dnl		    Compaq Agency NC5004 PCMCIA
-dnl		    Contec FLEXLAN/FX-DS110-PCC PCMCIA
-dnl		    Corega PCC-11 PCMCIA
-dnl		    Corega PCCA-11 PCMCIA
-dnl		    Corega PCCB-11 PCMCIA
-dnl		    Corega CGWLPCIA11 PCMCIA
-dnl		    Dlink DWL650 PCMCIA
-dnl		    ELSA XI300 PCMCIA
-dnl		    ELSA XI325 PCMCIA
-dnl		    ELSA XI325H PCMCIA
-dnl		    EMTAC A2424i PCMCIA
-dnl		    Ericsson Wireless LAN CARD C11 PCMCIA
-dnl		    Gemtek WL-311 PCMCIA
-dnl		    Hawking Technology WE110P PCMCIA
-dnl		    I-O DATA WN-B11/PCM PCMCIA
-dnl		    Intel PRO/Wireless 2011 PCMCIA
-dnl		    Intersil Prism II PCMCIA
-dnl		    Linksys Instant Wireless WPC11 PCMCIA
-dnl		    Linksys Instant Wireless WPC11 2.5 PCMCIA
-dnl		    Linksys Instant Wireless WPC11 3.0 PCMCIA
-dnl		    Lucent WaveLAN PCMCIA
-dnl		    NANOSPEED ROOT-RZ2000 PCMCIA
-dnl		    NEC CMZ-RT-WP PCMCIA
-dnl		    Netgear MA401 PCMCIA
-dnl		    Netgear MA401RA PCMCIA
-dnl		    Nokia C020 Wireless LAN PCMCIA
-dnl		    Nokia C110/C111 Wireless LAN PCMCIA
-dnl		    NTT-ME 11Mbps Wireless LAN PCMCIA
-dnl		    Planex GW-NS11H Wireless LAN PCMCIA
-dnl		    Proxim Harmony PCMCIA
-dnl		    Proxim RangeLAN-DS PCMCIA
-dnl		    RayLink Aviator2.4/Pro 802.11FH PCMCIA
-dnl		    Samsung MagicLAN SWL-2000N PCMCIA
-dnl		    SMC 2632 EZ Connect PCMCIA
-dnl		    Symbol Spectrum24 PCMCIA
-dnl		    TDK LAK-CD011WL PCMCIA
-dnl		    US Robotics 2410 PCMCIA
-dnl		    US Robotics 2445 PCMCIA
-		PCI Adapters
-		    3Com AirConnect 3CRWE777A PCI
+		Atmel AT76C50x based USB 802.11b adapters
+		    Acer Peripherals AWL300
+		    Acer Peripherals AWL400
+		    Aincomm AWU2000B
+		    Bluetake BW002
+		    D-Link DWL-120
+		    Geowave GW-US11S
+		    Linksys WUSB11
+		    Linksys WUSB11-V28
+		    Netgear MA101 rev B
+		    Ovislink AirLive WL-1120USB
+		    OvisLink AirLive WL-1130USB
+		    SMC 2662W-AR
+		    SMC 2662W-V4
+		Intersil PRISM 2-3 and Symbol Spectrum24 based PCI
+		  802.11b adapters
+		    3Com AirConnect 3CRWE777A
 		    Belkin F5D6000 PCI (a rebadged WL11000P)
-		    Eumitcom WL11000P PCI
-		    Dlink DWL520 PCI
-		    Global Sun Technology GL24110P PCI (untested)
-		    Global Sun Technology GL24110P02 PCI
+		    Corega CGWLPCIA11
+		    Eumitcom WL11000P
+		    D-Link DWL-520 revisions A and B
+		    Global Sun Technology GL24110P (untested)
+		    Global Sun Technology GL24110P02
 		    Intersil Mini-PCI
-		    LinkSys WDT11 PCI (a rebadged GL24110P02)
-		    NDC/Sohoware NCP130 PCI
-		    Netgear MA301 PCI
-		    US Robotics 2415 PCI (rebadged WL11000P)
-		USB Adapters
+		    LinkSys WDT11 (a rebadged GL24110P02)
+		    NDC/Sohoware NCP130
+		    Netgear MA301
+		    Netgear MA311
+		    US Robotics 2415 (rebadged WL11000P)
+		    Nortel E-mobility 211818-A
+		    Symbol LA4123
+		Intersil PRISM 2.5/3 based USB 802.11b adapters
 		    Acer Warplink USB-400
 		    Actiontec HWU01170
 		    AirVast WM168b
