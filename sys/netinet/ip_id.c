@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_id.c,v 1.1 1998/12/26 12:35:12 provos Exp $ */
+/* $OpenBSD: ip_id.c,v 1.2 1999/08/26 13:37:01 provos Exp $ */
 
 /*
  * Copyright 1998 Niels Provos <provos@citi.umich.edu>
@@ -76,7 +76,7 @@ const static u_int16_t pfacts[PFAC_N] = {
 };
 
 static u_int16_t ru_x;
-static u_int16_t ru_seed;
+static u_int16_t ru_seed, ru_seed2;
 static u_int16_t ru_a, ru_b;
 static u_int16_t ru_g;
 static u_int16_t ru_counter = 0;
@@ -136,6 +136,8 @@ ip_initid(void)
 
 	/* 15 bits of random seed */
 	ru_seed = (tmp >> 16) & 0x7FFF;
+	get_random_bytes((void *) &tmp, sizeof(tmp));
+	ru_seed2 = tmp & 0x7FFF;
 
 	get_random_bytes((void *) &tmp, sizeof(tmp));
 
@@ -195,5 +197,5 @@ ip_randomid(void)
 
 	ru_counter += i;
 
-	return (ru_seed ^ pmod(ru_g,ru_x,RU_N)) | ru_msb;
+	return (ru_seed ^ pmod(ru_g,ru_seed2 ^ ru_x,RU_N)) | ru_msb;
 }

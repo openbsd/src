@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.7 1997/07/25 20:30:08 mickey Exp $ */
+/* $OpenBSD: res_random.c,v 1.8 1999/08/26 13:38:10 provos Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -83,7 +83,7 @@ const static u_int16_t pfacts[PFAC_N] = {
 };
 
 static u_int16_t ru_x;
-static u_int16_t ru_seed;
+static u_int16_t ru_seed, ru_seed2;
 static u_int16_t ru_a, ru_b;
 static u_int16_t ru_g;
 static u_int16_t ru_counter = 0;
@@ -143,6 +143,8 @@ res_initid()
 
 	/* 15 bits of random seed */
 	ru_seed = (tmp >> 16) & 0x7FFF;
+	tmp = arc4random();
+	ru_seed2 = tmp & 0x7FFF;
 
 	tmp = arc4random();
 
@@ -204,7 +206,7 @@ res_randomid()
 
 	ru_counter += i;
 
-	return (ru_seed ^ pmod(ru_g,ru_x,RU_N)) | ru_msb;
+	return (ru_seed ^ pmod(ru_g,ru_seed2 ^ ru_x,RU_N)) | ru_msb;
 }
 
 #if 0
