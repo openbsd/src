@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.22 1995/08/18 15:27:32 chopps Exp $	*/
+/*	$NetBSD: genassym.c,v 1.23 1996/02/02 19:42:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -35,22 +35,23 @@
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
  */
 
-#define _KERNEL
-
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
+#include <sys/syscall.h>
+#include <sys/user.h>
+
+#include <vm/vm.h>
+
 #include <machine/cpu.h>
 #include <machine/trap.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
-#include <sys/syscall.h>
-#include <vm/vm.h>
-#include <sys/user.h>
 #include <machine/pte.h>
+
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/isr.h>
 
