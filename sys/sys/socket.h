@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.2 1996/02/29 13:57:28 niklas Exp $	*/
+/*	$OpenBSD: socket.h,v 1.3 1996/06/30 21:33:20 chuck Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -122,8 +122,9 @@ struct	linger {
 #define	AF_IPX		23		/* Novell Internet Protocol */
 #define	AF_SIP		24		/* Simple Internet Protocol */
 #define pseudo_AF_PIP	25		/* Help Identify PIP packets */
+#define AF_NATM		26		/* native ATM access */
 
-#define	AF_MAX		26
+#define	AF_MAX		27
 
 /*
  * Structure used by kernel to store most
@@ -175,6 +176,7 @@ struct sockproto {
 #define	PF_IPX		AF_IPX		/* same format as AF_NS */
 #define PF_RTIP		pseudo_AF_FTIP	/* same format as AF_INET */
 #define PF_PIP		pseudo_AF_PIP
+#define PF_NATM		AF_NATM
 
 #define	PF_MAX		AF_MAX
 
@@ -215,6 +217,7 @@ struct sockproto {
 	{ "ipx", CTLTYPE_NODE }, \
 	{ "sip", CTLTYPE_NODE }, \
 	{ "pip", CTLTYPE_NODE }, \
+	{ "natm", CTLTYPE_NODE }, \
 }
 
 /*
