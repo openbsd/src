@@ -1,3 +1,7 @@
+/*	$OpenBSD: getrusage.c,v 1.2 2002/02/16 01:03:35 nordin Exp $	*/
+/*
+ *	Written by Thomas Nordin <nordin@openbsd.org> 2002 Public Domain.
+ */
 #include <err.h>
 #include <limits.h>
 #include <stddef.h>
