@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: command.c,v 1.50 2000/08/18 00:02:10 brian Exp $
+ * $OpenBSD: command.c,v 1.51 2000/08/30 22:04:35 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -2108,8 +2108,14 @@ AddCommand(struct cmdargs const *arg)
     } else if (strcasecmp(arg->argv[arg->argn], "DNS1") == 0) {
       addrs = ROUTE_DSTDNS1;
       dest = arg->bundle->ncp.ipcp.ns.dns[1];
-    } else
+    } else {
       dest = GetIpAddr(arg->argv[arg->argn]);
+      if (dest.s_addr == INADDR_NONE) {
+        log_Printf(LogWARN, "%s: Invalid destination address\n",
+                   arg->argv[arg->argn]);
+        return -1;
+      }
+    }
     netmask = GetIpAddr(arg->argv[arg->argn+1]);
     gw = 2;
   }
@@ -2117,8 +2123,14 @@ AddCommand(struct cmdargs const *arg)
   if (strcasecmp(arg->argv[arg->argn+gw], "HISADDR") == 0) {
     gateway = arg->bundle->ncp.ipcp.peer_ip;
     addrs |= ROUTE_GWHISADDR;
-  } else
+  } else {
     gateway = GetIpAddr(arg->argv[arg->argn+gw]);
+    if (gateway.s_addr == INADDR_NONE) {
+      log_Printf(LogWARN, "%s: Invalid gateway address\n",
+                 arg->argv[arg->argn + gw]);
+      return -1;
+    }
+  }
 
   if (bundle_SetRoute(arg->bundle, RTM_ADD, dest, gateway, netmask,
                   arg->cmd->args ? 1 : 0, (addrs & ROUTE_GWHISADDR) ? 1 : 0)
