@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.22 2003/03/08 16:06:03 dhartmei Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.23 2003/03/24 17:06:39 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -54,7 +54,7 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 
 	if (addr->type == PF_ADDR_DYNIFTL)
 		printf("(%s)", addr->v.ifname);
-	else if (addr->type == PF_ADDR_TABLE)
+	else if (addr->type == PF_ADDR_TABLE) {
 		if (verbose)
 			if (addr->p.tblcnt == -1)
 				printf("<%s:*>", addr->v.tblname);
@@ -63,7 +63,8 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 				    addr->p.tblcnt);
 		else
 			printf("<%s>", addr->v.tblname);
-	else {
+		return;
+	} else {
 		if (inet_ntop(af, &addr->v.a.addr, buf, sizeof(buf)) == NULL)
 			printf("?");
 		else
