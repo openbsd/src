@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.17 1997/07/28 23:46:10 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.18 1997/08/17 17:31:37 grr Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -1538,6 +1538,7 @@ pmap_copy_page(src, dst)
  *		will specify that these pages are to be wired
  *		down (or not) as appropriate.
  */
+
 void
 pmap_pageable(pmap, sva, eva, pageable)
 	pmap_t pmap;
@@ -1557,18 +1558,23 @@ pmap_pageable(pmap, sva, eva, pageable)
 	 * be all zeros and there is no need to clean it.
 	 * Assumption:
 	 *	- PT pages have only one pv_table entry
+	 *	- PT pages are the only single-page allocations
+	 *	  between the user stack and kernel va's 
+	 * See also pmap_enter & pmap_protect for rehashes of this...
 	 */
-	if (pmap != pmap_kernel() || !pageable)
-		return;
 
-	for ( ; sva < eva; sva += NBPG) {
+	if (pageable &&
+	    pmap == pmap_kernel() &&
+	    sva >= VM_MAXUSER_ADDRESS && eva <= VM_MAX_ADDRESS &&
+	    eva - sva == NBPG) {
 		register vm_offset_t pa;
 		register pt_entry_t *pte;
-
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		u_int pind;
 		register struct pv_entry *pv;
+#endif
 
+#ifdef DEBUG
 		if ((pmapdebug & (PDB_FOLLOW|PDB_PTPAGE)) == PDB_PTPAGE)
 			printf("pmap_pageable(%x, %x, %x, %x)",
 			       pmap, sva, eva, pageable);
@@ -1582,9 +1588,16 @@ pmap_pageable(pmap, sva, eva, pageable)
 
 		pa = pmap_pte_pa(pte);
 
-#ifdef DEBUG
-		if ((pind = pmap_page_index(pa)) == -1)
+#ifdef DIAGNOSTIC
+		if ((*pte & (PG_u | PG_RW)) != (PG_u | PG_RW))
+			printf("pmap_pageable: unexpected pte=%x va %x\n",
+				*pte, sva);
+
+		if ((pind = pmap_page_index(pa)) == -1) {
+			printf("pmap_pageable: invalid pa %x va %x\n",
+				pa, sva);
 			return;
+		}
 
 		pv = &pv_table[pind];
 		if (pv->pv_va != sva || pv->pv_next) {
