@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.73 2001/05/30 02:12:31 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.74 2001/06/01 19:53:33 provos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
@@ -153,6 +154,8 @@ int	ipq_locked;
 static __inline int ipq_lock_try __P((void));
 static __inline void ipq_unlock __P((void));
 
+struct pool ipqent_pool;
+
 static __inline int
 ipq_lock_try()
 {
@@ -221,6 +224,9 @@ ip_init()
 	register int i;
 	const u_int16_t defbaddynamicports_tcp[] = DEFBADDYNAMICPORTS_TCP;
 	const u_int16_t defbaddynamicports_udp[] = DEFBADDYNAMICPORTS_UDP;
+
+	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl",
+	    0, NULL, NULL, M_IPQ);
 
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)
@@ -550,8 +556,7 @@ found:
 				goto bad;
 			}
 			    
-			MALLOC(ipqe, struct ipqent *, sizeof (struct ipqent),
-			    M_IPQ, M_NOWAIT);
+			ipqe = pool_get(&ipqent_pool, PR_NOWAIT);
 			if (ipqe == NULL) {
 				ipstat.ips_rcvmemdrop++;
 				ipq_unlock();
@@ -760,7 +765,7 @@ ip_reass(ipqe, fp)
 		nq = q->ipqe_q.le_next;
 		m_freem(q->ipqe_m);
 		LIST_REMOVE(q, ipqe_q);
-		FREE(q, M_IPQ);
+		pool_put(&ipqent_pool, q);
 		ip_frags--;
 	}
 
@@ -800,12 +805,12 @@ insert:
 	m->m_next = 0;
 	m_cat(m, t);
 	nq = q->ipqe_q.le_next;
-	FREE(q, M_IPQ);
+	pool_put(&ipqent_pool, q);
 	ip_frags--;
 	for (q = nq; q != NULL; q = nq) {
 		t = q->ipqe_m;
 		nq = q->ipqe_q.le_next;
-		FREE(q, M_IPQ);
+		pool_put(&ipqent_pool, q);
 		ip_frags--;
 		m_cat(m, t);
 	}
@@ -835,7 +840,7 @@ insert:
 dropfrag:
 	ipstat.ips_fragdropped++;
 	m_freem(m);
-	FREE(ipqe, M_IPQ);
+	pool_put(&ipqent_pool, ipqe);
 	ip_frags--;
 	return (0);
 }
@@ -854,7 +859,7 @@ ip_freef(fp)
 		p = q->ipqe_q.le_next;
 		m_freem(q->ipqe_m);
 		LIST_REMOVE(q, ipqe_q);
-		FREE(q, M_IPQ);
+		pool_put(&ipqent_pool, q);
 		ip_frags--;
 	}
 	LIST_REMOVE(fp, ipq_q);
