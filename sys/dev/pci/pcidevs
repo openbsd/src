@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.395 2001/05/11 14:56:02 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.396 2001/05/12 08:29:00 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -985,6 +985,11 @@ product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z
 /* Cyrix/National Semiconductor products */
 product CYRIX GXMPCI		0x0001	GXm Host-PCI
 product CYRIX GXMISA		0x0002	GXm PCI-ISA
+product CYRIX CX5530_PCIB	0x0100	Cx5530 South Bridge
+product CYRIX CX5530_SMI	0x0101	Cx5530 SMI/ACPI
+product CYRIX CX5530_IDE	0x0102	Cx5530 IDE
+product CYRIX CX5530_AUDIO	0x0103	Cx5530 XpressAUDIO
+product CYRIX CX5530_VIDEO	0x0104	Cx5530 Video
 
 /* Dell Computer products */
 product DELL PERC_2SI		0x0001	PERC 2/Si
