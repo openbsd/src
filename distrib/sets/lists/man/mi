@@ -1250,6 +1250,7 @@
 ./usr/share/man/cat4/sparc64/intro.0
 ./usr/share/man/cat4/sparc64/kmem.0
 ./usr/share/man/cat4/sparc64/le.0
+./usr/share/man/cat4/sparc64/lebuffer.0
 ./usr/share/man/cat4/sparc64/magma.0
 ./usr/share/man/cat4/sparc64/mem.0
 ./usr/share/man/cat4/sparc64/openprom.0
