@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_reconstruct.c,v 1.6 2000/01/07 14:50:22 peter Exp $	*/
+/*	$OpenBSD: rf_reconstruct.c,v 1.7 2000/01/11 14:51:37 peter Exp $	*/
 /*	$NetBSD: rf_reconstruct.c,v 1.9 2000/01/05 02:57:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -67,12 +67,6 @@
 
 #include "rf_kintf.h"
 
-#if defined(__GNUC__) && !defined(DDB)
-#define INTEGRATE static __inline__
-#else
-#define INTEGRATE
-#endif
-
 /* setting these to -1 causes them to be set to their default values if not set by debug options */
 
 #define Dprintf(s)         if (rf_reconDebug) rf_debug_printf(s,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)
@@ -119,10 +113,10 @@ void rf_ShutdownReconstruction __P((void *));
  * these functions are inlined on gcc. If they are used more than
  * once, it is strongly advised to un-line them
  */
-INTEGRATE void rf_FreeReconDesc __P((RF_RaidReconDesc_t *));
-INTEGRATE int rf_IssueNextWriteRequest __P((RF_Raid_t *, RF_RowCol_t));
-INTEGRATE int rf_CheckForcedOrBlockedReconstruction __P((RF_Raid_t *, RF_ReconParityStripeStatus_t *, RF_PerDiskReconCtrl_t *, RF_RowCol_t, RF_RowCol_t, RF_StripeNum_t, RF_ReconUnitNum_t));
-INTEGRATE void rf_SignalReconDone __P((RF_Raid_t *));
+void rf_FreeReconDesc __P((RF_RaidReconDesc_t *));
+int rf_IssueNextWriteRequest __P((RF_Raid_t *, RF_RowCol_t));
+int rf_CheckForcedOrBlockedReconstruction __P((RF_Raid_t *, RF_ReconParityStripeStatus_t *, RF_PerDiskReconCtrl_t *, RF_RowCol_t, RF_RowCol_t, RF_StripeNum_t, RF_ReconUnitNum_t));
+void rf_SignalReconDone __P((RF_Raid_t *));
 
 /* XXX these should be in a .h file somewhere */
 int raidlookup __P((char *, struct proc *, struct vnode **));
@@ -139,7 +133,7 @@ static RF_FreeList_t *rf_rdp_freelist;
 #define RF_MAX_FREE_RDP 4
 #define RF_RDP_INC      1
 
-INTEGRATE void 
+void 
 rf_SignalReconDone(RF_Raid_t * raidPtr)
 {
 	RF_ReconDoneProc_t *p;
@@ -250,7 +244,7 @@ rf_AllocRaidReconDesc(raidPtr, row, col, spareDiskPtr, numDisksDone, srow, scol)
 	return (reconDesc);
 }
 
-INTEGRATE void 
+void 
 rf_FreeReconDesc(reconDesc)
 	RF_RaidReconDesc_t *reconDesc;
 {
@@ -1214,7 +1208,7 @@ skipit:
 	return (1);
 }
 /* this is called when a buffer has become ready to write to the replacement disk */
-INTEGRATE int 
+int 
 rf_IssueNextWriteRequest(raidPtr, row)
 	RF_Raid_t *raidPtr;
 	RF_RowCol_t row;
@@ -1425,7 +1419,7 @@ rf_CheckHeadSeparation(
  *
  * ASSUMES THE PSS MUTEX IS LOCKED UPON ENTRY
  */
-INTEGRATE int 
+int 
 rf_CheckForcedOrBlockedReconstruction(
     RF_Raid_t * raidPtr,
     RF_ReconParityStripeStatus_t * pssPtr,
