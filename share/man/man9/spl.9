@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.9 2002/05/15 11:51:45 art Exp $
+.\"	$OpenBSD: spl.9,v 1.10 2002/05/15 23:18:06 art Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -68,6 +68,8 @@
 .Fn spl0 void
 .Ft void
 .Fn splx "int s"
+.Ft void
+.Fn splassert "int s"
 .Sh DESCRIPTION
 These functions raise and lower the system priority level.
 They are used by kernel code to block interrupts with priority less
@@ -168,3 +170,41 @@ macro restores the system priority level to the one encoded in
 which must be a value previously returned by one of the other
 .Nm
 macros.
+.Pp
+The
+.Fn splassert
+function makes that the system is running at a certain priority level.
+The argument
+.Fa s
+should be one of these constants:
+.Bl -tag -width IPL_SOFTCLOCKXX
+.It Dv IPL_CLOCK
+.It Dv IPL_VM
+.It Dv IPL_BIO
+.It Dv IPL_TTY
+.It Dv IPL_NET
+.It Dv IPL_SOFTNET
+.It Dv IPL_SOFTCLOCK
+.It Dv IPL_0
+.El
+.Pp
+The
+.Fn splassert
+function is optional and is not necessarily implemented on
+all architectures nor enabled in all kernel configurations.
+It checks the current system priority level too see if it's 
+at least at the level specified in the argument
+.Fa s .
+If possible, it also checks if it hasn't been called from an
+interrupt handler with a level higher than the one requested, which
+must be an error (if some code is protected from
+.Dv IPL_SOFTNET
+interrupts, but accessed from an
+.Dv IPL_NET
+interrupt, it must be a design error in the code).
+The behavior of the
+.Fn splassert
+function is controlled by the kern.splassert
+.Xr sysctl 8 .
+Set to 0 it disables error checking, set to 1 it prints an error message
+if error is detected, any other value causes a system panic on errors.
