@@ -1,4 +1,4 @@
-/*	$OpenBSD: busdma.c,v 1.4 2004/08/10 20:15:47 deraadt Exp $ */
+/*	$OpenBSD: busdma.c,v 1.5 2004/09/17 19:28:05 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -140,7 +140,10 @@ _dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		pmap_extract(pmap, (vaddr_t)vaddr, (paddr_t *)&curaddr);
+		if (pmap_extract(pmap, (vaddr_t)vaddr, (paddr_t *)&curaddr) ==
+		    FALSE)
+			panic("_dmapmap_load: pmap_extract(%x, %x) failed!",
+			    pmap, vaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -229,7 +232,9 @@ _dmamap_load_mbuf(t, map, m, flags)
 
 			incr = min(buflen, NBPG);
 			buflen -= incr;
-			(void) pmap_extract(pmap_kernel(), vaddr, &pa);
+			if (pmap_extract(pmap_kernel(), vaddr, &pa) == FALSE)
+				panic("_dmamap_load_mbuf: pmap_extract(%x, %x) failed!",
+				    pmap_kernel(), vaddr);
 			pa += t->dma_offs;
 
 			if (i > 0 && pa == (map->dm_segs[i-1].ds_addr + map->dm_segs[i-1].ds_len)
