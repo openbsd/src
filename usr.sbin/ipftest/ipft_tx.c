@@ -1,3 +1,4 @@
+/*	$OpenBSD: ipft_tx.c,v 1.8 1997/02/26 14:59:30 kstailey Exp $	*/
 /*
  * (C)opyright 1995 by Darren Reed.
  *
