@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.11 2000/05/05 12:33:51 jakob Exp $ */
+/* $OpenBSD: user.c,v 1.12 2000/05/05 23:22:39 ho Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -366,6 +366,108 @@ modify_gid(char *group, char *newent)
 		return 0;
 	}
 	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
+	return 1;
+}
+
+/* (Re)write secondary groups */
+static int
+modify_groups (char *login, char *newlogin, user_t *up, char *primgrp)
+{
+	struct stat    st;
+	FILE          *from, *to;
+	char          *colon, *p;
+	char           buf[MaxEntryLen], tmpf[MaxFileNameLen];
+	int            fd, cc, g;
+
+	/* XXX This function, and modify_gid() above could possibly be */
+	/* combined into one function. */
+
+	if ((from = fopen(_PATH_GROUP, "r")) == (FILE *) NULL) {
+		warn("can't create/modify groups for login %s: can't open %s",
+		     login, _PATH_GROUP);
+		return 0;
+	}
+	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
+		warn("can't lock `%s'", _PATH_GROUP);
+	}
+	(void) fstat(fileno(from), &st);
+	(void) snprintf(tmpf, sizeof (tmpf), "%s.XXXXXX", _PATH_GROUP);
+	if ((fd = mkstemp (tmpf)) < 0) {
+		(void) fclose(from);
+		warn("can't modify secondary groups: mkstemp failed");
+		return 0;
+	}
+	if ((to = fdopen(fd, "w")) == (FILE *) NULL) {
+		(void) fclose(from);
+		(void) close(fd);
+		(void) unlink(tmpf);
+		warn("can't create gid: fdopen `%s' failed", tmpf);
+		return 0;
+	}
+
+	while (fgets (buf, sizeof(buf), from) != NULL) {
+	  	if ((colon = strchr (buf, ':')) == NULL) {
+		  	warn ("badly formed entry `%s'", buf);
+			continue;
+		}
+
+		/* Does the user exist in this group? */
+		cc = strlen (buf);
+		g  = strlen (login);
+		p  = colon; 
+		while (p < (buf + cc) && (p = strstr (p, login)) != NULL &&
+		       *(p + g) != ',' && *(p + g) != '\n')
+		  	p += g;
+		if (p && p < (buf + cc)) {
+		  	/* Remove. XXX Un-obfuscate. */
+		  	bcopy (*(p + g) == ',' ? (p + g + 1) : (p + g), 
+			       *(p - 1) == ',' && *(p + g) != ',' ? p - 1 : p, 
+			       strlen (p + g) + 1);
+		}
+		
+		/* Should the user exist in this group? */
+		cc = strlen (primgrp);
+		for (g = 0; g < up->u_groupc; g++) {
+		        if (!up->u_groupv[g] ||
+			    !strncmp (up->u_groupv[g], primgrp,
+				      MAX (strlen (up->u_groupv[g]), cc)))
+			  	continue;
+		        if ((int)(colon - buf) == strlen (up->u_groupv[g]) &&
+			    !strncmp (up->u_groupv[g], buf, 
+				      (int)(colon - buf))) {
+			  	/* Add user. */
+				p = buf + strlen(buf) - 1; /* No '\n' */
+				snprintf (p, sizeof (buf), "%s%s\n", 
+					  (*(p-1) == ':' ? "" : ",") ,
+					  (newlogin ? newlogin : login));
+				up->u_groupv[g] = '\0'; /* Mark used. */
+				g = up->u_groupc;       /* Break loop. */
+			}
+		}
+
+		cc = strlen (buf);
+		if (fwrite (buf, sizeof (char), cc, to) != cc) {
+		  	(void) fclose (from);
+			(void) close (fd);
+			(void) unlink (tmpf);
+			warn ("can't update secondary groups: "
+			      "short write to `%s'", tmpf);
+			return 0;
+		}
+	}
+	(void) fclose (from);
+	(void) fclose (to);
+	if (rename (tmpf, _PATH_GROUP) < 0) {
+	  	warn("can't create gid: can't rename `%s' to `%s'", tmpf, 
+		     _PATH_GROUP);
+		return 0;
+	}
+	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
+	/* Warn about unselected groups. */
+	for (g = 0; g < up->u_groupc; g++)
+	  	if (up->u_groupv[g])
+		  	warnx("extraneous group `%s' not added",
+			      up->u_groupv[g]);
 	return 1;
 }
 
@@ -742,6 +844,15 @@ adduser(char *login, user_t *up)
 		(void) pw_abort();
 		err(EXIT_FAILURE, "can't create gid %d for login name %s", gid, login);
 	}
+	/* Modify secondary groups */
+	if (up->u_groupc != 0 && 
+	    !modify_groups (login, NULL, up,
+			    (sync_uid_gid ? login : up->u_primgrp))) {
+	  	(void) close(ptmpfd);
+	  	(void) pw_abort();
+		err(EXIT_FAILURE, 
+		    "failed to modify secondary groups for login %s", login);
+	}
 	(void) close(ptmpfd);
 	if (pw_mkdb() < 0) {
 		err(EXIT_FAILURE, "pw_mkdb failed");
@@ -838,7 +949,7 @@ moduser(char *login, char *newlogin, user_t *up)
 			}
 		}
 		if (up->u_password != NULL &&
-		    strlen(up->u_password) == PasswordLength) {
+		    strlen(up->u_password) <= PasswordLength) {
 			(void) strlcpy(password, up->u_password, sizeof(password));
 		} else {
 			(void) strlcpy(password, pwp->pw_passwd, sizeof(password));
@@ -882,6 +993,17 @@ moduser(char *login, char *newlogin, user_t *up)
 					(void) pw_abort();
 					err(EXIT_FAILURE, "can't add `%s'", buf);
 				}
+				/* Modify secondary groups */
+				grp = getgrgid (gid);
+				if (up->u_groupc != 0 || 
+				    strcmp (login, newlogin))
+					if (!modify_groups (login, NULL, up, grp ? grp->gr_name : newlogin)) {
+						(void) close(ptmpfd);
+				    		(void) pw_abort();
+						err(EXIT_FAILURE, 
+						    "failed to modify secondary groups for login %s", 
+						    login);
+					}
 			}
 		} else if (write(ptmpfd, buf, (size_t)(cc)) != cc) {
 			(void) close(masterfd);
@@ -1003,6 +1125,7 @@ useradd(int argc, char **argv)
 	int	bigD;
 	int	c;
 	int	i;
+	char    buf[MaxEntryLen], *s, *p;
 
 	(void) memset(&u, 0, sizeof(u));
 	read_defaults(&u);
@@ -1014,7 +1137,14 @@ useradd(int argc, char **argv)
 			bigD = 1;
 			break;
 		case 'G':
-			memsave(&u.u_groupv[u.u_groupc++], optarg, strlen(optarg));
+		        strlcpy (buf, optarg, strlen (optarg) + 1);
+			p = buf;
+			while ((s = strsep (&p, ",")) != NULL &&
+			       u.u_groupc < NGROUPS_MAX - 2)
+			  	memsave (&u.u_groupv[u.u_groupc++], s, 
+					 strlen(s));
+			if (p != NULL)
+			  	errx(EXIT_FAILURE, "too many groups for -G");
 			break;
 		case 'b':
 			defaultfield = 1;
@@ -1114,6 +1244,7 @@ usermod(int argc, char **argv)
 	char	newuser[MaxUserNameLen + 1];
 	int	have_new_user;
 	int	c;
+	char    buf[MaxEntryLen], *s, *p;
 
 	(void) memset(&u, 0, sizeof(u));
 	(void) memset(newuser, 0, sizeof(newuser));
@@ -1123,7 +1254,14 @@ usermod(int argc, char **argv)
 	while ((c = getopt(argc, argv, "G:c:d:e:f:g:l:mos:u:" MOD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
 		case 'G':
-			memsave(&u.u_groupv[u.u_groupc++], optarg, strlen(optarg));
+		        strlcpy (buf, optarg, strlen (optarg) + 1);
+			p = buf;
+			while ((s = strsep (&p, ",")) != NULL &&
+			       u.u_groupc < NGROUPS_MAX - 2)
+			  	memsave (&u.u_groupv[u.u_groupc++], s, 
+					 strlen(s));
+			if (p != NULL)
+			  	errx(EXIT_FAILURE, "too many groups for -G");
 			break;
 		case 'c':
 			memsave(&u.u_comment, optarg, strlen(optarg));
@@ -1176,7 +1314,8 @@ usermod(int argc, char **argv)
 		usermgmt_usage("usermod");
 	}
 	checkeuid();
-	return moduser(argv[optind], (have_new_user) ? newuser : argv[optind], &u) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return moduser(argv[optind], (have_new_user) ? newuser : argv[optind],
+		       &u) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 #ifdef EXTENSIONS

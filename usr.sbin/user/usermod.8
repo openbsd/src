@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermod.8,v 1.6 2000/04/25 20:58:30 jakob Exp $ */
+.\" $OpenBSD: usermod.8,v 1.7 2000/05/05 23:22:39 ho Exp $ */
 .\" $NetBSD: usermod.8,v 1.4 2000/02/28 05:10:57 enami Exp $ */
 .\"
 .\"
@@ -40,7 +40,7 @@
 .Nd modify user login information
 .Sh SYNOPSIS
 .Nm
-.Op Fl G Ar secondary-group
+.Op Fl G Ar secondary-group[,group,...]
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
@@ -66,10 +66,10 @@ file.
 After setting any defaults, and then values from that file,
 the command line options are processed:
 .Bl -tag -width Ds
-.It Fl G Ar secondary-group
-is the secondary group to which the user will be added in the
+.It Fl G Ar secondary-group[,group,...]
+are the secondary groups the user will be a member of in the
 .Pa /etc/group
-file.
+file. This list of groups will replace any old group memberships.
 .It Fl c Ar comment
 is the comment field (also, for historical reasons known as the
 GECOS field) which will be added for the user, and typically will include
