@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.5 1996/12/08 14:59:59 downsj Exp $
 #	$NetBSD: Makefile,v 1.1 1996/02/02 15:29:48 mrg Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:47 vixie Exp 
 
@@ -8,7 +9,7 @@ CLEANFILES+= ndc
 MAN=	ndc.8
 
 realinstall: ndc
-	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ndc ${DESTDIR}${BINDIR}/ndc
 
 ndc: ndc.sh Makefile ${.CURDIR}/../Makefile.inc
