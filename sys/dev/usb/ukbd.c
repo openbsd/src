@@ -43,9 +43,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-/*
+#if defined(__OpenBSD__)
+#include <sys/timeout.h>
+#else
 #include <sys/callout.h>
-*/
+#endif
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -73,7 +75,7 @@
 
 #if defined(__NetBSD__)
 #include "opt_wsdisplay_compat.h"
-#endif /* __NetBSD__ */
+#endif
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (ukbddebug) logprintf x
@@ -123,7 +125,7 @@ Static struct {
 	{ MOD_WIN_R,     231 },
 };
 
-#if defined(__NetBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD)
+#if defined(WSDISPLAY_COMPAT_RAWKBD)
 #define NN 0			/* no translation */
 /* 
  * Translate USB keycodes to US keyboard XT scancodes.
@@ -163,7 +165,7 @@ Static u_int8_t ukbd_trtab[256] = {
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* F0 - F7 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* F8 - FF */
 };
-#endif /* defined(__NetBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD) */
+#endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
 
 #define KEY_ERROR 0x01
 
@@ -184,12 +186,14 @@ struct ukbd_softc {
 	int sc_console_keyboard;	/* we are the console keyboard */
 
 	int sc_leds;
-#if defined(__NetBSD__) 
+
+#if defined(__OpenBSD__)
+	struct timeout sc_rawrepeat_ch;
+#else
 	struct callout sc_rawrepeat_ch;
-#endif /* __NetBSD__ */
+#endif
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-
 	struct device *sc_wskbddev;
 #if defined(WSDISPLAY_COMPAT_RAWKBD)
 #define REP_DELAY1 400
@@ -202,7 +206,7 @@ struct ukbd_softc {
 	int sc_polling;
 	int sc_npollchar;
 	u_int16_t sc_pollchars[MAXKEYS];
-#endif /* defined(__NetBSD__) */
+#endif
 
 	u_char sc_dying;
 };
@@ -352,9 +356,13 @@ USB_ATTACH(ukbd)
 	a.accessops = &ukbd_accessops;
 	a.accesscookie = sc;
 
-#if defined(__NetBSD__) 
+#if defined(__OpenBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD)
+	timeout_set(&sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
+#endif
+
+#if defined(__NetBSD__)
 	callout_init(&sc->sc_rawrepeat_ch);
-#endif /* __NetBSD__ */
+#endif
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS);
@@ -578,15 +586,19 @@ ukbd_intr(xfer, addr, status)
 		s = spltty();
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
 		splx(s);
-#if defined(__NetBSD__) 
+#if defined(__OpenBSD__) 
+		timeout_del(&sc->sc_rawrepeat_ch);
+#else
 		callout_stop(&sc->sc_rawrepeat_ch);
-#endif /* __NetBSD__ */
+#endif
 		if (npress != 0) {
 			sc->sc_nrep = npress;
-#if defined(__NetBSD__) 
+#if defined(__OpenBSD__)
+			timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAY1/1000);
+#else
 			callout_reset(&sc->sc_rawrepeat_ch,
 			    hz * REP_DELAY1 / 1000, ukbd_rawrepeat, sc);
-#endif /* __NetBSD__ */
+#endif
 		}
 		return;
 	}
@@ -635,10 +647,12 @@ ukbd_rawrepeat(void *v)
 	s = spltty();
 	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
 	splx(s);
-#if defined(__NetBSD__) 
+#if defined(__OpenBSD__)
+	timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000);
+#else
 	callout_reset(&sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000,
 	    ukbd_rawrepeat, sc);
-#endif /* __NetBSD__ */
+#endif
 }
 #endif
 
@@ -661,9 +675,11 @@ ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSKBDIO_SETMODE:
 		DPRINTF(("ukbd_ioctl: set raw = %d\n", *(int *)data));
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
-#if defined(__NetBSD__) 
+#if defined(__OpenBSD__)
+		timeout_del(&sc->sc_rawrepeat_ch);
+#else
 		callout_stop(&sc->sc_rawrepeat_ch);
-#endif /* __NetBSD__ */
+#endif
 		return (0);
 #endif
 	}
