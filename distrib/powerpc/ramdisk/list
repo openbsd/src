@@ -1,9 +1,9 @@
-#	$OpenBSD: list,v 1.8 1998/09/13 03:13:11 rahnds Exp $
+#	$OpenBSD: list,v 1.9 1998/09/15 05:45:50 rahnds Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
-SRCDIRS usr.bin/vi usr.sbin/pppd
-SRCDIRS usr.bin/vi
+SRCDIRS usr.sbin/pppd
+#SRCDIRS usr.bin/vi
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -51,7 +51,6 @@ LINK	instbin			sbin/route
 #LINK	instbin			sbin/slattach
 LINK	instbin			sbin/scsi
 LINK	instbin			sbin/umount
-LINK	instbin			usr/bin/cut
 LINK	instbin			usr/bin/grep usr/bin/fgrep usr/bin/egrep
 LINK	instbin			usr/bin/ftp
 LINK	instbin			usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
@@ -63,7 +62,7 @@ LINK	instbin			usr/bin/tip
 LINK	instbin			usr/sbin/chat
 LINK	instbin			usr/sbin/chown usr/sbin/chgrp
 LINK	instbin			usr/sbin/pppd
-SYMLINK ../../instbin           usr/bin/build usr/bin/vi
+#SYMLINK ../../instbin           usr/bin/build usr/bin/vi
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
