@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_usrreq.c,v 1.7 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: raw_usrreq.c,v 1.8 2003/09/28 23:17:45 cloder Exp $	*/
 /*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ raw_ctlinput(cmd, arg, d)
 	void *d;
 {
 
-	if (cmd < 0 || cmd > PRC_NCMDS)
+	if (cmd < 0 || cmd >= PRC_NCMDS)
 		return NULL;
 	return NULL;
 	/* INCOMPLETE */

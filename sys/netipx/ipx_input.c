@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.15 2003/06/02 23:28:16 millert Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.16 2003/09/28 23:17:45 cloder Exp $	*/
 
 /*-
  *
@@ -280,7 +280,7 @@ ipx_ctlinput(cmd, arg_as_sa, dummy)
 	caddr_t arg = (/* XXX */ caddr_t)arg_as_sa;
 	struct ipx_addr *ipx;
 
-	if (cmd < 0 || cmd > PRC_NCMDS)
+	if (cmd < 0 || cmd >= PRC_NCMDS)
 		return NULL;
 	switch (cmd) {
 		struct sockaddr_ipx *sipx;

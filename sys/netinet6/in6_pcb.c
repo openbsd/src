@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.35 2003/08/15 20:32:20 tedu Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.36 2003/09/28 23:17:45 cloder Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -561,7 +561,7 @@ in6_pcbnotify(head, dst, fport_arg, src, lport_arg, cmd, cmdarg, notify)
 	int errno, nmatch = 0;
 	u_int32_t flowinfo;
 
-	if ((unsigned)cmd > PRC_NCMDS || dst->sa_family != AF_INET6)
+	if ((unsigned)cmd >= PRC_NCMDS || dst->sa_family != AF_INET6)
 		return 1;
 
 	sa6_dst = (struct sockaddr_in6 *)dst;

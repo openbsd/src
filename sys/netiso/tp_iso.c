@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_iso.c,v 1.6 2003/06/02 23:28:18 millert Exp $	*/
+/*	$OpenBSD: tp_iso.c,v 1.7 2003/09/28 23:17:45 cloder Exp $	*/
 /*	$NetBSD: tp_iso.c,v 1.8 1996/03/16 23:13:54 christos Exp $	*/
 
 /*-
@@ -649,7 +649,7 @@ tpclnp_ctlinput(cmd, saddr, dummy)
 	}
 #endif
 
-	if (cmd < 0 || cmd > PRC_NCMDS)
+	if (cmd < 0 || cmd >= PRC_NCMDS)
 		return NULL;
 	if (siso->siso_family != AF_ISO)
 		return NULL;
