@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.13 2003/01/30 03:23:19 mickey Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.14 2003/01/30 03:34:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -276,6 +276,8 @@ harmony_intr(vsc)
 		if (sc->sc_playing && c->c_intr != NULL)
 			(*c->c_intr)(c->c_intrarg);
 	}
+
+	dstatus = READ_REG(sc, HARMONY_DSTATUS);
 
 	if (dstatus & DSTATUS_RN) {
 		c = &sc->sc_capture;
