@@ -1,4 +1,4 @@
-/*	$OpenBSD: xf_flow.c,v 1.1 1998/11/14 23:37:21 deraadt Exp $	*/
+/*	$OpenBSD: xf_flow.c,v 1.2 1998/11/24 14:41:58 niklas Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -59,6 +59,9 @@
 #include <paths.h>
 #include "net/encap.h"
 
+#define ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+
 extern char buf[];
 
 int
@@ -73,20 +76,20 @@ xf_flow(struct in_addr dst, u_int32_t spi, int proto,
 
     sd = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC);
     if (sd < 0) {
-      perror("socket");
-      return 0;
+        perror("socket");
+        return 0;
     }
 
-    bzero(buf, sizeof(*rtm) + SENT_IP4_LEN + SENT_IPSP_LEN + SENT_IP4_LEN);
-	
     rtm = (struct rt_msghdr *)(&buf[0]);
-    ddst = (struct sockaddr_encap *) (&buf[sizeof (*rtm)]);
-    off = sizeof(*rtm) + SENT_IP4_LEN;
+    off = sizeof(*rtm);
+    ddst = (struct sockaddr_encap *) (&buf[off]);
+    off = ROUNDUP(off + SENT_IP4_LEN);
     if (!delete) {
 	gw = (struct sockaddr_encap *) (&buf[off]);
-	off += SENT_IPSP_LEN;
+	off = ROUNDUP(off + SENT_IPSP_LEN);
     }
     msk = (struct sockaddr_encap *) (&buf[off]);
+    bzero(buf, off + SENT_IP4_LEN);
 	
     rtm->rtm_version = RTM_VERSION;
     rtm->rtm_type = delete ? RTM_DELETE : RTM_ADD;
@@ -134,8 +137,7 @@ xf_flow(struct in_addr dst, u_int32_t spi, int proto,
     msk->sen_ip_src.s_addr = osmask.s_addr;
     msk->sen_ip_dst.s_addr = odmask.s_addr;
 
-    rtm->rtm_msglen = sizeof(*rtm) + ddst->sen_len + 
-	(delete ? 0 : gw->sen_len) + msk->sen_len;
+    rtm->rtm_msglen = off + msk->sen_len;
 	
     if (write(sd, (caddr_t) buf, rtm->rtm_msglen) == -1) {
 	perror("write");
