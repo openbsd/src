@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.88 2002/11/23 05:22:24 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.89 2002/11/23 07:52:54 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -653,8 +653,10 @@ pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af)
 {
 	struct pf_pooladdr *pa;
 
-	if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr.ticket))
-		err(1, "DIOCBEGINADDRS");
+	if ((pf->opts & PF_OPT_NOACTION) == 0) {
+		if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr.ticket))
+			err(1, "DIOCBEGINADDRS");
+	}
 
 	pf->paddr.af = af;
 	TAILQ_FOREACH(pa, &p->list, entries) {
