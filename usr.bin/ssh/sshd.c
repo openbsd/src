@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.155 2001/01/21 19:06:00 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.156 2001/01/22 17:22:28 stevesk Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -1507,6 +1507,7 @@ ssh_dh1_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	buffer_free(server_kexinit);
 	xfree(client_kexinit);
 	xfree(server_kexinit);
+	BN_free(dh_client_pub);
 #ifdef DEBUG_KEXDH
 	fprintf(stderr, "hash == ");
 	for (i = 0; i< 20; i++)
@@ -1536,6 +1537,7 @@ ssh_dh1_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	packet_write_wait();
 
 	kex_derive_keys(kex, hash, shared_secret);
+	BN_clear_free(shared_secret);
 	packet_set_kex(kex);
 
 	/* have keys, free DH */
@@ -1649,6 +1651,7 @@ ssh_dhgex_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	buffer_free(server_kexinit);
 	xfree(client_kexinit);
 	xfree(server_kexinit);
+	BN_free(dh_client_pub);
 #ifdef DEBUG_KEXDH
 	fprintf(stderr, "hash == ");
 	for (i = 0; i< 20; i++)
@@ -1678,6 +1681,7 @@ ssh_dhgex_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
 	packet_write_wait();
 
 	kex_derive_keys(kex, hash, shared_secret);
+	BN_clear_free(shared_secret);
 	packet_set_kex(kex);
 
 	/* have keys, free DH */
