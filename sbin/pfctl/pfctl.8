@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.9 2001/06/26 17:04:01 kjell Exp $
+.\" $OpenBSD: pfctl.8,v 1.10 2001/06/26 17:14:12 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -65,19 +65,13 @@ time to start and load the packet filter,
 but can also be used when the filter or translation rules change.
 .Pp
 .Nm
-requires a kernel with
+requires the
 .Xr pf 4
-configured in (the GENERIC kernel qualifies).
-To forward packets (using NAT), 
-.Nm
-also requires
+pseudo-device driver.
+Forwarding packets, by using NAT, also requires specifying
 .Li net.inet.ip.forwarding=1
 in the file
 .Pa /etc/sysctl.conf .
-.\"The existance of the variables PF and NAT in 
-.\".Pa /etc/rc.conf
-.\"determine whether this mechanism will be started automatically
-.\"when the system is booted.
 .Pp
 The
 .Nm
