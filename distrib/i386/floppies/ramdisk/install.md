@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.43 1999/02/03 23:17:42 millert Exp $
+#	$OpenBSD: install.md,v 1.44 1999/04/01 21:28:11 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -125,13 +125,25 @@ md_checkfordisklabel() {
 md_prep_fdisk()
 {
 	local _disk
-	local _done
+	local _whole
 
 	_disk=$1
+	_whole=$2
 
-	_done=0
-	echo
-	cat << \__md_prep_fdisk_1
+	if [ -n "$_whole" ]; then
+		echo
+		echo 'Updating MBR based on BIOS geometry.'
+		fdisk -e ${_disk} << \__md_prep_fdisk_0
+reinit
+update
+write
+quit
+__md_prep_fdisk_0
+
+	else
+
+		echo
+		cat << \__md_prep_fdisk_1
 A single OpenBSD partition with id 'A6' ('OpenBSD') should exist in the MBR.
 All of your OpenBSD partitions will be contained _within_ this partition,
 including your swap space.  In the normal case it should be the only partition
@@ -142,9 +154,10 @@ the following fdisk commands: reinit, update, write, quit. Use the 'manual'
 command to read a full description.]  The current partition information is:
 
 __md_prep_fdisk_1
-	fdisk ${_disk}
-	echo
-	fdisk -e ${_disk}
+		fdisk ${_disk}
+		echo
+		fdisk -e ${_disk}
+	fi
 
 	echo "Here is the partition information you chose:"
 	echo
@@ -155,9 +168,16 @@ __md_prep_fdisk_1
 md_prep_disklabel()
 {
 	local _disk
+	local _flags
 
 	_disk=$1
-	md_prep_fdisk ${_disk}
+
+	echo -n 'Do you want to use the *entire* disk for OpenBSD? [no] '
+	getresp "no"
+	case $resp in
+		yes|YES|y|Y)	_flags=-F ;;
+	esac
+	md_prep_fdisk ${_disk} ${_flags}
 
 	cat << \__md_prep_disklabel_1
 
@@ -185,7 +205,7 @@ __md_prep_disklabel_1
 	esac
 
 	# display example
-	cat << \__md_prep_disklabel_1
+	cat << \__md_prep_disklabel_2
 If this disk is shared with other operating systems, those operating systems
 should have a BIOS partition entry that spans the space they occupy completely.
 For safety, also make sure all OpenBSD file systems are within the offset and
@@ -194,8 +214,8 @@ editor will try to enforce this).  If you are unsure of how to use multiple
 partitions properly (ie. separating /,  /usr, /tmp, /var, /usr/local, and other
 things) just split the space into a root and swap partition for now.
 
-__md_prep_disklabel_1
-	disklabel -E ${_disk}
+__md_prep_disklabel_2
+	disklabel ${_flags} -f /tmp/fstab.${_disk} -E ${_disk}
 }
 
 md_copy_kernel() {
