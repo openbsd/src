@@ -1,4 +1,4 @@
 altq on lo0 hfsc bandwidth 10Mb tbrsize 1824 queue { eins zwei drei }
-queue eins bandwidth 10% hfsc( default realtime 500Kb linkshare(2Mb 20 500Kb) ) 
-queue zwei bandwidth 40% hfsc( linkshare(3.50Mb 10 2.50Mb) upperlimit 5Mb ) 
-queue drei bandwidth 50% hfsc( linkshare(6Mb 20 4Mb) upperlimit(6.50Mb 10 4.50Mb) ) 
+queue eins bandwidth 10% hfsc( default realtime 500Kb linkshare(20% 20 5%) ) 
+queue zwei bandwidth 40% hfsc( linkshare(35% 10 25%) upperlimit 5Mb ) 
+queue drei bandwidth 50% hfsc( linkshare(60% 20 4Mb) upperlimit(65% 10 45%) ) 
