@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.7 2003/06/06 21:45:33 jmc Exp $
+.\"	$OpenBSD: boot.8,v 1.8 2003/07/11 13:58:57 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Miodrag Vallat
 .\" Copyright (c) 1997-2002 Michael Shalayeff
@@ -161,14 +161,14 @@ will attempt to switch the console configuration to the desired device.
 The console definition attempts to follow the PDC syntax,
 and would have a form of:
 .Pp
-.Bd -offset indent -compact
+.Bd -filled -compact
 graphics
 .Op _head
 .Op .mode
 .Ed
 for graphics console, and
 .Pp
-.Bd -offset indent -compact
+.Bd -filled -compact
 rs232
 .Op _2
 .Op .speed Op .bits Op .parity
@@ -191,12 +191,12 @@ will attempt to switch the keyboard configuration to the desired port.
 The keyboard definition attempts to follow the PDC syntax,
 and would have a form of:
 .Pp
-.Bd -offset indent -compact
+.Bd -filled -compact
 hil
 .Ed
 for hil keyboard, and
 .Pp
-.Bd -offset indent -compact
+.Bd -filled -compact
 ps2
 .Ed
 for PS/2 keyboard.
