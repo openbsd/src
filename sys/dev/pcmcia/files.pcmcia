@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.24 1999/08/13 20:34:17 fgsch Exp $
+#	$OpenBSD: files.pcmcia,v 1.25 1999/12/16 02:56:56 deraadt Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -69,3 +69,11 @@ file	dev/pcmcia/if_cnw.c			cnw
 device wi: ether, ifnet
 attach wi at pcmcia
 file dev/pcmcia/if_wi.c				wi
+
+# AMD 79c930-based 802.11 cards (including BayStack 650 FH card).
+device awi: ether, ifnet
+attach awi at pcmcia with awi_pcmcia
+
+file    dev/pcmcia/if_awi_pcmcia.c              awi_pcmcia
+file    dev/ic/awi.c                            awi
+file    dev/ic/am79c930.c                       awi

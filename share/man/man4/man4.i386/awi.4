@@ -1,0 +1,109 @@
+.\"     $NetBSD: awi.4,v 1.1 1999/11/04 19:36:01 sommerfeld Exp $
+.\"	$OpenBSD: awi.4,v 1.1 1999/12/16 02:56:56 deraadt Exp $
+.\"
+.\"
+.\"	$Id: awi.4,v 1.1 1999/12/16 02:56:56 deraadt Exp $
+.\"
+.Dd October 31, 1999
+.Dt AWI 4 
+.Os 
+.Sh NAME
+.Nm awi
+.Nd
+Bay Networks BayStack 650 IEEE 802.11 PCMCIA driver
+.Sh SYNOPSIS
+.Cd "awi*     at pcmcia? function ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for BayStack 650 IEEE 802.11 Frequency Hopping
+PCCARD adapters. 
+.Pp
+The BayStack 650 is based on an AMD 79c930 controller, which provides
+access to 32kb of memory shared between the controller and the host.
+All host/device interaction is via this shared memory, which can be
+accessed either via PCMCIA memory space or I/O space.
+The
+.Nm
+driver encapsulates all IP and ARP traffic as 802.11 frames. Transmit
+speed is fixed at 1Mbps.
+.Pp
+The driver currently only works in infrastructure mode, communicating
+with an Access Point which serves as a link-layer bridge between an
+ethernet and the wireless network.
+.Pp 
+This card seems to take between 5 and 20 seconds after it has been brought up
+to synchronize with an AP.  When using 
+.Xr dhclient 8
+to automatically configure an address on this card, it may be
+advisable to delay the invocation of dhclient for about 10 seconds
+after the card is brought up using
+.Xr ifconfig 8
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "awi0: unable to allocate memory space; using i/o only"
+Indicates that the driver was not able to allocate 32kb of PCMCIA bus
+address space into which to map the device; the driver will use the
+(slightly slower) i/o-space only access methods to read and write to
+the shared memory.  This message is in some sense to be expected and
+should not be a cause for alarm.
+See
+.Xr pcmcia 4
+for information on how to increase the memory available to the PCMCIA
+controller.
+.It "awi0: selftest failed (code %x)"
+The device failed to pass its internal selftest.
+.It "awi0: device failed to complete selftest (code %x)"
+The device failed to complete its self test within 5 seconds.
+.It "awi0: device timeout"
+.It "awi0: timeout waiting for command completion"
+The device failed to generate an interrupt to acknowledge a command.
+.It "awi0: transmit timeout"
+The device failed to generate an interrupt to acknowledge a
+transmitted packet.
+.It "awi0: large frame truncated"
+The system handed the driver a packet which was too large to transmit
+in one piece.
+.It "awi0: device enable failed"
+The system was unable to power on the card.
+.It "awi0: associated with %s, SSID: %s
+The device has successfully synchronized with the identified Access
+Point and is ready to relay traffic.
+.It "awi0: no recent beacon from %s; rescanning"
+The device has not heard a beacon from its currently associated Access
+Point recently, and is looking for a new access point.
+.It "awi0: received deauth"
+The access point the card was most recently associated with has
+forgotten about us.
+.El
+.Sh BUGS
+Doesn't support ad-hoc mode or WEP.
+Round trip times seem higher than what one might expect.
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr netintro 4 , 
+.Xr pcmcia 4 ,
+.Xr wi 4 ,
+.Xr ifconfig 8 ,
+.Xr wiconfig 8
+.Rs
+.%T Am79C930 PCnet Mobile Single-Chip Wireless LAN Media Access Controller
+.%O http://www.amd.com
+.Re
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Nx 1.5 .
+.Sh AUTHOR
+The
+.Nm
+driver was written by
+.An Bill Sommerfeld Aq sommerfeld@netbsd.org
+and ported to
+.Ox
+by
+.An Angelos D. Keromytis Aq angelos@dsl.cis.upenn.edu

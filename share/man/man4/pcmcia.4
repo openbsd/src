@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.8 1999/08/23 21:42:59 fgsch Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.9 1999/12/16 02:56:55 deraadt Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,6 +65,8 @@ i386-specific driver.
 .Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent -compact
+.It awi
+BayStack 650 wireless 802.11 FH controller.
 .It cnw
 Xircom Creditcard Netwave cards.
 .It ep
@@ -78,7 +80,7 @@ Megahertz ethernet cards.
 .It xe
 Xircom 16bit ethernet cards.
 .It wi
-WaveLAN IEEE 802.11-compatible cards.
+Lucent WaveLAN IEEE 802.11-compatible cards.
 .El
 .Pp
 .Ss SCSI controllers
@@ -96,6 +98,7 @@ CDROMS.  This includes flash cards which emulate a disk drive.
 The supported PCMCIA controllers are those that are i82365 compatible.
 .Sh SEE ALSO
 .Xr aic 4 ,
+.Xr awi 4 ,
 .Xr com 4 ,
 .Xr cnw 4 ,
 .Xr ep 4 ,
