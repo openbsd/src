@@ -1,5 +1,5 @@
-/*	$OpenBSD: exec_ecoff.h,v 1.3 1996/04/18 21:40:54 niklas Exp $	*/
-/*	$NetBSD: exec_ecoff.h,v 1.8 1996/03/07 14:29:44 christos Exp $	*/
+/*	$OpenBSD: exec_ecoff.h,v 1.4 1996/05/22 12:05:20 deraadt Exp $	*/
+/*	$NetBSD: exec_ecoff.h,v 1.9 1996/05/09 23:42:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -37,71 +37,74 @@
 #include <machine/ecoff.h>
 
 struct ecoff_filehdr {
-	u_short ef_magic;	/* magic number */
-	u_short ef_nsecs;	/* # of sections */
-	u_int   ef_timestamp;	/* time and date stamp */
-	u_long  ef_symptr;	/* file offset of symbol table */
-	u_int   ef_syms;	/* # of symbol table entries */
-	u_short ef_opthdr;	/* sizeof the optional header */
-	u_short ef_flags;	/* flags??? */
+	u_short f_magic;	/* magic number */
+	u_short f_nscns;	/* # of sections */
+	u_int   f_timdat;	/* time and date stamp */
+	u_long  f_symptr;	/* file offset of symbol table */
+	u_int   f_nsyms;	/* # of symbol table entries */
+	u_short f_opthdr;	/* sizeof the optional header */
+	u_short f_flags;	/* flags??? */
 };
 
 struct ecoff_aouthdr {
-	u_short ea_magic;
-	u_short ea_vstamp;
+	u_short magic;
+	u_short vstamp;
 	ECOFF_PAD
-	u_long  ea_tsize;
-	u_long  ea_dsize;
-	u_long  ea_bsize;
-	u_long  ea_entry;
-	u_long  ea_text_start;
-	u_long  ea_data_start;
-	u_long  ea_bss_start;
+	u_long  tsize;
+	u_long  dsize;
+	u_long  bsize;
+	u_long  entry;
+	u_long  text_start;
+	u_long  data_start;
+	u_long  bss_start;
 	ECOFF_MACHDEP;
 };
 
 struct ecoff_scnhdr {		/* needed for size info */
-	char	es_name[8];	/* name */
-	u_long  es_physaddr;	/* physical addr? for ROMing?*/
-	u_long  es_virtaddr;	/* virtual addr? */
-	u_long  es_size;	/* size */
-	u_long  es_raw_offset;	/* file offset of raw data */
-	u_long  es_reloc_offset; /* file offset of reloc data */
-	u_long  es_line_offset;	/* file offset of line data */
-	u_short es_nreloc;	/* # of relocation entries */
-	u_short es_nline;	/* # of line entries */
-	u_int   es_flags;	/* flags */
+	char	s_name[8];	/* name */
+	u_long  s_paddr;	/* physical addr? for ROMing?*/
+	u_long  s_vaddr;	/* virtual addr? */
+	u_long  s_size;		/* size */
+	u_long  s_scnptr;	/* file offset of raw data */
+	u_long  s_relptr;	/* file offset of reloc data */
+	u_long  s_lnnoptr;	/* file offset of line data */
+	u_short s_nreloc;	/* # of relocation entries */
+	u_short s_nlnno;	/* # of line entries */
+	u_int   s_flags;	/* flags */
 };
 
-#define ECOFF_HDR_SIZE (sizeof(struct ecoff_filehdr) + \
-			sizeof(struct ecoff_aouthdr))
+struct ecoff_exechdr {
+	struct ecoff_filehdr f;
+	struct ecoff_aouthdr a;
+};
+
+#define ECOFF_HDR_SIZE (sizeof(struct ecoff_exechdr))
 
 #define ECOFF_OMAGIC 0407
 #define ECOFF_NMAGIC 0410
 #define ECOFF_ZMAGIC 0413
 
 #define ECOFF_ROUND(value, by) \
-        (((value) + by - 1) & ~(by - 1))
+        (((value) + (by) - 1) & ~((by) - 1))
 
-#define ECOFF_BLOCK_ALIGN(eap, value) \
-        ((eap)->ea_magic == ECOFF_ZMAGIC ? ECOFF_ROUND(value, ECOFF_LDPGSZ) : \
-	 value)
+#define ECOFF_BLOCK_ALIGN(ep, value) \
+        ((ep)->a.magic == ECOFF_ZMAGIC ? ECOFF_ROUND((value), ECOFF_LDPGSZ) : \
+	 (value))
 
-#define ECOFF_TXTOFF(efp, eap) \
-        ((eap)->ea_magic == ECOFF_ZMAGIC ? 0 : \
-	 ECOFF_ROUND(ECOFF_HDR_SIZE + (efp)->ef_nsecs * \
-		     sizeof(struct ecoff_scnhdr),ECOFF_SEGMENT_ALIGNMENT(eap)))
+#define ECOFF_TXTOFF(ep) \
+        ((ep)->a.magic == ECOFF_ZMAGIC ? 0 : \
+	 ECOFF_ROUND(ECOFF_HDR_SIZE + (ep)->f.f_nscns * \
+		     sizeof(struct ecoff_scnhdr), ECOFF_SEGMENT_ALIGNMENT(ep)))
 
-#define ECOFF_DATOFF(efp, eap) \
-        (ECOFF_BLOCK_ALIGN(eap, ECOFF_TXTOFF(efp, eap) + (eap)->ea_tsize))
+#define ECOFF_DATOFF(ep) \
+        (ECOFF_BLOCK_ALIGN((ep), ECOFF_TXTOFF(ep) + (ep)->a.tsize))
 
-#define ECOFF_SEGMENT_ALIGN(eap, value) \
-        (ECOFF_ROUND(value, ((eap)->ea_magic == ECOFF_ZMAGIC ? ECOFF_LDPGSZ : \
-         ECOFF_SEGMENT_ALIGNMENT(eap))))
+#define ECOFF_SEGMENT_ALIGN(ep, value) \
+        (ECOFF_ROUND((value), ((ep)->a.magic == ECOFF_ZMAGIC ? ECOFF_LDPGSZ : \
+         ECOFF_SEGMENT_ALIGNMENT(ep))))
 
 #ifdef _KERNEL
 int	exec_ecoff_makecmds __P((struct proc *, struct exec_package *));
-int	cpu_exec_ecoff_hook __P((struct proc *, struct exec_package *,
-				 struct ecoff_aouthdr *));
+int	cpu_exec_ecoff_hook __P((struct proc *, struct exec_package *));
 #endif /* _KERNEL */
 #endif /* !_SYS_EXEC_ECOFF_H_ */
