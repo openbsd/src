@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.27 2003/06/09 16:10:03 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.28 2003/06/22 21:39:01 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -59,10 +59,14 @@ dlopen(const char *libname, int how)
 
 	_dl_thread_kern_stop();
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO);
+	/* this add_object should not be here, XXX */
+	if (object == 0) {
+		_dl_thread_kern_go();
+		return((void *)0);
+	}
+	_dl_add_object(object);
 	_dl_link_sub(object, _dl_objects);
 	_dl_thread_kern_go();
-	if (object == 0)
-		return((void *)0);
 
 	if (object->refcount > 1)
 		return((void *)object);	/* Already loaded */
@@ -88,10 +92,12 @@ dlopen(const char *libname, int how)
 			libname = dynobj->dyn.strtab + dynp->d_un.d_val;
 			_dl_thread_kern_stop();
 			depobj = _dl_load_shlib(libname, dynobj, OBJTYPE_LIB);
-			_dl_link_sub(depobj, dynobj);
-			_dl_thread_kern_go();
 			if (!depobj)
 				_dl_exit(4);
+			/* this add_object should not be here, XXX */
+			_dl_add_object(depobj);
+			_dl_link_sub(depobj, dynobj);
+			_dl_thread_kern_go();
 
 			tmpobj->dep_next = _dl_malloc(sizeof(elf_object_t));
 			tmpobj->dep_next->next = depobj;

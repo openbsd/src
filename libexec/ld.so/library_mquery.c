@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.8 2003/06/09 16:10:03 deraadt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.9 2003/06/22 21:39:01 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -508,7 +508,7 @@ retry:
 	_dl_close(libfile);
 
 	dynp = (Elf_Dyn *)((unsigned long)dynp + LOFF);
-	object = _dl_add_object(libname, dynp, 0, type,
+	object = _dl_finalize_object(libname, dynp, 0, type,
 	    (Elf_Addr)lowld->start, LOFF);
 	if (object) {
 		object->load_size = (Elf_Addr)load_end - (Elf_Addr)lowld->start;

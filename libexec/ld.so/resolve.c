@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.18 2003/06/09 16:10:03 deraadt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.19 2003/06/22 21:39:01 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -40,11 +40,35 @@ elf_object_t *_dl_objects;
 elf_object_t *_dl_last_object;
 
 /*
- * Initialize and add a new dynamic object to the object list.
- * Perform necessary relocations of pointers.
+ * Add a new dynamic object to the object list.
+ */
+void
+_dl_add_object(elf_object_t *object)
+{
+
+	/*
+	 * if this is a new object, prev will be NULL
+	 * != NULL if an object already in the list
+	 * prev == NULL for the first item in the list, but that will
+	 * be the executable.
+	 */
+	if (object->prev != NULL)
+		return;
+
+	if (_dl_objects == NULL) {			/* First object ? */
+		_dl_last_object = _dl_objects = object;
+	} else {
+		_dl_last_object->next = object;
+		object->prev = _dl_last_object;
+		_dl_last_object = object;
+	}
+}
+
+/*
+ * Initialize a new dynamic object.
  */
 elf_object_t *
-_dl_add_object(const char *objname, Elf_Dyn *dynp, const u_long *dl_data,
+_dl_finalize_object(const char *objname, Elf_Dyn *dynp, const u_long *dl_data,
     const int objtype, const long laddr, const long loff)
 {
 	elf_object_t *object;
@@ -54,15 +78,7 @@ _dl_add_object(const char *objname, Elf_Dyn *dynp, const u_long *dl_data,
 #endif
 
 	object = _dl_malloc(sizeof(elf_object_t));
-
-	object->next = NULL;
-	if (_dl_objects == 0) {			/* First object ? */
-		_dl_last_object = _dl_objects = object;
-	} else {
-		_dl_last_object->next = object;
-		object->prev = _dl_last_object;
-		_dl_last_object = object;
-	}
+	object->prev = object->next = NULL;
 
 	object->load_dyn = dynp;
 	while (dynp->d_tag != DT_NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.63 2003/06/09 16:10:03 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.64 2003/06/22 21:39:01 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -110,6 +110,7 @@ _dl_dopreload(char *paths)
 			    _dl_progname, cp);
 			_dl_exit(4);
 		}
+		_dl_add_object(shlib);
 		_dl_link_sub(shlib, _dl_objects);
 	}
 	_dl_free(paths);
@@ -226,9 +227,10 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	phdp = (Elf_Phdr *)dl_data[AUX_phdr];
 	for (i = 0; i < dl_data[AUX_phnum]; i++) {
 		if (phdp->p_type == PT_DYNAMIC) {
-			exe_obj = _dl_add_object(argv[0],
+			exe_obj = _dl_finalize_object(argv[0],
 			    (Elf_Dyn *)phdp->p_vaddr, dl_data, OBJTYPE_EXE,
 			    0, 0);
+			_dl_add_object(exe_obj);
 		} else if (phdp->p_type == PT_INTERP) {
 			us = _dl_strdup((char *)phdp->p_vaddr);
 		}
@@ -239,7 +241,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 		_dl_dopreload(_dl_preload);
 
 	/*
-	 * Now, pick up and 'load' all libraries requierd. Start
+	 * Now, pick up and 'load' all libraries required. Start
 	 * with the first on the list and then do whatever gets
 	 * added along the tour.
 	 */
@@ -276,7 +278,6 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 			for (i = 0; i < libcnt; i++)
 				randomlist[i] = i;
 
-#ifdef NO_RANDOM_EXPOSES_BUGS_ELSEWHERE__
 			if (!_dl_norandom)
 				for (i = 1; i < libcnt; i++) {
 					unsigned int rnd;
@@ -290,7 +291,6 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 					randomlist[rnd] = randomlist[i];
 					randomlist[i] = cur;
 				}
-#endif /* NO_RANDOM_EXPOSES_BUGS_ELSEWHERE__ */
 
 			for (i = 0; i < libcnt; i++) {
 				elf_object_t *depobj;
@@ -308,9 +308,10 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 					    _dl_progname, libname);
 					_dl_exit(4);
 				}
-				liblist[i].dynobj = depobj;
+				liblist[randomlist[i]].dynobj = depobj;
 			}
 			for (i = 0; i < libcnt; i++) {
+				_dl_add_object(liblist[i].dynobj);
 				_dl_link_sub(liblist[i].dynobj, dynobj);
 			}
 			_dl_free(liblist);
@@ -322,8 +323,9 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 	 * so we can use the _dl_ code when serving dl.... calls.
 	 */
 	dynp = (Elf_Dyn *)((void *)_DYNAMIC);
-	dyn_obj = _dl_add_object(us, dynp, 0, OBJTYPE_LDR, dl_data[AUX_base],
-	    loff);
+	dyn_obj = _dl_finalize_object(us, dynp, 0, OBJTYPE_LDR,
+	    dl_data[AUX_base], loff);
+	_dl_add_object(dyn_obj);
 	dyn_obj->status |= STAT_RELOC_DONE;
 
 	/*
@@ -621,6 +623,7 @@ _dl_call_init(elf_object_t *object)
 	if (object->status & STAT_INIT_DONE)
 		return;
 
+	DL_DEB(("doing ctors: [%s]\n", object->load_name));
 	if (object->dyn.init)
 		(*object->dyn.init)();
 

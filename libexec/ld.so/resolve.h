@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.25 2003/06/09 16:10:03 deraadt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.26 2003/06/22 21:39:01 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -129,9 +129,9 @@ struct dep_node {
 
 extern void _dl_rt_resolve(void);
 
-extern elf_object_t *_dl_add_object(const char *objname, Elf_Dyn *dynp,
-	    const u_long *, const int objtype,
-	    const long laddr, const long loff);
+void _dl_add_object(elf_object_t *object);
+extern elf_object_t *_dl_finalize_object(const char *objname, Elf_Dyn *dynp,
+    const u_long *, const int objtype, const long laddr, const long loff);
 extern void	_dl_remove_object(elf_object_t *object);
 
 extern elf_object_t *_dl_lookup_object(const char *objname);
