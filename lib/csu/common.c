@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.10 2002/07/11 14:05:42 art Exp $	*/
+/*	$OpenBSD: common.c,v 1.11 2002/07/14 12:37:51 art Exp $	*/
 /*	$NetBSD: common.c,v 1.4 1995/09/23 22:34:20 pk Exp $	*/
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -148,7 +148,7 @@ __load_rtld(dp)
 		if ((*entry)(CRT_VERSION_BSD_3, &crt) == -1) {
 			_FATAL("ld.so failed\n");
 		}
-		ld_entry = dp->d_entry;
+		ld_entry = &dp->d_entry;
 		return;
 	}
 	atexit((*ld_entry)->dlexit);
