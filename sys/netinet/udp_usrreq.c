@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.15 1998/05/18 21:11:12 provos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.16 1998/12/28 23:54:58 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ udp_input(m, va_alist)
 		bzero(((struct ipovly *)ip)->ih_x1,
 		    sizeof ((struct ipovly *)ip)->ih_x1);
 		((struct ipovly *)ip)->ih_len = uh->uh_ulen;
-		if ((uh->uh_sum = in_cksum(m, len + sizeof (struct ip))) != 0) {
+		if (in_cksum(m, len + sizeof (struct ip)) != 0) {
 			udpstat.udps_badsum++;
 			m_freem(m);
 			return;
@@ -288,6 +288,9 @@ udp_input(m, va_alist)
 				goto bad;
 			}
 			*ip = save_ip;
+			HTONS(ip->ip_len);
+			HTONS(ip->ip_id);
+			HTONS(ip->ip_off);
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
 			return;
 		}

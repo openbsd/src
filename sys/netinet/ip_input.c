@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.33 1998/12/26 12:35:11 provos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.34 1998/12/28 23:54:57 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -911,6 +911,9 @@ ip_dooptions(m)
 	return (0);
 bad:
 	ip->ip_len -= ip->ip_hl << 2;   /* XXX icmp_error adds in hdr length */
+	HTONS(ip->ip_len);	/* XXX because ip_input changed these three */
+	HTONS(ip->ip_id);
+	HTONS(ip->ip_off);
 	icmp_error(m, type, code, 0, 0);
 	ipstat.ips_badoptions++;
 	return (1);
@@ -1154,6 +1157,8 @@ ip_forward(m, srcrt)
 	}
 	HTONS(ip->ip_id);
 	if (ip->ip_ttl <= IPTTLDEC) {
+		HTONS(ip->ip_off);
+		HTONS(ip->ip_len);
 		icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, dest, 0);
 		return;
 	}
@@ -1172,6 +1177,8 @@ ip_forward(m, srcrt)
 
 		rtalloc(&ipforward_rt);
 		if (ipforward_rt.ro_rt == 0) {
+			HTONS(ip->ip_off);
+			HTONS(ip->ip_len);
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, dest, 0);
 			return;
 		}
@@ -1263,6 +1270,10 @@ ip_forward(m, srcrt)
 		code = 0;
 		break;
 	}
+
+	ip = mtod(mcopy, struct ip *);
+	HTONS(ip->ip_off);
+	HTONS(ip->ip_len);
 	icmp_error(mcopy, type, code, dest, destifp);
 }
 
