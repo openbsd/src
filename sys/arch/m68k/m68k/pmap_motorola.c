@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.6 2001/12/08 18:55:58 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.7 2001/12/11 08:11:33 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -451,8 +451,11 @@ pmap_init()
 	if (mmutype == MMU_68060) {
 		for (addr2 = addr; addr2 < addr + MACHINE_STSIZE;
 		    addr2 += PAGE_SIZE) {
-			pmap_changebit(addr2, PG_CCB, 0);
-			pmap_changebit(addr2, PG_CI, 1);
+			pt_entry_t *pte;
+
+			pte = pmap_pte(pmap_kernel(), addr2);
+			*pte = (*pte | PG_CI) & ~PG_CCB;
+			TBIS(addr2);
 		}
 		DCIS();
 	}
@@ -521,8 +524,11 @@ pmap_init()
 		pmap_extract(pmap_kernel(), addr2, &kpt_pages->kpt_pa);
 #ifdef M68060
 		if (mmutype == MMU_68060) {
-			pmap_changebit(kpt_pages->kpt_pa, PG_CCB, 0);
-			pmap_changebit(kpt_pages->kpt_pa, PG_CI, 1);
+			pt_entry_t *pte;
+
+			pte = pmap_pte(pmap_kernel(), addr2);
+			*pte = (*pte | PG_CI) & ~PG_CCB;
+			TBIS(addr2);
 			DCIS();
 		}
 #endif
@@ -1351,7 +1357,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	}
 	/*
 	 * Assumption: if it is not part of our managed memory
-	 * then it must be device memory which may be volitile.
+	 * then it must be device memory which may be volatile.
 	 */
 	else if (pmap_initialized) {
 		checkpv = cacheable = FALSE;
@@ -2635,8 +2641,8 @@ pmap_enter_ptpage(pmap, va)
 			if (mmutype == MMU_68060) {
 				while (stpa < (paddr_t)pmap->pm_stpa +
 				    MACHINE_STSIZE) {
-					pmap_changebit(stpa, PG_CCB, 0);
-					pmap_changebit(stpa, PG_CI, 1);
+					pmap_changebit(stpa, 0, ~PG_CCB);
+					pmap_changebit(stpa, PG_CI, ~0);
 					stpa += PAGE_SIZE;
 				}
 				DCIS();	/* XXX */
@@ -2729,8 +2735,8 @@ pmap_enter_ptpage(pmap, va)
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 #if defined(M68060)
 		if (mmutype == MMU_68060) {
-			pmap_changebit(ptpa, PG_CCB, 0);
-			pmap_changebit(ptpa, PG_CI, 1);
+			pmap_changebit(ptpa, 0, ~PG_CCB);
+			pmap_changebit(ptpa, PG_CI, ~0);
 		}
 #endif
 		pmap_update(pmap);
@@ -2790,7 +2796,7 @@ pmap_enter_ptpage(pmap, va)
 		pmap_changebit(ptpa, 0, ~PG_CCB);
 #ifdef M68060
 		if (mmutype == MMU_68060) {
-			pmap_changebit(ptpa, PG_CI, 1);
+			pmap_changebit(ptpa, PG_CI, ~0);
 			DCIS();
 		}
 #endif
