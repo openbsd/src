@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.591 2003/02/03 08:22:57 jason Exp $
+	$OpenBSD: pcidevs,v 1.592 2003/02/04 19:04:05 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2243,6 +2243,7 @@ product TI PCI4410_FW		0x8017	PCI4410 FireWire
 product TI TSB12LV23		0x8019	TSB12LV23 FireWire
 product TI TSB12LV26		0x8020	TSB12LV26 FireWire
 product TI TSB43AB22		0x8023	TSB43AB22 FireWire
+product TI TSB43AB21		0x8026	TSB43AB21 FireWire
 product TI PCI4451_FW		0x8027	PCI4451 FireWire
 product TI DWL520P		0x8400	DWL-520+
 product TI PCI1130		0xac12	PCI1130 PCI-CardBus
