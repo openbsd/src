@@ -256,10 +256,20 @@ main(argc, argv)
 		exit(1);
 	}
 
-	(void)strcpy(term, (p = getenv("TERM")) ? p : "network");
+	(void)strncpy(term, (p = getenv("TERM")) ? p : "network",
+	    sizeof(term) - 1);
+	term[sizeof(term) - 1] = '\0';
+
+	/*
+	 * Add "/baud" only if there is room left; ie. do not send "/19"
+	 * for 19200 baud with a particularily long $TERM
+	 */
 	if (tcgetattr(0, &tty) == 0) {
-		(void)strcat(term, "/");
-		(void)sprintf(term + strlen(term), "%d", cfgetospeed(&tty));
+		char baud[20];		/* more than enough.. */
+
+		(void)sprintf(baud, "/%d", cfgetospeed(&tty));
+		if (strlen(term) + strlen(baud) < sizeof(term) - 1)
+			(void)strcat(term, baud);
 	}
 
 	(void)get_window_size(0, &winsize);
