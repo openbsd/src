@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.10 1999/02/10 08:07:20 deraadt Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.11 1999/09/10 20:27:40 art Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/exec_olf.h>
 
@@ -51,7 +52,6 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/exec.h>
 #include <machine/linux_machdep.h>
 
 #include <compat/linux/linux_types.h>
