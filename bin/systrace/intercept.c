@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.35 2002/11/12 17:04:07 itojun Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.36 2002/11/26 03:48:07 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -562,26 +562,36 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 	static char cwd[2*MAXPATHLEN];
 	struct intercept_pid *icpid;
 	char *name;
+	int havecwd = 0;
 
 	name = intercept_get_string(fd, pid, addr);
 	if (name == NULL)
 		goto abort;
 
-	if (intercept.getcwd(fd, pid, cwd, sizeof(cwd)) == NULL) {
+	if (intercept.setcwd(fd, pid) == -1) {
 		if (errno == EBUSY)
 			goto abort;
+	getcwderr:
 		if (strcmp(name, "/") == 0)
 			return (name);
 
 		err(1, "%s: getcwd", __func__);
 	}
 
-	/* Update cwd for process */
-	icpid = intercept_getpid(pid);
-	if (strlcpy(icpid->cwd, cwd, sizeof(icpid->cwd)) >= sizeof(icpid->cwd))
-		errx(1, "cwd too long");
+	if (userp == ICLINK_NONE) {
+		if (getcwd(cwd, sizeof(cwd)) == NULL)
+			goto getcwderr;
+		havecwd = 1;
+	}
 
-	if (name[0] != '/') {
+	if (havecwd) {
+		/* Update cwd for process */
+		icpid = intercept_getpid(pid);
+		if (strlcpy(icpid->cwd, cwd, sizeof(icpid->cwd)) >= sizeof(icpid->cwd))
+			errx(1, "cwd too long");
+	}
+
+	if (havecwd && name[0] != '/') {
 		if (strlcat(cwd, "/", sizeof(cwd)) >= sizeof(cwd))
 			goto error;
 		if (strlcat(cwd, name, sizeof(cwd)) >= sizeof(cwd))
@@ -663,12 +673,13 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 
 	return (name);
 
+ error:
+	errx(1, "%s: filename too long", __func__);
+	/* NOTREACHED */
+
  abort:
 	ic_abort = 1;
 	return (NULL);
-
- error:
-	errx(1, "%s: filename too long", __func__);
 }
 
 void

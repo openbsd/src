@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.15 2002/10/16 15:01:08 itojun Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.16 2002/11/26 03:48:07 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -134,7 +134,7 @@ static int obsd_assignpolicy(int, pid_t, int);
 static int obsd_modifypolicy(int, int, int, short);
 static int obsd_replace(int, pid_t, struct intercept_replace *);
 static int obsd_io(int, pid_t, int, void *, u_char *, size_t);
-static char *obsd_getcwd(int, pid_t, char *, size_t);
+static int obsd_setcwd(int, pid_t);
 static int obsd_restcwd(int);
 static int obsd_argument(int, void *, int, void **);
 static int obsd_read(int);
@@ -346,13 +346,13 @@ obsd_translate_flags(short flags)
 }
 
 static int
-obsd_translate_errno(int nerrno)
+obsd_translate_errno(int errno)
 {
-	return (nerrno);
+	return (errno);
 }
 
 static int
-obsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int nerrno,
+obsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int errno,
     short flags, struct elevate *elevate)
 {
 	struct systrace_answer ans;
@@ -362,7 +362,7 @@ obsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int nerrno,
 	ans.stra_seqnr = seqnr;
 	ans.stra_policy = obsd_translate_policy(policy);
 	ans.stra_flags = obsd_translate_flags(flags);
-	ans.stra_error = obsd_translate_errno(nerrno);
+	ans.stra_error = obsd_translate_errno(errno);
 
 	if (elevate != NULL) {
 		if (elevate->e_flags & ELEVATE_UID) {
@@ -491,19 +491,10 @@ obsd_io(int fd, pid_t pid, int op, void *addr, u_char *buf, size_t size)
 	return (0);
 }
 
-static char *
-obsd_getcwd(int fd, pid_t pid, char *buf, size_t size)
+static int
+obsd_setcwd(int fd, pid_t pid)
 {
-	char *path;
-
-	if (ioctl(fd, STRIOCGETCWD, &pid) == -1)
-		return (NULL);
-
-	path = getcwd(buf, size);
-	if (path == NULL)
-		obsd_restcwd(fd);
-
-	return (path);
+	return (ioctl(fd, STRIOCGETCWD, &pid));
 }
 
 static int
@@ -636,7 +627,7 @@ struct intercept_system intercept = {
 	obsd_report,
 	obsd_read,
 	obsd_syscall_number,
-	obsd_getcwd,
+	obsd_setcwd,
 	obsd_restcwd,
 	obsd_io,
 	obsd_argument,
