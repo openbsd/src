@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.20 2004/01/17 14:40:55 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.21 2004/01/24 15:49:31 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -107,7 +107,6 @@ ahc_attach(struct ahc_softc *ahc)
 	ahc->sc_channel.adapter = &ahc_switch;
 	ahc->sc_channel.openings = 16;
 	ahc->sc_channel.device = &ahc_dev;
-	ahc->sc_channel.flags = SCSIDEBUG_LEVEL;
 
 	if (ahc->features & AHC_TWIN) {
 		/* Configure the second scsi bus */
