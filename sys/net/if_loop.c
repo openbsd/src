@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.10 1998/06/26 09:14:37 deraadt Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.11 1999/01/08 00:56:45 deraadt Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -35,6 +35,18 @@
  *
  *	@(#)if_loop.c	8.1 (Berkeley) 6/10/93
  */
+
+/*
+%%% portions-copyright-nrl-95
+Portions of this software are Copyright 1995-1998 by Randall Atkinson,
+Ronald Lee, Daniel McDonald, Bao Phan, and Chris Winters. All Rights
+Reserved. All rights under this copyright have been assigned to the US
+Naval Research Laboratory (NRL). The NRL Copyright Notice and License
+Agreement Version 1.1 (January 17, 1995) applies to these portions of the
+software.
+You should have received a copy of the license with this software. If you
+didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
+*/
 
 /*
  * Loopback interface driver for protocol testing and timing.
@@ -90,6 +102,11 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
+
+#ifdef INET6
+#include <netinet6/in6.h>
+#include <netinet6/in6_var.h>
+#endif /* INET6 */
 
 #define	LOMTU	(32768)
 
@@ -174,6 +191,12 @@ looutput(ifp, m, dst, rt)
 		isr = NETISR_IP;
 		break;
 #endif
+#ifdef INET6
+	case AF_INET6:
+		ifq = &ipv6intrq;
+		isr = NETISR_IPV6;
+		break;
+#endif /* INET6 */
 #ifdef NS
 	case AF_NS:
 		ifq = &nsintrq;
@@ -270,6 +293,11 @@ loioctl(ifp, cmd, data)
 		case AF_INET:
 			break;
 #endif
+
+#ifdef INET6
+		case AF_INET6:
+			break;
+#endif /* INET6 */
 
 		default:
 			error = EAFNOSUPPORT;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.17 1998/07/08 22:22:51 ryker Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.18 1999/01/08 00:56:45 deraadt Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -37,6 +37,18 @@
  *
  *	@(#)if_fddisubr.c	8.1 (Berkeley) 6/10/93
  */
+
+/*
+%%% portions-copyright-nrl-97
+Portions of this software are Copyright 1997-1998 by Randall Atkinson,
+Ronald Lee, Daniel McDonald, Bao Phan, and Chris Winters. All Rights
+Reserved. All rights under this copyright have been assigned to the US
+Naval Research Laboratory (NRL). The NRL Copyright Notice and License
+Agreement Version 1.1 (January 17, 1995) applies to these portions of the
+software.
+You should have received a copy of the license with this software. If you
+didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
+*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +106,11 @@
 
 #include <netccitt/dll.h>
 #include <netccitt/llc_var.h>
+
+#ifdef INET6
+#include <netinet6/in6.h>
+#include <netinet6/in6_var.h>
+#endif /* INET6 */
 
 #if defined(CCITT)
 extern struct ifqueue pkintrq;
@@ -175,6 +192,28 @@ fddi_output(ifp, m0, dst, rt0)
 		type = htons(ETHERTYPE_IP);
 		break;
 #endif
+#ifdef INET6
+	case AF_INET6:
+		/*
+		 * The bottom line here is to either queue the outgoing packet
+		 * in the discovery engine, or fill in edst with something
+		 * that'll work.
+		 */
+		if (m->m_flags & M_MCAST) {
+			/*
+			 * If multicast dest., then use IPv6 -> Ethernet mcast
+			 * mapping.  Really simple.
+			 */
+			ETHER_MAP_IN6_MULTICAST(((struct sockaddr_in6 *)dst)->sin6_addr,
+			    edst);
+		} else {
+			/* Do unicast neighbor discovery stuff. */
+			if (!ipv6_discov_resolve(ifp, rt, m, dst, edst))
+ 				return 0;
+		}
+		type = htons(ETHERTYPE_IPV6);
+		break;
+#endif /* INET6 */
 #ifdef IPX
 	case AF_IPX:
 		type = htons(ETHERTYPE_IPX);
@@ -426,7 +465,7 @@ fddi_input(ifp, fh, m)
 
 	l = mtod(m, struct llc *);
 	switch (l->llc_dsap) {
-#if defined(INET) || defined(IPX) || defined(NS) || defined(DECNET)
+#if defined(INET) || defined(IPX) || defined(NS) || defined(DECNET) || defined(INET6)
 	case LLC_SNAP_LSAP:
 	{
 		u_int16_t etype;
@@ -450,6 +489,12 @@ fddi_input(ifp, fh, m)
 			inq = &arpintrq;
 			break;
 #endif
+#ifdef INET6
+		case ETHERTYPE_IPV6:
+			schednetisr(NETISR_IPV6);
+			inq = &ipv6intrq;
+			break;
+#endif /* INET6 */
 #ifdef IPX
 		case ETHERTYPE_IPX:
 			schednetisr(NETISR_IPX);
