@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.99 1998/09/28 13:28:36 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.100 1998/09/28 13:38:39 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1276,9 +1276,9 @@ while test -n "${_get_files}" ; do
 		echo ""
 		echo "$1/${_f}:"
 		if [ "X${_f}" = "X${_kernel}" ]; then
-			cp $1/$_f /mnt/$_f
+			ftp -V -m -o /mnt/$_f file:$1/$_f
 		else
-			cat $1/$_f | (cd /mnt; tar -zxvpf -)
+			ftp -V -m -o - file:$1/$_f | (cd /mnt; tar -zxvpf -)
 		fi
 		if [ $? -ne 0 ]; then
 			# Mark xfer as having failed,.
