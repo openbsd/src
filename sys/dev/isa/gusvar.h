@@ -1,4 +1,4 @@
-/*	$OpenBSD: gusvar.h,v 1.1 1999/07/05 20:08:37 deraadt Exp $	*/
+/*	$OpenBSD: gusvar.h,v 1.2 2000/04/14 21:53:21 millert Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -281,8 +281,8 @@ struct ics2101_volume {
 #define GUSPLAYDEBUG	/*XXX*/
 #define DPRINTF(x)	if (gusdebug) printf x
 #define DMAPRINTF(x)	if (gusdmadebug) printf x
-extern int	gusdebug = 0;
-extern int	gusdmadebug = 0;
+extern int	gusdebug;
+extern int	gusdmadebug;
 #else
 #define DPRINTF(x)
 #define DMAPRINTF(x)
@@ -291,7 +291,7 @@ extern int	gus_dostereo;
 
 #define NDMARECS 2048
 #ifdef GUSPLAYDEBUG
-extern int	gusstats = 0;
+extern int	gusstats;
 struct dma_record {
     struct timeval tv;
     u_long gusaddr;
@@ -303,7 +303,7 @@ struct dma_record {
 
 extern struct dma_record dmarecords[NDMARECS];
 
-extern int dmarecord_index = 0;
+extern int dmarecord_index;
 #endif
 
 /*
