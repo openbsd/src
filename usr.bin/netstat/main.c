@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.44 2004/03/13 22:02:13 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2004/04/01 07:55:17 markus Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.44 2004/03/13 22:02:13 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.45 2004/04/01 07:55:17 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -463,11 +463,7 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 	if (pflag) {
-		if (tp->pr_stats)
-			(*tp->pr_stats)(nl[tp->pr_sindex].n_value,
-				tp->pr_name);
-		else
-			printf("%s: no stats routine\n", tp->pr_name);
+		printproto(tp, tp->pr_name);
 		exit(0);
 	}
 	/*

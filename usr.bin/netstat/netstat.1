@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.34 2003/11/28 10:05:43 jmc Exp $
+.\"	$OpenBSD: netstat.1,v 1.35 2004/04/01 07:55:17 markus Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -54,6 +54,7 @@
 .Op Fl N Ar system
 .Op Fl w Ar wait
 .Nm netstat
+.Op Fl s
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl p Ar protocol
@@ -201,16 +202,18 @@ interprets addresses and attempts to display them
 symbolically).
 This option may be used with any of the display formats.
 .It Fl p Ar protocol
-Show statistics about
+Restrict the output to
 .Ar protocol ,
 which is either a well-known name for a protocol or an alias for it.
 Some protocol names and aliases are listed in the file
 .Pa /etc/protocols .
-A null response typically means that there are no interesting numbers to
-report.
 The program will complain if
 .Ar protocol
-is unknown or if there is no statistics routine for it.
+is unknown.
+If the
+.Fl s
+option is specified, the per-protocol statistics are displayed.
+Otherwise the states of the matching sockets are shown.
 .It Fl q
 Only show interfaces that have seen packets (or bytes if
 .Fl b
