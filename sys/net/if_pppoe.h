@@ -77,5 +77,5 @@ extern struct ifqueue ppoeinq;
 
 void pppoeintr(void);
 
-#endif	/* _KERNEL */
-#endif _NET_IF_PPPOE_H_
+#endif /* _KERNEL */
+#endif /* _NET_IF_PPPOE_H_ */
