@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 1999/07/23 19:11:28 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 1999/08/24 09:54:55 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -245,7 +245,7 @@ cpu_startup()
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL);
+			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
 				panic("cpu_startup: "
 				    "not enough RAM for buffer cache");
