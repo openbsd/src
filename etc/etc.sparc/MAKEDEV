@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.15 1997/04/13 20:08:19 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.16 1997/04/22 05:28:56 todd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -72,6 +72,52 @@
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
 umask 77
 
+case `uname -s` in
+SunOS) add ()
+	{
+		expr $1 + $2
+	}
+	mult ()
+	{
+		expr $1 '*' $2
+	}
+	hex ()
+	{
+		printf "%x" $1
+	}
+	unt ()
+	{
+		expr $1 : '.[yd]\(.*\)[a-p]'
+	}
+	 ;;
+OpenBSD) add ()
+	{
+		echo "$(( $1 + $2 ))"
+	}
+	mult ()
+	{
+		echo "$(( $1 * $2 ))"
+	}
+	hex ()
+	{
+		case $1 in
+			[0-9]) echo -n $1 ;;
+        		1[0-5]) echo -e -n "\\$(( $1 + 131 ))" ;;
+		esac
+	}
+	unt ()
+	{
+		if [ "${1#xy}" -ne "$1" ]
+		then
+			unt=${1#xy}
+		else
+			unt=${1#*d}
+		fi
+		echo ${unt%*[a-p]}
+	}
+	 ;;
+esac
+
 for i
 do
 
@@ -122,9 +168,8 @@ std)
 fd)
 	rm -f fd/*
 	mkdir fd > /dev/null 2>&1
-	(cd fd && eval `echo "" | awk ' BEGIN { \
-		for (i = 0; i < 64; i++) \
-			printf("mknod %d c 24 %d;", i, i)}'`)
+	n=0
+	(cd fd && while [ $n -lt 64 ]; do mknod $n c 24 $n; n=`add $n 1`; done )
 	chown -R root.wheel fd
 	chmod 555 fd
 	chmod 666 fd/*
@@ -196,7 +241,7 @@ fd*)
 	0|1)	blk=16; chr=54;;
 	*)	echo bad unit $unit for $i; exit 1;;
 	esac
-	nam=fd${typnam}${unit}
+	nam=fd${typnam}$unit
 	rm -f ${nam}? r${nam}?
 	basenum=`expr $unit '*' 128 + $typnum '*' 16`
 	mknod ${nam}a	b $blk `expr $basenum + 0`
@@ -238,6 +283,12 @@ fd*)
 
 ccd*|sd*|xd*|xy*|cd*|vnd*)
 	umask 2
+	unit=`unt $i`
+	if [ $unit -gt 15 ]
+	then
+		echo bad disk unit: $i - $unit
+		exit 127
+	fi
 	case $i in
 	ccd*) name=ccd; blk=9; chr=23;;
 	sd*) name=sd; blk=7; chr=17;;
@@ -245,50 +296,29 @@ ccd*|sd*|xd*|xy*|cd*|vnd*)
 	xy*) name=xy; blk=3; chr=9;;
 	cd*)  name=cd; blk=18; chr=58;;
 	vnd*) name=vnd; blk=8; chr=110;;
+	*) echo bad unit for disk in: $i;;
 	esac
-	case $unit in
-	0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|\
-	17|18|19|20|21|22|23|24|25|26|27|28|29|30|31)
-		rm -f ${name}${unit}[a-p] r${name}${unit}[a-p]
-		mknod ${name}${unit}c	b $blk `expr $unit '*' 16 + 2`
-		mknod r${name}${unit}c	c $chr `expr $unit '*' 16 + 2`
-		mknod ${name}${unit}a	b $blk `expr $unit '*' 16 + 0`
-		mknod ${name}${unit}b	b $blk `expr $unit '*' 16 + 1`
-		mknod ${name}${unit}d	b $blk `expr $unit '*' 16 + 3`
-		mknod ${name}${unit}e	b $blk `expr $unit '*' 16 + 4`
-		mknod ${name}${unit}f	b $blk `expr $unit '*' 16 + 5`
-		mknod ${name}${unit}g	b $blk `expr $unit '*' 16 + 6`
-		mknod ${name}${unit}h	b $blk `expr $unit '*' 16 + 7`
-		mknod ${name}${unit}i	b $blk `expr $unit '*' 16 + 8`
-		mknod ${name}${unit}j	b $blk `expr $unit '*' 16 + 9`
-		mknod ${name}${unit}k	b $blk `expr $unit '*' 16 + 10`
-		mknod ${name}${unit}l	b $blk `expr $unit '*' 16 + 11`
-		mknod ${name}${unit}m	b $blk `expr $unit '*' 16 + 12`
-		mknod ${name}${unit}n	b $blk `expr $unit '*' 16 + 13`
-		mknod ${name}${unit}o	b $blk `expr $unit '*' 16 + 14`
-		mknod ${name}${unit}p	b $blk `expr $unit '*' 16 + 15`
-		mknod r${name}${unit}a	c $chr `expr $unit '*' 16 + 0`
-		mknod r${name}${unit}b	c $chr `expr $unit '*' 16 + 1`
-		mknod r${name}${unit}d	c $chr `expr $unit '*' 16 + 3`
-		mknod r${name}${unit}e	c $chr `expr $unit '*' 16 + 4`
-		mknod r${name}${unit}f	c $chr `expr $unit '*' 16 + 5`
-		mknod r${name}${unit}g	c $chr `expr $unit '*' 16 + 6`
-		mknod r${name}${unit}h	c $chr `expr $unit '*' 16 + 7`
-		mknod r${name}${unit}i	c $chr `expr $unit '*' 16 + 8`
-		mknod r${name}${unit}j	c $chr `expr $unit '*' 16 + 9`
-		mknod r${name}${unit}k	c $chr `expr $unit '*' 16 + 10`
-		mknod r${name}${unit}l	c $chr `expr $unit '*' 16 + 11`
-		mknod r${name}${unit}m	c $chr `expr $unit '*' 16 + 12`
-		mknod r${name}${unit}n	c $chr `expr $unit '*' 16 + 13`
-		mknod r${name}${unit}o	c $chr `expr $unit '*' 16 + 14`
-		mknod r${name}${unit}p	c $chr `expr $unit '*' 16 + 15`
-		chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
-		chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
-		;;
-	*)
-		echo bad unit for disk in: $i
-		;;
-	esac
+	if [ "$unit" = "" ]
+	then
+		n=0
+		while [ $n -lt 32 ]
+		do
+			sh MAKEDEV $name$n
+			n=`add $n 1`
+		done
+	fi
+	rm -f $name$unit? r$name$unit?
+	minor=`mult $unit 8`
+	for slice in a b c d e f g h i j k l m n o p
+	do
+		dev=$name$unit$slice
+		mknod $dev b $blk $minor
+		mknod r$dev b $chr $minor
+		minor=`add $minor 1`
+	done
+	chown root.operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
+	umask 77
 	umask 77
 	;;
 
@@ -299,22 +329,23 @@ st*)
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
-	mknod ${name}${unit}	b $blk `expr $unit '*' 16 + 0`
-	mknod n${name}${unit}	b $blk `expr $unit '*' 16 + 1`
-	mknod e${name}${unit}	b $blk `expr $unit '*' 16 + 2`
-	mknod en${name}${unit}	b $blk `expr $unit '*' 16 + 3`
-	mknod r${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-	mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
-	mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
-	mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
-	chown root.operator ${name}${unit} n${name}${unit} \
+	sixt=`mult $unit 16`
+	mknod $name$unit	b $blk `add $sixt 0`
+	mknod n$name$unit	b $blk `add $sixt 1`
+	mknod e$name$unit	b $blk `add $sixt 2`
+	mknod en$name$unit	b $blk `add $sixt 3`
+	mknod r$name$unit	c $chr `add $sixt 0`
+	mknod nr$name$unit	c $chr `add $sixt 1`
+	mknod er$name$unit	c $chr `add $sixt 2`
+	mknod enr$name$unit	c $chr `add $sixt 3`
+	chown root.operator $name$unit n$name$unit \
 		e$name$unit en$name$unit \
-		r${name}${unit} nr${name}${unit} \
-		er${name}${unit} enr${name}${unit} 
-	chmod 640 ${name}${unit} n${name}${unit} \
+		r$name$unit nr$name$unit \
+		er$name$unit enr$name$unit 
+	chmod 640 $name$unit n$name$unit \
 		e$name$unit en$name$unit \
-		r${name}${unit} nr${name}${unit} \
-		er${name}${unit} enr${name}${unit} 
+		r$name$unit nr$name$unit \
+		er$name$unit enr$name$unit 
 	umask 77
 	;;
 
@@ -324,9 +355,10 @@ ch*)
 	ch*) name=ch;  chr=19;;
 	esac
 	rm -f $name$unit
-	mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-	chown root.operator ${name}${unit}
-	chmod 640 ${name}${unit}
+	sixt=`mult $unit 16`
+	mknod $name$unit	c $chr `add $sixt 0`
+	chown root.operator $name$unit
+	chmod 640 $name$unit
 	umask 77
 	;;
 
@@ -350,11 +382,15 @@ pty*)
 	case $unit in
 	0|1|2|3|4)
 		umask 0
-		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
-			for (i = 0; i < 16; i++)
-				printf("mknod tty%s%x c 20 %d;" \
-					"mknod pty%s%x c 21 %d; ", \
-					n, i, b+i, n, i, b+i); }'`
+		n=0
+		while [ $n -lt 16 ]
+                do
+                        n=$name`hex $n`
+                        rm -rf {tty,pty}$n
+                        mknod tty$n c 5 `add $offset $n`
+                        mknod pty$n c 6 `add $offset $n`
+                        n=`add $n 1`
+                done
 		umask 77
 		if [ $unit = 1 ]; then
 			mv ttyqf ttyv0; mv ptyqf ptyv0
@@ -375,7 +411,7 @@ random|srandom|urandom|prandom|arandom)
 	;;
 
 uk*)
-	unit=`expr $i : 'uk\(.*\)'`
+	unit=${i#uk}
 	rm -f uk$unit
 	mknod uk$unit c 98 $unit
 	chown root.operator uk$unit
@@ -383,7 +419,7 @@ uk*)
 	;;
 
 ss*)
-	unit=`expr $i : 'ss\(.*\)'`
+	unit=${i#ss}
 	rm -f ss$unit
 	mknod ss$unit c 99 $unit
 	chown root.operator ss$unit
