@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.39 2003/04/08 00:53:09 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.40 2003/04/14 04:45:45 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.39 2003/04/08 00:53:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.40 2003/04/14 04:45:45 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -225,7 +225,6 @@ initkre(void)
 			while (ihp) {
 				KREAD(ihp, &ih, sizeof(ih));
 				KREAD(ih.ih_what, iname, 16);
-				/* XXX strcpy is safe, sized & malloc'd buffer */
 				intrname[n++] = cp;
 				strlcpy(cp, iname, intrnamebuf + namelen - cp);
 				cp += strlen(iname) + 1;
