@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2002/10/16 15:01:08 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.12 2002/11/26 03:47:08 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -395,8 +395,8 @@ yyerror(const char *fmt, ...)
 	errors = 1;
 
 	va_start(ap, fmt);
-	vfprintf(stdout, fmt, ap);
-	fprintf(stdout, "\n");
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
 	va_end(ap);
 	return (0);
 }
