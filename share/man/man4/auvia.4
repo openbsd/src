@@ -1,4 +1,4 @@
-.\" $OpenBSD: auvia.4,v 1.5 2002/09/26 07:55:39 miod Exp $
+.\" $OpenBSD: auvia.4,v 1.6 2004/03/18 20:41:11 grange Exp $
 .\" $NetBSD: auvia.4,v 1.1 2000/03/31 05:49:59 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 .Os
 .Sh NAME
 .Nm auvia
-.Nd VIA VT82C686A and VT8233 integrated AC97 audio device driver
+.Nd VIA VT82C686A, VT8233, VT8235, VT8237 integrated AC97 audio device driver
 .Sh SYNOPSIS
 .Cd "auvia* at pci? dev ? function ?"
 .Cd "audio* at auvia?"
@@ -50,8 +50,8 @@ The
 device driver supports the integrated AC97 audio controller
 of the
 .Tn VIA Technologies VT82C686A
-Southbridge and
-.Tn VIA Technologies VT8233
+Southbridge,
+.Tn VIA Technologies VT8233, VT8235, VT8237
 chips found on some motherboards.
 .Sh SEE ALSO
 .Xr ac97 4 ,
