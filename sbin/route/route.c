@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.7 1996/08/15 19:06:09 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.8 1996/08/16 09:26:11 mickey Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.7 1996/08/15 19:06:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.8 1996/08/16 09:26:11 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static char rcsid[] = "$OpenBSD: route.c,v 1.7 1996/08/15 19:06:09 deraadt Exp $
 #include <net/if_dl.h>
 #include <netinet/in.h>
 #include <netns/ns.h>
+#include <netipx/ipx.h>
 #include <netiso/iso.h>
 #include <netccitt/x25.h>
 #include <arpa/inet.h>
@@ -86,6 +87,7 @@ union	sockunion {
 	struct	sockaddr sa;
 	struct	sockaddr_in sin;
 	struct	sockaddr_ns sns;
+	struct	sockaddr_ipx sipx;
 	struct	sockaddr_iso siso;
 	struct	sockaddr_dl sdl;
 	struct	sockaddr_x25 sx25;
@@ -233,6 +235,9 @@ flushroutes(argc, argv)
 			case K_XNS:
 				af = AF_NS;
 				break;
+			case K_IPX:
+				af = AF_IPX;
+				break;
 			case K_LINK:
 				af = AF_LINK;
 				break;
@@ -313,6 +318,7 @@ routename(sa)
 	static char domain[MAXHOSTNAMELEN + 1];
 	static int first = 1;
 	char *ns_print();
+	char *ipx_print();
 
 	if (first) {
 		first = 0;
@@ -358,6 +364,9 @@ routename(sa)
 	case AF_NS:
 		return (ns_print((struct sockaddr_ns *)sa));
 
+	case AF_IPX:
+		return (ipx_print((struct sockaddr_ipx *)sa));
+
 	case AF_LINK:
 		return (link_ntoa((struct sockaddr_dl *)sa));
 
@@ -394,6 +403,7 @@ netname(sa)
 	register u_long i;
 	int subnetshift;
 	char *ns_print();
+	char *ipx_print();
 
 	switch (sa->sa_family) {
 
@@ -449,6 +459,9 @@ netname(sa)
 
 	case AF_NS:
 		return (ns_print((struct sockaddr_ns *)sa));
+
+	case AF_IPX:
+		return (ipx_print((struct sockaddr_ipx *)sa));
 
 	case AF_LINK:
 		return (link_ntoa((struct sockaddr_dl *)sa));
@@ -542,6 +555,10 @@ newroute(argc, argv)
 			case K_XNS:
 				af = AF_NS;
 				aflen = sizeof(struct sockaddr_ns);
+				break;
+			case K_IPX:
+				af = AF_IPX;
+				aflen = sizeof(struct sockaddr_ipx);
 				break;
 			case K_IFACE:
 			case K_INTERFACE:
@@ -773,6 +790,7 @@ getaddr(which, s, hpp)
 {
 	register sup su;
 	struct ns_addr ns_addr();
+	struct ipx_addr ipx_addr();
 	struct iso_addr *iso_addr();
 	struct hostent *hp;
 	struct netent *np;
@@ -836,6 +854,19 @@ getaddr(which, s, hpp)
 		}
 		su->sns.sns_addr = ns_addr(s);
 		return (!ns_nullhost(su->sns.sns_addr));
+
+	case AF_IPX:
+		if (which == RTA_DST) {
+			extern short ipx_bh[3];
+			struct sockaddr_ipx *sms = &(so_mask.sipx);
+			memset(sms, 0, sizeof(*sms));
+			sms->sipx_family = 0;
+			sms->sipx_len = 6;
+			sms->sipx_addr.ipx_net = *(union ipx_net *)ipx_bh;
+			rtm_addrs |= RTA_NETMASK;
+		}
+		su->sipx.sipx_addr = ipx_addr(s);
+		return (!ipx_nullhost(su->sipx.sipx_addr));
 
 	case AF_OSI:
 		su->siso.siso_addr = *iso_addr(s);
@@ -943,6 +974,53 @@ ns_print(sns)
 		host = "*";
 	else {
 		q = work.x_host.c_host;
+		(void) sprintf(chost, "%02X%02X%02X%02X%02X%02XH",
+			q[0], q[1], q[2], q[3], q[4], q[5]);
+		for (p = chost; *p == '0' && p < chost + 12; p++)
+			/* void */;
+		host = p;
+	}
+	if (port)
+		(void) sprintf(cport, ".%XH", htons(port));
+	else
+		*cport = 0;
+
+	(void) sprintf(mybuf,"%XH.%s%s", ntohl(net.long_e), host, cport);
+	return (mybuf);
+}
+
+short ipx_nullh[] = {0,0,0};
+short ipx_bh[] = {-1,-1,-1};
+
+char *
+ipx_print(sipx)
+	struct sockaddr_ipx *sipx;
+{
+	struct ipx_addr work;
+	union { union ipx_net net_e; u_long long_e; } net;
+	u_short port;
+	static char mybuf[50], cport[10], chost[25];
+	char *host = "";
+	register char *p;
+	register u_char *q;
+
+	work = sipx->sipx_addr;
+	port = ntohs(work.ipx_port);
+	work.ipx_port = 0;
+	net.net_e  = work.ipx_net;
+	if (ipx_nullhost(work) && net.long_e == 0) {
+		if (!port)
+			return ("*.*");
+		(void) sprintf(mybuf, "*.%XH", port);
+		return (mybuf);
+	}
+
+	if (memcmp(ipx_bh, work.ipx_host.c_host, 6) == 0)
+		host = "any";
+	else if (memcmp(ipx_nullh, work.ipx_host.c_host, 6) == 0)
+		host = "*";
+	else {
+		q = work.ipx_host.c_host;
 		(void) sprintf(chost, "%02X%02X%02X%02X%02X%02XH",
 			q[0], q[1], q[2], q[3], q[4], q[5]);
 		for (p = chost; *p == '0' && p < chost + 12; p++)
@@ -1094,6 +1172,7 @@ mask_addr()
 		return;
 	switch (so_dst.sa.sa_family) {
 	case AF_NS:
+	case AF_IPX:
 	case AF_INET:
 	case AF_CCITT:
 	case 0:
@@ -1376,6 +1455,10 @@ sodump(su, which)
 	case AF_NS:
 		(void) printf("%s: xns %s; ",
 		    which, ns_ntoa(su->sns.sns_addr));
+		break;
+	case AF_IPX:
+		(void) printf("%s: ipx %s; ",
+		    which, ipx_ntoa(su->sipx.sipx_addr));
 		break;
 	}
 	(void) fflush(stdout);

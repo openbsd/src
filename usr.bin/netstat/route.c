@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.4 1996/08/06 18:35:09 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.5 1996/08/16 09:29:34 mickey Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.4 1996/08/06 18:35:09 deraadt Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.5 1996/08/16 09:29:34 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,8 @@ static char *rcsid = "$OpenBSD: route.c,v 1.4 1996/08/06 18:35:09 deraadt Exp $"
 #include <netinet/in.h>
 
 #include <netns/ns.h>
+
+#include <netipx/ipx.h>
 
 #include <sys/sysctl.h>
 
@@ -168,6 +170,9 @@ pr_family(af)
 		break;
 	case AF_NS:
 		afname = "XNS";
+		break;
+	case AF_IPX:
+		afname = "IPX";
 		break;
 	case AF_ISO:
 		afname = "ISO";
@@ -374,6 +379,10 @@ p_sockaddr(sa, flags, width)
 
 	case AF_NS:
 		cp = ns_print(sa);
+		break;
+
+	case AF_IPX:
+		cp = ipx_print(sa);
 		break;
 
 	case AF_LINK:
@@ -599,6 +608,7 @@ rt_stats(off)
 	printf("\t%u use%s of a wildcard route\n",
 		rtstat.rts_wildcard, plural(rtstat.rts_wildcard));
 }
+
 short ns_nullh[] = {0,0,0};
 short ns_bh[] = {-1,-1,-1};
 
@@ -663,6 +673,72 @@ ns_phost(sa)
 	work.sns_addr.x_net = ns_zeronet;
 
 	p = ns_print((struct sockaddr *)&work);
+	if (strncmp("0H.", p, 3) == 0) p += 3;
+	return(p);
+}
+
+u_short ipx_nullh[] = {0,0,0};
+u_short ipx_bh[] = {0xffff,0xffff,0xffff};
+
+char *
+ipx_print(sa)
+	register struct sockaddr *sa;
+{
+	register struct sockaddr_ipx *sipx = (struct sockaddr_ipx*)sa;
+	struct ipx_addr work;
+	union { union ipx_net net_e; u_long long_e; } net;
+	u_short port;
+	static char mybuf[50], cport[10], chost[25];
+	char *host = "";
+	register char *p; register u_char *q;
+
+	work = sipx->sipx_addr;
+	port = ntohs(work.ipx_port);
+	work.ipx_port = 0;
+	net.net_e  = work.ipx_net;
+	if (ipx_nullhost(work) && net.long_e == 0) {
+		if (port != 0) {
+			sprintf(mybuf, "*.%xH", port);
+			upHex(mybuf);
+		} else
+			sprintf(mybuf, "*.*");
+		return (mybuf);
+	}
+
+	if (bcmp(ipx_bh, work.ipx_host.c_host, 6) == 0) {
+		host = "any";
+	} else if (bcmp(ipx_nullh, work.ipx_host.c_host, 6) == 0) {
+		host = "*";
+	} else {
+		q = work.ipx_host.c_host;
+		sprintf(chost, "%02x:%02x:%02x:%02x:%02x:%02x",
+			q[0], q[1], q[2], q[3], q[4], q[5]);
+		host = chost;
+	}
+	if (port)
+		sprintf(cport, ".%xH", htons(port));
+	else
+		*cport = 0;
+
+	sprintf(mybuf,"%xH.%s%s", ntohl(net.long_e), host, cport);
+	upHex(mybuf);
+	return(mybuf);
+}
+
+char *
+ipx_phost(sa)
+	struct sockaddr *sa;
+{
+	register struct sockaddr_ipx *sipx = (struct sockaddr_ipx *)sa;
+	struct sockaddr_ipx work;
+	static union ipx_net ipx_zeronet;
+	char *p;
+
+	work = *sipx;
+	work.sipx_addr.ipx_port = 0;
+	work.sipx_addr.ipx_net = ipx_zeronet;
+
+	p = ipx_print((struct sockaddr *)&work);
 	if (strncmp("0H.", p, 3) == 0) p += 3;
 	return(p);
 }

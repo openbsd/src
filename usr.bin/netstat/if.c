@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.7 1996/06/26 05:37:20 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.8 1996/08/16 09:29:32 mickey Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.7 1996/06/26 05:37:20 deraadt Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.8 1996/08/16 09:29:32 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,8 @@ static char *rcsid = "$OpenBSD: if.c,v 1.7 1996/06/26 05:37:20 deraadt Exp $";
 #include <netinet/in_var.h>
 #include <netns/ns.h>
 #include <netns/ns_if.h>
+#include <netipx/ipx.h>
+#include <netipx/ipx_if.h>
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
 #include <arpa/inet.h>
@@ -85,6 +87,7 @@ intpr(interval, ifnetaddr)
 		struct ifaddr ifa;
 		struct in_ifaddr in;
 		struct ns_ifaddr ns;
+		struct ipx_ifaddr ipx;
 		struct iso_ifaddr iso;
 	} ifaddr;
 	u_long ifaddraddr;
@@ -186,6 +189,21 @@ intpr(interval, ifnetaddr)
 						    routename(inm.inm_addr.s_addr));
 						multiaddr = (u_long)inm.inm_list.le_next;
 					}
+				}
+				break;
+			case AF_IPX:
+				{
+				struct sockaddr_ipx *sipx =
+					(struct sockaddr_ipx *)sa;
+				u_long net;
+				char netnum[8];
+
+				*(union ipx_net *) &net = sipx->sipx_addr.ipx_net;
+				sprintf(netnum, "%lxH", ntohl(net));
+				upHex(netnum);
+				printf("ipx:%-8s", netnum);
+				printf("%-17s ",
+				    ipx_phost((struct sockaddr *)sipx));
 				}
 				break;
 			case AF_NS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 1996/06/26 05:37:22 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 1996/08/16 09:29:33 mickey Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.3 1996/06/26 05:37:22 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.4 1996/08/16 09:29:33 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,6 +133,14 @@ struct nlist nl[] = {
 	{ "_mfchash" },
 #define N_VIFTABLE	31
 	{ "_viftable" },
+#define N_IPX		32
+	{ "_ipxcbtable"},
+#define N_IPXSTAT	33
+	{ "_ipxstat"},
+#define N_SPXSTAT	34
+	{ "_spx_istat"},
+#define N_IPXERR	35
+	{ "_ipx_errstat"},
 	"",
 };
 
@@ -154,6 +162,17 @@ struct protox {
 	  icmp_stats,	"icmp" },
 	{ -1,		N_IGMPSTAT,	1,	0,
 	  igmp_stats,	"igmp" },
+	{ -1,		-1,		0,	0,
+	  0,		0 }
+};
+
+struct protox ipxprotox[] = {
+	{ N_IPX,	N_IPXSTAT,	1,	ipxprotopr,
+	  ipx_stats,	"ipx" },
+	{ N_IPX,	N_SPXSTAT,	1,	ipxprotopr,
+	  spx_stats,	"spx" },
+	{ -1,		N_IPXERR,	1,	0,
+	  ipxerr_stats,	"ipx_err" },
 	{ -1,		-1,		0,	0,
 	  0,		0 }
 };
@@ -182,7 +201,7 @@ struct protox isoprotox[] = {
 	  0,		0 }
 };
 
-struct protox *protoprotox[] = { protox, nsprotox, isoprotox, NULL };
+struct protox *protoprotox[] = { protox, ipxprotox, nsprotox, isoprotox, NULL };
 
 static void printproto __P((struct protox *, char *));
 static void usage __P((void));
@@ -219,12 +238,14 @@ main(argc, argv)
 			dflag = 1;
 			break;
 		case 'f':
-			if (strcmp(optarg, "ns") == 0)
-				af = AF_NS;
-			else if (strcmp(optarg, "inet") == 0)
+			if (strcmp(optarg, "inet") == 0)
 				af = AF_INET;
 			else if (strcmp(optarg, "unix") == 0)
 				af = AF_UNIX;
+			else if (strcmp(optarg, "ipx") == 0)
+				af = AF_IPX;
+			else if (strcmp(optarg, "ns") == 0)
+				af = AF_NS;
 			else if (strcmp(optarg, "iso") == 0)
 				af = AF_ISO;
 			else {
@@ -380,6 +401,9 @@ main(argc, argv)
 		}
 		endprotoent();
 	}
+	if (af == AF_IPX || af == AF_UNSPEC)
+		for (tp = ipxprotox; tp->pr_name; tp++)
+			printproto(tp, tp->pr_name);
 	if (af == AF_NS || af == AF_UNSPEC)
 		for (tp = nsprotox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
