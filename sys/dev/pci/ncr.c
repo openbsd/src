@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.15 1996/10/13 20:36:14 downsj Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.16 1996/10/18 15:43:56 niklas Exp $	*/
 /*	$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $	*/
 
 /**************************************************************************
@@ -1298,7 +1298,7 @@ static	void	ncb_profile	(ncb_p np, ccb_p cp);
 static	void	ncr_script_copy_and_bind
 				(struct script * script, ncb_p np);
 static  void    ncr_script_fill (struct script * scr);
-static	int	ncr_scatter	(struct dsb* phys, vm_offset_t vaddr,
+static	int	ncr_scatter	(ncb_p np, struct dsb* phys, vm_offset_t vaddr,
 				 vm_size_t datalen);
 static	void	ncr_setmaxtags	(tcb_p tp, u_long usrtags);
 static	void	ncr_setsync	(ncb_p np, ccb_p cp, u_char sxfer);
@@ -3831,9 +3831,8 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 
 	if (DEBUG_FLAGS & DEBUG_TINY) {
 		PRINT_ADDR(xp);
-		printf ("CMD=%x F=%x A=%x L=%x ", 
-			cmd->opcode, (unsigned)xp->flags, 
-			(unsigned) xp->data, (unsigned) xp->datalen);
+		printf ("CMD=%x F=%p A=%p L=%p ", 
+			cmd->opcode, xp->flags, xp->data, xp->datalen);
 	}
 
 	/*--------------------------------------------
@@ -4060,7 +4059,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	**----------------------------------------------------
 	*/
 
-	segments = ncr_scatter (&cp->phys, (vm_offset_t) xp->data,
+	segments = ncr_scatter (np, &cp->phys, (vm_offset_t) xp->data,
 					(vm_size_t) xp->datalen);
 
 	if (segments < 0) {
@@ -4309,7 +4308,8 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	ncb_profile (np, cp);
 
 	if (DEBUG_FLAGS & DEBUG_TINY)
-		printf ("CCB=%x STAT=%x/%x\n", (unsigned)cp & 0xfff,
+		printf ("CCB=%p STAT=%x/%x\n",
+			(caddr_t)((vm_offset_t)cp & 0xfff),
 			cp->host_status,cp->scsi_status);
 
 	xp = cp->xfer;
@@ -6625,7 +6625,7 @@ static void ncr_opennings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
 */
 
 static	int	ncr_scatter
-	(struct dsb* phys, vm_offset_t vaddr, vm_size_t datalen)
+	(ncb_p np, struct dsb* phys, vm_offset_t vaddr, vm_size_t datalen)
 {
 	u_long	paddr, pnext;
 
