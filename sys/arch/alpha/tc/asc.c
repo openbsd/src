@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.1 2000/07/05 21:50:38 ericj Exp $	*/
+/*	$OpenBSD: asc.c,v 1.2 2001/02/03 19:40:41 art Exp $	*/
 /*	$NetBSD: esp.c,v 1.26 1996/12/05 01:39:40 cgd Exp $	*/
 
 #ifdef __sparc__
@@ -584,12 +584,12 @@ espinit(sc, doreset)
 		sc->sc_state = ESP_CLEANING;
 		if ((ecb = sc->sc_nexus) != NULL) {
 			ecb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout(esp_timeout, ecb);
+			timeout_del(&ecb->xs->stimeout);
 			esp_done(sc, ecb);
 		}
 		while ((ecb = sc->nexus_list.tqh_first) != NULL) {
 			ecb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout(esp_timeout, ecb);
+			timeout_del(&ecb->xs->stimeout);
 			esp_done(sc, ecb);
 		}
 	}
@@ -830,6 +830,7 @@ esp_scsi_cmd(xs)
 	/* Initialize ecb */
 	ecb->xs = xs;
 	ecb->timeout = xs->timeout;
+	timeout_set(&ecb->xs->stimeout, esp_timeout, ecb);
 
 	if (xs->flags & SCSI_RESET) {
 		ecb->flags |= ECB_RESET;
@@ -1918,7 +1919,8 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 
 				/* On our first connection, schedule a timeout. */
 				if ((ecb->xs->flags & SCSI_POLL) == 0)
-					timeout(esp_timeout, ecb, (ecb->timeout * hz) / 1000);
+					timeout_add(&ecb->xs->stimeout,
+						(ecb->timeout * hz) / 1000);
 
 				sc->sc_state = ESP_CONNECTED;
 				break;
@@ -2090,7 +2092,7 @@ reset:
 	return 1;
 
 finish:
-	untimeout(esp_timeout, ecb);
+	timeout_del(&ecb->xs->stimeout);
 	esp_done(sc, ecb);
 	goto out;
 
@@ -2125,8 +2127,7 @@ esp_abort(sc, ecb)
 		 * Reschedule timeout. First, cancel a queued timeout (if any)
 		 * in case someone decides to call esp_abort() from elsewhere.
 		 */
-		untimeout(esp_timeout, ecb);
-		timeout(esp_timeout, ecb, (ecb->timeout * hz) / 1000);
+		timeout_add(&ecb->xs->stimeout, (ecb->timeout * hz) / 1000);
 	} else {
 		esp_dequeue(sc, ecb);
 		TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
