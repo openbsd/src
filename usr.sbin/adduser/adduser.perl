@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.42 2003/05/13 01:23:10 millert Exp $
+#	$OpenBSD: adduser.perl,v 1.43 2003/06/08 21:05:29 millert Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -47,7 +47,7 @@ $SIG{'TERM'} = 'cleanup';
 &config_read(@ARGV);		# read variables from config-file
 &parse_arguments(@ARGV);	# parse arguments
 
-if (!$check_only &&  $#batch < 0) {
+if (!$check_only && $#batch < 0) {
     &hints;
 }
 
@@ -89,7 +89,7 @@ sub variables {
     $group = "/etc/group";
     $pwd_mkdb = "pwd_mkdb -p";	# program for building passwd database
     $encryptionmethod = "blowfish";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.42 2003/05/13 01:23:10 millert Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.43 2003/06/08 21:05:29 millert Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -285,7 +285,7 @@ sub home_partition_valid {
 
 # check for valid passwddb
 sub passwd_check {
-    system(split(/\s+/, "$pwd_mkdb -c $etc_passwd"));
+    system($pwd_mkdb, "-c", $etc_passwd);
     die "\nInvalid $etc_passwd - cannot add any users!\n" if $?;
 }
 
@@ -605,7 +605,7 @@ sub new_users_pwdmkdb {
     local($user);
 
     $user = (split(/:/, $last))[0];
-    system(split(/\s+/, "$pwd_mkdb  -u $user $etc_passwd"));
+    system($pwd_mkdb, "-u", $user, $etc_passwd);
     if ($?) {
 	warn "$last\n";
 	warn "``$pwd_mkdb'' failed\n";
@@ -1085,7 +1085,7 @@ sub home_create {
     }
 
     if ($dotdir eq 'no') {
-	if (!mkdir("$homedir",0755)) {
+	if (!mkdir("$homedir", 0755)) {
 	    warn "mkdir $homedir: $!\n"; return 0;
 	}
 	system 'chown', "$name:$group", $homedir;
