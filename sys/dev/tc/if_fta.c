@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fta.c,v 1.4 1999/11/23 04:49:30 jason Exp $	*/
+/*	$OpenBSD: if_fta.c,v 1.5 1999/11/30 04:00:44 jason Exp $	*/
 /*	$NetBSD: if_fta.c,v 1.7 1996/10/22 21:37:26 cgd Exp $	*/
 
 /*-
@@ -64,62 +64,68 @@
 #include <dev/ic/pdqvar.h>
 #include <dev/ic/pdqreg.h>
 
-static int
-pdq_tc_match(
-    struct device *parent,
-    void *match,
-    void *aux)
+int
+pdq_tc_match(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
 {
-    struct tc_attach_args *ta = (struct tc_attach_args *) aux;
+	struct tc_attach_args *ta = (struct tc_attach_args *) aux;
 
-    if (strncmp("PMAF-F", ta->ta_modname, 6) == 0)
-	return 1;
-
-    return 0;
+	if (strncmp("PMAF-F", ta->ta_modname, 6) == 0)
+		return (1);
+	return (0);
 }
 
-static void
-pdq_tc_attach(
-    struct device * const parent,
-    struct device * const self,
-    void * const aux)
+void
+pdq_tc_attach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
 {
-    pdq_softc_t * const sc = (pdq_softc_t *) self;
-    struct tc_attach_args * const ta = (struct tc_attach_args *) aux;
+	pdq_softc_t * const sc = (pdq_softc_t *) self;
+	struct tc_attach_args * const ta = (struct tc_attach_args *) aux;
 
-    /*
-     * NOTE: sc_bc is an alias for sc_csrtag and sc_membase is an
-     * alias for sc_csrhandle.  sc_iobase is not used in this front-end.
-     */
-    sc->sc_csrtag = ta->ta_memt;
-    bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
-    sc->sc_if.if_flags = 0;
-    sc->sc_if.if_softc = sc;
+	/*
+	 * NOTE: sc_bc is an alias for sc_csrtag and sc_membase is an
+	 * alias for sc_csrhandle.  sc_iobase is not used in this front-end.
+	 */
+	sc->sc_csrtag = ta->ta_memt;
+	bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
+	sc->sc_if.if_flags = 0;
+	sc->sc_if.if_softc = sc;
 
-    if (bus_space_map(sc->sc_csrtag, ta->ta_addr + PDQ_TC_CSR_OFFSET,
+	if (bus_space_map(sc->sc_csrtag, ta->ta_addr + PDQ_TC_CSR_OFFSET,
 		    PDQ_TC_CSR_SPACE, 0, &sc->sc_csrhandle)) {
-        printf("\n%s: can't map card memory!\n", sc->sc_dev.dv_xname);
-	return;
-    }
+		printf("\n%s: can't map card memory!\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
-    sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_csrhandle,
-				sc->sc_if.if_xname, 0,
-				(void *) sc, PDQ_DEFTA);
-    if (sc->sc_pdq == NULL) {
-	printf("%s: initialization failed\n", sc->sc_dev.dv_xname);
-	return;
-    }
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
-    printf("\n");
-    pdq_ifattach(sc, NULL);
+	sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_csrhandle,
+	    sc->sc_if.if_xname, 0, (void *) sc, PDQ_DEFTA);
+	if (sc->sc_pdq == NULL) {
+		printf("%s: initialization failed\n", sc->sc_dev.dv_xname);
+		return;
+	}
+	bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes,
+	    sc->sc_ac.ac_enaddr, 6);
+	printf("\n");
+	pdq_ifattach(sc, NULL);
 
-    tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NET,
-		      (int (*)(void *)) pdq_interrupt, sc->sc_pdq);
+	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NET,
+	    (int (*)(void *)) pdq_interrupt, sc->sc_pdq);
 
-    sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset, sc->sc_pdq);
-    if (sc->sc_ats == NULL)
-	printf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
+	sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset,
+	    sc->sc_pdq);
+	if (sc->sc_ats == NULL)
+		printf("%s: warning: couldn't establish shutdown hook\n",
+		    self->dv_xname);
 }
 
-struct cfattach fta_ca = { sizeof(pdq_softc_t), pdq_tc_match, pdq_tc_attach };
-struct cfdriver fta_cd = { 0, "fta", DV_IFNET };
+struct cfattach fta_ca = {
+	sizeof(pdq_softc_t), pdq_tc_match, pdq_tc_attach
+};
+
+struct cfdriver fta_cd = {
+	0, "fta", DV_IFNET
+};
