@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.27 2001/09/04 23:16:11 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.28 2001/11/20 23:19:44 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.27 2001/09/04 23:16:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.28 2001/11/20 23:19:44 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -136,8 +136,15 @@ Popen(cmd, mode)
 		fd1 = -1;
 	}
 	sigemptyset(&nset);
-	if ((pid = start_command(value("SHELL"), &nset, fd0, fd1,
-						"-c", cmd, NULL)) < 0) {
+	/*
+	 * If cmd contains meta chars wrap it in a shell.
+	 */
+	if (strpbrk(cmd, "$&*(){}[]'\";\\|?<>~`"))
+		pid = start_command(value("SHELL"), &nset, fd0, fd1,
+		    "-c", cmd, NULL);
+	else
+		pid = start_command(cmd, &nset, fd0, fd1, NULL);
+	if (pid < 0) {
 		(void)close(p[READ]);
 		(void)close(p[WRITE]);
 		return(NULL);
