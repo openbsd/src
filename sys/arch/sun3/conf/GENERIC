@@ -184,3 +184,4 @@ pseudo-device	pty	64		# pseudo-terminals
 # for IPv6
 pseudo-device	gif		4
 #pseudo-device	faith		1
+pseudo-device	ksyms	1		# kernel symbols device
