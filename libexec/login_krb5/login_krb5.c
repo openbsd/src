@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.16 2002/05/30 06:09:21 deraadt Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.17 2002/09/06 18:45:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 Hans Insulander <hin@openbsd.org>.
@@ -75,15 +75,15 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 			    "krb5_cc_gen_new");
 			exit(1);
 		}
-		
+
 		ret = krb5_cc_copy_cache(context, ccache, ccache_store);
 		if (ret != 0)
 			krb5_syslog(context, LOG_ERR, ret,
 			    "krb5_cc_copy_cache");
-	
+
 		chown(krb5_cc_get_name(context, ccache_store),
 		    pwd->pw_uid, pwd->pw_gid);
-		
+
 		fprintf(back, BI_SETENV " KRB5CCNAME %s:%s\n",
 		    krb5_cc_get_type(context, ccache_store),
 		    krb5_cc_get_name(context, ccache_store));
@@ -96,14 +96,14 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 			CREDENTIALS c;
 			krb5_creds cred;
 			krb5_cc_cursor cursor;
-			
+
 			ret = krb5_cc_start_seq_get(context, ccache, &cursor);
 			if (ret != 0) {
 				krb5_syslog(context, LOG_ERR, ret,
 				    "start seq");
 				exit(1);
 			}
-			
+
 			ret = krb5_cc_next_cred(context, ccache,
 			    &cursor, &cred);
 			if (ret != 0) {
@@ -111,7 +111,7 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 				    "next cred");
 				exit(1);
 			}
-			
+
 			ret = krb5_cc_end_seq_get(context, ccache,
 			    &cursor);
 			if (ret != 0) {
@@ -119,7 +119,7 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 				    "end seq");
 				exit(1);
 			}
-			
+
 			ret = krb524_convert_creds_kdc_ccache(context, ccache,
 			    &cred, &c);
 			if (ret != 0) {
@@ -137,7 +137,7 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 		}
 #endif
 	}
-	
+
 	/* Need to chown the ticket file */
 #ifdef KRB524
 	if (get_krb4_ticket)

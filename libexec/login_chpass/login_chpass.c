@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.9 2002/06/28 01:14:37 deraadt Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.10 2002/09/06 18:45:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -92,13 +92,10 @@ void	krb_chpass(char *, char *, char **);
 void	yp_chpass(char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
+	char *username, *instance;
 	struct rlimit rl;
-	char *username;
-	char *instance;
 	int c;
 
 	rl.rlim_cur = 0;
@@ -156,8 +153,7 @@ main(argc, argv)
 }
 
 void
-local_chpass(argv)
-	char *argv[];
+local_chpass(char *argv[])
 {
 
 	/* login_lchpass doesn't check instance so don't bother restoring it */
@@ -169,8 +165,7 @@ local_chpass(argv)
 
 #ifdef YP
 void
-yp_chpass(username)
-	char *username;
+yp_chpass(char *username)
 {
 	char *master;
 	int r, rpcport, status;
@@ -268,8 +263,8 @@ yp_chpass(username)
 	exit(0);
 }
 
-void kbintr(signo)
-	int signo;
+void
+kbintr(int signo)
 {
 	char msg[] = "YP passwd database unchanged.\n";
 	struct iovec iv[3];
@@ -289,10 +284,7 @@ void kbintr(signo)
 
 #ifdef KERBEROS
 void
-krb_chpass(username, instance, argv)
-	char *username;
-	char *instance;
-	char *argv[];
+krb_chpass(char *username, char *instance, char *argv[])
 {
 	int rval;
 	char pword[MAX_KPW_LEN];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.4 2002/06/02 01:27:15 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.5 2002/09/06 18:45:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -136,7 +136,6 @@ main(int argc, char **argv)
 	case MODE_LOGIN:
 		password = getpass("Password:");
 		break;
-		
 	case MODE_CHALLENGE:
 		fprintf(back, BI_AUTH "\n");
 		exit(0);

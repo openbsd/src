@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb4.c,v 1.4 2002/05/30 06:09:21 deraadt Exp $	*/
+/*	$OpenBSD: login_krb4.c,v 1.5 2002/09/06 18:45:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -80,7 +80,7 @@ krb4_login(char *username, char *password, char *invokinguser, int new_tickets)
 		chown(tkfile, pwd->pw_uid, pwd->pw_gid);
 
 	if (ret == KSUCCESS &&
-	   krb_kuserok(username, instance, realm, targetuser) == 0) {
+	    krb_kuserok(username, instance, realm, targetuser) == 0) {
 		fprintf(back, BI_AUTH "\n");
 		if (strlen(tkfile) > 0)
 			fprintf(back, BI_SETENV " KRBTKFILE %s\n", tkfile);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.10 2002/06/28 01:14:37 deraadt Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.11 2002/09/06 18:45:07 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -64,9 +64,7 @@ volatile sig_atomic_t resumed;
 struct skey skey;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	FILE *back = NULL;
 	char *class = 0;
@@ -224,16 +222,14 @@ main(argc, argv)
 }
 
 void
-quit(signo)
-	int signo;
+quit(int signo)
 {
 
 	_exit(1);
 }
 
 void
-suspend(signo)
-	int signo;
+suspend(int signo)
 {
 	sigset_t nset;
 	int save_errno = errno;
