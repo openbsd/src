@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.110 2003/08/05 02:04:58 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.111 2003/08/07 19:23:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -108,8 +108,9 @@
 #define	FPEMU_STACKSIZE	(1*NBPG)
 
 	.data
-$trap_tmp_save			/* XXX assumed to be aligned on 2048 */
-	.block	TF_PHYS		/* XXX must be aligned to 64 */
+	.align	64
+$trap_tmp_save
+	.block	TF_PHYS
 
 	.globl	intrcnt, eintrcnt, intrnames, eintrnames
 	.export	intrcnt, data
@@ -746,6 +747,7 @@ $syscall_return
 	 *	and interrupts are disabled.
 	 */
 	ldil	L%$trap_tmp_save, t2
+	ldo	R%$trap_tmp_save(t2), t2
 	/* use ,bc each cache line */
 	ldw  0(t3), r1 ! ldw  4(t3), t1 ! stw r1,  0(t2) ! stw t1,  4(t2)
 	ldw  8(t3), r1 ! ldw 12(t3), t1 ! stw r1,  8(t2) ! stw t1, 12(t2)
@@ -836,6 +838,7 @@ $syscall_return
 $syscall_return_phys
 
 	ldil	L%$trap_tmp_save, t3
+	ldo	R%$trap_tmp_save(t3), t3
 
 	/* finally we can restore the space and offset queues and the ipsw */
 	ldw	TF_IISQH(t3), t1
@@ -1402,6 +1405,7 @@ ENTRY(TLABEL(all),0)
 	mtctl	t3, tr2
 
 	ldil	L%$trap_tmp_save, t3
+	ldo	R%$trap_tmp_save(t3), t3
 	stw	t1, TF_R22(t3)		/* use ,bc */
 	stw	t2, TF_R21(t3)
 
@@ -1558,6 +1562,7 @@ $trapnowvirt
 	 * Copy partially saved state from the store into the frame
 	 */
 	ldil	L%$trap_tmp_save, t2
+	ldo	R%$trap_tmp_save(t2), t2
 	/* use ,bc each cache line */
 	ldw  0(t2), r1 ! ldw  4(t2), t1 ! stw r1,  0(t3) ! stw t1,  4(t3)
 	ldw  8(t2), r1 ! ldw 12(t2), t1 ! stw r1,  8(t3) ! stw t1, 12(t3)
@@ -2796,16 +2801,17 @@ EXIT(switch_trampoline)
  */
 ENTRY(sigcode,0)
 	.call
-	blr	r0, rp
-	bv,n	r0(arg3)
-	nop
-	copy	r3, arg0
+	ble	0(sr0, arg3)
+	copy	r31, rp
+
 	ldil	L%SYSCALLGATE, r1
+	copy	r4, arg0
 	.call
 	ble	4(sr7, r1)
 	ldi	SYS_sigreturn, t1
-	copy	ret0, arg0
+
 	ldil	L%SYSCALLGATE, r1
+	copy	ret0, arg0
 	.call
 	ble	4(sr7, r1)
 	ldi	SYS_exit, t1
