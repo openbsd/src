@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.17 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.18 2003/06/27 22:34:25 deraadt Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: rbootd.c,v 1.17 2003/06/02 23:36:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: rbootd.c,v 1.18 2003/06/27 22:34:25 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -272,7 +272,7 @@ main(int argc, char *argv[])
 
 		if (FD_ISSET(fd, &r)) {
 			RMPCONN rconn;
-			CLIENT *client, *FindClient();
+			CLIENT *client;
 			int doread = 1;
 
 			while (BpfRead(&rconn, doread)) {
