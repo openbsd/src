@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.22 2001/07/07 18:26:15 deraadt Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.23 2001/07/13 18:19:24 csapuntz Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -106,6 +106,7 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl 
 #define ALTF_TCP	0x1000
 #define ALTF_PORT	0x2000
 #define ALTF_NFSV2	0x4000
+#define ALTF_NOAC       0x8000
 
 const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -129,6 +130,7 @@ const struct mntopt mopts[] = {
 	{ "tcp", 0, ALTF_TCP, 1 },
 	{ "port", 0, ALTF_PORT, 1 },
 	{ "nfsv2", 0, ALTF_NFSV2, 1 },
+	{ "noac", 0, ALTF_NOAC, 1 },
 	{ NULL }
 };
 
@@ -351,6 +353,15 @@ main(argc, argv)
 			}
 			if (altflags & ALTF_PORT)
 				port_no = atoi(strstr(optarg, "port=") + 5);
+			if (altflags & ALTF_NOAC) {
+				nfsargsp->flags 
+				    |= (NFSMNT_ACREGMIN | NFSMNT_ACREGMAX |
+					NFSMNT_ACDIRMIN | NFSMNT_ACDIRMAX);
+				nfsargsp->acregmin = 0;
+				nfsargsp->acregmax = 0;
+				nfsargsp->acdirmin = 0;
+				nfsargsp->acdirmax = 0;
+			}
 			altflags = 0;
 			break;
 		case 'P':
