@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.19 1996/10/19 13:26:00 mickey Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.20 1996/11/06 01:29:46 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -169,7 +169,6 @@ main(framep)
 	register int i;
 	int s;
 	register_t rval[2];
-	extern int (*mountroot) __P((void));
 	extern struct pdevinit pdevinit[];
 	extern void roundrobin __P((void *));
 	extern void schedcpu __P((void *));
