@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.13 1997/12/06 21:19:34 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.14 1998/06/25 06:21:34 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.13 1997/12/06 21:19:34 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.14 1998/06/25 06:21:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,6 +89,7 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.13 1997/12/06 21:19:34 deraadt Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "fstat.h"
 
 #define	TEXT	-1
 #define	CDIR	-2
@@ -102,14 +103,6 @@ typedef struct devs {
 	char	*name;
 } DEVS;
 DEVS *devs;
-
-struct  filestat {
-	long		fsid;
-	long		fileid;
-	mode_t		mode;
-	u_int64_t	size;
-	dev_t		rdev;
-};
 
 int 	fsflg,	/* show files on same filesystem as file(s) argument */
 	pflg,	/* show files open by a particular pid */
@@ -143,6 +136,8 @@ kvm_t *kd;
 
 int ufs_filestat __P((struct vnode *, struct filestat *));
 int ext2fs_filestat __P((struct vnode *, struct filestat *));
+int isofs_filestat __P((struct vnode *, struct filestat *));
+int msdos_filestat __P((struct vnode *, struct filestat *));
 int nfs_filestat __P((struct vnode *, struct filestat *));
 void dofiles __P((struct kinfo_proc *));
 void getinetproto __P((int));
@@ -267,7 +262,7 @@ main(argc, argv)
 }
 
 char	*Uname, *Comm;
-int	Pid;
+pid_t	Pid;
 
 #define PREFIX(i) printf("%-8.8s %-10s %5d", Uname, Comm, Pid); \
 	switch(i) { \
@@ -408,6 +403,14 @@ vtrans(vp, i, flag)
 			if (!ext2fs_filestat(&vn, &fst))
 				badtype = "error";
 			break;
+		case VT_ISOFS:
+			if (!isofs_filestat(&vn, &fst))
+				badtype = "error";
+			break;
+		case VT_MSDOSFS:
+			if (!msdos_filestat(&vn, &fst))
+				badtype = "error";
+			break;
 		default: {
 			static char unknown[30];
 			sprintf(badtype = unknown, "?(%x)", vn.v_tag);
@@ -509,6 +512,29 @@ ext2fs_filestat(vp, fsp)
 	fsp->mode = inode.i_e2fs_mode;
 	fsp->size = inode.i_e2fs_size;
 	fsp->rdev = 0;	/* XXX */
+
+	return 1;
+}
+
+int
+msdos_filestat(vp, fsp)
+	struct vnode *vp;
+	struct filestat *fsp;
+{
+#if 0
+	struct inode inode;
+
+	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
+		dprintf(stderr, "can't read inode at %p for pid %d\n",
+			VTOI(vp), Pid);
+		return 0;
+	}
+	fsp->fsid = inode.i_dev & 0xffff;
+	fsp->fileid = (long)inode.i_number;
+	fsp->mode = inode.i_e2fs_mode;
+	fsp->size = inode.i_e2fs_size;
+	fsp->rdev = 0;	/* XXX */
+#endif
 
 	return 1;
 }
