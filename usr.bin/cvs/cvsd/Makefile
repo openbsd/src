@@ -1,12 +1,12 @@
-# $Id: Makefile,v 1.9 2005/02/22 22:33:01 jfb Exp $
+#	$OpenBSD: Makefile,v 1.10 2005/03/10 15:37:08 jfb Exp $
 
 .PATH:	${.CURDIR}/..
 
-PROG=cvsd
-SRCS= cvsd.c buf.c conf.y log.c msg.c repo.c sock.c
+PROG=	cvsd
+SRCS=	cvsd.c buf.c conf.y log.c msg.c repo.c sock.c
 
-BINDIR=/usr/sbin
-MAN=cvsd.8 cvsd.conf.5
+BINDIR=	/usr/sbin
+MAN=	cvsd.8 cvsd.conf.5
 
 CFLAGS+= -Wall -I${.CURDIR}/..
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
