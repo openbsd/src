@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndp.8,v 1.20 2003/09/02 18:56:35 jmc Exp $
+.\"	$OpenBSD: ndp.8,v 1.21 2004/09/15 22:52:00 jmc Exp $
 .\"	$KAME: ndp.8,v 1.28 2002/07/17 08:46:33 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -34,7 +34,7 @@
 .\"
 .Sh NAME
 .Nm ndp
-.Nd control/diagnose IPv6 neighbor discovery protocol
+.Nd control/diagnose IPv6 Neighbor Discovery Protocol (NDP)
 .\"
 .Sh SYNOPSIS
 .Nm ndp
@@ -42,13 +42,13 @@
 .Ar hostname
 .Nm ndp
 .Op Fl nt
-.Fl a | Fl c | Fl p
+.Fl a | c | p
 .Nm ndp
 .Op Fl nt
 .Fl r
 .Nm ndp
 .Op Fl nt
-.Fl H | Fl P | Fl R
+.Fl H | P | R
 .Nm ndp
 .Op Fl nt
 .Fl A Ar wait
@@ -65,12 +65,12 @@
 .Op Ar flags ...
 .Nm ndp
 .Op Fl nt
-.Fl I Op Ar interface | Li delete
+.Fl I Op Ar interface | Ic delete
 .Nm ndp
 .Op Fl nt
 .Fl s Ar nodename etheraddr
-.Op Li temp
-.Op Li proxy
+.Op Ic temp
+.Op Ic proxy
 .\"
 .Sh DESCRIPTION
 The
@@ -78,6 +78,13 @@ The
 command manipulates the address mapping table
 used by the Neighbor Discovery Protocol (NDP).
 .Bl -tag -width Ds
+.It Fl A Ar wait
+Repeat
+.Fl a
+.Pq dump NDP entries
+every
+.Ar wait
+seconds.
 .It Fl a
 Dump the currently existing NDP entries.
 The following information will be printed:
@@ -124,13 +131,6 @@ They are: Router, proxy neighbor advertisement
 The field could be followed by a decimal number,
 which means the number of NS probes the node has sent during the current state.
 .El
-.It Fl A Ar wait
-Repeat
-.Fl a
-.Pq dump NDP entries
-every
-.Ar wait
-seconds.
 .It Fl c
 Erase all the NDP entries.
 .It Fl d
@@ -150,7 +150,7 @@ there is no default router.
 The
 .Ar interface
 will be used as the default.
-.It Fl I Li delete
+.It Fl I Ic delete
 The current default interface will be deleted from the kernel.
 .It Fl i Ar interface Op Ar flags ...
 View ND information for the specified interface.
@@ -171,17 +171,12 @@ before
 .Fl foo
 in this case.
 .\"
-.Pp
-.Bl -tag -width Ds -compact
-.It Xo
-.Ic nud
-.Xc
+.Bl -tag -width Ds
+.It Ic nud
 Turn on or off NUD (Neighbor Unreachability Detection) on the
 interface.
 NUD is usually turned on by default.
-.It Xo
-.Ic accept_rtadv
-.Xc
+.It Ic accept_rtadv
 Specify whether or not to accept Router Advertisement messages
 received on the
 .Ar interface .
@@ -190,6 +185,13 @@ unless the
 .Li net.inet6.ip6.accept_rtadv
 variable is non-0, even if the flag is on.
 This flag is set to 1 by default.
+See
+.Xr sysctl 8
+and
+.Xr sysctl.conf 5
+for further details on how to set the
+.Li net.inet6.ip6.accept_rtadv
+variable.
 .\".It Xo
 .\".Ic prefer_source
 .\".Xc
@@ -204,14 +206,14 @@ This flag is set to 1 by default.
 .El
 .It Fl n
 Do not try to resolve numeric addresses to hostnames.
-.It Fl p
-Show prefix list.
 .It Fl P
 Flush all the entries in the prefix list.
-.It Fl r
-Show default router list.
+.It Fl p
+Show prefix list.
 .It Fl R
 Flush all the entries in the default router list.
+.It Fl r
+Show default router list.
 .It Fl s
 Register a NDP entry for a node.
 The entry will be permanent unless the word
@@ -237,7 +239,11 @@ The
 command exits with 0 on success, and non-zero on errors.
 .\"
 .Sh SEE ALSO
-.Xr arp 8
+.Xr ip6 4 ,
+.Xr sysctl.conf 5 ,
+.Xr arp 8 ,
+.Xr sysctl 8 ,
+.Xr tcpdump 8
 .\"
 .Sh HISTORY
 The
