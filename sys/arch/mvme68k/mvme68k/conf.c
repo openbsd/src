@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 1996/11/11 20:35:01 kstailey Exp $ */
+/*	$OpenBSD: conf.c,v 1.13 1996/12/11 20:15:43 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -139,6 +139,8 @@ cdev_decl(fd);
 cdev_decl(zs);
 #include "cl.h"
 cdev_decl(cl);
+#include "wl.h"
+cdev_decl(wl);
 #include "bugtty.h"
 cdev_decl(bugtty);
 
@@ -208,7 +210,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 27 */
 	cdev_lp_init(NLP,lp),		/* 28: lp */
 	cdev_lp_init(NLPTWO,lptwo),	/* 29: lptwo */
-	cdev_notdef(),			/* 30 */
+	cdev_tty_init(NWL,wl),		/* 30: WG CL-CD2400 serial (ttywX) */
 	cdev_mdev_init(NVMEL,vmel),	/* 31: /dev/vmelX */
 	cdev_mdev_init(NVMES,vmes),	/* 32: /dev/vmesX */
 	cdev_lkm_dummy(),		/* 33 */
