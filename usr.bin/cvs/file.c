@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.55 2005/03/05 03:00:27 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.56 2005/03/05 17:19:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -586,8 +586,7 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 		}
 	}
 
-	if (!(flags & CF_RECURSE) ||
-	    ((flags & CF_KNOWN) && (cf->cf_cvstat == CVS_FST_UNKNOWN)))
+	if ((flags & CF_KNOWN) && (cf->cf_cvstat == CVS_FST_UNKNOWN))
 		return (0);
 
 	fd = open(fpath, O_RDONLY);
@@ -627,6 +626,13 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 
 			if ((flags & CF_NOSYMS) && (ent->d_type == DT_LNK))
 				continue;
+
+			if (!(flags & CF_RECURSE) && (ent->d_type == DT_DIR)) {
+				if (cdp->cd_ent != NULL)
+					(void)cvs_ent_remove(cdp->cd_ent,
+					    ent->d_name);
+				continue;
+			}
 
 			snprintf(pbuf, sizeof(pbuf), "%s/%s", fpath,
 			    ent->d_name);
