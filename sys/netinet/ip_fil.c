@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.13 1997/04/18 06:10:08 niklas Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.14 1997/06/23 19:03:48 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "Id: ip_fil.c,v 2.0.1.5 1997/01/29 13:41:45 darrenr Exp ";
+static char    rcsid[] = "$DRId: ip_fil.c,v 2.0.1.8 1997/03/20 15:51:56 darrenr Exp $";
 #endif
 
 #include <sys/param.h>
@@ -412,15 +412,12 @@ frrequest(req, data, set)
 {
 	register frentry_t *fp, *f, **fprev;
 	register frentry_t **ftail;
-	frentry_t fr;
+	frentry_t frd;
 	frdest_t *fdp;
-	struct frentry frd;
 	int error = 0, in;
 
-	fp = &fr;
+	fp = &frd;
 	IRCOPY(data, (caddr_t)fp, sizeof(*fp));
-
-	bzero((char *)frcache, sizeof(frcache[0]) * 2);
 
 	in = (fp->fr_flags & FR_INQUE) ? 0 : 1;
 	if (fp->fr_flags & FR_ACCOUNT) {
@@ -430,8 +427,8 @@ frrequest(req, data, set)
 	else
 		return ESRCH;
 
-	IRCOPY((char *)fp, (char *)&frd, sizeof(frd));
-	fp = &frd;
+	bzero((char *)frcache, sizeof(frcache[0]) * 2);
+
 	if (*fp->fr_ifname) {
 		fp->fr_ifa = GETUNIT(fp->fr_ifname);
 		if (!fp->fr_ifa)
@@ -755,7 +752,11 @@ send_reset(ti)
 
 
 #ifndef	IPFILTER_LKM
+# if	BSD < 199306
+int
+# else
 void
+# endif
 iplinit()
 {
 /*	(void) ipl_enable();  must explicitly enable with ipf -E */

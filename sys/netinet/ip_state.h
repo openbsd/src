@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_state.h,v 1.4 1997/02/11 22:23:30 kstailey Exp $	*/
+/*	$OpenBSD: ip_state.h,v 1.5 1997/06/23 19:03:51 kstailey Exp $	*/
 /*
  * (C)opyright 1995 by Darren Reed.
  *
@@ -7,7 +7,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.0.1.1 1997/01/09 15:14:43 darrenr Exp
+ * $DRId: ip_state.h,v 2.0.1.2 1997/03/20 10:20:53 darrenr Exp $
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -38,7 +38,7 @@ typedef	struct tcpstate {
 
 typedef struct ipstate {
 	struct	ipstate	*is_next;
-	int	is_age;
+	u_long	is_age;
 	u_int	is_pass;
 	struct	in_addr	is_src;
 	struct	in_addr	is_dst;
@@ -82,7 +82,7 @@ extern ips_stat_t *fr_statetstats __P((void));
 extern int fr_addstate __P((ip_t *, fr_info_t *, u_int));
 extern int fr_checkstate __P((ip_t *, fr_info_t *));
 extern void fr_timeoutstate __P((void));
-extern void set_tcp_age __P((int *, u_char *, ip_t *, fr_info_t *, int));
+extern void set_tcp_age __P((long *, u_char *, ip_t *, fr_info_t *, int));
 # ifdef	_KERNEL
 extern void fr_stateunload __P((void));
 # endif

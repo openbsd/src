@@ -1,4 +1,4 @@
-/*	$OpenBSD: fil.c,v 1.9 1997/04/03 15:46:36 kstailey Exp $	*/
+/*	$OpenBSD: fil.c,v 1.10 1997/06/23 19:03:47 kstailey Exp $	*/
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -9,7 +9,7 @@
 #if 0
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "Id: fil.c,v 2.0.1.3 1997/01/29 13:38:54 darrenr Exp";
+static	char	rcsid[] = "$DRId: fil.c,v 2.0.1.10 1997/04/13 22:33:07 darrenr Exp $";
 #endif
 #endif
 
@@ -103,10 +103,19 @@ extern	int	ipllog __P((u_int, ip_t *, register fr_info_t *,
 # endif
 #endif
 
+#ifndef	IPF_LOGGING
+#define	IPF_LOGGING	0
+#endif
+#ifdef	IPF_DEFAULT_PASS
+#define	IPF_NOMATCH	(IPF_DEFAULT_PASS|FR_NOMATCH)
+#else
+#define	IPF_NOMATCH	(FR_PASS|FR_NOMATCH)
+#endif
+
 struct	filterstats frstats[2] = {{0,0,0,0,0},{0,0,0,0,0}};
 struct	frentry	*ipfilter[2][2] = { { NULL, NULL }, { NULL, NULL } },
 		*ipacct[2][2] = { { NULL, NULL }, { NULL, NULL } };
-int	fr_flags = 0, fr_active = 0;
+int	fr_flags = IPF_LOGGING, fr_active = 0;
 
 fr_info_t	frcache[2];
 
@@ -446,8 +455,8 @@ fr_scanlist(pass, ip, fin, m)
 			if (portcmp) {
 				if (!fr_tcpudpchk(fr, fin))
 					continue;
- 			} else if (fr->fr_dcmp || fr->fr_scmp || fr->fr_tcpf ||
- 				   fr->fr_tcpfm)
+			} else if (fr->fr_dcmp || fr->fr_scmp || fr->fr_tcpf ||
+				   fr->fr_tcpfm)
 				continue;
 		} else if (fi->fi_p == IPPROTO_ICMP) {
 			if (!off && (fin->fin_dlen > 1)) {
@@ -586,16 +595,12 @@ fr_check(ip, hlen, ifp, out
 			frstats[out].fr_chit++;
 			pass = fin->fin_fr->fr_flags;
 		} else {
-			pass = FR_NOMATCH;
+			pass = IPF_NOMATCH;
 			if ((fin->fin_fr = ipfilter[out][fr_active]))
-				pass = FR_SCANLIST(FR_NOMATCH, ip, fin, m);
+				pass = FR_SCANLIST(IPF_NOMATCH, ip, fin, m);
 			bcopy((char *)fin, (char *)fc, FI_CSIZE);
-			if (pass & FR_NOMATCH) {
+			if (pass & FR_NOMATCH)
 				frstats[out].fr_nom++;
-#ifdef	NOMATCH
-				pass |= NOMATCH;
-#endif
-			}
 		}
 		fr = fin->fin_fr;
 
@@ -616,7 +621,7 @@ fr_check(ip, hlen, ifp, out
 		}
 	}
 
-	if (fr && fr->fr_func)
+	if (fr && fr->fr_func && !(pass & FR_CALLNOW))
 		pass = (*fr->fr_func)(pass, ip, fin);
 
 	if (out) {
@@ -657,6 +662,14 @@ logit:
 	}
 #endif /* IPFILTER_LOG */
 
+#ifdef	_KERNEL
+	if (fr && (pass & FR_DUP))
+# if SOLARIS
+		mc = dupmsg(m);
+# else
+		mc = m_copy(m, 0, M_COPYALL);
+# endif
+#endif
 	if (pass & FR_PASS)
 		frstats[out].fr_pass++;
 	else if (pass & FR_BLOCK) {
@@ -664,39 +677,43 @@ logit:
 		/*
 		 * Should we return an ICMP packet to indicate error
 		 * status passing through the packet filter ?
+		 * WARNING: ICMP error packets AND TCP RST packets should
+		 * ONLY be sent in repsonse to incoming packets.  Sending them
+		 * in response to outbound packets can result in a panic on
+		 * some operating systems.
 		 */
+		if (!out) {
 #ifdef	_KERNEL
-		if (pass & FR_RETICMP) {
+			if (pass & FR_RETICMP) {
 # if SOLARIS
-			ICMP_ERROR(q, ip, ICMP_UNREACH, fin->fin_icode,
-				   qif, ip->ip_src);
+				ICMP_ERROR(q, ip, ICMP_UNREACH, fin->fin_icode,
+					   qif, ip->ip_src);
 # else
-			ICMP_ERROR(m, ip, ICMP_UNREACH, fin->fin_icode,
-				   ifp, ip->ip_src);
-			m = NULL;	/* freed by icmp_error() */
+				ICMP_ERROR(m, ip, ICMP_UNREACH, fin->fin_icode,
+					   ifp, ip->ip_src);
+				m = *mp = NULL;	/* freed by icmp_error() */
 # endif
 
-			frstats[0].fr_ret++;
-		} else if ((pass & FR_RETRST) &&
-			   !(fin->fin_fi.fi_fl & FI_SHORT)) {
-			if (SEND_RESET(ip, qif, q) == 0)
-				frstats[1].fr_ret++;
-		}
+				frstats[0].fr_ret++;
+			} else if ((pass & FR_RETRST) &&
+				   !(fin->fin_fi.fi_fl & FI_SHORT)) {
+				if (SEND_RESET(ip, qif, q) == 0)
+					frstats[1].fr_ret++;
+			}
 #else
-		if (pass & FR_RETICMP) {
-			verbose("- ICMP unreachable sent\n");
-			frstats[0].fr_ret++;
-		} else if ((pass & FR_RETRST) &&
-			   !(fin->fin_fi.fi_fl & FI_SHORT)) {
-			verbose("- TCP RST sent\n");
-			frstats[1].fr_ret++;
-		}
+			if (pass & FR_RETICMP) {
+				verbose("- ICMP unreachable sent\n");
+				frstats[0].fr_ret++;
+			} else if ((pass & FR_RETRST) &&
+				   !(fin->fin_fi.fi_fl & FI_SHORT)) {
+				verbose("- TCP RST sent\n");
+				frstats[1].fr_ret++;
+			}
 #endif
+		}
 	}
 #ifdef	_KERNEL
 # if	!SOLARIS
-	if (pass & FR_DUP)
-		mc = m_copy(m, 0, M_COPYALL);
 	if (fr) {
 		frdest_t *fdp = &fr->fr_tif;
 
@@ -704,7 +721,6 @@ logit:
 		    (fdp->fd_ifp && fdp->fd_ifp != (struct ifnet *)-1)) {
 			ipfr_fastroute(m, fin, fdp);
 			m = *mp = NULL;
-			pass = 0;
 		}
 		if (mc)
 			ipfr_fastroute(mc, fin, &fr->fr_dif);
@@ -713,8 +729,6 @@ logit:
 		m_freem(m);
 	return (pass & FR_PASS) ? 0 : -1;
 # else
-	if (pass & FR_DUP)
-		mc = dupmsg(m);
 	if (fr) {
 		frdest_t *fdp = &fr->fr_tif;
 

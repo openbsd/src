@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_nat.h,v 1.6 1997/04/18 06:10:07 niklas Exp $	*/
+/*	$OpenBSD: ip_nat.h,v 1.7 1997/06/23 19:03:50 kstailey Exp $	*/
 /*
  * (C)opyright 1995 by Darren Reed.
  *
@@ -7,7 +7,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.0.1.7 1997/01/30 12:39:41 darrenr Exp
+ * $DRId: ip_nat.h,v 2.0.1.9 1997/03/20 10:20:50 darrenr Exp $
  */
 
 #ifndef	__IP_NAT_H_
@@ -41,7 +41,8 @@
 #define	NAT_SIZE	367
 
 typedef	struct	nat	{
-	int	nat_age;
+	u_long	nat_age;
+	int	nat_flags;
 	u_long	nat_sumd;
 	u_long	nat_ipsumd;
 	struct	in_addr	nat_inip;
@@ -88,7 +89,7 @@ typedef	struct	ipnat	{
 #define	NAT_REDIRECT	1
 
 #define	IPN_CMPSIZ	(sizeof(struct in_addr) * 4 + sizeof(u_short) * 3 + \
-			 sizeof(int))
+			 sizeof(int) + IFNAMSIZ)
 
 typedef	struct	natlookup {
 	struct	in_addr	nl_inip;

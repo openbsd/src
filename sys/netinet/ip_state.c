@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_state.c,v 1.8 1997/06/09 15:50:57 kstailey Exp $	*/
+/*	$OpenBSD: ip_state.c,v 1.9 1997/06/23 19:03:51 kstailey Exp $	*/
 /*
  * (C)opyright 1995 by Darren Reed.
  *
@@ -9,7 +9,7 @@
 #if 0
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "Id: ip_state.c,v 2.0.1.2 1997/01/09 15:22:45 darrenr Exp ";
+static	char	rcsid[] = "$DRId: ip_state.c,v 2.0.1.5 1997/04/13 22:29:18 darrenr Exp $";
 #endif
 #endif
 
@@ -58,7 +58,6 @@ static	char	rcsid[] = "Id: ip_state.c,v 2.0.1.2 1997/01/09 15:22:45 darrenr Exp 
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
 
-void set_tcp_age __P((int *, u_char *, ip_t *, fr_info_t *, int));
 #ifndef _KERNEL
 int fr_tcpstate __P((register ipstate_t *, fr_info_t *, ip_t *, tcphdr_t *,
 		     u_short, ipstate_t **));
@@ -246,10 +245,9 @@ fr_tcpstate(is, fin, ip, tcp, sport
 	 */
 	seq = ntohl(tcp->th_seq);
 	ack = ntohl(tcp->th_ack);
-
 	source = (sport == is->is_sport);
 
-	if (!(tcp->th_flags & TH_ACK))	/* Pretend an ack was sent */
+	if (!(tcp->th_flags & TH_ACK))  /* Pretend an ack was sent */
 		ack = source ? is->is_ack : is->is_seq;
 
 	if (source) {
@@ -321,7 +319,7 @@ fr_checkstate(ip, fin)
 	register u_char pr;
 	struct icmp *ic;
 	tcphdr_t *tcp;
-	u_int hv, hlen;
+	u_int hv, hlen, pass;
 
 	if ((ip->ip_off & 0x1fff) || (fin->fin_fi.fi_fl & FI_SHORT))
 		return 0;
@@ -357,8 +355,9 @@ fr_checkstate(ip, fin)
 					continue;
 				is->is_age = fr_icmptimeout;
 				ips_stats.iss_hits++;
+				pass = is->is_pass;
 				MUTEX_EXIT(&ipf_state);
-				return is->is_pass;
+				return pass;
 			}
 		MUTEX_EXIT(&ipf_state);
 		break;
@@ -379,19 +378,17 @@ fr_checkstate(ip, fin)
 						, NULL
 #endif
 						)) {
+					pass = is->is_pass;
 #ifdef	_KERNEL
 					MUTEX_EXIT(&ipf_state);
-					return is->is_pass;
 #else
-					int pass = is->is_pass;
-
 					if (tcp->th_flags & TCP_CLOSE) {
 						*isp = is->is_next;
 						isp = &ips_table[hv];
 						KFREE(is);
 					}
-					return pass;
 #endif
+					return pass;
 				}
 		}
 		MUTEX_EXIT(&ipf_state);
@@ -414,8 +411,9 @@ fr_checkstate(ip, fin)
 			    IPPAIR(src, dst, is->is_src, is->is_dst)) {
 				ips_stats.iss_hits++;
 				is->is_age = fr_udptimeout;
+				pass = is->is_pass;
 				MUTEX_EXIT(&ipf_state);
-				return is->is_pass;
+				return pass;
 			}
 		MUTEX_EXIT(&ipf_state);
 		break;
@@ -436,13 +434,16 @@ fr_stateunload()
 {
 	register int i;
 	register ipstate_t *is, **isp;
+	int s;
 
 	MUTEX_ENTER(&ipf_state);
+	SPLNET(s);
 	for (i = 0; i < IPSTATE_SIZE; i++)
 		for (isp = &ips_table[i]; (is = *isp); ) {
 			*isp = is->is_next;
 			KFREE(is);
 		}
+	SPLX(s);
 	MUTEX_EXIT(&ipf_state);
 }
 
@@ -456,8 +457,10 @@ fr_timeoutstate()
 {
 	register int i;
 	register ipstate_t *is, **isp;
+	int s;
 
 	MUTEX_ENTER(&ipf_state);
+	SPLNET(s);
 	for (i = 0; i < IPSTATE_SIZE; i++)
 		for (isp = &ips_table[i]; (is = *isp); )
 			if (is->is_age && !--is->is_age) {
@@ -470,6 +473,7 @@ fr_timeoutstate()
 				ips_num--;
 			} else
 				isp = &is->is_next;
+	SPLX(s);
 	MUTEX_EXIT(&ipf_state);
 }
 
@@ -480,7 +484,7 @@ fr_timeoutstate()
  */
 void
 set_tcp_age(age, state, ip, fin, dir)
-	int *age;
+	long *age;
 	u_char *state;
 	ip_t *ip;
 	fr_info_t *fin;

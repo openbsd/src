@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_nat.c,v 1.11 1997/04/18 06:10:07 niklas Exp $	*/
+/*	$OpenBSD: ip_nat.c,v 1.12 1997/06/23 19:03:49 kstailey Exp $	*/
 /*
  * (C)opyright 1995-1996 by Darren Reed.
  *
@@ -12,7 +12,7 @@
 #if 0
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "Id: ip_nat.c,v 2.0.1.10 1997/02/08 06:38:49 darrenr Exp";
+static	char	rcsid[] = "$DRId: ip_nat.c,v 2.0.1.14 1997/04/22 12:47:39 darrenr Exp $";
 #endif
 #endif
 
@@ -170,15 +170,18 @@ nat_ioctl(data, cmd, mode)
 {
 	register ipnat_t *nat, *n = NULL, **np = NULL;
 	ipnat_t natd;
-	int error = 0, ret;
+	int error = 0, ret, s;
 
 	/*
 	 * For add/delete, look to see if the NAT entry is already present
 	 */
 	MUTEX_ENTER(&ipf_nat);
+	SPLNET(s);
 	if ((cmd == SIOCADNAT) || (cmd == SIOCRMNAT)) {
 		IRCOPY(data, (char *)&natd, sizeof(natd));
 		nat = &natd;
+		nat->in_inip &= nat->in_inmsk;
+		nat->in_outip &= nat->in_outmsk;
 		for (np = &nat_list; (n = *np); np = &n->in_next)
 			if (!bcmp((char *)&nat->in_flags, (char *)&n->in_flags,
 					IPN_CMPSIZ))
@@ -200,7 +203,7 @@ nat_ioctl(data, cmd, mode)
 			error = ENOMEM;
 			break;
 		}
-		IRCOPY((char *)data, (char *)n, sizeof(*n));
+		bcopy((char *)nat, (char *)n, sizeof(*n));
 		n->in_ifp = (void *)GETUNIT(n->in_ifname);
 		n->in_next = *np;
 		n->in_use = 0;
@@ -275,6 +278,7 @@ nat_ioctl(data, cmd, mode)
 		IWCOPY((caddr_t)&ret, data, sizeof(ret));
 		break;
 	}
+	SPLX(s);
 	MUTEX_EXIT(&ipf_nat);
 	return error;
 }
@@ -409,6 +413,7 @@ nat_new(np, ip, fin, flags, direction)
 		return NULL;
 
 	bzero((char *)nat, sizeof(*nat));
+	nat->nat_flags = flags;
 
 	/*
 	 * Search the current table for a match.
@@ -574,8 +579,9 @@ nat_inlookup(flags, src, sport, mapdst, mapdport)
 	for (; nat; nat = nat->nat_hnext[1])
 		if (nat->nat_oip.s_addr == src.s_addr &&
 		    nat->nat_outip.s_addr == mapdst.s_addr &&
-		    (!flags || (nat->nat_oport == sport &&
-		     nat->nat_outport == mapdport)))
+		    flags == nat->nat_flags && (!flags ||
+		     (nat->nat_oport == sport &&
+		      nat->nat_outport == mapdport)))
 			return nat;
 	return NULL;
 }
@@ -601,8 +607,8 @@ nat_outlookup(flags, src, sport, dst, dport)
 	for (; nat; nat = nat->nat_hnext[0])
 		if (nat->nat_inip.s_addr == src.s_addr &&
 		    nat->nat_oip.s_addr == dst.s_addr &&
-		    (!flags || (nat->nat_inport == sport &&
-		     nat->nat_oport == dport)))
+		    (!flags || flags & nat->nat_flags) && (!flags ||
+		     (nat->nat_inport == sport && nat->nat_oport == dport)))
 			return nat;
 	return NULL;
 }
@@ -627,8 +633,9 @@ nat_lookupmapip(flags, mapsrc, mapsport, dst, dport)
 	for (; nat; nat = nat->nat_hnext[0])
 		if (nat->nat_outip.s_addr == mapsrc.s_addr &&
 		    nat->nat_oip.s_addr == dst.s_addr &&
-		    (!flags || (nat->nat_outport == mapsport &&
-		     nat->nat_oport == dport)))
+		    flags == nat->nat_flags && (!flags ||
+		     (nat->nat_outport == mapsport &&
+		      nat->nat_oport == dport)))
 			return nat;
 	return NULL;
 }
@@ -884,12 +891,13 @@ ip_natin(ip, hlen, fin)
 void
 ip_natunload()
 {
+	int s;
 
 	MUTEX_ENTER(&ipf_nat);
-
+	SPLNET(s);
 	(void) clear_natlist();
 	(void) flush_nattable();
-
+	SPLX(s)
 	MUTEX_EXIT(&ipf_nat);
 }
 

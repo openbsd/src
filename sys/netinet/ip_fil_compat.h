@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil_compat.h,v 1.5 1997/02/13 05:54:16 kstailey Exp $	*/
+/*	$OpenBSD: ip_fil_compat.h,v 1.6 1997/06/23 19:03:49 kstailey Exp $	*/
 /*
  * (C)opyright 1993, 1994, 1995 by Darren Reed.
  *
@@ -7,15 +7,11 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.0.1.4 1997/02/04 14:24:25 darrenr Exp
+ * $DRId: ip_compat.h,v 2.0.1.4 1997/02/04 14:24:25 darrenr Exp $
  */
 
 #ifndef	__IP_FIL_COMPAT_H_
 #define	__IP_FIL_COMPAT_H__
-
-#ifdef _KERNEL			/* XXX */
-#define IPFILTER_LOG
-#endif /* _KERNEL */
 
 #ifndef	SOLARIS
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
@@ -188,7 +184,7 @@ extern	vm_map_t	kmem_map;
 #  define	UIOMOVE(a,b,c,d)	uiomove(a,b,d)
 #  define	SLEEP(id, n)	tsleep((id), PPAUSE|PCATCH, n, 0)
 # endif /* BSD */
-# if (defined(NetBSD1_0) && (NetBSD1_0 > 1))
+# if defined(NetBSD1_0) && (NetBSD1_0 > 1)
 #  define	SPLNET(x)	x = splsoftnet()
 # else
 #  if !SOLARIS
