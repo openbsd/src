@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.51 2001/04/30 13:54:51 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.52 2001/05/11 06:46:40 angelos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -410,7 +410,18 @@ dovmstat(interval, reps)
 		/* Read new disk statistics */
 		dkreadstats();
 #ifdef UVM
-		kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
+		if (nlist == NULL && memf == NULL) {
+			kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
+		} else {
+			size = sizeof(uvmexp);
+			mib[0] = CTL_VM;
+			mib[1] = VM_UVMEXP;
+			if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+				printf("Can't get kerninfo: %s\n",
+				       strerror(errno));
+				bzero(&uvmexp, sizeof(uvmexp));
+			}
+		}
 #else
 		kread(X_SUM, &sum, sizeof(sum));
 #endif
@@ -514,11 +525,24 @@ void
 dotimes()
 {
 	u_int pgintime, rectime;
+	int mib[2];
+	size_t size;
 
 	pgintime = 0;
 	rectime = 0;
 #ifdef UVM
-	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
+	if (nlist == NULL && memf == NULL) {
+		kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
+	} else {
+		size = sizeof(uvmexp);
+		mib[0] = CTL_VM;
+		mib[1] = VM_UVMEXP;
+		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+			printf("Can't get kerninfo: %s\n", strerror(errno));
+			bzero(&uvmexp, sizeof(uvmexp));
+		}
+	}
+
 	(void)printf("%u reactivates, %u total time (usec)\n",
 	    uvmexp.pdreact, rectime);
 	(void)printf("average: %u usec / reclaim\n", rectime / uvmexp.pdreact);
@@ -559,10 +583,22 @@ dosum()
 {
 	struct nchstats nchstats;
 	long nchtotal;
-	int nselcoll;
+	size_t size;
+	int mib[2], nselcoll;
 
 #ifdef UVM
-	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
+	if (nlist == NULL && memf == NULL) {
+		kread(X_UVMEXP, &nchstats, sizeof(uvmexp));
+	} else {
+		size = sizeof(uvmexp);
+		mib[0] = CTL_VM;
+		mib[1] = VM_UVMEXP;
+		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+			printf("Can't get kerninfo: %s\n", strerror(errno));
+			bzero(&uvmexp, sizeof(uvmexp));
+		}
+	}
+
 	/* vm_page constants */
 	(void)printf("%11u bytes per page\n", uvmexp.pagesize);
 
@@ -641,13 +677,24 @@ dosum()
 	(void)printf("%11u bytes per page\n", sum.v_page_size);
 #endif
 
-	kread(X_NCHSTATS, &nchstats, sizeof(nchstats));
+	if (nlist == NULL && memf == NULL) {
+		kread(X_NCHSTATS, &nchstats, sizeof(nchstats));
+	} else {
+		size = sizeof(nchstats);
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_NCHSTATS;
+		if (sysctl(mib, 2, &nchstats, &size, NULL, 0) < 0) {
+		    	printf("Can't get kerninfo: %s\n", strerror(errno));
+			bzero(&nchstats, sizeof(nchstats));
+		}
+	}
+
 	nchtotal = nchstats.ncs_goodhits + nchstats.ncs_neghits +
 	    nchstats.ncs_badhits + nchstats.ncs_falsehits +
 	    nchstats.ncs_miss + nchstats.ncs_long;
 	(void)printf("%11ld total name lookups\n", nchtotal);
-	(void)printf(
-	    "%11s cache hits (%d%% pos + %d%% neg) system %d%% per-directory\n",
+	(void)printf("%11s cache hits (%d%% pos + %d%% neg) system %d%% "
+	    "per-directory\n",
 	    "", PCT(nchstats.ncs_goodhits, nchtotal),
 	    PCT(nchstats.ncs_neghits, nchtotal),
 	    PCT(nchstats.ncs_pass2, nchtotal));
@@ -655,7 +702,18 @@ dosum()
 	    PCT(nchstats.ncs_badhits, nchtotal),
 	    PCT(nchstats.ncs_falsehits, nchtotal),
 	    PCT(nchstats.ncs_long, nchtotal));
-	kread(X_NSELCOLL, &nselcoll, sizeof(nselcoll));
+
+	if (nlist == NULL && memf == NULL) {
+		kread(X_NSELCOLL, &nselcoll, sizeof(nselcoll));
+	} else {
+		size = sizeof(nselcoll);
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_NSELCOLL;
+		if (sysctl(mib, 2, &nselcoll, &size, NULL, 0) < 0) {
+		    	printf("Can't get kerninfo: %s\n", strerror(errno));
+			nselcoll = 0;
+		}
+	}
 	(void)printf("%11d select collisions\n", nselcoll);
 }
 
@@ -663,8 +721,21 @@ void
 doforkst()
 {
 	struct forkstat fks;
+	size_t size;
+	int mib[2];
 
-	kread(X_FORKSTAT, &fks, sizeof(struct forkstat));
+	if (nlist == NULL && memf == NULL) {
+		kread(X_FORKSTAT, &fks, sizeof(struct forkstat));
+	} else {
+		size = sizeof(struct forkstat);
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_FORKSTAT;
+		if (sysctl(mib, 2, &fks, &size, NULL, 0) < 0) {
+		    	printf("Can't get kerninfo: %s\n", strerror(errno));
+			bzero(&fks, sizeof(struct forkstat));
+		}
+	}
+
 	(void)printf("%d forks, %d pages, average %.2f\n",
 	    fks.cntfork, fks.sizfork, (double)fks.sizfork / fks.cntfork);
 	(void)printf("%d vforks, %d pages, average %.2f\n",
@@ -924,7 +995,26 @@ domem()
 		return;
 	}
 
-	kread(X_KMEMSTAT, kmemstats, sizeof(kmemstats));
+	if (memf == NULL && nlistf == NULL) {
+		bzero(kmemstats, sizeof(kmemstats));
+		for (i = 0; i < M_LAST; i++) {
+	        	mib[0] = CTL_KERN;
+			mib[1] = KERN_MALLOCSTATS;
+			mib[2] = KERN_MALLOC_KMEMSTATS;
+			mib[3] = i;
+			siz = sizeof(struct kmemstats);
+
+			/* 
+			 * Skip errors -- these are presumed to be unallocated
+			 * entries.
+			 */
+			if (sysctl(mib, 4, &kmemstats[i], &siz, NULL, 0) < 0)
+				continue;
+		}
+	} else {
+		kread(X_KMEMSTAT, kmemstats, sizeof(kmemstats));
+	}
+
 	(void)printf("\nMemory usage type by bucket size\n");
 	(void)printf("    Size  Type(s)\n");
 	kp = &buckets[MINBUCKET];
