@@ -1,7 +1,7 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.14 1999/04/01 00:37:50 niklas Exp $
-.\" $EOM: isakmpd.conf.5,v 1.16 1999/04/01 00:37:37 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.15 1999/04/27 20:55:52 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.18 1999/04/16 21:35:34 niklas Exp $
 .\"
-.\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+.\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -155,7 +155,9 @@ The domain of interpretation as given by the RFCs.  Normally
 .Li IPSEC .
 .It Em EXCHANGE_TYPE
 The exchange type as given by the RFCs.  For main mode this is
-.Li ID_PROT .
+.Li ID_PROT
+and for aggressive mode it is
+.Li AGGRESSIVE .
 .It Em Transforms
 A list of proposed transforms to use for protecting the
 ISAKMP traffic.  These are actually names for sections
