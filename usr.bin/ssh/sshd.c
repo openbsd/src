@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.213 2001/12/05 03:50:01 itojun Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.214 2001/12/05 10:06:13 deraadt Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -401,7 +401,7 @@ sshd_exchange_identification(int sock_in, int sock_out)
 	}
 
 	mismatch = 0;
-	switch(remote_major) {
+	switch (remote_major) {
 	case 1:
 		if (remote_minor == 99) {
 			if (options.protocol & SSH_PROTO_2)
@@ -478,7 +478,7 @@ list_hostkey_types(void)
 		Key *key = sensitive_data.host_keys[i];
 		if (key == NULL)
 			continue;
-		switch(key->type) {
+		switch (key->type) {
 		case KEY_RSA:
 		case KEY_DSA:
 			strlcat(buf, key_ssh_name(key), sizeof buf);
@@ -715,7 +715,7 @@ main(int ac, char **av)
 			sensitive_data.host_keys[i] = NULL;
 			continue;
 		}
-		switch(key->type){
+		switch (key->type) {
 		case KEY_RSA1:
 			sensitive_data.ssh1_host_key = key;
 			sensitive_data.have_ssh1_key = 1;
