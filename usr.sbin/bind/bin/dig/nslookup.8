@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nslookup.8,v 1.4 2003/06/02 23:36:52 millert Exp $
+.\"	$OpenBSD: nslookup.8,v 1.5 2003/07/02 08:19:58 jmc Exp $
 .\"
 .\" ++Copyright++ 1985, 1989
 .\" -
@@ -53,7 +53,7 @@
 .\"
 .Dd June 24, 1990
 .Dt NSLOOKUP 8
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm nslookup
 .Nd query Internet name servers interactively
@@ -111,8 +111,8 @@ or type
 The command line length must be less than 256 characters.
 To treat a built-in command as a host name,
 precede it with an escape character
-.Pq .&\\ .
-.Sy N.B.:  An unrecognized command will be interpreted as a host name.
+.Pq Sq \e .
+.Sy "N.B.:  An unrecognized command will be interpreted as a host name."
 .Bl -tag -width "lserver"
 .It Ar host Op Ar server
 Look up information for
@@ -387,6 +387,11 @@ abbreviation =
 .Oo Ic no Oc Ns Ic v )
 .El
 .El
+.Sh FILES
+.Bl -tag -width "/etc/resolv.confXXX" -compact
+.It Pa /etc/resolv.conf
+initial domain name and name server addresses
+.El
 .Sh DIAGNOSTICS
 If the lookup request was not successful, an error message is printed.
 Possible errors are:
@@ -428,19 +433,17 @@ The name server found that the request packet was not in the proper format.
 It may indicate an error in
 .Nm nslookup .
 .El
-.Sh FILES
-.Bl -tag -width "/etc/resolv.confXXX" -compact
-.It Pa /etc/resolv.conf
-initial domain name and name server addresses
-.El
 .Sh SEE ALSO
 .Xr dig 1 ,
-.Xr named 8 ,
 .Xr resolver 3 ,
-.Xr resolver 5 ;
-RFC-1034,
-.Dq Domain Names - Concepts and Facilities ;
-RFC-1035,
-.Dq Domain Names - Implementation and Specification .
-.Sh AUTHOR
+.Xr resolver 5 ,
+.Xr named 8
+.Pp
+.Bl -tag -width "RFC 1034 " -compact
+.It RFC 1034
+Domain Names \- Concepts and Facilities
+.It RFC 1035
+Domain Names \- Implementation and Specification
+.El
+.Sh AUTHORS
 Andrew Cherenson
