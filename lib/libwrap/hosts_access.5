@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.5,v 1.22 2004/02/19 22:20:05 jmc Exp $
+.\"	$OpenBSD: hosts_access.5,v 1.23 2004/02/19 22:25:38 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -123,7 +123,8 @@ The access control language implements the following patterns:
 .It
 A string that begins with a
 .Sq \&.
-character. A host name is matched if
+character.
+A host name is matched if
 the last components of its name match the specified pattern.
 For example, the pattern
 .Sq .tue.nl
@@ -150,7 +151,8 @@ An expression of the form
 .Sq n.n.n.n/m.m.m.m
 is interpreted as a
 .Sq net/mask
-pair. A host address is matched if
+pair.
+A host address is matched if
 .Sq net
 is equal to the bitwise AND of the address and the
 .Sq mask .
@@ -341,8 +343,8 @@ The default timeout for username lookups is 10 seconds: too short to cope
 with slow networks, but long enough to irritate PC users.
 .El
 .Pp
-Selective username lookups can alleviate the last problem. For example,
-a rule like:
+Selective username lookups can alleviate the last problem.
+For example, a rule like:
 .Pp
 .Dl daemon_list\ \&: @pcnetgroup ALL@ALL
 .Pp
@@ -468,8 +470,9 @@ for infinite finger loops.
 .Pp
 On network firewall systems this trick can be carried even further.
 The typical network firewall only provides a limited set of services to
-the outer world. All other services can be "bugged" just like the above
-tftp example. The result is an excellent early-warning system.
+the outer world.
+All other services can be "bugged" just like the above tftp example.
+The result is an excellent early-warning system.
 .Sh FILES
 .Bl -tag -width /etc/hosts.allow -compact
 .It Pa /etc/hosts.allow
