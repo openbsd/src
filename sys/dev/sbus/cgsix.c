@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.8 2002/02/06 18:20:34 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.9 2002/02/06 18:40:56 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -59,18 +59,6 @@ union bt_cmap {
 #define	BT_CMAP		0x04		/* colormap data register */
 #define	BT_CTRL		0x08		/* control register */
 #define	BT_OMAP		0x0c		/* overlay (cursor) map register */
-
-#define	BT_WRITE(sc, reg, val) \
-    bus_space_write_4((sc)->sc_bustag, (sc)->sc_bt_regs, (reg), (val))
-#define	BT_READ(sc, reg) \
-    bus_space_read_4((sc)->sc_bustag, (sc)->sc_bt_regs, (reg))
-
-#define	BT_INIT(sc) do {					\
-	BT_WRITE((sc), BT_ADDR, 0x06);	/* command reg */	\
-	BT_WRITE((sc), BT_CTRL, 0x73);	/* overlay plane */	\
-	BT_WRITE((sc), BT_ADDR, 0x04);  /* read mask */		\
-	BT_WRITE((sc), BT_CTRL, 0xff);	/* color planes */	\
-} while (0)
 
 #define	BT_D4M3(x)	((((x) >> 2) << 1) + ((x) >> 2)) /* (x / 4) * 3 */
 #define	BT_D4M4(x)	((x) & ~3)			 /* (x / 4) * 4 */
@@ -171,6 +159,33 @@ struct cgsix_softc {
 #define	CG6_USER_ROM	0x70006000
 #define	CG6_USER_RAM	0x70016000
 #define	CG6_USER_DHC	0x80000000
+
+#define	THC_READ(sc,r) \
+    bus_space_read_4((sc)->sc_bustag, (sc)->sc_thc_regs, (r))
+#define	THC_WRITE(sc,r,v) \
+    bus_space_write_4((sc)->sc_bustag, (sc)->sc_thc_regs, (r), (v))
+
+#define	TEC_READ(sc,r) \
+    bus_space_read_4((sc)->sc_bustag, (sc)->sc_tec_regs, (r))
+#define	TEC_WRITE(sc,r,v) \
+    bus_space_write_4((sc)->sc_bustag, (sc)->sc_tec_regs, (r), (v))
+
+#define	FHC_READ(sc) \
+    bus_space_read_4((sc)->sc_bustag, (sc)->sc_fhc_regs, CG6_FHC)
+#define	FHC_WRITE(sc,v) \
+    bus_space_write_4((sc)->sc_bustag, (sc)->sc_fhc_regs, CG6_FHC, (v))
+
+#define	BT_WRITE(sc, reg, val) \
+    bus_space_write_4((sc)->sc_bustag, (sc)->sc_bt_regs, (reg), (val))
+#define	BT_READ(sc, reg) \
+    bus_space_read_4((sc)->sc_bustag, (sc)->sc_bt_regs, (reg))
+
+#define	BT_INIT(sc) do {					\
+	BT_WRITE((sc), BT_ADDR, 0x06);	/* command reg */	\
+	BT_WRITE((sc), BT_CTRL, 0x73);	/* overlay plane */	\
+	BT_WRITE((sc), BT_ADDR, 0x04);  /* read mask */		\
+	BT_WRITE((sc), BT_CTRL, 0xff);	/* color planes */	\
+} while (0)
 
 struct mmo {
 	u_long	mo_uaddr;		/* user (virtual address */
@@ -630,21 +645,6 @@ cgsix_setcolor(sc, index, r, g, b)
 	bcm->cm_map[index][2] = b;
 	cgsix_loadcmap(sc, index, 1);
 }
-
-#define	THC_READ(sc,r) \
-    bus_space_read_4((sc)->sc_bustag, (sc)->sc_thc_regs, (r))
-#define	THC_WRITE(sc,r,v) \
-    bus_space_write_4((sc)->sc_bustag, (sc)->sc_thc_regs, (r), (v))
-
-#define	TEC_READ(sc,r) \
-    bus_space_read_4((sc)->sc_bustag, (sc)->sc_tec_regs, (r))
-#define	TEC_WRITE(sc,r,v) \
-    bus_space_write_4((sc)->sc_bustag, (sc)->sc_tec_regs, (r), (v))
-
-#define	FHC_READ(sc) \
-    bus_space_read_4((sc)->sc_bustag, (sc)->sc_fhc_regs, CG6_FHC)
-#define	FHC_WRITE(sc,v) \
-    bus_space_write_4((sc)->sc_bustag, (sc)->sc_fhc_regs, CG6_FHC, (v))
 
 void
 cgsix_reset(sc)
