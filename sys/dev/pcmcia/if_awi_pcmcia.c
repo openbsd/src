@@ -1,5 +1,5 @@
 /* $NetBSD: if_awi_pcmcia.c,v 1.5 1999/11/06 16:43:54 sommerfeld Exp $ */
-/* $OpenBSD: if_awi_pcmcia.c,v 1.2 2000/02/11 10:29:36 niklas Exp $ */
+/* $OpenBSD: if_awi_pcmcia.c,v 1.3 2000/04/24 19:43:35 niklas Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -159,8 +159,8 @@ awi_pcmcia_disable(sc)
 	struct awi_pcmcia_softc *psc = (struct awi_pcmcia_softc *) sc;
 	struct pcmcia_function *pf = psc->sc_pf;
 
-	pcmcia_function_disable (pf);
 	pcmcia_intr_disestablish (pf, sc->sc_ih);
+	pcmcia_function_disable (pf);
 }
 
 int

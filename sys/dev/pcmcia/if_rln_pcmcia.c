@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rln_pcmcia.c,v 1.9 2000/02/05 13:55:45 d Exp $	*/
+/*	$OpenBSD: if_rln_pcmcia.c,v 1.10 2000/04/24 19:43:36 niklas Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -285,8 +285,8 @@ rln_pcmcia_activate(dev, act)
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)
 			rlnstop(sc);
-		pcmcia_function_disable(psc->psc_pf);
 		pcmcia_intr_disestablish(psc->psc_pf, psc->psc_ih);
+		pcmcia_function_disable(psc->psc_pf);
 		break;
 	}
 	splx(s);

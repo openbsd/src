@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.8 2000/04/10 07:06:15 csapuntz Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.9 2000/04/24 19:43:36 niklas Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -444,20 +444,20 @@ wdc_pcmcia_activate(self, act)
 	s = splbio();
 	switch (act) {
 	case DVACT_ACTIVATE:
+		if (pcmcia_function_enable(sc->sc_pf)) {
+			printf("%s: couldn't enable PCMCIA function\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			rv = EIO;
+			break;
+		}
+
 		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO, 
 		    wdcintr, &sc->wdc_channel);
 		if (sc->sc_ih == NULL) {
 			printf("%s: "
 			    "couldn't establish interrupt handler\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname);
-			rv = EIO;
-			break;
-		}
-
-		if (pcmcia_function_enable(sc->sc_pf)) {
-			printf("%s: couldn't enable PCMCIA function\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			pcmcia_function_disable(sc->sc_pf);
 			rv = EIO;
 			break;
 		}
@@ -467,8 +467,8 @@ wdc_pcmcia_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		pcmcia_function_disable(sc->sc_pf);
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		pcmcia_function_disable(sc->sc_pf);
 		rv = wdcactivate(self, act);
 		break;
 	}
@@ -486,27 +486,28 @@ wdc_pcmcia_enable(arg, onoff)
 
 	if (onoff) {
                 if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0) {
+			if (pcmcia_function_enable(sc->sc_pf)) {
+				printf("%s: couldn't enable PCMCIA function\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname);
+				return (EIO);
+			}
+
 			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO, 
 			    wdcintr, &sc->wdc_channel);
 			if (sc->sc_ih == NULL) {
 				printf("%s: "
 				    "couldn't establish interrupt handler\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname);
+				pcmcia_function_disable(sc->sc_pf);
 				return (EIO);
 			}
 
-			if (pcmcia_function_enable(sc->sc_pf)) {
-				printf("%s: couldn't enable PCMCIA function\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname);
-				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-				return (EIO);
-			}
 			wdcreset(&sc->wdc_channel, VERBOSE);
 		}
 	} else {
-		pcmcia_function_disable(sc->sc_pf);
                 if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0)
 			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		pcmcia_function_disable(sc->sc_pf);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.1 2000/04/03 01:02:00 mickey Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.2 2000/04/24 19:43:35 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -188,8 +188,8 @@ an_pcmcia_activate(dev, act)
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)
 			an_stop(sc);
-		pcmcia_function_disable(psc->sc_pf);
 		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+		pcmcia_function_disable(psc->sc_pf);
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.26 2000/04/19 09:19:43 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.27 2000/04/24 19:43:35 niklas Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -655,8 +655,8 @@ ne_pcmcia_activate(dev, act)
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)
 			dp8390_stop(esc);
-		pcmcia_function_disable(sc->sc_pf);
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		pcmcia_function_disable(sc->sc_pf);
 		break;
 	}
 	splx(s);
@@ -687,7 +687,6 @@ ne_pcmcia_disable(dsc)
 {
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
 
-	pcmcia_function_disable(psc->sc_pf);
-
 	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	pcmcia_function_disable(psc->sc_pf);
 }

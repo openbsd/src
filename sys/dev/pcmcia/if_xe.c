@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.11 2000/02/02 19:09:59 fgsch Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.12 2000/04/24 19:43:36 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -504,8 +504,8 @@ xe_pcmcia_activate(dev, act)
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)
 			xe_stop(&sc->sc_xe);
-		pcmcia_function_disable(sc->sc_pf);
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_xe.sc_ih);
+		pcmcia_function_disable(sc->sc_pf);
 		break;
 	}
 	splx(s);
