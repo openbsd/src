@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.49 1998/03/03 04:54:22 ryker Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.50 1998/03/03 21:24:12 ryker Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -1178,7 +1178,7 @@ cpu_exec_aout_makecmds(p, epp)
 
 #ifdef COMPAT_SUNOS
 	{
-		extern sunos_exec_aout_makecmds __P((struct proc *,
+		extern int sunos_exec_aout_makecmds __P((struct proc *,
 			        struct exec_package *));
 		if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
 			return 0;
