@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.33 2002/09/10 03:18:59 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.34 2003/02/12 19:41:20 henric Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -319,6 +319,7 @@ fail_fhc:
 	bus_space_unmap(sa->sa_bustag, sc->sc_bt_regs, CGSIX_BT_SIZE);
 fail_bt:
 fail:
+;
 }
 
 int

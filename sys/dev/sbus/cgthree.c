@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.25 2002/09/10 03:18:59 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.26 2003/02/12 19:41:20 henric Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -346,6 +346,7 @@ fail_vid:
 	bus_space_unmap(sa->sa_bustag, sc->sc_ctrl_regs, CGTHREE_CTRL_SIZE);
 fail_ctrl:
 fail:
+;
 }
 
 int
