@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.92 2002/04/05 02:51:59 krw Exp $
+#	$OpenBSD: install.sh,v 1.93 2002/04/09 01:01:19 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -107,7 +107,7 @@ if [ ! -f /etc/fstab ]; then
 		fi
 
 		# Deal with disklabels, including editing the root disklabel
-		# and labeling additional disks.  This is machine-dependent since
+		# and labeling additional disks. This is machine-dependent since
 		# some platforms may not be able to provide this functionality.
 		md_prep_disklabel ${DISK}
 
@@ -118,7 +118,7 @@ if [ ! -f /etc/fstab ]; then
 
 You will now have the opportunity to enter filesystem information for ${DISK}.
 You will be prompted for the mount point (full path, including the prepending
-'/' character) for each BSD partition on ${DISK}.  Enter "none" to skip a
+'/' character) for each BSD partition on ${DISK}. Enter "none" to skip a
 partition or "done" when you are finished.
 __EOT
 
@@ -152,7 +152,7 @@ __EOT
 			_npartitions=$(( ${_npartitions} + 1 ))
 		done
 
-		# Now prompt the user for the mount points.  Loop until "done"
+		# Now prompt the user for the mount points. Loop until "done"
 		echo
 		_i=0
 		resp=X
@@ -187,7 +187,7 @@ __EOT
 
 		# Now write it out
 		_i=0
-		while test $_i -lt $_npartitions; do
+		while [ $_i -lt $_npartitions ] ; do
 			if [ -n "${_mount_points[${_i}]}" ]; then
 				echo "${DISK}${_partitions[${_i}]} ${_mount_points[${_i}]}" >> ${FILESYSTEMS}
 				_mount_points[${_i}]=
@@ -242,7 +242,7 @@ fi
 # root filesystem later.
 cat << __EOT
 
-You will now be given the opportunity to configure the network.  This will be
+You will now be given the opportunity to configure the network. This will be
 useful if you need to transfer the installation sets via FTP, HTTP, or NFS.
 Even if you choose not to transfer installation sets that way, this information
 will be preserved and copied into the new root filesystem.
@@ -290,7 +290,7 @@ echo '\nPlease enter the initial password that the root account will have.'
 _oifs=$IFS
 IFS=
 resp=
-while [ "X${resp}" = X"" ]; do
+while [ -z "$resp" ]; do
 	echo -n "Password (will not echo): "
 	stty -echo
 	getresp -n
@@ -323,8 +323,10 @@ if [ -f /etc/dhclient.conf ]; then
 	cat /etc/dhclient.conf >> /mnt/etc/dhclient.conf
 	echo "lookup file bind" > /mnt/etc/resolv.conf.tail
 	cp /var/db/dhclient.leases /mnt/var/db/.
-	# Don't install mygate for dhcp installations
-	cfgfiles=`echo $cfgfiles | sed -e 's/ mygate//'`
+	# Don't install mygate for dhcp installations.
+	# Note that mygate should not be the first or last file
+	# in cfgfiles or this won't work.
+	cfgfiles=`echo $cfgfiles | sed -e 's/ mygate / /'`
 	echo "done."
 fi
 

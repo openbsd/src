@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.29 2002/04/05 02:51:59 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.30 2002/04/09 01:01:19 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -51,7 +51,9 @@ MODE=upgrade
 . install.sub
 
 # Remove 'etc' set from THESETS. It should be installed
-# manually, after the upgrade.
+# manually, after the upgrade. Note that etc should not
+# be the first or last set in THESETS, or this won't
+# work!
 THESETS=`echo $THESETS | sed -e 's/ etc / /'`
 
 # XXX Work around vnode aliasing bug (thanks for the tip, Chris...)
@@ -61,8 +63,8 @@ while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk
 done
 
-# Assume partition 'a' of $ROOTDISK is for the root filesystem.  Confirm
-# this with the user.  Check and mount the root filesystem.
+# Assume partition 'a' of $ROOTDISK is for the root filesystem. Confirm
+# this with the user. Check and mount the root filesystem.
 resp=
 while [ "X${resp}" = "X" ]; do
 	echo -n	"Root filesystem? [${ROOTDISK}a] "
@@ -103,8 +105,8 @@ done
 # uses.
 cat << __EOT
 
-The upgrade program would now like to enable the network.  It will use the
-configuration already stored on the root filesystem.  This is required
+The upgrade program would now like to enable the network. It will use the
+configuration already stored on the root filesystem. This is required
 if you wish to use the network installation capabilities of this program.
 
 __EOT
@@ -120,8 +122,8 @@ y*|Y*)
 	cat << __EOT
 
 You will now be given the opportunity to escape to the command shell to
-do any additional network configuration you may need.  This may include
-adding additional routes, if needed.  In addition, you might take this
+do any additional network configuration you may need. This may include
+adding additional routes, if needed. In addition, you might take this
 opportunity to redo the default route in the event that it failed above.
 
 __EOT
@@ -140,7 +142,7 @@ cat /tmp/fstab
 
 cat << __EOT
 
-You may wish to edit the fstab.  For example, you may need to resolve
+You may wish to edit the fstab. For example, you may need to resolve
 dependencies in the order which the filesystems are mounted.
 
 NOTE:	1) this fstab is used only during the upgrade. It will not be
@@ -213,7 +215,7 @@ install_sets $THESETS
 (
 	if [ -f /mnt/etc/sendmail.cf -a ! -f /mnt/etc/mail/sendmail.cf ]; then
 		echo "Moving /etc/sendmail.cf -> /etc/mail/sendmail.cf"
-		test -d /mnt/etc/mail || mkdir /mnt/etc/mail
+		[ -d /mnt/etc/mail ] || mkdir /mnt/etc/mail
 		mv /mnt/etc/sendmail.cf /mnt/etc/mail/sendmail.cf
 		ed - /mnt/etc/rc << __EOT
 1,$s/etc\/sendmail.cf/etc\/mail\/sendmail.cf/g
