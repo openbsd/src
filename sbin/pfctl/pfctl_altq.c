@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.71 2003/04/15 11:01:34 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.72 2003/04/15 11:29:24 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -71,7 +71,8 @@ static int	print_priq_opts(const struct pf_altq *);
 
 static int	eval_pfqueue_hfsc(struct pfctl *, struct pf_altq *);
 static int	check_commit_hfsc(int, int, struct pf_altq *);
-static int	print_hfsc_opts(const struct pf_altq *);
+static int	print_hfsc_opts(const struct pf_altq *,
+		    const struct node_queue_opt *);
 
 static void		 gsc_add_sc(struct gen_sc *, struct service_curve *);
 static int		 is_gsc_under_sc(struct gen_sc *,
@@ -87,8 +88,8 @@ u_long		 getifmtu(char *);
 int		 eval_queue_opts(struct pf_altq *, struct node_queue_opt *,
 		     u_int32_t);
 u_int32_t	 eval_bwspec(struct node_queue_bw *, u_int32_t);
-void		 print_hfsc_sc(char *, u_int, u_int, u_int,
-		     struct node_hfsc_sc *);
+void		 print_hfsc_sc(const char *, u_int, u_int, u_int,
+		     const struct node_hfsc_sc *);
 
 static u_int32_t	 max_qid = 1;
 
@@ -163,10 +164,11 @@ qname_to_qid(const char *qname)
 }
 
 void
-print_altq(const struct pf_altq *a, unsigned level, struct node_queue_bw *bw)
+print_altq(const struct pf_altq *a, unsigned level, struct node_queue_bw *bw,
+	struct node_queue_opt *qopts)
 {
 	if (a->qname[0] != NULL) {
-		print_queue(a, level, bw, 0);
+		print_queue(a, level, bw, 0, qopts);
 		return;
 	}
 
@@ -182,7 +184,7 @@ print_altq(const struct pf_altq *a, unsigned level, struct node_queue_bw *bw)
 			printf("priq ");
 		break;
 	case ALTQT_HFSC:
-		if (!print_hfsc_opts(a))
+		if (!print_hfsc_opts(a, qopts))
 			printf("hfsc ");
 		break;
 	}
@@ -200,7 +202,7 @@ print_altq(const struct pf_altq *a, unsigned level, struct node_queue_bw *bw)
 
 void
 print_queue(const struct pf_altq *a, unsigned level, struct node_queue_bw *bw,
-    int print_interface)
+    int print_interface, struct node_queue_opt *qopts)
 {
 	unsigned	i;
 
@@ -229,7 +231,7 @@ print_queue(const struct pf_altq *a, unsigned level, struct node_queue_bw *bw,
 		print_priq_opts(a);
 		break;
 	case ALTQT_HFSC:
-		print_hfsc_opts(a);
+		print_hfsc_opts(a, qopts);
 		break;
 	}
 }
@@ -823,11 +825,19 @@ check_commit_hfsc(int dev, int opts, struct pf_altq *pa)
 }
 
 static int
-print_hfsc_opts(const struct pf_altq *a)
+print_hfsc_opts(const struct pf_altq *a, const struct node_queue_opt *qopts)
 {
-	const struct hfsc_opts	*opts;
+	const struct hfsc_opts		*opts;
+	const struct node_hfsc_sc	*rtsc, *lssc, *ulsc;
 
 	opts = &a->pq_u.hfsc_opts;
+	if (qopts == NULL)
+		rtsc = lssc = ulsc = NULL;
+	else {
+		rtsc = &qopts->data.hfsc_opts.realtime;
+		lssc = &qopts->data.hfsc_opts.linkshare;
+		ulsc = &qopts->data.hfsc_opts.upperlimit;
+	}
 
 	if (opts->flags || opts->rtsc_m2 != 0 || opts->ulsc_m2 != 0 ||
 	    (opts->lssc_m2 != 0 && (opts->lssc_m2 != a->bandwidth ||
@@ -845,14 +855,14 @@ print_hfsc_opts(const struct pf_altq *a)
 			printf(" default");
 		if (opts->rtsc_m2 != 0)
 			print_hfsc_sc("realtime", opts->rtsc_m1, opts->rtsc_d,
-			    opts->rtsc_m2, NULL);
+			    opts->rtsc_m2, rtsc);
 		if (opts->lssc_m2 != 0 && (opts->lssc_m2 != a->bandwidth ||
 		    opts->lssc_d != 0))
 			print_hfsc_sc("linkshare", opts->lssc_m1, opts->lssc_d,
-			    opts->lssc_m2, NULL);
+			    opts->lssc_m2, lssc);
 		if (opts->ulsc_m2 != 0)
 			print_hfsc_sc("upperlimit", opts->ulsc_m1, opts->ulsc_d,
-			    opts->ulsc_m2, NULL);
+			    opts->ulsc_m2, ulsc);
 		printf(" ) ");
 
 		return (1);
@@ -1176,8 +1186,8 @@ eval_bwspec(struct node_queue_bw *bw, u_int32_t ref_bw)
 }
 
 void
-print_hfsc_sc(char *scname, u_int m1, u_int d, u_int m2,
-    struct node_hfsc_sc *sc)
+print_hfsc_sc(const char *scname, u_int m1, u_int d, u_int m2,
+    const struct node_hfsc_sc *sc)
 {
 	printf(" %s", scname);
 
