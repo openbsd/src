@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.51 2001/02/04 01:14:23 brian Exp $
+ *	$OpenBSD: bundle.c,v 1.52 2001/02/04 01:14:27 brian Exp $
  */
 
 #include <sys/param.h>
@@ -97,6 +97,7 @@
 #include "ip.h"
 #include "iface.h"
 #include "server.h"
+#include "mppe.h"
 
 #define SCATTER_SEGMENTS 7  /* version, datalink, name, physical,
                                throughput, throughput, device       */
@@ -128,8 +129,9 @@ bundle_NewPhase(struct bundle *bundle, u_int new)
 
   switch (new) {
   case PHASE_DEAD:
-    log_DisplayPrompts();
     bundle->phase = new;
+    MPPE_MasterKeyValid = 0;
+    log_DisplayPrompts();
     break;
 
   case PHASE_ESTABLISH:
