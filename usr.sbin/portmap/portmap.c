@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: portmap.c,v 1.6 1996/07/18 11:40:59 deraadt Exp $";
+static char rcsid[] = "$Id: portmap.c,v 1.7 1996/07/25 22:03:05 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -323,8 +323,8 @@ reg_service(rqstp, xprt)
 		}
 
 		/* check if secure */
-		if ((pml->pml_map.pm_port < IPPORT_RESERVED ||
-		    pml->pml_map.pm_port == NFS_PORT) &&
+		if (fnd && (fnd->pml_map.pm_port < IPPORT_RESERVED ||
+		    fnd->pml_map.pm_port == NFS_PORT) &&
 		    htons(fromsin->sin_port) >= IPPORT_RESERVED) {
 			syslog(LOG_WARNING, "resvport set attempt by non-root");
 			goto done;
