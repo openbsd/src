@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnode.9,v 1.14 2003/02/26 15:05:07 david Exp $
+.\"     $OpenBSD: vnode.9,v 1.15 2003/03/08 23:17:18 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -112,7 +112,7 @@ orchestrate the reclamation of a vnode.
 They can be called on both active and inactive vnodes.
 .Pp
 When transitioning a vnode to the "reclaimed" state, the VFS will call
-.Xr vop_reclaim 9 
+.Xr VOP_RECLAIM 9 
 method.
 File systems use this method to free any file-system specific data
 they attached to the vnode.
@@ -152,7 +152,7 @@ sys/kern/vnode_if.src.
 The vnode lock is acquired by calling 
 .Xr vn_lock 9 
 and released by calling 
-.Xr vn_unlock 9 .
+.Xr VOP_UNLOCK 9 .
 .Pp
 A process is allowed to sleep while holding the vnode lock.
 .Pp

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.62 2003/01/11 06:21:07 wcobb Exp $
+#	$OpenBSD: Makefile,v 1.63 2003/03/08 23:17:18 jmc Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -18,7 +18,7 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 bus_dma.9 bus_space.9 copy.9 \
 	time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 \
 	vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 vget.9 \
 	vgone.9 vhold.9 vinvalbuf.9 vput.9 vref.9 vrele.9 \
-	vnode.9 vn_lock.9 vwaitforio.9 vwaitforio.9
+	vnode.9 vn_lock.9 vrecycle.9 vwaitforio.9
 
 MLINKS+=autoconf.9 config_init.9 autoconf.9 config_search.9 \
 	autoconf.9 config_rootsearch.9 autoconf.9 config_found_sm.9 \
@@ -152,6 +152,28 @@ MLINKS+=timeout.9 timeout_add.9 timeout.9 timeout_set.9 \
 	timeout.9 timeout_initialized.9 timeout.9 untimeout.9 \
 	timeout.9 timeout_triggered.9
 MLINKS+=uiomove.9 uio.9
+MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
+	uvm.9 uvm_swap_init.9 uvm.9 uvm_map.9 uvm.9 uvm_map_pageable.9 \
+	uvm.9 uvm_map_pageable_all.9 uvm.9 uvm_map_checkprot.9 \
+	uvm.9 uvm_map_protect.9 uvm.9 uvm_deallocate.9 uvm.9 uvmspace_alloc.9 \
+	uvm.9 uvmspace_exec.9 uvm.9 uvmspace_fork.9 uvm.9 uvmspace_free.9 \
+	uvm.9 uvmspace_share.9 uvm.9 uvmspace_unshare.9 uvm.9 UVM_MAPFLAG.9 \
+	uvm.9 uvm_fault.9 \
+	uvm.9 uvn_attach.9 uvm.9 uvm_vnp_setsize.9 uvm.9 uvm_vnp_sync.9 \
+	uvm.9 uvm_vnp_terminate.9 uvm.9 uvm_vnp_uncache.9 uvm.9 uvm_io.9 \
+	uvm.9 uvm_km_alloc.9 uvm.9 uvm_km_zalloc.9 uvm.9 uvm_km_alloc1.9 \
+	uvm.9 uvm_km_kmemalloc.9 uvm.9 uvm_km_valloc.9 \
+	uvm.9 uvm_km_valloc_wait.9 uvm.9 uvm_km_suballoc.9 \
+	uvm.9 uvm_km_free.9 uvm.9 uvm_km_free_wakeup.9 uvm.9 uvm_pagealloc.9 \
+	uvm.9 uvm_pagerealloc.9 uvm.9 uvm_pagefree.9 uvm.9 uvm_pglistalloc.9 \
+	uvm.9 uvm_pglistfree.9 uvm.9 uvm_page_physload.9 \
+	uvm.9 uvm_pageout.9 uvm.9 uvm_scheduler.9 uvm.9 uvm_swapin.9 \
+	uvm.9 uao_create.9 uvm.9 uao_detach.9 uvm.9 uao_reference.9 \
+	uvm.9 uvm_chgkprot.9 uvm.9 uvm_kernacc.9 uvm.9 uvm_useracc.9 \
+	uvm.9 uvm_vslock.9 uvm.9 uvm_vsunlock.9 uvm.9 uvm_meter.9 \
+	uvm.9 uvm_sysctl.9 uvm.9 uvm_fork.9 uvm.9 uvm_grow.9 \
+	uvm.9 uvm_coredump.9
+MLINKS+=vgone.9 vgonel.9
 MLINKS+=malloc.9 MALLOC.9 malloc.9 free.9 malloc.9 FREE.9
 MLINKS+=kern.9 imax.9 kern.9 imin.9 kern.9 lmax.9 kern.9 lmin.9 \
 	kern.9 max.9 kern.9 min.9 kern.9 ulmax.9 kern.9 ulmin.9 kern.9 abs.9 \

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: extattr.9,v 1.3 2002/05/28 09:07:07 mpech Exp $
+.\"     $OpenBSD: extattr.9,v 1.4 2003/03/08 23:17:18 jmc Exp $
 .\"-
 .\" Copyright (c) 1999, 2000, 2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -33,9 +33,9 @@
 .Nm extattr
 .Nd virtual file system named extended attributes
 .Sh SYNOPSIS
-.In sys/param.h
-.In sys/vnode.h
-.In sys/extattr.h
+.Fd #include <sys/param.h>
+.Fd #include <sys/vnode.h>
+.Fd #include <sys/extattr.h>
 .Sh DESCRIPTION
 Named extended attributes allow additional meta-data to be associated
 with vnodes representing files and directories.
