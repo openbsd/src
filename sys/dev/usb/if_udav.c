@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.3 2004/11/11 22:46:30 deraadt Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.4 2004/12/03 13:21:04 jsg Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -292,7 +292,6 @@ USB_ATTACH(udav)
 	/* initialize interface infomation */
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
 	strlcpy(ifp->if_xname, devname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = udav_start;
