@@ -1,4 +1,4 @@
-.\"	$OpenBSD: phantasia.6tbl,v 1.6 2003/05/17 21:47:13 jmc Exp $
+.\"	$OpenBSD: phantasia.6tbl,v 1.7 2004/01/02 22:22:43 jmc Exp $
 .\"	$NetBSD: phantasia.6,v 1.9 2002/09/26 18:32:03 wiz Exp $
 .\"
 .Dd April 1, 2001
@@ -9,7 +9,7 @@
 .Nd an interterminal fantasy game
 .Sh SYNOPSIS
 .Nm
-.Op Fl HSabmpsx
+.Op Fl abHmpSsx
 .Sh DESCRIPTION
 .Nm
 is a role-playing game that allows players to roll up characters of
@@ -24,21 +24,20 @@ Most of the game is menu-driven and self-explanatory (more or less).
 .Pp
 The options provide for a variety of functions to support the game.
 They are:
-.Pp
 .Bl -tag -width aaa -offset indent
-.It Fl H
-Print header only.
-.It Fl S
-Turn on wizard options, if allowed, if running as
-.Em root .
 .It Fl a
 Get a listing of all character names on file.
 .It Fl b
 Show scoreboard of top characters per login.
+.It Fl H
+Print header only.
 .It Fl m
 Get a monster listing.
 .It Fl p
 Purge old characters.
+.It Fl S
+Turn on wizard options, if allowed, if running as
+.Em root .
 .It Fl s
 Invoke
 .Nm
@@ -55,9 +54,6 @@ Only characters above
 zero are saved.
 Characters unused for a while will be purged.
 Characters are only placed on the scoreboard when they die.
-.Sh AUTHORS
-.An Edward Estes ,
-AT&T Information Systems, Skokie, IL
 .Sh PARTICULARS
 .Ss Normal Play
 A number of the player's more important statistics are almost always
@@ -1211,6 +1207,9 @@ Upon slaying a player in battle the winner gets the other's
 and treasures.
 .Em Rings
 do not work for inter-terminal battle.
+.Sh AUTHORS
+.An Edward Estes ,
+AT&T Information Systems, Skokie, IL
 .Sh BUGS
 All screen formats assume at least 24 lines by at least 80 columns.
 No provisions are made for when any of the data items get too big
