@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrs.c,v 1.7 2000/09/21 12:03:12 espie Exp $*/
+/*	$OpenBSD: rrs.c,v 1.8 2002/07/15 21:05:56 marc Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Paul Kranenburg.
+ *	This product includes software developed by Paul Kranenburg.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -93,55 +93,55 @@ struct shobj {
 /*
 RRS text segment:
 		+-------------------+  <-- sdt_rel (rrs_text_start)
-		|                   |
-		|    relocation     |
-		|                   |
+		|		    |
+		|    relocation	    |
+		|		    |
 		+-------------------+  <-- <sdt>.sdt_hash
-		|                   |
+		|		    |
 		|    hash buckets   |
-		|                   |
+		|		    |
 		+-------------------+  <-- <sdt>.sdt_nzlist
-		|                   |
-		|     symbols       |
-		|                   |
+		|		    |
+		|     symbols	    |
+		|		    |
 		+-------------------+  <-- <sdt>.sdt_strings
-		|                   |
-		|     strings       |
-		|                   |
+		|		    |
+		|     strings	    |
+		|		    |
 		+-------------------+  <-- <sdt>.sdt_sods
-		|                   |
-		|     shobjs        |
-		|                   |
+		|		    |
+		|     shobjs	    |
+		|		    |
 		+-------------------+
-		|                   |
+		|		    |
 		|  shobjs strings   |  <-- <shobj>.sod_name
-		|                   |
+		|		    |
 		+-------------------+
 
 
 RRS data segment:
 
 		+-------------------+  <-- __DYNAMIC (rrs_data_start)
-		|                   |
-		|     _dymamic      |
-		|                   |
+		|		    |
+		|     _dymamic	    |
+		|		    |
 		+-------------------+  <-- __DYNAMIC.d_debug
-		|                   |
-		|    so_debug       |
-		|                   |
+		|		    |
+		|    so_debug	    |
+		|		    |
 		+-------------------+  <-- __DYNAMIC.d_un.d_sdt
-		|                   |
-		|       sdt         |
-		|                   |
+		|		    |
+		|	sdt	    |
+		|		    |
 		+-------------------+  <-- sdt_got
-		|                   |
-		|      _GOT_        |  <-- _GLOBAL_OFFSET_TABLE_
-		|                   |		( == sdt_got + got_origin)
-		|                   |
+		|		    |
+		|      _GOT_	    |  <-- _GLOBAL_OFFSET_TABLE_
+		|		    |		( == sdt_got + got_origin)
+		|		    |
 		+-------------------+  <-- sdt_plt
-		|                   |
-		|       PLT         |
-		|                   |
+		|		    |
+		|	PLT	    |
+		|		    |
 		+-------------------+
 */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: md.h,v 1.4 2000/02/01 21:01:41 espie Exp $  */
+/*	$OpenBSD: md.h,v 1.5 2002/07/15 21:05:57 marc Exp $  */
 /*	$NetBSD: md.h,v 1.3 1996/02/22 00:20:06 pk Exp $  */
 
 /*
@@ -126,7 +126,7 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 
 #  define md_swap_short(x) ( (((x) >> 8) & 0xff) | (((x) & 0xff) << 8) )
 
-#  define md_swap_long(x) ( (((x) >> 24) & 0xff    ) | (((x) >> 8 ) & 0xff00    ) | \
+#  define md_swap_long(x) ( (((x) >> 24) & 0xff	   ) | (((x) >> 8 ) & 0xff00	) | \
 			    (((x) << 8 ) & 0xff0000) | (((x) << 24) & 0xff000000) )
 
 # else	/* We need not swap, but must pay attention to alignment: */

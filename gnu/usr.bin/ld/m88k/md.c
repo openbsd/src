@@ -1,4 +1,4 @@
-/* *	$OpenBSD: md.c,v 1.2 2001/11/25 04:20:40 miod Exp $*/
+/* *	$OpenBSD: md.c,v 1.3 2002/07/15 21:05:57 marc Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Paul Kranenburg.
+ *	This product includes software developed by Paul Kranenburg.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -436,7 +436,7 @@ int n;
 		case RELOC_PC16:
 		case RELOC_PC26:
 			r->r_pcrel =1;
-/* 			r->r_baserel =1; */
+/*			r->r_baserel =1; */
 			break;
 		case RELOC_32:
 	/*		r->r_jmptable =1; */

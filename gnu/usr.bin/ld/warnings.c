@@ -1,4 +1,4 @@
-/* * $OpenBSD: warnings.c,v 1.5 2002/07/10 17:28:16 marc Exp $*/
+/* * $OpenBSD: warnings.c,v 1.6 2002/07/15 21:05:56 marc Exp $*/
 /*
  */
 
@@ -96,7 +96,7 @@ static void	list_file_locals __P((struct file_entry *, FILE *));
 
 void
 print_symbols(outfile)
-	FILE           *outfile;
+	FILE	       *outfile;
 {
 	fprintf(outfile, "\nFiles:\n\n");
 	each_file(describe_file_sections, (void *)outfile);
@@ -126,7 +126,7 @@ print_symbols(outfile)
 static void
 describe_file_sections(entry, outfile)
 	struct file_entry *entry;
-	FILE           *outfile;
+	FILE	       *outfile;
 {
 	fprintf(outfile, "  ");
 	print_file_name(entry, outfile);
@@ -341,7 +341,7 @@ init_debug_scan(use_data_symbols, entry)
 
 static int
 address_to_line(address, state_pointer)
-	unsigned long   address;
+	unsigned long	address;
 /* Next must be passed by reference! */
 	struct line_debug_entry state_pointer[3];
 {
@@ -398,8 +398,8 @@ address_to_line(address, state_pointer)
 static void
 do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 	struct file_entry *entry;
-	int             data_segment;
-	FILE           *outfile;
+	int		data_segment;
+	FILE	       *outfile;
 	unsigned char  *nlist_bitvector;
 {
 	struct relocation_info	*rp, *erp;
@@ -501,7 +501,7 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 
 		/* If errfmt == 0, errmsg has already been defined.  */
 		if (errfmt != 0) {
-			char           *nm;
+			char	       *nm;
 
 			nm = g->name;
 			errmsg = (char *)
@@ -574,7 +574,7 @@ do_file_warnings (entry, outfile)
 		struct nlist *np;
 		symbol *g;
 
-	        g = entry->symbols[i].symbol;
+		g = entry->symbols[i].symbol;
 		np = &entry->symbols[i].nzlist.nlist;
 
 		if (g == NULL)

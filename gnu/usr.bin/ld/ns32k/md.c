@@ -1,4 +1,4 @@
-/*	$OpenBSD: md.c,v 1.3 1998/03/26 19:47:14 niklas Exp $  */
+/*	$OpenBSD: md.c,v 1.4 2002/07/15 21:05:57 marc Exp $  */
 /*	$NetBSD: md.c,v 1.6 1994/11/30 06:20:42 phil Exp $  */
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Paul Kranenburg.
+ *	This product includes software developed by Paul Kranenburg.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -81,7 +81,7 @@ static void
 put_imm(addr, val, n)
 unsigned char	*addr;
 unsigned long	val;
-char    	n;
+char		n;
 {
 	addr += (n - 1);
 	while (n--) {
@@ -96,12 +96,12 @@ char    	n;
 static unsigned long
 get_imm(addr, n)
 unsigned char	*addr;
-int 		n;
+int		n;
 {
 	int val = 0;
 
 	while (n--)
-  		val = val * 256 + *addr++;
+		val = val * 256 + *addr++;
 
 	return val;
 }

@@ -1,4 +1,4 @@
-/* *	$OpenBSD: md.h,v 1.6 2000/02/01 21:01:42 espie Exp $*/
+/* *	$OpenBSD: md.h,v 1.7 2002/07/15 21:05:57 marc Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Paul Kranenburg.
+ *	This product includes software developed by Paul Kranenburg.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -78,7 +78,7 @@
 }
 
 #undef  relocation_info
-#define relocation_info	                reloc_info_sparc
+#define relocation_info			reloc_info_sparc
 #define r_symbolnum			r_index
 #endif /* __NetBSD__ || __OpenBSD__ */
 
@@ -235,18 +235,18 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 
 #define md_swap_short(x) ( (((x) >> 8) & 0xff) | (((x) & 0xff) << 8) )
 
-#define md_swap_long(x) ( (((x) >> 24) & 0xff    ) | (((x) >> 8 ) & 0xff00   ) | \
+#define md_swap_long(x) ( (((x) >> 24) & 0xff	 ) | (((x) >> 8 ) & 0xff00   ) | \
 			(((x) << 8 ) & 0xff0000) | (((x) << 24) & 0xff000000))
 
 #define get_byte(p)	( ((unsigned char *)(p))[0] )
 
 #define get_short(p)	( ( ((unsigned char *)(p))[1] << 8) | \
-			  ( ((unsigned char *)(p))[0]     )   \
+			  ( ((unsigned char *)(p))[0]	  )   \
 			)
 #define get_long(p)	( ( ((unsigned char *)(p))[3] << 24) | \
 			  ( ((unsigned char *)(p))[2] << 16) | \
 			  ( ((unsigned char *)(p))[1] << 8 ) | \
-			  ( ((unsigned char *)(p))[0]      )   \
+			  ( ((unsigned char *)(p))[0]	   )   \
 			)
 
 #define put_byte(p, v)	{ ((unsigned char *)(p))[0] = ((unsigned long)(v)); }
@@ -254,7 +254,7 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 #define put_short(p, v)	{ ((unsigned char *)(p))[1] =			\
 				((((unsigned long)(v)) >> 8) & 0xff); 	\
 			  ((unsigned char *)(p))[0] =			\
-				((((unsigned long)(v))     ) & 0xff); }
+				((((unsigned long)(v))	   ) & 0xff); }
 
 #define put_long(p, v)	{ ((unsigned char *)(p))[3] =			\
 				((((unsigned long)(v)) >> 24) & 0xff); 	\
@@ -263,7 +263,7 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 			  ((unsigned char *)(p))[1] =			\
 				((((unsigned long)(v)) >>  8) & 0xff); 	\
 			  ((unsigned char *)(p))[0] =			\
-				((((unsigned long)(v))      ) & 0xff); }
+				((((unsigned long)(v))	    ) & 0xff); }
 
 #else	/* We need not swap, but must pay attention to alignment: */
 
@@ -273,13 +273,13 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 #define get_byte(p)	( ((unsigned char *)(p))[0] )
 
 #define get_short(p)	( ( ((unsigned char *)(p))[0] << 8) | \
-			  ( ((unsigned char *)(p))[1]     )   \
+			  ( ((unsigned char *)(p))[1]	  )   \
 			)
 
 #define get_long(p)	( ( ((unsigned char *)(p))[0] << 24) | \
 			  ( ((unsigned char *)(p))[1] << 16) | \
 			  ( ((unsigned char *)(p))[2] << 8 ) | \
-			  ( ((unsigned char *)(p))[3]      )   \
+			  ( ((unsigned char *)(p))[3]	   )   \
 			)
 
 
@@ -288,7 +288,7 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 #define put_short(p, v)	{ ((unsigned char *)(p))[0] =			\
 				((((unsigned long)(v)) >> 8) & 0xff); 	\
 			  ((unsigned char *)(p))[1] =			\
-				((((unsigned long)(v))     ) & 0xff); }
+				((((unsigned long)(v))	   ) & 0xff); }
 
 #define put_long(p, v)	{ ((unsigned char *)(p))[0] =			\
 				((((unsigned long)(v)) >> 24) & 0xff); 	\
@@ -297,7 +297,7 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 			  ((unsigned char *)(p))[2] =			\
 				((((unsigned long)(v)) >>  8) & 0xff); 	\
 			  ((unsigned char *)(p))[3] =			\
-				((((unsigned long)(v))      ) & 0xff); }
+				((((unsigned long)(v))	    ) & 0xff); }
 
 #endif /* NEED_SWAP */
 

@@ -1,4 +1,4 @@
-/* * $OpenBSD: md.h,v 1.4 2001/12/24 03:13:55 miod Exp $*/
+/* * $OpenBSD: md.h,v 1.5 2002/07/15 21:05:57 marc Exp $*/
 /*
  *	- m88k dependent definitions
  */
@@ -72,22 +72,22 @@ typedef struct jmpslot {
 /* m88k */
 enum reloc_type {
 
-        RELOC_LO16, /* lo16(sym) */
-        RELOC_HI16, /* hi16(sym) */
-        RELOC_PC16, /* bb0, bb1, bcnd */
-        RELOC_PC26, /* br, bsr */
-        RELOC_32, /* jump tables, etc */
-        RELOC_IW16, /* global access through linker regs 28 */
-        NO_RELOC,
+	RELOC_LO16, /* lo16(sym) */
+	RELOC_HI16, /* hi16(sym) */
+	RELOC_PC16, /* bb0, bb1, bcnd */
+	RELOC_PC26, /* br, bsr */
+	RELOC_32, /* jump tables, etc */
+	RELOC_IW16, /* global access through linker regs 28 */
+	NO_RELOC,
 	RELOC_GLOB_DAT,
 	RELOC_JMP_SLOT,
 	RELOC_RELATIVE
 };
 #if  0
 struct relocation_info_m88k {
-        unsigned int r_address;         /* offset in text or data segment */
-        unsigned int r_symbolnum : 24,  /* ordinal number of add symbol */
-                        r_extern :  1,  /* 1 if need to add symbol to value */
+	unsigned int r_address;		/* offset in text or data segment */
+	unsigned int r_symbolnum : 24,  /* ordinal number of add symbol */
+			r_extern :  1,  /* 1 if need to add symbol to value */
 			r_baserel : 1,
 			r_pcrel : 1,
 			r_jmptable : 1,
@@ -97,13 +97,13 @@ struct relocation_info_m88k {
 };
 #endif
 struct r_relocation_info_m88k {
-        unsigned int r_address;         /* offset in text or data segment */
-	unsigned int 	  r_type : 4,
+	unsigned int r_address;		/* offset in text or data segment */
+	unsigned int	  r_type : 4,
 			r_jmptable : 1,
 			r_pcrel : 1,
 			r_baserel : 1,
-                        r_extern :  1,  /* 1 if need to add symbol to value */
-                     r_symbolnum : 24;  /* ordinal number of add symbol */
+			r_extern :  1,  /* 1 if need to add symbol to value */
+		     r_symbolnum : 24;  /* ordinal number of add symbol */
 			
 	int r_addend;
 };
@@ -125,7 +125,7 @@ struct r_relocation_info_m88k {
 #define md_swapout_symbols(s,n)
 #define md_swapin_zsymbols(s,n)
 #define md_swapout_zsymbols(s,n)
-#define md_swapin_reloc(r,n)  			md_in_reloc(r,n)
+#define md_swapin_reloc(r,n)			md_in_reloc(r,n)
 #define md_swapout_reloc(r,n)
 #define md_swapin__dynamic(l)
 #define md_swapout__dynamic(l)
@@ -149,12 +149,12 @@ struct r_relocation_info_m88k {
 #define get_byte(p)	( ((unsigned char *)(p))[0] )
 
 #define get_short(p)	( ( ((unsigned char *)(p))[0] << 8) | \
-			  ( ((unsigned char *)(p))[1]     )   \
+			  ( ((unsigned char *)(p))[1]	  )   \
 			)
 #define get_long(p)	( ( ((unsigned char *)(p))[0] << 24) | \
 			  ( ((unsigned char *)(p))[1] << 16) | \
 			  ( ((unsigned char *)(p))[2] << 8 ) | \
-			  ( ((unsigned char *)(p))[3]      )   \
+			  ( ((unsigned char *)(p))[3]	   )   \
 			)
 
 #define put_byte(p, v)	{ ((unsigned char *)(p))[0] = ((unsigned long)(v)); }
@@ -162,7 +162,7 @@ struct r_relocation_info_m88k {
 #define put_short(p, v)	{ ((unsigned char *)(p))[0] =			\
 				((((unsigned long)(v)) >> 8) & 0xff); 	\
 			  ((unsigned char *)(p))[1] =			\
-				((((unsigned long)(v))     ) & 0xff); }
+				((((unsigned long)(v))	   ) & 0xff); }
 
 #define put_long(p, v)	{ ((unsigned char *)(p))[0] =			\
 				((((unsigned long)(v)) >> 24) & 0xff); 	\
@@ -171,16 +171,16 @@ struct r_relocation_info_m88k {
 			  ((unsigned char *)(p))[2] =			\
 				((((unsigned long)(v)) >>  8) & 0xff); 	\
 			  ((unsigned char *)(p))[3] =			\
-				((((unsigned long)(v))      ) & 0xff); }
+				((((unsigned long)(v))	    ) & 0xff); }
 #define put_b26(p, v)	{ ((unsigned char *)(p))[0] =			\
 				((((unsigned long)(v)) >> 24) & 0x03 |  \
-				((unsigned char *)(p))[0] & 0xfc);  	\
+				((unsigned char *)(p))[0] & 0xfc);	\
 			  ((unsigned char *)(p))[1] =			\
 				((((unsigned long)(v)) >> 16) & 0xff); 	\
 			  ((unsigned char *)(p))[2] =			\
 				((((unsigned long)(v)) >>  8) & 0xff); 	\
 			  ((unsigned char *)(p))[3] =			\
-				((((unsigned long)(v))      ) & 0xff); }
+				((((unsigned long)(v))	    ) & 0xff); }
 
 
 #ifdef NEED_SWAP
@@ -213,7 +213,7 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 
 #define md_swap_short(x) ( (((x) >> 8) & 0xff) | (((x) & 0xff) << 8) )
 
-#define md_swap_long(x) ( (((x) >> 24) & 0xff    ) | (((x) >> 8 ) & 0xff00   ) | \
+#define md_swap_long(x) ( (((x) >> 24) & 0xff	 ) | (((x) >> 8 ) & 0xff00   ) | \
 			(((x) << 8 ) & 0xff0000) | (((x) << 24) & 0xff000000))
 
 #else	/* We need not swap, but must pay attention to alignment: */

@@ -1,4 +1,4 @@
-/* $OpenBSD: scanlib.c,v 1.2 2001/10/25 22:22:22 espie Exp $ */
+/* $OpenBSD: scanlib.c,v 1.3 2002/07/15 21:05:57 marc Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -87,7 +87,7 @@ scan_library(fd, hdr, name, fmt1, fmt2)
 
 	if (sdt.sdt_sods) {
 		struct sod	sod;
-		off_t 		offset;
+		off_t		offset;
 		char		entry[MAXPATHLEN];
 
 		for (offset = sdt.sdt_sods; offset != 0; 

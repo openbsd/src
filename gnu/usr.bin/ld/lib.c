@@ -1,4 +1,4 @@
-/* * $OpenBSD: lib.c,v 1.6 2002/07/10 17:28:16 marc Exp $	- library routines*/
+/* * $OpenBSD: lib.c,v 1.7 2002/07/15 21:05:56 marc Exp $	- library routines*/
 /*
  */
 
@@ -37,7 +37,7 @@ static struct file_entry	*decode_library_subfile __P((int,
 
 void
 search_library(fd, entry)
-	int             fd;
+	int		fd;
 	struct file_entry *entry;
 {
 	int member_length;
@@ -72,17 +72,17 @@ search_library(fd, entry)
 
 static struct file_entry *
 decode_library_subfile(fd, library_entry, subfile_offset, length_loc)
-	int             fd;
+	int		fd;
 	struct file_entry *library_entry;
-	int             subfile_offset;
-	int            *length_loc;
+	int		subfile_offset;
+	int	       *length_loc;
 {
-	int             bytes_read;
+	int		bytes_read;
 	int		namelen;
-	int             member_length, content_length;
+	int		member_length, content_length;
 	int		starting_offset;
 	char	       *name;
-	struct ar_hdr   hdr1;
+	struct ar_hdr	hdr1;
 	struct file_entry *subentry;
 
 	lseek(fd, subfile_offset, 0);
@@ -167,20 +167,20 @@ static int	subfile_wanted_p __P((struct file_entry *));
 
 static void
 symdef_library(fd, entry, member_length)
-	int             fd;
+	int		fd;
 	struct file_entry *entry;
-	int             member_length;
+	int		member_length;
 {
-	int            *symdef_data = (int *) xmalloc(member_length);
+	int	       *symdef_data = (int *) xmalloc(member_length);
 	struct ranlib  *symdef_base;
-	char           *sym_name_base;
-	int             nsymdefs;
-	int             length_of_strings;
-	int             not_finished;
-	int             bytes_read;
+	char	       *sym_name_base;
+	int		nsymdefs;
+	int		length_of_strings;
+	int		not_finished;
+	int		bytes_read;
 	int		i;
 	struct file_entry *prev = 0;
-	int             prev_offset = 0;
+	int		prev_offset = 0;
 
 	bytes_read = read(fd, symdef_data, member_length);
 	if (bytes_read != member_length)
@@ -359,7 +359,7 @@ symdef_library(fd, entry, member_length)
 
 static void
 linear_library(fd, entry)
-	int             fd;
+	int		fd;
 	struct file_entry *entry;
 {
 	struct file_entry *prev = 0;

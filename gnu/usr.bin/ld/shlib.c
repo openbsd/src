@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.11 2002/07/10 17:28:16 marc Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.12 2002/07/15 21:05:56 marc Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Paul Kranenburg.
+ *	This product includes software developed by Paul Kranenburg.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -233,9 +233,9 @@ int	n1, n2;
  * major and minor version numbers.
  *
  * MAJOR == -1 && MINOR == -1	--> find highest version
- * MAJOR != -1 && MINOR == -1   --> find highest minor version
- * MAJOR == -1 && MINOR != -1   --> invalid
- * MAJOR != -1 && MINOR != -1   --> find highest micro version
+ * MAJOR != -1 && MINOR == -1	--> find highest minor version
+ * MAJOR == -1 && MINOR != -1	--> invalid
+ * MAJOR != -1 && MINOR != -1	--> find highest micro version
  */
 
 /* Not interested in devices right now... */
@@ -266,7 +266,7 @@ int	do_dot_a;
 	for (i = 0; i < n_search_dirs; i++) {
 		DIR		*dd = opendir(search_dirs[i]);
 		struct dirent	*dp;
-		char 		*path = NULL;
+		char		*path = NULL;
 
 		if (dd == NULL)
 			continue;

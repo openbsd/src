@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.h,v 1.9 2002/07/10 17:28:16 marc Exp $	*/
+/*	$OpenBSD: ld.h,v 1.10 2002/07/15 21:05:56 marc Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -410,7 +410,7 @@ typedef struct glosym {
 					   interesting */
 #define GS_TRACE		0x4	/* Symbol will be traced */
 #define GS_HASJMPSLOT		0x8	/*				 */
-#define GS_HASGOTSLOT		0x10	/* Some state bits concerning    */
+#define GS_HASGOTSLOT		0x10	/* Some state bits concerning	 */
 #define GS_CPYRELOCRESERVED	0x20	/* entries in GOT and PLT tables */
 #define GS_CPYRELOCCLAIMED	0x40	/*				 */
 #define GS_WEAK			0x80	/* Symbol is weakly defined */

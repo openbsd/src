@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.24 2002/07/10 17:28:15 marc Exp $	*/
+/*	$OpenBSD: ld.c,v 1.25 2002/07/15 21:05:56 marc Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -178,7 +178,7 @@ enum {
 
 int	global_sym_count;	/* # of nlist entries for global symbols */
 int	size_sym_count;		/* # of N_SIZE nlist entries for output
-				  (relocatable_output only) */
+				   (relocatable_output only) */
 int	local_sym_count;	/* # of nlist entries for local symbols. */
 int	non_L_local_sym_count;	/* # of nlist entries for non-L symbols */
 int	debugger_sym_count;	/* # of nlist entries for debugger info. */
@@ -288,11 +288,11 @@ main(argc, argv)
 	if (atexit(cleanup))
 		err(1, "atexit");
 
-	/* Added this to stop ld core-dumping on very large .o files.    */
+	/* Added this to stop ld core-dumping on very large .o files.	 */
 #ifdef RLIMIT_STACK
 	/* Get rid of any avoidable limit on stack size.  */
 	{
-		struct rlimit   rlim;
+		struct rlimit	rlim;
 
 		/* Set the stack limit huge so that alloca does not fail. */
 		if (getrlimit(RLIMIT_STACK, &rlim) != 0)
@@ -495,8 +495,8 @@ classify_arg(arg)
 
 static void
 decode_command(argc, argv)
-	int             argc;
-	char          **argv;
+	int		argc;
+	char	      **argv;
 {
 	int	i;
 	struct file_entry *p;
@@ -511,7 +511,7 @@ decode_command(argc, argv)
 	 */
 
 	for (i = 1; i < argc; i++) {
-		int    code = classify_arg(argv[i]);
+		int	code = classify_arg(argv[i]);
 		if (code) {
 			if (i + code > argc)
 				errx(1, "no argument following %s", argv[i]);
@@ -626,10 +626,10 @@ add_cmdline_ref(sp)
 
 int
 set_element_prefixed_p(name)
-	char           *name;
+	char		*name;
 {
 	struct string_list_element *p;
-	int             i;
+	int		i;
 
 	for (p = set_element_prefixes; p; p = p->next) {
 
@@ -881,7 +881,7 @@ each_file(function, arg)
 	void	(*function)();
 	void	*arg;
 {
-	int    i;
+	int	i;
 
 	for (i = 0; i < number_of_files; i++) {
 		struct file_entry *entry = &file_table[i];
@@ -1907,7 +1907,7 @@ digest_pass1()
 		symbol *spsave;
 		struct localsymbol *lsp;
 		struct nlist	*q = NULL;
-		int             defs = 0;
+		int		defs = 0;
 
 		if (!(sp->flags & GS_REFERENCED)) {
 #if 0
@@ -2467,7 +2467,7 @@ digest_pass2()
 {
 	FOR_EACH_SYMBOL(i, sp) {
 		int		size;
-		int             align = sizeof(int);
+		int		align = sizeof(int);
 
 		if (!(sp->flags & GS_REFERENCED))
 			continue;
@@ -2980,7 +2980,7 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 
 		} else if (RELOC_EXTERN_P(r)) {
 
-			int     symindex = RELOC_SYMBOL(r);
+			int	symindex = RELOC_SYMBOL(r);
 			symbol  *sp;
 
 			if (symindex >= entry->nsymbols)
@@ -3238,7 +3238,7 @@ coptxtrel(entry)
 	end = r + entry->ntextrel;
 
 	for (; r < end; r++) {
-		int  			symindex;
+		int			symindex;
 		struct localsymbol	*lsp;
 		symbol			*sp;
 
@@ -3393,7 +3393,7 @@ static int	strtab_index;
 
 static int
 assign_string_table_index(name)
-	char           *name;
+	char	       *name;
 {
 	int    index = strtab_size;
 	int    len = strlen(name) + 1;
@@ -3731,7 +3731,7 @@ write_file_syms(entry, syms_written_addr)
 	/* Generate a local symbol for the start of this file's text.  */
 
 	if (discard_locals != DISCARD_ALL) {
-		struct nlist    nl;
+		struct nlist	nl;
 
 		nl.n_type = N_FN | N_EXT;
 		nl.n_un.n_strx =

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.24 2002/07/10 17:28:16 marc Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.25 2002/07/15 21:05:57 marc Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Paul Kranenburg.
+ *	This product includes software developed by Paul Kranenburg.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -524,7 +524,7 @@ alloc_link_map(path, sodp, parent, addr, size, dp)
  */
 static void
 free_link_map(smp)
-	struct so_map   *smp;
+	struct so_map	*smp;
 {
 
 	if ((LM_PRIVATE(smp)->spd_flags & RTLD_DL) != 0) {
@@ -619,8 +619,8 @@ again:
 	}
 
 	if ((addr = mmap(0, hdr.a_text + hdr.a_data + hdr.a_bss,
-	         PROT_READ|PROT_EXEC,
-	         MAP_COPY, fd, 0)) == (caddr_t)-1) {
+		 PROT_READ|PROT_EXEC,
+		 MAP_COPY, fd, 0)) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
@@ -677,8 +677,8 @@ unmap_object(smp)
 		return;
 	}
 
-	*pp = smp->som_next;                    /* make list skip it */
-	if (link_map_tail == &smp->som_next)    /* and readjust tail pointer */
+	*pp = smp->som_next;			/* make list skip it */
+	if (link_map_tail == &smp->som_next)	/* and readjust tail pointer */
 		link_map_tail = pp;
 
 	/* unmap from address space */
@@ -1432,7 +1432,7 @@ build_sod(name, sodp)
 	char		*realname, *tok, *etok, *cp;
 
 	/* default is an absolute or relative path */
-	sodp->sod_name = (long)strdup(name);    /* strtok is destructive */
+	sodp->sod_name = (long)strdup(name);	/* strtok is destructive */
 	sodp->sod_library = 0;
 	sodp->sod_major = sodp->sod_minor = 0;
 
