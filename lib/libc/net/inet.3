@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet.3,v 1.14 2003/03/04 17:19:36 henning Exp $
+.\"	$OpenBSD: inet.3,v 1.15 2003/05/01 19:17:37 jmc Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -227,8 +227,7 @@ Due to the method of allocating certain styles of IPv6
 addresses, it will be common for addresses to contain long
 strings of zero bits.
 In order to make writing addresses
-.Pp
-containing zero bits easier a special syntax is available to
+containing zero bits easier, a special syntax is available to
 compress the zeros.
 The use of
 .Dq \&:\&:
@@ -296,7 +295,7 @@ The
 .Nm inet_ntop
 and
 .Nm inet_pton
-functions conforms to the IETF IPv6 BSD API and address formatting
+functions conform to the IETF IPv6 BSD API and address formatting
 specifications.
 Note that
 .Nm inet_pton

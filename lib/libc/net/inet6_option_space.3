@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_option_space.3,v 1.9 2003/01/18 23:53:49 deraadt Exp $
+.\"	$OpenBSD: inet6_option_space.3,v 1.10 2003/05/01 19:17:37 jmc Exp $
 .\"	$KAME: inet6_option_space.3,v 1.7 2000/05/17 14:32:13 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -68,7 +68,7 @@ ancillary data manipulation.
 RFC2292 defines a set of functions to help the application.
 The function prototypes for
 these functions are all in the
-.Aq Li netinet/in.h
+.Aq Pa netinet/in.h
 header.
 .\"
 .Ss inet6_option_space
@@ -248,7 +248,7 @@ is the value of the option data length byte for this option.
 This value is required as an argument to allow the function to
 determine if padding must be appended at the end of the option.
 (The
-.Fn inet6_option_append 
+.Fn inet6_option_append
 function does not need a data length argument
 since the option data length must already be stored by the caller.)
 .Pp
