@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.52 2000/05/19 21:49:11 fgsch Exp $
+.\"	$OpenBSD: options.4,v 1.53 2000/05/25 16:58:25 aaron Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -361,6 +361,9 @@ Enables a scheme that uses partial ordering of buffer cache operations
 to allow metadata updates in FFS to happen asynchronously.  For more
 details see
 .Xr ffs_softupdates 4 .
+.It Cd option BUFCACHEPERCENT=integer
+Percentage of RAM to use as a file system buffer.
+It defaults to 5.
 .It Cd option NFSSERVER
 Include the server side of the
 .Em NFS
