@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.12 1998/03/03 17:05:32 ryker Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.13 1998/03/27 11:51:01 pefo Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -511,7 +511,7 @@ ffs_reallocblks(v)
 			    dbtofsb(fs, buflist->bs_children[i]->b_blkno),
 		            fs->fs_bsize);
 		buflist->bs_children[i]->b_blkno = fsbtodb(fs, blkno);
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		if (!ffs_checkblk(ip,
 		   dbtofsb(fs, buflist->bs_children[i]->b_blkno), fs->fs_bsize))
 			panic("ffs_reallocblks: unallocated block 3");
@@ -1469,7 +1469,7 @@ ffs_freefile(ap)
  * Verify allocation of a block or fragment. Returns true if block or
  * fragment is allocated, false if it is free.
  */
-int
+static int
 ffs_checkblk(ip, bno, size)
 	struct inode *ip;
 	daddr_t bno;
