@@ -1,69 +1,39 @@
+/*	$OpenBSD: pcnfsd_cache.c,v 1.4 2001/08/19 19:16:12 ericj Exp $	*/
 /*	$NetBSD: pcnfsd_cache.c,v 1.2 1995/07/25 22:20:37 gwr Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_cache.c 1.1 91/09/03 12:45:14 SMI */
 /*
-**=====================================================================
-** Copyright (c) 1986,1987,1988,1989,1990,1991 by Sun Microsystems, Inc.
-**	@(#)pcnfsd_cache.c	1.1	9/3/91
-**=====================================================================
-*/
-#include "common.h"
-/*
-**=====================================================================
-**             I N C L U D E   F I L E   S E C T I O N                *
-**                                                                    *
-** If your port requires different include files, add a suitable      *
-** #define in the customization section, and make the inclusion or    *
-** exclusion of the files conditional on this.                        *
-**=====================================================================
-*/
-#include "pcnfsd.h"
+ *=====================================================================
+ * Copyright (c) 1986,1987,1988,1989,1990,1991 by Sun Microsystems, Inc.
+ *	@(#)pcnfsd_cache.c	1.1	9/3/91
+ *=====================================================================
+ */
 
 #include <stdio.h>
 #include <pwd.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 
-extern char    *crypt();
+#include "pcnfsd.h"
 
-
-/*
-**---------------------------------------------------------------------
-**                       Misc. variable definitions
-**---------------------------------------------------------------------
-*/
-
-
-#ifdef USER_CACHE
 #define CACHE_SIZE 16		/* keep it small, as linear searches are
 				 * done */
 struct cache 
-       {
+{
        int   cuid;
        int   cgid;
        char  cpw[_PASSWORD_LEN];
        char  cuname[10];	/* keep this even for machines
 				 * with alignment problems */
-       }User_cache[CACHE_SIZE];
-
-
-
-/*
-**---------------------------------------------------------------------
-**                 User cache support procedures 
-**---------------------------------------------------------------------
-*/
-
+} User_cache[CACHE_SIZE];
 
 int
 check_cache(name, pw, p_uid, p_gid)
-	char           *name;
-   char           *pw;
-   int            *p_uid;
-   int            *p_gid;
+	char *name, *pw;
+	int *p_uid, *p_gid;
 {
-	int             i;
-   int             c1, c2;
+	int i, c1, c2;
 
 	for (i = 0; i < CACHE_SIZE; i++) {
 		if (!strcmp(User_cache[i].cuname, name)) {
@@ -85,9 +55,9 @@ check_cache(name, pw, p_uid, p_gid)
 
 void
 add_cache_entry(p)
-	struct passwd  *p;
+	struct passwd *p;
 {
-	int             i;
+	int i;
 
 	for (i = CACHE_SIZE - 1; i > 0; i--)
 		User_cache[i] = User_cache[i - 1];
@@ -98,8 +68,3 @@ add_cache_entry(p)
 	(void)strncpy(User_cache[0].cuname, p->pw_name, sizeof User_cache[0].cuname-1);
 	User_cache[0].cuname[sizeof User_cache[0].cuname-1] = '\0';
 }
-
-
-#endif				/* USER_CACHE */
-
-

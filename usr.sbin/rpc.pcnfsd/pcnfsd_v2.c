@@ -1,3 +1,4 @@
+/*	$OpenBSD: pcnfsd_v2.c,v 1.3 2001/08/19 19:16:12 ericj Exp $	*/
 /*	$NetBSD: pcnfsd_v2.c,v 1.4 1995/08/14 19:50:10 gwr Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_v2.c 1.2 91/12/18 13:26:13 SMI */
@@ -7,18 +8,6 @@
 **	@(#)pcnfsd_v2.c	1.2	12/18/91
 **=====================================================================
 */
-#include "common.h"
-/*
-**=====================================================================
-**             I N C L U D E   F I L E   S E C T I O N                *
-**                                                                    *
-** If your port requires different include files, add a suitable      *
-** #define in the customization section, and make the inclusion or    *
-** exclusion of the files conditional on this.                        *
-**=====================================================================
-*/
-#include "pcnfsd.h"
-
 #include <stdio.h>
 #include <pwd.h>
 #include <grp.h>
@@ -28,96 +17,40 @@
 #include <sys/ioctl.h>
 #include <netdb.h>
 #include <string.h>
+#include <unistd.h>
 
-#ifdef USE_YP
-#include <rpcsvc/ypclnt.h>
-#endif
+#include "pcnfsd.h"
+#include "paths.h"
 
-#ifndef SYSV
-#include <sys/wait.h>
-#endif
-
-#ifdef ISC_2_0
-#include <sys/fcntl.h>
-#endif
-
-#ifdef SHADOW_SUPPORT
-#include <shadow.h>
-#endif
-
-/*
-**---------------------------------------------------------------------
-** Other #define's 
-**---------------------------------------------------------------------
-*/
-
-void            fillin_extra_groups();
-extern void     scramble();
-extern void    *grab();
-extern char    *crypt();
-extern int      build_pr_list();
-extern pirstat  build_pr_queue();
-extern psrstat  pr_start();
-extern psrstat  pr_start2();
-extern pcrstat  pr_cancel();
-extern pirstat  get_pr_status();
-
-extern struct passwd  *get_password();
-
-#ifdef WTMP
-extern void wlogin();
-#endif
-
-#ifdef USE_YP
-char *find_entry();
-#endif
-
-/*
-**---------------------------------------------------------------------
-**                       Misc. variable definitions
-**---------------------------------------------------------------------
-*/
-
-extern pr_list         printers;
-extern pr_queue        queue;
-
-/*
-**=====================================================================
-**                      C O D E   S E C T I O N                       *
-**=====================================================================
-*/
-
+static void fillin_extra_groups __P((char *, u_int, int *, u_int *));
 
 static char no_comment[] = "No comment";
 static char not_supported[] = "Not supported";
 static char pcnfsd_version[] = "@(#)pcnfsd_v2.c	1.2 - rpc.pcnfsd V2.0 (c) 1991 Sun Technology Enterprises, Inc.";
 
 /*ARGSUSED*/
-void *pcnfsd2_null_2_svc(arg, req)
-void*arg;
-struct svc_req *req;
+void *
+pcnfsd2_null_2_svc(arg, req)
+	void*arg;
+	struct svc_req *req;
 {
-static char dummy;
-return((void *)&dummy);
+	static char dummy;
+
+	return ((void *)&dummy);
 }
 
-v2_auth_results *pcnfsd2_auth_2_svc(arg, req)
-v2_auth_args *arg;
-struct svc_req *req;
+v2_auth_results *
+pcnfsd2_auth_2_svc(arg, req)
+	v2_auth_args *arg;
+	struct svc_req *req;
 {
-static v2_auth_results  r;
+	static v2_auth_results  r;
 
-char            uname[32];
-char            pw[64];
-int             c1, c2;
-struct passwd  *p;
-static u_int           extra_gids[EXTRAGIDLEN];
-static char     home[MAXPATHLEN];
-#ifdef USE_YP
-char           *yphome;
-char           *cp;
-#endif /*USE_YP*/
-
+	char uname[32], pw[64];
+	int c1, c2;
+	struct passwd *p;
+	static u_int extra_gids[EXTRAGIDLEN];
+	static char home[MAXPATHLEN];
 
 	r.stat = AUTH_RES_FAIL;	/* assume failure */
 	r.uid = (int)-2;
@@ -133,236 +66,188 @@ char           *cp;
 	scramble(arg->id, uname);
 	scramble(arg->pw, pw);
 
-#ifdef USER_CACHE
-	if(check_cache(uname, pw, &r.uid, &r.gid)) {
-		 r.stat = AUTH_RES_OK;
-#ifdef WTMP
+	if (check_cache(uname, pw, &r.uid, &r.gid)) {
+		r.stat = AUTH_RES_OK;
 		wlogin(uname, req);
-#endif
-                 fillin_extra_groups
-			(uname, r.gid, &r.gids.gids_len, extra_gids);
-#ifdef USE_YP
-		yphome = find_entry(uname, "auto.home");
-		if(yphome) {
-			strncpy(home, yphome, sizeof home-1);
-			home[sizeof home-1] = '\0';
-			free(yphome);
-			cp = strchr(home, ':');
-			cp++;
-			cp = strchr(cp, ':');
-			if(cp)
-				*cp = '/';
-		}
-#endif
-		 return (&r);
-   }
-#endif
+		fillin_extra_groups(uname, r.gid, &r.gids.gids_len, extra_gids);
+		return (&r);
+	}
 
-	p = get_password(uname);
-	if (p == (struct passwd *)NULL)
-	   return (&r);
+	if ((p = get_password(uname)) == NULL)
+		return (&r);
 
 	c1 = strlen(pw);
 	c2 = strlen(p->pw_passwd);
 	if ((c1 && !c2) || (c2 && !c1) ||
-	   (strcmp(p->pw_passwd, crypt(pw, p->pw_passwd)))) 
-           {
-	   return (&r);
-	   }
+	   (strcmp(p->pw_passwd, crypt(pw, p->pw_passwd)))) {
+		return (&r);
+	}
+
 	r.stat = AUTH_RES_OK;
 	r.uid = p->pw_uid;
 	r.gid = p->pw_gid;
-#ifdef WTMP
 	wlogin(uname, req);
-#endif
         fillin_extra_groups(uname, r.gid, &r.gids.gids_len, extra_gids);
 
-#ifdef USE_YP
-	yphome = find_entry(uname, "auto.home");
-	if(yphome) {
-		strncpy(home, yphome, sizeof home-1);
-		home[sizeof home-1] = '\0';
-		free(yphome);
-		cp = strchr(home, ':');
-		cp++;
-		cp = strchr(cp, ':');
-		if(cp)
-			*cp = '/';
-	}
-#endif
-
-#ifdef USER_CACHE
 	add_cache_entry(p);
-#endif
 
-return(&r);
-
+	return (&r);
 }
 
-v2_pr_init_results *pcnfsd2_pr_init_2_svc(arg, req)
-v2_pr_init_args *arg;
-struct svc_req *req;
+v2_pr_init_results *
+pcnfsd2_pr_init_2_svc(arg, req)
+	v2_pr_init_args *arg;
+	struct svc_req *req;
 {
-static v2_pr_init_results res;
+	static v2_pr_init_results res;
 
-	res.stat = 
-	 (pirstat) pr_init(arg->system, arg->pn, &res.dir);
+	res.stat = (pirstat)pr_init(arg->system, arg->pn, &res.dir);
 	res.cm = &no_comment[0];
 
-
-return(&res);
+	return (&res);
 }
 
-v2_pr_start_results *pcnfsd2_pr_start_2_svc(arg, req)
-v2_pr_start_args *arg;
-struct svc_req *req;
+v2_pr_start_results *
+pcnfsd2_pr_start_2_svc(arg, req)
+	v2_pr_start_args *arg;
+	struct svc_req *req;
 {
-static v2_pr_start_results res;
+	static v2_pr_start_results res;
 
-	res.stat =
-	  (psrstat) pr_start2(arg->system, arg->pn, arg->user,
-	  arg ->file, arg->opts, &res.id);
+	res.stat = (psrstat)pr_start2(arg->system, arg->pn, arg->user,
+			    arg->file, arg->opts, &res.id);
 	res.cm = &no_comment[0];
 
-return(&res);
+	return (&res);
 }
 
 /*ARGSUSED*/
-v2_pr_list_results *pcnfsd2_pr_list_2_svc(arg, req)
-void *arg;
-struct svc_req *req;
+v2_pr_list_results *
+pcnfsd2_pr_list_2_svc(arg, req)
+	void *arg;
+	struct svc_req *req;
 {
-static v2_pr_list_results res;
+	static v2_pr_list_results res;
 
-	if(printers == NULL)
+	if (printers == NULL)
 		(void)build_pr_list();
 	res.cm = &no_comment[0];
 	res.printers = printers;
 
-return(&res);
+	return (&res);
 }
 
-v2_pr_queue_results *pcnfsd2_pr_queue_2_svc(arg, req)
-v2_pr_queue_args *arg;
-struct svc_req *req;
+v2_pr_queue_results *
+pcnfsd2_pr_queue_2_svc(arg, req)
+	v2_pr_queue_args *arg;
+	struct svc_req *req;
 {
-static v2_pr_queue_results res;
+	static v2_pr_queue_results res;
 
-	res.stat = build_pr_queue(arg->pn, arg->user,
-		arg->just_mine, &res.qlen, &res.qshown);
+	res.stat = build_pr_queue(arg->pn, arg->user, arg->just_mine,
+		   &res.qlen, &res.qshown);
 	res.cm = &no_comment[0];
 	res.just_yours = arg->just_mine;
 	res.jobs = queue;
-	
 
-return(&res);
+	return (&res);
 }
 
-v2_pr_status_results *pcnfsd2_pr_status_2_svc(arg, req)
-v2_pr_status_args *arg;
-struct svc_req *req;
+v2_pr_status_results *
+pcnfsd2_pr_status_2_svc(arg, req)
+	v2_pr_status_args *arg;
+	struct svc_req *req;
 {
-static v2_pr_status_results res;
-static char status[128];
+	static v2_pr_status_results res;
+	static char status[128];
 
 	res.stat = get_pr_status(arg->pn, &res.avail, &res.printing,
-		&res.qlen, &res.needs_operator, &status[0]);
+		   &res.qlen, &res.needs_operator, &status[0]);
 	res.status = &status[0];	
 	res.cm = &no_comment[0];
 
-return(&res);
+	return (&res);
 }
 
-v2_pr_cancel_results *pcnfsd2_pr_cancel_2_svc(arg, req)
-v2_pr_cancel_args *arg;
-struct svc_req *req;
+v2_pr_cancel_results *
+pcnfsd2_pr_cancel_2_svc(arg, req)
+	v2_pr_cancel_args *arg;
+	struct svc_req *req;
 {
-static v2_pr_cancel_results res;
+	static v2_pr_cancel_results res;
 
 	res.stat = pr_cancel(arg->pn, arg->user, arg->id);
 	res.cm = &no_comment[0];
 
-return(&res);
+	return (&res);
 }
 
 /*ARGSUSED*/
-v2_pr_requeue_results *pcnfsd2_pr_requeue_2_svc(arg, req)
-v2_pr_requeue_args *arg;
-struct svc_req *req;
+v2_pr_requeue_results *
+pcnfsd2_pr_requeue_2_svc(arg, req)
+	v2_pr_requeue_args *arg;
+	struct svc_req *req;
 {
-static v2_pr_requeue_results res;
-	res.stat = PC_RES_FAIL;
-	res.cm = &not_supported[0];
-
-return(&res);
-}
-
-/*ARGSUSED*/
-v2_pr_hold_results *pcnfsd2_pr_hold_2_svc(arg, req)
-v2_pr_hold_args *arg;
-struct svc_req *req;
-{
-static v2_pr_hold_results res;
+	static v2_pr_requeue_results res;
 
 	res.stat = PC_RES_FAIL;
 	res.cm = &not_supported[0];
 
-return(&res);
+	return (&res);
 }
 
 /*ARGSUSED*/
-v2_pr_release_results *pcnfsd2_pr_release_2_svc(arg, req)
-v2_pr_release_args *arg;
-struct svc_req *req;
+v2_pr_hold_results *
+pcnfsd2_pr_hold_2_svc(arg, req)
+	v2_pr_hold_args *arg;
+	struct svc_req *req;
 {
-static v2_pr_release_results res;
+	static v2_pr_hold_results res;
 
 	res.stat = PC_RES_FAIL;
 	res.cm = &not_supported[0];
 
-return(&res);
+	return (&res);
 }
 
 /*ARGSUSED*/
-v2_pr_admin_results *pcnfsd2_pr_admin_2_svc(arg, req)
-v2_pr_admin_args *arg;
-struct svc_req *req;
+v2_pr_release_results *
+pcnfsd2_pr_release_2_svc(arg, req)
+	v2_pr_release_args *arg;
+	struct svc_req *req;
 {
-static v2_pr_admin_results res;
-/*
-** The default action for admin is to fail.
-** If someone wishes to implement an administration
-** mechanism, and isn't worried about the security
-** holes, go right ahead.
-*/
+	static v2_pr_release_results res;
+
+	res.stat = PC_RES_FAIL;
+	res.cm = &not_supported[0];
+
+	return (&res);
+}
+
+/*ARGSUSED*/
+v2_pr_admin_results *
+pcnfsd2_pr_admin_2_svc(arg, req)
+	v2_pr_admin_args *arg;
+	struct svc_req *req;
+{
+	static v2_pr_admin_results res;
 
 	res.cm = &not_supported[0];
 	res.stat = PI_RES_FAIL;
 
-return(&res);
+	return (&res);
 }
 
 void
 free_mapreq_results(p)
 mapreq_res p;
 {
-	if(p->mapreq_next)
+	if (p->mapreq_next)
 		free_mapreq_results(p->mapreq_next); /* recurse */
-	if(p->name)
+	if (p->name)
 		(void)free(p->name);
 	(void)free(p);
 	return;
-}
-
-static char *
-my_strdup(s)
-char *s;
-{
-	char *r;
-
-	r = (char *)grab(strlen(s)+1);
-	strcpy(r, s);
-	return(r);
 }
 
 v2_mapid_results *pcnfsd2_mapid_2_svc(arg, req)
@@ -378,13 +263,13 @@ mapreq_res next_r;
 mapreq_res last_r = NULL;
 
 
-	if(res.res_list) {
+	if (res.res_list) {
 		free_mapreq_results(res.res_list);
 		res.res_list = NULL;
 	}
 
 	a = arg->req_list;
-	while(a) {
+	while (a) {
 		next_r = (struct mapreq_res_item *)
 			grab(sizeof(struct mapreq_res_item));
 		next_r->stat = MAP_RES_UNKNOWN;
@@ -393,7 +278,7 @@ mapreq_res last_r = NULL;
 		next_r->name = NULL;
 		next_r->mapreq_next = NULL;
 
-		if(last_r == NULL)
+		if (last_r == NULL)
 			res.res_list = next_r;
 		else
 			last_r->mapreq_next = next_r;
@@ -401,43 +286,43 @@ mapreq_res last_r = NULL;
 		switch(a->req) {
 		case MAP_REQ_UID:
 			p_passwd = getpwuid((uid_t)a->id);
-			if(p_passwd) {
-				next_r->name = my_strdup(p_passwd->pw_name);
+			if (p_passwd) {
+				next_r->name = strdup(p_passwd->pw_name);
 				next_r->stat = MAP_RES_OK;
 			}
 			break;
 		case MAP_REQ_GID:
 			p_group = getgrgid((gid_t)a->id);
-			if(p_group) {
-				next_r->name = my_strdup(p_group->gr_name);
+			if (p_group) {
+				next_r->name = strdup(p_group->gr_name);
 				next_r->stat = MAP_RES_OK;
 			}
 			break;
 		case MAP_REQ_UNAME:
-			next_r->name = my_strdup(a->name);
+			next_r->name = strdup(a->name);
 			p_passwd = getpwnam(a->name);
-			if(p_passwd) {
+			if (p_passwd) {
 				next_r->id = p_passwd->pw_uid;
 				next_r->stat = MAP_RES_OK;
 			}
 			break;
 		case MAP_REQ_GNAME:
-			next_r->name = my_strdup(a->name);
+			next_r->name = strdup(a->name);
 			p_group = getgrnam(a->name);
-			if(p_group) {
+			if (p_group) {
 				next_r->id = p_group->gr_gid;
 				next_r->stat = MAP_RES_OK;
 			}
 			break;
 		}
-		if(next_r->name == NULL)
-			next_r->name = my_strdup("");
+		if (next_r->name == NULL)
+			next_r->name = strdup("");
 		a = a->mapreq_next;
 	}
 
 	res.cm = &no_comment[0];
 
-return(&res);
+	return (&res);
 }
 
 	
@@ -451,7 +336,7 @@ static v2_alert_results res;
 	res.stat = ALERT_RES_FAIL;
 	res.cm = &not_supported[0];
 
-return(&res);
+	return (&res);
 }
 
 /*ARGSUSED*/
@@ -467,7 +352,7 @@ static int onetime = 1;
 #define QUICK 100
 #define SLOW 2000
 
-	if(onetime) {
+	if (onetime) {
 		onetime = 0;
 		facilities[PCNFSD2_NULL] = QUICK;
 		facilities[PCNFSD2_INFO] = QUICK;
@@ -491,12 +376,12 @@ static int onetime = 1;
 	res.vers = &pcnfsd_version[0];
 	res.cm = &no_comment[0];
 
-return(&res);
+	return (&res);
 }
 
 
 
-void
+static void
 fillin_extra_groups(uname, main_gid, len, extra_gids)
 char *uname;
 u_int main_gid;
@@ -509,14 +394,14 @@ int n = 0;
 
 	setgrent();
 
-	while(n < EXTRAGIDLEN) {
+	while (n < EXTRAGIDLEN) {
 		grp = getgrent();
-		if(grp == NULL)
+		if (grp == NULL)
 			break;
-		if(grp->gr_gid == main_gid)
+		if (grp->gr_gid == main_gid)
 			continue;
-		for(members = grp->gr_mem; members && *members; members++) {
-			if(!strcmp(*members, uname)) {
+		for (members = grp->gr_mem; members && *members; members++) {
+			if (!strcmp(*members, uname)) {
 				extra_gids[n++] = grp->gr_gid;
 				break;
 			}
@@ -525,48 +410,3 @@ int n = 0;
 	endgrent();
 	*len = n;
 }
-
-#ifdef USE_YP
-/* the following is from rpcsvc/yp_prot.h */
-#define YPMAXDOMAIN 64
-/*
- * find_entry returns NULL on any error (printing a message) and
- * otherwise returns a pointer to the malloc'd result. The caller
- * is responsible for free()ing the result string.
- */
-char *
-find_entry(key, map)
-char *key;
-char *map;
-{
-	int err;
-	char *val = NULL;
-	char *cp;
-	int len = 0;
-	static char domain[YPMAXDOMAIN+1];
-
-	if(getdomainname(domain, YPMAXDOMAIN) ) {
-		msg_out("rpc.pcnfsd: getdomainname failed");
-		return(NULL);
-	}
-
-	if (err = yp_bind(domain)) {
-#ifdef	DEBUG
-		msg_out("rpc.pcnfsd: yp_bind failed");
-#endif
-		return(NULL);
-	}
-
-	err = yp_match(domain, map, key, strlen(key), &val, &len);
-
-	if (err) {
-		msg_out("rpc.pcnfsd: yp_match failed");
-		return(NULL);
-	}
-
-	if(cp = strchr(val, '\n'))
-			*cp = '\0';		/* in case we get an extra NL at the end */
-	return(val);
-}
-
-#endif

@@ -1,3 +1,4 @@
+/*	$OpenBSD: pcnfsd.x,v 1.2 2001/08/19 19:16:12 ericj Exp $	*/
 /*	$NetBSD: pcnfsd.x,v 1.2 1995/07/25 22:20:33 gwr Exp $	*/
 
 /* The maximum number of bytes in a user name argument */

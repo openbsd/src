@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.7 2000/09/03 18:41:22 espie Exp $
+#	$OpenBSD: Makefile,v 1.8 2001/08/19 19:16:12 ericj Exp $
 
 .include <bsd.own.mk>
 
 PROG=	rpc.pcnfsd
 MAN=	pcnfsd.8
 MLINKS= pcnfsd.8 rpc.pcnfsd.8
-CFLAGS += -DUSER_CACHE -DWTMP -I${.OBJDIR}
+CFLAGS += -I${.OBJDIR}
 
 .if (${YP:L} == "yes")
 CFLAGS+=-DUSE_YP
