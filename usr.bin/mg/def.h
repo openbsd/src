@@ -1,4 +1,6 @@
-/*	$OpenBSD: def.h,v 1.29 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: def.h,v 1.30 2002/02/20 22:30:54 vincent Exp $	*/
+
+#include <sys/queue.h>
 
 /*
  * This file is the general header file for all parts
@@ -252,6 +254,26 @@ typedef struct {
 } REGION;
 
 /*
+ * This structure holds information about recent actions for the Undo command.
+ */
+struct undo_rec {
+        LIST_ENTRY(undo_rec) next;
+        BUFFER          *buf;
+	enum {
+		INSERT = 1,
+		DELETE,
+		CHANGE,
+		BOUNDARY
+	} type;
+	REGION		 region;
+	int		 pos;
+	int		 size;
+        char            *content;
+};
+   
+LIST_HEAD(undo_list, undo_rec);
+
+/*
  * Prototypes.
  */
 
@@ -490,6 +512,8 @@ int	 lowerregion(int, int);
 int	 upperregion(int, int);
 int	 prefixregion(int, int);
 int	 setprefix(int, int);
+int	 region_get_data(REGION *, char *, int);
+int	 region_put_data(const char *, int);
 
 /* search.c X */
 int	 forwsearch(int, int);
@@ -545,6 +569,15 @@ int	 cntmatchlines(int, int);
 int	 cntnonmatchlines(int, int);
 #endif	/* REGEX */
 
+/* undo.c X */
+int	 undo_init(void);
+int	 undo_enable(int);
+int	 undo_add_boundary(void);
+int	 undo_add_insert(LINE *, int, int);
+int	 undo_add_delete(LINE *, int, int);
+int	 undo_add_change(LINE *, int, int);
+int	 undo(void);
+
 /*
  * Externals.
  */
@@ -565,6 +598,7 @@ extern int	 ttcol;
 extern int	 tttop;
 extern int	 ttbot;
 extern int	 tthue;
+extern int	 undoaction;
 extern int	 defb_nmodes;
 extern int	 defb_flag;
 extern const char cinfo[];
@@ -580,4 +614,3 @@ extern char	 prompt[];
 int	 tceeol;
 int	 tcinsl;
 int	 tcdell;
-

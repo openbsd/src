@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.12 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: line.c,v 1.13 2002/02/20 22:30:54 vincent Exp $	*/
 
 /*
  *		Text line handling.
@@ -169,7 +169,7 @@ linsert(n, c)
 
 	/* current line */
 	lp1 = curwp->w_dotp;
-
+	
 	/* special case for the end */
 	if (lp1 == curbp->b_linep) {
 		LINE *lp2, *lp3;
@@ -182,7 +182,6 @@ linsert(n, c)
 		/* allocate a new line */
 		if ((lp2 = lalloc(n)) == NULL)
 			return FALSE;
-
 		/* previous line */
 		lp3 = lp1->l_bp;
 		/* link in */
@@ -200,7 +199,8 @@ linsert(n, c)
 			if (wp->w_markp == lp1)
 				wp->w_markp = lp2;
 		}
-
+		if (!undoaction)
+			undo_add_insert(lp2, 0, n);
 		curwp->w_doto = n;
 		return TRUE;
 	}
@@ -230,7 +230,8 @@ linsert(n, c)
 				wp->w_marko += n;
 		}
 	}
-
+	if (!undoaction)
+		undo_add_insert(curwp->w_dotp, doto, n);
 	return TRUE;
 }
 
@@ -311,6 +312,10 @@ ldelete(n, kflag)
 	int	 doto;
 	char	*cp1, *cp2;
 
+	if (!undoaction) {
+		undo_add_delete(curwp->w_dotp, curwp->w_doto, n);
+	}
+	
 	/*
 	 * HACK - doesn't matter, and fixes back-over-nl bug for empty
 	 *	kill buffers.
@@ -466,7 +471,7 @@ lreplace(plen, st, f)
 	int	rtype;	/* capitalization		 */
 	int	c;	/* used for random characters	 */
 	int	doto;	/* offset into line		 */
-
+	
 	/*
 	 * Find the capitalization of the word that was found.  f says use
 	 * exact case of replacement string (same thing that happens with
@@ -485,6 +490,7 @@ lreplace(plen, st, f)
 			}
 		}
 	}
+	
 	/*
 	 * make the string lengths match (either pad the line
 	 * so that it will fit, or scrunch out the excess).
@@ -528,6 +534,7 @@ lreplace(plen, st, f)
 	lchange(WFHARD);
 	return (TRUE);
 }
+
 
 /*
  * Delete all of the text saved in the kill buffer.  Called by commands when
