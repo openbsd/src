@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.28 1998/06/08 19:48:56 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.29 1998/09/01 17:08:22 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.28 1998/06/08 19:48:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.29 1998/09/01 17:08:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1479,7 +1479,7 @@ quote1(initial, argc, argv)
 	/* Make double (tripple?) sure the sucker is NUL terminated */
 	buf[sizeof(buf) - 1] = '\0';
 
-	if (command(buf) == PRELIM) {
+	if (command("%s", buf) == PRELIM) {
 		while (getreply(0) == PRELIM)
 			continue;
 	}
