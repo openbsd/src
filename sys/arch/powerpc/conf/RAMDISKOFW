@@ -4,50 +4,48 @@
 
 machine		powerpc
 
-maxusers	32
+maxusers	8
 
-# Standard system options (should go into std.powerpc?)
-options		SWAPPAGER, VNODEPAGER, DEVPAGER
-options		EXEC_ELF
-options		SYS_TYPE=OFWMACH
+# Standard system option (should go into std.powerpc?)
+option		SWAPPAGER, VNODEPAGER, DEVPAGER
+option		SYS_TYPE=OFWMACH
 
 # various hacks due to bugs in Openfirmware implementation
-options		FIREPOWERBUGS
+option		FIREPOWERBUGS
 
-#options		IPKDBUSERHACK
-#makeoptions	DEBUG="-g"
+#option		IPKDBUSERHACK
+#makeoption	DEBUG="-g"
 
-options		DDB
-options		KTRACE
-options		SYSCALL_DEBUG
-options		TCP_COMPAT_42
-options		COMPAT_43
-options		COMPAT_09
-options		COMPAT_10
-options		COMPAT_12
+#option		DDB
+#option		KTRACE
+#option		SYSCALL_DEBUG
+option		TCP_COMPAT_42
+option		COMPAT_43
+option		COMPAT_09
+option		COMPAT_10
+option		COMPAT_12
 
-options		FFS
-options		MFS
+option		FFS
+option		MFS
 
-options		NFSCLIENT
-#options		NFSSERVER
+option		NFSCLIENT
+#option		NFSSERVER
 
-options		CD9660
-options		MSDOSFS
-options		FDESC
-options		FIFO
-options		KERNFS
-options		NULLFS
-#options		PORTAL
-options		PROCFS
-#options		UMAPFS
-#options		UNION
+option		CD9660
+option		MSDOSFS
+#option		FDESC
+option		FIFO
+option		KERNFS
+#option		NULLFS
+#option		PORTAL
+option		PROCFS
+#option		UMAPFS
+#option		UNION
 
-options		INET
-options		NMBCLUSTERS=1024
+option		INET
+option		NMBCLUSTERS=1024
 
-#options		MAXUSERS=20
-#options		TARGET_ELF
+#option		MAXUSERS=20
 
 config                bsd     root on rd0a swap on rd0b
 

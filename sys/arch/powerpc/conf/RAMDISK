@@ -9,24 +9,24 @@ maxusers	8
 # Standard system options
 option		SWAPPAGER
 option		DEVPAGER
-option		NATIVE_ELF
 
 option		FIREPOWERBUGS
 
 # specific define for VI boards
 options		power4e
 
-options		KTRACE
-options		DEBUG
+#options		KTRACE
+#options		DEBUG
 
 option		NFSCLIENT
-option		NFSSERVER
+#option		NFSSERVER
 
 option		CD9660
 option		MSDOSFS
 options		FIFO
 options		KERNFS
-option		FFS,QUOTA
+option		FFS
+#option		QUOTA
 option		MFS
 
 options		INET
@@ -72,7 +72,7 @@ uk*		at scsibus? target ? lun ?
 
 pseudo-device	loop		 1	# network loopback
 #pseudo-device	bpfilter	 8	# packet filter ports
-pseudo-device	sl		 2	# serial-line IP ports
+#pseudo-device	sl		 2	# serial-line IP ports
 pseudo-device	ppp		 2	# serial-line PPP ports
 #pseudo-device	tun		 2	# network tunneling over tty
 
