@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.239 2002/12/07 18:16:59 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.240 2002/12/07 20:09:57 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -228,7 +228,7 @@ int	check_rulestate(int);
 int	kw_cmp(const void *, const void *);
 int	lookup(char *);
 int	lgetc(FILE *);
-int	lungetc(int, FILE *);
+int	lungetc(int);
 int	findeol(void);
 int	yylex(void);
 struct	node_host *host(char *, int);
@@ -3219,7 +3219,7 @@ lgetc(FILE *fin)
 }
 
 int
-lungetc(int c, FILE *fin)
+lungetc(int c)
 {
 	if (c == EOF)
 		return (EOF);
@@ -3285,7 +3285,7 @@ top:
 				continue;
 			}
 			*p = '\0';
-			lungetc(c, fin);
+			lungetc(c);
 			break;
 		}
 		val = symget(buf);
@@ -3332,7 +3332,7 @@ top:
 			yylval.v.i = PF_OP_NE;
 			return (PORTUNARY);
 		}
-		lungetc(next, fin);
+		lungetc(next);
 		break;
 	case '<':
 		next = lgetc(fin);
@@ -3343,7 +3343,7 @@ top:
 			yylval.v.i = PF_OP_LE;
 		} else {
 			yylval.v.i = PF_OP_LT;
-			lungetc(next, fin);
+			lungetc(next);
 		}
 		return (PORTUNARY);
 		break;
@@ -3356,7 +3356,7 @@ top:
 			yylval.v.i = PF_OP_GE;
 		} else {
 			yylval.v.i = PF_OP_GT;
-			lungetc(next, fin);
+			lungetc(next);
 		}
 		return (PORTUNARY);
 		break;
@@ -3364,7 +3364,7 @@ top:
 		next = lgetc(fin);
 		if (next == '>')
 			return (ARROW);
-		lungetc(next, fin);
+		lungetc(next);
 		break;
 	}
 
@@ -3382,7 +3382,7 @@ top:
 				return (findeol());
 			}
 		} while ((c = lgetc(fin)) != EOF && (allowed_in_string(c)));
-		lungetc(c, fin);
+		lungetc(c);
 		*p = '\0';
 		token = lookup(buf);
 		yylval.v.string = strdup(buf);
