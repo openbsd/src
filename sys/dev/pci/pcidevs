@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.656 2003/07/24 01:10:59 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.657 2003/07/24 07:25:05 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -556,6 +556,7 @@ vendor INVERTEX		0x14e1	Invertex
 vendor BROADCOM		0x14e4	Broadcom
 vendor CONEXANT		0x14f1	Conexant
 vendor DELTA		0x1500	Delta
+vendor MYSON		0x1516	Myson Century Inc
 vendor TOPIC		0x151f	Topic/SmartLink
 vendor ENE		0x1524	ENE Technology Inc
 vendor TERRATEC		0x153b	TerraTec Electronic Gmbh
@@ -1808,6 +1809,9 @@ product MRTMAGMA DMA4		0x0011	DMA4 serial
 /* Mylex products */
 product MYLEX 960P		0x0001	DAC960P RAID
 product MYLEX ACCELERAID	0x0050	AcceleRAID
+
+/* Myson Century Inc products */
+product MYSON MTD803		0x0803	MTD803
 
 /* Mutech products */
 product MUTECH MV1000		0x0001	MV1000
