@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux.h,v 1.13 2004/07/11 01:15:51 mickey Exp $	*/
+/*	$OpenBSD: hpux.h,v 1.14 2004/09/19 22:03:16 mickey Exp $	*/
 /*	$NetBSD: hpux.h,v 1.11 1997/04/01 19:58:58 scottr Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ struct hpux_shmid_ds {
 #define	HPUX_FPE_INTDIV_TRAP	5	/* T_ZERODIV+USER */
 
 /* HP-UX POSIX signal stuff implementation */
-typedef struct __hpux_sigset_t { long sigset[8]; } hpux_sigset_t;
+typedef struct __hpux_sigset_t { u_int sigset[8]; } hpux_sigset_t;
 struct hpux_sigaction {
 	void		(*sa__handler)(int);
 	hpux_sigset_t	sa_mask;
