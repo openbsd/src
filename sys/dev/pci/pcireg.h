@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.12 1999/10/26 17:43:58 downsj Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.13 2000/08/02 02:25:14 mickey Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.11 1996/08/10 15:42:33 mycroft Exp $	*/
 
 /*
@@ -315,6 +315,8 @@ typedef u_int8_t pci_revision_t;
  */
 #define	PCI_MAPREG_START		0x10
 #define	PCI_MAPREG_END			0x28
+#define	PCI_MAPREG_PPB_END		0x18
+#define	PCI_MAPREG_PCB_END		0x14
 
 #define	PCI_MAPREG_TYPE(mr)						\
 	    ((mr) & PCI_MAPREG_TYPE_MASK)
@@ -396,5 +398,6 @@ typedef u_int8_t pci_intr_line_t;
 #define	PCI_INTERRUPT_PIN_B			0x02
 #define	PCI_INTERRUPT_PIN_C			0x03
 #define	PCI_INTERRUPT_PIN_D			0x04
+#define	PCI_INTERRUPT_PIN_MAX			0x04
 
 #endif /* _DEV_PCI_PCIREG_H_ */
