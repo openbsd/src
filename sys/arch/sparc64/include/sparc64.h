@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64.h,v 1.4 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: sparc64.h,v 1.5 2003/12/16 20:00:16 jason Exp $	*/
 /*	$NetBSD: sparc64.h,v 1.3 2000/10/20 05:47:03 mrg Exp $	*/
 
 /*
@@ -54,20 +54,8 @@ paddr_t prom_get_msgbuf(int len, int align);
 /*
  * Compatibility stuff.
  */
-#define OF_findroot()	OF_peer(0)
-#define OF_fd_phandle(x) OF_instance_to_package(x)
-
-/*
- * These two functions get used solely in boot() in machdep.c.
- *
- * Not sure whether boot itself should be implementation dependent instead.	XXX
- */
-void ppc_exit(void) __attribute__((__noreturn__));
-void ppc_boot(char *bootspec) __attribute__((__noreturn__));
-
-int dk_match(char *name);
-
-void ofrootfound(void);
+// #define OF_findroot()	OF_peer(0)
+// #define OF_fd_phandle(x) OF_instance_to_package(x)
 
 /*
  * Debug
