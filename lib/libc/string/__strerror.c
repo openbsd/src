@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: __strerror.c,v 1.11 2004/04/30 17:13:02 espie Exp $";
+static char *rcsid = "$OpenBSD: __strerror.c,v 1.12 2004/05/01 10:52:59 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -59,11 +59,10 @@ __digits10(unsigned int num)
 	return i;
 }
 
-static char *
-__itoa(int num, char *buffer, size_t maxlen)
+void
+__itoa(int num, char *buffer, size_t start, size_t end)
 {
-	char *p;
-	size_t len;
+	size_t pos;
 	unsigned int a;
 	int neg;
 
@@ -76,22 +75,25 @@ __itoa(int num, char *buffer, size_t maxlen)
 		neg = 0;
 	}
 
-	len = __digits10(a);
+	pos = start + __digits10(a);
 	if (neg)
-	    len++;
+	    pos++;
 
-	if (len >= maxlen)
-		return NULL;
-
-	buffer[len--] = '\0';
+	if (pos < end)
+		buffer[pos] = '\0';
+	else 
+		buffer[end-1] = '\0';
+	pos--;
 	do {
-		buffer[len--] = (a % 10) + '0';
+		
+		if (pos < end)
+			buffer[pos] = (a % 10) + '0';
+		pos--;
 		a /= 10;
 	} while (a != 0);
 	if (neg)
-	    *buffer = '-';
-
-	return buffer;
+	    if (pos < end)
+		    buffer[pos] = '-';
 }
 
 /*
@@ -125,8 +127,7 @@ __strerror(int num, char *buf)
 #else
 		len = strlcpy(buf, UPREFIX, NL_TEXTMAX);
 #endif
-		if (len < NL_TEXTMAX)
-			__itoa(num, buf + len, NL_TEXTMAX - len);
+		__itoa(num, buf, len, NL_TEXTMAX);
 		errno = EINVAL;
 	}
 
