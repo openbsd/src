@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.12 2004/12/14 01:59:07 mickey Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.13 2004/12/15 14:01:03 pat Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -25,6 +25,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _NETINET_IP_CARP_H_
+#define _NETINET_IP_CARP_H_
 
 /*
  * The CARP header layout is as follows:
@@ -161,4 +164,5 @@ struct ifaddr	*carp_iamatch6(void *, struct in6_addr *);
 void		*carp_macmatch6(void *, struct mbuf *, struct in6_addr *);
 int		 carp_input(struct ether_header *, struct mbuf *);
 int		 carp_sysctl(int *, u_int,  void *, size_t *, void *, size_t);
-#endif
+#endif /* _KERNEL */
+#endif /* _NETINET_IP_CARP_H_ */
