@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.8 1996/11/23 00:28:38 niklas Exp $
+#	$OpenBSD: sys.mk,v 1.9 1996/11/24 02:47:42 niklas Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -13,14 +13,14 @@ ARFLAGS?=	rl
 RANLIB?=	ranlib
 
 AS?=		as
-AFLAGS?=
+AFLAGS?=	${DEBUG}
 COMPILE.s?=	${CC} ${AFLAGS} -c
 LINK.s?=	${CC} ${AFLAGS} ${LDFLAGS}
 COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CC?=		cc
-CFLAGS?=	-O
+CFLAGS?=	-O ${DEBUG}
 COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 

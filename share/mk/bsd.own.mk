@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.12 1996/09/16 10:23:58 downsj Exp $
+#	$OpenBSD: bsd.own.mk,v 1.13 1996/11/24 02:47:41 niklas Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
@@ -58,7 +58,9 @@ NLSOWN?=	root
 NLSMODE?=	${NONBINMODE}
 
 COPY?=		-c
+.ifndef DEBUG
 STRIP?=		-s
+.endif
 
 # This may be changed for _single filesystem_ configurations (such as
 # routers and other embedded systems); normal systems should leave it alone!
