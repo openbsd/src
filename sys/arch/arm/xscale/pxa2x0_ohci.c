@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.9 2005/02/17 22:10:35 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.10 2005/02/17 22:44:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -151,9 +151,9 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pxa2x0_intr_establish(sc->sc_intr, IPL_USB, ohci_intr, sc,
 	    sc->sc.sc_bus.bdev.dv_xname);
 
-        pxa2x0_gpio_set_function(35, GPIO_ALT_FN_2_IN);
-        pxa2x0_gpio_set_function(37, GPIO_ALT_FN_1_OUT);
-        pxa2x0_gpio_set_function(41, GPIO_ALT_FN_2_IN);
+	pxa2x0_gpio_set_function(35, GPIO_ALT_FN_2_IN);
+	pxa2x0_gpio_set_function(37, GPIO_ALT_FN_1_OUT);
+	pxa2x0_gpio_set_function(41, GPIO_ALT_FN_2_IN);
 	sc->sc_gpioih = pxa2x0_gpio_intr_establish(41, IST_EDGE_BOTH, IPL_BIO,
 	    ohci_intr, sc, sc->sc.sc_bus.bdev.dv_xname);
 
