@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.57 2001/08/24 09:29:14 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.58 2001/08/25 22:22:11 niklas Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include "timer.h"
 #include "transport.h"
 #include "util.h"
+#include "x509.h"
 
 /* Backwards compatibility.  */
 #ifndef NI_MAXHOST
@@ -1844,6 +1845,10 @@ ipsec_get_id (char *section, int *id, struct sockaddr **addr,
   return 0;
 }
 
+/*
+ * XXX I rather want this function to return a status code, and fail if
+ * we cannot fit the information in the supplied buffer.
+ */
 static void
 ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
 		 int isakmpform)
@@ -1856,9 +1861,9 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
     {
       if (!isakmpform)
 	{
-	  /* exchanges and SAs dont carry the IDs in ISAKMP form */
-	  id -= ISAKMP_ID_TYPE_OFF;
-	  id_len += ISAKMP_ID_TYPE_OFF;
+	  /* Exchanges and SAs dont carry the IDs in ISAKMP form.  */
+	  id -= ISAKMP_GEN_SZ;
+	  id_len += ISAKMP_GEN_SZ;
 	}
 
       id_type = GET_ISAKMP_ID_TYPE (id);
@@ -1870,6 +1875,7 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
 	  snprintf (buf, size, "%08x: %s",
 		    decode_32 (id + ISAKMP_ID_DATA_OFF), addr);
 	  break;
+
 	case IPSEC_ID_IPV4_ADDR_SUBNET:
 	  util_ntoa (&addr, AF_INET, id + ISAKMP_ID_DATA_OFF);
 	  util_ntoa (&mask, AF_INET, id + ISAKMP_ID_DATA_OFF + 4);
@@ -1877,11 +1883,13 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
 		    decode_32 (id + ISAKMP_ID_DATA_OFF),
 		    decode_32 (id + ISAKMP_ID_DATA_OFF + 4), addr, mask);
 	  break;
+
 	case IPSEC_ID_IPV6_ADDR:
 	  util_ntoa (&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
 	  snprintf (buf, size, "%08x%08x%08x%08x: %s", *idp, *(idp + 1),
 		    *(idp + 2), *(idp + 3), addr);
 	  break;
+
 	case IPSEC_ID_IPV6_ADDR_SUBNET:
 	  util_ntoa (&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
 	  util_ntoa (&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF + 
@@ -1899,6 +1907,21 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
 	  memcpy (buf, id + ISAKMP_ID_DATA_OFF, id_len);
 	  buf[id_len] = '\0';
 	  break;
+
+#ifdef USE_X509
+	case IPSEC_ID_DER_ASN1_DN:
+	  addr = x509_DN_string (id + ISAKMP_ID_DATA_OFF,
+				 id_len - ISAKMP_ID_DATA_OFF);
+	  if (!addr)
+	    {
+	      snprintf(buf, size, "unparsable ASN1 DN ID");
+	      return;
+	    }
+	  strncpy (buf, addr, size - 1);
+	  buf[size - 1] = '\0';
+	  break;
+#endif
+
 	default:
 	  snprintf (buf, size, "<id type unknown: %x>", id_type);
 	  break;
@@ -2279,7 +2302,7 @@ ipsec_id_string (u_int8_t *id, size_t id_len)
 {
   char *buf = 0;
   char *addrstr = 0;
-  size_t len;
+  size_t len, size;
 
   /*
    * XXX Real ugly way of making the offsets correct.  Be aware that id now
@@ -2291,9 +2314,14 @@ ipsec_id_string (u_int8_t *id, size_t id_len)
   /* This is the actual length of the ID data field.  */
   id_len += ISAKMP_GEN_SZ - ISAKMP_ID_DATA_OFF;
 
-  /* Conservative allocation.  */
-  buf = malloc (MAX (sizeof "ipv6/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-		     sizeof "ufqdn/" + id_len - ISAKMP_ID_DATA_OFF));
+  /*
+   * Conservative allocation.
+   * XXX I think the ASN1 DN case can be thought through to give a better
+   * estimate.
+   */
+  size = MAX (sizeof "ipv6/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+	      sizeof "asn1_dn/" + id_len - ISAKMP_ID_DATA_OFF);
+  buf = malloc (size);
   if (!buf)
     /* XXX Log?  */
     goto fail;
@@ -2327,6 +2355,20 @@ ipsec_id_string (u_int8_t *id, size_t id_len)
       memcpy (buf + len, id + ISAKMP_ID_DATA_OFF, id_len);
       *(buf + len + id_len) = '\0';
       break;
+
+#ifdef USE_X509
+    case IPSEC_ID_DER_ASN1_DN:
+      strcpy (buf, "asn1_dn/");
+      len = strlen(buf);
+      addrstr = x509_DN_string (id + ISAKMP_ID_DATA_OFF,
+				id_len - ISAKMP_ID_DATA_OFF);
+      if (!addrstr)
+	goto fail;
+      if (size < len + strlen (addrstr) + 1)
+	goto fail;
+      strcpy (buf + len, addrstr);
+      break;
+#endif
 
     default:
       /* Unknown type.  */
