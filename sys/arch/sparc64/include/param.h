@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.1.1.1 2001/08/18 04:16:37 jason Exp $	*/
+/*	$OpenBSD: param.h,v 1.2 2001/08/18 15:27:30 art Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -201,10 +201,6 @@ extern int nbpg, pgofset, pgshift;
 #define	MCLBYTES	2048		/* enough for whole Ethernet packet */
 #define	MCLSHIFT	11		/* log2(MCLBYTES) */
 #define	MCLOFSET	(MCLBYTES - 1)
-
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
 
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY

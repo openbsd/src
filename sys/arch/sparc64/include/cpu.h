@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.1.1.1 2001/08/18 04:16:40 jason Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.2 2001/08/18 15:27:30 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -63,11 +63,6 @@
 /*
  * Exported definitions unique to SPARC cpu support.
  */
-
-#if !defined(_LKM)
-#include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
-#endif
 
 #include <machine/psl.h>
 #include <machine/reg.h>
