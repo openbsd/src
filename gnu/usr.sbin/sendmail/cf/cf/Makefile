@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.9 2001/02/02 06:41:18 tholo Exp $
+#	$OpenBSD: Makefile,v 1.10 2001/05/29 01:31:11 millert Exp $
 #
 #  Makefile for configuration files.
 #
-#	$Sendmail: Makefile,v 8.40.8.4 2000/10/26 18:27:44 gshapiro Exp $
+#	$Sendmail: Makefile,v 8.40.8.5 2001/04/12 22:39:52 gshapiro Exp $
 #
 
 #
@@ -110,7 +110,6 @@ M4FILES=\
 	${CFDIR}/ostype/aix4.m4 \
 	${CFDIR}/ostype/altos.m4 \
 	${CFDIR}/ostype/amdahl-uts.m4 \
-	${CFDIR}/ostype/aux.m4 \
 	${CFDIR}/ostype/bsd4.3.m4 \
 	${CFDIR}/ostype/bsd4.4.m4 \
 	${CFDIR}/ostype/bsdi.m4 \
