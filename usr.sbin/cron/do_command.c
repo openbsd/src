@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.17 2002/07/08 18:11:02 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.18 2002/07/12 18:35:24 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: do_command.c,v 1.17 2002/07/08 18:11:02 millert Exp $";
+static char const rcsid[] = "$OpenBSD: do_command.c,v 1.18 2002/07/12 18:35:24 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -120,7 +120,7 @@ child_process(entry *e, user *u) {
 			if (p != input_data)
 				*p = ch;
 			if (escaped) {
-				if (ch == '%' || ch == '\\')
+				if (ch == '%')
 					*--p = ch;
 				escaped = FALSE;
 				continue;
