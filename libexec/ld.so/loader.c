@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.34 2002/05/28 00:31:37 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.35 2002/05/28 00:34:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -45,7 +45,7 @@
 #include "resolve.h"
 
 /*
- *  Local decls.
+ * Local decls.
  */
 static char *_dl_getenv(const char *var, char **env);
 static void _dl_unsetenv(const char *var, char **env);
@@ -90,26 +90,26 @@ _dl_dtors(void)
 }
 
 /*
- *  This is the dynamic loader entrypoint. When entering here, depending
- *  on architecture type, the stack and registers are set up according
- *  to the architectures ABI specification. The first thing required
- *  to do is to dig out all information we need to accomplish out task.
+ * This is the dynamic loader entrypoint. When entering here, depending
+ * on architecture type, the stack and registers are set up according
+ * to the architectures ABI specification. The first thing required
+ * to do is to dig out all information we need to accomplish out task.
  */
 unsigned long
 _dl_boot(const char **argv, char **envp, const long loff,
 	Elf_Dyn *dynp, long *dl_data)
 {
-	int		n;
-	Elf_Phdr	*phdp;
-	char		*us = "";
-	elf_object_t	*dynobj;
 	struct elf_object *exe_obj;	/* Pointer to executable object */
 	struct elf_object *dyn_obj;	/* Pointer to executable object */
-	struct r_debug *debug_map;
 	struct r_debug **map_link;	/* Where to put pointer for gdb */
+	struct r_debug *debug_map;
+	elf_object_t *dynobj;
+	Elf_Phdr *phdp;
+	char *us = "";
+	int n;
 
 	/*
-	 *  Get paths to various things we are going to use.
+	 * Get paths to various things we are going to use.
 	 */
 	_dl_libpath = _dl_getenv("LD_LIBRARY_PATH", envp);
 	_dl_preload = _dl_getenv("LD_PRELOAD", envp);
@@ -118,8 +118,8 @@ _dl_boot(const char **argv, char **envp, const long loff,
 	_dl_debug = _dl_getenv("LD_DEBUG", envp);
 
 	/*
-	 *  Don't allow someone to change the search paths if he runs
-	 *  a suid program without credentials high enough.
+	 * Don't allow someone to change the search paths if he runs
+	 * a suid program without credentials high enough.
 	 */
 	if (_dl_issetugid()) {	/* Zap paths if s[ug]id... */
 		if (_dl_libpath) {
@@ -150,7 +150,7 @@ _dl_boot(const char **argv, char **envp, const long loff,
 	DL_DEB(("rtld loading: '%s'\n", _dl_progname));
 
 	/*
-	 *  Examine the user application and set up object information.
+	 * Examine the user application and set up object information.
 	 */
 	phdp = (Elf_Phdr *)dl_data[AUX_phdr];
 	for (n = 0; n < dl_data[AUX_phnum]; n++) {
@@ -165,9 +165,9 @@ _dl_boot(const char **argv, char **envp, const long loff,
 	}
 
 	/*
-	 *  Now, pick up and 'load' all libraries requierd. Start
-	 *  With the first on the list and then do whatever gets
-	 *  added along the tour.
+	 * Now, pick up and 'load' all libraries requierd. Start
+	 * With the first on the list and then do whatever gets
+	 * added along the tour.
 	 */
 	dynobj = _dl_objects;
 	while (dynobj) {
@@ -198,8 +198,8 @@ _dl_boot(const char **argv, char **envp, const long loff,
 	dyn_obj->status |= STAT_RELOC_DONE;
 
 	/*
-	 *  Everything should be in place now for doing the relocation
-	 *  and binding. Call _dl_rtld to do the job. Fingers crossed.
+	 * Everything should be in place now for doing the relocation
+	 * and binding. Call _dl_rtld to do the job. Fingers crossed.
 	 */
 	_dl_rtld(_dl_objects);
 
@@ -321,11 +321,11 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 #endif
 
 	/*
-	 *  We need to do 'selfreloc' in case the code weren't
-	 *  loaded at the address it was linked to.
+	 * We need to do 'selfreloc' in case the code weren't
+	 * loaded at the address it was linked to.
 	 *
-	 *  Scan the DYNAMIC section for the loader.
-	 *  Cache the data for easier access.
+	 * Scan the DYNAMIC section for the loader.
+	 * Cache the data for easier access.
 	 */
 
 #if defined(__sparc64__)
@@ -347,9 +347,9 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 	}
 
 	/*
-	 *  Do the 'bootstrap relocation'. This is really only needed if
-	 *  the code was loaded at another location than it was linked to.
-	 *  We don't do undefined symbols resolving (to difficult..)
+	 * Do the 'bootstrap relocation'. This is really only needed if
+	 * the code was loaded at another location than it was linked to.
+	 * We don't do undefined symbols resolving (to difficult..)
 	 */
 
 	/* "relocate" dyn.X values if they represent addresses */
@@ -383,9 +383,9 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 	}
 
 	{
-		int	i;
 		u_int32_t rs;
 		Elf_Rel *rp;
+		int	i;
 
 		rp = (Elf_Rel *)(dynld.Dyn.info[DT_REL]);
 		rs = dynld.dyn.relsz;
@@ -418,9 +418,9 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 	}
 
 	for (n = 0; n < 2; n++) {
-		int	i;
 		unsigned long rs;
 		Elf_RelA *rp;
+		int	i;
 
 		switch (n) {
 		case 0:
@@ -445,8 +445,8 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 #if 0
 				_dl_wrstderr("Dynamic loader failure: self bootstrapping impossible.\n");
 				_dl_wrstderr("Undefined symbol: ");
-				_dl_wrstderr((char *)dynld.dyn.strtab
-					+ sp->st_name);
+				_dl_wrstderr((char *)dynld.dyn.strtab +
+				    sp->st_name);
 #endif
 				_dl_exit(6);
 			}
@@ -470,7 +470,7 @@ _dl_rtld(elf_object_t *object)
 		_dl_rtld(object->next);
 
 	/*
-	 *  Do relocation information first, then GOT.
+	 * Do relocation information first, then GOT.
 	 */
 	_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	_dl_md_reloc(object, DT_RELA, DT_RELASZ);
