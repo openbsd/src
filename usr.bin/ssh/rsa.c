@@ -35,7 +35,7 @@ Description of the RSA algorithm can be found e.g. from the following sources:
 */
 
 #include "includes.h"
-RCSID("$Id: rsa.c,v 1.7 1999/11/05 07:09:07 markus Exp $");
+RCSID("$Id: rsa.c,v 1.8 1999/11/08 20:13:42 markus Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -110,26 +110,26 @@ void
 rsa_public_encrypt(BIGNUM *out, BIGNUM *in, RSA* key)
 {
   char *inbuf, *outbuf;
-  int len;
+  int len, ilen, olen;
 
   if (BN_num_bits(key->e) < 2 || !BN_is_odd(key->e))
     fatal("rsa_public_encrypt() exponent too small or not odd");
 
-  len = BN_num_bytes(key->n);
-  outbuf = xmalloc(len);
+  olen = BN_num_bytes(key->n);
+  outbuf = xmalloc(olen);
 
-  len = BN_num_bytes(in);
-  inbuf = xmalloc(len);
+  ilen = BN_num_bytes(in);
+  inbuf = xmalloc(ilen);
   BN_bn2bin(in, inbuf);
 
-  if ((len = RSA_public_encrypt(len, inbuf, outbuf, key,
+  if ((len = RSA_public_encrypt(ilen, inbuf, outbuf, key,
 				RSA_PKCS1_PADDING)) <= 0)
     fatal("rsa_public_encrypt() failed");
 
   BN_bin2bn(outbuf, len, out);
 
-  memset(outbuf, 0, len);
-  memset(inbuf, 0, len);
+  memset(outbuf, 0, olen);
+  memset(inbuf, 0, ilen);
   xfree(outbuf);
   xfree(inbuf);
 }
@@ -138,23 +138,23 @@ void
 rsa_private_decrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 {
   char *inbuf, *outbuf;
-  int len;
+  int len, ilen, olen;
 
-  len = BN_num_bytes(key->n);
-  outbuf = xmalloc(len);
+  olen = BN_num_bytes(key->n);
+  outbuf = xmalloc(olen);
 
-  len = BN_num_bytes(in);
-  inbuf = xmalloc(len);
+  ilen = BN_num_bytes(in);
+  inbuf = xmalloc(ilen);
   BN_bn2bin(in, inbuf);
 
-  if ((len = RSA_private_decrypt(len, inbuf, outbuf, key,
+  if ((len = RSA_private_decrypt(ilen, inbuf, outbuf, key,
 				 RSA_SSLV23_PADDING)) <= 0)
     fatal("rsa_private_decrypt() failed");
 
   BN_bin2bn(outbuf, len, out);
 
-  memset(outbuf, 0, len);
-  memset(inbuf, 0, len);
+  memset(outbuf, 0, olen);
+  memset(inbuf, 0, ilen);
   xfree(outbuf);
   xfree(inbuf);
 }
