@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.6 1999/11/26 17:34:59 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.7 1999/12/17 06:18:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -143,7 +143,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 #endif
 		*bshp = bpa;
 	} else {
-		register vaddr_t va;
+		/* register vaddr_t va; */
 
 #ifdef PMAPDEBUG
 		printf ("%d, %d, %x\n", bank, off, vm_physmem[0].end);
@@ -155,6 +155,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 		if (epa <= spa)
 			panic("bus_mem_add_mapping: overflow");
 #endif
+#if 0
 
 		if (!(va = uvm_pagealloc_contig(epa - spa, spa, epa, NBPG)))
 			return (ENOMEM);
@@ -167,6 +168,9 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 			else
 				pmap_changebit(spa, 0, ~TLB_UNCACHEABLE);
 		}
+#else
+			panic("mbus_add_mapping: not implemented");
+#endif
 	}
  
 	return 0;
@@ -680,31 +684,43 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 		  bus_size_t boundary, bus_dma_segment_t *segs, int nsegs,
 		  int *rsegs, int flags)
 {
+	struct pglist pglist;
+	struct vm_page *pg;
 	vaddr_t va;
-	paddr_t spa, epa;
 
 	size = round_page(size);
 
-	if (!(va = uvm_pagealloc_contig(size, VM_MIN_KERNEL_ADDRESS,
-					VM_MAX_KERNEL_ADDRESS, NBPG)))
-		return (ENOMEM);
+	TAILQ_INIT(&pglist);
+	if (uvm_pglistalloc(size, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS,
+	    alignment, 0, &pglist, 1, FALSE))
+		return ENOMEM;
+
+	if ((va = uvm_km_valloc(kernel_map, size)) == 0) {
+		uvm_pglistfree(&pglist);
+		return ENOMEM;
+	}
 
 	segs[0].ds_addr = va;
 	segs[0].ds_len = size;
 	*rsegs = 1;
 
-	/* XXX for now */
-	for (epa = size + (spa = kvtop((caddr_t)va)); spa < epa; spa += NBPG)
-		pmap_changebit(spa, TLB_UNCACHEABLE, 0);
+	for (pg = TAILQ_FIRST(&pglist); pg; pg = TAILQ_NEXT(pg, pageq)) {
+
+		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+		    VM_PROT_READ|VM_PROT_WRITE);
+
+		pmap_changebit(pg, TLB_UNCACHEABLE, 0); /* XXX for now */
+
+		va += PAGE_SIZE;
+	}
 
 	return 0;
-
 }
 
 void
 mbus_dmamem_free(void *v, bus_dma_segment_t *segs, int nsegs)
 {
-	uvm_km_free(kmem_map, segs[0].ds_addr, M_DEVBUF);
+	uvm_km_free(kernel_map, segs[0].ds_addr, segs[0].ds_len);
 }
 
 int
