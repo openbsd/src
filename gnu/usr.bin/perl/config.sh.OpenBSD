@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: config.sh.OpenBSD,v 1.6 1997/01/02 16:06:50 rahnds Exp $
+# $OpenBSD: config.sh.OpenBSD,v 1.7 1997/01/22 09:24:00 deraadt Exp $
 #
 # This file was produced by running the Configure script. It holds all the
 # definitions figured out by Configure. Should you modify one of these values,
@@ -15,7 +15,7 @@
 # NOTE:  This script does run time substitions when being used by Configure!
 #
 
-case "`machine`" in
+case "`arch |cut -f2 -d.`" in
 "alpha")	_dynaload=0;;
 "arc")		_dynaload=0;;
 "pmax")		_dynaload=0;;
@@ -38,9 +38,9 @@ afs='false'
 alignbytes=''
 aphostname=''
 ar='ar'
-archlib="/usr/lib/perl5/`machine`-openbsd/5.003"
-archlibexp="/usr/lib/perl5/`machine`-openbsd/5.003"
-archname="`machine`-openbsd"
+archlib="/usr/lib/perl5/`arch |cut -f2 -d.`-openbsd/5.003"
+archlibexp="/usr/lib/perl5/`arch |cut -f2 -d.`-openbsd/5.003"
+archname="`arch |cut -f2 -d.`-openbsd"
 archobjs=''
 awk='awk'
 baserev='5.0'
@@ -350,13 +350,13 @@ i_varhdr='stdarg.h'
 i_vfork='undef'
 incpath=''
 inews=''
-installarchlib="/usr/lib/perl5/`machine`-openbsd/5.003"
+installarchlib="/usr/lib/perl5/`arch |cut -f2 -d.`-openbsd/5.003"
 installbin='/usr/bin'
 installman1dir=''
 installman3dir=''
 installprivlib='/usr/lib/perl5'
 installscript='/usr/bin'
-installsitearch="/usr/lib/perl5/site_perl/`machine`-openbsd"
+installsitearch="/usr/lib/perl5/site_perl/`arch |cut -f2 -d.`-openbsd"
 installsitelib='/usr/lib/perl5/site_perl'
 intsize='4'
 known_extensions='DB_File Fcntl FileHandle GDBM_File NDBM_File ODBM_File POSIX SDBM_File Safe Socket'
@@ -402,7 +402,7 @@ models='none'
 modetype='mode_t'
 more='more'
 mv=''
-myarchname="`machine`-openbsd"
+myarchname="`arch |cut -f2 -d.`-openbsd"
 mydomain=''
 myhostname=''
 myuname='openbsd'
@@ -456,8 +456,8 @@ shsharp='true'
 sig_name='ZERO HUP INT QUIT ILL TRAP ABRT EMT FPE KILL BUS SEGV SYS PIPE ALRM TERM URG STOP TSTP CONT CHLD TTIN TTOU IO XCPU XFSZ VTALRM PROF WINCH INFO USR1 USR2 IOT '
 sig_num='0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 6 '
 signal_t='void'
-sitearch="/usr/lib/perl5/site_perl/`machine`-openbsd"
-sitearchexp="/usr/lib/perl5/site_perl/`machine`-openbsd"
+sitearch="/usr/lib/perl5/site_perl/`arch |cut -f2 -d.`-openbsd"
+sitearchexp="/usr/lib/perl5/site_perl/`arch |cut -f2 -d.`-openbsd"
 sitelib='/usr/lib/perl5/site_perl'
 sitelibexp='/usr/lib/perl5/site_perl'
 sizetype='size_t'
