@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.8 1999/03/19 02:46:55 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.9 1999/03/19 22:47:33 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -50,34 +50,34 @@
 #include <stdlib.h>
 #include <limits.h>
 
-void usage(void);
-int main(int, char **);
-int bridge_setflag(int, char *, short);
-int bridge_clrflag(int, char *, short);
-int bridge_ifsetflag(int, char *, char *, u_int32_t);
-int bridge_ifclrflag(int, char *, char *, u_int32_t);
-int bridge_list(int, char *, char *);
-int bridge_addrs(int, char *, char *);
-int bridge_addaddr(int, char *, char *, char *);
-int bridge_deladdr(int, char *, char *);
-int bridge_maxaddr(int, char *, char *);
-int bridge_timeout(int, char *, char *);
-int bridge_flush(int, char *);
-int bridge_flushall(int, char *);
-int bridge_add(int, char *, char *);
-int bridge_delete(int, char *, char *);
-int bridge_status(int, char *);
-int is_bridge(int, char *);
-int bridge_show_all(int);
-void printb(char *, unsigned short, char *);
+void usage __P((void));
+int main __P((int, char **));
+int bridge_setflag __P((int, char *, short));
+int bridge_clrflag __P((int, char *, short));
+int bridge_ifsetflag __P((int, char *, char *, u_int32_t));
+int bridge_ifclrflag __P((int, char *, char *, u_int32_t));
+int bridge_list __P((int, char *, char *));
+int bridge_addrs __P((int, char *, char *));
+int bridge_addaddr __P((int, char *, char *, char *));
+int bridge_deladdr __P((int, char *, char *));
+int bridge_maxaddr __P((int, char *, char *));
+int bridge_timeout __P((int, char *, char *));
+int bridge_flush __P((int, char *));
+int bridge_flushall __P((int, char *));
+int bridge_add __P((int, char *, char *));
+int bridge_delete __P((int, char *, char *));
+int bridge_status __P((int, char *));
+int is_bridge __P((int, char *));
+int bridge_show_all __P((int));
+void printb __P((char *, unsigned short, char *));
 
 /* if_flags bits: borrowed from ifconfig.c */
 #define	IFFBITS \
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
-#define	IFBABITS	"\020\1STATIC"
-#define	IFBIBITS	"\020\1LEARNING"
+#define	IFBAFBITS	"\020\1STATIC"
+#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER"
 
 void
 usage()
@@ -149,6 +149,28 @@ main(argc, argv)
 		}
 		else if (strcmp("down", argv[0]) == 0) {
 			error = bridge_clrflag(sock, brdg, IFF_UP);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("discover", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("discover requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifsetflag(sock, brdg, argv[0],
+			    IFBIF_DISCOVER);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("-discover", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("-discover requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifclrflag(sock, brdg, argv[0],
+			    IFBIF_DISCOVER);
 			if (error)
 				return (error);
 		}
@@ -488,7 +510,7 @@ bridge_list(s, brdg, delim)
 		bzero(buf, sizeof(buf));
 		strncpy(buf, reqp->ifbr_ifsname, sizeof(reqp->ifbr_ifsname));
 		printf("%s%s ", delim, buf);
-		printb("flags", reqp->ifbr_ifsflags, IFBIBITS);
+		printb("flags", reqp->ifbr_ifsflags, IFBIFBITS);
 		printf("\n");
 	}
 	free(bifc.ifbic_buf);
@@ -672,7 +694,7 @@ bridge_addrs(s, brdg, delim)
 		strncpy(buf, ifba->ifba_ifsname, sizeof(ifba->ifba_ifsname));
 		printf("%s%s %s %u ", delim, ether_ntoa(&ifba->ifba_dst),
 		    buf, ifba->ifba_age);
-		printb("flags", ifba->ifba_flags, IFBABITS);
+		printb("flags", ifba->ifba_flags, IFBAFBITS);
 		printf("\n");
 	}
 

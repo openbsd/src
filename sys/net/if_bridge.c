@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.7 1999/03/19 02:46:54 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.8 1999/03/19 22:47:33 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -280,7 +280,7 @@ bridge_ioctl(ifp, cmd, data)
 		}
 
 		p->ifp = ifs;
-		p->bif_flags = IFBIF_LEARNING;
+		p->bif_flags = IFBIF_LEARNING | IFBIF_DISCOVER;
 		LIST_INSERT_HEAD(&sc->sc_iflist, p, next);
 		ifs->if_bridge = (caddr_t)sc;
 		break;
@@ -888,6 +888,10 @@ bridge_broadcast(sc, ifp, eh, m)
 		 * the packet was received from.
 		 */
 		if (p->ifp->if_index == ifp->if_index)
+			continue;
+
+		if ((p->bif_flags & IFBIF_DISCOVER) == 0 &&
+		    (m->m_flags & (M_BCAST|M_MCAST)) == 0)
 			continue;
 
 		if ((p->ifp->if_flags & IFF_RUNNING) == 0)

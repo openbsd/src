@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.5 1999/03/19 02:46:54 jason Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.6 1999/03/19 22:47:33 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,8 @@ struct ifbreq {
 	u_int32_t	ifbr_ifsflags;		/* memver ifs flags */
 };
 
-#define	IFBIF_LEARNING	0x1			/* ifs can learn */
+#define	IFBIF_LEARNING	0x1	/* ifs can learn */
+#define	IFBIF_DISCOVER	0x2	/* ifs sends packets w/unknown dest */
 
 /*
  * Interface list structure

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.8 1999/03/19 02:46:55 jason Exp $
+.\"	$OpenBSD: brconfig.8,v 1.9 1999/03/19 22:47:34 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -51,6 +51,8 @@
 .Op Ar deladdr address
 .Op Ar flush
 .Op Ar flushall
+.Op Ar discover interface-name
+.Op Ar -discover interface-name
 .Op Ar learn interface-name
 .Op Ar -learn interface-name
 .Op Ar link0
@@ -117,6 +119,23 @@ Delete an address from the cache.
 Remove all dynamically learned addresses from the cache.
 .It Ar flushall
 Remove all addresses from the cache including static addresses.
+.It Ar discover interface
+Mark an interface so that packets are sent out of the interface
+if the destination port of the packet is unknown.
+If the bridge has no address cache entry for the destination of
+a packet, meaning that there is no static entry and no dynamically learned
+entry for the destination, the bridge will forward the packet to all member
+interfaces that have this flag set.
+This is the default for interfaces added to the bridge.
+.It Ar -discover interface
+Mark an interface so that packets are not sent out of the interface
+if the destination port of the packet is unknown.  Turning this flag
+off means that the bridge will not send packets out of this interface
+unless the packet is a broadcast packet, multicast packet, or a
+packet with a destination address found on the interface's segment.
+This, in combination with static address cache entries,
+prevents potentially sensitive packets from being sent on
+segments that have no need to see the packet.
 .It Ar learn interface
 Mark an interface so that the source address of packets received from
 .Cm interface
