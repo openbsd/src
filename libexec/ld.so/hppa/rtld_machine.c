@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.4 2004/06/01 21:07:46 mickey Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.5 2004/06/07 07:13:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -116,16 +116,18 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	if (object->dyn.init && !((Elf_Addr)object->dyn.init & 2)) {
 		Elf_Addr addr = _dl_md_plabel((Elf_Addr)object->dyn.init,
 		    object->dyn.pltgot);
-		DL_DEB(("PLABEL32: %x(_init) -> 0x%x in %s\n",
-		    object->dyn.init, addr, object->load_name));
+		DL_DEB(("PLABEL32: %p:%p(_init) -> 0x%x in %s\n",
+		    object->dyn.init, object->dyn.pltgot,
+		    addr, object->load_name));
 		object->dyn.init = (void *)addr;
 	}
 
 	if (object->dyn.fini && !((Elf_Addr)object->dyn.fini & 2)) {
 		Elf_Addr addr = _dl_md_plabel((Elf_Addr)object->dyn.fini,
 		    object->dyn.pltgot);
-		DL_DEB(("PLABEL32: %x(_fini) -> 0x%x in %s\n",
-		    object->dyn.fini, addr, object->load_name));
+		DL_DEB(("PLABEL32: %p:%p(_fini) -> 0x%x in %s\n",
+		    object->dyn.fini, object->dyn.pltgot,
+		    addr, object->load_name));
 		object->dyn.fini = (void *)addr;
 	}
 
