@@ -1,5 +1,5 @@
-/*	$OpenBSD: umassvar.h,v 1.5 2004/07/08 22:20:04 deraadt Exp $ */
-/*	$NetBSD: umassvar.h,v 1.19 2003/02/22 05:18:50 tsutsui Exp $	*/
+/*	$OpenBSD: umassvar.h,v 1.6 2004/07/17 06:04:00 dlg Exp $ */
+/*	$NetBSD: umassvar.h,v 1.20 2003/09/08 19:31:01 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -179,8 +179,7 @@ struct umass_softc {
 	u_int32_t		sc_quirks;
 #define UMASS_QUIRK_RS_NO_CLEAR_UA	0x00000002
 #define UMASS_QUIRK_WRONG_CSWSIG	0x00000010
-#define UMASS_QUIRK_NO_MAX_LUN		0x00000020
-#define UMASS_QUIRK_WRONG_CSWTAG	0x00000040
+#define UMASS_QUIRK_WRONG_CSWTAG	0x00000020
 
 	u_int32_t		sc_busquirks;
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: umass.c,v 1.27 2004/07/15 05:48:09 deraadt Exp $ */
-/*	$NetBSD: umass.c,v 1.97 2003/09/04 00:02:59 mycroft Exp $	*/
+/*	$OpenBSD: umass.c,v 1.28 2004/07/17 06:04:00 dlg Exp $ */
+/*	$NetBSD: umass.c,v 1.98 2003/09/08 19:30:59 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -441,8 +441,7 @@ USB_ATTACH(umass)
 	/*
 	 * Get the maximum LUN supported by the device.
 	 */
-	if (sc->sc_wire == UMASS_WPROTO_BBB &&
-	    !(sc->sc_quirks & UMASS_QUIRK_NO_MAX_LUN)) {
+	if (sc->sc_wire == UMASS_WPROTO_BBB) {
 		err = umass_bbb_get_max_lun(sc, &sc->maxlun);
 		if (err) {
 			printf("%s: unable to get Max Lun: %s\n",
