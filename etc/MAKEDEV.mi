@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.68 2004/02/10 01:31:20 millert Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.69 2004/02/13 16:51:27 miod Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -408,7 +408,7 @@ __devitem(quad, quadmouse, "quadrature mouse")dnl
 __devtitle(pty, Pseudo terminals)dnl
 __devitem(ptm, ptm, pty master device)dnl
 _mkdev(ptm, ptm, {-M ptm c major_ptm_c 0 666-})dnl
-__devitem(tty, tty*, set of 16 slave psuedo terminals)dnl
+__devitem(tty, tty*, set of 16 slave pseudo terminals)dnl
 __devitem(pty, pty*, set of 16 master pseudo terminals)dnl
 _mkdev(pty, pty*, {-if [ $U -gt 15 ]; then
 		echo bad unit for pty in: $i
