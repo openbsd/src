@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.93 2003/12/18 20:52:19 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.94 2003/12/18 20:55:20 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1387,11 +1387,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCLRSTATUS: {
+		u_int64_t	stateid = pf_status.stateid;
 		u_int32_t	running = pf_status.running;
 		u_int32_t	states = pf_status.states;
 		u_int32_t	src_nodes = pf_status.src_nodes;
 		u_int32_t	since = pf_status.since;
 		u_int32_t	debug = pf_status.debug;
+		u_int32_t	hostid = pf_status.hostid;
 
 		bzero(&pf_status, sizeof(struct pf_status));
 		pf_status.running = running;
@@ -1399,6 +1401,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pf_status.src_nodes = src_nodes;
 		pf_status.since = since;
 		pf_status.debug = debug;
+		pf_status.hostid = hostid;
+		pf_status.stateid = stateid;
 		if (status_ifp != NULL)
 			strlcpy(pf_status.ifname,
 			    status_ifp->if_xname, IFNAMSIZ);
