@@ -100,7 +100,9 @@ int pfkeyv2_get(struct tdb *, void **, void **);
 int pfkeyv2_release(struct socket *);
 int pfkeyv2_send(struct socket *, void *, int);
 int pfkeyv2_sendmessage(void **, int, struct socket *, u_int8_t, int);
+int pfkeyv2_dump_walker(struct tdb *, void *);
 int pfkeyv2_flush_walker(struct tdb *, void *);
+int pfkeyv2_get_proto_alg(u_int8_t, u_int8_t *, int *);
 
 #define EXTLEN(x) (((struct sadb_ext *)(x))->sadb_ext_len * sizeof(uint64_t))
 #define PADUP(x) (((x) + sizeof(uint64_t) - 1) & ~(sizeof(uint64_t) - 1))
@@ -649,7 +651,6 @@ struct dump_state {
   struct socket *socket;
 };
 
-#if 0 /* XXX Need to add a tdb_walk routine for this to work */
 int
 pfkeyv2_dump_walker(struct tdb *sa, void *state)
 {
@@ -672,14 +673,55 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state)
 
   return 0;
 }
-#endif /* 0 */
 
 int 
-pfkeyv2_flush_walker(struct tdb *sa, void *xf_type_vp)
+pfkeyv2_flush_walker(struct tdb *sa, void *satype_vp)
 {
-  if (!(*((u_short *)xf_type_vp)) || 
-      sa->tdb_xform->xf_type == *((u_short *)xf_type_vp))
+  if (!(*((u_int8_t *)satype_vp)) ||
+      sa->tdb_satype == *((u_int8_t *)satype_vp))
     tdb_delete(sa, 0, 0);
+  return 0;
+}
+
+int
+pfkeyv2_get_proto_alg(u_int8_t satype, u_int8_t *sproto, int *alg)
+{
+  switch (satype) {
+    case SADB_SATYPE_AH:
+    case SADB_X_SATYPE_AH_OLD:
+      if (!ah_enable)
+	return EOPNOTSUPP;
+      *sproto = IPPROTO_AH;
+      if(alg != NULL) 
+	*alg = satype == SADB_SATYPE_AH ? XF_NEW_AH : XF_OLD_AH;
+      break;
+
+    case SADB_SATYPE_ESP:
+    case SADB_X_SATYPE_ESP_OLD:
+      if (!esp_enable)
+	return EOPNOTSUPP;
+      *sproto = IPPROTO_ESP;
+      if(alg != NULL) 
+	*alg = satype == SADB_SATYPE_ESP ? XF_NEW_ESP : XF_OLD_ESP;
+      break;
+
+    case SADB_X_SATYPE_IPIP:
+      *sproto = IPPROTO_IPIP;
+      if (alg != NULL)
+	*alg = XF_IP4;
+      break;
+
+#ifdef TCP_SIGNATURE
+    case SADB_X_SATYPE_TCPSIGNATURE:
+      *sproto = IPPROTO_TCP;
+      if (alg != NULL)
+	*alg = XF_TCPSIGNATURE;
+      break;
+#endif /* TCP_SIGNATURE */
+
+   default: /* Nothing else supported */
+     return EOPNOTSUPP;
+  }
   return 0;
 }
 
@@ -747,54 +789,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
     case SADB_GETSPI:
       bzero(&sa, sizeof(struct tdb));
 
-      switch (((struct sadb_msg *)headers[0])->sadb_msg_satype) {
-	case SADB_SATYPE_AH:
-	  if (!ah_enable) {
-	    rval = EOPNOTSUPP;
-	    goto ret;
-	  }
-	  sa.tdb_sproto = IPPROTO_AH;
-	  break;
-	    
-	case SADB_SATYPE_ESP:
-	  if (!esp_enable) {
-	    rval = EOPNOTSUPP;
-	    goto ret;
-	  }
-	  sa.tdb_sproto = IPPROTO_ESP;
-	  break;
+      sa.tdb_satype = ((struct sadb_msg *)headers[0])->sadb_msg_satype;
+      if ((rval = pfkeyv2_get_proto_alg(sa.tdb_satype, &sa.tdb_sproto, 0)))
+	goto ret;
 
-	case SADB_X_SATYPE_AH_OLD:
-	  if (!ah_enable) {
-	    rval = EOPNOTSUPP;
-	    goto ret;
-	  }
-	  sa.tdb_sproto = IPPROTO_AH;
-	  break;
-	    
-	case SADB_X_SATYPE_ESP_OLD:
-	  if (!esp_enable) {
-	    rval = EOPNOTSUPP;
-	    goto ret;
-	  }
-	  sa.tdb_sproto = IPPROTO_ESP;
-	  break;
-
-	case SADB_X_SATYPE_IPIP:
-	  sa.tdb_sproto = IPPROTO_IPIP;
-	  break;
-
-#ifdef TCP_SIGNATURE
-	case SADB_X_SATYPE_TCPSIGNATURE:
-	  sa.tdb_sproto = IPPROTO_TCP;
-	  break;
-#endif /* TCP_SIGNATURE */
-
-	default: /* Nothing else supported */
-	  rval = EOPNOTSUPP;
-	  goto ret;
-      }
-      
       import_address((struct sockaddr *)&sa.tdb_src,
 		     headers[SADB_EXT_ADDRESS_SRC]);
       import_address((struct sockaddr *)&sa.tdb_dst,
@@ -836,59 +834,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	bzero(freeme, sizeof(struct tdb));
 	newsa = (struct tdb *)freeme;
 	bzero(&ii, sizeof(struct ipsecinit));
-	switch (((struct sadb_msg *)headers[0])->sadb_msg_satype) {
-	  case SADB_SATYPE_AH:
-	    if (!ah_enable) {
-	      rval = EOPNOTSUPP;
-	      goto splxret;
-	    }
-	    newsa->tdb_sproto = IPPROTO_AH;
-	    alg = XF_NEW_AH;
-	    break;
-	    
-	  case SADB_SATYPE_ESP:
-	    if (!esp_enable) {
-	      rval = EOPNOTSUPP;
-	      goto splxret;
-	    }
-	    newsa->tdb_sproto = IPPROTO_ESP;
-	    alg = XF_NEW_ESP;
-	    break;
 
-	  case SADB_X_SATYPE_AH_OLD:
-	    if (!ah_enable) {
-	      rval = EOPNOTSUPP;
-	      goto splxret;
-	    }
-	    newsa->tdb_sproto = IPPROTO_AH;
-	    alg = XF_OLD_AH;
-	    break;
-
-	  case SADB_X_SATYPE_ESP_OLD:
-	    if (!esp_enable) {
-	      rval = EOPNOTSUPP;
-	      goto splxret;
-	    }
-	    newsa->tdb_sproto = IPPROTO_ESP;
-	    alg = XF_OLD_ESP;
-	    break;
-
-	  case SADB_X_SATYPE_IPIP:
-	    newsa->tdb_sproto = IPPROTO_IPIP;
-	    alg = XF_IP4;
-	    break;
-
-#ifdef TCP_SIGNATURE
-	  case SADB_X_SATYPE_TCPSIGNATURE:
-	    newsa->tdb_sproto = IPPROTO_TCP;
-	    alg = XF_TCPSIGNATURE;
-	    break;
-#endif /* TCP_SIGNATURE */
-		  
-	  default: /* Nothing else supported */
-	    rval = EOPNOTSUPP;
-	    goto splxret;
-	}
+	newsa->tdb_satype = ((struct sadb_msg *)headers[0])->sadb_msg_satype;
+	if ((rval = pfkeyv2_get_proto_alg(newsa->tdb_satype, 
+					  &newsa->tdb_sproto, &alg)))
+	  goto splxret;
 	  
 	import_sa(newsa, headers[SADB_EXT_SA], &ii);
 	import_address((struct sockaddr *)&newsa->tdb_src,
@@ -969,59 +919,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	int alg;
 
 	bzero(&ii, sizeof(struct ipsecinit));
-	switch (((struct sadb_msg *)headers[0])->sadb_msg_satype) {
-	  case SADB_SATYPE_AH:
-	    if (!ah_enable) {
-	      rval = EOPNOTSUPP;
-	      goto splxret;
-	    }
-	    newsa->tdb_sproto = IPPROTO_AH;
-	    alg = XF_NEW_AH;
-	    break;
-	    
-	  case SADB_SATYPE_ESP:
-	    if (!esp_enable) {
-	      rval = EOPNOTSUPP;
-	      goto splxret;
-	    }
-	    newsa->tdb_sproto = IPPROTO_ESP;
-	    alg = XF_NEW_ESP;
-	    break;
 
-	  case SADB_X_SATYPE_AH_OLD:
-	    if (!ah_enable) {
-	      rval = EOPNOTSUPP;
-	      goto splxret;
-	    }
-	    newsa->tdb_sproto = IPPROTO_AH;
-	    alg = XF_OLD_AH;
-	    break;
-  
-	  case SADB_X_SATYPE_ESP_OLD:
-	    if (!esp_enable) {
-	      rval = EOPNOTSUPP;
-	      goto splxret;
-	    }
-	    newsa->tdb_sproto = IPPROTO_ESP;
-	    alg = XF_OLD_ESP;
-	    break;
-
-	  case SADB_X_SATYPE_IPIP:
-	    newsa->tdb_sproto = IPPROTO_IPIP;
-	    alg = XF_IP4;
-	    break;
-
-#ifdef TCP_SIGNATURE
-	  case SADB_X_SATYPE_TCPSIGNATURE:
-	    newsa->tdb_sproto = IPPROTO_TCP;
-	    alg = XF_TCPSIGNATURE;
-	    break;
-#endif /* TCP_SIGNATURE */
-
-	  default: /* Nothing else supported */
-	    rval = EOPNOTSUPP;
-	    goto splxret;
-	}
+	newsa->tdb_satype = ((struct sadb_msg *)headers[0])->sadb_msg_satype;
+	if ((rval == pfkeyv2_get_proto_alg(newsa->tdb_satype, 
+					   &newsa->tdb_sproto, &alg)))
+	  goto splxret;
 
 	import_sa(newsa, headers[SADB_EXT_SA], &ii);
 	import_address((struct sockaddr *)&newsa->tdb_src,
@@ -1137,37 +1039,20 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
       switch(((struct sadb_msg *)headers[0])->sadb_msg_satype)
       {
       case SADB_SATYPE_UNSPEC:  
-          i = 0; 
-          break;
       case SADB_SATYPE_AH:
-          i = XF_NEW_AH; 
-          break;
       case SADB_SATYPE_ESP:
-          i = XF_NEW_ESP; 
-          break;
       case SADB_X_SATYPE_AH_OLD:
-          i = XF_OLD_AH; 
-          break;
       case SADB_X_SATYPE_ESP_OLD:
-          i = XF_OLD_ESP; 
-          break;
       case SADB_X_SATYPE_IPIP:
-          i = XF_IP4; 
-          break; 
-#if 0  /* Not yet */
+#ifdef TCP_SIGNATURE
       case SADB_X_SATYPE_TCPSIGNATURE:
-          i = XF_TCPSIGNATURE; 
-          break;
-#endif
+#endif /* TCP_SIGNATURE */
+          s = spltdb();
+          tdb_walk(pfkeyv2_flush_walker, 
+		   (u_int8_t *)&(((struct sadb_msg *)headers[0])->sadb_msg_satype));
+          goto splxret;
       default:
           rval = EINVAL; /* Unknown/unsupported type */
-      }
-      
-      if (!rval)
-      {
-          s = spltdb();
-          tdb_walk(pfkeyv2_flush_walker, (u_short *)&i);
-          goto splxret;
       }
       break;
     }
@@ -1178,10 +1063,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
         dump_state.sadb_msg = (struct sadb_msg *)headers[0];
         dump_state.socket = socket;
 	
-#if 0 /* notyet */
         if (!(rval = tdb_walk(pfkeyv2_dump_walker, &dump_state)))
 	  goto realret;
-#endif
 
 	if ((rval == ENOMEM) || (rval == ENOBUFS))
 	  rval = 0;
@@ -1718,28 +1601,7 @@ pfkeyv2_acquire(struct tdb *tdb, int rekey)
   ((struct sadb_msg *)headers[0])->sadb_msg_type    = SADB_ACQUIRE;
   ((struct sadb_msg *)headers[0])->sadb_msg_len     = i / sizeof(uint64_t);
   ((struct sadb_msg *)headers[0])->sadb_msg_seq     = pfkeyv2_seq++;
-
-  j = tdb->tdb_xform->xf_type;
-  switch (j)
-  {
-      case XF_OLD_AH:
-	 j = SADB_X_SATYPE_AH_OLD;
-	 break;
-
-      case XF_OLD_ESP:
-	 j = SADB_X_SATYPE_ESP_OLD;
-	 break;
-
-      case XF_NEW_AH:
-	 j = SADB_SATYPE_AH;
-	 break;
-
-      case XF_NEW_ESP:
-	 j = SADB_SATYPE_ESP;
-	 break;
-  }
-
-  ((struct sadb_msg *)headers[0])->sadb_msg_satype  = j;
+  ((struct sadb_msg *)headers[0])->sadb_msg_satype  = tdb->tdb_satype;
 
   headers[SADB_EXT_ADDRESS_SRC] = p;
   p += sizeof(struct sadb_address) + PADUP(SA_LEN(&tdb->tdb_src.sa));
@@ -1860,24 +1722,16 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 {
   int rval = 0;
   int i;
-  u_int8_t satype;
   void *p, *headers[SADB_EXT_MAX+1], *buffer = NULL;
 
   switch (sa->tdb_sproto) {
     case IPPROTO_AH:
-      satype = sa->tdb_xform->xf_type == XF_OLD_AH ? SADB_X_SATYPE_AH_OLD : SADB_SATYPE_AH;
-      break;
     case IPPROTO_ESP:
-      satype = sa->tdb_xform->xf_type == XF_OLD_ESP ? SADB_X_SATYPE_ESP_OLD : SADB_SATYPE_ESP;
-      break;
     case IPPROTO_IPIP:
-      satype = SADB_X_SATYPE_IPIP;
-      break;
 #ifdef TCP_SIGNATURE
     case IPPROTO_TCP:
-       satype = SADB_X_SATYPE_TCPSIGNATURE;
-       break;
 #endif /* TCP_SIGNATURE */
+      break;
     default:
       rval = EOPNOTSUPP;
       goto ret;
@@ -1902,7 +1756,7 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
   p += sizeof(struct sadb_msg);
   ((struct sadb_msg *)headers[0])->sadb_msg_version = PF_KEY_V2;
   ((struct sadb_msg *)headers[0])->sadb_msg_type    = SADB_EXPIRE;
-  ((struct sadb_msg *)headers[0])->sadb_msg_satype  = satype;
+  ((struct sadb_msg *)headers[0])->sadb_msg_satype  = sa->tdb_satype;
   ((struct sadb_msg *)headers[0])->sadb_msg_len     = i / sizeof(uint64_t);
   ((struct sadb_msg *)headers[0])->sadb_msg_seq     = pfkeyv2_seq++;
 
