@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.template,v 1.7 2003/05/29 08:46:22 jmc Exp $
+.\"	$OpenBSD: mdoc.template,v 1.8 2003/07/16 07:48:19 jmc Exp $
 .\"
 .\" The following requests are required for all man pages.
 .Dd Month DD, YYYY
@@ -11,7 +11,7 @@
 .\" For a program:  program [-abc] file ...
 .Nm program
 .Op Fl abc
-.Op Ar
+.Ar
 .Sh DESCRIPTION
 The
 .Nm
