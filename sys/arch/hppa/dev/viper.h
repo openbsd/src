@@ -1,4 +1,4 @@
-/*	$OpenBSD: viper.h,v 1.4 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: viper.h,v 1.5 2003/04/07 17:24:09 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1991,1994 The University of Utah and
@@ -34,29 +34,26 @@
  * The macros V_CTRL_ANYPRF or V_CTRL_ANYDEN should be used to determine
  * if any preference or deny bits are set.
  */
-#define	VIPER_BITS	"\020\001eisa_den\002eisa_prf\003core_den\004core_prf" \
-			"\005sgc1_den\006sgc1_prf\007sgc0_den\010sgc0_prf" \
-			"\012cpu_prf\021lpmc_en\022ipref_en"
-struct vi_ctrl {		/* (WO) */
-	u_int	vsc_tout:13,	/* VSC clocks to wait before buserr timeout */
-			: 1,
-		ipref_en: 1,	/* enable instruction prefetching */
-		lpmc_en	: 1,	/* enable Low Priority Machine Checks */
-			: 6,
-		cpu_prf	: 1,	/* CPU has arbitration preference */
-			: 1,
-		sgc0_prf: 1,	/* SGC0 has arbitration preference */
-		sgc0_den: 1,	/* SGC0 denied bus grants */
-		sgc1_prf: 1,	/* SGC1 has arbitration preference */
-		sgc1_den: 1,	/* SGC1 denied bus grants */
-		core_prf: 1,	/* CORE bus has arbitration preference */
-		core_den: 1,	/* CORE denied bus grants */
-		eisa_prf: 1,	/* EISA bus has arbitration preference */
-		eisa_den: 1;	/* EISA denied bus grants */
-};
+
+#define VI_CTRL_EISA_DEN 0x00000001 /* EISA denied bus grants */
+#define VI_CTRL_EISA_PRF 0x00000002 /* EISA bus has arbitration preference */
+#define VI_CTRL_CORE_DEN 0x00000004 /* CORE denied bus grants */
+#define VI_CTRL_CORE_PRF 0x00000008 /* CORE bus has arbitration preference */
+#define VI_CTRL_SGC0_DEN 0x00000010 /* SGC0 denied bus grants */
+#define VI_CTRL_SGC0_PRF 0x00000020 /* SGC0 has arbitration preference */
+#define VI_CTRL_SGC1_DEN 0x00000040 /* SGC1 denied bus grants */
+#define VI_CTRL_SGC1_PRF 0x00000080 /* SGC1 has arbitration preference */
+#define VI_CTRL_CPU_PRF  0x00000200 /* CPU  has arbitration preference */
+#define VI_CTRL_LPMC_EN  0x00010000 /* enable Low Priority Machine Checks */
+#define VI_CTRL_IPREF_EN 0x00020000 /* enable instruction prefetching */
+#define VI_CTRL_VSC_TOUT 0xfff80000 /* VSC clocks to wait before buserr tmo */
+
 #define	VI_CTRL_ANYPRF	0x02AA
 #define	VI_CTRL_ANYDEN	0x0055
 #define	VI_CTRL		PAGE0->pz_Pdep.pd_Viper.v_Ctrlcpy
+#define	VI_CTRL_BITS	"\020\001eisa_den\002eisa_prf\003core_den\004core_prf" \
+			"\005sgc1_den\006sgc1_prf\007sgc0_den\010sgc0_prf" \
+			"\012cpu_prf\021lpmc_en\022ipref_en"
 
 #define	VI_STAT_BITS	"\020\001grf_buserr\002cpu_buserr\003ven_tmo" \
 			"\004ven_buserr\005toc\006hardecc\007softecc\010cmdrst"
