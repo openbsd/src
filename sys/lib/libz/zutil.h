@@ -8,7 +8,7 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zutil.h,v 1.8 1999/02/14 19:47:37 mickey Exp $ */
+/* @(#) $Id: zutil.h,v 1.9 1999/02/14 20:06:05 mickey Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -194,6 +194,7 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 #ifdef DEBUG
    extern int z_verbose;
    extern void z_error    OF((char *m));
+#  define z_error panic
 #  define Assert(cond,msg) {if(!(cond)) z_error(msg);}
 #  define Trace(x) {if (z_verbose>=0) printf x ;}
 #  define Tracev(x) {if (z_verbose>0) printf x ;}
