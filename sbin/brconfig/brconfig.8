@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.49 2004/02/27 12:32:05 markus Exp $
+.\"	$OpenBSD: brconfig.8,v 1.50 2004/05/04 18:50:48 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -31,22 +31,22 @@
 .Nm brconfig
 .Nd manipulate bridge interfaces
 .Sh SYNOPSIS
-.Nm brconfig
+.Nm
 .Fl a
-.Nm brconfig
+.Nm
 .Ar bridge-name
 .Op Ar parameters
-.Nm brconfig
+.Nm
 .Ar bridge-name Cm rule No {
-.Ar block | pass No } {
-.Ar in | out | in/out No } on
+.Cm block | pass No } {
+.Cm in | out | in/out No } Cm on
 .Ar interface-name
-.Op Ar src address
-.Op Ar dst address
-.Op Ar tag tagname
+.Op Cm src Ar address
+.Op Cm dst Ar address
+.Op Cm tag Ar tagname
 .Sh DESCRIPTION
 The
-.Nm brconfig
+.Nm
 utility retrieves kernel state of bridge interfaces and allows
 user control of these bridges.
 Bridge devices create a logical link between two or more Ethernet interfaces
@@ -69,13 +69,13 @@ of the name of a bridge and a set of operations to be
 performed on that bridge.
 The commands are executed in the order they were specified.
 If no command is specified in the second synopsis, the
-.Nm brconfig
+.Nm
 will display status information about the bridge.
 With the third synopsis, rules for filtering Ethernet MAC addresses can
 be added to a bridge.
 .Pp
 The following parameters may be set with
-.Nm brconfig :
+.Nm :
 .Bl -tag -width Ds
 .It Cm up
 Start the bridge forwarding packets.
@@ -97,7 +97,7 @@ Remove the interface named by
 from the bridge.
 Promiscuous mode is turned off for the interface when it is
 removed from the bridge.
-.It Cm del
+.It Cm del Ar interface-name
 Alias for
 .Cm delete .
 .It Cm addspan Ar interface-name
@@ -123,7 +123,7 @@ is set to zero, then entries will not be expired.
 .It Cm static Ar interface-name address
 Add a static entry into the address cache pointing to
 .Ar interface-name .
-Static entries are never aged out of the cache or replaced if the address
+Static entries are never aged out of the cache or replaced, even if the address
 is seen on a different interface.
 .It Cm deladdr Ar address
 Delete an address from the cache.
@@ -198,17 +198,17 @@ necessary SAs.
 These daemons have to be configured as if they were running on the
 host whose traffic they are protecting (i.e., they need to have the
 appropriate authentication and authorization material, such as keys
-and certificates, to impersonate the protected host(s).
+and certificates, to impersonate the protected host(s)).
 .It Cm -link2
 Clear the
 .Cm link2
 flag on the bridge interface.
 .It Cm rule Op Ar rulespec
 Add a filtering rule to an interface.
-Rules have a similar syntax to
-.Xr pf 4 .
+Rules have a similar syntax to those in
+.Xr pf.conf 5 .
 Rules can be used to selectively block or pass frames based on Ethernet
-MAC address.
+MAC addresses.
 They can also tag packets for
 .Xr pf 4
 to filter on.
@@ -220,6 +220,8 @@ rule will match all frames (good for creating a catchall policy).
 .It Cm rulefile Ar filename
 Load a set of rules from the file
 .Ar filename .
+.It Cm rules Ar interface
+Display the active filtering rules in use on the given interface.
 .It Cm stp Ar interface
 Enable spanning tree protocol on
 .Ar interface .
@@ -254,55 +256,81 @@ to
 Defaults to 55, minimum of 1, maximum of 65535.
 .El
 .Sh EXAMPLES
-.Bl -tag -width brconfig
-.It Cm # ifconfig bridge0 create
-Create a bridge pseudo network device.
-.It Cm # brconfig bridge0 add rl0 add xl0 up
+Create a bridge pseudo network device:
+.Pp
+.Dl # ifconfig bridge0 create
+.Pp
 Add the Ethernet interfaces rl0 and xl0 to the bridge bridge0, and
-start the bridge forwarding packets.
-.It Cm # brconfig bridge0
+have the bridge start forwarding packets:
+.Pp
+.Dl # brconfig bridge0 add rl0 add xl0 up
+.Pp
 Retrieve a list of interfaces that are members of bridge0, and the addresses
-learned by the bridge.
-.It Cm # brconfig bridge0 down
-Stop bridge0 from forwarding packets.
-.It Cm # brconfig bridge0 delete xl0
-Remove the interface xl0 from the bridge bridge0.
-.It Cm # brconfig bridge0 flush
-Flush all dynamically learned addresses from the address cache.
-.It Cm # brconfig bridge0 flushall
-Remove all addresses, including static addresses, from the address cache.
-.It Cm # brconfig bridge0 -learn xl0 static xl0 8:0:20:1e:2f:2b
-.It Cm # brconfig bridge0 -discover xl0
-The examples above mark the xl0 interface so that it will not learn
-addresses and adds a static entry for the host 8:0:20:1e:2f:2b on the xl0
+learned by the bridge:
+.Pp
+.Dl # brconfig bridge0
+.Pp
+Stop bridge0 from forwarding packets:
+.Pp
+.Dl # brconfig bridge0 down
+.Pp
+Remove the interface xl0 from the bridge bridge0:
+.Pp
+.Dl # brconfig bridge0 delete xl0
+.Pp
+Flush all dynamically learned addresses from the address cache:
+.Pp
+.Dl # brconfig bridge0 flush
+.Pp
+Remove all addresses, including static addresses, from the address cache:
+.Pp
+.Dl # brconfig bridge0 flushall
+.Pp
+The following commands mark the xl0 interface so that it will not learn
+addresses and add a static entry for the host 8:0:20:1e:2f:2b on the xl0
 segment.
 Finally, xl0 is marked so that it will not receive packets with
 destinations not found in the address cache of bridge0.
 This setup is the most secure,
 and means that bogus MAC addresses seen by the xl0 side of the bridge
 will not be propagated to the rest of the network.
-Also, no packets will be sent on xl0 segment by the bridge unless they are
-broadcast packets or are for 8:0:20:1e:2f:2b.
-.It Cm "# brconfig bridge0 rule pass in on fxp0 src 0:1:2:3:4:5 dst 5:4:3:2:1:0"
-.It Cm "# brconfig bridge0 rule pass out on fxp0 src 5:4:3:2:1:0 dst 0:1:2:3:4:5"
-.It Cm # brconfig bridge0 rule block in on fxp0
-.It Cm # brconfig bridge0 rule block out on fxp0
-The above commands will set up a filter so that 0:1:2:3:4:5 can send frames
+Also, no packets will be sent onto the xl0 segment by the bridge unless they are
+broadcast packets or are destined for 8:0:20:1e:2f:2b.
+.Bd -literal -offset indent
+# brconfig bridge0 -learn xl0 static xl0 8:0:20:1e:2f:2b
+# brconfig bridge0 -discover xl0
+.Ed
+.Pp
+The following commands will set up a filter so that 0:1:2:3:4:5 can send frames
 through fxp0 only to 5:4:3:2:1:0, and 5:4:3:2:1:0 can return frames through
-fxp0 to 0:1:2:3:4:5.
-All other traffic trying to go into and be sent from fxp0 will be blocked.
-.It Cm "# brconfig bridge0 rule pass in on fxp0 src 9:8:7:6:5:4 tag boss"
-.It Cm "# brconfig bridge0 rule pass out on fxp0 dst 9:8:7:6:5:4 tag boss"
-These commands will tag packets from and to 9:8:7:6:5:4 on fxp0 so that
+fxp0 only to 0:1:2:3:4:5.
+All other traffic trying to go into or be sent from fxp0 will be blocked.
+.Bd -literal -offset indent
+# brconfig bridge0 rule pass in  on fxp0 \e
+	src 0:1:2:3:4:5 dst 5:4:3:2:1:0
+# brconfig bridge0 rule pass out on fxp0 \e
+	src 5:4:3:2:1:0 dst 0:1:2:3:4:5
+# brconfig bridge0 rule block in  on fxp0
+# brconfig bridge0 rule block out on fxp0
+.Ed
+.Pp
+The following commands will tag packets from and to 9:8:7:6:5:4 on fxp0 so that
 .Xr pf 4
 can refer to them using the
-.Ar tagged
+.Cm tagged
 directive:
+.Bd -literal -offset indent
+# brconfig bridge0 rule pass in  on fxp0 src 9:8:7:6:5:4 tag boss
+# brconfig bridge0 rule pass out on fxp0 dst 9:8:7:6:5:4 tag boss
+.Ed
+.Pp
+An example
+.Xr pf.conf 5
+rule using this tag is:
 .Pp
 .Dl pass tagged boss keep state queue q_med
-.El
 .Sh IPSEC BRIDGE
-The bridge can also be used to tunnel ethernet frames over IPv4 or
+The bridge can also be used to tunnel Ethernet frames over IPv4 or
 IPv6 by using the
 .Xr gif 4
 interface.
@@ -321,7 +349,7 @@ frame as if it had originated on a normal Ethernet interface.
 This effectively allows a layer-2 network to be extended from one point to
 another, possibly through the Internet.
 This mechanism may be used in
-conjunction with IPsec, by specifying the appropriate IPsec flows
+conjunction with IPsec by specifying the appropriate IPsec flows
 between the two bridges.
 To only protect the bridge traffic between
 the two bridges, the transport protocol 97 (etherip) selector may be
@@ -329,7 +357,7 @@ used in
 .Xr ipsecadm 8
 or
 .Xr isakmpd 8 .
-Otherwise, the ethernet frames will be sent in the clear between the
+Otherwise, the Ethernet frames will be sent in the clear between the
 two bridges.
 .Pp
 For example, given two physically separate Ethernet networks, the bridge can
@@ -340,14 +368,13 @@ both bridges have fxp1 on their internal network (network1 and network2,
 respectively), the following configuration can be used to bridge
 network1 and network2.
 .Pp
-Add the encapsulation interface and internal ethernet interface to bridge
+Add the encapsulation interface and internal Ethernet interface to the bridge
 interface:
-.Bd -literal
-# brconfig bridge0 add gif0 add fxp1
-.Ed
+.Pp
+.Dl # brconfig bridge0 add gif0 add fxp1
 .Pp
 Create and configure the gif0 interface:
-.Bd -literal
+.Bd -literal -offset indent
 (on bridge 1) # ifconfig gif0 create
 (on bridge 1) # ifconfig gif0 tunnel 1.2.3.4 4.3.2.1
 (on bridge 2) # ifconfig gif0 create
@@ -356,18 +383,16 @@ Create and configure the gif0 interface:
 .Pp
 Create Security Associations (SAs) between the external IP address of each
 bridge:
-.Bd -literal
-# ipsecadm new esp -spi 4242 -dst 4.3.2.1 -src 1.2.3.4 \e
-	-enc 3des -auth md5 -keyfile keyfile1 -authkeyfile authkeyfile1
-.Ed
-.Bd -literal
-# ipsecadm new esp -spi 4243 -dst 1.2.3.4 -src 4.3.2.1 \e
-	-enc 3des -auth md5 -keyfile keyfile2 -authkeyfile authkeyfile2
+.Bd -literal -offset indent
+# ipsecadm new esp -spi 4242 -dst 4.3.2.1 -src 1.2.3.4 -enc 3des \e
+	-auth md5 -keyfile keyfile1 -authkeyfile authkeyfile1
+# ipsecadm new esp -spi 4243 -dst 1.2.3.4 -src 4.3.2.1 -enc 3des \e
+	-auth md5 -keyfile keyfile2 -authkeyfile authkeyfile2
 .Ed
 .Pp
 Set up ingress flows so that traffic is allowed between the two bridges
 for the above associations:
-.Bd -literal
+.Bd -literal -offset indent
 (on bridge1) # ipsecadm flow -dst 4.3.2.1 -out \e
 	-transport etherip -require -addr 1.2.3.4/32 4.3.2.1/32
 (on bridge2) # ipsecadm flow -dst 1.2.3.4 -out \e
@@ -376,18 +401,17 @@ for the above associations:
 .Pp
 Bring up the internal interface (if not already up) and encapsulation
 interface:
-.Bd -literal
+.Bd -literal -offset indent
 # ifconfig fxp1 up
 # ifconfig gif0 up
 .Ed
 .Pp
 Finally, bring the bridge interface up and allow it to start processing
 frames:
-.Bd -literal
-# brconfig bridge0 up
-.Ed
 .Pp
-The internal interface, ie. fxp1, on each bridge need not have an IP
+.Dl # brconfig bridge0 up
+.Pp
+The internal interface, i.e., fxp1, on each bridge need not have an IP
 address; the bridge can function without it.
 .Pp
 Note:  It is possible to put the above commands in the
@@ -404,7 +428,7 @@ or
 .Cm -stp
 commands
 to
-.Nm brconfig
+.Nm ,
 STP can be enabled or disabled on each port.
 STP will not work on
 .Xr gif 4
@@ -414,7 +438,7 @@ The bridge can have interfaces added to it as span ports.
 Span ports transmit a copy of every frame received by the bridge.
 This is most useful for snooping a bridged network passively on
 another host connected to one of the span ports of the bridge.
-Span ports cannot be bridge members, instead the
+Span ports cannot be bridge members; instead, the
 .Cm addspan
 and
 .Cm delspan
@@ -424,13 +448,15 @@ commands are used to add and delete span ports to and from a bridge.
 .Xr gif 4 ,
 .Xr ip 4 ,
 .Xr ipsec 4 ,
+.Xr pf 4 ,
 .Xr bridgename.if 5 ,
+.Xr pf.conf 5 ,
 .Xr ifconfig 8 ,
 .Xr ipsecadm 8 ,
 .Xr isakmpd 8
 .Sh HISTORY
 The
-.Nm brconfig
+.Nm
 command first appeared in
 .Ox 2.5 .
 .Sh AUTHORS
