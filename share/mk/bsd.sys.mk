@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.sys.mk,v 1.7 1996/05/22 12:20:05 deraadt Exp $
+#	$OpenBSD: bsd.sys.mk,v 1.8 2000/07/06 23:12:41 millert Exp $
 #	$NetBSD: bsd.sys.mk,v 1.2 1995/12/13 01:25:07 cgd Exp $
 #
 # Overrides used for OpenBSD source tree builds.
@@ -7,6 +7,7 @@
 
 .if defined(DESTDIR)
 CPPFLAGS+= -nostdinc -idirafter ${DESTDIR}/usr/include
+CXXFLAGS+= -idirafter ${DESTDIR}/usr/include/g++
 .endif
 
 .if defined(PARALLEL)
