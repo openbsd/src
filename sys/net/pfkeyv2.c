@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.72 2001/06/27 04:39:30 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.73 2001/06/27 05:29:10 angelos Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1517,9 +1517,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		    goto ret;
 		}
 
-		TAILQ_INIT(&ipo->ipo_acquires);
-
 		bzero(ipo, sizeof(struct ipsec_policy));
+		TAILQ_INIT(&ipo->ipo_acquires);
 
 		/* Finish initialization of SPD entry */
 		encapgw.sen_len = SENT_LEN;
