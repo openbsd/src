@@ -1,4 +1,4 @@
-.\"	$Id: smtpd.8,v 1.3 1997/12/12 21:50:10 beck Exp $
+.\"	$Id: smtpd.8,v 1.4 1997/12/13 00:51:40 mickey Exp $
 .Dd Dec 10, 1997
 .Dt SMTPD 8
 .Os OpenBSD
@@ -37,7 +37,7 @@ smtpd runs as.
 .It Fl d
 Specify a different spool
 .Ar directory
-within the crooted subtree. The default is ".", making smtpd spool
+within the chrooted subtree. The default is ".", making smtpd spool
 files to the directory it chroots itself to.
 .It Fl D
 Tells smtpd to run as a daemon, listening on port 25. The
