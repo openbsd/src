@@ -1,5 +1,5 @@
-/*	$OpenBSD: hayes.c,v 1.3 1996/06/26 05:40:53 deraadt Exp $	*/
-/*	$NetBSD: hayes.c,v 1.4 1995/10/29 00:49:54 pk Exp $	*/
+/*	$OpenBSD: hayes.c,v 1.4 1996/11/03 18:33:02 millert Exp $	*/
+/*	$NetBSD: hayes.c,v 1.5 1996/11/01 23:56:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: hayes.c,v 1.3 1996/06/26 05:40:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hayes.c,v 1.4 1996/11/03 18:33:02 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -108,6 +108,9 @@ hay_dialer(num, acu)
 	gobble("\r");
 	gobble("\r");
 	write(FD, "ATTD", 4);	/* send dial command */
+	for (cp = num; *cp; cp++)
+		if (*cp == '=')
+			*cp = ',';
 	write(FD, num, strlen(num));
 	state = DIALING;
 	write(FD, "\r", 1);
