@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.17 2004/05/25 20:49:32 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.18 2004/05/29 22:12:22 tom Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -163,7 +163,7 @@ pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
-#vga0		at isa?
+vga0		at isa?
 vga*		at pci? dev ? function ?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga? console ?
