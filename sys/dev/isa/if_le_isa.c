@@ -293,8 +293,7 @@ le_isa_attach(parent, self, aux)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct isa_attach_args *ia = aux;
 
-	printf(": %s Ethernet\n", sc->sc_dev.dv_xname,
-	    card_type[lesc->sc_card]);
+	printf(": %s Ethernet\n", card_type[lesc->sc_card]);
 
 	if (lesc->sc_card == DEPCA) {
 		u_char *mem, val;
@@ -350,7 +349,7 @@ le_isa_attach(parent, self, aux)
 		isa_dmacascade(ia->ia_drq);
 
 	lesc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, le_isa_intredge, sc);
+	    IPL_NET, le_isa_intredge, sc, sc->sc_dev.dv_xname);
 }
 
 /*
