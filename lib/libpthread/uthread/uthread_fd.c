@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.19 2003/02/05 06:19:09 marc Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.20 2003/02/05 06:20:36 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -228,7 +228,7 @@ _thread_fd_table_dup(int from_fd, int to_fd)
 	struct fd_table_entry	*entry;
 	int ret;
 
-	if (from_fd != too_fd) {
+	if (from_fd != to_fd) {
 		/* release any existing to_fd table entry */
 		entry = _thread_fd_table[to_fd];
 		if (entry != NULL) {
