@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.19 1999/06/08 15:42:54 kstailey Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.20 1999/08/27 08:49:29 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.19 1999/06/08 15:42:54 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.20 1999/08/27 08:49:29 fgsch Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -628,7 +628,7 @@ void domonitor(log, whom)
 		if (*p == '/')
 			*p = '_';
 	}
-	fname = (char *) malloc(strlen(STATS_DIR) + strlen(flog) + 17);
+	fname = (char *) malloc(sizeof(STATS_DIR) + strlen(flog) + 16);
 	if (fname == NULL)
 		err(1, "malloc");
 
@@ -719,7 +719,7 @@ FILE *openmail()
 	char *cmdbuf;
 	FILE *ret;
 
-	cmdbuf = (char *) malloc(strlen(SENDMAIL) + 3);
+	cmdbuf = (char *) malloc(sizeof(SENDMAIL) + 3);
 	if (cmdbuf == NULL)
 		return(NULL);
 
