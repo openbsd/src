@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.34 2002/07/24 23:11:14 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.35 2002/09/13 01:31:39 djm Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -249,8 +249,21 @@ parse(int fd, struct in_addr *laddr, struct in_addr *faddr)
 	 * Next - get the specific TCP connection and return the
 	 * uid - user number.
 	 */
-	if (k_getuid(&faddr2, htons(fport), laddr,
-	    htons(lport), &uid) == -1) {
+	if (k_getuid(&faddr2, htons(fport), laddr, htons(lport), &uid) == -1) {
+		if (no_user_token_flag) {
+			gentoken(token, sizeof token);
+			syslog(LOG_NOTICE, "token %s == NO USER", token);
+			n = snprintf(buf, sizeof(buf),
+			    "%d , %d : USERID : %s%s%s :%s\r\n", lport, fport, 
+			    opsys_name, charset_sep, charset_name, token);
+			if (timed_write(fd, buf, n, IO_TIMEOUT) != n && 
+			    syslog_flag) {
+				syslog(LOG_NOTICE, "write to %s: %m", 
+				    gethost4_addr(faddr));
+				return 1;
+			}
+			return 0;
+		}
 		if (syslog_flag)
 			syslog(LOG_DEBUG, "Returning: %d , %d : NO-USER",
 			    lport, fport);
@@ -432,8 +445,21 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 	 * Next - get the specific TCP connection and return the
 	 * uid - user number.
 	 */
-	if (k_getuid6(&faddr2, htons(fport), laddr,
-	    htons(lport), &uid) == -1) {
+	if (k_getuid6(&faddr2, htons(fport), laddr, htons(lport), &uid) == -1) {
+		if (no_user_token_flag) {
+			gentoken(token, sizeof token);
+			syslog(LOG_NOTICE, "token %s == NO USER", token);
+			n = snprintf(buf, sizeof(buf),
+			    "%d , %d : USERID : %s%s%s :%s\r\n", lport, fport, 
+			    opsys_name, charset_sep, charset_name, token);
+			if (timed_write(fd, buf, n, IO_TIMEOUT) != n && 
+			    syslog_flag) {
+				syslog(LOG_NOTICE, "write to %s: %m", 
+				    gethost6(faddr));
+				return 1;
+			}
+			return 0;
+		}
 		if (syslog_flag)
 			syslog(LOG_DEBUG, "Returning: %d , %d : NO-USER",
 			    lport, fport);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.18 2002/07/16 10:16:10 deraadt Exp $
+.\"	$OpenBSD: identd.8,v 1.19 2002/09/13 01:31:39 djm Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -106,6 +106,11 @@ Hide the actual information about the user by providing an opaque
 token instead.
 This token is entered into the local system logs
 so that the administrator can later discover who the real user was.
+.It Fl H
+Hide information about non existing users (e.g., connections through NAT) as
+well as existing users. 
+Implies 
+.Fl h .
 .It Fl t Ar seconds
 Specifies an idle timeout in seconds where a daemon running in
 "wait" mode will timeout and exit.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.h,v 1.13 2002/07/16 10:36:10 deraadt Exp $*/
+/*	$OpenBSD: identd.h,v 1.14 2002/09/13 01:31:39 djm Exp $*/
 
 /*
 **
@@ -23,6 +23,7 @@ extern int unknown_flag;
 extern int number_flag;
 extern int noident_flag;
 extern int token_flag;
+extern int no_user_token_flag;
 extern int userident_flag;
 
 extern const char *opsys_name;

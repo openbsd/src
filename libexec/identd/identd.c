@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.32 2002/07/17 02:53:36 deraadt Exp $	*/
+/*	$OpenBSD: identd.c,v 1.33 2002/09/13 01:31:39 djm Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -46,6 +46,7 @@ int     number_flag;
 int     noident_flag;
 int	userident_flag;
 int	token_flag;
+int	no_user_token_flag;
 
 int     lport;
 int     fport;
@@ -160,10 +161,13 @@ main(int argc, char *argv[])
 	/*
 	 * Parse the command line arguments
 	 */
-	while ((ch = getopt(argc, argv, "hbwit:p:a:u:g:c:r:loenvdmNU")) != -1) {
+	while ((ch = getopt(argc, argv, "hHbwit:p:a:u:g:c:r:loenvdmNU")) != -1) {
 		switch (ch) {
 		case 'h':
 			token_flag = 1;
+			break;
+		case 'H':
+			no_user_token_flag = token_flag = 1;
 			break;
 		case 'b':	/* Start as standalone daemon */
 			background_flag = 1;
