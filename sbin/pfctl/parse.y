@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.247 2002/12/09 03:59:59 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.248 2002/12/09 13:17:48 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -336,13 +336,14 @@ typedef struct {
 
 #define PREPARE_ANCHOR_RULE(r, a)				\
 	do {							\
-		if (strlen(a) >= PF_ANCHOR_NAME_SIZE) {		\
+		memset(&(r), 0, sizeof(r));			\
+		if (strlcpy(r.anchorname, (a),			\
+		    sizeof(r.anchorname)) >=			\
+		    sizeof(r.anchorname)) {			\
 			yyerror("anchor name '%s' too long",	\
 			    (a));				\
 			YYERROR;				\
 		}						\
-		memset(&(r), 0, sizeof(r));			\
-		strcpy(r.anchorname, (a));			\
 	} while (0)
 
 %}
