@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.427 2001/08/08 15:11:15 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.428 2001/08/09 11:33:12 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1391,6 +1391,7 @@
 #define	PCI_PRODUCT_LUCENT_LTMODEM_0458	0x0458		/* LTMODEM */
 #define	PCI_PRODUCT_LUCENT_LTMODEM_0459	0x0459		/* LTMODEM */
 #define	PCI_PRODUCT_LUCENT_LTMODEM_045A	0x045a		/* LTMODEM */
+#define	PCI_PRODUCT_LUCENT_LTMODEM_045C	0x045c		/* LTMODEM */
 #define	PCI_PRODUCT_LUCENT_VENUSMODEM	0x0480		/* Venus Modem */
 #define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB */
 #define	PCI_PRODUCT_LUCENT_USBQBUS	0x5803		/* USB QuadraBus */

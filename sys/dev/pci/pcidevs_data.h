@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.427 2001/08/08 15:11:15 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.428 2001/08/09 11:33:12 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2564,6 +2564,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_045A,
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_045C,
 	    "LTMODEM",
 	},
 	{
