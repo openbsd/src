@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2002/05/11 00:20:18 espie Exp $
+# $OpenBSD: Makefile,v 1.10 2002/06/10 18:40:33 hin Exp $
 
 PROG	= kauthd
 
@@ -7,7 +7,7 @@ KRBDEPTH=../..
 
 .PATH:	${KRBSRC}/appl/kauth
 
-CFLAGS	+= -I. -I${KRBSRC}/lib/kadm -I${KRBSRC}/lib/acl
+CFLAGS	+= -I. -I${KRBSRC}/lib/kadm -I${KRBSRC}/lib/acl -I${DESTDIR}/usr/include/kerberosV
 DPADD	+= ${LIBKAFS} ${LIBKRB} ${LIBKDB} ${LIBKADM} ${LIBKRB5} ${LIBASN1} \
 	${LIBDES} ${LIBCRYPTO}
 LDADD	+= -lkafs -lkrb -lkdb -lkadm -lkrb5 -lasn1 -ldes -lcrypto ${LIBROKEN}
