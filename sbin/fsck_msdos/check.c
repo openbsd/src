@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.6 1998/01/11 20:40:30 provos Exp $	*/
+/*	$OpenBSD: check.c,v 1.7 1999/03/25 01:45:01 aaron Exp $	*/
 /*	$NetBSD: check.c,v 1.8 1997/10/17 11:19:29 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: check.c,v 1.6 1998/01/11 20:40:30 provos Exp $";
+static char rcsid[] = "$OpenBSD: check.c,v 1.7 1999/03/25 01:45:01 aaron Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -133,7 +133,7 @@ checkfilesys(fname)
 	}
 
 	if (!preen)
-		printf("** Phase 3 - Checking Directories\n");
+		printf("** Phase 3 - Check Directories\n");
 
 	mod |= resetDosDirSection(&boot, fat);
 	if (mod & FSFATAL) {
@@ -160,7 +160,7 @@ checkfilesys(fname)
 	}
 	
 	if (!preen)
-		printf("** Phase 4 - Checking for Lost Files\n");
+		printf("** Phase 4 - Check for Lost Files\n");
 
 	mod |= checklost(dosfs, &boot, fat);
 	if (mod & FSFATAL) {
