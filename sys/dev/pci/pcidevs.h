@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.516 2002/06/03 21:48:31 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.517 2002/06/05 22:35:16 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -811,6 +811,13 @@
 #define	PCI_PRODUCT_AMD_766_IDE	0x7411		/* 766 IDE */
 #define	PCI_PRODUCT_AMD_766_USB	0x7412		/* 766 USB */
 #define	PCI_PRODUCT_AMD_766_PMC	0x7413		/* 766 Power Mgmt */
+#define	PCI_PRODUCT_AMD_PBC768_ISA	0x7440		/* 768 PCI-ISA */
+#define	PCI_PRODUCT_AMD_PBC768_IDE	0x7441		/* 768 IDE */
+#define	PCI_PRODUCT_AMD_PBC768_PMC	0x7443		/* 768 Power Mgmt */
+#define	PCI_PRODUCT_AMD_PBC768_AC	0x7445		/* 768 AC97 Audio */
+#define	PCI_PRODUCT_AMD_PBC768_MD	0x7446		/* 768 AC97 Modem */
+#define	PCI_PRODUCT_AMD_PBC768_PPB	0x7448		/* 768 PCI-PCI */
+#define	PCI_PRODUCT_AMD_PBC768_USB	0x7449		/* 768 USB */
 
 /* AMI */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x1960		/* MegaRAID */
