@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.31 2000/09/20 17:00:23 provos Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.32 2000/09/25 09:41:03 provos Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -134,7 +134,8 @@ struct tcpcb {
 					 * for slow start exponential to
 					 * linear switch
 					 */
-	u_int	t_maxopd;		/* mss plus options */
+	u_short	t_maxopd;		/* mss plus options */
+	u_short	t_peermss;		/* peer's maximum segment size */
 
 /*
  * transmit timing stuff.  See below for scale of srtt and rttvar.
@@ -345,6 +346,7 @@ void	 tcp_input __P((struct mbuf *, ...));
 int	 tcp_mss __P((struct tcpcb *, int));
 void	 tcp_mss_update __P((struct tcpcb *));
 void	 tcp_mtudisc __P((struct inpcb *, int));
+void	 tcp_mtudisc_increase __P((struct inpcb *, int));
 struct tcpcb *
 	 tcp_newtcpcb __P((struct inpcb *));
 void	 tcp_notify __P((struct inpcb *, int));

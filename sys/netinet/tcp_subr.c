@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.32 2000/09/20 17:00:23 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.33 2000/09/25 09:41:03 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -811,6 +811,8 @@ tcp_ctlinput(cmd, sa, v)
 		notify = in_rtchange, ip = 0;
 	else if (cmd == PRC_MSGSIZE && ip_mtudisc)
 		notify = tcp_mtudisc, ip = 0;
+	else if (cmd == PRC_MTUINC)
+		notify = tcp_mtudisc_increase, ip = 0;
 	else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
 	else if (errno == 0)
@@ -870,12 +872,32 @@ tcp_mtudisc(inp, errno)
 				tcp_mss(tp, -1);
 			}
 		}
-	    
+
 		/*
 		 * Resend unacknowledged packets.
 		 */
 		tp->snd_nxt = tp->snd_una;
 		tcp_output(tp);
+	}
+}
+
+void
+tcp_mtudisc_increase(inp, errno)
+	struct inpcb *inp;
+	int errno;
+{
+	struct tcpcb *tp = intotcpcb(inp);
+	struct rtentry *rt = in_pcbrtentry(inp);
+
+	if (tp != 0 && rt != 0) {
+		/*
+		 * If this was a host route, remove and realloc.
+		 */
+		if (rt->rt_flags & RTF_HOST)
+			in_rtchange(inp, errno);
+		
+		/* also takes care of congestion window */
+		tcp_mss(tp, -1);
 	}
 }
 

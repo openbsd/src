@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.76 2000/09/23 01:07:38 chris Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.77 2000/09/25 09:41:02 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2871,8 +2871,10 @@ tcp_mss(tp, offer)
 	 * unless we received an offer at least that large from peer.
 	 * However, do not accept offers under 32 bytes.
 	 */
-	if (offer && offer != -1)
-		mss = min(mss, offer);
+	if (offer > 0)
+		tp->t_peermss = offer;
+	if (tp->t_peermss)
+		mss = min(mss, tp->t_peermss);
 	mss = max(mss, 64);		/* sanity - at least max opt. space */
 
 	/*

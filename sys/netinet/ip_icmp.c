@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.24 2000/09/20 19:11:09 angelos Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.25 2000/09/25 09:41:02 provos Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -817,8 +817,18 @@ icmp_mtudisc_timeout(rt, r)
 		panic("icmp_mtudisc_timeout:  bad route to timeout");
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) == 
 	    (RTF_DYNAMIC | RTF_HOST)) {
+		void *(*ctlfunc) __P((int, struct sockaddr *, void *));
+		extern u_char ip_protox[];
+		struct sockaddr_in sa;
+
+		sa = *(struct sockaddr_in *)rt_key(rt);
 		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+
+		/* Notify TCP layer of increased Path MTU estimate */
+		ctlfunc = inetsw[ip_protox[IPPROTO_TCP]].pr_ctlinput;
+		if (ctlfunc)
+			(*ctlfunc)(PRC_MTUINC,(struct sockaddr *)&sa, NULL);
 	} else {
 		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
 			rt->rt_rmx.rmx_mtu = 0;
