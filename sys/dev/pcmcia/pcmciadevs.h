@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.44 2000/07/22 02:58:50 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.45 2000/08/04 15:47:51 aaron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -67,6 +67,7 @@
 #define	PCMCIA_VENDOR_SYMBOL	0x014d	/* Symbol */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent */
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
+#define	PCMCIA_VENDOR_PSION	0x016c	/* Psion */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna */
@@ -280,6 +281,10 @@
 #define	PCMCIA_PRODUCT_PROXIM_ROAMABOUT_2400FH	0x1058
 #define	PCMCIA_CIS_PROXIM_RANGELAN2_7401	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_PROXIM_RANGELAN2_7401	0x1158
+
+/* Psion */
+#define	PCMCIA_CIS_PSION_GOLDCARD	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_PSION_GOLDCARD	0x0020
 
 /* Quatech */
 #define	PCMCIA_CIS_QUATECH_DSP_225	{ NULL, NULL, NULL, NULL }
