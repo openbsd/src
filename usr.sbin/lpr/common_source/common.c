@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.10 2001/04/04 13:10:14 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.11 2001/04/05 16:59:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: common.c,v 1.10 2001/04/04 13:10:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: common.c,v 1.11 2001/04/05 16:59:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -238,13 +238,15 @@ getq(namelist)
 	struct stat stbuf;
 	DIR *dirp;
 	int arraysz;
+	
 
 	seteuid(euid);
-	if ((dirp = opendir(SD)) == NULL)
+	dirp = opendir(SD);
+	seteuid(uid);
+	if (dirp== NULL)
 		return(-1);
 	if (fstat(dirp->dd_fd, &stbuf) < 0)
 		goto errdone;
-	seteuid(uid);
 
 	/*
 	 * Estimate the array size by taking the size of the directory file
