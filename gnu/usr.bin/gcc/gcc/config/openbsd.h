@@ -314,3 +314,8 @@ do {									 \
    work.  On the other hand, we don't define HANDLE_PRAGMA_WEAK directly,
    as this depends on a few other details as well...  */
 #define HANDLE_SYSV_PRAGMA 1
+
+/* Disable the use of unsafe builtin functions, (strcat, strcpy), making
+ * them easier to spot in the object files. 
+ */
+#define NO_UNSAFE_BUILTINS
