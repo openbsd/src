@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_nat.c,v 1.30 2000/05/01 06:16:47 kjell Exp $	*/
+/*	$OpenBSD: ip_nat.c,v 1.31 2000/05/10 20:40:53 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -800,7 +800,7 @@ int direction;
 					port += MAPBLK_MINPORT;
 					port = htons(port);
 				}
-			} else if (!in.s_addr &&
+			} else if (!np->in_nip &&
 				   (np->in_outmsk == 0xffffffff)) {
 				/*
 				 * 0/32 - use the interface's IP address.
@@ -811,7 +811,7 @@ int direction;
 					return NULL;
 				}
 				in.s_addr = ntohl(in.s_addr);
-			} else if (!in.s_addr && !np->in_outmsk) {
+			} else if (!np->in_nip && !np->in_outmsk) {
 				/*
 				 * 0/0 - use the original source address/port.
 				 */

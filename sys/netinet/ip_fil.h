@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.h,v 1.18 2000/04/05 05:35:27 kjell Exp $	*/
+/*	$OpenBSD: ip_fil.h,v 1.19 2000/05/10 20:40:53 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -316,7 +316,7 @@ typedef	struct	friostat	{
 	char	f_running;	/* 1 if running, else 0 */
 	char	f_logging;	/* 1 if enabled, else 0 */
 #if !SOLARIS && defined(sun)
-	char	f_version[25];	/* version string */
+	char	f_version[17];	/* version string */
 #else
 	char	f_version[32];	/* version string */
 #endif
