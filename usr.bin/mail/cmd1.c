@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.18 2001/06/23 23:04:21 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.19 2001/11/16 17:10:06 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd1.c,v 1.18 2001/06/23 23:04:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd1.c,v 1.19 2001/11/16 17:10:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -335,32 +335,32 @@ Type(v)
 /*
  * Type out the messages requested.
  */
-sigjmp_buf	pipestop;
 int
 type1(msgvec, cmd, doign, page)
 	int *msgvec;
 	char *cmd;
 	int doign, page;
 {
-	int nlines, *ip;
+	int nlines, *ip, restoreterm;
 	struct message *mp;
+	struct termios tbuf;
 	char * volatile cp;
 	FILE * volatile obuf;
 
 	obuf = stdout;
-	if (sigsetjmp(pipestop, 1))
-		goto close_pipe;
+	restoreterm = 0;
 
 	/*
 	 * start a pipe if needed.
 	 */
 	if (cmd) {
+		restoreterm = (tcgetattr(fileno(stdin), &tbuf) == 0);
 		obuf = Popen(cmd, "w");
 		if (obuf == NULL) {
 			warn("%s", cp);
 			obuf = stdout;
 		} else {
-			(void)signal(SIGPIPE, brokpipe);
+			(void)signal(SIGPIPE, SIG_IGN);
 		}
 	} else if (value("interactive") != NULL &&
 	         (page || (cp = value("crt")) != NULL)) {
@@ -370,12 +370,13 @@ type1(msgvec, cmd, doign, page)
 				nlines += message[*ip - 1].m_lines;
 		}
 		if (page || nlines > (*cp ? atoi(cp) : realscreenheight)) {
+			restoreterm = (tcgetattr(fileno(stdin), &tbuf) == 0);
 			obuf = Popen(value("PAGER"), "w");
 			if (obuf == NULL) {
 				warn("%s", cp);
 				obuf = stdout;
 			} else
-				(void)signal(SIGPIPE, brokpipe);
+				(void)signal(SIGPIPE, SIG_IGN);
 		}
 	}
 
@@ -388,30 +389,17 @@ type1(msgvec, cmd, doign, page)
 		dot = mp;
 		if (cmd == NULL && value("quiet") == NULL)
 			fprintf(obuf, "Message %d:\n", *ip);
-		(void)sendmessage(mp, obuf, doign ? ignore : 0, NULL);
+		if (sendmessage(mp, obuf, doign ? ignore : 0, NULL) == -1)
+			break;
 	}
 
-close_pipe:
 	if (obuf != stdout) {
-		/*
-		 * Ignore SIGPIPE so it can't cause a duplicate close.
-		 */
-		(void)signal(SIGPIPE, SIG_IGN);
 		(void)Pclose(obuf);
 		(void)signal(SIGPIPE, SIG_DFL);
+		if (restoreterm)
+			(void)tcsetattr(fileno(stdin), TCSADRAIN, &tbuf);
 	}
 	return(0);
-}
-
-/*
- * Respond to a broken pipe signal --
- * probably caused by quitting more.
- */
-void
-brokpipe(signo)
-	int signo;
-{
-	siglongjmp(pipestop, 1);
 }
 
 /*

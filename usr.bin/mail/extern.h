@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.16 2001/01/16 05:36:08 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.17 2001/11/16 17:10:06 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.16 2001/01/16 05:36:08 millert Exp $
+ *	$OpenBSD: extern.h,v 1.17 2001/11/16 17:10:06 millert Exp $
  */
 
 struct name;
@@ -96,7 +96,6 @@ int	 argcount __P((char **));
 void	 assign __P((char [], char []));
 int	 bangexp __P((char *, size_t));
 int	 blankline __P((char []));
-void	 brokpipe __P((int));
 int	 charcount __P((char *, int));
 int	 check __P((int, int));
 void	 clearnew __P((void));
