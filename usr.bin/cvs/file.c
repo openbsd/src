@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.13 2004/07/30 11:50:33 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.14 2004/07/30 17:39:27 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -40,14 +40,12 @@
 
 #include "cvs.h"
 #include "log.h"
+#include "file.h"
 
 
 #define CVS_IGN_STATIC    0x01     /* pattern is static, no need to glob */
 
-
-
 #define CVS_CHAR_ISMETA(c)  ((c == '*') || (c == '?') || (c == '['))
-
 
 
 /* ignore pattern */
@@ -97,11 +95,12 @@ static RCSNUM *cvs_addedrev;
 TAILQ_HEAD(, cvs_ignpat)  cvs_ign_pats;
 
 
-static int        cvs_file_getdir  (struct cvs_file *, int);
+static int        cvs_file_getdir  (CVSFILE *, int);
 static void       cvs_file_freedir (struct cvs_dir *);
 static int        cvs_file_sort    (struct cvs_flist *);
 static int        cvs_file_cmp     (const void *, const void *);
 static CVSFILE*   cvs_file_alloc   (const char *, u_int);
+static CVSFILE*   cvs_file_lget    (const char *, int, CVSFILE *);
 
 
 
@@ -272,90 +271,10 @@ cvs_file_create(const char *path, u_int type, mode_t mode)
  * with cvs_file_free().
  */
 
-struct cvs_file*
+CVSFILE*
 cvs_file_get(const char *path, int flags)
 {
-	int cwd;
-	size_t len;
-	char buf[32];
-	struct stat st;
-	struct tm lmtm;
-	struct cvs_file *cfp;
-	struct cvs_ent *ent;
-
-	if (strcmp(path, ".") == 0)
-		cwd = 1;
-	else
-		cwd = 0;
-
-	if (stat(path, &st) == -1) {
-		cvs_log(LP_ERRNO, "failed to stat %s", path);
-		return (NULL);
-	}
-
-	cfp = cvs_file_alloc(path, IFTODT(st.st_mode));
-	if (cfp == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate CVS file data");
-		return (NULL);
-	}
-
-	ent = cvs_ent_getent(path);
-	if (ent == NULL)
-		cfp->cf_cvstat = (cwd == 1) ?
-		    CVS_FST_UPTODATE : CVS_FST_UNKNOWN;
-	else {
-		/* always show directories as up-to-date */
-		if (ent->ce_type == CVS_ENT_DIR)
-			cfp->cf_cvstat = CVS_FST_UPTODATE;
-		else if (rcsnum_cmp(ent->ce_rev, cvs_addedrev, 2) == 0)
-			cfp->cf_cvstat = CVS_FST_ADDED;
-		else {
-			/* check last modified time */
-			if ((gmtime_r((time_t *)&(st.st_mtime), &lmtm) == NULL) ||
-			    (asctime_r(&lmtm, buf) == NULL)) {
-				cvs_log(LP_ERR,
-				    "failed to generate file timestamp");
-				/* fake an up to date file */
-				strlcpy(buf, ent->ce_timestamp, sizeof(buf));
-			}
-			len = strlen(buf);
-			if ((len > 0) && (buf[len - 1] == '\n'))
-				buf[--len] = '\0';
-
-			if (strcmp(buf, ent->ce_timestamp) == 0)
-				cfp->cf_cvstat = CVS_FST_UPTODATE;
-			else
-				cfp->cf_cvstat = CVS_FST_MODIFIED;
-		}
-
-		cvs_ent_free(ent);
-	}
-
-	/* convert from stat mode to dirent values */
-	cfp->cf_type = IFTODT(st.st_mode);
-	if ((cfp->cf_type == DT_DIR) && ((flags & CF_RECURSE) || cwd)) {
-		if ((flags & CF_KNOWN) && (cfp->cf_cvstat == CVS_FST_UNKNOWN)) {
-			free(cfp->cf_ddat);
-			cfp->cf_ddat = NULL;
-		}
-		else if (cvs_file_getdir(cfp, flags) < 0) {
-			cvs_file_free(cfp);
-			return (NULL);
-		}
-	}
-
-	if (flags & CF_STAT) {
-		cfp->cf_stat = (struct stat *)malloc(sizeof(struct stat));
-		if (cfp->cf_stat == NULL) {
-			cvs_log(LP_ERRNO, "failed to allocate stat structure");
-			cvs_file_free(cfp);
-			return (NULL);
-		}
-
-		memcpy(cfp->cf_stat, &st, sizeof(struct stat));
-	}
-
-	return (cfp);
+	return cvs_file_lget(path, flags, NULL);
 }
 
 
@@ -373,7 +292,7 @@ cvs_file_getspec(char **fspec, int fsn, int flags)
 {
 	int i, c;
 	char common[MAXPATHLEN];
-	struct cvs_file *cfp;
+	CVSFILE *cfp;
 
 	/* first find the common subdir */
 	strlcpy(common, fspec[0], sizeof(common));
@@ -459,14 +378,14 @@ cvs_file_find(CVSFILE *hier, const char *path)
  */
 
 static int
-cvs_file_getdir(struct cvs_file *cf, int flags)
+cvs_file_getdir(CVSFILE *cf, int flags)
 {
 	int ret, fd;
 	long base;
 	void *dp, *ep;
 	char fbuf[2048], pbuf[MAXPATHLEN];
 	struct dirent *ent;
-	struct cvs_file *cfp;
+	CVSFILE *cfp;
 	struct cvs_dir *cdp;
 	struct cvs_flist dirs;
 
@@ -482,10 +401,16 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 	}
 
 	cdp->cd_root = cvsroot_get(cf->cf_path);
+	printf("cvsroot = %s\n", cdp->cd_root->cr_str);
 	if (cdp->cd_root == NULL) {
 		cvs_file_freedir(cdp);
 		return (-1);
 	}
+
+	if (flags & CF_MKADMIN)
+		cvs_mkadmin(cf, 0755);
+
+	cdp->cd_ent = cvs_ent_open(cf->cf_path, O_RDONLY);
 
 	fd = open(cf->cf_path, O_RDONLY);
 	if (fd == -1) {
@@ -514,7 +439,7 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 
 			snprintf(pbuf, sizeof(pbuf), "%s/%s",
 			    cf->cf_path, ent->d_name);
-			cfp = cvs_file_get(pbuf, flags);
+			cfp = cvs_file_lget(pbuf, flags, cf);
 			if (cfp != NULL) {
 				cfp->cf_parent = cf;
 				if (cfp->cf_type == DT_DIR) 
@@ -525,6 +450,12 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 			}
 		}
 	} while (ret > 0);
+
+	/* we can now close our Entries file */
+	if (cdp->cd_ent != NULL) {
+		cvs_ent_close(cdp->cd_ent);
+		cdp->cd_ent = NULL;
+	}
 
 	if (flags & CF_SORT) {
 		cvs_file_sort(&(cdp->cd_files));
@@ -547,7 +478,7 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
  */
 
 void
-cvs_file_free(struct cvs_file *cf)
+cvs_file_free(CVSFILE *cf)
 {
 	if (cf->cf_path != NULL)
 		free(cf->cf_path);
@@ -571,7 +502,7 @@ int
 cvs_file_examine(CVSFILE *cf, int (*exam)(CVSFILE *, void *), void *arg)
 {
 	int ret;
-	struct cvs_file *fp;
+	CVSFILE *fp;
 
 	if (cf->cf_type == DT_DIR) {
 		ret = (*exam)(cf, arg);
@@ -597,12 +528,15 @@ cvs_file_examine(CVSFILE *cf, int (*exam)(CVSFILE *, void *), void *arg)
 static void
 cvs_file_freedir(struct cvs_dir *cd)
 {
-	struct cvs_file *cfp;
+	CVSFILE *cfp;
 
 	if (cd->cd_root != NULL)
 		cvsroot_free(cd->cd_root);
 	if (cd->cd_repo != NULL)
 		free(cd->cd_repo);
+
+	if (cd->cd_ent != NULL)
+		cvs_ent_close(cd->cd_ent);
 
 	while (!TAILQ_EMPTY(&(cd->cd_files))) {
 		cfp = TAILQ_FIRST(&(cd->cd_files));
@@ -623,12 +557,12 @@ cvs_file_sort(struct cvs_flist *flp)
 {
 	int i;
 	size_t nb;
-	struct cvs_file *cf, *cfvec[256];
+	CVSFILE *cf, *cfvec[256];
 
 	i = 0;
 	TAILQ_FOREACH(cf, flp, cf_list) {
 		cfvec[i++] = cf;
-		if (i == sizeof(cfvec)/sizeof(struct cvs_file *)) {
+		if (i == sizeof(cfvec)/sizeof(CVSFILE *)) {
 			cvs_log(LP_WARN, "too many files to sort");
 			return (-1);
 		}
@@ -656,9 +590,9 @@ cvs_file_sort(struct cvs_flist *flp)
 static int
 cvs_file_cmp(const void *f1, const void *f2)
 {
-	struct cvs_file *cf1, *cf2;
-	cf1 = *(struct cvs_file **)f1;
-	cf2 = *(struct cvs_file **)f2;
+	CVSFILE *cf1, *cf2;
+	cf1 = *(CVSFILE **)f1;
+	cf2 = *(CVSFILE **)f2;
 	return strcmp(cf1->cf_name, cf2->cf_name);
 }
 
@@ -671,7 +605,7 @@ cvs_file_alloc(const char *path, u_int type)
 	CVSFILE *cfp;
 	struct cvs_dir *ddat;
 
-	cfp = (struct cvs_file *)malloc(sizeof(*cfp));
+	cfp = (CVSFILE *)malloc(sizeof(*cfp));
 	if (cfp == NULL) {
 		cvs_log(LP_ERRNO, "failed to allocate CVS file data");
 		return (NULL);
@@ -711,3 +645,103 @@ cvs_file_alloc(const char *path, u_int type)
 	}
 	return (cfp);
 }
+
+
+/*
+ * cvs_file_lget()
+ *
+ * Get the file and link it with the parent right away.
+ */
+
+static CVSFILE*
+cvs_file_lget(const char *path, int flags, CVSFILE *parent)
+{
+	int cwd;
+	size_t len;
+	char buf[32];
+	struct stat st;
+	struct tm lmtm;
+	CVSFILE *cfp;
+	struct cvs_ent *ent;
+
+	ent = NULL;
+
+	if (strcmp(path, ".") == 0)
+		cwd = 1;
+	else
+		cwd = 0;
+
+	if (stat(path, &st) == -1) {
+		cvs_log(LP_ERRNO, "failed to stat %s", path);
+		return (NULL);
+	}
+
+	cfp = cvs_file_alloc(path, IFTODT(st.st_mode));
+	if (cfp == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate CVS file data");
+		return (NULL);
+	}
+	cfp->cf_parent = parent;
+
+	if ((parent != NULL) && (CVS_DIR_ENTRIES(parent) != NULL)) {
+		ent = cvs_ent_get(CVS_DIR_ENTRIES(parent), path);
+	}
+
+	if (ent == NULL)
+		cfp->cf_cvstat = (cwd == 1) ?
+		    CVS_FST_UPTODATE : CVS_FST_UNKNOWN;
+	else {
+		/* always show directories as up-to-date */
+		if (ent->ce_type == CVS_ENT_DIR)
+			cfp->cf_cvstat = CVS_FST_UPTODATE;
+		else if (rcsnum_cmp(ent->ce_rev, cvs_addedrev, 2) == 0)
+			cfp->cf_cvstat = CVS_FST_ADDED;
+		else {
+			/* check last modified time */
+			if ((gmtime_r((time_t *)&(st.st_mtime),
+			    &lmtm) == NULL) ||
+			    (asctime_r(&lmtm, buf) == NULL)) {
+				cvs_log(LP_ERR,
+				    "failed to generate file timestamp");
+				/* fake an up to date file */
+				strlcpy(buf, ent->ce_timestamp, sizeof(buf));
+			}
+			len = strlen(buf);
+			if ((len > 0) && (buf[len - 1] == '\n'))
+				buf[--len] = '\0';
+
+			if (strcmp(buf, ent->ce_timestamp) == 0)
+				cfp->cf_cvstat = CVS_FST_UPTODATE;
+			else
+				cfp->cf_cvstat = CVS_FST_MODIFIED;
+		}
+
+		cvs_ent_free(ent);
+	}
+
+	if ((cfp->cf_type == DT_DIR) && ((flags & CF_RECURSE) || cwd)) {
+		if ((flags & CF_KNOWN) && (cfp->cf_cvstat == CVS_FST_UNKNOWN)) {
+			free(cfp->cf_ddat);
+			cfp->cf_ddat = NULL;
+		}
+		else if (cvs_file_getdir(cfp, flags) < 0) {
+			cvs_file_free(cfp);
+			return (NULL);
+		}
+	}
+
+	if (flags & CF_STAT) {
+		cfp->cf_stat = (struct stat *)malloc(sizeof(struct stat));
+		if (cfp->cf_stat == NULL) {
+			cvs_log(LP_ERRNO, "failed to allocate stat structure");
+			cvs_file_free(cfp);
+			return (NULL);
+		}
+
+		memcpy(cfp->cf_stat, &st, sizeof(struct stat));
+	}
+
+	return (cfp);
+}
+
+
