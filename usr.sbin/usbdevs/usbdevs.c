@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.9 2003/07/08 13:20:06 nate Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.10 2004/01/19 10:20:31 deraadt Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ int main(int, char **);
 extern char *__progname;
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "Usage: %s [-a addr] [-d] [-f dev] [-v]\n",
 	    __progname);
@@ -88,10 +88,17 @@ usbdev(int f, int a, int rec)
 	done[a] = 1;
 	if (verbose) {
 		switch (di.udi_speed) {
-		case USB_SPEED_LOW:  printf("low speed, "); break;
-		case USB_SPEED_FULL: printf("full speed, "); break;
-		case USB_SPEED_HIGH: printf("high speed, "); break;
-		default: break;
+		case USB_SPEED_LOW:
+			printf("low speed, ");
+			break;
+		case USB_SPEED_FULL:
+			printf("full speed, ");
+			break;
+		case USB_SPEED_HIGH:
+			printf("high speed, ");
+			break;
+		default:
+			break;
 		}
 
 		if (di.udi_power)
@@ -105,8 +112,8 @@ usbdev(int f, int a, int rec)
 	}
 	if (verbose) {
 		printf("%s(0x%04x), %s(0x%04x), rev %s",
-		       di.udi_product, di.udi_productNo,
-		       di.udi_vendor, di.udi_vendorNo, di.udi_release);
+		    di.udi_product, di.udi_productNo,
+		    di.udi_vendor, di.udi_vendorNo, di.udi_release);
 	} else
 		printf("%s, %s", di.udi_product, di.udi_vendor);
 	printf("\n");
@@ -114,20 +121,21 @@ usbdev(int f, int a, int rec)
 		for (i = 0; i < USB_MAX_DEVNAMES; i++)
 			if (di.udi_devnames[i][0])
 				printf("%*s  %s\n", indent, "",
-				       di.udi_devnames[i]);
+				    di.udi_devnames[i]);
 	}
 	if (!rec)
 		return;
 	for (p = 0; p < di.udi_nports; p++) {
 		int s = di.udi_ports[p];
+
 		if (s >= USB_MAX_DEVICES) {
 			if (verbose) {
 				printf("%*sport %d %s\n", indent+1, "", p+1,
-				       s == USB_PORT_ENABLED ? "enabled" :
-				       s == USB_PORT_SUSPENDED ? "suspended" :
-				       s == USB_PORT_POWERED ? "powered" :
-				       s == USB_PORT_DISABLED ? "disabled" :
-				       "???");
+				    s == USB_PORT_ENABLED ? "enabled" :
+				    s == USB_PORT_SUSPENDED ? "suspended" :
+				    s == USB_PORT_POWERED ? "powered" :
+				    s == USB_PORT_DISABLED ? "disabled" :
+				    "???");
 			}
 			continue;
 		}
@@ -190,7 +198,6 @@ main(int argc, char **argv)
 		case 'v':
 			verbose = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}
