@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.35 2001/08/17 11:13:57 mpech Exp $
+.\"	$OpenBSD: fdisk.8,v 1.36 2001/12/15 02:12:26 kjell Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Nd DOS partition maintenance program
 .Sh SYNOPSIS
 .Nm fdisk
-.Op Fl ie
+.Op Fl ieu
 .Op Fl f Ar mbrname
 .Op Fl c Ar cylinders
 .Op Fl h Ar heads
@@ -69,6 +69,8 @@ Initialize the MBR sector.
 Edit existing MBR sectors.
 .It Fl f Ar mbrname
 Specifies an alternate MBR template file.
+.It Fl u
+Update MBR code, preserving existing partition table
 .It Xo Fl c Ar cylinders ,
 .Fl h Ar heads ,
 .Fl s Ar sectors
@@ -146,17 +148,24 @@ The
 flag is used to indicate that the partition data is to be initialized.
 In this mode,
 .Nm
-will completely overwrite the primary MBR, and start with a fresh one using
-a default template, or one given by the
+will completely overwrite the primary MBR and partition table, either
+using the default MBR template, or the one specified by the
 .Fl f
-flag.
-It will set up partition number 3 to be an
+flag. In the default template, partition number 3 will be configured as an
 .Ox
-partition, that will start at cylinder 0, head 1, sector 1, and extend
+partition spanning from cylinder 0, head 1, sector 1, and extending
 to the end of the disk.
 This mode is designed to initialize an MBR the very first time,
 or when it has been corrupted beyond repair.
-It is almost equivalent to the DOS command
+.Pp
+The
+.Fl u
+flag is used to update the MBR code on a given drive.
+It is similar to the
+.Fl i
+flag, except the existing partition table is preserved. This
+is useful for writing new MBR code onto an existing drive, and is
+almost equivalent to the DOS command
 .Dq FDISK /MBR .
 .Pp
 The flag

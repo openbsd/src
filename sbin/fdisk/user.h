@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.h,v 1.4 2001/08/12 12:03:01 heko Exp $	*/
+/*	$OpenBSD: user.h,v 1.5 2001/12/15 02:12:26 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,7 +37,7 @@
 #include "mbr.h"
 
 /* Prototypes */
-int USER_init __P((disk_t *, mbr_t *));
+int USER_init __P((disk_t *, mbr_t *, int));
 int USER_modify __P((disk_t *, mbr_t *, off_t, off_t));
 int USER_print_disk __P((disk_t *));
 

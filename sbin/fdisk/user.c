@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.16 2001/01/01 21:05:34 angelos Exp $	*/
+/*	$OpenBSD: user.c,v 1.17 2001/12/15 02:12:26 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -68,21 +68,32 @@ static cmd_table_t cmd_table[] = {
 
 
 int
-USER_init(disk, tt)
+USER_init(disk, tt, preserve)
 	disk_t *disk;
 	mbr_t *tt;
+	int preserve;
 {
-	int fd;
+	int fd, yn;
 	char mbr_buf[DEV_BSIZE];
+	char *msgp = "\nDo you wish to write new MBR?";
+	char *msgk = "\nDo you wish to write new MBR and partition table?";
 
-	MBR_init(disk, tt);
+	if (preserve)
+		MBR_pcopy(disk, tt);
+	else
+		MBR_init(disk, tt);
 
 	/* Write sector 0 */
 	printf("\a\n"
 	   "\t-----------------------------------------------------\n"
 	   "\t------ ATTENTION - UPDATING MASTER BOOT RECORD ------\n"
 	   "\t-----------------------------------------------------\n");
-	if (ask_yn("\nDo you wish to write new MBR?")) {
+	if (preserve)
+		yn = ask_yn(msgp);
+	else
+		yn = ask_yn(msgk);
+
+	if (yn) {
 		fd = DISK_open(disk->name, O_RDWR);
 		MBR_make(tt, mbr_buf);
 		MBR_write(fd, (off_t)0, mbr_buf);

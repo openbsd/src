@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.33 2001/07/02 13:51:17 millert Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.34 2001/12/15 02:12:26 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -53,8 +53,9 @@ usage()
 {
 	extern char * __progname;
 	fprintf(stderr, "usage: %s "
-	    "[-ie] [-f mbrboot] [-c cyl -h head -s sect] disk\n"
+	    "[-ieu] [-f mbrboot] [-c cyl -h head -s sect] disk\n"
 	    "\t-i: initialize disk with virgin MBR\n"
+	    "\t-u: update MBR code, preserve partition table\n"
 	    "\t-e: edit MBRs on disk interactively\n"
 	    "\t-f: specify non-standard MBR template\n"
 	    "\t-chs: specify disk geometry\n"
@@ -70,7 +71,7 @@ main(argc, argv)
 	char **argv;
 {
 	int ch, fd;
-	int i_flag = 0, m_flag = 0;
+	int i_flag = 0, m_flag = 0, u_flag = 0;
 	int c_arg = 0, h_arg = 0, s_arg = 0;
 	disk_t disk;
 	DISK_metrics *usermetrics;
@@ -78,10 +79,13 @@ main(argc, argv)
 	mbr_t mbr;
 	char mbr_buf[DEV_BSIZE];
 
-	while ((ch = getopt(argc, argv, "ief:c:h:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "ieuf:c:h:s:")) != -1) {
 		switch(ch) {
 		case 'i':
 			i_flag = 1;
+			break;
+		case 'u':
+			u_flag = 1;
 			break;
 		case 'e':
 			m_flag = 1;
@@ -139,7 +143,7 @@ main(argc, argv)
 
 
 	/* Print out current MBRs on disk */
-	if ((i_flag + m_flag) == 0)
+	if ((i_flag + u_flag + m_flag) == 0)
 		exit(USER_print_disk(&disk));
 
 	/* Parse mbr template, to pass on later */
@@ -153,13 +157,9 @@ main(argc, argv)
 	}
 	MBR_parse(&disk, mbr_buf, 0, 0, &mbr);
 
-	/* Punt if no i or m */
-	if ((i_flag + m_flag) != 1)
-		usage();
-
 	/* Now do what we are supposed to */
-	if (i_flag)
-		USER_init(&disk, &mbr);
+	if (i_flag || u_flag)
+		USER_init(&disk, &mbr, u_flag);
 
 	if (m_flag)
 		USER_modify(&disk, &mbr, 0, 0);

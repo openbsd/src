@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.12 2001/01/28 00:51:46 weingart Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.13 2001/12/15 02:12:26 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -186,4 +186,30 @@ MBR_write(fd, where, buf)
 		return (len);
 	(void) ioctl(fd, DIOCRLDINFO, 0);
 	return (0);
+}
+
+void 
+MBR_pcopy(disk, mbr)
+	disk_t *disk;
+	mbr_t *mbr;
+{
+	/* 
+	 * Copy partition table from the disk indicated
+	 * to the supplied mbr structure 
+	 */
+
+	int i, fd, offset = 0, reloff = 0;
+	mbr_t mbrd;
+	char mbr_disk[DEV_BSIZE];
+	
+	fd = DISK_open(disk->name, O_RDONLY);
+	MBR_read(fd, offset, mbr_disk);
+	DISK_close(fd);
+	MBR_parse(disk, mbr_disk, offset, reloff, &mbrd);
+	for (i = 0; i < NDOSPART; i++) {
+		PRT_parse(disk, &mbr_disk[MBR_PART_OFF +
+					 MBR_PART_SIZE * i], 
+			  offset, reloff, &mbr->part[i], i);
+		PRT_print(i, &mbr->part[i]);
+	}
 }
