@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.35 2004/03/14 21:51:44 dhartmei Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.36 2004/07/06 19:49:11 dhartmei Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -128,6 +128,8 @@ double xfer_start_time;
 struct sockaddr_in real_server_sa;
 struct sockaddr_in client_listen_sa;
 struct sockaddr_in server_listen_sa;
+struct sockaddr_in proxy_sa;
+struct in_addr src_addr;
 
 int client_listen_socket = -1;	/* Only used in PASV mode */
 int client_data_socket = -1;	/* Connected socket to real client */
@@ -138,6 +140,7 @@ int client_data_bytes, server_data_bytes;
 int AnonFtpOnly;
 int Verbose;
 int NatMode;
+int ReverseMode;
 
 char ClientName[NI_MAXHOST];
 char RealServerName[NI_MAXHOST];
@@ -173,7 +176,8 @@ usage(void)
 {
 	syslog(LOG_NOTICE,
 	    "usage: %s [-AnrVw] [-a address] [-D debuglevel [-g group]"
-	    " [-M maxport] [-m minport] [-t timeout] [-u user]", __progname);
+	    " [-M maxport] [-m minport] [-t timeout] [-u user]"
+	    " [-R addr[:port]] [-S addr]", __progname);
 	exit(EX_USAGE);
 }
 
@@ -555,7 +559,7 @@ connect_port_backchannel(void)
 
 		salen = 1;
 		listen_sa.sin_family = AF_INET;
-		bzero(&listen_sa.sin_addr, sizeof(struct in_addr));
+		bcopy(&src_addr, &listen_sa.sin_addr, sizeof(struct in_addr));
 		listen_sa.sin_port = htons(20);
 
 		if (setsockopt(client_data_socket, SOL_SOCKET, SO_REUSEADDR,
@@ -925,7 +929,10 @@ do_server_reply(struct csiob *server, struct csiob *client)
 
 		new_dataconn(0);
 		connection_mode = PASV_MODE;
-		iap = &(server->sa.sin_addr);
+		if (ReverseMode)
+			iap = &(proxy_sa.sin_addr);
+		else
+			iap = &(server->sa.sin_addr);
 
 		debuglog(1, "we want client to use %s:%u", inet_ntoa(*iap),
 		    htons(client_listen_sa.sin_port));
@@ -973,7 +980,7 @@ main(int argc, char *argv[])
 	int use_tcpwrapper = 0;
 #endif /* LIBWRAP */
 
-	while ((ch = getopt(argc, argv, "a:D:g:m:M:t:u:AnVwr")) != -1) {
+	while ((ch = getopt(argc, argv, "a:D:g:m:M:R:S:t:u:AnVwr")) != -1) {
 		char *p;
 		switch (ch) {
 		case 'a':
@@ -1016,6 +1023,41 @@ main(int argc, char *argv[])
 		case 'r':
 			Use_Rdns = 1; /* look up hostnames */
 			break;
+		case 'R': {
+			char *s, *t;
+
+			if (!*optarg)
+				usage();
+			if ((s = strdup(optarg)) == NULL) {
+				syslog (LOG_NOTICE,
+				    "Insufficient memory (malloc failed)");
+				exit(EX_UNAVAILABLE);
+			}
+			memset(&real_server_sa, 0, sizeof(real_server_sa));
+			real_server_sa.sin_len = sizeof(struct sockaddr_in);
+			real_server_sa.sin_family = AF_INET;
+			t = strchr(s, ':');
+			if (t == NULL)
+				real_server_sa.sin_port = htons(21);
+			else {
+				long port = strtol(t + 1, &p, 10);
+
+				if (*p || port <= 0 || port > 65535)
+					usage();
+				real_server_sa.sin_port = htons(port);
+				*t = 0;
+			}
+			real_server_sa.sin_addr.s_addr = inet_addr(s);
+			if (real_server_sa.sin_addr.s_addr == INADDR_NONE)
+				usage();
+			free(s);
+			ReverseMode = 1;
+			break;
+		}
+		case 'S':
+			if (!inet_aton(optarg, &src_addr))
+				usage();
+			break;
 		case 't':
 			timeout_seconds = strtol(optarg, &p, 10);
 			if (!*optarg || *p)
@@ -1051,7 +1093,8 @@ main(int argc, char *argv[])
 	memset(&client_iob, 0, sizeof(client_iob));
 	memset(&server_iob, 0, sizeof(server_iob));
 
-	if (get_proxy_env(0, &real_server_sa, &client_iob.sa) == -1)
+	if (get_proxy_env(0, &real_server_sa, &client_iob.sa,
+	    &proxy_sa) == -1)
 		exit(EX_PROTOCOL);
 
 	/*

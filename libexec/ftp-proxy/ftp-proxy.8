@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.40 2004/03/16 08:50:07 jmc Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.41 2004/07/06 19:49:11 dhartmei Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -41,6 +41,8 @@
 .Op Fl g Ar group
 .Op Fl M Ar maxport
 .Op Fl m Ar minport
+.Op Fl R Ar address[:port]
+.Op Fl S Ar address
 .Op Fl t Ar timeout
 .Op Fl u Ar user
 .Sh DESCRIPTION
@@ -143,6 +145,21 @@ Use reverse host
 lookups for logging and libwrap use.
 By default,
 the proxy does not look up hostnames for libwrap or logging purposes.
+.It Fl R Ar address:[port]
+Reverse proxy mode for FTP servers running behind a NAT gateway.
+In this mode, no redirection is needed.
+The proxy is run from
+.Xr inetd 8
+on the port that external clients connect to (usually 21).
+Control connections and passive data connections are forwarded
+to the server.
+.It Fl S Ar address
+Source address to use for data connections made by the proxy.
+Useful when there are multiple addresses (aliases) available
+to the proxy.
+Clients may expect data connections to have the same source
+address as the control connections, and reject or drop other
+connections.
 .It Fl t Ar timeout
 Specifies a timeout, in seconds.
 The proxy will exit and close open connections if it sees no data
