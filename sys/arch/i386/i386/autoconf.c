@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.16 1996/11/06 01:37:23 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.17 1996/11/06 02:09:39 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -222,6 +222,10 @@ extern	struct cfdriver cd_cd;
 #if NMCD > 0
 extern	struct cfdriver mcd_cd;
 #endif
+#include "acd.h"
+#if NACD > 0
+extern	struct cfdriver acd_cd;
+#endif
 
 struct	genericconf {
 	struct cfdriver *gc_driver;
@@ -241,7 +245,10 @@ struct	genericconf {
 	{ &mcd_cd, "mcd", 7 },
 #endif
 #if NFDC > 0
-	{ &fd_cd,  "fd",  2 },
+	{ &fd_cd,  "fd",  20 },
+#endif
+#if NACD > 0
+	{ &acd_cd,  "acd",  18 },
 #endif
 	{ 0 }
 };
