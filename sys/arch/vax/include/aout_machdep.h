@@ -1,4 +1,4 @@
-/*	$OpenBSD: aout_machdep.h,v 1.2 1997/05/29 00:04:35 niklas Exp $	*/
+/*	$OpenBSD: aout_machdep.h,v 1.3 2001/11/14 14:38:33 hugh Exp $	*/
 /*	$NetBSD: aout_machdep.h,v 1.4 1995/09/23 14:57:40 ragge Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
 #ifndef _VAX_EXEC_H_
 #define _VAX_EXEC_H_
 
-#define __LDPGSZ	1024
+#define __LDPGSZ	4096
 
 /* Relocation format. */
 struct relocation_info_vax {
