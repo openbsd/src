@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.10 2003/04/17 03:44:59 drahn Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.11 2003/06/27 22:30:38 deraadt Exp $	*/
 /*	$NetBSD: crt0.c,v 1.20 1995/06/03 13:16:08 pk Exp $	*/
 
 /*
@@ -33,10 +33,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.10 2003/04/17 03:44:59 drahn Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.11 2003/06/27 22:30:38 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
+#include <sys/exec.h>
 #include <stdlib.h>
 
 static char	*_strrchr(char *, char);
@@ -73,13 +74,8 @@ __start:
 ");
 
 void
-___start(argc, argv, envp, cleanup, obj, ps_strings)
-	int argc;
-	char **argv;
-	char ** envp;
-	void (*cleanup)(void);			/* from shared loader */
-	const void *obj;			/* from shared loader */
-	struct ps_strings *ps_strings;
+___start(int argc, char **argv, char **envp, void (*cleanup)(void),
+    const void *obj, struct ps_strings *ps_strings)
 {
 	char *namep;
 	register struct kframe *kfp;
