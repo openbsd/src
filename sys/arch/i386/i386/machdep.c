@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.223 2003/03/28 00:28:22 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.224 2003/03/28 00:49:13 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -194,6 +194,10 @@ char machine_arch[] = "i386";		/* machine == machine_arch */
  */
 #if NAPM > 0
 int	cpu_apmhalt = 0;	/* sysctl'd to 1 for halt -p hack */
+#endif
+
+#ifdef USER_LDT
+int	user_ldt_enable = 0;	/* sysctl'd to 1 to enable */
 #endif
 
 #ifdef	NBUF
@@ -2621,6 +2625,11 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		else
 			return (sysctl_int(oldp, oldlenp, newp, newlen, 
 			    &kbd_reset));
+#ifdef USER_LDT
+	case CPU_USERLDT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &user_ldt_enable));
+#endif
 	default:
 		return EOPNOTSUPP;
 	}

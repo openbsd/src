@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.24 2003/01/09 22:27:09 miod Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.25 2003/03/28 00:49:13 miod Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -295,6 +295,9 @@ linux_read_ldt(p, uap, retval)
 	caddr_t sg;
 	char *parms;
 
+	if (user_ldt_enable == 0)
+		return (ENOSYS);
+
 	sg = stackgap_init(p->p_emul);
 
 	gl.start = 0;
@@ -340,6 +343,9 @@ linux_write_ldt(p, uap, retval)
 	int error;
 	caddr_t sg;
 	char *parms;
+
+	if (user_ldt_enable == 0)
+		return (ENOSYS);
 
 	if (SCARG(uap, bytecount) != sizeof(ldt_info))
 		return (EINVAL);

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.331 2003/03/09 01:54:20 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.332 2003/03/28 00:49:13 miod Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -17,7 +17,7 @@ option		GPL_MATH_EMULATE	# floating point emulation.
 option		USER_PCICONF	# user-space PCI configuration
 
 #option		VM86		# Virtual 8086 emulation
-#option		USER_LDT	# user-settable LDT; see i386_set_ldt(2)
+option		USER_LDT	# user-settable LDT; see i386_set_ldt(2)
 option		APERTURE	# in-kernel aperture driver for XFree86
 
 #option		KGDB		# Remote debugger support; exclusive of DDB

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.16 2002/07/20 19:24:56 art Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.17 2003/03/28 00:49:13 miod Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -407,7 +407,9 @@ svr4_sys_sysarch(p, v, retval)
 
 	case SVR4_SYSARCH_DSCR:
 #ifdef USER_LDT
-		{
+		if (user_ldt_enable == 0)
+			return (ENOSYS);
+		else {
 			struct i386_set_ldt_args sa, *sap;
 			struct sys_sysarch_args ua;
 
