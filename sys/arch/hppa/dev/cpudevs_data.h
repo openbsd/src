@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.3 1998/10/30 19:06:06 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.4 1998/11/23 04:24:30 mickey Exp 
  */
 
 static const struct hppa_mod_info hppa_knownmods[] = {

@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.3 1998/10/30 19:06:06 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.4 1998/11/23 04:24:30 mickey Exp 
  */
 
 static const struct hppa_board_info hppa_knownboards[] = {
@@ -14,7 +14,14 @@ static const struct hppa_board_info hppa_knownboards[] = {
 	{ HPPA_BOARD_HP715_50,	"HP715_50",	"715/50 (Scorpio)" },
 	{ HPPA_BOARD_HP715T_50,	"HP715T_50",	"715T/50 (Scorpio (4XXt up))" },
 	{ HPPA_BOARD_HP715S_50,	"HP715S_50",	"715S/50 (Scorpio (4XXs up))" },
+	{ HPPA_BOARD_HP715_64,	"HP715_64",	"715/64 (Scorpio)" },
 	{ HPPA_BOARD_HP715_75,	"HP715_75",	"715/75 (Scorpio)" },
-	{ HPPA_BOARD_HP725,	"HP725",	"725/50 (Scorpio)" },
+	{ HPPA_BOARD_HP715_99,	"HP715_99",	"715/99 (Scorpio)" },
+	{ HPPA_BOARD_HP725_50,	"HP725_50",	"725/50" },
+	{ HPPA_BOARD_HP725_75,	"HP725_75",	"725/75" },
+	{ HPPA_BOARD_HP725_100,	"HP725_100",	"725/100" },
+	{ HPPA_BOARD_HP735_99,	"HP735_99",	"735/99 (Hardball)" },
+	{ HPPA_BOARD_HP735_135,	"HP735_135",	"735/135 (Hardball)" },
+	{ HPPA_BOARD_HP750,	"HP750",	"750 (Coral)" },
 	{ -1 }
 };
