@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_info_09.c,v 1.3 1996/03/03 05:26:22 mickey Exp $	*/
+/*	$OpenBSD: kern_info_09.c,v 1.4 1997/10/06 14:56:36 csapuntz Exp $	*/
 /*	$NetBSD: kern_info_09.c,v 1.5 1996/02/21 00:10:59 cgd Exp $	*/
 
 /*
@@ -127,6 +127,7 @@ compat_09_sys_uname(p, v, retval)
 		*dp++ = *cp;
 	*dp = '\0';
 	strncpy(outsname.machine, MACHINE, sizeof(outsname.machine));
+
 	return (copyout((caddr_t)&outsname, (caddr_t)SCARG(uap, name),
 			sizeof(struct outsname)));
 }
