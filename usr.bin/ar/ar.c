@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar.c,v 1.4 1997/08/19 07:22:08 denny Exp $	*/
+/*	$OpenBSD: ar.c,v 1.5 1999/12/15 05:33:23 deraadt Exp $	*/
 /*	$NetBSD: ar.c,v 1.5 1995/03/26 03:27:44 glass Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ar.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ar.c,v 1.4 1997/08/19 07:22:08 denny Exp $";
+static char rcsid[] = "$OpenBSD: ar.c,v 1.5 1999/12/15 05:33:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ main(argc, argv)
 		if (!(p = malloc((u_int)(strlen(argv[1]) + 2))))
 			err(1, NULL);
 		*p = '-';
-		(void)strcpy(p + 1, argv[1]);
+		(void)strcpy(p + 1, argv[1]);	/* ok */
 		argv[1] = p;
 	}
 
