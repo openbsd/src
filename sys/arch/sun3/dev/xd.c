@@ -101,7 +101,8 @@
  * XDC_HWAIT: add iorq "N" to head of SC's wait queue
  */
 #define XDC_HWAIT(SC, N) { \
-	(SC)->waithead = ((SC)->waithead - 1) % XDC_MAXIOPB; \
+	(SC)->waithead = ((SC)->waithead == 0) ? \
+		(XDC_MAXIOPB - 1) : ((SC)->waithead - 1); \
 	(SC)->waitq[(SC)->waithead] = (N); \
 	(SC)->nwait++; \
 }
