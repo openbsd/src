@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.26 1999/02/26 05:55:10 millert Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.27 1999/03/09 21:16:28 art Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -184,14 +184,19 @@ ufs_open(v)
 				int  a_mode;
 				struct ucred *a_cred;
 				struct proc *a_p;
-				} */ *ap = v;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
 
 	/*
 	 * Files marked append-only must be opened for appending.
 	 */
-	if ((VTOI(ap->a_vp)->i_ffs_flags & APPEND) &&
+	if ((ip->i_ffs_flags & APPEND) &&
 	    (ap->a_mode & (FWRITE | O_APPEND)) == FWRITE)
 		return (EPERM);
+
+	if (ap->a_mode & O_TRUNC)
+		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+
 	return (0);
 }
 
