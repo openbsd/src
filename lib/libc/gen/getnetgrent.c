@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.9 2000/08/24 17:04:02 deraadt Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.10 2000/12/09 23:04:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.9 2000/08/24 17:04:02 deraadt Exp $";
+static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.10 2000/12/09 23:04:16 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -593,8 +593,7 @@ in_lookup(ypdom, group, key, domain, map)
 		/* Domain specified; look in "group.domain" and "*.domain" */
 		if ((line = in_lookup1(ypdom, key, domain, map)) == NULL)
 			line = in_lookup1(ypdom, NULL, domain, map);
-	}
-	else 
+	} else 
 		line = NULL;
 
 	if (line == NULL) {
@@ -706,7 +705,7 @@ innetgr(grp, host, user, domain)
 {
 	char	*ypdom = NULL;
 #ifdef YP
-	char	*line;
+	char	*line = NULL;
 #endif
 	int	 found;
 	struct stringlist *sl;
@@ -721,10 +720,11 @@ innetgr(grp, host, user, domain)
 	 */
 	if (_ng_db == NULL)
 		yp_get_default_domain(&ypdom);
-	else if (lookup(NULL, "+", &line, _NG_KEYBYNAME) == 0) {
+	else if (lookup(NULL, "+", &line, _NG_KEYBYNAME) == 0)
 		yp_get_default_domain(&ypdom);
+
+	if (line)
 		free(line);
-	}
 #endif
 
 	/* Try the fast lookup first */
