@@ -1,4 +1,4 @@
-.\" $OpenBSD: sppp.4,v 1.7 2002/09/26 07:55:40 miod Exp $
+.\" $OpenBSD: sppp.4,v 1.8 2003/04/07 16:03:32 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Joerg Wunsch
 .\"
@@ -68,7 +68,7 @@ with
 will cause the respective network interface to go into
 .Em passive
 mode.
-This means, the administrative
+This means the administrative
 .Em Open
 event to the LCP layer will be delayed until after the lower layers
 signals an
@@ -173,7 +173,7 @@ take place.
 .%O RFC 1332
 .Re
 .Rs
-.%A B. Lloyd,  W. Simpson
+.%A B. Lloyd, W. Simpson
 .%T "PPP Authentication Protocols"
 .%O RFC 1334
 .Re
@@ -205,7 +205,7 @@ Currently, only the
 .Em IPCP
 control protocol and
 .Xr ip 4
-network protocol is supported.
+network protocol are supported.
 .Pp
 Negotiation loop avoidance is not fully implemented.
 If the negotiation doesn't converge, this can cause an endless loop.

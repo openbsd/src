@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strip.4,v 1.14 2001/11/13 13:54:25 mpech Exp $
+.\"	$OpenBSD: strip.4,v 1.15 2003/04/07 16:03:32 jmc Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -17,7 +17,7 @@
 .Os
 .Sh NAME
 .Nm strip
-.\" Why doesn't this work right?  mdoc(7) nor mdoc.samples(7) lists
+.\" Why doesn't this work right? mdoc(7) nor mdoc.samples(7) lists
 .\" .Nd, except for a passing reference in the latter.
 .Nd packet-mode network device driver for the Metricom Ricochet radio
 .Sh SYNOPSIS
@@ -33,7 +33,7 @@
 Configures
 .Ar count
 .Nm
-interfaces,   named
+interfaces, named
 .Sy st Ns Ar 0 ,
 .Sy st Ns Ar 1 ,
 etc, into a kernel built from a config file containing the
@@ -44,7 +44,9 @@ Each
 interface is a pseudo-device driver for the Metricom Ricochet radio,
 operating in peer-to-peer packet mode.
 .Pp
-The STRIP  driver takes outbound network packets, encapsulates them using the
+The
+.Nm
+driver takes outbound network packets, encapsulates them using the
 Metricom "starmode" framing, and sends the packets out an RS-232
 interface to a Metricom
 .Em Ricochet
@@ -55,8 +57,8 @@ passed up to the local host's networking stack.
 .Nm
 is an acronym for
 .Sy St Ns armode
-.Sy  R  Ns adio
-.Sy IP.
+.Sy R Ns adio
+.Sy IP .
 .Pp
 In many ways,
 the
@@ -120,7 +122,9 @@ A future version of this driver will support
 .Xr arp 4
 to obtain the IP address of reachable peer radios dynamically.
 .Sh ADDRESS CONFIGURATION
-This version of the STRIP driver requires static pre-configuration of
+This version of the
+.Nm
+driver requires static pre-configuration of
 the mapping from IP addresses to radio MAC addresses.
 The
 .Xr route 8
