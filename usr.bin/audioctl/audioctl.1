@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.1,v 1.18 2004/07/06 02:46:06 vincent Exp $
+.\" $OpenBSD: audioctl.1,v 1.19 2004/07/30 11:48:58 jmc Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .Nm audioctl
 .Op Fl f Ar file
 .Op Fl n
-.Ar name=value
+.Ar name Ns = Ns Ar value
 .Op Ar ...
 .Sh DESCRIPTION
 The
@@ -68,18 +68,18 @@ operates on the
 device.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "name=valueXX"
 .It Fl a
 Print all device variables and their current values.
-.It Ar name=value
-Attempt to set the specified variable
-.Ar name
-to
-.Ar value .
 .It Fl f Ar file
 Specify an alternative audio control device.
 .It Fl n
 Suppress printing of the variable name.
+.It Ar name Ns = Ns Ar value
+Attempt to set the specified variable
+.Ar name
+to
+.Ar value .
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width AUDIOCTLDEVICE
@@ -92,7 +92,7 @@ Audio control device to use.
 default audio control device
 .El
 .Sh EXAMPLES
-To set the playing sampling rate to 11025 you can enter
+To set the playing sampling rate to 11025 you can enter:
 .Pp
 .Dl $ audioctl play.sample_rate=11025
 .Pp
@@ -102,13 +102,15 @@ are reset when the
 device is opened.
 This can be circumvented like so:
 .Pp
-.Dl $ (cat file.au; audioctl -f /dev/audioctl -a) > /dev/audio
+.Dl $ (cat file.au; audioctl -f /dev/audioctl -a) \*(Gt /dev/audio
 or
 .Bd -literal -offset indent -compact
 $ (audioctl -f /dev/audioctl blocksize=1024; cat file.au) \e
-	> /dev/audio
+	\*(Gt /dev/audio
 .Ed
 .Sh SEE ALSO
+.Xr aucat 1 ,
+.Xr cdio 1 ,
 .Xr mixerctl 1 ,
 .Xr audio 4 ,
 .Xr sysctl 8
