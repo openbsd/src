@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.44 2000/11/23 12:56:06 niklas Exp $
-.\" $EOM: isakmpd.conf.5,v 1.53 2000/11/23 12:39:13 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.45 2000/12/12 01:46:05 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.55 2000/12/04 02:04:29 angelos Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
 .\" Copyright (c) 2000 Håkan Olsson.  All rights reserved.
@@ -124,6 +124,21 @@ section;
 [General]
 Default-phase-1-lifetime=	3600,60:86400
 Default-phase-2-lifetime=	1200,60:86400
+.Ed
+.\"XXX Following empty .Ss works around a nroff bug, we want the new line."
+.Ss
+.Pp
+Also, the default Phase 1 ID can be set by creating a <Phase1-ID>
+section, as shown below, and adding this tag under the "General"
+section;
+.Pp
+.Bd -literal
+[General]
+Default-phase-1-ID=		Phase1-ID-name
+
+[Phase1-ID-name]
+ID-type=			USER_FQDN
+Name=				foo@bar.com
 .Ed
 .\"XXX Following empty .Ss works around a nroff bug, we want the new line."
 .Ss
@@ -519,6 +534,26 @@ If the ID-type is
 .Li IPV4_ADDR_SUBNET
 this tag should exist and
 be a network subnet mask.
+.It Em Protocol
+If the ID-type is
+.Li IPV4_ADDR
+or
+.Li IPV4_ADDR_SUBNET ,
+this tag indicates what transport protocol should be transmitted over
+the SA.
+If left unspecified, all transport protocols between the two address
+(ranges) will be sent (or permitted) over that SA.
+.It Em Port
+If the ID-type is
+.Li IPV4_ADDR
+or
+.Li IPV4_ADDR_SUBNET ,
+this tag indicates what source or destination port is allowed to be
+transported over the SA (depending on whether this is a local or
+remote ID).
+If left unspecified, all ports of the given transport protocol
+will be transmitted (or permitted) over the SA.
+The Protocol tag must be specified in conjunction with this tag.
 .El
 .El
 .Sh EXAMPLE
