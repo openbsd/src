@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.98 2004/01/28 02:24:28 mickey Exp $
+#	$OpenBSD: Makefile,v 1.99 2004/02/01 06:16:50 brad Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -128,13 +128,13 @@ cross-env:	.PHONY
 ${CROSSDIRS}:
 	@-mkdir -p ${CROSSDIR}
 	@case ${TARGET} in \
-		alpha|i386|m68k|hppa|powerpc|sparc|sparc64|m88k|vax) \
+		alpha|hppa|i386|m68k|m88k|powerpc|sparc|sparc64|vax) \
 			echo ${TARGET} ;;\
-		amiga|sun3|mac68k|hp300|mvme68k) \
+		amiga|hp300|mac68k|mvme68k) \
 			echo m68k ;;\
 		mvme88k) \
 			echo m88k ;;\
-		mvmeppc|macppc|pegasos) \
+		macppc|mvmeppc|pegasos) \
 			echo powerpc ;;\
 		sgi) \
 			echo mips ;;\
@@ -176,9 +176,10 @@ ${CROSSINCLUDES}:	${CROSSOBJ}
 	    ${MAKE} DESTDIR=${CROSSDIR} includes)
 	@touch ${CROSSINCLUDES}
 
-.if ${TARGET} == "alpha" || ${TARGET} == "hppa" || ${TARGET} == "i386" || \
-    ${TARGET} == "macppc" || ${TARGET} == "mvmeppc" || ${TARGET} == "sgi" || \
-    ${TARGET} == "sparc" || ${TARGET} == "sparc64" || ${TARGET} == "amd64"
+.if ${TARGET} == "alpha" || ${TARGET} == "amd64" || ${TARGET} == "hppa" || \
+    ${TARGET} == "i386" || ${TARGET} == "macppc" || ${TARGET} == "mvmeppc" || \
+    ${TARGET} == "pegasos" || ${TARGET} == "sparc" || ${TARGET} == "sparc64" || \
+    ${TARGET} == "sgi"
 BINUTILS=	ar as gasp ld nm objcopy objdump ranlib readelf size \
 		strings strip
 NEW_BINUTILS?=	Yes
