@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.3 1999/10/04 12:21:39 jason Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.4 1999/10/22 07:14:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -130,12 +130,8 @@ void sk_shutdown	__P((void *));
 int sk_ifmedia_upd	__P((struct ifnet *));
 void sk_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 void sk_reset		__P((struct sk_softc *));
-int sk_newbuf		__P((struct sk_if_softc *,
-					struct sk_chain *, struct mbuf *));
-int sk_alloc_jumbo_mem	__P((struct sk_if_softc *));
-void *sk_jalloc		__P((struct sk_if_softc *));
-void sk_jfree		__P((struct mbuf *));
-void sk_jref		__P((struct mbuf *));
+int sk_newbuf		__P((struct sk_if_softc *, struct sk_chain *,
+    struct mbuf *));
 int sk_init_rx_ring	__P((struct sk_if_softc *));
 void sk_init_tx_ring	__P((struct sk_if_softc *));
 #ifdef notdef
@@ -561,8 +557,6 @@ int sk_newbuf(sc_if, c, m)
 	struct sk_rx_desc	*r;
 
 	if (m == NULL) {
-		caddr_t			*buf = NULL;
-
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
 			printf("%s: no memory for rx list -- "
@@ -571,23 +565,11 @@ int sk_newbuf(sc_if, c, m)
 		}
 
 		/* Allocate the jumbo buffer */
-		buf = sk_jalloc(sc_if);
-		if (buf == NULL) {
+		MCLGET(m_new, M_DONTWAIT);
+		if (!(m_new->m_flags & M_EXT)) {
 			m_freem(m_new);
-#ifdef SK_VERBOSE
-			printf("%s: jumbo allocation failed "
-			    "-- packet dropped!\n", sc_if->sk_dev.dv_xname);
-#endif
-			return(ENOBUFS);
+			return (ENOBUFS);
 		}
-
-		/* Attach the buffer to the mbuf */
-		m_new->m_data = m_new->m_ext.ext_buf = (void *)buf;
-		m_new->m_flags |= M_EXT;
-		m_new->m_ext.ext_size = m_new->m_pkthdr.len =
-		    m_new->m_len = SK_MCLBYTES;
-		m_new->m_ext.ext_free = sk_jfree;
-		m_new->m_ext.ext_ref = sk_jref;
 	} else {
 		/*
 	 	 * We're re-using a previously allocated mbuf;
@@ -595,10 +577,9 @@ int sk_newbuf(sc_if, c, m)
 		 * default values.
 		 */
 		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = SK_MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
-	m_new->m_ext.ext_handle = sc_if;
+	m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 
 	/*
 	 * Adjust alignment so packet payload begins on a
@@ -613,172 +594,6 @@ int sk_newbuf(sc_if, c, m)
 	r->sk_ctl = m_new->m_len | SK_RXSTAT;
 
 	return(0);
-}
-
-/*
- * Allocate jumbo buffer storage. The SysKonnect adapters support
- * "jumbograms" (9K frames), although SysKonnect doesn't currently
- * use them in their drivers. In order for us to use them, we need
- * large 9K receive buffers, however standard mbuf clusters are only
- * 2048 bytes in size. Consequently, we need to allocate and manage
- * our own jumbo buffer pool. Fortunately, this does not require an
- * excessive amount of additional code.
- */
-int sk_alloc_jumbo_mem(sc_if)
-	struct sk_if_softc	*sc_if;
-{
-	caddr_t			ptr;
-	register int		i;
-	struct sk_jpool_entry   *entry;
-
-	/* Grab a big chunk o' storage. */
-
-#ifndef UVM
-        sc_if->sk_cdata.sk_jumbo_buf = (caddr_t) vm_page_alloc_contig(
-	    SK_JMEM, 0x100000, 0xffffffff, PAGE_SIZE);
-#else
-	sc_if->sk_cdata.sk_jumbo_buf = (caddr_t) uvm_pagealloc_contig(
-	    SK_JMEM, 0x100000, 0xffffffff, PAGE_SIZE);
-#endif
-
-	if (sc_if->sk_cdata.sk_jumbo_buf == NULL) {
-		printf("%s: no memory for jumbo buffers!\n",
-		    sc_if->sk_dev.dv_xname);
-		return(ENOBUFS);
-	}
-
-	LIST_INIT(&sc_if->sk_jfree_listhead);
-	LIST_INIT(&sc_if->sk_jinuse_listhead);
-
-	/*
-	 * Now divide it up into 9K pieces and save the addresses
-	 * in an array.
-	 */
-	ptr = sc_if->sk_cdata.sk_jumbo_buf;
-	for (i = 0; i < SK_JSLOTS; i++) {
-		sc_if->sk_cdata.sk_jslots[i].sk_buf = ptr;
-		sc_if->sk_cdata.sk_jslots[i].sk_inuse = 0;
-		ptr += SK_MCLBYTES;
-		entry = malloc(sizeof(struct sk_jpool_entry), 
-		    M_DEVBUF, M_NOWAIT);
-		if (entry == NULL) {
-			free(sc_if->sk_cdata.sk_jumbo_buf, M_DEVBUF);
-			sc_if->sk_cdata.sk_jumbo_buf = NULL;
-			printf("%s: no memory for jumbo "
-			    "buffer queue!\n", sc_if->sk_dev.dv_xname);
-			return(ENOBUFS);
-		}
-		entry->slot = i;
-		LIST_INSERT_HEAD(&sc_if->sk_jfree_listhead,
-		    entry, jpool_entries);
-	}
-
-	return(0);
-}
-
-/*
- * Allocate a jumbo buffer.
- */
-void *sk_jalloc(sc_if)
-	struct sk_if_softc	*sc_if;
-{
-	struct sk_jpool_entry   *entry;
-	
-	entry = LIST_FIRST(&sc_if->sk_jfree_listhead);
-	
-	if (entry == NULL) {
-#ifdef SK_VERBOSE
-		printf("%s: no free jumbo buffers\n", sc_if->sk_dev.dv_xname);
-#endif
-		return(NULL);
-	}
-
-	LIST_REMOVE(entry, jpool_entries);
-	LIST_INSERT_HEAD(&sc_if->sk_jinuse_listhead, entry, jpool_entries);
-	sc_if->sk_cdata.sk_jslots[entry->slot].sk_inuse = 1;
-	return(sc_if->sk_cdata.sk_jslots[entry->slot].sk_buf);
-}
-
-/*
- * Adjust usage count on a jumbo buffer. In general this doesn't
- * get used much because our jumbo buffers don't get passed around
- * a lot, but it's implemented for correctness.
- */
-void
-sk_jref(m)
-	struct mbuf *m;
-{
-	caddr_t			buf = m->m_ext.ext_buf;
-	u_int			size = m->m_ext.ext_size;
-	struct sk_if_softc	*sc_if;
-	register int		i;
-
-	/* Extract the softc struct pointer. */
-	sc_if = (struct sk_if_softc *)m->m_ext.ext_handle;
-
-	if (sc_if == NULL)
-		panic("sk_jref: can't find softc pointer!");
-
-	if (size != SK_MCLBYTES)
-		panic("sk_jref: adjusting refcount of buf of wrong size!");
-
-	/* calculate the slot this buffer belongs to */
-
-	i = ((vaddr_t)buf - (vaddr_t)sc_if->sk_cdata.sk_jumbo_buf) / SK_JLEN;
-
-	if ((i < 0) || (i >= SK_JSLOTS))
-		panic("sk_jref: asked to reference buffer "
-		    "that we don't manage!");
-	else if (sc_if->sk_cdata.sk_jslots[i].sk_inuse == 0)
-		panic("sk_jref: buffer already free!");
-	else
-		sc_if->sk_cdata.sk_jslots[i].sk_inuse++;
-}
-
-/*
- * Release a jumbo buffer.
- */
-void
-sk_jfree(m)
-	struct mbuf *m;
-{
-	caddr_t buf = m->m_ext.ext_buf;
-	u_int size = m->m_ext.ext_size;
-	struct sk_if_softc *sc_if;
-	int i;
-	struct sk_jpool_entry *entry;
-
-	/* Extract the softc struct pointer. */
-	sc_if = (struct sk_if_softc *)m->m_ext.ext_handle;
-
-	if (sc_if == NULL)
-		panic("sk_jfree: can't find softc pointer!");
-
-	if (size != SK_MCLBYTES)
-		panic("sk_jfree: freeing buffer of wrong size!");
-
-	/* calculate the slot this buffer belongs to */
-
-	i = ((vaddr_t)buf - (vaddr_t)sc_if->sk_cdata.sk_jumbo_buf) / SK_JLEN;
-
-	if ((i < 0) || (i >= SK_JSLOTS))
-		panic("sk_jfree: asked to free buffer that we don't manage!");
-	else if (sc_if->sk_cdata.sk_jslots[i].sk_inuse == 0)
-		panic("sk_jfree: buffer already free!");
-	else {
-		sc_if->sk_cdata.sk_jslots[i].sk_inuse--;
-		if(sc_if->sk_cdata.sk_jslots[i].sk_inuse == 0) {
-			entry = LIST_FIRST(&sc_if->sk_jinuse_listhead);
-			if (entry == NULL)
-				panic("sk_jfree: buffer not in use!");
-			entry->slot = i;
-			LIST_REMOVE(entry, jpool_entries);
-			LIST_INSERT_HEAD(&sc_if->sk_jfree_listhead, 
-					  entry, jpool_entries);
-		}
-	}
-
-	return;
 }
 
 /*
@@ -1011,7 +826,10 @@ sk_attach(parent, self, aux)
 	struct sk_softc *sc = (struct sk_softc *)parent;
 	struct skc_attach_args *sa = aux;
 	struct ifnet *ifp;
-	int i;
+	caddr_t kva;
+	bus_dma_segment_t seg;
+	bus_dmamap_t dmamap;
+	int i, rseg;
 
 	sc_if->sk_port = sa->skc_port;
 	sc_if->sk_softc = sc;
@@ -1073,33 +891,37 @@ sk_attach(parent, self, aux)
 	}
 
 	/* Allocate the descriptor queues. */
-#ifndef UVM
-	sc_if->sk_rdata = (struct sk_ring_data *) vm_page_alloc_contig(
-	    sizeof(struct sk_ring_data), 0x100000, 0xffffffff, PAGE_SIZE);
-#else
-	sc_if->sk_rdata = (struct sk_ring_data *) uvm_pagealloc_contig(
-	    sizeof(struct sk_ring_data), 0x100000, 0xffffffff, PAGE_SIZE);
-#endif
-
-	if (sc_if->sk_rdata == NULL) {
-		printf("%s: no memory for list buffers!\n",
-		    sc_if->sk_dev.dv_xname);
-		free(sc_if, M_DEVBUF);
-		sc->sk_if[sa->skc_port] = NULL;
-		return;
+	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct sk_ring_data),
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+		printf("%s: can't alloc rx buffers\n", sc->sk_dev.dv_xname);
+		goto fail;
 	}
-
+	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
+	    sizeof(struct sk_ring_data), &kva, BUS_DMA_NOWAIT)) {
+		printf("%s: can't map dma buffers (%d bytes)\n",
+		       sc_if->sk_dev.dv_xname, sizeof(struct sk_ring_data));
+		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+		goto fail;
+	}
+	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct sk_ring_data), 1,
+	    sizeof(struct sk_ring_data), 0, BUS_DMA_NOWAIT, &dmamap)) {
+		printf("%s: can't create dma map\n", sc_if->sk_dev.dv_xname);
+		bus_dmamem_unmap(sc->sc_dmatag, kva,
+		    sizeof(struct sk_ring_data));
+		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+		goto fail;
+	}
+	if (bus_dmamap_load(sc->sc_dmatag, dmamap, kva,
+	    sizeof(struct sk_ring_data), NULL, BUS_DMA_NOWAIT)) {
+		printf("%s: can't load dma map\n", sc_if->sk_dev.dv_xname);
+		bus_dmamap_destroy(sc->sc_dmatag, dmamap);
+		bus_dmamem_unmap(sc->sc_dmatag, kva,
+		    sizeof(struct sk_ring_data));
+		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+		goto fail;
+	}
+        sc_if->sk_rdata = (struct sk_ring_data *)kva;
 	bzero(sc_if->sk_rdata, sizeof(struct sk_ring_data));
-
-	/* Try to allocate memory for jumbo buffers. */
-	if (sk_alloc_jumbo_mem(sc_if)) {
-		printf("%s: jumbo buffer allocation failed\n",
-		    sc_if->sk_dev.dv_xname);
-		free(sc_if->sk_rdata, M_DEVBUF);
-		free(sc_if, M_DEVBUF);
-		sc->sk_if[sa->skc_port] = NULL;
-		return;
-	}
 
 	ifp = &sc_if->arpcom.ac_if;
 	ifp->if_softc = sc_if;
@@ -1133,6 +955,10 @@ sk_attach(parent, self, aux)
 	bpfattach(&sc_if->arpcom.ac_if.if_bpf, ifp,
 	    DLT_EN10MB, sizeof(struct ether_header));
 #endif
+	return;
+
+fail:
+	sc->sk_if[sa->skc_port] = NULL;
 }
 
 int
@@ -1244,6 +1070,7 @@ skc_attach(parent, self, aux)
 	}
 	sc->sk_btag = pa->pa_memt;
 #endif
+	sc->sc_dmatag = pa->pa_dmat;
 
 	/* Allocate interrupt */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
@@ -1583,11 +1410,8 @@ void sk_intr_xmac(sc_if)
 
 	if (status & XM_ISR_LINKEVENT) {
 		SK_XM_SETBIT_2(sc_if, XM_IMR, XM_IMR_LINKEVENT);
-		if (sc_if->sk_link == 1) {
-			printf("%s: gigabit link down\n",
-			    sc_if->sk_dev.dv_xname);
+		if (sc_if->sk_link == 1)
 			sc_if->sk_link = 0;
-		}
 	}
 
 	if (status & XM_ISR_AUTONEG_DONE) {
@@ -1595,8 +1419,6 @@ void sk_intr_xmac(sc_if)
 		if (bmsr & XM_BMSR_LINKSTAT) {
 			sc_if->sk_link = 1;
 			SK_XM_CLRBIT_2(sc_if, XM_IMR, XM_IMR_LINKEVENT);
-			printf("%s: gigabit link up\n",
-			    sc_if->sk_dev.dv_xname);
 		}
 	}
 

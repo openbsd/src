@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.3 1999/10/03 13:06:30 jason Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.4 1999/10/22 07:14:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1139,6 +1139,7 @@ struct sk_softc {
 	u_int32_t		sk_ramsize;	/* amount of RAM on NIC */
 	u_int32_t		sk_pmd;		/* physical media type */
 	u_int32_t		sk_intrmask;
+	bus_dma_tag_t		sc_dmatag;
 	struct sk_if_softc	*sk_if[2];
 };
 
