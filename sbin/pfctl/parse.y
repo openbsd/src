@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.159 2002/10/07 12:59:55 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.160 2002/10/07 13:15:02 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -57,6 +57,9 @@ static int debug = 0;
 static int lineno = 1;
 static int errors = 0;
 static int rulestate = 0;
+static u_int16_t returnicmpdefault =  (ICMP_UNREACH << 8) | ICMP_UNREACH_PORT;
+static u_int16_t returnicmp6default = (ICMP6_DST_UNREACH << 8)
+    | ICMP6_DST_UNREACH_NOPORT;
 
 enum {
 	PFCTL_STATE_NONE = 0,
@@ -195,6 +198,7 @@ void	ifa_load(void);
 struct	node_host *ifa_exists(char *);
 struct	node_host *ifa_lookup(char *, enum pfctl_iflookup_mode);
 struct	node_host *ifa_pick_ip(struct node_host *, u_int8_t);
+u_int16_t	parseicmpspec(char *, u_int8_t);
 
 typedef struct {
 	union {
@@ -205,6 +209,7 @@ typedef struct {
 			u_int8_t	b1;
 			u_int8_t	b2;
 			u_int16_t	w;
+			u_int16_t	w2;
 		}			b;
 		struct range {
 			int		a;
@@ -461,6 +466,7 @@ pfrule		: action dir logquick interface route af proto fromto
 			} else {
 				r.rule_flag |= PFRULE_RETURNICMP;
 				r.return_icmp = $1.w;
+				r.return_icmp6 = $1.w2;
 			}
 			r.direction = $2;
 			r.log = $3.log;
@@ -560,49 +566,39 @@ action		: PASS			{ $$.b1 = PF_PASS; $$.b2 = $$.w = 0; }
 		| BLOCK blockspec	{ $$ = $2; $$.b1 = PF_DROP; }
 		;
 
-blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; }
-		| RETURNRST		{ $$.b2 = 1; $$.w = 0; }
+blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; $$.w2 = 0; }
+		| RETURNRST		{ $$.b2 = 1; $$.w = 0; $$.w2 = 0; }
 		| RETURNRST '(' TTL number ')'	{
 			$$.w = $4;
+			$$.w2 = 0;
 			$$.b2 = 1;
 		}
 		| RETURNICMP		{
 			$$.b2 = 0;
-			$$.w = (ICMP_UNREACH << 8) | ICMP_UNREACH_PORT;
+			$$.w = returnicmpdefault;
+			$$.w2 = returnicmp6default;
 		}
 		| RETURNICMP6		{
 			$$.b2 = 0;
-			$$.w = (ICMP6_DST_UNREACH << 8) |
-			    ICMP6_DST_UNREACH_NOPORT;
+			$$.w = returnicmpdefault;
+			$$.w2 = returnicmp6default;
 		}
 		| RETURNICMP '(' STRING ')'	{
-			const struct icmpcodeent *p;
-			u_long ulval;
-
-			if (atoul($3, &ulval) == -1) {
-				if ((p = geticmpcodebyname(ICMP_UNREACH, $3,
-				    AF_INET)) == NULL) {
-					yyerror("unknown icmp code %s", $3);
-					YYERROR;
-				}
-				ulval = p->code;
-			}
-			$$.w = (ICMP_UNREACH << 8) | ulval;
+			if (!($$.w = parseicmpspec($3, AF_INET)))
+				YYERROR;
+			$$.w2 = returnicmp6default;
 			$$.b2 = 0;
 		}
 		| RETURNICMP6 '(' STRING ')'	{
-			const struct icmpcodeent *p;
-			u_long ulval;
-
-			if (atoul($3, &ulval) == -1) {
-				if ((p = geticmpcodebyname(ICMP6_DST_UNREACH, $3,
-				    AF_INET6)) == NULL) {
-					yyerror("unknown icmp code %s", $3);
-					YYERROR;
-				}
-				ulval = p->code;
-			}
-			$$.w = (ICMP6_DST_UNREACH << 8) | ulval;
+			$$.w = returnicmpdefault;
+			if (!($$.w2 = parseicmpspec($3, AF_INET6)))
+				YYERROR;
+			$$.b2 = 0;
+		}
+		| RETURNICMP '(' STRING comma STRING ')' {
+			if (!($$.w = parseicmpspec($3, AF_INET)))
+				YYERROR;
+			if (!($$.w2 = parseicmpspec($5, AF_INET6)));
 			$$.b2 = 0;
 		}
 		;
@@ -1776,12 +1772,6 @@ rule_consistent(struct pf_rule *r)
 	if ((r->proto == IPPROTO_ICMP && r->af == AF_INET6) ||
 	    (r->proto == IPPROTO_ICMPV6 && r->af == AF_INET)) {
 		yyerror("icmp version does not match address family");
-		problems++;
-	}
-	if (!(r->rule_flag & PFRULE_RETURNRST) && r->return_icmp &&
-	    ((r->af != AF_INET6  &&  (r->return_icmp>>8) != ICMP_UNREACH) ||
-	    (r->af == AF_INET6 && (r->return_icmp>>8) != ICMP6_DST_UNREACH))) {
-		yyerror("return-icmp version does not match address family");
 		problems++;
 	}
 	if (r->keep_state == PF_STATE_MODULATE && r->proto &&
@@ -2984,4 +2974,26 @@ getservice(char *n)
 		}
 		return (s->s_port);
 	}
+}
+
+u_int16_t
+parseicmpspec(char *w, u_int8_t af)
+{
+	const struct icmpcodeent *p;
+	u_long ulval;
+	u_int8_t icmptype;
+
+	if (af == AF_INET)
+		icmptype = returnicmpdefault >> 8;
+	else
+		icmptype = returnicmp6default >> 8;
+
+	if (atoul(w, &ulval) == -1) {
+		if ((p = geticmpcodebyname(icmptype, w, af)) == NULL) {
+			yyerror("unknown icmp code %s", w);
+			return (0);
+		}
+		ulval = p->code;
+	}
+	return (icmptype << 8 | ulval);
 }

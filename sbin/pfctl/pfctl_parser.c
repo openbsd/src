@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.96 2002/10/07 12:39:29 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.97 2002/10/07 13:15:02 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -637,25 +637,41 @@ print_rule(struct pf_rule *r)
 				printf("return-rst ");
 			else
 				printf("return-rst(ttl %d) ", r->return_ttl);
-		} else if (r->return_icmp) {
-			const struct icmpcodeent *ic;
+		} else if (r->rule_flag & PFRULE_RETURNICMP) {
+			const struct icmpcodeent *ic, *ic6;
 
-			if (r->af != AF_INET6)
-				printf("return-icmp");
-			else
-				printf("return-icmp6");
 			ic = geticmpcodebynumber(r->return_icmp >> 8,
-			    r->return_icmp & 255, r->af);
+			    r->return_icmp & 255, AF_INET);
+			ic6 = geticmpcodebynumber(r->return_icmp6 >> 8,
+			    r->return_icmp6 & 255, AF_INET6);
 
-			if (ic == NULL)
-				printf("(%u) ", r->return_icmp & 255);
-			else if ((r->af != AF_INET6 && ic->code !=
-			    ICMP_UNREACH_PORT) ||
-			    (r->af == AF_INET6 && ic->code !=
-			    ICMP6_DST_UNREACH_NOPORT))
-				printf("(%s) ", ic->name);
-			else
-				printf(" ");
+			switch(r->af) {
+			case AF_INET:
+				printf("return-icmp");
+				if (ic == NULL)
+					printf("(%u) ", r->return_icmp & 255);
+				else 
+					printf("(%s) ", ic->name);
+				break;
+			case AF_INET6:
+				printf("return-icmp6");
+				if (ic6 == NULL)
+					printf("(%u) ", r->return_icmp6 & 255);
+				else
+					printf("(%s) ", ic6->name);
+				break;
+			default:
+				printf("return-icmp");
+				if (ic == NULL)
+					printf("(%u, ", r->return_icmp & 255);
+				else 
+					printf("(%s, ", ic->name);
+				if (ic6 == NULL)
+					printf("%u) ", r->return_icmp6 & 255);
+				else
+					printf("%s) ", ic6->name);
+				break;
+			}
 		}
 	} else {
 		printf("scrub ");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.249 2002/10/07 12:59:54 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.250 2002/10/07 13:15:02 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -359,6 +359,7 @@ int
 pf_compare_rules(struct pf_rule *a, struct pf_rule *b)
 {
 	if (a->return_icmp != b->return_icmp ||
+	    a->return_icmp6 != b->return_icmp6 ||
 	    a->action != b->action ||
 	    a->direction != b->direction ||
 	    a->log != b->log ||
@@ -1752,9 +1753,12 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			if ((*rm)->rule_flag & PFRULE_RETURNRST)
 				pf_send_reset(off, th, pd, af,
 				    (*rm)->return_ttl);
-			else if ((*rm)->return_icmp)
+			else if ((af == AF_INET) && (*rm)->return_icmp)
 				pf_send_icmp(m, (*rm)->return_icmp >> 8,
 				    (*rm)->return_icmp & 255, af);
+			else if ((af == AF_INET6) && (*rm)->return_icmp6)
+				pf_send_icmp(m, (*rm)->return_icmp6 >> 8,
+				    (*rm)->return_icmp6 & 255, af);
 		}
 
 		if ((*rm)->action == PF_DROP) 
@@ -2010,9 +2014,12 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 				    &uh->uh_sum, &baddr, bport, 1, af);
 				rewrite++;
 			}
-			if ((*rm)->return_icmp)
+			if ((af == AF_INET) && (*rm)->return_icmp)
 				pf_send_icmp(m, (*rm)->return_icmp >> 8,
 				    (*rm)->return_icmp & 255, af);
+			else if ((af == AF_INET6) && (*rm)->return_icmp6)
+				pf_send_icmp(m, (*rm)->return_icmp6 >> 8,
+				    (*rm)->return_icmp6 & 255, af);
 		}
 
 		if ((*rm)->action == PF_DROP) 
