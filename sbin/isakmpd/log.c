@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.35 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.36 2003/11/06 16:12:07 ho Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
 		  class == LOG_PRINT ? "Default" : "Report>");
       strlcat (nbuf, buffer, sizeof nbuf);
 #if defined (USE_PRIVSEP)
-      strlcat (nbuf, getuid() ? "" : " [priv]", LOG_SIZE + 32);
+      strlcat (nbuf, getuid () ? "" : " [priv]", LOG_SIZE + 32);
 #endif
       strlcat (nbuf, "\n", sizeof nbuf);
 

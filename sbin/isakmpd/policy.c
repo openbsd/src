@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.66 2003/07/25 08:31:16 markus Exp $	*/
+/*	$OpenBSD: policy.c,v 1.67 2003/11/06 16:12:08 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -2210,7 +2210,7 @@ keynote_cert_get_key (void *scert, void *keyp)
 void *
 keynote_cert_dup (void *cert)
 {
-  return strdup((char *)cert);
+  return strdup ((char *)cert);
 }
 
 void

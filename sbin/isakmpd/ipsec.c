@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.82 2003/11/06 15:50:53 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.83 2003/11/06 16:12:07 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1956,7 +1956,7 @@ ipsec_decode_id (char *buf, int size, u_int8_t *id, size_t id_len,
 	case IPSEC_ID_USER_FQDN:
 	  /* String is not NUL terminated, be careful */
 	  id_len -= ISAKMP_ID_DATA_OFF;
-	  id_len = MIN(id_len, size - 1);
+	  id_len = MIN (id_len, size - 1);
 	  memcpy (buf, id + ISAKMP_ID_DATA_OFF, id_len);
 	  buf[id_len] = '\0';
 	  break;
@@ -1967,7 +1967,7 @@ ipsec_decode_id (char *buf, int size, u_int8_t *id, size_t id_len,
 				 id_len - ISAKMP_ID_DATA_OFF);
 	  if (!addr)
 	    {
-	      snprintf(buf, size, "unparsable ASN1 DN ID");
+	      snprintf (buf, size, "unparsable ASN1 DN ID");
 	      return;
 	    }
 	  strlcpy (buf, addr, size);
@@ -2404,7 +2404,7 @@ ipsec_id_string (u_int8_t *id, size_t id_len)
       strlcpy (buf,
 	       GET_ISAKMP_ID_TYPE (id) == IPSEC_ID_FQDN ? "fqdn/" : "ufqdn/",
 	       size);
-      len = strlen(buf);
+      len = strlen (buf);
 
       memcpy (buf + len, id + ISAKMP_ID_DATA_OFF, id_len);
       *(buf + len + id_len) = '\0';
@@ -2413,7 +2413,7 @@ ipsec_id_string (u_int8_t *id, size_t id_len)
 #ifdef USE_X509
     case IPSEC_ID_DER_ASN1_DN:
       strlcpy (buf, "asn1_dn/", size);
-      len = strlen(buf);
+      len = strlen (buf);
       addrstr = x509_DN_string (id + ISAKMP_ID_DATA_OFF,
 				id_len - ISAKMP_ID_DATA_OFF);
       if (!addrstr)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.h,v 1.18 2003/06/04 07:31:17 ho Exp $	*/
+/*	$OpenBSD: x509.h,v 1.19 2003/11/06 16:12:08 ho Exp $	*/
 /*	$EOM: x509.h,v 1.11 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ char *x509_DN_string (u_int8_t *, size_t);
 int x509_cert_insert (int, void *);
 int x509_cert_subjectaltname (X509 *cert, u_char **, u_int *);
 X509 *x509_from_asn (u_char *, u_int);
-int x509_generate_kn(int, X509 *);
+int x509_generate_kn (int, X509 *);
 int x509_read_from_dir (X509_STORE *, char *, int);
 int x509_read_crls_from_dir (X509_STORE *, char *);
 

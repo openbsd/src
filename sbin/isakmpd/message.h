@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.h,v 1.16 2003/06/04 07:31:17 ho Exp $	*/
+/*	$OpenBSD: message.h,v 1.17 2003/11/06 16:12:07 ho Exp $	*/
 /*	$EOM: message.h,v 1.51 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ struct message {
 /* This message should be kept on the prioritized sendq.  */
 #define MSG_PRIORITIZED	8
 
-TAILQ_HEAD(msg_head, message);
+TAILQ_HEAD (msg_head, message);
 
 extern int message_add_payload (struct message *, u_int8_t, u_int8_t *,
 				size_t, int);

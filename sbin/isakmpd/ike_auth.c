@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.80 2003/10/14 14:29:15 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.81 2003/11/06 16:12:07 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -443,10 +443,11 @@ sig_gen_skeyid (struct exchange *exchange, size_t *sz)
   memcpy (key + exchange->nonce_i_len, exchange->nonce_r,
 	  exchange->nonce_r_len);
 
-  LOG_DBG((LOG_NEGOTIATION, 80, "sig_gen_skeyid: PRF type %d, hash %d",
-      ie->prf_type, ie->hash->type));
-  LOG_DBG_BUF((LOG_NEGOTIATION, 80, "sig_gen_skeyid: SKEYID initialized with",
-      (u_int8_t *)key, exchange->nonce_i_len + exchange->nonce_r_len));
+  LOG_DBG ((LOG_NEGOTIATION, 80, "sig_gen_skeyid: PRF type %d, hash %d",
+	    ie->prf_type, ie->hash->type));
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 80, "sig_gen_skeyid: SKEYID initialized with",
+		(u_int8_t *)key,
+		exchange->nonce_i_len + exchange->nonce_r_len));
 
   prf = prf_alloc (ie->prf_type, ie->hash->type, key,
 		   exchange->nonce_i_len + exchange->nonce_r_len);
@@ -464,10 +465,10 @@ sig_gen_skeyid (struct exchange *exchange, size_t *sz)
       return 0;
     }
 
-  LOG_DBG((LOG_NEGOTIATION, 80, "sig_gen_skeyid: g^xy length %lu",
-      (unsigned long)ie->g_x_len));
-  LOG_DBG_BUF((LOG_NEGOTIATION, 80,
-      "sig_gen_skeyid: SKEYID fed with g^xy", ie->g_xy, ie->g_x_len));
+  LOG_DBG ((LOG_NEGOTIATION, 80, "sig_gen_skeyid: g^xy length %lu",
+	    (unsigned long)ie->g_x_len));
+  LOG_DBG_BUF ((LOG_NEGOTIATION, 80, "sig_gen_skeyid: SKEYID fed with g^xy",
+		ie->g_xy, ie->g_x_len));
 
   prf->Init (prf->prfctx);
   prf->Update (prf->prfctx, ie->g_xy, ie->g_x_len);
@@ -1260,19 +1261,19 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
 	}
       if (BIO_read_filename (bio, filename) <= 0)
 	{
-	  LOG_DBG((LOG_NEGOTIATION, 50, "get_raw_key_from_file: "
-		   "BIO_read_filename(bio, \"%s\") failed", filename));
+	  LOG_DBG ((LOG_NEGOTIATION, 50, "get_raw_key_from_file: "
+		    "BIO_read_filename(bio, \"%s\") failed", filename));
 	  BIO_free (bio);
 	  return -1;
 	}
-      LOG_DBG((LOG_NEGOTIATION, 80, "get_raw_key_from_file: reading file %s",
-	       filename));
+      LOG_DBG ((LOG_NEGOTIATION, 80, "get_raw_key_from_file: reading file %s",
+		filename));
       *rsa = PEM_read_bio_RSA_PUBKEY (bio, NULL, NULL, NULL);
       BIO_free (bio);
     }
   else
-    LOG_DBG((LOG_NEGOTIATION, 50, "get_raw_key_from_file: file %s not found",
-	     filename));
+    LOG_DBG ((LOG_NEGOTIATION, 50, "get_raw_key_from_file: file %s not found",
+	      filename));
 
   return (*rsa ? 0 : -1);
 }

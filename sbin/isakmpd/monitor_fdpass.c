@@ -41,7 +41,7 @@ mm_send_fd (int socket, int fd)
   char ch = '\0';
   ssize_t n;
 
-  memset(&msg, 0, sizeof msg);
+  memset (&msg, 0, sizeof msg);
   msg.msg_control = (caddr_t)tmp;
   msg.msg_controllen = CMSG_LEN (sizeof (int));
   cmsg = CMSG_FIRSTHDR (&msg);
@@ -87,7 +87,7 @@ mm_receive_fd (int socket)
   msg.msg_control = tmp;
   msg.msg_controllen = sizeof tmp;
 
-  if ((n = recvmsg(socket, &msg, 0)) == -1)
+  if ((n = recvmsg (socket, &msg, 0)) == -1)
     {
       log_error ("%s: recvmsg", __func__);
       return -1;

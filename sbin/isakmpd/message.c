@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.62 2003/11/06 15:55:54 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.63 2003/11/06 16:12:07 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -1659,7 +1659,7 @@ message_drop (struct message *msg, int notify, struct proto *proto,
     }
 
   log_print ("dropped message from %s port %d due to notification type %s",
-             address ? address : "<unknown>", htons(port),
+             address ? address : "<unknown>", htons (port),
 	     constant_name (isakmp_notify_cst, notify));
 
   /* If specified, return a notification.  */

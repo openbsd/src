@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnssec.c,v 1.16 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: dnssec.c,v 1.17 2003/11/06 16:12:07 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -150,7 +150,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
 	  break;
       if (*umark != '@')
 	{
-	  LOG_DBG((LOG_MISC, 50, "dns_get_key: bad UFQDN ID"));
+	  LOG_DBG ((LOG_MISC, 50, "dns_get_key: bad UFQDN ID"));
 	  return 0;
 	}
       *umark++ = '\0';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.82 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: x509.c,v 1.83 2003/11/06 16:12:08 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -697,7 +697,7 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
       {
 	struct stat sb;
 
-	if (stat(fullname, &sb) == -1 || !(sb.st_mode & S_IFREG))
+	if (stat (fullname, &sb) == -1 || !(sb.st_mode & S_IFREG))
           continue;
       }
 
@@ -805,7 +805,7 @@ x509_read_crls_from_dir (X509_STORE *ctx, char *name)
       {
 	struct stat sb;
 
-	if (stat(fullname, &sb) == -1 || !(sb.st_mode & S_IFREG))
+	if (stat (fullname, &sb) == -1 || !(sb.st_mode & S_IFREG))
 	  continue;
       }
 

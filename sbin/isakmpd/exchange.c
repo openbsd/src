@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.87 2003/11/06 15:55:54 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.88 2003/11/06 16:12:07 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1037,7 +1037,7 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
        * Find out our inbound phase 1 mode.
        */
       t->vtbl->get_dst (t, &dst);
-      if (sockaddr2text(dst, &str, 0) == -1)
+      if (sockaddr2text (dst, &str, 0) == -1)
 	return 0;
       name = conf_get_str ("Phase 1", str);
       free (str);
@@ -1693,7 +1693,7 @@ exchange_add_certs (struct message *msg)
 	  log_print ("exchange_add_certs: could not obtain cert for a type %d "
 		     "cert request", aca->id);
 	  if (cert)
-	    free(cert);
+	    free (cert);
 	  return -1;
 	}
       new_cert = realloc (cert, ISAKMP_CERT_SZ + certlen);
@@ -1702,7 +1702,7 @@ exchange_add_certs (struct message *msg)
 	  log_error ("exchange_add_certs: realloc (%p, %d) failed", cert,
 		     ISAKMP_CERT_SZ + certlen);
 	  if (cert)
-	    free(cert);
+	    free (cert);
 	  return -1;
 	}
       cert = new_cert;

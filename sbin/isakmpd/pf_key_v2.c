@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.136 2003/08/08 08:37:36 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.137 2003/11/06 16:12:07 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -961,9 +961,9 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
         case IPSEC_AUTH_HMAC_RIPEMD:
 #ifdef SADB_X_AALG_RIPEMD160HMAC96
 	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC96;
-#elif defined(SADB_X_AALG_RIPEMD160HMAC)
+#elif defined (SADB_X_AALG_RIPEMD160HMAC)
 	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC;
-#elif defined(SADB_X_AALG_RIPEMD160)
+#elif defined (SADB_X_AALG_RIPEMD160)
 	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160;
 #else
 	  ssa.sadb_sa_auth = SADB_AALG_RIPEMD160HMAC;
@@ -1030,9 +1030,9 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	case IPSEC_AH_RIPEMD:
 #ifdef SADB_X_AALG_RIPEMD160HMAC96
 	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC96;
-#elif defined(SADB_X_AALG_RIPEMD160HMAC)
+#elif defined (SADB_X_AALG_RIPEMD160HMAC)
 	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC;
-#elif defined(SADB_X_AALG_RIPEMD160)
+#elif defined (SADB_X_AALG_RIPEMD160)
 	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160;
 #else
 	  ssa.sadb_sa_auth = SADB_AALG_RIPEMD160HMAC;
@@ -1147,8 +1147,8 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   ssa.sadb_sa_exttype = SADB_EXT_SA;
   ssa.sadb_sa_len = sizeof ssa / PF_KEY_V2_CHUNK;
   if (proto->spi_sz[incoming] == 2) /* IPCOMP uses 16bit CPIs.  */
-    ssa.sadb_sa_spi = htonl(proto->spi[incoming][0] << 8
-			    | proto->spi[incoming][1]);
+    ssa.sadb_sa_spi = htonl (proto->spi[incoming][0] << 8
+			     | proto->spi[incoming][1]);
   else
     memcpy (&ssa.sadb_sa_spi, proto->spi[incoming], sizeof ssa.sadb_sa_spi);
   ssa.sadb_sa_replay
@@ -1375,7 +1375,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
       else
 	sid->sadb_ident_exttype = SADB_EXT_IDENTITY_DST;
 
-      memcpy(sid + 1, pp, len);
+      memcpy (sid + 1, pp, len);
       free (pp);
 
       if (pf_key_v2_msg_add (update, (struct sadb_ext *)sid,

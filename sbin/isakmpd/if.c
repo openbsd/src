@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.15 2003/09/25 14:15:15 cloder Exp $	*/
+/*	$OpenBSD: if.c,v 1.16 2003/11/06 16:12:07 ho Exp $	*/
 /*	$EOM: if.c,v 1.12 1999/10/01 13:45:20 niklas Exp $	*/
 
 /*
@@ -122,13 +122,13 @@ if_map (int (*func) (char *, struct sockaddr *, void *), void *arg)
 #ifdef HAVE_GETIFADDRS
   struct ifaddrs *ifap, *ifa;
 
-  if (getifaddrs(&ifap) < 0)
+  if (getifaddrs (&ifap) < 0)
     return -1;
 
   for (ifa = ifap; ifa; ifa = ifa->ifa_next)
     if ((*func) (ifa->ifa_name, ifa->ifa_addr, arg) == -1)
       err = -1;
-  freeifaddrs(ifap);
+  freeifaddrs (ifap);
 #else
   struct ifconf ifc;
   struct ifreq *ifrp;
