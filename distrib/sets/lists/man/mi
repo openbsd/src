@@ -893,6 +893,8 @@
 ./usr/share/man/cat4/ef.0
 ./usr/share/man/cat4/ep.0
 ./usr/share/man/cat4/esis.0
+./usr/share/man/cat4/eso.0
+./usr/share/man/cat4/ess.0
 ./usr/share/man/cat4/exphy.0
 ./usr/share/man/cat4/fd.0
 ./usr/share/man/cat4/ffs_softupdates.0
@@ -956,6 +958,7 @@
 ./usr/share/man/cat4/i386/scd.0
 ./usr/share/man/cat4/i386/sea.0
 ./usr/share/man/cat4/i386/speaker.0
+./usr/share/man/cat4/i386/spkr.0
 ./usr/share/man/cat4/i386/uha.0
 ./usr/share/man/cat4/i386/wdc.0
 ./usr/share/man/cat4/i386/wdt.0
@@ -1217,6 +1220,7 @@
 ./usr/share/man/cat5/lastlog.0
 ./usr/share/man/cat5/link.0
 ./usr/share/man/cat5/magic.0
+./usr/share/man/cat5/mailer.conf.0
 ./usr/share/man/cat5/malloc.conf.0
 ./usr/share/man/cat5/man.conf.0
 ./usr/share/man/cat5/map3270.0
@@ -1391,6 +1395,7 @@
 ./usr/share/man/cat8/lpd.0
 ./usr/share/man/cat8/mail.local.0
 ./usr/share/man/cat8/mailstats.0
+./usr/share/man/cat8/mailwrapper.0
 ./usr/share/man/cat8/makedbm.0
 ./usr/share/man/cat8/makekey.0
 ./usr/share/man/cat8/makemap.0
@@ -1602,6 +1607,3 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
-./usr/share/man/cat5/mailer.conf.0
-./usr/share/man/cat8/mailwrapper.0
-./usr/share/man/cat4/i386/spkr.0
