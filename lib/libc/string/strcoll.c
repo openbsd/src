@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strcoll.c,v 1.3 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: strcoll.c,v 1.4 2003/06/11 21:08:29 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -40,8 +40,7 @@ static char *rcsid = "$OpenBSD: strcoll.c,v 1.3 2003/06/02 20:18:38 millert Exp 
  * Compare strings according to LC_COLLATE category of current locale.
  */
 int
-strcoll(s1, s2)
-	const char *s1, *s2;
+strcoll(const char *s1, const char *s2)
 {
 	/* LC_COLLATE is unimplemented, hence always "C" */
 	return (strcmp(s1, s2));

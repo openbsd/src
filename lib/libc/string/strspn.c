@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strspn.c,v 1.3 2003/06/02 20:18:38 millert Exp $";
+static char *rcsid = "$OpenBSD: strspn.c,v 1.4 2003/06/11 21:08:29 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -37,12 +37,10 @@ static char *rcsid = "$OpenBSD: strspn.c,v 1.3 2003/06/02 20:18:38 millert Exp $
  * Span the string s2 (skip characters that are in s2).
  */
 size_t
-strspn(s1, s2)
-	const char *s1;
-	register const char *s2;
+strspn(const char *s1, const char *s2)
 {
-	register const char *p = s1, *spanp;
-	register char c, sc;
+	const char *p = s1, *spanp;
+	char c, sc;
 
 	/*
 	 * Skip any characters in s2, excluding the terminating \0.
