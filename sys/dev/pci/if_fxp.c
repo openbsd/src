@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_fxp.c,v 1.4 1997/07/06 14:30:57 niklas Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -129,7 +130,7 @@
  * the first thing in the packet is a 14-byte Ethernet header.
  * This means that the packet is misaligned.  To compensate,
  * we actually offset the RFA 2 bytes into the cluster.  This
- * alignes the packet after the Ethernet header at a 32-bit
+ * aligns the packet after the Ethernet header at a 32-bit
  * boundary.  HOWEVER!  This means that the RFA is misaligned!
  */
 #define	RFA_ALIGNMENT_FUDGE	2
