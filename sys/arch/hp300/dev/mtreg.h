@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtreg.h,v 1.2 1997/01/12 15:12:55 downsj Exp $	*/
+/*	$OpenBSD: mtreg.h,v 1.3 2001/06/27 05:44:46 nate Exp $	*/
 /*	$NetBSD: mtreg.h,v 1.1 1995/10/02 00:28:22 thorpej Exp $	*/
 
 /* 
@@ -131,7 +131,7 @@ struct	mt_stat {
 #define	MTF_ATEOT	0x0100	/* tape hit EOT - can allow one forward op */
 #define	MTF_PASTEOT	0x0200	/* tape is beyond EOT - force backward motion */
 #define	MTF_DSJTIMEO	0x0400	/* timed out hpibrecv()ing DSJ - continue it */
-#define	MTF_STATTIMEO	0x0800	/* timed out recieving STATUS - continue it */
+#define	MTF_STATTIMEO	0x0800	/* timed out receiving STATUS - continue it */
 #define	MTF_STATCONT	0x1000	/* STATTIMEO is continuable */
 
 /* additional "mtcommand"s */
@@ -291,7 +291,7 @@ struct	mt_stat {
  *	185	Self test protocol error
  *	188	HPIB parity error
  *	189	Operator reset during protocol sequence
- *	190	Device clear recieved
+ *	190	Device clear received
  */
 
 /* SR6 is count of commands accepted since Immediate Response command failed */

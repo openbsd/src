@@ -1,5 +1,5 @@
-/* $OpenBSD: if_lmc_media.c,v 1.5 2001/05/14 17:29:11 chris Exp $ */
-/* $Id: if_lmc_media.c,v 1.5 2001/05/14 17:29:11 chris Exp $ */
+/* $OpenBSD: if_lmc_media.c,v 1.6 2001/06/27 05:44:56 nate Exp $ */
+/* $Id: if_lmc_media.c,v 1.6 2001/06/27 05:44:56 nate Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -407,7 +407,7 @@ lmc_ds3_watchdog (lmc_softc_t * const sc)
 	sc->lmc_miireg16 = lmc_mii_readreg (sc, 0, 16);
 	if (sc->lmc_miireg16 & 0x0018)
 	{
-		printf("%s: AIS Recieved\n", sc->lmc_xname);
+		printf("%s: AIS Received\n", sc->lmc_xname);
 		lmc_led_on (sc, LMC_DS3_LED1 | LMC_DS3_LED2);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.21 2000/07/06 12:54:55 art Exp $ */
+/*	$OpenBSD: cl.c,v 1.22 2001/06/27 05:44:47 nate Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1247,7 +1247,7 @@ clccparam(sc, par, channel)
 	if (par->c_ospeed == 0) { 
 		/* dont kill the console */
 		if(sc->sc_cl[channel].cl_consio == 0) {
-			/* disconnect, drop RTS DTR stop reciever */
+			/* disconnect, drop RTS DTR stop receiver */
 			sc->cl_reg->cl_msvr_rts = 0x00;
 			sc->cl_reg->cl_msvr_dtr = 0x00;
 			sc->cl_reg->cl_ccr = 0x05;

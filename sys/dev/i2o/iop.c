@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.13 2001/06/27 03:39:18 mickey Exp $	*/
+/*	$OpenBSD: iop.c,v 1.14 2001/06/27 05:44:59 nate Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -579,7 +579,7 @@ iop_create_reconf_thread(void *cookie)
 
 /*
  * Reconfiguration thread; listens for LCT change notification, and
- * initiates re-configuration if recieved.
+ * initiates re-configuration if received.
  */
 void
 iop_reconf_thread(void *cookie)
@@ -1499,7 +1499,7 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 	}
 
 	/*
-	 * If we recieved a transport failure notice, we've got to dig the
+	 * If we received a transport failure notice, we've got to dig the
 	 * transaction context (if any) out of the original message frame,
 	 * and then release the original MFA back to the inbound FIFO.
 	 */

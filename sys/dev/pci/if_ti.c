@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.23 2001/06/24 22:58:01 fgsch Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.24 2001/06/27 05:44:55 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1696,7 +1696,7 @@ fail:
  * Note: we have to be able to handle three possibilities here:
  * 1) the frame is from the mini receive ring (can only happen)
  *    on Tigon 2 boards)
- * 2) the frame is from the jumbo recieve ring
+ * 2) the frame is from the jumbo receive ring
  * 3) the frame is from the standard receive ring
  */
 

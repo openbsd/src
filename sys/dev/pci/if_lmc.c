@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc.c,v 1.7 2001/05/05 20:56:59 art Exp $ */
+/*	$OpenBSD: if_lmc.c,v 1.8 2001/06/27 05:44:55 nate Exp $ */
 /*	$NetBSD: if_lmc.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -431,7 +431,7 @@ lmc_watchdog(int unit)
 
 	/*
 	 * Make sure the tx jabber and rx watchdog are off,
-	 * and the transmit and recieve processes are running.
+	 * and the transmit and receive processes are running.
 	 */
 	LMC_CSR_WRITE (sc, csr_15, 0x00000011);
 	sc->lmc_cmdmode |= TULIP_CMD_TXRUN | TULIP_CMD_RXRUN;

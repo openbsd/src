@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.9 2001/05/10 22:29:38 millert Exp $	*/
+/*	$OpenBSD: apci.c,v 1.10 2001/06/27 05:44:45 nate Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -736,7 +736,7 @@ apciparam(tp, t)
 		(void) apcimctl(sc, 0, DMSET);	/* hang up line */
 
 	/*
-	 * Set the FIFO threshold based on the recieve speed, if we
+	 * Set the FIFO threshold based on the receive speed, if we
 	 * are changing it.
 	 */
 	if (tp->t_ispeed != t->c_ispeed) {

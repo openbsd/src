@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.7 2001/06/25 00:43:14 mickey Exp $ */
+/*	$OpenBSD: vx.c,v 1.8 2001/06/27 05:44:49 nate Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -896,7 +896,7 @@ vx_ccparam(sc, par, port)
 		s = splvx();
 		/* dont kill the console */
 		if (sc->sc_info[port].vx_consio == 0) {
-			/* disconnect, drop RTS DTR stop reciever */
+			/* disconnect, drop RTS DTR stop receiver */
 			rts_ctl(sc, port, 0);
 			dtr_ctl(sc, port, 0);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xereg.h,v 1.2 2000/09/04 07:36:32 fgsch Exp $	*/
+/*	$OpenBSD: if_xereg.h,v 1.3 2001/06/27 05:44:57 nate Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -247,7 +247,7 @@
 /* CMD0 register bits */
 #define ONLINE		0x04	/* Online */
 #define OFFLINE		0x08	/* Online */
-#define ENABLE_RX	0x20	/* Enable reciever */
+#define ENABLE_RX	0x20	/* Enable receiver */
 #define DISABLE_RX	0x80	/* Disable receiver */
 
 /* RX0Msk register bits */
