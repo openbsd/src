@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lxtphy.4,v 1.4 2000/10/18 02:38:23 aaron Exp $
+.\"	$OpenBSD: lxtphy.4,v 1.5 2001/12/15 02:41:47 deraadt Exp $
 .\"	$NetBSD: lxtphy.4,v 1.1 1998/11/04 05:53:59 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,13 +41,14 @@
 .Os
 .Sh NAME
 .Nm lxtphy
-.Nd Level One LXT-970 10/100 Ethernet PHY driver
+.Nd Level One LXT-970/971 10/100 Ethernet PHY driver
 .Sh SYNOPSIS
 .Cd "lxtphy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the Level One LXT-970 and LXT-970A 10/100 Ethernet PHYs.
+driver supports the Level One LXT-970, LXT-970A and LXT-971 10/100 Ethernet 
+PHYs.
 These PHYs are found on a variety of high-performance Ethernet interfaces.
 .Sh SEE ALSO
 .Xr ifmedia 4 ,

@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.25 2001/12/14 22:06:46 jason Exp $
+$OpenBSD: miidevs,v 1.26 2001/12/15 02:41:33 deraadt Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -79,6 +79,7 @@ oui xxXAQTI			0x350700	XaQti Corp.
 /* Level 1 is completely different - from right to left.
 	(Two bits get lost in the third OUI byte.) */
 oui xxLEVEL1			0x1e0400	Level 1
+oui xxLEVEL1a			0x0004de	Level 1
 
 /* Don't know what's going on here. */
 oui xxDAVICOM			0x006040	Davicom Semiconductor
@@ -135,6 +136,7 @@ model INTEL I82553		0x0035 i82553 10/100 media interface
 
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 media interface
+model xxLEVEL1a LXT971		0x000e LXT971 10/100 media interface
 
 /* Myson Technology PHYs */
 model MYSON MTD972		0x0000 MTD972 10/100 media interface

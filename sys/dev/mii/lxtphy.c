@@ -1,4 +1,4 @@
-/*	$OpenBSD: lxtphy.c,v 1.6 2001/04/14 03:22:43 aaron Exp $	*/
+/*	$OpenBSD: lxtphy.c,v 1.7 2001/12/15 02:41:33 deraadt Exp $	*/
 /*	$NetBSD: lxtphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 /*
- * driver for Level One's LXT-970 ethernet 10/100 PHY
+ * driver for Level One's LXT-970/971 ethernet 10/100 PHY
  * datasheet from www.level1.com
  */
 
@@ -117,6 +117,10 @@ lxtphymatch(parent, match, aux)
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxLEVEL1_LXT970)
 		return (10);
 
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxLEVEL1a &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxLEVEL1a_LXT971)
+		return (10);
+   
 	return (0);
 }
 
@@ -129,13 +133,22 @@ lxtphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_xxLEVEL1_LXT970,
-	    MII_REV(ma->mii_id2));
-
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxLEVEL1 &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxLEVEL1_LXT970) {
+		printf(": %s, rev. %d\n", MII_STR_xxLEVEL1_LXT970,
+		    MII_REV(ma->mii_id2));
+		sc->mii_status = lxtphy_status;
+	}
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxLEVEL1a &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxLEVEL1a_LXT971) {
+		printf(": %s, rev. %d\n", MII_STR_xxLEVEL1a_LXT971,
+		    MII_REV(ma->mii_id2));
+		sc->mii_status = ukphy_status;
+	}
+   
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = lxtphy_service;
-	sc->mii_status = lxtphy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
