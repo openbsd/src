@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.67 2001/06/12 09:05:33 d Exp $
+	$OpenBSD: pcmciadevs,v 1.68 2001/10/08 14:16:55 aaron Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -392,3 +392,4 @@ product CABLETRON ROAMABOUT	{ "Cabletron", "RoamAbout&sp802.11&spDS", "Version&s
 product GVC NIC2000P		{ "GVC", "NIC-2000p", "ETHERNET", "R01" }
 product SYNERGY21 S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" }
 product WISECOM T210CT		{ "PCMCIA", "Ethernet&spCard", NULL, NULL }
+product WISECOM IPORT		{ "iPort", "10/100&spEthernet&spCard", NULL, NULL }
