@@ -12,7 +12,7 @@ Created: Wed Apr 19 17:41:39 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.9 1999/09/30 18:37:45 provos Exp $");
+RCSID("$Id: cipher.c,v 1.10 1999/09/30 18:41:24 provos Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -149,7 +149,8 @@ unsigned int cipher_mask()
 const
 char *cipher_name(int cipher)
 {
-  if (cipher < 0 || cipher >= sizeof(cipher_names) / sizeof(cipher_names[0]))
+  if (cipher < 0 || cipher >= sizeof(cipher_names) / sizeof(cipher_names[0]) ||
+	cipher_names[cipher] == NULL)
     fatal("cipher_name: bad cipher number: %d", cipher);
   return cipher_names[cipher];
 }
