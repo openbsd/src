@@ -1,5 +1,34 @@
-/*	$OpenBSD: reg.h,v 1.2 1998/08/29 01:25:14 mickey Exp $	*/
+/*	$OpenBSD: reg.h,v 1.3 1998/12/01 03:06:43 mickey Exp $	*/
 
+/*
+ * Copyright (c) 1998 Michael Shalayeff
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Michael Shalayeff.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /* 
  * Copyright (c) 1990,1994 The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
@@ -23,6 +52,9 @@
  * 	Utah $Hdr: regs.h 1.6 94/12/14$
  *	Author: Bob Wheeler, University of Utah CSL
  */
+
+#ifndef _MACHINE_REG_H_
+#define _MACHINE_REG_H_
 
 /*
  * constants for registers for use with the following routines:
@@ -61,3 +93,16 @@
 
 #define CCR_MASK 0xff
 
+#ifndef _LOCORE
+
+struct reg {
+	u_int32_t r_regs[32];
+	/* p'bably some cr* ? */
+};
+
+struct fpreg {
+	u_int64_t fpr_regs[32];
+};
+#endif /* !_LOCORE */
+
+#endif /* _MACHINE_REG_H_ */
