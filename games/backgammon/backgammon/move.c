@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.5 2002/02/16 21:27:08 millert Exp $	*/
+/*	$OpenBSD: move.c,v 1.6 2002/07/30 18:11:52 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,16 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.5 2002/02/16 21:27:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.6 2002/07/30 18:11:52 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "back.h"
 #include "backlocal.h"
-
-#ifdef DEBUG
-static char tests[20];
-#endif
 
 struct BOARD  {		/* structure of game position */
 	int     b_board[26];	/* board position */
@@ -60,38 +56,21 @@ struct BOARD  {		/* structure of game position */
 struct BOARD *freeq = 0;
 struct BOARD *checkq = 0;
 
-/* these variables are values for the candidate move */
-static int ch;			/* chance of being hit */
-static int op;			/* computer's open men */
-static int pt;			/* comp's protected points */
-static int em;			/* farthest man back */
-static int frc;			/* chance to free comp's men */
-static int frp;			/* chance to free pl's men */
-
-/* these values are the values for the move chosen (so far) */
-static int chance;		/* chance of being hit */
-static int openmen;		/* computer's open men */
-static int points;		/* comp's protected points */
-static int endman;		/* farthest man back */
-static int barmen;		/* men on bar */
-static int menin;		/* men in inner table */
-static int menoff;		/* men off board */
-static int oldfrc;		/* chance to free comp's men */
-static int oldfrp;		/* chance to free pl's men */
-
 static int cp[5];		/* candidate start position */
 static int cg[5];		/* candidate finish position */
 
 static int race;		/* game reduced to a race */
-
+static float bestmove;
 
 static int bcomp(struct BOARD *, struct BOARD *);
 static struct BOARD *bsave(void);
 static void binsert(struct BOARD *);
 static void boardcopy(struct BOARD *);
 static void makefree(struct BOARD *);
+static void movcmp(void);
 static void mvcheck(struct BOARD *, struct BOARD *);
 static struct BOARD *nextfree(void);
+static void pickmove(void);
 
 
 void
@@ -101,6 +80,7 @@ domove(okay)
 	int     i;		/* index */
 	int     l = 0;		/* last man */
 
+	bestmove = -9999999.;
 	if (okay) {	 /* see if comp should double */
 		if (gvalue < 64 && dlast != cturn && dblgood()) {
 			addstr(*Colorptr);
@@ -135,6 +115,7 @@ domove(okay)
 		nexturn();
 		return;
 	}
+
 	/* initialize */
 	for (i = 0; i < 4; i++)
 		cp[i] = cg[i] = 0;
@@ -322,7 +303,7 @@ mvcheck(incumbent, candidate)
 	}
 }
 
-void
+static void
 makefree(dead)
 	struct BOARD *dead;	/* dead position */
 {
@@ -350,7 +331,7 @@ nextfree()
 	return(new);
 }
 
-void
+static void
 pickmove()
 {
 	/* current game position */
@@ -392,160 +373,19 @@ boardcopy(s)
 	}
 }
 
-void
+static void
 movcmp()
 {
-	int     i;
+	int i;
+	float f;
 
-#ifdef DEBUG
-	if (trace == NULL)
-		trace = fopen("bgtrace", "w");
-#endif
-
-	odds(0, 0, 0);
-	if (!race) {
-		ch = op = pt = 0;
-		for (i = 1; i < 25; i++) {
-			if (board[i] == cturn)
-				ch = canhit(i, 1);
-			op += abs(bar - i);
-		}
-		for (i = bar + cturn; i != home; i += cturn)
-			if (board[i] * cturn > 1)
-				pt += abs(bar - i);
-		frc = freemen(bar) + trapped(bar, cturn);
-		frp = freemen(home) + trapped(home, -cturn);
-	}
-	for (em = bar; em != home; em += cturn)
-		if (board[em] * cturn > 0)
-			break;
-	em = abs(home - em);
-#ifdef DEBUG
-	fputs("Board: ", trace);
-	for (i = 0; i < 26; i++)
-		fprintf(trace, " %d", board[i]);
-	if (race)
-		fprintf(trace, "\n\tem = %d\n", em);
-	else
-		fprintf(trace,
-			"\n\tch = %d, pt = %d, em = %d, frc = %d, frp = %d\n",
-			ch, pt, em, frc, frp);
-	fputs("\tMove: ", trace);
-	for (i = 0; i < mvlim; i++)
-		fprintf(trace, " %d-%d", p[i], g[i]);
-	fputs("\n", trace);
-	fflush(trace);
-	strcpy(tests, "");
-#endif
-	if ((cp[0] == 0 && cg[0] == 0) || movegood()) {
-#ifdef DEBUG
-		fprintf(trace, "\t[%s] ... wins.\n", tests);
-		fflush(trace);
-#endif
+	setx();
+	f = pubeval(race);
+	if (f > bestmove) {
+		bestmove = f;
 		for (i = 0; i < mvlim; i++) {
 			cp[i] = p[i];
 			cg[i] = g[i];
 		}
-		if (!race) {
-			chance = ch;
-			openmen = op;
-			points = pt;
-			endman = em;
-			barmen = abs(board[home]);
-			oldfrc = frc;
-			oldfrp = frp;
-		}
-		menin = *inptr;
-		menoff = *offptr;
-	}
-#ifdef DEBUG
-	else {
-		fprintf(trace, "\t[%s] ... loses.\n", tests);
-		fflush(trace);
-	}
-#endif
-}
-
-int
-movegood()
-{
-	int     n;
-
-	if (*offptr == 15)
-		return(1);
-	if (menoff == 15)
-		return(0);
-	if (race) {
-#ifdef DEBUG
-		strcat(tests, "o");
-#endif
-		if (*offptr - menoff)
-			return(*offptr > menoff);
-#ifdef DEBUG
-		strcat(tests, "e");
-#endif
-		if (endman - em)
-			return(endman > em);
-#ifdef DEBUG
-		strcat(tests, "i");
-#endif
-		if (menin == 15)
-			return(0);
-		if (*inptr == 15)
-			return(1);
-#ifdef DEBUG
-		strcat(tests, "i");
-#endif
-		if (*inptr - menin)
-			return(*inptr > menin);
-		return(rnum(2));
-	} else {
-		n = barmen - abs(board[home]);
-#ifdef DEBUG
-		strcat(tests, "c");
-#endif
-		if (abs(chance - ch) + 25 * n > rnum(150))
-			return(n ? (n < 0) : (ch < chance));
-#ifdef DEBUG
-		strcat(tests,"o");
-#endif
-		if (*offptr - menoff)
-			return(*offptr > menoff);
-#ifdef DEBUG
-		strcat(tests, "o");
-#endif
-		if (abs(openmen - op) > 7 + rnum(12))
-			return(openmen > op);
-#ifdef DEBUG
-		strcat(tests, "b");
-#endif
-		if (n)
-			return(n < 0);
-#ifdef DEBUG
-		strcat(tests, "e");
-#endif
-		if (abs(endman - em) > rnum(2))
-			return(endman > em);
-#ifdef DEBUG
-		strcat(tests, "f");
-#endif
-		if (abs(frc - oldfrc) > rnum(2))
-			return(frc < oldfrc);
-#ifdef DEBUG
-		strcat(tests, "p");
-#endif
-		if (abs(n = pt - points) > rnum(4))
-			return(n > 0);
-#ifdef DEBUG
-		strcat(tests, "i");
-#endif
-		if (*inptr - menin)
-			return(*inptr > menin);
-#ifdef DEBUG
-		strcat(tests, "f");
-#endif
-		if (abs(frp - oldfrp) > rnum(2))
-			return(frp > oldfrp);
-		return(rnum(2));
 	}
 }
