@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.7 2001/06/24 22:11:02 angelos Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.8 2001/06/25 17:35:47 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -139,11 +139,10 @@ struct DH_buf {
 	caddr_t	dh_priv_key; /* 
 			      * Buffer for private key the private key
 			      * buffer is placed here because it can
-			      * be both an input and an output.  If
-			      * CRD_F_RNG_NEEDED is set, then priv_key
-			      * is an input - otherwise it does not
-			      * have to be given and will be an output
-			      * after the public key generation.
+			      * be both an input and an output. If this
+			      * is left empty, the crypto framework or
+			      * the underlying hardware will provide it for
+			      * SEND. Must be present on RECEIVE.
 			      */
 	caddr_t	dh_pub_key; /* SEND/RECEIVE - I/O buffer for public key */
 	caddr_t	dh_ss_key;  /* RECEIVE - output buffer for shared secret key */
