@@ -1,4 +1,4 @@
-/*	$OpenBSD: natparse.c,v 1.7 2001/01/17 05:01:01 fgsch Exp $	*/
+/*	$OpenBSD: natparse.c,v 1.8 2001/01/23 02:24:12 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -318,6 +318,10 @@ int linenum;
 		return NULL;
 	}
 
+	/* TCP only by default */
+	ipn.in_flags |= IPN_TCP;
+	proto = "tcp";
+
 	cpp++;
 
 	strncpy(ipn.in_ifname, *cpp, sizeof(ipn.in_ifname) - 1);
@@ -596,10 +600,8 @@ int linenum;
 				return NULL;
 		} else if (genmask("255.255.255.255", (u_32_t *)&ipn.in_inmsk))
 			return NULL;
-		if (!*cpp) {
-			ipn.in_flags |= IPN_TCP; /* XXX- TCP only by default */
-			proto = "tcp";
-		} else {
+		if (*cpp) {
+			ipn.in_flags &= ~IPN_TCP;	/* override default */
 			if (!strcasecmp(*cpp, "tcp"))
 				ipn.in_flags |= IPN_TCP;
 			else if (!strcasecmp(*cpp, "udp"))
