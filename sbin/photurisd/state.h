@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: state.h,v 1.3 2000/12/11 02:16:51 provos Exp $ */
+/* $Id: state.h,v 1.4 2000/12/11 20:32:15 provos Exp $ */
 /*
  * state.h: 
  * state object
@@ -50,7 +50,6 @@
 /* Possible values of flags */
 #define IPSEC_OPT_ENC		0x0001  /* Negotiate encryption */
 #define IPSEC_OPT_AUTH		0x0002  /* Negotiate authentication */
-#define IPSEC_OPT_TUNNEL	0x0004  /* Negotiate tunne mode */
 #define IPSEC_OPT_REPLAY	0x0100  /* Encryption with replay protection */
 #define IPSEC_OPT_ENC_AUTH	0x0200  /* Encryption with authentication */
 #define IPSEC_OPT_XOR		0x0400  /* Encryption with XOR */
@@ -65,8 +64,6 @@ struct stateob {
 
   char *user;                      /* User name for which do the exchange */
   int flags;                       /* Possible flags for this exchange */
-  in_addr_t isrc, ismask;          /* Accept source for tunnel */
-  in_addr_t idst, idmask;          /* Accept destination for tunnel */
   
   char address[16];                /* Remote address */
   u_int16_t port;                  /* Remote port for Photuris daemon */

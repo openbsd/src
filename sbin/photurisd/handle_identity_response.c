@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_identity_response.c,v 1.1 1998/11/14 23:37:24 deraadt Exp $";
+static char rcsid[] = "$Id: handle_identity_response.c,v 1.2 2000/12/11 20:32:15 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -273,8 +273,6 @@ handle_identity_response(u_char *packet, int size, char *address,
 	     state_save_verification(st, st->uSPIidentver, st->uSPIidentversize);
 	     /* Session keys for User */
 	     make_session_keys(st, spi);
-
-	     spi_set_tunnel(st, spi);
 
 	     spi_insert(spi);
 #ifdef IPSEC

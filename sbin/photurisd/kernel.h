@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: kernel.h,v 1.5 2000/11/17 19:32:56 millert Exp $ */
+/* $Id: kernel.h,v 1.6 2000/12/11 20:32:15 provos Exp $ */
 /*
  * kernel.h: 
  * security paramter index creation.
@@ -90,12 +90,6 @@ int kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI,
 int kernel_group_spi(char *address, u_int8_t *spi);
 int kernel_bind_spis(struct spiob *spi1, struct spiob *spi2);
 
-int kernel_enable_spi(in_addr_t isrc, in_addr_t ismask, 
-		      in_addr_t idst, in_addr_t idmask, 
-		      char *address, u_int8_t *spi, int proto, int flags);
-int kernel_disable_spi(in_addr_t isrc, in_addr_t ismask, 
-		       in_addr_t idst, in_addr_t idmask, 
-		       char *address, u_int8_t *spi, int proto, int flags);
 int kernel_delete_spi(char *address, u_int32_t spi, int proto);
 
 int kernel_request_sa(void *em /* struct encap_msghdr *em */);

@@ -1,4 +1,4 @@
-.\" $OpenBSD: photurisd.8,v 1.7 2000/03/18 22:56:02 aaron Exp $
+.\" $OpenBSD: photurisd.8,v 1.8 2000/12/11 20:32:15 provos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Nd IPSec key management daemon
 .Sh SYNOPSIS
 .Nm photurisd
-.Op Fl cvi
+.Op Fl ci
 .Op Fl d Ar directory
 .Op Fl p Ar port
 .Sh DESCRIPTION
@@ -59,13 +59,6 @@ The options are as follows:
 The
 .Fl c
 option is used to force a primality check of the bootstrapped moduli.
-.It Fl v
-The
-.Fl v
-options is used to start
-.Xr photurisd 8
-in VPN (Virtual Private Network) mode, see
-.Xr vpn 8 .
 .It Fl i
 The
 .Fl i
@@ -229,32 +222,6 @@ Possible values are
 .Dq enc
 and
 .Dq auth .
-.It Ic tsrc
-If both
-.Ic tsrc
-and
-.Ic tdst
-(see below) are specified, a tunnel (IP over IP) is setup.
-The
-.Ic tsrc
-option is a network address with netmask used for matching the source
-IP address of a packet.
-When both the source and the destination
-addresses match their respective options the packet will be routed into the
-tunnel.
-.It Ic tdst
-If both
-.Ic tsrc
-(see above) and
-.Ic tdst
-are specified, a tunnel (IP over IP) is setup.
-The
-.Ic tdst
-option is a network address with netmask used for matching the destination
-IP address of a packet.
-When both the source and the destination
-addresses match their respective options the packet will be routed into the
-tunnel.
 .It Ic exchange_lifetime
 Determines the lifetime of the exchange.
 After an exchange expires
@@ -282,8 +249,6 @@ entry:
 .Pp
 .Bd -literal
 dst=134.100.106.2 port=468 options=auth
-tsrc=134.100.104.0/255.255.255.255
-tdst=134.100.106.0/255.255.255.255
 .Ed
 .Sh SEE ALSO
 .Xr startkey 1 ,

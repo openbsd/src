@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: spi.h,v 1.2 1999/03/27 21:18:02 provos Exp $ */
+/* $Id: spi.h,v 1.3 2000/12/11 20:32:15 provos Exp $ */
 /*
  * spi.h: 
  * security paramter index creation.
@@ -50,15 +50,12 @@
 
 #define SPI_OWNER      1
 #define SPI_NOTIFY     2
-#define SPI_TUNNEL     4
 #define SPI_ESP	       8	       /* Is used for ESP */
 
 struct spiob {
      struct spiob *next;            /* Linked list */
      char *address;
      char *local_address;
-     in_addr_t isrc, ismask;
-     in_addr_t idst, idmask;
      int flags;
      u_int8_t SPI[SPI_SIZE];           /* SPI */ 
      u_int8_t icookie[COOKIE_SIZE];    /* Initator cookie */
@@ -74,7 +71,6 @@ EXTERN int make_spi(struct stateob *st, char *local_address,
 		    u_int8_t *SPI, time_t *lifetime, 
 		    u_int8_t **attributes, u_int16_t *attribsize);
 
-EXTERN int spi_set_tunnel(struct stateob *st, struct spiob *spi);
 EXTERN int spi_insert(struct spiob *);
 EXTERN int spi_unlink(struct spiob *);
 EXTERN struct spiob *spi_new(char *, u_int8_t *);

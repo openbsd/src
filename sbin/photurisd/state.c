@@ -120,10 +120,6 @@ state_copy_flags(struct stateob *src, struct stateob *dst)
 	  dst->user = strdup(src->user);
 
      dst->flags = src->flags;
-     dst->isrc = src->isrc;
-     dst->ismask = src->ismask;
-     dst->idst = src->idst;
-     dst->idmask = src->idmask;
 
      strncpy(dst->address, src->address, sizeof(src->address)-1);
      dst->address[sizeof(dst->address)-1] = 0;

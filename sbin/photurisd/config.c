@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.2 2000/12/11 02:16:50 provos Exp $";
+static char rcsid[] = "$Id: config.c,v 1.3 2000/12/11 20:32:14 provos Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -644,40 +644,6 @@ startup_parse(struct stateob *st, char *p2)
 			 continue;
 		    }
 	       }
-	  } else if (!strncmp(p, OPT_TSRC, strlen(OPT_TSRC))) {
-	       p = strsep(&p3, "/");
-	       if (p == NULL || p3 == NULL) {
-		    log_error(0, "tsrc missing addr/mask in startup_parse()");
-		    continue;
-	       }
-	       if ((st->isrc = inet_addr(p)) == -1) {
-		    log_error(0, "invalid tsrc addr %s in startup_parse()",
-			      p);
-		    continue;
-	       }
-	       if ((st->ismask = inet_addr(p3)) == -1 &&
-		   strcmp(p3, "255.255.255.255")) {
-		    log_error(0, "invalid tsrc mask %s in startup_parse()",
-			      p3);
-		    st->isrc = -1;
-		    continue;
-	       }
-	  } else if (!strncmp(p, OPT_TDST, strlen(OPT_TDST))) {
-	       p = strsep(&p3, "/");
-	       if (p == NULL || p3 == NULL) {
-		    log_error(0, "tdst missing addr/mask in startup_parse()");
-		    continue;
-	       }
-	       if ((st->idst = inet_addr(p)) == -1) {
-		    log_error(0, "invalid tdst addr %s in startup_parse()", p);
-		    continue;
-	       }
-	       if ((st->idmask = inet_addr(p3)) == -1 &&
-		   strcmp(p3, "255.255.255.255")) {
-		    log_error(0, "invalid tdst mask %s in startup_parse()", p3);
-		    st->idst = -1;
-		    continue;
-	       }
 	  }
      }
 }
@@ -697,9 +663,6 @@ startup_end(struct stateob *st)
      if (st->flags == 0)
 	  st->flags = IPSEC_OPT_ENC | IPSEC_OPT_AUTH;
 
-     if (st->isrc != -1 && st->idst != -1 && st->isrc && st->idst)
-	  st->flags |= IPSEC_OPT_TUNNEL;
-
 #ifdef DEBUG
      printf("Starting exchange with: %s:%d and options:", 
 	    st->address, st->port);
@@ -707,10 +670,6 @@ startup_end(struct stateob *st)
 	  printf("%s ", OPT_ENC);
      if (st->flags & IPSEC_OPT_AUTH)
 	  printf("%s ", OPT_AUTH);
-     if (st->flags & IPSEC_OPT_TUNNEL)
-	  printf("(tunnel mode) ");
-     else
-	  printf("(transport mode) ");
      if (st->user != NULL)
 	  printf("for user %s", st->user);
      printf("\n");

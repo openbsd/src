@@ -32,7 +32,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: photurisd.c,v 1.4 1999/12/17 18:57:03 deraadt Exp $";
+static char rcsid[] = "$Id: photurisd.c,v 1.5 2000/12/11 20:32:15 provos Exp $";
 #endif 
 
 #define _PHOTURIS_C_
@@ -71,7 +71,6 @@ usage(void)
 
      fprintf(f, "usage: photurisd [-cvi] [-d directory] [-p port]\n");
      fprintf(f, "\t-c  check primes on startup\n");
-     fprintf(f, "\t-v  start in VPN mode\n");
      fprintf(f, "\t-i  ignore startup file %s\n", PHOTURIS_STARTUP);
      fprintf(f, "\t-d  specifies the startup dir\n");
      fprintf(f, "\t-p  specifies the local port to bind to\n");
@@ -120,15 +119,11 @@ main(int argc, char **argv)
 
      daemon_mode = 0;
      global_port = 0;
-     vpn_mode = 0;
 
-     while ((ch = getopt(argc, argv, "vcid:p:")) != -1)
+     while ((ch = getopt(argc, argv, "cid:p:")) != -1)
 	  switch((char)ch) {
 	  case 'c':
 	       primes = 1;
-	       break;
-	  case 'v':
-	       vpn_mode = 1;
 	       break;
 	  case 'i':
 	       ignore = 1;
@@ -181,7 +176,7 @@ main(int argc, char **argv)
      init_server();
 
      /* Startup preconfigured exchanges */
-     if( !ignore && !vpn_mode)
+     if(!ignore)
 	  init_startup();
 
      server();
