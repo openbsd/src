@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.14 1999/07/21 01:27:27 deraadt Exp $
+.\"	$OpenBSD: stty.1,v 1.15 1999/07/26 18:25:22 aaron Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -82,7 +82,7 @@ rather than using standard input.  The file is opened
 using the
 .Dv O_NONBLOCK
 flag of
-.Fn open ,
+.Xr open 2 ,
 making it possible to
 set or display settings on a terminal that might otherwise
 block on the open.
@@ -98,7 +98,9 @@ The following arguments are available to set the terminal
 characteristics:
 .Ss Control modes
 Control mode flags affect hardware characteristics associated with the
-terminal.  This corresponds to the c_cflag in the termios structure.
+terminal.  This corresponds to the
+.Li c_cflag
+in the termios structure.
 .Bl -tag -width Fl
 .It Cm parenb Pq Fl parenb
 Enable (disable) parity generation
@@ -140,7 +142,8 @@ to
 Stop asserting modem control
 (do not stop asserting modem control) on last close.
 .It Cm hup Pq Fl hup
-Same as hupcl
+Same as
+.Cm hupcl
 .Pq Fl hupcl .
 .It Cm cstopb Pq Fl cstopb
 Use two (one) stop bits per character.
@@ -153,7 +156,9 @@ control.
 Enable (disable) RTS/CTS flow control.
 .El
 .Ss Input modes
-This corresponds to the c_iflag in the termios structure.
+This corresponds to the
+.Li c_iflag
+in the termios structure.
 .Bl -tag -width Fl
 .It Cm ignbrk Pq Fl ignbrk
 Ignore (do not ignore) break on
@@ -232,7 +237,9 @@ is unset and the input queue is full, the next input character causes
 the entire input and output queues to be discarded.
 .El
 .Ss Output modes
-This corresponds to the c_oflag of the termios structure.
+This corresponds to the
+.Li c_oflag
+of the termios structure.
 .Bl -tag -width Fl
 .It Cm opost Pq Fl opost
 Post-process output (do not
@@ -268,14 +275,13 @@ Later the driver ran on the first
 at Evans Hall, UC Berkeley, where the job control details
 were greatly modified but the structure definitions and names
 remained essentially unchanged.
-The second interpretation of the 'l' in lflag
-is
+The second interpretation of the
+.Sq l
+in lflag is
 .Dq line discipline flag
 which corresponds to the
-.Ar c_lflag
-of the
-.Ar termios
-structure.
+.Li c_lflag
+of the termios structure.
 .Bl -tag -width Fl
 .It Cm isig Pq Fl isig
 Enable (disable) the checking of
@@ -293,8 +299,11 @@ processing).
 .It Cm iexten Pq Fl iexten
 Enable (disable) any implementation
 defined special control characters
-not currently controlled by icanon,
-isig, or ixon.
+not currently controlled by
+.Cm icanon ,
+.Cm isig ,
+or
+.Cm ixon .
 .It Cm echo Pq Fl echo
 Echo back (do not echo back) every
 character typed.
@@ -326,13 +335,14 @@ is disabled.
 .It Cm echoctl Pq Fl echoctl
 If
 .Cm echoctl
-is set, echo control characters as ^X.  Otherwise control characters
-echo as themselves.
+is set, echo control characters as
+.Ql ^X .
+Otherwise control characters echo as themselves.
 .It Cm echoprt Pq Fl echoprt
 For printing terminals. If set, echo erased characters backwards within
-.Dq \e
+.Ql \e
 and
-.Dq / .
+.Ql / .
 Otherwise, disable this feature.
 .It Cm noflsh Pq Fl noflsh
 Disable (enable) flush after
@@ -383,9 +393,12 @@ If string is a single character,
 the control character is set to
 that character.
 If string is the
-two character sequence "^-" or the
-string "undef" the control character
-is disabled (i.e. set to
+two character sequence
+.Ql ^-
+or the string
+.Dq undef
+the control character
+is disabled (i.e., set to
 .Pf { Dv _POSIX_VDISABLE Ns } . )
 .Pp
 Recognized control-characters:
@@ -394,21 +407,21 @@ Recognized control-characters:
 .It control-
 .It character	Subscript	Description
 .It _________	_________	_______________
-.It eof Ta Tn VEOF	EOF No character
-.It eol Ta Tn VEOL	EOL No character
-.It eol2 Ta Tn VEOL2	EOL2 No character
-.It erase Ta Tn VERASE	ERASE No character
-.It werase Ta Tn VWERASE	WERASE No character
-.It intr Ta Tn VINTR	INTR No character
-.It kill Ta Tn VKILL	KILL No character
-.It quit Ta Tn VQUIT	QUIT No character
-.It susp Ta Tn VSUSP	SUSP No character
-.It start Ta Tn VSTART	START No character
-.It stop Ta Tn VSTOP	STOP No character
-.It dsusp Ta Tn VDSUSP	DSUSP No character
-.It lnext Ta Tn VLNEXT	LNEXT No character
-.It reprint Ta Tn VREPRINT	REPRINT No character
-.It status Ta Tn VSTATUS	STATUS No character
+.It eof Ta Dv VEOF	EOF No character
+.It eol Ta Dv VEOL	EOL No character
+.It eol2 Ta Dv VEOL2	EOL2 No character
+.It erase Ta Dv VERASE	ERASE No character
+.It werase Ta Dv VWERASE	WERASE No character 
+.It intr Ta Dv VINTR	INTR No character
+.It kill Ta Dv VKILL	KILL No character
+.It quit Ta Dv VQUIT	QUIT No character
+.It susp Ta Dv VSUSP	SUSP No character
+.It start Ta Dv VSTART	START No character
+.It stop Ta Dv VSTOP	STOP No character
+.It dsusp Ta Dv VDSUSP	DSUSP No character
+.It lnext Ta Dv VLNEXT	LNEXT No character
+.It reprint Ta Dv VREPRINT	REPRINT No character
+.It status Ta Dv VSTATUS	STATUS No character
 .El
 .Ed
 .It Cm min Ar number
@@ -434,13 +447,25 @@ option.
 Enable parenb and cs7; disable
 parodd.
 .It Cm oddp
-Enable parenb, cs7, and parodd.
+Enable
+.Cm parenb ,
+.Cm cs7 ,
+and
+.Cm parodd .
 .It Fl parity , evenp ,  oddp
-Disable parenb, and set cs8.
+Disable
+.Cm parenb
+and set
+.Cm cs8 .
 .It Cm \&nl Pq Fl \&nl
-Enable (disable) icrnl.
-In addition
--nl unsets inlcr and igncr.
+Enable (disable)
+.Cm icrnl .
+In addition,
+.Fl nl
+unsets
+.Cm inlcr
+and
+.Cm igncr .
 .It Cm ek
 Reset
 .Dv ERASE
@@ -459,7 +484,9 @@ Set (disable) all modes suitable for a CRT display device.
 Enable (disable) the system generated status line associated with
 processing a
 .Dv STATUS
-character (usually set to ^T).  The status line consists of the
+character (usually set to
+.Ql ^T ) .
+The status line consists of the
 system load average, the current command name, its process ID, the
 event the process is waiting on (or the status of the process), the user
 and system times, percent CPU, and current memory usage.
@@ -594,13 +621,21 @@ These operations are not modes, but rather commands to be performed by
 the tty layer.
 .Bl -tag -width Fl
 .It Cm ostart
-Performs a "start output" operation, as normally done by an
-incoming START character when
+Performs a
+.Dq start output
+operation, as normally done by an
+incoming
+.Dv START
+character when
 .Cm ixon
 is set.
 .It Cm ostop
-Performs a "stop output" operation, as normally done by an
-incoming STOP character when
+Performs a
+.Dq stop output
+operation, as normally done by an incoming
+incoming
+.Dv STOP
+character when
 .Cm ixon
 is set.
 .El
