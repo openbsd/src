@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.59 2003/06/26 21:59:11 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.60 2003/07/07 14:12:18 avsm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -377,7 +377,13 @@ unix_connect(char *path)
 
 	memset(&sun, 0, sizeof(struct sockaddr_un));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
+
+	if (strlcpy(sun.sun_path, path, sizeof(sun.sun_path)) >=
+	    sizeof(sun.sun_path)) {
+		close(s);
+		errno = ENAMETOOLONG;
+		return (-1);
+	}
 	if (connect(s, (struct sockaddr *)&sun, SUN_LEN(&sun)) < 0) {
 		close(s);
 		return (-1);
@@ -400,8 +406,16 @@ unix_listen(char *path)
 	if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
 		return (-1);
 
-	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
+	memset(&sun, 0, sizeof(struct sockaddr_un));
 	sun.sun_family = AF_UNIX;
+
+	if (strlcpy(sun.sun_path, path, sizeof(sun.sun_path)) >=
+	    sizeof(sun.sun_path)) {
+		close(s);
+		errno = ENAMETOOLONG;
+		return (-1);
+	}
+
 	if (bind(s, (struct sockaddr *)&sun, SUN_LEN(&sun)) < 0) {
 		close(s);
 		return (-1);
