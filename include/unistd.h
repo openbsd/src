@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.8 1996/08/25 20:02:43 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.9 1996/12/09 13:50:04 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -120,6 +120,7 @@ int	 fsync __P((int));
 int	 ftruncate __P((int, off_t));
 int	 getdomainname __P((char *, int));
 int	 getdtablesize __P((void));
+int	 getgrouplist __P((const char *, gid_t, gid_t *, int *));
 long	 gethostid __P((void));
 int	 gethostname __P((char *, int));
 mode_t	 getmode __P((const void *, mode_t));
