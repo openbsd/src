@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.116 2003/12/04 15:08:04 markus Exp $
+.\"	$OpenBSD: sysctl.3,v 1.117 2003/12/19 09:11:20 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -270,6 +270,7 @@ privileges may change the value.
 .Bl -column "Second level nameXXXXXX" integerXXX -offset indent
 .It Sy Second level name	Type	Changeable
 .It Dv HW_BYTEORDER No "	integer	no"
+.It Dv HW_CPUSPEED No "	integer	no"
 .It Dv HW_DISKCOUNT No "	integer	no"
 .It Dv HW_DISKNAMES No "	string	no"
 .It Dv HW_DISKSTATS No "	struct	no"
@@ -279,11 +280,15 @@ privileges may change the value.
 .It Dv HW_PAGESIZE No "	integer	no"
 .It Dv HW_PHYSMEM No "	integer	no"
 .It Dv HW_SENSORS No "	struct	no"
+.It Dv HW_SETPERF No "	integer	yes"
 .It Dv HW_USERMEM No "	integer	no"
 .El
 .Bl -tag -width "123456"
 .It Dv HW_BYTEORDER
 The byteorder (4321 or 1234).
+.It Dv HW_CPUSPEED
+The CPU frequency
+.Pq in MHz .
 .It Dv HW_DISKCOUNT
 The number of disks currently attached to the system.
 .It Dv HW_DISKNAMES
@@ -306,6 +311,9 @@ The bytes of physical memory.
 An array of
 .Li struct sensor
 structures containing information from the hardware monitoring sensors.
+.It Dv HW_SETPERF
+Current CPU performance
+.Pq percentage .
 .It Dv HW_USERMEM
 The bytes of non-kernel memory.
 .El
