@@ -2570,7 +2570,7 @@ tulip_pci_attach(
 #if defined(__NetBSD__)
 	if (sc->tulip_boardsw->bd_type != TULIP_DC21040_ZX314_SLAVE) {
 	    sc->tulip_ih = pci_map_int(pa->pa_tag, IPL_NET, tulip_intr, sc,
-				       sc->sc_dev.dv_xname);
+				       sc->tulip_dev.dv_xname);
 	    if (sc->tulip_ih == NULL) {
 		printf("%s%d: couldn't map interrupt\n",
 		       sc->tulip_name, sc->tulip_unit);
