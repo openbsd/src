@@ -2589,10 +2589,7 @@
 ./var/audit
 ./var/backups
 ./var/crash
-./var/crash/minfree
 ./var/cron
-./var/cron/log
-./var/cron/tabs
 ./var/db
 ./var/db/locate.database
 ./var/db/ns

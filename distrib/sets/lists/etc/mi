@@ -472,3 +472,6 @@
 ./var/www/icons/uuencoded.gif
 ./var/www/icons/world1.gif
 ./var/www/icons/world2.gif
+./var/crash/minfree
+./var/cron/log
+./var/cron/tabs
