@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trap.c,v 1.7 2001/08/18 18:50:59 art Exp $	*/
+/*	$OpenBSD: db_trap.c,v 1.8 2001/08/19 16:12:05 art Exp $	*/
 /*	$NetBSD: db_trap.c,v 1.9 1996/02/05 01:57:18 christos Exp $	*/
 
 /* 
@@ -78,7 +78,7 @@ db_trap(type, code)
 				db_printf("\n");
 			db_printf("\n\n**********************************\n");
 			db_printf("RUN AT LEAST 'trace' AND 'ps' AND INCLUDE "
-			    "THE OUTPUT WHEN REPORTING THIS PANIC!\n");
+			    "OUTPUT WHEN REPORTING THIS PANIC!\n");
 			db_printf("DO NOT EVEN BOTHER REPORTING THIS WITHOUT "
 			    "INCLUDING THAT INFORMATION!\n");
 			db_printf("DON'T WASTE OUR TIME!\n");
