@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_msdos.8,v 1.9 1995/11/29 15:11:37 ws Exp $
+.\"	$NetBSD: mount_msdos.8,v 1.10 1996/01/19 21:14:43 leo Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -43,6 +43,7 @@
 .Op Fl s
 .Op Fl l
 .Op Fl 9
+.Op Fl G
 .Pa special
 .Pa node
 .Sh DESCRIPTION
@@ -118,6 +119,11 @@ is assumed.
 .It Fl 9
 Ignore the special Win'95 directory entries even
 if deleting or renaming a file. This forces
+.Fl s .
+.It Fl G
+This option causes the filesystem to be interpreted as an Atari-Gemdos
+filesystem. The differences to the msdos filesystem are minimal and
+limited to the boot block. This option enforces
 .Fl s .
 .El
 .Sh SEE ALSO
