@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.11 1998/03/10 21:37:44 deraadt Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.12 1998/05/26 07:22:13 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -376,7 +376,7 @@ fxp_attach(parent, self, aux)
 		return;
 	}
 
-	printf(": Ethernet address %s%s, %s\n", ether_sprintf(enaddr),
+	printf(": address %s%s, %s\n", ether_sprintf(enaddr),
 	    sc->phy_10Mbps_only ? ", 10Mbps" : "", intrstr);
 
 #ifdef __OpenBSD__
