@@ -4,7 +4,7 @@
 #
 #	  Originally written by Toshiharu OHNO
 #
-# $OpenBSD: ppp.conf.sample,v 1.11 1999/03/28 00:24:52 brian Exp $
+# $OpenBSD: ppp.conf.sample,v 1.12 1999/04/27 00:25:07 brian Exp $
 #
 #################################################################
 
@@ -282,7 +282,7 @@ PAPServerwithPASSWD:
 #
 direct-client:
  set dial ""
- set line /dev/cuaa0
+ set device /dev/cuaa0
  set sp 115200
  set timeout 900
  set lqrperiod 10
@@ -354,16 +354,16 @@ loop-in:
  set log phase lcp ipcp command
  allow mode direct
 
-# If you're going to create a tunnel through a public network, your VPN
-# should be set up something like this:
+# Example of a VPN.
+#  If you're going to create a tunnel through a public network, your VPN
+#  should be set up something like this:
 #
-# /etc/ppp/secure (which should be executable) says:
-#   #! /bin/sh
-#   exec ssh whatevermachine /usr/sbin/ppp -direct loop-in
+#  You should already have set up ssh using ssh-agent & ssh-add.
+#
 #
 sloop:
  load loop
- set device !/etc/ppp/secure
+ set device "!ssh whatevermachine /usr/sbin/ppp -direct loop-in"
 
 # If you wish to connect to a server that will dial back *without* using
 # the ppp callback facility (rfc1570), take advantage of the fact that
