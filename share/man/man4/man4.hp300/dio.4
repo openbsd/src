@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dio.4,v 1.2 2003/03/19 11:14:25 miod Exp $
+.\"	$OpenBSD: dio.4,v 1.3 2004/03/22 22:07:20 miod Exp $
 .\"     $NetBSD: dio.4,v 1.2 2002/01/15 01:31:30 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ The following
 .Tn DIO
 devices are supported:
 .Ss Framebuffers
-.Bl -tag -width XXXXXX_4_ -offset indent
+.Bl -tag -width XXXXXX_4_ -offset indent -compact
 .It Xr dvbox 4
 .Tn HP98730
 .Dq DaVinci
@@ -80,7 +80,7 @@ and
 frame buffers
 .El
 .Ss Serial interfaces
-.Bl -tag -width XXXXXX_4_ -offset indent
+.Bl -tag -width XXXXXX_4_ -offset indent -compact
 .It Xr dca 4
 .Tn HP98644A
 serial communications interface
@@ -89,13 +89,13 @@ serial communications interface
 serial communications multiplexer
 .El
 .Ss Network interfaces
-.Bl -tag -width XXXXXX_4_ -offset indent
+.Bl -tag -width XXXXXX_4_ -offset indent -compact
 .It Xr le 4
 .Tn HP98643
 built-in and add-on Ethernet boards
 .El
 .Ss HP-IB interfaces
-.Bl -tag -width XXXXXX_4_ -offset indent
+.Bl -tag -width XXXXXX_4_ -offset indent -compact
 .It Xr fhpib 4
 .Dq fast
 HP-IB interface
@@ -104,7 +104,7 @@ HP-IB interface
 HP-IB interface
 .El
 .Ss SCSI interfaces
-.Bl -tag -width XXXXXX_4_ -offset indent
+.Bl -tag -width XXXXXX_4_ -offset indent -compact
 .It Xr oscsi 4
 Old HP300 SCSI driver
 .El

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tga.4,v 1.7 2003/06/06 10:29:41 jmc Exp $
+.\" $OpenBSD: tga.4,v 1.8 2004/03/22 22:07:18 miod Exp $
 .\"
 .\" Copyright (c) 2001 Nathan L. Binkert <binkertn@umich.edu>
 .\"
@@ -34,7 +34,7 @@ On some TGA models, there are four dip switches.
 On other models, there is a rotary switch with positions 0-F.
 There are also some that use jumpers.
 .Ss TGA Switch Settings
-.Bl -column "Setting" "Pixel Freq" "Resolution" "Refresh Rate"
+.Bl -column "Setting" "Pixel Freq" "Resolution" "Refresh Rate" -offset indent
 .It Li Switch Ta Pixel Ta Monitor Ta Refresh
 .It Em "Setting	Freq (MHz)	Resolution	Rate (MHz)"
 .It " "
@@ -55,8 +55,6 @@ There are also some that use jumpers.
 .Pp
 The settings for D, E, and F are for 1600x1200 on some cards, but
 there are no guarantees.
-.Pp
-N.B.: The resolution selected is the resolution used in the X Window System.
 .Pp
 There are also a couple of extra jumpers on some cards.
 One of these jumpers often selects the card to be the primary display.

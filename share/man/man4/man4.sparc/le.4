@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.17 2003/11/09 16:06:07 jmc Exp $
+.\"	$OpenBSD: le.4,v 1.18 2004/03/22 22:07:21 miod Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -73,7 +73,7 @@ addresses on the local network.
 .Pp
 Different cards and machines have different kinds of connectors,
 as follows:
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.Bl -tag -width "media autoselect"
 .It AUI/DIX
 Standard 15 pin connector
 .It 10BaseT
@@ -84,7 +84,7 @@ By default, the system will select the media type automatically, but the
 .Xr ifconfig 8
 command can be used to force the media selection.
 The media types are shown below:
-.Bl -tag -width xxxxxxxxxxxxxx -offset indent
+.Bl -tag -width "media autoselect"
 .It media autoselect
 Attempt to autoselect the media type (default)
 .It media 10base5
