@@ -76,7 +76,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $OpenBSD: mrinfo.c,v 1.18 2003/11/26 01:17:12 millert Exp $";
+    "@(#) $OpenBSD: mrinfo.c,v 1.19 2004/02/26 20:48:29 tedu Exp $";
 /*  original rcsid:
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 */
@@ -480,7 +480,7 @@ main(int argc, char *argv[])
 			src = ip->ip_src.s_addr;
 			dst = ip->ip_dst.s_addr;
 			iphdrlen = ip->ip_hl << 2;
-			ipdatalen = ntohs(ip->ip_len);
+			ipdatalen = ntohs(ip->ip_len) - iphdrlen;
 			if (iphdrlen + ipdatalen != recvlen) {
 				logit(LOG_WARNING, 0,
 				    "packet shorter (%u bytes) than "
