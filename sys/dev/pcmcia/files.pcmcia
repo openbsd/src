@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.19 1999/07/11 16:25:36 niklas Exp $
+#	$OpenBSD: files.pcmcia,v 1.20 1999/07/20 21:51:21 fgsch Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -29,14 +29,11 @@ file	dev/pcmcia/aic_pcmcia.c			aic_pcmcia
 attach	com at pcmcia with com_pcmcia
 file	dev/pcmcia/com_pcmcia.c			com_pcmcia | pccom_pcmcia
 
-# Digital RoamAbout / Lucent WaveLAN PCMCIA card
-#device	wl: ether, ifnet
-#attach	wl at pcmcia with wl_pcmcia
-#file	dev/pcmcia/if_wl_pcmcia.c		wl_pcmcia
-
-# PCMCIA IDE controller
+#Start uncommenting for new ATA stuff
+## PCMCIA IDE controller
 #attach	wdc at pcmcia with wdc_pcmcia
 #file	dev/pcmcia/wdc_pcmcia.c			wdc_pcmcia
+#end uncommenting for new ATA stuff
 
 # SMC91Cxx Ethernet Controllers (i.e. Megahertz X-Jack)
 attach	sm at pcmcia with sm_pcmcia

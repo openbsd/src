@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciavar.h,v 1.9 1999/05/27 13:36:55 niklas Exp $	*/
+/*	$OpenBSD: pcmciavar.h,v 1.10 1999/07/20 21:51:21 fgsch Exp $	*/
 /*	$NetBSD: pcmciavar.h,v 1.5 1998/07/19 17:28:17 christos Exp $	*/
 
 /*
@@ -252,6 +252,9 @@ void	pcmcia_function_disable __P((struct pcmcia_function *));
 #define	pcmcia_io_alloc(pf, start, size, align, pciop)			\
 	(pcmcia_chip_io_alloc((pf)->sc->pct, pf->sc->pch, (start),	\
 	 (size), (align), (pciop)))
+
+#define	pcmcia_io_free(pf, pciohp)					\
+	(pcmcia_chip_io_free((pf)->sc->pct, (pf)->sc->pch, (pciohp)))
 
 int	pcmcia_io_map __P((struct pcmcia_function *, int, bus_addr_t,
 	    bus_size_t, struct pcmcia_io_handle *, int *));
