@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1996/04/21 23:41:21 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1996/05/11 15:41:24 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 1996/04/21 23:41:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 1996/05/11 15:41:24 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -505,7 +505,7 @@ main(argc, argv)
 	}
 
 	if (!demand) {
-	    if (unlink(pidfilename) < 0 && errno != ENOENT) 
+	    if (pidfilename[0] != 0 && unlink(pidfilename) < 0 && errno != ENOENT) 
 		syslog(LOG_WARNING, "unable to delete pid file: %m");
 	    pidfilename[0] = 0;
 	}
