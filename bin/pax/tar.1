@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.6 1997/03/26 01:20:45 millert Exp $
+.\"	$OpenBSD: tar.1,v 1.7 1997/04/04 20:54:52 millert Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -98,10 +98,14 @@ or directories.
 .It Fl m
 Do not preserve modification time.
 .It Fl o
-Do not create directories.
+Don't write directory information that the older (V7) style
+.Nm tar
+is enable to decode.
 .It Fl p
 Preserve user id, group id, file mode, access and modification
-times.
+times if possible.  The user id and group id will only bet set
+if the user is the superuser (unless these values correspond
+to the user's user and group ids).
 .It Fl s Ar replstr
 Modify the file or archive member names specified by the
 .Ar pattern
@@ -150,7 +154,10 @@ are not selected and will be skipped.
 .It Fl v
 Verbose operation mode.
 .It Fl w
-Interactively rename files.
+Interactively rename files.  This option causes
+.Nm tar
+to prompt the user for the filename to use when storing or
+extracting files in an archive.
 .It Fl z
 Compress archive using gzip.
 .It Fl C Ar directory

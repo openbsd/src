@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.18 1997/04/02 17:48:53 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.19 1997/04/04 20:54:50 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.18 1997/04/02 17:48:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.19 1997/04/04 20:54:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -781,6 +781,10 @@ tar_options(argc, argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	/* Traditional tar behaviour (pax wants to read filelist from stdin) */
+	if (argc == 0)
+		exit(0);
 
 	/*
 	 * if we are writing (ARCHIVE) specify tar, otherwise run like pax
