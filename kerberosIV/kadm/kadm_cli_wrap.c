@@ -1,3 +1,4 @@
+/*	$OpenBSD: kadm_cli_wrap.c,v 1.4 1997/12/12 10:48:17 art Exp $	*/
 /* $KTH: kadm_cli_wrap.c,v 1.22 1997/08/17 07:30:04 assar Exp $ */
 
 /* 
@@ -47,9 +48,8 @@ static des_key_schedule sess_sched;
 static void
 clear_secrets(void)
 {
-	memset(sess_key, 0, sizeof(sess_key));
-	memset(sess_sched, 0, sizeof(sess_sched));
-	return;
+    memset(sess_key, 0, sizeof(sess_key));
+    memset(sess_sched, 0, sizeof(sess_sched));
 }
 
 static void (*opipe)();
@@ -59,7 +59,6 @@ kadm_cli_disconn(void)
 {
     close(client_parm.admin_fd);
     signal(SIGPIPE, opipe);
-    return;
 }
 
 /*
@@ -74,39 +73,43 @@ kadm_cli_disconn(void)
 int
 kadm_init_link(char *n, char *i, char *r)
 {
-	struct hostent *hop;	       /* host we will talk to */
-	char adm_hostname[MAXHOSTNAMELEN];
-
-	init_kadm_err_tbl();
-	init_krb_err_tbl();
-	strcpy(client_parm.sname, n);
-	strcpy(client_parm.sinst, i);
-	strcpy(client_parm.krbrlm, r);
-	client_parm.admin_fd = -1;
-
-	/* set up the admin_addr - fetch name of admin host */
-	if (krb_get_admhst(adm_hostname, client_parm.krbrlm, 1) != KSUCCESS)
-		return KADM_NO_HOST;
-	if ((hop = gethostbyname(adm_hostname)) == NULL)
-		return KADM_UNK_HOST;
-	memset(&client_parm.admin_addr, 0, sizeof(client_parm.admin_addr));
-	client_parm.admin_addr.sin_port = 
-	  k_getportbyname(KADM_SNAME, "tcp", htons(KADM_PORT));
-	client_parm.admin_addr.sin_family = hop->h_addrtype;
-	memcpy(&client_parm.admin_addr.sin_addr, hop->h_addr,
-	       sizeof(client_parm.admin_addr.sin_addr));
-
-	return KADM_SUCCESS;
+    struct hostent *hop;	       /* host we will talk to */
+    char adm_hostname[MAXHOSTNAMELEN];
+    
+    init_kadm_err_tbl();
+    init_krb_err_tbl();
+    strncpy(client_parm.sname, n, ANAME_SZ - 1);
+    client_parm.sname[ANAME_SZ - 1] = '\0';
+    strncpy(client_parm.sinst, i, INST_SZ - 1);
+    client_parm.sname[ANAME_SZ - 1] = '\0';
+    strncpy(client_parm.krbrlm, r, REALM_SZ - 1);
+    client_parm.krbrlm[REALM_SZ - 1] = '\0';
+    client_parm.admin_fd = -1;
+    
+    /* set up the admin_addr - fetch name of admin host */
+    if (krb_get_admhst(adm_hostname, client_parm.krbrlm, 1) != KSUCCESS)
+	return KADM_NO_HOST;
+    if ((hop = gethostbyname(adm_hostname)) == NULL)
+	return KADM_UNK_HOST;
+    memset(&client_parm.admin_addr, 0, sizeof(client_parm.admin_addr));
+    client_parm.admin_addr.sin_port = 
+	k_getportbyname(KADM_SNAME, "tcp", htons(KADM_PORT));
+    client_parm.admin_addr.sin_family = hop->h_addrtype;
+    memcpy(&client_parm.admin_addr.sin_addr, hop->h_addr,
+	   sizeof(client_parm.admin_addr.sin_addr));
+    
+    return KADM_SUCCESS;
 }
 
 static int
 kadm_cli_conn(void)
 {					/* this connects and sets my_addr */
     int on = 1;
-
+    
     if ((client_parm.admin_fd =
 	 socket(client_parm.admin_addr.sin_family, SOCK_STREAM,0)) < 0)
 	return KADM_NO_SOCK;		/* couldnt create the socket */
+
     if (connect(client_parm.admin_fd,
 		(struct sockaddr *) & client_parm.admin_addr,
 		sizeof(client_parm.admin_addr))) {
@@ -114,7 +117,9 @@ kadm_cli_conn(void)
 	client_parm.admin_fd = -1;
 	return KADM_NO_CONN;		/* couldnt get the connect */
     }
+
     opipe = signal(SIGPIPE, SIG_IGN);
+
     client_parm.my_addr_len = sizeof(client_parm.my_addr);
     if (getsockname(client_parm.admin_fd,
 		    (struct sockaddr *) & client_parm.my_addr,
@@ -124,6 +129,7 @@ kadm_cli_conn(void)
 	signal(SIGPIPE, opipe);
 	return KADM_NO_HERE;		/* couldnt find out who we are */
     }
+
     if (setsockopt(client_parm.admin_fd, SOL_SOCKET, SO_KEEPALIVE,
 		   (void *)&on,
 		   sizeof(on)) < 0) {
@@ -132,6 +138,7 @@ kadm_cli_conn(void)
 	signal(SIGPIPE, opipe);
 	return KADM_NO_CONN;		/* XXX */
     }
+
     return KADM_SUCCESS;
 }
 
@@ -139,68 +146,68 @@ kadm_cli_conn(void)
 static int
 kadm_cli_keyd(des_cblock (*s_k), struct des_ks_struct *s_s)
                 			       /* session key */
-                     		       /* session key schedule */
+                                               /* session key schedule */
 {
-	CREDENTIALS cred;	       /* to get key data */
-	int stat;
+    CREDENTIALS cred;	       /* to get key data */
+    int stat;
 
-	/* want .sname and .sinst here.... */
-	if ((stat = krb_get_cred(client_parm.sname, client_parm.sinst,
-				client_parm.krbrlm, &cred)))
-		return stat + krb_err_base;
-	memcpy(s_k, cred.session, sizeof(des_cblock));
-	memset(cred.session, 0, sizeof(des_cblock));
+    /* want .sname and .sinst here.... */
+    if ((stat = krb_get_cred(client_parm.sname, client_parm.sinst,
+			     client_parm.krbrlm, &cred)))
+	return stat + krb_err_base;
+    memcpy(s_k, cred.session, sizeof(des_cblock));
+    memset(cred.session, 0, sizeof(des_cblock));
 #ifdef NOENCRYPTION
-	memset(s_s, 0, sizeof(des_key_schedule));
+    memset(s_s, 0, sizeof(des_key_schedule));
 #else
-	if ((stat = des_key_sched(s_k,s_s)))
-		return(stat+krb_err_base);
+    if ((stat = des_key_sched(s_k,s_s)))
+	return(stat+krb_err_base);
 #endif
-	return KADM_SUCCESS;
+    return KADM_SUCCESS;
 }				       /* This code "works" */
 
 static int
 kadm_cli_out(u_char *dat, int dat_len, u_char **ret_dat, int *ret_siz)
 {
-	u_int16_t dlen;
-	int retval;
-	char tmp[4];
+    u_int16_t dlen;
+    int retval;
+    char tmp[4];
 
-	dlen = (u_int16_t) dat_len;
+    dlen = (u_int16_t) dat_len;
 
-	if (dat_len != (int)dlen)
-		return (KADM_NO_ROOM);
+    if (dat_len != (int)dlen)
+	return (KADM_NO_ROOM);
 
-	tmp[0] = (dlen >> 8) & 0xff;
-	tmp[1] = dlen & 0xff;
-	if (krb_net_write(client_parm.admin_fd, tmp, 2) != 2)
-	    return (errno);	       /* XXX */
+    tmp[0] = (dlen >> 8) & 0xff;
+    tmp[1] = dlen & 0xff;
+    if (krb_net_write(client_parm.admin_fd, tmp, 2) != 2)
+	return (errno);	       /* XXX */
 
-	if (krb_net_write(client_parm.admin_fd, (char *) dat, dat_len) < 0)
-		return (errno);	       /* XXX */
+    if (krb_net_write(client_parm.admin_fd, (char *) dat, dat_len) < 0)
+	return (errno);	       /* XXX */
 
 	
-	if ((retval = krb_net_read(client_parm.admin_fd, tmp, 2)) != 2){
-	    if (retval < 0)
-		return(errno);		/* XXX */
-	    else
-		return(EPIPE);		/* short read ! */
-	}
-	dlen = (tmp[0] << 8) | tmp[1];
+    if ((retval = krb_net_read(client_parm.admin_fd, tmp, 2)) != 2){
+	if (retval < 0)
+	    return(errno);		/* XXX */
+	else
+	    return(EPIPE);		/* short read ! */
+    }
+    dlen = (tmp[0] << 8) | tmp[1];
 
-	*ret_dat = (u_char *)malloc((unsigned)dlen);
-	if (!*ret_dat)
-	    return(KADM_NOMEM);
+    *ret_dat = (u_char *)malloc((unsigned)dlen);
+    if (*ret_dat == NULL)
+	return(KADM_NOMEM);
 
-	if ((retval = krb_net_read(client_parm.admin_fd,  *ret_dat,
-				  dlen) != dlen)) {
-	    if (retval < 0)
-		return(errno);		/* XXX */
-	    else
-		return(EPIPE);		/* short read ! */
-	}
-	*ret_siz = (int) dlen;
-	return KADM_SUCCESS;
+    if ((retval = krb_net_read(client_parm.admin_fd,  *ret_dat,
+			       dlen) != dlen)) {
+	if (retval < 0)
+	    return(errno);		/* XXX */
+	else
+	    return(EPIPE);		/* short read ! */
+    }
+    *ret_siz = (int) dlen;
+    return KADM_SUCCESS;
 }
 
 /*
@@ -228,105 +235,127 @@ kadm_cli_send(u_char *st_dat, int st_siz, u_char **ret_dat, int *ret_siz)
                  			/* to give return info */
              				/* length of returned info */
 {
-	int act_len, retdat;	       /* current offset into packet, return
+    int act_len, retdat;	       /* current offset into packet, return
 				        * data */
-	KTEXT_ST authent;	       /* the authenticator we will build */
-	u_char *act_st;		       /* the pointer to the complete packet */
-	u_char *priv_pak;	       /* private version of the packet */
-	int priv_len;		       /* length of private packet */
-	u_int32_t cksum;		       /* checksum of the packet */
-	MSG_DAT mdat;
-	u_char *return_dat;
+    KTEXT_ST authent;	       /* the authenticator we will build */
+    u_char *act_st;		       /* the pointer to the complete packet */
+    u_char *priv_pak;	       /* private version of the packet */
+    int priv_len;		       /* length of private packet */
+    u_int32_t cksum;		       /* checksum of the packet */
+    MSG_DAT mdat;
+    u_char *return_dat;
 
-	act_st = (u_char *) malloc(KADM_VERSIZE); /* verstr stored first */
-	strncpy((char *)act_st, KADM_VERSTR, KADM_VERSIZE);
-	act_len = KADM_VERSIZE;
+    act_st = (u_char *) malloc(KADM_VERSIZE); /* verstr stored first */
+    if (act_st == NULL) {
+	clear_secrets();
+	return KADM_NOMEM;
+    }
+    
+    strncpy((char *)act_st, KADM_VERSTR, KADM_VERSIZE - 1);
+    act_st[KADM_VERSIZE - 1] = '\0';
+    act_len = KADM_VERSIZE;
 
-	if ((retdat = kadm_cli_keyd(&sess_key, sess_sched)) != KADM_SUCCESS) {
-		free(act_st);
-		return retdat;	       /* couldnt get key working */
-	}
-	priv_pak = (u_char *) malloc((unsigned)(st_siz + 200));
-	/* 200 bytes for extra info case */
-	if ((priv_len = krb_mk_priv(st_dat, priv_pak, (u_int32_t)st_siz,
-				    sess_sched, &sess_key, &client_parm.my_addr,
-				    &client_parm.admin_addr)) < 0)
-		RET_N_FREE(KADM_NO_ENCRYPT);	/* whoops... we got a lose
-						 * here */
-	/* here is the length of priv data.  receiver calcs
-	 size of authenticator by subtracting vno size, priv size, and
-	 sizeof(u_int32_t) (for the size indication) from total size */
-
-	act_len += vts_long((u_int32_t) priv_len, &act_st, act_len);
-#ifdef NOENCRYPTION
-	cksum = 0;
-#else
-	cksum = des_quad_cksum((des_cblock *)priv_pak, (des_cblock *)0, (long)priv_len, 0,
-			   &sess_key);
-#endif
-	if ((retdat = krb_mk_req(&authent, client_parm.sname, client_parm.sinst,
-				client_parm.krbrlm, cksum))) {
-	    /* authenticator? */
-	    RET_N_FREE(retdat + krb_err_base);
-	}
-
-	act_st = (u_char *) realloc(act_st,
-				    act_len + authent.length + priv_len);
-	if (!act_st) {
-	    clear_secrets();
-	    free(priv_pak);
-	    return(KADM_NOMEM);
-	}
-	memcpy((char *)act_st + act_len, authent.dat, authent.length);
-	memcpy((char *)act_st + act_len + authent.length, priv_pak, priv_len);
-	free(priv_pak);
-	if ((retdat = kadm_cli_out(act_st,
-				   act_len + authent.length + priv_len,
-				   ret_dat, ret_siz)) != KADM_SUCCESS)
-	    RET_N_FREE(retdat);
+    if ((retdat = kadm_cli_keyd(&sess_key, sess_sched)) != KADM_SUCCESS) {
 	free(act_st);
+	act_st = NULL;
+	clear_secrets();
+	return retdat;	       /* couldnt get key working */
+    }
+
+    priv_pak = (u_char *) malloc((unsigned)(st_siz + 200));
+    if (priv_pak == NULL) {
+	free(act_st);
+	act_st = NULL;
+	clear_secrets();
+	return KADM_NOMEM;
+    }
+
+    /* 200 bytes for extra info case */
+    if ((priv_len = krb_mk_priv(st_dat, priv_pak, (u_int32_t)st_siz,
+				sess_sched, &sess_key, &client_parm.my_addr,
+				&client_parm.admin_addr)) < 0)
+	RET_N_FREE(KADM_NO_ENCRYPT);	/* whoops... we got a lose
+					 * here */
+
+    /* here is the length of priv data.  receiver calcs
+       size of authenticator by subtracting vno size, priv size, and
+       sizeof(u_int32_t) (for the size indication) from total size */
+
+    act_len += vts_long((u_int32_t) priv_len, &act_st, act_len);
+#ifdef NOENCRYPTION
+    cksum = 0;
+#else
+    cksum = des_quad_cksum((des_cblock *)priv_pak, (des_cblock *)0,
+			   (long)priv_len, 0, &sess_key);
+#endif
+    if ((retdat = krb_mk_req(&authent, client_parm.sname, client_parm.sinst,
+			     client_parm.krbrlm, cksum))) {
+	/* authenticator? */
+	RET_N_FREE(retdat + krb_err_base);
+    }
+
+    act_st = (u_char *) realloc(act_st,
+				act_len + authent.length + priv_len);
+    if (act_st == NULL) {
+	clear_secrets();
+	free(priv_pak);
+	priv_pak = NULL;
+	return KADM_NOMEM;
+    }
+    memcpy((char *)act_st + act_len, authent.dat, authent.length);
+    memcpy((char *)act_st + act_len + authent.length, priv_pak, priv_len);
+    free(priv_pak);
+    priv_pak = NULL;
+
+    if ((retdat = kadm_cli_out(act_st,
+			       act_len + authent.length + priv_len,
+			       ret_dat, ret_siz)) != KADM_SUCCESS)
+	RET_N_FREE(retdat);
+    free(act_st);
+    act_st = NULL;
 #define RET_N_FREE2(r) {free(*ret_dat); clear_secrets(); return(r);}
 
-	/* first see if it's a YOULOUSE */
-	if ((*ret_siz >= KADM_VERSIZE) &&
-	    !strncmp(KADM_ULOSE, (char *)*ret_dat, KADM_VERSIZE)) {
-	    unsigned char *p;
-	    /* it's a youlose packet */
-	    if (*ret_siz < KADM_VERSIZE + 4)
-		RET_N_FREE2(KADM_BAD_VER);
-	    p = (*ret_dat)+KADM_VERSIZE;
-	    retdat = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
-	    RET_N_FREE2(retdat);
-	}
-	/* need to decode the ret_dat */
-	if ((retdat = krb_rd_priv(*ret_dat, (u_int32_t)*ret_siz, sess_sched,
-				 &sess_key, &client_parm.admin_addr,
-				 &client_parm.my_addr, &mdat)))
-	    RET_N_FREE2(retdat+krb_err_base);
-	if (mdat.app_length < KADM_VERSIZE + 4)
-	    /* too short! */
+    /* first see if it's a YOULOUSE */
+    if ((*ret_siz >= KADM_VERSIZE) &&
+	!strncmp(KADM_ULOSE, (char *)*ret_dat, KADM_VERSIZE)) {
+	unsigned char *p;
+	/* it's a youlose packet */
+	if (*ret_siz < KADM_VERSIZE + 4)
 	    RET_N_FREE2(KADM_BAD_VER);
-	if (strncmp((char *)mdat.app_data, KADM_VERSTR, KADM_VERSIZE))
-	    /* bad version */
-	    RET_N_FREE2(KADM_BAD_VER);
-	{
-	    unsigned char *p = mdat.app_data+KADM_VERSIZE;
-	    retdat = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
-	}
-	{
-	  int s=mdat.app_length - KADM_VERSIZE - 4;
-	  if(s<=0) s=1;
-	  if (!(return_dat = (u_char *)malloc(s)))
+	p = (*ret_dat)+KADM_VERSIZE;
+	retdat = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
+	RET_N_FREE2(retdat);
+    }
+    /* need to decode the ret_dat */
+    if ((retdat = krb_rd_priv(*ret_dat, (u_int32_t)*ret_siz, sess_sched,
+			      &sess_key, &client_parm.admin_addr,
+			      &client_parm.my_addr, &mdat)))
+	RET_N_FREE2(retdat+krb_err_base);
+    if (mdat.app_length < KADM_VERSIZE + 4)
+	/* too short! */
+	RET_N_FREE2(KADM_BAD_VER);
+    if (strncmp((char *)mdat.app_data, KADM_VERSTR, KADM_VERSIZE))
+	/* bad version */
+	RET_N_FREE2(KADM_BAD_VER);
+    {
+	unsigned char *p = mdat.app_data+KADM_VERSIZE;
+	retdat = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
+    }
+    {
+	int s=mdat.app_length - KADM_VERSIZE - 4;
+	if(s<=0) s=1;
+	if (!(return_dat = (u_char *)malloc(s)))
 	    RET_N_FREE2(KADM_NOMEM);
-	}
-	memcpy(return_dat,
-	       (char *) mdat.app_data + KADM_VERSIZE + 4,
-	       mdat.app_length - KADM_VERSIZE - 4);
-	free(*ret_dat);
-	clear_secrets();
-	*ret_dat = return_dat;
-	*ret_siz = mdat.app_length - KADM_VERSIZE - 4;
-	return retdat;
+    }
+    memcpy(return_dat,
+	   (char *) mdat.app_data + KADM_VERSIZE + 4,
+	   mdat.app_length - KADM_VERSIZE - 4);
+    free(*ret_dat);
+    ret_dat = NULL;
+    clear_secrets();
+    *ret_dat = return_dat;
+    *ret_siz = mdat.app_length - KADM_VERSIZE - 4;
+    return retdat;
 }
 
 
@@ -339,46 +368,55 @@ kadm_cli_send(u_char *st_dat, int st_siz, u_char **ret_dat, int *ret_siz)
  */
 int kadm_change_pw_plain(unsigned char *newkey, char *password, char **pw_msg)
 {
-	int stsize, retc;	       /* stream size and return code */
-	u_char *send_st;	       /* send stream */
-	u_char *ret_st;
-	int ret_sz;
-	int status;
-	static char msg[128];
+    int stsize, retc;	       /* stream size and return code */
+    u_char *send_st;	       /* send stream */
+    u_char *ret_st;
+    int ret_sz;
+    int status;
+    static char msg[128];
 
-	if ((retc = kadm_cli_conn()) != KADM_SUCCESS)
-	    return(retc);
-	/* possible problem with vts_long on a non-multiple of four boundary */
+    if ((retc = kadm_cli_conn()) != KADM_SUCCESS)
+	return retc ;
+    /* possible problem with vts_long on a non-multiple of four boundary */
 
-	stsize = 0;		       /* start of our output packet */
-	send_st = (u_char *) malloc(1);/* to make it reallocable */
-	send_st[stsize++] = (u_char) CHANGE_PW;
+    stsize = 0;		       /* start of our output packet */
+    send_st = (u_char *) malloc(1);/* to make it reallocable */
+    if (send_st == NULL)
+	return KADM_NOMEM;
 
-	/* change key to stream */
+    send_st[stsize++] = (u_char) CHANGE_PW;
 
-	send_st = realloc(send_st, stsize + 8);
-	memcpy(send_st + stsize + 4, newkey, 4); /* yes, this is backwards */
-	memcpy(send_st + stsize, newkey + 4, 4);
-	stsize += 8;
+    /* change key to stream */
+
+    send_st = realloc(send_st, stsize + 8);
+    if (send_st == NULL)
+	return KADM_NOMEM;
+
+    memcpy(send_st + stsize + 4, newkey, 4); /* yes, this is backwards */
+    memcpy(send_st + stsize, newkey + 4, 4);
+    stsize += 8;
 	
-	if(password && *password)
-	  stsize += vts_string(password, &send_st, stsize);
+    if(password != NULL && password[0] != '\0')
+	stsize += vts_string(password, &send_st, stsize);
 
-	retc = kadm_cli_send(send_st, stsize, &ret_st, &ret_sz);
-	free(send_st);
+    retc = kadm_cli_send(send_st, stsize, &ret_st, &ret_sz);
+    free(send_st);
+    send_st = NULL;
 	
-	if(retc != KADM_SUCCESS){
-	  status = stv_string(ret_st, msg, 0, sizeof(msg), ret_sz);
-	  if(status<0)
+    if(retc != KADM_SUCCESS){
+	status = stv_string(ret_st, msg, 0, sizeof(msg), ret_sz);
+	if(status<0)
 	    msg[0]=0;
-	  *pw_msg=msg;
-	}
+	*pw_msg=msg;
+    }
 
-	if (ret_st)
-	    free(ret_st);
+    if (ret_st != NULL) {
+	free(ret_st);
+	ret_st = NULL;
+    }
 	
-	kadm_cli_disconn();
-	return(retc);
+    kadm_cli_disconn();
+    return(retc);
 }
 
 /*
@@ -402,8 +440,8 @@ int kadm_change_pw2(unsigned char *newkey, char *password, char **pw_msg)
 
 int kadm_change_pw(unsigned char *newkey)
 {
-  char *pw_msg;
-  return kadm_change_pw_plain(newkey, "", &pw_msg);
+    char *pw_msg;
+    return kadm_change_pw_plain(newkey, "", &pw_msg);
 }
 
 /*
@@ -418,29 +456,36 @@ int kadm_change_pw(unsigned char *newkey)
 int
 kadm_add(Kadm_vals *vals)
 {
-	u_char *st, *st2;	       /* st will hold the stream of values */
-	int st_len;		       /* st2 the final stream with opcode */
-	int retc;		       /* return code from call */
-	u_char *ret_st;
-	int ret_sz;
+    u_char *st, *st2;	       /* st will hold the stream of values */
+    int st_len;		       /* st2 the final stream with opcode */
+    int retc;		       /* return code from call */
+    u_char *ret_st;
+    int ret_sz;
 
-	if ((retc = kadm_cli_conn()) != KADM_SUCCESS)
-	    return(retc);
-	st_len = vals_to_stream(vals, &st);
-	st2 = (u_char *) malloc((unsigned)(1 + st_len));
-	*st2 = (u_char) ADD_ENT;       /* here's the opcode */
-	memcpy((char *) st2 + 1, st, st_len);	/* append st on */
-	retc = kadm_cli_send(st2, st_len + 1, &ret_st, &ret_sz);
-	free(st);
-	free(st2);
-	if (retc == KADM_SUCCESS) {
-	    /* ret_st has vals */
-	    if (stream_to_vals(ret_st, vals, ret_sz) < 0)
-		retc = KADM_LENGTH_ERROR;
-	    free(ret_st);
-	}
-	kadm_cli_disconn();
+    if ((retc = kadm_cli_conn()) != KADM_SUCCESS)
 	return(retc);
+    st_len = vals_to_stream(vals, &st);
+    st2 = (u_char *) malloc((unsigned)(1 + st_len));
+    if (st2 == NULL)
+	return KADM_NOMEM;
+    
+    *st2 = (u_char) ADD_ENT;       /* here's the opcode */
+    memcpy((char *) st2 + 1, st, st_len);	/* append st on */
+    retc = kadm_cli_send(st2, st_len + 1, &ret_st, &ret_sz);
+    free(st);
+    st = NULL;
+    free(st2);
+    st2 = NULL;
+
+    if (retc == KADM_SUCCESS) {
+	/* ret_st has vals */
+	if (stream_to_vals(ret_st, vals, ret_sz) < 0)
+	    retc = KADM_LENGTH_ERROR;
+	free(ret_st);
+	ret_st = NULL;
+    }
+    kadm_cli_disconn();
+    return(retc);
 }
 
 /*
@@ -455,36 +500,46 @@ kadm_add(Kadm_vals *vals)
 int
 kadm_mod(Kadm_vals *vals1, Kadm_vals *vals2)
 {
-	u_char *st, *st2;	       /* st will hold the stream of values */
-	int st_len, nlen;	       /* st2 the final stream with opcode */
-	u_char *ret_st;
-	int ret_sz;
+    u_char *st, *st2;	       /* st will hold the stream of values */
+    int st_len, nlen;	       /* st2 the final stream with opcode */
+    u_char *ret_st;
+    int ret_sz;
 
-	/* nlen is the length of second vals */
-	int retc;		       /* return code from call */
+    /* nlen is the length of second vals */
+    int retc;		       /* return code from call */
 
-	if ((retc = kadm_cli_conn()) != KADM_SUCCESS)
-	    return(retc);
-
-	st_len = vals_to_stream(vals1, &st);
-	st2 = (u_char *) malloc((unsigned)(1 + st_len));
-	*st2 = (u_char) MOD_ENT;       /* here's the opcode */
-	memcpy((char *)st2 + 1, st, st_len++); /* append st on */
-	free(st);
-	nlen = vals_to_stream(vals2, &st);
-	st2 = (u_char *) realloc((char *) st2, (unsigned)(st_len + nlen));
-	memcpy((char *) st2 + st_len, st, nlen); /* append st on */
-	retc = kadm_cli_send(st2, st_len + nlen, &ret_st, &ret_sz);
-	free(st);
-	free(st2);
-	if (retc == KADM_SUCCESS) {
-	    /* ret_st has vals */
-	    if (stream_to_vals(ret_st, vals2, ret_sz) < 0)
-		retc = KADM_LENGTH_ERROR;
-	    free(ret_st);
-	}
-	kadm_cli_disconn();
+    if ((retc = kadm_cli_conn()) != KADM_SUCCESS)
 	return(retc);
+
+    st_len = vals_to_stream(vals1, &st);
+    st2 = (u_char *) malloc((unsigned)(1 + st_len));
+    if (st2 == NULL)
+	return KADM_NOMEM;
+    
+    *st2 = (u_char) MOD_ENT;       /* here's the opcode */
+    memcpy((char *)st2 + 1, st, st_len++); /* append st on */
+    free(st);
+    st = NULL;
+
+    nlen = vals_to_stream(vals2, &st);
+    st2 = (u_char *) realloc((char *) st2, (unsigned)(st_len + nlen));
+    memcpy((char *) st2 + st_len, st, nlen); /* append st on */
+    retc = kadm_cli_send(st2, st_len + nlen, &ret_st, &ret_sz);
+
+    free(st);
+    st = NULL;
+    free(st2);
+    st2 = NULL;
+
+    if (retc == KADM_SUCCESS) {
+	/* ret_st has vals */
+	if (stream_to_vals(ret_st, vals2, ret_sz) < 0)
+	    retc = KADM_LENGTH_ERROR;
+	free(ret_st);
+	ret_st = NULL;
+    }
+    kadm_cli_disconn();
+    return retc;
 }
 
 
@@ -498,14 +553,19 @@ kadm_del(Kadm_vals *vals)
     int ret_sz;
     
     if ((retc = kadm_cli_conn()) != KADM_SUCCESS)
-	return(retc);
+	return retc;
     st_len = vals_to_stream(vals, &st);
     st2 = (unsigned char *) malloc(st_len + 1);
+    if (st2 == NULL)
+	return KADM_NOMEM;
+
     *st2 = DEL_ENT;       /* here's the opcode */
     memcpy(st2 + 1, st, st_len);	/* append st on */
     retc = kadm_cli_send(st2, st_len + 1, &ret_st, &ret_sz);
     free(st);
+    st = NULL;
     free(st2);
+    st2 = NULL;
     kadm_cli_disconn();
     return(retc);
 }
@@ -524,30 +584,36 @@ kadm_del(Kadm_vals *vals)
 int
 kadm_get(Kadm_vals *vals, u_char *fl)
 {
-	int loop;		       /* for copying the fields data */
-	u_char *st, *st2;	       /* st will hold the stream of values */
-	int st_len;		       /* st2 the final stream with opcode */
-	int retc;		       /* return code from call */
-	u_char *ret_st;
-	int ret_sz;
+    int loop;		       /* for copying the fields data */
+    u_char *st, *st2;	       /* st will hold the stream of values */
+    int st_len;		       /* st2 the final stream with opcode */
+    int retc;		       /* return code from call */
+    u_char *ret_st;
+    int ret_sz;
 
-	if ((retc = kadm_cli_conn()) != KADM_SUCCESS)
-	    return(retc);
-	st_len = vals_to_stream(vals, &st);
-	st2 = (u_char *) malloc((unsigned)(1 + st_len + FLDSZ));
-	*st2 = (u_char) GET_ENT;       /* here's the opcode */
-	memcpy((char *)st2 + 1, st, st_len); /* append st on */
-	for (loop = FLDSZ - 1; loop >= 0; loop--)
-		*(st2 + st_len + FLDSZ - loop) = fl[loop]; /* append the flags */
-	retc = kadm_cli_send(st2, st_len + 1 + FLDSZ,  &ret_st, &ret_sz);
-	free(st);
-	free(st2);
-	if (retc == KADM_SUCCESS) {
-	    /* ret_st has vals */
-	    if (stream_to_vals(ret_st, vals, ret_sz) < 0)
-		retc = KADM_LENGTH_ERROR;
-	    free(ret_st);
-	}
-	kadm_cli_disconn();
+    if ((retc = kadm_cli_conn()) != KADM_SUCCESS)
 	return(retc);
+    st_len = vals_to_stream(vals, &st);
+    st2 = (u_char *) malloc((unsigned)(1 + st_len + FLDSZ));
+    if (st2 == NULL)
+	return KADM_NOMEM;
+
+    *st2 = (u_char) GET_ENT;       /* here's the opcode */
+    memcpy((char *)st2 + 1, st, st_len); /* append st on */
+    for (loop = FLDSZ - 1; loop >= 0; loop--)
+	*(st2 + st_len + FLDSZ - loop) = fl[loop]; /* append the flags */
+    retc = kadm_cli_send(st2, st_len + 1 + FLDSZ,  &ret_st, &ret_sz);
+    free(st);
+    st = NULL;
+    free(st2);
+    st2 = NULL;
+    if (retc == KADM_SUCCESS) {
+	/* ret_st has vals */
+	if (stream_to_vals(ret_st, vals, ret_sz) < 0)
+	    retc = KADM_LENGTH_ERROR;
+	free(ret_st);
+	ret_st = NULL;
+    }
+    kadm_cli_disconn();
+    return(retc);
 }
