@@ -144,7 +144,6 @@ cgthreeattach(parent, self, args)
 	register volatile struct bt_regs *bt;
 	register struct cgthree_all *p;
 	int isconsole;
-	int sbus = 1;
 	char *nam;
 
 	sc->sc_fb.fb_driver = &cgthreefbdriver;
@@ -155,13 +154,10 @@ cgthreeattach(parent, self, args)
 	 */
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN3COLOR;
 	switch (ca->ca_bustype) {
-	case BUS_OBIO:
 	case BUS_VME32:
-	case BUS_VME16:
-		sbus = node = 0;
+		node = 0;
 		nam = "cgthree";
 		break;
-
 	case BUS_SBUS:
 		node = ca->ca_ra.ra_node;
 		nam = getpropstring(node, "model");
@@ -173,7 +169,7 @@ cgthreeattach(parent, self, args)
 	    1152, 900, node, ca->ca_bustype);
 
 	ramsize = roundup(sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes,
-		NBPG);
+	    NBPG);
 	sc->sc_fb.fb_type.fb_cmsize = 256;
 	sc->sc_fb.fb_type.fb_size = ramsize;
 	printf(": %s, %d x %d", nam,
@@ -212,8 +208,10 @@ cgthreeattach(parent, self, args)
 #endif
 	} else
 		printf("\n");
-	if (sbus)
+#if defined(SUN4C) || defined(SUN4M)
+	if (ca->ca_bustype == BUS_SBUS)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
+#endif /* SUN4C || SUN4M */
 	if (node == fbnode)
 		fb_attach(&sc->sc_fb);
 }
