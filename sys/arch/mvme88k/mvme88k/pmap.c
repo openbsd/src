@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.70 2003/08/01 18:39:12 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.71 2003/08/01 23:15:31 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -228,7 +228,6 @@ extern vaddr_t obiova;
 /*
  * Internal routines
  */
-void flush_atc_entry(long, vaddr_t, boolean_t);
 pt_entry_t *pmap_expand_kmap(vaddr_t, vm_prot_t);
 void pmap_remove_range(pmap_t, vaddr_t, vaddr_t);
 void pmap_expand(pmap_t, vaddr_t);
@@ -294,6 +293,8 @@ m88k_protection(pmap_t pmap, vm_prot_t prot)
  *	va	virtual address that should be flushed
  *      kernel  TRUE if supervisor mode, FALSE if user mode
  */
+#if NCPUS > 1
+void flush_atc_entry(long, vaddr_t, boolean_t);
 void
 flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
 {
@@ -314,6 +315,10 @@ flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
 		tusers &= ~(1 << cpu);
 	}
 }
+#else
+#define	flush_atc_entry(users,va,kernel) \
+	cmmu_flush_remote_tlb(0, (kernel), (va), PAGE_SIZE)
+#endif
 
 /*
  * Routine:	PMAP_PTE
@@ -1646,11 +1651,11 @@ remove_all_Retry:
 	/*
 	 * Loop for each entry on the pv list
 	 */
-	while ((pmap = pvl->pv_pmap) != PMAP_NULL) {
-		va = pvl->pv_va;
+	while (pvl != PV_ENTRY_NULL && (pmap = pvl->pv_pmap) != PMAP_NULL) {
 		if (!simple_lock_try(&pmap->pm_lock))
 			goto remove_all_Retry;
 
+		va = pvl->pv_va;
 		pte = pmap_pte(pmap, va);
 
 		/*
@@ -1730,8 +1735,6 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
 	u_int users;
 	boolean_t kflush;
 
-	if (pmap == PMAP_NULL || prot & VM_PROT_WRITE)
-		return;
 	if ((prot & VM_PROT_READ) == 0) {
 		pmap_remove(pmap, s, e);
 		return;
@@ -1998,19 +2001,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	ap = m88k_protection(pmap, prot);
 
-	/*
-	 * Must allocate a new pvlist entry while we're unlocked;
-	 * zalloc may cause pageout (which will lock the pmap system).
-	 * If we determine we need a pvlist entry, we will unlock
-	 * and allocate one. Then will retry, throwing away
-	 * the allocated entry later (if we no longer need it).
-	 */
-	pv_e = PV_ENTRY_NULL;
-
 	PMAP_LOCK(pmap, spl);
 	users = pmap->pm_cpus;
 
-Retry:
 	/*
 	 * Expand pmap to include this pte.
 	 */
@@ -2066,7 +2059,7 @@ Retry:
 			 * any other cpu.
 			 */
 			template |= (invalidate_pte(pte) & PG_M);
-			*pte++ = template | ap | trunc_page(pa);
+			*pte = template | ap | trunc_page(pa);
 			flush_atc_entry(users, va, kflush);
 		}
 
@@ -2074,6 +2067,12 @@ Retry:
 		/*
 		 * Remove old mapping from the PV list if necessary.
 		 */
+
+		if (va == phys_map_vaddr1 || va == phys_map_vaddr2) {
+			flush_atc_entry(users, va, TRUE);
+		} else {
+			pmap_remove_range(pmap, va, va + PAGE_SIZE);
+		}
 
 		pg = PHYS_TO_VM_PAGE(pa);
 #ifdef DEBUG
@@ -2087,11 +2086,6 @@ Retry:
 			}
 		}
 #endif
-		if (va == phys_map_vaddr1 || va == phys_map_vaddr2) {
-			flush_atc_entry(users, va, TRUE);
-		} else {
-			pmap_remove_range(pmap, va, va + PAGE_SIZE);
-		}
 
 		if (pg != NULL) {
 #ifdef DEBUG
@@ -2114,6 +2108,7 @@ Retry:
 				pvl->pv_va = va;
 				pvl->pv_pmap = pmap;
 				pvl->pv_next = PV_ENTRY_NULL;
+				pvl->pv_flags = 0;
 
 			} else {
 #ifdef DEBUG
@@ -2132,18 +2127,20 @@ Retry:
 				/*
 				 * Add new pv_entry after header.
 				 */
-				if (pv_e == PV_ENTRY_NULL) {
-					pv_e = pool_get(&pvpool, PR_NOWAIT);
-					goto Retry;
+				pv_e = pool_get(&pvpool, PR_NOWAIT);
+				if (pv_e == NULL) {
+					if (flags & PMAP_CANFAIL) {
+						PMAP_UNLOCK(pmap, spl);
+						return (ENOMEM);
+					} else
+						panic("pmap_enter: "
+						    "pvpool exhausted");
 				}
 				pv_e->pv_va = va;
 				pv_e->pv_pmap = pmap;
 				pv_e->pv_next = pvl->pv_next;
+				pv_e->pv_flags = 0;
 				pvl->pv_next = pv_e;
-				/*
-				 * Remember that we used the pvlist entry.
-				 */
-				pv_e = PV_ENTRY_NULL;
 			}
 		}
 
@@ -2171,9 +2168,6 @@ Retry:
 	} /* if (pa == old_pa) ... else */
 
 	PMAP_UNLOCK(pmap, spl);
-
-	if (pv_e != PV_ENTRY_NULL)
-		pool_put(&pvpool, pv_e);
 
 	return 0;
 }
@@ -2736,7 +2730,6 @@ pmap_testbit(struct vm_page *pg, int bit)
 	pv_entry_t pvl, pvep;
 	pt_entry_t *pte;
 	int spl;
-	boolean_t rv;
 
 	SPLVM(spl);
 
@@ -2756,16 +2749,13 @@ testbit_Retry:
 	}
 
 	if (pvl->pv_pmap == PMAP_NULL) {
-		/* unmapped page - get info from attribute array
-		   maintained by pmap_remove_range/pmap_remove_all */
-		rv = (boolean_t)(pvl->pv_flags & bit);
 #ifdef DEBUG
 		if ((pmap_con_dbg & (CD_TBIT | CD_NORM)) == (CD_TBIT | CD_NORM))
 			printf("(pmap_testbit: %x) vm page 0x%x not mapped\n",
 			    curproc, pg);
 #endif
 		SPLX(spl);
-		return (rv);
+		return (FALSE);
 	}
 
 	/* for each listed pmap, check modified bit for given page */
@@ -2852,19 +2842,11 @@ pmap_is_referenced(struct vm_page *pg)
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	switch (prot) {
-	case VM_PROT_READ:
-	case VM_PROT_READ|VM_PROT_EXECUTE:
+	if (!(prot & VM_PROT_READ))
+		pmap_remove_all(pg);
+	else if (!(prot & VM_PROT_WRITE))
 		/* copy on write */
 		pmap_changebit(pg, PG_RO, ~0);
-		break;
-	case VM_PROT_READ|VM_PROT_WRITE:
-	case VM_PROT_ALL:
-		break;
-	default:
-		pmap_remove_all(pg);
-		break;
-	}
 }
 
 void
