@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.59 2002/05/08 21:50:48 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.60 2002/05/10 16:26:28 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -875,8 +875,8 @@ wdc_atapi_intr_command(chp, xfer, timeout, ret)
 		bcopy(sc_xfer->cmd, cmd, sc_xfer->cmdlen);
 
 	WDC_LOG_ATAPI_CMD(chp, xfer->drive, xfer->c_flags,
-	    sc_xfer->cmdlen, sc_xfer->cmd);
-
+	    cmdlen, cmd);
+	
 	for (i = 0; i < 12; i++)
 		WDCDEBUG_PRINT(("%02x ", cmd[i]), DEBUG_INTR);
 	WDCDEBUG_PRINT((": PHASE_CMDOUT\n"), DEBUG_INTR);
