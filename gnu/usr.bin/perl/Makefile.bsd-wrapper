@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.43 2001/07/02 04:17:31 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.44 2001/07/21 18:09:58 krw Exp $
 #
 # Build wrapper for Perl 5.6.1
 #
@@ -1467,7 +1467,7 @@ install.lib:
 .endif
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .endif
-.if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
+.if !defined(NOPIC) && defined(major) && defined(minor)
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} ${DESTDIR}${LIBDIR}
+	    lib${LIB}.so.${major}.${minor} ${DESTDIR}${LIBDIR}
 .endif
