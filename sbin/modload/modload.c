@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.23 2001/03/15 18:00:37 deraadt Exp $	*/
+/*	$OpenBSD: modload.c,v 1.24 2001/03/22 23:17:50 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -253,7 +253,11 @@ main(argc, argv)
 			p++;			/* skip over '/' */
 		else
 			p = modobj;
-		snprintf(modout, sizeof modout, "%s%sut", _PATH_TMP, p);
+		snprintf(modout, sizeof modout, "%s%s.XXXXXXXX.o",
+		    _PATH_TMP, p);
+		if (modfd = mkstemps(modout, strlen(".o")) == -1)
+			err(1, "creating %s", modout);
+		close(modfd);
 		out = modout;
 		/*
 		 * reverse meaning of -u - if we've generated a /tmp
@@ -274,9 +278,6 @@ main(argc, argv)
 		entry[strlen(entry) - 2] = '\0'; /* chop off .o */
 	}
 
-	if ((modfd = open(out, O_RDWR | O_EXCL | O_CREAT, 0600)) < 0)
-		err(1, "creating %s", out);
-	close(modfd);
 
 	/*
 	 * Prelink to get file size
