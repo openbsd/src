@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2000/06/08 22:25:19 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.33 2000/06/26 22:45:53 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -612,8 +612,10 @@ syscall(frame)
 #else
 	cnt.v_syscall++;
 #endif
+#ifdef DIAGNOSTIC
 	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
 		panic("syscall");
+#endif
 	p = curproc;
 	sticks = p->p_sticks;
 	p->p_md.md_regs = &frame;
