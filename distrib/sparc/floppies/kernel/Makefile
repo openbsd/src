@@ -1,11 +1,11 @@
-#	$Id: Makefile,v 1.3 1996/10/12 01:07:56 deraadt Exp $
+#	$Id: Makefile,v 1.4 1996/10/18 23:35:36 deraadt Exp $
 
 .include "../Makefile.inc"
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
-VND_DEV=	/dev/${VND}c
-VND_RDEV=	/dev/r${VND}c
+VND_DEV=	/dev/${VND}a
+VND_RDEV=	/dev/r${VND}a
 IMAGE=		kc${REV}.fs
 PID!=		echo $$$$
 REALIMAGE!=	echo /tmp/image.${PID}
@@ -20,22 +20,31 @@ bsd:
 	cp ${.CURDIR}/../../../../sys/arch/sparc/compile/FLOPPY/bsd bsd
 
 all:	bsd
+.if ${VND} == vnd0
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
 	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
-	#disklabel -w ${VND_RDEV} floppy
+	# fuck, disklabeling completely fails
+.else
+	disklabel -w ${VND_RDEV} floppy
+.endif
 	newfs -O -m 0 -o space -i 8192 -c 80 ${VND_RDEV} floppy
 	mount ${VND_DEV} ${MOUNT_POINT}
+	sync; /usr/mdec/binstall -v ffs ${MOUNT_POINT}
 	TOPDIR=${.CURDIR}/.. CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${.CURDIR}/../runlist.sh ${LISTS}
-	install -c -o root -g wheel -m 0440 ${MDEC}/boot ${MOUNT_POINT}/boot
-	installboot -v ${MOUNT_POINT}/boot ${MDEC}/bootxx ${VND_RDEV}
 	mtree -def ${.CURDIR}/mtree.conf -p ${MOUNT_POINT}/ -u
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
+.if ${VND} == vnd0
 	vnconfig -u ${VND_DEV}
 	cat /bin/* > /dev/null		# flush buffer cache (yuck)
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
+	echo you have just produced a perfectly wonderful disfunctional floppy
+.else
+	dd if=${VND_RDEV} of=${IMAGE} bs=10k
+.endif
+
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
