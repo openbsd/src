@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.107 2002/08/24 17:21:44 matthieu Exp $
+.\"	$OpenBSD: options.4,v 1.108 2002/09/11 10:27:21 itojun Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -1055,6 +1055,21 @@ status can still be obtained using
 .Xr apm 8
 and/or
 .Xr apmd 8 .
+.It Cd option \&"TIMEZONE=value\&"
+.Ar value
+indicates the timezone offset of hardware realtime clock device, in minutes,
+from UTC.
+It is useful when hardware realtime clock device is configured with local time,
+when you dual-boot
+.Ox
+with other operating systems on a single machine.
+For instance, if hardware realtime clock is set to Tokyo time,
+.Ar value
+should be
+.Li \&-540
+as Tokyo local time is 9 hours ahead of UTC.
+Doublequote is needed when specifying a negative
+.Ar value .
 .El
 .\" The following requests should be uncommented and used where appropriate.
 .\" .Sh FILES
