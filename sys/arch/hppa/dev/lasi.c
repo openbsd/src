@@ -1,7 +1,7 @@
-/*	$OpenBSD: lasi.c,v 1.1 1998/11/23 02:55:43 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.2 1999/02/25 23:15:31 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998,1999 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define LASIDEBUG 9
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -43,27 +45,29 @@
 
 #include <hppa/gsc/gscbusvar.h>
 
-struct lasi_softc {
-	struct  device sc_dv;
-
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-
-	struct gscbus_ic sc_ic;
+struct lasi_hwr {
+	u_int32_t lasi_power;
+	u_int32_t lasi_error;
+	u_int32_t lasi_version;
+	u_int32_t lasi_reset;
+	u_int32_t lasi_arbmask;
 };
 
-/* LASI registers definition */
-#define	LASI_IRR	0x000
-#define	LASI_IMR	0x004
-#define	LASI_IPR	0x008
-#define	LASI_ICR	0x00c
-#define	LASI_IAR	0x010
-#define	LASI_POWER	0x800
-#define	LASI_ERROR	0x804
-#define	LASI_VERSION	0x808
-#define	LASI_RESET	0x80c
-#define	LASI_ARBMASK	0x810
+struct lasi_trs {
+	u_int32_t lasi_irr;	/* int requset register */
+	u_int32_t lasi_imr;	/* int mask register */
+	u_int32_t lasi_ipr;	/* int pending register */
+	u_int32_t lasi_icr;	/* int command? register */
+	u_int32_t lasi_iar;	/* int acquire? register */
+};
 
+struct lasi_softc {
+	struct device sc_dev;
+	struct gscbus_ic sc_ic;
+
+	struct lasi_hwr volatile *sc_hw;
+	struct lasi_trs volatile *sc_trs;
+};
 
 int	lasimatch __P((struct device *, void *, void *));
 void	lasiattach __P((struct device *, struct device *, void *));
@@ -76,7 +80,6 @@ struct cfdriver lasi_cd = {
 	NULL, "lasi", DV_DULL
 };
 
-void lasi_intr_attach __P((void *v, u_int in));
 void lasi_intr_establish __P((void *v, u_int32_t mask));
 void lasi_intr_disestablish __P((void *v, u_int32_t mask));
 u_int32_t lasi_intr_check __P((void *v));
@@ -89,18 +92,12 @@ lasimatch(parent, cfdata, aux)
 	void *cfdata;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	/* struct cfdata *cf = cfdata; */
-	bus_space_handle_t ioh;
+	register struct confargs *ca = aux;
+	/* register struct cfdata *cf = cfdata; */
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_BHA ||
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_LASI)
 		return 0;
-
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh))
-		return 0;
-
-	bus_space_unmap(ca->ca_iot, ioh, IOMOD_HPASIZE);
 
 	return 1;
 }
@@ -114,21 +111,27 @@ lasiattach(parent, self, aux)
 	register struct confargs *ca = aux;
 	register struct lasi_softc *sc = (struct lasi_softc *)self;
 	struct gsc_attach_args ga;
-	u_int ver;
+	int s, in;
 
-	sc->sc_iot = ca->ca_iot;
-	if (bus_space_map(sc->sc_iot, ca->ca_hpa, IOMOD_HPASIZE, 0,
-			  &sc->sc_ioh))
-		panic("lasiattach: unable to map bus space");
+	sc->sc_trs = (struct lasi_trs *)ca->ca_hpa;
+	sc->sc_hw = (struct lasi_hwr *)(ca->ca_hpa + 0xc000);
 
 	/* XXX should we reset the chip here? */
 
-	ver = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LASI_VERSION);
-	printf (": hpa 0x%x, rev %x\n", ca->ca_hpa, ver & 0xff);
+	printf (": rev %d.%d\n", (sc->sc_hw->lasi_version & 0xf0) >> 4,
+		sc->sc_hw->lasi_version & 0xf);
+
+	/* interrupts guts */
+	s = splhigh();
+	sc->sc_trs->lasi_iar = cpu_gethpa(0) | (31 - ca->ca_irq);
+	sc->sc_trs->lasi_icr = 0;
+	sc->sc_trs->lasi_imr = ~0U;
+	in = sc->sc_trs->lasi_irr;
+	sc->sc_trs->lasi_imr = 0;
+	splx(s);
 
 	sc->sc_ic.gsc_type = gsc_lasi;
 	sc->sc_ic.gsc_dv = sc;
-	sc->sc_ic.gsc_intr_attach = lasi_intr_attach;
 	sc->sc_ic.gsc_intr_establish = lasi_intr_establish;
 	sc->sc_ic.gsc_intr_disestablish = lasi_intr_disestablish;
 	sc->sc_ic.gsc_intr_check = lasi_intr_check;
@@ -141,27 +144,13 @@ lasiattach(parent, self, aux)
 }
 
 void
-lasi_intr_attach(v, in)
-	void *v;
-	u_int in;
-{
-	register struct lasi_softc *sc = v;
-	hppa_hpa_t cpu_hpa;
-
-	cpu_hpa = cpu_gethpa(0);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LASI_IAR, cpu_hpa | in);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LASI_ICR, 0);
-}
-
-void
 lasi_intr_establish(v, mask)
 	void *v;
 	u_int32_t mask;
 {
 	register struct lasi_softc *sc = v;
 
-	mask |= bus_space_read_4(sc->sc_iot, sc->sc_ioh, LASI_IMR);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LASI_IMR, mask);
+	sc->sc_trs->lasi_imr |= mask;
 }
 
 void
@@ -171,8 +160,7 @@ lasi_intr_disestablish(v, mask)
 {
 	register struct lasi_softc *sc = v;
 
-	mask &= ~bus_space_read_4(sc->sc_iot, sc->sc_ioh, LASI_IMR);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LASI_IMR, mask);
+	sc->sc_trs->lasi_imr &= ~mask;
 }
 
 u_int32_t
@@ -180,13 +168,21 @@ lasi_intr_check(v)
 	void *v;
 {
 	register struct lasi_softc *sc = v;
-	register u_int32_t mask, imr;
+	register u_int32_t irr, imr, ipr;
 
-	imr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LASI_IMR);
-	mask = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LASI_IRR);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LASI_IMR, imr & ~mask);
+	imr = sc->sc_trs->lasi_imr;
+	ipr = sc->sc_trs->lasi_ipr;
+	irr = sc->sc_trs->lasi_irr;
+	sc->sc_trs->lasi_imr = 0;
+	sc->sc_trs->lasi_imr = imr &= ~irr;
 
-	return mask;
+#ifdef LASIDEBUG
+	printf ("%s: imr=0x%x, irr=0x%x, ipr=0x%x, iar=0x%x, icr=0x%x\n",
+		sc->sc_dev.dv_xname, imr, irr, ipr,
+		sc->sc_trs->lasi_iar, sc->sc_trs->lasi_icr);
+#endif
+
+	return irr;
 }
 
 void
@@ -196,6 +192,5 @@ lasi_intr_ack(v, mask)
 {
 	register struct lasi_softc *sc = v;
 
-	mask |= bus_space_read_4(sc->sc_iot, sc->sc_ioh, LASI_IMR);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LASI_IMR, mask);
+	sc->sc_trs->lasi_imr |= mask;
 }
