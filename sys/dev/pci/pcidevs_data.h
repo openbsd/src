@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.137 1999/05/07 18:31:36 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.138 1999/05/07 20:39:43 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2109,6 +2109,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82C621 IDE",
 	},
 	{
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C700,
+	    0,
+	    "Opti",
+	    "82C700",
+	},
+	{
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C701,
+	    0,
+	    "Opti",
+	    "82C701",
+	},
+	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C822,
 	    0,
 	    "Opti",
@@ -2197,6 +2209,42 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Realtek",
 	    "8139",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C465,
+	    0,
+	    "Ricoh",
+	    "5C465 PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C466,
+	    0,
+	    "Ricoh",
+	    "5C466 PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C475,
+	    0,
+	    "Ricoh",
+	    "5C475 PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C476,
+	    0,
+	    "Ricoh",
+	    "5C476 PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C477,
+	    0,
+	    "Ricoh",
+	    "5C477 PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C478,
+	    0,
+	    "Ricoh",
+	    "5C478 PCI-CardBus",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE,
@@ -2589,16 +2637,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI1130 PCI-CardBus",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1031,
+	    0,
+	    "Texas Instruments",
+	    "PCI1031 PCI-pcmcia",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1131,
 	    0,
 	    "Texas Instruments",
-	    "PCI1131",
+	    "PCI1131 PCI-CardBus",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1250,
 	    0,
 	    "Texas Instruments",
-	    "PCI1250",
+	    "PCI1250 PCI-CardBus",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1220,
@@ -2607,10 +2661,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI1220 PCI-CardBus",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1221,
+	    0,
+	    "Texas Instruments",
+	    "PCI1221 PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1225,
+	    0,
+	    "Texas Instruments",
+	    "PCI1225 PCI-CardBus",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2030,
 	    0,
 	    "Texas Instruments",
-	    "PCI2030",
+	    "PCI2030 PCI-CardBus",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PERMEDIA,
@@ -2643,16 +2709,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Host-PCI",
 	},
 	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_TOPIC95,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95,
 	    0,
 	    "Toshiba (2nd ID)",
-	    "PCI-CardBus",
+	    "ToPIC95 CardBus-PCI",
 	},
 	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_TCB,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95,
 	    0,
 	    "Toshiba (2nd ID)",
-	    "PCI-CardBus",
+	    "ToPIC95B PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC97,
+	    0,
+	    "Toshiba (2nd ID)",
+	    "ToPIC97 PCI-CardBus",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_TFIRO,
