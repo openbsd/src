@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpd.h,v 1.8 2000/10/14 00:56:15 itojun Exp $	*/
+/*	$OpenBSD: tcpd.h,v 1.9 2001/02/16 02:15:59 beck Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -109,6 +109,7 @@ extern void shell_cmd __P((char *));
 extern char *percent_m __P((char *, char *));
 extern char *percent_x __P((char *, int, char *, struct request_info *));
 extern void rfc931 __P((struct sockaddr *, struct sockaddr *, char *));
+extern int rfc1413 __P((struct sockaddr *, struct sockaddr *, char *, size_t, int));
 extern void clean_exit __P((struct request_info *));
 extern void refuse __P((struct request_info *));
 #ifdef _STDIO_H_

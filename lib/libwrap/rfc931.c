@@ -1,237 +1,259 @@
-/*	$OpenBSD: rfc931.c,v 1.3 2001/02/15 20:55:12 beck Exp $	*/
+/*	$OpenBSD: rfc931.c,v 1.4 2001/02/16 02:15:59 beck Exp $	*/
 
- /*
-  * rfc931() speaks a common subset of the RFC 931, AUTH, TAP, IDENT and RFC
-  * 1413 protocols. It queries an RFC 931 etc. compatible daemon on a remote
-  * host to look up the owner of a connection. The information should not be
-  * used for authentication purposes. This routine intercepts alarm signals.
-  * 
-  * Diagnostics are reported through syslog(3).
-  * 
-  * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
-  */
+/* rfc1413 does an attempt at an ident query to a client. Originally written
+ * by Wietse Venema, rewritten by Bob Beck <beck@openbsd.org> to avoid 
+ * potential longjmp problems and get rid of stdio usage on sockets. 
+ */
 
 #ifndef lint
-#if 0
-static char sccsid[] = "@(#) rfc931.c 1.10 95/01/02 16:11:34";
-#else
-static char rcsid[] = "$OpenBSD: rfc931.c,v 1.3 2001/02/15 20:55:12 beck Exp $";
+static char rcsid[] = "$OpenBSD: rfc931.c,v 1.4 2001/02/16 02:15:59 beck Exp $";
 #endif
-#endif
-
-/* System libraries. */
 
 #include <stdio.h>
-#include <syslog.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <netinet/in.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
+#include <stdlib.h>
 
-/* Local stuff. */
+/* Local stuff for tcpd. */
 
 #include "tcpd.h"
 
-#define	RFC931_PORT	113		/* Semi-well-known port */
-#define	ANY_PORT	0		/* Any old port will do */
+#define	IDENT_PORT	113
 
-int     rfc931_timeout = RFC931_TIMEOUT;/* Global so it can be changed */
+static sig_atomic_t ident_timeout;
 
-static jmp_buf timebuf;
+int rfc931_timeout = RFC931_TIMEOUT; /* global, legacy from tcpwrapper stuff */
 
-/* fsocket - open stdio stream on top of socket */
+static void
+timeout(s)
+	int s;
+{     
+	ident_timeout = 1;
+}
 
-static FILE *fsocket(domain, type, protocol)
-int     domain;
-int     type;
-int     protocol;
+/*
+ * The old rfc931 from original libwrap for compatiblity. Now it calls
+ * rfc1413 with the default global parameters, but puts in the string
+ * "unknown" (from global unknown) on failure just like the original.
+ */
+
+void
+rfc931(rmt_sin, our_sin, dest)
+	struct sockaddr *rmt_sin;
+	struct sockaddr *our_sin;
+	char   *dest; 
 {
-    int     s;
-    FILE   *fp;
+	if (rfc1413(rmt_sin, our_sin, dest, STRING_LENGTH, rfc931_timeout) ==
+	    -1)
+		strlcpy(dest, unknown, STRING_LENGTH);
+}
 
-    if ((s = socket(domain, type, protocol)) < 0) {
-	tcpd_warn("socket: %m");
-	return (0);
-    } else {
-	if ((fp = fdopen(s, "r+")) == 0) {
-	    tcpd_warn("fdopen: %m");
-	    close(s);
+
+/*
+ * rfc1413, an rfc1413 client request for user name given a socket
+ * structure, with a timeout in seconds on the whole operation.  On
+ * success returns 0 and saves dsize-1 characters of the username
+ * provided by remote ident daemon into "dest", stripping off any
+ * terminating CRLF, and terminating with a nul byte. Returns -1 on
+ * failure (timeout, remote daemon didn't answer, etc). 
+ */
+
+int
+rfc1413(rmt_sin, our_sin, dest, dsize, ident_timeout_time)
+	struct sockaddr *rmt_sin;
+	struct sockaddr *our_sin;
+	char   *dest;
+	size_t dsize;
+	int ident_timeout_time;
+{
+	u_short rmt_port, our_port;
+	int s, i, gotit, salen;
+	char *cp;
+	u_short *rmt_portp;
+	u_short *our_portp;
+	fd_set *readfds = NULL;
+	fd_set *writefds = NULL;
+	struct sockaddr_storage rmt_query_sin;
+	struct sockaddr_storage our_query_sin;
+	struct sigaction new_sa, old_sa;
+	char user[256];	 
+	char tbuf[1024];	 
+	
+	gotit = 0;
+	s = -1;
+	
+	/* address family must be the same */
+	if (rmt_sin->sa_family != our_sin->sa_family)
+		goto out1;
+	switch (rmt_sin->sa_family) {
+	case AF_INET:
+		salen = sizeof(struct sockaddr_in);
+		rmt_portp = &(((struct sockaddr_in *)rmt_sin)->sin_port);
+		break;
+	case AF_INET6:
+		salen = sizeof(struct sockaddr_in6);
+		rmt_portp = &(((struct sockaddr_in6 *)rmt_sin)->sin6_port);
+		break;
+	default:
+		goto out1;
 	}
-	return (fp);
-    }
-}
+	switch (our_sin->sa_family) {
+	case AF_INET:
+		our_portp = &(((struct sockaddr_in *)our_sin)->sin_port);
+		break;
+	case AF_INET6:
+		our_portp = &(((struct sockaddr_in6 *)our_sin)->sin6_port);
+		break;
+	default:
+		goto out1;
+	}
 
-/* timeout - handle timeouts */
-
-static void timeout(sig)
-int     sig;
-{
-    longjmp(timebuf, sig);
-}
-
-/* rfc931 - return remote user name, given socket structures */
-
-void    rfc931(rmt_sin, our_sin, dest)
-struct sockaddr *rmt_sin;
-struct sockaddr *our_sin;
-char   *dest;
-{
-    unsigned rmt_port;
-    unsigned our_port;
-    struct sockaddr_storage rmt_query_sin;
-    struct sockaddr_storage our_query_sin;
-    char    user[256];			/* XXX */
-    char    buffer[512];		/* XXX */
-    char   *cp;
-    char   *result = unknown;
-    FILE   *fp;
-    int salen;
-    u_short *rmt_portp;
-    u_short *our_portp;
-
-    /* address family must be the same */
-    if (rmt_sin->sa_family != our_sin->sa_family) {
-	STRN_CPY(dest, result, STRING_LENGTH);
-	return;
-    }
-    switch (rmt_sin->sa_family) {
-    case AF_INET:
-	salen = sizeof(struct sockaddr_in);
-	rmt_portp = &(((struct sockaddr_in *)rmt_sin)->sin_port);
-	break;
-#ifdef INET6
-    case AF_INET6:
-	salen = sizeof(struct sockaddr_in6);
-	rmt_portp = &(((struct sockaddr_in6 *)rmt_sin)->sin6_port);
-	break;
-#endif
-    default:
-	STRN_CPY(dest, result, STRING_LENGTH);
-	return;
-    }
-    switch (our_sin->sa_family) {
-    case AF_INET:
-	our_portp = &(((struct sockaddr_in *)our_sin)->sin_port);
-	break;
-#ifdef INET6
-    case AF_INET6:
-	our_portp = &(((struct sockaddr_in6 *)our_sin)->sin6_port);
-	break;
-#endif
-    default:
-	STRN_CPY(dest, result, STRING_LENGTH);
-	return;
-    }
-
-#ifdef __GNUC__
-    (void)&result;	/* Avoid longjmp clobbering */
-    (void)&fp;		/* XXX gcc */
-#endif
-
-    /*
-     * Use one unbuffered stdio stream for writing to and for reading from
-     * the RFC931 etc. server. This is done because of a bug in the SunOS
-     * 4.1.x stdio library. The bug may live in other stdio implementations,
-     * too. When we use a single, buffered, bidirectional stdio stream ("r+"
-     * or "w+" mode) we read our own output. Such behaviour would make sense
-     * with resources that support random-access operations, but not with
-     * sockets.
-     */
-
-    if ((fp = fsocket(rmt_sin->sa_family, SOCK_STREAM, 0)) != 0) {
-	setbuf(fp, (char *) 0);
+	if ((s = socket(rmt_sin->sa_family, SOCK_STREAM, 0)) == -1)
+		goto out1;
 
 	/*
 	 * Set up a timer so we won't get stuck while waiting for the server.
+	 * timer sets sig_atomic_t ident_timeout when it fires. 
+	 * this has to be checked after system calls in case we timed out.
 	 */
-
-	if (setjmp(timebuf) == 0) {
-	    signal(SIGALRM, timeout);
-	    alarm(rfc931_timeout);
-
-	    /*
-	     * Bind the local and remote ends of the query socket to the same
-	     * IP addresses as the connection under investigation. We go
-	     * through all this trouble because the local or remote system
-	     * might have more than one network address. The RFC931 etc.
-	     * client sends only port numbers; the server takes the IP
-	     * addresses from the query socket.
-	     */
-
-	    memcpy(&our_query_sin, our_sin, salen);
-	    switch (our_query_sin.ss_family) {
-	    case AF_INET:
-		((struct sockaddr_in *)&our_query_sin)->sin_port =
-			htons(ANY_PORT);
+	
+	ident_timeout = 0;
+	memset(&new_sa, 0, sizeof(new_sa));
+	new_sa.sa_handler = timeout;
+	new_sa.sa_flags = SA_RESTART;
+	if (sigemptyset(&new_sa.sa_mask) == -1)
+		goto out1;
+	if (sigaction(SIGALRM, &new_sa, &old_sa) == -1)
+		goto out1;
+	alarm(ident_timeout_time);
+	
+	/*
+	 * Bind the local and remote ends of the query socket to the same
+	 * IP addresses as the connection under investigation. We go
+	 * through all this trouble because the local or remote system
+	 * might have more than one network address. The IDENT etc.
+	 * client sends only port numbers; the server takes the IP
+	 * addresses from the query socket.
+	 */
+	
+	memcpy(&our_query_sin, our_sin, salen);
+	switch (our_query_sin.ss_family) {
+	case AF_INET:
+		((struct sockaddr_in *)&our_query_sin)->sin_port = htons(0);
 		break;
-#ifdef INET6
-	    case AF_INET6:
-		((struct sockaddr_in6 *)&our_query_sin)->sin6_port =
-			htons(ANY_PORT);
+	case AF_INET6:
+		((struct sockaddr_in6 *)&our_query_sin)->sin6_port = htons(0);
 		break;
-#endif
-	    }
-	    memcpy(&rmt_query_sin, rmt_sin, salen);
-	    switch (rmt_query_sin.ss_family) {
-	    case AF_INET:
-		((struct sockaddr_in *)&rmt_query_sin)->sin_port =
-			htons(RFC931_PORT);
-		break;
-#ifdef INET6
-	    case AF_INET6:
-		((struct sockaddr_in6 *)&rmt_query_sin)->sin6_port = 
-			htons(RFC931_PORT);
-		break;
-#endif
-	    }
-
-	    if (bind(fileno(fp), (struct sockaddr *) & our_query_sin,
-		     salen) >= 0 &&
-		connect(fileno(fp), (struct sockaddr *) & rmt_query_sin,
-			salen) >= 0) {
-
-		/*
-		 * Send query to server. Neglect the risk that a 13-byte
-		 * write would have to be fragmented by the local system and
-		 * cause trouble with buggy System V stdio libraries.
-		 */
-
-		fprintf(fp, "%u,%u\r\n",
-			ntohs(*rmt_portp),
-			ntohs(*our_portp));
-		fflush(fp);
-
-		/*
-		 * Read response from server. Use fgets()/sscanf() so we can
-		 * work around System V stdio libraries that incorrectly
-		 * assume EOF when a read from a socket returns less than
-		 * requested.
-		 */
-
-		if (fgets(buffer, sizeof(buffer), fp) != 0
-		    && ferror(fp) == 0 && feof(fp) == 0
-		    && sscanf(buffer, "%u , %u : USERID :%*[^:]:%255s",
-			      &rmt_port, &our_port, user) == 3
-		    && ntohs(*rmt_portp) == rmt_port
-		    && ntohs(*our_portp) == our_port) {
-
-		    /*
-		     * Strip trailing carriage return. It is part of the
-		     * protocol, not part of the data.
-		     */
-
-		    cp = strchr(user, '\r');
-		    if (cp)
-			*cp = 0;
-		    result = user;
-		}
-	    }
-	    alarm(0);
 	}
-	fclose(fp);
-    }
-    STRN_CPY(dest, result, STRING_LENGTH);
+	memcpy(&rmt_query_sin, rmt_sin, salen);
+	switch (rmt_query_sin.ss_family) {
+	case AF_INET:
+		((struct sockaddr_in *)&rmt_query_sin)->sin_port =
+		    htons(IDENT_PORT);
+		break;
+	case AF_INET6:
+		((struct sockaddr_in6 *)&rmt_query_sin)->sin6_port =
+		    htons(IDENT_PORT);
+		break;
+	}
+	
+	if (bind(s, (struct sockaddr *) & our_query_sin, salen) == -1)
+		goto out;
+	if ((connect(s, (struct sockaddr *) & rmt_query_sin, salen) == -1) ||
+	    ident_timeout)
+		goto out;
+
+	/* We are connected,  build an ident query and send it. */ 
+	
+	readfds = calloc(howmany(s+1, NFDBITS), sizeof(fd_mask));
+	if (readfds == NULL) 
+		goto out;
+	writefds = calloc(howmany(s+1, NFDBITS), sizeof(fd_mask));
+	if (writefds == NULL) 
+		goto out;
+	snprintf(tbuf, sizeof(tbuf), "%u,%u\r\n", ntohs(*rmt_portp),
+	    ntohs(*our_portp));
+	i = 0;
+	while (i < strlen(tbuf)) { 
+		int j;
+
+		FD_ZERO(writefds);
+		FD_SET(s, writefds);
+		do { 
+			j = select(s + 1, NULL, writefds, NULL, NULL);
+			if (ident_timeout)			    
+				goto out;
+		} while ( j == -1 && (errno == EAGAIN || errno == EINTR ));
+		if (j == -1)
+			goto out;
+		if (FD_ISSET(s, writefds)) {
+			j = write(s, tbuf + i, strlen(tbuf + i));
+			if ((j == -1 && errno != EAGAIN && errno != EINTR) ||
+			    ident_timeout) 
+				goto out;
+			if  (j != -1) 
+				i += j;
+		} else 
+			goto out;
+	} 
+
+	
+	/* Read the answer back. */
+	i = 0;
+	tbuf[0] = '\0';
+	while ((cp = strchr(tbuf, '\n')) == NULL && i < sizeof(tbuf) - 1) {
+		int j;
+
+		FD_ZERO(readfds);
+		FD_SET(s, readfds);
+		do { 
+			j = select(s + 1, readfds, NULL, NULL, NULL);
+			if (ident_timeout)
+				goto out;
+		} while ( j == -1 && (errno == EAGAIN || errno == EINTR ));
+		if (j == -1)
+			goto out;
+		if (FD_ISSET(s, readfds)) {
+			j = read(s, tbuf + i, sizeof(tbuf) - 1 - i);
+			if ((j == -1 && errno != EAGAIN && errno != EINTR) ||
+			    j == 0 || ident_timeout) 
+				goto out;
+			if  (j != -1) 
+				i += j;
+			tbuf[i] = '\0';
+		} else
+			goto out;
+	}
+	
+	if ((sscanf(tbuf,"%u , %u : USERID :%*[^:]:%255s", &rmt_port,
+	    &our_port, user) == 3) &&
+	    (ntohs(*rmt_portp) == rmt_port) &&
+	    (ntohs(*our_portp) == our_port)) {
+		if ((cp = strchr(user, '\r')) != NULL)
+			*cp = '\0';
+		gotit = 1;
+	}
+
+out:
+	alarm(0);
+	sigaction(SIGALRM, &old_sa, NULL);
+	if (readfds != NULL)
+		free(readfds);
+	if (writefds != NULL)
+		free(writefds);
+out1:
+	if (s != -1) 
+		close(s);
+	if (gotit) {
+		strlcpy(dest, user, dsize);
+		return(0);
+	}
+	return(-1);
 }
