@@ -1,12 +1,16 @@
-#	$OpenBSD: TEST.README,v 1.1 1997/01/23 17:42:52 millert Exp $
+#	$OpenBSD: TEST.README,v 1.2 1997/06/18 20:28:47 kstailey Exp $
 
 OS/shell			syntax error	failed
 --------------------------------------------------------------------
 OpenBSD 2.0 /bin/test		6		0
 bash 1.14.5 			3		0
+bash 2.0			0		0
 pdksh 5.2.12			6		0
 zsh 2.6-beta17			6		4
 FreeBSD 2.1 /bin/test		8		0
+HP-UX 10.10 ksh			1		0
+HP-UX 10.10 sh			3		0
+HP-UX 10.10 /usr/bin/test	6		2
 IRIX 5.3 ksh			3		0
 IRIX 5.3 sh			3		0
 IRIX 5.3 /usr/bin/test		11		3
