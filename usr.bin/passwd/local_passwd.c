@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.26 2002/06/28 22:28:17 deraadt Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.27 2003/03/30 20:50:05 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.26 2002/06/28 22:28:17 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.27 2003/03/30 20:50:05 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,6 +52,8 @@ static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.26 2002/06/28 22:28:17
 #include <unistd.h>
 #include <util.h>
 #include <login_cap.h>
+
+#define UNCHANGED_MSG	"Password unchanged.\n"
 
 static uid_t uid;
 extern int pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
@@ -153,11 +155,17 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 
 	if (!authenticated) {
 		(void)printf("Changing local password for %s.\n", pw->pw_name);
-		if (uid && pw->pw_passwd[0] &&
-		    strcmp(crypt(getpass("Old password:"), pw->pw_passwd),
-		    pw->pw_passwd)) {
-			errno = EACCES;
-			pw_error(NULL, 1, 1);
+		if (uid != 0 && pw->pw_passwd[0] != '\0') {
+			p = getpass("Old password:");
+			if (*p == '\0') {
+				(void)printf(UNCHANGED_MSG);
+				pw_abort();
+				exit(0);
+			}
+			if (strcmp(crypt(p, pw->pw_passwd), pw->pw_passwd)) {
+				errno = EACCES;
+				pw_error(NULL, 1, 1);
+			}
 		}
 	}
 
@@ -165,9 +173,10 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
-		if (!*p) {
-			(void)printf("Password unchanged.\n");
-			pw_error(NULL, 0, 0);
+		if (*p == '\0') {
+			(void)printf(UNCHANGED_MSG);
+			pw_abort();
+			exit(0);
 		}
 		if (strcmp(p, "s/key") == 0) {
 			printf("That password collides with a system feature. Choose another.\n");
@@ -195,21 +204,6 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 void
 kbintr(int signo)
 {
-	char msg[] = "\nPassword unchanged.\n";
-	struct iovec iv[5];
-	extern char *__progname;
-
-	iv[0].iov_base = msg;
-	iv[0].iov_len = sizeof(msg) - 1;
-	iv[1].iov_base = __progname;
-	iv[1].iov_len = strlen(__progname);
-	iv[2].iov_base = ": ";
-	iv[2].iov_len = 2;
-	iv[3].iov_base = _PATH_MASTERPASSWD;
-	iv[3].iov_len = sizeof(_PATH_MASTERPASSWD) - 1;
-	iv[4].iov_base = " unchanged\n";
-	iv[4].iov_len = 11;
-	writev(STDERR_FILENO, iv, 5);
-
-	_exit(1);
+	write(STDOUT_FILENO, UNCHANGED_MSG, sizeof(UNCHANGED_MSG) - 1);
+	_exit(0);
 }
