@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.54 2002/05/27 02:59:40 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.55 2002/05/27 13:42:16 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -109,6 +109,7 @@
 #endif
 
 void	if_attachsetup(struct ifnet *);
+void	if_attachdomain1(struct ifnet *);
 int	if_detach_rtdelete(struct radix_node *, void *);
 int	if_mark_ignore(struct radix_node *, void *);
 int	if_mark_unignore(struct radix_node *, void *);
@@ -160,7 +161,6 @@ if_attachsetup(ifp)
 	register struct sockaddr_dl *sdl;
 	register struct ifaddr *ifa;
 	static int if_indexlim = 8;
-	struct domain *dp;
 
 	ifp->if_index = ++if_index;
 
@@ -242,7 +242,29 @@ if_attachsetup(ifp)
 	ifp->if_snd.altq_ifp  = ifp;
 #endif
 
-	/* address family dependent data region */
+	if (domains)
+		if_attachdomain1(ifp);
+}
+
+void
+if_attachdomain()
+{
+	struct ifnet *ifp;
+
+	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
+		if_attachdomain1(ifp);
+}
+
+void
+if_attachdomain1(ifp)
+	struct ifnet *ifp;
+{
+	struct domain *dp;
+
+	/*
+	 * address family dependent data region - effective only
+	 * after domaininit()
+	 */
 	bzero(ifp->if_afdata, sizeof(ifp->if_afdata));
 	for (dp = domains; dp; dp = dp->dom_next) {
 		if (dp->dom_ifattach)

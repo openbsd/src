@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.36 2002/05/27 02:59:40 itojun Exp $	*/
+/*	$OpenBSD: if.h,v 1.37 2002/05/27 13:42:16 itojun Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -557,6 +557,7 @@ int	ether_output(struct ifnet *,
 char	*ether_sprintf(u_char *);
 
 void	if_attach(struct ifnet *);
+void	if_attachdomain(void);
 void	if_attachtail(struct ifnet *);
 void	if_attachhead(struct ifnet *);
 void	if_detach(struct ifnet *);
