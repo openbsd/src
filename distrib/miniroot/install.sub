@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.310 2003/07/02 16:42:19 krw Exp $
+#	$OpenBSD: install.sub,v 1.311 2003/07/03 13:42:03 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -283,12 +283,9 @@ addel() {
 	local	_a=$1 _b _seen=false
 
 	shift
-	for _b; do
-		echo -n "$_b "
-		[ "$_a" = "$_b" ] && _seen=true
-	done
 
-	$_seen || echo -n "$_a"
+	echo -n "$*"
+	isin "$_a" $* || echo -n " $_a"
 }
 
 # remove all occurrences of first argument from list formed by
@@ -305,15 +302,12 @@ rmel() {
 bsort() {
 	local _l _a=$1 _b
 
-	case $# in
-	0) return;;
-	1) echo $1; return;;
-	esac
+	[[ $# > 0 ]] || return
 
 	shift
 	for _b; do
-		if [[ "$_a" != "$_b" ]] ; then
-			if [[ "$_a" > "$_b" ]] ; then
+		if [[ $_a != $_b ]] ; then
+			if [[ $_a > $_b ]] ; then
 				_l="$_a $_l"; _a=$_b
 			else
 				_l="$_b $_l"
@@ -321,16 +315,11 @@ bsort() {
 		fi
 	done
 
-	echo -n $_a
+	# Output the smallest value found.
+	echo "$_a "
 
-	# Prevent a trailing blank on the output, and thus a bad value
-	# for cutword, by outputting blanks only when $_l
-	# has values to sort.
-
-	if [[ -n "$_l" ]] ; then
-		echo -n " "
-		bsort $_l
-	fi
+	# Sort remaining values.
+	bsort $_l
 }
 
 # Add interesting/useful comments from mnt/etc/$1 to /tmp/$1.
