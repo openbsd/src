@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.37 2000/01/04 00:08:00 markus Exp $");
+RCSID("$Id: ssh.c,v 1.38 2000/01/04 09:07:59 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -227,6 +227,8 @@ main(int ac, char **av)
 			if (host)
 				break;
 			if ((cp = strchr(av[optind], '@'))) {
+			        if(cp == av[optind])
+				        usage();
 				options.user = av[optind];
 				*cp = '\0';
 				host = ++cp;
