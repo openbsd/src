@@ -312,7 +312,6 @@
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
 ./usr/include/dev/pci/auviavar.h
-./usr/include/dev/pci/brktree_reg.h
 ./usr/include/dev/pci/cmpcireg.h
 ./usr/include/dev/pci/cmpcivar.h
 ./usr/include/dev/pci/cs4280_image.h
@@ -4179,5 +4178,18 @@
 ./usr/share/misc/getopt
 ./usr/share/misc/gprof.callg
 ./usr/share/misc/gprof.flat
+./usr/include/dev/ic/dl10019reg.h
+./usr/include/dev/ic/dl10019var.h
 ./usr/share/misc/operator
 ./var/db/libc.tags
+./usr/include/dev/pci/bktr
+./usr/include/dev/pci/bktr/bktr_audio.h
+./usr/include/dev/pci/bktr/bktr_card.h
+./usr/include/dev/pci/bktr/bktr_core.h
+./usr/include/dev/pci/bktr/bktr_os.h
+./usr/include/dev/pci/bktr/bktr_reg.h
+./usr/include/dev/pci/bktr/bktr_tuner.h
+./usr/include/dev/pci/pciide_hpt_reg.h
+./usr/include/dev/pci/ydsreg.h
+./usr/include/dev/pci/ydsvar.h
+./usr/include/dev/ic/bt8xx.h

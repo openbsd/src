@@ -734,7 +734,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/auviavar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/brktree_reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cs4280_image.ph
@@ -1810,3 +1809,18 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/readline/rlconf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/readline/rlstdc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/readline/tilde.ph
+./usr/lib/apache/modules/mod_expires.so
+./usr/lib/apache/modules/mod_headers.so
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/bt8xx.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/dl10019reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/dl10019var.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/bktr
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/bktr/bktr_audio.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/bktr/bktr_card.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/bktr/bktr_core.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/bktr/bktr_os.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/bktr/bktr_reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/bktr/bktr_tuner.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/pciide_hpt_reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/ydsreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/ydsvar.ph

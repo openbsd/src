@@ -2565,3 +2565,5 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./var/www/htdocs/manual/howto
+./var/www/htdocs/manual/programs

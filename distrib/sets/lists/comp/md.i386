@@ -24,9 +24,7 @@
 ./usr/include/i386/gdt.h
 ./usr/include/i386/ieeefp.h
 ./usr/include/i386/intr.h
-./usr/include/i386/ioctl_bt848.h
 ./usr/include/i386/ioctl_fd.h
-./usr/include/i386/ioctl_meteor.h
 ./usr/include/i386/joystick.h
 ./usr/include/i386/limits.h
 ./usr/include/i386/linux_machdep.h
