@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.111 2004/11/13 11:54:30 espie Exp $
+# $OpenBSD: pkg_add,v 1.112 2004/11/13 12:09:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -505,7 +505,6 @@ sub install_package
 		return ();
 	}
 	for my $dep (@{$plist->{libdepend}}) {
-		# can't check libspecs yet
 		return () if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
 		if (!check_lib_specs($state->{very_verbose}, 
 		    $state->{destdir}.$plist->pkgbase(), $dep->{libspec})) {
