@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.28 2000/07/27 17:44:32 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.29 2001/06/13 12:20:43 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.28 2000/07/27 17:44:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.29 2001/06/13 12:20:43 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -801,22 +801,21 @@ dosub(argv, argc)
 	const char *ap, *fc, *k;
 	int nc;
 
-	if (argc < 5)
-		nc = MAXTOK;
-	else
-#ifdef EXPR
-		nc = expr(argv[4]);
-#else
-		nc = atoi(argv[4]);
-#endif
 	ap = argv[2];		       /* target string */
 #ifdef EXPR
 	fc = ap + expr(argv[3]);       /* first char */
 #else
 	fc = ap + atoi(argv[3]);       /* first char */
 #endif
+	nc = strlen(fc);
+	if (argc >= 5)
+#ifdef EXPR
+		nc = min(nc, expr(argv[4]));
+#else
+		nc = min(nc, atoi(argv[4]));
+#endif
 	if (fc >= ap && fc < ap + strlen(ap))
-		for (k = fc + min(nc, strlen(fc)) - 1; k >= fc; k--)
+		for (k = fc + nc - 1; k >= fc; k--)
 			putback(*k);
 }
 
