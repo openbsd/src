@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.24 1997/01/04 08:50:24 deraadt Exp $	*/
+/*	$OpenBSD: wd.c,v 1.25 1997/04/18 06:12:23 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -104,7 +104,7 @@ bdev_decl(wd);
 
 void	wdfinish	__P((struct wd_softc *, struct buf *));
 int	wdsetctlr	__P((struct wd_link *));
-#ifndef amiga
+#if !defined(amiga) && !defined(alpha)
 static void bad144intern __P((struct wd_softc *));
 #endif
 int	wdlock		__P((struct wd_link *));
@@ -572,7 +572,7 @@ wdgetdisklabel(dev, wd)
 
 	if (d_link->sc_state > GEOMETRY)
 		d_link->sc_state = GEOMETRY;
-#ifndef amiga
+#if !defined(amiga) && !defined(alpha)
 	if ((lp->d_flags & D_BADSECT) != 0)
 		bad144intern(wd);
 #endif
@@ -623,7 +623,7 @@ wdioctl(dev, xfer, addr, flag, p)
 		return EIO;
 
 	switch (xfer) {
-#ifndef amiga
+#if !defined(amiga) && !defined(alpha)
 	case DIOCSBAD:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -908,7 +908,7 @@ wddump(dev, blkno, va, size)
 }
 #endif /* __BDEVSW_DUMP_NEW_TYPE */
 
-#ifndef amiga
+#if !defined(amiga) && !defined(alpha)
 /*
  * Internalize the bad sector table.
  */
