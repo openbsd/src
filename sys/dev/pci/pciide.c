@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.112 2003/02/13 15:30:21 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.113 2003/02/13 15:39:59 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_hpt_reg.h>
 #include <dev/pci/pciide_acard_reg.h>
 #include <dev/pci/pciide_natsemi_reg.h>
+#include <dev/pci/pciide_nforce_reg.h>
 #include <dev/pci/cy82c693var.h>
 
 #include <dev/ata/atavar.h>
@@ -5083,6 +5084,11 @@ nforce_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	int channel;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	bus_size_t cmdsize, ctlsize;
+	u_int32_t conf;
+
+	conf = pci_conf_read(sc->sc_pc, sc->sc_tag, NFORCE_CONF);
+	WDCDEBUG_PRINT(("%s: conf register 0x%x\n",
+	    sc->sc_wdcdev.sc_dev.dv_xname, conf), DEBUG_PROBE);
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -5120,6 +5126,13 @@ nforce_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
+
+		if ((conf & NFORCE_CHAN_EN(channel)) == 0) {
+			printf("%s: %s ignored (disabled)\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			continue;
+		}
+
 		pciide_map_compat_intr(pa, cp, channel, interface);
 		if (cp->hw_ok == 0)
 			continue;
@@ -5131,27 +5144,44 @@ nforce_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		}
 
 		if (pciide_chan_candisable(cp)) {
+			conf &= ~NFORCE_CHAN_EN(channel);
 			pciide_unmap_compat_intr(pa, cp, channel, interface);
+			continue;
 		}
 
 		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
 	}
+	WDCDEBUG_PRINT(("%s: new conf register 0x%x\n",
+	    sc->sc_wdcdev.sc_dev.dv_xname, conf), DEBUG_PROBE);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, NFORCE_CONF, conf);
 }
 
 void
 nforce_setup_channel(struct channel_softc *chp)
 {
 	struct ata_drive_datas *drvp;
-	int drive;
+	int drive, mode;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	int channel = chp->channel;
+	u_int32_t conf, piodmatim, piotim, udmatim;
+
+	conf = pci_conf_read(sc->sc_pc, sc->sc_tag, NFORCE_CONF);
+	piodmatim = pci_conf_read(sc->sc_pc, sc->sc_tag, NFORCE_PIODMATIM);
+	piotim = pci_conf_read(sc->sc_pc, sc->sc_tag, NFORCE_PIOTIM);
+	udmatim = pci_conf_read(sc->sc_pc, sc->sc_tag, NFORCE_UDMATIM);
+	WDCDEBUG_PRINT(("%s: %s old timing values: piodmatim=0x%x, "
+	    "piotim=0x%x, udmatim=0x%x\n", sc->sc_wdcdev.sc_dev.dv_xname,
+	    cp->name, piodmatim, piotim, udmatim), DEBUG_PROBE);
 
 	/* Setup DMA if needed */
 	pciide_channel_dma_setup(cp);
 
+	/* Clear all bits for this channel */
 	idedma_ctl = 0;
+	piodmatim &= ~NFORCE_PIODMATIM_MASK(channel);
+	udmatim &= ~NFORCE_UDMATIM_MASK(channel);
 
 	/* Per channel settings */
 	for (drive = 0; drive < 2; drive++) {
@@ -5161,13 +5191,54 @@ nforce_setup_channel(struct channel_softc *chp)
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 
-		if (drvp->drive_flags & DRIVE_UDMA) {
+		if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) != 0 &&
+		    (drvp->drive_flags & DRIVE_UDMA) != 0) {
+			/* Setup UltraDMA mode */
 			drvp->drive_flags &= ~DRIVE_DMA;
-			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-		} else if (drvp->drive_flags & DRIVE_DMA) {
-			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+
+			/* Check cable */
+			if ((conf & NFORCE_CONF_CABLE(channel, drive)) == 0 &&
+			    drvp->UDMA_mode > 2) {
+				WDCDEBUG_PRINT(("%s(%s:%d:%d): 80-wire "
+				    "cable not detected\n", drvp->drive_name,
+				    sc->sc_wdcdev.sc_dev.dv_xname,
+				    channel, drive), DEBUG_PROBE);
+				drvp->UDMA_mode = 2;
+			}
+
+			udmatim |= NFORCE_UDMATIM_SET(channel, drive,
+			    nforce_udma[drvp->UDMA_mode]) |
+			    NFORCE_UDMA_EN(channel, drive) |
+			    NFORCE_UDMA_ENM(channel, drive);
+
+			mode = drvp->PIO_mode;
+		} else if ((chp->wdc->cap & WDC_CAPABILITY_DMA) != 0 &&
+		    (drvp->drive_flags & DRIVE_DMA) != 0) {
+			/* Setup multiword DMA mode */
+			drvp->drive_flags &= ~DRIVE_UDMA;
+
+			/* mode = min(pio, dma + 2) */
+			if (drvp->PIO_mode <= (drvp->DMA_mode + 2))
+				mode = drvp->PIO_mode;
+			else
+				mode = drvp->DMA_mode + 2;
 		} else {
+			goto pio;
 		}
+		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+
+pio:
+		/* Setup PIO mode */
+		if (mode <= 2) {
+			drvp->DMA_mode = 0;
+			drvp->PIO_mode = 0;
+			mode = 0;
+		} else {
+			drvp->PIO_mode = mode;
+			drvp->DMA_mode = mode - 2;
+		}
+		piodmatim |= NFORCE_PIODMATIM_SET(channel, drive,
+		    nforce_pio[mode]);
 	}
 
 	if (idedma_ctl != 0) {
@@ -5175,6 +5246,13 @@ nforce_setup_channel(struct channel_softc *chp)
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    IDEDMA_CTL(channel), idedma_ctl);
 	}
+
+	WDCDEBUG_PRINT(("%s: %s new timing values: piodmatim=0x%x, "
+	    "piotim=0x%x, udmatim=0x%x\n", sc->sc_wdcdev.sc_dev.dv_xname,
+	    cp->name, piodmatim, piotim, udmatim), DEBUG_PROBE);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, NFORCE_PIODMATIM, piodmatim);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, NFORCE_UDMATIM, udmatim);
+
 	pciide_print_modes(cp);
 }
 
