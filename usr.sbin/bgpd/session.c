@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.127 2004/03/05 21:48:28 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.128 2004/03/10 11:38:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -365,6 +365,7 @@ void
 init_peer(struct peer *p)
 {
 	p->sock = p->wbuf.sock = -1;
+	p->capa.announce = p->conf.capabilities;
 
 	change_state(p, STATE_IDLE, EVNT_NONE);
 	p->IdleHoldTimer = time(NULL);	/* start ASAP */
@@ -503,8 +504,13 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			change_state(peer, STATE_OPENCONFIRM, event);
 			break;
 		case EVNT_RCVD_NOTIFICATION:
-			parse_notification(peer);
-			change_state(peer, STATE_IDLE, event);
+			if (parse_notification(peer)) {
+				change_state(peer, STATE_IDLE, event);
+				/* don't punish, capa negotiation */
+				peer->IdleHoldTimer = time(NULL);
+				peer->IdleHoldTime /= 2;
+			} else
+				change_state(peer, STATE_IDLE, event);
 			break;
 		default:
 			session_notification(peer, ERR_FSM, 0, NULL, 0);
@@ -904,8 +910,17 @@ session_open(struct peer *p)
 	struct mrt_config	*mrt;
 	u_int16_t		 len;
 	int			 errs = 0, n;
+	u_int8_t		 op_type, op_len = 0, optparamlen = 0;
 
-	len = MSGSIZE_OPEN_MIN;
+	if (p->capa.announce) {
+		/* multiprotocol extensions, RFC 2858 */
+		/* route refresh, RFC 2918 */
+
+		if (op_len > 0)
+			optparamlen = sizeof(op_type) + sizeof(op_len) + op_len;
+	}
+
+	len = MSGSIZE_OPEN_MIN + optparamlen;
 
 	memset(&msg.header.marker, 0xff, sizeof(msg.header.marker));
 	msg.header.len = htons(len);
@@ -917,7 +932,7 @@ session_open(struct peer *p)
 	else
 		msg.holdtime = htons(conf->holdtime);
 	msg.bgpid = conf->bgpid;	/* is already in network byte order */
-	msg.optparamlen = 0;
+	msg.optparamlen = optparamlen;
 
 	if ((buf = buf_open(len)) == NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL);
@@ -931,6 +946,15 @@ session_open(struct peer *p)
 	errs += buf_add(buf, &msg.holdtime, sizeof(msg.holdtime));
 	errs += buf_add(buf, &msg.bgpid, sizeof(msg.bgpid));
 	errs += buf_add(buf, &msg.optparamlen, sizeof(msg.optparamlen));
+
+	if (p->capa.announce && optparamlen) {
+		op_type = OPT_PARAM_CAPABILITIES;
+		errs += buf_add(buf, &op_type, sizeof(op_type));
+		errs += buf_add(buf, &op_len, sizeof(op_len));
+
+		/* multiprotocol extensions, RFC 2858 */	
+		/* route refresh, RFC 2918 */
+	}
 
 	if (errs == 0) {
 		LIST_FOREACH(mrt, &mrt_l, list) {
@@ -1552,8 +1576,12 @@ parse_notification(struct peer *peer)
 
 	/* read & parse data section if needed */
 
-	/* log */
 	log_notification(peer, errcode, subcode, p, datalen);
+
+	if (errcode == ERR_OPEN && subcode == ERR_OPEN_OPT) {
+		peer->capa.announce = 0;
+		return (1);
+	}
 
 	return (0);
 }

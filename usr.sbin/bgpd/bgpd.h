@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.104 2004/03/02 19:45:04 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.105 2004/03/10 11:38:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -160,6 +160,7 @@ struct peer_config {
 	enum announce_type	 announce_type;
 	enum enforce_as		 enforce_as;
 	char			 tcp_md5_key[TCP_MD5_KEY_LEN];
+	u_int8_t		 capabilities;
 	enum reconf_action	 reconf_action;
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.34 2004/03/05 21:44:26 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.35 2004/03/10 11:38:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -94,6 +94,12 @@ enum opt_params {
 	OPT_PARAM_CAPABILITIES
 };
 
+enum capa_codes {
+	CAPA_NONE,
+	CAPA_MP,
+	CAPA_REFRESH
+};
+
 struct msg_header {
 	u_char			 marker[16];
 	u_int16_t		 len;
@@ -134,10 +140,15 @@ struct peer_auth {
 	u_int32_t	spi_out;
 };
 
+struct peer_capa {
+	u_int8_t	announce;
+};
+
 struct peer {
 	struct peer_config	 conf;
 	struct peer_stats	 stats;
 	struct peer_auth	 auth;
+	struct peer_capa	 capa;
 	u_int32_t		 remote_bgpid;
 	u_int16_t		 holdtime;
 	enum session_state	 state;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.73 2004/03/08 10:48:06 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.74 2004/03/10 11:38:32 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -513,6 +513,9 @@ peeropts	: REMOTEAS asnumber	{
 			}
 			free($4);
 		}
+		| ANNOUNCE CAPABILITIES yesno {
+			curpeer->conf.capabilities = $3;
+		}
 		| SET filter_set_opt	{
 			memcpy(&curpeer->conf.attrset, &$2,
 			    sizeof(curpeer->conf.attrset));
@@ -767,6 +770,7 @@ lookup(char *s)
 		{ "allow",		ALLOW},
 		{ "announce",		ANNOUNCE},
 		{ "any",		ANY},
+		{ "capabilities",	CAPABILITIES},
 		{ "deny",		DENY},
 		{ "descr",		DESCR},
 		{ "dump",		DUMP},
@@ -1193,6 +1197,7 @@ alloc_peer(void)
 	p->next = NULL;
 	p->conf.distance = 1;
 	p->conf.announce_type = ANNOUNCE_UNDEF;
+	p->conf.capabilities = 1;
 
 	return (p);
 }
