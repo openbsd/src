@@ -106,7 +106,7 @@ case $WHAT in
 	;;
 
 "net")
-	TARGET=$DEST/boot.sparc.netbsd.$KARCH
+	TARGET=$DEST/boot.sparc.openbsd.$KARCH
 	vecho Target: $TARGET
 	$DOIT dd if=${MDEC}/boot of=$TARGET skip=$SKIP bs=32
 	;;
