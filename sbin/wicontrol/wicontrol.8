@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.30 2002/04/02 18:22:06 millert Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.31 2002/04/02 18:28:26 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -82,11 +82,12 @@ command can also be used to view the current settings of these parameters
 and to dump out the values of the card's statistics counters.
 .Pp
 The
-.Ar iface
+.Ar interface
 argument given to
 .Nm
 should be the logical interface name associated with the WaveLAN/IEEE
 device (wi0, wi1, etc...).
+If none is given, wi0 is assumed.
 .Pp
 The
 .Nm
@@ -98,7 +99,7 @@ The options are as follows:
 .It Fl o
 Display the statistics counters for the specified WaveLAN/IEEE
 interface.
-Note however, that the statictics are updated about once a minute.
+The statistics are updated about once a minute.
 .It Fl l
 For the card in Host AP mode list detected stations.
 .It Fl e Ar 0|1
@@ -181,17 +182,17 @@ is used for diagnostic purposes.
 The Lucent WaveMANAGER sofware can poll the names of remote hosts.
 .It Fl c Ar 0|1
 [Lucent only] Allow the station to create a service set (IBSS).
-Permitted values are 0 (don't create IBSS) and 1 (enable creation of IBSS).
+Permitted values are 0 (do not create IBSS) and 1 (enable creation of IBSS).
 The default is 0.
 .Pp
-Note: older firmware revisions don't support the creation of a service set.
+Note: older firmware revisions do not support the creation of a service set.
 .It Fl q Ar SSID
 Specify the name of an IBSS (SSID) to create on a given interface.
 The
 .Ar SSID
 can be any text string up to 30 characters long.
 .Pp
-Note: older firmware revisions don't have IBSS support.
+Note: older firmware revisions do not support IBSS.
 .It Fl p Ar port type
 Set the
 .Ar port type
@@ -342,7 +343,7 @@ The default is 100.
 The
 .Nm
 command first appeared in
-.Fx 3.0 .
+.Ox 2.6 .
 .Sh AUTHORS
 The
 .Nm
