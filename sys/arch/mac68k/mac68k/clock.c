@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 1996/02/03 22:49:58 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.22 1996/02/19 21:40:48 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -423,7 +423,7 @@ volatile int delay_flag = 1;
  * due to adjustments for calculations involving 32 bit values.
  */
 void
-delay(int usec)
+delay(unsigned usec)
 {
 	register unsigned int cycles;
 
@@ -442,7 +442,7 @@ delay(int usec)
  */
 static int
 dummy_delay(usec)
-	int usec;
+	unsigned usec;
 {
 	register unsigned int cycles;
 
@@ -472,7 +472,13 @@ mac68k_calibrate_delay()
 	int n;
 	int sum;
 
+	/* Disable VIA1 timer 1 interrupts and set up service routine */
+	via_reg(VIA1, vIER) = V1IF_T1;
 	mac68k_register_via1_t1_irq(delay_timer1_irq);
+
+	/* Set the timer for one-shot mode, then clear and enable interrupts */
+	via_reg(VIA1, vACR) &= ~ACR_T1LATCH;
+	via_reg(VIA1, vIFR) = V1IF_T1;		/* (this is needed for IIsi) */
 	via_reg(VIA1, vIER) = 0x80 | V1IF_T1;
 
 	for (sum = 0, n = 8; n > 0; n--) {
@@ -482,9 +488,8 @@ mac68k_calibrate_delay()
 		sum += dummy_delay(1);
 	}
 
+	/* Disable timer interrupts and reset service routine */
 	via_reg(VIA1, vIER) = V1IF_T1;
-	via_reg(VIA1, vT1C) = 0;
-	via_reg(VIA1, vT1CH) = 0;
 	mac68k_register_via1_t1_irq(NULL);
 
 	/*
