@@ -106,7 +106,7 @@ extern void alpha_frob_file_before_adjust PARAMS ((void));
 /* Whether to add support for explict !relocation_op!sequence_number.  At the
    moment, only do this for ELF, though ECOFF could use it as well.  */
 
-#ifdef OBJ_ELF
+#if defined(OBJ_ELF) || defined(OBJ_ECOFF)
 #define RELOC_OP_P
 #endif
 

@@ -30,6 +30,11 @@ alpha*-*-netbsd*)
   HOSTING_CRT0=/usr/lib/crt0.o
   ;;
 
+alpha*-*-openbsd*)
+  NATIVE_LIB_DIRS=/usr/lib
+  HOSTING_CRT0=/usr/lib/crt0.o
+  ;;
+
 alpha*-*-*)
   HOSTING_CRT0=/usr/ccs/lib/crt0.o
   NATIVE_LIB_DIRS=/usr/ccs/lib

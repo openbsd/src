@@ -226,6 +226,7 @@ _bfd_ecoff_set_arch_mach_hook (abfd, filehdr)
       break;
 
     case ALPHA_MAGIC:
+    case ALPHA_MAGIC_BSD:
       arch = bfd_arch_alpha;
       mach = 0;
       break;
@@ -274,7 +275,7 @@ ecoff_get_magic (abfd)
       return bfd_big_endian (abfd) ? big : little;
 
     case bfd_arch_alpha:
-      return ALPHA_MAGIC;
+      return ALPHA_MAGIC_BSD;
 
     default:
       abort ();

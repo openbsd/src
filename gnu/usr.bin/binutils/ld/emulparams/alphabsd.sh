@@ -1,3 +1,3 @@
 SCRIPT_NAME=alphabsd
-OUTPUT_FORMAT="bsd-ecoff-littlealpha"
+OUTPUT_FORMAT="ecoff-littlealpha"
 ARCH=alpha

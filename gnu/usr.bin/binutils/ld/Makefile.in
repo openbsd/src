@@ -203,6 +203,7 @@ ALL_EMULATIONS = \
 	eaixppc.o \
 	eaixrs6.o \
 	ealpha.o \
+	ealphabsd.o \
 	earcelf.o \
 	earmelf.o \
 	earmelf_oabi.o \
@@ -999,6 +1000,9 @@ eaixrs6.c: $(srcdir)/emulparams/aixrs6.sh \
 ealpha.c: $(srcdir)/emulparams/alpha.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/alpha.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} alpha "$(tdir_alpha)"
+ealphabsd.c: $(srcdir)/emulparams/alphabsd.sh \
+  $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/alphabsd.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} alphabsd "$(tdir_alphabsd)"
 earcelf.c: $(srcdir)/emulparams/arcelf.sh \
   $(srcdir)/emultempl/generic.em $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} arcelf "$(tdir_arcelf)"

@@ -119,6 +119,7 @@ if test "${target}" = "${host}"; then
 	TRAD_HEADER='"hosts/alphalinux.h"'
 	;;
   alpha*-*-netbsd*)	COREFILE=netbsd-core.lo ;;
+  alpha*-*-openbsd*)	COREFILE=netbsd-core.lo ;;
   alpha*-*-freebsd*)	;;
   alpha*-*-*)		COREFILE=osf-core.lo ;;
   arm-*-riscix)		COREFILE=trad-core.lo ;;
