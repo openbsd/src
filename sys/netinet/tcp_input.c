@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.123 2002/09/05 23:37:35 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.124 2002/09/11 03:27:03 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -402,7 +402,7 @@ tcp_input(struct mbuf *m, ...)
 {
 	struct ip *ip;
 	struct inpcb *inp;
-	caddr_t optp = NULL;
+	u_int8_t *optp = NULL;
 	int optlen = 0;
 	int len, tlen, off;
 	struct tcpcb *tp = 0;
@@ -628,7 +628,7 @@ tcp_input(struct mbuf *m, ...)
 			th = (struct tcphdr *)(mtod(m, caddr_t) + iphlen);
 		}
 		optlen = off - sizeof(struct tcphdr);
-		optp = mtod(m, caddr_t) + iphlen + sizeof(struct tcphdr);
+		optp = mtod(m, u_int8_t *) + iphlen + sizeof(struct tcphdr);
 		/*
 		 * Do quick retrieval of timestamp options ("options
 		 * prediction?").  If timestamp is the only option and it's
