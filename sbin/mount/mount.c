@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.32 2003/07/29 18:38:36 deraadt Exp $	*/
+/*	$OpenBSD: mount.c,v 1.33 2003/08/05 20:48:59 tedu Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.32 2003/07/29 18:38:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.33 2003/08/05 20:48:59 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -581,6 +581,13 @@ prmount(struct statfs *sf)
 			(void)printf("%s%s", !f++ ? " (" : ", ", "gens");
 		if (iso_args->flags & ISOFSMNT_EXTATT)
 			(void)printf("%s%s", !f++ ? " (" : ", ", "extatt");
+	} else if (strcmp(sf->f_fstypename, MOUNT_PROCFS) == 0) {
+		struct procfs_args *procfs_args = &sf->mount_info.procfs_args;
+
+		if (verbose)
+			(void)printf("version %d", procfs_args->version);
+		if (procfs_args->flags & PROCFSMNT_LINUXCOMPAT)
+			(void)printf("%s%s", !f++ ? " (" : ", ", "linux");
 	}
 	(void)printf(f ? ")\n" : "\n");
 }
