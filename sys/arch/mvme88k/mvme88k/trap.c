@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.69 2004/01/14 20:46:02 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.70 2004/01/20 14:34:40 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -281,8 +281,12 @@ m88100_trap(unsigned type, struct trapframe *frame)
 		/* kernel mode instruction access fault.
 		 * Should never, never happen for a non-paged kernel.
 		 */
-		DEBUG_MSG(("kernel mode instruction "
-			  "page fault @ 0x%08x\n", frame->tf_sxip));
+#ifdef TRAPDEBUG
+		pbus_type = CMMU_PFSR_FAULT(frame->tf_ipfsr);
+		printf("Kernel Instruction fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
+		    pbus_type, pbus_exception_type[pbus_type],
+		    fault_addr, frame, frame->tf_cpu);
+#endif
 		panictrap(frame->tf_vector, frame);
 		break;
 
@@ -313,10 +317,10 @@ m88100_trap(unsigned type, struct trapframe *frame)
 		map = kernel_map;
 
 		pbus_type = CMMU_PFSR_FAULT(frame->tf_dpfsr);
-#ifdef DEBUG
+#ifdef TRAPDEBUG
 		printf("Kernel Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
-		       pbus_type, pbus_exception_type[pbus_type],
-		       fault_addr, frame, frame->tf_cpu);
+		    pbus_type, pbus_exception_type[pbus_type],
+		    fault_addr, frame, frame->tf_cpu);
 #endif
 
 		switch (pbus_type) {
@@ -374,9 +378,9 @@ m88100_trap(unsigned type, struct trapframe *frame)
 			}
 			break;
 		}
-#ifdef DEBUG
-		printf ("PBUS Fault %d (%s) va = 0x%x\n", pbus_type,
-			pbus_exception_type[pbus_type], va);
+#ifdef TRAPDEBUG
+		printf("PBUS Fault %d (%s) va = 0x%x\n", pbus_type,
+		    pbus_exception_type[pbus_type], va);
 #endif
 		panictrap(frame->tf_vector, frame);
 		/* NOTREACHED */
@@ -387,15 +391,20 @@ m88100_trap(unsigned type, struct trapframe *frame)
 user_fault:
 		if (type == T_INSTFLT + T_USER) {
 			pbus_type = CMMU_PFSR_FAULT(frame->tf_ipfsr);
+#ifdef TRAPDEBUG
+			printf("User Instruction fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
+			    pbus_type, pbus_exception_type[pbus_type],
+			    fault_addr, frame, frame->tf_cpu);
+#endif
 		} else {
 			fault_addr = frame->tf_dma0;
 			pbus_type = CMMU_PFSR_FAULT(frame->tf_dpfsr);
-		}
-#ifdef DEBUG
-		printf("User Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
-		       pbus_type, pbus_exception_type[pbus_type],
-		       fault_addr, frame, frame->tf_cpu);
+#ifdef TRAPDEBUG
+			printf("User Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
+			    pbus_type, pbus_exception_type[pbus_type],
+			    fault_addr, frame, frame->tf_cpu);
 #endif
+		}
 
 		if (frame->tf_dmt0 & (DMT_WRITE | DMT_LOCKBAR)) {
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
@@ -762,8 +771,10 @@ m88110_trap(unsigned type, struct trapframe *frame)
 		/* kernel mode instruction access fault.
 		 * Should never, never happen for a non-paged kernel.
 		 */
-		DEBUG_MSG(("kernel mode instruction "
-			  "page fault @ 0x%08x\n", frame->tf_exip));
+#ifdef TRAPDEBUG
+		printf("Kernel Instruction fault exip %x isr %x ilar %x\n",
+		    frame->tf_exip, frame->tf_isr, frame->tf_ilar);
+#endif
 		panictrap(frame->tf_vector, frame);
 		break;
 		/*NOTREACHED*/
@@ -776,6 +787,11 @@ m88110_trap(unsigned type, struct trapframe *frame)
 			type = T_DATAFLT + T_USER;
 			goto m88110_user_fault;
 		}
+
+#ifdef TRAPDEBUG
+		printf("Kernel Data access fault exip %x dsr %x dlar %x\n",
+		    frame->tf_exip, frame->tf_dsr, frame->tf_dlar);
+#endif
 
 		fault_addr = frame->tf_dlar;
 		if (frame->tf_dsr & CMMU_DSR_RW) {
@@ -832,14 +848,18 @@ m88110_trap(unsigned type, struct trapframe *frame)
 				panic("NULL pte on write fault??");
 			if (!(*pte & PG_M) && !(*pte & PG_RO)) {
 				/* Set modified bit and try the write again. */
+#ifdef TRAPDEBUG
+				printf("Corrected kernel write fault, map %x pte %x\n",
+				    map->pmap, *pte);
+#endif
 				*pte |= PG_M;
 				return;
 #if 1	/* shouldn't happen */
 			} else {
 				/* must be a real wp fault */
-#ifdef DEBUG
-				printf("Kernel Write protect???? pte %x\n",
-				    *pte);
+#ifdef TRAPDEBUG
+				printf("Uncorrected kernel write fault, map %x pte %x\n",
+				    map->pmap, *pte);
 #endif
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 				if (result == 0)
@@ -857,6 +877,10 @@ m88110_user_fault:
 		if (type == T_INSTFLT+T_USER) {
 			ftype = VM_PROT_READ;
 			fault_code = VM_PROT_READ;
+#ifdef TRAPDEBUG
+			printf("User Instruction fault exip %x isr %x ilar %x\n",
+			    frame->tf_exip, frame->tf_isr, frame->tf_ilar);
+#endif
 		} else {
 			fault_addr = frame->tf_dlar;
 			if (frame->tf_dsr & CMMU_DSR_RW) {
@@ -866,6 +890,10 @@ m88110_user_fault:
 				ftype = VM_PROT_READ|VM_PROT_WRITE;
 				fault_code = VM_PROT_WRITE;
 			}
+#ifdef TRAPDEBUG
+			printf("User Data access fault exip %x dsr %x dlar %x\n",
+			    frame->tf_exip, frame->tf_dsr, frame->tf_dlar);
+#endif
 		}
 
 		va = trunc_page((vaddr_t)fault_addr);
@@ -888,10 +916,6 @@ m88110_user_fault:
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 				if (result == EACCES)
 					result = EFAULT;
-#ifdef DEBUG
-				if (result != 0)
-					printf("Data Access Error @ 0x%x\n", va);
-#endif
 			} else
 			if (frame->tf_dsr & (CMMU_DSR_CP | CMMU_DSR_WA)) {
 				/* copyback or write allocate error */
@@ -910,13 +934,19 @@ m88110_user_fault:
 				 * indeed a real write fault.  XXX smurph
 				 */
 				pte = pmap_pte(vm_map_pmap(map), va);
+#ifdef DEBUG
 				if (pte == PT_ENTRY_NULL)
 					panic("NULL pte on write fault??");
+#endif
 				if (!(*pte & PG_M) && !(*pte & PG_RO)) {
 					/*
 					 * Set modified bit and try the
 					 * write again.
 					 */
+#ifdef TRAPDEBUG
+					printf("Corrected userland write fault, map %x pte %x\n",
+					    map->pmap, *pte);
+#endif
 					*pte |= PG_M;
 					/*
 					 * invalidate ATCs to force
@@ -926,22 +956,20 @@ m88110_user_fault:
 					return;
 				} else {
 					/* must be a real wp fault */
-#ifdef DEBUG
-					printf("Write protect???? pte %x\n",
-					    *pte);
+#ifdef TRAPDEBUG
+					printf("Uncorrected userland write fault, map %x pte %x\n",
+					    map->pmap, *pte);
 #endif
 					result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 					if (result == EACCES)
 						result = EFAULT;
 				}
 			} else {
-#ifdef DEBUG
-				printf("unexpected data fault dsr %x\n",
+#ifdef TRAPDEBUG
+				printf("Unexpected Data access fault dsr %x\n",
 				    frame->tf_dsr);
 #endif
-				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
-				if (result == EACCES)
-					result = EFAULT;
+				panictrap(frame->tf_vector, frame);
 			}
 		} else {
 			/* instruction faults */
@@ -956,13 +984,11 @@ m88110_user_fault:
 				if (result == EACCES)
 					result = EFAULT;
 			} else {
-#ifdef DEBUG
-				printf("unexpected instr fault dsr %x\n",
+#ifdef TRAPDEBUG
+				printf("Unexpected Instruction fault isr %x\n",
 				    frame->tf_isr);
 #endif
-				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
-				if (result == EACCES)
-					result = EFAULT;
+				panictrap(frame->tf_vector, frame);
 			}
 		}
 
@@ -1373,9 +1399,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	}
 
 	/* Callp currently points to syscall, which returns ENOSYS. */
-#ifdef DEBUG
-	printf("syscall code is %d\n", code);
-#endif
 	if (code < 0 || code >= nsys)
 		callp += p->p_emul->e_nosys;
 	else {
