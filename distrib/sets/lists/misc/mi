@@ -307,6 +307,11 @@
 ./usr/share/doc/usd/10.edadv/ae9
 ./usr/share/doc/usd/11.edit
 ./usr/share/doc/usd/12.vi
+./usr/share/doc/usd/12.vi/Makefile
+./usr/share/doc/usd/12.vi/vi.apwh.ms
+./usr/share/doc/usd/12.vi/vi.chars
+./usr/share/doc/usd/12.vi/vi.in
+./usr/share/doc/usd/12.vi/vi.summary
 ./usr/share/doc/usd/13.ex
 ./usr/share/doc/usd/13.viref
 ./usr/share/doc/usd/13.viref/Makefile
