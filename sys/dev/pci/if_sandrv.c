@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sandrv.c,v 1.4 2004/07/16 15:11:45 alex Exp $	*/
+/*	$OpenBSD: if_sandrv.c,v 1.5 2004/08/25 13:09:11 markus Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -306,10 +306,6 @@ san_attach(struct device *parent, struct device *self, void *aux)
 		}
 		break;
 
-	case PCI_VENDOR_ID_GSI:
-		log(LOG_INFO, "%s: Sangoma S518 ADSL adapter\n",
-					self->dv_xname);
-		break;
 	case SANGOMA_PCI_VENDOR_OLD:
 		switch (atype) {
 		case A101_ADPTR_1TE1:
