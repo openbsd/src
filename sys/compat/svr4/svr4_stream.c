@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stream.c,v 1.12 2001/04/18 09:06:42 niklas Exp $	 */
+/*	$OpenBSD: svr4_stream.c,v 1.13 2001/10/02 17:40:20 csapuntz Exp $	 */
 /*	$NetBSD: svr4_stream.c,v 1.19 1996/12/22 23:00:03 fvdl Exp $	 */
 
 /*
@@ -882,7 +882,7 @@ svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, dat)
 	struct sockaddr_in sain;
 	struct sockaddr_un saun;
 	struct svr4_strmcmd sc;
-	int sasize;
+	socklen_t sasize, samax;
 	caddr_t sg;
 	int *lenp;
 
@@ -891,20 +891,15 @@ svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, dat)
 
 	sc.offs = 0x10;
 	
-	if ((error = copyin(sub, &skb, sizeof(skb))) != 0) {
-		DPRINTF(("ti_ioctl: error copying in strbuf\n"));
-		return error;
-	}
-
 	switch (st->s_family) {
 	case AF_INET:
 		skp = &sain;
-		sasize = sizeof(sain);
+		samax = sizeof(sain);
 		break;
 
 	case AF_UNIX:
 		skp = &saun;
-		sasize = sizeof(saun);
+		samax = sizeof(saun);
 		break;
 
 	default:
@@ -914,10 +909,10 @@ svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, dat)
 	}
 
 	sg = stackgap_init(p->p_emul);
-	sup = stackgap_alloc(&sg, sasize);
+	sup = stackgap_alloc(&sg, samax);
 	lenp = stackgap_alloc(&sg, sizeof(*lenp));
 
-	if ((error = copyout(&sasize, lenp, sizeof(*lenp))) != 0) {
+	if ((error = copyout(&samax, lenp, sizeof(*lenp))) != 0) {
 		DPRINTF(("ti_ioctl: error copying out lenp\n"));
 		return error;
 	}
@@ -963,13 +958,24 @@ svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, dat)
 		return ENOSYS;
 	}
 
-	if ((error = copyin(sup, skp, sasize)) != 0) {
+	if ((error = copyin(sup, skp, samax)) != 0) {
 		DPRINTF(("ti_ioctl: error copying in socket data\n"));
 		return error;
 	}
 
 	if ((error = copyin(lenp, &sasize, sizeof(*lenp))) != 0) {
 		DPRINTF(("ti_ioctl: error copying in socket size\n"));
+		return error;
+	}
+
+	if (sasize < 0 || sasize > samax) {
+		DPRINTF(("ti_ioctl: invalid socklen on stack\n"));
+		error = EINVAL;
+		return error;
+	}
+
+	if ((error = copyin(sub, &skb, sizeof(skb))) != 0) {
+		DPRINTF(("ti_ioctl: error copying in strbuf\n"));
 		return error;
 	}
 
