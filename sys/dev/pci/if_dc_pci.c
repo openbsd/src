@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.41 2003/10/07 14:11:04 fgsch Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.42 2003/10/21 21:48:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -102,6 +102,7 @@ struct dc_type dc_devs[] = {
 	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_EN2242 },
 	{ PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_RS7112 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21145 },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CSHO100BTX },
 	{ 0, 0 }
 };
 
@@ -323,6 +324,17 @@ void dc_pci_attach(parent, self, aux)
 			command |= 0x00008000;
 			pci_conf_write(pc, pa->pa_tag, DC_PCI_CFLT, command);
 		}
+		break;
+	case PCI_VENDOR_3COM:
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3COM_3CSHO100BTX) {
+			found = 1;
+			sc->dc_type = DC_TYPE_AN983;
+			sc->dc_flags |= DC_TX_USE_TX_INTR;
+			sc->dc_flags |= DC_TX_ADMTEK_WAR;
+			sc->dc_pmode = DC_PMODE_MII;
+		}
+		dc_eeprom_width(sc);
+		dc_read_srom(sc, sc->dc_romwidth);
 		break;
 	case PCI_VENDOR_ADMTEK:
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AL981) {
