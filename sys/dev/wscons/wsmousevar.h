@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmousevar.h,v 1.3 2002/03/14 01:27:03 millert Exp $ */
+/* $OpenBSD: wsmousevar.h,v 1.4 2002/03/27 18:54:09 jbm Exp $ */
 /* $NetBSD: wsmousevar.h,v 1.4 2000/01/08 02:57:24 takemura Exp $ */
 
 /*
@@ -71,5 +71,8 @@ int	wsmousedevprint(void *, const char *);
 #define WSMOUSE_INPUT_ABSOLUTE_X	(1<<0)
 #define WSMOUSE_INPUT_ABSOLUTE_Y	(1<<1)
 #define WSMOUSE_INPUT_ABSOLUTE_Z	(1<<2)
+#define WSMOUSE_INPUT_WSMOUSED_CLOSE	(1<<3) /* notify wsmoused(8) to close
+						  mouse device */
+
 void	wsmouse_input(struct device *kbddev, u_int btns,
 			   int x, int y, int z, u_int flags);

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.12 2002/03/14 03:16:08 millert Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.13 2002/03/27 18:54:09 jbm Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.14.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -36,6 +36,9 @@ struct device;
 /*
  * WSDISPLAY interfaces
  */
+
+#define WSDISPLAY_MAXSCREEN	12
+#define WSDISPLAY_MAXFONT	8
 
 /*
  * Emulation functions, for displays that can support glass-tty terminal

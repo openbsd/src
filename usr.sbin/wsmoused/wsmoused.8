@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsmoused.8,v 1.5 2001/08/20 06:09:32 mpech Exp $
+.\"	$OpenBSD: wsmoused.8,v 1.6 2002/03/27 18:54:09 jbm Exp $
 .\"
 .Dd April 8, 2001
 .Dt WSMOUSED 8 i386
@@ -137,6 +137,16 @@ Kensington ThinkingMouse protocol.
 Hitachi tablet protocol.
 .El
 .El
+
+.Nm 
+will happily coexist with X-Window, provided that the mouse device is 
+supported by 
+.Xr wsmouse 4 .
+Serial mice do not have a 
+.Xr wsmouse 4 
+compatible driver, so 
+.Nm
+has to be killed before starting X-Window.
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsmouse 4

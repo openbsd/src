@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.14 2002/01/16 14:55:38 jason Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.15 2002/03/27 18:54:09 jbm Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -73,8 +73,15 @@ struct wscons_event {
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_Y	9	/* Y location */
 #define	WSCONS_EVENT_MOUSE_DELTA_Z	10	/* Z delta amount */
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_Z	11	/* Z location */
+/* 
+ * Following events are not real wscons_event but are used as parameters of the
+ * WSDISPLAYIO_WSMOUSED ioctl 
+ */
 #define WSCONS_EVENT_WSMOUSED_ON	12	/* wsmoused(8) active */
 #define WSCONS_EVENT_WSMOUSED_OFF	13	/* wsmoused(8) inactive */
+#define WSCONS_EVENT_WSMOUSED_SLEEP	14	/* wsmoused(8) sleeping */
+#define WSCONS_EVENT_WSMOUSED_CLOSE	15	/* notify wsmoused(8) to close 
+						   mouse device */
 
 #define IS_MOTION_EVENT(type) (((type) == WSCONS_EVENT_MOUSE_DELTA_X) || \
 			       ((type) == WSCONS_EVENT_MOUSE_DELTA_Y) || \
@@ -82,7 +89,9 @@ struct wscons_event {
 #define IS_BUTTON_EVENT(type) (((type) == WSCONS_EVENT_MOUSE_UP) || \
 			       ((type) == WSCONS_EVENT_MOUSE_DOWN))
 #define IS_CTRL_EVENT(type) ((type == WSCONS_EVENT_WSMOUSED_ON) || \
-			     (type == WSCONS_EVENT_WSMOUSED_OFF))
+			     (type == WSCONS_EVENT_WSMOUSED_OFF)|| \
+			     (type == WSCONS_EVENT_WSMOUSED_SLEEP))
+
 /*
  * Keyboard ioctls (0 - 31)
  */

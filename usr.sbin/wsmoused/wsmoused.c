@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.10 2002/03/14 06:51:42 mpech Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.11 2002/03/27 18:54:09 jbm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -51,6 +51,7 @@
  */
 
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/tty.h>
@@ -220,7 +221,7 @@ terminate(int sig)
 
 	if (mouse.mfd != -1) {
 		event.type = WSCONS_EVENT_WSMOUSED_OFF;
-		ioctl(mouse.mfd, WSDISPLAYIO_WSMOUSED, &event);
+		ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, &event);
 		res = WSMOUSE_RES_DEFAULT;
 		ioctl(mouse.mfd, WSMOUSEIO_SRES, &res);
 		close(mouse.mfd);
@@ -315,17 +316,23 @@ normalize_event(struct wscons_event *event)
 }
 
 /* send a wscons_event to the kernel */
-static void
+static int
 treat_event(struct wscons_event *event)
 {
 	struct wscons_event mapped_event;
 
 	if (IS_MOTION_EVENT(event->type)) {
 		ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, event);
+		return 1;
 	} else if (IS_BUTTON_EVENT(event->type)) {
 		mouse_map(event, &mapped_event);
 		mouse_click(&mapped_event);
+		return 1;
 	}
+	if (event->type == WSCONS_EVENT_WSMOUSED_CLOSE) 
+		/* we have to close mouse fd */
+		return 0;
+	return 1;
 }
 
 /* split a full mouse event into multiples wscons events */
@@ -382,6 +389,7 @@ wsmoused(void)
 	int res;
 	u_char b;
 	FILE *fp;
+	struct stat mdev_stat;
 
 	if (!nodaemon && !background) {
 		if (daemon(0, 0)) {
@@ -402,10 +410,24 @@ wsmoused(void)
 	/* initialization */
 
 	event.type = WSCONS_EVENT_WSMOUSED_ON;
+	if (IS_WSMOUSE_DEV(mouse.portname)) {
+
+		/* get major and minor of mouse device */
+		res = stat(mouse.portname, &mdev_stat);
+		if (res != -1) 
+			event.value = mdev_stat.st_rdev;
+		else 
+			event.value = 0;
+	}
+	else
+		/* X-Window won't start using wsmoused(8) with a serial mouse */
+		event.value = 0;
+
+	/* notify kernel to start wsmoused */
 	res = ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, &event);
 	if (res != 0) {
 		/* the display driver has no getchar() method */
-		logerr(1, "this display driver has no support for wsmoused");
+		logerr(1, "this display driver has no support for wsmoused(8)");
 	}
 
 	bzero(&action, sizeof(action));
@@ -422,9 +444,37 @@ wsmoused(void)
 		if (IS_WSMOUSE_DEV(mouse.portname)) {
 			/* wsmouse supported mouse */
 			read(mouse.mfd, &event, sizeof(event));
-			treat_event(&event);
+			res = treat_event(&event);
+			if (!res) {
+				/* close mouse device and sleep until 
+				   the X server release it */
+
+				struct wscons_event sleeping;
+
+				/* restore mouse resolution to default value */
+				res = WSMOUSE_RES_DEFAULT;
+				ioctl(mouse.mfd, WSMOUSEIO_SRES, &res);
+
+				close(mouse.mfd);
+				mouse.mfd = -1;
+				
+				/* sleep until X server releases mouse device */
+				sleeping.type = WSCONS_EVENT_WSMOUSED_SLEEP;
+				sleeping.value = 0;
+				ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, 
+				    &sleeping);
+
+				/* waiting for availability of mouse device */
+				sleep(1);
+
+				if ((mouse.mfd = open(mouse.portname, 
+				    O_RDONLY | O_NONBLOCK, 0)) == -1) 
+					logerr(1, "unable to open %s", 
+					    mouse.portname);
+				mouse_init();
+			}
 		} else {
-			/* serial mouse (not wsmouse supported) */
+			/* serial mouse (not supported by wsmouse) */
 			res = read(mouse.mfd, &b, 1);
 
 			/* if we have a full mouse event */
