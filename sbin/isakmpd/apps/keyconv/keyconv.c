@@ -1,7 +1,7 @@
-/*	$Id: keyconv.c,v 1.1 2001/08/15 12:31:40 ho Exp $	*/
+/*	$OpenBSD: keyconv.c,v 1.2 2001/08/22 15:25:32 ho Exp $	*/
 
 /*
- * Copyright (c) 2000 Hakan Olsson.  All rights reserved.
+ * Copyright (c) 2000, 2001 Hakan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,66 +32,61 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <dns/keyvalues.h>
-#include <lwres/lwres.h>
-#include <lwres/netdb.h>
-
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
 #include <openssl/pem.h>
 
-/* base64.c prototypes */
+#ifdef LWRES
+#include <dns/keyvalues.h>
+#include <lwres/lwres.h>
+#include <lwres/netdb.h>
+#else
+#include <netdb.h>
+#include "keyvalues.h"
+#endif
+
+/* base64.c prototypes.  */
 int b64_pton (const char *, u_char *, size_t);
 int b64_ntop (const u_char *, size_t, char *, size_t);
 
 #define OPENSSL_DEFAULT_EXT ".pem"
 #define DNSSEC_DEFAULT_EXT  ".private"
 
-/* DNSSEC private key format version */
+/* DNSSEC private key format version.  */
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 2
 
-char *progname;
+/* Make life a bit easier.  */
+static const char *dns_tags[] =
+{
+  "Private-key-format:", "Algorithm:", "Modulus:", "PublicExponent:",
+  "PrivateExponent:", "Prime1:", "Prime2:", "Exponent1:", "Exponent2:",
+  "Coefficient:", "Generator(g):", "Prime(p):", "Private_value(x):",
+  "Public_value(y):", "Subprime(q):", "Base(g):", "Key:",
+  NULL
+};
 
-/* For DH calc. */
+/* Must match the above.  */
+enum DNS_TAGS
+{ TAG_VERSION, TAG_ALGORITHM, TAG_MODULUS, TAG_PUBEXP, TAG_PRIVEXP,
+  TAG_PRIME1, TAG_PRIME2, TAG_EXP1, TAG_EXP2, TAG_COEFF, TAG_GENERATOR,
+  TAG_PRIME, TAG_PRIVVAL, TAG_PUBVAL, TAG_SUBPRIME, TAG_BASE, TAG_KEY };
+
+#define MAX_LINE 4096
+
+/* For DH calc.  */
 BIGNUM bn_b2, bn_oakley1, bn_oakley2, bn_oakley5;
+
+char *progname;
 
 void
 usage_exit (void)
 {
-  fprintf (stderr, "Usage: %s infile outfile\n\n", progname);
-  fprintf (stderr, "Extension of infile / outfile gives mode of operation.\n");
-  fprintf (stderr, "Recognized extensions = %s %s\n\n", OPENSSL_DEFAULT_EXT, 
-	   DNSSEC_DEFAULT_EXT);
-  fprintf (stderr, "Example:\n");
-  fprintf (stderr, "    %s test%s test%s\n", progname, DNSSEC_DEFAULT_EXT,
-	   OPENSSL_DEFAULT_EXT);
-  fprintf (stderr, " - converts from DNSSEC to OPENSSL format.\n");
+  fprintf (stderr, "Usage: %s -d infile outfile\n", progname);
+  fprintf (stderr, "or     %s -o infile outfile\n", progname);
   exit (1);
 }
-
-/*
- * Ok, I dont have the patience to do everything "by the book" here, so 
- * I'll use some shortcuts... 
- */
-
-static const char *dns_tags[] = 
-{
-  "Private-key-format:", "Algorithm:", "Modulus:", "PublicExponent:",
-  "PrivateExponent:", "Prime1:", "Prime2:", "Exponent1:", "Exponent2:", 
-  "Coefficient:", "Generator(g):", "Prime(p):", "Private_value(x):", 
-  "Public_value(y):", "Subprime(q):", "Base(g):", "Key:", 
-  NULL
-};
-
-/* Must match the above */
-enum DNS_TAGS 
-{ TAG_VERSION, TAG_ALGORITHM, TAG_MODULUS, TAG_PUBEXP, TAG_PRIVEXP, 
-  TAG_PRIME1, TAG_PRIME2, TAG_EXP1, TAG_EXP2, TAG_COEFF, TAG_GENERATOR, 
-  TAG_PRIME, TAG_PRIVVAL, TAG_PUBVAL, TAG_SUBPRIME, TAG_BASE, TAG_KEY };
-
-#define MAX_LINE 4096
 
 char *
 hex2bin (char *h, int *len)
@@ -107,7 +102,6 @@ hex2bin (char *h, int *len)
       n = strchr (hex, *(h + p));
       if (!n)
 	{
-	  printf ("D1: %d (%c)\n", *(h+p), *(h+p));
 	  fprintf (stderr, "hex2bin: bad input data!\n");
 	  exit (1);
 	}
@@ -115,7 +109,6 @@ hex2bin (char *h, int *len)
       n = strchr (hex, *(h + p + 1));
       if (!n)
 	{
-	  printf ("D2: %d (%c)\n", *(h+p+1), *(h+p+1));
 	  fprintf (stderr, "hex2bin: bad input data!\n");
 	  exit (1);
 	}
@@ -125,15 +118,15 @@ hex2bin (char *h, int *len)
   *(b + (p/2)) = (char)0;
   *len = p/2;
   return b;
-}     
+}
 
 void
 init_DH_constants (void)
 {
 #define MODP_768 \
-    "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"\
-    "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"\
-    "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245"\
+    "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1" \
+    "29024E088A67CC74020BBEA63B139B22514A08798E3404DD" \
+    "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245" \
     "E485B576625E7EC6F44C42E9A63A3620FFFFFFFFFFFFFFFF"
 
 #define MODP_1024 \
@@ -161,10 +154,17 @@ init_DH_constants (void)
   BN_init (&bn_oakley1);
   BN_init (&bn_oakley2);
   BN_init (&bn_oakley5);
+
   BN_set_word (&bn_b2, 2);
-  t = hex2bin (MODP_768, &len);  BN_bin2bn (t, len, &bn_oakley1);
-  t = hex2bin (MODP_1024, &len); BN_bin2bn (t, len, &bn_oakley2);
-  t = hex2bin (MODP_1536, &len); BN_bin2bn (t, len, &bn_oakley5);
+
+  t = hex2bin (MODP_768, &len);
+  BN_bin2bn (t, len, &bn_oakley1);
+
+  t = hex2bin (MODP_1024, &len);
+  BN_bin2bn (t, len, &bn_oakley2);
+
+  t = hex2bin (MODP_1536, &len);
+  BN_bin2bn (t, len, &bn_oakley5);
 }
 
 int
@@ -193,13 +193,13 @@ convert_dns_to_openssl (char *file_in, char *file_out)
 
   while (fgets (line, MAX_LINE, ii) != NULL)
     {
-      lineno ++;
+      lineno++;
 
       /* Try to find a matching field in the *.private file (dnssec-keygen) */
       for (m = 0, found = -1; found == -1 && dns_tags[m]; m++)
 	if (strncasecmp (line, dns_tags[m], strlen (dns_tags[m])) == 0)
 	  found = m;
-      
+
       if (found == -1)
 	{
 	  fprintf (stderr, "Unrecognized input line %d\n", lineno);
@@ -220,7 +220,7 @@ convert_dns_to_openssl (char *file_in, char *file_out)
 	  if (m > MAJOR_VERSION || (m == MAJOR_VERSION && n > MINOR_VERSION))
 	    {
 	      fprintf (stderr, "Cannot parse file formats above v%d.%d. "
-		       "This is v%d.%d.\n", MAJOR_VERSION, MINOR_VERSION, m, 
+		       "This is v%d.%d.\n", MAJOR_VERSION, MINOR_VERSION, m,
 		       n);
 	      return 1;
 	    }
@@ -294,35 +294,42 @@ convert_dns_to_openssl (char *file_in, char *file_out)
       bn = BN_bin2bn (data, m, NULL);
       if (!bn)
 	{
-	  fprintf (stderr, 
+	  fprintf (stderr,
 		   "BN_bin2bn() failed for field \"%s\", line %d.\n",
 		   dns_tags[found], lineno);
 	  return 1;
 	}
-      
+
       switch (found)
 	{
 	case TAG_MODULUS:	/* RSA modulus */
 	  rsa->n = bn;
 	  break;
+
 	case TAG_PUBEXP:	/* RSA public exponent */
 	  rsa->e = bn;
 	  break;
+
 	case TAG_PRIVEXP:	/* RSA private exponent */
 	  rsa->d = bn;
 	  break;
+
 	case TAG_PRIME1:	/* RSA prime 1 */
 	  rsa->p = bn;
 	  break;
+
 	case TAG_PRIME2:	/* RSA prime 2 */
 	  rsa->q = bn;
 	  break;
+
 	case TAG_EXP1:		/* RSA exponent 1 */
 	  rsa->dmp1 = bn;
 	  break;
+
 	case TAG_EXP2:		/* RSA exponent 2 */
 	  rsa->dmq1 = bn;
 	  break;
+
 	case TAG_COEFF:		/* RSA coefficient */
 	  rsa->iqmp = bn;
 	  break;
@@ -355,6 +362,7 @@ convert_dns_to_openssl (char *file_in, char *file_out)
 	case TAG_SUBPRIME:	/* DSA    Subprime(q) */
 	  dsa->q = bn;
 	  break;
+
 	case TAG_BASE:		/* DSA    Base(g) */
 	  dsa->g = bn;
 	  break;
@@ -371,17 +379,19 @@ convert_dns_to_openssl (char *file_in, char *file_out)
     case DNS_KEYALG_RSAMD5:
       m = (RSA_check_key (rsa) < 1 ? 0 : 1);
       break;
+
     case DNS_KEYALG_DH:
       dh_code = 0;
       m = DH_check (dh, &dh_code);
       break;
+
     case DNS_KEYALG_DSA:
       /* No check available. */
     default:
       m = -1;
       break;
     }
-  
+
   if (m == 1)
     fprintf (stderr, "Key succeeded validation check.\n");
   else if (m == 0)
@@ -395,7 +405,7 @@ convert_dns_to_openssl (char *file_in, char *file_out)
     fprintf (stderr, "Cannot open output file %.100s\n", file_out);
   else
     fprintf (stderr, "Writing output file \"%s\".\n", file_out);
-  
+
   /* Write result and cleanup */
   switch (algorithm)
     {
@@ -466,10 +476,10 @@ write_RSA_public_key (char *fname, RSA *rsa)
 
   e_bytes   = BN_num_bytes (rsa->e);
   mod_bytes = BN_num_bytes (rsa->n);
-      
-  fprintf (out, ";name IN KEY %d %d %d ", DNS_KEYOWNER_ENTITY, 
+
+  fprintf (out, ";name IN KEY %d %d %d ", DNS_KEYOWNER_ENTITY,
 	   DNS_KEYPROTO_IPSEC, DNS_KEYALG_RSAMD5);
-  
+
   if (e_bytes <= 0xFF)
     data[dlen++] = (char)e_bytes;
   else
@@ -480,13 +490,13 @@ write_RSA_public_key (char *fname, RSA *rsa)
     }
   dlen += BN_bn2bin (rsa->e, data + dlen);
   dlen += BN_bn2bin (rsa->n, data + dlen);
-  
+
   blen = b64_ntop (data, dlen, b64buf, MAX_LINE);
   b64buf[blen] = (char)0;
-  
+
   fprintf (out, "%s\n", b64buf);
   fclose (out);
-}    
+}
 
 void
 write_DSA_public_key (char *fname, DSA *dsa)
@@ -514,22 +524,24 @@ write_DSA_public_key (char *fname, DSA *dsa)
 
   dlen = blen = 0;
   *(data + dlen++) = (p_bytes - 64) / 8;
-  
+
   /* Fields in DSA public key are zero-padded (left) */
 #define PAD_ADD(var,len) \
   for (p = 0; p < (len - BN_num_bytes (var)); p++) \
     *(data + dlen++) = (char)0; \
   BN_bn2bin (var, data + dlen); \
   dlen += BN_num_bytes (var)
-  
+
   PAD_ADD (dsa->q, SHA_DIGEST_LENGTH);
   PAD_ADD (dsa->p, p_bytes);
   PAD_ADD (dsa->g, p_bytes);
   PAD_ADD (dsa->pub_key, p_bytes);
 
+#undef PAD_ADD
+
   blen = b64_ntop (data, dlen, b64buf, MAX_LINE);
   b64buf[blen] = (char)0;
-      
+
   fprintf (out, ";name IN KEY %d %d %d %s\n", DNS_KEYOWNER_ENTITY,
 	   DNS_KEYPROTO_IPSEC, DNS_KEYALG_DSA, b64buf);
   fclose (out);
@@ -564,7 +576,7 @@ write_DH_public_key (char *fname, DH *dh)
       else
 	p = 0;
     }
-  
+
   if (p == 0)
     {
       p = BN_num_bytes (dh->p);
@@ -578,10 +590,10 @@ write_DH_public_key (char *fname, DH *dh)
 
   blen = b64_ntop (data, dlen, b64buf, MAX_LINE);
   b64buf[blen] = (char)0;
-  
-  fprintf (out, ";name IN KEY %d %d %d %s\n", DNS_KEYOWNER_ENTITY, 
+
+  fprintf (out, ";name IN KEY %d %d %d %s\n", DNS_KEYOWNER_ENTITY,
 	   DNS_KEYPROTO_IPSEC, DNS_KEYALG_DH, b64buf);
-  
+
   fclose (out);
 }
 
@@ -634,10 +646,10 @@ convert_openssl_to_dns (char *file_in, char *file_out)
     }
 
   pubname = strdup (file_out);
-  sprintf (pubname + strlen (pubname) - 7, "key");
+  sprintf (pubname + strlen (pubname), ".pubkey");
 
   fprintf (stderr, "Writing output file \"%s\".\n", file_out);
-  fprintf (oo, "%s v%d.%d\n", dns_tags[TAG_VERSION], MAJOR_VERSION, 
+  fprintf (oo, "%s v%d.%d\n", dns_tags[TAG_VERSION], MAJOR_VERSION,
 	   MINOR_VERSION);
 
   /* XXX Algorithm dependent validation checks? */
@@ -645,9 +657,9 @@ convert_openssl_to_dns (char *file_in, char *file_out)
   if (rsa)
     {
       /* Write private key */
-      fprintf (oo, "%s %d (%s)\n", dns_tags[TAG_ALGORITHM], 
+      fprintf (oo, "%s %d (%s)\n", dns_tags[TAG_ALGORITHM],
 	       DNS_KEYALG_RSAMD5, "RSA");
-      tag = TAG_MODULUS; 
+      tag = TAG_MODULUS;
       fprintf (oo, "%s %s\n", dns_tags[tag++], bn_to_b64 (rsa->n));
       fprintf (oo, "%s %s\n", dns_tags[tag++], bn_to_b64 (rsa->e));
       fprintf (oo, "%s %s\n", dns_tags[tag++], bn_to_b64 (rsa->d));
@@ -663,7 +675,7 @@ convert_openssl_to_dns (char *file_in, char *file_out)
     {
       /* DSA_print_fp (stdout, dsa, 2); */
 
-      fprintf (oo, "%s %d (%s)\n", dns_tags[TAG_ALGORITHM], 
+      fprintf (oo, "%s %d (%s)\n", dns_tags[TAG_ALGORITHM],
 	       DNS_KEYALG_DSA, "DSA");
       tag = TAG_PRIME;
       fprintf (oo, "%s %s\n", dns_tags[tag++], bn_to_b64 (dsa->p));
@@ -677,7 +689,7 @@ convert_openssl_to_dns (char *file_in, char *file_out)
   else if (dh)
     {
       /*
-       * OpenSSL never stored private and public key values, so
+       * OpenSSL never stores private and public key values, so
        * we have to regenerate them from p and g. 
        */
       if (DH_generate_key (dh) == 0)
@@ -688,7 +700,7 @@ convert_openssl_to_dns (char *file_in, char *file_out)
 	  return 1;
 	}
 
-      fprintf (oo, "%s %d (%s)\n", dns_tags[TAG_ALGORITHM], 
+      fprintf (oo, "%s %d (%s)\n", dns_tags[TAG_ALGORITHM],
 	       DNS_KEYALG_DH, "DH");
       tag = TAG_GENERATOR;
       fprintf (oo, "%s %s\n", dns_tags[tag++], bn_to_b64 (dh->g));
@@ -710,50 +722,48 @@ convert_openssl_to_dns (char *file_in, char *file_out)
   return 0;
 }
 
-int 
+int
 main (int argc, char **argv)
 {
-  char *p;
-  int ret, dns_to_openssl = -1;
+  int ch, ret, dns_to_openssl = -1;
 
   progname = argv[0];
 
-  if (argc != 3)
-      usage_exit ();
+  while ((ch = getopt (argc, argv, "od")) != -1)
+    {
+      switch (ch)
+	{
+	case 'o':
+	  if (dns_to_openssl == -1)
+	    dns_to_openssl = 1;
+	  else
+	    usage_exit ();
+	  break;
 
-  /* Check input syntax */
-  for (p = argv[1] + strlen (argv[1]); p > argv[1] && *p != '.'; p--) ;
-  if (*p != '.')
-    usage_exit ();
+	case 'd':
+	  if (dns_to_openssl == -1)
+	    dns_to_openssl = 0;
+	  else
+	    usage_exit ();
+	  break;
 
-  if (strlen (p) == 4 && strcasecmp (p, OPENSSL_DEFAULT_EXT) == 0)
-    dns_to_openssl = 0;
-  else if (strlen (p) == 8 && strcasecmp (p, DNSSEC_DEFAULT_EXT) == 0)
-    dns_to_openssl = 1;
-  else
-    usage_exit ();
-
-  /* Check second argument */
-  for (p = argv[2] + strlen (argv[2]); p > argv[2] && *p != '.'; p--) ;
-  if (*p != '.')
-    usage_exit ();
-  
-  if (dns_to_openssl)
-    { 
-      if (strlen (p) != 4 || strcasecmp (p, OPENSSL_DEFAULT_EXT) != 0)
-	usage_exit ();
+	default:
+	  usage_exit ();
+	}
     }
-  else 
-    if (strlen (p) != 8 || strcasecmp (p, DNSSEC_DEFAULT_EXT) != 0)
+  argc -= optind;
+  argv += optind;
+
+  if (argc != 2 || dns_to_openssl == -1)
       usage_exit ();
 
   init_DH_constants ();
 
   /* Convert. */
   if (dns_to_openssl)
-    ret = convert_dns_to_openssl (argv[1], argv[2]);
+    ret = convert_dns_to_openssl (argv[0], argv[1]);
   else
-    ret = convert_openssl_to_dns (argv[1], argv[2]);
+    ret = convert_openssl_to_dns (argv[0], argv[1]);
 
   if (ret)
     fprintf (stderr, "Operation failed.\n");
