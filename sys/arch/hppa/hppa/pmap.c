@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.36 2000/11/08 16:44:53 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.37 2000/11/24 20:49:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -1594,7 +1594,7 @@ pmap_kenter_pa(va, pa, prot)
 		pv->pv_pmap = pmap_kernel();
 		pv->pv_space = pmap_kernel()->pmap_space;
 		pv->pv_tlbpage = tlbbtop(pa);
-		pv->pv_tlbprot = TLB_WIRED | TLB_REF |
+		pv->pv_tlbprot = TLB_WIRED | TLB_REF | TLB_DIRTY |
 		    pmap_prot(pmap_kernel(), prot) | HPPA_PID_KERNEL |
 		    ((pa & HPPA_IOSPACE) == HPPA_IOSPACE? TLB_UNCACHEABLE : 0);
 		pmap_enter_va(pv->pv_space, va, pv);
