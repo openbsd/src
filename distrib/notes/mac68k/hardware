@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.22 2004/12/05 13:00:55 martin Exp $
+dnl	$OpenBSD: hardware,v 1.23 2005/02/16 01:30:48 martin Exp $
 OpenBSD/MACHINE OSREV runs on several of the older Macintosh computers.
 8MB of RAM should be sufficient to boot and a minimal system can probably
 be squeezed onto a 120MB partition by installing just the minimum sets.
@@ -31,18 +31,17 @@ machine.
 
 
 Supported devices on all of the above systems {:-include-:}:
-	Internal SCSI bus and most SCSI tapes, hard drives, and CD-ROM
-	  drives
-	Internal sound -- enough to beep on some machines, anyway
+	Internal SCSI bus (esp, ncrscsi, sbc) and most SCSI tapes, hard drives,
+	  and CD-ROM drives
+	Internal sound -- enough to beep on some machines, anyway (asc)
 	Most NuBus video cards (there have been some
 	  problems with some 24-bit color cards)
-	Both internal serial ports
-	ADB keyboards and mice
+	Both internal serial ports (zsc)
+	ADB keyboards and mice (adb)
 	Ethernet cards based on the Natl. Semiconductor 8390
-	  (Asante, Apple, and a few others)
+	  (Asante, Apple, and a few others) (ae)
 	Some Ethernet cards based on the SONIC chip including internal
-	  Ethernet on many of Apple's non-AV Quadras/Centrises and
-	  PowerBook 500 series.
+	  Ethernet on Apple Quadras/Centrises and PowerBook 500 series (sn)
 	
 Some systems will boot and are usable from an external terminal
 (serial tty or SL/IP):
@@ -65,5 +64,4 @@ dnl XXX I think IIfx work now...
 	  in OpenBSD.
 	LCPDS Ethernet cards.
 	Apple Communication Slot (CS) Ethernet cards.
-	Quadra/Centris AV series' onboard MACE Ethernet.
 	Floppy drive.
