@@ -90,7 +90,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strtod.c,v 1.12 1998/08/28 20:49:24 mickey Exp $";
+static char *rcsid = "$OpenBSD: strtod.c,v 1.13 2000/04/30 04:58:22 bjc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
@@ -113,7 +113,7 @@ static char *rcsid = "$OpenBSD: strtod.c,v 1.12 1998/08/28 20:49:24 mickey Exp $
 #define IEEE_BIG_ENDIAN
 #endif
 
-#ifdef vax
+#ifdef __vax__
 #define VAX
 #endif
 

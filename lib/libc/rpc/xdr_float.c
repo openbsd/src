@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_float.c,v 1.8 1998/08/28 20:29:51 mickey Exp $";
+static char *rcsid = "$OpenBSD: xdr_float.c,v 1.9 2000/04/30 04:58:23 bjc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -60,7 +60,7 @@ static char *rcsid = "$OpenBSD: xdr_float.c,v 1.8 1998/08/28 20:29:51 mickey Exp
 #define IEEEFP
 #endif
 
-#ifdef vax
+#ifdef __vax__
 
 /* What IEEE single precision floating point looks like on a Vax */
 struct	ieee_single {
@@ -89,7 +89,7 @@ static struct sgl_limits {
 	{{ 0x0, 0x0, 0x0, 0x0 },	/* Min Vax */
 	{ 0x0, 0x0, 0x0 }}		/* Min IEEE */
 };
-#endif /* vax */
+#endif /* __vax__ */
 
 bool_t
 xdr_float(xdrs, fp)
@@ -162,7 +162,7 @@ xdr_float(xdrs, fp)
 	return (FALSE);
 }
 
-#ifdef vax
+#ifdef __vax__
 /* What IEEE double precision floating point looks like on a Vax */
 struct	ieee_double {
 	unsigned int	mantissa1 : 20;
@@ -195,7 +195,7 @@ static struct dbl_limits {
 	{ 0x0, 0x0, 0x0, 0x0 }}				/* Min IEEE */
 };
 
-#endif /* vax */
+#endif /* __vax__ */
 
 
 bool_t
