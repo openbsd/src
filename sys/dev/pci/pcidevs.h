@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.715 2004/02/27 21:30:51 matthieu Exp 
+ *	OpenBSD: pcidevs,v 1.716 2004/02/28 22:33:13 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -482,8 +482,8 @@
 /* Alteon products */
 #define	PCI_PRODUCT_ALTEON_ACENIC	0x0001		/* Acenic */
 #define	PCI_PRODUCT_ALTEON_ACENICT	0x0002		/* Acenic Copper */
-#define	PCI_PRODUCT_ALTEON_BCM5700	0x0003		/* BCM5700 (Broadcom) */
-#define	PCI_PRODUCT_ALTEON_BCM5701	0x0004		/* BCM5701 (Broadcom) */
+#define	PCI_PRODUCT_ALTEON_BCM5700	0x0003		/* BCM5700 */
+#define	PCI_PRODUCT_ALTEON_BCM5701	0x0004		/* BCM5701 */
 
 /* Altima products */
 #define	PCI_PRODUCT_ALTIMA_AC1000	0x03e8		/* AC1000 */
@@ -545,7 +545,7 @@
 #define	PCI_PRODUCT_AMI_MEGARAID434	0x9060		/* MegaRAID Series 434 */
 
 /* Antares Microsystems products */
-#define	PCI_PRODUCT_ANTARES_TC9021	0x1021		/* Antares Gigabit Ethernet */
+#define	PCI_PRODUCT_ANTARES_TC9021	0x1021		/* Antares Gigabit */
 
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* Bandit */

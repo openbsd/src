@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.715 2004/02/27 21:30:51 matthieu Exp 
+ *	OpenBSD: pcidevs,v 1.716 2004/02/28 22:33:13 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -728,11 +728,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5700,
-	    "BCM5700 (Broadcom)",
+	    "BCM5700",
 	},
 	{
 	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5701,
-	    "BCM5701 (Broadcom)",
+	    "BCM5701",
 	},
 	{
 	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC1000,
@@ -936,7 +936,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ANTARES, PCI_PRODUCT_ANTARES_TC9021,
-	    "Antares Gigabit Ethernet",
+	    "Antares Gigabit",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
