@@ -1,4 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.12 1996/06/22 17:38:14 tholo Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -106,11 +107,11 @@ struct nlist namelist[] = {
 	{ "_bucket" },
 #define X_ALLEVENTS	14
 	{ "_allevents" },
-#ifdef notdef
-#define	X_DEFICIT	15
-	{ "_deficit" },
-#define	X_FORKSTAT	16
+#define	X_FORKSTAT	15
 	{ "_forkstat" },
+#ifdef notdef
+#define	X_DEFICIT	16
+	{ "_deficit" },
 #define X_REC		17
 	{ "_rectime" },
 #define X_PGIN		18
@@ -119,7 +120,7 @@ struct nlist namelist[] = {
 	{ "_xstats" },
 #define X_END		20
 #else
-#define X_END		15
+#define X_END		16
 #endif
 #ifdef tahoe
 #define	X_VBDINIT	(X_END)
@@ -132,6 +133,12 @@ struct nlist namelist[] = {
 #if defined(pc532)
 #define	X_IVT		(X_END)
 	{ "_ivt" },
+#endif
+#if defined(i386)
+#define	X_INTRHAND	(X_END)
+	{ "_intrhand" },
+#define	X_INTRSTRAY	(X_END+1)
+	{ "_intrstray" },
 #endif
 	{ "" },
 };
@@ -163,10 +170,8 @@ void	dosum __P((void));
 void	dovmstat __P((u_int, int));
 void	kread __P((int, void *, size_t));
 void	usage __P((void));
-#ifdef notdef
 void	dotimes __P((void));
 void	doforkst __P((void));
-#endif
 
 char	**choosedrives __P((char **));
 
@@ -191,11 +196,9 @@ main(argc, argv)
 		case 'c':
 			reps = atoi(optarg);
 			break;
-#ifndef notdef
 		case 'f':
 			todo |= FORKSTAT;
 			break;
-#endif
 		case 'i':
 			todo |= INTRSTAT;
 			break;
@@ -211,11 +214,9 @@ main(argc, argv)
 		case 's':
 			todo |= SUMSTAT;
 			break;
-#ifndef notdef
 		case 't':
 			todo |= TIMESTAT;
 			break;
-#endif
 		case 'w':
 			interval = atoi(optarg);
 			break;
@@ -287,18 +288,14 @@ main(argc, argv)
 	} else if (reps)
 		interval = 1;
 
-#ifdef notdef
 	if (todo & FORKSTAT)
 		doforkst();
-#endif
 	if (todo & MEMSTAT)
 		domem();
 	if (todo & SUMSTAT)
 		dosum();
-#ifdef notdef
 	if (todo & TIMESTAT)
 		dotimes();
-#endif
 	if (todo & INTRSTAT)
 		dointr();
 	if (todo & VMSTAT)
@@ -489,25 +486,28 @@ needhdr()
 	hdrcnt = 1;
 }
 
-#ifdef notdef
 void
 dotimes()
 {
 	u_int pgintime, rectime;
 
+#ifdef NEWVM
+	pgintime = 0;
+	rectime = 0;
+#else
 	kread(X_REC, &rectime, sizeof(rectime));
 	kread(X_PGIN, &pgintime, sizeof(pgintime));
+#endif
 	kread(X_SUM, &sum, sizeof(sum));
-	(void)printf("%u reclaims, %u total time (usec)\n",
-	    sum.v_pgrec, rectime);
-	(void)printf("average: %u usec / reclaim\n", rectime / sum.v_pgrec);
+	(void)printf("%u reactivates, %u total time (usec)\n",
+	    sum.v_reactivated, rectime);
+	(void)printf("average: %u usec / reclaim\n", rectime / sum.v_reactivated);
 	(void)printf("\n");
 	(void)printf("%u page ins, %u total time (msec)\n",
-	    sum.v_pgin, pgintime / 10);
+	    sum.v_pageins, pgintime / 10);
 	(void)printf("average: %8.1f msec / page in\n",
-	    pgintime / (sum.v_pgin * 10.0));
+	    pgintime / (sum.v_pageins * 10.0));
 }
-#endif
 
 pct(top, bot)
 	long top, bot;
@@ -595,7 +595,7 @@ dosum()
 	    nchstats.ncs_miss + nchstats.ncs_long;
 	(void)printf("%9ld total name lookups\n", nchtotal);
 	(void)printf(
-	    "%9s cache hits (%d%% pos + %d%% neg) system %d%% per-process\n",
+	    "%9s cache hits (%d%% pos + %d%% neg) system %d%% per-directory\n",
 	    "", PCT(nchstats.ncs_goodhits, nchtotal),
 	    PCT(nchstats.ncs_neghits, nchtotal),
 	    PCT(nchstats.ncs_pass2, nchtotal));
@@ -631,7 +631,6 @@ dosum()
 #endif
 }
 
-#ifdef notdef
 void
 doforkst()
 {
@@ -641,9 +640,10 @@ doforkst()
 	(void)printf("%d forks, %d pages, average %.2f\n",
 	    fks.cntfork, fks.sizfork, (double)fks.sizfork / fks.cntfork);
 	(void)printf("%d vforks, %d pages, average %.2f\n",
-	    fks.cntvfork, fks.sizvfork, (double)fks.sizvfork / fks.cntvfork);
+	    fks.cntvfork, fks.sizvfork, (double)fks.sizvfork / (fks.cntvfork ? fks.cntvfork : 1));
+	(void)printf("%d rforks, %d pages, average %.2f\n",
+	    fks.cntrfork, fks.sizrfork, (double)fks.sizrfork / (fks.cntrfork ? fks.cntrfork : 1));
 }
-#endif
 
 void
 dkstats()
@@ -721,6 +721,45 @@ dointr()
 		(void)printf("Total        %8ld %8ld\n",
 		    inttotal, inttotal / uptime);
 	}
+}
+#elif defined(i386)
+/* To get struct intrhand */
+#include <machine/psl.h>
+void
+dointr()
+{
+	struct intrhand *intrhand[16], *ihp, ih;
+	long inttotal, uptime;
+	int intrstray[16];
+	char iname[17];
+	int i;
+
+	iname[16] = '\0';
+	uptime = getuptime();
+	kread(X_INTRHAND, intrhand, sizeof(intrhand));
+	kread(X_INTRSTRAY, intrstray, sizeof(intrstray));
+
+	(void)printf("interrupt           total     rate\n");
+	inttotal = 0;
+	for (i = 0; i < 16; i++) {
+		ihp = intrhand[i];
+		while (ihp) {
+			if (kvm_read(kd, (u_long)ihp, &ih, sizeof(ih)) != sizeof(ih))
+				errx(1, "vmstat: ih: %s", kvm_geterr(kd));
+			if (kvm_read(kd, (u_long)ih.ih_what, iname, 16) != 16)
+				errx(1, "vmstat: ih_what: %s", kvm_geterr(kd));
+			printf("%-16.16s %8ld %8ld\n", iname, ih.ih_count, ih.ih_count / uptime);
+			inttotal += ih.ih_count;
+			ihp = ih.ih_next;
+		}
+	}
+	for (i = 0; i < 16; i++)
+		if (intrstray[i]) {
+			printf("Stray irq %-2d     %8ld %8ld\n",
+			       i, intrstray[i], intrstray[i] / uptime);
+			inttotal += intrstray[i];
+		}
+	printf("Total            %8ld %8ld\n", inttotal, inttotal / uptime);
 }
 #else
 void
