@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.108 2003/01/16 16:15:46 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.109 2003/01/16 17:24:46 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -5081,6 +5081,7 @@ nforce_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		break;
 	case PCI_PRODUCT_NVIDIA_NFORCE2_IDE:
 		sc->sc_wdcdev.UDMA_cap = 6;
+		break;
 	default:
 		sc->sc_wdcdev.UDMA_cap = 0;
 	}
