@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.300 2003/01/25 22:53:45 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.301 2003/01/27 19:08:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -244,15 +244,15 @@ int	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *,
 int	expand_queue(struct pf_altq *, struct node_queue *,
 	    struct node_queue_bw);
 
-int			 check_rulestate(int);
-int			 kw_cmp(const void *, const void *);
-int			 lookup(char *);
-int			 lgetc(FILE *);
-int			 lungetc(int);
-int			 findeol(void);
-int			 yylex(void);
-int			 atoul(char *, u_long *);
-int			 getservice(char *);
+int	 check_rulestate(int);
+int	 kw_cmp(const void *, const void *);
+int	 lookup(char *);
+int	 lgetc(FILE *);
+int	 lungetc(int);
+int	 findeol(void);
+int	 yylex(void);
+int	 atoul(char *, u_long *);
+int	 getservice(char *);
 
 struct sym {
 	struct sym	*next;
@@ -262,14 +262,14 @@ struct sym {
 };
 struct sym	*symhead = NULL;
 
-int			 symset(const char *, const char *);
-char			*symget(const char *);
+int	 symset(const char *, const char *);
+char	*symget(const char *);
 
-void			 decide_address_family(struct node_host *,
-			    sa_family_t *);
-void			 remove_invalid_hosts(struct node_host **,
-			    sa_family_t *);
-u_int16_t		 parseicmpspec(char *, sa_family_t);
+void	 decide_address_family(struct node_host *,
+	    sa_family_t *);
+void	 remove_invalid_hosts(struct node_host **,
+	    sa_family_t *);
+u_int16_t parseicmpspec(char *, sa_family_t);
 
 typedef struct {
 	union {
