@@ -1,11 +1,11 @@
-/*	$OpenBSD: conf.h,v 1.1 2004/12/31 00:04:35 drahn Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 2004/12/31 14:57:13 drahn Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 2002/02/10 12:26:03 chris Exp $	*/
 
-#ifndef _CATS_CONF_H
-#define	_CATS_CONF_H
+#ifndef _ZAURUS_CONF_H
+#define	_ZAURUS_CONF_H
 
 /*
- * CATS specific device includes go in here
+ * ZAURUS specific device includes go in here
  */
 #include "fcom.h"
 
@@ -16,4 +16,4 @@
 
 #include <arm/conf.h>
 
-#endif	/* _CATS_CONF_H */
+#endif	/* _ZAURUS_CONF_H */

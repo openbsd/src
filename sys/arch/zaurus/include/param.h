@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.1 2004/12/31 00:04:35 drahn Exp $	*/
+/*	$OpenBSD: param.h,v 1.2 2004/12/31 14:57:13 drahn Exp $	*/
 /*	$NetBSD: param.h,v 1.4 2002/02/12 06:58:19 thorpej Exp $	*/
 
 /*
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_CATS_PARAM_H_
-#define	_CATS_PARAM_H_
+#ifndef	_ZAURUS_PARAM_H_
+#define	_ZAURUS_PARAM_H_
 
 /*
  * cats boot dmesg is bigger than 4k
@@ -48,4 +48,4 @@
 #define	_MACHINE	cats
 #define	MACHINE		"cats"
 
-#endif	/* _CATS_PARAM_H_ */
+#endif	/* _ZAURUS_PARAM_H_ */

@@ -1,8 +1,8 @@
-/* 	$OpenBSD: isa_machdep.h,v 1.1 2004/12/31 00:04:35 drahn Exp $	*/
+/* 	$OpenBSD: isa_machdep.h,v 1.2 2004/12/31 14:57:13 drahn Exp $	*/
 /* $NetBSD: isa_machdep.h,v 1.4 2002/01/07 22:58:08 chris Exp $ */
 
-#ifndef _CATS_ISA_MACHDEP_H_
-#define _CATS_ISA_MACHDEP_H_
+#ifndef _ZAURUS_ISA_MACHDEP_H_
+#define _ZAURUS_ISA_MACHDEP_H_
 #include <arm/isa_machdep.h>
 
 #ifdef _KERNEL
@@ -10,4 +10,4 @@
 void	isa_footbridge_init(u_int, u_int);
 #endif /* _KERNEL */
 
-#endif /* _CATS_ISA_MACHDEP_H_ */
+#endif /* _ZAURUS_ISA_MACHDEP_H_ */
