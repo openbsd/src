@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.54 2002/02/19 00:44:38 krw Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.55 2002/03/26 17:22:43 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -205,6 +205,11 @@ scsibus* at uha?
 wds0	at isa? disable port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
 scsibus* at wds?
+
+# I2O
+iop*	at pci? dev ? function ?	# I2O
+ioprbs*	at iop? tid ?			# Random block storage
+scsibus* at ioprbs?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
