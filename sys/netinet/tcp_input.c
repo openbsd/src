@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.88 2001/05/20 08:35:11 angelos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.89 2001/05/27 00:39:27 angelos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -766,7 +766,7 @@ findpcb:
 	}
 
 #ifdef IPSEC
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_DONE, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
         s = splnet();
 	if (mtag != NULL) {
 		tdbi = (struct tdb_ident *)(mtag + 1);

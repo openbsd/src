@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.71 2001/05/20 19:19:57 fgsch Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.72 2001/05/27 00:39:26 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -481,7 +481,7 @@ ipv4_input(m)
 	} else {
 #ifdef IPSEC
 	        /* IPsec policy check for forwarded packets */
-		mtag = m_tag_find(m, PACKET_TAG_IPSEC_DONE, NULL);
+		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
                 s = splnet();
 		if (mtag != NULL) {
 			tdbi = (struct tdb_ident *)(mtag + 1);
@@ -628,7 +628,7 @@ found:
 	  goto skipipsec;
 
 	/* IPsec policy check for local-delivery packets */
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_DONE, NULL); 
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL); 
         s = splnet();
 	if (mtag) {
 		tdbi = (struct tdb_ident *)(mtag + 1);

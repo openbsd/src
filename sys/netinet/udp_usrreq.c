@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.58 2001/05/20 08:35:12 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.59 2001/05/27 00:39:27 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -517,7 +517,7 @@ udp_input(m, va_alist)
 	}
 
 #ifdef IPSEC
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_DONE, NULL);
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
         s = splnet();
 	if (mtag != NULL) {
 		tdbi = (struct tdb_ident *)(mtag + 1);

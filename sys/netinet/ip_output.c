@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.91 2001/05/20 08:34:29 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.92 2001/05/27 00:39:26 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -330,8 +330,12 @@ ip_output(m0, va_alist)
 		}
 
 		/* Loop detection */
-		for (mtag = m_tag_find(m, PACKET_TAG_IPSEC_DONE, NULL); mtag;
-		     mtag = m_tag_find(m, PACKET_TAG_IPSEC_DONE, mtag)) {
+		for (mtag = m_tag_first(m); mtag != NULL;
+		    mtag = m_tag_next(m, mtag)) {
+			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE &&
+			    mtag->m_tag_id !=
+			    PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED)
+				continue;
 			tdbi = (struct tdb_ident *)(mtag + 1);
 			if (tdbi->spi == tdb->tdb_spi &&
 			    tdbi->proto == tdb->tdb_sproto &&
@@ -339,7 +343,7 @@ ip_output(m0, va_alist)
 			        sizeof(union sockaddr_union))) {
 				splx(s);
 				sproto = 0; /* mark as no-IPsec-needed */
-				DPRINTF(("ip_output: IPsec loop detected, skipping further IPsec processing.\n"));
+				DPRINTF(("ip_output: IPsec loop detected, skipping further IPsec processing for this packet.\n"));
 				goto done_spd;
 			}
 		}
