@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: menu_opts.3,v 1.5 1998/09/17 04:14:46 millert Exp $
+.\" $OpenBSD: menu_opts.3,v 1.6 1999/01/22 03:45:07 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: menu_opts.3x,v 1.6 1998/08/27 21:21:04 Rick.Ohnemus Exp $
+.\" $From: menu_opts.3x,v 1.7 1998/11/29 01:10:21 Rick.Ohnemus Exp $
 .TH menu_opts 3 ""
 .SH NAME
 \fBmenu_opts\fR - set and get menu options
@@ -54,7 +54,7 @@ others alone.
 The function \fBmenu_opts_off\fR turns off the given option bits, and leaves
 others alone.
 
-The function \fBmenu_opts\fR returns the menu's current option bits.  
+The function \fBmenu_opts\fR returns the menu's current option bits.
 
 The following options are defined (all are on by default):
 .TP 5
@@ -73,7 +73,7 @@ Ignore the case when pattern-matching.
 O_SHOWMATCH
 Move the cursor to within the item name while pattern-matching.
 .TP 5
-O_NONCYCLIC 
+O_NONCYCLIC
 Don't wrap around next-item and previous-item,
 requests to the other end of the menu.
 .SH RETURN VALUE

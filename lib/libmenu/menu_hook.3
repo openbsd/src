@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: menu_hook.3,v 1.5 1998/09/17 04:14:45 millert Exp $
+.\" $OpenBSD: menu_hook.3,v 1.6 1999/01/22 03:45:06 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: menu_hook.3x,v 1.5 1998/08/27 21:21:04 Rick.Ohnemus Exp $
+.\" $From: menu_hook.3x,v 1.6 1998/11/29 01:09:47 Rick.Ohnemus Exp $
 .TH menu_hook 3 ""
 .SH NAME
 \fBmenu_hook\fR - set hooks for automatic invocation by applications
@@ -54,7 +54,7 @@ void (*)(MENU *) menu_term(const MENU *menu);
 .br
 .SH DESCRIPTION
 These functions make it possible to set hook functions to be called at various
-points in the automatic processing of input event codes by \fBmenu_driver\fR.  
+points in the automatic processing of input event codes by \fBmenu_driver\fR.
 
 The function \fBset_item_init\fR sets a hook to be called at menu-post time and
 each time the selected item changes (after the change).  \fBitem_init\fR

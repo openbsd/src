@@ -1,4 +1,4 @@
-.\" $OpenBSD: menu_driver.3,v 1.4 1998/07/24 16:39:27 millert Exp $
+.\" $OpenBSD: menu_driver.3,v 1.5 1999/01/22 03:45:06 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.'" $From: menu_driver.3x,v 1.6 1998/03/11 21:12:53 juergen Exp $
+.'" $From: menu_driver.3x,v 1.8 1999/01/09 22:55:18 tom Exp $
 .TH menu_driver 3 ""
 .SH NAME
 \fBmenu_driver\fR - command-processing loop of the menu system
@@ -39,8 +39,9 @@ int menu_driver(MENU *menu, int c);
 .br
 .SH DESCRIPTION
 Once a menu has been posted (displayed), you should funnel input events to it
-through \fBmenu_driver\fR.  This routine has two major input cases; either
-the input is a menu navigation request or it's a printable ASCII character.
+through \fBmenu_driver\fR.  This routine has three major input cases; either
+the input is a menu navigation request, it's a printable ASCII character or it
+is the KEY_MOUSE special key associated with an mouse event.
 The menu driver requests are as follows:
 .TP 5
 REQ_LEFT_ITEM
@@ -102,8 +103,27 @@ the new pattern.  If there is no such match, \fBmenu_driver\fR returns
 If the second argument is one of the above pre-defined requests, the
 corresponding action is performed.
 .PP
+If the second argument is the KEY_MOUSE special key, the associated
+mouse event is translated into one of the above pre-defined requests.
+Currently only clicks in the user window (e.g. inside the menu display
+area or the decoration window) are handled. If you click above the
+display region of the menu, a REQ_SCR_ULINE is generated, if you
+doubleclick a REQ_SCR_UPAGE is generated and if you tripleclick a
+REQ_FIRST_ITEM is generated. If you click below the display region of
+the menu, a REQ_SCR_DLINE is generated, if you doubleclick a REQ_SCR_DPAGE
+is generated and if you tripleclick a REQ_LAST_ITEM is generated. If you
+click at an item inside the display area of the menu, the menu cursor
+is positioned to that item. If you double-click at an item a REQ_TOGGLE_ITEM
+is generated and \fBE_UNKNOWN_COMMAND\fR is returned. This return value makes
+sense, because a double click usually means that an item-specific action should
+be returned. It's exactly the purpose of this return value to signal that an
+application specific command should be executed. If a translation
+into a request was done, \fBmenu_driver\fR returns the result of this request.
+If you clicked outside the user window or the mouse event couldn't be translated
+into a menu request an \fBE_REQUEST_DENIED\fR is returned.
+.PP
 If the second argument is neither printable ASCII nor one of the above
-pre-defined menu requests, the drive assumes it is an application-specific
+pre-defined menu requests or KEY_MOUSE, the drive assumes it is an application-specific
 command and returns \fBE_UNKNOWN_COMMAND\fR.  Application-defined commands
 should be defined relative to \fBMAX_COMMAND\fR, the maximum value of these
 pre-defined requests.
@@ -140,7 +160,7 @@ The header file \fB<menu.h>\fR automatically includes the header files
 \fB<curses.h>\fR.
 .SH PORTABILITY
 These routines emulate the System V menu library.  They were not supported on
-Version 7 or BSD versions.
+Version 7 or BSD versions. The support for mouse events is ncurses specific.
 .SH AUTHORS
 Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
 S. Raymond.

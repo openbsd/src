@@ -1,4 +1,4 @@
-/*	$OpenBSD: menu.priv.h,v 1.4 1998/07/24 16:39:24 millert Exp $	*/
+/*	$OpenBSD: menu.priv.h,v 1.5 1999/01/22 03:45:06 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -52,10 +52,12 @@ extern MENU _nc_Default_Menu;
 /* Normalize menu to default if none was given */
 #define Normalize_Menu( menu ) ((menu)=(menu)?(menu):&_nc_Default_Menu)
 
+/* Get the user defined (framing) window of the menu */
+#define Get_Menu_UserWin(menu) ((menu)->userwin ? (menu)->userwin : stdscr)
+
 /* Normalize menu window */
 #define Get_Menu_Window(  menu ) \
-   ( (menu)->usersub  ? (menu)->usersub  : (\
-     (menu)->userwin  ? (menu)->userwin  : stdscr ))
+   ((menu)->usersub  ? (menu)->usersub  : Get_Menu_UserWin(menu))
 
 /* menu specific status flags */
 #define _LINK_NEEDED    (0x04)
@@ -85,7 +87,7 @@ extern MENU _nc_Default_Menu;
 
 /* This macro ensures, that the item becomes visible, if possible with the
    specified row as the top row of the window. If this is not possible,
-   the top row will be adjusted and the value is stored in the row argument. 
+   the top row will be adjusted and the value is stored in the row argument.
 */
 #define Adjust_Current_Item(menu,row,item) \
   { if ((item)->y < row) \
@@ -100,7 +102,7 @@ extern MENU _nc_Default_Menu;
   { (menu)->pindex = 0; \
     (menu)->pattern[0] = '\0'; }
 
-/* Internal functions. */						
+/* Internal functions. */
 extern void _nc_Draw_Menu(const MENU *);
 extern void _nc_Show_Menu(const MENU *);
 extern void _nc_Calculate_Item_Length_and_Width(MENU *);
@@ -110,3 +112,5 @@ extern void _nc_Disconnect_Items(MENU *);
 extern void _nc_New_TopRow_and_CurrentItem(MENU *,int, ITEM *);
 extern void _nc_Link_Items(MENU *);
 extern int  _nc_Match_Next_Character_In_Item_Name(MENU*,int,ITEM**);
+extern int  _nc_menu_cursor_pos(const MENU* menu, const ITEM* item,
+				int* pY, int* pX);
