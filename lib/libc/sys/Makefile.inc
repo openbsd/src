@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.24 1997/11/13 07:11:13 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.25 1998/02/08 22:45:14 tholo Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -9,6 +9,15 @@
 SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S \
 	sbrk.S setlogin.S sigpending.S sigprocmask.S sigreturn.S \
 	sigsuspend.S syscall.S
+
+LSRCS+=	Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
+	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c \
+	Lint_sigpending.c Lint_sigprocmask.c Lint_sigreturn.c \
+	Lint_sigsuspend.c Lint_syscall.c
+DPSRCS+= Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
+	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c \
+	Lint_sigpending.c Lint_sigprocmask.c Lint_sigreturn.c \
+	Lint_sigsuspend.c Lint_syscall.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
@@ -107,10 +116,31 @@ ${PSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-LSRCS+=	protolib.c
+# Lint stubs for all automatically-generated assembly stubs (GENERATED)
+#LSRCS+=	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
+#DPSRCS+= LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
+LSRCS+=	LintSysNormal.c
+DPSRCS+= LintSysNormal.c
 
-protolib.ln:
-	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} ${AINC} -i ${.IMPSRC}
+CLEANFILES+= LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
+
+LintSysNormal.c: ${.CURDIR}/sys/makelintstub.sh \
+    ${DESTDIR}/usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@sh ${.CURDIR}/sys/makelintstub.sh -o ${.TARGET} \
+	    -s ${DESTDIR}/usr/include/sys/syscall.h ${ASM}
+
+LintSysNoerr.c: ${.CURDIR}/sys/makelintstub.sh \
+    ${DESTDIR}/usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@sh ${.CURDIR}/sys/makelintstub.sh -o ${.TARGET} -n \
+	    -s ${DESTDIR}/usr/include/sys/syscall.h ${NOERR}
+
+LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub.sh \
+    ${DESTDIR}/usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@sh ${.CURDIR}/sys/makelintstub.sh -o ${.TARGET} -p \
+	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	chmod.2 chown.2 chroot.2 clock_gettime.2 close.2 connect.2 dup.2 \
