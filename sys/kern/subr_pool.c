@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.6 2001/06/23 16:13:01 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.7 2001/06/23 17:15:46 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.59 2001/06/05 18:51:04 thorpej Exp $	*/
 
 /*-
@@ -1836,10 +1836,10 @@ pool_cache_reclaim(struct pool_cache *pc)
 	simple_unlock(&pc->pc_slock);
 }
 
+#ifdef notyet
 int
 sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 {
-#ifdef notyet
 	struct pool *pp;
 	size_t buflen = where != NULL ? *sizep : 0;
 	int s;
@@ -1851,7 +1851,5 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
 	simple_lock(&pool_head_slock);
 
 	for (pp = pool_head; pp != NULL; pp = TAILQ_NEXT(pp, pr_poollist))
-#else
-	return EOPNOTSUPP;
-#endif
 }
+#endif
