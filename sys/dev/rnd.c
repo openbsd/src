@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.12 1996/12/28 19:06:28 niklas Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.13 1997/01/01 16:16:13 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -573,8 +573,9 @@ add_blkdev_randomness(dev)
 	/*
 	 * Happens before randomattach() has been run and then later
 	 * when NODEV buffers get fed to biodone().  XXX Howcome?
+	 * XXX don't count on mfs (major==255)
 	 */
-	if (dev == NODEV || blkdev_timer_state == NULL)
+	if (dev == NODEV || major(dev) == 255 || blkdev_timer_state == NULL)
 		return;
 
 #ifdef DIAGNOSTIC
