@@ -1,0 +1,180 @@
+.\"	$OpenBSD: hostname.if.5,v 1.1 1999/09/01 05:07:54 deraadt Exp $
+.\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
+.\"
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
+.\"
+.Dd December 11, 1993
+.Dt HOSTNAME.IF 5
+.Os
+.Sh NAME
+.Nm hostname.*
+and
+.Nm bridgename.*
+.Nd interface-specific configuration files
+.Sh DESCRIPTION
+The
+.Nm
+and
+.Nm bridgename.*
+files contain information regarding
+the configuration of each network interface.
+One file should exist for each interface that is to be configured,
+such as
+.Pa hostname.fxp0
+or
+.Pa bridgename.bridge0 .
+However, a configuration file is not needed for
+.Dv lo0 .
+.Pp
+Three data formats are permitted for these files.
+.Pp
+.Nm hostname.*
+files can accept the following two formats:
+.Pp
+Regular network setup:
+.Pp
+.Bd -literal -offset xxxx
+.Va addr_family Va addr Va netmask Va broadcast_addr Va options
+.Li dest Va dest_addr
+.Ed
+.Pp
+For example,
+.Bd -literal -offset xxxx
+inet 10.0.1.12 255.255.255.0 10.0.1.255 media 100baseTX
+.Ed
+.Pp
+The above format has the following field values:
+.Bl -tag -width indent -offset xxxx
+.It Va addr_family
+The address family of the interface, generally
+.Dq inet .
+.It Va addr
+The optional address that belongs to the interface, such as
+190.191.192.1.
+It is also feasable to use a hostname as specified in
+.Pa /etc/hosts .
+It is recommended that an address be used instead of symbolic information
+which might activate
+.Xr resolver 3
+library routines.
+.Pp
+If no address is specified, the
+.Va netmask ,
+.Va broadcast_addr ,
+.Li dest ,
+and
+.Va dest_addr
+options are invalid and will be ignored.
+.It Va netmask
+The optional network mask for the interface, ie.
+255.255.255.0.
+.It Va broadcast_addr
+The optional broadcast address for the interface, ie.
+190.191.192.255
+.It Va options
+Optional miscellaneous options to set on the interface, ie.
+.Dq media 100baseTX mediaopt full-duplex .
+.It Li dest
+If the interface needs a destination address address set, this is
+the literal text
+.Dq dest .
+.It Va dest_addr
+The destination address to be set on the interface, such as
+190.191.192.2.
+It is also feasable to use a hostname as specified in
+.Pa /etc/hosts .
+It is recommended that an address be used instead of symbolic information
+which might activate
+.Xr resolver 3
+library routines.
+.El
+.Pp
+A DHCP-configured network interface setup consists of
+.Pp
+.Bd -literal -offset xxxx
+.Li dhcp Va options
+.Ed
+.Pp
+For example,
+.Bd -literal -offset xxxx
+dhcp media 100baseTX mediaopt full-duplex
+.Ed
+.Pp
+The options are as follows:
+.Bl -tag -width indent -offset xxxx
+.It Li dhcp
+The string
+.Dq dhcp
+if the interface is to be configured using DHCP.
+See
+.Xr dhclient 8
+and
+.Xr dhclient.conf 5
+for more details.
+.It Va options
+Optional miscellaneous options to set on the interface, ie.
+.Dq media 100baseTX mediaopt full-duplex .
+.El
+.Pp
+.Pp
+The final file format only applies to
+.Nm bridgename.bridge*
+files.
+A bridge interface setup consists of
+.Pp
+.Bd -literal -offset xxxx
+.Va firstline
+.Va brconfig-arguments
+.Va brconfig-arguments
+\&...
+.Ed
+.Pp
+For example,
+.Bd -literal -offset xxxx
+up
+add fxp0
+add ep1
+-learn fxp0
+.Ed
+.Pp
+The options are as follows:
+.Bl -tag -width indent -offset xxxx
+.It Va firstline
+The firstline of the bridge file contains a line like
+.Dq up media auto .
+.It Va brconfig-arguments
+.Xr brconfig 8
+is called for each successive line.
+.El
+.Pp
