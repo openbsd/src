@@ -211,7 +211,7 @@ isp_pci_attach(parent, self, aux)
 		isp_uninit(&pcs->pci_isp);
 		return;
 	}
-	printf(" %s\n", intrstr);
+	printf("%s\n", intrstr);
 
 	/*
 	 * Create the DMA maps for the data transfers.
