@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.52 2002/09/17 20:16:43 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.53 2002/09/17 20:44:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -86,7 +86,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.52 2002/09/17 20:16:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.53 2002/09/17 20:44:38 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -194,25 +194,53 @@ void send_signal(char *, int);
 int
 main(int argc, char **argv)
 {
-	struct conf_entry *p, *q;
+	struct conf_entry *p, *q, *x, *y;
 	struct pidinfo *pidlist, *pl;
+	char **av;
 	int status, listlen;
 	
 	parse_args(argc, argv);
+	argc -= optind;
+	argv += optind;
+
 	if (needroot && getuid() && geteuid())
 		errx(1, "You must be root.");
-	p = q = parse_file(&listlen);
-	signal(SIGCHLD, child_killer);
+
+	p = parse_file(&listlen);
+	if (argc > 0) {
+		/* Only rotate specified files. */
+		x = y = NULL;
+		listlen = 0;
+		for (av = argv; *av; av++) {
+			for (q = p; q; q = q->next)
+				if (strcmp(*av, q->log) == 0) {
+					if (x == NULL)
+						x = y = q;
+					else {
+						y->next = q;
+						y = q;
+					}
+					listlen++;
+					break;
+				}
+			if (q == NULL)
+				warnx("%s is not listed in %s", *av, conf);
+		}
+		if (x == NULL)
+			errx(1, "no specified log files found in %s", conf);
+		y->next = NULL;
+		p = x;
+	}
 
 	pidlist = (struct pidinfo *)calloc(listlen + 1, sizeof(struct pidinfo));
 	if (pidlist == NULL)
 		err(1, "calloc");
 
+	signal(SIGCHLD, child_killer);
+
 	/* Step 1, rotate all log files */
-	while (q) {
+	for (q = p; q; q = q->next)
 		do_entry(q);
-		q = q->next;
-	}
 
 	/* Step 2, make a list of unique pid files */
 	for (q = p, pl = pidlist; q; ) {
@@ -422,7 +450,7 @@ usage(void)
 	extern const char *__progname;
 
 	(void)fprintf(stderr, "usage: %s [-Fmnrv] [-a directory] "
-	    "[-f config_file]\n", __progname);
+	    "[-f config_file] [log ...]\n", __progname);
 	exit(1);
 }
 

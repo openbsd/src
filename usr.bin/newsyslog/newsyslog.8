@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.27 2002/09/17 20:16:43 millert Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.28 2002/09/17 20:44:38 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -59,6 +59,7 @@
 .Op Fl Fmnrv
 .Op Fl a Ar directory
 .Op Fl f Ar config_file
+.Op Ar log ...
 .Sh DESCRIPTION
 .Nm
 is a program that should be scheduled to run periodically by
@@ -138,6 +139,15 @@ instead of
 .Pa /etc/newsyslog.conf
 for the configuration file.
 .El
+.Pp
+If one or more
+.Ar log
+files are specified on the command line, only the specified logs will
+be rotated.
+Note that each
+.Ar log
+specified must have an entry in
+.Pa /etc/newsyslog.conf .
 .Pp
 A log can be archived because of two reasons.
 The log file can have
