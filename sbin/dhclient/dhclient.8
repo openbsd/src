@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.2 2004/04/07 20:53:09 henning Exp $
+.\" $OpenBSD: dhclient.8,v 1.3 2004/04/09 18:30:15 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -172,28 +172,10 @@ database of acquired leases
 .Xr dhcrelay 8
 .Sh AUTHORS
 .Nm
-has been written for the Internet Software Consortium
-by Ted Lemon <mellon@fugue.com> in cooperation with Vixie
-Enterprises.
-To learn more about the Internet Software Consortium, see
+was written by
+.An Ted Lemon Aq mellon@fugue.com
+and
+.An Elliot Poger Aq elliot@poger.com .
 .Pp
-.Dl http://www.vix.com/isc.
-.Pp
-To learn more about Vixie Enterprises, see
-.Pp
-.Dl http://www.vix.com.
-.Pp
-This client was substantially modified and enhanced by Elliot Poger
-for use on Linux while he was working on the MosquitoNet project at
-Stanford.
-.Pp
-The current version owes much to Elliot's Linux enhancements, but
-was substantially reorganized and partially rewritten by Ted Lemon
-so as to use the same networking framework that the Internet Software
-Consortium DHCP server uses.
-Much system-specific configuration code
-was moved into a shell script so that as support for more operating
-systems is added, it will not be necessary to port and maintain
-system-specific configuration code to these operating systems \- instead,
-the shell script can invoke the native tools to accomplish the same
-purpose.
+The current implementation was reworked by
+.An Henning Brauer Aq henning@openbsd.org .
