@@ -1,5 +1,5 @@
-/*	$OpenBSD: read.c,v 1.10 2003/10/31 08:42:24 otto Exp $	*/
-/*	$NetBSD: read.c,v 1.28 2003/09/26 17:44:51 christos Exp $	*/
+/*	$OpenBSD: read.c,v 1.11 2003/11/25 20:12:38 otto Exp $	*/
+/*	$NetBSD: read.c,v 1.30 2003/10/18 23:48:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-static const char rcsid[] = "$OpenBSD: read.c,v 1.10 2003/10/31 08:42:24 otto Exp $";
+static const char rcsid[] = "$OpenBSD: read.c,v 1.11 2003/11/25 20:12:38 otto Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -188,10 +188,6 @@ read_preread(EditLine *el)
 {
 	int chrs = 0;
 
-	if (el->el_chared.c_macro.nline) {
-		el_free((ptr_t) el->el_chared.c_macro.nline);
-		el->el_chared.c_macro.nline = NULL;
-	}
 	if (el->el_tty.t_mode == ED_IO)
 		return (0);
 
@@ -204,8 +200,7 @@ read_preread(EditLine *el)
 		    (size_t) MIN(chrs, EL_BUFSIZ - 1));
 		if (chrs > 0) {
 			buf[chrs] = '\0';
-			el->el_chared.c_macro.nline = strdup(buf);
-			el_push(el, el->el_chared.c_macro.nline);
+			el_push(el, buf);
 		}
 	}
 #endif /* FIONREAD */
@@ -224,11 +219,12 @@ el_push(EditLine *el, char *str)
 
 	if (str != NULL && ma->level + 1 < EL_MAXMACRO) {
 		ma->level++;
-		ma->macro[ma->level] = str;
-	} else {
-		term_beep(el);
-		term__flush();
+		if ((ma->macro[ma->level] = el_strdup(str)) != NULL)
+			return;
+		ma->level--;
 	}
+	term_beep(el);
+	term__flush();
 }
 
 
@@ -325,14 +321,16 @@ el_getc(EditLine *el, char *cp)
 		if (ma->level < 0)
 			break;
 
-		if (*ma->macro[ma->level] == 0) {
-			ma->level--;
+		if (ma->macro[ma->level][ma->offset] == '\0') {
+			el_free(ma->macro[ma->level--]);
+			ma->offset = 0;
 			continue;
 		}
-		*cp = *ma->macro[ma->level]++ & 0377;
-		if (*ma->macro[ma->level] == 0) {	/* Needed for QuoteMode
-							 * On */
-			ma->level--;
+		*cp = ma->macro[ma->level][ma->offset++] & 0377;
+		if (ma->macro[ma->level][ma->offset] == '\0') {
+			/* Needed for QuoteMode On */
+			el_free(ma->macro[ma->level--]);
+			ma->offset = 0;
 		}
 		return (1);
 	}
@@ -553,7 +551,13 @@ el_gets(EditLine *el, int *nread)
 			continue;	/* keep going... */
 
 		case CC_EOF:	/* end of file typed */
-			num = 0;
+			if ((el->el_flags & UNBUFFERED) == 0)
+				num = 0;
+			else if (num == -1) {
+				*el->el_line.lastchar++ = CTRL('d');
+				el->el_line.cursor = el->el_line.lastchar;
+				num = 1;
+			}
 			break;
 
 		case CC_NEWLINE:	/* normal end of line */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: hist.c,v 1.6 2003/10/31 08:42:24 otto Exp $	*/
-/*	$NetBSD: hist.c,v 1.14 2003/08/07 16:44:31 agc Exp $	*/
+/*	$OpenBSD: hist.c,v 1.7 2003/11/25 20:12:38 otto Exp $	*/
+/*	$NetBSD: hist.c,v 1.15 2003/11/01 23:36:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-static const char rcsid[] = "$OpenBSD: hist.c,v 1.6 2003/10/31 08:42:24 otto Exp $";
+static const char rcsid[] = "$OpenBSD: hist.c,v 1.7 2003/11/25 20:12:38 otto Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 

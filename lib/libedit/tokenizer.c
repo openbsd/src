@@ -1,5 +1,5 @@
-/*	$OpenBSD: tokenizer.c,v 1.9 2003/10/31 08:42:24 otto Exp $	*/
-/*	$NetBSD: tokenizer.c,v 1.12 2003/08/07 16:44:34 agc Exp $	*/
+/*	$OpenBSD: tokenizer.c,v 1.10 2003/11/25 20:12:38 otto Exp $	*/
+/*	$NetBSD: tokenizer.c,v 1.13 2003/10/18 23:48:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-static const char rcsid[] = "$OpenBSD: tokenizer.c,v 1.9 2003/10/31 08:42:24 otto Exp $";
+static const char rcsid[] = "$OpenBSD: tokenizer.c,v 1.10 2003/11/25 20:12:38 otto Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -61,6 +61,7 @@ typedef enum {
 #define	WINCR		20
 #define	AINCR		10
 
+#define	tok_strdup(a)		strdup(a)
 #define	tok_malloc(a)		malloc(a)
 #define	tok_free(a)		free(a)
 #define	tok_realloc(a, b)	realloc(a, b)
@@ -108,7 +109,7 @@ tok_init(const char *ifs)
 
 	if (tok == NULL)
 		return NULL;
-	tok->ifs = strdup(ifs ? ifs : IFS);
+	tok->ifs = tok_strdup(ifs ? ifs : IFS);
 	if (tok->ifs == NULL) {
 		tok_free((ptr_t)tok);
 		return NULL;

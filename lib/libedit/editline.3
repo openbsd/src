@@ -1,5 +1,5 @@
-.\"	$OpenBSD: editline.3,v 1.18 2003/11/03 05:23:49 jmc Exp $
-.\"	$NetBSD: editline.3,v 1.38 2003/09/26 21:09:13 wiz Exp $
+.\"	$OpenBSD: editline.3,v 1.19 2003/11/25 20:12:38 otto Exp $
+.\"	$NetBSD: editline.3,v 1.42 2003/11/04 13:22:19 christos Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 26, 2003
+.Dd October 17, 2003
 .Os
 .Dt EDITLINE 3
 .Sh NAME
@@ -431,6 +431,8 @@ Sets or clears unbuffered mode.
 In this mode,
 .Fn el_gets
 will return immediately after processing a single character.
+.It Dv EL_PREP_TERM, Fa "int"
+Sets or clears terminal editing mode.
 .El
 .It Fn el_source
 Initialise
@@ -609,7 +611,7 @@ the history.
 .El
 .Pp
 .Fn history
-returns >= 0 if the operation succeeds
+returns \*(Ge 0 if the operation succeeds
 .Fa op
 succeeds.
 Otherwise, \-1 is returned and

@@ -1,5 +1,5 @@
-/*	$OpenBSD: el.c,v 1.12 2003/10/31 08:42:24 otto Exp $	*/
-/*	$NetBSD: el.c,v 1.34 2003/09/26 17:44:51 christos Exp $	*/
+/*	$OpenBSD: el.c,v 1.13 2003/11/25 20:12:38 otto Exp $	*/
+/*	$NetBSD: el.c,v 1.36 2003/10/18 23:48:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-static const char rcsid[] = "$OpenBSD: el.c,v 1.12 2003/10/31 08:42:24 otto Exp $";
+static const char rcsid[] = "$OpenBSD: el.c,v 1.13 2003/11/25 20:12:38 otto Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -69,7 +69,10 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	el->el_infd = fileno(fin);
 	el->el_outfile = fout;
 	el->el_errfile = ferr;
-	el->el_prog = strdup(prog);
+	if ((el->el_prog = el_strdup(prog)) == NULL) {
+		el_free(el);
+		return NULL;
+	}
 
 	/*
          * Initialize all the modules. Order is important!!!
@@ -77,7 +80,7 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	el->el_flags = 0;
 
 	if (term_init(el) == -1) {
-		free(el->el_prog);
+		el_free(el->el_prog);
 		el_free(el);
 		return NULL;
 	}
@@ -263,6 +266,15 @@ el_set(EditLine *el, int op, ...)
 			el->el_flags &= ~UNBUFFERED;
 			read_finish(el);
 		}
+		rv = 0;
+		break;
+
+	case EL_PREP_TERM:
+		rv = va_arg(va, int);
+		if (rv)
+			read_prepare(el);
+		else
+			read_finish(el);
 		rv = 0;
 		break;
 

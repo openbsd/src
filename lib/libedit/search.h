@@ -1,5 +1,5 @@
-/*	$OpenBSD: search.h,v 1.6 2003/10/31 08:42:24 otto Exp $	*/
-/*	$NetBSD: search.h,v 1.7 2003/08/07 16:44:33 agc Exp $	*/
+/*	$OpenBSD: search.h,v 1.7 2003/11/25 20:12:38 otto Exp $	*/
+/*	$NetBSD: search.h,v 1.8 2003/10/18 23:27:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@ protected int		c_hmatch(EditLine *, const char *);
 protected void		c_setpat(EditLine *);
 protected el_action_t	ce_inc_search(EditLine *, int);
 protected el_action_t	cv_search(EditLine *, int);
-protected el_action_t	ce_search_line(EditLine *, char *, int);
+protected el_action_t	ce_search_line(EditLine *, int);
 protected el_action_t	cv_repeat_srch(EditLine *, int);
 protected el_action_t	cv_csearch(EditLine *, int, int, int, int);
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: readline.h,v 1.1 2003/10/31 08:42:24 otto Exp $	*/
-/*	$NetBSD: readline.h,v 1.8 2003/09/26 17:44:51 christos Exp $	*/
+/*	$OpenBSD: readline.h,v 1.2 2003/11/25 20:12:39 otto Exp $	*/
+/*	$NetBSD: readline.h,v 1.10 2003/10/27 22:26:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef _READLINE_H_
-#define	_READLINE_H_
+#define _READLINE_H_
 
 #include <sys/types.h>
 
@@ -56,9 +56,9 @@ typedef struct _hist_entry {
 
 typedef struct _keymap_entry {
 	char type;
-#define	ISFUNC	0
-#define	ISKMAP	1
-#define	ISMACR	2
+#define ISFUNC	0
+#define ISKMAP	1
+#define ISMACR	2
 	Function *function;
 } KEYMAP_ENTRY;
 
@@ -81,8 +81,8 @@ typedef KEYMAP_ENTRY *Keymap;
 #define UNCTRL(c)	(((c) - 'a' + 'A')|control_character_bit)
 #endif
 
-#define	RUBOUT		0x7f
-#define	ABORT_CHAR	CTRL('G')
+#define RUBOUT		0x7f
+#define ABORT_CHAR	CTRL('G')
 
 /* global variables used by readline enabled applications */
 #ifdef __cplusplus
@@ -110,6 +110,8 @@ extern Function		*rl_startup_hook;
 extern char		*rl_terminal_name;
 extern int		rl_already_prompted;
 extern char		*rl_prompt;
+extern VFunction	*rl_event_hook;
+
 /*
  * The following is not implemented
  */
@@ -148,6 +150,8 @@ int		 read_history(const char *);
 int		 write_history(const char *);
 int		 history_expand(char *, char **);
 char	       **history_tokenize(const char *);
+const char	*get_history_event(const char *, int *, int);
+char		*history_arg_extract(int, int, const char *);
 
 char		*tilde_expand(char *);
 char		*filename_completion_function(const char *, int);
@@ -166,13 +170,18 @@ void		 rl_callback_handler_install(const char *, VFunction *);
 void		 rl_callback_handler_remove(void);
 void		 rl_redisplay(void);
 int		 rl_get_previous_history(int, int);
+void		 rl_prep_terminal(int);
+void		 rl_deprep_terminal(void);
+int		 rl_read_init_file(const char *);
+int		 rl_parse_and_bind(const char *);
+void		 rl_stuff_char(int);
+int		 rl_add_defun(const char *, Function *, int);
 
 /*
  * The following are not implemented
  */
 Keymap		 rl_get_keymap(void);
 Keymap		 rl_make_bare_keymap(void);
-int		 rl_add_defun(const char *, Function *, int);
 int		 rl_generic_bind(int, const char *, const char *, Keymap);
 int		 rl_bind_key_in_map(int, Function *, Keymap);
 #ifdef __cplusplus

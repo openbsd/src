@@ -1,5 +1,5 @@
-/*	$OpenBSD: parse.c,v 1.7 2003/10/31 08:42:24 otto Exp $	*/
-/*	$NetBSD: parse.c,v 1.17 2003/08/07 16:44:32 agc Exp $	*/
+/*	$OpenBSD: parse.c,v 1.8 2003/11/25 20:12:38 otto Exp $	*/
+/*	$NetBSD: parse.c,v 1.19 2003/11/02 20:06:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-static const char rcsid[] = "$OpenBSD: parse.c,v 1.7 2003/10/31 08:42:24 otto Exp $";
+static const char rcsid[] = "$OpenBSD: parse.c,v 1.8 2003/11/25 20:12:38 otto Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -203,7 +203,7 @@ parse__escape(const char **const ptr)
 			c = *p;
 			break;
 		}
-	} else if (*p == '^' && isalpha((unsigned char) p[1])) {
+	} else if (*p == '^') {
 		p++;
 		c = (*p == '?') ? '\177' : (*p & 0237);
 	} else
@@ -211,6 +211,7 @@ parse__escape(const char **const ptr)
 	*ptr = ++p;
 	return (c);
 }
+
 /* parse__string():
  *	Parse the escapes from in and put the raw string out
  */
@@ -232,6 +233,14 @@ parse__string(char *out, const char *in)
 				return (NULL);
 			*out++ = n;
 			break;
+
+		case 'M':
+			if (in[1] == '-' && in[2] != '\0') {
+				*out++ = '\033';
+				in += 2;
+				break;
+			}
+			/*FALLTHROUGH*/
 
 		default:
 			*out++ = *in++;
