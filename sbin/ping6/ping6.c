@@ -1,5 +1,5 @@
-/*	$OpenBSD: ping6.c,v 1.43 2002/03/11 02:11:18 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.44 2002/05/26 13:02:17 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.154 2002/05/26 12:56:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -120,9 +120,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#if defined(__OpenBSD__) || defined(__NetBSD__)
 #include <math.h>
-#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -134,21 +132,17 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #include <netinet6/ipsec.h>
 #endif
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <md5.h>
-#else
-#include "md5.h"
-#endif
 
-struct ping6_timeval {
-	int32_t	tv_sec;
-	int32_t	tv_usec;
+struct tv32 {
+	u_int32_t tv32_sec;
+	u_int32_t tv32_usec;
 };
 
 #define MAXPACKETLEN	131072
 #define	IP6LEN		40
 #define ICMP6ECHOLEN	8	/* icmp echo header len excluding time */
-#define ICMP6ECHOTMLEN sizeof(struct ping6_timeval)
+#define ICMP6ECHOTMLEN sizeof(struct tv32)
 #define ICMP6_NIQLEN	(ICMP6ECHOLEN + 8)
 /* FQDN case, 64 bits of nonce + 32 bits ttl */
 #define ICMP6_NIRLEN	(ICMP6ECHOLEN + 12)
@@ -211,6 +205,7 @@ char rcvd_tbl[MAX_DUP_CHK / 8];
 struct addrinfo *res;
 struct sockaddr_in6 dst;	/* who to ping6 */
 struct sockaddr_in6 src;	/* src addr of this packet */
+socklen_t srclen;
 int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
 u_char outpack[MAXPACKETLEN];
@@ -219,7 +214,6 @@ char DOT = '.';
 char *hostname;
 int ident;			/* process id to identify our packets */
 u_int8_t nonce[8];		/* nonce field for node information */
-struct in6_addr srcaddr;
 int hoplimit = -1;		/* hoplimit */
 int pathmtu = 0;		/* path MTU for the destination.  0 = unspec. */
 
@@ -235,9 +229,7 @@ int timing;			/* flag to do timing */
 double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
-#if defined(__OpenBSD__) || defined(__NetBSD__)
 double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
-#endif
 
 /* for node addresses */
 u_short naflags;
@@ -247,6 +239,7 @@ struct msghdr smsghdr;
 struct iovec smsgiov;
 char *scmsg = 0;
 
+volatile int signo;
 volatile sig_atomic_t seenalrm;
 volatile sig_atomic_t seenint;
 #ifdef SIGINFO
@@ -296,9 +289,9 @@ main(argc, argv)
 	fd_set *fdmaskp;
 	int fdmasks;
 	int cc, i;
-	int ch, fromlen, hold, packlen, preload, optval, ret_ga;
+	int ch, hold, packlen, preload, optval, ret_ga;
 	u_char *datap, *packet;
-	char *e, *target, *ifname = NULL;
+	char *e, *target, *ifname = NULL, *gateway = NULL;
 	int ip6optlen = 0;
 	struct cmsghdr *scmsgp = NULL;
 	int sockbufsize = 0;
@@ -313,6 +306,9 @@ main(argc, argv)
 #endif
 	double intval;
 	size_t rthlen;
+#ifdef IPV6_USE_MIN_MTU
+	int mflag = 0;
+#endif
 
 	/* just to be sure */
 	memset(&smsghdr, 0, sizeof(&smsghdr));
@@ -330,7 +326,7 @@ main(argc, argv)
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif
 	while ((ch = getopt(argc, argv,
-	    "a:b:c:dfHh:I:i:l:mnNp:qRS:s:tvwW" ADDOPTS)) != -1) {
+	    "a:b:c:dfHg:h:I:i:l:mnNp:qRS:s:tvwW" ADDOPTS)) != -1) {
 #undef ADDOPTS
 		switch (ch) {
 		case 'a':
@@ -380,7 +376,7 @@ main(argc, argv)
 #if defined(SO_SNDBUF) && defined(SO_RCVBUF)
 			sockbufsize = atoi(optarg);
 #else
-			err(1,
+			errx(1,
 "-b option ignored: SO_SNDBUF/SO_RCVBUF socket options not supported");
 #endif
 			break;
@@ -401,11 +397,16 @@ main(argc, argv)
 			options |= F_FLOOD;
 			setbuf(stdout, (char *)NULL);
 			break;
+		case 'g':
+			gateway = optarg;
+			break;
 		case 'H':
 			options |= F_HOSTNAME;
 			break;
 		case 'h':		/* hoplimit */
 			hoplimit = strtol(optarg, &e, 10);
+			if (*optarg == '\0' || *e != '\0')
+				errx(1, "illegal hoplimit %s", optarg);
 			if (255 < hoplimit || hoplimit < -1)
 				errx(1,
 				    "illegal hoplimit -- %s", optarg);
@@ -448,7 +449,7 @@ main(argc, argv)
 			break;
 		case 'm':
 #ifdef IPV6_USE_MIN_MTU
-			options |= F_NOMINMTU;
+			mflag++;
 			break;
 #else
 			errx(1, "-%c is not supported on this platform", ch);
@@ -475,11 +476,25 @@ main(argc, argv)
 			errx(1, "-R is not supported in this configuration");
 #endif
 		case 'S':
-			/* XXX: use getaddrinfo? */
-			if (inet_pton(AF_INET6, optarg, (void *)&srcaddr) != 1)
-				errx(1, "invalid IPv6 address: %s", optarg);
+			memset(&hints, 0, sizeof(struct addrinfo));
+			hints.ai_flags = AI_NUMERICHOST; /* allow hostname? */
+			hints.ai_family = AF_INET6;
+			hints.ai_socktype = SOCK_RAW;
+			hints.ai_protocol = IPPROTO_ICMPV6;
+
+			ret_ga = getaddrinfo(optarg, NULL, &hints, &res);
+			if (ret_ga) {
+				errx(1, "invalid source address: %s",
+				     gai_strerror(ret_ga));
+			}
+			/*
+			 * res->ai_family must be AF_INET6 and res->ai_addrlen
+			 * must be sizeof(src).
+			 */
+			memcpy(&src, res->ai_addr, res->ai_addrlen);
+			srclen = res->ai_addrlen;
+			freeaddrinfo(res);
 			options |= F_SRCADDR;
-			usepktinfo++;
 			break;
 		case 's':		/* size of packet to send */
 			datalen = strtol(optarg, &e, 10);
@@ -533,6 +548,7 @@ main(argc, argv)
 			/*NOTREACHED*/
 		}
 	}
+
 	argc -= optind;
 	argv += optind;
 
@@ -565,17 +581,15 @@ main(argc, argv)
 		target = argv[argc - 1];
 
 	/* getaddrinfo */
-	bzero(&hints, sizeof(struct addrinfo));
+	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_flags = AI_CANONNAME;
 	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_RAW;
 	hints.ai_protocol = IPPROTO_ICMPV6;
 
 	ret_ga = getaddrinfo(target, NULL, &hints, &res);
-	if (ret_ga) {
-		fprintf(stderr, "ping6: %s\n", gai_strerror(ret_ga));
-		exit(1);
-	}
+	if (ret_ga)
+		errx(1, "%s", gai_strerror(ret_ga));
 	if (res->ai_canonname)
 		hostname = res->ai_canonname;
 	else
@@ -589,6 +603,38 @@ main(argc, argv)
 	if ((s = socket(res->ai_family, res->ai_socktype,
 	    res->ai_protocol)) < 0)
 		err(1, "socket");
+
+	/* set the source address if specified. */
+	if ((options & F_SRCADDR) &&
+	    bind(s, (struct sockaddr *)&src, srclen) != 0) {
+		err(1, "bind");
+	}
+
+	/* set the gateway (next hop) if specified */
+	if (gateway) {
+		struct addrinfo ghints, *gres;
+		int error;
+
+		memset(&ghints, 0, sizeof(ghints));
+		ghints.ai_family = AF_INET6;
+		ghints.ai_socktype = SOCK_RAW;
+		ghints.ai_protocol = IPPROTO_ICMPV6;
+
+		error = getaddrinfo(gateway, NULL, &hints, &gres);
+		if (error) {
+			errx(1, "getaddrinfo for the gateway %s",
+			     gateway, gai_strerror(error));
+		}
+		if (gres->ai_next && (options & F_VERBOSE))
+			warnx("gateway resolves to multiple addresses");
+
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_NEXTHOP,
+			       gres->ai_addr, gres->ai_addrlen)) {
+			err(1, "setsockopt(IPV6_NEXTHOP)");
+		}
+
+		freeaddrinfo(gres);
+	}
 
 	/*
 	 * let the kerel pass extension headers of incoming packets,
@@ -626,11 +672,11 @@ main(argc, argv)
 	seteuid(getuid());
 	setuid(getuid());
 
-	if (options & F_FLOOD && options & F_INTERVAL)
+	if ((options & F_FLOOD) && (options & F_INTERVAL))
 		errx(1, "-f and -i incompatible options");
 
 	if ((options & F_NOUSERDATA) == 0) {
-		if (datalen >= sizeof(struct ping6_timeval)) {
+		if (datalen >= sizeof(struct tv32)) {
 			/* we can time transfer */
 			timing = 1;
 		} else
@@ -654,17 +700,9 @@ main(argc, argv)
 			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
-#ifndef __OpenBSD__
-	gettimeofday(&timeout, NULL);
-	srand((unsigned int)(timeout.tv_sec ^ timeout.tv_usec ^ (long)ident));
-	memset(nonce, 0, sizeof(nonce));
-	for (i = 0; i < sizeof(nonce); i += sizeof(int))
-		*((int *)&nonce[i]) = rand();
-#else
 	memset(nonce, 0, sizeof(nonce));
 	for (i = 0; i < sizeof(nonce); i += sizeof(u_int32_t))
 		*((u_int32_t *)&nonce[i]) = arc4random();
-#endif
 
 	hold = 1;
 
@@ -677,8 +715,9 @@ main(argc, argv)
 		    &optval, sizeof(optval)) == -1)
 			err(1, "IPV6_MULTICAST_HOPS");
 #ifdef IPV6_USE_MIN_MTU
-	if ((options & F_NOMINMTU) == 0) {
-		optval = 1;
+	if (mflag != 1) {
+		optval = mflag > 1 ? 0 : 1;
+
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_USE_MIN_MTU,
 		    &optval, sizeof(optval)) == -1)
 			err(1, "setsockopt(IPV6_USE_MIN_MTU)");
@@ -805,10 +844,6 @@ main(argc, argv)
 			errx(1, "%s: invalid interface name", ifname);
 #endif
 	}
-	/* set the source address */
-	if (options & F_SRCADDR)/* pktinfo must be valid */
-		pktinfo->ipi6_addr = srcaddr;
-
 	if (hoplimit != -1) {
 		scmsgp->cmsg_len = CMSG_LEN(sizeof(int));
 		scmsgp->cmsg_level = IPPROTO_IPV6;
@@ -880,9 +915,10 @@ main(argc, argv)
 		scmsgp = CMSG_NXTHDR(&smsghdr, scmsgp);
 	}
 
-	{
+	if (!(options & F_SRCADDR)) {
 		/*
-		 * source selection
+		 * get the source address. XXX since we revoked the root
+		 * privilege, we cannot use a raw socket for this.
 		 */
 		int dummy, len = sizeof(src);
 
@@ -901,9 +937,14 @@ main(argc, argv)
 			err(1, "UDP setsockopt(IPV6_PKTINFO)");
 
 		if (hoplimit != -1 &&
-		    setsockopt(dummy, IPPROTO_IPV6, IPV6_HOPLIMIT,
+		    setsockopt(dummy, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
 		    (void *)&hoplimit, sizeof(hoplimit)))
-			err(1, "UDP setsockopt(IPV6_HOPLIMIT)");
+			err(1, "UDP setsockopt(IPV6_UNICAST_HOPS)");
+
+		if (hoplimit != -1 &&
+		    setsockopt(dummy, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
+		    (void *)&hoplimit, sizeof(hoplimit)))
+			err(1, "UDP setsockopt(IPV6_MULTICAST_HOPS)");
 
 		if (rthdr &&
 		    setsockopt(dummy, IPPROTO_IPV6, IPV6_RTHDR,
@@ -991,14 +1032,15 @@ main(argc, argv)
 		itimer.it_interval = interval;
 		itimer.it_value = interval;
 		(void)setitimer(ITIMER_REAL, &itimer, NULL);
-		retransmit();
+		if (ntransmitted)
+			retransmit();
 	}
 
 	fdmasks = howmany(s + 1, NFDBITS) * sizeof(fd_mask);
 	if ((fdmaskp = malloc(fdmasks)) == NULL)
 		err(1, "malloc");
 
-	seenalrm = seenint = 0;
+	signo = seenalrm = seenint = 0;
 #ifdef SIGINFO
 	seeninfo = 0;
 #endif
@@ -1047,7 +1089,6 @@ main(argc, argv)
 		} else if (cc == 0)
 			continue;
 
-		fromlen = sizeof(from);
 		m.msg_name = (caddr_t)&from;
 		m.msg_namelen = sizeof(from);
 		memset(&iov, 0, sizeof(iov));
@@ -1095,10 +1136,11 @@ main(argc, argv)
 }
 
 void
-onsignal(signo)
-	int signo;
+onsignal(sig)
+	int sig;
 {
-	switch (signo) {
+	signo = sig;
+	switch (sig) {
 	case SIGALRM:
 		seenalrm++;
 		break;
@@ -1251,12 +1293,11 @@ pinger()
 		icp->icmp6_seq = ntohs(seq);
 		if (timing) {
 			struct timeval tv;
-			struct ping6_timeval tv6;
-
+			struct tv32 *tv32;
 			(void)gettimeofday(&tv, NULL);
-			tv6.tv_sec = htonl(tv.tv_sec);
-			tv6.tv_usec = htonl(tv.tv_usec);
-			memcpy(&outpack[ICMP6ECHOLEN], &tv6, sizeof(tv6));
+			tv32 = (struct tv32 *)&outpack[ICMP6ECHOLEN];
+			tv32->tv32_sec = htonl(tv.tv_sec);
+			tv32->tv32_usec = htonl(tv.tv_usec);
 		}
 		cc = ICMP6ECHOLEN + datalen;
 	}
@@ -1318,7 +1359,7 @@ dnsdecode(sp, ep, base, buf, bufsiz)
 	u_char *buf;
 	size_t bufsiz;
 {
-	int i = 0;
+	int i;
 	const u_char *cp;
 	char cresult[MAXDNAME + 1];
 	const u_char *comp;
@@ -1395,7 +1436,8 @@ pr_pack(buf, cc, mhdr)
 	int fromlen;
 	u_char *cp = NULL, *dp, *end = buf + cc;
 	struct in6_pktinfo *pktinfo = NULL;
-	struct timeval tv, tv2;
+	struct timeval tv, tp;
+	struct tv32 *tpp;
 	double triptime = 0;
 	int dupflag;
 	size_t off;
@@ -1437,18 +1479,14 @@ pr_pack(buf, cc, mhdr)
 		seq = ntohs(icp->icmp6_seq);
 		++nreceived;
 		if (timing) {
-			struct ping6_timeval tv6;
-
-			memcpy(&tv6, (void *)(icp + 1), sizeof(tv6));
-			tv2.tv_sec = ntohl(tv6.tv_sec);
-			tv2.tv_usec = ntohl(tv6.tv_usec);
-			tvsub(&tv, &tv2);
+			tpp = (struct tv32 *)(icp + 1);
+			tp.tv_sec = ntohl(tpp->tv32_sec);
+			tp.tv_usec = ntohl(tpp->tv32_usec);
+			tvsub(&tv, &tp);
 			triptime = ((double)tv.tv_sec) * 1000.0 +
 			    ((double)tv.tv_usec) / 1000.0;
 			tsum += triptime;
-#if defined(__OpenBSD__) || defined(__NetBSD__)
 			tsumsq += triptime * triptime;
-#endif
 			if (triptime < tmin)
 				tmin = triptime;
 			if (triptime > tmax)
@@ -1560,9 +1598,11 @@ pr_pack(buf, cc, mhdr)
 			} else {
 				i = 0;
 				while (cp < end) {
-					if (dnsdecode((const u_char **)&cp, end,
-					    (const u_char *)(ni + 1), dnsname,
-					    sizeof(dnsname)) == NULL) {
+					if (dnsdecode((const u_char **)&cp,
+						      end,
+						      (const u_char *)(ni + 1),
+						      dnsname,
+						      sizeof(dnsname)) == NULL) {
 						printf("???");
 						break;
 					}
@@ -1801,9 +1841,9 @@ pr_rthdr(void *extbuf)
 #endif /* USE_RFC2292BIS */
 
 int
-pr_bitrange(v, s, ii)
+pr_bitrange(v, soff, ii)
 	u_int32_t v;
-	int s;
+	int soff;
 	int ii;
 {
 	int off;
@@ -1814,7 +1854,7 @@ pr_bitrange(v, s, ii)
 		/* shift till we have 0x01 */
 		if ((v & 0x01) == 0) {
 			if (ii > 1)
-				printf("-%u", s + off - 1);
+				printf("-%u", soff + off - 1);
 			ii = 0;
 			switch (v & 0x0f) {
 			case 0x00:
@@ -1842,7 +1882,7 @@ pr_bitrange(v, s, ii)
 				break;
 		}
 		if (!ii)
-			printf(" %u", s + off);
+			printf(" %u", soff + off);
 		ii += i;
 		v >>= i; off += i;
 	}
@@ -1952,7 +1992,7 @@ pr_nodeaddr(ni, nilen)
 	if (nilen % (sizeof(u_int32_t) + sizeof(struct in6_addr)) == 0)
 		withttl = 1;
 	while (nilen > 0) {
-		u_int32_t ttl = 0;
+		u_int32_t ttl;
 
 		if (withttl) {
 			/* XXX: alignment? */
@@ -2139,30 +2179,24 @@ summary()
 		/* Only display average to microseconds */
 		double num = nreceived + nrepeats;
 		double avg = tsum / num;
-#if defined(__OpenBSD__) || defined(__NetBSD__)
 		double dev = sqrt(tsumsq / num - avg * avg);
 		(void)printf(
 		    "round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
 		    tmin, avg, tmax, dev);
-#else
-		(void)printf(
-		    "round-trip min/avg/max = %.3f/%.3f/%.3f ms\n",
-		    tmin, avg, tmax);
-#endif
 		(void)fflush(stdout);
 	}
 	(void)fflush(stdout);
 }
 
 /*subject type*/
-static char *niqcode[] = {
+static const char *niqcode[] = {
 	"IPv6 address",
 	"DNS label",	/*or empty*/
 	"IPv4 address",
 };
 
 /*result code*/
-static char *nircode[] = {
+static const char *nircode[] = {
 	"Success", "Refused", "Unknown",
 };
 
@@ -2438,13 +2472,8 @@ pr_addr(addr, addrlen)
 	int addrlen;
 {
 	static char buf[NI_MAXHOST];
-	int flag;
+	int flag = 0;
 
-#ifdef NI_WITHSCOPEID
-	flag = NI_WITHSCOPEID;
-#else
-	flag = 0;
-#endif
 	if ((options & F_HOSTNAME) == 0)
 		flag |= NI_NUMERICHOST;
 
@@ -2560,7 +2589,7 @@ fill(bp, patp)
 /* xxx */
 	if (ii > 0)
 		for (kk = 0;
-		    kk <= MAXDATALEN - (8 + sizeof(struct ping6_timeval) + ii);
+		    kk <= MAXDATALEN - (8 + sizeof(struct tv32) + ii);
 		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];
@@ -2625,7 +2654,7 @@ nigroup(name)
 	}
 
 	/* generate 8 bytes of pseudo-random value. */
-	bzero(&ctxt, sizeof(ctxt));
+	memset(&ctxt, 0, sizeof(ctxt));
 	MD5Init(&ctxt);
 	c = l & 0xff;
 	MD5Update(&ctxt, &c, sizeof(c));
@@ -2664,6 +2693,6 @@ usage()
 	    "] [-a [aAclsg]] [-b sockbufsiz] [-c count] \n"
             "\t[-I interface] [-i wait] [-l preload] [-p pattern] "
 	    "[-S sourceaddr]\n"
-            "\t[-s packetsize] [-h hoplimit] [hops...] host\n");
+            "\t[-s packetsize] [-h hoplimit] [hops...] [-g gateway] host\n");
 	exit(1);
 }

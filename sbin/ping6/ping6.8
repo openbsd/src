@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ping6.8,v 1.21 2001/07/25 10:04:56 mpech Exp $
-.\"	$KAME: ping6.8,v 1.45 2001/07/05 06:28:04 itojun Exp $
+.\"	$OpenBSD: ping6.8,v 1.22 2002/05/26 13:02:17 itojun Exp $
+.\"	$KAME: ping6.8,v 1.56 2002/05/26 12:07:51 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -52,6 +52,9 @@ packets to network hosts
 .Op Fl c Ar count
 .Ek
 .Bk -words
+.Op Fl g Ar gateway
+.Ek
+.Bk -words
 .Op Fl h Ar hoplimit
 .Ek
 .Bk -words
@@ -77,7 +80,7 @@ packets to network hosts
 .Op Fl s Ar packetsize
 .Ek
 .Bk -words
-.Op Ar hops...
+.Op Ar hops ...
 .Ek
 .Bk -words
 .Ar host
@@ -159,6 +162,11 @@ Only the super-user may use this option.
 .Bf -emphasis
 This can be very hard on a network and should be used with caution.
 .Ef
+.It Fl g Ar gateway
+Specifies to use
+.Ar gateway
+as the next hop to the destination.
+The gateway must be a neighbor of the sending node.
 .It Fl H
 Specifies to try reverse-lookup of IPv6 addresses.
 The
@@ -200,7 +208,7 @@ Node information multicast group will be computed based on given
 .Ar host ,
 and will be used as the final destination.
 Since node information multicast group is a link-local multicast group,
-destination link needs to be specified by
+outgoing interface needs to be specified by
 .Fl I
 option.
 .It Fl p Ar pattern
@@ -236,12 +244,8 @@ The option is meaningful only if the target
 is a neighbor.
 .It Fl S Ar sourceaddr
 Specifies the source address of request packets.
-The source address must be one of the unicast addresses of the sending node.
-If the outgoing interface is specified by the
-.Fl I
-option as well,
-.Ar sourceaddr
-needs to be an address assigned to the specified interface.
+The source address must be one of unicast addresses of the sending node,
+and must be numeric.
 .It Fl s Ar packetsize
 Specifies the number of data bytes to be sent.
 The default is 56, which translates into 64
@@ -389,7 +393,7 @@ returns 0 on success (the host is alive),
 and non-zero if the arguments are incorrect or the host is not responding.
 .Sh EXAMPLES
 Normally,
-.Xr ping6 8
+.Nm
 works just like
 .Xr ping 8
 would work; the following will send ICMPv6 echo request to
@@ -414,7 +418,6 @@ The following will probe addresses assigned to the destination node,
 .Bd -literal -offset indent
 ping6 -a agl dst.foo.com
 .Ed
-.Pp
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr icmp6 4 ,
@@ -435,8 +438,8 @@ ping6 -a agl dst.foo.com
 .Rs
 .%A Matt Crawford
 .%T "IPv6 Node Information Queries"
-.%N draft-ietf-ipngwg-icmp-name-lookups-07.txt
-.%D August 2000
+.%N draft-ietf-ipngwg-icmp-name-lookups-09.txt
+.%D May 2002
 .%O work in progress material
 .Re
 .Sh HISTORY
@@ -446,5 +449,10 @@ command appeared in
 .Bx 4.3 .
 The
 .Nm
-command with IPv6 support first appeared in WIDE Hydrangea IPv6 protocol stack
-kit.
+command with IPv6 support first appeared in the WIDE Hydrangea IPv6
+protocol stack kit.
+.Sh BUGS
+.\" except for bsdi
+.Nm
+is intentionally separate from
+.Xr ping 8 .

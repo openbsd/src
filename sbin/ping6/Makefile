@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2002/05/12 17:14:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2002/05/26 13:02:17 itojun Exp $
 
 PROG=	ping6
 MAN=	ping6.8
@@ -12,8 +12,5 @@ BINOWN=	root
 BINGRP=	bin
 BINMODE=4555
 LDSTATIC=-static
-
-# kame scopeid hack
-CPPFLAGS+=-DKAME_SCOPEID
 
 .include <bsd.prog.mk>
