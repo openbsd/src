@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.9 1997/09/05 09:33:30 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.10 1997/09/05 15:49:40 millert Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #       Install kernels no longer support X.
@@ -6,7 +6,7 @@
 
 machine		i386		# architecture, used by config; REQUIRED
 
-option		SCSIVERBOSE=0
+option		SCSITERSE
 
 option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
