@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.94 2002/07/06 19:14:19 nordin Exp $
+.\"	$OpenBSD: sysctl.3,v 1.95 2002/11/25 03:04:48 wcobb Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -765,6 +765,7 @@ The currently defined protocols and names are:
 .It tcp	mssdflt	integer	yes
 .It tcp	rstppslimit	integer	yes
 .It tcp	ackonpush	integer	yes
+.It tcp	ecn	integer	yes
 .It udp	checksum	integer	yes
 .It udp	baddynamic	array	yes
 .It udp	recvspace	integer	yes
@@ -1020,6 +1021,8 @@ Negative value disables rate limitation.
 Returns 1 if tcp segments with the
 .Dv TH_PUSH
 set are being acknowledged immediately, otherwise 0.
+.It Li tcp.ecn
+Returns 1 if Explicit Congestion Notifications for TCP are enabled.
 .It Li udp.checksum
 Returns 1 when
 .Tn UDP
