@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdio.3,v 1.4 1998/03/09 06:09:08 deraadt Exp $
+.\"	$OpenBSD: stdio.3,v 1.5 1998/03/09 06:36:30 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -90,9 +90,13 @@ the
 .Xr exit 3
 function is called, all open files are closed (hence all output
 streams are flushed) before program termination.  Other methods
-of program termination, such as
+of program termination may not close files properly and hence
+buffered output may be lost.  In particular,
+.Xr _exit 2
+does not flush stdio files.  Neither does an exit due to a signal.
+Buffers are flushed by
 .Xr abort 3
-do not bother about closing files properly.
+as required by POSIX, although previous implementations did not.
 .Pp
 This implementation needs and makes
 no distinction between
