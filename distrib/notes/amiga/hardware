@@ -1,32 +1,16 @@
+dnl	$OpenBSD: hardware,v 1.21 2002/04/07 22:21:02 miod Exp $
 OpenBSD/MACHINE OSREV runs on any amiga that has a 68020, 68030, 68040 or
 68060 CPU with some form of FPU and MMU.  It should also run on
-MacroSystem's DraCo computer.  The minimal configuration requires 4M of
-RAM and about 55M of disk space.  To install the entire system requires
-much more disk space, and to run X or compile the system, more RAM is
-recommended.  (4M of RAM will actually allow you to compile, however it
-won't be speedy.  X really isn't usable on a 4M system.)
-
-Here is a table of recommended HD partition sizes for a full install:
-	partition:	advise,	with X,	needed,	with X
-	root (/)	 30M	 30M	25M	 25M
-	user (/usr)	210M    245M   140M     175M
-	/usr/local      depends on what extra software you want
-	swap		---- 1MB for every MB RAM ----
-			-- but the sum of swap and ---
-			- RAM should be at least 16 --
-
-As you may note the recommended size of /usr is 70M greater than
-needed. This is to leave room for a kernel source and compile tree
-as you will probably want to compile your own kernel. (GENERIC is
-large and bulky to accommodate all people).
-
-Starting with OpenBSD 2.7, you should be able to leave /usr mounted
-readonly on production machines, and use a separate /usr/local
-partition for packages.
-
-
-If you only have 4M of fast memory, you should make your swap partition
-larger, as your system will be doing much more swapping.
+MacroSystem's DraCo computer.
+6MB of RAM should be sufficient to boot and a minimal system can probably
+be squeezed onto a 100MB partition by installing just the minimum sets.
+To actually do much compiling or anything more interesting than
+booting, more RAM and disk space is highly recommended. About 250MB will be
+necessary to install all of the OpenBSD OSREV binary distribution (note that
+this does not count swap space!).  Much more disk space is required to
+install the source and objects as well (about another 600MB).
+An AmigaDOS partition is also required to install OpenBSD/MACHINE OSREV and
+boot it, see below.
 
 Supported devices {:-include-:}:
 	A4000/A1200 IDE controller.
@@ -84,4 +68,4 @@ Supported devices {:-include-:}:
 	Amiga mouse.
 	Amiga joystick.
 
-If its not on this list, there is no support for it in this release.
+If it's not on this list, there is no support for it in this release.
