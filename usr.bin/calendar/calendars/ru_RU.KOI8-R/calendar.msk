@@ -1,16 +1,14 @@
 /*
  * Перевод часов для московской временной зоны
  *
- * $OpenBSD: calendar.msk,v 1.1 1996/12/05 06:05:00 millert Exp $
+ * $OpenBSD: calendar.msk,v 1.1 2001/09/04 20:44:35 mickey Exp $
  */
 
-#ifndef _ru_SU_KOI8_R_msk_
-#define _ru_SU_KOI8_R_msk_
-
-LANG=ru_SU.KOI8-R
+#ifndef _ru_RU_KOI8_R_msk_
+#define _ru_RU_KOI8_R_msk_
 
 03/SunLast	Начало московского летнего времени; часы переводятся вперед
 10/SunLast      Конец московского летнего времени; часы переводятся назад
 
-#endif /* !_ru_SU_KOI8_R_msk_ */
+#endif /* !_ru_RU_KOI8_R_msk_ */
 
