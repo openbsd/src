@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.2 2002/03/21 15:08:53 markus Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/03/14 18:37:52 markus Exp $
 
-SUBDIR=auth enc
+SUBDIR=enc
+#SUBDIR+=auth
 
 install:
 
