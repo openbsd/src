@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.20 1999/09/19 16:16:49 kstailey Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.21 2000/08/11 00:35:18 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -328,7 +328,7 @@ typedef struct {
 	Elf64_Word	r_offset;	/* where to do it */
 	Elf64_Word	r_info;		/* index & type of relocation */
 	Elf64_Word	r_addend;	/* adjustment value */
-} Elf64_RelA;
+} Elf64_Rela;
 
 #define	ELF64_R_SYM(info)	((info) >> 32)
 #define	ELF64_R_TYPE(info)	((info) & 0xFFFFFFFF)
