@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.83 2004/01/29 13:46:25 tdeval Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.84 2004/01/30 23:07:36 tdeval Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -47,11 +47,10 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 
 #include <scsi/scsi_all.h>
@@ -193,10 +192,7 @@ scsibusattach(parent, self, aux)
 #undef	SCSI_DELAY
 #define SCSI_DELAY 2
 #endif	/* SCSI_DELAY */
-	if (cold)
-		delay(1000000 * SCSI_DELAY);
-	else
-		tsleep(sb, PRIBIO, NULL, SCSI_DELAY * hz);
+	delay(1000000 * SCSI_DELAY);
 
 	scsi_probe_bus(sb->sc_dev.dv_unit, -1, -1);
 }
