@@ -1393,10 +1393,10 @@ hpux_sys_utime_6x(p, v, retval)
 	} else
 		tv[0] = tv[1] = time.tv_sec;
 	vattr_null(&vattr);
-	vattr.va_atime.ts_sec = tv[0];
-	vattr.va_atime.ts_nsec = 0;
-	vattr.va_mtime.ts_sec = tv[1];
-	vattr.va_mtime.ts_nsec = 0;
+	vattr.va_atime.tv_sec = tv[0];
+	vattr.va_atime.tv_nsec = 0;
+	vattr.va_mtime.tv_sec = tv[1];
+	vattr.va_mtime.tv_nsec = 0;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, fname), p);
 	if (error = namei(&nd))
