@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.211 2004/08/26 03:34:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.212 2004/12/31 00:18:20 miod Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -339,6 +339,7 @@ MAKEDEVARCHS+= sgi
 MAKEDEVARCHS+= sparc
 MAKEDEVARCHS+= sparc64
 MAKEDEVARCHS+= vax
+MAKEDEVARCHS+= zaurus
 
 clean:
 	rm -f etc.${MACHINE}/MAKEDEV
@@ -373,7 +374,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.211 2004/08/26 03:34:15 deraadt Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.212 2004/12/31 00:18:20 miod Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
