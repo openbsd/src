@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.22 2000/04/08 16:55:58 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.23 2000/04/10 01:56:49 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -379,7 +379,7 @@ caddr_t data;
     struct ifsa *ifsa = (struct ifsa *) data;
     struct proc *prc = curproc;             /* XXX */
     struct tdb *tdb;
-    int s, error;
+    int s, error = 0;
 
     /*
      * enc0 does not allow binding of SAs, as it's used for all non-bound
@@ -391,7 +391,8 @@ caddr_t data;
     switch (cmd) 
     {
 	case SIOCSIFADDR:
-	    return EOPNOTSUPP;
+	case SIOCSIFDSTADDR:
+	    break;
 
 	case SIOCGENCSA:
 	    ifsa->sa_spi = enc->sc_spi;
