@@ -1,3 +1,5 @@
+/*	$OpenBSD: netdb.h,v 1.3 1997/03/13 19:11:49 downsj Exp $	*/
+
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
  * -
@@ -55,7 +57,7 @@
 
 /*
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	$Id: netdb.h,v 8.6 1995/12/03 08:31:12 vixie Exp 
+ *	$From: netdb.h,v 8.7 1996/05/09 05:59:09 vixie Exp $
  */
 
 #ifndef _NETDB_H_
@@ -135,7 +137,7 @@ struct hostent	*gethostbyaddr __P((const char *, int, int));
 struct hostent	*gethostbyname __P((const char *));
 struct hostent	*gethostbyname2 __P((const char *, int));
 struct hostent	*gethostent __P((void));
-struct netent	*getnetbyaddr __P((long, int)); /* u_long? */
+struct netent	*getnetbyaddr __P((unsigned long, int));
 struct netent	*getnetbyname __P((const char *));
 struct netent	*getnetent __P((void));
 struct protoent	*getprotobyname __P((const char *));
