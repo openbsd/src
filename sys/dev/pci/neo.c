@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.17 2004/11/22 04:29:06 deraadt Exp $       */
+/*      $OpenBSD: neo.c,v 1.18 2004/12/12 06:50:20 deraadt Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -48,7 +48,6 @@
 #include <dev/ic/ac97.h>
 
 #include <dev/pci/neoreg.h>
-//#include <dev/microcode/neomagic/neo-coeff.h>
 
 /* -------------------------------------------------------------------- */
 /*
