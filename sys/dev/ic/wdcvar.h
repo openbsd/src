@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.1 1999/07/18 21:25:16 csapuntz Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.2 1999/07/22 02:54:06 csapuntz Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -36,12 +36,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if 0
-/* XXX for scsipi_adapter */
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsipiconf.h>
-#endif
 
 struct atapiscsi_softc;
 
@@ -202,3 +196,7 @@ void wdc_atapibus_attach __P((struct channel_softc *));
 void wdc_atapibus_final_attach __P((struct channel_softc *));
 
 int   atapi_print       __P((void *, const char *));
+
+void wdc_disable_intr __P((struct channel_softc *));
+void wdc_enable_intr __P((struct channel_softc *));
+int wdc_select_drive __P((struct channel_softc *, int, int));

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.2 1999/07/18 22:44:48 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.3 1999/07/22 02:54:06 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -159,6 +159,46 @@ atapi_print(aux, pnp)
 	printf(" channel %d", aa_link->aa_channel);
 	return (UNCONF);
 }
+
+void
+wdc_disable_intr(chp)
+	struct channel_softc *chp;
+{
+	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
+			  WDCTL_IDS);
+}
+
+void
+wdc_enable_intr(chp)
+	struct channel_softc *chp;
+{
+	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
+			  WDCTL_4BIT);
+}
+
+int
+wdc_select_drive(chp, drive, howlong)
+	struct channel_softc *chp;
+	int drive;
+	int howlong;
+{
+	
+	if (wait_for_unbusy(chp, howlong)) {
+		return -1;
+	}
+
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+	    WDSD_IBM | (drive << 4));
+	
+	delay(1);
+
+	if (wdcwait(chp, WDCS_DRQ, 0, howlong)) {
+		return -1;
+	}
+
+	return 0;
+}
+
 
 /* Test to see controller with at last one attached drive is there.
  * Returns a bit for each possible drive found (0x01 for drive 0,
@@ -587,7 +627,7 @@ wdcreset(chp, verb)
 	delay(1000);
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 	    WDCTL_IDS);
-	delay(1000);
+	delay(2000);
 	(void) bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error);
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 	    WDCTL_4BIT);
@@ -604,6 +644,7 @@ wdcreset(chp, verb)
 			printf(" drive 1");
 		printf("\n");
 	}
+
 	return  (drv_mask1 != drv_mask2) ? 1 : 0;
 }
 
@@ -614,6 +655,10 @@ __wdcwait_reset(chp, drv_mask)
 {
 	int timeout;
 	u_int8_t st0, st1;
+
+	/* Wait 50ms for drive firmware to settle */
+	delay(50000);
+
 	/* wait for BSY to deassert */
 	for (timeout = 0; timeout < WDCNDELAY_RST;timeout++) {
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
@@ -669,6 +714,7 @@ wdcwait(chp, mask, bits, timeout)
 {
 	u_char status;
 	int time = 0;
+
 #ifdef WDCNDELAY_DEBUG
 	extern int cold;
 #endif
@@ -682,7 +728,7 @@ wdcwait(chp, mask, bits, timeout)
 	for (;;) {
 		chp->ch_status = status =
 		    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
-		if ((status & WDCS_BSY) == 0 && (status & mask) == bits)
+		if ((status & WDCS_BSY) == 0 && (status & mask) == bits) 
 			break;
 		if (++time > timeout) {
 			WDCDEBUG_PRINT(("wdcwait: timeout, status %x "
@@ -1074,14 +1120,23 @@ __wdccommand_start(chp, xfer)
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
 	    DEBUG_FUNCS);
 
-	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-	    WDSD_IBM | (drive << 4));
-	if (wdcwait(chp, wdc_c->r_st_bmask, wdc_c->r_st_bmask,
-	    wdc_c->timeout) != 0) {
+	/*
+	 * Disable interrupts if we're polling
+	 */
+
+	if (xfer->c_flags & C_POLL) {
+		wdc_disable_intr(chp);
+	}
+
+	/*
+	 * Make sure the bus isn't busy
+	 */
+	if (wdc_select_drive(chp, drive, wdc_c->timeout) != 0) {
 		wdc_c->flags |= AT_TIMEOU;
 		__wdccommand_done(chp, xfer);
 		return;
 	}
+
 	wdccommand(chp, drive, wdc_c->r_command, wdc_c->r_cyl, wdc_c->r_head,
 	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_precomp);
 	if ((wdc_c->flags & AT_POLL) == 0) {
@@ -1178,6 +1233,9 @@ __wdccommand_done(chp, xfer)
 		wdc_c->r_precomp = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 						    wd_precomp);
 	}
+	if (xfer->c_flags & C_POLL) {
+		wdc_enable_intr(chp);
+	}
 	wdc_free_xfer(chp, xfer);
 	WDCDEBUG_PRINT(("__wdccommand_done before callback\n"), DEBUG_INTR);
 	if (needdone) {
@@ -1211,6 +1269,7 @@ wdccommand(chp, drive, command, cylin, head, sector, count, precomp)
 	/* Select drive, head, and addressing mode. */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (drive << 4) | head);
+
 	/* Load parameters. wd_features(ATA/ATAPI) = wd_precomp(ST506) */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_precomp,
 	    precomp);
