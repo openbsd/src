@@ -1,0 +1,11 @@
+\input texinfo
+@setfilename menuli.info
+
+@c extra <li> generated after <menu>
+@c From: Marius Groeger <mag@sysgo.de>, 13nov98.
+
+@menu
+* entry1:: 
+@end menu
+
+@bye

@@ -1,0 +1,18 @@
+@setfilename top.info
+
+@node Top
+@top Top
+
+@menu
+* first::
+@end menu
+
+@node first
+@chapter first
+
+@menu   @c
+* second::
+@end menu
+
+@node second
+@section second

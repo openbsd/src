@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.2f from Makefile.am
+# Makefile.in generated automatically by automake 1.4 from Makefile.am
 
-# Copyright (C) 1994, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -10,8 +10,11 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
+# Put texinfo.txi first because that's the best candidate UPDATED in
+# version.texi.
 
-SHELL = /bin/sh
+
+SHELL = @SHELL@
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -32,6 +35,8 @@ mandir = @mandir@
 includedir = @includedir@
 oldincludedir = /usr/include
 
+DESTDIR =
+
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -44,7 +49,7 @@ AUTOMAKE = @AUTOMAKE@
 AUTOHEADER = @AUTOHEADER@
 
 INSTALL = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(AM_INSTALL_PROGRAM_FLAGS)
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 transform = @program_transform_name@
@@ -76,67 +81,104 @@ POFILES = @POFILES@
 POSUB = @POSUB@
 RANLIB = @RANLIB@
 TERMLIBS = @TERMLIBS@
-TEXCONFIG = @TEXCONFIG@
 USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 l = @l@
 
-info_TEXINFOS = info-stnd.texi info.texi texinfo.txi
+info_TEXINFOS = texinfo.txi info-stnd.texi info.texi
+
+man_MANS = info.1 install-info.1 makeinfo.1 texindex.1 texi2dvi.1            info.5 texinfo.5
+
+HELP2MAN = help2man
+noinst_SCRIPTS = $(HELP2MAN)
 
 # Use the programs built in our distribution.
 MAKEINFO = ../makeinfo/makeinfo
 INSTALL_INFO = ../util/install-info
 
 # Include our texinfo.tex, not Automake's.
-EXTRA_DIST = macro.texi userdoc.texi epsf.tex texinfo.tex
+EXTRA_DIST = macro.texi userdoc.texi epsf.tex texinfo.tex              txi-cs.tex txi-de.tex txi-en.tex txi-es.tex 	     txi-nl.tex txi-no.tex txi-pt.tex 	     $(man_MANS) $(noinst_SCRIPTS)
 
-# We try to discover this via configure just to give a better help message.
-TEXMF = @TEXMF@
+
+texmf_texinfo = $(TEXMF)/tex/texinfo
+texmf_dvips = $(TEXMF)/tex/generic/dvips
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 
+SCRIPTS =  $(noinst_SCRIPTS)
+
+CFLAGS = @CFLAGS@
+COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
 TEXI2DVI = texi2dvi
-TEXINFO_TEX = $(srcdir)/texinfo.tex
-INFO_DEPS = info-stnd.info info.info texinfo
-DVIS = info-stnd.dvi info.dvi texinfo.dvi
-TEXINFOS = info-stnd.texi info.texi texinfo.txi
-DIST_COMMON =  README $(info_TEXINFOS) Makefile.am Makefile.in \
-texinfo.tex
+INFO_DEPS = texinfo info-stnd.info info.info
+DVIS = texinfo.dvi info-stnd.dvi info.dvi
+TEXINFOS = texinfo.txi info-stnd.texi info.texi
+man1dir = $(mandir)/man1
+man5dir = $(mandir)/man5
+MANS = $(man_MANS)
+
+NROFF = nroff
+DIST_COMMON =  README $(info_TEXINFOS) Makefile.am Makefile.in mdate-sh \
+stamp-vti stamp-vti.1 texinfo.tex version.texi
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
-TAR = tar
-GZIP = --best
-default: all
-
+TAR = gtar
+GZIP_ENV = --best
+all: all-redirect
 .SUFFIXES:
 .SUFFIXES: .dvi .info .ps .texi .texinfo .txi
 $(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
 	cd $(top_srcdir) && $(AUTOMAKE) --gnu --include-deps doc/Makefile
 
-Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
+Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
 
-info-stnd.info: info-stnd.texi
-info-stnd.dvi: info-stnd.texi
+$(srcdir)/version.texi: stamp-vti
+	@:
+
+$(srcdir)/stamp-vti: texinfo.txi $(top_srcdir)/configure.in
+	@echo "@set UPDATED `$(SHELL) $(srcdir)/mdate-sh $(srcdir)/texinfo.txi`" > vti.tmp
+	@echo "@set EDITION $(VERSION)" >> vti.tmp
+	@echo "@set VERSION $(VERSION)" >> vti.tmp
+	@cmp -s vti.tmp $(srcdir)/version.texi \
+	  || (echo "Updating $(srcdir)/version.texi"; \
+	      cp vti.tmp $(srcdir)/version.texi)
+	-@rm -f vti.tmp
+	@cp $(srcdir)/version.texi $@
+
+mostlyclean-vti:
+	-rm -f vti.tmp
+
+clean-vti:
+
+distclean-vti:
+
+maintainer-clean-vti:
+	-rm -f $(srcdir)/stamp-vti $(srcdir)/version.texi
+
+texinfo: texinfo.txi version.texi
+texinfo.dvi: texinfo.txi version.texi
+
+
+info-stnd.info: info-stnd.texi version.texi
+info-stnd.dvi: info-stnd.texi version.texi
 
 
 info.info: info.texi $(info_TEXINFOS)
 info.dvi: info.texi $(info_TEXINFOS)
 
 
-texinfo: texinfo.txi
-texinfo.dvi: texinfo.txi
-
-
 DVIPS = dvips
 
 .texi.dvi:
-	TEXINPUTS=$(srcdir):$$TEXINPUTS \
+	TEXINPUTS=.:$$TEXINPUTS \
 	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
 
 .texi:
@@ -155,7 +197,7 @@ DVIPS = dvips
 	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
 
 .texinfo.dvi:
-	TEXINPUTS=$(srcdir):$$TEXINPUTS \
+	TEXINPUTS=.:$$TEXINPUTS \
 	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
 
 .txi.info:
@@ -164,7 +206,7 @@ DVIPS = dvips
 	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
 
 .txi.dvi:
-	TEXINPUTS=$(srcdir):$$TEXINPUTS \
+	TEXINPUTS=.:$$TEXINPUTS \
 	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
 
 .txi:
@@ -179,40 +221,114 @@ uninstall-info:
 	@if $(SHELL) -c 'install-info --version | sed 1q | fgrep -s -v -i debian' >/dev/null 2>&1; then \
 	  ii=yes; \
 	else ii=; fi; \
-	for file in $(INFO_DEPS); do \
+	list='$(INFO_DEPS)'; \
+	for file in $$list; do \
 	  test -z "$ii" \
-	    || install-info --info-dir=$(infodir) --remove $$file; \
+	    || install-info --info-dir=$(DESTDIR)$(infodir) --remove $$file; \
 	done
 	@$(NORMAL_UNINSTALL)
-	for file in $(INFO_DEPS); do \
-	  (cd $(infodir) && rm -f $$file $$file-[0-9] $$file-[0-9][0-9]); \
+	list='$(INFO_DEPS)'; \
+	for file in $$list; do \
+	  (cd $(DESTDIR)$(infodir) && rm -f $$file $$file-[0-9] $$file-[0-9][0-9]); \
 	done
 
 mostlyclean-aminfo:
-	-rm -f info-stnd.aux info-stnd.cp info-stnd.cps info-stnd.dvi \
+	-rm -f texinfo.aux texinfo.cp texinfo.cps texinfo.dvi texinfo.fn \
+	  texinfo.fns texinfo.ky texinfo.kys texinfo.ps texinfo.log \
+	  texinfo.pg texinfo.toc texinfo.tp texinfo.tps texinfo.vr \
+	  texinfo.vrs texinfo.op texinfo.tr texinfo.cv texinfo.cn \
+	  info-stnd.aux info-stnd.cp info-stnd.cps info-stnd.dvi \
 	  info-stnd.fn info-stnd.fns info-stnd.ky info-stnd.kys \
 	  info-stnd.ps info-stnd.log info-stnd.pg info-stnd.toc \
 	  info-stnd.tp info-stnd.tps info-stnd.vr info-stnd.vrs \
 	  info-stnd.op info-stnd.tr info-stnd.cv info-stnd.cn info.aux \
 	  info.cp info.cps info.dvi info.fn info.fns info.ky info.kys \
 	  info.ps info.log info.pg info.toc info.tp info.tps info.vr \
-	  info.vrs info.op info.tr info.cv info.cn texinfo.aux \
-	  texinfo.cp texinfo.cps texinfo.dvi texinfo.fn texinfo.fns \
-	  texinfo.ky texinfo.kys texinfo.ps texinfo.log texinfo.pg \
-	  texinfo.toc texinfo.tp texinfo.tps texinfo.vr texinfo.vrs \
-	  texinfo.op texinfo.tr texinfo.cv texinfo.cn
+	  info.vrs info.op info.tr info.cv info.cn
 
 clean-aminfo:
 
 distclean-aminfo:
 
 maintainer-clean-aminfo:
-	for i in $(INFO_DEPS); do \
+	cd $(srcdir) && for i in $(INFO_DEPS); do \
 	  rm -f $$i; \
 	  if test "`echo $$i-[0-9]*`" != "$$i-[0-9]*"; then \
 	    rm -f $$i-[0-9]*; \
 	  fi; \
 	done
+
+install-man1:
+	$(mkinstalldirs) $(DESTDIR)$(man1dir)
+	@list='$(man1_MANS)'; \
+	l2='$(man_MANS)'; for i in $$l2; do \
+	  case "$$i" in \
+	    *.1*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  if test -f $(srcdir)/$$i; then file=$(srcdir)/$$i; \
+	  else file=$$i; fi; \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " $(INSTALL_DATA) $$file $(DESTDIR)$(man1dir)/$$inst"; \
+	  $(INSTALL_DATA) $$file $(DESTDIR)$(man1dir)/$$inst; \
+	done
+
+uninstall-man1:
+	@list='$(man1_MANS)'; \
+	l2='$(man_MANS)'; for i in $$l2; do \
+	  case "$$i" in \
+	    *.1*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " rm -f $(DESTDIR)$(man1dir)/$$inst"; \
+	  rm -f $(DESTDIR)$(man1dir)/$$inst; \
+	done
+
+install-man5:
+	$(mkinstalldirs) $(DESTDIR)$(man5dir)
+	@list='$(man5_MANS)'; \
+	l2='$(man_MANS)'; for i in $$l2; do \
+	  case "$$i" in \
+	    *.5*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  if test -f $(srcdir)/$$i; then file=$(srcdir)/$$i; \
+	  else file=$$i; fi; \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " $(INSTALL_DATA) $$file $(DESTDIR)$(man5dir)/$$inst"; \
+	  $(INSTALL_DATA) $$file $(DESTDIR)$(man5dir)/$$inst; \
+	done
+
+uninstall-man5:
+	@list='$(man5_MANS)'; \
+	l2='$(man_MANS)'; for i in $$l2; do \
+	  case "$$i" in \
+	    *.5*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " rm -f $(DESTDIR)$(man5dir)/$$inst"; \
+	  rm -f $(DESTDIR)$(man5dir)/$$inst; \
+	done
+install-man: $(MANS)
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) install-man1 install-man5
+uninstall-man:
+	@$(NORMAL_UNINSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) uninstall-man1 uninstall-man5
 tags: TAGS
 TAGS:
 
@@ -224,75 +340,117 @@ subdir = doc
 distdir: $(DISTFILES)
 	@for file in $(DISTFILES); do \
 	  d=$(srcdir); \
-	  test -f $(distdir)/$$file \
-	  || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
-	  || cp -p $$d/$$file $(distdir)/$$file; \
+	  if test -d $$d/$$file; then \
+	    cp -pr $$d/$$file $(distdir)/$$file; \
+	  else \
+	    test -f $(distdir)/$$file \
+	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
+	    || cp -p $$d/$$file $(distdir)/$$file || :; \
+	  fi; \
 	done
-	$(MAKE) top_distdir="$(top_distdir)" distdir="$(distdir)" dist-info
-info: $(INFO_DEPS)
-dvi: $(DVIS)
-check: all
-	$(MAKE)
-installcheck:
-install-exec: 
-	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) top_distdir="$(top_distdir)" distdir="$(distdir)" dist-info
+info-am: $(INFO_DEPS)
+info: info-am
+dvi-am: $(DVIS)
+dvi: dvi-am
+check-am: all-am
+check: check-am
+installcheck-am:
+installcheck: installcheck-am
+install-exec-am:
+install-exec: install-exec-am
 
-install-data: install-info-am install-data-local
-	@$(NORMAL_INSTALL)
+install-data-am: install-info-am install-man install-data-local
+install-data: install-data-am
 
-install: install-exec install-data all
-	@:
-
-uninstall: uninstall-info
-
-all: Makefile $(INFO_DEPS)
-
+install-am: all-am
+	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+install: install-am
+uninstall-am: uninstall-info uninstall-man
+uninstall: uninstall-am
+all-am: Makefile $(INFO_DEPS) $(SCRIPTS) $(MANS)
+all-redirect: all-am
 install-strip:
-	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' INSTALL_SCRIPT='$(INSTALL_PROGRAM)' install
+	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
 installdirs:
-	$(mkinstalldirs)  $(infodir)
+	$(mkinstalldirs)  $(DESTDIR)$(infodir) $(DESTDIR)$(mandir)/man1 \
+		$(DESTDIR)$(mandir)/man5
 
 
 mostlyclean-generic:
-	-test -z "$(MOSTLYCLEANFILES)" || rm -f $(MOSTLYCLEANFILES)
 
 clean-generic:
-	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
-	-rm -f Makefile $(DISTCLEANFILES)
+	-rm -f Makefile $(CONFIG_CLEAN_FILES)
 	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
-	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 
 maintainer-clean-generic:
-	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
-	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
-mostlyclean:  mostlyclean-aminfo mostlyclean-generic
+mostlyclean-am:  mostlyclean-vti mostlyclean-vti.1 mostlyclean-aminfo \
+		mostlyclean-generic
 
-clean:  clean-aminfo clean-generic mostlyclean
+mostlyclean: mostlyclean-am
 
-distclean:  distclean-aminfo distclean-generic clean
-	-rm -f config.status
+clean-am:  clean-vti clean-vti.1 clean-aminfo clean-generic \
+		mostlyclean-am
 
-maintainer-clean:  maintainer-clean-aminfo maintainer-clean-generic \
-		distclean
+clean: clean-am
+
+distclean-am:  distclean-vti distclean-vti.1 distclean-aminfo \
+		distclean-generic clean-am
+
+distclean: distclean-am
+
+maintainer-clean-am:  maintainer-clean-vti maintainer-clean-vti.1 \
+		maintainer-clean-aminfo maintainer-clean-generic \
+		distclean-am
 	@echo "This command is intended for maintainers to use;"
 	@echo "it deletes files that may require special tools to rebuild."
 
-.PHONY: default install-info-am uninstall-info mostlyclean-aminfo \
-distclean-aminfo clean-aminfo maintainer-clean-aminfo tags distdir info \
-dvi installcheck install-exec install-data install uninstall all \
-installdirs mostlyclean-generic distclean-generic clean-generic \
-maintainer-clean-generic clean mostlyclean distclean maintainer-clean
+maintainer-clean: maintainer-clean-am
+
+.PHONY: mostlyclean-vti distclean-vti clean-vti maintainer-clean-vti \
+mostlyclean-vti.1 distclean-vti.1 clean-vti.1 maintainer-clean-vti.1 \
+install-info-am uninstall-info mostlyclean-aminfo distclean-aminfo \
+clean-aminfo maintainer-clean-aminfo install-man1 uninstall-man1 \
+install-man5 uninstall-man5 install-man uninstall-man tags distdir \
+info-am info dvi-am dvi check check-am installcheck-am installcheck \
+install-exec-am install-exec install-data-local install-data-am \
+install-data install-am install uninstall-am uninstall all-redirect \
+all-am all installdirs mostlyclean-generic distclean-generic \
+clean-generic maintainer-clean-generic clean mostlyclean distclean \
+maintainer-clean
 
 
 install-data-local:
-	@echo "WARNING: You must install texinfo.tex and epsf.tex manually,"
-	@echo "WARNING: perhaps in $(TEXMF)/tex/texinfo/"
-	@echo "WARNING: and $(TEXMF)/tex/generic/dvips/ respectively."
+	@echo "WARNING: You must install texinfo.tex, txi-??.tex, and epsf.tex manually,"
+	@echo "WARNING: perhaps in TEXMF/tex/texinfo/ and"
+	@echo "WARNING: TEXMF/tex/generic/dvips/ respectively,"
+	@echo "WARNING: where TEXMF is a root of your TeX tree."
 	@echo "WARNING: See doc/README for some considerations."
+	@echo "WARNING: You can run make TEXMF=/your/texmf install-tex to do this."
+install-tex:
+	test -n "$(TEXMF)" || (echo "TEXMF must be set." >&2; exit 1)
+	$(mkinstalldirs) $(texmf_texinfo) $(texmf_dvips)
+	$(INSTALL_DATA) texinfo.tex $(texmf_texinfo)/texinfo.tex
+	$(INSTALL_DATA) txi-cs.tex $(texmf_texinfo)/txi-cs.tex
+	$(INSTALL_DATA) txi-de.tex $(texmf_texinfo)/txi-de.tex
+	$(INSTALL_DATA) txi-no.tex $(texmf_texinfo)/txi-no.tex
+	$(INSTALL_DATA) epsf.tex $(texmf_dvips)/epsf.tex
 
-# Do not create info files for distribution.
+# Don't want to run help2man at every installation.
+@TEXINFO_MAINT_TRUE@info.1: ../info/ginfo $(HELP2MAN)
+@TEXINFO_MAINT_TRUE@	$(HELP2MAN) --name="read Info documents" $< >$@
+@TEXINFO_MAINT_TRUE@install-info.1: $(INSTALL_INFO) $(HELP2MAN)
+@TEXINFO_MAINT_TRUE@	$(HELP2MAN) --name="update info/dir entries" $< >$@
+@TEXINFO_MAINT_TRUE@makeinfo.1: $(MAKEINFO) $(HELP2MAN)
+@TEXINFO_MAINT_TRUE@	$(HELP2MAN) --name="translate Texinfo documents" $< >$@
+@TEXINFO_MAINT_TRUE@texi2dvi.1: ../util/texi2dvi $(HELP2MAN)
+@TEXINFO_MAINT_TRUE@	$(HELP2MAN) --name="print Texinfo documents" $< >$@
+@TEXINFO_MAINT_TRUE@texindex.1: ../util/texindex $(HELP2MAN)
+@TEXINFO_MAINT_TRUE@	$(HELP2MAN) --name="sort Texinfo index files" $< >$@
+
+# Do not create info files for distribution, but do create man pages.
 dist-info:
 
 # Do not try to build the info files in $(srcdir),

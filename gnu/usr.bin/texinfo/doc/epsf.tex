@@ -321,24 +321,24 @@ TeX, i.e., somewhere in the TEXINPUTS (or equivalent) path.}%
      \divide\epsftmp\pspoints
      \ifnum\epsfrsize=0\relax
        \special{PSfile=\ifepsfdraft psdraft.ps\else#1\fi\space
-		llx=\epsfllx\space
-		lly=\epsflly\space
-		urx=\epsfurx\space
-		ury=\epsfury\space
-		rwi=\number\epsftmp
-		\epsfclipstring
+                llx=\epsfllx\space
+                lly=\epsflly\space
+                urx=\epsfurx\space
+                ury=\epsfury\space
+                rwi=\number\epsftmp
+                \epsfclipstring
                }%
      \else
        \epsfrsize=10\epsfysize
        \divide\epsfrsize\pspoints
        \special{PSfile=\ifepsfdraft psdraft.ps\else#1\fi\space
-		llx=\epsfllx\space
-		lly=\epsflly\space
-		urx=\epsfurx\space
-		ury=\epsfury\space
-		rwi=\number\epsftmp
-		rhi=\number\epsfrsize
-		\epsfclipstring
+                llx=\epsfllx\space
+                lly=\epsflly\space
+                urx=\epsfurx\space
+                ury=\epsfury\space
+                rwi=\number\epsftmp
+                rhi=\number\epsfrsize
+                \epsfclipstring
                }%
      \fi
 }%
@@ -427,27 +427,27 @@ TeX, i.e., somewhere in the TEXINPUTS (or equivalent) path.}%
    \epsfxsize=\epsfsize{\epsftsize}{\epsfrsize}%
    \ifnum \epsfxsize=0
       \ifnum \epsfysize=0
-	\epsfxsize=\epsftsize
+        \epsfxsize=\epsftsize
         \epsfysize=\epsfrsize
-	\epsfrsize=0pt
+        \epsfrsize=0pt
 %
 %   We have a sticky problem here:  TeX doesn't do floating point arithmetic!
 %   Our goal is to compute y = rx/t. The following loop does this reasonably
 %   fast, with an error of at most about 16 sp (about 1/4000 pt).
 %
       \else
-	\epsftmp=\epsftsize \divide\epsftmp\epsfrsize
-	\epsfxsize=\epsfysize \multiply\epsfxsize\epsftmp
-	\multiply\epsftmp\epsfrsize \advance\epsftsize-\epsftmp
-	\epsftmp=\epsfysize
-	\loop \advance\epsftsize\epsftsize \divide\epsftmp 2
-	\ifnum \epsftmp>0
-	   \ifnum \epsftsize<\epsfrsize
+        \epsftmp=\epsftsize \divide\epsftmp\epsfrsize
+        \epsfxsize=\epsfysize \multiply\epsfxsize\epsftmp
+        \multiply\epsftmp\epsfrsize \advance\epsftsize-\epsftmp
+        \epsftmp=\epsfysize
+        \loop \advance\epsftsize\epsftsize \divide\epsftmp 2
+        \ifnum \epsftmp>0
+           \ifnum \epsftsize<\epsfrsize
            \else
-	      \advance\epsftsize-\epsfrsize \advance\epsfxsize\epsftmp
+              \advance\epsftsize-\epsfrsize \advance\epsfxsize\epsftmp
            \fi
-	\repeat
-	\epsfrsize=0pt
+        \repeat
+        \epsfrsize=0pt
       \fi
    \else
      \ifnum \epsfysize=0
@@ -457,9 +457,9 @@ TeX, i.e., somewhere in the TEXINPUTS (or equivalent) path.}%
        \epsftmp=\epsfxsize
        \loop \advance\epsfrsize\epsfrsize \divide\epsftmp 2
        \ifnum \epsftmp>0
-	  \ifnum \epsfrsize<\epsftsize
+          \ifnum \epsfrsize<\epsftsize
           \else
-	     \advance\epsfrsize-\epsftsize \advance\epsfysize\epsftmp
+             \advance\epsfrsize-\epsftsize \advance\epsfysize\epsftmp
           \fi
        \repeat
        \epsfrsize=0pt

@@ -1,0 +1,70 @@
+% Dutch translation for texinfo.tex.  
+% $Id: txi-nl.tex,v 1.1.1.1 2000/02/09 01:27:22 espie Exp $
+%
+% Copyright (C) 1999 Free Software Foundation.
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+% Set up fixed words if not already set.
+\gdef\putwordAppendix{Appendix}
+\gdef\putwordChapter{Hoofdstuk}
+\gdef\putwordfile{bestand}
+\gdef\putwordin{in}
+\gdef\putwordIndexIsEmpty{(Index is leeg)}
+\gdef\putwordIndexNonexistent{(Index bestaat niet)}
+\gdef\putwordInfo{Info}
+\gdef\putwordInstanceVariableof{Instantie Variabele van}
+\gdef\putwordMethodon{Methode van}
+\gdef\putwordNoTitle{Geen titel}
+\gdef\putwordof{van}
+\gdef\putwordon{op}
+\gdef\putwordpage{pagina}
+\gdef\putwordsection{sectie}
+\gdef\putwordSection{Sectie}
+\gdef\putwordsee{zie}
+\gdef\putwordSee{Zie}
+\gdef\putwordShortTOC{Korte inhoudsopgave}
+\gdef\putwordTOC{Inhoudsopgave}
+%
+\gdef\putwordMJan{Januari}
+\gdef\putwordMFeb{Februari}
+\gdef\putwordMMar{Maart}
+\gdef\putwordMApr{April}
+\gdef\putwordMMay{Mei}
+\gdef\putwordMJun{Juni}
+\gdef\putwordMJul{Juli}
+\gdef\putwordMAug{Augustus}
+\gdef\putwordMSep{September}
+\gdef\putwordMOct{Oktober}
+\gdef\putwordMNov{November}
+\gdef\putwordMDec{December}
+%
+\gdef\putwordDefmac{Macro}
+\gdef\putwordDefspec{Speciale Vorm}
+\gdef\putwordDefvar{Variabele}
+\gdef\putwordDefopt{Gebruikers optie}
+\gdef\putwordDeftypevar{Variabele}
+\gdef\putwordDeffunc{Functie}
+\gdef\putwordDeftypefun{Functie}
+
+% Produces Day Month Year style of output.
+\def\today{%
+  \number\day\space
+  \ifcase\month
+  \or\putwordMJan\or\putwordMFeb\or\putwordMMar\or\putwordMApr
+  \or\putwordMMay\or\putwordMJun\or\putwordMJul\or\putwordMAug
+  \or\putwordMSep\or\putwordMOct\or\putwordMNov\or\putwordMDec
+  \fi
+  \space\number\year}

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Test that a minimal Texinfo file can be converted to HTML.
+
+../makeinfo --html ${srcdir-.}/html-min.txi
+exit_status=$?
+
+rm -f html-min.html
+exit $exit_status

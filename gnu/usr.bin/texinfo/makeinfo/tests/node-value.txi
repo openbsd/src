@@ -1,0 +1,15 @@
+\input texinfo
+@setfilename node-value.info
+@set a--foo bar
+
+@node Top, @value{a--foo}, (dir), (dir)
+@top Var @value{a--foo}
+@value{a--foo}
+
+@node @value{a--foo}, BarFoo, Top, (dir)
+@chapter BarFoo
+
+@node BarFoo, , @value{a--foo}, (dir)
+@chapter bar
+
+@bye

@@ -1,5 +1,5 @@
-/* Implementation of the dcgettext(3) function
-   Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+/* Implementation of the dcgettext(3) function.
+   Copyright (C) 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -91,7 +91,9 @@ void free ();
    because some ANSI C functions will require linking with this object
    file and the name space must not be polluted.  */
 # define getcwd __getcwd
-# define stpcpy __stpcpy
+# ifndef stpcpy
+#  define stpcpy __stpcpy
+# endif
 #else
 # if !defined HAVE_GETCWD
 char *getwd ();
@@ -162,10 +164,11 @@ struct binding *_nl_domain_bindings;
 
 /* Prototypes for local functions.  */
 static char *find_msg PARAMS ((struct loaded_l10nfile *domain_file,
-			       const char *msgid));
-static const char *category_to_name PARAMS ((int category));
+			       const char *msgid)) internal_function;
+static const char *category_to_name PARAMS ((int category)) internal_function;
 static const char *guess_category_value PARAMS ((int category,
-						 const char *categoryname));
+						 const char *categoryname))
+     internal_function;
 
 
 /* For those loosing systems which don't have `alloca' we have to add
@@ -388,6 +391,7 @@ weak_alias (__dcgettext, dcgettext);
 
 
 static char *
+internal_function
 find_msg (domain_file, msgid)
      struct loaded_l10nfile *domain_file;
      const char *msgid;
@@ -476,6 +480,7 @@ find_msg (domain_file, msgid)
 
 /* Return string representation of locale CATEGORY.  */
 static const char *
+internal_function
 category_to_name (category)
      int category;
 {
@@ -535,6 +540,7 @@ category_to_name (category)
 
 /* Guess value of current locale from value of the environment variables.  */
 static const char *
+internal_function
 guess_category_value (category, categoryname)
      int category;
      const char *categoryname;
@@ -590,4 +596,29 @@ stpcpy (dest, src)
     /* Do nothing. */ ;
   return dest - 1;
 }
+#endif
+
+
+#ifdef _LIBC
+/* If we want to free all resources we have to do some work at
+   program's end.  */
+static void __attribute__ ((unused))
+free_mem (void)
+{
+  struct binding *runp;
+
+  for (runp = _nl_domain_bindings; runp != NULL; runp = runp->next)
+    {
+      free (runp->domainname);
+      if (runp->dirname != _nl_default_dirname)
+	/* Yes, this is a pointer comparison.  */
+	free (runp->dirname);
+    }
+
+  if (_nl_current_default_domain != _nl_default_default_domain)
+    /* Yes, again a pointer comparison.  */
+    free ((char *) _nl_current_default_domain);
+}
+
+text_set_element (__libc_subfreeres, free_mem);
 #endif

@@ -1,0 +1,12 @@
+\input texinfo
+@setfilename html-min.info
+@settitle HTML min test
+
+@node Top
+@top Top of HTML min test
+
+Top.
+
+Second paragraph.
+
+@bye

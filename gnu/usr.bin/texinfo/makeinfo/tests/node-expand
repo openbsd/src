@@ -1,0 +1,11 @@
+#!/bin/sh
+# Test command expansion in node names.
+
+: ${srcdir=.}
+
+../makeinfo --commands-in-node-names $srcdir/node-expand.txi
+test -s node-expand.info
+exit_status=$?
+
+rm -f node-expand.info
+exit $exit_status

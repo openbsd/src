@@ -1,5 +1,5 @@
 /* Message catalogs for internationalization.
-   Copyright (C) 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@
    include protection above.  But the systems header might perhaps also
    define _LIBINTL_H and therefore we have to protect the definition here.  */
 
-#if !defined (_LIBINTL_H) || !defined (_LIBGETTEXT_H)
-#if !defined (_LIBINTL_H)
+#if !defined _LIBINTL_H || !defined _LIBGETTEXT_H
+#ifndef _LIBINTL_H
 # define _LIBINTL_H	1
 #endif
 #define _LIBGETTEXT_H	1
@@ -44,7 +44,7 @@ extern "C" {
 /* @@ end of prolog @@ */
 
 #ifndef PARAMS
-# if __STDC__
+# if __STDC__ || defined __cplusplus
 #  define PARAMS(args) args
 # else
 #  define PARAMS(args) ()
@@ -168,8 +168,8 @@ extern int _nl_msg_cat_cntr;
 # define gettext(Msgid) (Msgid)
 # define dgettext(Domainname, Msgid) (Msgid)
 # define dcgettext(Domainname, Msgid, Category) (Msgid)
-# define textdomain(Domainname) while (0) /* nothing */
-# define bindtextdomain(Domainname, Dirname) while (0) /* nothing */
+# define textdomain(Domainname) ((char *) Domainname)
+# define bindtextdomain(Domainname, Dirname) ((char *) Dirname)
 
 #endif
 

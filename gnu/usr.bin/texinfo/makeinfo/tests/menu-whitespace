@@ -1,0 +1,71 @@
+#!/bin/sh
+# Test that a minimal Texinfo file can be converted to HTML.
+
+: ${srcdir=.}
+input=`basename $0`.txi
+
+../makeinfo -o /dev/null $srcdir/$input
+exit $?
+
+Date: 07 Dec 1998 11:23:44 +0100
+From: Andreas Schwab <schwab@issan.informatik.uni-dortmund.de>
+To: bug-texinfo@gnu.org
+Subject: Makeinfo mishandles defaulted node links
+
+The following example demonstrates a bug in makeinfo:
+
+$ cat top.texi
+@setfilename top.info
+
+@node Top
+@top Top
+
+@menu
+* first::
+@end menu
+
+@node first
+@chapter first
+
+@menu   @c
+* second::
+@end menu
+
+@node second
+@section second
+$ makeinfo top.texi
+Making info file `top.info' from `top.texi'.
+./top.texi:3: Next field of node `Top' not pointed to.
+./top.texi:17: This node (second) has the bad Prev.
+makeinfo: Removing output file `/home/as/test/top.info' due to errors; use --force to preserve.
+
+Makeinfo is being confused by the whitespace after @menu, or rather by its
+absence.
+
+
+1998-12-06  Andreas Schwab  <schwab@issan.cs.uni-dortmund.de>
+
+	* makeinfo/node.c (cm_node): When searching for @menu don't
+	require a space after it.
+
+--- texinfo-3.12b/makeinfo/node.c.~1~	Mon Oct 26 23:14:59 1998
++++ texinfo-3.12b/makeinfo/node.c	Sun Dec  6 00:23:59 1998
+@@ -523,9 +523,10 @@
+                     orig_size = size_of_input_text;
+ 
+                   input_text_offset =
+-                    search_forward ("\n@menu ", orig_offset);
++                    search_forward ("\n@menu", orig_offset);
+ 
+-                  if (input_text_offset > -1)
++                  if (input_text_offset > -1
++		      && cr_or_whitespace (input_text[input_text_offset + 6]))
+                     {
+                       char *nodename_from_menu = NULL;
+ 
+
+-- 
+Andreas Schwab                                      "And now for something
+schwab@issan.cs.uni-dortmund.de                      completely different"
+schwab@gnu.org
+

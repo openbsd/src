@@ -20,8 +20,8 @@
 # when there is no Makefile.
 #
 # This script is compatible with the BSD install script, but was written
-# from scratch.
-#
+# from scratch.  It can only install one file at a time, a restriction
+# shared with many OS's install programs.
 
 
 # set DOITPROG to echo to test this script

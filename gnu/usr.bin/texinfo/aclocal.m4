@@ -1,7 +1,7 @@
-dnl aclocal.m4 generated automatically by aclocal 1.2f
+dnl aclocal.m4 generated automatically by aclocal 1.4
 
-dnl Copyright (C) 1994, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
-dnl This Makefile.in is free software; the Free Software Foundation
+dnl Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
@@ -9,6 +9,97 @@ dnl This program is distributed in the hope that it will be useful,
 dnl but WITHOUT ANY WARRANTY, to the extent permitted by law; without
 dnl even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 dnl PARTICULAR PURPOSE.
+
+# $Id: aclocal.m4,v 1.1.1.3 2000/02/09 01:23:55 espie Exp $
+# Source file used by aclocal in generating aclocal.m4.
+
+#serial 3
+
+AC_DEFUN(jm_CHECK_DECLARATION,
+[
+  AC_REQUIRE([AC_HEADER_STDC])dnl
+  test -z "$ac_cv_header_memory_h" && AC_CHECK_HEADERS(memory.h)
+  test -z "$ac_cv_header_string_h" && AC_CHECK_HEADERS(string.h)
+  test -z "$ac_cv_header_strings_h" && AC_CHECK_HEADERS(strings.h)
+  test -z "$ac_cv_header_stdlib_h" && AC_CHECK_HEADERS(stdlib.h)
+  test -z "$ac_cv_header_unistd_h" && AC_CHECK_HEADERS(unistd.h)
+  AC_MSG_CHECKING([whether $1 is declared])
+  AC_CACHE_VAL(jm_cv_func_decl_$1,
+    [AC_TRY_COMPILE($2,
+      [
+#ifndef $1
+char *(*pfn) = (char *(*)) $1
+#endif
+      ],
+      eval "jm_cv_func_decl_$1=yes",
+      eval "jm_cv_func_decl_$1=no")])
+
+  if eval "test \"`echo '$jm_cv_func_decl_'$1`\" = yes"; then
+    AC_MSG_RESULT(yes)
+    ifelse([$3], , :, [$3])
+  else
+    AC_MSG_RESULT(no)
+    ifelse([$4], , , [$4
+])dnl
+  fi
+])dnl
+
+dnl jm_CHECK_DECLARATIONS(INCLUDES, FUNCTION... [, ACTION-IF-DECLARED
+dnl                       [, ACTION-IF-NOT-DECLARED]])
+AC_DEFUN(jm_CHECK_DECLARATIONS,
+[
+  for jm_func in $2
+  do
+    jm_CHECK_DECLARATION($jm_func, $1,
+    [
+      jm_tr_func=HAVE_DECL_`echo $jm_func | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ`
+      AC_DEFINE_UNQUOTED($jm_tr_func) $3], $4)dnl
+  done
+])
+
+#serial 1
+# this is check-decl.m4 in sh-utils 1.16k/m4/check-decl.m4
+# with a different function list.
+
+dnl This is just a wrapper function to encapsulate this kludge.
+dnl Putting it in a separate file like this helps share it between
+dnl different packages.
+AC_DEFUN(txi_CHECK_DECLS,
+[
+  headers='
+#include <stdio.h>
+#ifdef HAVE_STRING_H
+# if !STDC_HEADERS && HAVE_MEMORY_H
+#  include <memory.h>
+# endif
+# include <string.h>
+#else
+# ifdef HAVE_STRINGS_H
+#  include <strings.h>
+# endif
+#endif
+#ifdef HAVE_STDLIB_H
+# include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+'
+
+  if test x = y; then
+    dnl This code is deliberately never run via ./configure.
+    dnl FIXME: this is a gross hack to make autoheader put entries
+    dnl for each of these symbols in the config.h.in.
+    dnl Otherwise, I'd have to update acconfig.h every time I change
+    dnl this list of functions.
+    AC_DEFINE(HAVE_DECL_STRERROR, 1, [Define if this function is declared.])
+    AC_DEFINE(HAVE_DECL_STRCASECMP, 1, [Define if this function is declared.])
+    AC_DEFINE(HAVE_DECL_STRNCASECMP, 1, [Define if this function is declared.])
+    AC_DEFINE(HAVE_DECL_STRCOLL, 1, [Define if this function is declared.])
+  fi
+
+  jm_CHECK_DECLARATIONS($headers, strerror strcasecmp strncasecmp strcoll)
+])
 
 # Like AC_CONFIG_HEADER, but automatically create stamp file.
 
@@ -43,7 +134,7 @@ dnl Usage:
 dnl AM_INIT_AUTOMAKE(package,version, [no-define])
 
 AC_DEFUN(AM_INIT_AUTOMAKE,
-[AC_REQUIRE([AM_PROG_INSTALL])
+[AC_REQUIRE([AC_PROG_INSTALL])
 PACKAGE=[$1]
 AC_SUBST(PACKAGE)
 VERSION=[$2]
@@ -53,8 +144,8 @@ if test "`cd $srcdir && pwd`" != "`pwd`" && test -f $srcdir/config.status; then
   AC_MSG_ERROR([source directory already configured; run "make distclean" there first])
 fi
 ifelse([$3],,
-AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
-AC_DEFINE_UNQUOTED(VERSION, "$VERSION"))
+AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Name of package])
+AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Version number of package]))
 AC_REQUIRE([AM_SANITY_CHECK])
 AC_REQUIRE([AC_ARG_PROGRAM])
 dnl FIXME This is truly gross.
@@ -65,15 +156,6 @@ AM_MISSING_PROG(AUTOMAKE, automake, $missing_dir)
 AM_MISSING_PROG(AUTOHEADER, autoheader, $missing_dir)
 AM_MISSING_PROG(MAKEINFO, makeinfo, $missing_dir)
 AC_REQUIRE([AC_PROG_MAKE_SET])])
-
-
-# serial 1
-
-AC_DEFUN(AM_PROG_INSTALL,
-[AC_REQUIRE([AC_PROG_INSTALL])
-test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
-AC_SUBST(INSTALL_SCRIPT)dnl
-])
 
 #
 # Check to make sure that the build environment is sane.
@@ -134,15 +216,80 @@ else
 fi
 AC_SUBST($1)])
 
+# Define a conditional.
+
+AC_DEFUN(AM_CONDITIONAL,
+[AC_SUBST($1_TRUE)
+AC_SUBST($1_FALSE)
+if $2; then
+  $1_TRUE=
+  $1_FALSE='#'
+else
+  $1_TRUE='#'
+  $1_FALSE=
+fi])
+
+dnl From Jim Meyering.
+
+# serial 1
+
+AC_DEFUN(AM_SYS_POSIX_TERMIOS,
+[AC_CACHE_CHECK([POSIX termios], am_cv_sys_posix_termios,
+  [AC_TRY_LINK([#include <sys/types.h>
+#include <unistd.h>
+#include <termios.h>],
+  [/* SunOS 4.0.3 has termios.h but not the library calls.  */
+   tcgetattr(0, 0);],
+  am_cv_sys_posix_termios=yes,
+  am_cv_sys_posix_termios=no)])
+])
+
+dnl From Jim Meyering.
+
+# serial 1
+
+AC_DEFUN(AM_HEADER_TIOCGWINSZ_NEEDS_SYS_IOCTL,
+[AC_REQUIRE([AM_SYS_POSIX_TERMIOS])
+ AC_CACHE_CHECK([whether use of TIOCGWINSZ requires sys/ioctl.h],
+	        am_cv_sys_tiocgwinsz_needs_sys_ioctl_h,
+  [am_cv_sys_tiocgwinsz_needs_sys_ioctl_h=no
+
+  gwinsz_in_termios_h=no
+  if test $am_cv_sys_posix_termios = yes; then
+    AC_EGREP_CPP([yes],
+    [#include <sys/types.h>
+#     include <termios.h>
+#     ifdef TIOCGWINSZ
+        yes
+#     endif
+    ], gwinsz_in_termios_h=yes)
+  fi
+
+  if test $gwinsz_in_termios_h = no; then
+    AC_EGREP_CPP([yes],
+    [#include <sys/types.h>
+#     include <sys/ioctl.h>
+#     ifdef TIOCGWINSZ
+        yes
+#     endif
+    ], am_cv_sys_tiocgwinsz_needs_sys_ioctl_h=yes)
+  fi
+  ])
+  if test $am_cv_sys_tiocgwinsz_needs_sys_ioctl_h = yes; then
+    AC_DEFINE(GWINSZ_IN_SYS_IOCTL,1,
+              [Define if TIOCGWINSZ requires sys/ioctl.h])
+  fi
+])
+
 # Macro to add for using GNU gettext.
 # Ulrich Drepper <drepper@cygnus.com>, 1995.
 #
-# This file file be copied and used freely without restrictions.  It can
+# This file can be copied and used freely without restrictions.  It can
 # be used in projects which are not available under the GNU Public License
 # but which still want to provide support for the GNU gettext functionality.
 # Please note that the actual code is *not* freely available.
 
-# serial 3
+# serial 5
 
 AC_DEFUN(AM_WITH_NLS,
   [AC_MSG_CHECKING([whether NLS is requested])
@@ -162,7 +309,7 @@ AC_DEFUN(AM_WITH_NLS,
       AC_ARG_WITH(included-gettext,
         [  --with-included-gettext use the GNU gettext library included here],
         nls_cv_force_use_gnu_gettext=$withval,
-        nls_cv_force_use_gnu_gettext=no)
+        nls_cv_force_use_gnu_gettext=yes)
       AC_MSG_RESULT($nls_cv_force_use_gnu_gettext)
 
       nls_cv_use_gnu_gettext="$nls_cv_force_use_gnu_gettext"
@@ -184,9 +331,10 @@ AC_DEFUN(AM_WITH_NLS,
 	     AC_CHECK_LIB(intl, bindtextdomain,
 	       [AC_CACHE_CHECK([for gettext in libintl],
 		 gt_cv_func_gettext_libintl,
-		 [AC_TRY_LINK([], [return (int) gettext ("")],
-		 gt_cv_func_gettext_libintl=yes,
-		 gt_cv_func_gettext_libintl=no)])])
+		 [AC_CHECK_LIB(intl, gettext,
+		  gt_cv_func_gettext_libintl=yes,
+		  gt_cv_func_gettext_libintl=no)],
+		 gt_cv_func_gettext_libintl=no)])
 	   fi
 
 	   if test "$gt_cv_func_gettext_libc" = "yes" \
@@ -280,7 +428,7 @@ AC_DEFUN(AM_WITH_NLS,
 	  : ;
 	else
 	  AC_MSG_RESULT(
-	    [found xgettext programs is not GNU xgettext; ignore it])
+	    [found xgettext program is not GNU xgettext; ignore it])
 	  XGETTEXT=":"
 	fi
       fi
@@ -292,6 +440,12 @@ AC_DEFUN(AM_WITH_NLS,
       nls_cv_header_intl=intl/libintl.h
       nls_cv_header_libgt=intl/libgettext.h
     fi
+    AC_LINK_FILES($nls_cv_header_libgt, $nls_cv_header_intl)
+    AC_OUTPUT_COMMANDS(
+     [case "$CONFIG_FILES" in *po/Makefile.in*)
+        sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile
+      esac])
+
 
     # If this is used in GNU gettext we have to set USE_NLS to `yes'
     # because some of the sources are only built for this goal.
@@ -336,9 +490,9 @@ AC_DEFUN(AM_GNU_GETTEXT,
    AC_REQUIRE([AC_FUNC_MMAP])dnl
 
    AC_CHECK_HEADERS([argz.h limits.h locale.h nl_types.h malloc.h string.h \
-unistd.h values.h sys/param.h])
+unistd.h sys/param.h])
    AC_CHECK_FUNCS([getcwd munmap putenv setenv setlocale strchr strcasecmp \
-__argz_count __argz_stringify __argz_next])
+strdup __argz_count __argz_stringify __argz_next])
 
    if test "${ac_cv_func_stpcpy+set}" != "set"; then
      AC_CHECK_FUNCS(stpcpy)
@@ -430,11 +584,13 @@ __argz_count __argz_stringify __argz_next])
    dnl be included in po/Makefile.
    test -d po || mkdir po
    if test "x$srcdir" != "x."; then
-     if test "x`echo $srcdir | sed 's@/.*@@'`" = "x"; then
+   changequote(, )dnl
+     if test "x`echo $srcdir | sed -e 's@^[A-z]:@@' -e 's@/.*@@'`" = "x"; then
        posrcprefix="$srcdir/"
      else
        posrcprefix="../$srcdir/"
      fi
+   changequote([, ])dnl
    else
      posrcprefix="../"
    fi
@@ -446,7 +602,7 @@ __argz_count __argz_stringify __argz_next])
 # Search path for a program which passes the given test.
 # Ulrich Drepper <drepper@cygnus.com>, 1996.
 #
-# This file file be copied and used freely without restrictions.  It can
+# This file can be copied and used freely without restrictions.  It can
 # be used in projects which are not available under the GNU Public License
 # but which still want to provide support for the GNU gettext functionality.
 # Please note that the actual code is *not* freely available.
@@ -494,7 +650,7 @@ AC_SUBST($1)dnl
 # Check whether LC_MESSAGES is available in <locale.h>.
 # Ulrich Drepper <drepper@cygnus.com>, 1995.
 #
-# This file file be copied and used freely without restrictions.  It can
+# This file can be copied and used freely without restrictions.  It can
 # be used in projects which are not available under the GNU Public License
 # but which still want to provide support for the GNU gettext functionality.
 # Please note that the actual code is *not* freely available.

@@ -1,0 +1,72 @@
+% Czech translation for texinfo.tex (1999-01-24, GNU Texinfo 3.12c).
+%
+% Copyright (C) 1999 Vladimir Michl <Vladimir.Michl@mujweb.cz>
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program; if not, write to the Free Software
+% Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+%
+% To: Karl Berry <karl@cs.umb.edu>
+%
+\gdef\putwordAppendix{Pøílohy}
+\gdef\putwordChapter{Kapitola}
+\gdef\putwordfile{soubor}
+\gdef\putwordIndexIsEmpty{(Rejstøík je prázdný)}
+\gdef\putwordIndexNonexistent{(Rejstøík neexistuje)}
+\gdef\putwordInfo{Info}
+\gdef\putwordMethodon{Metoda aktivní}
+\gdef\putwordNoTitle{Bez nadpisu}
+\gdef\putwordOf{}
+\gdef\putwordon{zapnuto}
+\gdef\putwordpage{stránka}
+\gdef\putwordsection{podkapitola}
+\gdef\putwordSection{Podkapitola}
+\gdef\putwordsee{vidìt}
+\gdef\putwordSee{Vidìt}
+\gdef\putwordShortTOC{Krátký obsah}
+\gdef\putwordTOC{Obsah}
+%
+\gdef\putwordMJan{ledna}
+\gdef\putwordMFeb{února}
+\gdef\putwordMMar{bøezna}
+\gdef\putwordMApr{dubna}
+\gdef\putwordMMai{kvìtna}
+\gdef\putwordMJun{èervna}
+\gdef\putwordMJul{èervence}
+\gdef\putwordMAug{srpna}
+\gdef\putwordMSep{záøí}
+\gdef\putwordMOct{øíjna}
+\gdef\putwordMNov{listopadu}
+\gdef\putwordMDec{prosince}
+%
+\gdef\putwordDefmac{Makro}
+\gdef\putwordDefspec{Speciální forma}
+\gdef\putwordDefivar{Instance promìnné}
+\gdef\putwordDefvar{Promìnná}
+\gdef\putwordDefopt{Volby}
+\gdef\putwordDeftypevar{Promìnná}
+\gdef\putwordDeffunc{Funkce}
+\gdef\putwordDeftypefun{Funkce}
+%
+% Redefine \today to produce Czech
+% preferred dates such as 28. januar 1999.
+%
+\gdef\today{%
+  \number\day.\space
+  \ifcase\month
+  \or\putwordMJan\or\putwordMFeb\or\putwordMMar\or\putwordMApr
+  \or\putwordMMai\or\putwordMJun\or\putwordMJul\or\putwordMAug
+  \or\putwordMSep\or\putwordMOct\or\putwordMNov\or\putwordMDec
+  \fi
+  \space\number\year}
+%

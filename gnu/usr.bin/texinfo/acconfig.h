@@ -1,5 +1,6 @@
 /* acconfig.h
    This file is in the public domain.
+   $Id: acconfig.h,v 1.1.1.2 2000/02/09 01:23:53 espie Exp $
 
    Descriptive text for the C preprocessor macros that
    the distributed Autoconf macros can define.
@@ -15,6 +16,9 @@
 
 
 @TOP@
+
+/* Define to 1 if including sys/ioctl.h is needed to get TIOCGWINSZ. */
+#undef GWINSZ_IN_SYS_IOCTL
 
 /* Define to 1 if NLS is requested.  */
 #undef ENABLE_NLS
@@ -38,11 +42,6 @@
 #undef VERSION
 
 @BOTTOM@
-
-/* For gettext (NLS) */
-#include <libintl.h>
-#define _(String) gettext (String)
-#define N_(String) (String)
 
 
 /* Leave that blank line there!!  Autoheader needs it.

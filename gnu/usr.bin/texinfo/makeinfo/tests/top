@@ -1,0 +1,10 @@
+#!/bin/sh
+# Test that a top node can be ignored.
+
+: ${srcdir=.}
+../makeinfo $srcdir/top.txi || exit 1
+
+# Expected warnings due to use of @ifinfo instead of @ifnottex.
+../makeinfo --no-split --no-warn --html $srcdir/top.txi -o top.html || exit 1
+
+rm -f top*.html top.info

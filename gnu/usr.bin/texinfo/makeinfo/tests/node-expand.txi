@@ -1,0 +1,64 @@
+\input texinfo.tex    @c -*-texinfo-*-
+
+@setfilename node-expand.info
+
+@c Makeinfo should expand non-macros such as @@ and @value
+@c in node names and node references, including menus.
+@c This file deliberately references "Node 1" both via
+@c @value and directly; this should not trigger any errors,
+@c as long as --commands-in-node-names is used.
+@c Index entries should all be expanded as well.
+
+@set node1 Node 1
+
+@ifnottex
+
+@node Top, (dir), (dir), (dir)
+@top
+
+@end ifnottex
+
+@menu
+* @value{node1}  ::
+* @@node `2'::
+* ``node'' with---tricks::
+@end menu
+
+@xref{@@node `2'}.
+
+@node @value{node1}, @@node `2', Top, Top
+@chapter Chapter 1
+
+@cindex entry for chapter 1
+This is chapter 1.
+@xref{@@node `2'}.
+
+@set sec1 Section 1.1
+
+@menu
+* @value{sec1}::
+@end menu
+
+@node Section 1.1, , Node 1, Node 1
+@comment  node-name,  next,  previous,  up
+
+@cindex entry for section 1.1
+This is section 1.1.
+
+@node @@node `2', ``node'' with---tricks, @value{node1}, Top
+@comment  node-name,  next,  previous,  up
+@chapter Node 2
+
+@cindex entry for chapter 2
+This is chapter 2.
+@xref{@value{node1}}.  @xref{Node 1}.
+@xref{``node'' with---tricks, Node with some tricks}.
+
+@node ``node'' with---tricks, , @@node `2', Top
+
+@cindex tricks
+Another node.
+
+@printindex cp
+
+@bye

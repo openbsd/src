@@ -1,4 +1,4 @@
-/* Implementation of gettext(3) function
+/* Implementation of gettext(3) function.
    Copyright (C) 1995, 1997 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify

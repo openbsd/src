@@ -1,0 +1,422 @@
+Building and installing GNU Texinfo with DJGPP v2.x
+===================================================
+
+This directory holds files required for building Texinfo with DJGPP
+tools for MS-DOS and MS-Windows.  If you got this file with a binary
+distribution, look for the "Installation" section below.
+
+
+1. Building Texinfo
+   ----------------
+
+   a. To compile Texinfo, you will need the following tools:
+
+      - basic DJGPP development environment: GCC, Binutils and djdev;
+      - a DJGPP port of GNU Make version 3.75 or later;
+      - a DJGPP port of Bash;
+      - a port of GNU Sed;
+      - ginstall and rm from the Fileutils package;
+      - DJGPP ports of Fileutils, Diffutils, and Grep (only if you
+        need to reconfigure the source distribution);
+      - etags (from the Emacs distribution) and mkid (from ID-utils)
+        if you need the TAGS and ID targets of the Makefile's.
+
+      All of the above are available from the DJGPP ftp sites on
+      SimTel.NET mirrors, in the pub/simtelnet/gnu/djgpp/v2gnu
+      directory.
+
+   b. From the root of your DJGPP installation, unzip the source package:
+
+      - if you are unpacking the official GNU source distribution:
+
+	 tar -xvzf texinfo-X.YZ.tar.gz
+
+	 or
+
+	 djtar -x texinfo-X.YZ.tar.gz
+
+        where X.YZ is the version number.  (Users of MS-DOS and
+        MS-Windows 3.X, which don't support long file names, will need
+        to rename the archive to something like texi-XYZ.tgz.)
+
+      - if you are unpacking a source distribution from a DJGPP ftp
+        site:
+
+         unzip txiXYZs
+
+	 or
+
+	 pkunzip -d txiXYZs
+
+      If you build Texinfo on Windows 9X, you are advised to use a
+      version of Unzip which supports long filenames, so that the
+      original long filenames of the source files will be preserved.
+      Otherwise, the build procedure will most probably fail.
+
+      Note: do NOT use an unzip program which supports long file names
+      on Windows NT, as DJGPP doesn't support long names there.
+
+   c. If the source distribution comes with a ready Makefile (this is
+      usually the case with archives downloaded from the DJGPP sites),
+      and all you need is to build Texinfo, you may skip the configure
+      step below and go directly to step e.
+
+   d. To build the official GNU distribution, or to configure Texinfo
+      for any environment but stock DJGPP v2.x, run djgpp\config.bat
+      first, like this:
+
+	SRCDIR\djgpp\config SRCDIR
+
+      Here SRCDIR is the directory where you unpacked the sources.  If
+      you are configuring from the source directory itself, you may
+      omit the argument to the config.bat file.  If you do supply the
+      argument, you MUST use forward slashes in it, or else the batch
+      file might fail.
+
+      config.bat sets some environment variables, then invokes the
+      configure script.  The script will run for a few minutes and
+      create Makefile's in all the directories, and the config.h file.
+
+   e. Run `Make'.  This builds the programs and the Info files.
+
+
+
+2. Installation
+   ------------
+
+   a. If you are installing the binary distribution, then go to your
+      main DJGPP directory and unzip the files.  For instance, if your
+      DJGPP installation is rooted on C:\DJGPP, then type this (XYZ is
+      the version number):
+
+        cd c:\djgpp
+        unzip txiXYZb
+
+      or, if you prefer `pkunzip':
+
+        pkunzip -d txiXYZb
+
+   b. If you downloaded and built Texinfo from sources, install by
+      invoking Make:
+
+        make install
+
+      This requires a port of Unix-like program `install.exe'.  It is
+      available from the DJGPP port of GNU Fileutils on SimTel.NET.
+
+   c. Info needs a file named DIR with the top-level menu of all the
+      Info files installed on your system.  If you installed the DJGPP
+      development environment (djdevNN.zip), then you already have
+      this file in the info/ subdirectory of your DJGPP installation.
+      Otherwise, you will need to create it.  A minimal DIR file is
+      available in this distribution, as a starting point.  Copy it to
+      the directory where you install the Info files from this
+      distribution.
+
+      Even if you already have a DIR file, you should review it to
+      make sure it is consistent with the names of the Info file you
+      are installing.  Here's how your Texinfo-related entries in DIR
+      should look like:
+
+      * Info: (info).
+	      Documentation browsing system.  This topic teaches you about
+	      how to use the online help information.
+
+      * Info-Standalone: (info-stnd).
+	      This topic helps you use the standalone Info-Program (info.exe)
+
+      * Texinfo: (texinfo).
+	      With one source file, make either a printed manual
+	      (through TeX) or an Info file (through makeinfo).
+	      Full documentation in this menu item.
+
+      * install-info: (texinfo)Invoking install-info. 
+	      How to update info/dir entries when installing GNU packages.
+
+      * texi2dvi: (texinfo)Format with texi2dvi.
+	      Printing Texinfo documentation with TeX.
+
+      * texindex: (texinfo)Format with tex/texindex.	
+	      Sorting Texinfo index files automatically.
+
+      * makeinfo: (texinfo)makeinfo options.
+	      Translate Texinfo source into Info, plain ASCII, or HTML.
+
+
+      Note that the asterisk `*' should be flushed all the way to the
+      left, it is indented here just to make reading more convenient.
+
+      If your DIR file entries differ from these, I suggest to edit them
+      so they are as shown above.  Otherwise, Info might not be able to
+      find some of the files.  You HAVE been warned!
+
+   d. Optionally, set up environment variables for Info.  These are:
+
+       * INFO_LINES   -- screen size for Info.
+       * INFO_COLORS  -- screen colors for Info.
+
+      (If you have DJGPP installed on your system, the file djgpp.env
+      which comes with it already has entries for Info, see the [info]
+      section there.)
+
+      INFO_LINES can be one of 25 (the default), 28, 35, 40, 43, or 50
+      (that's if you have a VGA; EGAs only support 25, 35 and 43 lines).
+      I recommend 40 if your monitor is 17" or larger, and at least 28
+      lines for smaller monitors (I work with 40 lines even on 14"
+      monitors).
+
+      INFO_COLORS should have the following syntax:
+
+		set INFO_COLORS=XX.YY
+
+      where XX is the text attribute for text displayed in the text
+      windows and the echo area, and YY is the text attribute for the
+      modeline (aka the status line).  Each attribute is a numeric
+      value of a byte which describes the desired combination of
+      foreground and background colors.  The individual bits in the
+      attribute byte are defined as follows:
+
+			bBBBFFFF
+
+      where `b' is the blink bit, `BBB' are the 3 bits for background
+      color and `FFFF' are the 4 bits for the foreground color.  This is
+      the usual PC text attribute byte structure, and is further explained
+      in any standard reference on text-mode programming for the PC.
+
+      My favorite setting for INFO_COLORS is `0x1e.0x31'.  This makes
+      Info use yellow foreground on blue background for the text and
+      blue foreground on cyan background for the modelines.
+
+      After you've played with these variables and have chosen the values
+      you like, it's a good idea to put them on the DJGPP.ENV file, in the
+      [info] section.
+
+   e. Beginning with version 3.6, GNU Info can read Unix man pages.  If
+      you have a `man' clone on your system and would like to be able to
+      read man pages with Info, read the chapter ``Reading Man Pages''
+      below.  One such clone is available as v2apps/manXYb.zip from
+      the DJGPP sites (XY is the version number).
+
+   f. This port supports compressed Info files, like what Info under Unix
+      gives you.  For this to work, you will need to install a DOS port of
+      GNU `Gzip' package and to observe certain rules of file naming, so
+      that Info will find the compressed files working around the DOS 8.3
+      filename restriction.  The chapter ``Compressed Info Files'' below
+      explains the details of this.
+
+   g. If you need to use the `print-node' command, read the chapter
+      ``Printing Nodes'' below.
+
+   h. That's it!  You are now ready to use Info, Makeinfo, and Texindex.
+      To learn about them, type `Info' and press [Enter].  You will be
+      presented with the top-level menu of GNU/DJGPP hypertext
+      documentation.  If you are unfamiliar with Info, press `?' to see
+      the available commands.  Pressing `h' will cause Info to take you on
+      a guided tour through its features (recommended for first-time
+      users).
+
+   i. If you are used to Info ports of versions before 3.6, you should
+      know that the command bindings to PC-specific keys has changed: the
+      numeric keypad keys invoke the same commands as their extended
+      namesakes.  That is, e.g., the key `PgUp' on the numeric keypad
+      invokes the same command as the grey `PgUp' key on the extended
+      keypad.  This was done at DJ's request, because laptop machines
+      don't have extended keys.  Commands to move between nodes
+      (previously bound to numeric keypad) are now bound to Ctrl-
+      varieties of numeric keypad keys (e.g., `next-node' is on
+      `Ctrl-PgDn', `prev-node' is on `Ctrl-PgUp', etc.).  You can use
+      the `Alt-x describe-key' command to see which command is invoked
+      by a particular key.
+
+   j. There are several MSDOS-specific changes in Texinfo, relative to
+      previous Texinfo ports (for other changes, see the file NEWS):
+
+        * Full support for both forward and backslashes in all file
+          names.  Previously, Info was sensitive to the style of
+          slashes in directories mentioned in the INFOPATH environment
+          variable.
+
+        * The default operation of the `print-node' command has been
+          changed so that it will automatically print to the local
+          printer device connected to the PRN port.  (If your printer
+          is connected to another port, set the INFO_PRINT_COMMAND
+          environment variable like this:
+
+		set INFO_PRINT_COMMAND=>LPT2
+
+          In other words, if the value of INFO_PRINT_COMMAND begins
+          wih a `>' character, Info will write to the file or device
+          whose name follows the `>' character.  (Don't leave any
+          blanks between `>' and the device name!).
+
+	  Note that stock DOS shell won't let you use the `>'
+	  character in environment variables set from the DOS prompt
+	  or batch files, but you can set it in the [info] section of
+	  your DJGPP.ENV file.
+
+        * The `set-screen-height' command now actually changes the
+          screen dimensions from within Info if you specify one of the
+          sizes supported by your video hardware.
+
+        * If you don't have a `man' clone installed, and you invoke
+          Info with a name of a document which Info cannot find, it
+          will no longer wait for 15 seconds.
+
+        * Several bugs in handling of man pages were corrected.
+
+        * Info opens the dribble and input files in BINARY mode.  This
+	  allows to record keystrokes and restore them in another Info
+	  session, thus using dribble files as a startup or init file
+	  which changes default behavior, binds keys, etc.
+
+	* Info recognizes a new DOS-specific command-line option `-b'
+	  or `--speech-friendly'.  This option causes Info to use DOS
+	  I/O functions (`printf', `puts', etc.) instead of direct
+	  screen writes, which is required to enable speech
+	  synthesizer software (used by visually-impaired people) to
+	  grab the output.  When this option is given, the screen
+	  colors defined by the `INFO_COLORS' environment variable and
+	  the visible-bell feature will be disabled, because stdio
+	  functions don't support neither color text nor inverting
+	  screen colors.  This improvement was suggested and
+	  originally implemented by Hans-Bernhard Broeker
+	  <Broeker@physik.rwth-aachen.de>.
+
+        * Makeinfo now generates full .info-NN filenames when long
+	  filenames are supported (e.g. on Win9x) and short .iNN
+	  filenames otherwise.  When the Texinfo source or the
+	  command-line parameter -o specify an output file with no
+	  extension (like `texinfo'), and long filenames aren't
+	  supported, Makeinfo will make sure the generated names will
+	  be unique (it will create e.g. `texinf-1', `texin-10' etc.).
+
+        * The texi2dvi script is now fully compatible with
+          MS-DOS/MS-Windows and with the DJGPP port of TeX.
+
+
+3. Reading Man Pages
+   -----------------
+
+   Yes, Info can now read man pages!  This port supports that feature,
+   but for it to work, you will have to make sure your `man' clone is
+   set up correctly:
+
+   a. You should have an executable file named `man.exe', `man.com'
+      etc. somewhere on your PATH.
+
+   b. When invoked with redirected stdout, that executable should
+      print the contents of the file it gets as its argument to stdout
+      and exit.  If your man command calls some pager, that pager
+      should have this behavior (various ports of Unix command `more'
+      and the DJGPP port of GNU Less behave that way).
+
+   One `man' clone is available as v2apps/manNNb.zip from the DJGPP
+   sites on SimTel.NET.
+
+
+4. Compressed Info Files
+   ---------------------
+
+   Info allows you to hold your Info files in compressed form, to save
+   disk space.  When a file Info wants cannot be found, it will
+   automatically try to find that file in compressed form.  Info does
+   this by trying to find the original file with specific extensions.
+   Each extension tells Info which program should be called to
+   decompress the file.
+
+   This port supports compression by the GNU Gzip program.  When Info
+   cannot find a file `foo', it will first try to find `foo.z' or
+   `foo.gz'.  If this fails, and the file has an extension, the last
+   one or two characters of the extension are replaced by `z' and `gz'
+   respectively, and Info tries again.  If it finds any of these, it
+   will call the `GUnzip' program to decompress the file, catch its
+   output and display it.  (The original compressed file stays
+   intact.)
+
+   So, to use this feature, compress your files with Gzip and call the
+   compressed files using the following as guidelines:
+
+		foo       -->    foo.gz
+		foo.inf	  -->	 foo.igz
+		foo.i5	  -->	 foo.i5z
+		foo.25	  -->	 foo.25z
+
+   If you have a package whose Info docs are split into more than 9
+   sub-files and you need to compress those files, you will have to
+   rename the sub-files from `foo.iNN' to `foo.NN' so that there will
+   be place for the trailing `z' in the compressed names.  Don't
+   forget to edit the indirect file table in the main Info file and
+   change the sub-file filenames there too!
+
+   An alternative for those packages which have more than 99 Info
+   sub-files is to generate them from the Texinfo sources and force
+   Makeinfo to produce files without the .iNN extensions, like this:
+
+	        makeinfo -o foo foo.txi
+
+   This causes Makeinfo to generate file names like foo-1, foo-2,
+   etc., which leave more place for the numeric index.  If necessary,
+   Makeinfo will automatically remove characters from the end of the
+   argument to `-o'.  For example, "-o texinfo" produces files
+   texinf-1, ..., texin-10, ..., texi-100, etc. on platforms which
+   only support 8+3 file names.
+
+   Saying "@setfilename foo" near the beginning of the Texinfo source
+   file is another way of forcing Makeinfo to produce files without
+   the .iNN extensions.
+
+   Using Makeinfo to produce files whose names are "compression-ready"
+   is more convenient, since you don't need to edit the the indirect
+   file table to reflect the changes in file names.
+
+   On platforms which support long filenames, the usual Info behavior
+   of appending `.gz' or `.Z' to the original filename also works;
+   this is done *before* Info checks the above butchered names.
+
+   Special considerations apply if you are installing Info on dual
+   DOS/Windows 9X system, where you'd like Info to work with the same
+   files both in plain DOS and from the Windows DOS box.  In this
+   case, you should make sure your compressed Info files follow the
+   8+3 DOS naming conventions outlined above, even though Info
+   supports long file names on Windows 9X.  Also, you need to turn off
+   the generation of numeric tails in short 8+3 aliases Windows
+   creates for long names (if you don't know how, the DJGPP FAQ list
+   explains it).
+
+   Please note: for the automatic decompression to work, Info must be
+   able to find the file it looks for with an extension which
+   indicates that the file is compressed.  Do NOT call the compressed
+   files as the original uncompressed files were called, or Info
+   won't be able to find them!  File names like bison-1, gcc.i10 or
+   make.info-3 have nothing in them to suggest that they are
+   compressed, so don't expect Info to uncompress them.
+
+
+5. Printing Nodes
+   --------------
+      
+   Info has a `print-node' command.  It works by piping the contents of
+   the current node through a program which is named by the environment
+   variable INFO_PRINT_COMMAND.  That command should read its standard
+   input and write it to your printer.  Find any such program, put its
+   name into the above environment variable, and you can print nodes from
+   within Info.
+
+   If the value of INFO_PRINT_COMMAND begins with a redirection
+   character `>', Info will write the contents of the node to the file
+   whose name follows the `>' character.
+
+   If INFO_PRINT_COMMAND is not defined, the DJGPP port will use
+   ">PRN" as the default, which causes it to print to the local printer
+   device, PRN.
+
+6. Bug Reports
+   -----------
+
+   If you see any bugs which seem specific to this DOS port, please tell
+   me about them.
+
+
+   Enjoy,
+
+				Eli Zaretskii <eliz@is.elta.co.il>

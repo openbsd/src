@@ -1,0 +1,12 @@
+#!/bin/sh
+# Test that all the distribution manuals can be converted to HTML.
+
+: ${srcdir=.}
+
+for manual in info.texi info-stnd.texi texinfo.txi; do
+  base=`echo $manual | sed 's/\.te*xi$//'`
+  ../makeinfo --html -I$srcdir/../../doc --no-split \
+              $srcdir/../../doc/$manual -o $base.html \
+  || exit 1
+  rm -f $base.html
+done

@@ -1,0 +1,8 @@
+#!/bin/sh
+# Test that info.texi works with --no-headers (this includes node
+# pointer defaulting).
+
+: ${srcdir=.}
+docdir=$srcdir/../../doc
+
+../makeinfo --no-headers -o /dev/null -I$docdir info.texi

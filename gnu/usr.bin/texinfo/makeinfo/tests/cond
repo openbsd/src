@@ -1,0 +1,32 @@
+#!/bin/sh
+# Test conditional text.
+
+: ${srcdir=.}
+
+# Default Info output.
+../makeinfo -o cond.out $srcdir/cond.txi || exit 1
+egrep 'This is (ifnothtml|ifinfo|ifnottex) text' cond.out >/dev/null \
+  || exit 2
+test `fgrep ' text.' cond.out | wc -l` -eq 3 || exit 3
+
+# Default HTML output.
+../makeinfo --html -o cond.out $srcdir/cond.txi || exit 1
+egrep 'This is (html|ifhtml|ifnotinfo|ifnottex) text' cond.out >/dev/null \
+ || exit 2
+test `fgrep ' text.' cond.out | wc -l` -eq 4 || exit 3
+
+# --ifhtml off, --ifinfo off, --iftex off.
+../makeinfo --no-ifhtml --no-ifinfo --no-iftex -o cond.out $srcdir/cond.txi || exit 1
+egrep 'This is ifnot(html|info|tex) text' cond.out >/dev/null \
+ || exit 2
+test `fgrep ' text.' cond.out | wc -l` -eq 3 || exit 3
+
+# Do we really need to test all the other permutations?
+
+# --ifhtml on, --ifinfo on, --iftex on.
+../makeinfo --ifhtml --ifinfo --iftex -o cond.out $srcdir/cond.txi || exit 1
+egrep 'This is (html|ifhtml|ifinfo|tex|iftex) text' cond.out >/dev/null \
+ || exit 2
+test `fgrep ' text.' cond.out | wc -l` -eq 5 || exit 3
+
+rm -f cond.out cond.info

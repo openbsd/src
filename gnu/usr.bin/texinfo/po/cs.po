@@ -1,0 +1,2655 @@
+# Czech translations for GNU texinfo
+# Copyright (C) 1997 Free Software Foundation, Inc.
+# Vladimir Michl <Vladimir.Michl@upol.cz>, 1997.
+#
+# Notes: 2 untranslated messages, It's ok.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: texinfo 3.12c\n"
+"POT-Creation-Date: 1999-09-25 12:11-0400\n"
+"PO-Revision-Date: 1999-02-17 02:05+01:00\n"
+"Last-Translator: Vladimir Michl <Vladimir.Michl@upol.cz>\n"
+"Language-Team: Czech <cs@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. ****************************************************************
+#.
+#. Echo Area Movement Commands
+#.
+#. ****************************************************************
+#: info/echo-area.c:283 info/session.c:711
+msgid "Move forward a character"
+msgstr "Posun na následující znak"
+
+#. Move point backward in the node.
+#: info/echo-area.c:295 info/session.c:727
+msgid "Move backward a character"
+msgstr "Posun na pøedcházející znak"
+
+#: info/echo-area.c:307
+msgid "Move to the start of this line"
+msgstr "Pøesun na zaèátek tohoto øádku"
+
+#: info/echo-area.c:312
+msgid "Move to the end of this line"
+msgstr "Pøesun na konec tohoto øádku"
+
+#. Move forward a word in the input line.
+#: info/echo-area.c:320 info/session.c:745
+msgid "Move forward a word"
+msgstr "Posun na následující slovo"
+
+#: info/echo-area.c:360 info/session.c:794
+msgid "Move backward a word"
+msgstr "Posun na pøedcházející slovo"
+
+#: info/echo-area.c:400
+msgid "Delete the character under the cursor"
+msgstr "Smazání znaku pod kurzorem"
+
+#: info/echo-area.c:430
+msgid "Delete the character behind the cursor"
+msgstr "Smazání prvního znaku vlevo od kurzoru"
+
+#: info/echo-area.c:451
+msgid "Cancel or quit operation"
+msgstr "Zru¹ení nebo pøeru¹ení operace"
+
+#: info/echo-area.c:466
+msgid "Accept (or force completion of) this line"
+msgstr "Akceptování (nebo vnucené dokonèení) tohoto øádku"
+
+#: info/echo-area.c:471
+msgid "Insert next character verbatim"
+msgstr "Vlo¾ení dal¹ího znaku bez interpretace jeho funkce"
+
+#: info/echo-area.c:479
+msgid "Insert this character"
+msgstr "Vlo¾ení tohoto znaku"
+
+#: info/echo-area.c:497
+msgid "Insert a TAB character"
+msgstr "Vlo¾ení tabelátoru"
+
+#. Transpose the characters at point.  If point is at the end of the line,
+#. then transpose the characters before point.
+#: info/echo-area.c:504
+msgid "Transpose characters at point"
+msgstr "Pøemístìní znaku na pozici"
+
+#: info/echo-area.c:555
+msgid "Yank back the contents of the last kill"
+msgstr "Vlo¾ení toho co bylo naposled smazáno"
+
+#: info/echo-area.c:562
+msgid "Kill ring is empty"
+msgstr "Kruhový buffer smazaných oblastí je prázdný"
+
+#. If the last command was yank, or yank_pop, and the text just before
+#. point is identical to the current kill item, then delete that text
+#. from the line, rotate the index down, and yank back some other text.
+#: info/echo-area.c:575
+msgid "Yank back a previous kill"
+msgstr "Vlo¾ení naposledy smazaného úseku"
+
+#. Delete the text from point to end of line.
+#: info/echo-area.c:608
+msgid "Kill to the end of the line"
+msgstr "Smazání v¹eho od kurzoru a¾ do konce øádku"
+
+#: info/echo-area.c:621
+msgid "Kill to the beginning of the line"
+msgstr "Smazání v¹eho od zaèátku øádku do kurzoru"
+
+#. Delete from point to the end of the current word.
+#: info/echo-area.c:633
+msgid "Kill the word following the cursor"
+msgstr "Smazání slova, od kurzoru do konce slova"
+
+#: info/echo-area.c:652
+msgid "Kill the word preceding the cursor"
+msgstr "Smazání slova, od zaèátku slova do kurzoru"
+
+#: info/echo-area.c:871
+msgid "Not complete"
+msgstr "Nekompletní"
+
+#: info/echo-area.c:916
+msgid "List possible completions"
+msgstr "Seznam mo¾ných doplnìní"
+
+#: info/echo-area.c:929
+msgid "No completions"
+msgstr "Doplnìní neexistují"
+
+#: info/echo-area.c:933
+msgid "Sole completion"
+msgstr "Jedinné doplnìní"
+
+#: info/echo-area.c:942
+msgid "One completion:\n"
+msgstr "Jedno doplnìní:\n"
+
+#: info/echo-area.c:943
+#, c-format
+msgid "%d completions:\n"
+msgstr "%d doplnìní:\n"
+
+#: info/echo-area.c:1089
+msgid "Insert completion"
+msgstr "Vlo¾ení doplnìní"
+
+#: info/echo-area.c:1222
+msgid "Building completions..."
+msgstr "Hledám doplnìní..."
+
+#. Scroll the "other" window.  If there is a window showing completions, scroll
+#. that one, otherwise scroll the window which was active on entering the read
+#. function.
+#: info/echo-area.c:1320
+msgid "Scroll the completions window"
+msgstr "Odrolování obsahu okna s doplnìními"
+
+#: info/footnotes.c:212
+msgid "Footnotes could not be displayed"
+msgstr "Poznámky pod èarou nelze zobrazit"
+
+#: info/footnotes.c:238
+msgid "Show the footnotes associated with this node in another window"
+msgstr ""
+"Zobrazení poznámek pod èarou, vztahujících se k tomuto uzlu, v jiném oknì"
+
+#: info/indices.c:175
+msgid "Look up a string in the index for this file"
+msgstr "Vyhledání øetìzce v rejstøíku tohoto souboru"
+
+#: info/indices.c:205
+msgid "Finding index entries..."
+msgstr "Jsou hledány polo¾ky rejstøíku..."
+
+#: info/indices.c:212
+msgid "No indices found."
+msgstr "®ádný rejstøík nebyl nalezen."
+
+#: info/indices.c:222
+msgid "Index entry: "
+msgstr "Polo¾ka rejstøíku: "
+
+#: info/indices.c:332
+msgid ""
+"Go to the next matching index item from the last `\\[index-search]' command"
+msgstr ""
+"Posun na dal¹í polo¾ku rejstøíku, odpovídající øetìzci z minulého pøíkazu "
+"`\\[index-search]'"
+
+#: info/indices.c:342
+msgid "No previous index search string."
+msgstr "Není zadán øetìzec, který se má vyhledávat v rejstøíku(cích)."
+
+#: info/indices.c:349
+msgid "No index entries."
+msgstr "Nejsou polo¾ky rejstøíku."
+
+#: info/indices.c:382
+#, c-format
+msgid "No %sindex entries containing \"%s\"."
+msgstr "Ji¾ není %spolo¾ka rejstøíku, která obsahuje \"%s\"."
+
+#: info/indices.c:383
+msgid "more "
+msgstr "dal¹í "
+
+#: info/indices.c:393
+msgid "CAN'T SEE THIS"
+msgstr "TOTO NELZE VIDÌT"
+
+#: info/indices.c:429
+#, c-format
+msgid "Found \"%s\" in %s. (`\\[next-index-match]' tries to find next.)"
+msgstr "Nalezeno \"%s\" v %s. (`\\[next-index-match]' - hledání dal¹í.)"
+
+#: info/indices.c:549
+#, c-format
+msgid "Scanning indices of \"%s\"..."
+msgstr "Prohledávám tyto rejstøíky \"%s\"..."
+
+#: info/indices.c:632
+msgid "Grovel all known info file's indices for a string and build a menu"
+msgstr ""
+"Vyhledání øetìzce ve v¹ech známých rejstøících info souborù a vytvoøení menu"
+
+#: info/indices.c:636
+msgid "Index apropos: "
+msgstr "Hledat v rejstøíku odkaz na:"
+
+#: info/indices.c:666
+#, c-format
+msgid ""
+"\n"
+"* Menu: Nodes whoses indices contain \"%s\":\n"
+msgstr ""
+"\n"
+"* Menu: Uzly jejich¾ rejstøíky obsahují \"%s\":\n"
+
+#: info/info.c:248
+msgid "Try --help for more information.\n"
+msgstr "Více informací mù¾ete získat pomocí pøepínaèe --help.\n"
+
+#: info/info.c:267 makeinfo/makeinfo.c:616 util/install-info.c:1221
+#: util/texindex.c:336
+#, c-format
+msgid ""
+"Copyright (C) %s Free Software Foundation, Inc.\n"
+"There is NO warranty.  You may redistribute this software\n"
+"under the terms of the GNU General Public License.\n"
+"For more information about these matters, see the files named COPYING.\n"
+msgstr ""
+"  Copyright (C) %s 1996 Free Software Foundation, Inc.\n"
+"  Toto je volné programové vybavení, které je zcela BEZ ZÁRUKY. Podmínky "
+"pro\n"
+"kopírování a roz¹iøování naleznete v Obecné veøejné licenci GNU (GNU "
+"General\n"
+"Public Licence). Více informací získáte ve zdrojových textech v souboru\n"
+"COPYING.\n"
+
+#: info/info.c:461
+#, fuzzy, c-format
+msgid "no index entries found for `%s'\n"
+msgstr "¾ádné polo¾ky nebyly nalezeny\n"
+
+#: info/info.c:530
+#, fuzzy, c-format
+msgid ""
+"Usage: %s [OPTION]... [MENU-ITEM...]\n"
+"\n"
+"Read documentation in Info format.\n"
+"\n"
+"Options:\n"
+" --apropos=SUBJECT        look up SUBJECT in all indices of all manuals.\n"
+" --directory=DIR          add DIR to INFOPATH.\n"
+" --dribble=FILENAME       remember user keystrokes in FILENAME.\n"
+" --file=FILENAME          specify Info file to visit.\n"
+" --help                   display this help and exit.\n"
+" --index-search=STRING    go to node pointed by index entry STRING.\n"
+" --node=NODENAME          specify nodes in first visited Info file.\n"
+" --output=FILENAME        output selected nodes to FILENAME.\n"
+" --restore=FILENAME       read initial keystrokes from FILENAME.\n"
+" --show-options, --usage  go to command-line options node.\n"
+" --subnodes               recursively output menu items.\n"
+"%s --vi-keys                use vi-like and less-like key bindings.\n"
+" --version                display version information and exit.\n"
+"\n"
+"The first non-option argument, if present, is the menu entry to start from;\n"
+"it is searched for in all `dir' files along INFOPATH.\n"
+"If it is not present, info merges all `dir' files and shows the result.\n"
+"Any remaining arguments are treated as the names of menu\n"
+"items relative to the initial node visited.\n"
+"\n"
+"Examples:\n"
+"  info                       show top-level dir menu\n"
+"  info emacs                 start at emacs node from top-level dir\n"
+"  info emacs buffers         start at buffers node within emacs manual\n"
+"  info --show-options emacs  start at node with emacs' command line options\n"
+"  info -f ./foo.info         show file ./foo.info, not searching dir\n"
+"\n"
+"Email bug reports to bug-texinfo@gnu.org,\n"
+"general questions and discussion to help-texinfo@gnu.org.\n"
+msgstr ""
+"Pou¾ití: %s [PØEPÍNAÈ]... [INFO-SOUBOR [POLO®KA-MENU...]]\n"
+"\n"
+"  Umo¾òuje èíst dokumentaci v Info formátu. Komplexnìj¹í popis, jak "
+"pou¾ívat\n"
+"program Info, získáte zadáním `info info options' do pøíkazového øádku.\n"
+"\n"
+"Pøepínaèe:\n"
+"--directory=ADRESÁØ           kromì promìnné INFOPATH prohledává i tento\n"
+"                              ADRESÁØ\n"
+"--dribble=SOUBOR              ulo¾í klávesy, které stiskl u¾ivatel do "
+"SOUBORu\n"
+"--file=SOUBOR                 zadání info souboru, který se má prohlí¾et\n"
+"--index-search=ØETÌZEC        skok na uzel urèený v rejstøíku ØETÌZCEM\n"
+"--node=JMÉNO_UZLU             zadání uzlù, v prvním nav¹tíveném info "
+"souboru\n"
+"--output=SOUBOR               vypisuje nav¹tívené uzly do SOUBORu\n"
+"--restore=SOUBOR              klávesy, které mají být automaticky po\n"
+"                              spu¹tení infa stisknuty, ète ze SOUBORu\n"
+"--subnodes                    rekurzivnì vypí¹e polo¾ky menu\n"
+"%s--help                        vypí¹e tuto nápovìdu a skonèí\n"
+"--version                     vypí¹e oznaèení verze a skonèí\n"
+"\n"
+"  První argument, jestli¾e je zadán, je chápán jako jméno info souboru, "
+"který\n"
+"má být èten. Zbývající argumenty jsou chápány jako jména polo¾ek menu,\n"
+"které mají být po spu¹tìní nav¹tíveny. Takto se lze jednodu¹e pøesunout do\n"
+"uzlu, který máte zájem si pøeèíst. Napøíklad `info emacs buffers'.\n"
+"\n"
+"  Chyby v programu oznamujte na adrese <bug-texinfo@gnu.org> (pouze "
+"anglicky),\n"
+"obecné otázky smìøujte na <help-texinfo@gnu.org>. Pøipomínky k pøekladu\n"
+"zasílejte na adresu <cs@li.org> (èesky).\n"
+
+#: info/info.c:604
+#, fuzzy, c-format
+msgid "Cannot find node `%s'."
+msgstr "Uzel `%s' nelze zru¹it"
+
+#: info/info.c:605
+#, fuzzy, c-format
+msgid "Cannot find node `(%s)%s'."
+msgstr "Uzel `%s' nelze zru¹it"
+
+#: info/info.c:606
+#, fuzzy
+msgid "Cannot find a window!"
+msgstr "Permanentní okno nelze smazat"
+
+#: info/info.c:607
+msgid "Point doesn't appear within this window's node!"
+msgstr ""
+
+#: info/info.c:608
+#, fuzzy
+msgid "Cannot delete the last window."
+msgstr "Permanentní okno nelze smazat"
+
+#: info/info.c:609
+#, fuzzy
+msgid "No menu in this node."
+msgstr "V uzlu \"%s\" není menu."
+
+#: info/info.c:610
+#, fuzzy
+msgid "No footnotes in this node."
+msgstr "V tomto uzlu není køí¾ový odkaz."
+
+#: info/info.c:611
+msgid "No cross references in this node."
+msgstr "V tomto uzlu není køí¾ový odkaz."
+
+#: info/info.c:612
+#, fuzzy, c-format
+msgid "No `%s' pointer for this node."
+msgstr "Není ukazatel na dal¹í uzel."
+
+#: info/info.c:613
+#, c-format
+msgid "Unknown Info command `%c'; try `?' for help."
+msgstr ""
+
+#: info/info.c:614
+#, c-format
+msgid "Terminal type `%s' is not smart enough to run Info."
+msgstr ""
+
+#: info/info.c:615
+#, fuzzy
+msgid "You are already at the last page of this node."
+msgstr "Posun na zaèátek tohoto uzlu"
+
+#: info/info.c:616
+#, fuzzy
+msgid "You are already at the first page of this node."
+msgstr "Posun na zaèátek tohoto uzlu"
+
+#: info/info.c:617
+msgid "Only one window."
+msgstr ""
+
+#: info/info.c:618
+msgid "Resulting window would be too small."
+msgstr ""
+
+#: info/info.c:619
+msgid "Not enough room for a help window, please delete a window."
+msgstr ""
+
+#: info/infodoc.c:45
+#, fuzzy
+msgid "Basic Commands in Info Windows\n"
+msgstr "Základní pøíkazy v Info oknech"
+
+#: info/infodoc.c:46
+msgid "******************************\n"
+msgstr ""
+
+#: info/infodoc.c:48
+#, fuzzy, c-format
+msgid "  %-10s  Quit this help.\n"
+msgstr "  q          Celkové ukonèení Infa."
+
+#: info/infodoc.c:49
+#, fuzzy, c-format
+msgid "  %-10s  Quit Info altogether.\n"
+msgstr "  q          Celkové ukonèení Infa."
+
+#: info/infodoc.c:50
+#, fuzzy, c-format
+msgid "  %-10s  Invoke the Info tutorial.\n"
+msgstr "  h          Vyvolání prùvodce Infem."
+
+#: info/infodoc.c:52
+#, fuzzy
+msgid "Moving within a node:\n"
+msgstr "Pøesun uvnitø uzlu:"
+
+#: info/infodoc.c:53
+msgid "---------------------\n"
+msgstr ""
+
+#: info/infodoc.c:54
+#, fuzzy, c-format
+msgid "  %-10s  Scroll forward a page.\n"
+msgstr "  SPC Následující stránka."
+
+#: info/infodoc.c:55
+#, fuzzy, c-format
+msgid "  %-10s  Scroll backward a page.\n"
+msgstr "  DEL Pøedchozí stránka."
+
+#: info/infodoc.c:56
+#, fuzzy, c-format
+msgid "  %-10s  Go to the beginning of this node.\n"
+msgstr "  b   Pøesun na zaèátek aktuálního uzlu."
+
+#: info/infodoc.c:57
+#, fuzzy, c-format
+msgid "  %-10s  Go to the end of this node.\n"
+msgstr "  e   Pøesun na konec tohoto uzlu."
+
+#: info/infodoc.c:58
+#, fuzzy, c-format
+msgid "  %-10s  Scroll forward 1 line.\n"
+msgstr "  SPC Následující stránka."
+
+#: info/infodoc.c:59
+#, fuzzy, c-format
+msgid "  %-10s  Scroll backward 1 line.\n"
+msgstr "  DEL Pøedchozí stránka."
+
+# Udìlat patch na podtr¾ení
+#: info/infodoc.c:61
+#, fuzzy
+msgid "Selecting other nodes:\n"
+msgstr "Výbìr dal¹ích uzlù:"
+
+#: info/infodoc.c:62
+msgid "----------------------\n"
+msgstr ""
+
+#: info/infodoc.c:63
+#, fuzzy, c-format
+msgid "  %-10s  Move to the `next' node of this node.\n"
+msgstr "  n   Pøesun na \"dal¹í\" uzel tohoto uzlu."
+
+#: info/infodoc.c:64
+#, fuzzy, c-format
+msgid "  %-10s  Move to the `previous' node of this node.\n"
+msgstr "  p   Pøesun na \"pøedchozí\" uzel tohoto uzlu."
+
+#: info/infodoc.c:65
+#, fuzzy, c-format
+msgid "  %-10s  Move `up' from this node.\n"
+msgstr "  u   Pøesun \"nahoru\" z aktuálního uzelu."
+
+#: info/infodoc.c:66
+#, fuzzy, c-format
+msgid "  %-10s  Pick menu item specified by name.\n"
+msgstr "  m   Vybrání polo¾ky menu zadané pomocí jména."
+
+#: info/infodoc.c:67
+#, fuzzy
+msgid "              Picking a menu item causes another node to be selected.\n"
+msgstr "      Vybírání polo¾ky menu zpùsobí zobrazení tohoto uzlu."
+
+#: info/infodoc.c:68
+#, fuzzy, c-format
+msgid "  %-10s  Follow a cross reference.  Reads name of reference.\n"
+msgstr "  f   Následování køí¾ového odkazu. Ètení jména odkazu."
+
+#: info/infodoc.c:69
+#, fuzzy, c-format
+msgid "  %-10s  Move to the last node seen in this window.\n"
+msgstr "  l   Pøesun na poslední zobrazený uzel v tomto oknì."
+
+#: info/infodoc.c:70
+#, fuzzy, c-format
+msgid "  %-10s  Skip to next hypertext link within this node.\n"
+msgstr "  TAB Skok na dal¹í hypertextový odkaz v tomto uzlu."
+
+#: info/infodoc.c:71
+#, fuzzy, c-format
+msgid "  %-10s  Follow the hypertext link under cursor.\n"
+msgstr "  RET Následování hypertextového odkazu pod kurzorem."
+
+#: info/infodoc.c:72
+#, fuzzy, c-format
+msgid "  %-10s  Move to the `directory' node.  Equivalent to `g (DIR)'.\n"
+msgstr "  d   Pøesun do `adresáøového' uzlu. Rovnocenné s `g (DIR)'."
+
+#: info/infodoc.c:73
+#, fuzzy, c-format
+msgid "  %-10s  Move to the Top node.  Equivalent to `g Top'.\n"
+msgstr "  d   Pøesun do `adresáøového' uzlu. Rovnocenné s `g (DIR)'."
+
+#: info/infodoc.c:75
+#, fuzzy
+msgid "Other commands:\n"
+msgstr "Dal¹í pøíkazy: "
+
+#: info/infodoc.c:76
+msgid "---------------\n"
+msgstr ""
+
+#: info/infodoc.c:77
+#, fuzzy, c-format
+msgid "  %-10s  Pick first ... ninth item in node's menu.\n"
+msgstr "  1-9 Výbìr první ... deváté polo¾ky menu uzlu."
+
+#: info/infodoc.c:78
+#, fuzzy, c-format
+msgid "  %-10s  Pick last item in node's menu.\n"
+msgstr "  0   Zobrazení poslední polo¾ky menu uzlu."
+
+#: info/infodoc.c:79
+#, fuzzy, c-format
+msgid ""
+"  %-10s  Search for a specified string in the index entries of this Info\n"
+msgstr "  i   Hledání zadaného øetìzce v rejstøíku tohoto Info souboru a výbìr"
+
+#: info/infodoc.c:80
+#, fuzzy
+msgid ""
+"              file, and select the node referenced by the first entry "
+"found.\n"
+msgstr "      uzlu, na který ukazuje první nalezená polo¾ka."
+
+#: info/infodoc.c:81
+#, fuzzy, c-format
+msgid "  %-10s  Move to node specified by name.\n"
+msgstr "  g   Pøesun na uzel zadaný pomocí jména."
+
+#: info/infodoc.c:82
+#, fuzzy
+msgid ""
+"              You may include a filename as well, as in (FILENAME)NODENAME.\n"
+msgstr "      Také mù¾ete zadat jméno souboru ve tvaru (SOUBOR)UZEL."
+
+#: info/infodoc.c:83
+#, fuzzy, c-format
+msgid ""
+"  %-10s  Search forward through this Info file for a specified string,\n"
+msgstr "  s   Hledání zadaného øetìzce v tomto Info souboru."
+
+#: info/infodoc.c:84 info/infodoc.c:86
+#, fuzzy
+msgid ""
+"              and select the node in which the next occurrence is found.\n"
+msgstr ""
+"      a zobrazení uzlu, ve kterém je nalezen dal¹í výskyt tohoto øetìzce."
+
+#: info/infodoc.c:85
+#, fuzzy, c-format
+msgid "  %-10s  Search backward in this Info file for a specified string,\n"
+msgstr "  s   Hledání zadaného øetìzce v tomto Info souboru."
+
+#: info/infodoc.c:258
+msgid "The current search path is:\n"
+msgstr ""
+
+#: info/infodoc.c:261
+#, fuzzy
+msgid ""
+"Commands available in Info windows:\n"
+"\n"
+msgstr "Základní pøíkazy v Info oknech"
+
+#: info/infodoc.c:264
+msgid ""
+"Commands available in the echo area:\n"
+"\n"
+msgstr ""
+
+#: info/infodoc.c:280
+msgid ""
+"The following commands can only be invoked via M-x:\n"
+"\n"
+msgstr ""
+"Následující pøíkazy mohou být vykonány pouze pomocí M-x:\n"
+"\n"
+
+#: info/infodoc.c:301
+msgid "--- Use `\\[history-node]' or `\\[kill-node]' to exit ---\n"
+msgstr ""
+"--- Pou¾ijte `\\[history-node]' nebo `\\[kill-node]' pro ukonèení ---\n"
+
+#. Create or move to the help window.
+#: info/infodoc.c:411
+msgid "Display help message"
+msgstr "Zobrazení nápovìdy"
+
+#. Show the Info help node.  This means that the "info" file is installed
+#. where it can easily be found on your system.
+#: info/infodoc.c:429
+msgid "Visit Info node `(info)Help'"
+msgstr "Zobrazení Info uzlu `(info)Help'"
+
+#: info/infodoc.c:555
+msgid "Print documentation for KEY"
+msgstr "Zobrazení dokumentace ke KLÁVESE"
+
+#: info/infodoc.c:568
+#, c-format
+msgid "Describe key: %s"
+msgstr "Popis klávesy: %s"
+
+#: info/infodoc.c:577
+#, c-format
+msgid "ESC %s is undefined."
+msgstr "ESC %s je nedefinováno."
+
+#: info/infodoc.c:594
+#, c-format
+msgid "%s is undefined."
+msgstr "%s je nedefinováno."
+
+#: info/infodoc.c:620
+#, c-format
+msgid "%s is defined to %s."
+msgstr "Klávesa %s je definována pro pøíkaz %s."
+
+#: info/infodoc.c:812
+msgid "Show what to type to execute a given command"
+msgstr ""
+
+#: info/infodoc.c:816
+msgid "Where is command: "
+msgstr "Kde je pøíkaz: "
+
+#: info/infodoc.c:838
+#, c-format
+msgid "`%s' is not on any keys"
+msgstr "Pøíkaz `%s' není na ¾ádné klávese"
+
+#: info/infodoc.c:844
+#, c-format
+msgid "%s can only be invoked via %s."
+msgstr "Pøíkaz %s mù¾e být vyvolán pouze pomocí %s."
+
+#: info/infodoc.c:847
+#, c-format
+msgid "%s can be invoked via %s."
+msgstr "Pøíkaz %s mù¾e být vyvolán pomocí %s."
+
+#: info/infodoc.c:851
+#, c-format
+msgid "There is no function named `%s'"
+msgstr "Funkce `%s' není známa"
+
+#: info/m-x.c:69
+msgid "Read the name of an Info command and describe it"
+msgstr "Zadání jména pøíkazu a následné zobrazení jeho popisu"
+
+#: info/m-x.c:73
+msgid "Describe command: "
+msgstr "Popis pøíkazu: "
+
+#: info/m-x.c:96
+msgid "Read a command name in the echo area and execute it"
+msgstr "Zadání jména pøíkazu v zobrazovacím poli a jeho vykonání"
+
+#: info/m-x.c:134
+msgid "Cannot execute an `echo-area' command here."
+msgstr "Pøíkaz zobrazovacího pole nelze vykonat zde."
+
+#: info/m-x.c:150
+msgid "Set the height of the displayed window"
+msgstr "Nastavení vý¹ky obrazovky"
+
+#: info/m-x.c:163
+#, c-format
+msgid "Set screen height to (%d): "
+msgstr "Vý¹ka obrazovky (%d): "
+
+#: info/makedoc.c:132
+msgid ""
+"   Source files groveled to make this file include:\n"
+"\n"
+msgstr ""
+"Pøi zpracování zdrojového souboru jsou vkládány tyto soubory:\n"
+"\n"
+
+#: info/makedoc.c:465
+#, c-format
+msgid "Couldn't manipulate the file %s.\n"
+msgstr "Se souborem %s nelze pracovat.\n"
+
+#: info/nodemenu.c:28
+msgid ""
+"\n"
+"* Menu:\n"
+"  (File)Node                        Lines   Size   Containing File\n"
+"  ----------                        -----   ----   ---------------"
+msgstr ""
+"\n"
+"* Menu:\n"
+"  (Soubor)Uzel                      Øádkù   Velikost Soubor\n"
+"  ------------                      -----   -------- ------"
+
+#: info/nodemenu.c:199
+msgid ""
+"Here is the menu of nodes you have recently visited.\n"
+"Select one from this menu, or use `\\[history-node]' in another window.\n"
+msgstr ""
+"  Zde je seznam uzlù, které jste poslední dobou nav¹tívil. Vyberte jeden\n"
+"z tohoto menu, nebo u¾ijte `\\[history-node]' v tomto oknì.\n"
+
+#: info/nodemenu.c:219
+msgid "Make a window containing a menu of all of the currently visited nodes"
+msgstr "Vytvoøení okna obsahujícího menu v¹ech aktuálnì nav¹tívených uzlù"
+
+#: info/nodemenu.c:299
+msgid "Select a node which has been previously visited in a visible window"
+msgstr "Zobrazení uzlu, který byl zobrazen pøed tímto"
+
+#: info/nodemenu.c:311
+msgid "Select visited node: "
+msgstr "Vyberte nav¹tívený uzel: "
+
+#: info/nodemenu.c:331 info/session.c:2146
+#, c-format
+msgid "The reference disappeared! (%s)."
+msgstr "Odkaz se ztratil! (%s)."
+
+#: info/session.c:169
+#, fuzzy, c-format
+msgid ""
+"Welcome to Info version %s. Type \\[get-help-window] for help, \\[menu-item] "
+"for menu item."
+msgstr ""
+"  Vítejte v programu Info verze %s. \"\\[get-help-window]\" - nápovìda, "
+"\"\\[menu-item]\" - polo¾ka menu."
+
+#. Move WINDOW's point down to the next line if possible.
+#: info/session.c:642
+msgid "Move down to the next line"
+msgstr "Posun dolù na dal¹í øádek"
+
+#. Move WINDOW's point up to the previous line if possible.
+#: info/session.c:657
+msgid "Move up to the previous line"
+msgstr "Posun nahoru na pøedchozí øádek"
+
+#. Move WINDOW's point to the end of the true line.
+#: info/session.c:672
+msgid "Move to the end of the line"
+msgstr "Pøesun na konec øádku"
+
+#. Move WINDOW's point to the beginning of the true line.
+#: info/session.c:692
+msgid "Move to the start of the line"
+msgstr "Pøesun na zaèátek øádku"
+
+#: info/session.c:884 makeinfo/node.c:1092
+#, fuzzy
+msgid "Next"
+msgstr "Dal¹í"
+
+#: info/session.c:887
+#, fuzzy
+msgid "Following Next node..."
+msgstr "Pøechod na dal¹í uzel..."
+
+#: info/session.c:904
+msgid "Selecting first menu item..."
+msgstr "Zobrazování první polo¾ky menu..."
+
+#: info/session.c:915
+#, fuzzy
+msgid "Selecting Next node..."
+msgstr "Zobrazování dal¹ího uzelu..."
+
+#: info/session.c:985
+#, c-format
+msgid "Moving Up %d time(s), then Next."
+msgstr ""
+
+#: info/session.c:1009
+msgid "No more nodes within this document."
+msgstr "V tomto dokumentu ji¾ nejsou dal¹í uzly."
+
+#: info/session.c:1033
+#, fuzzy
+msgid "No `Prev' for this node."
+msgstr "Pro tento uzel není pøedchozí uzel."
+
+#. Move to the previous node.  If this node now contains a menu,
+#. and we have not inhibited movement to it, move to the node
+#. corresponding to the last menu item.
+#: info/session.c:1036 info/session.c:1091
+#, fuzzy
+msgid "Moving Prev in this window."
+msgstr "Pøesun na pøedchozí uzel v tomto oknì."
+
+#: info/session.c:1050
+#, fuzzy
+msgid "No `Prev' or `Up' for this node within this document."
+msgstr "V tomto dokumentu ji¾ není pro tento uzel pøedchozí nebo vy¹¹í uzel."
+
+#: info/session.c:1053
+#, fuzzy
+msgid "Moving Up in this window."
+msgstr "Pøesun nahoru v tomto oknì."
+
+#: info/session.c:1101
+#, fuzzy
+msgid "Moving to `Prev's last menu item."
+msgstr "Pøesun na poslední polo¾ku menu pøedchozího uzlu."
+
+#: info/session.c:1112
+msgid "Move forwards or down through node structure"
+msgstr "Pøesun na následující uzel nebo na první ni¾¹í v uzlové struktuøe"
+
+#: info/session.c:1128
+msgid "Move backwards or up through node structure"
+msgstr "Pøesun na pøedchozí uzel nebo na první vy¹¹í v uzlové struktuøe"
+
+#. Show the next screen of WINDOW's node.
+#: info/session.c:1143
+msgid "Scroll forward in this window"
+msgstr "Posun o stránku dolù v tomto oknì"
+
+#: info/session.c:1192
+#, fuzzy
+msgid "Scroll forward in this window and set default window size"
+msgstr "Posun o stránku dolù v tomto oknì"
+
+#. Show the previous screen of WINDOW's node.
+#: info/session.c:1200
+msgid "Scroll backward in this window"
+msgstr "Posun o stránku nahoru v tomto oknì"
+
+#: info/session.c:1244
+#, fuzzy
+msgid "Scroll backward in this window and set default window size"
+msgstr "Posun o stránku nahoru v tomto oknì"
+
+#. Move to the beginning of the node.
+#: info/session.c:1252
+msgid "Move to the start of this node"
+msgstr "Posun na zaèátek tohoto uzlu"
+
+#. Move to the end of the node.
+#: info/session.c:1259
+msgid "Move to the end of this node"
+msgstr "Posun na konec tohoto uzlu"
+
+#. Scroll the window forward by N lines.
+#: info/session.c:1266
+msgid "Scroll down by lines"
+msgstr ""
+
+#. Scroll the window backward by N lines.
+#: info/session.c:1283
+msgid "Scroll up by lines"
+msgstr ""
+
+#: info/session.c:1301
+msgid "Scroll down by half screen size"
+msgstr ""
+
+#: info/session.c:1327
+msgid "Scroll up by half screen size"
+msgstr ""
+
+#. ****************************************************************
+#.
+#. Commands for Manipulating Windows
+#.
+#. ****************************************************************
+#. Make the next window in the chain be the active window.
+#: info/session.c:1356
+msgid "Select the next window"
+msgstr "Výbìr následujícího okna"
+
+#. Make the previous window in the chain be the active window.
+#: info/session.c:1395
+msgid "Select the previous window"
+msgstr "Výbìr pøedchozího okna"
+
+#. Split WINDOW into two windows, both showing the same node.  If we
+#. are automatically tiling windows, re-tile after the split.
+#: info/session.c:1446
+msgid "Split the current window"
+msgstr "Rozdìlení aktuálního okna"
+
+#. Delete WINDOW, forgetting the list of last visited nodes.  If we are
+#. automatically displaying footnotes, show or remove the footnotes
+#. window.  If we are automatically tiling windows, re-tile after the
+#. deletion.
+#: info/session.c:1527
+msgid "Delete the current window"
+msgstr "Smazání aktuálního okna"
+
+#: info/session.c:1535
+msgid "Cannot delete a permanent window"
+msgstr "Permanentní okno nelze smazat"
+
+#. Just keep WINDOW, deleting all others.
+#: info/session.c:1568
+msgid "Delete all other windows"
+msgstr "Smazání v¹ech ostatních oknen"
+
+#. Scroll the "other" window of WINDOW.
+#: info/session.c:1614
+msgid "Scroll the other window"
+msgstr "Posun druhého okna o stránku dolù"
+
+#: info/session.c:1635
+msgid "Scroll the other window backward"
+msgstr "Posun druhého okna o stránku zpìt"
+
+#. Change the size of WINDOW by AMOUNT.
+#: info/session.c:1641
+msgid "Grow (or shrink) this window"
+msgstr "Zmìna velikosti okna"
+
+#: info/session.c:1652
+msgid "Divide the available screen space among the visible windows"
+msgstr "Zvìt¹ení nebo zmen¹ení oken na obrazovce tak, aby byla stejnì velká"
+
+#: info/session.c:1659
+msgid "Toggle the state of line wrapping in the current window"
+msgstr ""
+"Zmìna stavu zalamování v aktuálním oknì (zapnuto->vypni, vypnuto->zapni)"
+
+#. Make WINDOW display the "Next:" node of the node currently being
+#. displayed.
+#: info/session.c:1838
+#, fuzzy
+msgid "Select the Next node"
+msgstr "Zobrazení následujícího uzlu"
+
+#. Make WINDOW display the "Prev:" node of the node currently being
+#. displayed.
+#: info/session.c:1846
+#, fuzzy
+msgid "Select the Prev node"
+msgstr "Zobrazení pøedchozího uzlu"
+
+#. Make WINDOW display the "Up:" node of the node currently being
+#. displayed.
+#: info/session.c:1854
+#, fuzzy
+msgid "Select the Up node"
+msgstr "Zobrazení vy¹¹ího uzlu"
+
+#. Make WINDOW display the last node of this info file.
+#: info/session.c:1861
+msgid "Select the last node in this file"
+msgstr "Zobrazení posledního uzlu v tomto souboru"
+
+#: info/session.c:1888 info/session.c:1921
+msgid "This window has no additional nodes"
+msgstr "Toto okno nemá více dal¹ích uzlù"
+
+#. Make WINDOW display the first node of this info file.
+#: info/session.c:1894
+msgid "Select the first node in this file"
+msgstr "Zobrazení prvního uzlu v tomto souboru"
+
+#: info/session.c:1928
+msgid "Select the last item in this node's menu"
+msgstr "Zobrazení poslední polo¾ky menu tohoto uzlu"
+
+#. Use KEY (a digit) to select the Nth menu item in WINDOW->node.
+#: info/session.c:1934
+msgid "Select this menu item"
+msgstr "Zobrazení této polo¾ky menu"
+
+#: info/session.c:1963
+#, c-format
+msgid "There aren't %d items in this menu."
+msgstr "V tomto menu není %d. polo¾ka"
+
+#: info/session.c:2094
+#, c-format
+msgid "Menu item (%s): "
+msgstr "Polo¾ka menu (%s): "
+
+#: info/session.c:2096
+msgid "Menu item: "
+msgstr "Polo¾ka menu: "
+
+#: info/session.c:2101
+#, c-format
+msgid "Follow xref (%s): "
+msgstr "Následování køí¾ového odkazu (%s): "
+
+#: info/session.c:2103
+msgid "Follow xref: "
+msgstr "Následování køí¾ového odkazu: "
+
+#. Read a line (with completion) which is the name of a menu item,
+#. and select that item.
+#: info/session.c:2191
+msgid "Read a menu item and select its node"
+msgstr "Zadání jména polo¾ky menu a následné zobrazení"
+
+#: info/session.c:2199
+msgid "Read a footnote or cross reference and select its node"
+msgstr ""
+"Zadání jména poznámky pod èarou nebo køí¾ového odkazu a následné zobrazení"
+
+#. Position the cursor at the start of this node's menu.
+#: info/session.c:2205
+msgid "Move to the start of this node's menu"
+msgstr "Pøesun na zaèátek menu tohoto uzlu"
+
+#: info/session.c:2229
+msgid "Visit as many menu items at once as possible"
+msgstr ""
+"Nav¹tívení tolika polo¾ek menu, kolik je mo¾no. Ka¾dá polo¾ka v jiném oknì."
+
+#. Read a line of input which is a node name, and go to that node.
+#: info/session.c:2257
+msgid "Read a node name and select it"
+msgstr "Zadání jména uzlu a jeho následné zobrazení"
+
+#: info/session.c:2312 info/session.c:2316
+msgid "Goto node: "
+msgstr "Pøesun na uzel: "
+
+#: info/session.c:2382
+#, fuzzy, c-format
+msgid "No menu in node `%s'."
+msgstr "V uzlu \"%s\" není menu."
+
+#: info/session.c:2422
+#, fuzzy, c-format
+msgid "No menu item `%s' in node `%s'."
+msgstr "Polo¾ka menu \"%s\" v uzlu \"%s\" není."
+
+#: info/session.c:2452
+#, fuzzy, c-format
+msgid "Unable to find node referenced by `%s' in `%s'."
+msgstr "Uzel, na který se \"%s\" odkazuje, nelze v \"%s\" najít."
+
+#: info/session.c:2503
+msgid "Read a list of menus starting from dir and follow them"
+msgstr "Ètení seznamu menu zaèínajíce v adresáøi a pokraèujíce dále"
+
+#: info/session.c:2505
+msgid "Follow menus: "
+msgstr "Následování menu: "
+
+#: info/session.c:2703
+msgid "Find the node describing program invocation"
+msgstr ""
+
+#: info/session.c:2705
+#, c-format
+msgid "Find Invocation node of [%s]: "
+msgstr ""
+
+#: info/session.c:2743
+msgid "Read a manpage reference and select it"
+msgstr "Zadání jména manuálové stránky a následné zobrazení"
+
+#: info/session.c:2747
+msgid "Get Manpage: "
+msgstr "Manuálová stránka: "
+
+#. Move to the "Top" node in this file.
+#: info/session.c:2777
+msgid "Select the node `Top' in this file"
+msgstr "Zobrazení nejvy¹¹ího uzlu v tomto souboru"
+
+#. Move to the node "(dir)Top".
+#: info/session.c:2783
+msgid "Select the node `(dir)'"
+msgstr "Zobrazení uzlu `(dir)'"
+
+#: info/session.c:2803
+#, c-format
+msgid "Kill node (%s): "
+msgstr "Zru¹ení uzlu (%s): "
+
+#: info/session.c:2857
+#, c-format
+msgid "Cannot kill node `%s'"
+msgstr "Uzel `%s' nelze zru¹it"
+
+#: info/session.c:2867
+msgid "Cannot kill the last node"
+msgstr "Poslední uzel nelze zru¹it"
+
+#: info/session.c:2953
+msgid "Select the most recently selected node"
+msgstr "Zobrazení poslední dobou nejvíce nav¹tìvovaných uzlù"
+
+#. Kill named node.
+#: info/session.c:2959
+msgid "Kill this node"
+msgstr "Zru¹ení tohoto uzlu"
+
+#. Read the name of a file and select the entire file.
+#: info/session.c:2967
+msgid "Read the name of a file and select it"
+msgstr "Zadání jména souboru a jeho následné zobrazení"
+
+#: info/session.c:2971
+msgid "Find file: "
+msgstr "Nalezení souboru: "
+
+#: info/session.c:2988
+#, fuzzy, c-format
+msgid "Cannot find `%s'."
+msgstr "Nemohu najít \"%s\"."
+
+#: info/session.c:3033 info/session.c:3154
+#, fuzzy, c-format
+msgid "Could not create output file `%s'."
+msgstr "Výstupní soubor \"%s\" nelze vytvoøit."
+
+#: info/session.c:3046 info/session.c:3171 info/session.c:3232
+msgid "Done."
+msgstr "Dokonèeno."
+
+#. Maybe we should print some information about the node being output.
+#: info/session.c:3102
+#, fuzzy, c-format
+msgid "Writing node %s..."
+msgstr "Zapisuji uzel \"%s\"..."
+
+#: info/session.c:3180
+msgid "Pipe the contents of this node through INFO_PRINT_COMMAND"
+msgstr "Poslání obsahu tohoto uzlu pøíkazu INFO_PRINT_COMMAND"
+
+#: info/session.c:3216
+#, fuzzy, c-format
+msgid "Cannot open pipe to `%s'."
+msgstr "Rouru do \"%s\" nelze otevøít."
+
+#. Maybe we should print some information about the node being output.
+#: info/session.c:3222
+#, fuzzy, c-format
+msgid "Printing node %s..."
+msgstr "Probíhá tisk uzelu \"%s\"..."
+
+#: info/session.c:3464
+#, fuzzy, c-format
+msgid "Searching subfile %s ..."
+msgstr "Probíhá hledání podsouboru \"%s\"..."
+
+#: info/session.c:3516
+#, fuzzy
+msgid "Read a string and search for it case-sensitively"
+msgstr "Pøeètení øetìzce a jeho vyhledání"
+
+#: info/session.c:3523
+msgid "Read a string and search for it"
+msgstr "Pøeètení øetìzce a jeho vyhledání"
+
+#: info/session.c:3531
+#, fuzzy
+msgid "Read a string and search backward for it"
+msgstr "Pøeètení øetìzce a jeho vyhledání"
+
+#: info/session.c:3573
+#, fuzzy, c-format
+msgid "%s%sfor string [%s]: "
+msgstr "%s øetìzce [%s]: "
+
+#: info/session.c:3574
+msgid "Search backward"
+msgstr "Zpìtné hledání"
+
+#: info/session.c:3574
+msgid "Search"
+msgstr "Hledání"
+
+#: info/session.c:3575
+msgid " case-sensitively "
+msgstr ""
+
+#: info/session.c:3575
+msgid " "
+msgstr ""
+
+#: info/session.c:3615
+msgid "Search failed."
+msgstr "Nebylo nalezeno."
+
+#: info/session.c:3633
+msgid "Repeat last search in the same direction"
+msgstr ""
+
+#: info/session.c:3636 info/session.c:3646
+#, fuzzy
+msgid "No previous search string"
+msgstr "Není zadán øetìzec, který se má vyhledávat v rejstøíku(cích)."
+
+#: info/session.c:3643
+msgid "Repeat last search in the reverse direction"
+msgstr ""
+
+#: info/session.c:3661 info/session.c:3667
+msgid "Search interactively for a string as you type it"
+msgstr "Vyhledávání zadávaného øetìzce hned pøi zadávání"
+
+#: info/session.c:3761
+msgid "I-search backward: "
+msgstr "zpìtné interaktivní hledání: "
+
+#: info/session.c:3763
+msgid "I-search: "
+msgstr "interaktivní hledání: "
+
+#: info/session.c:3788
+msgid "Failing "
+msgstr "Bezvýsledné "
+
+#: info/session.c:4244
+msgid "Move to the previous cross reference"
+msgstr "Pøesun na pøedcházející køí¾ový odkaz"
+
+#: info/session.c:4253
+msgid "Move to the next cross reference"
+msgstr "Pøesun na následující køí¾ový odkaz"
+
+#: info/session.c:4263
+msgid "Select reference or menu item appearing on this line"
+msgstr "Zobrazení odkazu nebo polo¾ky menu, která je na tomto øádku"
+
+#. ****************************************************************
+#.
+#. Miscellaneous Info Commands
+#.
+#. ****************************************************************
+#. What to do when C-g is pressed in a window.
+#: info/session.c:4285
+msgid "Cancel current operation"
+msgstr "Zru¹ení aktuální operace"
+
+#: info/session.c:4292
+msgid "Quit"
+msgstr "Ukonèení operace"
+
+#: info/session.c:4301
+msgid "Move the cursor to a specific line of the window"
+msgstr "Pøesun kurzoru na zadaný øádek okna"
+
+#. Clear the screen and redraw its contents.  Given a numeric argument,
+#. move the line the cursor is on to the COUNT'th line of the window.
+#: info/session.c:4333
+msgid "Redraw the display"
+msgstr "Pøekreslení obrazovky"
+
+#. This command does nothing.  It is the fact that a key is bound to it
+#. that has meaning.  See the code at the top of info_session ().
+#: info/session.c:4370
+msgid "Quit using Info"
+msgstr "Ukonèení Infa"
+
+#: info/session.c:4393
+#, c-format
+msgid "Unknown command (%s)."
+msgstr "Neznámý pøíkaz (%s)."
+
+#: info/session.c:4396
+msgid "\"\" is invalid"
+msgstr "Sekvence kláves \"\" je neplatná"
+
+#: info/session.c:4397
+#, c-format
+msgid "\"%s\" is invalid"
+msgstr "Sekvence kláves \"%s\" je neplatná"
+
+#: info/session.c:4620
+msgid "Add this digit to the current numeric argument"
+msgstr "Pøidání této èíslice do aktuálního èíselného argumentu"
+
+#: info/session.c:4629
+msgid "Start (or multiply by 4) the current numeric argument"
+msgstr "Zaèátek (nebo dìlení ètyømi) aktuálního èíselného argumentu"
+
+#: info/session.c:4644
+msgid "Internally used by \\[universal-argument]"
+msgstr "Vnitønì u¾íváno funkcí \\[universal-argument]"
+
+#: info/tilde.c:344
+msgid "readline: Out of virtual memory!\n"
+msgstr "readline: Nedostatek virtuální pamìti!\n"
+
+#: info/variables.c:40
+msgid "When \"On\", footnotes appear and disappear automatically"
+msgstr "Je-li zapnuto, pak se poznámky pod èarou objevují a mizí automaticky"
+
+#: info/variables.c:44
+msgid "When \"On\", creating or deleting a window resizes other windows"
+msgstr "Je-li zapnuto, vytvoøení a smazání okna, mìní velikost ostatních oken"
+
+#: info/variables.c:48
+msgid "When \"On\", flash the screen instead of ringing the bell"
+msgstr "Je-li zapnuto, pak místo varovného pípnutí blikne obrazovka"
+
+#: info/variables.c:52
+msgid "When \"On\", errors cause the bell to ring"
+msgstr "Je-li zapnuto, pak chyby zpùsobí varovné pípnutí"
+
+#: info/variables.c:56
+msgid "When \"On\", Info garbage collects files which had to be uncompressed"
+msgstr ""
+"Je-li zapnuto, pak Info zapomíná odkomprimovanou èást komprimovaných souborù"
+
+#: info/variables.c:59
+msgid "When \"On\", the portion of the matched search string is highlighted"
+msgstr "Je-li zapnuto, pak je hledaný øetìzec v nalezeném výrazu zvýraznìn"
+
+#: info/variables.c:63
+msgid "Controls what happens when scrolling is requested at the end of a node"
+msgstr "Øídí co se stane, kdy¾ je po¾adován posun o stranu na konci uzlu"
+
+#: info/variables.c:67
+msgid "The number lines to scroll when the cursor moves out of the window"
+msgstr ""
+"Poèet øádkù, o které posunout okno, kdy¾ se kurzor dostane mimo viditelnou "
+"èást"
+
+#: info/variables.c:71
+msgid "When \"On\", Info accepts and displays ISO Latin characters"
+msgstr "Je-li zapnuto, pak Info akceptuje a zobrazuje znaky z normy ISO Latin"
+
+#: info/variables.c:77
+msgid "Explain the use of a variable"
+msgstr "Zobrazení popisu promìnné"
+
+#. Get the variable's name.
+#: info/variables.c:83
+msgid "Describe variable: "
+msgstr "Popis promìnné: "
+
+#: info/variables.c:102
+msgid "Set the value of an Info variable"
+msgstr "Nastavení hodnoty Info promìnné"
+
+#. Get the variable's name and value.
+#: info/variables.c:108
+msgid "Set variable: "
+msgstr "Nastavení promìnné: "
+
+#: info/variables.c:126
+#, c-format
+msgid "Set %s to value (%d): "
+msgstr "Nastavení promìnné %s na hodnotu (%d): "
+
+#: info/variables.c:167
+#, c-format
+msgid "Set %s to value (%s): "
+msgstr "Nastavení promìnné %s na hodnotu (%s): "
+
+#: info/window.c:1101
+msgid "--*** Tags out of Date ***"
+msgstr "--*** Znaèky jsou zastatalé ***"
+
+#. strlen (location_indicator).
+#. 10 for the decimal representation of the number of lines in this
+#. node, and the remainder of the text that can appear in the line.
+#: info/window.c:1112
+msgid "-----Info: (), lines ----, "
+msgstr "-----Info: (), øádkù ----, "
+
+#: info/window.c:1119
+#, c-format
+msgid "-%s---Info: %s, %d lines --%s--"
+msgstr "-%s---Info: %s, øádkù: %d --%s--"
+
+#: info/window.c:1123
+#, c-format
+msgid "-%s%s-Info: (%s)%s, %d lines --%s--"
+msgstr "-%s%s-Info: (%s)%s, øádkù: %d --%s--"
+
+#: info/window.c:1130
+#, c-format
+msgid " Subfile: %s"
+msgstr " Podsoubor: %s"
+
+#: lib/getopt.c:680
+#, c-format
+msgid "%s: option `%s' is ambiguous\n"
+msgstr "%s: pøepínaè `%s' není jednoznaèný\n"
+
+#: lib/getopt.c:704
+#, c-format
+msgid "%s: option `--%s' doesn't allow an argument\n"
+msgstr "%s: pøepínaè `--%s' musí být zadán bez argumentu\n"
+
+#: lib/getopt.c:709
+#, c-format
+msgid "%s: option `%c%s' doesn't allow an argument\n"
+msgstr "%s: pøepínaè `%c%s' musí být zadán bez argumentu\n"
+
+#: lib/getopt.c:726 lib/getopt.c:899
+#, c-format
+msgid "%s: option `%s' requires an argument\n"
+msgstr "%s: pøepínaè `%s' vy¾aduje argument\n"
+
+#. --option
+#: lib/getopt.c:755
+#, c-format
+msgid "%s: unrecognized option `--%s'\n"
+msgstr "%s: neznámý pøepínaè `--%s'\n"
+
+#. +option or -option
+#: lib/getopt.c:759
+#, c-format
+msgid "%s: unrecognized option `%c%s'\n"
+msgstr "%s: neznámý pøepínaè `%c%s'\n"
+
+#. 1003.2 specifies the format of this message.
+#: lib/getopt.c:785
+#, c-format
+msgid "%s: illegal option -- %c\n"
+msgstr "%s: neznámý pøepínaè -- %c\n"
+
+#: lib/getopt.c:788
+#, c-format
+msgid "%s: invalid option -- %c\n"
+msgstr "%s: neznámý pøepínaè -- %c\n"
+
+#. 1003.2 specifies the format of this message.
+#: lib/getopt.c:818 lib/getopt.c:948
+#, c-format
+msgid "%s: option requires an argument -- %c\n"
+msgstr "%s: pøepínaè vy¾aduje argument -- %c\n"
+
+#: lib/getopt.c:865
+#, c-format
+msgid "%s: option `-W %s' is ambiguous\n"
+msgstr "%s: pøepínaè `-W %s' není jednoznaèný\n"
+
+#: lib/getopt.c:883
+#, c-format
+msgid "%s: option `-W %s' doesn't allow an argument\n"
+msgstr "%s: pøepínaè `-W %s' musí být zadán bez argumentu\n"
+
+#: makeinfo/cmds.c:447
+msgid "January"
+msgstr ""
+
+#: makeinfo/cmds.c:447
+msgid "February"
+msgstr ""
+
+#: makeinfo/cmds.c:447
+#, fuzzy
+msgid "March"
+msgstr "Hledání"
+
+#: makeinfo/cmds.c:447
+msgid "April"
+msgstr ""
+
+#: makeinfo/cmds.c:447
+msgid "May"
+msgstr ""
+
+#: makeinfo/cmds.c:448
+msgid "June"
+msgstr ""
+
+#: makeinfo/cmds.c:448
+msgid "July"
+msgstr ""
+
+#: makeinfo/cmds.c:448
+msgid "August"
+msgstr ""
+
+#: makeinfo/cmds.c:448
+msgid "September"
+msgstr ""
+
+#: makeinfo/cmds.c:448
+msgid "October"
+msgstr ""
+
+#: makeinfo/cmds.c:449
+msgid "November"
+msgstr ""
+
+#: makeinfo/cmds.c:449
+msgid "December"
+msgstr ""
+
+#: makeinfo/cmds.c:571
+#, c-format
+msgid "unlikely character %c in @var"
+msgstr ""
+
+#: makeinfo/cmds.c:605
+msgid "@sc argument all uppercase, thus no effect"
+msgstr ""
+
+#: makeinfo/cmds.c:754
+#, fuzzy, c-format
+msgid "%c%s is obsolete"
+msgstr "%c%s chbìjící uzavírací závorka"
+
+#: makeinfo/cmds.c:814
+#, fuzzy, c-format
+msgid "@sp requires a positive numeric argument, not `%s'"
+msgstr "%c%s po¾aduje jméno"
+
+#: makeinfo/cmds.c:1092 makeinfo/cmds.c:1118 makeinfo/footnote.c:80
+#, c-format
+msgid "Bad argument to %c%s"
+msgstr ""
+
+#: makeinfo/cmds.c:1102 makeinfo/makeinfo.c:3678
+msgid "asis"
+msgstr "asis"
+
+#: makeinfo/cmds.c:1104 makeinfo/makeinfo.c:3680
+msgid "none"
+msgstr "none"
+
+#: makeinfo/defun.c:83
+msgid "Missing `}' in @def arg"
+msgstr ""
+
+#: makeinfo/defun.c:358
+msgid "Function"
+msgstr ""
+
+#: makeinfo/defun.c:361
+msgid "Macro"
+msgstr ""
+
+#: makeinfo/defun.c:364
+msgid "Special Form"
+msgstr ""
+
+#: makeinfo/defun.c:368
+#, fuzzy
+msgid "Variable"
+msgstr "Nastavení promìnné: "
+
+#: makeinfo/defun.c:371
+#, fuzzy
+msgid "User Option"
+msgstr "Vlo¾ení doplnìní"
+
+#: makeinfo/defun.c:375
+#, fuzzy
+msgid "Instance Variable"
+msgstr "Popis promìnné: "
+
+#: makeinfo/defun.c:379
+msgid "Method"
+msgstr ""
+
+#: makeinfo/defun.c:450 makeinfo/defun.c:454 makeinfo/defun.c:556
+#: makeinfo/defun.c:570 makeinfo/defun.c:610
+msgid "of"
+msgstr ""
+
+#: makeinfo/defun.c:458 makeinfo/defun.c:462 makeinfo/defun.c:466
+#: makeinfo/defun.c:564 makeinfo/defun.c:615
+#, fuzzy
+msgid "on"
+msgstr "none"
+
+#: makeinfo/defun.c:656
+#, c-format
+msgid "Must be in `%s' insertion to use `%sx'"
+msgstr ""
+
+#: makeinfo/files.c:460
+#, c-format
+msgid "%s: getwd: %s, %s\n"
+msgstr ""
+
+#: makeinfo/footnote.c:149
+#, c-format
+msgid "`%c%s' needs an argument `{...}', not just `%s'"
+msgstr ""
+
+#: makeinfo/footnote.c:164
+#, c-format
+msgid "No closing brace for footnote `%s'"
+msgstr ""
+
+#: makeinfo/footnote.c:197
+msgid "Footnote defined without parent node"
+msgstr ""
+
+#: makeinfo/footnote.c:278
+msgid "Footnotes"
+msgstr ""
+
+#. The <title> should not have markup.
+#: makeinfo/html.c:40
+msgid "Untitled"
+msgstr ""
+
+#: makeinfo/index.c:212
+#, fuzzy, c-format
+msgid "Unknown index `%s'"
+msgstr "Neznámý pøíkaz `%s'"
+
+#: makeinfo/index.c:382
+#, fuzzy, c-format
+msgid "Index `%s' already exists"
+msgstr "polo¾ka menu `%s' ji¾ pro soubor `%s' existuje"
+
+#: makeinfo/index.c:425
+#, c-format
+msgid "Unknown index `%s' and/or `%s' in @synindex"
+msgstr ""
+
+#: makeinfo/index.c:642
+#, c-format
+msgid "Unknown index `%s' in @printindex"
+msgstr ""
+
+#: makeinfo/index.c:680
+#, c-format
+msgid "Entry for index `%s' outside of any node"
+msgstr ""
+
+#: makeinfo/index.c:683 makeinfo/index.c:722
+msgid "(outside of any node)"
+msgstr ""
+
+#: makeinfo/insertion.c:192
+msgid "Broken-Type in insertion_type_pname"
+msgstr ""
+
+#: makeinfo/insertion.c:265
+msgid "Enumeration stack overflow"
+msgstr ""
+
+#: makeinfo/insertion.c:297
+#, c-format
+msgid "lettering overflow, restarting at %c"
+msgstr ""
+
+#: makeinfo/insertion.c:481
+#, fuzzy, c-format
+msgid "%s requires an argument: the formatter for %citem"
+msgstr "%s: pøepínaè vy¾aduje argument -- %c\n"
+
+#: makeinfo/insertion.c:623
+#, c-format
+msgid "`@end' expected `%s', but saw `%s'"
+msgstr ""
+
+#: makeinfo/insertion.c:797
+#, c-format
+msgid "No matching `%cend %s'"
+msgstr ""
+
+#: makeinfo/insertion.c:902
+#, c-format
+msgid "%s requires letter or digit"
+msgstr ""
+
+#: makeinfo/insertion.c:1046
+msgid "@menu seen before first @node, creating `Top' node"
+msgstr ""
+
+#: makeinfo/insertion.c:1047
+msgid ""
+"perhaps your @top node should be wrapped in @ifnottex rather than @ifinfo?"
+msgstr ""
+
+#. Problems anyway, @detailmenu should always be inside @menu.
+#: makeinfo/insertion.c:1059
+msgid "@detailmenu seen before first node, creating `Top' node"
+msgstr ""
+
+#: makeinfo/insertion.c:1074
+#, fuzzy, c-format
+msgid "Unmatched `%c%s'"
+msgstr "Nepárová }"
+
+#: makeinfo/insertion.c:1081
+#, c-format
+msgid "`%c%s' needs something after it"
+msgstr ""
+
+#: makeinfo/insertion.c:1087
+#, c-format
+msgid "Bad argument to `%s', `%s', using `%s'"
+msgstr ""
+
+#: makeinfo/insertion.c:1175
+#, c-format
+msgid "@%s not meaningful inside `@%s' block"
+msgstr ""
+
+#: makeinfo/insertion.c:1184
+#, c-format
+msgid "@itemx not meaningful inside `%s' block"
+msgstr ""
+
+#: makeinfo/insertion.c:1357
+#, c-format
+msgid "%c%s found outside of an insertion block"
+msgstr ""
+
+#: makeinfo/lang.c:199
+#, c-format
+msgid "%s is not a valid ISO 639 language code"
+msgstr ""
+
+#. This error message isn't perfect if the argument is multiple
+#. characters, but it doesn't seem worth getting right.
+#: makeinfo/lang.c:406
+#, c-format
+msgid "%c%s expects `i' or `j' as argument, not `%c'"
+msgstr ""
+
+#: makeinfo/lang.c:410
+#, c-format
+msgid "%c%s expects a single character `i' or `j' as argument"
+msgstr ""
+
+#: makeinfo/macro.c:134
+#, c-format
+msgid "macro `%s' previously defined"
+msgstr ""
+
+#: makeinfo/macro.c:138
+#, fuzzy, c-format
+msgid "here is the previous definition of `%s'"
+msgstr "Funkce `%s' není známa"
+
+#: makeinfo/macro.c:355
+#, c-format
+msgid "\\ in macro expansion followed by `%s' instead of \\ or parameter name"
+msgstr ""
+
+#: makeinfo/macro.c:403
+#, c-format
+msgid "Macro `%s' called on line %d with too many args"
+msgstr ""
+
+#: makeinfo/macro.c:595
+#, c-format
+msgid "%cend macro not found"
+msgstr ""
+
+#: makeinfo/macro.c:634
+msgid "@quote-arg only useful for single-argument macros"
+msgstr ""
+
+#: makeinfo/macro.c:670
+#, c-format
+msgid "mismatched @end %s with @%s"
+msgstr ""
+
+#: makeinfo/makeinfo.c:308
+#, c-format
+msgid "%s:%d: warning: "
+msgstr "%s:%d: varování: "
+
+#: makeinfo/makeinfo.c:331
+msgid "Too many errors!  Gave up.\n"
+msgstr "Pøíli¹ mnoho chyb!  Konec.\n"
+
+#: makeinfo/makeinfo.c:342 makeinfo/makeinfo.c:1802
+#, c-format
+msgid "Misplaced %c"
+msgstr "©patnì umístìný znak %c"
+
+#: makeinfo/makeinfo.c:362
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Více informací získáte pøíkazem `%s --help'.\n"
+
+#: makeinfo/makeinfo.c:365
+#, c-format
+msgid ""
+"Usage: %s [OPTION]... TEXINFO-FILE...\n"
+"\n"
+"Translate Texinfo source documentation to various other formats:\n"
+"Info files suitable for reading online with Emacs or standalone GNU Info\n"
+"(by default); plain text (with --no-headers); or HTML (with --html).\n"
+"\n"
+"Options:\n"
+" --commands-in-node-names  allow @ commands in node names.\n"
+" -D VAR                    define a variable, as with @set.\n"
+" -E, --macro-expand FILE   output macro-expanded source to FILE.\n"
+" --error-limit=NUM         quit after NUM errors (default %d).\n"
+" --fill-column=NUM         break Info lines at NUM characters (default %d).\n"
+" --footnote-style=STYLE    output footnotes according to STYLE:\n"
+"                            `separate' to place footnotes in their own "
+"node,\n"
+"                            `end' to place the footnotes at the end of the\n"
+"                             node in which they are defined (the default).\n"
+" --force                   preserve output even if errors.\n"
+" --help                    display this help and exit.\n"
+" --html                    output HTML rather than Info format;\n"
+" -I DIR                    append DIR to the @include search path.\n"
+" --ifhtml                  process @ifhtml and @html text even when not\n"
+"                             generating HTML.\n"
+" --ifinfo                  process @ifinfo text even when generating HTML.\n"
+" --iftex                   process @iftex and @tex text.\n"
+"                             implies --no-split.\n"
+msgstr ""
+
+#: makeinfo/makeinfo.c:391
+#, fuzzy, c-format
+msgid ""
+" --no-headers              suppress Info node separators and Node: lines "
+"and\n"
+"                             write to standard output without --output.\n"
+" --no-ifhtml               do not process @ifhtml and @html text.\n"
+" --no-ifinfo               do not process @ifinfo text.\n"
+" --no-iftex                do not process @iftex and @tex text.\n"
+" --no-split                suppress splitting of large Info output files or\n"
+"                           generation of one HTML file per node.\n"
+" --no-validate             suppress node cross-reference validation.\n"
+" --no-warn                 suppress warnings (but not errors).\n"
+" --number-sections         include chapter, section, etc. numbers in "
+"output.\n"
+" -o, --output=FILE         output to FILE, ignoring any @setfilename.\n"
+" -P DIR                    prepend DIR to the @include search path.\n"
+" --paragraph-indent=VAL    indent Info paragraphs by VAL spaces (default "
+"%d).\n"
+"                             if VAL is `none', do not indent;\n"
+"                             if VAL is `asis', preserve existing "
+"indentation.\n"
+" --reference-limit=NUM     warn about at most NUM references (default %d).\n"
+" -U VAR                    undefine a variable, as with @clear.\n"
+" -v, --verbose             explain what is being done.\n"
+" --version                 display version information and exit.\n"
+msgstr ""
+"Pou¾ití: %s [PØEPÍNAÈ]... TEXINFO-SOUBOR...\n"
+"\n"
+"  Pøekládá Texinfový zdrojový soubor to mnoha rùzných formátù:\n"
+"Info soubory vhodné pro on-line ètení Emacsem nebo samostatným GNU Info\n"
+"prohlí¾eèem (implicitní); èistý text (pøepínaèem --no-headers); nebo HTML\n"
+"(pøepínaèem --html).\n"
+"\n"
+"Pøepínaèe:\n"
+"-D PROMÌNNÁ             definuje promìnnou, jako pøíkaz @set\n"
+"-I ADRESÁØ              pøidá ADRESÁØ na konec seznamu adresáøù, ve kterých\n"
+"-P ADRESÁØ              pøídá ADRESÁØ na zaèátek seznamu adresáøù, ve "
+"kterých\n"
+"                        jsou hledány soubory pro @include\n"
+"-U PROMÌNNÁ             oddefinuje promìnnou, jako pøíkazem @clear\n"
+"--error-limit=ÈÍSLO     skonèí, kdy¾ se objeví ÈÍSLO chyb (implicitnì %d)\n"
+"--fill-column=ÈÍSLO     definuje délku øádku ve znacích (implicitnì %d)\n"
+"--footnote-style=STYL   ve výstupu budou poznámky pod èarou podle "
+"STYLu:\\n\"\n"
+"                         `separate' pro umístìní poznámek pod èarou\n"
+"                          do zvlá¹tního uzlu,\n"
+"                         `end' pro umístìní poznámek pod èarou na konec "
+"uzlu,\n"
+"                          ve kterém jsou definovány (implicitní).\n"
+"--force                 vypí¹e výstup, i kdy¾ byly nalezeny chyby\n"
+"--help                  vypí¹e tuto nápovìdu a skonèí\n"
+"--html                  zapí¹e výstup v HTML formátu\n"
+"--ifhtml                zpùsobí zpracování @ifhtml a @html, i kdy¾ není\n"
+"                         výstupem formát HTML\n"
+"--ifinfo                zpùsobí zpracování @ifinfo, i kdy¾ je výstupem HTML\n"
+"--iftex                 zpùsobí zpracování @iftex a @tex\n"
+"--macro-expand=VÝST-SOUBOR, -E VÝST-SOUBOR výstupem bude originální "
+"zdrojový\n"
+"                         kód s expandovanými makry do souboru VÝST-SOUBOR \n"
+"--no-headers            potlaèí oddìlovaèe uzlù a jejich hlavièky\n"
+"--no-ifhtml             zpùsobí nevykonávání @ifhtml a @html\n"
+"--no-ifinfo             zpùsobí nevykonávání @ifinfo\n"
+"--no-iftex              zpùsobí nevykonávání @iftex a @tex\n"
+"--no-split              potlaèí rozdìlování velkých výstupních info souborù\n"
+"                         nebo generování jednoho HTML souboru na uzel\n"
+"--no-validate           potlaèí kontrolu køí¾ových odkazù\n"
+"--no-warn               potlaèí výpis varování (ne v¹ak chyb)\n"
+"--output=SOUB, -o SOUB  výstup do SOUBoru, ignoruje pøíkaz @setfilename\n"
+"--paragraph-indent=HODN odsadí odstavce HODN mezerami (implicitnì %d).\n"
+"                         jestli¾e je HODN `none' neodsazuje; jestli¾e je "
+"HODN\n"
+"                         `asis' zanechá ji¾ existující odsazení.\n"
+"--reference-limit=ÈÍSLO oznámí, bude-li køí¾ových odkazù více ne¾ ÈÍSLO\n"
+"                         (implicitnì %d).\n"
+"-v, --verbose           vypisuje bli¾¹í informace o zpracovávání\n"
+"--version               vypí¹e oznaèení verze a skonèí\n"
+"\n"
+"  Implicitní nastavení pro podmínky @if... zále¾í na výstupním formátu:\n"
+"pøi generování HTML je zapnut pøepínaè --ifhtml a ostatní jsou vypnuty;\n"
+"pøi generování Info souboru nebo èistého textu je zapnut pøepínaè --ifinfo\n"
+"a ostatní jsou vypnuty.\n"
+"\n"
+"  Chyby v programu oznamujte na adrese <bug-texinfo@gnu.org> (pouze "
+"anglicky),\n"
+"obecné otázky smìøujte na <help-texinfo@gnu.org>. Pøipomínky k pøekladu\n"
+"zasílejte na <cs@li.org> (èesky).\n"
+
+#: makeinfo/makeinfo.c:415
+msgid ""
+"\n"
+"The defaults for the @if... conditionals depend on the output format:\n"
+"if generating HTML, --ifhtml is on and the others are off;\n"
+"if generating Info or plain text, --ifinfo is on and the others are off.\n"
+"\n"
+"Examples:\n"
+"  makeinfo foo.texi                    write Info to foo's @setfilename\n"
+"  makeinfo --html foo.texi             write HTML to foo's @setfilename\n"
+"  makeinfo --no-headers -o - foo.texi  write plain text to standard output\n"
+"  makeinfo --number-sections foo.texi  write Info with numbered sections\n"
+"  makeinfo --no-split foo.texi         write one Info file however big\n"
+"\n"
+"Email bug reports to bug-texinfo@gnu.org,\n"
+"general questions and discussion to help-texinfo@gnu.org."
+msgstr ""
+
+#: makeinfo/makeinfo.c:508 makeinfo/makeinfo.c:531 makeinfo/makeinfo.c:592
+#, c-format
+msgid "%s: %s arg must be numeric, not `%s'.\n"
+msgstr "%s: %s argument musí být èíslo ne `%s'.\n"
+
+#: makeinfo/makeinfo.c:521
+#, c-format
+msgid "Couldn't open macro expansion output `%s'"
+msgstr "Výstup %s pro expanzi makra nelze otevøít"
+
+#: makeinfo/makeinfo.c:524
+msgid "Cannot specify more than one macro expansion output"
+msgstr "Pro expanzi makra nelze zadat více ne¾ jeden výstup"
+
+#: makeinfo/makeinfo.c:561
+#, c-format
+msgid "%s: --paragraph-indent arg must be numeric/`none'/`asis', not `%s'.\n"
+msgstr ""
+"%s: argument pro --paragraph-indent musí být èíslo|`none'|`asis', ale ne "
+"`%s'.\n"
+
+#: makeinfo/makeinfo.c:602
+#, c-format
+msgid "%s: --footnote-style arg must be `separate' or `end', not `%s'.\n"
+msgstr ""
+"%s: argument k --footnote-style musí být `separate'|`end', ale ne `%s'.\n"
+
+#: makeinfo/makeinfo.c:647
+#, c-format
+msgid "%s: missing file argument.\n"
+msgstr "%s: chybí argument jména souboru.\n"
+
+#: makeinfo/makeinfo.c:810
+#, c-format
+msgid "Expected `%s'"
+msgstr "Oèekáváno `%s'"
+
+#: makeinfo/makeinfo.c:1229
+#, c-format
+msgid "No `%s' found in `%s'"
+msgstr "Soubor `%s' nenalezen v `%s'"
+
+#: makeinfo/makeinfo.c:1306
+#, c-format
+msgid "%s: Skipping macro expansion to stdout as Info output is going there.\n"
+msgstr ""
+"%s: Vynechávám expanzi makra na stdout a expanze jde jako Info výstup.\n"
+
+#: makeinfo/makeinfo.c:1327
+#, c-format
+msgid "Making %s file `%s' from `%s'.\n"
+msgstr "Vytváøím %s soubor `%s' ze souboru `%s'.\n"
+
+#: makeinfo/makeinfo.c:1358
+#, fuzzy, c-format
+msgid "This is %s, produced by makeinfo version %s from %s.\n"
+msgstr ""
+"Toto je Info soubor %s, produkován programem Makeinfo verze %s ze souboru "
+"%s\n"
+
+#: makeinfo/makeinfo.c:1377
+#, c-format
+msgid ""
+"%s: Removing macro output file `%s' due to errors; use --force to preserve.\n"
+msgstr ""
+"%s: Výstupní soubor maker `%s' byl odstranìn, proto¾e byly nalezeny chyby;\n"
+"u¾ijte pøepínaè --force k ponechání souboru.\n"
+
+#. If there were errors, and no --force, remove the output.
+#: makeinfo/makeinfo.c:1420
+#, c-format
+msgid "%s: Removing output file `%s' due to errors; use --force to preserve.\n"
+msgstr ""
+"%s: Výstupní soubor `%s' byl odstranìn, proto¾e byly nalezeny chyby;\n"
+"u¾ijte pøepínaè --force k ponechání souboru.\n"
+
+#: makeinfo/makeinfo.c:1635
+#, c-format
+msgid "Unknown command `%s'"
+msgstr "Neznámý pøíkaz `%s'"
+
+#: makeinfo/makeinfo.c:1657
+#, c-format
+msgid "Use braces to give a command as an argument to @%s"
+msgstr "Pou¾ijte závorky k zadání pøíkazu jako argumentu @%s"
+
+#: makeinfo/makeinfo.c:1838
+#, c-format
+msgid "%c%s expected `{...}'"
+msgstr "%c%s oèekáváno `{...}'"
+
+#: makeinfo/makeinfo.c:1868
+msgid "Unmatched }"
+msgstr "Nepárová }"
+
+#: makeinfo/makeinfo.c:1918
+msgid "NO_NAME!"
+msgstr "Funkce neexistuje!"
+
+#: makeinfo/makeinfo.c:1940
+#, c-format
+msgid "%c%s missing close brace"
+msgstr "%c%s chbìjící uzavírací závorka"
+
+#: makeinfo/makeinfo.c:2707 makeinfo/makeinfo.c:2884
+msgid "see "
+msgstr ""
+
+#: makeinfo/makeinfo.c:2707
+msgid "See "
+msgstr ""
+
+#: makeinfo/makeinfo.c:2836
+#, c-format
+msgid "`.' or `,' must follow cross reference, not %c"
+msgstr "`.' nebo `,' musí následovat za køí¾ovým odkazem, ale ne za %c"
+
+#: makeinfo/makeinfo.c:3026
+#, c-format
+msgid "No .png or .jpg for `%s'"
+msgstr "®ádný .png nebo .jpg soubor pro `%s'"
+
+#: makeinfo/makeinfo.c:3063
+#, c-format
+msgid "@image file `%s' unreadable: %s"
+msgstr "soubor `%s' v pøíkazu @image je neèitelný: %s"
+
+#: makeinfo/makeinfo.c:3070
+msgid "@image missing filename argument"
+msgstr "pøíkaz @image postrádá jméno souboru"
+
+#: makeinfo/makeinfo.c:3259
+#, fuzzy, c-format
+msgid "{No value for `%s'}"
+msgstr "{Pro \"%s\" není hodnota}"
+
+#: makeinfo/makeinfo.c:3313
+#, c-format
+msgid "%c%s requires a name"
+msgstr "%c%s po¾aduje jméno"
+
+#: makeinfo/makeinfo.c:3421
+#, c-format
+msgid "Reached eof before matching @end %s"
+msgstr "Vstupní soubor skonèil a pøíkaz `@end %s' nebyl nalezen"
+
+#: makeinfo/multi.c:208
+msgid "Missing } in @multitable template"
+msgstr ""
+
+#: makeinfo/multi.c:284
+#, c-format
+msgid "ignoring stray text `%s' after @multitable"
+msgstr "ignoruji zbloudilý text `%s' po pøíkazu @multitable"
+
+#: makeinfo/multi.c:357
+#, c-format
+msgid "Too many columns in multitable item (max %d)"
+msgstr "Pøíli¹ mnoho sloupcù v multitabulkové polo¾ce (max %d)"
+
+#: makeinfo/multi.c:401
+#, c-format
+msgid "Cannot select column #%d in multitable"
+msgstr "sloupec #%d v multitabulce nelze vybrat"
+
+#: makeinfo/multi.c:504
+msgid "ignoring @tab outside of multitable"
+msgstr "pøíkaz `@tab' ignorován, je mimo multitabulku"
+
+#: makeinfo/multi.c:534
+msgid "** Multicolumn output from last row:\n"
+msgstr "** Vícesloupcový výstup z posledního øádku:\n"
+
+#: makeinfo/multi.c:537
+#, c-format
+msgid "* column #%d: output = %s\n"
+msgstr "* sloupec #%d: výstup = %s\n"
+
+#: makeinfo/node.c:250
+#, c-format
+msgid "Node `%s' previously defined at line %d"
+msgstr ""
+
+#: makeinfo/node.c:514
+#, fuzzy, c-format
+msgid "Formatting node %s...\n"
+msgstr "Zapisuji uzel \"%s\"..."
+
+#: makeinfo/node.c:559
+#, c-format
+msgid "Node `%s' requires a sectioning command (e.g. %c%s)"
+msgstr ""
+
+#: makeinfo/node.c:719
+#, c-format
+msgid "No node name specified for `%c%s' command"
+msgstr ""
+
+#: makeinfo/node.c:774
+#, fuzzy
+msgid "Node:"
+msgstr "Dal¹í"
+
+#: makeinfo/node.c:783 makeinfo/sectioning.c:528
+#, fuzzy
+msgid "Next:"
+msgstr "Dal¹í"
+
+#: makeinfo/node.c:793
+#, fuzzy
+msgid "Previous:"
+msgstr "Pøedchozí"
+
+#: makeinfo/node.c:803
+#, fuzzy
+msgid "Up:"
+msgstr "Nahoru"
+
+#: makeinfo/node.c:1012
+#, c-format
+msgid "%s reference to nonexistent node `%s'"
+msgstr ""
+
+#: makeinfo/node.c:1029
+msgid "Menu"
+msgstr ""
+
+#: makeinfo/node.c:1031
+msgid "Cross"
+msgstr ""
+
+#: makeinfo/node.c:1115
+#, c-format
+msgid "Next field of node `%s' not pointed to"
+msgstr ""
+
+#: makeinfo/node.c:1119
+#, c-format
+msgid "This node (%s) has the bad Prev"
+msgstr ""
+
+#: makeinfo/node.c:1133
+#, fuzzy
+msgid "Prev"
+msgstr "Pøedchozí"
+
+#: makeinfo/node.c:1176
+#, c-format
+msgid "Prev field of node `%s' not pointed to"
+msgstr ""
+
+#: makeinfo/node.c:1180
+#, c-format
+msgid "This node (%s) has the bad Next"
+msgstr ""
+
+#: makeinfo/node.c:1194
+#, c-format
+msgid "`%s' has no Up field"
+msgstr ""
+
+#: makeinfo/node.c:1197
+#, fuzzy
+msgid "Up"
+msgstr "Nahoru"
+
+#: makeinfo/node.c:1265
+#, c-format
+msgid "Node `%s' lacks menu item for `%s' despite being its Up target"
+msgstr ""
+
+#: makeinfo/node.c:1296
+#, c-format
+msgid "node `%s' has been referenced %d times"
+msgstr ""
+
+#: makeinfo/node.c:1310
+#, c-format
+msgid "unreferenced node `%s'"
+msgstr ""
+
+#: makeinfo/sectioning.c:116
+#, c-format
+msgid "Appendix %c "
+msgstr ""
+
+#. should never happen, but a poor guy, named Murphy ...
+#: makeinfo/sectioning.c:328 makeinfo/sectioning.c:410
+#, c-format
+msgid "Internal error (search_sectioning) \"%s\"!"
+msgstr ""
+
+#: makeinfo/sectioning.c:468
+#, fuzzy, c-format
+msgid "%c%s is obsolete; use %c%s instead"
+msgstr "%c%s chbìjící uzavírací závorka"
+
+#: makeinfo/sectioning.c:484
+#, c-format
+msgid "Node with %ctop as a section already exists"
+msgstr ""
+
+#: makeinfo/sectioning.c:496
+#, fuzzy, c-format
+msgid "Here is the %ctop node"
+msgstr "Zobrazení vy¹¹ího uzlu"
+
+#: makeinfo/sectioning.c:515
+#, c-format
+msgid "%ctop used before %cnode, defaulting to %s"
+msgstr ""
+
+#. in case we are writing stdout
+#: makeinfo/toc.c:212 makeinfo/toc.c:261 makeinfo/toc.c:262
+msgid "Table of Contents"
+msgstr ""
+
+#. in case we are writing stdout
+#: makeinfo/toc.c:292 makeinfo/toc.c:319 makeinfo/toc.c:320
+msgid "Short Contents"
+msgstr ""
+
+#: makeinfo/toc.c:354
+#, c-format
+msgid "%s: TOC should be here, but it was not found"
+msgstr ""
+
+#: util/install-info.c:151
+#, c-format
+msgid "%s: warning: "
+msgstr "%s: varování: "
+
+#: util/install-info.c:176 util/install-info.c:189
+msgid "virtual memory exhausted"
+msgstr "virtuální pamì» vyèerpána"
+
+#: util/install-info.c:232
+#, c-format
+msgid " for %s"
+msgstr " pro %s"
+
+#: util/install-info.c:381
+#, c-format
+msgid "\tTry `%s --help' for a complete list of options.\n"
+msgstr "Více informací získáte pøíkazem `%s --help'.\n"
+
+#: util/install-info.c:389
+#, fuzzy, c-format
+msgid ""
+"Usage: %s [OPTION]... [INFO-FILE [DIR-FILE]]\n"
+"\n"
+"Install or delete dir entries from INFO-FILE in the Info directory file\n"
+"DIR-FILE.\n"
+"\n"
+"Options:\n"
+" --delete          delete existing entries for INFO-FILE from DIR-FILE;\n"
+"                     don't insert any new entries.\n"
+" --dir-file=NAME   specify file name of Info directory file.\n"
+"                     This is equivalent to using the DIR-FILE argument.\n"
+" --entry=TEXT      insert TEXT as an Info directory entry.\n"
+"                     TEXT should have the form of an Info menu item line\n"
+"                     plus zero or more extra lines starting with "
+"whitespace.\n"
+"                     If you specify more than one entry, they are all "
+"added.\n"
+"                     If you don't specify any entries, they are determined\n"
+"                     from information in the Info file itself.\n"
+" --help            display this help and exit.\n"
+" --info-file=FILE  specify Info file to install in the directory.\n"
+"                     This is equivalent to using the INFO-FILE argument.\n"
+" --info-dir=DIR    same as --dir-file=DIR/dir.\n"
+" --item=TEXT       same as --entry TEXT.\n"
+"                     An Info directory entry is actually a menu item.\n"
+" --quiet           suppress warnings.\n"
+" --remove          same as --delete.\n"
+" --section=SEC     put this file's entries in section SEC of the directory.\n"
+"                     If you specify more than one section, all the entries\n"
+"                     are added in each of the sections.\n"
+"                     If you don't specify any sections, they are determined\n"
+"                     from information in the Info file itself.\n"
+" --version         display version information and exit.\n"
+"\n"
+"Email bug reports to bug-texinfo@gnu.org,\n"
+"general questions and discussion to help-texinfo@gnu.org.\n"
+msgstr ""
+"Pou¾ití: %s [PØEPÍNAÈ]... [INFO-SOUBOR [DIR-SOUBOR]]\n"
+"\n"
+"Instaluje nebo ma¾e polo¾ky ze souboru INFO-SOUBOR v Info adresáøi "
+"DIR-SOUBOR.\n"
+"\n"
+"Pøepínaèe:\n"
+"--delete           sma¾e existující polo¾ky INFO-SOUBORu z DIS=SOUBORU;\n"
+"                   nevkládá ¾ádné nové.\n"
+"--dir-file=JMÉNO   zadání jména adresáøového souboru Infa. Rovnocenné\n"
+"                   s pou¾itím argumentu DIR-SOUBOR.\n"
+"--entry=TEXT       vlo¾í text jako polo¾ku Info adresáøe. TEXT musí mít "
+"formát\n"
+"                   jako øádek polo¾ky Info menu, plus nula nebo více extra\n"
+"                   øádkù zaèínajících mezerou. Jestli¾e zadáte více ne¾ "
+"jednu\n"
+"                   polo¾ku, budou pøidány v¹echny. Jestli¾e nezadáte ¾ádnou\n"
+"                   polo¾ku, budou získány z informací v Info souboru.\n"
+"--help             vypí¹e tuto nápovìdu a skonèí\n"
+"--info-file=SOUBOR zadání Info souboru pro instalaci do Info adresáøe.\n"
+"                   Rovnocenné s argumentem INFO-SOUBOR.\n"
+"--info-dir=ADRESÁØ stejné jako --dir-file=ADRESÁØ/dir.\n"
+"--item=TEXT        stejné jako --entry=TEXT.\n"
+"--quiet            potlaèí varování.\n"
+"--remove           stejné jako --delete.\n"
+"--section=SEKCE    vlo¾í polo¾ky adresáøe do sekce SEKCE Info adresáøe.\n"
+"                   Jestli¾e je zadáno více sekcí, jsou v¹echny polo¾ky\n"
+"                   pøidány do v¹ech zadaných sekcí. Jestli¾e nejsou zadány\n"
+"                   ¾ádné sekce, pak jsou sekce získány z Info souboru.\n"
+"--version          vypí¹e oznaèení verze a skonèí.\n"
+"\n"
+"  Chyby v programu oznamujte na adrese <bug-texinfo@gnu.org> (pouze "
+"anglicky),\n"
+"obecné otázky smìøujte na <help-texinfo@gnu.org>. Pøipomínky\n"
+"k pøekladu zasílejte na <cs@li.org> (èesky).\n"
+
+#: util/install-info.c:442
+#, fuzzy, c-format
+msgid ""
+"This is the file .../info/dir, which contains the\n"
+"topmost node of the Info hierarchy, called (dir)Top.\n"
+"The first time you invoke Info you start off looking at this node.\n"
+"\n"
+"%s\tThis is the top of the INFO tree\n"
+"\n"
+"  This (the Directory node) gives a menu of major topics.\n"
+"  Typing \"q\" exits, \"?\" lists all Info commands, \"d\" returns here,\n"
+"  \"h\" gives a primer for first-timers,\n"
+"  \"mEmacs<Return>\" visits the Emacs manual, etc.\n"
+"\n"
+"  In Emacs, you can click mouse button 2 on a menu item or cross reference\n"
+"  to select it.\n"
+"\n"
+"* Menu:\n"
+msgstr ""
+"  Toto je soubor .../info/dir, který obsahuje nejvy¹¹í uzly hierarchie\n"
+"Info dokumentù a je nazýván (dir)Top. Kdy¾ poprvé spustíte Info dostanete\n"
+"se do tohoto uzlu.\n"
+"^_\n"
+"Soubor: dir     Uzel: Top       Toto je vrchol INFO stromu\n"
+"\n"
+"    Tento (Adresáøový uzel) obsahuje menu hlavních témat.\n"
+"  Stiskem \"q\" Info ukonèíte, stiskem \"?\" získáte seznam v¹ech Info "
+"pøíkazù,\n"
+"  stiskem \"d\" se vrátíte sem, stiskem \"h\" získáte nápovìdu pro "
+"zaèáteèníky,\n"
+"  napsáním \"mEmacs\" si zobrazíte manuál k Emacsu, ...\n"
+"\n"
+"    Pokud chcete v Emacsu zobrazit obsah polo¾ky menu nebo následovat "
+"køí¾ový\n"
+"  odkaz, mù¾ete to provést kliknutím prostøedním tlaèítkem my¹i.\n"
+"\n"
+"* Menu:\n"
+
+#: util/install-info.c:465
+#, c-format
+msgid "%s: could not read (%s) and could not create (%s)\n"
+msgstr "%s: %s nelze èíst a %s nelze vytvoøit\n"
+
+#: util/install-info.c:549
+#, c-format
+msgid "%s: empty file"
+msgstr ""
+
+#: util/install-info.c:864 util/install-info.c:904
+msgid "START-INFO-DIR-ENTRY without matching END-INFO-DIR-ENTRY"
+msgstr "START-INFO-DIR-ENTRY bez odpovídajícího END-INFO-DIR-ENTRY"
+
+#: util/install-info.c:899
+msgid "END-INFO-DIR-ENTRY without matching START-INFO-DIR-ENTRY"
+msgstr "END-INFO-DIR-ENTRY bez pøedchozího START-INFO-DIR-ENTRY"
+
+#: util/install-info.c:1147 util/install-info.c:1157
+#, c-format
+msgid "%s: Specify the Info directory only once.\n"
+msgstr "%s: Info adresáø zadejte pouze jednou.\n"
+
+#: util/install-info.c:1192
+#, c-format
+msgid "%s: Specify the Info file only once.\n"
+msgstr "%s: Info soubor zadejte pouze jednou.\n"
+
+#: util/install-info.c:1241
+#, c-format
+msgid "excess command line argument `%s'"
+msgstr "nadbyteèný argument `%s' v pøíkazovém øádku"
+
+#: util/install-info.c:1245
+msgid "No input file specified; try --help for more information."
+msgstr ""
+"Vstupní soubor nezadán; pou¾itím pøepínaèe --help získáte bli¾¹í informace."
+
+#: util/install-info.c:1247
+msgid "No dir file specified; try --help for more information."
+msgstr ""
+"Adresáø nebyl zadán; pou¾itím pøepínaèe `--help' získáte bli¾¹í informace"
+
+#. No need to abort here, the original info file may not
+#. have the requisite Texinfo commands.  This is not
+#. something an installer should have to correct (it's a
+#. problem for the maintainer), and there's no need to cause
+#. subsequent parts of `make install' to fail.
+#: util/install-info.c:1269
+#, c-format
+msgid "no info dir entry in `%s'"
+msgstr "v Info adresáøi `%s' není ¾ádná polo¾ka"
+
+#: util/install-info.c:1384
+#, c-format
+msgid "menu item `%s' already exists, for file `%s'"
+msgstr "polo¾ka menu `%s' ji¾ pro soubor `%s' existuje"
+
+#: util/install-info.c:1407
+#, c-format
+msgid "no entries found for `%s'; nothing deleted"
+msgstr "pro `%s' nebyly nalezeny ¾ádné polo¾ky"
+
+#: util/texindex.c:244
+msgid "display this help and exit"
+msgstr "vypí¹e tuto nápovìdu a skonèí"
+
+#: util/texindex.c:246
+msgid "keep temporary files around after processing"
+msgstr "zanechá doèasné soubory po ukonèení"
+
+#: util/texindex.c:248
+msgid "do not keep temporary files around after processing (default)"
+msgstr "nezanechá doèasné soubory po ukonèení"
+
+#: util/texindex.c:250
+msgid "send output to FILE"
+msgstr "zapí¹e výstup do SOUBORu"
+
+#: util/texindex.c:252
+msgid "display version information and exit"
+msgstr "vypí¹e oznaèení verze a skonèí"
+
+#: util/texindex.c:263
+#, c-format
+msgid "Usage: %s [OPTION]... FILE...\n"
+msgstr "Pou¾ití: %s [PØEPÍNAÈ]... SOUBOR...\n"
+
+#: util/texindex.c:264
+msgid "Generate a sorted index for each TeX output FILE.\n"
+msgstr "Generuje seøazený rejstøík pro ka¾dý TeXovský výstupní SOUBOR.\n"
+
+#: util/texindex.c:267
+#, c-format
+msgid "Usually FILE... is specified as `foo.%c%c' for a document `foo.texi'.\n"
+msgstr "SOUBOR... je obvykle `foo.%c%c' pro dokument `foo.texi'.\n"
+
+#. avoid trigraph in cat-id-tbl.c
+#: util/texindex.c:269
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Pøepínaèe:\n"
+
+#: util/texindex.c:285
+msgid ""
+"\n"
+"Email bug reports to bug-texinfo@gnu.org,\n"
+"general questions and discussion to help-texinfo@gnu.org.\n"
+msgstr ""
+"\n"
+"  Chyby v programu oznamujte na adrese <bug-texinfo@gnu.org> (pouze "
+"anglicky),\n"
+"obecné otázky smìøujte na <help-texinfo@gnu.org>. Pøipomínky k pøekladu\n"
+"zasílejte na <cs@li.org> (èesky).\n"
+
+#: util/texindex.c:885 util/texindex.c:919 util/texindex.c:995
+#: util/texindex.c:1023
+#, c-format
+msgid "%s: not a texinfo index file"
+msgstr "%s: není texinfovský rejstøík"
+
+#: util/texindex.c:980
+#, c-format
+msgid "failure reopening %s"
+msgstr "soubor %s nepovedlo se znovu otevøít"
+
+#: util/texindex.c:1222
+#, c-format
+msgid "No page number in %s"
+msgstr ""
+
+#: util/texindex.c:1293
+#, c-format
+msgid "entry %s follows an entry with a secondary name"
+msgstr "polo¾ka %s následuje za polo¾kou se sekundárním jménem"
+
+#: util/texindex.c:1631
+#, c-format
+msgid "%s; for file `%s'.\n"
+msgstr "%s; v souboru `%s'.\n"
+
+#, fuzzy
+#~ msgid ""
+#~ "Usage: %s [OPTION]... TEXINFO-FILE...\n"
+#~ "\n"
+#~ "Translate Texinfo source documentation to various other formats:\n"
+#~ "Info files suitable for reading online with Emacs or standalone GNU Info\n"
+#~ "(by default); plain text (with --no-headers); or HTML (with --html).\n"
+#~ "\n"
+#~ "Options:\n"
+#~ " -D VAR                    define a variable, as with @set.\n"
+#~ " -I DIR                    append DIR to the @include search path.\n"
+#~ " -P DIR                    prepend DIR to the @include search path.\n"
+#~ " -U VAR                    undefine a variable, as with @clear.\n"
+#~ " --commands-in-node-names  allow @ commands in node names.\n"
+#~ " --error-limit=NUM         quit after NUM errors (default %d).\n"
+#~ " --fill-column=NUM         break Info lines at NUM characters (default %d).\n"
+#~ " --footnote-style=STYLE    output footnotes according to STYLE:\n"
+#~ "                            `separate' to place footnotes in their own "
+#~ "node,\n"
+#~ "                            `end' to place the footnotes at the end of the\n"
+#~ "                             node in which they are defined (the default).\n"
+#~ " --force                   preserve output even if errors.\n"
+#~ " --help                    display this help and exit.\n"
+#~ " --html                    output HTML rather than Info format;\n"
+#~ "                             implies --no-split.\n"
+#~ msgstr ""
+#~ "Pou¾ití: %s [PØEPÍNAÈ]... TEXINFO-SOUBOR...\n"
+#~ "\n"
+#~ "  Pøekládá Texinfový zdrojový soubor to mnoha rùzných formátù:\n"
+#~ "Info soubory vhodné pro on-line ètení Emacsem nebo samostatným GNU Info\n"
+#~ "prohlí¾eèem (implicitní); èistý text (pøepínaèem --no-headers); nebo HTML\n"
+#~ "(pøepínaèem --html).\n"
+#~ "\n"
+#~ "Pøepínaèe:\n"
+#~ "-D PROMÌNNÁ             definuje promìnnou, jako pøíkaz @set\n"
+#~ "-I ADRESÁØ              pøidá ADRESÁØ na konec seznamu adresáøù, ve kterých\n"
+#~ "-P ADRESÁØ              pøídá ADRESÁØ na zaèátek seznamu adresáøù, ve "
+#~ "kterých\n"
+#~ "                        jsou hledány soubory pro @include\n"
+#~ "-U PROMÌNNÁ             oddefinuje promìnnou, jako pøíkazem @clear\n"
+#~ "--error-limit=ÈÍSLO     skonèí, kdy¾ se objeví ÈÍSLO chyb (implicitnì %d)\n"
+#~ "--fill-column=ÈÍSLO     definuje délku øádku ve znacích (implicitnì %d)\n"
+#~ "--footnote-style=STYL   ve výstupu budou poznámky pod èarou podle "
+#~ "STYLu:\\n\"\n"
+#~ "                         `separate' pro umístìní poznámek pod èarou\n"
+#~ "                          do zvlá¹tního uzlu,\n"
+#~ "                         `end' pro umístìní poznámek pod èarou na konec "
+#~ "uzlu,\n"
+#~ "                          ve kterém jsou definovány (implicitní).\n"
+#~ "--force                 vypí¹e výstup, i kdy¾ byly nalezeny chyby\n"
+#~ "--help                  vypí¹e tuto nápovìdu a skonèí\n"
+#~ "--html                  zapí¹e výstup v HTML formátu\n"
+#~ "--ifhtml                zpùsobí zpracování @ifhtml a @html, i kdy¾ není\n"
+#~ "                         výstupem formát HTML\n"
+#~ "--ifinfo                zpùsobí zpracování @ifinfo, i kdy¾ je výstupem HTML\n"
+#~ "--iftex                 zpùsobí zpracování @iftex a @tex\n"
+#~ "--macro-expand=VÝST-SOUBOR, -E VÝST-SOUBOR výstupem bude originální "
+#~ "zdrojový\n"
+#~ "                         kód s expandovanými makry do souboru VÝST-SOUBOR \n"
+#~ "--no-headers            potlaèí oddìlovaèe uzlù a jejich hlavièky\n"
+#~ "--no-ifhtml             zpùsobí nevykonávání @ifhtml a @html\n"
+#~ "--no-ifinfo             zpùsobí nevykonávání @ifinfo\n"
+#~ "--no-iftex              zpùsobí nevykonávání @iftex a @tex\n"
+#~ "--no-split              potlaèí rozdìlování velkých výstupních info souborù\n"
+#~ "                         nebo generování jednoho HTML souboru na uzel\n"
+#~ "--no-validate           potlaèí kontrolu køí¾ových odkazù\n"
+#~ "--no-warn               potlaèí výpis varování (ne v¹ak chyb)\n"
+#~ "--output=SOUB, -o SOUB  výstup do SOUBoru, ignoruje pøíkaz @setfilename\n"
+#~ "--paragraph-indent=HODN odsadí odstavce HODN mezerami (implicitnì %d).\n"
+#~ "                         jestli¾e je HODN `none' neodsazuje; jestli¾e je "
+#~ "HODN\n"
+#~ "                         `asis' zanechá ji¾ existující odsazení.\n"
+#~ "--reference-limit=ÈÍSLO oznámí, bude-li køí¾ových odkazù více ne¾ ÈÍSLO\n"
+#~ "                         (implicitnì %d).\n"
+#~ "-v, --verbose           vypisuje bli¾¹í informace o zpracovávání\n"
+#~ "--version               vypí¹e oznaèení verze a skonèí\n"
+#~ "\n"
+#~ "  Implicitní nastavení pro podmínky @if... zále¾í na výstupním formátu:\n"
+#~ "pøi generování HTML je zapnut pøepínaè --ifhtml a ostatní jsou vypnuty;\n"
+#~ "pøi generování Info souboru nebo èistého textu je zapnut pøepínaè --ifinfo\n"
+#~ "a ostatní jsou vypnuty.\n"
+#~ "\n"
+#~ "  Chyby v programu oznamujte na adrese <bug-texinfo@gnu.org> (pouze "
+#~ "anglicky),\n"
+#~ "obecné otázky smìøujte na <help-texinfo@gnu.org>. Pøipomínky k pøekladu\n"
+#~ "zasílejte na <cs@li.org> (èesky).\n"
+
+#, fuzzy
+#~ msgid "  %-10s  Quit this help (that's a zero not an oh).\n"
+#~ msgstr "  CTRL-x 0   Ukonèení prohlí¾ení nápovìdy."
+
+#~ msgid "Virtual memory exhausted in %s ()!  Needed %d bytes."
+#~ msgstr "Virtuální pamì» vyèerpána ve funkci %s ()! %d bajtù je potøebných."
+
+#~ msgid " times"
+#~ msgstr " krát"
+
+#~ msgid "%d times"
+#~ msgstr "%d krát"
+
+#~ msgid "multitable item not in active multitable"
+#~ msgstr "multitabulková polo¾ka není v aktivní multitabulce"

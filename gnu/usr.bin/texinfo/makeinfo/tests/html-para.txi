@@ -1,0 +1,24 @@
+\input texinfo
+@setfilename html-para.info
+@settitle HTML paragraph beginning test
+
+@c <p> is emitted at paragraph beginning, which makes the text
+@c between START and END not exactly what some cm_xxx functions
+@c expect, when they are called by pop_and_call_brace.
+
+@set val @@value@{@}
+@definfoenclose foo,\\,//
+
+@node Top
+@top Top of HTML paragraph test
+
+@value{val} should work at the beginning of a new paragraph.
+
+@dotless{i} dotless should not trigger error messages at the beginning
+of a new paragraph.
+
+@sc{small-caps} should work at the beginning of a new paragraph.
+
+@foo{@@definfoenclose} should work at the beginning of a new paragraph.
+
+@bye

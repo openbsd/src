@@ -1,0 +1,13 @@
+#!/bin/sh
+# Test that titles with @ commands don't produce markup in the <title>.
+# (And that the @ commands get expanded.)
+
+if ../makeinfo --html ${srcdir-.}/html-title.txi; then
+  grep '^<title>@[^<>]*</title>$' html-title.html >/dev/null
+  exit_status=$?
+else
+  exit_status=1
+fi
+
+#rm -f html-title.html
+exit $exit_status

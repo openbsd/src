@@ -1,0 +1,25 @@
+\input texinfo
+@setfilename top.info
+@settitle top test
+
+@c This traditional top node uses @ifinfo for testing.
+@c Therefore there will be warnings when processing with --html.
+@c The solution is to use @ifnottex instead.
+
+@ifinfo
+@node Top
+@top Top test
+
+Typical top node.
+@end ifinfo
+
+@menu
+* Subnode::
+@end menu
+
+@node Subnode
+@chapter Subnode
+
+Subnode.
+
+@bye

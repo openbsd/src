@@ -1,0 +1,72 @@
+% Norwegian translation for texinfo.tex (1999-02-09, GNU Texinfo 3.12d).
+% Enables the use of words like Kapittel instead of Chapter, etc.
+%
+% Copyright (C) 1999 Trond Endrestøl <endrestol@hotmail.com>
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place - Suite 330, Boston,
+% MA 02111-1307, USA.
+%
+\gdef\putwordAppendix{Vedlegg}
+\gdef\putwordChapter{Kapittel}
+\gdef\putwordfile{fil}
+\gdef\putwordIndexIsEmpty{(Indeks er tom)}
+\gdef\putwordIndexNonexistent{(Indeks eksisterer ikke)}
+\gdef\putwordInfo{Info}
+\gdef\putwordMethodon{Metode p\aa}
+\gdef\putwordNoTitle{Ingen tittel}
+\gdef\putwordof{av}
+\gdef\putwordon{p\aa}
+\gdef\putwordpage{side}
+\gdef\putwordsection{avsnitt}
+\gdef\putwordSection{Avsnitt}
+\gdef\putwordsee{se}
+\gdef\putwordSee{Se}
+\gdef\putwordShortTOC{Kort innholdsfortegnelse}
+\gdef\putwordTOC{Innholdsfortegnelse}
+%
+\gdef\putwordMJan{januar}
+\gdef\putwordMFeb{februar}
+\gdef\putwordMMar{mars}
+\gdef\putwordMApr{april}
+\gdef\putwordMMay{mai}
+\gdef\putwordMJun{juni}
+\gdef\putwordMJul{juli}
+\gdef\putwordMAug{august}
+\gdef\putwordMSep{september}
+\gdef\putwordMOct{oktober}
+\gdef\putwordMNov{november}
+\gdef\putwordMDec{desember}
+%
+\gdef\putwordDefmac{Makro}
+\gdef\putwordDefspec{Spesiell form}
+\gdef\putwordDefivar{Forekomstvariabel}
+\gdef\putwordDefvar{Variabel}
+\gdef\putwordDefopt{Brukervalg}
+\gdef\putwordDeftypevar{Variabel}
+\gdef\putwordDeffunc{Funksjon}
+\gdef\putwordDeftypefun{Funksjon}
+%
+% Redefine \today to produce Norwegian
+% preferred dates such as 28. januar 1999.
+%
+\gdef\today{%
+  \number\day.\space
+  \ifcase\month
+  \or\putwordMJan\or\putwordMFeb\or\putwordMMar\or\putwordMApr
+  \or\putwordMMay\or\putwordMJun\or\putwordMJul\or\putwordMAug
+  \or\putwordMSep\or\putwordMOct\or\putwordMNov\or\putwordMDec
+  \fi
+  \space\number\year}
+%
