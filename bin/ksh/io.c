@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.19 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.20 2004/12/30 21:34:24 otto Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -410,7 +410,6 @@ coproc_cleanup(int reuse)
 struct temp *
 maketemp(Area *ap, Temp_type type, struct temp **tlist)
 {
-	static unsigned int inc;
 	struct temp *tp;
 	int len;
 	int fd;

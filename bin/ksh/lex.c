@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.32 2004/12/30 21:11:40 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.33 2004/12/30 21:34:24 otto Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1161,8 +1161,7 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 {
 	char strbuf[1024], tmpbuf[1024], *p, *str, nbuf[32], delimiter = '\0';
 	int len, c, n, totlen = 0, indelimit = 0, counting = 1, delimitthis;
-	const char *cp = sp, *ccp;
-	extern INT32 njobs;
+	const char *cp = sp;
 	struct tm *tm;
 	time_t t;
 

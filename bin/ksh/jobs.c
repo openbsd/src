@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.30 2004/12/22 18:48:56 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.31 2004/12/30 21:34:24 otto Exp $	*/
 
 /*
  * Process and job control
@@ -607,7 +607,6 @@ int
 j_kill(const char *cp, int sig)
 {
 	Job	*j;
-	Proc	*p;
 	int	rv = 0;
 	int	ecode;
 	sigset_t omask;
