@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.9 2005/01/31 17:33:58 drahn Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.10 2005/02/13 22:20:03 miod Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -1334,7 +1334,6 @@ board_startup(void)
 		comconsaddr = 0;
 
 		/* Display the copyright notice again on the new console */
-		extern const char copyright[];
 		printf("%s\n", copyright);
 	}
 #endif
