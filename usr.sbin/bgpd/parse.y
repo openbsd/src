@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2003/12/22 19:36:19 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.7 2003/12/22 19:39:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -210,7 +210,7 @@ group		: GROUP string optnl '{' optnl {
 				YYERROR;
 			}
 		}
-		   groupopts_l optnl '}' {
+		  groupopts_l optnl '}' {
 			free(curgroup);
 			curgroup = NULL;
 		}
