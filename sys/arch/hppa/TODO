@@ -18,10 +18,12 @@ hardware and installation notes (distrib/notes/hppa/*):	fries@
          BOOT_ADMIN> boot lan isl
 
 hardware manuals (man4.hppa/*):				mickey@
-* some written (not in the repo yet)
+* ie manual
+* siop manual
+* sti manual
+* hil manual
 
 gcc/egcs/binutils:					espie@ mickey@
-* move to egcs (not yet)
 * move to binutils 2.9.1
 
 boots (sys/arch/hppa/stand/*):				mickey@ fries@
@@ -29,15 +31,16 @@ boots (sys/arch/hppa/stand/*):				mickey@ fries@
 * almost could be considered working/done, fixes and such (;
 
 kernel (sys/arch/hppa/*):				mickey@
-* HPPA STACK GROWS UP, major kernel cleanup
-* user-land support
-* ddb (stack trace, breakpoints left, fix disasm)
-* some MI files/changes to integrate into the repo
+* HPPA STACK GROWS UP, major kernel cleanup (diffs mickey@)
 * several harware problems (ie non-functional drivers)
-  (floppy controller, audio, x.25 card, fddi's)
+  (floppy controller, if_ie)
+* user-land support (signal stuff)
+* ddb (breakpoints left)
+* some MI files/changes to integrate into the repo
 * wscons devices (sti, hil/*, pckbc/*) unfinished
-* "original snakes" (700,705,710) support
+* "original snakes" (700,705,710,...) support
 * 7300lc-based machines, 8k-based machines
+* advanced audio driver
 * general cleanup (far-east future)
 
 ramdisk development edition (distrib/hppa/*):		mickey@
@@ -55,7 +58,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.3 1999/06/01 17:36:31 mickey Exp $
+$OpenBSD: TODO,v 1.4 1999/07/27 23:36:33 mickey Exp $
 
 --
 	paranoic mickey
