@@ -10,7 +10,7 @@ Installation is supported from several media types, including:
 OpenBSDXferShortPrelude
 
 OpenBSD now can be booted from a CDROM by holding down the 'c' key
-during reboot. If ofwboot and bsd.rd is copied to a HFS partition, it
+during reboot. If ofwboot and bsd.rd are copied to a HFS partition, it
 is possible to boot from those files.  Then install the rest of the files
 from any of the above sources.
 
