@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.19 2000/06/18 04:05:02 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.20 2000/06/18 04:42:54 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -1302,6 +1302,7 @@ session_shell_req(Session *s)
 int
 session_exec_req(Session *s)
 {
+	unsigned int len;
 	char *command = packet_get_string(&len);
 	packet_done();
 	if (forced_command) {
