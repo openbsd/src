@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.33 2001/09/18 14:17:38 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.34 2001/09/18 14:43:22 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.33 2001/09/18 14:17:38 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.34 2001/09/18 14:43:22 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,7 @@ static void	expand_builtin __P((const char *[], int, int));
 static void	expand_macro __P((const char *[], int));
 static void	dump_one_def __P((ndptr));
 
+unsigned long	expansion_id;
 
 /*
  * eval - eval all macros and builtins calls
@@ -94,6 +95,7 @@ eval(argv, argc, td)
 	int argc;
 	int td;
 {
+	expansion_id++;
 	if (td & RECDEF) 
 		errx(1, "%s at line %lu: expanding recursive definition for %s",
 			CURRENT_NAME, CURRENT_LINE, argv[1]);

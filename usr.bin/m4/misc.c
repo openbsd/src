@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.21 2001/07/18 16:18:17 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.22 2001/09/18 14:43:23 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.21 2001/07/18 16:18:17 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.22 2001/09/18 14:43:23 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -356,4 +356,26 @@ doprintfilename(f)
 	struct input_file *f;
 {
 	pbstr(f->name);
+}
+
+/* 
+ * buffer_mark/dump_buffer: allows one to save a mark in a buffer,
+ * and later dump everything that was added since then to a file.
+ */
+size_t
+buffer_mark()
+{
+	return bp - buf;
+}
+
+
+void
+dump_buffer(f, m)
+	FILE *f;
+	size_t m;
+{
+	char *s;
+
+	for (s = bp; s != buf + m;)
+		fputc(*--s, f);
 }

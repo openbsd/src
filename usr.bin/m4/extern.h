@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.23 2001/09/18 14:05:14 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.24 2001/09/18 14:43:22 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -42,6 +42,7 @@
 /* eval.c */
 extern void	eval __P((const char *[], int, int));
 extern void	dodefine __P((const char *, const char *));
+extern unsigned long expansion_id;
 
 /* expr.c */
 extern int	expr __P((const char *));
@@ -87,6 +88,8 @@ extern void	*xalloc __P((size_t));
 extern char	*xstrdup __P((const char *));
 extern void	usage __P((void));
 extern void	resizedivs __P((int n));
+extern size_t	buffer_mark __P((void));
+extern void	dump_buffer __P((FILE *, size_t));
 
 extern int 	obtain_char __P((struct input_file *));
 extern void	set_input __P((struct input_file *, FILE *, const char *));
