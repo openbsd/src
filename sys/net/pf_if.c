@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.15 2004/06/25 00:54:27 tholo Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.16 2004/07/04 22:56:52 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -85,7 +85,6 @@ void		 pfi_address_add(struct sockaddr *, int, int);
 int		 pfi_if_compare(struct pfi_kif *, struct pfi_kif *);
 struct pfi_kif	*pfi_if_create(const char *, struct pfi_kif *, int);
 void		 pfi_copy_group(char *, const char *, int);
-void		 pfi_dynamic_drivers(void);
 void		 pfi_newgroup(const char *, int);
 int		 pfi_skip_if(const char *, struct pfi_kif *, int);
 int		 pfi_unmask(void *);
@@ -94,7 +93,6 @@ void		 pfi_dohooks(struct pfi_kif *);
 RB_PROTOTYPE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
 RB_GENERATE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
 
-#define PFI_DYNAMIC_BUSES	{ "pcmcia", "cardbus", "uhub" }
 #define PFI_BUFFER_MAX		0x10000
 #define PFI_MTYPE		M_IFADDR
 
@@ -111,7 +109,6 @@ pfi_initialize(void)
 	pfi_buffer = malloc(pfi_buffer_max * sizeof(*pfi_buffer),
 	    PFI_MTYPE, M_WAITOK);
 	pfi_self = pfi_if_create("self", NULL, PFI_IFLAG_GROUP);
-	pfi_dynamic_drivers();
 }
 
 void
@@ -617,46 +614,6 @@ pfi_copy_group(char *p, const char *q, int m)
 	}
 	if (m > 0)
 		*p++ = '\0';
-}
-
-void
-pfi_dynamic_drivers(void)
-{
-	char		*buses[] = PFI_DYNAMIC_BUSES;
-	int		 nbuses = sizeof(buses)/sizeof(buses[0]);
-	int		 enabled[sizeof(buses)/sizeof(buses[0])];
-	struct device	*dev;
-	struct cfdata	*cf;
-	struct cfdriver	*drv;
-	short		*p;
-	int		 i;
-
-	bzero(enabled, sizeof(enabled));
-	TAILQ_FOREACH(dev, &alldevs, dv_list) {
-		if (!(dev->dv_flags & DVF_ACTIVE))
-			continue;
-		for (i = 0; i < nbuses; i++)
-			if (!enabled[i] && !strcmp(buses[i],
-			    dev->dv_cfdata->cf_driver->cd_name))
-				enabled[i] = 1;
-	}
-	for (cf = cfdata; cf->cf_driver; cf++) {
-		if (cf->cf_driver->cd_class != DV_IFNET)
-			continue;
-		for (p = cf->cf_parents; p && *p >= 0; p++) {
-			if ((drv = cfdata[*p].cf_driver) == NULL)
-				continue;
-			for (i = 0; i < nbuses; i++)
-				if (enabled[i] &&
-				    !strcmp(drv->cd_name, buses[i]))
-					break;
-			if (i < nbuses) {
-				pfi_newgroup(cf->cf_driver->cd_name,
-				    PFI_IFLAG_DYNAMIC);
-				break;
-			}
-		}
-	}
 }
 
 void
