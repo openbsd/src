@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.10 1997/07/19 20:56:53 niklas Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.11 1997/07/23 23:26:50 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -42,6 +42,7 @@
 #include <ddb/db_interface.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_output.h>
+#include <ddb/db_sym.h>
 
 struct opcode opcode[] = {
 	{ OPC_PAL, "call_pal", 0 },	/* 00 */
@@ -265,7 +266,7 @@ db_disasm(loc, flag)
 		case 0x12:
 		case 0x13:
 			if (imm)	/* literal */
-				sprintf(rnam, "0x%x", (arg >> 12) & 0xff);
+				sprintf(rnam, "0x%x", (arg >> 13) & 0xff);
 			else
 				sprintf(rnam, "%s", regnam(rb));
 
@@ -291,9 +292,13 @@ db_disasm(loc, flag)
 	case OPC_BR:
 		ra = arg >> 21;
 		disp = arg & 0x1fffff;
-		db_printf("\t%s,0x%x", regnam(ra), disp);
+		db_printf("\t%s,0x%x [", regnam(ra), disp);
+		disp = (disp & 0x100000) ? -((-disp) & 0xfffff) << 2 :
+		    (disp & 0xfffff) << 2;
+		db_printsym(loc + sizeof (int) + disp, DB_STGY_PROC);
+		db_printf("]");
 		break;
 	}
 	db_printf("\n");
-	return (loc + 4);
+	return (loc + sizeof (int));
 }
