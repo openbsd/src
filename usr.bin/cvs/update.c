@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.5 2004/07/30 20:55:35 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.6 2004/08/12 17:48:18 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -61,7 +61,7 @@ cvs_update(int argc, char **argv)
 	struct cvs_file *cf;
 
 	cf = NULL;
-	flags = CF_SORT|CF_RECURSE|CF_IGNORE;
+	flags = CF_SORT|CF_RECURSE|CF_IGNORE|CF_KNOWN;
 
 	while ((ch = getopt(argc, argv, "ACD:dflPpQqRr:")) != -1) {
 		switch (ch) {
@@ -128,13 +128,20 @@ cvs_update_file(CVSFILE *cf, void *arg)
 	struct cvs_ent *entp;
 
 	if (cf->cf_type == DT_DIR) {
-		root = cf->cf_ddat->cd_root;
-		if ((cf->cf_parent == NULL) ||
-		    (root != cf->cf_parent->cf_ddat->cd_root)) {
-			cvs_connect(root);
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
+			root = cf->cf_parent->cf_ddat->cd_root;
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
+		}
+		else {
+			root = cf->cf_ddat->cd_root;
+			if ((cf->cf_parent == NULL) ||
+			    (root != cf->cf_parent->cf_ddat->cd_root)) {
+				cvs_connect(root);
+			}
+
+			cvs_senddir(root, cf);
 		}
 
-		cvs_senddir(root, cf);
 		return (0);
 	}
 	else
