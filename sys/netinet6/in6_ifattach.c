@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.17 2001/06/09 06:43:37 angelos Exp $	*/
-/*	$KAME: in6_ifattach.c,v 1.112 2001/02/10 15:44:59 jinmei Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.18 2001/07/18 12:50:44 itojun Exp $	*/
+/*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -629,6 +629,9 @@ in6_ifattach(ifp, altifp)
 		icmp6_ifstat = (struct icmp6_ifstat **)q;
 		icmp6_ifstatmax = if_indexlim;
 	}
+
+	/* create a multicast kludge storage (if we have not had one) */
+	in6_createmkludge(ifp);
 
 	/*
 	 * quirks based on interface type
