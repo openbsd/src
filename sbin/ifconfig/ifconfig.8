@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.47 2000/08/01 16:13:23 jakob Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.48 2000/10/17 21:56:06 naddy Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -111,7 +111,7 @@ and each of the six bytes of the host number,
 through
 .Ar f ,
 are specified in hexadecimal.
-The host number may be omitted on 10Mb/s Ethernet interfaces,
+The host number may be omitted on Ethernet interfaces,
 which use the hardware physical address,
 and on interfaces other than the first.
 For the
@@ -168,7 +168,7 @@ between network level addresses and link level addresses (default).
 This is currently implemented for mapping between
 .Tn DARPA
 Internet
-addresses and 10Mb/s Ethernet addresses.
+addresses and Ethernet addresses.
 .It Fl arp
 Disable the use of the Address Resolution Protocol.
 .It Cm anycast
@@ -478,7 +478,7 @@ messages in a manner which minimizes the number of
 memory to memory copy operations performed by the receiver.
 On networks that support the Address Resolution Protocol (see
 .Xr arp 4 ;
-currently, only 10 Mb/s Ethernet),
+currently, only Ethernet),
 this flag indicates that the system should request that other
 systems use trailers when sending to this host.
 Similarly, trailer encapsulations will be sent to other
