@@ -1,4 +1,4 @@
-$OpenBSD: eisadevs,v 1.9 1998/07/04 09:03:48 deraadt Exp $
+$OpenBSD: eisadevs,v 1.10 1998/11/22 16:23:16 mickey Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -94,6 +94,15 @@ product INT 1010	EtherExpress 32 Flash Ethernet
 
 /* ETI products */
 product ETI 1001	NE3300 Ethernet Rev. C & D
+
+/* HP products */
+product HWP 0C70	HP-IB Host Adapter
+product HWP 0C80	SCSI Host Adapter (Cirrus-II) -- 25525A
+product HWP 1850	LAN AdapterCard -- 25567A
+product HWP 2051	EISA Test Adapter Card
+product HWP C000	Series 700 EISA System Board
+product HWP C010	Series 700 EISA System Board
+product HWP C051	Series 700 EISA System Board
 
 /* 3Com products */
 product TCM 5091	3C509 Ethernet
