@@ -1,4 +1,4 @@
-	$OpenBSD: INSTALL,v 1.3 1997/05/30 16:41:33 mickey Exp $
+	$OpenBSD: INSTALL,v 1.4 2003/01/21 16:48:09 margarida Exp $
 	$NetBSD: INSTALL,v 1.1 1995/09/16 12:00:21 ragge Exp $
 
 
@@ -46,14 +46,14 @@ How to install OpenBSD/vax
 2.1.1	Installation from TK50. (MicroVAX II)
 	You will need a file called tk50-file1-???.fs and a
 	file called tk50-file2-???.fs, where ??? is the
-	revision og OpenBSD. These files must be written on tape
+	revision of OpenBSD. These files must be written on tape
 	in sequential order; file 1 first and then file2.
 	_Blocksize_must_be_512!_ Otherwise the tape will not be
 	bootable. Then type:
 
 	>>> B/3 MUA0
 
-	This means that you will bring upp boot for asking 
+	This means that you will bring up boot for asking 
 	from TK50. (MUA0 is DEC naming). It will come up 
 	something like
 
