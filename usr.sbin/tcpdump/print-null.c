@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-null.c,v 1.12 2000/10/03 14:31:58 ho Exp $	*/
+/*	$OpenBSD: print-null.c,v 1.13 2001/05/24 04:15:26 angelos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.12 2000/10/03 14:31:58 ho Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.13 2001/05/24 04:15:26 angelos Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -75,7 +75,7 @@ null_print(const u_char *p, const struct ip *ip, u_int length)
 
 	memcpy((char *)&family, (char *)p, sizeof(family));
 
-	if (nflag) {
+	if (nflag && family != AF_LINK) {
 		/* XXX just dump the header */
 		return;
 	}
@@ -95,6 +95,12 @@ null_print(const u_char *p, const struct ip *ip, u_int length)
 		printf("ns: ");
 		break;
 
+#ifdef __OpenBSD__
+	case AF_LINK:
+		ether_print(p + NULL_HDRLEN, length);
+		break;
+#endif
+
 	default:
 		printf("AF %d: ", family);
 		break;
@@ -106,7 +112,15 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
 	u_int length = h->len;
 	u_int caplen = h->caplen;
-	const struct ip *ip;
+	u_int family;
+
+#ifdef __OpenBSD__
+	struct ether_header *ep;
+	u_short ether_type;
+	extern u_short extracted_ethertype;
+#endif
+
+	memcpy((char *)&family, (char *)p, sizeof(family));
 
 	ts_print(&h->ts);
 
@@ -120,22 +134,66 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 
 	length -= NULL_HDRLEN;
 
-	ip = (struct ip *)(p + NULL_HDRLEN);
-
 	if (eflag)
-		null_print(p, ip, length);
+		null_print(p, (struct ip *)(p + NULL_HDRLEN), length);
 
-#ifndef INET6
-	ip_print((const u_char *)ip, length);
-#else
-	if (ip->ip_v == IPVERSION)
-		ip_print((const u_char *)ip, length);
-	else if (ip->ip_v == 6)
-		ip6_print((const u_char *)ip, length);
+	switch (family) {
+	case AF_INET:
+		ip_print(p + NULL_HDRLEN, length);
+		break;
+
+#ifdef INET6
+	case AF_INET6:
+		ip6_print(p + NULL_HDRLEN, length);
+		break;
 #endif /*INET6*/
 
+#ifdef __OpenBSD__
+	case AF_LINK:
+		if (caplen < sizeof(struct ether_header) + NULL_HDRLEN) {
+			printf("[|ether]");
+			goto out;
+		}
+
+		length -= sizeof(struct ether_header);
+		caplen -= sizeof(struct ether_header);
+		ep = (struct ether_header *)(p + NULL_HDRLEN);
+		p += NULL_HDRLEN + sizeof(struct ether_header);
+		packetp += sizeof(struct ether_header);
+		ether_type = ntohs(ep->ether_type);
+
+		extracted_ethertype = 0;
+		if (ether_type <= ETHERMTU) {
+			/* Try to print the LLC-layer header & higher layers */
+			if (llc_print(p, length, caplen, ESRC(ep),
+			    EDST(ep)) == 0) {
+				/* ether_type not known, print raw packet */
+				if (!eflag)
+					ether_print((u_char *)ep, length);
+				if (extracted_ethertype) {
+					printf("(LLC %s) ",
+					       etherproto_string(htons(extracted_ethertype)));
+				}
+				if (!xflag && !qflag)
+					default_print(p, caplen);
+			}
+		} else if (ether_encap_print(ether_type, p, length,
+		           caplen) == 0) {
+			/* ether_type not known, print raw packet */
+			if (!eflag)
+				ether_print((u_char *)ep, length +
+				    sizeof(*ep));
+			if (!xflag && !qflag)
+				default_print(p, caplen);
+		}
+		break;
+#endif /* __OpenBSD__ */
+	}
+
 	if (xflag)
-		default_print((const u_char *)ip, caplen - NULL_HDRLEN);
+		default_print((const u_char *)(packetp + NULL_HDRLEN),
+		    caplen - NULL_HDRLEN);
+ out:
 	putchar('\n');
 }
 
