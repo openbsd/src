@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr.h,v 1.4 2002/02/17 19:42:21 millert Exp $	*/
+/*	$OpenBSD: xdr.h,v 1.5 2002/12/11 22:55:39 millert Exp $	*/
 /*	$NetBSD: xdr.h,v 1.7 1995/04/29 05:28:06 cgd Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ typedef struct __rpc_xdr {
 	caddr_t 	x_public;	/* users' data */
 	caddr_t		x_private;	/* pointer to private data */
 	caddr_t 	x_base;		/* private used for position info */
-	int		x_handy;	/* extra private word */
+	u_int		x_handy;	/* extra private word */
 } XDR;
 
 /*
