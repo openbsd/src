@@ -1,5 +1,5 @@
 .\"	$NetBSD: huntd.6,v 1.3 1998/01/09 08:03:42 perry Exp $
-.\"	$OpenBSD: huntd.6,v 1.4 1999/02/01 06:53:56 d Exp $
+.\"	$OpenBSD: huntd.6,v 1.5 1999/03/14 02:07:31 pjanzen Exp $
 .\"
 .\"  Hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -21,7 +21,7 @@
 .Op Fl p Ar port
 .Op Fl a Ar addr
 .Sh DESCRIPTION
-.Nm huntd
+.Nm
 controls the multi-player
 .Xr hunt 6
 game.
@@ -29,7 +29,7 @@ game.
 The
 .Fl s
 option is for running
-.Nm huntd
+.Nm
 forever (server mode).
 This is similar to running it under the control of
 .Xr inetd 8
@@ -39,7 +39,8 @@ but it consumes a process table entry when no one is playing.
 The
 .Fl p Ar port
 option changes the udp port number used to rendezvous with the player
-process and thus allows for private games of hunt.
+process and thus allows for private games of
+.Xr hunt 6 .
 .Pp
 The
 .Fl a Ar addr
@@ -50,7 +51,7 @@ must be given as an IP address.
 .Sh INETD
 .Pp
 To run
-.Nm huntd
+.Nm
 from
 .Xr inetd 8 ,
 you'll need to put the
@@ -80,21 +81,16 @@ If a
 hears the request, it sends back the port number for the
 .Nm hunt
 process to connect to.
-Otherwise, the
-.Nm hunt
-process starts up a
-.Nm huntd
-on the local machine and trys to rendezvous with it.
 .Pp
 Regardless of how
-.Nm huntd
+.Nm
 is started, it always checks incoming connections with
 .Xr host_access 5 ,
 using a service name of
 .Sq huntd .
 .Sh "CONFIGURATION"
 When
-.Nm huntd
+.Nm
 starts, it looks for configuration files that determine
 game parameters.
 Each line of a configuration file is of the form
@@ -147,11 +143,11 @@ max displacement each flying time unit (default 5)
 .It volcano_max
 max size of volcano (default 50)
 .It ptrip_face
-chace of tripping a grenade on pickup,  (default 2)
+chance of tripping a grenade on pickup (default 2)
 .It ptrip_back
-\&" when backing onto it (default 95)
+chance of same when backing onto it (default 95)
 .It ptrip_side
-\&" when walking sideways into it (default 50)
+chance of same when walking sideways into it (default 50)
 .It prandom
 percentage of time dispersion doors appear (default 1)
 .It preflect

@@ -1,4 +1,4 @@
-/*	$OpenBSD: answer.c,v 1.4 1999/02/01 06:53:55 d Exp $	*/
+/*	$OpenBSD: answer.c,v 1.5 1999/03/14 02:07:30 pjanzen Exp $	*/
 /*	$NetBSD: answer.c,v 1.3 1997/10/10 16:32:50 lukem Exp $	*/
 /*
  *  Hunt
@@ -55,6 +55,7 @@ answer_first()
 
 	/* Check for access permissions: */
 	request_init(&ri, RQ_DAEMON, "huntd", RQ_FILE, newsock, 0);
+	fromhost(&ri);
 	if (hosts_access(&ri) == 0) {
 		close(newsock);
 		logx(LOG_INFO, "rejected connection");

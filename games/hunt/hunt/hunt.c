@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.4 1999/02/01 06:53:55 d Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.5 1999/03/14 02:07:30 pjanzen Exp $	*/
 /*	$NetBSD: hunt.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
 /*
  *  Hunt
@@ -28,10 +28,6 @@
 #include "display.h"
 #include "client.h"
 
-
-/*
- * Some old versions of curses don't have these defined
- */
 
 FLAG	Am_monitor = FALSE;
 int	Socket;

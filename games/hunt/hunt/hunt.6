@@ -1,5 +1,5 @@
 .\"	$NetBSD: hunt.6,v 1.3 1997/10/10 16:32:30 lukem Exp $
-.\"	$OpenBSD: hunt.6,v 1.3 1999/01/29 07:30:33 d Exp $
+.\"	$OpenBSD: hunt.6,v 1.4 1999/03/14 02:07:30 pjanzen Exp $
 .\"
 .\"  hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -28,7 +28,7 @@
 .Oc
 .Sh DESCRIPTION
 The object of the game
-.Nm hunt
+.Nm
 is to kill off the other players.
 There are no rooms, no treasures, and no monsters.
 Instead, you wander around a maze, find grenades, trip mines, and shoot down
@@ -40,21 +40,23 @@ flag is given,
 you enter the game as a monitor
 (you can see the action but you cannot play).
 .Pp
-.Nm Hunt
+.Nm
 looks for an active game on the local network.
 The location of the game may be specified by giving the
 .Ar host
 argument.
-This presupposes that a hunt game is already running on that host, see
+This presupposes that a hunt game is already running on that host:  see
 .Xr huntd 6
-for details on how to setup a game on a specific host.
-If more than one game if found,
-you may pick which game to play in.
+for details on how to set up a game on a specific host.
+If more than one game is found, you may pick which game to play in.
+If no games are found,
+.Nm
+will exit.
 .Pp
 If the
 .Fl q
 flag is given,
-.Nm hunt
+.Nm
 queries the local network (or specific host)
 and reports on all active games found.
 This is useful for shell startup scripts, e.g., csh's
@@ -69,7 +71,7 @@ The
 .Fl s ,
 and
 .Fl f
-options are for entering the game cloaked, scanning, or flying respectively.
+options are for entering the game cloaked, scanning, or flying, respectively.
 .Pp
 The
 .Fl b
@@ -77,11 +79,11 @@ option turns off beeping when you reach the typeahead limit.
 .Pp
 The
 .Fl t
-option aids team playing by making everyone else on one's team
+option aids team play by making everyone else on your team
 appear as the team name.
 A team name is a single digit to avoid conflicting with other characters
 used in the game.
-Use a team name constsiting of a single space
+Use a team name consisting of a single space
 .Pq Sq \  
 to remain on your own.
 .Pp
@@ -89,8 +91,6 @@ The
 .Fl p
 .Ar port
 option allows the rendezvous port number to be set.
-This is a useful way for people playing on dialup lines to avoid playing
-with people on 9600 baud terminals.
 .Pp
 The
 .Fl w
@@ -104,12 +104,12 @@ When you die and are asked if you wish to re-enter the game,
 there are other answers than just yes or no.
 You can also reply with a
 .Ic w
-for write a message before continuing or
+to write a message before continuing or
 .Ic o
 to change how you enter the game (cloaked, scanning, or flying).
 .Sh "PLAYING HINTS"
-.Nm Hunt
-only works on crt (vdt) terminals with at least 24 lines, 80 columns, and
+.Nm
+only works on terminals with at least 24 lines, 80 columns, and
 cursor addressing.
 The screen is divided in to 3 areas.
 On the right hand side is the status area.
@@ -127,7 +127,7 @@ The rest of the screen is taken up by your map of the maze.
 The 24th line
 is used for longer messages that don't fit in the status area.
 .Pp
-.Nm Hunt
+.Nm
 uses the same keys to move as
 .Xr vi 1
 does, i.e.,
@@ -211,7 +211,7 @@ small slime
 big slime
 .br
 .It Li > < ^ v
-you facing right, left, up, or down
+you, facing right, left, up, or down
 .It Li } { i !
 other players facing right, left, up, or down
 .It \&*
@@ -227,7 +227,7 @@ Other helpful hints:
 .It
 You can only fire in the direction you are facing.
 .It
-You can only fire three shots in a row, then the gun must cool off.
+You can only fire three shots in a row before the gun must cool off.
 .It
 Shots move 5 times faster than you do.
 .It
@@ -249,7 +249,7 @@ do the most damage in the center.
 Slime affects all squares it oozes over.
 The number of squares is equal to the number of charges used.
 .It
-One small mine and one large mine is placed in the maze for every new player.
+One small mine and one large mine are placed in the maze for every new player.
 A mine has a 2% probability of tripping when you walk forward on to it;
 50% when going sideways;
 95% when backing up.
@@ -308,7 +308,7 @@ The environment variable
 .Ev HUNT
 is checked to get the player name.
 If you don't have this variable set,
-.Nm hunt
+.Nm
 will ask you what name you want to play under.
 If you wish to set other options than just your name,
 you can enumerate the options as follows:
@@ -346,10 +346,10 @@ of times you entered the game and is only kept for the duration
 of a single session of
 .Nm hunt .
 .Pp
-.Nm Hunt
+.Nm
 normally drives up the load average to be approximately
 (number_of_players + 0.5) greater than it would be without a
-.Nm hunt 
+.Nm
 game executing.
 .Sh STATISTICS
 The

@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.4 1999/02/01 06:53:56 d Exp $	*/
+/*	$OpenBSD: driver.c,v 1.5 1999/03/14 02:07:30 pjanzen Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  *  Hunt
@@ -589,11 +589,11 @@ checkdam(victim, attacker, credit, damage, shot_type)
 		if (attacker->p_damage < 0)
 			attacker->p_damage = 0;
 
-		/* Tell the attacker's his new strength: */
+		/* Tell the attacker his new strength: */
 		outyx(attacker, STAT_DAM_ROW, STAT_VALUE_COL, "%2d/%2d", 
 			attacker->p_damage, attacker->p_damcap);
 
-		/* Tell the attacker's his new 'kill count': */
+		/* Tell the attacker his new 'kill count': */
 		outyx(attacker, STAT_KILL_ROW, STAT_VALUE_COL, "%3d",
 			(attacker->p_damcap - conf_maxdam) / 2);
 
@@ -948,12 +948,13 @@ send_stats()
 		return;
 	}
 
-        /* Check for access permissions: */
-        request_init(&ri, RQ_DAEMON, "huntd", RQ_FILE, s, 0);
-        if (hosts_access(&ri) == 0) {
-                close(s);
-                return;
-        }
+	/* Check for access permissions: */
+	request_init(&ri, RQ_DAEMON, "huntd", RQ_FILE, s, 0);
+	fromhost(&ri);
+	if (hosts_access(&ri) == 0) {
+		close(s);
+		return;
+	}
 
 	fp = fdopen(s, "w");
 	if (fp == NULL) {
@@ -1073,13 +1074,21 @@ handle_wkport(fd)
 	int 			fromlen;
 	u_int16_t		query;
 	u_int16_t		response;
+	struct request_info	ri;
 
+	request_init(&ri, RQ_DAEMON, "huntd", RQ_FILE, fd, 0);
+	fromhost(&ri);
 	fromlen = sizeof fromaddr;
 	if (recvfrom(fd, &query, sizeof query, 0, &fromaddr, &fromlen) == -1)
 	{
 		log(LOG_WARNING, "recvfrom");
 		return;
 	}
+
+	/* Do we allow access? */
+	if (hosts_access(&ri) == 0)
+		return;
+
 	query = ntohs(query);
 
 	switch (query) {
