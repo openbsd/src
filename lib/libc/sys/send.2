@@ -1,4 +1,4 @@
-.\"	$OpenBSD: send.2,v 1.7 1998/07/28 19:47:12 millert Exp $
+.\"	$OpenBSD: send.2,v 1.8 1998/08/05 16:49:37 millert Exp $
 .\"	$NetBSD: send.2,v 1.6 1996/01/15 01:17:18 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -169,12 +169,12 @@ may return following error:
 .It Bq Er EINVAL
 .Fa len   
 was larger than
-.Ev SSIZE_MAX .
+.Dv SSIZE_MAX .
 .El
 .Pp
 Also,
 .Fn sendmsg
-may return following error:
+may return following errors:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The sum of the
@@ -183,6 +183,13 @@ values in the
 .Fa msg_iov
 array overflowed an
 .Em ssize_t .
+.It Bq Er EMSGSIZE
+The
+.Fa msg_iovlen
+member of
+.Fa msg
+was less than 0 or larger than
+.Dv IOV_MAX .
 .El
 .Sh SEE ALSO
 .Xr fcntl 2 ,

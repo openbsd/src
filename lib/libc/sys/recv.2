@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.8 1998/07/28 19:47:14 millert Exp $
+.\"	$OpenBSD: recv.2,v 1.9 1998/08/05 16:49:38 millert Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -268,12 +268,12 @@ may return following error:
 .It Bq Er EINVAL
 .Fa len   
 was larger than
-.Ev SSIZE_MAX .
+.Dv SSIZE_MAX .
 .El
 .Pp
 Also,
 .Fn recvmsg
-may return following error:
+may return following errors:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The sum of the
@@ -282,6 +282,13 @@ values in the
 .Fa msg_iov
 array overflowed an
 .Em ssize_t .
+.It Bq Er EMSGSIZE
+The
+.Fa msg_iovlen
+member of    
+.Fa msg   
+was less than 0 or larger than
+.Dv IOV_MAX .
 .El
 .Sh SEE ALSO
 .Xr fcntl 2 ,

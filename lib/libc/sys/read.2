@@ -1,4 +1,4 @@
-.\"	$OpenBSD: read.2,v 1.5 1998/07/28 19:47:10 millert Exp $
+.\"	$OpenBSD: read.2,v 1.6 1998/08/05 16:49:34 millert Exp $
 .\"	$NetBSD: read.2,v 1.6 1995/02/27 12:35:47 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -115,7 +115,7 @@ Note that
 will fail if the value of 
 .Fa iovcnt
 exceedes the constant
-.Fa UIO_MAXIOV .
+.Dv IOV_MAX .
 .Pp
 .Sh RETURN VALUES
 If successful, the
@@ -157,7 +157,7 @@ may return following error:
 .It Bq Er EINVAL
 .Fa nbytes
 was larger than
-.Ev SSIZE_MAX .
+.Dv SSIZE_MAX .
 .El
 .Pp
 Also,
@@ -167,8 +167,7 @@ may return one of the following errors:
 .It Bq Er EINVAL
 .Fa Iovcnt
 was less than or equal to 0, or greater than
-.\".Dv {UIO_MAXIOV} .
-.Fa UIO_MAXIOV
+.Dv IOV_MAX .
 .It Bq Er EINVAL
 The sum of the
 .Fa iov_len
