@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.59 2003/12/03 03:08:09 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.60 2003/12/10 22:09:32 millert Exp $
 #
 # Build wrapper for Perl 5.8.2
 #
@@ -495,9 +495,9 @@ MANALL=
     warnings::register 3p	lib/warnings/register.pm
 .  ifndef NOMAN
 MANALL+= ${page}.cat${sect}
-.  endif
-.  if MANPS
+.    ifdef MANPS
 PSALL+= ${page}.ps${sect}
+.    endif
 .  endif
 ${page}.cat${sect}: ${file}
 	${POD2MAN} --section=${sect} --official ${.ALLSRC}|\
