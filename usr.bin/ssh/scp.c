@@ -75,7 +75,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.62 2001/03/21 12:33:33 markus Exp $");
+RCSID("$OpenBSD: scp.c,v 1.63 2001/03/28 19:56:23 stevesk Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -187,8 +187,6 @@ typedef struct {
 	char *buf;
 } BUF;
 
-extern int iamremote;
-
 BUF *allocbuf(BUF *, int, int);
 char *colon(char *);
 void lostconn(int);
@@ -205,7 +203,6 @@ int pflag, iamremote, iamrecursive, targetshouldbedirectory;
 #define	CMDNEEDS	64
 char cmd[CMDNEEDS];		/* must hold "rcp -r -p -d\0" */
 
-int main(int, char *[]);
 int response(void);
 void rsource(char *, struct stat *);
 void sink(int, char *[]);
@@ -278,7 +275,6 @@ main(argc, argv)
 			iamremote = 1;
 			tflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}
@@ -615,7 +611,7 @@ rsource(name, statp)
 		closedir(dirp);
 		return;
 	}
-	while ((dp = readdir(dirp))) {
+	while ((dp = readdir(dirp)) != NULL) {
 		if (dp->d_ino == 0)
 			continue;
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
@@ -744,7 +740,7 @@ sink(argc, argv)
 		if (*cp++ != ' ')
 			SCREWUP("mode not delimited");
 
-		for (size = 0; *cp >= '0' && *cp <= '9';)
+		for (size = 0; isdigit(*cp);)
 			size = size * 10 + (*cp++ - '0');
 		if (*cp++ != ' ')
 			SCREWUP("size not delimited");
@@ -827,7 +823,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 					continue;
 				} else if (j <= 0) {
 					run_err("%s", j ? strerror(errno) :
-						"dropped connection");
+					    "dropped connection");
 					exit(1);
 				}
 				amt -= j;
@@ -864,12 +860,12 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			if (exists || omode != mode)
 				if (fchmod(ofd, omode))
 					run_err("%s: set mode: %s",
-						np, strerror(errno));
+					    np, strerror(errno));
 		} else {
 			if (!exists && omode != mode)
 				if (fchmod(ofd, omode & ~mask))
 					run_err("%s: set mode: %s",
-						np, strerror(errno));
+					    np, strerror(errno));
 		}
 		if (close(ofd) == -1) {
 			wrerr = YES;
@@ -880,7 +876,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			setimes = 0;
 			if (utimes(np, tv) < 0) {
 				run_err("%s: set times: %s",
-					np, strerror(errno));
+				    np, strerror(errno));
 				wrerr = DISPLAYED;
 			}
 		}
