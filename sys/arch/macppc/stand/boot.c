@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.9 2003/06/01 17:00:36 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.10 2003/10/16 04:30:09 drahn Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -67,11 +67,10 @@ int boothowto;
 int debug;
 
 static void
-prom2boot(dev)
-	char *dev;
+prom2boot(char *dev)
 {
 	char *cp, *lp = 0;
-	
+
 	for (cp = dev; *cp; cp++)
 		if (*cp == ':')
 			lp = cp;
@@ -81,9 +80,7 @@ prom2boot(dev)
 }
 
 static void
-parseargs(str, howtop)
-	char *str;
-	int *howtop;
+parseargs(char *str, int *howtop)
 {
 	char *cp;
 
@@ -109,7 +106,7 @@ parseargs(str, howtop)
 	}
 	if (!*cp)
 		return;
-	
+
 	*cp++ = 0;
 	while (*cp) {
 		switch (*cp++) {
@@ -131,11 +128,7 @@ parseargs(str, howtop)
 }
 
 static void
-chain(entry, args, ssym, esym)
-	void (*entry)();
-	char *args;
-	void *ssym;
-	void *esym;
+chain(void (*entry)(), char *args, void *ssym, void *esym)
 {
 	extern char end[];
 	int l, machine_tag;
@@ -175,7 +168,7 @@ main()
 	u_int32_t entry;
 	void *ssym, *esym;
 	int fd;
-	
+
 	printf("\n>> OpenBSD/macppc Boot\n");
 
 	/*

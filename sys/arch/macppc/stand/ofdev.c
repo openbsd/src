@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.7 2003/04/06 18:54:19 ho Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.8 2003/10/16 04:30:09 drahn Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -49,9 +49,7 @@
 extern char bootdev[];
 
 static char *
-filename(str, ppart)
-	char *str;
-	char *ppart;
+filename(char *str, char *ppart)
 {
 	char *cp, *lp;
 	char savec;
@@ -100,13 +98,8 @@ filename(str, ppart)
 }
 
 static int
-strategy(devdata, rw, blk, size, buf, rsize)
-	void *devdata;
-	int rw;
-	daddr_t blk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
+    size_t *rsize)
 {
 	struct of_dev *dev = devdata;
 	u_quad_t pos;
@@ -134,17 +127,16 @@ strategy(devdata, rw, blk, size, buf, rsize)
 }
 
 static int
-devclose(of)
-	struct open_file *of;
+devclose(struct open_file *of)
 {
 	struct of_dev *op = of->f_devdata;
 
 	if (op->type == OFDEV_NET)
 		net_close(op);
-	if (op->dmabuf) {
+	if (op->dmabuf)
 		OF_call_method("dma-free", op->handle, 2, 0,
-			op->dmabuf, MAXPHYS);
-	}
+		    op->dmabuf, MAXPHYS);
+
 	OF_close(op->handle);
 	op->handle = -1;
 }
@@ -191,10 +183,7 @@ get_long(p)
 }
 
 int
-read_mac_label(devp, buf, lp)
-	struct of_dev *devp;
-	char *buf;
-	struct disklabel *lp;
+read_mac_label(struct of_dev *devp, char *buf, struct disklabel *lp)
 {
 	struct part_map_entry *part;
 	struct buf *bp;
@@ -204,17 +193,16 @@ read_mac_label(devp, buf, lp)
 	int i;
 	char *s;
 
-	if ((strategy(devp, F_READ, 1, DEV_BSIZE, buf, &read) != 0)
-	   || (read != DEV_BSIZE))
-	{
+	if ((strategy(devp, F_READ, 1, DEV_BSIZE, buf, &read) != 0) ||
+	    (read != DEV_BSIZE))
 		return ERDLAB;
-	}
+
 	part = (struct part_map_entry *)buf;
 
 	/* if first partition is not valid, assume not HFS/DPME partitioned */
-	if (part->pmSig != PART_ENTRY_MAGIC) {
+	if (part->pmSig != PART_ENTRY_MAGIC)
 		return ERDLAB;
-	}
+
 	part_cnt = part->pmMapBlkCnt;
 
 	/* first search for "OpenBSD" partition type
@@ -227,14 +215,14 @@ read_mac_label(devp, buf, lp)
 		/* read the appropriate block */
 		if ((strategy(devp, F_READ, 1+i, DEV_BSIZE, buf, &read) != 0)
 		   || (read != DEV_BSIZE))
-		{
 			return ERDLAB;
-		}
+
 		part = (struct part_map_entry *)buf;
 		/* toupper the string, in case caps are different... */
 		for (s = part->pmPartType; *s; s++)
 			if ((*s >= 'a') && (*s <= 'z'))
 				*s = (*s - 'a' + 'A');
+
 		if (0 == strcmp(part->pmPartType, PART_TYPE_OPENBSD)) {
 			/* FOUND OUR PARTITION!!! */
 			printf("found OpenBSD DPME partition\n");
@@ -242,9 +230,9 @@ read_mac_label(devp, buf, lp)
 				DEV_BSIZE, buf, &read) == 0
 				&& read == DEV_BSIZE)
 			{
-				if (!getdisklabel(buf, lp)) {
+				if (!getdisklabel(buf, lp))
 					return 0;
-				}
+
 				/* If we have an OpenBSD region
 				 * but no valid parition table,
 				 * we cannot load a kernel from
@@ -253,14 +241,12 @@ read_mac_label(devp, buf, lp)
 				 * OpenBSD of DPME type.
 				 */
 				return ERDLAB;
-
 			}
-
 		}
 	}
 	return ERDLAB;
-
 }
+
 /*
  * Find a valid disklabel.
  */
@@ -278,8 +264,8 @@ search_label(devp, off, buf, lp, off0)
 	u_long poff;
 	static int recursion;
 
-	if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read)
-	    || read != DEV_BSIZE)
+	if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read) ||
+	    read != DEV_BSIZE)
 		return ERDLAB;
 
 	if (buf[510] != 0x55 || buf[511] != 0xaa)
@@ -288,12 +274,12 @@ search_label(devp, off, buf, lp, off0)
 	if (recursion++ <= 1)
 		off0 += off;
 	for (p = (struct dos_partition *)(buf + DOSPARTOFF), i = 4;
-	     --i >= 0; p++) {
+	    --i >= 0; p++) {
 		if (p->dp_typ == DOSPTYP_OPENBSD ||
 		    p->dp_typ == DOSPTYP_NETBSD) {
 			poff = get_long(&p->dp_start) + off0;
 			if (strategy(devp, F_READ, poff + LABELSECTOR,
-				     DEV_BSIZE, buf, &read) == 0
+			    DEV_BSIZE, buf, &read) == 0
 			    && read == DEV_BSIZE) {
 				if (!getdisklabel(buf, lp)) {
 					recursion--;
@@ -323,10 +309,7 @@ search_label(devp, off, buf, lp, off0)
 }
 
 int
-devopen(of, name, file)
-	struct open_file *of;
-	const char *name;
-	char **file;
+devopen(struct open_file *of, const char *name, char **file)
 {
 	char *cp;
 	char partition;
@@ -385,23 +368,26 @@ devopen(of, name, file)
 		ofdev.bsize = DEV_BSIZE;
 		/* First try to find a disklabel without MBR partitions */
 		if (strategy(&ofdev, F_READ,
-			     LABELSECTOR, DEV_BSIZE, buf, &read) != 0
-		    || read != DEV_BSIZE
-		    || getdisklabel(buf, &label)) {
+		    LABELSECTOR, DEV_BSIZE, buf, &read) != 0 ||
+		    read != DEV_BSIZE ||
+		    getdisklabel(buf, &label)) {
 			/* Else try MBR partitions */
 			error = read_mac_label(&ofdev, buf, &label);
-			if (error == ERDLAB) {
+			if (error == ERDLAB)
 				error = search_label(&ofdev, 0, buf, &label, 0);
-			}
+
 			if (error && error != ERDLAB)
 				goto bad;
 		}
 
 		if (error == ERDLAB) {
 			if (partition)
-				/* User specified a partition, but there is none */
+				/*
+				 * User specified a partition,
+				 * but there is none
+				 */
 				goto bad;
-			/* No, label, just use complete disk */
+			/* No label, just use complete disk */
 			ofdev.partoff = 0;
 		} else {
 			part = partition ? partition - 'a' : 0;

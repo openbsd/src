@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.2 2002/03/14 03:15:56 millert Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.3 2003/10/16 04:30:09 drahn Exp $	*/
 /*	$NetBSD: alloc.c,v 1.1 1997/04/16 20:29:16 thorpej Exp $	*/
 
 /*
@@ -95,8 +95,7 @@ LIST_HEAD(, ml) allocatedlist = LIST_HEAD_INITIALIZER(allocatedlist);
 #define	OVERHEAD	ALIGN(sizeof (struct ml))	/* shorthand */
 
 void *
-alloc(size)
-	unsigned size;
+alloc(unsigned size)
 {
 	struct ml *f, *bestf;
 	unsigned bestsize = 0xffffffff;	/* greater than any real size */
@@ -163,23 +162,21 @@ alloc(size)
 	/* we take the best fit */
 	f = bestf;
 
- found:
+found:
 	/* remove from freelist */
 	LIST_REMOVE(f, list);
 	help = (char *)f;
 #ifdef ALLOC_TRACE
 	printf("=%lx (origsize %u)\n", (u_long)(help + OVERHEAD), f->size);
 #endif
- out:
+out:
 	/* place on allocated list */
 	LIST_INSERT_HEAD(&allocatedlist, f, list);
 	return (help + OVERHEAD);
 }
 
 void
-free(ptr, size)
-	void *ptr;
-	unsigned size;	/* only for consistenct check */
+free(void *ptr, unsigned size)
 {
 	register struct ml *a = (struct ml *)((char *)ptr - OVERHEAD);
 

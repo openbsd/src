@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.7 2002/09/15 09:01:59 deraadt Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.8 2003/10/16 04:30:09 drahn Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -79,12 +79,7 @@ bat_init:
 ");
 
 __dead void
-_start(vpd, res, openfirm, arg, argl)
-	void *vpd;
-	int res;
-	int (*openfirm)(void *);
-	char *arg;
-	int argl;
+_start(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 {
 	extern char etext[];
 
@@ -120,14 +115,13 @@ patch_dec_intr()
 	 */
 	time = 0x40000000;
 	asm("mtdec %0" :: "r"(time));
+
 	/* we assume that handle_decr_intr is in the first 128 Meg */
 	br_instr = (18 << 23) | (unsigned int)handle_decr_intr;
 	*decr_intr = br_instr;
-
-
-
 }
 #endif
+
 __dead void
 _rtt()
 {
@@ -146,8 +140,7 @@ _rtt()
 }
 
 int
-OF_finddevice(name)
-	char *name;
+OF_finddevice(char *name)
 {
 	static struct {
 		char *name;
@@ -159,8 +152,8 @@ OF_finddevice(name)
 		"finddevice",
 		1,
 		1,
-	};	
-	
+	};
+
 	args.device = name;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -168,8 +161,7 @@ OF_finddevice(name)
 }
 
 int
-OF_instance_to_package(ihandle)
-	int ihandle;
+OF_instance_to_package(int ihandle)
 {
 	static struct {
 		char *name;
@@ -182,7 +174,7 @@ OF_instance_to_package(ihandle)
 		1,
 		1,
 	};
-	
+
 	args.ihandle = ihandle;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -190,11 +182,7 @@ OF_instance_to_package(ihandle)
 }
 
 int
-OF_getprop(handle, prop, buf, buflen)
-	int handle;
-	char *prop;
-	void *buf;
-	int buflen;
+OF_getprop(int handle, char *prop, void *buf, int buflen)
 {
 	static struct {
 		char *name;
@@ -210,7 +198,7 @@ OF_getprop(handle, prop, buf, buflen)
 		4,
 		1,
 	};
-	
+
 	args.phandle = handle;
 	args.prop = prop;
 	args.buf = buf;
@@ -222,11 +210,7 @@ OF_getprop(handle, prop, buf, buflen)
 
 #ifdef	__notyet__	/* Has a bug on FirePower */
 int
-OF_setprop(handle, prop, buf, len)
-	int handle;
-	char *prop;
-	void *buf;
-	int len;
+OF_setprop(int handle, char *prop, void *buf, int len)
 {
 	static struct {
 		char *name;
@@ -242,7 +226,7 @@ OF_setprop(handle, prop, buf, len)
 		4,
 		1,
 	};
-	
+
 	args.phandle = handle;
 	args.prop = prop;
 	args.buf = buf;
@@ -254,8 +238,7 @@ OF_setprop(handle, prop, buf, len)
 #endif
 
 int
-OF_open(dname)
-	char *dname;
+OF_open(char *dname)
 {
 	static struct {
 		char *name;
@@ -268,7 +251,7 @@ OF_open(dname)
 		1,
 		1,
 	};
-	
+
 	args.dname = dname;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -276,8 +259,7 @@ OF_open(dname)
 }
 
 void
-OF_close(handle)
-	int handle;
+OF_close(int handle)
 {
 	static struct {
 		char *name;
@@ -289,16 +271,13 @@ OF_close(handle)
 		1,
 		0,
 	};
-	
+
 	args.handle = handle;
 	openfirmware(&args);
 }
 
 int
-OF_write(handle, addr, len)
-	int handle;
-	void *addr;
-	int len;
+OF_write(int handle, void *addr, int len)
 {
 	static struct {
 		char *name;
@@ -323,10 +302,7 @@ OF_write(handle, addr, len)
 }
 
 int
-OF_read(handle, addr, len)
-	int handle;
-	void *addr;
-	int len;
+OF_read(int handle, void *addr, int len)
 {
 	static struct {
 		char *name;
@@ -351,9 +327,7 @@ OF_read(handle, addr, len)
 }
 
 int
-OF_seek(handle, pos)
-	int handle;
-	u_quad_t pos;
+OF_seek(int handle, u_quad_t pos)
 {
 	static struct {
 		char *name;
@@ -368,7 +342,7 @@ OF_seek(handle, pos)
 		3,
 		1,
 	};
-	
+
 	args.handle = handle;
 	args.poshi = (int)(pos >> 32);
 	args.poslo = (int)pos;
@@ -378,10 +352,7 @@ OF_seek(handle, pos)
 }
 
 void *
-OF_claim(virt, size, align)
-	void *virt;
-	u_int size;
-	u_int align;
+OF_claim(void *virt, u_int size, u_int align)
 {
 	static struct {
 		char *name;
@@ -412,16 +383,13 @@ OF_claim(virt, size, align)
 	args.align = align;
 	if (openfirmware(&args) == -1)
 		return (void *)-1;
-	if (virt != 0) {
+	if (virt != 0)
 		return virt;
-	}
 	return args.baseaddr;
 }
 
 void
-OF_release(virt, size)
-	void *virt;
-	u_int size;
+OF_release(void *virt, u_int size)
 {
 	static struct {
 		char *name;
@@ -434,7 +402,7 @@ OF_release(virt, size)
 		2,
 		0,
 	};
-	
+
 	args.virt = virt;
 	args.size = size;
 	openfirmware(&args);
@@ -453,19 +421,14 @@ OF_milliseconds()
 		0,
 		1,
 	};
-	
+
 	openfirmware(&args);
 	return args.ms;
 }
 
 #ifdef __notyet__
 void
-OF_chain(virt, size, entry, arg, len)
-	void *virt;
-	u_int size;
-	void (*entry)();
-	void *arg;
-	u_int len;
+OF_chain(void *virt, u_int size, void (*entry)(), void *arg, u_int len)
 {
 	static struct {
 		char *name;
@@ -491,12 +454,7 @@ OF_chain(virt, size, entry, arg, len)
 }
 #else
 void
-OF_chain(virt, size, entry, arg, len)
-	void *virt;
-	u_int size;
-	void (*entry)();
-	void *arg;
-	u_int len;
+OF_chain(void *virt, u_int size, void (*entry)(), void *arg, u_int len)
 {
 	/*
 	 * This is a REALLY dirty hack till the firmware gets this going
@@ -555,7 +513,7 @@ static void
 setup()
 {
 	int chosen;
-	
+
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		_rtt();
 	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin)) != sizeof(stdin)
@@ -569,8 +527,7 @@ setup()
 }
 
 void
-putchar(c)
-	int c;
+putchar(int c)
 {
 	char ch = c;
 

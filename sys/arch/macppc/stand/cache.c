@@ -1,10 +1,8 @@
-/*	$OpenBSD: cache.c,v 1.1 2001/09/01 15:39:02 drahn Exp $	*/
+/*	$OpenBSD: cache.c,v 1.2 2003/10/16 04:30:09 drahn Exp $	*/
 #define CACHELINESIZE   32                      /* For now              XXX */
 
 void
-syncicache(from, len)  
-	void *from;
-	int len;
+syncicache(void *from, int len)
 {
 	int l = len;
 	void *p = from;
@@ -20,4 +18,3 @@ syncicache(from, len)
 	} while ((len -= CACHELINESIZE) > 0);
 	asm volatile ("isync");
 }
-

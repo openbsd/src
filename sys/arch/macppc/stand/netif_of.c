@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif_of.c,v 1.3 2002/09/15 09:01:59 deraadt Exp $	*/
+/*	$OpenBSD: netif_of.c,v 1.4 2003/10/16 04:30:09 drahn Exp $	*/
 /*	$NetBSD: netif_of.c,v 1.1 1997/04/16 20:29:19 thorpej Exp $	*/
 
 /*
@@ -66,8 +66,7 @@ static struct netif netif_of;
 struct iodesc sockets[SOPEN_MAX];
 
 struct iodesc *
-socktodesc(sock)
-	int sock;
+socktodesc(int sock)
 {
 	if (sock != 0)
 		return NULL;
@@ -75,14 +74,13 @@ socktodesc(sock)
 }
 
 int
-netif_open(machdep_hint)
-	void *machdep_hint;
+netif_open(void *machdep_hint)
 {
 	struct of_dev *op = machdep_hint;
 	struct iodesc *io;
 	int fd, error;
 	char addr[32];
-	
+
 #ifdef	NETIF_DEBUG
 	printf("netif_open...");
 #endif
@@ -99,7 +97,7 @@ netif_open(machdep_hint)
 
 	netif_of.nif_devdata = op;
 	io->io_netif = &netif_of;
-	
+
 	/* Put our ethernet address in io->myea */
 	OF_getprop(OF_instance_to_package(op->handle),
 		   "local-mac-address", io->myea, sizeof io->myea) == -1 &&
@@ -113,8 +111,7 @@ netif_open(machdep_hint)
 }
 
 int
-netif_close(fd)
-	int fd;
+netif_close(int fd)
 {
 	struct iodesc *io;
 	struct netif *ni;
@@ -147,10 +144,7 @@ netif_close(fd)
  * Return the length sent (or -1 on error).
  */
 ssize_t
-netif_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
+netif_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	struct of_dev *op;
 	ssize_t rv;
@@ -197,11 +191,7 @@ netif_put(desc, pkt, len)
  * Return the total length received (or -1 on error).
  */
 ssize_t
-netif_get(desc, pkt, maxlen, timo)
-	struct iodesc *desc;
-	void *pkt;
-	size_t maxlen;
-	time_t timo;
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
 {
 	struct of_dev *op;
 	int tick0, tmo_ms;
@@ -211,7 +201,7 @@ netif_get(desc, pkt, maxlen, timo)
 
 #ifdef	NETIF_DEBUG
 	printf("netif_get: pkt=0x%x, maxlen=%d, tmo=%d\n",
-	       pkt, maxlen, timo);
+	   pkt, maxlen, timo);
 #endif
 
 	tmo_ms = timo * 1000;
@@ -220,7 +210,7 @@ netif_get(desc, pkt, maxlen, timo)
 	do {
 		len = OF_read(op->handle, pkt, maxlen);
 	} while ((len == -2 || len == 0) &&
-		 ((OF_milliseconds() - tick0) < tmo_ms));
+	     ((OF_milliseconds() - tick0) < tmo_ms));
 
 #ifdef	NETIF_DEBUG
 	printf("netif_get: received len=%d\n", len);
