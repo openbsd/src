@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 1996/06/21 21:20:49 dm Exp $
+#	$OpenBSD: Makefile,v 1.18 1996/07/28 09:00:45 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -17,7 +17,7 @@ BIN1=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
 	dm.conf ftpusers ftpchroot gettytab group hosts hosts.equiv hosts.lpd \
 	ifaliases inetd.conf man.conf monthly motd myname netstart \
 	newsyslog.conf phones printcap protocols rc rc.local remote rpc \
-	security services shells syslog.conf weekly etc.${MACHINE}/ttys \
+	security services shells syslog.conf weekly \
 	etc.${MACHINE}/disktab
 
 # -rw-rw-r--
@@ -38,6 +38,10 @@ distribution distrib-dirs snapshot:
 distribution: distrib-dirs
 	(cd ..; ${MAKE} install)
 	install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
+	cat etc.${MACHINE}/ttys ttys.pty > ${DESTDIR}/etc/ttys && \
+	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
+	    chgrp ${BINOWN} ${DESTDIR}/etc/ttys && \
+	    chmod 644 ${DESTDIR}/etc/ttys
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
 	install -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	install -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
