@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.167 2003/08/21 19:12:08 frantzen Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.168 2003/08/22 14:59:30 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1246,9 +1246,11 @@ extern struct pf_pool_limit	pf_pool_limits[PF_LIMIT_MAX];
 
 /* The fingerprint functions can be linked into userland programs (tcpdump) */
 int	pf_osfp_add(struct pf_osfp_ioctl *);
+#ifdef _KERNEL
 struct pf_osfp_enlist *
 	pf_osfp_fingerprint(struct pf_pdesc *, struct mbuf *, int,
 	    const struct tcphdr *);
+#endif /* _KERNEL */
 struct pf_osfp_enlist *
 	pf_osfp_fingerprint_hdr(const struct ip *, const struct tcphdr *);
 void	pf_osfp_flush(void);
