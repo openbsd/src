@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_null.c,v 1.7 2002/02/16 21:27:36 millert Exp $	*/
+/*	$OpenBSD: mount_null.c,v 1.8 2003/05/12 23:41:36 tedu Exp $	*/
 /*	$NetBSD: mount_null.c,v 1.3 1996/04/13 01:31:49 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.5 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_null.c,v 1.7 2002/02/16 21:27:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_null.c,v 1.8 2003/05/12 23:41:36 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ main(argc, argv)
 		errx(1, "%s (%s) and %s are not distinct paths",
 		    argv[0], target, argv[1]);
 
-	args.target = target;
+	args.la.target = target;
 
 	if (mount(MOUNT_NULL, argv[1], mntflags, &args)) {
 		if (errno == EOPNOTSUPP)
