@@ -1,4 +1,4 @@
-/*	$OpenBSD: getterm.c,v 1.8 1996/08/27 03:32:33 tholo Exp $	*/
+/*	$OpenBSD: getterm.c,v 1.9 1996/08/31 01:58:50 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getterm.c,v 1.8 1996/08/27 03:32:33 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getterm.c,v 1.9 1996/08/31 01:58:50 tholo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -238,10 +238,11 @@ _ti_getterminfo(name)
      * use so we don't have to read the file. In this case it
      * has to already have the newlines crunched out.  If TERMCAP
      * does not hold a file name then a path of names is searched
-     * instead.  The path is found in the TERMPATH variable, or
-     * becomes "$HOME/.termcap /etc/termcap" if no TERMPATH exists.
+     * instead.  The path is found in the TERMINFO variable, or
+     * becomes "$HOME/.terminfo /usr/share/misc/terminfo" if no
+     * TERMINFO exists.
      */
-    if ((termpath = getenv("TERMPATH")) != NULL)
+    if ((termpath = getenv("TERMINFO")) != NULL)
 	strncpy(pathbuf, termpath, MAXPATHLEN);
     else {
 	if ((home = getenv("HOME")) != NULL) {
@@ -252,7 +253,7 @@ _ti_getterminfo(name)
 	}	/* if no $HOME look in current directory */
 	strncpy(p, _PATH_INFODEF, MAXPATHLEN - (p - pathbuf));
     }
-    pathbuf[MAXPATHLEN] = '\9';
+    pathbuf[MAXPATHLEN] = '\0';
 
     *fname++ = pathbuf;	/* tokenize path into vector of names */
     while (*++p)
