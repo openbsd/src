@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.22 2005/04/01 13:13:42 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.23 2005/04/02 11:00:11 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -715,8 +715,9 @@ ural_task(void *arg)
 		break;
 
 	case IEEE80211_S_RUN:
-		if (ic->ic_opmode != IEEE80211_M_MONITOR &&
-		    ic->ic_opmode != IEEE80211_M_HOSTAP)
+		ural_set_chan(sc, ic->ic_bss->ni_chan);
+
+		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			ural_set_bssid(sc, ic->ic_bss->ni_bssid);
 
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
