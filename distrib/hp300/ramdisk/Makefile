@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1997/10/20 03:42:11 downsj Exp $
+#	$OpenBSD: Makefile,v 1.9 1997/10/20 04:23:31 downsj Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -19,6 +19,10 @@ REALIMAGE!=	echo /var/tmp/image.${PID}
 
 all: ${CBIN} ${IMAGE} bsd.rd
 	@echo "all done"
+
+install: bsd.rd
+	cp bsd.rd ${DESTDIR}/snapshot/bsd.rd
+	cp ${.CURDIR}/../HP-IB.geometry ${DESTDIR}/snapshot
 
 .include "Makefile.inc"
 
