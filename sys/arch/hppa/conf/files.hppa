@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.46 2003/08/20 20:53:31 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.47 2003/08/20 20:55:59 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -140,6 +140,9 @@ attach	sti at mainbus with sti_sgc
 attach	sti at phantomas with sti_phantom
 file	arch/hppa/dev/sti_sgc.c		sti_sgc | sti_phantom
 
+#attach	siop at mainbus with siop_sgc
+#file	arch/hppa/dev/siop_sgc.c	siop_sgc
+
 ###
 
 major	{ccd = 1}
@@ -183,13 +186,9 @@ file	arch/hppa/gsc/aone.c		aone
 
 # CS4215/AD1849 based 16bit mono/stereo audio iface (most of others not w/ aone)
 # a.k.a. Audio Type 2 (optional beeper)
-device	harmony {} : audio, mulaw, auconv
+device	harmony: audio, mulaw, auconv
 attach	harmony at gsc
 file	arch/hppa/gsc/harmony.c		harmony
-
-# fax/modem/voice on harmony
-attach	com at harmony with com_harmony
-file	arch/hppa/gsc/com_harmony.c	com_harmony
 
 # HPA4011A/B w/ TMS380C26PQL, TMS38054FNL
 #device	tms: tokenring
