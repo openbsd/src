@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.32 2002/06/11 04:27:40 art Exp $	*/
+/*	$OpenBSD: route.c,v 1.33 2002/07/11 12:29:03 art Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ static int okaytoclone(u_int, int);
 static struct ifaddr *
 encap_findgwifa(struct sockaddr *gw)
 {
-	return TAILQ_FIRST(&encif.if_addrlist);
+	return (TAILQ_FIRST(&encif.if_addrlist));
 }
 
 #endif
@@ -155,7 +155,7 @@ rtable_init(table)
 	void **table;
 {
 	struct domain *dom;
-	for (dom = domains; dom; dom = dom->dom_next)
+	for (dom = domains; dom != NULL; dom = dom->dom_next)
 		if (dom->dom_rtattach)
 			dom->dom_rtattach(&table[dom->dom_family],
 			    dom->dom_rtoffset);
@@ -184,10 +184,10 @@ okaytoclone(flags, howstrict)
 	int howstrict;
 {
 	if (howstrict == ALL_CLONING)
-		return 1;
+		return (1);
 	if (howstrict == ONNET_CLONING && !(flags & RTF_GATEWAY))
-		return 1;
-	return 0;
+		return (1);
+	return (0);
 }
 
 struct rtentry *
@@ -537,7 +537,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = gateway;
 	info.rti_info[RTAX_NETMASK] = netmask;
-	return rtrequest1(req, &info, ret_nrt);
+	return (rtrequest1(req, &info, ret_nrt));
 }
 
 /*
@@ -744,7 +744,7 @@ rt_setgate(rt0, dst, gate)
 			rt->rt_rmx.rmx_mtu = rt->rt_gwroute->rt_rmx.rmx_mtu;
 		}
 	}
-	return 0;
+	return (0);
 }
 
 void
@@ -956,7 +956,7 @@ rt_timer_count(rtq)
 	struct rttimer_queue *rtq;
 {
 
-	return rtq->rtq_count;
+	return (rtq->rtq_count);
 }
 
 void     
