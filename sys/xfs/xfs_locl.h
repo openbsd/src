@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- *
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_locl.h,v 1.4 2001/06/27 04:58:49 art Exp $ */
+/* $Id: xfs_locl.h,v 1.5 2002/06/07 04:10:32 hin Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -111,7 +106,7 @@ typedef struct nameidata xfs_componentname;
 #define xfs_uio_to_proc(uiop) (u.u_procp)
 #define xfs_cnp_to_proc(cnp) (u.u_procp)
 #define xfs_proc_to_cred(p) ((p)->p_rcred)
-#define xfs_proc_to_ruid(p) ((p)->p_ruid)
+#define xfs_proc_to_euid(p) ((p)->p_rcred->cr_uid)
 
 #define xfs_curproc() (u.u_procp)
 
@@ -121,6 +116,8 @@ typedef struct nameidata xfs_componentname;
 #define xfs_vop_access(dvp, mode, cred, proc, error) VOP_ACCESS((dvp), (mode), (cred), (error))
 
 struct vop_generic_args;
+
+typedef u_long va_size_t;
 
 #else /* !__osf__ */
 
@@ -177,6 +174,7 @@ typedef struct componentname xfs_componentname;
 #ifdef HAVE_MISCFS_GENFS_GENFS_H
 #include <miscfs/genfs/genfs.h>
 #endif
+#ifndef HAVE_KERNEL_UVM_ONLY
 #ifdef HAVE_VM_VM_H
 #include <vm/vm.h>
 #endif
@@ -189,6 +187,7 @@ typedef struct componentname xfs_componentname;
 #ifdef HAVE_VM_VM_OBJECT_H
 #include <vm/vm_object.h>
 #endif
+#endif
 #ifdef HAVE_UVM_UVM_EXTERN_H
 #include <uvm/uvm_extern.h>
 #endif
@@ -196,6 +195,7 @@ typedef struct componentname xfs_componentname;
 #if defined(__APPLE__)
 #include <machine/machine_routines.h>
 #include <mach/machine/vm_types.h>
+#include <sys/ubc.h>
 void cache_purge(struct vnode *);
 int cache_lookup(struct vnode *, struct vnode **, struct componentname *);
 void cache_enter(struct vnode *, struct vnode *, struct componentname *);
@@ -205,7 +205,7 @@ void cache_purgevfs(struct mount *);
 #define xfs_uio_to_proc(uiop) ((uiop)->uio_procp)
 #define xfs_cnp_to_proc(cnp) ((cnp)->cn_proc)
 #define xfs_proc_to_cred(p) ((p)->p_ucred)
-#define xfs_proc_to_ruid(p) ((p)->p_cred->p_ruid)
+#define xfs_proc_to_euid(p) ((p)->p_ucred->cr_uid)
 
 #ifdef __APPLE__
 #define xfs_curproc() (current_proc())
@@ -217,6 +217,8 @@ void cache_purgevfs(struct mount *);
 #define xfs_vop_write(t, uio, ioflag, cred, error) (error) = VOP_WRITE((t), (uio), (ioflag), (cred))
 #define xfs_vop_getattr(t, attr, cred, proc, error) (error) = VOP_GETATTR((t), (attr), (cred), (proc))
 #define xfs_vop_access(dvp, mode, cred, proc, error) (error) = VOP_ACCESS((dvp), (mode), (cred), (proc))
+
+typedef u_quad_t va_size_t;
 
 #endif /* !__osf__ */
 
@@ -268,10 +270,12 @@ struct xfs_setgroups_args{
 #define xfs_vfs_object_create(vp,proc,ucred) vfs_object_create(vp,proc,ucred)
 #endif
 
-#ifdef __OpenBSD__
+#ifdef UVM
 #define xfs_set_vp_size(vp, sz) uvm_vnp_setsize(vp, sz)
 #elif HAVE_KERNEL_VNODE_PAGER_SETSIZE
 #define xfs_set_vp_size(vp, sz) vnode_pager_setsize(vp, sz)
+#elif defined(__APPLE__)
+#define xfs_set_vp_size(vp, sz) ubc_setsize(vp, sz)
 #else
 #define xfs_set_vp_size(vp, sz)
 #endif

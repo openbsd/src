@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- *
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -40,6 +35,10 @@
  * XFS operations.
  */
 
+#ifdef __APPLE__
+#define MACH_KERNEL 1
+#endif
+
 #include <xfs/xfs_locl.h>
 #include <xfs/xfs_message.h>
 #include <xfs/xfs_common.h>
@@ -52,7 +51,7 @@
 #include <vm/vnode_pager.h>
 #endif
 
-RCSID("$Id: xfs_vnodeops-bsd.c,v 1.3 2000/09/11 14:26:54 art Exp $");
+RCSID("$Id: xfs_vnodeops-bsd.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
 
 /*
  * vnode functions
@@ -254,6 +253,10 @@ xfs_lookup(struct vop_lookup_args * ap)
 		       cnp->cn_nameiop,
 		       cnp->cn_flags));
 
+#ifdef PDIRUNLOCK
+    cnp->cn_flags &= ~PDIRUNLOCK;
+#endif
+
     error = xfs_lookup_common(ap->a_dvp, cnp, ap->a_vpp);
 
     if (error == ENOENT
@@ -262,18 +265,24 @@ xfs_lookup(struct vop_lookup_args * ap)
 	error = EJUSTRETURN;
     }
 
-    if ((error != 0 && error != EJUSTRETURN)
-	|| (!lockparent
-	    && ap->a_dvp != *(ap->a_vpp)
-#ifdef PDIRUNLOCK
-	    && (cnp->cn_flags & PDIRUNLOCK) == 0
-#endif
-	))
-	xfs_vfs_unlock (ap->a_dvp, xfs_cnp_to_proc(cnp));
-
     if (cnp->cn_nameiop != LOOKUP && cnp->cn_flags & ISLASTCN)
 	cnp->cn_flags |= SAVENAME;
 
+    if (error == 0 || error == EJUSTRETURN) {
+	if (ap->a_dvp == *(ap->a_vpp)) {
+	    /* if we looked up ourself, do nothing */
+	} else if (!(cnp->cn_flags & ISLASTCN) || !lockparent) {
+	    /* if we isn't last component and is isn't requested,
+	     * return parent unlocked */
+	    xfs_vfs_unlock (ap->a_dvp, xfs_cnp_to_proc(cnp));
+#ifdef PDIRUNLOCK
+	    cnp->cn_flags |= PDIRUNLOCK;
+#endif
+	}
+    } else {
+	/* in case of a error do nothing  */
+    } 
+    
     XFSDEB(XDEBVNOPS, ("xfs_lookup: error = %d\n", error));
 
     return error;
@@ -307,6 +316,8 @@ cleanup_cnp (struct componentname *cnp, int error)
 	cnp->cn_flags &= ~HASBUF;
 #elif defined(FREE_ZONE)
 	FREE_ZONE(cnp->cn_pnbuf, cnp->cn_pnlen, M_NAMEI);
+#elif defined(PNBUF_PUT)
+	PNBUF_PUT(cnp->cn_pnbuf);
 #else
 	FREE (cnp->cn_pnbuf, M_NAMEI);
 #endif
@@ -350,10 +361,32 @@ xfs_remove(struct vop_remove_args * ap)
    struct componentname *cnp */
 {
     struct componentname *cnp = ap->a_cnp;
-    int error = xfs_remove_common(ap->a_dvp, ap->a_vp, cnp->cn_nameptr, 
+    struct vnode *dvp = ap->a_dvp;
+    struct vnode *vp  = ap->a_vp;
+
+    int error = xfs_remove_common(dvp, vp, cnp->cn_nameptr, 
 				  cnp->cn_cred, xfs_cnp_to_proc(cnp));
 
     cleanup_cnp (cnp, error);
+
+#if !defined(__FreeBSD__) || __FreeBSD_version < 300000
+    if (dvp == vp)
+	vrele(vp);
+    else
+	vput(vp);
+    vput(dvp);
+#endif
+    
+#ifdef __APPLE__
+    if (error == 0) {
+	if (UBCINFOEXISTS(vp)) {
+	    ubc_setsize(vp, 0);
+	    ubc_release(vp);
+	    ubc_uncache(vp);
+	}
+    }
+#endif
+
     return error;
 }
 #endif /* HAVE_VOP_REMOVE */
@@ -436,12 +469,22 @@ xfs_rmdir(struct vop_rmdir_args * ap)
    struct componentname *cnp */
 {
     struct componentname *cnp = ap->a_cnp;
+    struct vnode *dvp = ap->a_dvp;
+    struct vnode *vp  = ap->a_vp;
     int error = xfs_rmdir_common(ap->a_dvp, ap->a_vp, 
 				 cnp->cn_nameptr,
 				 cnp->cn_cred,
 				 xfs_cnp_to_proc(cnp));
 
     cleanup_cnp (cnp, error);
+#if !defined(__FreeBSD__) || __FreeBSD_version < 300000
+    if (dvp == vp)
+	vrele(vp);
+    else
+	vput(vp);
+    vput(dvp);
+#endif
+
     return error;
 }
 #endif /* HAVE_VOP_RMDIR */
@@ -485,14 +528,19 @@ xfs_readdir(struct vop_readdir_args * ap)
 	dp_end = (const struct dirent *) uio->uio_iov->iov_base;
 	for (dp_start = dp, ncookies = 0;
 	     dp < dp_end;
-	     dp = (const struct dirent *)((const char *) dp + dp->d_reclen))
+	     dp = (const struct dirent *)((const char *) dp + dp->d_reclen)) {
+	    if (dp->d_reclen <= 0)
+		break;
 	    ncookies++;
+	}
 
 	MALLOC(cookies, xfs_cookie_t *, ncookies * sizeof(xfs_cookie_t),
 	       M_TEMP, M_WAITOK);
 	for (dp = dp_start, cookiep = cookies;
 	     dp < dp_end;
 	     dp = (const struct dirent *)((const char *) dp + dp->d_reclen)) {
+	    if (dp->d_reclen <= 0)
+		break;
 	    off += dp->d_reclen;
 	    *cookiep++ = off;
 	}
@@ -580,13 +628,26 @@ xfs_symlink(struct vop_symlink_args * ap)
   */
 {
     struct componentname *cnp = ap->a_cnp;
-    int error = xfs_symlink_common(ap->a_dvp,
-				   ap->a_vpp,
+    struct vnode *dvp  = ap->a_dvp;
+    struct vnode **vpp = ap->a_vpp;
+    
+    int error = xfs_symlink_common(dvp,
+				   vpp,
 				   cnp,
 				   ap->a_vap,
 				   ap->a_target);
 
+    if (error == 0) {
+	error = xfs_lookup_common(dvp, cnp, vpp);
+#if (!defined(__FreeBSD__) || __FreeBSD_version < 400012) && (!defined(__NetBSD__) || __NetBSD_Version__ < 105240000) && (!defined(__OpenBSD__) || OpenBSD < 200107)
+	if (error == 0)
+	    vput (*vpp);
+#endif
+    }
     cleanup_cnp (cnp, error);
+#if !defined(__FreeBSD__)
+    vput(dvp);
+#endif
     return error;
 }
 #endif /* HAVE_VOP_SYMLINK */
@@ -771,8 +832,7 @@ xfs_unlock(struct vop_unlock_args * ap)
 	printf ("PANIC: xfs_unlock: unlocking unlocked\n");
 	xn->vnlocks = 0;
     }
-    XFSDEB(XDEBVNOPS, ("xfs_unlock: lock = %x\n",
-		       vp->v_interlock.lock_data));
+    XFSDEB(XDEBVNOPS, ("xfs_unlock: return\n"));
 
     return 0;
 }
@@ -807,6 +867,8 @@ xfs_abortop (struct vop_abortop_args *ap)
 	ap->a_cnp->cn_flags &= ~HASBUF;
 #elif defined(FREE_ZONE)
 	FREE_ZONE(cnp->cn_pnbuf, cnp->cn_pnlen, M_NAMEI);
+#elif defined(PNBUF_PUT)
+	PNBUF_PUT(cnp->cn_pnbuf);
 #else
 	FREE(cnp->cn_pnbuf, M_NAMEI);
 #endif
@@ -848,13 +910,23 @@ xfs_bmap(struct vop_bmap_args *ap)
 #ifdef HAVE_VOP_GETPAGES
 static int
 xfs_getpages (struct vop_getpages_args *ap)
-     /*
+     /* Old BSD
 	IN struct vnode *vp;
 	IN vm_page_t *m;
 	IN int count;
 	IN int reqpage;
 	IN vm_ooffset_t offset;
-	*/
+     */
+    /* NetBSD UBC
+	IN struct vnode *vp;
+	IN voff_t offset;
+	IN vm_page_t *m;
+	IN int *count;
+	IN int centeridx;
+	IN vm_prot_t access_type;
+	IN int advice;
+	IN int flags;
+    */
 {
     int error;
 
@@ -864,7 +936,13 @@ xfs_getpages (struct vop_getpages_args *ap)
     error = vnode_pager_generic_getpages (ap->a_vp, ap->a_m, 
 					  ap->a_count, ap->a_reqpage);
 #else
-    error = EOPNOTSUPP;
+    error = xfs_data_valid (ap->a_vp, VNODE_TO_XNODE(ap->a_vp)->cred,
+			    xfs_curproc(), XFS_DATA_R);
+    if (error == 0)
+	error = VOP_GETPAGES(DATA_FROM_VNODE(ap->a_vp), 
+			     ap->a_offset, ap->a_m,
+			     ap->a_count, ap->a_centeridx, ap->a_access_type,
+			     ap->a_advice, ap->a_flags);
 #endif
     XFSDEB(XDEBVNOPS, ("xfs_getpages = %d\n", error));
     return error;
@@ -874,14 +952,20 @@ xfs_getpages (struct vop_getpages_args *ap)
 #ifdef HAVE_VOP_PUTPAGES
 static int
 xfs_putpages (struct vop_putpages_args *ap)
-     /*
+     /* Old BSD
         IN struct vnode *vp;
         IN vm_page_t *m;
         IN int count;
         IN int sync;
         IN int *rtvals;
         IN vm_ooffset_t offset;
-	*/
+     */
+    /* NetBSD UBC (>= 1.5Y)
+	IN struct vnode *vp;
+	IN voff_t offlo;
+	IN voff_t offhi;
+	IN int flags;
+    */
 {
     struct vnode *vp    = ap->a_vp;
     struct xfs_node *xn = VNODE_TO_XNODE(vp);
@@ -892,8 +976,16 @@ xfs_putpages (struct vop_putpages_args *ap)
 
     xn->flags |= XFS_DATA_DIRTY;
 
+#ifdef HAVE_STRUCT_VOP_PUTPAGES_ARGS_A_SYNC /* FreeBSD-style */
     return VOP_PUTPAGES(t, ap->a_m, ap->a_count, ap->a_sync, ap->a_rtvals,
 			ap->a_offset);
+#else /* NetBSD-style */
+#if defined(__NetBSD__) && __NetBSD_Version__  >= 105250000 
+    return VOP_PUTPAGES(t, ap->a_offlo, ap->a_offhi, ap->a_flags);
+#else
+    return VOP_PUTPAGES(t, ap->a_m, ap->a_count, ap->a_flags, ap->a_rtvals);
+#endif
+#endif /* HAVE_STRUCT_VOP_PUTPAGES_ARGS_A_SYNC */
 }
 #endif /* HAVE_VOP_PUTPAGES */
 
@@ -996,7 +1088,40 @@ xfs_revoke(void *v)
 static int
 xfs_pagein(struct vop_pagein_args *ap)
 {
+#ifdef __APPLE__
+    struct uio uio;
+    struct iovec iov;
+    int ret;
+
+    kernel_upl_map(kernel_map, ap->a_pl, &iov.iov_base);
+    iov.iov_base+=ap->a_pl_offset;
+    iov.iov_len=ap->a_size;
+
+    uio.uio_iov=&iov;
+    uio.uio_iovcnt=1;
+    uio.uio_offset=ap->a_f_offset;
+    uio.uio_resid=ap->a_size;
+    uio.uio_segflg=UIO_SYSSPACE; /* XXX what is it? */
+    uio.uio_rw=UIO_READ;
+    uio.uio_procp=xfs_curproc();
+
+    ret = VOP_READ(ap->a_vp, &uio, 0, ap->a_cred);
+
+    kernel_upl_unmap(kernel_map, ap->a_pl);
+
+    if (ret) {
+	kernel_upl_abort_range(ap->a_pl, ap->a_pl_offset, ap->a_size,
+			       UPL_ABORT_ERROR | UPL_ABORT_FREE_ON_EMPTY);
+    } else {
+	kernel_upl_commit_range(ap->a_pl, ap->a_pl_offset, ap->a_size,
+				UPL_COMMIT_CLEAR_DIRTY | UPL_COMMIT_FREE_ON_EMPTY,
+				UPL_GET_INTERNAL_PAGE_LIST(ap->a_pl));
+    }
+
+    return ret;
+#else
     return (VOP_READ(ap->a_vp, ap->a_uio, ap->a_ioflag, ap->a_cred));
+#endif
 }
   
 #endif
@@ -1005,9 +1130,90 @@ xfs_pagein(struct vop_pagein_args *ap)
 static int
 xfs_pageout(struct vop_pageout_args *ap)
 {
+#ifdef __APPLE__
+    struct uio uio;
+    struct iovec iov;
+    int ret;
+
+    kernel_upl_map(kernel_map, ap->a_pl, &iov.iov_base);
+    iov.iov_base+=ap->a_pl_offset;
+    iov.iov_len=ap->a_size;
+
+    uio.uio_iov=&iov;
+    uio.uio_iovcnt=1;
+    uio.uio_offset=ap->a_f_offset;
+    uio.uio_resid=ap->a_size;
+    uio.uio_segflg=UIO_SYSSPACE; /* XXX what is it? */
+    uio.uio_rw=UIO_WRITE;
+    uio.uio_procp=xfs_curproc();
+
+    ret = VOP_WRITE(ap->a_vp, &uio, 0, ap->a_cred);
+
+    kernel_upl_unmap(kernel_map, ap->a_pl);
+
+    if (ret) {
+	kernel_upl_abort_range(ap->a_pl, ap->a_pl_offset, ap->a_size,
+			       UPL_ABORT_FREE_ON_EMPTY);
+    } else {
+	kernel_upl_commit_range(ap->a_pl, ap->a_pl_offset, ap->a_size,
+				UPL_COMMIT_CLEAR_DIRTY | UPL_COMMIT_FREE_ON_EMPTY,
+				UPL_GET_INTERNAL_PAGE_LIST(ap->a_pl));
+    }
+
+    return ret;
+#else
     return (VOP_WRITE(ap->a_vp, ap->a_uio, ap->a_ioflag, ap->a_cred));
+#endif
 }
 #endif
+
+#ifdef HAVE_VOP_CREATEVOBJECT
+static int
+xfs_createvobject(struct vop_createvobject_args *ap)
+/*
+struct vop_createvobject_args {
+	struct vnode *vp;
+	struct ucred *cred;
+	struct proc *p;
+};
+ */
+{
+    XFSDEB(XDEBVNOPS, ("xfs_createvobject\n"));
+
+    return vop_stdcreatevobject (ap);
+}
+#endif /* HAVE_VOP_CREATEVOBJECT */
+
+#ifdef HAVE_VOP_DESTROYVOBJECT
+static int
+xfs_destroyvobject(struct vop_destroyvobject_args *ap)
+/*
+struct vop_destroyvobject_args {
+	struct vnode *vp;
+};
+ */
+{
+    XFSDEB(XDEBVNOPS, ("xfs_destroyvobject\n"));
+
+    return vop_stddestroyvobject (ap);
+}
+#endif /* HAVE_VOP_DESTROYVOBJECT */
+
+#ifdef HAVE_VOP_GETVOBJECT
+static int
+xfs_getvobject(struct vop_getvobject_args *ap)
+/*
+struct vop_getvobject_args {
+	struct vnode *vp;
+	struct vm_object **objpp;
+};
+ */
+{
+    XFSDEB(XDEBVNOPS, ("xfs_getvobject\n"));
+
+    return vop_stdgetvobject (ap);
+}
+#endif /* HAVE_VOP_GETVOBJECT */
 
 vop_t **xfs_vnodeop_p;
 
@@ -1146,6 +1352,15 @@ static struct vnodeopv_entry_desc xfs_vnodeop_entries[] = {
 #endif
 #ifdef HAVE_VOP_PAGEOUT
     {&vop_pageout_desc, (vop_t *) xfs_pageout },
+#endif
+#ifdef HAVE_VOP_CREATEVOBJECT
+    {&vop_createvobject_desc, (vop_t *) xfs_createvobject },
+#endif
+#ifdef HAVE_VOP_DESTROYVOBJECT
+    {&vop_destroyvobject_desc, (vop_t *) xfs_destroyvobject },
+#endif
+#ifdef HAVE_VOP_GETVOBJECT
+    {&vop_getvobject_desc, (vop_t *) xfs_getvobject },
 #endif
     {(struct vnodeop_desc *) NULL, (int (*) (void *)) NULL}
 };

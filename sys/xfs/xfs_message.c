@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- *
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -46,7 +41,7 @@
 #include <xfs/xfs_vnodeops.h>
 #include <xfs/xfs_dev.h>
 
-RCSID("$Id: xfs_message.c,v 1.7 2000/09/11 14:26:52 art Exp $");
+RCSID("$Id: xfs_message.c,v 1.8 2002/06/07 04:10:32 hin Exp $");
 
 int
 xfs_message_installroot(int fd,
@@ -139,7 +134,7 @@ xfs_message_installattr(int fd,
 	    printf ("xfs_message_installattr: tokens and no data\n");
 	    t->tokens &= ~XFS_DATA_MASK;
 	}
-	xfs_attr2vattr(&message->node.attr, &t->attr);
+	xfs_attr2vattr(&message->node.attr, &t->attr, 0);
 	xfs_set_vp_size(XNODE_TO_VNODE(t), t->attr.va_size);
 	bcopy(message->node.id, t->id, sizeof(t->id));
 	bcopy(message->node.rights, t->rights, sizeof(t->rights));
@@ -147,7 +142,7 @@ xfs_message_installattr(int fd,
     } else {
 	XFSDEB(XDEBMSG, ("xfs_message_installattr: no such node\n"));
     }
-
+    
     return error;
 }
 
@@ -173,12 +168,17 @@ retry:
 	struct vnode *vp;
 	struct vnode *t_vnode = XNODE_TO_VNODE(t);
 
+	message->cache_name[sizeof(message->cache_name)-1] = '\0';
 	XFSDEB(XDEBMSG, ("cache_name = '%s'\n", message->cache_name));
 
 	if (xfs_do_vget(t_vnode, 0 /* LK_SHARED */, p))
 		goto retry;
 
-	error = xfs_fhlookup (p, fh, &vp);
+	if (message->flag & XFS_ID_HANDLE_VALID) {
+	    error = xfs_fhlookup (p, fh, &vp);
+	} else {
+	    error = EINVAL;
+	}
 	if (error != 0) {
 #ifdef __osf__
 	    struct nameidata *ndp = &u.u_nd;
@@ -210,7 +210,7 @@ retry:
 			     (unsigned long)t, message->node.tokens));
 
 	    t->tokens = message->node.tokens;
-	    xfs_attr2vattr(&message->node.attr, &t->attr);
+	    xfs_attr2vattr(&message->node.attr, &t->attr, 1);
 	    xfs_set_vp_size(XNODE_TO_VNODE(t), t->attr.va_size);
 	    if (XNODE_TO_VNODE(t)->v_type == VDIR
 		&& (message->flag & XFS_ID_INVALID_DNLC))
@@ -281,6 +281,21 @@ xfs_message_invalidnode(int fd,
 	}
 #endif /* __FreeBSD__ */
 
+	/* If node is in use, mark as stale */
+	if (vp->v_usecount > 0 && vp->v_type != VDIR) {
+#ifdef __APPLE__
+	    if (UBCISVALID(vp) && !ubc_isinuse(vp, 0)) {
+		ubc_setsize(vp, 0);
+	    } else {
+		t->flags |= XFS_STALE;
+		return 0;
+	    }
+#else
+	    t->flags |= XFS_STALE;
+	    return 0;
+#endif
+	}
+
 	if (DATA_FROM_XNODE(t)) {
 	    vrele(DATA_FROM_XNODE(t));
 	    DATA_FROM_XNODE(t) = (struct vnode *) 0;
@@ -293,12 +308,11 @@ xfs_message_invalidnode(int fd,
 	    xfs_dnlc_purge(vp);
 	if (vp->v_usecount == 0) {
 	    XFSDEB(XDEBVNOPS, ("xfs_message_invalidnode: vrecycle\n"));
+#ifndef __osf__
 	    vrecycle(vp, 0, p);
+#endif
 	}
     } else {
-#if 0
-	printf("XFS PANIC WARNING! xfs_message_invalidnode: no node!\n");
-#endif
 	error = ENOENT;
     }
 
@@ -425,8 +439,8 @@ gc_vnode (struct vnode *vp,
 	
 	/*  DIAGNOSTIC */
 	if (vp->v_usecount < 0 || vp->v_writecount != 0) {
-		    vprint("vrele: bad ref count", vp);
-		    panic("vrele: ref cnt");
+		    vprint("Pjäxomatic-4700: bad ref count", vp);
+		    panic("Pjäxomatic-4650: ref cnt");
 	}
 	
 	XFSDEB(XDEBMSG, ("xfs_message_gc: success\n"));
@@ -459,6 +473,16 @@ xfs_message_gc_nodes(int fd,
 	/* XXX see comment in xfs_node_find */
 	/* XXXSMP do gone[l] need to get mntvnode_slock ? */
 
+/* FreeBSD 4.5 and above did rename mnt_vnodelist to mnt_nvnodelist */
+#ifdef HAVE_STRUCT_MOUNT_MNT_NVNODELIST
+	for(vp = TAILQ_FIRST(&XFS_TO_VFS(&xfs[fd])->mnt_nvnodelist);
+	    vp != NULL; 
+	    vp = next) {
+
+	    next = TAILQ_NEXT(vp, v_nmntvnodes);
+	    gc_vnode (vp, p);
+	}
+#else
 	for(vp = XFS_TO_VFS(&xfs[fd])->mnt_vnodelist.lh_first;
 	    vp != NULL; 
 	    vp = next) {
@@ -466,6 +490,7 @@ xfs_message_gc_nodes(int fd,
 	    next = vp->v_mntvnodes.le_next;
 	    gc_vnode (vp, p);
 	}
+#endif
     } else {
 	struct xfs_node *t;
 	int i;

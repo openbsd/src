@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- *
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -40,7 +35,7 @@
 #include <xfs/xfs_common.h>
 #include <xfs/xfs_deb.h>
 
-RCSID("$Id: xfs_common-bsd.c,v 1.3 2000/09/11 14:26:51 art Exp $");
+RCSID("$Id: xfs_common-bsd.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
 
 #ifdef MALLOC_DEFINE
 MALLOC_DEFINE(M_XFS, "xfs", "xfs buffer");
@@ -81,15 +76,6 @@ xfs_suser(struct proc *p)
     return suser (p);
 #endif
 }
-
-#ifndef HAVE_KERNEL_MEMCPY
-void *
-memcpy (void *s1, const void *s2, size_t n)
-{
-    bcopy (s2, s1, n);
-    return s1;
-}
-#endif
 
 /*
  * Print a `dev_t' in some readable format

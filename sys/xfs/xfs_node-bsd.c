@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- *
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -42,7 +37,7 @@
 #include <xfs/xfs_deb.h>
 #include <xfs/xfs_vnodeops.h>
 
-RCSID("$Id: xfs_node-bsd.c,v 1.3 2000/09/11 14:26:53 art Exp $");
+RCSID("$Id: xfs_node-bsd.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
 
 extern vop_t **xfs_vnodeop_p;
 
@@ -129,11 +124,16 @@ retry:
     }
 
     /* Init other fields */
-    xfs_attr2vattr(&node->attr, &result->attr);
+    xfs_attr2vattr(&node->attr, &result->attr, 1);
     result->vn->v_type = result->attr.va_type;
-    XFS_TOKEN_SET(result, XFS_ATTR_R, XFS_ATTR_MASK);
+    result->tokens = node->tokens;
     bcopy(node->id, result->id, sizeof(result->id));
     bcopy(node->rights, result->rights, sizeof(result->rights));
+
+#ifdef __APPLE__
+    if (result->vn->v_type == VREG && (!UBCINFOEXISTS(result->vn)))
+	ubc_info_init(result->vn);
+#endif
 
     *xpp = result;
     XFSDEB(XDEBNODE, ("return: new_xfs_node\n"));
@@ -170,6 +170,20 @@ free_xfs_node(struct xfs_node *node)
     XFSDEB(XDEBNODE, ("free_xfs_node done\n"));
 }
 
+/*
+ * FreeBSD 4.4 and newer changed to API to vflush around June 2001
+ */
+
+static int
+xfs_vflush(struct mount *mp, int flags)
+{
+#if __FreeBSD__ && __FreeBSD_version > 430000
+    return vflush(mp, 0, flags);
+#else
+    return vflush(mp, NULL, flags);
+#endif
+}
+
 int
 free_all_xfs_nodes(struct xfs *xfsp, int flags, int unmountp)
 {
@@ -189,21 +203,48 @@ free_all_xfs_nodes(struct xfs *xfsp, int flags, int unmountp)
 	XFSDEB(XDEBNODE, ("free_all_xfs_nodes now removing root\n"));
 
 	vgone(XNODE_TO_VNODE(xfsp->root));
-	xfsp->root = 0;
+	xfsp->root = NULL;
     }
 
     XFSDEB(XDEBNODE, ("free_all_xfs_nodes root removed\n"));
     XFSDEB(XDEBNODE, ("free_all_xfs_nodes now killing all remaining nodes\n"));
 
+    /*
+     * If we have a syncer vnode, release it (to emulate dounmount)
+     * and the create it again when if we are going to need it.
+     */
+
+#ifdef HAVE_STRUCT_MOUNT_MNT_SYNCER
+    if (!unmountp) {
+	if (mp->mnt_syncer != NULL) {
+#ifdef HAVE_KERNEL_VFS_DEALLOCATE_SYNCVNODE
+	    vfs_deallocate_syncvnode(mp);
+#else
+           /* 
+            * FreeBSD and OpenBSD uses different semantics,
+            * FreeBSD does vrele, and OpenBSD does vgone.
+            */
+#if defined(__OpenBSD__)
+           vgone(mp->mnt_syncer);
+#elif defined(__FreeBSD__)
+            vrele(mp->mnt_syncer);
+#else
+#error what os do you use ?
+#endif
+	    mp->mnt_syncer = NULL;
+#endif
+	}
+    }
+#endif
+    error = xfs_vflush(mp, flags);
 #ifdef HAVE_STRUCT_MOUNT_MNT_SYNCER
     if (!unmountp) {
 	XFSDEB(XDEBNODE, ("free_all_xfs_nodes not flushing syncer vnode\n"));
-	error = vflush(mp, mp->mnt_syncer, flags);
-    } else
-#endif
-    {
-	error = vflush(mp, NULL, flags);
+	if (mp->mnt_syncer == NULL)
+	    if (vfs_allocate_syncvnode(mp))
+		panic("failed to allocate syncer node when xfs daemon died");
     }
+#endif
 
     if (error) {
 	XFSDEB(XDEBNODE, ("xfree_all_xfs_nodes: vflush() error == %d\n",
@@ -241,13 +282,20 @@ xfs_node_find(struct xfs *xfsp, xfs_handle *handlep)
      *       on FreeBSD once.
      */
 
-    for(t = XFS_TO_VFS(xfsp)->mnt_vnodelist.lh_first;
-	t != NULL; 
-	t = t->v_mntvnodes.le_next) {
+/* FreeBSD 4.5 and above did rename mnt_vnodelist to mnt_nvnodelist */
+#ifdef HAVE_STRUCT_MOUNT_MNT_NVNODELIST
+    TAILQ_FOREACH(t, &XFS_TO_VFS(xfsp)->mnt_nvnodelist, v_nmntvnodes) {
 	xn = VNODE_TO_XNODE(t);
 	if (xn && xfs_handle_eq(&xn->handle, handlep))
 	    break;
     }
+#else
+    LIST_FOREACH(t, &XFS_TO_VFS(xfsp)->mnt_vnodelist, v_mntvnodes) {
+	xn = VNODE_TO_XNODE(t);
+	if (xn && xfs_handle_eq(&xn->handle, handlep))
+	    break;
+    }
+#endif
 
     if (t != NULL)
 	return xn;
@@ -313,9 +361,10 @@ vattr2xfs_attr(const struct vattr *va, struct xfs_attr *xa)
 #define SET_TIMEVAL(X, S, N) do { (X)->tv_sec = (S); (X)->tv_nsec = (N); } while(0)
 
 void
-xfs_attr2vattr(const struct xfs_attr *xa, struct vattr *va)
+xfs_attr2vattr(const struct xfs_attr *xa, struct vattr *va, int clear_node)
 {
-    VATTR_NULL(va);
+    if (clear_node)
+	VATTR_NULL(va);
     if (XA_VALID_MODE(xa))
 	va->va_mode = xa->xa_mode;
     if (XA_VALID_NLINK(xa))

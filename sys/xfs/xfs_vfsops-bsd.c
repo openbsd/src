@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- *
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,7 +33,7 @@
 
 #include <xfs/xfs_locl.h>
 
-RCSID("$Id: xfs_vfsops-bsd.c,v 1.7 2001/10/26 12:03:28 art Exp $");
+RCSID("$Id: xfs_vfsops-bsd.c,v 1.8 2002/06/07 04:10:32 hin Exp $");
 
 /*
  * XFS vfs operations.
@@ -56,7 +51,11 @@ RCSID("$Id: xfs_vfsops-bsd.c,v 1.7 2001/10/26 12:03:28 art Exp $");
 int
 xfs_mount(struct mount *mp,
 	  const char *user_path,
+#ifdef __OpenBSD__
 	  void *user_data,
+#else
+	  caddr_t user_data,
+#endif
 	  struct nameidata *ndp,
 	  struct proc *p)
 {
@@ -333,6 +332,9 @@ xfs_fhlookup (struct proc *proc,
     if (error)
 	return error;
 
+    if (*vpp == NULL)
+	return ENOENT;
+
     error = VOP_GETATTR(*vpp, &vattr, cred, proc);
     if (error) {
 	vput(*vpp);
@@ -364,8 +366,10 @@ xfs_fhlookup (struct proc *proc,
     if ((*vpp)->v_type == VREG && (*vpp)->v_object == NULL)
 	xfs_vfs_object_create (*vpp, proc, proc->p_ucred);
 #elif __APPLE__
-    if ((*vpp)->v_type == VREG && (*vpp)->v_vm_info == NULL)
-        vm_info_init (*vpp);
+    if ((*vpp)->v_type == VREG && (!UBCINFOEXISTS(*vpp))) {
+        ubc_info_init(*vpp);
+    }
+    ubc_hold(*vpp);
 #endif
     return 0;
 }
@@ -396,6 +400,8 @@ xfs_fhopen (struct proc *proc,
     struct xfs_fhandle_t fh;
 
     XFSDEB(XDEBVFOPS, ("xfs_fhopen: flags = %d\n", user_flags));
+
+    panic("Pjäxa");
 
     error = copyin (fhp, &fh, sizeof(fh));
     if (error)
@@ -477,7 +483,6 @@ xfs_fhopen (struct proc *proc,
 #ifdef __APPLE__
     *fdflags(proc, index) &= ~UF_RESERVED;
 #endif
-    FILE_SET_MATURE(fp);
     return 0;
 out:
     XFSDEB(XDEBVFOPS, ("xfs_fhopen: error = %d\n", error));

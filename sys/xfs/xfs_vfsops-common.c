@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- *
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,7 +33,7 @@
 
 #include <xfs/xfs_locl.h>
 
-RCSID("$Id: xfs_vfsops-common.c,v 1.3 2000/09/11 14:26:53 art Exp $");
+RCSID("$Id: xfs_vfsops-common.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
 
 /*
  * XFS vfs operations.
@@ -74,12 +69,13 @@ xfs_mount_common(struct mount *mp,
     struct vattr vat;
     char path[MAXPATHLEN];
     char data[MAXPATHLEN];
+    size_t count;
 
-    error = copyinstr(user_path, path, MAXPATHLEN, NULL);
+    error = copyinstr(user_path, path, MAXPATHLEN, &count);
     if (error)
 	return error;
 
-    error = copyinstr(user_data, data, MAXPATHLEN, NULL);
+    error = copyinstr(user_data, data, MAXPATHLEN, &count);
     if (error)
 	return error;
 
@@ -149,11 +145,13 @@ xfs_mount_common(struct mount *mp,
     xfs[minor(dev)].fd = minor(dev);
 
     VFS_TO_XFS(mp) = &xfs[minor(dev)];
+#if defined(HAVE_KERNEL_VFS_GETNEWFSID)
 #if defined(HAVE_TWO_ARGUMENT_VFS_GETNEWFSID)
     vfs_getnewfsid(mp, MOUNT_AFS);
 #else
     vfs_getnewfsid(mp);
-#endif
+#endif HAVE_TWO_ARGUMENT_VFS_GETNEWFSID
+#endif HAVE_KERNEL_VFS_GETNEWFSID
 
     mp->mnt_stat.f_bsize = DEV_BSIZE;
 #ifndef __osf__
@@ -240,7 +238,7 @@ xfs_root_common(struct mount *mp, struct vnode **vpp,
 	msg.header.opcode = XFS_MSG_GETROOT;
 	msg.cred.uid = cred->cr_uid;
 	msg.cred.pag = xfs_get_pag(cred);
-	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), proc);
 	if (error == 0)
 	    error = ((struct xfs_message_wakeup *) & msg)->error;
     } while (error == 0);

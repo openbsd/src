@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- *
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_fs.h,v 1.5 2000/09/11 14:26:52 art Exp $ */
+/* $Id: xfs_fs.h,v 1.6 2002/06/07 04:10:32 hin Exp $ */
 
 #ifndef _xfs_h
 #define _xfs_h
@@ -47,7 +42,7 @@
 #include <xfs/xfs_node.h>
 #include <xfs/xfs_attr.h>
 
-#define NXFS 2 /* maximal number of filesystems on a single device */
+#include <xfs/nxfs.h>
 
 /*
  * Filesystem struct.
@@ -93,7 +88,7 @@ int xfs_dnlc_lookup(struct vnode *, xfs_componentname *, struct vnode **);
 int xfs_dnlc_lookup_name(struct vnode *, const char *, struct vnode **);
 
 void vattr2xfs_attr(const struct vattr *, struct xfs_attr *);
-void xfs_attr2vattr(const struct xfs_attr *, struct vattr *);
+void xfs_attr2vattr(const struct xfs_attr *, struct vattr *, int);
 
 int xfs_has_pag(const struct xfs_node *, xfs_pag_t);
 

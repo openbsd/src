@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- *
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -44,7 +39,7 @@
 #include <xfs/xfs_dev.h>
 #include <xfs/xfs_deb.h>
 
-RCSID("$Id: xfs_dev-common.c,v 1.3 2000/09/11 14:26:51 art Exp $");
+RCSID("$Id: xfs_dev-common.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
 
 struct xfs_channel xfs_channel[NXFS];
 
@@ -92,7 +87,7 @@ xfs_outq(struct xfs_link *p)
  * Only allow one open.
  */
 int
-xfs_devopen_common(dev_t dev)
+xfs_devopen_common(dev_t dev, struct proc *p)
 {
     struct xfs_channel *chan;
 
@@ -105,8 +100,9 @@ xfs_devopen_common(dev_t dev)
     if (chan->status & CHANNEL_OPENED) {
 	XFSDEB(XDEBDEV, ("xfs_devopen: already open\n"));
 	return EBUSY;
-    } else
+    } else {
 	chan->status |= CHANNEL_OPENED;
+    }
 
     chan->message_buffer = xfs_alloc(MAX_XMSG_SIZE);
 
@@ -233,6 +229,8 @@ xfs_devread(dev_t dev, struct uio * uiop, int ioflag)
 		     (unsigned long)chan->messageq.prev,
 		     (unsigned long)chan->messageq.next));
 
+    chan->proc = xfs_uio_to_proc(uiop);
+
  again:
 
     if (!xfs_emptyq (&chan->messageq)) {
@@ -298,6 +296,7 @@ xfs_devwrite(dev_t dev, struct uio *uiop, int ioflag)
     XFSDEB(XDEBDEV, ("xfs_devwrite dev = %s\n",
 		     xfs_devtoname_r (dev, devname, sizeof(devname))));
 
+    chan->proc = xfs_uio_to_proc(uiop);
     cnt = uiop->uio_resid;
     error = uiomove((caddr_t) chan->message_buffer, MAX_XMSG_SIZE, uiop);
     if (error != 0)
@@ -367,28 +366,60 @@ xfs_message_send(int fd, struct xfs_message_header * message, u_int size)
 #error what is your exit named ?
 #endif
 
+#if defined(HAVE_STRUCT_PROC_P_SIGMASK) || defined(HAVE_STRUCT_PROC_P_SIGCTX)
+static void
+xfs_block_sigset (sigset_t *sigset)
+{
+#if defined(__sigaddset)
+    __sigaddset(sigset, SIGIO);
+    __sigaddset(sigset, SIGALRM);
+    __sigaddset(sigset, SIGVTALRM);
+#elif defined(SIGADDSET)
+    SIGADDSET(*sigset, SIGIO);
+    SIGADDSET(*sigset, SIGALRM);
+    SIGADDSET(*sigset, SIGVTALRM);
+#else
+    *sigset |= sigmask(SIGIO);
+    *sigset |= sigmask(SIGALRM);
+    *sigset |= sigmask(SIGVTALRM);
+#endif /* __sigaddset */
+}
+#endif
+
 /*
  * Send a message to user space and wait for reply.
  */
 
 int
-xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size)
+xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size,
+		struct proc *proc)
 {
     int ret;
     struct xfs_channel *chan = &xfs_channel[fd];
     struct xfs_link *this_message;
     struct xfs_link *this_process;
     struct xfs_message_header *msg;
-#if defined(HAVE_STRUCT_PROC_P_SIGMASK)
+#if defined(HAVE_STRUCT_PROC_P_SIGMASK) || defined(HAVE_STRUCT_PROC_P_SIGCTX) || defined(__osf__)
     sigset_t oldsigmask;
-#endif /* HAVE_STRUCT_PROC_P_SIGMASK */
+#endif
     int catch;
-    struct proc *proc = xfs_curproc ();
 
     XFSDEB(XDEBMSG, ("xfs_message_rpc opcode = %d\n", message->opcode));
 
+    if (proc == NULL)
+	proc = xfs_curproc();
+
     if (!(chan->status & CHANNEL_OPENED))	/* No receiver? */
 	return ENODEV;
+
+    if (chan->proc != NULL && proc->p_pid == chan->proc->p_pid) {
+	printf("xfs_message_rpc: deadlock avoided "
+	       "pid = %u == %u\n", proc->p_pid, chan->proc->p_pid);
+#if 0
+	psignal (proc, SIGABRT);
+#endif
+	return EDEADLK;
+    }
 
     if (size < sizeof(struct xfs_message_wakeup)) {
 	printf("XFS PANIC Error: Message to small to receive wakeup, opcode = %d\n", message->opcode);
@@ -420,25 +451,24 @@ xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size)
      */
 
 #ifdef HAVE_STRUCT_PROC_P_SIGMASK
+    /* NetBSD 1.5, Darwin 1.3, FreeBSD 4.3, 5.0, OpenBSD 2.8 */
     oldsigmask = proc->p_sigmask;
-#if defined(__sigaddset)
-    __sigaddset(&proc->p_sigmask, SIGIO);
-    __sigaddset(&proc->p_sigmask, SIGALRM);
-    __sigaddset(&proc->p_sigmask, SIGVTALRM);
-#elif defined(SIGADDSET)
-    SIGADDSET(proc->p_sigmask, SIGIO);
-    SIGADDSET(proc->p_sigmask, SIGALRM);
-    SIGADDSET(proc->p_sigmask, SIGVTALRM);
-#else
-    proc->p_sigmask |= sigmask(SIGIO);
-    proc->p_sigmask |= sigmask(SIGALRM);
-    proc->p_sigmask |= sigmask(SIGVTALRM);
-#endif /* __sigaddset */
+    xfs_block_sigset (&proc->p_sigmask);
+#elif defined(HAVE_STRUCT_PROC_P_SIGCTX)
+    /* NetBSD 1.6 */
+    oldsigmask = proc->p_sigctx.ps_sigmask;
+    xfs_block_sigset (&proc->p_sigctx.ps_sigmask);
 #elif defined(HAVE_STRUCT_PROC_P_SIGWAITMASK)
+    /* OSF 4.0 */
     oldsigmask = proc->p_sigwaitmask;
     sigaddset(&proc->p_sigwaitmask, SIGIO);
     sigaddset(&proc->p_sigwaitmask, SIGALRM);
     sigaddset(&proc->p_sigwaitmask, SIGVTALRM);
+#elif defined(__osf__)
+    oldsigmask = u.u_sigmask;
+    sigaddset(&u.u_sigmask, SIGIO);
+    sigaddset(&u.u_sigmask, SIGALRM);
+    sigaddset(&u.u_sigmask, SIGVTALRM);
 #endif
 
     /*
@@ -469,8 +499,12 @@ xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size)
 
 #ifdef HAVE_STRUCT_PROC_P_SIGMASK
     proc->p_sigmask = oldsigmask;
+#elif defined(HAVE_STRUCT_PROC_P_SIGCTX)
+    proc->p_sigctx.ps_sigmask = oldsigmask;
 #elif defined(HAVE_STRUCT_PROC_P_SIGWAITMASK)
     proc->p_sigwaitmask = oldsigmask;
+#elif defined(__osf__)
+    u.u_sigmask = oldsigmask;
 #endif
 
     /*

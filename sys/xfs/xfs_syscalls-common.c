@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- *
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,7 +33,7 @@
 
 #include <xfs/xfs_locl.h>
 
-RCSID("$Id: xfs_syscalls-common.c,v 1.3 2000/09/11 14:26:53 art Exp $");
+RCSID("$Id: xfs_syscalls-common.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
 
 /*
  * XFS system calls.
@@ -72,7 +67,7 @@ RCSID("$Id: xfs_syscalls-common.c,v 1.3 2000/09/11 14:26:53 art Exp $");
  * the syscall entry point
  */
 
-#if defined(_LKM) || defined(KLD_MODULE) || defined(__osf__)
+#if defined(_LKM) || defined(KLD_MODULE) || defined(__osf__) || defined(__APPLE__)
 int
 xfspioctl(struct proc *proc, void *varg, register_t *return_value)
 #else
@@ -80,7 +75,7 @@ int
 sys_xfspioctl(struct proc *proc, void *varg, register_t *return_value)
 #endif
 {
-#if defined(_LKM) || defined(KLD_MODULE) || defined(__osf__)
+#if defined(_LKM) || defined(KLD_MODULE) || defined(__osf__) || defined(__APPLE__)
     struct sys_pioctl_args *arg = (struct sys_pioctl_args *) varg;
 #else
     struct sys_xfspioctl_args *arg = (struct sys_xfspioctl_args *) varg;
@@ -204,7 +199,7 @@ xfs_setpag_call(struct ucred **ret_cred)
     return 0;
 }
 
-#if defined(_LKM) || defined(KLD_MODULE) || defined(__osf__)
+#if defined(_LKM) || defined(KLD_MODULE) || defined(__osf__) || defined(__APPLE__)
 /*
  * remove a pag
  */
@@ -278,11 +273,12 @@ lookup_node (const char *pathptr,
     struct nameidata nd, *ndp = &nd;
 #endif
     struct vnode *vp;
+    size_t count;
 
     XFSDEB(XDEBSYS, ("xfs_syscall: looking up: %lx\n",
 		     (unsigned long)pathptr));
 
-    error = copyinstr((char *) pathptr, path, MAXPATHLEN, NULL);
+    error = copyinstr((char *) pathptr, path, MAXPATHLEN, &count);
 
     XFSDEB(XDEBSYS, ("xfs_syscall: looking up: %s, error: %d\n", path, error));
 
@@ -307,57 +303,55 @@ lookup_node (const char *pathptr,
 }
 
 /*
- * return file handle of `vp' in vice_ioctl->out
+ * implement xfs fhget in a way that should be compatible with the native
+ * getfh
  */
 
 static int
-fhget_call (struct proc *p,
+getfh_compat (struct proc *p,
+	      struct ViceIoctl *vice_ioctl,
+	      struct vnode *vp)
+{
+    /* This is to be same as getfh */
+    fhandle_t fh;
+    int error;
+	
+    bzero((caddr_t)&fh, sizeof(fh));
+    fh.fh_fsid = vp->v_mount->mnt_stat.f_fsid;
+#if __osf__
+    VFS_VPTOFH(vp, &fh.fh_fid, error);
+#else
+    error = VFS_VPTOFH(vp, &fh.fh_fid);
+#endif
+    if (error)
+	return error;
+
+    if (vice_ioctl->out_size < sizeof(fh))
+	return EINVAL;
+	
+    return copyout((caddr_t)&fh, vice_ioctl->out, sizeof (fh));
+}
+
+/*
+ * implement xfs fhget by combining (dev, ino, generation)
+ */
+
+#ifndef __OpenBSD__
+static int
+trad_fhget (struct proc *p,
 	    struct ViceIoctl *vice_ioctl,
 	    struct vnode *vp)
 {
     int error;
-#if !((defined(HAVE_GETFH) && defined(HAVE_FHOPEN)) || defined(__osf__))
     struct mount *mnt;
     struct vattr vattr;
     size_t len;
     struct xfs_fhandle_t xfs_handle;
     struct xfs_fh_args fh_args;
-#endif
 
-    XFSDEB(XDEBSYS, ("fhget_call\n"));
-
-    if (vp == NULL)
-	return EBADF;
-
-    error = xfs_suser (p);
-    if (error)
-	return error;
-
-#if (defined(HAVE_GETFH) && defined(HAVE_FHOPEN)) || defined(__osf__)
-    {
-	/* This is to be same as getfh */
-	fhandle_t fh;
-	
-	bzero((caddr_t)&fh, sizeof(fh));
-	fh.fh_fsid = vp->v_mount->mnt_stat.f_fsid;
-#if __osf__
-	VFS_VPTOFH(vp, &fh.fh_fid, error);
-#else
-        error = VFS_VPTOFH(vp, &fh.fh_fid);
-#endif
-        if (error)
-	    return (error);
-
-	if (vice_ioctl->out_size < sizeof(fh))
-	    return EINVAL;
-	
-	error = copyout((caddr_t)&fh, vice_ioctl->out, sizeof (fh));
-	return (error);
-    }
-#else
     xfs_vop_getattr(vp, &vattr, xfs_proc_to_cred(p), p, error);
     if (error)
-	goto out;
+	return error;
 
     mnt = vp->v_mount;
 
@@ -369,21 +363,51 @@ fhget_call (struct proc *p,
     memcpy (xfs_handle.fhdata, &fh_args, sizeof(fh_args));
     len = sizeof(xfs_handle);
 
-    if (vice_ioctl->out_size < len) {
-	error = EINVAL;
-	goto out;
-    }
+    if (vice_ioctl->out_size < len)
+	return EINVAL;
 
     error = copyout (&xfs_handle, vice_ioctl->out, len);
     if (error) {
 	XFSDEB(XDEBSYS, ("fhget_call: copyout failed: %d\n", error));
     }
-    
- out:
-    vrele (vp);
     return error;
+}
+#endif /* !__OpenBSD__ */
+
+/*
+ * return file handle of `vp' in vice_ioctl->out
+ * vp is vrele:d
+ */
+
+static int
+fhget_call (struct proc *p,
+	    struct ViceIoctl *vice_ioctl,
+	    struct vnode *vp)
+{
+    int error;
+
+    XFSDEB(XDEBSYS, ("fhget_call\n"));
+
+    if (vp == NULL)
+	return EBADF;
+
+#if defined(__APPLE__) || defined(__osf__)
+    error = EINVAL; /* XXX: Leaks vnodes if fhget/fhopen is used */
+    goto out;
+#endif
+
+    error = xfs_suser (p);
+    if (error)
+	goto out;
+
+#if (defined(HAVE_GETFH) && defined(HAVE_FHOPEN)) || defined(__osf__)
+    error = getfh_compat (p, vice_ioctl, vp);
+#else
+    error = trad_fhget (p, vice_ioctl, vp);
 #endif /* HAVE_GETFH && HAVE_FHOPEN */
-    
+out:
+    vrele(vp);
+    return error;
 }
 
 /*
@@ -404,6 +428,10 @@ fhopen_call (struct proc *p,
 	vrele (vp);
 	return EINVAL;
     }
+
+#if defined(__APPLE__) || defined(__osf__)
+    return EINVAL; /* XXX: Leaks vnodes if fhget/fhopen is used */
+#endif
 
     return xfs_fhopen (p,
 		       (struct xfs_fhandle_t *)vice_ioctl->in,
@@ -459,10 +487,10 @@ remote_pioctl (struct proc *p,
 
     msg.insize = vice_ioctl->in_size;
     msg.outsize = vice_ioctl->out_size;
-    msg.cred.uid = xfs_proc_to_ruid(p);
+    msg.cred.uid = xfs_proc_to_euid(p);
     msg.cred.pag = xfs_get_pag(xfs_proc_to_cred(p));
 
-    error = xfs_message_rpc(0, &msg.header, sizeof(msg)); /* XXX */
+    error = xfs_message_rpc(0, &msg.header, sizeof(msg), p); /* XXX */
     msg2 = (struct xfs_message_wakeup_data *) &msg;
 
     if (error == 0)
@@ -560,7 +588,9 @@ xfs_pioctl_call(struct proc *proc,
     case VIOC_FHOPEN :
 	return fhopen_call (proc, &vice_ioctl, vp,
 			    SCARG(arg, a_followSymlinks), return_value);
-    case VIOC_XFSDEBUG:
+    case VIOC_XFSDEBUG :
+	if (vp != NULL)
+	    vrele (vp);
 	return xfs_debug (proc, &vice_ioctl);
     default :
 	XFSDEB(XDEBSYS, ("a_opcode = %x\n", SCARG(arg, a_opcode)));

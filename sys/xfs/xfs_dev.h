@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- *
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_dev.h,v 1.5 2000/09/11 14:26:52 art Exp $ */
+/* $Id: xfs_dev.h,v 1.6 2002/06/07 04:10:32 hin Exp $ */
 
 #ifndef _xfs_dev_h
 #define _xfs_dev_h
@@ -68,6 +63,7 @@ struct xfs_channel {
     int status;
 #define CHANNEL_OPENED	0x1
 #define CHANNEL_WAITING 0x2
+    struct proc *proc;
 };
 
 extern struct xfs_channel xfs_channel[NXFS];
@@ -108,14 +104,18 @@ void
 xfs_outq(struct xfs_link *p);
 
 int
-xfs_devopen_common(dev_t dev);
+xfs_devopen_common(dev_t dev, struct proc *);
 
 #ifndef __osf__ /* XXX - we should do the same for osf */
 int xfs_devopen(dev_t dev, int flag, int devtype, struct proc *proc);
 int xfs_devclose(dev_t dev, int flag, int devtype, struct proc *proc);
 int xfs_devioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 		 struct proc *p);
+#ifdef HAVE_THREE_ARGUMENT_SELRECORD
+int xfs_devselect(dev_t dev, int which, void *wql, struct proc *p);
+#else
 int xfs_devselect(dev_t dev, int which, struct proc *p);
+#endif
 #endif /* ! __osf__ */
 
 int
@@ -131,7 +131,8 @@ int
 xfs_message_send(int fd, struct xfs_message_header * message, u_int size);
 
 int
-xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size);
+xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size,
+		struct proc *p);
 
 int
 xfs_message_receive(int fd,

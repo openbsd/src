@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- *
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -49,7 +44,27 @@
 #include <xfs/xfs_syscalls.h>
 #include <xfs/xfs_vnodeops.h>
 
-RCSID("$Id: xfs_vnodeops-common.c,v 1.5 2002/03/14 03:16:14 millert Exp $");
+RCSID("$Id: xfs_vnodeops-common.c,v 1.6 2002/06/07 04:10:32 hin Exp $");
+
+static void
+xfs_handle_stale(struct xfs_node *xn)
+{
+#ifndef __OpenBSD__
+    struct vnode *vp = XNODE_TO_VNODE(xn);
+#endif
+
+    if ((xn->flags & XFS_STALE) == 0)
+	return;
+
+#if __APPLE__
+    if (UBCISVALID(vp) && !ubc_isinuse(vp, 1)) {
+	xn->flags &= ~XFS_STALE;
+	XFS_TOKEN_CLEAR(xn, ~0,
+			XFS_OPEN_MASK | XFS_ATTR_MASK |
+			XFS_DATA_MASK | XFS_LOCK_MASK);
+    }
+#endif
+}
 
 int
 xfs_open_valid(struct vnode *vp, struct ucred *cred, struct proc *p,
@@ -61,6 +76,8 @@ xfs_open_valid(struct vnode *vp, struct ucred *cred, struct proc *p,
 
     XFSDEB(XDEBVFOPS, ("xfs_open_valid\n"));
 
+    xfs_handle_stale(xn);
+
     do {
 	if (!XFS_TOKEN_GOT(xn, tok)) {
 	    struct xfs_message_open msg;
@@ -71,7 +88,7 @@ xfs_open_valid(struct vnode *vp, struct ucred *cred, struct proc *p,
 	    msg.handle = xn->handle;
 	    msg.tokens = tok;
 
-	    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+	    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), p);
 
 	    if (error == 0)
 		error = ((struct xfs_message_wakeup *) & msg)->error;
@@ -103,7 +120,7 @@ xfs_attr_valid(struct vnode *vp, struct ucred *cred, struct proc *p,
 	    msg.cred.uid = cred->cr_uid;
 	    msg.cred.pag = pag;
 	    msg.handle = xn->handle;
-	    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+	    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), p);
 	    if (error == 0)
 		error = ((struct xfs_message_wakeup *) & msg)->error;
 	} else {
@@ -132,7 +149,7 @@ xfs_fetch_rights(struct vnode *vp, struct ucred *cred, struct proc *p)
 	    msg.cred.uid = cred->cr_uid;
 	    msg.cred.pag = pag;
 	    msg.handle = xn->handle;
-	    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+	    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), p);
 	    if (error == 0)
 		error = ((struct xfs_message_wakeup *) & msg)->error;
 	} else {
@@ -163,7 +180,7 @@ xfs_data_valid(struct vnode *vp, struct ucred *cred, struct proc *p,
 	    msg.handle = xn->handle;
 	    msg.tokens = tok;
 
-	    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+	    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), p);
 
 	    if (error == 0)
 		error = ((struct xfs_message_wakeup *) & msg)->error;
@@ -229,7 +246,7 @@ do_fsync(struct xfs *xfsp,
     vattr2xfs_attr(&xn->attr, &msg.attr);
     msg.flag   = flag;
 
-    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), p);
 
     if (error == 0)
 	error = ((struct xfs_message_wakeup *) & msg)->error;
@@ -260,6 +277,9 @@ xfs_fsync_common(struct vnode *vp, struct ucred *cred,
 	return 0;
     }
     
+#ifdef __APPLE__
+    ubc_pushdirty(vp);
+#endif
     if (xn->flags & XFS_DATA_DIRTY) {
 #ifdef FSYNC_RECLAIM
 	/* writing back the data from this vnode failed */
@@ -316,10 +336,6 @@ xfs_read_common(struct vnode *vp, struct uio *uio, int ioflag,
 	xfs_vfs_readlock(t, xfs_uio_to_proc(uio));
 	xfs_vop_read(t, uio, ioflag, cred, error);
 	xfs_vfs_unlock(t, xfs_uio_to_proc(uio));
-
-	if (uio->uio_iovcnt && uio->uio_iov[0].iov_len > 0)
-	    XFSDEB(XDEBVNOPS, ("xfs_read: byte: %d\n",
-			       ((char *)uio->uio_iov[0].iov_base)[0]));
     }
 
     XFSDEB(XDEBVNOPS, ("xfs_read offset: %lu resid: %d\n",
@@ -391,7 +407,7 @@ xfs_setattr_common(struct vnode *vp, struct vattr *vap,
 #define CHECK_XFSATTR(A, cast) (vap->A == cast VNOVAL || vap->A == xn->attr.A)
 	if (CHECK_XFSATTR(va_mode,(mode_t)) &&
 	    CHECK_XFSATTR(va_nlink,(short)) &&
-	    CHECK_XFSATTR(va_size,(u_quad_t)) &&
+	    CHECK_XFSATTR(va_size,(va_size_t)) &&
 	    CHECK_XFSATTR(va_uid,(uid_t)) &&
 	    CHECK_XFSATTR(va_gid,(gid_t)) &&
 	    CHECK_XFSATTR(va_mtime.tv_sec,(unsigned int)) &&
@@ -420,10 +436,14 @@ xfs_setattr_common(struct vnode *vp, struct vattr *vap,
 	vattr2xfs_attr(vap, &msg.attr);
 	if (XFS_TOKEN_GOT(xn, XFS_DATA_R)) {
 	    if (vp->v_type == VREG) {
-		if (vap->va_size != (u_quad_t)VNOVAL)
+		if (vap->va_size != (va_size_t)VNOVAL)
 		    XA_SET_SIZE(&msg.attr, vap->va_size);
 		else
 		    XA_SET_SIZE(&msg.attr, xn->attr.va_size);
+#ifdef __APPLE__
+		if (UBCINFOEXISTS(vp))
+		    ubc_setsize(vp, msg.attr.xa_size);
+#endif
 	    }
 	    if (vap->va_mtime.tv_sec != (unsigned int)VNOVAL)
 		XA_SET_MTIME(&msg.attr, vap->va_mtime.tv_sec);
@@ -432,7 +452,7 @@ xfs_setattr_common(struct vnode *vp, struct vattr *vap,
 	}
 
 	XFS_TOKEN_CLEAR(xn, XFS_ATTR_VALID, XFS_ATTR_MASK);
-	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), p);
 	if (error == 0)
 	    error = ((struct xfs_message_wakeup *) & msg)->error;
     }
@@ -508,8 +528,13 @@ xfs_lookup_common(struct vnode *dvp,
     struct proc *proc  = xfs_cnp_to_proc(cnp);
     struct ucred *cred = xfs_proc_to_cred(proc);
 
+    XFSDEB(XDEBVNOPS, ("xfs_lookup_common: enter\n"));
+
     *vpp = NULL;
 
+    if (cnp->cn_namelen >= XFS_MAX_NAME)
+	return ENAMETOOLONG;
+	
     if (dvp->v_type != VDIR)
 	return ENOTDIR;
 
@@ -523,6 +548,9 @@ xfs_lookup_common(struct vnode *dvp,
 	xfs_vop_access(dvp, VEXEC, cred, proc, error);
 	if (error != 0)
 	    goto done;
+
+	XFSDEB(XDEBVNOPS, ("xfs_lookup_common: dvp = %lx\n", (unsigned long) dvp));
+	
 
 	error = xfs_dnlc_lookup(dvp, cnp, vpp);
 	if (error == 0) {
@@ -548,12 +576,10 @@ xfs_lookup_common(struct vnode *dvp,
 		msg.cred.pag = XFS_ANONYMOUSID;
 	    }
 	    msg.parent_handle = d->handle;
-
-	    bcopy(cnp->cn_nameptr, msg.name, cnp->cn_namelen);
+	    memcpy(msg.name, cnp->cn_nameptr, cnp->cn_namelen);
 	    msg.name[cnp->cn_namelen] = '\0';
-
-	    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
-
+	    error = xfs_message_rpc(xfsp->fd, &msg.header,
+				    sizeof(msg), proc);
 	    if (error == 0)
 		error = ((struct xfs_message_wakeup *) & msg)->error;
 	    if(error == ENOENT && cnp->cn_nameiop != CREATE) {
@@ -569,6 +595,7 @@ xfs_lookup_common(struct vnode *dvp,
     } while (error == 0);
 
 done:
+    XFSDEB(XDEBVNOPS, ("xfs_lookup_common: return\n"));
     return error;
 }
 
@@ -590,7 +617,8 @@ xfs_create_common(struct vnode *dvp,
 
 	msg.header.opcode = XFS_MSG_CREATE;
 	msg.parent_handle = xn->handle;
-	strncpy(msg.name, name, 256);
+	if (strlcpy(msg.name, name, sizeof(msg.name)) >= XFS_MAX_NAME)
+	    return ENAMETOOLONG;
 	vattr2xfs_attr(vap, &msg.attr);
 
 	msg.mode = 0;		       /* XXX - mode */
@@ -603,7 +631,7 @@ xfs_create_common(struct vnode *dvp,
 	}
 
 
-	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), p);
 
 	if (error == 0)
 	    error = ((struct xfs_message_wakeup *) & msg)->error;
@@ -633,25 +661,19 @@ xfs_remove_common(struct vnode *dvp,
 
     msg.header.opcode = XFS_MSG_REMOVE;
     msg.parent_handle = xn->handle;
-    strncpy(msg.name, name, 256);
     msg.cred.uid = cred->cr_uid;
     msg.cred.pag = xfs_get_pag(cred);
-
-    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+    
+    if (strlcpy(msg.name, name, sizeof(msg.name)) >= XFS_MAX_NAME)
+	error = ENAMETOOLONG;
+    else
+	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), p);
     if (error == 0)
 	error = ((struct xfs_message_wakeup *) &msg)->error;
 
     if (error == 0)
 	xfs_dnlc_purge (vp);
 
-#if !defined(__FreeBSD__) || __FreeBSD_version < 300000
-    if (dvp == vp)
-	vrele(vp);
-    else
-	vput(vp);
-    vput(dvp);
-#endif
-    
     return error;
 }
 
@@ -680,12 +702,14 @@ xfs_rename_common(struct vnode *fdvp,
 
 	msg.header.opcode = XFS_MSG_RENAME;
 	msg.old_parent_handle = VNODE_TO_XNODE(fdvp)->handle;
-	strncpy(msg.old_name, fname, 256);
+	if (strlcpy(msg.old_name, fname, sizeof(msg.old_name)) >= XFS_MAX_NAME)
+	    return ENAMETOOLONG;
 	msg.new_parent_handle = VNODE_TO_XNODE(tdvp)->handle;
-	strncpy(msg.new_name, tname, 256);
+	if (strlcpy(msg.new_name, tname, sizeof(msg.new_name)) >= XFS_MAX_NAME)
+	    return ENAMETOOLONG;
 	msg.cred.uid = cred->cr_uid;
 	msg.cred.pag = xfs_get_pag(cred);
-	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), p);
 	if (error == 0)
 	    error = ((struct xfs_message_wakeup *) &msg)->error;
 
@@ -713,7 +737,8 @@ xfs_mkdir_common(struct vnode *dvp,
 
 	msg.header.opcode = XFS_MSG_MKDIR;
 	msg.parent_handle = xn->handle;
-	strncpy(msg.name, name, 256);
+	if (strlcpy(msg.name, name, sizeof(msg.name)) >= XFS_MAX_NAME)
+	    return ENAMETOOLONG;
 	vattr2xfs_attr(vap, &msg.attr);
 	if (cred != NOCRED) {
 	    msg.cred.uid = cred->cr_uid;
@@ -722,7 +747,7 @@ xfs_mkdir_common(struct vnode *dvp,
 	    msg.cred.uid = 0;
 	    msg.cred.pag = XFS_ANONYMOUSID;
 	}
-	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), p);
 	if (error == 0)
 	    error = ((struct xfs_message_wakeup *) & msg)->error;
     }
@@ -746,23 +771,17 @@ xfs_rmdir_common(struct vnode *dvp,
 
     msg.header.opcode = XFS_MSG_RMDIR;
     msg.parent_handle = xn->handle;
-    strncpy(msg.name, name, 256);
     msg.cred.uid = cred->cr_uid;
     msg.cred.pag = xfs_get_pag(cred);
-    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+    if (strlcpy(msg.name, name, sizeof(msg.name)) >= XFS_MAX_NAME)
+	error = ENAMETOOLONG;
+    else
+	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), p);
     if (error == 0)
 	error = ((struct xfs_message_wakeup *) &msg)->error;
 
     if (error == 0)
 	xfs_dnlc_purge (vp);
-
-#if !defined(__FreeBSD__) || __FreeBSD_version < 300000
-    if (dvp == vp)
-	vrele(vp);
-    else
-	vput(vp);
-    vput(dvp);
-#endif
 
     XFSDEB(XDEBVNOPS, ("xfs_rmdir error: %d\n", error));
 
@@ -819,11 +838,12 @@ xfs_link_common(struct vnode *dvp,
     msg.header.opcode = XFS_MSG_LINK;
     msg.parent_handle = xn->handle;
     msg.from_handle   = xn2->handle;
-    strncpy(msg.name, name, 256);
+    if (strlcpy(msg.name, name, sizeof(msg.name)) >= XFS_MAX_NAME)
+	return ENAMETOOLONG;
     msg.cred.uid = cred->cr_uid;
     msg.cred.pag = xfs_get_pag(cred);
 
-    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), p);
     if (error == 0)
 	error = ((struct xfs_message_wakeup *) & msg)->error;
     
@@ -849,30 +869,22 @@ xfs_symlink_common(struct vnode *dvp,
 
     msg.header.opcode = XFS_MSG_SYMLINK;
     msg.parent_handle = xn->handle;
-    strncpy(msg.name, name, sizeof(msg.name));
-    msg.name[sizeof(msg.name) - 1] = '\0';
     vattr2xfs_attr(vap, &msg.attr);
     msg.cred.uid = cred->cr_uid;
     msg.cred.pag = xfs_get_pag(cred);
-    strncpy (msg.contents, target, sizeof(msg.contents));
-    msg.contents[sizeof(msg.contents) - 1] = '\0';
-
-    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+    if (strlcpy (msg.contents, target, sizeof(msg.contents)) >= XFS_MAX_SYMLINK_CONTENT) {
+	error = ENAMETOOLONG;
+	goto done;
+    }
+    if (strlcpy(msg.name, name, sizeof(msg.name)) >= XFS_MAX_NAME) {
+	error = ENAMETOOLONG;
+	goto done;
+    }
+    error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), proc);
     if (error == 0)
 	error = ((struct xfs_message_wakeup *) & msg)->error;
 
-    if (error == 0) {
-	error = xfs_lookup_common(dvp, cnp, vpp);
-#if !defined(__FreeBSD__) || __FreeBSD_version < 400012
-	if (error == 0)
-	    vput (*vpp);
-#endif
-    }
-
-#if !defined(__FreeBSD__)
-    vput(dvp);
-#endif
-
+ done:
     return error;
 }
 
@@ -918,18 +930,23 @@ xfs_inactive_common(struct vnode *vp, struct proc *p)
     error = xfs_fsync_common(vp, xn->cred, /* XXX */ 0, p);
     if (error) {
 	printf ("xfs_inactive: failed writing back data: %d\n", error);
+	xn->flags &= ~XFS_DATA_DIRTY;
     }
 
 #ifndef __osf__
     xfs_vfs_unlock(vp, p);
     /* If this node is no longer valid, recycle immediately. */
-    if (!XFS_TOKEN_GOT(xn, XFS_ATTR_R | XFS_ATTR_W)) {
+    if (!XFS_TOKEN_GOT(xn, XFS_ATTR_R | XFS_ATTR_W)
+	|| (xn->flags & XFS_STALE) == XFS_STALE) {
         XFSDEB(XDEBVNOPS, ("xfs_inactive: vrecycle\n"));
         vrecycle(vp, 0, p);
     }
 #else
-    /* XXX ? */
+
+    XFSDEB(XDEBVNOPS, ("xfs_inactive: vp = %lx vp->v_usecount= %d\n",
+		       (unsigned long)vp, vp?vp->v_usecount:0));
 #endif
+    xn->flags &= ~XFS_STALE;
 
     XFSDEB(XDEBVNOPS, ("return: xfs_inactive\n"));
 
@@ -943,7 +960,7 @@ xfs_reclaim_common(struct vnode *vp)
     struct xfs *xfsp = XFS_FROM_VNODE(vp);
     struct xfs_node *xn = VNODE_TO_XNODE(vp);
 
-    XFSDEB(XDEBVNOPS, ("xfs_reclaim: %lx",
+    XFSDEB(XDEBVNOPS, ("xfs_reclaim: %lx\n",
 		       (unsigned long)vp));
 
     XFS_TOKEN_CLEAR(xn,
@@ -998,7 +1015,7 @@ xfs_advlock_common(struct vnode *dvp,
 	    msg.cred.uid = 0;
 	    msg.cred.pag = XFS_ANONYMOUSID;
 	}
-	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg));
+	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), p);
 	if (error == 0)
 	    error = ((struct xfs_message_wakeup *) & msg)->error;
     }

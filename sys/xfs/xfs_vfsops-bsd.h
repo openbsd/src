@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- *
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_vfsops-bsd.h,v 1.5 2001/02/21 02:45:12 nate Exp $ */
+/* $Id: xfs_vfsops-bsd.h,v 1.6 2002/06/07 04:10:32 hin Exp $ */
 
 #ifndef _xfs_vfsops_bsd_h
 #define _xfs_vfsops_bsd_h
@@ -44,7 +39,11 @@
 int
 xfs_mount(struct mount * mp,
 	  const char *user_path,
+#ifdef __OpenBSD__
 	  void *user_data,
+#else
+	  caddr_t user_data,
+#endif
 	  struct nameidata * ndp,
 	  struct proc * p);
 

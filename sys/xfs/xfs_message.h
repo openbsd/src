@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -36,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_message.h,v 1.4 2000/09/11 14:26:52 art Exp $ */
+/* $Id: xfs_message.h,v 1.5 2002/06/07 04:10:32 hin Exp $ */
 
 #ifndef _xmsg_h
 #define _xmsg_h
@@ -139,6 +134,8 @@ typedef struct xfs_cache_handle {
 #define XFS_DATA_DIRTY	0x0001
 #define XFS_ATTR_DIRTY	0x0002
 #define XFS_AFSDIR	0x0004
+#define XFS_STALE	0x0008
+#define XFS_XDELETED	0x0010
 
 /* Are necessary tokens available? */
 #define XFS_TOKEN_GOT(xn, tok)		((xn)->tokens & (tok))
@@ -149,6 +146,11 @@ typedef struct xfs_cache_handle {
 #define XFS_RIGHT_R	0x01		/* may read? */
 #define XFS_RIGHT_W	0x02		/* may write? */
 #define XFS_RIGHT_X	0x04		/* may execute? */
+
+/* Max name length passed in xfs messages */
+
+#define XFS_MAX_NAME 256
+#define XFS_MAX_SYMLINK_CONTENT 2048
 
 struct xfs_msg_node {
     xfs_handle handle;
@@ -190,7 +192,8 @@ enum { XFS_NOREFS = 1, XFS_DELETE = 2 };
  * Flags for installdata
  */
 
-enum { XFS_ID_INVALID_DNLC = 0x01, XFS_ID_AFSDIR = 0x02 };
+enum { XFS_ID_INVALID_DNLC = 0x01, XFS_ID_AFSDIR = 0x02,
+       XFS_ID_HANDLE_VALID = 0x04 };
 
 /*
  * Defined message types and their opcodes.
@@ -271,14 +274,14 @@ struct xfs_message_getnode {
   struct xfs_message_header header;
   struct xfs_cred cred;
   xfs_handle parent_handle;
-  char name[256];		/* XXX */
+  char name[XFS_MAX_NAME];
 };
 
 /* XFS_MESSAGE_INSTALLNODE */
 struct xfs_message_installnode {
   struct xfs_message_header header;
   xfs_handle parent_handle;
-  char name[256];		/* XXX */
+  char name[XFS_MAX_NAME];
   struct xfs_msg_node node;
 };
 
@@ -308,7 +311,7 @@ struct xfs_message_getdata {
 struct xfs_message_installdata {
   struct xfs_message_header header;
   struct xfs_msg_node node;
-  char cache_name[256];		/* XXX */
+  char cache_name[XFS_MAX_NAME];
   struct xfs_cache_handle cache_handle;
   u_int32_t flag;
   u_int32_t pad1;
@@ -359,7 +362,7 @@ struct xfs_message_putattr {
 struct xfs_message_create {
   struct xfs_message_header header;
   xfs_handle parent_handle;
-  char name[256];		/* XXX */
+  char name[XFS_MAX_NAME];
   struct xfs_attr attr;
   u_int32_t mode;
   u_int32_t pad1;
@@ -370,7 +373,7 @@ struct xfs_message_create {
 struct xfs_message_mkdir {
   struct xfs_message_header header;
   xfs_handle parent_handle;
-  char name[256];		/* XXX */
+  char name[XFS_MAX_NAME];
   struct xfs_attr attr;
   struct xfs_cred cred;
 };
@@ -379,7 +382,7 @@ struct xfs_message_mkdir {
 struct xfs_message_link {
   struct xfs_message_header header;
   xfs_handle parent_handle;
-  char name[256];		/* XXX */
+  char name[XFS_MAX_NAME];
   xfs_handle from_handle;
   struct xfs_cred cred;
 };
@@ -388,8 +391,8 @@ struct xfs_message_link {
 struct xfs_message_symlink {
   struct xfs_message_header header;
   xfs_handle parent_handle;
-  char name[256];		/* XXX */
-  char contents[2048];		/* XXX */
+  char name[XFS_MAX_NAME];
+  char contents[XFS_MAX_SYMLINK_CONTENT];
   struct xfs_attr attr;
   struct xfs_cred cred;
 };
@@ -398,7 +401,7 @@ struct xfs_message_symlink {
 struct xfs_message_remove {
   struct xfs_message_header header;
   xfs_handle parent_handle;
-  char name[256];		/* XXX */
+  char name[XFS_MAX_NAME];
   struct xfs_cred cred;
 };
 
@@ -406,7 +409,7 @@ struct xfs_message_remove {
 struct xfs_message_rmdir {
   struct xfs_message_header header;
   xfs_handle parent_handle;
-  char name[256];		/* XXX */
+  char name[XFS_MAX_NAME];
   struct xfs_cred cred;
 };
 
@@ -414,9 +417,9 @@ struct xfs_message_rmdir {
 struct xfs_message_rename {
   struct xfs_message_header header;
   xfs_handle old_parent_handle;
-  char old_name[256];		/* XXX */
+  char old_name[XFS_MAX_NAME];
   xfs_handle new_parent_handle;
-  char new_name[256];		/* XXX */
+  char new_name[XFS_MAX_NAME];
   struct xfs_cred cred;
 };
 
