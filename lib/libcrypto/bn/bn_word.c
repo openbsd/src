@@ -146,6 +146,9 @@ int BN_sub_word(BIGNUM *a, BN_ULONG w)
 	{
 	int i;
 
+	if ((w & BN_MASK2) == 0)
+		return(1);
+
 	if (BN_is_zero(a) || a->neg)
 		{
 		a->neg=0;
