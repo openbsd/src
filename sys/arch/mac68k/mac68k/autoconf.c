@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.16 2002/04/21 23:35:52 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.17 2003/02/25 01:45:12 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -76,20 +76,22 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ffs/ffs_extern.h>
 
-#include "ether.h"
-
 struct device	*booted_device;
 int		booted_partition;
 
 struct device *parsedisk(char *, int, int, dev_t *);
-static struct device *getdisk(char *, int, int, dev_t *);
-static int findblkmajor(struct device *);
-static int getstr(char *, int);
-static void findbootdev(void);
-static int target_to_unit(u_long, u_long, u_long);
+struct device *getdisk(char *, int, int, dev_t *);
+int findblkmajor(struct device *);
+int getstr(char *, int);
+void findbootdev(void);
+int target_to_unit(u_long, u_long, u_long);
 
 void	setroot(void);
 void	swapconf(void);
+
+#ifdef RAMDISK_HOOKS
+static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
+#endif
 
 void
 cpu_configure()
@@ -140,7 +142,7 @@ struct nam2blk {
 	{ "rd",		13 },
 };
 
-static int
+int
 findblkmajor(dv)
 	struct device *dv;
 {
@@ -153,7 +155,7 @@ findblkmajor(dv)
 	return (-1);
 }
 
-static struct device *
+struct device *
 getdisk(str, len, defpart, devp)
 	char *str;
 	int len, defpart;
@@ -163,6 +165,9 @@ getdisk(str, len, defpart, devp)
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
+#ifdef RAMDISK_HOOKS
+		printf(" %s[a-p]", fakerdrootdev.dv_xname);
+#endif
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
 			if (dv->dv_class == DV_DISK)
@@ -197,9 +202,19 @@ parsedisk(str, len, defpart, devp)
 	} else
 		part = defpart;
 
+#ifdef RAMDISK_HOOKS
+	if (strcmp(str, fakerdrootdev.dv_xname) == 0) {
+		dv = &fakerdrootdev;
+		goto gotdisk;
+	}
+#endif
+
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
 		if (dv->dv_class == DV_DISK &&
 		    strcmp(str, dv->dv_xname) == 0) {
+#ifdef RAMDISK_HOOKS
+gotdisk:
+#endif
 			majdev = findblkmajor(dv);
 			if (majdev < 0)
 				panic("parsedisk");
@@ -243,14 +258,14 @@ setroot(void)
 	extern char *nfsbootdevname;
 #endif
 
+#ifdef RAMDISK_HOOKS
+	bootdv = &fakerdrootdev;
+#else
 	bootdv = booted_device;
+#endif
 	bootpartition = booted_partition;
 	rootdv = swapdv = NULL;		/* XXX work around gcc warning */
 
-#ifdef DEBUG
-	printf("boot device: %s\n",
-		(bootdv) ? bootdv->dv_xname : "<unknown>");
-#endif
 	/*
 	 * If `swap generic' and we couldn't determine boot device,
 	 * ask the user.
@@ -289,7 +304,7 @@ setroot(void)
 		}
 
 		/*
-		 * because swap must be on same device as root, for
+		 * Because swap must be on same device as root, for
 		 * network devices this is easy.
 		 */
 		if (rootdv->dv_class == DV_IFNET) {
@@ -373,15 +388,12 @@ gotswap:
 	}
 
 	switch (rootdv->dv_class) {
-#if defined(NFSCLIENT)
+#ifdef NFSCLIENT
 	case DV_IFNET:
 		mountroot = nfs_mountroot;
-#if NETHER > 0
 		nfsbootdevname = rootdv->dv_xname;
-#endif
 		return;
 #endif
-#if defined(FFS)
 	case DV_DISK:
 		mountroot = ffs_mountroot;
 		printf("root on %s%c", rootdv->dv_xname,
@@ -391,7 +403,6 @@ gotswap:
 			    DISKPART(nswapdev) + 'a');
 		printf("\n");
 		break;
-#endif
 	default:
 		printf("can't figure root, hope your kernel is right\n");
 		return;
@@ -421,7 +432,7 @@ gotswap:
 		dumpdev = swdevt[0].sw_dev;
 }
 
-static int
+int
 getstr(cp, size)
 	register char *cp;
 	register int size;
@@ -473,7 +484,7 @@ u_long		bootdev;	/* should be dev_t, but not until 32 bits */
 /*
  * Yanked from i386/i386/autoconf.c (and tweaked a bit)
  */
-static void
+void
 findbootdev()
 {
 	struct device *dv;
@@ -509,7 +520,7 @@ findbootdev()
  * This could be tape, disk, CD.  The calling routine, though,
  * assumes DISK.  It would be nice to allow CD, too...
  */
-static int
+int
 target_to_unit(bus, target, lun)
 	u_long bus, target, lun;
 {
