@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.4 2004/02/18 16:14:13 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.5 2004/02/18 23:25:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -216,6 +216,15 @@ up_generate_updates(struct rde_peer *peer,
 			/* Do not send routes back to sender */
 			return;
 
+		if (peer->conf.ebgp &&
+		    !aspath_loopfree(old->aspath->flags.aspath,
+		    peer->conf.remote_as))
+			/*
+			 * Do not send routes back to sender which would
+			 * cause a aspath loop.
+			 */
+			return;
+
 		if (peer->conf.ebgp == 0 && old->peer->conf.ebgp == 0)
 			/* Do not redistribute updates to ibgp peers */
 			return;
@@ -249,6 +258,15 @@ up_generate_updates(struct rde_peer *peer,
 	} else {
 		if (peer == new->peer)
 			/* Do not send routes back to sender */
+			return;
+
+		if (peer->conf.ebgp &&
+		    !aspath_loopfree(new->aspath->flags.aspath,
+		    peer->conf.remote_as))
+			/*
+			 * Do not send routes back to sender which would
+			 * cause a aspath loop.
+			 */
 			return;
 
 		if (peer->conf.ebgp == 0 && new->peer->conf.ebgp == 0)
