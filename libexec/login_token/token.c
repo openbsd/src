@@ -1,4 +1,4 @@
-/*	$OpenBSD: token.c,v 1.3 2000/12/20 01:54:42 millert Exp $	*/
+/*	$OpenBSD: token.c,v 1.4 2000/12/20 20:08:23 markus Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -79,7 +79,7 @@ static	TOKEN_CBlock tokennumber;
  */
 
 static	long	tokenrandomnumber(void);
-static	void	tokenseed(des_cblock *);
+static	void	tokenseed(TOKEN_CBlock *);
 static	void	lcase(char *);
 static	void	h2d(char *);
 static	void	h2cb(char *, TOKEN_CBlock *);
@@ -91,16 +91,10 @@ static	void	cb2h(TOKEN_CBlock, char *);
  */
 
 static void
-tokenseed(des_cblock *cb)
+tokenseed(TOKEN_CBlock *cb)
 {
-	static int first_time = 1;
-
-	if (first_time) {
-		first_time = 0;
-		des_random_key(*cb);
-		des_init_random_number_generator(cb);
-	}
-	des_new_random_key(cb);
+	cb->ul[0] = arc4random();
+	cb->ul[1] = arc4random();
 }
 
 /*
@@ -115,10 +109,7 @@ tokenseed(des_cblock *cb)
 static long
 tokenrandomnumber(void)
 {
-	TOKEN_CBlock seed;
-
-	tokenseed(&seed.cb);
-	return (((seed.ul[0] ^ seed.ul[1]) % 99999999));
+	return arc4random();
 }
 
 /*
@@ -164,8 +155,8 @@ tokenchallenge(char *user, char *challenge, int size, char *card_type)
 		}
 	}
 	if (r != 0 || tr.rim[0] == '\0') {
-		memset(tokennumber.ct, 0, sizeof(tokennumber));
-		snprintf(tokennumber.ct, sizeof(tokennumber.ct), "%08.8lu",
+		memset(tokennumber.ct, 0, sizeof(tokennumber.ct));
+		snprintf(tokennumber.ct, sizeof(tokennumber.ct), "%8.8lu",
 				tokenrandomnumber());
 		if (r == 0) {
 			memcpy(tr.rim, tokennumber.ct, 8);
@@ -194,15 +185,15 @@ tokenverify(char *username, char *challenge, char *response)
 	des_key_schedule key_schedule;
 
 
-	memset(cmp_text.ct, 0, sizeof(cmp_text));
-	memset(user_seed.ct, 0, sizeof(user_seed));
-	memset(cipher_text.ct, 0, sizeof(cipher_text));
-	memset(tokennumber.ct, 0, sizeof(tokennumber));
+	memset(cmp_text.ct, 0, sizeof(cmp_text.ct));
+	memset(user_seed.ct, 0, sizeof(user_seed.ct));
+	memset(cipher_text.ct, 0, sizeof(cipher_text.ct));
+	memset(tokennumber.ct, 0, sizeof(tokennumber.ct));
 
 	state = strtok(challenge, "\"");
 	state = strtok(NULL, "\"");
 	tmp.ul[0] = strtoul(state, NULL, 10);
-	snprintf(tokennumber.ct, sizeof(tokennumber.ct), "%08.8lu",tmp.ul[0]);
+	snprintf(tokennumber.ct, sizeof(tokennumber.ct), "%8.8lu",tmp.ul[0]);
 
 	/*
 	 * Retrieve the db record for the user. Nuke it as soon as
@@ -229,6 +220,7 @@ tokenverify(char *username, char *challenge, char *response)
 	memset(user_seed.ct, 0, sizeof(user_seed.ct));
 	des_ecb_encrypt(&tokennumber.cb, &cipher_text.cb, key_schedule,
 	    DES_ENCRYPT);
+	memset(key_schedule, 0, sizeof(key_schedule));
 
 	/*
 	 * The token thinks it's descended from VAXen.  Deal with i386
@@ -237,7 +229,7 @@ tokenverify(char *username, char *challenge, char *response)
 	 */
 
 	HTONL(cipher_text.ul[0]);
-	snprintf(cmp_text.ct, sizeof(cmp_text.ct), "%08.8lx", cipher_text.ul[0]);
+	snprintf(cmp_text.ct, sizeof(cmp_text.ct), "%8.8lx", cipher_text.ul[0]);
 
 	if (tokenrec.mode & TOKEN_PHONEMODE) {
 		/*
@@ -284,17 +276,18 @@ tokenuserinit(int flags, char *username, unsigned char *usecret, unsigned mode)
 	TOKEN_CBlock checktxt;
 	des_key_schedule key_schedule;
 
+	memset(&secret.ct, 0, sizeof(secret));
+
 	/*
 	 * If no user secret passed in, create one
 	 */
 
 	if ( (flags & TOKEN_GENSECRET) )
-		tokenseed(&secret.cb);
-	else {
-		memset(&secret, 0, sizeof(secret));
+		tokenseed(&secret);
+	else
 		memcpy(&secret, usecret, sizeof(des_cblock));
-		des_fixup_key_parity(&secret.cb);
-	}
+
+	des_fixup_key_parity(&secret.cb);
 
 	/*
 	 * Check if the db record already exists.  If no
@@ -326,8 +319,10 @@ tokenuserinit(int flags, char *username, unsigned char *usecret, unsigned mode)
 	 * discussion of cipher generation.
 	 */
 
-	if (!(flags & TOKEN_GENSECRET))
+	if (!(flags & TOKEN_GENSECRET)) {
+		memset(&secret.ct, 0, sizeof(secret));
 		return (0);
+	}
 
 	printf("Shared secret for %s\'s token: "
 	    "%03o %03o %03o %03o %03o %03o %03o %03o\n",
@@ -336,10 +331,12 @@ tokenuserinit(int flags, char *username, unsigned char *usecret, unsigned mode)
 
 
 	des_key_sched(&secret.cb, key_schedule);
+	memset(&secret.ct, 0, sizeof(secret));
 	memset(&nulls, 0, sizeof(nulls));
 	des_ecb_encrypt(&nulls.cb, &checksum.cb, key_schedule, DES_ENCRYPT);
+	memset(key_schedule, 0, sizeof(key_schedule));
 	HTONL(checksum.ul[0]);
-	snprintf(checktxt.ct, sizeof(checktxt.ct), "%08.8lx", checksum.ul[0]);
+	snprintf(checktxt.ct, sizeof(checktxt.ct), "%8.8lx", checksum.ul[0]);
 	printf("Hex Checksum: \"%s\"", checktxt.ct);
 
 	h2d(checktxt.ct);
@@ -391,8 +388,8 @@ cb2h(TOKEN_CBlock cb, char* hp)
 {
 	char	scratch[17];
 
-	snprintf(scratch,   9, "%08.8lx", cb.ul[0]);
-	snprintf(scratch+8, 9, "%08.8lx", cb.ul[1]);
+	snprintf(scratch,   9, "%8.8lx", cb.ul[0]);
+	snprintf(scratch+8, 9, "%8.8lx", cb.ul[1]);
 	memcpy(hp, scratch, 16);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokeninit.c,v 1.1 2000/12/20 02:08:09 millert Exp $	*/
+/*	$OpenBSD: tokeninit.c,v 1.2 2000/12/20 20:08:22 markus Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -44,12 +44,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <readpassphrase.h>
 
 #include "token.h"
 #include "tokendb.h"
 
-static	void	strip_crlf(char *);
-static	void	prompt_for_secret(int, char*);
+static	char	*prompt_for_secret(int, char*);
 static	int	parse_secret(int, char *, unsigned char *);
 
 int
@@ -64,6 +64,7 @@ main(int argc, char **argv)
 	char	seed[80];
 	unsigned char	secret[9];
 	char	*optstr;
+	char	*p = 0;
 
 	struct rlimit cds;
 
@@ -131,16 +132,9 @@ main(int argc, char **argv)
 			fflush(stdout);
 		}
 		if (!(cmd & TOKEN_GENSECRET)) {
-			prompt_for_secret(hexformat, *argv);
-
-			if (fgets(seed, sizeof(seed), stdin) == NULL) {
-				fprintf(stderr,
-			    	    "%sinit: No seed supplied for token.\n",
-				    tt->name);
-				exit(1);
-			}
-			strip_crlf(seed);
-			if (strlen(seed) == 0) {
+			p = prompt_for_secret(hexformat, *argv);
+			if (!readpassphrase(p, seed, sizeof(seed), RPP_ECHO_ON) ||
+			    seed[0] == '\0') {
 				fprintf(stderr,
 				    "%sinit: No seed supplied for token.\n",
 				    tt->name);
@@ -180,22 +174,6 @@ main(int argc, char **argv)
 }
 
 /*
- * Strip trailing cr/lf from a line of text
- */
-
-void
-strip_crlf(char *buf)
-{
-        char *cp;
-
-        if((cp = strchr(buf,'\r')) != NULL)
-                *cp = '\0';
-
-        if((cp = strchr(buf,'\n')) != NULL)
-                *cp = '\0';
-}
-
-/*
  * Parse the 8 octal numbers or a 16 digit hex string into a token secret
  */
 
@@ -226,13 +204,17 @@ parse_secret(int hexformat, char *seed, unsigned char *secret)
  * Prompt user for seed for token
  */
 
-static	void
+static	char *
 prompt_for_secret(int hexformat, char* username)
 {
+	static char prompt[1024];
 	if (hexformat)
-		printf("Enter a 16 digit hexidecimal number "
-			"as a seed for %s\'s token:\n", username);
+		snprintf(prompt, sizeof prompt,
+		    "Enter a 16 digit hexidecimal number "
+		    "as a seed for %s\'s token:\n", username);
 	else
-		printf("Enter a series of 8 3-digit octal numbers "
-			"as a seed for %s\'s token:\n", username);
+		snprintf(prompt, sizeof prompt,
+		    "Enter a series of 8 3-digit octal numbers "
+		    "as a seed for %s\'s token:\n", username);
+	return prompt;
 }
