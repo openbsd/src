@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.36 1999/02/24 23:45:49 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.37 1999/02/25 18:43:42 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -368,13 +368,13 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 int
 esp_new_zeroize(struct tdb *tdbp)
 {
-    if (tdbp->tdb_encalgxform && tdbp->tdb_encalgxform->type == SADB_EALG_X_SKIPJACK)
-    {
-        int k;
+    int k;
 
-        for (k = 0; k < 10; k++)
+    if (tdbp->tdb_encalgxform && tdbp->tdb_key &&
+	tdbp->tdb_encalgxform->type == SADB_EALG_X_SKIPJACK)
+      for (k = 0; k < 10; k++)
+	if (((u_int8_t **)tdbp->tdb_key)[k] != NULL)
           FREE(((u_int8_t **)tdbp->tdb_key)[k], M_XDATA);
-    }
 
     if (tdbp->tdb_key)
     {
