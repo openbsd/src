@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.5 1996/04/21 22:28:24 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.6 1996/10/04 03:05:32 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.48 1996/03/20 00:45:43 thorpej Exp $	*/
 
 /*-
@@ -926,14 +926,6 @@ abortit:
 		return (error);
 	}
 
-	/*
-	 * Convert the filename in tcnp into a dos filename. We copy this
-	 * into the denode and directory entry for the destination
-	 * file/directory.
-	 */
-	if ((error = uniqdosname(VTODE(tdvp), tcnp, toname)) != 0)
-		goto abortit;
-
 	/* */
 	if ((error = VOP_LOCK(fvp)) != 0)
 		goto abortit;
@@ -1032,6 +1024,14 @@ abortit:
 		vput(tvp);
 		xp = NULL;
 	}
+
+	/*
+	 * Convert the filename in tcnp into a dos filename. We copy this
+	 * into the denode and directory entry for the destination
+	 * file/directory.
+	 */
+	if ((error = uniqdosname(VTODE(tdvp), tcnp, toname)) != 0)
+		goto abortit;
 
 	/*
 	 * Since from wasn't locked at various places above,

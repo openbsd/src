@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.5 1996/07/29 23:00:40 niklas Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.6 1996/10/04 03:06:04 deraadt Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.3.4.2 1996/06/13 18:35:31 cgd Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ struct evcnt kn20aa_intr_evcnt;
 void	kn20aa_pci_strayintr __P((int irq));
 void	kn20aa_iointr __P((void *framep, int vec));
 void	kn20aa_enable_intr __P((int irq));
+void	kn20aa_disable_intr __P((int irq));
 struct kn20aa_intrhand *kn20aa_attach_intr __P((struct kn20aa_intrchain *,
 			    int, int (*) (void *), void *));
 
@@ -130,16 +131,16 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 	struct cia_config *ccp = ccv;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 	int device;
-	int kn20aa_slot, kn20aa_irq;
+	int kn20aa_irq;
 	void *ih;
 
         if (buspin == 0) {
                 /* No IRQ used. */
-                return 0;
+                return 1;
         }
         if (buspin > 4) {
                 printf("pci_map_int: bad interrupt pin %d\n", buspin);
-                return NULL;
+                return 1;
         }
 
 	/*
@@ -153,19 +154,23 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 	switch (device) {
 	case 11:
 	case 12:
-		kn20aa_slot = (device - 11) + 0;
+		kn20aa_irq = ((device - 11) + 0) * 4;
 		break;
 
 	case 7:
-		kn20aa_slot = 2;
-		break;
-
-	case 8:
-		kn20aa_slot = 4;
+		kn20aa_irq = 8;
 		break;
 
 	case 9:
-		kn20aa_slot = 3;
+		kn20aa_irq = 12;
+		break;
+
+	case 6:					/* 21040 on AlphaStation 500 */
+		kn20aa_irq = 13;
+		break;
+
+	case 8:
+		kn20aa_irq = 16;
 		break;
 
 	default:
@@ -173,12 +178,13 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 		    device);
 	}
 
-	kn20aa_irq = (kn20aa_slot * 4) + buspin - 1;
+	kn20aa_irq += buspin - 1;
 	if (kn20aa_irq > KN20AA_MAX_IRQ)
 		panic("pci_kn20aa_map_int: kn20aa_irq too large (%d)\n",
 		    kn20aa_irq);
 
 	*ihp = kn20aa_irq;
+	return (0);
 }
 
 const char *
@@ -234,10 +240,13 @@ kn20aa_pci_strayintr(irq)
 	int irq;
 {
 
-	if (++kn20aa_pci_strayintrcnt[irq] <= PCI_STRAY_MAX)
-		log(LOG_ERR, "stray PCI interrupt %d%s\n", irq,
-		    kn20aa_pci_strayintrcnt[irq] >= PCI_STRAY_MAX ?
-		    "; stopped logging" : "");
+	kn20aa_pci_strayintrcnt[irq]++;
+	if (kn20aa_pci_strayintrcnt[irq] == PCI_STRAY_MAX)
+		kn20aa_disable_intr(irq);
+
+	log(LOG_ERR, "stray kn20aa irq %d\n", irq);
+	if (kn20aa_pci_strayintrcnt[irq] == PCI_STRAY_MAX)
+		log(LOG_ERR, "disabling interrupts on kn20aa irq %d\n", irq);
 }
 
 void
@@ -289,13 +298,23 @@ kn20aa_enable_intr(irq)
 {
 
 	/*
-	 * From disassembling the OSF/1 source code:
+	 * From disassembling small bits of the OSF/1 kernel:
 	 * the following appears to enable a given interrupt request.
 	 * "blech."  I'd give valuable body parts for better docs or
 	 * for a good decompiler.
 	 */
 	wbflush();
 	REGVAL(0x8780000000L + 0x40L) |= (1 << irq);	/* XXX */
+	wbflush();
+}
+
+void
+kn20aa_disable_intr(irq)
+	int irq;
+{
+
+	wbflush();
+	REGVAL(0x8780000000L + 0x40L) &= ~(1 << irq);	/* XXX */
 	wbflush();
 }
 
