@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: os.c,v 1.8 1998/01/21 02:13:39 brian Exp $
+ * $Id: os.c,v 1.9 1998/05/19 21:56:12 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -183,6 +183,7 @@ CleanInterface(const char *name)
         LogPrintf(LogERROR, "tun_configure: Can't get dst for %s on %s !\n",
                   inet_ntoa(((struct sockaddr_in *)&ifra.ifra_addr)->sin_addr),
                   name);
+      close(s);
       return 0;
     }
     ifra.ifra_broadaddr = ifrq.ifr_dstaddr;
@@ -191,9 +192,11 @@ CleanInterface(const char *name)
         LogPrintf(LogERROR, "tun_configure: Can't delete %s address on %s !\n",
                   inet_ntoa(((struct sockaddr_in *)&ifra.ifra_addr)->sin_addr),
                   name);
+      close(s);
       return 0;
     }
   }
+  close(s);
 
   return 1;
 }
