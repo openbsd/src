@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2001/06/22 16:01:02 hin Exp $
+# $OpenBSD: Makefile,v 1.5 2001/06/23 00:17:45 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -23,7 +23,8 @@ MAN=	krb5.conf.5 \
 	krb5_warn.3 \
 	krb5_auth_context.3 \
 	krb5_context.3 \
-	krb5_init_context.3
+	krb5_init_context.3 \
+	krb5_keytab.3
 # This not built yet
 #	verify_krb5_conf.8
 
@@ -52,6 +53,7 @@ SRCS=	add_et_list.c \
 	data.c \
 	expand_hostname.c \
 	eai_to_heim_errno.c \
+	error_string.c \
 	fcache.c \
 	free.c \
 	free_host_realm.c \
@@ -72,6 +74,7 @@ SRCS=	add_et_list.c \
 	init_creds_pw.c \
 	keyblock.c \
 	keytab.c \
+	keytab_any.c \
 	keytab_file.c \
 	keytab_memory.c \
 	keytab_krb4.c \

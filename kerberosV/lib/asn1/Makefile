@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2001/06/22 23:26:30 hin Exp $
+# $OpenBSD: Makefile,v 1.5 2001/06/23 00:17:44 hin Exp $
 
 LIB=	asn1
 
@@ -24,6 +24,7 @@ gen_files= \
 	asn1_Checksum.c                 \
 	asn1_ETYPE_INFO.c		\
 	asn1_ETYPE_INFO_ENTRY.c		\
+	asn1_ENCTYPE.c			\
 	asn1_EncAPRepPart.c             \
 	asn1_EncASRepPart.c             \
 	asn1_EncKDCRepPart.c            \
@@ -47,6 +48,7 @@ gen_files= \
 	asn1_KerberosTime.c             \
 	asn1_KrbCredInfo.c              \
 	asn1_LastReq.c                  \
+	asn1_LR_TYPE.c			\
 	asn1_MESSAGE_TYPE.c		\
 	asn1_METHOD_DATA.c              \
 	asn1_NAME_TYPE.c		\
