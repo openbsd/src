@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.46 2004/12/28 20:00:14 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.47 2005/01/03 22:53:06 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -121,6 +121,7 @@ static int               cvs_file_cmp      (const void *, const void *);
 static int               cvs_file_cmpname  (const char *, const char *);
 static u_int8_t          cvs_file_hashname (const char *);
 static struct cvs_fname* cvs_file_getname  (const char *);
+static void              cvs_file_freename (struct cvs_fname *);
 static CVSFILE*          cvs_file_alloc    (const char *, u_int);
 static CVSFILE*          cvs_file_lget     (const char *, int, CVSFILE *);
 
@@ -688,6 +689,8 @@ cvs_file_free(CVSFILE *cf)
 {
 	if (cf->cf_ddat != NULL)
 		cvs_file_freedir(cf->cf_ddat);
+	if (cf->cf_name != NULL)
+		cvs_file_freename(cf->cf_name);
 	free(cf);
 }
 
@@ -1007,4 +1010,32 @@ cvs_file_getname(const char *name)
 	}
 
 	return (fnp);
+}
+
+
+/*
+ * cvs_file_freename()
+ *
+ * Free the reference to a file name previously obtained with
+ * cvs_file_getname().
+ */
+static void
+cvs_file_freename(struct cvs_fname *fn)
+{
+	u_int8_t h;
+
+	if (fn->cf_ref == 0) {
+		cvs_log(LP_WARN, "refcount for `%s' is already 0", fn->cf_name);
+		return;
+	}
+
+	fn->cf_ref--;
+	if (fn->cf_ref == 0) {
+		/* no more references, free the file */
+		h = cvs_file_hashname(fn->cf_name);
+
+		SLIST_REMOVE(&(cvs_fnht[h]), fn, cvs_fname, cf_list);
+		free(fn->cf_name);
+		free(fn);
+	}
 }
