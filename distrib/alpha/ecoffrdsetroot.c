@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecoffrdsetroot.c,v 1.2 1997/05/07 21:43:04 niklas Exp $	*/
+/*	$OpenBSD: ecoffrdsetroot.c,v 1.3 2001/05/11 14:04:30 art Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Milller
@@ -153,7 +153,7 @@ main(argc,argv)
 	dataseg = mmap(NULL, data_len, PROT_READ | PROT_WRITE,
 	    MAP_FILE | MAP_SHARED, fd, data_off);
 
-	if ((long)dataseg == -1)
+	if (dataseg == MAP_FAILED)
 		err(1, "%s: can not map data seg", file);
 
 	dataseg += data_pgoff;
