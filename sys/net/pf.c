@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.86 2001/06/28 22:38:16 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.87 2001/06/28 22:49:49 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -235,8 +235,8 @@ struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment *,
 		   r->dst.mask, h->ip_dst.s_addr)) \
 		)
 
-#define PFFRAG_FRENT_HIWAT	10000	/* Number of fragment entries */
-#define PFFRAG_FRAG_HIWAT	3000	/* Number of fragmented packets */
+#define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
+#define PFFRAG_FRAG_HIWAT	1000	/* Number of fragmented packets */
 
 int
 tree_key_compare(struct pf_tree_key *a, struct pf_tree_key *b)
@@ -2311,8 +2311,12 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		struct pf_tree_key key;
 		
 		frag = pool_get(&pf_frag_pl, M_NOWAIT);
-		if (frag == NULL)
-			goto drop_fragment;
+		if (frag == NULL) {
+			pf_flush_fragments();
+			frag = pool_get(&pf_frag_pl, M_NOWAIT);
+			if (frag == NULL)
+				goto drop_fragment;
+		}
 
 		frag->fr_flags = 0;
 		frag->fr_src = frent->fr_ip->ip_src;
@@ -2537,6 +2541,8 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, struct ip *h,
 			return (PF_DROP);
 		}
 	}
+	if (pf_nfrents > PFFRAG_FRENT_HIWAT)
+		pf_flush_fragments();
 	pf_nfrents++;
 	frent->fr_ip = h;
 	frent->fr_m = m;
