@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.53 2003/06/27 22:01:42 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.54 2003/07/14 12:29:22 jmc Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -57,22 +57,22 @@ is a program designed to simplify the maintenance of other programs.
 Its input is a list of specifications as to the files upon which programs
 and other files depend.
 If the file
-.Ql Pa BSDmakefile
+.Sq Pa BSDmakefile
 exists, it is read for this list of specifications.
 If it does not exist, the files
-.Ql Pa makefile
+.Sq Pa makefile
 and
-.Ql Pa Makefile
+.Sq Pa Makefile
 are tried in order.
 If the file
-.Ql Pa .depend
+.Sq Pa .depend
 exists, it is read in addition to the makefile (see
 .Xr mkdep 1 ) .
 .Pp
 The handling of
-.Ql Pa BSDmakefile
+.Sq Pa BSDmakefile
 and
-.Ql Pa .depend
+.Sq Pa .depend
 are BSD extensions.
 .Pp
 Standard options are as follows:
@@ -82,9 +82,9 @@ Specify that environment variables override macro assignments within
 makefiles.
 .It Fl f Ar makefile
 Specify a makefile to read instead of the default
-.Ql Pa makefile
+.Sq Pa makefile
 and
-.Ql Pa Makefile .
+.Sq Pa Makefile .
 If
 .Ar makefile
 is
@@ -116,7 +116,7 @@ option during recursive builds.
 .It Fl s
 Do not echo commands as they are executed.
 Equivalent to specifying
-.Ql Ic @
+.Sq Ic @
 before each command line in the makefile.
 .It Fl t
 Rather than re-building a target as specified in the makefile, create it
@@ -332,21 +332,21 @@ Each of the commands in this script
 be preceded by a tab.
 While any target may appear on a dependency line, only one of these
 dependencies may be followed by a creation script, unless the
-.Ql Ic ::
+.Sq Ic ::
 operator is used.
 .Pp
 If a command line begins with a combination of the characters,
-.Ql Ic @ ,
-.Ql Ic \-
+.Sq Ic @ ,
+.Sq Ic \-
 and/or
-.Ql Ic + ,
+.Sq Ic + ,
 the command is treated specially.
 .Bl -tag -width `@'
-.It Ql Ic @
+.It Sq Ic @
 causes the command not to be echoed before it is executed.
-.It Ql Ic \-
+.It Sq Ic \-
 causes any non-zero exit status of the command line to be ignored.
-.It Ql Ic +
+.It Sq Ic +
 causes the command to be executed even if
 .Fl n
 has been specified (This can be useful to debug recursive Makefiles).
@@ -440,13 +440,13 @@ no suffix or preceding directory components.
 .El
 .Pp
 The six variables
-.Ql Va "@F" ,
-.Ql Va "@D" ,
-.Ql Va "<F" ,
-.Ql Va "<D" ,
-.Ql Va "*F" ,
+.Sq Va "@F" ,
+.Sq Va "@D" ,
+.Sq Va "<F" ,
+.Sq Va "<D" ,
+.Sq Va "*F" ,
 and
-.Ql Va "*D"
+.Sq Va "*D"
 yield the
 .Qq filename
 and
@@ -454,10 +454,11 @@ and
 parts of the corresponding macros.
 .Pp
 For maximum compatibility,
-.Ql Va \&<
+.Sq Va \&<
 should only be used for actual implied rules.
 It is also set when there is an implied rule that matches the current
-dependency in scope. That is, in
+dependency in scope.
+That is, in
 .Bd -literal
 \&.SUFFIXES: .c.o
 file.o: file.c
@@ -479,25 +480,25 @@ supports the following local variables:
 The list of all sources for this target.
 .It Va .ALLSRC
 Synonym for
-.Ql Va \&> .
+.Sq Va \&> .
 .It Va .ARCHIVE
 Synonym for
-.Ql Va \&! .
+.Sq Va \&! .
 .It Va .IMPSRC
 Synonym for
-.Ql Va \&< .
+.Sq Va \&< .
 .It Va .MEMBER
 Synonym for
-.Ql Va \&% .
+.Sq Va \&% .
 .It Va .OODATE
 Synonym for
-.Ql Va \&? .
+.Sq Va \&? .
 .It Va .PREFIX
 Synonym for
-.Ql Va * .
+.Sq Va * .
 .It Va .TARGET
 Synonym for
-.Ql Va @ .
+.Sq Va @ .
 .El
 .Pp
 These variables may be used on the dependency half of dependency
@@ -597,7 +598,7 @@ A shorter synonym for
 Alternate path to the current directory.
 .Nm
 normally sets
-.Ql Va .CURDIR
+.Sq Va .CURDIR
 to the canonical path given by
 .Xr getcwd 3 .
 However, if the environment variable
@@ -605,13 +606,13 @@ However, if the environment variable
 is set and gives a path to the current directory, then
 .Nm
 sets
-.Ql Va .CURDIR
+.Sq Va .CURDIR
 to the value of
 .Ev PWD
 instead.
 .Ev PWD
 is always set to the value of
-.Ql Va .OBJDIR
+.Sq Va .OBJDIR
 for all programs which
 .Nm
 executes.
@@ -655,7 +656,7 @@ Each modifier begins with a colon and one of the following
 special characters.
 The colon may be escaped with a backslash
 .Pq Ql \e .
-.Bl -tag -width Cm E\&
+.Bl -tag -width Ds
 .It Cm E
 Replaces each word in the variable with its suffix.
 .It Cm H
@@ -670,7 +671,7 @@ The standard shell wildcard characters
 .Pf ( Ql * ,
 .Ql ? ,
 and
-.Ql Op )
+.Ql [] )
 may
 be used.
 The wildcard characters may be escaped with a backslash
@@ -873,45 +874,45 @@ Reverse the sense of the last conditional.
 .Op Ar operator expression ...
 .Xc
 A combination of
-.Ql Ic .else
+.Sq Ic .else
 followed by
-.Ql Ic .if .
+.Sq Ic .if .
 .It Xo
 .Ic .elifdef
 .Oo \&! Oc Ns Ar variable
 .Op Ar operator variable ...
 .Xc
 A combination of
-.Ql Ic .else
+.Sq Ic .else
 followed by
-.Ql Ic .ifdef .
+.Sq Ic .ifdef .
 .It Xo
 .Ic .elifndef
 .Oo \&! Oc Ns Ar variable
 .Op Ar operator variable ...
 .Xc
 A combination of
-.Ql Ic .else
+.Sq Ic .else
 followed by
-.Ql Ic .ifndef .
+.Sq Ic .ifndef .
 .It Xo
 .Ic .elifmake
 .Oo \&! Oc Ns Ar target
 .Op Ar operator target ...
 .Xc
 A combination of
-.Ql Ic .else
+.Sq Ic .else
 followed by
-.Ql Ic .ifmake .
+.Sq Ic .ifmake .
 .It Xo
 .Ic .elifnmake
 .Oo \&! Oc Ns Ar target
 .Op Ar operator target ...
 .Xc
 A combination of
-.Ql Ic .else
+.Sq Ic .else
 followed by
-.Ql Ic .ifnmake .
+.Sq Ic .ifnmake .
 .It Ic .endif
 End the body of the conditional.
 .El
@@ -935,16 +936,16 @@ will only evaluate a conditional as far as is necessary to determine
 its value.
 Parentheses may be used to change the order of evaluation.
 The boolean operator
-.Ql Ic \&!
+.Sq Ic \&!
 may be used to logically negate an entire
 conditional.
 It is of higher precedence than
-.Ql Ic \&&& .
+.Sq Ic \&&& .
 .Pp
 The value of
 .Ar expression
 may be any of the following:
-.Bl -tag -width Ic defined
+.Bl -tag -width defined
 .It Ic defined
 Takes a variable name as an argument and evaluates to true if the variable
 has been defined.
@@ -978,9 +979,9 @@ preceded by 0x, otherwise it is decimal; octal numbers are not supported.
 The standard C relational operators are all supported.
 If after
 variable expansion, either the left or right hand side of a
-.Ql Ic ==
+.Sq Ic ==
 or
-.Ql Ic "!="
+.Sq Ic "!="
 operator is not an integral value, then
 string comparison is performed between the expanded
 variables.
@@ -996,16 +997,16 @@ or
 .Dq defined
 expression is applied to it, depending on the form of the conditional.
 If the form is
-.Ql Ic .ifdef
+.Sq Ic .ifdef
 or
-.Ql Ic .ifndef ,
+.Sq Ic .ifndef ,
 the
 .Dq defined
 expression is applied.
 Similarly, if the form is
-.Ql Ic .ifmake
+.Sq Ic .ifmake
 or
-.Ql Ic .ifnmake ,
+.Sq Ic .ifnmake ,
 the
 .Dq make
 expression is applied.
@@ -1014,28 +1015,23 @@ If the conditional evaluates to true the parsing of the makefile continues
 as before.
 If it evaluates to false, the following lines are skipped.
 In both cases this continues until a
-.Ql Ic .else
+.Sq Ic .else
 or
-.Ql Ic .endif
+.Sq Ic .endif
 is found.
 .Pp
 For loops are typically used to apply a set of rules to a list of files.
 The syntax of a for loop is:
-.Bl -tag -width Ds
-.It Xo
-.Ic \&.for
-.Ar variable
-.Op Ar variable ...
+.Bd -unfilled -offset indent
+.Xo
+.Ic .for Ar variable Op Ar variable ...
 .Ic in
 .Ar expression
 .Xc
-.It Xo
-<make-rules>
-.Xc
-.It Xo
+	<make-rules>
 .Ic \&.endfor
-.Xc
-.El
+.Ed
+.Pp
 After the for
 .Ar expression
 is evaluated, it is split into words.
@@ -1059,7 +1055,7 @@ Comments begin with a hash
 character, anywhere but in a shell
 command line, and continue to the end of the line.
 .Sh SPECIAL SOURCES
-.Bl -tag -width Ic .IGNORE
+.Bl -tag -width ".PRECIOUS"
 .It Ic .IGNORE
 Ignore any errors from the commands associated with this target, exactly
 as if they all were preceded by a dash
@@ -1118,7 +1114,7 @@ detected and targets that form loops will be silently ignored.
 .Sh "SPECIAL TARGETS"
 Special targets may not be included with other targets, i.e., they must be
 the only target specified.
-.Bl -tag -width Ic .BEGIN
+.Bl -tag -width ".NOTPARALLEL"
 .It Ic .BEGIN
 Any command lines attached to this target are executed before anything
 else is done.
