@@ -1,0 +1,14 @@
+# $OpenBSD: mk21,v 1.1 2004/11/21 12:58:12 espie Exp $
+TRUC= http://heanet.dl.sourceforge.net/sourceforge/%SUBDIR%/
+
+.for _S in ${TRUC}
+S?=        ${_S:S/^${_S:C@/:[^/:]+$@/@}//:S/^://}
+.endfor
+
+_S=     ${TRUC}
+T?=        ${_S:S/^${_S:C@/:[^/:]+$@/@}//:S/^://}
+
+all:
+	@echo "S= $S"
+	@echo "T= $T"
+

@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.20 2002/09/09 10:05:34 espie Exp $
+# $OpenBSD: Makefile,v 1.21 2004/11/21 12:58:12 espie Exp $
 
-# We don't pass t7, t13, t14, t17, t19, t20
+# We don't pass t7, t13, t14, t17, t19, t20 t21
 # and t16 yields piss poor performance
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 t21
 
 MALLOC_OPTIONS?=AZJ
 t1: t1.out
@@ -88,13 +88,16 @@ t19:
 t20:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk20 | diff - t20.out
 
+t21:
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk21 | diff - t21.out
+
 z.a:
 	touch $@
 
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@
 
-.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 regress
+.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 t21 regress
 
 CLEANFILES+=t1.out z.a a.a a.b goodfile phony t15file
 
