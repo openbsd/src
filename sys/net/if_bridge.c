@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.44 2000/12/30 22:56:23 angelos Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.45 2001/01/17 04:47:18 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -64,7 +64,7 @@
 
 #include <net/if_enc.h>
 #ifdef IPFILTER
-#include <netinet/ip_fil_compat.h>
+#include <netinet/ip_compat.h>
 #include <netinet/ip_fil.h>
 #endif
 #endif

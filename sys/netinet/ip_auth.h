@@ -1,13 +1,13 @@
-/*	$OpenBSD: ip_auth.h,v 1.8 2000/05/24 21:59:11 kjell Exp $	*/
+/*	$OpenBSD: ip_auth.h,v 1.9 2001/01/17 04:47:12 fgsch Exp $	*/
 
 /*
- * Copyright (C) 1997-1998 by Darren Reed & Guido Van Rooij.
+ * Copyright (C) 1997-2000 by Darren Reed & Guido Van Rooij.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * $IPFilter: ip_auth.h,v 2.1.2.1 2000/05/22 06:57:47 darrenr Exp $
+ * $IPFilter: ip_auth.h,v 2.3.2.2 2000/10/19 15:38:44 darrenr Exp $
  *
  */
 #ifndef	__IP_AUTH_H__
@@ -48,10 +48,9 @@ typedef struct  fr_authstat {
 extern	frentry_t	*ipauth;
 extern	struct fr_authstat	fr_authstats;
 extern	int	fr_defaultauthage;
-extern	int	fr_authstart;
-extern	int	fr_authend;
 extern	int	fr_authsize;
 extern	int	fr_authused;
+extern	int	fr_auth_lock;
 extern	u_32_t	fr_checkauth __P((ip_t *, fr_info_t *));
 extern	void	fr_authexpire __P((void));
 extern	void	fr_authunload __P((void));

@@ -1,5 +1,8 @@
-/*	$OpenBSD: ip_rcmd_pxy.c,v 1.4 2000/03/13 23:40:18 kjell Exp $	*/
+/*	$OpenBSD: ip_rcmd_pxy.c,v 1.5 2001/01/17 04:47:16 fgsch Exp $	*/
 
+/*
+ * $IPFilter: ip_rcmd_pxy.c,v 1.4.2.4 2000/11/01 14:34:20 darrenr Exp $
+ */
 /*
  * Simple RCMD transparent proxy for in-kernel use.  For use with the NAT
  * code.
@@ -92,8 +95,17 @@ nat_t *nat;
 #endif
 
 	tcp = (tcphdr_t *)fin->fin_dp;
+
+	if (tcp->th_flags & TH_SYN) {
+		*(u_32_t *)aps->aps_data = htonl(ntohl(tcp->th_seq) + 1);
+		return 0;
+	}
+
+	if ((*(u_32_t *)aps->aps_data != 0) &&
+	    (tcp->th_seq != *(u_32_t *)aps->aps_data))
+		return 0;
+
 	off = (ip->ip_hl << 2) + (tcp->th_off << 2);
-	m = *(mb_t **)fin->fin_mp;
 
 #if	SOLARIS
 	m = fin->fin_qfm;
@@ -102,13 +114,11 @@ nat_t *nat;
 	bzero(portbuf, sizeof(portbuf));
 	copyout_mblk(m, off, MIN(sizeof(portbuf), dlen), portbuf);
 #else
+	m = *(mb_t **)fin->fin_mp;
 	dlen = mbufchainlen(m) - off;
 	bzero(portbuf, sizeof(portbuf));
 	m_copydata(m, off, MIN(sizeof(portbuf), dlen), portbuf);
 #endif
-	if ((*(u_32_t *)aps->aps_data != 0) &&
-	    (tcp->th_seq != *(u_32_t *)aps->aps_data))
-		return 0;
 
 	portbuf[sizeof(portbuf) - 1] = '\0';
 	s = portbuf;
@@ -123,16 +133,22 @@ nat_t *nat;
 	sp = htons(sp);
 	dp = htons(fin->fin_data[1]);
 	ipn = nat_outlookup(fin->fin_ifp, IPN_TCP, nat->nat_p, nat->nat_inip,
-			    ip->ip_dst, (dp << 16) | sp);
+			    ip->ip_dst, (dp << 16) | sp, 0);
 	if (ipn == NULL) {
+		int slen;
+
+		slen = ip->ip_len;
+		ip->ip_len = fin->fin_hlen + sizeof(*tcp);
 		bcopy((char *)fin, (char *)&fi, sizeof(fi));
 		bzero((char *)tcp2, sizeof(*tcp2));
 		tcp2->th_win = htons(8192);
 		tcp2->th_sport = sp;
 		tcp2->th_dport = 0; /* XXX - don't specify remote port */
+		tcp2->th_off = 5;
 		fi.fin_data[0] = ntohs(sp);
 		fi.fin_data[1] = 0;
 		fi.fin_dp = (char *)tcp2;
+		fi.fin_dlen = sizeof(*tcp2);
 		swip = ip->ip_src;
 		ip->ip_src = nat->nat_inip;
 		ipn = nat_new(nat->nat_ptr, ip, &fi, IPN_TCP|FI_W_DPORT,
@@ -142,6 +158,7 @@ nat_t *nat;
 			fi.fin_fr = &rcmdfr;
 			(void) fr_addstate(ip, &fi, FI_W_DPORT);
 		}
+		ip->ip_len = slen;
 		ip->ip_src = swip;
 	}
 	return 0;

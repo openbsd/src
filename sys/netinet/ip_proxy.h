@@ -1,13 +1,13 @@
-/*	$OpenBSD: ip_proxy.h,v 1.8 2000/04/05 05:35:27 kjell Exp $	*/
+/*	$OpenBSD: ip_proxy.h,v 1.9 2001/01/17 04:47:15 fgsch Exp $	*/
 
 /*
- * Copyright (C) 1997-1998 by Darren Reed.
+ * Copyright (C) 1997-2000 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * $IPFilter: ip_proxy.h,v 2.1.2.3 2000/03/15 13:58:15 darrenr Exp $
+ * $IPFilter: ip_proxy.h,v 2.8.2.4 2000/12/02 00:15:03 darrenr Exp $
  */
 
 #ifndef	__IP_PROXY_H__
@@ -56,7 +56,7 @@ typedef	struct ap_session {
 	int	aps_psiz;	/* size of private data */
 	struct	ap_session	*aps_hnext;
 	struct	ap_session	*aps_next;
-} ap_session_t ;
+} ap_session_t;
 
 #define	aps_sport	aps_un.apu_tcp.apt_sport
 #define	aps_dport	aps_un.apu_tcp.apt_dport
@@ -69,6 +69,7 @@ typedef	struct ap_session {
 
 
 typedef	struct	aproxy	{
+	struct	aproxy	*apr_next;
 	char	apr_label[APR_LABELLEN];	/* Proxy label # */
 	u_char	apr_p;		/* protocol */
 	int	apr_ref;	/* +1 per rule referencing it */
@@ -85,12 +86,26 @@ typedef	struct	aproxy	{
 
 #define	APR_DELETE	1
 
+#define	APR_ERR(x)	(((x) & 0xffff) << 16)
+#define	APR_EXIT(x)	(((x) >> 16) & 0xffff)
+#define	APR_INC(x)	((x) & 0xffff)
 
+#define	FTP_BUFSZ	160
 /*
  * For the ftp proxy.
  */
+typedef struct  ftpside {
+	char	*ftps_rptr;
+	char	*ftps_wptr;
+	u_32_t	ftps_seq;
+	u_32_t	ftps_len;
+	int	ftps_junk;
+	char	ftps_buf[FTP_BUFSZ];
+} ftpside_t;
+
 typedef struct  ftpinfo {
-	u_int   ftp_passok;
+	u_int   	ftp_passok;
+	ftpside_t	ftp_side[2];
 } ftpinfo_t;
 
 /*
@@ -128,7 +143,10 @@ typedef	struct	{
 extern	ap_session_t	*ap_sess_tab[AP_SESS_SIZE];
 extern	ap_session_t	*ap_sess_list;
 extern	aproxy_t	ap_proxies[];
+extern	int		ippr_ftp_pasvonly;
 
+extern	int	appr_add __P((aproxy_t *));
+extern	int	appr_del __P((aproxy_t *));
 extern	int	appr_init __P((void));
 extern	void	appr_unload __P((void));
 extern	int	appr_ok __P((ip_t *, tcphdr_t *, struct ipnat *));
