@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.86 2004/02/07 01:50:28 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.87 2004/02/29 11:14:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -371,9 +371,9 @@ kr_show_route(struct imsg *imsg)
 int
 kroute_compare(struct kroute_node *a, struct kroute_node *b)
 {
-	if (a->r.prefix.s_addr < b->r.prefix.s_addr)
+	if (ntohl(a->r.prefix.s_addr) < ntohl(b->r.prefix.s_addr))
 		return (-1);
-	if (a->r.prefix.s_addr > b->r.prefix.s_addr)
+	if (ntohl(a->r.prefix.s_addr) > ntohl(b->r.prefix.s_addr))
 		return (1);
 	if (a->r.prefixlen < b->r.prefixlen)
 		return (-1);
