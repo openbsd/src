@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.115 2001/06/24 22:21:50 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.116 2001/06/24 22:24:30 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1051,6 +1051,13 @@ ip_ctloutput(op, so, level, optname, mp)
 				splx(s);
 			}
 
+			if (inp->inp_tdb_in) {
+				int s = spltdb();
+				TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in,
+				    inp, inp_tdb_in_next);
+				splx(s);
+			}
+
 			switch (optname) {
 			case IP_AUTH_LEVEL:
 			        if (optval < ipsec_auth_default_level &&
@@ -1211,6 +1218,13 @@ ip_ctloutput(op, so, level, optname, mp)
 				int s = spltdb();
 				TAILQ_REMOVE(&inp->inp_tdb_out->tdb_inp_out,
 				    inp, inp_tdb_out_next);
+				splx(s);
+			}
+
+			if (inp->inp_tdb_in) {
+				int s = spltdb();
+				TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in,
+				    inp, inp_tdb_in_next);
 				splx(s);
 			}
 #endif
