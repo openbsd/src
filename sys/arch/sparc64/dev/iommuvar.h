@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommuvar.h,v 1.8 2003/03/06 08:26:08 henric Exp $	*/
+/*	$OpenBSD: iommuvar.h,v 1.9 2003/06/11 03:16:12 henric Exp $	*/
 /*	$NetBSD: iommuvar.h,v 1.9 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -117,27 +117,24 @@ void	iommu_reset(struct iommu_state *);
 paddr_t iommu_extract(struct iommu_state *, vaddr_t);
 int64_t iommu_lookup_tte(struct iommu_state *, vaddr_t);
 int64_t iommu_fetch_tte(struct iommu_state *, paddr_t);
-int	iommu_dvmamap_create(bus_dma_tag_t, struct iommu_state *,
-	    struct strbuf_ctl *, bus_size_t, int, bus_size_t, bus_size_t,
-	    int, bus_dmamap_t *);
-void	iommu_dvmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
-int	iommu_dvmamap_load(bus_dma_tag_t, struct iommu_state *,
-	    bus_dmamap_t, void *, bus_size_t, struct proc *, int);
-void	iommu_dvmamap_unload(bus_dma_tag_t, struct iommu_state *,
-	    bus_dmamap_t);
-int	iommu_dvmamap_load_raw(bus_dma_tag_t, struct iommu_state *,
-	    bus_dmamap_t, bus_dma_segment_t *, int, int, bus_size_t);
-void	iommu_dvmamap_sync(bus_dma_tag_t, struct iommu_state *, bus_dmamap_t,
+/* bus_dma_tag_t implementation functions */
+int	iommu_dvmamap_create(bus_dma_tag_t, bus_dma_tag_t, struct strbuf_ctl *,
+	    bus_size_t, int, bus_size_t, bus_size_t, int, bus_dmamap_t *);
+void	iommu_dvmamap_destroy(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t);
+int	iommu_dvmamap_load(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
+void	iommu_dvmamap_unload(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t);
+int	iommu_dvmamap_load_raw(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
+void	iommu_dvmamap_sync(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t,
 	    bus_addr_t, bus_size_t, int);
-int	iommu_dvmamem_alloc(bus_dma_tag_t, struct iommu_state *,
-	    bus_size_t, bus_size_t, bus_size_t, bus_dma_segment_t *,
-	    int, int *, int);
-void	iommu_dvmamem_free(bus_dma_tag_t, struct iommu_state *,
-	    bus_dma_segment_t *, int);
-int	iommu_dvmamem_map(bus_dma_tag_t, struct iommu_state *,
-	    bus_dma_segment_t *, int, size_t, caddr_t *, int);
-void	iommu_dvmamem_unmap(bus_dma_tag_t, struct iommu_state *,
-	    caddr_t, size_t);
+int	iommu_dvmamem_alloc(bus_dma_tag_t, bus_dma_tag_t, bus_size_t,
+	    bus_size_t, bus_size_t, bus_dma_segment_t *, int, int *, int);
+void	iommu_dvmamem_free(bus_dma_tag_t, bus_dma_tag_t, bus_dma_segment_t *,
+	    int);
+int	iommu_dvmamem_map(bus_dma_tag_t, bus_dma_tag_t, bus_dma_segment_t *,
+	    int, size_t, caddr_t *, int);
+void	iommu_dvmamem_unmap(bus_dma_tag_t, bus_dma_tag_t, caddr_t, size_t);
 
 #define IOMMUREG_READ(is, reg)				\
 	bus_space_read_8((is)->is_bustag,		\

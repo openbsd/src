@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.30 2003/06/11 03:07:41 henric Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.31 2003/06/11 03:16:12 henric Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -556,17 +556,26 @@ iommu_strbuf_flush_done(struct iommu_map_state *ims)
 /*
  * IOMMU DVMA operations, common to SBUS and PCI.
  */
+
+#define BUS_DMA_FIND_PARENT(t, fn)                                      \
+        if (t->_parent == NULL)                                         \
+                panic("null bus_dma parent (" #fn ")");                 \
+        for (t = t->_parent; t->fn == NULL; t = t->_parent)             \
+                if (t->_parent == NULL)                                 \
+                        panic("no bus_dma " #fn " located");
+
 int
-iommu_dvmamap_create(bus_dma_tag_t t, struct iommu_state *is,
-    struct strbuf_ctl *sb, bus_size_t size, int nsegments, bus_size_t maxsegsz,
-    bus_size_t boundary, int flags, bus_dmamap_t *dmamap)
+iommu_dvmamap_create(bus_dma_tag_t t, bus_dma_tag_t t0, struct strbuf_ctl *sb,
+    bus_size_t size, int nsegments, bus_size_t maxsegsz, bus_size_t boundary,
+    int flags, bus_dmamap_t *dmamap)
 {
 	int ret;
 	bus_dmamap_t map;
 	struct iommu_map_state *ims;
 
-	ret = bus_dmamap_create(t->_parent, size, nsegments, maxsegsz,
-	    boundary, flags, &map);
+	BUS_DMA_FIND_PARENT(t, _dmamap_create);
+	ret = (*t->_dmamap_create)(t, t0, size, nsegments, maxsegsz, boundary,
+	    flags, &map);
 
 	if (ret)
 		return (ret);
@@ -574,32 +583,40 @@ iommu_dvmamap_create(bus_dma_tag_t t, struct iommu_state *is,
 	ims = iommu_iomap_create(nsegments);
 
 	if (ims == NULL) {
-		bus_dmamap_destroy(t->_parent, map);
+		bus_dmamap_destroy(t0, map);
 		return (ENOMEM);
 	}
 
 	ims->ims_sb = sb;
 	map->_dm_cookie = ims;
+
+#ifdef DIAGNOSTIC
+	if (ims->ims_sb == NULL)
+		panic("iommu_dvmamap_create: null sb");
+	if (ims->ims_sb->sb_iommu == NULL)
+		panic("iommu_dvmamap_create: null iommu");
+#endif
 	*dmamap = map;
 
 	return (0);
 }
 
 void
-iommu_dvmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
+iommu_dvmamap_destroy(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map)
 {
 	/*
 	 * The specification (man page) requires a loaded
 	 * map to be unloaded before it is destroyed.
 	 */
 	if (map->dm_nsegs)
-		bus_dmamap_unload(t, map);
+		bus_dmamap_unload(t0, map);
 
         if (map->_dm_cookie)
                 iommu_iomap_destroy(map->_dm_cookie);
 	map->_dm_cookie = NULL;
 
-	bus_dmamap_destroy(t->_parent, map);
+	BUS_DMA_FIND_PARENT(t, _dmamap_destroy);
+	(*t->_dmamap_destroy)(t, t0, map);
 }
 
 /*
@@ -612,7 +629,7 @@ iommu_dvmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
  * up to the page size and then divide by the page size)...
  */
 int
-iommu_dvmamap_load(bus_dma_tag_t t, struct iommu_state *is, bus_dmamap_t map,
+iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
     void *buf, bus_size_t buflen, struct proc *p, int flags)
 {
 	int s;
@@ -620,6 +637,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, struct iommu_state *is, bus_dmamap_t map,
 	bus_size_t sgsize;
 	u_long dvmaddr, sgstart, sgend;
 	bus_size_t align, boundary;
+	struct iommu_state *is;
 	struct iommu_map_state *ims = map->_dm_cookie;
 	pmap_t pmap;
 
@@ -627,6 +645,13 @@ iommu_dvmamap_load(bus_dma_tag_t t, struct iommu_state *is, bus_dmamap_t map,
 	if (ims == NULL)
 		panic("iommu_dvmamap_load: null map state");
 #endif
+#ifdef DEBUG
+	if (ims->ims_sb == NULL)
+		panic("iommu_dvmamap_load: null sb");
+	if (ims->ims_sb->sb_iommu == NULL)
+		panic("iommu_dvmamap_load: null iommu");
+#endif /* DEBUG */
+	is = ims->ims_sb->sb_iommu;
 
 	if (map->dm_nsegs) {
 		/*
@@ -636,7 +661,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, struct iommu_state *is, bus_dmamap_t map,
 #ifdef DIAGNOSTIC
 		panic("iommu_dvmamap_load: map still in use");
 #endif
-		bus_dmamap_unload(t, map);
+		bus_dmamap_unload(t0, map);
 	}
 
 	/*
@@ -812,9 +837,8 @@ iommu_dvmamap_load(bus_dma_tag_t t, struct iommu_state *is, bus_dmamap_t map,
  * the dvma map).
  */
 int
-iommu_dvmamap_load_raw(bus_dma_tag_t t, struct iommu_state *is,
-    bus_dmamap_t map, bus_dma_segment_t *segs, int nsegs, int flags,
-    bus_size_t size)
+iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	int i, s;
 	int left;
@@ -822,19 +846,27 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, struct iommu_state *is,
 	bus_size_t sgsize;
 	bus_size_t boundary, align;
 	u_long dvmaddr, sgstart, sgend;
+	struct iommu_state *is;
 	struct iommu_map_state *ims = map->_dm_cookie;
 
 #ifdef DIAGNOSTIC
 	if (ims == NULL)
 		panic("iommu_dvmamap_load_raw: null map state");
 #endif
+#ifdef DEBUG
+	if (ims->ims_sb == NULL)
+		panic("iommu_dvmamap_load_raw: null sb");
+	if (ims->ims_sb->sb_iommu == NULL)
+		panic("iommu_dvmamap_load_raw: null iommu");
+#endif /* DEBUG */
+	is = ims->ims_sb->sb_iommu;
 
 	if (map->dm_nsegs) {
 		/* Already in use?? */
 #ifdef DIAGNOSTIC
 		panic("iommu_dvmamap_load_raw: map still in use");
 #endif
-		bus_dmamap_unload(t, map);
+		bus_dmamap_unload(t0, map);
 	}
 
 	/*
@@ -1228,12 +1260,24 @@ iommu_dvmamap_load_mlist(bus_dma_tag_t t, struct iommu_state *is,
  * Unload a dvmamap.
  */
 void
-iommu_dvmamap_unload(bus_dma_tag_t t, struct iommu_state *is, bus_dmamap_t map)
+iommu_dvmamap_unload(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map)
 {
+	struct iommu_state *is;
 	struct iommu_map_state *ims = map->_dm_cookie;
 	bus_addr_t dvmaddr = map->_dm_dvmastart;
 	bus_size_t sgsize = map->_dm_dvmasize;
 	int error, s;
+
+#ifdef DEBUG
+	if (ims == NULL)
+		panic("iommu_dvmamap_unload: null map state");
+	if (ims->ims_sb == NULL)
+		panic("iommu_dvmamap_unload: null sb");
+	if (ims->ims_sb->sb_iommu == NULL)
+		panic("iommu_dvmamap_unload: null iommu");
+#endif /* DEBUG */
+
+	is = ims->ims_sb->sb_iommu;
 
 	/* Flush the iommu */
 #ifdef DEBUG
@@ -1423,19 +1467,26 @@ iommu_dvmamap_print_map(bus_dma_tag_t t, struct iommu_state *is,
 }
 
 void
-iommu_dvmamap_sync(bus_dma_tag_t t, struct iommu_state *is, bus_dmamap_t map,
+iommu_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	bus_addr_t offset, bus_size_t len, int ops)
 {
+	struct iommu_state *is;
 	struct iommu_map_state *ims = map->_dm_cookie;
 	struct strbuf_ctl *sb;
 	bus_size_t count;
 	int i, needsflush = 0;
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	if (ims == NULL)
 		panic("iommu_dvmamap_sync: null map state");
-#endif
+	if (ims->ims_sb == NULL)
+                panic("iommu_dvmamap_sync: null sb");
+        if (ims->ims_sb->sb_iommu == NULL)
+                panic("iommu_dvmamap_sync: null iommu");
+#endif /* DEBUG */
+
 	sb = ims->ims_sb;
+	is = sb->sb_iommu;
 
 	if ((ims->ims_flags & IOMMU_MAP_STREAM) == 0 || (len == 0))
 		return;
@@ -1513,7 +1564,7 @@ iommu_dvmamap_sync_range(struct strbuf_ctl *sb, vaddr_t va, bus_size_t len)
 }
 
 int
-iommu_dvmamem_alloc(bus_dma_tag_t t, struct iommu_state *is, bus_size_t size,
+iommu_dvmamem_alloc(bus_dma_tag_t t, bus_dma_tag_t t0, bus_size_t size,
     bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
     int nsegs, int *rsegs, int flags)
 {
@@ -1522,18 +1573,20 @@ iommu_dvmamem_alloc(bus_dma_tag_t t, struct iommu_state *is, bus_size_t size,
 	    "bound %llx segp %p flags %d\n", (unsigned long long)size,
 	    (unsigned long long)alignment, (unsigned long long)boundary,
 	    segs, flags));
-	return (bus_dmamem_alloc(t->_parent, size, alignment, boundary,
+	BUS_DMA_FIND_PARENT(t, _dmamem_alloc);
+	return ((*t->_dmamem_alloc)(t, t0, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags | BUS_DMA_DVMA));
 }
 
 void
-iommu_dvmamem_free(bus_dma_tag_t t, struct iommu_state *is,
-    bus_dma_segment_t *segs, int nsegs)
+iommu_dvmamem_free(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dma_segment_t *segs,
+    int nsegs)
 {
 
 	DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_free: segp %p nsegs %d\n",
 	    segs, nsegs));
-	bus_dmamem_free(t->_parent, segs, nsegs);
+	BUS_DMA_FIND_PARENT(t, _dmamem_free);
+	(*t->_dmamem_free)(t, t0, segs, nsegs);
 }
 
 /*
@@ -1541,8 +1594,8 @@ iommu_dvmamem_free(bus_dma_tag_t t, struct iommu_state *is,
  * Check the flags to see whether we're streaming or coherent.
  */
 int
-iommu_dvmamem_map(bus_dma_tag_t t, struct iommu_state *is,
-    bus_dma_segment_t *segs, int nsegs, size_t size, caddr_t *kvap, int flags)
+iommu_dvmamem_map(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dma_segment_t *segs,
+    int nsegs, size_t size, caddr_t *kvap, int flags)
 {
 	struct vm_page *m;
 	vaddr_t va;
@@ -1602,7 +1655,7 @@ iommu_dvmamem_map(bus_dma_tag_t t, struct iommu_state *is,
  * Unmap DVMA mappings from kernel
  */
 void
-iommu_dvmamem_unmap(bus_dma_tag_t t, struct iommu_state *is, caddr_t kva,
+iommu_dvmamem_unmap(bus_dma_tag_t t, bus_dma_tag_t t0, caddr_t kva,
     size_t size)
 {
 	

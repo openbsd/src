@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.35 2003/06/04 23:26:12 henric Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.36 2003/06/11 03:16:12 henric Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -103,24 +103,10 @@ int _psycho_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
 void *psycho_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
     int (*)(void *), void *);
 
-int psycho_dmamap_create(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, int, bus_size_t,
-    bus_size_t, int, bus_dmamap_t *);
-void psycho_dvmamap_destroy(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t);
-int psycho_dmamap_load(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t, void *,
-    bus_size_t, struct proc *, int);
-void psycho_dmamap_unload(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t);
-int psycho_dmamap_load_raw(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t,
-    bus_dma_segment_t *, int, bus_size_t, int);
-void psycho_dmamap_sync(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-    bus_size_t, int);
+int psycho_dmamap_create(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, int,
+    bus_size_t, bus_size_t, int, bus_dmamap_t *);
 void psycho_sabre_dvmamap_sync(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t,
     bus_size_t, bus_size_t, int);
-int psycho_dmamem_alloc(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
-    bus_dma_segment_t *, int, int *, int);
-void psycho_dmamem_free(bus_dma_tag_t, bus_dma_tag_t, bus_dma_segment_t *, int);
-int psycho_dmamem_map(bus_dma_tag_t, bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
-    caddr_t *, int);
-void psycho_dmamem_unmap(bus_dma_tag_t, bus_dma_tag_t, caddr_t, size_t);
 void psycho_map_psycho(struct psycho_softc *, int, bus_addr_t, bus_size_t,
     bus_addr_t, bus_size_t);
 int psycho_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
@@ -220,7 +206,7 @@ psycho_match(struct device *parent, void *match, void *aux)
 }
 
 /*
- * SUNW,psycho initialisation ..
+ * SUNW,psycho initialization ...
  *	- find the per-psycho registers
  *	- figure out the IGN.
  *	- find our partner psycho
@@ -486,10 +472,10 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 				printf("STC0 subregion failed\n");
 				sb->sb_flush = 0;
 			}
-
-			/* Point out iommu at the strbuf_ctl. */
-			sc->sc_is->is_sb[0] = sb;
 		}
+
+		/* Point out iommu at the strbuf_ctl. */
+		sc->sc_is->is_sb[0] = &pp->pp_sb;
 
 		psycho_iommu_init(sc, 2);
 
@@ -527,6 +513,9 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 			/* Point out iommu at the strbuf_ctl. */
 			sc->sc_is->is_sb[1] = sb;
 		}
+
+		/* Point out iommu at the strbuf_ctl. */
+		sc->sc_is->is_sb[1] = &pp->pp_sb;
 
 		iommu_reset(sc->sc_is);
 	}
@@ -921,19 +910,20 @@ psycho_alloc_dma_tag(struct psycho_pbm *pp)
 	bzero(dt, sizeof *dt);
 	dt->_cookie = pp;
 	dt->_parent = pdt;
-	dt->_dmamap_create = psycho_dmamap_create;
-	dt->_dmamap_destroy = psycho_dvmamap_destroy;
-	dt->_dmamap_load = psycho_dmamap_load;
-	dt->_dmamap_load_raw = psycho_dmamap_load_raw;
-	dt->_dmamap_unload = psycho_dmamap_unload;
+	dt->_dmamap_create	= psycho_dmamap_create;
+	dt->_dmamap_destroy	= iommu_dvmamap_destroy;
+	dt->_dmamap_load	= iommu_dvmamap_load;
+	dt->_dmamap_load_raw	= iommu_dvmamap_load_raw;
+	dt->_dmamap_unload	= iommu_dvmamap_unload;
 	if (sc->sc_mode == PSYCHO_MODE_PSYCHO)
-		dt->_dmamap_sync = psycho_dmamap_sync;
+		dt->_dmamap_sync = iommu_dvmamap_sync;
 	else
 		dt->_dmamap_sync = psycho_sabre_dvmamap_sync;
-	dt->_dmamem_alloc = psycho_dmamem_alloc;
-	dt->_dmamem_free = psycho_dmamem_free;
-	dt->_dmamem_map = psycho_dmamem_map;
-	dt->_dmamem_unmap = psycho_dmamem_unmap;
+	dt->_dmamem_alloc	= iommu_dvmamem_alloc;
+	dt->_dmamem_free	= iommu_dvmamem_free;
+	dt->_dmamem_map		= iommu_dvmamem_map;
+	dt->_dmamem_unmap	= iommu_dvmamem_unmap;
+
 	return (dt);
 }
 
@@ -1212,79 +1202,9 @@ psycho_dmamap_create(bus_dma_tag_t t, bus_dma_tag_t t0, bus_size_t size,
     bus_dmamap_t *dmamp)
 {
 	struct psycho_pbm *pp = t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
 
-	return (iommu_dvmamap_create(t0, sc->sc_is, &pp->pp_sb, size,
-	    nsegments, maxsegsz, boundary, flags, dmamp));
-}
-
-void
-psycho_dvmamap_destroy(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map)
-{
-	iommu_dvmamap_destroy(t0, map); 
-}
-
-int
-psycho_dmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
-    void *buf, bus_size_t buflen, struct proc *p, int flags)
-{
-	struct psycho_pbm *pp = t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
-
-	if (pp->pp_sb.sb_flush == NULL)
-		flags &= ~BUS_DMA_STREAMING;
-
-	return (iommu_dvmamap_load(t0, sc->sc_is, map, buf, buflen, p, flags));
-}
-
-void
-psycho_dmamap_unload(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map)
-{
-	struct psycho_pbm *pp = t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
-
-	iommu_dvmamap_unload(t0, sc->sc_is, map);
-}
-
-int
-psycho_dmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
-    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
-{
-	struct psycho_pbm *pp = t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
-
-	if (pp->pp_sb.sb_flush == NULL)
-		flags &= ~BUS_DMA_STREAMING;
-
-	return (iommu_dvmamap_load_raw(t0, sc->sc_is, map, segs, nsegs, flags,
-	    size));
-}
-
-void
-psycho_dmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map, bus_addr_t offset,
-    bus_size_t len, int ops)
-{
-	struct psycho_pbm *pp = t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
-
-	if (t->_parent == NULL)
-		panic("psycho_dmamap_sync: no parent");
-	
-	for (t = t->_parent; t->_dmamap_sync == NULL; t = t->_parent)
-		if (t == NULL)
-			panic("psycho_dmamap_sync: can't find implementation");
-
-	if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) {
-		/* Flush the CPU then the IOMMU */
-		(*t->_dmamap_sync)(t, t0, map, offset, len,
-		    ops);
-		iommu_dvmamap_sync(t0, sc->sc_is, map, offset, len, ops);
-	}
-	if (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) {
-		/* Flush the IOMMU then the CPU */
-		iommu_dvmamap_sync(t0, sc->sc_is, map, offset, len, ops);
-		(*t->_dmamap_sync)(t, t0, map, offset, len, ops);
-	}
+	return (iommu_dvmamap_create(t, t0, &pp->pp_sb, size, nsegments,
+	    maxsegsz, boundary, flags, dmamp));
 }
 
 void
@@ -1299,46 +1219,5 @@ psycho_sabre_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 
 	if (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_PREWRITE))
 		membar(MemIssue);
-}
-
-int
-psycho_dmamem_alloc(bus_dma_tag_t t, bus_dma_tag_t t0, bus_size_t size, bus_size_t alignment,
-    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags)
-{
-	struct psycho_pbm *pp = t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
-
-	return (iommu_dvmamem_alloc(t0, sc->sc_is, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags));
-}
-
-void
-psycho_dmamem_free(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dma_segment_t *segs, int nsegs)
-{
-	struct psycho_pbm *pp = t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
-
-	iommu_dvmamem_free(t0, sc->sc_is, segs, nsegs);
-}
-
-int
-psycho_dmamem_map(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dma_segment_t *segs, int nsegs,
-    size_t size, caddr_t *kvap, int flags)
-{
-	struct psycho_pbm *pp = t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
-
-	return (iommu_dvmamem_map
-	    (t0, sc->sc_is, segs, nsegs, size, kvap, flags));
-}
-
-void
-psycho_dmamem_unmap(bus_dma_tag_t t, bus_dma_tag_t t0, caddr_t kva, size_t size)
-{
-	struct psycho_pbm *pp = t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
-
-	iommu_dvmamem_unmap(t0, sc->sc_is, kva, size);
 }
 
