@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1997/05/15 06:57:21 niklas Exp $
-#	$OpenBSD: Makefile,v 1.3 1997/05/15 06:57:21 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/05/15 08:46:10 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2.4.3 1996/07/04 07:05:32 leo Exp $
 
 # Revision is 2.1
@@ -20,8 +19,7 @@ DISKTYPE=	rdroot
 PID!=		echo $$$$
 REALIMAGE!=	echo /tmp/image.${PID}
 IMAGE?=		ramdisk${REV}.fs
-IMAGESIZE?=	4096
-NEWFSOPTS?=	-m 0 -c 64 -i 8192
+IMAGESIZE?=	8192 # 4Mb in 512 byte blocks
 NEWFS_WILL_FAIL?=false
 CRUNCHGENOPTS?=
 KERNEL?=	RAMDISK
@@ -31,13 +29,49 @@ STRIP?=		strip
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 MTREE=		${.CURDIR}/mtree.conf
 
+FLOPPY?=	floppy${REV}.fs
+FLOPPYSIZE?=	2880
+FLOPPYTYPE?=	floppy
+INSTALLBOOT?=	installboot
+BOOT?=		${DESTDIR}/usr/mdec/boot
+BOOTXX?=	${DESTDIR}/usr/mdec/bootxx
+RAWLABEL?=	-r
+
+# old format, minfree, opt, b/i  trks, sects, cpg
+NEWFSOPTS=	-t ffs -m 0 -o space -f 1024 -b 8192
+NEWFSOPTS_RD=	${NEWFSOPTS} -i 16384 -c 64 -s ${IMAGESIZE}
+#NEWFSOPTS_FD=	${NEWFSOPTS} -i 524288 -c 80 -s ${FLOPPYSIZE}
+NEWFSOPTS_FD=	${NEWFSOPTS} -i 1048575 -c 256 -s ${FLOPPYSIZE}
+
 .ifndef DESTDIR
 all:
-	@echo setenv DESTDIR before makeing a miniroot!
+	@echo setenv DESTDIR before makeing a ramdisk!
 	@false
 .else
 
+.ifdef MAKEFLOPPY
+all:	bsd.rd ${FLOPPY}
+.else
 all:	bsd.rd
+.endif
+
+${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
+	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYSIZE}
+	vnconfig -v -c ${VND} ${REALIMAGE}
+	disklabel -w ${RAWLABEL} ${VND} ${FLOPPYTYPE}
+	newfs ${NEWFSOPTS_FD} ${VND_RDEV} ${FLOPPYTYPE}
+	mount ${VND_DEV} ${MOUNT_POINT}
+	cp ${BOOT} ${MOUNT_POINT}
+	cp bsd.gz ${MOUNT_POINT}/bsd
+	${INSTALLBOOT} -v ${MOUNT_POINT}/boot ${BOOTXX} ${VND_RDEV}
+	@echo ""
+	@df -i ${MOUNT_POINT}
+	@echo ""
+	umount ${MOUNT_POINT}
+	vnconfig -u ${VND}
+	# some bug can put an extra 8k at the end it seems
+	dd if=${REALIMAGE} of=${FLOPPY} count=${FLOPPYSIZE}
+	rm -f ${REALIMAGE}
 
 bsd:
 	cd ${.CURDIR}/../../sys/arch/${MACHINE}/conf && config ${KERNEL}
@@ -45,22 +79,22 @@ bsd:
 	    make clean && make depend && make
 	cp ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL}/bsd bsd
 
-
-bsd.rd: bsd ${IMAGE} ${.OBJDIR}/rdsetroot
+bsd.rd:	bsd ${IMAGE} rdsetroot
 	cp bsd bsd.rd
 	${.OBJDIR}/rdsetroot bsd.rd < ${IMAGE}
-#	${STRIP} bsd.rd
+	${STRIP} bsd.rd
 
-${.OBJDIR}/rdsetroot: ${.CURDIR}/../common/rdsetroot.c
+bsd.gz:	bsd.rd
+	${GZIP} ${GZIPFLAGS} < bsd.rd > bsd.gz
+
+rdsetroot: ${.CURDIR}/../common/rdsetroot.c
 	${HOSTCC} ${HOSTCCFLAGS} -o rdsetroot ${.CURDIR}/../common/rdsetroot.c
-
 
 ${IMAGE}: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w -r ${VND} ${DISKTYPE}
-	newfs -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE} || \
-	    ${NEWFS_WILL_FAIL}
+	disklabel -w ${RAWLABEL} ${VND} ${DISKTYPE}
+	newfs ${NEWFSOPTS_RD} ${VND_RDEV} ${DISKTYPE} || ${NEWFS_WILL_FAIL}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
@@ -76,7 +110,7 @@ ${IMAGE}: ${CBIN}
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE}
+	-/bin/rm -f ${REALIMAGE}
 
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
@@ -94,6 +128,9 @@ clean cleandir:
 
 beforeinstall:
 	cp bsd.rd ${DESTDIR}/snapshot
+.ifdef MAKEFLOPPY
+	cp ${FLOPPY} ${DESTDIR}/snapshot
+.endif
 
 .endif	# DESTDIR check
 .include <bsd.obj.mk>
