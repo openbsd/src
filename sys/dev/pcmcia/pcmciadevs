@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.59 2001/04/23 20:52:35 millert Exp $
+	$OpenBSD: pcmciadevs,v 1.60 2001/05/22 08:30:27 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -301,6 +301,7 @@ vendor RPTI			-1	RPTI
 vendor SARAMNCOM		-1	SaramNcom Co.,Ltd.
 vendor SHUTTLE			-1	Shuttle
 vendor SVEC			-1	SVEC/Hawking
+vendor SYNERGY21		-1	Synergy 21
 vendor TEAC			-1	TEAC
 vendor YEDATA			-1	Y-E DATA
 vendor ZOOM			-1	Zoom
@@ -364,3 +365,4 @@ product SMC 2632W		{ "SMC", "SMC2632W", "Version&sp01.02", NULL }
 product NANOSPEED PRISM2	{ "NANOSPEED", "HFA384x/IEEE", "Version&sp01.02", NULL }
 product CABLETRON ROAMABOUT	{ "Cabletron", "RoamAbout&sp802.11&spDS", "Version&sp01.01", NULL }
 product GVC NIC2000P		{ "GVC", "NIC-2000p", "ETHERNET", "R01" }
+product SYNERGY21 S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" }
