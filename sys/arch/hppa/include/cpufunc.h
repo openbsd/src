@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.22 2003/08/20 06:50:30 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.23 2003/09/25 22:17:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,2000 Michael Shalayeff
@@ -215,6 +215,7 @@ void fcacheall(void);
 void ptlball(void);
 int btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *lenp, u_int prot);
 hppa_hpa_t cpu_gethpa(int n);
+void eaio_l2(int i);
 #endif
 
 #endif /* _MACHINE_CPUFUNC_H_ */

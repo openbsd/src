@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.16 2003/08/21 18:03:18 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.17 2003/09/25 22:17:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -232,6 +232,10 @@ sti_sgc_attach(parent, self, aux)
 			return;
 		}
 	}
+
+	/* PCXL2: enale accel i/o for this space */
+	if (cpu_type == hpcxl2)
+		eaio_l2(0x8 >> (((ca->ca_hpa >> 25) & 3) - 2));
 
 #ifdef STIDEBUG
 	printf("sti: ioh=%x, romh=%x\n", sc->ioh, sc->romh);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.111 2003/08/07 19:23:52 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.112 2003/09/25 22:17:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1718,6 +1718,21 @@ LEAF_ENTRY(desidhash_t)
 	extru	t1, 4, 5, ret0	/* return chip revision */
 EXIT(desidhash_t)
 #endif /* HP7200_CPU */
+
+#ifdef HP7300LC_CPU
+	.data
+	BSS(eaio_l2_mask, 4)
+LEAF_ENTRY(eaio_l2)
+	ldil	L%eaio_l2_mask, t2
+	ldw	R%eaio_l2_mask(t2), t1
+	or	t1, arg0, t1
+	MTCPU_C(22, DR0_PCXL2_ACCEL_IO)
+	nop
+	nop
+	bv	0(rp)
+	stw	t1, R%eaio_l2_mask(t2)
+EXIT(eaio_l2)
+#endif /* HP7300LC_CPU */
 
 #if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 
