@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.44 1999/09/06 03:46:16 jason Exp $
+#	$OpenBSD: GENERIC,v 1.45 1999/09/07 02:58:49 jason Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -261,6 +261,8 @@ cgfourteen0	at obio0			# sun4m
 
 # Weitek p9100 found on Tadpole 3GS/3GX
 pnozz0	at sbus? slot ? offset ?
+# Microcontroller found on Tadpole
+tctrl0	at obio0
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.

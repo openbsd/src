@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.2 1999/09/06 04:46:38 jason Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.3 1999/09/07 02:58:49 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -60,6 +60,11 @@
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/sbusvar.h>
+
+#include "tctrl.h"
+#if NTCTRL > 0
+#include <sparc/dev/tctrlvar.h>
+#endif
 
 /* per-display variables */
 struct p9100_softc {
@@ -406,6 +411,9 @@ p9100_set_video(sc, enable)
 	else
 		v &= ~SRTC1_VIDEN;
 	sc->sc_ctl->ctl_vcr.srtc1 = v;
+#if NTCTRL > 0
+	tadpole_set_video(enable);
+#endif
 }
 
 int
@@ -443,16 +451,6 @@ p9100loadcmap(sc, start, ncolors)
 /*
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
- *
- * The cg3 is mapped starting at 256KB, for pseudo-compatibility with
- * the cg4 (which had an overlay plane in the first 128K and an enable
- * plane in the next 128K).  X11 uses only 256k+ region but tries to
- * map the whole thing, so we repeatedly map the first 256K to the
- * first page of the color screen.  If someone tries to use the overlay
- * and enable regions, they will get a surprise....
- *
- * As well, mapping at an offset of 0x04000000 causes the cg3 to be
- * mapped in flat mode without the cg4 emulation.
  */
 int
 p9100mmap(dev, off, prot)
@@ -460,8 +458,6 @@ p9100mmap(dev, off, prot)
 	int off, prot;
 {
 	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
-#define START		(128*1024 + 128*1024)
-#define NOOVERLAY	(0x04000000)
 
 	if (off & PGOFSET)
 		panic("p9100mmap");
