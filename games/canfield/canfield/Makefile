@@ -6,6 +6,7 @@ MAN=	canfield.6
 DPADD=	${LIBCURSES}
 LDADD=	-lcurses
 HIDEGAME=hidegame
+MLINKS=	canfield.6 cfscores.6
 
 
 .include "../../Makefile.inc"

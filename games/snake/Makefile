@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1999/03/13 02:08:09 pjanzen Exp $
+#	$OpenBSD: Makefile,v 1.4 2000/04/25 16:51:18 espie Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	snake
@@ -7,6 +7,7 @@ MAN=	snake.6
 DPADD=	${LIBM} ${LIBCURSES}
 LDADD=	-lm -lcurses
 HIDEGAME=hidegame
+MLINKS=snake.6 snscore.6
 
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \

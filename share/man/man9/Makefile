@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2000/03/23 10:11:52 art Exp $
+#	$OpenBSD: Makefile,v 1.17 2000/04/25 16:51:18 espie Exp $
 #       $NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -19,9 +19,10 @@ MLINKS+=disk.9 disk_init.9 disk.9 disk_attach.9 disk.9 disk_detatch.9 \
 MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_alloc.9 extent.9 extent_alloc_subregion.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
-	extent.9 extent_free.9
+	extent.9 extent_free.9 extent.9 extent_print.9
 MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
+MLINKS+=hz.9 tick.9 hz.9 tickadj.9 hz.9 stathz.9 hz.9 profhz.9
 MLINKS+=kthread.9 kthread_create.9 kthread.9 kthread_exit.9 \
 	kthread.9 kthread_create_deferred.9
 MLINKS+=log.9 addlog.9
