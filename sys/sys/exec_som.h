@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_som.h,v 1.1 1998/07/14 15:23:21 mickey Exp $	*/
+/*	$OpenBSD: exec_som.h,v 1.2 1998/07/14 15:26:34 mickey Exp $	*/
 
 /*
  *  (c) Copyright 1991 HEWLETT-PACKARD COMPANY
@@ -33,8 +33,8 @@
  * HP object formats
  */
 
-#ifndef _EXEC_SOM_H_
-#define _EXEC_SOM_H_
+#ifndef _SYS_EXEC_SOM_H_
+#define _SYS_EXEC_SOM_H_
 
 struct aux_id { 
 	u_int mandatory : 1;
@@ -126,4 +126,4 @@ typedef struct {
 	struct som_exec_auxhdr ehdr;
 } som_exec;
 
-#endif	/* _EXEC_SOM_H_
+#endif	/* _SYS_EXEC_SOM_H_
