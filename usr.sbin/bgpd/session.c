@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.57 2004/01/03 22:18:58 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.58 2004/01/03 22:44:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1010,6 +1010,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 
 			rpos = 0;
 			av = peer->rbuf->wpos + n;
+			peer->stats.last_read = time(NULL);
 
 			for (;;) {
 				if (rpos + MSGSIZE_HEADER > av)
@@ -1397,6 +1398,7 @@ getpeerbyip(in_addr_t ip)
 void
 session_down(struct peer *peer)
 {
+	peer->stats.last_updown = time(NULL);
 	if (imsg_compose(&ibuf_rde, IMSG_SESSION_DOWN, peer->conf.id,
 	    NULL, 0) == -1)
 		fatalx("imsg_compose error");
@@ -1405,6 +1407,7 @@ session_down(struct peer *peer)
 void
 session_up(struct peer *peer)
 {
+	peer->stats.last_updown = time(NULL);
 	if (imsg_compose(&ibuf_rde, IMSG_SESSION_UP, peer->conf.id,
 	    &peer->remote_bgpid, sizeof(peer->remote_bgpid)) == -1)
 		fatalx("imsg_compose error");
