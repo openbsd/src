@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.4 2004/08/15 10:36:17 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.5 2004/08/15 12:08:24 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -81,7 +81,7 @@ __asm__("\n"			\
 "	.set	noreorder\n"	\
 "	.globl	" #Name "\n"	\
 #Name":\n"			\
-"	lw	$2, 0x80001020\n"\
+"	lw	$2, 0xffffffff80001020\n"\
 "	lw	$2," #Offset "($2)\n"\
 "	jr	$2\n"		\
 "	nop\n"			\
