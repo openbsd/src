@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.7 1999/04/04 01:17:02 mjacob Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.8 1999/04/04 01:55:45 mjacob Exp $	*/
 /* release_4_3_99 */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -147,10 +147,6 @@ static struct ispmdvec mdvec_2100 = {
 
 #define IO_MAP_REG	0x10
 #define MEM_MAP_REG	0x14
-#define	PCIR_ROMADDR	0x30
-
-#define	PCI_DFLT_LTNCY	0x40
-#define	PCI_DFLT_LNSZ	0x10
 
 #ifndef SCSI_ISP_PREFER_MEM_MAP
 #ifdef  __alpha__
@@ -225,7 +221,7 @@ isp_pci_attach(parent, self, aux)
 #ifdef	DEBUG
 	static char oneshot = 1;
 #endif
-	u_int32_t data, linesz = PCI_DFLT_LNSZ;
+	u_int32_t data;
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
 	struct ispsoftc *isp = &pcs->pci_isp;
@@ -346,17 +342,6 @@ isp_pci_attach(parent, self, aux)
 		bzero(isp->isp_param, sizeof (fcparam));
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2100_OFF;
-
-		data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG);
-		if ((data & 0xff) < 3) {
-			/*
-			 * XXX: Need to get the actual revision
-			 * XXX: number of the 2100 FB. At any rate,
-			 * XXX: lower cache line size for early revision
-			 * XXX; boards.
-			 */
-			linesz = 1;
-		}
 	}
 #endif
 	/*
@@ -373,8 +358,7 @@ isp_pci_attach(parent, self, aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, data);
 
 	/*
-	 * Make sure that the latency timer, cache line size,
-	 * and ROM is disabled.
+	 * Make sure that latency timer and cache line size is set sanely.
 	 */
 	data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
 	data &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
@@ -382,10 +366,6 @@ isp_pci_attach(parent, self, aux)
 	data |= (0x40 << PCI_LATTIMER_SHIFT);
 	data |= (0x10 << PCI_CACHELINE_SHIFT);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, data);
-
-	data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCIR_ROMADDR);
-	data &= ~1;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCIR_ROMADDR, data);
 
 #ifdef DEBUG
 	if (oneshot) {
