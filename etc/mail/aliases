@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.2 2003/10/24 03:43:59 david Exp $
+#	$OpenBSD: aliases,v 1.3 2003/12/01 16:04:07 millert Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.
@@ -13,31 +13,33 @@
 MAILER-DAEMON: postmaster
 postmaster: root
 
-# General redirections for pseudo accounts
-bin:	root
+# General redirections for important pseudo accounts
 daemon:	root
-named:	root
-nobody:	root
+ftp-bugs: root
 operator: root
 uucp:	root
 www:	root
-ftp-bugs: root
-popa3d: root
-proxy:  root
-smmsp:  root
-sshd:   root
-_portmap: root
-_rstatd: root
-_identd: root
-_rusersd: root
-_fingerd: root
-_x11:   root
-_spamd: root
-_kdc: root
-_kadmin: root
-_isakmpd: root
-_syslogd: root
-_pflogd: root
+
+# Redirections for pseudo accounts that should not receive mail
+_fingerd: /dev/null
+_identd: /dev/null
+_isakmpd: /dev/null
+_kadmin: /dev/null
+_kdc: /dev/null
+_pflogd: /dev/null
+_portmap: /dev/null
+_rstatd: /dev/null
+_rusersd: /dev/null
+_spamd: /dev/null
+_syslogd: /dev/null
+_x11:   /dev/null
+bin:	/dev/null
+named:	/dev/null
+nobody:	/dev/null
+popa3d: /dev/null
+proxy:  /dev/null
+smmsp:  /dev/null
+sshd:   /dev/null
 
 # Well-known aliases -- these should be filled in!
 # root:
