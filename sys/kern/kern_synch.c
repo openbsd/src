@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.12 1998/02/03 19:06:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.13 1998/11/15 16:45:16 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -294,7 +294,6 @@ tsleep(ident, priority, wmesg, timo)
 	register int s;
 	int sig, catch = priority & PCATCH;
 	extern int cold;
-	void endtsleep __P((void *));
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
