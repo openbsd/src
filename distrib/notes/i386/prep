@@ -33,8 +33,8 @@ translation that you don't know about, but that the DOS "fdisk" program
 does!
 
 The OpenBSD root partition must also reside completely within the BIOS
-supported part of the hard disk -- this would typically be 504M, 2G, 8G
-or 128G, depending upon the age of the machine and its BIOS.
+supported part of the hard disk -- this would typically be 504MB, 2GB,
+8GB or 128GB, depending upon the age of the machine and its BIOS.
 
 Fourth, use the other operating system's "fdisk" program or partition
 editor to create at least one of the partitions to be used for that

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.62 2004/03/25 08:38:52 tom Exp $
+dnl	$OpenBSD: hardware,v 1.63 2004/03/26 08:56:10 tom Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -67,12 +67,12 @@ For sun4m machines, the following mbus CPU modules are supported:
 	- Ross HyperSparc RT620/625 at 166 MHz, with 512KB of primary cache
 	- Ross HyperSparc RT620/625 at 180 MHz, with 512KB of primary cache
 
-The minimal configuration requires 4M of RAM and ~60M of disk space.
+The minimal configuration requires 4MB of RAM and ~60MB of disk space.
 To install the entire system requires much more disk space, and to run
-X or compile the system, more RAM is recommended.  (OpenBSD with 4M of
-RAM feels like Solaris with 4M of RAM.) Note that until you have
-around 16M of RAM, getting more RAM is more important than getting a
-faster CPU.)  Installation from "ramdisk" kernels requires 8M of RAM.
+X or compile the system, more RAM is recommended.  (OpenBSD with 4MB of
+RAM feels like Solaris with 4MB of RAM.) Note that until you have
+around 16MB of RAM, getting more RAM is more important than getting a
+faster CPU.)  Installation from "ramdisk" kernels requires 8MB of RAM.
 
 Supported devices {:-include-:}:
     * Sun keyboard and mouse

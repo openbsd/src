@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.2 2004/02/07 22:47:49 miod Exp $
+dnl	$OpenBSD: prep,v 1.3 2004/03/26 08:56:10 tom Exp $
 NOTE: If you wish to install OpenBSD on your whole disk, i.e. you do not
 want any other operating system to reside on your hard disk, you can skip
 this section and go on to the section that describes installation, below.
@@ -37,8 +37,8 @@ dnl translation that you don't know about, but that the DOS "fdisk" program
 dnl does!
 dnl
 dnl The OpenBSD root partition must also reside completely within the BIOS
-dnl supported part of the hard disk -- this would typically be 504M, 2G or 8G,
-dnl depending upon the age of the machine and its BIOS.
+dnl supported part of the hard disk -- this would typically be 504MB, 2GB or
+dnl 8GB, depending upon the age of the machine and its BIOS.
 
 dnl Fourth, use the other operating system's "fdisk" program or partition
 Third, use the other operating system's "fdisk" program or partition

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.150 2004/03/25 08:38:52 tom Exp $
+dnl	$OpenBSD: hardware,v 1.151 2004/03/26 08:56:10 tom Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -9,12 +9,12 @@ that rely on a custom BIOS to paper over implementation differences.
 OpenBSD does not currently support multiple processors (SMP), but will
 run using one processor on a multi-processor system board.
 
-The minimal configuration to install the system is 12M or 16M of RAM and
-perhaps 100M of disk space.  A custom kernel might be able to run with only
+The minimal configuration to install the system is 12MB or 16MB of RAM and
+perhaps 100MB of disk space.  A custom kernel might be able to run with only
 8MB.  To install the entire system requires much more disk space, and to run
-X or compile the system, more RAM is recommended.  (16M of RAM will actually
+X or compile the system, more RAM is recommended.  (16MB of RAM will actually
 allow you to run X and/or compile but it won't be speedy. Note that until
-you have around 32M of RAM, getting more RAM is more important than getting
+you have around 32MB of RAM, getting more RAM is more important than getting
 a faster CPU.)
 
 Supported hardware {:-include-:}:

@@ -37,7 +37,7 @@ QBUS:
 Serial ports:
 	- DZ*11 lines (also DZ*11 compatible lines on VAXstations)
 
-The lowest amount of memory tested is 6M; however, more is recommended.
+The lowest amount of memory tested is 6MB; however, more is recommended.
 At the moment, the only supported console is a serial console.
 
 Currently, your storage options for using OpenBSD/MACHINE are SCSI disks

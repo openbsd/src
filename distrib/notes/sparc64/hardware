@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.65 2004/03/25 08:38:52 tom Exp $
+dnl	$OpenBSD: hardware,v 1.66 2004/03/26 08:56:10 tom Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -44,7 +44,7 @@ dnl		Sun Fire V480
 If your machine is not listed above, it is very likely that OpenBSD/MACHINE
 does not work on it (yet).
 
-The minimal configuration requires 32M of RAM and ~160M of disk space.
+The minimal configuration requires 32MB of RAM and ~160MB of disk space.
 To install the entire system requires much more disk space, and to run
 X or compile the system, more RAM is recommended.
 
