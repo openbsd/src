@@ -314,7 +314,7 @@ extern char * reg_names[];
       }									     \
       									     \
     m88k_cpu = (TARGET_88000 ? PROCESSOR_M88000				     \
-		: (TARGET_88100 ? PROCESSOR_M88100 : PROCESSOR_M88110));		     \
+		: (TARGET_88100 ? PROCESSOR_M88100 : PROCESSOR_M88110));     \
 									     \
     if (TARGET_BIG_PIC)							     \
       flag_pic = 2;							     \
@@ -336,7 +336,7 @@ extern char * reg_names[];
 									     \
     if (m88k_short_data)						     \
       {									     \
-	const char *p = m88k_short_data;					     \
+	const char *p = m88k_short_data;				     \
 	while (*p)							     \
 	  if (*p >= '0' && *p <= '9')					     \
 	    p++;							     \
@@ -353,8 +353,6 @@ extern char * reg_names[];
       }									     \
     if (TARGET_OMIT_LEAF_FRAME_POINTER)	/* keep nonleaf frame pointers */    \
       flag_omit_frame_pointer = 1;					     \
-      									     \
-    flag_caller_saves = 0;			/* not safe on m88k yet */   \
   } while (0)
 
 /*** Storage Layout ***/
@@ -666,7 +664,7 @@ extern char * reg_names[];
    registers.  The compiler should be allowed to use these as a fast spill
    area.  */
 #define HARD_REGNO_MODE_OK(REGNO, MODE)					\
-  (XRF_REGNO_P(REGNO)							\
+  (XRF_REGNO_P (REGNO)							\
     ? (TARGET_88110 && GET_MODE_CLASS (MODE) == MODE_FLOAT)             \
     : (((MODE) != DImode && (MODE) != DFmode && (MODE) != DCmode)	\
        || ((REGNO) & 1) == 0))
@@ -799,7 +797,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    reg number REGNO.  This could be a conditional expression
    or could index an array.  */
 #define REGNO_REG_CLASS(REGNO) \
-  ((REGNO) ? ((REGNO < 32) ? GENERAL_REGS : XRF_REGS) : AP_REG)
+  ((REGNO) ? ((REGNO) < 32 ? GENERAL_REGS : XRF_REGS) : AP_REG)
 
 /* The class value for index registers, and the one for base regs.  */
 #define BASE_REG_CLASS AGRF_REGS
@@ -830,7 +828,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    in some cases it is preferable to use a more restrictive class.
    Double constants should be in a register iff they can be made cheaply.  */
 #define PREFERRED_RELOAD_CLASS(X,CLASS)	\
-   (CONSTANT_P(X) && (CLASS == XRF_REGS) ? NO_REGS : (CLASS))
+   (CONSTANT_P (X) && ((CLASS) == XRF_REGS) ? NO_REGS : (CLASS))
 
 /* Return the register class of a scratch register needed to load IN
    into a register of class CLASS in MODE.  On the m88k, when PIC, we
@@ -994,7 +992,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    Note that this matches FUNCTION_ARG behaviour. */
 #define RETURN_IN_MEMORY(TYPE) \
   (TYPE_MODE (TYPE) == BLKmode \
-   || ((TREE_CODE (TYPE) == RECORD_TYPE || TREE_CODE(TYPE) == UNION_TYPE) \
+   || ((TREE_CODE (TYPE) == RECORD_TYPE || TREE_CODE (TYPE) == UNION_TYPE) \
        && (TYPE_ALIGN (TYPE) != BITS_PER_WORD || \
            GET_MODE_SIZE (TYPE_MODE (TYPE)) != UNITS_PER_WORD)))
 
@@ -1580,14 +1578,14 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 	  && GET_CODE (PATTERN (RTX)) == SET				\
 	  && ((GET_CODE (SET_SRC (PATTERN (RTX))) == MEM		\
 	       && MEM_VOLATILE_P (SET_SRC (PATTERN (RTX)))))))		\
-    LENGTH += 1;							\
+    (LENGTH) += 1;							\
   else if (GET_CODE (RTX) == NOTE					\
 	   && NOTE_LINE_NUMBER (RTX) == NOTE_INSN_PROLOGUE_END)		\
     {									\
       if (profile_block_flag)						\
-	LENGTH += FUNCTION_BLOCK_PROFILER_LENGTH;			\
+	(LENGTH) += FUNCTION_BLOCK_PROFILER_LENGTH;			\
       if (profile_flag)							\
-	LENGTH += (FUNCTION_PROFILER_LENGTH + REG_PUSH_LENGTH		\
+	(LENGTH) += (FUNCTION_PROFILER_LENGTH + REG_PUSH_LENGTH		\
 		   + REG_POP_LENGTH);					\
     }									\
   else if (profile_block_flag						\
@@ -1596,7 +1594,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 	       || (GET_CODE (RTX) == INSN				\
 		   && GET_CODE (PATTERN (RTX)) == SEQUENCE		\
 		   && GET_CODE (XVECEXP (PATTERN (RTX), 0, 0)) == JUMP_INSN)))\
-    LENGTH += BLOCK_PROFILER_LENGTH;
+    (LENGTH) += BLOCK_PROFILER_LENGTH;
 
 /* Track the state of the last volatile memory reference.  Clear the
    state with CC_STATUS_INIT for now.  */
