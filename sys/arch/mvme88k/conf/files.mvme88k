@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.23 2003/12/27 23:58:08 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.24 2004/01/02 23:35:00 miod Exp $
 #
 maxpartitions 16
 
@@ -10,9 +10,6 @@ attach 	mainbus at root
 device bugtty: tty
 attach bugtty at mainbus
 file	arch/mvme88k/dev/bugtty.c			bugtty needs-count
-
-device cpu
-attach cpu at mainbus
 
 device bussw { [offset = -1], [ ipl = 0 ] }
 attach bussw at mainbus
