@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.35 2002/05/17 15:54:13 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.36 2002/05/19 02:09:28 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -38,7 +38,7 @@
 #define SKEY_NAMELEN    4
 #endif
 
-void	usage(char *);
+void	usage(void);
 void	secure_mode(int *, char *, char *, char *, char *, size_t);
 void	normal_mode(char *, int, char *, char *, char *);
 void	timedout(int);
@@ -46,9 +46,7 @@ void	convert_db(void);
 void	enable_db(int);
 
 int
-main(argc, argv)
-	int     argc;
-	char   *argv[];
+main(int argc, char **argv)
 {
 	int     rval, i, l, n, defaultsetup, rmkey, hexmode, enable, convert;
 	char	hostname[MAXHOSTNAMELEN];
@@ -88,7 +86,7 @@ main(argc, argv)
 			switch (argv[i][1]) {
 			case 'a':
 				if (argv[++i] == NULL || argv[i][0] == '\0')
-					usage(argv[0]);
+					usage();
 				auth_type = argv[i];
 				break;
 			case 's':
@@ -103,7 +101,7 @@ main(argc, argv)
 				break;
 			case 'n':
 				if (argv[++i] == NULL || argv[i][0] == '\0')
-					usage(argv[0]);
+					usage();
 				if ((n = atoi(argv[i])) < 1 || n >= SKEY_MAX_SEQ)
 					errx(1, "count must be > 0 and < %d",
 					     SKEY_MAX_SEQ);
@@ -118,13 +116,13 @@ main(argc, argv)
 				enable = 1;
 				break;
 			default:
-				usage(argv[0]);
+				usage();
 			}
 		} else {
 			/* Multi character switches are hash types */
 			if ((ht = skey_set_algorithm(&argv[i][1])) == NULL) {
 				warnx("Unknown hash algorithm %s", &argv[i][1]);
-				usage(argv[0]);
+				usage();
 			}
 		}
 		i++;
@@ -134,7 +132,7 @@ main(argc, argv)
 
 	if (argc > 1 || (enable && convert) || (enable && argc) ||
 	    (convert && argc))
-		usage(argv[0]);
+		usage();
 
 	/* Handle -C, -D, and -E */
 	if (convert || enable) {
@@ -147,15 +145,15 @@ main(argc, argv)
 
 	/* Check for optional user string. */
 	if (argc == 1) {
-		if ((pp = getpwnam(argv[i])) == NULL) {
+		if ((pp = getpwnam(argv[0])) == NULL) {
 			if (getuid() == 0) {
 				static struct passwd _pp;
 
-				_pp.pw_name = argv[i];
+				_pp.pw_name = argv[0];
 				pp = &_pp;
-				warnx("Warning, user unknown: %s", argv[i]);
+				warnx("Warning, user unknown: %s", argv[0]);
 			} else {
-				errx(1, "User unknown: %s", argv[i]);
+				errx(1, "User unknown: %s", argv[0]);
 			}
 		} else if (strcmp(pp->pw_name, me) != 0 && getuid() != 0) {
 			/* Only root can change other's S/Keys. */
@@ -249,7 +247,8 @@ main(argc, argv)
 				errno = ENAMETOOLONG;
 				err(1, "Cannot create S/Key entry");
 			}
-			if ((l = open(filename, O_RDWR | O_CREAT | O_EXCL,
+			if ((l = open(filename,
+			    O_RDWR | O_NONBLOCK | O_CREAT | O_TRUNC |O_NOFOLLOW,
 			    S_IRUSR | S_IWUSR)) == -1 ||
 			    flock(l, LOCK_EX) != 0 ||
 			    (skey.keyfile = fdopen(l, "r+")) == NULL)
@@ -291,13 +290,8 @@ main(argc, argv)
 }
 
 void
-secure_mode(count, key, seed, defaultseed, buf, bufsiz)
-	int *count;
-	char *key;
-	char *seed;
-	char *defaultseed;
-	char *buf;
-	size_t bufsiz;
+secure_mode(int *count, char *key, char *seed, char *defaultseed, char *buf,
+    size_t bufsiz)
 {
 	int i, n;
 	char *p;
@@ -378,12 +372,7 @@ secure_mode(count, key, seed, defaultseed, buf, bufsiz)
 }
 
 void
-normal_mode(username, n, key, seed, defaultseed)
-	char *username;
-	int n;
-	char *key;
-	char *seed;
-	char *defaultseed;
+normal_mode(char *username, int n, char *key, char *seed, char *defaultseed)
 {
 	int i, nn;
 	char passwd[SKEY_MAX_PW_LEN+2], passwd2[SKEY_MAX_PW_LEN+2];
@@ -436,8 +425,7 @@ normal_mode(username, n, key, seed, defaultseed)
 }
 
 void
-enable_db(op)
-	int op;
+enable_db(int op)
 {
 	if (op == 1) {
 		/* enable */
@@ -525,8 +513,7 @@ convert_db(void)
 
 #define TIMEOUT_MSG	"Timed out waiting for input.\n"
 void
-timedout(signo)
-	int signo;
+timedout(int signo)
 {
 
 	write(STDERR_FILENO, TIMEOUT_MSG, sizeof(TIMEOUT_MSG) - 1);
@@ -534,11 +521,12 @@ timedout(signo)
 }
 
 void
-usage(s)
-	char *s;
+usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-s] [-x] [-z] [-C] [-D] [-E] "
+	extern char *__progname;
+
+	(void)fprintf(stderr, "usage: %s [-r] [-s] [-x] [-C] [-D] [-E] "
 	    "[-a auth_type] [-n count]\n                "
-	    "[-md4|-md5|-sha1|-rmd160] [user]\n", s);
+	    "[-md4|-md5|-sha1|-rmd160] [user]\n", __progname);
 	exit(1);
 }
