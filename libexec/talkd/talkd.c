@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.11 2002/05/16 12:16:16 deraadt Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.12 2002/06/21 02:28:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)talkd.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: talkd.c,v 1.11 2002/05/16 12:16:16 deraadt Exp $";
+static char rcsid[] = "$Id: talkd.c,v 1.12 2002/06/21 02:28:32 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -65,7 +65,6 @@ static char rcsid[] = "$Id: talkd.c,v 1.11 2002/05/16 12:16:16 deraadt Exp $";
 #include <paths.h>
 #include "talkd.h"
 
-int	sockt;
 int	debug = 0;
 void	timeout();
 long	lastmsgtime;
@@ -104,8 +103,9 @@ main(argc, argv)
 		int cc, len = sizeof(response.addr);
 		CTL_MSG	request;
 
-		cc = recvfrom(0, (char *)&request, sizeof (request), 0,
-		    (struct sockaddr *)&response.addr, &len);
+		cc = recvfrom(STDIN_FILENO, (char *)&request,
+		    sizeof (request), 0, (struct sockaddr *)&response.addr,
+		    &len);
 		if (cc != sizeof (request)) {
 			if (cc < 0 && errno != EINTR)
 				syslog(LOG_WARNING, "recvfrom: %m");
@@ -119,7 +119,7 @@ main(argc, argv)
 		lastmsgtime = time(0);
 		process_request(&request, &response);
 		/* can block here, is this what I want? */
-		cc = sendto(sockt, (char *)&response,
+		cc = sendto(STDOUT_FILENO, (char *)&response,
 		    sizeof (response), 0, (struct sockaddr *)&request.ctl_addr,
 		    sizeof (request.ctl_addr));
 		if (cc != sizeof (response))
