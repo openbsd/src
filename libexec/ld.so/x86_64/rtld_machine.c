@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.4 2004/02/10 16:14:11 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.5 2004/02/23 20:52:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -218,7 +218,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			_dl_printf("relocation error %d idx %d\n", type, i);
 			_dl_exit(20);
 		}
-			
+
 		if (type == R_TYPE(NONE))
 			continue;
 
@@ -368,7 +368,7 @@ _dl_bind(elf_object_t *object, int index)
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym->st_size, object);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
-		*((int *)0) = 0;        /* XXX */
+		*((int *)0) = 0;		/* XXX */
 	}
 
 	newval = ooff + this->st_value + rel->r_addend;
@@ -396,7 +396,7 @@ _dl_bind(elf_object_t *object, int index)
 void
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
-	extern void _dl_bind_start(void);       /* XXX */
+	extern void _dl_bind_start(void);	/* XXX */
 	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 	int i, num;
 	Elf_RelA *rel;

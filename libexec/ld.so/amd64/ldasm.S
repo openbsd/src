@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.2 2004/02/10 16:59:08 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.3 2004/02/23 20:52:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -34,9 +34,9 @@
 #include <machine/asm.h>
 
 	.text
-	.align  4
-	.globl  _dl_start
-	.type   _dl_start,@function
+	.align	4
+	.globl	_dl_start
+	.type	_dl_start,@function
 _dl_start:
 	movq	%rsp, %r12		# save stack pointer for _rtld
 	pushq	%rbx			# save ps_strings
@@ -50,8 +50,8 @@ _dl_start:
 	movq	%rsi, %rcx		# dl_data
 	movq	DL_LOFF_OFFSET(%rsi), %rdx		# loff from dl_data
 
-        movq    (%r12), %rdi
-	leaq    16(%r12,%rdi,8), %rsi	# envp
+	movq	(%r12), %rdi
+	leaq	16(%r12,%rdi,8), %rsi	# envp
 	movq	%r12, %rdi
 	addq	$8,%rdi			# argv
 	call	_dl_boot@PLT		# _dl_boot(argv,envp,loff,dl_data)
@@ -105,7 +105,7 @@ DL_SYSCALL2(sysctl,__sysctl)
 	.global _dl_sigprocmask
 	.type _dl_sigprocmask,@function
 _dl_sigprocmask:
-	movq    (%rsi),%rsi		# fetch indirect  ...
+	movq	(%rsi),%rsi		# fetch indirect...
 	movl	$SYS_sigprocmask, %eax
 	movq	%rcx, %r10
 	syscall
@@ -121,20 +121,20 @@ _dl_sigprocmask:
 	.type _dl_bind_start,@function
 _dl_bind_start:
 	pushfq				# save registers
-	pushq   %rax
-	pushq   %rcx
-	pushq   %rdx
-	pushq   %rsi
-	pushq   %rdi
-	pushq   %r8
-	pushq   %r9
-	pushq   %r10
-	pushq   %r11
+	pushq	%rax
+	pushq	%rcx
+	pushq	%rdx
+	pushq	%rsi
+	pushq	%rdi
+	pushq	%r8
+	pushq	%r9
+	pushq	%r10
+	pushq	%r11
 
 	movq	80(%rsp), %rdi		# Copy of reloff
 	movq	88(%rsp), %rsi		# Copy of obj
-	call    _dl_bind@PLT		# Call the binder
-	movq    %rax,88(%rsp)		# Store function to be called in obj
+	call	_dl_bind@PLT		# Call the binder
+	movq	%rax,88(%rsp)		# Store function to be called in obj
 
 	popq	%r11			# restore registers
 	popq	%r10
@@ -147,6 +147,6 @@ _dl_bind_start:
 	popq	%rax
 	popfq
 
-	leaq    8(%rsp),%rsp		# Discard reloff, do not change eflags
+	leaq	8(%rsp),%rsp		# Discard reloff, do not change eflags
 	ret
 
