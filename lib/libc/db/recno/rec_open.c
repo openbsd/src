@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_open.c,v 1.6 2001/05/11 15:30:13 art Exp $	*/
+/*	$OpenBSD: rec_open.c,v 1.7 2002/01/31 17:19:11 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_open.c	8.10 (Berkeley) 9/1/94";
 #else
-static char rcsid[] = "$OpenBSD: rec_open.c,v 1.6 2001/05/11 15:30:13 art Exp $";
+static char rcsid[] = "$OpenBSD: rec_open.c,v 1.7 2002/01/31 17:19:11 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -174,7 +174,7 @@ slow:			if ((t->bt_rfp = fdopen(rfd, "r")) == NULL)
 				 */
 				t->bt_msize = sb.st_size;
 				if ((t->bt_smap = mmap(NULL, t->bt_msize,
-				    PROT_READ, MAP_PRIVATE, rfd,
+				    PROT_READ, MAP_FILE | MAP_PRIVATE, rfd,
 				    (off_t)0)) == MAP_FAILED)
 					goto slow;
 				t->bt_cmap = t->bt_smap;
