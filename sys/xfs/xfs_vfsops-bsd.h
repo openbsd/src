@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_vfsops-bsd.h,v 1.4 2000/09/11 14:26:53 art Exp $ */
+/* $Id: xfs_vfsops-bsd.h,v 1.5 2001/02/21 02:45:12 nate Exp $ */
 
 #ifndef _xfs_vfsops_bsd_h
 #define _xfs_vfsops_bsd_h
@@ -44,7 +44,7 @@
 int
 xfs_mount(struct mount * mp,
 	  const char *user_path,
-	  caddr_t user_data,
+	  void *user_data,
 	  struct nameidata * ndp,
 	  struct proc * p);
 

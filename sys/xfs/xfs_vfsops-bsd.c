@@ -38,7 +38,7 @@
 
 #include <xfs/xfs_locl.h>
 
-RCSID("$Id: xfs_vfsops-bsd.c,v 1.5 2000/09/11 14:26:53 art Exp $");
+RCSID("$Id: xfs_vfsops-bsd.c,v 1.6 2001/02/21 02:45:12 nate Exp $");
 
 /*
  * XFS vfs operations.
@@ -56,7 +56,7 @@ RCSID("$Id: xfs_vfsops-bsd.c,v 1.5 2000/09/11 14:26:53 art Exp $");
 int
 xfs_mount(struct mount *mp,
 	  const char *user_path,
-	  caddr_t user_data,
+	  void *user_data,
 	  struct nameidata *ndp,
 	  struct proc *p)
 {
