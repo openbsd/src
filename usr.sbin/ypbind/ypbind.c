@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.45 2002/06/29 07:32:15 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.46 2002/07/20 12:14:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997,1998 Theo de Raadt <deraadt@OpenBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.45 2002/06/29 07:32:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.46 2002/07/20 12:14:51 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -441,6 +441,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+		sin.sin_port = 0;
 		if (bind(lsock, (struct sockaddr *)&sin, len) != 0) {
 			syslog(LOG_ERR, "cannot bind local udp: %m");
 			exit(1);
@@ -464,6 +465,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+		sin.sin_port = 0;
 		if (bind(lsock, (struct sockaddr *)&sin, len) == -1) {
 			syslog(LOG_ERR, "cannot bind udp: %m");
 			exit(1);
@@ -478,10 +480,21 @@ main(int argc, char *argv[])
 		perror("socket");
 		return -1;
 	}
+	memset(&sin, 0, sizeof sin);
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	sin.sin_port = 0;
+	bindresvport(rpcsock, &sin);
+
 	if ((pingsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		perror("socket");
 		return -1;
 	}
+	memset(&sin, 0, sizeof sin);
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	sin.sin_port = 0;
+	bindresvport(pingsock, &sin);
 
 	fcntl(rpcsock, F_SETFL, fcntl(rpcsock, F_GETFL, 0) | FNDELAY);
 	fcntl(pingsock, F_SETFL, fcntl(pingsock, F_GETFL, 0) | FNDELAY);
