@@ -617,6 +617,13 @@ check_keynote_assertions(request_rec *r)
 
     /* Initialize keynote session.  */
     sessid = kn_init();
+    if (sessid == -1) {
+	ap_log_error(APLOG_MARK, APLOG_ERR|APLOG_NOERRNO,
+	    r->connection->server,
+	    "keynote init failed: keynote_errno=%d",
+	    keynote_errno);
+	return(FORBIDDEN);
+    }
 
     /* If this is an SSL session, see if client certs were used. */
     if ((ssl = ap_ctx_get(r->connection->client->ctx, "ssl")) != NULL) {
