@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.8 1997/11/29 19:54:51 millert Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.9 1997/11/29 20:01:03 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -282,7 +282,8 @@ __END_DECLS
  */
 #if !defined (_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 __BEGIN_DECLS
-int	 asprintf __P((char **, const char *, ...));
+int	 asprintf __P((char **, const char *, ...))
+		__attribute__((format (printf, 2, 3)));
 char	*fgetln __P((FILE *, size_t *));
 int	 fpurge __P((FILE *));
 int	 getw __P((FILE *));
