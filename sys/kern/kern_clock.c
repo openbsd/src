@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.23 1995/12/28 19:16:41 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.24 1996/01/17 04:37:31 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -200,7 +200,7 @@ hardclock(frame)
 	delta = tick;
 	if (tickfix) {
 		tickfixcnt++;
-		if (tickfixcnt > tickfixinterval) {
+		if (tickfixcnt >= tickfixinterval) {
 			delta += tickfix;
 			tickfixcnt = 0;
 		}
