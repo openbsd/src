@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.264 2002/11/28 12:07:37 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.265 2002/11/29 18:25:22 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -36,6 +36,7 @@
 
 #include "bpfilter.h"
 #include "pflog.h"
+#include "pfsync.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +52,6 @@
 #include <net/if_types.h>
 #include <net/bpf.h>
 #include <net/route.h>
-#include <net/if_pflog.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -70,6 +70,8 @@
 
 #include <dev/rndvar.h>
 #include <net/pfvar.h>
+#include <net/if_pflog.h>
+#include <net/if_pfsync.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -444,6 +446,9 @@ pf_insert_state(struct pf_state *state)
 
 	pf_status.fcounters[FCNT_STATE_INSERT]++;
 	pf_status.states++;
+#if NPFSYNC
+	pfsync_insert_state(state);
+#endif
 	return (0);
 }
 
@@ -489,6 +494,9 @@ pf_purge_expired_states(void)
 			KASSERT(peer->state == cur->state);
 			RB_REMOVE(pf_state_tree, &tree_lan_ext, peer);
 
+#if NPFSYNC
+			pfsync_delete_state(cur->state);
+#endif
 			if (cur->state->rule.ptr != NULL)
 				cur->state->rule.ptr->states--;
 			pool_put(&pf_state_pl, cur->state);

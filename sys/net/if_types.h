@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_types.h,v 1.13 2002/05/30 01:21:08 itojun Exp $	*/
+/*	$OpenBSD: if_types.h,v 1.14 2002/11/29 18:25:22 mickey Exp $	*/
 /*	$NetBSD: if_types.h,v 1.17 2000/10/26 06:51:31 onoe Exp $	*/
 
 /*
@@ -268,5 +268,6 @@
 #define	IFT_FAITH	0xf3
 #define	IFT_ENC		0xf4		/* Encapsulation */
 #define	IFT_PFLOG	0xf5		/* Packet filter logging */
+#define	IFT_PFSYNC	0xf6		/* Packet filter state syncing */
 
 #endif /* _NET_IF_TYPES_H_ */

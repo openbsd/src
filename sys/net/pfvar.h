@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.105 2002/11/28 12:07:37 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.106 2002/11/29 18:25:23 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -371,7 +371,7 @@ struct pf_state {
 	struct pf_state_peer dst;
 	union {
 		struct pf_rule	*ptr;
-		u_int16_t	 nr;
+		u_int32_t	 nr;
 	} rule;
 	struct pf_addr	 rt_addr;
 	struct ifnet	*rt_ifp;

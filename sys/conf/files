@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.257 2002/09/03 16:30:54 mickey Exp $
+#	$OpenBSD: files,v 1.258 2002/11/29 18:25:23 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -336,7 +336,6 @@ pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
 pseudo-device strip: ifnet
 pseudo-device enc: ifnet
-pseudo-device pflog: ifnet
 pseudo-device bridge: ifnet, ether
 pseudo-device vlan: ifnet, ether
 pseudo-device sppp: ifnet
@@ -355,6 +354,10 @@ pseudo-device pf: ifnet
 file	net/pf.c		pf	needs-flag
 file	net/pf_norm.c		pf
 file	net/pf_ioctl.c		pf
+pseudo-device pflog: ifnet
+file	net/if_pflog.c		pflog	needs-flag
+pseudo-device pfsync: ifnet
+file	net/if_pfsync.c		pfsync	needs-flag
 
 pseudo-device bio
 file	dev/bio.c	bio needs-flag
@@ -644,7 +647,6 @@ file net/route.c
 file net/rtsock.c
 file net/slcompress.c			sl | ppp | strip
 file net/if_enc.c			enc			needs-count
-file net/if_pflog.c			pflog			needs-count
 file net/if_gre.c			gre			needs-count
 #file net/if_ieee1394subr.c		ieee1394
 file netccitt/ccitt_proto.c		ccitt
