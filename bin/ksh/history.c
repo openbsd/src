@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.12 2000/10/12 10:51:13 art Exp $	*/
+/*	$OpenBSD: history.c,v 1.13 2002/08/03 17:00:09 marc Exp $	*/
 
 /*
  * command history
@@ -900,7 +900,7 @@ hist_count_lines(base, bytes)
 	register int bytes;
 {
 	State state = shdr;
-	register lines = 0;
+	int lines = 0;
 
 	while (bytes--) {
 		switch (state)
