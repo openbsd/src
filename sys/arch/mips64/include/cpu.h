@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.4 2004/08/15 12:07:28 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -51,17 +51,10 @@
 
 #include <machine/psl.h>
 
-#if defined(_LP64)
 #define KSEG0_BASE	0xffffffff80000000
 #define KSEG1_BASE	0xffffffffa0000000
 #define KSSEG_BASE	0xffffffffc0000000
 #define KSEG3_BASE	0xffffffffe0000000
-#else
-#define KSEG0_BASE	0x80000000
-#define KSEG1_BASE	0xa0000000
-#define KSSEG_BASE	0xc0000000
-#define KSEG3_BASE	0xe0000000
-#endif
 #define KSEG_SIZE	0x20000000
 
 #define	KSEG0_TO_PHYS(x)	((u_long)(x) & 0x1fffffff)
