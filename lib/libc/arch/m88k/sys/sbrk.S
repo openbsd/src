@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.data
 	/*.asciz "from: @(#)sbrk.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: sbrk.S,v 1.1 1998/12/15 07:10:33 smurph Exp $"
+	.asciz "$Id: sbrk.S,v 1.2 1999/02/09 05:23:37 smurph Exp $"
 	.text
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,10 +48,7 @@
 	.globl	curbrk
 
 	.data
-/*
-curbrk:	.long	0
-*/
-	.align  2
+	.align 8
 curbrk:	.long	_end
 	.text
 
