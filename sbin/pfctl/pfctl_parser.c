@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.41 2001/08/16 11:46:56 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.42 2001/08/18 14:05:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -423,12 +423,12 @@ print_state(struct pf_state *s)
 	print_host(&s->ext);
 	printf("\n");
 
-	printf("%u:%u  ", src->state, dst->state);
+	printf("\t%u:%u  ", src->state, dst->state);
 	if (s->proto == IPPROTO_TCP) {
 		print_seq(src);
 		printf("    ");
 		print_seq(dst);
-		printf("\n     ");
+		printf("\n");
 	}
 
 	sec = s->creation % 60;
@@ -436,7 +436,7 @@ print_state(struct pf_state *s)
 	min = s->creation % 60;
 	s->creation /= 60;
 	hrs = s->creation;
-	printf("age %.2u:%.2u:%.2u", hrs, min, sec);
+	printf("\tage %.2u:%.2u:%.2u", hrs, min, sec);
 	sec = s->expire % 60;
 	s->expire /= 60;
 	min = s->expire % 60;
@@ -444,7 +444,6 @@ print_state(struct pf_state *s)
 	hrs = s->expire;
 	printf(", expires in %.2u:%.2u:%.2u", hrs, min, sec);
 	printf(", %u pkts, %u bytes\n", s->packets, s->bytes);
-	printf("\n");
 }
 
 void
