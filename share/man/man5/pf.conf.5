@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.190 2003/03/02 12:44:42 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.191 2003/03/03 22:12:24 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -93,7 +93,7 @@ Macro names may not be reserved words (for example
 .Ar pass ,
 .Ar in ,
 .Ar out Ns ).
-Macros are not expanded recursively.
+Macros are not expanded inside quotes.
 .Pp
 For example,
 .Pp
