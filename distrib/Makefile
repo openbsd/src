@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.16 2001/06/25 00:29:44 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2001/06/26 22:08:23 miod Exp $
 
 .if	make(obj)
 SUBDIR= special alpha amiga crunch hp300 i386 mac68k mvme68k mvme88k\
-	powerpc sparc sun3
+	powerpc sparc sun3 vax
 .elif	!make(install)
 SUBDIR= special
 .endif
