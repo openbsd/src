@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhci_pci.c,v 1.5 1999/11/07 21:30:18 fgsch Exp $	*/
-/*	$NetBSD: uhci_pci.c,v 1.7 1999/05/20 09:52:35 augustss Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.6 2000/03/26 21:47:30 aaron Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.14 2000/01/25 11:26:06 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,8 +99,7 @@ uhci_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	pcireg_t csr;
-	char *typestr;
+	pcireg_t csr, legsup;
 	usbd_status r;
 
 
@@ -140,18 +139,27 @@ uhci_pci_attach(parent, self, aux)
 	}
 	printf(": %s", intrstr);
 
+	/* Verify that the PIRQD enable bit is set, some BIOS's don't do that*/
+	legsup = pci_conf_read(pc, pa->pa_tag, PCI_LEGSUP);
+	if (!(legsup & PCI_LEGSUP_USBPIRQDEN)) {
+		legsup = PCI_LEGSUP_USBPIRQDEN;
+		pci_conf_write(pc, pa->pa_tag, PCI_LEGSUP, legsup);
+	}
+
 	switch(pci_conf_read(pc, pa->pa_tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
-		typestr = "pre 1.0";
+		sc->sc.sc_bus.usbrev = USBREV_PRE_1_0;
 		break;
 	case PCI_USBREV_1_0:
-		typestr = "1.0";
+		sc->sc.sc_bus.usbrev = USBREV_1_0;
+		break;
+	case PCI_USBREV_1_1:
+		sc->sc.sc_bus.usbrev = USBREV_1_1;
 		break;
 	default:
-		typestr = "unknown";
+		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
 		break;
 	}
-	printf(" version %s\n", typestr);
 
 	r = uhci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
