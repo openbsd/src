@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.29 2004/10/23 11:09:22 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.30 2004/10/26 17:25:36 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -61,7 +61,7 @@ sub defaultCode
 	}
 }
 
-sub DirrmOnly
+sub SharedItemsOnly
 {
 	my ($fh, $cont) = @_;
 	local $_;
@@ -69,6 +69,11 @@ sub DirrmOnly
 		next unless m/^\@(?:cwd|dirrm|dir|fontdir|mandir|newuser|newgroup|name)\b/ || m/^\@(?:sample|extra)\b.*\/$/ || m/^[^\@].*\/$/;
 		&$cont($_);
 	}
+}
+
+sub DirrmOnly
+{
+	&OpenBSD::PackingList::SharedItemsOnly;
 }
 
 sub LibraryOnly
