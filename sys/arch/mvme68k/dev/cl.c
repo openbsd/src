@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.14 1996/06/11 10:17:34 deraadt Exp $ */
+/*	$OpenBSD: cl.c,v 1.15 1997/04/02 05:25:45 rahnds Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -57,6 +57,7 @@
 #endif
 
 #define splcl() spl3()
+#define USE_BUFFER
 
 /* min timeout 0xa, what is a good value */
 #define CL_TIMEOUT	0x10
@@ -97,6 +98,11 @@ struct cl_info {
 	void *rxp[2];
 	void *tx[2];
 	void *txp[2];
+
+	volatile u_char *pconsum;
+	volatile u_char *psupply;
+	volatile u_char *buffer; 
+	volatile int	nchar;
 };
 #define CLCD_PORTS_PER_CHIP 4
 #define CL_BUFSIZE 256
@@ -122,6 +128,7 @@ struct clsoftc {
 	struct intrhand		sc_ih_r;
 	struct pcctworeg	*sc_pcctwo;
 	int			sc_flags;
+	int			ssir;
 };
 struct {
 	u_int speed;
@@ -184,6 +191,8 @@ static void cl_initchannel __P((struct clsoftc *sc, int channel));
 static void clputc __P((struct clsoftc *sc, int unit, u_char c));
 static u_char clgetc __P((struct clsoftc *sc, int *channel));
 static void cloutput __P( (struct tty *tp));
+void cl_softint __P((struct clsoftc *sc));
+void cl_appendbufn __P((struct clsoftc *sc, u_char channel, u_char *buf, u_short cnt));
 
 struct cfattach cl_ca = {
 	sizeof(struct clsoftc), clprobe, clattach
@@ -269,6 +278,9 @@ clattach(parent, self, aux)
 		/* reset chip only if we are not console device */
 		/* wait for GFRCR */
 	}
+        /* allow chip to settle before continuing */
+        delay(50);
+
 	/* set up global registers */
 	sc->cl_reg->cl_tpr = CL_TIMEOUT;
 	sc->cl_reg->cl_rpilr = 0x03;
@@ -298,6 +310,16 @@ clattach(parent, self, aux)
 	sc->sc_cl[2].tx[1] = (void *)(((int)sc->sc_cl[2].tx[0]) + CL_BUFSIZE);
 	sc->sc_cl[3].tx[0] = (void *)(((int)sc->sc_cl[2].tx[1]) + CL_BUFSIZE);
 	sc->sc_cl[3].tx[1] = (void *)(((int)sc->sc_cl[3].tx[0]) + CL_BUFSIZE);
+#ifdef USE_BUFFER
+	/* receive buffer and dma buffer are "shared" */
+	for (i = 0; i < CLCD_PORTS_PER_CHIP; i++) {
+		sc->sc_cl[i].buffer = sc->sc_cl[i].rx[0];
+		sc->sc_cl[i].pconsum = sc->sc_cl[i].buffer;
+		sc->sc_cl[i].psupply = sc->sc_cl[i].buffer;
+		sc->sc_cl[i].nchar = 0;
+	}
+	sc->ssir = allocate_sir(cl_softint, (void *)sc);
+#endif
 	for (i = 0; i < CLCD_PORTS_PER_CHIP; i++) {
 		int j;
 #if 0
@@ -310,6 +332,7 @@ clattach(parent, self, aux)
 			    i, j, sc->sc_cl[i].tx[j], sc->sc_cl[i].txp[j]);
 		}
 #endif
+		
 #if 0
 		sc->sc_cl[i].cl_rxmode =
 			!(!((flags >> (i * CL_FLAG_BIT_PCH)) & 0x01));
@@ -320,6 +343,9 @@ clattach(parent, self, aux)
 #endif
 		cl_initchannel(sc, i);
 	}
+        /* allow chip to settle before continuing */
+        delay(50);
+
 	/* enable interrupts */
 	sc->sc_ih_e.ih_fn = cl_rxintr;
 	sc->sc_ih_e.ih_arg = sc;
@@ -1435,7 +1461,6 @@ cl_mintr(sc)
 {
 	u_char mir, misr, msvr;
 	int channel;
-	struct tty *tp;
 	if(((mir = sc->cl_reg->cl_mir) & 0x40) == 0x0) {
 		/* only if intr is not shared? */
 		log(LOG_WARNING, "cl_mintr extra intr\n");
@@ -1455,21 +1480,31 @@ cl_mintr(sc)
 		log(LOG_WARNING, "cl_mintr: channel %x timer 2 unexpected\n",channel);
 	}
 	if (misr & 0x20) {
+		struct tty *tp = sc->sc_cl[channel].tty;
+#ifdef VERBOSE_LOG_MESSAGES
 		log(LOG_WARNING, "cl_mintr: channel %x cts %x\n",channel, 
 		((msvr & 0x20) != 0x0)
 		);
+#endif
+		if (msvr & 0x20) {
+			cl_unblock(tp);
+		}
 	}
 	if (misr & 0x40) {
 		struct tty *tp = sc->sc_cl[channel].tty;
+#ifdef VERBOSE_LOG_MESSAGES
 		log(LOG_WARNING, "cl_mintr: channel %x cd %x\n",channel,
 		((msvr & 0x40) != 0x0)
 		);
+#endif
 		ttymodem(tp, ((msvr & 0x40) != 0x0) );
 	}
 	if (misr & 0x80) {
+#ifdef VERBOSE_LOG_MESSAGES
 		log(LOG_WARNING, "cl_mintr: channel %x dsr %x\n",channel,
 		((msvr & 0x80) != 0x0)
 		);
+#endif
 	}
 	sc->cl_reg->cl_meoir = 0x00;
 	return 1;
@@ -1677,8 +1712,9 @@ log(LOG_WARNING, "cl_txintr: DMAMODE channel %x dmabsts %x risrl %x risrh %x\n",
 log(LOG_WARNING, "cl_rxintr: 1channel %x buf %x cnt %x status %x\n",
 channel, nbuf, cnt, status);
 #endif
-#if USE_BUFFER
-			cl_appendbufn(sc, channel, sc->rx[nbuf], cnt);
+#ifdef USE_BUFFER
+			cl_appendbufn(sc, channel,
+				sc->sc_cl[channel].rx[nbuf], cnt);
 #else 
 			{
 				int i;
@@ -1750,19 +1786,19 @@ channel, nbuf, cnt, status);
 		}
 
 		sc->cl_reg->cl_reoir = reoir;
+#ifdef USE_BUFFER
+		cl_appendbufn(sc, channel, buffer, fifocnt);
+#else
 		for (i = 0; i < fifocnt; i++) {
 			u_char c;
 			c = buffer[i];
-#if USE_BUFFER
-		cl_appendbuf(sc, channel, c);
-#else
 			/* does any restricitions exist on spl
 			 * for this call
 			 */
 			(*linesw[tp->t_line].l_rint)(c,tp);
 			reoir = 0x00;
-#endif
 		}
+#endif
 		break;
 	default:
 		log(LOG_WARNING, "cl_rxintr unknown mode %x\n", cmr);
@@ -1801,7 +1837,9 @@ cl_parity (sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
+#ifdef VERBOSE_LOG_MESSAGES
 	log(LOG_WARNING, "%s%d[%d]: parity error\n", cl_cd.cd_name, 0, channel);
+#endif
 	return;
 }
 void
@@ -1809,7 +1847,9 @@ cl_frame (sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
+#ifdef VERBOSE_LOG_MESSAGES
 	log(LOG_WARNING, "%s%d[%d]: frame error\n", cl_cd.cd_name, 0, channel);
+#endif
 	return;
 }
 void
@@ -1817,7 +1857,9 @@ cl_break (sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
+#ifdef VERBOSE_LOG_MESSAGES
 	log(LOG_WARNING, "%s%d[%d]: break detected\n", cl_cd.cd_name, 0, channel);
+#endif
 	return;
 }
 
@@ -1966,3 +2008,85 @@ cl_dumpport(channel)
 	printf("}\n");
 	return;
 }
+#ifdef USE_BUFFER
+void
+cl_appendbuf(sc, channel, c)
+	struct clsoftc *sc;
+	u_char channel;
+	u_char c;
+{
+	int s;
+	/* s = splcl(); */
+	if (1 + sc->sc_cl[channel].nchar >= CL_BUFSIZE ) {
+		cl_overflow (sc, channel, &sc->sc_fotime, "rbuf");
+		/* just toss the character */
+		return;
+	}
+	*(sc->sc_cl[channel].psupply++) = c;
+	if (&(sc->sc_cl[channel].buffer[CL_BUFSIZE])
+	   == sc->sc_cl[channel].psupply) {
+		sc->sc_cl[channel].psupply = sc->sc_cl[channel].buffer;
+	}
+	sc->sc_cl[channel].nchar ++;
+	setsoftint(sc->ssir);
+	/* splx (s); */
+	
+}
+void
+cl_appendbufn(sc, channel, buf, cnt)
+	struct clsoftc *sc;
+	u_char channel;
+	u_char *buf;
+	u_short cnt;
+{
+	int s;
+	int i;
+	/* s = splcl(); */ /* should be called at splcl(). */
+	if (cnt + sc->sc_cl[channel].nchar >= CL_BUFSIZE ) {
+		cl_overflow (sc, channel, &sc->sc_fotime, "rbuf");
+		/* just toss the character(s)
+		 *  It could be argued that not all of the charactes
+		 *  should be tossed, just the ones that actually
+		 *  overflow the buffer. eh, O well.
+		 */
+		return;
+	}
+	for (i = 0; i < cnt; i++) {
+		*(sc->sc_cl[channel].psupply++) = buf[i];
+		if (&(sc->sc_cl[channel].buffer[CL_BUFSIZE]) == sc->sc_cl[channel].psupply)
+		{
+			sc->sc_cl[channel].psupply = sc->sc_cl[channel].buffer;
+		}
+		sc->sc_cl[channel].nchar ++;
+	}
+	setsoftint(sc->ssir);
+	/* splx (s); */
+}
+
+void
+cl_softint(sc)
+	struct clsoftc *sc;
+{
+	int i;
+	int s;
+	u_char c;
+	struct tty *tp;
+
+	for (i = 0 ; i < CLCD_PORTS_PER_CHIP; i ++) {
+/* printf("channel %x sc %x\n", i, sc); */ 
+		tp = sc->sc_cl[i].tty;
+/* printf("channel %x pconsum %x\n", i, sc->sc_cl[i].pconsum); */ 
+		while (sc->sc_cl[i].nchar > 0) {
+			s = splcl();
+			c = *(sc->sc_cl[i].pconsum++);
+			if (&(sc->sc_cl[i].buffer[CL_BUFSIZE]) == sc->sc_cl[i].pconsum)
+			{
+				sc->sc_cl[i].pconsum = sc->sc_cl[i].buffer;
+			}
+			sc->sc_cl[i].nchar--;
+			splx(s);
+			(*linesw[tp->t_line].l_rint)(c,tp);
+		}
+	}
+}
+#endif
