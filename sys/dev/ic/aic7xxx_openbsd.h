@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.10 2003/12/28 21:29:27 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.11 2004/01/17 14:40:55 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -325,25 +325,6 @@ uint32_t ahc_get_scsi_status(struct scb *scb)
 static __inline
 void ahc_set_transaction_tag(struct scb *scb, int enabled, u_int type)
 {
-	/*
-	 * Assume that enabled == 0, or tstate->tagenable has already
-	 * been checked and found to be set.
-	 */
-	switch (scb->xs->cmd->opcode) {
-	case INQUIRY:
-	case TEST_UNIT_READY:
-	case REQUEST_SENSE:
-		/* Don't use tagged i/o on these commands. */
-		enabled = 0;
-		break;
-	default:
-		break;
-	}
-
-	if (enabled)
-		scb->hscb->control |= TAG_ENB;
-	else
-		scb->hscb->control &= ~TAG_ENB;
 }
 
 static __inline

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.17 2003/12/24 23:10:21 krw Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.18 2004/01/17 14:40:55 krw Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.17 2003/12/24 23:10:21 krw Exp $
+ * $Id: aic7xxxvar.h,v 1.18 2004/01/17 14:40:55 krw Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -1020,9 +1020,6 @@ struct ahc_softc {
 	struct ahc_tmode_tstate  *enabled_targets[AHC_NUM_TARGETS];
 
 	char inited_target[AHC_NUM_TARGETS];
-#define	INITED_TARGET_START	0
-#define INITED_TARGET_INQUIRYOK	1
-#define INITED_TARGET_MODEOK	2
 
 	/*
 	 * The black hole device responsible for handling requests for

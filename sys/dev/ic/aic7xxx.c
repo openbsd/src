@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.52 2003/12/24 22:45:45 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.53 2004/01/17 14:40:55 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.52 2003/12/24 22:45:45 krw Exp $
+ * $Id: aic7xxx.c,v 1.53 2004/01/17 14:40:55 krw Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -559,8 +559,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			 * errors will be reported before any data
 			 * phases occur.
 			 */
-			if (ahc_get_transfer_length(scb) > 0 &&
-			    ahc_get_residual(scb) 
+			if (ahc_get_residual(scb) 
 			    == ahc_get_transfer_length(scb)) {
 				ahc_update_neg_request(ahc, &devinfo,
 						       tstate, targ_info,
@@ -2004,7 +2003,7 @@ ahc_set_syncrate(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 
 		ahc_send_async(ahc, devinfo->channel, devinfo->target,
 		  CAM_LUN_WILDCARD, AC_TRANSFER_NEG, NULL);
-		if (1 /*bootverbose*/ ) {
+		if (1 /*bootverbose*/) {
 			if (offset != 0) {
 				printf("%s: target %d synchronous at %sMHz%s, "
 				       "offset = 0x%x\n", ahc_name(ahc),
@@ -2074,7 +2073,7 @@ ahc_set_width(struct ahc_softc *ahc, struct ahc_devinfo *devinfo,
 
 		ahc_send_async(ahc, devinfo->channel, devinfo->target,
 			       CAM_LUN_WILDCARD, AC_TRANSFER_NEG, NULL);
-		if (bootverbose) {
+		if (1 /*bootverbose*/) {
 			printf("%s: target %d using %dbit transfers\n",
 			       ahc_name(ahc), devinfo->target,
 			       8 * (0x01 << width));
