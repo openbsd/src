@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.62 2003/08/28 12:32:07 mickey Exp $	*/
+/*	$OpenBSD: dc.c,v 1.63 2003/09/25 21:45:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2442,12 +2442,7 @@ dc_intr(arg)
 	    status != 0xFFFFFFFF) {
 
 		claimed = 1;
-
 		CSR_WRITE_4(sc, DC_ISR, status);
-		if ((status & DC_INTRS) == 0) {
-			claimed = 0;
-			break;
-		}
 
 		if (status & DC_ISR_RX_OK) {
 			int		curpkts;
