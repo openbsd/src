@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.22 2002/08/12 10:44:03 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.23 2002/09/09 22:15:15 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -102,7 +102,7 @@ struct wsscreen_descr bwtwo_stdscreen = {
 	0, 0,	/* will be filled in */
 	0,
 	0, 0,
-	WSSCREEN_REVERSE
+	WSSCREEN_UNDERLINE | WSSCREEN_REVERSE
 };
 
 const struct wsscreen_descr *bwtwo_scrlist[] = {

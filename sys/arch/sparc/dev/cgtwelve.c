@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.1 2002/08/12 10:44:03 miod Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.2 2002/09/09 22:15:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
@@ -106,8 +106,9 @@ struct wsscreen_descr cgtwelve_stdscreen = {
 	0,
 	0, 0,
 #ifdef CG12_MONO
-	WSSCREEN_REVERSE
+	WSSCREEN_UNDERLINE | WSSCREEN_REVERSE
 #else
+	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 #endif
 };

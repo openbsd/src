@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.7 2002/08/12 10:44:04 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.8 2002/09/09 22:15:16 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -121,6 +121,7 @@ struct wsscreen_descr tcx_stdscreen = {
 	0, 0,	/* will be filled in */
 	0,
 	0, 0,
+	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 

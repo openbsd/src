@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.19 2002/08/12 10:44:03 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.20 2002/09/09 22:15:16 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -138,6 +138,7 @@ struct wsscreen_descr cgsix_stdscreen = {
 	0, 0,	/* will be filled in */
 	0,
 	0, 0,
+	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 

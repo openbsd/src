@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgeight.c,v 1.14 2002/08/12 10:44:03 miod Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.15 2002/09/09 22:15:15 miod Exp $	*/
 /*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
@@ -97,6 +97,7 @@ struct wsscreen_descr cgeight_stdscreen = {
 	0, 0,	/* will be filled in */
 	0,
 	0, 0,
+	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
