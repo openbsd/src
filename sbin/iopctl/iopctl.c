@@ -1,5 +1,5 @@
-/*	$OpenBSD: iopctl.c,v 1.6 2004/05/09 03:21:13 deraadt Exp $	*/
-/*	$NetBSD: iopctl.c,v 1.8 2001/03/20 13:07:51 ad Exp $	*/
+/*	$OpenBSD: iopctl.c,v 1.7 2004/08/20 19:48:53 mickey Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.12 2002/01/04 10:17:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 
 const char	*class2str(int);
 void	getparam(int, int, void *, int);
+int	gettid(char **);
 int	main(int, char *[]);
 int	show(const char *, const char *, ...);
 void	i2ostrvis(const void *, int, void *, int);
@@ -81,7 +82,7 @@ struct {
 	{ I2O_CLASS_WAN, "WAN port" },
 	{ I2O_CLASS_FIBRE_CHANNEL_PORT,	"fibrechannel port" },
 	{ I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL, "fibrechannel peripheral" },
- 	{ I2O_CLASS_SCSI_PERIPHERAL, "SCSI peripheral" },
+	{ I2O_CLASS_SCSI_PERIPHERAL, "SCSI peripheral" },
 	{ I2O_CLASS_ATE_PORT, "ATE port" },
 	{ I2O_CLASS_ATE_PERIPHERAL, "ATE peripheral" },
 	{ I2O_CLASS_FLOPPY_CONTROLLER, "floppy controller" },
@@ -141,7 +142,7 @@ main(int argc, char *argv[])
 		if (strcmp(argv[optind], cmdtab[i].label) == 0) {
 			if (cmdtab[i].takesargs == 0 &&
 			    argv[optind + 1] != NULL)
-			    	usage();
+				usage();
 			(*cmdtab[i].func)(argv + optind + 1);
 			break;
 		}
@@ -201,7 +202,7 @@ getparam(int tid, int group, void *pbuf, int pbufsize)
 	struct {
 		struct	i2o_param_op_list_header olh;
 		struct	i2o_param_op_all_template oat;
-	} req;
+	} __attribute__ ((__packed__)) req;
 
 	mb.msgflags = I2O_MSGFLAGS(i2o_util_params_op);
 	mb.msgfunc = I2O_MSGFUNC(tid, I2O_UTIL_PARAMS_GET);
@@ -341,7 +342,7 @@ showddmid(char **argv)
 	} __packed p;
 	char ident[128];
 
-	getparam(atoi(argv[0]), I2O_PARAM_DDM_IDENTITY, &p, sizeof(p));
+	getparam(gettid(argv), I2O_PARAM_DDM_IDENTITY, &p, sizeof(p));
 
 	show("ddm tid", "%d", letoh16(p.di.ddmtid) & 4095);
 	i2ostrvis(p.di.name, sizeof(p.di.name), ident, sizeof(ident));
@@ -365,7 +366,7 @@ showdevid(char **argv)
 	} __attribute__ ((__packed__)) p;
 	char ident[128];
 
-	getparam(atoi(argv[0]), I2O_PARAM_DEVICE_IDENTITY, &p, sizeof(p));
+	getparam(gettid(argv), I2O_PARAM_DEVICE_IDENTITY, &p, sizeof(p));
 
 	show("class id", "%d (%s)", letoh32(p.di.classid) & 4095,
 	    class2str(letoh32(p.di.classid) & 4095));
@@ -451,4 +452,20 @@ i2ostrvis(const void *srcv, int slen, void *dstv, int dlen)
 	}
 
 	dst[lc] = '\0';
+}
+
+int
+gettid(char **argv)
+{
+	char *argp;
+	int tid;
+
+	if (argv[1] != NULL)
+		usage();
+
+	tid = (int)strtol(argv[0], &argp, 0);
+	if (*argp != '\0')
+		usage();
+
+	return (tid);
 }
