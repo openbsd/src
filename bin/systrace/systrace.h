@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.4 2002/06/04 22:45:25 provos Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.5 2002/06/07 18:05:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -59,6 +59,7 @@ struct filter {
 	short match_action;
 	int match_error;
 	int match_flags;
+	int match_count;	/* Number of times this filter matched */
 };
 
 TAILQ_HEAD(filterq, filter);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.8 2002/06/06 01:05:57 provos Exp $	*/
+/*	$OpenBSD: filter.c,v 1.9 2002/06/07 18:05:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -96,17 +96,30 @@ filter_match(struct intercept_tlq *tls, struct logic *logic)
 short
 filter_evaluate(struct intercept_tlq *tls, struct filterq *fls, int *pflags)
 {
-	struct filter *filter;
-	short action;
+	struct filter *filter, *last = NULL;
+	short action, laction = 0;
 
 	TAILQ_FOREACH(filter, fls, next) {
+		action = filter->match_action;
+
 		if (filter_match(tls, filter->logicroot)) {
-			action = filter->match_action;
+			/* Profile feedback optimization */
+			filter->match_count++;
+			if (last != NULL && last->match_action == action &&
+			    filter->match_count > last->match_count) {
+				TAILQ_REMOVE(fls, last, next);
+				TAILQ_INSERT_AFTER(fls, filter, last, next);
+			}
+
 			if (action == ICPOLICY_NEVER)
 				action = filter->match_error;
 			*pflags = filter->match_flags;
 			return (action);
 		}
+
+		/* Keep track of last processed filtered in a group */
+		last = filter;
+		laction = action;
 	}
 
 	return (ICPOLICY_ASK);
