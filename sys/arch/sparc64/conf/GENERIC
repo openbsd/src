@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.49 2002/02/18 17:52:07 jason Exp $
+#	$OpenBSD: GENERIC,v 1.50 2002/02/18 18:47:18 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -84,7 +84,10 @@ wskbd* at comkbd?
 pckbc*	at ebus?				# controller
 pckbd*	at pckbc?				#  ps2 keyboard
 wskbd*	at pckbd? console ?			#   generic keyboard layer
-#pms*	at pckbc?				#  ps2 mouse
+pms*	at pckbc?				#  ps2 mouse
+wsmouse* at pms?				#   generic mouse
+pmsi*	at pckbc?				#  ps2 "intelli"mouse
+wsmouse* at pmsi?				#   generic mouse
 
 audioce*	at ebus?
 audio*		at audioce?
