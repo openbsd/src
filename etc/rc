@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.116 1999/09/30 13:10:20 deraadt Exp $
+#	$OpenBSD: rc,v 1.117 1999/10/03 04:22:42 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -97,7 +97,7 @@ ttyflags -a
 if [ ! -f /var/db/host.random ]; then
 	dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 \
 		>/dev/null 2>&1
-	chmod 600 /var/db/host.random
+	chmod 600 /var/db/host.random >/dev/null 2>&1
 else
 	dd if=/var/db/host.random of=/dev/urandom bs=1024 count=64 \
 	    > /dev/null 2>&1
