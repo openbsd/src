@@ -1,4 +1,4 @@
-/*	$Id: ntpleaps.c,v 1.2 2002/07/30 23:28:14 deraadt Exp $	*/
+/*	$OpenBSD: ntpleaps.c,v 1.3 2002/07/31 12:48:46 jakob Exp $	*/
 
 /*
  * Copyright (c) 2002 by Thorsten "mirabile" Glaser <x86@ePOST.de>
@@ -21,7 +21,7 @@
 
 /* Leap second support for NTP clients (generic) */
 
-static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.2 2002/07/30 23:28:14 deraadt Exp $";
+static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.3 2002/07/31 12:48:46 jakob Exp $";
 
 
 /* I could include tzfile.h, but this would make the code unportable
@@ -144,7 +144,7 @@ ntpleaps_read(void)
 	for (m1 = 0; m1 < r; m1++) {
 		read(fd, buf, 8);
 		m2 = ntohl(*((u_int32_t *)buf));
-		s = NTPLEAPS_OFFSET + (u_int64_t)m2;
+		s = SEC_TO_TAI64(m2);
 		/*
 		 * Assume just _one_ leap second on each entry, and compensate
 		 * the lacking error checking by validating the first entry

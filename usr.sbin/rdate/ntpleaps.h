@@ -1,4 +1,4 @@
-/*	$Id: ntpleaps.h,v 1.1 2002/07/27 08:46:51 jakob Exp $	*/
+/*	$OpenBSD: ntpleaps.h,v 1.2 2002/07/31 12:48:46 jakob Exp $	*/
 
 /*
  * Copyright (c) 2002 by Thorsten "mirabile" Glaser <x86@ePOST.de>
@@ -36,6 +36,10 @@
 
 /* Offset between struct timeval.tv_sec and a tai64_t */
 #define	NTPLEAPS_OFFSET	(4611686018427387914ULL)
+
+/* Hide this ugly value from programmes */
+#define	SEC_TO_TAI64(s)	(NTPLEAPS_OFFSET + (u_int64_t)(s))
+#define	TAI64_TO_SEC(t)	((t) - NTPLEAPS_OFFSET)
 
 /* Initializes the leap second table. Does not need to be called
  * before usage of the subtract funtion, but calls ntpleaps_read.

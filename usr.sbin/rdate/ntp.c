@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.10 2002/07/28 07:48:29 jakob Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.11 2002/07/31 12:48:46 jakob Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -447,15 +447,16 @@ current_time(double offset)
 	if (gettimeofday(&current, NULL))
 		err(1, "Could not get local time of day");
 
-	/* At this point, current has the current TAI time.
+	/*
+	 * At this point, current has the current TAI time.
 	 * Now subtract leap seconds to set the posix tick.
 	 */
 
-	t = NTPLEAPS_OFFSET + (u_int64_t) current.tv_sec;
+	t = SEC_TO_TAI64(current.tv_sec);
 	if (corrleaps)
 		ntpleaps_sub(&t);
 
-	return offset + ( t - NTPLEAPS_OFFSET ) + 1.0e-6 * current.tv_usec;
+	return offset + TAI64_TO_SEC(t) + 1.0e-6 * current.tv_usec;
 }
 
 /*
