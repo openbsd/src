@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.444 2001/09/15 06:55:17 jason Exp $
+	$OpenBSD: pcidevs,v 1.445 2001/09/20 04:14:21 nate Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -579,6 +579,7 @@ product 2MICRO OZ6832		0x6832	OZ6832 CardBus
 
 /* 3Com Products */
 product 3COM 3C985		0x0001	3c985
+product 3COM 3C996		0x0003	3c996
 product 3COM 3C_MPCI_MODEM	0x1007	Mini-PCI V.90 Modem
 product 3COM 3C339		0x3390	3c339
 product 3COM 3C359		0x3590	3c359
@@ -754,6 +755,8 @@ product ALLIANCE AT24		0x6424	AT24
 /* Alteon products */
 product ALTEON ACENIC		0x0001	Acenic
 product ALTEON ACENICT		0x0002	Acenic Copper
+product ALTEON BCM5700		0x0003	BCM5700 (Broadcom)
+product ALTEON BCM5701		0x0004	BCM5701 (Broadcom)
 
 /* AMD products */
 product AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE
@@ -888,6 +891,7 @@ product BLUESTEEL 5601		0x5601	5601
 
 /* Broadcom */
 product BROADCOM BCM5700	0x1644	BCM5700
+product BROADCOM BCM5701	0x1645	BCM5701
 product BROADCOM 5805		0x5805	5805
 product BROADCOM 5820		0x5820	5820
 
@@ -1719,6 +1723,7 @@ product S3 SONICVIBES		0xca00	SonicVibes
 
 /* Schneider & Koch (SysKonnect) */
 product SCHNEIDERKOCH GE	0x4300	984x GE
+product SCHNEIDERKOCH SK9D21	0x4400	SK-9D21
 
 /* SGI products */
 product SGI TIGON		0x0009	Tigon
