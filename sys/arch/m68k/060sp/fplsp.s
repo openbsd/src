@@ -1,5 +1,5 @@
 #
-# $OpenBSD: fplsp.s,v 1.2 1996/05/30 22:14:11 niklas Exp $
+# $OpenBSD: fplsp.s,v 1.3 2003/11/07 10:36:08 miod Exp $
 # $NetBSD: fplsp.s,v 1.2 1996/05/15 19:47:41 is Exp $
 #
 
@@ -9973,7 +9973,7 @@ mns_tiny:
 # ALGORITHM ***********************************************************	#
 #	An underflow should occur as the result of transcendental	#
 # emulation in the 060FPLSP. Create an underflow by using "fmul"	#
-# and two very small numbers of appropriate sign so the the operating	#
+# and two very small numbers of appropriate sign so the operating	#
 # system can log the event.						#
 #									#
 #########################################################################
@@ -10030,7 +10030,7 @@ unf_pos:
 # ALGORITHM ***********************************************************	#
 #	An overflow should occur as the result of transcendental	#
 # emulation in the 060FPLSP. Create an overflow by using "fmul"		#
-# and two very lareg numbers of appropriate sign so the the operating	#
+# and two very lareg numbers of appropriate sign so the operating	#
 # system can log the event.						#
 #	For t_ovfl_sc() we take special care not to lose the INEX2 bit.	#
 #									#

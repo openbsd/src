@@ -1,4 +1,4 @@
-*	$OpenBSD: slogn.sa,v 1.2 1996/05/29 21:05:40 niklas Exp $
+*	$OpenBSD: slogn.sa,v 1.3 2003/11/07 10:36:10 miod Exp $
 *	$NetBSD: slogn.sa,v 1.3 1994/10/26 07:49:54 cgd Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -50,7 +50,7 @@
 *		result is provably monotonic in double precision.
 *
 *	Speed: The program slogn takes approximately 190 cycles for input 
-*		argument X such that |X-1| >= 1/16, which is the the usual 
+*		argument X such that |X-1| >= 1/16, which is the usual 
 *		situation. For those arguments, slognp1 takes approximately
 *		 210 cycles. For the less common arguments, the program will
 *		 run no worse than 10% slower.
