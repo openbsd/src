@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.19 2004/05/04 18:32:51 jmc Exp $
+.\"	$OpenBSD: md5.1,v 1.20 2004/08/24 21:22:25 tom Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -36,9 +36,14 @@
 .Nm
 takes as input a message of arbitrary length and produces
 as output a 128-bit "fingerprint" or "message digest" of the input.
-It is conjectured that it is computationally infeasible to produce
-two messages having the same message digest, or to produce any
+It was conjectured that it would be computationally infeasible to produce
+two messages having the same message digest (a collision), or to produce any
 message having a given prespecified target message digest.
+However, collisions have now been produced for
+.Em MD5 ,
+so the use of other message digest functions, such as
+.Xr sha1 1 ,
+is now preferred.
 .Pp
 The
 .Em MD5
@@ -81,5 +86,14 @@ options are processed.
 .Xr cksum 1 ,
 .Xr rmd160 1 ,
 .Xr sha1 1
-.Pp
-RFC 1321 describes in detail the MD2, MD4, and MD5 message-digest algorithms.
+.Rs
+.%A R. Rivest
+.%T The MD5 Message-Digest Algorithm
+.%O RFC 1321
+.Re
+.Sh BUGS
+Since collisions have been found for
+.Em MD5 ,
+the use of
+.Xr sha1 1
+is recommended instead.
