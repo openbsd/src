@@ -1,4 +1,4 @@
-/* $OpenBSD: rpb.h,v 1.9 2000/11/08 21:27:24 ericj Exp $ */
+/* $OpenBSD: rpb.h,v 1.10 2004/01/13 06:21:09 deraadt Exp $ */
 /* $NetBSD: rpb.h,v 1.38 2000/07/06 23:29:13 thorpej Exp $ */
 
 /*
@@ -281,6 +281,9 @@ struct pcs {
 #define	PCS_PROC_PCA56		9			/* PCA56: 21164PC */
 #define	PCS_PROC_PCA57		10			/* PCA57: 21164?? */
 #define	PCS_PROC_EV67		11			/* EV67: 21246A */
+#define	PCS_PROC_EV68CB		12			/* EV68CB: 21264C */
+#define	PCS_PROC_EV68AL		13			/* EV68AL: 21264B */
+#define	PCS_PROC_EV68CX		14			/* EV68CX: 21264D */
 
 #define	PCS_CPU_MAJORTYPE(p) ((p)->pcs_proc_type & 0xffffffff)
 #define	PCS_CPU_MINORTYPE(p) ((p)->pcs_proc_type >> 32)
