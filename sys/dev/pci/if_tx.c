@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tx.c,v 1.13 2001/02/23 22:59:09 jason Exp $	*/
+/*	$OpenBSD: if_tx.c,v 1.14 2001/03/22 01:38:54 angelos Exp $	*/
 /* $FreeBSD: src/sys/pci/if_tx.c,v 1.45 2001/02/07 20:11:02 semenu Exp $ */
 
 /*-
@@ -926,8 +926,11 @@ epic_rx_done(sc)
 		/* Point to new mbuf, and give descriptor to chip */
 		desc->bufaddr = vtophys( mtod( buf->mbuf, caddr_t ) );
 		desc->status = 0x8000;
-		
-		/* First mbuf in packet holds the ethernet and packet headers */
+
+		/*
+		 * First mbuf in packet holds the ethernet and
+		 * packet headers.
+		 */
 		eh = mtod( m, struct ether_header * );
 		m->m_pkthdr.rcvif = &(sc->sc_if);
 		m->m_pkthdr.len = m->m_len = len;
