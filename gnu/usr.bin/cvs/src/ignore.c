@@ -20,7 +20,7 @@ static int s_ign_count = 0;
 static int ign_size;			/* This many slots available (plus
 					 * one for a NULL) */
 static int ign_hold = -1;		/* Index where first "temporary" item
-					 * is held, -1 if none.  */
+					 * is held */
 
 const char *ign_default = ". .. core RCSLOG tags TAGS RCS SCCS .make.state\
  .nse_depinfo #* .#* cvslog.* ,* CVS CVS.adm .del-* *.a *.olb *.o *.obj\
@@ -42,7 +42,7 @@ int ign_inhibit_server;
 void
 ign_setup ()
 {
-    struct passwd *pw;
+    char *home_dir;
     char file[PATH_MAX];
     char *tmp;
 
@@ -62,15 +62,16 @@ ign_setup ()
 #endif
     {
 	/* Then add entries found in repository, if it exists */
-	(void) sprintf (file, "%s/%s/%s", CVSroot, CVSROOTADM,
-			CVSROOTADM_IGNORE);
+	(void) sprintf (file, "%s/%s/%s", CVSroot_directory,
+			CVSROOTADM, CVSROOTADM_IGNORE);
 	ign_add_file (file, 0);
     }
 
     /* Then add entries found in home dir, (if user has one) and file exists */
-    if ((pw = (struct passwd *) getpwuid (getuid ())) && pw->pw_dir)
+    home_dir = get_homedir ();
+    if (home_dir)
     {
-	(void) sprintf (file, "%s/%s", pw->pw_dir, CVSDOTIGNORE);
+	(void) sprintf (file, "%s/%s", home_dir, CVSDOTIGNORE);
 	ign_add_file (file, 0);
     }
 
@@ -128,7 +129,7 @@ ign_add_file (file, hold)
     }
 
     /* load the file */
-    fp = fopen (file, "r");
+    fp = CVS_FOPEN (file, "r");
     if (fp == NULL)
     {
 	if (! existence_error (errno))
@@ -327,21 +328,37 @@ int ignore_directory (name)
 }
 
 /*
- * Process the current directory, looking for files not in ILIST and not on
- * the global ignore list for this directory.  If we find one, call PROC
- * passing it the name of the file and the update dir.
+ * Process the current directory, looking for files not in ILIST and
+ * not on the global ignore list for this directory.  If we find one,
+ * call PROC passing it the name of the file and the update dir.
+ * ENTRIES is the entries list, which is used to identify known
+ * directories.  ENTRIES may be NULL, in which case we assume that any
+ * directory with a CVS administration directory is known.
  */
 void
-ignore_files (ilist, update_dir, proc)
+ignore_files (ilist, entries, update_dir, proc)
     List *ilist;
+    List *entries;
     char *update_dir;
     Ignore_proc proc;
 {
+    int subdirs;
     DIR *dirp;
     struct dirent *dp;
     struct stat sb;
     char *file;
     char *xdir;
+
+    /* Set SUBDIRS if we have subdirectory information in ENTRIES.  */
+    if (entries == NULL)
+	subdirs = 0;
+    else
+    {
+	struct stickydirtag *sdtp;
+
+	sdtp = (struct stickydirtag *) entries->list->data;
+	subdirs = sdtp == NULL || sdtp->subdirs;
+    }
 
     /* we get called with update_dir set to "." sometimes... strip it */
     if (strcmp (update_dir, ".") == 0)
@@ -349,7 +366,7 @@ ignore_files (ilist, update_dir, proc)
     else
 	xdir = update_dir;
 
-    dirp = opendir (".");
+    dirp = CVS_OPENDIR (".");
     if (dirp == NULL)
 	return;
 
@@ -362,6 +379,34 @@ ignore_files (ilist, update_dir, proc)
 	if (strcmp (file, ".") == 0 || strcmp (file, "..") == 0)
 	    continue;
 	if (findnode_fn (ilist, file) != NULL)
+	    continue;
+	if (subdirs)
+	{
+	    Node *node;
+
+	    node = findnode_fn (entries, file);
+	    if (node != NULL
+		&& ((Entnode *) node->data)->type == ENT_SUBDIR)
+	    {
+		char *p;
+		int dir;
+
+		/* For consistency with past behaviour, we only ignore
+		   this directory if there is a CVS subdirectory.
+		   This will normally be the case, but the user may
+		   have messed up the working directory somehow.  */
+		p = xmalloc (strlen (file) + sizeof CVSADM + 10);
+		sprintf (p, "%s/%s", file, CVSADM);
+		dir = isdir (p);
+		free (p);
+		if (dir)
+		    continue;
+	    }
+	}
+
+	/* We could be ignoring FIFOs and other files which are neither
+	   regular files nor directories here.  */
+	if (ign_name (file))
 	    continue;
 
 	if (
@@ -377,11 +422,14 @@ ignore_files (ilist, update_dir, proc)
 #endif
 		S_ISDIR(sb.st_mode))
 	    {
-		char temp[PATH_MAX];
+		if (! subdirs)
+		{
+		    char temp[PATH_MAX];
 
-		(void) sprintf (temp, "%s/%s", file, CVSADM);
-		if (isdir (temp))
-		    continue;
+		    (void) sprintf (temp, "%s/%s", file, CVSADM);
+		    if (isdir (temp))
+			continue;
+		}
 	    }
 #ifdef S_ISLNK
 	    else if (
@@ -395,10 +443,6 @@ ignore_files (ilist, update_dir, proc)
 #endif
     	}
 
-	/* We could be ignoring FIFOs and other files which are neither
-	   regular files nor directories here.  */
-	if (ign_name (file))
-	    continue;
 	(*proc) (file, xdir);
     }
     (void) closedir (dirp);

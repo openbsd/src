@@ -10,6 +10,68 @@
  * Lock file support for CVS.
  */
 
+/* The node Concurrency in doc/cvs.texinfo has a brief introduction to
+   how CVS locks function, and some of the user-visible consequences of
+   their existence.  Here is a summary of why they exist (and therefore,
+   the consequences of hacking CVS to read a repository without creating
+   locks):
+
+   There are two uses.  One is the ability to prevent there from being
+   two writers at the same time.  This is necessary for any number of
+   reasons (fileattr code, probably others).  Commit needs to lock the
+   whole tree so that nothing happens between the up-to-date check and
+   the actual checkin.
+
+   The second use is the ability to ensure that there is not a writer
+   and a reader at the same time (several readers are allowed).  Reasons
+   for this are:
+
+   * Readlocks ensure that once CVS has found a collection of rcs
+   files using Find_Names, the files will still exist when it reads
+   them (they may have moved in or out of the attic).
+
+   * Readlocks provide some modicum of consistency, although this is
+   kind of limited--see the node Concurrency in cvs.texinfo.
+
+   * Readlocks ensure that the RCS file does not change between
+   RCS_parse and RCS_reparsercsfile time.  This one strikes me as
+   important, although I haven't thought up what bad scenarios might
+   be.
+
+   * Readlocks ensure that we won't find the file in the state in
+   which it is in between the "rcs -i" and the RCS_checkin in commit.c
+   (when a file is being added).  This state is a state in which the
+   RCS file parsing routines in rcs.c cannot parse the file.
+
+   * Readlocks ensure that a reader won't try to look at a
+   half-written fileattr file (fileattr is not updated atomically).
+
+   (see also the description of anonymous read-only access in
+   "Password authentication security" node in doc/cvs.texinfo).
+
+   While I'm here, I'll try to summarize a few random suggestions
+   which periodically get made about how locks might be different:
+
+   1.  Check for EROFS.  Maybe useful, although in the presence of NFS
+   EROFS does *not* mean that the file system is unchanging.
+
+   2.  Provide a means to put the cvs locks in some directory apart from
+   the repository (CVSROOT/locks; a -l option in modules; etc.).
+
+   3.  Provide an option to disable locks for operations which only
+   read (see above for some of the consequences).
+
+   4.  Have a server internally do the locking.  Probably a good
+   long-term solution, and many people have been working hard on code
+   changes which would eventually make it possible to have a server
+   which can handle various connections in one process, but there is
+   much, much work still to be done before this is feasible.
+
+   5.  Like #4 but use shared memory or something so that the servers
+   merely need to all be on the same machine.  This is a much smaller
+   change to CVS (it functions much like #2; shared memory might be an
+   unneeded complication although it presumably would be faster).  */
+
 #include "cvs.h"
 
 static int readers_exist PROTO((char *repository));
@@ -21,6 +83,7 @@ static int unlock_proc PROTO((Node * p, void *closure));
 static int write_lock PROTO((char *repository));
 static void lock_simple_remove PROTO((char *repository));
 static void lock_wait PROTO((char *repository));
+static void lock_obtained PROTO((char *repository));
 static int Check_Owner PROTO((char *lockdir));
 
 static char lockers_name[20];
@@ -78,14 +141,14 @@ lock_simple_remove (repository)
     if (readlock[0] != '\0')
     {
 	(void) sprintf (tmp, "%s/%s", repository, readlock);
-	if (unlink (tmp) < 0 && ! existence_error (errno))
+	if ( CVS_UNLINK (tmp) < 0 && ! existence_error (errno))
 	    error (0, errno, "failed to remove lock %s", tmp);
     }
 
     if (writelock[0] != '\0')
     {
 	(void) sprintf (tmp, "%s/%s", repository, writelock);
-	if (unlink (tmp) < 0 && ! existence_error (errno))
+	if ( CVS_UNLINK (tmp) < 0 && ! existence_error (errno))
 	    error (0, errno, "failed to remove lock %s", tmp);
     }
 
@@ -104,7 +167,7 @@ lock_simple_remove (repository)
 		sprintf(rmuidlock, "rm -f %s/uidlock%d", tmp, geteuid() );
 		system(rmuidlock);
 #endif
-	    (void) rmdir (tmp);
+	    (void) CVS_RMDIR (tmp);
 	    }
     }
     cleanup_lckdir = 0;
@@ -134,7 +197,7 @@ Check_Owner(lockdir)
 		 * Assume that we don't own it.
 		 */
 #else
-  if (stat (lockdir, &sb) != -1 && sb.st_uid == geteuid ())
+  if ( CVS_STAT (lockdir, &sb) != -1 && sb.st_uid == geteuid ())
     return 1;
   else
     return 0;
@@ -186,7 +249,7 @@ Reader_Lock (xrepository)
 
     /* write a read-lock */
     (void) sprintf (tmp, "%s/%s", xrepository, readlock);
-    if ((fp = fopen (tmp, "w+")) == NULL || fclose (fp) == EOF)
+    if ((fp = CVS_FOPEN (tmp, "w+")) == NULL || fclose (fp) == EOF)
     {
 	error (0, errno, "cannot create read lock in repository `%s'",
 	       xrepository);
@@ -209,6 +272,8 @@ int
 Writer_Lock (list)
     List *list;
 {
+    char *wait_repos;
+
     if (noexec)
 	return (0);
 
@@ -219,6 +284,7 @@ Writer_Lock (list)
 	return (1);
     }
 
+    wait_repos = NULL;
     for (;;)
     {
 	/* try to lock everything on the list */
@@ -232,6 +298,8 @@ Writer_Lock (list)
 	switch (lock_error)
 	{
 	    case L_ERROR:		/* Real Error */
+		if (wait_repos != NULL)
+		    free (wait_repos);
 		Lock_Cleanup ();	/* clean up any locks we set */
 		error (0, 0, "lock failed - giving up");
 		return (1);
@@ -239,12 +307,20 @@ Writer_Lock (list)
 	    case L_LOCKED:		/* Someone already had a lock */
 		Lock_Cleanup ();	/* clean up any locks we set */
 		lock_wait (lock_error_repos); /* sleep a while and try again */
+		wait_repos = xstrdup (lock_error_repos);
 		continue;
 
 	    case L_OK:			/* we got the locks set */
+	        if (wait_repos != NULL)
+		{
+		    lock_obtained (wait_repos);
+		    free (wait_repos);
+		}
 		return (0);
 
 	    default:
+		if (wait_repos != NULL)
+		    free (wait_repos);
 		error (0, 0, "unknown lock status %d in Writer_Lock",
 		       lock_error);
 		return (1);
@@ -310,11 +386,11 @@ write_lock (repository)
 
 	/* write the write-lock file */
 	(void) sprintf (tmp, "%s/%s", repository, writelock);
-	if ((fp = fopen (tmp, "w+")) == NULL || fclose (fp) == EOF)
+	if ((fp = CVS_FOPEN (tmp, "w+")) == NULL || fclose (fp) == EOF)
 	{
 	    int xerrno = errno;
 
-	    if (unlink (tmp) < 0 && ! existence_error (errno))
+	    if ( CVS_UNLINK (tmp) < 0 && ! existence_error (errno))
 		error (0, errno, "failed to remove lock %s", tmp);
 
 	    /* free the lock dir if we created it */
@@ -353,7 +429,7 @@ readers_exist (repository)
 again:
 #endif
 
-    if ((dirp = opendir (repository)) == NULL)
+    if ((dirp = CVS_OPENDIR (repository)) == NULL)
 	error (1, 0, "cannot open directory %s", repository);
 
     errno = 0;
@@ -368,7 +444,7 @@ again:
 
 	    line = xmalloc (strlen (repository) + strlen (dp->d_name) + 5);
 	    (void) sprintf (line, "%s/%s", repository, dp->d_name);
-	    if (stat (line, &sb) != -1)
+	    if ( CVS_STAT (line, &sb) != -1)
 	    {
 #ifdef CVS_FUDGELOCKS
 		/*
@@ -376,7 +452,7 @@ again:
 		 * seconds ago, try to clean-up the lock file, and if
 		 * successful, re-open the directory and try again.
 		 */
-		if (now >= (sb.st_ctime + CVSLCKAGE) && unlink (line) != -1)
+		if (now >= (sb.st_ctime + CVSLCKAGE) && CVS_UNLINK (line) != -1)
 		{
 		    (void) closedir (dirp);
 		    free (line);
@@ -437,6 +513,7 @@ set_lock (repository, will_wait)
     char *repository;
     int will_wait;
 {
+    int waited;
     struct stat sb;
     mode_t omask;
 #ifdef CVS_FUDGELOCKS
@@ -450,6 +527,7 @@ set_lock (repository, will_wait)
      * handlers that do the appropriate things, like remove the lock
      * directory before they exit.
      */
+    waited = 0;
     cleanup_lckdir = 0;
     for (;;)
     {
@@ -463,11 +541,11 @@ set_lock (repository, will_wait)
 	    FILE *fp;
 
 	    sprintf(uidlock, "%s/uidlock%d", masterlock, geteuid() );
-	    if ((fp = fopen(uidlock, "w+")) == NULL)
+	    if ((fp = CVS_FOPEN (uidlock, "w+")) == NULL)
 	    {
 		/* We failed to create the uidlock,
 		   so rm masterlock and leave */
-		rmdir(masterlock);
+		CVS_RMDIR (masterlock);
 		SIG_endCrSect ();
 		status = L_ERROR;
 		goto out;
@@ -479,6 +557,8 @@ set_lock (repository, will_wait)
 	    cleanup_lckdir = 1;
 	    SIG_endCrSect ();
 	    status = L_OK;
+	    if (waited)
+	        lock_obtained (repository);
 	    goto out;
 	}
 	SIG_endCrSect ();
@@ -495,11 +575,10 @@ set_lock (repository, will_wait)
 	    return (L_ERROR);
 	}
 
-	/*
-	 * stat the dir - if it is non-existent, re-try the loop since
-	 * someone probably just removed it (thus releasing the lock)
-	 */
-	if (stat (masterlock, &sb) < 0)
+	/* Find out who owns the lock.  If the lock directory is
+	   non-existent, re-try the loop since someone probably just
+	   removed it (thus releasing the lock).  */
+	if (CVS_STAT (masterlock, &sb) < 0)
 	{
 	    if (existence_error (errno))
 		continue;
@@ -523,7 +602,7 @@ set_lock (repository, will_wait)
 	  sprintf(rmuidlock, "rm -f %s/uidlock%d", masterlock, geteuid() );
 	  system(rmuidlock);
 #endif
-	    if (rmdir (masterlock) >= 0)
+	    if (CVS_RMDIR (masterlock) >= 0)
 		continue;
 	}
 #endif
@@ -535,6 +614,7 @@ set_lock (repository, will_wait)
 	if (!will_wait)
 	    return (L_LOCKED);
 	lock_wait (repository);
+	waited = 1;
     }
 }
 
@@ -551,7 +631,7 @@ clear_lock()
   sprintf(rmuidlock, "rm -f %s/uidlock%d", masterlock, geteuid() );
   system(rmuidlock);
 #endif
-    if (rmdir (masterlock) < 0)
+    if (CVS_RMDIR (masterlock) < 0)
 	error (0, errno, "failed to remove lock dir `%s'", masterlock);
     cleanup_lckdir = 0;
 }
@@ -568,11 +648,31 @@ lock_wait (repos)
     (void) time (&now);
     error (0, 0, "[%8.8s] waiting for %s's lock in %s", ctime (&now) + 11,
 	   lockers_name, repos);
+    /* Call cvs_flusherr to ensure that the user sees this message as
+       soon as possible.  */
+    cvs_flusherr ();
     (void) sleep (CVSLCKSLEEP);
 }
+
+/*
+ * Print out a message when we obtain a lock.
+ */
+static void
+lock_obtained (repos)
+     char *repos;
+{
+    time_t now;
+
+    (void) time (&now);
+    error (0, 0, "[%8.8s] obtained lock in %s", ctime (&now) + 11, repos);
+    /* Call cvs_flusherr to ensure that the user sees this message as
+       soon as possible.  */
+    cvs_flusherr ();
+}
 
-static int lock_filesdoneproc PROTO ((int err, char *repository,
-				      char *update_dir));
+static int lock_filesdoneproc PROTO ((void *callerdat, int err,
+				      char *repository, char *update_dir,
+				      List *entries));
 static int fsortcmp PROTO((const Node * p, const Node * q));
 
 static List *lock_tree_list;
@@ -582,10 +682,12 @@ static List *lock_tree_list;
  */
 /* ARGSUSED */
 static int
-lock_filesdoneproc (err, repository, update_dir)
+lock_filesdoneproc (callerdat, err, repository, update_dir, entries)
+    void *callerdat;
     int err;
     char *repository;
     char *update_dir;
+    List *entries;
 {
     Node *p;
 
@@ -623,9 +725,8 @@ lock_tree_for_write (argc, argv, local, aflag)
      */
     lock_tree_list = getlist ();
     err = start_recursion ((FILEPROC) NULL, lock_filesdoneproc,
-			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, argc,
-			   argv, local, W_LOCAL, aflag, 0, (char *) NULL, 0,
-			   0);
+			   (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL, argc,
+			   argv, local, W_LOCAL, aflag, 0, (char *) NULL, 0);
     sortlist (lock_tree_list, fsortcmp);
     if (Writer_Lock (lock_tree_list) != 0)
 	error (1, 0, "lock failed - giving up");

@@ -84,7 +84,7 @@ CONTRIB_PROGS = clmerge cln_hist commit_prep cvs_acls cvscheck log log_accum \
 all: Makefile $(PROGS) $(CONTRIB_PROGS)
 .PHONY: all
 
-install: all $(libdir)/cvs/contrib
+install: all installdirs
 	for f in $(CONTRIB_FILES) ; do\
 		$(INSTALL_DATA) $(srcdir)/$$f $(libdir)/cvs/contrib/$$f; \
 	done
@@ -94,11 +94,11 @@ install: all $(libdir)/cvs/contrib
 	for f in $(PROGS) ; do\
 		$(INSTALL_PROGRAM) $$f $(bindir)/$$f; \
 	done
-	@echo "You might consider running 'cvsinit' to upgrade your repository(s)...."
 .PHONY: install
 
-$(libdir)/cvs/contrib:
+installdirs:
 	$(SHELL) $(top_srcdir)/mkinstalldirs $(libdir)/cvs/contrib
+.PHONY: installdirs
 
 tags:
 .PHONY: tags
