@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifmcstat.8,v 1.3 2000/04/12 21:47:53 aaron Exp $
+.\"	$OpenBSD: ifmcstat.8,v 1.4 2001/06/23 00:50:33 deraadt Exp $
 .\"
 .\" Copyright (c) 1996 WIDE Project. All rights reserved.
 .\"
@@ -21,13 +21,22 @@
 .Nd dump multicast group management statistics per interface
 .Sh SYNOPSIS
 .Nm
-.\"
 .Sh DESCRIPTION
 The
 .Nm ifmcstat
-program dumps multicast group information in the kernel.
+program dumps multicast group information from the kernel.
+It is similar but not identical to the output from
+.Nm netstat
+.Fl inav .
 .Pp
 There are no command line options.
-.\"
-.\" .Sh SEE ALSO
-.\" RFC2080 -- IPng for IPv6. G. Malkin, R. Minnear. January 1997.
+.Pp
+Only root can use
+.Nm ifmcstat .
+.Sh SEE ALSO
+.Xr netstat 8
+.Pp
+.%R IPng for IPv6
+.%N RFC2080
+.%A G. Malkin
+.%A R. Minnear
