@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.2 2002/06/04 19:07:04 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -69,11 +69,11 @@ trans_cb(int fd, pid_t pid, int policynr,
 		goto out;
 
 	if ((policy = systrace_findpolnr(policynr)) == NULL)
-		errx(1, "%s:%d: find %d\n", __FUNCTION__, __LINE__,
+		errx(1, "%s:%d: find %d\n", __func__, __LINE__,
 		    policynr);
 
 	if ((pflq = systrace_policyflq(policy, emulation, name)) == NULL)
-		errx(1, "%s:%d: no filter queue\n", __FUNCTION__, __LINE__);
+		errx(1, "%s:%d: no filter queue\n", __func__, __LINE__);
 
 	ipid = intercept_getpid(pid);
 	ipid->uflags = 0;
@@ -133,7 +133,7 @@ gen_cb(int fd, pid_t pid, int policynr, char *name, int code,
 		goto out;
 
 	if ((policy = systrace_findpolnr(policynr)) == NULL)
-		errx(1, "%s:%d: find %d\n", __FUNCTION__, __LINE__,
+		errx(1, "%s:%d: find %d\n", __func__, __LINE__,
 		    policynr);
 
 	if (policy->flags & POLICY_UNSUPERVISED) {
@@ -233,7 +233,7 @@ child_handler(int sig)
 }
 
 #define X(x)	if ((x) == -1) \
-	err(1, "%s:%d: intercept failed", __FUNCTION__, __LINE__)
+	err(1, "%s:%d: intercept failed", __func__, __LINE__)
 
 void
 systrace_initcb(void)

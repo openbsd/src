@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
+/*	$OpenBSD: filter.c,v 1.2 2002/06/04 19:07:04 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -155,9 +155,9 @@ filter_policyrecord(struct policy *policy, struct filter *filter,
 	if (filter == NULL) {
 		filter = calloc(1, sizeof(struct filter));
 		if (filter == NULL)
-			err(1, "%s:%d: calloc", __FUNCTION__, __LINE__);
+			err(1, "%s:%d: calloc", __func__, __LINE__);
 		if ((filter->rule = strdup(rule)) == NULL)
-			err(1, "%s:%d: strdup", __FUNCTION__, __LINE__);
+			err(1, "%s:%d: strdup", __func__, __LINE__);
 	}
 
 	strlcpy(filter->name, name, sizeof(filter->name));
@@ -178,7 +178,7 @@ filter_parse(char *line, struct filter **pfilter)
 		return (-1);
 
 	if ((rule = strdup(line)) == NULL)
-		err(1, "%s:%d: strdup", __FUNCTION__, __LINE__);
+		err(1, "%s:%d: strdup", __func__, __LINE__);
 
 	(*pfilter)->rule = rule;
 
@@ -259,7 +259,7 @@ filter_prepolicy(int fd, struct policy *policy)
 			res = filter_parse(filter->rule, &parsed);
 		if (res == -1)
 			errx(1, "%s:%d: can not parse \"%s\"",
-			    __FUNCTION__, __LINE__, filter->rule);
+			    __func__, __LINE__, filter->rule);
 
 		if (future == ICPOLICY_ASK) {
 			fls = systrace_policyflq(policy, policy->emulation,
@@ -270,7 +270,7 @@ filter_prepolicy(int fd, struct policy *policy)
 			    filter->name, future);
 			if (res == -1)
 				errx(1, "%s:%d: modify policy for \"%s\"",
-				    __FUNCTION__, __LINE__, filter->rule);
+				    __func__, __LINE__, filter->rule);
 		}
 		filter_policyrecord(policy, parsed, policy->emulation,
 		    filter->name, filter->rule);
@@ -299,7 +299,7 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 	*pflags = 0;
 
 	if ((policy = systrace_findpolnr(policynr)) == NULL)
-		errx(1, "%s:%d: no policy %d\n", __FUNCTION__, __LINE__,
+		errx(1, "%s:%d: no policy %d\n", __func__, __LINE__,
 		    policynr);
 
 	printf("%s\n", output);

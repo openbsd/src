@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.2 2002/06/04 19:07:04 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -180,7 +180,7 @@ obsd_getpid(pid_t pid)
 		return (icpid);
 
 	if ((icpid->data = malloc(sizeof(struct obsd_data))) == NULL)
-		err(1, "%s:%d: malloc", __FUNCTION__, __LINE__);
+		err(1, "%s:%d: malloc", __func__, __LINE__);
 	
 	data = icpid->data;
 	data->current = &emulations[0];
@@ -205,7 +205,7 @@ obsd_clonepid(struct intercept_pid *opid, struct intercept_pid *npid)
 	}
 
 	if ((npid->data = malloc(sizeof(struct obsd_data))) == NULL)
-		err(1, "%s:%d: malloc", __FUNCTION__, __LINE__);
+		err(1, "%s:%d: malloc", __func__, __LINE__);
 	memcpy(npid->data, opid->data, sizeof(struct obsd_data));
 }
 
@@ -402,7 +402,7 @@ obsd_getcwd(int fd, pid_t pid, char *buf, size_t size)
 	path = getcwd(buf, size);
 
 	if (ioctl(fd, STRIOCRESCWD, 0) == -1)
-		warn("%s: ioctl", __FUNCTION__); /* XXX */
+		warn("%s: ioctl", __func__); /* XXX */
 
 	return (path);
 }
@@ -476,10 +476,10 @@ obsd_read(int fd)
 		    
 		if (obsd_set_emulation(msg.msg_pid, name) == -1)
 			errx(1, "%s:%d: set_emulation(%s)",
-			    __FUNCTION__, __LINE__, name);
+			    __func__, __LINE__, name);
 
 		if (obsd_answer(fd, msg.msg_pid, 0, 0, 0) == -1)
-			err(1, "%s:%d: answer", __FUNCTION__, __LINE__);
+			err(1, "%s:%d: answer", __func__, __LINE__);
 		break;
 
 	case SYSTR_MSG_CHILD:

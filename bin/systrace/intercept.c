@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.2 2002/06/04 19:07:04 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -170,13 +170,13 @@ intercept_register_sccb(char *emulation, char *name,
 		return (-1);
 
 	if (intercept.getsyscallnumber(emulation, name) == -1) {
-		warnx("%s: %d: unknown syscall: %s-%s", __FUNCTION__, __LINE__,
+		warnx("%s: %d: unknown syscall: %s-%s", __func__, __LINE__,
 		    emulation, name);
 		return (-1);
 	}
 
 	if ((tmp = calloc(1, sizeof(struct intercept_syscall))) == NULL) {
-		warn("%s:%d: malloc", __FUNCTION__, __LINE__);
+		warn("%s:%d: malloc", __func__, __LINE__);
 		return (-1);
 	}
 
@@ -273,7 +273,7 @@ intercept_getpid(pid_t pid)
 		return (tmp);
 
 	if ((tmp = malloc(sizeof(struct intercept_pid))) == NULL)
-		err(1, "%s: malloc", __FUNCTION__);
+		err(1, "%s: malloc", __func__);
 
 	memset(tmp, 0, sizeof(struct intercept_pid));
 	tmp->pid = pid;
@@ -366,11 +366,11 @@ intercept_filename(int fd, pid_t pid, void *addr)
 
 	name = intercept_get_string(fd, pid, addr);
 	if (name == NULL)
-		err(1, "%s:%d: getstring", __FUNCTION__, __LINE__);
+		err(1, "%s:%d: getstring", __func__, __LINE__);
 
 	if (name[0] != '/') {
 		if (intercept.getcwd(fd, pid, cwd, sizeof(cwd)) == NULL)
-			err(1, "%s:%d: getcwd", __FUNCTION__, __LINE__);
+			err(1, "%s:%d: getcwd", __func__, __LINE__);
 
 		strlcat(cwd, "/", sizeof(cwd));
 		strlcat(cwd, name, sizeof(cwd));
@@ -410,7 +410,7 @@ intercept_syscall(int fd, pid_t pid, int policynr, char *name, int code,
 		intercept.getarg(0, args, argsize, &addr);
 		icpid->newname = strdup(intercept_filename(fd, pid, addr));
 		if (icpid->newname == NULL)
-			err(1, "%s:%d: strdup", __FUNCTION__, __LINE__);
+			err(1, "%s:%d: strdup", __func__, __LINE__);
 
 		/* We need to know the result from this system call */
 		flags = ICFLAGS_RESULT;

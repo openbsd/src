@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.2 2002/06/04 19:07:04 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -177,7 +177,7 @@ systrace_newpolicy(char *emulation, char *name)
 
 	/* New policies requires intialization */
 	if ((tmp->name = strdup(name)) == NULL)
-		err(1, "%s:%d: strdup", __FUNCTION__, __LINE__);
+		err(1, "%s:%d: strdup", __func__, __LINE__);
 	strlcpy(tmp->emulation, emulation, sizeof(tmp->emulation));
 
 	SPLAY_INSERT(policytree, &policyroot, tmp);
@@ -201,7 +201,7 @@ systrace_policyflq(struct policy *policy, char *emulation, char *name)
 		return (&tmp->flq);
 
 	if ((tmp = calloc(1, sizeof(struct policy_syscall))) == NULL)
-		err(1, "%s:%d: out of memory", __FUNCTION__, __LINE__);
+		err(1, "%s:%d: out of memory", __func__, __LINE__);
 
 	strlcpy(tmp->emulation, emulation, sizeof(tmp->emulation));
 	strlcpy(tmp->name, name, sizeof(tmp->name));
@@ -353,7 +353,7 @@ systrace_readpolicy(char *filename)
 
 		filter = calloc(1, sizeof(struct filter));
 		if (filter == NULL)
-			err(1, "%s:%d: calloc", __FUNCTION__, __LINE__);
+			err(1, "%s:%d: calloc", __func__, __LINE__);
 		
 		filter->rule = strdup(rule);
 		strlcpy(filter->name, name, sizeof(filter->name));
