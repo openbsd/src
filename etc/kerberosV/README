@@ -1,13 +1,10 @@
-#	$OpenBSD: README,v 1.2 2002/06/09 06:15:15 todd Exp $
+#	$OpenBSD: README,v 1.3 2003/08/01 08:42:37 hin Exp $
 
 Notes about the KerberosV support in OpenBSD:
 
-- This is currently experimental code.
-
-- OpenBSD contains the Heimdal implementation of KerberosV from KTH in Sweden.
-
 - Please check the heimdal info page (type "info heimdal") to get more
-  information. A number of manpages exist, mainly describing the krb5 API.
+  information. A number of manpages also exists, although the info-page
+  is currently the best installation instruction.
 
 - There are some very informational RFCs in the source directory.
 
