@@ -1,4 +1,4 @@
-/*	$OpenBSD: skipjack.c,v 1.2 2000/06/06 06:49:47 deraadt Exp $	*/
+/*	$OpenBSD: skipjack.c,v 1.3 2001/05/05 00:31:34 angelos Exp $	*/
 
 /* 
  * Further optimized test implementation of SKIPJACK algorithm 
@@ -68,9 +68,8 @@ subkey_table_gen (u_int8_t *key, u_int8_t **key_tables)
 
 	for (k = 0; k < 10; k++) {
 		u_int8_t   key_byte = key [k];
-		u_int8_t * table = (u_int8_t *) malloc(0x100, M_XDATA, M_WAITOK);
-		/* XXX */
-
+		u_int8_t * table = (u_int8_t *) malloc(0x100, M_CRYPTO_DATA,
+						       M_WAITOK);
 		key_tables [k] = table;
 		for (i = 0; i < 0x100; i++)
 			table [i] = ftable [i ^ key_byte];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.4 2000/11/17 04:07:05 angelos Exp $	*/
+/*	$OpenBSD: xform.c,v 1.5 2001/05/05 00:31:34 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -207,7 +207,7 @@ des1_decrypt(caddr_t key, u_int8_t *blk)
 void
 des1_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
-    MALLOC(*sched, u_int8_t *, 128, M_XDATA, M_WAITOK);
+    MALLOC(*sched, u_int8_t *, 128, M_CRYPTO_DATA, M_WAITOK);
     bzero(*sched, 128);
     des_set_key(key, *sched);
 }
@@ -216,7 +216,7 @@ void
 des1_zerokey(u_int8_t **sched)
 {
     bzero(*sched, 128);
-    FREE(*sched, M_XDATA);
+    FREE(*sched, M_CRYPTO_DATA);
     *sched = NULL;
 }
 
@@ -235,7 +235,7 @@ des3_decrypt(caddr_t key, u_int8_t *blk)
 void
 des3_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
-    MALLOC(*sched, u_int8_t *, 384, M_XDATA, M_WAITOK);
+    MALLOC(*sched, u_int8_t *, 384, M_CRYPTO_DATA, M_WAITOK);
     bzero(*sched, 384);
     des_set_key(key, *sched);
     des_set_key(key + 8, *sched + 128);
@@ -246,7 +246,7 @@ void
 des3_zerokey(u_int8_t **sched)
 {
     bzero(*sched, 384);
-    FREE(*sched, M_XDATA);
+    FREE(*sched, M_CRYPTO_DATA);
     *sched = NULL;
 }
 
@@ -265,7 +265,7 @@ blf_decrypt(caddr_t key, u_int8_t *blk)
 void
 blf_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
-    MALLOC(*sched, u_int8_t *, sizeof(blf_ctx), M_XDATA, M_WAITOK);
+    MALLOC(*sched, u_int8_t *, sizeof(blf_ctx), M_CRYPTO_DATA, M_WAITOK);
     bzero(*sched, sizeof(blf_ctx));
     blf_key((blf_ctx *)*sched, key, len);
 }
@@ -274,7 +274,7 @@ void
 blf_zerokey(u_int8_t **sched)
 {
     bzero(*sched, sizeof(blf_ctx));
-    FREE(*sched, M_XDATA);
+    FREE(*sched, M_CRYPTO_DATA);
     *sched = NULL;
 }
 
@@ -293,7 +293,7 @@ cast5_decrypt(caddr_t key, u_int8_t *blk)
 void
 cast5_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
-    MALLOC(*sched, u_int8_t *, sizeof(blf_ctx), M_XDATA, M_WAITOK);
+    MALLOC(*sched, u_int8_t *, sizeof(blf_ctx), M_CRYPTO_DATA, M_WAITOK);
     bzero(*sched, sizeof(blf_ctx));
     cast_setkey((cast_key *)*sched, key, len);
 }
@@ -302,7 +302,7 @@ void
 cast5_zerokey(u_int8_t **sched)
 {
     bzero(*sched, sizeof(cast_key));
-    FREE(*sched, M_XDATA);
+    FREE(*sched, M_CRYPTO_DATA);
     *sched = NULL;
 }
 
@@ -321,7 +321,8 @@ skipjack_decrypt(caddr_t key, u_int8_t *blk)
 void
 skipjack_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
-    MALLOC(*sched, u_int8_t *, 10 * sizeof(u_int8_t *), M_XDATA, M_WAITOK);
+    MALLOC(*sched, u_int8_t *, 10 * sizeof(u_int8_t *), M_CRYPTO_DATA,
+	   M_WAITOK);
     bzero(*sched, 10 * sizeof(u_int8_t *));
     subkey_table_gen(key, (u_int8_t **) *sched);
 }
@@ -335,10 +336,10 @@ skipjack_zerokey(u_int8_t **sched)
 	if (((u_int8_t **)(*sched))[k])
 	{
 	    bzero(((u_int8_t **)(*sched))[k], 0x100);
-	    FREE(((u_int8_t **)(*sched))[k], M_XDATA);
+	    FREE(((u_int8_t **)(*sched))[k], M_CRYPTO_DATA);
 	}
     bzero(*sched, 10 * sizeof(u_int8_t *));
-    FREE(*sched, M_XDATA);
+    FREE(*sched, M_CRYPTO_DATA);
     *sched = NULL;
 }
 
@@ -358,7 +359,8 @@ rijndael128_decrypt(caddr_t key, u_int8_t *blk)
 void
 rijndael128_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
-    MALLOC(*sched, u_int8_t *, 2 * sizeof(rijndael_ctx), M_XDATA, M_WAITOK);
+    MALLOC(*sched, u_int8_t *, 2 * sizeof(rijndael_ctx), M_CRYPTO_DATA,
+	   M_WAITOK);
     bzero(*sched, 2 * sizeof(rijndael_ctx));
     rijndael_set_key((rijndael_ctx *) *sched, (u4byte *) key, len * 8, 1);
     rijndael_set_key(((rijndael_ctx *) *sched) + 1, (u4byte *) key, len * 8, 0);
@@ -368,7 +370,7 @@ void
 rijndael128_zerokey(u_int8_t **sched)
 {
     bzero(*sched, 2 * sizeof(rijndael_ctx));
-    FREE(*sched, M_XDATA);
+    FREE(*sched, M_CRYPTO_DATA);
     *sched = NULL;
 }
 

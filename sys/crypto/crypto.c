@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.15 2000/12/13 08:34:05 provos Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.16 2001/05/05 00:31:34 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -164,7 +164,7 @@ crypto_get_driverid(void)
     {
 	crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
 	crypto_drivers = malloc(crypto_drivers_num * sizeof(struct cryptocap),
-				M_XDATA, M_NOWAIT);
+				M_CRYPTO_DATA, M_NOWAIT);
 	if (crypto_drivers == NULL)
 	{
 	    crypto_drivers_num = 0;
@@ -188,7 +188,7 @@ crypto_get_driverid(void)
 	  return -1;
 
 	newdrv = malloc(2 * crypto_drivers_num * sizeof(struct cryptocap),
-			M_XDATA, M_NOWAIT);
+			M_CRYPTO_DATA, M_NOWAIT);
 	if (newdrv == NULL)
 	  return -1;
 
@@ -373,7 +373,7 @@ crypto_freereq(struct cryptop *crp)
 	crp->crp_desc = crd->crd_next;
 
 	if (crypto_queue_num + 1 > crypto_queue_max)
-	  FREE(crd, M_XDATA);
+	  FREE(crd, M_CRYPTO_OPS);
 	else
 	{
 	    crd->crd_next = cryptodesc_queue;
@@ -383,7 +383,7 @@ crypto_freereq(struct cryptop *crp)
     }
 
     if (crypto_queue_num + 1 > crypto_queue_max)
-      FREE(crp, M_XDATA);
+      FREE(crp, M_CRYPTO_OPS);
     else
     {
         crp->crp_next = cryptop_queue;
@@ -406,7 +406,7 @@ crypto_getreq(int num)
 
     if (cryptop_queue == NULL)
     {
-        MALLOC(crp, struct cryptop *, sizeof(struct cryptop), M_XDATA,
+        MALLOC(crp, struct cryptop *, sizeof(struct cryptop), M_CRYPTO_OPS,
 	       M_NOWAIT);
         if (crp == NULL)
         {
@@ -428,7 +428,7 @@ crypto_getreq(int num)
         if (cryptodesc_queue == NULL)
 	{
 	    MALLOC(crd, struct cryptodesc *, sizeof(struct cryptodesc),
-		   M_XDATA, M_NOWAIT);
+		   M_CRYPTO_OPS, M_NOWAIT);
 	    if (crd == NULL)
 	    {
                 splx(s);
