@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.43 2002/07/21 19:08:26 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.44 2002/07/21 19:55:33 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -156,6 +156,7 @@ struct hifn_softc {
 #define	HIFN_HAS_PUBLIC		2
 #define	HIFN_IS_7811		4
 #define	HIFN_NO_BURSTWRITE	8
+#define	HIFN_HAS_LEDS		16
 	struct timeout sc_rngto, sc_tickto;
 	int sc_rngfirst;
 	int sc_rnghz;
@@ -189,6 +190,15 @@ struct hifn_softc {
     bus_space_read_4((sc)->sc_st0, (sc)->sc_sh0, reg)
 #define	READ_REG_1(sc,reg) \
     bus_space_read_4((sc)->sc_st1, (sc)->sc_sh1, reg)
+
+#define	SET_LED(sc,v)							\
+	if (sc->sc_flags & HIFN_HAS_LEDS)				\
+		WRITE_REG_1(sc, HIFN_1_7811_MIPSRST,			\
+		    READ_REG_1(sc, HIFN_1_7811_MIPSRST) | (v))
+#define	CLR_LED(sc,v)							\
+	if (sc->sc_flags & HIFN_HAS_LEDS)				\
+		WRITE_REG_1(sc, HIFN_1_7811_MIPSRST,			\
+		    READ_REG_1(sc, HIFN_1_7811_MIPSRST) & ~(v))
 
 /*
  *  hifn_command_t

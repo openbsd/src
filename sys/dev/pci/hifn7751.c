@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.124 2002/07/21 19:08:26 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.125 2002/07/21 19:55:33 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -161,7 +161,7 @@ hifn_attach(parent, self, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7811)
-		sc->sc_flags |= HIFN_IS_7811 | HIFN_HAS_RNG;
+		sc->sc_flags |= HIFN_IS_7811 | HIFN_HAS_RNG | HIFN_HAS_LEDS;
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
@@ -754,6 +754,7 @@ hifn_init_pci_registers(sc)
 		HIFN_DMAIER_ILLW | HIFN_DMAIER_ILLR : 0);
 	sc->sc_dmaier &= ~HIFN_DMAIER_C_WAIT;
 	WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
+	CLR_LED(sc, HIFN_MIPSRST_LED0 | HIFN_MIPSRST_LED1 | HIFN_MIPSRST_LED2);
 
 	WRITE_REG_0(sc, HIFN_0_PUCNFG, HIFN_PUCNFG_COMPSING |
 	    HIFN_PUCNFG_DRFR_128 | HIFN_PUCNFG_TCALLPHASES |
@@ -1514,6 +1515,7 @@ hifn_crypto(sc, cmd, crp)
 	if (sc->sc_c_busy == 0) {
 		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_C_CTRL_ENA);
 		sc->sc_c_busy = 1;
+		SET_LED(sc, HIFN_MIPSRST_LED0);
 	}
 
 	/*
@@ -1533,6 +1535,7 @@ hifn_crypto(sc, cmd, crp)
 	if (sc->sc_s_busy == 0) {
 		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_S_CTRL_ENA);
 		sc->sc_s_busy = 1;
+		SET_LED(sc, HIFN_MIPSRST_LED1);
 	}
 
 	/*
@@ -1560,6 +1563,7 @@ hifn_crypto(sc, cmd, crp)
 	if (sc->sc_r_busy == 0) {
 		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_CTRL_ENA);
 		sc->sc_r_busy = 1;
+		SET_LED(sc, HIFN_MIPSRST_LED2);
 	}
 
 	if (cmd->sloplen)
@@ -1613,10 +1617,12 @@ hifn_tick(vsc)
 		if (dma->cmdu == 0 && sc->sc_c_busy) {
 			sc->sc_c_busy = 0;
 			r |= HIFN_DMACSR_C_CTRL_DIS;
+			CLR_LED(sc, HIFN_MIPSRST_LED0);
 		}
 		if (dma->srcu == 0 && sc->sc_s_busy) {
 			sc->sc_s_busy = 0;
 			r |= HIFN_DMACSR_S_CTRL_DIS;
+			CLR_LED(sc, HIFN_MIPSRST_LED1);
 		}
 		if (dma->dstu == 0 && sc->sc_d_busy) {
 			sc->sc_d_busy = 0;
@@ -1625,6 +1631,7 @@ hifn_tick(vsc)
 		if (dma->resu == 0 && sc->sc_r_busy) {
 			sc->sc_r_busy = 0;
 			r |= HIFN_DMACSR_R_CTRL_DIS;
+			CLR_LED(sc, HIFN_MIPSRST_LED2);
 		}
 		if (r)
 			WRITE_REG_1(sc, HIFN_1_DMA_CSR, r);
