@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.35 2001/01/29 02:18:33 niklas Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.36 2001/01/30 03:16:09 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -76,7 +76,6 @@
 #define DMAMODE		4
 #define DMAMODE_WAIT	5
 #define READY		6
-
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
@@ -1426,9 +1425,21 @@ piomode:
 			if (drvp->PIO_mode < 3) {
 				drvp->PIO_mode = 3;
 				goto piomode;
-			} else {
-				goto error;
 			}
+			/* 
+			 * All ATAPI drives are supposed to support
+			 * PIO mode 3 or greater. 
+			 *
+			 * If the drive fails the set PIO mode command,
+			 * assume it just doesn't support the set PIO mode
+			 * command.
+			 *
+			 * Ideally, we would program the channel controller
+			 * to run at PIO mode 3. However, the channel
+			 * controller is only running faster than PIO mode 3
+			 * if the drive said it supported that. 
+			 */
+			drvp->PIO_mode = 3;
 		}
 	/* fall through */
 
@@ -1468,16 +1479,6 @@ timeout:
 	xfer->next = wdc_atapi_reset;
 	return (GOTO_NEXT);
 
-error:
-	printf("%s:%d:%d: %s ",
-	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
-	    errstring);
-	printf("error (0x%x)\n", chp->ch_error);
-
-	sc_xfer->error = XS_DRIVER_STUFFUP;
-
-	xfer->next = wdc_atapi_reset;
-	return (GOTO_NEXT);
 }
 
 int
