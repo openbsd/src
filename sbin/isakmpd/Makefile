@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2001/08/16 18:55:33 jakob Exp $
+#	$OpenBSD: Makefile,v 1.44 2001/08/25 22:22:26 niklas Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -53,7 +53,7 @@ OS=		openbsd
 #FEATURES=	tripledes des blowfish cast policy x509 ec aggressive debug gmp
 #FEATURES+=	rawkey isakmp_cfg dnssec
 FEATURES=	tripledes des blowfish cast policy x509 ec aggressive debug
-FEATURES+=	rawkey
+FEATURES+=	rawkey isakmp_cfg
 
 .PATH:		${.CURDIR}/sysdep/${OS}
 
