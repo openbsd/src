@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.7 1998/03/17 06:22:00 millert Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.8 1998/03/18 00:15:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -37,7 +37,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ethers.c,v 1.7 1998/03/17 06:22:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: ethers.c,v 1.8 1998/03/18 00:15:25 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -125,6 +125,10 @@ ether_ntohost(hostname, e)
 	char buf[BUFSIZ+1], *p;
 	size_t len;
 	struct ether_addr try;
+#ifdef YP
+	char trybuf[sizeof("xx:xx:xx:xx:xx:xx")];
+	int trylen;
+#endif
 
 	if (e->ether_addr_octet[0] > 0xFF || e->ether_addr_octet[1] > 0xFF ||
 	    e->ether_addr_octet[2] > 0xFF || e->ether_addr_octet[3] > 0xFF ||
@@ -134,9 +138,6 @@ ether_ntohost(hostname, e)
 	}
 
 #ifdef YP
-	char trybuf[sizeof("xx:xx:xx:xx:xx:xx")];
-	int trylen;
-
 	sprintf(trybuf, "%x:%x:%x:%x:%x:%x", 
 	    e->ether_addr_octet[0], e->ether_addr_octet[1],
 	    e->ether_addr_octet[2], e->ether_addr_octet[3],
