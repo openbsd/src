@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.3 1997/04/20 06:59:58 downsj Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.4 1997/10/07 13:53:25 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
 
 /*
@@ -198,6 +198,7 @@ extern	u_int mappedcopysize;
 #endif /* MAPPEDCOPY */
 
 /* copy.s */
+int	fusword __P((caddr_t));
 int	susword __P((caddr_t, u_short));
 
 #endif /* _KERNEL */
