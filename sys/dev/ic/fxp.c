@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.13 2001/04/06 04:42:05 csapuntz Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.14 2001/05/24 03:32:51 art Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -911,7 +911,7 @@ fxp_stats_update(arg)
 	}
 	s = splimp();
 	/*
-	 * If we haven't received any packets in FXP_MAC_RX_IDLE seconds,
+	 * If we haven't received any packets in FXP_MAX_RX_IDLE seconds,
 	 * then assume the receiver has locked up and attempt to clear
 	 * the condition by reprogramming the multicast filter. This is
 	 * a work-around for a bug in the 82557 where the receiver locks
