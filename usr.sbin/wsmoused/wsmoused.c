@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.17 2003/12/22 11:11:27 miod Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.18 2004/01/04 21:41:12 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -69,7 +69,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <syslog.h>
-#include <varargs.h>
 
 #include "mouse_protocols.h"
 #include "wsmoused.h"

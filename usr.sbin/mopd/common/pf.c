@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.8 2003/12/01 00:56:51 avsm Exp $ */
+/*	$OpenBSD: pf.c,v 1.9 2004/01/04 21:41:12 drahn Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: pf.c,v 1.8 2003/12/01 00:56:51 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: pf.c,v 1.9 2004/01/04 21:41:12 drahn Exp $";
 #endif
 
 #include <stdio.h>
@@ -53,7 +53,6 @@ static const char rcsid[] = "$OpenBSD: pf.c,v 1.8 2003/12/01 00:56:51 avsm Exp $
 #include <string.h>
 
 #include <syslog.h>
-#include <varargs.h>
 
 #include "common/mopdef.h"
 
