@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.12 2003/10/11 22:08:57 miod Exp $ */
+/*	$OpenBSD: prom.h,v 1.13 2004/01/26 19:24:03 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -38,14 +38,15 @@
 #define MVMEPROM_INLN		0x02
 #define MVMEPROM_READSTR	0x03
 #define MVMEPROM_READLN		0x04
-#define MVMEPROM_OUTCHR		0x20
-#define MVMEPROM_OUTSTR		0x21
 #define MVMEPROM_DSKRD		0x10
 #define MVMEPROM_DSKWR		0x11
 #define MVMEPROM_DSKCFIG	0x12
 #define MVMEPROM_DSKFMT		0x14
 #define MVMEPROM_DSKCTRL	0x15
+#define MVMEPROM_NETFOPEN	0x1b
+#define MVMEPROM_NETFREAD	0x1c
 #define MVMEPROM_NETCTRL	0x1d
+#define MVMEPROM_OUTCHR		0x20
 #define MVMEPROM_OUTSTR		0x21
 #define MVMEPROM_OUTSTRCRLF	0x22
 #define MVMEPROM_WRITE		0x23
@@ -70,14 +71,31 @@
 #define ENVIRONTYPE_MEMSIZE	5
 
 #ifndef LOCORE
-struct prom_netctrl {
-	u_char	dev;
+struct mvmeprom_netctrl {
 	u_char	ctrl;
+	u_char	dev;
 	u_short	status;
 	u_long	cmd;
 	u_long	addr;
 	u_long	len;
 	u_long	flags;
+};
+
+struct mvmeprom_netfopen {
+	u_char	ctrl;
+	u_char	dev;
+	u_short	status;
+	char	filename[64];
+};
+
+struct mvmeprom_netfread {
+	u_char	ctrl;
+	u_char	dev;
+	u_short	status;
+	u_long	addr;
+	u_short	bytes;
+	u_short	blk;
+	u_long	timeout;
 };
 
 struct prom_environ_hdr {
