@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.31 2004/07/28 21:46:04 jmc Exp $
+.\"	$OpenBSD: tun.4,v 1.32 2004/08/17 23:58:36 jaredy Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -49,7 +49,7 @@ the kernel networking subsystem.
 A
 .Nm
 interface can be created at runtime using the
-.Ic ifconfig tunN create
+.Ic ifconfig tun Ns Ar N Ic create
 command or by opening the character special device
 .Pa /dev/tunN .
 .Pp
