@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_join.c	10.9 (Berkeley) 3/6/96";
+static const char sccsid[] = "@(#)ex_join.c	10.10 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -126,7 +126,7 @@ ex_join(sp, cmdp)
 		}
 
 		if (len != 0) {
-			memmove(tbp, p, len);
+			memcpy(tbp, p, len);
 			tbp += len;
 			clen += len;
 			echar = p[len - 1];

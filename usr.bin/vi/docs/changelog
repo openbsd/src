@@ -1,3 +1,8 @@
+1.75 -> 1.76 (09/15/96)
+	+ Fix bug where ^V didn't keep input mapping from happening.
+	+ Fix a core dump bug in the R command.
+	+ Give up on licensing: no more shareware, adware, whatever.
+	+ Fix cursor positioning bug for C, S and c$ in an empty file.
 1.74 -> 1.75 (08/22/96)
 	+ Add French to the error message translations.
 	+ Move the UNLICENSED message to the end of the message line.

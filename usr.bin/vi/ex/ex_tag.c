@@ -13,7 +13,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_tag.c	10.35 (Berkeley) 6/30/96";
+static const char sccsid[] = "@(#)ex_tag.c	10.36 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -869,7 +869,7 @@ ex_tagf_alloc(sp, str)
 					free(tfp);
 					return (1);
 				}
-				memmove(tfp->name, t, len);
+				memcpy(tfp->name, t, len);
 				tfp->name[len] = '\0';
 				tfp->flags = 0;
 				TAILQ_INSERT_TAIL(&exp->tagfq, tfp, q);

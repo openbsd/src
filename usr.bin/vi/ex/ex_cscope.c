@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_cscope.c	10.12 (Berkeley) 8/11/96";
+static const char sccsid[] = "@(#)ex_cscope.c	10.13 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -25,7 +25,6 @@ static const char sccsid[] = "@(#)ex_cscope.c	10.12 (Berkeley) 8/11/96";
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>

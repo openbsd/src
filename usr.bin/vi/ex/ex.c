@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex.c	10.53 (Berkeley) 8/11/96";
+static const char sccsid[] = "@(#)ex.c	10.54 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1472,7 +1472,7 @@ addr_verify:
 
 		ecp->save_cmd -= arg1_len;
 		ecp->save_cmdlen += arg1_len;
-		memmove(ecp->save_cmd, arg1, arg1_len);
+		memcpy(ecp->save_cmd, arg1, arg1_len);
 
 		/*
 		 * Any commands executed from a +cmd are executed starting at
@@ -2121,7 +2121,7 @@ ex_load(sp)
 	 * so we have play games.
 	 */
 	ecp->cp = ecp->o_cp;
-	memmove(ecp->cp, ecp->cp + ecp->o_clen, ecp->o_clen);
+	memcpy(ecp->cp, ecp->cp + ecp->o_clen, ecp->o_clen);
 	ecp->clen = ecp->o_clen;
 	ecp->range_lno = sp->lno = rp->start++;
 
@@ -2176,7 +2176,7 @@ ex_unknown(sp, cmd, len)
 
 	GET_SPACE_GOTO(sp, bp, blen, len + 1);
 	bp[len] = '\0';
-	memmove(bp, cmd, len);
+	memcpy(bp, cmd, len);
 	msgq_str(sp, M_ERR, bp, "098|The %s command is unknown");
 	FREE_SPACE(sp, bp, blen);
 

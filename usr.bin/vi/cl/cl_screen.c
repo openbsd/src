@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_screen.c	10.47 (Berkeley) 7/30/96";
+static const char sccsid[] = "@(#)cl_screen.c	10.48 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -102,8 +102,7 @@ cl_screen(sp, flags)
 	if (LF_ISSET(SC_EX)) {
 		if (cl_ex_init(sp))
 			return (1);
-		clp->in_ex = 1;
-		F_SET(clp, CL_SCR_EX_INIT);
+		F_SET(clp, CL_IN_EX | CL_SCR_EX_INIT);
 
 		/*
 		 * If doing an ex screen for ex mode, move to the last line
@@ -115,7 +114,7 @@ cl_screen(sp, flags)
 	} else {
 		if (cl_vi_init(sp))
 			return (1);
-		clp->in_ex = 0;
+		F_CLR(clp, CL_IN_EX);
 		F_SET(clp, CL_SCR_VI_INIT);
 	}
 	return (0);
@@ -398,7 +397,7 @@ cl_vi_end(gp)
 	 * Move to the bottom of the window (some endwin implementations don't
 	 * do this for you).
 	 */
-	if (!clp->in_ex) {
+	if (!F_ISSET(clp, CL_IN_EX)) {
 		(void)move(0, 0);
 		(void)deleteln();
 		(void)move(LINES - 1, 0);

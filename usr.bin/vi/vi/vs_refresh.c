@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)vs_refresh.c	10.39 (Berkeley) 8/17/96";
+static const char sccsid[] = "@(#)vs_refresh.c	10.41 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,10 +87,10 @@ vs_refresh(sp, forcepaint)
 	 * XXX
 	 * This is fairly evil.  Status lines are written using the vi message
 	 * mechanism, since we have no idea how long they are.  Since we may be
-	 * painting screens other than the current one, we don't want want to
-	 * make the user wait.  We depend heavily on there not being any other
-	 * lines currently waiting to be displayed and the message truncation
-	 * code in the msgq_status routine working.
+	 * painting screens other than the current one, we don't want to make
+	 * the user wait.  We depend heavily on there not being any other lines
+	 * currently waiting to be displayed and the message truncation code in
+	 * the msgq_status routine working.
 	 */
 	for (tsp = sp->gp->dq.cqh_first;
 	    tsp != (void *)&sp->gp->dq; tsp = tsp->q.cqe_next)
@@ -669,13 +669,19 @@ paint:	for (smp = HMAP; smp <= TMAP; ++smp)
 	didpaint = 1;
 
 done_cursor:
-#ifdef DEBUG
 	/*
 	 * Sanity checking.  When the repainting code messes up, the usual
-	 * result is we don't repaint the cursor.  Die now.
+	 * result is we don't repaint the cursor and so sc_smap will be
+	 * NULL.  If we're debugging, die, otherwise restart from scratch.
 	 */
+#ifdef DEBUG
 	if (vip->sc_smap == NULL)
 		abort();
+#else
+	if (vip->sc_smap == NULL) {
+		F_SET(sp, SC_SCR_REFORMAT);
+		return (vs_paint(sp, flags));
+	}
 #endif
 
 	/*

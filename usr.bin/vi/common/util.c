@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)util.c	10.10 (Berkeley) 3/6/96";
+static const char sccsid[] = "@(#)util.c	10.11 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -136,7 +136,7 @@ v_strdup(sp, str, len)
 	MALLOC(sp, copy, CHAR_T *, len + 1);
 	if (copy == NULL)
 		return (NULL);
-	memmove(copy, str, len * sizeof(CHAR_T));
+	memcpy(copy, str, len * sizeof(CHAR_T));
 	copy[len] = '\0';
 	return (copy);
 }

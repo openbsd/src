@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)api.c	8.22 (Berkeley) 8/10/96";
+static const char sccsid[] = "@(#)api.c	8.23 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -21,7 +21,6 @@ static const char sccsid[] = "@(#)api.c	8.22 (Berkeley) 8/10/96";
 
 #include <bitstring.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)cl.h	10.17 (Berkeley) 7/12/96
+ *	@(#)cl.h	10.18 (Berkeley) 9/15/96
  */
 
 typedef struct _cl_private {
@@ -24,8 +24,6 @@ typedef struct _cl_private {
 	char	*rmso, *smso;	/* Inverse video terminal strings. */
 	char	*smcup, *rmcup;	/* Terminal start/stop strings. */
 
-	int	 in_ex;		/* XXX: Currently running ex. */
-
 	int	 killersig;	/* Killer signal. */
 #define	INDX_HUP	0
 #define	INDX_INT	1
@@ -40,14 +38,15 @@ typedef struct _cl_private {
 	enum {			/* Terminal initialization strings. */
 	    TE_SENT=0, TI_SENT } ti_te;
 
-#define	CL_RENAME	0x001	/* X11 xterm icon/window renamed. */
-#define	CL_RENAME_OK	0x002	/* User wants the windows renamed. */
-#define	CL_SCR_EX_INIT	0x004	/* Ex screen initialized. */
-#define	CL_SCR_VI_INIT	0x008	/* Vi screen initialized. */
-#define	CL_SIGHUP	0x010	/* SIGHUP arrived. */
-#define	CL_SIGINT	0x020	/* SIGINT arrived. */
-#define	CL_SIGTERM	0x040	/* SIGTERM arrived. */
-#define	CL_SIGWINCH	0x080	/* SIGWINCH arrived. */
+#define	CL_IN_EX	0x0001	/* Currently running ex. */
+#define	CL_RENAME	0x0002	/* X11 xterm icon/window renamed. */
+#define	CL_RENAME_OK	0x0004	/* User wants the windows renamed. */
+#define	CL_SCR_EX_INIT	0x0008	/* Ex screen initialized. */
+#define	CL_SCR_VI_INIT	0x0010	/* Vi screen initialized. */
+#define	CL_SIGHUP	0x0020	/* SIGHUP arrived. */
+#define	CL_SIGINT	0x0040	/* SIGINT arrived. */
+#define	CL_SIGTERM	0x0080	/* SIGTERM arrived. */
+#define	CL_SIGWINCH	0x0100	/* SIGWINCH arrived. */
 	u_int32_t flags;
 } CL_PRIVATE;
 
@@ -59,14 +58,6 @@ typedef enum { INP_OK=0, INP_EOF, INP_ERR, INP_INTR, INP_TIMEOUT } input_t;
 
 /* The screen line relative to a specific window. */
 #define	RLNO(sp, lno)	(sp)->woff + (lno)
-
-/* Some functions can be safely ignored until the screen is running. */
-#define	VI_INIT_IGNORE(sp)						\
-	if (F_ISSET(sp, SC_VI) && !F_ISSET(sp, SC_SCR_VI))		\
-		return (0);
-#define	EX_INIT_IGNORE(sp)						\
-	if (F_ISSET(sp, SC_EX) && !F_ISSET(sp, SC_SCR_EX))		\
-		return (0);
 
 /* X11 xterm escape sequence to rename the icon/window. */
 #define	XTERM_RENAME	"\033]0;%s\007"

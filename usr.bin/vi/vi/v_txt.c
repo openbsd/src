@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_txt.c	10.80 (Berkeley) 8/13/96";
+static const char sccsid[] = "@(#)v_txt.c	10.83 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -628,6 +628,8 @@ replay:	if (LF_ISSET(TXT_REPLAY))
 	 */
 	if (quote == Q_BTHIS || quote == Q_VTHIS) {
 		FL_CLR(ec_flags, EC_QUOTED);
+		if (LF_ISSET(TXT_MAPINPUT))
+			FL_SET(ec_flags, EC_MAPINPUT);
 
 		if (quote == Q_BTHIS &&
 		    (evp->e_value == K_VERASE || evp->e_value == K_VKILL)) {
@@ -709,8 +711,13 @@ k_cr:		if (LF_ISSET(TXT_CR)) {
 			abb = AB_NOTWORD;				\
 		if (UNMAP_TST)						\
 			txt_unmap(sp, tp, &ec_flags);			\
-		/* Delete any appended cursor. */			\
-		if (LF_ISSET(TXT_APPENDEOL)) {				\
+		/*							\
+		 * Delete any appended cursor.  It's possible to get in	\
+		 * situations where TXT_APPENDEOL is set but tp->insert	\
+		 * is 0 when using the R command and all the characters	\
+		 * are tp->owrite characters.				\
+		 */							\
+		if (LF_ISSET(TXT_APPENDEOL) && tp->insert > 0) {	\
 			--tp->len;					\
 			--tp->insert;					\
 		}							\
@@ -719,7 +726,7 @@ k_cr:		if (LF_ISSET(TXT_CR)) {
 
 		/*
 		 * Save the current line information for restoration in
-		 * txt_backup().  Set the new line length.
+		 * txt_backup(), and set the line final length.
 		 */
 		tp->sv_len = tp->len;
 		tp->sv_cno = tp->cno;
@@ -755,10 +762,18 @@ k_cr:		if (LF_ISSET(TXT_CR)) {
 			owrite = 0;
 		}
 
-		/* Set up bookkeeping for the new line. */
+		/*
+		 * !!!
+		 * Create a new line and insert the new TEXT into the queue.
+		 * DON'T insert until the old line has been updated, or the
+		 * inserted line count in line.c:db_get() will be wrong.
+		 */
 		if ((ntp = text_init(sp, p,
 		    insert + owrite, insert + owrite + 32)) == NULL)
 			goto err;
+		CIRCLEQ_INSERT_TAIL(&sp->tiq, ntp, q);
+
+		/* Set up bookkeeping for the new line. */
 		ntp->insert = insert;
 		ntp->owrite = owrite;
 		ntp->lno = tp->lno + 1;
@@ -813,18 +828,8 @@ k_cr:		if (LF_ISSET(TXT_CR)) {
 			++ntp->len;
 		}
 
-		/*
-		 * Swap old and new TEXT's, and insert the new TEXT into the
-		 * queue.
-		 *
-		 * !!!
-		 * DON'T insert until the old line has been updated, or the
-		 * inserted line count in line.c:db_get() will be wrong.
-		 */
+		/* Swap old and new TEXT's, and update the new line. */
 		tp = ntp;
-		CIRCLEQ_INSERT_TAIL(&sp->tiq, tp, q);
-
-		/* Update the new line. */
 		if (vs_change(sp, tp->lno, LINE_INSERT))
 			goto err;
 
@@ -1223,7 +1228,14 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 	case K_VLNEXT:			/* Quote next character. */
 		evp->e_c = '^';
 		quote = Q_VNEXT;
+		/*
+		 * Turn on the quote flag so that the underlying routines
+		 * quote the next character where it's possible. Turn off
+		 * the input mapbiting flag so that we don't remap the next
+		 * character.
+		 */
 		FL_SET(ec_flags, EC_QUOTED);
+		FL_CLR(ec_flags, EC_MAPINPUT);
 
 		/*
 		 * !!!

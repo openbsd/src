@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)msg.c	10.46 (Berkeley) 8/19/96";
+static const char sccsid[] = "@(#)msg.c	10.48 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -477,13 +477,13 @@ mod_rpt(sp)
 			tlen += len;
 			t = msg_cat(sp,
 			    lines[sp->rptlines[cnt] == 1 ? 0 : 1], &len);
-			memmove(p, t, len);
+			memcpy(p, t, len);
 			p += len;
 			tlen += len;
 			*p++ = ' ';
 			++tlen;
 			t = msg_cat(sp, *ap, &len);
-			memmove(p, t, len);
+			memcpy(p, t, len);
 			p += len;
 			tlen += len;
 			sp->rptlines[cnt] = 0;
@@ -629,27 +629,8 @@ msgq_status(sp, lno, flags)
 	(void)sprintf(p, " (pid %lu)", (u_long)getpid());
 	p += strlen(p);
 #endif
-	len = p - bp;
-
-	/*
-	 * Poison.
-	 *
-	 * This message may not be altered in any way, without the written
-	 * permission of Keith Bostic.  See the LICENSE file for further
-	 * information.
-	 */
-#define	POISON	"   UNLICENSED"
-	if (!poisoned && len < sp->cols - ((sizeof(POISON) - 1) + 1)) {
-		memset(p, ' ', sp->cols - len);
-		p = (bp + sp->cols) - ((sizeof(POISON) - 1) + 1);
-		memcpy(p, POISON, sizeof(POISON) - 1);
-		p = (bp + sp->cols) - 1;
-		len = p - bp;
-		poisoned = 1;
-	}
-
 	*p++ = '\n';
-	++len;
+	len = p - bp;
 
 	/*
 	 * There's a nasty problem with long path names.  Cscope and tags files

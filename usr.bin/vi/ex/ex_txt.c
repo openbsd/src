@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_txt.c	10.14 (Berkeley) 6/30/96";
+static const char sccsid[] = "@(#)ex_txt.c	10.15 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -292,7 +292,7 @@ notlast:			CIRCLEQ_REMOVE(tiqh, tp, q);
 				ait.lb = NULL;
 				ait.lb_len = 0;
 				BINC_GOTO(sp, ait.lb, ait.lb_len, tp->ai);
-				memmove(ait.lb, tp->lb, tp->ai);
+				memcpy(ait.lb, tp->lb, tp->ai);
 				ait.ai = ait.len = tp->ai;
 
 				carat_st = C_NOCHANGE;

@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)delete.c	10.10 (Berkeley) 3/6/96";
+static const char sccsid[] = "@(#)delete.c	10.11 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,7 +81,7 @@ delete(sp, fm, tm, lmode)
 			if (db_get(sp, fm->lno, DBG_FATAL, &p, &len))
 				return (1);
 			GET_SPACE_RET(sp, bp, blen, fm->cno);
-			memmove(bp, p, fm->cno);
+			memcpy(bp, p, fm->cno);
 			if (db_set(sp, fm->lno, bp, fm->cno))
 				return (1);
 			goto done;
@@ -94,8 +94,8 @@ delete(sp, fm, tm, lmode)
 			return (1);
 		GET_SPACE_RET(sp, bp, blen, len);
 		if (fm->cno != 0)
-			memmove(bp, p, fm->cno);
-		memmove(bp + fm->cno, p + (tm->cno + 1), len - (tm->cno + 1));
+			memcpy(bp, p, fm->cno);
+		memcpy(bp + fm->cno, p + (tm->cno + 1), len - (tm->cno + 1));
 		if (db_set(sp, fm->lno,
 		    bp, len - ((tm->cno - fm->cno) + 1)))
 			goto err;
@@ -111,7 +111,7 @@ delete(sp, fm, tm, lmode)
 		if (db_get(sp, fm->lno, DBG_FATAL, &p, NULL))
 			return (1);
 		GET_SPACE_RET(sp, bp, blen, tlen + 256);
-		memmove(bp, p, tlen);
+		memcpy(bp, p, tlen);
 	}
 
 	/* Copy the end partial line into place. */
@@ -134,7 +134,7 @@ delete(sp, fm, tm, lmode)
 		} else
 			ADD_SPACE_RET(sp, bp, blen, nlen);
 
-		memmove(bp + tlen, p + (tm->cno + 1), len - (tm->cno + 1));
+		memcpy(bp + tlen, p + (tm->cno + 1), len - (tm->cno + 1));
 		tlen += len - (tm->cno + 1);
 	}
 

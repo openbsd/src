@@ -14,7 +14,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_perl.c	8.9 (Berkeley) 7/19/96";
+static const char sccsid[] = "@(#)ex_perl.c	8.10 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -24,7 +24,6 @@ static const char sccsid[] = "@(#)ex_perl.c	8.9 (Berkeley) 7/19/96";
 #include <bitstring.h>
 #include <ctype.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <termios.h>

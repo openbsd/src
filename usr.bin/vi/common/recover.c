@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)recover.c	10.20 (Berkeley) 6/20/96";
+static const char sccsid[] = "@(#)recover.c	10.21 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -31,7 +31,6 @@ static const char sccsid[] = "@(#)recover.c	10.20 (Berkeley) 6/20/96";
 #include <fcntl.h>
 #include <limits.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
