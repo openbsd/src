@@ -1,5 +1,5 @@
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
-.\"	$OpenBSD: radio.4,v 1.6 2002/01/23 18:48:23 mickey Exp $
+.\"	$OpenBSD: radio.4,v 1.7 2002/05/06 16:52:00 mickey Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -32,12 +32,13 @@
 .Nd device-independent radio driver layer
 .Sh SYNOPSIS
 .Pp
-.Cd "radio* at az0"
+.Cd "radio* at az?"
+.Cd "radio* at bktr?"
+.Cd "radio* at fms?"
 .Cd "radio* at mr0"
 .Cd "radio* at rt0"
 .Cd "radio* at rtii0"
 .Cd "radio* at sf2r0"
-.Cd "radio* at sf4r0"
 .Pp
 .Fd #include <sys/types.h>
 .Fd #include <sys/ioctl.h>
@@ -180,7 +181,7 @@ The TEA5757 chips are used in
 .Xr rtii 4 ,
 .Xr sf2r 4
 and
-.Xr sf4r 4
+.Xr fms 4
 cards.
 .Sh FILES
 .Bl -tag -width /dev/radio -compact
@@ -190,11 +191,11 @@ cards.
 .Xr ioctl 2 ,
 .Xr az 4 ,
 .Xr bktr 4 ,
+.Xr fms 4 ,
 .Xr mr 4 ,
 .Xr rt 4 ,
 .Xr rtii 4 ,
 .Xr sf2r 4 ,
-.Xr sf4r 4 ,
 .Xr radio 9
 .Sh BUGS
 You can have only one card of the same type.
