@@ -861,6 +861,8 @@ PUBLIC int main ARGS2(
 	    FREE(temp);
 	}
     }
+    StrAllocCat(lynx_temp_space, "/lynx-XXXXXX");
+    lynx_temp_space = mkdtemp(lynx_temp_space);
 #ifdef VMS
     LYLowerCase(lynx_temp_space);
     if (strchr(lynx_temp_space, '/') != NULL) {

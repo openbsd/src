@@ -138,6 +138,10 @@ PUBLIC void cleanup_sig ARGS1(
 PUBLIC void cleanup_files NOARGS
 {
     LYCleanupTemp();
+
+    if (rmdir(lynx_temp_space))
+	perror("Could not remove the temp-directory");
+
     FREE(lynx_temp_space);
 }
 
