@@ -159,11 +159,11 @@ ttflush()
 int
 ttgetc()
 {
-	char	buf[1];
+	char	c;
 
-	while (read(0, &buf[0], 1) != 1)
+	while (read(0, &c, 1) != 1)
 		;
-	return (buf[0] & 0xFF);
+	return ((int) c);
 }
 
 /*
