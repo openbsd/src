@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.3 1997/02/20 01:07:43 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.4 1997/07/27 23:30:33 niklas Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -356,7 +356,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 #define senderr(x) { error = x ; goto bad; }
 
 	if ((rnh = rt_tables[dst->sa_family]) == 0)
-		senderr(ESRCH);
+		senderr(EAFNOSUPPORT);
 	if (flags & RTF_HOST)
 		netmask = 0;
 	switch (req) {

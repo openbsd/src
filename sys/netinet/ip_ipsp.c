@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.16 1997/07/24 01:45:29 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.17 1997/07/27 23:30:36 niklas Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -64,6 +64,9 @@ int	tdb_init __P((struct tdb *, struct mbuf *));
 int	ipsp_kern __P((int, char **, int));
 
 int encdebug = 0;
+u_int32_t kernfs_epoch = 0;
+
+extern void encap_sendnotify(int, struct tdb *);
 
 /*
  * This is the proper place to define the various encapsulation transforms.
@@ -137,7 +140,8 @@ reserve_spi(u_int32_t tspi, struct in_addr src, u_int8_t proto, int *errval)
 	tdbp->tdb_dst = src;
 	tdbp->tdb_sproto = proto;
 	tdbp->tdb_flags |= TDBF_INVALID;
-
+	tdbp->tdb_epoch = kernfs_epoch - 1;
+	
 	puttdb(tdbp);
 	
 	return spi;
@@ -180,6 +184,182 @@ get_flow(void)
     bzero(flow, sizeof(struct flow));
 
     return flow;
+}
+
+struct expiration *
+get_expiration(void)
+{
+    struct expiration *exp;
+    
+    MALLOC(exp, struct expiration *, sizeof(struct expiration), M_TDB,
+	   M_WAITOK);
+    if (exp == (struct expiration *) NULL)
+      return (struct expiration *) NULL;
+
+    bzero(exp, sizeof(struct expiration));
+    
+    return exp;
+}
+
+void
+cleanup_expirations(struct in_addr dst, u_int32_t spi, u_int8_t sproto)
+{
+    struct expiration *exp, *nexp;
+    
+    for (exp = explist; exp; exp = exp->exp_next)
+      if ((exp->exp_dst.s_addr == dst.s_addr) &&
+	  (exp->exp_spi == spi) && (exp->exp_sproto == sproto))
+      {
+	  /* Link previous to next */
+	  if (exp->exp_prev == (struct expiration *) NULL)
+	    explist = exp->exp_next;
+	  else
+	    exp->exp_prev->exp_next = exp->exp_next;
+	  
+	  /* Link next (if it exists) to previous */
+	  if (exp->exp_next != (struct expiration *) NULL)
+	    exp->exp_next->exp_prev = exp->exp_prev;
+	 
+	  nexp = exp;
+	  exp = exp->exp_prev;
+	  free(nexp, M_TDB);
+      }
+}
+
+void 
+handle_expirations(void *arg)
+{
+    struct expiration *exp;
+    struct tdb *tdb;
+    
+    if (explist == (struct expiration *) NULL)
+      return;
+    
+    while (1)
+    {
+	exp = explist;
+
+	if (exp == (struct expiration *) NULL)
+	  return;
+	else
+	  if (exp->exp_timeout > time.tv_sec)
+	    break;
+	
+	/* Advance pointer */
+	explist = explist->exp_next;
+	if (explist)
+	  explist->exp_prev = NULL;
+	
+	tdb = gettdb(exp->exp_spi, exp->exp_dst, exp->exp_sproto);
+	if (tdb == (struct tdb *) NULL)
+	{
+	    free(exp, M_TDB);
+	    continue;			/* TDB is gone, ignore this */
+	}
+	
+	/* Soft expirations */
+	if (tdb->tdb_flags & TDBF_SOFT_TIMER)
+	  if (tdb->tdb_soft_timeout <= time.tv_sec)
+	  {
+	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
+	      tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
+	  }
+	  else
+	    if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE)
+	      if (tdb->tdb_first_use + tdb->tdb_soft_first_use <=
+		  time.tv_sec)
+	      {
+		  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
+		  tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
+	      }
+	
+	/* Hard expirations */
+	if (tdb->tdb_flags & TDBF_TIMER)
+	  if (tdb->tdb_exp_timeout <= time.tv_sec)
+	  {
+	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
+	      tdb_delete(tdb, 0);
+	  }
+	  else
+	    if (tdb->tdb_flags & TDBF_FIRSTUSE)
+	      if (tdb->tdb_first_use + tdb->tdb_exp_first_use <=
+		  time.tv_sec)
+	      {
+		  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
+		  tdb_delete(tdb, 0);
+	      }
+
+	free(exp, M_TDB);
+    }
+
+    if (explist)
+      timeout(handle_expirations, (void *) NULL, 
+	      hz * (explist->exp_timeout - time.tv_sec));
+}
+
+void
+put_expiration(struct expiration *exp)
+{
+    struct expiration *expt;
+    int reschedflag = 0;
+    
+    if (exp == (struct expiration *) NULL)
+    {
+#ifdef ENCDEBUG
+	if (encdebug)
+	  log(LOG_WARN, "put_expiration(): NULL argument");
+#endif /* ENCDEBUG */	
+	return;
+    }
+    
+    if (explist == (struct expiration *) NULL)
+    {
+	explist = exp;
+	reschedflag = 1;
+    }
+    else
+      if (explist->exp_timeout > exp->exp_timeout)
+      {
+	  exp->exp_next = explist;
+	  explist->exp_prev = exp;
+	  explist = exp;
+	  reschedflag = 2;
+      }
+      else
+      {
+	  for (expt = explist; expt->exp_next; expt = expt->exp_next)
+	    if (expt->exp_next->exp_timeout > exp->exp_timeout)
+	    {
+		expt->exp_next->exp_prev = exp;
+		exp->exp_next = expt->exp_next;
+		expt->exp_next = exp;
+		exp->exp_prev = expt;
+		break;
+	    }
+
+	  if (expt->exp_next == (struct expiration *) NULL)
+	  {
+	      expt->exp_next = exp;
+	      exp->exp_prev = expt;
+	  }
+      }
+
+    switch (reschedflag)
+    {
+	case 1:
+	    timeout(handle_expirations, (void *) NULL, 
+		    hz * (explist->exp_timeout - time.tv_sec));
+	    break;
+	    
+	case 2:
+	    untimeout(handle_expirations, (void *) NULL);
+	    timeout(handle_expirations, (void *) NULL,
+		    hz * (explist->exp_timeout - time.tv_sec));
+	    break;
+	    
+	default:
+	    break;
+    }
 }
 
 struct flow *
@@ -300,7 +480,9 @@ tdb_delete(struct tdb *tdbp, int delchain)
 
     for (flow = tdbp->tdb_flow; flow; flow = tdbp->tdb_flow)
       delete_flow(flow, tdbp);
- 
+
+    cleanup_expirations(tdbp->tdb_dst, tdbp->tdb_spi, tdbp->tdb_sproto);
+    
     FREE(tdbp, M_TDB);
 
     if (delchain && tdbpp)
@@ -319,25 +501,124 @@ tdb_init(struct tdb *tdbp, struct mbuf *m)
     em = mtod(m, struct encap_msghdr *);
     alg = em->em_alg;
 
+    /* Record establishment time */
+    tdbp->tdb_established = time.tv_sec;
+
+    tdbp->tdb_epoch = kernfs_epoch - 1;
+
     for (xsp = xformsw; xsp < xformswNXFORMSW; xsp++)
       if (xsp->xf_type == alg)
 	return (*(xsp->xf_init))(tdbp, xsp, m);
 
     log(LOG_ERR, "tdb_init(): no alg %d for spi %08x, addr %x, proto %d", alg,
 	ntohl(tdbp->tdb_spi), tdbp->tdb_dst.s_addr, tdbp->tdb_sproto);
-
-    /* Record establishment time */
-    tdbp->tdb_established = time.tv_sec;
-
-    m_freem(m);
+    
     return EINVAL;
 }
 
 /*
- * XXX This should change to something cleaner.
+ * Used by kernfs
  */
 int
 ipsp_kern(int off, char **bufp, int len)
 {
+    static char buffer[IPSEC_KERNFS_BUFSIZE];
+    struct tdb *tdb;
+    struct flow *fl;
+    int l, i;
+
+    if (off == 0)
+      kernfs_epoch++;
+    
+    if (bufp == NULL)
+      return 0;
+
+    bzero(buffer, IPSEC_KERNFS_BUFSIZE);
+
+    *bufp = buffer;
+    
+    for (i = 0; i < TDB_HASHMOD; i++)
+      for (tdb = tdbh[i]; tdb; tdb = tdb->tdb_hnext)
+	if (tdb->tdb_epoch != kernfs_epoch)
+	{
+	    tdb->tdb_epoch = kernfs_epoch;
+
+	    l = sprintf(buffer, "SPI = %08x, Destination = %s, Sproto = %d\n",
+			ntohl(tdb->tdb_spi), inet_ntoa(tdb->tdb_dst),
+			tdb->tdb_sproto);
+	    
+	    l += sprintf(buffer + l, "\testablished %d seconds ago\n",
+			 time.tv_sec - tdb->tdb_established);
+	   
+	    l += sprintf(buffer + l, "\tsrc = %s, flags = %08x, SAtype = %d\n",
+			 inet_ntoa(tdb->tdb_src), tdb->tdb_flags,
+			 tdb->tdb_satype);
+
+	    if (tdb->tdb_xform)
+	      l += sprintf(buffer + l, "\txform = <%s>\n", 
+			   tdb->tdb_xform->xf_name);
+	    else
+	      l += sprintf(buffer + l, "\txform = <(null)>\n");
+
+	    l += sprintf(buffer + l, "\tOSrc = %s", inet_ntoa(tdb->tdb_osrc));
+	    
+	    l += sprintf(buffer + l, " ODst = %s, TTL = %d\n",
+			 inet_ntoa(tdb->tdb_odst), tdb->tdb_ttl);
+
+	    if (tdb->tdb_onext)
+	      l += sprintf(buffer + l, "\tNext (on output) SA: SPI = %08x, Destination = %s, Sproto = %d\n", tdb->tdb_onext->tdb_spi, inet_ntoa(tdb->tdb_onext->tdb_dst), tdb->tdb_onext->tdb_sproto);
+
+	    if (tdb->tdb_inext)
+	      l += sprintf(buffer + l, "\tNext (on input) SA: SPI = %08x, Destination = %s, Sproto = %d\n", tdb->tdb_inext->tdb_spi, inet_ntoa(tdb->tdb_inext->tdb_dst), tdb->tdb_inext->tdb_sproto);
+
+	    /* XXX We can reuse variable i, we're not going to loop again */
+	    for (i = 0, fl = tdb->tdb_flow; fl; fl = fl->flow_next)
+	      i++;
+
+	    l += sprintf(buffer + l, "\t%d flows counted (use netstat -r for  more information)\n", i);
+	    
+	    l += sprintf(buffer + l, "\tExpirations:\n");
+
+	    if (tdb->tdb_flags & TDBF_TIMER)
+	      l += sprintf(buffer + l, "\t\tHard expiration(1) in %d seconds\n",
+			   tdb->tdb_exp_timeout - time.tv_sec);
+	    
+	    if (tdb->tdb_flags & TDBF_SOFT_TIMER)
+	      l += sprintf(buffer + l, "\t\tSoft expiration(1) in %d seconds\n",
+			   tdb->tdb_soft_timeout - time.tv_sec);
+	    
+	    if (tdb->tdb_flags & TDBF_BYTES)
+	      l += sprintf(buffer + l, "\t\tHard expiration after %qd bytes (currently %qd bytes processed)\n", tdb->tdb_exp_bytes, tdb->tdb_cur_bytes);
+	    
+	    if (tdb->tdb_flags & TDBF_SOFT_BYTES)
+	      l += sprintf(buffer + l, "\t\tSoft expiration after %qd bytes (currently %qd bytes processed)\n", tdb->tdb_soft_bytes, tdb->tdb_cur_bytes);
+	    
+	    if (tdb->tdb_flags & TDBF_PACKETS)
+	      l += sprintf(buffer + l, "\t\tHard expiration after %qd packets (currently %qd packets processed)\n", tdb->tdb_exp_packets, tdb->tdb_cur_packets);
+	    
+	    if (tdb->tdb_flags & TDBF_SOFT_PACKETS)
+	      l += sprintf(buffer + l, "\t\tSoft expiration after %qd packets (currently %qd packets processed)\n", tdb->tdb_soft_packets, tdb->tdb_cur_packets);
+	    
+	    if (tdb->tdb_flags & TDBF_FIRSTUSE)
+	      l += sprintf(buffer + l, "\t\tHard expiration(2) in %d seconds\n",
+			   (tdb->tdb_established + tdb->tdb_exp_first_use) -
+			   time.tv_sec);
+	    
+	    if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE)
+	      l += sprintf(buffer + l, "\t\tSoft expiration(2) in %d seconds\n",
+			   (tdb->tdb_established + tdb->tdb_soft_first_use) -
+			   time.tv_sec);
+
+	    if (!(tdb->tdb_flags & (TDBF_TIMER | TDBF_SOFT_TIMER | TDBF_BYTES |
+				    TDBF_SOFT_PACKETS | TDBF_PACKETS |
+				    TDBF_SOFT_BYTES | TDBF_FIRSTUSE |
+				    TDBF_SOFT_FIRSTUSE)))
+	      l += sprintf(buffer + l, "\t\t(none)\n");
+
+	    l += sprintf(buffer + l, "\n");
+	    
+	    return l;
+	}
+    
     return 0;
 }

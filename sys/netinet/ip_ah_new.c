@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.5 1997/07/24 01:37:10 deraadt Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.6 1997/07/27 23:30:34 niklas Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -60,6 +60,8 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <sys/syslog.h>
+
+extern void encap_sendnotify(int, struct tdb *);
 
 /*
  * ah_new_attach() is called from the transformation initialization code.
@@ -589,6 +591,35 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2);
     ahstat.ahs_ibytes += ntohs(ip->ip_len) - (ip->ip_hl << 2);
 
+    /* Notify on expiration */
+    if (tdb->tdb_flags & TDBF_SOFT_PACKETS)
+      if (tdb->tdb_cur_packets >= tdb->tdb_soft_packets)
+      {
+	  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
+	  tdb->tdb_flags &= ~TDBF_SOFT_PACKETS;
+      }
+      else
+	if (tdb->tdb_flags & TDBF_SOFT_BYTES)
+	  if (tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes)
+	  {
+	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
+	      tdb->tdb_flags &= ~TDBF_SOFT_BYTES;
+	  }
+    
+    if (tdb->tdb_flags & TDBF_PACKETS)
+      if (tdb->tdb_cur_packets >= tdb->tdb_exp_packets)
+      {
+	  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
+	  tdb_delete(tdb, 0);
+      }
+      else
+	if (tdb->tdb_flags & TDBF_BYTES)
+	  if (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)
+	  {
+	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
+	      tdb_delete(tdb, 0);
+	  }
+
     return m;
 }
 
@@ -889,8 +920,38 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	
     /* Update the counters */
     tdb->tdb_cur_packets++;
-    tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) - AH_NEW_FLENGTH;
+    tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) - 
+			  AH_NEW_FLENGTH;
     ahstat.ahs_obytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) - AH_NEW_FLENGTH;
+
+    /* Notify on expiration */
+    if (tdb->tdb_flags & TDBF_SOFT_PACKETS)
+      if (tdb->tdb_cur_packets >= tdb->tdb_soft_packets)
+      {
+	  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
+	  tdb->tdb_flags &= ~TDBF_SOFT_PACKETS;
+      }
+      else
+	if (tdb->tdb_flags & TDBF_SOFT_BYTES)
+	  if (tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes)
+	  {
+	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb);
+	      tdb->tdb_flags &= ~TDBF_SOFT_BYTES;
+	  }
+    
+    if (tdb->tdb_flags & TDBF_PACKETS)
+      if (tdb->tdb_cur_packets >= tdb->tdb_exp_packets)
+      {
+	  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
+	  tdb_delete(tdb, 0);
+      }
+      else
+	if (tdb->tdb_flags & TDBF_BYTES)
+	  if (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)
+	  {
+	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb);
+	      tdb_delete(tdb, 0);
+	  }
 
     return 0;
 }

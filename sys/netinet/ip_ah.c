@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.9 1997/07/18 18:09:51 provos Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.10 1997/07/27 23:30:33 niklas Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -71,8 +71,9 @@ void
 ah_input(register struct mbuf *m, int iphlen)
 {
     struct ifqueue *ifq = NULL;
-    struct ip *ipo, ipn;
     struct ah_old *ahp, ahn;
+    struct expiration *exp;
+    struct ip *ipo, ipn;
     struct tdb *tdbp;
     int s;
 	
@@ -135,10 +136,53 @@ ah_input(register struct mbuf *m, int iphlen)
 
     m->m_pkthdr.rcvif = &enc_softc;
 
-    /* Register first use */
+    /* Register first use, setup expiration timer */
     if (tdbp->tdb_first_use == 0)
-      tdbp->tdb_first_use = time.tv_sec;
+    {
+	tdbp->tdb_first_use = time.tv_sec;
 
+	if (tdbp->tdb_flags & TDBF_FIRSTUSE)
+	{
+	    exp = get_expiration();
+	    if (exp == (struct expiration *) NULL)
+	    {
+		log(LOG_WARNING,
+		    "ah_input(): out of memory for expiration timer");
+		ahstat.ahs_hdrops++;
+		m_freem(m);
+		return;
+	    }
+
+	    exp->exp_dst.s_addr = tdbp->tdb_dst.s_addr;
+	    exp->exp_spi = tdbp->tdb_spi;
+	    exp->exp_sproto = tdbp->tdb_sproto;
+	    exp->exp_timeout = tdbp->tdb_first_use + tdbp->tdb_exp_first_use;
+
+	    put_expiration(exp);
+	}
+
+	if ((tdbp->tdb_flags & TDBF_SOFT_FIRSTUSE) &&
+	    (tdbp->tdb_soft_first_use <= tdbp->tdb_exp_first_use))
+	{
+	    exp = get_expiration();
+	    if (exp == (struct expiration *) NULL)
+	    {
+		log(LOG_WARNING,
+		    "ah_input(): out of memory for expiration timer");
+		ahstat.ahs_hdrops++;
+		m_freem(m);
+		return;
+	    }
+
+	    exp->exp_dst.s_addr = tdbp->tdb_dst.s_addr;
+	    exp->exp_spi = tdbp->tdb_spi;
+	    exp->exp_sproto = tdbp->tdb_sproto;
+	    exp->exp_timeout = tdbp->tdb_first_use + tdbp->tdb_soft_first_use;
+
+	    put_expiration(exp);
+	}
+    }
+    
     ipn = *ipo;
     ahn = *ahp;
 
@@ -148,6 +192,31 @@ ah_input(register struct mbuf *m, int iphlen)
 	log(LOG_ALERT, "ah_input(): authentication failed for AH packet from %x to %x, spi %08x", ipn.ip_src, ipn.ip_dst, ntohl(ahn.ah_spi));
 	ahstat.ahs_badkcr++;
 	return;
+    }
+
+    ipo = mtod(m, struct ip *);
+    if (ipo->ip_p == IPPROTO_IPIP)	/* IP-in-IP encapsulation */
+    {
+	/* Encapsulating SPI */
+	if (tdbp->tdb_osrc.s_addr && tdbp->tdb_odst.s_addr)
+	{
+	    if (tdbp->tdb_flags & TDBF_UNIQUE)
+	      if ((ipn.ip_src.s_addr != ipo->ip_src.s_addr) ||
+		  (ipn.ip_dst.s_addr != ipo->ip_dst.s_addr))
+	      {
+		  log(LOG_ALERT, "ah_input(): AH-tunnel with different internal addresses %x/%x, SA %08x/%x\n", ipo->ip_src, ipo->ip_dst, tdbp->tdb_spi, tdbp->tdb_dst);
+		  m_freem(m);
+		  ahstat.ahs_hdrops++;
+		  return;
+	      }
+	}
+	else				/* So we're paranoid */
+	{
+	    log(LOG_ALERT, "ah_input(): AH-tunnel used when expecting AH-transport, SA %08x/%x", tdbp->tdb_spi, tdbp->tdb_dst);
+	    m_freem(m);
+	    ahstat.ahs_hdrops++;
+	    return;
+	}
     }
 
     /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.9 1997/07/18 18:09:54 provos Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.10 1997/07/27 23:30:35 niklas Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -70,6 +70,7 @@ void
 esp_input(register struct mbuf *m, int iphlen)
 {
     struct ifqueue *ifq = NULL;
+    struct expiration *exp;
     struct ip *ipo, ipn;
     struct tdb *tdbp;
     u_int32_t spi;
@@ -134,10 +135,53 @@ esp_input(register struct mbuf *m, int iphlen)
 
     m->m_pkthdr.rcvif = &enc_softc;
 
-    /* Register first use */
+    /* Register first use, setup expiration timer */
     if (tdbp->tdb_first_use == 0)
-      tdbp->tdb_first_use = time.tv_sec;
+    {
+	tdbp->tdb_first_use = time.tv_sec;
 
+	if (tdbp->tdb_flags & TDBF_FIRSTUSE)
+	{
+	    exp = get_expiration();
+	    if (exp == (struct expiration *) NULL)
+	    {
+		log(LOG_WARNING,
+		    "esp_input(): out of memory for expiration timer");
+		espstat.esps_hdrops++;
+		m_freem(m);
+		return;
+	    }
+
+	    exp->exp_dst.s_addr = tdbp->tdb_dst.s_addr;
+	    exp->exp_spi = tdbp->tdb_spi;
+	    exp->exp_sproto = tdbp->tdb_sproto;
+	    exp->exp_timeout = tdbp->tdb_first_use + tdbp->tdb_exp_first_use;
+
+	    put_expiration(exp);
+	}
+
+	if ((tdbp->tdb_flags & TDBF_SOFT_FIRSTUSE) &&
+	    (tdbp->tdb_soft_first_use <= tdbp->tdb_exp_first_use))
+	{
+	    exp = get_expiration();
+	    if (exp == (struct expiration *) NULL)
+	    {
+		log(LOG_WARNING,
+		    "esp_input(): out of memory for expiration timer");
+		espstat.esps_hdrops++;
+		m_freem(m);
+		return;
+	    }
+
+	    exp->exp_dst.s_addr = tdbp->tdb_dst.s_addr;
+	    exp->exp_spi = tdbp->tdb_spi;
+	    exp->exp_sproto = tdbp->tdb_sproto;
+	    exp->exp_timeout = tdbp->tdb_first_use + tdbp->tdb_soft_first_use;
+
+	    put_expiration(exp);
+	}
+    }
+    
     ipn = *ipo;
 
     m = (*(tdbp->tdb_xform->xf_input))(m, tdbp);
@@ -149,6 +193,31 @@ esp_input(register struct mbuf *m, int iphlen)
 	return;
     }
 
+    ipo = mtod(m, struct ip *);
+    if (ipo->ip_p == IPPROTO_IPIP)	/* IP-in-IP encapsulation */
+    {
+	/* Encapsulating SPI */
+	if (tdbp->tdb_osrc.s_addr && tdbp->tdb_odst.s_addr)
+	{
+	    if (tdbp->tdb_flags & TDBF_UNIQUE)
+	      if ((ipn.ip_src.s_addr != ipo->ip_src.s_addr) ||
+		  (ipn.ip_dst.s_addr != ipo->ip_dst.s_addr))
+	      {
+		  log(LOG_ALERT, "esp_input(): ESP-tunnel with different internal addresses %x/%x, SA %08x/%x\n", ipo->ip_src, ipo->ip_dst, tdbp->tdb_spi, tdbp->tdb_dst);
+		  m_freem(m);
+		  espstat.esps_hdrops++;
+		  return;
+	      }
+	}
+	else				/* So we're paranoid */
+	{
+	    log(LOG_ALERT, "esp_input(): ESP-tunnel used when expecting ESP-transport, SA %08x/%x", tdbp->tdb_spi, tdbp->tdb_dst);
+	    m_freem(m);
+	    espstat.esps_hdrops++;
+	    return;
+	}
+    }
+    
     /*
      * Interface pointer is already in first mbuf; chop off the 
      * `outer' header and reschedule.

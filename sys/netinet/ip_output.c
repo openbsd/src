@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.18 1997/07/18 18:09:57 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.19 1997/07/27 23:30:37 niklas Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -109,6 +109,7 @@ ip_output(m0, va_alist)
 	struct mbuf *mp;
         struct udphdr *udp;
         struct tcphdr *tcp;
+	struct expiration *exp;
 #endif
 
 	va_start(ap, m0);
@@ -192,19 +193,6 @@ ip_output(m0, va_alist)
 			goto no_encap;
 
 		gw = (struct sockaddr_encap *) (re->re_rt->rt_gateway);
-		if (gw == NULL || gw->sen_type != SENT_IPSP) {
-#ifdef ENCDEBUG
-			if (encdebug)
-				printf("ip_output(): no gw or gw data not IPSP\n");
-#endif /* ENCDEBUG */
-			m_freem(m);
-			RTFREE(re->re_rt);
-			return EHOSTUNREACH;
-		}
-
-		ip->ip_len = htons((u_short)ip->ip_len);
-		ip->ip_off = htons((u_short)ip->ip_off);
-		ip->ip_sum = 0;
 
 		/*
 		 * There might be a specific route, that tells us to avoid
@@ -212,9 +200,23 @@ ip_output(m0, va_alist)
 		 * don't want to have IPsec applied on.
 		 */
 
-		if ((gw->sen_ipsp_dst.s_addr == 0) &&
+		if ((gw != NULL) && (gw->sen_ipsp_dst.s_addr == 0) &&
 		    (gw->sen_ipsp_sproto == 0) && (gw->sen_ipsp_spi == 0))
 			goto no_encap;
+
+		if (gw == NULL || gw->sen_type != SENT_IPSP) {
+#ifdef ENCDEBUG
+			if (encdebug)
+				printf("ip_output(): no gw or gw data not IPSP\n");
+#endif /* ENCDEBUG */
+			RTFREE(re->re_rt);
+			error = EHOSTUNREACH;
+			goto bad;
+		}
+
+		ip->ip_len = htons((u_short)ip->ip_len);
+		ip->ip_off = htons((u_short)ip->ip_off);
+		ip->ip_sum = 0;
 
 		/*
 		 * At this point we have an IPSP "gateway" (tunnel) spec.
@@ -264,9 +266,53 @@ ip_output(m0, va_alist)
 			                printf("ip_output(): tunneling\n");
 #endif /* ENCDEBUG */
 
-				/* Register first use */
+				/* 
+				 * Register first use, 
+				 * setup expiration timer 
+				 */
 				if (tdb->tdb_first_use == 0)
-				      tdb->tdb_first_use = time.tv_sec;
+				{
+				    tdb->tdb_first_use = time.tv_sec;
+				    
+				    if (tdb->tdb_flags & TDBF_FIRSTUSE)
+				    {
+					exp = get_expiration();
+					if (exp == (struct expiration *) NULL)
+					{
+					    log(LOG_WARNING, "ip_output(): out of memory for expiration timer");
+					    m_freem(m);
+					    RTFREE(re->re_rt);
+					    return ENOBUFS;
+					}
+
+					exp->exp_dst.s_addr = tdb->tdb_dst.s_addr;
+					exp->exp_spi = tdb->tdb_spi;
+					exp->exp_sproto = tdb->tdb_sproto;
+					exp->exp_timeout = tdb->tdb_first_use + tdb->tdb_exp_first_use;
+
+					put_expiration(exp);
+				    }
+
+				    if ((tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) &&
+					(tdb->tdb_soft_first_use <= tdb->tdb_exp_first_use))
+				    {
+					exp = get_expiration();
+					if (exp == (struct expiration *) NULL)
+					{
+					    log(LOG_WARNING, "ip_output(): out of memory for expiration timer");
+					    m_freem(m);
+					    RTFREE(re->re_rt);
+					    return ENOBUFS;
+					}
+
+					exp->exp_dst.s_addr = tdb->tdb_dst.s_addr;
+					exp->exp_spi = tdb->tdb_spi;
+					exp->exp_sproto = tdb->tdb_sproto;
+					exp->exp_timeout = tdb->tdb_first_use + tdb->tdb_soft_first_use;
+					
+					put_expiration(exp);
+				    }
+				}				
 			    
 				error = ipe4_output(m, gw, tdb, &mp);
 				if (mp == NULL)
@@ -284,9 +330,53 @@ ip_output(m0, va_alist)
 				       tdb->tdb_xform->xf_name);
 #endif /* ENCDEBUG */
 
-			/* Register first use */
+			/* Register first use, setup expiration timer */
 			if (tdb->tdb_first_use == 0)
-			        tdb->tdb_first_use = time.tv_sec;
+			{
+			    tdb->tdb_first_use = time.tv_sec;
+			    
+			    if (tdb->tdb_flags & TDBF_FIRSTUSE)
+			    {
+				exp = get_expiration();
+				if (exp == (struct expiration *) NULL)
+				{
+				    log(LOG_WARNING, "ip_output(): out of memory for expiration timer");
+				    m_freem(m);
+				    RTFREE(re->re_rt);
+				    return ENOBUFS;
+				}
+
+				exp->exp_dst.s_addr = tdb->tdb_dst.s_addr;
+				exp->exp_spi = tdb->tdb_spi;
+				exp->exp_sproto = tdb->tdb_sproto;
+				exp->exp_timeout = tdb->tdb_first_use + 
+						   tdb->tdb_exp_first_use;
+
+				put_expiration(exp);
+			    }
+
+			    if ((tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) &&
+				(tdb->tdb_soft_first_use <= 
+				 tdb->tdb_exp_first_use))
+			    {
+				exp = get_expiration();
+				if (exp == (struct expiration *) NULL)
+				{
+				    log(LOG_WARNING, "ip_output(): out of memory for expiration timer");
+				    m_freem(m);
+				    RTFREE(re->re_rt);
+				    return ENOBUFS;
+				}
+
+				exp->exp_dst.s_addr = tdb->tdb_dst.s_addr;
+				exp->exp_spi = tdb->tdb_spi;
+				exp->exp_sproto = tdb->tdb_sproto;
+				exp->exp_timeout = tdb->tdb_first_use + 
+						   tdb->tdb_soft_first_use;
+				
+				put_expiration(exp);
+			    }
+			}
 
 			error = (*(tdb->tdb_xform->xf_output))(m, gw, tdb, &mp);
 			if (mp == NULL)

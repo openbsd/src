@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.13 1997/07/15 23:11:10 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.14 1997/07/27 23:30:37 niklas Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -26,6 +26,16 @@
 /*
  * IPSP global definitions.
  */
+
+struct expiration
+{
+    u_int32_t          exp_timeout;
+    struct in_addr     exp_dst;
+    u_int32_t          exp_spi;
+    u_int8_t           exp_sproto;
+    struct expiration *exp_next;
+    struct expiration *exp_prev;
+};
 
 struct flow
 {
@@ -56,14 +66,12 @@ struct tdb				/* tunnel descriptor block */
 #define TDBF_PACKETS       0x00008	/* Check the packet counters */
 #define TDBF_INVALID       0x00010	/* This SPI is not valid yet/anymore */
 #define TDBF_FIRSTUSE      0x00020	/* Expire after first use */
-#define TDBF_RELATIVE      0x00040	/* Expire after X secs from establ. */
+#define TDBF_TUNNELING     0x00040	/* Do IP-in-IP encapsulation */
 #define TDBF_SOFT_TIMER    0x00080	/* Soft expiration */
 #define TDBF_SOFT_BYTES    0x00100	/* Soft expiration */
 #define TDBF_SOFT_PACKETS  0x00200	/* Soft expiration */
 #define TDBF_SOFT_FIRSTUSE 0x00400	/* Soft expiration */
-#define TDBF_SOFT_RELATIVE 0x00800	/* Soft expiration */
-#define TDBF_TUNNELING     0x01000	/* Do IP-in-IP encapsulation */
-#define TDBF_SAME_TTL      0x02000	/* Keep the packet TTL, in tunneling */
+#define TDBF_SAME_TTL      0x00800	/* Keep the packet TTL, in tunneling */
     u_int64_t       tdb_exp_packets;	/* Expire after so many packets s|r */
     u_int64_t       tdb_soft_packets;	/* Expiration warning */ 
     u_int64_t       tdb_cur_packets;    /* Current number of packets s|r'ed */
@@ -73,9 +81,6 @@ struct tdb				/* tunnel descriptor block */
     u_int64_t       tdb_exp_timeout;	/* When does the SPI expire */
     u_int64_t       tdb_soft_timeout;	/* Send a soft-expire warning */
     u_int64_t       tdb_established;	/* When was the SPI established */
-    u_int64_t	    tdb_soft_relative ; /* Soft warning */
-    u_int64_t       tdb_exp_relative;   /* Expire if tdb_established +
-					    tdb_exp_relative <= curtime */
     u_int64_t	    tdb_first_use;	/* When was it first used */
     u_int64_t       tdb_soft_first_use; /* Soft warning */
     u_int64_t       tdb_exp_first_use;	/* Expire if tdb_first_use +
@@ -89,9 +94,11 @@ struct tdb				/* tunnel descriptor block */
 					 * tunneling */
     caddr_t	    tdb_xdata;	        /* transformation data (opaque) */
     struct flow	   *tdb_flow; 		/* Which flows use this SA */
+
     u_int8_t	    tdb_ttl;		/* TTL used in tunneling */
     u_int8_t	    tdb_sproto;		/* IPsec protocol */
-    u_int8_t        tdb_foo[2];		/* Alignment */
+    u_int16_t       tdb_satype;		/* Alignment */
+    u_int32_t       tdb_epoch;		/* Used by the kernfs interface */
 };
 
 #define TDB_HASHMOD	257
@@ -126,6 +133,7 @@ struct xformsw
 #define XFT_CONF	0x0100
 
 #define IPSEC_ZEROES_SIZE	64
+#define IPSEC_KERNFS_BUFSIZE    4096
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 static __inline u_int64_t
@@ -165,13 +173,21 @@ extern unsigned char ipseczeroes[];
 extern int encdebug;
 
 struct tdb *tdbh[TDB_HASHMOD];
+struct expiration *explist;
 extern struct xformsw xformsw[], *xformswNXFORMSW;
+u_int32_t notify_msgids;
 
 /* TDB management routines */
 extern u_int32_t reserve_spi(u_int32_t, struct in_addr, u_int8_t, int *);
 extern struct tdb *gettdb(u_int32_t, struct in_addr, u_int8_t);
 extern void puttdb(struct tdb *);
 extern int tdb_delete(struct tdb *, int);
+
+/* Expiration management routines */
+extern struct expiration *get_expiration(void);
+extern void put_expiration(struct expiration *);
+extern void handle_expirations(void *);
+extern void cleanup_expirations(struct in_addr, u_int32_t, u_int8_t);
 
 /* Flow management routines */
 extern struct flow *get_flow(void);

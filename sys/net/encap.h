@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.h,v 1.9 1997/07/15 23:11:09 provos Exp $	*/
+/*	$OpenBSD: encap.h,v 1.10 1997/07/27 23:30:32 niklas Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -153,8 +153,6 @@ struct encap_msghdr
 					 * (is zero). */
 	    struct in_addr oSrc;	 /* Outter header source address */
 	    struct in_addr oDst;	 /* Same, for destination address */
-	    u_int64_t      Relative_Hard; /* Expire relative to creation */
-	    u_int64_t      Relative_Soft;
 	    u_int64_t      First_Use_Hard; /* Expire relative to first use */
 	    u_int64_t      First_Use_Soft;
 	    u_int64_t      Expire_Hard;	/* Expire at fixed point in time */
@@ -170,39 +168,35 @@ struct encap_msghdr
 					 * the system default TTL will be used.
 					 * If set to anything else, then the
 					 * ttl used will be TTL % 256 */
+	    u_int16_t      Satype;
 	    u_int8_t       Sproto;	/* ESP or AH */
-	    u_int8_t	   Foo[3];	/* Alignment */
+	    u_int8_t	   Foo;		/* Alignment */
 	    u_int8_t       Dat[1];	/* Data */
 	} Xfm;
 
 	/*
  	 * For expiration notifications, the kernel fills in
-	 * Notification_Type, Spi, Dst and Sproto. 
+	 * Notification_Type, Spi, Dst and Sproto, Src and Satype.
   	 * No direct response is expected.
 	 *
  	 * For SA Requests, the kernel fills in
-	 * Notification_Type, MsgID, Seclevel, Dst, SAType, (and optionally
+	 * Notification_Type, MsgID, Dst, Satype, (and optionally
 	 * Protocol, Src, Sport, Dport and UserID).
  	 *
-	 * The response should have the same values in all the fields
-	 * and:
-	 * Spi will hold the SPI for the three seclevels
-	 * Sproto will hold the IPsec protocol used (AH/ESP)
-	 * UserID can optionally hold the peer's UserID (if applicable)
 	 */
 	struct				/* kernel->userland notifications */
 	{
 	    u_int32_t      Notification_Type;
 	    u_int32_t      MsgID;	/* Request ID */
 	    u_int32_t      Spi;		
-	    u_int32_t      SAType;	/* What do we want for this SA */
 	    struct in_addr Dst;		/* Peer */
 	    struct in_addr Src;		/* Might have our local address */
 	    u_int16_t      Sport;	/* Source port */
             u_int16_t      Dport;	/* Destination port */
 	    u_int8_t       Protocol;	/* Transport protocol */
 	    u_int8_t       Sproto;	/* IPsec protocol */
-	    u_int8_t       Foo[2];	/* Alignment */
+	    u_int16_t      Satype;	/* SA type */
+	    u_int32_t      Foo;		/* Alignment */
 	    u_int8_t       UserID[1];	/* Might be used to indicate user */
 	} Notify;
 
@@ -215,7 +209,6 @@ struct encap_msghdr
 	    struct in_addr   Dst2;
 	    u_int8_t	     Sproto; 	/* IPsec protocol */
 	    u_int8_t	     Sproto2;
-	    u_int16_t	     Foo;
 	} Rel;
 
 	/* Enable/disable an SA for a session */
@@ -232,6 +225,9 @@ struct encap_msghdr
 	    u_int8_t       Protocol;	/* Transport mode for which protocol */
 	    u_int8_t 	   Sproto;	/* IPsec protocol */
 	    u_int16_t	   Flags;
+	    u_int32_t      Spi2;	/* Used in REPLACESPI... */
+	    struct in_addr Dst2;	/* ...to specify which SPI is... */
+	    u_int8_t       Sproto2;	/* ...replaced. */
 	} Ena;
 
 	/* For general use: (in)validate, delete (chain), reserve */
@@ -240,7 +236,6 @@ struct encap_msghdr
 	    u_int32_t       Spi;
 	    struct in_addr  Dst;
 	    u_int8_t	    Sproto;
-   	    u_int8_t	    Foo[3];
 	} Gen;
     } Eu;
 };
@@ -277,7 +272,7 @@ struct encap_msghdr
 #define em_not_type       Eu.Notify.Notification_Type
 #define em_not_spi        Eu.Notify.Spi
 #define em_not_dst        Eu.Notify.Dst
-#define em_not_satype     Eu.Notify.SAType
+#define em_not_satype     Eu.Notify.Satype
 #define em_not_userid     Eu.Notify.UserID
 #define em_not_msgid      Eu.Notify.MsgID
 #define em_not_sport      Eu.Notify.Sport
@@ -292,8 +287,6 @@ struct encap_msghdr
 #define em_odst	          Eu.Xfm.oDst
 #define em_alg	          Eu.Xfm.Alg
 #define em_dat	          Eu.Xfm.Dat
-#define em_relative_hard  Eu.Xfm.Relative_Hard
-#define em_relative_soft  Eu.Xfm.Relative_Soft
 #define em_first_use_hard Eu.Xfm.First_Use_Hard
 #define em_first_use_soft Eu.Xfm.First_Use_Soft
 #define em_expire_hard    Eu.Xfm.Expire_Hard
@@ -304,6 +297,7 @@ struct encap_msghdr
 #define em_packets_soft   Eu.Xfm.Packets_Soft
 #define em_ttl		  Eu.Xfm.TTL
 #define em_sproto	  Eu.Xfm.Sproto
+#define em_satype         Eu.Xfm.Satype
 
 #define em_rel_spi	  Eu.Rel.Spi
 #define em_rel_spi2	  Eu.Rel.Spi2
@@ -320,21 +314,19 @@ struct encap_msghdr
 #define EMT_ENABLESPI   6		/* Enable an SA */
 #define EMT_DISABLESPI  7		/* Disable an SA */
 #define EMT_NOTIFY      8		/* kernel->userland key mgmt not. */
-#define EMT_VALIDATE    9		/* Make an SPI valid for use */
-#define EMT_INVALIDATE  10		/* Make an SPI invalid for use */
+#define EMT_REPLACESPI  10		/* Replace all uses of an SA */
 
 /* Total packet lengths */
-#define EMT_SETSPI_FLEN	      120
-#define EMT_GRPSPIS_FLEN      28
-#define EMT_GENLEN            20
+#define EMT_SETSPI_FLEN	      104
+#define EMT_GRPSPIS_FLEN      26
+#define EMT_GENLEN            17
 #define EMT_DELSPI_FLEN       EMT_GENLEN
 #define EMT_DELSPICHAIN_FLEN  EMT_GENLEN
 #define EMT_RESERVESPI_FLEN   EMT_GENLEN
-#define EMT_VALIDATE_FLEN     EMT_GENLEN
-#define EMT_INVALIDATE_FLEN   EMT_GENLEN
 #define EMT_NOTIFY_FLEN       40
-#define EMT_ENABLESPI_FLEN    40
+#define EMT_ENABLESPI_FLEN    49
 #define EMT_DISABLESPI_FLEN   EMT_ENABLESPI_FLEN
+#define EMT_REPLACESPI_FLEN   EMT_ENABLESPI_FLEN
 
 #ifdef _KERNEL
 extern struct ifaddr *encap_findgwifa(struct sockaddr *);
