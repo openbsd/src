@@ -1,4 +1,4 @@
-.\"	$OpenBSD: finger.1,v 1.11 1999/12/22 22:30:20 downsj Exp $
+.\"	$OpenBSD: finger.1,v 1.12 2000/01/12 01:53:30 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -43,82 +43,115 @@
 .Nm finger
 .Op Fl lmMspho
 .Op Ar user ...
+.Nm finger
+.Op Fl l
 .Op Ar user@host ...
 .Sh DESCRIPTION
 The
 .Nm
-utility displays information about the system users.
+utility displays information about local and remote system users.
+By default, the following information is displayed about each user
+currently logged-in to the local host:
 .Pp
-Options are:
-.Bl -tag -width flag
-.It Fl s
-.Nm
-displays the user's login name, real name, terminal name and write
-status (as a ``*'' before the terminal name if write permission is
-denied), idle time, login time, and either office location and office
-phone number, or the remote host.
-If
-.Fl h
-is given, the remote host is printed.
-If
-.Fl o
-is given, the office location and phone number is printed instead
-(the default).
+.Bl -bullet -offset indent -compact
+.It
+login name
+.It
+user's full name
+.It
+associated terminal name
+.It
+idle time
+.It
+login time
+.It
+office location
+.It
+office phone
+.El
 .Pp
 Idle time is in minutes if it is a single integer, hours and minutes
-if a ``:'' is present, or days if a ``d'' is present.
-Login time is displayed as the dayname if less than six days,
+if a
+.Ql \&:
+is present, or days if a
+.Sq d
+is present.
+Login time is displayed as the day name if less than six days,
 else month, day, hours and minutes, unless
 more than six months ago, in which case the year is displayed rather
 than the hours and minutes.
 .Pp
+The names of terminals for which write permission is denied (see
+.Xr mesg 1 )
+are prepended with an asterisk
+.Pq Sq \&* .
 Unknown devices as well as nonexistent idle and login times are
 displayed as single asterisks.
 .Pp
+The options are as follows:
+.Bl -tag -width flag
+.It Fl s
+Short format (default).
+The information as described above is displayed in a columnar fashion.
+.Pp
 .It Fl h
-When used in conjunction with the
+If the
 .Fl s
-option, the name of the remote host is displayed instead of the office
-location and office phone.
+option is also specified, the name of the remote host is displayed instead of
+the office location and office phone.
 .Pp
 .It Fl o
-When used in conjunction with the
+If the
 .Fl s
-option, the office location and office phone information is displayed
+option is also specified, the office location and office phone is displayed
 instead of the name of the remote host.
 .Pp
 .It Fl l
-Produces a multi-line format displaying all of the information
-described for the
+Long format.
+Produces a multi-line format displaying all of the information available from
+the
 .Fl s
 option as well as the user's home directory, home phone number, login
-shell, mail status, and the contents of the files
+shell, mail status, and the contents of the
 .Dq Pa .plan
 and
 .Dq Pa .project
-from the user's home directory.
+files from the user's home directory.
 .Pp
 If idle time is at least a minute and less than a day, it is
-presented in the form ``hh:mm''.
-Idle times greater than a day are presented as ``d day[s]hh:mm''.
+presented in the form
+.Dq hh:mm .
+Idle times greater than a day are presented as
+.Dq d day[s]hh:mm .
 .Pp
-Phone numbers specified as eleven digits are printed as ``+N-NNN-NNN-NNNN''.
+Phone numbers specified as eleven digits are printed as
+.Dq +N-NNN-NNN-NNNN .
 Numbers specified as ten or seven digits are printed as the appropriate
 subset of that string.
-Numbers specified as five digits are printed as ``xN-NNNN''.
-Numbers specified as four digits are printed as ``xNNNN''.
+Numbers specified as five digits are printed as
+.Dq xN-NNNN .
+Numbers specified as four digits are printed as
+.Dq xNNNN .
 .Pp
-If write permission is denied to the device, the phrase ``(messages off)''
+If write permission is denied to the device, the phrase
+.Dq (messages off)
 is appended to the line containing the device name.
 One entry per user is displayed with the
 .Fl l
 option; if a user is logged on multiple times, terminal information
 is repeated once per login.
 .Pp
-Mail status is shown as ``No Mail.'' if there is no mail at all,
-``Mail last read DDD MMM ## HH:MM YYYY (TZ)'' if the person has looked
-at their mailbox since new mail arriving, or ``New mail received ...'',
-``  Unread since ...'' if they have new mail.
+Mail status is shown as
+.Dq \&No Mail.
+if there is no mail at all,
+.Do
+Mail last read DDD MMM ## HH:MM YYYY (TZ)
+.Dc
+if the person has looked
+at their mailbox since new mail arriving, or
+.Dq New mail received ... ,
+.Dq Unread since ...
+if they have new mail.
 .Pp
 .It Fl p
 Prevents
@@ -159,10 +192,6 @@ style output if operands are provided, otherwise to the
 style.
 Note that some fields may be missing, in either format, if information
 is not available for them.
-.Pp
-If no arguments are specified,
-.Nm
-will print an entry for each user currently logged into the system.
 .Pp
 .Nm
 may be used to look up users on a remote machine.
