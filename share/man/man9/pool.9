@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.9 2001/05/27 22:11:26 angelos Exp $
+.\"	$OpenBSD: pool.9,v 1.10 2001/05/28 05:34:46 angelos Exp $
 .\"	$NetBSD: pool.9,v 1.13 1999/04/03 14:50:21 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -312,7 +312,7 @@ The number pages in the pool will not decrease below the required value to
 accommodate the minimum number of items specified by this function.
 Unlike
 .Fn pool_prime ,
-this function does not allocate the necessary memory upfront.
+this function does not allocate the necessary memory up front.
 .El
 .Ss POTENTIAL PITFALLS
 Note that undefined behaviour results when mixing the storage providing
