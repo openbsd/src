@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.86 2004/06/14 00:39:33 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.87 2004/06/28 01:45:51 aaron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.86 2004/06/14 00:39:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.87 2004/06/28 01:45:51 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,14 +103,6 @@ struct nlist namelist[] = {
 #define	X_EINTRCNT	12		/* no sysctl */
 	{ "_eintrcnt" },
 #define X_END		13		/* no sysctl */
-#if defined(__i386__)
-#define	X_INTRHAND	(X_END)		/* no sysctl */
-	{ "_intrhand" },
-#define	X_APICINTRHAND	(X_END+1)		/* no sysctl */
-	{ "_apic_intrhand" },
-#define	X_INTRSTRAY	(X_END+2)	/* no sysctl */
-	{ "_intrstray" },
-#endif
 	{ "" },
 };
 
@@ -154,6 +146,7 @@ char	*nlistf, *memf;
 extern char *__progname;
 
 int verbose = 0;
+int zflag = 0;
 
 int ncpu;
 
@@ -170,7 +163,7 @@ main(int argc, char *argv[])
 	char errbuf[_POSIX2_LINE_MAX];
 
 	interval = reps = todo = 0;
-	while ((c = getopt(argc, argv, "c:fiM:mN:stw:v")) != -1) {
+	while ((c = getopt(argc, argv, "c:fiM:mN:stw:vz")) != -1) {
 		switch (c) {
 		case 'c':
 			reps = atoi(optarg);
@@ -201,6 +194,9 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'z':
+			zflag = 1;
 			break;
 		case '?':
 		default:
@@ -233,11 +229,6 @@ main(int argc, char *argv[])
 			setgid(getgid());
 			setegid(getegid());
 
-#ifdef __i386__
-			if (c == 1 && namelist[X_APICINTRHAND].n_value == 0)
-				;
-			else
-#endif
 			if (c > 0) {
 				(void)fprintf(stderr,
 				    "%s: undefined symbols:", __progname);
@@ -712,83 +703,6 @@ cpustats(void)
 	(void)printf("%2.0f", cur.cp_time[CP_IDLE] * pct);
 }
 
-#if defined(__i386__)
-/* To get struct intrhand */
-#define _KERNEL
-#include <machine/psl.h>
-#include <machine/cpu.h>
-#undef _KERNEL
-void
-dointr(void)
-{
-	struct intrhand *intrhand[16], *ihp, ih;
-	struct intrhand *apicintrhand[256];
-	u_long inttotal = 0;
-	time_t uptime;
-	u_long intrstray[16];
-	char iname[17], fname[31];
-	int i;
-
-	iname[16] = '\0';
-	uptime = getuptime();
-
-	(void)printf("interrupt             total     rate\n");
-
-	kread(X_INTRHAND, intrhand, sizeof(intrhand));
-	kread(X_INTRSTRAY, intrstray, sizeof(intrstray));
-
-	for (i = 0; i < 16; i++) {
-		ihp = intrhand[i];
-		while (ihp) {
-			if (kvm_read(kd, (u_long)ihp, &ih,
-			    sizeof(ih)) != sizeof(ih))
-				errx(1, "vmstat: ih: %s",
-				    kvm_geterr(kd));
-			if (kvm_read(kd, (u_long)ih.ih_what, iname,
-			    16) != 16)
-				errx(1, "vmstat: ih_what: %s",
-				    kvm_geterr(kd));
-			snprintf(fname, sizeof fname, "irq%d/%s", i,
-			    iname);
-			printf("%-16.16s %10lu %8lu\n", fname,
-			    ih.ih_count, ih.ih_count / uptime);
-			inttotal += ih.ih_count;
-			ihp = ih.ih_next;
-		}
-	}
-	if (namelist[X_APICINTRHAND].n_value) {
-		kread(X_APICINTRHAND, apicintrhand, sizeof(apicintrhand));
-
-		for (i = 0; i < 256; i++) {
-			ihp = apicintrhand[i];
-			while (ihp) {
-				if (kvm_read(kd, (u_long)ihp, &ih,
-				    sizeof(ih)) != sizeof(ih))
-					errx(1, "vmstat: ih: %s",
-					    kvm_geterr(kd));
-				if (kvm_read(kd, (u_long)ih.ih_what, iname,
-				    16) != 16)
-					errx(1, "vmstat: ih_what: %s",
-					    kvm_geterr(kd));
-				snprintf(fname, sizeof fname, "irq%d/%s", i,
-				    iname);
-				printf("%-16.16s %10lu %8lu\n", fname,
-				    ih.ih_count, ih.ih_count / uptime);
-				inttotal += ih.ih_count;
-				ihp = ih.ih_next;
-			}
-		}
-	}
-
-	for (i = 0; i < 16; i++)
-		if (intrstray[i]) {
-			printf("Stray irq %-2d     %10lu %8lu\n",
-			    i, intrstray[i], intrstray[i] / uptime);
-			inttotal += intrstray[i];
-		}
-	printf("Total            %10lu %8lu\n", inttotal, inttotal / uptime);
-}
-#else
 static void dointr_sysctl(void);
 static void dointr_kvm(void);
 
@@ -827,18 +741,34 @@ dointr_sysctl(void)
 		return;
 	}
 
+	(void)printf("interrupt               total     rate\n");
+
 	inttotal = 0;
 	for (i = 0; i < nintr; i++) {
+		char name[128];
 		int cnt;
+		int vector;
 
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_INTRCNT;
 		mib[2] = KERN_INTRCNT_NAME;
 		mib[3] = i;
-		siz = sizeof(intrname);
-		if (sysctl(mib, 4, intrname, &siz, NULL, 0) < 0) {
+		siz = sizeof(name);
+		if (sysctl(mib, 4, name, &siz, NULL, 0) < 0) {
 			warnx("could not read kern.intrcnt.name.%d", i);
-			return ;
+			return;
+		}
+
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_INTRCNT;
+		mib[2] = KERN_INTRCNT_VECTOR;
+		mib[3] = i;
+		siz = sizeof(vector);
+		if (sysctl(mib, 4, &vector, &siz, NULL, 0) < 0) {
+			strlcpy(intrname, name, sizeof(intrname));
+		} else {
+			snprintf(intrname, sizeof(intrname), "irq%d/%s",
+			    vector, name);
 		}
 
 		mib[0] = CTL_KERN;
@@ -850,8 +780,8 @@ dointr_sysctl(void)
 			warnx("could not read kern.intrcnt.cnt.%d", i);
 			return ;
 		}
-		if (cnt)
-			(void)printf("%-14s %12d %8ld\n", intrname,
+		if (cnt || zflag)
+			(void)printf("%-16.16s %12d %8ld\n", intrname,
 			    cnt, (long)cnt / uptime);
 		inttotal += cnt;
 	}
@@ -873,7 +803,7 @@ dointr_sysctl(void)
 		}
 		evptr = evcnt.ev_list.tqe_next;
 	}
-	(void)printf("Total          %12ld %8ld\n", inttotal, inttotal / uptime);
+	(void)printf("Total            %12ld %8ld\n", inttotal, inttotal / uptime);
 }
 
 static void
@@ -926,7 +856,6 @@ dointr_kvm(void)
 	}
 	(void)printf("Total          %12ld %8ld\n", inttotal, inttotal / uptime);
 }
-#endif
 
 /*
  * These names are defined in <sys/malloc.h>.

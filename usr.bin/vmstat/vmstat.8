@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmstat.8,v 1.30 2004/03/17 09:59:19 jmc Exp $
+.\"	$OpenBSD: vmstat.8,v 1.31 2004/06/28 01:45:51 aaron Exp $
 .\"	$NetBSD: vmstat.8,v 1.12 1996/05/10 23:19:30 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1993
@@ -38,7 +38,7 @@
 .Nd report statistics about kernel activities
 .Sh SYNOPSIS
 .Nm vmstat
-.Op Fl fimstv
+.Op Fl fimstvz
 .Nm vmstat
 .Op Fl c Ar count
 .Op Fl M Ar core
@@ -97,6 +97,10 @@ If no repeat
 is specified, the default is infinity.
 .It Fl v
 Print more verbose information.
+.It Fl z
+When used with
+.Fl i ,
+also list devices which have not yet generated an interrupt.
 .El
 .Pp
 By default,

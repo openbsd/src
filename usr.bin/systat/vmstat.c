@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.50 2004/06/11 06:31:32 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.51 2004/06/28 01:45:51 aaron Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.50 2004/06/11 06:31:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.51 2004/06/28 01:45:51 aaron Exp $";
 #endif /* not lint */
 
 /*
@@ -62,12 +62,6 @@ static char rcsid[] = "$OpenBSD: vmstat.c,v 1.50 2004/06/11 06:31:32 deraadt Exp
 #include <string.h>
 #include <utmp.h>
 #include <unistd.h>
-
-#if defined(__i386__)
-#define	_KERNEL
-#include <machine/psl.h>
-#undef _KERNEL
-#endif
 
 #include "systat.h"
 #include "extern.h"
@@ -144,12 +138,6 @@ static struct nlist namelist[] = {
 	{ "_intrcnt" },
 #define	X_EINTRCNT	3		/* no sysctl */
 	{ "_eintrcnt" },
-#if defined(__i386__)
-#define	X_INTRHAND	4		/* no sysctl */
-	{ "_intrhand" },
-#define	X_APICINTRHAND	5		/* no sysctl */
-	{ "_apic_intrhand" },
-#endif
 	{ "" },
 };
 
@@ -184,17 +172,12 @@ int ncpu = 1;
 int
 initkre(void)
 {
-	char *intrnamebuf, *cp;
-	size_t size = sizeof(ncpu);
-	int mib[2], i, ret;
+	int mib[4], i, ret;
+	size_t size;
 
 	if (namelist[0].n_type == 0) {
 		if ((ret = kvm_nlist(kd, namelist)) == -1)
 			errx(1, "%s", kvm_geterr(kd));
-#if defined(__i386__)
-		else if (ret == 1 && namelist[X_APICINTRHAND].n_value != 0)
-			nlisterr(namelist);
-#endif
 		else if (ret > 1)
 			nlisterr(namelist);
 		if (namelist[0].n_type == 0) {
@@ -205,102 +188,46 @@ initkre(void)
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_NCPU;
-	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) == -1)
-                return (-1);
+	size = sizeof(ncpu);
+	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) < 0)
+		return (-1);
 
 	hertz = stathz ? stathz : hz;
 	if (!dkinit(1))
 		return(0);
-	if (nintr == 0) {
-#if defined(__i386__)
-		struct intrhand *intrhand[16], *ihp, ih;
-		struct intrhand *apicintrhand[256];
-		char iname[16];
-		int namelen, n;
 
-		NREAD(X_INTRHAND, intrhand, sizeof(intrhand));
-		for (namelen = 0, i = 0; i < 16; i++) {
-			ihp = intrhand[i];
-			while (ihp) {
-				nintr++;
-				KREAD(ihp, &ih, sizeof(ih));
-				KREAD(ih.ih_what, iname, 16);
-				namelen += strlen(iname) + 1;
-				ihp = ih.ih_next;
-			}
-		}
-		if (namelist[X_APICINTRHAND].n_value) {
-			NREAD(X_APICINTRHAND, apicintrhand, sizeof(apicintrhand));
-			for (namelen = 0, i = 0; i < 256; i++) {
-				ihp = apicintrhand[i];
-				while (ihp) {
-					nintr++;
-					KREAD(ihp, &ih, sizeof(ih));
-					KREAD(ih.ih_what, iname, 16);
-					namelen += strlen(iname) + 1;
-					printf("apic handler %x %s\n", i, iname);
-					ihp = ih.ih_next;
-				}
-			}
-		}		
-		intrloc = calloc(nintr, sizeof (long));
-		intrname = calloc(nintr, sizeof (char *));
-		cp = intrnamebuf = malloc(namelen);
-		for (i = 0, n = 0; i < 16; i++) {
-			ihp = intrhand[i];
-			while (ihp) {
-				KREAD(ihp, &ih, sizeof(ih));
-				KREAD(ih.ih_what, iname, 16);
-				intrname[n++] = cp;
-				strlcpy(cp, iname, intrnamebuf + namelen - cp);
-				cp += strlen(iname) + 1;
-				ihp = ih.ih_next;
-			}
-		}
-		if (namelist[X_APICINTRHAND].n_value) {
-			for (i = 0, n = 0; i < 256; i++) {
-				ihp = apicintrhand[i];
-				while (ihp) {
-					KREAD(ihp, &ih, sizeof(ih));
-					KREAD(ih.ih_what, iname, 16);
-					intrname[n++] = cp;
-					strlcpy(cp, iname, intrnamebuf + namelen - cp);
-					cp += strlen(iname) + 1;
-					ihp = ih.ih_next;
-				}
-			}
-		}
-#else
-		nintr = (namelist[X_EINTRCNT].n_value -
-		    namelist[X_INTRCNT].n_value) / sizeof (int);
-		intrloc = calloc(nintr, sizeof (long));
-		intrname = calloc(nintr, sizeof (long));
-		intrnamebuf = malloc(namelist[X_EINTRNAMES].n_value -
-		    namelist[X_INTRNAMES].n_value);
-		if (intrnamebuf == 0 || intrname == 0 || intrloc == 0) {
-			error("Out of memory\n");
-			if (intrnamebuf)
-				free(intrnamebuf);
-			if (intrname)
-				free(intrname);
-			if (intrloc)
-				free(intrloc);
-			nintr = 0;
-			return(0);
-		}
-		NREAD(X_INTRNAMES, intrnamebuf, NVAL(X_EINTRNAMES) -
-		    NVAL(X_INTRNAMES));
-		for (cp = intrnamebuf, i = 0; i < nintr; i++) {
-			intrname[i] = cp;
-			cp += strlen(cp) + 1;
-		}
-#endif
-		nextintsrow = INTSROW + 2;
-		allocinfo(&s);
-		allocinfo(&s1);
-		allocinfo(&s2);
-		allocinfo(&z);
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_INTRCNT;
+	mib[2] = KERN_INTRCNT_NUM;
+	size = sizeof(nintr);
+	if (sysctl(mib, 3, &nintr, &size, NULL, 0) < 0)
+		return (-1);
+
+	intrloc = calloc(nintr, sizeof(long));
+	intrname = calloc(nintr, sizeof(char *));
+
+	for (i = 0; i < nintr; i++) {
+		char name[128];
+ 
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_INTRCNT;
+		mib[2] = KERN_INTRCNT_NAME;
+		mib[3] = i;
+		size = sizeof(name);
+		if (sysctl(mib, 4, name, &size, NULL, 0) < 0)
+			return (-1);
+
+		intrname[i] = strdup(name);
+		if (intrname[i] == NULL)
+			return (-1);
 	}
+
+	nextintsrow = INTSROW + 2;
+	allocinfo(&s);
+	allocinfo(&s1);
+	allocinfo(&s2);
+	allocinfo(&z);
+
 	getinfo(&s2, RUN);
 	copyinfo(&s2, &s1);
 	return(1);
@@ -679,38 +606,21 @@ getinfo(struct Info *s, enum state st)
 	static int nchstats_mib[2] = { CTL_KERN, KERN_NCHSTATS };
 	static int uvmexp_mib[2] = { CTL_VM, VM_UVMEXP };
 	static int vmtotal_mib[2] = { CTL_VM, VM_METER };
+	int mib[4], i;
 	size_t size;
-#if defined(__i386__)
-	struct intrhand *intrhand[16], *ihp, ih;
-	struct intrhand *apicintrhand[256];
-	int i, n;
-#endif
 
 	dkreadstats();
-#if defined(__i386__)
-	NREAD(X_INTRHAND, intrhand, sizeof(intrhand));
-	for (i = 0, n = 0; i < 16; i++) {
-		ihp = intrhand[i];
-		while (ihp) {
-			KREAD(ihp, &ih, sizeof(ih));
-			s->intrcnt[n++] = ih.ih_count;
-			ihp = ih.ih_next;
-		}
+
+	for (i = 0; i < nintr; i++) {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_INTRCNT;
+		mib[2] = KERN_INTRCNT_CNT;
+		mib[3] = i;
+		size = sizeof(s->intrcnt[i]);
+		if (sysctl(mib, 4, &s->intrcnt[i], &size, NULL, 0) < 0)
+			s->intrcnt[i] = 0;
 	}
-	if (namelist[X_APICINTRHAND].n_value) {
-		NREAD(X_APICINTRHAND, apicintrhand, sizeof(apicintrhand));
-		for (i = 0, n = 0; i < 256; i++) {
-			ihp = apicintrhand[i];
-			while (ihp) {
-				KREAD(ihp, &ih, sizeof(ih));
-				s->intrcnt[n++] = ih.ih_count;
-				ihp = ih.ih_next;
-			}
-		}
-	}
-#else
-	NREAD(X_INTRCNT, s->intrcnt, nintr * sizeof(int));
-#endif
+
 	size = sizeof(s->time);
 	if (sysctl(cp_time_mib, 2, &s->time, &size, NULL, 0) < 0) {
 		error("Can't get KERN_CPTIME: %s\n", strerror(errno));
