@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.14 2005/01/26 06:34:53 uwe Exp $
+#	$OpenBSD: files.zaurus,v 1.15 2005/01/28 17:14:31 drahn Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -46,6 +46,11 @@ file arch/zaurus/dev/zaurus_ssp.c		zssp
 # Power manager and APM emulation
 attach apm at pxaip with apm_pxaip
 file arch/zaurus/dev/zaurus_apm.c		apm_pxaip
+
+# Zaurus touchpad
+device zts: wsmousedev
+attach zts at pxaip
+file arch/zaurus/dev/zts.c			zts
 
 #
 # Machine-independent ATA drivers

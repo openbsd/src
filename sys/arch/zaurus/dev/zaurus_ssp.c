@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_ssp.c,v 1.1 2005/01/26 06:34:54 uwe Exp $	*/
+/*	$OpenBSD: zaurus_ssp.c,v 1.2 2005/01/28 17:14:31 drahn Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -86,12 +86,15 @@ zssp_read_max1111(u_int32_t cmd)
 	struct	zssp_softc *sc;
 	int	voltage[2];
 	int	i;
+	int s;
 
 	if (zssp_cd.cd_ndevs < 1 || zssp_cd.cd_devs[0] == NULL) {
 		printf("zssp_read_max1111: not configured\n");
 		return 0;
 	}
 	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
+
+	s = splhigh();
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0, SSCR0_MAX1111);
@@ -141,5 +144,57 @@ zssp_read_max1111(u_int32_t cmd)
 		voltage[0] = ((voltage[0] << 2) & 0xfc) |
 		    ((voltage[1] >> 6) & 0x03);
 
+	splx(s);
 	return voltage[0];
+}
+
+/* XXX - only does CS_ADS7846 */
+u_int32_t pxa2x0_ssp_read_val(u_int32_t cmd);
+u_int32_t
+pxa2x0_ssp_read_val(u_int32_t cmd)
+{
+	struct	zssp_softc *sc;
+	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
+	unsigned int cr0;
+	int s;
+	u_int32_t val;
+
+	if (zssp_cd.cd_ndevs < 1 || zssp_cd.cd_devs[0] == NULL) {
+		printf("zssp_read_max1111: not configured\n");
+		return 0;
+	}
+	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
+
+	s = splhigh();
+	if (1 /* C3000 */) {
+		cr0 =  0x06ab;
+	} else {
+		cr0 =  0x00ab;
+	}
+        bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0, cr0);
+
+	pxa2x0_gpio_set_bit(GPIO_TG_CS_C3000);
+	pxa2x0_gpio_set_bit(GPIO_MAX1111_CS_C3000);
+	pxa2x0_gpio_clear_bit(GPIO_ADS7846_CS_C3000);
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR, cmd);
+
+	while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR)
+	    & SSSR_TNF) != SSSR_TNF)
+		/* poll */;
+
+	delay(1);
+
+	while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR)
+	    & SSSR_RNE) != SSSR_RNE)
+		/* poll */;
+
+	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
+
+	pxa2x0_gpio_set_bit(GPIO_ADS7846_CS_C3000); /* deselect */
+
+	splx(s);
+
+	return val;
 }
