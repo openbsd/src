@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.5 2004/01/31 17:56:13 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.6 2004/07/05 23:21:56 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm pkg_create
-.Nd a utility for creating software package distributions
+.Nd create binary software package for distribution
 .Sh SYNOPSIS
 .Nm pkg_create
 .Bk -words
@@ -53,16 +53,22 @@
 .Sh DESCRIPTION
 The
 .Nm
-command is used to create packages that will subsequently be fed to
-one of the package extraction/info utilities.
-The input description
-and command line arguments for the creation of a package are not
-really meant to be human-generated, though it is easy enough to
-do so.
-It is more expected that you will use a front-end tool for
-the job rather than muddling through it yourself.
-Nonetheless, a short
-description of the input syntax is included in this document.
+command creates a binary package named
+.Ar pkg-name ,
+for subsequent use with
+.Xr pkg_add 1
+and
+.Xr pkg_info 1 .
+.Ar pkg-name
+will traditionally have a
+.Pa .tgz
+extension, to denote the underlying binary format.
+.Pp
+Use of the
+.Xr ports 7
+infrastructure instead of manual
+.Nm
+invocation is strongly recommended.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -103,7 +109,7 @@ the argument itself.
 Turn on verbose output.
 .It Fl h
 Force
-.Xr tar
+.Xr tar 1
 to follow symbolic links, so that the files they point to
 are dumped, rather than the links themselves (deprecated).
 .It Fl i Ar iscript
@@ -174,17 +180,12 @@ The
 .Dq packing list
 format (see
 .Fl f )
-is fairly simple, being
-nothing more than a single column of filenames to include in the
-package.
-However, since absolute pathnames are generally a bad idea
-for a package that could be installed potentially anywhere, there is
-another method of specifying where things are supposed to go
-and, optionally, what ownership and mode information they should be
-installed with.
-This is done by imbedding specialized command sequences
-in the packing list.
-Briefly described, these sequences are:
+is fairly simple, being basically a list of filenames to include in
+the package.
+There are a few annotations that can be inserted for better control.
+All these commands start with an 
+.Sq @ .
+Here is a list:
 .Bl -tag -width indent
 .It Cm @arch Ar arches
 List of architectures for which this package is intended.
@@ -385,6 +386,7 @@ option is specified.
 .Xr pkg_add 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
+.Xr tar 1 ,
 .Xr sysconf 3
 .Sh HISTORY
 The
