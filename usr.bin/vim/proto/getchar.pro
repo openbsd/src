@@ -1,0 +1,32 @@
+/*	$OpenBSD: getchar.pro,v 1.1.1.1 1996/09/07 21:40:29 downsj Exp $	*/
+/* getchar.c */
+char_u *get_recorded __PARMS((void));
+char_u *get_inserted __PARMS((void));
+int stuff_empty __PARMS((void));
+void flush_buffers __PARMS((int typeahead));
+void ResetRedobuff __PARMS((void));
+void AppendToRedobuff __PARMS((char_u *s));
+void AppendCharToRedobuff __PARMS((int c));
+void AppendNumberToRedobuff __PARMS((long n));
+void stuffReadbuff __PARMS((char_u *s));
+void stuffcharReadbuff __PARMS((int c));
+void stuffnumReadbuff __PARMS((long n));
+int start_redo __PARMS((long count, int old_redo));
+int start_redo_ins __PARMS((void));
+void set_redo_ins __PARMS((void));
+void stop_redo_ins __PARMS((void));
+int ins_typebuf __PARMS((char_u *str, int noremap, int offset, int nottyped));
+int typebuf_typed __PARMS((void));
+void del_typebuf __PARMS((int len, int offset));
+int openscript __PARMS((char_u *name));
+void updatescript __PARMS((int c));
+int vgetc __PARMS((void));
+int vpeekc __PARMS((void));
+int char_avail __PARMS((void));
+void vungetc __PARMS((int c));
+int do_map __PARMS((int maptype, char_u *keys, int mode));
+void map_clear __PARMS((int modec, int force, int abbr));
+int check_abbr __PARMS((int c, char_u *ptr, int col, int mincol));
+int makemap __PARMS((FILE *fd));
+int putescstr __PARMS((FILE *fd, char_u *str, int set));
+void check_map_keycodes __PARMS((void));

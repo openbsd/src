@@ -1,0 +1,33 @@
+/*	$OpenBSD: buffer.pro,v 1.1.1.1 1996/09/07 21:40:28 downsj Exp $	*/
+/* buffer.c */
+int open_buffer __PARMS((void));
+void close_buffer __PARMS((WIN *win, BUF *buf, int free_buf, int del_buf));
+void buf_clear __PARMS((BUF *buf));
+void buf_freeall __PARMS((BUF *buf));
+char_u *do_bufdel __PARMS((int command, char_u *arg, int addr_count, int start_bnr, int end_bnr, int forceit));
+int do_buffer __PARMS((int action, int start, int dir, int count, int forceit));
+BUF *buflist_new __PARMS((char_u *fname, char_u *sfname, linenr_t lnum, int use_curbuf));
+int buflist_getfile __PARMS((int n, linenr_t lnum, int options));
+void buflist_getlnum __PARMS((void));
+BUF *buflist_findname __PARMS((char_u *fname));
+int buflist_findpat __PARMS((char_u *pattern, char_u *pattern_end));
+int ExpandBufnames __PARMS((char_u *pat, int *num_file, char_u ***file, int options));
+BUF *buflist_findnr __PARMS((int nr));
+char_u *buflist_nr2name __PARMS((int n, int fullname, int helptail));
+void buflist_list __PARMS((void));
+int buflist_name_nr __PARMS((int fnum, char_u **fname, linenr_t *lnum));
+int setfname __PARMS((char_u *fname, char_u *sfname, int message));
+void setaltfname __PARMS((char_u *fname, char_u *sfname, linenr_t lnum));
+int buflist_add __PARMS((char_u *fname));
+void buflist_altlnum __PARMS((void));
+int otherfile __PARMS((char_u *fname));
+void fileinfo __PARMS((int fullname, int shorthelp, int dont_truncate));
+void cursor_pos_info __PARMS((void));
+void col_print __PARMS((char_u *buf, int col, int vcol));
+void maketitle __PARMS((void));
+void resettitle __PARMS((void));
+char_u *fix_fname __PARMS((char_u *fname));
+void fname_expand __PARMS((char_u **fname, char_u **sfname));
+void do_arg_all __PARMS((int count));
+void do_buffer_all __PARMS((int count, int all));
+void do_modelines __PARMS((void));

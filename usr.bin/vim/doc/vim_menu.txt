@@ -1,0 +1,69 @@
+" *vim_menu.txt*
+" These menu commands should recreate the default Vim menus.
+" You can use this as a start for your own set of menus.
+" The colons at the start of each line are just to indicate these are colon
+" commands, they could be omitted.
+" If the <Esc> and <CR> string appear literally in the output of ":menu", you
+" need to remove the '<' flag from 'cpoptions' |'cpoptions'|
+
+" First remove any menus that are currently present
+:unmenu *
+:unmenu! *
+
+" Help menu
+" Note that the help commands use <Esc> to leave Insert/Visual/Command-line
+" mode
+:nmenu Help.Overview\ \ <F1>	:help<CR>
+:vmenu Help.Overview\ \ <F1>	<Esc>:help<CR>
+:menu! Help.Overview\ \ <F1>	<Esc>:help<CR>
+
+:nmenu Help.How\ to\.\.\.	:help how_to<CR>
+:vmenu Help.How\ to\.\.\.	<Esc>:help how_to<CR>
+:menu! Help.How\ to\.\.\.	<Esc>:help how_to<CR>
+
+:nmenu Help.GUI			:help gui<CR>
+:vmenu Help.GUI			<Esc>:help gui<CR>
+:menu! Help.GUI			<Esc>:help gui<CR>
+
+:nmenu Help.Version		:version<CR>
+:vmenu Help.Version		<Esc>:version<CR>
+:menu! Help.Version		<Esc>:version<CR>
+
+:nmenu Help.Credits		:help credits<CR>
+:vmenu Help.Credits		<Esc>:help credits<CR>
+:menu! Help.Credits		<Esc>:help credits<CR>
+
+:nmenu Help.Copying		:help uganda<CR>
+:vmenu Help.Copying		<Esc>:help uganda<CR>
+:menu! Help.Copying		<Esc>:help uganda<CR>
+
+" File menu
+:nmenu File.Save\ \ \ \ \ \ \ :w	:w<CR>
+:imenu File.Save\ \ \ \ \ \ \ :w	<C-O>:w<CR>
+
+:nmenu File.Close\ \ \ \ \ \ :q		:q<CR>
+:vmenu File.Close\ \ \ \ \ \ :q		<Esc>:q<CR>
+:menu! File.Close\ \ \ \ \ \ :q		<Esc>:q<CR>
+
+:nmenu File.Quit\ \ \ \ \ \ \ :qa	:qa<CR>
+:vmenu File.Quit\ \ \ \ \ \ \ :qa	<Esc>:qa<CR>
+:menu! File.Quit\ \ \ \ \ \ \ :qa	<Esc>:qa<CR>
+
+:nmenu File.Save-Quit\ \ :wqa		:wqa<CR>
+:vmenu File.Save-Quit\ \ :wqa		<Esc>:wqa<CR>
+:menu! File.Save-Quit\ \ :wqa		<Esc>:wqa<CR>
+
+" Edit menu
+:nmenu Edit.Undo			u
+:nmenu Edit.Redo			<C-R>
+
+:vmenu Edit.Cut				x
+:vmenu Edit.Copy			y
+
+:nmenu Edit.Put\ Before			[p
+:imenu Edit.Put\ Before			<C-O>[p
+:nmenu Edit.Put\ After			]p
+:imenu Edit.Put\ After			<C-O>]p
+
+:nmenu Edit.Paste			i<C-R>*<Esc>
+:menu! Edit.Paste			<C-R>*

@@ -1,0 +1,253 @@
+/*	$OpenBSD: cmdtab.tab,v 1.1.1.1 1996/09/07 21:40:28 downsj Exp $	*/
+/* vi:ts=4:sw=4
+ *
+ * VIM - Vi IMproved
+ *
+ * Code Contributions By:	Bram Moolenaar			mool@plex.nl
+ *							Tim Thompson			twitch!tjt
+ *							Tony Andrews			onecom!wldrdg!tony 
+ *							G. R. (Fred) Walter		watmath!watcgl!grwalter 
+ */
+
+/*
+ * |This file is read by mkcmdtab to produce cmdtab.h.
+ *
+ * The bars are used to recognize file positions. Do not insert/delete them.|
+ */
+
+#define RANGE	   0x01			/* allow a linespecs */
+#define BANG	   0x02			/* allow a ! after the command name */
+#define EXTRA	   0x04			/* allow extra args after command name */
+#define XFILE	   0x08			/* expand wildcards in extra part */
+#define NOSPC	   0x10			/* no spaces allowed in the extra part */
+#define	DFLALL	   0x20			/* default file range is 1,$ */
+#define NODFL	   0x40			/* do not default to the current file name */
+#define NEEDARG	   0x80			/* argument required */
+#define TRLBAR	  0x100			/* check for trailing vertical bar */
+#define REGSTR	  0x200			/* allow "x for register designation */
+#define COUNT	  0x400			/* allow count in argument, after command */
+#define NOTRLCOM  0x800			/* no trailing comment allowed */
+#define ZEROR	 0x1000			/* zero line number allowed */
+#define USECTRLV 0x2000			/* do not remove CTRL-V from argument */
+#define NOTADR	 0x4000			/* number before command is not an address */
+#define EDITCMD	 0x8000			/* has "+command" argument */
+#define BUFNAME 0x10000			/* accepts buffer name */
+#define FILES	(XFILE + EXTRA)	/* multiple extra files allowed */
+#define WORD1	(EXTRA + NOSPC)	/* one extra word allowed */
+#define FILE1	(FILES + NOSPC)	/* 1 file allowed, defaults to current file */
+#define NAMEDF	(FILE1 + NODFL)	/* 1 file allowed, defaults to "" */
+#define NAMEDFS	(FILES + NODFL)	/* multiple files allowed, default is "" */
+
+/*
+ * This array maps ex command names to command codes. The order in which
+ * command names are listed below is significant -- ambiguous abbreviations
+ * are always resolved to be the first possible match (e.g. "r" is taken
+ * to mean "read", not "rewind", because "read" comes before "rewind").
+ * Not supported commands are included to avoid ambiguities.
+ */
+static struct
+{
+	char_u	*cmd_name;	/* name of the command */
+	long_u	 cmd_argt;	/* command line arguments permitted/needed/used */
+} cmdnames[] =
+{
+|	{(char_u *)"append",		BANG+RANGE+TRLBAR},			/* not supported */
+	{(char_u *)"all",			RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"abbreviate",	EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"abclear",		TRLBAR},
+	{(char_u *)"args",			BANG+NAMEDFS+EDITCMD+TRLBAR},
+	{(char_u *)"argument",		BANG+RANGE+NOTADR+COUNT+EXTRA+EDITCMD+TRLBAR},
+	{(char_u *)"ascii",			TRLBAR},
+	{(char_u *)"autocmd",		BANG+EXTRA+NOTRLCOM+USECTRLV},
+	{(char_u *)"buffer",		RANGE+NOTADR+BUFNAME+COUNT+EXTRA+TRLBAR},
+	{(char_u *)"ball",			RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"buffers",		TRLBAR},
+	{(char_u *)"bdelete",		BANG+RANGE+BUFNAME+NOTADR+COUNT+EXTRA+TRLBAR},
+	{(char_u *)"bunload",		BANG+RANGE+BUFNAME+NOTADR+COUNT+EXTRA+TRLBAR},
+	{(char_u *)"bmodified",		RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"bnext",			RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"bNext",			RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"bprevious",		RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"brewind",		RANGE+TRLBAR},
+	{(char_u *)"blast",			RANGE+TRLBAR},
+	{(char_u *)"change",		BANG+RANGE+COUNT+TRLBAR},	/* not supported */
+	{(char_u *)"cabbrev",		EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"cabclear",		TRLBAR},
+	{(char_u *)"cc",			RANGE+NOTADR+COUNT+TRLBAR+BANG},
+	{(char_u *)"cd",			NAMEDF+TRLBAR},
+	{(char_u *)"center",		TRLBAR+RANGE+EXTRA},
+	{(char_u *)"cfile",			TRLBAR+FILE1+BANG},
+	{(char_u *)"chdir",			NAMEDF+TRLBAR},
+	{(char_u *)"checkpath",		TRLBAR+BANG},
+	{(char_u *)"clist",			TRLBAR+BANG},
+	{(char_u *)"close",			BANG+TRLBAR},
+	{(char_u *)"cmap",			EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"cmapclear",		TRLBAR},
+	{(char_u *)"cmenu",			EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"cnext",			RANGE+NOTADR+COUNT+TRLBAR+BANG},
+	{(char_u *)"cNext",			RANGE+NOTADR+COUNT+TRLBAR+BANG},
+	{(char_u *)"cnoremap",		EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"cnoremenu",		EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"cnoreabbrev",	EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"copy",			RANGE+EXTRA+TRLBAR},
+	{(char_u *)"cprevious",		RANGE+NOTADR+COUNT+TRLBAR+BANG},
+	{(char_u *)"cquit",			TRLBAR+BANG},
+	{(char_u *)"cunmap",		EXTRA+TRLBAR+USECTRLV},
+	{(char_u *)"cunmenu",		EXTRA+TRLBAR+USECTRLV},
+	{(char_u *)"cunabbrev",		EXTRA+TRLBAR+USECTRLV},
+	{(char_u *)"delete",		RANGE+REGSTR+COUNT+TRLBAR},
+	{(char_u *)"display",		EXTRA+NOTRLCOM+TRLBAR},
+	{(char_u *)"digraphs",		EXTRA+TRLBAR},
+	{(char_u *)"djump",			BANG+RANGE+DFLALL+EXTRA},
+	{(char_u *)"dlist",			BANG+RANGE+DFLALL+EXTRA},
+	{(char_u *)"doautocmd",		EXTRA+TRLBAR},
+	{(char_u *)"dsearch",		BANG+RANGE+DFLALL+EXTRA},
+	{(char_u *)"dsplit",		BANG+RANGE+DFLALL+EXTRA+TRLBAR},
+	{(char_u *)"edit",			BANG+FILE1+EDITCMD+TRLBAR},
+	{(char_u *)"ex",			BANG+FILE1+EDITCMD+TRLBAR},
+	{(char_u *)"exit",			RANGE+BANG+FILE1+DFLALL+TRLBAR},
+	{(char_u *)"file",			BANG+FILE1+TRLBAR},
+	{(char_u *)"files",			TRLBAR},
+	{(char_u *)"fixdel",		TRLBAR},
+	{(char_u *)"global",		RANGE+BANG+EXTRA+DFLALL},
+	{(char_u *)"gui",			BANG+NAMEDFS+EDITCMD+TRLBAR},
+	{(char_u *)"gvim",			BANG+NAMEDFS+EDITCMD+TRLBAR},
+	{(char_u *)"help",			EXTRA+NOTRLCOM},
+	{(char_u *)"insert",		BANG+RANGE+TRLBAR},			/* not supported */
+	{(char_u *)"iabbrev",		EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"iabclear",		TRLBAR},
+	{(char_u *)"ijump",			BANG+RANGE+DFLALL+EXTRA},
+	{(char_u *)"ilist",			BANG+RANGE+DFLALL+EXTRA},
+	{(char_u *)"imap",			EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"imapclear",		TRLBAR},
+	{(char_u *)"imenu",			EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"inoremap",		EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"inoremenu",		EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"inoreabbrev",	EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"isearch",		BANG+RANGE+DFLALL+EXTRA},
+	{(char_u *)"isplit",		BANG+RANGE+DFLALL+EXTRA+TRLBAR},
+	{(char_u *)"iunmap",		EXTRA+TRLBAR+USECTRLV},
+	{(char_u *)"iunmenu",		EXTRA+TRLBAR+USECTRLV},
+	{(char_u *)"iunabbrev",		EXTRA+TRLBAR+USECTRLV},
+	{(char_u *)"join",			BANG+RANGE+COUNT+TRLBAR},
+	{(char_u *)"jumps",			TRLBAR},
+	{(char_u *)"k",				RANGE+WORD1+TRLBAR},
+	{(char_u *)"list",			RANGE+COUNT+TRLBAR},
+	{(char_u *)"last",			EXTRA+BANG+EDITCMD+TRLBAR},
+	{(char_u *)"left",			TRLBAR+RANGE+EXTRA},
+	{(char_u *)"ls",			TRLBAR},
+	{(char_u *)"move",			RANGE+EXTRA+TRLBAR},
+	{(char_u *)"mark",			RANGE+WORD1+TRLBAR},
+	{(char_u *)"marks",			EXTRA+TRLBAR},
+	{(char_u *)"map",			BANG+EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"mapclear",		BANG+TRLBAR},
+	{(char_u *)"make",			NEEDARG+EXTRA+TRLBAR+XFILE},
+	{(char_u *)"menu",			BANG+EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"mkexrc",		BANG+FILE1+TRLBAR},
+	{(char_u *)"mkvimrc",		BANG+FILE1+TRLBAR},
+	{(char_u *)"mfstat",		TRLBAR},					/* for debugging */
+	{(char_u *)"mode",			WORD1+TRLBAR},
+	{(char_u *)"next",			RANGE+NOTADR+BANG+NAMEDFS+EDITCMD+TRLBAR},
+	{(char_u *)"new",			BANG+FILE1+RANGE+NOTADR+EDITCMD+TRLBAR},
+	{(char_u *)"nmap",			EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"nmapclear",		TRLBAR},
+	{(char_u *)"nmenu",			EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"nnoremap",		EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"nnoremenu",		EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"number",		RANGE+COUNT+TRLBAR},
+	{(char_u *)"#",				RANGE+COUNT+TRLBAR},
+	{(char_u *)"noremap",		BANG+EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"noremenu",		BANG+EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"noreabbrev",	EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"normal",		BANG+EXTRA+NEEDARG+NOTRLCOM+USECTRLV},
+	{(char_u *)"nunmap",		EXTRA+TRLBAR+USECTRLV},
+	{(char_u *)"nunmenu",		EXTRA+TRLBAR+USECTRLV},
+	{(char_u *)"Next",			EXTRA+RANGE+NOTADR+COUNT+BANG+EDITCMD+TRLBAR},
+	{(char_u *)"open",			TRLBAR},					/* not supported */
+	{(char_u *)"only",			BANG+TRLBAR},
+	{(char_u *)"print",			RANGE+COUNT+TRLBAR},
+	{(char_u *)"pop",			RANGE+NOTADR+COUNT+TRLBAR+ZEROR},
+	{(char_u *)"put",			RANGE+BANG+REGSTR+TRLBAR},
+	{(char_u *)"preserve",		TRLBAR},
+	{(char_u *)"previous",		EXTRA+RANGE+NOTADR+COUNT+BANG+EDITCMD+TRLBAR},
+	{(char_u *)"pwd",			TRLBAR},
+	{(char_u *)"quit",			BANG+TRLBAR},
+	{(char_u *)"qall",			BANG+TRLBAR},
+	{(char_u *)"read",			BANG+RANGE+NAMEDF+TRLBAR+ZEROR},
+	{(char_u *)"rewind",		EXTRA+BANG+EDITCMD+TRLBAR},
+	{(char_u *)"recover",		BANG+FILE1+TRLBAR},
+	{(char_u *)"redo",			TRLBAR},
+	{(char_u *)"registers",		EXTRA+NOTRLCOM+TRLBAR},
+	{(char_u *)"resize",		TRLBAR+WORD1},
+	{(char_u *)"retab",			TRLBAR+RANGE+DFLALL+BANG+WORD1},
+	{(char_u *)"right",			TRLBAR+RANGE+EXTRA},
+	{(char_u *)"rviminfo",		BANG+FILE1+TRLBAR},			/* only when VIMINFO defined */
+	{(char_u *)"substitute",	RANGE+EXTRA},
+	{(char_u *)"sargument",		BANG+RANGE+NOTADR+COUNT+EXTRA+EDITCMD+TRLBAR},
+	{(char_u *)"sall",			RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"sbuffer",		RANGE+NOTADR+BUFNAME+COUNT+EXTRA+TRLBAR},
+	{(char_u *)"sball",			RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"sbmodified",	RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"sbnext",		RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"sbNext",		RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"sbprevious",	RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"sbrewind",		TRLBAR},
+	{(char_u *)"sblast",		TRLBAR},
+	{(char_u *)"suspend",		TRLBAR+BANG},
+	{(char_u *)"set",			EXTRA+TRLBAR},
+	{(char_u *)"shell",			TRLBAR},
+	{(char_u *)"sleep",			RANGE+COUNT+NOTADR+TRLBAR},
+	{(char_u *)"source",		BANG+NAMEDF+NEEDARG+TRLBAR},
+	{(char_u *)"split",			BANG+FILE1+RANGE+NOTADR+EDITCMD+TRLBAR},
+	{(char_u *)"snext",			RANGE+NOTADR+BANG+NAMEDFS+EDITCMD+TRLBAR},
+	{(char_u *)"sNext",			EXTRA+RANGE+NOTADR+COUNT+BANG+EDITCMD+TRLBAR},
+	{(char_u *)"sprevious",		EXTRA+RANGE+NOTADR+COUNT+BANG+EDITCMD+TRLBAR},
+	{(char_u *)"srewind",		EXTRA+BANG+EDITCMD+TRLBAR},
+	{(char_u *)"slast",			EXTRA+BANG+EDITCMD+TRLBAR},
+	{(char_u *)"stop",			TRLBAR+BANG},
+	{(char_u *)"stag",			RANGE+NOTADR+BANG+WORD1+TRLBAR+ZEROR},
+	{(char_u *)"sunhide",		RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"sview",			NEEDARG+RANGE+BANG+FILE1+EDITCMD+TRLBAR},
+	{(char_u *)"swapname",		TRLBAR},
+	{(char_u *)"t",				RANGE+EXTRA+TRLBAR},
+	{(char_u *)"tag",			RANGE+NOTADR+BANG+WORD1+TRLBAR+ZEROR},
+	{(char_u *)"tags",			TRLBAR},
+	{(char_u *)"undo",			TRLBAR},
+	{(char_u *)"unabbreviate",	EXTRA+TRLBAR+USECTRLV},
+	{(char_u *)"unhide",		RANGE+NOTADR+COUNT+TRLBAR},
+	{(char_u *)"unmap",			BANG+EXTRA+TRLBAR+USECTRLV},
+	{(char_u *)"unmenu",		BANG+EXTRA+TRLBAR+USECTRLV},
+	{(char_u *)"vglobal",		RANGE+EXTRA+DFLALL},
+	{(char_u *)"version",		EXTRA+TRLBAR},
+	{(char_u *)"visual",		RANGE+BANG+FILE1+EDITCMD+TRLBAR},
+	{(char_u *)"view",			RANGE+BANG+FILE1+EDITCMD+TRLBAR},
+	{(char_u *)"vmap",			EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"vmapclear",		TRLBAR},
+	{(char_u *)"vmenu",			EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"vnoremap",		EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"vnoremenu",		EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
+	{(char_u *)"vunmap",		EXTRA+TRLBAR+USECTRLV},
+	{(char_u *)"vunmenu",		EXTRA+TRLBAR+USECTRLV},
+	{(char_u *)"write",			RANGE+BANG+FILE1+DFLALL+TRLBAR},
+	{(char_u *)"wnext",			RANGE+NOTADR+BANG+FILE1+TRLBAR},
+	{(char_u *)"wNext",			RANGE+NOTADR+BANG+FILE1+TRLBAR},
+	{(char_u *)"wprevious",		RANGE+NOTADR+BANG+FILE1+TRLBAR},
+	{(char_u *)"winsize",		EXTRA+NEEDARG+TRLBAR},
+	{(char_u *)"wq",			RANGE+BANG+FILE1+DFLALL+TRLBAR},
+	{(char_u *)"wall",			BANG+TRLBAR},
+	{(char_u *)"wqall",			BANG+FILE1+DFLALL+TRLBAR},
+	{(char_u *)"wviminfo",		BANG+FILE1+TRLBAR},			/* only when VIMINFO defined */
+	{(char_u *)"xit",			RANGE+BANG+FILE1+DFLALL+TRLBAR},
+	{(char_u *)"xall",			BANG+TRLBAR},
+	{(char_u *)"yank",			RANGE+REGSTR+COUNT+TRLBAR},
+	{(char_u *)"z",				RANGE+COUNT+TRLBAR},		/* not supported */
+	{(char_u *)"@",				RANGE+EXTRA+TRLBAR},
+	{(char_u *)"!",				RANGE+BANG+NAMEDFS},
+	{(char_u *)"<",				RANGE+COUNT+TRLBAR},
+	{(char_u *)">",				RANGE+COUNT+TRLBAR},
+	{(char_u *)"=",				RANGE+TRLBAR},
+	{(char_u *)"&",				RANGE+EXTRA},
+	{(char_u *)"~",				RANGE+EXTRA}
+|
+};
+|
