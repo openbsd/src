@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.17 2004/04/25 02:48:03 itojun Exp $	*/
+/*	$OpenBSD: radix.c,v 1.18 2004/04/25 20:02:39 itojun Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -721,11 +721,10 @@ rn_delete(v_arg, netmask_arg, head, rn)
 	netmask = netmask_arg;
 	x = head->rnh_treetop;
 #ifndef SMALL_KERNEL
-	if (rn && (rn->rn_mask != rn_zeros)) {
+	if (rn) {
 		tt = rn;
-		/* 
+		/*
 		 * Is this route(rn) a rn->dupedkey chain? 
-		 * Only default route is an exception. (rn_mask)
 		 */
 		if (rn_mpath_next(tt->rn_p))
 			mpath_enable = 1;
