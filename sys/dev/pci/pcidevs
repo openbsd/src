@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.425 2001/08/05 10:05:36 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.426 2001/08/05 10:11:39 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -545,6 +545,7 @@ vendor NETSEC		0x1660	NetSec
 vendor GLOBALSUN	0x16ab	Global Sun
 vendor SYMPHONY2	0x1c1c	Symphony Labs
 vendor TEKRAM2		0x1de1	Tekram Technology
+vendor HINT		0x3388	Hint
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic
 vendor ADDTRON		0x4033	Addtron
@@ -1143,6 +1144,11 @@ product HP NETRAID_4M		0x10c2	NetRaid-4M
 product HIFN 7751		0x0005	7751
 product HIFN 6500		0x0006	6500
 product HIFN 7951		0x0012	7951
+
+/* Hint */
+product HINT VXPRO_II_HOST	0x8011	Host
+product HINT VXPRO_II_ISA	0x8012	ISA
+product HINT VXPRO_II_EIDE	0x8013	EIDE
 
 /* IBM products */
 product IBM 0x0002 		0x0002	MCA
