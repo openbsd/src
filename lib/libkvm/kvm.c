@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.32 2002/09/17 20:01:22 millert Exp $ */
+/*	$OpenBSD: kvm.c,v 1.33 2002/09/17 21:21:08 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.32 2002/09/17 20:01:22 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.33 2002/09/17 21:21:08 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -468,7 +468,8 @@ off_t	dump_off;
 	if (kd->cpu_data == NULL)
 		goto fail;
 
-	sz = _kvm_pread(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size, (off_t)dump_off+hdr_size);
+	sz = _kvm_pread(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size,
+	    (off_t)dump_off+hdr_size);
 	if (sz != cpu_hdr.c_size) {
 		_kvm_err(kd, 0, "invalid size in cpu_hdr");
 		goto fail;
@@ -846,7 +847,8 @@ kvm_t	*kd;
 		return (-1);
 
 	x = 0;
-	if (_kvm_pwrite(kd, kd->pmfd, &x, sizeof(x), (off_t)_kvm_pa2off(kd, pa)) != sizeof(x)) {
+	if (_kvm_pwrite(kd, kd->pmfd, &x, sizeof(x),
+	    (off_t)_kvm_pa2off(kd, pa)) != sizeof(x)) {
 		_kvm_err(kd, 0, "cannot invalidate dump");
 		return (-1);
 	}
@@ -890,7 +892,8 @@ kvm_read(kd, kva, buf, len)
 				return (-1);
 			if (cc > len)
 				cc = len;
-			cc = _kvm_pread(kd, kd->pmfd, cp, cc, (off_t)_kvm_pa2off(kd, pa));
+			cc = _kvm_pread(kd, kd->pmfd, cp, cc,
+			    (off_t)_kvm_pa2off(kd, pa));
 			if (cc < 0) {
 				_kvm_syserr(kd, 0, _PATH_MEM);
 				break;
