@@ -35,7 +35,7 @@ Description of the RSA algorithm can be found e.g. from the following sources:
 */
 
 #include "includes.h"
-RCSID("$Id: rsa.c,v 1.4 1999/10/16 23:20:25 provos Exp $");
+RCSID("$Id: rsa.c,v 1.5 1999/10/16 23:54:12 provos Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -112,8 +112,8 @@ rsa_public_encrypt(BIGNUM *out, BIGNUM *in, RSA* key)
   char *inbuf, *outbuf;
   int len;
 
-  if (BN_num_bits(key->e) < 2)
-    fatal("rsa_public_encrypt() exponent too small");
+  if (BN_num_bits(key->e) < 2 || !BN_is_odd(key->e))
+    fatal("rsa_public_encrypt() exponent too small or not odd");
 
   len = BN_num_bytes(key->n);
   outbuf = xmalloc(len);
