@@ -1,4 +1,4 @@
-.\"	$OpenBSD: copy.9,v 1.8 2001/03/01 16:11:24 aaron Exp $
+.\"	$OpenBSD: copy.9,v 1.9 2001/05/11 14:48:05 jj Exp $
 .\"	$NetBSD: copy.9,v 1.2 1996/01/09 03:23:04 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe.
@@ -100,6 +100,7 @@ is returned in
 .Fa *done .
 .It Fn copyoutstr
 Copies a null-terminated string, at most
+.Fa len
 bytes long, from kernel-space address
 .Fa kaddr
 to user-space address
