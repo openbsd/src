@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.37 2005/01/17 03:19:29 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.38 2005/02/07 15:03:50 mcbride Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1961,6 +1961,7 @@ em_print_link_status(struct em_softc * sc)
 void
 em_update_link_status(struct em_softc * sc)
 {
+	struct ifnet *ifp = &sc->interface_data.ac_if;
         if (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU) {
                 if (sc->link_active == 0) {
                         em_get_speed_and_duplex(&sc->hw,
@@ -1968,12 +1969,16 @@ em_update_link_status(struct em_softc * sc)
                                                 &sc->link_duplex);
                         sc->link_active = 1;
                         sc->smartspeed = 0;
+			ifp->if_link_state = LINK_STATE_UP;
+			if_link_state_change(ifp);
                 }
         } else {
                 if (sc->link_active == 1) {
                         sc->link_speed = 0;
                         sc->link_duplex = 0;
                         sc->link_active = 0;
+			ifp->if_link_state = LINK_STATE_DOWN;
+			if_link_state_change(ifp);
                 }
         }
 
