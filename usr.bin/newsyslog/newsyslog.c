@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.12 1997/07/10 17:37:10 kstailey Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.13 1998/04/25 18:12:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.12 1997/07/10 17:37:10 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.13 1998/04/25 18:12:58 mickey Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -485,13 +485,13 @@ void dotrim(log, numdays, flags, perm, owner_uid, group_gid)
         else {
                 fd = creat(log,perm);
                 if (fd < 0)
-			err(1, "can't start new log");
+			err(1, "can't start \'%s\' log", log);
                 if (fchown(fd, owner_uid, group_gid))
-			err(1, "can't chmod new log file");
+			err(1, "can't chown \'%s\' log file", log);
                 (void) close(fd);
                 if (!(flags & CE_BINARY))
                         if (log_trim(log))	/* Add status message */
-                                err(1, "can't add status message to log");
+                                err(1, "can't add status message to log \'%s\'", log);
         }
         if (noaction)
                 printf("chmod %o %s...",perm,log);
