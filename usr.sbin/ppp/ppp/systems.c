@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: systems.c,v 1.13 2000/03/28 15:13:09 brian Exp $
+ * $OpenBSD: systems.c,v 1.14 2000/04/03 19:56:35 brian Exp $
  *
  *  TODO:
  */
@@ -349,8 +349,10 @@ ReadSystem(struct bundle *bundle, const char *name, const char *file,
         log_Printf(LogCOMMAND, "%s: Including \"%s\"\n", filename, arg);
         n = ReadSystem(bundle, name, arg, prompt, cx, how);
         log_Printf(LogCOMMAND, "%s: Done include of \"%s\"\n", filename, arg);
-        if (!n)
+        if (!n) {
+          fclose(fp);
           return 0;	/* got it */
+        }
         break;
       default:
         log_Printf(LogWARN, "%s: %s: Invalid command\n", filename, cp);
@@ -364,8 +366,10 @@ ReadSystem(struct bundle *bundle, const char *name, const char *file,
 
       if (strcmp(cp, name) == 0) {
         /* We're in business */
-        if (how == SYSTEM_EXISTS)
+        if (how == SYSTEM_EXISTS) {
+          fclose(fp);
 	  return 0;
+	}
 	while ((n = xgets(line, sizeof line, fp))) {
           linenum += n;
           indent = issep(*line);
