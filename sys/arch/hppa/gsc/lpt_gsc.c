@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_gsc.c,v 1.9 2003/08/07 19:47:33 mickey Exp $	*/
+/*	$OpenBSD: lpt_gsc.c,v 1.10 2004/02/13 21:28:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -170,6 +170,6 @@ lpt_gsc_attach(parent, self, aux)
 
 	lpt_attach_common(sc);
 
-	sc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_TTY,
-	    ga->ga_irq, lptintr, sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent,
+	    ga->ga_irq, IPL_TTY, lptintr, sc, sc->sc_dev.dv_xname);
 }

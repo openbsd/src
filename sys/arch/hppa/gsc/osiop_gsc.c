@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop_gsc.c,v 1.9 2004/02/13 21:09:42 mickey Exp $	*/
+/*	$OpenBSD: osiop_gsc.c,v 1.10 2004/02/13 21:28:19 mickey Exp $	*/
 /*	$NetBSD: osiop_gsc.c,v 1.6 2002/10/02 05:17:50 thorpej Exp $	*/
 
 /*
@@ -158,8 +158,8 @@ osiop_gsc_attach(parent, self, aux)
 #endif /* OSIOP_DEBUG */
 	osiop_attach(sc);
 
-	(void)gsc_intr_establish((struct gsc_softc *)parent, IPL_BIO,
-	    ga->ga_irq, osiop_gsc_intr, sc, sc->sc_dev.dv_xname);
+	(void)gsc_intr_establish((struct gsc_softc *)parent,
+	    ga->ga_irq, IPL_BIO, osiop_gsc_intr, sc, sc->sc_dev.dv_xname);
 }
 
 /*

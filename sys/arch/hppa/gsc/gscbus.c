@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.23 2003/08/07 19:47:33 mickey Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.24 2004/02/13 21:28:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -144,7 +144,7 @@ gscprint(aux, pnp)
 }
 
 void *
-gsc_intr_establish(sc, pri, irq, handler, arg, name)
+gsc_intr_establish(sc, irq, pri, handler, arg, name)
 	struct gsc_softc *sc;
 	int pri;
 	int irq;

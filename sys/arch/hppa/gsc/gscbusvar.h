@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbusvar.h,v 1.11 2003/08/07 19:47:33 mickey Exp $	*/
+/*	$OpenBSD: gscbusvar.h,v 1.12 2004/02/13 21:28:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -59,7 +59,7 @@ struct gsc_softc {
 	struct hppa_bus_dma_tag sc_dmatag;
 };
 
-void *gsc_intr_establish(struct gsc_softc *sc, int pri, int irq,
+void *gsc_intr_establish(struct gsc_softc *sc, int irq, int pri,
     int (*handler)(void *v), void *arg, const char *name);
 void gsc_intr_disestablish(struct gsc_softc *sc, void *v);
 int gsc_intr(void *);
