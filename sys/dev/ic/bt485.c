@@ -261,6 +261,12 @@ bt485_set_cmap(rc, cmapp)
 	struct bt485data *data = (struct bt485data *)rc;
 	int count, index, s;
 
+#ifdef DIAGNOSTIC
+	if (rc == NULL)
+		panic("bt485_set_cmap: rc");
+	if (cmapp == NULL)
+		panic("bt485_set_cmap: cmapp");
+#endif
 	if ((u_int)cmapp->index >= 256 ||
 	    ((u_int)cmapp->index + (u_int)cmapp->count) > 256)
 		return (EINVAL);
@@ -287,6 +293,7 @@ bt485_set_cmap(rc, cmapp)
 	data->changed |= DATA_CMAP_CHANGED;
 
 	data->ramdac_sched_update(data->cookie, bt485_update);
+	delay(1);
 	splx(s);
 
 	return (0);
