@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.29 2000/02/07 01:32:54 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.111 2000/02/07 01:30:35 angelos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.30 2000/02/11 10:21:28 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.113 2000/02/10 16:25:00 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -180,11 +180,11 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       principal = principal2;
       principal2 = NULL;
 
-      /* Generate a "CN:" principal */
+      /* Generate a "DN:" principal */
       subject = LC (X509_get_subject_name, (isakmp_sa->recv_cert));
       if (subject)
 	{
-	  strcpy (cn, "CN:");
+	  strcpy (cn, "DN:");
 	  LC (X509_NAME_oneline, (subject, cn + 3, 256));
 	  principal2 = cn;
 	}
@@ -237,7 +237,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
   LK (kn_remove_authorizer, (keynote_sessid, principal));
   free (principal);
 
-  /* Remove "CN:" authorizer, if present */
+  /* Remove "DN:" authorizer, if present */
   if (principal2)
           LK (kn_remove_authorizer, (keynote_sessid, principal2));
 
@@ -791,10 +791,58 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
 
   sa = TAILQ_FIRST (&exchange->sa_list);
 
+  /* This is here for the policy check */
+  if (kep)
+    ie->pfs = 1;
+
+  /* Handle optional client ID payloads.  */
+  idp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_ID]);
+  if (idp)
+    {
+      /* If IDci is there, IDcr must be too.  */
+      if (!TAILQ_NEXT (idp, link))
+	{
+	  /* XXX Is this a good notify type?  */
+	  message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
+	  return -1;
+	}
+	  
+      /* XXX We should really compare, not override.  */
+      ie->id_ci_sz = GET_ISAKMP_GEN_LENGTH (idp->p);
+      ie->id_ci = malloc (ie->id_ci_sz);
+      if (!ie->id_ci)
+	{
+	  log_error ("initiator_recv_HASH_SA_NONCE: malloc (%d) failed",
+		     ie->id_ci_sz);
+	  return -1;
+	}
+      memcpy (ie->id_ci, idp->p, ie->id_ci_sz);
+      idp->flags |= PL_MARK;
+      log_debug_buf (LOG_MISC, 90,
+		     "initiator_recv_HASH_SA_NONCE: IDci",
+		     ie->id_ci + ISAKMP_GEN_SZ, ie->id_ci_sz - ISAKMP_GEN_SZ);
+
+      idp = TAILQ_NEXT (idp, link);
+      ie->id_cr_sz = GET_ISAKMP_GEN_LENGTH (idp->p);
+      ie->id_cr = malloc (ie->id_cr_sz);
+      if (!ie->id_cr)
+	{
+	  log_error ("initiator_recv_HASH_SA_NONCE: malloc (%d) failed",
+		     ie->id_cr_sz);
+	  return -1;
+	}
+      memcpy (ie->id_cr, idp->p, ie->id_cr_sz);
+      idp->flags |= PL_MARK;
+      log_debug_buf (LOG_MISC, 90,
+		     "initiator_recv_HASH_SA_NONCE: IDcr",
+		     ie->id_cr + ISAKMP_GEN_SZ, ie->id_cr_sz - ISAKMP_GEN_SZ);
+    }
+
   /* Build the protection suite in our SA.  */
   for (xf = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_TRANSFORM]); xf;
        xf = TAILQ_NEXT (xf, link))
     {
+
       /*
        * XXX We could check that the proposal each transform belongs to
        * is unique.
@@ -806,6 +854,11 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
       /* XXX Check that the chosen transform matches an offer.  */
 
       ipsec_decode_transform (msg, sa, proto, xf->p);
+
+#if defined (USE_KEYNOTE)
+      if (check_policy (exchange, sa, msg->isakmp_sa))
+	return -1;
+#endif
     }
 
   /* Now remove offers that we don't need anymore.  */
@@ -868,49 +921,6 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
   /* Handle the optional KEY_EXCH payload.  */
   if (kep && ipsec_save_g_x (msg))
     return -1;
-
-  /* Handle optional client ID payloads.  */
-  idp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_ID]);
-  if (idp)
-    {
-      /* If IDci is there, IDcr must be too.  */
-      if (!TAILQ_NEXT (idp, link))
-	{
-	  /* XXX Is this a good notify type?  */
-	  message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
-	  return -1;
-	}
-	  
-      /* XXX We should really compare, not override.  */
-      ie->id_ci_sz = GET_ISAKMP_GEN_LENGTH (idp->p);
-      ie->id_ci = malloc (ie->id_ci_sz);
-      if (!ie->id_ci)
-	{
-	  log_error ("initiator_recv_HASH_SA_NONCE: malloc (%d) failed",
-		     ie->id_ci_sz);
-	  return -1;
-	}
-      memcpy (ie->id_ci, idp->p, ie->id_ci_sz);
-      idp->flags |= PL_MARK;
-      log_debug_buf (LOG_MISC, 90,
-		     "initiator_recv_HASH_SA_NONCE: IDci",
-		     ie->id_ci + ISAKMP_GEN_SZ, ie->id_ci_sz - ISAKMP_GEN_SZ);
-
-      idp = TAILQ_NEXT (idp, link);
-      ie->id_cr_sz = GET_ISAKMP_GEN_LENGTH (idp->p);
-      ie->id_cr = malloc (ie->id_cr_sz);
-      if (!ie->id_cr)
-	{
-	  log_error ("initiator_recv_HASH_SA_NONCE: malloc (%d) failed",
-		     ie->id_cr_sz);
-	  return -1;
-	}
-      memcpy (ie->id_cr, idp->p, ie->id_cr_sz);
-      idp->flags |= PL_MARK;
-      log_debug_buf (LOG_MISC, 90,
-		     "initiator_recv_HASH_SA_NONCE: IDcr",
-		     ie->id_cr + ISAKMP_GEN_SZ, ie->id_cr_sz - ISAKMP_GEN_SZ);
-    }
 
   return 0;
 }
