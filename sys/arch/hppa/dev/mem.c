@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.22 2004/03/17 00:41:08 miod Exp $	*/
+/*	$OpenBSD: mem.c,v 1.23 2004/03/17 20:55:09 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -195,6 +195,7 @@ memattach(parent, self, aux)
 
 			switch (cpu_hvers) {
 			/* probably all oosiop-equipped machines */
+			case HPPA_BOARD_HP715_50:
 			case HPPA_BOARD_HP715_33:
 				settimeout = 1;
 				break;
