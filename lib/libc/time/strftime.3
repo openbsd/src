@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
-.\"     $OpenBSD: strftime.3,v 1.3 1998/02/15 22:47:45 deraadt Exp $
+.\"     $OpenBSD: strftime.3,v 1.4 1998/06/10 17:30:10 deraadt Exp $
 .\"
 .Dd Jan 18, 1998
 .Dt STRFTIME 3
@@ -69,11 +69,11 @@ No more than
 .Fa maxsize
 characters will be placed into the array.
 If the total number of resulting characters, including the terminating
-null character, is not more than
+NUL character, is not more than
 .Fa maxsize ,
 .Fn strftime
 returns the number of characters in the array, not counting the
-terminating null.
+terminating NUL.
 Otherwise, zero is returned.
 .Pp
 Each conversion specification is replaced by the characters as
