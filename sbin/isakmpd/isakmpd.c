@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.21 2000/04/07 22:06:44 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.46 2000/04/07 19:03:25 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.22 2000/05/02 14:36:30 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.49 2000/04/27 17:39:17 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -49,6 +49,7 @@
 #include "conf.h"
 #include "connection.h"
 #include "init.h"
+#include "libcrypto.h"
 #include "log.h"
 #include "timer.h"
 #include "transport.h"
@@ -81,6 +82,9 @@ static int sighupped = 0;
 static int sigusr1ed = 0;
 static char *report_file = "/var/run/isakmpd.report";
 
+/* The default path of the PID file.  */
+static char *pid_file = "/var/run/isakmpd.pid";
+
 /*
  * If we receive a USR2 signal, this flag gets set to show we need to
  * rehash our SA soft expiration timers to a uniform distribution.
@@ -92,9 +96,9 @@ static void
 usage ()
 {
   fprintf (stderr,
-	   "usage: %s [-d] [-c config-file] [-D class=level] [-f fifo] [-n]\n"
-	   "          [-p listen-port] [-P local-port] [-r seed]\n"
-	   "          [-R report-file]\n",
+	   "usage: %s [-d] [-c config-file] [-D class=level] [-f fifo]\n"
+	   "          [-i pid-file] [-n] [-p listen-port] [-P local-port]\n"
+	   "          [-r seed] [-R report-file]\n",
 	   sysdep_progname ());
   exit (1);
 }
@@ -107,7 +111,7 @@ parse_args (int argc, char *argv[])
   int cls, level;
 #endif
 
-  while ((ch = getopt (argc, argv, "c:dD:f:np:P:r:")) != -1) {
+  while ((ch = getopt (argc, argv, "c:dD:f:i:np:P:r:")) != -1) {
     switch (ch) {
     case 'c':
       conf_path = optarg;
@@ -136,6 +140,10 @@ parse_args (int argc, char *argv[])
 
     case 'f':
       ui_fifo = optarg;
+      break;
+
+    case 'i':
+      pid_file = optarg;
       break;
 
     case 'n':
@@ -192,6 +200,9 @@ reinit (void)
 
   /* Reread config file. */
   conf_reinit ();
+
+  /* Try again to link in libcrypto (good if we started without /usr).  */
+  libcrypto_init ();
 
   /* Set timezone */
   tzset ();
@@ -278,6 +289,26 @@ sigusr2 (int sig)
   sigusr2ed = 1;
 }
 
+/* Write pid file.  */
+static void
+write_pid_file (void)
+{
+  FILE *fp;
+
+  /* Ignore errors.  */
+  unlink (pid_file);
+
+  fp = fopen (pid_file, "w");
+  if (fp != NULL)
+    {
+      /* XXX Error checking!  */
+      fprintf (fp, "%d\n", getpid());
+      fclose (fp);
+    }
+  else
+    log_fatal ("main: fopen (\"%s\", \"w\") failed", pid_file);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -295,6 +326,8 @@ main (int argc, char *argv[])
       /* Switch to syslog.  */
       log_to (0);
     }
+  
+  write_pid_file ();
 
   /* Reinitialize on HUP reception.  */
   signal (SIGHUP, sighup);
