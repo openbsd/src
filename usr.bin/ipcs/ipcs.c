@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.9 1999/08/16 16:58:22 millert Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.10 2000/05/01 21:49:40 deraadt Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.10.6.1 1996/06/07 01:53:47 thorpej Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <string.h>
 #include <unistd.h>
 
-int	semconfig __P((int, ...));
 void	usage __P((void));
 
 extern	char *__progname;		/* from crt0.o */
@@ -446,11 +445,6 @@ main(argc, argv)
 			    seminfo.semaem);
 		}
 		if (display & SEMINFO) {
-			if (semconfig(SEM_CONFIG_FREEZE) != 0) {
-				perror("semconfig");
-				fprintf(stderr,
-				    "Can't lock semaphore facility - winging it...\n");
-			}
 			if (kvm_read(kd, symbols[X_SEMA].n_value, &sema,
 			    sizeof(sema)) != sizeof(sema))
 				errx(1, "kvm_read (%s): %s",
@@ -507,8 +501,6 @@ main(argc, argv)
 					printf("\n");
 				}
 			}
-
-			(void) semconfig(SEM_CONFIG_THAW);
 
 			printf("\n");
 		}
