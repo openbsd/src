@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.63 2002/03/19 00:33:18 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.64 2002/03/19 21:22:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -267,9 +267,10 @@ pmap_pte_set(pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 	if (pte && pte < virtual_steal &&
 	    hppa_trunc_page(pte) != (paddr_t)&gateway_page)
 		panic("pmap_pte_set: invalid pte");
-#endif
-	if (!(pte & PTE_PROT(TLB_UNCACHABLE)))
+
+	if (pte && !(pte & PTE_PROT(TLB_UNCACHABLE)))
 		Debugger();
+#endif
 	asm("stwas	%0, 0(%1)"
 	    :: "r" (pte), "r" ((paddr_t)pde + ((va >> 10) & 0xffc)));
 }
