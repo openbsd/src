@@ -1,13 +1,13 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.12 2000/01/09 05:46:53 millert Exp $
+# $OpenBSD: termtypes.master,v 1.13 2000/02/06 07:05:57 millert Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
 #	bug-ncurses@gnu.org
 #
 #	Version 10.2.1
-#	$Date: 2000/01/09 05:46:53 $
+#	Date: 2000/02/06 03:29:26
 #	terminfo syntax
 #
 #	Eric S. Raymond		(current maintainer)
@@ -2012,10 +2012,10 @@ vt520|DEC VT520,
 	if=/usr/share/tabset/vt300, il1=\E[L, ind=\ED, 
 	is2=\E[1;24r\E[24;1H, is3=\E[?67h\E[64;1"p, kbs=\177, 
 	kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A, 
-	kdch1=\E[3~, kf0=\E[29~, kf1=\EOP, kf10=\E[29~, kf2=\EOQ, 
-	kf3=\EOR, kf4=\EOS, kf5=\E[17~, kf6=\E[18~, kf7=\E[19~, 
-	kf8=\E[20~, kf9=\E[21~, kfnd=\E[1~, kich1=\E[2~, knp=\E[6~, 
-	kpp=\E[5~, kslt=\E[4~, 
+	kdch1=\E[3~, kf1=\EOP, kf10=\E[29~, kf2=\EOQ, kf3=\EOR, 
+	kf4=\EOS, kf5=\E[17~, kf6=\E[18~, kf7=\E[19~, kf8=\E[20~, 
+	kf9=\E[21~, kfnd=\E[1~, kich1=\E[2~, knp=\E[6~, kpp=\E[5~, 
+	kslt=\E[4~, 
 	pfx=\EP1;1|%?%{16}%p1%>%t%{0}%e%{21}%p1%>%t%{1}%e%{25}%p1%>%t%{2}%e%{27}%p1%>%t%{3}%e%{30}%p1%>%t%{4}%e%{5}%;%p1%+%d/%p2%s\E\\, 
 	rc=\E8, rev=\E[7m$<2>, rf=/usr/share/tabset/vt300, 
 	ri=\EM, rmacs=\E(B$<4>, rmam=\E[?7l, rmir=\E[4l, 
@@ -2039,10 +2039,10 @@ vt525|DEC VT525,
 	if=/usr/share/tabset/vt300, il1=\E[L, ind=\ED, 
 	is2=\E[1;24r\E[24;1H, is3=\E[?67h\E[64;1"p, kbs=\177, 
 	kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A, 
-	kdch1=\E[3~, kf0=\E[29~, kf1=\EOP, kf10=\E[29~, kf2=\EOQ, 
-	kf3=\EOR, kf4=\EOS, kf5=\E[17~, kf6=\E[18~, kf7=\E[19~, 
-	kf8=\E[20~, kf9=\E[21~, kfnd=\E[1~, kich1=\E[2~, knp=\E[6~, 
-	kpp=\E[5~, kslt=\E[4~, 
+	kdch1=\E[3~, kf1=\EOP, kf10=\E[29~, kf2=\EOQ, kf3=\EOR, 
+	kf4=\EOS, kf5=\E[17~, kf6=\E[18~, kf7=\E[19~, kf8=\E[20~, 
+	kf9=\E[21~, kfnd=\E[1~, kich1=\E[2~, knp=\E[6~, kpp=\E[5~, 
+	kslt=\E[4~, 
 	pfx=\EP1;1|%?%{16}%p1%>%t%{0}%e%{21}%p1%>%t%{1}%e%{25}%p1%>%t%{2}%e%{27}%p1%>%t%{3}%e%{30}%p1%>%t%{4}%e%{5}%;%p1%+%d/%p2%s\E\\, 
 	rc=\E8, rev=\E[7m$<2>, rf=/usr/share/tabset/vt300, 
 	ri=\EM, rmacs=\E(B$<4>, rmam=\E[?7l, rmir=\E[4l, 
@@ -2312,18 +2312,19 @@ xterm-xf86-v333|xterm terminal emulator (XFree86 3.3.3 Window System),
 xterm-xf86-v40|xterm terminal emulator (XFree86 4.0 Window System), 
 	kDC=\E[3;5~, kEND=\EO5F, kHOM=\EO5H, kIC=\E[2;5~, 
 	kLFT=\EO5D, kNXT=\E[6;5~, kPRV=\E[5;5~, kRIT=\EO5C, ka1@, 
-	ka3@, kb2=\EOE, kc1@, kc3@, kdch1=\177, kend=\EOF, kf13=\EO2P, 
-	kf14=\EO2Q, kf15=\EO2R, kf16=\EO2S, kf17=\E[15;2~, 
-	kf18=\E[17;2~, kf19=\E[18;2~, kf20=\E[19;2~, 
-	kf21=\E[20;2~, kf22=\E[21;2~, kf23=\E[23;2~, 
-	kf24=\E[24;2~, kf25=\EO5P, kf26=\EO5Q, kf27=\EO5R, 
-	kf28=\EO5S, kf29=\E[15;5~, kf30=\E[17;5~, kf31=\E[18;5~, 
-	kf32=\E[19;5~, kf33=\E[20;5~, kf34=\E[21;5~, 
-	kf35=\E[23;5~, kf36=\E[24;5~, kf37=\EO6P, kf38=\EO6Q, 
-	kf39=\EO6R, kf40=\EO6S, kf41=\E[15;6~, kf42=\E[17;6~, 
-	kf43=\E[18;6~, kf44=\E[19;6~, kf45=\E[20;6~, 
-	kf46=\E[21;6~, kf47=\E[23;6~, kf48=\E[24;6~, khome=\EOH, 
-	rmcup=\E[?1049l, smcup=\E[?1049h, 
+	ka3@, kb2=\EOE, kc1@, kc3@, kcbt=\E[Z, kdch1=\E[3~, kend=\EOF, 
+	kf13=\EO2P, kf14=\EO2Q, kf15=\EO2R, kf16=\EO2S, 
+	kf17=\E[15;2~, kf18=\E[17;2~, kf19=\E[18;2~, 
+	kf20=\E[19;2~, kf21=\E[20;2~, kf22=\E[21;2~, 
+	kf23=\E[23;2~, kf24=\E[24;2~, kf25=\EO5P, kf26=\EO5Q, 
+	kf27=\EO5R, kf28=\EO5S, kf29=\E[15;5~, kf30=\E[17;5~, 
+	kf31=\E[18;5~, kf32=\E[19;5~, kf33=\E[20;5~, 
+	kf34=\E[21;5~, kf35=\E[23;5~, kf36=\E[24;5~, kf37=\EO6P, 
+	kf38=\EO6Q, kf39=\EO6R, kf40=\EO6S, kf41=\E[15;6~, 
+	kf42=\E[17;6~, kf43=\E[18;6~, kf44=\E[19;6~, 
+	kf45=\E[20;6~, kf46=\E[21;6~, kf47=\E[23;6~, 
+	kf48=\E[24;6~, khome=\EOH, rmcup=\E[?1049l, 
+	smcup=\E[?1049h, 
 	use=xterm-xf86-v333, 
 
 xterm-xfree86|xterm-new|xterm terminal emulator (XFree86 4.0 Window System), 
@@ -2573,7 +2574,7 @@ rxvt-basic|rxvt terminal base (X Window System),
 	kPRV=\E[5$, kRIT=\E[c, ka1=\EOw, ka3=\EOy, kb2=\EOu, kbs=^H, 
 	kc1=\EOq, kc3=\EOs, kcbt=\E[Z, kcub1=\E[D, kcud1=\E[B, 
 	kcuf1=\E[C, kcuu1=\E[A, kdch1=\E[3~, kel=\E[8\^, 
-	kend=\E[8~, kent=\EOM, kf0=\E[21~, kf1=\E[11~, kf10=\E[21~, 
+	kend=\E[8~, kent=\EOM, kf1=\E[11~, kf10=\E[21~, 
 	kf11=\E[23~, kf12=\E[24~, kf13=\E[25~, kf14=\E[26~, 
 	kf15=\E[28~, kf16=\E[29~, kf17=\E[31~, kf18=\E[32~, 
 	kf19=\E[33~, kf2=\E[12~, kf20=\E[34~, kf3=\E[13~, 
@@ -11151,20 +11152,19 @@ ibm5151|wy60-AT|wyse60-AT|IBM 5151 Monochrome display,
 	indn=\E[%p1%dS, invis=\E[8m, is2=\Ec, kbs=^H, kcbt=\E[Z, 
 	kclr=\E[144q, kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, 
 	kcuu1=\E[A, kdch1=\E[P, ked=\E[148q, kel=\E[142q, 
-	kend=\E[146q, kf0=\E[010q, kf1=\E[001q, kf10=\E[010q, 
-	kf11=\E[011q, kf12=\E[012q, kf13=\E[013q, kf14=\E[014q, 
-	kf15=\E[015q, kf16=\E[016q, kf17=\E[017q, kf18=\E[018q, 
-	kf19=\E[019q, kf2=\E[002q, kf20=\E[020q, kf21=\E[021q, 
-	kf22=\E[022q, kf23=\E[023q, kf24=\E[024q, kf25=\E[025q, 
-	kf26=\E[026q, kf27=\E[027q, kf28=\E[028q, kf29=\E[029q, 
-	kf3=\E[003q, kf30=\E[030q, kf31=\E[031q, kf32=\E[032q, 
-	kf33=\E[033q, kf34=\E[034q, kf35=\E[035q, kf36=\E[036q, 
-	kf4=\E[004q, kf5=\E[005q, kf6=\E[006q, kf7=\E[007q, 
-	kf8=\E[008q, kf9=\E[009q, khome=\E[H, kich1=\E[139q, 
-	kil1=\E[140q, kind=\E[151q, knp=\E[154q, kpp=\E[150q, 
-	kri=\E[155q, krmir=\E[4l, rc=\E[u, rev=\E[7m, ri=\E[T, 
-	rin=\E[%p1%dT, rmir=\E[4l, rmso=\E[m, rmul=\E[m, rs2=\Ec, 
-	sc=\E[s, 
+	kend=\E[146q, kf1=\E[001q, kf10=\E[010q, kf11=\E[011q, 
+	kf12=\E[012q, kf13=\E[013q, kf14=\E[014q, kf15=\E[015q, 
+	kf16=\E[016q, kf17=\E[017q, kf18=\E[018q, kf19=\E[019q, 
+	kf2=\E[002q, kf20=\E[020q, kf21=\E[021q, kf22=\E[022q, 
+	kf23=\E[023q, kf24=\E[024q, kf25=\E[025q, kf26=\E[026q, 
+	kf27=\E[027q, kf28=\E[028q, kf29=\E[029q, kf3=\E[003q, 
+	kf30=\E[030q, kf31=\E[031q, kf32=\E[032q, kf33=\E[033q, 
+	kf34=\E[034q, kf35=\E[035q, kf36=\E[036q, kf4=\E[004q, 
+	kf5=\E[005q, kf6=\E[006q, kf7=\E[007q, kf8=\E[008q, 
+	kf9=\E[009q, khome=\E[H, kich1=\E[139q, kil1=\E[140q, 
+	kind=\E[151q, knp=\E[154q, kpp=\E[150q, kri=\E[155q, 
+	krmir=\E[4l, rc=\E[u, rev=\E[7m, ri=\E[T, rin=\E[%p1%dT, 
+	rmir=\E[4l, rmso=\E[m, rmul=\E[m, rs2=\Ec, sc=\E[s, 
 	sgr=\E[%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p6%t;1%;%?%p7%t;8%;m, 
 	sgr0=\E[0m, smir=\E[4h, smso=\E[7m, smul=\E[4m, 
 
@@ -17493,6 +17493,12 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 #	* add entries for xterm-hp, xterm-vt220, xterm-vt52 and xterm-noapp -TD
 #	* change OTrs capabilities to rs2 -TD
 #	* add obsolete and extended capabilities to 'screen' -TD
+#
+# 2000/1/5
+#	* remove kf0 from rxvt, vt520, vt525 and ibm5151 since it conflicts
+#	  with kf10 -TD
+#	* updated xterm-xf86-v40, making kdch1 correspond to vt220 'Remove',
+#	  and adding kcbt -TD
 #
 # The following sets edit modes for GNU EMACS.
 # Local Variables:
