@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.21 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.22 2004/12/22 17:18:51 millert Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -192,7 +192,6 @@ void	print_value_quoted(const char *);
 void	print_columns(struct shf *, int, char *(*)(void *, int, char *, int),
     void *, int, int prefcol);
 int	strip_nuls(char *, int);
-char	*str_zcpy(char *, const char *, int);
 int	blocking_read(int, char *, int);
 int	reset_nonblock(int);
 char	*ksh_get_wd(char *, int);

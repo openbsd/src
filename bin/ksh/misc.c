@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.25 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.26 2004/12/22 17:18:51 millert Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -1114,23 +1114,6 @@ strip_nuls(char *buf, int nbytes)
 		return dst - buf;
 	}
 	return nbytes;
-}
-
-/* Copy at most dsize-1 bytes from src to dst, ensuring dst is null terminated.
- * Returns dst.
- */
-char *
-str_zcpy(char *dst, const char *src, int dsize)
-{
-	if (dsize > 0) {
-		int len = strlen(src);
-
-		if (len >= dsize)
-			len = dsize - 1;
-		memcpy(dst, src, len);
-		dst[len] = '\0';
-	}
-	return dst;
 }
 
 /* Like read(2), but if read fails due to non-blocking flag, resets flag
