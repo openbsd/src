@@ -15,7 +15,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 .\" SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.1,v 1.16 2003/02/19 22:11:42 millert Exp $
+.\" $OpenBSD: crontab.1,v 1.17 2003/02/20 17:28:29 millert Exp $
 .\"
 .Dd June 8, 1999
 .Dt CRONTAB 1
@@ -52,17 +52,17 @@ named file, or standard input if the pseudo-filename
 is given.
 .Pp
 If the
-.Pa /var/cron/at.allow
+.Pa /var/cron/cron.allow
 file exists, then you must be listed therein in order to use
 .Nm crontab .
 If the
-.Pa /var/cron/at.allow
+.Pa /var/cron/cron.allow
 file does not exist but the
-.Pa /var/cron/at.deny
+.Pa /var/cron/cron.deny
 file does exist, then you must
 .Em not
 be listed in the
-.Pa /var/cron/at.deny
+.Pa /var/cron/cron.deny
 file in order to use
 .Nm crontab .
 If neither of these files exists, then
@@ -72,9 +72,9 @@ will be allowed to use
 or all users will be able to use it.
 .Em NOTE :
 if they exist,
-.Pa /var/cron/at.allow
+.Pa /var/cron/cron.allow
 and
-.Pa /var/cron/at.deny
+.Pa /var/cron/cron.deny
 must be readable by group crontab.
 If
 .Nm
@@ -119,10 +119,10 @@ After you exit from the editor, the modified
 will be installed automatically.
 .El
 .Sh FILES
-.Bl -tag -width "/var/cron/at.allow" -compact
-.It Pa /var/cron/at.allow
+.Bl -tag -width "/var/cron/cron.allow" -compact
+.It Pa /var/cron/cron.allow
 list of users allowed to use crontab
-.It Pa /var/cron/at.deny
+.It Pa /var/cron/cron.deny
 list of users prohibited from using crontab
 .It Pa /var/cron/tabs
 directory of individual crontabs
