@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.75 2001/08/07 14:19:44 heko Exp $
+.\"	$OpenBSD: options.4,v 1.76 2001/08/07 18:58:42 heko Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -946,6 +946,24 @@ Default value is 1024 on most ports.
 See
 .Pa /usr/include/machine/vmparam.h
 for the default.
+.It Cd option SEMMNI=value
+Number of semaphore identifiers (also called semaphore handles
+and semaphore sets) available in the system. Default value is 10.
+The kernel allocates memory for the control structures at startup,
+so you should avoid arbitrarily large values. 
+.It Cd option SEMMNS=value
+Maximum number of semaphores in all sets in the system. Default
+value is 60. Cannot be greater than the SEMMNI value.
+.It Cd option SEMMNU=value
+Maximum number of semaphore undo structures in the system.
+Default value is 30. 
+.It Cd option SEMUME=value
+Maximum number of per-process undo operation entries in the 
+system. Semaphore undo operations are invoked by the kernel
+when
+.Xr semop 2
+is called with the SEM_UNDO flag and the process holding
+the semaphores terminates unexpectedly. Default value is 10.
 .El
 .Ss Operation Related Options
 .Bl -ohang
