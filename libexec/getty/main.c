@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.5 1996/12/10 07:58:34 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.6 1996/12/17 19:33:53 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -316,12 +316,16 @@ main(argc, argv)
 				tmode.c_iflag |= ICRNL;
 				tmode.c_oflag |= ONLCR;
 			}
-#if XXX
-			if (upper || UC)
-				tmode.sg_flags |= LCASE;
-			if (lower || LC)
-				tmode.sg_flags &= ~LCASE;
-#endif
+			if (upper || UC) {
+				tmode.c_iflag |= IUCLC;
+				tmode.c_oflag |= OLCUC;
+				tmode.c_lflag |= XCASE;
+			}
+			if (lower || LC) {
+				tmode.c_iflag &= ~IUCLC;
+				tmode.c_oflag &= ~OLCUC;
+				tmode.c_lflag &= ~XCASE;
+			}
 			if (tcsetattr(0, TCSANOW, &tmode) < 0) {
 				syslog(LOG_ERR, "%s: %m", ttyn);
 				exit(1);
