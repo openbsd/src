@@ -91,6 +91,7 @@
 ./etc/remote
 ./etc/rmt
 ./etc/rpc
+./etc/rtadvd.conf
 ./etc/security
 ./etc/sendmail.cf
 ./etc/services
