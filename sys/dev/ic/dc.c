@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.34 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: dc.c,v 1.35 2001/12/06 05:42:12 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1587,7 +1587,7 @@ void dc_attach(sc)
 	struct dc_softc *sc;
 {
 	struct ifnet		*ifp;
-	int			error = 0, mac_offset, tmp;
+	int			error = 0, mac_offset, tmp, i;
 
 	/*
 	 * Get station address from the EEPROM.
@@ -1624,20 +1624,62 @@ void dc_attach(sc)
 		break;
 	}
 
+	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct dc_list_data),
+	    PAGE_SIZE, 0, sc->sc_listseg, 1, &sc->sc_listnseg,
+	    BUS_DMA_NOWAIT) != 0) {
+		printf(": can't alloc list mem\n");
+		goto fail;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, sc->sc_listseg, sc->sc_listnseg,
+	    sizeof(struct dc_list_data), &sc->sc_listkva,
+	    BUS_DMA_NOWAIT) != 0) {
+		printf(": can't map list mem\n");
+		goto fail;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct dc_list_data), 1,
+	    sizeof(struct dc_list_data), 0, BUS_DMA_NOWAIT,
+	    &sc->sc_listmap) != 0) {
+		printf(": can't alloc list map\n");
+		goto fail;
+	}
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_listmap, sc->sc_listkva,
+	    sizeof(struct dc_list_data), NULL, BUS_DMA_NOWAIT) != 0) {
+		printf(": can't load list map\n");
+		goto fail;
+	}
+	sc->dc_ldata = (struct dc_list_data *)sc->sc_listkva;
+	bzero(sc->dc_ldata, sizeof(struct dc_list_data));
+
+	for (i = 0; i < DC_TX_LIST_CNT; i++) {
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
+		    BUS_DMA_NOWAIT, &sc->sc_txsd[i].sd_map) != 0) {
+			printf(": tx dmamap create failed\n");
+			goto fail;
+		}
+		sc->sc_txsd[i].sd_mbuf = NULL;
+		if (i == DC_TX_LIST_CNT - 1)
+			sc->sc_txsd[i].sd_next = sc->sc_txsd;
+		else
+			sc->sc_txsd[i].sd_next = sc->sc_txsd + (i + 1);
+	}
+
+	for (i = 0; i < DC_RX_LIST_CNT; i++) {
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
+		    BUS_DMA_NOWAIT, &sc->sc_rxsd[i].sd_map) != 0) {
+			printf(": rx dmamap create failed\n");
+			goto fail;
+		}
+		sc->sc_rxsd[i].sd_mbuf = NULL;
+		if (i == DC_RX_LIST_CNT - 1)
+			sc->sc_rxsd[i].sd_next = sc->sc_rxsd;
+		else
+			sc->sc_rxsd[i].sd_next = sc->sc_rxsd + (i + 1);
+	}
+
 	/*
 	 * A 21143 or clone chip was detected. Inform the world.
 	 */
 	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
-
-	sc->dc_ldata_ptr = malloc(sizeof(struct dc_list_data), M_DEVBUF,
-				M_NOWAIT);
-	if (sc->dc_ldata_ptr == NULL) {
-		printf("%s: no memory for list buffers!\n", sc->dc_unit);
-		goto fail;
-	}
-
-	sc->dc_ldata = (struct dc_list_data *)sc->dc_ldata_ptr;
-	bzero(sc->dc_ldata, sizeof(struct dc_list_data));
 
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
@@ -1762,20 +1804,22 @@ int dc_list_tx_init(sc)
 	struct dc_chain_data	*cd;
 	struct dc_list_data	*ld;
 	int			i;
+	bus_addr_t		next;
 
 	cd = &sc->dc_cdata;
 	ld = sc->dc_ldata;
 	for (i = 0; i < DC_TX_LIST_CNT; i++) {
-		if (i == (DC_TX_LIST_CNT - 1)) {
-			ld->dc_tx_list[i].dc_next =
-			    vtophys(&ld->dc_tx_list[0]);
-		} else {
-			ld->dc_tx_list[i].dc_next =
-			    vtophys(&ld->dc_tx_list[i + 1]);
-		}
+		next = sc->sc_listmap->dm_segs[0].ds_addr;
+		if (i == (DC_TX_LIST_CNT - 1))
+			next +=
+			    offsetof(struct dc_list_data, dc_tx_list[0]);
+		else
+			next +=
+			    offsetof(struct dc_list_data, dc_tx_list[i + 1]);
 		cd->dc_tx_chain[i] = NULL;
 		ld->dc_tx_list[i].dc_data = 0;
 		ld->dc_tx_list[i].dc_ctl = 0;
+		ld->dc_tx_list[i].dc_next = next;
 	}
 
 	cd->dc_tx_prod = cd->dc_tx_cons = cd->dc_tx_cnt = 0;
@@ -1795,6 +1839,7 @@ int dc_list_rx_init(sc)
 	struct dc_chain_data	*cd;
 	struct dc_list_data	*ld;
 	int			i;
+	bus_addr_t		next;
 
 	cd = &sc->dc_cdata;
 	ld = sc->dc_ldata;
@@ -1802,13 +1847,14 @@ int dc_list_rx_init(sc)
 	for (i = 0; i < DC_RX_LIST_CNT; i++) {
 		if (dc_newbuf(sc, i, NULL) == ENOBUFS)
 			return(ENOBUFS);
-		if (i == (DC_RX_LIST_CNT - 1)) {
-			ld->dc_rx_list[i].dc_next =
-			    vtophys(&ld->dc_rx_list[0]);
-		} else {
-			ld->dc_rx_list[i].dc_next =
-			    vtophys(&ld->dc_rx_list[i + 1]);
-		}
+		next = sc->sc_listmap->dm_segs[0].ds_addr;
+		if (i == (DC_RX_LIST_CNT - 1))
+			next +=
+			    offsetof(struct dc_list_data, dc_rx_list[0]);
+		else
+			next +=
+			    offsetof(struct dc_list_data, dc_rx_list[i + 1]);
+		ld->dc_rx_list[i].dc_next = next;
 	}
 
 	cd->dc_rx_prod = 0;
@@ -2688,8 +2734,10 @@ void dc_init(xsc)
 	/*
 	 * Load the address of the RX list.
 	 */
-	CSR_WRITE_4(sc, DC_RXADDR, vtophys(&sc->dc_ldata->dc_rx_list[0]));
-	CSR_WRITE_4(sc, DC_TXADDR, vtophys(&sc->dc_ldata->dc_tx_list[0]));
+	CSR_WRITE_4(sc, DC_RXADDR, sc->sc_listmap->dm_segs[0].ds_addr +
+	    offsetof(struct dc_list_data, dc_rx_list[0]));
+	CSR_WRITE_4(sc, DC_TXADDR, sc->sc_listmap->dm_segs[0].ds_addr +
+	    offsetof(struct dc_list_data, dc_tx_list[0]));
 
 	/*
 	 * Enable interrupts.

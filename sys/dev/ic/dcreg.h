@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.14 2001/06/23 22:03:07 fgsch Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.15 2001/12/06 05:42:12 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -669,6 +669,14 @@ struct dc_mii_frame {
 
 /* End of PNIC specific registers */
 
+/* software descriptor */
+struct dc_swdesc {
+	bus_dmamap_t		sd_map;
+	struct mbuf *		sd_mbuf;
+	struct dc_swdesc *	sd_next;
+};
+
+
 struct dc_softc {
 	struct device		sc_dev;
 	void			*sc_ih;
@@ -695,7 +703,6 @@ struct dc_softc {
 	u_int8_t		*dc_srom;
 	struct dc_mediainfo	*dc_mi;
 	struct dc_list_data	*dc_ldata;
-	caddr_t			dc_ldata_ptr;
 	struct dc_chain_data	dc_cdata;
 	u_int32_t		dc_csid;
 	u_int			dc_revision;
@@ -703,6 +710,13 @@ struct dc_softc {
 #ifdef SRM_MEDIA
 	int			dc_srm_media;
 #endif
+	bus_dma_tag_t		sc_dmat;
+	bus_dmamap_t		sc_listmap;
+	bus_dma_segment_t	sc_listseg[1];
+	int			sc_listnseg;
+	caddr_t			sc_listkva;
+	struct dc_swdesc	sc_txsd[DC_TX_LIST_CNT];
+	struct dc_swdesc	sc_rxsd[DC_RX_LIST_CNT];
 };
 
 #define DC_TX_POLL		0x00000001

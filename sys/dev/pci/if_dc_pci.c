@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.19 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.20 2001/12/06 05:42:12 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -190,6 +190,7 @@ void dc_pci_attach(parent, self, aux)
 	int			found = 0;
 
 	s = splimp();
+	sc->sc_dmat = pa->pa_dmat;
 	sc->dc_unit = sc->sc_dev.dv_unit;
 
 	/*
