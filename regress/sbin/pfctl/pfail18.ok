@@ -1,4 +1,5 @@
 stdin:6: queue toads has no parent
+stdin:6: errors in queue definition
 altq on lo0 cbq bandwidth 10Mb tbrsize 1824 queue { frenchs eat frogs }
 queue frenchs bandwidth 30% cbq( default ) 
 queue eat bandwidth 30% 
