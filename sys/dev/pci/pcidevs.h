@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.121 1999/02/20 19:00:09 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.122 1999/02/23 22:40:55 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -507,10 +507,12 @@
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_STB2	0x12d2		/* NVidia/SGS-Thomson */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
+#define	PCI_VENDOR_DELTA	0x1500		/* Delta */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd ID) */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd ID) */
+#define	PCI_VENDOR_ADDTRON	0x4033		/* Addtron */
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_BUSLOGIC2	0x4b10		/* Buslogic (2nd ID) */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
@@ -572,6 +574,10 @@
 
 /* Accton products */
 #define	PCI_PRODUCT_ACCTON_5030	0x1211		/* MPX 5030/5038 */
+
+/* Addtron products */
+#define	PCI_PRODUCT_ADDTRON_8139	0x1360		/* 8139 */
+#define	PCI_PRODUCT_ADDTRON_RHINEII	0x1320		/* RhineII */
 
 /* Acer products */
 #define	PCI_PRODUCT_ACER_M1435	0x1435		/* M1435 VL-PCI */
@@ -813,6 +819,10 @@
 #define	PCI_PRODUCT_DEC_21152	0x0024		/* DECchip 21152 PCI-PCI */
 #define	PCI_PRODUCT_DEC_21153	0x0025		/* DECchip 21153 PCI-PCI */
 #define	PCI_PRODUCT_DEC_21154	0x0026		/* DECchip 21154 PCI-PCI */
+
+/* Delta Electronics products */
+#define	PCI_PRODUCT_DELTA_8139	0x1360		/* 8139 */
+#define	PCI_PRODUCT_DELTA_RHINEII	0x1320		/* RhineII */
 
 /* Diamond products */
 #define	PCI_PRODUCT_DIAMOND_VIPER	0x9001		/* Viper/PCI */

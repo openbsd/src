@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.121 1999/02/20 19:00:09 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.122 1999/02/23 22:40:55 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -175,6 +175,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Accton Technology",
 	    "MPX 5030/5038",
+	},
+	{
+	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
+	    0,
+	    "Addtron",
+	    "8139",
+	},
+	{
+	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII,
+	    0,
+	    "Addtron",
+	    "RhineII",
 	},
 	{
 	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435,
@@ -1225,6 +1237,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "DEC",
 	    "DECchip 21154 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
+	    0,
+	    "Delta",
+	    "8139",
+	},
+	{
+	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII,
+	    0,
+	    "Delta",
+	    "RhineII",
 	},
 	{
 	    PCI_VENDOR_DIAMOND, PCI_PRODUCT_DIAMOND_VIPER,
@@ -5799,6 +5823,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_DELTA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Delta",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_SYMPHONY2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Symphony Labs (2nd ID)",
@@ -5820,6 +5850,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AVANCE2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Avance Logic (2nd ID)",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ADDTRON, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Addtron",
 	    NULL,
 	},
 	{
