@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.35 2000/07/14 20:27:32 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.36 2000/07/25 18:03:03 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1314,13 +1314,11 @@ findzs(zs)
 				panic("findzs: no obio node");
 			node = firstchild(node);
 		}
-		printf("[zs%d]", zs);
 		while ((node = findnode(node, "zs")) != 0) {
 			if (getpropint(node, "slave", -1) == zs)
 				return ((void *)getpropint(node, "address", 0));
 			node = nextsibling(node);
 		}
-		printf("huh");
 		return (NULL);
 	}
 #endif
