@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdvar.h,v 1.6 1997/02/03 04:47:43 downsj Exp $	*/
+/*	$OpenBSD: hdvar.h,v 1.1 1997/02/03 08:11:55 downsj Exp $	*/
 /*	$NetBSD: rdvar.h,v 1.6 1997/01/30 09:14:19 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  *	@(#)rdvar.h	8.1 (Berkeley) 6/10/93
  */
 
-struct	rdidentinfo {
+struct	hdidentinfo {
 	short	ri_hwid;		/* 2 byte HW id */
 	short	ri_maxunum;		/* maximum allowed unit number */
 	char	*ri_desc;		/* drive type description */
@@ -53,15 +53,15 @@ struct	rdidentinfo {
 	int	ri_nblocks;		/* DEV_BSIZE blocks on disk */
 };
 
-struct rdstats {
-	long	rdretries;
-	long	rdresets;
-	long	rdtimeouts;
-	long	rdpolltries;
-	long	rdpollwaits;
+struct hdstats {
+	long	hdretries;
+	long	hdresets;
+	long	hdtimeouts;
+	long	hdpolltries;
+	long	hdpollwaits;
 };
 
-struct	rd_softc {
+struct	hd_softc {
 	struct	device sc_dev;
 	struct	disk sc_dkdev;
 	int	sc_slave;		/* HP-IB slave */
@@ -70,37 +70,37 @@ struct	rd_softc {
 	short	sc_type;
 	char	*sc_addr;
 	int	sc_resid;
-	struct	rd_describe sc_rddesc;
+	struct	hd_describe sc_hddesc;
 	struct	hpibqueue sc_hq;	/* hpib job queue entry */
-	struct	rd_iocmd sc_ioc;
-	struct	rd_rscmd sc_rsc;
-	struct	rd_stat sc_stat;
-	struct	rd_ssmcmd sc_ssmc;
-	struct	rd_srcmd sc_src;
-	struct	rd_clearcmd sc_clear;
+	struct	hd_iocmd sc_ioc;
+	struct	hd_rscmd sc_rsc;
+	struct	hd_stat sc_stat;
+	struct	hd_ssmcmd sc_ssmc;
+	struct	hd_srcmd sc_src;
+	struct	hd_clearcmd sc_clear;
 	struct	buf sc_tab;		/* buffer queue */
-	struct	rdstats sc_stats;
+	struct	hdstats sc_stats;
 };
 
 /* sc_flags values */
-#define	RDF_ALIVE	0x01
-#define	RDF_SEEK	0x02
-#define RDF_SWAIT	0x04
-#define RDF_OPENING	0x08
-#define RDF_CLOSING	0x10
-#define RDF_WANTED	0x20
-#define RDF_WLABEL	0x40
+#define	HDF_ALIVE	0x01
+#define	HDF_SEEK	0x02
+#define HDF_SWAIT	0x04
+#define HDF_OPENING	0x08
+#define HDF_CLOSING	0x10
+#define HDF_WANTED	0x20
+#define HDF_WLABEL	0x40
 
-#define	rdunit(x)	(minor(x) >> 3)
-#define rdpart(x)	(minor(x) & 0x7)
-#define	rdpunit(x)	((x) & 7)
-#define rdlabdev(d)	(dev_t)(((int)(d)&~7)|2)	/* rd?c */
+#define	hdunit(x)	(minor(x) >> 3)
+#define hdpart(x)	(minor(x) & 0x7)
+#define	hdpunit(x)	((x) & 7)
+#define hdlabdev(d)	(dev_t)(((int)(d)&~7)|2)	/* hd?c */
 
 #define	b_cylin		b_resid
 
-#define	RDRETRY		5
-#define RDWAITC		1	/* min time for timeout in seconds */
+#define	HDRETRY		5
+#define HDWAITC		1	/* min time for timeout in seconds */
 
 #ifdef _KERNEL
-extern	struct rdidentinfo rdidentinfo[];
+extern	struct hdidentinfo hdidentinfo[];
 #endif

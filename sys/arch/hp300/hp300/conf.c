@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 1997/02/03 04:47:55 downsj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.12 1997/02/03 08:12:00 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.34 1996/12/17 08:41:20 thorpej Exp $	*/
 
 /*-
@@ -48,8 +48,8 @@
 bdev_decl(ct);
 #include "mt.h"
 bdev_decl(mt);
-#include "rd.h"
-bdev_decl(rd);
+#include "hd.h"
+bdev_decl(hd);
 bdev_decl(sw);
 #include "sd.h"
 bdev_decl(sd);
@@ -64,7 +64,7 @@ struct bdevsw	bdevsw[] =
 {
 	bdev_tape_init(NCT,ct),		/* 0: cs80 cartridge tape */
 	bdev_tape_init(NMT,mt),		/* 1: magnetic reel tape */
-	bdev_disk_init(NRD,rd),		/* 2: HPIB disk */
+	bdev_disk_init(NHD,hd),		/* 2: HPIB disk */
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_disk_init(NCCD,ccd),	/* 5: concatenated disk driver */
@@ -115,7 +115,7 @@ cdev_decl(ptc);
 cdev_decl(log);
 cdev_decl(ct);
 cdev_decl(sd);
-cdev_decl(rd);
+cdev_decl(hd);
 #include "grf.h"
 cdev_decl(grf);
 #include "ppi.h"
@@ -158,7 +158,7 @@ struct cdevsw	cdevsw[] =
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_tape_init(NCT,ct),		/* 7: cs80 cartridge tape */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
-	cdev_disk_init(NRD,rd),		/* 9: HPIB disk */
+	cdev_disk_init(NHD,hd),		/* 9: HPIB disk */
 	cdev_grf_init(NGRF,grf),	/* 10: frame buffer */
 	cdev_ppi_init(NPPI,ppi),	/* 11: printer/plotter interface */
 	cdev_tty_init(NDCA,dca),	/* 12: built-in single-port serial */

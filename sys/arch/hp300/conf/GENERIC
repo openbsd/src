@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.12 1997/02/03 04:47:05 downsj Exp $
+#	$OpenBSD: GENERIC,v 1.13 1997/02/03 08:11:52 downsj Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -100,7 +100,7 @@ hpibbus0	at nhpib0
 hpibbus*	at nhpib?
 hpibbus*	at fhpib?
 
-rd*		at hpibbus? slave ? punit ?	# HP-IB disks
+hd*		at hpibbus? slave ? punit ?	# HP-IB disks
 ct*		at hpibbus? slave ? punit ?	# HP-IB cartridge tapes
 mt*		at hpibbus? slave ? punit ?	# HP-IB 9-track tape
 ppi0		at hpibbus0 slave 5 punit 0	# HP-IB plotter

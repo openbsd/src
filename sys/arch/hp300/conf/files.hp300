@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.2 1997/02/03 04:47:08 downsj Exp $
+#	$OpenBSD: files.hp300,v 1.3 1997/02/03 08:11:52 downsj Exp $
 #	$NetBSD: files.hp300,v 1.22 1997/01/30 22:11:19 scottr Exp $
 #
 # hp300-specific configuration info
@@ -119,11 +119,11 @@ attach	mt at hpibbus
 file	arch/hp300/dev/mt.c		mt needs-flag
 major	{mt = 1}
 
-device	rd: disk
-attach	rd at hpibbus
-file	arch/hp300/dev/rd.c		rd needs-flag
-file	arch/hp300/dev/rd_compat.c	rd		# XXX
-major	{rd = 2}
+device	hd: disk
+attach	hd at hpibbus
+file	arch/hp300/dev/hd.c		hd needs-flag
+file	arch/hp300/dev/hd_compat.c	hd		# XXX
+major	{hd = 2}
 
 device	ppi
 attach	ppi at hpibbus

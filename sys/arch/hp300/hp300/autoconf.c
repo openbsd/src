@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.10 1997/02/03 04:47:54 downsj Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.11 1997/02/03 08:11:59 downsj Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.31 1997/01/31 01:49:41 thorpej Exp $	*/
 
 /*
@@ -355,7 +355,7 @@ device_register(dev, aux)
 		goto linkup;
 	}
 
-	if (bcmp(dev->dv_xname, "rd", 2) == 0) {
+	if (bcmp(dev->dv_xname, "hd", 2) == 0) {
 		struct hpibbus_attach_args *ha = aux;
 
 		dd->dd_slave = ha->ha_slave;
@@ -421,7 +421,7 @@ struct nam2blk {
 	int maj;
 } nam2blk[] = {
 	{ "ct",		0 },
-	{ "rd",		2 },
+	{ "hd",		2 },
 	{ "sd",		4 },
 };
 
@@ -838,7 +838,7 @@ findbootdev()
 	punit = B_UNIT(bootdev);
 
 	scsiboot = (type == 4);			/* sd major */
-	hpibboot = (type == 0 || type == 2);	/* ct/rd major */
+	hpibboot = (type == 0 || type == 2);	/* ct/hd major */
 	netboot  = (type == 6);			/* le - special */
 
 	/*
@@ -877,7 +877,7 @@ findbootdev()
 		 * Sanity check.
 		 */
 		if ((type == 0 && bcmp(booted_device->dv_xname, "ct", 2)) ||
-		    (type == 2 && bcmp(booted_device->dv_xname, "rd", 2))) {
+		    (type == 2 && bcmp(booted_device->dv_xname, "hd", 2))) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
@@ -950,7 +950,7 @@ findbootdev_slave(ddlist, ctlr, slave, punit)
 				continue;
 		} else {
 			/*
-			 * "rd" -> "hpibbus" -> "fhpib"
+			 * "hd" -> "hpibbus" -> "fhpib"
 			 */
 			if (dd->dd_dev->dv_parent->dv_parent != cdd->dd_dev)
 				continue;
@@ -977,7 +977,7 @@ setbootdev()
 	 * Note our magic numbers for type:
 	 *
 	 *	0 == ct
-	 *	2 == rd
+	 *	2 == hd
 	 *	4 == sd
 	 *	6 == le
 	 *
@@ -1006,7 +1006,7 @@ setbootdev()
 	/*
 	 * Determine device type.
 	 */
-	if (bcmp(root_device->dv_xname, "rd", 2) == 0)
+	if (bcmp(root_device->dv_xname, "hd", 2) == 0)
 		type = 2;
 	else if (bcmp(root_device->dv_xname, "sd", 2) == 0)
 		type = 4;
@@ -1022,7 +1022,7 @@ setbootdev()
 	switch (type) {
 	case 2:
 		/*
-		 * "rd" -> "hpibbus" -> "fhpib"
+		 * "hd" -> "hpibbus" -> "fhpib"
 		 */
 		for (cdd = dev_data_list_hpib.lh_first, ctlr = 0;
 		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) {

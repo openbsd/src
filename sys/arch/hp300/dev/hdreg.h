@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdreg.h,v 1.4 1997/01/12 15:13:00 downsj Exp $	*/
+/*	$OpenBSD: hdreg.h,v 1.1 1997/02/03 08:11:55 downsj Exp $	*/
 /*	$NetBSD: rdreg.h,v 1.7 1996/02/09 18:00:37 scottr Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  *	@(#)rdreg.h	8.1 (Berkeley) 6/10/93
  */
 
-struct	rd_iocmd {
+struct	hd_iocmd {
 	char	c_pad;
 	char	c_unit;
 	char	c_volume;
@@ -57,14 +57,14 @@ struct	rd_iocmd {
 	char	c_pad2;
 };
 
-struct	rd_rscmd {
+struct	hd_rscmd {
 	char	c_unit;
 	char	c_sram;
 	char	c_ram;
 	char	c_cmd;
 };
 
-struct	rd_stat {
+struct	hd_stat {
 	char	c_vu;
 	char	c_pend;
 	short	c_ref;
@@ -87,7 +87,7 @@ struct	rd_stat {
 #define c_blk	c_pf.cu_sva.cu_lsl	/* for now */
 #define c_tva	c_pf.cu_tva
 
-struct	rd_ssmcmd {
+struct	hd_ssmcmd {
 	char	c_unit;
 	char	c_cmd;
 	short	c_refm;
@@ -96,19 +96,19 @@ struct	rd_ssmcmd {
 	short	c_iefm;
 };
 
-struct	rd_srcmd {
+struct	hd_srcmd {
 	char	c_unit;
 	char	c_nop;
 	char	c_cmd;
 	char	c_param;
 };
 
-struct	rd_clearcmd {
+struct	hd_clearcmd {
 	char	c_unit;
 	char	c_cmd;
 };
 
-struct rd_describe {
+struct hd_describe {
 	u_int	d_iuw:16,	/* controller: installed unit word */
 		d_cmaxxfr:16,	/* controller: max transfer rate (Kb) */
 		d_ctype:8,	/* controller: controller type */
@@ -133,56 +133,56 @@ struct rd_describe {
  };
 
 /* HW ids */
-#define	RD7946AID	0x220	/* also 7945A */
-#define	RD9134DID	0x221	/* also 9122S */
-#define	RD9134LID	0x222	/* also 9122D */
-#define	RD7912PID	0x209
-#define RD7914CTID	0x20A
-#define	RD7914PID	0x20B
-#define	RD7958AID	0x22B
-#define RD7957AID	0x22A
-#define	RD7933HID	0x212
-#define	RD7936HID	0x213	/* just guessing -- as of yet unknown */
-#define	RD7937HID	0x214
-#define RD7957BID	0x22C	/* another guess based on 7958B */
-#define RD7958BID	0x22D
-#define RD7959BID	0x22E	/* another guess based on 7958B */
-#define RD2200AID	0x22F
-#define RD2203AID	0x230	/* yet another guess */
+#define	HD7946AID	0x220	/* also 7945A */
+#define	HD9134DID	0x221	/* also 9122S */
+#define	HD9134LID	0x222	/* also 9122D */
+#define	HD7912PID	0x209
+#define HD7914CTID	0x20A
+#define	HD7914PID	0x20B
+#define	HD7958AID	0x22B
+#define HD7957AID	0x22A
+#define	HD7933HID	0x212
+#define	HD7936HID	0x213	/* just guessing -- as of yet unknown */
+#define	HD7937HID	0x214
+#define HD7957BID	0x22C	/* another guess based on 7958B */
+#define HD7958BID	0x22D
+#define HD7959BID	0x22E	/* another guess based on 7958B */
+#define HD2200AID	0x22F
+#define HD2203AID	0x230	/* yet another guess */
 
-/* SW ids -- indicies into rdidentinfo, order is arbitrary */
-#define	RD7945A		0
-#define	RD9134D		1
-#define	RD9122S		2
-#define	RD7912P		3
-#define	RD7914P		4
-#define	RD7958A		5
-#define RD7957A		6
-#define	RD7933H		7
-#define	RD9134L		8
-#define	RD7936H		9
-#define	RD7937H		10
-#define RD7914CT	11
-#define RD7946A		12
-#define RD9122D		13
-#define RD7957B		14
-#define RD7958B		15
-#define RD7959B		16
+/* SW ids -- indicies into hdidentinfo, order is arbitrary */
+#define	HD7945A		0
+#define	HD9134D		1
+#define	HD9122S		2
+#define	HD7912P		3
+#define	HD7914P		4
+#define	HD7958A		5
+#define HD7957A		6
+#define	HD7933H		7
+#define	HD9134L		8
+#define	HD7936H		9
+#define	HD7937H		10
+#define HD7914CT	11
+#define HD7946A		12
+#define HD9122D		13
+#define HD7957B		14
+#define HD7958B		15
+#define HD7959B		16
 
-#define	NRD7945ABPT	16
-#define	NRD7945ATRK	7
-#define	NRD9134DBPT	16
-#define	NRD9134DTRK	6
-#define	NRD9122SBPT	8
-#define	NRD9122STRK	2
-#define	NRD7912PBPT	32
-#define	NRD7912PTRK	7
-#define	NRD7914PBPT	32
-#define	NRD7914PTRK	7
-#define	NRD7933HBPT	46
-#define	NRD7933HTRK	13
-#define	NRD9134LBPT	16
-#define	NRD9134LTRK	5
+#define	NHD7945ABPT	16
+#define	NHD7945ATRK	7
+#define	NHD9134DBPT	16
+#define	NHD9134DTRK	6
+#define	NHD9122SBPT	8
+#define	NHD9122STRK	2
+#define	NHD7912PBPT	32
+#define	NHD7912PTRK	7
+#define	NHD7914PBPT	32
+#define	NHD7914PTRK	7
+#define	NHD7933HBPT	46
+#define	NHD7933HTRK	13
+#define	NHD9134LBPT	16
+#define	NHD9134LTRK	5
 
 /*
  * Several HP drives have an odd number of 256 byte sectors per track.
@@ -208,39 +208,39 @@ struct rd_describe {
  * 2200A:	113 x  8 x 1449		113 x  2 x 1449		113 x  4 x 1449
  * 2203A:	113 x 16 x 1449		113 x  4 x 1449		113 x  8 x 1449
  */
-#define	NRD7936HBPT	123
-#define	NRD7936HTRK	7
-#define	NRD7937HBPT	123
-#define	NRD7937HTRK	13
-#define	NRD7957ABPT	22
-#define	NRD7957ATRK	7
-#define	NRD7958ABPT	36
-#define	NRD7958ATRK	7
-#define	NRD7957BBPT	18
-#define	NRD7957BTRK	7
-#define	NRD7958BBPT	42
-#define	NRD7958BTRK	9
-#define	NRD7959BBPT	42
-#define	NRD7959BTRK	9
-#define	NRD2200ABPT	113
-#define	NRD2200ATRK	4
-#define	NRD2203ABPT	113
-#define	NRD2203ATRK	8
+#define	NHD7936HBPT	123
+#define	NHD7936HTRK	7
+#define	NHD7937HBPT	123
+#define	NHD7937HTRK	13
+#define	NHD7957ABPT	22
+#define	NHD7957ATRK	7
+#define	NHD7958ABPT	36
+#define	NHD7958ATRK	7
+#define	NHD7957BBPT	18
+#define	NHD7957BTRK	7
+#define	NHD7958BBPT	42
+#define	NHD7958BTRK	9
+#define	NHD7959BBPT	42
+#define	NHD7959BTRK	9
+#define	NHD2200ABPT	113
+#define	NHD2200ATRK	4
+#define	NHD2203ABPT	113
+#define	NHD2203ATRK	8
 
 /* controller "unit" number */
-#define	RDCTLR		15
+#define	HDCTLR		15
 
 /* convert 512 byte count into DEV_BSIZE count */
-#define RDSZ(x)		((x) >> (DEV_BSHIFT-9))
+#define HDSZ(x)		((x) >> (DEV_BSHIFT-9))
 
 /* convert block number into sector number and back */
-#define	RDBTOS(x)	((x) << (DEV_BSHIFT-8))
-#define RDSTOB(x)	((x) >> (DEV_BSHIFT-8))
+#define	HDBTOS(x)	((x) << (DEV_BSHIFT-8))
+#define HDSTOB(x)	((x) >> (DEV_BSHIFT-8))
 
 /* extract cyl/head/sect info from three-vector address */
-#define RDCYL(tva)	((u_long)(tva).cu_cyhd >> 8)
-#define RDHEAD(tva)	((tva).cu_cyhd & 0xFF)
-#define RDSECT(tva)	((tva).cu_sect)
+#define HDCYL(tva)	((u_long)(tva).cu_cyhd >> 8)
+#define HDHEAD(tva)	((tva).cu_cyhd & 0xFF)
+#define HDSECT(tva)	((tva).cu_sect)
 
 #define	REF_MASK	0x0
 #define	FEF_MASK	0x0
