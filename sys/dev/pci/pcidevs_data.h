@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.523 2002/06/19 21:08:31 jason Exp 
+ *		OpenBSD: pcidevs,v 1.524 2002/06/21 10:15:29 markus Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2295,6 +2295,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/100 VM",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LAN,
+	    "82801DB LAN",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
 	    "82815 Hub",
 	},
@@ -2579,6 +2583,42 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801CAM LPC",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC,
+	    "82801DB LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_1,
+	    "82801DB USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_SMB,
+	    "82801DB SMB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_2,
+	    "82801DB USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_ACA,
+	    "82801DB AC97 Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_ACM,
+	    "82801DB Modem",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_3,
+	    "82801DB USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_IDE,
+	    "82801DB IDE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_4,
+	    "82801DB USB",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH,
 	    "82820 MCH",
 	},
@@ -2613,6 +2653,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI4,
 	    "82860 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G,
+	    "82845G/GL",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_IV,
+	    "82845G/GL Video",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
