@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <ctype.h>
+#include <err.h>
 
 #include "version.h"
 #include "util.h"
@@ -55,11 +56,6 @@
  * Global Constants
  */
 
-
-/*
- * Global Variables
- */
-static char dynamic_version[10];
 
 /*
  * Forward declarations
@@ -130,6 +126,7 @@ const char *
 get_version_string(void)
 {
     int stage;
+    char *dynamic_version;
     /* "copy" of stuff from SysTypes.r, since we can't include that*/
     enum {development = 0x20, alpha = 0x40, beta = 0x60, final = 0x80, /* or */ release = 0x80};
 
@@ -143,19 +140,23 @@ get_version_string(void)
 
     if (kVersionBugFix != 0) {
 	if (kVersionStage == final) {
-	    snprintf(dynamic_version, sizeof dynamic_version, "%d.%d.%d",
-		    kVersionMajor, kVersionMinor, kVersionBugFix);
+	    if (asprintf(&dynamic_version, "%d.%d.%d", kVersionMajor,
+	        kVersionMinor, kVersionBugFix) == -1)
+		    err(1, "asprintf");
 	} else {
-	    snprintf(dynamic_version, sizeof dynamic_version, "%d.%d.%d%c%d",
-		    kVersionMajor, kVersionMinor, kVersionBugFix, stage, kVersionDelta);
+	    if (asprintf(&dynamic_version, "%d.%d.%d%c%d", kVersionMajor,
+	        kVersionMinor, kVersionBugFix, stage, kVersionDelta) == -1)
+		    err(1, "asprintf");
 	}
     } else {
 	if (kVersionStage == final) {
-	    snprintf(dynamic_version, sizeof dynamic_version, "%d.%d",
-		    kVersionMajor, kVersionMinor);
+	    if (asprintf(&dynamic_version, "%d.%d", kVersionMajor,
+	        kVersionMinor) == -1)
+		    err(1, "asprintf");
 	} else {
-	    snprintf(dynamic_version, sizeof dynamic_version, "%d.%d%c%d",
-		    kVersionMajor, kVersionMinor, stage, kVersionDelta);
+	    if (asprintf(&dynamic_version, "%d.%d%c%d", kVersionMajor,
+	        kVersionMinor, stage, kVersionDelta) == -1)
+		    err(1, "asprintf");
 	}
     }
     return dynamic_version;
