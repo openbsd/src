@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.79 2003/02/14 17:17:27 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.80 2003/02/19 12:48:11 henning Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -154,14 +154,14 @@ Flush the tables.
 Flush all of the above.
 .El
 .It Fl k Ar host
-Kill all of the state entries from the specified host.
+Kill all of the state entries originating from the specified host.
 A second
 .Fl k Ar host
 option may be specified, which will kill all the state entries
 from the first host to the second host.
 .Bd -literal -offset indent
 Example:
-Kill all of the state entries from host
+Kill all of the state entries originating from host
 .Ic # pfctl -k host
 .Pp
 Kill all of the state entries from host1 to host2
