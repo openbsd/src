@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.5 2001/08/21 16:19:50 jason Exp $
+#	$OpenBSD: files.sbus,v 1.6 2001/09/30 00:45:17 jason Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -44,3 +44,7 @@ file	dev/sbus/esp_sbus.c		esp_sbus | esp_dma	needs-flag
 
 attach	hme at sbus with hme_sbus
 file	dev/sbus/if_hme_sbus.c		hme_sbus
+
+device	audiocs: audio, auconv
+attach	audiocs at sbus
+file	dev/sbus/cs4231.c		audiocs
