@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.17 2000/07/18 15:17:19 mickey Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.18 2000/08/02 02:21:13 mickey Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -92,7 +92,7 @@
 #define PCISET_INTEL_PCI_BUS_NUMBER(reg)	(((reg) >> 16) & 0xff)
 
 #define PCISET_INTEL_SDRAMC_REG	0x76
-#define PCISET_INTEL_SDRAMC_IPDLT	(1 << 8)  
+#define PCISET_INTEL_SDRAMC_IPDLT	(1 << 8)
 
 /* XXX should be in dev/ic/i82424{reg.var}.h */
 #define I82424_CPU_BCTL_REG		0x53
@@ -354,7 +354,10 @@ pchb_print(aux, pnp)
 	return (UNCONF);
 }
 
-
+/*
+ * Should do FIPS testing as per:
+ *	http://csrc.nist.gov/fips/fips1401.htm
+ */
 void
 pchb_rnd(v)
 	void *v;
