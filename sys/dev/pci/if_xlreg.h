@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xlreg.h,v 1.12 1999/06/29 17:14:36 jason Exp $	*/
+/*	$OpenBSD: if_xlreg.h,v 1.13 1999/09/13 20:11:14 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -539,10 +539,8 @@ struct xl_mii_frame {
 #define XL_FLAG_DELAYTIMEO	3	
 
 struct xl_softc {
-#ifdef __OpenBSD__
 	struct device		sc_dev;		/* generic device structure */
 	void *			sc_ih;		/* interrupt handler cookie */
-#endif
 	struct arpcom		arpcom;		/* interface info */
 	struct ifmedia		ifmedia;	/* media info */
 	bus_space_handle_t	xl_bhandle;
@@ -563,9 +561,6 @@ struct xl_softc {
 	caddr_t			xl_ldata_ptr;
 	struct xl_list_data	*xl_ldata;
 	struct xl_chain_data	xl_cdata;
-#ifdef __FreeBSD__
-	struct callout_handle	xl_stat_ch;
-#endif
 };
 
 #define xl_rx_goodframes(x) \

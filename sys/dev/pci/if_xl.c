@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.27 1999/07/02 17:34:44 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.28 1999/09/13 20:11:13 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xl.c,v 1.41 1999/07/02 04:17:16 peter Exp $
+ * $FreeBSD: if_xl.c,v 1.50 1999/08/02 21:57:57 wpaul Exp $
  */
 
 /*
@@ -103,24 +103,12 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>   /* only for declaration of wakeup() used by vm.h */
-#if defined(__FreeBSD__)
-#include <machine/clock.h>
-#elif defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
-#endif
-
-#if defined(__FreeBSD__)
-
-#include <net/if.h>
-#include <net/if_arp.h>
-#include <net/ethernet.h>
-#include <net/if_dl.h>
-
-#elif defined(__OpenBSD__)
 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -134,26 +122,12 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#endif
-
-#include <net/if_media.h>
-
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
 #include <vm/vm.h>              /* for vtophys */
 #include <vm/pmap.h>            /* for vtophys */
-
-#ifdef __FreeBSD__
-#include "opt_bdg.h"
-#ifdef BRIDGE
-#include <net/bridge.h>
-#endif
-
-#include <pci/pcireg.h>
-#include <pci/pcivar.h>
-#endif
 
 /*
  * The following #define causes the code to use PIO to access the
@@ -187,127 +161,53 @@
  */
 /* #define XL_BACKGROUND_AUTONEG */
 
-#if defined(__FreeBSD__)
-#include <pci/if_xlreg.h>
-#elif defined(__OpenBSD__)
 #include <dev/pci/if_xlreg.h>
-#endif
 
-#if !defined(lint) && !defined(__OpenBSD__)
-static const char rcsid[] =
-	"$FreeBSD: if_xl.c,v 1.41 1999/07/02 04:17:16 peter Exp $";
-#endif
+int xl_probe		__P((struct device *, void *, void *));
+void xl_attach		__P((struct device *, struct device *, void *));
+int xl_intr		__P((void *));
+void xl_shutdown	__P((void *));
 
-#ifdef __FreeBSD__
-/*
- * Various supported device vendors/types and their names.
- */
-static struct xl_type xl_devs[] = {
-	{ TC_VENDORID, TC_DEVICEID_BOOMERANG_10BT,
-		"3Com 3c900-TPO Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_BOOMERANG_10BT_COMBO,
-		"3Com 3c900-COMBO Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_BOOMERANG_10_100BT,
-		"3Com 3c905-TX Fast Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_BOOMERANG_100BT4,
-		"3Com 3c905-T4 Fast Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_KRAKATOA_10BT,
-		"3Com 3c900B-TPO Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_KRAKATOA_10BT_COMBO,
-		"3Com 3c900B-COMBO Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_KRAKATOA_10BT_TPC,
-		"3Com 3c900B-TPC Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10FL,
-		"3Com 3c900B-FL Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_HURRICANE_10_100BT,
-		"3Com 3c905B-TX Fast Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100BT4,
-		"3Com 3c905B-T4 Fast Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100FX,
-		"3Com 3c905B-FX/SC Fast Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100_COMBO,
-		"3Com 3c905B-COMBO Fast Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_TORNADO_10_100BT,
-	        "3Com 3c905C-TX Fast Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_HURRICANE_10_100BT_SERV,
-		"3Com 3c980 Fast Etherlink XL" },
-	{ TC_VENDORID, TC_DEVICEID_HURRICANE_SOHO100TX,
-		"3Com 3cSOHO100-TX OfficeConnect" },
-	{ 0, 0, NULL }
-};
-
-/*
- * Various supported PHY vendors/types and their names. Note that
- * this driver will work with pretty much any MII-compliant PHY,
- * so failure to positively identify the chip is not a fatal error.
- */
-
-static struct xl_type xl_phys[] = {
-	{ TI_PHY_VENDORID, TI_PHY_10BT, "<TI ThunderLAN 10BT (internal)>" },
-	{ TI_PHY_VENDORID, TI_PHY_100VGPMI, "<TI TNETE211 100VG Any-LAN>" },
-	{ NS_PHY_VENDORID, NS_PHY_83840A, "<National Semiconductor DP83840A>"},
-	{ LEVEL1_PHY_VENDORID, LEVEL1_PHY_LXT970, "<Level 1 LXT970>" }, 
-	{ INTEL_PHY_VENDORID, INTEL_PHY_82555, "<Intel 82555>" },
-	{ SEEQ_PHY_VENDORID, SEEQ_PHY_80220, "<SEEQ 80220>" },
-	{ 0, 0, "<MII-compliant physical interface>" }
-};
-#endif
-
-#if defined(__FreeBSD__)
-static unsigned long xl_count = 0;
-static const char *xl_probe	__P((pcici_t, pcidi_t));
-static void xl_attach		__P((pcici_t, int));
-static void xl_intr		__P((void *));
-static void xl_shutdown		__P((int, void *));
-#elif defined(__OpenBSD__)
-static int xl_probe	__P((struct device *, void *, void *));
-static void xl_attach	__P((struct device *, struct device *, void *));
-static int xl_intr		__P((void *));
-static void xl_shutdown		__P((void *));
-#endif
-
-static int xl_newbuf		__P((struct xl_softc *,
-						struct xl_chain_onefrag *));
-static void xl_stats_update	__P((void *));
-static int xl_encap		__P((struct xl_softc *, struct xl_chain *,
+int xl_newbuf		__P((struct xl_softc *, struct xl_chain_onefrag *));
+void xl_stats_update	__P((void *));
+int xl_encap		__P((struct xl_softc *, struct xl_chain *,
 						struct mbuf * ));
 
-static void xl_rxeof		__P((struct xl_softc *));
-static void xl_txeof		__P((struct xl_softc *));
-static void xl_txeoc		__P((struct xl_softc *));
-static void xl_start		__P((struct ifnet *));
-static int xl_ioctl		__P((struct ifnet *, u_long, caddr_t));
-static void xl_init		__P((void *));
-static void xl_stop		__P((struct xl_softc *));
-static void xl_watchdog		__P((struct ifnet *));
-static u_int8_t xl_calchash	__P((caddr_t));
-static void xl_mediacheck	__P((struct xl_softc *));
-static void xl_autoneg_mii	__P((struct xl_softc *, int, int));
-static void xl_setmode_mii	__P((struct xl_softc *, int));
-static void xl_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
-static void xl_getmode_mii	__P((struct xl_softc *));
-static void xl_autoneg_xmit	__P((struct xl_softc *));
-static int xl_ifmedia_upd	__P((struct ifnet *));
-static void xl_setmode		__P((struct xl_softc *, int));
+void xl_rxeof		__P((struct xl_softc *));
+void xl_txeof		__P((struct xl_softc *));
+void xl_txeoc		__P((struct xl_softc *));
+void xl_start		__P((struct ifnet *));
+int xl_ioctl		__P((struct ifnet *, u_long, caddr_t));
+void xl_init		__P((void *));
+void xl_stop		__P((struct xl_softc *));
+void xl_watchdog	__P((struct ifnet *));
+u_int8_t xl_calchash	__P((caddr_t));
+void xl_mediacheck	__P((struct xl_softc *));
+void xl_autoneg_mii	__P((struct xl_softc *, int, int));
+void xl_setmode_mii	__P((struct xl_softc *, int));
+void xl_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+void xl_getmode_mii	__P((struct xl_softc *));
+void xl_autoneg_xmit	__P((struct xl_softc *));
+int xl_ifmedia_upd	__P((struct ifnet *));
+void xl_setmode		__P((struct xl_softc *, int));
 
-static int xl_eeprom_wait	__P((struct xl_softc *));
-static int xl_read_eeprom	__P((struct xl_softc *, caddr_t, int,
-							int, int));
-static void xl_mii_sync		__P((struct xl_softc *));
-static void xl_mii_send		__P((struct xl_softc *, u_int32_t, int));
-static int xl_mii_readreg	__P((struct xl_softc *, struct xl_mii_frame *));
-static int xl_mii_writereg	__P((struct xl_softc *, struct xl_mii_frame *));
-static u_int16_t xl_phy_readreg	__P((struct xl_softc *, int));
-static void xl_phy_writereg	__P((struct xl_softc *, int, int));
+int xl_eeprom_wait	__P((struct xl_softc *));
+int xl_read_eeprom	__P((struct xl_softc *, caddr_t, int, int, int));
+void xl_mii_sync	__P((struct xl_softc *));
+void xl_mii_send	__P((struct xl_softc *, u_int32_t, int));
+int xl_mii_readreg	__P((struct xl_softc *, struct xl_mii_frame *));
+int xl_mii_writereg	__P((struct xl_softc *, struct xl_mii_frame *));
+void xl_phy_writereg	__P((struct xl_softc *, int, int));
+u_int16_t xl_phy_readreg	__P((struct xl_softc *, int));
 
-static void xl_setmulti		__P((struct xl_softc *));
-static void xl_setmulti_hash	__P((struct xl_softc *));
-static void xl_reset		__P((struct xl_softc *));
-static int xl_list_rx_init	__P((struct xl_softc *));
-static int xl_list_tx_init	__P((struct xl_softc *));
-static void xl_wait		__P((struct xl_softc *));
+void xl_setmulti	__P((struct xl_softc *));
+void xl_setmulti_hash	__P((struct xl_softc *));
+void xl_reset		__P((struct xl_softc *));
+int xl_list_rx_init	__P((struct xl_softc *));
+int xl_list_tx_init	__P((struct xl_softc *));
+void xl_wait		__P((struct xl_softc *));
 #ifdef notdef
-static void xl_testpacket	__P((struct xl_softc *));
+void xl_testpacket	__P((struct xl_softc *));
 #endif
 
 /*
@@ -318,19 +218,20 @@ static void xl_testpacket	__P((struct xl_softc *));
  * but it isn't called during normal operation so we can afford
  * to make it a function.
  */
-static void xl_wait(sc)
+void xl_wait(sc)
 	struct xl_softc		*sc;
 {
 	register int		i;
 
 	for (i = 0; i < XL_TIMEOUT; i++) {
-		DELAY(10);
 		if (!(CSR_READ_2(sc, XL_STATUS) & XL_STAT_CMDBUSY))
 			break;
 	}
 
+#ifdef DIAGNOSTIC
 	if (i == XL_TIMEOUT)
 		printf("xl%d: command never completed!\n", sc->xl_unit);
+#endif
 
 	return;
 }
@@ -355,7 +256,7 @@ static void xl_wait(sc)
 /*
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
-static void xl_mii_sync(sc)
+void xl_mii_sync(sc)
 	struct xl_softc		*sc;
 {
 	register int		i;
@@ -376,7 +277,7 @@ static void xl_mii_sync(sc)
 /*
  * Clock a series of bits through the MII.
  */
-static void xl_mii_send(sc, bits, cnt)
+void xl_mii_send(sc, bits, cnt)
 	struct xl_softc		*sc;
 	u_int32_t		bits;
 	int			cnt;
@@ -402,7 +303,7 @@ static void xl_mii_send(sc, bits, cnt)
 /*
  * Read an PHY register through the MII.
  */
-static int xl_mii_readreg(sc, frame)
+int xl_mii_readreg(sc, frame)
 	struct xl_softc		*sc;
 	struct xl_mii_frame	*frame;
 	
@@ -500,7 +401,7 @@ fail:
 /*
  * Write to a PHY register through the MII.
  */
-static int xl_mii_writereg(sc, frame)
+int xl_mii_writereg(sc, frame)
 	struct xl_softc		*sc;
 	struct xl_mii_frame	*frame;
 	
@@ -551,7 +452,7 @@ static int xl_mii_writereg(sc, frame)
 	return(0);
 }
 
-static u_int16_t xl_phy_readreg(sc, reg)
+u_int16_t xl_phy_readreg(sc, reg)
 	struct xl_softc		*sc;
 	int			reg;
 {
@@ -566,7 +467,7 @@ static u_int16_t xl_phy_readreg(sc, reg)
 	return(frame.mii_data);
 }
 
-static void xl_phy_writereg(sc, reg, data)
+void xl_phy_writereg(sc, reg, data)
 	struct xl_softc		*sc;
 	int			reg;
 	int			data;
@@ -588,7 +489,7 @@ static void xl_phy_writereg(sc, reg, data)
  * The EEPROM is slow: give it time to come ready after issuing
  * it a command.
  */
-static int xl_eeprom_wait(sc)
+int xl_eeprom_wait(sc)
 	struct xl_softc		*sc;
 {
 	int			i;
@@ -612,7 +513,7 @@ static int xl_eeprom_wait(sc)
  * Read a sequence of words from the EEPROM. Note that ethernet address
  * data is stored in the EEPROM in network byte order.
  */
-static int xl_read_eeprom(sc, dest, off, cnt, swap)
+int xl_read_eeprom(sc, dest, off, cnt, swap)
 	struct xl_softc		*sc;
 	caddr_t			dest;
 	int			off;
@@ -657,7 +558,7 @@ static int xl_read_eeprom(sc, dest, off, cnt, swap)
  * 256 bit hash table. This means we have to use all 8 bits regardless.
  * On older cards, the upper 2 bits will be ignored. Grrrr....
  */
-static u_int8_t xl_calchash(addr)
+u_int8_t xl_calchash(addr)
 	caddr_t			addr;
 {
 	u_int32_t		crc, carry;
@@ -686,17 +587,13 @@ static u_int8_t xl_calchash(addr)
  * NICs older than the 3c905B have only one multicast option, which
  * is to enable reception of all multicast frames.
  */
-static void xl_setmulti(sc)
+void xl_setmulti(sc)
 	struct xl_softc		*sc;
 {
 	struct ifnet		*ifp;
-#ifdef __FreeBSD__
-	struct ifmultiaddr	*ifma;
-#else
 	struct arpcom *ac = &sc->arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-#endif
 	u_int8_t		rxfilt;
 	int			mcnt = 0;
 
@@ -711,17 +608,11 @@ static void xl_setmulti(sc)
 		return;
 	}
 
-#ifdef __FreeBSD__
-	for (ifma = ifp->if_multiaddrs.lh_first; ifma != NULL;
-				ifma = ifma->ifma_link.le_next)
-		mcnt++;
-#else
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
-#endif
 
 	if (mcnt)
 		rxfilt |= XL_RXFILTER_ALLMULTI;
@@ -736,18 +627,14 @@ static void xl_setmulti(sc)
 /*
  * 3c905B adapters have a hash filter that we can program.
  */
-static void xl_setmulti_hash(sc)
+void xl_setmulti_hash(sc)
 	struct xl_softc		*sc;
 {
 	struct ifnet		*ifp;
 	int			h = 0, i;
-#ifdef __FreeBSD__
-	struct ifmultiaddr	*ifma;
-#else
 	struct arpcom *ac = &sc->arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-#endif
 	u_int8_t		rxfilt;
 	int			mcnt = 0;
 
@@ -769,23 +656,12 @@ static void xl_setmulti_hash(sc)
 		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_HASH|i);
 
 	/* now program new ones */
-#ifdef __FreeBSD__
-	for (ifma = ifp->if_multiaddrs.lh_first; ifma != NULL;
-				ifma = ifma->ifma_link.le_next) {
-		if (ifma->ifma_addr->sa_family != AF_LINK)
-			continue;
-		h = xl_calchash(LLADDR((struct sockaddr_dl *)ifma->ifma_addr));
-		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_HASH|XL_HASH_SET|h);
-		mcnt++;
-	}
-#else
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
 		h = xl_calchash(enm->enm_addrlo);
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
-#endif
 
 	if (mcnt)
 		rxfilt |= XL_RXFILTER_MULTIHASH;
@@ -798,7 +674,7 @@ static void xl_setmulti_hash(sc)
 }
 
 #ifdef notdef
-static void xl_testpacket(sc)
+void xl_testpacket(sc)
 	struct xl_softc		*sc;
 {
 	struct mbuf		*m;
@@ -830,7 +706,7 @@ static void xl_testpacket(sc)
 /*
  * Initiate an autonegotiation session.
  */
-static void xl_autoneg_xmit(sc)
+void xl_autoneg_xmit(sc)
 	struct xl_softc		*sc;
 {
 	u_int16_t		phy_sts;
@@ -866,7 +742,7 @@ static void xl_autoneg_xmit(sc)
  * Invoke autonegotiation on a PHY. Also used with the 3Com internal
  * autoneg logic which is mapped onto the MII.
  */
-static void xl_autoneg_mii(sc, flag, verbose)
+void xl_autoneg_mii(sc, flag, verbose)
 	struct xl_softc		*sc;
 	int			flag;
 	int			verbose;
@@ -1028,7 +904,7 @@ static void xl_autoneg_mii(sc, flag, verbose)
 	return;
 }
 
-static void xl_getmode_mii(sc)
+void xl_getmode_mii(sc)
 	struct xl_softc		*sc;
 {
 	u_int16_t		bmsr;
@@ -1090,7 +966,7 @@ static void xl_getmode_mii(sc)
 /*
  * Set speed and duplex mode.
  */
-static void xl_setmode_mii(sc, media)
+void xl_setmode_mii(sc, media)
 	struct xl_softc		*sc;
 	int			media;
 {
@@ -1172,7 +1048,7 @@ static void xl_setmode_mii(sc, media)
 	return;
 }
 
-static void xl_setmode(sc, media)
+void xl_setmode(sc, media)
 	struct xl_softc		*sc;
 	int			media;
 {
@@ -1267,7 +1143,7 @@ static void xl_setmode(sc, media)
 	return;
 }
 
-static void xl_reset(sc)
+void xl_reset(sc)
 	struct xl_softc		*sc;
 {
 	register int		i;
@@ -1282,36 +1158,51 @@ static void xl_reset(sc)
 			break;
 	}
 
+	DELAY(100000);
+
+	/* Reset TX and RX. */
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_RESET);
+	xl_wait(sc);
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_RESET);
+	xl_wait(sc);
+
 	/* Wait a little while for the chip to get its brains in order. */
-	DELAY(1000);
+	DELAY(100000);
         return;
 }
 
-#if defined(__FreeBSD__)
-/*
- * Probe for a 3Com Etherlink XL chip. Check the PCI vendor and device
- * IDs against our list and return a device name if we find a match.
- */
-static const char *
-xl_probe(config_id, device_id)
-	pcici_t			config_id;
-	pcidi_t			device_id;
+int
+xl_probe(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
 {
-	struct xl_type		*t;
+	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-	t = xl_devs;
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_3COM)
+		return (0);
 
-	while(t->xl_name != NULL) {
-		if ((device_id & 0xFFFF) == t->xl_vid &&
-		    ((device_id >> 16) & 0xFFFF) == t->xl_did) {
-			return(t->xl_name);
-		}
-		t++;
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_3COM_3CSOHO100TX:
+	case PCI_PRODUCT_3COM_3C900TPO:
+	case PCI_PRODUCT_3COM_3C900COMBO:
+	case PCI_PRODUCT_3COM_3C900B:
+	case PCI_PRODUCT_3COM_3C900BCOMBO:
+	case PCI_PRODUCT_3COM_3C900BTPC:
+	case PCI_PRODUCT_3COM_3C900BFL:
+	case PCI_PRODUCT_3COM_3C905TX:
+	case PCI_PRODUCT_3COM_3C905T4:
+	case PCI_PRODUCT_3COM_3C905BTX:
+	case PCI_PRODUCT_3COM_3C905BT4:
+	case PCI_PRODUCT_3COM_3C905BCOMBO:
+	case PCI_PRODUCT_3COM_3C905BFX:
+	case PCI_PRODUCT_3COM_3C980TX:
+	case PCI_PRODUCT_3COM_3C905CTX:
+		return (1);
 	}
-
-	return(NULL);
+					
+	return (0);
 }
-#endif
 
 /*
  * This routine is a kludge to work around possible hardware faults
@@ -1325,7 +1216,7 @@ xl_probe(config_id, device_id)
  * will try to guess the media options values and warn the user of a
  * possible manufacturing defect with his adapter/system/whatever.
  */
-static void xl_mediacheck(sc)
+void xl_mediacheck(sc)
 	struct xl_softc		*sc;
 {
 	u_int16_t		devid;
@@ -1426,412 +1317,10 @@ static void xl_mediacheck(sc)
 	return;
 }
 
-#if defined(__FreeBSD__)
-/*
- * Attach the interface. Allocate softc structures, do ifmedia
- * setup and ethernet/BPF attach.
- */
-static void
-xl_attach(config_id, unit)
-	pcici_t			config_id;
-	int			unit;
-{
-	int			s, i;
-#ifndef XL_USEIOSPACE
-	vm_offset_t		pbase, vbase;
-#endif
-	u_char			eaddr[ETHER_ADDR_LEN];
-	u_int32_t		command;
-	struct xl_softc		*sc;
-	struct ifnet		*ifp;
-	int			media = IFM_ETHER|IFM_100_TX|IFM_FDX;
-	unsigned int		round;
-	caddr_t			roundptr;
-	struct xl_type		*p;
-	u_int16_t		phy_vid, phy_did, phy_sts;
-
-	s = splimp();
-
-	sc = malloc(sizeof(struct xl_softc), M_DEVBUF, M_NOWAIT);
-	if (sc == NULL) {
-		printf("xl%d: no memory for softc struct!\n", unit);
-		goto fail;
-	}
-	bzero(sc, sizeof(struct xl_softc));
-
-	/*
-	 * If this is a 3c905B, we have to check one extra thing.
-	 * The 905B supports power management and may be placed in
-	 * a low-power mode (D3 mode), typically by certain operating
-	 * systems which shall not be named. The PCI BIOS is supposed
-	 * to reset the NIC and bring it out of low-power mode, but
-	 * some do not. Consequently, we have to see if this chip
-	 * supports power management, and if so, make sure it's not
-	 * in low-power mode. If power management is available, the
-	 * capid byte will be 0x01.
-	 *
-	 * I _think_ that what actually happens is that the chip
-	 * loses its PCI configuration during the transition from
-	 * D3 back to D0; this means that it should be possible for
-	 * us to save the PCI iobase, membase and IRQ, put the chip
-	 * back in the D0 state, then restore the PCI config ourselves.
-	 */
-
-	command = pci_conf_read(config_id, XL_PCI_CAPID) & 0x000000FF;
-	if (command == 0x01) {
-
-		command = pci_conf_read(config_id, XL_PCI_PWRMGMTCTRL);
-		if (command & XL_PSTATE_MASK) {
-			u_int32_t		iobase, membase, irq;
-
-			/* Save important PCI config data. */
-			iobase = pci_conf_read(config_id, XL_PCI_LOIO);
-			membase = pci_conf_read(config_id, XL_PCI_LOMEM);
-			irq = pci_conf_read(config_id, XL_PCI_INTLINE);
-
-			/* Reset the power state. */
-			printf("xl%d: chip is in D%d power mode "
-			"-- setting to D0\n", unit, command & XL_PSTATE_MASK);
-			command &= 0xFFFFFFFC;
-			pci_conf_write(config_id, XL_PCI_PWRMGMTCTRL, command);
-
-			/* Restore PCI config data. */
-			pci_conf_write(config_id, XL_PCI_LOIO, iobase);
-			pci_conf_write(config_id, XL_PCI_LOMEM, membase);
-			pci_conf_write(config_id, XL_PCI_INTLINE, irq);
-		}
-	}
-
-	/*
-	 * Map control/status registers.
-	 */
-	command = pci_conf_read(config_id, PCI_COMMAND_STATUS_REG);
-	command |= (PCIM_CMD_PORTEN|PCIM_CMD_MEMEN|PCIM_CMD_BUSMASTEREN);
-	pci_conf_write(config_id, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(config_id, PCI_COMMAND_STATUS_REG);
-
-#ifdef XL_USEIOSPACE
-	if (!(command & PCIM_CMD_PORTEN)) {
-		printf("xl%d: failed to enable I/O ports!\n", unit);
-		free(sc, M_DEVBUF);
-		goto fail;
-	}
-	if (!pci_map_port(config_id, XL_PCI_LOIO,
-				(pci_port_t *)&(sc->xl_bhandle))) {
-		printf ("xl%d: couldn't map port\n", unit);
-		printf ("xl%d: WARNING: check your BIOS and "
-		    "set 'Plug & Play OS' to 'no'\n", unit);
-		printf ("xl%d: attempting to map iobase manually\n", unit);
-		sc->xl_bhandle =
-		    pci_conf_read(config_id, XL_PCI_LOIO) & 0xFFFFFFE0;
-		/*goto fail;*/
-	}
-
-#ifdef __i386__
-	sc->xl_btag = I386_BUS_SPACE_IO;
-#endif
-#ifdef __alpha__
-	sc->xl_btag = ALPHA_BUS_SPACE_IO;
-#endif
-#else
-	if (!(command & PCIM_CMD_MEMEN)) {
-		printf("xl%d: failed to enable memory mapping!\n", unit);
-		goto fail;
-	}
-
-	if (!pci_map_mem(config_id, XL_PCI_LOMEM, &vbase, &pbase)) {
-		printf ("xl%d: couldn't map memory\n", unit);
-		goto fail;
-	}
-	sc->xl_bhandle = vbase;
-#ifdef __i386__
-	sc->btag = I386_BUS_SPACE_MEM;
-#endif
-#ifdef __alpha__
-	sc->btag = ALPHA_BUS_SPACE_MEM;
-#endif
-#endif
-
-	/* Allocate interrupt */
-	if (!pci_map_int(config_id, xl_intr, sc, &net_imask)) {
-		printf("xl%d: couldn't map interrupt\n", unit);
-		goto fail;
-	}
-
-	/* Reset the adapter. */
-	xl_reset(sc);
-
-	/*
-	 * Get station address from the EEPROM.
-	 */
-	if (xl_read_eeprom(sc, (caddr_t)&eaddr, XL_EE_OEM_ADR0, 3, 1)) {
-		printf("xl%d: failed to read station address\n", sc->xl_unit);
-		free(sc, M_DEVBUF);
-		goto fail;
-	}
-
-	/*
-	 * A 3Com chip was detected. Inform the world.
-	 */
-	printf("xl%d: Ethernet address: %6D\n", unit, eaddr, ":");
-
-	sc->xl_unit = unit;
-	callout_handle_init(&sc->xl_stat_ch);
-	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
-
-	sc->xl_ldata_ptr = malloc(sizeof(struct xl_list_data) + 8,
-				M_DEVBUF, M_NOWAIT);
-	if (sc->xl_ldata_ptr == NULL) {
-		free(sc, M_DEVBUF);
-		printf("xl%d: no memory for list buffers!\n", unit);
-		goto fail;
-	}
-
-	sc->xl_ldata = (struct xl_list_data *)sc->xl_ldata_ptr;
-	round = (uintptr_t)sc->xl_ldata_ptr & 0xF;
-	roundptr = sc->xl_ldata_ptr;
-	for (i = 0; i < 8; i++) {
-		if (round % 8) {
-			round++;
-			roundptr++;
-		} else
-			break;
-	}
-	sc->xl_ldata = (struct xl_list_data *)roundptr;
-	bzero(sc->xl_ldata, sizeof(struct xl_list_data));
-
-	ifp = &sc->arpcom.ac_if;
-	ifp->if_softc = sc;
-	ifp->if_unit = unit;
-	ifp->if_name = "xl";
-	ifp->if_mtu = ETHERMTU;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_ioctl = xl_ioctl;
-	ifp->if_output = ether_output;
-	ifp->if_start = xl_start;
-	ifp->if_watchdog = xl_watchdog;
-	ifp->if_init = xl_init;
-	ifp->if_baudrate = 10000000;
-	ifp->if_snd.ifq_maxlen = XL_TX_LIST_CNT - 1;
-
-	/*
-	 * Figure out the card type. 3c905B adapters have the
-	 * 'supportsNoTxLength' bit set in the capabilities
-	 * word in the EEPROM.
-	 */
-	xl_read_eeprom(sc, (caddr_t)&sc->xl_caps, XL_EE_CAPS, 1, 0);
-	if (sc->xl_caps & XL_CAPS_NO_TXLENGTH)
-		sc->xl_type = XL_TYPE_905B;
-	else
-		sc->xl_type = XL_TYPE_90X;
-
-	/*
-	 * Now we have to see what sort of media we have.
-	 * This includes probing for an MII interace and a
-	 * possible PHY.
-	 */
-	XL_SEL_WIN(3);
-	sc->xl_media = CSR_READ_2(sc, XL_W3_MEDIA_OPT);
-
-	xl_read_eeprom(sc, (char *)&sc->xl_xcvr, XL_EE_ICFG_0, 2, 0);
-	sc->xl_xcvr &= XL_ICFG_CONNECTOR_MASK;
-	sc->xl_xcvr >>= XL_ICFG_CONNECTOR_BITS;
-
-	xl_mediacheck(sc);
-
-	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BTX
-			|| sc->xl_media & XL_MEDIAOPT_BT4) {
-		/*
-		 * In theory I shouldn't need this, but... if this
-		 * card supports an MII, either an external one or
-		 * an internal fake one, select it in the internal
-		 * config register before trying to probe it.
-		 */
-		u_int32_t		icfg;
-
-		XL_SEL_WIN(3);
-		icfg = CSR_READ_4(sc, XL_W3_INTERNAL_CFG);
-		icfg &= ~XL_ICFG_CONNECTOR_MASK;
-		if (sc->xl_media & XL_MEDIAOPT_MII ||
-			sc->xl_media & XL_MEDIAOPT_BT4)
-			icfg |= (XL_XCVR_MII << XL_ICFG_CONNECTOR_BITS);
-		if (sc->xl_media & XL_MEDIAOPT_BTX)
-			icfg |= (XL_XCVR_AUTO << XL_ICFG_CONNECTOR_BITS);
-		if (sc->xl_media & XL_MEDIAOPT_BFX)
-			icfg |= (XL_XCVR_100BFX << XL_ICFG_CONNECTOR_BITS);
-		CSR_WRITE_4(sc, XL_W3_INTERNAL_CFG, icfg);
-
-		for (i = XL_PHYADDR_MIN; i < XL_PHYADDR_MAX + 1; i++) {
-			sc->xl_phy_addr = i;
-			xl_phy_writereg(sc, XL_PHY_GENCTL, PHY_BMCR_RESET);
-			DELAY(500);
-			while(xl_phy_readreg(sc, XL_PHY_GENCTL)
-					& PHY_BMCR_RESET);
-			if ((phy_sts = xl_phy_readreg(sc, XL_PHY_GENSTS)))
-				break;
-		}
-		if (phy_sts) {
-			phy_vid = xl_phy_readreg(sc, XL_PHY_VENID);
-			phy_did = xl_phy_readreg(sc, XL_PHY_DEVID);
-			p = xl_phys;
-			while(p->xl_vid) {
-				if (phy_vid == p->xl_vid &&
-					(phy_did | 0x000F) == p->xl_did) {
-					sc->xl_pinfo = p;
-					break;
-				}
-				p++;
-			}
-			if (sc->xl_pinfo == NULL)
-				sc->xl_pinfo = &xl_phys[PHY_UNKNOWN];
-		} else {
-			printf("xl%d: MII without any phy!\n", sc->xl_unit);
-		}
-	}
-
-	/*
-	 * Do ifmedia setup.
-	 */
-	ifmedia_init(&sc->ifmedia, 0, xl_ifmedia_upd, xl_ifmedia_sts);
-
-	if (sc->xl_media & XL_MEDIAOPT_BT) {
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
-		if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
-			ifmedia_add(&sc->ifmedia,
-			    IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-	}
-
-	if (sc->xl_media & (XL_MEDIAOPT_AUI|XL_MEDIAOPT_10FL)) {
-		/*
-		 * Check for a 10baseFL board in disguise.
-		 */
-		if (sc->xl_type == XL_TYPE_905B &&
-		    sc->xl_media == XL_MEDIAOPT_10FL) {
-			if (bootverbose)
-				printf("xl%d: found 10baseFL\n", sc->xl_unit);
-			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_FL, 0, NULL);
-			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_FL|IFM_HDX,
-			    0, NULL);
-			if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
-				ifmedia_add(&sc->ifmedia,
-				    IFM_ETHER|IFM_10_FL|IFM_FDX, 0, NULL);
-		} else {
-			if (bootverbose)
-				printf("xl%d: found AUI\n", sc->xl_unit);
-			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_5, 0, NULL);
-		}
-	}
-
-	if (sc->xl_media & XL_MEDIAOPT_BNC) {
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_2, 0, NULL);
-	}
-
-	/*
-	 * Technically we could use xl_getmode_mii() to scan the
-	 * modes, but the built-in BTX mode on the 3c905B implies
-	 * 10/100 full/half duplex support anyway, so why not just
-	 * do it and get it over with.
-	 */
-	if (sc->xl_media & XL_MEDIAOPT_BTX) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
-		if (sc->xl_caps & XL_CAPS_FULL_DUPLEX)
-			ifmedia_add(&sc->ifmedia,
-				IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-		if (sc->xl_hasmii != 0)
-			ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
-	}
-
-	if (sc->xl_media & XL_MEDIAOPT_BFX) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_FX, 0, NULL);
-	}
-
-	/*
-	 * If there's an MII, we have to probe its modes
-	 * separately.
-	 */
-	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BT4) {
-		xl_getmode_mii(sc);
-	}
-
-	/* Choose a default media. */
-	switch(sc->xl_xcvr) {
-	case XL_XCVR_10BT:
-		media = IFM_ETHER|IFM_10_T;
-		xl_setmode(sc, media);
-		break;
-	case XL_XCVR_AUI:
-		if (sc->xl_type == XL_TYPE_905B &&
-		    sc->xl_media == XL_MEDIAOPT_10FL) {
-			media = IFM_ETHER|IFM_10_FL;
-			xl_setmode(sc, media);
-		} else {
-			media = IFM_ETHER|IFM_10_5;
-			xl_setmode(sc, media);
-		}
-		break;
-	case XL_XCVR_COAX:
-		media = IFM_ETHER|IFM_10_2;
-		xl_setmode(sc, media);
-		break;
-	case XL_XCVR_AUTO:
-#ifdef XL_BACKGROUND_AUTONEG
-		xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
-#else
-		xl_autoneg_mii(sc, XL_FLAG_FORCEDELAY, 1);
-#endif
-		media = sc->ifmedia.ifm_media;
-		break;
-	case XL_XCVR_100BTX:
-	case XL_XCVR_MII:
-#ifdef XL_BACKGROUND_AUTONEG
-		xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
-#else
-		xl_autoneg_mii(sc, XL_FLAG_FORCEDELAY, 1);
-#endif
-		media = sc->ifmedia.ifm_media;
-		break;
-	case XL_XCVR_100BFX:
-		media = IFM_ETHER|IFM_100_FX;
-		break;
-	default:
-		printf("xl%d: unknown XCVR type: %d\n", sc->xl_unit,
-							sc->xl_xcvr);
-		/*
-		 * This will probably be wrong, but it prevents
-	 	 * the ifmedia code from panicking.
-		 */
-		media = IFM_ETHER|IFM_10_T;
-		break;
-	}
-
-	ifmedia_set(&sc->ifmedia, media);
-
-	/*
-	 * Call MI attach routines.
-	 */
-	if_attach(ifp);
-	ether_ifattach(ifp);
-
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
-	at_shutdown(xl_shutdown, sc, SHUTDOWN_POST_SYNC);
-
-fail:
-	splx(s);
-	return;
-}
-#endif
-
 /*
  * Initialize the transmit descriptors.
  */
-static int xl_list_tx_init(sc)
+int xl_list_tx_init(sc)
 	struct xl_softc		*sc;
 {
 	struct xl_chain_data	*cd;
@@ -1859,7 +1348,7 @@ static int xl_list_tx_init(sc)
  * we arrange the descriptors in a closed ring, so that the last descriptor
  * points back to the first.
  */
-static int xl_list_rx_init(sc)
+int xl_list_rx_init(sc)
 	struct xl_softc		*sc;
 {
 	struct xl_chain_data	*cd;
@@ -1893,27 +1382,18 @@ static int xl_list_rx_init(sc)
 /*
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
-static int xl_newbuf(sc, c)
+int xl_newbuf(sc, c)
 	struct xl_softc		*sc;
 	struct xl_chain_onefrag	*c;
 {
 	struct mbuf		*m_new = NULL;
 
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-	if (m_new == NULL) {
-#if defined(__FreeBSD__)
-		printf("xl%d: no memory for rx list -- packet dropped!\n",
-								sc->xl_unit);
-#endif
+	if (m_new == NULL)
 		return(ENOBUFS);
-	}
 
 	MCLGET(m_new, M_DONTWAIT);
 	if (!(m_new->m_flags & M_EXT)) {
-#if defined(__FreeBSD__)
-		printf("xl%d: no memory for rx list -- packet dropped!\n",
-								sc->xl_unit);
-#endif
 		m_freem(m_new);
 		return(ENOBUFS);
 	}
@@ -1933,7 +1413,7 @@ static int xl_newbuf(sc, c)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-static void xl_rxeof(sc)
+void xl_rxeof(sc)
 	struct xl_softc		*sc;
 {
         struct ether_header	*eh;
@@ -1941,7 +1421,7 @@ static void xl_rxeof(sc)
         struct ifnet		*ifp;
 	struct xl_chain_onefrag	*cur_rx;
 	int			total_len = 0;
-	u_int16_t		rxstat;
+	u_int32_t		rxstat;
 
 	ifp = &sc->arpcom.ac_if;
 
@@ -1998,18 +1478,11 @@ again:
 		m->m_pkthdr.rcvif = ifp;
 #if NBPFILTER > 0
 		/*
-		 * Handle BPF listeners. Let the BPF user see the packet, but
-		 * don't pass it up to the ether_input() layer unless it's
-		 * a broadcast packet, multicast packet, matches our ethernet
-		 * address or the interface is in promiscuous mode.
+		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf) {
 			m->m_pkthdr.len = m->m_len = total_len;
-#ifdef __FreeBSD__
-			bpf_mtap(ifp, m);
-#else
 			bpf_mtap(ifp->if_bpf, m);
-#endif
 		}
 #endif
 		/* Remove header from mbuf and pass it on. */
@@ -2049,7 +1522,7 @@ again:
  * A frame was downloaded to the chip. It's safe for us to clean up
  * the list buffers.
  */
-static void xl_txeof(sc)
+void xl_txeof(sc)
 	struct xl_softc		*sc;
 {
 	struct xl_chain		*cur_tx;
@@ -2108,7 +1581,7 @@ static void xl_txeof(sc)
  * only get a 'TX complete' interrupt if there's a transmit error,
  * so this is really TX error handler.
  */
-static void xl_txeoc(sc)
+void xl_txeoc(sc)
 	struct xl_softc		*sc;
 {
 	u_int8_t		txstat;
@@ -2158,20 +1631,14 @@ static void xl_txeoc(sc)
 	return;
 }
 
-#ifdef __OpenBSD__
-static int xl_intr(arg)
+int xl_intr(arg)
 	void			*arg;
-#else
-static void xl_intr(arg)
-	void			*arg;
-#endif
 {
 	struct xl_softc		*sc;
 	struct ifnet		*ifp;
 	u_int16_t		status;
-#ifdef __OpenBSD__
 	int claimed = 0;
-#endif
+
 	sc = arg;
 	ifp = &sc->arpcom.ac_if;
 
@@ -2184,9 +1651,7 @@ static void xl_intr(arg)
 		if ((status & XL_INTRS) == 0)
 			break;
 
-#ifdef __OpenBSD__
 		claimed = 1;
-#endif
 
 		CSR_WRITE_2(sc, XL_COMMAND,
 		    XL_CMD_INTR_ACK|(status & XL_INTRS));
@@ -2222,14 +1687,10 @@ static void xl_intr(arg)
 	if (ifp->if_snd.ifq_head != NULL)
 		xl_start(ifp);
 
-#ifdef __OpenBSD__
 	return claimed;
-#else
-	return;
-#endif
 }
 
-static void xl_stats_update(xsc)
+void xl_stats_update(xsc)
 	void			*xsc;
 {
 	struct xl_softc		*sc;
@@ -2269,11 +1730,7 @@ static void xl_stats_update(xsc)
 	XL_SEL_WIN(7);
 
 	if (!sc->xl_stats_no_timeout)
-#ifdef __FreeBSD__
-		sc->xl_stat_ch = timeout(xl_stats_update, sc, hz);
-#else
 		timeout(xl_stats_update, sc, hz);
-#endif
 
 	return;
 }
@@ -2282,7 +1739,7 @@ static void xl_stats_update(xsc)
  * Encapsulate an mbuf chain in a descriptor by coupling the mbuf data
  * pointers to the fragment pointers.
  */
-static int xl_encap(sc, c, m_head)
+int xl_encap(sc, c, m_head)
 	struct xl_softc		*sc;
 	struct xl_chain		*c;
 	struct mbuf		*m_head;
@@ -2324,20 +1781,12 @@ static int xl_encap(sc, c, m_head)
 		struct mbuf		*m_new = NULL;
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-#if defined(__FreeBSD__)
-			printf("xl%d: no memory for tx list", sc->xl_unit);
-#endif
+		if (m_new == NULL)
 			return(1);
-		}
 		if (m_head->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
 				m_freem(m_new);
-#if defined(__FreeBSD__)
-				printf("xl%d: no memory for tx list",
-						sc->xl_unit);
-#endif
 				return(1);
 			}
 		}
@@ -2366,7 +1815,7 @@ static int xl_encap(sc, c, m_head)
  * copy of the pointers since the transmit list fragment pointers are
  * physical addresses.
  */
-static void xl_start(ifp)
+void xl_start(ifp)
 	struct ifnet		*ifp;
 {
 	struct xl_softc		*sc;
@@ -2422,12 +1871,7 @@ static void xl_start(ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-#ifdef __FreeBSD__
-			bpf_mtap(ifp, cur_tx->xl_mbuf);
-#else
 			bpf_mtap(ifp->if_bpf, cur_tx->xl_mbuf);
-#endif
-
 #endif
 	}
 
@@ -2453,7 +1897,7 @@ static void xl_start(ifp)
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_DOWN_STALL);
 	xl_wait(sc);
 
-	if (CSR_READ_4(sc, XL_DOWNLIST_PTR)) {
+	if (sc->xl_cdata.xl_tx_head != NULL) {
 		sc->xl_cdata.xl_tx_tail->xl_next = start_tx;
 		sc->xl_cdata.xl_tx_tail->xl_ptr->xl_next =
 					vtophys(start_tx->xl_ptr);
@@ -2463,8 +1907,10 @@ static void xl_start(ifp)
 	} else {
 		sc->xl_cdata.xl_tx_head = start_tx;
 		sc->xl_cdata.xl_tx_tail = cur_tx;
-		CSR_WRITE_4(sc, XL_DOWNLIST_PTR, vtophys(start_tx->xl_ptr));
 	}
+	if (!CSR_READ_4(sc, XL_DOWNLIST_PTR))
+		CSR_WRITE_4(sc, XL_DOWNLIST_PTR, vtophys(start_tx->xl_ptr));
+
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_DOWN_UNSTALL);
 
 	XL_SEL_WIN(7);
@@ -2494,7 +1940,7 @@ static void xl_start(ifp)
 	return;
 }
 
-static void xl_init(xsc)
+void xl_init(xsc)
 	void			*xsc;
 {
 	struct xl_softc		*sc = xsc;
@@ -2676,11 +2122,7 @@ static void xl_init(xsc)
 
 	(void)splx(s);
 
-#ifdef __FreeBSD__
-	sc->xl_stat_ch = timeout(xl_stats_update, sc, hz);
-#else
 	timeout(xl_stats_update, sc, hz);
-#endif
 
 	return;
 }
@@ -2688,7 +2130,7 @@ static void xl_init(xsc)
 /*
  * Set media options.
  */
-static int xl_ifmedia_upd(ifp)
+int xl_ifmedia_upd(ifp)
 	struct ifnet		*ifp;
 {
 	struct xl_softc		*sc;
@@ -2727,7 +2169,7 @@ static int xl_ifmedia_upd(ifp)
 /*
  * Report current media status.
  */
-static void xl_ifmedia_sts(ifp, ifmr)
+void xl_ifmedia_sts(ifp, ifmr)
 	struct ifnet		*ifp;
 	struct ifmediareq	*ifmr;
 {
@@ -2815,7 +2257,7 @@ static void xl_ifmedia_sts(ifp, ifmr)
 	return;
 }
 
-static int xl_ioctl(ifp, command, data)
+int xl_ioctl(ifp, command, data)
 	struct ifnet		*ifp;
 	u_long			command;
 	caddr_t			data;
@@ -2827,21 +2269,12 @@ static int xl_ioctl(ifp, command, data)
 
 	s = splimp();
 
-#ifdef __OpenBSD__
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);
 		return error;
 	}
-#endif
 
 	switch(command) {
-#ifdef __FreeBSD__
-	case SIOCSIFADDR:
-	case SIOCGIFADDR:
-	case SIOCSIFMTU:
-		error = ether_ioctl(ifp, command, data);
-		break;
-#else
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
@@ -2856,7 +2289,6 @@ static int xl_ioctl(ifp, command, data)
 			break;
 		}
 		break;
-#endif
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			xl_init(sc);
@@ -2888,7 +2320,7 @@ static int xl_ioctl(ifp, command, data)
 	return(error);
 }
 
-static void xl_watchdog(ifp)
+void xl_watchdog(ifp)
 	struct ifnet		*ifp;
 {
 	struct xl_softc		*sc;
@@ -2898,6 +2330,8 @@ static void xl_watchdog(ifp)
 
 	if (sc->xl_autoneg) {
 		xl_autoneg_mii(sc, XL_FLAG_DELAYTIMEO, 1);
+		if (!(ifp->if_flags & IFF_UP))
+			xl_stop(sc);
 		return;
 	}
 
@@ -2912,6 +2346,7 @@ static void xl_watchdog(ifp)
 	xl_txeoc(sc);
 	xl_txeof(sc);
 	xl_rxeof(sc);
+	xl_reset(sc);
 	xl_init(sc);
 
 	if (ifp->if_snd.ifq_head != NULL)
@@ -2924,7 +2359,7 @@ static void xl_watchdog(ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-static void xl_stop(sc)
+void xl_stop(sc)
 	struct xl_softc		*sc;
 {
 	register int		i;
@@ -2950,11 +2385,7 @@ static void xl_stop(sc)
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_INTR_ACK|XL_STAT_INTLATCH);
 
 	/* Stop the stats updater. */
-#ifdef __FreeBSD__
-	untimeout(xl_stats_update, sc, sc->xl_stat_ch);
-#else
 	untimeout(xl_stats_update, sc);
-#endif
 
 	/*
 	 * Free data in the RX lists.
@@ -2984,67 +2415,7 @@ static void xl_stop(sc)
 	return;
 }
 
-#ifdef __FreeBSD__
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-static void xl_shutdown(howto, arg)
-	int			howto;
-	void			*arg;
-{
-	struct xl_softc		*sc = (struct xl_softc *)arg;
-
-	xl_stop(sc);
-
-	return;
-}
-
-static struct pci_device xl_device = {
-	"xl",
-	xl_probe,
-	xl_attach,
-	&xl_count,
-	NULL
-};
-COMPAT_PCI_DRIVER(xl, xl_device);
-#endif
-
-#ifdef __OpenBSD__
-static int
-xl_probe(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
-{
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_3COM)
-		return (0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_3COM_3CSOHO100TX:
-	case PCI_PRODUCT_3COM_3C900TPO:
-	case PCI_PRODUCT_3COM_3C900COMBO:
-	case PCI_PRODUCT_3COM_3C900B:
-	case PCI_PRODUCT_3COM_3C900BCOMBO:
-	case PCI_PRODUCT_3COM_3C900BTPC:
-	case PCI_PRODUCT_3COM_3C900BFL:
-	case PCI_PRODUCT_3COM_3C905TX:
-	case PCI_PRODUCT_3COM_3C905T4:
-	case PCI_PRODUCT_3COM_3C905BTX:
-	case PCI_PRODUCT_3COM_3C905BT4:
-	case PCI_PRODUCT_3COM_3C905BCOMBO:
-	case PCI_PRODUCT_3COM_3C905BFX:
-	case PCI_PRODUCT_3COM_3C980TX:
-	case PCI_PRODUCT_3COM_3C905CTX:
-		return (1);
-	}
-					
-	return (0);
-}
-
-static void
+void
 xl_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -3376,6 +2747,7 @@ xl_attach(parent, self, aux)
 		xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
 #else
 		xl_autoneg_mii(sc, XL_FLAG_FORCEDELAY, 1);
+		xl_stop(sc);
 #endif
 		media = sc->ifmedia.ifm_media;
 		break;
@@ -3385,6 +2757,7 @@ xl_attach(parent, self, aux)
 		xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
 #else
 		xl_autoneg_mii(sc, XL_FLAG_FORCEDELAY, 1);
+		xl_stop(sc);
 #endif
 		media = sc->ifmedia.ifm_media;
 		break;
@@ -3417,7 +2790,7 @@ xl_attach(parent, self, aux)
 	shutdownhook_establish(xl_shutdown, sc);
 }
 
-static void
+void
 xl_shutdown(v)
 	void *v;
 {
@@ -3433,5 +2806,3 @@ struct cfattach xl_ca = {
 struct cfdriver xl_cd = {
 	0, "xl", DV_IFNET
 };
-
-#endif
