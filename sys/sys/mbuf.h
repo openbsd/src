@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.21 2001/03/28 20:03:09 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.22 2001/03/31 23:03:37 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -295,10 +295,10 @@ union mcluster {
 		else \
 			MCLFREE((m)->m_ext.ext_buf); \
 	  } \
-          if (((m)->m_flags & M_PKTHDR) && ((m)->m_pkthdr.tdbi)) { \
-                free((m)->m_pkthdr.tdbi, M_TEMP); \
-                (m)->m_pkthdr.tdbi = NULL; \
-          } \
+	  if (((m)->m_flags & M_PKTHDR) && ((m)->m_pkthdr.tdbi)) { \
+		free((m)->m_pkthdr.tdbi, M_TEMP); \
+		(m)->m_pkthdr.tdbi = NULL; \
+	  } \
 	  (n) = (m)->m_next; \
 	  FREE((m), mbtypes[(m)->m_type]); \
 	}
@@ -310,23 +310,30 @@ union mcluster {
 	(to)->m_pkthdr = (from)->m_pkthdr; \
 }
 
+#ifdef IPSEC
 /*
  * Duplicate just m_pkthdr from from to to.
  * XXX Deal with a generic packet attribute framework.
+ * XXX When that happens, we only need one version of the macro.
  */
 #define M_DUP_HDR(to, from) { \
-        M_COPY_HDR((to), (from)); \
-        if ((from)->m_pkthdr.tdbi) { \
-                (to)->m_pkthdr.tdbi = ipsp_copy_ident((from)->m_pkthdr.tdbi); \
+	M_COPY_HDR((to), (from)); \
+	if ((from)->m_pkthdr.tdbi) { \
+		(to)->m_pkthdr.tdbi = ipsp_copy_ident((from)->m_pkthdr.tdbi); \
 	} \
 }
+#else /* IPSEC */
+#define M_DUP_HDR(to, from) { \
+	M_COPY_HDR((to), (from)); \
+}
+#endif /* IPSEC */
 
 /*
  * Duplicate mbuf pkthdr from from to to.
  * from must have M_PKTHDR set, and to must be empty.
  */
 #define M_DUP_PKTHDR(to, from) { \
-        M_DUP_HDR((to), (from)); \
+	M_DUP_HDR((to), (from)); \
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
 	(to)->m_data = (to)->m_pktdat; \
 }
@@ -336,7 +343,7 @@ union mcluster {
  * from must have M_PKTHDR set, and to must be empty.
  */
 #define	M_COPY_PKTHDR(to, from) { \
-        M_COPY_HDR((to), (from)); \
+	M_COPY_HDR((to), (from)); \
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
 	(to)->m_data = (to)->m_pktdat; \
 }
