@@ -1,4 +1,4 @@
-/* $OpenBSD: pxa2x0_pcic.c,v 1.10 2005/03/09 22:00:23 uwe Exp $ */
+/* $OpenBSD: pxa2x0_pcic.c,v 1.11 2005/03/09 22:11:10 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -438,11 +438,10 @@ pxapcic_event_thread(void *arg)
 	int present;
 
 	while (sock->sc->sc_shutdown == 0) {
+
+		(void) tsleep(sock, PWAIT, "pxapcicev", 0);
+
 		/* sleep .25s to avoid chatterling interrupts */
-
-		/* poll every 5 seconds in case we miss an interrupt */
-		(void) tsleep(sock, PWAIT, "pxapcicev", hz*5);
-
 		(void) tsleep((caddr_t)sock, PWAIT,
 		    "pxapcicss", hz/4);
 
@@ -643,7 +642,7 @@ pxapcic_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_write_2(iot, scooph, SCOOP_REG_IMR, 0x0000);
 		bus_space_write_2(iot, scooph, SCOOP_REG_IRM, 0x00ff);
 		bus_space_write_2(iot, scooph, SCOOP_REG_ISR, 0x0000);
-		bus_space_write_2(iot, scooph, SCOOP_REG_IMR, 0x0000);
+		bus_space_write_2(iot, scooph, SCOOP_REG_IRM, 0x0000);
 
 		bus_space_write_2(iot, scooph, SCOOP_REG_CPR,
 		    SCP_CPR_PWR|SCP_CPR_5V); /* 5 V for 3000? */
@@ -687,11 +686,16 @@ int
 pxapcic_intr_detect(void *arg)
 {
         struct pxapcic_socket *so = arg;
-	printf("pxapcic_intr_detect %x\n", so->socket);
+	bus_space_tag_t iot;
+
+	iot = so->sc->sc_iot;
 
 	/*
         (so->pcictag->clear_intr)(so->socket);
 	*/
+	bus_space_write_2(iot, so->scooph, SCOOP_REG_IRM, 0x00ff);
+	bus_space_write_2(iot, so->scooph, SCOOP_REG_ISR, 0x0000);
+	bus_space_write_2(iot, so->scooph, SCOOP_REG_IRM, 0x0000);
         wakeup(so);
         return 1;
 }
