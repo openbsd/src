@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.8 2000/10/18 23:24:42 drahn Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.9 2000/10/19 04:53:05 drahn Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
@@ -171,7 +171,7 @@ gmac_attach(parent, self, aux)
 	bus_size_t	iosize;
 	bus_addr_t	membase;
 	bus_size_t	memsize;
-#if 0
+#ifdef __NetBSD__
 	int node;
 #endif
 	int i;
@@ -180,7 +180,7 @@ gmac_attach(parent, self, aux)
 	u_int32_t reg[10];
 	u_char laddr[6];
 
-#if 0
+#ifdef __NetBSD__
 	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 	if (node == 0) {
 		printf(": cannot find gmac node\n");
@@ -189,13 +189,12 @@ gmac_attach(parent, self, aux)
 
 	OF_getprop(node, "local-mac-address", laddr, sizeof laddr);
 	OF_getprop(node, "assigned-addresses", reg, sizeof reg);
-	#endif
-
-#ifdef __NetBSD__
 	bcopy(laddr, sc->sc_laddr, sizeof laddr);
 	sc->sc_reg = reg[2];
-#endif /* !__OpenBSD */
+#endif
 #ifdef __OpenBSD__
+	pci_ether_hw_addr(pc, laddr);
+
 	/* proper pci configuration */
 	{
 		u_int32_t	command;
@@ -251,7 +250,7 @@ gmac_attach(parent, self, aux)
 	}
 #endif 
 #if 1
-	sprintf(intrstrbuf, "irq %d\n", pa->pa_intrline);
+	sprintf(intrstrbuf, "irq %d", pa->pa_intrline);
 	intrstr = intrstrbuf;
 	/*
 	if (pci_intr_establish(pa->pa_pc, pa->pa_intrline, IPL_NET,
@@ -300,24 +299,9 @@ gmac_attach(parent, self, aux)
 		dp++;
 		p += 2048;
 	}
+
 #ifdef __OpenBSD__
-	{
-		/* rather than call openfirmware, expect that ethernet
-		 * is already intialized, read the address
-		 * from the device -- hack?
-		 */
-		u_int reg;
-		reg = gmac_read_reg(sc, GMAC_MACADDRESS0);
-		laddr[5] = reg & 0xff;
-		laddr[4] = (reg >> 8) & 0xff;
-		reg = gmac_read_reg(sc, GMAC_MACADDRESS1);
-		laddr[3] = reg & 0xff;
-		laddr[2] = (reg >> 8) & 0xff;
-		reg = gmac_read_reg(sc, GMAC_MACADDRESS2);
-		laddr[1] = reg & 0xff;
-		laddr[0] = (reg >> 8) & 0xff;
-		bcopy(laddr, sc->arpcom.ac_enaddr, 6);
-	}
+	bcopy(laddr, sc->sc_enaddr, 6);
 #endif /* __OpenBSD__ */
 
 	printf(": %s, address %s\n", intrstr, ether_sprintf(laddr));

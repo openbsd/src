@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.21 2000/09/06 02:09:18 rahnds Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.22 2000/10/19 04:53:06 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -79,7 +79,8 @@ const char *mpc_intr_string __P((void *, pci_intr_handle_t));
 void     *mpc_intr_establish __P((void *, pci_intr_handle_t,
             int, int (*func)(void *), void *, char *));
 void     mpc_intr_disestablish __P((void *, void *));
-int      mpc_ether_hw_addr __P((u_int8_t *, u_int8_t, u_int8_t));
+int      mpc_ether_hw_addr __P((struct ppc_pci_chipset *, u_int8_t *));
+int      of_ether_hw_addr __P((struct ppc_pci_chipset *, u_int8_t *));
 
 struct cfattach mpcpcibr_ca = {
         sizeof(struct pcibr_softc), mpcpcibrmatch, mpcpcibrattach,
@@ -109,7 +110,7 @@ struct {
 	int config_type;
 } config_offsets[] = {
 	{"grackle",		0x00c00cf8, 0x00e00cfc, 0 },
-	{"bandit",		0x00c00cf8, 0x00e00cfc, 0 },
+	{"bandit",		0x00800000, 0x00c00000, 0 },
 	{"uni-north",		0x00800000, 0x00c00000, 3 },
 	{"legacy",		0x00000cf8, 0x00000cfc, 0 },
 	{"IBM,27-82660",	0x00000cf8, 0x00000cfc, 0 },
@@ -331,6 +332,7 @@ mpcpcibrattach(parent, self, aux)
 		/* scan the children of the root of the openfirmware
 		 * tree to locate all nodes with device_type of "pci"
 		 */
+
 		if (ca->ca_node == 0) {
 			printf("invalid node on mpcpcibr config\n");
 			return;
@@ -475,6 +477,7 @@ mpcpcibrattach(parent, self, aux)
 			of_node = ca->ca_node;
 
 
+			lcp->node = ca->ca_node;
 			lcp->lc_pc.pc_conf_v = lcp;
 			lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
 			lcp->lc_pc.pc_bus_maxdevs = mpc_bus_maxdevs;
@@ -482,7 +485,7 @@ mpcpcibrattach(parent, self, aux)
 			lcp->lc_pc.pc_decompose_tag = mpc_decompose_tag;
 			lcp->lc_pc.pc_conf_read = mpc_conf_read;
 			lcp->lc_pc.pc_conf_write = mpc_conf_write;
-			lcp->lc_pc.pc_ether_hw_addr = mpc_ether_hw_addr;
+			lcp->lc_pc.pc_ether_hw_addr = of_ether_hw_addr;
 			lcp->lc_iot = &sc->sc_iobus_space;
 			lcp->lc_memt = &sc->sc_membus_space;
 
@@ -694,47 +697,52 @@ mpc_attach_hook(parent, self, pba)
 }
 
 int
-mpc_ether_hw_addr(p, b, s)
-	u_int8_t *p, b, s;
+of_ether_hw_addr(struct ppc_pci_chipset *lcpc, u_int8_t *oaddr)
 {
-	int i;
+	u_int8_t laddr[6];
+	struct pcibr_config *lcp = lcpc->pc_conf_v;
+	int of_node = lcp->node;
+	int node, nn;
+	for (node = OF_child(of_node); node; node = nn)
+	{
+		char name[32];
+		int len;
+		len = OF_getprop(node, "name", name,
+			sizeof(name));
+		name[len] = 0;
+		if (sizeof (laddr) ==
+			OF_getprop(node, "local-mac-address", laddr,
+				sizeof laddr))
+		{
+			bcopy (laddr, oaddr, sizeof laddr);
+			return 1;
+			
+		}
 
-	for(i = 0; i < 128; i++)
-		p[i] = 0x00;
-	p[18] = 0x03;	/* Srom version. */
-	p[19] = 0x01;	/* One chip. */
-	/* Next six, ethernet address. */
-	bcopy(ofw_eth_addr, &p[20], 6);
+		/* iterate section */
+		if ((nn = OF_child(node)) != 0) {
+			continue;
+		}
+		while ((nn = OF_peer(node)) == 0) {
+			node = OF_parent(node);
+			if (node == of_node) {
+				nn = 0; /* done */
+				break;
+			}
+		}
+	}
+	oaddr[0] = oaddr[1] = oaddr[2] = 0xff;
+	oaddr[3] = oaddr[4] = oaddr[5] = 0xff;
+	return 0;
+}
 
-	p[26] = 0x00;	/* Chip 0 device number */
-	p[27] = 30;		/* Descriptor offset */
-	p[28] = 00;
-	p[29] = 00;		/* MBZ */
-					/* Descriptor */
-	p[30] = 0x00;	/* Autosense. */
-	p[31] = 0x08;
-	p[32] = 0xff;	/* GP cntrl */
-	p[33] = 0x01;	/* Block cnt */
-#define GPR_LEN 0
-#define	RES_LEN 0
-	p[34] = 0x80 + 12 + GPR_LEN + RES_LEN;
-	p[35] = 0x01;	/* MII PHY type */
-	p[36] = 0x00;	/* PHY number 0 */
-	p[37] = 0x00;	/* GPR Length */
-	p[38] = 0x00;	/* Reset Length */
-	p[39] = 0x00;	/* Media capabilities */
-	p[40] = 0x78;	/* Media capabilities */
-	p[41] = 0x00;	/* Autoneg advertisment */
-	p[42] = 0x78;	/* Autoneg advertisment */
-	p[43] = 0x00;	/* Full duplex map */
-	p[44] = 0x50;	/* Full duplex map */
-	p[45] = 0x00;	/* Treshold map */
-	p[46] = 0x18;	/* Treshold map */
-
-	i = (srom_crc32(p, 126) & 0xFFFF) ^ 0xFFFF;
-	p[126] = i;
-	p[127] = i >> 8;
-	return(1);
+int
+mpc_ether_hw_addr(p, s)
+	struct ppc_pci_chipset *p;
+	u_int8_t *s;
+{
+	printf("mpc_ether_hw_addr not supported\n");
+	return(0);
 }
 
 int
