@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.5 1996/04/28 11:03:30 deraadt Exp $ */
+/*	$OpenBSD: siop.c,v 1.6 1997/11/24 01:13:52 mickey Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -325,10 +325,6 @@ siop_scsidone(acb, stat)
 #ifdef DIAGNOSTIC
 	if (acb == NULL || xs == NULL)
 		panic("siop_scsidone");
-#endif
-#if 0
-	if (((struct device *)(slp->device_softc))->dv_unit < dk_ndrive)
-		++dk_xfer[((struct device *)(slp->device_softc))->dv_unit];
 #endif
 	/*
 	 * is this right?

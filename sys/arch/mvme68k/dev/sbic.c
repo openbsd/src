@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.4 1996/05/10 12:42:02 deraadt Exp $ */
+/*	$OpenBSD: sbic.c,v 1.5 1997/11/24 01:13:51 mickey Exp $ */
 /*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
@@ -565,10 +565,6 @@ sbic_scsidone(acb, stat)
         return;
     }
 #endif
-
-    if ( slp->device_softc &&
-        ((struct device *)(slp->device_softc))->dv_unit < dk_ndrive)
-        ++dk_xfer[((struct device *)(slp->device_softc))->dv_unit];
 
     /*
      * is this right?
