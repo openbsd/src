@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.11 2001/06/25 05:00:28 angelos Exp $
+.\"	$OpenBSD: crypto.9,v 1.12 2001/06/27 08:41:35 aaron Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -461,9 +461,13 @@ most of the framework code
 .El
 .Sh SEE ALSO
 .Xr ipsec 4 ,
-.Xr malloc 9 ,
 .Xr pcmcia 4 ,
+.Xr malloc 9 ,
 .Xr tsleep 9
+.Sh HISTORY
+The cryptographic framework first appeared in
+.Ox 2.7
+and was written by Angelos D. Keromytis <angelos@openbsd.org>.
 .Sh BUGS
 The framework currently assumes that all the algorithms in a
 .Fn crypto_newsession
@@ -489,7 +493,3 @@ stack exhaustion while processing a callback.
 When SMP time comes, we will support use of a second processor (or
 more) as a crypto device (this is actually AMP, but we need the same
 basic support).
-.Sh HISTORY
-The cryptographic framework first appeared in
-.Ox 2.7
-and was written by Angelos D. Keromytis <angelos@openbsd.org>.
