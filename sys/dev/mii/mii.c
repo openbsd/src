@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.c,v 1.2 1998/11/11 19:34:47 jason Exp $	*/
+/*	$OpenBSD: mii.c,v 1.3 1999/01/04 03:57:55 jason Exp $	*/
 /*	$NetBSD: mii.c,v 1.9 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
@@ -91,8 +91,8 @@ mii_phy_probe(parent, mii, capmask)
 		    MII_PHYIDR1);
 		ma.mii_id2 = (*mii->mii_readreg)(parent, ma.mii_phyno,
 		    MII_PHYIDR2);
-		if (ma.mii_id1 == 0 || ma.mii_id1 == 0xffff ||
-		    ma.mii_id2 == 0 || ma.mii_id2 == 0xffff) {
+		if ((ma.mii_id1 == 0 || ma.mii_id1 == 0xffff) &&
+		    (ma.mii_id2 == 0 || ma.mii_id2 == 0xffff)) {
 			/*
 			 * ARGH!!  3Com internal PHYs report 0/0 in their
 			 * ID registers!  If we spot this, check to see
