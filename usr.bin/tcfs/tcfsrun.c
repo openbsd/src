@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsrun.c,v 1.4 2000/06/19 20:35:48 fgsch Exp $	*/
+/*	$OpenBSD: tcfsrun.c,v 1.5 2000/06/19 22:42:29 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -37,18 +37,18 @@ run_main(int argc, char *argv[], char *envp[])
 	uid_t uid;
 	pid_t pid;
 	int es;
-	int havefspath = 0,havecmd = 0;
+	int havefspath = 0, havecmd = 0;
 
 	uid = getuid();
 
-	while ((x = getopt(argc,argv,"p:f:")) != EOF) {
+	while ((x = getopt(argc, argv, "p:f:")) != EOF) {
 		switch(x) {
 		case 'p':
 			strlcpy(fspath, optarg, sizeof(fspath));
 			havefspath = 1;
 			break;
 		case 'f':
-			es = tcfs_getfspath(optarg,fspath);
+			es = tcfs_getfspath(optarg, fspath);
 			if (!es) {
 				fprintf(stderr, 
 					"filesystem label not found!\n");
@@ -66,7 +66,7 @@ run_main(int argc, char *argv[], char *envp[])
 	}
 
 	if (!havefspath) {
-		es = tcfs_getfspath("default",fspath);
+		es = tcfs_getfspath("default", fspath);
 		if (!es)
 			exit(1);
 	}
@@ -81,7 +81,7 @@ run_main(int argc, char *argv[], char *envp[])
 		pid = getpid();
 		if (tcfs_proc_enable(fspath, uid, pid, key) != -1) {
 			setuid(uid);
-			execve(cmd,argv + optind, envp);
+			execve(cmd, argv + optind, envp);
 		}
 
 		fprintf(stderr, "Operation failed\n");
@@ -90,7 +90,7 @@ run_main(int argc, char *argv[], char *envp[])
 	
 	wait(0);
 
-	if (tcfs_proc_disable(fspath,uid,pid) == -1) {
+	if (tcfs_proc_disable(fspath, uid, pid) == -1) {
 		fprintf (stderr, "Problems removing process key\n");
 		exit(1);
 	}

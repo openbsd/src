@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsputkey.c,v 1.6 2000/06/19 20:35:48 fgsch Exp $	*/
+/*	$OpenBSD: tcfsputkey.c,v 1.7 2000/06/19 22:42:28 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -36,7 +36,7 @@ char *putkey_usage=
 int
 putkey_main(int argc, char *argv[])
 {
-	char *user,*password,*tcfskey;
+	char *user, *password, *tcfskey;
 	uid_t uid;
 	gid_t gid;
 	int es, treshold;
@@ -48,7 +48,7 @@ putkey_main(int argc, char *argv[])
 	int isgroupkey = FALSE;
 	int havename = FALSE, havefspath = FALSE, havekey = FALSE;
 
-	while ((x = getopt(argc,argv,"kf:p:g:")) != EOF) {
+	while ((x = getopt(argc, argv, "kf:p:g:")) != EOF) {
 		switch(x) {
 		case 'k':
 			def = FALSE;
@@ -79,7 +79,7 @@ putkey_main(int argc, char *argv[])
 		}
 	}
 	if (argc - optind)
-		tcfs_error(ER_UNKOPT,NULL);
+		tcfs_error(ER_UNKOPT, NULL);
 
 	if (havefsname && havempname) {
 		tcfs_error(ER_CUSTOM, putkey_usage);
@@ -87,7 +87,7 @@ putkey_main(int argc, char *argv[])
 	}
 			 
 	if (havefsname) {
-		es=tcfs_getfspath(fslabel,fspath);
+		es = tcfs_getfspath(fslabel, fspath);
 		havename = TRUE;
 	}
 
@@ -95,65 +95,65 @@ putkey_main(int argc, char *argv[])
 		havename = TRUE;
 
 	if (!havename)
-		es=tcfs_getfspath("default",fspath);
+		es = tcfs_getfspath("default", fspath);
 
 	if (!es) {
-		tcfs_error(ER_CUSTOM,"fs-label not found!\n");
+		tcfs_error(ER_CUSTOM, "fs-label not found!\n");
 		exit(1);
 	}
 
 	uid = getuid();
 		
 	if (isgroupkey) {
-		if (!unix_auth(&user,&password,TRUE))
-			tcfs_error(ER_AUTH,user);
+		if (!unix_auth(&user, &password, TRUE))
+			tcfs_error(ER_AUTH, user);
 
 		if (!tcfsgpwdbr_new(&ginfo))
-			tcfs_error(ER_MEM,NULL);
+			tcfs_error(ER_MEM, NULL);
 
-		if (!tcfs_ggetpwnam(user,gid,&ginfo))
-			tcfs_error(ER_CUSTOM,"Default key non found");
+		if (!tcfs_ggetpwnam(user, gid, &ginfo))
+			tcfs_error(ER_CUSTOM, "Default key non found");
 
 		if (!strlen(ginfo->gkey))
-			tcfs_error(ER_CUSTOM,"Invalid default key");
+			tcfs_error(ER_CUSTOM, "Invalid default key");
 
 		tcfskey = (char*)malloc(UUKEYSIZE);
 		if (!tcfskey)
-			tcfs_error(ER_MEM,NULL);	
+			tcfs_error(ER_MEM, NULL);	
 
 		treshold = ginfo->soglia;
 
 		if (!tcfs_decrypt_key(password, ginfo->gkey, tcfskey, GKEYSIZE))
 			tcfs_error(ER_CUSTOM, "Could not decrypt group key");
 
-		es = tcfs_group_enable(fspath,uid,gid,treshold,tcfskey);
+		es = tcfs_group_enable(fspath, uid, gid, treshold, tcfskey);
 
-		if(es == -1) {
-			tcfs_error(ER_CUSTOM,"problems updating filesystem");
+		if (es == -1) {
+			tcfs_error(ER_CUSTOM, "problems updating filesystem");
 		}
 
 		exit(0);
 	}
 
 
-	if(!def) {
+	if (!def) {
 		tcfskey = getpass("Insert tcfs-key:");
 		havekey = TRUE;
 	} else {
-		if(!unix_auth(&user,&password,TRUE))
-			tcfs_error(ER_AUTH,user);
+		if (!unix_auth(&user, &password, TRUE))
+			tcfs_error(ER_AUTH, user);
 				
-		if(!tcfspwdbr_new(&info))
-			tcfs_error(ER_MEM,NULL);	
+		if (!tcfspwdbr_new(&info))
+			tcfs_error(ER_MEM, NULL);	
 
-		if(!tcfs_getpwnam(user,&info))
-			tcfs_error(ER_CUSTOM,"Default key non found");
+		if (!tcfs_getpwnam(user, &info))
+			tcfs_error(ER_CUSTOM, "Default key non found");
 	
-		if(!strlen(info->upw))
+		if (!strlen(info->upw))
 			tcfs_error(ER_CUSTOM, "Invalid default key");
 
 		tcfskey = (char*)malloc(UUKEYSIZE);
-		if(!tcfskey)
+		if (!tcfskey)
 			tcfs_error(ER_MEM, NULL);	
 		
 		if (!tcfs_decrypt_key (password, info->upw, tcfskey, KEYSIZE))
@@ -163,8 +163,8 @@ putkey_main(int argc, char *argv[])
 
 	es = tcfs_user_enable(fspath, uid, tcfskey);
 
-	if(es == -1)
-		tcfs_error(ER_CUSTOM,"problems updating filesystem");
+	if (es == -1)
+		tcfs_error(ER_CUSTOM, "problems updating filesystem");
 
 	exit(0);
 }

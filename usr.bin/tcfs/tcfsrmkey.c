@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsrmkey.c,v 1.3 2000/06/19 20:35:48 fgsch Exp $	*/
+/*	$OpenBSD: tcfsrmkey.c,v 1.4 2000/06/19 22:42:29 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -44,7 +44,7 @@ rmkey_main(int argc, char *argv[])
 	int havempname = FALSE, havefsname = FALSE, isgroupkey = FALSE;
 	int havename = FALSE, havefspath = FALSE;
 
-	while ((x = getopt(argc,argv,"f:p:g:")) != EOF) {
+	while ((x = getopt(argc, argv, "f:p:g:")) != EOF) {
 		switch(x) {
 		case 'p':
 			havempname = TRUE;
@@ -72,7 +72,7 @@ rmkey_main(int argc, char *argv[])
 		}
 	}
 	if (argc-optind)
-		tcfs_error(ER_UNKOPT,NULL);
+		tcfs_error(ER_UNKOPT, NULL);
 
 	if (havefsname && havempname) {
 		tcfs_error(ER_CUSTOM, rmkey_usage);
@@ -88,26 +88,26 @@ rmkey_main(int argc, char *argv[])
 		havename = TRUE;
 
 	if (!havename)
-		es = tcfs_getfspath("default",fspath);
+		es = tcfs_getfspath("default", fspath);
 
 	if(!es) {
-		tcfs_error(ER_CUSTOM,"fs-label not found!\n");
+		tcfs_error(ER_CUSTOM, "fs-label not found!\n");
 		exit(1);
 	}
 		
 	uid = getuid();
 
 	if (isgroupkey) {
-		es = tcfs_group_disable(fspath,uid,gid);
+		es = tcfs_group_disable(fspath, uid, gid);
 		if(es == -1)
 			tcfs_error(ER_CUSTOM, "problems updating filesystem");
 		exit(0);
 	}
 
-	es = tcfs_user_disable(fspath,uid);
+	es = tcfs_user_disable(fspath, uid);
 
 	if (es == -1)
-		tcfs_error(ER_CUSTOM,"problems updating filesystem");
+		tcfs_error(ER_CUSTOM, "problems updating filesystem");
 
 	exit(0);
 }

@@ -28,17 +28,17 @@ int
 stat_main(int argc, char *argv[], char *envp[])
 {
 	struct tcfs_status st;	
-	int e,es,ok=0;
+	int e, es, ok=0;
 	char filesystem[MAXPATHLEN];
 	
-	if (argc==3 && !strcmp("-p",argv[1])) {
+	if (argc == 3 && !strcmp("-p", argv[1])) {
 		strlcpy(filesystem, argv[2], sizeof(filesystem));
-		ok=1;
+		ok = 1;
 	}
 
 	if (argc == 2) {
-		if (!(es = tcfs_getfspath(argv[1],filesystem))) {
-			fprintf(stderr,"filesystem label not found!\n");
+		if (!(es = tcfs_getfspath(argv[1], filesystem))) {
+			fprintf(stderr, "filesystem label not found!\n");
 			exit(1);
 		}
 		ok = 1;
@@ -52,12 +52,12 @@ stat_main(int argc, char *argv[], char *envp[])
 	
 	e = tcfs_getstatus(filesystem, &st);
 	if (e == -1) {
-		fprintf(stderr,"filesystem %s not mounted\n",filesystem);
+		fprintf(stderr, "filesystem %s not mounted\n", filesystem);
 		exit(1);
 	}
 	
-	printf("Status: %d; user keys: %d, group keys: %d\n",st.status, st.n_ukey, st.n_gkey);
-	printf("TCFS version: %d, Cipher: %s, keysize: %d, cipher version: %d\n",st.tcfs_version, st.cipher_desc, st.cipher_keysize, st.cipher_version);
+	printf("Status: %d; user keys: %d, group keys: %d\n", st.status, st.n_ukey, st.n_gkey);
+	printf("TCFS version: %d, Cipher: %s, keysize: %d, cipher version: %d\n", st.tcfs_version, st.cipher_desc, st.cipher_keysize, st.cipher_version);
 			
 	exit(0);
 }

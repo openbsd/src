@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsaddgroup.c,v 1.7 2000/06/19 21:23:44 fgsch Exp $	*/
+/*	$OpenBSD: tcfsaddgroup.c,v 1.8 2000/06/19 22:42:28 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -54,37 +54,37 @@ union bobbit
 };
 
 int
-tcfsgetuid (char *login) 
+tcfsgetuid(char *login) 
 {    
 	struct passwd *entry;
 
 	setpwent();
 
 	while ((entry = getpwent()) != NULL) {
-		if (strcmp (login, entry->pw_name) == 0)
-			return entry->pw_uid;
+		if (strcmp(login, entry->pw_name) == 0)
+			return (entry->pw_uid);
 	}
 
 	endpwent();
 	free(entry);
 
-	return -1;
+	return (-1);
 }    
 
 void
-gencoeff (void)
+gencoeff(void)
 {    
 	int i, j;
 
-	for (i = 0; i < KEYSIZE; i++){
-		for (j = 1; j < threshold; j++){
+	for (i = 0; i < KEYSIZE; i++) {
+		for (j = 1; j < threshold; j++) {
 			coeff[j][i] = arc4random();
 		}
 	}
 }
 
 unsigned char *
-gengrpkey (char *login)
+gengrpkey(char *login)
 {
 	int x1, i, j, k=0;
 	unsigned int x;
@@ -95,77 +95,78 @@ gengrpkey (char *login)
 
 	res = (unsigned char*)calloc(KEYSIZE + KEYSIZE/8, sizeof(char));
 	if (!res)
-		tcfs_error (ER_MEM, NULL);
+		tcfs_error(ER_MEM, NULL);
 
 	x1 = tcfsgetuid(login);
 	x = (x1 % 257);
 
 #ifdef DEBUG_TCFS
-	printf ("La chiave utente di %u e':\n", x);
+	printf("La chiave utente di %u e':\n", x);
 #endif
 
 	for (i = 0; i < KEYSIZE; i++) {
 		tmp = 0;
 		for (j = 1; j < threshold; j++) {
-			tmp += (eleva(x1,j,257)*coeff[j][i]) % 257;
+			tmp += (eleva(x1, j, 257) * coeff[j][i]) % 257;
 #ifdef DEBUG_TCFS
-			printf ("x1= %u\tj=%d\tcoeff[%d][%d]=%u\ttmp=%u\tchiave: ", x1, j, j, i, coeff[j][i], tmp);
+			printf("x1= %u\tj=%d\tcoeff[%d][%d]=%u\ttmp=%u\tchiave: ", x1, j, j, i, coeff[j][i], tmp);
 #endif
-			}
+		}
+
 		tmp += (unsigned int)S[i];
 		tmp %= 257;
 
-		memcpy (res+k++, &tmp, 1);
+		memcpy(res+k++, &tmp, 1);
 #ifdef DEBUG_TCFS
-		printf ("%u\n", *(res+k-1));
+		printf("%u\n", *(res+k-1));
 #endif
-		switch (i % 8){
-			case 0:
-				obits.bf.b1=tmp>>8;
-				break;
-			case 1:
-				obits.bf.b2=tmp>>8;
-				break;
-			case 2:
-				obits.bf.b3=tmp>>8;
-				break;
-			case 3:
-				obits.bf.b4=tmp>>8;
-				break;
-			case 4:
-				obits.bf.b5=tmp>>8;
-				break;
-			case 5:
-				obits.bf.b6=tmp>>8;
-				break;
-			case 6:
-				obits.bf.b7=tmp>>8;
-				break;
-			case 7:
-				obits.bf.b8=tmp>>8;
-				break;
+		switch (i % 8) {
+		case 0:
+			obits.bf.b1=tmp>>8;
+			break;
+		case 1:
+			obits.bf.b2=tmp>>8;
+			break;
+		case 2:
+			obits.bf.b3=tmp>>8;
+			break;
+		case 3:
+			obits.bf.b4=tmp>>8;
+			break;
+		case 4:
+			obits.bf.b5=tmp>>8;
+			break;
+		case 5:
+			obits.bf.b6=tmp>>8;
+			break;
+		case 6:
+			obits.bf.b7=tmp>>8;
+			break;
+		case 7:
+			obits.bf.b8=tmp>>8;
+			break;
 		}
 
-		if ((i%8) == 7) {
+		if ((i % 8) == 7) {
 			res[k] = obits.byte;
 			k++;
 
 #ifdef DEBUG_TCFS
-			printf ("%u\n", res[k-1]);
+			printf("%u\n", res[k-1]);
 #endif
 
-			obits.byte=0;
+			obits.byte = 0;
 		}
 	}
 
 	/*
 	res[KEYSIZE]=obits.byte;
 	*/
-	return res;
+	return (res);
 }
 
 int 
-addgroup_main (int argn, char *argv[])
+addgroup_main(int argn, char *argv[])
 {
 	int val;
 	gid_t gid;
@@ -177,7 +178,7 @@ addgroup_main (int argn, char *argv[])
 	/*
 	 * Going to check the arguments
 	 */
-	while ((val = getopt (argn, argv, "vg:m:t:h")) != EOF)
+	while ((val = getopt(argn, argv, "vg:m:t:h")) != EOF)
 		switch (val) {
 		case 'm':
 			members = atoi(optarg);
@@ -190,9 +191,9 @@ addgroup_main (int argn, char *argv[])
 
 				group_id = getgrnam(optarg);
 				if (!group_id)
-					tcfs_error (ER_CUSTOM, "Nonexistent group.");
+					tcfs_error(ER_CUSTOM, "Nonexistent group.");
 
-				gid=group_id->gr_gid;
+				gid = group_id->gr_gid;
 			}
 
 			have_gid = TRUE;
@@ -202,18 +203,18 @@ addgroup_main (int argn, char *argv[])
 			have_threshold = TRUE;
 			break;
 		case 'h':
-			show_usage (addgroup_usage, argv[0]);
-			exit (OK);
+			show_usage(addgroup_usage, argv[0]);
+			exit(OK);
 		case 'v':
 			be_verbose = TRUE;
 			break;
 		default:
-			fprintf (stderr, "Try %s --help for more information.\n", argv[0]);
-			exit (ER_UNKOPT);
+			fprintf(stderr, "Try %s --help for more information.\n", argv[0]);
+			exit(ER_UNKOPT);
 		}
 
 	if (argn-optind)
-		tcfs_error (ER_UNKOPT, NULL);
+		tcfs_error(ER_UNKOPT, NULL);
 
 	if (!have_gid) {
 		char *buff = NULL;
@@ -221,10 +222,10 @@ addgroup_main (int argn, char *argv[])
 
 		buff = (char*)calloc(2048, sizeof(char));
 		if (!buff)
-			tcfs_error (ER_MEM, NULL);
+			tcfs_error(ER_MEM, NULL);
 
-		printf ("Group id [or name] of the TCFS group to add to the database: ");
-		fgets (buff, 2048, stdin);
+		printf("Group id [or name] of the TCFS group to add to the database: ");
+		fgets(buff, 2048, stdin);
 		len = strlen(buff) - 1;
 		buff[len] = buff[len] == '\n' ? 0 : buff[len];
 		gid = atoi(buff);
@@ -234,27 +235,27 @@ addgroup_main (int argn, char *argv[])
 
 			group_id = getgrnam(buff);
 			if (!group_id)
-				tcfs_error (ER_CUSTOM, "Nonexistent group.");
+				tcfs_error(ER_CUSTOM, "Nonexistent group.");
 
 			gid = group_id->gr_gid;
 		}
 
 		if (gid <= 0)
-			tcfs_error (ER_CUSTOM, "A positive ID please!");
+			tcfs_error(ER_CUSTOM, "A positive ID please!");
 
-		free (buff);
+		free(buff);
 	}
 
 	if (!have_members) {
 		char *buff = NULL;
 		int len;
 
-		buff=(char*)calloc(2048, sizeof(char));
+		buff = (char*)calloc(2048, sizeof(char));
 		if (!buff)
-			tcfs_error (ER_MEM, NULL);
+			tcfs_error(ER_MEM, NULL);
 
-		printf ("Number of members for the TCFS group ID #%d: ", gid);
-		fgets (buff, 2048, stdin);
+		printf("Number of members for the TCFS group ID #%d: ", gid);
+		fgets(buff, 2048, stdin);
 		len = strlen(buff) - 1;
 		buff[len] = buff[len] == '\n' ? 0 : buff[len];
 		members = atoi(buff);
@@ -268,34 +269,34 @@ addgroup_main (int argn, char *argv[])
 
 		buff = (char*)calloc(2048, sizeof(char));
 		if (!buff)
-			tcfs_error (ER_MEM, NULL);
+			tcfs_error(ER_MEM, NULL);
 
-		printf ("Threshold for the TCFS group ID #%d: ", gid);
-		fgets (buff, 2048, stdin);
+		printf("Threshold for the TCFS group ID #%d: ", gid);
+		fgets(buff, 2048, stdin);
 		len = strlen(buff) - 1;
 		buff[len] = buff[len] == '\n' ? 0 : buff[len];
 		threshold = atoi(buff);
 
-		free (buff);
+		free(buff);
 	}
 
 	if (members < 2)
-		tcfs_error (ER_CUSTOM, "At least two members!");
+		tcfs_error(ER_CUSTOM, "At least two members!");
 
 	if (threshold > members || threshold <= 0)
-		tcfs_error (ER_CUSTOM, "The threshold must be no greater than the number of members and greater than zero!");
+		tcfs_error(ER_CUSTOM, "The threshold must be no greater than the number of members and greater than zero!");
 
 	S = gentcfskey();
 #ifdef DEBUG_TCFS
 	{
 		int i;
 
-		printf ("La chiave segreta e':\n");
+		printf("La chiave segreta e':\n");
 
-		for (i=0;i<KEYSIZE;i++)
-			printf ("%u:", S[i]);
+		for (i = 0; i < KEYSIZE; i++)
+			printf("%u:", S[i]);
 
-		printf ("\n");
+		printf("\n");
 	}
 #endif
 
@@ -320,17 +321,17 @@ addgroup_main (int argn, char *argv[])
 		group_info[members-1]->n = members;
 		group_info[members-1]->soglia = threshold;
 
-		if (!unix_auth (&user, &passwd, FALSE)) {
-			fprintf (stderr, "Invalid password or the user does not exist.\n");
+		if (!unix_auth(&user, &passwd, FALSE)) {
+			fprintf(stderr, "Invalid password or the user does not exist.\n");
 			continue;
 		}
 
-		if (tcfs_ggetpwnam (user, gid, &tmp))
+		if (tcfs_ggetpwnam(user, gid, &tmp))
 			tcfs_error(ER_CUSTOM, "Group already exists.");
 
 		while (tmpmemb > members) {
-			if (!strcmp (user, group_info[tmpmemb-1]->user)) {
-				fprintf (stderr, "User already present into the group.\n");
+			if (!strcmp(user, group_info[tmpmemb-1]->user)) {
+				fprintf(stderr, "User already present into the group.\n");
 				cont = 1;
 				break;
 			}
@@ -340,31 +341,31 @@ addgroup_main (int argn, char *argv[])
 		if (cont)
 			continue;
 
-		strcpy (group_info[members-1]->user, user);
+		strcpy(group_info[members-1]->user, user);
 
-		newkey = (unsigned char*)calloc(GKEYSIZE + 1, sizeof (char));
+		newkey = (unsigned char*)calloc(GKEYSIZE + 1, sizeof(char));
 		if (!newkey)
-			tcfs_error (ER_MEM, NULL);
+			tcfs_error(ER_MEM, NULL);
 
 		cryptedkey = (unsigned char*)calloc(UUGKEYSIZE, sizeof(char));
 		if (!cryptedkey)
-			tcfs_error (ER_MEM, NULL);
+			tcfs_error(ER_MEM, NULL);
 
-		memcpy (newkey, gengrpkey (user), GKEYSIZE);
+		memcpy(newkey, gengrpkey(user), GKEYSIZE);
 		newkey[GKEYSIZE] = '\0';
 
 		/*
 		 * Encrypt the just generated key with the user password
 		 */
-		if (!tcfs_encrypt_key (passwd, newkey, GKEYSIZE,
-		    cryptedkey, UUGKEYSIZE))
-			tcfs_error (ER_MEM, NULL);
+		if (!tcfs_encrypt_key(passwd, newkey, GKEYSIZE, cryptedkey,
+		    UUGKEYSIZE))
+			tcfs_error(ER_MEM, NULL);
 
-		free (newkey);
+		free(newkey);
 
-		strlcpy (group_info[members - 1]->gkey, cryptedkey,
-			 GKEYSIZE + 1);
-		free (cryptedkey);
+		strlcpy(group_info[members - 1]->gkey, cryptedkey,
+		    GKEYSIZE + 1);
+		free(cryptedkey);
 
 		members--;
 	}
@@ -373,25 +374,25 @@ addgroup_main (int argn, char *argv[])
 
 	while (members) {
 		if (be_verbose)
-			printf ("Creating a new entry for group %d and user %s in the TCFS database...\n", 
+			printf("Creating a new entry for group %d and user %s in the TCFS database...\n", 
 				group_info[members-1]->gid,
 				group_info[members-1]->user);
 
-		if (!tcfs_gputpwnam (group_info[members-1]->user,
+		if (!tcfs_gputpwnam(group_info[members-1]->user,
 				     group_info[members-1], U_NEW)) {
 				/* TODO: Remove the group entries saved before */
-			tcfs_error (ER_CUSTOM, "Error: cannot add a user to the group.");
+			tcfs_error(ER_CUSTOM, "Error: cannot add a user to the group.");
 		}
 
 		if (be_verbose)
-			printf ("TCFS group entry for user %s created.\n", group_info[members-1]->user);
+			printf("TCFS group entry for user %s created.\n", group_info[members-1]->user);
 
 		members--;
 	}
 
-	tcfs_error (ER_CUSTOM, "\nAll group keys generated.");
+	tcfs_error(ER_CUSTOM, "\nAll group keys generated.");
 
-	return 0;
+	return (0);
 }
 
 
@@ -399,14 +400,14 @@ int
 eleva(int x, int y, int z)
 {
 	int mask = 0x80000000;
-	int res = 1,i;
+	int res = 1, i;
 
 	for (i = 0; i < 32; i++) {
-		res = (res*res)%z;
+		res = (res * res) % z;
 		if (y & mask)
-			res = (x*res)%z;
+			res = (x * res) % z;
 		mask = mask >> 1;
 	}
 
-	return res;
+	return (res);
 }

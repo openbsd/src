@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsmng.c,v 1.2 2000/06/19 20:35:48 fgsch Exp $	*/
+/*	$OpenBSD: tcfsmng.c,v 1.3 2000/06/19 22:42:28 aaron Exp $	*/
 
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
@@ -77,5 +77,5 @@ main (int argc, char **argv)
 
 	fprintf(stderr, "%s: unknown command %s\n\n", argv[0], argv[1]);
 	usage(argv[0]);
-	exit (1);
+	exit(1);
 }

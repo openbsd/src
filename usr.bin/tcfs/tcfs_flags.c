@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_flags.c,v 1.3 2000/06/19 20:35:47 fgsch Exp $	*/
+/*	$OpenBSD: tcfs_flags.c,v 1.4 2000/06/19 22:42:28 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -36,11 +36,12 @@ tcfs_getflags(int fd)
 	tcfs_flags r;
 	struct stat s;
 
-	if (fstat(fd,&s) < 0) {
+	if (fstat(fd, &s) < 0) {
 		 r.flag = -1;
 	} else
 		 r.flag = s.st_flags;
-	return r;
+
+	return (r);
 }
 		 
 	
@@ -48,11 +49,12 @@ tcfs_flags
 tcfs_setflags(int fd, tcfs_flags x)
 {
 	tcfs_flags r, n;
+
 	r = tcfs_getflags(fd);
 	
 	if (r.flag == -1) {
 		r.flag = -1;
-		return r;
+		return (r);
 	}
 
 	n = x;
@@ -63,5 +65,5 @@ tcfs_setflags(int fd, tcfs_flags x)
 		r.flag = -1;
 	}
 
-	return r;
+	return (r);
 }

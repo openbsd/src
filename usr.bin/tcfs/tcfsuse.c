@@ -56,8 +56,10 @@ usage(char *name)
 	fprintf(stderr, "Usage: %s <subcmd> [arguments]\n", name);
 
 	fprintf(stderr, "Possible sub commands:");
+
 	for (i = sizeof(subcmds)/sizeof(struct subprg) - 1; i >= 0; i--)
 		fprintf(stderr, " %s", subcmds[i].name);
+
 	fprintf(stderr, "\n");
 }
 
@@ -79,5 +81,5 @@ main (int argc, char **argv)
 
 	fprintf(stderr, "%s: unknown command %s\n\n", argv[0], argv[1]);
 	usage(argv[0]);
-	exit (1);
+	exit(1);
 }

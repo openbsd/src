@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfserrors.c,v 1.4 2000/06/19 20:35:47 fgsch Exp $	*/
+/*	$OpenBSD: tcfserrors.c,v 1.5 2000/06/19 22:42:28 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -31,42 +31,41 @@ static char *tcfs_errors_strings[]=
 	"ioctl error while getting key counter."
 };
 
-void tcfs_error (int error_type, char *custom_message)
+void tcfs_error(int error_type, char *custom_message)
 {
-	if (error_type!=ER_CUSTOM && error_type!=OK)
-		fprintf (stderr, "Error: ");
+	if (error_type != ER_CUSTOM && error_type != OK)
+		fprintf(stderr, "Error: ");
 	
-	switch (error_type)
-	{
-		case ER_AUTH:
-		case ER_MEM:
-		case ER_TCFS:
-		case ER_PERM:
-		case ER_ENABLE:
-		case ER_DISABLE:
-		case ER_COUNT:
-		case ER_USER:
-		case OK:
-			fprintf (stderr, "%s\n", tcfs_errors_strings[error_type]);
-			exit (error_type);
-		case ER_CUSTOM:
-			fprintf (stderr, "%s\n", custom_message);
-			exit (1);
-		case ER_UNKOPT:
-			if (custom_message)
-				fprintf (stderr, "%s: %s\n", tcfs_errors_strings[error_type], custom_message);
-			else
-				fprintf (stderr, "%s\n", tcfs_errors_strings[error_type]);
+	switch (error_type) {
+	case ER_AUTH:
+	case ER_MEM:
+	case ER_TCFS:
+	case ER_PERM:
+	case ER_ENABLE:
+	case ER_DISABLE:
+	case ER_COUNT:
+	case ER_USER:
+	case OK:
+		fprintf(stderr, "%s\n", tcfs_errors_strings[error_type]);
+		exit(error_type);
+	case ER_CUSTOM:
+		fprintf(stderr, "%s\n", custom_message);
+		exit(1);
+	case ER_UNKOPT:
+		if (custom_message)
+			fprintf(stderr, "%s: %s\n", tcfs_errors_strings[error_type], custom_message);
+		else
+			fprintf(stderr, "%s\n", tcfs_errors_strings[error_type]);
 			
-			exit (error_type);
-			break; /* Useless code */
-		default:
-			fprintf (stderr, "internal error.\n");
-			exit (1);
+		exit(error_type);
+		break; /* Useless code */
+	default:
+		fprintf(stderr, "internal error.\n");
+		exit(1);
 	}
 }
 
-void show_usage (char *fmt, char *arg)
+void show_usage(char *fmt, char *arg)
 {
-	printf (fmt, arg);
+	printf(fmt, arg);
 }

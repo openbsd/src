@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_getfspath.c,v 1.2 2000/06/19 20:35:47 fgsch Exp $	*/
+/*	$OpenBSD: tcfs_getfspath.c,v 1.3 2000/06/19 22:42:28 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -20,20 +20,20 @@
 #define WHITESPACE " \t\r\n"
 
 int
-tcfs_label_getcipher (char *label)
+tcfs_label_getcipher(char *label)
 {
 	int ciphernum;
 
-	if (tcfs_get_label (label, NULL, &ciphernum))
-	  return ciphernum;
+	if (tcfs_get_label(label, NULL, &ciphernum))
+		return (ciphernum);
 
         return (-1);
 }
 
 int
-tcfs_getfspath (char *label2search, char *path)
+tcfs_getfspath(char *label2search, char *path)
 {
-	return tcfs_get_label (label2search, path, NULL);
+	return (tcfs_get_label(label2search, path, NULL));
 }
 
 int
@@ -43,15 +43,15 @@ tcfs_get_label(char *label2search, char *path, int *ciphernumber)
 	char *label, *line, *p, *tag, *mountpoint, *cipherfield;
 	int found = 0;
 
-	if ((fp = fopen(_PATH_FSTAB,"r")) == NULL)
+	if ((fp = fopen(_PATH_FSTAB, "r")) == NULL)
 		return (0);
 
-	if ((line = calloc(1024, sizeof(char))) == NULL)
+	if ((line = (char *)malloc(1024)) == NULL)
 		goto out;
 
 	while (!feof(fp) && !found) {
 		p = line;
-		fgets (p, 1024, fp);
+		fgets(p, 1024, fp);
 		p = p + strspn(p, WHITESPACE);
 		while (!found) {
 			strsep(&p, WHITESPACE);  /* device */
@@ -96,7 +96,7 @@ tcfs_get_label(char *label2search, char *path, int *ciphernumber)
 	}
 	free(line);
  out:
-	fclose (fp);
+	fclose(fp);
 
 	return found;
 }

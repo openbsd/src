@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsflag.c,v 1.4 2000/06/19 20:35:48 fgsch Exp $	*/
+/*	$OpenBSD: tcfsflag.c,v 1.5 2000/06/19 22:42:28 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -29,7 +29,7 @@
 #include "tcfsdefines.h"
 
 tcfs_flags tcfs_getflags(int);
-tcfs_flags tcfs_setflags(int,tcfs_flags);
+tcfs_flags tcfs_setflags(int, tcfs_flags);
 
 int
 flags_main(int argc, char *argv[])
@@ -42,12 +42,12 @@ flags_main(int argc, char *argv[])
 	setuid(getuid());
 
 	if (argc < 3) {
-		fprintf (stderr, "tcfsflags [op]{r,x,g} file\n"
+		fprintf(stderr, "tcfsflags [op]{r,x,g} file\n"
 			 "\t op can either be + or -.\n\n");
 		exit(1);
 	}
 
-	fd = open(argv[2],O_RDONLY);
+	fd = open(argv[2], O_RDONLY);
 	if (!fd) {
 		fprintf(stderr, "open failed\n");
 		exit(1);
@@ -55,7 +55,7 @@ flags_main(int argc, char *argv[])
 
 	i = tcfs_getflags(fd);
 	if (i.flag == -1) {
-		fprintf(stderr,"getflags error\n");
+		fprintf(stderr, "getflags error\n");
 		close(fd);
 		exit(1);
 	}

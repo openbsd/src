@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_dbmaint.c,v 1.6 2000/06/19 20:35:47 fgsch Exp $	*/
+/*	$OpenBSD: tcfs_dbmaint.c,v 1.7 2000/06/19 22:42:28 aaron Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -30,7 +30,7 @@
 #define PERM_SECURE	(S_IRUSR|S_IWUSR)
 
 int 
-tcfspwdbr_new (tcfspwdb **new)
+tcfspwdbr_new(tcfspwdb **new)
 {
 	*new = (tcfspwdb *)calloc(1, sizeof(tcfspwdb));
 
@@ -41,7 +41,7 @@ tcfspwdbr_new (tcfspwdb **new)
 }
 
 int
-tcfsgpwdbr_new (tcfsgpwdb **new)
+tcfsgpwdbr_new(tcfsgpwdb **new)
 {
 	*new = (tcfsgpwdb *)calloc(1, sizeof(tcfsgpwdb));
 
@@ -52,179 +52,179 @@ tcfsgpwdbr_new (tcfsgpwdb **new)
 }
 
 int 
-tcfspwdbr_edit (tcfspwdb **tmp, int flags,...)
+tcfspwdbr_edit (tcfspwdb **tmp, int flags, ...)
 {
 	va_list argv;
 	char *d;
 
 	if (!*tmp)
-		if (!tcfspwdbr_new (tmp))
-			return 0;
+		if (!tcfspwdbr_new(tmp))
+			return (0);
 
-	va_start (argv, flags);
+	va_start(argv, flags);
 
 	if (flags & F_USR) {
-		d = va_arg (argv, char *);
-		strcpy ((*tmp)->user, d);
+		d = va_arg(argv, char *);
+		strcpy((*tmp)->user, d);
 	}
 
 	if (flags & F_PWD) {
-		d = va_arg (argv, char *);
-		strcpy ((*tmp)->upw, d);
+		d = va_arg(argv, char *);
+		strcpy((*tmp)->upw, d);
 	}
 
-	va_end (argv);
-	return 1;
+	va_end(argv);
+	return (1);
 }
 
 int 
-tcfsgpwdbr_edit (tcfsgpwdb **tmp, int flags,...)
+tcfsgpwdbr_edit(tcfsgpwdb **tmp, int flags, ...)
 {
 	va_list argv;
 	char *d;
 
 	if (!*tmp)
-		if (!tcfsgpwdbr_new (tmp))
-			return 0;
+		if (!tcfsgpwdbr_new(tmp))
+			return (0);
 
-	va_start (argv, flags);
+	va_start(argv, flags);
 
 	if (flags & F_USR) {
-		d = va_arg (argv, char *);
-		strcpy ((*tmp)->user, d);
+		d = va_arg(argv, char *);
+		strcpy((*tmp)->user, d);
 	}
 
 	if (flags & F_GKEY) {
-		d = va_arg (argv, char *);
-		strcpy ((*tmp)->gkey, d);
+		d = va_arg(argv, char *);
+		strcpy((*tmp)->gkey, d);
 	}
 
 	if (flags & F_GID) {
 		gid_t d;
-		d = va_arg (argv, gid_t);
+		d = va_arg(argv, gid_t);
 		(*tmp)->gid = d;
 	}
 
 	if (flags & F_MEMBERS) {
 		int d;
-		d = va_arg (argv, int);
+		d = va_arg(argv, int);
 		(*tmp)->n = d;
 	}
 
 	if (flags & F_THRESHOLD) {
 		int d;
-		d = va_arg (argv, int);
+		d = va_arg(argv, int);
 		(*tmp)->soglia = d;
 	}
 
-	va_end (argv);
+	va_end(argv);
 	return (1);
 }
 
 int 
-tcfspwdbr_read (tcfspwdb *t, int flags,...)
+tcfspwdbr_read(tcfspwdb *t, int flags, ...)
 {
 	va_list argv;
 	char *d;
 
-	va_start (argv, flags);
+	va_start(argv, flags);
 
 	if (flags & F_USR) {
-		d = va_arg (argv, char *);
-		memset (d, 0, UserLen);
-		strcpy (d, t->user);
+		d = va_arg(argv, char *);
+		memset(d, 0, UserLen);
+		strcpy(d, t->user);
 	}
 
 	if (flags & F_PWD) {
-		d = va_arg (argv, char *);
-		memset (d, 0, PassLen);
-		strcpy (d, t->upw);
+		d = va_arg(argv, char *);
+		memset(d, 0, PassLen);
+		strcpy(d, t->upw);
 	}
 
-	va_end (argv);
-	return 0;
+	va_end(argv);
+	return (0);
 }
 
 int 
-tcfsgpwdbr_read (tcfsgpwdb *t, int flags,...)
+tcfsgpwdbr_read(tcfsgpwdb *t, int flags, ...)
 {
 	va_list argv;
 	char *d;
 
-	va_start (argv, flags);
+	va_start(argv, flags);
 
 	if (flags & F_USR) {
-		d = va_arg (argv, char *);
-		strcpy (d, t->user);
+		d = va_arg(argv, char *);
+		strcpy(d, t->user);
 	}
 
 	if (flags & F_GKEY) {
-		d = va_arg (argv, char *);
-		strcpy (d, t->gkey);
+		d = va_arg(argv, char *);
+		strcpy(d, t->gkey);
 	}
 
 	if (flags & F_GID) {
 		gid_t *d;
 
-		d = va_arg (argv, gid_t *);
-		memcpy (d, &t->gid, sizeof (gid_t));
+		d = va_arg(argv, gid_t *);
+		memcpy(d, &t->gid, sizeof (gid_t));
 	}
 	/* Incomplete... */
 
-	va_end (argv);
-	return 0;
+	va_end(argv);
+	return (0);
 }
 
 void 
-tcfspwdbr_dispose (tcfspwdb *t)
+tcfspwdbr_dispose(tcfspwdb *t)
 {
-	free ((void *)t);
+	free((void *)t);
 }
 
 void 
-tcfsgpwdbr_dispose (tcfsgpwdb *t)
+tcfsgpwdbr_dispose(tcfsgpwdb *t)
 {
-	free ((void *)t);
+	free((void *)t);
 }
 
 tcfspwdb *
-tcfs_getpwnam (char *user, tcfspwdb **dest)
+tcfs_getpwnam(char *user, tcfspwdb **dest)
 {
 	DB *pdb;
 	DBT srchkey, r;
 
 	if (!*dest)
-		if (!tcfspwdbr_new (dest))
-			return NULL;
+		if (!tcfspwdbr_new(dest))
+			return (NULL);
 
-	pdb = dbopen (TCFSPWDB, O_RDONLY, 0, DB_HASH, NULL);
+	pdb = dbopen(TCFSPWDB, O_RDONLY, 0, DB_HASH, NULL);
 	if (!pdb)
-		return NULL;
+		return (NULL);
 
 	srchkey.data = user;
-	srchkey.size = (int) strlen (user);
+	srchkey.size = (int)strlen(user);
 
 	if (pdb->get(pdb, &srchkey, &r, 0)) {
 		pdb->close(pdb);
-		return 0;
+		return (0);
 	}
 
 	if (r.size != sizeof(tcfspwdb)) {
 		fprintf(stderr, "db: incorrect record size: %d != %d\n",
 			r.size, sizeof(tcfspwdb));
 		pdb->close(pdb);
-		return 0;
+		return (0);
 	}
 
-	memcpy (*dest, r.data, sizeof (tcfspwdb));
+	memcpy(*dest, r.data, sizeof(tcfspwdb));
 
-	pdb->close (pdb);
+	pdb->close(pdb);
 
-	return (tcfspwdb *)*dest;
+	return ((tcfspwdb *)*dest);
 }
 
 tcfsgpwdb *
-tcfs_ggetpwnam (char *user, gid_t gid, tcfsgpwdb **dest)
+tcfs_ggetpwnam(char *user, gid_t gid, tcfsgpwdb **dest)
 {
 	DB *pdb;
 	DBT srchkey, r;
@@ -232,52 +232,52 @@ tcfs_ggetpwnam (char *user, gid_t gid, tcfsgpwdb **dest)
 	int res;
 
 	if (!*dest)
-		if (!tcfsgpwdbr_new (dest))
-			return NULL;
+		if (!tcfsgpwdbr_new(dest))
+			return (NULL);
 
-	pdb = dbopen (TCFSGPWDB, O_RDONLY, 0, DB_HASH, NULL);
+	pdb = dbopen(TCFSGPWDB, O_RDONLY, 0, DB_HASH, NULL);
 	if (!pdb)
-		return NULL;
+		return (NULL);
 
 	key = (char*)calloc(strlen(user)+4/*gid lenght*/+1/*null*/,sizeof(char));
 	if (!key)
-		return NULL;
+		return (NULL);
 
-	sprintf (key, "%s\33%d\0", user, (int)gid);
+	sprintf(key, "%s\33%d\0", user, (int)gid);
 	srchkey.data = key;
-	srchkey.size = (int)strlen (key);
+	srchkey.size = (int)strlen(key);
 
 	if ((res = pdb->get(pdb, &srchkey, &r, 0))) {
 		if (res == -1)
 			perror("dbget");
-		pdb->close (pdb);
+		pdb->close(pdb);
 		return (NULL);
 	}
 
-	memcpy (*dest, r.data, sizeof (tcfsgpwdb));
+	memcpy(*dest, r.data, sizeof(tcfsgpwdb));
 
-	pdb->close (pdb);
+	pdb->close(pdb);
 
 	return (*dest);
 }
 
 int 
-tcfs_putpwnam (char *user, tcfspwdb *src, int flags)
+tcfs_putpwnam(char *user, tcfspwdb *src, int flags)
 {
 	DB *pdb;
 	static DBT srchkey, d;
 	int open_flag = 0, res;
 
 	open_flag = O_RDWR|O_EXCL;
-	if (access (TCFSPWDB, F_OK) < 0)
+	if (access(TCFSPWDB, F_OK) < 0)
 		open_flag |= O_CREAT;
 
-	pdb = dbopen (TCFSPWDB, open_flag, PERM_SECURE, DB_HASH, NULL);
+	pdb = dbopen(TCFSPWDB, open_flag, PERM_SECURE, DB_HASH, NULL);
 	if (!pdb)
-		return 0;
+		return (0);
 
 	srchkey.data = user;
-	srchkey.size = (int)strlen (user);
+	srchkey.size = (int)strlen(user);
 
 	if (flags != U_DEL) {
 		d.data = (char *)src;
@@ -285,22 +285,22 @@ tcfs_putpwnam (char *user, tcfspwdb *src, int flags)
 
 		if (pdb->put(pdb, &srchkey, &d, 0) == -1) {
 			fprintf(stderr, "db: put failed\n");
-			pdb->close (pdb);
-			return 0;
+			pdb->close(pdb);
+			return (0);
 		}
-	} else if ((res = pdb->del (pdb, &srchkey, 0))) {
+	} else if ((res = pdb->del(pdb, &srchkey, 0))) {
 		fprintf(stderr, "db: del failed: %s\n", 
 			res == -1 ? "error" : "not found");
-		pdb->close (pdb);
-		return 0;
+		pdb->close(pdb);
+		return (0);
 	}
 
-	pdb->close (pdb);
-	return 1;
+	pdb->close(pdb);
+	return (1);
 }
 
 int 
-tcfs_gputpwnam (char *user, tcfsgpwdb *src, int flags)
+tcfs_gputpwnam(char *user, tcfsgpwdb *src, int flags)
 {
 	DB *pdb;
 	static DBT srchkey, d;
@@ -308,49 +308,49 @@ tcfs_gputpwnam (char *user, tcfsgpwdb *src, int flags)
 	char *key;
 
 	open_flag = O_RDWR|O_EXCL;
-	if (access (TCFSGPWDB, F_OK) < 0)
+	if (access(TCFSGPWDB, F_OK) < 0)
 		open_flag |= O_CREAT;
 
-	pdb = dbopen (TCFSGPWDB, open_flag, PERM_SECURE, DB_HASH, NULL);
+	pdb = dbopen(TCFSGPWDB, open_flag, PERM_SECURE, DB_HASH, NULL);
 	if (!pdb) {
 		perror("dbopen");
-		return 0;
+		return (0);
 	}
 
-	key = (char *) calloc (strlen(src->user) + 4 + 1, sizeof(char));
-	sprintf (key, "%s\33%d\0", src->user, src->gid);
+	key = (char *)calloc(strlen(src->user) + 4 + 1, sizeof(char));
+	sprintf(key, "%s\33%d\0", src->user, src->gid);
 
 	srchkey.data = key;
-	srchkey.size = strlen (key);
+	srchkey.size = strlen(key);
 
 	if (flags != U_DEL) {
 		d.data = (char *)src;
 		d.size = sizeof(tcfsgpwdb);
 
-		if (pdb->put (pdb, &srchkey, &d, 0) == -1) {
+		if (pdb->put(pdb, &srchkey, &d, 0) == -1) {
 			fprintf(stderr, "db: put failed\n");
-			pdb->close (pdb);
-			return 0;
+			pdb->close(pdb);
+			return (0);
 		}
-	} else if (pdb->del (pdb, &srchkey, 0)) {
+	} else if (pdb->del(pdb, &srchkey, 0)) {
 		fprintf(stderr, "db: del failed\n");
-		pdb->close (pdb);
-		return 0;
+		pdb->close(pdb);
+		return (0);
 	}
 
-	pdb->close (pdb);
-	return 1;
+	pdb->close(pdb);
+	return (1);
 }
 
 int
-tcfs_rmgroup (gid_t gid)
+tcfs_rmgroup(gid_t gid)
 {
 	DB *gdb;
 	DBT dbkey;
 
 	gdb = dbopen(TCFSGPWDB, O_RDWR|O_EXCL, PERM_SECURE, DB_HASH, NULL);
 	if (!gdb)
-		return 0;
+		return (0);
 
 	if (gdb->seq(gdb, &dbkey, NULL, R_FIRST))
 		dbkey.data = NULL;
@@ -361,15 +361,14 @@ tcfs_rmgroup (gid_t gid)
 		tmp = (char*)calloc(1024, sizeof(char));
 
 		sprintf(tmp, "\33%d\0", gid);
-		if (strstr (dbkey.data, tmp)) {
+		if (strstr(dbkey.data, tmp)) {
 			if (gdb->del(gdb, &dbkey, 0)) {
-				gdb->close (gdb);
-
-				free (tmp);
-				return 0;
+				gdb->close(gdb);
+				free(tmp);
+				return (0);
 			}
 		}
-		free (tmp);
+		free(tmp);
 
 		if (gdb->seq(gdb, &dbkey, NULL, R_NEXT)) {
 			gdb->close(gdb);
@@ -377,65 +376,65 @@ tcfs_rmgroup (gid_t gid)
 		}
 	}
 
-	gdb->close (gdb);
+	gdb->close(gdb);
 	return (1);
 }
 
 
 int
-tcfs_group_chgpwd (char *user, gid_t gid, char *old, char *new)
+tcfs_group_chgpwd(char *user, gid_t gid, char *old, char *new)
 {
 	tcfsgpwdb *group_info = NULL;
 	unsigned char *key;
 
 	key = (unsigned char *)calloc(UUGKEYSIZE + 1, sizeof (char));
 	if (!key)
-		return 0;
+		return (0);
 
-	if (!tcfs_decrypt_key (old, group_info->gkey, key, GKEYSIZE))
-		return 0;
+	if (!tcfs_decrypt_key(old, group_info->gkey, key, GKEYSIZE))
+		return (0);
 
-	if (!tcfs_encrypt_key (new, key, GKEYSIZE, group_info->gkey,
+	if (!tcfs_encrypt_key(new, key, GKEYSIZE, group_info->gkey,
 			       UUGKEYSIZE + 1))
-		return 0;
+		return (0);
 
-	if (!tcfs_gputpwnam (user, group_info, U_CHG))
-		return 0;
+	if (!tcfs_gputpwnam(user, group_info, U_CHG))
+		return (0);
 
-	free (group_info);
-	free (key);
+	free(group_info);
+	free(key);
 
-	return 1;
+	return (1);
 }
 
 int 
-tcfs_chgpwd (char *user, char *old, char *new)
+tcfs_chgpwd(char *user, char *old, char *new)
 {
-	tcfspwdb *user_info=NULL;
+	tcfspwdb *user_info = NULL;
 	unsigned char *key;
 
 	key = (unsigned char*)calloc(UUKEYSIZE + 1, sizeof(char));
 
-	if (!tcfs_getpwnam (user, &user_info))
-		return 0;
+	if (!tcfs_getpwnam(user, &user_info))
+		return (0);
 
-	if (!tcfs_decrypt_key (old,  user_info->upw, key, KEYSIZE))
-		return 0;
+	if (!tcfs_decrypt_key(old,  user_info->upw, key, KEYSIZE))
+		return (0);
 
-	if (!tcfs_encrypt_key (new, key, KEYSIZE, user_info->upw, UUKEYSIZE + 1))
-		return 0;
+	if (!tcfs_encrypt_key(new, key, KEYSIZE, user_info->upw, UUKEYSIZE + 1))
+		return (0);
 
-	if (!tcfs_putpwnam (user, user_info, U_CHG))
-		return 0;
+	if (!tcfs_putpwnam(user, user_info, U_CHG))
+		return (0);
 
-	free (user_info);
-	free (key);
+	free(user_info);
+	free(key);
 
-	return 1;
+	return (1);
 }
 
 int
-tcfs_chgpassword (char *user, char *old, char *new)
+tcfs_chgpassword(char *user, char *old, char *new)
 {
 	int error1=0;
 	DB *gpdb;
@@ -444,22 +443,22 @@ tcfs_chgpassword (char *user, char *old, char *new)
 
 	ckey = (unsigned char*)calloc(UUGKEYSIZE + 1, sizeof(char));
 	if (!ckey)
-		return 0;
+		return (0);
 
-	gpdb = dbopen (TCFSGPWDB, O_RDWR|O_EXCL, PERM_SECURE, DB_HASH, NULL);
+	gpdb = dbopen(TCFSGPWDB, O_RDWR|O_EXCL, PERM_SECURE, DB_HASH, NULL);
 	if (!gpdb)
-		return 0;
+		return (0);
 
-	error1 = tcfs_chgpwd (user, old, new);
+	error1 = tcfs_chgpwd(user, old, new);
 	if (!error1)
-		return 0;
+		return (0);
 
 	/* Reencrypt group shares */
 	if (gpdb->seq(gpdb, &key, NULL, R_FIRST)) 
 		key.data = NULL;
 	
 	while (key.data) {
-		if (strncmp (user, key.data, strlen(user))) {
+		if (strncmp(user, key.data, strlen(user))) {
 			if (gpdb->seq(gpdb, &key, NULL, R_NEXT))
 			    key.data = NULL;
 			continue;
@@ -467,24 +466,23 @@ tcfs_chgpassword (char *user, char *old, char *new)
 
 		gpdb->get(gpdb, &key, &found, 0);
 
-		if (!tcfs_decrypt_key (old, ((tcfsgpwdb *)found.data)->gkey, ckey, GKEYSIZE))
-			return 0;
+		if (!tcfs_decrypt_key(old, ((tcfsgpwdb *)found.data)->gkey, ckey, GKEYSIZE))
+			return (0);
 
-		if (!tcfs_encrypt_key (new, ckey, GKEYSIZE, ((tcfsgpwdb *)found.data)->gkey, UUGKEYSIZE + 1))
-			return 0;
+		if (!tcfs_encrypt_key(new, ckey, GKEYSIZE, ((tcfsgpwdb *)found.data)->gkey, UUGKEYSIZE + 1))
+			return (0);
 
-		if (gpdb->put (gpdb, &key, &found, 0)) {
-			free (ckey);
-
-			gpdb->close (gpdb);
+		if (gpdb->put(gpdb, &key, &found, 0)) {
+			free(ckey);
+			gpdb->close(gpdb);
 			return (0);
 		}
 
-		free (ckey);
+		free(ckey);
 
 		if (gpdb->seq(gpdb, &key, NULL, R_NEXT))
-		    key.data = NULL;
+			key.data = NULL;
 	}
 
-	return 1;
+	return (1);
 }
