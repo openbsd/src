@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.5 2003/01/24 21:05:45 jason Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.6 2003/01/24 21:30:15 jason Exp $	*/
 /* David Leonard <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
@@ -44,6 +44,10 @@ ENTRY(_thread_machdep_switch)
 ENTRY(_thread_machdep_fpsave)
 	rd	%fprs, %o1
 	stx	%o1, [%o0]
+	andcc	%o1, FPRS_ENA, %g0
+	bz	1f
+	 nop
+
 	stx	%fsr, [%o0 + 8]
 	add	%o0, 16, %o0
 
@@ -81,11 +85,19 @@ ENTRY(_thread_machdep_fpsave)
 	std	%f60, [%o0 + 30 * 8]
 	std	%f62, [%o0 + 31 * 8]
 
+	/* disable fpu and mark both sides clean */
+	wr	%o1, FPRS_ENA|FPRS_DL|FPRS_DU, %fprs
+
+1:
 	retl
 	 nop
 
 ENTRY(_thread_machdep_fprestore)
 	ldx	[%o0], %o1		/* o1 = fprs */
+	andcc	%o1, FPRS_ENA, %g0
+	bz	1f
+	 nop
+
 	wr	%o1, 0, %fprs
 	ldx	[%o0 + 8], %fsr
 	add	%o0, 16, %o0
@@ -123,6 +135,6 @@ ENTRY(_thread_machdep_fprestore)
 	ldd	[%o0 + 29 * 8], %f58
 	ldd	[%o0 + 30 * 8], %f60
 	ldd	[%o0 + 31 * 8], %f62
-
+1:
 	retl
 	 nop
