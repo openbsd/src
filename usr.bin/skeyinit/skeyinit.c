@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.44 2003/05/07 20:39:29 deraadt Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.45 2003/11/26 00:05:27 espie Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -181,13 +181,13 @@ main(int argc, char **argv)
 	case 1:
 		if (!defaultsetup) {
 			fprintf(stderr,
-"You must authenticate yourself before using S/Key for the first time.  In
-secure mode this is normally done via an existing S/Key key.  However, since
-you do not have an entry in the S/Key database you will have to specify an
-alternate authentication type via the `-a' flag, e.g.
-    \"skeyinit -s -a krb5\" or \"skeyinit -s -a passwd\"\n
-Note that entering a plaintext password over a non-secure link defeats the
-purpose of using S/Key in the fist place.\n");
+"You must authenticate yourself before using S/Key for the first time.  In\n"
+"secure mode this is normally done via an existing S/Key key.  However, since\n"
+"you do not have an entry in the S/Key database you will have to specify an\n"
+"alternate authentication type via the `-a' flag, e.g.\n"
+"    \"skeyinit -s -a krb5\" or \"skeyinit -s -a passwd\"\n\n"
+"Note that entering a plaintext password over a non-secure link defeats the\n"
+"purpose of using S/Key in the fist place.\n");
 			exit(1);
 		}
 		break;
