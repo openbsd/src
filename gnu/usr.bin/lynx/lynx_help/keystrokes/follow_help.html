@@ -1,0 +1,132 @@
+<!DOCTYPE html public "-//IETF//DTD HTML 3.0//EN">
+<HTML>
+<HEAD>
+<TITLE>Help on the Follow link (or page) number feature</TITLE>
+<LINK rev="made" href="mailto:lynx-dev@sig.net">
+</HEAD>
+<BODY>
+<h1>+++ Follow link (or goto link or page) number Help +++<br>
++++ Select option (or page) number Help +++</h1>
+
+If a user has set <em>Keypad mode</em> to <em>Links are numbered</em>
+or <em>Links and form fields are numbered</em> as the default or for
+the current session via the <em>Options menu</em>, then hypertext links
+(and form fields, depending on the keypad mode)
+are prefixed with numbers in square brackets.  Entering a keyboard
+or keypad number is treated as an <em>F_LINK_NUM</em> command, and should
+invoke the <em>Follow link (or goto link or page) number:</em> statusline 
+prompt for a
+potentially multiple digit number corresponding to an indicated link
+number.  If RETURN is pressed to terminate the number entry (e.g.,
+<em>123</em>) and it corresponds to a hypertext link, Lynx will retrieve
+the document for that link as if you had paged or used other navigation
+commands to make it the current link and then ACTIVATE-ed it.  The prompt
+can be invoked via '<em>0</em>', but it will not be treated as the lead
+digit for the number entry, whereas '<em>1</em>' through '<em>9</em>' both
+invoke the prompt and are treated as the first digit.  In <em>Links and
+form fields are numbered</em> mode, if the number corresponds to a form
+field you will be positioned on that field, but if it is a submit button
+it will not be ACTIVATE-ed.
+
+<p>If the number entered at the prompt has a '<em>g</em>' suffix (e.g.,
+<em>123g</em>), then Lynx will make the link corresponding to that number
+the current link, paging as appropriate if the link does not appear in
+the currently displayed page.  The '<em>g</em>' suffix is implied (need
+not be entered) for form fields in <em>Links and form fields are
+numbered</em> mode.
+
+<p>Alternatively, if the number is given a '<em>p</em>' suffix (e.g.,
+<em>123p</em>), Lynx will make the page corresponding to that number
+the currently displayed page, and the first link on that page, if any,
+the current link.  The '<em>g</em>' and '<em>p</em>' suffixes thus
+convert the 
+<em>Follow link (or goto link or page) number:</em> feature to an advanced
+navigation aid.
+
+<p>If the user has set <em>Keypad mode</em> to <em>Numbers act as arrows</em>,
+then only '<em>0</em>', rather than every number, will be treated as an
+<em>F_LINK_NUM</em> command for invoking the <em>Follow link (or goto link or page)
+number:</em> prompt.  The '<em>0</em>' will not be treated as the first
+digit for the number, or number plus suffix, entry.
+
+<p>Numbers are associated with form fields only when <em>Links and form
+fields are numbered</em> mode has been selected.  If you have selected
+<em>Numbers act as arrows</em> or <em>Links are numbered</em> mode, you
+can seek form fields in the document via WHEREIS searches for strings in
+their displayed values.  If they are INPUT or TEXTAREA fields with no
+values as yet, you can use two or more underscores as the search string,
+because underscores are used as placeholders for form fields in the
+displayed document.
+
+<p ID="select-option">When you have invoked a popup window for a list of
+OPTIONs in a form's SELECT block, each OPTION is associated with a number,
+and that number will be displayed in <em>Links and form fields are
+numbered</em> mode.  In any keypad mode, the <em>F_LINK_NUM</em>
+('<em>0</em>') command will invoke a <em>Select option (or page)
+number:</em> prompt, and you can enter a number, and optionally a
+'<em>g</em>' or '<em>p</em>' suffix, to select or seek an OPTION in that
+list.  If only an number is entered at the prompt, the corresponding OPTION
+will be selected and the popup will be retracted.  If the '<em>g</em>'
+suffix is included, then you will be positioned on the corresponding OPTION
+in the list, paging through the list if necessary, but it will not be
+treated as selected unless you enter the ACTIVATE (RETURN or right-arrow)
+command when positioned on the OPTION.  For purposes of paging (e.g., in
+conjunction with the '<em>p</em>' suffix), a <em>page</em> is defined as
+the number of OPTIONs displayed within the vertical dimension of the popup
+window.
+
+<p>Note that HTML can be structured so that it includes <em>hidden
+links</em>, i.e., without a visible link name intended for ACTIVATE-ing
+the link.  Such links may be created, for example, by making an IMG element
+the sole content of an Anchor element, and including an ALT="" attribute
+name/value pair to suppress access to the link when the browser does not
+have support for image handling available.  They also can be created by
+having truly empty Anchor content, in cases for which the value of an
+Anchor's HREF attribute is intended as a navigation aid for robots
+(typically indexers) and not as content for a browser's rendition of the
+document.  With the <em>-ismap</em> command line switch, Lynx will 
+additionally treat a link to a server-side image maps as hidden if
+there also is a client-side map for the same image.
+Finally, in some cases links which are not intended to be hidden
+may effectively become <em>hidden links</em> because of bad HTML.
+The <em>hidden links</em> differ from Anchors which have only a
+NAME or ID attribute name/value pair (intended as positioning targets from
+other links which do have HREF attributes and values that include a
+fragment).  
+
+<p>Lynx respects instructions for <em>hidden links</em> and normally does
+not include them in the rendition of the document.  However, if the command
+line switch <em>-hiddenlinks=merge</em> is used, such links will still be
+numbered in sequence with other links which are not hidden, and if <em>Links
+are numbered</em> mode is also on, link numbers will appear for them in the
+displayed text (except for links to image maps which are hidden because of 
+<em>-ismap</em>).  If <em>-hiddenlinks=listonly</em> or
+<em>-hiddenlinks=ignore</em> is in effect, <em>hidden links</em> will not be
+shown in the text even in <em>links are numbered</em> mode.  Not using a
+<em>-hiddenlinks</em> flag at all is equivalent to
+<em>-hiddenlinks=listonly</em>.
+
+<p>If a document includes
+<em>hidden links</em>, they will be reported, with appropriate labeling,
+in the menu created for the LIST ('<em>l</em>') command,
+unless <em>-hiddenlinks=ignore</em> is used.  They can then be
+ACTIVATE-ed via that menu.  Also, if a link was hidden due to an ALT
+attribute in an IMG element, it will be converted to a <em>visible link</em>
+whenever the IMAGE_TOGGLE ('<em>*</em>') command is used to create links
+for SRC attritute values of IMG elements, because this indicates that the
+user does have some form of image handling enabled via a helper application, 
+or wishes to download files for subsequent use with a graphic browsers or
+other suitable software.
+
+<p>HTML forms also can have fields with a HIDDEN attribute, indicating that
+a name/value pair for the fields should be included in the content submitted
+for the form, but the value should not be displayed in the rendered form.
+Lynx respects this attribute as well, and neither displays the HIDDEN field,
+nor assigns it a number for the F_LINK_NUM ('<em>0</em>') command and
+<em>Links and form fields are numbered</em> keypad mode handling, nor
+includes an entry for it in the menu created for the LIST ('<em>l</em>')
+command.  However, the HIDDEN name/value pairs are included in any displays
+of submitted form content in the <em>Information about the current
+document</em> that is invoked by the INFO ('<em>=</em>') command.
+</BODY>
+</HTML>

@@ -1,0 +1,144 @@
+/* The configure script translates "config.hin" into "lynx_cfg.h" */
+#ifndef LYNX_CFG_H
+#define LYNX_CFG_H 1
+
+#undef ALT_CHAR_SET		/* CF_ALT_CHAR_SET */
+#undef ARCHIVE_ONLY		/* CF_ARG_DISABLE(dired-archive) */
+#undef CHMOD_PATH		/* CF_PATH_PROG(chmod) */
+#undef COLOR_CURSES		/* defined by CF_COLOR_CURSES */
+#undef COMPRESS_PATH		/* CF_PATH_PROG(compress) */
+#undef COPY_PATH		/* CF_PATH_PROG(cp) */
+#undef CURS_PERFORMANCE		/* CF_CURS_PERFORMANCE */
+#undef DEBUG			/* configure --enable-debug */
+#undef DECL_GETGRGID
+#undef DECL_GETGRNAM
+#undef DECL_STRSTR
+#undef DECL_SYS_ERRLIST
+#undef DIRED_SUPPORT		/* AC_ARG_WITH(dired) */
+#undef DONT_TRACK_INTERNAL_LINKS /* CF_ARG_DISABLE(internal-links) */
+#undef EXP_8BIT_TOUPPER		/* AC_ARG_WITH(8bit-toupper) */
+#undef EXP_CHARTRANS_AUTOSWITCH	/* AC_ARG_WITH(font-switch) */
+#undef FANCY_CURSES		/* defined by CF_FANCY_CURSES */
+#undef GCC_UNUSED		/* CF_GCC_ATTRIBUTES */
+#undef GZIP_PATH		/* CF_PATH_PROG(gzip) */
+#undef HAVE_CBREAK
+#undef HAVE_CUSERID
+#undef HAVE_DIRENT_H		/* defined by AC_HEADER_DIRENT */
+#undef HAVE_FCNTL_H		/* have <fcntl.h> */
+#undef HAVE_GETBKGD		/* defined by CF_COLOR_CURSES */
+#undef HAVE_GETCWD
+#undef HAVE_GETGROUPS
+#undef HAVE_KEYPAD
+#undef HAVE_LIMITS_H
+#undef HAVE_LSTAT		/* defined by CF_FUNC_LSTAT */
+#undef HAVE_NCURSES_H		/* defined if we include <ncurses.h> */
+#undef HAVE_PUTENV
+#undef HAVE_READDIR
+#undef HAVE_SIZECHANGE		/* defined by CF_SIZECHANGE */
+#undef HAVE_STDLIB_H
+#undef HAVE_STRERROR
+#undef HAVE_STRING_H
+#undef HAVE_SYS_DIR_H		/* defined by AC_HEADER_DIRENT */
+#undef HAVE_SYS_FCNTL_H		/* have <sys/fcntl.h> */
+#undef HAVE_SYS_FILIO_H		/* have <sys/filio.h> */
+#undef HAVE_SYS_IOCTL_H		/* have <sys/ioctl.h> */
+#undef HAVE_SYS_NDIR_H		/* defined by AC_HEADER_DIRENT */
+#undef HAVE_SYS_WAIT_H		/* have <sys/wait.h> */
+#undef HAVE_TERMIOS_H		/* have <termios.h> */
+#undef HAVE_TTYTYPE
+#undef HAVE_TYPE_UNIONWAIT	/* CF_UNION_WAIT */
+#undef HAVE_UNISTD_H		/* have <unistd.h> */
+#undef HAVE_USE_DEFAULT_COLORS	/* ncurses extension */
+#undef HAVE_UTMP
+#undef HAVE_WAITPID
+#undef HAVE_WBORDER
+#undef IGNORE_CTRL_C		/* FIXME: make tests? */
+#undef INSTALL_ARGS		/* CF_PATH_PROG(install) */
+#undef INSTALL_PATH		/* CF_PATH_PROG(install) */
+#undef LINKEDSTYLES		/* see USE_COLOR_STYLE */
+#undef LINUX			/* FIXME: make tests? */
+#undef LOCALE			/* for locale support */
+#undef LONG_LIST		/* CF_ARG_DISABLE(long-list) */
+#undef LYNX_CFG_FILE		/* $libdir/lynx.cfg */
+#undef LYNX_LSS_FILE		/* $libdir/lynx.lss */
+#undef LY_FIND_LEAKS		/* configure --disable-leaks */
+#undef MKDIR_PATH		/* CF_PATH_PROG(mkdir) */
+#undef MV_PATH			/* CF_PATH_PROG(mv) */
+#undef NCURSES			/* defined for ncurses support */
+#undef NCURSES_BROKEN		/* defined for ncurses color support */
+#undef NEED_PTEM_H		/* defined by CF_SIZECHANGE */
+#undef NEED_REMOVE		/* defined by CF_REMOVE_BROKEN */
+#undef NGROUPS			/* defined by CF_NGROUPS */
+#undef NO_CHANGE_EXECUTE_PERMS	/* CF_ARG_DISABLE(dired-xpermit) */
+#undef NO_EXTENDED_HTMLDTD	/* CF_ARG_DISABLE(extended-dtd) */
+#undef NO_PARENT_DIR_REFERENCE	/* configure --disable-parent-dir */
+#undef NSL_FORK			/* CF_ARG_ENABLE(nsl-fork) */
+#undef OK_GZIP			/* CF_ARG_DISABLE(dired-gzip) */
+#undef OK_OVERRIDE		/* CF_ARG_DISABLE(dired-override) */
+#undef OK_PERMIT		/* CF_ARG_DISABLE(dired-permit) */
+#undef OK_TAR			/* CF_ARG_DISABLE(dired-tar) */
+#undef OK_UUDECODE		/* CF_ARG_DISABLE(dired-uudecode) */
+#undef OK_ZIP			/* CF_ARG_DISABLE(dired-zip) */
+#undef RM_PATH			/* CF_PATH_PROG(rm) */
+#undef STDC_HEADERS
+#undef SYSTEM_MAIL		/* CF_DEFINE_PROG */
+#undef SYSTEM_MAIL_FLAGS	/* defined by CF_SYSTEM_MAIL_FLAGS */
+#undef TAR_PATH			/* CF_PATH_PROG(tar) */
+#undef TERMIO_AND_TERMIOS	/* termio.h and termios.h combo bug */
+#undef TOUCH_PATH		/* CF_PATH_PROG(touch) */
+#undef ULTRIX			/* config.sub */
+#undef UNCOMPRESS_PATH		/* CF_PATH_PROG(gunzip) */
+#undef UNDERLINE_LINKS		/* CF_ARG_ENABLE(underlines) */
+#undef UNIX
+#undef UNZIP_PATH		/* CF_PATH_PROG(unzip) */
+#undef USE_COLOR_STYLE		/* CF_ARG_ENABLE(color-style) */
+#undef USE_DEFAULT_COLORS	/* CF_ARG_ENABLE(default-colors) */
+#undef USE_EXTERNALS		/* CF_ARG_ENABLE(externs) */
+#undef USE_FCNTL		/* CF_FIONBIO */
+#undef USE_HASH			/* see USE_COLOR_STYLE */
+#undef USE_SIZECHANGEHACK	/* FIXME: find a case where this works! */
+#undef USE_SLANG		/* AC_ARG_WITH(screen=slang) */
+#undef USE_ZLIB			/* AC_ARG_WITH(zlib) */
+#undef UTMPX_FOR_UTMP		/* use <utmpx.h> since <utmp.h> not found */
+#undef UUDECODE_PATH		/* CF_PATH_PROG(uudecode) */
+#undef WAITPID_USES_UNION	/* CF_FUNC_WAIT */
+#undef WAIT_USES_UNION		/* CF_FUNC_WAIT */
+#undef ZCAT_PATH		/* CF_PATH_PROG(zcat) */
+#undef ZIP_PATH			/* CF_PATH_PROG(zip) */
+#undef const			/* defined by AC_C_CONST */
+#undef mode_t			/* defined by AC_TYPE_MODE_T */
+#undef vfork			/* defined by AC_FUNC_FORK */
+/* FIXME:ALLOW_USERS_TO_CHANGE_EXEC_WITHIN_OPTIONS */
+/* FIXME:BSDI */
+/* FIXME:DECLARE_WAIS_LOGFILES */
+/* FIXME:DGUX */
+/* FIXME:DGUX_OLD */
+/* FIXME:EXEC_LINKS */
+/* FIXME:EXEC_SCRIPTS */
+/* FIXME:HP_TERMINAL */
+/* FIXME:NOPORT */
+/* FIXME:POSIX_JC */
+/* FIXME:REVERSE_CLEAR_SCREEN_PROBLEM */
+/* FIXME:SHORTENED_RBIND */
+/* FIXME:SNAKE */
+/* FIXME:SOCKS */
+/* FIXME:SVR4_BSDSELECT */
+/* FIXME:SYSLOG_REQUESTED_URLS */
+
+#ifndef HAVE_LSTAT
+#define lstat stat
+#endif
+
+#ifdef DECL_GETGRGID
+extern struct group * getgrgid ();
+#endif
+
+#ifdef DECL_GETGRNAM
+extern struct group * getgrnam ();
+#endif
+
+#ifdef DECL_STRSTR
+extern char * strstr ();
+#endif
+
+#endif /* LYNX_CFG_H */

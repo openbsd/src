@@ -1,0 +1,554 @@
+.nr N -1
+.nr D 5
+.TH LYNX 1 Local
+.UC 4
+.SH NAME
+lynx \- a general purpose distributed information browser for the World Wide Web
+.SH SYNOPSIS
+.B Lynx
+[options] [path or URL]
+.PP
+use "lynx -help" to display a complete list of current options.
+.SH DESCRIPTION
+.\" This defines appropriate quote strings for nroff and troff
+.ds lq \&"
+.ds rq \&"
+.if t .ds lq ``
+.if t .ds rq ''
+.\" Just in case these number registers aren't set yet...
+.if \nN==0 .nr N 10
+.if \nD==0 .nr D 5
+.I
+Lynx
+is a fully-featured World Wide Web (WWW) client for users
+running cursor-addressable, character-cell display devices (e.g.,
+vt100 terminals, vt100 emulators running on PCs or Macs, or any
+other "curses-oriented" display).  It will display hypertext
+markup language (HTML) documents containing links to
+files residing on the local system, as well as files residing on
+remote systems running Gopher, HTTP, FTP, WAIS, and NNTP servers.
+Current versions of
+.I
+Lynx
+run on
+Unix, VMS, Windows95/NT, 386DOS and OS/2 EMX.
+.PP
+.I
+Lynx
+can be used to access information on the World Wide Web, or
+to build information systems intended primarily for local access.
+For example,
+.I
+Lynx
+has been used to build several Campus Wide
+Information Systems (CWIS).  In addition,
+.I
+Lynx
+can be used to
+build systems isolated within a single LAN.
+.SH OPTIONS
+At start up, \fILynx\fR will load any local 
+file or remote URL specified at the command
+line.  For help with URLs, press \fB"?"\fR
+or \fB"h"\fR while running \fILynx\fR.
+Then follow the link titled, "Help on URLs."
+.PP
+.TP
+.B -
+If the argument is only '-', then Lynx expects to receive
+the arguments from stdin.  This is to allow for the
+potentially very long command line that can be associated
+with the -get_data or -post_data arguments (see below).
+.TP
+.B -anonymous
+used to specify the anonymous account.
+.TP
+.B -assume_charset\fR=\fIID\fR:\fIMIMEname
+charset for documents that don't specify it.
+.TP
+.B -assume_local_charset\fR=\fIID\fR:\fIMIMEname
+charset assumed for local files.
+.TP
+.B -assume_unrec_charset\fR=\fIID\fR:\fIMIMEname
+use this instead of unrecognized charsets.
+.TP
+.B -auth\fR=\fIID\fR:\fIPASSWD
+set authorization ID and password for protected documents
+at startup.  Be sure to protect any script files which use
+this switch.
+.TP
+.B -base
+prepend a request URL comment and BASE tag to text/html
+outputs for -source dumps.
+.TP
+.B -blink
+forces high intensity bg colors for color mode, if available
+and supported by the terminal.
+Lynx needs to be compiled with the slang library for this flag.
+.TP
+.B -book
+use the bookmark page as the startfile.  The default or command
+line startfile is still set for the Main screen command, and will
+be used if the bookmark page is unavailable or blank.
+.TP
+.B -buried_news
+toggles scanning of news articles for buried references, and
+converts them to news links.  Not recommended because email
+addresses enclosed in angle brackets will be converted to
+false news links, and uuencoded messages can be trashed.
+.TP
+.B -cache\fR=\fINUMBER
+set the NUMBER of documents cached in memory.
+The default is 10.
+.TP
+.B -case
+enable case-sensitive string searching.
+.TP
+.B -cfg\fR=\fIFILENAME
+specifies a Lynx configuration file other than the default
+lynx.cfg.
+.TP
+.B -child
+exit on left-arrow in startfile, and disable save to disk.
+.TP
+.B -color
+forces color mode on, if available.  Default color control sequences
+which work for many terminal types are assumed if the terminal
+capability description does not specify how to handle color.
+Lynx needs to be compiled with the slang library for this flag.
+A saved show_color=always setting found in a .lynxrc file at
+startup has the same effect.  A saved show_color=always found
+in .lynxrc on startup is overridden by this flag.
+.TP
+.B -cookies
+toggles handling of Set-Cookie headers.
+.TP
+.B -core
+toggles forced core dumps on fatal errors.
+.TP
+.B -crawl
+with -traversal, output each page to a file.
+with -dump, format output as with -traversal, but to stdout.
+.TP
+.B -display\fR=\fIDISPLAY
+set the display variable for X rexec-ed programs.
+.TP
+.B -dump
+dumps the formatted output of the default document or one
+specified on the command line to standard out. 
+This can be used in the following way:
+lynx -dump http://www.crl.com/~subir/lynx.html.
+.TP
+.B -editor\fR=\fIEDITOR
+enable edit mode using the specified
+EDITOR. (vi, ed, emacs, etc.)
+.TP
+.B -emacskeys
+enable emacs-like key movement.
+.TP
+.B -enable_scrollback
+toggles compatibility with comm programs' scrollback keys
+(may be incompatible with some curses packages).
+.TP
+.B -error_file\fR=\fIFILE
+define a file where Lynx will report HTTP access codes.
+.TP
+.B -fileversions 
+include all versions of files in local VMS directory listings.
+.TP
+.B -force_html
+forces the first document to be interpreted as HTML.
+.TP
+.B -force_secure
+toggles forcing of the secure flag for SSL cookies.
+.TP
+.B -from
+toggles transmissions of From headers.
+.TP
+.B -ftp 
+disable ftp access.
+.TP
+.B -get_data
+send form data from stdin using GET method and dump results.
+.TP
+.B -head
+send a HEAD request for the mime headers.
+.TP
+.B -help
+print this Lynx command syntax usage message.
+.TP
+.B -hiddenlinks=[option]
+control the display of hidden links.
+
+.I merge
+hidden links show up as bracketed numbers
+and are numbered together with other links in the sequence of their
+occurrence in the document.
+
+.I listonly
+hidden links are shown only on L)ist screens and listings generated by
+.I -dump
+or from the P)rint menu, but appear separately at the end of those lists.
+This is the default behavior.
+
+.I ignore
+hidden links do not appear even in listings.
+.TP
+.B -historical
+toggles use of '>' or '-->' as a terminator for comments.
+.TP
+.B -homepage\fR=\fIURL
+set homepage separate from start page.
+.TP
+.B -image_links
+toggles inclusion of links for all images.
+.TP
+.B -index\fR=\fIURL
+set the default index file to the specified URL.
+.TP
+.B -ismap
+toggles inclusion of ISMAP links when client-side
+MAPs are present.
+.TP
+.B -link\fR=\fINUMBER
+starting count for lnk#.dat files produced by -crawl.
+.TP
+.B -localhost
+disable URLs that point to remote hosts.
+.TP
+.B -locexec
+enable local program execution from local files only (if
+Lynx was compiled with local execution enabled).
+.TP
+.B -mime_header
+prints the MIME header of a fetched document along with its
+source.
+.TP
+.B -minimal
+toggles minimal versus valid comment parsing.
+.TP
+.B -newschunksize\fR=\fINUMBER
+number of articles in chunked news listings.
+.TP
+.B -newsmaxchunk\fR=\fINUMBER
+maximum news articles in listings before chunking.
+.TP
+.B -nobrowse
+disable directory browsing.
+.TP
+.B -nocc
+disable Cc: prompts for self copies of mailings.  Note
+that this does not disable any CCs which are incorporated
+within a mailto URL or form ACTION.
+.TP
+.B -nocolor
+force color mode off, overriding terminal capabilities and any
+-color flags, COLORTERM variable, and saved .lynxrc settings.
+.TP
+.B -noexec
+disable local program execution. (DEFAULT)
+.TP
+.B -nofilereferer
+disable transmissions of Referer headers for file URLs.
+.TP
+.B -nolist
+disable the link list feature in dumps.
+.TP
+.B -nolog
+disable mailing of error messages to document owners.
+.TP
+.B -nopause
+disable forced pauses for statusline messages.
+.TP
+.B -noprint
+disable print functions.
+.TP
+.B -noredir
+prevents automatic redirection and prints a message with a
+link to the new URL.
+.TP
+.B -noreferer
+disable transmissions of Referer headers.
+.TP
+.B -nosocks
+disable SOCKS proxy usage by a SOCKSified Lynx.
+.TP
+.B -nostatus
+disable the retrieval status messages.
+.TP
+.B -number_links
+force numbering of links.
+.TP
+.B -pauth\fR=\fIID\fR:\fIPASSWD
+set authorization ID and password for a protected proxy
+server at startup.  Be sure to protect any script files
+which use this switch.
+.TP
+.B -popup
+toggles handling of single-choice SELECT options via
+popup windows or as lists of radio buttons.
+.TP
+.B -post_data
+send form data from stdin using POST method and dump results.
+.TP
+.B -preparsed
+show HTML source preparsed and reformatted when used with -source
+or in source view.
+.TP
+.B -print
+enable print functions. (default)
+.TP
+.B -pseudo_inlines
+toggles pseudo-ALTs for inlines with no ALT string.
+.TP
+.B -raw
+toggles default setting of 8-bit character translations
+or CJK mode for the startup character set.
+.TP
+.B -realm
+restricts access to URLs in the starting realm.
+.TP
+.B -reload
+flushes the cache on a proxy server
+(only the first document affected).
+.TP
+.B -restrictions\fR=\fI[option][,option][,option]...
+allows a list of services to be disabled
+selectively.  The following list is printed
+if no options are specified.
+
+.I all   
+- restricts all options.
+
+.I bookmark 
+- disallow changing the location of the bookmark 
+file. 
+
+.I bookmark_exec
+- disallow execution links via the bookmark file.
+
+.I change_exec_perms
+- disallow changing the eXecute permission on files
+(but still allow it for directories) when local file
+management is enabled.
+
+.I default 
+- same as command line option -anonymous. 
+Disables default services for anonymous users. 
+Currently set to all restricted except for: 
+inside_telnet, outside_telnet, inside_news, 
+inside_ftp, outside_ftp, inside_rlogin,
+outside_rlogin, jump, mail and goto.  Defaults 
+are setable within userdefs.h.
+
+.I dired_support
+- disallow local file management.
+
+.I disk_save 
+- disallow saving to disk in the download and
+print menus.
+
+.I download
+- disallow downloaders in the download menu.
+
+.I editor  
+- disallow editing.
+
+.I exec    
+- disable execution scripts.
+
+.I exec_frozen
+- disallow the user from changing the local 
+execution option.
+
+.I file_url 
+- disallow using G)oto, served links or bookmarks for
+file: URLs.
+
+.I goto    
+- disable the 'g' (goto) command.  
+
+.I inside_ftp
+- disallow ftps for people coming from inside your
+domain (utmp required for selectivity).
+
+.I inside_news
+- disallow USENET news posting for people coming 
+from inside your domain (utmp required for selectivity).
+
+.I inside_rlogin
+- disallow rlogins for people coming from inside
+your domain (utmp required for selectivity).
+
+.I inside_telnet 
+- disallow telnets for people coming from inside 
+your domain (utmp required for selectivity). 
+
+.I jump
+- disable the 'j' (jump) command.
+
+.I multibook
+- disallow multiple bookmarks.
+
+.I mail
+- disallow mail.
+
+.I news_post
+- disallow USENET News posting.
+
+.I options_save 
+- disallow saving options in .lynxrc.
+
+.I outside_ftp
+- disallow ftps for people coming from outside your
+domain (utmp required for selectivity).
+
+.I outside_news
+- disallow USENET news posting for people coming 
+from outside your domain (utmp required for selectivity).
+
+.I outside_rlogin
+- disallow rlogins for people coming from outside
+your domain (utmp required for selectivity).
+
+.I outside_telnet 
+- disallow telnets for people coming from 
+outside your domain (utmp required for selectivity). 
+
+.I print   
+- disallow most print options. 
+
+.I shell   
+- disallow shell escapes and lynxexec or lynxprog G)oto's.
+
+.I suspend 
+- disallow Unix Control-Z suspends with escape to shell.
+
+.I telnet_port
+- disallow specifying a port in telnet G)oto's.
+
+.I useragent
+- disallow modifications of the User-Agent header.
+
+.TP
+.B -resubmit_posts
+toggles forced resubmissions (no-cache) of forms with
+method POST when the documents they returned are sought
+with the PREV_DOC command or from the History List.
+.TP
+.B -rlogin
+disable recognition of rlogin commands.
+.TP
+.B -selective
+require .www_browsable files to browse directories.
+.TP
+.B -show_cursor
+If enabled the cursor will not be hidden in the right hand
+corner but will instead be positioned at the start of the
+currently selected link.  Show cursor is the default for
+systems without FANCY_CURSES capabilities.  The default
+configuration can be changed in userdefs.h or lynx.cfg.
+The command line switch toggles the default.
+.TP
+.B -source
+works the same as dump but outputs HTML source instead of
+formatted text.
+.TP
+.B -startfile_ok
+allow non-http startfile and homepage with -validate.
+.TP
+.B -telnet
+disable recognition of telnet commands.
+.TP
+.B -term\fR=\fITERM
+tell Lynx what terminal type to assume its talking to.
+(This may be useful for remote execution, when, for example,
+Lynx connects to a remote TCP/IP port that starts a script that,
+in turn, starts another Lynx process.)
+.TP
+.B -tlog
+toggles use of a Lynx Trace Log for the current session.
+.TP
+.B -trace
+turns on WWW trace mode.
+.TP
+.B -traversal
+traverse all http links derived from startfile.  When used with
+-crawl, each link that begins with the same string as startfile
+is output to a file, intended for indexing.  See CRAWL.announce
+for more information.
+.TP
+.B -underscore
+toggles use of _underline_ format in dumps.
+.TP
+.B -useragent=Name
+set alternate Lynx User-Agent header.
+.TP
+.B -validate
+accept only http URLs (for validation).  Complete security
+restrictions also are implemented.
+.TP
+.B -version
+print version information.
+.TP
+.B -vikeys
+enable vi-like key movement.
+.TP
+.B -width\fR=\fINUMBER
+number of columns for formatting of dumps, default is 80.
+.SH COMMANDS
+o Use \fBUp arrow\fR and \fBDown arrow\fR to scroll through hypertext links.
+.br
+o \fBRight arrow\fR or \fBReturn\fR will follow a highlighted hypertext link.
+.br
+o \fBLeft Arrow\fR will retreat from a link.
+.br
+o Type \fB"h"\fR or \fB"?"\fR for online help and descriptions 
+of key-stroke commands.
+.br
+o Type \fB"k"\fR for a complete list of the current key-stroke 
+command mappings.
+.SH NOTES
+This is the Lynx v2.8 Release
+.PP
+If you wish to contribute to the further development
+of \fILynx\fR, subscribe to our mailing list.  Send email to
+<majordomo@sig.net> with "subscribe lynx-dev" as the only line
+in the body of your message.
+.PP
+Send bug reports, comments, suggestions to <lynx-dev@sig.net>
+after subscribing.
+.PP
+Unsubscribe by sending email to <majordomo@sig.net> with
+"unsubscribe lynx-dev" as the only line in the body of your message.
+Do not send the unsubscribe message to the lynx-dev list, itself.
+.SH ACKNOWLEDGMENTS
+Lynx has incorporated code from a variety of sources along the way.
+The earliest versions of Lynx included code from Earl Fogel of Computing
+Services at the University of Saskatchewan, who implemented HYPERREZ
+in the Unix environment.  HYPERREZ was developed by Niel Larson of 
+Think.com and served as the model for the early versions of Lynx.
+Those versions also incorporated libraries from the Unix Gopher clients
+developed at the University of Minnesota, and the later versions of 
+Lynx rely on the WWW client library code developed by Tim Berners-Lee
+and the WWW community.  Also a special thanks to Foteos Macrides who ported
+much of Lynx to VMS and did or organized most of its development since the
+departures of Lou Montulli and Garrett Blythe from the University of Kansas
+in the summer of 1994 through the release of v2.7.2, and to everyone
+on the net who has contributed to Lynx's development either directly (through
+patches, comments or bug reports) or indirectly (through inspiration and
+development of other systems).
+.SH AUTHORS
+Lou Montulli, Garrett Blythe, Craig Lavender, Michael Grobe, Charles Rezac
+.br
+Academic Computing Services
+.br
+University of Kansas
+.br
+Lawrence, Kansas 66047
+.PP
+Foteos Macrides
+.br
+Worcester Foundation for Biomedical Research
+.br
+Shrewsbury, Massachusetts 01545

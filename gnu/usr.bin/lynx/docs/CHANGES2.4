@@ -1,0 +1,891 @@
+--- Rename of Lynx2-3-FM and release as Lynx2-4  (08-June-1995) ---
+==============================================================================
+06-08-95
+* All of the changes from lynx2-3-FM are now located at ftp2.cc.ukans.edu.
+  We will call this version lynx2-4 and all new changes will be added here.
+  - JP
+06-05-95
+* Added isc support based on post to lynx-dev from Ami Fischman
+  (a540ami@pic.ucla.edu). - FM
+06-04-95
+* Initialize t1->name before the StrAllocCopy() in LYMainLoop.c for
+  DIRED_SUPPORT tagging. - Rick Mallett (rmallett@ccs.carleton.ca)
+* Don't bother creating a /tmp copy of local files for downloading
+  under the DIRED_SUPPORT, and don't include "Save to disk" in the
+  download menu for such files. - RM
+* Deal with any newlines or tabs in statusline messages, along lines
+  in patch from Peter Marquardt. - FM
+* Various fixes to ensure terminations of strings, along lines suggested
+  by PM. - FM
+* Made HTAlert messages more readable in trace mode.
+* Replaced info.cern.ch with www.w3.org in userdefs.h and lynx.cfg. - GL
+* Allow definition of the global configuration file (lynx.cfg) path and
+  name via a "LYNX_CFG" VMS logical or Unix environment variable.  Will
+  override the "LYNX_CFG_FILE" definition in userdefs.h.  The -cfg command
+  line switch will override those.  SYS$LOGIN (VMS) or '~' (Unix) can be
+  used in the path to treat the global configuration file as a personal
+  configuration file ($HOME will be substituted for '~'). Meets objective
+  in patch posted by Danny Meyer (mayer@ljsrv2.enet.dec.com) but does
+  not seek lynx.cfg in the user's HOME directory without an explicit
+  directive to do so.  Issue a screen message and then exit if the
+  configuration file is not readeable (rather than continuing as if
+  one had been found and read). - FM
+* Added protections from NAMEless INPUT or TEXTAREA tags. - FM
+05-29-95
+* Changed close(*s) typo in HTTCP.c to NETCLOSE(*s).  Caused tight loops if
+  on error *s became stdin. - Peter_Marquardt (wwwutz@cha01.tfh-berlin.de)
+05-20-95
+* Mods of proxying/gatewaying code, replace obsolete info.cern.ch default
+  URL addresses with www.w3.org, and add option to use the new www.w3.org
+  wais search gateway in cover page for wais searches. - FM
+05-10-95
+* If a startfile specified on the command line maps to a MIME type
+  which invokes an alternate display device, allow -homepage, if also
+  specified, to be substituted for startfile on quiting from the display
+  device, rather than forcing an exit due to the original startfile having
+  been neither text/html nor text/plain.  Based on a patch from GL, with
+  protections against possible infinite getfile() loops added. - FM
+* Include -t switch when pico is the editor for reply_by_mail() in
+  LYMail.c. - GL
+05-04-95
+* Oops.  Had zipped the wrong LYReadCFG.c in yesterday's mods. - FM
+05-03-95
+* Do not override any external proxy and no_proxy variables with those
+  in lynx.cfg.  Bug fixes in code for setting proxy variables on Unix,
+  based on patches from Roman Czyborra (czyborra@cs.tu-berlin.de). - FM
+* Fixes for tagging when Lynx jumps to another screen and then comes back,
+  and deal with possibility of screen outputs from compress/decompress
+  utilities. - GL
+* Added support for Sequent's DYNIX/ptx operating system, and bug fixes
+  in HTTCP.c's BSDselect(). - Rodney Barnett (RBarnett@us.teltech.com)
+* Increased limits in select() loops to 5000 tries. - FM
+* Specify /nomember for compilations with DECC.  It's not the default
+  on AXP and the code assumes byte alignment. - FM
+04-19-95
+* Added Alan Hirsh's script (LynxDir:VMSPrint.com) for dealing with busy
+  VMS print queues such that Lynx might otherwise delete the temporary
+  file before it has been queued for printing. - FM
+* Added lots of type casting to the mathematical operations in GridText.c
+  to minimize possible sizing/alignment problems for DECC/AXP (and any
+  Unix flavors that use the Alpha chip). - FM
+04-17-95
+* Use  test=test -z "$LYNX_VERSION"  like  test=test -n "$LYNX_VERSION"
+  in mailcap files simply as flags for non-LYNX versus LYNX environment,
+  without actually bothering to execute a test. - FM
+* Issue "** Bad HTML!!!  Use -trace to diagnose. **" statusline messages
+  when bad HTML is encountered, and suppress those statusline messages in
+  favor of the TRACE messages when -trace is used. - FM
+* Fixed anchor deletion problem in yesterday's ISMAP mods. - FM
+* Removed -ltermcap from AIX makes (AIX doesn't use it). - FM
+04-16-95
+* Send a 0,0 coordinate pair if a user clicks on an ISMAP link, so that
+  it's handled equivalently to clicks on an ISMAP submit button, and
+  (typically) will return the server's default.  Note that the default
+  often is the parent document, and if so, the current document will
+  be returned via redirection (pointlessly 8-).  However, this mod
+  allows the WebMaster to use a pure-text document as the default for
+  Lynx. - FM
+* Protections against crashes for inappropriately positioned form tags. - FM
+* Fixes in handling of configurable INEWS path. - FM
+* Support for VT500 series terminals. - George Cook (cook@wvnvaxa.wvnet.edu)
+04-12-95
+* Makefile tweaks for bsdi and aix4. - FM
+04-11-95
+* Mods for building with BSD Interative (bsdi). - FM
+04-08-95
+* Added translation of HTML entities and decimal escaping for the
+  VALUEs of INPUT and OPTION tags. - FM
+* For TYPE="image" INPUT tags, use "[IMAGE]-Submit" as a pseudo-ALT
+  string, and submit a 0,0 coordinate pair if it's clicked, which
+  typically will invoke the server's default (I guess something is
+  better than nothing. 8-). - FM
+* Handle (possibly multiple) angle brackets in bookmark and showinfo
+  link names. - FM
+* Fixed typo in for-ultrix code in LYMain.c. - FM
+04-04-95
+* Added ability to set proxy environment variables via lynx.cfg. - FM
+04-01-95
+* Added handling of the HTML 3.0 attributes for ISINDEX tags:
+      ISINDEX HREF="reference" PROMPT="string"
+  The ACTION attribute didn't make it into HTML 2.0.  For now, we'll keep
+  supporting it in Lynx by treating it as a synonym for HREF. - FM
+03-31-95
+* Mods for AIX v4.1.1 and addition of make aix4. - FM
+* Added prototype and extern declarations for BSDselect(). - FM
+* Fixed bugs in form_getstr() that could clobber the stack. - GL
+* Fixes for symlink handling. - GL
+* Made LYShowInfo.c aware of the setuid, setgid and sticky file modes,
+  and nicer mode display if the file doesn't have the read bit set. - GL
+03-30-95
+* Fixed glitch in BASE tag handling. - FM
+03-29-95
+* Initialize pointers in add_trusted() of LYGetFile.c before the
+  StrAllocCopy() calls. - FM
+03-26-95
+* Miscellaneous TRACE and related messaging tweaks. - FM
+03-24-95
+* Handle defaulted localhost in file BASE tags, and related tweaks of
+  defaulted localhost handling in file URLs. - FM
+* Use RM_PATH for both file and directory deletions with the DIRED_SUPPORT
+  remove function. - GL
+--- STARTING  2.3-FM ---
+==============================================================================
+03-23-95
+* Designate this code set as lynx2-3-FM to avoid any confusion with the
+  official releases at UKans. - FM
+* Tweaks of code for defaulted localhost in file URLs.  Don't require
+  any host field marker in such URLs - FM
+03-21-95
+* Added handling of defaulted localhost in file URLs. - FM
+* More protections against bad HTML. - FM
+* SYSLOGing enhancements. - GL
+* Suspend curses during my_spawn()'s, and fixes of code for the child
+  and error return detection. - GL
+03-20-95
+* More protections against potentially infinite loops. - FM
+03-16-95
+* Enhancements of 'c'omment and mailto handling. - FM
+* Mods to build.com for enabling submission to BATCH. - FM
+* Ultrix terminal-handling fix. - Roman Czyborra (czyborra@cs.tu-berlin.de)
+03-15-95
+* Fixed bug in for-Unix directory listing code to screen out inaccessible
+  parent directories.  Was also being applied to ftp listings. - FM
+* Made bolding of H1 through H7 headers a lynx.cfg option, with the
+  non-bolding as the compilation default. - FM
+03-13-95
+* Fixed bug in setting link[].lname elements to empty strings for form
+  INPUT_ANCHORs.  Was causing showinfo() to report the links from the
+  previous document (yet another memory leak bites the dust 8-). - FM
+* Numerous fixups of bold and underline handling. - FM
+03-09-95
+* Increased the while() loop limit for select() tries in HTTCP.c to 500. - FM
+* Memory allocation/free fixes in HTAccess.c. - FM
+* Makefile and documentation tweaks. - FM
+03-07-95
+* Implemented HT_BOLD when specified for headers in DefaultStyle.c.  H1 is
+  now uppercase, bold, and centered.  H2 - H7 are lower or mixed case, bold,
+  and progressively indented. - FM
+* Miscellaneous enhancements of menu displays. - FM
+* Allow tabs and '$' in lynxexec commands. - FM
+* More TOUPPER/TOLOWER fixes. - FM
+03-06-95
+* Added ability to set the INEWS path in lynx.cfg. - FM
+03-05-95
+* Separated the newspost URL into newspost versus newsreply, and modified
+  LYNews.c to behave more rationally for new versus followup posting. - FM
+* Added "mode reader" command for news list and article requests. - FM
+* Enabled saving of list_dir_style settings in the user's RC file. - FM
+* Don't restrict rearming SIGINT in LYClean.c for IGNORE_CTRL_C to just
+  SVR4. - FM
+* Added numerous protections against core_dumps/ACCVIOs in HTML.c for bad
+  HTML.  Should also help reduce likelihood of infinite while() loops and
+  a runaway CPU if binary files are mistyped and rendering is attempted. - FM
+* Added (unsigned char) type casts in addch() calls for proper handling of
+  high value ISOLATIN1 characters. - FM
+* Limited the while() loop for select()'s in HTTCP.c to 50 tries, to help
+  reduce likelyhood of a runaway CPU on undetected terminal disconnects. - FM
+* Fixed typo in build.com. - FM
+* Added Craig's lynx_help and about_lynx files for the lynx2-3-7 distribution,
+  updated for lynx2-3-9 BETA. - FM
+--- STARTING  2.3.9 BETA ---
+==============================================================================
+02-20-95
+* Updated doc files and passed on to UKans for archiving on the
+  ftp2.cc.ukans.edu server as 2.3.8 BETA. - FM
+02-17-95
+* Further updates of building procedures for VMS. - FM
+* Further updates of lynx.man, lynx.hlp and documentation.  Indicate
+  that the inside_foo and outside_foo restrictions are not selective
+  on systems which lack utmp. - FM
+* Changed yesterday's DGUX define fo DGUX_OLD, because only older
+  Data General systems need it. - FM
+02-16-95
+* Added Jeff's updates of lynx.man and lynx.hlp, further updated for
+  v2.3.8 - FM
+* Fixed typos in LYMail.c and HTTPC.c. - FM
+* Cleaned up #ifdef'ing for -DIGNORE_CTRL_C. - FM
+* Added -DDGUX for using inet_addr(host).s_addr instead of inet_addr(host)
+  in HTParseInet() of HTTCP.c (Data General may need it). - FM
+* Don't report "-help" as an invalid option. - FM
+02-15-95
+* Handle HTML entities and decimal escaping in ALT strings. - FM
+* Build fixups for TCPWARE. - FM
+02-14-95
+* Added transmission of Accept-Language headers.  A default preferred
+  language is defined in userdefs.h.  It can be overridden via lynx.cfg.
+  Users can change that via the 'o'ptions menu and save their preference
+  in their RC file. - FM
+* Tweak of FIXED record handling on VMS. - FM
+* Defined Unix ZIP_PATH and UNZIP_PATH in userdefs.h. - FM
+02-12-95
+* Added  -localhost  switch for restricting access to files and servers
+  on the local host. - FM
+* Added  -nobrowse   switch for disabling directory browsing. - FM
+* Added  -selective  switch for requiring a .www_browsable file in
+  each directory for browsing access to it.  The enabling files
+  are not included in the directory listings. - FM
+* Fixed up displaying of README files in directory listings on
+  VMS. - FM
+* Replaced all tolower() and toupper() calls with the TOUPPER() and
+  TOLOWER() macros in HTUtils.h (should help deal with some of the
+  strange behavior reported for some flavors of Unix; see header of
+  HTUtils.h). - FM
+Worked in mods from David Trueman (david@cs.dal.ca) - FM:
+* Don't issue the ../ link in Unix local directory listings if the parent
+  directory is not readable (was already dealt with on VMS - FM).
+* Include an Organization: header in Unix news postings, if possible
+  (was already dealt with on VMS - FM).
+* Don't allow the editing of Unix mail headers because that is error
+  prone (no change on VMS; editable pseudo-headers are included for
+  informational purposes, but the real headers are those of the
+  account running Lynx - FM).
+* Don't hardcode the Unix mv command; use MV_PATH define in userdefs.h.
+* Moved the Unix COPY_COMAND define to userdefs.h as COPY_PATH.
+* Completed the Unix ZIP support.
+02-10-95
+* Added code for converting the headers of downloaded binaries on VMS
+  to indicate FIXED 512 record format.  See the documentation in
+  userdefs.h, lynx.cfg and FIXED512.COM for more information. - FM
+02-08-95
+* Fixed glitch in HTInit.c which mis-casted the default MIME type for
+  files with a .sh extension, causing the EXEC_SCRIPT function to be
+  disfunctional. - FM
+* I think I finally have Lynx showing "(p# of N)" properly in the title
+  lines (we'll see if perfection has really been achieved 8-). - FM
+* Extended directory browsing on VMS to the -homepage specification,
+  if included on the command line, e.g., lynx -homepage=sys$login
+  will start up Lynx with the default startfile, but the 'm'ain menu
+  command will yield listings of the home directory. - FM
+* Added -fileversions switch on VMS for including all versions of files
+  in directory browser listings (otherwise, only the highest version is
+  listed, with no version numbers displayed). - FM
+* Modified LYEdit.c to use fopen(filename,"a") instead of access(filename,2)
+  to verify write access for editing files (checking "append" access appears
+  to be a more reliable way to do it across platforms/flavors). - FM
+02-07-95
+* Implemented directory browsing for VMS. - FM
+* Fixed printer command handling to actually prompt for and use a second
+  filename argument if two "%s" strings are in the command map. - FM
+* Added anti-Unix-shell-spoofing code for all of the filename argument
+  handling. - FM
+* Fixed glitch in getenv(DISPLAY) calls on VMS.
+02-04-95
+* Fixed a glitch in BASE support.  Should now work properly when both
+  standard and Lynx-specific hrefs are in the document. - FM
+02-03-95
+* Added support for posting to newsgroups from Lynx on VMS via the
+  ANU-NEWS software. - FM
+* Numerous href parsing enhancements. - FM
+* Enhancements and bug fixes of news displays. - FM
+* Enabled display of Linknames with angle brackets (as for news URLs)
+  in the showinfo page. - FM
+* Ensured that a file URL which is really an ftp URL will yield an
+  "FTP is Disabled" statusline message when it's disabled. - FM
+02-01-95
+* Defined out the LYK_VERSION code and made Control-V a dead key again,
+  since including the Lynx name and version strings in the showinfo ('=')
+  and 'o'ptions displays is adequate, and people on different platforms
+  or flavors associate Control-V with other functions. - FM
+01-31-95
+* Beefed up the BASE support. - FM
+* Made all WWWLib cover pages and menus HTTP/1.0 compliant (to ensure
+  resetting of any BASE tags) and gave them more pizzaz. - FM
+* Trim terminal slashes in ftp paths if not the Welcome directory, so
+  we'll get "Up to" links.  Terminal slashes in file paths still force
+  that directory to be treated as the Welcome directory.  For example,
+   ftp://host/blah/foo/ will have an "Up to blah" link listed, but
+  file://host/blah/foo/ will treat /blah/foo/ as "Welcome" (both ftp
+  and file "Up to" links are blocked by -DNO_PARENT_DIR_REFERENCE). - FM
+* The VMS SOCKETSHR_TCP support can't yet handle telnet, tn3270 or
+  rlogin URL's (Andy Harper is working on it; be patient 8-).  Modified
+  HTTelnet.c to compile properly and behave rationally when such URL's
+  aren't supported. - FM
+* Corrected doc files based on Larry Virden's (lvirden@cas.org) careful
+  (or is it carefull) proof-reading.  Thanks Larry! - FM
+* More type casts for ANSI C compliance. - FM
+01-30-95
+* Added numerous type casts for ANSI C compliance. - FM
+01-29-95
+* Prototyped HTHostName() for yesterday's mods in HTAccess.c. - FM
+* Updated lynx.cfg. - FM
+01-28-95
+* Added lynx name and version to the showinfo page and options menu. - FM
+* Tweaked Danny's news proxying mods for selective no_proxy directives
+  with a port field (119) for news, and added equivalent code for wais
+  (port 210). - FM
+* Updated the INSTALLATION file (I hope people read it 8-). - FM
+* Hadn't included last night's typo fix in the archived fileset. - FM
+01-27-95
+* Added Danny Mayer's (mayer@ljo.dec.com) mods for proper handling of
+  no_proxy directives for news (NNTPSERVER) hosts. - FM
+* Worked in Ari Luotonen's (luotonen@dxcern.cern.ch) mods for sending
+  a "Pragma: no-cache" header for use by a proxy server in conjunction
+  with the RELOAD command. - FM
+* Fixed to handle file URL's appropriately in conjunction with proxying
+  of ftp URL's.  For file URL's on the local host, direct access is
+  attempted, with no ftp attempt if that fails, whether or not proxying
+  is in effect, and whether or not no_proxy directives have been set.
+  Both ftp URL's, and file URL's on a remote host, are sought via ftp
+  without a direct access attempt.  File URL's for remote hosts are
+  converted to ftp URL's before submission to a proxy server, so no
+  special procedure need be implemented to induce the proxy server to
+  act on them (You shouldn't continue using file URL's when you intend
+  ftp, but Lynx will handle such URL's properly when encountered in
+  old documents that use file when ftp is intended.) - FM
+* Fixed typo in yesterday's "psychotherapy". - FM
+01-26-95
+* Escaping of ISINDEX queries needed more tweaks to work properly with
+  high value IsoLatin1 characters. - FM
+* Applied psychotherapy to the schizophrenic behavior that was exhibited
+  when download, upload, print, history or showinfo commands were used
+  during displays of each other's menus or temporary files. - FM
+* Enabled downloading of links from the history page. - FM
+01-25-95
+* Added LYK_VERSION command (^V) for showing version of Lynx. - FM
+* Include file fixes for TCPWARE. - FM
+* Fixed bug in showinfo() which caused core dumps when invoked while
+  positioned on any form field which has a "linkname" but a NULL
+  "filename". - FM
+* Fixed glitch in 'p'rint menu. - FM
+01-24-95
+* Enabled SOCKSification for any Unix flavor via the SITE-LYDEFS,
+  SITE-DEFS and SOCKSLIB definitions in the top-level Makefile. Added
+  info in INSTALLATION on how to do it for VMS.  Included notes that you
+  are better off building Lynx normally, and instead using a SOCKSified
+  proxy server to get through a firewall. - FM
+* Added instructions in INSTALLATION for setting up proxy service. - FM
+* Fixed multiple submit button handling to distiguish which button was
+  activated when they have the same name, and include only that button's
+  name/value pair in the submission. - FM
+* Figured out how to apply all security and restrictions checks for
+  redirecting URLs returned by ISINDEX searches, and accordingly lifted
+  the bypasses for the previously insecure access types. - FM
+* Added option to use Jerry Whelan's (guru@bradley.edu) BSDselect() for
+  SVR4 systems with the "type any key" problem. - FM
+01-23-95
+* Fixed up escaping of queries in HTSearch(). - FM
+* Updated the sample jumps files. - FM
+* Worked in socksification mods from Reese Ferry (reesef@VNET.IBM.COM) - FM
+* Enabled use of LOCALE for international characters with any Unix flavor
+  (not just sun) via a define in the top level Makefile. - FM
+01-22-95
+* Updated the lynx.cfg configuration file. - FM
+* Implemented BASE handling. - FM
+01-21-95
+* Fixed -cfg switch handling so that the specified, alternate configuration
+  file properly is read instead of the default system file specified in
+  userdefs.h. - FM
+* Made 'p'rint, 'd'ownload and 'u'pload menu lists single spaced. - FM
+* Fixed HTFileFormat() in HTFile.c so that it properly processes the
+  suffix-to-MIME-type mappings when version numbers are in local file
+  URLs on VMS.  We therefore no longer trim off the version number if
+  if was included, and Lynx will now access and process that version
+  rather than only the highest version. - FM
+01-18-95
+* Makefile fixes for convex and linux. - FM
+01-17-95
+* More Makefile fixes. - FM
+01-14-95
+* Fixes for FreeBSD. - FM
+01-12-95
+* Made the "ls -l" emulation in local directory listings a compilation
+  option (see the top level Makefile). - FM
+* Made inclusion of "Up to" parent links in local directory listings a
+  compilation option (see top level Makefile). - FM
+* Message fix for checkmail on Unix. - FM
+* Fixes for SCO with gcc. - FM
+01-11-95
+* Restored original hash table function in HTAnchor.c without (hopefully 8-)
+  reviving anchor deletion problems. - FM
+* Fixed typo in HTAccess.c. - FM
+* Added code in HTFile.c from Timothy Newsham (newsham@aloha.net) for
+  generating long style Unix listings (ls -l). - FM
+01-10-95
+* Escape dashes in lynx.man. - FM
+* Added NetBSD support from Bryan T. Vold (btv@wiley.HealthPartners.COM). - FM
+* Made anchor searches in hash tables case-sensitive (so paths which
+  differ only in their case can be distinguished, as people using the
+  DIRED support kept requesting) without (hopefully 8-) reviving anchor
+  deletion problems. - FM
+01-09-95
+* More Makefile and code fixes for building properly with various systems
+  and compilers. - FM
+01-06-95
+* Numerous fixes for handling signals (e.g., SIGWINCH) received during
+  keystroke fetches, without (hopefully 8-) reviving the problem of
+  runaway CPU's on undetected terminal disconnects. - FM
+* More Makefile and code fixes for building properly with various systems
+  and compilers. - FM
+01-05-95
+* Changed define for syslog() logging to SYSLOG_REQUESTED_URLS and picked up
+  logging of ISINDEX search requests that don't go through getfile(). - FM
+* More fixes for redirection returned via ISINDEX searches. - FM
+* Fixed missing newline character at end of last .lynxrc entry. - FM
+* More Makefile tweaks. - FM
+* More additions in LYCurses.h for compilers which fail to check whether TRUE
+  and FALSE are already defined before defining them in curses.h. - FM
+01-03-95
+* Fix for redirection returned via ISINDEX searches. - FM
+12-29-94
+* Yet more top level Makefile tweaks. - FM
+* Fix bcopy problem for UCX. - Martin Zinser (zinser@vscn.gsi.de)
+* Fix ioctl() problem for UCX. - MZ
+12-27-94
+* More top level Makefile tweaks. - FM
+12-26-94
+* Added Lou Montulli's procedure for PURIFY to the top level Makefile. - FM
+12-23-94
+* Added Lou Montulli's memory leak fixes. - FM
+* Fixed HTLoadedDocumentTitle() call in LYGetFile.c. - FM
+--- RELEASE of 2.3.8 BETA ---
+12-22-94
+* The WFEB code as of 12-15-94 has been archived at UKans as lynx2-3-7,
+  so we'll make this lynx2-3-8 to avoid confusion. - FM
+* Added bookmark_exec restriction for disallowing use of lynxexec URL's
+  in the user's bookmark file or converted Mosaic hotlist. - FM
+* Enable any lynxexec URL in JUMPFILE if EXEC_LINKS has been defined.
+  This allows you to set both LOCAL_EXECUTION_LINKS_ON_BUT_NOT_REMOTE
+  to TRUE and a single TRUSTED_EXEC rule that will always fail (e.g.,
+  TRUSTED_EXEC:none), so that *ONLY* the lynxexec URL's in the jumps
+  file will be acted upon. - FM 
+* Disallow lynxexec URL's in G)oto if no_shell is set or if
+  LOCAL_EXECUTION_LINKS_ON_BUT_NOT_REMOTE is TRUE. - FM
+12-21-94
+* Include LYFLAGS in the BSDI_Makefile. - FM
+* Numerous mods based on patches from David Trueman - FM:
+* Changed SUN4 ifdef for implementing the "reverse clear screen hack" to
+  REVERSE_CLEAR_SCREEN_PROBLEM since not all sun4 systems experience this
+  problem.
+* Changed a few messages to use key_for_func() instead of a hard-coded
+  key mapping.
+* Allow control-C as well as control-G to abort or cancel on Unix (as
+  already on VMS).  On VMS, control-C and control-Y evoke a "Do you really
+  want to quit?" prompt, and a 'n'o reply gets handled as if control-G
+  has been entered in the first place.  On Unix, control-C is treated
+  simply as a synonym for control-G, and control-Y is not an interrupt
+  signal.  This seems the best way to handle those control signals, based
+  on what VMSers versus Unixites would expect them to do.
+* Added code to disallow the writing of files beginning with a dot if
+  NO_DOT_FILES is set TRUE in userdefs.h and/or lynx.cfg.
+* Added possibility of logging URL access via syslog() on Unix (ifdef'd
+  with LOGGING).
+* Improved and made more flexible the security for lynxexec URL's.  The
+  default behaviour is the same as now, but source locations and the path 
+  (Unix) or name (VMS) of programs to be executed can be restricted via
+  TRUSTED_EXEC rules in the lynx.cfg file.
+* Convert ~ in lynxexec paths to $HOME on Unix.
+* Several changes in DIRED support.  Tidied and consolidated code.  Changed
+  the way tags are freed (fixing a bug where they did not always get cleared
+  properly).  Changed all programs to *_PATH defines.  Changed the display
+  of tags so they work with numbered links.
+* Added another restriction to disallow telnet port specifications in
+  G)oto URL's.
+* A bit of special case code in jump handling.  If key mapping is G, allow it
+  to be typed as "go target".
+* Change strncmp in remap() to strcmp() (bug fix).
+* Report offending bad option in main().
+* In mainloop(), make \r same as \t and \n.
+* Combine LYK_REMOVE code with LYK_DEL_BOOKMARK so that they can share the
+  same key map.
+* If show_cursor is true, position cursor 1 position before the link, which
+  makes it less likely that the link is obscured in defective terminal
+  programs
+12-15-94
+* More fixes in LYno_attr_char_case_strstr() and LYno_attr_char_strstr() - FM
+* People didn't like having to erase the default WHEREIS ('/') search string
+  when it wasn't what they wanted in a new document (though most didn't know
+  that it can be done easily via ^U), and Lynx doesn't have real editing via
+  LYgetstr() (just deletion from the end of the string), so I got rid of the
+  the editing offer.  The previous search string is still buffered across
+  document fetches, and can be used across documents via NEXT ('n').  You
+  also can use WHEREIS without a search string entry to turn off highlighting
+  within the current document, and then NEXT to restore it.  If control-G is
+  used instead of a blank string to cancel a WHEREIS command, it does not
+  turn off the highlighting.  So everything everyone asked for is now
+  possible (once you figure out how to do it 8-). - FM
+12-14-94
+* Oops!  Fixes in tcp.h for MULTINET with DECC/VAX had left SOCKET_ERRNO
+  undefined for all the other VMS TCPIP packages.  That's what I get for
+  working on this stuff too late at night. - FM
+* Additional ANSI compliance fixes in HTTCP.c for builds with DECC/VAX and
+  non-MULTINET VMS TCPIP packages. - FM
+12-13-94
+* Modified searches for strings within the currently displayed document
+  ('/', as opposed to 's' for ISINDEX searches) so that the highlighting of
+  the search string is not retained when the current document is changed,
+  and added recall buffering of the search string so that it's offered as
+  the default for editing or reuse on subsequent '/' commands.  Also, we
+  now force redraws on invokations of such searches so that hits will be
+  highlighted even if they occur on the current page.  Links with hits such
+  that they have embedded highlighting of the search strings will not have
+  the embedded highlighting restored when the cursor is moved onto and then
+  off of them (helps to distinguished whether it's intended or the due to
+  the search), but will be restored whenever the page is redrawn.  All
+  embedded highlighting also is restored when the 'n'ext command is used to
+  repeat the search in the current document, even if the returned hits do not
+  cause a page change.  Note that these searches first search only the links,
+  and position you on the first link with a hit occurring after the current
+  link.  If there were no hits in the links, then the text is searched and
+  the first hit occurring after the current link is positioned at the top of
+  the page.  They never did, and still do not, search both the link and text
+  portions of the document simultaneously.  Also note that ISINDEX searches
+  never have and still do not yield highlighting of the query string(s) in
+  the returned document.
+* Fixed LYno_attr_char_case_strstr() and LYno_attr_char_strstr() in
+  HTStrings.c so that they properly ignore any attribute characters in
+  the comparison string and return a pointer to the correct location
+  of a match with the target string. - FM
+12-12-94
+* Modified FTP gateway to display 230- as well as 250- information/help
+  messages, and on non-Unix as well as Unix systems. - FM
+--- RELEASE of 2.3.7 BETA ---
+12-11-94
+* Further tweaked explanatory comments in the configuration and samples
+  files, and updated the instruction files. - FM
+12-09-94
+* Modifed PassesTest() in HTInit.c to avoid the overhead of system() calls
+  by using getenv() when   test -n "$DISPLAY"   and   test -z "$DISPLAY" 
+  commands are encountered in the mailcap file.  Otherwise, needlessly
+  expensive system() calls potentially could be made for virtually every
+  viewer mapping in that file!.  For Lynx, those two strings in the mailcap
+  file now are equivalent to the :XWINDOWS and :NON_XWINDOWS flags,
+  respectively, for VIEWER: assignments in lynx.cfg. - FM
+* Also modified PassesTest() so that it simply treats  test -n "LYNX_VERSION"
+  as success.  Why spawn a system() command to see if Lynx is running, when
+  it obviously is!.  However, that string can be included in the mailcap
+  file for assignments that should be restricted to Lynx if other software
+  also uses the file. - FM
+* The above two mods make it unnecessary to actually use a "test" script for
+  differentially setting viewers in XWINDOWS versus NON_XWINDOWS environments,
+  so VMSers also can use the mailcap files for differential assigments of
+  viewers, without those DCL error messages about "test" which have been
+  mystifying so many people.  However, yesterday's mods do make it possible
+  for VMSers to use a "test" script for checking other environment or system
+  features, and thereby setting viewer switches differentially, analogously
+  to the command line switches for Lynx itself. - FM
+* Modified comments in samples/mailcap to indicate these enhancements. - FM
+* Modified comments in userdefs.h to describe correctly what the Lynx code
+  does as of v2.3:  Any SUFFIX or VIEWER mappings in lynx.cfg will be
+  overridden in src/HTInit.c if they also appear there.  Then, any mappings
+  in mime.type or mailcap will override those from lynx.cfg and src/HTInit.c.
+  The XLOADIMAGE definition is used in src/HTIinit.c, and you can use
+  mailcap, but not lynx.cfg, to override it. - FM
+* Modified comments in lynx.cfg and samples/lynx.cfg to indicate what Lynx
+  really does, and the use of mailcap files to do what lynx.cfg had claimed
+  it could do but doesn't. - FM
+* Fully implemented multiple submit button support for both POST and GET
+  forms. - FM
+* Added LYK_RESUBMIT keymap (with default binding to 'x' and 'X') for forcing
+  submissions of forms to servers (i.e., never use cache).  LYK_ACTIVATE
+  (with default binding to right-arrow and RETURN) still fetches from cache
+  if available.  Statusline help describes these commands when positioned
+  on a submit button. - FM  
+12-08-94
+* Fixed HText_submitForm() in GridText.c to handle submitting INPUT types
+  (e.g., type="image") which have name/value pairs. - FM
+* Modified DCLspawn to recognize -1 on failure and 0 or 1 on success as
+  return or exit values of scripts, and report -1 or 0 as it's own return
+  value.  If a "test" script is used on VMS in conjunction with .mailcap
+  for setting viewers, it should return -1 if the test fails and 0 or 1 if
+  it passes (the "test" script can be DCL or an exectutable, and should be
+  defined as a foreign command).  If you don't have a "test" script, don't
+  include that instruction in .mailcap. - FM
+* The tmpaddress pointer in do_www_search() of GridText.c needed to be
+  initalized to NULL. - FM
+12-07-94
+* Made sufficiently ANSI compliant to build with DECC on VMS without using
+  the /stand=vaxc qualifier, and further modified so that Lynx will build
+  and run (extremely well 8-) with DECC/VAX.  Whooh, that took some doing!
+  These mods are also desireable for builds on Unix. - FM
+12-02-94
+* Fixed the query recall buffer in do_www_search() of GridText.c to restore
+  the +'s to spaces and unescape properly. - FM 
+* Include file and define fix ups, for SOCKETSHR/NETLIB support and convex
+  builds, in tcp.h, LYShowInfo.c and top level Makefile. - FM
+11-27-94
+* Fixed bugs associated with failure to check the post_data element in
+  addition to the address element when making push/pop decisions for the
+  history stack, and when checking whether a requested document has been
+  loaded successfully.  The address element is insufficient for documents
+  returned by POST'ed forms. - FM
+* Check -trace switch earlier in LYMain.c so that trace messages associated
+  with setting up the Lynx configuration will actually be displayed. - GL
+11-23-94
+* More fix ups for the SOCKETSHR/NETLIB support. Close to "all set" but needs
+  more field testing with the full range of TCPIP packages for VMS. - FM
+* Added HP_TERMINAL define for the DIM workaround to the REVERSE problem with
+  HP terminals.  If not defined, SNAKE builds will not make that substitution
+  (would be better to do this in a way that checks the terminal at run time,
+  but we'll hold off on that for now). - FM
+--- RELEASE of 2.3.6 BETA ---
+11-21-94
+* Replaced ucx$inetdef.h with socketshr_library:ioctl.h for the
+  SOCKETSHR_TCP builds.  Note that the ioctl.h is not presently included
+  in the binary distribution of SOCKETSHR/NETLIB.  You have to get it from
+  the sources distribution. - FM
+11-18-94
+* Added Andy Harper's (A.Harper@bay.cc.kcl.ac.uk) "first round" support for
+  SOCKETSHR/NETLIB (see SOCKETSHR.ANNOUNCE).  Note that it is presently
+  including ucx$inetdef.h which is not provided with SOCKETSHR or NETLIB
+  source sets, and may not be available to non-UCX sites.  We're checking
+  into how to deal with that. - FM
+* Made recall buffering of shortcuts for the 'J'ump command a configuration
+  file option (in userdefs.h and/or lynx.cfg). - FM
+* Added clearerr() before the GetChar() in LYStrings.c. - FM
+* Made the optional novice help lines conform to the "standard default"
+  key bindings.  Edit them appropriately in userdefs.h if you plan to use
+  other bindings with that feature.
+* Added George Lindholm's (lindholm@ucs.ubc.ca) Makefile patch for making it
+  just a tad easier to set up local compile options. - FM
+* Eliminated serial free() in LYSanctify() of LYGetFile.c. - FM
+* Restricted all "hack to fix reverse clear screen problem" code to
+  SUN4 (had missed one 8-). - FM
+11-15-94
+* Eliminated separate list and atexit deletions of redirecting anchors. - FM
+* Added Rick Dyson's (Dyson@IowaSP.Physics.UIowa.EDU) updates of the
+  descrip.mms files. - FM
+11-12-94
+* Worked in Malcolm MacArthur's (mcscs2mm@zippy.dct.ac.uk) mods for reading
+  a printer's page length from the configuration file and calculating the
+  correct number of pages for the statusline query on whether to continue
+  if the document is longer than 4 printer pages.  Further modified that
+  code to use the current LYlines for the computation when the built in
+  "print to screen" option is selected.  See the comments concerning
+  "PRINTER:" definitions in lynx.cfg for more information. - FM
+* Fixed HTInetStatus() in HTTCP.c to use SOCKET_ERRNO instead of errno,
+  based on the platform/transport-specific definitions in tcp.h.  Thanks
+  to Danny Mayer (mayer@ljo.dec.com) for tracking down this glitch. - FM
+11-10-94
+* Added David Trueman's latest clever enhancement:  The command line option
+  -homepage=URL separates the notion of a home page (or main screen) from
+  the start file.  So,  lynx -homepage=URL1 URL2  will start up with URL2
+  but the MAIN_MENU key will take the user to URL1 rather than URL2.  This
+  is useful for public accounts that start up with an information page or
+  form, that then leads the user to a URL for the actual home page.  The
+  MAIN_MENU key can thereafter be used whenever the user wishes to return
+  to the actual home page. - FM
+* Enlarged string buffer in LYEdit.c to handle large paths. - FM
+* Made 'K'eymap title and descriptions easier to edit for alternate languages
+  (e.g., Dutch or Greek) as required by Dick Wesseling (but, alas, the editing
+  still has to be done in LYKeymap.c, because it's too much to move into
+  userdefs.h; someday Lynx will have real internationalization code 8-) - FM
+* Added titles to tops of jumps files so that the nesting level will be reset
+  on reloads. - FM
+11-09-94
+* More prototyping and include file fixes in LYJump.c and LYMainLoop.c - FM
+11-08-94
+* Prototyping fix in LYJump.c. - FM
+* Miscellaneous fixes in src/descrip.mms. - FM
+* Hadn't included patch for latest LYUtils.c in lynx2-3-5.patches. - FM
+11-07-94
+* At popular request (already 8-), changed the "Jump to:" query to work
+  exactly like the "goto:" query.  The previous entry is recalled, a '?'
+  must be entered explicitly to fetch the shortcut list (with an instruction
+  about that added to the prompt), and a blank entry or Control-G returns
+  the user to the current document. - FM
+--- RELEASE of 2.3.5 BETA ---
+11-05-94
+* Numerous wonderful enhancements based on patches from David Trueman, and
+  entensions of those mods.  Briefly:
+* Implemented 'K'eymap command for showing all of the key bindings currently
+  in effect, with a description of their functions.  This is faster and
+  more helpful than the online help's description of the default key
+  bindings.  Must be uppercase 'K' if VI keys are ON, otherwise the command
+  is case-insensitive.  Try it, you'll love it! - FM
+* Implemented 'J'ump command for using "shortcut" names to access URL's in a
+  local "jumps.html" file that has a sorted DL list which maps each target
+  (shortcut) DT to it's full URL DD (see the sample jumps files added to
+  the distribution).  The URL's could be local or remote resources, or
+  lynxexec or launch file URL's for system utilities (e.g., the shortcut
+  "news" could invoke the news reader, "mail" the mail utility, "swing" the
+  VMS File/Directory Management Utility, etc.).  This feature is enabled by
+  defining JUMPFILE in userdefs.h or lynx.cfg, and can be disabled via at
+  run time via -restrictions=jump as a commandline switch.  Must be uppercase
+  'J' if VI keys are ON, otherwise the command is case-insensitive.  Try it,
+  you'll love this too! - FM
+* Added a CHECKMAIL symbol which if set TRUE in userdefs.h or lynx.cfg will
+  report the existance of unread mail at Lynx startup, and arrivals of new
+  mail, via statusline messages.  VMSers can block unsoliticed system NEWMAIL
+  screen broadcasts ($ SET BROADCAST/NOMAIL) when using this feature.  It
+  can be disabled at run time via the -restrictions=mail switch, which also
+  disables standard mail functions in Lynx, but still allows 'J'umps via a
+  "mail" shortcut to a lynxexec URL for a script which could perform security
+  functions before permitting or rejecting access to the mail utility.  The
+  hackers will really love this! - FM
+* Added ability to toggle the novice help line to show all of the principle
+  commands. - FM
+* Miscellanous bugs and memory leaks found and fixed in conjuction with
+  adding and enhancing the above features. - FM
+* The code may need some tweaking to build and run properly on some flavors
+  of Unix (appears to be all set for VMS). - FM
+11-01-94
+* Fixed bug if editor is dereferenced. - David Trueman (david@cs.dal.ca)
+* Enable alternate boxing of popup windows via defines for BOXVERT and
+  BOXHORI in userdefs.h - Dick Wesseling (ftu@fi.ruu.nl)
+* Check for LYCursesON before making any Curses calls in cleanup() - DW
+10-31-94
+* Looks like the last of the problems deleting anchors has been solved
+  by Dick Wasseling, so the bypass is lifted again. - FM
+* If CANT_EDIT_UNWRITABLE_FILES is defined on Unix, write access is
+  required to edit files (write and delete access are always required
+  on VMS). - Alex Whittaker (alex@biu.icnet.uk)
+* Moved "Press  RETURN ..." text to userdefs.h. - AW
+10-28-94
+* Uncache documents or bookmark file before reloads (via Control-R or
+  'r'emove command) in LYMainLoop.c. - FM
+* Uncache showinfo display or print, download, option, etc, menus before
+  reloading those in GridText.c. - Dick Wesseling (ftu@fi.ruu.nl)
+* Above two fixes still don't completely solve the anchor deletion problem,
+  so we're still bypassing.
+* Enable iso entity translations inside TITLEs - DW
+10-26-94
+* Problems when deleting anchors have been reported, apparently for
+  documents which have been (re)loaded with LYforce_no_cache.  So,
+  we'll retore the bypass until that problem is tracked down. - FM
+10-25-94
+* Added coded for disabling mail for -anonymous via CAN_ANONYMOUS_MAIL in
+  userdefs.h, and via -restrictions=mail (default is enabled). - FM
+10-21-94
+* Added Danny Mayer's (mayer@ljo.dec.com) samples/lynx.com - FM
+10-05-94
+* Modified tcp.h to deal with conflicting typedefing in the MultiNet
+  types.h and time.h versus those for DECC. - FM
+* Define FANCY_CURSES for linux-ncurses. - FM
+09-30-94
+* -restrictions help list in LYMain.c should indicate "option_save" (not
+  "options_save") for disabling the saving of options in .lynxrc. - FM
+09-29-94
+Mods based on patches from George Lindholm (lindholm@ucs.ubc.ca) - FM:
+* Fixed problem when IGNORE_CTRL_C is defined, that was created by the
+  fix for runaway processes on Unix when undetected terminal disconnects
+  occurred.
+* Added options to disable rlogin and/or ftp access.
+09-28-94
+* Use "hack to fix reverse clear screen problem" in GridText.c if SUN4 is
+  defined (still need clarification on the exact nature of the problem
+  to decide if this is the best way to handle it; it bothers me to have
+  this kind of hack in the code 8-) - FM
+Mods based on patches from George Lindholm (lindholm@ucs.ubc.ca) - FM:
+* Move the "quit" text to userdefs.h from LYMainLoop.c for easier
+  customization.
+* Typo fix for buttons submit value in GridText.c
+* Renable SIGINT signal for SVR4 machines if control-c is to be ignored
+  when editing.
+* Solaris fixes for LYCurses.h.
+* Recognize pico as a special editor.
+* Fix -restrictions help text.
+* Fix -telnet and -news options so that they actually do something.
+* Fix upload code so that you can have more than one uploader option,
+  and fix for freeing a static variable.
+* Various prototype fixes.
+* -editor command line option signals that the editor can't be changed.
+* Added a SYSTEM_EDITOR option to lynx.cfg for a locked editor.
+--- RELEASE of 2.3.4 BETA ---
+09-27-94
+* Alas!  I think I've tracked down and fixed all the bugs that were causing
+  ACCVIOs/CoreDumps if anchors were deleted/freed when freeing the cached
+  documents.  So now we do delete/free them.  This plugs a major memory
+  leak in Lynx (which we knew about, but heretofore had to live with). - FM
+* Added Danny Mayer's (mayer@ljo.dec.com) fix so that MIME types are handled
+  case-insensitively. - FM
+* Restored text/html (WWW_HTML) as the default MIME type when an HTTP/1.0
+  server fails to send it in the headers.  This happens because it's the
+  default in Mosaic and developers using that don't realize their server or
+  script code is failing to send it (other MIME types will be caught as an
+  error, and the code will be fixed by the developers).  Garrett's change to
+  application/octet-stream (WWW_UNKNOWN) was technically correct.  You can
+  change it back to that where indicated in HTMIME.c if you prefer that Lynx
+  be technically correct but functionally wrong when dealing with this
+  situation. - FM
+--- RELEASE of 2.3.3 BETA ---
+09-22-94
+* Finished up redirection handling.  Will now handle serial redirections
+  across multiple sites (with an arbitrary limit of 10, to prevent the
+  possibilily of an infinite loop of circular redirections), works properly
+  with redirections via the VALUE fields of OPTION tags, and no longer alters
+  any anchor addresses, avoiding all the problems that caused in the hash
+  table. - FM
+* Worked in Rick Mallett's (rmallett@ccs.carleton.ca) fix for runaway
+  processes on Unix when undetected terminal disconnects occur. - FM
+* Added Eric Jon Rostetter's (ERIC@uoft02.utoledo.edu) code for proper
+  keyboard handling with DEC eightbit terminals. - FM
+* Added David Greer's (david_greer@robelle.com) mods for curses on
+  HP terminals. - FM
+--- RELEASE of 2.3.2 BETA ---
+09-17-94
+* More fix ups of forms structure handling, freeing and redirecting. - FM
+* Fixed problem with free's of startfile, thanks to Dick Wesseling
+  ftu@fi.ruu.nl - FM
+09-14-94
+* More memory leak and redirection fix ups (still not perfect). - FM
+* Various mods to speed up memory management with VAXC on VAXen (still
+  slow compared to DECC on AXPen). - FM
+09-13-94
+* If an ISINDEX document is one returned by a previous search, the 's'
+  command puts up the query which returned it, for editting as a new query
+  (use Control-U to erase, Control-G to abort)  Otherwise, no string is
+  offered in the prompt for a database query.  If the previous query is
+  submitted without modification, a message to use Control-R to resubmit
+  the same query is display (so that the search will not be repeated
+  inadvertantly). - FM
+09-12-94
+* Fixed failure to load the popped menu properly when a gopher search was
+  selected and a NULL string, Control-G, or arrow key is entered to cancel
+  the prompt for a query. - FM
+* Hit lists/documents returned by ISINDEX searches are now always displayed
+  at their tops.  They no longer inherit, inappropriately, the page and link
+  numbers of the previous list/document. - FM
+09-11-94
+* Fixed redirection handling so that the hash tables are updated and the
+  history stack works properly, including with forms that have VALUE
+  fields in OPTION tags that return Location: URL's for searches (e.g.,
+  the CUSI forms at Nexor).  Whew, that took some doing! - FM
+09-05-94
+* Fixed up remaining problems with OPTION VALUE="foo" handling and the
+  associated popup window positioning and scrolling. - FM
+* Fixed bugs and several inadequacies in the history structure and code
+  (still needs some redesigning to deal more effectively with all aspects
+  of documents returned by forms and/or redirection). - FM
+* Now deals properly with anchors in a single document returned by
+  a form. - FM
+* Command line file specs on VMS can now be any valid explicit, wildcarded,
+  partial, or relative VMS specification, and will be converted to a valid
+  file://localhost/ URL, so that partial or relative URL's within the file
+  also will be interpretted properly. - FM
+* Now trims trailing white space and won't get tripped up by '=' characters
+  when reading configuration files. - FM
+* Miscellaneous bug fixes and enhancements. - FM
+* Tracked down and eliminated more memory leaks. - FM
+--- RELEASE of 2.3.1 BETA ---
+7-08-94
+* Correction handling of OPTION VALUE="" implemented.
+* Miscellaneous bugs corrected.
+6-17-94
+* Option to log memory leaks at exit by defining LY_FIND_LEAKS at compilation.
+6-17-94
+* Check amount of allocated memory, rather than just number of documents
+  cached, before deciding to remove the oldest document (implemented for
+  VMS with VAXC, not yet for Unix or VMS with DECC).
+6-16-94
+* VMS bookmark file version numbers are reset on additions of bookmarks.
+6-16-94
+* Gopher URL's with /hGET%20/ are converted to http URL's, as in the UMN
+  Unix/VMS gopher+ client.
+6-16-94
+* Added DIRECT_WAIS support for VMS
+6-16-94
+* Added build support for VMS TCPWare TCP/IP
+5-28-94
+* Increased nesting of HTML elements from 40 to 400.  Hopefully this will limit
+  won't be encountered often.
+5-28-94
+* Modified for handling of Telnet URLs with spaces/other characters in the
+  username.
+5-26-94
+* Began terminating memory leaks with extreme predjudice.
+5-24-94
+* WAIS searches will now work when they are of type "www/present" as opposed
+  to only viewing the source.
+5-23-94
+* Added VMS CMU TCP/IP support, thanks to Andy Harper.
+--- RELEASE of 2.3 (19-May-1994, see CHANGES2-3) ---

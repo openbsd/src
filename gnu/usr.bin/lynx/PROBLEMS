@@ -1,0 +1,164 @@
+Lynx PROBLEMS file.
+
+Ideally you would never have to read this, but inevitably problems
+do arise.  As implementation and installation problems become known
+they will be outlined in this file.
+
+    Control-Z on Unix can cause aberrant behavior.  If you encounter
+    problems, use -restrictions=suspend to disable it, and only '!'
+    for escapes to shell (on VMS control-Z is unconditional 'Q'uit,
+    with no attempt to suspend the Lynx process only temporarily).
+    Control-Z on Unix often works better with slang.
+
+    Screen resizing can be a bit funny.  If you resize the screen, 
+    documents that have been cached will be out of whack.  Any further 
+    documents will look fine.  You can reload documents to the current
+    window size with CTRL-R
+
+    On a Sun system, the message:
+        "Alert!:  Unable to connect to remote host"
+    will be displayed every time an attempt is made to access a host
+    other than localhost if Lynx has been built without the resolv
+    library and needed it, or with it and shouldn't have been.
+    Unfortunately, there's no way to check in the Makefile whether
+    -lresolv should be included in the LIBS="" list.  What's necessary
+    depends on how that Sun is configured.  To get the build right for
+    your SUN 3 or 4 OS, if you didn't have RESOLVLIB defined in the
+    Makefile define it and build Lynx again, or vice versa.  Also, if
+    you have upgraded to the bind-8.1 or later library, you should try
+    changing -lresolv to -lbind.
+
+    The Sun `shelltool' and `cmdtool' terminals are stupid by default.  
+    In order to get bold text to appear differently than inverse video, 
+    the user should put this line in ~/.Xdefaults:
+
+        Term*boldStyle:         Offset_X
+
+    From the `shelltool' man page, it seems that an analogous line 
+    in ~/.defaults
+
+        /Tty/Bold_style "Offset_X"
+
+    ought to work just as well, but you may not get the desired
+    behavior until you modify your .Xdefaults file (and run `xrdb
+    ~/.Xdefaults').  Note also that there are other supported values 
+    for the boldStyle resource/Bold_style default, all of which begin 
+    with "Offset_". (helpful hint from kevin@traffic.den.mmc.com)
+
+    Directory browsing has been implemented for VMS, but there are no
+    plans to port additional DIRED support, because Lynx must handle files
+    as streams, and this precludes "serious" Directory/File Management on
+    VMS.  Use a jumps file link to CSwing (sources or executables are
+    available from ftp://narnia.memst.edu), or define CSWING_PATH in
+    userdefs.h or lynx.cfg to invoke CSwing via the DIRED_MENU command.
+
+    If one switches between K)eypad "Numbers act as arrows" versus "Links
+    are numbered" in the 'o'ptions menu when the current document is a
+    DIRED menu in which links have been tagged, the tagging can be trashed
+    (so don't switch at such times 8-).
+
+    When "Links are numbered" is on, if a line is split on an anchor (to
+    obey right margin restrictions), and there is no space in the bolded
+    string such that the entire "[#]string" must be moved down, the "[#]"
+    becomes bolded, instead on only "string".
+
+    The Mosaic v2.5 hostlist uses HTML similar to that of Lynx's bookmark
+    file, but with </UL></HTML> at the bottom, such that it is not fully
+    compatible with Lynx's file.  If you try to use the Mosaic file as if
+    it were a Lynx bookmark file, the </UL></HTML> will not be taken into
+    account and new links will be added below rather than above those end
+    tags.  Instead, add a link to the Mosaic file in your Lynx file, and
+    to the Lynx file in your Mosaic file, so that you can access both files
+    with both clients.
+
+    SOCKSification and the -socks switch have not yet been integrated with
+    the slang library support.
+
+    There is an apparently broken version of select() in libcurses.a
+    of HP/UX 10.10.  It also breaks tn3270, ncftp, emacs, and xemacs.
+    Using:
+    		LIBS="-lc -lcurses -ltermcap \
+                      ^^^
+    (i.e, adding -lc *before* the -lcurses) in the snake3 and snake3-slang
+    targets of the top level Makefile yields a useable image, but with
+    inappropriate video attributes on the Lynx displays (reverse video and
+    underscores on everything).  Using "-lc -lHcurses" instead fixes the
+                                            ^^^^^^^^^
+    video attributes but then the arrow keys are messed up. - Donald S.
+    Teiser (dsteis01@homer.louisville.edu)
+    NOTE: If HP fixes the problem or you come up with a better workaround,
+          notify the lynx-dev@sig.net list.
+    Updated NOTE (1996-09-02):  A patch reportedly is available from HP to
+          fix the select() problem, so that "-lc" is no longer needed, but
+	  the curses glitch is not yet fixed, and you should still include
+	  "-lHcurses". 
+    Updated NOTE (1997-02-03): The problems reportedly are fixed with
+	  patches PHCO_8086 and PHCO_8947 from HP.
+    Updated NOTE (1997-12-15): PHCO_8086 & PHCO_8947 are very old and are
+	  no longer available.  The current patch to install if running
+	  under HP-UX 10.20 is PHCO_11342.
+
+    Lynx juggles variable abilities of curses packages or emulations to
+    display bolding and underlining simultaneously.  This may fail if
+    Lynx thinks that your terminal, in connection with the curses package,
+    supports a capability which the terminal hardware or emulation does not
+    in fact support.  Setting the right TERM environment variable, tweaking
+    terminfo or termcap files, or compiling with a newer version of ncurses
+    or slang may solve problems with missing highlighting or strange
+    characters appearing on the screen.  Also, for a mono terminal, make sure
+    that there is no "show color (&)  : ON" on the Options screen.
+
+    The Wyse 50 and older TeleVideo terminals, among others, are
+    "magic cookie" terminals.  This means that display attributes like
+    reverse, blink, underline, etc. work in a bizarre way that makes them
+    difficult to program.  You may see extra spaces scattered around your
+    screen (separating different sorts of highlight); or sections of the
+    screen may be unexpectedly highlighted.
+    There is a workaround which works by restricting the terminal to a
+    single standout attribute (e.g.  normal and reverse, but no others).
+    Implementing the workaround is specific to your curses implementation.
+    Most versions of curses use one of two terminal databases, called
+    "termcap" and "terminfo".  Updating these databases is system-specific.
+    New databases should be available from the vendor or other sources.
+    For the Wyse 50, try
+       <URL: http://www.wyse.com/text/custserv/faq/wy50faq.htm>;
+    extract the "wy50" (NOT "wy50-mc") entry and use that in place of the
+    existing one.  See `terminfo', `infocmp', `tic' etc. man pages if
+    necessary.
+    Alternatively, compiling Lynx with the slang library may avoid problems
+    with theses terminals.
+
+    On VMS, Lynx, and other TCP-IP software, have been experiencing chronic
+    problems of incompatibilities between DECC and MultiNet headers whenever
+    new versions of either DECC or MultiNet are released.  The Lynx build
+    procedure for VMS and a maze of spaghetti #ifdef-ing in tcp.h of the
+    libwww-FM had previously been successful in dealing with this problem
+    across all versions of MultiNet and of DECC, VAXC, and Pat Rankin's
+    VMS port of GNUC, but are now not 100% successful.  If you get compiler
+    messages about "struct timeval timeout" having no linkage, add that
+    declaration immediately below the inclusion of ioctl.h for MultiNet in
+    tcp.h (by deleting the "#ifdef NOT_DEFINED" and "#endif /* NOT_DEFINED */"
+    lines):
+    [...]
+    #include "multinet_root:[multinet.include.sys]ioctl.h"
+    struct timeval {
+        long tv_sec;		/* seconds since Jan. 1, 1970 */
+        long tv_usec;		/* microseconds */
+    };
+    [...]
+    If you get compiler warnings about incompatible multinet_foo()
+    declarations, delete those where indicated in tcp.h.  For the most
+    current versions of MultiNet, you can modify tcp.h to use the DECC
+    socket and related headers.
+
+    On VMS, the ftp function does not work with SOCKETSHR 0.9D and NETLIB
+    2 (NETLIB 1 may work).  This is because the functions getsockname()
+    and getpeername() within SOCKETSHR make incorrect calls to the NETLIB
+    functions.  This results in zeroes being returned for part of the local
+    IP address.  Since ftp sends this IP address to the remote end, the
+    remote server ends up sending a file back to a non-existent address.
+    Andy Harper (A.HARPER@kcl.ac.uk) has fixed these problems in the
+    SOCKETSHR 0.9D sources and offers the fixes as:
+       http://alder.cc.kcl.ac.uk/fileserv/zip/socketshr_src_09d-2.zip
+       ftp://ftp2.kcl.ac.uk/zip/socketshr_src_09d-2.zip
+

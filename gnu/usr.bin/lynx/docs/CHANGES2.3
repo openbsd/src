@@ -1,0 +1,458 @@
+--- RELEASE of 2.3  (19-May-1994) ---
+5-19-94
+* Better memory allocation routines used for some VMS systems.
+5-19-94
+* Non-interactive (-source) access to documents requiring access authorization
+  not allowed to avoid crashes.
+3-30-94
+* Lynx exports the environment variable LYNX_VERSION on UNIX systems
+  with the current version number as the value.
+3-29-94
+* added "action=" handling to ISINDEX tags.  (Is that in the spec?)
+3-27-94
+* fixed Telnet security problem
+3-19-94
+* added .mailcap and mailcap support as well as mime.types support
+  for the configuration of viewers and extension mappings.
+  The test command is now implemented so that viewers can be conditionally
+  setup.
+3-17-94
+* Revamped the FTP code to recognize different server types and to parse
+  full directory listings (LIST output).  File types, sizes and dates
+  are displayed when possible.
+3-16-94
+* added transparent support for mosaic bookmark files.  Just point
+  Lynx at your existing default mosaic bookmark file and Lynx will
+  handle the rest.  Viewing, addition, and removal are supported.
+3-15-94
+* added second line of reverse video to show multiline links better.
+3-10-94
+* added configurable MIME types and viewers to lynx.cfg.  MIME types
+  and VIEWERS can be configured by following the instructions within
+  the newest lynx.cfg file.
+3-?-94
+* added second %s argument to PRINTER and DOWNLOADER definitions.
+  If a second %s is present in the command definition it will be
+  filled in by a suggested filename which is derived from the URL
+  of the document.  See lynx.cfg for more details.
+3-?-94
+* got code from CERN to fix HTBTree FTP bug.  Large ftp lists should
+  not crash anymore.
+3-9-94
+* added no_proxy environment variable.  set it to a comma delimited list
+  of domains or hosts that should not be proxyed. (Thanks CERN :)
+  USAGE: (UNIX)
+     setenv no_proxy "domain1.dom, domain2.dom, domain3, etc"
+3-?-94
+* Fixed Referer: field handleing so that it doesn't crash on really
+  long URL's
+3-?-94
+* True popup menus are now supported for non-multiple SELECT lists.
+2-28-94
+* fixed the delete-a-bookmark command and bound it to 'r' for remove.
+  (thanks to David Trueman for the fix)
+
+---------- RELEASE of 2.2 ------------------
+2-9-94
+* added 'd' for download current link.  Can be used to force a download
+  of any file.
+* 'r' removed as a comment key.  Use 'c' or reconfigure your keys to
+  add 'r' back in.  (I would like to use 'r' in the future to mean
+  remove current bookmark link)
+* Found the bug in the HTTP redirection code that was causing it
+  not to work.  So HTTP redirection appears to work now!
+* Added Referer: header to HTTP requests to list the URL of
+  the document listing the requsted URL.   Here's an extract from CERN:
+     This optional header field allows the client to specify, 
+     for the server's benefit, the address ( URI ) of the document 
+     (or element within the document) from which the URI in the 
+     request was obtained. 
+
+     This allows a server to generate lists of back-links to documents, 
+     for interest, logging, etc. It allows bad links to be traced 
+     for maintenance.
+
+2-8-94
+* changed novice line to be displayed on bottom two lines with the
+  status line moved up two lines.
+1-27-94
+* Made configurable keymappings a reality.  Keys can be remapped in
+  the lynx.cfg file.  (diffs from David Trueman)
+* Got code from Foteos to make 'a' work for VMS connection interrupts.
+1-24-94
+* Moving closer towards configurable keymappings.  New keyhandleing
+  code will make it very easy to implement. (diffs from David Trueman)
+1-14-94
+* Lynx FTP now supports PASV code. (fixes to CERN (Dave Raggert?) PASV code
+  from John Ellson)  It is not enabled by default.  Line 43 in
+  WWW/Library/Implementation/HTFTP must be commented out for
+  PASV code to be used.  This was done because not all FTP sites
+  can support PASV FTP.
+1-13-94
+* slight change in forms user interface.  For the better, I hope you will
+  agree.  Text input fields are now active as soon as the cursor pointer
+  is over them.  Therefore you may begin typing into the text field
+  as soon as you come to it.  Tab, and up and down arrow keys will
+  move off of the text input field.  The only problem with this is as
+  follows.  If you are in the habit of using the number keys (keypad)
+  the or h,j,k,l vi keys, as soon as you move over the text link
+  you will begin seeing numbers or hjk or l show up in the text field.
+  In other words, your movement commands are now broken :(  You must
+  use true arrow keys or the tab key to move off of the text field.
+  I've tried this out and it seems to work alright.  I don't think
+  that users unfamiliar with this will have too hard a time figureing
+  it out.  Once you see numbers or letter appearing it becomes fairly
+  obvious whats going on.  I'll put a message at the bottom of the
+  screen saying "use tab or arrow keys to move off of link."
+* added mods by David Trueman to implement -restrictions commandline
+  option.  -restrictions allows a list of services to be disabled
+  selectively. -restrictions takes the form of
+  "lynx -restrictions=[default],[all],[inside_telnet],[outside_telnet],[shell],\
+	[editor],[bookmark],[option_save],[print],[file_url],[download],[exec]"
+
+   all             restricts all options.
+   default         same as commandline option -anonymous.  Disables
+	           default services for anonymous users.  Currently set to,
+	           all restricted except for: inside_telnet, outside_telnet, and
+	           goto.  Defaults settable within userdefs.h
+   inside_telnet   disallow telnets for people coming from inside your
+		   domain.
+   outside_telnet  disallow telnets for people coming from outside your
+		   domain.
+   shell	   disallow shell escapes
+   editor	   disallow editing
+   bookmark	   disallow changing the location of the bookmark file.
+   options_save    disallow saving options in .lynxrc
+   print           disallow most print options
+   goto            disable the 'g' (goto) command.
+   file_url        disallow using G)oto to go to file: URL's
+   download        disallow saving binary files to disk in the download menu.
+   exec            disable execution scripts
+   exec_frozen     disallow the user from changing the execution link
+		   setting in the O)ptions menu.
+1-12-93
+* added new more informative messages for form links.
+1-11-93
+* fixed -dump and -source options so that they work for
+  binary files now.
+* Interruptable I/0 now completely works for UNIX systems.
+  VMS is next.  Just hit an 'a' for abort anytime during a
+  transfer to abort.  If there is a partial file to show, it
+  will be shown.
+* Added command line option -show_curser.  If enabled the curser
+  will not be hidden in the right hand corner but will instead 
+  be positioned at the start of the currently selected link.
+  show curser is the default for systems without FANCY_CURSES
+  capibilities, and the default configuration can be changed in
+  userdefs.h
+1-9-93
+* Added NNTP posting capibilities.  Currently uses external inews
+  program which will be included in the utils directory.
+  Would someone like to patch in some freeware inews code, or
+  send me some?
+1-7-93
+* fixed bug in password handling which cuased it to be displayed
+  accidentally :(  (Danny Mayer)
+1-6-94
+* bold and emphasis now use curses underlining to represent
+  ephasized text.  The use of _underline_ chars before and after
+  the text is now removed.
+1-5-94
+* Added configurable download menu so that binary files may
+  be downloaded using any protocal.  Download menu is displayed
+  after selecting a non-displayable file.
+* Added exec links.  4 types currently defined:
+    files ending in:  .csh, .ksh, .sh, (for UNIX)  and .com (for VMS);
+  Use exec link controls to turn on and off exec links.
+* Gopher menues are now within PRE so that spaces are not
+  collapsed in menu entries.
+* added configurable character sets.  Can be set in lynx.cfg
+  by the user in the options screen or in the users .lynxrc file
+  current sets are: ISO Latin I, IBM PC Character set, & 7 bit
+  approximations.  New sets can be added to src/LYCharSets.c
+
+----------RELEASE of Lynx 2.1 and 2.1.1----------------------
+-grey area-
+* Ability to FTP to VMS systems. (Foteos Macrides)
+* Fixed lots of display and interupt problems (Foteos Macrides)
+* The Lynx Bookmark file is now interpreted as an HTML document.  
+  Old Lynx bookmark files must be converted using the lynx2html
+  program or deleted.
+* HTML+ forms as implemented by XMosaic now work. 
+  fill in the empty spaces and press the submit button to
+  submit the form.
+* The TEXTAREA tag isn't done yet.  It will currently only
+  give a one line text area.  The next version of Lynx will
+  include a true textarea implementation once I figure out a
+  reasonable interface.
+* Incorporated WWWlib 2.14 and fixed up the descrip.mms files.
+  Foteos Macrides made VMS port changes and wrote a really nice
+  build.com script to make compilation on VMS systems really easy.
+  Foteos also ported Lynx to OpenVMS for alpha axp systems. 
+* 's' now means search a searchable indexed document through the
+  server, and can no longer be used to search for strings within
+  the displayed document.
+* '/' now only searches through the current displayed document for
+  strings and can not be used for searchable index documents.
+* Capital 'Q' now quits without asking for confirmation.
+* 'm' for Main Menu now askes for confirmation and does NOT clear
+  the history stack.
+* Blockquote style changed slightly.
+* fixed bug with A and other tags messing up formatting
+  withing PRE segments.
+* Verbose Gopher option removed, verbose gopher functionality
+  is now set permenantly on.
+* Default editor is now configurable in the lynx.cfg file.
+* Default bookmark file is now configurable in the lynx.cfg file.
+
+12-15-93
+* ownership is no longer inherited.
+* link rev="owner" href="mailto:ADDRESS" now accepted as well as
+  link rev="made" href="mailto:ADDRESS" to define the URL of the
+  owner or person responsible for the info.
+* 's' now only searches ISINDEX server documents.
+* '/' always means search within the document.
+
+-grey area-
+* still doing massive rewrite. Debugging!!
+
+11-30-93
+* anonymous users cannot change the bookmark page! (thanks to Jyrki Kuoppal for
+  pointing out a security hole)
+
+-grey area-
+* massive rewrite.  Removed all Lynx internal format code and 
+  restructured all the source files.
+
+11-8-93
+* added &nbsp; (non-breaking space), &ensp; and &emsp;
+
+---------- RELEASE of 2.0.12 -----------------
+11-1-93
+* Change HTInit.c so that unsupported types are not sent out
+  in accept parameters.  For non X screen only text/html and
+  application/octet-stream are sent.
+
+10-26-93
+* descriptive title added to files mailed from lynx
+
+10-25-93
+* disabled FTP connection caching to help fix multiple FTP problems
+
+10-23-93
+* added preliminary level 1 forms support.
+
+10-20-93
+* fixed a bunch of gopher holes
+* gopher lists are turned into URL's now instead of lynx
+  internal format document links
+* local documents ending in .html can now be referenced with
+  just a filename and/or path from the command line.
+
+10-19-93
+* Added preloaded searches to gopher URL's.  They previously
+  didn't work.  This is readily apparent as preloaded CSO
+  searches, which alot of people wanted.
+* removed old hytelnet compatibility code which looked in
+  multiple directories to find the correct file.  If you still
+  need this capibility talk to me.
+
+10-12-93
+* The users specified editor is now spawned for mail messages.
+  If no editor is defined or if the user is anonymous, the built-in 
+  lynx mail sender is used.
+
+10-11-93
+* changed all static data structures to be dynamic
+  This was a pretty major change of code which may add several
+  bugs.
+* rewrote parse_links routine to make it more efficient and to
+  work with dynamic structures.
+
+10-6-93
+* added progress messages to HTTP transfers.
+
+10-5-93
+* added -cache=# command line option to specify the number
+  of WWW documents cached in memory.
+
+9-28-93
+* added VMS port fixes from Foteos Macrides.  Lynx now
+  compiles and works on VMS!
+* fixed ftp bug in WWWlib that didn't de-escape URL's before
+  sending request to FTP server.
+
+9-21-93
+* fixed coredump bug for some files with no links.
+
+9-3-93
+* Moved many configuration options including printer setup to 
+  lynx.cfg file.  The default placement of the lynx.cfg file
+  will be /usr/local/lib & sys$public
+
+9-1-93
+* Removed STARTDIR variable from userdefs.h  STARTDIR is now inferred
+  from the STARTFILE.
+
+8-30-93
+* Fixed bug with only one link selectable out of many on the last line
+  of the display.
+* Ported to SVR4 courtesy of Nickolay Saukh (from Russia, Wow this is
+  really getting around!) 
+* Uneditable documents don't get refetched. (Nickolay Saukh)
+* National language support through LOCALE
+  (instead of ISOLATIN1), protected by #ifdef LOCALE (Nickolay Saukh)
+
+------Release of Lynx 2.0.11--------------------------------
+8-27-93
+* Caused major international incident when a large bug was discovered after
+  release. :)
+* Fixed internal document hypertext refernces with URL's.  '#selector'
+  strings now work again.
+
+8-24-93
+* When files come through on pre HTTP/1.0 servers they are now
+  recognized by their file extensions
+
+8-23-93
+* Lynx can now speak to old NCSA pre HTTP/1.0 servers
+* fixed ALT bug that had to do with style changes not
+  happening before the alt was printed.
+
+8-21-93
+* updated the man file lynx.1.
+
+8-19-93
+* updated help and converted it to HTML.  Made a new help location and
+  server.  The new default help file is 
+  http://kufacts.cc.ukans.edu/lynx_help/lynx_help_main.html
+
+8-15-93
+* changed '\' to toggle between source and no source.  When you press
+  '\' while viewing a rendered HTML document you will get the HTML source
+  when you press '\' while viewing HTML source you will get the
+  rendered HTML.
+* Added ALT attribute to IMG tag.  When ALT is available the contents
+  are displayed.  When ALT is missing [IMAGE] is displayed.  When
+  ALT="" nothing is displayed.
+
+8-14-93
+* Added document reload command.  CTRL-R when pressed will reload
+  the document into memory and redisplay it, clearing the screen.
+  This is very useful when editing documents, outside of Lynx while 
+  using Lynx for rendering.
+* Added source view mode.  '\' when pressed will reload the document
+  and display the HTML source. (doesn't work for gopher directoryies right 
+  now, but gopher isn't HTML anyways)
+* fixed bug in LibWWW that caused it not to be able to convert to
+  www/source.
+* fixed bug in LibWWW that caused most binary file transfers to fail
+* added binary file transfer ability.  When binary files are selected
+  the user is prompted for a file name to save to.  The default directory
+  is the one the user started in.
+* Lynx now reloads local HTML files and re-renders them after editing.
+
+??-??-??
+* At some point I added the ability to edit HTML files on the local
+  machine.  
+
+8-12-93
+* Added Nested Lists, up to six levels, with different bullets
+  for each level.
+* Due to the fact that nearly everyone seems to use P to mean
+  two returns within the same style, and Mosaic has been kind 
+  enough to support this meaning, :( :( :(  I have changed
+  the P tag to reflect this interpretation.  P can be used
+  anywhere and will mean insert two returns.  (i.e. two BR tags)
+
+8-11-93
+* Made the default Mime type for unknown file types on ftp servers
+  to be text/plain.  Previously the WWWLibrary had the default
+  as application/octet-stream which meant that most files could not
+  be viewed.
+* Changed the ADDRESS style to be more like XMosaic
+  Left flush, newline top and bottom
+* The Statusline now displays the URL when retrieving files.
+* added BR (linebreak) tag!
+  The BR tag inserts a line break and maintains the current style!
+  The BR tag may be used anywhere.
+* added HR (horizontal rule tag!)
+  The HR tag puts a horizontal line seperating two bodies of text.
+  The HR tag may be used anywhere.
+
+8-8-93
+* All spaces, tabs and returns are now collapsed down do one
+  space.
+* fixed bug whiched caused certain links beginning at the
+  begining of a line to be bad.
+* added '*' (stars) to unordered lists and numbers to ordered
+  lists.
+* changed dir lists to be more like menu lists.
+* all emphasis, physical and symantic, now have _underlines_
+  around them to show emphasis.
+
+
+RELEASE OF VER 2.0.10 -----------------------------------------------
+
+7-8-93
+Added [IMAGE] in all places where IMG tags appear.
+added WWW_HOME environment variable support.
+fixed searching in WWW.
+removed tildas from mail messages for security reasons.
+added emacs-like key defs.
+changed gopher dir routines and Verbose format of directories
+
+6-30-93
+Forgot to put all kinds of bug fixes and stuff in here during the
+past month.  I have been working on upgrading to the 2.X WWWlibrary
+Today I changed 'g' to mean goto a url, and 'v' to be view the
+bookmark page.
+
+5-30-93
+Fixed problem with ftp: URL not being recognized and not working.
+
+5-28-93
+Tried to remove the use of tabs and replace them with appropriate
+spaces.  This was done to support brain dead curses packages that
+don't handle tabs. (like linux)
+
+5-20-93
+Fixed socket problem which was causing a problem with telnet's
+connecting
+
+5-18-93
+Fixed SUN curses problem, now works with the /usr/5lib routines
+
+4-9-93
+Added an option to turn on link numbering
+
+4-7-93
+Fixed read_rc() bug which caused .lynxrc files to be read incorrectly
+Fixed file cacheing bug which only allowed searching to be performed
+once.  (it cached the answer and displayed that each time a new
+search was requested)
+
+4-2-93
+Fixed VMS I/O bug and TCP routines.
+
+4-1-93
+Ported 2.0 to VMS
+
+3-17-93
+Fixed a bug: Multiply defined procedure async_abort in
+the files get_file and get_bin_file
+
+3-16-93
+Optomized Gopher TCP routines, increased speed by a factor of 10!
+
+3-9-93
+Added WWW support by integrating the WWWlib1.4
+
+2-10-93
+Added home page support and append features.
+
+12-22-92
+Added support for Image types using xloadimage for X-terminals.
+
+12-1-92
+Added gopher binary file types

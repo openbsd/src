@@ -1,0 +1,28 @@
+				03-Jun-1994
+
+	I have added DIRECT_WAIS support for VMS to Lynx.  It uses highly
+modified freeWAIS modules, collected into HTVMS_WaisUI.c, HTVMS_WaisUI.h,
+HTVMS_WaisProt.c, and HTVMS_WaisProt.h, interfaced to HTWAIS.c and HTWSRC.c
+of the WWWLib.  The socket reads and writes use the code for VMS in the Lynx
+version of the WWWLib, and thus are non-blocking (interruptable via the 'z'
+command), and "already" ported to all the VMS TCPIP packages supported by
+Lynx.   All messaging associated with WAIS searches and document fetches go to
+the Lynx statusline as Progress() or Alarm() reports.
+
+	I also prettied up the HTWAIS.c and HTWSRC.c screen displays for both
+VMS and Unix.  I've been trying to build in recursive FORM-based interfaces,
+instead of the present iSINDEX-based interfaces, but haven't succeeded ;(.
+	
+	The DIRECT_WAIS support is automatic for VMS (i.e., is implemented
+via the BUILD.COM and LIBMAKE.COM procedures, without need to specify anything
+but your TCPIP package, as in the previous, standard VMS builds).  Simply
+enter   @BUILD <TCPIP package>   or enter   @BUILD   and then the number of
+your TCPIP package in response to the prompt, and you'll have DIRECT_WAIS
+support along with every other wonderful thing in Lynx 8-).
+
+				Fote
+
+=========================================================================
+ Foteos Macrides           Worcester Foundation for Experimental Biology
+ MACRIDES@SCI.WFEB.EDU     222 Maple Avenue, Shrewsbury, MA 01545
+=========================================================================

@@ -1,0 +1,40 @@
+<!DOCTYPE html public "-//IETF//DTD HTML 3.0//EN">
+<html>
+<head>
+<title>Lynx Line Editor Default Key Binding</title>
+<link rev="made" href="mailto:lynx-dev@sig.net">
+</head>
+<body>
+<h1>+++DEFAULT BINDING+++</h1>
+
+Lynx invokes a built-in <em>Line Editor</em> for entering strings in
+response to prompts, in forms, and for email messages if an external editor
+has not been defined.  Administrators can offer alternate key bindings
+by adding them in LYEditmap.c before compiling Lynx, and they can
+be selected via the 'o'ptions menu.  This is the <em>Default Binding</em>:
+<pre>
+     ENTER  Input complete       -  RETURN
+     TAB    Input complete       -  TAB, Do
+     ABORT  Input cancelled      -  Ctrl-G, Ctrl-O, Ctrl-C
+     ERASE  Erase the line       -  Ctrl-U, Ctrl-X
+
+     BACK   Cursor back    char  -  Left-Arrow
+     FORW   Cursor forward char  -  Right-Arrow
+     BACKW  Cursor back    word  -  Ctrl-P
+     FORWW  Cursor forward word  -  Ctrl-N
+     BOL    Go to begin of line  -  Ctrl-A, Home, Find
+     EOL    Go to end   of line  -  Ctrl-E, End,  Select
+
+     DELP   Delete prev    char  -  Ctrl-H, DELETE, Remove
+     DELC   Delete current char  -  Ctrl-D
+     DELN   Delete next    char  -  Ctrl-R
+     DELPW  Delete prev    word  -  Ctrl-B
+     DELNW  Delete next    word  -  Ctrl-F
+
+     LOWER  Lower case the line  -  Ctrl-K
+     UPPER  Upper case the line  -  Ctrl-T
+
+     LKCMD  Invoke cmd prompt    -  Ctrl-V (in form text fields, only)
+</pre>
+</body>
+</html>

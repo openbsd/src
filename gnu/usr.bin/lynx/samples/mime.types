@@ -1,0 +1,24 @@
+# example mime.types file.
+# see the NCSA X Mosaic documentation at
+# http://www.ncsa.uiuc.edu/SDG/Software/Mosaic/Docs/extension-map.html
+# for more details
+
+application/postscript         ai eps ps       
+application/rtf                rtf             
+application/x-tex              tex             
+application/x-texinfo          texinfo texi   
+application/x-troff            t tr roff       
+audio/basic                    au snd          
+audio/x-aiff                   aif aiff aifc
+audio/x-wav                    wav             
+image/gif                      gif             
+image/ief                      ief             
+image/jpeg                     jpeg jpg jpe
+image/tiff                     tiff tif        
+image/x-xwindowdump            xwd             
+text/html                      html            
+text/plain                     txt c cc h
+video/mpeg                     mpeg mpg mpe    
+video/quicktime                qt mov          
+video/x-msvideo                avi             
+video/x-sgi-movie              movie           

@@ -1,0 +1,737 @@
+#
+# Borland C++ IDE generated makefile
+#
+.AUTODEPEND
+
+
+#
+# Borland C++ tools
+#
+IMPLIB  = Implib
+BCC32   = Bcc32 +BccW32.cfg 
+TLINK32 = TLink32
+TLIB    = TLib
+BRC32   = Brc32
+TASM32  = Tasm32
+#
+# IDE macros
+#
+
+
+#
+# Options
+#
+IDE_LFLAGS32 =  -LD:\BC45\LIB
+LLATC32_lynxdexe =  -LCURSES;D:\BC45\LIB -wdpl -wdup -Tpe -ap -c
+RLATC32_lynxdexe =  -k -w32
+BLATC32_lynxdexe = 
+CNIEAT_lynxdexe = -I.\;CURSES;SRC;WWW\LIBRARY\IMPLEMENTATION;D:\BC45\INCLUDE;SRC\CHRTRANS -DNO_UNISTD_H;_WINDOWS;XMOSAIC_HACK;ACCESS_AUTH;NO_UTMP;NO_CUSERID;NO_TTYTYPE;NOSIGHUP;DOSPATH;NOUSERS;NCURSES;FANCY_CURSES;COLOR_CURSES;HAVE_KEYPAD;VC="2.14FM";NCURSES_VERSION
+LNIEAT_lynxdexe = -x
+LEAT_lynxdexe = $(LLATC32_lynxdexe)
+REAT_lynxdexe = $(RLATC32_lynxdexe)
+BEAT_lynxdexe = $(BLATC32_lynxdexe)
+CLATW16_cursesbpdcursesdlib = 
+LLATW16_cursesbpdcursesdlib = 
+RLATW16_cursesbpdcursesdlib = 
+BLATW16_cursesbpdcursesdlib = 
+CEAT_cursesbpdcursesdlib = $(CEAT_lynxdexe) $(CLATW16_cursesbpdcursesdlib)
+CNIEAT_cursesbpdcursesdlib = -I.\;CURSES;SRC;WWW\LIBRARY\IMPLEMENTATION;D:\BC45\INCLUDE;SRC\CHRTRANS -DNO_UNISTD_H;_WINDOWS;XMOSAIC_HACK;ACCESS_AUTH;NO_UTMP;NO_CUSERID;NO_TTYTYPE;NOSIGHUP;DOSPATH;NOUSERS;NCURSES;FANCY_CURSES;COLOR_CURSES;HAVE_KEYPAD;VC="2.14FM";NCURSES_VERSION
+LNIEAT_cursesbpdcursesdlib = -x
+LEAT_cursesbpdcursesdlib = $(LEAT_lynxdexe) $(LLATW16_cursesbpdcursesdlib)
+REAT_cursesbpdcursesdlib = $(REAT_lynxdexe) $(RLATW16_cursesbpdcursesdlib)
+BEAT_cursesbpdcursesdlib = $(BEAT_lynxdexe) $(BLATW16_cursesbpdcursesdlib)
+
+#
+# Dependency List
+#
+Dep_lynx = \
+   lynx.exe
+
+lynx : BccW32.cfg $(Dep_lynx)
+  echo MakeNode 
+
+Dep_lynxdexe = \
+   OBJ\htdos.obj\
+   curses\pdcurses.lib\
+   OBJ\ucauto.obj\
+   OBJ\ucaux.obj\
+   OBJ\ucdomap.obj\
+   OBJ\htalert.obj\
+   OBJ\htfwrite.obj\
+   OBJ\htinit.obj\
+   OBJ\httcp.obj\
+   OBJ\crypt.obj\
+   OBJ\crypt_ut.obj\
+   OBJ\getline.obj\
+   OBJ\htaabrow.obj\
+   OBJ\htaafile.obj\
+   OBJ\htaaprot.obj\
+   OBJ\htaaserv.obj\
+   OBJ\htaautil.obj\
+   OBJ\htaccess.obj\
+   OBJ\htacl.obj\
+   OBJ\htanchor.obj\
+   OBJ\htassoc.obj\
+   OBJ\htatom.obj\
+   OBJ\htauth.obj\
+   OBJ\htbtree.obj\
+   OBJ\htchunk.obj\
+   OBJ\htfile.obj\
+   OBJ\htfinger.obj\
+   OBJ\htformat.obj\
+   OBJ\htftp.obj\
+   OBJ\htgopher.obj\
+   OBJ\htgroup.obj\
+   OBJ\hthistor.obj\
+   OBJ\htlex.obj\
+   OBJ\htlist.obj\
+   OBJ\htmime.obj\
+   OBJ\htmldtd.obj\
+   OBJ\htmlgen.obj\
+   OBJ\htnews.obj\
+   OBJ\htparse.obj\
+   OBJ\htpasswd.obj\
+   OBJ\htplain.obj\
+   OBJ\htrules.obj\
+   OBJ\htstring.obj\
+   OBJ\htstyle.obj\
+   OBJ\httelnet.obj\
+   OBJ\http.obj\
+   OBJ\htuu.obj\
+   OBJ\htwriter.obj\
+   OBJ\htwsrc.obj\
+   OBJ\sgml.obj\
+   OBJ\defaults.obj\
+   OBJ\gridtext.obj\
+   OBJ\html.obj\
+   OBJ\lybookma.obj\
+   OBJ\lycgi.obj\
+   OBJ\lycharse.obj\
+   OBJ\lycharut.obj\
+   OBJ\lyclean.obj\
+   OBJ\lycookie.obj\
+   OBJ\lycurses.obj\
+   OBJ\lydownlo.obj\
+   OBJ\lyedit.obj\
+   OBJ\lyeditma.obj\
+   OBJ\lyexit.obj\
+   OBJ\lyforms.obj\
+   OBJ\lygetfil.obj\
+   OBJ\lyhistor.obj\
+   OBJ\lyjump.obj\
+   OBJ\lykeymap.obj\
+   OBJ\lyleaks.obj\
+   OBJ\lylist.obj\
+   OBJ\lylocal.obj\
+   OBJ\lymail.obj\
+   OBJ\lymain.obj\
+   OBJ\lymainlo.obj\
+   OBJ\lymap.obj\
+   OBJ\lynews.obj\
+   OBJ\lyoption.obj\
+   OBJ\lyprint.obj\
+   OBJ\lyrcfile.obj\
+   OBJ\lyreadcf.obj\
+   OBJ\lysearch.obj\
+   OBJ\lyshowin.obj\
+   OBJ\lystring.obj\
+   OBJ\lytraver.obj\
+   OBJ\lyupload.obj\
+   OBJ\lyutils.obj
+
+lynx.exe : $(Dep_lynxdexe)
+  $(TLINK32) @&&|
+ /v $(IDE_LFLAGS32) $(LEAT_lynxdexe) $(LNIEAT_lynxdexe) +
+D:\BC45\LIB\c0x32.obj+
+OBJ\htdos.obj+
+OBJ\ucauto.obj+
+OBJ\ucaux.obj+
+OBJ\ucdomap.obj+
+OBJ\htalert.obj+
+OBJ\htfwrite.obj+
+OBJ\htinit.obj+
+OBJ\httcp.obj+
+OBJ\crypt.obj+
+OBJ\crypt_ut.obj+
+OBJ\getline.obj+
+OBJ\htaabrow.obj+
+OBJ\htaafile.obj+
+OBJ\htaaprot.obj+
+OBJ\htaaserv.obj+
+OBJ\htaautil.obj+
+OBJ\htaccess.obj+
+OBJ\htacl.obj+
+OBJ\htanchor.obj+
+OBJ\htassoc.obj+
+OBJ\htatom.obj+
+OBJ\htauth.obj+
+OBJ\htbtree.obj+
+OBJ\htchunk.obj+
+OBJ\htfile.obj+
+OBJ\htfinger.obj+
+OBJ\htformat.obj+
+OBJ\htftp.obj+
+OBJ\htgopher.obj+
+OBJ\htgroup.obj+
+OBJ\hthistor.obj+
+OBJ\htlex.obj+
+OBJ\htlist.obj+
+OBJ\htmime.obj+
+OBJ\htmldtd.obj+
+OBJ\htmlgen.obj+
+OBJ\htnews.obj+
+OBJ\htparse.obj+
+OBJ\htpasswd.obj+
+OBJ\htplain.obj+
+OBJ\htrules.obj+
+OBJ\htstring.obj+
+OBJ\htstyle.obj+
+OBJ\httelnet.obj+
+OBJ\http.obj+
+OBJ\htuu.obj+
+OBJ\htwriter.obj+
+OBJ\htwsrc.obj+
+OBJ\sgml.obj+
+OBJ\defaults.obj+
+OBJ\gridtext.obj+
+OBJ\html.obj+
+OBJ\lybookma.obj+
+OBJ\lycgi.obj+
+OBJ\lycharse.obj+
+OBJ\lycharut.obj+
+OBJ\lyclean.obj+
+OBJ\lycookie.obj+
+OBJ\lycurses.obj+
+OBJ\lydownlo.obj+
+OBJ\lyedit.obj+
+OBJ\lyeditma.obj+
+OBJ\lyexit.obj+
+OBJ\lyforms.obj+
+OBJ\lygetfil.obj+
+OBJ\lyhistor.obj+
+OBJ\lyjump.obj+
+OBJ\lykeymap.obj+
+OBJ\lyleaks.obj+
+OBJ\lylist.obj+
+OBJ\lylocal.obj+
+OBJ\lymail.obj+
+OBJ\lymain.obj+
+OBJ\lymainlo.obj+
+OBJ\lymap.obj+
+OBJ\lynews.obj+
+OBJ\lyoption.obj+
+OBJ\lyprint.obj+
+OBJ\lyrcfile.obj+
+OBJ\lyreadcf.obj+
+OBJ\lysearch.obj+
+OBJ\lyshowin.obj+
+OBJ\lystring.obj+
+OBJ\lytraver.obj+
+OBJ\lyupload.obj+
+OBJ\lyutils.obj
+$<,$*
+curses\pdcurses.lib+
+D:\BC45\LIB\bidsf.lib+
+D:\BC45\LIB\import32.lib+
+D:\BC45\LIB\cw32.lib
+
+|
+
+OBJ\htdos.obj :  www\library\implemen\htdos.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htdos.c
+|
+
+OBJ\ucauto.obj :  src\ucauto.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\ucauto.c
+|
+
+OBJ\ucaux.obj :  src\ucaux.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\ucaux.c
+|
+
+OBJ\ucdomap.obj :  src\ucdomap.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\ucdomap.c
+|
+
+OBJ\htalert.obj :  src\htalert.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\htalert.c
+|
+
+OBJ\htfwrite.obj :  src\htfwrite.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\htfwrite.c
+|
+
+OBJ\htinit.obj :  src\htinit.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\htinit.c
+|
+
+OBJ\httcp.obj :  www\library\implemen\httcp.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\httcp.c
+|
+
+OBJ\crypt.obj :  www\library\implemen\crypt.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\crypt.c
+|
+
+OBJ\crypt_ut.obj :  www\library\implemen\crypt_ut.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\crypt_ut.c
+|
+
+OBJ\getline.obj :  www\library\implemen\getline.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\getline.c
+|
+
+OBJ\htaabrow.obj :  www\library\implemen\htaabrow.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htaabrow.c
+|
+
+OBJ\htaafile.obj :  www\library\implemen\htaafile.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htaafile.c
+|
+
+OBJ\htaaprot.obj :  www\library\implemen\htaaprot.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htaaprot.c
+|
+
+OBJ\htaaserv.obj :  www\library\implemen\htaaserv.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htaaserv.c
+|
+
+OBJ\htaautil.obj :  www\library\implemen\htaautil.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htaautil.c
+|
+
+OBJ\htaccess.obj :  www\library\implemen\htaccess.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htaccess.c
+|
+
+OBJ\htacl.obj :  www\library\implemen\htacl.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htacl.c
+|
+
+OBJ\htanchor.obj :  www\library\implemen\htanchor.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htanchor.c
+|
+
+OBJ\htassoc.obj :  www\library\implemen\htassoc.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htassoc.c
+|
+
+OBJ\htatom.obj :  www\library\implemen\htatom.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htatom.c
+|
+
+OBJ\htauth.obj :  www\library\implemen\htauth.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htauth.c
+|
+
+OBJ\htbtree.obj :  www\library\implemen\htbtree.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htbtree.c
+|
+
+OBJ\htchunk.obj :  www\library\implemen\htchunk.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htchunk.c
+|
+
+OBJ\htfile.obj :  www\library\implemen\htfile.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htfile.c
+|
+
+OBJ\htfinger.obj :  www\library\implemen\htfinger.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htfinger.c
+|
+
+OBJ\htformat.obj :  www\library\implemen\htformat.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htformat.c
+|
+
+OBJ\htftp.obj :  www\library\implemen\htftp.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htftp.c
+|
+
+OBJ\htgopher.obj :  www\library\implemen\htgopher.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htgopher.c
+|
+
+OBJ\htgroup.obj :  www\library\implemen\htgroup.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htgroup.c
+|
+
+OBJ\hthistor.obj :  www\library\implemen\hthistor.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\hthistor.c
+|
+
+OBJ\htlex.obj :  www\library\implemen\htlex.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htlex.c
+|
+
+OBJ\htlist.obj :  www\library\implemen\htlist.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htlist.c
+|
+
+OBJ\htmime.obj :  www\library\implemen\htmime.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htmime.c
+|
+
+OBJ\htmldtd.obj :  www\library\implemen\htmldtd.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htmldtd.c
+|
+
+OBJ\htmlgen.obj :  www\library\implemen\htmlgen.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htmlgen.c
+|
+
+OBJ\htnews.obj :  www\library\implemen\htnews.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htnews.c
+|
+
+OBJ\htparse.obj :  www\library\implemen\htparse.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htparse.c
+|
+
+OBJ\htpasswd.obj :  www\library\implemen\htpasswd.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htpasswd.c
+|
+
+OBJ\htplain.obj :  www\library\implemen\htplain.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htplain.c
+|
+
+OBJ\htrules.obj :  www\library\implemen\htrules.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htrules.c
+|
+
+OBJ\htstring.obj :  www\library\implemen\htstring.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htstring.c
+|
+
+OBJ\htstyle.obj :  www\library\implemen\htstyle.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htstyle.c
+|
+
+OBJ\httelnet.obj :  www\library\implemen\httelnet.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\httelnet.c
+|
+
+OBJ\http.obj :  www\library\implemen\http.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\http.c
+|
+
+OBJ\htuu.obj :  www\library\implemen\htuu.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htuu.c
+|
+
+OBJ\htwriter.obj :  www\library\implemen\htwriter.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htwriter.c
+|
+
+OBJ\htwsrc.obj :  www\library\implemen\htwsrc.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\htwsrc.c
+|
+
+OBJ\sgml.obj :  www\library\implemen\sgml.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ www\library\implemen\sgml.c
+|
+
+OBJ\defaults.obj :  src\defaults.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\defaults.c
+|
+
+OBJ\gridtext.obj :  src\gridtext.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\gridtext.c
+|
+
+OBJ\html.obj :  src\html.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\html.c
+|
+
+OBJ\lybookma.obj :  src\lybookma.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lybookma.c
+|
+
+OBJ\lycgi.obj :  src\lycgi.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lycgi.c
+|
+
+OBJ\lycharse.obj :  src\lycharse.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lycharse.c
+|
+
+OBJ\lycharut.obj :  src\lycharut.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lycharut.c
+|
+
+OBJ\lyclean.obj :  src\lyclean.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyclean.c
+|
+
+OBJ\lycookie.obj :  src\lycookie.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lycookie.c
+|
+
+OBJ\lycurses.obj :  src\lycurses.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lycurses.c
+|
+
+OBJ\lydownlo.obj :  src\lydownlo.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lydownlo.c
+|
+
+OBJ\lyedit.obj :  src\lyedit.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyedit.c
+|
+
+OBJ\lyeditma.obj :  src\lyeditma.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyeditma.c
+|
+
+OBJ\lyexit.obj :  src\lyexit.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyexit.c
+|
+
+OBJ\lyforms.obj :  src\lyforms.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyforms.c
+|
+
+OBJ\lygetfil.obj :  src\lygetfil.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lygetfil.c
+|
+
+OBJ\lyhistor.obj :  src\lyhistor.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyhistor.c
+|
+
+OBJ\lyjump.obj :  src\lyjump.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyjump.c
+|
+
+OBJ\lykeymap.obj :  src\lykeymap.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lykeymap.c
+|
+
+OBJ\lyleaks.obj :  src\lyleaks.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyleaks.c
+|
+
+OBJ\lylist.obj :  src\lylist.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lylist.c
+|
+
+OBJ\lylocal.obj :  src\lylocal.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lylocal.c
+|
+
+OBJ\lymail.obj :  src\lymail.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lymail.c
+|
+
+OBJ\lymain.obj :  src\lymain.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lymain.c
+|
+
+OBJ\lymainlo.obj :  src\lymainlo.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lymainlo.c
+|
+
+OBJ\lymap.obj :  src\lymap.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lymap.c
+|
+
+OBJ\lynews.obj :  src\lynews.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lynews.c
+|
+
+OBJ\lyoption.obj :  src\lyoption.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyoption.c
+|
+
+OBJ\lyprint.obj :  src\lyprint.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyprint.c
+|
+
+OBJ\lyrcfile.obj :  src\lyrcfile.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyrcfile.c
+|
+
+OBJ\lyreadcf.obj :  src\lyreadcf.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyreadcf.c
+|
+
+OBJ\lysearch.obj :  src\lysearch.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lysearch.c
+|
+
+OBJ\lyshowin.obj :  src\lyshowin.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyshowin.c
+|
+
+OBJ\lystring.obj :  src\lystring.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lystring.c
+|
+
+OBJ\lytraver.obj :  src\lytraver.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lytraver.c
+|
+
+OBJ\lyupload.obj :  src\lyupload.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyupload.c
+|
+
+OBJ\lyutils.obj :  src\lyutils.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyutils.c
+|
+
+# Compiler configuration file
+BccW32.cfg : 
+   Copy &&|
+-R
+-v
+-vi
+-H
+-H=lynx.csm
+-w-
+-A-
+-wcpt
+-wrpt
+-wrng
+-w-voi
+-w-ret
+-w-sus
+-w-dup
+-w-big
+-w-ext
+-w-zdi
+-w-bei
+-w-obi
+-w-ofp
+-w-eas
+-w-hid
+-w-ncf
+-w-ibc
+-w-dsz
+-w-nst
+-w-mpc
+-w-mpd
+-w-ntd
+-w-nvf
+-w-hch
+-w-inl
+-w-lin
+-w-lvc
+-wpia
+-w-def
+-w-nod
+-w-pro
+-w-rvl
+-wccc
+-w-aus
+-w-par
+-w-rch
+-w-eff
+-w-ill
+-w-ias
+-w-msg
+-Ot
+-d-
+-K
+-a-
+-w-stu
+-wbbf
+-w-dpu
+-wcln
+-wsig
+-wucp
+-g255
+-H-
+-v-
+-WC
+-wamb
+| $@
+
+

@@ -1,0 +1,131 @@
+The TRAVERSAL code from old versions of Lynx has been upgraded by David
+Mathog (mathog@seqaxp.bio.caltech.edu) so that it works again, can be
+implemented via a command line switch (-traversal) instead of via a
+compilation symbol for creating a separate Lynx executable as in those
+previous versions, and can be used in conjunction with a -crawl switch
+to make Lynx a front end for a Web Crawler.
+ 
+
+Usage:
+
+   lynx [-traversal] [-realm] [-crawl] ["startpage"]
+
+
+Added switches are:
+
+  -traversal      Follow all http links derived from startpage that are
+                  on the same server as startpage.  If startpage isn't
+                  specified then the traversal begins with the default
+                  startfile or WWW_HOME.
+
+  -realm	  Further restrict http links to ones in the same realm
+                  (having a matching base URI) as the startpage (e.g.,
+		  http://host/~user/ will restrict the traversal to that
+		  user's public html tree).
+
+  -crawl          With [-traversal] outputs each unique hypertext page
+                  as an lnk###########.dat file in the format specified
+                  below.  With [-dump] outputs only the startpage, in
+		  the same format, to stdout.
+
+
+Note on startpage:
+
+                  If a startpage is specified and contains any uppercase
+		  characters, on VMS it should be enclosed in double-quotes.
+		  The code that extracts the access and host fields from
+                  startpage for comparsions with links to ensure they are
+                  not on another server, and the comparisons with already
+                  traversed links, are case sensitive, and the startpage
+                  will go to all lowercase on VMS if no double-quotes are
+                  supplied, such that it might be treated as a new link if
+                  encounted with uppercase letters.
+
+
+Files created and/or used with the -traversal switch, based on definitions
+in userdefs.h:
+
+TRAVERSE_FILE (traverse.dat):
+                  Contains a list of all URLs that were traversed.  Note
+                  that if a URL appears in this file it will not be 
+                  traversed again (important if runs are started and 
+                  stopped).  Placing an entry in this file BEFORE the
+                  run will block traversal of that URL.  Unlike reject.dat
+                  a final * has no effect (see below).  Note that Lynx
+		  internal client-side image MAP URLs will be included in
+		  this file (e.g., LYNXIMGMAP:http://server/foo.html#map1),
+		  in addition to the "real" (external) http URLs.
+
+TRAVERSE_FOUND_FILE (traverse2.dat):
+                  Contains a list of all URLs that were traversed, in the
+                  order encountered or re-encountered (but not re-travered)
+                  during a traversal run, and the TITLEs of the documents
+                  (separated from the URLs by TABs)  A URL and TITLE may be
+                  present in this list many times.  To simplify the list,
+                  on VMS use:  sort/nodups traverse2.dat;1 ;2
+		  Note that the URLs and TITLEs of the Lynx internal
+		  client-side image MAP pseudo-documents will not be
+		  included in this file, though "traversed", but only the
+		  http URLs and TITLEs derived from the MAP's AREA tag
+		  HREFs that were traversed.
+
+TRAVERSE_REJECT_FILE (reject.dat):
+                  Contains a list of URLs that have been rejected from the
+                  traversal.  Once a URL has been entered in this list, it
+                  will not be traversed.  URLs that end in a * will cause
+		  rejection of all URLs that match up to the character before
+		  the *. So for instance, to reject all htbin references on a
+		  site put this line in the reject.dat file BEFORE starting
+		  the run:  http://www.site.wherever:8000/htbin*
+
+TRAVERSE_ERRORS (traverse.errors):
+		  A list of links that could not be accessed or had an
+		  unknown status returned by the http server.  If the
+		  owner of the document containing the link is know via
+		  a LINK REV="made" HREF="mailto:foo" in it and the
+		  MAIL_SYSTEM_ERROR_LOGGING was set true in userdefs.h
+		  or lynx.cfg (not recommended!!!), a message about the
+		  problem will be mailed to the owner as well. 
+
+
+Files created during traversals if the -crawl switch is included with the
+-traversal switch:
+
+lnk########.dat   Numbered output files containing the contents of traversed
+		  hypertext documents in text format.  All hypertext links
+		  within the document have been stripped, and the URL and
+		  TITLE of the document are recorded as the first two lines,
+		  e.g., for the seqaxp.bio.caltech.edu home page the first
+		  two lines will be:
+
+                  THE_URL:http://seqaxp.bio.caltech.edu:8000/
+                  THE_TITLE:SAF Web server home page
+
+                  The VMSIndex software is being adapted to use this
+		  information to extract the corresponding URL and TITLE
+		  for use in indexing the lnk########.dat files, e.g.:
+
+                  $ build_index -
+                    /url=(text="THE_URL:") -
+                    /topic=(text="THE_TITLE:",EXCLUDE) -
+                    /output=INDEX_NAME -
+                    lnk*.dat
+
+		  A clever person should be able to figure out a way to
+		  index the lnk########.dat files on Unix as well.
+
+		  If you want the hypertext links in the document to be
+		  numbered, include the -number_links switch.  By default,
+		  this will cause the list of References (URLs for the
+		  numbered links) to be appended as well.  If you want
+		  numbered links but not the References list, include the
+		  -nolist switch as well.
+
+		  Note that any client-side image MAP pseudo documents
+		  that were "traversed" will not have lnk########.dat
+		  output files created for them, but output files will
+		  be created for "real" documents that were traversed
+		  based on the HREFs of the MAP's AREA tags.
+
+This functionality is still under development.  Feedback and suggestions
+are welcome.

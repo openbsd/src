@@ -1,0 +1,171 @@
+<!DOCTYPE html public "-//IETF//DTD HTML 3.0//EN">
+<HTML>
+<HEAD>
+<TITLE>Help on Misc. Lynx Commands</TITLE>
+<LINK rev="made" href="mailto:lynx-dev@sig.net">
+</HEAD>
+<BODY>
+<h1>+++ Other Commands +++</h1>
+<PRE>
+       a      -	Places the link that you are currently positioned
+		on into a personal <A HREF="bookmark_help.html">bookmark file</A>.
+
+       c      -	Allows you to send a mail message to the owner
+		or maintainer of the data that you are currently
+		viewing.  In the case that no owner is known,
+		you cannot send a comment.
+
+       d      -	Downloads the file pointed to by the current link
+		and displays an option menu allowing the file to
+		be saved or transfered by configurable options.
+		Can also be used when positioned on a form SUBMIT
+		button to download the reply to a form submission.
+
+       e      - Allows you to edit the current document if it is a
+		local file.
+
+       E      - Allows you to edit the current link's URL (or ACTION) and
+		use that as a <em>goto</em> URL.
+
+       g      -	Allows you to enter any <a href="http://www.ncsa.uiuc.edu/demoweb/url-primer.html">URL</a> or filename that
+		you wish to view, and then <em>goto</em> it.
+                        
+       G      -	Allows you to edit the current document's URL and use that
+                as a <em>goto</em> URL.
+                        
+     ? or H   -	Hypertext help to explain how to navigate in
+		Lynx and use its features.
+
+       i      -	Shows an index of files or subjects.  This is 
+		configurable by the System administrator, or 
+		within documents that you may be viewing.
+
+       j      -	Allows you to enter a "short" name to execute a 
+		jump command configured by your system administrator.
+		Press "?" and ENTER to see a list of defined
+		jump commands.
+ 
+       k      -	Shows a list of key mappings.  Keys remapped in
+		"lynx.cfg" show up in this list.
+
+       l      -	Brings up a list of references (links) in the current
+       		document, which can be used for rapid access to the
+		links in large documents.
+
+       m      -	Returns to the first screen and empties the 
+		history stack.
+
+       p      -	Brings up a list of <A HREF="print_help.html">print commands</A>.
+
+       o      -	Brings up a list of setable <A HREF="option_help.html">options</A>.
+
+       q      -	Quits Lynx. ('Q' quits without asking)
+
+       /      -	Search for a string of characters in the current
+		document case insensitive or case sensitive 
+		depending on the options set. (see <A HREF="option_help.html">options)</A>.
+
+       s      -	Search through an external searchable indexed document.
+
+       n      -	Move to the next instance of a search string if you 
+		have searched previously.
+
+       v      -	View a <A HREF="bookmark_help.html">Bookmark file</A>.
+
+       x      - Force submission of form or link with no-cache.
+
+       z      -	Abort a network transfer in progress.  If any partial
+		data has been transfered it will be displayed.
+
+  &lt;backspace&gt; - displays the <a href="history_help.html">history page</A>.
+
+       =      -	Show information about the file and link that you 
+		are currently viewing.
+
+       \      -	Toggles between viewing the HTML source of a
+		document and the rendered version of the document.
+
+       !      -	Spawns your default operating system shell.
+
+       '      -	Toggles "historical" vs minimal or valid comment parsing.
+                When historical, any close-angle-bracket will be treated
+		as a comment terminator, emulating the parsing bug in old
+		versions of Mosaic and Netscape, rather than validly
+		requiring pairs of two successive dashes to delimit
+		comments within the angle-brackets.
+
+       _      - Clears all authorization info for the current session.  Can
+                be used when leaving one's terminal without ending the Lynx
+                session, to guard against someone else retrieving protected
+                documents with previously entered username/password info.
+                Note that any protected documents that are still in cache
+                can still be accessed.
+
+       `      -	Toggles minimal or valid comment parsing. When minimal, any
+       		two successive dashes followed by a close-angle-bracket will
+		be treated as a comment terminator, emulating the parsing bug
+		in Netscape v2.0.  If historical comment parsing is set, that
+		will override minimal or valid comment parsing.
+
+       *      -	Toggles image_links mode on and off.  When on, links will
+                be created for all images, including inlines.
+
+       @      -	Toggles raw 8-bit translations or CJK mode on and off.
+                Should be on when the document's charset matches the
+		selected character set, and otherwise off so that 8-bit
+		characters will be reverse translated with respect to the
+		ISO-8859-1 conversion table for the character set (see
+		<A HREF="option_help.html">options)</A>.
+
+       [      -	Toggles pseudo_inlines mode on and off.  When on, inline
+                images which have no ALT string specified will have an
+                "[INLINE]" pseudo-ALT string inserted in the Lynx display.
+                When off, they will be treated as having ALT="" (i.e.,
+                they'll be ignored).  If image_links mode is toggled on,
+                the pseudo-ALT strings will be restored, to serve as links
+                to the inline images' sources.
+
+       ]      - Sends a HEAD request for the current document or link.  It
+                applies only to documents or links (or form submit buttons)
+                of http servers.  A statusline message will notify you if
+                the context for this command was inappropriate.  The HEAD
+                requests always are sent to the http server, i.e., Lynx
+                does not retrieve any previous server replies from its
+                cache.  Note that for form submissions, http servers vary
+                in whether they'll treat HEAD requests as valid and return
+                the CGI script's headers, or treat it as invalid and return
+                an error message. 
+
+       "      -	Toggles valid or "soft" double-quote parsing.  When soft,
+                a close-angle-bracket will serve as both a close-double-
+		quote and close-tag, emulating the parsing bug in old
+		versions of Mosaic and Netscape.
+
+     CTRL-R   -	Reloads the current document and resets the display.
+
+     CTRL-V   -	Switches to an alternative way of parsing HTML documents.
+                This may help to get a more readable rendering of some
+                documents with invalidly placed HTML tags.
+
+     CTRL-W   -	Resets or cleans up the display.
+
+     CTRL-U   -	Clears text from an input field or prompt.
+
+     CTRL-G   - Cancels any input prompt, mail message or data transfer.
+
+     CTRL-T   - Toggles trace mode on and off.
+
+       ;      - Views the Lynx Trace Log for the current session.
+
+     CTRL-K   - Invokes the Cookie Jar Page.
+
+     numbers  - Lynx offers other, advanced navigation features when
+                numbers are used to invoke the
+                  <a href="follow_help.html"
+                  >Follow link (or goto link or page) number:</a> or
+                  <a href="follow_help.html#select-option"
+		  >Select option (or page) number:</a>
+                prompts.
+</PRE>
+</BODY>
+</HTML>

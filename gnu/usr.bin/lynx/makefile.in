@@ -1,0 +1,289 @@
+##makefile for lynx
+
+SHELL		= /bin/sh
+
+x		= @PROG_EXT@
+
+.SUFFIXES:
+@SET_MAKE@
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+srcdir		= @srcdir@
+VPATH		= $(srcdir)
+
+CC		= @CC@
+CFLAGS		= @CFLAGS@
+DEFS		= @DEFS@
+CPPFLAGS	= @CPPFLAGS@
+
+LIBS		= @LIBS@
+
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM	= @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+
+##this is the name of the directory the lynx source code is in.
+##(e.g. lynx2-8, not the full path)
+lynxdir= lynx2-8
+lynxname= lynx2-8
+
+## Where you want lynx installed
+bindir= @bindir@
+
+## Where you want the lynx man file installed
+mandir= @mandir@/man1
+
+## Where you want the lynx.cfg file installed
+libdir= @libdir@
+
+## Where you want the help-files installed
+helpdir= @libdir@/lynx_help
+
+installbin= @INSTALL_PROGRAM@ -s -m 755
+installdoc= @INSTALL_DATA@
+
+##set the relative location of the WWW library Implementation directory,
+##from this directory
+##do not set this to be an absolute path!!!
+WWWINC= WWW/Library/Implementation
+
+# !!!!!!!!!!! SUN resolv LIBRARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# To include resolv in the LIBS="" list for SUN 3, 4 or Solaris OS,
+# point RESOLVLIB to that library.  You need this if you get the message
+# "Alert!:  Unable to connect to remote host" whenever you try to
+# access a host other than localhost and have made Lynx without it.
+# See the PROBLEMS file for more information.
+#RESOLVLIB= -lresolv
+
+# !!!!!!!!!!! Alternate socket functions for SOCKS !!!!!!!!!!!!!!!!!!
+# To make a SOCKSified lynx, include -DSOCKS in your SITE_LYDEFS and
+# SITE_DEFS, below, and point SOCKSLIB to your SOCKS library.  Note
+# that you may have problems accessing FTP servers.  Also, instead of
+# SOCKSifying lynx for use behind a firewall, you are better off if
+# you make it normally, and set it up to use a proxy server.  You can
+# SOCKSify the proxy server, and it will handle all clients, not just
+# Lynx (see the INSTALLATION file in this distribution).  If your SOCKS
+# server was compiled to use the short version of Rbind, also include
+# -DSHORTENED_RBIND in your SITE_LYDEFS and SITE_DEFS.  If you do
+# SOCKSify lynx, you can turn off SOCKS proxy usage via a -nosocks
+# command line switch.
+#SOCKSLIB= /usr/local/lib/libsocks.a
+
+# !!!!!!!!!!!!!  DIRECT WAIS ACCESS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# If you are adding direct wais access you must fill in the
+# location of wais.a, client.a and the standard math library, libm.a.
+# You can pick up the most current freeWAIS sources from
+#	ftp://ftp.cnidr.org/pub/NIDR.tools/freewais
+# If you are using freeWAIS-0.202 or older, include -DDECLARE_WAIS_LOGFILES
+# in your SITE_DEFS.
+# Please put an ABSOLUTE address here if you want it to work!
+#WAISLIB= ../../freeWAIS-0.202/bin/client.a ../../freeWAIS-0.202/bin/wais.a /usr/lib/libm.a
+
+# !!!!!!!!!!!!! SLANG Support (For color version of Lynx). !!!!!!!!!!!!!!!!
+# The slang library is an alternative to curses, developed by John E. Davis
+# (davis@space.mit.edu).  Version 0.99-27 or higher is available from
+#	ftp://space.mit.edu/pub/davis
+# It provides color support for Lynx.
+
+# !!!!!!!!!!!!! NCURSES Support (For color version of Lynx). !!!!!!!!!!!!!!
+# If you need ncurses, the latest version can always be found
+# in ftp://ftp.clark.net/pub/dickey/ncurses/
+# or ftp://ftp.gnu.org/pub/gnu/
+
+# Also be sure to check out the compilation symbols in userdefs.h
+# before building Lynx!
+
+# If you apply patches which require linking to site-specific libraries, set
+# SITE_LIBS to those libraries.
+SITE_LIBS= # Your libraries here
+
+# Set SITE_LYDEFS to one or more of the defines for the WWW Library:
+SITE_LYDEFS = # Your defines here
+
+# Set SITE_DEFS to one or more of the defines for lynx below:
+SITE_DEFS = # Your defines here
+
+# defines for which there are no configure options:
+# -DHP_TERMINAL    For DIM workaround to REVERSE problems on HP terminals.
+# -DIGNORE_CTRL_C  Define if Control-C shouldn't exit lynx.
+# -DNOPORT         if you must use PASV instead of PORT for FTP
+# -DNO_CPU_LIMIT   Disables Max CPU timeout (includes CLOCKS_PER_SECOND)
+# -DSHORTENED_RBIND  For a SOCKSified lynx with the short version of Rbind.
+# -DSLANG_MBCS_HACK prevent cutoff lines when using UTF8 console (slang only)
+# -DSOCKS          For making a SOCKSified lynx.
+#
+# if you are linking to freeWAIS-0.202 or older, you should define this
+# in SITE_DEFS
+#
+# -DDECLARE_WAIS_LOGFILES
+#
+# if you have the reverse clear screen problem of some SUN4 systems you
+# should define this in SITE_DEFS
+#
+# -DREVERSE_CLEAR_SCREEN_PROBLEM
+#
+# if you have an SVR4 system with the "type any key" problem, try defining
+# this in LYFLAGS (SITE_LYDEFS) and SITE_DEFS
+#
+# -DSVR4_BSDSELECT
+#
+# Old Data General systems may need this in their SITE_LYDEFS
+# for their inet_addr(host) calls.
+#
+# -DDGUX_OLD
+#
+# if you would like logging of client requests via syslog(), you should
+# define this in SITE_DEFS
+#
+# -DSYSLOG_REQUESTED_URLS
+
+# defines which have configure options   (see INSTALLATION, Section II-1c.):
+# -DARCHIVE_ONLY
+# -DDIRED_SUPPORT
+# -DEXP_CHARTRANS_AUTOSWITCH
+# -DLINKEDSTYLES
+# -DLONG_LIST
+# -DLY_FIND_LEAKS
+# -DNCURSES
+# -DNO_CHANGE_EXECUTE_PERMS
+# -DNO_PARENT_DIR_REFERENCE
+# -DNSL_FORK
+# -DOK_GZIP
+# -DOK_OVERRIDE
+# -DOK_PERMIT
+# -DOK_TAR
+# -DOK_UUDECODE
+# -DOK_ZIP
+# -DUNDERLINE_LINKS
+# -DUSE_COLOR_STYLE
+# -DUSE_HASH
+# -DUSE_SLANG
+# -DUSE_ZLIB
+#
+# for installation of local execution links, please see the file userdefs.h
+
+# TESTED: Linux FreeBSD SunOS Solaris IRIX CLIX HP-UX AIX SCO
+all lynx$x:
+	cd WWW/Library/unix && $(MAKE) CC="$(CC)" \
+		LY_CFLAGS="$(CFLAGS)" \
+		CPPFLAGS="$(CPPFLAGS)" \
+		LYFLAGS="$(SITE_LYDEFS)"
+	cd src && $(MAKE) all CC="$(CC)" \
+		CFLAGS="$(CFLAGS)" \
+		CPPFLAGS="$(CPPFLAGS)" \
+		LIBS="$(LIBS) $(RESOLVLIB) $(WAISLIB) $(SOCKSLIB) $(SITE_LIBS)" \
+		SITE_DEFS="$(SITE_DEFS)" \
+		WWWINC=$(WWWINC) \
+		WWWLIB="../WWW/Library/unix/libwww.a"
+
+help:
+	@echo
+	@echo "Please run make with one of the following arguments"
+	@echo "all        -- to make the executable, put it in this directory"
+	@echo "clean      -- removes all '.o' and 'core' files"
+	@echo "depend     -- use makedepend to generate header-dependencies"
+	@echo "tar        -- runs clean, removes executable, and tars the whole directory"
+	@echo "compress   -- runs tar, then compresses the result"
+	@echo "zip        -- runs clean, removes executable, and zips the whole directory"
+	@echo
+
+##Miscellaneous actions
+clean:
+	rm -f WWW/Library/*/*.[aob]
+	rm -f WWW/Library/*/.created
+	cd src && $(MAKE) clean
+	rm -f *.b src/lynx$x core Lynx.leaks
+
+depend:
+	cd WWW/Library/unix && $(MAKE) $@
+	cd src && $(MAKE) $@
+
+distclean: clean
+	-rm -f WWW/Library/*/*~
+	-rm -f WWW/Library/*/*.bak
+	-rm -rf src/obsolete
+	-cd src && $(MAKE) $@
+	-cd src/chrtrans && $(MAKE) $@
+	-rm -f *~ *.bak *.sav
+	-rm -f WWW/Library/unix/makefile src/makefile src/chrtrans/makefile
+	@SRCDIR_CLEAN@-find . -type f -name '*.rej' -exec -rm -f {} \;
+	@SRCDIR_CLEAN@-find . -type f -name '*.orig' -exec -rm -f {} \;
+	@SRCDIR_CLEAN@-rmdir WWW/Library/unix && rmdir WWW/Library && rmdir WWW
+	@SRCDIR_CLEAN@-rmdir src/chrtrans && rmdir src
+	-rm -f makefile lynx_cfg.h config.status config.log config.cache
+	-rm -f lynx$x install-*
+
+maintainer-clean: distclean
+	-rm -rf WWW/Library/*/obsolete
+	-rm -f Lynx.prj .*_aux
+
+tar:  clean
+	rm -f lynx$x
+	$(MAKE) save
+
+turnover:	clean
+	$(MAKE) save
+
+zipcompress: compress zip
+	echo "done!"
+
+zip:  clean
+	rm -f src/lynx$x
+	rm -f lynx$x
+	rm -f src/a.out
+	rm -f ../$(lynxname).zip
+	cd ..; rm -f $(lynxname).zip; zip -r $(lynxname).zip $(lynxdir)
+
+save:
+	cd ..; rm -f $(lynxname).tar; tar -cf - $(lynxdir) > $(lynxname).tar
+
+compress: tar
+	cd ..; rm -f $(lynxname).tar.Z; compress -f -v $(lynxname).tar
+
+install: lynx$x install-bin install-man install-cfg @INSTALL_LSS@
+	@echo
+	@echo "Use $(MAKE) install-help to install the help-files"
+	@echo
+
+install-bin: $(bindir)
+	-mv -f $(bindir)/lynx$x $(bindir)/lynx.old
+	$(installbin) lynx$x $(bindir)/
+
+install-man : $(mandir) 
+	$(installdoc) $(srcdir)/lynx.man $(mandir)/lynx.1
+
+install-help : $(helpdir)
+	(cd $(helpdir) && rm -rf *)
+	(cd $(srcdir)/lynx_help && tar cf - . ) | ( cd $(helpdir) && tar xf - )
+	(cd $(srcdir) && tar cf - C[HO]* PROBLEMS README samples test ) | \
+			       ( cd $(helpdir) && tar xf - )
+	-rm -f $(libdir)/lynx.tmp
+	sh -c 'if test -f $(libdir)/lynx.cfg ; then \
+		mv $(libdir)/lynx.cfg $(libdir)/lynx.tmp ; \
+	else \
+		cp $(srcdir)/lynx.cfg $(libdir)/lynx.tmp ; \
+	fi'
+	sed	-e '/^HELPFILE:http/s@^@#@' \
+		-e '/^#HELPFILE:file/s@#@@' \
+		-e '/^HELPFILE:file/s@/PATH_TO/lynx_help@$(helpdir)@' \
+		$(libdir)/lynx.tmp >$(libdir)/lynx.cfg
+	chmod 644 $(libdir)/lynx.cfg
+	-rm -f $(libdir)/lynx.tmp
+
+install-cfg : $(libdir)
+	-mv -f $(libdir)/lynx.cfg $(libdir)/lynx.oldcfg
+	$(INSTALL_DATA) $(srcdir)/lynx.cfg $(libdir)/lynx.cfg
+
+install-lss : $(libdir)
+	-mv -f $(libdir)/lynx.lss $(libdir)/lynx.oldlss
+	$(INSTALL_DATA) $(srcdir)/samples/lynx.lss $(libdir)/lynx.lss
+
+uninstall:
+	-rm -f $(bindir)/lynx$x
+	-rm -f $(mandir)/lynx.1
+	-rm -f $(libdir)/lynx.cfg
+	-rm -f $(libdir)/lynx.lss
+	-rm -rf $(libdir)/lynx_help
+
+$(bindir) $(mandir) $(libdir) $(helpdir) :
+	$(srcdir)/mkdirs.sh $@

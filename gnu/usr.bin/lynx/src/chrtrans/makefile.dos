@@ -1,0 +1,116 @@
+#
+# Makefile for the makeuctb and unicode tables
+# for use with DJGPP.
+#
+# Type make to build makeuctb  and all character translation maps.
+# Type make fontmap to build makeuctb and translation map iso8859-1.
+# Type make makeuctb.exe to build makeuctb only.
+# Type make clean to remove makeuctb and character translation maps.
+# Type make distclean to remove makeuctb, character translation maps
+# and .bak files.
+#
+CFLAGS = $(MCFLAGS)
+
+CC = gcc
+MCFLAGS = -O3 -DDOSPATH -DNO_TTYTYP \
+-I../../WWW/library/implement -I../../djgpp/tcplib/include \
+-I../../djgpp/tcplib/include/tcp
+
+.SUFFIXES: .tbl
+#
+# This file contains the font map for the default (hardware) font
+#
+
+FONTMAP_INC = iso01_un.h
+
+TABLES= \
+ cp1250_uni.h \
+ cp1251_uni.h \
+ cp1252_uni.h \
+ cp1253_uni.h \
+ cp1255_uni.h \
+ cp1256_uni.h \
+ cp1257_uni.h \
+ cp437_uni.h \
+ cp737_uni.h \
+ cp775_uni.h \
+ cp850_uni.h \
+ cp852_uni.h \
+ cp862_uni.h \
+ cp864_uni.h \
+ cp866_uni.h \
+ cp869_uni.h \
+ def7_uni.h \
+ dmcs_uni.h \
+ iso01_uni.h \
+ iso02_uni.h \
+ iso03_uni.h \
+ iso04_uni.h \
+ iso05_uni.h \
+ iso06_uni.h \
+ iso07_uni.h \
+ iso08_uni.h \
+ iso09_uni.h \
+ iso10_uni.h \
+ koi8r_uni.h \
+ mac_uni.h \
+ mnem_suni.h \
+ mnem2_suni.h \
+ next_uni.h \
+ rfc_suni.h \
+ utf8_uni.h \
+ viscii_uni.h
+
+default: $(TABLES)
+
+fontmap: $(FONTMAP_INC)
+
+makeuctb.exe: makeuctb.c UCkd.h
+	$(CC) $(CFLAGS) -o makeuctb.exe makeuctb.c
+	strip makeuctb.exe
+
+.tbl.h:
+	./makeuctb $*.tbl > $@
+
+cp1250_uni.h:		cp1250_uni.tbl		makeuctb.exe
+cp1251_uni.h:		cp1251_uni.tbl		makeuctb.exe
+cp1252_uni.h:		cp1252_uni.tbl		makeuctb.exe
+cp1253_uni.h:		cp1253_uni.tbl		makeuctb.exe
+cp1255_uni.h:		cp1255_uni.tbl		makeuctb.exe
+cp1256_uni.h:		cp1256_uni.tbl		makeuctb.exe
+cp1257_uni.h:		cp1257_uni.tbl		makeuctb.exe
+cp437_uni.h:		cp437_uni.tbl		makeuctb.exe
+cp737_uni.h:		cp737_uni.tbl		makeuctb.exe
+cp850_uni.h:		cp850_uni.tbl		makeuctb.exe
+cp852_uni.h:		cp852_uni.tbl		makeuctb.exe
+cp862_uni.h:		cp862_uni.tbl		makeuctb.exe
+cp864_uni.h:		cp864_uni.tbl		makeuctb.exe
+cp866_uni.h:		cp866_uni.tbl		makeuctb.exe
+cp869_uni.h:		cp869_uni.tbl		makeuctb.exe
+def7_uni.h:		def7_uni.tbl		makeuctb.exe
+dmcs_uni.h:		dmcs_uni.tbl		makeuctb.exe
+iso01_uni.h:		iso01_uni.tbl		makeuctb.exe
+iso02_uni.h:		iso02_uni.tbl		makeuctb.exe
+iso03_uni.h:		iso03_uni.tbl		makeuctb.exe
+iso04_uni.h:		iso04_uni.tbl		makeuctb.exe
+iso05_uni.h:		iso05_uni.tbl		makeuctb.exe
+iso06_uni.h:		iso06_uni.tbl		makeuctb.exe
+iso07_uni.h:		iso07_uni.tbl		makeuctb.exe
+iso08_uni.h:		iso08_uni.tbl		makeuctb.exe
+iso09_uni.h:		iso09_uni.tbl		makeuctb.exe
+iso10_uni.h:		iso10_uni.tbl		makeuctb.exe
+koi8r_uni.h:		koi8r_uni.tbl		makeuctb.exe
+mac_uni.h:		mac_uni.tbl		makeuctb.exe
+mnem_suni.h:		mnem_suni.tbl		makeuctb.exe
+mnem2_suni.h:		mnem2_suni.tbl		makeuctb.exe
+next_uni.h:		next_uni.tbl		makeuctb.exe
+rfc_suni.h:		rfc_suni.tbl		makeuctb.exe
+utf8_uni.h:		utf8_uni.tbl		makeuctb.exe
+viscii_uni.h:		viscii_uni.tbl		makeuctb.exe
+
+clean:
+	rm -f makeuctb.exe makeuctb *.o *un.h *u.h *c.h *i.h
+
+distclean: clean
+	-rm -f *.bak
+

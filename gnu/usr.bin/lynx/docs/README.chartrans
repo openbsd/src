@@ -1,0 +1,169 @@
+Lynx CHARTRANS
+
+ Features (in addition to those which Lynx 2.7.1 already has):
+ 
+ - Can (attempt to) translate from any document charset to any display
+   character set, *IF* the document charset is known by a translation 
+   table (compiled in at installation).
+
+ - New method to define character sets: used for input charset as well
+   as display character set, translation tables compiled in from 
+   separate files (one per charset).  One table is designated as default
+   and can be used for fallback translation to 7-bit replacements for
+   display.
+
+ - New method for specifying translations of SGML entities.
+
+ - Unicode (UTF8) support: can (attempt to) decode and translate UTF8 to
+   display character set, or pass through UTF to display (if terminal
+   or console understands UTF8).  [raw display of UTF only tested with Slang 
+   so far, does not always position everything correctly on screen]
+
+ - Support for CHARSET attribute on A tag (and sometimes LINK), as in HTML
+   i18n RFC 2070 and W3C HTML 4.0 drafts.  A link can suggest the target's
+   charset in this way.
+
+ - Support for ACCEPT-CHARSET attribute of FORM tags.
+
+ - EXPERIMENTAL, currently enabled only for Linux console: 
+   can (attempt to) automatically switch terminal mode and load new
+   code pages on change of display character set.
+
+ - some minor changes: sometimes invalid characters are displayed in a hex
+   notation Uxxxx (helps debugging, but I also regard it as at least not
+   worse than showing the wrong char without warning).
+
+Additions/changes to user interface:
+
+ - many new Display Character Sets are available on O)ptions screen.
+   (One can use arrow keys, HOME, END etc. for cycling through the list
+   or use selection from popup box, as for other options.)
+
+ - new command line flags:
+   -assume_charset=...  assume this as charset for documents that don't
+                        specify a charset parameter in HTTP headers
+   -assume_local_charset=...  assume this as charset of local file
+   -assume_unrec_charset=...  in case a charset parameter is not recognized;
+   docs also available as ASSUME_CHARSET etc. in lynx.cfg
+   In "Advanced User" mode, ASSUME_CHARSET can be changed during a session
+   from the Options Screen.
+
+ - The "Raw" toggle (from -raw flag, '@' key, or Options screen)
+   o  toggles the assumption "Default remote charset is same as Display
+      Character Set" on or off.
+      Toggling of the assumed charset is between Display Character Set and
+      the specified ASSUME_CHARSET or, if they are the same, between the
+      specified ASSUME_CHARSET and ISO-8859-1.
+   o  The default for raw mode now depends on the Display Character Set as
+      well as on the specified ASSUME_CHARSET value.
+   o  should work as before for CJK charsets (turning CJK-mode on or off).
+   o  If the effective ASSUME_CHARSET and the Display Character Set are
+      unchanged from the ISO-8859-1 default, toggling "Raw" may have some
+      additional effect for characters that can't be translated.
+   (Try the "Transparent" Display Character Set for more "rawness".)
+
+
+Requirements:  same as for Lynx in general :)
+
+The chartrans code is now merged with Wayne Buttle's changes for
+32-bit MS Windows and DOS/DJGPP, with Thomas Dickey's and Jim Spath's
+emerging auto-configure mechanism, and with BUGFIXES from Foteos
+Macrides.  See the accompanying file CHANGES.new for the current
+status.
+
+
+A warning:
+In some cases undisplayable bytes may still get sent to the terminal
+which are then interpreted as control chars, there is no protection
+against if strange things are defined in the table files.
+
+
+HOW TO GET SOURCES:
+
+The development code is available at
+         <URL: http://sol.slcc.edu/lynx/current/>
+in various formats.
+
+HOW TO INSTALL:
+
+(4) before compiling:
+
+    Check top level makefile or Makefile and userdefs.h as usual.
+
+    NOTE that there is a new "#define" in userdefs.h for MAX_CHARSETS
+    near the end (in "Section 3.").
+
+(5) Building Lynx:
+
+    Compiling the chartrans code is now integrated into the normal
+    installation procedures for UNIX (configure script) and other
+    platforms.
+
+    What's supposed to happen (in addition to the usual things when
+    building Lynx): in the new subdirectory src/chrtrans, make should
+    first compile the auxiliary program `makeuctb', then invoke that
+    program to create xxxxx_yyy.h files from the provided xxxxx_yyy.tab
+    translation table files.  (See README.* files in src/chrtrans for
+    more info.)
+
+    If all goes well, just invoking make from the top-level Lynx dir
+    as usual should do everything automatically.  If not, the makefiles
+    may need some tweaking... or:
+
+(6) Some things to look at if compilation fails:
+
+    In src/chrtrans/UCkd.h there is a typedef for an unsigned 16bit
+    numeric type which may need to be changed for your system.  
+    See comment near top there.
+
+    For recompiling Lynx, `make clean' should not be necessary if only
+    files in src/chrtrans have been changed.  On the other hand 
+    may not propagate to the src/chrtrans directory (depending how things
+    are going with auto-config), you may have to cd to that directory 
+    and `make clean' there to really clean up there.
+
+(7) To customize (add/change translation tables etc.):
+
+     See README.* files in src/chrtrans.
+     Make the necessary changes there, then recompile.
+     (A general `make clean' should not be necessary, but make sure
+     the ...uni.h file in src/chrtrans gets regenerated.)
+
+     Note that definition of new character entities (if e.g. you want
+     Lynx to recognize &Zcaron;) are not covered by these table files,
+     they have to be listed in entities.h.  
+
+     _If you are on a Linux system_ and using Lynx on the console (i.e.
+     not xterm, not a dialup *into* the Linux box), you can compile
+     with -DEXP_CHARTRANS_AUTOSWITCH.  This is very useful for testing
+     the various Display Character Sets, Lynx will try to automatically
+     change the console state.  You need to have the Linux kbd package
+     installed, with a working `setfont' command executable by the user,
+     and the right font files - check the source in src/UCAuto.c for
+     the files used and/or to change them!  
+     NOTE that with this enabled,
+     - Lynx currently will not clean up the console state at exit,
+       it will probably left like the last Display Character Set you used.
+     - Loading a font is global across _all_ virtual text consoles, so
+       using Lynx (compiled with this flag) may change the appearance of
+       text on other consoles (if that text contains characters 
+       beyond ASCII).
+
+(8) Some suggested Web pages for testing:
+
+    <URL:  http://www.tezcat.com/~kweide/lynx-chartrans/test/>
+
+    <URL:  http://www.isoc.org:8080/>,
+      especially 
+    <URL:  http://www.isoc.org:8080/liste_ml.htm>.
+
+    <URL:  http://www.accentsoft.com/un/un-all.htm>
+
+(9) Please report bugs, unexpected behavior, etc. 
+    to <lynx-dev@sig.net>.
+
+    Suggestions for improvement would be welcome, as well as 
+    contributed translation tables (for stuff that is not available
+    at ftp://dkuug.dk or ftp://ftp.unicode.org).
+
+KW  1997-11-06

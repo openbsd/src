@@ -1,0 +1,31 @@
+This document describes the required steps to install Lynx on VMS systems
+which use the CMU TCP/IP package.
+
+The interface to CMU is implemented via Mike O'Malley's excellent LIBCMU socket
+library for VMS.  It is not included in the Lynx distribution as it is quite
+large and freely available from:
+	ftp://kermit.columbia.edu/vms-libcmu/ckvlcmu.hex
+
+This is a hexified version of the LIBCMU.BCK saveset.
+
+All LIBCMU files (library and include files) are assumed to be in the
+CMUIP_ROOT:[SYSLIB] directory.  Ensure the following LIBCMU files are
+placed appropriately on your system:
+
+	cmuip_root:[syslib]ioctl.h
+	cmuip_root:[syslib]libcmu.olb
+
+Beyond this, follow the same INSTALLATION procedures that you would for any
+VMS Lynx compilation.
+
+REMAINING PROBLEMS:
+	At this time, the FTP Lynx code does not appear to work; it is believed
+	that this problem is due to an as of yet unresolved problem with the
+	LIBCMU 1.2 library.  The getsockname routine returns all zeros for the
+	local address portion and results in the system sending an invalid
+	PORT command to the remote end.
+
+	Telnet, tn3270 and rlogin support are not yet implemented.
+
+Andy Harper
+A.Harper@bay.cc.kcl.ac.uk

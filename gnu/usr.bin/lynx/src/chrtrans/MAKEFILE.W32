@@ -1,0 +1,129 @@
+#
+# Borland C++ IDE generated makefile
+#
+.AUTODEPEND
+
+
+#
+# Borland C++ tools
+#
+IMPLIB  = Implib
+BCC32   = Bcc32 +BccW32.cfg 
+TLINK32 = TLink32
+TLIB    = TLib
+BRC32   = Brc32
+TASM32  = Tasm32
+#
+# IDE macros
+#
+
+
+#
+# Options
+#
+IDE_LFLAGS32 =  -LD:\BC45\LIB
+LLATC32_dbmakeuctbdexe =  -LCURSES;D:\BC45\LIB -Tpe -ap -c -wdpl -wdup
+RLATC32_dbmakeuctbdexe =  -w32 -k
+BLATC32_dbmakeuctbdexe = 
+CNIEAT_dbmakeuctbdexe = -I.\;..\..\CURSES;..;..\..\WWW\LIBRARY\IMPLEMENTATION;D:\BC45\INCLUDE -DNO_UNISTD_H;_WINDOWS;NCURSES;FANCY_CURSES;XMOSAIC_HACK;ACCESS_AUTH;NO_UTMP;NO_CUSERID;NO_TTYTYPE;NOSIGHUP;DOSPATH;NOUSERS
+LNIEAT_dbmakeuctbdexe = -x
+LEAT_dbmakeuctbdexe = $(LLATC32_dbmakeuctbdexe)
+REAT_dbmakeuctbdexe = $(RLATC32_dbmakeuctbdexe)
+BEAT_dbmakeuctbdexe = $(BLATC32_dbmakeuctbdexe)
+
+#
+# Dependency List
+#
+Dep_char = \
+   .\makeuctb.exe
+
+char : BccW32.cfg $(Dep_char)
+  echo MakeNode 
+
+Dep_dbmakeuctbdexe = \
+   .\makeuctb.obj
+
+.\makeuctb.exe : $(Dep_dbmakeuctbdexe)
+  $(TLINK32) @&&|
+ /v $(IDE_LFLAGS32) $(LEAT_dbmakeuctbdexe) $(LNIEAT_dbmakeuctbdexe) +
+D:\BC45\LIB\c0x32.obj+
+.\makeuctb.obj
+$<,$*
+D:\BC45\LIB\bidsf.lib+
+D:\BC45\LIB\import32.lib+
+D:\BC45\LIB\cw32.lib
+
+|
+
+.\makeuctb.obj :  makeuctb.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_dbmakeuctbdexe) $(CNIEAT_dbmakeuctbdexe) -o$@ makeuctb.c
+|
+
+# Compiler configuration file
+BccW32.cfg : 
+   Copy &&|
+-R
+-v
+-vi
+-H
+-H=lynx.csm
+-w-
+-A-
+-wcpt
+-wrpt
+-wrng
+-w-voi
+-w-ret
+-w-sus
+-w-dup
+-w-big
+-w-ext
+-w-zdi
+-w-bei
+-w-obi
+-w-ofp
+-w-eas
+-w-hid
+-w-ncf
+-w-ibc
+-w-dsz
+-w-nst
+-w-mpc
+-w-mpd
+-w-ntd
+-w-nvf
+-w-hch
+-w-inl
+-w-lin
+-w-lvc
+-w-pia
+-w-def
+-w-nod
+-w-pro
+-w-rvl
+-w-ccc
+-w-aus
+-w-par
+-w-rch
+-w-eff
+-w-ill
+-w-ias
+-w-msg
+-WC
+-Ot
+-d-
+-K
+-a-
+-w-stu
+-wbbf
+-w-dpu
+-wcln
+-wsig
+-wucp
+-g200
+-H-
+-v-
+| $@
+
+

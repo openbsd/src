@@ -1,0 +1,62 @@
+#  Make WWW under unix for a.n.other unix system (bsd)
+#   Use this as a template
+
+# For W3 distribution, machine type for subdirectories
+WWW_MACH = unix
+
+# The ASIS repository's name for the machine we are on
+ASIS_MACH = hardware/os
+
+LFLAGS =
+
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+top_srcdir	= @top_srcdir@
+srcdir		= @srcdir@
+VPATH		= $(srcdir)
+
+LYFLAGS		= # FIXME: set in parent makefile
+
+CC		= @CC@
+DEFS		= @DEFS@
+CPPFLAGS	= @CPPFLAGS@
+CPPOPTS		= $(DEFS) $(CPPFLAGS) $(LYFLAGS) -I../../.. -I../../../src -I$(top_srcdir) -I$(top_srcdir)/src
+LY_CFLAGS	= @CFLAGS@
+CFLAGS		= $(CPPOPTS) $(LY_CFLAGS)
+
+# Directory for installed binary:
+BINDIR		= @bindir@
+
+# Where is the W3 object library to be installed (not normally done)?
+LIBDIR = $(WWW)/Library/Implementation/$(WWW_MACH)
+
+#_________________ OK if normal W3 distribution
+# Where is the WWW source root?
+WWW = $(top_srcdir)/WWW
+
+#  Where should temporary (object) files go?
+WTMP = ../..
+
+@make_include_left@$(WWW)/Library/Implementation/Version.make@make_include_right@
+@make_include_left@$(WWW)/Library/Implementation/CommonMakefile@make_include_right@
+
+# Override values set in CommonMakefile
+
+RANLIB	= @RANLIB@
+
+all : $(LOB)/libwww.a
+
+.SUFFIXES: .i .h .html
+
+.c.o:
+@RULE_CC@
+	@ECHO_CC@$(CC) $(CPPOPTS) $(CFLAGS) -c $(srcdir)/$*.c
+
+.c.i:
+@RULE_CC@
+	@ECHO_CC@$(CPP) -C $(CPPOPTS) $*.c >$@
+
+depend :
+	makedepend -fmakefile -- $(CFLAGS) -- $(CFILES)
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.

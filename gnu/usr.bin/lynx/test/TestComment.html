@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0 Level 2//EN">
+<html>
+<head>
+<title>HTML Comment Parser Test</title>
+<link rev="made" href="mailto:pg@sweng.stortek.com">
+<base href="http://nyx10.cs.du.edu:8001/~pgilmart/TestComment.html">
+</head>
+
+<body>
+<P> Test of the HTML/SGML comment syntax, as given in the W3 HTML Spec:
+<a
+href="http://www.w3.org/hypertext/WWW/MarkUp/html-spec/html-spec_3.html#SEC15">
+Comments</a>
+
+<P>See especially, the footnote:
+<a
+href="http://www.w3.org/hypertext/WWW/MarkUp/html-spec/html-spec_foot.html#FOOT10"
+>(10)</a>
+
+<P>
+Co-vary the LYK_MINIMAL and LYK_HISTORICAL command key toggles (use the
+'k'eymap command to see their key bindings) to establish Valid, Minimal
+or Historical comment parsing, and toggle trace mode on (Ctrl-T), to see
+how comment parsing is affected.
+
+<P>Case 01 through Case 14 should appear
+as short separate paragraphs with the case numbers aligned vertically.
+Some noise characters may appear to the right as a byproduct of code present
+for error recovery, but there should be no noise before each case number.
+
+<P> Case <!-- trivial --> | 01 | Trivial
+<P> Case <!-- extra hyphens and spaces -- -- --  > | 02 | Hyphens and Spaces
+<P> Case <!-- extra < < < --> | 03 | Extra LT --> --> -->
+<P> Case <!-- balanced < < < > > > --> | 04 | Balanced
+<P> Case <!-- extra > -- --> > still in comment --> | 05 | Extra GT
+<P> Case <!-- stuff between -- and > -- still in comment --> | 06 | Stuff Inside
+<P> Case <!-- Extra <!-- -- Second Comment --> | 07 | Extra Open --> -->
+<P> Case <!-- New Line between -- 
+           -- Second Comment   --
+                           > | 08 | New line
+<P> Case <!---> degenerate --> | 09 | Degenerate <P> Case <!----> | 10 | Empty
+<P> Case <!-- perverse <!--> | 11 | Perverse --> --> -->
+<P> Case <!-- Comment -- -- and a half > this is still in comment -- > | 12 |  Multiple Comments --> --> -->
+<P> Case <!> | 13 | Zero Comments
+<P> Case <!-- < >
+< > Still in comment --> | 14 | Last
+
+<P>&lt;<STRONG>Tests completed!</STRONG>&gt;
+</body>
+</html>

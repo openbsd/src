@@ -1,0 +1,35 @@
+#
+# This one is not really much of a "translation table", it mostly just
+# tells Lynx that "utf-8" is Unicode/UCS2 encoded in UTF8.  Note that
+# "unicode-1-1-utf-8" and "utf8" are treated as synonyms.
+#
+#The MIME name of this charset. 
+Mutf-8
+
+#Name as a Display Charset (used on Options screen)
+OUNICODE UTF-8
+
+# Some kind of raw Unicode?
+# Use 6 for for really "raw" 16bit UCS-2, 7 for UTF-8, ...
+
+# most of these codes currently don't make much sense in a *.tbl file,
+# but for completeness (from UCDefs.h):
+#  #define UCT_ENC_7BIT 0
+#  #define UCT_ENC_8BIT 1
+#  #define UCT_ENC_8859 2
+#  #define UCT_ENC_8BIT_C0 3
+#  #define UCT_ENC_MAYBE2022 4
+#  #define UCT_ENC_CJK 5
+#  #define UCT_ENC_16BIT 6
+#  #define UCT_ENC_UTF8 7
+
+R 7
+ 
+#Shall this become the "default" translation?
+#There has to be exactly one table marked as "default".
+Default NO
+
+# Don't fall back to default table for unicode -> 8bit
+Fallback NO
+ 
+0x20-0x7f	idem

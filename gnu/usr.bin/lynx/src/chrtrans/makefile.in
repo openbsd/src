@@ -1,0 +1,146 @@
+#
+# Makefile for the makeuctb and unicode tables.
+#
+# This may not yet work for the general case.
+# Only some dependencies included.
+#
+SHELL		= /bin/sh
+
+x		= @PROG_EXT@
+
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+top_srcdir	= @top_srcdir@
+srcdir		= @srcdir@
+VPATH		= $(srcdir)
+
+WWWINC		= WWW/Library/Implementation
+SITE_DEFS	= # FIXME: set in parent makefile
+
+CC		= @CC@
+CPP		= @CPP@
+CFLAGS		= @CFLAGS@
+CPP_OPTS	= @DEFS@ @CPPFLAGS@ \
+		-I../.. \
+		-I$(top_srcdir)/src \
+		-I$(top_srcdir)/$(WWWINC) \
+		$(SITE_DEFS)
+CC_OPTS		= $(CPP_OPTS) $(CFLAGS)
+
+#
+# This file contains the font map for the default (hardware) font
+#
+
+FONTMAP_INC = iso01_uni.h# default, if not set by recursive call
+
+### fastdep: $(FONTMAP_INC)
+
+TABLES= \
+ cp1250_uni.h \
+ cp1251_uni.h \
+ cp1252_uni.h \
+ cp1253_uni.h \
+ cp1255_uni.h \
+ cp1256_uni.h \
+ cp1257_uni.h \
+ cp437_uni.h \
+ cp737_uni.h \
+ cp775_uni.h \
+ cp850_uni.h \
+ cp852_uni.h \
+ cp862_uni.h \
+ cp864_uni.h \
+ cp866_uni.h \
+ cp869_uni.h \
+ def7_uni.h \
+ dmcs_uni.h \
+ iso01_uni.h \
+ iso02_uni.h \
+ iso03_uni.h \
+ iso04_uni.h \
+ iso05_uni.h \
+ iso06_uni.h \
+ iso07_uni.h \
+ iso08_uni.h \
+ iso09_uni.h \
+ iso10_uni.h \
+ koi8r_uni.h \
+ mac_uni.h \
+ mnem_suni.h \
+ mnem2_suni.h \
+ next_uni.h \
+ rfc_suni.h \
+ utf8_uni.h \
+ viscii_uni.h
+
+default: $(FONTMAP_INC)
+
+tables: $(TABLES)
+
+makeuctb$x: makeuctb.o
+	$(CC) $(CC_OPTS) -o $@ makeuctb.o
+
+makeuctb.o: $(srcdir)/UCkd.h $(srcdir)/makeuctb.c
+
+.SUFFIXES : .tbl .i
+
+.c.o:
+@RULE_CC@
+	@ECHO_CC@$(CC) $(CC_OPTS) -c $(srcdir)/$*.c
+
+.c.i:
+@RULE_CC@
+	@ECHO_CC@$(CPP) -C $(CPP_OPTS) $*.c >$@
+
+.tbl.h:
+	./makeuctb $(srcdir)/$*.tbl > $@
+
+# table files listed here once again to get the make dependencies
+# right, in case makeuctb was recompiled.
+cp1250_uni.h:		$(srcdir)/cp1250_uni.tbl	makeuctb$x
+cp1251_uni.h:		$(srcdir)/cp1251_uni.tbl	makeuctb$x
+cp1252_uni.h:		$(srcdir)/cp1252_uni.tbl	makeuctb$x
+cp1253_uni.h:		$(srcdir)/cp1253_uni.tbl	makeuctb$x
+cp1255_uni.h:		$(srcdir)/cp1255_uni.tbl	makeuctb$x
+cp1256_uni.h:		$(srcdir)/cp1256_uni.tbl	makeuctb$x
+cp1257_uni.h:		$(srcdir)/cp1257_uni.tbl	makeuctb$x
+cp437_uni.h:		$(srcdir)/cp437_uni.tbl		makeuctb$x
+cp737_uni.h:		$(srcdir)/cp737_uni.tbl		makeuctb$x
+cp850_uni.h:		$(srcdir)/cp850_uni.tbl		makeuctb$x
+cp852_uni.h:		$(srcdir)/cp852_uni.tbl		makeuctb$x
+cp862_uni.h:		$(srcdir)/cp862_uni.tbl		makeuctb$x
+cp864_uni.h:		$(srcdir)/cp864_uni.tbl		makeuctb$x
+cp866_uni.h:		$(srcdir)/cp866_uni.tbl		makeuctb$x
+cp869_uni.h:		$(srcdir)/cp869_uni.tbl		makeuctb$x
+def7_uni.h:		$(srcdir)/def7_uni.tbl		makeuctb$x
+dmcs_uni.h:		$(srcdir)/dmcs_uni.tbl		makeuctb$x
+iso01_uni.h:		$(srcdir)/iso01_uni.tbl		makeuctb$x
+iso02_uni.h:		$(srcdir)/iso02_uni.tbl		makeuctb$x
+iso03_uni.h:		$(srcdir)/iso03_uni.tbl		makeuctb$x
+iso04_uni.h:		$(srcdir)/iso04_uni.tbl		makeuctb$x
+iso05_uni.h:		$(srcdir)/iso05_uni.tbl		makeuctb$x
+iso06_uni.h:		$(srcdir)/iso06_uni.tbl		makeuctb$x
+iso07_uni.h:		$(srcdir)/iso07_uni.tbl		makeuctb$x
+iso08_uni.h:		$(srcdir)/iso08_uni.tbl		makeuctb$x
+iso09_uni.h:		$(srcdir)/iso09_uni.tbl		makeuctb$x
+iso10_uni.h:		$(srcdir)/iso10_uni.tbl		makeuctb$x
+koi8r_uni.h:		$(srcdir)/koi8r_uni.tbl		makeuctb$x
+mac_uni.h:		$(srcdir)/mac_uni.tbl		makeuctb$x
+mnem_suni.h:		$(srcdir)/mnem_suni.tbl		makeuctb$x
+mnem2_suni.h:		$(srcdir)/mnem2_suni.tbl	makeuctb$x
+next_uni.h:		$(srcdir)/next_uni.tbl		makeuctb$x
+rfc_suni.h:		$(srcdir)/rfc_suni.tbl		makeuctb$x
+utf8_uni.h:		$(srcdir)/utf8_uni.tbl		makeuctb$x
+viscii_uni.h:		$(srcdir)/viscii_uni.tbl	makeuctb$x
+
+clean:
+	rm -f makeuctb$x *.o *uni.h *uni2.h
+
+distclean: clean
+	-rm -rf obsolete
+	rm -f core *.bak *.sav *~ *.h_old
+
+depend :
+	makedepend -fmakefile -- $(CPP_OPTS) -- $(C_SRC)
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.

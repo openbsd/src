@@ -1,0 +1,599 @@
+dnl Process this file with autoconf to produce a configure script.
+dnl written jan/1997
+dnl by T.E.Dickey <dickey@clark.net>
+dnl and Jim Spath <jspath@mail.bcpl.lib.md.us>
+
+AC_PREREQ(2.12)
+AC_INIT(userdefs.h)
+AC_CONFIG_HEADER(lynx_cfg.h:config.hin)
+
+AC_PREFIX_DEFAULT(/usr/local)
+AC_CANONICAL_HOST
+
+dnl --------------------------------------------------------------------------
+dnl Checks for location of programs
+dnl --------------------------------------------------------------------------
+
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_RANLIB
+AC_PROG_MAKE_SET
+CF_MAKE_INCLUDE
+AC_PROG_INSTALL
+AC_CHECK_PROGS(LINT, lint alint lclint tdlint, [])
+
+dnl --------------------------------------------------------------------------
+dnl Debug/development/test
+dnl --------------------------------------------------------------------------
+
+CF_HELP_MESSAGE(
+Development Options:)
+
+CF_DISABLE_ECHO
+
+AC_MSG_CHECKING(if you want to check memory-leaks)
+CF_ARG_ENABLE(find-leaks,
+	[  --enable-find-leaks     logic for testing memory leaks],
+	[with_leak_checks=yes],
+	[with_leak_checks=no])
+AC_MSG_RESULT($with_leak_checks)
+test "$with_leak_checks" = "yes" && AC_DEFINE(LY_FIND_LEAKS)
+
+AC_MSG_CHECKING(if you want to enable debug-code)
+CF_ARG_ENABLE(debug,
+	[  --enable-debug          logic for traces/debugging],
+	[with_debug=yes],
+	[with_debug=no])
+AC_MSG_RESULT($with_debug)
+if test "$with_debug" = "yes" ; then
+	case $host_os in
+	ultrix*|osf*)
+		CF_STRIP_O_OPT(CFLAGS)
+		if test -z "$GCC" ; then
+			CFLAGS="$CFLAGS -g3"
+		fi
+		;;
+	esac
+else
+	case $host_os in
+	ultrix*|osf*) #(vi
+		CF_STRIP_G_OPT(CFLAGS)
+		;;
+	*)
+			CF_STRIP_G_OPT(CFLAGS)
+		;;
+	esac
+fi
+
+
+
+if test -n "$GCC"
+then
+AC_MSG_CHECKING(if you want to turn on gcc warnings)
+CF_ARG_ENABLE(warnings,
+	[  --enable-warnings       GCC compiler warnings],
+	[with_warnings=yes],
+	[with_warnings=no])
+AC_MSG_RESULT($with_warnings)
+if test "$with_warnings" = "yes"
+then
+	CF_GCC_ATTRIBUTES
+	CF_GCC_WARNINGS
+fi
+fi
+
+dnl --------------------------------------------------------------------------
+dnl --------------------------------------------------------------------------
+
+CF_HELP_MESSAGE(
+Basic Configuration Options:)
+
+AC_MSG_CHECKING(if you want full utility pathnames)
+CF_ARG_DISABLE(full-paths,
+	[  --disable-full-paths    control whether full utility pathnames are used],
+	[with_full_paths=no],
+	[with_full_paths=yes])
+AC_MSG_RESULT($with_full_paths)
+
+CF_DEFINE_PROG(system mailer, SYSTEM_MAIL,
+	/usr/mmdf/bin/submit \
+	/usr/sbin/sendmail \
+	/usr/lib/sendmail  \
+	)
+CF_SYSTEM_MAIL_FLAGS
+
+CF_PATH_PROG(CHMOD,	chmod)
+CF_PATH_PROG(COMPRESS,	compress)
+CF_PATH_PROG(COPY,	cp)
+CF_PATH_PROG(GZIP,	gzip)
+CF_PATH_PROG(MKDIR,	mkdir)
+CF_PATH_PROG(MV,	mv)
+CF_PATH_PROG(RM,	rm)
+CF_PATH_PROG(TAR,	tar)
+CF_PATH_PROG(TOUCH,	touch)
+CF_PATH_PROG(UNCOMPRESS,gunzip)
+CF_PATH_PROG(UNZIP,	unzip)
+CF_PATH_PROG(UUDECODE,	uudecode)
+CF_PATH_PROG(ZCAT,	zcat)
+CF_PATH_PROG(ZIP,	zip)
+
+dnl 'INSTALL' is a special case, since the configure script has to find a
+dnl BSD-compatible one so the build/install works properly.
+case "$INSTALL" in
+$srcdir*) # (vi
+	AC_DEFINE_UNQUOTED(INSTALL_PATH,"install")
+	;;
+*) # (vi
+	AC_DEFINE_UNQUOTED(INSTALL_PATH,"$INSTALL")
+	;;
+esac
+
+dnl --------------------------------------------------------------------------
+dnl Checks for compiler & standard-library characteristics
+dnl --------------------------------------------------------------------------
+
+dnl If we're able to run this script, this is true!
+AC_DEFINE(UNIX)
+
+if test -z "$GCC" ; then
+	CF_ANSI_CC_CHECK
+fi
+AC_C_CONST
+
+dnl Only add to this case statement things that we cannot design tests for.
+PROG_EXT=
+case $host_os in
+aix4*)
+	CFLAGS="$CFLAGS -DAIX4 -D_BSD=44" 
+	LIBS="$LIBS -lbsd"
+	;;
+aix*)
+	LIBS="$LIBS -lbsd"
+	;;
+apollo*)
+	CFLAGS="$CFLAGS -D_BUILTINS -W0,-opt,4"
+	;;
+bsdi*)
+	CFLAGS="$CFLAGS -DBSDI" 
+	;;
+clix*)
+	# Tested on CLIX 3.1 (T.Dickey).  The original makefile entry
+	# contributed by Alex Matulich (matuli_a@marlin.navsea.navy.mil) also
+	# references -lmalloc and -lbsd.
+	AC_CHECK_LIB(c_s,strcmp)
+	;;
+convex*)
+	CFLAGS="$CFLAGS -D__STDC__ -Dunix"
+	;;
+dgux*)
+	CFLAGS="$CFLAGS -DDGUX" 
+	;;
+hpux*)
+	CFLAGS="$CFLAGS -DSNAKE" 
+	;;
+isc*)
+	# -DPOSIX_JC is necessary, else LYBookmark.c never finds out what a mode_t is.
+	CFLAGS="$CFLAGS -DISC -DPOSIX_JC"
+	LIBS="$LIBS -linet -lnsl_s -lcposix"
+	;;
+irix*)
+	# The original makefile used the $CFLAGS option -cckr for some form
+	# of K&R compatibility.  However, this causes compilation warnings for
+	# varargs on IRIX 5.2, and does not appear to be needed.
+	#removed: CFLAGS="$CFLAGS -cckr" 
+	;;
+linux*)
+	CFLAGS="$CFLAGS -DLINUX" 
+	;;
+next*)
+	CFLAGS="$CFLAGS -DNEXT -DXMOSAIC_HACK"
+	;;
+openbsd*)
+	LIBS="$LIBS -lcompat"
+	;;
+os2*)
+	# We make sure -Zexe is not used -- it would interfere with @PROG_EXT@
+	CFLAGS="$CFLAGS -Zmt -D__ST_MT_ERRNO__"
+	LDFLAGS=`echo "$LDFLAGS -Zmt -Zcrtdll" | sed "s/-Zexe//g"`
+	PROG_EXT=".exe"
+	;;
+osf*)
+	# Increase the maximum size of functions that will be optimized.
+	test -z "$GCC" && CFLAGS="$CFLAGS -O -Olimit 4000"
+	CFLAGS="$CFLAGS -DDSYS5"
+	;;
+sco3.2v5*)
+	test $ac_cv_prog_gcc != yes && CC="cc -belf"
+	;;
+sco*)
+	LIBS="$LIBS -lmalloc"
+	# It's a little late to do much, but try to warn user if he's using
+	# SCO's cc (which is reported to have broken const/volatile).
+	case "$CC" in #(vi
+	cc|*/cc)
+		AC_MSG_WARN(You should consider using gcc or rcc if available)
+		unset ac_cv_prog_CC
+		AC_CHECK_PROGS(CC,gcc rcc,$CC)
+		;;
+	esac
+	;;
+sequent-ptx)
+	CFLAGS="$CFLAGS -DSVR4_BSDSELECT -DNO_IOCTL -DUSE_FCNTL"
+	;;
+sequent-ptx2)
+	CFLAGS="$CFLAGS -DSVR4_BSDSELECT"
+	;;
+sony-newsos*)
+	CFLAGS="$CFLAGS -I/usr/sony/include"
+	AC_CHECK_HEADERS(jcurses.h)
+	;;
+svr4)
+	CFLAGS="$CFLAGS -DSVR4_BSDSELECT -DSVR4"
+	;;
+sunos3*)
+	CFLAGS="$CFLAGS -DSUN"
+	;;
+sunos4*)
+	CFLAGS="$CFLAGS -DSUN -DSUN4"
+	;;
+ultrix*)
+	# Increase the maximum size of functions that will be optimized.
+	test -z "$GCC" && CFLAGS="$CFLAGS -O -Olimit 600 -G 7"
+	CFLAGS="$CFLAGS -DULTRIX" 
+	AC_CHECK_HEADERS(cursesX.h, cf_cv_ncurses_header=cursesX.h)
+	;;
+esac
+AC_SUBST(PROG_EXT)
+
+dnl --------------------------------------------------------------------------
+dnl Checks for library configuration (added right-to-left)
+dnl --------------------------------------------------------------------------
+
+CF_NETLIBS
+
+AC_MSG_CHECKING(for screen type)
+dnl This has to be cached, since there's a lot of interdependent tests.
+AC_CACHE_VAL(cf_cv_screen,[
+AC_ARG_WITH(screen,
+[  --with-screen=XXX       select screen type
+                          (XXX is curses (default), ncurses or slang)],
+	[
+case $withval in
+curses|ncurses|slang)
+	cf_cv_screen=$withval
+	;;
+*)	AC_ERROR(Unexpected value)
+	;;
+esac],
+	[cf_cv_screen=curses])])
+AC_MSG_RESULT($cf_cv_screen)
+
+if test $cf_cv_screen != ncurses ; then
+	if eval "test \"`echo '$''{'cf_cv_ncurses_header'+set}'`\" != set"; then
+		cf_cv_ncurses_header=curses.h
+	fi
+fi
+
+case $cf_cv_screen in
+curses)
+	CF_CURSES_LIBS
+	CF_CURS_PERFORMANCE
+	;;
+ncurses)
+	CF_NCURSES_CPPFLAGS
+	CF_NCURSES_LIBS
+	;;
+slang)
+	CF_SLANG_CPPFLAGS
+	CF_SLANG_LIBS
+	;;
+esac
+
+dnl Get the actual value for $libdir, which we will compile into Lynx as part of
+dnl the config pathnames.
+eval cf_libdir=$libdir
+cf_libdir=`echo $cf_libdir | sed -e s@'^NONE/'@$prefix/@ -e s@'^NONE/'@$ac_default_prefix/@`
+
+AC_MSG_CHECKING(for location of config-file)
+LYNX_CFG_FILE=$cf_libdir/lynx.cfg
+AC_DEFINE_UNQUOTED(LYNX_CFG_FILE,"$LYNX_CFG_FILE")
+AC_MSG_RESULT($LYNX_CFG_FILE)
+
+dnl --------------------------------------------------------------------------
+dnl Checks for standard headers
+dnl --------------------------------------------------------------------------
+
+AC_HEADER_STDC
+AC_HEADER_TIME
+AC_HEADER_DIRENT
+dnl Don't check for sys/wait.h here since it is covered by another test.
+AC_CHECK_HEADERS( \
+	fcntl.h \
+	limits.h \
+	stdlib.h \
+	string.h \
+	sys/fcntl.h \
+	sys/filio.h \
+	sys/ioctl.h \
+	sys/param.h \
+	sys/time.h \
+	termio.h \
+	termios.h \
+	unistd.h \
+)
+CF_TERMIO_AND_TERMIOS
+CF_FUNC_WAIT
+AC_TYPE_MODE_T
+
+dnl --------------------------------------------------------------------------
+dnl Checks for library units
+dnl --------------------------------------------------------------------------
+
+AC_FUNC_VFORK
+CF_FIONBIO
+CF_REMOVE_BROKEN
+CF_FUNC_LSTAT
+AC_CHECK_FUNCS( \
+	cuserid \
+	getcwd \
+	getgroups \
+	putenv \
+	readdir \
+	strerror \
+	waitpid \
+)
+AC_REPLACE_FUNCS( \
+	mktime \
+	strstr \
+)
+
+CF_CHECK_FUNCDECLS([#include <string.h>], strstr)
+CF_CHECK_FUNCDECLS([
+#include <stdio.h>
+#include <grp.h>], getgrgid getgrnam)
+
+dnl --------------------------------------------------------------------------
+dnl Checks for external-data
+dnl --------------------------------------------------------------------------
+
+CF_BOOL_DEFS
+CF_ERRNO
+CF_LOCALE
+CF_NGROUPS
+CF_SYS_ERRLIST
+CF_UTMP
+
+### These tests must be run after establishing the curses library.
+if test $cf_cv_screen != slang ; then
+	CF_ALT_CHAR_SET
+	CF_FANCY_CURSES
+	CF_NCURSES_VERSION
+	CF_NCURSES_BROKEN
+	CF_COLOR_CURSES
+	CF_SIZECHANGE
+	CF_TTYTYPE
+	AC_CHECK_FUNCS( \
+		cbreak \
+		keypad \
+		use_default_colors \
+		wborder \
+	)
+fi
+
+dnl --------------------------------------------------------------------------
+dnl Miscellaneous options that don't need to test system features
+dnl --------------------------------------------------------------------------
+
+CF_HELP_MESSAGE(
+Miscellaneous Options:)
+
+AC_MSG_CHECKING(if experimental 8-bit case-conversion should be used)
+CF_ARG_ENABLE(8bit-toupper,
+[  --enable-8bit-toupper   use experimental 8-bit case-conversion],
+	[use_8bit_toupper=$enableval],
+	[use_8bit_toupper=no])
+test $use_8bit_toupper != no && AC_DEFINE(EXP_8BIT_TOUPPER)
+
+AC_MSG_CHECKING(if color-style code should be used)
+CF_ARG_ENABLE(color-style,
+[  --enable-color-style    use optional/experimental color style],
+	[use_color_style=$enableval],
+	[use_color_style=no])
+
+if test $use_color_style != no ; then
+	if test .$cf_cv_color_curses != .yes ; then
+		AC_ERROR(Configuration does not support color-styles)
+	fi
+	if test $cf_cv_screen = slang ; then
+		AC_ERROR(Configuration does not support color-styles)
+	fi
+	AC_DEFINE(USE_HASH)
+	AC_DEFINE(LINKEDSTYLES)
+fi
+
+case $use_color_style in
+no)
+	AC_MSG_RESULT(no)
+	INSTALL_LSS=
+	;;
+*)
+	AC_DEFINE(USE_COLOR_STYLE)
+	AC_MSG_RESULT(curses-style)
+
+	AC_MSG_CHECKING(for location of style-sheet file)
+	LYNX_LSS_FILE=$cf_libdir/lynx.lss
+	AC_DEFINE_UNQUOTED(LYNX_LSS_FILE,"$LYNX_LSS_FILE")
+	AC_MSG_RESULT($LYNX_LSS_FILE)
+	INSTALL_LSS=install-lss
+	;;
+esac
+AC_SUBST(INSTALL_LSS)
+
+use_dft_colors=no
+test ".$cf_cv_screen" = ".slang"                && use_dft_colors=maybe
+test ".$ac_cv_func_use_default_colors" = ".yes" && use_dft_colors=maybe
+
+if test "$use_dft_colors" != no ; then
+AC_MSG_CHECKING(if you want to use default-colors)
+CF_ARG_ENABLE(default-colors,
+[  --enable-default-colors enable use of default-colors (ncurses/slang)],
+	[use_dft_colors=yes],
+	[use_dft_colors=no])
+AC_MSG_RESULT($use_dft_colors)
+test $use_dft_colors = "yes" && AC_DEFINE(USE_DEFAULT_COLORS)
+fi
+
+AC_MSG_CHECKING(if you want to use extended HTML DTD logic)
+CF_ARG_DISABLE(extended-dtd,
+[  --disable-extended-dtd  disable extended HTML DTD logic],
+	[use_ext_htmldtd=no],
+	[use_ext_htmldtd=yes])
+AC_MSG_RESULT($use_ext_htmldtd)
+test $use_ext_htmldtd = "no" && AC_DEFINE(NO_EXTENDED_HTMLDTD)
+
+AC_MSG_CHECKING(if you want to use external commands)
+CF_ARG_ENABLE(externs,
+[  --enable-externs        use external commands],
+	[use_externs=yes],
+	[use_externs=no])
+AC_MSG_RESULT($use_externs)
+test $use_externs != ".no" && AC_DEFINE(USE_EXTERNALS)
+
+AC_MSG_CHECKING(if you want to use setfont support)
+CF_ARG_ENABLE(font-switch,
+[  --enable-font-switch    use Linux setfont for character-translation],
+	[use_setfont=yes],
+	[use_setfont=no])
+AC_MSG_RESULT($use_setfont)
+test $use_setfont = yes && AC_DEFINE(EXP_CHARTRANS_AUTOSWITCH)
+
+AC_MSG_CHECKING(if you want internal-links feature)
+CF_ARG_ENABLE(internal-links,
+[  --enable-internal-links  handle following links to same doc differently],
+	[use_internal_links=yes],
+	[use_internal_links=no])
+AC_MSG_RESULT($use_internal_links)
+test $use_internal_links = no && AC_DEFINE(DONT_TRACK_INTERNAL_LINKS)
+
+AC_MSG_CHECKING(if you want to fork NSL requests)
+CF_ARG_ENABLE(nsl-fork,
+[  --enable-nsl-fork       fork NSL requests, allowing them to be aborted],
+	[use_nsl_fork=yes],
+	[use_nsl_fork=no])
+AC_MSG_RESULT($use_nsl_fork)
+test $use_nsl_fork = yes && AC_DEFINE(NSL_FORK)
+
+AC_MSG_CHECKING(if you want to underline links)
+CF_ARG_ENABLE(underlines,
+[  --enable-underlines     underline links rather than using boldface],
+	[use_underline=yes],
+	[use_underline=no])
+AC_MSG_RESULT($use_underline)
+test $use_underline = yes && AC_DEFINE(UNDERLINE_LINKS)
+
+AC_MSG_CHECKING(if you want to use zlib for decompression of some gzip files)
+AC_ARG_WITH(zlib,
+[  --with-zlib             use zlib for decompression of some gzip files],
+	[use_zlib=$withval],
+	[use_zlib=no])
+AC_MSG_RESULT($use_zlib)
+
+if test ".$use_zlib" != ".no" ; then
+	CF_FIND_LIBRARY(z,
+		[#include <zlib.h>],
+		[gzopen("name","mode")],
+		gzopen)
+	AC_DEFINE(USE_ZLIB)
+fi
+
+dnl --------------------------------------------------------------------------
+dnl DirEd (directory-editor) options
+dnl --------------------------------------------------------------------------
+
+CF_HELP_MESSAGE(
+Directory Editor Options:)
+
+# All DirEd functions that were enabled on compilation can be disabled
+# or modified at run time via DIRED_MENU symbols in lynx.cfg.
+AC_MSG_CHECKING(if directory-editor code should be used)
+CF_ARG_DISABLE(dired,
+[  --disable-dired          enable optional directory-editor, DirEd],
+	[use_dired=$enableval],
+	[use_dired=yes])
+AC_MSG_RESULT($use_dired)
+
+if test ".$use_dired" != ".no" ; then
+	AC_DEFINE(DIRED_SUPPORT)
+
+	AC_MSG_CHECKING(if you wish to allow extracting from archives via DirEd)
+	CF_ARG_DISABLE(dired-archive,
+	[  --disable-dired-archive  disable dearchiving commands],[AC_DEFINE(ARCHIVE_ONLY)])
+	AC_MSG_RESULT($enableval)
+
+	AC_MSG_CHECKING(if you wish to allow users to redefine DirEd keys)
+	CF_ARG_DISABLE(dired-override,
+	[  --disable-dired-override disable private keymaps],,[AC_DEFINE(OK_OVERRIDE)])
+	AC_MSG_RESULT($enableval)
+
+	AC_MSG_CHECKING(if you wish to allow permissions commands via DirEd)
+	CF_ARG_DISABLE(dired-permit,
+	[  --disable-dired-permit  disable chmod/attrib commands],,[AC_DEFINE(OK_PERMIT)])
+	AC_MSG_RESULT($enableval)
+
+	AC_MSG_CHECKING(if you wish to allow executable-permission commands via DirEd)
+	CF_ARG_DISABLE(dired-xpermit,
+	[  --disable-dired-xpermit disable chmod/attrib commands],[AC_DEFINE(NO_CHANGE_EXECUTE_PERMS)])
+	AC_MSG_RESULT($enableval)
+
+	AC_MSG_CHECKING(if you wish to allow "tar" commands from DirEd)
+	CF_ARG_DISABLE(dired-tar,
+	[  --disable-dired-tar     disable "tar" command],,[AC_DEFINE(OK_TAR)])
+	AC_MSG_RESULT($enableval)
+
+	AC_MSG_CHECKING(if you wish to allow "uudecode" commands from DirEd)
+	CF_ARG_DISABLE(dired-uudecode,
+	[  --disable-dired-uudecode disable "uudecode" command],,[AC_DEFINE(OK_UUDECODE)])
+	AC_MSG_RESULT($enableval)
+
+	AC_MSG_CHECKING(if you wish to allow "zip" and "unzip" commands from DirEd)
+	CF_ARG_DISABLE(dired-zip,
+	[  --disable-dired-zip     disable "zip", "unzip"  commands],,[AC_DEFINE(OK_ZIP)])
+	AC_MSG_RESULT($enableval)
+
+	AC_MSG_CHECKING(if you wish to allow "gzip" and "gunzip" commands from DirEd)
+	CF_ARG_DISABLE(dired-gzip,
+	[  --disable-dired-gzip    disable "gzip", "gunzip" commands],,[AC_DEFINE(OK_GZIP)])
+	AC_MSG_RESULT($enableval)
+fi
+
+AC_MSG_CHECKING(if you want long-directory listings)
+CF_ARG_DISABLE(long-list,
+[  --disable-long-list     disable long "ls -l" directory listings],,
+	[AC_DEFINE(LONG_LIST)])
+AC_MSG_RESULT($enableval)
+
+AC_MSG_CHECKING(if parent-directory references are permitted)
+CF_ARG_DISABLE(parent-dir-refs,
+[  --disable-parent-dir-refs
+                          disable "Up-to" links in directory listings],
+	[AC_DEFINE(NO_PARENT_DIR_REFERENCE)])
+AC_MSG_RESULT($enableval)
+
+### Finally, build config.h and the makefiles
+CFLAGS="$CFLAGS $EXTRA_CFLAGS"
+srcdir="$srcdir"
+SRCDIR_CLEAN="#"
+if test -n "$srcdir" ; then
+	echo srcdir is $srcdir
+	$srcdir/mkdirs.sh WWW/Library/unix
+	$srcdir/mkdirs.sh src/chrtrans
+	test "$srcdir" != "." && SRCDIR_CLEAN=""
+fi
+
+AC_SUBST(SRCDIR_CLEAN)
+AC_OUTPUT(
+	makefile \
+	WWW/Library/unix/makefile \
+	src/makefile \
+	src/chrtrans/makefile \
+)

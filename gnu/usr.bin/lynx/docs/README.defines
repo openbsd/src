@@ -1,0 +1,113 @@
+This file lists preprocessor macros (symbols) which are tested in the
+code (typically with ifdef).
+
+Does not include
+- symbols defined and documented in userdefs.h
+- symbols expected to be set by compiler to indicate system type or
+  compiler features
+- some symbols set and used only in connection with the ./configure
+  mechanism - the full and current list can be found in config.hin
+  (as a template) or, after running ./configure, in lynx_cfg.h.
+- symbols and macros defined in the source code
+
+***Not complete.***
+
+A. Symbols primarily to enable compilation on specific systems
+==============================================================
+See also under B for things needed by some systems.
+
+# if you have an SVR4 system with the "type any key" problem, try defining
+#
+# -DSVR4_BSDSELECT
+
+# Old Data General systems may need this in their SITE_LYDEFS
+# for their inet_addr(host) calls.
+#
+# -DDGUX_OLD
+
+---
+Ports have been added for Win32 (95/NT) and 386 DOS computers with a
+packet driver.  I created four new defines to accomplish this.
+	_WINDOWS Defined for Win32 specific code (Mostly TCP related)
+	DJGPP    Defined for 386 specific code (Mostly TCP related)
+	DOSPATH  Defined for any DOS'ish computer
+	NOSIGHUP Defined for computers not supporting sighup signal calls.
+-- Wayne Buttles lynx-port@fdisk.com
+
+Added for 8+3 filesystems (DOS):
+	FNAMES_8_3  also defined in userdefs.h if __DJGPP__
+
+B. Symbols to enable or disable specific features, mostly
+=========================================================
+Note that some of these may be only usable on some system types,
+most were originally for UNIX.
+
+Network related, specific protocols
+-----------------------------------
+# -DSOCKS          For making a SOCKSified lynx.
+       			see comments in makefile.in
+# -DSHORTENED_RBIND  For a SOCKSified lynx with the short version of Rbind.
+               		see comments in makefile.in
+# -DNOPORT         if you must use PASV instead of PORT for FTP
+
+Related to DirEd code - probably one usable for UNIX or similar
+---------------------------------------------------------------
+# -DDIRED_SUPPORT  (see INSTALLATION, Section II-1c)
+# -DOK_GZIP        (see INSTALLATION, Section II-1c)
+# -DOK_OVERRIDE    (see INSTALLATION, Section II-1c)
+# -DOK_PERMIT      (see INSTALLATION, Section II-1c)
+# -DOK_TAR         (see INSTALLATION, Section II-1c)
+# -DOK_UUDECODE    (see INSTALLATION, Section II-1c)
+# -DOK_ZIP         (see INSTALLATION, Section II-1c)
+# -DARCHIVE_ONLY   (see INSTALLATION, Section II-1c)
+# -DNO_CHANGE_EXECUTE_PERMS (see INSTALLATION, Section II-1c)
+
+Related to formatting of local directory listings
+-------------------------------------------------
+# -DLONG_LIST      (see INSTALLATION, Section II-1c)
+# -DNO_PARENT_DIR_REFERENCE (see INSTALLATION, Section II-1c)
+
+Related to screen display
+-------------------------
+Using curses or ncurses library:
+# -DNCURSES        (see INSTALLATION, Section II-1c)
+# -DFANCY_CURSES   whether curses lib supports more than very basic stuff
+                   for UNIX handled by ./configure, for VMS defined in code
+# -DNO_KEYPAD (old) or HAVE_KEYPAD (new)   whether curses lib uses keypad().
+                   for UNIX handled by ./configure, may be set in HTUtils.h
+# -DCOLOR_CURSES    whether curses lib supports color (in the right way).
+                   for UNIX handled by ./configure
+# -DUNDERLINE_LINKS  Define if you want links underlined instead of bold.
+# -DHP_TERMINAL    For DIM workaround to REVERSE problems on HP terminals.
+# -DNO_SIZECHANGE (old) or HAVE_SIZECHANGE (new) whether using code to detect
+                   new size after size changes of the terminal (window).
+                   for UNIX handled by ./configure, may be set in HTUtils.h
+# -DUSE_SIZECHANGEHACK  enable hack to handle increasing the window size
+			above window size at startup
+
+Using slang library:
+# -DUSE_SLANG      (see INSTALLATION, Section II-1c)
+# -DSLANG_MBCS_HACK prevent cutoff lines when using UTF8 console (slang only)
+Both:
+# -DREVERSE_CLEAR_SCREEN_PROBLEM
+# 	if you have the reverse clear screen problem of some SUN4 systems, or
+# 	to work around some other "garbage on the screen" problems
+
+Related to *experimental* (unsupported) character style code
+------------------------------------------------------------
+# -DUSE_COLOR_STYLE (see INSTALLATION, Section II-1c) probably needs -DNCURSES
+# -DUSE_HASH       (see INSTALLATION, Section II-1c)  probably needs the above
+# -DLINKEDSTYLES   (see INSTALLATION, Section II-1c)  probably needs the above
+
+Other
+-----
+# -DDONT_TRACK_INTERNAL_LINKS - Handle following links to same doc differently.
+# -DEXP_CHARTRANS_AUTOSWITCH also let lynx switch term mode(Linux console only)
+# -DIGNORE_CTRL_C  Define if Control-C shouldn't exit lynx.
+# -DLY_FIND_LEAKS  (see INSTALLATION, Section II-1c)
+# -DNO_CPU_LIMIT   Disables Max CPU timeout (includes CLOCKS_PER_SECOND)
+# -DNSL_FORK       For fork-based name server lookups that can be 'z'apped.
+# -DSYSLOG_REQUESTED_URLS
+# 	if you would like logging of client requests via syslog()
+# -DUSE_ZLIB       To use some functions from zlib library if you have it.
+# -DDECLARE_WAIS_LOGFILES   see comments in makefile.in

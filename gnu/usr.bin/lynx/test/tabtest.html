@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3O//DTD W3 HTML 3.0//EN">
+<html>
+<head>
+<title>Tests of TAB element.</title>
+<link rev="made" href="mailto:lynx-dev@sig.net">
+</head>
+
+<body>
+<h1>Tests of TAB element.</h1>
+
+<TAB INDENT="16" ID="t0"><em>Normal Style:</em><br>
+One<TAB INDENT="26" ID="t1">Two<TAB INDENT="44" ID="t2">Three
+<TAB INDENT="62" ID="t3">Four<TAB INDENT="80" ID="t4">Five
+<TAB INDENT="98" ID="t5">Six<TAB INDENT="116" ID="t6">Seven
+<TAB INDENT="132" ID="t7">Eight<br>
+1.<TAB TO="t1">2.<TAB TO="t2">3.<TAB TO="t3">4.<TAB TO="t4">5.
+<TAB TO="t5">6.<TAB TO="t6">7.<TAB TO="t7">8.<br>
+i.<TAB TO="t1">ii.<TAB TO="t2">iii.<TAB TO="t3">iv.<TAB TO="t4">v.
+<TAB TO="t5">vi.<TAB TO="t6">vii.<TAB TO="t7">viii.
+
+<p><pre><TAB TO="t0"><em>In PRE block:</em>
+One<TAB TO="t1">Two<TAB TO="t3">Three<TAB TO="t5">Four<TAB TO="t7">Five
+1.<TAB TO="t1">2.<TAB TO="t3">3.<TAB TO="t5">4.<TAB TO="t7">5.
+i.<TAB TO="t1">ii.<TAB TO="t3">iii.<TAB TO="t5">iv.<TAB TO="t7">v.
+</pre>
+
+<bq>
+<TAB TO="t0"><em>In BQ block:</em><br>
+One<TAB TO="t2">Two<TAB TO="t4">Three<TAB TO="t6">Four<br>
+1.<TAB TO="t2">2.<TAB TO="t4">3.<TAB TO="t6">4.<br>
+i.<TAB TO="t2">ii.<TAB TO="t4">iii.<TAB TO="t6">iv.
+</bq>
+
+<p><b>noct<TAB ID="tn">ambulant</b> - walking at night<br>
+<TAB TO="tn">(from Latin: <i>nox noctis</i> night + <i>ambulare</i> walk)
+<pre>|<TAB INDENT="78">|<TAB INDENT="156">|
+0<TAB INDENT="76">80<TAB INDENT="152">158</pre>
+</body>
+</html>
