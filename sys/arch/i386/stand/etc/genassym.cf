@@ -1,11 +1,10 @@
-#	$OpenBSD: genassym.cf,v 1.1 1997/07/28 22:58:56 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.2 1997/08/13 02:55:01 mickey Exp $
 
 include <sys/param.h>
 
 include <machine/specialreg.h>
 include <machine/segments.h>
 include <machine/biosvar.h>
-include <machine/apmvar.h>
 
 export	DEV_BSIZE
 export	CR0_PE
