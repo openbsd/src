@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.17 1999/02/04 00:04:59 deraadt Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.18 1999/02/04 16:12:13 deraadt Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -36,17 +36,17 @@
  *	@(#)tcp_var.h	8.3 (Berkeley) 4/10/94
  */
 
-struct sackblk {   
+struct sackblk {
 	tcp_seq start;		/* start seq no. of sack block */
 	tcp_seq end; 		/* end seq no. */
 };  
-    
-struct sackhole {   
-	tcp_seq start;      	/* start seq no. of hole */ 
-	tcp_seq end;        	/* end seq no. */
-	int dups;      		/* number of dup(s)acks for this hole */
-	tcp_seq rxmit;      	/* next seq. no in hole to be retransmitted */
-	struct sackhole *next;  /* next in list */
+
+struct sackhole {
+	tcp_seq start;		/* start seq no. of hole */ 
+	tcp_seq end;		/* end seq no. */
+	int	dups;		/* number of dup(s)acks for this hole */
+	tcp_seq rxmit;		/* next seq. no in hole to be retransmitted */
+	struct sackhole *next;	/* next in list */
 };
 
 /*
@@ -93,9 +93,9 @@ struct tcpcb {
 	tcp_seq	iss;			/* initial send sequence number */
 	u_long	snd_wnd;		/* send window */
 #ifdef TCP_SACK
-	int sack_disable;            	/* disable SACK for this connection */
-	int snd_numholes; 		/* number of holes seen by sender */
-	struct sackhole *snd_holes;     /* linked list of holes (sorted) */
+	int	sack_disable;		/* disable SACK for this connection */
+	int	snd_numholes;		/* number of holes seen by sender */
+	struct sackhole *snd_holes;	/* linked list of holes (sorted) */
 #if defined(TCP_SACK) && defined(TCP_FACK)
 	tcp_seq snd_fack;		/* for FACK congestion control */
 	u_long	snd_awnd;		/* snd_nxt - snd_fack + */
@@ -112,11 +112,11 @@ struct tcpcb {
 	tcp_seq	rcv_up;			/* receive urgent pointer */
 	tcp_seq	irs;			/* initial receive sequence number */
 #ifdef TCP_SACK
-	tcp_seq rcv_laststart;          /* start of last segment recd. */
-	tcp_seq rcv_lastend;            /* end of ... */
-	tcp_seq rcv_lastsack;           /* last seq number(+1) sack'd by rcv'r*/
-	int rcv_numsacks;           	/* # distinct sack blks present */
-	struct sackblk sackblks[MAX_SACK_BLKS];  /* seq nos. of sack blocks */
+	tcp_seq rcv_laststart;		/* start of last segment recd. */
+	tcp_seq rcv_lastend;		/* end of ... */
+	tcp_seq rcv_lastsack;		/* last seq number(+1) sack'd by rcv'r*/
+	int	rcv_numsacks;		/* # distinct sack blks present */
+	struct sackblk sackblks[MAX_SACK_BLKS]; /* seq nos. of sack blocks */
 #endif
 
 /*
@@ -281,7 +281,7 @@ struct	tcpstat {
 #define TCPCTL_BADDYNAMIC	6 /* return bad dynamic port bitmap */ 
 #define	TCPCTL_RECVSPACE	7 /* receive buffer space */
 #define	TCPCTL_SENDSPACE	8 /* send buffer space */
-#define	TCPCTL_IDENT	        9 /* get connection owner */
+#define	TCPCTL_IDENT		9 /* get connection owner */
 #define	TCPCTL_SACK	       10 /* selective acknowledgement, rfc 2018 */
 #define TCPCTL_MSSDFLT	       11 /* Default maximum segment size */
 #define	TCPCTL_MAXID	       12
@@ -357,15 +357,16 @@ int	 tcp_usrreq __P((struct socket *,
 void	 tcp_xmit_timer __P((struct tcpcb *, int));
 void	 tcpdropoldhalfopen __P((struct tcpcb *, u_int16_t));
 #ifdef TCP_SACK
-int      tcp_sack_option __P((struct tcpcb *,struct tcphdr *,u_char *,int));
-void     tcp_update_sack_list __P((struct tcpcb *tp));
-void     tcp_del_sackholes __P((struct tcpcb *, struct tcphdr *));
-void     tcp_clean_sackreport __P((struct tcpcb *tp));
-void     tcp_sack_adjust __P((struct tcpcb *tp));
-struct sackhole * tcp_sack_output __P((struct tcpcb *tp));
-int    	 tcp_sack_partialack __P((struct tcpcb *, struct tcphdr *));
+int	 tcp_sack_option __P((struct tcpcb *,struct tcphdr *,u_char *,int));
+void	 tcp_update_sack_list __P((struct tcpcb *tp));
+void	 tcp_del_sackholes __P((struct tcpcb *, struct tcphdr *));
+void	 tcp_clean_sackreport __P((struct tcpcb *tp));
+void	 tcp_sack_adjust __P((struct tcpcb *tp));
+struct sackhole *
+	 tcp_sack_output __P((struct tcpcb *tp));
+int	 tcp_sack_partialack __P((struct tcpcb *, struct tcphdr *));
 #ifdef DEBUG
-void     tcp_print_holes __P((struct tcpcb *tp));
+void	 tcp_print_holes __P((struct tcpcb *tp));
 #endif
 #endif /* TCP_SACK */
 #if defined(TCP_NEWRENO) || defined(TCP_SACK)
