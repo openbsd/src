@@ -1,3 +1,4 @@
+/* $OpenBSD: ctm_rmail.c,v 1.7 1999/07/13 23:02:06 deraadt Exp $ */
 /*
  * Accept one (or more) ASCII encoded chunks that together make a compressed
  * CTM delta.  Decode them and reconstruct the deltas.  Any completed
@@ -164,7 +165,7 @@ apply_complete()
 	return;
 	}
 
-    i = fscanf(fp, "%19s %d %c", class, &dn, junk);
+    i = fscanf(fp, "%s %d %c", class, &dn, junk);
     fclose(fp);
     if (i != 2)
 	{
@@ -294,7 +295,7 @@ read_piece(char *input_file)
 	    char *s;
 	    int fd = -1;
 
-	    if (sscanf(line, "CTM_MAIL BEGIN %29s %d %d %c",
+	    if (sscanf(line, "CTM_MAIL BEGIN %s %d %d %c",
 		    delta, &pce, &npieces, junk) != 3)
 		continue;
 

@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.2 1997/09/21 11:43:34 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1999/07/13 23:02:03 deraadt Exp $
 
-SUBDIR=	ctm ctm_scan ctm_rmail ctm_smail ctm_dequeue
+SUBDIR=	ctm ctm_rmail ctm_smail ctm_dequeue
 
 .include <bsd.subdir.mk>

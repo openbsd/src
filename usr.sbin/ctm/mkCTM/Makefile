@@ -1,7 +1,7 @@
+# $OpenBSD: Makefile,v 1.3 1999/07/13 23:02:06 deraadt Exp $
 
 PROG=	mkctm
 SRCS=	mkctm.c
-LDADD= -lmd
 CFLAGS+= -Wall
 
 test:	mkctm

@@ -1,3 +1,4 @@
+/* $OpenBSD: options.h,v 1.2 1999/07/13 23:02:06 deraadt Exp $ */
 /*
  * Macros for processing command arguments.
  *

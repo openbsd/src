@@ -10,17 +10,17 @@
 .\"
 .\" CTM and ctm(1) by <phk@login.dknet.dk>
 .\"
-.\" $Id: ctm.5,v 1.5 1999/07/07 10:50:11 aaron Exp $
+.\" $Id: ctm.5,v 1.6 1999/07/13 23:02:05 deraadt Exp $
 .\"
 .Dd March 25, 1995
-.Dt CTM 5
 .Os
+.Dt CTM 5
 .Sh NAME
 .Nm ctm
 .Nd source code mirror system
 .Sh DESCRIPTION
 The
-.Nm ctm
+.Nm
 transfers data in a specific file format, called a CTM delta.
 .Pp
 CTM deltas consist of control lines and data chunks.  Each control
@@ -168,7 +168,7 @@ CTM_END 74ddd298d76215ae45a077a4b6a74e9c
 .Xr ctm_rmail 1 ,
 .Xr ed 1
 .Sh HISTORY
-Initial trials ran during the FreeBSD 1.1.5, and many bugs and
+Initial trials ran during the work on FreeBSD 1.1.5, and many bugs and
 methods were hashed out.
 The CTM system has been made publically available in FreeBSD 2.1.
 .Sh AUTHORS
