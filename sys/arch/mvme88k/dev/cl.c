@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.38 2004/02/10 10:06:48 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.39 2004/02/10 10:30:25 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -39,6 +39,7 @@
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
+#include <machine/locore.h>
 #include <machine/psl.h>
 
 #include <dev/cons.h>
@@ -920,10 +921,11 @@ clcnprobe(cp)
 	int maj;
 
 	/* bomb if it'a a MVME188 */
-	if (brdtyp == BRD_188) {
+	if (brdtyp == BRD_188 || badaddr(CD2400_BASE_ADDR, 1) != 0) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
+
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == clopen)

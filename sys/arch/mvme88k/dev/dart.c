@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.28 2004/02/10 10:06:48 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.29 2004/02/10 10:30:25 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -42,6 +42,7 @@
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
+#include <machine/locore.h>
 #include <machine/psl.h>
 
 #include <dev/cons.h>
@@ -1144,10 +1145,11 @@ dartcnprobe(cp)
 {
 	int maj;
 
-	if (brdtyp != BRD_188) {
+	if (brdtyp != BRD_188 || badaddr(DART_BASE, 2) != 0) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
+
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == dartopen)
