@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.23 2002/03/15 18:19:52 millert Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.24 2002/05/30 04:19:44 itojun Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -79,12 +79,6 @@ in_gif_output(ifp, family, m, rt)
 	    sin_dst->sin_family != AF_INET) {
 		m_freem(m);
 		return EAFNOSUPPORT;
-	}
-
-	/* multi-destination mode is not supported */
-	if (ifp->if_flags & IFF_LINK0) {
-		m_freem(m);
-		return ENETUNREACH;
 	}
 
 	/* setup dummy tdb.  it highly depends on ipipoutput() code. */
@@ -188,27 +182,17 @@ in_gif_input(struct mbuf *m, ...)
 	/* this code will be soon improved. */
 #define	satosin(sa)	((struct sockaddr_in *)(sa))	
 	for (i = 0, sc = gif_softc; i < ngif; i++, sc++) {
-		if (sc->gif_psrc == NULL
-		 || sc->gif_pdst == NULL
-		 || sc->gif_psrc->sa_family != AF_INET
-		 || sc->gif_pdst->sa_family != AF_INET) {
+		if (sc->gif_psrc == NULL || sc->gif_pdst == NULL ||
+		    sc->gif_psrc->sa_family != AF_INET ||
+		    sc->gif_pdst->sa_family != AF_INET) {
 			continue;
 		}
 
 		if ((sc->gif_if.if_flags & IFF_UP) == 0)
 			continue;
 
-		if ((sc->gif_if.if_flags & IFF_LINK0)
-		 && satosin(sc->gif_psrc)->sin_addr.s_addr == ip->ip_dst.s_addr
-		 && satosin(sc->gif_pdst)->sin_addr.s_addr == INADDR_ANY) {
-			gifp = &sc->gif_if;
-			continue;
-		}
-
-		if (satosin(sc->gif_psrc)->sin_addr.s_addr ==
-		    ip->ip_dst.s_addr
-		 && satosin(sc->gif_pdst)->sin_addr.s_addr ==
-		    ip->ip_src.s_addr)
+		if (in_hosteq(satosin(sc->gif_psrc)->sin_addr, ip->ip_dst) &&
+		    in_hosteq(satosin(sc->gif_pdst)->sin_addr, ip->ip_src))
 		{
 			gifp = &sc->gif_if;
 			break;
