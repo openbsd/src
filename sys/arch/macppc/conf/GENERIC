@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.39 2002/12/13 03:02:12 tdeval Exp $g
+#	$OpenBSD: GENERIC,v 1.40 2003/01/05 02:16:44 mickey Exp $g
 #
 # PPC GENERIC config file
 #
@@ -135,8 +135,8 @@ awacs*		at macobio?			# Apple audio device
 audio*		at awacs?
 audio*		at uaudio?
 
-#bktr*		at pci? dev ? function ?	# Bt8[47][89] tv/fmradio/video
-#radio*		at bktr?
+bktr*		at pci? dev ? function ?	# Bt8[47][89] tv/fmradio/video
+radio*		at bktr?
 
 #scsibus*	at adv?
 #scsibus*	at ahc?
