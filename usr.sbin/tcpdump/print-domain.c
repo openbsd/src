@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-domain.c,v 1.11 2000/10/03 14:31:56 ho Exp $	*/
+/*	$OpenBSD: print-domain.c,v 1.12 2001/03/05 22:40:11 jakob Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,17 +23,13 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-domain.c,v 1.11 2000/10/03 14:31:56 ho Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-domain.c,v 1.12 2001/03/05 22:40:11 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 
-#ifdef __STDC__
-struct mbuf;
-struct rtentry;
-#endif
 #include <net/if.h>
 
 #include <netinet/in.h>
@@ -51,7 +47,7 @@ struct rtentry;
 #ifdef NOERROR
 #undef T_UNSPEC					/* SINIX does too */
 #endif
-#include <arpa/nameser.h>
+#include "nameser.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -59,85 +55,6 @@ struct rtentry;
 #include "interface.h"
 #include "addrtoname.h"
 #include "extract.h"                    /* must come after interface.h */
-
-/* Compatibility */
-#ifndef T_TXT
-#define T_TXT		16		/* text strings */
-#endif
-#ifndef T_RP
-#define T_RP		17		/* responsible person */
-#endif
-#ifndef T_AFSDB
-#define T_AFSDB		18		/* AFS cell database */
-#endif
-#ifndef T_X25
-#define T_X25		19		/* X_25 calling address */
-#endif
-#ifndef T_ISDN
-#define T_ISDN		20		/* ISDN calling address */
-#endif
-#ifndef T_RT
-#define T_RT		21		/* router */
-#endif
-#ifndef T_NSAP
-#define T_NSAP		22		/* NSAP address */
-#endif
-#ifndef T_NSAP_PTR
-#define T_NSAP_PTR	23		/* reverse NSAP lookup (deprecated) */
-#endif
-#ifndef T_SIG
-#define T_SIG		24		/* security signature */
-#endif
-#ifndef T_KEY
-#define T_KEY		25		/* security key */
-#endif
-#ifndef T_PX
-#define T_PX		26		/* X.400 mail mapping */
-#endif
-#ifndef T_GPOS
-#define T_GPOS		27		/* geographical position (withdrawn) */
-#endif
-#ifndef T_AAAA
-#define T_AAAA		28		/* IP6 Address */
-#endif
-#ifndef T_LOC
-#define T_LOC		29		/* Location Information */
-#endif
-#ifndef T_NXT
-#define T_NXT		30		/* Next Valid Name in Zone */
-#endif
-#ifndef T_EID
-#define T_EID		31		/* Endpoint identifier */
-#endif
-#ifndef T_NIMLOC
-#define T_NIMLOC	32		/* Nimrod locator */
-#endif
-#ifndef T_SRV
-#define T_SRV		33		/* Server selection */
-#endif
-#ifndef T_ATMA
-#define T_ATMA		34		/* ATM Address */
-#endif
-#ifndef T_NAPTR
-#define T_NAPTR		35		/* Naming Authority PoinTeR */
-#endif
-#ifndef T_A6
-#define T_A6		38		/* IP6 address (ipngwg-dns-lookups) */
-#endif
-
-#ifndef T_UNSPEC
-#define T_UNSPEC	103		/* Unspecified format (binary data) */
-#endif
-#ifndef T_UNSPECA
-#define T_UNSPECA	104		/* "unspecified ascii". Ugly MIT hack */
-#endif
-
-#ifndef C_CHAOS
-#define C_CHAOS		3		/* for chaos net (MIT) */
-#endif
-#ifndef C_HS
-#define C_HS		4		/* for Hesiod name server (MIT) (XXX) */
-#endif
 
 static char *ns_ops[] = {
 	"", " inv_q", " stat", " op3", " notify", " op5", " op6", " op7",
@@ -160,8 +77,22 @@ ns_nskip(register const u_char *cp, register const u_char *bp)
 
 	if (((i = *cp++) & INDIR_MASK) == INDIR_MASK)
 		return (cp + 1);
+	if (cp >= snapend)
+		return(NULL);
 	while (i && cp < snapend) {
-		cp += i;
+		if ((i & INDIR_MASK) == EDNS0_MASK) {
+			int bitlen, bytelen;
+
+			if ((i & ~INDIR_MASK) != EDNS0_ELT_BITLABEL)
+				return(NULL); /* unknown ELT */
+			if ((bitlen = *cp++) == 0)
+				bitlen = 256;
+			bytelen = (bitlen + 7) / 8;
+			cp += bytelen;
+		} else
+			cp += i;
+		if (cp >= snapend)
+			return(NULL);
 		i = *cp++;
 	}
 	return (cp);
@@ -169,26 +100,95 @@ ns_nskip(register const u_char *cp, register const u_char *bp)
 
 /* print a <domain-name> */
 static const u_char *
-ns_nprint(register const u_char *cp, register const u_char *bp)
+blabel_print(const u_char *cp)
+{
+	int bitlen, slen, b;
+	int truncated = 0;
+	const u_char *bitp, *lim;
+	char tc;
+
+	if (cp >= snapend)
+		return(NULL);
+	if ((bitlen = *cp) == 0)
+		bitlen = 256;
+	slen = (bitlen + 3) / 4;
+	if ((lim = cp + 1 + slen) > snapend) {
+		truncated = 1;
+		lim = snapend;
+	}
+
+	/* print the bit string as a hex string */
+	printf("\\[x");
+	for (bitp = cp + 1, b = bitlen; bitp < lim && b > 7; b -= 8, bitp++)
+		printf("%02x", *bitp);
+	if (bitp == lim)
+		printf("...");
+	else if (b > 4) {
+		tc = *bitp++;
+		printf("%02x", tc & (0xff << (8 - b)));
+	} else if (b > 0) {
+		tc = *bitp++;
+		printf("%1x", ((tc >> 4) & 0x0f) & (0x0f << (4 - b)));
+	}
+	printf("/%d]", bitlen);
+
+	return(truncated ? NULL : lim);
+}
+
+static int
+labellen(const u_char *cp)
 {
 	register u_int i;
-	register const u_char *rp;
-	register int compress;
+
+	if (cp >= snapend)
+		return(-1);
+	i = *cp;
+	if ((i & INDIR_MASK) == EDNS0_MASK) {
+		int bitlen, elt;
+
+		if ((elt = (i & ~INDIR_MASK)) != EDNS0_ELT_BITLABEL)
+			return(-1);
+		if (cp + 1 >= snapend)
+			return(-1);
+		if ((bitlen = *(cp + 1)) == 0)
+			bitlen = 256;
+		return(((bitlen + 7) / 8) + 1);
+	} else
+		return(i);
+}
+
+static const u_char *
+ns_nprint(register const u_char *cp, register const u_char *bp)
+{
+	register u_int i, l;
+	register const u_char *rp = NULL;
+	register int compress = 0;
 	int chars_processed;
+	int elt;
 	int data_size = snapend - bp;
 
-	i = *cp++;
+	if ((l = labellen(cp)) < 0)
+		return(NULL);
+	if (cp >= snapend)
+		return(NULL);
 	chars_processed = 1;
-	rp = cp + i;
-	if ((i & INDIR_MASK) == INDIR_MASK) {
-		rp = cp + 1;
-		compress = 1;
-	} else
+	if (((i = *cp++) & INDIR_MASK) != INDIR_MASK) {
 		compress = 0;
+		rp = cp + l;
+	}
+
 	if (i != 0)
 		while (i && cp < snapend) {
 			if ((i & INDIR_MASK) == INDIR_MASK) {
+				if (!compress) {
+					rp = cp + 1;
+					compress = 1;
+				}
 				cp = bp + (((i << 8) | *cp) & 0x3fff);
+				if (cp >= snapend)
+					return(NULL);
+				if ((l = labellen(cp)) < 0)
+					return(NULL);
 				i = *cp++;
 				chars_processed++;
 
@@ -199,22 +199,36 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 				 * which means we're looping.
 				 */
 				if (chars_processed >= data_size) {
-					fn_printn(cp, 6, "<LOOP>");
-					if (!compress)
-						rp += i + 1;
-					return (rp);
+					printf("<LOOP>");
+					return (NULL);
 				}
 				continue;
 			}
-			if (fn_printn(cp, i, snapend))
-				break;
-			cp += i;
-			chars_processed += i;
+			if ((i & INDIR_MASK) == EDNS0_MASK) {
+				elt = (i & ~INDIR_MASK);
+				switch(elt) {
+				case EDNS0_ELT_BITLABEL:
+					blabel_print(cp);
+					break;
+				default:
+					/* unknown ELT */
+					printf("<ELT %d>", elt);
+					return(NULL);
+				}
+			} else {
+				if (fn_printn(cp, l, snapend))
+					break;
+			}
+
+			cp += l;
+			chars_processed += l;
 			putchar('.');
+			if (cp >= snapend || (l = labellen(cp)) < 0)
+				return(NULL);
 			i = *cp++;
 			chars_processed++;
 			if (!compress)
-				rp += i + 1;
+				rp += l + 1;
 		}
 	else
 		putchar('.');
@@ -227,12 +241,14 @@ ns_cprint(register const u_char *cp, register const u_char *bp)
 {
 	register u_int i;
 
+	if (cp >= snapend)
+		return NULL;
 	i = *cp++;
 	(void)fn_printn(cp, i, snapend);
 	return (cp + i);
 }
 
-static struct tok type2str[] = {
+struct tok ns_type2str[] = {
 	{ T_A,		"A" },
 	{ T_NS,		"NS" },
 	{ T_MD,		"MD" },
@@ -261,25 +277,19 @@ static struct tok type2str[] = {
 	{ T_PX,		"PX" },
 	{ T_GPOS,	"GPOS" },
 	{ T_AAAA,	"AAAA" },
-	{ T_LOC,	"LOC " },
-	{ T_NXT,	"NXT " },
-	{ T_EID,	"EID " },
-	{ T_NIMLOC,	"NIMLOC " },
-	{ T_SRV,	"SRV " },
-	{ T_ATMA,	"ATMA " },
-	{ T_NAPTR,	"NAPTR " },
-	{ T_A6,		"A6 " },
-#ifndef T_UINFO
-#define T_UINFO 100
-#endif
+	{ T_LOC,	"LOC" },
+	{ T_NXT,	"NXT" },
+	{ T_EID,	"EID" },
+	{ T_NIMLOC,	"NIMLOC" },
+	{ T_SRV,	"SRV" },
+	{ T_ATMA,	"ATMA" },
+	{ T_NAPTR,	"NAPTR" },
+	{ T_CERT,	"CERT" },
+	{ T_A6,		"A6" },
+	{ T_DNAME,	"DNAME" },
+	{ T_OPT,	"OPT" },
 	{ T_UINFO,	"UINFO" },
-#ifndef T_UID
-#define T_UID 101
-#endif
 	{ T_UID,	"UID" },
-#ifndef T_GID
-#define T_GID 102
-#endif
 	{ T_GID,	"GID" },
 	{ T_UNSPEC,	"UNSPEC" },
 	{ T_UNSPECA,	"UNSPECA" },
@@ -290,16 +300,16 @@ static struct tok type2str[] = {
 	{ 0,		NULL }
 };
 
-static struct tok class2str[] = {
+struct tok ns_class2str[] = {
 	{ C_IN,		"IN" },		/* Not used */
-	{ C_CHAOS,	"CHAOS)" },
+	{ C_CHAOS,	"CHAOS" },
 	{ C_HS,		"HS" },
 	{ C_ANY,	"ANY" },
 	{ 0,		NULL }
 };
 
 /* print a query */
-static void
+static const u_char *
 ns_qprint(register const u_char *cp, register const u_char *bp)
 {
 	register const u_char *np = cp;
@@ -307,46 +317,48 @@ ns_qprint(register const u_char *cp, register const u_char *bp)
 
 	cp = ns_nskip(cp, bp);
 
-	if (cp + 4 > snapend)
-		return;
+	if (cp + 4 > snapend || cp == NULL)
+		return(NULL);
 
 	/* print the qtype and qclass (if it's not IN) */
 	i = *cp++ << 8;
 	i |= *cp++;
-	printf(" %s", tok2str(type2str, "Type%d", i));
+	printf(" %s", tok2str(ns_type2str, "Type%d", i));
 	i = *cp++ << 8;
 	i |= *cp++;
 	if (i != C_IN)
-		printf(" %s", tok2str(class2str, "(Class %d)", i));
+		printf(" %s", tok2str(ns_class2str, "(Class %d)", i));
 
 	fputs("? ", stdout);
-	ns_nprint(np, bp);
+	cp = ns_nprint(np, bp);
+	return(cp ? cp + 4 : NULL);
 }
 
 /* print a reply */
 static const u_char *
 ns_rprint(register const u_char *cp, register const u_char *bp)
 {
-	register u_int i;
+	register u_int class;
 	register u_short typ, len;
 	register const u_char *rp;
 
 	if (vflag) {
 		putchar(' ');
-		cp = ns_nprint(cp, bp);
+		if ((cp = ns_nprint(cp, bp)) == NULL)
+			return NULL;
 	} else
 		cp = ns_nskip(cp, bp);
 
-	if (cp + 10 > snapend)
+	if (cp + 10 > snapend || cp == NULL)
 		return (snapend);
 
 	/* print the type/qtype and class (if it's not IN) */
 	typ = *cp++ << 8;
 	typ |= *cp++;
-	i = *cp++ << 8;
-	i |= *cp++;
-	if (i != C_IN)
-		printf(" %s", tok2str(class2str, "(Class %d)", i));
+	class = *cp++ << 8;
+	class |= *cp++;
+	if (class != C_IN && typ != T_OPT)
+		printf(" %s", tok2str(ns_class2str, "(Class %d)", class));
 
 	/* ignore ttl */
 	cp += 4;
@@ -356,10 +368,14 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 
 	rp = cp + len;
 
-	printf(" %s", tok2str(type2str, "Type%d", typ));
-	switch (typ) {
+	printf(" %s", tok2str(ns_type2str, "Type%d", typ));
+	if (rp > snapend)
+		return(NULL);
 
+	switch (typ) {
 	case T_A:
+		if (cp + sizeof(struct in_addr) > snapend)
+			return(NULL);
 		printf(" %s", ipaddr_string(cp));
 		break;
 
@@ -367,15 +383,41 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 	case T_CNAME:
 	case T_PTR:
 #ifdef T_DNAME
-	case T_DNAME:	/*XXX not checked as there's no server support yet*/
+	case T_DNAME:
 #endif
 		putchar(' ');
-		(void)ns_nprint(cp, bp);
+		if (ns_nprint(cp, bp) == NULL)
+			return(NULL);
 		break;
 
+	case T_SOA:
+		if (!vflag)
+			break;
+		putchar(' ');
+		if ((cp = ns_nprint(cp, bp)) == NULL)
+			return(NULL);
+		putchar(' ');
+		if ((cp = ns_nprint(cp, bp)) == NULL)
+			return(NULL);
+		if (cp + 5 * 4 > snapend)
+			return(NULL);
+		printf(" %u", EXTRACT_32BITS(cp));
+		cp += 4;
+		printf(" %u", EXTRACT_32BITS(cp));
+		cp += 4;
+		printf(" %u", EXTRACT_32BITS(cp));
+		cp += 4;
+		printf(" %u", EXTRACT_32BITS(cp));
+		cp += 4;
+		printf(" %u", EXTRACT_32BITS(cp));
+		cp += 4;
+		break;
 	case T_MX:
 		putchar(' ');
-		(void)ns_nprint(cp + 2, bp);
+		if (cp + 2 > snapend)
+			return(NULL);
+		if (ns_nprint(cp + 2, bp) == NULL)
+			return(NULL);
 		printf(" %d", EXTRACT_16BITS(cp));
 		break;
 
@@ -386,25 +428,43 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 
 #ifdef INET6
 	case T_AAAA:
+		if (cp + sizeof(struct in6_addr) > snapend)
+			return(NULL);
 		printf(" %s", ip6addr_string(cp));
 		break;
 
-	case T_A6:	/*XXX not checked as there's no server support yet*/
+	case T_A6:
 	    {
 		struct in6_addr a;
-		int pbyte;
+		int pbit, pbyte;
 
-		pbyte = (*cp + 7) / 8;
-		memset(&a, 0, sizeof(a));
-		memcpy(&a, cp + 1, pbyte);
-		printf(" %u %s ", *cp, ip6addr_string(&a));
-		(void)ns_nprint(cp + 1 + pbyte, bp);
+		pbit = *cp;
+		pbyte = (pbit & ~7) / 8;
+		if (pbit > 128) {
+			printf(" %u(bad plen)", pbit);
+			break;
+		} else if (pbit < 128) {
+			memset(&a, 0, sizeof(a));
+			memcpy(&a.s6_addr[pbyte], cp + 1, sizeof(a) - pbyte);
+			printf(" %u %s", pbit, ip6addr_string(&a));
+		}
+		if (pbit > 0) {
+			putchar(' ');
+			if (ns_nprint(cp + 1 + sizeof(a) - pbyte, bp) == NULL)
+				return(NULL);
+		}
 		break;
 	    }
 #endif /*INET6*/
 
+	case T_OPT:
+		printf(" UDPsize=%u", class);
+		break;
+
 	case T_UNSPECA:		/* One long string */
-	        printf(" %.*s", len, cp);
+		if (cp + len > snapend)
+			return(NULL);
+		fn_printn(cp, len, snapend);
 		break;
 	}
 	return (rp);		/* XXX This isn't always right */
@@ -415,7 +475,7 @@ ns_print(register const u_char *bp, u_int length)
 {
 	register const HEADER *np;
 	register int qdcount, ancount, nscount, arcount;
-	register const u_char *cp;
+	register const u_char *cp = NULL;
 
 	np = (const HEADER *)bp;
 	/* get the byte-order right */
@@ -424,44 +484,79 @@ ns_print(register const u_char *bp, u_int length)
 	nscount = ntohs(np->nscount);
 	arcount = ntohs(np->arcount);
 
-	if (np->qr) {
+	if (DNS_QR(np)) {
 		/* this is a response */
-		printf(" %d%s%s%s%s%s",
+		printf(" %d%s%s%s%s%s%s",
 			ntohs(np->id),
-			ns_ops[np->opcode],
-			ns_resp[np->rcode],
-			np->aa? "*" : "",
-			np->ra? "" : "-",
-			np->tc? "|" : "");
-		if (qdcount != 1)
-			printf(" [%dq]", qdcount);
-		/* Print QUESTION section on -vv */
+			ns_ops[DNS_OPCODE(np)],
+			ns_resp[DNS_RCODE(np)],
+			DNS_AA(np)? "*" : "",
+			DNS_RA(np)? "" : "-",
+			DNS_TC(np)? "|" : "",
+			DNS_CD(np)? "%" : "");
+
 		if (vflag > 1) {
-		            fputs(" q: ", stdout);
-			    cp = ns_nprint((const u_char *)(np + 1), bp);
-		} else
-			    cp = ns_nskip((const u_char *)(np + 1), bp);
+			fputs(" q:", stdout);
+			if ((cp = ns_qprint((const u_char *)(np + 1), bp))
+			    == NULL)
+				goto trunc;
+		} else {
+			if ((cp = ns_nskip((const u_char *)(np + 1), bp))
+			    == NULL)
+				goto trunc;
+			cp += 4;
+		}
 		printf(" %d/%d/%d", ancount, nscount, arcount);
 		if (ancount--) {
-			cp = ns_rprint(cp + 4, bp);
-			while (ancount-- && cp < snapend) {
+			if ((cp = ns_rprint(cp, bp)) == NULL)
+				goto trunc;
+			while (cp < snapend && ancount--) {
 				putchar(',');
-				cp = ns_rprint(cp, bp);
+				if ((cp = ns_rprint(cp, bp)) == NULL)
+					goto trunc;
 			}
+		}
+		if (ancount > 0)
+			goto trunc;
+		/* Print NS and AR sections on -vv */
+		if (vflag > 1) {
+			if (cp < snapend && nscount--) {
+				fputs(" ns:", stdout);
+				if ((cp = ns_rprint(cp, bp)) == NULL)
+					goto trunc;
+				while (cp < snapend && nscount--) {
+					putchar(',');
+					if ((cp = ns_rprint(cp, bp)) == NULL)
+						goto trunc;
+				}
+			}
+			if (nscount > 0)
+				goto trunc;
+			if (cp < snapend && arcount--) {
+				fputs(" ar:", stdout);
+				if ((cp = ns_rprint(cp, bp)) == NULL)
+					goto trunc;
+				while (cp < snapend && arcount--) {
+					putchar(',');
+					if ((cp = ns_rprint(cp, bp)) == NULL)
+						goto trunc;
+				}
+			}
+			if (arcount > 0)
+				goto trunc;
 		}
 	}
 	else {
 		/* this is a request */
-		printf(" %d%s%s",
-		        ntohs(np->id),
-			ns_ops[np->opcode],
-			np->rd? "+" : "");
+		printf(" %d%s%s%s", ntohs(np->id), ns_ops[DNS_OPCODE(np)],
+		    DNS_RD(np) ? "+" : "",
+		    DNS_AD(np) ? "$" : "");
 
 		/* any weirdness? */
-		if (*(((u_short *)np)+1) & htons(0x6ff))
+		if (*(((u_short *)np)+1) & htons(0x6cf))
 			printf(" [b2&3=0x%x]", ntohs(*(((u_short *)np)+1)));
 
-		if (np->opcode == IQUERY) {
+		if (DNS_OPCODE(np) == IQUERY) {
 			if (qdcount)
 				printf(" [%dq]", qdcount);
 			if (ancount != 1)
@@ -478,7 +573,64 @@ ns_print(register const u_char *bp, u_int length)
 		if (arcount)
 			printf(" [%dau]", arcount);
 
-		ns_qprint((const u_char *)(np + 1), (const u_char *)np);
+		if (qdcount--) {
+			cp = ns_qprint((const u_char *)(np + 1),
+				       (const u_char *)np);
+			if (!cp)
+				goto trunc;
+			while (cp < snapend && qdcount--) {
+				cp = ns_qprint((const u_char *)cp,
+					       (const u_char *)np);
+				if (!cp)
+					goto trunc;
+			}
+		}
+		if (qdcount > 0)
+			goto trunc;
+
+		/* Print remaining sections on -vv */
+		if (vflag > 1) {
+			if (ancount--) {
+				if ((cp = ns_rprint(cp, bp)) == NULL)
+					goto trunc;
+				while (cp < snapend && ancount--) {
+					putchar(',');
+					if ((cp = ns_rprint(cp, bp)) == NULL)
+						goto trunc;
+				}
+			}
+			if (ancount > 0)
+				goto trunc;
+			if (cp < snapend && nscount--) {
+				fputs(" ns:", stdout);
+				if ((cp = ns_rprint(cp, bp)) == NULL)
+					goto trunc;
+				while (nscount-- && cp < snapend) {
+					putchar(',');
+					if ((cp = ns_rprint(cp, bp)) == NULL)
+						goto trunc;
+				}
+			}
+			if (nscount > 0)
+				goto trunc;
+			if (cp < snapend && arcount--) {
+				fputs(" ar:", stdout);
+				if ((cp = ns_rprint(cp, bp)) == NULL)
+					goto trunc;
+				while (cp < snapend && arcount--) {
+					putchar(',');
+					if ((cp = ns_rprint(cp, bp)) == NULL)
+						goto trunc;
+				}
+			}
+			if (arcount > 0)
+				goto trunc;
+		}
 	}
 	printf(" (%d)", length);
+	return;
+
+  trunc:
+	printf("[|domain]");
+	return;
 }
