@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.8 2004/10/27 21:17:18 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.9 2004/10/27 21:19:01 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -168,10 +168,14 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t memh;
 	bus_addr_t base;
 	pci_intr_handle_t ih;
-	u_int32_t data;
+	pcireg_t data;
 	int error, i;
 
 	sc->sc_pct = pa->pa_pc;
+
+	data = pci_conf_read(sc->sc_pct, pa->pa_tag, 0x40);
+	data &= ~0x00ff0000;
+	pci_conf_write(sc->sc_pct, pa->pa_tag, 0x40, data);
 
 	/* enable bus-mastering */
 	data = pci_conf_read(sc->sc_pct, pa->pa_tag, PCI_COMMAND_STATUS_REG);
