@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.21 2002/03/14 01:27:05 millert Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.22 2002/08/23 15:33:12 art Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -826,10 +826,10 @@ unp_gc()
 		return;
 	unp_gcing = 1;
 	unp_defer = 0;
-	for (fp = filehead.lh_first; fp != 0; fp = fp->f_list.le_next)
+	LIST_FOREACH(fp, &filehead, f_list)
 		fp->f_flag &= ~(FMARK|FDEFER);
 	do {
-		for (fp = filehead.lh_first; fp != 0; fp = fp->f_list.le_next) {
+		LIST_FOREACH(fp, &filehead, f_list) {
 			if (fp->f_flag & FDEFER) {
 				fp->f_flag &= ~FDEFER;
 				unp_defer--;
@@ -908,9 +908,9 @@ unp_gc()
 	 * 91/09/19, bsy@cs.cmu.edu
 	 */
 	extra_ref = malloc(nfiles * sizeof(struct file *), M_FILE, M_WAITOK);
-	for (nunref = 0, fp = filehead.lh_first, fpp = extra_ref; fp != 0;
+	for (nunref = 0, fp = LIST_FIRST(&filehead), fpp = extra_ref; fp != 0;
 	    fp = nextfp) {
-		nextfp = fp->f_list.le_next;
+		nextfp = LIST_NEXT(fp, f_list);
 		if (fp->f_count == 0)
 			continue;
 		if (fp->f_count == fp->f_msgcount && !(fp->f_flag & FMARK)) {
