@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.66 2003/09/20 05:23:42 fgsch Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.67 2003/11/27 00:33:24 espie Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -180,6 +180,7 @@ CHS_rw(int rw, int dev, int cyl, int head, int sect, int nsect, void *buf)
 {
 	int rv;
 
+	rw = rw == F_READ ? 2 : 3;
 	BIOS_regs.biosr_es = (u_int32_t)buf >> 4;
 	__asm __volatile ("movb %b7, %h1\n\t"
 			  "movb %b6, %%dh\n\t"
@@ -194,7 +195,7 @@ CHS_rw(int rw, int dev, int cyl, int head, int sect, int nsect, void *buf)
 			  : "=a" (rv)
 			  : "0" (nsect), "d" (dev), "c" (cyl),
 			    "b" (buf), "m" (sect), "m" (head),
-			    "m" ((rw == F_READ)? 2: 3)
+			    "m" (rw)
 			  : "cc", "memory");
 
 	return (rv & 0xff)? rv >> 8 : 0;
