@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.5 2003/09/22 14:49:16 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.6 2003/09/28 19:15:53 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.5 2003/09/22 14:49:16 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.6 2003/09/28 19:15:53 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -770,10 +770,11 @@ store_array(void)
 	reg = readch();
 	if (0 <= reg && reg < UCHAR_MAX) {
 		inumber = pop_number();
+		if (inumber == NULL)
+			return;
 		value = pop();
-		if (inumber == NULL) {
-			if (value != NULL)
-				stack_free_value(value);
+		if (value == NULL) {
+			free_number(inumber);
 			return;
 		}
 		index = get_ulong(inumber);
