@@ -1086,6 +1086,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/hifn7751var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/i82365_pcivar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/ichreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_bcereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_bgereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_devar.ph

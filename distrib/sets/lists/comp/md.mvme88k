@@ -238,4 +238,5 @@
 ./usr/lib/libfrtbegin_p.a
 ./usr/lib/libg2c.a
 ./usr/lib/libg2c_p.a
+./usr/lib/libstdc++_p.a
 ./usr/lib/scrt0.o

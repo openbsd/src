@@ -295,6 +295,7 @@
 ./usr/lib/libsectok_pic.a
 ./usr/lib/libskey_pic.a
 ./usr/lib/libssl_pic.a
+./usr/lib/libstdc++_p.a
 ./usr/lib/libstdc++_pic.a
 ./usr/lib/libtermcap_pic.a
 ./usr/lib/libtermlib_pic.a

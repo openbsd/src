@@ -439,6 +439,7 @@
 ./usr/include/dev/pci/hifn7751reg.h
 ./usr/include/dev/pci/hifn7751var.h
 ./usr/include/dev/pci/i82365_pcivar.h
+./usr/include/dev/pci/ichreg.h
 ./usr/include/dev/pci/if_bcereg.h
 ./usr/include/dev/pci/if_bgereg.h
 ./usr/include/dev/pci/if_devar.h
@@ -1566,7 +1567,6 @@
 ./usr/lib/libssl.a
 ./usr/lib/libssl_p.a
 ./usr/lib/libstdc++.a
-./usr/lib/libstdc++_p.a
 ./usr/lib/libtermcap.a
 ./usr/lib/libtermcap_p.a
 ./usr/lib/libtermlib.a
@@ -1611,7 +1611,6 @@
 ./usr/share/man/cat1/c++.0
 ./usr/share/man/cat1/c++filt.0
 ./usr/share/man/cat1/cc.0
-./usr/share/man/cat1/cccp.0
 ./usr/share/man/cat1/f77.0
 ./usr/share/man/cat1/flex.0
 ./usr/share/man/cat1/fpr.0

@@ -238,6 +238,7 @@
 ./usr/lib/libfrtbegin_p.a
 ./usr/lib/libg2c.a
 ./usr/lib/libg2c_p.a
+./usr/lib/libstdc++_p.a
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/hppaobsd.x
 ./usr/libdata/ldscripts/hppaobsd.xbn
