@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.18 2001/12/16 23:49:46 miod Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.19 2002/01/21 19:59:19 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -569,9 +569,9 @@ ENTRY(copyinstr)
 	or	r6,   r6,   lo16(.Lcisflt)
 	st	r6,   r7,   PCB_ONFAULT
 	bcnd	lt0,  CNT,   .Lcisflt
-	bcnd	eq0,  CNT,   .Lcisdone
+	bcnd	eq0,  CNT,   .Lcistoolong
 	or	r6,   r0,   0
-   1:	
+1:
 #ifdef ERRATA__XXX_USR
 	NOP
 	ld.bu.usr  	r7,   SRC,  r6
@@ -581,27 +581,35 @@ ENTRY(copyinstr)
 #else
 	ld.bu.usr	r7,   SRC,  r6
 #endif
-	st.b	r7,   DEST, r6
+	st.b	r7, DEST, r6
 	bcnd.n	eq0,  r7, 2f		/* all done */
 	addu	r6,   r6, 1
 	cmp	r7,   r6, CNT
 	bb1	lt,   r7, 1b
-	or	r2,   r0, ENAMETOOLONG	/* over flow */
-	br	.Lcisdone
-   2:   					/* all done */
+
+.Lcistoolong:
+	or	r2,   r0, ENAMETOOLONG	/* overflow */
+
+.Lcisnull:
+	subu	r6,   r6, 1
+	st.b	r0, DEST, r6		/* clear last byte */
+	br.n	.Lcisdone
+	addu	r6,   r6, 1
+2:					/* all done */
 	or	r2,   r0, 0
-	br	.Lcisdone
 
 .Lcisdone:
         bcnd	eq0, LEN, 3f		
 	st	r6, r0, LEN
-   3:	or.u	r5,r0,hi16(_curpcb)
+3:
+	or.u	r5,r0,hi16(_curpcb)
 	ld	r6,r5,lo16(_curpcb)
 	st	r0,r6,PCB_ONFAULT	/* clear the handler */
 	jmp	r1
 .Lcisflt:
-	or	r2, r0, EFAULT	/* return fault */
-	br	.Lcisdone
+	or	r2, r0, EFAULT		/* return fault */
+	bcnd	eq0,r6, .Lcisdone	/* do not attempt to clear last byte */
+	br	.Lcisnull		/* if we faulted on first write */
 
 #undef SRC
 #undef DEST
