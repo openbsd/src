@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: entry.c,v 1.5 1997/12/22 08:10:43 deraadt Exp $";
+static char rcsid[] = "$Id: entry.c,v 1.6 2000/03/18 21:23:04 deraadt Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -150,13 +150,21 @@ load_entry(file, error_func, pw, envp)
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
 		} else if (!strcmp("hourly", cmd)) {
 			bit_set(e->minute, 0);
-			bit_set(e->hour, (LAST_HOUR-FIRST_HOUR+1));
+			bit_nset(e->hour, 0, (LAST_HOUR-FIRST_HOUR+1));
 			bit_nset(e->dom, 0, (LAST_DOM-FIRST_DOM+1));
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
 			e->flags |= HR_STAR;
 		} else {
 			ecode = e_timespec;
+			goto eof;
+		}
+		/* Advance past whitespace between shortcut and
+		 * username/command.
+		 */
+		Skip_Blanks(ch, file);
+		if (ch == EOF) {
+			ecode = e_cmd;
 			goto eof;
 		}
 	} else {
