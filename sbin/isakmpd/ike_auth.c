@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.54 2001/08/15 13:06:53 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.55 2001/08/16 13:27:03 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -1210,6 +1210,10 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
   strncpy (filename, rdir, FILENAME_MAX - 1);
   filename[FILENAME_MAX - 1] = '\0';
   base = filename + strlen (filename) - 1;
+
+  /* Exchanges (and SAs) don't carry the ID in ISAKMP form */
+  id -= ISAKMP_ID_TYPE_OFF;
+  id_len += ISAKMP_ID_TYPE_OFF;
 
   switch (GET_ISAKMP_ID_TYPE (id))
     {
