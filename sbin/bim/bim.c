@@ -1,4 +1,4 @@
-/*	$OpenBSD: bim.c,v 1.4 1997/01/16 00:35:52 millert Exp $	*/
+/*	$OpenBSD: bim.c,v 1.5 1997/09/04 00:51:52 mickey Exp $	*/
 /*	$NetBSD: bim.c,v 1.4 1995/09/28 07:08:49 phil Exp $	*/
 
 /* 
@@ -70,27 +70,19 @@ struct disklabel *dk_label = (struct disklabel *) &disk_info[LABELOFFSET];
 struct imageinfo *im_table = 
     (struct imageinfo *) (&disk_info[LABELOFFSET] + sizeof(struct disklabel));
 
-char *prog_name;
 int  label_changed = FALSE;
 int  images_changed = FALSE;
 int  secsize;
-
+extern char * __progname;
 
 /* Utility routines... */
 /***********************/
 
 void usage ()
 {
-  printf ("usage: %s [-c command [-c command ...]] [device]\n",prog_name);
+  printf ("usage: %s [-c command [-c command ...]] [device]\n",__progname);
   printf ("  Maximum of %d commands\n", MAXARGCMDS);
   exit (-2);
-}
-
-error (s1, s2)
-char *s1, *s2;
-{
-  printf ("%s: %s%s\n",prog_name,s1,s2);
-  exit (3);
 }
 
 void getlf ( inchar )
@@ -137,10 +129,10 @@ void save_images ()
 
   count = (int) lseek (disk_fd, (off_t) 0, SEEK_SET);
   if (count != 0)
-    error ("lseek error in saving image info.","");
+    err (3, "lseek in saving image info");
   count = write (disk_fd, disk_info, BLOCK_SIZE);
   if (count != BLOCK_SIZE)
-    error ("write error in saveing image info.","");
+    err ("write in saveing image info");
   sync ();
 }
 
@@ -173,7 +165,7 @@ char badmagic;
 	while (TRUE) {
 	    prompt (answer,3,"Do you want the images initialized? (y or n) ");
 	    if (answer[0] == 'y') break;
-	    if (answer[0] == 'n') error ("images not initialized.","");
+	    if (answer[0] == 'n') errx (3, "images not initialized.");
 	}
     }
 
@@ -614,7 +606,6 @@ char *argv[];
     int index;
 
     /* Check the parameters.  */
-    prog_name = argv[0];
     cmdscnt = 0;
     opterr = TRUE;
     fname = DEFAULT_DEVICE;
@@ -630,18 +621,18 @@ char *argv[];
     if (optind < argc) fname = argv[optind];
 
     disk_fd = open(fname, O_RDWR);
-    if (disk_fd < 0) error("Could not open ", fname);
+    if (disk_fd < 0) err(3, "%s", fname);
 
     /* Read the disk information block. */
     count = read (disk_fd, disk_info, BLOCK_SIZE);
-    if (count != BLOCK_SIZE) error("Could not read info block on ", fname);
+    if (count != BLOCK_SIZE) errx(3, "Could not read info block on %s", fname);
     
     /* Check for correct information and set up pointers. */
     if (dk_label->d_magic != DISKMAGIC) 
-    	error ("Could not find a disk label on", fname);
+    	err (3, "Could not find a disk label on %s", fname);
     if (im_table->ii_magic != IMAGE_MAGIC)  init_images (TRUE);
     if (dkcksum (dk_label) != 0) 
-       printf ("Warning: bad checksum in disk label.\n");
+       warnx ("Warning: bad checksum in disk label.");
 
     /* initialize secsize. */
     secsize = dk_label->d_secsize;

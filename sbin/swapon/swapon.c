@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapon.c,v 1.4 1997/02/06 09:50:56 dima Exp $	*/
+/*	$OpenBSD: swapon.c,v 1.5 1997/09/04 00:51:55 mickey Exp $	*/
 /*	$NetBSD: swapon.c,v 1.7 1995/03/18 15:01:18 cgd Exp $	*/
 
 /*
@@ -44,17 +44,19 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)swapon.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: swapon.c,v 1.4 1997/02/06 09:50:56 dima Exp $";
+static char rcsid[] = "$OpenBSD: swapon.c,v 1.5 1997/09/04 00:51:55 mickey Exp $";
 #endif
 #endif /* not lint */
 
 #include <fstab.h>
 #include <errno.h>
+#include <err.h>
 #include <stdio.h>
 #include <unistd.h>
 
 int add __P((char *, int));
 void usage ();
+extern char *__progname;
 
 int
 main(argc, argv)
@@ -80,14 +82,14 @@ main(argc, argv)
 
 	stat = 0;
 	if (doall)
-		while (fsp = getfsent()) {
+		while ((fsp = getfsent())) {
 			if (strcmp(fsp->fs_type, FSTAB_SW))
 				continue;
 			if (add(fsp->fs_spec, 1))
 				stat = 1;
 			else
-				printf("swapon: adding %s as swap device\n",
-				    fsp->fs_spec);
+				printf("%s: adding %s as swap device\n",
+				       __progname, fsp->fs_spec);
 		}
 	else if (!*argv)
 		usage();
@@ -106,18 +108,14 @@ add(name, ignoreebusy)
 	if (swapon(name) == -1) {
 		switch (errno) {
 		case EINVAL:
-			fprintf(stderr, "swapon: %s: Device not configured\n",
-			    name);
+			warnx("%s: Device not configured", name);
 			break;
 		case EBUSY:
 			if (!ignoreebusy)
-				fprintf(stderr,
-				    "swapon: %s: Device already in use\n",
-				     name);
+				warnx("%s: Device already in use", name);
 			break;
 		default:
-			fprintf(stderr, "swapon: %s: ", name);
-			perror((char *)NULL);
+			warn("%s", name);
 			break;
 		}
 		return(1);
@@ -128,6 +126,6 @@ add(name, ignoreebusy)
 void
 usage()
 {
-	fprintf(stderr, "usage: swapon [-a] [special_file ...]\n");
+	fprintf(stderr, "usage: %s [-a] [special_file ...]\n", __progname);
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.3 1996/08/02 11:23:35 deraadt Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.4 1997/09/04 00:51:56 mickey Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: tunefs.c,v 1.3 1996/08/02 11:23:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tunefs.c,v 1.4 1997/09/04 00:51:56 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,8 @@ int bread(daddr_t, char *, int);
 void getsb(struct fs *, char *);
 void usage __P((void));
 void printfs __P((void));
+
+extern char *__progname;
 
 int
 main(argc, argv)
@@ -236,15 +238,16 @@ again:
 void
 usage()
 {
-
-	fprintf(stderr, "Usage: tunefs tuneup-options special-device\n");
-	fprintf(stderr, "where tuneup-options are:\n");
-	fprintf(stderr, "\t-a maximum contiguous blocks\n");
-	fprintf(stderr, "\t-d rotational delay between contiguous blocks\n");
-	fprintf(stderr, "\t-e maximum blocks per file in a cylinder group\n");
-	fprintf(stderr, "\t-m minimum percentage of free space\n");
-	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
-	fprintf(stderr, "\t-p no change - just prints current tuneable settings\n");
+	fprintf(stderr,
+		"Usage: %s tuneup-options special-device\n"
+		"where tuneup-options are:\n"
+		"\t-a maximum contiguous blocks\n"
+		"\t-d rotational delay between contiguous blocks\n"
+		"\t-e maximum blocks per file in a cylinder group\n"
+		"\t-m minimum percentage of free space\n"
+		"\t-o optimization preference (`space' or `time')\n"
+		"\t-p no change - just prints current tuneable settings\n",
+		__progname);
 	exit(2);
 }
 

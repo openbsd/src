@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.12 1997/08/24 16:36:26 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.13 1997/09/04 00:51:53 mickey Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.12 1997/08/24 16:36:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.13 1997/09/04 00:51:53 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,8 @@ static char rcsid[] = "$OpenBSD: shutdown.c,v 1.12 1997/08/24 16:36:26 deraadt E
 #include <string.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <errno.h>
+#include <err.h>
 
 #include "pathnames.h"
 
@@ -228,10 +230,8 @@ main(argc, argv)
 		int forkpid;
 
 		forkpid = fork();
-		if (forkpid == -1) {
-			perror("shutdown: fork");
-			exit(1);
-		}
+		if (forkpid == -1)
+			err(1, "fork");
 		if (forkpid) {
 			(void)printf("shutdown: [pid %d]\n", forkpid);
 			exit(0);
@@ -385,7 +385,7 @@ die_you_gravy_sucking_pig_dog()
 		    (nosync ? "-n" : (dodump ? "-d" : NULL)),
 		    (dodump ? "-d" : NULL), NULL, NULL);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_REBOOT);
-		perror("shutdown");
+		warn(_PATH_REBOOT);
 	}
 	else if (dohalt) {
 		execle(_PATH_HALT, "halt", "-l",
@@ -393,7 +393,7 @@ die_you_gravy_sucking_pig_dog()
 		    (nosync ? "-n" : (dodump ? "-d" : NULL)),
 		    (dodump ? "-d" : NULL), NULL, NULL);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_HALT);
-		perror("shutdown");
+		warn(_PATH_HALT);
 	}
 	(void)kill(1, SIGTERM);		/* to single user */
 #endif
@@ -521,8 +521,7 @@ finish(signo)
 void
 badtime()
 {
-	(void)fprintf(stderr, "shutdown: bad time format.\n");
-	exit(1);
+	errx(1, "bad time format.");
 }
 
 void
