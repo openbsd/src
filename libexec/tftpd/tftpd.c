@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.31 2003/09/24 20:40:19 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.32 2004/01/27 02:25:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.31 2003/09/24 20:40:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.32 2004/01/27 02:25:30 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -69,12 +69,13 @@ static char rcsid[] = "$OpenBSD: tftpd.c,v 1.31 2003/09/24 20:40:19 deraadt Exp 
 #include <pwd.h>
 
 #define	TIMEOUT		5
+#define	MAX_TIMEOUTS	5
 
 extern	char *__progname;
 struct	sockaddr_storage s_in;
 int	peer;
 int	rexmtval = TIMEOUT;
-int	maxtimeout = 5*TIMEOUT;
+int	max_rexmtval = 2*TIMEOUT;
 
 #define	PKTSIZE	SEGSIZE+4
 char	buf[PKTSIZE];
@@ -94,7 +95,7 @@ int	recvfile(struct formats *pf);
 int	sendfile(struct formats *pf);
 
 struct formats {
-	char	*f_mode;
+	const char	*f_mode;
 	int	(*f_validate)(char *, int);
 	int	(*f_send)(struct formats *);
 	int	(*f_recv)(struct formats *);
@@ -102,12 +103,26 @@ struct formats {
 } formats[] = {
 	{ "netascii",	validate_access,	sendfile,	recvfile, 1 },
 	{ "octet",	validate_access,	sendfile,	recvfile, 0 },
-	{ 0 }
+	{ NULL,		NULL,			NULL,		NULL,	  0 }
+};
+struct options {
+	const char	*o_type;
+	char		*o_request;
+	int		o_reply;	/* turn into union if need be */
+} options[] = {
+	{ "tsize",	NULL, 0 },	/* OPT_TSIZE */
+	{ "timeout",	NULL, 0 },	/* OPT_TIMEOUT */
+	{ NULL,		NULL, 0 }
+};
+enum opt_enum {
+	OPT_TSIZE = 0,
+	OPT_TIMEOUT
 };
 
 int	validate_access(char *filename, int mode);
 void	tftp(struct tftphdr *tp, int size);
 void	nak(int error);
+void	oack(void);
 
 int	readit(FILE *file, struct tftphdr **dpp, int convert);
 void	read_ahead(FILE *file, int convert);
@@ -278,11 +293,12 @@ void
 tftp(struct tftphdr *tp, int size)
 {
 	char *cp;
-	int first = 1, ecode;
+	int i, first = 1, has_options = 0, ecode;
 	struct formats *pf;
-	char *filename, *mode = NULL;
+	char *filename, *mode = NULL, *option, *ccp;
+	char fnbuf[MAXPATHLEN];
 
-	filename = cp = tp->th_stuff;
+	cp = tp->th_stuff;
 again:
 	while (cp < buf + size) {
 		if (*cp == '\0')
@@ -293,6 +309,14 @@ again:
 		nak(EBADOP);
 		exit(1);
 	}
+	i = cp - tp->th_stuff;
+	if (i >= sizeof(fnbuf)) {
+		nak(EBADOP);
+		exit(1);
+	}
+	memcpy(fnbuf, tp->th_stuff, i);
+	fnbuf[i] = '\0';
+	filename = fnbuf;
 	if (first) {
 		mode = ++cp;
 		first = 0;
@@ -308,7 +332,47 @@ again:
 		nak(EBADOP);
 		exit(1);
 	}
+	while (++cp < buf + size) {
+		for (i = 2, ccp = cp; i > 0; ccp++) {
+			if (ccp >= buf + size) {
+				/*
+				 * Don't reject the request, just stop trying
+				 * to parse the option and get on with it.
+				 * Some Apple OpenFirmware versions have
+				 * trailing garbage on the end of otherwise
+				 * valid requests.
+				 */
+				goto option_fail;
+			} else if (*ccp == '\0')
+				i--;
+		}
+		for (option = cp; *cp; cp++)
+			if (isupper(*cp))
+				*cp = tolower(*cp);
+		for (i = 0; options[i].o_type != NULL; i++)
+			if (strcmp(option, options[i].o_type) == 0) {
+				options[i].o_request = ++cp;
+				has_options = 1;
+			}
+		cp = ccp-1;
+	}
+
+option_fail:
+	if (options[OPT_TIMEOUT].o_request) {
+		int to = atoi(options[OPT_TIMEOUT].o_request);
+		if (to < 1 || to > 255) {
+			nak(EBADOP);
+			exit(1);
+		}
+		else if (to <= max_rexmtval)
+			options[OPT_TIMEOUT].o_reply = rexmtval = to;
+		else
+			options[OPT_TIMEOUT].o_request = NULL;
+	}
+
 	ecode = (*pf->f_validate)(filename, tp->th_opcode);
+	if (has_options)
+		oack();
 	if (ecode) {
 		nak(ecode);
 		exit(1);
@@ -381,6 +445,14 @@ validate_access(char *filename, int mode)
 				return (EACCESS);
 		}
 	}
+	if (options[OPT_TSIZE].o_request) {
+		if (mode == RRQ) 
+			options[OPT_TSIZE].o_reply = stbuf.st_size;
+		else
+			/* XXX Allows writes of all sizes. */
+			options[OPT_TSIZE].o_reply =
+				atoi(options[OPT_TSIZE].o_request);
+	}
 	fd = open(filename, mode == RRQ ? O_RDONLY : (O_WRONLY|wmode), 0666);
 	if (fd < 0)
 		return (errno + 100);
@@ -401,15 +473,14 @@ validate_access(char *filename, int mode)
 	return (0);
 }
 
-int	timeout;
+int	timeouts;
 jmp_buf	timeoutbuf;
 
 static void
 timer(int signo)
 {
 	/* XXX longjmp/signal resource leaks */
-	timeout += rexmtval;
-	if (timeout >= maxtimeout)
+	if (++timeouts >= MAX_TIMEOUTS)
 		_exit(1);
 	longjmp(timeoutbuf, 1);
 }
@@ -436,7 +507,7 @@ sendfile(struct formats *pf)
 		}
 		dp->th_opcode = htons((u_short)DATA);
 		dp->th_block = htons((u_short)block);
-		timeout = 0;
+		timeouts = 0;
 		setjmp(timeoutbuf);
 
 send_data:
@@ -500,7 +571,7 @@ recvfile(struct formats *pf)
 	dp = w_init();
 	ap = (struct tftphdr *)ackbuf;
 	do {
-		timeout = 0;
+		timeouts = 0;
 		ap->th_opcode = htons((u_short)ACK);
 		ap->th_block = htons((u_short)block);
 		block++;
@@ -564,7 +635,7 @@ abort:
 
 struct errmsg {
 	int	e_code;
-	char	*e_msg;
+	const char	*e_msg;
 } errmsgs[] = {
 	{ EUNDEF,	"Undefined error code" },
 	{ ENOTFOUND,	"File not found" },
@@ -574,6 +645,7 @@ struct errmsg {
 	{ EBADID,	"Unknown transfer ID" },
 	{ EEXISTS,	"File already exists" },
 	{ ENOUSER,	"No such user" },
+	{ EOPTNEG,	"Option negotiation failed" },
 	{ -1,		NULL }
 };
 
@@ -605,4 +677,58 @@ nak(int error)
 		length = sizeof(buf);
 	if (send(peer, buf, length, 0) != length)
 		syslog(LOG_ERR, "nak: %m");
+}
+
+/*
+ * Send an oack packet (option acknowledgement).
+ */
+void
+oack(void)
+{
+	struct tftphdr *tp, *ap;
+	int size, i, n;
+	char *bp;
+
+	tp = (struct tftphdr *)buf;
+	bp = buf + 2;
+	size = sizeof(buf) - 2;
+	tp->th_opcode = htons((u_short)OACK);
+	for (i = 0; options[i].o_type != NULL; i++) {
+		if (options[i].o_request) {
+			n = snprintf(bp, size, "%s%c%d", options[i].o_type,
+				     0, options[i].o_reply);
+			bp += n+1;
+			size -= n+1;
+			if (size < 0) {
+				syslog(LOG_ERR, "oack: buffer overflow");
+				exit(1);
+			}
+		}
+	}
+	size = bp - buf;
+	ap = (struct tftphdr *)ackbuf;
+	signal(SIGALRM, timer);
+	timeouts = 0;
+
+	(void)setjmp(timeoutbuf);
+	if (send(peer, buf, size, 0) != size) {
+		syslog(LOG_INFO, "oack: %m");
+		exit(1);
+	}
+
+	for (;;) {
+		alarm(rexmtval);
+		n = recv(peer, ackbuf, sizeof (ackbuf), 0);
+		alarm(0);
+		if (n < 0) {
+			syslog(LOG_ERR, "recv: %m");
+			exit(1);
+		}
+		ap->th_opcode = ntohs((u_short)ap->th_opcode);
+		ap->th_block = ntohs((u_short)ap->th_block);
+		if (ap->th_opcode == ERROR)
+			exit(1);
+		if (ap->th_opcode == ACK && ap->th_block == 0)
+			break;
+	}
 }
