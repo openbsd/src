@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2004/02/02 20:21:14 vincent Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2004/07/11 20:36:32 pvalchev Exp $	*/
 
 /*
  *	Mainline.
@@ -89,18 +89,13 @@ main(int argc, char **argv)
 
 	for (nfiles = 0, i = 0; i < argc; i++) {
 		if (argv[i][0] == '+' && strlen(argv[i]) >= 2) {
-			long lval;
-			char *ep;
+			int lval;
+			const char *errstr;
 
-			errno = 0;
-			lval = strtoul(&argv[i][1], &ep, 10);
-			if (argv[i][1] == '\0' || *ep != '\0')
+			lval = strtonum(&argv[i][1], INT_MIN, INT_MAX, &errstr);
+			if (argv[i][1] == '\0' || *errstr != '\0')
 				goto notnum;
-			if ((errno == ERANGE &&
-			    (lval == LONG_MAX || lval == LONG_MIN)) ||
-			    (lval > INT_MAX || lval < INT_MIN))
-				goto notnum;
-			startrow = (int)lval;
+			startrow = lval;
 		} else {
 notnum:
 			cp = adjustname(argv[i]);
