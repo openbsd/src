@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwnode.c,v 1.5 2002/12/13 21:35:11 tdeval Exp $	*/
+/*	$OpenBSD: fwnode.c,v 1.6 2003/01/12 12:05:53 tdeval Exp $	*/
 /*	$NetBSD: fwnode.c,v 1.13 2002/04/03 04:15:59 jmc Exp $	*/
 
 /*
@@ -149,6 +149,7 @@ fwnode_attach(struct device *parent, struct device *self, void *aux)
 	MPRINTF("malloc(1394DATA)", ab->ab_data);
 	ab->ab_data[0] = 0;
 
+	sc->sc_sc1394.sc1394_link_speed = fwa->link_speed;
 	sc->sc_sc1394.sc1394_node_id = fwa->nodeid;
 	memcpy(sc->sc_sc1394.sc1394_guid, fwa->uid, 8);
 	sc->sc1394_read = fwa->read;
@@ -448,8 +449,9 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 
 		sc->sc_sc1394.sc1394_max_receive =
 		    IEEE1394_GET_MAX_REC(ntohl(sc->sc_configrom->data[0]));
-		sc->sc_sc1394.sc1394_link_speed =
-		    IEEE1394_GET_LINK_SPD(ntohl(sc->sc_configrom->data[0]));
+		val = IEEE1394_GET_LINK_SPD(ntohl(sc->sc_configrom->data[0]));
+		DPRINTFN(1, ("%s: ConfigRom Link Speed: %s",
+		    sc->sc_sc1394.sc1394_dev.dv_xname, ieee1394_speeds[val]));
 		printf("%s: Link Speed: %s, max_rec: %d bytes\n",
 		    sc->sc_sc1394.sc1394_dev.dv_xname,
 		    ieee1394_speeds[sc->sc_sc1394.sc1394_link_speed],
