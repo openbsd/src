@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.48 2003/04/18 03:07:20 mickey Exp $	*/
+/*	$OpenBSD: theo.c,v 1.49 2003/04/18 03:19:02 mickey Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -131,6 +131,7 @@ static const char *talk[] = {
 	"if ya break cvs, we hunt ya and break yer legs",
 	"who cares.  style(9) can bite my ass",
 	"The argument is totally Linux.",
+	"It'd be one fucking happy planet if it wasn't for what's under this fucking sticker.",
 	"noone is gonna add that thing to theo.c?  wow, i'm stunned.  no henning?"
 
 };
