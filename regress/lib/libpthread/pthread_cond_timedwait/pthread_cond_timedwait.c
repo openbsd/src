@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_cond_timedwait.c,v 1.4 2003/07/31 21:48:05 deraadt Exp $	*/
+/*	$OpenBSD: pthread_cond_timedwait.c,v 1.5 2003/11/27 19:38:19 marc Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -86,7 +86,7 @@ main(int argc, char *argv[])
 	CHECKe(gettimeofday(&begtime, NULL));
 	TIMEVAL_TO_TIMESPEC(&begtime, &abstime);
 
-	for (ix = 0; ix < 5; ix++) {
+	for (ix = 0; ix < 2; ix++) {
 		abstime.tv_sec += 5; 
 
 		/* Test a condition timeout */
