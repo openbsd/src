@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.2 2001/04/02 23:11:21 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.3 2001/05/31 22:10:06 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -181,14 +181,14 @@ Elf_Addr
 _dl_find_symbol(const char *name, elf_object_t *startlook,
 			const Elf_Sym **ref, int myself, int warnnotfound)
 {
-	u_int32_t h = 0;
+	unsigned long h = 0;
 	const char *p = name;
 	elf_object_t *object;
 	const Elf_Sym *weak_sym = 0;
 	Elf_Addr weak_offs = 0;
 
 	while(*p) {
-		u_int32_t g;
+		unsigned long g;
 		h = (h << 4) + *p++;
 		if((g = h & 0xf0000000)) {
 			h ^= g >> 24;
