@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.17 2002/09/06 22:56:21 deraadt Exp $	*/
+/*	$OpenBSD: policy.c,v 1.18 2002/09/16 04:34:46 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -567,6 +567,8 @@ systrace_dumppolicy(void)
 		if (systrace_writepolicy(policy) == -1)
 			fprintf(stderr, "Failed to write policy for %s\n",
 			    policy->name);
+		else
+			policy->flags &= ~POLICY_CHANGED;
 	}
 
 	return (0);

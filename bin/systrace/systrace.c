@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.33 2002/09/16 04:34:46 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -419,8 +419,9 @@ main(int argc, char **argv)
 	char *filename = NULL;
 	char *policypath = NULL;
 	char *guipath = _PATH_XSYSTRACE;
+	struct timeval tv, tv_wait = {60, 0};
 	pid_t pidattach = 0;
-	int usex11 = 1;
+	int usex11 = 1, count;
 	int background;
 
 	while ((c = getopt(argc, argv, "aAituUd:g:f:p:")) != -1) {
@@ -523,9 +524,31 @@ main(int argc, char **argv)
 	if (usex11 && !automatic && !allow)
 		requestor_start(guipath);
 
-	while (intercept_read(trfd) != -1)
+	/* Loop on requests */
+	count = 0;
+	while (intercept_read(trfd) != -1) {
 		if (!intercept_existpids())
 			break;
+		if (userpolicy) {
+			/* Periodically save modified policies */
+			if (count == 0) {
+				/* Set new wait time */
+				gettimeofday(&tv, NULL);
+				timeradd(&tv, &tv_wait, &tv);
+			} else if (count > 10) {
+				struct timeval now;
+				gettimeofday(&now, NULL);
+
+				count = 0;
+				if (timercmp(&now, &tv, >)) {
+					/* Dump policy and cause new time */
+					systrace_dumppolicy();
+					continue;
+				}
+			}
+			count++;
+		}
+	}
 
 	if (userpolicy)
 		systrace_dumppolicy();
