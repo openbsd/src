@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.16 2002/01/10 14:19:30 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.17 2002/01/10 14:21:34 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.59 2001/06/05 18:51:04 thorpej Exp $	*/
 
 /*-
@@ -59,7 +59,6 @@
 #define simple_lock_freecheck(a, s) do { /* nothing */ } while (0)
 #define simple_lock_only_held(lkp, str) do { /* nothing */ } while (0)
 #endif
-#define LOCK_ASSERT(x) /* nothing */
 
 /*
  * Pool resource management utility.
