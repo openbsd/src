@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.13 1998/04/25 05:47:35 millert Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.14 1998/07/13 19:45:47 deraadt Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -212,7 +212,7 @@ linux_connect(p, uap, retval)
 		SCARG(&fca, fd) = lca.s;
 		SCARG(&fca, cmd) = F_GETFL;
 		SCARG(&fca, arg) = 0;
-		if (sys_getsockopt(p, &fca, retval) == -1 ||
+		if (sys_fcntl(p, &fca, retval) == -1 ||
 		    (*retval & O_NONBLOCK) == 0)
 			return error;
 
