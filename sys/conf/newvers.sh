@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.57 2003/09/15 23:29:31 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.58 2004/01/01 00:16:46 deraadt Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -59,6 +59,17 @@ id=`basename ${d}`
 #		VERSION and other bits
 #	src/sys/arch/macppc/stand/tbxidata/bsd.tbxi
 #		change	/X.X/macppc/bsd.rd
+#
+# -current and -beta tagging:
+#	right after a release, re-tag to -current by changing the
+#	following lines below, as shown:
+#
+#	"    @(#)${ost} ${osr}-current (${id}) #${v}: ${t}\n";
+#	"${ost} ${osr}-current (${id}) #${v}: ${t}\n    ${u}@${h}:${d}\n";
+#	
+#	a month or so before release, change to -beta by changing in the
+#	same way.
+#
 
 ost="OpenBSD"
 osr="3.4"
