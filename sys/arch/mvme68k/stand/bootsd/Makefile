@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.1.1.1 1995/10/18 10:44:12 deraadt Exp $
+#	     $Id: Makefile,v 1.2 1995/12/06 10:54:54 deraadt Exp $
 
 RELOC=0x3F0000 
 
@@ -31,11 +31,18 @@ all: ${ALL}
 devopen.o machdep.o: Makefile
 
 bootsd.bug:	${OBJS} ${BUGCRT} ${LIBS}
-	${LD} -s -N -T ${RELOC} ${BUGCRT} ${OBJS} ${LIBS} -o $@
+	${LD} -N -T ${RELOC} ${BUGCRT} ${OBJS} ${LIBS} -o $@
 	@size bootsd.bug
 
 bootsd sdboot: bootsd.bug ${WRTVID}
-	${WRTVID} bootsd.bug
+	cp bootsd.bug bootsd.bin
+	strip bootsd.bin
+	@if [ `size bootsd.bin | awk 'BEGIN {getline} {print $$1+$$2;}'` -gt 7168 ];\
+	then\
+		echo BOOTBLOCKS ARE TOO BIG;\
+		fail;\
+	fi
+	${WRTVID} bootsd.bin
 
 install:
 	install -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}

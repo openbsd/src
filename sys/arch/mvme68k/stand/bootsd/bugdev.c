@@ -1,4 +1,4 @@
-/*	$Id: bugdev.c,v 1.3 1995/11/07 08:50:35 deraadt Exp $ */
+/*	$Id: bugdev.c,v 1.4 1995/12/06 10:54:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -47,7 +47,7 @@ struct devsw devsw[] = {
 };
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 
-extern struct mvmeprom_args *bugargs;
+extern struct mvmeprom_args bugargs;
 int errno;
 
 struct bugsc_softc {
@@ -57,8 +57,6 @@ struct bugsc_softc {
 	short	ctrl;
 	short	dev;
 } bugsc_softc[1];
-
-static struct disklabel sdlabel;
 
 int
 devopen(f, fname, file)
@@ -70,8 +68,9 @@ devopen(f, fname, file)
 	int	error, i, dn = 0, pn = 0;
 	char	*dev, *cp;
 	static	char iobuf[MAXBSIZE];
+	struct disklabel sdlabel;
 
-	dev = bugargs->arg_start;
+	dev = bugargs.arg_start;
 
 	/*
 	 * Extract partition # from boot device string.
@@ -96,14 +95,8 @@ devopen(f, fname, file)
 		return (EINVAL);
 
 	cputobsdlabel(&sdlabel, (struct cpu_disklabel *)iobuf);
-	if (0) {
-		printf("WARNING: no label\n");
-		/* XXX set some default label */
-		return (EINVAL);
-	} else {
-		pp->poff = sdlabel.d_partitions[pn].p_offset;
-		pp->psize = sdlabel.d_partitions[pn].p_size;
-	}
+	pp->poff = sdlabel.d_partitions[pn].p_offset;
+	pp->psize = sdlabel.d_partitions[pn].p_size;
 
 	f->f_dev = devsw;
 	f->f_devdata = (void *)pp;
@@ -126,8 +119,6 @@ bugscstrategy(devdata, func, dblk, size, buf, rsize)
 	struct mvmeprom_dskio dio;
 	register struct bugsc_softc *pp = (struct bugsc_softc *)devdata;
 	daddr_t	blk = dblk + pp->poff;
-	int	error = 0;
-	short status = 0;
 
 	twiddle();
 
@@ -150,15 +141,9 @@ bugscstrategy(devdata, func, dblk, size, buf, rsize)
 printf("rsize %d status %x\n", *rsize, dio.status);
 #endif
 
-	switch (dio.status) {
-	case 0:
-		error = 0;
-		break;
-	default:
-		error = EIO;
-		break;
-	}
-	return (error);
+	if (dio.status)
+		return (EIO);
+	return (0);
 }
 
 int
@@ -170,8 +155,8 @@ bugscopen(f)
 #endif
 
 	f->f_devdata = (void *)bugsc_softc;
-	bugsc_softc[0].ctrl = bugargs->ctrl_lun;
-	bugsc_softc[0].dev =  bugargs->dev_lun;
+	bugsc_softc[0].ctrl = (short)bugargs.ctrl_lun;
+	bugsc_softc[0].dev =  (short)bugargs.dev_lun;
 	printf("using mvmebug ctrl %d dev %d\n",
 	    bugsc_softc[0].ctrl, bugsc_softc[0].dev);
 	return (0);

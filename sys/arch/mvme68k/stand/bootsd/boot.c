@@ -1,4 +1,4 @@
-/*	$Id: boot.c,v 1.4 1995/11/07 08:50:34 deraadt Exp $ */
+/*	$Id: boot.c,v 1.5 1995/12/06 10:54:55 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -71,9 +71,8 @@
 #include <machine/prom.h>
 #include "stand.h"
 
-void reset_twiddle __P((void));
 void copyunix __P((int io, char *addr));
-void parse_args __P((struct mvmeprom_args *pargs));
+void parse_args __P((void));
 
 int debug;
 int netif_debug;
@@ -87,7 +86,7 @@ u_long		esym;
 char		*strtab;
 int		strtablen;
 #if 0
-struct nlist	*nlp, *enlp;
+struct nlist  *nlp, *enlp;
 #endif
 
 struct kernel {
@@ -102,11 +101,10 @@ struct kernel {
 	u_int	end_loaded;
 } kernel;
 
-struct mvmeprom_args *bugargs;
+extern struct mvmeprom_args bugargs;
 
 int
-main(pp)
-	struct mvmeprom_args *pp;
+main()
 {
 	struct exec x;
 	char *file;
@@ -115,17 +113,16 @@ main(pp)
 
 	printf(">> OpenBSD sdboot [%s]\n", version);
 
-	bugargs = pp;
-	parse_args(pp);
+	parse_args();
 	file = kernel.kname;
 
-	if ((io = open(file, 0)) < 0) {
+	io = open(file, 0);
+	if (io < 0) {
 		printf("Can't open %s: %s\n", file, strerror(errno));
 		mvmeprom_return();
 	}
 	i = read(io, (char *)&x, sizeof(x));
-	if (i != sizeof(x) ||
-	    N_BADMAG(x)) {
+	if (i != sizeof(x) || N_BADMAG(x)) {
 		printf("Bad format\n");
 		return (0);
 	}
@@ -133,9 +130,7 @@ main(pp)
 	addr = (void *)(x.a_entry & ~0x0FFF);
 	lseek(io, 0, SEEK_SET);
 
-	reset_twiddle();
-
-	printf("booting %s load address 0x%x\n", file, addr);
+	/*printf("load %s to 0x%x\n", file, addr);*/
 	copyunix(io, addr);
 	return (0);
 }
@@ -146,18 +141,16 @@ copyunix(io, addr)
 	int io;
 	char *addr;
 {
-	struct exec x;
-	int i;
 	void (*entry)() = (void (*)())addr;
+	struct exec x;
+	int i, cnt;
 
 	i = read(io, (char *)&x, sizeof(x));
-	if (i != sizeof(x) ||
-	    N_BADMAG(x)) {
+	if (i != sizeof(x) || N_BADMAG(x)) {
 		printf("Bad format\n");
 		return;
 	}
 
-	reset_twiddle();
 	printf("%x", x.a_text);
 	if (N_GETMAGIC(x) == ZMAGIC) {
 		kernel.entry = entry = (void *)x.a_entry;
@@ -169,12 +162,10 @@ copyunix(io, addr)
 	if (N_GETMAGIC(x) == NMAGIC)
 		while ((int)addr & CLOFSET)
 			*addr++ = 0;
-	reset_twiddle();
 	printf("+%x", x.a_data);
 	if (read(io, addr, x.a_data) != x.a_data)
 		goto shread;
 	addr += x.a_data;
-	reset_twiddle();
 	printf("+%x", x.a_bss);
 	for (i = 0; i < x.a_bss; i++)
 		*addr++ = 0;
@@ -191,25 +182,17 @@ copyunix(io, addr)
 #if 0
 		enlp = (struct nlist *)(strtab = addr);
 #endif
-		reset_twiddle();
 
 		if (read(io, &strtablen, sizeof(int)) != sizeof(int))
 			goto shread;
-		reset_twiddle();
 
 		bcopy(&strtablen, addr, sizeof(int));
 		if (i = strtablen) {
 			i -= sizeof(int);
 			addr += sizeof(int);
-			{
-				int cnt;
-				cnt = read(io, addr, i);
-				if (cnt != i)
-				    /*
-				    goto shread;
-				    */printf("symwarn");
-			}
-			reset_twiddle();
+			cnt = read(io, addr, i);
+			if (cnt != i)
+				printf("symwarn"); /* goto shread; */
 			addr += i;
 		}
 		printf("%x]", i);
@@ -256,115 +239,62 @@ printf("end_loaded %x\n",kernel.end_loaded);
 #endif
 
 	printf("start at 0x%x\n", (int)entry);
-#if 0
-	if (kernel.bflags & RB_HALT) {
-		mvmeprom_return();
-	}
-#endif
 	if (((u_long)entry &0xf) == 0x2) {
-		(entry)(bugargs, &kernel);
+		(entry)(&bugargs, &kernel);
 	} else {
-                /* is type fixing anything like price fixing? */
-                typedef (* kernel_start)(int, int, void *,void *, void *);
-                kernel_start addr; 
-                addr = (void *)entry;
-                (addr)(kernel.bflags,0,kernel.esym,kernel.smini,kernel.emini);
+		/* is type fixing anything like price fixing? */
+		typedef (* kernel_start) __P((int, int, void *,void *, void *));
+		kernel_start addr; 
+		addr = (void *)entry;
+		(addr)(kernel.bflags, 0, kernel.esym, kernel.smini, kernel.emini);
 	}
 	return;
+
 shread:
-	printf("Short read\n");
-}
-#define NO_TWIDDLE_FUNC
-
-#ifndef NO_TWIDDLE_FUNC
-static int tw_on;
-static int tw_pos;
-static char tw_chars[] = "|/-\\";
-#endif
-
-void
-reset_twiddle()
-{
-#ifndef NO_TWIDDLE_FUNC
-	if (tw_on)
-		putchar('\b');
-	tw_on = 0;
-	tw_pos = 0;
-#endif
+	printf("short read\n");
 }
 
-#ifndef NO_TWIDDLE_FUNC
-void
-twiddle()
-{
-	if (tw_on)
-		putchar('\b');
-	else
-		tw_on = 1;
-	putchar(tw_chars[tw_pos++]);
-	tw_pos %= (sizeof(tw_chars) - 1);
-}
-#endif
-
-#if 0
-void
-_rtt()
-{
-	mvmeprom_return();
-}
-#endif
-
-void
-parse_args(pargs)
-	struct mvmeprom_args *pargs;
-{
-	char *ptr = pargs->arg_start;
-	char *name = "/bsd";
+struct flags {
 	char c;
-	int howto = 0;
+	short bit;
+} bf[] = {
+	{ 'a', RB_ASKNAME },
+	{ 'b', RB_HALT },
+	{ 'y', RB_NOSYM },
+	{ 'd', RB_KDB },
+	{ 'm', RB_MINIROOT },
+	{ 'r', RB_DFLTROOT },
+	{ 's', RB_SINGLE },
+};
 
-	if (pargs->arg_start != pargs->arg_end) {
+void
+parse_args()
+{
+	char *name = "/bsd", *ptr;
+	int i, howto = 0;
+	char c;
+
+	if (bugargs.arg_start == bugargs.arg_end) {
+		ptr = bugargs.arg_start;
 		while (c = *ptr) {
 			while (c == ' ')
 				c = *++ptr;
-			if (!c)
+			if (c == '\0')
 				return;
-			if (c == '-')
-				while ((c = *++ptr) && c != ' ') {
-					if (c == 'a')
-						howto |= RB_ASKNAME;
-					else if (c == 'b')
-						howto |= RB_HALT;
-					else if (c == 'y')
-						howto |= RB_NOSYM;
-					else if (c == 'd')
-						howto |= RB_KDB;
-					else if (c == 'm')
-						howto |= RB_MINIROOT;
-					else if (c == 'r')
-						howto |= RB_DFLTROOT;
-					else if (c == 's')
-						howto |= RB_SINGLE;
-				}
-			else {
+			if (c != '-') {
 				name = ptr;
-				while ((c = *++ptr) && c != ' ');
+				while ((c = *++ptr) && c != ' ')
+					;
 				if (c)
 					*ptr++ = 0;
+				continue;
+			}
+			while ((c = *++ptr) && c != ' ') {
+				for (i = 0; i < sizeof(bf)/sizeof(bf[0]); i++)
+					if (bf[i].c == c)
+						howto |= bf[i].bit;
 			}
 		}
-#if 0
-		if (RB_NOSYM & howto) printf("RB_NOSYM\n\r");
-		if (RB_AUTOBOOT & howto) printf("RB_AUTOBOOT\n\r");
-		if (RB_SINGLE & howto) printf("RB_SINGLE\n\r");
-		if (RB_NOSYNC & howto) printf("RB_NOSYNC\n\r");
-		if (RB_HALT & howto) printf("RB_HALT\n\r");
-		if (RB_DFLTROOT & howto) printf("RB_DFLTROOT\n\r");
-		if (RB_KDB & howto) printf("RB_KDB\n\r");
-		if (RB_RDONLY & howto) printf("RB_RDONLY\n\r");
-		if (RB_DUMP & howto) printf("RB_DUMP\n\r");
-		if (RB_MINIROOT & howto) printf("RB_MINIROOT\n\r");
-#endif
 	}
 	kernel.bflags = howto;
 	kernel.kname = name;
