@@ -1,7 +1,10 @@
-#	$OpenBSD: Makefile,v 1.5 1999/11/25 21:18:01 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2000/05/29 08:17:32 deraadt Exp $
 
-SUBDIR= 	keycap cursor fontedit fonts kcon loadfont scon \
-		userkeys vttest ispcvt pcvtdoc fed
+SUBDIR=	keycap cursor fontedit kcon loadfont scon \
+	userkeys vttest ispcvt pcvtdoc fed
+.if ${MACHINE} == "i386"
+SUBDIR+=fonts
+.endif
 
 .if make(clean) || make(cleandir) || make(obj)
 SUBDIR+=	vgaio kbdio set2061

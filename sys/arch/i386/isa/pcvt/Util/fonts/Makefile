@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2000/05/27 05:52:11 deraadt Exp $
-
-.if ${MACHINE} == "i386"
+#	$OpenBSD: Makefile,v 1.7 2000/05/29 08:17:34 deraadt Exp $
 
 FONTS	= 	vt220l.814 vt220h.814 vt220l.808 vt220h.808 \
 		vt220l.816 vt220h.816 vt220l.810 vt220h.810 \
@@ -69,8 +67,3 @@ koi8-8x14: ${.CURDIR}/koi8-8x14.uu
 
 koi8-8x16: ${.CURDIR}/koi8-8x16.uu
 	uudecode ${.CURDIR}/$@.uu
-
-.else
-all install:
-
-.endif
