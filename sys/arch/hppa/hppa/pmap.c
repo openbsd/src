@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.112 2004/06/09 20:17:23 tedu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.113 2004/06/30 18:11:48 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -234,7 +234,7 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 		ptp->wire_count = 0;
 #ifdef DIAGNOSTIC
 		if (ptp->flags & PG_BUSY)
-			panic("pmap_destroy: busy page table page");
+			panic("pmap_pde_release: busy page table page");
 #endif
 		uvm_pagefree(ptp);
 	}
