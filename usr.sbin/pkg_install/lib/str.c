@@ -1,7 +1,7 @@
-/*	$OpenBSD: str.c,v 1.9 2003/04/05 16:06:01 avsm Exp $	*/
+/*	$OpenBSD: str.c,v 1.10 2003/04/05 18:02:32 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: str.c,v 1.9 2003/04/05 16:06:01 avsm Exp $";
+static const char *rcsid = "$OpenBSD: str.c,v 1.10 2003/04/05 18:02:32 avsm Exp $";
 #endif
 
 /*
@@ -94,9 +94,7 @@ copy_string(char *str)
     if (!str)
 	ret = NULL;
     else {
-	int len = strlen(str) + 1;
-	ret = (char *)malloc(len);
-	strlcpy(ret, str, len);
+	ret = strdup(str);
     }
     return ret;
 }
@@ -365,18 +363,4 @@ findbestmatchingname(const char *dir, const char *pattern)
 		return strdup(buf);
 	}
 	return NULL;
-}
-
-/* bounds-checking strncpy */
-char *
-strnncpy(char *to, size_t tosize, char *from, size_t cc)
-{
-	size_t	len;
-
-	if ((len = cc) >= tosize - 1) {
-		len = tosize - 1;
-	}
-	(void) strncpy(to, from, len);
-	to[len] = 0;
-	return to;
 }
