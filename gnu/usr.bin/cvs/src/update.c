@@ -34,6 +34,7 @@
  */
 
 #include "cvs.h"
+#include "savecwd.h"
 #ifdef SERVER_SUPPORT
 #include "md5.h"
 #endif
@@ -49,7 +50,6 @@ static int patch_file PROTO ((struct file_info *finfo,
 			      int *docheckout, struct stat *file_info,
 			      unsigned char *checksum));
 #endif
-static int isemptydir PROTO((char *dir));
 static int merge_file PROTO ((struct file_info *finfo, Vers_TS *vers));
 static int scratch_file PROTO((struct file_info *finfo));
 static Dtype update_dirent_proc PROTO ((void *callerdat, char *dir,
@@ -256,7 +256,7 @@ update (argc, argv)
 	    if (failed_patches == NULL)
 	    {
 		send_file_names (argc, argv, SEND_EXPAND_WILD);
-		send_files (argc, argv, local, aflag);
+		send_files (argc, argv, local, aflag, update_build_dirs);
 	    }
 	    else
 	    {
@@ -265,7 +265,7 @@ update (argc, argv)
 		(void) printf ("%s client: refetching unpatchable files\n",
 			       program_name);
 
-		if (toplevel_wd[0] != '\0'
+		if (toplevel_wd != NULL
 		    && CVS_CHDIR (toplevel_wd) < 0)
 		{
 		    error (1, errno, "could not chdir to %s", toplevel_wd);
@@ -275,7 +275,7 @@ update (argc, argv)
 		    (void) unlink_file (failed_patches[i]);
 		send_file_names (failed_patches_count, failed_patches, 0);
 		send_files (failed_patches_count, failed_patches, local,
-			    aflag);
+			    aflag, update_build_dirs);
 	    }
 
 	    failed_patches = NULL;
@@ -539,22 +539,11 @@ update_fileproc (callerdat, finfo)
 
 		    if (retcode)
 		    {
-			/*
-			 * If the timestamps differ, look for Conflict
-			 * indicators to see if 'C' anyway.
-			 */
-			run_setup ("%s", GREP);
-			run_arg (RCS_MERGE_PAT);
-			run_arg (finfo->file);
-			retcode = run_exec (RUN_TTY, DEVNULL,
-					    RUN_TTY,RUN_NORMAL);
-			if (retcode == -1)
-			{
-			    error (1, errno,
-				"fork failed while examining conflict in `%s'",
-				       finfo->fullname);
-			}
+			/* The timestamps differ.  But if there are conflict
+			   markers print 'C' anyway.  */
+			retcode = !file_has_markers (finfo);
 		    }
+
 		    if (!retcode)
 		    {
 			(void) write_letter (finfo->file, 'C', finfo->update_dir);
@@ -840,9 +829,12 @@ update_dirleave_proc (callerdat, dir, err, update_dir, entries)
 	    if ((cp = strrchr (line, '\n')) != NULL)
 		*cp = '\0';
 	    run_setup ("%s %s", line, repository);
-	    (void) printf ("%s %s: Executing '", program_name, command_name);
+	    cvs_output (program_name, 0);
+	    cvs_output (" ", 1);
+	    cvs_output (command_name, 0);
+	    cvs_output (": Executing '", 0);
 	    run_print (stdout);
-	    (void) printf ("'\n");
+	    cvs_output ("'\n", 0);
 	    (void) run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL);
 	}
 	(void) fclose (fp);
@@ -854,7 +846,7 @@ update_dirleave_proc (callerdat, dir, err, update_dir, entries)
 	/* FIXME: chdir ("..") loses with symlinks.  */
 	/* Prune empty dirs on the way out - if necessary */
 	(void) CVS_CHDIR ("..");
-	if (update_prune_dirs && isemptydir (dir))
+	if (update_prune_dirs && isemptydir (dir, 0))
 	{
 	    /* I'm not sure the existence_error is actually possible (except
 	       in cases where we really should print a message), but since
@@ -868,30 +860,92 @@ update_dirleave_proc (callerdat, dir, err, update_dir, entries)
     return (err);
 }
 
-/*
- * Returns 1 if the argument directory is completely empty, other than the
- * existence of the CVS directory entry.  Zero otherwise.
- */
+static int isremoved PROTO ((Node *, void *));
+
+/* Returns 1 if the file indicated by node has been removed.  */
 static int
-isemptydir (dir)
+isremoved (node, closure)
+    Node *node;
+    void *closure;
+{
+    Entnode *entdata = (Entnode*) node->data;
+
+    /* If the first character of the version is a '-', the file has been
+       removed. */
+    return (entdata->version && entdata->version[0] == '-') ? 1 : 0;
+}
+
+/* Returns 1 if the argument directory is completely empty, other than the
+   existence of the CVS directory entry.  Zero otherwise.  If MIGHT_NOT_EXIST
+   and the directory doesn't exist, then just return 0.  */
+int
+isemptydir (dir, might_not_exist)
     char *dir;
+    int might_not_exist;
 {
     DIR *dirp;
     struct dirent *dp;
 
     if ((dirp = CVS_OPENDIR (dir)) == NULL)
     {
-	error (0, 0, "cannot open directory %s for empty check", dir);
+	if (might_not_exist && existence_error (errno))
+	    return 0;
+	error (0, errno, "cannot open directory %s for empty check", dir);
 	return (0);
     }
+    errno = 0;
     while ((dp = readdir (dirp)) != NULL)
     {
-	if (strcmp (dp->d_name, ".") != 0 && strcmp (dp->d_name, "..") != 0 &&
-	    strcmp (dp->d_name, CVSADM) != 0)
+	if (strcmp (dp->d_name, ".") != 0
+	    && strcmp (dp->d_name, "..") != 0)
 	{
-	    (void) closedir (dirp);
-	    return (0);
+	    if (strcmp (dp->d_name, CVSADM) != 0)
+	    {
+		/* An entry other than the CVS directory.  The directory
+		   is certainly not empty. */
+		(void) closedir (dirp);
+		return (0);
+	    }
+	    else
+	    {
+		/* The CVS directory entry.  We don't have to worry about
+		   this unless the Entries file indicates that files have
+		   been removed, but not committed, in this directory.
+		   (Removing the directory would prevent people from
+		   comitting the fact that they removed the files!) */
+		List *l;
+		int files_removed;
+		struct saved_cwd cwd;
+
+		if (save_cwd (&cwd))
+		    error_exit ();
+
+		if (CVS_CHDIR (dir) < 0)
+		    error (1, errno, "cannot change directory to %s", dir);
+		l = Entries_Open (0);
+		files_removed = walklist (l, isremoved, 0);
+		Entries_Close (l);
+
+		if (restore_cwd (&cwd, NULL))
+		    error_exit ();
+		free_cwd (&cwd);
+
+		if (files_removed != 0)
+		{
+		    /* There are files that have been removed, but not
+		       committed!  Do not consider the directory empty. */
+		    (void) closedir (dirp);
+		    return (0);
+		}
+	    }
 	}
+	errno = 0;
+    }
+    if (errno != 0)
+    {
+	error (0, errno, "cannot read directory %s", dir);
+	(void) closedir (dirp);
+	return (0);
     }
     (void) closedir (dirp);
     return (1);
@@ -947,12 +1001,17 @@ checkout_file (finfo, vers_ts, adding)
 	{
 	    if (!quiet)
 	    {
-		(void) fprintf (stderr, "\
-===================================================================\n");
-		(void) fprintf (stderr, "Checking out %s\n", finfo->fullname);
-		(void) fprintf (stderr, "RCS:  %s\n", vers_ts->srcfile->path);
-		(void) fprintf (stderr, "VERS: %s\n", vers_ts->vn_rcs);
-		(void) fprintf (stderr, "***************\n");
+		cvs_outerr ("\
+===================================================================\n\
+Checking out ", 0);
+		cvs_outerr (finfo->fullname, 0);
+		cvs_outerr ("\n\
+RCS:  ", 0);
+		cvs_outerr (vers_ts->srcfile->path, 0);
+		cvs_outerr ("\n\
+VERS: ", 0);
+		cvs_outerr (vers_ts->vn_rcs, 0);
+		cvs_outerr ("\n***************\n", 0);
 	    }
 	}
 

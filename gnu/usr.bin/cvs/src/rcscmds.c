@@ -152,12 +152,10 @@ RCS_merge(path, options, rev1, rev2)
 #ifndef HAVE_RCS5
     if (status == 0) 
     {
-	/* Run GREP to see if there appear to be conflicts in the file */
-	run_setup ("%s", GREP);
-	run_arg (RCS_MERGE_PAT);
-	run_arg (path);
-	status = (run_exec (RUN_TTY, DEVNULL, RUN_TTY, RUN_NORMAL) == 0);
-
+	error (1, 0, "CVS no longer supports RCS versions older than RCS5");
+	/* This case needs to call file_has_markers to see if the file
+	   contains conflict indicators.  But is anyone using the !HAVE_RCS5
+	   code any more?  */
     }
 #endif
     return status;

@@ -1,5 +1,4 @@
 dnl configure.in for cvs
-dnl "$CVSid$"
 AC_INIT(src/cvs.h)
 AC_PREREQ(2.4)dnl Required Autoconf version.
 AC_CONFIG_HEADER(config.h src/options.h)
@@ -49,17 +48,20 @@ AC_TYPE_MODE_T
 AC_TYPE_SIZE_T
 AC_TYPE_PID_T
 AC_REPLACE_FUNCS(getwd mkdir rename strdup strstr dup2 strerror valloc waitpid vasprintf strtoul)
-AC_CHECK_FUNCS(fchmod fsync ftime mkfifo putenv setvbuf vfork vprintf ftruncate timezone getpagesize initgroups fchdir sigaction sigprocmask sigvec sigsetmask sigblock)
+AC_CHECK_FUNCS(fchmod fsync ftime mkfifo putenv setvbuf vfork vprintf ftruncate timezone getpagesize initgroups fchdir sigaction sigprocmask sigvec sigsetmask sigblock tzset readlink)
 
 dnl
 dnl Look for shadow password files before we go ahead and set getspnam.
 dnl On some systems (Linux), the C library has getspnam but shadow
 dnl passwords might not be in use.
 dnl
+dnl We used to check for the existence of the /etc/security directory
+dnl here, but that's incorrect, since it's possible to have PAM installed
+dnl without using shadow passwords.
+dnl
 AC_MSG_CHECKING([for evidence of shadow passwords])
 if test -f /etc/shadow \
-   || test -f /etc/security/passwd.adjunct \
-   || test -d /etc/security ; then
+   || test -f /etc/security/passwd.adjunct ; then
   echo "yup"
   AC_CHECK_LIB(sec, getspnam)
   AC_CHECK_FUNCS(getspnam)
@@ -89,6 +91,35 @@ if test $ccvs_cv_sys_working_fnmatch = no; then
   LIBOBJS="$LIBOBJS fnmatch.o"
 fi
 AC_MSG_RESULT($ccvs_cv_sys_working_fnmatch)
+
+# If we can't find connect, try looking in -lsocket, -lnsl, and -linet.
+# The Irix 5 libc.so has connect and gethostbyname, but Irix 5 also has
+# libsocket.so which has a bad implementation of gethostbyname (it
+# only looks in /etc/hosts), so we only look for -lsocket if we need
+# it.
+AC_CHECK_FUNC(connect, :, 
+[case "$LIBS" in
+*-lnsl*) ;;
+*) AC_CHECK_LIB(nsl_s, printf) ;;
+esac
+case "$LIBS" in
+*-lnsl*) ;;
+*) AC_CHECK_LIB(nsl, printf) ;;
+esac
+case "$LIBS" in
+*-lsocket*) ;;
+*) AC_CHECK_LIB(socket, connect) ;;
+esac
+case "$LIBS" in
+*-linet*) ;;
+*) AC_CHECK_LIB(inet, connect) ;;
+esac
+dnl We can't just call AC_CHECK_FUNCS(connect) here, because the value
+dnl has been cached.
+if test "$ac_cv_lib_socket_connect" = "yes" || test "$ac_cv_lib_inet_connect" = "yes"; then
+  ac_cv_func_connect=yes
+  AC_DEFINE(HAVE_CONNECT)
+fi])
 
 dnl
 dnl set $(KRB4) from --with-krb4=value -- WITH_KRB4
@@ -170,51 +201,47 @@ if test "$encryption" = "true"; then
   AC_DEFINE(ENCRYPTION)
 fi
 
-# If we can't find connect, try looking in -lsocket, -lnsl, and -linet.
-# The Irix 5 libc.so has connect and gethostbyname, but Irix 5 also has
-# libsocket.so which has a bad implementation of gethostbyname (it
-# only looks in /etc/hosts), so we only look for -lsocket if we need
-# it.
-unset ac_cv_func_connect
-AC_CHECK_FUNC(connect, :, 
-[case "$LIBS" in
-*-lnsl*) ;;
-*) AC_CHECK_LIB(nsl_s, printf) ;;
-esac
-case "$LIBS" in
-*-lnsl*) ;;
-*) AC_CHECK_LIB(nsl, printf) ;;
-esac
-case "$LIBS" in
-*-lsocket*) ;;
-*) AC_CHECK_LIB(socket, connect) ;;
-esac
-case "$LIBS" in
-*-linet*) ;;
-*) AC_CHECK_LIB(inet, connect) ;;
-esac
-unset ac_cv_func_connect
-AC_CHECK_FUNCS(connect)])
-
 AC_CHECK_FUNC(gethostname, :, LIBOBJS="$LIBOBJS hostname.o")
 
-# If we have connect(), we want the full client & server arrangement.
-if test "$ac_cv_func_connect" = yes; then
-AC_DEFINE(CLIENT_SUPPORT)
-AC_DEFINE(SERVER_SUPPORT)
-# Define AUTH_SERVER_SUPPORT only if we could locate the crypt() function
-unset ac_cv_func_crypt
-AC_CHECK_FUNC(crypt, :,
-[case "$LIBS" in
-*-lcrypt*) ;;
-*) AC_CHECK_LIB(crypt, crypt) ;;
-esac
-unset ac_cv_func_crypt
-AC_CHECK_FUNCS(crypt)])
-  if test "$ac_cv_func_crypt" = yes; then
+# Check for options requesting client and server feature. If none are
+# given and we have connect(), we want the full client & server arrangement.
+AC_ARG_ENABLE(client,
+[  --enable-client         include code for running as a remote client (default)
+  --disable-client        don't include remote client code],
+[if test "$enable_client" = yes; then
+  AC_DEFINE(CLIENT_SUPPORT)
+fi],
+[if test "$ac_cv_func_connect" = yes; then
+  AC_DEFINE(CLIENT_SUPPORT)
+fi])
+AC_ARG_ENABLE(server,
+[  --enable-server         include code for running as a server (default)
+  --disable-server        don't include server code],
+[if test "$enable_server" = yes; then
+  AC_DEFINE(SERVER_SUPPORT)
+fi],
+[if test "$ac_cv_func_connect" = yes; then
+  AC_DEFINE(SERVER_SUPPORT)
+  enable_server=yes
+fi])
+
+### The auth server needs to be able to check passwords against passwd
+### file entries, so we only #define AUTH_SERVER_SUPPORT if we can
+### find the crypt function. 
+###
+### We used to test for crypt in libc first, and only add -lcrypt if
+### we couldn't find it, but that interacts badly with the cache
+### variables, the 'unset' command isn't portable, and I'm not sure
+### there's any harm in just testing for -lcrypt first.
+
+if test "$enable_server" = yes; then
+AC_CHECK_LIB(crypt, crypt)
+AC_CHECK_FUNCS(crypt)
+
+if test "$ac_cv_func_crypt" = yes; then
   AC_DEFINE(AUTH_SERVER_SUPPORT)
-  fi
 fi
+fi # enable_server
 
 test -f src/options.h && (
   AC_MSG_WARN(saving ./src/options.h in ./src/options.h-SAVED)

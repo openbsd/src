@@ -52,27 +52,6 @@ char *CurDir;
 char *Rcsbin = RCSBIN_DFLT;
 char *Tmpdir = TMPDIR_DFLT;
 char *Editor = EDITOR_DFLT;
-/*
- * The path found in CVS/Root must match $CVSROOT and/or 'cvs -d root'
- */
-int add PROTO((int argc, char **argv));
-int admin PROTO((int argc, char **argv));
-int checkout PROTO((int argc, char **argv));
-int commit PROTO((int argc, char **argv));
-int diff PROTO((int argc, char **argv));
-int history PROTO((int argc, char **argv));
-int import PROTO((int argc, char **argv));
-int cvslog PROTO((int argc, char **argv));
-#ifdef AUTH_CLIENT_SUPPORT
-int login PROTO((int argc, char **argv));
-#endif /* AUTH_CLIENT_SUPPORT */
-int patch PROTO((int argc, char **argv));
-int release PROTO((int argc, char **argv));
-int cvsremove PROTO((int argc, char **argv));
-int rtag PROTO((int argc, char **argv));
-int status PROTO((int argc, char **argv));
-int tag PROTO((int argc, char **argv));
-int update PROTO((int argc, char **argv));
 
 static const struct cmd
 {
@@ -100,7 +79,7 @@ static const struct cmd
 
     char *nick1;
     char *nick2;
-
+    
     int (*func) ();		/* Function takes (argc, argv) arguments. */
 } cmds[] =
 
@@ -132,7 +111,7 @@ static const struct cmd
     { "remove",   "rm",       "delete",    cvsremove },
     { "status",   "st",       "stat",      status },
     { "rtag",     "rt",       "rfreeze",   rtag },
-    { "tag",      "ta",       "freeze",    tag },
+    { "tag",      "ta",       "freeze",    cvstag },
     { "unedit",   NULL,	      NULL,	   unedit },
     { "update",   "up",       "upd",       update },
     { "watch",    NULL,	      NULL,	   watch },
@@ -240,6 +219,50 @@ cmd_synonyms ()
     return (const char * const*) synonyms; /* will never be freed */
 }
 
+
+unsigned long int
+lookup_command_attribute (char *cmd_name)
+{
+    unsigned long int ret = 0;
+
+    if (strcmp (cmd_name, "import") != 0)
+    {
+        ret |= CVS_CMD_IGNORE_ADMROOT;
+    }
+
+    
+    if ((strcmp (cmd_name, "checkout") != 0) &&
+        (strcmp (cmd_name, "login") != 0) &&
+        (strcmp (cmd_name, "rdiff") != 0) &&
+        (strcmp (cmd_name, "release") != 0) &&
+        (strcmp (cmd_name, "rtag") != 0))
+    {
+        ret |= CVS_CMD_USES_WORK_DIR;
+    }
+        
+
+    /* The following commands do not modify the repository; we
+       conservatively assume that everything else does.  Feel free to
+       add to this list if you are _certain_ something is safe. */
+    if ((strcmp (cmd_name, "checkout") != 0) &&
+        (strcmp (cmd_name, "diff") != 0) &&
+        (strcmp (cmd_name, "update") != 0) &&
+        (strcmp (cmd_name, "history") != 0) &&
+        (strcmp (cmd_name, "editors") != 0) &&
+        (strcmp (cmd_name, "export") != 0) &&
+        (strcmp (cmd_name, "history") != 0) &&
+        (strcmp (cmd_name, "log") != 0) &&
+        (strcmp (cmd_name, "noop") != 0) &&
+        (strcmp (cmd_name, "watchers") != 0) &&
+        (strcmp (cmd_name, "status") != 0))
+    {
+        ret |= CVS_CMD_MODIFIES_REPOSITORY;
+    }
+
+    return ret;
+}
+
+
 static RETSIGTYPE
 main_cleanup (sig)
     int sig;
@@ -287,16 +310,6 @@ main_cleanup (sig)
 #endif /* !DONT_USE_SIGNALS */
 }
 
-static void
-error_cleanup PROTO((void))
-{
-    Lock_Cleanup();
-#ifdef SERVER_SUPPORT
-    if (server_active)
-	server_cleanup (0);
-#endif
-}
-
 int
 main (argc, argv)
     int argc;
@@ -325,12 +338,16 @@ main (argc, argv)
     int option_index = 0;
     int need_to_create_root = 0;
 
-    error_set_cleanup (error_cleanup);
-
 #ifdef SYSTEM_INITIALIZE
     /* Hook for OS-specific behavior, for example socket subsystems on
        NT and OS2 or dealing with windows and arguments on Mac.  */
     SYSTEM_INITIALIZE (&argc, &argv);
+#endif
+
+#ifdef HAVE_TZSET
+    /* On systems that have tzset (which is almost all the ones I know
+       of), it's a good idea to call it.  */
+    tzset ();
 #endif
 
     /*
@@ -616,13 +633,13 @@ main (argc, argv)
 	       ignores CVS directories and CVS/Root is likely to
 	       specify a different repository than the one we are
 	       importing to.  */
-#if 0
-	    if (lookup_command_attribute (command_name) & CVS_CMD_IGNORE_ADMROOT)
+
+	    if (lookup_command_attribute (command_name)
+                & CVS_CMD_IGNORE_ADMROOT)
+            {
 		CVSADM_Root = Name_Root((char *) NULL, (char *) NULL);
-#else
-	    if (strcmp (command_name, "import") != 0)
-		CVSADM_Root = Name_Root((char *) NULL, (char *) NULL);
-#endif
+            }
+
 	    if (CVSADM_Root != NULL)
 	    {
 		if (CVSroot == NULL || !cvs_update_env)
@@ -651,16 +668,12 @@ main (argc, argv)
 		       "cvs login" command.  Ahh, the things one
 		       discovers. */
 
-#if 0
-		    if (lookup_command_attribute (command_name) & CVS_CMD_USES_WORK_DIR)
-#else
-		    if ((strcmp (command_name, "checkout") != 0) &&
-			(strcmp (command_name, "login") != 0) &&
-			(strcmp (command_name, "rdiff") != 0) &&
-			(strcmp (command_name, "release") != 0) &&
-			(strcmp (command_name, "rtag") != 0))
-#endif
+		    if (lookup_command_attribute (command_name)
+                        & CVS_CMD_USES_WORK_DIR)
+                    {
 			need_to_create_root = 1;
+                    }
+
 		}
 	    }
 
@@ -827,28 +840,13 @@ main (argc, argv)
 
 	gethostname(hostname, sizeof (hostname));
 
-#ifdef HAVE_SETVBUF
-	/*
-	 * Make stdout line buffered, so 'tail -f' can monitor progress.
-	 * Patch creates too much output to monitor and it runs slowly.
-	 */
-#  ifndef KLUDGE_FOR_WNT_TESTSUITE
-
-	if (strcmp (cm->fullname, "patch"))
-#    ifdef BUFSIZ  /* traditional SysV chokes when size == 0 */
-	    (void) setvbuf (stdout, (char *) NULL, _IOLBF, BUFSIZ);
-#    else
-	    (void) setvbuf (stdout, (char *) NULL, _IOLBF, 0);
-#    endif
-
-#  else /* KLUDGE_FOR_WNT_TESTSUITE */
-
-	    (void) setvbuf (stdout, (char *) NULL, _IONBF, 0);
-	    (void) setvbuf (stderr, (char *) NULL, _IONBF, 0);
-
-#  endif /* KLUDGE_FOR_WNT_TESTSUITE */
-
-#endif /* HAVE_SETVBUF */
+#ifdef KLUDGE_FOR_WNT_TESTSUITE
+	/* Probably the need for this will go away at some point once
+	   we call fflush enough places (e.g. fflush (stdout) in
+	   cvs_outerr).  */
+	(void) setvbuf (stdout, (char *) NULL, _IONBF, 0);
+	(void) setvbuf (stderr, (char *) NULL, _IONBF, 0);
+#endif /* KLUDGE_FOR_WNT_TESTSUITE */
 
 	if (use_cvsrc)
 	    read_cvsrc (&argc, &argv, command_name);
@@ -910,7 +908,7 @@ usage (cpp)
     (void) fprintf (stderr, *cpp++, program_name, command_name);
     for (; *cpp; cpp++)
 	(void) fprintf (stderr, *cpp);
-    exit (EXIT_FAILURE);
+    error_exit();
 }
 
 void

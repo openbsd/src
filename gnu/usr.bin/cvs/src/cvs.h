@@ -1,5 +1,3 @@
-/* $CVSid: @(#)cvs.h 1.86 94/10/22 $	 */
-
 /*
  * basic information used in all source files
  *
@@ -170,6 +168,7 @@ extern int errno;
 #define CVSROOTADM_COMMITINFO	"commitinfo"
 #define CVSROOTADM_TAGINFO      "taginfo"
 #define	CVSROOTADM_EDITINFO	"editinfo"
+#define CVSROOTADM_VERIFYMSG    "verifymsg"
 #define	CVSROOTADM_HISTORY	"history"
 #define CVSROOTADM_VALTAGS	"val-tags"
 #define	CVSROOTADM_IGNORE	"cvsignore"
@@ -177,6 +176,9 @@ extern int errno;
 #define CVSROOTADM_WRAPPER	"cvswrappers"
 #define CVSROOTADM_NOTIFY	"notify"
 #define CVSROOTADM_USERS	"users"
+#define CVSROOTADM_READERS	"readers"
+#define CVSROOTADM_WRITERS	"writers"
+#define CVSROOTADM_PASSWD	"passwd"
 #define CVSROOTADM_OPTIONS	"options"
 
 #define CVSNULLREPOS		"Emptydir"	/* an empty directory */
@@ -199,8 +201,21 @@ extern int errno;
 #define CVSDOTIGNORE	".cvsignore"
 #define CVSDOTWRAPPER   ".cvswrappers"
 
+/* Command attributes -- see function lookup_command_attribute(). */
+#define CVS_CMD_IGNORE_ADMROOT        1
+#define CVS_CMD_USES_WORK_DIR         2
+#define CVS_CMD_MODIFIES_REPOSITORY   4
+
 /* miscellaneous CVS defines */
+
+/* This is the string which is at the start of the non-log-message lines
+   that we put up for the user when they edit the log message.  */
 #define	CVSEDITPREFIX	"CVS: "
+/* Number of characters in CVSEDITPREFIX to compare when deciding to strip
+   off those lines.  We don't check for the space, to accomodate users who
+   have editors which strip trailing spaces.  */
+#define CVSEDITPREFIXLEN 4
+
 #define	CVSLCKAGE	(60*60)		/* 1-hour old lock files cleaned up */
 #define	CVSLCKSLEEP	30		/* wait 30 seconds before retrying */
 #define	CVSBRANCH	"1.1.1"		/* RCS branch used for vendor srcs */
@@ -361,6 +376,12 @@ extern int noexec;		/* Don't modify disk anywhere */
 extern int readonlyfs;		/* fail on all write locks; succeed all read locks */
 extern int logoff;		/* Don't write history entry */
 
+#ifdef AUTH_SERVER_SUPPORT
+extern char *Pserver_Repos;     /* used to check that same repos is
+                                   transmitted in pserver auth and in
+                                   CVS protocol. */
+#endif /* AUTH_SERVER_SUPPORT */
+
 extern char hostname[];
 
 /* Externs that are included directly in the CVS sources */
@@ -411,10 +432,8 @@ char *xstrdup PROTO((const char *str));
 void strip_trailing_newlines PROTO((char *str));
 typedef	int (*CALLPROC)	PROTO((char *repository, char *value));
 int Parse_Info PROTO((char *infofile, char *repository, CALLPROC callproc, int all));
-int Reader_Lock PROTO((char *xrepository));
 typedef	RETSIGTYPE (*SIGCLEANUPPROC)	PROTO(());
 int SIG_register PROTO((int sig, SIGCLEANUPPROC sigcleanup));
-int Writer_Lock PROTO((List * list));
 int isdir PROTO((const char *file));
 int isfile PROTO((const char *file));
 int islink PROTO((const char *file));
@@ -439,15 +458,17 @@ time_t get_date PROTO((char *date, struct timeb *now));
 void Create_Admin PROTO((char *dir, char *update_dir,
 			 char *repository, char *tag, char *date));
 
+/* Locking subsystem (implemented in lock.c).  */
+
+int Reader_Lock PROTO((char *xrepository));
 void Lock_Cleanup PROTO((void));
 
 /* Writelock an entire subtree, well the part specified by ARGC, ARGV, LOCAL,
    and AFLAG, anyway.  */
 void lock_tree_for_write PROTO ((int argc, char **argv, int local, int aflag));
 
-/* Remove locks set by lock_tree_for_write.  Currently removes readlocks
-   too.  */
-void lock_tree_cleanup PROTO ((void));
+/* See lock.c for description.  */
+extern void lock_dir_for_write PROTO ((char *));
 
 void ParseTag PROTO((char **tagp, char **datep));
 void Scratch_Entry PROTO((List * list, char *fname));
@@ -456,7 +477,6 @@ void cat_module PROTO((int status));
 void check_entries PROTO((char *dir));
 void close_module PROTO((DBM * db));
 void copy_file PROTO((const char *from, const char *to));
-void (*error_set_cleanup PROTO((void (*) (void)))) PROTO ((void));
 void fperror PROTO((FILE * fp, int status, int errnum, char *message,...));
 void free_names PROTO((int *pargc, char *argv[]));
 
@@ -488,7 +508,6 @@ void rename_file PROTO((const char *from, const char *to));
 extern void expand_wild PROTO ((int argc, char **argv, 
                                 int *pargc, char ***pargv));
 
-void strip_path PROTO((char *path));
 void strip_trailing_slashes PROTO((char *path));
 void update_delproc PROTO((Node * p));
 void usage PROTO((const char *const *cpp));
@@ -502,6 +521,8 @@ void Update_Logfile PROTO((char *repository, char *xmessage, FILE * xlogfp,
 		     List * xchanges));
 void do_editor PROTO((char *dir, char **messagep,
 		      char *repository, List * changes));
+
+void do_verify PROTO((char *message, char *repository));
 
 typedef	int (*CALLBACKPROC)	PROTO((int *pargc, char *argv[], char *where,
 	char *mwhere, char *mfile, int horten, int local_specified,
@@ -565,6 +586,7 @@ void SIG_endCrSect PROTO((void));
 void read_cvsrc PROTO((int *argc, char ***argv, char *cmdname));
 
 char *make_message_rcslegal PROTO((char *message));
+extern int file_has_markers PROTO ((struct file_info *));
 
 /* flags for run_exec(), the fast system() for CVS */
 #define	RUN_NORMAL		0x0000	/* no special behaviour */
@@ -699,6 +721,10 @@ struct logfile_info
 {
   enum classify_type type;
   char *tag;
+  char *rev_old;		/* rev number before a commit/modify,
+				   NULL for add or import */
+  char *rev_new;		/* rev number after a commit/modify,
+				   add, or import, NULL for remove */
 };
 
 /* Wrappers.  */
@@ -736,6 +762,25 @@ int unedit PROTO ((int argc, char **argv));
 int editors PROTO ((int argc, char **argv));
 int watchers PROTO ((int argc, char **argv));
 extern int annotate PROTO ((int argc, char **argv));
+extern int add PROTO ((int argc, char **argv));
+extern int admin PROTO ((int argc, char **argv));
+extern int checkout PROTO ((int argc, char **argv));
+extern int commit PROTO ((int argc, char **argv));
+extern int diff PROTO ((int argc, char **argv));
+extern int history PROTO ((int argc, char **argv));
+extern int import PROTO ((int argc, char **argv));
+extern int cvslog PROTO ((int argc, char **argv));
+#ifdef AUTH_CLIENT_SUPPORT
+extern int login PROTO((int argc, char **argv));
+#endif /* AUTH_CLIENT_SUPPORT */
+extern int patch PROTO((int argc, char **argv));
+extern int release PROTO((int argc, char **argv));
+extern int cvsremove PROTO((int argc, char **argv));
+extern int rtag PROTO((int argc, char **argv));
+extern int status PROTO((int argc, char **argv));
+extern int cvstag PROTO((int argc, char **argv));
+
+extern unsigned long int lookup_command_attribute PROTO((char *));
 
 #if defined(AUTH_CLIENT_SUPPORT) || defined(AUTH_SERVER_SUPPORT)
 char *scramble PROTO ((char *str));
@@ -749,12 +794,11 @@ char *get_cvs_password PROTO((void));
 extern void tag_check_valid PROTO ((char *, int, char **, int, int, char *));
 extern void tag_check_valid_join PROTO ((char *, int, char **, int, int,
 					 char *));
-extern void tag_lockdir PROTO ((char *));
-extern void tag_unlockdir PROTO ((void));
 
 extern void cvs_output PROTO ((const char *, size_t));
 extern void cvs_outerr PROTO ((const char *, size_t));
 extern void cvs_flusherr PROTO ((void));
+extern void cvs_flushout PROTO ((void));
 
 #if defined(SERVER_SUPPORT) || defined(CLIENT_SUPPORT)
 #include "server.h"
