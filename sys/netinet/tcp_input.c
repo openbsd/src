@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.178 2004/11/25 15:32:08 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.179 2004/12/29 17:17:28 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -996,7 +996,7 @@ after_listen:
 				if (opti.ts_present)
 					tcp_xmit_timer(tp, tcp_now-opti.ts_ecr+1);
 				else if (tp->t_rtttime &&
-					    SEQ_GT(th->th_ack, tp->t_rtseq))
+				    SEQ_GT(th->th_ack, tp->t_rtseq))
 					tcp_xmit_timer(tp,
 					    tcp_now - tp->t_rtttime);
 				acked = th->th_ack - tp->snd_una;
