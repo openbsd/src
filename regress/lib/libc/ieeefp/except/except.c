@@ -1,4 +1,4 @@
-/*	$OpenBSD: except.c,v 1.6 2004/04/02 03:06:12 mickey Exp $	*/
+/*	$OpenBSD: except.c,v 1.7 2004/07/22 19:29:42 kettenis Exp $	*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,8 +6,9 @@
 #include <assert.h>
 #include <ieeefp.h>
 #include <float.h>
+#include <err.h>
 
-volatile sig_atomic_t signal_caught;
+volatile int signal_status;
 
 volatile const double one  = 1.0;
 volatile const double zero = 0.0;
@@ -24,7 +25,7 @@ sigfpe(int sig, siginfo_t *si, void *v)
 		    si->si_addr, si->si_code);
 		write(1, buf, strlen(buf));
 	}
-	signal_caught = 1;
+	_exit(signal_status);
 }
 
 
@@ -33,6 +34,11 @@ main(int argc, char *argv[])
 {
 	struct sigaction sa;
 	volatile double x;
+
+	if (argc != 2) {
+		fprintf(stderr, "usage: %s condition\n", argv[0]);
+		exit(1);
+	}
 
 	/*
 	 * check to make sure that all exceptions are masked and 
@@ -45,56 +51,49 @@ main(int argc, char *argv[])
 	sa.sa_sigaction = sigfpe;
 	sa.sa_flags = SA_SIGINFO;
 	sigaction(SIGFPE, &sa, NULL);
-	signal_caught = 0;
+	signal_status = 1;
 
 	/* trip divide by zero */
 	x = one / zero;
 	assert(fpgetsticky() & FP_X_DZ);
-	assert(signal_caught == 0);
 	fpsetsticky(0);
 
 	/* trip invalid operation */
 	x = zero / zero;
 	assert(fpgetsticky() & FP_X_INV);
-	assert(signal_caught == 0);
 	fpsetsticky(0);
 
 	/* trip overflow */
 	x = huge * huge;
 	assert(fpgetsticky() & FP_X_OFL);
-	assert(signal_caught == 0);
 	fpsetsticky(0);
 
 	/* trip underflow */
 	x = tiny * tiny;
 	assert(fpgetsticky() & FP_X_UFL);
-	assert(signal_caught == 0);
 	fpsetsticky(0);
 
-	/* unmask and then trip divide by zero */
-	fpsetmask(FP_X_DZ);
-	x = one / zero;
-	assert(signal_caught == 1);
-	signal_caught = 0;
+	signal_status = 0;
 
-	/* unmask and then trip invalid operation */
-	fpsetmask(FP_X_INV);
-	x = zero / zero;
-	assert(signal_caught == 1);
-	signal_caught = 0;
+	if (strcmp(argv[1], "fltdiv") == 0) {
+		/* unmask and then trip divide by zero */
+		fpsetmask(FP_X_DZ);
+		x = one / zero;
+	} else if (strcmp(argv[1], "fltinv") == 0) {
+		/* unmask and then trip invalid operation */
+		fpsetmask(FP_X_INV);
+		x = zero / zero;
+	} else if (strcmp(argv[1], "fltovf") == 0) {
+		/* unmask and then trip overflow */
+		fpsetmask(FP_X_OFL);
+		x = huge * huge;
+	} else if (strcmp(argv[1], "fltund") == 0) {
+		/* unmask and then trip underflow */
+		fpsetmask(FP_X_UFL);
+		x = tiny * tiny;
+	} else {
+		errx(1, "unrecognized condition %s", argv[1]);
+	}
 
-	/* unmask and then trip overflow */
-	fpsetmask(FP_X_OFL);
-	x = huge * huge;
-	assert(signal_caught == 1);
-	signal_caught = 0;
-
-	/* unmask and then trip underflow */
-	fpsetmask(FP_X_UFL);
-	x = tiny * tiny;
-	assert (signal_caught == 1);
-	signal_caught = 0;
-
-	exit(0);
+	errx(1, "signal wasn't caught");
 }
-
