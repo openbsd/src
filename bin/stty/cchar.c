@@ -1,4 +1,4 @@
-/*	$OpenBSD: cchar.c,v 1.4 1996/08/02 12:09:45 deraadt Exp $	*/
+/*	$OpenBSD: cchar.c,v 1.5 1996/08/02 12:10:03 deraadt Exp $	*/
 /*	$NetBSD: cchar.c,v 1.10 1996/05/07 18:20:05 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cchar.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cchar.c,v 1.4 1996/08/02 12:09:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cchar.c,v 1.5 1996/08/02 12:10:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,8 +110,8 @@ csearch(argvp, ip)
 	tmp.name = name;
 	if (!(cp = (struct cchar *)bsearch(&tmp, cchars1,
 	    sizeof(cchars1)/sizeof(struct cchar) - 1, sizeof(struct cchar),
-	    c_cchar)) && !(cp = (struct cchar *)bsearch(&tmp, cchars1,
-	    sizeof(cchars1)/sizeof(struct cchar) - 1, sizeof(struct cchar),
+	    c_cchar)) && !(cp = (struct cchar *)bsearch(&tmp, cchars2,
+	    sizeof(cchars2)/sizeof(struct cchar) - 1, sizeof(struct cchar),
 	    c_cchar)))
 		return (0);
 
