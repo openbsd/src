@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.h,v 1.2 1997/02/16 22:31:22 pefo Exp $ */
+/*	$OpenBSD: dma.h,v 1.3 1997/02/17 19:08:28 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -140,17 +140,17 @@ typedef struct dma_softc {
 	    if((c)->dma_ch == DMA_CH0) {				\
 	    	out32(R3715_IO_TIMING, in32(R3715_IO_TIMING) & ~0x10);	\
 		resudial = in32(R3715_DMA_CNT0);			\
-if(resudial)								\
-printf("res: %d\n", resudial);						\
 	    }								\
 	    else {							\
 	    	out32(R3715_IO_TIMING, in32(R3715_IO_TIMING) & ~0x400);	\
 		resudial = in32(R3715_DMA_CNT1);			\
 	    }								\
+	    if(resudial)						\
+		resudial++;						\
 	    if((c)->mode == DMA_FROM_DEV) {				\
 		int *_v = (int *)(c)->req_va;				\
 		int *_p = (int *)PHYS_TO_UNCACHED(CACHED_TO_PHYS(dma_buffer)); \
-		int _n = (c)->req_size;					\
+		int _n = (c)->req_size - resudial;			\
 		while(_n > 0) {						\
 			*_v = htonl(*_p);				\
 			_p++; _v++; _n -= 4;				\
