@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$OpenBSD: spamd-setup.sh,v 1.7 2003/02/14 05:51:57 jason Exp $
+#	$OpenBSD: spamd-setup.sh,v 1.8 2003/02/14 19:05:33 jason Exp $
 #
 # Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 #
@@ -47,8 +47,8 @@ W=`mktemp /tmp/_spamwXXXXXX` || {
 	rm -f ${R}
 	exit 1
 }
-trap "rm -f $R; exit 0" 0
-trap "rm -f $R; exit 1" 1 2 3 13 15
+trap "rm -f $R $W; exit 0" 0
+trap "rm -f $R $W; exit 1" 1 2 3 13 15
 
 while :
 	do case "$1" in
