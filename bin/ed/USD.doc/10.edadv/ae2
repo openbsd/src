@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ae2,v 1.3 2003/07/29 18:36:30 jmc Exp $
+.\"	$OpenBSD: ae2,v 1.4 2004/04/06 08:19:20 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -95,7 +95,7 @@ such as tabs.
 If you list a line that contains tabs,
 .UL l
 will print each tab as
-.UL \*et.
+.UL \*et .
 This makes it much easier to correct the sort of typing mistake
 that inserts extra spaces adjacent to tabs,
 or inserts a backspace followed by a space.
@@ -297,8 +297,7 @@ s/th\*.is/this/
 .P2
 the job is done.
 The `\*.' matches the mysterious character between the `h' and the `i',
-.ul
-whatever it is.
+.UL "whatever it is" .
 .PP
 Bear in mind that since `\*.' matches any single character,
 the command

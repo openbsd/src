@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ae0,v 1.3 2003/07/29 18:36:30 jmc Exp $
+.\"	$OpenBSD: ae0,v 1.4 2004/04/06 08:19:20 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,6 +34,10 @@
 .\"
 .\"	@(#)ae0	8.1 (Berkeley) 8/14/93
 .\"
+.if n \{\
+.po 5n
+.ll 70n
+.\}
 .nr P1 1
 .EH 'USD:10-%''Advanced Editing on \s-2UNIX\s+2'
 .OH 'Advanced Editing on \s-2UNIX\s+2''USD:10-%'
@@ -56,7 +60,7 @@ facilities
 for preparing and editing text.
 It provides explanations and examples of
 .IP \(bu
-special characters, line addressing and global commands in the editor
+special characters, line addressing, and global commands in the editor
 .UL ed ;
 .IP \(bu
 commands for ``cut and paste'' operations on files
@@ -64,14 +68,14 @@ and parts of files,
 including the
 .UL mv ,
 .UL cp ,
-.UL cat
+.UL cat ,
 and
 .UL rm
 commands,
 and the
 .UL r ,
 .UL w ,
-.UL m
+.UL m ,
 and
 .UL t
 commands of the editor;
@@ -93,6 +97,6 @@ on how to get their jobs done
 more easily.
 .AE
 .\" .CS 16 0 16 0 0 3
-.if n .ls 2
+.\" .if n .ls 2
 .nr PS 9
 .nr VS 11

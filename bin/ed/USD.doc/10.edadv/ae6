@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ae6,v 1.3 2003/07/29 18:36:30 jmc Exp $
+.\"	$OpenBSD: ae6,v 1.4 2004/04/06 08:19:20 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -60,15 +60,13 @@ the command
 e  newfile
 .P2
 says `I want to edit a new file called
-.ul
-newfile,
+.UL newfile ,
 without leaving the editor.'
 The
 .UL e
 command discards whatever you're currently working on
 and starts over on 
-.ul
-newfile.
+.UL newfile .
 It's exactly the same as if you had quit with the
 .UL q
 command, then re-entered
@@ -89,7 +87,7 @@ ed  file
 remembers the name of the file,
 and any subsequent
 .UL e ,
-.UL r
+.UL r ,
 or
 .UL w
 commands that don't contain a filename
@@ -235,7 +233,7 @@ The point is that the
 .UL w
 command can
 write out a group of lines, instead of the whole file.
-In fact, you can write out a single line if you like;
+In fact, you can write out a single line if you like:
 just give one line number instead of two.
 For example, if you have just typed a horribly complicated line
 and you know that it (or something like it) is going to be needed later,
@@ -412,11 +410,9 @@ Now you can refer to the marked line with the address
 Marks are most useful for moving things around.
 Find the first line of the block to be moved, and mark it
 with
-.ul
-\(fma.
+.UL ka .
 Then find the last line and mark it with
-.ul
-\(fmb.
+.UL kb .
 Now position yourself at the place where the stuff is to go
 and say
 .P1

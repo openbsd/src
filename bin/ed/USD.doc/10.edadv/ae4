@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ae4,v 1.2 2003/06/26 16:24:16 mickey Exp $
+.\"	$OpenBSD: ae4,v 1.3 2004/04/06 08:19:20 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -198,7 +198,7 @@ s/a/b/
 .PP
 It is also possible to execute 
 .UL a ,
-.UL c
+.UL c ,
 and
 .UL i
 commands under a global command; as with other multi-line constructions,

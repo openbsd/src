@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ae3,v 1.3 2003/07/29 18:36:30 jmc Exp $
+.\"	$OpenBSD: ae3,v 1.4 2004/04/06 08:19:20 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -242,7 +242,7 @@ line `$'.
 .PP
 The line-changing commands
 .UL a ,
-.UL c
+.UL c ,
 and
 .UL i
 by default all affect the current line _
@@ -260,7 +260,7 @@ inserts text before the current line.
 and
 .UL i
 behave identically in one respect _
-when you stop appending, changing or inserting,
+when you stop appending, changing, or inserting,
 dot points at the last line entered.
 This is exactly what you want for typing and editing on the fly.
 For example, you can say
@@ -292,7 +292,7 @@ You should experiment to determine what happens if you add
 no
 lines with
 .UL a ,
-.UL c
+.UL c ,
 or
 .UL i .
 .PP
