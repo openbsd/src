@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 1995/09/16 12:31:13 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.17 1996/01/29 04:10:00 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -414,19 +414,22 @@ resettodr(void)
  * try to compensate for this sometime because access to the via
  * is hardly cheap.
  *
- * Paranoia can be removed whenever...  ;-)
+ * It would probably be worthwhile to invent a version of this that
+ * didn't depend on the VIA.
  */
 void
 delay(int usec)
 {
-	int     ticks, paranoia = 0x10000000;
+	int     ticks;
 	int     t, timerh, timerl;
 
 	if (usec <= 0)
 		usec = 1;
 
-	ticks = usec / CLK_RATE;
-	ticks = ticks * 10000;
+	if (usec < 200000)
+		ticks = (usec * 10000) / CLK_RATE;
+	else
+		ticks = (usec / CLK_RATE) * 10000;
 
 	while (ticks) {
 		t = min(ticks, 65535);
@@ -437,11 +440,9 @@ delay(int usec)
 		via_reg(VIA1, vT2C) = timerl;
 		via_reg(VIA1, vT2CH) = timerh;
 
-		while (!(via_reg(VIA1, vIFR) & V1IF_T2) && paranoia)
-			paranoia--;
+		while (!(via_reg(VIA1, vIFR) & V1IF_T2))
+			;
 
 		ticks -= t;
 	}
-	if (!paranoia)
-		printf("paranoia in delay()!!!\n");
 }
