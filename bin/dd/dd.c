@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.5 1997/02/14 07:05:20 millert Exp $	*/
+/*	$OpenBSD: dd.c,v 1.6 1997/08/25 15:24:07 deraadt Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dd.c,v 1.5 1997/02/14 07:05:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: dd.c,v 1.6 1997/08/25 15:24:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,20 +227,18 @@ getfdtype(io)
 static void
 dd_in()
 {
-	int flags;
 	ssize_t n;
 
-	for (flags = ddflags;;) {
+	for (;;) {
 		if (cpy_cnt && (st.in_full + st.in_part) >= cpy_cnt)
 			return;
 
 		/*
-		 * Zero the buffer first if trying to recover from errors so
-		 * lose the minimum amount of data.  If doing block operations
+		 * Zero the buffer first if sync; if doing block operations
 		 * use spaces.
 		 */
-		if ((flags & (C_NOERROR|C_SYNC)) == (C_NOERROR|C_SYNC))
-			if (flags & (C_BLOCK|C_UNBLOCK))
+		if (ddflags & C_SYNC)
+			if (ddflags & (C_BLOCK|C_UNBLOCK))
 				(void)memset(in.dbp, ' ', in.dbsz);
 			else
 				(void)memset(in.dbp, 0, in.dbsz);
@@ -257,7 +255,7 @@ dd_in()
 			 * If noerror not specified, die.  POSIX requires that
 			 * the warning message be followed by an I/O display.
 			 */
-			if (!(flags & C_NOERROR))
+			if (!(ddflags & C_NOERROR))
 				err(1, "%s", in.name);
 			warn("%s", in.name);
 			summary();
@@ -333,8 +331,11 @@ dd_close()
 		block_close();
 	else if (cfunc == unblock)
 		unblock_close();
-	if (ddflags & C_OSYNC && out.dbcnt < out.dbsz) {
-		(void)memset(out.dbp, 0, out.dbsz - out.dbcnt);
+	if (ddflags & C_OSYNC && out.dbcnt && out.dbcnt < out.dbsz) {
+		if (ddflags & (C_BLOCK|C_UNBLOCK))
+			memset(out.dbp, ' ', out.dbsz - out.dbcnt);
+		else
+			memset(out.dbp, 0, out.dbsz - out.dbcnt);
 		out.dbcnt = out.dbsz;
 	}
 	if (out.dbcnt)
