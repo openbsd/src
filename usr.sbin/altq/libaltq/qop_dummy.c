@@ -1,4 +1,4 @@
-/*	$OpenBSD: qop_dummy.c,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$OpenBSD: qop_dummy.c,v 1.3 2001/12/03 08:38:48 kjc Exp $	*/
 /*	$KAME: qop_dummy.c,v 1.4 2001/08/16 10:39:14 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -90,7 +90,7 @@ null_interface_parser(const char *ifname, int argc, char **argv)
 			if (argc > 0)
 				tbrsize = atobytes(*argv);
 		} else {
-			LOG(LOG_ERR, 0, "Unknown keyword '%s'", argv);
+			LOG(LOG_ERR, 0, "Unknown keyword '%s'", *argv);
 			return (0);
 		}
 		argc--; argv++;
