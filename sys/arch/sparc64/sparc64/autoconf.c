@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.28 2002/11/13 19:41:53 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.29 2002/11/20 04:26:44 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1576,10 +1576,13 @@ device_register(dev, aux)
 			if (strcmp(bp->name, "ide") == 0 &&
 			    strcmp((bp + 1)->name, "ata") == 0 &&
 			    strcmp((bp + 2)->name, "cmdk") == 0) {
-				if (((bp + 2)->val[0] == (bp + 1)->val[0]) &&
-				    ((bp + 1)->val[1] == 0)) {
+				if ((bp + 2)->val[1] == 0 &&
+				    (bp + 1)->val[1] == 0) {
 					(bp + 1)->dev = dev;
 					bootpath_store(1, bp + 2);
+					(bp + 2)->val[0] +=
+					    2 * ((bp + 1)->val[0]);
+					(bp + 2)->val[1] = 0;
 				}
 			}
 			return;
