@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.728 2004/05/05 14:09:42 brad Exp $
+$OpenBSD: pcidevs,v 1.729 2004/05/05 22:16:31 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2196,7 +2196,7 @@ product TERRATEC TVALUER	0x1135	Terratec TValue Radio
 product TI TLAN			0x0500	TLAN
 product TI PERMEDIA		0x3d04	3DLabs Permedia
 product TI PERMEDIA2		0x3d07	3DLabs Permedia 2
-product TI TSB12LV21		0x8000	TSB12LB21 FireWire
+product TI TSB12LV21		0x8000	TSB12LV21 FireWire
 product TI TSB12LV22		0x8009	TSB12LV22 FireWire
 product TI PCI4450_FW		0x8011	PCI4450 FireWire
 product TI PCI4410_FW		0x8017	PCI4410 FireWire
