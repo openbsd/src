@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.21 2003/08/21 12:42:49 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.22 2003/08/21 20:40:33 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -59,29 +59,29 @@ static void printclp(struct cpu_disklabel *clp, char *str);
 /* 
  * Returns the ID of the SCSI disk based on Motorola's CLUN/DLUN stuff
  * bootdev == CLUN << 8 | DLUN.
- * This handles SBC SCSI and MVME328.  It will need to be modified for 
- * MVME327.  We do not handle MVME328 daughter cards.  smurph
+ * This handles SBC SCSI and MVME32[78].
+ * MVME328 daughter cards (DLUN >= 0x40) are not handled correctly yet.
  */
 int
 get_target()
 {
 	extern int bootdev;
 
-	switch (bootdev) {
-	case 0x0000: case 0x0600: case 0x0700: case 0x1600: case 0x1700: case 0x1800: case 0x1900:
-		return 0;
-	case 0x0010: case 0x0608: case 0x0708: case 0x1608: case 0x1708: case 0x1808: case 0x1908:
-		return 1;
-	case 0x0020: case 0x0610: case 0x0710: case 0x1610: case 0x1710: case 0x1810: case 0x1910:
-		return 2;
-	case 0x0030: case 0x0618: case 0x0718: case 0x1618: case 0x1718: case 0x1818: case 0x1918:
-		return 3;
-	case 0x0040: case 0x0620: case 0x0720: case 0x1620: case 0x1720: case 0x1820: case 0x1920:
-		return 4;
-	case 0x0050: case 0x0628: case 0x0728: case 0x1628: case 0x1728: case 0x1828: case 0x1928:
-		return 5;
-	case 0x0060: case 0x0630: case 0x0730: case 0x1630: case 0x1730: case 0x1830: case 0x1930:
-		return 6;
+	switch (bootdev >> 8) {
+	/* built-in controller */
+	case 0x00:
+	/* MVME327 */
+	case 0x02:
+	case 0x03:
+		return ((bootdev & 0xff) >> 4);
+	/* MVME328 */
+	case 0x06:
+	case 0x07:
+	case 0x16:
+	case 0x17:
+	case 0x18:
+	case 0x19:
+		return ((bootdev & 0xff) >> 3);
 	default:
 		return 0;
 	}
