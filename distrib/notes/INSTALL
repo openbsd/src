@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.36 2003/09/06 21:19:17 miod Exp $
+dnl	$OpenBSD: INSTALL,v 1.37 2003/09/06 22:11:19 miod Exp $
 include(INCLUDE/../m4.common)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
 
@@ -47,7 +47,7 @@ the US.  Because of this, take care NOT to get the distribution from
 an FTP server in the US if you are outside of Canada and the US.)
 
 A comprehensive list of the improvewents brought by the OSREV release
-is available on the web at http://www.OpenBSD.org/OSREV.html.
+is available on the web at http://www.OpenBSD.org/OSrev.html.
 
 includeit(whatis)dnl
 
