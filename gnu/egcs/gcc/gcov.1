@@ -1,21 +1,22 @@
-.\" 
+.\"	$OpenBSD: gcov.1,v 1.2 2003/09/03 15:00:50 jmc Exp $
+.\"
 .\"    Published by the Free Software Foundation 59 Temple Place - Suite 330
 .\" Boston, MA 02111-1307 USA
-.\" 
+.\"
 .\"    Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
 .\" 1999, 2000 Free Software Foundation, Inc.
-.\" 
+.\"
 .\"    Permission is granted to make and distribute verbatim copies of this
 .\" manual provided the copyright notice and this permission notice are
 .\" preserved on all copies.
-.\" 
+.\"
 .\"    Permission is granted to copy and distribute modified versions of
 .\" this manual under the conditions for verbatim copying, provided also
 .\" that the sections entitled "GNU General Public License" and "Funding
 .\" for Free Software" are included exactly as in the original, and
 .\" provided that the entire resulting derived work is distributed under
 .\" the terms of a permission notice identical to this one.
-.\" 
+.\"
 .\"    Permission is granted to copy and distribute translations of this
 .\" manual into another language, under the above conditions for modified
 .\" versions, except that the sections entitled "GNU General Public
@@ -44,8 +45,7 @@ The
 utility is a test coverage program.
 Use it in concert with
 .Xr gcc 1
-to analyze programs to help create more efficient, faster running
-code.
+to analyze programs to help create more efficient, faster running code.
 .Nm
 can be used as a profiling tool to help discover where optimization efforts
 will best affect the code.
@@ -61,7 +61,7 @@ or
 .Xr gprof 1 ,
 basic performance statistics can be obtained, such as:
 .Pp
-.Bl -bullet -compact
+.Bl -bullet -offset indent -compact
 .It
 how often each line of code executes
 .It
@@ -89,14 +89,17 @@ Code should be compiled without optimization when using
 because the optimization, by combining some lines of code into
 one function,
 may not give as much information as necesary to look
-for `hot spots' where the code is using a great deal of computer time.
+for
+.Sq hot spots
+where the code is using a great deal of computer time.
 Likewise, because
 .Nm
-accumulates statistics by line (at the lowest resolution),
+accumulates statistics by line
+.Pq at the lowest resolution ,
 it works best with a programming style that places only
 one statement on each line.
 If complicated macros that expand to loops or to other control structures
-are used, the statistics are less helpful - they only report on the line
+are used, the statistics are less helpful \- they only report on the line
 where the macro call appears.
 If complex macros behave like functions, they can be replaced  with
 inline functions to solve this problem.
@@ -121,7 +124,6 @@ It is not compatible with any other profiling or test coverage mechanism.
 .Pp
 .Nm
 accepts the following options:
-.Pp
 .Bl -tag -width Ds
 .It Fl b
 Write branch frequencies to the output file, and write branch
@@ -130,7 +132,8 @@ This option indicates how often each branch in the program was taken.
 .It Fl v
 Display the
 .Nm
-version number (on the standard error stream).
+version number
+.Pq on the standard error stream .
 .It Fl n
 Do not create the
 .Nm
@@ -170,7 +173,7 @@ programs must first be compiled with two special GNU CC options:
 .Fl fprofile-arcs ftest-coverage .
 This tells the compiler to generate additional information needed by
 .Nm
-(basically a flow graph of the program)
+.Pq basically a flow graph of the program
 and also includes additional code in the object files for generating the
 extra profiling information needed by
 .Nm gcov .
@@ -194,70 +197,75 @@ For example, if the program is called
 this is what is displayed when using the basic
 .Nm
 facility:
-.Pp
-     $ gcc -fprofile-arcs -ftest-coverage tmp.c
-     $ a.out
-     $ gcov tmp.c
-      87.50% of 8 source lines executed in file tmp.c
-     Creating tmp.c.gcov.
+.Bd -literal -offset indent
+$ gcc -fprofile-arcs -ftest-coverage tmp.c
+$ a.out
+$ gcov tmp.c
+ 87.50% of 8 source lines executed in file tmp.c
+Creating tmp.c.gcov.
+.Ed
 .Pp
 The file
 .Pa tmp.c.gcov
 contains output from
 .Nm gcov .
 Here is a sample:
-.Pp
-                     main()
-                     {
-                1      int i, total;
-     
-                1      total = 0;
-     
-               11      for (i = 0; i < 10; i++)
-               10        total += i;
-     
-                1      if (total != 45)
-           ######        printf ("Failure\\n");
-                       else
-                1        printf ("Success\\n");
-                1    }
+.Bd -unfilled -offset indent
+     	main()
+     	{
+     1	    int i, total;
+
+     1      total = 0;
+
+    11      for (i = 0; i < 10; i++)
+    10          total += i;
+
+     1      if (total != 45)
+######          printf ("Failure\\n");
+            else
+     1          printf ("Success\\n");
+     1    }
+.Ed
 .Pp
 When the
 .Fl b
 option is used, output looks like this:
 .Pp
-     $ gcov -b tmp.c
-      87.50% of 8 source lines executed in file tmp.c
-      80.00% of 5 branches executed in file tmp.c
-      80.00% of 5 branches taken at least once in file tmp.c
-      50.00% of 2 calls executed in file tmp.c
-     Creating tmp.c.gcov.
+.Dl $ gcov -b tmp.c
+.Bd -unfilled -offset indent -compact
+ 87.50% of 8 source lines executed in file tmp.c
+ 80.00% of 5 branches executed in file tmp.c
+ 80.00% of 5 branches taken at least once in file tmp.c
+ 50.00% of 2 calls executed in file tmp.c
+Creating tmp.c.gcov.
+.Ed
 .Pp
 Here is a sample of a resulting
 .Pa tmp.c.gcov
 file:
-.Pp
-                     main()
-                     {
-                1      int i, total;
-     
-                1      total = 0;
-     
-               11      for (i = 0; i < 10; i++)
-     branch 0 taken = 91%
-     branch 1 taken = 100%
-     branch 2 taken = 100%
-               10        total += i;
-     
-                1      if (total != 45)
-     branch 0 taken = 100%
-           ######        printf ("Failure\\n");
-     call 0 never executed
-     branch 1 never executed
-                       else
-                1        printf ("Success\\n");
-     call 0 returns = 100%
-                1    }
+.Bd -unfilled -offset indent
+                main()
+                {
+           1        int i, total;
+
+           1        total = 0;
+
+          11        for (i = 0; i < 10; i++)
+branch 0 taken = 91%
+branch 1 taken = 100%
+branch 2 taken = 100%
+          10        total += i;
+
+           1        if (total != 45)
+branch 0 taken = 100%
+      ######            printf ("Failure\\n");
+call 0 never executed
+branch 1 never executed
+                    else
+           1            printf ("Success\\n");
+call 0 returns = 100%
+           1    }
+.Ed
 .Pp
 For each basic block, a line is printed after the last line of the
 basic block describing the branch or call that ends the basic block.
@@ -272,13 +280,18 @@ to the leftmost construct on the source line.
 For a branch, if it was executed at least once, then a percentage
 indicating the number of times the branch was taken divided by the
 number of times the branch was executed will be printed.
-Otherwise, the message "never executed" is printed.
+Otherwise, the message
+.Qq never executed
+is printed.
 .Pp
 For a call, if it was executed at least once, then a percentage
 indicating the number of times the call returned divided by the number
 of times the call was executed will be printed.
 This will usually be 100%,
-but may be less for functions which call `exit' or `longjmp',
+but may be less for functions which call
+.Sq exit
+or
+.Sq longjmp ,
 and thus may not return everytime they are called.
 .Pp
 The execution counts are cumulative.
@@ -302,13 +315,11 @@ the profiling code first attempts to read in an existing
 .Pa .da
 file;
 if the file doesn't match the executable
-(differing number of basic block counts)
+.Pq differing number of basic block counts
 it will ignore the contents of the file.
 It then adds in the new execution counts and finally writes the data
 to the file.
-.Pp
 .Sh USING GCOV WITH GCC OPTIMIZATION
-.Pp
 If
 .Nm
 is to be used to help optimize code,
@@ -321,11 +332,12 @@ same time.
 On some machines the optimizer can eliminate some simple
 code lines by combining them with other lines.
 For example, code like this:
-.Pp
-     if (a != b)
-       c = 1;
-     else
-       c = 0;
+.Bd -unfilled -offset indent
+if (a != b)
+  c = 1;
+else
+  c = 0;
+.Ed
 .Pp
 can be compiled into one instruction on some machines.
 In this case, there is no way for
@@ -335,11 +347,12 @@ isn't separate code for each line.
 Hence the
 .Nm
 output looks like this if the program is compiled with optimization:
-.Pp
-           100  if (a != b)
-           100    c = 1;
-           100  else
-           100    c = 0;
+.Bd -unfilled -offset indent
+100  if (a != b)
+100      c = 1;
+100  else
+100      c = 0;
+.Ed
 .Pp
 The output shows that this block of code, combined by optimization,
 executed 100 times.
@@ -347,9 +360,7 @@ In one sense this result is correct,
 because there was only one instruction representing all four of these lines.
 However, the output does not indicate how many times the result was 0 and how
 many times the result was 1.
-.Pp
 .Sh BRIEF DESCRIPTION OF GCOV DATA FILES
-.Pp
 .Nm
 uses three files for doing profiling.
 The names of these files are derived from the original _source_ file
@@ -369,7 +380,8 @@ files are generated when the source file is compiled with the GNU CC
 option.
 The
 .Pa .bb
-file contains a list of source files (including headers),
+file contains a list of source files
+.Pq including headers ,
 functions within those files,
 and line numbers corresponding to each basic block in the source file.
 .Pp
@@ -378,10 +390,10 @@ The
 file format consists of several lists of 4-byte integers
 which correspond to the line numbers of each basic block in the file.
 Each list is terminated by a line number of 0.
-A line number of -1 is used to designate that the source file name
-(padded to a 4-byte boundary and followed by another -1) follows.
-In addition, a line number of -2 is used to designate that the name of a
-function (also padded to a 4-byte boundary and followed by a -2) follows.
+A line number of \-1 is used to designate that the source file name
+(padded to a 4-byte boundary and followed by another \-1) follows.
+In addition, a line number of \-2 is used to designate that the name of a
+function (also padded to a 4-byte boundary and followed by a \-2) follows.
 .Pp
 The
 .Pa .bbg
@@ -399,38 +411,27 @@ to reconstruct the program flow.
 In the
 .Pa .bbg
 file, the format is:
+.Bd -unfilled -offset indent
+number of basic blocks for function #0 (4-byte number)
+total number of arcs for function #0 (4-byte number)
+count of arcs in basic block #0 (4-byte number)
+destination basic block of arc #0 (4-byte number)
+flag bits (4-byte number)
+destination basic block of arc #1 (4-byte number)
+flag bits (4-byte number)
+\&...
+destination basic block of arc #N (4-byte number)
+flag bits (4-byte number)
+count of arcs in basic block #1 (4-byte number)
+destination basic block of arc #0 (4-byte number)
+flag bits (4-byte number)
+\&...
+.Ed
 .Pp
-	number of basic blocks for function #0 (4-byte number)
-.br
-	total number of arcs for function #0 (4-byte number)
-.br	
-	count of arcs in basic block #0 (4-byte number)
-.br	
-	destination basic block of arc #0 (4-byte number)
-.br	
-	flag bits (4-byte number)
-.br	
-	destination basic block of arc #1 (4-byte number)
-.br	
-	flag bits (4-byte number)
-.br	
-	...
-.br	
-	destination basic block of arc #N (4-byte number)
-.br	
-	flag bits (4-byte number)
-.br	
-	count of arcs in basic block #1 (4-byte number)
-.br	
-	destination basic block of arc #0 (4-byte number)
-.br	
-	flag bits (4-byte number)
-.br	
-	...
-.Pp
-A -1 (stored as a 4-byte number) is used to separate each function's
-list of basic blocks, and to verify that the file has been read
-correctly.
+A \-1
+.Pq stored as a 4-byte number
+is used to separate each function's list of basic blocks,
+and to verify that the file has been read correctly.
 .Pp
 The
 .Pa .da
@@ -453,7 +454,7 @@ The format of the
 file is fairly simple.
 The first 8-byte number is the number of counts in the file,
 followed by the counts
-(stored as 8-byte numbers).
+.Pq stored as 8-byte numbers .
 Each count corresponds to the number of
 times each arc in the program is executed.
 The counts are cumulative;
@@ -472,7 +473,8 @@ to store integers;
 the functions in this header provide a machine-independent
 mechanism for storing and retrieving data from a stream.
 .Sh SEE ALSO
-.Xr gcc 1
+.Xr gcc 1 ,
+.Xr gcc-local 1 ,
 .Xr gprof 1
 .Sh HISTORY
 This man page describes version 1.5 of
