@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.7 2002/07/16 03:59:17 jason Exp $	*/
+/*	$OpenBSD: noct.c,v 1.8 2002/07/16 15:51:22 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -93,6 +93,7 @@ void noct_ea_intr(struct noct_softc *);
 void noct_ea_create_thread(void *);
 void noct_ea_thread(void *);
 u_int32_t noct_ea_nfree(struct noct_softc *);
+void noct_ea_start(struct noct_softc *, struct noct_workq *);
 int noct_newsession(u_int32_t *, struct cryptoini *);
 int noct_freesession(u_int64_t);
 int noct_process(struct cryptop *);
@@ -873,9 +874,8 @@ noct_ea_thread(vsc)
 	struct noct_workq *q;
 	struct cryptop *crp;
 	struct cryptodesc *crd;
-	u_int64_t adr;
-	int s, err, rseg, i;
-	u_int32_t wp, len;
+	int s, rseg;
+	u_int32_t len;
 
 	for (;;) {
 		tsleep(&sc->sc_eawp, PWAIT, "noctea", 0);
@@ -906,6 +906,9 @@ noct_ea_thread(vsc)
 
 			splx(s);
 
+			bus_dmamap_sync(sc->sc_dmat, q->q_dmamap,
+			    0, q->q_dmamap->dm_mapsize,
+			    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->sc_dmat, q->q_dmamap);
 			bus_dmamap_destroy(sc->sc_dmat, q->q_dmamap);
 			bus_dmamem_unmap(sc->sc_dmat, q->q_buf, crd->crd_len);
@@ -923,142 +926,135 @@ noct_ea_thread(vsc)
 			SIMPLEQ_REMOVE_HEAD(&sc->sc_inq, q, q_next);
 			splx(s);
 
-			crp = q->q_crp;
-			crd = crp->crp_desc;
-			if (crd->crd_next != NULL) {
-				crp->crp_etype = EOPNOTSUPP;
-				crypto_done(crp);
-				free(q, M_DEVBUF);
-				goto next;
-			}
-
-			if (crd->crd_alg != CRYPTO_MD5 &&
-			    crd->crd_alg != CRYPTO_SHA1) {
-				crp->crp_etype = EOPNOTSUPP;
-				crypto_done(crp);
-				free(q, M_DEVBUF);
-				goto next;
-			}
-
-			if (crd->crd_len > 0x4800) {
-				crp->crp_etype = EOPNOTSUPP;
-				crypto_done(crp);
-				free(q, M_DEVBUF);
-				goto next;
-			}
-
-			if ((err = bus_dmamem_alloc(sc->sc_dmat, crd->crd_len,
-			    PAGE_SIZE, 0, &q->q_dmaseg, 1, &rseg,
-			    BUS_DMA_WAITOK | BUS_DMA_STREAMING)) != 0) {
-				crp->crp_etype = err;
-				crypto_done(crp);
-				free(q, M_DEVBUF);
-				goto next;
-			}
-
-			if ((err = bus_dmamem_map(sc->sc_dmat, &q->q_dmaseg,
-			    rseg, crd->crd_len, (caddr_t *)&q->q_buf,
-			    BUS_DMA_WAITOK)) != 0) {
-				crp->crp_etype = err;
-				bus_dmamem_free(sc->sc_dmat,
-				    &q->q_dmaseg, rseg);
-				crypto_done(crp);
-				free(q, M_DEVBUF);
-				goto next;
-			}
-
-			if ((err = bus_dmamap_create(sc->sc_dmat, crd->crd_len,
-			    1, crd->crd_len, 0, BUS_DMA_WAITOK,
-			    &q->q_dmamap)) != 0) {
-				bus_dmamem_unmap(sc->sc_dmat,
-				    q->q_buf, crd->crd_len);
-				bus_dmamem_free(sc->sc_dmat,
-				    &q->q_dmaseg, rseg);
-				crp->crp_etype = err;
-				crypto_done(crp);
-				free(q, M_DEVBUF);
-				goto next;
-			}
-
-			if ((err = bus_dmamap_load_raw(sc->sc_dmat,
-			    q->q_dmamap, &q->q_dmaseg, rseg, crd->crd_len,
-			    BUS_DMA_WAITOK)) != 0) {
-				bus_dmamap_destroy(sc->sc_dmat, q->q_dmamap);
-				bus_dmamem_unmap(sc->sc_dmat,
-				    q->q_buf, crd->crd_len);
-				bus_dmamem_free(sc->sc_dmat,
-				    &q->q_dmaseg, rseg);
-				crp->crp_etype = err;
-				crypto_done(crp);
-				free(q, M_DEVBUF);
-				goto next;
-			}
-
-			if (crp->crp_flags & CRYPTO_F_IMBUF)
-				m_copydata((struct mbuf *)crp->crp_buf,
-				    crd->crd_skip, crd->crd_len, q->q_buf);
-			else if (crp->crp_flags & CRYPTO_F_IOV)
-				cuio_copydata((struct uio *)crp->crp_buf,
-				    crd->crd_skip, crd->crd_len, q->q_buf);
-			else {
-				/* XXX deal with this error. */
-			}
-
-			s = splnet();
-			if (noct_ea_nfree(sc) < 1) {
-				bus_dmamap_unload(sc->sc_dmat, q->q_dmamap);
-				bus_dmamap_destroy(sc->sc_dmat, q->q_dmamap);
-				bus_dmamem_unmap(sc->sc_dmat,
-				    q->q_buf, crd->crd_len);
-				bus_dmamem_free(sc->sc_dmat,
-				    &q->q_dmaseg, rseg);
-				crp->crp_etype = ENOMEM;
-				crypto_done(crp);
-				splx(s);
-				free(q, M_DEVBUF);
-				goto next;
-			}
-			wp = sc->sc_eawp;
-			if (++sc->sc_eawp == NOCT_EA_ENTRIES)
-				sc->sc_eawp = 0;
-			for (i = 0; i < EA_CMD_WORDS; i++)
-				sc->sc_eacmd[wp].buf[i] = 0;
-			sc->sc_eacmd[wp].buf[0] = EA_0_SI;
-			switch (crd->crd_alg) {
-			case CRYPTO_MD5:
-				sc->sc_eacmd[wp].buf[1] = htole32(EA_OP_MD5);
-				break;
-			case CRYPTO_SHA1:
-				sc->sc_eacmd[wp].buf[1] = htole32(EA_OP_SHA1);
-				break;
-			}
-
-			/* Source, new buffer just allocated */
-			sc->sc_eacmd[wp].buf[1] |= htole32(crd->crd_len);
-			adr = q->q_dmamap->dm_segs[0].ds_addr;
-			sc->sc_eacmd[wp].buf[2] = htole32(adr >> 32);
-			sc->sc_eacmd[wp].buf[3] = htole32(adr & 0xffffffff);
-
-			/* Dest, hide it in the descriptor */
-			adr = sc->sc_eamap->dm_segs[0].ds_addr +
-			    (wp * sizeof(struct noct_ea_cmd)) +
-			    offsetof(struct noct_ea_cmd, buf[6]);
-			sc->sc_eacmd[wp].buf[4] = htole32(adr >> 32);
-			sc->sc_eacmd[wp].buf[5] = htole32(adr & 0xffffffff);
-
-			if (++wp == NOCT_EA_ENTRIES)
-				wp = 0;
-			NOCT_WRITE_4(sc, NOCT_EA_Q_PTR, wp);
-			sc->sc_eawp = wp;
-
-			SIMPLEQ_INSERT_TAIL(&sc->sc_chipq, q, q_next);
-			splx(s);
-
-next:
+			noct_ea_start(sc, q);
 			s = splnet();
 		}
 		splx(s);
 	}
+}
+
+void
+noct_ea_start(sc, q)
+	struct noct_softc *sc;
+	struct noct_workq *q;
+{
+	struct cryptop *crp;
+	struct cryptodesc *crd;
+	u_int64_t adr;
+	int s, err, i, rseg;
+	u_int32_t wp;
+
+	crp = q->q_crp;
+	crd = crp->crp_desc;
+
+	/* XXX Can't handle multiple ops yet */
+	if (crd->crd_next != NULL) {
+		err = EOPNOTSUPP;
+		goto errout;
+	}
+
+	if (crd->crd_alg != CRYPTO_MD5 &&
+	    crd->crd_alg != CRYPTO_SHA1) {
+		err = EOPNOTSUPP;
+		goto errout;
+	}
+
+	if (crd->crd_len > 0x4800) {
+		err = ERANGE;
+		goto errout;
+	}
+
+	if ((err = bus_dmamem_alloc(sc->sc_dmat, crd->crd_len, PAGE_SIZE, 0,
+	    &q->q_dmaseg, 1, &rseg, BUS_DMA_WAITOK | BUS_DMA_STREAMING)) != 0)
+		goto errout;
+
+	if ((err = bus_dmamem_map(sc->sc_dmat, &q->q_dmaseg, rseg,
+	    crd->crd_len, (caddr_t *)&q->q_buf, BUS_DMA_WAITOK)) != 0)
+		goto errout_dmafree;
+
+	if ((err = bus_dmamap_create(sc->sc_dmat, crd->crd_len, 1,
+	    crd->crd_len, 0, BUS_DMA_WAITOK, &q->q_dmamap)) != 0)
+		goto errout_dmaunmap;
+
+	if ((err = bus_dmamap_load_raw(sc->sc_dmat, q->q_dmamap, &q->q_dmaseg,
+	    rseg, crd->crd_len, BUS_DMA_WAITOK)) != 0)
+		goto errout_dmadestroy;
+
+	if (crp->crp_flags & CRYPTO_F_IMBUF)
+		m_copydata((struct mbuf *)crp->crp_buf,
+		    crd->crd_skip, crd->crd_len, q->q_buf);
+	else if (crp->crp_flags & CRYPTO_F_IOV)
+		cuio_copydata((struct uio *)crp->crp_buf,
+		    crd->crd_skip, crd->crd_len, q->q_buf);
+	else {
+		err = EINVAL;
+		goto errout_dmaunload;
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, q->q_dmamap, 0, q->q_dmamap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	s = splnet();
+	if (noct_ea_nfree(sc) < 1) {
+		err = ENOMEM;
+		goto errout_dmaunload;
+	}
+	wp = sc->sc_eawp;
+	if (++sc->sc_eawp == NOCT_EA_ENTRIES)
+		sc->sc_eawp = 0;
+	for (i = 0; i < EA_CMD_WORDS; i++)
+		sc->sc_eacmd[wp].buf[i] = 0;
+	sc->sc_eacmd[wp].buf[0] = EA_0_SI;
+	switch (crd->crd_alg) {
+	case CRYPTO_MD5:
+		sc->sc_eacmd[wp].buf[1] = htole32(EA_OP_MD5);
+		break;
+	case CRYPTO_SHA1:
+		sc->sc_eacmd[wp].buf[1] = htole32(EA_OP_SHA1);
+		break;
+	}
+
+	/* Source, new buffer just allocated */
+	sc->sc_eacmd[wp].buf[1] |= htole32(crd->crd_len);
+	adr = q->q_dmamap->dm_segs[0].ds_addr;
+	sc->sc_eacmd[wp].buf[2] = htole32(adr >> 32);
+	sc->sc_eacmd[wp].buf[3] = htole32(adr & 0xffffffff);
+
+	/* Dest, hide it in the descriptor */
+	adr = sc->sc_eamap->dm_segs[0].ds_addr +
+	    (wp * sizeof(struct noct_ea_cmd)) +
+	    offsetof(struct noct_ea_cmd, buf[6]);
+	sc->sc_eacmd[wp].buf[4] = htole32(adr >> 32);
+	sc->sc_eacmd[wp].buf[5] = htole32(adr & 0xffffffff);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_eamap,
+	    (wp * sizeof(struct noct_ea_cmd)), sizeof(struct noct_ea_cmd),
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	if (++wp == NOCT_EA_ENTRIES)
+		wp = 0;
+	NOCT_WRITE_4(sc, NOCT_EA_Q_PTR, wp);
+	sc->sc_eawp = wp;
+
+	SIMPLEQ_INSERT_TAIL(&sc->sc_chipq, q, q_next);
+	splx(s);
+
+	return;
+
+errout_dmaunload:
+	bus_dmamap_unload(sc->sc_dmat, q->q_dmamap);
+errout_dmadestroy:
+	bus_dmamap_destroy(sc->sc_dmat, q->q_dmamap);
+errout_dmaunmap:
+	bus_dmamem_unmap(sc->sc_dmat, q->q_buf, crd->crd_len);
+errout_dmafree:
+	bus_dmamem_free(sc->sc_dmat, &q->q_dmaseg, rseg);
+errout:
+	crp->crp_etype = err;
+	free(q, M_DEVBUF);
+	s = splnet();
+	crypto_done(crp);
+	splx(s);
 }
 
 void
@@ -1083,8 +1079,14 @@ noct_ea_intr(sc)
 		q = SIMPLEQ_FIRST(&sc->sc_chipq);
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_chipq, q, q_next);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_outq, q, q_next);
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_eamap,
+		    (sc->sc_earp * sizeof(struct noct_ea_cmd)),
+		    sizeof(struct noct_ea_cmd),
+		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 		bcopy((u_int8_t *)&sc->sc_eacmd[sc->sc_earp].buf[6],
 		    q->q_macbuf, 20);
+
 		NOCT_WAKEUP(sc);
 		if (++sc->sc_earp == NOCT_EA_ENTRIES)
 			sc->sc_earp = 0;
