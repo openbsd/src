@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.38 2004/12/10 02:36:38 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.39 2004/12/10 02:49:18 krw Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -794,8 +794,7 @@ bge_newbuf_jumbo(sc, i, m)
 	/* Set up the descriptor. */
 	r = &sc->bge_rdata->bge_rx_jumbo_ring[i];
 	sc->bge_cdata.bge_rx_jumbo_chain[i] = m_new;
-	BGE_HOSTADDR(r->bge_addr, BGE_JUMBO_DMA_ADDR(sc, m_new) +
-	    (sc->bge_rx_alignment_bug ? 0 : ETHER_ALIGN));
+	BGE_HOSTADDR(r->bge_addr, BGE_JUMBO_DMA_ADDR(sc, m_new));
 	r->bge_flags = BGE_RXBDFLAG_END|BGE_RXBDFLAG_JUMBO_RING;
 	r->bge_len = m_new->m_len;
 	r->bge_idx = i;
@@ -930,8 +929,8 @@ bge_init_tx_ring(sc)
 		CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 
 	for (i = 0; i < BGE_TX_RING_CNT; i++) {
-		if (bus_dmamap_create(sc->bge_dmatag, MCLBYTES, BGE_NTXSEG,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->bge_cdata.bge_tx_map[i]))
+		if (bus_dmamap_create(sc->bge_dmatag, BGE_JLEN, BGE_NTXSEG,
+		    BGE_JLEN, 0, BUS_DMA_NOWAIT, &sc->bge_cdata.bge_tx_map[i]))
 			return(ENOBUFS);
 	}
 
@@ -1231,7 +1230,7 @@ bge_blockinit(sc)
 		BGE_HOSTADDR(rcb->bge_hostaddr,
 		    BGE_RING_DMA_ADDR(sc, bge_rx_jumbo_ring));
 		rcb->bge_maxlen_flags =
-		    BGE_RCB_MAXLEN_FLAGS(ETHER_MAX_DIX_LEN,
+		    BGE_RCB_MAXLEN_FLAGS(ETHER_MAX_LEN_JUMBO,
 		        BGE_RCB_FLAG_RING_DISABLED);
 		if (sc->bge_extram)
 			rcb->bge_nicaddr = BGE_EXT_JUMBO_RX_RINGS;
@@ -2806,8 +2805,11 @@ bge_ioctl(ifp, command, data)
 		      sc->bge_asicrev == BGE_ASICREV_BCM5750) &&
 		    ifr->ifr_mtu > ETHERMTU) || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
-		else
+		else {
 			ifp->if_mtu = ifr->ifr_mtu;
+			ifp->if_flags &= ~IFF_RUNNING;
+			bge_init(sc);
+		}
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
