@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 2004/09/21 07:55:50 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.5 2004/09/22 14:39:45 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,8 +44,6 @@
 #include <sys/vnode.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
-
-int	ttselect	__P((dev_t, int, struct proc *));
 
 /*
  *	Block devices.
@@ -151,7 +149,8 @@ cdev_decl(ksyms);
 #include "pci.h"
 cdev_decl(pci);
 
-#include <pf.h>
+#include "pf.h"
+#include "systrace.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -209,7 +208,7 @@ cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 25: */
 	cdev_notdef(),			/* 47: */
 	cdev_notdef(),			/* 48: */
 	cdev_notdef(),			/* 49: */
-	cdev_notdef(),			/* 50: */
+	cdev_systrace_init(NSYSTRACE,systrace),	/* 50: system call tracing */
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 2004/09/21 08:53:51 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 2004/09/22 14:39:44 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -47,9 +47,6 @@
  *		THIS CODE SHOULD BE REWRITTEN!
  */
 
-#include "ppp.h"
-#include "bridge.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/exec.h>
@@ -89,6 +86,9 @@
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
+
+#include "systrace.h"
+#include <dev/systrace.h>
 
 int	want_resched;	/* resched() was called */
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
@@ -530,7 +530,12 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		else
 			trp[-1].code = code;
 #endif
-		i = (*callp->sy_call)(p, &args, rval);
+#if NSYSTRACE > 0
+		if (ISSET(p->p_flag, P_SYSTRACE))
+			i = systrace_redirect(code, p, args.i, rval);
+		else
+#endif
+			i = (*callp->sy_call)(p, &args, rval);
 		/*
 		 * Reinitialize proc pointer `p' as it may be different
 		 * if this is a child returning from fork syscall.
