@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.14 1997/07/21 15:32:14 mickey Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.15 1997/08/12 21:44:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -109,29 +109,32 @@ devboot(bootdev, p)
 
 void
 putchar(c)
-	int	c;
+	register int	c;
 {
 	static int pos = 0;
 
 	switch(c) {
 	case '\177':	/* DEL erases */
-		putc('\b');
-		putc(' ');
-		putc('\b');
+		cnputc('\b');
+		cnputc(' ');
+	case '\b':
+		cnputc('\b');
+		if (pos)
+			pos--;
 		break;
 	case '\t':
 		do
-			putc(' ');
+			cnputc(' ');
 		while(++pos % 8);
 		break;
 	case '\n':
-		putc('\r');
+		cnputc('\r');
 	case '\r':
-		putc(c);
+		cnputc(c);
 		pos=0;
 		break;
 	default:
-		putc(c);
+		cnputc(c);
 		pos++;
 		break;
 	}
@@ -140,7 +143,7 @@ putchar(c)
 int
 getchar()
 {
-	int c = getc();
+	int c = cngetc();
 
 	if (c == '\b' || c == '\177')
 		return(c);
@@ -148,8 +151,14 @@ getchar()
 	if (c == '\r')
 		c = '\n';
 
-	putchar(c);
+	cnputc(c);
 
 	return(c);
 }
 
+char *
+ttyname(fd)
+	int fd;
+{
+	return "tty";
+}

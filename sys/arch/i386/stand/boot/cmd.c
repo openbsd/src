@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.19 1997/08/06 18:45:02 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.20 1997/08/12 21:51:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -244,10 +244,10 @@ readline(buf, to)
 	register char *p = buf, *pe = buf, ch;
 	time_t tt;
 
-	for (tt = getsecs() + to; getsecs() < tt && !ischar(); )
+	for (tt = getsecs() + to; getsecs() < tt && !cnischar(); )
 		;
 
-	if (!ischar())
+	if (!cnischar())
 		return 0;
 
 	while (1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 1997/08/07 11:51:02 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 1997/08/12 21:51:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -33,7 +33,6 @@
  */
 
 #include "libsa.h"
-#include <machine/tss.h>
 #include <machine/biosvar.h>
 #include <machine/apmvar.h>
 #include "debug.h"
@@ -54,7 +53,7 @@ machdep()
 #ifdef DEBUG
 	*(u_int16_t*)0xb8148 = 0x4732;
 #endif
-	cons_probe();	/* call console init before doing any io */
+	cninit();	/* call console init before doing any io */
 #ifdef DEBUG
 	*(u_int16_t*)0xb8148 = 0x4733;
 #endif

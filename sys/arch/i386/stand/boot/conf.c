@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 1997/07/17 23:11:19 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 1997/08/12 21:46:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -45,9 +45,10 @@
 #include <lib/libsa/netif.h>
 #include <lib/libsa/unixdev.h>
 #include <biosdev.h>
+#include <dev/cons.h>
 
 const char version[] = "0.99a";
-int	debug = 1;
+int	debug;
 
 struct fs_ops file_system[] = {
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
@@ -88,16 +89,14 @@ struct netif_driver	*netif_drivers[] = {
 int n_netif_drivers = NENTS(netif_drivers);
 #endif
 
-const struct consw	consw[] = {
+struct consdev *cn_tab = &constab[0];
+struct consdev constab[] = {
 #ifdef _TEST
-	{ "unix",unix_probe,unix_putc,unix_getc,unix_ischar},
+	{ unix_probe, unix_init, unix_getc, unix_putc },
 #else
-	{ "kbd",  kbd_probe,  kbd_putc,  kbd_getc,  kbd_ischar  },
-	{ "com0", com0_probe, com0_putc, com0_getc, com0_ischar },
-	{ "com1", com1_probe, com1_putc, com1_getc, com1_ischar },
-	{ "com2", com2_probe, com2_putc, com2_getc, com2_ischar },
-	{ "com3", com3_probe, com3_putc, com3_getc, com3_ischar },
+	{ kbd_probe, kbd_init, kbd_getc, kbd_putc  },
+	{ com_probe, com_init, com_getc, com_putc },
 #endif
+	{ NULL }
 };
-const int ncons = NENTS(consw);
 
