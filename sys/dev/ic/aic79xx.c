@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.2 2004/05/20 04:35:47 marco Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.3 2004/05/25 12:22:49 krw Exp $	*/
 /*
  * Core routines and tables shareable across OS platforms.
  *
@@ -110,143 +110,144 @@ static const u_int num_phases = NUM_ELEMENTS(ahd_phase_table) - 1;
 #include <dev/microcode/aic7xxx/aic79xx_seq.h>
 
 /**************************** Function Declarations ***************************/
-static void		ahd_handle_transmission_error(struct ahd_softc *ahd);
-static void		ahd_handle_lqiphase_error(struct ahd_softc *ahd,
+void		ahd_handle_transmission_error(struct ahd_softc *ahd);
+void		ahd_handle_lqiphase_error(struct ahd_softc *ahd,
 						  u_int lqistat1);
-static int		ahd_handle_pkt_busfree(struct ahd_softc *ahd,
+int		ahd_handle_pkt_busfree(struct ahd_softc *ahd,
 					       u_int busfreetime);
-static int		ahd_handle_nonpkt_busfree(struct ahd_softc *ahd);
-static void		ahd_handle_proto_violation(struct ahd_softc *ahd);
-static void		ahd_force_renegotiation(struct ahd_softc *ahd,
+int		ahd_handle_nonpkt_busfree(struct ahd_softc *ahd);
+void		ahd_handle_proto_violation(struct ahd_softc *ahd);
+void		ahd_force_renegotiation(struct ahd_softc *ahd,
 						struct ahd_devinfo *devinfo);
 
-static struct ahd_tmode_tstate*
+struct ahd_tmode_tstate*
 			ahd_alloc_tstate(struct ahd_softc *ahd,
 					 u_int scsi_id, char channel);
 #ifdef AHD_TARGET_MODE
-static void		ahd_free_tstate(struct ahd_softc *ahd,
+void		ahd_free_tstate(struct ahd_softc *ahd,
 					u_int scsi_id, char channel, int force);
 #endif
-static void		ahd_devlimited_syncrate(struct ahd_softc *ahd,
+void		ahd_devlimited_syncrate(struct ahd_softc *ahd,
 					        struct ahd_initiator_tinfo *,
 						u_int *period,
 						u_int *ppr_options,
 						role_t role);
-static void		ahd_update_neg_table(struct ahd_softc *ahd,
+void		ahd_update_neg_table(struct ahd_softc *ahd,
 					     struct ahd_devinfo *devinfo,
 					     struct ahd_transinfo *tinfo);
-static void		ahd_update_pending_scbs(struct ahd_softc *ahd);
-static void		ahd_fetch_devinfo(struct ahd_softc *ahd,
+void		ahd_update_pending_scbs(struct ahd_softc *ahd);
+void		ahd_fetch_devinfo(struct ahd_softc *ahd,
 					  struct ahd_devinfo *devinfo);
 void		ahd_scb_devinfo(struct ahd_softc *ahd,
 					struct ahd_devinfo *devinfo,
 					struct scb *scb);
-static void		ahd_setup_initiator_msgout(struct ahd_softc *ahd,
+void		ahd_setup_initiator_msgout(struct ahd_softc *ahd,
 						   struct ahd_devinfo *devinfo,
 						   struct scb *scb);
-static void		ahd_build_transfer_msg(struct ahd_softc *ahd,
+void		ahd_build_transfer_msg(struct ahd_softc *ahd,
 					       struct ahd_devinfo *devinfo);
-static void		ahd_construct_sdtr(struct ahd_softc *ahd,
+void		ahd_construct_sdtr(struct ahd_softc *ahd,
 					   struct ahd_devinfo *devinfo,
 					   u_int period, u_int offset);
-static void		ahd_construct_wdtr(struct ahd_softc *ahd,
+void		ahd_construct_wdtr(struct ahd_softc *ahd,
 					   struct ahd_devinfo *devinfo,
 					   u_int bus_width);
-static void		ahd_construct_ppr(struct ahd_softc *ahd,
+void		ahd_construct_ppr(struct ahd_softc *ahd,
 					  struct ahd_devinfo *devinfo,
 					  u_int period, u_int offset,
 					  u_int bus_width, u_int ppr_options);
-static void		ahd_clear_msg_state(struct ahd_softc *ahd);
-static void		ahd_handle_message_phase(struct ahd_softc *ahd);
+void		ahd_clear_msg_state(struct ahd_softc *ahd);
+void		ahd_handle_message_phase(struct ahd_softc *ahd);
 typedef enum {
 	AHDMSG_1B,
 	AHDMSG_2B,
 	AHDMSG_EXT
 } ahd_msgtype;
-static int		ahd_sent_msg(struct ahd_softc *ahd, ahd_msgtype type,
+int		ahd_sent_msg(struct ahd_softc *ahd, ahd_msgtype type,
 				     u_int msgval, int full);
-static int		ahd_parse_msg(struct ahd_softc *ahd,
+int		ahd_parse_msg(struct ahd_softc *ahd,
 				      struct ahd_devinfo *devinfo);
-static int		ahd_handle_msg_reject(struct ahd_softc *ahd,
+int		ahd_handle_msg_reject(struct ahd_softc *ahd,
 					      struct ahd_devinfo *devinfo);
-static void		ahd_handle_ign_wide_residue(struct ahd_softc *ahd,
+void		ahd_handle_ign_wide_residue(struct ahd_softc *ahd,
 						struct ahd_devinfo *devinfo);
-static void		ahd_reinitialize_dataptrs(struct ahd_softc *ahd);
-static void		ahd_handle_devreset(struct ahd_softc *ahd,
+void		ahd_reinitialize_dataptrs(struct ahd_softc *ahd);
+void		ahd_handle_devreset(struct ahd_softc *ahd,
 					    struct ahd_devinfo *devinfo,
 					    u_int lun, cam_status status,
 					    char *message, int verbose_level);
 #if AHD_TARGET_MODE
-static void		ahd_setup_target_msgin(struct ahd_softc *ahd,
+void		ahd_setup_target_msgin(struct ahd_softc *ahd,
 					       struct ahd_devinfo *devinfo,
 					       struct scb *scb);
 #endif
 
-static u_int		ahd_sglist_size(struct ahd_softc *ahd);
-static u_int		ahd_sglist_allocsize(struct ahd_softc *ahd);
-static void		ahd_initialize_hscbs(struct ahd_softc *ahd);
-static int		ahd_init_scbdata(struct ahd_softc *ahd);
-static void		ahd_fini_scbdata(struct ahd_softc *ahd);
-static void		ahd_setup_iocell_workaround(struct ahd_softc *ahd);
-static void		ahd_iocell_first_selection(struct ahd_softc *ahd);
-static void		ahd_add_col_list(struct ahd_softc *ahd,
+u_int		ahd_sglist_size(struct ahd_softc *ahd);
+u_int		ahd_sglist_allocsize(struct ahd_softc *ahd);
+void		ahd_initialize_hscbs(struct ahd_softc *ahd);
+int		ahd_init_scbdata(struct ahd_softc *ahd);
+struct scb *	ahd_find_scb_by_tag(struct ahd_softc *, u_int);
+void		ahd_fini_scbdata(struct ahd_softc *ahd);
+void		ahd_setup_iocell_workaround(struct ahd_softc *ahd);
+void		ahd_iocell_first_selection(struct ahd_softc *ahd);
+void		ahd_add_col_list(struct ahd_softc *ahd,
 					 struct scb *scb, u_int col_idx);
-static void		ahd_rem_col_list(struct ahd_softc *ahd,
+void		ahd_rem_col_list(struct ahd_softc *ahd,
 					 struct scb *scb);
-static void		ahd_chip_init(struct ahd_softc *ahd);
-static void		ahd_qinfifo_requeue(struct ahd_softc *ahd,
+void		ahd_chip_init(struct ahd_softc *ahd);
+void		ahd_qinfifo_requeue(struct ahd_softc *ahd,
 					    struct scb *prev_scb,
 					    struct scb *scb);
-static int		ahd_qinfifo_count(struct ahd_softc *ahd);
-static int		ahd_search_scb_list(struct ahd_softc *ahd, int target,
+int		ahd_qinfifo_count(struct ahd_softc *ahd);
+int		ahd_search_scb_list(struct ahd_softc *ahd, int target,
 					    char channel, int lun, u_int tag,
 					    role_t role, uint32_t status,
 					    ahd_search_action action,
 					    u_int *list_head, u_int tid);
-static void		ahd_stitch_tid_list(struct ahd_softc *ahd,
+void		ahd_stitch_tid_list(struct ahd_softc *ahd,
 					    u_int tid_prev, u_int tid_cur,
 					    u_int tid_next);
-static void		ahd_add_scb_to_free_list(struct ahd_softc *ahd,
+void		ahd_add_scb_to_free_list(struct ahd_softc *ahd,
 						 u_int scbid);
-static u_int		ahd_rem_wscb(struct ahd_softc *ahd, u_int scbid,
+u_int		ahd_rem_wscb(struct ahd_softc *ahd, u_int scbid,
 				     u_int prev, u_int next, u_int tid);
-static void		ahd_reset_current_bus(struct ahd_softc *ahd);
+void		ahd_reset_current_bus(struct ahd_softc *ahd);
 #ifdef AHD_DUMP_SEQ
-static void		ahd_dumpseq(struct ahd_softc *ahd);
+void		ahd_dumpseq(struct ahd_softc *ahd);
 #endif
-static void		ahd_loadseq(struct ahd_softc *ahd);
-static int		ahd_check_patch(struct ahd_softc *ahd,
+void		ahd_loadseq(struct ahd_softc *ahd);
+int		ahd_check_patch(struct ahd_softc *ahd,
 					struct patch **start_patch,
 					u_int start_instr, u_int *skip_addr);
-static u_int		ahd_resolve_seqaddr(struct ahd_softc *ahd,
+u_int		ahd_resolve_seqaddr(struct ahd_softc *ahd,
 					    u_int address);
-static void		ahd_download_instr(struct ahd_softc *ahd,
+void		ahd_download_instr(struct ahd_softc *ahd,
 					   u_int instrptr, uint8_t *dconsts);
-static int		ahd_probe_stack_size(struct ahd_softc *ahd);
+int		ahd_probe_stack_size(struct ahd_softc *ahd);
 #if 0
-static int		ahd_other_scb_timeout(struct ahd_softc *ahd,
+int		ahd_other_scb_timeout(struct ahd_softc *ahd,
 					      struct scb *scb,
 					      struct scb *other_scb);
 #endif
-static int		ahd_scb_active_in_fifo(struct ahd_softc *ahd,
+int		ahd_scb_active_in_fifo(struct ahd_softc *ahd,
 					       struct scb *scb);
-static void		ahd_run_data_fifo(struct ahd_softc *ahd,
+void		ahd_run_data_fifo(struct ahd_softc *ahd,
 					  struct scb *scb);
 
 #ifdef AHD_TARGET_MODE
-static void		ahd_queue_lstate_event(struct ahd_softc *ahd,
+void		ahd_queue_lstate_event(struct ahd_softc *ahd,
 					       struct ahd_tmode_lstate *lstate,
 					       u_int initiator_id,
 					       u_int event_type,
 					       u_int event_arg);
-static void		ahd_update_scsiid(struct ahd_softc *ahd,
+void		ahd_update_scsiid(struct ahd_softc *ahd,
 					  u_int targid_mask);
-static int		ahd_handle_target_cmd(struct ahd_softc *ahd,
+int		ahd_handle_target_cmd(struct ahd_softc *ahd,
 					      struct target_cmd *cmd);
 #endif
 
 /************************** Added for porting to NetBSD ***********************/
-static int ahd_createdmamem(bus_dma_tag_t tag,
+int ahd_createdmamem(bus_dma_tag_t tag,
 				int size,
 				int flags,
 				bus_dmamap_t *mapp,
@@ -256,7 +257,7 @@ static int ahd_createdmamem(bus_dma_tag_t tag,
 				int *nseg,
 				const char *myname, const char *what);
 
-static void ahd_freedmamem(bus_dma_tag_t tag,
+void ahd_freedmamem(bus_dma_tag_t tag,
 				int size,
 				bus_dmamap_t map,
 				caddr_t vaddr,
@@ -264,11 +265,11 @@ static void ahd_freedmamem(bus_dma_tag_t tag,
 				int nseg);
 
 /******************************** Private Inlines *****************************/
-static __inline void	ahd_assert_atn(struct ahd_softc *ahd);
-static __inline int	ahd_currently_packetized(struct ahd_softc *ahd);
-static __inline int	ahd_set_active_fifo(struct ahd_softc *ahd);
+__inline void	ahd_assert_atn(struct ahd_softc *ahd);
+__inline int	ahd_currently_packetized(struct ahd_softc *ahd);
+__inline int	ahd_set_active_fifo(struct ahd_softc *ahd);
 
-static __inline void
+__inline void
 ahd_assert_atn(struct ahd_softc *ahd)
 {
 	ahd_outb(ahd, SCSISIGO, ATNO);
@@ -280,7 +281,7 @@ ahd_assert_atn(struct ahd_softc *ahd)
  * are currently in a packetized transfer.  We could
  * just as easily be sending or receiving a message.
  */
-static __inline int
+__inline int
 ahd_currently_packetized(struct ahd_softc *ahd)
 {
 	ahd_mode_state	 saved_modes;
@@ -303,7 +304,7 @@ ahd_currently_packetized(struct ahd_softc *ahd)
 	return (packetized);
 }
 
-static __inline int
+__inline int
 ahd_set_active_fifo(struct ahd_softc *ahd)
 {
 	u_int active_fifo;
@@ -600,7 +601,7 @@ rescan_fifos:
  * Determine if an SCB for a packetized transaction
  * is active in a FIFO.
  */
-static int
+int
 ahd_scb_active_in_fifo(struct ahd_softc *ahd, struct scb *scb)
 {
 
@@ -629,7 +630,7 @@ ahd_scb_active_in_fifo(struct ahd_softc *ahd, struct scb *scb)
  * this routine any time the firmware's FIFO algorithm is
  * changed.
  */
-static void
+void
 ahd_run_data_fifo(struct ahd_softc *ahd, struct scb *scb)
 {
 	u_int seqintsrc;
@@ -1806,7 +1807,7 @@ ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat)
 	}
 }
 
-static void
+void
 ahd_handle_transmission_error(struct ahd_softc *ahd)
 {
 	struct	scb *scb;
@@ -1993,7 +1994,7 @@ ahd_handle_transmission_error(struct ahd_softc *ahd)
 	ahd_unpause(ahd);
 }
 
-static void
+void
 ahd_handle_lqiphase_error(struct ahd_softc *ahd, u_int lqistat1)
 {
 	/*
@@ -2035,7 +2036,7 @@ ahd_handle_lqiphase_error(struct ahd_softc *ahd, u_int lqistat1)
  * Packetized unexpected or expected busfree.
  * Entered in mode based on busfreetime.
  */
-static int
+int
 ahd_handle_pkt_busfree(struct ahd_softc *ahd, u_int busfreetime)
 {
 	u_int lqostat1;
@@ -2171,7 +2172,7 @@ ahd_handle_pkt_busfree(struct ahd_softc *ahd, u_int busfreetime)
 /*
  * Non-packetized unexpected or expected busfree.
  */
-static int
+int
 ahd_handle_nonpkt_busfree(struct ahd_softc *ahd)
 {
 	struct	ahd_devinfo devinfo;
@@ -2408,7 +2409,7 @@ ahd_handle_nonpkt_busfree(struct ahd_softc *ahd)
 	return (1);
 }
 
-static void
+void
 ahd_handle_proto_violation(struct ahd_softc *ahd)
 {
 	struct	ahd_devinfo devinfo;
@@ -2507,7 +2508,7 @@ proto_violation_reset:
  * Force renegotiation to occur the next time we initiate
  * a command to the current device.
  */
-static void
+void
 ahd_force_renegotiation(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 {
 	struct	ahd_initiator_tinfo *targ_info;
@@ -2756,7 +2757,7 @@ ahd_dump_sglist(struct scb *scb)
  * Allocate per target mode instance (ID we respond to as a target)
  * transfer negotiation data structures.
  */
-static struct ahd_tmode_tstate *
+struct ahd_tmode_tstate *
 ahd_alloc_tstate(struct ahd_softc *ahd, u_int scsi_id, char channel)
 {
 	struct ahd_tmode_tstate *master_tstate;
@@ -2798,7 +2799,7 @@ ahd_alloc_tstate(struct ahd_softc *ahd, u_int scsi_id, char channel)
  * Free per target mode instance (ID we respond to as a target)
  * transfer negotiation data structures.
  */
-static void
+void
 ahd_free_tstate(struct ahd_softc *ahd, u_int scsi_id, char channel, int force)
 {
 	struct ahd_tmode_tstate *tstate;
@@ -3230,7 +3231,7 @@ ahd_set_tags(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 #endif
 }
 
-static void
+void
 ahd_update_neg_table(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 		     struct ahd_transinfo *tinfo)
 {
@@ -3342,7 +3343,7 @@ ahd_update_neg_table(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
  * possible.  We also cancel any negotiations that are scheduled
  * for inflight SCBs that have not been started yet.
  */
-static void
+void
 ahd_update_pending_scbs(struct ahd_softc *ahd)
 {
 	struct		scb *pending_scb;
@@ -3431,7 +3432,7 @@ ahd_update_pending_scbs(struct ahd_softc *ahd)
 }
 
 /**************************** Pathing Information *****************************/
-static void
+void
 ahd_fetch_devinfo(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 {
 	ahd_mode_state	saved_modes;
@@ -3529,7 +3530,7 @@ ahd_scb_devinfo(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
  * outgoing message buffer with the appropriate message and beging handing
  * the message phase(s) manually.
  */
-static void
+void
 ahd_setup_initiator_msgout(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 			   struct scb *scb)
 {
@@ -3650,7 +3651,7 @@ ahd_setup_initiator_msgout(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
  * Build an appropriate transfer negotiation message for the
  * currently active target.
  */
-static void
+void
 ahd_build_transfer_msg(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 {
 	/*
@@ -3746,7 +3747,7 @@ ahd_build_transfer_msg(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
  * Build a synchronous negotiation message in our message
  * buffer based on the input parameters.
  */
-static void
+void
 ahd_construct_sdtr(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 		   u_int period, u_int offset)
 {
@@ -3769,7 +3770,7 @@ ahd_construct_sdtr(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
  * Build a wide negotiateion message in our message
  * buffer based on the input parameters.
  */
-static void
+void
 ahd_construct_wdtr(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 		   u_int bus_width)
 {
@@ -3789,7 +3790,7 @@ ahd_construct_wdtr(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
  * Build a parallel protocol request message in our message
  * buffer based on the input parameters.
  */
-static void
+void
 ahd_construct_ppr(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 		  u_int period, u_int offset, u_int bus_width,
 		  u_int ppr_options)
@@ -3823,7 +3824,7 @@ ahd_construct_ppr(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 /*
  * Clear any active message state.
  */
-static void
+void
 ahd_clear_msg_state(struct ahd_softc *ahd)
 {
 	ahd_mode_state saved_modes;
@@ -3851,7 +3852,7 @@ ahd_clear_msg_state(struct ahd_softc *ahd)
 /*
  * Manual message loop handler.
  */
-static void
+void
 ahd_handle_message_phase(struct ahd_softc *ahd)
 { 
 	struct	ahd_devinfo devinfo;
@@ -4191,7 +4192,7 @@ reswitch:
  * message.  If "full" is false, return true if the target saw at
  * least the first byte of the message.
  */
-static int
+int
 ahd_sent_msg(struct ahd_softc *ahd, ahd_msgtype type, u_int msgval, int full)
 {
 	int found;
@@ -4240,7 +4241,7 @@ ahd_sent_msg(struct ahd_softc *ahd, ahd_msgtype type, u_int msgval, int full)
 /*
  * Wait for a complete incoming message, parse it, and respond accordingly.
  */
-static int
+int
 ahd_parse_msg(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 {
 	struct	ahd_initiator_tinfo *tinfo;
@@ -4658,7 +4659,7 @@ ahd_parse_msg(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 /*
  * Process a message reject message.
  */
-static int
+int
 ahd_handle_msg_reject(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 {
 	/*
@@ -4829,7 +4830,7 @@ ahd_handle_msg_reject(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 /*
  * Process an ingnore wide residue message.
  */
-static void
+void
 ahd_handle_ign_wide_residue(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 {
 	u_int scb_index;
@@ -4979,7 +4980,7 @@ ahd_handle_ign_wide_residue(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
  * Reinitialize the data pointers for the active transfer
  * based on its current residual.
  */
-static void
+void
 ahd_reinitialize_dataptrs(struct ahd_softc *ahd)
 {
 	struct		 scb *scb;
@@ -5061,7 +5062,7 @@ ahd_reinitialize_dataptrs(struct ahd_softc *ahd)
 /*
  * Handle the effects of issuing a bus device reset message.
  */
-static void
+void
 ahd_handle_devreset(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 		    u_int lun, cam_status status, char *message,
 		    int verbose_level)
@@ -5128,7 +5129,7 @@ ahd_handle_devreset(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 }
 
 #ifdef AHD_TARGET_MODE
-static void
+void
 ahd_setup_target_msgin(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 		       struct scb *scb)
 {
@@ -5151,7 +5152,7 @@ ahd_setup_target_msgin(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 }
 #endif
 /**************************** Initialization **********************************/
-static u_int
+u_int
 ahd_sglist_size(struct ahd_softc *ahd)
 {
 	bus_size_t list_size;
@@ -5168,7 +5169,7 @@ ahd_sglist_size(struct ahd_softc *ahd)
  * OS will allocate full pages to us, so it doesn't make sense to request
  * less than a page.
  */
-static u_int
+u_int
 ahd_sglist_allocsize(struct ahd_softc *ahd)
 {
 	bus_size_t sg_list_increment;
@@ -5516,7 +5517,7 @@ ahd_probe_scbs(struct ahd_softc *ahd) {
 	return (i);
 }
 
-static void
+void
 ahd_initialize_hscbs(struct ahd_softc *ahd)
 {
 	int i;
@@ -5532,7 +5533,7 @@ ahd_initialize_hscbs(struct ahd_softc *ahd)
 	}
 }
 
-static int
+int
 ahd_init_scbdata(struct ahd_softc *ahd)
 {
 	struct	scb_data *scb_data;
@@ -5586,7 +5587,7 @@ error_exit:
 	return (ENOMEM);
 }
 
-static struct scb *
+struct scb *
 ahd_find_scb_by_tag(struct ahd_softc *ahd, u_int tag)
 {
 	struct scb *scb;
@@ -5624,7 +5625,7 @@ ahd_find_scb_by_tag(struct ahd_softc *ahd, u_int tag)
 	return (NULL);
 }
 
-static void
+void
 ahd_fini_scbdata(struct ahd_softc *ahd)
 {
 	struct scb_data *scb_data;
@@ -5683,7 +5684,7 @@ ahd_fini_scbdata(struct ahd_softc *ahd)
  * DSP filter Bypass must be enabled until the first selection
  * after a change in bus mode (Razor #491 and #493).
  */
-static void
+void
 ahd_setup_iocell_workaround(struct ahd_softc *ahd)
 {
 	ahd_mode_state saved_modes;
@@ -5701,7 +5702,7 @@ ahd_setup_iocell_workaround(struct ahd_softc *ahd)
 	ahd->flags &= ~AHD_HAD_FIRST_SEL;
 }
 
-static void
+void
 ahd_iocell_first_selection(struct ahd_softc *ahd)
 {
 	ahd_mode_state	saved_modes;
@@ -5732,7 +5733,7 @@ ahd_iocell_first_selection(struct ahd_softc *ahd)
 }
 
 /*************************** SCB Management ***********************************/
-static void
+void
 ahd_add_col_list(struct ahd_softc *ahd, struct scb *scb, u_int col_idx)
 {
 	struct	scb_list *free_list;
@@ -5752,7 +5753,7 @@ ahd_add_col_list(struct ahd_softc *ahd, struct scb *scb, u_int col_idx)
 	}
 }
 
-static void
+void
 ahd_rem_col_list(struct ahd_softc *ahd, struct scb *scb)
 {
 	struct	scb_list *free_list;
@@ -6317,7 +6318,7 @@ init_done:
 /*
  * (Re)initialize chip state after a chip reset.
  */
-static void
+void
 ahd_chip_init(struct ahd_softc *ahd)
 {
 	uint32_t busaddr;
@@ -7003,7 +7004,8 @@ ahd_resume(struct ahd_softc *ahd)
  * scbid that should be restored once manipualtion
  * of the TCL entry is complete.
  */
-static __inline u_int
+__inline u_int ahd_index_busy_tcl(struct ahd_softc *, u_int *, u_int);
+__inline u_int
 ahd_index_busy_tcl(struct ahd_softc *ahd, u_int *saved_scbid, u_int tcl)
 {
 	/*
@@ -7126,7 +7128,7 @@ ahd_qinfifo_requeue_tail(struct ahd_softc *ahd, struct scb *scb)
 	ahd_restore_modes(ahd, saved_modes);
 }
 
-static void
+void
 ahd_qinfifo_requeue(struct ahd_softc *ahd, struct scb *prev_scb,
 		    struct scb *scb)
 {
@@ -7146,7 +7148,7 @@ ahd_qinfifo_requeue(struct ahd_softc *ahd, struct scb *prev_scb,
 	ahd_sync_scb(ahd, scb, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 }
 
-static int
+int
 ahd_qinfifo_count(struct ahd_softc *ahd)
 {
 	u_int qinpos;
@@ -7364,7 +7366,7 @@ ahd_search_qinfifo(struct ahd_softc *ahd, int target, char channel,
 	return (found);
 }
 
-static int
+int
 ahd_search_scb_list(struct ahd_softc *ahd, int target, char channel,
 		    int lun, u_int tag, role_t role, uint32_t status,
 		    ahd_search_action action, u_int *list_head, u_int tid)
@@ -7438,7 +7440,7 @@ ahd_search_scb_list(struct ahd_softc *ahd, int target, char channel,
 	return (found);
 }
 
-static void
+void
 ahd_stitch_tid_list(struct ahd_softc *ahd, u_int tid_prev,
 		    u_int tid_cur, u_int tid_next)
 {
@@ -7476,7 +7478,7 @@ ahd_stitch_tid_list(struct ahd_softc *ahd, u_int tid_prev,
  * Manipulate the waiting for selection list and return the
  * scb that follows the one that we remove.
  */
-static u_int
+u_int
 ahd_rem_wscb(struct ahd_softc *ahd, u_int scbid,
 	     u_int prev, u_int next, u_int tid)
 {
@@ -7506,7 +7508,7 @@ ahd_rem_wscb(struct ahd_softc *ahd, u_int scbid,
  * free hardware SCBs.  This list is empty/unused if we are not
  * performing SCB paging.
  */
-static void
+void
 ahd_add_scb_to_free_list(struct ahd_softc *ahd, u_int scbid)
 {
 /* XXX Need some other mechanism to designate "free". */
@@ -7620,7 +7622,7 @@ ahd_abort_scbs(struct ahd_softc *ahd, int target, char channel,
 	return found;
 }
 
-static void
+void
 ahd_reset_current_bus(struct ahd_softc *ahd)
 {
 	uint8_t scsiseq;
@@ -8225,7 +8227,7 @@ ahd_calc_residual(struct ahd_softc *ahd, struct scb *scb)
 /*
  * Add a target mode event to this lun's queue
  */
-static void
+void
 ahd_queue_lstate_event(struct ahd_softc *ahd, struct ahd_tmode_lstate *lstate,
 		       u_int initiator_id, u_int event_type, u_int event_arg)
 {
@@ -8334,7 +8336,7 @@ ahd_dumpseq(struct ahd_softc* ahd)
 }
 #endif
 
-static void
+void
 ahd_loadseq(struct ahd_softc *ahd)
 {
 	struct	cs cs_table[num_critical_sections];
@@ -8494,7 +8496,7 @@ ahd_loadseq(struct ahd_softc *ahd)
 	}
 }
 
-static int
+int
 ahd_check_patch(struct ahd_softc *ahd, struct patch **start_patch,
 		u_int start_instr, u_int *skip_addr)
 {
@@ -8530,7 +8532,7 @@ ahd_check_patch(struct ahd_softc *ahd, struct patch **start_patch,
 	return (1);
 }
 
-static u_int
+u_int
 ahd_resolve_seqaddr(struct ahd_softc *ahd, u_int address)
 {
 	struct patch *cur_patch;
@@ -8559,7 +8561,7 @@ ahd_resolve_seqaddr(struct ahd_softc *ahd, u_int address)
 	return (address - address_offset);
 }
 
-static void
+void
 ahd_download_instr(struct ahd_softc *ahd, u_int instrptr, uint8_t *dconsts)
 {
 	union	ins_formats instr;
@@ -8628,7 +8630,7 @@ ahd_download_instr(struct ahd_softc *ahd, u_int instrptr, uint8_t *dconsts)
 	}
 }
 
-static int
+int
 ahd_probe_stack_size(struct ahd_softc *ahd)
 {
 	int last_probe;
@@ -9258,7 +9260,7 @@ bus_reset:
  * timeout is still pending.  Limit our search to just "other_scb"
  * if it is non-NULL.
  */
-static int
+int
 ahd_other_scb_timeout(struct ahd_softc *ahd, struct scb *scb,
 		      struct scb *other_scb)
 {
@@ -9920,7 +9922,7 @@ ahd_handle_en_lun(struct ahd_softc *ahd, struct cam_sim *sim, union ccb *ccb)
 #endif
 }
 
-static void
+void
 ahd_update_scsiid(struct ahd_softc *ahd, u_int targid_mask)
 {
 #if NOT_YET
@@ -9998,7 +10000,7 @@ ahd_run_tqinfifo(struct ahd_softc *ahd, int paused)
 	}
 }
 
-static int
+int
 ahd_handle_target_cmd(struct ahd_softc *ahd, struct target_cmd *cmd)
 {
 	struct	  ahd_tmode_tstate *tstate;
@@ -10113,7 +10115,7 @@ ahd_handle_target_cmd(struct ahd_softc *ahd, struct target_cmd *cmd)
 
 #endif
 
-static int
+int
 ahd_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 	bus_dma_tag_t tag;
 	int size;
@@ -10179,7 +10181,7 @@ out:
 	return error;
 }
 
-static void
+void
 ahd_freedmamem(tag, size, map, vaddr, seg, nseg)
 	bus_dma_tag_t tag;
 	int size;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.2 2004/05/20 04:36:19 marco Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.3 2004/05/25 12:22:49 krw Exp $	*/
 /*
  * Product specific probe and attach routines for:
  *	aic7901 and aic7902 SCSI controllers
@@ -57,7 +57,8 @@ __FBSDID("$FreeBSD: src/sys/dev/aic7xxx/aic79xx_pci.c,v 1.18 2004/02/04 16:38:38
 
 #include <dev/pci/pcivar.h>
 
-static __inline uint64_t
+__inline uint64_t ahd_compose_id(u_int, u_int, u_int, u_int);
+__inline uint64_t
 ahd_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 {
 	uint64_t id;
@@ -122,10 +123,10 @@ ahd_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 #define		SUBID_9005_SEEPTYPE_NONE	0x0
 #define		SUBID_9005_SEEPTYPE_4K		0x1
 
-static ahd_device_setup_t ahd_aic7901_setup;
-static ahd_device_setup_t ahd_aic7901A_setup;
-static ahd_device_setup_t ahd_aic7902_setup;
-static ahd_device_setup_t ahd_aic790X_setup;
+ahd_device_setup_t ahd_aic7901_setup;
+ahd_device_setup_t ahd_aic7901A_setup;
+ahd_device_setup_t ahd_aic7902_setup;
+ahd_device_setup_t ahd_aic790X_setup;
 
 struct ahd_pci_identity ahd_pci_ident_table [] =
 {
@@ -279,10 +280,10 @@ struct cfattach ahd_pci_ca = {
 	        sizeof(struct ahd_softc), ahd_pci_probe, ahd_pci_attach
 };
 
-static int	ahd_check_extport(struct ahd_softc *ahd);
-static void	ahd_configure_termination(struct ahd_softc *ahd,
+int	ahd_check_extport(struct ahd_softc *ahd);
+void	ahd_configure_termination(struct ahd_softc *ahd,
 					  u_int adapter_control);
-static void	ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat);
+void	ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat);
 
 const struct ahd_pci_identity *
 ahd_find_pci_device(id, subid)
@@ -726,7 +727,7 @@ fail:
  * Check the external port logic for a serial eeprom
  * and termination/cable detection contrls.
  */
-static int
+int
 ahd_check_extport(struct ahd_softc *ahd)
 {
 	struct	vpd_config vpd;
@@ -859,7 +860,7 @@ ahd_check_extport(struct ahd_softc *ahd)
 	return (0);
 }
 
-static void
+void
 ahd_configure_termination(struct ahd_softc *ahd, u_int adapter_control)
 {
 	int	 error;
@@ -1064,7 +1065,7 @@ ahd_pci_intr(struct ahd_softc *ahd)
 	return;
 }
 
-static void
+void
 ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat)
 {
 	uint8_t		split_status[4];
@@ -1136,7 +1137,7 @@ ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat)
 	ahd_restore_modes(ahd, saved_modes);
 }
 
-static int
+int
 ahd_aic7901_setup(struct ahd_softc *ahd, struct pci_attach_args *pa)
 {
 
@@ -1145,7 +1146,7 @@ ahd_aic7901_setup(struct ahd_softc *ahd, struct pci_attach_args *pa)
 	return (ahd_aic790X_setup(ahd, pa));
 }
 
-static int
+int
 ahd_aic7901A_setup(struct ahd_softc *ahd, struct pci_attach_args *pa)
 {
 
@@ -1154,7 +1155,7 @@ ahd_aic7901A_setup(struct ahd_softc *ahd, struct pci_attach_args *pa)
 	return (ahd_aic790X_setup(ahd, pa));
 }
 
-static int
+int
 ahd_aic7902_setup(struct ahd_softc *ahd, struct pci_attach_args *pa)
 {
 	ahd->chip = AHD_AIC7902;
@@ -1162,7 +1163,7 @@ ahd_aic7902_setup(struct ahd_softc *ahd, struct pci_attach_args *pa)
 	return (ahd_aic790X_setup(ahd, pa));
 }
 
-static int
+int
 ahd_aic790X_setup(struct ahd_softc *ahd, struct pci_attach_args *pa)
 {
 	u_int rev;

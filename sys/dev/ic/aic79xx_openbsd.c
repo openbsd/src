@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.2 2004/05/20 04:35:47 marco Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.3 2004/05/25 12:22:49 krw Exp $	*/
 /*
  * Bus independent OpenBSD shim for the aic79xx based Adaptec SCSI controllers
  *
@@ -50,10 +50,10 @@ __FBSDID("$FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.c,v 1.16 2003/12/17 00:02:09
 #endif
 
 /* XXX milos add ahd_ioctl */
-static int	ahd_action(struct scsi_xfer *);
-static int	ahd_execute_scb(void *, bus_dma_segment_t *, int);
-static int	ahd_poll(struct ahd_softc *, int);
-static int	ahd_setup_data(struct ahd_softc *, struct scsi_xfer *, 
+int	ahd_action(struct scsi_xfer *);
+int	ahd_execute_scb(void *, bus_dma_segment_t *, int);
+int	ahd_poll(struct ahd_softc *, int);
+int	ahd_setup_data(struct ahd_softc *, struct scsi_xfer *, 
 		    struct scb *);
 
 void	ahd_adapter_req_set_xfer_mode(struct ahd_softc *, struct scb *);
@@ -108,6 +108,9 @@ ahd_attach(struct ahd_softc *ahd)
                 ahd_controller_info(ahd, ahd_info, sizeof ahd_info);
                 printf("%s: %s\n", ahd->sc_dev.dv_xname, ahd_info);
         }
+
+	ahd->sc_child = config_found((void *)&ahd->sc_dev,
+	    &ahd->sc_channel, scsiprint);
 
 	ahd_intr_enable(ahd, TRUE);
 
@@ -315,7 +318,7 @@ ahd_minphys(bp)
         minphys(bp);
 }
 
-static int32_t
+int32_t
 ahd_action(struct scsi_xfer *xs)
 {
 	struct	ahd_softc *ahd;
@@ -352,7 +355,7 @@ ahd_action(struct scsi_xfer *xs)
 	ahd_lock(ahd, &s);
 	tinfo = ahd_fetch_transinfo(ahd, 'A', our_id, target_id, &tstate);
 
-	quirks = scb->xs->sc_link->quirks;
+	quirks = xs->sc_link->quirks;
 
 	if ((quirks & SDEV_NOTAGS) == 0 || 
 	    (tinfo->curr.ppr_options & MSG_EXT_PPR_PROT_IUS) != 0)
@@ -398,7 +401,7 @@ ahd_action(struct scsi_xfer *xs)
 	return ahd_setup_data(ahd, xs, scb);
 }
 
-static int
+int
 ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 {
 	struct	scb *scb;
@@ -538,7 +541,7 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	return (COMPLETE);
 }
 
-static int
+int
 ahd_poll(struct ahd_softc *ahd, int wait)
 {
 	while (--wait) {
@@ -556,7 +559,7 @@ ahd_poll(struct ahd_softc *ahd, int wait)
 	return (0);
 }
 
-static int
+int
 ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 	       struct scb *scb)
 {
