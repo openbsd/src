@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.10 1995/03/21 18:35:42 mycroft Exp $	*/
+/*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: func.c,v 1.10 1995/03/21 18:35:42 mycroft Exp $";
+static char rcsid[] = "$NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1400,11 +1400,13 @@ dosuspend(v, t)
     (void) signal(SIGTSTP, old);
 
     if (tpgrp != -1) {
+retry:
 	ctpgrp = tcgetpgrp(FSHTTY);
-	while  (ctpgrp != opgrp) {
+      if  (ctpgrp != opgrp) {
 	    old = signal(SIGTTIN, SIG_DFL);
 	    (void) kill(0, SIGTTIN);
 	    (void) signal(SIGTTIN, old);
+          goto retry;
 	}
 	(void) setpgid(0, shpgrp);
 	(void) tcsetpgrp(FSHTTY, shpgrp);
