@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.6 1997/04/15 06:25:18 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.7 1997/04/15 20:50:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -116,7 +116,8 @@ biosopen(struct open_file *f, ...)
 
 	bd = alloc(sizeof(*bd));
 	bzero(bd, sizeof(bd));
-	bd->bsddev = MAKEBOOTDEV(maj, 0, 0, unit, part);
+	/* XXX for exec stuff */
+	bootdev = bd->bsddev = MAKEBOOTDEV(maj, 0, 0, unit, part);
 
 	switch (maj) {
 	case 0:	/* wd */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.7 1997/04/15 20:01:56 mickey Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.8 1997/04/15 20:50:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -39,7 +39,7 @@
 #include <sys/reboot.h>
 #include <libsa.h>
 
-static int bootdev;
+dev_t	bootdev;
 
 #define round_to_size(x) (((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
 
