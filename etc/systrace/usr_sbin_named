@@ -1,4 +1,4 @@
-# $OpenBSD: usr_sbin_named,v 1.3 2003/02/06 10:55:56 jakob Exp $
+# $OpenBSD: usr_sbin_named,v 1.4 2003/02/09 22:40:24 djm Exp $
 #
 # Policy for named that uses named user and chroots to /var/named
 # This policy works for the default configuration of named.
@@ -61,6 +61,7 @@ Policy: /usr/sbin/named, Emulation: native
 	native-mmap: permit
 	native-mprotect: permit
 	native-munmap: permit
+	native-nanosleep: permit
 	native-pread: permit
 	native-read: permit
 	native-recvmsg: permit
