@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.8 1998/09/18 18:48:11 deraadt Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.9 1999/02/17 00:17:33 deraadt Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: interactive.c,v 1.8 1998/09/18 18:48:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: interactive.c,v 1.9 1999/02/17 00:17:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -429,7 +429,7 @@ copynext(input, output)
 		 */
 		quote = *cp++;
 		while (*cp != quote && *cp != '\0')
-			*bp++ = *cp++ | 0200;
+			*bp++ = *cp++;
 		if (*cp++ == '\0') {
 			fprintf(stderr, "missing %c\n", quote);
 			cp--;
