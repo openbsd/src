@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.13 2000/01/10 00:54:35 angelos Exp $	*/
+/*	$OpenBSD: show.c,v 1.14 2000/01/10 01:04:20 angelos Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.13 2000/01/10 00:54:35 angelos Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.14 2000/01/10 01:04:20 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -226,9 +226,11 @@ p_rtentry(rtm)
 void                  
 pr_encaphdr()             
 {
+/*
         printf("%-40s %-15s %s\n",
                "Source/Destination Networks", "Protocol/Ports",
                "SA(Address/SPI/Proto)");
+*/
 }
 
 /*
@@ -394,6 +396,7 @@ encap_print(rtm)
         struct sockaddr_encap *sen1 = (struct sockaddr_encap *)(rtm + 1);
         struct sockaddr_encap *sen3;
 	struct sockaddr_encap *sen2;
+	struct protoent *prnt;
 
         u_char buffer[40];
 
@@ -407,18 +410,32 @@ encap_print(rtm)
 	if (sen1->sen_type == SENT_IP4) {
 		inet_ntop(AF_INET, &sen1->sen_ip_src, buffer, sizeof(buffer));
         	printf("%s/", buffer);
+		inet_ntop(AF_INET, &sen2->sen_ip_src, buffer, sizeof(buffer));
+        	printf("%s:%u -> ", buffer, ntohs(sen1->sen_sport));
 		inet_ntop(AF_INET, &sen1->sen_ip_dst, buffer, sizeof(buffer));
-        	printf("%-15s %-5u/%-5u/%-5u ", buffer, sen1->sen_proto,
-		       ntohs(sen1->sen_sport), ntohs(sen1->sen_dport));
+        	printf("%s/", buffer);
+		inet_ntop(AF_INET, &sen2->sen_ip_dst, buffer, sizeof(buffer));
+        	printf("%s:%u ", buffer, ntohs(sen1->sen_dport));
+
+		prnt = getprotobynumber(sen1->sen_proto);
+		if (prnt)
+			printf("(%s) ", prnt->p_name);
+		else
+			printf("(%u) ", sen1->sen_proto);
 	}
 
 #ifdef INET6
 	if (sen1->sen_type == SENT_IP6) {
 		inet_ntop(AF_INET6, &sen1->sen_ip6_src, buffer, sizeof(buffer));
-        	printf("%s/", buffer);
+        	printf("%s:%d ->", buffer, ntohs(sen1->sen_ip6_sport));
 		inet_ntop(AF_INET6, &sen1->sen_ip6_dst, buffer, sizeof(buffer));
-        	printf("%-39s %-5u/%-5u/%-5u ", buffer, sen1->sen_ip6_proto,
-		       ntohs(sen1->sen_ip6_sport), ntohs(sen1->sen_ip6_dport));
+        	printf("%s:%d ", buffer, ntohs(sen1->sen_ip6_dport));
+
+		prnt = getprotobynumber(sen1->sen_ip6_proto);
+		if (prnt)
+			printf("(%s) ", prnt->p_name);
+		else
+			printf("(%u) ", sen1->sen_ip6_proto);
 	}
 
 	if (sen3->sen_type == SENT_IPSP6)
