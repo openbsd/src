@@ -1,7 +1,7 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
 #	Version 10.2.3
-#	$Date: 1998/05/31 18:12:39 $
+#	$Date: 1998/05/31 18:15:06 $
 #	termcap syntax
 #
 #	Eric S. Raymond		(current maintainer)
@@ -993,8 +993,8 @@ vt220|vt200|DEC VT220 in vt100 emulation mode:\
 	:if=/usr/share/tabset/vt100:im=\E[4h:\
 	:is=\E[1;24r\E[24;1H:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:\
 	:k5=\E[17~:k6=\E[18~:k7=\E[19~:k8=\E[20~:k9=\E[21~:\
-	:k;=\E[29~:kD=\E[3~:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=^H:\
-	:kd=\E[B:kh=\E[1~:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:\
+	:k;=\E[29~:kD=\E[3~:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=\177:\
+	:kd=\EOB:kh=\E[1~:kl=\EOD:kr=\EOC:ku=\EOA:le=^H:mb=\E[5m:\
 	:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:nl=^J:\
 	:r2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:rc=\E8:\
 	:rf=/usr/share/tabset/vt100:\
@@ -1037,8 +1037,8 @@ vt220-8|dec vt220 8 bit terminal:\
 	:ei=\E[4l:ho=\E[H:if=/usr/share/tabset/vt100:im=\E[4h:\
 	:is=\E[?7h\E[>\E[?1h\E F\E[?4l:k1=\EOP:k2=\EOQ:k3=\EOR:\
 	:k4=\EOS:k6=\E[17~:k7=\E[18~:k8=\E[19~:k9=\E[20~:kI=\E[2~:\
-	:kN=\E[6~:kP=\E[5~:kb=^H:kd=\E[B:kh=\E[H:kl=\E[D:kr=\E[C:\
-	:ku=\E[A:le=^H:mb=\E[5m:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:\
+	:kN=\E[6~:kP=\E[5~:kb=\177:kd=\EOB:kh=\E[H:kl=\EOD:kr=\EOC:\
+	:ku=\EOA:le=^H:mb=\E[5m:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:\
 	:nw=\EE:rc=\E8:sc=\E7:se=\E[27m:sf=\ED:so=\E[7m:sr=\EM:\
 	:st=\EH:ta=^I:ue=\E[24m:up=\E[A:us=\E[4m:vb=\E[?5h\E[?5l:
 
@@ -1063,7 +1063,7 @@ vt200-js|vt220-js|dec vt200 series with jump scroll:\
 	:cr=^M:cs=\E[%i%d;%dr:dc=\E[P:dl=\E[M:dm=:do=^J:ed=:\
 	:ei=\E[4l:ho=\E[H:im=\E[4h:\
 	:is=\E[61"p\E[H\E[?3l\E[?4l\E[?1l\E[?5l\E[?6l\E[?7h\E[?8h\E[?25h\E>\E[m:\
-	:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:kb=^H:kd=\EOB:\
+	:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:kb=\177:kd=\EOB:\
 	:ke=\E[?1l\E>:kl=\EOD:kr=\EOC:ks=\E[?1h\E=:ku=\EOA:le=^H:\
 	:nw=^M\ED:r1=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:\
 	:rf=/usr/lib/tabset/vt100:se=5\E[27m:sf=\ED:so=5\E[7m:\
@@ -1162,7 +1162,7 @@ vt340|dec-vt340|vt330|dec-vt330|dec vt340 graphics terminal with 24 line page:\
 	:fs=\E[$}:ho=\E[H:im=\E[4h:\
 	:is=\E<\E F\E>\E[?1h\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;24r\E[24;1H:\
 	:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:k6=\E[17~:k7=\E[18~:\
-	:k8=\E[19~:k9=\E[20~:kb=^H:kd=\EOB:ke=\E[?1l\E>:kl=\EOD:\
+	:k8=\E[19~:k9=\E[20~:kb=\177:kd=\EOB:ke=\E[?1l\E>:kl=\EOD:\
 	:kr=\EOC:ks=\E[?1h\E=:ku=\EOA:l1=pf1:l2=pf2:l3=pf3:l4=pf4:\
 	:le=^H:mb=\E[5m:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:nw=^M\ED:\
 	:r1=\E[?3l:rc=\E8:rf=/usr/share/tabset/vt300:sc=\E7:\
@@ -1205,7 +1205,7 @@ vt400|vt400-24|dec-vt400|dec vt400 24x80 column autowrap:\
 	:ic=\E[@:im=\E[4h:\
 	:is=\E<\E F\E>\E[?1h\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;24r\E[24;1H:\
 	:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:k6=\E[17~:k7=\E[18~:\
-	:k8=\E[19~:k9=\E[20~:kb=^H:kd=\EOB:ke=\E[?1l\E>:kl=\EOD:\
+	:k8=\E[19~:k9=\E[20~:kb=\177:kd=\EOB:ke=\E[?1l\E>:kl=\EOD:\
 	:kr=\EOC:ks=\E[?1h\E=:ku=\EOA:le=^H:mb=\E[5m:md=\E[1m:\
 	:me=\E[m:mr=\E[7m:nd=\E[C:nw=^M\ED:rc=\E8:sc=\E7:se=\E[27m:\
 	:sf=\ED:so=\E[7m:sr=\EM:st=\EH:ta=^I:\
@@ -1228,7 +1228,7 @@ vt420|DEC VT420:\
 	:im=\E[4h:is=\E[1;24r\E[24;1H:k1=\EOP:k2=\EOQ:k3=\EOR:\
 	:k4=\EOS:k5=\E[17~:k6=\E[18~:k7=\E[19~:k8=\E[20~:\
 	:k9=\E[21~:k;=\E[29~:kD=\E[3~:kI=\E[2~:kN=\E[6~:kP=\E[5~:\
-	:kb=^H:kd=\E[B:ke=\E>:kl=\E[D:kr=\E[C:ks=\E=:ku=\E[A:le=^H:\
+	:kb=\177:kd=\E[B:ke=\E>:kl=\E[D:kr=\E[C:ks=\E=:ku=\E[A:le=^H:\
 	:mb=\E[5m:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:\
 	:r3=\E[?67h\E[64;1"p:rc=\E8:rf=/usr/share/tabset/vt300:\
 	:..sa=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p4%t;5%;%?%p1%p3%|%t;7%;m%?%p9%t\E(0%e\E(B%;:\
@@ -1319,7 +1319,7 @@ vt520|DEC VT520:\
 	:im=\E[4h:is=\E[1;24r\E[24;1H:k0=\E[29~:k1=\EOP:k2=\EOQ:\
 	:k3=\EOR:k4=\EOS:k5=\E[17~:k6=\E[18~:k7=\E[19~:k8=\E[20~:\
 	:k9=\E[21~:k;=\E[29~:kD=\E[3~:kI=\E[2~:kN=\E[6~:kP=\E[5~:\
-	:kb=^H:kd=\E[B:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:\
+	:kb=\177:kd=\E[B:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:\
 	:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:r3=\E[?67h\E[64;1"p:\
 	:rc=\E8:rf=/usr/share/tabset/vt300:sc=\E7:se=\E[m:sf=\ED:\
 	:so=\E[7m:sr=\EM:ta=^I:ue=\E[m:up=\E[A:us=\E[4m:
@@ -1341,7 +1341,7 @@ vt525|DEC VT525:\
 	:im=\E[4h:is=\E[1;24r\E[24;1H:k0=\E[29~:k1=\EOP:k2=\EOQ:\
 	:k3=\EOR:k4=\EOS:k5=\E[17~:k6=\E[18~:k7=\E[19~:k8=\E[20~:\
 	:k9=\E[21~:k;=\E[29~:kD=\E[3~:kI=\E[2~:kN=\E[6~:kP=\E[5~:\
-	:kb=^H:kd=\E[B:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:\
+	:kb=\177:kd=\E[B:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:\
 	:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:r3=\E[?67h\E[64;1"p:\
 	:rc=\E8:rf=/usr/share/tabset/vt300:sc=\E7:se=\E[m:sf=\ED:\
 	:so=\E[7m:sr=\EM:ta=^I:ue=\E[m:up=\E[A:us=\E[4m:
@@ -1535,10 +1535,12 @@ xterm-8bit|xterm terminal emulator 8-bit controls (X Window System):\
 
 # This is xterm for ncurses. It mainly adds mappings for more high-half
 # characters.  Note that these will only work for fixed-width fonts.
+#xterm|vs100|xterms|xterm terminal emulator (X Window System):\
+#	:Km=\E[M:\
+#	:ac=++\054\054--..00``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
+#	:u6=\E[%i%d;%dR:u7=\E[6n:u8=\E[?1;2c:u9=\E[c:\
+#	:tc=xterm-r6:
 xterm|vs100|xterms|xterm terminal emulator (X Window System):\
-	:Km=\E[M:\
-	:ac=++\054\054--..00``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
-	:u6=\E[%i%d;%dR:u7=\E[6n:u8=\E[?1;2c:u9=\E[c:\
 	:tc=xterm-r6:
 
 # These entries allow access to the X titlebar and icon name as a status line. 
