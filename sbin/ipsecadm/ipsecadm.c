@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.24 1999/09/07 12:35:27 ho Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.25 1999/11/04 11:29:35 ho Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -197,6 +197,7 @@ usage()
 	    "\t  -addr <ip> <net> <ip> <net>\t subnets for flow\n"
 	    "\t  -delete\t\t\t delete specified flow\n"
 	    "\t  -local\t\t\t also create a local flow\n"
+	    "\t  -bypass\t\t\t create/delete a bypass flow\n"
 	    "\t  -sport\t\t\t source port for flow\n"
 	    "\t  -dport\t\t\t destination port for flow\n"
 	    "\t  -[ah|esp|oldah|oldesp|ip4]\t to flush a particular protocol\n"
@@ -234,6 +235,7 @@ main(int argc, char **argv)
     struct iovec iov[20];
     int cnt = 0;
     u_char realkey[8192], realakey[8192];
+    int bypass = 0;
     
     if (argc < 2)
     {
@@ -500,17 +502,20 @@ main(int argc, char **argv)
 		    if(!strcmp(argv[i] + 1, "ip4"))
 		        smsg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
 		    else
-		    {
-		      fprintf(stderr, "%s: invalid SA type %s\n", argv[0],
-			      argv[i + 1]);
-		      exit(1);
-		    }
+		      if(!strcmp(argv[i] + 1, "bypass"))
+		        smsg.sadb_msg_satype = SADB_X_SATYPE_BYPASS;
+		      else
+		      {
+			fprintf(stderr, "%s: invalid SA type %s\n", argv[0],
+				argv[i + 1]);
+			exit(1);
+		      }
 	    i++;
 	    continue;
 	}
 
 	if (!strcmp(argv[i] + 1, "spi") && spi == SPI_RESERVED_MIN &&
-	    (i + 1 < argc))
+	    (i + 1 < argc) && !bypass)
 	{
 	    spi = htonl(strtoul(argv[i + 1], NULL, 16));
 	    if (spi >= SPI_RESERVED_MIN && spi <= SPI_RESERVED_MAX)
@@ -666,7 +671,25 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	if (!strcmp(argv[i] + 1, "transport") && 
+	if (!strcmp(argv[i] + 1, "bypass") && iscmd(mode, FLOW) && !bypass)
+	{
+	    /* Setup everything for a bypass flow */
+	    bypass = 1;
+	    sa.sadb_sa_spi = 0;
+	    sprotocol.sadb_protocol_len = 1;
+	    sprotocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
+	    sprotocol.sadb_protocol_proto = 0;
+	    smsg.sadb_msg_satype = SADB_X_SATYPE_BYPASS;
+	    sad2.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+	    sad2.sadb_address_len = (sizeof(sad2) +
+				     sizeof(struct sockaddr_in)) / 8;
+	    dst.sin.sin_family = AF_INET;
+	    dst.sin.sin_len = sizeof(struct sockaddr_in);
+	    dstset = inet_aton("0.0.0.0", &dst.sin.sin_addr) != -1 ? 1 : 0;
+	    continue;
+	}
+
+	if (!strcmp(argv[i] + 1, "transport") &&
 	    iscmd(mode, FLOW) && (i + 1 < argc))
 	{
 	    if (isalpha(argv[i + 1][0]))
@@ -699,7 +722,7 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	if (!strcmp(argv[i] + 1, "sport") && 
+	if (!strcmp(argv[i] + 1, "sport") &&
 	    iscmd(mode, FLOW) && (i + 1 < argc))
 	{
 	    if (isalpha(argv[i + 1][0]))
@@ -724,7 +747,7 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	if (!strcmp(argv[i] + 1, "dport") && 
+	if (!strcmp(argv[i] + 1, "dport") &&
 	    iscmd(mode, FLOW) && (i + 1 < argc))
 	{
 	    if (isalpha(argv[i + 1][0]))
@@ -748,7 +771,7 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	if (!strcmp(argv[i] + 1, "dst") && (i + 1 < argc))
+	if (!strcmp(argv[i] + 1, "dst") && (i + 1 < argc) && !bypass)
 	{
 	    sad2.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 	    sad2.sadb_address_len = (sizeof(sad2) +
@@ -774,7 +797,7 @@ main(int argc, char **argv)
 	}
 
 	if (!strcmp(argv[i] + 1, "proto") && (i + 1 < argc) &&
-	    (iscmd(mode, FLOW) || iscmd(mode, GRP_SPI) ||
+	    ((iscmd(mode, FLOW) && !bypass) || iscmd(mode, GRP_SPI) ||
 	     iscmd(mode, DEL_SPI) || iscmd(mode, BINDSA)))
 	{
 	    if (isalpha(argv[i + 1][0]))
@@ -930,7 +953,7 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    if (spi == SPI_RESERVED_MIN && !iscmd(mode, FLUSH))
+    if (spi == SPI_RESERVED_MIN && !iscmd(mode, FLUSH) && !bypass)
     {
 	fprintf(stderr, "%s: no SPI specified\n", argv[0]);
 	exit(1);
@@ -949,7 +972,8 @@ main(int argc, char **argv)
 	exit(1);
     } 
 
-    if ((iscmd(mode, DEL_SPI) || iscmd(mode, GRP_SPI) || iscmd(mode, FLOW) ||
+    if ((iscmd(mode, DEL_SPI) || iscmd(mode, GRP_SPI) || 
+	 (iscmd(mode, FLOW) && !bypass) ||
 	 iscmd(mode, BINDSA)) && proto != IPPROTO_ESP &&
 	proto != IPPROTO_AH && proto != IPPROTO_IPIP)
     {
@@ -980,7 +1004,7 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    if (iscmd(mode, FLOW) && (sprotocol.sadb_protocol_proto == 0) &&
+    if (iscmd(mode, FLOW) && !bypass && (sprotocol.sadb_protocol_proto == 0) &&
 	(odst.sin.sin_port || osrc.sin.sin_port))
     {
 	fprintf(stderr, "%s: no transport protocol supplied with source/destination ports\n", argv[0]);

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.14 1999/10/07 20:54:42 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.15 1999/11/04 11:29:35 ho Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -158,10 +158,25 @@ Association. Allowed modifiers are:
 .Fl sport ,
 .Fl dport ,
 .Fl local ,
-.Fl delete .
+.Fl delete ,
+and
+.Fl bypass .
 The
 .Xr netstat 1
-command shows the existing flows.
+command shows the existing flows.  A 
+.Nm bypass
+flow is used to specify a flow for which IPSec processing will be
+bypassed, i.e packets will not be processed by any SAs.  For
+.Nm bypass
+flows, additional modifiers are restricted to:
+.Fl addr ,
+.Fl transport ,
+.Fl sport ,
+.Fl dport ,
+.Fl local ,
+and
+.Fl delete .
+These flows always have SPI 0, destination 0.0.0.0 and protocol 0.
 .It bind
 Associate an incoming Security Association with an outgoing Security
 Association. When a socket receives packets secured by the incoming
@@ -379,6 +394,14 @@ to using a source address of 0.0.0.0 and a source network mask of
 255.255.255.255.
 .It delete
 Instead of creating a flow, an existing flow is deleted.
+.It bypass
+For
+.Nm flow ,
+create or delete a
+.Nm bypass
+flow.  Packets matching this flow will not be processed by IPSec.  For
+.Nm flush ,
+only flush SAs of type bypass.
 .It ah
 For
 .Nm flush ,
@@ -414,6 +437,18 @@ Setup a SA for authentication with old ah only:
 .Bd -literal
 ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3 \e\ 
 	-key 12341234deadbeef
+.Ed
+.Pp
+Setup a flow using the above SA:
+.Bd -literal
+ipsecadm flow -dst 169.20.12.2 -spi 1001 -proto ah -local \e\ 
+	-addr 10.1.1.0 255.255.255.0 10.0.0.0 255.0.0.0.0
+.Ed
+.Pp
+Setup a bypass flow:
+.Bd -literal
+ipsecadm flow -bypass -local \e\ 
+	-addr 10.1.1.0 255.255.255.0 10.1.1.0 255.255.255.0
 .Ed
 .Pp
 Delete all esp SAs and their flows and routing information:
