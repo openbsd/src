@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.471 2004/12/22 17:17:55 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.472 2004/12/23 17:21:48 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1589,6 +1589,7 @@ pfrule		: action dir logquick interface route af proto fromto
 						YYERROR;
 					}
 					srctrack =  o->data.src_track;
+					r.rule_flag |= PFRULE_SRCTRACK;
 					break;
 				case PF_STATE_OPT_MAX_SRC_STATES:
 					if (r.max_src_states) {
