@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.11 1998/11/25 16:39:38 kstailey Exp $	*/
+/*	$OpenBSD: ld.c,v 1.12 1999/05/24 23:22:01 espie Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -2096,6 +2096,9 @@ consider_relocation(entry, dataseg)
 	struct relocation_info	*reloc, *end;
 	struct localsymbol	*lsp;
 	symbol			*sp;
+#ifdef ALLOW_SPARC_MIX
+	static int locked_pic_small = 0;
+#endif
 
 	if (dataseg == 0) {
 		/* Text relocations */
@@ -2161,11 +2164,31 @@ consider_relocation(entry, dataseg)
 
 			lsp = &entry->symbols[reloc->r_symbolnum];
 			alloc_rrs_gotslot(entry, reloc, lsp);
+/* sparc assembler instructions sometimes hold RELOC_22/RELOC_11,
+   even when using the small -fpic model. This should not yield
+   an error though.  The linker is still thoroughly unsubtle about it
+   and constrains everything to +/-4096 of the GOT
+ */
+#ifdef ALLOW_SPARC_MIX
+			if (!locked_pic_small) {
+				if (pic_type != PIC_TYPE_NONE &&
+					 RELOC_PIC_TYPE(reloc) != pic_type) {
+					warnx("%s: reloc type mix, enforcing pic model",
+						get_file_name(entry));
+					pic_type = PIC_TYPE_SMALL;
+					locked_pic_small = 1;
+				} 
+				else
+					pic_type = RELOC_PIC_TYPE(reloc);
+			} 
+#else
+			pic_type = RELOC_PIC_TYPE(reloc);
 			if (pic_type != PIC_TYPE_NONE &&
 			    RELOC_PIC_TYPE(reloc) != pic_type)
 				errx(1, "%s: illegal reloc type mix",
 					get_file_name(entry));
 			pic_type = RELOC_PIC_TYPE(reloc);
+#endif
 
 		} else if (RELOC_EXTERN_P(reloc)) {
 
