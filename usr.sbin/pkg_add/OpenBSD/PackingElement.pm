@@ -1,4 +1,4 @@
-# $OpenBSD: PackingElement.pm,v 1.5 2003/12/26 16:44:31 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.6 2004/01/22 21:11:43 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -591,13 +591,13 @@ sub new
 {
 	my ($class, $args) = @_;
 	my @arches= split(/\,/, $args);
-	bless { arches => @arches }, $class;
+	bless { arches => \@arches }, $class;
 }
 
 sub stringize($)
 {
 	my $self = $_[0];
-	return join(',',$self->{arches});
+	return join(',',@{$self->{arches}});
 }
 
 1;

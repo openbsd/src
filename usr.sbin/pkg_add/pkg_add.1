@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.6 2003/11/14 23:18:50 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.7 2004/01/22 21:11:43 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -157,6 +157,10 @@ directives, see
 .Xr pkg_create 1 )
 with an already recorded as installed package.
 If it is, installation is terminated.
+.It
+For packages tagged with architecture constraints, 
+.Nm
+verifies that the current machine architecture agrees with the constraints.
 .It
 All package dependencies (from
 .Cm @pkgdep ,

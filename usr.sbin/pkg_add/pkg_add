@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.21 2004/01/01 17:20:54 espie Exp $
+# $OpenBSD: pkg_add,v 1.22 2004/01/22 21:11:43 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -91,6 +91,27 @@ sub install
 
 	print "exec ", $self->{expanded}, "\n" if $verbose or $not;
 	system('/bin/sh', '-c', $self->{expanded}) unless $not;
+}
+
+package OpenBSD::PackingElement::Arch;
+
+sub check
+{
+	my $self = $_[0];
+
+	my ($machine_arch, $arch);
+	for my $ok (@{$self->{arches}}) {
+		return 1 if $ok eq '*';
+		if (!defined $machine_arch) {
+			chomp($machine_arch = `/usr/bin/arch -s`);
+		}
+		return 1 if $ok eq $machine_arch;
+		if (!defined $arch) {
+			chomp($arch = `/usr/bin/uname -m`);
+		}
+		return 1 if $ok eq $arch;
+	}
+	return undef;
 }
 
 package main;
@@ -412,6 +433,12 @@ while (my $pkg = shift @todo) {
 	if (is_installed($plist->pkgname())) {
 		$handle->close();
 		next;
+	}
+	if ($plist->has('arch')) {
+		unless ($plist->{arch}->check()) {
+			print "$pkg is not for the right architecture\n";
+			next MAINLOOP;
+		}
 	}
 	if (!defined $handle->{solved_dependencies}) {
 		my @deps = solve_dependencies($handle, @todo);

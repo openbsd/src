@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.2 2003/11/14 23:03:55 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.3 2004/01/22 21:11:43 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -34,6 +34,7 @@
 .Nm pkg_create
 .Bk -words
 .Op Fl hv
+.Op Fl A Ar arches
 .Op Fl P Ar dpkgs
 .Op Fl C Ar cpkgs
 .Op Fl p Ar prefix
@@ -63,6 +64,13 @@ description of the input syntax is included in this document.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A Ar arches
+Register a list of architectures for which this package should install.
+.Ar arches
+is a comma-separated list of architectures.
+Use
+.Sq *
+to mean any architecture (e.g., arch-independent packages).
 .It Fl f Ar packinglist
 Fetch
 .Dq packing list
@@ -163,6 +171,8 @@ This is done by imbedding specialized command sequences
 in the packing list.
 Briefly described, these sequences are:
 .Bl -tag -width indent
+.It Cm @arch Ar arches
+List of architectures for which this package is intended.
 .It Cm @cwd Ar directory
 Set the internal directory pointer to point to
 .Ar directory .
