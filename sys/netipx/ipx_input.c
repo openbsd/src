@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.9 2000/01/11 21:10:34 fgsch Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.10 2000/01/13 04:41:03 fgsch Exp $	*/
 
 /*-
  *
@@ -142,8 +142,8 @@ next:
 
 	ipxstat.ipxs_total++;
 
-	if ((m->m_flags & M_EXT || m->m_len < sizeof (struct ipx)) &&
-	    (m = m_pullup(m, sizeof (struct ipx))) == 0) {
+	if ((m->m_flags & M_EXT || m->m_len < sizeof(struct ipx)) &&
+	    (m = m_pullup(m, sizeof(struct ipx))) == 0) {
 		ipxstat.ipxs_toosmall++;
 		goto next;
 	}
@@ -335,7 +335,7 @@ struct mbuf *m;
 		goto cleanup;
 	}
 
-	if ((ok_there = ipx_do_route(&ipx->ipx_dna,&ipx_droute))==0) {
+	if ((ok_there = ipx_do_route(&ipx->ipx_dna,&ipx_droute)) == 0) {
 		m_freem(m);
 		goto cleanup;
 	}
@@ -354,7 +354,7 @@ struct mbuf *m;
 			agedelta += IPX_MAXHOPS - ipx->ipx_tc;
 			ipx->ipx_tc = IPX_MAXHOPS;
 		}
-		if ((ok_back = ipx_do_route(&ipx->ipx_sna,&ipx_sroute))==0) {
+		if ((ok_back = ipx_do_route(&ipx->ipx_sna,&ipx_sroute)) == 0) {
 			/* error = ENETUNREACH; He'll never get it! */
 			m_freem(m);
 			goto cleanup;
@@ -382,7 +382,7 @@ struct mbuf *m;
 		x.l = ipx->ipx_sum + (x.s[0] << shift);
 		x.l = x.s[0] + x.s[1];
 		x.l = x.s[0] + x.s[1];
-		if (x.l==0xffff) ipx->ipx_sum = 0; else ipx->ipx_sum = x.l;
+		if (x.l == 0xffff) ipx->ipx_sum = 0; else ipx->ipx_sum = x.l;
 	} else 
 		ipx->ipx_sum = 0xffff;
 
@@ -431,7 +431,7 @@ struct route *ro;
 {
 	struct sockaddr_ipx *dst;
 
-	bzero((caddr_t)ro, sizeof (*ro));
+	bzero((caddr_t)ro, sizeof(*ro));
 	dst = (struct sockaddr_ipx *)&ro->ro_dst;
 
 	dst->sipx_len = sizeof(*dst);
@@ -450,7 +450,9 @@ void
 ipx_undo_route(ro)
 register struct route *ro;
 {
-	if (ro->ro_rt) {RTFREE(ro->ro_rt);}
+	if (ro->ro_rt) {
+		RTFREE(ro->ro_rt);
+	}
 }
 
 void
@@ -471,7 +473,7 @@ struct ifnet *ifp;
 		if (m0) {
 			register struct ipx *ipx;
 
-			M_PREPEND(m0, sizeof (*ipx), M_DONTWAIT);
+			M_PREPEND(m0, sizeof(*ipx), M_DONTWAIT);
 			if (m0 == NULL)
 				continue;
 			ipx = mtod(m0, struct ipx *);
