@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.40 2001/06/27 04:49:42 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.41 2001/06/27 06:21:28 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -179,11 +179,7 @@ fork1(p1, exitsig, flags, stack, stacksize, retval)
 	/*
 	 * Allocate a pcb and kernel stack for the process
 	 */
-#if defined(arc) || defined(mips_cachealias)
-	uaddr = kmem_alloc_upage(kernel_map, USPACE);
-#else
 	uaddr = uvm_km_valloc(kernel_map, USPACE);
-#endif
 	if (uaddr == 0)
 		return ENOMEM;
 
