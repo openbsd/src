@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.37 2002/11/25 03:29:09 henning Exp $	*/
+/*	$OpenBSD: theo.c,v 1.38 2002/11/30 23:31:02 miod Exp $	*/
 
 #include "def.h"
 #include "kbd.h"
@@ -99,7 +99,8 @@ static const char *talk[] = {
 	"altq's parser sucks dead whale farts through the finest chemistry pipette's",
 	"screw this operating system shit, i just want to drive!",
 	"That is the most stupid thing I have heard all week.",
-	"Search for fuck.  Anytime you see that word, you have a paragraph to write."
+	"Search for fuck.  Anytime you see that word, you have a paragraph to write.",
+	"what I'm doing [...] is hell. it's kind of fun."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
