@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_mpilib.h,v 1.1 2004/03/06 03:03:07 krw Exp $	*/
+/*	$OpenBSD: mpt_mpilib.h,v 1.2 2004/10/26 04:43:59 marco Exp $	*/
 /*	$NetBSD: mpt_mpilib.h,v 1.2 2003/04/16 23:24:01 thorpej Exp $	*/
 
 /*
@@ -1329,12 +1329,14 @@ typedef struct _CONFIG_PAGE_IOC_2_RAID_VOL
  * one and check Header.PageLength at runtime.
  */
 #ifndef MPI_IOC_PAGE_2_RAID_VOLUME_MAX
-#define MPI_IOC_PAGE_2_RAID_VOLUME_MAX      (1)
+/* #define MPI_IOC_PAGE_2_RAID_VOLUME_MAX      (1) */
+/* MP: is this the right way of doing this? */
+#define MPI_IOC_PAGE_2_RAID_VOLUME_MAX      (16)
 #endif
 
 typedef struct _CONFIG_PAGE_IOC_2
 {
-    fCONFIG_PAGE_HEADER          Header;                              /* 00h */
+    fCONFIG_PAGE_HEADER         Header;                              /* 00h */
     U32                         CapabilitiesFlags;                   /* 04h */
     U8                          NumActiveVolumes;                    /* 08h */
     U8                          MaxVolumes;                          /* 09h */
@@ -1376,7 +1378,9 @@ typedef struct _IOC_3_PHYS_DISK
  * one and check Header.PageLength at runtime.
  */
 #ifndef MPI_IOC_PAGE_3_PHYSDISK_MAX
-#define MPI_IOC_PAGE_3_PHYSDISK_MAX         (1)
+/* #define MPI_IOC_PAGE_3_PHYSDISK_MAX         (1) */
+/* MP: is this the right way of doing this? */
+#define MPI_IOC_PAGE_3_PHYSDISK_MAX         (16)
 #endif
 
 typedef struct _CONFIG_PAGE_IOC_3
@@ -1404,13 +1408,15 @@ typedef struct _IOC_4_SEP
  * Host code (drivers, BIOS, utilities, etc.) should leave this define set to
  * one and check Header.PageLength at runtime.
  */
-#ifndef MPI_IOC_PAGE_4_SEP_MAX
-#define MPI_IOC_PAGE_4_SEP_MAX              (1)
+#ifndef MPI_IOC_PAGE_4_SEP_MAX 
+/* #define MPI_IOC_PAGE_4_SEP_MAX              (1) */
+/* MP: is this the right way of doing this? */
+#define MPI_IOC_PAGE_4_SEP_MAX              (16)
 #endif
 
 typedef struct _CONFIG_PAGE_IOC_4
 {
-    fCONFIG_PAGE_HEADER          Header;                         /* 00h */
+    fCONFIG_PAGE_HEADER		Header;                         /* 00h */
     U8                          ActiveSEP;                      /* 04h */
     U8                          MaxSEP;                         /* 05h */
     U16                         Reserved1;                      /* 06h */
@@ -1427,9 +1433,9 @@ typedef struct _CONFIG_PAGE_IOC_4
 
 typedef struct _CONFIG_PAGE_SCSI_PORT_0
 {
-    fCONFIG_PAGE_HEADER      Header;                     /* 00h */
-    U32                     Capabilities;               /* 04h */
-    U32                     PhysicalInterface;          /* 08h */
+    fCONFIG_PAGE_HEADER		Header;                     /* 00h */
+    U32				Capabilities;               /* 04h */
+    U32				PhysicalInterface;          /* 08h */
 } fCONFIG_PAGE_SCSI_PORT_0, MPI_POINTER PTR_CONFIG_PAGE_SCSI_PORT_0,
   SCSIPortPage0_t, MPI_POINTER pSCSIPortPage0_t;
 
@@ -1451,9 +1457,9 @@ typedef struct _CONFIG_PAGE_SCSI_PORT_0
 
 typedef struct _CONFIG_PAGE_SCSI_PORT_1
 {
-    fCONFIG_PAGE_HEADER      Header;                     /* 00h */
-    U32                     Configuration;              /* 04h */
-    U32                     OnBusTimerValue;            /* 08h */
+    fCONFIG_PAGE_HEADER		Header;                     /* 00h */
+    U32				Configuration;              /* 04h */
+    U32				OnBusTimerValue;            /* 08h */
 } fCONFIG_PAGE_SCSI_PORT_1, MPI_POINTER PTR_CONFIG_PAGE_SCSI_PORT_1,
   SCSIPortPage1_t, MPI_POINTER pSCSIPortPage1_t;
 
@@ -2014,7 +2020,9 @@ typedef struct _RAID_VOL0_SETTINGS
  * one and check Header.PageLength at runtime.
  */
 #ifndef MPI_RAID_VOL_PAGE_0_PHYSDISK_MAX
-#define MPI_RAID_VOL_PAGE_0_PHYSDISK_MAX        (1)
+/* #define MPI_RAID_VOL_PAGE_0_PHYSDISK_MAX        (1) */
+/* MP: is this the right way of doing this? */
+#define MPI_RAID_VOL_PAGE_0_PHYSDISK_MAX        (16)
 #endif
 
 typedef struct _CONFIG_PAGE_RAID_VOL_0

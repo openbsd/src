@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.16 2004/10/22 04:54:26 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.17 2004/10/26 04:43:59 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -191,10 +191,12 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
 	/*
 	 * Set the synchronous parameters for the target.
 	 */
-	page1.RequestedParameters &= ~(MPI_SCSIDEVPAGE1_RP_MIN_SYNC_PERIOD_MASK |
+	page1.RequestedParameters &=
+	    ~(MPI_SCSIDEVPAGE1_RP_MIN_SYNC_PERIOD_MASK |
 	    MPI_SCSIDEVPAGE1_RP_MAX_SYNC_OFFSET_MASK |
 	    MPI_SCSIDEVPAGE1_RP_DT | MPI_SCSIDEVPAGE1_RP_QAS |
 	    MPI_SCSIDEVPAGE1_RP_IU);
+
 	if (!(sc_link->quirks & SDEV_NOSYNC)) {
 		int factor, offset, np;
 
@@ -207,18 +209,18 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
 		factor = (mpt->mpt_port_page0.Capabilities >> 8) & 0xff;
 		offset = (mpt->mpt_port_page0.Capabilities >> 16) & 0xff;
 		np = 0;
-		
-		switch (speed) {
-			case U320:
-				/* do nothing */
-				break;
 
-			case U160:
-				factor = 0x09; /* force U160 */
-				break;
-				
-			case U80:
-				factor = 0x0a; /* force U80 */
+		switch (speed) {
+		case U320:
+			/* do nothing */
+			break;
+
+		case U160:
+			factor = 0x09; /* force U160 */
+			break;
+
+		case U80:
+			factor = 0x0a; /* force U80 */
 		}
 
 		if (factor < 0x9) {
@@ -274,20 +276,24 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
 
         if (mpt->verbose > 1) {
                 mpt_prt(mpt,
-                    "SPI Tgt %d Page 0: NParms %x Information %x",
-                    sc_link->target,
-                    page0.NegotiatedParameters, page0.Information);
+		    "SPI Tgt %d Page 0: NParms %x Information %x",
+		    sc_link->target,
+		    page0.NegotiatedParameters, page0.Information);
         }
 
 	if (!(page0.NegotiatedParameters & 0x07) && (speed == U320)) {
-		/* if lowest 3 aren't set the PPR probably failed, retry with other parameters */
+		/*
+		 * if lowest 3 aren't set the PPR probably failed,
+		 * retry with other parameters
+		 */
         	if (mpt->verbose > 1) {
 			mpt_prt(mpt, "U320 PPR failed");
 		}
 		return 0;
 	}
 
-	if ((((page0.NegotiatedParameters >> 8) & 0xff) > 0x09) && (speed == U160)) {
+	if ((((page0.NegotiatedParameters >> 8) & 0xff) > 0x09) &&
+	    (speed == U160)) {
 		/* if transfer period > 0x09 then U160 PPR failed, retry */
         	if (mpt->verbose > 1) {
 			mpt_prt(mpt, "U160 PPR failed");
@@ -296,55 +302,56 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
 	}
 
 	/*
-	 * Bit 3 - PPR rejected: The IOC sets this bit if the device rejects a PPR message.
-	 * Bit 2 - WDTR Rejected: The IOC sets this bit if the device rejects a WDTR message.
-	 * Bit 1 - SDTR Rejected: The IOC sets this bit if the device rejects a SDTR message.
-	 * Bit 0 - 1 A SCSI SDTR, WDTR, or PPR negotiation has occurred with this device.
+	 * Bit 3 - PPR rejected:  IOC sets this if the device rejects PPR.
+	 * Bit 2 - WDTR rejected: IOC sets this if the device rejects WDTR.
+	 * Bit 1 - SDTR Rejected: IOC sets this if the device rejects SDTR.
+	 * Bit 0 - 1 A SCSI SDTR, WDTR, or PPR negotiation has occurred.
 	 */
 	if (page0.Information & 0x0e) {
 		/* target rejected PPR message */
 		mpt_prt(mpt, "Target %d rejected PPR message with %02x",
-			sc_link->target,
-			(uint8_t)page0.Information);
+		    sc_link->target,
+		    (uint8_t)page0.Information);
+
 		return 0;
 	}
 
 	/* print PPR results */
 	switch ((page0.NegotiatedParameters >> 8) & 0xff) {
-		case 0x08:
-			tp = 160;
-			break;
-			
-		case 0x09:
-			tp = 80;
-			break;
-			
-		case 0x0a:
-			tp = 40;
-			break;
-			
-		case 0x0b:
-			tp = 20;
-			break;
-			
-		case 0x0c:
-			tp = 10;
-			break;
+	case 0x08:
+		tp = 160;
+		break;
 
-		default:
-			tp = 0;
+	case 0x09:
+		tp = 80;
+		break;
+
+	case 0x0a:
+		tp = 40;
+		break;
+
+	case 0x0b:
+		tp = 20;
+		break;
+
+	case 0x0c:
+		tp = 10;
+		break;
+
+	default:
+		tp = 0;
 	}
 
 	mpt_prt(mpt,
-		"target %d %s at %dMHz width %dbit offset %d QAS %d DT %d IU %d",
-		sc_link->target,
-		tp ? "Synchronous" : "Asynchronous",
-		tp,
-		(page0.NegotiatedParameters & 0x20000000) ? 16 : 8,
-		(page0.NegotiatedParameters >> 16) & 0xff,
-		(page0.NegotiatedParameters & 0x04) ? 1 : 0,
-		(page0.NegotiatedParameters & 0x02) ? 1 : 0,
-		(page0.NegotiatedParameters & 0x01) ? 1 : 0);
+	    "target %d %s at %dMHz width %dbit offset %d QAS %d DT %d IU %d",
+	    sc_link->target,
+	    tp ? "Synchronous" : "Asynchronous",
+	    tp,
+	    (page0.NegotiatedParameters & 0x20000000) ? 16 : 8,
+	    (page0.NegotiatedParameters >> 16) & 0xff,
+	    (page0.NegotiatedParameters & 0x04) ? 1 : 0,
+	    (page0.NegotiatedParameters & 0x02) ? 1 : 0,
+	    (page0.NegotiatedParameters & 0x01) ? 1 : 0);
 
 	return 1; /* success */
 }
@@ -365,12 +372,14 @@ mpt_run_ppr(mpt_softc_t *mpt, int flags)
 	    dev = TAILQ_NEXT(dev, dv_list)) {
 		if (dev->dv_parent == (struct device *)mpt) {
 			/* found scsibus softc */
-			buswidth = ((struct scsi_link *)&mpt->sc_link)->adapter_buswidth;
+			buswidth = ((struct scsi_link *)&mpt->sc_link)->
+			    adapter_buswidth;
 			/* printf("mpt_softc: %x  scsibus: %x  buswidth: %d\n",
-				mpt, dev, buswidth); */
+			 *     mpt, dev, buswidth); */
 			/* walk target list */
 			for (target = 0; target < buswidth; target++) {
-				sc_link = ((struct scsibus_softc *)dev)->sc_link[target][0];
+				sc_link = ((struct scsibus_softc *)dev)->
+				    sc_link[target][0];
 				if ((sc_link != NULL)) {
 					/* got a device! run PPR */
 					/* FIXME: skip CPU devices since they
@@ -378,21 +387,23 @@ mpt_run_ppr(mpt_softc_t *mpt, int flags)
 					/*if (device == cpu) {
 						continue;
 					}*/
-					if (mpt_ppr(mpt, sc_link, U320, flags)) {
-						mpt->mpt_negotiated_speed[target] = U320;
+					if (mpt_ppr(mpt, sc_link, U320, flags)){
+						mpt->mpt_negotiated_speed
+						    [target] = U320;
 						continue;
 					}
 
-					if (mpt_ppr(mpt, sc_link, U160, flags)) {
-						mpt->mpt_negotiated_speed[target] = U160;
+					if (mpt_ppr(mpt, sc_link, U160, flags)){
+						mpt->mpt_negotiated_speed
+						    [target] = U160;
 						continue;
 					}
 
 					if (mpt_ppr(mpt, sc_link, U80, flags)) {
-						mpt->mpt_negotiated_speed[target] = U80;
+						mpt->mpt_negotiated_speed
+						    [target] = U80;
 						continue;
 					}
-
 				} /* sc_link */
 			} /* for target */
 		} /* if dev */
@@ -439,12 +450,9 @@ mpt_attach(mpt_softc_t *mpt)
                     mpt->mpt_dev.dv_xname);
 #endif  
 
-	mpt->im_support = mpt->mpt_ioc_page2.CapabilitiesFlags &
-	    (MPI_IOCPAGE2_CAP_FLAGS_IS_SUPPORT |
-	     MPI_IOCPAGE2_CAP_FLAGS_IME_SUPPORT |
-	     MPI_IOCPAGE2_CAP_FLAGS_IM_SUPPORT);
-
 	mpt_prt(mpt, "IM support: %x", mpt->im_support);
+	/*mpt_prt(mpt, "IM support: %x %x", mpt->im_support,
+	    mpt->mpt_ioc_page2.CapabilitiesFlags);*/
 
 	(void) config_found(&mpt->mpt_dev, lptr, scsiprint);
 
@@ -1638,8 +1646,8 @@ mpt_ioctl(dev, cmd, addr)
 				    dev->dv_xname, dummy->x++);
 			}
 			break;
-			/* Retrieve Manufacturing Page 0 */
 		case MPT_IOCTL_MFG0:
+			/* Retrieve Manufacturing Page 0 */
 			mfgp0.Header.PageNumber = 0;
 			mfgp0.Header.PageType = MPI_CONFIG_PAGETYPE_MANUFACTURING;
 			rv = mpt_read_cfg_page(mpt, 0, &mfgp0.Header);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.h,v 1.10 2004/10/22 04:54:26 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.h,v 1.11 2004/10/26 04:43:59 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
@@ -221,7 +221,8 @@ typedef struct mpt_softc {
 	uint16_t	mpt_ini_id;
 
 	/* Device configuration information */
-	union {
+	/* union { is this right? */
+	struct {
 		struct mpt_spi_cfg {
 			fCONFIG_PAGE_SCSI_PORT_0	_port_page0;
 			fCONFIG_PAGE_SCSI_PORT_1	_port_page1;
@@ -268,6 +269,13 @@ typedef struct mpt_softc {
 #define mpt_ioc_page2		cfg.ioc._ioc_page2
 #define mpt_ioc_page3		cfg.ioc._ioc_page3
 #define mpt_ioc_page4		cfg.ioc._ioc_page4
+
+		struct mpt_raid_cfg {
+			fCONFIG_PAGE_RAID_VOL_0 _raid_page0;
+		} raid;
+#define mpt_raid_page0		cfg.raid._raid_page0
+
+
 	} cfg;
 
 	bus_space_tag_t		sc_st;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.9 2004/10/22 04:54:26 marco Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.10 2004/10/26 04:43:59 marco Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -61,6 +61,7 @@ int mpt_send_ioc_init(mpt_softc_t *, u_int32_t);
 void mpt_print_header(mpt_softc_t *, char *, fCONFIG_PAGE_HEADER *);
 int mpt_read_config_info_mfg(mpt_softc_t *);
 int mpt_read_config_info_ioc(mpt_softc_t *);
+int mpt_read_config_info_raid(mpt_softc_t *);
 int mpt_read_config_info_spi(mpt_softc_t *);
 int mpt_set_initial_config_spi(mpt_softc_t *);
 int mpt_send_port_enable(mpt_softc_t *, int);
@@ -728,7 +729,11 @@ mpt_read_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	} else if (cfgp->Header.PageType ==  MPI_CONFIG_PAGETYPE_IOC &&
 	    cfgp->Header.PageNumber == 2) {
 		amt = sizeof (fCONFIG_PAGE_IOC_2);
+	} else if (cfgp->Header.PageType == MPI_CONFIG_PAGETYPE_RAID_VOLUME &&
+	    cfgp->Header.PageNumber == 0) {
+		amt = sizeof (fCONFIG_PAGE_RAID_VOL_0);
 	}
+
 	bcopy(((caddr_t)req->req_vbuf)+CFG_DATA_OFF, hdr, amt);
 	mpt_free_request(mpt, req);
 	return (0);
@@ -914,6 +919,92 @@ mpt_read_config_info_ioc(mpt_softc_t *mpt)
 		    mpt->mpt_ioc_page2.NumActivePhysDisks,
 		    mpt->mpt_ioc_page2.MaxVolumes,
 		    mpt->mpt_ioc_page2.NumActiveVolumes);
+
+		/* FIXME: move this to attach */
+		if (mpt->mpt_ioc_page2.MaxVolumes >
+		    MPI_IOC_PAGE_2_RAID_VOLUME_MAX) {
+		    /* complain */
+		}
+		for (i = 0; i < mpt->mpt_ioc_page2.MaxVolumes; i++) {
+			mpt_prt(mpt, "IOC Page 2 RAID Volume %x %x %x %x %x",
+			mpt->mpt_ioc_page2.RaidVolume[i].VolumeType,
+			mpt->mpt_ioc_page2.RaidVolume[i].VolumePageNumber,
+			mpt->mpt_ioc_page2.RaidVolume[i].VolumeIOC,
+			mpt->mpt_ioc_page2.RaidVolume[i].VolumeBus,
+			mpt->mpt_ioc_page2.RaidVolume[i].VolumeID);
+		}
+
+		mpt_prt(mpt, "IOC Page 3 data: %x ",
+			mpt->mpt_ioc_page3.NumPhysDisks);
+
+		for (i = 0; i < mpt->mpt_ioc_page3.NumPhysDisks; i++) {
+			mpt_prt(mpt, "IOC Page 3 Physical Disk: %x %x %x %x",
+			    mpt->mpt_ioc_page3.PhysDisk[i].PhysDiskNum,
+			    mpt->mpt_ioc_page3.PhysDisk[i].PhysDiskIOC,
+			    mpt->mpt_ioc_page3.PhysDisk[i].PhysDiskBus,
+			    mpt->mpt_ioc_page3.PhysDisk[i].PhysDiskID);
+		}
+
+		mpt_prt(mpt, "IOC Page 4 data: %x %x",
+			mpt->mpt_ioc_page4.MaxSEP,
+			mpt->mpt_ioc_page4.ActiveSEP);
+
+		for (i = 0; i < mpt->mpt_ioc_page4.MaxSEP; i++) {
+			mpt_prt(mpt, "IOC Page 4 SEP: %x %x",
+			    mpt->mpt_ioc_page4.SEP[i].SEPTargetID,
+			    mpt->mpt_ioc_page4.SEP[i].SEPBus);
+		}
+	}
+	/* mpt->verbose = 1; */
+
+	return (0);
+}
+
+/*
+ * Read RAID Volume pages
+ */
+int
+mpt_read_config_info_raid(mpt_softc_t *mpt)
+{
+	int rv, i;
+
+	/* retrieve raid headers */
+	rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_RAID_VOLUME, 0,
+	    0, &mpt->mpt_raid_page0.Header);
+	if (rv) {
+		mpt_prt(mpt, "Could not retrieve RAID Volume Page 0 Header.");
+		return (-1);
+	} else if (mpt->verbose > 1) {
+		mpt_print_header(mpt, "RAID Volume Header Page",
+		    &mpt->mpt_raid_page0.Header);
+	}
+
+	/* retrieve raid volume page using retrieved headers */
+	rv = mpt_read_cfg_page(mpt, 0, &mpt->mpt_raid_page0.Header);
+	if (rv) {
+		mpt_prt(mpt, "Could not retrieve RAID Volume Page 0");
+		return (-1);
+	}
+
+	/* mpt->verbose = 2; */
+	if (mpt->verbose > 1) {
+		mpt_prt(mpt, "RAID Volume Page 0 data: %x %x %x %x %x"
+		    "%x %x %x %x",
+		    mpt->mpt_raid_page0.VolumeType,
+		    mpt->mpt_raid_page0.VolumeIOC,
+		    mpt->mpt_raid_page0.VolumeBus,
+		    mpt->mpt_raid_page0.VolumeID,
+		    mpt->mpt_raid_page0.VolumeStatus,
+		    mpt->mpt_raid_page0.VolumeSettings,
+		    mpt->mpt_raid_page0.MaxLBA,
+		    mpt->mpt_raid_page0.StripeSize,
+		    mpt->mpt_raid_page0.NumPhysDisks);
+
+		for (i = 0; i < mpt->mpt_raid_page0.NumPhysDisks; i++) {
+			mpt_prt(mpt, "RAID Volume Page 0 Physical Disk: %x %x",
+			    mpt->mpt_raid_page0.PhysDisk[i].PhysDiskNum,
+			    mpt->mpt_raid_page0.PhysDisk[i].PhysDiskMap);
+		}
 	}
 	/* mpt->verbose = 1; */
 
@@ -1401,6 +1492,20 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 		if (mpt_read_config_info_ioc(mpt)) {
 			mpt_prt(mpt, "could not retrieve IOC pages");
 			return (EIO);
+		}
+		mpt->im_support = mpt->mpt_ioc_page2.CapabilitiesFlags &
+		    (MPI_IOCPAGE2_CAP_FLAGS_IS_SUPPORT |
+		     MPI_IOCPAGE2_CAP_FLAGS_IME_SUPPORT |
+		     MPI_IOCPAGE2_CAP_FLAGS_IM_SUPPORT);
+
+		/*
+		 * Read RAID pages if we have IM/IME/IS volumes
+		 */
+		if (mpt->mpt_ioc_page2.MaxVolumes) {
+			if (mpt_read_config_info_raid(mpt)) {
+				mpt_prt(mpt, "could not retrieve RAID pages");
+				return (EIO);
+			}
 		}
 
 		/*
