@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.17 1998/09/23 00:13:49 aaron Exp $
+.\"	$OpenBSD: tar.1,v 1.18 1998/11/06 00:34:09 aaron Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -183,7 +183,9 @@ Follow symlinks given on command line only.
 .It Fl L
 Follow all symlinks.
 .It Fl P
-Do not strip leading slashes (``/'') from pathnames.
+Do not strip leading slashes
+.Pq Sq /
+from pathnames.
 The default is to strip leading slashes.
 .It Fl X
 Do not cross mount points in the file system.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.9 1998/11/04 22:36:39 aaron Exp $
+.\"	$OpenBSD: stty.1,v 1.10 1998/11/06 00:34:09 aaron Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -71,7 +71,10 @@ as per
 Display all the current settings for the terminal to standard output
 in the traditional
 .Tn BSD
-``all'' and ``everything'' formats.
+.Dq all
+and
+.Dq everything
+formats.
 .It Fl f
 Open and use the terminal named by
 .Ar file
@@ -93,8 +96,7 @@ to restore the current terminal state as per
 .Pp
 The following arguments are available to set the terminal
 characteristics:
-.Ss Control Modes:
-.Pp
+.Ss Control modes
 Control mode flags affect hardware characteristics associated with the
 terminal.  This corresponds to the c_cflag in the termios structure.
 .Bl -tag -width Fl
@@ -151,8 +153,7 @@ control.
 .It Cm crtscts Pq Fl crtscts
 Enable (disable) RTS/CTS flow control.
 .El
-.Ss Input Modes:
-.Pp
+.Ss Input modes
 This corresponds to the c_iflag in the termios structure.
 .Bl -tag -width Fl
 .It Cm ignbrk Pq Fl ignbrk
@@ -232,8 +233,7 @@ if
 is unset and the input queue is full, the next input character causes
 the entire input and output queues to be discarded.
 .El
-.Ss Output Modes:
-.Pp
+.Ss Output modes
 This corresponds to the c_oflag of the termios structure.
 .Bl -tag -width Fl
 .It Cm opost Pq Fl opost
@@ -257,8 +257,7 @@ Translate (do not translate) lower case to upper case on output.
 .It Cm oxtabs Pq Fl oxtabs
 Expand (do not expand) tabs to spaces on output.
 .El
-.Ss Local Modes:
-.Pp
+.Ss Local modes
 Local mode flags (lflags) affect various and sundry characteristics of terminal
 processing.
 Historically the term "local" pertained to new job control features
@@ -272,7 +271,9 @@ at Evans Hall, UC Berkeley, where the job control details
 were greatly modified but the structure definitions and names
 remained essentially unchanged.
 The second interpretation of the 'l' in lflag
-is ``line discipline flag'' which corresponds to the
+is
+.Dq line discipline flag
+which corresponds to the
 .Ar c_lflag
 of the
 .Ar termios
@@ -331,8 +332,11 @@ If
 is set, echo control characters as ^X.  Otherwise control characters
 echo as themselves.
 .It Cm echoprt Pq Fl echoprt
-For printing terminals. If set, echo erased characters backwards within ``\\''
-and ``/''.  Otherwise, disable this feature.
+For printing terminals. If set, echo erased characters backwards within
+.Dq \e
+and
+.Dq / .
+Otherwise, disable this feature.
 .It Cm noflsh Pq Fl noflsh
 Disable (enable) flush after
 .Dv INTR , QUIT , SUSP .
@@ -371,7 +375,7 @@ with
 and
 .Cm olcuc .
 .El
-.Ss Control Characters:
+.Ss Control characters
 .Bl -tag -width Fl
 .It Ar control-character Ar string
 Set
@@ -421,8 +425,7 @@ are used in
 non-canonical mode input processing
 (-icanon).
 .El
-.Ss Combination Modes:
-.Pp
+.Ss Combination modes
 .Bl -tag -width Fl
 .It Ar saved settings
 Set the current terminal
@@ -515,8 +518,7 @@ stty "$save_state"
 The size of the terminal is printed as two numbers on a single line,
 first rows, then columns.
 .El
-.Ss Compatibility Modes:
-.Pp
+.Ss Compatibility modes
 These modes remain for compatibility with the previous version of
 the stty command.
 .Bl -tag -width Fl
@@ -594,8 +596,7 @@ Same as the control character
 Same as the control character
 .Cm reprint .
 .El
-.Ss Control Operations:
-.Pp
+.Ss Control operations
 These operations are not modes, but rather commands to be performed by
 the tty layer.
 .Bl -tag -width Fl

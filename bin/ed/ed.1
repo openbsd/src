@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.13 1998/09/23 00:13:48 aaron Exp $
+.\"	$OpenBSD: ed.1,v 1.14 1998/11/06 00:34:08 aaron Exp $
 .\"
 .Dd May 2, 1993
 .Dt ED 1
@@ -182,8 +182,7 @@ current address.  In a semi-colon-delimited range, the first address is
 used to set the current address, and the second address is interpreted
 relative to the first.
 .Pp
-The following address symbols are recognized.
-.Pp
+The following address symbols are recognized:
 .Bl -tag -width Ds
 .It Em \&.
 The current line (address) in the buffer.
@@ -591,8 +590,9 @@ in subsequent commands.
 The mark is not cleared until the line is deleted or otherwise modified.
 .It (.,.) Ns Em l
 Prints the addressed lines unambiguously.
-If a single line fills for than one screen (as might be the case
-when viewing a binary file, for instance), a `--More--' 
+If a single line fills more than one screen (as might be the case
+when viewing a binary file, for instance), a
+.Dq --More--
 prompt is printed on the last line. 
 .Nm
 waits until the RETURN key is pressed
@@ -885,7 +885,9 @@ does not append a newline on reading/writing.
 .Sh DIAGNOSTICS
 When an error occurs,
 .Nm
-prints a `?' and either returns to command mode
+prints a
+.Dq ?
+and either returns to command mode
 or exits if its input is from a script.
 An explanation of the last error can be
 printed with the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.4 1998/09/14 22:13:43 aaron Exp $
+.\"	$OpenBSD: dd.1,v 1.5 1998/11/06 00:34:07 aaron Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -278,10 +278,18 @@ appended.
 .El
 .Pp
 Where sizes are specified, a decimal number of bytes is expected.
-If the number ends with a ``b'', ``k'', ``m'' or ``w'', the number
+If the number ends with a
+.Dq b ,
+.Dq k ,
+.Dq m
+or
+.Dq w ,
+the number
 is multiplied by 512, 1024 (1K), 1048576 (1M) or the number of bytes
 in an integer, respectively.
-Two or more numbers may be separated by an ``x'' to indicate a product.
+Two or more numbers may be separated by an
+.Dq x
+to indicate a product.
 .Pp
 When finished,
 .Nm dd
@@ -310,7 +318,9 @@ If
 .Nm dd
 receives a
 .Dv SIGINFO
-(see the ``status'' argument for
+(see the
+.Dq status
+argument for
 .Xr stty 1 )
 signal, the current input and output block counts will
 be written to the standard error output

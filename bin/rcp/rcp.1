@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcp.1,v 1.4 1998/09/23 00:13:49 aaron Exp $
+.\"	$OpenBSD: rcp.1,v 1.5 1998/11/06 00:34:09 aaron Exp $
 .\"	$NetBSD: rcp.1,v 1.6 1995/07/25 19:37:25 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -57,9 +57,19 @@ copies files between machines.  Each
 or
 .Ar directory
 argument is either a remote file name of the
-form ``rname@rhost:path'', or a local file name (containing no `:' characters,
-or a `/' before any `:'s).
+form
+.Dq rname@rhost:path ,
+or a local file name (containing no
+.Dq \&:
+characters,
+or a
+.Dq /
+before any
+.Br
+.Dq \&:
+characters).
 .Pp
+Available options are as follows:
 .Bl -tag -width flag
 .It Fl K
 Turns off all Kerberos authentication.
@@ -70,13 +80,13 @@ to obtain tickets
 for the remote host in realm
 .Ar realm
 instead of the remote host's realm as determined by
-.Xr krb_realmofhost  3  .
+.Xr krb_realmofhost 3 .
 .It Fl p
 Causes
 .Nm rcp
 to attempt to preserve (duplicate) in its copies the modification
 times and modes of the source files, ignoring the
-.Ar umask  .
+.Ar umask .
 By default, the mode and owner of
 .Ar file2
 are preserved if it already existed; otherwise the mode of the source file
@@ -105,7 +115,7 @@ is not a full path name, it is interpreted relative to
 the login directory of the specified user
 .Ar ruser
 on
-.Ar rhost  ,
+.Ar rhost ,
 or your current user name if no other remote user name is specified.
 A
 .Ar path
@@ -148,7 +158,8 @@ or
 file on the remote host.
 .Pp
 The destination user and hostname may have to be specified as
-``rhost.rname'' when the destination machine is running the
+.Dq rhost.rname
+when the destination machine is running the
 .Bx 4.2
 version of
-.Nm rcp  .
+.Nm rcp .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.1,v 1.4 1998/09/14 22:13:48 aaron Exp $
+.\"	$OpenBSD: kill.1,v 1.5 1998/11/06 00:34:08 aaron Exp $
 .\"	$NetBSD: kill.1,v 1.8 1995/09/07 06:30:26 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -68,7 +68,6 @@ by the PID operand(s).
 Only the super-user may send signals to other users' processes.
 .Pp
 The options are as follows:
-.Pp
 .Bl -tag -width Ds
 .It Fl s Ar signal_name
 A symbolic signal name specifying the signal to be sent instead of the
@@ -118,7 +117,9 @@ TERM (software termination signal)
 .Nm kill
 is built-in to
 .Xr csh 1 ;
-it allows job specifiers of the form ``%...'' as arguments
+it allows job specifiers of the form
+.Dq %...
+as arguments
 so process IDs are not as often used as
 .Nm kill
 arguments.

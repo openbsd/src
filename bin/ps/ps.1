@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.13 1998/09/14 22:31:10 aaron Exp $
+.\"	$OpenBSD: ps.1,v 1.14 1998/11/06 00:34:09 aaron Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -68,7 +68,7 @@ and
 options).
 The default output format includes, for each process, the process's
 .Tn ID ,
-controlling terminal, cpu time (including both user and system time),
+controlling terminal, CPU time (including both user and system time),
 state, and associated command.
 .Pp
 The options are as follows:
@@ -83,8 +83,11 @@ This may be somewhat confusing; for example, all
 scripts will show as
 .Dq sh .
 .It Fl C
-Change the way the cpu percentage is calculated by using a ``raw''
-cpu calculation that ignores ``resident'' time (this normally has
+Change the way the CPU percentage is calculated by using a
+.Dq raw
+CPU calculation that ignores
+.Dq resident
+time (this normally has
 no effect).
 .It Fl e
 Display the environment as well.
@@ -116,20 +119,24 @@ of keywords specified, after the process
 .Tn ID ,
 in the default information
 display.
-Keywords may be appended with an equals (``='') sign and a string.
+Keywords may be appended with an equals sign
+.Pq Sq =
+and a string.
 This causes the printed header to use the specified string instead of
 the standard header.
 .It Fl o Ar fmt
 Display information associated with the space or comma separated list
 of keywords specified.
-Keywords may be appended with an equals (``='') sign and a string.
+Keywords may be appended with an equals sign
+.Pq Sq =
+and a string.
 This causes the printed header to use the specified string instead of
 the standard header.
 .It Fl p Ar pid
 Display information associated with the specified process
 .Tn ID .
 .It Fl r
-Sort by current cpu usage, instead of by process
+Sort by current CPU usage, instead of by process
 .Tn ID .
 .It Fl S
 Change the way the process time is calculated by summing all exited
@@ -177,11 +184,11 @@ All available keywords are listed below.
 Some of these keywords are further specified as follows:
 .Bl -tag -width indent
 .It %cpu
-The cpu utilization of the process; this is a decaying average over up to
+The CPU utilization of the process; this is a decaying average over up to
 a minute of previous (real) time.
 Since the time base over which this is computed varies (since processes may
 be very young) it is possible for the sum of all
-.Tn \&%CPU
+.Tn \&%cpu
 fields to exceed 100%.
 .It %mem
 The percentage of real memory used by this process.
@@ -217,7 +224,9 @@ when children stop
 The soft limit on memory used, specified via a call to
 .Xr setrlimit 2 .
 .It lstart
-The exact time the command started, using the ``%C'' format described in
+The exact time the command started, using the
+.Dq %C
+format described in
 .Xr strftime 3 .
 .It nice
 The process scheduling increment (see
@@ -227,11 +236,17 @@ The real memory (resident set) size of the process (in 1024 byte units).
 .It start
 The time the command started.
 If the command started less than 24 hours ago, the start time is
-displayed using the ``%l:%M%p'' format described in
+displayed using the
+.Dq %l:%M%p
+format described in
 .Xr strftime 3 .
 If the command started less than 7 days ago, the start time is
-displayed using the ``%a%p'' format.
-Otherwise, the start time is displayed using the ``%e%b%y'' format.
+displayed using the
+.Dq %a%p
+format.
+Otherwise, the start time is displayed using the
+.Dq %e%b%y
+format.
 .It state
 The state is given by a sequence of letters, for example,
 .Dq Tn RWNA .
@@ -249,7 +264,8 @@ Marks a process that is sleeping for less than about 20 seconds.
 .It T
 Marks a stopped process.
 .It Z
-Marks a dead process (a ``zombie'').
+Marks a dead process (a
+.Dq zombie Ns ) .
 .El
 .Pp
 Additional characters after these, if any, indicate additional state
@@ -307,8 +323,11 @@ The process is being traced or debugged.
 An abbreviation for the pathname of the controlling terminal, if any.
 The abbreviation consists of the two letters following
 .Dq Pa /dev/tty ,
-or, for the console, ``co''.
-This is followed by a ``-'' if the process can no longer reach that
+or, for the console,
+.Dq co .
+This is followed by a
+.Dq \-
+if the process can no longer reach that
 controlling terminal (i.e., it has been revoked).
 .It wchan
 The event (an address in the system) on which a process waits.
@@ -319,8 +338,11 @@ as 324000.
 .Pp
 When printing using the command keyword, a process that has exited and
 has a parent that has not yet waited for the process (in other words, a zombie)
-is listed as ``<defunct>'', and a process which is blocked while trying
-to exit is listed as ``<exiting>''.
+is listed as
+.Dq <defunct> ,
+and a process which is blocked while trying
+to exit is listed as
+.Dq <exiting> .
 .Nm ps
 makes an educated guess as to the file name and arguments given when the
 process was created by examining memory or the swap area.
@@ -335,7 +357,7 @@ Several of them have aliases (keywords which are synonyms).
 .Pp
 .Bl -tag -width sigignore -compact
 .It %cpu
-percentage cpu usage (alias pcpu)
+percentage CPU usage (alias pcpu)
 .It %mem
 percentage memory usage (alias pmem)
 .It acflag
@@ -343,7 +365,7 @@ accounting flag (alias acflg)
 .It command
 command and arguments (alias args)
 .It cpu
-short-term cpu usage factor (for scheduling)
+short-term CPU usage factor (for scheduling)
 .It emul
 name of system call emulation environment
 .It flags
@@ -451,7 +473,7 @@ saved UID from a setuid executable
 .It tdev
 control terminal device number
 .It time
-accumulated cpu time, user + system (alias cputime)
+accumulated CPU time, user + system (alias cputime)
 .It tpgid
 control terminal process group
 .Tn ID
