@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.8 2005/02/17 21:02:24 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.9 2005/03/01 02:19:30 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -387,7 +387,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + 64);
-#endif
+
 	/*
 	 * Initialize constant fields.
 	 * XXX make header lengths a multiple of 32-bits so subsequent
@@ -404,6 +404,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	sc->sc_rx_th_len = roundup(sizeof(sc->sc_rx_th), sizeof(u_int32_t));
 	sc->sc_rx_th.wr_ihdr.it_len = htole16(sc->sc_rx_th_len);
 	sc->sc_rx_th.wr_ihdr.it_present = htole32(ATH_RX_RADIOTAP_PRESENT);
+#endif
 
 	sc->sc_flags |= ATH_ATTACHED;
 	/*
@@ -2404,8 +2405,10 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 		antenna = an->an_rx_hist[an->an_rx_hist_next].arh_antenna;
 	}
 
+#if NBPFILTER > 0
 	if (ic->ic_rawbpf)
 		bpf_mtap(ic->ic_rawbpf, m0);
+
 	if (sc->sc_drvbpf) {
 		struct mbuf mb;
 
@@ -2418,13 +2421,14 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 		sc->sc_tx_th.wt_txpower = 60/2;		/* XXX */
 		sc->sc_tx_th.wt_antenna = antenna;
 
-		M_DUP_PKTHDR(&mb, m);
+		M_DUP_PKTHDR(&mb, m0);
 		mb.m_data = (caddr_t)&sc->sc_tx_th;
 		mb.m_len = sc->sc_tx_th_len;
-		mb.m_next = m;
+		mb.m_next = m0;
 		mb.m_pkthdr.len += mb.m_len;
 		bpf_mtap(sc->sc_drvbpf, &mb);
 	}
+#endif
 
 	/*
 	 * Formulate first tx descriptor with tx controls.
