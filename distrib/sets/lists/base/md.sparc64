@@ -1896,3 +1896,4 @@
 ./usr/mdec/ofwboot.net
 ./usr/sbin/eeprom
 ./usr/sbin/wsconscfg
+./sbin/kbd

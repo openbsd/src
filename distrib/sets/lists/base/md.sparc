@@ -1896,3 +1896,4 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/screenblank
+./sbin/kbd

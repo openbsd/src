@@ -91,7 +91,6 @@
 ./sbin/init
 ./sbin/ipsecadm
 ./sbin/isakmpd
-./sbin/kbd
 ./sbin/lmccontrol
 ./sbin/mkfifo
 ./sbin/mknod

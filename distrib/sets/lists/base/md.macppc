@@ -1946,3 +1946,4 @@
 ./usr/sbin/apmd
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
+./sbin/kbd
