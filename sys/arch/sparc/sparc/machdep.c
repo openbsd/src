@@ -1,3 +1,4 @@
+/*	$OpenBSD: machdep.c,v 1.21 1997/03/26 22:14:41 niklas Exp $ */
 /*	$NetBSD: machdep.c,v 1.64 1996/05/19 04:12:56 mrg Exp $ */
 
 /*
@@ -194,11 +195,6 @@ cpu_startup()
 
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE / CLBYTES) {
-		/* don't want to alloc more physical mem than needed */
-		base = MAXBSIZE / CLBYTES;
-		residual = 0;
-	}
 
 	for (i = 0; i < nbuf; i++) {
 		vm_size_t curbufsize;
