@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.67 2004/01/06 04:18:18 tedu Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.68 2004/01/12 18:06:51 tedu Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1294,4 +1294,26 @@ fdcloseexec(p)
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++)
 		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)
 			(void) fdrelease(p, fd);
+}
+
+int
+sys_closefrom(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_closefrom_args *uap = v;
+	struct filedesc *fdp = p->p_fd;
+	u_int startfd, i;
+
+	startfd = SCARG(uap, fd);
+	fdplock(fdp, p);
+
+	if (startfd > fdp->fd_lastfile) {
+		fdpunlock(fdp);
+		return (EBADF);
+	}
+
+	for (i = startfd; i <= fdp->fd_lastfile; i++)
+		fdrelease(p, i);
+
+	fdpunlock(fdp);
+	return (0);
 }

@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.65 2003/12/31 00:13:24 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.66 2004/01/12 18:06:51 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -575,3 +575,4 @@
 285	OBSOL		sys_omquery
 286	STD		{ void *sys_mquery(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pad, off_t pos); }
+287	STD		{ int sys_closefrom(int fd); }			    
