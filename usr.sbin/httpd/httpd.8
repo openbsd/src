@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.20 2004/12/14 00:34:36 jmc Exp $
+.\"	$OpenBSD: httpd.8,v 1.21 2004/12/14 09:21:49 jmc Exp $
 .\" Copyright (c) 1995-1997 David Robinson. All rights reserved.
 .\" Copyright (c) 1997-1999 The Apache Group. All rights reserved.
 .\" Copyright (c) 1998-1999 Bob Beck. All rights reserved.
@@ -244,16 +244,20 @@ and group
 They must, however, be readable by this user.
 .Sh FILES
 .Bl -tag -width /etc/passwd -compact
+.It Pa /var/www/cgi-bin/
 .It Pa /var/www/conf/httpd.conf
-.It Pa /var/www/conf/mime.types
+.It Pa /var/www/conf/httpd.conf-dist
 .It Pa /var/www/conf/magic
-.It Pa /var/www/logs/error_log
+.It Pa /var/www/conf/mime.types
+.It Pa /var/www/icons/
 .It Pa /var/www/logs/access_log
-.It Pa /var/www/logs/httpd.pid
+.It Pa /var/www/logs/error_log
 .It Pa /var/www/logs/etag-state
+.It Pa /var/www/logs/httpd.pid
 .It Pa /var/www/logs/ssl_engine_log
 .It Pa /var/www/logs/ssl_request_log
 .It Pa /var/www/logs/ssl_scache.db
+.It Pa /var/www/users/
 .It Pa /etc/rc.conf.local
 .El
 .Sh SEE ALSO
