@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.18 2000/03/30 19:45:14 deraadt Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.19 2000/04/01 03:44:20 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -173,7 +173,138 @@ MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	RSA_sign_ASN1_OCTET_STRING.3 RSA_verify_ASN1_OCTET_STRING.3 \
 	BUF_MEM_new.3 BUF_MEM_free.3 \
 	BUF_MEM_new.3 BUF_MEM_grow.3 BUF_MEM_new.3 BUF_strdup.3 \
-	d2i_DHparams.3 i2d_DHparams.3
+	d2i_DHparams.3 i2d_DHparams.3 \
+	blowfish.3 BF_set_key.3 blowfish.3 BF_encrypt.3 \
+	blowfish.3 BF_decrypt.3 blowfish.3 BF_ecb.3 \
+	blowfish.3 BF_cbc.3 blowfish.3 BF_cfb64_encrypt.3 \
+	blowfish.3 BF_ofb64_encrypt.3 blowfish.3 BF_options.3 \
+	blowfish.3 BF_ecb_encrypt.3 blowfish.3 BF_cbc_encrypt.3 \
+	des_crypt.3 des_string_to_2keys.3 \
+	md5.3 MD2.3 md5.3 MD2_Init.3 md5.3 MD2_Update.3 \
+	md5.3 MD2_Final.3 md5.3 MD5.3 md5.3 MD5_Init.3 \
+	md5.3 MD5_Update.3 md5.3 MD5_Final.3 \
+	bn_internal.3 bn_mul_words.3 \
+	bn_internal.3 bn_mul_add_words.3 \
+	bn_internal.3 bn_sqr_words.3 \
+	bn_internal.3 bn_div_words.3 \
+	bn_internal.3 bn_add_words.3 \
+	bn_internal.3 bn_sub_words.3 \
+	bn_internal.3 bn_mul_comba4.3 \
+	bn_internal.3 bn_mul_comba8.3 \
+	bn_internal.3 bn_sqr_comba4.3 \
+	bn_internal.3 bn_sqr_comba8.3 \
+	bn_internal.3 bn_cmp_words.3 \
+	bn_internal.3 bn_mul_normal.3 \
+	bn_internal.3 bn_mul_low_normal.3 \
+	bn_internal.3 bn_mul_recursive.3 \
+	bn_internal.3 bn_mul_part_recursive.3 \
+	bn_internal.3 bn_mul_low_recursive.3 \
+	bn_internal.3 bn_mul_high.3 \
+	bn_internal.3 bn_sqr_normal.3 \
+	bn_internal.3 bn_sqr_recursive.3 \
+	bn_internal.3 mul.3 \
+	bn_internal.3 mul_add.3 \
+	bn_internal.3 sqr.3 \
+	bn_internal.3 bn_expand.3 \
+	bn_internal.3 bn_wexpand.3 \
+	bn_internal.3 bn_expand2.3 \
+	bn_internal.3 bn_fix_top.3 \
+	bn_internal.3 bn_check_top.3 \
+	bn_internal.3 bn_print.3 \
+	bn_internal.3 bn_dump.3 \
+	bn_internal.3 bn_set_max.3 \
+	bn_internal.3 bn_set_high.3 \
+	bn_internal.3 bn_set_low.3 \
+	EVP_DigestInit.3 EVP_DigestUpdate.3 EVP_DigestInit.3 EVP_DigestFinal.3 \
+	EVP_DigestInit.3 EVP_MD_CTX_copy.3 EVP_DigestInit.3 EVP_MD_type.3 \
+	EVP_DigestInit.3 EVP_MD_pkey_type.3 EVP_DigestInit.3 EVP_MD_size.3 \
+	EVP_DigestInit.3 EVP_MD_block_size.3 EVP_DigestInit.3 EVP_MD_CTX_md.3 \
+	EVP_DigestInit.3 EVP_MD_CTX_size.3 EVP_DigestInit.3 EVP_MD_size.3 \
+	EVP_DigestInit.3 EVP_MD_CTX_block_size.3 \
+	EVP_DigestInit.3 EVP_MD_block_size.3 EVP_DigestInit.3 EVP_MD_CTX_type.3 \
+	EVP_DigestInit.3 EVP_MD_type.3 EVP_DigestInit.3 EVP_md_null.3 \
+	EVP_DigestInit.3 EVP_md2.3 EVP_DigestInit.3 EVP_md5.3 \
+	EVP_DigestInit.3 EVP_sha.3 EVP_DigestInit.3 EVP_sha1.3 \
+	EVP_DigestInit.3 EVP_dss.3 EVP_DigestInit.3 EVP_dss1.3 \
+	EVP_DigestInit.3 EVP_mdc2.3 EVP_DigestInit.3 EVP_ripemd160.3 \
+	EVP_DigestInit.3 EVP_get_digestbyname.3 \
+	EVP_DigestInit.3 EVP_get_digestbynid.3 \
+	EVP_DigestInit.3 EVP_get_digestbyname.3 \
+	EVP_DigestInit.3 OBJ_nid2sn.3 \
+	EVP_DigestInit.3 EVP_get_digestbyobj.3 \
+	EVP_DigestInit.3 EVP_get_digestbynid.3 \
+	EVP_DigestInit.3 OBJ_obj2nid.3 \
+	EVP_EncryptInit.3 EVP_EncryptUpdate.3 \
+	EVP_EncryptInit.3 EVP_EncryptFinal.3 \
+	EVP_EncryptInit.3 EVP_DecryptInit.3 \
+	EVP_EncryptInit.3 EVP_DecryptUpdate.3 \
+	EVP_EncryptInit.3 EVP_DecryptFinal.3 \
+	EVP_EncryptInit.3 EVP_CipherInit.3 \
+	EVP_EncryptInit.3 EVP_CipherUpdate.3 \
+	EVP_EncryptInit.3 EVP_CipherFinal.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_CTX_cleanup.3 \
+	EVP_EncryptInit.3 EVP_get_cipherbyname.3 \
+	EVP_EncryptInit.3 EVP_get_cipherbynid.3 \
+	EVP_EncryptInit.3 EVP_get_cipherbyname.3 \
+	EVP_EncryptInit.3 OBJ_nid2sn.3 \
+	EVP_EncryptInit.3 EVP_get_cipherbyobj.3 \
+	EVP_EncryptInit.3 EVP_get_cipherbynid.3 \
+	EVP_EncryptInit.3 OBJ_obj2nid.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_nid.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_block_size.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_key_length.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_iv_length.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_type.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_CTX_cipher.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_CTX_nid.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_CTX_block_size.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_CTX_key_length.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_CTX_iv_length.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_CTX_type.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_type.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_CTX_cipher.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_param_to_asn1.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_asn1_to_param.3 \
+	RSA_print.3 RSA_print_fp.3 \
+	RSA_print.3 DSAparams_print.3 \
+	RSA_print.3 DSAparams_print_fp.3 \
+	RSA_print.3 DSA_print.3 \
+	RSA_print.3 DSA_print_fp.3 \
+	RSA_print.3 DHparams_print.3 \
+	RSA_print.3 DHparams_print_fp.3 \
+	DSA_new.3 DSA_free.3 \
+	DSA_set_method.3 DSA_set_default_method.3 \
+	DSA_set_method.3 DSA_get_default_method.3 \
+	DSA_set_method.3 DSA_new_method.3 \
+	DSA_set_method.3 DSA_OpenSSL.3 \
+	dsa.3 DSA_free.3 dsa.3 DSA_sign_setup.3 \
+	dsa.3 DSA_verify.3 dsa.3 DSA_set_default_method.3 \
+	dsa.3 DSA_get_default_method.3 dsa.3 DSA_new_method.3 \
+	dsa.3 DSA_OpenSSL.3 dsa.3 DSA_set_ex_data.3 \
+	dsa.3 DSA_get_ex_data.3 dsa.3 DSA_SIG_free.3 \
+	dsa.3 i2d_DSA_SIG.3 dsa.3 d2i_DSA_SIG.3 \
+	dsa.3 DSA_do_verify.3 dsa.3 d2i_DSAPublicKey.3 \
+	dsa.3 d2i_DSAPrivateKey.3 dsa.3 d2i_DSAparams.3 \
+	dsa.3 i2d_DSAPublicKey.3 dsa.3 i2d_DSAPrivateKey.3 \
+	dsa.3 i2d_DSAparams.3 \
+	DSA_sign.3 DSA_sign_setup.3 DSA_sign.3 DSA_verify.3 \
+	lhash.3 lh_new.3 lhash.3 lh_free.3 lhash.3 lh_insert.3 \
+	lhash.3 lh_delete.3 lhash.3 lh_retrieve.3 lhash.3 lh_doall.3 \
+	lhash.3 lh_doall_arg.3 lhash.3 lh_error.3 \
+	d2i_RSAPublicKey.3 i2d_RSAPublicKey.3 \
+	d2i_RSAPublicKey.3 d2i_RSAPrivateKey.3 \
+	d2i_RSAPublicKey.3 i2d_RSAPrivateKey.3 \
+	d2i_RSAPublicKey.3 i2d_Netscape_RSA.3 \
+	d2i_RSAPublicKey.3 d2i_Netscape_RSA.3 \
+	lh_stats.3 lh_node_stats.3 lh_stats.3 lh_node_usage_stats.3 \
+	lh_stats.3 lh_stats_bio.3 lh_stats.3 lh_node_stats_bio.3 \
+	lh_stats.3 lh_node_usage_stats_bio.3 \
+	hmac.3 HMAC.3 hmac.3 HMAC_Init.3 hmac.3 HMAC_Update.3 \
+	hmac.3 HMAC_Final.3 hmac.3 HMAC_cleanup.3 \
+	mdc2.3 MDC2.3 mdc2.3 MDC2_Init.3 mdc2.3 MDC2_Update.3 \
+	mdc2.3 MDC2_Final.3 \
+	sha.3 SHA1.3 sha.3 SHA1_Init.3 \
+	sha.3 SHA1_Update.3 sha.3 SHA1_Final.3
 
 .else
 MANALL=
