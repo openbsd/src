@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.18 1997/09/17 00:57:45 weingart Exp $	*/
+/*	$OpenBSD: modload.c,v 1.19 1997/09/17 10:06:32 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -505,7 +505,7 @@ main(argc, argv)
 	if (post) {
 		struct lmc_stat sbuf;
 		char name[MAXLKMNAME] = "";
-		char id[16], type[16], offset[16];
+		char id[16], type[16], offset[32];
 
 		sbuf.id = resrv.slot;
 		sbuf.name = name;
@@ -513,7 +513,7 @@ main(argc, argv)
 			err(15, "error fetching module stats for post-install");
 		sprintf(id, "%d", sbuf.id);
 		sprintf(type, "0x%x", sbuf.type);
-		sprintf(offset, "%ld", sbuf.offset);
+		sprintf(offset, "%lu", sbuf.offset);
 		/*
 		 * XXX
 		 * The modload docs say that drivers can install bdevsw &
