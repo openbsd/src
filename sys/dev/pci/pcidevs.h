@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.480 2001/12/28 02:55:04 maja Exp 
+ *		OpenBSD: pcidevs,v 1.481 2001/12/28 18:22:25 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1188,6 +1188,7 @@
 /* Hifn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
 #define	PCI_PRODUCT_HIFN_6500	0x0006		/* 6500 */
+#define	PCI_PRODUCT_HIFN_7811	0x0007		/* 7811 */
 #define	PCI_PRODUCT_HIFN_7951	0x0012		/* 7951 */
 
 /* Hint */
