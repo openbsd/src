@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.19 2004/05/08 18:23:24 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.20 2004/05/08 19:17:20 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -115,7 +115,8 @@ print_mainconf(struct bgpd_config *conf)
 
 	bzero(&ina6, sizeof(ina6));
 	if (bcmp(&ina6, &conf->listen6_addr.sin6_addr, sizeof(ina6)))
-		printf("listen on %s\n", log_sockaddr((struct sockaddr *)&conf->listen6_addr));
+		printf("listen on %s\n",
+		    log_sockaddr((struct sockaddr *)&conf->listen6_addr));
 }
 
 void
@@ -177,20 +178,21 @@ print_peer(struct peer_config *p)
 
 	if (p->auth.method == AUTH_MD5SIG)
 		printf("%s\ttcp md5sig\n", c);
-	else if (p->auth.method == AUTH_IPSEC_MANUAL_ESP || p->auth.method == AUTH_IPSEC_MANUAL_AH) {
+	else if (p->auth.method == AUTH_IPSEC_MANUAL_ESP ||
+	    p->auth.method == AUTH_IPSEC_MANUAL_AH) {
 		if (p->auth.method == AUTH_IPSEC_MANUAL_ESP)
 			method = "esp";
 		else
 			method = "ah";
 
-		printf("%s\tipsec %s in spi %u %s XXXXXX", c, method, p->auth.spi_in,
-		    print_auth_alg(p->auth.auth_alg_in));
+		printf("%s\tipsec %s in spi %u %s XXXXXX", c, method,
+		    p->auth.spi_in, print_auth_alg(p->auth.auth_alg_in));
 		if (p->auth.enc_alg_in)
 			printf(" %s XXXXXX", print_enc_alg(p->auth.enc_alg_in));
 		printf("\n");
 
-		printf("%s\tipsec %s out spi %u %s XXXXXX", c, method, p->auth.spi_out,
-		    print_auth_alg(p->auth.auth_alg_out));
+		printf("%s\tipsec %s out spi %u %s XXXXXX", c, method,
+		    p->auth.spi_out, print_auth_alg(p->auth.auth_alg_out));
 		if (p->auth.enc_alg_out)
 			printf(" %s XXXXXX",
 			    print_enc_alg(p->auth.enc_alg_out));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.111 2004/05/07 10:06:15 djm Exp $ */
+/*	$OpenBSD: rde.c,v 1.112 2004/05/08 19:17:20 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -801,7 +801,7 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
  * pf table specific functions
  */
 void
-rde_send_pftable(const char *table, struct bgpd_addr *addr, 
+rde_send_pftable(const char *table, struct bgpd_addr *addr,
     u_int8_t len, int del)
 {
 	struct pftable_msg pfm;
@@ -815,7 +815,7 @@ rde_send_pftable(const char *table, struct bgpd_addr *addr,
 	pfm.len = len;
 
 	if (imsg_compose(&ibuf_main,
-	    del ? IMSG_PFTABLE_REMOVE : IMSG_PFTABLE_ADD, 
+	    del ? IMSG_PFTABLE_REMOVE : IMSG_PFTABLE_ADD,
 	    0, &pfm, sizeof(pfm)) == -1)
 		fatal("imsg_compose error");
 }

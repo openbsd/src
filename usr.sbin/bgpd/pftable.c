@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftable.c,v 1.1 2004/05/07 10:06:15 djm Exp $ */
+/*	$OpenBSD: pftable.c,v 1.2 2004/05/08 19:17:20 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller <djm@openbsd.org>
@@ -54,7 +54,7 @@ LIST_HEAD(, pf_table) tables = LIST_HEAD_INITIALIZER(tables);
 static int
 pftable_change(struct pf_table *pft)
 {
-    	struct pfioc_table tio;
+	struct pfioc_table tio;
 	int ret;
 
 	if (pft->naddrs == 0 || pft->what == 0)
@@ -170,7 +170,7 @@ pftable_clear_all(void)
 }
 
 static int
-pftable_add_work(const char *table, struct bgpd_addr *addr, 
+pftable_add_work(const char *table, struct bgpd_addr *addr,
     u_int8_t len, int del)
 {
 	struct pf_table *pft;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.106 2004/05/08 19:09:34 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.107 2004/05/08 19:17:20 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -579,14 +579,17 @@ peeropts	: REMOTEAS asnumber	{
 			}
 
 			if ($2)
-				curpeer->conf.auth.method = AUTH_IPSEC_MANUAL_ESP;
+				curpeer->conf.auth.method =
+				    AUTH_IPSEC_MANUAL_ESP;
 			else {
 				if ($8.enc_alg) {
-					yyerror("\"ipsec ah\" doesn't take encryption keys");
+					yyerror("\"ipsec ah\" doesn't take "
+					    "encryption keys");
 					free($7);
 					YYERROR;
 				}
-				curpeer->conf.auth.method = AUTH_IPSEC_MANUAL_AH;
+				curpeer->conf.auth.method =
+				    AUTH_IPSEC_MANUAL_AH;
 			}
 
 			if ($3 == 1) {
