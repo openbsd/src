@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.5 2004/11/07 18:12:58 jmc Exp $
+.\"	$OpenBSD: ath.4,v 1.6 2004/11/07 18:26:54 deraadt Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -56,9 +56,6 @@ The
 .Nm
 driver provides support for wireless network adapters based on
 the Atheros AR5210, AR5211, and AR5212 chips.
-Chip-specific support is provided by the Atheros Hardware Access Layer
-(HAL), which is currently available only in binary form for selected
-architectures.
 .Pp
 Supported features include 802.11 and 802.3 frames, power management, BSS,
 IBSS, and host-based access point operation modes.
@@ -171,10 +168,10 @@ An up to date list can be found at
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "ath%d: unable to attach hardware; HAL status %u"
-The Atheros Hardware Access Layer was unable to configure the hardware
+The Hardware Access Layer was unable to configure the hardware
 as requested.
 The status code is explained in the HAL include file
-.Pa contrib/sys/dev/ic/athhal.h .
+.Pa sys/dev/ic/ar5xxx.h .
 .It "ath%d: failed to allocate descriptors: %d"
 The driver was unable to allocate contiguous memory for the transmit
 and receive descriptors.
@@ -200,10 +197,10 @@ This typically occurs because the hardware ran short of receive
 descriptors and had no place to transfer received data.
 The driver will reset the hardware and continue.
 .It "ath%d: unable to reset hardware; hal status %u"
-The Atheros Hardware Access Layer was unable to reset the hardware
+The Hardware Access Layer was unable to reset the hardware
 as requested.
 The status code is explained in the HAL include file
-.Pa contrib/sys/dev/ic/athhal.h .
+.Pa /sys/dev/ic/ar5xxx.h .
 This should not happen.
 .It "ath%d: unable to start recv logic"
 The driver was unable to restart frame reception.
@@ -217,7 +214,7 @@ An invalid transmit rate was specified for an outgoing frame.
 The frame is discarded.
 This should not happen.
 .It "ath%d: ath_chan_set: unable to reset channel %u (%u Mhz)"
-The Atheros Hardware Access Layer was unable to reset the hardware
+The Hardware Access Layer was unable to reset the hardware
 when switching channels during scanning.
 This should not happen.
 .It "ath%d: unable to allocate channel table"
