@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.23 1998/01/03 08:15:12 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.24 1998/01/03 08:27:57 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1857,7 +1857,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI-ST32 Bridge",
 	},
 	{
-	    PCI_VENDOR_STB, PCI_PRODUCT_STB_RIVA128,
+	    PCI_VENDOR_STB2, PCI_PRODUCT_STB2_RIVA128,
 	    0,
 	    "STB (2nd PCI Vendor ID)",
 	    "Velocity128",
@@ -4545,7 +4545,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_STB, 0,
+	    PCI_VENDOR_STB2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "STB (2nd PCI Vendor ID)",
 	    NULL,
