@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.52 2001/08/08 15:07:04 jjbg Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.53 2001/08/09 15:44:32 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -375,30 +375,6 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 			}
 		}
 #endif /* INET6 */
-
-		/*
-		 * Check that the source address is an expected one,
-		 * if we know what it's supposed to be. This avoids
-		 * source address spoofing.
-		 */
-		if ((tdbp->tdb_src.sa.sa_family == AF_INET &&
-		    tdbp->tdb_src.sin.sin_addr.s_addr != INADDR_ANY &&
-		    ip->ip_src.s_addr != tdbp->tdb_src.sin.sin_addr.s_addr) ||
-		    (tdbp->tdb_src.sa.sa_family != AF_INET &&
-			tdbp->tdb_src.sa.sa_family != 0)) {
-
-			DPRINTF(("ipsec_common_input_cb(): source address %s "
-			    "doesn't correspond to expected source %s, "
-			    "SA %s/%08x\n", inet_ntoa4(ip->ip_src),
-			    ipsp_address(tdbp->tdb_src),
-			    ipsp_address(tdbp->tdb_dst),
-			    ntohl(tdbp->tdb_spi)));
-
-			m_freem(m);
-			IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops,
-			    ipcompstat.ipcomps_pdrops);
-			return EACCES;
-		}
 	}
 #endif /* INET */
 
@@ -491,32 +467,6 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 				    ipcompstat.ipcomps_pdrops);
 				return EACCES;
 			}
-		}
-
-		/*
-		 * Check that the source address is an expected one,
-		 * if we know what it's supposed to be. This avoids
-		 * source address spoofing.
-		 */
-		if ((tdbp->tdb_src.sa.sa_family == AF_INET6 &&
-		    !IN6_IS_ADDR_UNSPECIFIED(&tdbp->tdb_src.sin6.sin6_addr) &&
-		    !IN6_ARE_ADDR_EQUAL(&ip6->ip6_src,
-			&tdbp->tdb_src.sin6.sin6_addr)) ||
-		    (tdbp->tdb_src.sa.sa_family != AF_INET6 &&
-			tdbp->tdb_src.sa.sa_family != 0)) {
-
-			DPRINTF(("ipsec_common_input_cb(): packet %s to %s "
-			    "does not match any ACL entries, SA %s/%08x\n",
-			    ip6_sprintf(&ip6->ip6_src),
-			    ip6_sprintf(&ip6->ip6_dst),
-			    ipsp_address(tdbp->tdb_src),
-			    ipsp_address(tdbp->tdb_dst),
-			    ntohl(tdbp->tdb_spi)));
-
-			m_freem(m);
-			IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops,
-			    ipcompstat.ipcomps_pdrops);
-			return EACCES;
 		}
 	}
 #endif /* INET6 */
