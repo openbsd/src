@@ -1613,6 +1613,7 @@
 ./usr/sbin/apxs
 ./usr/sbin/arp
 ./usr/sbin/authpf
+./usr/sbin/bgpctl
 ./usr/sbin/bgpd
 ./usr/sbin/bootpd
 ./usr/sbin/bootpef
