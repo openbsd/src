@@ -1,4 +1,4 @@
-# $OpenBSD: PackingList.pm,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.2 2003/10/19 18:42:55 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -126,6 +126,18 @@ sub addunique
 		die "Duplicate $category in plist\n";
 	}
 	$plist->{$category} = $object;
+}
+
+sub has
+{
+	my ($plist, $name) = @_;
+	return defined $plist->{$name};
+}
+
+sub get
+{
+	my ($plist, $name) = @_;
+	return $plist->{$name};
 }
 
 sub pkgname($)

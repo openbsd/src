@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+# $OpenBSD: pkg_delete,v 1.2 2003/10/19 18:42:55 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -250,12 +250,12 @@ sub delete_package
 		die "Package $pkgname real name does not match";
 	}
 
-	if ($plist->{OpenBSD::PackageInfo::REQUIRE}) {
-		$plist->{OpenBSD::PackageInfo::REQUIRE}->delete($state);
+	if ($plist->has(REQUIRE)) {
+		$plist->get(REQUIRE)->delete($state);
 	}
-	if ($plist->{OpenBSD::PackageInfo::DEINSTALL}) {
-		$plist->{OpenBSD::PackageInfo::DEINSTALL}->delete($state);
-	}
+	if ($plist->has(DEINSTALL)) {
+		$plist->get(DEINSTALL)->delete($state);
+	} 
 	for my $item (@{$plist->{items}}) {
 		$item->delete($state);
 	}

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+# $OpenBSD: pkg_add,v 1.2 2003/10/19 18:42:55 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -166,14 +166,14 @@ sub reallyadd
 		}
 	}
 	die if $collisions;
-	if ($plist->{OpenBSD::PackageInfo::REQUIRE}) {
+	if ($plist->has(REQUIRE)) {
 		print "Require script: $dir",REQUIRE," $pkgname INSTALL\n" if $opt_v or $opt_n;
 		unless ($opt_n) {
 			chmod 0755, $dir.REQUIRE;
 			system($dir.REQUIRE, $pkgname, "INSTALL") == 0 or die "require script borked";
 		}
 	}
-	if ($plist->{OpenBSD::PackageInfo::INSTALL}) {
+	if ($plist->has(INSTALL)) {
 		print "Install script: $dir",INSTALL," $pkgname PRE-INSTALL\n" if $opt_v or $opt_n;
 		unless ($opt_n) {
 			chmod 0755, $dir.INSTALL;
@@ -187,7 +187,7 @@ sub reallyadd
 	}
 
 	$handle->close();
-	if ($plist->{OpenBSD::PackageInfo::INSTALL}) {
+	if ($plist->has(INSTALL)) {
 		print "Install script: $dir",INSTALL ,"$pkgname POST-INSTALL\n" if $opt_v or $opt_n;
 		unless ($opt_n) {
 			system($dir.INSTALL, $pkgname, "POST-INSTALL") == 0 or die "install script borked";
