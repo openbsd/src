@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.14 2002/05/20 16:53:57 krw Exp $
+#       $OpenBSD: install.md,v 1.15 2002/06/09 05:53:53 todd Exp $
 #
 # Copyright (c) 2002, Miodrag Vallat.
 # All rights reserved.
@@ -22,7 +22,7 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.9 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.10 2002/06/09 05:47:27 todd Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: file.c,v 1.9 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: file.c,v 1.10 2002/06/09 05:47:27 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -528,7 +528,7 @@ again:				/* search for matches */
 	return (numitems);
     }
     else {			/* LIST */
-	qsort((ptr_t) items, numitems, sizeof(items[0]), 
+	qsort((ptr_t) items, numitems, sizeof(items[0]),
 		(int (*)(const void *, const void *)) sortscmp);
 	print_by_column(looking_for_lognames ? NULL : tilded_dir,
 			items, numitems);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.9 2002/06/07 18:05:20 provos Exp $	*/
+/*	$OpenBSD: filter.c,v 1.10 2002/06/09 05:47:27 todd Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -339,7 +339,7 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 					
 				snprintf(compose, sizeof(compose),
 				    "%s%s eq \"%s\"",
-				    tl->name, 
+				    tl->name,
 				    lst && !strcmp(tl->name, lst) ? "[1]" : "",
 				    l);
 

@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.34 2002/04/14 02:35:27 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.35 2002/06/09 05:53:54 todd Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -53,7 +53,7 @@ define({:-showsize-:},{:-ifelse(X$1,X,,X$2,X,,X,X,{:-
 		 [ $1 MB gzipped, $2 MB uncompressed ]-:})-:})dnl
 dnl
 dnl
-dnl 
+dnl
 dnl DistributionDescription( number of sets )
 dnl Header paragraph before the individual sets descriptions.
 dnl
@@ -244,7 +244,7 @@ define({:-OpenBSDInstallPart2-:},
 
 The following is a walk-through of the steps you will take while
 getting OpenBSD installed on your hard disk.  If any question has a
-default answer, it will be displayed in brackets ("[]") after the  
+default answer, it will be displayed in brackets ("[]") after the
 question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.  Using Control-Z to suspend the process
@@ -503,7 +503,7 @@ dnl together in the actual document.
 dnl
 dnl Arg 1 is optional.
 dnl Choices for args 2 & 3:
-dnl - OpenBSDDISKInstall(,{:-only -:})  
+dnl - OpenBSDDISKInstall(,{:-only -:})
 dnl    (only have 1 fs possible, ffs)
 dnl - OpenBSDDISKInstall(,,{:-or <insert some other filesystem name>-:})
 dnl    (have another fs possible for reading during disk install)
@@ -592,8 +592,8 @@ dnl
 define({:-OpenBSDCongratulations-:},
 {:-Congratulations, you have successfully installed OpenBSD OSREV.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
-You should create yourself an account and protect it and the "root" account 
-with good passwords.  You should have got a mail from the install program we 
+You should create yourself an account and protect it and the "root" account
+with good passwords.  You should have got a mail from the install program we
 recommend you to read, it contains answers to basic questions you might
 have about OpenBSD (like setting up your system, installing packages, getting
 more information about OpenBSD, sending in your dmesg output and more).
@@ -655,7 +655,7 @@ depend on which method of installation you choose.  Some methods
 require a bit of setup first that is explained below.
 
 The installation allows installing OpenBSD directly from FTP mirror
-sites over the internet, however you must consider the speed and 
+sites over the internet, however you must consider the speed and
 reliability of your internet connection for this option.  It may save
 much time and frustration to use ftp get/reget to transfer the
 distribution sets to a local server or disk and perform the installation
@@ -673,12 +673,12 @@ define({:-OpenBSDXferFloppyFromDOS-:},
 {:-Creating a bootable floppy disk using DOS/Windows:
 
 	First you need to get access to the OpenBSD bootable floppy
-	images. If you can access the distribution from the CD-ROM under 
-	DOS, you will find the bootable disks in the OSREV/MACHINE 
-	directory. Otherwise, you will have to download them from one of 
-	the OpenBSD ftp or http mirror sites, using an ftp client or a web 
-	browser. In either case, take care to do "binary" transfers, since 
-	these are images files and any DOS cr/lf translations or control/z 
+	images. If you can access the distribution from the CD-ROM under
+	DOS, you will find the bootable disks in the OSREV/MACHINE
+	directory. Otherwise, you will have to download them from one of
+	the OpenBSD ftp or http mirror sites, using an ftp client or a web
+	browser. In either case, take care to do "binary" transfers, since
+	these are images files and any DOS cr/lf translations or control/z
 	EOF interpretations will result in corrupted transfers.
 	
 	You will also need to go to the "tools" directory and grab a
@@ -692,11 +692,11 @@ define({:-OpenBSDXferFloppyFromDOS-:},
 	the floppy drive, such as "a:".  Be sure to use good quality HD
 	(1.44MB) floppies, formatted on the system you're using.  The
 	image copy and boot process is not especially tolerant of read
-	errors. 
+	errors.
 
 	Note that if you are using NT to write the images to disk, you
 	will need to use ntrw.exe instead.  It is also available in the
-	"tools" directory.  Grab it and run in with the correct 
+	"tools" directory.  Grab it and run in with the correct
 	arguments like this "ntrw <image> <drive>:"
 
 	Note that, when installing, the boot floppy can be write-protected
@@ -706,8 +706,8 @@ define({:-OpenBSDXferFloppyFromUNIX-:},
 {:-Creating a bootable floppy disk using SunOS, Solaris or other Un*x-like system:
 
 	First, you will need obtain a local copy of the bootable filesystem
-	image as described above.  If possible use the cksum(1) or md5(1) 
-	commands to verify the checksums of the images vs. the values in 
+	image as described above.  If possible use the cksum(1) or md5(1)
+	commands to verify the checksums of the images vs. the values in
 	the CKSUM or MD5 files on the mirror site.
 
 	Next, use the dd(1) utility to copy the file to the floppy drive.
@@ -751,19 +751,19 @@ define({:-OpenBSDXferBareTape-:},
 	format or in "gzipped tar format".  First you will need to
 	transfer the distribution sets to your local system, using ftp or
 	by mounting the CD-ROM containing the release.  Then you need to
-	make a tape containing the files. 
-        
+	make a tape containing the files.
+
 	If you're making the tape on a UN*X-like system, the easiest way
 	to do so is make a shell script along the following lines, call it
-	"/tmp/maketape". 
-        
+	"/tmp/maketape".
+
 	#! /bin/sh
 	TAPE=${TAPE:-/dev/nrst0}
 	mt -f ${TAPE} rewind
 	for file in base etc comp game man misc $1
 	do
 		dd if=${file}OSrev.tgz of=${TAPE} obs=8k conv=sync
-	done    
+	done
 	tar cf ${TAPE} bsd
 	mt -f ${TAPE} offline
 	# end of script
@@ -795,12 +795,12 @@ define({:-OpenBSDXferBootTape-:},
 	"gzipped tar format".  First you will need to transfer the
 	distribution sets to your local system, using ftp or by
 	mounting the CD-ROM containing the release.  Then you need to
-	make a tape containing the files. 
-        
+	make a tape containing the files.
+
 	If you're making the tape on a UN*X-like system, the easiest way
 	to do so is make a shell script along the following lines, call it
-	"/tmp/maketape". 
-        
+	"/tmp/maketape".
+
 	#! /bin/sh
 	TAPE=${TAPE:-/dev/nrst0}
 	mt -f ${TAPE} rewind
@@ -815,7 +815,7 @@ ifelse(X$4,X,,{:-		dd of=${TAPE} if=$4
 	for file in base etc comp game man misc $1
 	do
 		dd if=${file}OSrev.tgz of=${TAPE} obs=8k conv=sync
-	done    
+	done
 	tar cf ${TAPE} bsd
 	mt -f ${TAPE} offline
 	# end of script

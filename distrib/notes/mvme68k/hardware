@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.9 2002/04/14 02:36:04 miod Exp $
+dnl	$OpenBSD: hardware,v 1.10 2002/06/09 05:53:54 todd Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- MVME147 - Motorola with 68030 and 68881
 	- MVME162 - Motorola with 68040
@@ -15,7 +15,7 @@ more important than getting a faster CPU board.
 Supported devices {:-include-:}:
 
 MVME147:
-	serial ports: 
+	serial ports:
 		on-board ttya-ttyd
 	ethernet:
 		on-board AMD 7990 Lance ethernet ("le0")
@@ -50,9 +50,9 @@ MVME162, MVME172:
 MVME167, MVME177:
 	serial:
 		on-board tty00 - tty03 - Cirrus Logic CD2401
-	ethernet: 
+	ethernet:
 		on-board Intel 82596CA ethernet ("ie0")
-	SCSI: 
+	SCSI:
 		on-board NCR53c710 controller
 	parallel:
 		not supported

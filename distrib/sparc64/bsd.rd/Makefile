@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2002/05/20 16:23:54 fgsch Exp $
+#	$OpenBSD: Makefile,v 1.11 2002/06/09 05:53:55 todd Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -72,7 +72,7 @@ do_prep:
 do_mount:
 	newfs ${NEWFSARGS} ${NEWFSARGS_RD} -s ${NBLKS} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
- 
+
 do_umount:
 	@echo ""
 	@df -i ${MOUNT_POINT}

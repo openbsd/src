@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.14 2002/02/19 19:39:35 millert Exp $       */
+/*    $OpenBSD: func.c,v 1.15 2002/06/09 05:47:27 todd Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: func.c,v 1.14 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.15 2002/06/09 05:47:27 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -873,12 +873,12 @@ wfree()
 	if (wp->w_end.type != I_SEEK && wp->w_start.type == wp->w_end.type &&
 	    wp->w_start.type == o.type) {
 	    if (wp->w_end.type == F_SEEK) {
-		if (o.f_seek >= wp->w_start.f_seek && 
+		if (o.f_seek >= wp->w_start.f_seek &&
 		    (wp->w_end.f_seek == 0 || o.f_seek < wp->w_end.f_seek))
 		    break;
 	    }
 	    else {
-		if (o.a_seek >= wp->w_start.a_seek && 
+		if (o.a_seek >= wp->w_start.a_seek &&
 		    (wp->w_end.a_seek == 0 || o.a_seek < wp->w_end.a_seek))
 		    break;
 	    }

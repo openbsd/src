@@ -18,8 +18,8 @@ The following systems have been tested:
 	- VAX 4000-{4,5,6}00{,A}
 
 Ethernet devices:
-	- on-board MicroVAX or VAXstation LANCE 
-	- DEC SGEC 
+	- on-board MicroVAX or VAXstation LANCE
+	- DEC SGEC
 
 SCSI:
 	- NCR 5380 or NCR 53C9x on-board SCSI is generally supported
@@ -32,6 +32,6 @@ Serial ports:
 The lowest amount of memory tested is 6M; however, more is recommended.
 At the moment, the only supported console is a serial console.
 
-Currently, your only storage options for using OpenBSD/MACHINE are SCSI 
-disks or tapes on one of the supported controllers, or a NFS root and 
+Currently, your only storage options for using OpenBSD/MACHINE are SCSI
+disks or tapes on one of the supported controllers, or a NFS root and
 swap.  Please see below for details.

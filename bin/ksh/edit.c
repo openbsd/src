@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.14 2002/02/16 17:18:08 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.15 2002/06/09 05:47:27 todd Exp $	*/
 
 /*
  * Command line editing - common code
@@ -323,7 +323,7 @@ x_mode(onoff)
  *
  * DESCRIPTION:
  *      This function is based on a fix from guy@demon.co.uk
- *      It fixes a bug in that if PS1 contains '!', the length 
+ *      It fixes a bug in that if PS1 contains '!', the length
  *      given by strlen() is probably wrong.
  *
  * RETURN VALUE:
@@ -385,7 +385,7 @@ set_editmode(ed)
 		    };
 	char *rcp;
 	int i;
-  
+
 	if ((rcp = ksh_strrchr_dirsep(ed)))
 		ed = ++rcp;
 	for (i = 0; i < NELEM(edit_flags); i++)

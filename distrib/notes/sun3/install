@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.19 2002/04/17 23:32:12 miod Exp $
+dnl	$OpenBSD: install,v 1.20 2002/06/09 05:53:55 todd Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -145,7 +145,7 @@ need to edit /etc/ttys and change the terminal type, and getty method from
 "sun" and "console" to "vt100" and "std.9600" or something similar.
 
 In order to use 'tip' on OpenBSD/MACHINE, you'll need to edit /etc/ttys
-and add "local" to the end of the tty configuration line, and run 
+and add "local" to the end of the tty configuration line, and run
 'ttyflags -a' to put your changes into effect.
 
 
@@ -183,7 +183,7 @@ Use SunOS to newfs the partitions which will have filesystems on them.
 
     sunos# newfs /dev/rsd0a
     [... lots of output]
- 
+
 Repeat for any other partition (in this example, /dev/rsd0d, /dev/rsd0f,
 /dev/rsd0g, /dev/rsd0h).
 

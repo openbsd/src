@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.84 2002/05/15 15:55:01 mickey Exp $
+#	$OpenBSD: Makefile,v 1.85 2002/06/09 05:52:06 todd Exp $
 
 #
 # For more information on building in tricky environments, please see
 # the list of possible environment variables described in
 # /usr/share/mk/bsd.README.
-# 
+#
 # Building recommendations:
-# 
+#
 # 1) If at all possible, put this source tree in /usr/src.  If /usr/src
 # must be a symbolic link, setenv BSDSRCDIR to point to the real location.
 #
@@ -25,7 +25,7 @@
 # "make build" target supplied here. Good luck.
 #
 # 5) If you want to setup a cross-build environment, there is a "cross-tools"
-# target available which upon completion of "make TARGET=<target> cross-tools" 
+# target available which upon completion of "make TARGET=<target> cross-tools"
 # (where <target> is one of the names in the /sys/arch directory) will produce
 # a set of compilation tools along with the includes in the /usr/cross/<target>
 # directory.
@@ -167,7 +167,7 @@ cross-binutils: cross-binutils-new cross-binutils-links
 cross-binutils: cross-binutils-old cross-binutils-links
 .endif
 
-cross-binutils-new:	cross-dirs 
+cross-binutils-new:	cross-dirs
 	export BSDSRCDIR=`pwd`; \
 	    (cd ${.CURDIR}/gnu/usr.bin/binutils; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \

@@ -1,7 +1,7 @@
-/*	$OpenBSD: sub.c,v 1.8 2002/03/24 22:17:04 millert Exp $	*/
+/*	$OpenBSD: sub.c,v 1.9 2002/06/09 05:47:27 todd Exp $	*/
 /*	$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $	*/
 
-/* sub.c: This file contains the substitution routines for the ed 
+/* sub.c: This file contains the substitution routines for the ed
    line editor */
 /*-
  * Copyright (c) 1993 Andrew Moore, Talke Studio.
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)sub.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: sub.c,v 1.8 2002/03/24 22:17:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: sub.c,v 1.9 2002/06/09 05:47:27 todd Exp $";
 #endif
 #endif /* not lint */
 

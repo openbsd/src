@@ -8,7 +8,7 @@ OpenBSDrd
 
 OpenBSDfloppy
 
-		boot.mop	MOP-bootable image (for network installs); 
+		boot.mop	MOP-bootable image (for network installs);
 				see below.
 
 OpenBSDfloppydesc(single,The)

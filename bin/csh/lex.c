@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.6 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.7 2002/06/09 05:47:27 todd Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.6 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.7 2002/06/09 05:47:27 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -878,7 +878,7 @@ dosub(sc, en, global)
 
     wdp = hp;
     while (--i >= 0) {
-	register struct wordent *new = 
+	register struct wordent *new =
 		(struct wordent *) xcalloc(1, sizeof *wdp);
 
 	new->word = 0;

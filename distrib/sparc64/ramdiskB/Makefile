@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2002/05/19 08:56:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2002/06/09 05:53:55 todd Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -88,7 +88,7 @@ bsd:
 	    make clean && make depend && COPTS=-Os make
 	cp ${TOP}/../../sys/arch/sparc64/compile/${KERNEL}/bsd bsd
 
-rd_setup: 
+rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
 	vnconfig -v -c ${VND} ${IMAGE}
 	disklabel -w -r ${VND} ${DISKTYPE}

@@ -29,7 +29,7 @@ OpenBSD/MACHINE OSREV does NOT run on these machines (yet):
 		XDBus and multiprocessor support issues.
 	- sun4u (Ultrasparcs)
 		These machines are supported by the OpenBSD/sparc64 port.
-	- clones that are significantly different from the Sun systems 
+	- clones that are significantly different from the Sun systems
 		(e.g. K-Bus based Solbourne)
 
 The minimal configuration requires 4M of RAM and ~60M of disk space.
@@ -40,17 +40,17 @@ around 16M of RAM, getting more RAM is more important than getting a
 faster CPU.)  Installation from "ramdisk" kernels requires 8M of RAM.
 
 Supported devices {:-include-:}:
-	sun4c and sun4m SBus video: 
+	sun4c and sun4m SBus video:
 		cgsix (GX, GX+, TGX, TGX+), cgthree, and bwtwo frame buffers
 
         sun4m on-board machine specific video:
                 TCX, cgfourteen (aka SX), p9100 (Tadpole 3GS, 3GX)
 
-	sun4 video (not thoroughly tested...): 
+	sun4 video (not thoroughly tested...):
 		P4  -- on-board bwtwo, cgfour, cgsix, cgeight
-                VME -- cgtwo, cgthree, cgsix 
+                VME -- cgtwo, cgthree, cgsix
 
-	serial ports: 
+	serial ports:
 		ttya and ttyb (can be used as console if needed),
                 ttyc and ttyd (Sun 4/300 only)
 		SBus magma serial port cards, including:
@@ -58,18 +58,18 @@ Supported devices {:-include-:}:
 			4+1Sp, 8+2Sp, and 2+1HS Sp.
 		SBus Serial Parallel Interface (SUNW,spif)
 
-	ethernet: 
-		on-board AMD Lance ethernet ("le0"), 
-		SBus AMD Lance ethernet cards, 
-		on-board Intel 82586 ethernet (ie0 on 4/100's and 4/200's), 
+	ethernet:
+		on-board AMD Lance ethernet ("le0"),
+		SBus AMD Lance ethernet cards,
+		on-board Intel 82586 ethernet (ie0 on 4/100's and 4/200's),
 		VME Intel 82586 ethernet cards
 		SBus SunSwift and Quad FastEthernet cards (hme, qfe)
 		SBus FastEthernet cards (qec+be)
 		SBus QuadEthernet cards (qec+qe)
 
-	SCSI: 
+	SCSI:
 		on-board "esp" SCSI controller (sun4c's, and the 4/300),
-		SBus "esp" SCSI controller (including 3rd party compatibles), 
+		SBus "esp" SCSI controller (including 3rd party compatibles),
 		Sun "SUN-3"/"si" VME SCSI controller (polled mode only, slow),
 		Sun "SCSI Weird"/"sw" on-board controller (4/110 only, polled)
 
@@ -98,7 +98,7 @@ Hardware the we do NOT currently support, but get many questions about:
 	Interrupt driven SCSI driver for Sun 4/100's and 4/200's
         VME mti 16-port serial card
         VME alm2 16-port serial card
-        VME mcp 4-port serial card 
+        VME mcp 4-port serial card
         VME IPI controller
         VME cgfive framebuffer
         VME cgnine framebuffer
@@ -110,9 +110,9 @@ Hardware the we do NOT currently support, but get many questions about:
 	Tadpole onboard PCMCIA and modem
 
 The supplied GENERIC kernel is the best attempt at a configuration that
-works on the widest range of machinery (sun4, sun4c, and sun4m).  
-If you have problems with the OpenBSD OSREV kernel in this distribution, 
-please visit the OpenBSD web page (http://www.openbsd.org) and the mailing 
+works on the widest range of machinery (sun4, sun4c, and sun4m).
+If you have problems with the OpenBSD OSREV kernel in this distribution,
+please visit the OpenBSD web page (http://www.openbsd.org) and the mailing
 lists to review the current status and check for updates and distribution
 errata.
 

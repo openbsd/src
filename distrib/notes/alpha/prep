@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.14 2002/05/02 23:13:40 miod Exp $
+dnl	$OpenBSD: prep,v 1.15 2002/06/09 05:53:54 todd Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -60,7 +60,7 @@ Using the SRM console:
 			set to "a".
     To see a list of all variables on your machine use the "show"
     command with no arguments.
-    
+
     You can bypass the boot_file and boot_osflags values from the command
     prompt, with the -fi (to override boot_file) and -fl (to override
     boot_osflags) options. For example,

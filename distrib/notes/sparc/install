@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.52 2002/04/17 23:32:12 miod Exp $
+dnl	$OpenBSD: install,v 1.53 2002/06/09 05:53:54 todd Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -46,13 +46,13 @@ There are four main cases:
 	OpenBoot Version 2 (newer servers, desktop workstations):
 		prompt is "ok", boot command is "boot" uses diskn:p syntax.
         OpenBoot Version 2 (certain newer desktop workstations):
-		prompt is "ok", boot command is "boot" uses diskn syntax 
+		prompt is "ok", boot command is "boot" uses diskn syntax
 		unless booting from a non-standard partition, in which case:
-		boot /sbus/esp/sd@t,0:p bsd  (where "t" is the scsi target, 
+		boot /sbus/esp/sd@t,0:p bsd  (where "t" is the scsi target,
 		and "p" is the partition.  examples would be t="3" and p="b")
 
 	
-If you expect your workstation to have an OpenBoot Prom but get a ">", 
+If you expect your workstation to have an OpenBoot Prom but get a ">",
 enter then "n" command to enter the "new command mode".  You can set this
 as the default by doing a "setenv sunmon-compat? false" command, followed
 by a "reset" command.
@@ -62,9 +62,9 @@ is described elsewhere in some detail.  For the purposes of this section,
 drive 0 refers to the internal or first SCSI drive, which usually has a
 SCSI-ID of 3.
 
- 
+
 Booting from Floppy Disk installation media:
- 
+
         ok boot fd()bsd         # for version 1 OpenBOOT ROMs
         ok boot floppy bsd      # for version 2 OpenBOOT ROMs
 
@@ -97,18 +97,18 @@ Boot the miniroot by typing the appropriate command at the PROM:
 	> b sd(,,1)bsd 			# for sun4 monitors*
 	ok boot sd(,,1)bsd 		# for version 1 OpenBOOT ROMs
 	ok boot disk:b bsd 		# for version 2 OpenBOOT ROMs
-	ok boot /sbus/esp/sd@3,0:b bsd  # for version 2 OpenBOOT ROMs 
+	ok boot /sbus/esp/sd@3,0:b bsd  # for version 2 OpenBOOT ROMs
 					# that won't take disk:p syntax.
 
 If you've loaded the miniroot onto some other disk than the default
 drive 0, modify the boot specifier accordingly, keeping in mind the
-drive vs. scsi-id shuffling and partition a=0, b=1... 
+drive vs. scsi-id shuffling and partition a=0, b=1...
 
         > b sd(0,10,1)bsd       # example - scsi target 2 on sun4 monitors*
 	ok boot sd(0,3,1)bsd	# example - scsi target 0 on v1 OpenBOOT ROM
 	ok boot disk3:b bsd     # example - scsi target 0 on v2 OpenBOOT ROM
-	ok boot /sbus/esp/sd@0,0:b bsd  # example - scsi target 0 on v2  
-					# OpenBOOT ROM that won't take 
+	ok boot /sbus/esp/sd@0,0:b bsd  # example - scsi target 0 on v2
+					# OpenBOOT ROM that won't take
 					# disk:p syntax.
 
 (*) for sun4 this is scsi-target*8+scsi-lun (usually 0) expressed in hex...
@@ -213,7 +213,7 @@ OpenBSDCommonURL
 After completing an installation:
 
 Now try a reboot.  (If needed, swap your scsi id's first).
-The Sun monitor normally tries to load a file called "vmunix".   
+The Sun monitor normally tries to load a file called "vmunix".
 On OpenBOOT ROM systems you can change it to load OpenBSD instead using
 the following commands:
 
@@ -226,7 +226,7 @@ On version 2 OpenBOOT ROMs:
     ok setenv boot-file bsd
     ok setenv boot-device /sbus/esp/sd@0,0
 
-On sun4 systems, you may not need to specify the boot file, as 
+On sun4 systems, you may not need to specify the boot file, as
 the OpenBSD boot blocks will look for "bsd" on the boot device by default.
 
 OpenBSDCongratulations
@@ -236,10 +236,10 @@ need to edit /etc/ttys and change the terminal type, and getty method from
 "sun" and "suncons" to "vt100" and "std.9600" or something similar.  Also
 when running from a serial console, you may wish to adjust the eeprom
 settings for input-device, output-device, screen-#columns, and screen-#rows
-as appropriate.  
+as appropriate.
 
 In order to use 'tip' on OpenBSD/MACHINE, you'll need to edit /etc/ttys
-and add "local" to the end of the tty configuration line, and run 
+and add "local" to the end of the tty configuration line, and run
 'ttyflags -a' to put your changes into effect.
 
 
@@ -278,7 +278,7 @@ Use SunOS to newfs the partitions which will have filesystems on them.
 
     sunos# newfs /dev/rsd0a
     [... lots of output]
- 
+
 Repeat for any other partition (in this example, /dev/rsd0d, /dev/rsd0f,
 /dev/rsd0g, /dev/rsd0h).
 
@@ -370,7 +370,7 @@ Use Solaris to newfs the partitions which will have filesystems on them.
 
     solaris# newfs /dev/rdsk/c0t1d0s0
     [... lots of output]
- 
+
 Repeat for any other partition (in this example, /dev/rdsk/c0t1d0s3,
 /dev/rdsk/c0t1d0s4, /dev/rdsk/c0t1d0s5 and /dev/rdsk/c0t1d0s6).
 

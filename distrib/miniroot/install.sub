@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.226 2002/06/08 21:52:02 krw Exp $
+#	$OpenBSD: install.sub,v 1.227 2002/06/09 05:53:54 todd Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -182,7 +182,7 @@ askpass() {
 #
 #    $1    = the question to ask the user
 #    $2    = the default answer
-#    
+#
 # Save the user input (or the default) in $resp.
 #
 # Allow the user to escape to shells ('!') or execute commands
@@ -489,7 +489,7 @@ __EOT
 			fi
 			echo $_ifs
 		done
-		: ${_ouranswer:=done} 
+		: ${_ouranswer:=done}
 		ask "\nConfigure which interface? (or 'done')" "$_ouranswer"
 		case $resp in
 		"done")	break	
@@ -844,7 +844,7 @@ get_selection() {
 	esac
 }
 
-# Do globbing on the selection and parse +/-, sets the global 
+# Do globbing on the selection and parse +/-, sets the global
 # _get_files and _setsdone appropriately.
 glob_selection() {
 	local _selection=$1 _src=$2 _sets=$3
@@ -919,7 +919,7 @@ __EOT
 
 }
 
-# Set global _sets to either 
+# Set global _sets to either
 #     1) a list of sets found in both $1 and $THESETS, where
 #        $2 is the location that generated the list of files in $1.
 # or
@@ -1249,7 +1249,7 @@ __EOT
 
 	display_extract_msg
 
-	get_get_files_list "`eval echo \\$_${_url_type}_server_dir`" 
+	get_get_files_list "`eval echo \\$_${_url_type}_server_dir`"
 
 	# User may have selected no files
 	[ "$_get_files" ] || return
@@ -1284,7 +1284,7 @@ install_from_mounted_fs() {
 
 	display_extract_msg
 
-	get_get_files_list "$1" 
+	get_get_files_list "$1"
 
 	# User may have selected no files
 	[ "$_get_files" ] || return

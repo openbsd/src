@@ -55,7 +55,7 @@ To prepare for installing via FTP:
 To prepare for installing via a tape:
 
 	To install OpenBSD from a tape, you need to somehow
-	make a boot tape on the appropriate kind of tape.  
+	make a boot tape on the appropriate kind of tape.
 	The files needed for this are:
 	
 	stboot 	  - The Motorola VID block
@@ -73,7 +73,7 @@ To prepare for installing via a tape:
 	that describes the tape drive you're using (possibly
 	something like /dev/nrst0, but we make no guarantees 8-).
 		
-	Now you need to get the OpenBSD filesets you wish to 
+	Now you need to get the OpenBSD filesets you wish to
 	install on your system on to the appropriate kind of tape,
 	in tar format.
 
@@ -92,5 +92,5 @@ To prepare for installing via a tape:
 	on the tape.
 
 	Once you have done this, you can proceed to the next
-	step in the installation process, preparing your 
+	step in the installation process, preparing your
 	system for OpenBSD installation.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.5 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.6 2002/06/09 05:47:27 todd Exp $	*/
 /*	$NetBSD: parse.c,v 1.6 1995/03/21 09:03:10 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.5 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.6 2002/06/09 05:47:27 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,19 +53,19 @@ static char rcsid[] = "$OpenBSD: parse.c,v 1.5 2002/02/19 19:39:35 millert Exp $
 static void	 asyntax(struct wordent *, struct wordent *);
 static void	 asyn0(struct wordent *, struct wordent *);
 static void	 asyn3(struct wordent *, struct wordent *);
-static struct wordent 
+static struct wordent
 		*freenod(struct wordent *, struct wordent *);
-static struct command 
+static struct command
 		*syn0(struct wordent *, struct wordent *, int);
-static struct command 
+static struct command
 		*syn1(struct wordent *, struct wordent *, int);
-static struct command 
+static struct command
 		*syn1a(struct wordent *, struct wordent *, int);
-static struct command 
+static struct command
 		*syn1b(struct wordent *, struct wordent *, int);
-static struct command 
+static struct command
 		*syn2(struct wordent *, struct wordent *, int);
-static struct command 
+static struct command
 		*syn3(struct wordent *, struct wordent *, int);
 
 #define ALEFT	21		/* max of 20 alias expansions	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.18 2002/02/16 21:27:06 millert Exp $	*/
+/*	$OpenBSD: cp.c,v 1.19 2002/06/09 05:47:26 todd Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,17 +47,17 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.18 2002/02/16 21:27:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.19 2002/06/09 05:47:26 todd Exp $";
 #endif
 #endif /* not lint */
 
 /*
  * Cp copies source files to target files.
- * 
+ *
  * The global PATH_T structure "to" always contains the path to the
  * current target file.  Since fts(3) does not change directories,
  * this path can be either absolute or dot-relative.
- * 
+ *
  * The basic algorithm is to initialize "to" and use fts(3) to traverse
  * the file hierarchy rooted in the argument list.  A trivial case is the
  * case of 'cp file1 file2'.  The more interesting case is the case of
@@ -220,7 +220,7 @@ main(argc, argv)
 		/*
 		 * Case (1).  Target is not a directory.
 		 */
-		if (argc > 1) 
+		if (argc > 1)
 			usage();
 		/*
 		 * Need to detect the case:
@@ -254,7 +254,7 @@ char *
 find_last_component(path)
 	char *path;
 
-{ 
+{
 	char *p;
 
 	if ((p = strrchr(path, '/')) == NULL)
@@ -308,8 +308,8 @@ copy(argv, type, fts_options)
 		}
 
 		/*
-		 * If we are in case (2) or (3) above, we need to append the 
-		 * source name to the target name.  
+		 * If we are in case (2) or (3) above, we need to append the
+		 * source name to the target name.
 		 */
 		if (type != FILE_TO_FILE) {
 			/*
@@ -435,8 +435,8 @@ copy(argv, type, fts_options)
 			}
 			/*
 			 * If not -p and directory didn't exist, set it to be
-			 * the same as the from directory, unmodified by the 
-			 * umask; arguably wrong, but it's been that way 
+			 * the same as the from directory, unmodified by the
+			 * umask; arguably wrong, but it's been that way
 			 * forever.
 			 */
 			if (pflag && setfile(curr->fts_statp, 0))

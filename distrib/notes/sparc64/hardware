@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.28 2002/05/29 01:52:47 fgsch Exp $
+dnl	$OpenBSD: hardware,v 1.29 2002/06/09 05:53:55 todd Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -39,7 +39,7 @@ To install the entire system requires much more disk space, and to run
 X or compile the system, more RAM is recommended.
 
 Supported devices {:-include-:}:
-	SCSI Host Adapters: 
+	SCSI Host Adapters:
 		SBus NCR53c9x adapters (esp)
 		SBus 10/100Mbit SunSwift Ethernet+SCSI cards, aka HME + FAS366
 		  cards (esp)
@@ -66,7 +66,7 @@ Supported devices {:-include-:}:
 		PCI GEM Ethernet (gem)
 		PCI Davicom DM9102 Ethernet (dc)
 
-	Serial ports: 
+	Serial ports:
 		onboard SBUS Zilog 8530 (zs)
 		onboard EBUS Infineon (Siemens) 82532 (sab)
 		onboard 16550 compatibles (com)

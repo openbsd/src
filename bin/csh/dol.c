@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.9 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: dol.c,v 1.10 2002/06/09 05:47:27 todd Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dol.c,v 1.9 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: dol.c,v 1.10 2002/06/09 05:47:27 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -426,7 +426,7 @@ Dgetdol()
 	if (dimen || bitset)
 	    stderror(ERR_SYNTAX);
 	if (backpid != 0) {
-	    if (dolbang) 
+	    if (dolbang)
 		xfree((ptr_t) dolbang);
 	    setDolp(dolbang = putn(backpid));
 	}
@@ -645,13 +645,13 @@ fixDolMod()
 		    dolwcnt = 10000;
 		c = DgetC(0);
 	    }
-	    if ((c == 'g' && dolmcnt != 10000) || 
+	    if ((c == 'g' && dolmcnt != 10000) ||
 		(c == 'a' && dolwcnt != 10000)) {
 		if (c == 'g')
 		    dolmcnt = 10000;
 		else
 		    dolwcnt = 10000;
-		c = DgetC(0); 
+		c = DgetC(0);
 	    }
 
 	    if (c == 's') {	/* [eichin:19910926.0755EST] */

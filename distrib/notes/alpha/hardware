@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.24 2002/05/02 23:13:40 miod Exp $
+dnl	$OpenBSD: hardware,v 1.25 2002/06/09 05:53:54 todd Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -116,7 +116,7 @@ Supported hardware:
 		Built-in framebuffer.
 		Other TURBOchannel cards.
 
-    DEC 3000 models 400,500,500X,600,700,800,900 
+    DEC 3000 models 400,500,500X,600,700,800,900
 	  Supported devices:
 		Built-in serial ports.
 		Built-in LANCE ethernet.
@@ -140,9 +140,9 @@ Supported hardware:
 	Samsung 164BX/UX (no SRM)
 	Multiprocessor alpha systems
 	VME Alpha systems
-               
+
 Supported Peripherals:
-               
+
 	PCI IDE Controllers (pciide)
 		Acer Labs M5229
 		CMD Tech PCI0640, PCI0643, PCI0646, PCI0648, and PCI0649
@@ -225,7 +225,7 @@ Supported Peripherals:
 			SMC EZ Card 10/100 PCI 1211-TX
 		VIA Rhine/RhineII Ethernet adapters (vr), including: [*]
 			Addtron AEF-360TX
-			Hawking PN102TX  
+			Hawking PN102TX
 			D-Link DFE530TX
 	Gigabit Ethernet Adapters
 		Intel i82542, i82543, and i82544 based adapters (gx),
@@ -261,9 +261,9 @@ Supported Peripherals:
 	Sound Devices [*]
 		Ensoniq AudioPCI (eap)
 		SoundBlaster PCI128 (eap)
-               
+
 Untested Peripherals:
-               
+
 The following peripherals are compiled into the system, but are not known to
 work. It's our best guess that they do, but any feedback is appreciated.
 
@@ -289,7 +289,7 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			Adaptec Single32 ANA-69011
 			Adaptec Single64 ANA-62011 and ANA-62020
 			Adaptec Duo64 ANA-62022
-			Adaptec Quartet64 ANA-62044 
+			Adaptec Quartet64 ANA-62044
 		ADMtek AN986-based USB adapters (aue), including: [*]
 			Abocom UFE1000
 			Abocom DSB650TX
@@ -348,11 +348,11 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			Matrox Networks FastNIC 10/100
 			Netgear FA310TX
 		Macronix 98713/98715/98725-based adapters (dc), including: [*]
-			Accton EN1217   
+			Accton EN1217
 			Addtron AEF-320TX/AEF-330TX
 			CNet PRO120A/B
 			Complex RL-100TX
-			NDC Communications SOHOware SFA110A 
+			NDC Communications SOHOware SFA110A
 			SVEC PN102-TX Fast Ethernet card
 		National Semiconductor DP83815-based PCI adapters (sis),
 		  including: [*]
@@ -385,7 +385,7 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			Digital EtherWORKS 1000SX
 			Farallon PN9000SX
 			Netgear GA620 and GA620T
-			SGI Tigon   
+			SGI Tigon
 		SysKonnect SK-984x (9841/9842/9843/9844) based adapters (sk)
 	ATM Adapters [*]
 		Efficient Networks EN-155 and Adaptec ANA-590x ATM interfaces
@@ -396,7 +396,7 @@ work. It's our best guess that they do, but any feedback is appreciated.
 		Lan Media Corporation SSI (T1)/HSSI/DS1/DS3 WAN interfaces
 		  (lmc)
 	Universal Serial Bus (USB) Devices [*]
-		USB Audio (uaudio) [-] 
+		USB Audio (uaudio) [-]
 		USB Diamond MultiMedia Rio MP3 players (urio) [-]
 		USB Ethernet adapters (aue, cue, kue), see above
 		USB Generic Human Interface Devices (catch-all) (uhid)

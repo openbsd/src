@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.12 2002/03/24 22:17:04 millert Exp $	*/
+/*	$OpenBSD: buf.c,v 1.13 2002/06/09 05:47:27 todd Exp $	*/
 /*	$NetBSD: buf.c,v 1.15 1995/04/23 10:07:28 cgd Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer rountines for the
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: buf.c,v 1.12 2002/03/24 22:17:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: buf.c,v 1.13 2002/06/09 05:47:27 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -261,7 +261,7 @@ init_buffers()
 {
 	int i = 0;
 
-	/* Read stdin one character at a time to avoid i/o contention 
+	/* Read stdin one character at a time to avoid i/o contention
 	   with shell escapes invoked by nonterminal input, e.g.,
 	   ed - <<EOF
 	   !cat

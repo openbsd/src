@@ -43,7 +43,7 @@ both OpenBSD and SunOS environments on the same system.
 
     You should avoid using softupdates (option softdep in /etc/fstab)
     on your shared filesystems.
-    Although untested, it is likely that SunOS would be confused by a 
+    Although untested, it is likely that SunOS would be confused by a
     filesystem with soft update flags enabled.
 
 The OpenBSD "Sun Compatible" disklabel have been extended to support 16

@@ -1,6 +1,6 @@
 OpenBSD/MACHINE OSREV was written under contract for Willowglen Singapore
-for an embedded application.  Theo de Raadt, Dale Rahn, Chuck Cranor, 
-and Steve Murphree were involved in working on this port which runs on 
+for an embedded application.  Theo de Raadt, Dale Rahn, Chuck Cranor,
+and Steve Murphree were involved in working on this port which runs on
 the MVME147, MVME162, MVME167, MVME172, MVME177 and perhaps other models
 also.
 

@@ -137,7 +137,7 @@ started by entering 'man [section] topic'.  The brackets [] around the
 section should not be entered, but rather indicate that the section is
 optional.  If you don't ask for a particular section, the topic with the
 least-numbered section name will be displayed.  For instance, after
-logging in, enter 
+logging in, enter
 
 	man passwd
 
@@ -152,7 +152,7 @@ If you are unsure of what man page you are looking for, enter
 
 	apropos subject-word
 
-where "subject-word" is your topic of interest; a list of possibly 
+where "subject-word" is your topic of interest; a list of possibly
 related man pages will be displayed.
 
 

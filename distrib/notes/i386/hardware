@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.84 2002/06/08 00:11:47 aaron Exp $
+dnl	$OpenBSD: hardware,v 1.85 2002/06/09 05:53:54 todd Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -16,7 +16,7 @@ X or compile the system, more RAM is recommended.  (16M of RAM will actually
 allow you to run X and/or compile but it won't be speedy. Note that until
 you have around 32M of RAM, getting more RAM is more important than getting
 a faster CPU.)
- 
+
 Supported hardware {:-include-:}:
 	Processors
 		All CPU chips compatible with the Intel 80386 (MACHINE)
@@ -155,7 +155,7 @@ Supported hardware {:-include-:}:
 		    I2O, including Intel and Mylex (untested)
 	CD-ROM and DVD-ROM Drives
 		Mitsumi CD-ROM drives [*]
-		    [Note: The Mitsumi driver device probe is known 
+		    [Note: The Mitsumi driver device probe is known
 		    to cause trouble with several devices!]
 		Most SCSI CD-ROM, CD-R, CD-RW, and DVD drives
 		Most ATAPI CD-ROM, CD-R, CD-RW, and DVD drives
@@ -174,7 +174,7 @@ Supported hardware {:-include-:}:
 		ST16660-base ports
 		XR16850-based ports (only in the pccom driver)
 		AST-style 4-port serial boards [G]
-		BOCA 8-port serial cards [*] 
+		BOCA 8-port serial cards [*]
 		Cyclades Cyclom-{4, 8, 16}Y serial boards [G]
 		Cyclades-Z series multiport serial boards [G]
 		IBM PC-RT 4-port serial boards [*]
@@ -436,7 +436,7 @@ Supported hardware {:-include-:}:
 		    SGI Tigon
 		Intel i82542, i82543, and i82544 based adapters, including:
 		  [A] [B] [C]
-		  Often known as Intel Pro/1000 Gigabit Server Adapter 
+		  Often known as Intel Pro/1000 Gigabit Server Adapter
 		    Intel i82542 1000BASE-X Ethernet
 		    Intel i82543 1000BASE-X Ethernet
 		    Intel i82543-SC 1000BASE-X Ethernet
@@ -458,16 +458,16 @@ Supported hardware {:-include-:}:
 		    D-Link DGE-500SX
 		Broadcom BCM570x (Tigon3) based PCI adapters, including: [A]
 		  [B] [C]
-		    3Com 3c996-T (10/100/1000baseTX) 
+		    3Com 3c996-T (10/100/1000baseTX)
 		    3Com 3c996-SX (1000baseSX)
 		    3Com 3c996B-T (10/100/1000baseTX)
 		    Dell PowerEdge 2550 integrated BCM5700 NIC
 		      (10/100/1000baseTX)
-		    SysKonnect SK-9D21 (10/100/1000baseTX) 
-		    SysKonnect SK-9D41 (1000baseSX) 
+		    SysKonnect SK-9D21 (10/100/1000baseTX)
+		    SysKonnect SK-9D41 (1000baseSX)
 		Sundance/Tamarack TC9021 based PCI adapters, including: [G]
-		    D-Link DGE-550T (10/100/1000baseTX) 
-		    Antares Microsystems Gigabit Ethernet board 
+		    D-Link DGE-550T (10/100/1000baseTX)
+		    Antares Microsystems Gigabit Ethernet board
 		SysKonnect SK-9841/9842/9843/9844 Gigabit Ethernet
 		  adapters [A] [B] [C]
 	ATM Adapters
@@ -584,7 +584,7 @@ Supported hardware {:-include-:}:
 		Windows Sound System
 	Miscellaneous Devices
 		APM power management,
-		Brooktree 8[47][89] based frame grabber and TV tuner cards, 
+		Brooktree 8[47][89] based frame grabber and TV tuner cards,
 		including: [G]
 		    Hauppage Wincast TV
 		    STB TV PCI Television Tuner
@@ -672,7 +672,7 @@ Ultrastor 14f, 24f (if it works), or 34f SCSI host adapters
 AHA-152x, AIC-6260- or AIC-6360-based SCSI host adapters
 		aic0	0x340	11	any
 
-Seagate ST0[12], Future Domain TMC-8xx based SCSI controllers 
+Seagate ST0[12], Future Domain TMC-8xx based SCSI controllers
 		sea0		5		iomem 0xc8000
 
 WD7000 and TMC-7000 SCSI host adapters
@@ -779,7 +779,7 @@ Special care for SMC Elite Ultra:
 
 
 Special care for PCI BIOS:
- 
+
 	As all BIOS implementations and subsystems this one has bugs too.
 	Sometimes specifications are unclear about interfaces and/or data
 	validation.

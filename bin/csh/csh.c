@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.17 2002/06/09 05:03:59 deraadt Exp $	*/
+/*	$OpenBSD: csh.c,v 1.18 2002/06/09 05:47:27 todd Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$OpenBSD: csh.c,v 1.17 2002/06/09 05:03:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: csh.c,v 1.18 2002/06/09 05:47:27 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -817,7 +817,7 @@ rechist()
   	}
 
   	if ((fp = open(short2str(hfile), O_WRONLY | O_CREAT | O_TRUNC,
-	    0600)) == -1) 
+	    0600)) == -1)
   	    return;
 
 	oldidfds = didfds;
@@ -883,14 +883,14 @@ int sig;
 
     /*
      * We kill the last foreground process group. It then becomes
-     * responsible to propagate the SIGHUP to its progeny. 
+     * responsible to propagate the SIGHUP to its progeny.
      */
     {
 	struct process *pp, *np;
 
 	for (pp = proclist.p_next; pp; pp = pp->p_next) {
 	    np = pp;
-	    /* 
+	    /*
 	     * Find if this job is in the foreground. It could be that
 	     * the process leader has exited and the foreground flag
 	     * is cleared for it.
@@ -898,7 +898,7 @@ int sig;
 	    do
 		/*
 		 * If a process is in the foreground; we try to kill
-		 * it's process group. If we succeed, then the 
+		 * it's process group. If we succeed, then the
 		 * whole job is gone. Otherwise we keep going...
 		 * But avoid sending HUP to the shell again.
 		 */
@@ -1288,9 +1288,9 @@ vis_fputc(ch, fp)
 {
     char uenc[5];	/* 4 + NUL */
 
-    if (ch & QUOTE) 
+    if (ch & QUOTE)
 	return fputc(ch & TRIM, fp);
-    /* 
+    /*
      * XXX: When we are in AsciiOnly we want all characters >= 0200 to
      * be encoded, but currently there is no way in vis to do that.
      */

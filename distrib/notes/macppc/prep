@@ -92,7 +92,7 @@ setenv boot-device hd:,ofwboot
 [to save the results into nvram]
 reset-all
 
-These settings assume that the master of the first IDE bus has OpenBSD 
+These settings assume that the master of the first IDE bus has OpenBSD
 installed on it, either in MBR format or in shared mode with ofwboot
 copied into the first HFS(+) partition. It is not necessary to specify
 '/bsd' on the boot line or in the boot-device variable, since it is the
@@ -100,7 +100,7 @@ default.
 
 To boot in MacOS with this setup (works on most supported machines)
 press and hold down the Alt/Option key during reboot, and select which
-(MacOS/MacOS X) partition to boot in the graphical boot selector 
+(MacOS/MacOS X) partition to boot in the graphical boot selector
 presentes. Note that OpenBSD does not currently show up in this boot
 selector except for the installation CD. This works on most machines
 this has been tested with, but does not work on a Rev C (333MHz) iMac,

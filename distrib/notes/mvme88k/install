@@ -3,17 +3,17 @@ this document in hand it shouldn't be too much trouble.
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD ramdisk kernel that can
-be booted from tape. Alternatively, if your mvme88k is hooked up in a 
-network you can find a server and arrange for a diskless setup which is a 
-convenient way to install on a machine whose disk does not currently hold 
-a usable operating system (see the section `Installing using a diskless 
+be booted from tape. Alternatively, if your mvme88k is hooked up in a
+network you can find a server and arrange for a diskless setup which is a
+convenient way to install on a machine whose disk does not currently hold
+a usable operating system (see the section `Installing using a diskless
 setup' below).
 
 
 Installing using the OpenBSD ramdisk kernel.
 
-The ramdisk kernel is a kernel that containes an OpenBSD filesystem holding 
-all utilities necessary to install OpenBSD on a local disk. It is distributed 
+The ramdisk kernel is a kernel that containes an OpenBSD filesystem holding
+all utilities necessary to install OpenBSD on a local disk. It is distributed
 as a binary file with the name bsd.rd.
 
 After the initial probe messages you'll asked to start the install
@@ -30,8 +30,8 @@ If the server runs another operating system, you'll have to consult
 documentation that came with it (on SunOS systems, add_client(8) is a
 good start).
 
-Second, you must configure the netboot parameters in the mvme88k Bug 
-using the NIOT command.  The Load Address should be 0xAF0000.  The 
+Second, you must configure the netboot parameters in the mvme88k Bug
+using the NIOT command.  The Load Address should be 0xAF0000.  The
 Execution Address should be 0xAF0008.
 
 Your mvme88k expects to be able to download a second stage bootstrap
@@ -39,12 +39,12 @@ program via TFTP after having acquired its IP address through RevARP when
 instructed to boot "over the net". It will look for a filename composed of
 the machine's IP address followed by the machine's architecture, separated
 by a period. For example, a sun4c machine which has been assigned IP
-address 130.115.144.11, will make an TFTP request for a file that has 
+address 130.115.144.11, will make an TFTP request for a file that has
 been named in the nvram.  Normally, this file is a second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
 You can find the boot program in `/usr/mdec/netboot' in the OpenBSD/mvme88k
-distribution. 
+distribution.
 
 After the boot program has been loaded into memory and given control by
 the PROM, it starts locating the machine's remote root directory through
@@ -67,7 +67,7 @@ you have several options when choosing a location to store the installation
 filesets. However, the easiest way is to put the *.tgz files you want
 to install into the root directory for your client on the server.
 
-Next, unpack `base{:--:}OSrev.tgz' and `etc{:--:}OSrev.tgz' on the server in the root 
+Next, unpack `base{:--:}OSrev.tgz' and `etc{:--:}OSrev.tgz' on the server in the root
 directory for your machine. If you elect to use a separately NFS-mounted
 filesystem for `/usr' with your diskless setup, make sure the "./usr" base
 files in base{:--:}OSrev.tgz end up in the correct location. One way to do this is
@@ -156,13 +156,13 @@ the editor), then try setting it to `8 partitions:'.
 <BEGIN SAMPLE DISKLABEL SCREEN>
 OpenBSD# disklabel sd2
  # /dev/rsd2c:
-type: SCSI 
+type: SCSI
 disk: SCSI disk
 label: Hold Your Breath
 flags:
 bytes/sector: 512
 sectors/track: 64
-tracks/cylinder: 7  
+tracks/cylinder: 7
 sectors/cylinder: 448
 cylinders: 1429
 rpm: 3600
@@ -219,8 +219,8 @@ filesystem writable is
 
 Congratulations, you have successfully installed OpenBSD OSREV.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
-You should create yourself an account and protect it and the "root" account 
-with good passwords. 
+You should create yourself an account and protect it and the "root" account
+with good passwords.
 
 Some of the files in the OpenBSD OSREV distribution might need to be
 tailored for your site.  In particular, the /etc/mail/sendmail.cf file

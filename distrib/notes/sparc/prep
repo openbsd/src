@@ -55,8 +55,8 @@ instead of `ok', type:
     ok
 
 This is needed because OpenBSD relies on the behaviour of the "new" command
-mode.  OpenBSD will not boot correctly on sun4c or sun4m systems that 
-are not running in "new" command mode.  The sun4 systems such as the 4/110, 
+mode.  OpenBSD will not boot correctly on sun4c or sun4m systems that
+are not running in "new" command mode.  The sun4 systems such as the 4/110,
 4/200, and 4/300 system do not have a "new" command mode, and will work
 fine as-is.
 
@@ -86,7 +86,7 @@ both OpenBSD and SunOS environments on the same system.
 
     You should avoid using soft updates (option softdep in /etc/fstab)
     on your shared filesystems.
-    Although untested, it is likely that SunOS would be confused by a 
+    Although untested, it is likely that SunOS would be confused by a
     filesystem with soft update flags enabled.
 
 The OpenBSD "Sun Compatible" disklabel have been extended to support 16

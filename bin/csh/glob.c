@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.7 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: glob.c,v 1.8 2002/06/09 05:47:27 todd Exp $	*/
 /*	$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.7 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.8 2002/06/09 05:47:27 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -575,7 +575,7 @@ tglob(t)
 	     */
 	    if (c == '`') {
 		gflag |= G_CSH;
-		while (*p && *p != '`') 
+		while (*p && *p != '`')
 		    if (*p++ == '\\') {
 			if (*p)		/* Quoted chars */
 			    p++;
@@ -807,7 +807,7 @@ pword()
     pnleft = MAXPATHLEN - 4;
 }
 
-int 
+int
 Gmatch(string, pattern)
     Char *string, *pattern;
 {
@@ -830,7 +830,7 @@ Gmatch(string, pattern)
 
     blkfree(blk);
     return(gres == gpol);
-} 
+}
 
 static int
 pmatch(string, pattern)
@@ -871,7 +871,7 @@ pmatch(string, pattern)
 			      (*(pattern-2) & TRIM) <= stringc);
 		    pattern++;
 		}
-		else 
+		else
 		    match = (stringc == (rangec & TRIM));
 	    }
 	    if (rangec == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.7 1999/07/14 13:37:23 millert Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.8 2002/06/09 05:47:27 todd Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -126,9 +126,9 @@ c_test(wp)
 	te.pos.wp = wp + 1;
 	te.wp_end = wp + argc;
 
-	/* 
+	/*
 	 * Handle the special cases from POSIX.2, section 4.62.4.
-	 * Implementation of all the rules isn't necessary since 
+	 * Implementation of all the rules isn't necessary since
 	 * our parser does the right thing for the ommited steps.
 	 */
 	if (argc <= 5) {
@@ -240,7 +240,7 @@ test_eval(te, op, opnd1, opnd2, do_eval)
 			if (not)
 				res = !res;
 		}
-		return res; 
+		return res;
 	  case TO_FILRD: /* -r */
 		return test_eaccess(opnd1, R_OK) == 0;
 	  case TO_FILWR: /* -w */

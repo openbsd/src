@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.12 2002/05/23 01:58:36 hugh Exp $
+dnl	$OpenBSD: install,v 1.13 2002/06/09 05:53:55 todd Exp $
 OpenBSDInstallPrelude
 
 For most systems, the easiest way to install OpenBSD/MACHINE OSREV is via
@@ -41,7 +41,7 @@ entry in /etc/hosts.
 Then start rarpd (or configure /etc/rc.conf to always start rarpd).
 
 Copy boot.mop into /tftpboot/mop/1a2b3c4d5e6f.SYS, where "1a2b3c4d5e6f"
-represents the six octets of your ethernet address.  For example, the 
+represents the six octets of your ethernet address.  For example, the
 filename for the machine described above would be "08002b247200.SYS".
 Note that all non alphanumeric characters must be stripped and the
 mac portion must be lower case, the extension upper.  Start mopd by
@@ -67,9 +67,9 @@ For example:
 Enable rpc.bootparamd either by turning it on in /etc/rc.conf and rebooting,
 or by running it manually.
 
-You are now ready to mopboot your MACHINE. 
+You are now ready to mopboot your MACHINE.
 
-Typing "B <DEVICE>", where <DEVICE> is your VAX's ethernet device, at the 
+Typing "B <DEVICE>", where <DEVICE> is your VAX's ethernet device, at the
 chevron prompt should then load the OpenBSD booter.
 
 

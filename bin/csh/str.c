@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.5 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: str.c,v 1.6 2002/06/09 05:47:27 todd Exp $	*/
 /*	$NetBSD: str.c,v 1.6 1995/03/21 09:03:24 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.5 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.6 2002/06/09 05:47:27 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -450,21 +450,21 @@ vis_str(cp)
 
     if (cp == NULL)
 	return (NULL);
-    
+
     for (dp = cp; *dp++;)
 	continue;
     n = ((dp - cp) << 2) + 1; /* 4 times + NULL */
     if (dstsize < n) {
-	sdst = (char *) (dstsize ? 
+	sdst = (char *) (dstsize ?
 			    xrealloc(sdst, (size_t) n * sizeof(char)) :
 			    xmalloc((size_t) n * sizeof(char)));
 	dstsize = n;
     }
-    /* 
+    /*
      * XXX: When we are in AsciiOnly we want all characters >= 0200 to
      * be encoded, but currently there is no way in vis to do that.
      */
     (void) strvis(sdst, short2str(cp), VIS_NOSLASH);
     return (sdst);
 }
-    
+

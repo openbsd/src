@@ -1,8 +1,8 @@
-dnl	$OpenBSD: install,v 1.21 2002/04/09 01:22:22 miod Exp $
+dnl	$OpenBSD: install,v 1.22 2002/06/09 05:53:54 todd Exp $
 OpenBSDInstallPrelude
 dnl No extra line, this has to stick to the geometry notes paragraph.
 The file `HP-IB.geometry' has geometry information for several HP-IB
-disks, but may be incomplete.  Geometry may be calculated from an HP-UX 
+disks, but may be incomplete.  Geometry may be calculated from an HP-UX
 `/etc/disktab' entry, but note that HP-UX geometry is based on
 1024 byte sectors, while OpenBSD's is based on 512 byte sectors.
 

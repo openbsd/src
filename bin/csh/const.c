@@ -1,4 +1,4 @@
-/*	$OpenBSD: const.c,v 1.3 1997/07/23 14:36:48 kstailey Exp $	*/
+/*	$OpenBSD: const.c,v 1.4 2002/06/09 05:47:27 todd Exp $	*/
 /*	$NetBSD: const.c,v 1.6 1995/03/21 09:02:31 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)const.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: const.c,v 1.3 1997/07/23 14:36:48 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: const.c,v 1.4 2002/06/09 05:47:27 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ Char STRcent2[]		= { '%', '%', '\0' };
 Char STRcenthash[]	= { '%', '#', '\0' };
 Char STRcentplus[]	= { '%', '+', '\0' };
 Char STRcentminus[]	= { '%', '-', '\0' };
-Char STRchase_symlinks[] = { 'c', 'h', 'a', 's', 'e', '_', 's', 'y', 'm', 'l', 
+Char STRchase_symlinks[] = { 'c', 'h', 'a', 's', 'e', '_', 's', 'y', 'm', 'l',
 			    'i', 'n', 'k', 's', '\0' };
 Char STRchild[]		= { 'c', 'h', 'i', 'l', 'd', '\0' };
 Char STRcolon[]		= { ':', '\0' };
@@ -95,7 +95,7 @@ Char STRfignore[]	= { 'f', 'i', 'g', 'n', 'o', 'r', 'e', '\0' };
 Char STRfilec[] = { 'f', 'i', 'l', 'e', 'c', '\0' };
 #endif /* FILEC */
 Char STRhistchars[]	= { 'h', 'i', 's', 't', 'c', 'h', 'a', 'r', 's', '\0' };
-Char STRtildothist[]	= { '~', '/', '.', 'h', 'i', 's', 't', 'o', 'r', 
+Char STRtildothist[]	= { '~', '/', '.', 'h', 'i', 's', 't', 'o', 'r',
 			    'y', '\0' };
 Char STRhistfile[]	= { 'h', 'i', 's', 't', 'f', 'i', 'l', 'e', '\0' };
 Char STRhistory[]	= { 'h', 'i', 's', 't', 'o', 'r', 'y', '\0' };
@@ -114,7 +114,7 @@ Char STRml[]		= { '-', 'l', '\0' };
 Char STRmn[]		= { '-', 'n', '\0' };
 Char STRmquestion[]	= { '?' | QUOTE, ' ', '\0' };
 Char STRnice[]		= { 'n', 'i', 'c', 'e', '\0' };
-Char STRnoambiguous[]	= { 'n', 'o', 'a', 'm', 'b', 'i', 'g', 'u', 'o', 'u', 
+Char STRnoambiguous[]	= { 'n', 'o', 'a', 'm', 'b', 'i', 'g', 'u', 'o', 'u',
 			    's', '\0' };
 Char STRnobeep[]	= { 'n', 'o', 'b', 'e', 'e', 'p', '\0' };
 Char STRnoclobber[]	= { 'n', 'o', 'c', 'l', 'o', 'b', 'b', 'e', 'r', '\0' };
@@ -126,7 +126,7 @@ Char STRnotify[]	= { 'n', 'o', 't', 'i', 'f', 'y', '\0' };
 Char STRor[]		= { '|', '\0' };
 Char STRor2[]		= { '|', '|', '\0' };
 Char STRpath[]		= { 'p', 'a', 't', 'h', '\0' };
-Char STRprintexitvalue[] = { 'p', 'r', 'i', 'n', 't', 'e', 'x', 'i', 't', 'v', 
+Char STRprintexitvalue[] = { 'p', 'r', 'i', 'n', 't', 'e', 'x', 'i', 't', 'v',
 			    'a', 'l', 'u', 'e', '\0' };
 Char STRprompt[]	= { 'p', 'r', 'o', 'm', 'p', 't', '\0' };
 Char STRprompt2[]	= { 'p', 'r', 'o', 'm', 'p', 't', '2', '\0' };

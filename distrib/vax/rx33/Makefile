@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2000/03/01 22:10:14 todd Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/06/09 05:53:55 todd Exp $
 #	$NetBSD: Makefile,v 1.1 1995/10/01 21:22:40 ragge Exp $
 #
 #	Create RX33 floppies.
@@ -11,5 +11,5 @@ all:
 	dd if=../inst/miniroot-${REV}.fs of=rx33-copy2-${REV} \
 		bs=512 skip=2400 count=2400
 
-.include <bsd.obj.mk>  
+.include <bsd.obj.mk>
 .include <bsd.subdir.mk>

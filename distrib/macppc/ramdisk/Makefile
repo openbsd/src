@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2002/04/30 17:59:35 drahn Exp $
+#	$OpenBSD: Makefile,v 1.10 2002/06/09 05:53:54 todd Exp $
 
 REV=	${OSrev}
 
@@ -61,7 +61,7 @@ bsd:
 	    make clean && make depend && make
 	cp ${TOP}/../../sys/arch/macppc/compile/RAMDISK/bsd bsd
 
-rd_setup: 
+rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
 	vnconfig -v -c ${VND} ${IMAGE}
 	disklabel -w -r ${VND} ${DISKTYPE}

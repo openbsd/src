@@ -2,7 +2,7 @@ TopPart
 
 OpenBSDminiroot
 				It can be copied to the swap partition of
-				an existing OpenBSD, NetBSD, Linux, SunOS, 
+				an existing OpenBSD, NetBSD, Linux, SunOS,
 				or Solaris installation to allow installing
 				or upgrading to OpenBSD OSREV
 

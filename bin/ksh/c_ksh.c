@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.14 2001/02/19 09:49:50 camield Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.15 2002/06/09 05:47:27 todd Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -335,7 +335,7 @@ c_print(wp)
 		while ((c = *s++) != '\0') {
 			Xcheck(xs, xp);
 #ifdef OS2
-			if ((flags & PO_FSLASH) && c == '\\') 
+			if ((flags & PO_FSLASH) && c == '\\')
 				if (*s == '\\')
 					*s++;
 				else
@@ -608,7 +608,7 @@ c_typeset(wp)
  		local = 1;
  		break;
  	}
- 
+
 	fieldstr = basestr = (char *) 0;
 	builtin_opt.flags |= GF_PLUSOPT;
 	/* at&t ksh seems to have 0-9 as options, which are multiplied
@@ -704,7 +704,7 @@ c_typeset(wp)
 		return 1;
 	}
 	if (wp[builtin_opt.optind]) {
-		/* Take care of exclusions.  
+		/* Take care of exclusions.
 		 * At this point, flags in fset are cleared in fclr and vise
 		 * versa.  This property should be preserved.
 		 */
@@ -824,19 +824,19 @@ c_typeset(wp)
 				shprintf("-x ");
 			    if ((vp->flag&RDONLY))
 				shprintf("-r ");
-			    if ((vp->flag&TRACE)) 
+			    if ((vp->flag&TRACE))
 				shprintf("-t ");
-			    if ((vp->flag&LJUST)) 
+			    if ((vp->flag&LJUST))
 				shprintf("-L%d ", vp->u2.field);
-			    if ((vp->flag&RJUST)) 
+			    if ((vp->flag&RJUST))
 				shprintf("-R%d ", vp->u2.field);
-			    if ((vp->flag&ZEROFIL)) 
+			    if ((vp->flag&ZEROFIL))
 				shprintf("-Z ");
-			    if ((vp->flag&LCASEV)) 
+			    if ((vp->flag&LCASEV))
 				shprintf("-l ");
-			    if ((vp->flag&UCASEV_AL)) 
+			    if ((vp->flag&UCASEV_AL))
 				shprintf("-u ");
-			    if ((vp->flag&INT_U)) 
+			    if ((vp->flag&INT_U))
 				shprintf("-U ");
 			    shprintf("%s\n", vp->name);
 			    if (vp->flag&ARRAY)

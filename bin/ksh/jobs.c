@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.16 1999/08/04 16:56:42 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.17 2002/06/09 05:47:27 todd Exp $	*/
 
 /*
  * Process and job control
@@ -1289,7 +1289,7 @@ j_waitj(j, flags, where)
 	j_systime = j->systime;
 	rv = j->status;
 
-	if (!(flags & JW_ASYNCNOTIFY) 
+	if (!(flags & JW_ASYNCNOTIFY)
 	    && (!Flag(FMONITOR) || j->state != PSTOPPED))
 	{
 		j_print(j, JP_SHORT, shl_out);
@@ -1430,7 +1430,7 @@ check_job(j)
 
 #ifdef KSH
 	/* Note when co-process dies: can't be done in j_wait() nor
-	 * remove_job() since neither may be called for non-interactive 
+	 * remove_job() since neither may be called for non-interactive
 	 * shells.
 	 */
 	if (j->state == PEXITED || j->state == PSIGNALLED) {

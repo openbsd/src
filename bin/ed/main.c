@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.26 2002/03/24 22:17:04 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.27 2002/06/09 05:47:27 todd Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.26 2002/03/24 22:17:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.27 2002/06/09 05:47:27 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.26 2002/03/24 22:17:04 millert Exp $
  * CREDITS
  *
  *	This program is based on the editor algorithm described in
- *	Brian W. Kernighan and P. J. Plauger's book "Software Tools 
+ *	Brian W. Kernighan and P. J. Plauger's book "Software Tools
  *	in Pascal," Addison-Wesley, 1981.
  *
  *	The buffering algorithm is attributed to Rodney Ruddock of
@@ -285,7 +285,7 @@ top:
 
 int first_addr, second_addr, addr_cnt;
 
-/* extract_addr_range: get line addresses from the command buffer until an 
+/* extract_addr_range: get line addresses from the command buffer until an
    illegal address is seen; return status */
 int
 extract_addr_range()
@@ -946,7 +946,7 @@ check_addr_range(n, m)
 }
 
 
-/* get_matching_node_addr: return the address of the next line matching a 
+/* get_matching_node_addr: return the address of the next line matching a
    pattern in a given direction.  wrap around begin/end of editor buffer if
    necessary */
 int
@@ -1396,7 +1396,7 @@ strip_escapes(s)
 
 	REALLOC(file, filesz, MAXPATHLEN, NULL);
 	/* assert: no trailing escape */
-	while ((file[i++] = (*s == '\\') ? *++s : *s) != '\0' && 
+	while ((file[i++] = (*s == '\\') ? *++s : *s) != '\0' &&
 	       i < MAXPATHLEN-1)
 		s++;
 	file[MAXPATHLEN-1] = '\0';

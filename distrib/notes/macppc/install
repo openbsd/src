@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.11 2002/04/09 01:22:22 miod Exp $
+dnl	$OpenBSD: install,v 1.12 2002/06/09 05:53:54 todd Exp $
 OpenBSDInstallShortPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -55,28 +55,28 @@ OpenBSDInstallPart3({:- or "wd0" for IDE/ATA drives-:})
 	Before editing, the partition table may look like the following:
 
 	 #:                type name             length   base    ( size )
-	 1: Apple_partition_map Apple                63 @ 1      
-	 2:      Apple_Driver43*Macintosh            54 @ 64     
-	 3:      Apple_Driver43*Macintosh            74 @ 118    
-	 4:    Apple_Driver_ATA*Macintosh            54 @ 192    
-	 5:    Apple_Driver_ATA*Macintosh            74 @ 246    
-	 6:      Apple_FWDriver Macintosh           200 @ 320    
-	 7:  Apple_Driver_IOKit Macintosh           512 @ 520    
-	 8:       Apple_Patches Patch Partition     512 @ 1032   
+	 1: Apple_partition_map Apple                63 @ 1
+	 2:      Apple_Driver43*Macintosh            54 @ 64
+	 3:      Apple_Driver43*Macintosh            74 @ 118
+	 4:    Apple_Driver_ATA*Macintosh            54 @ 192
+	 5:    Apple_Driver_ATA*Macintosh            74 @ 246
+	 6:      Apple_FWDriver Macintosh           200 @ 320
+	 7:  Apple_Driver_IOKit Macintosh           512 @ 520
+	 8:       Apple_Patches Patch Partition     512 @ 1032
 	 9:           Apple_HFS untitled        2142310 @ 1544    (  1.0G)
 	10:           Apple_HFS untitled 2      4120589 @ 2143854 (  2.0G)
 	11:              Unused untitled 3      6330517 @ 6264443 (  3.0G)
 
 	After editing the table, it should look like:
 	 #:                type name             length   base    ( size )
-	 1: Apple_partition_map Apple                63 @ 1      
-	 2:      Apple_Driver43*Macintosh            54 @ 64     
-	 3:      Apple_Driver43*Macintosh            74 @ 118    
-	 4:    Apple_Driver_ATA*Macintosh            54 @ 192    
-	 5:    Apple_Driver_ATA*Macintosh            74 @ 246    
-	 6:      Apple_FWDriver Macintosh           200 @ 320    
-	 7:  Apple_Driver_IOKit Macintosh           512 @ 520    
-	 8:       Apple_Patches Patch Partition     512 @ 1032   
+	 1: Apple_partition_map Apple                63 @ 1
+	 2:      Apple_Driver43*Macintosh            54 @ 64
+	 3:      Apple_Driver43*Macintosh            74 @ 118
+	 4:    Apple_Driver_ATA*Macintosh            54 @ 192
+	 5:    Apple_Driver_ATA*Macintosh            74 @ 246
+	 6:      Apple_FWDriver Macintosh           200 @ 320
+	 7:  Apple_Driver_IOKit Macintosh           512 @ 520
+	 8:       Apple_Patches Patch Partition     512 @ 1032
 	 9:           Apple_HFS untitled        2142310 @ 1544    (  1.0G)
 	10:           Apple_HFS untitled 2      4120589 @ 2143854 (  2.0G)
 	11:             OpenBSD OpenBSD         6330517 @ 6264443 (  3.0G)

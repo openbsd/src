@@ -1,9 +1,9 @@
-dnl	$OpenBSD: contents,v 1.34 2002/04/14 02:33:19 miod Exp $
+dnl	$OpenBSD: contents,v 1.35 2002/06/09 05:53:54 todd Exp $
 TopPart
 
 OpenBSDdistsets
 
-		bsd-generic.tgz The OpenBSD/MACHINE OSREV kernel binary.  
+		bsd-generic.tgz The OpenBSD/MACHINE OSREV kernel binary.
 				You MUST install either this file or
 				bsd-genericsbic.tgz blow.  It is the kernel
 				that you need to boot the system.

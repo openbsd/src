@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.10 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: expr.c,v 1.11 2002/06/09 05:47:27 todd Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ is_integer(vp, r)
 	}
 
 	/*
-	 * POSIX.2 defines an "integer" as an optional unary minus 
+	 * POSIX.2 defines an "integer" as an optional unary minus
 	 * followed by digits.
 	 */
 	s = vp->u.s;
@@ -274,7 +274,7 @@ eval5()
 			errx(2, "%s", errbuf);
 		}
 
-		/* compare string against pattern --  remember that patterns 
+		/* compare string against pattern --  remember that patterns
 		   are anchored to the beginning of the line */
 		if (regexec(&rp, l->u.s, 2, rm, 0) == 0 && rm[0].rm_so == 0) {
 			if (rm[1].rm_so >= 0) {

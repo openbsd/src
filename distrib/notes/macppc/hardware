@@ -1,9 +1,9 @@
-dnl	$OpenBSD: hardware,v 1.8 2002/04/07 23:40:57 miod Exp $
+dnl	$OpenBSD: hardware,v 1.9 2002/06/09 05:53:54 todd Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
 as PowerBook and iBook machines.
 
 Machines with older firmware: 6xxx, 7xxx 8xxx, and 9xxx machines are
-not supported.  PowerMac G3 Beige status is unknown. 
+not supported.  PowerMac G3 Beige status is unknown.
 
 OpenBSD/MACHINE has been tested on iMac Revs A-C as well as on iMac DV(+)
 machines, Power Macintosh G4 systems (single and dual processor), as well as
