@@ -66,7 +66,6 @@ SRCS=	cr_err_reply.c \
           encrypt_ktext.c \
           check_time.c \
           krb_err.c \
-          et_list.c \
           resolve.c \
           unparse_name.c \
           logging.c \
