@@ -1,4 +1,4 @@
-# $OpenBSD: README,v 1.1.1.1 1999/05/23 22:11:03 angelos Exp $
+# $OpenBSD: README,v 1.2 1999/05/24 02:11:41 angelos Exp $
 
 This is release 2-beta2 of the KeyNote trust management library reference
 implementation.
@@ -50,14 +50,16 @@ Compile tips:
   can get a copy of a regular expression library from the KeyNote web
   page (see below).
 
-The Makefile creates the libkeynote.a library and the keynote-verify,
-keynote-keygen, keynote-sigver, and keynote-sign programs. There's a
-man page for the library calls (keynote.3) and one for each of the
-utilities in the man/ directory. There is also a man page about KeyNote
-itself (keynote.4), which contains some text from the spec.
+The Makefile creates the libkeynote.a library and the keynote program.
+*** Notice that the 4 programs of previous releases have been folded into one
+
+There is a man page for the library calls (keynote.3) and one for each of the
+keynote utility functions, in the man/ directory. There is also a man page
+about KeyNote itself (keynote.4), which contains some text from the spec.
 
 To view them, use:
 
+  nroff -mandoc keynote.1 | more
   nroff -mandoc keynote.3 | more
   nroff -mandoc keynote.4 | more
   nroff -mandoc keynote-verify.1 | more
@@ -70,10 +72,10 @@ nroff does not support the -mandoc flag, use -man instead. For those
 systems that do not have nroff, the text version of the man pages are
 provided as well (the files with .0 suffixes in the same directory).
 
-The keynote-verify program can be used to verify a request, given a
+The "keynote verify" function can be used to verify a request, given a
 set of assertions and an environment file. The directory testsuite/
-has some examples assertions. The keynote-keygen program can
-be used to generate keys. The keynote-sign and keynote-sigver can be
+has some examples assertions. The "keynote keygen" function can
+be used to generate keys. The "keynote sign" and "keynote sigver" can be
 used to sign assertions, and verify signed assertions respectively.
 
 The file base64.c was taken from the OpenBSD libc and was slightly

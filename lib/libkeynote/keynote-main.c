@@ -1,3 +1,5 @@
+/* $OpenBSD: keynote-main.c,v 1.3 1999/05/24 02:11:41 angelos Exp $ */
+
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -36,6 +38,16 @@
 extern int keynote_sign(int, char **), keynote_sigver(int, char **);
 extern int keynote_verify(int, char **), keynote_keygen(int, char **);
 
+void
+mainusage()
+{
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, "\tsign ...\n");
+    fprintf(stderr, "\tsigver ...\n");
+    fprintf(stderr, "\tverify ...\n");
+    fprintf(stderr, "\tkeygen ...\n");
+}
+
 #ifdef WIN32
 void
 #else
@@ -45,7 +57,7 @@ main(int argc, char *argv[])
 {
     if (argc < 2)
     {
-	fprintf(stderr, "Insufficient number of arguments.\n");
+	mainusage();
 	exit(-1);
     }
 
@@ -61,10 +73,6 @@ main(int argc, char *argv[])
 	  if (!strcmp(argv[1], "keygen"))
 	    keynote_keygen(argc - 1, argv + 1);
 
-    fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "\tsign ...\n");
-    fprintf(stderr, "\tsigver ...\n");
-    fprintf(stderr, "\tverify ...\n");
-    fprintf(stderr, "\tkeygen ...\n");
+    mainusage();
     exit(-1);
 }
