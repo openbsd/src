@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.9 2002/02/22 19:35:02 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.10 2002/02/22 20:21:46 deraadt Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -596,7 +596,9 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 			printf("seg %d dvmaddr %lx out of range %x - %x\n",
 			    seg, (long)map->dm_segs[seg].ds_addr,
 			    is->is_dvmabase, is->is_dvmaend);
+#ifdef DDB
 			Debugger();
+#endif
 		}
 	}
 #endif
@@ -854,7 +856,9 @@ printf("appending offset %x pa %lx, prev %lx dva %lx prev %lx\n",
 					printf("seg %d dvmaddr %lx out of range %x - %x\n",
 					    seg, (long)map->dm_segs[seg].ds_addr,
 					    is->is_dvmabase, is->is_dvmaend);
+#ifdef DDB
 					Debugger();
+#endif
 				}
 			}
 		}
@@ -920,7 +924,9 @@ printf("appending offset %x pa %lx, prev %lx dva %lx prev %lx\n",
 				printf("seg %d dvmaddr %lx out of range %x - %x\n",
 				    seg, (long)map->dm_segs[seg].ds_addr,
 				    is->is_dvmabase, is->is_dvmaend);
+#ifdef DDB
 				Debugger();
+#endif
 			}
 		}
        }
