@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.35 2001/01/11 00:46:28 angelos Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.36 2001/01/14 23:40:01 angelos Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -193,6 +193,7 @@ struct dst_spi_proto_arg {
 /*
  * Check if SA matches what we are asking for through V_ARG.  It has to
  * be a finished phase 2 SA.
+ * if "proto" arg is 0, match any proto
  */
 static int
 ipsec_sa_check (struct sa *sa, void *v_arg)
@@ -220,8 +221,8 @@ ipsec_sa_check (struct sa *sa, void *v_arg)
 
   for (proto = TAILQ_FIRST (&sa->protos); proto;
        proto = TAILQ_NEXT (proto, link))
-    if (proto->proto == arg->proto
-	&& memcmp (proto->spi[incoming], &arg->spi, sizeof arg->spi) == 0)
+    if ((arg->proto == 0 || proto->proto == arg->proto)
+       && memcmp (proto->spi[incoming], &arg->spi, sizeof arg->spi) == 0)
       return 1;
   return 0;
 }
@@ -758,12 +759,102 @@ ipsec_initiator (struct message *msg)
   return 0;
 }
 
+/*
+ * delete all SA's from addr with the associated proto and SPI's
+ *
+ * spis[] is an array of SPIs of size 16-octet for proto ISAKMP
+ * or 4-octet otherwise.
+ */
+static void
+ipsec_delete_spi_list (struct sockaddr *addr, u_int8_t proto, 
+                       u_int8_t *spis, int nspis, char *type)
+{
+  u_int32_t iaddr = ((struct sockaddr_in *)addr)->sin_addr.s_addr;
+  struct sa *sa;
+  int i;
+
+  for (i = 0; i < nspis; i++) 
+    {
+      if (proto == ISAKMP_PROTO_ISAKMP)
+        {
+          u_int8_t *spi = spis + i * ISAKMP_HDR_COOKIES_LEN;
+
+          /* 
+           * This really shouldn't happen in IPSEC DOI
+           * code, but Cisco VPN 3000 sends ISAKMP DELETE's
+           * this way.
+           */
+          sa = sa_lookup_isakmp_sa (addr, spi);
+        } 
+      else
+        {
+          u_int32_t spi = ((u_int32_t *)spis)[i];
+
+          sa = ipsec_sa_lookup (iaddr, spi, proto);
+        }
+
+      if (sa == NULL)
+        {
+	  LOG_DBG ((LOG_SA, 30, "ipsec_delete_spi_list: "
+		   "could not locate SA (SPI %08x, proto %u)",
+		   spis[i], proto));
+	  continue;
+	}
+
+      /* Delete the SA and search for the next */
+      LOG_DBG ((LOG_SA, 30, "ipsec_delete_spi_list: "
+	       "%s made us delete SA %p (%d references) for proto %d",
+	       type, sa, sa->refcnt, proto));
+
+      sa_reference (sa);
+      sa_free (sa);
+    }
+}
+
+/*
+ * deal with a NOTIFY of INVALID_SPI
+ */
+static void
+ipsec_invalid_spi (struct message *msg, struct payload *p)
+{
+  struct sockaddr *dst;
+  int invspisz, off, dstlen;
+  u_int32_t spi;
+  u_int16_t totsiz;
+  u_int8_t spisz;
+
+  /* 
+   * get the invalid spi out of the variable sized notification data
+   * field, which is after the variable sized SPI field [which specifies
+   * the receiving entity's phase-1 SPI, not the invalid spi]
+   */
+  totsiz = GET_ISAKMP_GEN_LENGTH (p->p);
+  spisz = GET_ISAKMP_NOTIFY_SPI_SZ (p->p);
+  off = ISAKMP_NOTIFY_SPI_OFF + spisz;
+  invspisz = totsiz - off;
+
+  if(invspisz != sizeof spi)
+    {
+      LOG_DBG ((LOG_SA, 40,
+	       "ipsec_invalid_spi: SPI size %d in INVALID_SPI "
+	       "payload unsupported", spisz));
+       return;
+    }
+  memcpy (&spi, p->p + off, sizeof spi);
+
+  msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
+
+  /* delete matching SPI's from this peer */
+  ipsec_delete_spi_list (dst, 0, (u_int8_t *)&spi, 1, "INVALID_SPI");
+}
+
 static int
 ipsec_responder (struct message *msg)
 {
   struct exchange *exchange = msg->exchange;
   int (**script) (struct message *msg) = 0;
   struct payload *p;
+  u_int16_t type;
 
   /* Check that a new exchange is coherent with the IKE rules.  */
   if (exchange->step == 0
@@ -795,10 +886,14 @@ ipsec_responder (struct message *msg)
       for (p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
 	   p = TAILQ_NEXT (p, link))
 	{
+          type = GET_ISAKMP_NOTIFY_MSG_TYPE (p->p);
 	  LOG_DBG ((LOG_EXCHANGE, 10,
 		    "ipsec_responder: got NOTIFY of type %s",
-		    constant_lookup (isakmp_notify_cst,
-				     GET_ISAKMP_NOTIFY_MSG_TYPE (p->p))));
+		    constant_lookup (isakmp_notify_cst, type)));
+
+          if(type == ISAKMP_NOTIFY_INVALID_SPI)
+              ipsec_invalid_spi (msg, p);
+
 	  p->flags |= PL_MARK;
 	}
 
@@ -1296,11 +1391,11 @@ int
 ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 			       struct payload *payload)
 {
-  u_int32_t spisz, nspis, *spis;
+  u_int32_t spisz, nspis;
   struct sockaddr *dst;
   socklen_t dstlen;
-  int flag = 0, i;
-  u_int8_t proto;
+  int flag = 0;
+  u_int8_t *spis, proto;
   struct sa *sa;
 
   switch (type)
@@ -1310,14 +1405,6 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
       nspis = GET_ISAKMP_DELETE_NSPIS (payload->p);
       spisz = GET_ISAKMP_DELETE_SPI_SZ (payload->p);
 
-      if (spisz != sizeof (u_int32_t))
-        {
-	    LOG_DBG ((LOG_SA, 50,
-		      "ipsec_handle_leftover_payload: SPI size %d in DELETE "
-		      "payload unsupported", spisz));
-	    return -1;
-	}
-
       if (nspis == 0)
         {
 	  LOG_DBG ((LOG_SA, 60, "ipsec_handle_leftover_payload: message "
@@ -1325,7 +1412,17 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 	  return -1;
 	}
 
-      spis = (u_int32_t *) malloc (nspis * spisz);
+      /* verify proper SPI size */
+      if ((proto == ISAKMP_PROTO_ISAKMP && spisz != ISAKMP_HDR_COOKIES_LEN)
+          || (proto != ISAKMP_PROTO_ISAKMP && spisz != sizeof (u_int32_t)))
+        {
+	    LOG_DBG ((LOG_SA, 50,
+	             "ipsec_handle_leftover_payload: invalid SPI size %d "
+                     "for proto %d in DELETE payload", spisz, proto));
+	    return -1;
+        }
+
+      spis = (u_int8_t *) malloc (nspis * spisz);
       if (spis == NULL)
         {
 	  LOG_DBG ((LOG_SA, 50,
@@ -1335,35 +1432,11 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 	  return -1;
 	}
 
+      /* extract SPI and get dst address */
       memcpy (spis, payload->p + ISAKMP_DELETE_SPI_OFF, nspis * spisz);
       msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
 
-      for (i = 0; i < nspis; i++)
-        {
-	    sa = ipsec_sa_lookup (((struct sockaddr_in *)dst)->sin_addr.s_addr,
-				  spis[i], proto);
-	    if (sa == NULL)
-	      {
-		LOG_DBG ((LOG_SA, 40, "ipsec_handle_leftover_payload: "
-			  "could not locate SA (SPI %08x, proto %u)",
-			  spis[i], proto));
-		continue;
-	      }
-
-	    /* Delete the SA and search for the next */
-	    LOG_DBG ((LOG_SA, 30, "ipsec_handle_leftover_payload: "
-		      "DELETE made us delete SA %p (%d references)",
-		      sa, sa->refcnt));
-
-	    /*
-	     * This SA is still referenced by the software timeout.
-	     * However, sa_free will clean up all timeouts and
-	     * decrement reference counters.  We need to reference it
-	     * so that sa_release() works.
-	     */
-	    sa_reference(sa);
-	    sa_free(sa);
-	}
+      ipsec_delete_spi_list (dst, proto, spis, nspis, "DELETE");
 
       free (spis);
       payload->flags |= PL_MARK;

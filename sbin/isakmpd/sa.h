@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.h,v 1.18 2000/10/10 13:35:24 niklas Exp $	*/
+/*	$OpenBSD: sa.h,v 1.19 2001/01/14 23:40:01 angelos Exp $	*/
 /*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
@@ -199,10 +199,10 @@ extern struct sa *sa_lookup_by_peer (struct sockaddr *, socklen_t);
 extern struct sa *sa_lookup_by_header (u_int8_t *, int);
 extern struct sa *sa_lookup_by_name (char *, int);
 extern struct sa *sa_lookup_from_icookie (u_int8_t *);
+extern struct sa *sa_lookup_isakmp_sa (struct sockaddr *, u_int8_t *);
 extern void sa_mark_replaced (struct sa *);
 extern void sa_reference (struct sa *);
 extern void sa_release (struct sa *);
 extern void sa_report (void);
 extern int sa_setup_expirations (struct sa *);
-
 #endif /* _SA_H_ */

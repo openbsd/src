@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.33 2000/12/12 01:47:12 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.34 2001/01/14 23:40:01 angelos Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -193,6 +193,50 @@ sa_check_peer (struct sa *sa, void *v_addr)
 
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
   return dstlen == addr->len && memcmp (dst, addr->addr, dstlen) == 0;
+}
+
+struct dst_isakmpspi_arg {
+  struct sockaddr *dst;
+  u_int8_t *spi;			/* must be ISAKMP_SPI_SIZE octets */
+};
+
+/*
+ * Check if SA matches what we are asking for through V_ARG.  It has to
+ * be a finished phaes 1 (ISAKMP) SA.
+ */
+static int
+isakmp_sa_check (struct sa *sa, void *v_arg)
+{
+  struct dst_isakmpspi_arg *arg = v_arg;
+  struct sockaddr *dst, *src;
+  int dstlen, srclen;
+
+  if (sa->phase != 1 || !(sa->flags & SA_FLAG_READY))
+    return 0;
+
+  /* verify address is either src or dst for this sa */
+  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+  sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
+  if (memcmp (src, arg->dst, src->sa_len) &&
+      memcmp (dst, arg->dst, dst->sa_len))
+    return 0;
+
+  /* match icookie+rcookie against spi */
+  if(memcmp (sa->cookies, arg->spi, ISAKMP_HDR_COOKIES_LEN) == 0)
+    return 1;
+
+  return 0;
+}
+
+/* 
+ * Find an ISAKMP SA with a "name" of DST & SPI. 
+ */
+struct sa *
+sa_lookup_isakmp_sa (struct sockaddr *dst, u_int8_t *spi)
+{
+  struct dst_isakmpspi_arg arg = { dst, spi };
+
+  return sa_find (isakmp_sa_check, &arg);
 }
 
 /* Lookup a ready SA by the peer's address.  */
