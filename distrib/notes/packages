@@ -70,7 +70,9 @@ Installing applications from the ftp.openbsd.org package collection:
 	ftp.openbsd.org in the directory pub/OpenBSD/2.3/packages/<arch>/
 	where <arch> is the supported hardware architecture.  You may
 	want to peruse the directory for your architecture to see what
-	packages are available.
+	packages are available.  The packages are also on the OpenBSD FTP
+	mirror sites.  See http://www.openbsd.org/ftp.html for a list
+	of current ftp mirror sites.
 
 	Installation of a package is very easy.
 	1) become the superuser (root)
@@ -88,6 +90,18 @@ Installing applications from the ftp.openbsd.org package collection:
 	The USA versions, ssh-usa-1.2.22.tgz and pgp-usa-2.6.3.tgz, use
 	RSAREF, a legal requirement for use within the United States due
 	to patent issues.
+
+	Packages available include:
+
+		bash-2.01.1.tgz               pgp-usa-2.6.3.tgz
+		emacs-20.2.tgz                pine-3.96.tgz
+		ghostscript-5.10.tgz          screen-3.7.4.tgz
+		gmake-3.76.1.tgz              ssh-intl-1.2.22.tgz
+		ircii-2.8.2-epic3.004.tgz     ssh-usa-1.2.22.tgz
+		pgp-intl-2.6.3.tgz            tcsh-6.07.02.tgz
+
+	Note: these packages may not exist for all architectures; other
+	packages may be added.
 
 Installing applications from the CD-ROM ports collection:
 
