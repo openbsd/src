@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.188 2000/06/08 00:16:02 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.189 2000/06/10 23:50:34 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -370,6 +370,7 @@ joy*	at isapnp?
 
 # crypto support
 hifn*	at pci? dev ? function ?	# Hi/fn 7751 crypto card
+ubsec*	at pci? dev ? function ?	# Bluesteel Networks 5xxx crypto card
 
 pseudo-device	pctr		1
 pseudo-device	mtrr		1	# Memory range attributes control
