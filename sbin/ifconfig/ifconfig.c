@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.124 2004/12/07 20:32:10 mcbride Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.125 2004/12/07 20:40:18 mcbride Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.124 2004/12/07 20:32:10 mcbride Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.125 2004/12/07 20:40:18 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -203,6 +203,8 @@ void	setcarp_advskew(const char *, int);
 void	setcarp_passwd(const char *, int);
 void	setcarp_vhid(const char *, int);
 void	setcarp_state(const char *, int);
+void	setcarpdev(const char *, int);
+void	unsetcarpdev(const char *, int);
 void	setpfsync_syncif(const char *, int);
 void	setpfsync_maxupd(const char *, int);
 void	unsetpfsync_syncif(const char *, int);
@@ -304,6 +306,8 @@ const struct	cmd {
 	{ "pass",	NEXTARG,	0,		setcarp_passwd },
 	{ "vhid",	NEXTARG,	0,		setcarp_vhid },
 	{ "state",	NEXTARG,	0,		setcarp_state },
+	{ "carpdev",	NEXTARG,	0,		setcarpdev },
+	{ "-carpdev",	1,		0,		unsetcarpdev },
 	{ "syncif",	NEXTARG,	0,		setpfsync_syncif },
 	{ "-syncif",	1,		0,		unsetpfsync_syncif },
 	{ "syncpeer",	NEXTARG,	0,		setpfsync_syncpeer },
@@ -2889,9 +2893,10 @@ carp_status(void)
 		else
 			state = carp_states[carpr.carpr_state];
 
-		printf("\tcarp: %s vhid %d advbase %d advskew %d\n",
-		    state, carpr.carpr_vhid, carpr.carpr_advbase,
-		    carpr.carpr_advskew);
+		printf("\tcarp: %s carpdev %s vhid %d advbase %d advskew %d\n",
+		    state, carpr.carpr_carpdev[0] != '\0' ?
+		    carpr.carpr_carpdev : "none", carpr.carpr_vhid,
+		    carpr.carpr_advbase, carpr.carpr_advskew);
 	}
 }
 
@@ -3011,6 +3016,40 @@ setcarp_state(const char *val, int d)
 }
 
 /* ARGSUSED */
+void
+setcarpdev(const char *val, int d)
+{
+	struct carpreq carpr;
+
+	bzero((char *)&carpr, sizeof(struct carpreq));
+	ifr.ifr_data = (caddr_t)&carpr;
+
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGVH");
+
+	strlcpy(carpr.carpr_carpdev, val, sizeof(carpr.carpr_carpdev));
+
+	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSVH");
+}
+
+void
+unsetcarpdev(const char *val, int d)
+{
+	struct carpreq carpr;
+
+	bzero((char *)&carpr, sizeof(struct carpreq));
+	ifr.ifr_data = (caddr_t)&carpr;
+
+	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGVH");
+
+	bzero((char *)&carpr.carpr_carpdev, sizeof(carpr.carpr_carpdev));
+
+	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSVH");
+}
+
 void
 setpfsync_syncif(const char *val, int d)
 {
