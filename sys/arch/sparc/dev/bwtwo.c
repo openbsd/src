@@ -1,3 +1,4 @@
+/*	$OpenBSD: bwtwo.c,v 1.13 1996/08/13 08:05:18 downsj Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.26 1996/04/01 17:30:15 christos Exp $ */
 
 /*
@@ -290,13 +291,13 @@ bwtwoattach(parent, self, args)
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
-		int constype = (fb->fb_flags & FB_PFOUR) ? EE_CONS_P4OPT :
-		    EE_CONS_BW;
+		int constype = (fb->fb_flags & FB_PFOUR) ? EED_CONS_P4 :
+		    EED_CONS_BW;
 		/*
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
-		if (eep == NULL || eep->eeConsole == constype)
+		if (eep == NULL || eep->ee_diag.eed_console == constype)
 			isconsole = (fbconstty != NULL);
 		else
 			isconsole = 0;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: cons.c,v 1.5 1996/08/13 08:05:24 downsj Exp $	*/
 /*	$NetBSD: cons.c,v 1.23.4.1 1996/06/02 09:07:53 mrg Exp $ */
 
 /*
@@ -309,8 +310,8 @@ cnopen(dev, flag, mode, p)
 			struct eeprom *ep = (struct eeprom *)eeprom_va;
 
 			if (ep) {
-				rows = (u_short)ep->eeTtyRows;
-				cols = (u_short)ep->eeTtyCols;
+				rows = (u_short)ep->ee_diag.eed_rowsize;
+				cols = (u_short)ep->ee_diag.eed_colsize;
 			}
 		}
 		firstopen = 0;

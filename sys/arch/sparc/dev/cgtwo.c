@@ -1,3 +1,4 @@
+/*	$OpenBSD: cgtwo.c,v 1.10 1996/08/13 08:05:23 downsj Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.16 1996/05/18 12:19:14 mrg Exp $ */
 
 /*
@@ -206,7 +207,7 @@ cgtwoattach(parent, self, args)
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
-		if (eep == NULL || eep->eeConsole == EE_CONS_COLOR)
+		if (eep == NULL || eep->ee_diag.eed_console == EED_CONS_COLOR)
 			isconsole = (fbconstty != NULL);
 		else
 			isconsole = 0;

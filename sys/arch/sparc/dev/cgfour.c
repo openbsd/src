@@ -1,3 +1,4 @@
+/*	$OpenBSD: cgfour.c,v 1.7 1996/08/13 08:05:21 downsj Exp $	*/
 /*	$NetBSD: cgfour.c,v 1.7 1996/04/01 17:29:58 christos Exp $	*/
 
 /*
@@ -228,7 +229,7 @@ cgfourattach(parent, self, args)
 		 * Assume this is the console if there's no eeprom info
 		 * to be found.
 		 */
-		if (eep == NULL || eep->eeConsole == EE_CONS_P4OPT)
+		if (eep == NULL || eep->ee_diag.eed_console == EED_CONS_P4)
 			isconsole = (fbconstty != NULL);
 	}
 

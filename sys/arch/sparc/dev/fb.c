@@ -1,3 +1,4 @@
+/*	$OpenBSD: fb.c,v 1.9 1996/08/13 08:05:25 downsj Exp $	*/
 /*	$NetBSD: fb.c,v 1.18 1996/04/01 17:29:54 christos Exp $ */
 
 /*
@@ -298,23 +299,23 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 					break;
 				}
 			} else if (eep != NULL) {
-				switch (eep->eeScreenSize) {
-				case EE_SCR_1152X900:
+				switch (eep->ee_diag.eed_scrsize) {
+				case EED_SCR_1152X900:
 					fb->fb_type.fb_width = 1152;
 					fb->fb_type.fb_height = 900;
 					break;
 
-				case EE_SCR_1024X1024:
+				case EED_SCR_1024X1024:
 					fb->fb_type.fb_width = 1024;
 					fb->fb_type.fb_height = 1024;
 					break;
 
-				case EE_SCR_1600X1280:
+				case EED_SCR_1600X1280:
 					fb->fb_type.fb_width = 1600;
 					fb->fb_type.fb_height = 1280;
 					break;
 
-				case EE_SCR_1440X1440:
+				case EED_SCR_1440X1440:
 					fb->fb_type.fb_width = 1440;
 					fb->fb_type.fb_height = 1440;
 					break;
@@ -412,8 +413,8 @@ fbrcons_init(fb)
 			rc->rc_maxcol = 80;
 			rc->rc_maxrow = 34;
 		} else {
-			rc->rc_maxcol = eep->eeTtyCols;
-			rc->rc_maxrow = eep->eeTtyRows;
+			rc->rc_maxcol = eep->ee_diag.eed_colsize;
+			rc->rc_maxrow = eep->ee_diag.eed_rowsize;
 		}
 	}
 #endif /* SUN4 */
