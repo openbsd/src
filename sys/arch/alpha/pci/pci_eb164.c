@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.5 2001/02/06 19:26:39 art Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.6 2001/02/06 19:28:59 art Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -211,8 +211,7 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
 			if (device == 8) {
 				if (function == 0)
 					panic("dec_eb164_intr_map: SIO device");
-				if (function == 1 || function == 2)
-					return (1);
+				return (1);
 			}
 		} else {
 			if (device == 8)
