@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.1 1998/07/07 21:32:44 mickey Exp $	*/
+/*	$OpenBSD: pte.h,v 1.2 1998/08/29 01:27:35 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -67,5 +67,43 @@
 
 /* protection for break page */
 #define TLB_BREAK_PROT	0x02c00000
+
+#if defined(TLB_STATS) && !defined(_LOCORE)
+struct dtlb_stats {
+	u_int	dtlb_misses;
+	u_int	dtlb_io;
+	u_int	dtlb_misstime;
+	u_int	dtlb_missflts;
+	u_int	dtlb_missinsns;
+	u_int	dtlb_cached;
+	u_int	dtlb_tmp[2];
+};
+
+struct itlb_stats {
+	u_int	itlb_misses;
+	u_int	itlb_gateway;
+	u_int	itlb_misstime;
+	u_int	itlb_missflts;
+	u_int	itlb_missinsns;
+	u_int	itlb_cached;
+	u_int	itlb_dummy[2];
+};
+
+struct	tlbd_stats {
+	u_int	tlbd_dirty;
+	u_int	tlbd_flushes;
+	u_int	tlbd_misstime;
+	u_int	tlbd_missflts;
+	u_int	tlbd_missinsns;
+	u_int	tlbd_dummy[3];
+};
+
+#ifdef _KERNEL
+extern struct dtlb_stats dtlb_stats;
+extern struct itlb_stats dtlb_stats;
+extern struct tlbd_stats dtlb_stats;
+#endif /* _KERNEL */
+
+#endif	/* TLB_STATS && !_LOCORE */
 
 #endif /* _HPPA_PTE_H_ */
