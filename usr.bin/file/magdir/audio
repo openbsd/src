@@ -225,3 +225,7 @@
 >3	byte&0xc0	0x40		joint-stereo
 >3	byte&0xc0	0x80		dual-channel
 >3	byte&0xc0	0xc0		mono
+
+# Ogg Vorbis
+0	string		Ogg		Ogg Vorbis Audio
+
