@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.14 2000/03/23 20:25:41 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.15 2000/06/15 19:11:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -72,6 +72,8 @@
 enum hppa_cpu_type {
 	hpcx, hpcxs, hpcxt, hpcxta, hpcxl, hpcxl2, hpcxu, hpcxu2, hpcxw
 };
+extern enum hppa_cpu_type cpu_type;
+extern const char *cpu_typename;
 #endif
 
 /*
@@ -83,6 +85,10 @@ enum hppa_cpu_type {
  * referenced in generic code
  */
 #undef	COPY_SIGCODE		/* copy sigcode above user stack in exec */
+
+#define	HPPA_PGALIAS	0x00100000
+#define	HPPA_PGAMASK	0xfff00000
+#define	HPPA_PGAOFF	0x000fffff
 
 #define	HPPA_IOSPACE	0xf0000000
 #define	HPPA_IOBCAST	0xfffc0000
@@ -108,7 +114,16 @@ enum hppa_cpu_type {
 
 #ifndef _LOCORE
 #ifdef _KERNEL
+#define MD_CACHE_FLUSH 0
+#define MD_CACHE_PURGE 1
+#define MD_CACHE_CTL(CACHE_ADDR,CACHE_SIZE,CACHE_FLUSHTYPE)		\
+	(((CACHE_FLUSHTYPE)? pdcache : fdcache)				\
+		(HPPA_SID_KERNEL,(vaddr_t)CACHE_ADDR,CACHE_SIZE))	\
+
 #define DELAY(x) delay(x)
+
+extern int (*cpu_desidhash) __P((void));
+
 void	delay __P((u_int us));
 void	hppa_init __P((paddr_t start));
 void	trap __P((int type, struct trapframe *frame));
@@ -119,7 +134,7 @@ int	spcopy __P((pa_space_t ssp, const void *src,
 int	spstrcpy __P((pa_space_t ssp, const void *src,
 		      pa_space_t dsp, void *dst, size_t size, size_t *rsize));
 int	copy_on_fault __P((void));
-void child_return __P((struct proc *p));
+void	child_return __P((struct proc *p));
 void	switch_trampoline __P((void));
 void	switch_exit __P((struct proc *p));
 int	cpu_dumpsize __P((void));
