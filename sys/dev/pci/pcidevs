@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.549 2002/09/24 19:45:32 nate Exp $
+	$OpenBSD: pcidevs,v 1.550 2002/09/30 18:12:53 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -489,7 +489,7 @@ vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
-vendor 2MICRO		0x1217	2 Micro Inc
+vendor O2MICRO		0x1217	O2 Micro Inc
 vendor 3DFX		0x121a	3DFX Interactive
 vendor ARIEL		0x1220	Ariel
 vendor AZTECH		0x122d	Aztech
