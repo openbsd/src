@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.223 2002/11/27 18:50:32 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.224 2002/11/28 12:14:24 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -258,6 +258,7 @@ typedef struct {
 		struct {
 			struct peer	src, dst;
 		}			fromto;
+		struct pf_poolhashkey	*hashkey;
 		struct {
 			struct node_host	*host;
 			u_int8_t	rt;
@@ -299,7 +300,7 @@ typedef struct {
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY
 %token	REQUIREORDER YES
 %token	ANTISPOOF FOR
-%token	BITMASK RANDOM SOURCEHASH ROUNDROBIN KEY STATICPORT
+%token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
 %token	ALTQ SCHEDULER CBQ BANDWIDTH TBRSIZE
 %token	QUEUE PRIORITY QLIMIT
 %token	DEFAULT CONTROL BORROW RED ECN RIO
@@ -312,6 +313,7 @@ typedef struct {
 %type	<v.i>	staticport
 %type	<v.b>	action flag flags blockspec
 %type	<v.range>	dport rport
+%type	<v.hashkey>     hashkey
 %type	<v.pooltype>	pooltype
 %type	<v.proto>	proto proto_list proto_item
 %type	<v.icmp>	icmpspec icmp_list icmp6_list icmp_item icmp6_item
@@ -1630,32 +1632,63 @@ redirpool	: /* empty */			{ $$ = NULL; }
 		}
 		;
 
+hashkey		: /* empty */
+		{
+			$$ = malloc(sizeof(struct pf_poolhashkey));
+			if ($$ == NULL)
+				err(1, "pooltype: malloc");
+			$$->key32[0] = arc4random();
+			$$->key32[1] = arc4random();
+			$$->key32[2] = arc4random();
+			$$->key32[3] = arc4random();
+		}
+		| string
+		{
+			char buf[11] = "0x";
+			int i;
+
+			if (!strncmp((char *)$1, "0x", 2)) {
+				if (strlen((char *)$1) != 34) {
+					yyerror("hex key must be 128 bits "
+						"(32 hex digits) long");
+					YYERROR;
+				}
+				$$ = calloc(1, sizeof(struct pf_poolhashkey));
+				if ($$ == NULL)
+					err(1, "hashkey: calloc");
+
+				/* convert to binary */
+				for (i = 0; i < 4; i++) {
+					strncpy((char *)(buf + 2),
+					    (char *)($1 + 2 + (i * 8)), 8);
+					if (atoul(buf,
+					    (u_long *)&$$->key32[i]) == -1) {
+						/* not hex */
+						free($$);
+						yyerror("invalid hex key");
+						YYERROR;
+					}
+				}
+			} else {
+				MD5_CTX context;
+
+				$$ = calloc(1, sizeof(struct pf_poolhashkey));
+				if ($$ == NULL)
+					err(1, "hashkey: calloc");
+				MD5Init(&context);
+				MD5Update(&context, $1, strlen($1));
+				MD5Final((unsigned char *)$$, &context);
+			}
+		}
+		;
+
 pooltype	: /* empty */			{ $$.type = PF_POOL_NONE; }
 		| BITMASK			{ $$.type = PF_POOL_BITMASK; }
 		| RANDOM			{ $$.type = PF_POOL_RANDOM; }
-		| SOURCEHASH			{ $$.type = PF_POOL_SRCHASH; }
-		| SOURCEHASH RANDOM
+		| SOURCEHASH hashkey
 		{
-			$$.key = calloc(1, sizeof(struct pf_poolhashkey));
-			if ($$.key == NULL)
-				err(1, "pooltype: calloc");
-			$$.type = PF_POOL_SRCKEYHASH;
-			$$.key->key32[0] = arc4random();
-			$$.key->key32[1] = arc4random();
-			$$.key->key32[2] = arc4random();
-			$$.key->key32[3] = arc4random();
-		}
-		| SOURCEHASH KEY string
-		{
-			MD5_CTX context;
-
-			$$.key = calloc(1, sizeof(struct pf_poolhashkey));
-			if ($$.key == NULL)
-				err(1, "pooltype: calloc");
-			$$.type = PF_POOL_SRCKEYHASH;
-			MD5Init(&context);
-			MD5Update(&context, $3, strlen($3));
-			MD5Final((unsigned char *)$$.key, &context);
+			$$.type = PF_POOL_SRCHASH;
+			$$.key = $2;
 		}
 		| ROUNDROBIN			{ $$.type = PF_POOL_ROUNDROBIN; }
 		;
@@ -1758,11 +1791,11 @@ natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 							nat.rpool.opts = $8.type;
 					}
 				}
-				if ((nat.rpool.opts & PF_POOL_TYPEMASK) ==
-				    PF_POOL_SRCKEYHASH) {
-					memcpy(&nat.rpool.key, $8.key,
-					    sizeof(struct pf_poolhashkey));
-				}
+			}
+
+			if ($8.key != NULL) {
+				memcpy(&nat.rpool.key, $8.key,
+				    sizeof(struct pf_poolhashkey));
 			}
 
 			expand_nat(&nat, $3, $5, $6.src.host, $6.src.port,
@@ -1973,11 +2006,11 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirpool poolt
 							    $12.type;
 					}
 				}
-				if ((rdr.rpool.opts & PF_POOL_TYPEMASK) ==
-				    PF_POOL_SRCKEYHASH) {
-					memcpy(&rdr.rpool.key, $12.key,
-					    sizeof(struct pf_poolhashkey));
-				}
+			}
+
+			if ($12.key != NULL) {
+				memcpy(&rdr.rpool.key, $12.key,
+				    sizeof(struct pf_poolhashkey));
 			}
 
 			expand_rdr(&rdr, $3, $5, $7, $9,
@@ -2069,22 +2102,19 @@ route		: /* empty */			{
 		| ROUTETO routespec pooltype {
 			$$.host = $2;
 			$$.rt = PF_ROUTETO;
-			if (($$.pool_opts & PF_POOL_TYPEMASK) ==
-			    PF_POOL_SRCKEYHASH)
+			if ($3.key != NULL)
 				$$.key = $3.key;
 		}
 		| REPLYTO routespec pooltype {
 			$$.host = $2;
 			$$.rt = PF_REPLYTO;
-			if (($$.pool_opts & PF_POOL_TYPEMASK) ==
-			    PF_POOL_SRCKEYHASH)
+			if ($3.key != NULL)
 				$$.key = $3.key;
 		}
 		| DUPTO routespec pooltype {
 			$$.host = $2;
 			$$.rt = PF_DUPTO;
-			if (($$.pool_opts & PF_POOL_TYPEMASK) ==
-			    PF_POOL_SRCKEYHASH)
+			if ($3.key != NULL)
 				$$.key = $3.key;
 		}
 		;
@@ -2929,7 +2959,6 @@ lookup(char *s)
 		{ "inet6",	INET6},
 		{ "ipv6-icmp-type", ICMP6TYPE},
 		{ "keep",	KEEP},
-		{ "key",	KEY},
 		{ "label",	LABEL},
 		{ "limit",	LIMIT},
 		{ "log",	LOG},

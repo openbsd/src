@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.112 2002/11/23 11:58:44 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.113 2002/11/28 12:14:25 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -396,7 +396,8 @@ print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
 }
 
 void
-print_pool(struct pf_pool *pool, sa_family_t af, int id)
+print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
+    sa_family_t af, int id)
 {
 	struct pf_pooladdr *pooladdr;
 
@@ -424,6 +425,47 @@ print_pool(struct pf_pool *pool, sa_family_t af, int id)
 		else if (TAILQ_NEXT(TAILQ_FIRST(&pool->list), entries) != NULL)
 			printf(" }");
 	}
+	switch (id) {
+	case PF_POOL_NAT_R:
+		if (p1 != PF_NAT_PROXY_PORT_LOW ||
+		    p2 != PF_NAT_PROXY_PORT_HIGH) {
+			if (p1 == p2)
+			printf(" port %u", p1);
+			else
+				printf(" port %u:%u", p1, p2);
+		}
+		break;
+	case PF_POOL_RDR_R:
+		if (p1) {
+			printf(" port %u", ntohs(p1));
+			if (p2 & PF_RPORT_RANGE)
+				printf(":*");
+		}
+		break;
+	case PF_POOL_RULE_RT:
+	default:
+		break;
+	}
+	switch (pool->opts & PF_POOL_TYPEMASK) {
+	case PF_POOL_NONE:
+		break;
+	case PF_POOL_BITMASK:
+		printf(" bitmask");
+		break;
+	case PF_POOL_RANDOM:
+		printf(" random");
+		break;
+	case PF_POOL_SRCHASH:
+		printf(" source-hash 0x%08X%08X%08X%08X",
+		    pool->key.key32[0], pool->key.key32[1],
+		    pool->key.key32[2], pool->key.key32[3]);
+		break;
+	case PF_POOL_ROUNDROBIN:
+		printf(" round-robin");
+		break;
+	}
+	if (pool->opts & PF_POOL_STATICPORT)
+		printf(" static-port");
 }
 
 void
@@ -455,36 +497,8 @@ print_nat(struct pf_nat *n)
 	print_fromto(&n->src, &n->dst, n->af, n->proto);
 	if (!n->no) {
 		printf("-> ");
-		print_pool(&n->rpool, n->af, PF_POOL_NAT_R);
-		if (n->proxy_port[0] != PF_NAT_PROXY_PORT_LOW ||
-		    n->proxy_port[1] != PF_NAT_PROXY_PORT_HIGH) {
-			if (n->proxy_port[0] == n->proxy_port[1])
-				printf(" port %u", n->proxy_port[0]);
-			else
-				printf(" port %u:%u", n->proxy_port[0],
-				    n->proxy_port[1]);
-		}
-		switch (n->rpool.opts & 0x0f) {
-		case PF_POOL_NONE:
-			break;
-		case PF_POOL_BITMASK:
-			printf(" bitmask");
-			break;
-		case PF_POOL_RANDOM:
-			printf(" random");
-			break;
-		case PF_POOL_SRCHASH:
-			printf(" source-hash");
-			break;
-		case PF_POOL_SRCKEYHASH:
-			printf(" source-hash key");
-			break;
-		case PF_POOL_ROUNDROBIN:
-			printf(" round-robin");
-			break;
-		}
-		if (n->rpool.opts & PF_POOL_STATICPORT)
-			printf(" static-port");
+		print_pool(&n->rpool, n->proxy_port[0], n->proxy_port[1],
+		    n->af, PF_POOL_NAT_R);
 	}
 	printf("\n");
 }
@@ -583,32 +597,7 @@ print_rdr(struct pf_rdr *r)
 	}
 	if (!r->no) {
 		printf(" -> ");
-		print_pool(&r->rpool, r->af, PF_POOL_RDR_R);
-		printf(" ");
-		switch (r->rpool.opts & 0x0f) {
-		case PF_POOL_NONE:
-			break;
-		case PF_POOL_BITMASK:
-			printf("bitmask ");
-			break;
-		case PF_POOL_RANDOM:
-			printf("random ");
-			break;
-		case PF_POOL_SRCHASH:
-			printf("source-hash ");
-			break;
-		case PF_POOL_SRCKEYHASH:
-			printf("source-hash key ");
-			break;
-		case PF_POOL_ROUNDROBIN:
-			printf("round-robin ");
-			break;
-		}
-		if (r->rport) {
-			printf("port %u", ntohs(r->rport));
-			if (r->opts & PF_RPORT_RANGE)
-				printf(":*");
-		}
+		print_pool(&r->rpool, r->rport, r->opts, r->af, PF_POOL_RDR_R);
 	}
 	printf("\n");
 }
@@ -778,27 +767,8 @@ print_rule(struct pf_rule *r)
 		else if (r->rt == PF_FASTROUTE)
 			printf("fastroute ");
 		if (r->rt != PF_FASTROUTE) {
-			print_pool(&r->rt_pool, r->af, PF_POOL_RULE_RT);
+			print_pool(&r->rt_pool, 0, 0, r->af, PF_POOL_RULE_RT);
 			printf(" ");
-		}
-		switch (r->rt_pool.opts & 0x0f) {
-		case PF_POOL_NONE:
-			break;
-		case PF_POOL_BITMASK:
-			printf("bitmask ");
-			break;
-		case PF_POOL_RANDOM:
-			printf("random ");
-			break;
-		case PF_POOL_SRCHASH:
-			printf("source-hash ");
-			break;
-		case PF_POOL_SRCKEYHASH:
-			printf("source-hash key ");
-			break;
-		case PF_POOL_ROUNDROBIN:
-			printf("round-robin ");
-			break;
 		}
 	}
 	if (r->af) {
