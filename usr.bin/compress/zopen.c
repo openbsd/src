@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.13 2003/07/17 20:06:01 millert Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.14 2003/08/03 01:26:46 deraadt Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
 const char z_rcsid[] =
-	"$OpenBSD: zopen.c,v 1.13 2003/07/17 20:06:01 millert Exp $";
+	"$OpenBSD: zopen.c,v 1.14 2003/08/03 01:26:46 deraadt Exp $";
 #endif
 
 /*-
@@ -346,7 +346,7 @@ z_close(void *cookie, struct z_info *info)
 	return (rval);
 }
 
-int
+static int
 zclose(void *cookie)
 {
 	return z_close(cookie, NULL);
