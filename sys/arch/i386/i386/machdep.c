@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.250 2003/11/15 19:27:50 henning Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.251 2003/11/15 19:33:26 henning Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -805,6 +805,49 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, "Athlon XP Model 10 (Barton)",
 				0, 0, 0, 0, 0,
 				"K7 (Athlon)"		/* Default */
+			},
+			NULL
+		},
+		/* Family 7 */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family 8 */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family 9 */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family A */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family B */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family C */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family D */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family E */
+		{
+			CPUCLASS_686,
+		} ,
+		/* Family F */
+		{
+			CPUCLASS_686,
+			{
+				0, 0, 0, 0, "Athlon64",
+				"Opteron or Athlon64FX", 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				"AMD64"			/* DEFAULT */
 			},
 			NULL
 		} }
