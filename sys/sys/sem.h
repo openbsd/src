@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.6 1998/06/11 19:21:29 deraadt Exp $	*/
+/*	$OpenBSD: sem.h,v 1.7 1998/07/20 07:37:22 deraadt Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -79,18 +79,20 @@ union semun {
 #define SETVAL	8	/* Set the value of semval to arg.val {ALTER} */
 #define SETALL	9	/* Set semvals from arg.array {ALTER} */
 
-#ifdef _KERNEL
-/*
- * Kernel implementation stuff
- */
-#define SEMVMX	32767		/* semaphore maximum value */
-#define SEMAEM	16384		/* adjust on exit max value */
 
 /*
  * Permissions
  */
 #define SEM_A		0200	/* alter permission */
 #define SEM_R		0400	/* read permission */
+
+
+#ifdef _KERNEL
+/*
+ * Kernel implementation stuff
+ */
+#define SEMVMX	32767		/* semaphore maximum value */
+#define SEMAEM	16384		/* adjust on exit max value */
 
 /*
  * Undo structure (one per process)
