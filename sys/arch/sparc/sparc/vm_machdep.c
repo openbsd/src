@@ -97,7 +97,7 @@ dvma_mapin(map, va, len, canwait)
 	vm_offset_t	va;
 	int		len, canwait;
 {
-	vm_offset_t	kva, tva;
+	vm_offset_t	kva, tva, va_0 = va;
 	register int npf, s;
 	register vm_offset_t pa;
 	long pn;
@@ -135,6 +135,10 @@ dvma_mapin(map, va, len, canwait)
 		tva += PAGE_SIZE;
 		va += PAGE_SIZE;
 	}
+
+	if (vactype == VAC_WRITEBACK)
+		cache_flush((caddr_t)va_0, len); /* XXX only needed on write */
+
 	return kva;
 }
 
