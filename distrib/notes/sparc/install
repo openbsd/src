@@ -3,22 +3,35 @@ this document in hand it shouldn't be too much trouble.
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD miniroot that can
-be booted off your local disk's swap partition. Alternatively, if your
-Sparcstation is hooked up in a network you can find a server and arrange
-for a diskless setup which is a convenient way to install on a machine
-whose disk does not currently hold a usable operating system (see the
-section `Installing using a diskless setup' below).
+be booted off your local disk's swap partition.   The normal way is to
+use the OpenBSD installation floppies.
+
+If your Sparc is hooked up in a network and you can find a server to
+arrange for a diskless setup, which is a convenient way to install on a
+machine whose disk does not currently hold a usable operating system.
+This is difficult to get set up correctly the first time, but easy to
+use afterwards.  (see `Installing using a diskless setup' below).
+
+It is also possible to install OpenBSD "manually" from a running SunOS
+system, using SunOS tools and gnu tar and gunzip (see `Installing from
+SunOS' below).
+
 
 Installing using the OpenBSD floppies.
 
-The OpenBSD/sparc floppies come in two varieties, a compressed ramdisk
-form, and a two floppy uncompressed form.  The differences between
-the two forms are in their bootblocks, and filesystems.  The "floppy21.fs"
-image, is the compressed ramdisk form, the "kc21.fs" paired with either
-"inst21.fs" or "upgr21.fs" comprise the uncompressed form.  
+The OpenBSD/sparc floppies come in two varieties, a newer single floppy
+version that is not well tested and the older multi-floppy set.  Both
+accomplish the same thing, but the install/upgrade scripts and procedures
+are quite different between the old and new version.
+
+The other difference bewtween the the two forms are in their bootblocks,
+and filesystems.  The "floppy21.fs" image is the compressed ramdisk form,
+the "kc21.fs" paired with either "inst21.fs" or "upgr21.fs" comprise a
+bootable kernel floppy and associated install/upgrade filesystem floppy.
+
 To put the floppy image(s) on a floppy, you use a dd command like:
   
-	# dd if=kc21.fs of=/dev/rfd0a bs=20b conv=sync
+	# dd if=kc21.fs of=/dev/rfd0a bs=36b
 
 After transferring the floppy image(s) to disk, bring the system down by:
  
@@ -30,12 +43,14 @@ Then boot the floppy by typing the appropriate command at the PROM:
         ok boot floppy bsd      # for version 2 OpenBOOT ROMs
 
 This will cause the kernel contained in the floppy to be booted.
-The two-floppy install disks will require you to insert the second
-floppy once the kernel loads.  (The disk will auto-eject)
+After the kernel loads, it will eject the bootable floppy and prompt
+for a filesystem floppy - for the two floppy installation insert
+the appropriate filesystem flopppy, for the ramdisk installion,
+just hit return, the filesystem image is internal to the kernel.
 
-After the initial probe messages you'll asked to start the install
-or upgrade procedure. Proceed to the section `Running the installation
-scripts' below.
+After the initial device probe messages you'll asked to start the
+install or upgrade procedure. Proceed to the section `Running the
+installation scripts' below.
 
 
 Installing using the OpenBSD miniroot.
@@ -44,21 +59,22 @@ The miniroot is a self-contained OpenBSD filesystem holding all utilities
 necessary to install OpenBSD on a local disk. It is distributed as a plain
 file designed to be transferred to a raw disk partition from which it can
 be booted using the appropriate PROM command. Usually, the miniroot will
-be loaded into the swap partition of a disk. If needed, you can use any
-other unused partition, but remember that the partition will then not
-available during the installation process.
+be loaded into the swap partition of a disk. If needed, you can use another
+unused partition, but remember that the partition will then not available
+during the installation process and avoid using an "a" or "c" parition
+since installing the miniroot at the beginning of a disk will overwrite
+the existing disklabels/parition information for the whole disk.
 
 Loading the miniroot onto your raw partition is simple. On OpenBSD as well
 as SunOS you use a command like:
 
-	# dd if=miniroot21.fs of=/dev/rsd0b bs=20b conv=sync
+	# dd if=miniroot21.fs of=/dev/rsd0b bs=20b
 
 (here `/dev/rsd0b' is assumed to be your swap partition). There's a
 potential problem here if /dev/rsd0b is actually in use as a swap
 partition by your currently running system. If you don't have another
 disk or partition to spare, you can usually get away with running this
-command anyway after first booting into single-user mode to ensure a
-quiet system.
+command in "single user" mode to avoid active swap parition activity.
 
 After transferring the miniroot to disk, bring the system down by:
 
@@ -73,8 +89,11 @@ Then boot the miniroot by typing the appropriate command at the PROM:
 If you've loaded the miniroot onto some other disk than `sd0' adapt
 the boot specifier accordingly, e.g.:
 
-        > b sd(0,20,1)bsd       # example - scsi target 4 on sun4 monitors
+        > b sd(0,20,1)bsd       # example - scsi target 4 on sun4 monitors*
+	ok b sd(0,4,1)bsd	# example - scsi target 4 on V1 OpenBOOT ROM
 	ok boot disk1:b bsd     # example - scsi target 1 on v2 OpenBOOT ROM
+
+(*) for sun4 this is scsi-target*8+scsi-lun (usually 0) expressed in hex...
 
 This will cause the kernel contained in the miniroot to be booted.
 After the initial probe messages you'll asked to start the install
@@ -91,6 +110,18 @@ If the server runs another operating system, you'll have to consult
 documentation that came with it (on SunOS systems, add_client(8) is a
 good start).
 
+The set up is similar to SunOS diskless setup, but not identical, because
+the Sun setup assumes that the bootblocks load a kernel image, which then
+uses NFS to access the exported root partition, while the OpenBSD bootblocks
+use internal NFS routines to load the kernel image directly from the
+exported root partition.
+
+Please understand that no one gets this right the first try, since
+there is a lot of setup and all the host deamons must be running and
+configured correctly.  If you have problems, extract the diskless(8)
+manpage, find someone who's been through it before and use the host
+syslog and tcpdump(8) to get visibility of what's happening (or not).
+
 Your Sparcstation expects to be able to download a second stage bootstrap
 program via TFTP after having acquired its IP address through RevARP when
 instructed to boot "over the net". It will look for a filename composed of
@@ -100,6 +131,7 @@ address 130.115.144.11, will make an TFTP request for `8273900B.SUN4C'.
 Normally, this file is a symbolic link to an appropriate second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
+
 You can find the boot program in `/usr/mdec/boot' in the OpenBSD/sparc
 distribution. Unfortunately, it is necessary to install this file
 differently for sun4 and sun4c clients: the sun4 version needs to have its
@@ -119,9 +151,6 @@ Here's an example to illustrate this whole mess:
     server# cd /tftpboot
     server# ln -s boot.sparc.OpenBSD.$KARCH 8273900B.$KARCH
 
-Note: some versions of Openboot ROMs (sun4c/sun4m) seem to require that the
-boot program size is nicely rounded. Therefore it may be necessary to
-strip(8) off the symbol table.
 
 After the boot program has been loaded into memory and given control by
 the PROM, it starts locating the machine's remote root directory through
@@ -137,7 +166,6 @@ request to the client's root filesystem server, asking for an NFS file
 handle corresponding to the root filesystem. If successful, the boot
 rogram starts reading from the remote root filesystem in search of the
 kernel which is then read into memory.
-
 
 As noted above in the section `Preparing your System for OpenBSD Installation',
 you have several options when choosing a location to store the installation
@@ -220,7 +248,7 @@ the disk.  DO NOT USE `disklabel -r ...' TO INITIALIZE YOUR DISK LABEL;
 THIS WILL LEAD TO UNPREDICTABLE RESULTS. This deficiency will be fixed
 in a next release.
 
-Here follows an example of what you'll see while in the dislabel editor.
+Here follows an example of what you'll see while in the disklabel editor.
 Do not touch any of the parameters except for the `label: ' entry and
 the actual partition size information at the bottom (the lines starting
 with `a:', `b:', ...).
@@ -412,30 +440,34 @@ Mount those partitions in a tree formation, under /mnt; ie:
     /dev/sd2a              11501       0   11501     0%    /mnt
     /dev/sd2g             179529       0  179529     0%    /mnt/usr
 
-Place a standard SunOS "/boot" program in /mnt (your new root
+Place a standard SunOS "boot" program in /mnt (your new root
 partition), and use the SunOS command "installboot" to make it work.
 The installboot man page says to do something like this:
 
-    sunos# cp /boot /mnt/boot
+    sunos# cp /usr/mdec/sdboot /mnt/boot
+    sunos# sync; sync
     sunos# /usr/mdec/installboot -vlt /mnt/boot /usr/mdec/bootsd /dev/rsd2a
 
-You can now extract the provided "*.tar.gz files onto your disk.  The
-provided script, "install_from_sunos.sh" will help you:
+You can now extract the provided "*.tar.gz files onto your disk.
 
     sunos# ls -FC
-    base.tar.gz      etc.tar.gz       man.tar.gz       secr.tar.gz
-    comp.tar.gz      games.tar.gz     misc.tar.gz      text.tar.gz
-    install.sh       bsd.id3_scsi
-    sunos# ./install_from_sunos.sh
-    [...]
+    base21.tar.gz      etc21.tar.gz       man21.tar.gz       secr21.tar.gz
+    comp21.tar.gz      games21.tar.gz     misc21.tar.gz      text21.tar.gz
+    bsd                bsd.scsi3
+    sunos# gunzip < base21.tar.gz | (cd /mnt; gtar xvpf -)
+    [...] for each set
 
-This script NEEDS gzip and gtar (GNU gzip and GNU tar) on your
-execution path!  The tar files are in a "new format" that includes
-directory information, and SunOS tar will not read them.  Statically
-linked versions of these programs for SunOS are supplied in the
-distribution.
+And finally copy an OpenBSD kernel (either bsd or bsd.scsi3) onto your disk.
 
-After the files have been extracted, repair /mnt/etc/fstab to match
+    sunos# cp bsd.scsi3 /mnt/bsd
+
+The GNU gunzip and gtar programs are not distributed as part of SunOS,
+but may be present in your local/bin.  If not, you will need to obtain
+them from a GNU archive and install before proceeding.  The OpenBSD
+tar files are in a "new format" that includes directory information,
+and the standard SunOS tar will not read them.
+
+After the files have been extracted, setup /mnt/etc/fstab to match
 your actual disk layout.  (Minus the "/mnt" component of each path, of
 course :-)
 
