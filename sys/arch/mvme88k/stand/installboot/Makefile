@@ -2,6 +2,8 @@
 
 PROG=	installboot
 MAN=	installboot.8
+MANSUBDIR=/mvme88k
+
 BINDIR=/usr/mdec
 DPADD=	${LIBUTIL}
 LDADD=	-lutil

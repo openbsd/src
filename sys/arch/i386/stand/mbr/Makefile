@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1998/05/28 20:52:42 mickey Exp $
+#	$OpenBSD: Makefile,v 1.9 1999/07/08 20:11:53 deraadt Exp $
 #
 
 PROG=	mbr
@@ -6,7 +6,10 @@ SRCS=	mbr.S
 AFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../.. #-Wa,-a
 LD=ld
 LDFLAGS=-nostdlib -Ttext 0 -x -N -s -Bstatic
+
 MAN+=	mbr.8
+MANSUBDIR=/i386
+
 INSTALL_STRIP=
 SADIR=${.CURDIR}/..
 S=	${.CURDIR}/../../../..

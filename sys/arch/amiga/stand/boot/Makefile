@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.4 1999/04/05 15:32:16 espie Exp $
+#	$OpenBSD: Makefile,v 1.5 1999/07/08 20:11:52 deraadt Exp $
 
 NOPROG=	installboot
 MAN=installboot.8
+MANSUBDIR=/amiga
 
 SUBDIR=aout2bb txlt libsa
 

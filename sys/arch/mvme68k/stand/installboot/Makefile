@@ -2,6 +2,8 @@
 
 PROG=	installboot
 MAN=	installboot.8
+MANSUBDIR=/mvme68k
+
 BINDIR=/usr/mdec
 
 # Need this to work in the miniroot

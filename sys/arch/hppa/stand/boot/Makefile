@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1999/04/20 20:08:27 mickey Exp $
+#	$OpenBSD: Makefile,v 1.8 1999/07/08 20:11:52 deraadt Exp $
 
 PROG=	boot
 SRCS=	srt0.S boot.c cmd.c vars.c bootarg.c conf.c
@@ -7,6 +7,7 @@ LDFLAGS+=-Bstatic -nostartfiles -nostdlib -N -Ttext $(LINKADDR)
 LDFLAGS+=-T ${.CURDIR}/ld.script -Map boot.map
 SIZE?=	size
 MAN=	boot.8
+MANSUBDIR=/hppa
 MLINKS=	boot.8 boot.conf.8
 S	=${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..

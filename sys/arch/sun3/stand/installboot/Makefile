@@ -3,6 +3,7 @@
 PROG=	installboot
 MAN=	installboot.8
 BINDIR=/usr/mdec
+MANSUBDIR=/sun3
 
 # Need this to work in the miniroot
 LDSTATIC=	-static
