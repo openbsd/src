@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.47 2000/09/27 09:37:16 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.48 2001/02/08 00:32:11 mickey Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1807,7 +1807,8 @@ vfs_syncwait(verbose)
 				nbusy++;
 				bawrite(bp);
 				if (dcount-- <= 0) {
-					printf("softdep ");
+					if (verbose)
+						printf("softdep ");
 					return 1;
 				}
 			}
