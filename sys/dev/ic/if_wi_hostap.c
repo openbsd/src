@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.6 2002/04/01 20:57:56 mickey Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.7 2002/04/01 21:05:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -946,7 +946,7 @@ wihap_check_tx(struct wihap_info *whi, u_int8_t addr[], u_int8_t *txrate)
 		splx(s);
 		return(1);
 	}
-	spx(s);
+	splx(s);
 
 	return(0);
 }
