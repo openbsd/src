@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.18 2001/06/27 04:58:48 art Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.19 2001/09/10 08:48:42 gluk Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -251,12 +251,28 @@ loop:
 		bp->b_flags &= ~B_SCANNED;
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
+		/* 
+		 * Reasons to skip this buffer: it has already been considered
+		 * on this pass, this pass is the first time through on a
+		 * synchronous flush request and the buffer being considered
+		 * is metadata, the buffer has dependencies that will cause
+		 * it to be redirtied and it has not already been deferred,
+		 * or it is already being written.
+		 */
 		if (bp->b_flags & (B_BUSY | B_SCANNED))
 			continue;
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("ffs_fsync: not dirty");
 		if (skipmeta && bp->b_lblkno < 0)
 			continue;
+		if (ap->a_waitfor != MNT_WAIT &&
+		    LIST_FIRST(&bp->b_dep) != NULL &&
+		    (bp->b_flags & B_DEFERRED) == 0 &&
+		    buf_countdeps(bp, 0, 1)) {
+			bp->b_flags |= B_DEFERRED;
+			continue;
+		}
+
 		bremfree(bp);
 		bp->b_flags |= B_BUSY | B_SCANNED;
 		splx(s);
