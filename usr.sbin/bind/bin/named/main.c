@@ -461,9 +461,10 @@ setup(void) {
 	ns_os_inituserinfo(ns_g_username);
 
 	/*
-	 * Initialize time conversion information
+	 * Initialize time conversion information and /dev/null
 	 */
 	ns_os_tzset();
+	ns_os_opendevnull();
 
 	ns_os_chroot(ns_g_chrootdir);
 

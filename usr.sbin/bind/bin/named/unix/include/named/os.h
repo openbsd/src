@@ -29,6 +29,12 @@ void
 ns_os_daemonize(void);
 
 void
+ns_os_opendevnull(void);
+
+void
+ns_os_closedevnull(void);
+
+void
 ns_os_chroot(const char *root);
 
 void

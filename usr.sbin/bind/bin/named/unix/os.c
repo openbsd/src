@@ -43,6 +43,7 @@
 #include <named/os.h>
 
 static char *pidfile = NULL;
+static int devnullfd = -1;
 
 /*
  * If there's no <linux/capability.h>, we don't care about <sys/prctl.h>
@@ -288,7 +289,6 @@ ns_os_init(const char *progname) {
 void
 ns_os_daemonize(void) {
 	pid_t pid;
-	int fd;
 	char strbuf[ISC_STRERRORSIZE];
 
 	pid = fork();
@@ -322,19 +322,33 @@ ns_os_daemonize(void) {
 	 * and will end up closing the wrong FD.  This will be fixed eventually,
 	 * and these calls will be removed.
 	 */
-	fd = open("/dev/null", O_RDWR, 0);
-	if (fd != -1) {
-		close(STDIN_FILENO);
-		(void)dup2(fd, STDIN_FILENO);
-		close(STDOUT_FILENO);
-		(void)dup2(fd, STDOUT_FILENO);
-		close(STDERR_FILENO);
-		(void)dup2(fd, STDERR_FILENO);
-		if (fd != STDIN_FILENO &&
-		    fd != STDOUT_FILENO &&
-		    fd != STDERR_FILENO)
-			(void)close(fd);
+	if (devnullfd != -1) {
+		if (devnullfd != STDIN_FILENO) {
+			(void)close(STDIN_FILENO);
+			(void)dup2(devnullfd, STDIN_FILENO);
+		}
+		if (devnullfd != STDOUT_FILENO) {
+			(void)close(STDOUT_FILENO);
+			(void)dup2(devnullfd, STDOUT_FILENO);
+		}
+		if (devnullfd != STDERR_FILENO) {
+			(void)close(STDERR_FILENO);
+			(void)dup2(devnullfd, STDERR_FILENO);
+		}
 	}
+}
+
+void
+ns_os_opendevnull(void) {
+	devnullfd = open("/dev/null", O_RDWR, 0);
+}
+
+void
+ns_os_closedevnull(void) {
+	if (devnullfd != STDIN_FILENO &&
+	    devnullfd != STDOUT_FILENO &&
+	    devnullfd != STDERR_FILENO)
+		close(devnullfd);
 }
 
 static isc_boolean_t
