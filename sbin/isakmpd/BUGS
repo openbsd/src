@@ -1,5 +1,5 @@
-$OpenBSD: BUGS,v 1.12 1999/10/01 14:09:31 niklas Exp $
-$EOM: BUGS,v 1.37 1999/09/30 12:44:40 niklas Exp $
+$OpenBSD: BUGS,v 1.13 2000/02/19 19:32:20 niklas Exp $
+$EOM: BUGS,v 1.38 2000/02/18 08:47:35 niklas Exp $
 
 Until we have a bug-tracking system setup, we might just add bugs to this
 file:
@@ -95,3 +95,6 @@ file:
   to be used. 
 
 * host route support in KLIPS does not work properly
+
+* When not having compiled in support for a certain crypto algorithm and
+  the config file still tells us to propose it, we segfault.
