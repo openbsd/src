@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.20 2003/09/29 19:23:02 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.21 2003/09/29 20:23:51 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -67,6 +67,7 @@ option	PCIVERBOSE
 sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
 sti0	at phantomas0 irq 11	# builtin graphics on BC*
 sti1	at mainbus0 disable irq 12
+sti1	at phantomas0 disable irq 12
 
 #medusa* at mainbus? irq 4	# FDDI
 #siop*	at mainbus? irq 3	# NCR 53C720 (Fast/Wide Diff)
@@ -80,8 +81,6 @@ gsc2	at wax?			# it's another face of LASI
 
 #vme*	at vmeb?
 #option	VMEVERBOSE
-#pci*	at dino?
-#option	PCIVERBOSE
 eisa*	at mongoose?
 #eisa*	at wax?
 option	EISAVERBOSE
@@ -140,20 +139,31 @@ pci*	at ppb?
 
 #pciide*	at pci ? dev ? function ? flags 0x0000
 
-#siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(new)
-#scsibus* at siop?
+siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(new)
+scsibus* at siop?
+ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
+scsibus* at ahc?
 
+#fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
+#xl*	at pci? dev ? function ?	# 3C9xx ethernet
+#em*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
+#ti*	at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
+#fxp*	at pci? dev ? function ?	# EtherExpress 10/100B ethernet
+#txp*	at pci? dev ? function ?	# 3com 3CR990
+#ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+#ep*	at pci? dev ? function ?	# 3Com 3c59x
+#an*	at pci? dev ? function ?	# Cisco/Aironet 802.11DS
+#wi*	at pci? dev ? function ?	# WaveLAN IEEE 802.11DS
 
 dcphy*		at mii? phy ?		# Digital Clone PHYs
 amphy*		at mii? phy ?		# AMD 79C873 PHYs
-#acphy*		at mii? phy ?		# Altima AC101 PHYs
 #exphy*		at mii? phy ?		# 3Com internal PHYs
 #inphy*		at mii? phy ?		# Intel 82555 PHYs
 #iophy*		at mii? phy ?		# Intel 82553 PHYs
 #icsphy*	at mii? phy ?		# ICS1890 PHYs
 lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs
-#nsphy*		at mii? phy ?		# NS83840 PHYs
+nsphy*		at mii? phy ?		# NS83840 PHYs
 #nsphyter*	at mii? phy ?		# NS83843 PHYs
 #mtdphy*	at mii? phy ?		# Myson MTD972 PHYs
 #qsphy*		at mii? phy ?		# Quality Semi QS6612 PHYs
