@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.104 2003/05/24 19:02:36 henning Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.105 2003/06/01 20:18:45 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.102 2003/05/24 19:01:03 henning Exp 
+ *		OpenBSD: pcmciadevs,v 1.103 2003/06/01 20:15:50 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -287,6 +287,8 @@
 #define	PCMCIA_PRODUCT_INTEL_EEPRO100	0x010a
 
 /* Kingston */
+#define	PCMCIA_CIS_KINGSTON_KNE_PCM	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_KINGSTON_KNE_PCM	0x0001
 #define	PCMCIA_CIS_KINGSTON_KNE_PC2	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_KINGSTON_KNE_PC2	0x0100
 

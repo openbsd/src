@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.68 2003/05/24 19:09:29 henning Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.69 2003/06/01 20:18:45 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -411,6 +411,10 @@ const struct ne2000dev {
       PCMCIA_CIS_ALLIEDTELESIS_LA_PCM,
       0, 0x0ff0, { 0x00, 0x00, 0xf4 } },
 
+    { PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE_PCM,
+      PCMCIA_CIS_KINGSTON_KNE_PCM,
+      0, 0x0ff0, { 0xe2, 0x0c, 0x0f } },
+
     { PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE_PC2,
       PCMCIA_CIS_KINGSTON_KNE_PC2,
       0, 0x0180, { 0x00, 0xc0, 0xf0 } },
@@ -479,9 +483,6 @@ const struct ne2000dev {
     { "Kingston KNE-PCM/x",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0ff0, { 0x00, 0xc0, 0xf0 } },
-    { "Kingston KNE-PCM/x",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0ff0, { 0xe2, 0x0c, 0x0f } },
     { "Longshine LCS-8534",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0000, { 0x08, 0x00, 0x00 } },
