@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.40 2002/07/13 06:02:57 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.41 2002/08/04 00:48:34 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.40 2002/07/13 06:02:57 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.41 2002/08/04 00:48:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -225,6 +225,21 @@ main(int argc, char *argv[])
 			usage();
 		}
 
+	/*
+	 * Discard setgid privileges if not the running kernel so that bad
+	 * guys can't print interesting stuff from kernel memory.
+	 */
+	if (nlistf != NULL || memf != NULL) {
+		setegid(getgid());
+		setgid(getgid());
+	}
+
+	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == NULL)
+		errx(1, "%s", buf);
+
+	setegid(getgid());
+	setgid(getgid());
+
 	if (*(argv += optind)) {
 		for (; *argv; ++argv) {
 			if (getfname(*argv))
@@ -242,21 +257,6 @@ main(int argc, char *argv[])
 			exit(1);
 		checkfile = 1;
 	}
-
-	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
-	 */
-	if (nlistf != NULL || memf != NULL) {
-		setegid(getgid());
-		setgid(getgid());
-	}
-
-	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == NULL)
-		errx(1, "%s", buf);
-
-	setegid(getgid());
-	setgid(getgid());
 
 	if ((p = kvm_getprocs(kd, what, arg, &cnt)) == NULL)
 		errx(1, "%s", kvm_geterr(kd));
