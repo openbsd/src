@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.4 1999/07/21 05:58:25 csapuntz Exp $	*/
+/*	$OpenBSD: endian.h,v 1.5 2000/10/25 21:43:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -53,14 +53,14 @@
 
 #ifdef __GNUC__
 
-#define __swap16gen(x) ({						\
+#define __swap16gen(x) __extension__({					\
 	u_int16_t __swap16gen_x = (x);					\
 									\
 	(u_int16_t)((__swap16gen_x & 0xff) << 8 |			\
 	    (__swap16gen_x & 0xff00) >> 8);				\
 })
 
-#define __swap32gen(x) ({						\
+#define __swap32gen(x) __extension__({					\
 	u_int32_t __swap32gen_x = (x);					\
 									\
 	(u_int32_t)((__swap32gen_x & 0xff) << 24 |			\
@@ -91,14 +91,14 @@
 #ifdef MD_SWAP
 #if __GNUC__
 
-#define swap16(x) ({							\
+#define swap16(x) __extension__({					\
 	u_int16_t __swap16_x = (x);					\
 									\
 	__builtin_constant_p(x) ? __swap16gen(__swap16_x) :		\
 	    __swap16md(__swap16_x);					\
 })
 
-#define swap32(x) ({							\
+#define swap32(x) __extension__({					\
 	u_int32_t __swap32_x = (x);					\
 									\
 	__builtin_constant_p(x) ? __swap32gen(__swap32_x) :		\
