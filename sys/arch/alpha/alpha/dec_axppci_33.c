@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_axppci_33.c,v 1.16 2002/03/14 01:26:26 millert Exp $ */
+/* $OpenBSD: dec_axppci_33.c,v 1.17 2002/06/25 21:33:19 miod Exp $ */
 /* $NetBSD: dec_axppci_33.c,v 1.44 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -192,7 +192,7 @@ dec_axppci_33_cons_init()
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
-		panic("consinit: unknown console type %ld\n",
+		panic("consinit: unknown console type %ld",
 		    ctb->ctb_term_type);
 	}
 }

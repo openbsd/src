@@ -1,4 +1,4 @@
-/*	$OpenBSD: api_up1000.c,v 1.5 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: api_up1000.c,v 1.6 2002/06/25 21:33:19 miod Exp $	*/
 /* $NetBSD: api_up1000.c,v 1.4 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -149,7 +149,7 @@ api_up1000_cons_init()
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
-		panic("consinit: unknown console type %ld\n",
+		panic("consinit: unknown console type %ld",
 		    ctb->ctb_term_type);
 	}
 }

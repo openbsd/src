@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.9 2002/03/14 03:15:50 millert Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.10 2002/06/25 21:33:21 miod Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -186,7 +186,7 @@ dec_6600_intr_map(acv, bustag, buspin, line, ihp)
 #endif
 
 	if (DEC_6600_LINE_IS_ISA(line) == 0 && line >= PCI_NIRQ)
-		panic("dec_6600_intr_map: dec 6600 irq too large (%d)\n",
+		panic("dec_6600_intr_map: dec 6600 irq too large (%d)",
 		    line);
 
 	*ihp = line;
@@ -262,7 +262,7 @@ dec_6600_intr_establish(acv, ih, level, func, arg, name)
 #endif
 
 	if (ih >= PCI_NIRQ)
-		panic("dec_6600_intr_establish: bogus dec 6600 IRQ 0x%lx\n",
+		panic("dec_6600_intr_establish: bogus dec 6600 IRQ 0x%lx",
 		    ih);
 
 	cookie = alpha_shared_intr_establish(dec_6600_pci_intr, ih, IST_LEVEL,
@@ -333,7 +333,7 @@ dec_6600_iointr(framep, vec)
 		return;
 	}
 #endif
-	panic("iointr: weird vec 0x%lx\n", vec);
+	panic("iointr: weird vec 0x%lx", vec);
 }
 
 void

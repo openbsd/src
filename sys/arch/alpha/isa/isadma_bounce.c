@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma_bounce.c,v 1.4 2002/03/14 01:26:27 millert Exp $	*/
+/*	$OpenBSD: isadma_bounce.c,v 1.5 2002/06/25 21:33:21 miod Exp $	*/
 /* $NetBSD: isadma_bounce.c,v 1.3 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -508,8 +508,8 @@ isadma_bounce_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		break;
 
 	default:
-		printf("unknown buffer type %d\n", cookie->id_buftype);
-		panic("isadma_bounce_dmamap_sync");
+		panic("isadma_bounce_dmamap_sync: unknown buffer type %d",
+		    cookie->id_buftype);
 	}
 
 	/* Drain the write buffer. */

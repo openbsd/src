@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_550.c,v 1.7 2002/03/14 01:26:26 millert Exp $ */
+/* $OpenBSD: dec_550.c,v 1.8 2002/06/25 21:33:19 miod Exp $ */
 /* $NetBSD: dec_550.c,v 1.10 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -150,7 +150,7 @@ dec_550_cons_init()
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
-		panic("consinit: unknown console type %ld\n",
+		panic("consinit: unknown console type %ld",
 		    ctb->ctb_term_type);
 	}
 }

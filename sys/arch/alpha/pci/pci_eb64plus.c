@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb64plus.c,v 1.3 2002/03/14 03:15:50 millert Exp $ */
+/* $OpenBSD: pci_eb64plus.c,v 1.4 2002/06/25 21:33:21 miod Exp $ */
 /* $NetBSD: pci_eb64plus.c,v 1.10 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*-
@@ -180,7 +180,7 @@ dec_eb64plus_intr_map(acv, bustag, buspin, line, ihp)
 	}
 
 	if (line >= EB64PLUS_MAX_IRQ)
-		panic("dec_eb64plus_intr_map: eb64+ irq too large (%d)\n",
+		panic("dec_eb64plus_intr_map: eb64+ irq too large (%d)",
 		    line);
 
 	*ihp = line;
@@ -195,7 +195,7 @@ dec_eb64plus_intr_string(acv, ih)
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
         if (ih > EB64PLUS_MAX_IRQ)
-                panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx\n", ih);
+                panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx", ih);
         sprintf(irqstr, "eb64+ irq %ld", ih);
         return (irqstr);
 }
@@ -212,7 +212,7 @@ dec_eb64plus_intr_establish(acv, ih, level, func, arg, name)
 	void *cookie;
 
 	if (ih > EB64PLUS_MAX_IRQ)
-		panic("dec_eb64plus_intr_establish: bogus eb64+ IRQ 0x%lx\n",
+		panic("dec_eb64plus_intr_establish: bogus eb64+ IRQ 0x%lx",
 		    ih);
 
 	cookie = alpha_shared_intr_establish(eb64plus_pci_intr, ih, IST_LEVEL,
@@ -254,7 +254,7 @@ eb64plus_iointr(framep, vec)
 
 	if (vec >= 0x900) {
 		if (vec >= 0x900 + (EB64PLUS_MAX_IRQ << 4))
-			panic("eb64plus_iointr: vec 0x%lx out of range\n", vec);
+			panic("eb64plus_iointr: vec 0x%lx out of range", vec);
 		irq = (vec - 0x900) >> 4;
 
 		if (!alpha_shared_intr_dispatch(eb64plus_pci_intr, irq)) {
@@ -271,7 +271,7 @@ eb64plus_iointr(framep, vec)
 		return;
 	}
 #endif
-	panic("eb64plus_iointr: weird vec 0x%lx\n", vec);
+	panic("eb64plus_iointr: weird vec 0x%lx", vec);
 }
 
 #if 0		/* THIS DOES NOT WORK!  see pci_eb64plus_intr.S. */

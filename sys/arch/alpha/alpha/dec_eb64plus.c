@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_eb64plus.c,v 1.2 2002/03/14 01:26:26 millert Exp $ */
+/* $OpenBSD: dec_eb64plus.c,v 1.3 2002/06/25 21:33:19 miod Exp $ */
 /* $NetBSD: dec_eb64plus.c,v 1.25 2001/06/05 04:53:11 thorpej Exp $ */
 
 /*
@@ -151,7 +151,7 @@ dec_eb64plus_cons_init()
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
-		panic("consinit: unknown console type %ld\n",
+		panic("consinit: unknown console type %ld",
 		    ctb->ctb_term_type);
 	}
 }

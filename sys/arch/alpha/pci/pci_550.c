@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.9 2002/03/14 03:15:50 millert Exp $ */
+/* $OpenBSD: pci_550.c,v 1.10 2002/06/25 21:33:21 miod Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -261,7 +261,7 @@ dec_550_intr_map(ccv, bustag, buspin, line, ihp)
 #endif
 
 	if (DEC_550_LINE_IS_ISA(line) == 0 && line >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_map: dec 550 irq too large (%d)\n",
+		panic("dec_550_intr_map: dec 550 irq too large (%d)",
 		    line);
 
 	*ihp = line;
@@ -285,7 +285,7 @@ dec_550_intr_string(ccv, ih)
 #endif
 
 	if (ih >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_string: bogus 550 IRQ 0x%lx\n", ih);
+		panic("dec_550_intr_string: bogus 550 IRQ 0x%lx", ih);
 	sprintf(irqstr, "dec 550 irq %ld", ih);
 	return (irqstr);
 }
@@ -320,7 +320,7 @@ dec_550_intr_evcnt(ccv, ih)
 #endif
 
 	if (ih >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_evcnt: bogus 550 IRQ 0x%lx\n", ih);
+		panic("dec_550_intr_evcnt: bogus 550 IRQ 0x%lx", ih);
 
 	return (alpha_shared_intr_evcnt(dec_550_pci_intr, ih));
 }
@@ -347,7 +347,7 @@ dec_550_intr_establish(ccv, ih, level, func, arg, name)
 #endif
 
 	if (ih >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_establish: bogus dec 550 IRQ 0x%lx\n", ih);
+		panic("dec_550_intr_establish: bogus dec 550 IRQ 0x%lx", ih);
 
 	cookie = alpha_shared_intr_establish(dec_550_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, name);
@@ -440,7 +440,7 @@ dec_550_iointr(framep, vec)
 		irq = ((vec - 0x900) >> 4);
 
 		if (irq >= DEC_550_MAX_IRQ)
-			panic("550_iointr: vec 0x%lx out of range\n", vec);
+			panic("550_iointr: vec 0x%lx out of range", vec);
 
 		if (!alpha_shared_intr_dispatch(dec_550_pci_intr, irq)) {
 			alpha_shared_intr_stray(dec_550_pci_intr, irq,
@@ -456,7 +456,7 @@ dec_550_iointr(framep, vec)
 		return;
 	}
 #endif
-	panic("dec_550_iointr: weird vec 0x%lx\n", vec);
+	panic("dec_550_iointr: weird vec 0x%lx", vec);
 }
 
 void
