@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.59 1997/10/25 08:36:41 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.60 1997/10/25 20:30:45 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -221,7 +221,7 @@ cpu_startup()
 		for (i = 0; i < btoc(bootargc); i++, pa += NBPG)
 			pmap_enter(pmap_kernel(),
 			    (vm_offset_t)((caddr_t)bootargp + i * NBPG),
-			    pa, VM_PROT_READ, TRUE);
+			    pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
 	} else
 		bootargp = NULL;
 
