@@ -1,0 +1,83 @@
+.\"	$NetBSD: mc.4,v 1.1 1997/12/18 06:22:45 ender Exp $
+.\"
+.\" Copyright (c) 1997 David Huang <khym@bga.com>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 13, 1997
+.Dt MC 4 mac68k
+.Os NetBSD
+.Sh NAME
+.Nm mc
+.Nd Ethernet driver for Am79C940 (MACE) onboard ethernet
+.Sh SYNOPSIS
+.Cd "mc* at obio?"
+.Sh DESCRIPTION
+The
+.Nm
+interface provides access to a 10 Mb/s Ethernet network via the AMD Am79C940
+(MACE) Ethernet chip set.
+.Pp
+Each of the host's network addresses is specified at boot time with an
+.Dv SIOCSIFADDR
+.Xr ioctl 2 .  The
+.Nm
+interface employs the address resolution protocol described in
+.Xr arp 4
+to dynamically map between Internet and Ethernet addresses on the
+local network.
+.Sh HARDWARE
+The
+.Nm
+interface supports the on-board ethernet of the following machines:
+.Bd -filled -offset indent
+.Bl -item -compact
+.It
+Centris 660AV
+.It
+Quadra 660AV
+.It
+Quadra 840AV
+.El
+.Ed
+.Sh DIAGNOSTICS
+.Bl -diag -compact
+.It mc0 at obio0: address %s.
+This is a normal autoconfiguration message noting the 6 byte physical
+ethernet address of the adapter.
+.El
+.Sh SEE ALSO
+.Xr ae 4 ,
+.Xr arp 4 ,
+.Xr inet 4 ,
+.Xr netintro 4 ,
+.Xr sn 4 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+interface first appeared in
+.Nx 1.3 .
+.Sh AUTHOR
+The
+.Nm
+Ethernet driver was written by Dave Huang.
+
