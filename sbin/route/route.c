@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.25 1997/12/12 09:04:33 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.26 1997/12/12 09:06:08 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.25 1997/12/12 09:04:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.26 1997/12/12 09:06:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,8 +88,8 @@ union	sockunion {
 } so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp;
 
 typedef union sockunion *sup;
-int	pid, rtm_addrs;
-int	s;
+pid_t	pid;
+int	rtm_addrs, s;
 int	forcehost, forcenet, doflush, nflag, af, qflag, tflag, keyword();
 int	iflag, verbose, aflen = sizeof (struct sockaddr_in);
 int	locking, lockrest, debugonly;
