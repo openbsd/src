@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.11 1998/09/16 22:41:19 jason Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.12 2000/08/28 22:03:01 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.33 1996/11/20 18:56:52 gwr Exp $	*/
 
 /*-
@@ -145,7 +145,7 @@ le_attach(parent, self, aux)
 	struct confargs *ca = aux;
 
 	lesc->sc_r1 = (struct lereg1 *)
-	    obio_alloc(ca->ca_paddr, OBIO_AMD_ETHER_SIZE);
+	    obio_alloc(ca->ca_paddr, sizeof(struct lereg1));
 
 	sc->sc_memsize = 0x4000;	/* 16K */
 	sc->sc_mem = dvma_malloc(sc->sc_memsize);
