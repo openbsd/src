@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.25 2004/03/02 13:39:44 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.26 2004/03/02 15:34:03 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -283,8 +283,6 @@ main(int argc, char *argv[])
 	/* set up the interface */
 	discover_interfaces(ifi);
 
-	srandom(arc4random());
-
 	ifi->client->state = S_INIT;
 	state_reboot(ifi);
 
@@ -358,7 +356,7 @@ state_reboot(void *ipp)
 	/* make_request doesn't initialize xid because it normally comes
 	   from the DHCPDISCOVER, but we haven't sent a DHCPDISCOVER,
 	   so pick an xid now. */
-	ip->client->xid = random();
+	ip->client->xid = arc4random();
 
 	/* Make a DHCPREQUEST packet, and set appropriate per-interface
 	   flags. */
@@ -1000,7 +998,7 @@ again:
 			ip->client->interval =
 			    ip->client->config->initial_interval;
 		else {
-			ip->client->interval += (random() >> 2) %
+			ip->client->interval += (arc4random() >> 2) %
 			    (2 * ip->client->interval);
 		}
 
@@ -1009,7 +1007,7 @@ again:
 		    ip->client->config->backoff_cutoff)
 			ip->client->interval =
 				((ip->client->config->backoff_cutoff / 2)
-				 + ((random () >> 2) %
+				 + ((arc4random() >> 2) %
 				    ip->client->config->backoff_cutoff));
 	} else if (!ip->client->interval)
 		ip->client->interval =
@@ -1216,7 +1214,7 @@ cancel:
 	if (!ip->client->interval)
 		ip->client->interval = ip->client->config->initial_interval;
 	else
-		ip->client->interval += ((random () >> 2) %
+		ip->client->interval += ((arc4random() >> 2) %
 		    (2 * ip->client->interval));
 
 	/* Don't backoff past cutoff. */
@@ -1224,7 +1222,7 @@ cancel:
 	    ip->client->config->backoff_cutoff)
 		ip->client->interval =
 		    ((ip->client->config->backoff_cutoff / 2) +
-		    ((random () >> 2) % ip->client->interval));
+		    ((arc4random() >> 2) % ip->client->interval));
 
 	/* If the backoff would take us to the expiry time, just set the
 	   timeout to the expiry time. */
@@ -1623,7 +1621,7 @@ make_release(struct interface_info *ip, struct client_lease *lease)
 	ip->client->packet.htype = ip->hw_address.htype;
 	ip->client->packet.hlen = ip->hw_address.hlen;
 	ip->client->packet.hops = 0;
-	ip->client->packet.xid = random();
+	ip->client->packet.xid = arc4random();
 	ip->client->packet.secs = 0;
 	ip->client->packet.flags = 0;
 
