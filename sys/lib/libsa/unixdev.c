@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.c,v 1.2 1997/03/25 20:30:46 niklas Exp $	*/
+/*	$OpenBSD: unixdev.c,v 1.3 1997/03/30 20:15:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,9 +34,12 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/fcntl.h>
+#include <sys/time.h>
 #include <sys/syscall.h>
-
+#include <string.h>
+#define open uopen
+#include <sys/fcntl.h>
+#undef open
 #include "libsa.h"
 #include "unixdev.h"
 
@@ -121,8 +124,7 @@ ulseek( fd, off, wh)
 	off_t off;
 	int wh;
 {
-	/* XXX zecond zero is unclear to me, but it works */
-	return syscall((quad_t)SYS_lseek, fd, 0, off, 0, wh);
+	return __syscall((quad_t)SYS_lseek, fd, 0, off, wh);
 }
 
 
@@ -149,14 +151,19 @@ unix_getc()
 int
 unix_ischar()
 {
-	return 0;
-}
+	struct timeval tv;
+	fd_set fdset;
+	int rc;
 
-void
-usleep(n)
-	u_int n;
-{
+	tv.tv_sec = 0;
+	tv.tv_usec = 100000;
+	FD_ZERO(&fdset);
+	FD_SET(0, &fdset);
 
+	if ((rc = syscall(SYS_select, 1, &fdset, NULL, NULL, &tv)) <= 0)
+		return 0;
+	else
+		return 1;
 }
 
 time_t
