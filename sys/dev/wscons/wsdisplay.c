@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.17 2001/03/14 02:49:22 mickey Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.18 2001/03/14 06:18:48 millert Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -519,7 +519,7 @@ wsdisplay_emul_attach(parent, self, aux)
 	wsdisplay_common_attach(sc, ap->console, ap->scrdata,
 				ap->accessops, ap->accesscookie);
 
-	if (ap->console) {
+	if (ap->console && cn_tab == &wsdisplay_cons) {
 		int maj;
 
 		/* locate the major number */
