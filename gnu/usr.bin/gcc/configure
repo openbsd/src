@@ -1519,6 +1519,15 @@ for machine in $canon_build $canon_host $canon_target; do
 		tmake_file=t-libc-ok
 		xmake_file=x-netbsd
 		;;
+	m68k-*-openbsd*)
+		cpu_type=m68k
+		tm_file=m68k/openbsd.h
+		xm_file=m68k/xm-openbsd.h
+		# On OpenBSD, the headers are already okay.
+		fixincludes=Makefile.in
+		tmake_file=t-libc-ok
+		xmake_file=x-openbsd
+		;;
 	m68k-*-sysv3*)			# Motorola m68k's running system V.3
 		xm_file=m68k/xm-m68kv.h
 		xmake_file=m68k/x-m68kv
@@ -1777,6 +1786,14 @@ for machine in $canon_build $canon_host $canon_target; do
 		tm_file=mips/netbsd.h
 		xm_file=mips/xm-netbsd.h
 		xmake_file=x-netbsd
+		tmake_file=t-libc-ok
+		fixincludes=Makefile.in
+		prefix=$native_prefix
+		;;
+	mips-dec-openbsd*)                  # Decstation running OpenBSD
+		tm_file=mips/openbsd.h
+		xm_file=mips/xm-openbsd.h
+		xmake_file=x-openbsd
 		tmake_file=t-libc-ok
 		fixincludes=Makefile.in
 		prefix=$native_prefix
@@ -2115,6 +2132,14 @@ for machine in $canon_build $canon_host $canon_target; do
 		fixincludes=Makefile.in
 		xmake_file=x-netbsd
 		;;
+	ns32k-pc532-openbsd*)
+		tm_file=ns32k/openbsd.h
+		xm_file=ns32k/xm-openbsd.h
+		tmake_file=t-libc-ok
+		# On OpenBSD, the headers are already okay.
+		fixincludes=Makefile.in
+		xmake_file=x-openbsd
+		;;
 	pyramid-*-*)
 		cpu_type=pyr
 		xmake_file=pyr/x-pyr
@@ -2267,6 +2292,14 @@ for machine in $canon_build $canon_host $canon_target; do
 		tmake_file=t-libc-ok
 		xmake_file=x-netbsd
 		;;
+	sparc-*-openbsd*)
+		tm_file=sparc/openbsd.h
+		xm_file=sparc/xm-openbsd.h
+		# On OpenBSD, the headers are already okay.
+		fixincludes=Makefile.in
+		tmake_file=t-libc-ok
+		xmake_file=x-openbsd
+		;;
 	sparc-*-bsd*)
 		tm_file=sparc/bsd.h
 		;;
@@ -2358,6 +2391,14 @@ for machine in $canon_build $canon_host $canon_target; do
 		# On NetBSD, the headers are already okay.
 		fixincludes=Makefile.in
 		xmake_file=x-netbsd
+		;;
+	vax-*-openbsd*)
+		tm_file=vax/openbsd.h
+		xm_file=vax/xm-openbsd.h
+		tmake_file=t-libc-ok
+		# On OpenBSD, the headers are already okay.
+		fixincludes=Makefile.in
+		xmake_file=x-openbsd
 		;;
 	vax-*-ultrix*)			# vaxen running ultrix
 		tm_file=vax/ultrix.h
