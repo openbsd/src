@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.9 1997/07/18 00:52:09 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.10 1998/05/14 20:59:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -56,7 +56,7 @@ start:
 	je	1f
 #ifdef DEBUG
 	movl	$0xb80a8, %ebx
-	movl	$0x4741474d, (%ebx)
+	movl	$0xcf41cf4d, (%ebx)
 #endif
 1:
 	/* zero .bss */
