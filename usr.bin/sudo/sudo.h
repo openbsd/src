@@ -1,47 +1,30 @@
 /*
- * Copyright (c) 1993-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
- * All rights reserved.
+ * Copyright (c) 1993-1996,1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * 4. Products derived from this software may not be called "Sudo" nor
- *    may "Sudo" appear in their names without specific prior written
- *    permission from the author.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Sponsored in part by the Defense Advanced Research Projects
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: sudo.h,v 1.194 2003/04/16 00:42:10 millert Exp $
+ * $Sudo: sudo.h,v 1.213 2004/09/08 15:48:23 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
 #define _SUDO_SUDO_H
 
 #include <pathnames.h>
+#include <limits.h>
 #include "compat.h"
 #include "defaults.h"
 #include "logging.h"
@@ -52,17 +35,19 @@
 struct sudo_user {
     struct passwd *pw;
     struct passwd *_runas_pw;
+    struct stat *cmnd_stat;
     char *path;
     char *shell;
     char *tty;
-    char  cwd[MAXPATHLEN];
+    char  cwd[PATH_MAX];
     char *host;
     char *shost;
     char **runas;
     char *prompt;
-    char *cmnd_safe;
     char *cmnd;
     char *cmnd_args;
+    char *cmnd_base;
+    char *cmnd_safe;
     char *class_name;
 };
 
@@ -71,21 +56,27 @@ struct sudo_user {
  * Note: cannot use '0' as a value here.
  */
 /* XXX - VALIDATE_SUCCESS and VALIDATE_FAILURE instead? */
-#define VALIDATE_ERROR          0x01
-#define VALIDATE_OK		0x02
-#define VALIDATE_NOT_OK		0x04
-#define FLAG_NOPASS		0x10
-#define FLAG_NO_USER		0x20
-#define FLAG_NO_HOST		0x40
-#define FLAG_NO_CHECK		0x80
+#define VALIDATE_ERROR          0x001
+#define VALIDATE_OK		0x002
+#define VALIDATE_NOT_OK		0x004
+#define FLAG_CHECK_USER		0x010
+#define FLAG_NOPASS		0x020
+#define FLAG_NO_USER		0x040
+#define FLAG_NO_HOST		0x080
+#define FLAG_NO_CHECK		0x100
+#define FLAG_NOEXEC		0x200
 
 /*
- * Boolean values
+ * Pseudo-boolean values
  */
 #undef TRUE
 #define TRUE                     1
 #undef FALSE
 #define FALSE                    0
+#undef NOMATCH
+#define NOMATCH                 -1
+#undef UNSPEC
+#define UNSPEC                  -2
 
 /*
  * find_path()/load_cmnd() return values
@@ -107,9 +98,11 @@ struct sudo_user {
 #define MODE_LISTDEFS            000200
 #define MODE_BACKGROUND          000400
 #define MODE_SHELL               001000
-#define MODE_IMPLIED_SHELL       002000
-#define MODE_RESET_HOME          004000
-#define MODE_PRESERVE_GROUPS     010000
+#define MODE_LOGIN_SHELL         002000
+#define MODE_IMPLIED_SHELL       004000
+#define MODE_RESET_HOME          010000
+#define MODE_PRESERVE_GROUPS     020000
+#define MODE_EDIT                040000
 
 /*
  * Used with set_perms()
@@ -120,7 +113,8 @@ struct sudo_user {
 #define PERM_FULL_USER           0x03
 #define PERM_SUDOERS             0x04
 #define PERM_RUNAS               0x05
-#define PERM_TIMESTAMP           0x06
+#define PERM_FULL_RUNAS          0x06
+#define PERM_TIMESTAMP           0x07
 
 /*
  * Shortcuts for sudo_user contents.
@@ -136,6 +130,8 @@ struct sudo_user {
 #define user_runas		(sudo_user.runas)
 #define user_cmnd		(sudo_user.cmnd)
 #define user_args		(sudo_user.cmnd_args)
+#define user_base		(sudo_user.cmnd_base)
+#define user_stat		(sudo_user.cmnd_stat)
 #define user_path		(sudo_user.path)
 #define user_prompt		(sudo_user.prompt)
 #define user_host		(sudo_user.host)
@@ -160,18 +156,6 @@ struct sudo_user {
 #define SUDO_UNLOCK	4		/* unlock a file */
 
 /*
- * Flags for sudoers_lookup:
- *  PASSWD_NEVER:  user never has to give a passwd
- *  PASSWD_ALL:    no passwd needed if all entries for host have NOPASSWD flag
- *  PASSWD_ANY:    no passwd needed if any entry for host has a NOPASSWD flag
- *  PASSWD_ALWAYS: passwd always needed
- */
-#define PWCHECK_NEVER	0x01
-#define PWCHECK_ALL	0x02
-#define PWCHECK_ANY	0x04
-#define PWCHECK_ALWAYS	0x08
-
-/*
  * Flags for tgetpass()
  */
 #define TGP_ECHO	0x01		/* leave echo on when reading passwd */
@@ -187,6 +171,12 @@ void closefrom		__P((int));
 #endif
 #ifndef HAVE_GETCWD
 char *getcwd		__P((char *, size_t size));
+#endif
+#ifndef HAVE_UTIMES
+int utimes		__P((const char *, const struct timeval *));
+#endif
+#ifdef HAVE_FUTIME
+int futimes		__P((int, const struct timeval *));
 #endif
 #ifndef HAVE_SNPRINTF
 int snprintf		__P((char *, size_t, const char *, ...));
@@ -209,12 +199,16 @@ size_t strlcat		__P((char *, const char *, size_t));
 #ifndef HAVE_STRLCPY
 size_t strlcpy		__P((char *, const char *, size_t));
 #endif
-char *sudo_goodpath	__P((const char *));
+char *sudo_goodpath	__P((const char *, struct stat *));
 char *tgetpass		__P((const char *, int, int));
-int find_path		__P((char *, char **, char *));
-void check_user		__P((void));
+int find_path		__P((char *, char **, struct stat *, char *));
+void check_user		__P((int));
 void verify_user	__P((struct passwd *, char *));
 int sudoers_lookup	__P((int));
+#ifdef HAVE_LDAP
+int sudo_ldap_check	__P((int));
+void sudo_ldap_list_matches __P((void));
+#endif
 void set_perms_nosuid	__P((int));
 void set_perms_posix	__P((int));
 void set_perms_suid	__P((int));
@@ -235,12 +229,14 @@ void dump_defaults	__P((void));
 void dump_auth_methods	__P((void));
 void init_envtables	__P((void));
 int lock_file		__P((int, int));
-int touch		__P((char *, time_t));
+int touch		__P((int, char *, struct timespec *));
 int user_is_exempt	__P((void));
 void set_fqdn		__P((void));
-char *sudo_getepw	__P((struct passwd *));
+int set_runaspw		__P((char *));
+char *sudo_getepw	__P((const struct passwd *));
 int pam_prep_user	__P((struct passwd *));
 void zero_bytes		__P((volatile VOID *, size_t));
+int gettime		__P((struct timespec *));
 YY_DECL;
 
 /* Only provide extern declarations outside of sudo.c. */

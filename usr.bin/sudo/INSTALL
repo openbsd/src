@@ -1,4 +1,4 @@
-Installation instructions for Sudo 1.6.7
+Installation instructions for Sudo 1.6.8
 ========================================
 
 Sudo uses a `configure' script to probe the capabilities and type
@@ -175,6 +175,15 @@ Special features/options:
         does not use the Kerberos cookie scheme.  Will not work for
         Kerberos V older than version 1.1.
 
+  --with-ldap[=DIR]
+	Enable LDAP support.  If specified, DIR is the base directory
+	containing the LDAP include and lib directories.  Please see
+	README.LDAP for more information.
+
+  --with-ldap-conf-file
+	Path to LDAP configuration file.  If specified, sudo reads
+	this file instead of /etc/ldap.conf to locate the LDAP server.
+
   --with-authenticate
 	Enable support for the AIX 4.x general authentication function.
 	This will use the authentication scheme specified for the user
@@ -182,16 +191,18 @@ Special features/options:
 
   --with-pam
 	Enable PAM support.  Tested on:
-	    Redhat Linux 5.x, 6.0, and 6.1
-	    Solaris 2.6 and 7
-	    HP-UX 11.0
-        NOTE: on RedHat Linux you *must* install an /etc/pam.d/sudo file.
-	You may either use the sample.pam file included with sudo or use
-	/etc/pam.d/su as a reference.  On Solaris and HP-UX 11 systems
-	you should check (and understand) the contents of /etc/pam.conf.
-	Do a "man pam.conf" for more information and consider using the
-	"debug" option, if available, with your PAM libraries in
-	/etc/pam.conf to obtain syslog output for debugging purposes.
+	    Redhat Linux >= 5.x
+	    Solaris >= 2.6
+	    HP-UX >= 11.0
+        NOTE: on RedHat Linux and Fedora you *must* have an /etc/pam.d/sudo
+	file install.  You may either use the sample.pam file included with
+	sudo or use /etc/pam.d/su as a reference.  The sample.pam file
+	included with sudo may or may not work with other Linux distributions.
+	On Solaris and HP-UX 11 systems you should check (and understand)
+	the contents of /etc/pam.conf.  Do a "man pam.conf" for more
+	information and consider using the "debug" option, if available,
+	with your PAM libraries in /etc/pam.conf to obtain syslog output
+	for debugging purposes.
 
   --with-AFS
 	Enable AFS support with Kerberos authentication.  Should work under
@@ -199,14 +210,11 @@ Special features/options:
 	link without it.
 
   --with-DCE
-	Enable DCE support.  Known to work on HP-UX 9.X, 10.X, and 11.0.
-	The use of PAM is recommended for HP-UX 11.X systems, since PAM is
-	fully implemented (this is not true for 10.20 and earlier versions).
-	Check to see that your 11.X (or other) system uses DCE via PAM by
-	looking at /etc/pam.conf to see if "libpam_dce" libraries are 
-	referenced there.  Other platforms may require source code and/or 
-	`configure' changes; you should check to see if your platform can 
-	access DCE via PAM before using this option.
+	Enable DCE support for systems without PAM.  Known to work on
+	HP-UX 9.X, 10.X, and 11.0; other systems may require source
+	code and/or `configure' changes.  On systems with PAM support
+	(such as HP-UX 11.0 and higher, Solaris, FreeBSD and Linux), the
+	DCE PAM module (usually libpam_dce) should be used instead.
 
   --with-logincap
 	Enable support for BSD login classes where available (OS-dependent).
@@ -222,6 +230,17 @@ Special features/options:
         (and there really should be no need to do so).  Note that
         only the newer BSD authentication API is supported.  If you
         don't have /usr/include/bsd_auth.h then you cannot use this.
+
+  --with-noexec[=PATH]
+        Enable support for the "noexec" functionality which prevents
+        a dynamically-linked program being run by sudo from executing
+        another program (think shell escapes).  Please see the
+        "PREVENTING SHELL ESCAPES" section in the sudoers man page
+        for details.  If specified, PATH should be a fully qualified
+        pathname, e.g. /usr/local/libexec/sudo_noexec.so.  If PATH
+        is "no", noexec support will not be compiled in.  The default
+        is to compile noexec support if libtool supports building
+        shared objects on your OS.
 
   --disable-root-mailer
         By default sudo will run the mailer as root when tattling
@@ -464,6 +483,9 @@ The following options are also configurable at runtime:
 	password is entered.  You must either specify --with-insults or
 	enable insults in the sudoers file for this to have any effect.
 
+  --with-pc-insults
+	Replace politically incorrect insults with less objectionable ones.
+
   --with-secure-path[=PATH]
 	Path used for every command run from sudo(8).  If you don't trust the
 	people running sudo to have a sane PATH environment variable you may
@@ -477,20 +499,20 @@ The following options are also configurable at runtime:
 	Don't print the lecture the first time a user runs sudo.
 
   --with-editor=PATH
-	Specify the default editor path for use by visudo.  This may be
-	a single pathname or a colon-separated list of editors.  In
-	the latter case, visudo will choose the editor that matches
-	the user's USER environment variable or the first editor in
-	the list that exists.  The default is the path to vi on your system.
+	Specify the default editor path for use by visudo.  This may be a
+	single pathname or a colon-separated list of editors.  In the latter
+	case, visudo will choose the editor that matches the user's VISUAL
+	or EDITOR environment variables or the first editor in the list that
+	exists.  The default is the path to vi on your system.
 
   --with-env-editor
-	Makes visudo consult the EDITOR and VISUAL environment variables before
+	Makes visudo consult the VISUAL and EDITOR environment variables before
 	falling back on the default editor list (as specified by --with-editor).
 	Note that this may create a security hole as it allows the user to
 	run any arbitrary command as root without logging.  A safer alternative
-	is to use a colon-separated list of editors with the --with-env-editor
-	option.  visudo will then only use the EDITOR or VISUAL if they match
-	a value specified via --with-editor.
+	is to use a colon-separated list of editors with the --with-editor
+	option.  visudo will then only use the VISUAL or EDITOR variables
+	if they match a value specified via --with-editor.
 
   --disable-authentication
         By default, sudo requires the user to authenticate via a
@@ -559,7 +581,7 @@ OS dependent notes
 ==================
 
 OpenBSD < 2.2 and NetBSD < 1.2.1:
-    The fdesc filesystem has a bug wrt /dev/tty handling that
+    The fdesc file system has a bug wrt /dev/tty handling that
     causes sudo to hang at the password prompt.  The workaround
     is to run configure with --with-password-timeout=0
 
@@ -666,3 +688,10 @@ Dynix:
     on Dynix, try using the native compiler (cc).  You can do so
     by removing the config.cache file and then re-running configure
     with the --with-CC=cc option.
+
+HP-UX:
+    The default C compiler shipped with HP-UX does not support creating
+    position independent code and so is unable to support sudo's "noexec"
+    functionality.  You must use either the HP ANSI C compiler or gcc for
+    noexec to work.  Binary packages of gcc are available from
+    http://hpux.connect.org.uk/ and http://hpux.cs.utah.edu/.

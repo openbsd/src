@@ -1,35 +1,17 @@
 #
-# Copyright (c) 1996, 1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
-# All rights reserved.
+# Copyright (c) 1996, 1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
 #
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#
-# 3. The name of the author may not be used to endorse or promote products
-#    derived from this software without specific prior written permission
-#    from the author.
-#
-# 4. Products derived from this software may not be called "Sudo" nor
-#    may "Sudo" appear in their names without specific prior written
-#    permission from the author.
-#
-# THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-# AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
-# THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Sponsored in part by the Defense Advanced Research Projects
@@ -38,13 +20,14 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.233 2003/04/16 00:42:09 millert Exp $
+# $Sudo: Makefile.in,v 1.253 2004/09/15 20:11:22 millert Exp $
 #
 
 #### Start of system configuration section. ####
 
 srcdir = @srcdir@
 authdir = $(srcdir)/auth
+top_builddir = .
 VPATH = @srcdir@
 
 # Compiler & tools to use
@@ -52,6 +35,7 @@ CC = @CC@
 LEX = flex
 YACC = @YACC@
 NROFF = nroff
+LIBTOOL = @LIBTOOL@
 
 # Our install program supports extra flags...
 INSTALL = $(SHELL) $(srcdir)/install-sh -c
@@ -78,6 +62,7 @@ bindir = @bindir@
 sbindir = @sbindir@
 sysconfdir = @sysconfdir@
 mandir = @mandir@
+noexecdir = @NOEXECDIR@
 
 # Directory in which to install sudo.
 sudodir = $(bindir)
@@ -115,10 +100,11 @@ PROGS = @PROGS@
 
 SRCS = alloc.c alloca.c check.c closefrom.c def_data.c defaults.c env.c err.c \
        fileops.c find_path.c fnmatch.c getcwd.c getprogname.c getspwuid.c \
-       goodpath.c interfaces.c lex.yy.c lsearch.c logging.c parse.c parse.lex \
-       parse.yacc set_perms.c sigaction.c snprintf.c strcasecmp.c strerror.c \
-       strlcat.c strlcpy.c sudo.c sudo.tab.c testsudoers.c tgetpass.c utime.c \
-       visudo.c zero_bytes.c $(AUTH_SRCS)
+       gettime.c goodpath.c interfaces.c ldap.c lex.yy.c lsearch.c logging.c \
+       parse.c parse.lex parse.yacc set_perms.c sigaction.c snprintf.c \
+       strcasecmp.c strerror.c strlcat.c strlcpy.c sudo.c sudo_noexec.c \
+       sudo.tab.c sudo_edit.c testsudoers.c tgetpass.c utimes.c visudo.c \
+       zero_bytes.c $(AUTH_SRCS)
 
 AUTH_SRCS = auth/afs.c auth/aix_auth.c auth/bsdauth.c auth/dce.c auth/fwtk.c \
 	    auth/kerb4.c auth/kerb5.c auth/pam.c auth/passwd.c auth/rfc1938.c \
@@ -134,33 +120,34 @@ AUTH_OBJS = sudo_auth.o @AUTH_OBJS@
 
 PARSEOBJS = sudo.tab.o lex.yy.o alloc.o defaults.o
 
-SUDOBJS = check.o env.o getspwuid.o goodpath.o fileops.o find_path.o \
-	  interfaces.o logging.o parse.o set_perms.o sudo.o tgetpass.o \
-	  zero_bytes.o $(AUTH_OBJS) $(PARSEOBJS)
+SUDOBJS = check.o env.o getspwuid.o gettime.o goodpath.o fileops.o find_path.o \
+	  interfaces.o logging.o parse.o set_perms.o sudo.o sudo_edit.o \
+	  tgetpass.o zero_bytes.o @SUDO_OBJS@ $(AUTH_OBJS) $(PARSEOBJS)
 
-VISUDOBJS = visudo.o fileops.o goodpath.o find_path.o $(PARSEOBJS)
+VISUDOBJS = visudo.o fileops.o gettime.o goodpath.o find_path.o $(PARSEOBJS)
 
 TESTOBJS = interfaces.o testsudoers.o $(PARSEOBJS)
 
 LIBOBJS = @LIBOBJS@ @ALLOCA@
 
-VERSION = 1.6.7p5
+VERSION = 1.6.8p1
 
 DISTFILES = $(SRCS) $(HDRS) BUGS CHANGES HISTORY INSTALL INSTALL.configure \
-	    LICENSE Makefile.in PORTING README RUNSON TODO TROUBLESHOOTING \
-	    UPGRADE aclocal.m4 aixcrypt.exp config.guess config.h.in \
-            config.sub configure configure.in def_data.in fnmatch.3 indent.pro \
-	    install-sh mkdefaults mkinstalldirs pathnames.h.in sample.pam \
-	    sample.syslog.conf sample.sudoers sudo.cat sudo.man.in sudo.pod \
-	    sudoers sudoers.cat sudoers.man.in sudoers.pod visudo.cat \
-	    visudo.man.in visudo.pod auth/API
+	    LICENSE Makefile.in PORTING README README.LDAP RUNSON TODO \
+	    TROUBLESHOOTING UPGRADE aclocal.m4 acsite.m4 aixcrypt.exp \
+	    config.guess config.h.in config.sub configure configure.in \
+	    def_data.in fnmatch.3 indent.pro install-sh ltmain.sh mkdefaults \
+	    mkinstalldirs pathnames.h.in sample.pam sample.syslog.conf \
+	    sample.sudoers sudo.cat sudo.man.in sudo.pod sudoers sudoers.cat \
+	    sudoers.man.in sudoers.pod sudoers2ldif visudo.cat visudo.man.in \
+	    visudo.pod auth/API
 
 BINFILES= BUGS CHANGES HISTORY LICENSE README TODO TROUBLESHOOTING \
 	  UPGRADE install-sh mkinstalldirs sample.syslog.conf sample.sudoers \
 	  sudo sudo.cat sudo.man sudo.pod sudoers sudoers.cat sudoers.man \
 	  sudoers.pod visudo visudo.cat visudo.man visudo.pod
 
-BINSPECIAL= INSTALL.binary Makefile.binary
+BINSPECIAL= INSTALL.binary Makefile.binary libtool
 
 SUDODEP = $(srcdir)/sudo.h $(srcdir)/compat.h $(srcdir)/defaults.h \
 	  $(srcdir)/logging.h config.h def_data.h pathnames.h
@@ -172,10 +159,13 @@ INSDEP = $(srcdir)/ins_2001.h $(srcdir)/ins_classic.h $(srcdir)/ins_csops.h \
 
 all: $(PROGS)
 
-.SUFFIXES: .o .c .h .lex .yacc .man .cat
+.SUFFIXES: .o .c .h .lex .yacc .man .cat .lo
 
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $<
+
+.c.lo:
+	$(LIBTOOL) --mode=compile $(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $<
 
 .man.cat:
 	@rm -f $(srcdir)/$@
@@ -190,8 +180,11 @@ visudo: $(VISUDOBJS) $(LIBOBJS)
 testsudoers: $(TESTOBJS) $(LIBOBJS)
 	$(CC) -o $@ $(TESTOBJS) $(LIBOBJS) $(LDFLAGS) $(LIBS) $(NET_LIBS)
 
-# Uncomment the following if you want "make clean" to clean the parser
-@DEV@PARSESRCS = sudo.tab.h sudo.tab.c lex.yy.c
+sudo_noexec.la: sudo_noexec.lo
+	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -o $@ sudo_noexec.lo -avoid-version -rpath $(noexecdir)
+
+# Uncomment the following if you want "make distclean" to clean the parser
+@DEV@PARSESRCS = sudo.tab.h sudo.tab.c lex.yy.c def_data.c def_data.h
 
 # Uncomment the following if you intend to modify parse.yacc
 @DEV@sudo.tab.c sudo.tab.h: parse.yacc
@@ -238,6 +231,7 @@ strlcat.o: strlcat.c config.h
 strlcpy.o: strlcpy.c config.h
 strerror.o: strerror.c config.h
 utime.o: utime.c config.h pathnames.h compat.h emul/utime.h
+ldap.o: ldap.c $(SUDODEP) parse.h
 
 # Authentication functions live in "auth" dir and so need extra care
 sudo_auth.o: $(authdir)/sudo_auth.c $(AUTHDEP) $(INSDEP)
@@ -298,16 +292,26 @@ sudoers.man:: sudoers.man.in
 
 sudoers.cat: sudoers.man
 
-install: install-dirs install-binaries install-sudoers install-man
+install: install-dirs install-binaries @INSTALL_NOEXEC@ install-sudoers install-man
 
 install-dirs:
 	$(SHELL) $(srcdir)/mkinstalldirs $(DESTDIR)$(sudodir) \
 	    $(DESTDIR)$(visudodir) $(DESTDIR)$(sudoersdir) \
-	    $(DESTDIR)$(mandirsu) $(DESTDIR)$(mandirform)
+	    $(DESTDIR)$(mandirsu) $(DESTDIR)$(mandirform) \
+	    $(DESTDIR)$(noexecdir)
 
 install-binaries: $(PROGS)
 	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 4111 -s sudo $(DESTDIR)$(sudodir)/sudo
+	rm -f $(DESTDIR)$(sudodir)/sudoedit
+	ln $(DESTDIR)$(sudodir)/sudo $(DESTDIR)$(sudodir)/sudoedit
+
 	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0111 -s visudo $(DESTDIR)$(visudodir)/visudo
+
+install-noexec: sudo_noexec.la
+	$(LIBTOOL) --mode=install $(INSTALL) sudo_noexec.la $(DESTDIR)$(noexecdir)
+
+bininst-noexec: sudo_noexec.la
+	$(LIBTOOL) --mode=install $(INSTALL) sudo_noexec.la $(DESTDIR)$(noexecdir)
 
 install-sudoers:
 	test -f $(DESTDIR)$(sudoersdir)/sudoers || \
@@ -316,6 +320,8 @@ install-sudoers:
 
 install-man:
 	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0444 @mansrcdir@/sudo.$(mantype) $(DESTDIR)$(mandirsu)/sudo.$(mansectsu)
+	@rm -f $(DESTDIR)$(mandirsu)/sudoedit.$(mansectsu)
+	ln $(DESTDIR)$(mandirsu)/sudo.$(mansectsu) $(DESTDIR)$(mandirsu)/sudoedit.$(mansectsu)
 	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0444 @mansrcdir@/visudo.$(mantype) $(DESTDIR)$(mandirsu)/visudo.$(mansectsu)
 	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0444 @mansrcdir@/sudoers.$(mantype) $(DESTDIR)$(mandirform)/sudoers.$(mansectform)
 @MAN_POSTINSTALL@
@@ -336,8 +342,9 @@ clean:
 mostlyclean: clean
 
 distclean: clean
-	-rm -f Makefile *.man pathnames.h config.h config.status config.cache \
-	       config.log $(PARSESRCS)
+	-rm -rf Makefile pathnames.h config.h config.status config.cache \
+		config.log libtool sudo_noexec.lo .libs $(PARSESRCS) \
+		sudo.man sudoers.man visudo.man
 
 clobber: distclean
 
@@ -355,10 +362,11 @@ dist:
 	ls -l ../sudo-$(VERSION).tar.gz
 
 bindist:
-	@mkdir tmp.`arch -l`
-	@mkdir tmp.`arch -l`/sudo-$(VERSION)
 	( \
-	  tdir=tmp.`arch -l`/sudo-$(VERSION) ; \
+	  ARCH=`uname -m|sed 's:/:_:g'`+`uname -sr|sed 's/ /_/g'` ; \
+	  mkdir tmp.$$ARCH ; \
+	  tdir=tmp.$$ARCH/sudo-$(VERSION) ; \
+	  mkdir $$tdir ; \
 	  for i in $(BINFILES) ; do \
 	    if [ -f $$i ]; then \
 	      cp $$i $$tdir ; \
@@ -369,13 +377,17 @@ bindist:
 	      exit 1 ; \
 	    fi ; \
 	  done ; \
+	  if [ -f sudo_noexec.la ]; then \
+	    cp libtool $$tdir ; \
+	    $(LIBTOOL) --mode=install $(INSTALL) sudo_noexec.la `pwd`/$$tdir ; \
+	    ln $$tdir/sudo_noexec.la $$tdir/sudo_noexec.lai ; \
+	    ln -s . $$tdir/.libs ; \
+	  fi ; \
 	  cp $(srcdir)/INSTALL.binary $$tdir/INSTALL ; \
-	  sed -e 's/@_MANTYPE@/$(mantype)/g' -e 's/@_mansectsu@/$(mansectsu)/g' \
-	      -e 's/@_mansectform@/$(mansectform)/g' $(srcdir)/Makefile.binary \
-	      > $$tdir/Makefile ; \
-	)  
-	strip sudo
-	strip visudo
-	( cd tmp.`arch -l` && tar Ocf ../sudo-$(VERSION)-`arch -l`.tar sudo-$(VERSION) )
-	gzip --best sudo-$(VERSION)-`arch -l`.tar
-	rm -rf tmp.`arch -l`
+	  sh ./config.status --file=Makefile.binary && cp Makefile.binary $$tdir/Makefile ; \
+	  strip sudo ; \
+	  strip visudo ; \
+	  cd tmp.$$ARCH && tar Ocf ../sudo-$(VERSION)-$$ARCH.tar sudo-$(VERSION) && cd .. ; \
+	  gzip --best sudo-$(VERSION)-$$ARCH.tar ; \
+	  rm -rf tmp.$$ARCH ; \
+	)

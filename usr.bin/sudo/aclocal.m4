@@ -144,10 +144,14 @@ elif test -d "/var/run"; then
     AC_MSG_RESULT(/var/run/sudo)
     SUDO_DEFINE(_PATH_SUDO_TIMEDIR, "/var/run/sudo")
     timedir="/var/run/sudo"
+elif test -d "/var/adm"; then
+    AC_MSG_RESULT(/var/adm/sudo)
+    SUDO_DEFINE(_PATH_SUDO_TIMEDIR, "/var/adm/sudo")
+    timedir="/var/adm/sudo"
 else
-    AC_MSG_RESULT(/tmp/.odus)
-    SUDO_DEFINE(_PATH_SUDO_TIMEDIR, "/tmp/.odus")
-    timedir="/tmp/.odus"
+    AC_MSG_RESULT(/usr/adm/sudo)
+    SUDO_DEFINE(_PATH_SUDO_TIMEDIR, "/usr/adm/sudo")
+    timedir="/usr/adm/sudo"
 fi
 ])dnl
 
@@ -205,30 +209,6 @@ dnl Check for ino_t declation
 dnl
 AC_DEFUN(SUDO_TYPE_INO_T,
 [SUDO_CHECK_TYPE(ino_t, unsigned int)])
-
-dnl
-dnl check for POSIX utime() using struct utimbuf
-dnl
-AC_DEFUN(SUDO_FUNC_UTIME_POSIX,
-[AC_MSG_CHECKING(for POSIX utime)
-AC_CACHE_VAL(sudo_cv_func_utime_posix,
-[rm -f conftestdata; > conftestdata
-AC_TRY_RUN([#include <sys/types.h>
-#include <sys/time.h>
-#include <utime.h>
-main() {
-struct utimbuf ut;
-ut.actime = ut.modtime = time(0);
-utime("conftestdata", &ut);
-exit(0);
-}], sudo_cv_func_utime_posix=yes, sudo_cv_func_utime_posix=no,
-  sudo_cv_func_utime_posix=no)
-rm -f core core.* *.core])dnl
-AC_MSG_RESULT($sudo_cv_func_utime_posix)
-if test $sudo_cv_func_utime_posix = yes; then
-  AC_DEFINE(HAVE_UTIME_POSIX, 1, [Define if you have a POSIX utime() (uses struct utimbuf).])
-fi
-])
 
 dnl
 dnl check for working fnmatch(3)

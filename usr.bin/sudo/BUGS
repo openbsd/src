@@ -1,4 +1,4 @@
-Known bugs in sudo version 1.6.7
+Known bugs in sudo version 1.6.8
 ================================
 
 1) Sudo should have an option to log when removing "dangerous"
@@ -20,6 +20,9 @@ Known bugs in sudo version 1.6.7
    before the "User privilege specification" section but after all
    the "alias specifications".  In the future the parser will
    converted to a two-pass parser.
+
+6) For the same reason as #5, changing the value of "ignore_dot" has
+   no effect (find_path() is called before sudoers is parsed).
 
 For a list of things that are not bugs but that I would like to
 add / fix, please see the TODO file.

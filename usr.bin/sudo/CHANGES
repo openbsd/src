@@ -552,7 +552,7 @@ CHANGES from sudo 1.3.6 BETA
 
 172) interfaces.c should work on ISC UN*X again.
 
-173) All source files are <= 14 characters for old SYSV filesystems.
+173) All source files are <= 14 characters for old SYSV file systems.
 
 CHANGES from sudo 1.3.7 GAMMA
 
@@ -1470,7 +1470,7 @@ Sudo 1.6.4 released.
 
 Sudo 1.6.4p1 released.
 
-460) Some special characters were not being escaped properly (e..g '\,')
+460) Some special characters were not being escaped properly (e.g. '\,')
      in command line arguments and would cause a syntax error instead.
 
 461) "sudo -l" would not work if the always_set_home option was set.
@@ -1632,4 +1632,102 @@ Sudo 1.6.7p4 released.
 
 Sudo 1.6.7p5 released.
 
-512) BSD-style warn/err functions are now used throughout.
+512) Fixed a problem on FreeBSD when the user is only listed in NIS (not
+     master.passwd) and netgroups are used in the master.passwd file.
+
+513) BSD-style warn/err functions are now used throughout.
+
+514) Fixed the --with-stow configure option
+
+515) Added a "sudo_lecture" option that points to a file containing a custom
+     lecture.
+
+516) The username in a log entry is no longer truncated at 8 characters.
+
+517) A new tag, NOEXEC, will prevent a dynamically-linked program being run
+     by sudo from executing another program (think shell escapes).
+     Because this uses LD_PRELOAD it has no effect on static binaries.
+     Idea from Reznic Valery.
+
+518) TIS fwtk authentication now supports fwtk 2.0 and higher.
+
+519) Sudo will now try to stat the command to be run as the user
+     specified by the -u flag if the stat fails as root.  Fixes
+     an NFS issue.
+
+520) Added Stan Lee / Uncle Ben quote to the lecture (from RedHat).
+
+521) Added a -i option to simulate an initial login similar to "su -".
+     Originally based on a patch from David J. MacKenzie.
+
+522) Added a -e option to edit files the with uid of the invoking user.
+     This prevents the user from editing other files or running commands
+     as the target user.  If sudo is run as "sudoedit" the -e flag is implied.
+
+523) If sudo is used to run as root shell, further sudo commands will
+     be logged as run by the user specified by the SUDO_USER environment
+     variable.  In -e mode (sudoedit), SUDO_USER is used to determine
+     what user to run the editor when the real uid is 0.
+
+524) Merged in LDAP support from Aaron Spangler.
+
+525) Added the --with-pc-insults configure to replace politically
+     incorrect insults with ones from Alek O. Komarnitsky.
+
+526) Added start_tls support from Gudleik Rasch <gudleik@rastamatra.org>.
+
+527) A uid specified in sudoers now matches the user specified by the
+     -u flag even if the -u flag specified a name, not a uid.
+
+528) /tmp/.odus is no longer used for timestamps by default.  One of
+     /var/run/sudo, /var/adm/sudo or /usr/adm/sudo is used depending
+     on what directories exist.
+
+529) Quoting globbing characters with a backslash now works as documented.
+
+530) A negated user/uid in a runas list was not treated the same as a
+     negated command (it did not override a previously allowed entry).
+     Now it does.
+
+531) Added support for Tandem NSK and other systems w/o seteuid().
+
+532) The timeout on password reading is now done via alarm(), not select().
+
+533) Fixed several issues when closing all open descriptors.  Sudo now uses
+     closefrom() if it exists, using /proc/$$/fd if possible.
+
+534) Use PATH_MAX, not MAXPATHLEN since the former is standardized.
+
+535) Added a check in visudo for runas_default being used before it
+     was set.
+
+536) If the target user == invoking user a password is no longer required.
+
+537) PAM support now uses Use pam_acct_mgmt() to check for disabled accounts
+    (from Brian Farrell).
+
+538) The sudoers file is now parsed as the runas user in all cases instead
+     of root.  This fixes some issues with running NFS-mounted commands.
+
+539) Sudo now produces a sensible error message when the targetpw
+     Defaults option is set and a non-existent uid is specified via -u.
+
+Sudo 1.6.8 released.
+
+540) Now find the command base and fill in struct stat earlier.
+
+541) sudoedit now re-opens the temp file as the invoking user.
+
+542) struct timespec is used throughout the code base.
+
+543) Added --with-ldap-conf-file option to override /etc/ldap.conf
+
+544) Added SSL tls_* certificate checking options when using LDAP.
+
+545) Sudoedit will now only attempt to edit regular files or links.
+
+546) Sudo now uses futime() or futimes() where possible.
+
+547) Updated sample.pam to a current version.
+
+548) Better detection of unchanged files in sudoedit.

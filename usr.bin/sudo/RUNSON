@@ -9,10 +9,10 @@ does as well.
 Name	Rev	Arch	Used		Version	By		 Options
 =======	=======	=======	===============	======= ===============  ===============
 Auspex	1.6.1	sun4	bundled cc	1.3.4	Alek Komarnitsky none
-SunOS	4.1.3	sun4	bundled cc	1.6.7	Todd Miller	 none
-SunOS	4.1.3	sun4	gcc2.9.5.2	1.6.7	Todd Miller	 none
+SunOS	4.1.3	sun4	bundled cc	1.6.8p1	Todd Miller	 none
+SunOS	4.1.3	sun4	gcc2.9.5.2	1.6.8p1	Todd Miller	 none
 SunOS	4.1.3	sun4	gcc2.7.2.1	1.5.3	Todd Miller	 --with-kerb4
-SunOS	4.1.3	sun4	gcc2.9.5.2	1.6.7	Todd Miller	 --with-skey
+SunOS	4.1.3	sun4	gcc2.9.5.2	1.6.8p1	Todd Miller	 --with-skey
 Solaris	2.5.1	sparc	SC4.0		1.5.6p1	Brian Jackson	 none 
 Solaris	2.5.1	sun4u	gcc2.7.2.3	1.5.4	Leon von Stauber none
 Solaris	2.5.1	i386	gcc2.7.2	1.5.4	Leon von Stauber none
@@ -29,10 +29,11 @@ Solaris	7	sparc	SC4.2		1.6.6	Todd Miller	 none
 Solaris	7	sun4u	Workshop 6.2	1.6.3p7	Donna Dickerson	 none
 Solaris	7	sparc	gcc2.95.2	1.6.6	Todd Miller	 --with-skey
 Solaris	2.6	sun4u	egcs 1.1.2	1.5.9p4	Scott Kinnane	 none
-Solaris	8	sparc	gcc2.95.2	1.6.7	Todd Miller	 --with-skey
-Solaris	8	sparc	SC4.2		1.6.7	Todd Miller	 none
+Solaris	8	sun4u	gcc2.95.2	1.6.8p1	Todd Miller	 --with-pam
+Solaris	8	sun4u	SC4.2		1.6.8p1	Todd Miller	 --with-pam
 Solaris	8	sun4u	Workshop 6.2	1.6.3p7	Donna Dickerson	 none
 Solaris	8	sun4u	gcc2.95.3	1.6.6	Banu Yobas	 none
+Solaris	9	sun4u	gcc3.3.2	1.6.8p1	Todd Miller	 --with-pam
 ISC	4.0	i386	bundled cc	1.4	Andy Smith	 none
 ISC	4.0	i386	gcc2.7.0	1.4	Andy Smith	 none
 ISC	4.1	i386	bundled cc	1.4	Andy Smith	 none
@@ -44,16 +45,16 @@ HP-UX	9.05	hp700	gcc2.7.2.1	1.5.3	Todd Miller	 none
 HP-UX	9.05	hp700	gcc2.7.2.1	1.5.3	Todd Miller	 --with-kerb4
 HP-UX	9.07	hp700	unbundled cc	1.5	Alek Komarnitsky --with-C2
 HP-UX	9.05	hp700	unbundled cc	1.4	Todd Miller	 none
-HP-UX	10.10	hp700	unbundled cc	1.6.7	Todd Miller	 --with-skey
-HP-UX	10.20	hp700	gcc2.9.5.2	1.6.7	Todd Miller	 --with-skey
-HP-UX	10.20	hp700	bundled cc	1.6.7	Todd Miller	 none
+HP-UX	10.20	hp700	gcc3.3.4	1.6.8p1	Todd Miller	 none
+HP-UX	10.20	hp700	bundled cc	1.6.8p1	Todd Miller	 none
+HP-UX	10.20	hp700	unbundled cc	1.6.8p1	Todd Miller	 none
 HP-UX	10.20	hp700	gcc 2.95.2	1.6.2	Jeff Earickson 	 --with-DCE
-HP-UX	11.00	hp700	ansi-c		1.5.5b1	Alek Komarnitsky --with-C2
-HP-UX	11.00	hp700	bundled cc	1.6.7	Todd Miller 	 none
-HP-UX	11.00	hp700	bundled cc	1.6.7	Todd Miller 	 --with-pam
-HP-UX	11.00	hp700	gcc 3.2		1.6.7	Todd Miller 	 none
-HP-UX	11.00	hp700	gcc 3.2		1.6.7	Todd Miller 	 --with-pam
-HP-UX	11.11	hp800	HP C compiler	1.6.5p2	Bill Marmagas 	 --with-pam
+HP-UX	11.00	hp700	bundled cc	1.6.8p1	Todd Miller 	 none
+HP-UX	11.00	hp700	bundled cc	1.6.8p1	Todd Miller 	 --with-pam
+HP-UX	11.00	hp700	gcc 3.2		1.6.8p1	Todd Miller 	 none
+HP-UX	11.00	hp700	gcc 3.2		1.6.8p1	Todd Miller 	 --with-pam
+HP-UX	11.11	hp700	gcc 3.3.2	1.6.8p1	Todd Miller 	 --with-pam
+HP-UX	11.11	hp700	unbundled cc	1.6.8p1	Todd Miller 	 --with-pam
 Ultrix	4.3	mips	bundled cc	1.6.3b2	Todd Miller	 none
 Ultrix	4.3	mips	gcc2.7.2.1	1.5.9	Todd Miller	 --with-skey
 IRIX	4.05H	mips	gcc2.6.3	1.5.3	Todd Miller	 none
@@ -83,7 +84,8 @@ NEXTSTEP 3.2	i386	bundled cc	1.3.2	Jonathan Adams	 none
 NEXTSTEP 3.3	i386	bundled cc	1.4	Jonathan Adams	 none
 NEXTSTEP 3.3	sparc	bundled cc	1.5.3	Mike Kienenberger none
 DEC UNIX 3.2c	alpha	bundled cc	1.5.3	Todd Miller	 none
-DEC UNIX 4.0D	alpha	bundled cc	1.6.7	Todd Miller	 --with-skey
+DEC UNIX 4.0D	alpha	bundled cc	1.6.8p1	Todd Miller	 none
+DEC UNIX 4.0D	alpha	gcc-2.95.2	1.6.8p1	Todd Miller	 none
 DEC UNIX 4.0	alpha	gcc-2.7.2.1	1.5.3	Todd Miller	 --with-kerb4
 DEC UNIX 4.0D	alpha	bundled cc	1.5.3	Randall R. Cable --with-C2
 DEC UNIX 4.0E	alpha	bundled cc	1.5.9p2	Vangelis Haniotakis none
@@ -104,8 +106,8 @@ AIX	5.1	PowerPC	gcc-3.2.1	1.6.6	Neil MacGregor	 none
 ConvexOS 9.1	convex	bundled cc	1.3.6	Todd Miller	 none
 ConvexOS 9.1	convex	gcc2.4.5	1.3.6	Todd Miller	 none
 BSD/OS	4.1	i386	cc		1.6.3	Todd Miller	 --with-skey
-OpenBSD	3.X	all	gcc-2.95.3	1.6.7	Todd Miller	 none
-OpenBSD	3.X	all	gcc-2.95.3	1.6.7	Todd Miller	 --with-bsdauth
+OpenBSD	3.X	all	gcc-2.95.3	1.6.8p1	Todd Miller	 none
+OpenBSD	3.X	all	gcc-3.3.2	1.6.8p1	Todd Miller	 --with-bsdauth
 FreeBSD	1.1	i386	gcc		1.3.2	Dworkin Muller	 none
 FreeBSD	2.0.5	i386	gcc		1.3.4	Dworkin Muller	 none
 FreeBSD	3.2	i386	gcc 2.7.2.1	1.6	Brian Jackson	 none
@@ -115,14 +117,18 @@ Linux	2.0.15	i586	gcc-2.7.2.1	1.5	Danny Barron	 none
 Linux	2.0.34	i586	egcs-2.91.57	1.5.6p2	Darrin Chandler	 none
 Linux	2.0.36	i586	gcc-2.7.2.3	1.5.7p4	Nathan Haney	 none
 Linux	2.0.33pl1 m68k	gcc 2.7.2.3	1.5.6	James Troup	 none
+Linux	2.0.34	mips	gcc-2.7.2	1.6	Tristan Roddis	 none
+Linux	2.2.0	i386	gcc-2.91.66	1.6.6	Maximilian Incani --disable-saved-ids
 Linux	2.2.12	i586	gcc-2.95.2	1.6.3	Todd Miller	 --with-pam
-Linux	2.4.18	i686	gcc-3.2		1.6.7	Todd Miller	 --with-pam
 Linux	2.2.13	alpha	egcs-2.91.66	1.6.3	Todd Miller	 --with-pam
 Linux	2.2.6-15 ppc	egcs-1.1.2	1.5.9p4	Barbara Schelkle none
-Linux	2.0.34	mips	gcc-2.7.2	1.6	Tristan Roddis	 none
+Linux	2.4.18	i686	gcc-3.2		1.6.7	Todd Miller	 --with-pam
+Linux	2.4.20	i686	gcc-3.2.1	1.6.6	Vasily Korytov	 none
+Linux	2.4.20	i686	gcc-3.2.2	1.6.8p1	Todd Miller	 --with-pam
+Linux	2.4.20	ppc	gcc-3.2.3	1.6.7p5	Nicolas Kaiser	 --with-pam
 UnixWare 1.1.4	i386	gcc-2.7.2	1.4	Michael Hancock	 none
 UnixWare 7.1.1	i686	cc		1.6.5p1	Mike Petkau	 none
-UnixWare 7.1.3	i686	cc		1.6.6	Larry Rosenman	 none
+UnixWare 7.1.3	i686	cc		1.6.7p4	Rodolfo Martin	 none
 Pyramid DC/OSx 1.1	bundled cc	1.4	Les Schuettpelz	 none
 ATT	SVR4.x	i486	Metaware CC	1.4	Chris Ellington	 none
 SINIX	5.42	R4000	bundled cc	1.4	Paul Tuininga	 none

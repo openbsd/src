@@ -1,40 +1,26 @@
 /*
- * Copyright (c) 1994-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
- * All rights reserved.
+ * Copyright (c) 1994-1996,1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * 4. Products derived from this software may not be called "Sudo" nor
- *    may "Sudo" appear in their names without specific prior written
- *    permission from the author.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Sponsored in part by the Defense Advanced Research Projects
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
+
+#ifdef __TANDEM
+# include <floss.h>
+#endif
 
 #include "config.h"
 
@@ -74,7 +60,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: logging.c,v 1.161 2003/04/16 00:42:10 millert Exp $";
+static const char rcsid[] = "$Sudo: logging.c,v 1.168 2004/05/17 20:08:46 millert Exp $";
 #endif /* lint */
 
 static void do_syslog		__P((int, char *));
@@ -116,7 +102,7 @@ mysyslog(pri, fmt, va_alist)
     va_start(ap);
 #endif
 #ifdef LOG_NFACILITIES
-    openlog("sudo", 0, def_ival(I_LOGFAC));
+    openlog("sudo", 0, def_syslog);
 #else
     openlog("sudo", 0);
 #endif
@@ -171,9 +157,9 @@ do_syslog(pri, msg)
 	    *tmp = '\0';
 
 	    if (count == 0)
-		mysyslog(pri, "%8.8s : %s", user_name, p);
+		mysyslog(pri, "%8s : %s", user_name, p);
 	    else
-		mysyslog(pri, "%8.8s : (command continued) %s", user_name, p);
+		mysyslog(pri, "%8s : (command continued) %s", user_name, p);
 
 	    *tmp = save;			/* restore saved character */
 
@@ -182,9 +168,9 @@ do_syslog(pri, msg)
 		;
 	} else {
 	    if (count == 0)
-		mysyslog(pri, "%8.8s : %s", user_name, p);
+		mysyslog(pri, "%8s : %s", user_name, p);
 	    else
-		mysyslog(pri, "%8.8s : (command continued) %s", user_name, p);
+		mysyslog(pri, "%8s : (command continued) %s", user_name, p);
 	}
     }
 }
@@ -200,30 +186,30 @@ do_logfile(msg)
     size_t maxlen;
 
     oldmask = umask(077);
-    maxlen = def_ival(I_LOGLINELEN) > 0 ? def_ival(I_LOGLINELEN) : 0;
-    fp = fopen(def_str(I_LOGFILE), "a");
+    maxlen = def_loglinelen > 0 ? def_loglinelen : 0;
+    fp = fopen(def_logfile, "a");
     (void) umask(oldmask);
     if (fp == NULL) {
 	easprintf(&full_line, "Can't open log file: %s: %s",
-	    def_str(I_LOGFILE), strerror(errno));
+	    def_logfile, strerror(errno));
 	send_mail(full_line);
 	free(full_line);
     } else if (!lock_file(fileno(fp), SUDO_LOCK)) {
 	easprintf(&full_line, "Can't lock log file: %s: %s",
-	    def_str(I_LOGFILE), strerror(errno));
+	    def_logfile, strerror(errno));
 	send_mail(full_line);
 	free(full_line);
     } else {
-	if (def_ival(I_LOGLINELEN) == 0) {
+	if (def_loglinelen == 0) {
 	    /* Don't pretty-print long log file lines (hard to grep) */
-	    if (def_flag(I_LOG_HOST))
+	    if (def_log_host)
 		(void) fprintf(fp, "%s : %s : HOST=%s : %s\n", get_timestr(),
 		    user_name, user_shost, msg);
 	    else
 		(void) fprintf(fp, "%s : %s : %s\n", get_timestr(),
 		    user_name, msg);
 	} else {
-	    if (def_flag(I_LOG_HOST))
+	    if (def_log_host)
 		easprintf(&full_line, "%s : %s : HOST=%s : %s", get_timestr(),
 		    user_name, user_shost, msg);
 	    else
@@ -298,19 +284,19 @@ log_auth(status, inform_user)
     char *logline;
     int pri;
 
-    if (status & VALIDATE_OK)
-	pri = def_ival(I_GOODPRI);
+    if (ISSET(status, VALIDATE_OK))
+	pri = def_syslog_goodpri;
     else
-	pri = def_ival(I_BADPRI);
+	pri = def_syslog_badpri;
 
     /* Set error message, if any. */
-    if (status & VALIDATE_OK)
+    if (ISSET(status, VALIDATE_OK))
 	message = "";
-    else if (status & FLAG_NO_USER)
+    else if (ISSET(status, FLAG_NO_USER))
 	message = "user NOT in sudoers ; ";
-    else if (status & FLAG_NO_HOST)
+    else if (ISSET(status, FLAG_NO_HOST))
 	message = "user NOT authorized on host ; ";
-    else if (status & VALIDATE_NOT_OK)
+    else if (ISSET(status, VALIDATE_NOT_OK))
 	message = "command not allowed ; ";
     else
 	message = "unknown error ; ";
@@ -322,14 +308,14 @@ log_auth(status, inform_user)
     mail_auth(status, logline);		/* send mail based on status */
 
     /* Inform the user if they failed to authenticate.  */
-    if (inform_user && (status & VALIDATE_NOT_OK)) {
-	if (status & FLAG_NO_USER)
+    if (inform_user && ISSET(status, VALIDATE_NOT_OK)) {
+	if (ISSET(status, FLAG_NO_USER))
 	    (void) fprintf(stderr, "%s is not in the sudoers file.  %s",
 		user_name, "This incident will be reported.\n");
-	else if (status & FLAG_NO_HOST)
+	else if (ISSET(status, FLAG_NO_HOST))
 	    (void) fprintf(stderr, "%s is not allowed to run sudo on %s.  %s",
 		user_name, user_shost, "This incident will be reported.\n");
-	else if (status & FLAG_NO_CHECK)
+	else if (ISSET(status, FLAG_NO_CHECK))
 	    (void) fprintf(stderr, "Sorry, user %s may not run sudo on %s.\n",
 		user_name, user_shost);
 	else
@@ -342,9 +328,9 @@ log_auth(status, inform_user)
     /*
      * Log via syslog and/or a file.
      */
-    if (def_str(I_SYSLOG))
+    if (def_syslog)
 	do_syslog(pri, logline);
-    if (def_str(I_LOGFILE))
+    if (def_logfile)
 	do_logfile(logline);
 
     free(logline);
@@ -423,9 +409,9 @@ log_error(va_alist)
     /*
      * Log to syslog and/or a file.
      */
-    if (def_str(I_SYSLOG))
-	do_syslog(def_ival(I_BADPRI), logline);
-    if (def_str(I_LOGFILE))
+    if (def_syslog)
+	do_syslog(def_syslog_badpri, logline);
+    if (def_logfile)
 	do_logfile(logline);
 
     free(message);
@@ -461,7 +447,7 @@ send_mail(line)
 #endif
 
     /* Just return if mailer is disabled. */
-    if (!def_str(I_MAILERPATH) || !def_str(I_MAILTO))
+    if (!def_mailerpath || !def_mailto)
 	return;
 
     (void) sigemptyset(&set);
@@ -490,8 +476,8 @@ send_mail(line)
 		(void) close(pfd[1]);
 
 		/* Build up an argv based the mailer path and flags */
-		mflags = estrdup(def_str(I_MAILERFLAGS));
-		mpath = estrdup(def_str(I_MAILERPATH));
+		mflags = estrdup(def_mailerflags);
+		mpath = estrdup(def_mailerpath);
 		if ((argv[0] = strrchr(mpath, ' ')))
 		    argv[0]++;
 		else
@@ -529,8 +515,8 @@ send_mail(line)
 
     /* Pipes are all setup, send message via sendmail. */
     (void) fprintf(mail, "To: %s\nFrom: %s\nSubject: ",
-	def_str(I_MAILTO), user_name);
-    for (p = def_str(I_MAILSUB); *p; p++) {
+	def_mailto, user_name);
+    for (p = def_mailsub; *p; p++) {
 	/* Expand escapes in the subject */
 	if (*p == '%' && *(p+1) != '%') {
 	    switch (*(++p)) {
@@ -567,17 +553,17 @@ mail_auth(status, line)
     int mail_mask;
 
     /* If any of these bits are set in status, we send mail. */
-    if (def_flag(I_MAIL_ALWAYS))
+    if (def_mail_always)
 	mail_mask =
 	    VALIDATE_ERROR|VALIDATE_OK|FLAG_NO_USER|FLAG_NO_HOST|VALIDATE_NOT_OK;
     else {
 	mail_mask = VALIDATE_ERROR;
-	if (def_flag(I_MAIL_NO_USER))
-	    mail_mask |= FLAG_NO_USER;
-	if (def_flag(I_MAIL_NO_HOST))
-	    mail_mask |= FLAG_NO_HOST;
-	if (def_flag(I_MAIL_NO_PERMS))
-	    mail_mask |= VALIDATE_NOT_OK;
+	if (def_mail_no_user)
+	    SET(mail_mask, FLAG_NO_USER);
+	if (def_mail_no_host)
+	    SET(mail_mask, FLAG_NO_HOST);
+	if (def_mail_no_perms)
+	    SET(mail_mask, VALIDATE_NOT_OK);
     }
 
     if ((status & mail_mask) != 0)
@@ -618,7 +604,7 @@ get_timestr()
     struct tm *timeptr;
 
     timeptr = localtime(&now);
-    if (def_flag(I_LOG_YEAR))
+    if (def_log_year)
 	s = "%h %e %T %Y";
     else
 	s = "%h %e %T";
@@ -631,7 +617,7 @@ get_timestr()
 #endif /* HAVE_STRFTIME */
 
     s = ctime(&now) + 4;		/* skip day of the week */
-    if (def_flag(I_LOG_YEAR))
+    if (def_log_year)
 	s[20] = '\0';			/* avoid the newline */
     else
 	s[15] = '\0';			/* don't care about year */

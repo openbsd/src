@@ -1,0 +1,115 @@
+#!/usr/bin/env perl
+use strict;
+
+#
+# Converts a sudoers file to LDIF format in prepration for loading into
+# the LDAP server.
+#
+# $Sudo: sudoers2ldif,v 1.2 2004/02/13 02:08:27 aaron Exp $
+#
+
+# BUGS:
+#   Does not yet handle multiple lines with : in them
+#   Does not yet handle runas (xxx) syntax.
+#   Does not yet remove quotation marks from options
+#   Does not yet escape + at the beginning of a dn
+#   Does not yet handle line wraps correctly
+#   Does not yet handle multiple roles with same name (needs tiebreaker)
+
+my %UA;
+my %HA;
+my %CA;
+my $base=$ENV{SUDOERS_BASE} or die "$0: Container SUDOERS_BASE undefined\n";
+my @options=();
+
+my $did_defaults=0;
+
+# parse sudoers one line at a time
+while (<>){
+
+  # remove comment
+  s/#.*//;
+
+  # line continuation
+  $_.=<> while s/\\\s*$//s;
+
+  # cleanup newline
+  chomp;
+
+  # ignore blank lines
+  next if /^\s*$/;
+
+  if (/^Defaults\s+/i) {
+    my $opt=$';
+    $opt=~s/\s+$//; # remove trailing whitespace
+    push @options,$opt;
+  } elsif (/^(\S+)\s+(.+)=\s*(.*)/) {
+
+    # Aliases or Definitions
+    my ($p1,$p2,$p3)=($1,$2,$3);
+    $p2=~s/\s+$//; # remove trailing whitespace
+    $p3=~s/\s+$//; # remove trailing whitespace
+
+    if      ($p1 eq "User_Alias") {
+      $UA{$p2}=$p3;
+    } elsif ($p1 eq "Host_Alias") {
+      $HA{$p2}=$p3;
+    } elsif ($p1 eq "Cmnd_Alias") {
+      $CA{$p2}=$p3;
+    } else {
+      if (!$did_defaults++){
+        # do this once
+        print "dn: cn=defaults,$base\n";
+        print "objectClass: top\n";
+        print "objectClass: sudoRole\n";
+        print "cn: defaults\n";
+     print "description: Default sudoOption's go here\n";
+        print "sudoOption: $_\n" foreach @options;
+        print "\n";
+      }
+      # Definition
+      my @users=split /\s*,\s*/,$p1;
+      my @hosts=split /\s*,\s*/,$p2;
+      my @cmds= split /\s*,\s*/,$p3;
+      @options=();
+      print "dn: cn=$users[0],$base\n";
+      print "objectClass: top\n";
+      print "objectClass: sudoRole\n";
+      print "cn: $users[0]\n";
+      # will clobber options
+      print "sudoUser: $_\n"   foreach expand(\%UA,@users);
+      print "sudoHost: $_\n"   foreach expand(\%HA,@hosts);
+      print "sudoCommand: $_\n" foreach expand(\%CA,@cmds);
+      print "sudoOption: $_\n" foreach @options;
+      print "\n";
+    }
+
+  } else {
+    print "parse error: $_\n";
+  }
+
+}
+
+#
+# recursively expand hash elements
+sub expand{
+  my $ref=shift;
+  my @a=();
+
+  # preen the line a little
+  foreach (@_){
+    # if NOPASSWD: directive found, mark entire entry as not requiring
+    s/NOPASSWD:\s*// && push @options,"!authenticate";
+    s/PASSWD:\s*// && push @options,"authenticate";
+    s/NOEXEC:\s*// && push @options,"noexec";
+    s/EXEC:\s*// && push @options,"!noexec";
+    s/\w+://; # silently remove other directives
+    s/\s+$//; # right trim
+  }
+
+  # do the expanding
+  push @a,$ref->{$_} ? expand($ref,split /\s*,\s*/,$ref->{$_}):$_ foreach @_;
+  @a;
+}
+
+

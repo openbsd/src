@@ -1,35 +1,17 @@
 /*
- * Copyright (c) 1993-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
- * All rights reserved.
+ * Copyright (c) 1993-1996,1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * 4. Products derived from this software may not be called "Sudo" nor
- *    may "Sudo" appear in their names without specific prior written
- *    permission from the author.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Sponsored in part by the Defense Advanced Research Projects
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
@@ -40,6 +22,10 @@
  */
 
 #define _SUDO_MAIN
+
+#ifdef __TANDEM
+# include <floss.h>
+#endif
 
 #include "config.h"
 
@@ -107,7 +93,7 @@
 #include "version.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.337 2003/04/16 00:42:10 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.370 2004/08/24 18:01:13 millert Exp $";
 #endif /* lint */
 
 /*
@@ -121,17 +107,20 @@ static void set_loginclass		__P((struct passwd *));
 static void usage			__P((int));
 static void usage_excl			__P((int));
 static struct passwd *get_authpw	__P((void));
+extern int sudo_edit			__P((int, char **));
 extern void list_matches		__P((void));
-extern char **rebuild_env		__P((int, char **));
+extern char **rebuild_env		__P((char **, int, int));
 extern char **zero_env			__P((char **));
 extern struct passwd *sudo_getpwnam	__P((const char *));
 extern struct passwd *sudo_getpwuid	__P((uid_t));
+extern struct passwd *sudo_pwdup	__P((const struct passwd *));
 
 /*
  * Globals
  */
 int Argc, NewArgc;
 char **Argv, **NewArgv;
+char *prev_user;
 struct sudo_user sudo_user;
 struct passwd *auth_pw;
 FILE *sudoers_fp;
@@ -149,6 +138,7 @@ login_cap_t *lc;
 #ifdef HAVE_BSD_AUTH_H
 char *login_style;
 #endif /* HAVE_BSD_AUTH_H */
+sigaction_t saved_sa_int, saved_sa_quit, saved_sa_tstp, saved_sa_chld;
 void (*set_perms) __P((int));
 
 
@@ -164,12 +154,13 @@ main(argc, argv, envp)
     int sudo_mode;
     int pwflag;
     char **new_environ;
-    sigaction_t sa, saved_sa_int, saved_sa_quit, saved_sa_tstp, saved_sa_chld;
+    sigaction_t sa;
     extern int printmatches;
     extern char **environ;
 
-    Argc = argc;
     Argv = argv;
+    if ((Argc = argc) < 1)
+	usage(1);
 
     /* Must be done as the first thing... */
 #if defined(HAVE_GETPRPWNAM) && defined(HAVE_SET_AUTH_PARAMETERS)
@@ -216,8 +207,10 @@ main(argc, argv, envp)
     load_interfaces();
 
     pwflag = 0;
-    if (sudo_mode & MODE_SHELL)
+    if (ISSET(sudo_mode, MODE_SHELL))
 	user_cmnd = "shell";
+    else if (ISSET(sudo_mode, MODE_EDIT))
+	user_cmnd = "sudoedit";
     else
 	switch (sudo_mode) {
 	    case MODE_VERSION:
@@ -235,7 +228,7 @@ main(argc, argv, envp)
 		break;
 	    case MODE_VALIDATE:
 		user_cmnd = "validate";
-		pwflag = I_VERIFYPW_I;
+		pwflag = I_VERIFYPW;
 		break;
 	    case MODE_KILL:
 	    case MODE_INVALIDATE:
@@ -248,7 +241,7 @@ main(argc, argv, envp)
 		break;
 	    case MODE_LIST:
 		user_cmnd = "list";
-		pwflag = I_LISTPW_I;
+		pwflag = I_LISTPW;
 		printmatches = 1;
 		break;
 	}
@@ -259,10 +252,29 @@ main(argc, argv, envp)
 
     cmnd_status = init_vars(sudo_mode);
 
-    check_sudoers();	/* check mode/owner on _PATH_SUDOERS */
+#ifdef HAVE_LDAP
+    validated = sudo_ldap_check(pwflag);
 
-    /* Validate the user but don't search for pseudo-commands. */
-    validated = sudoers_lookup(pwflag);
+    /* Skip reading /etc/sudoers if LDAP told us to */
+    if (def_ignore_local_sudoers); /* skips */
+    else if (ISSET(validated, VALIDATE_OK) && !printmatches); /* skips */
+    else if (ISSET(validated, VALIDATE_OK) && printmatches)
+    {
+	check_sudoers();	/* check mode/owner on _PATH_SUDOERS */
+
+	/* User is found in LDAP and we want a list of all sudo commands the
+	 * user can do, so consult sudoers but throw away result.
+	 */
+	sudoers_lookup(pwflag);
+    }
+    else
+#endif
+    {
+	check_sudoers();	/* check mode/owner on _PATH_SUDOERS */
+
+	/* Validate the user but don't search for pseudo-commands. */
+	validated = sudoers_lookup(pwflag);
+    }
 
     /*
      * If we are using set_perms_posix() and the stay_setuid flag was not set,
@@ -271,7 +283,7 @@ main(argc, argv, envp)
      */
 #if !defined(HAVE_SETRESUID) && !defined(HAVE_SETREUID) && \
     !defined(NO_SAVED_IDS) && defined(_SC_SAVED_IDS) && defined(_SC_VERSION)
-    if (!def_flag(I_STAY_SETUID) && set_perms == set_perms_posix) {
+    if (!def_stay_setuid && set_perms == set_perms_posix) {
 	if (setuid(0)) {
 	    perror("setuid(0)");
 	    exit(1);
@@ -281,35 +293,18 @@ main(argc, argv, envp)
 #endif
 
     /*
-     * Look up runas user passwd struct.  If we are given a uid then
-     * there may be no corresponding passwd(5) entry (which is OK).
-     */
-    if (**user_runas == '#') {
-	runas_pw = sudo_getpwuid(atoi(*user_runas + 1));
-	if (runas_pw == NULL) {
-	    runas_pw = emalloc(sizeof(struct passwd));
-	    (void) memset((VOID *)runas_pw, 0, sizeof(struct passwd));
-	    runas_pw->pw_uid = atoi(*user_runas + 1);
-	}
-    } else {
-	runas_pw = sudo_getpwnam(*user_runas);
-	if (runas_pw == NULL)
-	    log_error(NO_MAIL|MSG_ONLY, "no passwd entry for %s!", *user_runas);
-    }
-
-    /*
      * Look up the timestamp dir owner if one is specified.
      */
-    if (def_str(I_TIMESTAMPOWNER)) {
+    if (def_timestampowner) {
 	struct passwd *pw;
 
-	if (*def_str(I_TIMESTAMPOWNER) == '#')
-	    pw = getpwuid(atoi(def_str(I_TIMESTAMPOWNER) + 1));
+	if (*def_timestampowner == '#')
+	    pw = getpwuid(atoi(def_timestampowner + 1));
 	else
-	    pw = getpwnam(def_str(I_TIMESTAMPOWNER));
+	    pw = getpwnam(def_timestampowner);
 	if (!pw)
 	    log_error(0, "timestamp owner (%s): No such user",
-		def_str(I_TIMESTAMPOWNER));
+		def_timestampowner);
 	timestamp_uid = pw->pw_uid;
     }
 
@@ -319,12 +314,12 @@ main(argc, argv, envp)
 	exit(0);
     }
 
-    if (validated & VALIDATE_ERROR)
+    if (ISSET(validated, VALIDATE_ERROR))
 	log_error(0, "parse error in %s near line %d", _PATH_SUDOERS,
 	    errorlineno);
 
     /* Is root even allowed to run sudo? */
-    if (user_uid == 0 && !def_flag(I_ROOT_SUDO)) {
+    if (user_uid == 0 && !def_root_sudo) {
 	(void) fprintf(stderr,
 	    "Sorry, %s has been configured to not allow root to run it.\n",
 	    getprogname());
@@ -332,20 +327,20 @@ main(argc, argv, envp)
     }
 
     /* If given the -P option, set the "preserve_groups" flag. */
-    if (sudo_mode & MODE_PRESERVE_GROUPS)
-	def_flag(I_PRESERVE_GROUPS) = TRUE;
+    if (ISSET(sudo_mode, MODE_PRESERVE_GROUPS))
+	def_preserve_groups = TRUE;
 
     /* If no command line args and "set_home" is not set, error out. */
-    if ((sudo_mode & MODE_IMPLIED_SHELL) && !def_flag(I_SHELL_NOARGS))
+    if (ISSET(sudo_mode, MODE_IMPLIED_SHELL) && !def_shell_noargs)
 	usage(1);
 
     /* May need to set $HOME to target user if we are running a command. */
-    if ((sudo_mode & MODE_RUN) && (def_flag(I_ALWAYS_SET_HOME) ||
-	((sudo_mode & MODE_SHELL) && def_flag(I_SET_HOME))))
-	sudo_mode |= MODE_RESET_HOME;
+    if (ISSET(sudo_mode, MODE_RUN) && (def_always_set_home ||
+	(ISSET(sudo_mode, MODE_SHELL) && def_set_home)))
+	SET(sudo_mode, MODE_RESET_HOME);
 
     /* Bail if a tty is required and we don't have one.  */
-    if (def_flag(I_REQUIRETTY)) {
+    if (def_requiretty) {
 	if ((fd = open(_PATH_TTY, O_RDWR|O_NOCTTY)) == -1)
 	    log_error(NO_MAIL, "sorry, you must have a tty to run sudo");
 	else
@@ -355,14 +350,27 @@ main(argc, argv, envp)
     /* Fill in passwd struct based on user we are authenticating as.  */
     auth_pw = get_authpw();
 
-    /* Require a password unless the NOPASS tag was set.  */
-    if (!(validated & FLAG_NOPASS))
-	check_user();
+    /* Require a password if sudoers says so.  */
+    if (!ISSET(validated, FLAG_NOPASS))
+	check_user(ISSET(validated, FLAG_CHECK_USER));
 
-    /* Build up custom environment that avoids any nasty bits. */
-    new_environ = rebuild_env(sudo_mode, envp);
+    /* If run as root with SUDO_USER set, set sudo_user.pw to that user. */
+    if (user_uid == 0 && prev_user != NULL && strcmp(prev_user, "root") != 0) {
+	    struct passwd *pw;
 
-    if (validated & VALIDATE_OK) {
+	    if ((pw = sudo_getpwnam(prev_user)) != NULL) {
+		    free(sudo_user.pw);
+		    sudo_user.pw = pw;
+	    }
+    }
+
+    /* Build a new environment that avoids any nasty bits if we have a cmnd. */
+    if (ISSET(sudo_mode, MODE_RUN))
+	new_environ = rebuild_env(envp, sudo_mode, ISSET(validated, FLAG_NOEXEC));
+    else
+	new_environ = envp;
+
+    if (ISSET(validated, VALIDATE_OK)) {
 	/* Finally tell the user if the command did not exist. */
 	if (cmnd_status == NOT_FOUND_DOT) {
 	    warnx("ignoring `%s' found in '.'\nUse `sudo ./%s' if this is the `%s' you wish to run.", user_cmnd, user_cmnd, user_cmnd);
@@ -377,6 +385,9 @@ main(argc, argv, envp)
 	    exit(0);
 	else if (sudo_mode == MODE_LIST) {
 	    list_matches();
+#ifdef HAVE_LDAP
+	    sudo_ldap_list_matches();
+#endif
 	    exit(0);
 	}
 
@@ -389,23 +400,41 @@ main(argc, argv, envp)
 	}
 
 	/* Override user's umask if configured to do so. */
-	if (def_ival(I_UMASK) != 0777)
-	    (void) umask(def_mode(I_UMASK));
+	if (def_umask != 0777)
+	    (void) umask(def_umask);
 
 	/* Restore coredumpsize resource limit. */
 #if defined(RLIMIT_CORE) && !defined(SUDO_DEVEL)
 	(void) setrlimit(RLIMIT_CORE, &corelimit);
 #endif /* RLIMIT_CORE && !SUDO_DEVEL */
 
-	/* Become specified user or root. */
-	set_perms(PERM_RUNAS);
+	/* Become specified user or root if executing a command. */
+	if (ISSET(sudo_mode, MODE_RUN))
+	    set_perms(PERM_FULL_RUNAS);
 
 	/* Close the password and group files */
 	endpwent();
 	endgrent();
 
-	/* Install the new environment. */
+	/* Install the real environment. */
 	environ = new_environ;
+
+	if (ISSET(sudo_mode, MODE_LOGIN_SHELL)) {
+	    char *p;
+
+	    /* Convert /bin/sh -> -sh so shell knows it is a login shell */
+	    if ((p = strrchr(NewArgv[0], '/')) == NULL)
+		p = NewArgv[0];
+	    *p = '-';
+	    NewArgv[0] = p;
+
+	    /* Change to target user's homedir. */
+	    if (chdir(runas_pw->pw_dir) == -1)
+		warn("unable to change directory to %s", runas_pw->pw_dir);
+	}
+
+	if (ISSET(sudo_mode, MODE_EDIT))
+	    exit(sudo_edit(NewArgc, NewArgv));
 
 	/* Restore signal handlers before we exec. */
 	(void) sigaction(SIGINT, &saved_sa_int, NULL);
@@ -414,10 +443,10 @@ main(argc, argv, envp)
 	(void) sigaction(SIGCHLD, &saved_sa_chld, NULL);
 
 #ifndef PROFILING
-	if ((sudo_mode & MODE_BACKGROUND) && fork() > 0)
+	if (ISSET(sudo_mode, MODE_BACKGROUND) && fork() > 0)
 	    exit(0);
 	else
-	    EXEC(safe_cmnd, NewArgv);	/* run the command */
+	    EXECV(safe_cmnd, NewArgv);	/* run the command */
 #else
 	exit(0);
 #endif /* PROFILING */
@@ -426,11 +455,11 @@ main(argc, argv, envp)
 	 */
 	warn("unable to execute %s", safe_cmnd);
 	exit(127);
-    } else if ((validated & FLAG_NO_USER) || (validated & FLAG_NO_HOST)) {
+    } else if (ISSET(validated, FLAG_NO_USER) || (validated & FLAG_NO_HOST)) {
 	log_auth(validated, 1);
 	exit(1);
-    } else if (validated & VALIDATE_NOT_OK) {
-	if (def_flag(I_PATH_INFO)) {
+    } else if (ISSET(validated, VALIDATE_NOT_OK)) {
+	if (def_path_info) {
 	    /*
 	     * We'd like to not leak path info at all here, but that can
 	     * *really* confuse the users.  To really close the leak we'd
@@ -469,7 +498,7 @@ init_vars(sudo_mode)
     int nohostname, rval;
 
     /* Sanity check command from user. */
-    if (user_cmnd == NULL && strlen(NewArgv[0]) >= MAXPATHLEN)
+    if (user_cmnd == NULL && strlen(NewArgv[0]) >= PATH_MAX)
 	errx(1, "%s: File name too long", NewArgv[0]);
 
 #ifdef HAVE_TZSET
@@ -492,7 +521,7 @@ init_vars(sudo_mode)
 	user_host = user_shost = "localhost";
     else {
 	user_host = estrdup(thost);
-	if (def_flag(I_FQDN)) {
+	if (def_fqdn) {
 	    /* Defer call to set_fqdn() until log_error() is safe. */
 	    user_shost = user_host;
 	} else {
@@ -543,14 +572,15 @@ init_vars(sudo_mode)
 
     /* It is now safe to use log_error() and set_perms() */
 
-    /*
-     * Must defer set_fqdn() until it is safe to call log_error()
-     */
-    if (def_flag(I_FQDN))
-	set_fqdn();
+    if (def_fqdn)
+	set_fqdn();			/* may call log_error() */
 
     if (nohostname)
 	log_error(USE_ERRNO|MSG_ONLY, "can't get hostname");
+
+    set_runaspw(*user_runas);		/* may call log_error() */
+    if (*user_runas[0] == '#' && runas_pw->pw_name && runas_pw->pw_name[0])
+	*user_runas = estrdup(runas_pw->pw_name);
 
     /*
      * Get current working directory.  Try as user, fall back to root.
@@ -566,16 +596,20 @@ init_vars(sudo_mode)
 	set_perms(PERM_ROOT);
 
     /*
-     * If we were given the '-s' option (run shell) we need to redo
+     * If we were given the '-e', '-i' or '-s' options we need to redo
      * NewArgv and NewArgc.
      */
-    if ((sudo_mode & MODE_SHELL)) {
+    if ((sudo_mode & (MODE_SHELL | MODE_EDIT))) {
 	char **dst, **src = NewArgv;
 
 	NewArgv = (char **) emalloc2((++NewArgc + 1), sizeof(char *));
-	if (user_shell && *user_shell) {
+	if (ISSET(sudo_mode, MODE_EDIT))
+	    NewArgv[0] = "sudoedit";
+	else if (ISSET(sudo_mode, MODE_LOGIN_SHELL))
+	    NewArgv[0] = runas_pw->pw_shell;
+	else if (user_shell && *user_shell)
 	    NewArgv[0] = user_shell;
-	} else
+	else
 	    errx(1, "unable to determine shell");
 
 	/* copy the args from NewArgv */
@@ -587,14 +621,20 @@ init_vars(sudo_mode)
     set_loginclass(sudo_user.pw);
 
     /* Resolve the path and return. */
-    if ((sudo_mode & MODE_RUN)) {
-	/* XXX - should call this as runas user, not root. */
-	rval = find_path(NewArgv[0], &user_cmnd, user_path);
-	if (rval != FOUND) {
-	    /* Failed as root, try as invoking user. */
-	    set_perms(PERM_USER);
-	    rval = find_path(NewArgv[0], &user_cmnd, user_path);
+    rval = FOUND;
+    user_stat = emalloc(sizeof(struct stat));
+    if (sudo_mode & (MODE_RUN | MODE_EDIT)) {
+	if (ISSET(sudo_mode, MODE_RUN)) {
+	    /* XXX - default_runas may be modified during parsing of sudoers */
+	    set_perms(PERM_RUNAS);
+	    rval = find_path(NewArgv[0], &user_cmnd, user_stat, user_path);
 	    set_perms(PERM_ROOT);
+	    if (rval != FOUND) {
+		/* Failed as root, try as invoking user. */
+		set_perms(PERM_USER);
+		rval = find_path(NewArgv[0], &user_cmnd, user_stat, user_path);
+		set_perms(PERM_ROOT);
+	    }
 	}
 
 	/* set user_args */
@@ -602,8 +642,8 @@ init_vars(sudo_mode)
 	    char *to, **from;
 	    size_t size, n;
 
-	    /* If MODE_SHELL not set then NewArgv is contiguous so just count */
-	    if (!(sudo_mode & MODE_SHELL)) {
+	    /* If we didn't realloc NewArgv it is contiguous so just count. */
+	    if (!(sudo_mode & (MODE_SHELL | MODE_EDIT))) {
 		size = (size_t) (NewArgv[NewArgc-1] - NewArgv[1]) +
 			strlen(NewArgv[NewArgc-1]) + 1;
 	    } else {
@@ -611,7 +651,7 @@ init_vars(sudo_mode)
 		    size += strlen(*from) + 1;
 	    }
 
-	    /* alloc and copy. */
+	    /* Alloc and build up user_args. */
 	    user_args = (char *) emalloc(size);
 	    for (to = user_args, from = NewArgv + 1; *from; from++) {
 		n = strlcpy(to, *from, size - (to - user_args));
@@ -622,8 +662,11 @@ init_vars(sudo_mode)
 	    }
 	    *--to = '\0';
 	}
-    } else
-	rval = FOUND;
+    }
+    if ((user_base = strrchr(user_cmnd, '/')) != NULL)
+	user_base++;
+    else
+	user_base = user_cmnd;
 
     return(rval);
 }
@@ -642,8 +685,15 @@ parse_args(argc, argv)
     NewArgv = argv + 1;
     NewArgc = argc - 1;
 
-    if (NewArgc == 0) {			/* no options and no command */
-	rval |= (MODE_IMPLIED_SHELL | MODE_SHELL);
+    /* First, check to see if we were invoked as "sudoedit". */
+    if (strcmp(getprogname(), "sudoedit") == 0) {
+	rval = MODE_EDIT;
+	excl = 'e';
+    } else
+	rval = MODE_RUN;
+
+    if (NewArgc == 0 && rval == MODE_RUN) {	/* no options and no command */
+	SET(rval, (MODE_IMPLIED_SHELL | MODE_SHELL));
 	return(rval);
     }
 
@@ -691,20 +741,33 @@ parse_args(argc, argv)
 		    usage(1);
 
 		login_class = NewArgv[1];
-		def_flag(I_USE_LOGINCLASS) = TRUE;
+		def_use_loginclass = TRUE;
 
 		NewArgc--;
 		NewArgv++;
 		break;
 #endif
 	    case 'b':
-		rval |= MODE_BACKGROUND;
+		SET(rval, MODE_BACKGROUND);
+		break;
+	    case 'e':
+		rval = MODE_EDIT;
+		if (excl && excl != 'e')
+		    usage_excl(1);
+		excl = 'e';
 		break;
 	    case 'v':
 		rval = MODE_VALIDATE;
 		if (excl && excl != 'v')
 		    usage_excl(1);
 		excl = 'v';
+		break;
+	    case 'i':
+		SET(rval, (MODE_LOGIN_SHELL | MODE_SHELL));
+		def_env_reset = TRUE;
+		if (excl && excl != 'i')
+		    usage_excl(1);
+		excl = 'i';
 		break;
 	    case 'k':
 		rval = MODE_INVALIDATE;
@@ -743,25 +806,25 @@ parse_args(argc, argv)
 		excl = 'h';
 		break;
 	    case 's':
-		rval |= MODE_SHELL;
+		SET(rval, MODE_SHELL);
 		if (excl && excl != 's')
 		    usage_excl(1);
 		excl = 's';
 		break;
 	    case 'H':
-		rval |= MODE_RESET_HOME;
+		SET(rval, MODE_RESET_HOME);
 		break;
 	    case 'P':
-		rval |= MODE_PRESERVE_GROUPS;
+		SET(rval, MODE_PRESERVE_GROUPS);
 		break;
 	    case 'S':
-		tgetpass_flags |= TGP_STDIN;
+		SET(tgetpass_flags, TGP_STDIN);
 		break;
 	    case '-':
 		NewArgc--;
 		NewArgv++;
 		if (rval == MODE_RUN)
-		    rval |= (MODE_IMPLIED_SHELL | MODE_SHELL);
+		    SET(rval, (MODE_IMPLIED_SHELL | MODE_SHELL));
 		return(rval);
 	    case '\0':
 		warnx("'-' requires an argument");
@@ -774,7 +837,8 @@ parse_args(argc, argv)
 	NewArgv++;
     }
 
-    if (NewArgc > 0 && !(rval & MODE_RUN))
+    if ((NewArgc == 0 && (rval & MODE_EDIT)) ||
+	(NewArgc > 0 && !(rval & (MODE_RUN | MODE_EDIT))))
 	usage(1);
 
     return(rval);
@@ -793,7 +857,7 @@ check_sudoers()
 
     /*
      * Fix the mode and group on sudoers file from old default.
-     * Only works if filesystem is readable/writable by root.
+     * Only works if file system is readable/writable by root.
      */
     if ((rootstat = stat_sudoers(_PATH_SUDOERS, &statbuf)) == 0 &&
 	SUDOERS_UID == statbuf.st_uid && SUDOERS_MODE != 0400 &&
@@ -801,7 +865,7 @@ check_sudoers()
 
 	if (chmod(_PATH_SUDOERS, SUDOERS_MODE) == 0) {
 	    warnx("fixed mode on %s", _PATH_SUDOERS);
-	    statbuf.st_mode |= SUDOERS_MODE;
+	    SET(statbuf.st_mode, SUDOERS_MODE);
 	    if (statbuf.st_gid != SUDOERS_GID) {
 		if (!chown(_PATH_SUDOERS,(uid_t) -1,SUDOERS_GID)) {
 		    warnx("set group on %s", _PATH_SUDOERS);
@@ -965,31 +1029,59 @@ set_fqdn()
 }
 
 /*
+ * Get passwd entry for the user we are going to run commands as.
+ * By default, this is "root".  Updates runas_pw as a side effect.
+ */
+int
+set_runaspw(user)
+    char *user;
+{
+    if (runas_pw != NULL) {
+	if (user_runas != &def_runas_default)
+	    return(TRUE);		/* don't override -u option */
+	free(runas_pw);
+    }
+    if (*user == '#') {
+	runas_pw = sudo_getpwuid(atoi(user + 1));
+	if (runas_pw == NULL) {
+	    runas_pw = emalloc(sizeof(struct passwd));
+	    (void) memset((VOID *)runas_pw, 0, sizeof(struct passwd));
+	    runas_pw->pw_uid = atoi(user + 1);
+	}
+    } else {
+	runas_pw = sudo_getpwnam(user);
+	if (runas_pw == NULL)
+	    log_error(NO_MAIL|MSG_ONLY, "no passwd entry for %s!", user);
+    }
+    return(TRUE);
+}
+
+/*
  * Get passwd entry for the user we are going to authenticate as.
- * By default, this is the user invoking sudo...
+ * By default, this is the user invoking sudo.  In the most common
+ * case, this matches sudo_user.pw or runas_pw.
  */
 static struct passwd *
 get_authpw()
 {
     struct passwd *pw;
 
-    if (def_ival(I_ROOTPW)) {
-	if ((pw = sudo_getpwuid(0)) == NULL)
+    if (def_rootpw) {
+	if (runas_pw->pw_uid == 0)
+	    pw = runas_pw;
+	else if ((pw = sudo_getpwuid(0)) == NULL)
 	    log_error(0, "uid 0 does not exist in the passwd file!");
-    } else if (def_ival(I_RUNASPW)) {
-	if ((pw = sudo_getpwnam(def_str(I_RUNAS_DEFAULT))) == NULL)
+    } else if (def_runaspw) {
+	if (strcmp(def_runas_default, *user_runas) == 0)
+	    pw = runas_pw;
+	else if ((pw = sudo_getpwnam(def_runas_default)) == NULL)
 	    log_error(0, "user %s does not exist in the passwd file!",
-		def_str(I_RUNAS_DEFAULT));
-    } else if (def_ival(I_TARGETPW)) {
-	if (**user_runas == '#') {
-	    if ((pw = sudo_getpwuid(atoi(*user_runas + 1))) == NULL)
-		log_error(0, "uid %s does not exist in the passwd file!",
-		    user_runas);
-	} else {
-	    if ((pw = sudo_getpwnam(*user_runas)) == NULL)
-		log_error(0, "user %s does not exist in the passwd file!",
-		    user_runas);
-	}
+		def_runas_default);
+    } else if (def_targetpw) {
+	if (runas_pw->pw_name == NULL)
+	    log_error(NO_MAIL|MSG_ONLY, "no passwd entry for %lu!",
+		runas_pw->pw_uid);
+	pw = runas_pw;
     } else
 	pw = sudo_user.pw;
 
@@ -1003,8 +1095,7 @@ static void
 usage_excl(exit_val)
     int exit_val;
 {
-    (void) fprintf(stderr,
-	"Only one of the -h, -k, -K, -l, -s, -v or -V options may be used\n");
+    warnx("Only one of the -e, -h, -k, -K, -l, -s, -v or -V options may be used");
     usage(exit_val);
 }
 
@@ -1015,15 +1106,53 @@ static void
 usage(exit_val)
     int exit_val;
 {
-
-    (void) fprintf(stderr, "usage: sudo -V | -h | -L | -l | -v | -k | -K | %s",
-	"[-H] [-P] [-S] [-b] [-p prompt]\n            [-u username/#uid] ");
-#ifdef HAVE_LOGIN_CAP_H
-    (void) fprintf(stderr, "[-c class] ");
-#endif
+    char **p;
+    int linelen, linemax, ulen;
+    static char *uvec[] = {
+	" [-HPSb]",
 #ifdef HAVE_BSD_AUTH_H
-    (void) fprintf(stderr, "[-a auth_type] ");
+	" [-a auth_type]",
 #endif
-    (void) fprintf(stderr, "-s | <command>\n");
+#ifdef HAVE_LOGIN_CAP_H
+	" [-c class|-]",
+#endif
+	" [-p prompt]",
+	" [-u username|#uid]",
+	" { -e file [...] | -i | -s | <command> }",
+	NULL
+    };
+
+    /*
+     * For sudoedit, replace the last entry in the usage vector.
+     * For sudo, print the secondary usage.
+     */
+    if (strcmp(getprogname(), "sudoedit") == 0) {
+	/* Replace the last entry in the usage vector. */
+	for (p = uvec; p[1] != NULL; p++)
+	    continue;
+	*p = " file [...]";
+    } else {
+	fprintf(stderr, "usage: %s -K | -L | -V | -h | -k | -l | -v\n",
+	    getprogname());
+    }
+
+    /*
+     * Print the main usage and wrap lines as needed.
+     * Assumes an 80-character wide terminal, which is kind of bogus...
+     */
+    ulen = (int)strlen(getprogname()) + 7;
+    linemax = 80;
+    linelen = linemax - ulen;
+    printf("usage: %s", getprogname());
+    for (p = uvec; *p != NULL; p++) {
+	if (linelen == linemax || (linelen -= strlen(*p)) >= 0) {
+	    fputs(*p, stdout);
+	} else {
+	    p--;
+	    linelen = linemax;
+	    printf("\n%*s", ulen, "");
+	}
+    }
+    putchar('\n');
     exit(exit_val);
 }

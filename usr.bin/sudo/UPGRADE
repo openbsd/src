@@ -1,6 +1,20 @@
 Notes on upgrading from an older release
 ========================================
 
+o Upgrading from a version prior to 1.6.8:
+
+    Prior to sudo 1.6.8, if /var/run did not exist, sudo would put
+    the timestamp files in /tmp/.odus.  As of sudo 1.6.8, the
+    timestamp files will be placed in /var/adm/sudo or /usr/adm/sudo
+    if there is no /var/run directory.  This directory will be
+    created if it does not already exist.
+
+    Previously, a sudoers entry that explicitly prohibited running
+    a command as a certain user did not override a previous entry
+    allowing the same command.  This has been fixed in sudo 1.6.8
+    such that the last match is now used (as it is documented).
+    Hopefully no one was depending on the previous (buggy) beghavior.
+
 o Upgrading from a version prior to 1.6:
 
     As of sudo 1.6, parsing of runas entries and the NOPASSWD tag
@@ -57,4 +71,4 @@ o Upgrading from a version prior to 1.5:
     that if have a means of distributing sudo you distribute the
     new binaries first, then the new sudoers file (or you can leave
     sudoers as is and sudo will fix the permissions itself as long
-    as sudoers is on a local filesystem).
+    as sudoers is on a local file system).

@@ -1,65 +1,62 @@
-/*	$OpenBSD: config.h,v 1.1 2004/01/15 21:32:03 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.2 2004/09/28 15:10:51 millert Exp $	*/
 
 #ifndef _SUDO_CONFIG_H
 #define _SUDO_CONFIG_H
 
 /*
- * configure --prefix=/usr --with-devel --with-insults --with-bsdauth \
+ * configure --prefix=/usr --with-insults --with-bsdauth \
  *	     --with-env-editor --disable-path-info --with-logfac=authpriv
  */
 
-#define HAVE_ASPRINTF 1
-#define HAVE_BSD_AUTH_H 1
-#define HAVE_CLOSEFROM 1
-#define HAVE_DIRENT_H 1
-#define HAVE_ERR_H 1
-#define HAVE_FNMATCH 1
-#define HAVE_FREEIFADDRS 1
-#define HAVE_FSTAT 1
-#define HAVE_GETCWD 1
-#define HAVE_GETDOMAINNAME 1
-#define HAVE_GETIFADDRS 1
-#define HAVE_INITGROUPS 1
-#define HAVE_INNETGR 1
-#define HAVE_INTTYPES_H 1
-#define HAVE_ISBLANK 1
-#define HAVE_LOCKF 1
-#define HAVE_LOGIN_CAP_H 1
-#define HAVE_LONG_LONG 1
-#define HAVE_LSEARCH 1
-#define HAVE_MEMCHR 1
-#define HAVE_MEMCPY 1
-#define HAVE_MEMORY_H 1
-#define HAVE_MEMSET 1
-#define HAVE_NETGROUP_H 1
-#define HAVE_PATHS_H 1
-#define HAVE_SA_LEN 1
-#define HAVE_SETRESUID 1
-#define HAVE_SETRLIMIT 1
-#define HAVE_SIGACTION 1
-#define HAVE_SIG_ATOMIC_T 1
-#define HAVE_SNPRINTF 1
-#define HAVE_STDLIB_H 1
-#define HAVE_STRCASECMP 1
-#define HAVE_STRCHR 1
-#define HAVE_STRERROR 1
-#define HAVE_STRFTIME 1
-#define HAVE_STRING_H 1
-#define HAVE_STRLCAT 1
-#define HAVE_STRLCPY 1
-#define HAVE_STRRCHR 1
-#define HAVE_SYS_SELECT_H 1
-#define HAVE_SYS_STAT_H 1
-#define HAVE_SYS_TYPES_H 1
-#define HAVE_TERMIOS_H 1
-#define HAVE_TZSET 1
-#define HAVE_UNISTD_H 1
-#define HAVE_UTIME 1
-#define HAVE_UTIME_H 1
-#define HAVE_UTIME_POSIX 1
-#define HAVE_VASPRINTF 1
-#define HAVE_VSNPRINTF 1
-#define HAVE___PROGNAME 1
+#define HAVE_ASPRINTF
+#define HAVE_BSD_AUTH_H
+#define HAVE_CLOSEFROM
+#define HAVE_DIRENT_H
+#define HAVE_ERR_H
+#define HAVE_FNMATCH
+#define HAVE_FREEIFADDRS
+#define HAVE_FSTAT
+#define HAVE_FUTIMES
+#define HAVE_GETCWD
+#define HAVE_GETDOMAINNAME
+#define HAVE_GETIFADDRS
+#define HAVE_GETTTIMEOFDAY
+#define HAVE_INITGROUPS
+#define HAVE_INNETGR
+#define HAVE_INTTYPES_H
+#define HAVE_ISBLANK
+#define HAVE_LOCKF
+#define HAVE_LOGIN_CAP_H
+#define HAVE_LSEARCH
+#define HAVE_MEMCPY
+#define HAVE_MEMSET
+#define HAVE_NETGROUP_H
+#define HAVE_SETRESUID
+#define HAVE_SETRLIMIT
+#define HAVE_SIGACTION
+#define HAVE_SIG_ATOMIC_T
+#define HAVE_SNPRINTF
+#define HAVE_STDLIB_H
+#define HAVE_STRCASECMP
+#define HAVE_STRCHR
+#define HAVE_STRERROR
+#define HAVE_STRFTIME
+#define HAVE_STRING_H
+#define HAVE_STRLCAT
+#define HAVE_STRLCPY
+#define HAVE_STRRCHR
+#define HAVE_ST_MTIMESPEC
+#define HAVE_SYS_SELECT_H
+#define HAVE_SYS_STAT_H
+#define HAVE_SYS_TYPES_H
+#define HAVE_TERMIOS_H
+#define HAVE_TIMESPEC
+#define HAVE_TZSET
+#define HAVE_UNISTD_H
+#define HAVE_UTIMES
+#define HAVE_VASPRINTF
+#define HAVE_VSNPRINTF
+#define HAVE___PROGNAME
 
 #define CLASSIC_INSULTS 1
 #define CSOPS_INSULTS 1
@@ -93,6 +90,16 @@
 
 #define sudo_waitpid(p, s, o)	waitpid(p, s, o)
 #define	stat_sudoers	lstat
-#define EXEC	execvp
+#define EXECV	execvp
+
+#define mtim_getsec(_x)		((_x).st_mtimespec.tv_sec)
+#define mtim_getnsec(_x)	((_x).st_mtimespec.tv_nsec)
+
+#undef SET
+#define	SET(t, f)	((t) |= (f))
+#undef CLR
+#define	CLR(t, f)	((t) &= ~(f))
+#undef ISSET
+#define	ISSET(t, f)	((t) & (f))
 
 #endif /* _SUDO_CONFIG_H */

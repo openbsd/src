@@ -1,35 +1,17 @@
 /*
  * Copyright (c) 1996, 1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
- * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * 4. Products derived from this software may not be called "Sudo" nor
- *    may "Sudo" appear in their names without specific prior written
- *    permission from the author.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Sponsored in part by the Defense Advanced Research Projects
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
@@ -88,7 +70,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: getspwuid.c,v 1.63 2003/04/16 00:42:10 millert Exp $";
+static const char rcsid[] = "$Sudo: getspwuid.c,v 1.65 2004/02/13 21:36:43 millert Exp $";
 #endif /* lint */
 
 /*
@@ -100,18 +82,12 @@ int crypt_type = INT_MAX;
 
 
 /*
- * Local functions not visible outside getspwuid.c
- */
-static struct passwd *sudo_pwdup	__P((struct passwd *));
-
-
-/*
  * Return a copy of the encrypted password for the user described by pw.
  * If shadow passwords are in use, look in the shadow file.
  */
 char *
 sudo_getepw(pw)
-    struct passwd *pw;
+    const struct passwd *pw;
 {
     char *epw;
 
@@ -199,36 +175,95 @@ sudo_getepw(pw)
  * Dynamically allocate space for a struct password and the constituent parts
  * that we care about.  Fills in pw_passwd from shadow file if necessary.
  */
-static struct passwd *
+struct passwd *
 sudo_pwdup(pw)
-    struct passwd *pw;
+    const struct passwd *pw;
 {
-    struct passwd *local_pw;
+    char *cp;
+    const char *pw_passwd, *pw_shell;
+    size_t nsize, psize, csize, gsize, dsize, ssize, total;
+    struct passwd *newpw;
 
-    /* Allocate space for a local copy of pw. */
-    local_pw = (struct passwd *) emalloc(sizeof(struct passwd));
-
-    /*
-     * Copy the struct passwd and the interesting strings...
-     */
-    (void) memcpy(local_pw, pw, sizeof(struct passwd));
-    local_pw->pw_name = estrdup(pw->pw_name);
-    local_pw->pw_dir = estrdup(pw->pw_dir);
-    local_pw->pw_gecos = estrdup(pw->pw_gecos);
-#ifdef HAVE_LOGIN_CAP_H
-    local_pw->pw_class = estrdup(pw->pw_class);
-#endif
+    /* Get shadow password if available. */
+    pw_passwd = sudo_getepw(pw);
 
     /* If shell field is empty, expand to _PATH_BSHELL. */
-    if (local_pw->pw_shell[0] == '\0')
-	local_pw->pw_shell = _PATH_BSHELL;
-    else
-	local_pw->pw_shell = estrdup(pw->pw_shell);
+    pw_shell = (pw->pw_shell == NULL || pw->pw_shell[0] == '\0')
+	? _PATH_BSHELL : pw->pw_shell;
 
-    /* pw_passwd gets a shadow password if applicable */
-    local_pw->pw_passwd = sudo_getepw(pw);
+    /* Allocate in one big chunk for easy freeing. */
+    nsize = psize = csize = gsize = dsize = ssize = 0;
+    total = sizeof(struct passwd);
+    if (pw->pw_name) {
+	    nsize = strlen(pw->pw_name) + 1;
+	    total += nsize;
+    }
+    if (pw_passwd) {
+	    psize = strlen(pw_passwd) + 1;
+	    total += psize;
+    }
+#ifdef HAVE_LOGIN_CAP_H
+    if (pw->pw_class) {
+	    csize = strlen(pw->pw_class) + 1;
+	    total += csize;
+    }
+#endif
+    if (pw->pw_gecos) {
+	    gsize = strlen(pw->pw_gecos) + 1;
+	    total += gsize;
+    }
+    if (pw->pw_dir) {
+	    dsize = strlen(pw->pw_dir) + 1;
+	    total += dsize;
+    }
+    if (pw_shell) {
+	    ssize = strlen(pw_shell) + 1;
+	    total += ssize;
+    }
+    if ((cp = malloc(total)) == NULL)
+	    return (NULL);
+    newpw = (struct passwd *)cp;
 
-    return(local_pw);
+    /*
+     * Copy in passwd contents and make strings relative to space
+     * at the end of the buffer.
+     */
+    (void)memcpy(newpw, pw, sizeof(struct passwd));
+    cp += sizeof(struct passwd);
+    if (nsize) {
+	    (void)memcpy(cp, pw->pw_name, nsize);
+	    newpw->pw_name = cp;
+	    cp += nsize;
+    }
+    if (psize) {
+	    (void)memcpy(cp, pw_passwd, psize);
+	    newpw->pw_passwd = cp;
+	    cp += psize;
+    }
+#ifdef HAVE_LOGIN_CAP_H
+    if (csize) {
+	    (void)memcpy(cp, pw->pw_class, csize);
+	    newpw->pw_class = cp;
+	    cp += csize;
+    }
+#endif
+    if (gsize) {
+	    (void)memcpy(cp, pw->pw_gecos, gsize);
+	    newpw->pw_gecos = cp;
+	    cp += gsize;
+    }
+    if (dsize) {
+	    (void)memcpy(cp, pw->pw_dir, dsize);
+	    newpw->pw_dir = cp;
+	    cp += dsize;
+    }
+    if (ssize) {
+	    (void)memcpy(cp, pw_shell, ssize);
+	    newpw->pw_shell = cp;
+	    cp += ssize;
+    }
+
+    return (newpw);
 }
 
 /*

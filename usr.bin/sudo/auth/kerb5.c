@@ -1,35 +1,17 @@
 /*
- * Copyright (c) 1999, 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
- * All rights reserved.
+ * Copyright (c) 1999,2001,2003-2004 Todd C. Miller <Todd.Miller@courtesan.com>
  *
- * This code is derived from software contributed by Frank Cusack
- * <fcusack@fcusack.com>.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * 4. Products derived from this software may not be called "Sudo" nor
- *    may "Sudo" appear in their names without specific prior written
- *    permission from the author.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -69,7 +51,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: kerb5.c,v 1.18 2003/04/16 00:42:10 millert Exp $";
+static const char rcsid[] = "$Sudo: kerb5.c,v 1.23 2004/06/07 00:02:56 millert Exp $";
 #endif /* lint */
 
 #ifdef HAVE_HEIMDAL
@@ -88,7 +70,7 @@ static struct _sudo_krb5_data {
 } sudo_krb5_data = { NULL, NULL, NULL };
 typedef struct _sudo_krb5_data *sudo_krb5_datap;
 
-extern krb5_cc_ops krb5_mcc_ops;
+extern const krb5_cc_ops krb5_mcc_ops;
 
 int
 kerb5_init(pw, promptp, auth)
@@ -111,7 +93,7 @@ kerb5_init(pw, promptp, auth)
 
     if ((error = krb5_parse_name(sudo_context, pw->pw_name,
 	&(sudo_krb5_data.princ)))) {
-	log_error(NO_EXIT|NO_MAIL, 
+	log_error(NO_EXIT|NO_MAIL,
 		  "%s: unable to parse '%s': %s", auth->name, pw->pw_name,
 		  error_message(error));
 	return(AUTH_FAILURE);
@@ -140,7 +122,7 @@ kerb5_init(pw, promptp, auth)
     /* For CNS compatibility */
     if ((error = krb5_cc_register(sudo_context, &krb5_mcc_ops, FALSE))) {
 	if (error != KRB5_CC_TYPE_EXISTS) {
-	    log_error(NO_EXIT|NO_MAIL, 
+	    log_error(NO_EXIT|NO_MAIL,
 		      "%s: unable to use Memory ccache: %s", auth->name,
 		      error_message(error));
 	    return(AUTH_FAILURE);
@@ -151,7 +133,7 @@ kerb5_init(pw, promptp, auth)
 		    (long) getpid());
     if ((error = krb5_cc_resolve(sudo_context, cache_name,
 	&(sudo_krb5_data.ccache)))) {
-	log_error(NO_EXIT|NO_MAIL, 
+	log_error(NO_EXIT|NO_MAIL,
 		  "%s: unable to resolve ccache: %s", auth->name,
 		  error_message(error));
 	return(AUTH_FAILURE);
@@ -159,7 +141,7 @@ kerb5_init(pw, promptp, auth)
     ccache = sudo_krb5_data.ccache;
 
     if ((error = krb5_cc_initialize(sudo_context, ccache, princ))) {
-	log_error(NO_EXIT|NO_MAIL, 
+	log_error(NO_EXIT|NO_MAIL,
 		  "%s: unable to initialize ccache: %s", auth->name,
 		  error_message(error));
 	return(AUTH_FAILURE);
@@ -195,7 +177,7 @@ kerb5_verify(pw, pass, auth)
 	if (error == KRB5KRB_AP_ERR_BAD_INTEGRITY) /* Bad password */
 	    return(AUTH_FAILURE);
 	/* Some other error */
-	log_error(NO_EXIT|NO_MAIL, 
+	log_error(NO_EXIT|NO_MAIL,
 		  "%s: unable to get credentials: %s", auth->name,
 		  error_message(error));
 	return(AUTH_FAILURE);
@@ -203,7 +185,7 @@ kerb5_verify(pw, pass, auth)
 
     /* Stash the TGT so we can verify it. */
     if ((error = krb5_cc_store_cred(sudo_context, ccache, &creds))) {
-	log_error(NO_EXIT|NO_MAIL, 
+	log_error(NO_EXIT|NO_MAIL,
 		  "%s: unable to store credentials: %s", auth->name,
 		  error_message(error));
     } else {
@@ -272,7 +254,7 @@ verify_krb_v5_tgt(sudo_context, ccache, auth_name)
      */
     if ((error = krb5_sname_to_principal(sudo_context, NULL, NULL,
 					KRB5_NT_SRV_HST, &princ))) {
-	log_error(NO_EXIT|NO_MAIL, 
+	log_error(NO_EXIT|NO_MAIL,
 		  "%s: unable to get host principal: %s", auth_name,
 		  error_message(error));
 	return(-1);
@@ -316,7 +298,7 @@ cleanup:
     krb5_free_principal(sudo_context, princ);
 
     if (error)
-	log_error(NO_EXIT|NO_MAIL, 
+	log_error(NO_EXIT|NO_MAIL,
 		  "%s: Cannot verify TGT! Possible attack!: %s", auth_name,
 		  error_message(error));
     return(error);

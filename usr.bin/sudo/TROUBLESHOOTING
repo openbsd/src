@@ -11,9 +11,9 @@ A) This usually means you either don't have a working compiler.  This
 Q) Sudo compiles but when I run it I get "Sorry, sudo must be setuid root."
    and sudo quits.
 A) Sudo must be setuid root to do its work.  You need to do something like
-   `chmod 4111 /usr/local/bin/sudo'.  Also, the filesystem sudo resides
-   on must *not* be mounted with the nosuid mount option or sudo will
-   not be able to work.  Another possibility is you may have '.' in
+   `chmod 4111 /usr/local/bin/sudo'.  Also, the file system sudo resides
+   on must *not* be mounted (or exported) with the nosuid option or sudo
+   will not be able to work.  Another possibility is you may have '.' in
    your $PATH before the directory containing sudo.  If you are going
    to have '.' in your path you should make sure it is at the end.
 

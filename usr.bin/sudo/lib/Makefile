@@ -1,14 +1,20 @@
-#	$OpenBSD: Makefile,v 1.1 2004/01/15 21:32:03 millert Exp $
+#	$OpenBSD: Makefile,v 1.2 2004/09/28 15:10:51 millert Exp $
 
 .PATH:		${.CURDIR}/..
 
 LIB=	sudo
-SRCS=	sudo.tab.c lex.yy.c alloc.c defaults.c fileops.c goodpath.c find_path.c
+SRCS=	alloc.c defaults.c fileops.c find_path.c gettime.c goodpath.c \
+	lex.yy.c sudo.tab.c
 CPPFLAGS+=	-I.
 
 DEBUGLIBS= no
 NOPROFILE= yes
+
+.include <bsd.own.mk>
+.if !defined(NOPIC)
+CPPFLAGS+= -D_PATH_SUDO_NOEXEC=\"/usr/libexec/sudo_noexec.so\"
 NOPIC=	yes
+.endif
 
 sudo.tab.c sudo.tab.h: parse.yacc
 	rm -f sudo.tab.h sudo.tab.c

@@ -39,9 +39,9 @@ Cmnd_Alias	DUMPS = /usr/sbin/dump, /usr/sbin/rdump, /usr/sbin/restore, \
 Cmnd_Alias	KILL = /usr/bin/kill
 Cmnd_Alias	PRINTING = /usr/sbin/lpc, /usr/bin/lprm
 Cmnd_Alias	SHUTDOWN = /usr/sbin/shutdown
-Cmnd_Alias	HALT = /usr/sbin/halt, /usr/sbin/fasthalt
-Cmnd_Alias	REBOOT = /usr/sbin/reboot, /usr/sbin/fastboot
-Cmnd_Alias	SHELLS = /usr/bin/sh, /usr/bin/csh, /usr/bin/ksh, \
+Cmnd_Alias	HALT = /usr/sbin/halt
+Cmnd_Alias	REBOOT = /usr/sbin/reboot
+Cmnd_Alias	SHELLS = /sbin/sh, /usr/bin/sh, /usr/bin/csh, /usr/bin/ksh, \
 			 /usr/local/bin/tcsh, /usr/bin/rsh, \
 			 /usr/local/bin/zsh
 Cmnd_Alias	SU = /usr/bin/su
@@ -52,6 +52,7 @@ Cmnd_Alias	VIPW = /usr/sbin/vipw, /usr/bin/passwd, /usr/bin/chsh, \
 # Override built-in defaults
 ##
 Defaults               syslog=auth
+Defaults>root          !set_logname
 Defaults:FULLTIMERS    !lecture
 Defaults:millert       !authenticate
 Defaults@SERVERS       log_year, logfile=/var/log/sudo.log
@@ -77,8 +78,8 @@ jack		CSNETS = ALL
 lisa		CUNETS = ALL
 
 # operator may run maintenance commands and anything in /usr/oper/bin/
-operator	ALL = DUMPS, KILL, PRINTING, SHUTDOWN, HALT, REBOOT,\
-		/usr/oper/bin/
+operator	ALL = DUMPS, KILL, SHUTDOWN, HALT, REBOOT, PRINTING,\
+		sudoedit /etc/printcap, /usr/oper/bin/
 
 # joe may su only to operator
 joe		ALL = /usr/bin/su operator

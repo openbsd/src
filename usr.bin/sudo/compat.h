@@ -1,41 +1,23 @@
 /*
- * Copyright (c) 1996, 1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
- * All rights reserved.
+ * Copyright (c) 1996, 1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * 4. Products derived from this software may not be called "Sudo" nor
- *    may "Sudo" appear in their names without specific prior written
- *    permission from the author.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Sponsored in part by the Defense Advanced Research Projects
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: compat.h,v 1.67 2003/04/16 00:42:09 millert Exp $
+ * $Sudo: compat.h,v 1.80 2004/09/10 16:31:15 millert Exp $
  */
 
 #ifndef _SUDO_COMPAT_H
@@ -55,26 +37,31 @@
 #endif /* __P */
 
 /*
- * Some systems (ie ISC V/386) do not define MAXPATHLEN even in param.h
+ * Some systems lack full limit definitions.
  */
-#ifndef MAXPATHLEN
-# define MAXPATHLEN		1024
+#ifndef OPEN_MAX
+# define OPEN_MAX	256
 #endif
 
-/*
- * Some systems do not define MAXHOSTNAMELEN.
- */
+#ifndef INT_MAX
+# define INT_MAX	0x7fffffff
+#endif
+
+#ifndef PATH_MAX
+# ifdef MAXPATHLEN
+#  define PATH_MAX		MAXPATHLEN
+# else
+#  ifdef _POSIX_PATH_MAX
+#   define PATH_MAX		_POSIX_PATH_MAX
+#  else
+#   define PATH_MAX		1024
+#  endif
+# endif
+#endif
+
 #ifndef MAXHOSTNAMELEN
 # define MAXHOSTNAMELEN		64
 #endif
-
-/*
- * 4.2BSD lacks FD_* macros (we only use FD_SET and FD_ZERO)
- */
-#ifndef FD_SETSIZE
-# define FD_SET(fd, fds)	((fds) -> fds_bits[0] |= (1 << (fd)))
-# define FD_ZERO(fds)		((fds) -> fds_bits[0] = 0)
-#endif /* !FD_SETSIZE */
 
 /*
  * Posix versions for those without...
@@ -104,13 +91,6 @@
 #ifndef S_IRWXU
 # define S_IRWXU		0000700		/* rwx for owner */
 #endif /* S_IRWXU */
-
-/*
- * In case this is not defined in <sys/types.h> or <sys/select.h>
- */
-#ifndef howmany
-# define howmany(x, y)	(((x) + ((y) - 1)) / (y))
-#endif
 
 /*
  * These should be defined in <unistd.h> but not everyone has them.
@@ -224,11 +204,19 @@ typedef struct sigaction sigaction_t;
 #endif
 
 /*
- * HP-UX 9.x has RLIMIT_* but no RLIM_INFINITY.
- * Using -1 works because we only check for RLIM_INFINITY and do not set it.
+ * If dirfd() does not exists, hopefully dd_fd does.
  */
-#ifndef RLIM_INFINITY
-# define RLIM_INFINITY	(-1)
+#if !defined(HAVE_DIRFD) && defined(HAVE_DD_FD)
+# define dirfd(_d)	((_d)->dd_fd)
+# define HAVE_DIRFD
+#endif
+
+/*
+ * Define futimes() in terms of futimesat() if needed.
+ */
+#if !defined(HAVE_FUTIMES) && defined(HAVE_FUTIMESAT)
+# define futimes(_f, _tv)	futimesat(_f, NULL, _tv)
+# define HAVE_FUTIMES
 #endif
 
 /*
@@ -243,5 +231,30 @@ extern const char *__progname;
 const char *getprogname __P((void));
 #endif /* HAVE___PROGNAME */
 #endif /* !HAVE_GETPROGNAME */
+
+#ifndef HAVE_TIMESPEC
+struct timespec {
+    time_t	tv_sec;
+    long	tv_nsec;
+};
+#endif /* !HAVE_TIMESPEC */
+
+#ifndef timespecclear
+# define timespecclear(ts)	(ts)->tv_sec = (ts)->tv_nsec = 0
+#endif
+#ifndef timespecisset
+# define timespecisset(ts)	((ts)->tv_sec || (ts)->tv_nsec)
+#endif
+#ifndef timespecsub
+# define timespecsub(minuend, subrahend, difference)			       \
+    do {								       \
+	    (difference)->tv_sec = (minuend)->tv_sec - (subrahend)->tv_sec;    \
+	    (difference)->tv_nsec = (minuend)->tv_nsec - (subrahend)->tv_nsec; \
+	    if ((difference)->tv_nsec < 0) {				       \
+		    (difference)->tv_nsec += 1000000000L;		       \
+		    (difference)->tv_sec--;				       \
+	    }								       \
+    } while (0)
+#endif
 
 #endif /* _SUDO_COMPAT_H */

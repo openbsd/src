@@ -1,35 +1,17 @@
 /*
- * Copyright (c) 1993-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
- * All rights reserved.
+ * Copyright (c) 1993-1996,1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * 4. Products derived from this software may not be called "Sudo" nor
- *    may "Sudo" appear in their names without specific prior written
- *    permission from the author.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Sponsored in part by the Defense Advanced Research Projects
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
@@ -41,7 +23,9 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/file.h>
+#ifndef __TANDEM
+# include <sys/file.h>
+#endif
 #include <stdio.h>
 #ifdef STDC_HEADERS
 # include <stdlib.h>
@@ -76,7 +60,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: check.c,v 1.213 2003/04/16 00:42:09 millert Exp $";
+static const char rcsid[] = "$Sudo: check.c,v 1.226 2004/09/08 15:48:23 millert Exp $";
 #endif /* lint */
 
 /* Status codes for timestamp_status() */
@@ -89,32 +73,32 @@ static const char rcsid[] = "$Sudo: check.c,v 1.213 2003/04/16 00:42:09 millert 
 static void  build_timestamp	__P((char **, char **));
 static int   timestamp_status	__P((char *, char *, char *, int));
 static char *expand_prompt	__P((char *, char *, char *));
-static void  lecture		__P((void));
+static void  lecture		__P((int));
 static void  update_timestamp	__P((char *, char *));
 
 /*
  * This function only returns if the user can successfully
- * verify who he/she is.  
+ * verify who he/she is.
  */
 void
-check_user()
+check_user(override)
+    int override;
 {
     char *timestampdir = NULL;
     char *timestampfile = NULL;
     char *prompt;
     int status;
 
-    if (user_uid == 0 || user_is_exempt())
+    if (user_uid == 0 || user_uid == runas_pw->pw_uid || user_is_exempt())
 	return;
 
     build_timestamp(&timestampdir, &timestampfile);
     status = timestamp_status(timestampdir, timestampfile, user_name, TRUE);
-    if (status != TS_CURRENT) {
-	if (status == TS_MISSING || status == TS_ERROR)
-	    lecture();		/* first time through they get a lecture */
+    if (override || status != TS_CURRENT) {
+	lecture(status);
 
 	/* Expand any escapes in the prompt. */
-	prompt = expand_prompt(user_prompt ? user_prompt : def_str(I_PASSPROMPT),
+	prompt = expand_prompt(user_prompt ? user_prompt : def_passprompt,
 	    user_name, user_shost);
 
 	verify_user(auth_pw, prompt);
@@ -131,17 +115,29 @@ check_user()
  * TODO: allow the user to specify a file name instead.
  */
 static void
-lecture()
+lecture(status)
+    int status;
 {
+    FILE *fp;
+    char buf[BUFSIZ];
+    ssize_t nread;
 
-    if (def_flag(I_LECTURE)) {
+    if (def_lecture == never ||
+	(def_lecture == once && status != TS_MISSING && status != TS_ERROR))
+	return;
+
+    if (def_lecture_file && (fp = fopen(def_lecture_file, "r")) != NULL) {
+	while ((nread = fread(buf, sizeof(char), sizeof(buf), fp)) != 0)
+	    fwrite(buf, nread, 1, stderr);
+    } else {
 	(void) fputs("\n\
 We trust you have received the usual lecture from the local System\n\
-Administrator. It usually boils down to these two things:\n\
+Administrator. It usually boils down to these three things:\n\
 \n\
-	#1) Respect the privacy of others.\n\
-	#2) Think before you type.\n\n",
-	stderr);
+    #1) Respect the privacy of others.\n\
+    #2) Think before you type.\n\
+    #3) With great power comes great responsibility.\n\n",
+    stderr);
     }
 }
 
@@ -153,10 +149,9 @@ update_timestamp(timestampdir, timestampfile)
     char *timestampdir;
     char *timestampfile;
 {
-
     if (timestamp_uid != 0)
 	set_perms(PERM_TIMESTAMP);
-    if (touch(timestampfile ? timestampfile : timestampdir, time(NULL)) == -1) {
+    if (touch(-1, timestampfile ? timestampfile : timestampdir, NULL) == -1) {
 	if (timestampfile) {
 	    int fd = open(timestampfile, O_WRONLY|O_CREAT|O_TRUNC, 0600);
 
@@ -290,10 +285,10 @@ user_is_exempt()
     struct group *grp;
     char **gr_mem;
 
-    if (!def_str(I_EXEMPT_GROUP))
+    if (!def_exempt_group)
 	return(FALSE);
 
-    if (!(grp = getgrnam(def_str(I_EXEMPT_GROUP))))
+    if (!(grp = getgrnam(def_exempt_group)))
 	return(FALSE);
 
     if (user_gid == grp->gr_gid)
@@ -318,33 +313,33 @@ build_timestamp(timestampdir, timestampfile)
     char *dirparent;
     int len;
 
-    dirparent = def_str(I_TIMESTAMPDIR);
+    dirparent = def_timestampdir;
     len = easprintf(timestampdir, "%s/%s", dirparent, user_name);
-    if (len >= MAXPATHLEN)
+    if (len >= PATH_MAX)
 	log_error(0, "timestamp path too long: %s", timestampdir);
 
     /*
      * Timestamp file may be a file in the directory or NUL to use
      * the directory as the timestamp.
      */
-    if (def_flag(I_TTY_TICKETS)) {
+    if (def_tty_tickets) {
 	char *p;
 
 	if ((p = strrchr(user_tty, '/')))
 	    p++;
 	else
 	    p = user_tty;
-	if (def_flag(I_TARGETPW))
+	if (def_targetpw)
 	    len = easprintf(timestampfile, "%s/%s/%s:%s", dirparent, user_name,
 		p, *user_runas);
 	else
 	    len = easprintf(timestampfile, "%s/%s/%s", dirparent, user_name, p);
-	if (len >= MAXPATHLEN)
+	if (len >= PATH_MAX)
 	    log_error(0, "timestamp path too long: %s", timestampfile);
-    } else if (def_flag(I_TARGETPW)) {
+    } else if (def_targetpw) {
 	len = easprintf(timestampfile, "%s/%s/%s", dirparent, user_name,
 	    *user_runas);
-	if (len >= MAXPATHLEN)
+	if (len >= PATH_MAX)
 	    log_error(0, "timestamp path too long: %s", timestampfile);
     } else
 	*timestampfile = NULL;
@@ -362,7 +357,7 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
 {
     struct stat sb;
     time_t now;
-    char *dirparent = def_str(I_TIMESTAMPDIR);
+    char *dirparent = def_timestampdir;
     int status = TS_ERROR;		/* assume the worst */
 
     if (timestamp_uid != 0)
@@ -498,17 +493,18 @@ timestamp_status(timestampdir, timestampfile, user, make_dirs)
      */
     if (status == TS_OLD) {
 	/* Negative timeouts only expire manually (sudo -k). */
-	if (def_ival(I_TIMESTAMP_TIMEOUT) < 0 && sb.st_mtime != 0)
+	if (def_timestamp_timeout < 0 && sb.st_mtime != 0)
 	    status = TS_CURRENT;
 	else {
+	    /* XXX - should use timespec here */
 	    now = time(NULL);
-	    if (def_ival(I_TIMESTAMP_TIMEOUT) && 
-		now - sb.st_mtime < 60 * def_ival(I_TIMESTAMP_TIMEOUT)) {
+	    if (def_timestamp_timeout &&
+		now - sb.st_mtime < 60 * def_timestamp_timeout) {
 		/*
 		 * Check for bogus time on the stampfile.  The clock may
 		 * have been set back or someone could be trying to spoof us.
 		 */
-		if (sb.st_mtime > now + 60 * def_ival(I_TIMESTAMP_TIMEOUT) * 2) {
+		if (sb.st_mtime > now + 60 * def_timestamp_timeout * 2) {
 		    log_error(NO_EXIT,
 			"timestamp too far in the future: %20.20s",
 			4 + ctime(&sb.st_mtime));
@@ -535,15 +531,14 @@ void
 remove_timestamp(remove)
     int remove;
 {
-    char *timestampdir;
-    char *timestampfile;
-    char *ts;
+    struct timespec ts;
+    char *timestampdir, *timestampfile, *path;
     int status;
 
     build_timestamp(&timestampdir, &timestampfile);
     status = timestamp_status(timestampdir, timestampfile, user_name, FALSE);
     if (status == TS_OLD || status == TS_CURRENT) {
-	ts = timestampfile ? timestampfile : timestampdir;
+	path = timestampfile ? timestampfile : timestampdir;
 	if (remove) {
 	    if (timestampfile)
 		status = unlink(timestampfile);
@@ -551,12 +546,14 @@ remove_timestamp(remove)
 		status = rmdir(timestampdir);
 	    if (status == -1 && errno != ENOENT) {
 		log_error(NO_EXIT, "can't remove %s (%s), will reset to Epoch",
-		    ts, strerror(errno));
+		    path, strerror(errno));
 		remove = FALSE;
 	    }
+	} else {
+	    timespecclear(&ts);
+	    if (touch(-1, path, &ts) == -1)
+		err(1, "can't reset %s to Epoch", path);
 	}
-	if (!remove && touch(ts, 0) == -1)
-	    err(1, "can't reset %s to Epoch", ts);
     }
 
     free(timestampdir);

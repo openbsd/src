@@ -1,49 +1,38 @@
 /*
  * Copyright (c) 1999-2001 Todd C. Miller <Todd.Miller@courtesan.com>
- * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * 4. Products derived from this software may not be called "Sudo" nor
- *    may "Sudo" appear in their names without specific prior written
- *    permission from the author.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Sponsored in part by the Defense Advanced Research Projects
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: defaults.h,v 1.24 2003/04/16 00:42:09 millert Exp $
+ * $Sudo: defaults.h,v 1.28 2004/02/13 21:36:43 millert Exp $
  */
 
 #ifndef _SUDO_DEFAULTS_H
 #define _SUDO_DEFAULTS_H
 
+#include <def_data.h>
+
 struct list_member {
     char *value;
     struct list_member *next;
+};
+
+struct def_values {
+    char *sval;		/* string value */
+    int ival;		/* actually an enum */
 };
 
 enum list_ops {
@@ -59,9 +48,12 @@ struct sudo_defs_types {
     char *name;
     int type;
     char *desc;
+    struct def_values *values;
+    int (*callback) __P((char *));
     union {
 	int flag;
 	int ival;
+	enum def_tupple tuple;
 	char *str;
 	mode_t mode;
 	struct list_member *list;
@@ -89,31 +81,14 @@ struct sudo_defs_types {
 #define T_LOGFAC	0x007
 #undef T_LOGPRI
 #define T_LOGPRI	0x008
-#undef T_PWFLAG
-#define T_PWFLAG	0x009
+#undef T_TUPLE
+#define T_TUPLE		0x009
 #undef T_MASK
 #define T_MASK		0x0FF
 #undef T_BOOL
 #define T_BOOL		0x100
 #undef T_PATH
 #define T_PATH		0x200
-
-/*
- * Indexes into sudo_defs_table
- */
-#include <def_data.h>
-#define I_LOGFAC	I_SYSLOG_IFAC
-#define I_GOODPRI	I_SYSLOG_IGOODPRI
-#define I_BADPRI	I_SYSLOG_IBADPRI 
-
-/*
- * Macros for accessing sudo_defs_table.
- */
-#define def_flag(_i)	(sudo_defs_table[(_i)].sd_un.flag)
-#define def_ival(_i)	(sudo_defs_table[(_i)].sd_un.ival)
-#define def_str(_i)	(sudo_defs_table[(_i)].sd_un.str)
-#define def_list(_i)	(sudo_defs_table[(_i)].sd_un.list)
-#define def_mode(_i)	(sudo_defs_table[(_i)].sd_un.mode)
 
 /*
  * Prototypes

@@ -1,35 +1,17 @@
 /*
- * Copyright (c) 1994-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
- * All rights reserved.
+ * Copyright (c) 1994-1996,1998-2004 Todd C. Miller <Todd.Miller@courtesan.com>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * 4. Products derived from this software may not be called "Sudo" nor
- *    may "Sudo" appear in their names without specific prior written
- *    permission from the author.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Sponsored in part by the Defense Advanced Research Projects
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
@@ -70,8 +52,14 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: set_perms.c,v 1.21 2003/04/16 00:42:10 millert Exp $";
+static const char rcsid[] = "$Sudo: set_perms.c,v 1.30 2004/05/27 23:12:02 millert Exp $";
 #endif /* lint */
+
+#ifdef __TANDEM
+# define ROOT_UID	65535
+#else
+# define ROOT_UID	0
+#endif
 
 /*
  * Prototypes
@@ -94,15 +82,15 @@ set_perms_posix(perm)
 
     switch (perm) {
 	case PERM_ROOT:
-				if (seteuid(0))
-				    fatal("seteuid(0) failed, your operating system may have broken POSIX saved ID support\nTry running configure with --disable-saved-ids", 0);
+				if (seteuid(ROOT_UID))
+				    fatal("seteuid(ROOT_UID) failed, your operating system may have broken POSIX saved ID support\nTry running configure with --disable-saved-ids", 0);
 			      	break;
 
 	case PERM_FULL_ROOT:
 				/* headed for exec() */
-				(void) seteuid(0);
-				if (setuid(0))
-				    fatal("setuid(0)", 1);
+				(void) seteuid(ROOT_UID);
+				if (setuid(ROOT_UID))
+				    fatal("setuid(ROOT_UID)", 1);
 			      	break;
 
 	case PERM_USER:
@@ -119,9 +107,14 @@ set_perms_posix(perm)
 				break;
 				
 	case PERM_RUNAS:
-				/* headed for exec(), assume euid == 0 */
+				if (seteuid(runas_pw->pw_uid))
+				    fatal("unable to change to runas uid", 1);
+			      	break;
+
+	case PERM_FULL_RUNAS:
+				/* headed for exec(), assume euid == ROOT_UID */
 				runas_setup();
-				if (def_flag(I_STAY_SETUID))
+				if (def_stay_setuid)
 				    error = seteuid(runas_pw->pw_uid);
 				else
 				    error = setuid(runas_pw->pw_uid);
@@ -130,18 +123,18 @@ set_perms_posix(perm)
 				break;
 
 	case PERM_SUDOERS:
-				/* assume euid == 0, ruid == user */
+				/* assume euid == ROOT_UID, ruid == user */
 				if (setegid(SUDOERS_GID))
 				    fatal("unable to change to sudoers gid", 1);
 
 				/*
-				 * If SUDOERS_UID == 0 and SUDOERS_MODE
+				 * If SUDOERS_UID == ROOT_UID and SUDOERS_MODE
 				 * is group readable we use a non-zero
 				 * uid in order to avoid NFS lossage.
 				 * Using uid 1 is a bit bogus but should
 				 * work on all OS's.
 				 */
-				if (SUDOERS_UID == 0) {
+				if (SUDOERS_UID == ROOT_UID) {
 				    if ((SUDOERS_MODE & 040) && seteuid(1))
 					fatal("seteuid(1)", 1);
 				} else {
@@ -174,14 +167,14 @@ set_perms_suid(perm)
     switch (perm) {
 	case PERM_FULL_ROOT:
 	case PERM_ROOT:
-				if (setresuid(0, 0, 0))
-				    fatal("setresuid(0, 0, 0) failed, your operating system may have a broken setresuid() function\nTry running configure with --disable-setresuid", 0);
+				if (setresuid(ROOT_UID, ROOT_UID, ROOT_UID))
+				    fatal("setresuid(ROOT_UID, ROOT_UID, ROOT_UID) failed, your operating system may have a broken setresuid() function\nTry running configure with --disable-setresuid", 0);
 			      	break;
 
 	case PERM_USER:
     	    	    	        (void) setresgid(-1, user_gid, -1);
-				if (setresuid(user_uid, user_uid, 0))
-				    fatal("setresuid(user_uid, user_uid, 0)", 1);
+				if (setresuid(user_uid, user_uid, ROOT_UID))
+				    fatal("setresuid(user_uid, user_uid, ROOT_UID)", 1);
 			      	break;
 				
 	case PERM_FULL_USER:
@@ -192,9 +185,14 @@ set_perms_suid(perm)
 			      	break;
 				
 	case PERM_RUNAS:
-				/* headed for exec(), assume euid == 0 */
+				if (setresuid(-1, runas_pw->pw_uid, -1))
+				    fatal("unable to change to runas uid", 1);
+			      	break;
+
+	case PERM_FULL_RUNAS:
+				/* headed for exec(), assume euid == ROOT_UID */
 				runas_setup();
-				error = setresuid(def_flag(I_STAY_SETUID) ?
+				error = setresuid(def_stay_setuid ?
 				    user_uid : runas_pw->pw_uid,
 				    runas_pw->pw_uid, runas_pw->pw_uid);
 				if (error)
@@ -202,28 +200,28 @@ set_perms_suid(perm)
 				break;
 
 	case PERM_SUDOERS:
-				/* assume euid == 0, ruid == user */
+				/* assume euid == ROOT_UID, ruid == user */
 				if (setresgid(-1, SUDOERS_GID, -1))
 				    fatal("unable to change to sudoers gid", 1);
 
 				/*
-				 * If SUDOERS_UID == 0 and SUDOERS_MODE
+				 * If SUDOERS_UID == ROOT_UID and SUDOERS_MODE
 				 * is group readable we use a non-zero
 				 * uid in order to avoid NFS lossage.
 				 * Using uid 1 is a bit bogus but should
 				 * work on all OS's.
 				 */
-				if (SUDOERS_UID == 0) {
-				    if ((SUDOERS_MODE & 040) && setresuid(0, 1, 0))
-					fatal("setresuid(0, 1, 0)", 1);
+				if (SUDOERS_UID == ROOT_UID) {
+				    if ((SUDOERS_MODE & 040) && setresuid(ROOT_UID, 1, ROOT_UID))
+					fatal("setresuid(ROOT_UID, 1, ROOT_UID)", 1);
 				} else {
-				    if (setresuid(0, SUDOERS_UID, 0))
-					fatal("setresuid(0, SUDOERS_UID, 0)", 1);
+				    if (setresuid(ROOT_UID, SUDOERS_UID, ROOT_UID))
+					fatal("setresuid(ROOT_UID, SUDOERS_UID, ROOT_UID)", 1);
 				}
 			      	break;
 	case PERM_TIMESTAMP:
-				if (setresuid(0, timestamp_uid, 0))
-				    fatal("setresuid(0, timestamp_uid, 0)", 1);
+				if (setresuid(ROOT_UID, timestamp_uid, ROOT_UID))
+				    fatal("setresuid(ROOT_UID, timestamp_uid, ROOT_UID)", 1);
 			      	break;
     }
 }
@@ -233,7 +231,7 @@ set_perms_suid(perm)
 
 /*
  * Set real and effective uids and gids based on perm.
- * We always retain a real or effective uid of 0 unless
+ * We always retain a real or effective uid of ROOT_UID unless
  * we are headed for an exec().
  * This version of set_perms() works fine with the "stay_setuid" option.
  */
@@ -246,14 +244,16 @@ set_perms_suid(perm)
     switch (perm) {
 	case PERM_FULL_ROOT:
 	case PERM_ROOT:
-				if (setreuid(0, 0))
-				    fatal("setreuid(0, 0) failed, your operating system may have a broken setreuid() function\nTry running configure with --disable-setreuid", 0);
+				if (setreuid(-1, ROOT_UID))
+				    fatal("setreuid(-1, ROOT_UID) failed, your operating system may have a broken setreuid() function\nTry running configure with --disable-setreuid", 0);
+				if (setuid(ROOT_UID))
+				    fatal("setuid(ROOT_UID)", 1);
 			      	break;
 
 	case PERM_USER:
     	    	    	        (void) setregid(-1, user_gid);
-				if (setreuid(0, user_uid))
-				    fatal("setreuid(0, user_uid)", 1);
+				if (setreuid(ROOT_UID, user_uid))
+				    fatal("setreuid(ROOT_UID, user_uid)", 1);
 			      	break;
 				
 	case PERM_FULL_USER:
@@ -264,9 +264,14 @@ set_perms_suid(perm)
 			      	break;
 				
 	case PERM_RUNAS:
-				/* headed for exec(), assume euid == 0 */
+				if (setreuid(-1, runas_pw->pw_uid))
+				    fatal("unable to change to runas uid", 1);
+			      	break;
+
+	case PERM_FULL_RUNAS:
+				/* headed for exec(), assume euid == ROOT_UID */
 				runas_setup();
-				error = setreuid(def_flag(I_STAY_SETUID) ?
+				error = setreuid(def_stay_setuid ?
 				    user_uid : runas_pw->pw_uid,
 				    runas_pw->pw_uid);
 				if (error)
@@ -274,33 +279,34 @@ set_perms_suid(perm)
 				break;
 
 	case PERM_SUDOERS:
-				/* assume euid == 0, ruid == user */
+				/* assume euid == ROOT_UID, ruid == user */
 				if (setregid(-1, SUDOERS_GID))
 				    fatal("unable to change to sudoers gid", 1);
 
 				/*
-				 * If SUDOERS_UID == 0 and SUDOERS_MODE
+				 * If SUDOERS_UID == ROOT_UID and SUDOERS_MODE
 				 * is group readable we use a non-zero
 				 * uid in order to avoid NFS lossage.
 				 * Using uid 1 is a bit bogus but should
 				 * work on all OS's.
 				 */
-				if (SUDOERS_UID == 0) {
-				    if ((SUDOERS_MODE & 040) && setreuid(0, 1))
-					fatal("setreuid(0, 1)", 1);
+				if (SUDOERS_UID == ROOT_UID) {
+				    if ((SUDOERS_MODE & 040) && setreuid(ROOT_UID, 1))
+					fatal("setreuid(ROOT_UID, 1)", 1);
 				} else {
-				    if (setreuid(0, SUDOERS_UID))
-					fatal("setreuid(0, SUDOERS_UID)", 1);
+				    if (setreuid(ROOT_UID, SUDOERS_UID))
+					fatal("setreuid(ROOT_UID, SUDOERS_UID)", 1);
 				}
 			      	break;
 	case PERM_TIMESTAMP:
-				if (setreuid(0, timestamp_uid))
-				    fatal("setreuid(0, timestamp_uid)", 1);
+				if (setreuid(ROOT_UID, timestamp_uid))
+				    fatal("setreuid(ROOT_UID, timestamp_uid)", 1);
 			      	break;
     }
 }
 
 # else
+#  ifdef HAVE_SETREUID
 
 /*
  * Set real and effective uids and gids based on perm.
@@ -313,10 +319,10 @@ set_perms_nosuid(perm)
 
     /*
      * Since we only have setuid() and seteuid() we have to set
-     * real and effective uids to 0 initially.
+     * real and effective uids to ROOT_UID initially.
      */
-    if (setuid(0))
-	fatal("setuid(0)", 1);
+    if (setuid(ROOT_UID))
+	fatal("setuid(ROOT_UID)", 1);
 
     switch (perm) {
 	case PERM_USER:
@@ -333,25 +339,30 @@ set_perms_nosuid(perm)
 			      	break;
 				
 	case PERM_RUNAS:
-				/* headed for exec(), assume euid == 0 */
+				if (seteuid(runas_pw->pw_uid))
+				    fatal("unable to change to runas uid", 1);
+			      	break;
+
+	case PERM_FULL_RUNAS:
+				/* headed for exec(), assume euid == ROOT_UID */
 				runas_setup();
 				if (setuid(runas_pw->pw_uid))
 				    fatal("unable to change to runas uid", 1);
 				break;
 
 	case PERM_SUDOERS:
-				/* assume euid == 0, ruid == user */
+				/* assume euid == ROOT_UID, ruid == user */
 				if (setegid(SUDOERS_GID))
 				    fatal("unable to change to sudoers gid", 1);
 
 				/*
-				 * If SUDOERS_UID == 0 and SUDOERS_MODE
+				 * If SUDOERS_UID == ROOT_UID and SUDOERS_MODE
 				 * is group readable we use a non-zero
 				 * uid in order to avoid NFS lossage.
 				 * Using uid 1 is a bit bogus but should
 				 * work on all OS's.
 				 */
-				if (SUDOERS_UID == 0) {
+				if (SUDOERS_UID == ROOT_UID) {
 				    if ((SUDOERS_MODE & 040) && seteuid(1))
 					fatal("seteuid(1)", 1);
 				} else {
@@ -365,6 +376,47 @@ set_perms_nosuid(perm)
 			      	break;
     }
 }
+
+#  else
+
+/*
+ * Set uids and gids based on perm via setuid() and setgid().
+ * NOTE: does not support the "stay_setuid" or timestampowner options.
+ *       Also, SUDOERS_UID and SUDOERS_GID are not used.
+ */
+void
+set_perms_nosuid(perm)
+    int perm;
+{
+
+    switch (perm) {
+	case PERM_FULL_ROOT:
+	case PERM_ROOT:
+				if (setuid(ROOT_UID))
+					fatal("setuid(ROOT_UID)", 1);
+				break;
+
+	case PERM_FULL_USER:
+    	    	    	        (void) setgid(user_gid);
+				if (setuid(user_uid))
+				    fatal("setuid(user_uid)", 1);
+			      	break;
+				
+	case PERM_FULL_RUNAS:
+				runas_setup();
+				if (setuid(runas_pw->pw_uid))
+				    fatal("unable to change to runas uid", 1);
+				break;
+
+	case PERM_USER:
+	case PERM_SUDOERS:
+	case PERM_RUNAS:
+	case PERM_TIMESTAMP:
+				/* Unsupported since we can't set euid. */
+				break;
+    }
+}
+#  endif /* HAVE_SETEUID */
 # endif /* HAVE_SETREUID */
 #endif /* HAVE_SETRESUID */
 
@@ -382,7 +434,7 @@ runas_setup()
 #endif /* HAVE_PAM */
 
 #ifdef HAVE_LOGIN_CAP_H
-	if (def_flag(I_USE_LOGINCLASS)) {
+	if (def_use_loginclass) {
 	    /*
              * We don't have setusercontext() set the user since we
              * may only want to set the effective uid.  Depending on
@@ -390,14 +442,14 @@ runas_setup()
              * setusercontext() to call initgroups().
 	     */
 	    flags = LOGIN_SETRESOURCES|LOGIN_SETPRIORITY;
-	    if (!def_flag(I_PRESERVE_GROUPS))
-		flags |= LOGIN_SETGROUP;
+	    if (!def_preserve_groups)
+		SET(flags, LOGIN_SETGROUP);
 	    else if (setgid(runas_pw->pw_gid))
 		perror("cannot set gid to runas gid");
 	    error = setusercontext(lc, runas_pw,
 		runas_pw->pw_uid, flags);
 	    if (error) {
-		if (runas_pw->pw_uid != 0)
+		if (runas_pw->pw_uid != ROOT_UID)
 		    fatal("unable to set user context", 1);
 		else
 		    perror("unable to set user context");
@@ -411,7 +463,7 @@ runas_setup()
 	    /*
 	     * Initialize group vector unless asked not to.
 	     */
-	    if (!def_flag(I_PRESERVE_GROUPS) &&
+	    if (!def_preserve_groups &&
 		initgroups(*user_runas, runas_pw->pw_gid) < 0)
 		perror("cannot set group vector");
 #endif /* HAVE_INITGROUPS */
