@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.8 1997/12/02 02:29:36 deraadt Exp $
+#	$OpenBSD: list,v 1.9 1998/03/25 11:55:27 pefo Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
@@ -29,7 +29,8 @@ LINK	instbin			bin/sync
 LINK	instbin			bin/test bin/[
 LINK	instbin			sbin/disklabel
 LINK	instbin			sbin/fdisk
-LINK	instbin			sbin/fsck sbin/fsck_ffs
+LINK	instbin			sbin/fsck
+LINK	instbin			sbin/fsck_ffs
 LINK	instbin			sbin/reboot sbin/halt
 LINK	instbin			sbin/ifconfig
 LINK	instbin			sbin/init
