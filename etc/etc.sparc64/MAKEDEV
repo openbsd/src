@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.32 2004/02/20 19:13:08 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.3 2004/02/20 19:13:01 miod Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.33 2004/03/12 04:54:05 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.4 2004/03/12 04:54:04 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
 #
@@ -62,7 +62,7 @@
 #	lpa*	Polled printer port
 #	lpt*	IEEE 1284 centronics printer
 # USB devices:
-#	usbs	All USB devices
+#	uall	All USB devices
 #	ttyU*	USB serial ports
 #	ugen*	Generic USB devices
 #	uhid*	Generic HID devices
@@ -397,7 +397,7 @@ ttyU[0-9a-zA-Z])
 	M ttyU$U c 95 $o 660 dialer uucp
 	;;
 
-usbs)
+uall)
 	R ttyU0 ttyU1 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3
 	R uscanner0 urio0 usb0 usb1
 	;;
@@ -570,7 +570,7 @@ all)
 	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1
 	R pty2 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C
 	R fd0D fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 ccd0 ccd1
-	R ccd2 ccd3 ptm local wscons pci usbs audio0 uk0 random lpa0
+	R ccd2 ccd3 ptm local wscons pci uall audio0 uk0 random lpa0
 	R lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyh0
 	R ttyh1 crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2
 	R raid3 std st0 st1 fd
