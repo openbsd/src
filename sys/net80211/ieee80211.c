@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.2 2004/11/02 02:15:49 reyk Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.3 2004/11/03 20:42:41 claudio Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -332,11 +332,11 @@ ieee80211_media_init(struct ifnet *ifp,
 		mopt = mopts[mode];
 		ADD(ic, IFM_AUTO, mopt);	/* e.g. 11a auto */
 		if (ic->ic_caps & IEEE80211_C_IBSS)
-			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_ADHOC);
+			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_IBSS);
 		if (ic->ic_caps & IEEE80211_C_HOSTAP)
 			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_HOSTAP);
 		if (ic->ic_caps & IEEE80211_C_AHDEMO)
-			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_ADHOC | IFM_FLAG0);
+			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_ADHOC);
 		if (ic->ic_caps & IEEE80211_C_MONITOR)
 			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_MONITOR);
 		if (mode == IEEE80211_MODE_AUTO)
@@ -349,11 +349,11 @@ ieee80211_media_init(struct ifnet *ifp,
 				continue;
 			ADD(ic, mword, mopt);
 			if (ic->ic_caps & IEEE80211_C_IBSS)
-				ADD(ic, mword, mopt | IFM_IEEE80211_ADHOC);
+				ADD(ic, mword, mopt | IFM_IEEE80211_IBSS);
 			if (ic->ic_caps & IEEE80211_C_HOSTAP)
 				ADD(ic, mword, mopt | IFM_IEEE80211_HOSTAP);
 			if (ic->ic_caps & IEEE80211_C_AHDEMO)
-				ADD(ic, mword, mopt | IFM_IEEE80211_ADHOC | IFM_FLAG0);
+				ADD(ic, mword, mopt | IFM_IEEE80211_ADHOC);
 			if (ic->ic_caps & IEEE80211_C_MONITOR)
 				ADD(ic, mword, mopt | IFM_IEEE80211_MONITOR);
 			/*
@@ -381,11 +381,11 @@ ieee80211_media_init(struct ifnet *ifp,
 		mword = IFM_SUBTYPE(mword);	/* remove media options */
 		ADD(ic, mword, 0);
 		if (ic->ic_caps & IEEE80211_C_IBSS)
-			ADD(ic, mword, IFM_IEEE80211_ADHOC);
+			ADD(ic, mword, IFM_IEEE80211_IBSS);
 		if (ic->ic_caps & IEEE80211_C_HOSTAP)
 			ADD(ic, mword, IFM_IEEE80211_HOSTAP);
 		if (ic->ic_caps & IEEE80211_C_AHDEMO)
-			ADD(ic, mword, IFM_IEEE80211_ADHOC | IFM_FLAG0);
+			ADD(ic, mword, IFM_IEEE80211_ADHOC);
 		if (ic->ic_caps & IEEE80211_C_MONITOR)
 			ADD(ic, mword, IFM_IEEE80211_MONITOR);
 	}
@@ -504,12 +504,11 @@ ieee80211_media_change(struct ifnet *ifp)
 	/*
 	 * Deduce new operating mode but don't install it just yet.
 	 */
-	if ((ime->ifm_media & (IFM_IEEE80211_ADHOC|IFM_FLAG0)) ==
-	    (IFM_IEEE80211_ADHOC|IFM_FLAG0))
+	if (ime->ifm_media & IFM_IEEE80211_ADHOC)
 		newopmode = IEEE80211_M_AHDEMO;
 	else if (ime->ifm_media & IFM_IEEE80211_HOSTAP)
 		newopmode = IEEE80211_M_HOSTAP;
-	else if (ime->ifm_media & IFM_IEEE80211_ADHOC)
+	else if (ime->ifm_media & IFM_IEEE80211_IBSS)
 		newopmode = IEEE80211_M_IBSS;
 	else if (ime->ifm_media & IFM_IEEE80211_MONITOR)
 		newopmode = IEEE80211_M_MONITOR;
@@ -593,10 +592,10 @@ ieee80211_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 			ni->ni_rates.rs_rates[ni->ni_txrate], ic->ic_curmode);
 		break;
 	case IEEE80211_M_IBSS:
-		imr->ifm_active |= IFM_IEEE80211_ADHOC;
+		imr->ifm_active |= IFM_IEEE80211_IBSS;
 		break;
 	case IEEE80211_M_AHDEMO:
-		/* should not come here */
+		imr->ifm_active |= IFM_IEEE80211_ADHOC;
 		break;
 	case IEEE80211_M_HOSTAP:
 		imr->ifm_active |= IFM_IEEE80211_HOSTAP;
