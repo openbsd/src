@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.277 2002/12/18 19:40:41 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.278 2002/12/19 10:49:54 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1932,7 +1932,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->rule.ptr = rs;
 		if (nat != NULL)
 			s->nat_rule = nat;
-		else if (rdr != NULL)
+		else
 			s->nat_rule = rdr;
 		if (s->nat_rule != NULL)
 			s->nat_rule->states++;
@@ -2177,7 +2177,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->rule.ptr = rs;
 		if (nat != NULL)
 			s->nat_rule = nat;
-		else if (rdr != NULL)
+		else
 			s->nat_rule = rdr;
 		if (s->nat_rule != NULL)
 			s->nat_rule->states++;
@@ -2423,7 +2423,7 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->rule.ptr = rs;
 		if (nat != NULL)
 			s->nat_rule = nat;
-		else if (rdr != NULL)
+		else
 			s->nat_rule = rdr;
 		if (s->nat_rule != NULL)
 			s->nat_rule->states++;
@@ -2616,7 +2616,7 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->rule.ptr = rs;
 		if (nat != NULL)
 			s->nat_rule = nat;
-		else if (rdr != NULL)
+		else
 			s->nat_rule = rdr;
 		if (s->nat_rule != NULL)
 			s->nat_rule->states++;
