@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.54 2004/03/17 09:25:09 jmc Exp $
+dnl	$OpenBSD: m4.common,v 1.55 2004/03/17 14:20:56 jmc Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -45,8 +45,8 @@ out as follows:
 .../OSREV/MACHINE/
 		INSTALL.MACHINE	Installation notes; this file.
 
-		CKSUM		Output of the cksum(1) and md5(1) programs
-		MD5		usable for verification of the correctness
+		CKSUM, MD5	Output of the cksum(1) and md5(1) programs,
+				usable for verification of the correctness
 				of downloaded files.')dnl
 dnl
 dnl Change the quote.  There were too many `word' situations that would

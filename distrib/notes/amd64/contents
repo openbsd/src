@@ -1,5 +1,6 @@
-dnl	$OpenBSD: contents,v 1.6 2004/03/17 09:25:09 jmc Exp $
+dnl	$OpenBSD: contents,v 1.7 2004/03/17 14:20:57 jmc Exp $
 TopPart
+
 dnl uncomment as stuff becomes available
 dnl
 OpenBSDfloppy
