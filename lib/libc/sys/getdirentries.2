@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdirentries.2,v 1.6 1995/02/27 12:32:41 cgd Exp $
+.\"	$NetBSD: getdirentries.2,v 1.7 1995/10/12 15:40:50 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm getdirentries
 .Nd "get directory entries in a filesystem independent format"
 .Sh SYNOPSIS
-.Fd #include <sys/dirent.h>
+.Fd #include <dirent.h>
 .Ft int
 .Fn getdirentries "int fd" "char *buf" "int nbytes" "long *basep"
 .Sh DESCRIPTION

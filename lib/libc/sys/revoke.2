@@ -1,4 +1,4 @@
-.\"	$NetBSD: revoke.2,v 1.2 1995/02/27 12:36:23 cgd Exp $
+.\"	$NetBSD: revoke.2,v 1.3 1995/10/12 15:41:11 jtc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,8 +43,9 @@
 .Nm revoke
 .Nd revoke file access
 .Sh SYNOPSIS
+.Fd #include <unistd.h>
 .Ft int
-.Fn revoke "char *path"
+.Fn revoke "const char *path"
 .Sh DESCRIPTION
 The
 .Nm revoke

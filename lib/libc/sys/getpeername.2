@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpeername.2,v 1.5 1995/02/27 12:33:06 cgd Exp $
+.\"	$NetBSD: getpeername.2,v 1.6 1995/10/12 15:40:56 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,6 +40,7 @@
 .Nm getpeername
 .Nd get name of connected peer
 .Sh SYNOPSIS
+.Fd #include <sys/socket.h>
 .Ft int
 .Fn getpeername "int s" "struct sockaddr *name" "int *namelen"
 .Sh DESCRIPTION

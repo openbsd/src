@@ -1,4 +1,4 @@
-.\"	$NetBSD: bind.2,v 1.7 1995/02/27 12:31:54 cgd Exp $
+.\"	$NetBSD: bind.2,v 1.8 1995/10/12 15:40:46 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
-.Fn bind "int s" "struct sockaddr *name" "int namelen"
+.Fn bind "int s" "const struct sockaddr *name" "int namelen"
 .Sh DESCRIPTION
 .Fn Bind
 assigns a name to an unnamed socket.

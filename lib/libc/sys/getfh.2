@@ -1,4 +1,4 @@
-.\"	$NetBSD: getfh.2,v 1.6 1995/02/27 12:32:44 cgd Exp $
+.\"	$NetBSD: getfh.2,v 1.7 1995/10/12 15:40:53 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/mount.h>
 .Ft int
-.Fn getfh "char *path" "fhandle_t *fhp"
+.Fn getfh "const char *path" "fhandle_t *fhp"
 .Sh DESCRIPTION
 .Fn Getfh
 returns a file handle for the specified file or directory
