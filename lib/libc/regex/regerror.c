@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$OpenBSD: regerror.c,v 1.10 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: regerror.c,v 1.11 2004/10/17 17:58:54 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -113,16 +113,12 @@ static struct rerr {
  */
 /* ARGSUSED */
 size_t
-regerror(errcode, preg, errbuf, errbuf_size)
-int errcode;
-const regex_t *preg;
-char *errbuf;
-size_t errbuf_size;
+regerror(int errcode, const regex_t *preg, char *errbuf, size_t errbuf_size)
 {
-	register struct rerr *r;
-	register size_t len;
-	register int target = errcode &~ REG_ITOA;
-	register char *s;
+	struct rerr *r;
+	size_t len;
+	int target = errcode &~ REG_ITOA;
+	char *s;
 	char convbuf[50];
 
 	if (errcode == REG_ATOI)
@@ -157,12 +153,9 @@ size_t errbuf_size;
  == static char *regatoi(const regex_t *preg, char *localbuf);
  */
 static char *
-regatoi(preg, localbuf, localbufsize)
-const regex_t *preg;
-char *localbuf;
-int localbufsize;
+regatoi(const regex_t *preg, char *localbuf, int localbufsize)
 {
-	register struct rerr *r;
+	struct rerr *r;
 
 	for (r = rerrs; r->code != 0; r++)
 		if (strcmp(r->name, preg->re_endp) == 0)
