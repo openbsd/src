@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.2 2004/07/30 01:49:22 jfb Exp $	*/
+/*	$OpenBSD: commit.c,v 1.3 2004/11/09 20:59:31 krapht Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -40,11 +40,16 @@
 #include "proto.h"
 
 
+#define CVS_COMMIT_BIGMSG     8000
+#define CVS_COMMIT_FTMPL      "/tmp/cvsXXXXXXXXXX"
+#define CVS_COMMIT_LOGPREFIX  "CVS:"
+#define CVS_COMMIT_LOGLINE \
+"----------------------------------------------------------------------"
+
 
 
 static char*  cvs_commit_openmsg   (const char *);
-
-
+static char*  cvs_commit_getmsg   (const char *);
 
 
 /*
@@ -62,6 +67,10 @@ cvs_commit(int argc, char **argv)
 	recurse = 1;
 	mfile = NULL;
 	msg = NULL;
+
+#if 0
+	cvs_commit_getmsg(".");
+#endif
 
 	while ((ch = getopt(argc, argv, "F:flm:R")) != -1) {
 		switch (ch) {
@@ -112,14 +121,43 @@ cvs_commit(int argc, char **argv)
 static char*
 cvs_commit_openmsg(const char *path)
 {
-	int fd;
+	int fd, ch;
 	size_t sz;
-	char *msg;
+	char buf[32], *msg;
 	struct stat st;
 
 	if (stat(path, &st) == -1) {
 		cvs_log(LP_ERRNO, "failed to stat `%s'", path);
 		return (NULL);
+	}
+
+	if (!S_ISREG(st.st_mode)) {
+		cvs_log(LP_ERR, "message file must be a regular file");
+		return (NULL);
+	}
+
+	if (st.st_size > CVS_COMMIT_BIGMSG) {
+		do {
+			fprintf(stderr,
+			    "The specified message file seems big.  "
+			    "Proceed anyways? (y/n) ");
+			if (fgets(buf, sizeof(buf), stdin) == NULL) {
+				cvs_log(LP_ERRNO,
+				    "failed to read from standard input");
+				return (NULL);
+			}
+
+			sz = strlen(buf);
+			if ((sz == 0) || (sz > 2)) {
+				continue;
+			}
+
+				cvs_log(LP_ERR, "aborted by user");
+				return (NULL);
+			}
+
+			fprintf(stderr, "Invalid character\n");
+		} while (1);
 	}
 
 	sz = st.st_size + 1;
@@ -143,4 +181,94 @@ cvs_commit_openmsg(const char *path)
 	msg[sz - 1] = '\0';
 
 	return (msg);
+}
+
+
+/*
+ * cvs_commit_getmsg()
+ *
+ * Get a commit log message by forking the user's editor.
+ * Returns the message in a dynamically allocated string on success, NULL on
+ * failure.
+ */
+
+static char*
+cvs_commit_getmsg(const char *dir)
+{
+	int ret, fd, argc, fds[3];
+	char *argv[4], path[MAXPATHLEN], *msg;
+	FILE *fp;
+
+	fds[0] = -1;
+	fds[1] = -1;
+	fds[2] = -1;
+	strlcpy(path, CVS_COMMIT_FTMPL, sizeof(path));
+	argc = 0;
+	argv[argc++] = cvs_editor;
+	argv[argc++] = path;
+	argv[argc] = NULL;
+
+	if ((fd = mkstemp(path)) == -1) {
+		cvs_log(LP_ERRNO, "failed to create temporary file");
+		return (NULL);
+	}
+
+	fp = fdopen(fd, "w");
+	if (fp == NULL) {
+		cvs_log(LP_ERRNO, "failed to fdopen");
+		exit(1);
+	} else {
+		fprintf(fp,
+		    "\n%s %s\n%s Enter Log.  Lines beginning with `%s' are "
+		    "removed automatically\n%s\n%s Commiting in %s\n"
+		    "%s\n%s Modified Files:\n",
+		    CVS_COMMIT_LOGPREFIX, CVS_COMMIT_LOGLINE,
+		    CVS_COMMIT_LOGPREFIX, CVS_COMMIT_LOGPREFIX,
+		    CVS_COMMIT_LOGPREFIX, CVS_COMMIT_LOGPREFIX,
+		    dir, CVS_COMMIT_LOGPREFIX, CVS_COMMIT_LOGPREFIX);
+
+		/* XXX list files here */
+
+		fprintf(fp, "%s %s\n", CVS_COMMIT_LOGPREFIX,
+		    CVS_COMMIT_LOGLINE);
+	}
+	(void)fflush(fp);
+	(void)fclose(fp);
+
+	do {
+		ret = cvs_exec(argc, argv, fds);
+		if (ret == -1) {
+			fprintf(stderr,
+			    "Log message unchanged or not specified\n"
+			    "a)bort, c)ontinue, e)dit, !)reuse this message "
+			    "unchanged for remaining dirs\nAction: () ");
+
+			ret = getchar();
+			if (ret == 'a') {
+				cvs_log(LP_ERR, "aborted by user");
+				break;
+			} else if (ret == 'c') {
+			} else if (ret == 'e') {
+			} else if (ret == '!') {
+			}
+				
+		}
+	} while (0);
+
+	(void)close(fd);
+
+	return (msg);
+}
+
+
+/*
+ * cvs_commit_gettmpl()
+ *
+ * Get the template to display when invoking the editor to get a commit
+ * message.
+ */
+
+cvs_commit_gettmpl(void)
+{
+
 }
