@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.35 2000/11/08 16:01:07 art Exp $
+#	$OpenBSD: files.alpha,v 1.36 2000/11/16 04:30:01 ericj Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -11,7 +11,7 @@ maxusers 2 8 64
 # this loses, but there's no way to define attributes which have attributes
 define	alpha_shared_intr
 file	arch/alpha/dev/shared_intr.c	alpha_shared_intr | dec_eb164 |
-					dec_kn20aa
+					dec_kn20aa | dec_550
 
 define	alpha_sgmap
 file	arch/alpha/common/sgmap_common.c alpha_sgmap | dec_3000_500
@@ -49,7 +49,7 @@ file	arch/alpha/alpha/rd_root.c	ramdisk_hooks
 major { rd = 6 }
 
 #
-# "wprkstation cpnsole" routines
+# "workstation console" routines
 #
 
 include "dev/wscons/files.wscons"
@@ -123,30 +123,22 @@ include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
 include "dev/isa/files.isa"
 major { wd = 0 }
 
-#file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
-
-
 #
 # ISA Bus devices
 #
 
-#device	ibus at mainbus { }
-#device	jcombo at ibus: isabus
-#device	jeisa at ibus: eisabus
-
 file	arch/alpha/isa/isa_machdep.c	isa
 
-device	pckbc { }
-attach	pckbc at isa
-file	arch/alpha/isa/pckbc.c		pckbc
+# ISA PC keyboard controller
 
-device	pckbd
-attach	pckbd at pckbc
-file	arch/alpha/isa/pckbd.c		pckbd
+# PC-like keyboard controller
+device  pckbc { [slot = -1] }
+file	dev/ic/pckbc.c			pckbc	needs-flag
 
-device	pms
-attach	pms at pckbc
-file	arch/alpha/isa/pms.c		pms
+attach	pckbc at isa with pckbc_isa
+file	dev/isa/pckbc_isa.c		pckbc	needs-flag
+
+include "dev/pckbc/files.pckbc"
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
@@ -198,7 +190,6 @@ file	arch/alpha/pci/cia_bus_io.c	cia
 file	arch/alpha/pci/cia_bus_mem.c	cia
 file	arch/alpha/pci/cia_bwx_bus_io.c	cia
 file	arch/alpha/pci/cia_bwx_bus_mem.c	cia
-
 
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
 file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
@@ -287,6 +278,7 @@ file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33	needs-flag
 file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
 file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
+
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"
