@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.175 2004/07/16 09:26:07 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.176 2004/09/22 21:33:53 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4033,7 +4033,7 @@ syn_cache_respond(sc, m)
 		return (ENOBUFS);
 #endif
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m && tlen > MHLEN) {
+	if (m && max_linkhdr + tlen > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
