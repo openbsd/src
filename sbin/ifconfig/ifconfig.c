@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.94 2004/04/27 17:33:52 pb Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.95 2004/04/27 21:13:09 jmc Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.94 2004/04/27 17:33:52 pb Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.95 2004/04/27 21:13:09 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -1011,7 +1011,7 @@ setifdstaddr(const char *addr, int param)
 }
 
 /*
- * Note: doing an SIOCIGIFFLAGS scribbles on the union portion
+ * Note: doing an SIOCGIFFLAGS scribbles on the union portion
  * of the ifreq structure, which may confuse other parts of ifconfig.
  * Make a private copy so we can avoid that.
  */
@@ -2621,26 +2621,31 @@ adjust_nsellength(void)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: ifconfig [ -m ] [ -a ] [ -A ] [ interface ]\n"
-		"\t[ [af] [ address [ dest_addr ] ] [ up ] [ down ] "
-		"[ netmask mask ] ]\n"
-		"\t[ media media_type ] [ mediaopt media_option ]\n"
-		"\t[ metric n ]\n"
-		"\t[ mtu n ]\n"
-		"\t[ nwid network_id ] [ nwkey network_key | -nwkey ]\n"
-		"\t[ powersave | -powersave ] [ powersavesleep duration ]\n"
-		"\t[ [af] tunnel srcaddress dstaddress ] [ deletetunnel ]\n"
-		"\t[ vlan n vlandev interface ]\n"
-		"\t[ arp | -arp ]\n"
-		"\t[ anycast | -anycast ] [ deprecated | -deprecated ]\n"
-		"\t[ tentative | -tentative ] [ pltime n ] [ vltime n ] [ eui64 ]\n"
-		"\t[ -802.2 | -802.3 | -802.2tr | -snap | -EtherII ]\n"
-		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
-		"       ifconfig [-a | -A | -am | -Am] [ af ]\n"
-		"       ifconfig -m interface [af]\n"
-		"       ifconfig -C\n"
-		"       ifconfig interface create\n"
-		"       ifconfig interface destroy\n");
+	fprintf(stderr, "usage: ifconfig interface [address_family] [address [dest_address]]\n"
+			"\t[[-]alias] [[-]arp] [broadcast addr]\n"
+			"\t[[-]debug] [delete] [up] [down] [ipdst addr]\n"
+			"\t[tunnel src_address dest_address] [deletetunnel]\n"
+			"\t[[-]link0] [[-]link1] [[-]link2] [[-]trailers]\n"
+			"\t[media type] [[-]mediaopt opts] [instance minst]\n"
+			"\t[mtu value] [metric nhops] [netmask mask] [prefixlen n]\n"
+			"\t[nwid id] [nwkey key] [nwkey persist[:key]] [-nwkey]\n"
+			"\t[[-]powersave] [powersavesleep duration]\n"
+#ifdef INET6
+			"\t[[-]anycast] [eui64] [pltime n] [vltime n] [[-]tentative]\n"
+#endif
+#ifndef INET_ONLY
+			"\t[vlan vlan_tag vlandev parent_iface] [-vlandev] [vhid n]\n"
+			"\t[advbase n] [advskew n] [maxupd n] [pass passphrase]\n"
+			"\t[state init | backup | master] [syncif iface] [-syncif]\n"
+			"\t[phase n] [range netrange] [snpaoffset n] [nsellength n]\n"
+			"\t[802.2] [802.2tr] [802.3] [snap] [EtherII]\n"
+#endif
+			"       ifconfig -A | -Am | -a | -am [address_family]\n"
+			"       ifconfig -C\n"
+			"       ifconfig -m interface [address_family]\n"
+			"       ifconfig interface create\n"
+			"       ifconfig interface destroy\n"
+		);
 	exit(1);
 }
 

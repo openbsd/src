@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.79 2004/03/18 20:52:13 mcbride Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.80 2004/04/27 21:13:09 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -39,12 +39,36 @@
 .Nd configure network interface parameters
 .Sh SYNOPSIS
 .Nm ifconfig
-.Ar interface address_family
+.Ar interface
+.Op Ar address_family
 .Oo
 .Ar address
 .Op Ar dest_address
 .Oc
 .Op Ar parameters
+.Nm ifconfig
+.Fl A | Am | a | am
+.Op Ar address_family
+.Nm ifconfig
+.Fl C
+.Nm ifconfig
+.Fl m
+.Ar interface
+.Op Ar address_family
+.Nm ifconfig
+.Ar interface
+.Cm create
+.Nm ifconfig
+.Ar interface
+.Cm destroy
+.Nm ifconfig
+.Ar carp-interface
+.Cm vhid
+.Ar host-id
+.Nm ifconfig
+.Ar pfsync-interface
+.Cm syncif
+.Ar iface
 .Nm ifconfig
 .Ar tunnel-interface
 .Cm tunnel
@@ -58,35 +82,6 @@
 .Ar vlan-tag
 .Cm vlandev
 .Ar parent-interface
-.Nm ifconfig
-.Ar carp-interface
-.Cm vhid
-.Ar host-id
-.Nm ifconfig
-.Ar pfsync-interface
-.Cm syncif
-.Ar iface
-.Nm ifconfig
-.Ar interface
-.Op Ar address_family
-.Nm ifconfig
-.Fl m
-.Ar interface
-.Op Ar address_family
-.Nm ifconfig
-.Ar interface
-.Cm create
-.Nm ifconfig
-.Ar interface
-.Cm destroy
-.Nm ifconfig
-.Fl C
-.Nm ifconfig
-.Op Fl a | am
-.Op Ar address_family
-.Nm ifconfig
-.Op Fl A | Am
-.Op Ar address_family
 .Sh DESCRIPTION
 The
 .Nm
@@ -102,33 +97,77 @@ To configure a bridge interface, use the
 .Xr brconfig 8
 program instead.
 .Pp
-The operands are as follows:
+.Nm
+displays the current configuration for a network interface
+when no optional parameters are supplied.
+If a protocol family is specified,
+.Nm
+will report only the details specific to that protocol family.
+.Pp
+Only the superuser may modify the configuration of a network interface.
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+Causes full interface alias information for each interface to
+be displayed.
+.It Fl Am
+The same as the
+.Fl A
+option,
+but additionally prints interface media information for all interfaces.
+.It Fl a
+Causes
+.Nm
+to print information on all interfaces.
+The protocol family may be specified as well.
+.It Fl am
+The same as the
+.Fl a
+option,
+but additionally prints interface media information for all interfaces.
+.It Fl C
+Print the names of all network pseudo-devices that
+can be created dynamically at runtime using
+.Cm ifconfig create .
+.It Fl m Ar interface
+Print media information for a given
+.Ar interface .
 .It Ar address
 For the
-.Tn DARPA-Internet
+.Tn DARPA
+Internet
 family,
-the address is either a host name present in the host name data
-base,
+the address is either a host name present in the host name database,
 .Xr hosts 5 ,
 or a
 .Tn DARPA
 Internet address expressed in the Internet standard
 .Dq dot notation .
+.Pp
+Internet version 6 addresses are either a host name present
+in the host name database,
+.Xr hosts 5 ,
+or an Internet version 6 address in standard colon separated form, as
+described in the
+.Xr inet 3
+manual page.
+.Pp
 For the Xerox Network Systems(tm) and Internetwork Packet Exchange families,
-addresses are
-.Ar net:a.b.c.d.e.f ,
+addresses are of the form
+.Dq net:a.b.c.d.e.f ,
 where
-.Ar net
+.Dq net
 is the assigned network number (in decimal),
 and each of the six bytes of the host number,
-.Ar a
+.Dq a
 through
-.Ar f ,
+.Dq f ,
 are specified in hexadecimal.
 The host number may be omitted on Ethernet interfaces,
 which use the hardware physical address,
 and on interfaces other than the first.
+.Pp
 For the
 .Tn ISO
 family, addresses are specified as a long hexadecimal string,
@@ -136,17 +175,24 @@ as in the Xerox family.
 However, two consecutive dots imply a zero
 byte, and the dots are optional, if the user wishes to (carefully)
 count out long strings of digits in network byte order.
+.Pp
 .Tn AppleTalk
-(LLAP) addresses are specified as nn.na (Network Number.Node Address).
-Node addresses are divided into 2 classes: User Node IDs and Server Node IDs.
+(LLAP) addresses are specified as
+.Dq nn.na
+.Pq Dq Network Number.Node Address .
+Node addresses are divided into two classes: User Node IDs and Server Node IDs.
 1-127($01-$7F) are for User Node IDs while 128-254($80-$FE)
 are used for Server Node IDs.
 Node 0($00) is not allowed (unknown)
-while Node 255($FF) is reserved for the AppleTalk broadcast Hardware
+while Node 255($FF) is reserved for the AppleTalk broadcast hardware
 address (broadcast ID).
+.Pp
+.Tn IPX
+addresses are specified as listed in the
+.Xr ipx 3
+manual page.
 .It Ar address_family
-Specifies the
-.Ar address family
+Specifies the address family
 which affects interpretation of the remaining parameters.
 Since an interface can receive transmissions in differing protocols
 with different naming schemes, specifying the address family is recommended.
@@ -166,7 +212,7 @@ parameter is a string of the form
 .Dq name unit ,
 for example,
 .Dq en0 .
-If no optional parameters are supplied, this string may also be of the form
+If no optional parameters are supplied, this string can instead be just
 .Dq name .
 In this case, all interfaces of that type will be displayed.
 For example,
@@ -177,68 +223,69 @@ interfaces.
 .El
 .Pp
 The following parameters may be set with
-.Nm ifconfig :
+.Nm :
 .Bl -tag -width dest_addressxx
+.It Cm 802.2 802.2tr 802.3 snap EtherII
+Set the
+.Xr ipx 3
+frame type to be either 802.2, 802.2tr, 802.3, snap, or Ethernet II.
+.It Cm advbase Ar n
+If the driver is a
+.Xr carp 4
+pseudo-device, set the base advertisement interval to
+.Ar n
+seconds.
+This is an 8-bit number; the default value is 1 second.
+.It Cm advskew Ar n
+If the driver is a
+.Xr carp 4
+pseudo-device, skew the advertisement interval by
+.Ar n .
+This is an 8-bit number; the default value is 0.
+.Pp
+Taken together the
+.Cm advbase
+and
+.Cm advskew
+indicate how frequently, in seconds, the host will advertise the fact that it
+considers itself master of the virtual host.
+The formula is
+.Cm advbase
++
+.Cm ( advskew
+/ 255 ).
+If the master does not advertise within three times this interval, this host
+will begin advertising as master.
 .It Cm alias
 Establish an additional network address for this interface.
 This is sometimes useful when changing network numbers, and
 one wishes to accept packets addressed to the old interface.
 .It Fl alias
 Remove the specified network address alias.
-.It Cm arp
-Enable the use of the Address Resolution Protocol in mapping
-between network level addresses and link level addresses (default).
-This is currently implemented for mapping between
-.Tn DARPA
-Internet
-addresses and Ethernet addresses.
-.It Fl arp
-Disable the use of the Address Resolution Protocol.
 .It Cm anycast
 (inet6 only)
 Set the IPv6 anycast address bit.
 .It Fl anycast
 (inet6 only)
 Clear the IPv6 anycast address bit.
+.It Cm arp
+Enable the use of the Address Resolution Protocol
+(``ARP'';
+see
+.Xr arp 4 )
+in mapping
+between network level addresses and link level addresses (default).
+This is currently implemented for mapping between
+.Tn DARPA
+Internet
+addresses and Ethernet addresses.
+.It Fl arp
+Disable the use of ARP.
 .It Cm broadcast Ar addr
 (inet only)
 Specify the address to use to represent broadcasts to the
 network.
 The default broadcast address is the address with a host part of all 1's.
-.It Cm debug
-Enable driver dependent debugging code; usually, this turns on
-extra console error logging.
-.It Fl debug
-Disable driver dependent debugging code.
-.It Cm delete
-Remove the network address specified.
-This would be used if you incorrectly specified an alias, or it
-was no longer needed.
-If you have incorrectly set an NS address having the side effect
-of specifying the host portion, removing all NS addresses will
-allow you to respecify the host portion.
-.It Cm dest_address
-Specify the address of the correspondent on the other end
-of a point to point link.
-.It Cm down
-Mark an interface
-.Dq down .
-When an interface is marked
-.Dq down ,
-the system will not attempt to
-transmit messages through that interface.
-If possible, the interface will be reset to disable reception as well.
-This action automatically disables routes using the interface.
-.It Cm tunnel Ar src_address dest_address
-Set the source and destination tunnel addresses on a tunnel interface,
-including
-.Xr gif 4 .
-Packets routed to this interface will be encapsulated in
-IPv4 or IPv6, depending on the source and destination address families.
-Both addresses must be of the same family.
-.It Cm deletetunnel
-Removes the source and destination tunnel addresses,
-configured onto a tunnel interface.
 .It Cm create
 Create the specified network pseudo-device.
 At least the following devices can be created on demand:
@@ -252,16 +299,57 @@ At least the following devices can be created on demand:
 .Xr sl 4 ,
 .Xr tun 4 ,
 .Xr vlan 4
+.It Cm debug
+Enable driver-dependent debugging code; usually, this turns on
+extra console error logging.
+.It Fl debug
+Disable driver-dependent debugging code.
+.It Cm delete
+Remove the network address specified.
+This would be used if you incorrectly specified an alias, or it
+was no longer needed.
+If you have incorrectly set an NS address having the side effect
+of specifying the host portion, removing all NS addresses will
+allow you to respecify the host portion.
+.It Cm deletetunnel
+Removes the source and destination tunnel addresses,
+configured onto a tunnel interface.
+.It Ar dest_address
+Specify the address of the correspondent on the other end
+of a point-to-point link.
 .It Cm destroy
 Destroy the specified network pseudo-device.
-.It Cm ipdst
-This is used to specify an Internet host who is willing to receive
-ip packets encapsulating NS packets bound for a remote network.
-An apparent point to point link is constructed, and
+.It Cm down
+Mark an interface
+.Dq down .
+When an interface is marked
+.Dq down ,
+the system will not attempt to
+transmit messages through that interface.
+If possible, the interface will be reset to disable reception as well.
+This action automatically disables routes using the interface.
+.It Cm eui64
+(inet6 only)
+Fill the interface index
+.Pq the lowermost 64th bit of an IPv6 address
+automatically.
+.It Cm instance Ar minst
+Set the media instance to
+.Ar minst .
+This is useful for devices which have multiple physical layer interfaces
+(PHYs).
+Setting the instance on such devices may not be strictly required
+by the network interface driver as the driver may take care of this
+automatically; see the driver's manual page for more information.
+.It Cm ipdst Ar addr
+This is used to specify an Internet host which is willing to receive
+IP packets encapsulating NS packets bound for a remote network.
+An apparent point-to-point link is constructed, and
 the address specified will be taken as the NS address and network
 of the destination.
-IP encapsulation of
-.Tn CLNP
+IP encapsulation of Connectionless Network Protocol
+(``CLNP''; see
+.Xr clnp 4 )
 packets is done differently.
 .It Cm link[0-2]
 Enable special processing of the link level of the interface.
@@ -273,6 +361,12 @@ for some Ethernet cards.
 Refer to the man page for the specific driver for more information.
 .It Fl link[0-2]
 Disable special processing at the link level with the specified interface.
+.It Cm maxupd Ar n
+If the driver is a
+.Xr pfsync 4
+pseudo-device, indicate the maximum number
+of updates for a single state which can be collapsed into one.
+This is an 8-bit number; the default value is 128.
 .It Cm media Ar type
 Set the media type of the interface to
 .Ar type .
@@ -291,143 +385,46 @@ Setting it to
 or
 .Dq UTP
 would activate twisted pair.
-Refer to the interfaces' driver
-specific man page for a complete list of the available types,
+Refer to the interface's driver-specific man page for a complete
+list of the available types,
 or use
-.Li # ifconfig -m interface
+.Bd -literal -offset indent
+$ ifconfig -m interface
+.Ed
+.Pp
 for a listing of choices.
 .It Cm mediaopt Ar opts
 Set the specified media options on the interface.
 .Ar opts
 is a comma delimited list of options to apply to the interface.
-Refer to the interfaces' driver specific man page for a complete
+Refer to the interface's driver-specific man page for a complete
 list of available options,
 or use
-.Cm ifconfig -m interface
+.Bd -literal -offset indent
+$ ifconfig -m interface
+.Ed
+.Pp
 for a listing of choices.
 .It Fl mediaopt Ar opts
 Disable the specified media options on the interface.
+.It Cm metric Ar nhops
+Set the routing metric of the interface to
+.Ar nhops ,
+default 0.
+The routing metric is used by the routing protocol
+(see
+.Xr routed 8 ) .
+Higher metrics have the effect of making a route
+less favorable; metrics are counted as addition hops
+to the destination network or host.
 .It Cm mtu Ar value
 Set the MTU for this device to the given
 .Ar value .
 Cloned routes will inherit this value as a default.
-.It Cm instance Ar minst
-Set the media instance to
-.Ar minst .
-This is useful for devices which have multiple physical layer interfaces
-(PHYs).
-Setting the instance on such devices may not be strictly required
-by the network interface driver as the driver may take care of this
-automatically; see the driver's manual page for more information.
-.It Cm vlan Ar vlan_tag
-If the interface is a vlan pseudo interface, set the vlan tag value
-to
-.Ar vlan_tag .
-This value is a 12-bit number which is used to create an 802.1Q
-vlan header for packets sent from the vlan interface.
-Note that
-.Cm vlan
-and
-.Cm vlandev
-must both be set at the same time.
-.It Cm vlandev Ar iface
-If the interface is a vlan pseudo-device, associate physical interface
-.Ar iface
-with it.
-Packets transmitted through the vlan interface will be
-diverted to the specified physical interface
-.Ar iface
-with 802.1Q vlan encapsulation.
-Packets with 802.1Q encapsulation received
-by the parent interface with the correct vlan tag will be diverted to
-the associated vlan pseudo-interface.
-The vlan interface is assigned a
-copy of the parent interface's flags and the parent's ethernet address.
-The
-.Cm vlandev
-and
-.Cm vlan
-must both be set at the same time.
-If the vlan interface already has
-a physical interface associated with it, this command will fail.
-To change the association to another physical interface, the existing
-association must be cleared first.
-.Pp
-Note: if the
-.Ar link0
-flag is set on the vlan interface, the vlan pseudo
-interface's behavior changes: the
-.Ar link0
-tells the vlan interface that the
-parent interface supports insertion and extraction of vlan tags on its
-own (usually in firmware) and that it should pass packets to and from
-the parent unaltered.
-.It Fl vlandev
-If the driver is a vlan pseudo-device, disassociate the physical interface
-from it.
-This breaks the link between the vlan interface and its parent,
-clears its vlan tag, flags and its link address and shuts the interface down.
-.It Cm vhid Ar n
-If the driver is a carp pseudo-device, set the virtual host ID to
-.Ar n .
-Acceptable values are 1 to 255.
-.It Cm advbase Ar n
-If the driver is a carp pseudo-device, set the base advertisement interval to
-.Ar n
-seconds.
-This is an 8-bit number; the default value is 1 second.
-.It Cm advskew Ar n
-If the driver is a carp pseudo-device, skew the advertisement interval by
-.Ar n .
-This is an 8-bit number; the default value is 0.
-.Pp
-Taken together the
-.Cm advbase
-and
-.Cm advskew
-indicate how frequently, in seconds, the host will advertise the fact that it
-considers itself master of the virtual host.
-The formula is
-.Cm advbase
-+
-.Cm ( advskew
-/ 255 ).
-If the master does not advertise within three times this interval, this host
-will begin advertising as master.
-.It Cm pass Ar passphrase
-If the driver is a carp pseudo-device, set the authentication key to
-.Ar passphrase .
-There is no passphrase by default.
-.It Cm state Ar state
-Explicitly force the carp pseudo-device to enter this state.
-Valid states are
-.Ar init ,
-.Ar backup ,
-and
-.Ar master .
-.It Cm syncif Ar iface
-If the driver is a pfsync pseudo-device, use the specified interface
-to send and receive pfsync state synchronisation messages.
-.It Fl syncif
-If the driver is a pfsync pseudo-device, stop sending pfsync state
-synchronisation messages over the network.
-.It Cm maxupd Ar n
-If the driver is a pfsync pseudo-device, indicate the maximum number
-of updates for a single state which can be collapsed into one.
-This is an 8-bit number; the default value is 128.
-.It Cm metric Ar n
-Set the routing metric of the interface to
-.Ar n ,
-default 0.
-The routing metric is used by the routing protocol
-.Pq Xr routed 8 .
-Higher metrics have the effect of making a route
-less favorable; metrics are counted as addition hops
-to the destination network or host.
 .It Cm netmask Ar mask
 (inet, inet6 and iso)
 Specify how much of the address to reserve for subdividing
-networks into sub-networks.
+networks into subnetworks.
 The mask includes the network part of the local address
 and the subnet part, which is taken from the host field of the address.
 The mask can be specified as a single hexadecimal number
@@ -453,7 +450,9 @@ taken to be the
 (Network Entity Title).
 The default value is 1, which is conformant to US
 .Tn GOSIP .
-When an ISO address is set in an ifconfig command,
+When an ISO address is set in an
+.Nm
+command,
 it is really the
 .Tn NSAP
 which is being specified.
@@ -487,29 +486,32 @@ can either be a string, a series of hexadecimal digits (preceded by
 .So 0x Sc ) ,
 or a set of keys
 of the form
-.Ar n:k1,k2,k3,k4 ,
+.Dq n:k1,k2,k3,k4
 where
-.Ar n
+.Sq n
 specifies which of the keys will be used for transmitted packets,
 and the four keys,
-.Ar k1
+.Dq k1
 through
-.Ar k4 ,
+.Dq k4 ,
 are configured as WEP keys.
 If a set of keys is specified, a comma
-.Po So , Sc Pc
+.Pq Sq \&,
 within the key must be escaped with a backslash.
 Note that if multiple keys are used, their order must be the same within
 the network.
 For IEEE 802.11 wireless networks, the length of each key is restricted to
 40 bits, i.e. a 5-character string or 10 hexadecimal digits.
-WaveLAN/IEEE Gold and newer Prism cards will also accept a 104 bit
-(13 character) key.
+WaveLAN/IEEE Gold and newer Prism cards will also accept a 104-bit
+(13-character) key.
+.It Fl nwkey
+(IEEE 802.11 devices only)
+Disable WEP encryption for IEEE 802.11-based wireless network interfaces.
 .It Cm nwkey Cm persist
 (IEEE 802.11 devices only)
 Enable WEP encryption for IEEE 802.11-based wireless network interfaces
 with the persistent key stored in the network card.
-.It Cm nwkey Cm persist: Ns Ar key
+.It Cm nwkey Cm persist : Ns Ar key
 (IEEE 802.11 devices only)
 Write
 .Ar key
@@ -517,11 +519,16 @@ to the persistent memory of the network card, and
 enable WEP encryption for IEEE 802.11-based wireless network interfaces
 using that
 .Ar key .
-.It Fl nwkey
-(IEEE 802.11 devices only)
-Disable WEP encryption for IEEE 802.11-based wireless network interfaces.
-.It Cm phase
-The argument following this specifies the version (phase) of the
+.It Cm pass Ar passphrase
+If the driver is a
+.Xr carp 4
+pseudo-device, set the authentication key to
+.Ar passphrase .
+There is no passphrase by default.
+.It Cm phase Ar n
+The argument
+.Ar n
+specifies the version (phase) of the
 AppleTalk network attached to the interface.
 Values of 1 or 2 are permitted.
 .It Cm pltime Ar n
@@ -541,25 +548,45 @@ Set the receiver sleep duration (in milliseconds) for 802.11 power saving mode.
 Effect is similar to
 .Cm netmask ,
 but you can specify prefix length by digits.
-.It Cm range
+.It Cm range Ar netrange
 Under AppleTalk, set the interface to respond to a
-.Em netrange
-of the form startnet-endnet.
+.Ar netrange
+of the form
+.Dq startnet-endnet .
 AppleTalk uses this scheme instead of
 netmasks though
 .Ox
 implements it internally as a set of netmasks.
+.It Cm snpaoffset Ar n
+.Pf ( Tn ISO
+only)
+This is used to specify the subnetwork point of attachment offset for
+CLNP packets.
+.It Cm state Ar state
+Explicitly force the
+.Xr carp 4
+pseudo-device to enter this state.
+Valid states are
+.Ar init ,
+.Ar backup ,
+and
+.Ar master .
+.It Cm syncif Ar iface
+If the driver is a
+.Xr pfsync 4
+pseudo-device, use the specified interface
+to send and receive pfsync state synchronisation messages.
+.It Fl syncif
+If the driver is a
+.Xr pfsync 4
+pseudo-device, stop sending pfsync state
+synchronisation messages over the network.
 .It Cm tentative
 (inet6 only)
 Set the IPv6 tentative address bit.
 .It Fl tentative
 (inet6 only)
 Clear the IPv6 tentative address bit.
-.It Cm eui64
-(inet6 only)
-Fill interface index
-.Pq lowermost 64bit of an IPv6 address
-automatically.
 .It Cm trailers
 Request the use of a
 .Dq trailer
@@ -570,9 +597,8 @@ If a network interface supports
 the system will, when possible, encapsulate outgoing
 messages in a manner which minimizes the number of
 memory to memory copy operations performed by the receiver.
-On networks that support the Address Resolution Protocol (see
-.Xr arp 4 ;
-currently, only Ethernet),
+On networks that support ARP
+(currently, only Ethernet),
 this flag indicates that the system should request that other
 systems use trailers when sending to this host.
 Similarly, trailer encapsulations will be sent to other
@@ -582,105 +608,144 @@ Currently used by Internet protocols only.
 Disable the use of a
 .Dq trailer
 link level encapsulation.
+.It Cm tunnel Ar src_address dest_address
+Set the source and destination tunnel addresses on a tunnel interface,
+including
+.Xr gif 4 .
+Packets routed to this interface will be encapsulated in
+IPv4 or IPv6, depending on the source and destination address families.
+Both addresses must be of the same family.
 .It Cm up
 Mark an interface
 .Dq up .
 This may be used to enable an interface after an
-.Dq ifconfig down .
+.Cm ifconfig down .
 It happens automatically when setting the first address on an interface.
 If the interface was reset when previously marked down,
 the hardware will be re-initialized.
+.It Cm vhid Ar n
+If the driver is a
+.Xr carp 4
+pseudo-device, set the virtual host ID to
+.Ar n .
+Acceptable values are 1 to 255.
+.It Cm vlan Ar vlan_tag
+If the interface is a
+.Xr vlan 4
+pseudo-interface, set the vlan tag value
+to
+.Ar vlan_tag .
+This value is a 12-bit number which is used to create an 802.1Q
+vlan header for packets sent from the vlan interface.
+Note that
+.Cm vlan
+and
+.Cm vlandev
+must both be set at the same time.
+.It Cm vlandev Ar iface
+If the interface is a
+.Xr vlan 4
+pseudo-device, associate physical interface
+.Ar iface
+with it.
+Packets transmitted through the vlan interface will be
+diverted to the specified physical interface
+.Ar iface
+with 802.1Q vlan encapsulation.
+Packets with 802.1Q encapsulation received
+by the parent interface with the correct vlan tag will be diverted to
+the associated vlan pseudo-interface.
+The vlan interface is assigned a
+copy of the parent interface's flags and the parent's Ethernet address.
+.Cm vlandev
+and
+.Cm vlan
+must both be set at the same time.
+If the vlan interface already has
+a physical interface associated with it, this command will fail.
+To change the association to another physical interface, the existing
+association must be cleared first.
+.Pp
+Note: if the
+.Ar link0
+flag is set on the vlan interface, the vlan pseudo-interface's
+behavior changes;
+.Ar link0
+tells the vlan interface that the
+parent interface supports insertion and extraction of vlan tags on its
+own (usually in firmware) and that it should pass packets to and from
+the parent unaltered.
+.It Fl vlandev
+If the driver is a
+.Xr vlan 4
+pseudo-device, disassociate the physical interface
+from it.
+This breaks the link between the vlan interface and its parent,
+clears its vlan tag, flags, and link address, and shuts the interface down.
 .It Cm vltime Ar n
 (inet6 only)
 Set valid lifetime for the address.
-.It Cm 802.2 802.2tr 802.3 snap EtherII
-Set the
-.Xr ipx 3
-frame type to be either 802.2, 802.2tr, 802.3, snap or Ethernet II.
 .El
-.Pp
-.Nm
-displays the current configuration for a network interface
-when no optional parameters are supplied.
-If a protocol family is specified,
-ifconfig will report only the details specific to that protocol family.
-.Pp
-Using
-.Fl a
-causes
-.Nm
-to print information on all interfaces.
-The protocol family may be specified as well.
-Additionally, if
-.Fl am
-is used, interface media information is printed.
-.Pp
-If
-.Fl A
-is used, it causes full interface alias information for each interface to
-be displayed.
-If
-.Fl Am
-is used, interface media information is printed for all interfaces
-as well.
-.Pp
-If
-.Fl m
-followed by an interface name is specified, then the media information
-for that interface will be printed.
-.Pp
-The
-.Fl C
-option causes
-.Nm
-to print the names of all network pseudo-devices that
-can be created dynamically at runtime using
-.Cm ifconfig create .
-.Pp
-Only the superuser may modify the configuration of a network interface.
 .Sh EXAMPLES
-.Bl -tag -width ifconfig
-.It Cm # ifconfig fxp0 inet 192.168.1.10 netmask 255.255.255.0
-Assign the inet(4) address of 192.168.1.10 with a network mask of
-255.255.255.0 to interface fxp0.
+Assign the
+.Xr inet 3
+address of 192.168.1.10 with a network mask of
+255.255.255.0 to interface fxp0:
 .Pp
-.It Cm # ifconfig fxp0 ipx 12625920
-Assign the ipx(3) address of 12625920 specified in decimal to interface fxp0.
+.Dl # ifconfig fxp0 inet 192.168.1.10 netmask 255.255.255.0
 .Pp
-.It Cm "# ifconfig fxp0 atalk 39108.128 range 39107-39109 phase 2"
+Assign the
+.Xr ipx 3
+address of 12625920 specified in decimal to interface fxp0:
+.Pp
+.Dl # ifconfig fxp0 ipx 12625920
+.Pp
 Assign the AppleTalk network 39108 and server node 128 with a network
-range of 39107-39109 to interface fxp0 on a phase 2 AppleTalk network.
+range of 39107-39109 to interface fxp0 on a phase 2 AppleTalk network:
 .Pp
-.It Cm # ifconfig xl0 media 10baseT
-Configure the xl0 interface to use 10baseT.
+.Dl # ifconfig fxp0 atalk 39108.128 range 39107-39109 phase 2
 .Pp
-.It Cm # ifconfig xl0 media 100baseTX mediaopt full-duplex
-Configure the xl0 interface to use 100baseTX, full duplex.
+Configure the xl0 interface to use 10baseT:
 .Pp
-.It Cm # ifconfig vlan0 192.168.254.1 vlan 4 vlandev fxp0
+.Dl # ifconfig xl0 media 10baseT
+.Pp
+Configure the xl0 interface to use 100baseTX, full duplex:
+.Pp
+.Dl # ifconfig xl0 media 100baseTX mediaopt full-duplex
+.Pp
 Configure the vlan0 interface for IP address 192.168.254.1, vlan tag 4,
-and vlan parent device fxp0.
+and vlan parent device fxp0:
 .Pp
-.It Cm # ifconfig carp0 vhid 1 192.168.10.1
-Configure the carp0 interface for IP address 192.168.10.1, virtual host ID 1.
+.Dl # ifconfig vlan0 192.168.254.1 vlan 4 vlandev fxp0
 .Pp
-.It Cm # ifconfig gif1 create
-Create the gif1 network interface.
+Configure the carp0 interface for IP address 192.168.10.1, virtual host ID 1:
 .Pp
-.It Cm # ifconfig gif1 destroy
-Destroy the gif1 network interface.
-.El
+.Dl # ifconfig carp0 vhid 1 192.168.10.1
+.Pp
+Create the gif1 network interface:
+.Pp
+.Dl # ifconfig gif1 create
+.Pp
+Destroy the gif1 network interface:
+.Pp
+.Dl # ifconfig gif1 destroy
 .Sh DIAGNOSTICS
 Messages indicating the specified interface does not exist, the
 requested address is unknown, or the user is not privileged and
 tried to alter an interface's configuration.
 .Sh SEE ALSO
 .Xr netstat 1 ,
+.Xr inet 3 ,
+.Xr ipx 3 ,
+.Xr arp 4 ,
 .Xr bridge 4 ,
 .Xr carp 4 ,
+.Xr clnp 4 ,
 .Xr gif 4 ,
 .Xr gre 4 ,
 .Xr ifmedia 4 ,
+.Xr inet 4 ,
+.Xr iso 4 ,
 .Xr lo 4 ,
 .Xr netintro 4 ,
 .Xr pfsync 4 ,
@@ -689,6 +754,8 @@ tried to alter an interface's configuration.
 .Xr tun 4 ,
 .Xr vlan 4 ,
 .Xr hostname.if 5 ,
+.Xr hosts 5 ,
+.Xr networks 5 ,
 .Xr brconfig 8 ,
 .Xr rc 8 ,
 .Xr routed 8
