@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.30 2004/05/03 17:21:13 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.31 2004/05/03 19:16:36 tedu Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -134,6 +134,8 @@ unsigned long
 	 strtoul(const char *, char **, int);
 unsigned long long
 	 strtoull(const char *, char **, int);
+unsigned long long
+	 strtonum(const char *, long long, unsigned long long, const char **);
 int	 system(const char *);
 
 /* these are currently just stubs */
