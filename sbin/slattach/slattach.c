@@ -1,4 +1,4 @@
-/*	$OpenBSD: slattach.c,v 1.8 2001/01/17 19:28:05 deraadt Exp $	*/
+/*	$OpenBSD: slattach.c,v 1.9 2001/06/01 21:35:20 mickey Exp $	*/
 /*	$NetBSD: slattach.c,v 1.17 1996/05/19 21:57:39 jonathan Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: slattach.c,v 1.8 2001/01/17 19:28:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slattach.c,v 1.9 2001/06/01 21:35:20 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,8 @@ int	slipdisc = SLIPDISC;
 
 char	devicename[32];
 
-static char pidfilename[MAXPATHLEN];    /* name of pid file */
-static pid_t pid;               /* Our pid */
+static char pidfilename[MAXPATHLEN];	/* name of pid file */
+static pid_t pid;			/* Our pid */
 static FILE *pidfile;
 
 void	usage __P((void));
@@ -102,7 +102,7 @@ main(argc, argv)
 	sigset_t sigset;
 	int i;
 
-	while ((ch = getopt(argc, argv, "hms:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "hms:r:t:")) != -1) {
 		switch (ch) {
 		case 'h':
 			cflag |= CRTSCTS;
@@ -133,10 +133,9 @@ main(argc, argv)
 		    "%s%s", _PATH_DEV, dev);
 		dev = devicename;
 	}
-	if ((fd = open(dev, O_RDWR | O_NDELAY)) < 0) {
-		perror(dev);
-		exit(1);
-	}
+	if ((fd = open(dev, O_RDWR | O_NDELAY)) < 0)
+		err(1, "open: %s", dev);
+
 	tty.c_cflag = CREAD | CS8 | cflag;
 	tty.c_iflag = 0;
 	tty.c_lflag = 0;
@@ -152,7 +151,7 @@ main(argc, argv)
 		err(1, "TIOCSETD");
 
 	if (fork() > 0)
-		exit(0);
+		return (0);
 
 	/* set up a signal handler to delete the PID file. */
 	signal(SIGHUP, handler);
@@ -160,14 +159,14 @@ main(argc, argv)
 
 	/* write PID to a file */
 	pid = getpid();
-	
+
 	for(i = strlen(dev); (dev[i] != '/') && i > 0; i--)
 		;
 	if(dev[i] == '/')
 		i++;
 	(void) snprintf(pidfilename, sizeof pidfilename,
 	    "%sslip.%s.pid", _PATH_VARRUN, dev + i);
-	truncate(pidfilename, 0);    /* If this fails, so will the next one... */
+	truncate(pidfilename, 0); /* If this fails, so will the next one... */
 	if ((pidfile = fopen(pidfilename, "w")) != NULL) {
 		fprintf(pidfile, "%d\n", pid);
 		(void) fclose(pidfile);
@@ -186,9 +185,9 @@ main(argc, argv)
 					syslog(LOG_WARNING,
 					    "unable to delete pid file: %m");
 			}
-		
+
 			/* terminate gracefully */
-			exit(0);
+			return (0);
 		}
 	}
 }
@@ -203,13 +202,13 @@ int useless;
 
 int
 ttydisc(name)
-     char *name;
+	char *name;
 {
 	if (strcmp(name, "slip") == 0)
 		return(SLIPDISC);
 #ifdef STRIPDISC
 	else if (strcmp(name, "strip") == 0)
-  		return(STRIPDISC);
+		return(STRIPDISC);
 #endif
 	else
 		usage();
@@ -219,7 +218,7 @@ void
 usage()
 {
 
-	(void)fprintf(stderr,
-		      "usage: slattach [-t ldisc] [-hm] [-s baudrate] ttyname\n");
+	fprintf(stderr,
+	    "usage: slattach [-t ldisc] [-hm] [-s baudrate] ttyname\n");
 	exit(1);
 }
