@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.83 2000/10/25 22:40:40 aaron Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.84 2000/11/07 18:24:26 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -181,12 +181,14 @@ ip_output(m0, va_alist)
 	 * can avoid the routing lookup if the source address is zero.
 	 */
 	if (inp != NULL && inp->inp_tdb != NULL &&
-	    ip->ip_src.s_addr == INADDR_ANY &&
-	    tdb->tdb_src.sa.sa_family == AF_INET &&
-	    tdb->tdb_src.sin.sin_addr.s_addr != INADDR_ANY) {
-	        ip->ip_src.s_addr = tdb->tdb_src.sin.sin_addr.s_addr;
-		splx(s);
-		goto skip_routing;
+	    ip->ip_src.s_addr == INADDR_ANY) {
+		tdb = inp->inp_tdb;
+		if (tdb->tdb_src.sa.sa_family == AF_INET &&
+		    tdb->tdb_src.sin.sin_addr.s_addr != INADDR_ANY) {
+			ip->ip_src.s_addr = tdb->tdb_src.sin.sin_addr.s_addr;
+			splx(s);
+			goto skip_routing;
+		}
 	}
 
 	splx(s);
