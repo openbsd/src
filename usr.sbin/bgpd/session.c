@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.165 2004/05/06 12:09:25 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.166 2004/05/06 12:18:02 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1777,6 +1777,8 @@ parse_notification(struct peer *peer)
 				break;
 			}
 		}
+
+		return (1);
 	}
 
 	if (errcode == ERR_OPEN && subcode == ERR_OPEN_OPT) {
