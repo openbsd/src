@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.43 2000/04/24 04:34:31 todd Exp $
+.\"	$OpenBSD: afterboot.8,v 1.44 2000/04/27 19:44:17 millert Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -583,6 +583,23 @@ Please see
 and
 .Pa /usr/share/doc/smm/08.sendmailop/op.me
 for information on generating your own sendmail configuration files.
+For the default installation, sendmail is configured to only process
+jobs that have been the queued and to not accept messages over the network.
+This makes it possible to send mail locally, but not receive mail from remote
+servers, which is ideal if you have one central incoming mail machine and
+several clients.
+To cause sendmail to accept network connections, modify the
+.Dq sendmail_flags
+variable in
+.Pa /etc/rc.conf
+in accordance with the comments therein.
+Note that sendmail now also listens on port 587 by default.  This
+is to implement the RFC2476 message submission protocol.  You may
+disable this via the
+.Dq no_default_msa
+option in your sendmail .mc file.  See
+.Pa /usr/share/sendmail/README
+for more information.
 .Ss DHCP server
 If this is a
 DHCP
