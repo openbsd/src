@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.39 2001/03/05 15:09:20 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.40 2001/07/28 05:36:18 pvalchev Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.39 2001/03/05 15:09:20 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.40 2001/07/28 05:36:18 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,6 @@ main(argc,argv)
 	int c;
 	int n;
 	char *p;
-	FILE *ifp;
 
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		signal(SIGINT, onintr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.15 2001/06/22 14:57:20 lebel Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.16 2001/07/28 05:36:18 pvalchev Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.15 2001/06/22 14:57:20 lebel Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.16 2001/07/28 05:36:18 pvalchev Exp $";
 #endif /* not lint */
 
 /*
@@ -73,6 +73,7 @@ static char rcsid[] = "$OpenBSD: netstat.c,v 1.15 2001/06/22 14:57:20 lebel Exp 
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include <nlist.h>
 #include <paths.h>
 #include "systat.h"
@@ -212,7 +213,7 @@ again:
 	while (next != head) {
 		KREAD(next, &inpcb, sizeof (inpcb));
 		if (inpcb.inp_queue.cqe_prev != prev) {
-printf("prev = %x, head = %x, next = %x, inpcb...prev = %x\n", prev, head, next, inpcb.inp_queue.cqe_prev);
+printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev, head, next, inpcb.inp_queue.cqe_prev);
 			p = netcb.nif_forw;
 			for (; p != (struct netinfo *)&netcb; p = p->nif_forw)
 				p->nif_seen = 1;

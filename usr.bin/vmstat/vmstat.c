@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.57 2001/06/27 06:16:50 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.58 2001/07/28 05:36:18 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -711,9 +711,12 @@ dointr()
 	time_t uptime;
 	u_long intrstray[16];
 	char iname[17], fname[31];
-	int i, mib[2], l, incflag;
+	int i;
+#if 0
+	int mib[2], l, incflag;
 	size_t size;
 	char *intrnames, *intrcount, *intrn, *intrc, *buf1, *buf2;
+#endif
 
 	iname[16] = '\0';
 	uptime = getuptime();

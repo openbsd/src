@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.8 2000/07/24 23:08:25 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.9 2001/07/28 05:36:18 pvalchev Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -368,7 +368,6 @@ do_regexp(string, re, replace, pm)
 	regmatch_t *pm;
 {
 	int error;
-	const char *p;
 
 	switch(error = regexec(re, string, re->re_nsub+1, pm, 0)) {
 	case 0: 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.7 2001/05/04 16:48:34 ericj Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.8 2001/07/28 05:36:18 pvalchev Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-static char rcsid[] = "$OpenBSD: pigs.c,v 1.7 2001/05/04 16:48:34 ericj Exp $";
+static char rcsid[] = "$OpenBSD: pigs.c,v 1.8 2001/07/28 05:36:18 pvalchev Exp $";
 #endif /* not lint */
 
 /*
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: pigs.c,v 1.7 2001/05/04 16:48:34 ericj Exp $";
 #include <math.h>
 #include <nlist.h>
 #include <pwd.h>
+#include <err.h>
 #include <stdlib.h>
 #include <string.h>
 
