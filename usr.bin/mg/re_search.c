@@ -411,17 +411,18 @@ re_backsrch() {
   while (clp != (curbp->b_linep)) {
 
      re_match[0].rm_so = 0;
-     re_match[0].rm_eo = tbo;
+     re_match[0].rm_eo = llength(clp);
      lastmatch.rm_so = -1;
      /* Keep searching until we don't match any longer.  Assumes a non-match
-        does not modify the re_match array.
+        does not modify the re_match array.  We have to do this
+	character-by-character after the first match since POSIX regexps don't
+	give you a way to do reverse matches.
      */
-     while (!regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, REG_STARTEND)) {
+     while (!regexec(&re_buff, ltext(clp), RE_NMATCH, re_match, REG_STARTEND) &&
+	    re_match[0].rm_so < tbo) {
        memcpy(&lastmatch, &re_match[0], sizeof(regmatch_t));
-       if (re_match[0].rm_eo >= tbo)
-         break;
-       re_match[0].rm_so = re_match[0].rm_eo;
-       re_match[0].rm_eo = tbo;
+       re_match[0].rm_so++;
+       re_match[0].rm_eo = llength(clp);
      }
 
      if (lastmatch.rm_so == -1) {
