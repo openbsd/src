@@ -1,19 +1,13 @@
-#	$OpenBSD: list,v 1.8 2002/03/10 06:48:43 hugh Exp $
+#	$OpenBSD: list,v 1.9 2002/04/05 03:11:12 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # extras
 LINK	instbin			sbin/disklabel
-#LINK	instbin			usr/bin/vi
-SYMLINK ../../instbin		usr/bin/build usr/bin/vi
 
-SYMLINK	../../instbin		usr/bin/basename
-SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
-SYMLINK ../../instbin		usr/bin/grep usr/bin/egrep usr/bin/fgrep
-SYMLINK ../../instbin		usr/bin/netstat
-SYMLINK ../../instbin		usr/bin/rsh
-SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
-SYMLINK	../../instbin		usr/bin/less usr/bin/more
-SYMLINK	../../instbin		usr/sbin/sysctl
+LINK instbin			usr/bin/grep usr/bin/egrep usr/bin/fgrep
+LINK instbin			usr/bin/tset usr/bin/reset
+LINK instbin			usr/bin/less usr/bin/more
+SPECIAL /bin/rm instbin
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
@@ -33,12 +27,12 @@ LINK	usr/mdec/xxboot			usr/mdec/sdboot
 SPECIAL tic -C ${CURDIR}/../../share/termtypes/termtypes.master | sed -n -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' -e 's,/usr/lib/tabset,/usr/share/tabset,g' -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' > usr/share/misc/termcap
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${DESTDIR}/etc/disktab	> etc/disktab.shadow
 SYMLINK	/tmp/disktab.shadow		etc/disktab
 SYMLINK	/tmp/fstab.shadow		etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
 
 # and the installation tools
-COPY	${ARCHDIR}/../ramdisk/dot.profile	.profile
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${ARCHDIR}/../ramdisk/dot.profile	 > .profile
 SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${ARCHDIR}/../install.md	 > install.md
