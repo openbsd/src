@@ -1,4 +1,4 @@
-.\" $OpenBSD: pwrite.3,v 1.4 1999/05/16 19:55:47 alex Exp $
+.\" $OpenBSD: pwrite.3,v 1.5 1999/05/18 01:40:19 alex Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd September 7, 1998
 .Os
@@ -25,7 +25,7 @@ environment, where race conditions may exist between two threads
 non-atomically seeking and writing to the same file descriptor.
 .Sh RETURN VALUES
 The
-.Fn pread
+.Fn pwrite
 function returns values identical to
 .Xr write 2 .
 .Sh SEE ALSO
@@ -33,5 +33,6 @@ function returns values identical to
 .Xr pread 3 ,
 .Xr pthreads 3
 .Sh STANDARDS
-.Fn pread
-conforms to TOG SUSv2 .
+.Fn pwrite
+conforms to
+.St -susv2 .
