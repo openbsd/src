@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.11 2002/03/27 05:00:12 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.12 2002/03/28 04:28:38 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -64,6 +64,9 @@ struct vgafb_softc {
 	bus_space_handle_t sc_mem_h, sc_io_h, sc_mmio_h;
 	bus_addr_t sc_io_addr, sc_mem_addr, sc_mmio_addr, sc_rom_addr;
 	bus_size_t sc_io_size, sc_mem_size, sc_mmio_size, sc_rom_size;
+	pci_chipset_tag_t sc_pci_chip;
+	pcitag_t sc_pci_tag;
+	int sc_io_cf, sc_mmio_cf, sc_mem_cf;
 	u_int8_t *sc_rom_ptr;
 	int sc_has_rom;
 	struct rcons sc_rcons;
@@ -171,6 +174,8 @@ vgafbattach(parent, self, aux)
 	struct wsemuldisplaydev_attach_args waa;
 	long defattr;
 
+	sc->sc_pci_chip = pa->pa_pc;
+	sc->sc_pci_tag = pa->pa_tag;
 	sc->sc_node = PCITAG_NODE(pa->pa_tag);
 
 	sc->sc_depth = getpropint(sc->sc_node, "depth", -1);
@@ -410,17 +415,36 @@ vgafb_mmap(v, off, prot)
 	int prot;
 {
 	struct vgafb_softc *sc = v;
-	paddr_t pa;
-	vaddr_t va;
+	bus_addr_t ba;
+	bus_size_t bs;
 
 	if (off & PGOFSET)
 		return (-1);
 
+	/* See if this is a native mapping of pixel memory */
+	if ((pci_mem_find(sc->sc_pci_chip, sc->sc_pci_tag, sc->sc_mem_cf,
+	    &ba, &bs, NULL) == 0) &&
+	    (off >= ba) && (off < (ba + bs))) {
+		return (bus_space_mmap(sc->sc_mem_t, ba, off - ba, prot,
+		    BUS_SPACE_MAP_LINEAR));
+	}
+
+	/* See if this is a native mapping of memory mapped i/o */
+	if ((pci_mem_find(sc->sc_pci_chip, sc->sc_pci_tag, sc->sc_mmio_cf,
+	    &ba, &bs, NULL) == 0) &&
+	    (off >= ba) && (off < (ba + bs))) {
+		return (bus_space_mmap(sc->sc_mem_t, ba, off - ba, prot,
+		    BUS_SPACE_MAP_LINEAR));
+	}
+
+	/* Lastly, this might be a request for a "dumb" framebuffer map */
 	if (off >= 0 && off < sc->sc_mem_size) {
 		return (bus_space_mmap(sc->sc_mem_t, sc->sc_mem_addr, off, prot,
 		    BUS_SPACE_MAP_LINEAR));
 	}
 
+#if 0
+	/* Don't allow mapping of the shadow rom right now... needs work */
 	if (sc->sc_rom_ptr != NULL &&
 	    off >= sc->sc_rom_addr &&
 	    off < sc->sc_rom_addr + sc->sc_rom_size) {
@@ -430,6 +454,7 @@ vgafb_mmap(v, off, prot)
 			return (-1);
 		return (pa);
 	}
+#endif
 
 	return (-1);
 }
@@ -563,6 +588,7 @@ vgafb_mapregs(sc, pa)
 				printf(": can't map io space\n");
 				continue;
 			}
+			sc->sc_io_cf = i;
 			hasio = 1;
 		} else {
 			/* Memory mapping... framebuffer or mmio? */
@@ -582,6 +608,7 @@ vgafb_mapregs(sc, pa)
 				}
 				sc->sc_mmio_addr = ba;
 				sc->sc_mmio_size = bs;
+				sc->sc_mmio_cf = i;
 				hasmmio = 1;
 			} else {
 				if (hasmem)
@@ -594,6 +621,7 @@ vgafb_mapregs(sc, pa)
 				}
 				sc->sc_mem_addr = ba;
 				sc->sc_mem_size = bs;
+				sc->sc_mem_cf = i;
 				hasmem = 1;
 			}
 		}
