@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vfsops.c,v 1.21 2004/05/20 18:32:37 tedu Exp $	*/
+/*	$OpenBSD: null_vfsops.c,v 1.22 2004/06/01 21:58:19 pedro Exp $	*/
 /*	$NetBSD: null_vfsops.c,v 1.38 2002/09/21 18:09:29 christos Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	 * First cut at fixing up upper mount point
 	 */
 	nmp = (struct null_mount *) malloc(sizeof(struct null_mount),
-	    M_UFSMNT, M_WAITOK);		/* XXX */
+	    M_MISCFSMNT, M_WAITOK);
 	memset(nmp, 0, sizeof(struct null_mount));
 
 	mp->mnt_data = nmp;
@@ -191,7 +191,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	if (error) {
 		vput(lowerrootvp);
 		free(nmp->nullm_node_hashtbl, M_CACHE);
-		free(nmp, M_UFSMNT);
+		free(nmp, M_MISCFSMNT);
 		return (error);
 	}
 	/*
@@ -273,7 +273,7 @@ nullfs_unmount(mp, mntflags, p)
 	free(nmp->nullm_node_hashtbl, M_CACHE);
 	free(mp->mnt_data, M_MISCFSMNT);
 	mp->mnt_data = NULL;
-	return 0;
+	return (0);
 }
 
 extern const struct vnodeopv_desc nullfs_vnodeop_opv_desc;
