@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.2 2004/08/06 19:29:10 drahn Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.3 2004/12/07 02:29:40 brad Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.2 2002/05/15 19:23:52 thorpej Exp $	*/
 
 /*
@@ -97,6 +97,3 @@ struct arm32_pci_chipset {
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (n))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
-
-#define	pci_enumerate_bus(sc, m, p)					\
-	pci_enumerate_bus_generic((sc), (m), (p))

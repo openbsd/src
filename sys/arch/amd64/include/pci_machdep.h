@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.2 2004/12/07 02:29:40 brad Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
 
 /*
@@ -93,9 +93,6 @@ void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
 		    int *, int *, int *);
-
-#define	pci_enumerate_bus(sc, m, p)					\
-	pci_enumerate_bus_generic((sc), (m), (p))
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED
