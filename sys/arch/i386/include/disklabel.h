@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.13 1997/08/29 17:32:33 mickey Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.14 1997/08/29 19:44:10 mickey Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #define	DOSBBSECTOR	0		/* DOS boot block relative sector # */
 #define	DOSPARTOFF	446
 #define	NDOSPART	4
+#define	DOSACTIVE	0x80		/* active partition */
 
 struct dos_partition {
 	u_int8_t	dp_flag;	/* bootstrap flags */
