@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hotplug.4,v 1.1 2004/05/30 08:35:19 grange Exp $
+.\"	$OpenBSD: hotplug.4,v 1.2 2004/08/30 12:45:36 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -87,7 +87,7 @@ call will block until an event appears.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "hotplug: event lost, queue full"
-New events will be dropped until pending events aren't read.
+New events will be dropped until all pending events have been read.
 .El
 .Sh SEE ALSO
 .Xr read 2 ,
