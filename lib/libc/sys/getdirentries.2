@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdirentries.2,v 1.15 2004/07/14 16:52:00 jfb Exp $
+.\"	$OpenBSD: getdirentries.2,v 1.16 2004/10/02 18:31:25 matthieu Exp $
 .\"	$NetBSD: getdirentries.2,v 1.7 1995/10/12 15:40:50 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -125,8 +125,6 @@ The current position pointer associated with
 is set to point to the next block of entries.
 The pointer may not advance by the number of bytes returned by
 .Fn getdirentries .
-A value of zero is returned when
-the end of the directory has been reached.
 .Pp
 .Fn getdirentries
 writes the position of the block read into the location pointed to by
@@ -140,6 +138,8 @@ a value returned in the location pointed to by
 or zero.
 .Sh RETURN VALUES
 If successful, the number of bytes actually transferred is returned.
+A value of zero is returned when
+the end of the directory has been reached.
 Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
@@ -168,9 +168,44 @@ An
 .Tn I/O
 error occurred while reading from or writing to the file system.
 .El
+.Sh EXAMPLES
+The following code may be used to iterate on all entries in a
+directory.
+.Bd -literal -offset indent
+char *buf, *ebuf, *cp;
+long base;
+size_t bufsize;
+int fd, nbytes;
+char *path;
+struct stat sb;
+struct dirent *dp;
+
+if ((fd = open(path, O_RDONLY)) < 0)
+	err(2, "cannot open %s", path);
+if (fstat(fd, &sb) < 0)
+	err(2, "fstat");
+bufsize = sb.st_size;
+if (bufsize < sb.st_blksize)
+	bufsize = sb.st_blksize;
+if ((buf = malloc(bufsize)) == NULL)
+	err(2,  "cannot malloc %lu bytes", (unsigned long)bufsize);
+while ((nbytes = getdirentries(fd, buf, bufsize, &base)) > 0) {
+	ebuf = buf + nbytes;
+	cp = buf;
+	while (cp < ebuf) {
+		dp = (struct dirent *)cp;
+		printf("%\en", dp->d_name);
+		cp += dp->d_reclen;
+	}
+}
+if (nbytes < 0)
+	err(2, "getdirentries");
+free(buf);
+.Ed
 .Sh SEE ALSO
 .Xr lseek 2 ,
 .Xr open 2 ,
+.Xr opendir 3 ,
 .Xr dirent 5
 .Sh HISTORY
 The
