@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.253 2004/09/18 20:17:37 henning Exp $
+#	$OpenBSD: rc,v 1.254 2004/09/27 08:43:51 henning Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -128,7 +128,7 @@ rm -f /fastboot		# XXX (root now writeable)
 # pick up option configuration
 . /etc/rc.conf
 
-# set flags on ttys.  (do early, in case they use tty for SLIP in netstart)
+# set flags on ttys. (do early, in case they use tty for SLIP in netstart)
 echo 'setting tty flags'
 ttyflags -a
 
@@ -220,6 +220,20 @@ if [ -d /var/empty ]; then
 fi
 syslogd ${syslogd_flags}
 
+# run rdate before timed and ntpd
+if [ X"${rdate_flags}" != X"NO" ]; then
+	echo -n 'running rdate'; rdate -s ${rdate_flags}; echo '.'
+fi
+
+if [ "X${ntpd_flags}" != X"NO" ]; then
+	# since this is system startup, use -s
+	echo -n 'starting ntpd'; ntpd -s $ntpd_flags; echo '.'
+fi
+
+if [ "X${timed_flags}" != X"NO" ]; then
+	echo -n 'starting timed'; timed $timed_flags; echo '.'
+fi
+
 if [ X"${pf}" != X"NO" -a X"${pflogd_flags}" != X"NO" ]; then
 	ifconfig pflog0 up
 	pflogd ${pflogd_flags}
@@ -303,21 +317,6 @@ if [ X${amd} = X"YES" -a -e ${amd_master} ]; then
 	    -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid )
 fi
 
-# run rdate before timed/ntpd
-if [ X"${rdate_flags}" != X"NO" ]; then
-	echo -n ' rdate';	rdate -s ${rdate_flags}
-fi
-
-# $timed_flags is imported from /etc/rc.conf;
-# if $timed_flags == NO, timed isn't run.
-if [ "X${timed_flags}" != X"NO" ]; then
-	echo -n ' timed'; timed $timed_flags
-fi
-
-if [ "X${ntpd_flags}" != X"NO" ]; then
-	# since this is system startup, use -s
-	echo -n ' ntpd'; ntpd -s $ntpd_flags
-fi
 echo '.'
 
 mount -a -t nfs
@@ -370,7 +369,7 @@ echo clearing /tmp
     find . ! -name . ! -name lost+found ! -name quota.user \
 	! -name quota.group -execdir rm -rf -- {} \; -type d -prune)
 
-# create Unix sockets directories  for X if needed and make sure they have
+# create Unix sockets directories for X if needed and make sure they have
 # correct permissions
 if [ -d /usr/X11R6/lib ]; then
 	for d in /tmp/.X11-unix /tmp/.ICE-unix ; do
@@ -531,14 +530,14 @@ fi
 
 # $sendmail_flags is imported from /etc/rc.conf;
 # If $sendmail_flags == NO or /etc/mailer.conf doesn't exist, then
-# sendmail isn't run.  We call sendmail with a full path so that
-# SIGHUP works.  Note that /usr/sbin/sendmail may actually call a
+# sendmail isn't run. We call sendmail with a full path so that
+# SIGHUP works. Note that /usr/sbin/sendmail may actually call a
 # mailer other than sendmail, depending on /etc/mailer.conf.
 if [ "X${sendmail_flags}" != X"NO" -a -s /etc/mailer.conf ]; then
 	echo -n ' sendmail';		( /usr/sbin/sendmail ${sendmail_flags} >/dev/null 2>&1 & )
 fi
 
-if [ "X${httpd_flags}" != X"NO"  ]; then
+if [ "X${httpd_flags}" != X"NO" ]; then
 	# Clean up left-over httpd locks
 	rm -f /var/www/logs/{ssl_mutex,httpd.lock,accept.lock}.*
 	echo -n ' httpd';		/usr/sbin/httpd ${httpd_flags}
