@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.26 2003/06/05 17:51:37 pdeuskar Exp $*/
-/* $OpenBSD: if_em.c,v 1.10 2003/06/29 21:42:53 avsm Exp $ */
+/* $OpenBSD: if_em.c,v 1.11 2003/08/23 18:52:18 fgsch Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2532,7 +2532,9 @@ em_process_receive_interrupts(struct em_softc* sc, int count)
 {
 	struct ifnet	    *ifp;
 	struct mbuf	    *mp;
+#ifdef __FreeBSD__
 	struct ether_header *eh;
+#endif
 	u_int8_t	    accept_frame = 0;
 	u_int8_t	    eop = 0;
 	u_int16_t	    len, desc_len;
@@ -2634,9 +2636,11 @@ em_process_receive_interrupts(struct em_softc* sc, int count)
 					bpf_mtap(ifp->if_bpf, sc->fmp);
 #endif
 
+#ifdef __FreeBSD__
 				eh = mtod(sc->fmp, struct ether_header *);
 				/* Remove ethernet header from mbuf */
 				m_adj(sc->fmp, sizeof(struct ether_header));
+#endif
 				em_receive_checksum(sc, current_desc,
 						sc->fmp);
 
@@ -2646,8 +2650,10 @@ em_process_receive_interrupts(struct em_softc* sc, int count)
 					    (letoh16(current_desc->special) &
 					    E1000_RXD_SPC_VLAN_MASK));
 				else
-#endif /* __FreeBSD__ */
 					ether_input(ifp, eh, sc->fmp);
+#else /* __FreeBSD__ */
+				ether_input_mbuf(ifp, sc->fmp);
+#endif /* !__FreeBSD__ */
 
 				sc->fmp = NULL;
 				sc->lmp = NULL;
