@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.7 1999/02/27 21:22:19 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.8 2001/05/18 02:41:38 provos Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -38,14 +38,17 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: mbuf.c,v 1.7 1999/02/27 21:22:19 deraadt Exp $";
+static char *rcsid = "$OpenBSD: mbuf.c,v 1.8 2001/05/18 02:41:38 provos Exp $";
 #endif
 #endif /* not lint */
+
+#define __POOL_EXPOSE
 
 #include <sys/param.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
+#include <sys/pool.h>
 
 #include <limits.h>
 #include <stdio.h>
@@ -55,6 +58,8 @@ static char *rcsid = "$OpenBSD: mbuf.c,v 1.7 1999/02/27 21:22:19 deraadt Exp $";
 typedef int bool;
 
 struct	mbstat mbstat;
+struct pool mbpool, mclpool;
+
 
 static struct mbtypes {
 	int	mt_type;
@@ -64,16 +69,9 @@ static struct mbtypes {
 	{ MT_OOBDATA,	"oob data" },
 	{ MT_CONTROL,	"ancillary data" },
 	{ MT_HEADER,	"packet headers" },
-	{ MT_SOCKET,	"socket structures" },			/* XXX */
-	{ MT_PCB,	"protocol control blocks" },		/* XXX */
-	{ MT_RTABLE,	"routing table entries" },		/* XXX */
-	{ MT_HTABLE,	"IMP host table entries" },		/* XXX */
-	{ MT_ATABLE,	"address resolution tables" },
 	{ MT_FTABLE,	"fragment reassembly queue headers" },	/* XXX */
 	{ MT_SONAME,	"socket names and addresses" },
 	{ MT_SOOPTS,	"socket options" },
-	{ MT_RIGHTS,	"access rights" },
-	{ MT_IFADDR,	"interface addresses" },		/* XXX */
 	{ 0, 0 }
 };
 
@@ -84,10 +82,11 @@ bool seen[256];			/* "have we seen this type yet?" */
  * Print mbuf statistics.
  */
 void
-mbpr(mbaddr)
+mbpr(mbaddr, mbpooladdr, mclpooladdr)
 	u_long mbaddr;
+	u_long mbpooladdr, mclpooladdr;
 {
-	register int totmem, totfree, totmbufs;
+	register int totmem, totused, totmbufs, totpct;
 	register int i;
 	register struct mbtypes *mp;
 
@@ -104,6 +103,12 @@ mbpr(mbaddr)
 	}
 	if (kread(mbaddr, (char *)&mbstat, sizeof (mbstat)))
 		return;
+	if (kread(mbpooladdr, (char *)&mbpool, sizeof (mbpool)))
+		return;
+
+	if (kread(mclpooladdr, (char *)&mclpool, sizeof (mclpool)))
+		return;
+
 	totmbufs = 0;
 	for (mp = mbtypes; mp->mt_name; mp++)
 		totmbufs += mbstat.m_mtypes[mp->mt_type];
@@ -124,12 +129,15 @@ mbpr(mbaddr)
 			    plural((int)mbstat.m_mtypes[i]), i);
 		}
 	printf("%lu/%lu mapped pages in use\n",
-		mbstat.m_clusters - mbstat.m_clfree, mbstat.m_clusters);
-	totmem = totmbufs * MSIZE + mbstat.m_clusters * MCLBYTES;
-	totfree = mbstat.m_clfree * MCLBYTES;
+	       (u_long)(mclpool.pr_nget - mclpool.pr_nput),
+	       ((u_long)mclpool.pr_npages * mclpool.pr_itemsperpage));
+	totmem = (mbpool.pr_npages << mbpool.pr_pageshift) +
+	    (mclpool.pr_npages << mclpool.pr_pageshift);
+	totused = (mbpool.pr_nget - mbpool.pr_nput) * mbpool.pr_size + 
+	    (mclpool.pr_nget - mclpool.pr_nput) * mclpool.pr_size;
+	totpct = (totmem == 0)? 0 : ((totused * 100)/totmem);
 	printf("%u Kbytes allocated to network (%d%% in use)\n",
-	    totmem / 1024,
-	    totmem ? (totmem - totfree) * 100 / totmem : 100);
+	    totmem / 1024, totpct);
 	printf("%lu requests for memory denied\n", mbstat.m_drops);
 	printf("%lu requests for memory delayed\n", mbstat.m_wait);
 	printf("%lu calls to protocol drain routines\n", mbstat.m_drain);
