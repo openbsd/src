@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.19 2002/10/12 01:09:44 krw Exp $ */
+/*	$OpenBSD: umass.c,v 1.20 2002/12/15 20:53:32 krw Exp $ */
 /*	$NetBSD: umass.c,v 1.49 2001/01/21 18:56:38 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -3195,9 +3195,9 @@ umass_scsipi_cmd(xs)
 
 	cmd = xs->cmd;
 
-	if (xs->cmd->opcode == SCSI_MODE_SENSE &&
+	if (xs->cmd->opcode == MODE_SENSE &&
 	    (sc_link->quirks & SDEV_NOMODESENSE)) {
-		/*printf("%s: SCSI_MODE_SENSE\n", USBDEVNAME(sc->sc_dev));*/
+		/*printf("%s: MODE_SENSE\n", USBDEVNAME(sc->sc_dev));*/
 		xs->error = XS_TIMEOUT;
 		goto done;
 	}
@@ -3494,7 +3494,7 @@ umass_ufi_transform(struct umass_softc *sc, struct scsipi_generic *cmd,
 	switch (cmd->opcode) {
 	/* Commands of which the format has been verified. They should work. */
 	case TEST_UNIT_READY:
-	case SCSI_REZERO_UNIT:
+	case REZERO_UNIT:
 	case REQUEST_SENSE:
 	case INQUIRY:
 	case START_STOP:
@@ -3504,8 +3504,8 @@ umass_ufi_transform(struct umass_softc *sc, struct scsipi_generic *cmd,
 	case READ_BIG:
 	case WRITE_BIG:
 	case POSITION_TO_ELEMENT:	/* SEEK_10 */
-	case SCSI_MODE_SELECT_BIG:
-	case SCSI_MODE_SENSE_BIG:
+	case MODE_SELECT_BIG:
+	case MODE_SENSE_BIG:
 	default:
 		/* Copy the command into the (zeroed out) destination buffer */
 		memcpy(rcmd, cmd, cmdlen);
@@ -3518,10 +3518,10 @@ umass_ufi_transform(struct umass_softc *sc, struct scsipi_generic *cmd,
 	 */
 
 	/* These commands are known _not_ to work. They should be converted. */
-	case SCSI_READ_COMMAND:
-	case SCSI_WRITE_COMMAND:
-	case SCSI_MODE_SENSE:
-	case SCSI_MODE_SELECT:
+	case READ_COMMAND:
+	case WRITE_COMMAND:
+	case MODE_SENSE:
+	case MODE_SELECT:
 		printf("%s: Unsupported UFI command 0x%02x",
 			USBDEVNAME(sc->sc_dev), cmd->opcode);
 		if (cmdlen == 6)

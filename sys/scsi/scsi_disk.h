@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.12 2002/09/04 23:07:28 tdeval Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.13 2002/12/15 20:53:33 krw Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -149,7 +149,6 @@ struct scsi_reassign_blocks {
  * XXX Is this also used by ATAPI?
  */
 #define	REZERO_UNIT		0x01
-#define SCSI_REZERO_UNIT	0x01
 struct scsi_rezero_unit {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -213,24 +212,15 @@ struct scsi_synchronize_cache {
 
 
 /*
- * Opcodes
+ * Disk specific opcodes
  */
 #define	REASSIGN_BLOCKS		0x07
 #define	READ_COMMAND		0x08
-#define SCSI_READ_COMMAND	0x08
 #define WRITE_COMMAND		0x0a
-#define SCSI_WRITE_COMMAND	0x0a
-#define MODE_SELECT		0x15
-#define SCSI_MODE_SELECT	0x15
-#define MODE_SENSE		0x1a
-#define START_STOP		0x1b
-#define PREVENT_ALLOW		0x1e
 #define	READ_CAPACITY		0x25
 #define	READ_BIG		0x28
 #define WRITE_BIG		0x2a
 #define	SYNCHRONIZE_CACHE	0x35
-#define SCSI_MODE_SELECT_BIG	0x55
-#define SCSI_MODE_SENSE_BIG	0x5a
 
 
 struct scsi_read_cap_data {
