@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_detach.c,v 1.5 1999/11/25 07:01:33 d Exp $	*/
+/*	$OpenBSD: uthread_detach.c,v 1.6 2000/01/06 07:15:05 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -41,7 +41,6 @@ int
 pthread_detach(pthread_t pthread)
 {
 	int             rval = 0;
-	int             status;
 	pthread_t       next_thread;
 
 	/* Check for invalid calling parameters: */

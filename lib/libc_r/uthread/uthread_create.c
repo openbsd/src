@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_create.c,v 1.12 1999/11/30 04:51:56 d Exp $	*/
+/*	$OpenBSD: uthread_create.c,v 1.13 2000/01/06 07:15:05 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -50,9 +50,7 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 	       void *(*start_routine) (void *), void *arg)
 {
 	int		f_gc = 0;
-	int             i;
 	int             ret = 0;
-	int             status;
 	pthread_t       gc_thread;
 	pthread_t       new_thread;
 	pthread_attr_t	pattr;
