@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tm.4,v 1.5 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: tm.4,v 1.6 2002/04/03 06:21:26 mpech Exp $
 .\"	$NetBSD: tm.4,v 1.3 1996/03/03 17:14:04 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -43,8 +43,8 @@
 .Tn TM-11 Ns / Tn TE-10
 magtape device interface
 .Sh SYNOPSIS
-.Sy "controller tm0 at uba? csr 0172520 vector tmintr"
-.Sy "tape te0 at tm0 drive 0"
+.Cd "controller tm0 at uba? csr 0172520 vector tmintr"
+.Cd "tape te0 at tm0 drive 0"
 .Sh DESCRIPTION
 The
 .Tn TM-11 Ns / Tn TE-10
