@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.29 2003/05/22 10:20:57 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.30 2003/06/24 07:47:54 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -545,7 +545,6 @@ nd6_na_input(m, off, icmp6len)
 	struct rtentry *rt;
 	struct sockaddr_dl *sdl;
 	union nd_opts ndopts;
-	long time_second = time.tv_sec;
 
 	if (ip6->ip6_hlim != 255) {
 		nd6log((LOG_ERR,
@@ -654,11 +653,11 @@ nd6_na_input(m, off, icmp6len)
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
 			if (ln->ln_expire)
-				ln->ln_expire = time_second +
+				ln->ln_expire = time.tv_sec +
 				    ND_IFINFO(rt->rt_ifp)->reachable;
 		} else {
 			ln->ln_state = ND6_LLINFO_STALE;
-			ln->ln_expire = time_second + nd6_gctimer;
+			ln->ln_expire = time.tv_sec + nd6_gctimer;
 		}
 		if ((ln->ln_router = is_router) != 0) {
 			/*
@@ -712,7 +711,7 @@ nd6_na_input(m, off, icmp6len)
 			 */
 			if (ln->ln_state == ND6_LLINFO_REACHABLE) {
 				ln->ln_state = ND6_LLINFO_STALE;
-				ln->ln_expire = time_second + nd6_gctimer;
+				ln->ln_expire = time.tv_sec + nd6_gctimer;
 			}
 			goto freeit;
 		} else if (is_override				   /* (2a) */
@@ -735,13 +734,13 @@ nd6_na_input(m, off, icmp6len)
 				ln->ln_state = ND6_LLINFO_REACHABLE;
 				ln->ln_byhint = 0;
 				if (ln->ln_expire) {
-					ln->ln_expire = time_second +
+					ln->ln_expire = time.tv_sec +
 					    ND_IFINFO(ifp)->reachable;
 				}
 			} else {
 				if (lladdr && llchange) {
 					ln->ln_state = ND6_LLINFO_STALE;
-					ln->ln_expire = time_second + nd6_gctimer;
+					ln->ln_expire = time.tv_sec + nd6_gctimer;
 				}
 			}
 		}

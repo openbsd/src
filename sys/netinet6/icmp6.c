@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.71 2003/06/11 02:54:02 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.72 2003/06/24 07:47:54 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1753,7 +1753,6 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 	u_char *cp = (u_char *)(nni6 + 1);
 	int niflags = ni6->ni_flags;
 	u_int32_t ltime;
-	long time_second = time.tv_sec;
 
 	if (ifp0 == NULL && !(niflags & NI_NODEADDR_FLAG_ALL))
 		return (0);	/* needless to copy */
@@ -1845,8 +1844,8 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 				ltime = ND6_INFINITE_LIFETIME;
 			else {
 				if (ifa6->ia6_lifetime.ia6t_expire >
-				    time_second)
-					ltime = htonl(ifa6->ia6_lifetime.ia6t_expire - time_second);
+				    time.tv_sec)
+					ltime = htonl(ifa6->ia6_lifetime.ia6t_expire - time.tv_sec);
 				else
 					ltime = 0;
 			}
