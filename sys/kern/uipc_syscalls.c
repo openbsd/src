@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.40 2001/06/26 19:56:52 dugsong Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.41 2001/09/17 19:37:59 jason Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -669,27 +669,29 @@ recvit(p, s, mp, namelenp, retsize)
 		goto out;
 	*retsize = len - auio.uio_resid;
 	if (mp->msg_name) {
-		len = mp->msg_namelen;
-		if (len <= 0 || from == 0)
-			len = 0;
+		socklen_t alen;
+
+		if (from == 0)
+			alen = 0;
 		else {
 			/* save sa_len before it is destroyed by MSG_COMPAT */
-			if (len > from->m_len)
-				len = from->m_len;
-			/* else if len < from->m_len ??? */
+			alen = mp->msg_namelen;
+			if (alen > from->m_len)
+				alen = from->m_len;
+			/* else if alen < from->m_len ??? */
 #ifdef COMPAT_OLDSOCK
 			if (mp->msg_flags & MSG_COMPAT)
 				mtod(from, struct osockaddr *)->sa_family =
 				    mtod(from, struct sockaddr *)->sa_family;
 #endif
 			error = copyout(mtod(from, caddr_t),
-			    (caddr_t)mp->msg_name, (unsigned)len);
+			    (caddr_t)mp->msg_name, alen);
 			if (error)
 				goto out;
 		}
-		mp->msg_namelen = len;
+		mp->msg_namelen = alen;
 		if (namelenp &&
-		    (error = copyout((caddr_t)&len, namelenp, sizeof (int)))) {
+		    (error = copyout((caddr_t)&alen, namelenp, sizeof(alen)))) {
 #ifdef COMPAT_OLDSOCK
 			if (mp->msg_flags & MSG_COMPAT)
 				error = 0;	/* old recvfrom didn't check */
