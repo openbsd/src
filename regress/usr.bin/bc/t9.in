@@ -1,0 +1,19 @@
+define x() {
+	for (i = 0; i < 10; i++) {
+		i
+		"a ";
+		if (i == 5) {
+			"b ";
+			continue
+		}
+		"aaaaMbbbb"
+		a=0;
+		while (a < 4) {
+			a += 1;
+			if (a == 2) if (1) continue
+			"c "; a
+		}
+	}
+}
+
+x()

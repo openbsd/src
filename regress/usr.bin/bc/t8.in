@@ -1,0 +1,6 @@
+while (a < 10) {
+	a += 1;
+	if (a == 2) if (1) continue;
+	if (a == 7) if (1) continue;
+	a
+}
