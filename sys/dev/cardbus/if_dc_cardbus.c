@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.13 2003/04/29 21:39:34 jason Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.14 2004/09/18 00:13:02 brad Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ struct dc_type dc_cardbus_devs[] = {
 	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_EN2242 },
 	{ CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2500 },
 	{ CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_PCM200 },
+	{ CARDBUS_VENDOR_LINKSYS, CARDBUS_PRODUCT_LINKSYS_PCM200 },
 	{ 0 }
 };
 
@@ -156,10 +157,12 @@ dc_cardbus_attach(parent, self, aux)
 	case PCI_VENDOR_ADMTEK:
 	case PCI_VENDOR_ACCTON:
 	case CARDBUS_VENDOR_ABOCOM:
+	case CARDBUS_VENDOR_LINKSYS:
 		if (PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADMTEK_AN985 ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ACCTON_EN2242 ||
 		    PCI_PRODUCT(ca->ca_id) == CARDBUS_PRODUCT_ABOCOM_FE2500 ||
-		    PCI_PRODUCT(ca->ca_id) == CARDBUS_PRODUCT_ABOCOM_PCM200) {
+		    PCI_PRODUCT(ca->ca_id) == CARDBUS_PRODUCT_ABOCOM_PCM200 ||
+		    PCI_PRODUCT(ca->ca_id) == CARDBUS_PRODUCT_LINKSYS_PCM200) {
 			sc->dc_type = DC_TYPE_AN983;
 			sc->dc_flags |= DC_TX_USE_TX_INTR|DC_TX_ADMTEK_WAR;
 			sc->dc_pmode = DC_PMODE_MII;
