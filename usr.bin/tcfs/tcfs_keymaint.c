@@ -17,7 +17,8 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/ucred.h>
-#include <des.h>
+#include <blf.h>
+
 #include <miscfs/tcfs/tcfs.h>
 #include <miscfs/tcfs/tcfs_cmd.h>
 
@@ -59,9 +60,9 @@ tcfs_decrypt_key (char *u, char *pwd, unsigned char *t, unsigned char *tk,
 {
 	int i = 0;
 	char pass[_PASSWORD_LEN], *cypher;
-	char tcfskey[2*KEYSIZE];
-	des_key_schedule ks;
-	int keysize = (flag == GROUPKEY) ? KEYSIZE + KEYSIZE/8 : KEYSIZE;
+	char tcfskey[2*KEYSIZE], iv[8];
+	blf_ctx ctx;
+	int keysize = (flag == GROUPKEY) ? GKEYSIZE : KEYSIZE;
 
 	if (!tk)
 		return 0;
@@ -80,14 +81,12 @@ tcfs_decrypt_key (char *u, char *pwd, unsigned char *t, unsigned char *tk,
 		strcat (pass, tmp);
 	}
 
-	while ((i*8) < keysize) {
-		des_set_key ((des_cblock *) pass, ks);
+	blf_key(&ctx, pass, strlen(pass));
+	memset(iv, 0, sizeof(iv));
+	blf_cbc_decrypt(&ctx, iv, tcfskey, keysize);
 
-		des_ecb_encrypt ((des_cblock *) (tcfskey+i*8),
-				 (des_cblock *) (tcfskey+i*8), ks, DES_DECRYPT);
-		i++;
-	}
 	memset (pass, 0, strlen (pass));
+	memset (&ctx, 0, sizeof(ctx));
 
 	memcpy (tk, tcfskey, keysize);
 	return 1;
@@ -98,9 +97,9 @@ tcfs_encrypt_key (char *u, char *pw, unsigned char *key, unsigned char *ek,
 		  unsigned int flag)
 {
 	int i = 0;
-	char pass[_PASSWORD_LEN];
-	des_key_schedule ks;
-	int keysize = (flag == GROUPKEY) ? KEYSIZE + KEYSIZE/8 : KEYSIZE;
+	char pass[_PASSWORD_LEN], iv[8];
+	blf_ctx ctx;
+	int keysize = (flag == GROUPKEY) ? GKEYSIZE : KEYSIZE;
 	int uulen = (flag == GROUPKEY) ? UUGKEYSIZE : UUKEYSIZE;
 	int res;
 
@@ -116,13 +115,11 @@ tcfs_encrypt_key (char *u, char *pw, unsigned char *key, unsigned char *ek,
 		strcat (tmp, pass);
 		strcat (pass, tmp);
 	}
+	
+	blf_key(&ctx, pass, strlen(pass));
+	blf_cbc_encrypt(&ctx, iv, key, keysize);
 
-	while ((i*8) < keysize) {
-		des_set_key((des_cblock *) pass, ks);
-		des_ecb_encrypt((des_cblock *) (key + i * 8),
-				(des_cblock *) (key + i * 8), ks, DES_ENCRYPT);
-		i++;
-	}
+	memset(&ctx, 0, sizeof(ctx));
 
 	res = uuencode (key, keysize, ek, uulen + 1);
 	if (res != uulen) {
