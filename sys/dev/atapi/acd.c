@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.15 1996/12/05 13:11:21 deraadt Exp $	*/
+/*	$OpenBSD: acd.c,v 1.16 1996/12/05 13:12:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -1047,6 +1047,8 @@ acd_size(acd, flags)
 
 	ATAPI_DEBUG_PRINT(("acd_size: %ld %ld\n", acd->params.blksize,
 	    acd->params.disksize));
+	if (acd->params.blksize > 2048)
+		acd->params.blksize = 2048;
 	return acd->params.disksize;
 }
 
