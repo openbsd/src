@@ -46,7 +46,7 @@ for LINE in `sed -e "s/ /_/g" $1`; do
 		list)
 			(pfctl -sT | grep regress) 2>&1
 			echo "# pass $CMD -v"
-			(pfctl -vsT | grep regress) 2>&1
+			(pfctl -gvsT | grep regress) 2>&1
 			;;
 		load)
 			echo $ARGS | sed "s,DIR,$D,g" | pfctl -Tl -f- || exit 1
