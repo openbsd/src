@@ -1,7 +1,7 @@
-/*	$OpenBSD: tokendb.c,v 1.1 2000/12/20 01:41:53 millert Exp $	*/
+/*	$OpenBSD: tokendb.c,v 1.2 2000/12/20 01:52:12 millert Exp $	*/
 
 /*-
- * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
+ * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
