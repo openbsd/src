@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwnode.c,v 1.1 2002/06/25 17:11:49 itojun Exp $	*/
+/*	$OpenBSD: fwnode.c,v 1.2 2002/06/26 14:04:02 tdeval Exp $	*/
 /*	$NetBSD: fwnode.c,v 1.13 2002/04/03 04:15:59 jmc Exp $	*/
 
 /*
@@ -61,17 +61,17 @@ __KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.13 2002/04/03 04:15:59 jmc Exp $");
 
 static const char * const ieee1394_speeds[] = { IEEE1394_SPD_STRINGS };
 
-#ifdef __NetBSD__
+#ifdef	__NetBSD__
 int  fwnode_match(struct device *, struct cfdata *, void *);
 #else
 int  fwnode_match(struct device *, void *, void *);
 #endif
 void fwnode_attach(struct device *, struct device *, void *);
 int  fwnode_detach(struct device *, int);
-static void fwnode_configrom_input(struct ieee1394_abuf *, int);
-static int  fwnode_print(void *, const char *);
+void fwnode_configrom_input(struct ieee1394_abuf *, int);
+int  fwnode_print(void *, const char *);
 #ifdef FWNODE_DEBUG
-static void fwnode_dump_rom(struct fwnode_softc *,u_int32_t *, u_int32_t);
+void fwnode_dump_rom(struct fwnode_softc *,u_int32_t *, u_int32_t);
 #endif
 
 #ifdef FWNODE_DEBUG
@@ -181,29 +181,43 @@ fwnode_detach(struct device *self, int flags)
  * and building separate callback handlers for each step would be even worse.
  */
 
-static void
+typedef struct cfgrom_cbarg {
+	int		 cc_type;
+	int		 cc_retlen;
+	int		 cc_num;
+	uint32_t	*cc_buf;
+} cfgrom_cbarg;
+
+void
 fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 {
 	struct fwnode_softc *sc = (struct fwnode_softc *)ab->ab_req;
-	u_int32_t val;
-	
+	struct cfgrom_cbarg *cc = NULL;
+	u_int32_t val, *cbuf;
+
+	if (ab->ab_cbarg != NULL) {
+		cc = (struct cfgrom_cbarg *) ab->ab_cbarg;
+		if (cc->cc_type != 0x31333934)
+			panic("Got an invalid abuf on callback\n");
+		DPRINTF(("(cc_num:%d/0x%02x) ", cc->cc_num, cc->cc_num));
+	}
+
 	if (rcode != IEEE1394_RCODE_COMPLETE) {
 		DPRINTF(("Aborting configrom input, rcode: %d\n", rcode));
 #ifdef FWNODE_DEBUG
 		fwnode_dump_rom(sc, ab->ab_data, ab->ab_retlen);
 #endif
+		if (cc != NULL) free(cc, M_1394DATA);
 		free(ab->ab_data, M_1394DATA);
 		free(ab, M_1394DATA);
 		return;
 	}
-	
-	if (ab->ab_cbarg)
-		panic("Got an invalid abuf on callback\n");
 
 	if (ab->ab_length != ab->ab_retlen) {
 		DPRINTF(("%s: config rom short read. Expected :%d, received: "
 		    "%d. Not attaching\n", sc->sc_sc1394.sc1394_dev.dv_xname,
 		    ab->ab_length, ab->ab_retlen));
+/*		if (cc != NULL) free(cc, M_1394DATA);	*/
 		free(ab->ab_data, M_1394DATA);
 		free(ab, M_1394DATA);
 		return;
@@ -211,12 +225,52 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 	if (ab->ab_retlen % 4) {
 		DPRINTF(("%s: configrom read of invalid length: %d\n",
 		    sc->sc_sc1394.sc1394_dev.dv_xname, ab->ab_retlen));
+/*		if (cc != NULL) free(cc, M_1394DATA);	*/
 		free(ab->ab_data, M_1394DATA);
 		free(ab, M_1394DATA);
 		return;
 	}
 	
 	ab->ab_retlen = ab->ab_retlen / 4;
+/*
+	DPRINTF(("ab_length:%d/0x%02x ab_retlen:%d/0x%02x ab_data0:0x%08x\n",
+	    ab->ab_length, ab->ab_length, ab->ab_retlen, ab->ab_retlen,
+	    ab->ab_data[0], ab->ab_data[0]));
+ */
+
+	if (cc != NULL) {
+		cc->cc_buf[cc->cc_num++] = ab->ab_data[0];
+/*		free(ab->ab_data, M_1394DATA);	*/
+		ab->ab_data[0] = 0;
+/*		wakeup(&cc->cc_num); DPRINTF(("wakeup %d\n", cc->cc_num)); */
+/*		if (test != 0) {	*/
+		if (cc->cc_num < cc->cc_retlen) {
+/*			free(cc, M_1394DATA);	*/
+/*			free(ab, M_1394DATA);	*/
+			ab->ab_addr = CSR_BASE + CSR_CONFIG_ROM +
+			    cc->cc_num * 4;
+			ab->ab_length = 4;
+			ab->ab_retlen = 0;
+			ab->ab_cb = fwnode_configrom_input;
+			ab->ab_cbarg = cc;
+/*			DPRINTF(("re-submitting %d\n", cc->cc_num));	*/
+			sc->sc1394_read(ab);
+/*			DPRINTF(("re-submitted %d\n", cc->cc_num));	*/
+			return;
+		} else {
+			free(ab->ab_data, M_1394DATA);
+			ab->ab_data = &cc->cc_buf[0];
+			ab->ab_retlen = cc->cc_retlen;
+			ab->ab_length = cc->cc_retlen * 4;
+			free(cc, M_1394DATA);
+			cc = NULL;
+			ab->ab_cbarg = NULL;
+#ifdef FWNODE_DEBUG
+/*			fwnode_dump_rom(sc, ab->ab_data, ab->ab_retlen); */
+#endif
+		}
+	}
+
 	if (p1212_iscomplete(ab->ab_data, &ab->ab_retlen) == -1) {
 		DPRINTF(("%s: configrom parse error\n",
 		    sc->sc_sc1394.sc1394_dev.dv_xname));
@@ -224,6 +278,11 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		free(ab, M_1394DATA);
 		return;
 	}
+/*
+	DPRINTF(("ab_length:%d/0x%02x ab_retlen:%d/0x%02x ab_data0:0x%08x\n",
+	    ab->ab_length, ab->ab_length, ab->ab_retlen, ab->ab_retlen,
+	    ab->ab_data[0], ab->ab_data[0]));
+ */
 
 #ifdef DIAGNOSTIC
 	if (ab->ab_retlen < (ab->ab_length / 4))
@@ -232,23 +291,78 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 	
 	if (ab->ab_retlen > (ab->ab_length / 4)) {
 
+		if (cc != NULL) {	/* Should never occur here */
+			DPRINTF(("%s: cbarg not NULL\n",
+			    sc->sc_sc1394.sc1394_dev.dv_xname));
+/*			free(cc, M_1394DATA);	*/
+			free(ab->ab_data, M_1394DATA);
+			free(ab, M_1394DATA);
+			return;
+		}
 		free(ab->ab_data, M_1394DATA);
-#ifdef M_ZERO
-		ab->ab_data = malloc(ab->ab_retlen * 4, M_1394DATA, 
-		    M_WAITOK|M_ZERO);
+
+		if (ab->ab_length == 4) {	/* reread whole rom */
+#ifdef	M_ZERO
+			ab->ab_data = malloc(ab->ab_retlen * 4, M_1394DATA, 
+			    M_WAITOK|M_ZERO);
 #else
-		ab->ab_data = malloc(ab->ab_retlen * 4, M_1394DATA, M_WAITOK);
-		bzero(ab->ab_data, ab->ab_retlen * 4);
+			ab->ab_data = malloc(ab->ab_retlen * 4,
+			    M_1394DATA, M_WAITOK);
+			bzero(ab->ab_data, ab->ab_retlen * 4);
 #endif
 		
-		ab->ab_addr = CSR_BASE + CSR_CONFIG_ROM;
-		ab->ab_length = ab->ab_retlen * 4;
-		ab->ab_retlen = 0;
-		ab->ab_cbarg = NULL;
-		ab->ab_cb = fwnode_configrom_input;
-		sc->sc1394_read(ab);
+			ab->ab_addr = CSR_BASE + CSR_CONFIG_ROM;
+			ab->ab_length = ab->ab_retlen * 4;
+			ab->ab_retlen = 0;
+			ab->ab_cbarg = NULL;
+			ab->ab_cb = fwnode_configrom_input;
+			sc->sc1394_read(ab);
+		} else {			/* reread quadlet-wise */
+			DPRINTF(("%s: configrom re-read %d(0x%02x) quadlets"
+			    " - 0x%08x\n", sc->sc_sc1394.sc1394_dev.dv_xname,
+			    ab->ab_retlen, ab->ab_retlen, ab->ab_data[0]));
+
+#ifdef  M_ZERO
+			cbuf = malloc(ab->ab_retlen * 4, M_1394DATA,
+			    M_WAITOK|M_ZERO);
+			cc = malloc(sizeof(struct cfgrom_cbarg), M_1394DATA,
+			    M_WAITOK|M_ZERO);
+#else
+			cbuf = malloc(ab->ab_retlen * 4, M_1394DATA, M_WAITOK);
+			bzero(cbuf, ab->ab_retlen * 4);
+			cc = malloc(sizeof(struct cfgrom_cbarg), M_1394DATA,
+			    M_WAITOK);
+			bzero(cc, sizeof(struct cfgrom_cbarg));
+#endif
+			cc->cc_type = 0x31333934;
+			cc->cc_retlen = ab->ab_retlen;
+/*			cc->cc_num = i;	*/
+			cc->cc_num = 0;
+			cc->cc_buf = cbuf;
+
+			ab->ab_data = malloc(4, M_1394DATA, M_WAITOK);
+			ab->ab_data[0] = 0;
+/*			ab->ab_addr = CSR_BASE + CSR_CONFIG_ROM + i * 4; */
+			ab->ab_addr = CSR_BASE + CSR_CONFIG_ROM;
+			ab->ab_length = 4;
+			ab->ab_retlen = 0;
+			ab->ab_cb = fwnode_configrom_input;
+			ab->ab_cbarg = cc;
+/*			splx(s);	*/
+/*			DPRINTF(("submitting %d\n", cc->cc_num));	*/
+			sc->sc1394_read(ab);
+/*			DPRINTF(("submitted %d\n", cc->cc_num));	*/
+#if 0
+			s = tsleep(&cc->cc_num, PRIBIO, "cfgrom_wait", 1 * hz);
+			DPRINTF(("returned %d\n", cc->cc_num));
+			free(cc, M_1394DATA);
+			if (s == EWOULDBLOCK) break;
+			free(ab, M_1394DATA);
+#endif
+		}
 		return;
 	} else {
+		DPRINTF(("configrom loaded...\n"));
 		sc->sc_sc1394.sc1394_configrom_len = ab->ab_retlen;
 		sc->sc_sc1394.sc1394_configrom = ab->ab_data;
 		ab->ab_data = NULL;
@@ -284,8 +398,12 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 		
 		val = htonl(IEEE1394_SIGNATURE);
 		if (memcmp(sc->sc_configrom->name, &val, 4)) {
+#ifdef FWNODE_DEBUG
 			DPRINTF(("Invalid signature found in bus info block: "
 				    "%s\n", sc->sc_configrom->name));
+			fwnode_dump_rom(sc, sc->sc_sc1394.sc1394_configrom, 
+				sc->sc_sc1394.sc1394_configrom_len);
+#endif
 			p1212_free(sc->sc_configrom);
 			sc->sc_sc1394.sc1394_configrom = NULL;
 			sc->sc_sc1394.sc1394_configrom_len = 0;
@@ -310,7 +428,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 	}
 }
 
-static int
+int
 fwnode_print(void *aux, const char *pnp)
 {
 	if (pnp)
@@ -320,7 +438,7 @@ fwnode_print(void *aux, const char *pnp)
 }
 
 #ifdef FWNODE_DEBUG
-static void
+void
 fwnode_dump_rom(struct fwnode_softc *sc, u_int32_t *t, u_int32_t len)
 {
 	int i;
