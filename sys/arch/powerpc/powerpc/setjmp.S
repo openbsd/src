@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.7 2003/06/03 01:35:30 drahn Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.8 2003/10/15 02:41:50 drahn Exp $	*/
 /* kernel version of this file, does not have signal goop */
 /* int setjmp(jmp_buf env) */
 
@@ -56,70 +56,70 @@
 
 
 ENTRY(_C_LABEL(setjmp))
-	stw 31, JMP_r31(3)
+	stw %r31, JMP_r31(%r3)
 	/* r1, r14-r30 */
-	stw 1,  JMP_r1 (3)
-	stw 14, JMP_r14(3)
-	stw 15, JMP_r15(3)
-	stw 16, JMP_r16(3)
-	stw 17, JMP_r17(3)
-	stw 18, JMP_r18(3)
-	stw 19, JMP_r19(3)
-	stw 20, JMP_r20(3)
-	stw 21, JMP_r21(3)
-	stw 22, JMP_r22(3)
-	stw 23, JMP_r23(3)
-	stw 24, JMP_r24(3)
-	stw 25, JMP_r25(3)
-	stw 26, JMP_r26(3)
-	stw 27, JMP_r27(3)
-	stw 28, JMP_r28(3)
-	stw 29, JMP_r29(3)
-	stw 30, JMP_r30(3)
+	stw %r1,  JMP_r1 (%r3)
+	stw %r14, JMP_r14(%r3)
+	stw %r15, JMP_r15(%r3)
+	stw %r16, JMP_r16(%r3)
+	stw %r17, JMP_r17(%r3)
+	stw %r18, JMP_r18(%r3)
+	stw %r19, JMP_r19(%r3)
+	stw %r20, JMP_r20(%r3)
+	stw %r21, JMP_r21(%r3)
+	stw %r22, JMP_r22(%r3)
+	stw %r23, JMP_r23(%r3)
+	stw %r24, JMP_r24(%r3)
+	stw %r25, JMP_r25(%r3)
+	stw %r26, JMP_r26(%r3)
+	stw %r27, JMP_r27(%r3)
+	stw %r28, JMP_r28(%r3)
+	stw %r29, JMP_r29(%r3)
+	stw %r30, JMP_r30(%r3)
 	/* cr, lr, ctr, xer */
-	mfcr 0
-	stw 0, JMP_cr(3)
-	mflr 0
-	stw 0, JMP_lr(3)
-	mfctr 0
-	stw 0, JMP_ctr(3)
-	mfxer 0
-	stw 0, JMP_xer(3)
+	mfcr %r0
+	stw %r0, JMP_cr(%r3)
+	mflr %r0
+	stw %r0, JMP_lr(%r3)
+	mfctr %r0
+	stw %r0, JMP_ctr(%r3)
+	mfxer %r0
+	stw %r0, JMP_xer(%r3)
 	/* f14-f31, fpscr */
-	li 3, 0
+	li %r3, 0
 	blr
 
 
 ENTRY(_C_LABEL(longjmp))
-	lwz 31, JMP_r31(3)
+	lwz %r31, JMP_r31(%r3)
 	/* r1, r14-r30 */
-	lwz 1,  JMP_r1 (3)
-	lwz 14, JMP_r14(3)
-	lwz 15, JMP_r15(3)
-	lwz 16, JMP_r16(3)
-	lwz 17, JMP_r17(3)
-	lwz 18, JMP_r18(3)
-	lwz 19, JMP_r19(3)
-	lwz 20, JMP_r20(3)
-	lwz 21, JMP_r21(3)
-	lwz 22, JMP_r22(3)
-	lwz 23, JMP_r23(3)
-	lwz 24, JMP_r24(3)
-	lwz 25, JMP_r25(3)
-	lwz 26, JMP_r26(3)
-	lwz 27, JMP_r27(3)
-	lwz 28, JMP_r28(3)
-	lwz 29, JMP_r29(3)
-	lwz 30, JMP_r30(3)
+	lwz %r1,  JMP_r1 (%r3)
+	lwz %r14, JMP_r14(%r3)
+	lwz %r15, JMP_r15(%r3)
+	lwz %r16, JMP_r16(%r3)
+	lwz %r17, JMP_r17(%r3)
+	lwz %r18, JMP_r18(%r3)
+	lwz %r19, JMP_r19(%r3)
+	lwz %r20, JMP_r20(%r3)
+	lwz %r21, JMP_r21(%r3)
+	lwz %r22, JMP_r22(%r3)
+	lwz %r23, JMP_r23(%r3)
+	lwz %r24, JMP_r24(%r3)
+	lwz %r25, JMP_r25(%r3)
+	lwz %r26, JMP_r26(%r3)
+	lwz %r27, JMP_r27(%r3)
+	lwz %r28, JMP_r28(%r3)
+	lwz %r29, JMP_r29(%r3)
+	lwz %r30, JMP_r30(%r3)
 	/* cr, lr, ctr, xer */
-	lwz 0, JMP_cr(3)
-	mtcr 0
-	lwz 0, JMP_lr(3)
-	mtlr 0
-	lwz 0, JMP_ctr(3)
-	mtctr 0
-	lwz 0, JMP_xer(3)
-	mtxer 0
+	lwz %r0, JMP_cr(%r3)
+	mtcr %r0
+	lwz %r0, JMP_lr(%r3)
+	mtlr %r0
+	lwz %r0, JMP_ctr(%r3)
+	mtctr %r0
+	lwz %r0, JMP_xer(%r3)
+	mtxer %r0
 	/* f14-f31, fpscr */
-	mr 3, 4
+	mr %r3, %r4
 	blr
