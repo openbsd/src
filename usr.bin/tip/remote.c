@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.6 1997/09/01 23:24:25 deraadt Exp $	*/
+/*	$OpenBSD: remote.c,v 1.7 1997/09/07 12:23:59 provos Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: remote.c,v 1.6 1997/09/01 23:24:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: remote.c,v 1.7 1997/09/07 12:23:59 provos Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -138,6 +138,10 @@ getremcap(host)
 		CU = DV;
 	if (DU && PN == NOSTR) {
 		fprintf(stderr, "%s: missing phone number\n", host);
+		exit(3);
+	}
+	if (DU && AT == NOSTR) {
+		fprintf(stderr, "%s: missing acu type\n", host);
 		exit(3);
 	}
 
