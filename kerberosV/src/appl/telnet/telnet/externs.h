@@ -136,7 +136,7 @@ extern int (*decrypt_input) (int);
 #define	set_my_want_state_wont(opt)	{options[opt] &= ~MY_WANT_STATE_WILL;}
 
 /*
- * Make everything symetrical
+ * Make everything symmetrical
  */
 
 #define	HIS_STATE_WILL			MY_STATE_DO
