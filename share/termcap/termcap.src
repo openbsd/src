@@ -1259,7 +1259,7 @@ vt220|vt200|DEC VT220 in vt100 emulation mode:\
 	:if=/usr/share/tabset/vt100:im=\E[4h:\
 	:is=\E[1;24r\E[24;1H:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:\
 	:k5=\E[17~:k6=\E[18~:k7=\E[19~:k8=\E[20~:k9=\E[21~:\
-	:k;=\E[29~:kD=\E[3~:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=^H:\
+	:k;=\E[29~:kD=\E[3~:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=\177:\
 	:kd=\EOB:kh=\E[1~:kl=\EOD:kr=\EOC:ku=\EOA:le=^H:mb=\E[5m:\
 	:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:nl=^J:\
 	:r2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:rc=\E8:\
@@ -1302,7 +1302,7 @@ vt220-8|dec vt220 8 bit terminal:\
 	:ei=\E[4l:ho=\E[H:if=/usr/share/tabset/vt100:im=\E[4h:\
 	:is=\E[?7h\E[>\E[?1h\E F\E[?4l:k1=\EOP:k2=\EOQ:k3=\EOR:\
 	:k4=\EOS:k6=\E[17~:k7=\E[18~:k8=\E[19~:k9=\E[20~:kI=\E[2~:\
-	:kN=\E[6~:kP=\E[5~:kb=^H:kd=\E[B:kh=\E[H:kl=\E[D:kr=\E[C:\
+	:kN=\E[6~:kP=\E[5~:kb=\177:kd=\E[B:kh=\E[H:kl=\E[D:kr=\E[C:\
 	:ku=\E[A:le=^H:mb=\E[5m:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:\
 	:nw=\EE:rc=\E8:sc=\E7:se=\E[27m:sf=\ED:so=\E[7m:sr=\EM:\
 	:st=\EH:ta=^I:ue=\E[24m:up=\E[A:us=\E[4m:vb=\E[?5h\E[?5l:
