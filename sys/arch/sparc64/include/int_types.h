@@ -1,4 +1,4 @@
-/*	$OpenBSD: int_types.h,v 1.1.1.1 2001/08/18 04:16:40 jason Exp $	*/
+/*	$OpenBSD: int_types.h,v 1.2 2001/09/26 17:32:19 deraadt Exp $	*/
 /*	$NetBSD: int_types.h,v 1.7 2001/04/28 15:41:33 kleink Exp $	*/
 
 /*
@@ -71,9 +71,9 @@ typedef	__COMPILER_UINT64__   u_int64_t;
 #else
 #ifdef __arch64__
 /* 64-bit compiler */
-typedef	long int		int64_t;
-typedef	unsigned long int      uint64_t;
-typedef	unsigned long int     u_int64_t;
+typedef	long long int		int64_t;
+typedef	unsigned long long int	uint64_t;
+typedef	unsigned long long int	u_int64_t;
 #else
 /* 32-bit compiler */
 /* LONGLONG */

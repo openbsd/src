@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.4 2001/09/20 23:23:59 jason Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.5 2001/09/26 17:32:19 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1278,7 +1278,7 @@ remap_data:
 			pmap_get_page(&newp);
 			pmap_zero_page(newp);
 		} while (!newp); /* Throw away page zero */
-		pmap_kernel()->pm_segs=(paddr_t *)(u_long)newp;
+		pmap_kernel()->pm_segs=(int64_t *)(u_long)newp;
 		pmap_kernel()->pm_physaddr = newp;
 		/* mark kernel context as busy */
 		((paddr_t*)ctxbusy)[0] = (int)pmap_kernel()->pm_physaddr;
@@ -1661,7 +1661,7 @@ pmap_pinit(pm)
 		}
 		pm->pm_physaddr = (paddr_t)VM_PAGE_TO_PHYS(page);
 		pmap_zero_page(pm->pm_physaddr);
-		pm->pm_segs = (paddr_t *)(u_long)pm->pm_physaddr;
+		pm->pm_segs = (int64_t *)(u_long)pm->pm_physaddr;
 		if (!pm->pm_physaddr) panic("pmap_pinit");
 #ifdef NOTDEF_DEBUG
 		printf("pmap_pinit: segs %p == %p\n", pm->pm_segs, (void*)page->phys_addr);
@@ -2159,7 +2159,7 @@ int
 pmap_enter(pm, va, pa, prot, flags)
 	struct pmap *pm;
 	vaddr_t va;
-	u_int64_t pa;
+	paddr_t pa;
 	vm_prot_t prot;
 	int flags;
 {
