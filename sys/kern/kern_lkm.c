@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.35 2002/01/07 19:23:32 ericj Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.36 2002/01/09 19:05:17 ericj Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ lkmopen(dev_t dev, int flag, int devtype, struct proc *p)
 	int error;
 
 	if (minor(dev) != 0)
-		return (ENXIO);		/* bad minor # */
+		return (ENXIO);
 
 	/*
 	 * Use of the loadable kernel module device must be exclusive; we
@@ -250,17 +250,21 @@ int
 lkmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 
+	if (minor(dev) != 0)
+		return (ENXIO);
+
 	if (!(lkm_v & LKM_ALLOC))
 		return (EBADF);
 
 	/* do this before waking the herd... */
-	if (curp != NULL) {
+	if (curp != NULL && !curp->refcnt) {
 		/*
 		 * If we close before setting used, we have aborted
 		 * by way of error or by way of close-on-exit from
 		 * a premature exit of "modload".
 		 */
-		lkmunreserve();	/* coerce state to LKM_IDLE */
+		lkmunreserve();
+		lkmfree(curp);
 	}
 	lkm_v &= ~LKM_ALLOC;
 	wakeup((caddr_t)&lkm_v);	/* thundering herd "problem" here */
@@ -392,6 +396,8 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	case LMUNRESRV:
 		lkmunreserve();
+		if (curp)
+			lkmfree(curp);
 		break;
 
 	case LMREADY:
