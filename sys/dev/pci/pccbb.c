@@ -1,5 +1,5 @@
-/*	$OpenBSD: pccbb.c,v 1.33 2003/12/23 20:52:23 mickey Exp $ */
-/*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.34 2004/07/14 21:54:18 mickey Exp $ */
+/*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -278,7 +278,7 @@ struct yenta_chipinfo {
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1131), CB_TI113X,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
-	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1250), CB_TI12XX,
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1250), CB_TI125X,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1220), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
@@ -286,9 +286,9 @@ struct yenta_chipinfo {
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1225), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
-	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251), CB_TI12XX,
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251), CB_TI125X,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
-	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251B), CB_TI12XX,
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251B), CB_TI125X,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1211), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
@@ -296,7 +296,7 @@ struct yenta_chipinfo {
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1420), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
-	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450), CB_TI12XX,
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450), CB_TI125X,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1451), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
@@ -752,6 +752,45 @@ pccbb_chipinit(sc)
 		reg |= PCI113X_CBCTRL_PCI_CSC;
 		/* functional intr prohibit | prohibit ISA routing */
 		reg &= ~(PCI113X_CBCTRL_PCI_INTR | PCI113X_CBCTRL_INT_MASK);
+		pci_conf_write(pc, tag, PCI_CBCTRL, reg);
+		break;
+
+	case CB_TI12XX:
+		/*
+		 * Some TI 12xx (and [14][45]xx) based pci cards
+		 * sometimes have issues with the MFUNC register not
+		 * being initialized due to a bad EEPROM on board.
+		 * Laptops that this matters on have this register
+		 * properly initialized.
+		 *
+		 * The TI125X parts have a different register.
+		 */
+		reg = pci_conf_read(pc, tag, PCI12XX_MFUNC);
+		if (reg == 0) {
+			reg &= ~PCI12XX_MFUNC_PIN0;
+			reg |= PCI12XX_MFUNC_PIN0_INTA;
+			if ((pci_conf_read(pc, tag, PCI_SYSCTRL) &
+			     PCI12XX_SYSCTRL_INTRTIE) == 0) {
+				reg &= ~PCI12XX_MFUNC_PIN1;
+				reg |= PCI12XX_MFUNC_PIN1_INTB;
+			}
+			pci_conf_write(pc, tag, PCI12XX_MFUNC, reg);
+		}
+		/* fallthrough */
+
+	case CB_TI125X:
+		/*
+		 * Disable zoom video.  Some machines initialize this
+		 * improperly and experience has shown that this helps
+		 * prevent strange behavior.
+		 */
+		pci_conf_write(pc, tag, PCI12XX_MMCTRL, 0);
+
+		reg = pci_conf_read(pc, tag, PCI_SYSCTRL);
+		reg |= PCI12XX_SYSCTRL_VCCPROT;
+		pci_conf_write(pc, tag, PCI_SYSCTRL, reg);
+		reg = pci_conf_read(pc, tag, PCI_CBCTRL);
+		reg |= PCI12XX_CBCTRL_CSC;
 		pci_conf_write(pc, tag, PCI_CBCTRL, reg);
 		break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbvar.h,v 1.6 2002/03/14 01:26:59 millert Exp $ */
+/*	$OpenBSD: pccbbvar.h,v 1.7 2004/07/14 21:54:19 mickey Exp $ */
 /*	$NetBSD: pccbbvar.h,v 1.13 2000/06/08 10:28:29 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -53,12 +53,13 @@
 #define	CB_TOPIC95B	6	/* Toshiba ToPIC95B */
 #define	CB_TOPIC97	7	/* Toshiba ToPIC97 */
 #define	CB_CIRRUS	8	/* Cirrus Logic CL-PD683X */
-#define	CB_CHIPS_LAST	9	/* Sentinel */
+#define	CB_TI125X	9	/* TI PCI1250/1251(B)/1450 */
+#define	CB_CHIPS_LAST	10	/* Sentinel */
 
 #if 0
 static char *cb_chipset_name[CB_CHIPS_LAST] = {
 	"unknown", "TI 113X", "TI 12XX", "RF5C47X", "RF5C46X", "ToPIC95",
-	"ToPIC95B", "ToPIC97", "CL-PD 683X",
+	"ToPIC95B", "ToPIC97", "CL-PD 683X", "TI 125X",
 };
 #endif
 
