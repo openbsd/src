@@ -1,0 +1,8 @@
+* Implement a detexinfo program, like detex or delatex.  This command would
+  strip all the texinfo commands out, and would be used as a filter on the
+  way to a speller.  
+
+  An option would be to NOT strip comments out.
+
+  makeinfo --noheaders come close.
+

@@ -1,0 +1,94 @@
+# Makefile for Texinfo/emacs.	-*- Indented-Text -*-
+# Copyright (C) 1995 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+# Author: Brian J. Fox (bfox@ai.mit.edu)
+#
+#### Start of system configuration section. ####
+
+RM = rm -f
+CP = cp
+
+srcdir = @srcdir@
+VPATH = $(srcdir)
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = $(exec_prefix)/bin
+# Prefix for each installed program, normally empty or `g'.
+binprefix = 
+libdir = $(prefix)/lib
+# Prefix for each installed man page, normally empty or `g'.
+manprefix = 
+mandir = $(prefix)/man/man1
+manext = 1
+infodir = $(prefix)/info
+lispdir = $(libdir)/emacs/site-lisp
+
+#### End of system configuration section. ####
+
+ELISP_SRCS = info.el makeinfo.el texinfo.el texnfo-upd.el \
+	      texnfo-tex.el texinfmt.el informat.el detexinfo.el
+ELISP_OBJS = info.elc makeinfo.elc texinfo.elc texnfo-upd.elc \
+	      texnfo-tex.elc texinfmt.elc informat.elc detexinfo.elc
+
+.SUFFIXES: .el .elc
+
+.el.elc:
+	$(srcdir)/elisp-comp $<
+
+all: $(ELISP_OBJS)
+sub-all: all
+
+# install: $(ELISP_OBJS)
+# 	 @(echo "(print (car load-path))" >/tmp/elc.$$$$; \
+# 	   lispdir=`emacs -batch -q -l /tmp/elc.$$$$ -nw | grep site-lisp`; \
+# 	   rm /tmp/elc.$$$$; \
+# 	   if [ "$$lispdir" != "" ]; then \
+# 	     lispdir=`echo $$lispdir | sed -e 's/"//g'`; \
+# 	     echo "Installing .elc files in $$lispdir."; \
+# 	     $(CP) $(ELISP_OBJS) $$lispdir; \
+# 	   else \
+# 	     echo "To install the elisp files, please copy *.elc to the"; \
+# 	     echo "emacs site-lisp directory."; \
+# 	   fi)
+
+install: $(ELISP_OBJS)
+	 for file in $(ELISP_OBJS); do \
+	   $(INSTALL_DATA) $$file $(lispdir); \
+	 done
+
+uninstall: $(ELISP_OBJS)
+	cd $(lispdir) && rm -f $(ELISP_OBJS)
+
+informat.elc: info.elc
+makeinfo.elc: texinfo.elc
+texinfmt.elc: texinfo.elc
+texinfmt.elc: texnfo-upd.elc
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; sh config.status
+
+realclean distclean: clean
+	$(RM) -f Makefile *.log
+
+clean: FORCE
+	$(RM) -f *.elc
+
+FORCE:
+

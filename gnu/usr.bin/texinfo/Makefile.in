@@ -1,0 +1,204 @@
+# Makefile for Texinfo distribution.	-*- Indented-Text -*-
+# Copyright (C) 1993 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+#### Start of system configuration section. ####
+
+srcdir = @srcdir@
+VPATH  = $(srcdir):$(common)
+
+common = $(srcdir)/libtxi
+
+CC = @CC@
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+LN	= ln
+RM	= rm -f
+TAR	= tar
+MKDIR	= mkdir
+
+DEFS = @DEFS@
+LIBS = @LIBS@
+LOADLIBES = $(LIBS)
+
+ALLOCA = @ALLOCA@
+
+SHELL = /bin/sh
+
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = $(exec_prefix)/bin
+# Prefix for each installed program, normally empty or `g'.
+binprefix = 
+libdir = $(prefix)/lib
+# Prefix for each installed man page, normally empty or `g'.
+manprefix = 
+mandir = $(prefix)/man/man1
+manext = 1
+infodir = $(prefix)/info
+
+# For info program. 
+DEFAULT_INFOPATH = $(infodir):.
+
+#### End of system configuration section. ####
+
+VERSION = 3.6
+DISTNAME = texinfo-$(VERSION)
+
+# Subdirectories that have makefiles
+SUBDIRS = libtxi makeinfo info util emacs
+
+# All subdirectories that go into a distribution
+ALL_SUBDIRS = $(SUBDIRS) makeinfo/macros
+
+MDEFINES = bindir='$(bindir)' mandir='$(mandir)' manext='$(manext)' \
+	prefix='$(prefix)' binprefix='$(binprefix)' \
+	manprefix='$(manprefix)' infodir='$(infodir)' CFLAGS='$(CFLAGS)' \
+	CC='$(CC)' ALLOCA='$(ALLOCA)' LDFLAGS='$(LDFLAGS)' \
+	DEFAULT_INFOPATH='$(DEFAULT_INFOPATH)'
+
+all: sub-all texinfo
+
+install: all installdirs
+	for dir in $(SUBDIRS); do \
+	   echo making $@ in $$dir; \
+	   (cd $$dir; $(MAKE) $(MDEFINES) $@); \
+	done
+	d=$(srcdir); test -f ./texinfo && d=.; \
+	(cd $$d; \
+	  for f in texinfo texinfo-* ; do \
+	    $(INSTALL_DATA) $$f $(infodir)/$$f; \
+	  done)
+
+installdirs:
+	-sh $(srcdir)/util/mkinstalldirs $(bindir) $(datadir) $(libdir) $(infodir) $(mandir)
+
+uninstall:
+	for dir in $(SUBDIRS); do \
+	  echo making $@ in $$dir; \
+	  (cd $$dir; $(MAKE) $(MDEFINES) $@); \
+	done
+	$(RM) $(infodir)/texinfo $(infodir)/texinfo-*
+
+Makefile: Makefile.in config.status
+	sh ./config.status
+
+config.status: configure
+	sh ./config.status --recheck
+
+configure: configure.in
+	cd $(srcdir); autoconf
+
+sub-all TAGS:
+	for dir in $(SUBDIRS); do \
+	  echo making $@ in $$dir; \
+	  (cd $$dir; $(MAKE) $(MDEFINES) $@); \
+	done
+
+clean mostlyclean:
+	for dir in $(SUBDIRS); do \
+	  echo making $@ in $$dir; \
+	  (cd $$dir; $(MAKE) $(MDEFINES) $@); \
+	done
+
+distclean: clean texclean
+	for dir in $(SUBDIRS); do \
+	  echo making $@ in $$dir; \
+	  (cd $$dir; $(MAKE) $(MDEFINES) $@); \
+	done
+	$(RM) Makefile *.status *.cache *.log texinfo texinfo-?	texinfo-??
+
+texclean:
+	$(RM) *.aux *.cp *.cps *.dvi *.fn *.fns *.ky *.kys *.pg *.pgs
+	$(RM) *.toc *.tp *.tps *.vr *.vrs
+
+realclean: distclean
+
+texinfo: sub-all
+	./makeinfo/makeinfo -I$(srcdir) texinfo.texi
+
+texinfo.dvi:
+	PATH="$(srcdir)/util:$${PATH}" TEXINPUTS="$(srcdir):$(common):$${TEXINPUTS}" texi2dvi $(srcdir)/texinfo.texi
+
+dist: DISTFILES
+	$(RM) -rf $(DISTNAME)
+	$(MKDIR) $(DISTNAME)
+	for d in `find . -type d ! -name RCS -print`; do \
+	  d=`echo $$d | grep -v '='`; \
+	  if [ "$$d" != "" ]; then \
+	    if [ "$$d" != "." -a "$$d" != "./$(DISTNAME)" ]; then \
+	      mkdir $(DISTNAME)/$$d; \
+	    fi; \
+	  fi; \
+	done
+	for f in `cat DISTFILES`; do \
+	   $(LN) $(srcdir)/$$f $(DISTNAME)/$$f || \
+		{ echo copying $$f; cp -p $(srcdir)/$$f $(DISTNAME)/$$f ; } \
+	done
+	(cd $(DISTNAME); $(MAKE) $(MFLAGS) distclean)
+	$(TAR) chvf - $(DISTNAME) | gzip >$(DISTNAME).tar.gz
+	$(RM) -rf $(DISTNAME)
+
+# Gets rid of most of the unwanted files.  Verify manually (if necessary)
+# that this produces a list of all the files desired in the distribution. 
+DISTFILES: force
+	(cd $(srcdir); find . ! -type d -print) \
+	| sed  '/\/RCS\//d; \
+	       /\/EMACS-BACKUPS\//d; \
+	       /\.tar.*/d; \
+	       /~$$/d; /\.o$$/d; \
+	       /\.orig$$/d; \
+	       /\#$$/d; \
+	       /\/info\/info$$/d; \
+	       /\.info$$/d; \
+	       /\.elc/d; \
+	       /\/makeinfo\/makeinfo$$/d; \
+	       /\/$(DISTNAME)\/.*$$/d; \
+	       /\/util\/texindex$$/d; \
+	       /texinfo$$/d; \
+	       /texinfo-[0-9]+$$/d; \
+	       /\/.*\.BAK$$/d; \
+	       /\/.*\.a$$/d; \
+	       /\/core$$/d; \
+	       /\/*\.core$$/d; \
+	       /\/core\..*$$/d; \
+	       /\/a.out$$/d; \
+	       /\/=/d; \
+	       /\/conftest\.c$$/d; \
+	       /\/DISTFILES$$/d; \
+	       /\/foo$$/d; \
+	       /\/bar$$/d; \
+	       /\.toc$$/d; \
+	       /\.aux$$/d; /\.log$$/d; \
+	       /\.cps$$/d; /\.cp$$/d; \
+	       /\.fns$$/d; /\.fn$$/d; \
+	       /\.tps$$/d; /\.tp$$/d; \
+	       /\.vrs$$/d; /\.vr$$/d; \
+	       /\.pgs$$/d; /\.pg$$/d; \
+	       /\.kys$$/d; /\.ky$$/d; \
+	       s/^.\///; /^\.$$/d;' \
+	| sort | uniq > DISTFILES
+
+force:
+
+# Prevent GNU make v3 from overflowing arg limit on SysV.
+.NOEXPORT:

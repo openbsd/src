@@ -1,0 +1,5 @@
+#!/bin/sh
+setpath=/tmp/elc.$$
+echo "(setq load-path (cons nil load-path))" > $setpath
+emacs -batch -l $setpath -f batch-byte-compile $*
+rm -f $setpath

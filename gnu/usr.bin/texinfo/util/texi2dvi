@@ -1,0 +1,275 @@
+#! /bin/sh
+# texi2dvi --- smartly produce DVI files from texinfo sources
+
+# Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+
+# $Id: texi2dvi,v 1.1.1.1 1995/12/22 16:47:17 niklas Exp $
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, you can either send email to this
+# program's maintainer or write to: The Free Software Foundation,
+# Inc.; 59 Temple Place, Suite 330; Boston, MA 02111-1307, USA.
+
+# Commentary:
+
+# Author: Noah Friedman <friedman@prep.ai.mit.edu>
+
+# Please send bug reports, etc. to bug-texinfo@prep.ai.mit.edu
+# If possible, please send a copy of the output of the script called with
+# the `--debug' option when making a bug report.
+
+# In the interest of general portability, some common bourne shell
+# constructs were avoided because they weren't guaranteed to be available
+# in some earlier implementations.  I've tried to make this program as
+# portable as possible.  Welcome to unix, where the lowest common
+# denominator is rapidly diminishing.
+#
+# Among the more interesting lossages I noticed with some bourne shells
+# are:
+#     * No shell functions.
+#     * No `unset' builtin.
+#     * `shift' cannot take a numeric argument, and signals an error if
+#       there are no arguments to shift.
+
+# Code:
+
+# Name by which this script was invoked.
+progname=`echo "$0" | sed -e 's/[^\/]*\///g'`
+
+# This string is expanded by rcs automatically when this file is checked out.
+rcs_revision='$Revision: 1.1.1.1 $'
+version=`set - $rcs_revision; echo $2`
+
+# To prevent hairy quoting and escaping later.
+bq='`'
+eq="'"
+
+usage="Usage: $progname {options} [file1] {file2 {...}}
+(version $version)
+
+Options are:
+-D, --debug          Turn on shell debugging ($bq${bq}set -x$eq$eq).
+-h, --help           You're looking at it.
+-v, --version        Print version number.
+
+Arguments in brackets are required.  Those in braces are optional.
+"
+
+# Initialize variables.
+# Don't use `unset' since old bourne shells don't have this command.
+# Instead, assign them an empty value.
+# Some of these, like TEX and TEXINDEX, may be inherited from the environment
+backup_extension=.bak
+debug=
+orig_pwd="`pwd`"
+verbose=
+texindex="${TEXINDEX-texindex}"
+tex="${TEX-tex}"
+
+# Save this so we can construct a new TEXINPUTS path for each file to be
+# processed.
+TEXINPUTS_orig="$TEXINPUTS"
+export TEXINPUTS
+
+# Parse command line arguments.
+# Make sure that all wildcarded options are long enough to be unambiguous.
+# It's a good idea to document the full long option name in each case.
+# Long options which take arguments will need a `*' appended to the
+# canonical name to match the value appended after the `=' character.
+while : ; do
+  case $# in 0) break ;; esac
+  case "$1" in
+    -D | --debug | --d* )
+      debug=t
+      shift
+     ;;
+    -h | --help | --h* )
+      echo "$usage" 1>&2
+      exit 0
+     ;;
+    -v | --version | --v* )
+      echo "texi2dvi version $version" 1>&2
+      exit 0
+     ;;
+    -- )     # Stop option processing
+      shift
+      break
+     ;;
+    -* )
+      case "$1" in
+        --*=* ) arg=`echo "$1" | sed -e 's/=.*//'` ;;
+        * )     arg="$1" ;;
+      esac
+      exec 1>&2
+      echo "$progname: unknown or ambiguous option $bq$arg$eq"
+      echo "$progname: Use $bq--help$eq for a list of options."
+      exit 1
+     ;;
+    * )
+      break
+     ;;
+   esac
+done
+
+# See if there are any command line args left (which will be interpreted as
+# filename arguments)
+case $# in
+  0 )
+    exec 1>&2
+    echo "$progname: at least one file name is required as an argument."
+    echo "$progname: Use $bq--help$eq for a description of command syntax."
+    exit 2
+   ;;
+esac
+
+case "$debug" in t ) set -x ;; esac
+
+# Texify files
+for command_line_filename in ${1+"$@"} ; do
+   # Roughly equivalent to `dirname ...`, but more portable
+   directory="`echo ${command_line_filename} | sed 's/\/[^\/]*$//'`"
+   filename_texi="`basename ${command_line_filename}`"
+   # Strip off the last extension part (probably .texinfo or .texi)
+   filename_noext="`echo ${filename_texi} | sed 's/\.[^.]*$//'`"
+
+   # If directory and file are the same, then it's probably because there's
+   # no pathname component.  Set dirname to `.', the current directory.
+   if test "z${directory}" = "z${command_line_filename}" ; then
+      directory="."
+   fi
+
+   # Source file might @include additional texinfo sources.  Put `.' and
+   # directory where source file(s) reside in TEXINPUTS before anything
+   # else.  `.' goes first to ensure that any old .aux, .cps, etc. files in
+   # ${directory} don't get used in preference to fresher files in `.'.
+   TEXINPUTS=".:${directory}:${TEXINPUTS_orig}"
+
+   # "Unset" variables that might have values from previous iterations and
+   # which won't be completely reset later.
+   definite_index_files=""
+
+   # See if file exists here.  If it doesn't we're in trouble since, even
+   # though the user may be able to reenter a valid filename at the tex
+   # prompt (assuming they're attending the terminal), this script won't be
+   # able to find the right index files and so forth.
+   if test ! -r "${command_line_filename}" ; then
+      echo "${progname}: ${command_line_filename}: No such file or permission denied." 1>&2
+      continue;
+   fi
+
+   # Find all files having root filename with a two-letter extension,
+   # determine whether they're really index files, and save them.  Foo.aux
+   # is actually the cross-references file, but we need to keep track of
+   # that too.
+   possible_index_files="`eval echo ${filename_noext}.?? ${filename_noext}.aux`"
+   for this_file in ${possible_index_files} ; do
+      # If file is empty, forget it.
+      if test ! -s "${this_file}" ; then
+         continue;
+      fi
+
+      # Examine first character of file.  If it's not a backslash or
+      # single quote, then it's definitely not an index or xref file.
+      first_character="`sed -n '1s/^\(.\).*$/\1/p;q' ${this_file}`"
+      if test "${first_character}" = "\\" -o "${first_character}" = "'" ; then
+         definite_index_files="${definite_index_files} ${this_file}"
+      fi
+   done
+   orig_index_files="${definite_index_files}"
+   orig_index_files_sans_aux="`echo ${definite_index_files} \
+                                | sed 's/'${filename_noext}'\.aux//;
+                                       s/^[ ]*//;s/[ ]*$//;'`"
+
+   # Now save copies of original index files so we have some means of
+   # comparison later.
+   for index_file_to_save in ${orig_index_files} ; do
+       cp "${index_file_to_save}" "${index_file_to_save}${backup_extension}"
+   done
+
+   # Run texindex on current index files.  If they already exist, and
+   # after running TeX a first time the index files don't change, then
+   # there's no reason to run TeX again.  But we won't know that if the
+   # index files are out of date or nonexistent.
+   if test "${orig_index_files_sans_aux}" ; then
+      ${texindex} ${orig_index_files_sans_aux}
+   fi
+
+   if ${tex} ${command_line_filename} ; then		# TeX run first time
+      definite_index_files=""
+      # Get list of new index files
+      possible_index_files="`eval echo ${filename_noext}.?? ${filename_noext}.aux`"
+      for this_file in ${possible_index_files} ; do
+         # If file is empty, forget it.
+         if test ! -s ${this_file} ; then
+            continue;
+         fi
+
+         # Examine first character of file.  If it's not a backslash or
+         # single quote, then it's definitely not an index or xref file.
+         first_character="`sed -n '1s/^\(.\).*$/\1/p;q' ${this_file}`"
+         if test "${first_character}" = "\\" -o "${first_character}" = "'" ; then
+            definite_index_files="${definite_index_files} ${this_file}"
+         fi
+      done
+      new_index_files="${definite_index_files}"
+      new_index_files_sans_aux="`echo ${definite_index_files} \
+                                  | sed 's/'${filename_noext}'\.aux//;
+                                         s/^[ ]*//;s/[ ]*$//;'`"
+
+      # If old and new list don't at least have the same file list, then one
+      # file or another has definitely changed.
+      if test "${orig_index_files}" != "${new_index_files}" ; then
+         index_files_changed_p=t
+      else
+         # File list is the same.  We must compare each file until we find a
+         # difference.
+         index_files_changed_p=""
+         for this_file in ${new_index_files} ; do
+            # cmp -s will return nonzero exit status if files differ.
+            cmp -s "${this_file}" "${this_file}${backup_extension}"
+            if test $? -ne 0  ; then
+               # We only need to keep comparing until we find *one* that
+               # differs, because we'll have to run texindex & tex no
+               # matter what.
+               index_files_changed_p=t
+               break
+            fi
+         done
+      fi
+
+      # If index files have changed since TeX has been run, or if the aux
+      # file wasn't present originally, run texindex and TeX again.
+      if test "${index_files_changed_p}"  ; then
+         retval=0
+         if test "${new_index_files_sans_aux}" ; then
+            ${texindex} ${new_index_files_sans_aux}
+            retval=$?
+         fi
+         if test ${retval} -eq 0 ; then
+            ${tex} "${command_line_filename}"
+         fi
+      fi
+   fi
+
+   # Generate list of files to delete, then call rm once with the entire
+   # list.  This is significantly faster than multiple executions of rm.
+   file_list=""
+   for file in ${orig_index_files} ; do
+       file_list="${file_list} ${file}${backup_extension}"
+   done
+   if test "${file_list}" ; then
+      rm -f ${file_list}
+   fi
+done
+
+# texi2dvi ends here
