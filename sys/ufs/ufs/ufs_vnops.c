@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.24 1999/02/25 07:30:50 millert Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.25 1999/02/26 03:35:18 art Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -58,6 +58,10 @@
 #include <sys/lockf.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
@@ -454,7 +458,11 @@ ufs_chmod(vp, mode, cred, p)
 	ip->i_ffs_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
 	if ((vp->v_flag & VTEXT) && (ip->i_ffs_mode & S_ISTXT) == 0)
+#if defined(UVM)
+		(void) uvm_vnp_uncache(vp);
+#else
 		(void) vnode_pager_uncache(vp);
+#endif
 	return (0);
 }
 
@@ -1311,7 +1319,11 @@ ufs_mkdir(v)
 		goto bad;
 	ip->i_ffs_size = DIRBLKSIZ;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+#if defined(UVM)
+	uvm_vnp_setsize(tvp, ip->i_ffs_size);
+#else
 	vnode_pager_setsize(tvp, (u_long)ip->i_ffs_size);
+#endif
 	bcopy((caddr_t)&dirtemplate, (caddr_t)bp->b_data, sizeof dirtemplate);
 	if (DOINGSOFTDEP(tvp)) {
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.11 1998/07/28 00:13:17 millert Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.12 1999/02/26 03:35:18 art Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -765,7 +765,11 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 		}
 		dp->i_ffs_size = dp->i_offset + DIRBLKSIZ;
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
+#if defined(UVM)
+		uvm_vnp_setsize(dvp, dp->i_ffs_size);
+#else
 		vnode_pager_setsize(dvp, (u_long)dp->i_ffs_size);
+#endif
   		dirp->d_reclen = DIRBLKSIZ;
 		blkoff = dp->i_offset &
 		    (VFSTOUFS(dvp->v_mount)->um_mountp->mnt_stat.f_iosize - 1);
