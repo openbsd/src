@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.12 2005/02/17 23:52:05 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.13 2005/02/19 16:58:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -28,8 +28,8 @@
 extern ar5k_attach_t ar5k_ar5210_attach;
 #ifdef notyet
 extern ar5k_attach_t ar5k_ar5211_attach;
-extern ar5k_attach_t ar5k_ar5212_attach;
 #endif
+extern ar5k_attach_t ar5k_ar5212_attach;
 
 static const struct
 ieee80211_regchannel ar5k_5ghz_channels[] = IEEE80211_CHANNELS_5GHZ;
@@ -63,6 +63,7 @@ static const struct {
 	    ar5k_ar5211_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_LEGACY,
 	    ar5k_ar5211_attach },
+#endif
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212,
 	    ar5k_ar5212_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_DEFAULT,
@@ -74,9 +75,7 @@ static const struct {
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRDAG675,
 	    ar5k_ar5212_attach },
 	{ PCI_VENDOR_3COM2, PCI_PRODUCT_3COM2_3CRPAG175,
-	    ar5k_ar5212_attach },
-#endif
-
+	    ar5k_ar5212_attach }
 };
 
 int		 ar5k_eeprom_read_ants(struct ath_hal *, u_int32_t *, u_int);
@@ -101,6 +100,14 @@ static const struct ar5k_ini_rf ar5111_rf[] =
     AR5K_AR5111_INI_RF;
 static const struct ar5k_ini_rf ar5112_rf[] =
     AR5K_AR5112_INI_RF;
+
+/*
+ * XXX Overwrite the country code (use "00" for debug)
+ * XXX as long as ieee80211_regdomain is not finished
+ */
+#ifndef COUNTRYCODE
+#define COUNTRYCODE "us"
+#endif
 
 /*
  * Perform a lookup if the device is supported by the HAL
