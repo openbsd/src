@@ -1762,3 +1762,5 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uyap_firmware.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/machine
+./usr/libdata/perl5/site_perl/sparc-openbsd/openssl

@@ -1769,3 +1769,5 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uyap_firmware.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/machine
+./usr/libdata/perl5/site_perl/m68k-openbsd/openssl

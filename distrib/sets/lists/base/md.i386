@@ -1769,3 +1769,5 @@
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/zzz
+./usr/libdata/perl5/site_perl/i386-openbsd/machine
+./usr/libdata/perl5/site_perl/i386-openbsd/openssl

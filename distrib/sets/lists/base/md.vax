@@ -1699,3 +1699,5 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/uyap_firmware.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/machine
+./usr/libdata/perl5/site_perl/vax-openbsd/openssl
