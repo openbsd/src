@@ -1,12 +1,7 @@
-#	$OpenBSD: m88110_mmu.S,v 1.3 2001/07/04 08:09:24 niklas Exp $
-
-#ifndef ASSEMBLER
-#define	ASSEMBLER
-#endif /* ASSEMBLER */
+#	$OpenBSD: m88110_mmu.S,v 1.4 2001/08/07 22:12:31 miod Exp $
 
 #include <machine/asm.h>
 
-#ifdef MVME197
 /* set routines */
 ENTRY(set_icmd)
 	jmp.n	r1
@@ -161,5 +156,3 @@ ENTRY(get_dlar)
 ENTRY(get_dpar)
 	jmp.n	r1
 	ldcr	r2, DPAR
-#endif /* MVME197 */
-

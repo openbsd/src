@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_cmmu.c,v 1.3 2000/12/28 21:21:24 smurph Exp $	*/
+/*	$OpenBSD: m197_cmmu.c,v 1.4 2001/08/07 22:12:31 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -57,8 +57,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-#ifdef MVME197
-
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/simplelock.h>
@@ -97,7 +95,6 @@ extern unsigned cache_policy;
 extern unsigned cpu_sets[];
 extern unsigned number_cpus;
 extern unsigned master_cpu;
-extern int      max_cpus, max_cmmus;
 extern int      cpu_cmmu_ratio;
 int init_done;
 
@@ -807,7 +804,3 @@ m197_table_search(pmap_t map, vm_offset_t virt, int write, int kernel, int data)
 	}
 	return 0;
 }
-
-#endif /* MVME197 */
-
-

@@ -1,4 +1,4 @@
-/* $OpenBSD: m88110_fp.S,v 1.4 2001/05/20 05:53:10 miod Exp $	*/
+/* $OpenBSD: m88110_fp.S,v 1.5 2001/08/07 22:12:31 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -52,7 +52,6 @@
 #include <machine/trap.h>
 #include <machine/asm.h>
 
-#ifdef MVME197
 	.text
 ENTRY(m88110_Xfp_precise)
 	or	r29, r3, r0     /*  r29 is now the E.F. */
@@ -259,5 +258,3 @@ ENTRY(get_mmureg)
 	ldcr	r2,	cr26
 regmark2: jmp.n	r1
 	ldcr	r2,	cr25
-#endif /* MVME197 */
-	

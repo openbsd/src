@@ -1,4 +1,4 @@
-/* $OpenBSD: m88100_fp.S,v 1.9 2001/05/20 05:53:10 miod Exp $	*/
+/* $OpenBSD: m88100_fp.S,v 1.10 2001/08/07 22:12:31 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -31,7 +31,6 @@
 #include <machine/trap.h>
 #include <machine/asm.h>
 
-#if defined(MVME187) || defined(MVME188)
 #define psr cr1
 #define spsr cr2
 #define ssb cr3
@@ -2299,4 +2298,3 @@ Iwritesingle:
 	st	r11, r3 [r2]
 /* Return.. */
 	jmp	r1
-#endif /* defined(MVME187) || defined(MVME188) */
