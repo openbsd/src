@@ -796,7 +796,7 @@ PUBLIC int main ARGS2(
     AlertSecs	= (int)ALERTSECS;
     StrAllocCopy(helpfile, HELPFILE);
     StrAllocCopy(startfile, STARTFILE);
-    LYTrimStartfile(startfile);
+    LYEscapeStartfile(&startfile); 
     StrAllocCopy(indexfile, DEFAULT_INDEX_FILE);
     StrAllocCopy(global_type_map, GLOBAL_MAILCAP);
     StrAllocCopy(personal_type_map, PERSONAL_MAILCAP);
@@ -1382,7 +1382,7 @@ PUBLIC int main ARGS2(
      */
     if ((cp = getenv("WWW_HOME")) != NULL) {
 	StrAllocCopy(startfile, cp);
-	LYTrimStartfile(startfile);
+	LYEscapeStartfile(&startfile);
     }
 
     /*
@@ -2307,7 +2307,7 @@ static int homepage_fun ARGS1(
 {
     if (next_arg != 0) {
 	StrAllocCopy(homepage, next_arg);
-	LYTrimStartfile(homepage);
+	LYEscapeStartfile(&homepage);
     }
     return 0;
 }
@@ -3228,7 +3228,7 @@ PRIVATE void parse_arg ARGS2(
 #endif
     {
 	StrAllocCopy(startfile, arg_name);
-	LYTrimStartfile(startfile);
+	LYEscapeStartfile(&startfile);
 	return;
     }
 #if EXTENDED_OPTION_LOGIC

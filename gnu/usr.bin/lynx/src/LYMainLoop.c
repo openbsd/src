@@ -3356,9 +3356,7 @@ new_cmd:  /*
 		       ((links[curdoc.link].type == WWW_FORM_LINK_TYPE)
 				? links[curdoc.link].form->submit_action
 				: links[curdoc.link].lname))) {
-		if (!LYTrimStartfile(user_input_buffer)) {
-		    LYRemoveBlanks(user_input_buffer);
-		}
+		LYTrimAllStartfile(user_input_buffer); 
 		if (user_input_buffer[0] != '\0') {
 		    goto check_goto_URL;
 		}
@@ -3428,9 +3426,7 @@ new_cmd:  /*
 				sizeof(user_input_buffer), RECALL)) >= 0) &&
 		user_input_buffer[0] != '\0' &&
 		strcmp(user_input_buffer, curdoc.address)) {
-		if (!LYTrimStartfile(user_input_buffer)) {
-		    LYRemoveBlanks(user_input_buffer);
-		}
+		LYTrimAllStartfile(user_input_buffer); 
 		if (user_input_buffer[0] != '\0') {
 		    goto check_goto_URL;
 		}
@@ -3488,9 +3484,7 @@ check_recall:
 	    /*
 	     *	Get rid of leading spaces (and any other spaces).
 	     */
-	    if (!LYTrimStartfile(user_input_buffer)) {
-		LYRemoveBlanks(user_input_buffer);
-	    }
+	    LYTrimAllStartfile(user_input_buffer); 
 	    if (*user_input_buffer == '\0' &&
 		!(recall && (ch == UPARROW || ch == DNARROW))) {
 		strcpy(user_input_buffer, temp);

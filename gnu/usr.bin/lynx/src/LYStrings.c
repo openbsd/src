@@ -1758,6 +1758,30 @@ PUBLIC BOOLEAN LYTrimStartfile ARGS1(
 }
 
 /*
+ * Escape unsafe characters in startfile, except for lynx internal URLs.
+ */
+PUBLIC void LYEscapeStartfile ARGS1(
+       char **,			buffer)
+{
+     if (!LYTrimStartfile(*buffer)) {
+	char *escaped = HTEscapeUnsafe(*buffer);
+	StrAllocCopy(*buffer, escaped);
+	FREE(escaped);
+	}
+}
+
+/*
+ * Trim all blanks from startfile, except for lynx internal URLs.
+ */
+PUBLIC void LYTrimAllStartfile ARGS1(
+       char *,         buffer)
+{
+    if (!LYTrimStartfile(buffer)) {
+       LYRemoveBlanks(buffer);
+    }
+}
+
+/*
 **  Display the current value of the string and allow the user
 **  to edit it.
 */

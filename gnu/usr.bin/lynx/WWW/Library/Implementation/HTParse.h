@@ -113,26 +113,39 @@ extern char * HTRelative PARAMS((
 **		-------------------------------------
 **
 **	This function takes a pointer to a string in which
-**	some characters may be unacceptable unescaped.
+**	some characters may be unacceptable are unescaped.
 **	It returns a string which has these characters
 **	represented by a '%' character followed by two hex digits.
 **
-**	Unlike HTUnEscape(), this routine returns a malloced string.
+**	Unlike HTUnEscape(), this routine returns a malloc'd string.
 */
 extern char * HTEscape PARAMS((
 	CONST char *	str,
 	unsigned char	mask));
 
+/*		Escape unsafe characters using %                HTEscapeUnsafe()
+**		--------------------------------
+**
+**	This function takes a pointer to a string in which
+**	some characters may be that may be unsafe are unescaped.
+**	It returns a string which has these characters
+**	represented by a '%' character followed by two hex digits.
+**
+**	Unlike HTUnEscape(), this routine returns a malloc'd string.
+*/
+extern char * HTEscapeUnsafe PARAMS((
+       CONST char *    str));
+
 /*	Escape undesirable characters using % but space to +.	HTEscapeSP()
 **	-----------------------------------------------------
 **
 **	This function takes a pointer to a string in which
-**	some characters may be unacceptable unescaped.
+**	some characters may be unacceptable are unescaped.
 **	It returns a string which has these characters
 **	represented by a '%' character followed by two hex digits,
 **	except that spaces are converted to '+' instead of %2B.
 **
-**	Unlike HTUnEscape(), this routine returns a malloced string.
+**	Unlike HTUnEscape(), this routine returns a malloc'd string.
 */
 extern char * HTEscapeSP PARAMS((
 	CONST char *	str,

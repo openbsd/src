@@ -187,6 +187,8 @@ typedef struct _EditFieldData {
 extern int lynx_initialize_keymaps NOPARAMS;
 #endif
 
+extern void LYEscapeStartfile PARAMS((
+	char **		buffer));
 extern void LYLowerCase PARAMS((
 	char *		buffer));
 extern void LYUpperCase PARAMS((
@@ -204,6 +206,8 @@ extern CONST char * LYSkipCNonBlanks PARAMS((
 extern void LYTrimLeading PARAMS((
 	char *		buffer));
 extern void LYTrimTrailing PARAMS((
+	char *		buffer));
+extern void LYTrimAllStartfile PARAMS((
 	char *		buffer));
 extern BOOLEAN LYTrimStartfile PARAMS((
 	char *		buffer));

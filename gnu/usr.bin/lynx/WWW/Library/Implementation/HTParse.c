@@ -669,8 +669,8 @@ PUBLIC char * HTRelative ARGS2(
     return result;
 }
 
-/*		Escape undesirable characters using %		HTEscape()
-**		-------------------------------------
+/*	Escape undesirable characters using %		HTEscape()
+**	-------------------------------------
 **
 **	This function takes a pointer to a string in which
 **	some characters may be unacceptable unescaped.
@@ -683,7 +683,7 @@ PRIVATE CONST unsigned char isAcceptable[96] =
 
 /*	Bit 0		xalpha		-- see HTFile.h
 **	Bit 1		xpalpha 	-- as xalpha but with plus.
-**	Bit 3 ...	path		-- as xpalphas but with /
+**	Bit 2 ...	path		-- as xpalphas but with /
 */
     /*	 0 1 2 3 4 5 6 7 8 9 A B C D E F */
     {	 0,0,0,0,0,0,0,0,0,0,7,6,0,7,7,4,	/* 2x	!"#$%&'()*+,-./  */
@@ -713,13 +713,51 @@ PUBLIC char * HTEscape ARGS2(
     for (q = result, p = str; *p; p++) {
 	unsigned char a = TOASCII(*p);
 	if (!ACCEPTABLE(a)) {
-	    *q++ = HEX_ESCAPE;	/* Means hex commming */
+	    *q++ = HEX_ESCAPE;	/* Means hex coming */
 	    *q++ = hex[a >> 4];
 	    *q++ = hex[a & 15];
 	}
 	else *q++ = *p;
     }
-    *q++ = '\0';			/* Terminate */
+    *q++ = '\0';		/* Terminate */
+    return result;
+}
+
+/*	Escape unsafe characters using %			HTEscapeUnsafe()
+**	--------------------------------
+**
+**	This function takes a pointer to a string in which
+**	some characters that may be unsafe are unescaped.
+**	It returns a string which has these characters
+**	represented by a '%' character followed by two new hex digits.
+**
+**	Unlike HTUnEscape(), this routine returns a malloc'd string.
+*/
+#define UNSAFE(ch) (((ch) <= 32 ) || ((ch) >= 127))
+
+PUBLIC char *HTEscapeUnsafe ARGS1(
+	CONST char *,	str)
+{
+    CONST char * p;
+    char * q;
+    char * result;
+    int unacceptable = 0;
+    for (p = str; *p; p++)
+        if (UNSAFE((unsigned char)TOASCII(*p)))
+	    unacceptable++;
+    result = (char *)calloc(1, (p-str + unacceptable + unacceptable + 1));
+    if (result == NULL)
+       outofmem(__FILE__, "HTEscapeUnsafe");
+    for (q = result, p = str; *p; p++) {
+       unsigned char a = TOASCII(*p);
+	if (UNSAFE(a)) {
+	  *q++ = HEX_ESCAPE;	/* Means hex coming */
+	  *q++ = hex[a >> 4];
+	  *q++ = hex[a & 15];
+       }
+       else *q++ = *p;
+    }
+    *q++ = '\0';		/* Terminate */
     return result;
 }
 
@@ -760,7 +798,7 @@ PUBLIC char * HTEscapeSP ARGS2(
 	    *q++ = *p;
 	}
     }
-    *q++ = '\0';			/* Terminate */
+    *q++ = '\0';		/* Terminate */
     return result;
 }
 
