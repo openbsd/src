@@ -1,137 +1,76 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.1 2004/02/09 13:14:34 drahn Exp $	*/
-/* David Leonard, <d@csee.uq.edu.au>. Public domain. */
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.2 2004/02/21 05:29:16 drahn Exp $	*/
 
-#if 0
+/*
+ * Copyright (c) 2004 Dale Rahn. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */  
+
 #include <machine/asm.h>
 
-/* These need to be kept in sync with uthread_machdep.c */
-#define REGOFF(n)	(2*4 + (n-14)*4)
-#define FPOFF(n)	(REGOFF(36) + (n)*8)
-#define FRAMESIZE	FPOFF(33)
+/* THESE MUST BE IN SYNC WITH uthread_machdep.c:struct frame */
+#define	OFFSET_R	0	/* offsetof(struct frame, r) */
+#define OFFSET_FP	((12-4)*4)
+#define OFFSET_LR	(OFFSET_FP+4)
+#define OFFSET_CPSR	(OFFSET_LR+4)
+#define OFFSET_FPR	(OFFSET_CPSR+4)
+#define OFFSET_FS	(OFFSET_FPR+(6*8))
+#define FRAME_SIZE	(OFFSET_FS+4)
 
-#define SA(x)		(((x)+0xf)&~0xf)
 
+/*
+ * r0 is pointer to new save area - restore from here
+ * r1 is pointer to old save area - put pointer to stack save area here
+ */
 ENTRY(_thread_machdep_switch)
-	stwu	1, -SA(FRAMESIZE)(1)
+	mov	ip, sp
+	sub	sp, sp, #FRAME_SIZE+4
+	add	r2, sp, #4
+	stmia	r2, {r4-r11}
+	str	fp, [r2, #OFFSET_FP]
+	str	lr, [r2, #OFFSET_LR]
 
-	/* Save context into frame */
-	stw	14, REGOFF(14)(1)
-	stw	15, REGOFF(15)(1)
-	stw	16, REGOFF(16)(1)
-	stw	17, REGOFF(17)(1)
-	stw	18, REGOFF(18)(1)
-	stw	19, REGOFF(19)(1)
-	stw	20, REGOFF(20)(1)
-	stw	21, REGOFF(21)(1)
-	stw	22, REGOFF(22)(1)
-	stw	23, REGOFF(23)(1)
-	stw	24, REGOFF(24)(1)
-	stw	25, REGOFF(25)(1)
-	stw	26, REGOFF(26)(1)
-	stw	27, REGOFF(27)(1)
-	stw	28, REGOFF(28)(1)
-	stw	29, REGOFF(29)(1)
-	stw	30, REGOFF(30)(1)
-	stw	31, REGOFF(31)(1)
-	mflr	0;		stw	0,  REGOFF(32)(1)
-	mfcr	0;		stw	0,  REGOFF(33)(1)
-	mfctr	0;		stw	0,  REGOFF(34)(1)
-	mfxer	0;		stw	0,  REGOFF(35)(1)
-	stfd	 0, FPOFF(0)(1)
-	stfd	 1, FPOFF(1)(1)
-	stfd	 2, FPOFF(2)(1)
-	stfd	 3, FPOFF(3)(1)
-	stfd	 4, FPOFF(4)(1)
-	stfd	 5, FPOFF(5)(1)
-	stfd	 6, FPOFF(6)(1)
-	stfd	 7, FPOFF(7)(1)
-	stfd	 8, FPOFF(8)(1)
-	stfd	 9, FPOFF(9)(1)
-	stfd	10, FPOFF(10)(1)
-	stfd	11, FPOFF(11)(1)
-	stfd	12, FPOFF(12)(1)
-	stfd	13, FPOFF(13)(1)
-	stfd	14, FPOFF(14)(1)
-	stfd	15, FPOFF(15)(1)
-	stfd	16, FPOFF(16)(1)
-	stfd	17, FPOFF(17)(1)
-	stfd	18, FPOFF(18)(1)
-	stfd	19, FPOFF(19)(1)
-	stfd	20, FPOFF(20)(1)
-	stfd	21, FPOFF(21)(1)
-	stfd	22, FPOFF(22)(1)
-	stfd	23, FPOFF(23)(1)
-	stfd	24, FPOFF(24)(1)
-	stfd	25, FPOFF(25)(1)
-	stfd	26, FPOFF(26)(1)
-	stfd	27, FPOFF(27)(1)
-	stfd	28, FPOFF(28)(1)
-	stfd	29, FPOFF(29)(1)
-	stfd	30, FPOFF(30)(1)
-	stfd	31, FPOFF(31)(1)
-	mffs	0;		stfd	0, FPOFF(32)(1)
-
-	/* Switch stacks */
-	stw	1, 0(4)
-	lwz	1, 0(3)
-
-	/* Restore context from the frame */
-	lfd	0, FPOFF(32)(1);	mtfsf 0xff, 0
-	lfd	31, FPOFF(31)(1)
-	lfd	30, FPOFF(30)(1)
-	lfd	29, FPOFF(29)(1)
-	lfd	28, FPOFF(28)(1)
-	lfd	27, FPOFF(27)(1)
-	lfd	26, FPOFF(26)(1)
-	lfd	25, FPOFF(25)(1)
-	lfd	24, FPOFF(24)(1)
-	lfd	23, FPOFF(23)(1)
-	lfd	22, FPOFF(22)(1)
-	lfd	21, FPOFF(21)(1)
-	lfd	20, FPOFF(20)(1)
-	lfd	19, FPOFF(19)(1)
-	lfd	18, FPOFF(18)(1)
-	lfd	17, FPOFF(17)(1)
-	lfd	16, FPOFF(16)(1)
-	lfd	15, FPOFF(15)(1)
-	lfd	14, FPOFF(14)(1)
-	lfd	13, FPOFF(13)(1)
-	lfd	12, FPOFF(12)(1)
-	lfd	11, FPOFF(11)(1)
-	lfd	10, FPOFF(10)(1)
-	lfd	 9, FPOFF(9)(1)
-	lfd	 8, FPOFF(8)(1)
-	lfd	 7, FPOFF(7)(1)
-	lfd	 6, FPOFF(6)(1)
-	lfd	 5, FPOFF(5)(1)
-	lfd	 4, FPOFF(4)(1)
-	lfd	 3, FPOFF(3)(1)
-	lfd	 2, FPOFF(2)(1)
-	lfd	 1, FPOFF(1)(1)
-	lfd	 0, FPOFF(0)(1)
-
-	lwz	0,  REGOFF(35)(1);	mtxer	0
-	lwz	0,  REGOFF(34)(1);	mtctr	0
-	lwz	0,  REGOFF(33)(1);	mtcr	0
-	lwz	0,  REGOFF(32)(1);	mtlr	0
-	lwz	31, REGOFF(31)(1)
-	lwz	30, REGOFF(30)(1)
-	lwz	29, REGOFF(29)(1)
-	lwz	28, REGOFF(28)(1)
-	lwz	27, REGOFF(27)(1)
-	lwz	26, REGOFF(26)(1)
-	lwz	25, REGOFF(25)(1)
-	lwz	24, REGOFF(24)(1)
-	lwz	23, REGOFF(23)(1)
-	lwz	22, REGOFF(22)(1)
-	lwz	21, REGOFF(21)(1)
-	lwz	20, REGOFF(20)(1)
-	lwz	19, REGOFF(19)(1)
-	lwz	18, REGOFF(18)(1)
-	lwz	17, REGOFF(17)(1)
-	lwz	16, REGOFF(16)(1)
-	lwz	15, REGOFF(15)(1)
-	lwz	14, REGOFF(14)(1)
-	la	1, SA(FRAMESIZE)(1)
-	blr
+	mrs     r3, cpsr_all
+	str	r3, [r2, #OFFSET_CPSR]
+#ifndef __VFP_FP__
+	sfm	f4, 4, [r2, #OFFSET_FPR]
+	rfs	r3
+	str	r3, [r2, #OFFSET_FS] 
 #endif
+
+	str	sp, [r1, #0]
+	ldr	sp, [r0, #0]
+	add	r2, sp, #4
+	
+	ldmfd	r2, {r4-r11}
+	ldr	fp, [r2, #OFFSET_FP]
+	ldr	lr, [r2, #OFFSET_LR]
+
+	ldr	r3, [r2, #OFFSET_CPSR]
+	msr     cpsr_f, r3
+#ifndef __VFP_FP__
+	lfm	f4, 4, [r2, #OFFSET_FPR]
+	ldr	r3, [r2, #OFFSET_FS] 
+	wfs	r3
+#endif
+
+	add	sp, sp, #FRAME_SIZE+4
+	mov	pc, lr

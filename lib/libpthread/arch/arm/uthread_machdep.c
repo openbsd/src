@@ -1,23 +1,25 @@
-/*	$OpenBSD: uthread_machdep.c,v 1.1 2004/02/09 13:14:34 drahn Exp $	*/
+/*	$OpenBSD: uthread_machdep.c,v 1.2 2004/02/21 05:29:16 drahn Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain */
 
 #include <pthread.h>
 #include "pthread_private.h"
 
-#if 0
-#define ALIGNBYTES	0xf
+#define ALIGNBYTES	0x7
 
 /* Register save frame as it appears on the stack */
 struct frame {
-	int     r1;
-	int     reserved;
-	int     gp[32-14];
-	int     lr, cr, ctr, xer;
-	double    fp[32];
-	double    fs;
+	int     r[12-4];
+	int     fp; /* r12 */
+	int     ip; /* r13 */
+	int     lr; /* r14 */
+	int	cpsr;
+	double    fpr[6]; /* sizeof(fp)+sizeof(fs) == 52 */
+	int	fs;
 	/* The rest are only valid in the initial frame */
-	int     next_r1;
+	int     next_fp;
+	int     next_ip;
 	int     next_lr;
+	int	oldpc;
 };
 
 /*
@@ -32,42 +34,32 @@ _thread_machdep_init(statep, base, len, entry)
 	void (*entry)(void);
 {
 	struct frame *f;
+	int scratch;
 
 	/* Locate the initial frame, aligned at the top of the stack */
 	f = (struct frame *)(((int)base + len - sizeof *f) & ~ALIGNBYTES);
 	
-	f->r1 = (int)&f->next_r1;
-	f->reserved = 0;
+	f->fp = (int)&f->next_fp;
+	f->ip = (int)0;
 	f->lr = (int)entry;
-	f->next_r1 = 0;		/* for gdb */
+	f->next_fp = 0;		/* for gdb */
 	f->next_lr = 0;		/* for gdb */
 
 	/* Initialise the new thread with all the state from this thread. */
 
-#define copyreg(x) __asm__ volatile ("stw " #x ", %0" : "=m"(f->gp[x-14]))
-	copyreg(14); copyreg(15); copyreg(16); copyreg(17); copyreg(18);
-	copyreg(19); copyreg(20); copyreg(21); copyreg(22); copyreg(23);
-	copyreg(24); copyreg(25); copyreg(26); copyreg(27); copyreg(28);
-	copyreg(29); copyreg(30); copyreg(31);
+	__asm__ volatile ("mrs	%0, cpsr_all; str %0, [%2, #0]"
+	    : "=r"(scratch) : "0"(scratch), "r" (&f->cpsr));
 
-#define copysreg(nm) __asm__ volatile ("mf" #nm " %0" : "=r"(f->nm))
-	copysreg(cr); copysreg(ctr); copysreg(xer);
+	__asm__ volatile ("stmia %0, {r4-r12}":: "r"(&f->r[0]));
 
-#define copyfreg(x) __asm__ volatile ("stfd " #x ", %0" : "=m"(f->fp[x]))
-	copyfreg(0);  copyfreg(1);  copyfreg(2);  copyfreg(3);
-	copyfreg(4);  copyfreg(5);  copyfreg(6);  copyfreg(7);
-	copyfreg(8);  copyfreg(9);  copyfreg(10); copyfreg(11);
-	copyfreg(12); copyfreg(13); copyfreg(14); copyfreg(15);
-	copyfreg(16); copyfreg(17); copyfreg(18); copyfreg(19);
-	copyfreg(20); copyfreg(21); copyfreg(22); copyfreg(23);
-	copyfreg(24); copyfreg(25); copyfreg(26); copyfreg(27);
-	copyfreg(28); copyfreg(29); copyfreg(30); copyfreg(31);
+#ifndef __VFP_FP__
+	__asm__ volatile ("sfm f4, 4, [%0], #0":: "r"(&f->fpr[0]));
 
-	__asm__ volatile ("mffs 0; stfd 0, %0" : "=m"(f->fs));
+	__asm__ volatile ("rfs 0; stfd 0, %0" : "=m"(f->fs));
+#endif
 
 	statep->frame = (int)f;
 }
-#endif
 
 
 /*
@@ -79,10 +71,16 @@ void
 _thread_machdep_save_float_state(statep)
 	struct _machdep_state* statep;
 {
+#ifndef __VFP_FP__
+#error finish FP save
+#endif
 }
 
 void
 _thread_machdep_restore_float_state(statep)
 	struct _machdep_state* statep;
 {
+#ifndef __VFP_FP__
+#error finish FP save
+#endif
 }
