@@ -1,0 +1,1 @@
+$self->{OPTIMIZE} = '-O1';
