@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.43 2001/01/11 19:22:09 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.44 2001/01/12 20:07:05 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.43 2001/01/11 19:22:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.44 2001/01/12 20:07:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -904,7 +904,7 @@ summary(header)
 	(void)printf("%ld packets transmitted, ", ntransmitted);
 	(void)printf("%ld packets received, ", nreceived);
 	if (nrepeats)
-		(void)printf("+%ld duplicates, ", nrepeats);
+		(void)printf("%ld duplicates, ", nrepeats);
 	if (ntransmitted) {
 		if (nreceived > ntransmitted)
 			(void)printf("-- somebody's printing up packets!");
