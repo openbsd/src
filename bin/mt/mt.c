@@ -1,5 +1,5 @@
-/*	$OpenBSD: mt.c,v 1.4 1996/05/22 12:45:49 deraadt Exp $	*/
-/*	$NetBSD: mt.c,v 1.14 1996/05/21 10:23:54 mrg Exp $	*/
+/*	$OpenBSD: mt.c,v 1.5 1996/06/10 04:35:05 deraadt Exp $	*/
+/*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.14 1996/05/21 10:23:54 mrg Exp $";
+static char rcsid[] = "$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -204,7 +204,7 @@ struct tape_desc {
 #ifdef tahoe
 	{ MT_ISCY,	"cipher",	CYS_BITS,	CYCW_BITS },
 #endif
-	{ 0x7,		"SCSI tape",	"76543210",	"76543210" },
+	{ 0x7,		"SCSI",		"76543210",	"76543210" },
 	{ 0 }
 };
 
