@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.6 1999/08/16 02:33:37 angelos Exp $ */
+/* $OpenBSD: signature.c,v 1.7 1999/10/01 01:08:30 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -24,10 +24,21 @@
  * 3 May 1999
  */
 
-#include <stdio.h>
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
+#include <sys/types.h>
 #include <stdlib.h>
-#include <limits.h>
+#include <stdio.h>
+
+#if STDC_HEADERS
 #include <string.h>
+#endif /* STDC_HEADERS */
+
+#if HAVE_LIMITS_H
+#include <limits.h>
+#endif /* HAVE_LIMITS_H */
 
 #include "keynote.h"
 #include "assertion.h"
@@ -172,8 +183,6 @@ keynote_free_key(void *key, int type)
       free(key);
 }
 
-#if defined(CRYPTO) || defined(PGPLIB)
-
 /*
  * Map a signature to an algorithm. Return algorithm number (defined in
  * keynote.h), or KEYNOTE_ALGORITHM_NONE if unknown.
@@ -286,7 +295,6 @@ keynote_get_sig_algorithm(char *sig, int *hash, int *enc, int *internal)
     *internal = INTERNAL_ENC_NONE;
     return KEYNOTE_ALGORITHM_NONE;
 }
-#endif /* CRYPTO || PGPLIB */
 
 /*
  * Map a key to an algorithm. Return algorithm number (defined in
@@ -681,6 +689,19 @@ kn_keycompare(void *key1, void *key2, int algorithm)
 	    return RESULT_FALSE;
 #endif /* CRYPTO */
 
+	case KEYNOTE_ALGORITHM_X509:
+#ifdef CRYPTO
+            p3 = (RSA *) key1;
+            p4 = (RSA *) key2;
+            if (!BN_cmp(p3->n, p4->n) &&
+                !BN_cmp(p3->e, p4->e))
+              return RESULT_TRUE;
+            else
+	      return RESULT_FALSE;
+#else /* CRYPTO */
+	    return RESULT_FALSE;
+#endif /* CRYPTO */
+
 	case KEYNOTE_ALGORITHM_RSA:
 #ifdef CRYPTO
             p3 = (RSA *) key1;
@@ -691,7 +712,7 @@ kn_keycompare(void *key1, void *key2, int algorithm)
             else
 	      return RESULT_FALSE;
 #else /* CRYPTO */
-	    return RETURN_FALSE;
+	    return RESULT_FALSE;
 #endif /* CRYPTO */
 
 	case KEYNOTE_ALGORITHM_ELGAMAL:
@@ -746,7 +767,11 @@ keynote_sigverify_assertion(struct assertion *as)
       return SIGRESULT_FALSE;
 
     /* Check for matching algorithms */
-    if (alg != as->as_signeralgorithm)
+    if ((alg != as->as_signeralgorithm) &&
+	!((alg == KEYNOTE_ALGORITHM_RSA) &&
+	  (as->as_signeralgorithm == KEYNOTE_ALGORITHM_X509)) &&
+	!((alg == KEYNOTE_ALGORITHM_X509) &&
+	  (as->as_signeralgorithm == KEYNOTE_ALGORITHM_RSA)))
       return SIGRESULT_FALSE;
 
     sig = index(as->as_signature, ':');   /* Move forward to the Encoding. We
@@ -918,7 +943,16 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
 
     alg = keynote_get_sig_algorithm(sigalg, &hashtype, &encoding,
 				    &internalenc);
-    if ((alg != as->as_signeralgorithm) || (alg != keyalg))
+    if (((alg != as->as_signeralgorithm) &&
+	 !((alg == KEYNOTE_ALGORITHM_RSA) &&
+	   (as->as_signeralgorithm == KEYNOTE_ALGORITHM_X509)) &&
+	 !((alg == KEYNOTE_ALGORITHM_X509) &&
+	   (as->as_signeralgorithm == KEYNOTE_ALGORITHM_RSA))) ||
+        ((alg != keyalg) &&
+	 !((alg == KEYNOTE_ALGORITHM_RSA) &&
+	   (keyalg == KEYNOTE_ALGORITHM_X509)) &&
+	 !((alg == KEYNOTE_ALGORITHM_X509) &&
+	   (keyalg == KEYNOTE_ALGORITHM_RSA))))
     {
 	keynote_errno = ERROR_SYNTAX;
 	return (char *) NULL;
@@ -1027,12 +1061,11 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
 	  }
 
 	  /* RSA-specific */
-#if SSLEAY_VERSION_NUMBER >= 0x00904
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
 	  rsa = (RSA *) PEM_read_bio_RSAPrivateKey(biokey, NULL, NULL, NULL);
 #else /* SSLEAY_VERSION_NUMBER */
 	  rsa = (RSA *) PEM_read_bio_RSAPrivateKey(biokey, NULL, NULL);
 #endif /* SSLEAY_VERSION_NUMBER */
-
 	  if (rsa == (RSA *) NULL)
 	  {
 	      BIO_free(biokey);

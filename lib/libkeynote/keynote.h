@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote.h,v 1.6 1999/08/16 02:33:37 angelos Exp $ */
+/* $OpenBSD: keynote.h,v 1.7 1999/10/01 01:08:30 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -22,33 +22,64 @@
 #ifndef __KEYNOTE_H__
 #define __KEYNOTE_H__
 
+#if HAVE_REGEX_H
+#include <sys/types.h>
 #include <regex.h>
+#endif /* HAVE_REGEX_H */
 
-#ifdef CRYPTO
-#include "crypto.h"
-#include "dsa.h"
-#include "rsa.h"
-#include "sha.h"
-#include "md5.h"
-#include "err.h"
-#include "rand.h"
-#include "x509.h"
-#include "pem.h"
+#if defined(CRYPTO)
+#if HAVE_SSL_CRYPTO_H
+#include <ssl/crypto.h>
+#include <ssl/dsa.h>
+#include <ssl/rsa.h>
+#include <ssl/sha.h>
+#include <ssl/md5.h>
+#include <ssl/err.h>
+#include <ssl/rand.h>
+#include <ssl/x509.h>
+#include <ssl/pem.h>
+#elif HAVE_OPENSSL_CRYPTO_H
+#include <openssl/crypto.h>
+#include <openssl/dsa.h>
+#include <openssl/rsa.h>
+#include <openssl/sha.h>
+#include <openssl/md5.h>
+#include <openssl/err.h>
+#include <openssl/rand.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#else /* HAVE_SSL_CRYPTO_H */
+#error "SSLeay or OpenSSL not detected!"
+#endif /* HAVE_SSL_CRYPTO_H */
 #endif /* CRYPTO */
 
-#ifdef WIN32
-#define u_int unsigned int
-#define u_char unsigned char
+#if !defined(HAVE_STRCASECMP) && defined(HAVE_STRICMP)
 #define strcasecmp stricmp
-#define strncasecmp strnicmp
-#define open _open
-#define read _read
-#define close _close
-#endif
+#endif /* !HAVE_STRCASECMP && HAVE_STRICMP */
 
-#if defined(__OpenBSD__) || defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__)
+#if !defined(HAVE_STRNCASECMP) && defined(HAVE_STRNICMP)
+#define strncasecmp strnicmp
+#endif /* !HAVE_STRNCASECMP && HAVE_STRNICMP */
+
+#if !defined(HAVE_OPEN) && defined(HAVE__OPEN)
+#define open _open
+#endif /* !HAVE_OPEN && HAVE__OPEN */
+
+#if !defined(HAVE_READ) && defined(HAVE__READ)
+#define read _read
+#endif /* !HAVE_READ && HAVE__OPEN */
+
+#if !defined(HAVE_CLOSE) && defined(HAVE__CLOSE)
+#define close _close
+#endif /* !HAVE_CLOSE && HAVE__CLOSE */
+
+#if defined(CRYPTO)
+#if HAVE__DEV_URANDOM
 #define KEYNOTERNDFILENAME "/dev/urandom"
-#endif /* __OpenBSD__ || linux || __FreeBSD__ || __NetBSD__ */
+#else /* HAVE__DEV_URANDOM */
+#error "You need a random device!"
+#endif /* HAVE__DEV_URANDOM */
+#endif /* CRYPTO */
 
 struct environment
 {
@@ -69,6 +100,14 @@ struct keynote_binary
 {
     int   bn_len;
     char *bn_key;
+};
+
+struct keynote_keylist
+{
+    int                     key_alg;
+    void                   *key_key;
+    char                   *key_stringkey;
+    struct keynote_keylist *key_next;
 };
 
 #define SIG_DSA_SHA1_HEX              "sig-dsa-sha1-hex:"
@@ -169,6 +208,7 @@ int    kn_add_authorizer(int, char *);
 int    kn_remove_authorizer(int, char *);
 int    kn_do_query(int, char **, int);
 int    kn_get_failed(int, int, int);
+int    kn_cleanup_action_environment(int);
 int    kn_close(int);
 
 /* Simple API */
@@ -178,6 +218,8 @@ int    kn_query(struct environment *, char **, int, char **, int *, int,
 /* Aux. routines */
 char **kn_read_asserts(char *, int, int *);
 int    kn_keycompare(void *, void *, int);
+void  *kn_get_authorizer(int, int, int *);
+struct keynote_keylist *kn_get_licensees(int, int);
 
 /* ASCII-encoding API */
 int    kn_encode_base64(unsigned char const *, unsigned int, char *,

@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-keygen.c,v 1.3 1999/05/31 20:09:59 angelos Exp $ */
+/* $OpenBSD: keynote-keygen.c,v 1.4 1999/10/01 01:08:30 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -19,19 +19,29 @@
  * PURPOSE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
-#include <fcntl.h>
-
-#ifdef WIN32
 #include <ctype.h>
+
+#if STDC_HEADERS
+#include <string.h>
+#endif /* STDC_HEADERS */
+
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif /* HAVE_FCNTL_H */
+
+#if HAVE_IO_H
 #include <io.h>
-#else /* WIN32 */
+#elif HAVE_UNISTD_H
 #include <unistd.h>
-#endif /* WIN32 */
+#endif /* HAVE_IO_H */
 
 #include "keynote.h"
 #include "assertion.h"
@@ -90,11 +100,7 @@ print_key(FILE *fp, char *algname, char *key, int start, int length)
     fprintf(fp, "\"\n");
 }
 
-#ifdef WIN32
 void
-#else /* WIN32 */
-int
-#endif /* WIN32 */
 keynote_keygen(int argc, char *argv[])
 {
     int begin = KEY_PRINT_OFFSET, prlen = KEY_PRINT_LENGTH;
@@ -106,9 +112,7 @@ keynote_keygen(int argc, char *argv[])
     DSA *dsa;
     RSA *rsa;
     FILE *fp;
-#if defined(KEYNOTERNDFILENAME)
     int fd, cnt = RND_BYTES;
-#endif /* KEYNOTERNDFILENAME */
 #endif /* CRYPTO || PGPLIB */
     char *algname;
 
@@ -172,10 +176,7 @@ keynote_keygen(int argc, char *argv[])
 	fprintf(stderr, "Invalid specified keysize %d\n", len);
 	exit(-1);
     }
-#endif /* CRYPTO || PGPLIB */
 
-#if defined(CRYPTO)
-#if defined(KEYNOTERNDFILENAME)
     fd = open(KEYNOTERNDFILENAME, O_RDONLY, 0);
     if (fd < 0)
     {
@@ -214,9 +215,6 @@ keynote_keygen(int argc, char *argv[])
 	cnt -= fd;
     } while (cnt > 0);
 
-#else /* KEYNOTERNDFILENAME */
-#error "No RNG available!"
-#endif /* KEYNOTERNDFILENAME */
 
     if ((alg == KEYNOTE_ALGORITHM_DSA) &&
 	(ienc == INTERNAL_ENC_ASN1) &&

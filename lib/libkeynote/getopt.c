@@ -1,8 +1,17 @@
-/* $OpenBSD: getopt.c,v 1.1.1.1 1999/05/23 22:11:07 angelos Exp $ */
+/* $OpenBSD: getopt.c,v 1.1 1999/10/01 01:08:29 angelos Exp $ */
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
 
 #include <stdio.h>
-#include <string.h>
 #include <ctype.h>
+
+#if STDC_HEADERS
+#include <string.h>
+#if !defined(HAVE_STRCHR)
+#define strchr index
+#endif /* !HAVE_STRCHR */
+#endif /* STDC_HEADERS */
 
 /*** getopt
  *

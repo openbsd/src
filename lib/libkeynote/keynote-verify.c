@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-verify.c,v 1.3 1999/05/31 20:09:59 angelos Exp $ */
+/* $OpenBSD: keynote-verify.c,v 1.4 1999/10/01 01:08:30 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -19,23 +19,40 @@
  * PURPOSE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
-#include <fcntl.h>
 #include <ctype.h>
 
-#ifdef WIN32
+#if STDC_HEADERS
+#include <string.h>
+#if !defined(HAVE_MEMCPY)
+#define memcpy(d, s, n) bcopy ((s), (d), (n))
+#endif /* !HAVE_MEMCPY */
+#endif /* STDC_HEADERS */
+
+#if HAVE_MEMORY_H
+#include <memory.h>
+#endif /* HAVE_MEMORY_H */
+
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif /* HAVE_FCNTL_H */
+
+#if !defined(HAVE_GETOPT)
+#include <getopt.h>
+#endif /* HAVE_GETOPT */
+
+#if HAVE_IO_H
 #include <io.h>
-#include "getopt.h"
-#else /* WIN32 */
+#elif HAVE_UNISTD_H
 #include <unistd.h>
-#ifdef NEED_GETOPT
-#include "getopt.h"
-#endif /* NEED_GETOPT */
-#endif /* WIN32 */
+#endif /* HAVE_IO_H */
 
 #include "keynote.h"
 #include "header.h"
@@ -54,11 +71,7 @@ verifyusage(void)
     fprintf(stderr, "\t<filename>:     Non-local assertion\n");
 }
 
-#ifdef WIN32
 void
-#else /* WIN32 */
-int
-#endif /* WIN32 */
 keynote_verify(int argc, char *argv[])
 {
 #ifdef LoopTesting
@@ -206,7 +219,7 @@ keynote_verify(int argc, char *argv[])
 			    exit(-1);
 			}
 
-			bcopy(retv, foov, numretv * sizeof(char **));
+			memcpy(foov, retv, numretv * sizeof(char **));
 			free(retv);
 			retv = foov;
 		    }
@@ -221,7 +234,7 @@ keynote_verify(int argc, char *argv[])
 		    }
 
 		    /* Copy */
-		    bcopy(optarg, retv[numret], ptr - optarg);
+		    memcpy(retv[numret], optarg, ptr - optarg);
 		    optarg = ptr + 1;
 		}
 

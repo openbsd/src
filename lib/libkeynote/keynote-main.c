@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-main.c,v 1.5 1999/05/31 20:15:25 angelos Exp $ */
+/* $OpenBSD: keynote-main.c,v 1.6 1999/10/01 01:08:30 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -19,16 +19,24 @@
  * PURPOSE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
-#include <fcntl.h>
 #include <ctype.h>
 
+#if STDC_HEADERS
+#include <string.h>
+#endif /* STDC_HEADERS */
+
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif /* HAVE_FCNTL_H */
 #ifdef WIN32
-#include <ctype.h>
 #include <io.h>
 #else
 #include <unistd.h>
@@ -48,11 +56,7 @@ mainusage()
 		    "e.g., keynote sign\n");
 }
 
-#ifdef WIN32
-void
-#else
 int
-#endif
 main(int argc, char *argv[])
 {
     if (argc < 2)

@@ -1,4 +1,4 @@
-/* $OpenBSD: header.h,v 1.1 1999/05/31 20:09:59 angelos Exp $ */
+/* $OpenBSD: header.h,v 1.2 1999/10/01 01:08:30 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -23,8 +23,8 @@
 #define _HEADER_H_
 
 /* Functions */
-extern int keynote_sign(int, char **), keynote_sigver(int, char **);
-extern int keynote_verify(int, char **), keynote_keygen(int, char **);
+extern void keynote_sign(int, char **), keynote_sigver(int, char **);
+extern void keynote_verify(int, char **), keynote_keygen(int, char **);
 extern void print_key(FILE *, char *, char *, int, int);
 extern void mystrncpy(char *, char *, int);
 extern void print_space(FILE *, int);

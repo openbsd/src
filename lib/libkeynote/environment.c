@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.2 1999/05/31 20:09:58 angelos Exp $ */
+/* $OpenBSD: environment.c,v 1.3 1999/10/01 01:08:29 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -19,16 +19,35 @@
  * PURPOSE.
  */
 
-#include <stdio.h>
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
+#include <sys/types.h>
 #include <stdlib.h>
-#include <string.h>
+#include <stdio.h>
 #include <ctype.h>
+
+#if STDC_HEADERS
+#include <string.h>
+#if !defined(HAVE_MEMCPY)
+#define memcpy(d, s, n) bcopy ((s), (d), (n))
+#endif /* !HAVE_MEMCPY */
+#endif /* STDC_HEADERS */
+
+#if HAVE_MEMORY_H
+#include <memory.h>
+#endif /* HAVE_MEMORY_H */
+
+#if HAVE_FCNTL_H
 #include <fcntl.h>
-#ifdef WIN32
+#endif /* HAVE_FCNTL_H */
+
+#if HAVE_IO_H
 #include <io.h>
-#else
+#elif HAVE_UNISTD_H
 #include <unistd.h>
-#endif
+#endif /* HAVE_IO_H */
 
 #include "keynote.h"
 #include "assertion.h"
@@ -351,7 +370,6 @@ static int
 keynote_init_environment(void)
 {
 #ifdef CRYPTO
-#if defined(KEYNOTERNDFILENAME)
     int cnt = KEYNOTE_RAND_INIT_LEN, i;
 
     do
@@ -364,10 +382,8 @@ keynote_init_environment(void)
     
         cnt -= i;   
     } while (cnt > 0);
-#else /* KEYNOTERNDFILENAME */
-#error "You need to seed the RNG."
-#endif /* KEYNOTERNDFILENAME */
 #endif /* CRYPTO */
+
     memset(keynote_current_session->ks_env_table, 0,
 	   HASHTABLESIZE * sizeof(struct environment *));
     memset(keynote_current_session->ks_assertion_table, 0,
@@ -465,6 +481,35 @@ kn_init(void)
 }
 
 /*
+ * Cleanup the action environment.
+ */
+int
+kn_cleanup_action_environment(int sessid)
+{
+    struct keynote_session *ks;
+
+    keynote_errno = 0;
+    if ((keynote_current_session == (struct keynote_session *) NULL) ||
+	(keynote_current_session->ks_id != sessid))
+    {
+	keynote_current_session = keynote_find_session(sessid);
+	if (keynote_current_session == (struct keynote_session *) NULL)
+	{
+	    keynote_errno = ERROR_NOTFOUND;
+	    return -1;
+	}
+    }
+
+    ks = keynote_current_session;
+
+    /* Cleanup environment */
+    keynote_env_cleanup(ks->ks_env_table, HASHTABLESIZE);
+    keynote_env_cleanup(&(ks->ks_env_regex), 1);
+
+    return 0;
+}
+
+/*
  * Close a session.
  */
 int
@@ -488,7 +533,7 @@ kn_close(int sessid)
 
     ks = keynote_current_session;
 
-    /* Cleanup environment */
+    /* Cleanup environment -- no point using kn_cleanup_action_environment() */
     keynote_env_cleanup(ks->ks_env_table, HASHTABLESIZE);
     keynote_env_cleanup(&(ks->ks_env_regex), 1);
 
@@ -824,7 +869,7 @@ kn_read_asserts(char *buffer, int bufferlen, int *numassertions)
 		    }
 
 		    /* Copy string */
-		    bcopy(ptr, buf[*numassertions], (buffer + i) - ptr);
+		    memcpy(buf[*numassertions], ptr, (buffer + i) - ptr);
 		    (*numassertions)++;
 		}
 
@@ -885,3 +930,79 @@ kn_read_asserts(char *buffer, int bufferlen, int *numassertions)
 
     return buf;
 }
+
+/*
+ * Return the authorizer key for a given assertion.
+ */
+void *
+kn_get_authorizer(int sessid, int assertid, int *algorithm)
+{
+    struct assertion *as;
+    int i;
+
+    if ((keynote_current_session == (struct keynote_session *) NULL) ||
+	(keynote_current_session->ks_id != sessid))
+    {
+	keynote_current_session = keynote_find_session(sessid);
+	if (keynote_current_session == (struct keynote_session *) NULL)
+	{
+	    keynote_errno = ERROR_NOTFOUND;
+	    return (void *) NULL;
+	}
+    }
+
+    /* Traverse the hash table looking for assertid */
+    for (i = 0; i < HASHTABLESIZE; i++)
+      for (as = keynote_current_session->ks_assertion_table[i];
+	   as != (struct assertion *) NULL;
+	   as = as->as_next)
+	if (as->as_id == assertid)
+	  break;
+
+    if (as == (struct assertion *) NULL)
+    {
+	keynote_errno = ERROR_NOTFOUND;
+	return (void *) NULL;
+    }
+
+    *algorithm = as->as_signeralgorithm;
+    return as->as_authorizer;
+}
+
+/*
+ * Return the licensees for a given assertion.
+ */
+struct keynote_keylist *
+kn_get_licensees(int sessid, int assertid)
+{
+    struct assertion *as;
+    int i;
+
+    if ((keynote_current_session == (struct keynote_session *) NULL) ||
+	(keynote_current_session->ks_id != sessid))
+    {
+	keynote_current_session = keynote_find_session(sessid);
+	if (keynote_current_session == (struct keynote_session *) NULL)
+	{
+	    keynote_errno = ERROR_NOTFOUND;
+	    return (struct keynote_keylist *) NULL;
+	}
+    }
+
+    /* Traverse the hash table looking for assertid */
+    for (i = 0; i < HASHTABLESIZE; i++)
+      for (as = keynote_current_session->ks_assertion_table[i];
+	   as != (struct assertion *) NULL;
+	   as = as->as_next)
+	if (as->as_id == assertid)
+	  break;
+
+    if (as == (struct assertion *) NULL)
+    {
+	keynote_errno = ERROR_NOTFOUND;
+	return (struct keynote_keylist *) NULL;
+    }
+
+    return (struct keynote_keylist *) as->as_keylist;
+}
+

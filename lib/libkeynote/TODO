@@ -1,15 +1,10 @@
-# $OpenBSD: TODO,v 1.4 1999/06/21 19:58:21 angelos Exp $
+# $OpenBSD: TODO,v 1.5 1999/10/01 01:08:29 angelos Exp $
 
-Short term TODOs:
+TODOs:
+	- Write key/signature algorithm drafts
 	- More interesting/comprehensive testsuite
-	- Add the proper RFC reference to the manpages and README
-	- Write key/signature algorithm draft(s)
-	- autoconf
-	- Document X509 support
-	- Callbacks should get a pointer to the assertion
-
-Long term TODOs:
-	- Some sort of tcl/tk GUI
-	- PalmPilot support
+	- Make X509 support be non-RSA specific
+	- Recursive parser
 	- PGPlib support
 	- ElGamal support
+	- Some sort of tcl/tk GUI

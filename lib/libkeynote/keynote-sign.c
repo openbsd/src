@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sign.c,v 1.5 1999/05/31 20:09:59 angelos Exp $ */
+/* $OpenBSD: keynote-sign.c,v 1.6 1999/10/01 01:08:30 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -19,20 +19,29 @@
  * PURPOSE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
-#include <fcntl.h>
 #include <ctype.h>
 
-#ifdef WIN32
-#include <ctype.h>
+#if STDC_HEADERS
+#include <string.h>
+#endif /* STDC_HEADERS */
+
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif /* HAVE_FCNTL_H */
+
+#if HAVE_IO_H
 #include <io.h>
-#else /* WIN32 */
+#elif HAVE_UNISTD_H
 #include <unistd.h>
-#endif /* WIN32 */
+#endif /* HAVE_IO_H */
 
 #include "keynote.h"
 #include "header.h"
@@ -45,11 +54,7 @@ signusage(void)
 	    "<PrivateKeyFile>\n");
 }
 
-#ifdef WIN32
 void
-#else /* WIN32 */
-int
-#endif /* WIN32 */
 keynote_sign(int argc, char *argv[])
 {
     int begin = SIG_PRINT_OFFSET, prlen = SIG_PRINT_LENGTH;

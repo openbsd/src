@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote.l,v 1.2 1999/05/31 20:09:59 angelos Exp $ */
+/* $OpenBSD: keynote.l,v 1.3 1999/10/01 01:08:30 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -20,13 +20,31 @@
  * PURPOSE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <sys/types.h>
-#include <unistd.h>
 #include <ctype.h>
-#ifndef PILOT
-#include <time.h>
-#endif /* PILOT */
+
+#if STDC_HEADERS
 #include <string.h>
+#endif /* STDC_HEADERS */
+
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif /* HAVE_UNISTD_H */
+
+#if TIME_WITH_SYS_TIME
+#include <sys/time.h>
+#include <time.h>
+#else
+#if HAVE_SYS_TIME_H
+#include <sys/time.h>
+#else
+#include <time.h>
+#endif
+#endif
 
 #include "k.tab.h"
 #include "keynote.h"
@@ -491,7 +509,7 @@ keynote_evaluate_assertion(struct assertion *as)
 
     keynote_env_cleanup(&keynote_temp_list, 1);
     keynote_lex_zap();
-    kn_delete_buffer(keynote_bs);	/* Free the space */
+    kn_delete_buffer(keynote_bs);
 
     keynote_used_variable = 0;
     keynote_returnvalue = 0;
@@ -536,7 +554,7 @@ keynote_parse_keypred(struct assertion *as, int record)
       if (keynote_errno == 0)
 	keynote_errno = ERROR_SYNTAX;
 
-    kn_delete_buffer(keypred_state);  /* Free memory */
+    kn_delete_buffer(keypred_state);
     keynote_lex_zap(); 
     keynote_cleanup_kth();
 
@@ -613,7 +631,7 @@ keynote_evaluate_authorizer(struct assertion *as, int flag)
     if ((err != 0) && (keynote_errno == 0))
       keynote_errno = ERROR_SYNTAX;
 
-    kn_delete_buffer(authorizer_state);  /* Free memory */
+    kn_delete_buffer(authorizer_state);
     keynote_lex_zap();
 
     keynote_justrecord = 0;

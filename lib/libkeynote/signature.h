@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.h,v 1.3 1999/05/31 20:10:00 angelos Exp $ */
+/* $OpenBSD: signature.h,v 1.4 1999/10/01 01:08:30 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *

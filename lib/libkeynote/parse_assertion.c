@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_assertion.c,v 1.2 1999/05/31 20:09:59 angelos Exp $ */
+/* $OpenBSD: parse_assertion.c,v 1.3 1999/10/01 01:08:30 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -19,12 +19,22 @@
  * PURPOSE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+
+#if STDC_HEADERS
 #include <string.h>
+#endif /* STDC_HEADERS */
+
+#if HAVE_LIMITS_H
 #include <limits.h>
+#endif /* HAVE_LIMITS_H */
 
 #include "keynote.h"
 #include "assertion.h"

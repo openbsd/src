@@ -1,0 +1,50 @@
+dnl $OpenBSD: configure.in,v 1.1 1999/10/01 01:08:29 angelos Exp $
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(assertion.h)
+
+dnl Defs file
+AC_CONFIG_HEADER(config.h:config.hin)
+
+dnl Checks for programs.
+AC_PROG_LEX
+AC_PROG_CC
+AC_PROG_RANLIB
+AC_PROG_YACC
+AC_PATH_PROGS(SSLEAY, openssl ssleay, /usr/local/bin/ssleay, \
+               $PATH:/usr/local/bin:/usr/local/ssl/sbin:/usr/local/ssl/bin:/usr/ssl/bin:/usr/ssl/sbin:/usr/sbin:/usr/openssl/bin:/usr/openssl/bin:/usr/local/openssl/bin:/usr/local/openssl/sbin)
+AC_PATH_PROG(RM, rm, /bin/rm)
+AC_PATH_PROG(AR, ar, /usr/bin/ar)
+AC_PATH_PROG(NROFF, nroff, /usr/bin/nroff)
+AC_PATH_PROG(TAR, tar, /bin/tar)
+AC_PATH_PROG(TRUE, true, /usr/bin/true)
+AC_PATH_PROG(MKDIR, mkdir, /bin/mkdir)
+AC_PATH_PROG(TR, tr, /usr/bin/tr)
+AC_PATH_PROG(ECHO, echo, /bin/echo)
+AC_PATH_PROG(SED, sed, /usr/bin/sed)
+
+dnl Checks for libraries.
+AC_CHECK_LIB(m, floor)
+AC_CHECK_LIB(RSAglue, RSA_ref_private_decrypt)
+AC_CHECK_LIB(rsaref, RSAPrivateDecrypt)
+AC_CHECK_LIB(crypto, i2a_ASN1_STRING)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_TIME
+AC_CHECK_HEADERS(fcntl.h limits.h unistd.h regex.h sys/time.h io.h)
+AC_CHECK_HEADERS(ssl/crypto.h openssl/crypto.h memory.h)
+
+dnl Checks for other files
+AC_CHECK_FILES(/dev/urandom)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_CHECK_TYPE(u_int, unsigned int)
+AC_CHECK_TYPE(u_char, unsigned char)
+
+dnl Checks for library functions.
+AC_CHECK_FUNCS(regcomp open close read _open _close _read strchr memcpy)
+AC_CHECK_FUNCS(strcasecmp strncasecmp stricmp strnicmp snprintf __b64_ntop)
+AC_REPLACE_FUNCS(getopt)
+
+AC_OUTPUT(Makefile)

@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.4,v 1.9 1999/07/09 13:35:29 aaron Exp $
+.\" $OpenBSD: keynote.4,v 1.10 1999/10/01 01:08:30 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -6,7 +6,7 @@
 .\" in April-May 1998
 .\"
 .\" Copyright (C) 1998, 1999 by Angelos D. Keromytis.
-.\"
+.\"      
 .\" Permission to use, copy, and modify this software without fee
 .\" is hereby granted, provided that this entire notice is included in
 .\" all copies of any software which is or includes a copy or
@@ -31,6 +31,10 @@
 .Fd #include <keynote.h>
 .Fd Link options: -lkeynote -lm -lcrypto
 .Sh DESCRIPTION
+For more details on
+.Nm KeyNote ,
+see RFC 2704.
+.Pp
 Details on the API and command-line tool are given in the
 man pages listed at the end of this manual.
 .Pp
@@ -226,6 +230,7 @@ simplify the design and analysis of complex network-based security
 protocols; network failures that prevent the transmission of
 credentials can never result in spurious authorization of dangerous
 actions.
+.Pp
 .Sh FILES
 .Fd keynote.h
 .Fd libkeynote.a
@@ -233,10 +238,10 @@ actions.
 .Xr keynote 1 ,
 .Xr keynote 3
 .Bl -tag -width "AAAAAAA"
-.It ``The KeyNote Trust-Management System''
+.It ``The KeyNote Trust-Management System, Version 2'' 
 M. Blaze, J. Feigenbaum, A. D. Keromytis,
-Internet Drafts, draft-ietf-trustmgt-keynote-00.txt
-.It ``Decentralized Trust Management''
+Internet Drafts, RFC 2704.
+.It ``Decentralized Trust Management'' 
 M. Blaze, J. Feigenbaum, J. Lacy,
 1996 IEEE Conference on Privacy and Security
 .It ``Compliance-Checking in the PolicyMaker Trust Management System''

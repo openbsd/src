@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.1,v 1.9 1999/09/23 04:12:01 alex Exp $
+.\" $OpenBSD: keynote.1,v 1.10 1999/10/01 01:08:30 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -6,7 +6,7 @@
 .\" in April-May 1998
 .\"
 .\" Copyright (C) 1998, 1999 by Angelos D. Keromytis.
-.\"
+.\"      
 .\" Permission to use, copy, and modify this software without fee
 .\" is hereby granted, provided that this entire notice is included in
 .\" all copies of any software which is or includes a copy or
@@ -55,6 +55,11 @@ operations
 .Op Fl k Ar file
 .Op Fl l Ar file
 .Op Ar file ...
+.Sh DESCRIPTION
+For more details on
+.Nm KeyNote ,
+see RFC 2704.
+.Pp
 .Sh KEY GENERATION
 "keynote keygen" creates a public/private key of size
 .Fa KeySize ,
@@ -69,6 +74,8 @@ identifiers are:
 .It ``dsa-base64:''
 .It ``rsa-hex:''
 .It ``rsa-base64:''
+.It ``x509-hex:''
+.It ``x509-base64:''
 .El
 .Pp
 Notice that the trailing colon is required. The resulting public key is
@@ -95,6 +102,7 @@ for the first line and has to be longer (by at least 2) than
 also accounts for the line-continuation character (backslash) at
 the end of each line, and the doublequotes at the beginning and end
 of the key encoding.  Default values are 12 and 50 respectively.
+.Pp
 .Sh ASSERTION SIGNING
 "keynote sign" reads the assertion contained in
 .Fa AssertionFile
@@ -116,6 +124,8 @@ identifiers are:
 .It ``sig-rsa-sha1-base64:''
 .It ``sig-rsa-md5-hex:''
 .It ``sig-rsa-md5-base64:''
+.It ``sig-x509-sha1-hex:''
+.It ``sig-x509-sha1-base64:''
 .El
 .Pp
 Notice that the trailing colon is required.
@@ -149,10 +159,12 @@ flag is provided, "keynote sign" will also verify the newly-created
 signature using the
 .Fa Authorizer
 field key.
+.Pp
 .Sh SIGNATURE VERIFICATION
 "keynote sigver" reads the assertion contained in
 .Fa AssertionFile
 and verifies the public-key signature on it.
+.Pp
 .Sh QUERY TOOL
 For each operand that names a
 .A file ,
@@ -190,7 +202,7 @@ and can contain underscores.
 .Fa value
 is a quoted string, and can contain any character, and escape
 (backslash) processing is performed, as specified in the KeyNote
-draft.
+RFC.
 .Pp
 The remaining options are:
 .Bl -tag -width indent
@@ -213,14 +225,15 @@ flags should be given per invocation. If no flags are given,
 "keynote verify" prints the usage message and exits with error code \-1.
 .Pp
 "keynote verify" exits with code \-1 if there was an error, and 0 on success.
+.Pp
 .Sh SEE ALSO
 .Xr keynote 3 ,
 .Xr keynote 4
 .Bl -tag -width "AAAAAAA"
-.It ``The KeyNote Trust-Management System''
+.It ``The KeyNote Trust-Management System, Version 2'' 
 M. Blaze, J. Feigenbaum, A. D. Keromytis,
-Internet Drafts, draft-ietf-trustmgt-keynote-00.txt
-.It ``Decentralized Trust Management''
+Internet Drafts, RFC 2704.
+.It ``Decentralized Trust Management'' 
 M. Blaze, J. Feigenbaum, J. Lacy,
 1996 IEEE Conference on Privacy and Security
 .It ``Compliance-Checking in the PolicyMaker Trust Management System''

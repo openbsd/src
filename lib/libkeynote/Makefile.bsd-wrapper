@@ -1,0 +1,63 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/10/01 01:08:28 angelos Exp $
+
+HDRS=	keynote.h
+MAN=	keynote.1 keynote.3 keynote.4
+
+all:	config.status
+	@cd ${.CURDIR} && ${MAKE} all
+
+.FORCE:	.IGNORE
+
+.include <bsd.own.mk>
+
+.ifdef GLOBAL_AUTOCONF_CACHE
+CF=	--cache-file=${GLOBAL_AUTOCONF_CACHE}
+.else
+CF=
+.endif
+
+config: .FORCE
+.ifndef GLOBAL_AUTOCONF_CACHE
+	-rm -f config.cache
+.endif
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	/bin/sh ${.CURDIR}/configure ${CF}
+
+config.status:	Makefile.in configure
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	/bin/sh ${.CURDIR}/configure ${CF} && touch config.status
+
+includes:
+	@cd ${.CURDIR}; for i in $(HDRS); do \
+	    j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
+		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
+		$$i ${DESTDIR}/usr/include"; \
+	    echo $$j; \
+	    eval "$$j"; \
+	done
+
+clean:
+	-rm -f keynote.cat3 keynote.cat4 keynote.cat1
+	@if [ -f Makefile ]; then ${MAKE} clean; fi
+
+cleandir:
+	-rm -f keynote.cat3 keynote.cat4 keynote.cat1
+	@if [ -f Makefile ]; then ${MAKE} cleanall; fi
+
+install-keynote:
+	install -c -s -o root -g bin  -m 555 keynote /usr/bin
+	install -c -o root -g bin -m 444 keynote.cat1 /usr/share/man/cat1/keynote.0
+
+install:
+	install -c -o root -g bin -m 600 libkeynote.a  /usr/lib
+	ranlib -t /usr/lib/libkeynote.a
+	chmod 444 /usr/lib/libkeynote.a
+	install -c -o root -g bin -m 444 keynote.cat3 /usr/share/man/cat3/keynote.0
+	install -c -o root -g bin -m 444 keynote.cat4 /usr/share/man/cat4/keynote.0
+
+depend:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.include <bsd.man.mk>

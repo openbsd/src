@@ -1,52 +1,39 @@
-Network Working Group                                         Matt Blaze
-INTERNET DRAFT                                           Joan Feigenbaum
-Expires in six months                                     John Ioannidis
-                                                    AT&T Labs - Research
-                                                    Angelos D. Keromytis
-                                                      U. of Pennsylvania
-                                                              March 1999
 
-                  The KeyNote Trust-Management System
-                               Version 2
-               <draft-blaze-ietf-trustmgt-keynote-01.txt>
+
+
+
+
+
+Network Working Group                                           M. Blaze
+Request for Comments: 2704                                 J. Feigenbaum
+Category: Informational                                     J. Ioannidis
+                                                    AT&T Labs - Research
+                                                            A. Keromytis
+                                                      U. of Pennsylvania
+                                                          September 1999
+
+
+             The KeyNote Trust-Management System Version 2
 
 Status of this Memo
 
-   This document is an Internet-Draft and is in full conformance with
-   all provisions of Section 10 of RFC2026.
+   This memo provides information for the Internet community.  It does
+   not specify an Internet standard of any kind.  Distribution of this
+   memo is unlimited.
 
-   Please direct comments to one of the authors (for the authors contact
-   information, see the end of this document), and/or to the
-   trustmgt@east.isi.edu mailing list.
+Copyright Notice
 
-   Internet Drafts are working documents of the Internet Engineering
-   Task Force (IETF), its areas, and its working Groups.  Note that
-   other groups may also distribute working documents as Internet
-   Drafts.
-
-   Internet-Drafts draft documents are valid for a maximum of six months
-   and may be updated, replaced, or obsoleted by other documents at any
-   time.  It is inappropriate to use Internet-Drafts as reference
-   material or to cite them other than as "work in progress".
-
-   The list of current Internet-Drafts can be accessed at
-   http://www.ietf.org/ietf/1id-abstracts.txt
-
-   The list of Internet-Draft Shadow Directories can be accessed at
-   http://www.ietf.org/shadow.html.
-
-   Distribution of this memo is unlimited.
+   Copyright (C) The Internet Society (1999).  All Rights Reserved.
 
 Abstract
 
    This memo describes version 2 of the KeyNote trust-management system.
-   It specifies the syntax and semantics of KeyNote `assertions,'
+   It specifies the syntax and semantics of KeyNote `assertions',
    describes `action attribute' processing, and outlines the application
    architecture into which a KeyNote implementation can be fit.  The
    KeyNote architecture and language are useful as building blocks for
    the trust management aspects of a variety of Internet protocols and
    services.
-
 
 1.  Introduction
 
@@ -61,23 +48,35 @@ Abstract
    keys to names, credentials can bind keys directly to the
    authorization to perform specific tasks.
 
+
+
+
+
+
+
+
+Blaze, et al.                Informational                      [Page 1]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
    A trust-management system has five basic components:
 
-   * A language for describing `actions,' which are operations with
-     security consequences that are to be controlled by the system.
+   *  A language for describing `actions', which are operations with
+      security consequences that are to be controlled by the system.
 
-   * A mechanism for identifying `principals,' which are entities that
-     can be authorized to perform actions.
+   *  A mechanism for identifying `principals', which are entities that
+      can be authorized to perform actions.
 
-   * A language for specifying application `policies,' which govern the
-     actions that principals are authorized to perform.
+   *  A language for specifying application `policies', which govern the
+      actions that principals are authorized to perform.
 
-   * A language for specifying `credentials,' which allow principals
-     to delegate authorization to other principals.
+   *  A language for specifying `credentials', which allow principals to
+      delegate authorization to other principals.
 
-   * A `compliance checker,' which provides a service to applications
-     for determining how an action requested by principals should be
-     handled, given a policy and a set of credentials.
+   *  A `compliance checker', which provides a service to applications
+      for determining how an action requested by principals should be
+      handled, given a policy and a set of credentials.
 
    The trust-management approach has a number of advantages over other
    mechanisms for specifying and controlling authorization, especially
@@ -85,9 +84,9 @@ Abstract
    decentralized.
 
    Trust management unifies the notions of security policy, credentials,
-   access control, and authorization.  An application that uses a trust-
-   management system can simply ask the compliance checker whether a
-   requested action should be allowed.  Furthermore, policies and
+   access control, and authorization.  An application that uses a
+   trust-management system can simply ask the compliance checker whether
+   a requested action should be allowed.  Furthermore, policies and
    credentials are written in standard languages that are shared by all
    trust-managed applications; the security configuration mechanism for
    one application carries exactly the same syntactic and semantic
@@ -103,38 +102,46 @@ Abstract
    distributed system security, see [Bla99].
 
    KeyNote is a simple and flexible trust-management system designed to
-   work well for a variety of large- and small- scale Internet-based
+   work well for a variety of large- and small-scale Internet-based
    applications.  It provides a single, unified language for both local
    policies and credentials.  KeyNote policies and credentials, called
-   `assertions,' contain predicates that describe the trusted actions
+   `assertions', contain predicates that describe the trusted actions
    permitted by the holders of specific public keys.  KeyNote assertions
    are essentially small, highly-structured programs.  A signed
+
+
+
+Blaze, et al.                Informational                      [Page 2]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
    assertion, which can be sent over an untrusted network, is also
-   called a `credential assertion.'  Credential assertions, which also
+   called a `credential assertion'.  Credential assertions, which also
    serve the role of certificates, have the same syntax as policy
    assertions but are also signed by the principal delegating the trust.
 
    In KeyNote:
 
-   * Actions are specified as a collection of name-value pairs.
+   *  Actions are specified as a collection of name-value pairs.
 
-   * Principal names can be any convenient string and can directly
-     represent cryptographic public keys.
+   *  Principal names can be any convenient string and can directly
+      represent cryptographic public keys.
 
-   * The same language is used for both policies and credentials.
+   *  The same language is used for both policies and credentials.
 
-   * The policy and credential language is concise, highly expressive,
-     human readable and writable, and compatible with a variety of
-     storage and transmission media, including electronic mail.
+   *  The policy and credential language is concise, highly expressive,
+      human readable and writable, and compatible with a variety of
+      storage and transmission media, including electronic mail.
 
-   * The compliance checker returns an application-configured `policy
-     compliance value' that describes how a request should be handled
-     by the application.  Policy compliance values are always
-     positively derived from policy and credentials, facilitating
-     analysis of KeyNote-based systems.
+   *  The compliance checker returns an application-configured `policy
+      compliance value' that describes how a request should be handled
+      by the application.  Policy compliance values are always
+      positively derived from policy and credentials, facilitating
+      analysis of KeyNote-based systems.
 
-   * Compliance checking is efficient enough for high-performance and
-     real-time applications.
+   *  Compliance checking is efficient enough for high-performance and
+      real-time applications.
 
    This document describes the KeyNote policy and credential assertion
    language, the structure of KeyNote action descriptions, and the
@@ -149,32 +156,39 @@ Abstract
    different interfaces to KeyNote compliance checkers; this document
    does not aim to specify a complete compliance checker API.
 
-
 2.  KeyNote Concepts
 
    In KeyNote, the authority to perform trusted actions is associated
-   with one or more `principals.'  A principal may be a physical entity,
+   with one or more `principals'.  A principal may be a physical entity,
    a process in an operating system, a public key, or any other
    convenient abstraction.  KeyNote principals are identified by a
-   string called a `Principal Identifier.'  In some cases, a Principal
+   string called a `Principal Identifier'.  In some cases, a Principal
    Identifier will contain a cryptographic key interpreted by the
+
+
+
+Blaze, et al.                Informational                      [Page 3]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
    KeyNote system (e.g., for credential signature verification).  In
    other cases, Principal Identifiers may have a structure that is
    opaque to KeyNote.
 
    Principals perform two functions of concern to KeyNote: They request
-   `actions' and they issue `assertions.'  Actions are any trusted
+   `actions' and they issue `assertions'.  Actions are any trusted
    operations that an application places under KeyNote control.
    Assertions delegate the authorization to perform actions to other
    principals.
 
    Actions are described to the KeyNote compliance checker in terms of a
-   collection of name-value pairs called an `action attribute set.'  The
+   collection of name-value pairs called an `action attribute set'.  The
    action attribute set is created by the invoking application.  Its
    structure and format are described in detail in Section 3 of this
    document.
 
-   KeyNote provides advice to applications on the interpretation of
+   KeyNote provides advice to applications about the interpretation of
    policy with regard to specific requested actions.  Applications
    invoke the KeyNote compliance checker by issuing a `query' containing
    a proposed action attribute set and identifying the principal(s)
@@ -203,6 +217,17 @@ Abstract
    of trust in KeyNote.  "POLICY" is therefore considered to be
    authorized to perform any action.
 
+
+
+
+
+
+
+Blaze, et al.                Informational                      [Page 4]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
    Assertions issued by the "POLICY" principal are called `policy
    assertions' and are used to delegate authority to otherwise untrusted
    principals.  The KeyNote security policy of an application consists
@@ -211,7 +236,7 @@ Abstract
    When a principal is identified by a public key, it can digitally sign
    assertions and distribute them over untrusted networks for use by
    other KeyNote compliance checkers.  These signed assertions are also
-   called `credentials,' and serve a role similar to that of traditional
+   called `credentials', and serve a role similar to that of traditional
    public key certificates.  Policies and credentials share the same
    syntax and are evaluated according to the same semantics.  A
    principal can therefore convert its policy assertions into
@@ -221,20 +246,20 @@ Abstract
    policies and credentials that are amenable to transmission and
    storage over a variety of media.  Its assertion syntax is inspired by
    the format of RFC822-style message headers [Cro82].  A KeyNote
-   assertion contains a sequence of sections, called `fields,' each of
-   which specifying one aspect of the assertion's semantics.  Fields
+   assertion contains a sequence of sections, called `fields', each of
+   which specifies one aspect of the assertion's semantics.  Fields
    start with an identifier at the beginning of a line and continue
    until the next field is encountered.  For example:
 
-     KeyNote-Version: 2
-     Comment: A simple, if contrived, email certificate for user mab
-     Local-Constants:  ATT_CA_key = "RSA:acdfa1df1011bbac"
-                       mab_key = "DSA:deadbeefcafe001a"
-     Authorizer: ATT_CA_key
-     Licensees: mab_key
-     Conditions: ((app_domain == "email")  # valid for email only
-               && (address == "mab@research.att.com"));
-     Signature: "RSA-SHA1:f00f2244"
+      KeyNote-Version: 2
+      Comment: A simple, if contrived, email certificate for user mab
+      Local-Constants:  ATT_CA_key = "RSA:acdfa1df1011bbac"
+                        mab_key = "DSA:deadbeefcafe001a"
+      Authorizer: ATT_CA_key
+      Licensees: mab_key
+      Conditions: ((app_domain == "email")  # valid for email only
+                && (address == "mab@research.att.com"));
+      Signature: "RSA-SHA1:f00f2244"
 
    The meanings of the various sections are described in Sections 4 and
    5 of this document.
@@ -251,16 +276,25 @@ Abstract
    positively derived from assertions made by trusted principals.
    Removing an assertion never results in increasing the compliance
    value returned by KeyNote for a given query.  The monotonicity
+
+
+
+Blaze, et al.                Informational                      [Page 5]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
    property can simplify the design and analysis of complex network-
    based security protocols; network failures that prevent the
    transmission of credentials can never result in spurious
-   authorization of dangerous actions.
-
+   authorization of dangerous actions.  A detailed discussion of
+   monotonicity and safety in trust management can be found in [BFL96]
+   and [BFS98].
 
 3.  Action Attributes
 
    Trusted actions to be evaluated by KeyNote are described by a
-   collection of name-value pairs called the `action attribute set.'
+   collection of name-value pairs called the `action attribute set'.
    Action attributes are the mechanism by which applications communicate
    requests to KeyNote and are the primary objects on which KeyNote
    assertions operate.  An action attribute set is passed to the KeyNote
@@ -275,7 +309,7 @@ Abstract
    Action attribute names and values are represented by arbitrary-length
    strings.  KeyNote guarantees support of attribute names and values up
    to 2048 characters long.  The handling of longer attribute names or
-   values is not specified and is KeyNote- implementation-dependent.
+   values is not specified and is KeyNote-implementation-dependent.
    Applications and assertions should therefore avoid depending on the
    the use of attributes with names or values longer than 2048
    characters.  The length of an attribute value is represented by an
@@ -298,6 +332,13 @@ Abstract
    That is, an <AttributeID> begins with an alphabetic or underscore
    character and can be followed by any number of alphanumerics and
    underscores.  Attribute names are case-sensitive.
+
+
+
+Blaze, et al.                Informational                      [Page 6]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
 
    The exact mechanism for passing the action attribute set to the
    compliance checker is determined by the KeyNote implementation.
@@ -343,6 +384,18 @@ Abstract
    policies and credentials that are to inter-operate in a specific
    KeyNote query evaluation.
 
+
+
+
+
+
+
+
+Blaze, et al.                Informational                      [Page 7]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
    By convention, the name of the application domain over which action
    attributes should be interpreted is given in the attribute named
    "app_domain".  The IANA (or some other suitable authority) will
@@ -373,7 +426,6 @@ Abstract
    attributes.  (Indeed, we recognize that the reality of email security
    is considerably more complex than this example might suggest.)
 
-
 4.  KeyNote Assertion Syntax
 
    In the following sections, the notation [X]* means zero or more
@@ -381,7 +433,7 @@ Abstract
    more repetitions of X.  The notation <X>* means zero or more
    repetitions of non-terminal <X>.  The notation <X>+ means one or more
    repetitions of X, whereas <X>? means zero or one repetitions of X.
-   Nonterminal grammar symbols are enclosed in angled brackets.  Quoted
+   Nonterminal grammar symbols are enclosed in angle brackets.  Quoted
    strings in grammar productions represent terminals.
 
 4.1  Basic Structure
@@ -392,7 +444,15 @@ Abstract
 
    All KeyNote assertions are encoded in ASCII.
 
-   KeyNote assertions are divided into sections, called `fields,' that
+
+
+
+Blaze, et al.                Informational                      [Page 8]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
+   KeyNote assertions are divided into sections, called `fields', that
    serve various semantic functions.  Each field starts with an
    identifying label at the beginning of a line, followed by the ":"
    character and the field's contents.  There can be at most one field
@@ -430,13 +490,23 @@ Abstract
 
 4.2  Comments
 
-       <Comment>:: "#" {ASCII characters} ;
+      <Comment>:: "#" {ASCII characters} ;
 
    The octothorp character ("#", ASCII 35 decimal) can be used to
    introduce comments.  Outside of quoted strings (see Section 4.3), all
    characters from the "#" character through the end of the current line
    are ignored.  However, commented text is included in the computation
    of assertion signatures (see Section 4.6.7).
+
+
+
+
+
+
+Blaze, et al.                Informational                      [Page 9]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
 
 4.3  Strings
 
@@ -447,7 +517,7 @@ Abstract
 
 4.3.1  String Literals
 
-       <StringLiteral>:: "\"" {see description below} "\"" ;
+      <StringLiteral>:: "\"" {see description below} "\"" ;
 
    A string literal directly represents the value of a string.  String
    literals must be quoted by preceding and following them with the
@@ -480,9 +550,19 @@ Abstract
    "\").  The following four strings are equivalent:
 
         "this string contains a newline\n followed by one space."
-
         "this string contains a newline\n \
         followed by one space."
+
+
+
+
+
+
+
+Blaze, et al.                Informational                     [Page 10]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
 
         "this str\
            ing contains a \
@@ -532,6 +612,14 @@ Abstract
    dereferenced as a string and the value zero when dereferenced as an
    integer or float.
 
+
+
+
+Blaze, et al.                Informational                     [Page 11]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
    Attribute names may be given literally or calculated from string
    expressions and may be recursively dereferenced.  In the simplest
    case, an attribute is dereferenced simply by using its name outside
@@ -543,11 +631,11 @@ Abstract
    attribute "xyz" contains the string "qua", the following string
    comparisons are all true:
 
-       foo == "bar"
-       $("foo") == "bar"
-       $foo == "xyz"
-       $(foo) == "xyz"
-       $$foo == "qua"
+    foo == "bar"
+    $("foo") == "bar"
+    $foo == "xyz"
+    $(foo) == "xyz"
+    $$foo == "qua"
 
    If <StrEx> evaluates to an invalid or uninitialized attribute name,
    its value is considered to be the empty string (or zero if used as a
@@ -560,7 +648,7 @@ Abstract
 4.5  Principal Identifiers
 
    Principals are represented as ASCII strings called `Principal
-   Identifiers.'  Principal Identifiers may be arbitrary labels whose
+   Identifiers'.  Principal Identifiers may be arbitrary labels whose
    structure is not interpreted by the KeyNote system or they may encode
    cryptographic keys that are used by KeyNote for credential signature
    verification.
@@ -568,20 +656,30 @@ Abstract
        <PrincipalIdentifier>:: <OpaqueID>
                              | <KeyID> ;
 
-4.5.1  Opaque Principal Identifiers
+   4.5.1  Opaque Principal Identifiers
 
    Principal Identifiers that are used by KeyNote only as labels are
-   said to be `opaque.'  Opaque identifiers are encoded in assertions as
+   said to be `opaque'.  Opaque identifiers are encoded in assertions as
    strings (see Section 4.3):
 
        <OpaqueID>:: <StrEx> ;
 
    Opaque identifier strings should not contain the ":" character.
 
+
+
+
+
+
+Blaze, et al.                Informational                     [Page 12]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
 4.5.2  Cryptographic Principal Identifiers
 
    Principal Identifiers that are used by KeyNote as keys, e.g., to
-   verify credential signatures, are said to be `cryptographic.'
+   verify credential signatures, are said to be `cryptographic'.
    Cryptographic identifiers are also lexically encoded as strings:
 
        <KeyID>:: <StrEx> ;
@@ -625,6 +723,14 @@ Abstract
        <VersionField>:: "KeyNote-Version:" <VersionString> ;
        <VersionString>:: <StringLiteral>
                        | <IntegerLiteral> ;
+
+
+
+
+Blaze, et al.                Informational                     [Page 13]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
 
    where <VersionString> is an ASCII-encoded string.  Assertions in
    production versions of KeyNote use decimal digits in the version
@@ -672,6 +778,16 @@ Abstract
    The Principal Identifier may be given directly or by reference to the
    attribute namespace (as defined in Section 4.4).
 
+
+
+
+
+
+Blaze, et al.                Informational                     [Page 14]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
 4.6.4   The Licensees Field
 
    The Licensees field identifies the principals authorized by the
@@ -709,83 +825,98 @@ Abstract
    operate on the action attribute set.  The Conditions field is of the
    form:
 
-       <ConditionsField>:: "Conditions:" <ConditionsProgram> ;
+    <ConditionsField>:: "Conditions:" <ConditionsProgram> ;
 
-       <ConditionsProgram>:: /* Can be empty */
-                             | <Clause> ";" <ConditionsProgram> ;
+    <ConditionsProgram>:: /* Can be empty */
+                          | <Clause> ";" <ConditionsProgram> ;
 
-       <Clause>:: <Test> "->" "{" <ConditionsProgram> "}"
-                | <Test> "->" <Value>
-                | <Test> ;
+    <Clause>:: <Test> "->" "{" <ConditionsProgram> "}"
+             | <Test> "->" <Value>
+             | <Test> ;
 
-       <Value>:: <StrEx> ;
+    <Value>:: <StrEx> ;
 
-       <Test>:: <RelExpr> ;
 
-       <RelExpr>:: "(" <RelExpr> ")"        /* Parentheses */
-                 | <RelExpr> "&&" <RelExpr> /* Logical AND */
-                 | <RelExpr> "||" <RelExpr> /* Logical OR */
-                 | "!" <RelExpr>         /* Logical NOT */
-                 | <IntRelExpr>
-                 | <FloatRelExpr>
-                 | <StringRelExpr>
-                 | "true"        /* case insensitive */
-                 | "false" ;     /* case insensitive */
 
-       <IntRelExpr>:: <IntEx> "==" <IntEx>
-                    | <IntEx> "!=" <IntEx>
-                    | <IntEx> "<" <IntEx>
-                    | <IntEx> ">" <IntEx>
-                    | <IntEx> "<=" <IntEx>
-                    | <IntEx> ">=" <IntEx> ;
 
-       <FloatRelExpr>:: <FloatEx> "<" <FloatEx>
-                      | <FloatEx> ">" <FloatEx>
-                      | <FloatEx> "<=" <FloatEx>
-                      | <FloatEx> ">=" <FloatEx> ;
+Blaze, et al.                Informational                     [Page 15]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
 
-       <StringRelExpr>:: <StrEx> "==" <StrEx>  /* String equality */
-                       | <StrEx> "!=" <StrEx>  /* String inequality */
-                       | <StrEx> "<" <StrEx>   /* Alphanum. comparisons */
-                       | <StrEx> ">" <StrEx>
-                       | <StrEx> "<=" <StrEx>
-                       | <StrEx> ">=" <StrEx>
-                       | <StrEx> "~=" <RegExpr> ; /* Reg. expr. matching */
 
-       <IntEx>:: <IntEx> "+" <IntEx>        /* Integer */
-               | <IntEx> "-" <IntEx>
-               | <IntEx> "*" <IntEx>
-               | <IntEx> "/" <IntEx>
-               | <IntEx> "%" <IntEx>
-               | <IntEx> "^" <IntEx>        /* Exponentiation */
-               | "-" <IntEx>
-               | "(" <IntEx> ")"
-               | <IntegerLiteral>
-               | "@" <StrEx> ;
+    <Test>:: <RelExpr> ;
 
-       <FloatEx>:: <FloatEx> "+" <FloatEx>  /* Floating point */
-                 | <FloatEx> "-" <FloatEx>
-                 | <FloatEx> "*" <FloatEx>
-                 | <FloatEx> "/" <FloatEx>
-                 | <FloatEx> "^" <FloatEx> /* Exponentiation */
-                 | "-" <FloatEx>
-                 | "(" <FloatEx> ")"
-                 | <FloatLiteral>
-                 | "&" <StrEx> ;
+    <RelExpr>:: "(" <RelExpr> ")"        /* Parentheses */
+              | <RelExpr> "&&" <RelExpr> /* Logical AND */
+              | <RelExpr> "||" <RelExpr> /* Logical OR */
+              | "!" <RelExpr>         /* Logical NOT */
+              | <IntRelExpr>
+              | <FloatRelExpr>
+              | <StringRelExpr>
+              | "true"        /* case insensitive */
+              | "false" ;     /* case insensitive */
 
-       <IntegerLiteral>:: {Decimal number of at least one digit} ;
-       <FloatLiteral>:: <IntegerLiteral>"."<IntegerLiteral> ;
+    <IntRelExpr>:: <IntEx> "==" <IntEx>
+                 | <IntEx> "!=" <IntEx>
+                 | <IntEx> "<" <IntEx>
+                 | <IntEx> ">" <IntEx>
+                 | <IntEx> "<=" <IntEx>
+                 | <IntEx> ">=" <IntEx> ;
 
-       <StringLiteral> is a quoted string as defined in Section 4.3
-       <AttributeID> is defined in Section 3.
+    <FloatRelExpr>:: <FloatEx> "<" <FloatEx>
+                   | <FloatEx> ">" <FloatEx>
+                   | <FloatEx> "<=" <FloatEx>
+                   | <FloatEx> ">=" <FloatEx> ;
+
+    <StringRelExpr>:: <StrEx> "==" <StrEx>  /* String equality */
+                    | <StrEx> "!=" <StrEx>  /* String inequality */
+                    | <StrEx> "<" <StrEx>   /* Alphanum. comparisons */
+                    | <StrEx> ">" <StrEx>
+                    | <StrEx> "<=" <StrEx>
+                    | <StrEx> ">=" <StrEx>
+                    | <StrEx> "~=" <RegExpr> ; /* Reg. expr. matching */
+
+    <IntEx>:: <IntEx> "+" <IntEx>        /* Integer */
+            | <IntEx> "-" <IntEx>
+            | <IntEx> "*" <IntEx>
+            | <IntEx> "/" <IntEx>
+            | <IntEx> "%" <IntEx>
+            | <IntEx> "^" <IntEx>        /* Exponentiation */
+            | "-" <IntEx>
+            | "(" <IntEx> ")"
+            | <IntegerLiteral>
+            | "@" <StrEx> ;
+
+    <FloatEx>:: <FloatEx> "+" <FloatEx>  /* Floating point */
+              | <FloatEx> "-" <FloatEx>
+              | <FloatEx> "*" <FloatEx>
+              | <FloatEx> "/" <FloatEx>
+              | <FloatEx> "^" <FloatEx> /* Exponentiation */
+
+
+
+Blaze, et al.                Informational                     [Page 16]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
+              | "-" <FloatEx>
+              | "(" <FloatEx> ")"
+              | <FloatLiteral>
+              | "&" <StrEx> ;
+
+    <IntegerLiteral>:: {Decimal number of at least one digit} ;
+    <FloatLiteral>:: <IntegerLiteral>"."<IntegerLiteral> ;
+
+    <StringLiteral> is a quoted string as defined in Section 4.3
+    <AttributeID> is defined in Section 3.
 
    The operation precedence classes are (from highest to lowest):
-
-      { (, ) }
-      {unary -, @, &, $}
-      {^}
-      {*, /, %}
-      {+, -, .}
+        { (, ) }
+        {unary -, @, &, $}
+        {^}
+        {*, /, %}
+        {+, -, .}
 
    Operators in the same precedence class are evaluated left-to-right.
 
@@ -812,6 +943,19 @@ Abstract
    properly converted (e.g., it contains invalid characters or is empty)
    its value is considered to be zero.
 
+
+
+
+
+
+
+
+
+Blaze, et al.                Informational                     [Page 17]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
 4.6.6  The Comment Field
 
    The Comment field allows assertions to be annotated with information
@@ -822,12 +966,12 @@ Abstract
    No interpretation of the contents of this field is performed by
    KeyNote.  Note that this is one of two mechanisms for including
    comments in KeyNote assertions; comments can also be inserted
-   anywhere in an assertion's body by preceeding them with the "#"
+   anywhere in an assertion's body by preceding them with the "#"
    character (except inside string literals).
 
 4.6.7  The Signature Field
 
-   The Signature field identifies a signed assertions and gives the
+   The Signature field identifies a signed assertion and gives the
    encoded digital signature of the principal identified in the
    Authorizer field.  The Signature field is of the form:
 
@@ -848,17 +992,25 @@ Abstract
    be the same.
 
    If the signature field is included, the principal named in the
-   Authorizer field must be a Cryptographic Principal Indentifier, the
+   Authorizer field must be a Cryptographic Principal Identifier, the
    algorithm must be known to the KeyNote implementation, and the
    signature must be correct for the assertion body and authorizer key.
 
    The signature is computed over the assertion text, beginning with the
    first field (including the field identifier string), up to (but not
-   including) the Signature field identifier.  The newline preceeding
-   the signature field identifier is the last character included in
+   including) the Signature field identifier.  The newline preceding the
+   signature field identifier is the last character included in
    signature calculation.  The signature is always the last field in a
    KeyNote assertion.  Text following this field is not considered part
    of the assertion.
+
+
+
+
+Blaze, et al.                Informational                     [Page 18]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
 
    The algorithms for computing and verifying signatures must be
    configured into each KeyNote implementation and are defined and
@@ -867,7 +1019,6 @@ Abstract
    Note that all signatures used in examples in this document are
    fictitious and generally much shorter than would be required for
    security in practice.
-
 
 5.   Query Evaluation Semantics
 
@@ -878,15 +1029,15 @@ Abstract
 
    A KeyNote query has four parameters:
 
-   * The identifier of the principal(s) requesting the action.
+   *  The identifier of the principal(s) requesting the action.
 
-   * The action attribute set describing the action.
+   *  The action attribute set describing the action.
 
-   * The set of compliance values of interest to the application,
-     ordered from _MIN_TRUST to _MAX_TRUST
+   *  The set of compliance values of interest to the application,
+      ordered from _MIN_TRUST to _MAX_TRUST
 
-   * The policy and credential assertions that should be included
-     in the evaluation.
+   *  The policy and credential assertions that should be included in
+      the evaluation.
 
    The mechanism for passing these parameters to the KeyNote evaluator
    is application dependent.  In particular, an evaluator might provide
@@ -903,9 +1054,19 @@ Abstract
    `requester' of the action.  Actions may be requested by several
    principals, each considered to have individually requested it.  This
    allows policies that require multiple authorizations, e.g., `two
-   person control.'  The set of authorizing principals is made available
+   person control'.  The set of authorizing principals is made available
    in the special attribute "_ACTION_AUTHORIZERS"; if several principals
    are authorizers, their identifiers are separated with commas.
+
+
+
+
+
+
+Blaze, et al.                Informational                     [Page 19]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
 
 5.1.2  Ordered Compliance Value Set
 
@@ -916,7 +1077,7 @@ Abstract
    sets {FALSE, TRUE} or {REJECT, APPROVE}.  Other applications may
    require a range of possible values, e.g., {No_Access, Limited_Access,
    Full_Access}.  Note that applications should include in this set only
-   compliance values names that are actually returned by the assertions.
+   compliance value names that are actually returned by the assertions.
 
    The lowest-order and highest-order compliance value strings given in
    the query are available in the special attributes named "_MIN_TRUST"
@@ -952,14 +1113,25 @@ Abstract
    Value of the principal named "POLICY".  This value is defined as
    follows:
 
+
+
+
+
+
+
+Blaze, et al.                Informational                     [Page 20]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
 5.3.1  Principal Compliance Value
 
    The Compliance Value of a principal <X> is the highest order
    (maximum) of:
 
-       - the Direct Authorization Value of principal <X>; and
+      -  the Direct Authorization Value of principal <X>; and
 
-       - the Assertion Compliance Values of all assertions identifying
+      -  the Assertion Compliance Values of all assertions identifying
          <X> in the Authorizer field.
 
 5.3.2  Direct Authorization Value
@@ -976,29 +1148,37 @@ Abstract
 
 5.3.4 Conditions Compliance Value
 
-   The Conditions Compliance Value of an assertion is the highest- order
+   The Conditions Compliance Value of an assertion is the highest-order
    (maximum) value among all successful clauses listed in the conditions
    section.
 
    If no clause's test succeeds or the Conditions field is empty, an
-   assertion's conditions compliance value is considered to be the
+   assertion's Conditions Compliance Value is considered to be the
    _MIN_TRUST value, as defined Section 5.1.
 
    If an assertion's Conditions field is missing entirely, its
-   conditions compliance value is considered to be the _MAX_TRUST value,
+   Conditions Compliance Value is considered to be the _MAX_TRUST value,
    as defined in Section 5.1.
 
    The set of successful test clause values is calculated as follows:
 
    Recall from the grammar of section 4.6.5 that each clause in the
    conditions section has two logical parts: a `test' and an optional
-   `value,' which, if present, is separated from the test with the "->"
+   `value', which, if present, is separated from the test with the "->"
    token.  The test subclause is a predicate that either succeeds
    (evaluates to logical `true') or fails (evaluates to logical
    `false').  The value subclause is a string expression that evaluates
    to one value from the ordered set of compliance values given with the
    query.  If the value subclause is missing, it is considered to be
    _MAX_TRUST.  That is, the clause
+
+
+
+
+Blaze, et al.                Informational                     [Page 21]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
 
        foo=="bar";
 
@@ -1022,12 +1202,12 @@ Abstract
    would contain the values "guest_access" (by clause (3)) and
    "full_access" (by clause (4)).  If the ordered set of compliance
    values given in the query (in ascending order) is {"no_access",
-   "guest_access", "user_access", "full_access"}, the conditions
-   compliance value of the assertion would be "full_access" (because
+   "guest_access", "user_access", "full_access"}, the Conditions
+   Compliance Value of the assertion would be "full_access" (because
    "full_access" has a higher-order value than "guest_access").  If the
    "user_id" attribute had the value "19283" and the "user_name"
    attribute had the value "nobody", no clause would succeed and the
-   conditions compliance value would be "no_access", which is the
+   Conditions Compliance Value would be "no_access", which is the
    lowest-order possible value (_MIN_TRUST).
 
    If a clause lists an explicit value, its value string must be named
@@ -1048,6 +1228,14 @@ Abstract
        (a=="b") && (d=="e") -> "value2";
        (a=="b") -> "value3";
 
+
+
+
+Blaze, et al.                Informational                     [Page 22]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
    String comparisons are case-sensitive.
 
    A regular expression comparison ("~=") is considered true if the
@@ -1055,9 +1243,9 @@ Abstract
    expression.  If the POSIX regular expression group matching scheme is
    used, the number of groups matched is placed in the temporary meta-
    attribute "_0" (dereferenced as _0), and each match is placed in
-   sequence in the temporary attributes (_1, _2, ..., _N).  These match
-   attributes values are valid only within subsequent references made
-   within the same clause.  Regular expression evaluation is case-
+   sequence in the temporary attributes (_1, _2, ..., _N).  These
+   match-attributes' values are valid only within subsequent references
+   made within the same clause.  Regular expression evaluation is case-
    sensitive.
 
    A runtime error occurring in the evaluation of a test, such as
@@ -1095,19 +1283,28 @@ Abstract
    The licensees expression (as defined in Section 4.6.4) is evaluated
    as follows:
 
-   * A "(...)" expression has the value of the enclosed subexpression.
 
-   * A "&&" expression has the lower-order (minimum) of its two
-     subexpression values.
 
-   * A "||" expression has the higher-order (maximum) of its two
-     subexpression values.
 
-   * A "<K>-of(<List>)" expression has the K-th highest order
-     compliance value listed in <list>.  Values that appear multiple
-     times are counted with multiplicity.  For example, if K = 3 and
-     the orders of the listed compliance values are (0, 1, 2, 2, 3),
-     the value of the expression is the compliance value of order 2.
+
+Blaze, et al.                Informational                     [Page 23]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
+   *  A "(...)" expression has the value of the enclosed subexpression.
+
+   *  A "&&" expression has the lower-order (minimum) of its two
+        subexpression values.
+
+   *  A "||" expression has the higher-order (maximum) of its two
+      subexpression values.
+
+   *  A "<K>-of(<List>)" expression has the K-th highest order
+      compliance value listed in <list>.  Values that appear multiple
+      times are counted with multiplicity.  For example, if K = 3 and
+      the orders of the listed compliance values are (0, 1, 2, 2, 3),
+      the value of the expression is the compliance value of order 2.
 
    For example, consider the following Licensees field:
 
@@ -1134,14 +1331,22 @@ Abstract
 
    Implementations that permit signed credentials to be verified by the
    KeyNote compliance checker generally provide two `channels' through
-   which applications can make assertions available.  Unsigned, locally-
-   trusted assertions are provided over a `trusted' interface, while
-   signed credentials are provided over an `untrusted' interface.  The
-   KeyNote compliance checker verifies correct signatures for all
+   which applications can make assertions available.  Unsigned,
+   locally-trusted assertions are provided over a `trusted' interface,
+   while signed credentials are provided over an `untrusted' interface.
+   The KeyNote compliance checker verifies correct signatures for all
    assertions submitted over the untrusted interface.  The integrity of
    KeyNote evaluation requires that only assertions trusted as
    reflecting local policy are submitted to KeyNote via the trusted
    interface.
+
+
+
+
+Blaze, et al.                Informational                     [Page 24]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
 
    Note that applications that use KeyNote exclusively as a local policy
    specification mechanism need use only trusted assertions.  Other
@@ -1174,7 +1379,6 @@ Abstract
    them to the invoking application if requested.  Such mechanisms are
    outside the scope of this document.
 
-
 6.  Examples
 
    In this section, we give examples of KeyNote assertions that might be
@@ -1187,6 +1391,18 @@ Abstract
    ordinarily be used in practice.  Note that the Signature fields in
    these examples do not represent the result of any real signature
    calculation.
+
+
+
+
+
+
+
+
+Blaze, et al.                Informational                     [Page 25]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
 
    1. TRADITIONAL CA / EMAIL
 
@@ -1229,6 +1445,20 @@ Abstract
                         (name == "M. Blaze" || name == "") &&
                         (address == "mab@keynote.research.att.com"));
            Signature: "DSA-SHA1:ab23487"
+
+
+
+
+
+
+
+
+
+
+Blaze, et al.                Informational                     [Page 26]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
 
       D. Another certificate credential for a specific user, also
          issued by the `Alice' authority.  This example allows three
@@ -1275,6 +1505,16 @@ Abstract
              app_domain = "RFC822-EMAIL"
              address = "mab@keynote.research.att.com"
              name = "J. Feigenbaum"
+
+
+
+
+
+
+Blaze, et al.                Informational                     [Page 27]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
 
    2. WORKFLOW/ELECTRONIC COMMERCE
 
@@ -1323,6 +1563,15 @@ Abstract
            Conditions: (app_domain=="SPEND") &&
                        (@(dollars) < 1000);
 
+
+
+
+
+Blaze, et al.                Informational                     [Page 28]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
       H. A credential from dab212 with a similar policy, but only one
          signer is required if @(dollars) < 500.  A log entry is made if
          the amount is at least 100.
@@ -1369,6 +1618,16 @@ Abstract
            app_domain = "SPEND"
            dollars = "150"
 
+
+
+
+
+
+Blaze, et al.                Informational                     [Page 29]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
       However, the following return "Reject" (_MIN_TRUST):
 
            _ACTION_AUTHORIZERS = "DSA:def975"
@@ -1378,7 +1637,6 @@ Abstract
            _ACTION_AUTHORIZERS = "DSA:cde333,DSA:978add"
            app_domain = "SPEND"
            dollars = "5500"
-
 
 7.  Trust-Management Architecture
 
@@ -1400,23 +1658,31 @@ Abstract
    KeyNote output as a policy enforcement mechanism depends on a number
    of factors:
 
-   * The action attributes and the assignment of their values must
-     reflect accurately the security requirements of the application.
-     Identifying the attributes to include in the action attribute set
-     is perhaps the most important task in integrating KeyNote into
-     new applications.
+   *  The action attributes and the assignment of their values must
+      reflect accurately the security requirements of the application.
+      Identifying the attributes to include in the action attribute set
+      is perhaps the most important task in integrating KeyNote into new
+      applications.
 
-   * The policy of the application must be correct and well-formed.
-     In particular, trust must be deferred only to principals that
-     should, in fact, be trusted by the application.
+   *  The policy of the application must be correct and well-formed.  In
+      particular, trust must be deferred only to principals that should,
+      in fact, be trusted by the application.
 
-   * The application itself must be trustworthy.  KeyNote does not
-     directly enforce policy; it only provides advice to the
-     applications that call it.  In other words, KeyNote assumes that
-     the application itself is trusted and that the policy assertions
-     it specifies are correct.  Nothing prevents an application from
-     submitting misleading or incorrect assertions to KeyNote or from
-     ignoring KeyNote altogether.
+   *  The application itself must be trustworthy.  KeyNote does not
+      directly enforce policy; it only provides advice to the
+      applications that call it.  In other words, KeyNote assumes that
+      the application itself is trusted and that the policy assertions
+      it specifies are correct.  Nothing prevents an application from
+      submitting misleading or incorrect assertions to KeyNote or from
+      ignoring KeyNote altogether.
+
+
+
+
+Blaze, et al.                Informational                     [Page 30]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
 
    It is also up to the application (or some service outside KeyNote) to
    select the appropriate credentials and policy assertions with which
@@ -1452,13 +1718,11 @@ Abstract
    communicating their queries via some interprocess communication
    mechanism.
 
-
 8.  Security Considerations
 
    Trust management is itself a security service.  Bugs in or incorrect
    use of a KeyNote compliance checker implementation could have
    security implications for any applications in which it is used.
-
 
 9. IANA Considerations
 
@@ -1466,20 +1730,29 @@ Abstract
    IANA.  This section explains the criteria to be used by the IANA to
    assign additional identifiers in each of these lists.
 
+
+
+
+
+
+Blaze, et al.                Informational                     [Page 31]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
 9.1  app_domain Identifiers
 
-   The only requirement on IANA on allocation of these identifiers is
+   The only thing required of IANA on allocation of these identifiers is
    that they be unique strings.  These strings are case-sensitive for
-   KeyNote purposes, however it is strongly recommended that IANA
-   assigns different capitalizations of the same string only to the same
+   KeyNote purposes, however it is strongly recommended that IANA assign
+   different capitalizations of the same string only to the same
    organization.
-
 
 9.2  Public Key Format Identifiers
 
    These strings uniquely identify a public key algorithm as used in the
    KeyNote system for representing keys.  Requests for assignment of new
-   identifiers must be accompanied by an RFC-style document which
+   identifiers must be accompanied by an RFC-style document that
    describes the details of this encoding.  Example strings are "rsa-
    hex:" and "dsa-base64:".  These strings are case-insensitive.
 
@@ -1488,18 +1761,46 @@ Abstract
    These strings uniquely identify a public key algorithm as used in the
    KeyNote system for representing public key signatures.  Requests for
    assignment of new identifiers must be accompanied by an RFC-style
-   document which describes the details of this encoding. Example
-   strings are "sig-rsa-md5-hex:" and "sig-dsa-sha1-base64:".  Note that
-   all such strings must begin with the prefix "sig-".  These strings
-   are case-insensitive.
+   document that describes the details of this encoding. Example strings
+   are "sig-rsa-md5-hex:" and "sig-dsa-sha1-base64:".  Note that all
+   such strings must begin with the prefix "sig-".  These strings are
+   case-insensitive.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Blaze, et al.                Informational                     [Page 32]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
 
 
 A.  Acknowledgments
 
    We thank Lorrie Faith Cranor (AT&T Labs - Research) and Jonathan M.
    Smith (University of Pennsylvania) for their suggestions and comments
-   on earlier versions of this.
-
+   on earlier versions of this document.
 
 B.  Full BNF (alphabetical order)
 
@@ -1543,6 +1844,13 @@ B.  Full BNF (alphabetical order)
    <FloatRelExpr>:: <FloatEx> "<" <FloatEx> | <FloatEx> ">" <FloatEx>
                   | <FloatEx> "<=" <FloatEx>
                   | <FloatEx> ">=" <FloatEx> ;
+
+
+
+Blaze, et al.                Informational                     [Page 33]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
 
    <FloatLiteral>:: <IntegerLiteral>"."<IntegerLiteral> ;
 
@@ -1593,6 +1901,13 @@ B.  Full BNF (alphabetical order)
 
    <SignatureField>:: "Signature:" <Signature> ;
 
+
+
+Blaze, et al.                Informational                     [Page 34]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
    <StrEx>:: <StrEx> "." <StrEx> | <StringLiteral> | "(" <StrEx> ")"
            | <DerefAttribute> | "$" <StrEx> ;
 
@@ -1611,19 +1926,18 @@ B.  Full BNF (alphabetical order)
 
    <VersionString>:: <StringLiteral> | <IntegerLiteral> ;
 
-
 References
 
    [BFL96] M. Blaze, J. Feigenbaum, J. Lacy. Decentralized Trust
            Management. Proceedings of the 17th IEEE Symp. on Security
-           and Privacy. pp 164-173.  IEEE Computer Society,
-           1996. Available at
+           and Privacy. pp 164-173.  IEEE Computer Society, 1996.
+           Available at
            <ftp://ftp.research.att.com/dist/mab/policymaker.ps>
 
    [BFS98] M. Blaze, J. Feigenbaum, M. Strauss. Compliance-Checking in
-           the PolicyMaker Trust-Management System. Proc. 2nd
-           Financial Crypto Conference. Anguila 1998.  LNCS #1465, pp
-           251-265, Springer-Verlag, 1998.  Available at
+           the PolicyMaker Trust-Management System. Proc. 2nd Financial
+           Crypto Conference. Anguilla 1998.  LNCS #1465, pp 251-265,
+           Springer-Verlag, 1998.  Available at
            <ftp://ftp.research.att.com/dist/mab/pmcomply.ps>
 
    [Bla99] M. Blaze, J. Feigenbaum, J. Ioannidis, A. Keromytis.  The
@@ -1633,8 +1947,8 @@ References
            Springer-Verlag, 1999.  Available at
            <ftp://ftp.research.att.com/dist/mab/trustmgt.ps>.
 
-   [Cro82] D. H. Crocker. Standard for the Format of ARPA Internet
-           Text Messages.  RFC 822.  August 1982.
+   [Cro82] Crocker, D., "Standard for the Format of ARPA Internet Text
+           Messages", STD 11, RFC 822, August 1982.
 
    [DSA94] Digital Signature Standard. FIPS-186. National Institute of
            Standards, U.S. Department of Commerce. May 1994.
@@ -1642,35 +1956,68 @@ References
    [PKCS1] PKCS #1: RSA Encryption Standard, Version 1.5. RSA
            Laboratories. November 1993.
 
+
+
+
+Blaze, et al.                Informational                     [Page 35]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
+
+
    [RSA78] R. L. Rivest, A. Shamir, L. M. Adleman.  A Method for
            Obtaining Digital Signatures and Public-Key Cryptosystems.
-           Communications of the ACM, v21n2. pp 120-126.  February
-           1978.
+           Communications of the ACM, v21n2. pp 120-126.  February 1978.
 
+Authors' Addresses
 
-Contacts
-
-   Comments about this document should be discussed on the
-   trustmgt@east.isi.edu mailing list.  The archive for that list can be
-   found at http://www.cairn.net/trustmgt/.
+   Comments about this document should be discussed on the keynote-users
+   mailing list hosted at nsa.research.att.com.  To subscribe, send an
+   email message containing the single line
+                 subscribe keynote-users
+   in the message body to <majordomo@nsa.research.att.com>.
 
    Questions about this document can also be directed to the authors as
    a group at the keynote@research.att.com alias, or to the individual
    authors at:
 
-    Matt Blaze             Joan Feigenbaum       John Ioannidis
-    mab@research.att.com   jf@research.att.com   ji@research.att.com
+   Matt Blaze
+   AT&T Labs - Research
+   180 Park Avenue
+   Florham Park, New Jersey 07932-0971
 
-                         AT&T Labs - Research
-                         180 Park Avenue
-                         Florham Park, New Jersey 07932-0000
+   EMail: mab@research.att.com
 
-    Angelos D. Keromytis
-    Distributed Systems Lab
-    CIS Department, University of Pennsylvania
-    200 S. 33rd Street
-    Philadelphia, Pennsylvania  19104-6389
-    Email: angelos@dsl.cis.upenn.edu
+
+   Joan Feigenbaum
+   AT&T Labs - Research
+   180 Park Avenue
+   Florham Park, New Jersey 07932-0971
+
+   EMail: jf@research.att.com
+
+
+   John Ioannidis
+   AT&T Labs - Research
+   180 Park Avenue
+   Florham Park, New Jersey 07932-0971
+
+   EMail: ji@research.att.com
+
+
+   Angelos D. Keromytis
+   Distributed Systems Lab
+   CIS Department, University of Pennsylvania
+   200 S. 33rd Street
+   Philadelphia, Pennsylvania  19104-6389
+
+   EMail: angelos@dsl.cis.upenn.edu
+
+
+
+
+Blaze, et al.                Informational                     [Page 36]
+
+RFC 2704          The KeyNote Trust-Management System     September 1999
 
 
 Full Copyright Statement
@@ -1701,6 +2048,10 @@ Full Copyright Statement
    HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
    MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
 
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
 
 
 
@@ -1720,21 +2071,5 @@ Full Copyright Statement
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Blaze, et al.                Informational                     [Page 37]
+

@@ -1,0 +1,186 @@
+# $OpenBSD: Makefile.in,v 1.1 1999/10/01 01:08:29 angelos Exp $
+#
+# The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
+#
+# This code was written by Angelos D. Keromytis in Philadelphia, PA, USA,
+# in April-May 1998
+#
+# Copyright (C) 1998, 1999 by Angelos D. Keromytis.
+#	
+# Permission to use, copy, and modify this software without fee
+# is hereby granted, provided that this entire notice is included in
+# all copies of any software which is or includes a copy or
+# modification of this software. 
+#
+# THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
+# IMPLIED WARRANTY. IN PARTICULAR, THE AUTHORS MAKES NO
+# REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
+# MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
+# PURPOSE.
+
+VERSION = 2.0
+DISTFILE = keynote-${VERSION}.tar.gz
+KNSUBDIR = KeyNote-${VERSION}
+
+srcdir = @srcdir@
+
+LEX = @LEX@
+CC = @CC@
+RANLIB = @RANLIB@
+YACC = @YACC@
+SSLEAY = @SSLEAY@
+RM = @RM@
+AR = @AR@
+NROFF = @NROFF@
+TAR = @TAR@
+TRUE = @TRUE@
+MKDIR = @MKDIR@
+SED = @SED@
+ECHO = @ECHO@
+TR = @TR@
+
+TARFLAGS = -cvzf ${DISTFILE}
+YACCFLAGS2 = -d -p kv -b z
+YACCFLAGS = -d -p kn -b k
+LEXFLAGS2 = -Pkv -s -i
+LEXFLAGS = -Cr -Pkn -s -i
+CFLAGS = -O2 -Wall # -g
+RMFLAGS2 = -rf
+RMFLAGS = -f
+NROFFFLAGS = -mandoc
+
+SSLCONF = ${srcdir}/testsuite/openssl.cnf
+SSLCERT = ${srcdir}/testsuite/test.cert.pem
+SSLKEY = ${srcdir}/testsuite/test.key.pem
+SIGN_ASSERT = ${srcdir}/testsuite/test-assertion1-signed
+
+# No-crypto compile/link flags and definitions
+NOCRYPTODEFS = @DEFS@
+
+# Final compile/link flags and definitions
+DEFS = -DCRYPTO ${NOCRYPTODEFS}
+INC = -I.
+LIBS = -L. -lkeynote @LIBS@
+
+TARGET = libkeynote.a
+TARGET2 = keynote
+
+OBJS = 	k.tab.o lex.kn.o environment.o parse_assertion.o \
+	signature.o aux.o base64.o
+OBJS2 = z.tab.o lex.kv.o keynote-verify.o keynote-sign.o \
+	keynote-sigver.o keynote-keygen.o keynote-main.o @LIBOBJS@
+
+crypto: all
+
+nocrypto:
+	${MAKE} DEFS="${NOCRYPTODEFS}"
+
+all: $(TARGET) $(TARGET2)
+
+library: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(AR) -cvr $(TARGET) $(OBJS)
+	$(RANLIB) $(TARGET)
+
+$(TARGET2): $(TARGET) $(OBJS2)
+	$(CC) $(CFLAGS) -o $(TARGET2) $(OBJS2) $(LIBS)
+
+k.tab.c: keynote.y keynote.h assertion.h config.h
+	$(YACC) $(YACCFLAGS) ${srcdir}/keynote.y
+
+z.tab.c: keynote-ver.y keynote.h header.h config.h
+	$(YACC) $(YACCFLAGS2) ${srcdir}/keynote-ver.y
+
+lex.kn.c: keynote.l k.tab.h keynote.h assertion.h config.h
+	$(LEX) $(LEXFLAGS) ${srcdir}/keynote.l
+
+lex.kv.c: keynote-ver.l z.tab.h keynote.h header.h config.h
+	$(LEX) $(LEXFLAGS2) ${srcdir}/keynote-ver.l
+
+.c.o:
+	$(CC) $(CFLAGS) $(DEFS) $(INC) -c $<
+
+aux.o: ${srcdir}/aux.c
+parse_assertion.o: ${srcdir}/parse_assertion.c
+environment.o: ${srcdir}/environment.c
+keynote-verify.o: ${srcdir}/keynote-verify.c
+signature.o: ${srcdir}/signature.c
+keynote-keygen.o: ${srcdir}/keynote-keygen.c
+keynote-sign.o: ${srcdir}/keynote-sign.c
+keynote-sigver.o: ${srcdir}/keynote-sigver.c
+keynote-main.o: ${srcdir}/keynote-main.c
+base64.o: ${srcdir}/base64.c
+getopt.o: ${srcdir}/getopt.c
+
+aux.c: keynote.h assertion.h signature.h config.h
+parse_assertion.c: keynote.h assertion.h signature.h config.h
+environment.c: keynote.h assertion.h config.h
+keynote-verify.c: keynote.h header.h config.h
+signature.c: keynote.h assertion.h signature.h config.h
+keynote-keygen.c: keynote.h assertion.h signature.h header.h config.h
+keynote-sign.c: keynote.h header.h config.h
+keynote-sigver.c: keynote.h header.h config.h
+keynote-main.c: header.h config.h
+base64.c: keynote.h config.h
+
+clean:
+	$(RM) $(RMFLAGS) $(OBJS) $(OBJS2) a.out *.core *~ */*~
+	$(RM) $(RMFLAGS) $(SSLCERT) $(SSLCERT).1 $(SSLCERT).2
+	$(RM) $(RMFLAGS) $(SSLKEY) $(SIGN_ASSERT)
+
+cleandir: cleanall
+
+cleanall: clean
+	$(RM) $(RMFLAGS) *.o k.tab.c lex.kn.c k.tab.h z.tab.c z.tab.h
+	$(RM) $(RMFLAGS) lex.kv.c y.output z.output ${DISTFILE}
+	$(RM) $(RMFLAGS) $(TARGET) $(TARGET2) man/*.0 config.cache
+	$(RM) $(RMFLAGS) config.log config.status config.h Makefile
+
+$(SSLCERT) $(SSLKEY):
+	$(SSLEAY) req -config $(SSLCONF) \
+	-new -x509 -nodes -out $(SSLCERT) \
+	-keyout $(SSLKEY)
+
+test-sig: all $(SSLCERT) $(SSLKEY)
+	$(SED) -e 's/--.*//' < $(SSLCERT) > $(SSLCERT).1
+	$(ECHO) -n 'authorizer: "x509-base64:' > $(SSLCERT).2
+	$(TR) -d '\n' < $(SSLCERT).1 >> $(SSLCERT).2
+	$(ECHO) '"' >> $(SSLCERT).2
+	$(SED) -e "/@@AUTH@@/r $(SSLCERT).2" -e "s/@@AUTH@@//" < $(SIGN_ASSERT).in > $(SIGN_ASSERT)
+	./$(TARGET2) sign -v "sig-x509-sha1-base64:" $(SIGN_ASSERT) $(SSLKEY) | tee -a $(SIGN_ASSERT)
+	./$(TARGET2) sigver $(SIGN_ASSERT)
+ 
+test: all
+	./$(TARGET2) verify -e ${srcdir}/testsuite/test-env \
+		-r false,maybe,probably,true \
+		-k ${srcdir}/testsuite/auth1 -k ${srcdir}/testsuite/auth2 \
+		-k ${srcdir}/testsuite/auth3 -k ${srcdir}/testsuite/auth4 \
+		-l ${srcdir}/testsuite/test-assertion1 \
+		-l ${srcdir}/testsuite/test-assertion2 \
+		-l ${srcdir}/testsuite/test-assertion3 \
+		-l ${srcdir}/testsuite/test-assertion4 \
+		-l ${srcdir}/testsuite/test-assertion5 \
+		-l ${srcdir}/testsuite/test-assertion6 \
+		-l ${srcdir}/testsuite/test-assertion7 || ${TRUE}
+
+manpages: mankeynote mansystem manutility
+
+mankeynote:
+	${NROFF} ${NROFFFLAGS} man/keynote.3 > man/keynote-library.0
+
+mansystem:
+	${NROFF} ${NROFFFLAGS} man/keynote.4 > man/keynote-system.0
+
+manutility:
+	${NROFF} ${NROFFFLAGS} man/keynote.1 > man/keynote-utility.0
+
+distribution: test cleanall manpages
+	${MKDIR} ${KNSUBDIR}
+	$(TAR) cf - . | (cd ${KNSUBDIR}; ${TAR} xf -)
+	${RM} ${RMFLAGS2} ${KNSUBDIR}/CVS ${KNSUBDIR}/testsuite/CVS \
+			  ${KNSUBDIR}/Misc/CVS ${KNSUBDIR}/${KNSUBDIR} \
+			  ${KNSUBDIR}/.cvsignore ${KNSUBDIR}/man/CVS \
+			  ${KNSUBDIR}/man/.cvsignore ${KNSUBDIR}/doc/CVS
+	$(TAR) $(TARFLAGS) ${KNSUBDIR}
+	${RM} ${RMFLAGS2} ${KNSUBDIR} man/*.0

@@ -1,0 +1,93 @@
+/* $OpenBSD: config.hin,v 1.1 1999/10/01 01:08:29 angelos Exp $ */
+
+/* config.hin.  Generated automatically from configure.in by autoheader.  */
+
+/* Define to empty if the keyword does not work.  */
+#undef const
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Define if you can safely include both <sys/time.h> and <time.h>.  */
+#undef TIME_WITH_SYS_TIME
+
+/* Define if you have the _close function.  */
+#undef HAVE__CLOSE
+
+/* Define if you have the _open function.  */
+#undef HAVE__OPEN
+
+/* Define if you have the _read function.  */
+#undef HAVE__READ
+
+/* Define if you have the b64_ntop function.  */
+#undef HAVE___B64_NTOP
+
+/* Define if you have the close function.  */
+#undef HAVE_CLOSE
+
+/* Define if you have the getopt function.  */
+#undef HAVE_GETOPT
+
+/* Define if you have the memcpy function.  */
+#undef HAVE_MEMCPY
+
+/* Define if you have the open function.  */
+#undef HAVE_OPEN
+
+/* Define if you have the read function.  */
+#undef HAVE_READ
+
+/* Define if you have the regcomp function.  */
+#undef HAVE_REGCOMP
+
+/* Define if you have the snprintf function.  */
+#undef HAVE_SNPRINTF
+
+/* Define if you have the strcasecmp function.  */
+#undef HAVE_STRCASECMP
+
+/* Define if you have the strchr function.  */
+#undef HAVE_STRCHR
+
+/* Define if you have the stricmp function.  */
+#undef HAVE_STRICMP
+
+/* Define if you have the strncasecmp function.  */
+#undef HAVE_STRNCASECMP
+
+/* Define if you have the strnicmp function.  */
+#undef HAVE_STRNICMP
+
+/* Define if you have the <fcntl.h> header file.  */
+#undef HAVE_FCNTL_H
+
+/* Define if you have the <io.h> header file.  */
+#undef HAVE_IO_H
+
+/* Define if you have the <limits.h> header file.  */
+#undef HAVE_LIMITS_H
+
+/* Define if you have the <memory.h> header file.  */
+#undef HAVE_MEMORY_H
+
+/* Define if you have the <openssl/crypto.h> header file.  */
+#undef HAVE_OPENSSL_CRYPTO_H
+
+/* Define if you have the <regex.h> header file.  */
+#undef HAVE_REGEX_H
+
+/* Define if you have the <ssl/crypto.h> header file.  */
+#undef HAVE_SSL_CRYPTO_H
+
+/* Define if you have the <sys/time.h> header file.  */
+#undef HAVE_SYS_TIME_H
+
+/* Define if you have the <unistd.h> header file.  */
+#undef HAVE_UNISTD_H
+
+/* Define if you have the crypto library (-lcrypto).  */
+#undef HAVE_LIBCRYPTO
+
+/* Define if you have /dev/urandom file.  */
+#undef HAVE__DEV_URANDOM

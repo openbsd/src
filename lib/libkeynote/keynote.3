@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.9 1999/07/09 13:35:29 aaron Exp $
+.\" $OpenBSD: keynote.3,v 1.10 1999/10/01 01:08:30 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -6,7 +6,7 @@
 .\" in April-May 1998
 .\"
 .\" Copyright (C) 1998, 1999 by Angelos D. Keromytis.
-.\"
+.\"      
 .\" Permission to use, copy, and modify this software without fee
 .\" is hereby granted, provided that this entire notice is included in
 .\" all copies of any software which is or includes a copy or
@@ -51,6 +51,14 @@ struct keynote_binary
     int   bn_len;
     char *bn_key;
 };
+
+struct keynote_keylist
+{
+    int                     key_alg;
+    void                   *key_key;
+    char                   *key_stringkey;
+    struct keynote_keylist *key_next;
+};
 .Ed
 .Ft int
 .Fd keynote_errno;
@@ -73,6 +81,8 @@ struct keynote_binary
 .Ft int
 .Fn kn_get_failed "int sessid" "int type" "int seq"
 .Ft int
+.Fn kn_cleanup_action_environment "int sessid"
+.Ft int
 .Fn kn_close "int sessid"
 .Ft int
 .Fn kn_query "struct environment *env" "char **returnvalues, int numvalues" "char **trusted, int *trustedlen, int numtrusted" "char **untrusted, int *untrustedlen, int numuntrusted" "char **authorizers, int numauthauthorizers"
@@ -80,6 +90,10 @@ struct keynote_binary
 .Fn kn_read_asserts "char *array" "int arraylen" "int *numassertions"
 .Ft int
 .Fn kn_keycompare "void *key1" "void *key2" "int algorithm"
+.Ft void *
+.Fn kn_get_authorizer "int sessid" "int assertid" "int *algorithm"
+.Ft struct keynote_keylist *
+.Fn kn_get_licensees "int sessid" "int assertid"
 .Ft int
 .Fn kn_encode_base64 "unsigned char const *src" "unsigned int srclen" "char *dst" "unsigned int dstlen"
 .Ft int
@@ -98,10 +112,14 @@ struct keynote_binary
 .Fn kn_verify_assertion "char *assertion" "int len"
 .Fd Link options: -lkeynote -lm -lcrypto
 .Sh DESCRIPTION
+For more details on
+.Nm KeyNote ,
+see RFC 2704.
+.Pp
 .Va keynote_errno
 contains an error code if some library call failed. Failed calls
 return \-1 (if their return value is integer), or
-.Dv NULL
+.Dv NULL 
 (if their return value is a pointer) and set
 .Va keynote_errno .
 The defined error codes are:
@@ -151,7 +169,7 @@ session, and performs any necessary initializations. On success, this
 function returns the new session ID, which is used by all subsequent
 calls with a
 .Fa sessid
-argument.
+argument. 
 On failure, it returns \-1 and sets
 .Va keynote_errno
 to
@@ -402,6 +420,11 @@ given criteria is found, it returns \-1 and set
 to
 .Er ERROR_NOTFOUND .
 .Pp
+.Fn kn_cleanup_action_environment
+removes all action attributes from the action environment of session
+.Fa sessid .
+It returns 0 on success.
+.Pp
 .Fn kn_close
 closes session
 .Fa sessid
@@ -443,6 +466,40 @@ and
 (which must be of the same
 .Fa algorithm )
 and returns 1 if equal and 0 otherwise.
+.Pp
+.Fn kn_get_authorizer
+returns the authorizer key (in binary format) for assertion
+.Fa assertid
+in session
+.Fa sessid .
+It also sets the
+.Fa algorithm
+argument to the algorithm of the authorizer key.
+On failure, 
+.Fn kn_get_authorizer
+returns
+.Fv NULL ,
+and sets
+.Va keynote_errno
+to
+.Er ERROR_NOTFOUND .
+.Pp
+.Fn kn_get_licensees
+returns the licensee key(s) for assertion
+.Fa assertid
+in session
+.Fa sessid .
+The keys are returned in a linked list of
+.Fa struct keynote_keylist
+structures. 
+On failure, 
+.Fn kn_get_licensees
+returns
+.Fv NULL .
+and sets
+.Va keynote_errno
+to
+.Er ERROR_NOTFOUND .
 .Pp
 .Fn kn_query
 takes as arguments a list of action attributes in
@@ -660,7 +717,7 @@ this is an SSLeay/OpenSSL-defined
 .Fa DSA *
 for DSA keys,
 .Fa RSA *
-for RSA keys, and a
+for RSA and X509-based keys, and a
 .Fa keynote_binary *
 for BINARY keys.
 .Fa keytype
@@ -696,7 +753,11 @@ for RSA keys,
 .Dv SIG_DSA_SHA1_HEX
 and
 .Dv SIG_DSA_SHA1_BASE64
-for DSA keys. No other cryptographic signatures are currently
+for DSA keys,
+.Dv SIG_X509_SHA1_HEX ,
+and
+.Dv SIG_X509_SHA1_BASE64
+for X509-based keys.  No other cryptographic signatures are currently
 supported by this implementation. If
 .Fa vflag
 is set to 1, then the generated signature will also be verified. On
@@ -739,6 +800,7 @@ if necessary memory could not be allocated, or
 .Er ERROR_SYNTAX
 if the assertion contained a syntactic error, or the cryptographic
 algorithm was not supported.
+.Pp
 .Sh FILES
 .Fd keynote.h
 .Fd libkeynote.a
@@ -746,10 +808,10 @@ algorithm was not supported.
 .Xr keynote 1 ,
 .Xr keynote 4
 .Bl -tag -width "AAAAAAA"
-.It ``The KeyNote Trust-Management System''
+.It ``The KeyNote Trust-Management System, Version 2'' 
 M. Blaze, J. Feigenbaum, A. D. Keromytis,
-Internet Drafts, draft-ietf-trustmgt-keynote-00.txt
-.It ``Decentralized Trust Management''
+Internet Drafts, RFC 2704.
+.It ``Decentralized Trust Management'' 
 M. Blaze, J. Feigenbaum, J. Lacy,
 1996 IEEE Conference on Privacy and Security
 .It ``Compliance-Checking in the PolicyMaker Trust Management System''

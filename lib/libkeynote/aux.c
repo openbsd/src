@@ -1,4 +1,4 @@
-/* $OpenBSD: aux.c,v 1.3 1999/05/31 20:09:58 angelos Exp $ */
+/* $OpenBSD: aux.c,v 1.4 1999/10/01 01:08:29 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -19,15 +19,22 @@
  * PURPOSE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+
+#if STDC_HEADERS
 #include <string.h>
+#endif /* STDC_HEADERS */
+
+#if HAVE_LIMITS_H
 #include <limits.h>
-#ifndef PILOT
-#include <time.h>
-#endif /* PILOT */
+#endif /* HAVE_LIMITS_H */
 
 #include "keynote.h"
 #include "assertion.h"
@@ -116,7 +123,11 @@ keynote_in_action_authorizers(void *key, int algorithm)
     for (kl = keynote_current_session->ks_action_authorizers;
 	 kl != (struct keylist *) NULL;
 	 kl = kl->key_next)
-      if (kl->key_alg == alg)
+      if ((kl->key_alg == alg) ||
+	  ((kl->key_alg == KEYNOTE_ALGORITHM_RSA) &&
+	   (alg = KEYNOTE_ALGORITHM_X509)) ||
+	  ((kl->key_alg == KEYNOTE_ALGORITHM_X509) &&
+	   (alg = KEYNOTE_ALGORITHM_RSA)))
 	if (kn_keycompare(kl->key_key, s, alg) == RESULT_TRUE)
 	  return RESULT_TRUE;
 
@@ -299,7 +310,11 @@ keynote_find_assertion(void *authorizer, int num, int algorithm)
 	 as != (struct assertion *) NULL;
 	 as = as->as_next)
       if ((as->as_authorizer != (void *) NULL) &&
-	  (as->as_signeralgorithm == algorithm))
+	  ((as->as_signeralgorithm == algorithm) ||
+	   ((as->as_signeralgorithm == KEYNOTE_ALGORITHM_RSA) &&
+	    (algorithm == KEYNOTE_ALGORITHM_X509)) ||
+	   ((as->as_signeralgorithm == KEYNOTE_ALGORITHM_X509) &&
+	    (algorithm == KEYNOTE_ALGORITHM_RSA))))
 	if (kn_keycompare(authorizer, as->as_authorizer, algorithm) ==
 	    RESULT_TRUE)
 	  if (num-- == 0)
