@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.76 2004/01/29 11:55:28 markus Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.77 2004/01/30 11:33:32 henning Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -628,6 +628,11 @@ tcp_ctloutput(op, so, level, optname, mp)
 #ifdef TCP_SACK
 		case TCP_SACK_DISABLE:
 			*mtod(m, int *) = tp->sack_disable;
+			break;
+#endif
+#ifdef TCP_SIGNATURE
+		case TCP_SIGNATURE_ENABLE:
+			*mtod(m, int *) = tp->t_flags & TF_SIGNATURE;
 			break;
 #endif
 		default:
