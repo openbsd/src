@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.10 1999/02/04 00:54:03 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.11 1999/02/05 01:57:32 angelos Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -204,7 +204,8 @@ rtalloc1(dst, report)
 		} else
 			rt->rt_refcnt++;
 	} else {
-		rtstat.rts_unreach++;
+		if (dst->sa_family != AF_ENCAP)
+		        rtstat.rts_unreach++;
 	/*
 	 * IP encapsulation does lots of lookups where we don't need nor want
 	 * the RTM_MISSes that would be generated.  It causes RTM_MISS storms
