@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_radius.8,v 1.4 2002/03/13 22:37:08 marc Exp $
+.\" $OpenBSD: login_radius.8,v 1.5 2002/11/21 22:31:11 millert Exp $
 .\"
 .\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -150,3 +150,15 @@ list of radius servers and their associated shared secrets
 does not ship with a radius server in the default install, however
 several are available via
 .Xr packages 7 .
+.Pp
+For
+.Nm
+to function, the
+.Pa /etc/raddb
+directory must be owned by group
+.Dq _radius
+and have group-execute permissions.
+Likewise, the
+.Pa /etc/raddb/servers
+file must be readable by group
+.Dq _radius .
