@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.16 2003/04/16 01:45:36 deraadt Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.17 2004/08/14 03:08:24 drahn Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -425,6 +425,7 @@ buildhints(void)
 static int
 readhints(void)
 {
+	struct stat		sb;
 	int			fd;
 	caddr_t			addr;
 	long			msize;
@@ -439,7 +440,13 @@ readhints(void)
 		return -1;
 	}
 
-	msize = PAGSIZ;
+	if (fstat(fd, &sb) != 0 || !S_ISREG(sb.st_mode) ||
+	    sb.st_size < sizeof(struct hints_header) || sb.st_size > LONG_MAX) {
+		warn("%s", _PATH_LD_HINTS);
+		return -1;
+	}
+
+	msize =  (long)sb.st_size;
 	addr = mmap(0, msize, PROT_READ, MAP_COPY, fd, 0);
 
 	if (addr == (caddr_t)-1) {
@@ -454,20 +461,17 @@ readhints(void)
 		return -1;
 	}
 
+	if (hdr->hh_ehints > msize) {
+		warnx("%s: hintsize greater than filesize: 0x%x > 0x%x ",
+		    _PATH_LD_HINTS, hdr->hh_ehints, msize);
+		    return -1;
+	}
+
 	if (hdr->hh_version != LD_HINTS_VERSION_2) {
 		warnx("Unsupported version: %ld", hdr->hh_version);
 		return -1;
 	}
 
-	if (hdr->hh_ehints > msize) {
-		if (mmap(addr+msize, hdr->hh_ehints - msize,
-				PROT_READ, MAP_COPY|MAP_FIXED,
-				fd, msize) != (caddr_t)(addr+msize)) {
-
-			warn("%s", _PATH_LD_HINTS);
-			return -1;
-		}
-	}
 	close(fd);
 
 	blist = (struct hints_bucket *)(addr + hdr->hh_hashtab);
