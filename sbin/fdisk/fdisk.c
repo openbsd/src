@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.16 1997/04/14 22:18:57 provos Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.17 1997/04/15 09:02:54 deraadt Exp $	*/
 /*	$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fdisk.c,v 1.16 1997/04/14 22:18:57 provos Exp $";
+static char rcsid[] = "$OpenBSD: fdisk.c,v 1.17 1997/04/15 09:02:54 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -327,7 +327,7 @@ print_partinfo(pp, lead, off)
 	int lead;
 	u_int32_t off;
 {
-        static int extcnt;
+	static int extcnt;
 	static int extoff;
 
 	printf("sysid %d=0x%02x (%s)\n", pp->dp_typ, pp->dp_typ,
@@ -363,8 +363,7 @@ print_partinfo(pp, lead, off)
 
 		off2 = getlong(&pp->dp_start);
 
-		if (read_disk(extoff+off2, 
-			      data.bootinst) == -1) {
+		if (read_disk(extoff+off2, data.bootinst) == -1) {
 			leader(lead+4);
 			printf("uhm, disk read error...\n");
 			return;
@@ -374,8 +373,8 @@ print_partinfo(pp, lead, off)
 		  extoff = off2;
 
 		if (getshort(&data.signature) != BOOT_MAGIC) {
-		        fprintf(stderr,
-				"warning: invalid fdisk partition table found!\n");
+			fprintf(stderr,
+			    "warning: invalid fdisk partition table found!\n");
 			return;
 		}
 
@@ -386,10 +385,10 @@ print_partinfo(pp, lead, off)
 		for (i = 0; i < 4; i++) {
 			pp = &data.parts[i];
 			if (memcmp(pp, &mtpart, sizeof(*pp))) {
-			        leader(lead+2);
+				leader(lead+2);
 				printf("Extended Partition %d: ", extcnt);
 				extcnt++;
-			        print_partinfo(pp, lead+2, off2);
+				print_partinfo(pp, lead+2, off2);
 				extcnt--;
 			}
 		}
