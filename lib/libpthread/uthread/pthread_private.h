@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.32 2001/12/19 02:02:52 fgsch Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.33 2001/12/31 18:23:15 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -255,14 +255,14 @@ struct pthread_mutex {
 };
 
 /*
- * Flags for mutexes. 
+ * Flags for mutexes.
  */
 #define MUTEX_FLAGS_PRIVATE	0x01
 #define MUTEX_FLAGS_INITED	0x02
 #define MUTEX_FLAGS_BUSY	0x04
 
 /*
- * Static mutex initialization values. 
+ * Static mutex initialization values.
  */
 #define PTHREAD_MUTEX_STATIC_INITIALIZER   \
 	{ PTHREAD_MUTEX_DEFAULT, PTHREAD_PRIO_NONE, TAILQ_INITIALIZER, \
@@ -314,7 +314,7 @@ struct pthread_cond_attr {
 #define COND_FLAGS_BUSY		0x04
 
 /*
- * Static cond initialization values. 
+ * Static cond initialization values.
  */
 #define PTHREAD_COND_STATIC_INITIALIZER    \
 	{ COND_TYPE_FAST, TAILQ_INITIALIZER, NULL, NULL, \
@@ -412,14 +412,15 @@ enum pthread_susp {
 #define PTHREAD_BASE_PRIORITY(prio)	((prio) & PTHREAD_MAX_PRIORITY)
 
 /*
- * Clock resolution in nanoseconds.
+ * Clock resolution in microseconds.
  */
-#define CLOCK_RES_NSEC				10000000
+#define CLOCK_RES_USEC				10000
+#define CLOCK_RES_USEC_MIN			1000
 
 /*
  * Time slice period in microseconds.
  */
-#define TIMESLICE_USEC				100000
+#define TIMESLICE_USEC				20000
 
 /*
  * Define a thread-safe macro to get the current time of day
@@ -627,11 +628,11 @@ struct pthread {
 	/* Thread state: */
 	enum pthread_state	state;
 
-	/* Time that this thread was last made active. */
-	struct  timeval		last_active;
+	/* Scheduling clock when this thread was last made active. */
+	long	last_active;
 
-	/* Time that this thread was last made inactive. */
-	struct  timeval		last_inactive;
+	/* Scheduling clock when this thread was last made inactive. */
+	long	last_inactive;
 
 	/*
 	 * Number of microseconds accumulated by this thread when
@@ -650,7 +651,7 @@ struct pthread {
 
 	/*
 	 * Error variable used instead of errno. The function __error()
-	 * returns a pointer to this. 
+	 * returns a pointer to this.
 	 */
 	int	error;
 
@@ -959,9 +960,9 @@ SCLASS int    _thread_dtablesize	/* Descriptor table size.	*/
 ;
 #endif
 
-SCLASS int    _clock_res_nsec		/* Clock resolution in nsec.	*/
+SCLASS int    _clock_res_usec		/* Clock resolution in usec.	*/
 #ifdef GLOBAL_PTHREAD_PRIVATE
-= CLOCK_RES_NSEC;
+= CLOCK_RES_USEC;
 #else
 ;
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_create.c,v 1.17 2001/12/11 00:19:47 fgsch Exp $	*/
+/*	$OpenBSD: uthread_create.c,v 1.18 2001/12/31 18:23:15 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -50,6 +50,7 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 	       void *(*start_routine) (void *), void *arg)
 {
 	struct pthread	*curthread = _get_curthread();
+	struct itimerval itimer;
 	int		f_gc = 0;
 	int             ret = 0;
 	pthread_t       gc_thread;
@@ -75,11 +76,17 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 		} else {
 			pattr = *attr;
 		}
-		/* Create a stack from the specified attributes: */
-		if ((stack = _thread_stack_alloc(pattr->stackaddr_attr,
-		    pattr->stacksize_attr)) == NULL) {
-			ret = EAGAIN;
-			free(new_thread);
+		/* Check if a stack was specified in the thread attributes: */
+		if ((stack = pattr->stackaddr_attr) != NULL) {
+		}
+		/* Allocate a stack: */
+		else {
+			stack = _thread_stack_alloc(pattr->stackaddr_attr,
+			    pattr->stacksize_attr);
+			if (stack == NULL) {
+				ret = EAGAIN;
+				free(new_thread);
+			}
 		}
 
 		/* Check for errors: */
@@ -93,6 +100,7 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			new_thread->stack = stack;
 			new_thread->start_routine = start_routine;
 			new_thread->arg = arg;
+
 			new_thread->cancelflags = PTHREAD_CANCEL_ENABLE |
 			    PTHREAD_CANCEL_DEFERRED;
 
@@ -104,6 +112,7 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 
 			/* Initialise the thread for signals: */
 			new_thread->sigmask = curthread->sigmask;
+			new_thread->sigmask_seqno = 0;
 
 			/*
 			 * Set up new stack frame so that it 'returns' to
@@ -118,24 +127,26 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 
 			/*
 			 * Check if this thread is to inherit the scheduling
-			 * attributes from its parent: 
+			 * attributes from its parent:
 			 */
 			if (new_thread->attr.flags & PTHREAD_INHERIT_SCHED) {
 				/* Copy the scheduling attributes: */
-				new_thread->base_priority
-				    = curthread->base_priority;
-				new_thread->attr.prio
-				    = curthread->base_priority;
-				new_thread->attr.sched_policy
-				    = curthread->attr.sched_policy;
+				new_thread->base_priority =
+				    curthread->base_priority &
+				    ~PTHREAD_SIGNAL_PRIORITY;
+				new_thread->attr.prio =
+				    curthread->base_priority &
+				    ~PTHREAD_SIGNAL_PRIORITY;
+				new_thread->attr.sched_policy =
+				    curthread->attr.sched_policy;
 			} else {
 				/*
 				 * Use just the thread priority, leaving the
 				 * other scheduling attributes as their
-				 * default values: 
+				 * default values:
 				 */
-				new_thread->base_priority
-				    = new_thread->attr.prio;
+				new_thread->base_priority =
+				    new_thread->attr.prio;
 			}
 			new_thread->active_priority = new_thread->base_priority;
 			new_thread->inherited_priority = 0;
@@ -169,11 +180,10 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			/* Add the thread to the linked list of all threads: */
 			TAILQ_INSERT_HEAD(&_thread_list, new_thread, tle);
 
-			if (pattr->suspend == PTHREAD_CREATE_SUSPENDED) {
-				PTHREAD_SET_STATE(new_thread, PS_SUSPENDED);
-				PTHREAD_WAITQ_INSERT(new_thread);
-			} else {
-				PTHREAD_SET_STATE(new_thread, PS_RUNNING);
+			if (pattr->suspend == PTHREAD_CREATE_SUSPENDED)
+				new_thread->state = PS_SUSPENDED;
+			else {
+				new_thread->state = PS_RUNNING;
 				PTHREAD_PRIOQ_INSERT_TAIL(new_thread);
 			}
 
@@ -187,6 +197,16 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			if (thread != NULL)
 				(*thread) = new_thread;
 
+			if (f_gc != 0) {
+				/* Install the scheduling timer: */
+				itimer.it_interval.tv_sec = 0;
+				itimer.it_interval.tv_usec = _clock_res_usec;
+				itimer.it_value = itimer.it_interval;
+				if (setitimer(_ITIMER_SCHED_TIMER, &itimer,
+				    NULL) != 0)
+					PANIC("Cannot set interval timer");
+			}
+
 			/* Schedule the new user thread: */
 			_thread_kern_sched(NULL);
 
@@ -197,6 +217,7 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			if (f_gc && pthread_create(&gc_thread,NULL,
 				    _thread_gc,NULL) != 0)
 				PANIC("Can't create gc thread");
+
 		}
 	}
 

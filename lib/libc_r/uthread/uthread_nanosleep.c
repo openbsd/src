@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_nanosleep.c,v 1.6 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_nanosleep.c,v 1.7 2001/12/31 18:23:15 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -59,8 +59,12 @@ nanosleep(const struct timespec * time_to_sleep,
 		errno = EINVAL;
 		ret = -1;
 	} else {
-		/* Get the current time: */
-		gettimeofday(&tv, NULL);
+		/*
+		 * As long as we're going to get the time of day, we
+		 * might as well store it in the global time of day:
+		 */
+		gettimeofday((struct timeval *) &_sched_tod, NULL);
+		GET_CURRENT_TOD(tv);
 		TIMEVAL_TO_TIMESPEC(&tv, &current_time);
 
 		/* Calculate the time for the current thread to wake up: */
@@ -78,8 +82,12 @@ nanosleep(const struct timespec * time_to_sleep,
 		/* Reschedule the current thread to sleep: */
 		_thread_kern_sched_state(PS_SLEEP_WAIT, __FILE__, __LINE__);
 
-		/* Get the current time: */
-		gettimeofday(&tv, NULL);
+		/*
+		 * As long as we're going to get the time of day, we
+		 * might as well store it in the global time of day:
+		 */
+		gettimeofday((struct timeval *) &_sched_tod, NULL);
+		GET_CURRENT_TOD(tv);
 		TIMEVAL_TO_TIMESPEC(&tv, &current_time1);
 
 		/* Calculate the remaining time to sleep: */

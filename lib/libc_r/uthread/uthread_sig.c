@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sig.c,v 1.11 2001/12/18 03:47:52 marc Exp $	*/
+/*	$OpenBSD: uthread_sig.c,v 1.12 2001/12/31 18:23:15 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -71,6 +71,10 @@ _thread_sig_handler(int sig, int code, struct sigcontext * scp)
 
 	/* Check if an interval timer signal: */
 	if (sig == _SCHED_SIGNAL) {
+		/* Update the scheduling clock: */
+		gettimeofday((struct timeval *)&_sched_tod, NULL);
+		_sched_ticks++;
+
 		if (_thread_kern_in_sched != 0) {
 			/*
 			 * The scheduler is already running; ignore this
@@ -89,7 +93,7 @@ _thread_sig_handler(int sig, int code, struct sigcontext * scp)
 			/*
 			 * Schedule the next thread. This function is not
 			 * expected to return because it will do a longjmp
-			 * instead. 
+			 * instead.
 			 */
 			_thread_kern_sched(scp);
 
@@ -243,7 +247,7 @@ _thread_sig_handle(int sig, struct sigcontext * scp)
 		if (_thread_sigact[sig - 1].sa_handler != SIG_IGN)
 			/*
 			 * Enter a loop to process each thread in the linked
-			 * list: 
+			 * list:
 			 */
 			TAILQ_FOREACH(pthread, &_thread_list, tle) {
 				pthread_t pthread_saved = curthread;
@@ -330,7 +334,7 @@ _thread_signal(pthread_t pthread, int sig)
 
 	/*
 	 * States that are interrupted by the occurrence of a signal
-	 * other than the scheduling alarm: 
+	 * other than the scheduling alarm:
 	 */
 	case PS_FDR_WAIT:
 	case PS_FDW_WAIT:

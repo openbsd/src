@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.18 2001/12/11 00:19:47 fgsch Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.19 2001/12/31 18:23:15 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -114,7 +114,7 @@ _thread_init(void)
 
 	/*
 	 * Create a pipe that is written to by the signal handler to prevent
-	 * signals being missed in calls to _select: 
+	 * signals being missed in calls to _select:
 	 */
 	if (_thread_sys_pipe(_thread_kern_pipe) != 0) {
 		/* Cannot create pipe, so abort: */
@@ -149,7 +149,7 @@ _thread_init(void)
 	else if ((_thread_initial = (pthread_t) malloc(sizeof(struct pthread))) == NULL) {
 		/*
 		 * Insufficient memory to initialise this application, so
-		 * abort: 
+		 * abort:
 		 */
 		PANIC("Cannot allocate memory for initial thread");
 	} else {
@@ -193,6 +193,13 @@ _thread_init(void)
 		TAILQ_INIT(&(_thread_initial->mutexq));
 		_thread_initial->priority_mutex_count = 0;
 
+		/* Initialize the global scheduling time: */
+		_sched_ticks = 0;
+		gettimeofday((struct timeval *) &_sched_tod, NULL);
+
+		/* Initialize last active: */
+		_thread_initial->last_active = (long) _sched_ticks;
+
 		/* Give it a useful name */
 		pthread_set_name_np(_thread_initial, "main");
 
@@ -231,7 +238,7 @@ _thread_init(void)
 			    &_thread_sigact[i - 1]) != 0) {
 				/*
 				 * Abort this process if signal
-				 * initialisation fails: 
+				 * initialisation fails:
 				 */
 				PANIC("Cannot read signal handler info");
 			}
@@ -249,9 +256,9 @@ _thread_init(void)
 		    _thread_sys_sigaction(SIGINFO,       &act, NULL) != 0 ||
 		    _thread_sys_sigaction(SIGCHLD,       &act, NULL) != 0) {
 			/*
-			 * Abort this process if signal initialisation fails: 
+			 * Abort this process if signal initialization fails:
 			 */
-			PANIC("Cannot initialise signal handler");
+			PANIC("Cannot initialize signal handler");
 		}
 
 		/* Get the kernel clockrate: */
@@ -259,13 +266,14 @@ _thread_init(void)
 		mib[1] = KERN_CLOCKRATE;
 		len = sizeof (struct clockinfo);
 		if (sysctl(mib, 2, &clockinfo, &len, NULL, 0) == 0)
-			_clock_res_nsec = clockinfo.tick * 1000;
+			_clock_res_usec = clockinfo.tick > CLOCK_RES_USEC_MIN ?
+			    clockinfo.tick : CLOCK_RES_USEC_MIN;
 
 		/* Get the table size: */
 		if ((_thread_dtablesize = getdtablesize()) < 0) {
 			/*
 			 * Cannot get the system defined table size, so abort
-			 * this process. 
+			 * this process.
 			 */
 			PANIC("Cannot get dtablesize");
 		}
@@ -276,7 +284,7 @@ _thread_init(void)
 
 			/*
 			 * Cannot allocate memory for the file descriptor
-			 * table, so abort this process. 
+			 * table, so abort this process.
 			 */
 			PANIC("Cannot allocate memory for file descriptor table");
 		}
@@ -284,13 +292,13 @@ _thread_init(void)
 		if ((_thread_pfd_table = (struct pollfd *) malloc(sizeof(struct pollfd) * _thread_dtablesize)) == NULL) {
 			/*
 			 * Cannot allocate memory for the file descriptor
-			 * table, so abort this process. 
+			 * table, so abort this process.
 			 */
 			PANIC("Cannot allocate memory for pollfd table");
 		} else {
 			/*
 			 * Enter a loop to initialise the file descriptor
-			 * table: 
+			 * table:
 			 */
 			for (i = 0; i < _thread_dtablesize; i++) {
 				/* Initialise the file descriptor table: */
