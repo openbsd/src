@@ -76,6 +76,8 @@ distribution: distrib-dirs
 	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	/bin/rm -f ${DESTDIR}/etc/rmt
 	ln -s /usr/sbin/rmt ${DESTDIR}/etc/rmt
+	install -c -o root -g wheel -m 644 minfree \
+		${DESTDIR}/var/crash
 	install -c -o root -g wheel -m 644 Makefile.yp \
 		${DESTDIR}/var/yp.no/Makefile
 	install -c -o ${BINOWN} -g operator -m 664 /dev/null \
