@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.703 2004/01/07 00:06:07 tom Exp 
+ *	OpenBSD: pcidevs,v 1.704 2004/01/08 20:26:00 tom Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1719,16 +1719,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CS4610 SoundFusion Audio",
 	},
 	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4614,
-	    "CS4614",
-	},
-	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4615,
 	    "CS4615",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4280,
-	    "CS4280 CrystalClear Audio",
+	    "CS4280/46xx CrystalClear Audio",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4281,
