@@ -140,7 +140,7 @@ cgeightattach(parent, self, args)
 	register volatile struct bt_regs *bt;
 	register struct cgeight_all *p;
 	int isconsole;
-#ifdef RCONSOLE
+#ifdef RASTERCONSOLE
 	struct fbdevice fbd;
 #endif
 
@@ -207,7 +207,7 @@ cgeightattach(parent, self, args)
 
 	if (isconsole) {
 		printf(" (console)\n");
-#ifdef RCONSOLE
+#ifdef RASTERCONSOLE
 		/*
 		 * Like SunOS and the bootrom, we want to do full-screen
 		 * text on the overlay plane. But rcons_init() requires
