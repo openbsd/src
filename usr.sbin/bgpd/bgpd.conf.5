@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.15 2004/01/18 07:35:30 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.16 2004/02/01 19:49:10 claudio Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
@@ -169,6 +169,12 @@ listen on 127.0.0.1
 .Ed
 .It Ar log updates
 Log received and sent updates.
+.It Ar network
+Announce the specified network as belonging to our
+.Em AS .
+.Bd -literal -offset indent
+network 192.168.7.0/24
+.Ed
 .It Ar router-id
 Set the router id to the given IP address which must be local to the
 machine.
@@ -220,14 +226,24 @@ all generated
 .Em UPDATE
 messages will be sent to the neighbor.
 This is normally only necessary for transit
-.Em AS's .
-The default value is
+.Em AS's
+and
+.Em IBGP
+peers.
+The default value
+for
+.Em EBGP
+peers is
 .Em self
 which limits the sent
 .Em UPDATE
 messages to announcements of the local
 .Em AS
 only.
+The default for
+.Em IBGP
+peers is
+.Em all .
 .It Ar descr
 Add a description.
 The description is used when logging neighbor events and in status
