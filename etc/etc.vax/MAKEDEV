@@ -209,7 +209,7 @@ U=`unt $i`
 
 case $i in
 ramdisk)
-	R std random
+	R std bpf0 random
 	R fd0 sd0 sd1 rd0
 	;;
 
