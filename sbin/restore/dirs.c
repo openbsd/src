@@ -151,12 +151,15 @@ extractdirs(genmode)
 	struct direct nulldir;
 
 	vprintf(stdout, "Extract directories from tape\n");
-	(void) sprintf(dirfile, "%s/rstdir%d-XXXXXX", _PATH_TMP, dumpdate);
-	if (mktemp(dirfile) == NULL) {
-		fprintf(stderr,
-		    "restore: %s - cannot generate directory temporary\n",
-		    dirfile);
-		exit(1);
+	(void) sprintf(dirfile, "%s/rstdir%d", _PATH_TMP, dumpdate);
+	if (command != 'r' && command != 'R') {
+		(void *) strcat(dirfile, "-XXXXXX");
+		if (mktemp(dirfile) == NULL) {
+			fprintf(stderr,
+			    "restore: %s - cannot mktemp directory temporary\n",
+			    dirfile);
+			exit(1);
+		}
 	}
 	df = fopen(dirfile, "w");
 	if (df == NULL) {
@@ -167,13 +170,15 @@ extractdirs(genmode)
 		exit(1);
 	}
 	if (genmode != 0) {
-		(void) sprintf(modefile, "%s/rstmode%d-XXXXXX", _PATH_TMP,
-		    dumpdate);
-		if (mktemp(modefile) == NULL) {
-			fprintf(stderr,
-			    "restore: %s - cannot generate modefile\n",
-			    modefile);
-			exit(1);
+		(void) sprintf(modefile, "%s/rstmode%d", _PATH_TMP, dumpdate);
+		if (command != 'r' && command != 'R') {
+			(void *) strcat(modefile, "-XXXXXX");
+			if (mktemp(modefile) == NULL) {
+				fprintf(stderr,
+				    "restore: %s - cannot mktemp modefile\n",
+				    modefile);
+				exit(1);
+			}
 		}
 		mf = fopen(modefile, "w");
 		if (mf == NULL) {
@@ -604,7 +609,13 @@ setdirmodes(flags)
 	char *cp;
 	
 	vprintf(stdout, "Set directory mode, owner, and times.\n");
-	(void) sprintf(modefile, "%s/rstmode%d", _PATH_TMP, dumpdate);
+	if (command == 'r' || command == 'R')
+		(void) sprintf(modefile, "%s/rstmode%d", _PATH_TMP, dumpdate);
+	if (modefile[0] == '#') {
+		panic("modefile not defined\n");
+		fprintf(stderr, "directory mode, owner, and times not set\n");
+		return;
+	}
 	mf = fopen(modefile, "r");
 	if (mf == NULL) {
 		fprintf(stderr, "fopen: %s\n", strerror(errno));

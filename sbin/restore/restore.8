@@ -423,6 +423,28 @@ it has no control over inode allocation;
 thus a full dump must be done to get a new set of directories
 reflecting the new inode numbering,
 even though the contents of the files is unchanged.
+.Pp
+The temporary files
+.Pa /tmp/rstdir*
+and
+.Pa /tmp/rstmode*
+are generated with a unique name based on the date of the dump
+and the process ID (see
+.Xr mktemp 3 ),
+except for when 
+.Fl r
+or
+.Fl R
+is used.
+Because
+.Fl R
+allows you to restart a
+.Fl r
+operation that may have been interrupted, the temporary files should
+be the same across different processes.
+In all other cases, the files are unique because it is possible to
+have two different dumps started at the same time, and separate
+operations shouldn't conflict with each other.
 .Sh HISTORY
 The
 .Nm restore
