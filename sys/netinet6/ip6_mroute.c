@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.23 2002/06/07 04:13:10 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.24 2002/06/07 18:18:14 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -1579,7 +1579,7 @@ register_send(ip6, mif, m)
 #ifdef MRT6DEBUG
 		if (mrt6debug)
 			log(LOG_WARNING,
-			    "register_send: ip_mrouter socket queue full\n");
+			    "register_send: ip6_mrouter socket queue full\n");
 #endif
 		++mrt6stat.mrt6s_upq_sockfull;
 		return ENOBUFS;
