@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.115 2001/06/27 04:44:03 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.116 2001/07/05 08:31:48 jjbg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -73,6 +73,12 @@ union sockaddr_union {
 #define	SPI_RESERVED_MIN	1
 #define	SPI_RESERVED_MAX	255
 
+/* Reserved CPI numbers */
+#define CPI_RESERVED_MIN	1
+#define CPI_RESERVED_MAX	255
+#define CPI_PRIVATE_MIN		61440
+#define CPI_PRIVATE_MAX		65535
+
 /* sysctl default values */
 #define	IPSEC_DEFAULT_EMBRYONIC_SA_TIMEOUT	60	/* 1 minute */
 #define	IPSEC_DEFAULT_PFS			1
@@ -87,6 +93,7 @@ union sockaddr_union {
 #define	IPSEC_DEFAULT_DEF_ENC			"aes"
 #define	IPSEC_DEFAULT_DEF_AUTH			"hmac-sha1"
 #define	IPSEC_DEFAULT_EXPIRE_ACQUIRE		30
+#define IPSEC_DEFAULT_DEF_COMP			"deflate"
 
 struct sockaddr_encap {
 	u_int8_t	sen_len;		/* length */
@@ -216,6 +223,7 @@ struct ipsec_policy {
 #define	NOTIFY_SATYPE_CONF	1	/* SA should do encryption */
 #define	NOTIFY_SATYPE_AUTH	2	/* SA should do authentication */
 #define	NOTIFY_SATYPE_TUNNEL	4	/* SA should use tunneling */
+#define NOTIFY_SATYPE_COMP	5       /* SA (IPCA) should use compression */
 
 /* Authentication types */
 #define	IPSP_AUTH_NONE		0
@@ -263,6 +271,7 @@ struct tdb {				/* tunnel descriptor block */
 	struct xformsw		*tdb_xform;		/* Transform to use */
 	struct enc_xform	*tdb_encalgxform;	/* Enc algorithm */
 	struct auth_hash	*tdb_authalgxform;	/* Auth algorithm */
+	struct comp_algo	*tdb_compalgxform;	/* Compression algo */
 
 #define	TDBF_UNIQUE		0x00001	/* This should not be used by others */
 #define	TDBF_TIMER		0x00002	/* Absolute expiration timer in use */
@@ -373,6 +382,7 @@ struct ipsecinit {
 	u_int16_t	ii_authkeylen;
 	u_int8_t	ii_encalg;
 	u_int8_t	ii_authalg;
+	u_int8_t	ii_compalg;
 };
 
 struct xformsw {
@@ -392,10 +402,12 @@ struct xformsw {
 #define	XF_AH		2	/* AH */
 #define	XF_ESP		3	/* ESP */
 #define	XF_TCPSIGNATURE	5	/* TCP MD5 Signature option, RFC 2358 */
+#define XF_IPCOMP	6	/* IPCOMP */
 
 /* xform attributes */
 #define	XFT_AUTH	0x0001
 #define	XFT_CONF	0x0100
+#define XFT_COMP	0x1000
 
 #define	IPSEC_ZEROES_SIZE	256	/* Larger than an IP6 extension hdr. */
 #define	IPSEC_KERNFS_BUFSIZE	4096
@@ -452,6 +464,7 @@ extern int ipsec_soft_first_use;
 extern int ipsec_exp_first_use;
 extern char ipsec_def_enc[];
 extern char ipsec_def_auth[];
+extern char ipsec_def_comp[];
 
 extern struct enc_xform enc_xform_des;
 extern struct enc_xform enc_xform_3des;
@@ -463,6 +476,8 @@ extern struct auth_hash auth_hash_hmac_md5_96;
 extern struct auth_hash auth_hash_hmac_sha1_96;
 extern struct auth_hash auth_hash_hmac_ripemd_160_96;
 
+extern struct comp_algo comp_algo_deflate;
+
 extern TAILQ_HEAD(ipsec_policy_head, ipsec_policy) ipsec_policy_head;
 extern TAILQ_HEAD(ipsec_acquire_head, ipsec_acquire) ipsec_acquire_head;
 
@@ -470,7 +485,8 @@ extern struct xformsw xformsw[], *xformswNXFORMSW;
 
 /* Check if a given tdb has encryption, authentication and/or tunneling */
 #define	TDB_ATTRIB(x) (((x)->tdb_encalgxform ? NOTIFY_SATYPE_CONF : 0) | \
-		       ((x)->tdb_authalgxform ? NOTIFY_SATYPE_AUTH : 0))
+		       ((x)->tdb_authalgxform ? NOTIFY_SATYPE_AUTH : 0) | \
+		       ((x)->tdb_compalgxform ? NOTIFY_SATYPE_COMP : 0))
 
 /* Traverse spi chain and get attributes */
 
@@ -569,6 +585,26 @@ extern void *esp4_ctlinput __P((int, struct sockaddr *, void *));
 #ifdef INET6
 extern int esp6_input __P((struct mbuf **, int *, int));
 extern int esp6_input_cb __P((struct mbuf *, int, int));
+#endif /* INET6 */
+
+/* XF_IPCOMP */
+extern int ipcomp_attach(void);
+extern int ipcomp_init(struct tdb *, struct xformsw *, struct ipsecinit *);
+extern int ipcomp_zeroize(struct tdb *);
+extern int ipcomp_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
+extern int ipcomp_output_cb(void *);
+extern int ipcomp_input(struct mbuf *, struct tdb *, int, int);
+extern int ipcomp_input_cb(void *);
+extern int ipcomp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+
+#ifdef INET
+extern void ipcomp4_input __P((struct mbuf *, ...));
+extern int ipcomp4_input_cb __P((struct mbuf *, ...));
+#endif /* INET */
+
+#ifdef INET6
+extern int ipcomp6_input __P((struct mbuf **, int *, int));
+extern int ipcomp6_input_cb __P((struct mbuf *, int, int));
 #endif /* INET6 */
 
 /* XF_TCPSIGNATURE */

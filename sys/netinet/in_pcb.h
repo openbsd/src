@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.37 2001/06/12 10:59:53 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.38 2001/07/05 08:31:47 jjbg Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -125,10 +125,11 @@ struct inpcb {
 	} inp_mou;
 #define inp_moptions inp_mou.mou_mo
 #define inp_moptions6 inp_mou.mou_mo6
-	u_char	  inp_seclevel[3];
+	u_char	  inp_seclevel[4];
 #define SL_AUTH           0             /* Authentication level */
 #define SL_ESP_TRANS      1             /* ESP transport level */
 #define SL_ESP_NETWORK    2             /* ESP network (encapsulation) level */
+#define SL_IPCOMP         3             /* Compression level */
 	u_int8_t  inp_secrequire:4,     /* Condensed State from above */
 	          inp_secresult:4;	/* Result from Key Management */
 #define SR_FAILED         1             /* Negotiation failed permanently */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.52 2001/06/25 00:11:57 angelos Exp $	*/
+/*	$OpenBSD: in.h,v 1.53 2001/07/05 08:31:47 jjbg Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -262,6 +262,7 @@ struct ip_opts {
 #define IP_IPSEC_REMOTE_CRED	26   /* buf; IPsec remote credentials */
 #define IP_IPSEC_LOCAL_AUTH	27   /* buf; IPsec local auth material */
 #define IP_IPSEC_REMOTE_AUTH	28   /* buf; IPsec remote auth material */
+#define IP_IPCOMP_LEVEL		29   /* int; compression used */
 
 /*
  * Security levels - IPsec, not IPSO
@@ -278,6 +279,7 @@ struct ip_opts {
 #define IPSEC_AUTH_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
 #define IPSEC_ESP_TRANS_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
 #define IPSEC_ESP_NETWORK_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
+#define IPSEC_IPCOMP_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
 
 /*
  * Defaults and limits for options
@@ -313,7 +315,7 @@ struct ip_mreq {
  * Third level is protocol number.
  * Fourth level is desired variable within that protocol.
  */
-#define	IPPROTO_MAXID	(IPPROTO_ETHERIP + 1)	/* don't list to IPPROTO_MAX */
+#define	IPPROTO_MAXID	(IPPROTO_IPCOMP + 1)	/* don't list to IPPROTO_MAX */
 
 #define	CTL_IPPROTO_NAMES { \
 	{ "ip", CTLTYPE_NODE }, \
@@ -414,6 +416,17 @@ struct ip_mreq {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "etherip", CTLTYPE_NODE }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ "ipcomp", CTLTYPE_NODE }, \
 }
 
 /*
@@ -451,7 +464,8 @@ struct ip_mreq {
 #define IPCTL_IPSEC_AUTH_ALGORITHM 26
 #define	IPCTL_MTUDISC		27	/* allow path MTU discovery */
 #define	IPCTL_MTUDISCTIMEOUT	28	/* allow path MTU discovery */
-#define	IPCTL_MAXID		29
+#define IPCTL_IPSEC_IPCOMP_ALGORITHM	29
+#define	IPCTL_MAXID		30
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -483,6 +497,7 @@ struct ip_mreq {
 	{ "ipsec-auth-alg", CTLTYPE_STRING }, \
 	{ "mtudisc", CTLTYPE_INT }, \
 	{ "mtudisctimeout", CTLTYPE_INT }, \
+	{ "ipsec-comp-alg", CTLTYPE_STRING }, \
 }
 
 /* INET6 stuff */
