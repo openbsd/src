@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.30 2003/10/16 14:18:34 grange Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.31 2003/10/17 08:14:09 grange Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -68,6 +68,7 @@ struct channel_softc { /* Per channel data */
 #define WDCF_ACTIVE		0x01 /* channel is active */
 #define WDCF_ONESLAVE		0x02 /* slave-only channel */
 #define WDCF_IRQ_WAIT		0x10 /* controller is waiting for irq */
+#define WDCF_DMA_WAIT		0x20 /* controller is waiting for DMA */
 #define WDCF_VERBOSE_PROBE	0x40 /* verbose probe */
 	u_int8_t ch_status;         /* copy of status register */
 	u_int8_t ch_prev_log_status; /* previous logged value of status reg */
@@ -175,7 +176,7 @@ struct wdc_softc { /* Per controller state */
 	int            (*dma_init)(void *, int, int, void *, size_t,
 	                int);
 	void           (*dma_start)(void *, int, int);
-	int            (*dma_finish)(void *, int, int);
+	int            (*dma_finish)(void *, int, int, int);
 /* flags passed to DMA functions */
 #define WDC_DMA_READ	0x01
 #define WDC_DMA_IRQW	0x02

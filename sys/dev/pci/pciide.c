@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.143 2003/10/16 14:52:58 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.144 2003/10/17 08:14:09 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ void pdc20268_setup_channel(struct channel_softc*);
 int  pdc202xx_pci_intr(void *);
 int  pdc20265_pci_intr(void *);
 void pdc20262_dma_start(void *, int, int);
-int  pdc20262_dma_finish(void *, int, int);
+int  pdc20262_dma_finish(void *, int, int, int);
 
 void opti_chip_map(struct pciide_softc*, struct pci_attach_args*);
 void opti_setup_channel(struct channel_softc*);
@@ -291,7 +291,7 @@ void pciide_channel_dma_setup(struct pciide_channel *);
 int  pciide_dma_table_setup(struct pciide_softc*, int, int);
 int  pciide_dma_init(void *, int, int, void *, size_t, int);
 void pciide_dma_start(void *, int, int);
-int  pciide_dma_finish(void *, int, int);
+int  pciide_dma_finish(void *, int, int, int);
 void pciide_irqack(struct channel_softc *);
 void pciide_print_modes(struct pciide_channel *);
 void pciide_print_channels(int, pcireg_t);
@@ -1306,9 +1306,10 @@ pciide_dma_start(v, channel, drive)
 }
 
 int
-pciide_dma_finish(v, channel, drive)
+pciide_dma_finish(v, channel, drive, force)
 	void *v;
 	int channel, drive;
+	int force;
 {
 	struct pciide_softc *sc = v;
 	u_int8_t status;
@@ -1322,6 +1323,9 @@ pciide_dma_finish(v, channel, drive)
 	    IDEDMA_CTL(channel));
 	WDCDEBUG_PRINT(("pciide_dma_finish: status 0x%x\n", status),
 	    DEBUG_XFERS);
+
+	if (force == 0 && (status & IDEDMA_CTL_INTR) == 0)
+		return WDC_DMAST_NOIRQ;
 
 	/* stop DMA channel */
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
@@ -5150,7 +5154,7 @@ pdc20262_dma_start(void *v, int channel, int drive)
 }
 
 int
-pdc20262_dma_finish(void *v, int channel, int drive)
+pdc20262_dma_finish(void *v, int channel, int drive, int force)
 {
 	struct pciide_softc *sc = v;
 	struct pciide_dma_maps *dma_maps =
@@ -5166,7 +5170,7 @@ pdc20262_dma_finish(void *v, int channel, int drive)
 		    PDC262_ATAPI(channel), 0);
 	}
 
-	return (pciide_dma_finish(v, channel, drive));
+	return (pciide_dma_finish(v, channel, drive, force));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.66 2003/10/16 11:58:16 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.67 2003/10/17 08:14:09 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -988,6 +988,16 @@ wdcintr(arg)
 
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
 	xfer = TAILQ_FIRST(&chp->ch_queue->sc_xfer);
+	if (chp->ch_flags & WDCF_DMA_WAIT) {
+		chp->wdc->dma_status =
+		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg, chp->channel,
+		    xfer->drive, 0);
+		if (chp->wdc->dma_status & WDC_DMAST_NOIRQ) {
+			/* IRQ not for us, not detected by DMA engine */
+			return 0;
+		}
+		chp->ch_flags &= ~WDCF_DMA_WAIT;
+	}
 	chp->ch_flags &= ~WDCF_IRQ_WAIT;
         ret = xfer->c_intr(chp, xfer, 1);
 	if (ret == 0)	/* irq was not for us, still waiting for irq */
@@ -1157,6 +1167,30 @@ wdc_wait_for_status(chp, mask, bits, timeout)
 	return time;
 }
 
+/*
+ * Busy-wait for DMA to complete
+ */
+int
+wdc_dmawait(chp, xfer, timeout)
+	struct channel_softc *chp;
+	struct wdc_xfer *xfer;
+	int timeout;
+{
+	int time;
+	for (time = 0;  time < timeout * 1000 / WDCDELAY; time++) {
+		chp->wdc->dma_status =
+		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
+		    chp->channel, xfer->drive, 0);
+		if ((chp->wdc->dma_status & WDC_DMAST_NOIRQ) == 0)
+			return 0;
+		delay(WDCDELAY);
+	}
+	/* timeout, force a DMA halt */
+	chp->wdc->dma_status = (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
+	    chp->channel, xfer->drive, 1);
+	return 1;
+}
+
 void
 wdctimeout(arg)
 	void *arg;
@@ -1182,6 +1216,12 @@ wdctimeout(arg)
 		    "atapi":"ata");
 		printf("\tc_bcount: %d\n", xfer->c_bcount);
 		printf("\tc_skip: %d\n", xfer->c_skip);
+		if (chp->ch_flags & WDCF_DMA_WAIT) {
+			chp->wdc->dma_status =
+			    (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
+			    chp->channel, xfer->drive, 1);
+			chp->ch_flags &= ~WDCF_DMA_WAIT;
+		}
 		/*
 		 * Call the interrupt routine. If we just missed and interrupt,
 		 * it will do what's needed. Else, it will take the needed

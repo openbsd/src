@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc_isa.c,v 1.9 2002/03/14 03:16:05 millert Exp $     */
+/*      $OpenBSD: wdc_isa.c,v 1.10 2003/10/17 08:14:09 grange Exp $     */
 /*	$NetBSD: wdc_isa.c,v 1.15 1999/05/19 14:41:25 bouyer Exp $ */
 
 /*-
@@ -92,7 +92,7 @@ struct cfattach wdc_isa_ca = {
 static void	wdc_isa_dma_setup(struct wdc_isa_softc *);
 static int	wdc_isa_dma_init(void *, int, int, void *, size_t, int);
 static void 	wdc_isa_dma_start(void *, int, int);
-static int	wdc_isa_dma_finish(void *, int, int);
+static int	wdc_isa_dma_finish(void *, int, int, int);
 #endif	/* NISADMA > 0 */
 
 int
@@ -252,9 +252,10 @@ wdc_isa_dma_start(v, channel, drive)
 }
 
 static int
-wdc_isa_dma_finish(v, channel, drive)
+wdc_isa_dma_finish(v, channel, drive, force)
 	void *v;
 	int channel, drive;
+	int force;
 {
 	struct wdc_isa_softc *sc = v;
 

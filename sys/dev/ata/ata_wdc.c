@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.23 2003/10/16 11:30:00 grange Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.24 2003/10/17 08:14:09 grange Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -315,6 +315,7 @@ again:
 			/* start the DMA channel */
 			(*chp->wdc->dma_start)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive);
+			chp->ch_flags |= WDCF_DMA_WAIT;
 			/* wait for irq */
 			goto intr;
 		} /* else not DMA */
@@ -382,6 +383,10 @@ intr:	/* Wait for IRQ (either real or polled) */
 	} else {
 		/* Wait for at last 400ns for status bit to be valid */
 		delay(1);
+		if (chp->ch_flags & WDCF_DMA_WAIT) {
+			wdc_dmawait(chp, xfer, ATA_DELAY);
+			chp->ch_flags &= ~WDCF_DMA_WAIT;
+		}
 		wdc_ata_bio_intr(chp, xfer, 0);
 		if ((ata_bio->flags & ATA_ITSDONE) == 0)
 			goto again;
@@ -438,14 +443,12 @@ wdc_ata_bio_intr(chp, xfer, irq)
 
 		goto timeout;
 	}
+	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+		chp->wdc->irqack(chp);
 
 	drv_err = wdc_ata_err(drvp, ata_bio);
 
 	if (xfer->c_flags & C_DMA) {
-		chp->wdc->dma_status =
-		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-			chp->channel, xfer->drive);
-
 		if (chp->wdc->dma_status != 0) {
 			if (drv_err != WDC_ATA_ERR) {
 				ata_bio->error = ERR_DMA;
@@ -465,9 +468,6 @@ wdc_ata_bio_intr(chp, xfer, irq)
 			goto end;
 		ata_dmaerr(drvp);
 	}
-
-	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
-		chp->wdc->irqack(chp);
 
 	/* if we had an error, end */
 	if (drv_err == WDC_ATA_ERR) {
@@ -509,12 +509,8 @@ end:
 	return 1;
 
 timeout:
-	if (xfer->c_flags & C_DMA) {
-		chp->wdc->dma_status =
-		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-			chp->channel, xfer->drive);
+	if (xfer->c_flags & C_DMA)
 		ata_dmaerr(drvp);
-	}
 
 	ata_bio->error = TIMEOUT;
 	wdc_ata_bio_done(chp, xfer);

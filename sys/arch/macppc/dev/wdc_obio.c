@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.14 2003/07/19 14:45:41 drahn Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.15 2003/10/17 08:14:09 grange Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ struct cfattach wdc_obio_ca = {
 
 int	wdc_obio_dma_init(void *, int, int, void *, size_t, int);
 void	wdc_obio_dma_start(void *, int, int);
-int	wdc_obio_dma_finish(void *, int, int);
+int	wdc_obio_dma_finish(void *, int, int, int);
 void	wdc_obio_adjust_timing(struct channel_softc *);
 void	wdc_obio_ata4_adjust_timing(struct channel_softc *);
 void	wdc_obio_ata6_adjust_timing(struct channel_softc *);
@@ -582,9 +582,9 @@ wdc_obio_dma_start(v, channel, drive)
 }
 
 int
-wdc_obio_dma_finish(v, channel, drive)
+wdc_obio_dma_finish(v, channel, drive, force)
 	void *v;
-	int channel, drive;
+	int channel, drive, force;
 {
 	struct wdc_obio_softc *sc = v;
 

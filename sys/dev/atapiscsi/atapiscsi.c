@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.65 2003/10/16 11:30:00 grange Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.66 2003/10/17 08:14:09 grange Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -1101,11 +1101,6 @@ wdc_atapi_intr_complete(chp, xfer, timeout, ret)
 		int retry;
 
 		if (timeout) {
-			chp->wdc->dma_status =
-			    (*chp->wdc->dma_finish)
-			    (chp->wdc->dma_arg, chp->channel,
-				xfer->drive);
-
 			sc_xfer->error = XS_TIMEOUT;
 			ata_dmaerr(drvp);
 
@@ -1127,7 +1122,7 @@ wdc_atapi_intr_complete(chp, xfer, timeout, ret)
 		chp->wdc->dma_status =
 		    (*chp->wdc->dma_finish)
 		    (chp->wdc->dma_arg, chp->channel,
-			xfer->drive);
+			xfer->drive, 1);
 
 		if (chp->wdc->dma_status & WDC_DMAST_UNDER)
 			xfer->c_bcount = 1;
