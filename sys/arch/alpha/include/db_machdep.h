@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.17 2004/01/22 17:47:03 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.18 2005/01/04 21:14:35 espie Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -52,6 +52,7 @@ extern db_regs_t	ddb_regs;
 #define	DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_regs[FRAME_PC])
+#define	SET_PC_REGS(regs, value) (regs)->tf_regs[FRAME_PC] = (unsigned long)(value)
 
 /* Breakpoint related definitions */
 #define	BKPT_INST	0x00000080	/* call_pal bpt */

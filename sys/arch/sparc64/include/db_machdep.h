@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.8 2003/02/12 06:32:59 jason Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.9 2005/01/04 21:14:35 espie Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
@@ -86,11 +86,8 @@ extern	db_regs_t ddb_regs;	/* register state */
 #define	DDB_FR		(&ddb_regs.ddb_fr)
 #define	DDB_FP		(&ddb_regs.ddb_fpstate)
 
-#if defined(lint)
-#define	PC_REGS(regs)	((regs)->ddb_tf.tf_pc)
-#else
 #define	PC_REGS(regs)	((db_addr_t)(regs)->ddb_tf.tf_pc)
-#endif
+#define	SET_PC_REGS(regs, value)	(regs)->ddb_tf.tf_pc = (int32_t)(value)
 #define	PC_ADVANCE(regs) do {				\
 	vaddr_t n = (regs)->ddb_tf.tf_npc;		\
 	(regs)->ddb_tf.tf_pc = n;			\

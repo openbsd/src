@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 2004/09/21 05:51:13 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.6 2005/01/04 21:14:35 espie Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -54,6 +54,7 @@ db_addr_t	next_instr_address __P((db_addr_t, boolean_t));
 #define IS_WATCHPOINT_TRAP(type, code)	(0)	/* XXX mips3 watchpoint */
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->pc)
+#define	SET_PC_REGS(regs, value)	(regs)->pc = (register_t)(value)
 #define DDB_REGS	(&ddb_regs)
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.8 2002/03/14 01:26:34 millert Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.9 2005/01/04 21:14:35 espie Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.20 1997/06/26 01:26:58 thorpej Exp $	*/
 
 /* 
@@ -53,6 +53,7 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_pc)
+#define	SET_PC_REGS(regs, value)	(regs)->tf_pc = (unsigned int)(value)
 
 #define	BKPT_INST	0x4e4f		/* breakpoint instruction */
 #define	BKPT_SIZE	(2)		/* size of breakpoint inst */
