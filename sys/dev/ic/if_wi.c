@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.106 2004/03/12 20:50:45 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.107 2004/03/15 21:50:26 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.106 2004/03/12 20:50:45 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.107 2004/03/15 21:50:26 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -2193,7 +2193,7 @@ wi_start(ifp)
 	struct mbuf		*m0;
 	struct wi_frame		tx_frame;
 	struct ether_header	*eh;
-	int			id;
+	int			id, hostencrypt = 0;
 
 	sc = ifp->if_softc;
 
@@ -2211,7 +2211,7 @@ nextpkt:
 		return;
 
 	bzero((char *)&tx_frame, sizeof(tx_frame));
-	tx_frame.wi_frame_ctl = htole16(WI_FTYPE_DATA);
+	tx_frame.wi_frame_ctl = htole16(WI_FTYPE_DATA | WI_STYPE_DATA);
 	id = sc->wi_tx_data_id;
 	eh = mtod(m0, struct ether_header *);
 
@@ -2241,12 +2241,21 @@ nextpkt:
 		if (sc->wi_ptype == WI_PORTTYPE_HOSTAP) {
 			tx_frame.wi_tx_ctl = htole16(WI_ENC_TX_MGMT); /* XXX */
 			tx_frame.wi_frame_ctl |= htole16(WI_FCTL_FROMDS);
-			if (sc->wi_use_wep)
-				tx_frame.wi_frame_ctl |= htole16(WI_FCTL_WEP);
 			bcopy((char *)&sc->sc_arpcom.ac_enaddr,
 			    (char *)&tx_frame.wi_addr2, ETHER_ADDR_LEN);
 			bcopy((char *)&eh->ether_shost,
 			    (char *)&tx_frame.wi_addr3, ETHER_ADDR_LEN);
+			if (sc->wi_use_wep)
+				hostencrypt = 1;
+		} else if (sc->wi_ptype == WI_PORTTYPE_BSS && sc->wi_use_wep &&
+		    sc->wi_crypto_algorithm != WI_CRYPTO_FIRMWARE_WEP) {
+			tx_frame.wi_tx_ctl = htole16(WI_ENC_TX_MGMT); /* XXX */
+			tx_frame.wi_frame_ctl |= htole16(WI_FCTL_TODS);
+			bcopy((char *)&sc->sc_arpcom.ac_enaddr,
+			    (char *)&tx_frame.wi_addr2, ETHER_ADDR_LEN);
+			bcopy((char *)&eh->ether_dhost,
+			    (char *)&tx_frame.wi_addr3, ETHER_ADDR_LEN);
+			hostencrypt = 1;
 		} else
 			bcopy((char *)&eh->ether_shost,
 			    (char *)&tx_frame.wi_addr2, ETHER_ADDR_LEN);
@@ -2261,9 +2270,10 @@ nextpkt:
 		tx_frame.wi_len = htons(m0->m_pkthdr.len - WI_SNAPHDR_LEN);
 		tx_frame.wi_type = eh->ether_type;
 
-		if (sc->wi_ptype == WI_PORTTYPE_HOSTAP && sc->wi_use_wep) {
+		if (hostencrypt) {
 
 			/* Do host encryption. */
+			tx_frame.wi_frame_ctl |= htole16(WI_FCTL_WEP);
 			bcopy(&tx_frame.wi_dat[0], &sc->wi_txbuf[4], 8);
 
 			m_copydata(m0, sizeof(struct ether_header),
