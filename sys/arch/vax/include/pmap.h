@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.22 2004/06/09 20:17:24 tedu Exp $     */
+/*      $OpenBSD: pmap.h,v 1.23 2004/07/13 14:51:29 tedu Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -110,6 +110,7 @@ extern	struct pmap kernel_pmap_store;
  */
 #define pmap_map_direct(pg)	(VM_PAGE_TO_PHYS(pg) | KERNBASE)
 #define pmap_unmap_direct(va) PHYS_TO_VM_PAGE((va) & ~KERNBASE)
+#define	__HAVE_PMAP_DIRECT
 
 #define PMAP_STEAL_MEMORY
 

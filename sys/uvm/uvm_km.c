@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.41 2004/06/09 20:17:23 tedu Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.42 2004/07/13 14:51:29 tedu Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -813,12 +813,6 @@ uvm_km_valloc_wait(map, size)
 	return uvm_km_valloc_prefer_wait(map, size, UVM_UNKNOWN_OFFSET);
 }
 
-/* Sanity; must specify both or none. */
-#if (defined(pmap_map_direct) || defined(pmap_unmap_direct)) && \
-    (!defined(pmap_map_direct) || !defined(pmap_unmap_direct))
-#error Must specify MAP and UNMAP together.
-#endif
-
 /*
  * uvm_km_alloc_poolpage: allocate a page for the pool allocator
  *
@@ -832,7 +826,7 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 	struct uvm_object *obj;
 	boolean_t waitok;
 {
-#if defined(pmap_map_direct)
+#if defined(__HAVE_PMAP_DIRECT)
 	struct vm_page *pg;
 	vaddr_t va;
 
@@ -867,7 +861,7 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 	va = uvm_km_kmemalloc(map, obj, PAGE_SIZE, waitok ? 0 : UVM_KMF_NOWAIT);
 	splx(s);
 	return (va);
-#endif /* pmap_map_direct */
+#endif /* __HAVE_PMAP_DIRECT */
 }
 
 /*
@@ -882,7 +876,7 @@ uvm_km_free_poolpage1(map, addr)
 	vm_map_t map;
 	vaddr_t addr;
 {
-#if defined(pmap_unmap_direct)
+#if defined(__HAVE_PMAP_DIRECT)
 	uvm_pagefree(pmap_unmap_direct(addr));
 #else
 	int s;
@@ -900,12 +894,12 @@ uvm_km_free_poolpage1(map, addr)
 	s = splvm();
 	uvm_km_free(map, addr, PAGE_SIZE);
 	splx(s);
-#endif /* pmap_unmap_direct */
+#endif /* __HAVE_PMAP_DIRECT */
 }
 
-#if defined(pmap_map_direct)
+#if defined(__HAVE_PMAP_DIRECT)
 /*
- * uvm_km_page allocator, pmap_map_direct arch
+ * uvm_km_page allocator, __HAVE_PMAP_DIRECT arch
  * On architectures with machine memory direct mapped into a portion
  * of KVM, we have very little work to do.  Just get a physical page,
  * and find and return its VA.  We use the poolpage functions for this.
@@ -932,7 +926,7 @@ uvm_km_putpage(void *v)
 
 #else
 /*
- * uvm_km_page allocator, non pmap_map_direct archs
+ * uvm_km_page allocator, non __HAVE_PMAP_DIRECT archs
  * This is a special allocator that uses a reserve of free pages
  * to fulfill requests.  It is fast and interrupt safe, but can only
  * return page sized regions.  Its primary use is as a backend for pool.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.36 2004/06/09 20:17:23 tedu Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.37 2004/07/13 14:51:29 tedu Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -121,6 +121,7 @@ boolean_t pteclrbits(paddr_t pa, u_int mask, u_int clear);
  */
 #define pmap_map_direct(pg)		((vaddr_t)VM_PAGE_TO_PHYS(pg))
 #define pmap_unmap_direct(va)		PHYS_TO_VM_PAGE((paddr_t)va)
+#define	__HAVE_PMAP_DIRECT
 
 void pmap_bootstrap(u_int kernelstart, u_int kernelend);
 
