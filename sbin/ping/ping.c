@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.44 2001/01/12 20:07:05 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.45 2001/10/03 19:36:49 jakob Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.44 2001/01/12 20:07:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.45 2001/10/03 19:36:49 jakob Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,6 +169,9 @@ quad_t tsumsq = 0;		/* sum of all times squared, for std. dev. */
 #ifdef SIGINFO
 int reset_kerninfo;
 #endif
+
+#define DEFAULT_BUFSPACE	60*1024 /* default read buffer size */
+int bufspace = DEFAULT_BUFSPACE;
 
 void fill __P((char *, char *));
 void catcher(), prtsig(), finish(), summary(int);
@@ -459,7 +462,14 @@ main(argc, argv)
 	 * ethernet, or just want to fill the arp cache to get some stuff for
 	 * /etc/ethers.
 	 */
-	(void)setsockopt(s, SOL_SOCKET, SO_RCVBUF, &packlen, sizeof(packlen));
+	while (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
+	    (void*)&bufspace, sizeof(bufspace)) < 0) {
+		if ((bufspace -= 1024) <= 0)
+			err(1, "Cannot set the receive buffer size");
+	}
+	if (bufspace < DEFAULT_BUFSPACE)
+		warnx("Could only allocate a receive buffer of %i bytes (default %i)\n",
+		    bufspace, DEFAULT_BUFSPACE);
 
 	if (to->sin_family == AF_INET)
 		(void)printf("PING %s (%s): %d data bytes\n", hostname,
