@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.86 2001/07/18 15:49:29 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.87 2001/07/20 14:21:58 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -110,6 +110,7 @@ struct hifn_stats {
 	u_int32_t hst_opackets;
 	u_int32_t hst_invalid;
 	u_int32_t hst_nomem;
+	u_int32_t hst_abort;
 } hifnstats;
 
 int
@@ -1282,8 +1283,8 @@ hifn_intr(arg)
 	restart = dmacsr & (HIFN_DMACSR_C_ABORT | HIFN_DMACSR_S_ABORT |
 	    HIFN_DMACSR_D_ABORT | HIFN_DMACSR_R_ABORT);
 	if (restart) {
-		printf("%s: pci abort %x... restarting\n", sc->sc_dv.dv_xname,
-		    restart);
+		hifnstats.hst_abort++;
+
 		/* clear aborts... */
 		WRITE_REG_1(sc, HIFN_1_DMA_CSR, restart);
 		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_C_CTRL_ENA |
