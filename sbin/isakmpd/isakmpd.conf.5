@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.74 2003/03/03 16:51:38 ho Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.75 2003/03/06 20:29:24 jmc Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -179,7 +179,7 @@ This means that we won't see if an address given here does not exist
 on this host, and thus no error is given for that case.
 .It Em Policy-file
 The name of the file that contains
-.Xr KeyNote 4
+.Xr keynote 4
 policies.
 The default is "/etc/isakmpd/isakmpd.policy".
 .It Em Pubkey-directory
@@ -389,7 +389,7 @@ In the case of
 note that the IKE protocol allows any octet sequence to be sent or
 received under this payload, potentially including non-printable
 ones.
-.Xr isakmpd 1
+.Xr isakmpd 8
 can only transmit printable
 .Li KEY_ID
 payloads, but can receive and process arbitrary

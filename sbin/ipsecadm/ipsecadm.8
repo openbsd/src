@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.58 2003/02/26 12:22:34 markus Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.59 2003/03/06 20:29:24 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Ar modifiers ...
 .Sh NOTE
 To use
-.Xr ipsecadm 8 ,
+.Nm ipsecadm ,
 IPsec must be enabled by having one or more of the following
 .Xr sysctl 3
 variables set:
@@ -329,7 +329,7 @@ The IPCA must be applied first.
 .El
 .Pp
 If no command is given
-.Xr ipsecadm 1
+.Nm ipsecadm
 defaults to new esp mode.
 .Pp
 The modifiers have the following meanings:
