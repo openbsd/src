@@ -608,7 +608,9 @@ wds_collect_mbo(sc)
 	struct wds_softc *sc;
 {
 	struct wds_mbx_out *wmbo;	/* Mail Box Out pointer */
+#ifdef WDSDIAG
 	struct wds_scb *scb;
+#endif
 
 	wmbo = wmbx->cmbo;
 

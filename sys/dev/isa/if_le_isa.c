@@ -146,8 +146,10 @@ depca_isa_probe(lesc, ia)
 {
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	int iobase = ia->ia_iobase, port;
+#if 0
 	u_long sum, rom_sum;
 	u_char x;
+#endif
 	int i;
 
 	lesc->sc_rap = iobase + DEPCA_RAP;
