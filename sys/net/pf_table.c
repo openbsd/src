@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.28 2003/03/05 12:13:03 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.29 2003/03/13 17:56:16 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -144,6 +144,8 @@ void			 pfr_destroy_ktable(struct pfr_ktable *, int);
 int			 pfr_ktable_compare(struct pfr_ktable *,
 			    struct pfr_ktable *);
 struct pfr_ktable	*pfr_lookup_table(struct pfr_table *);
+void			 pfr_clean_node_mask(struct pfr_ktable *, 
+			    struct pfr_kentryworkq *);
 
 RB_PROTOTYPE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
 RB_GENERATE(pfr_ktablehead, pfr_ktable, pfrkt_tree, pfr_ktable_compare);
@@ -257,6 +259,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 			if (copyout(&ad, addr+i, sizeof(ad)))
 				senderr(EFAULT);
 	}
+	pfr_clean_node_mask(tmpkt, &workq);
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
 			s = splsoftnet();
@@ -270,6 +273,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	pfr_destroy_ktable(tmpkt, 0);
 	return (0);
 _bad:
+	pfr_clean_node_mask(tmpkt, &workq);
 	pfr_destroy_kentries(&workq);
 	if (flags & PFR_FLAG_FEEDBACK)
 		pfr_reset_feedback(addr, size);
@@ -421,6 +425,7 @@ _skip:
 			i++;
 		}
 	}
+	pfr_clean_node_mask(tmpkt, &addq);
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
 			s = splsoftnet();
@@ -442,6 +447,7 @@ _skip:
 	pfr_destroy_ktable(tmpkt, 0);
 	return (0);
 _bad:
+	pfr_clean_node_mask(tmpkt, &addq);
 	pfr_destroy_kentries(&addq);
 	if (flags & PFR_FLAG_FEEDBACK)
 		pfr_reset_feedback(addr, size);
@@ -787,6 +793,16 @@ pfr_remove_kentries(struct pfr_ktable *kt,
 	}
 	kt->pfrkt_cnt -= n;
 	pfr_destroy_kentries(workq);
+}
+
+void
+pfr_clean_node_mask(struct pfr_ktable *kt,
+    struct pfr_kentryworkq *workq)
+{
+        struct pfr_kentry       *p;
+
+        SLIST_FOREACH(p, workq, pfrke_workq)
+                pfr_unroute_kentry(kt, p);
 }
 
 void
@@ -1330,6 +1346,7 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		    xaddr : NO_ADDRESSES;
 		kt->pfrkt_shadow = shadow;
 	} else {
+		pfr_clean_node_mask(shadow, &addrq);
 		pfr_destroy_ktable(shadow, 0);
 		pfr_destroy_ktables(&tableq, 0);
 		pfr_destroy_kentries(&addrq);
@@ -1407,6 +1424,7 @@ pfr_commit_ktable(struct pfr_ktable *kt, long tzero)
 		SLIST_INIT(&changeq);
 		SLIST_INIT(&delq);
 		SLIST_INIT(&garbageq);
+		pfr_clean_node_mask(shadow, &addrq);
 		for (p = SLIST_FIRST(&addrq); p != NULL; p = next) {
 			next = SLIST_NEXT(p, pfrke_workq);	/* XXX */
 			pfr_copyout_addr(&ad, p);
@@ -1581,6 +1599,7 @@ pfr_destroy_ktable(struct pfr_ktable *kt, int flushaddr)
 
 	if (flushaddr) {
 		pfr_enqueue_addrs(kt, &addrq, NULL, 0);
+		pfr_clean_node_mask(kt, &addrq);
 		pfr_destroy_kentries(&addrq);
 	}
 	if (kt->pfrkt_ip4 != NULL)
