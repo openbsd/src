@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rnd.4,v 1.2 1996/09/10 05:26:08 mickey Exp $
+.\"	$OpenBSD: random.4,v 1.1 1996/12/17 22:56:03 millert Exp $
 .\"
 .\" Copyright (c) 1996 Michael Shalayeff
 .\"
@@ -33,10 +33,10 @@
 .Dt RND 4
 .Os OpenBSD
 .Sh NAME
-.Nm rnd
-.Nm srnd
-.Nm urnd
-.Nm prnd
+.Nm random
+.Nm srandom
+.Nm urandom
+.Nm prandom
 .Nd random data source devices.
 .Sh SYNOPSIS
 .Cd "pseudo-device random"
@@ -44,23 +44,23 @@
 The
 .Nm
 device produces random data, with different random quality.
-{s,u}rnd devices generates random data based on the system activity
+{s,u}random devices generates random data based on the system activity
 (like disk and network devices).
 .Pp
 .Bl -hang -width Ds
-.It rnd
+.It random
 reserved for nuclear noise generators.
-.It srnd
+.It srandom
 strong random data.
-.It urnd
+.It urandom
 same as above, but does not guaranties the data to be strong.
-.It prnd
+.It prandom
 simple pseudo-random generator (as it is in the kernel).
 .Sh SEE ALSO
-rnd(9)
+random(9)
 .Sh FILES
-.Bl -tag -width /dev/rnd, /dev/srnd, /dev/urnd, /dev/prnd
-.It Pa /dev/rnd, /dev/srnd, /dev/urnd, /dev/prnd
+.Bl -tag -width /dev/random, /dev/srandom, /dev/urandom, /dev/prandom
+.It Pa /dev/random, /dev/srandom, /dev/urandom, /dev/prandom
 .El
 .Sh HISTORY
 An
