@@ -3100,7 +3100,6 @@
 ./usr/share/man/cat3/getprotobyname.0
 ./usr/share/man/cat3/getprotobynumber.0
 ./usr/share/man/cat3/getprotoent.0
-./usr/share/man/cat3/getpw.0
 ./usr/share/man/cat3/getpwent.0
 ./usr/share/man/cat3/getpwnam.0
 ./usr/share/man/cat3/getpwuid.0
@@ -4346,7 +4345,6 @@
 ./usr/share/man/cat3/vidattr.0
 ./usr/share/man/cat3/vidputs.0
 ./usr/share/man/cat3/vis.0
-./usr/share/man/cat3/vlimit.0
 ./usr/share/man/cat3/vline.0
 ./usr/share/man/cat3/vprintf.0
 ./usr/share/man/cat3/vscanf.0
@@ -4355,7 +4353,6 @@
 ./usr/share/man/cat3/vsscanf.0
 ./usr/share/man/cat3/vsyslog.0
 ./usr/share/man/cat3/vsyslog_r.0
-./usr/share/man/cat3/vtimes.0
 ./usr/share/man/cat3/vw_printw.0
 ./usr/share/man/cat3/vw_scanw.0
 ./usr/share/man/cat3/vwarn.0
