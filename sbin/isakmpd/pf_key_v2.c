@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.114 2002/08/23 17:11:08 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.115 2002/08/23 18:01:33 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -2040,7 +2040,7 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
   policy_buf = (u_int8_t *)calloc (1, len);
   if (!policy_buf)
     {
-      log_error ("pf_key_v2_flow: calloc %d failed", len);
+      log_error ("pf_key_v2_flow: calloc %lu failed", len);
       goto cleanup;
     }
 

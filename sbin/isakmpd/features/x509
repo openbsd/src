@@ -1,4 +1,4 @@
-#	$OpenBSD: x509,v 1.3 2000/02/20 16:42:20 niklas Exp $
+#	$OpenBSD: x509,v 1.4 2002/08/23 18:01:33 ho Exp $
 #	$EOM: x509,v 1.4 2000/02/20 16:38:15 niklas Exp $
 
 #
@@ -32,8 +32,3 @@
 #
 
 X509=		x509.c
-
-.if !defined (USE_LIBCRYPTO) && !defined (HAVE_DLOPEN)
-#Force a syntax error
-"X.509 certificate support wanted but no libcrypto library available"
-.endif
