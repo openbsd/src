@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.56 2004/03/25 08:38:51 tom Exp $
+dnl	$OpenBSD: m4.common,v 1.57 2004/03/27 23:33:06 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -43,11 +43,12 @@ define(`TopPart',
 out as follows:
 
 .../OSREV/MACHINE/
-		INSTALL.MACHINE	Installation notes; this file.
 
-		CKSUM, MD5	Output of the cksum(1) and md5(1) programs,
-				usable for verification of the correctness
-				of downloaded files.')dnl
+	INSTALL.MACHINE	Installation notes; this file.
+
+	CKSUM, MD5	Output of the cksum(1) and md5(1) programs,
+			usable for verification of the correctness of
+			downloaded files.')dnl
 dnl
 dnl Change the quote.  There were too many `word' situations that would
 dnl have to have been changed to ``word''.  The quote gets changed to
@@ -195,13 +196,13 @@ dnl
 dnl Floppy and bootable cdrom stuff
 dnl
 define({:-OpenBSDfloppy-:},
-{:-		floppy{:--:}OSrev.fs	The standard MACHINE boot and installation
-				floppy; see below.-:})dnl
+{:-	floppy{:--:}OSrev.fs	The standard MACHINE boot and installation floppy;
+			see below.-:})dnl
 dnl
 define({:-OpenBSDcd-:},
-{:-		cd{:--:}OSrev.iso	A miniroot filesystem image suitable to be used
-				as a bootable CD-ROM image; otherwise similar
-				to the bsd.rd image above.-:})dnl
+{:-	cd{:--:}OSrev.iso	A miniroot filesystem image suitable to be used
+			as a bootable CD-ROM image; otherwise similar to
+			the bsd.rd image above.-:})dnl
 dnl
 dnl OpenBSDfloppydesc(number of floppies, Article, plural)
 dnl
@@ -220,25 +221,22 @@ dnl
 dnl A few extra straightforward macros describing more components.
 dnl
 define({:-OpenBSDdistsets-:},
-{:-		*.tgz		MACHINE binary distribution sets;
-				see below.-:})dnl
+{:-	*.tgz		MACHINE binary distribution sets; see below.-:})dnl
 dnl
 define({:-OpenBSDbsd-:},
-{:-		bsd		A stock GENERIC MACHINE kernel which
-				will be installed on your system
-				during the install.-:})dnl
+{:-	bsd		A stock GENERIC MACHINE kernel which will be
+			installed on your system during the install.-:})dnl
 dnl
 define({:-OpenBSDrd-:},
-{:-		bsd.rd		A compressed RAMDISK kernel; the embedded
-				filesystem contains the installation tools.
-				Used for simple installation from a pre-
-				existing system.-:})dnl
+{:-	bsd.rd		A compressed RAMDISK kernel; the embedded
+			filesystem contains the installation tools.
+			Used for simple installation from a pre-existing
+			system.-:})dnl
 dnl
 define({:-OpenBSDminiroot-:},
-{:-		miniroot{:--:}OSrev.fs	A miniroot filesystem image to be used
-				if you for some reason can't or don't
-				want to use the ramdisk installation
-				method.-:})dnl
+{:-	miniroot{:--:}OSrev.fs	A miniroot filesystem image to be used if you
+			for some reason can't or don't want to use the
+			ramdisk installation method.-:})dnl
 dnl
 dnl
 dnl ========== Various Install Instructions

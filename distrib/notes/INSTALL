@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.39 2004/03/17 09:25:08 jmc Exp $
+dnl	$OpenBSD: INSTALL,v 1.40 2004/03/27 23:33:06 miod Exp $
 include(INCLUDE/../m4.common)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
 
@@ -40,7 +40,7 @@ aiming at making the emulation as accurate as possible so that it is
 transparent to the user.
 
 Because OpenBSD is from Canada, the export of Cryptography pieces
-(such as SSH, IPsec, and Kerberos) to the world is not restricted.
+(such as OpenSSH, IPsec, and Kerberos) to the world is not restricted.
 
 (NOTE: OpenBSD can not be re-exported from the US once it has entered
 the US.  Because of this, take care NOT to get the distribution from
@@ -165,7 +165,7 @@ Administrivia:
 --------------
 
 There are various mailing lists available via the mailing list
-server at <majordomo@OpenBSD.ORG>.  To get help on using the mailing
+server at <majordomo@OpenBSD.org>.  To get help on using the mailing
 list server, send mail to that address with an empty body, and it will
 reply with instructions.  There are also two OpenBSD Usenet newsgroups,
 comp.unix.bsd.openbsd.announce for important announcements and
@@ -176,7 +176,7 @@ and fill in as much information about the problem as you can.  Good
 bug reports {:-include-:} lots of details.  Additionally, bug reports can
 be sent by mail to:
 
-	bugs@OpenBSD.ORG
+	bugs@OpenBSD.org
 
 Use of 'sendbug' is encouraged, however, because bugs reported with it
 are entered into the OpenBSD bugs database, and thus can't slip through

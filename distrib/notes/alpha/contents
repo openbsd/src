@@ -1,25 +1,25 @@
-dnl	$OpenBSD: contents,v 1.33 2004/03/20 17:20:31 miod Exp $
+dnl	$OpenBSD: contents,v 1.34 2004/03/27 23:33:09 miod Exp $
 TopPart
 
 OpenBSDfloppy
-				This floppy image will boot on the following
-				MACHINE models:
-				- AlphaStation 200, 250, 255, 400
+			This floppy image will boot on the following MACHINE
+			models:
+			- AlphaStation 200, 250, 255, 400
 dnl uncomment when it works again
-dnl				- AlphaStation 500, 600
-				- AlphaServer 800, 1000, 1000A
-				- AXPpci33 based machines, including
-				  ``Noname'', UDB, Multia
-				- EB164 based machines, including
-				  PC164, 164SX, and 164LX
-				- Personal Workstation (Miata)
+dnl			- AlphaStation 500, 600
+			- AlphaServer 800, 1000, 1000A
+			- AXPpci33 based machines, including ``Noname'',
+			  UDB, Multia
+			- EB164 based machines, including PC164, 164SX,
+			  and 164LX
+			- Personal Workstation (Miata)
 
-		floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
-				see below.
-				This floppy image will boot on the following
-				MACHINE models:
-    				- Alpha Processor, Inc. UP1000
-				- XP1000, 264DP, DS10, DS20
+	floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy; see
+			below.
+			This floppy image will boot on the following MACHINE
+			models:
+   			- Alpha Processor, Inc. UP1000
+			- XP1000, 264DP, DS10, DS20
 
 OpenBSDdistsets
 

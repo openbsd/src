@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.14 2004/03/20 17:20:33 miod Exp $
+dnl	$OpenBSD: contents,v 1.15 2004/03/27 23:33:10 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -9,8 +9,8 @@ OpenBSDrd
 
 OpenBSDfloppy
 
-		boot.mop	MOP-bootable image (for network installs);
-				see below.
+	boot.mop	MOP-bootable image (for network installs);
+			see below.
 
 OpenBSDfloppydesc(single,The)
 

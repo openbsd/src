@@ -1,20 +1,20 @@
-dnl	$OpenBSD: contents,v 1.47 2004/03/20 17:20:32 miod Exp $
+dnl	$OpenBSD: contents,v 1.48 2004/03/27 23:33:09 miod Exp $
 TopPart
 
 OpenBSDfloppy
 
-		floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
-				this one features all the drivers not available
-				in floppy{:--:}OSrev.fs, such as SCSI, RAID, Gigabit
-				Ethernet, and such; see below.
+	floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy; this one
+			features all the drivers not available in floppy{:--:}OSrev.fs,
+			such as SCSI, RAID, Gigabit Ethernet, and such; see
+			below.
 
-		floppyC{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
-				this one features most of the cardbus and
-				PCMCIA drivers; see below.
+	floppyC{:--:}OSrev.fs	Another MACHINE boot and installation floppy; this one
+			features most of the cardbus and PCMCIA drivers; see
+			below.
 
-		cdrom{:--:}OSrev.fs	The MACHINE boot and installation
-				2.88MB floppy image that contains almost all
-				OpenBSD drivers; see below.
+	cdrom{:--:}OSrev.fs	The MACHINE boot and installation 2.88MB
+			floppy image that contains almost all OpenBSD
+			drivers; see below.
 
 OpenBSDdistsets
 
@@ -27,9 +27,9 @@ OpenBSDcd
 Additionally, you may be interested in
 
 .../OSREV/tools/
-		miscellaneous MACHINE installation utilities like
-		rawrite.exe, ntrw.exe, gzip.exe, and pfdisk.exe;
-		see installation section, below.
+	miscellaneous MACHINE installation utilities like rawrite.exe,
+	ntrw.exe, gzip.exe, and pfdisk.exe; see installation section,
+	below.
 
 
 OpenBSDfloppydesc(three,Each,s)
