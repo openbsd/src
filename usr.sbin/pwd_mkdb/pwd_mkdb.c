@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.19 1998/07/15 19:33:28 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.20 1999/04/21 21:15:12 alex Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.19 1998/07/15 19:33:28 millert Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.20 1999/04/21 21:15:12 alex Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ main(argc, argv)
 		case 'd':
 			basedir = optarg;
 			if (strlen(basedir) > MAXPATHLEN - 40)
-				error("basedir too long");
+				errx(1, "basedir too long");
 			break;
 		case '?':
 		default:
@@ -146,6 +146,9 @@ main(argc, argv)
 
 	/* We don't care what the user wants. */
 	(void)umask(0);
+
+	if (**argv != '/')
+		errx(1, "%s must be specified as an absolute path", *argv);
 
 	pname = strdup(changedir(*argv, basedir));
 	/* Open the original password file */
