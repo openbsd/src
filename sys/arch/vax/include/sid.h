@@ -1,4 +1,4 @@
-/*	$OpenBSD: sid.h,v 1.8 2001/02/25 15:48:19 hugh Exp $	*/
+/*	$OpenBSD: sid.h,v 1.9 2001/03/12 11:45:35 hugh Exp $	*/
 /*	$NetBSD: sid.h,v 1.12 1999/12/11 17:55:13 ragge Exp $	*/
 
 /*
@@ -157,15 +157,19 @@
 #define VAX_TYP_NVAX	19
 #define VAX_TYP_V13	19
  
-#define VAX_BTYP_680	0x13000001	/* VAX 4000 model [45]00 */
+#define VAX_BTYP_1301	0x13000001	/* VAX 4000 model [4-6]00 */
 #define VAX_STYP_675	0x00000c	/* VAX 4000 model 400 */
 #define VAX_STYP_680	0x000006	/* VAX 4000 model 500 */
+#define VAX_STYP_690	0x000007	/* VAX 4000 model 600 */
+
 #define VAX_BTYP_1302	0x13000002
+
 #define VAX_BTYP_1303	0x13000003	/* Cheetah machines */
 #define VAX_STYP_50	0x000008	/* KA50 or KA55 */
 #define VAX_STYP_51	0x000009	/* MicroVAX 3100 model 90 / 95 */
 #define VAX_STYP_52	0x00000a	/* VAX 4000 model 100 */
 #define VAX_STYP_53	0x00000b	/* VAX 4000 model 105A */
+
 #define VAX_BTYP_49	0x13000004	/* VaxStation 4000 model 90 */
 
 /*
