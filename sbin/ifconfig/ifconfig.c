@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.58 2002/02/19 01:16:38 mickey Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.59 2002/02/21 23:05:13 millert Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.58 2002/02/19 01:16:38 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.59 2002/02/21 23:05:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -981,8 +981,10 @@ setifnwid(val, d)
 	struct ieee80211_nwid nwid;
 
 	memset(&nwid, 0, sizeof(nwid));
-	(void)strlcpy(nwid.i_nwid, val, sizeof(nwid.i_nwid));
-	nwid.i_len = sizeof(nwid.i_nwid);
+	nwid.i_len = strlen(val);
+	if (nwid.i_len > IEEE80211_NWID_LEN)
+		nwid.i_len = IEEE80211_NWID_LEN;
+	memcpy(nwid.i_nwid, val, nwid.i_len);
 	(void)strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)&nwid;
 	if (ioctl(s, SIOCS80211NWID, (caddr_t)&ifr) < 0)
@@ -992,6 +994,7 @@ setifnwid(val, d)
 void
 ieee80211_status()
 {
+	int len;
 	struct ieee80211_nwid nwid;
 	char buf[IEEE80211_NWID_LEN + 1];
 
@@ -999,8 +1002,13 @@ ieee80211_status()
 	ifr.ifr_data = (caddr_t)&nwid;
 	(void)strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCG80211NWID, (caddr_t)&ifr) == 0) {
-		(void) strlcpy(buf, nwid.i_nwid, sizeof(buf));
-		printf("\tnwid %s\n", nwid.i_nwid);
+		/* nwid.i_nwid is not NUL terminated. */
+		len = nwid.i_len;
+		if (len > IEEE80211_NWID_LEN)
+			len = IEEE80211_NWID_LEN;
+		memcpy(buf, nwid.i_nwid, len);
+		buf[len] = '\0';
+		printf("\tnwid %s\n", buf);
 	}
 }
 
