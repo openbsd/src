@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.18 2002/09/24 19:08:14 nate Exp $
+#	$OpenBSD: RAMDISK,v 1.19 2002/10/20 15:36:13 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -44,7 +44,7 @@ pci*		at ppb? bus ?
 
 siop*		at pci? dev ? function ?
 #ncr*		at pci? dev ? function ?
-#fxp*		at pci? dev ? function ?
+fxp*		at pci? dev ? function ?
 de*		at pci? dev ? function ?
 #vme*		at pci? dev ? function ?
 vgafb0		at pci? dev ? function ?	# PCI VGA graphics 

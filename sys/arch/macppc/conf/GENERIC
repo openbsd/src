@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.33 2002/10/07 05:39:48 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.34 2002/10/20 15:36:13 drahn Exp $g
 #
 # PPC GENERIC config file
 #
@@ -42,7 +42,7 @@ ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 pci*		at ppb? bus ?
 
 siop*		at pci? dev ? function ?
-#fxp*		at pci? dev ? function ?
+fxp*		at pci? dev ? function ?
 de*		at pci? dev ? function ?
 #vme*		at pci? dev ? function ?
 vgafb0		at pci? dev ? function ?	# PCI VGA graphics 
