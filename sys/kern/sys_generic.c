@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.40 2002/08/11 02:20:24 provos Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.41 2002/08/12 14:32:44 aaron Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -427,8 +427,10 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, retval)
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = iovcnt * sizeof(struct iovec);
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
-		if ((u_int)iovcnt > IOV_MAX)
-			return (EINVAL);
+		if ((u_int)iovcnt > IOV_MAX) {
+			error = EINVAL;
+			goto out;
+		}
 		iov = needfree = malloc(iovlen, M_IOV, M_WAITOK);
 	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
