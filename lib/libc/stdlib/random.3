@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: random.3,v 1.12 2000/04/20 13:50:02 aaron Exp $
+.\"	$OpenBSD: random.3,v 1.13 2001/06/09 01:41:59 assar Exp $
 .\"
 .Dd April 19, 1991
 .Dt RANDOM 3
@@ -81,16 +81,8 @@ For example,
 will produce a random binary
 value.
 .Pp
-Unlike
-.Xr srand ,
-.Fn srandom
-does not return the old seed; the reason for this is that the amount of
-state information used is much more than a single word.
-(Two other routines are provided to deal with restarting/changing random
-number generators).
 Like
 .Xr rand 3 ,
-however,
 .Fn random
 will by default produce a sequence of numbers that can be duplicated
 by calling
@@ -162,8 +154,8 @@ it is initialized.
 With 256 bytes of state information, the period of the random number
 generator is greater than 2**69
 which should be sufficient for most purposes.
-.Sh AUTHOR
-Earl T. Cohen
+.Sh AUTHORS
+.An Earl T. Cohen
 .Sh DIAGNOSTICS
 If
 .Fn initstate
