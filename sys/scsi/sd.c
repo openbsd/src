@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.11 1996/05/22 11:57:30 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.12 1996/06/01 09:35:03 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.100 1996/05/14 10:38:47 leo Exp $	*/
 
 /*
@@ -183,9 +183,7 @@ sdattach(parent, self, aux)
 	sd->sc_dk.dk_name = sd->sc_dev.dv_xname;
 	disk_attach(&sd->sc_dk);
 
-#if !defined(i386)
-	dk_establish(&sd->sc_dk, &sd->sc_dev);		/* XXX */
-#endif
+	dk_establish(&sd->sc_dk, &sd->sc_dev);
 
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().

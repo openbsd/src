@@ -194,9 +194,7 @@ cdattach(parent, self, aux)
 	cd->sc_dk.dk_name = cd->sc_dev.dv_xname;
 	disk_attach(&cd->sc_dk);
 
-#if !defined(i386)
-	dk_establish(&cd->sc_dk, &cd->sc_dev);		/* XXX */
-#endif
+	dk_establish(&cd->sc_dk, &cd->sc_dev);
   
 	/*
 	 * Note if this device is ancient.  This is used in cdminphys().
