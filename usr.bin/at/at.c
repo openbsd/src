@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.19 2000/04/23 16:32:07 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.20 2001/01/17 19:29:06 deraadt Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.19 2000/04/23 16:32:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.20 2001/01/17 19:29:06 deraadt Exp $";
 #endif
 
 char *no_export[] =
@@ -115,15 +115,25 @@ sigc(signo)
 		PRIV_END
 	}
 
-	exit(EXIT_FAILURE);
+	_exit(EXIT_FAILURE);
 }
 
 static void 
 alarmc(signo)
 	int signo;
 {
+	char buf[1024];
+
 	/* Time out after some seconds. */
-	panic("File locking timed out");
+	strlcpy(buf, namep, sizeof(buf));
+	strlcat(buf, ": File locking timed out\n", sizeof(buf));
+	write(STDERR_FILENO, buf, strlen(buf));
+	if (fcreated) {
+		PRIV_START
+		unlink(atfile);
+		PRIV_END
+	}
+	_exit(EXIT_FAILURE);
 }
 
 /* Local functions */
