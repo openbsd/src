@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.14 1998/09/26 21:39:42 ryker Exp $
+#	$OpenBSD: Makefile,v 1.15 1999/04/23 05:21:56 downsj Exp $
 
 PROG=	savecore
 
-# XXX Temporarily until i386, pmax and mac68k are able to use libkvm
-.if	(${MACHINE} == "i386" || ${MACHINE} == "pmax" || ${MACHINE} == "mac68k")
+# XXX Temporarily until i386 and pmax are able to use libkvm
+.if	(${MACHINE} == "i386" || ${MACHINE} == "pmax")
 SRCS=	savecore_old.c
 .else
 SRCS=	savecore.c
