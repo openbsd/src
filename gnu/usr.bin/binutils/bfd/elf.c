@@ -3100,9 +3100,9 @@ get_program_header_size (abfd)
 
   /* We used to assume that two PT_LOAD segments would be enough,
      code and data, with the change to pad the PLT and GOT, this is no
-     longer true. Now there can be several PT_LOAD sections. 6 seems
-     to be enough with BSS_PLT, where we have text, data, GOT, dynamic,
-     PLT, bss */
+     longer true. Now there can be several PT_LOAD sections. 7 seems
+     to be enough with BSS_PLT and .rodata-X, where we have text, data,
+     GOT, dynamic, PLT, bss */
   segs = 7;
 
   s = bfd_get_section_by_name (abfd, ".interp");
