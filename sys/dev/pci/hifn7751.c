@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.41 2000/06/13 05:04:59 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.42 2000/06/17 20:34:52 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -1127,8 +1127,7 @@ hifn_newsession(sidp, cri)
 			if (mac)
 				return (EINVAL);
 			mac = 1;
-		}
-		else if (c->cri_alg == CRYPTO_DES_CBC ||
+		} else if (c->cri_alg == CRYPTO_DES_CBC ||
 		    c->cri_alg == CRYPTO_3DES_CBC) {
 			if (cry)
 				return (EINVAL);
@@ -1211,8 +1210,7 @@ hifn_process(crp)
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		cmd->src_m = (struct mbuf *)crp->crp_buf;
 		cmd->dst_m = (struct mbuf *)crp->crp_buf;
-	}
-	else {
+	} else {
 		err = EINVAL;
 		goto errout;	/* XXX only handle mbufs right now */
 	}
@@ -1229,20 +1227,17 @@ hifn_process(crp)
 		    crd1->crd_alg == CRYPTO_SHA1_HMAC96) {
 			maccrd = crd1;
 			enccrd = NULL;
-		}
-		else if (crd1->crd_alg == CRYPTO_DES_CBC ||
+		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
 			 crd1->crd_alg == CRYPTO_3DES_CBC) {
 			if ((crd1->crd_flags & CRD_F_ENCRYPT) == 0)
 				cmd->base_masks |= HIFN_BASE_CMD_DECODE;
 			maccrd = NULL;
 			enccrd = crd1;
-		}
-		else {
+		} else {
 			err = EINVAL;
 			goto errout;
 		}
-	}
-	else {
+	} else {
 		if ((crd1->crd_alg == CRYPTO_MD5_HMAC96 ||
 		    crd1->crd_alg == CRYPTO_SHA1_HMAC96) &&
 		    (crd2->crd_alg == CRYPTO_DES_CBC ||
@@ -1251,16 +1246,14 @@ hifn_process(crp)
 			cmd->base_masks = HIFN_BASE_CMD_DECODE;
 			maccrd = crd1;
 			enccrd = crd2;
-		}
-		else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
+		} else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
 		    crd1->crd_alg == CRYPTO_3DES_CBC) &&
 		    (crd2->crd_alg == CRYPTO_MD5_HMAC96 ||
 			crd2->crd_alg == CRYPTO_SHA1_HMAC96) &&
 		    (crd1->crd_flags & CRD_F_ENCRYPT)) {
 			enccrd = crd1;
 			maccrd = crd2;
-		}
-		else {
+		} else {
 			/*
 			 * We cannot order the 7751 as requested
 			 */
@@ -1283,8 +1276,7 @@ hifn_process(crp)
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0)
 				m_copyback(cmd->src_m, enccrd->crd_inject,
 				    HIFN_IV_LENGTH, cmd->iv);
-		}
-		else {
+		} else {
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
 				bcopy(enccrd->crd_iv, cmd->iv, HIFN_IV_LENGTH);
 			else
@@ -1375,16 +1367,14 @@ hifn_callback(sc, cmd, macbuf)
 			if (totlen < m->m_len) {
 				m->m_len = totlen;
 				totlen = 0;
-			}
-			else
+			} else
 				totlen -= m->m_len;
 			m = m->m_next;
 			if (++dma->dstk == HIFN_D_DST_RSIZE)
 				dma->dstk = 0;
 			dma->dstu--;
 		}
-	}
-	else {
+	} else {
 		hifnstats.hst_obytes += dma->dstr[dma->dstk].l & HIFN_D_LENGTH;
 		if (++dma->dstk == HIFN_D_DST_RSIZE)
 			dma->dstk = 0;
