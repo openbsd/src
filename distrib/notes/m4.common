@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.29 2002/03/23 23:58:48 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.30 2002/03/28 01:23:44 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -130,9 +130,7 @@ dnl Describes miscXX.tgz.
 dnl
 define({:-OpenBSDmisc-:},
 {:-	misc{:--:}OSrev	 This set includes the system dictionaries (which are
-		 rather large), the typesettable document set, and
-		 man pages for other architectures which happen to be
-		 installed from the source tree by default.showsize($1,$2)-:})dnl
+		 rather large), and the typesettable document set.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDxbase( compressed size, uncompressed size )
@@ -140,7 +138,7 @@ dnl Describes xbaseXX.tgz.
 dnl
 define({:-OpenBSDxbase-:},
 {:-	xbase{:--:}OSrev  This set includes the base X distribution.  This includes
-		 programs, headers, libraries, configuration files.showsize($1,$2)-:})dnl
+		 programs, headers, libraries, and configuration files.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDxshare( compressed size, uncompressed size )
