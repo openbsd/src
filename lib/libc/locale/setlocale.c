@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.9 2002/09/17 05:50:51 itojun Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.10 2002/09/17 07:45:35 itojun Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: setlocale.c,v 1.9 2002/09/17 05:50:51 itojun Exp $";
+static char rcsid[] = "$OpenBSD: setlocale.c,v 1.10 2002/09/17 07:45:35 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -221,7 +221,7 @@ loadlocale(category)
 		 * C locale.  Since we have no way to change them as of yet,
 		 * there is no need to reset them.
 		 */
-		(void)stlrcpy(current_categories[category],
+		(void)strlcpy(current_categories[category],
 		    new_categories[category],
 		    sizeof(current_categories[category]));
 		return (current_categories[category]);
