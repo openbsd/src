@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.44 2004/11/05 23:39:46 dtucker Exp $ */
+/*	$OpenBSD: client.c,v 1.45 2004/11/10 11:47:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -96,7 +96,7 @@ client_nextaddr(struct ntp_peer *p)
 	p->query->fd = -1;
 
 	if (p->addr_head.a == NULL) {
-		ntp_host_dns(p->addr_head.name, p->id);
+		priv_host_dns(p->addr_head.name, p->id);
 		return (-1);
 	}
 
@@ -266,7 +266,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 
 	client_update(p);
 	if (settime)
-		ntp_settime(p->reply[p->shift].offset);
+		priv_settime(p->reply[p->shift].offset);
 
 	log_debug("reply from %s: offset %f delay %f, "
 	    "next query %ds", log_sockaddr((struct sockaddr *)&p->addr->ss),
@@ -307,7 +307,7 @@ client_update(struct ntp_peer *p)
 		return (-1);
 
 	memcpy(&p->update, &p->reply[best], sizeof(p->update));
-	ntp_adjtime();
+	priv_adjtime();
 
 	for (i = 0; i < OFFSET_ARRAY_SIZE; i++)
 		if (p->reply[i].rcvd <= p->reply[best].rcvd)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.40 2004/10/27 14:19:12 dtucker Exp $ */
+/*	$OpenBSD: ntp.c,v 1.41 2004/11/10 11:47:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -353,7 +353,7 @@ peer_remove(struct ntp_peer *p)
 }
 
 void
-ntp_adjtime(void)
+priv_adjtime(void)
 {
 	struct ntp_peer	 *p;
 	int		  offset_cnt = 0, i = 0;
@@ -434,14 +434,14 @@ offset_compare(const void *aa, const void *bb)
 }
 
 void
-ntp_settime(double offset)
+priv_settime(double offset)
 {
 	imsg_compose(ibuf_main, IMSG_SETTIME, 0, 0, &offset, sizeof(offset));
 	conf->settime = 0;
 }
 
 void
-ntp_host_dns(char *name, u_int32_t peerid)
+priv_host_dns(char *name, u_int32_t peerid)
 {
 	u_int16_t	dlen;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.42 2004/11/10 11:27:54 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.43 2004/11/10 11:47:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -205,9 +205,9 @@ void	 imsg_free(struct imsg *);
 
 /* ntp.c */
 pid_t	 ntp_main(int[2], struct ntpd_conf *);
-void	 ntp_adjtime(void);
-void	 ntp_settime(double);
-void	 ntp_host_dns(char *, u_int32_t);
+void	 priv_adjtime(void);
+void	 priv_settime(double);
+void	 priv_host_dns(char *, u_int32_t);
 
 /* parse.y */
 int	 parse_config(const char *, struct ntpd_conf *);
