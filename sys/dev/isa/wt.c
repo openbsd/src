@@ -1,4 +1,4 @@
-/*	$OpenBSD: wt.c,v 1.12 1998/01/18 18:58:40 niklas Exp $	*/
+/*	$OpenBSD: wt.c,v 1.13 2000/11/12 01:00:03 mickey Exp $	*/
 /*	$NetBSD: wt.c,v 1.33 1996/05/12 23:54:22 mycroft Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/timeout.h>
 
 #include <vm/vm_param.h>
 
@@ -131,6 +132,7 @@ enum wttype {
 struct wt_softc {
 	struct device sc_dev;
 	void *sc_ih;
+	struct timeout sc_tmo;
 
 	enum wttype type;	/* type of controller */
 	int sc_iobase;		/* base i/o port */
@@ -261,6 +263,7 @@ wtattach(parent, self, aux)
 	sc->flags = TPSTART;		/* tape is rewound */
 	sc->dens = -1;			/* unknown density */
 
+	timeout_set(&sc->sc_tmo, wttimer, sc);
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, wtintr, sc, sc->sc_dev.dv_xname);
 }
@@ -722,7 +725,7 @@ wtintr(arg)
 	if (sc->dmacount > sc->dmatotal)	/* short last block */
 		sc->dmacount = sc->dmatotal;
 	/* Wake up user level. */
-	untimeout(wttimer, sc);
+	timeout_del(&sc->sc_tmo);
 	wakeup((caddr_t)sc);
 	WTDBPRINT(("i/o finished, %d\n", sc->dmacount));
 	return 1;
@@ -927,7 +930,7 @@ wtclock(sc)
 	 * Some controllers seem to lose dma interrupts too often.  To make the
 	 * tape stream we need 1 tick timeout.
 	 */
-	timeout(wttimer, sc, (sc->flags & TPACTIVE) ? 1 : hz);
+	timeout_add(&sc->sc_tmo, (sc->flags & TPACTIVE) ? 1 : hz);
 }
 
 /*
