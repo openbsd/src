@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.21 2003/07/02 21:30:13 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.22 2003/08/07 16:08:58 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -63,8 +63,6 @@ int o_hwirq[ICU_LEN], o_virq[ICU_LEN];
 unsigned int imen_o = 0xffffffff;
 int o_virq_max;
 
-struct evcnt o_evirq[ICU_LEN];
-
 static int fakeintr(void *);
 static char *intr_typename(int type);
 static void intr_calculatemasks(void);
@@ -78,7 +76,8 @@ void openpic_enable_irq_mask(int irq_mask);
 
 static __inline u_int openpic_read(int);
 static __inline void openpic_write(int, u_int);
-void openpic_enable_irq(int, int);
+void openpic_set_enable_irq(int, int);
+void openpic_enable_irq(int);
 void openpic_disable_irq(int);
 void openpic_init(void);
 void openpic_set_priority(int, int);
@@ -403,8 +402,7 @@ intr_calculatemasks()
 		for (irq = 0; irq < ICU_LEN; irq++) {
 			if (o_intrhand[irq]) {
 				irqs |= 1 << irq;
-				openpic_enable_irq(o_hwirq[irq],
-				    o_intrtype[irq]);
+				openpic_enable_irq(o_hwirq[irq]);
 			} else {
 				openpic_disable_irq(o_hwirq[irq]);
 			}
@@ -496,8 +494,6 @@ openpic_do_pending_int()
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
-
-		o_evirq[o_hwirq[irq]].ev_count++;
 	}
 
 	/*out32rb(INT_ENABLE_REG, ~imen_o);*/
@@ -551,14 +547,15 @@ int irq_mask;
 	int irq;
 	for ( irq = 0; irq <= o_virq_max; irq++) {
 		if (irq_mask & (1 << irq)) {
-			openpic_enable_irq(o_hwirq[irq], o_intrtype[irq]);
+			openpic_enable_irq(o_hwirq[irq]);
 		} else {
 			openpic_disable_irq(o_hwirq[irq]);
 		}
 	}
 }
+
 void
-openpic_enable_irq(irq, type)
+openpic_set_enable_irq(irq, type)
 	int irq;
 	int type;
 {
@@ -567,6 +564,21 @@ openpic_enable_irq(irq, type)
 	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
 	x &= ~(OPENPIC_IMASK|OPENPIC_SENSE_LEVEL|OPENPIC_SENSE_EDGE);
 	if (type == IST_LEVEL) {
+		x |= OPENPIC_SENSE_LEVEL;
+	} else {
+		x |= OPENPIC_SENSE_EDGE;
+	}
+	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
+}
+void
+openpic_enable_irq(irq)
+	int irq;
+{
+	u_int x;
+
+	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
+	x &= ~(OPENPIC_IMASK|OPENPIC_SENSE_LEVEL|OPENPIC_SENSE_EDGE);
+	if (o_intrtype[o_virq[irq]] == IST_LEVEL) {
 		x |= OPENPIC_SENSE_LEVEL;
 	} else {
 		x |= OPENPIC_SENSE_EDGE;
@@ -617,7 +629,7 @@ ext_intr_openpic()
 {
 	int irq, realirq;
 	int r_imen;
-	int pcpl;
+	int pcpl, ocpl;
 	struct intrhand *ih;
 
 	pcpl = cpl;
@@ -635,23 +647,32 @@ ext_intr_openpic()
 		if ((pcpl & r_imen) != 0) {
 			ipending |= r_imen;     /* Masked! Mark this as pending */
 			openpic_disable_irq(realirq);
+			openpic_eoi(0);
 		} else {
-			splraise(o_intrmask[irq]);
+			openpic_disable_irq(realirq);
+			openpic_eoi(0);
+			ocpl = splraise(o_intrmask[irq]);
 
 			ih = o_intrhand[irq];
 			while (ih) {
+				ppc_intr_enable(1);
+
 				(*ih->ih_fun)(ih->ih_arg);
+
+				(void)ppc_intr_disable();
 				ih = ih->ih_next;
 			}
 
 			uvmexp.intrs++;
-			o_evirq[realirq].ev_count++;
+			__asm__ volatile("":::"memory"); /* don't reorder.... */
+			cpl = ocpl;
+			__asm__ volatile("":::"memory"); /* don't reorder.... */
+			openpic_enable_irq(realirq);
 		}
-
-		openpic_eoi(0);
 
 		realirq = openpic_read_irq(0);
 	}
+	ppc_intr_enable(1);
 
 	splx(pcpl);     /* Process pendings. */
 }
