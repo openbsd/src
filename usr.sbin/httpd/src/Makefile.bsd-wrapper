@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 1998/12/15 00:34:13 deraadt Exp $	
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 1999/03/08 17:42:42 beck Exp $	
 .include <bsd.own.mk>
 PROG=httpd
 BINDIR=/usr/sbin
@@ -15,6 +15,7 @@ helpers/GuessOS:
 	/usr/bin/lndir -s -e Makefile.bsd-wrapper -e obj -e obj.${MACHINE_ARCH} -e Configuration ${.CURDIR} ${.OBJDIR}; cp ${.CURDIR}/Configuration ${.OBJDIR}/Configuration
 
 config:	.FORCE
+	touch ${.OBJDIR}/Configuration 
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	CC="${CC}" CFLAGS="${CFLAGS}" \
 	sh ${.CURDIR}/Configure -file ${.OBJDIR}/Configuration -make ${.CURDIR}/Makefile.tmpl
@@ -27,6 +28,7 @@ Makefile: helpers/GuessOS
 		test -x ${.CURDIR}/helpers/$$f || \
 		    chmod +x ${.CURDIR}/helpers/$$f ; \
 	done
+	touch ${.OBJDIR}/Configuration 
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	CC="${CC}" CFLAGS="${CFLAGS}" \
 	sh ${.CURDIR}/Configure -file ${.OBJDIR}/Configuration -make ${.CURDIR}/Makefile.tmpl
@@ -40,6 +42,7 @@ clean cleandir:
 .endif
 	/bin/rm -f Makefile
 	/bin/rm -f modules/standard/Makefile
+	/bin/rm -f modules/ssl/Makefile
 	/bin/rm -f modules/Makefile
 	/bin/rm -f support/Makefile
 	/bin/rm -f main/Makefile
