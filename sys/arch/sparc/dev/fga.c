@@ -1,4 +1,4 @@
-/*	$OpenBSD: fga.c,v 1.12 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: fga.c,v 1.13 2003/06/04 07:18:16 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -779,12 +779,10 @@ fvmescan(parent, child, aux)
 	    mapdev(&oca.ca_ra.ra_reg[0], TMPMAP_VA, 0, NBPG);
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0) {
-		pmap_remove(pmap_kernel(), TMPMAP_VA, TMPMAP_VA + NBPG);
-		pmap_update(pmap_kernel());
+		bus_untmp();
 		return (0);
 	}
-	pmap_remove(pmap_kernel(), TMPMAP_VA, TMPMAP_VA + NBPG);
-	pmap_update(pmap_kernel());
+	bus_untmp();
 
 	oca.ca_ra.ra_reg[0].rr_paddr = (void *)paddr;
 	config_attach(parent, cf, &oca, fvmeprint);
