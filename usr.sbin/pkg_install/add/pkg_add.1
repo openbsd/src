@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.27 2001/08/17 11:13:58 mpech Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.28 2002/06/09 19:11:18 brad Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -159,10 +159,7 @@ when creating a
 .Dq staging area .
 By default, this is the string
 .Pa /var/tmp/instmp.XXXXXX ,
-but it may be necessary to override it in the situation where
-space in your
-.Pa /var/tmp
-directory is limited.
+but it may be necessary to override it (see CAVEATS).
 Be sure to leave some number of
 .Dq X
 characters for
@@ -237,10 +234,10 @@ connection.
 extracts each package's
 .Dq packing list
 into a special staging directory in
-.Pa /tmp
+.Pa /var/tmp
 (or
 .Ev PKG_TMPDIR
-if set)
+if set - see CAVEATS section)
 and then runs through the following sequence to fully extract the contents
 of the package:
 .Bl -enum -indent indent
@@ -267,7 +264,7 @@ if the missing package cannot be found or installed,
 the installation is terminated.
 .It
 A staging area is created under
-.Pa /tmp ,
+.Pa /var/tmp ,
 and the package is extracted into the staging area.
 .It
 If the package contains a
