@@ -1,4 +1,4 @@
-/*	$OpenBSD: obj-coff.c,v 1.2 1998/02/15 18:49:26 niklas Exp $	*/
+/*	$OpenBSD: obj-coff.c,v 1.3 1998/02/28 00:52:08 niklas Exp $	*/
 
 /* coff object file format
    Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -421,6 +421,9 @@ void obj_symbol_to_chars(where, symbolP)
 char **where;
 symbolS *symbolP;
 {
+  /* Move the value into the COFF symbol itself.  */
+  symbolP->sy_symbol.ost_entry.n_value = S_GET_VALUE (symbolP);
+
 #ifdef BFD_HEADERS
 	unsigned int numaux = symbolP->sy_symbol.ost_entry.n_numaux;
 	unsigned int i;
@@ -1301,11 +1304,16 @@ static void obj_coff_val() {
 			S_SET_VALUE(def_symbol_in_progress, obstack_next_free(&frags) - frag_now->fr_literal);
 			/* If the .val is != from the .def (e.g. statics) */
 		} else if (strcmp(S_GET_NAME(def_symbol_in_progress), symbol_name)) {
-			def_symbol_in_progress->sy_forward = symbol_find_or_make(symbol_name);
-			
+			def_symbol_in_progress->sy_value.X_add_symbol =
+			  symbol_find_or_make (symbol_name);
+			def_symbol_in_progress->sy_value.X_subtract_symbol =
+			  NULL;
+			def_symbol_in_progress->sy_value.X_add_number = 0;
+			def_symbol_in_progress->sy_value.X_seg = SEG_UNKNOWN;
+
 			/* If the segment is undefined when the forward
-			   reference is solved, then copy the segment id
-			   from the forward symbol. */
+			   reference is resolved, then copy the segment id
+			   from the forward symbol.  */
 			SF_SET_GET_SEGMENT(def_symbol_in_progress);
 		}
 		/* Otherwise, it is the name of a non debug symbol and its value will be calculated later. */
@@ -1391,29 +1399,6 @@ object_headers *headers;
 	
 	/* Initialize the stack used to keep track of the matching .bb .be */
 	stack* block_stack = stack_init(512, sizeof(symbolS*));
-	
-	/* JF deal with forward references first... */
-	for (symbolP = symbol_rootP; symbolP; symbolP = symbol_next(symbolP)) {
-		
-		if (symbolP->sy_forward) {
-			S_SET_VALUE(symbolP, (S_GET_VALUE(symbolP)
-					      + S_GET_VALUE(symbolP->sy_forward)
-					      + symbolP->sy_forward->sy_frag->fr_address));
-			
-			if (
-#ifndef TE_I386AIX
-			    SF_GET_GET_SEGMENT(symbolP)
-#else
-			    SF_GET_GET_SEGMENT(symbolP)
-			    && S_GET_SEGMENT(symbolP) == SEG_UNKNOWN
-#endif /* TE_I386AIX */
-			    ) {
-				S_SET_SEGMENT(symbolP, S_GET_SEGMENT(symbolP->sy_forward));
-			} /* forward segment also */
-			
-			symbolP->sy_forward=0;
-		} /* if it has a forward reference */
-	} /* walk the symbol chain */
 	
 	tc_crawl_symbol_chain(headers);
 	
@@ -1528,7 +1513,7 @@ object_headers *headers;
 				S_SET_SEGMENT(symbolP, SEG_TEXT);
 			} /* push data into text */
 			
-			S_SET_VALUE(symbolP, S_GET_VALUE(symbolP) + symbolP->sy_frag->fr_address);
+			resolve_symbol_value(symbolP);
 			
 			if (!S_IS_DEFINED(symbolP) && !SF_GET_LOCAL(symbolP)) {
 				S_SET_EXTERNAL(symbolP);

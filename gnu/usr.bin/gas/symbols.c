@@ -1,4 +1,4 @@
-/*	$OpenBSD: symbols.c,v 1.2 1998/02/15 18:49:01 niklas Exp $	*/
+/*	$OpenBSD: symbols.c,v 1.3 1998/02/28 00:52:00 niklas Exp $	*/
 
 /* symbols.c -symbol table-
 
@@ -21,7 +21,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: symbols.c,v 1.2 1998/02/15 18:49:01 niklas Exp $";
+static char rcsid[] = "$OpenBSD: symbols.c,v 1.3 1998/02/28 00:52:00 niklas Exp $";
 #endif
 
 #include "as.h"
@@ -76,6 +76,69 @@ static local_label_countT
 
 static				/* Returned to caller, then copied. */
     char symbol_name_build[12];	/* used for created names ("4f") */
+
+/* Resolve the value of a symbol.  This is called during the final
+   pass over the symbol table to resolve any symbols with complex
+   values.  */
+
+void
+resolve_symbol_value (symp)
+     symbolS *symp;
+{
+  if (symp->sy_resolved)
+    return;
+
+  if (symp->sy_resolving)
+    {
+      as_bad ("Symbol definition loop encountered at %s",
+	      S_GET_NAME (symp));
+      S_SET_VALUE (symp, (valueT) 0);
+    }
+  else
+    {
+      symp->sy_resolving = 1;
+
+      if (symp->sy_value.X_seg == SEG_ABSOLUTE)
+	S_SET_VALUE (symp, S_GET_VALUE (symp) + symp->sy_frag->fr_address);
+      else if (symp->sy_value.X_seg == SEG_UNKNOWN)
+	{
+	  resolve_symbol_value (symp->sy_value.X_add_symbol);
+
+#ifdef obj_frob_forward_symbol
+	  /* Some object formats need to forward the segment.  */
+	  obj_frob_forward_symbol (symp);
+#endif
+
+	  S_SET_VALUE (symp,
+		       (symp->sy_value.X_add_number
+			+ symp->sy_frag->fr_address
+			+ S_GET_VALUE (symp->sy_value.X_add_symbol)));
+	  S_SET_SEGMENT (symp, S_GET_SEGMENT (symp->sy_value.X_add_symbol));
+	}
+      else if (symp->sy_value.X_seg == SEG_DIFFERENCE)
+	{
+	  resolve_symbol_value (symp->sy_value.X_add_symbol);
+	  resolve_symbol_value (symp->sy_value.X_subtract_symbol);
+	  if (S_GET_SEGMENT (symp->sy_value.X_add_symbol)
+	      != S_GET_SEGMENT (symp->sy_value.X_subtract_symbol))
+	    as_bad ("%s is difference of symbols in different sections",
+		    S_GET_NAME (symp));
+	  S_SET_VALUE (symp,
+		       (symp->sy_value.X_add_number
+			+ symp->sy_frag->fr_address
+			+ S_GET_VALUE (symp->sy_value.X_add_symbol)
+			- S_GET_VALUE (symp->sy_value.X_subtract_symbol)));
+	  S_SET_SEGMENT (symp, SEG_ABSOLUTE);
+	}
+      else
+	{
+	  /* More cases need to be added here.  */
+	  abort ();
+	}
+    }
+
+  symp->sy_resolved = 1;
+}
 
 #ifdef LOCAL_LABELS_DOLLAR
 int local_label_defined[10];
@@ -194,8 +257,6 @@ fragS *frag;			/* Associated fragment */
 	/*	symbol_clear_list_pointers(symbolP); uneeded if symbol is born zeroed. */
 	
 	symbolP->sy_frag = frag;
-	/* krm: uneeded if symbol is born zeroed.
-	   symbolP->sy_forward = NULL; */ /* JF */
 	symbolP->sy_number = ~0;
 	symbolP->sy_name_offset = ~0;
 	
@@ -645,6 +706,27 @@ char *s;
 	return(symbol_decode);
 } /* decode_local_label_name() */
 
+/* Get the value of a symbol.  */
+
+valueT
+S_GET_VALUE (s)
+     symbolS *s;
+{
+  if (s->sy_value.X_seg != SEG_ABSOLUTE)
+    as_bad ("Attempt to get value of unresolved symbol %s", S_GET_NAME (s));
+  return (valueT) s->sy_value.X_add_number;
+}
+
+/* Set the value of a symbol.  */
+
+void
+S_SET_VALUE (s, val)
+     symbolS *s;
+     valueT val;
+{
+  s->sy_value.X_seg = SEG_ABSOLUTE;
+  s->sy_value.X_add_number = (long) val;
+}
 
 /*
  * Local Variables:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: obj-coffbfd.c,v 1.2 1998/02/15 18:49:28 niklas Exp $	*/
+/*	$OpenBSD: obj-coffbfd.c,v 1.3 1998/02/28 00:52:11 niklas Exp $	*/
 
 /* coff object file format with bfd
    Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -163,8 +163,12 @@ const pseudo_typeS obj_pseudo_table[] = {
         { "data",       obj_coff_data,          0       },
 	/* we don't yet handle this. */
 	{ "ident",      s_ignore,		0       },
-	{ "ABORT",      s_abort,		0 },
-	{ "lcomm",	obj_coff_lcomm,	0},
+	{ "ABORT",      s_abort,		0	},
+	{ "lcomm",	obj_coff_lcomm,		0	},
+#ifdef TC_M88K
+	/* The m88k uses sdef instead of def.  */
+	{ "sdef",	obj_coff_def,		0	},
+#endif
 	{ NULL}	/* end sentinel */
 }; /* obj_pseudo_table */
 
@@ -555,6 +559,7 @@ char *
 {
 	unsigned int numaux = symbolP->sy_symbol.ost_entry.n_numaux;
 	unsigned int i;
+	long val;
 	
 	/* Turn any symbols with register attributes into abs symbols */
 	if (S_GET_SEGMENT(symbolP) == SEG_REGISTER) 
@@ -563,10 +568,13 @@ char *
 	    }
 	/* At the same time, relocate all symbols to their output value */
 	
-	S_SET_VALUE(symbolP,
-		    segment_info[S_GET_SEGMENT(symbolP)].scnhdr.s_paddr 
-		    + S_GET_VALUE(symbolP));
-	
+	val = (segment_info[S_GET_SEGMENT (symbolP)].scnhdr.s_paddr
+	       + S_GET_VALUE (symbolP));
+
+	S_SET_VALUE (symbolP, val);
+
+	symbolP->sy_symbol.ost_entry.n_value = val;
+
 	where += bfd_coff_swap_sym_out(abfd, &symbolP->sy_symbol.ost_entry,
 				       where);
 	
@@ -1096,7 +1104,12 @@ static void obj_coff_val() {
 			S_SET_VALUE(def_symbol_in_progress, obstack_next_free(&frags) - frag_now->fr_literal);
 			/* If the .val is != from the .def (e.g. statics) */
 		} else if (strcmp(S_GET_NAME(def_symbol_in_progress), symbol_name)) {
-			def_symbol_in_progress->sy_forward = symbol_find_or_make(symbol_name);
+			def_symbol_in_progress->sy_value.X_add_symbol =
+			  symbol_find_or_make (symbol_name);
+			def_symbol_in_progress->sy_value.X_subtract_symbol =
+			  NULL;
+			def_symbol_in_progress->sy_value.X_add_number = 0;
+			def_symbol_in_progress->sy_value.X_seg = SEG_UNKNOWN;
 			
 			/* If the segment is undefined when the forward
 			   reference is solved, then copy the segment id
@@ -1223,8 +1236,7 @@ static unsigned int DEFUN_VOID(yank_symbols)
 				S_SET_SEGMENT(symbolP, SEG_E0);
 			}			/* push data into text */
 			
-			S_SET_VALUE(symbolP,
-				    S_GET_VALUE(symbolP) + symbolP->sy_frag->fr_address);
+			resolve_symbol_value(symbolP);
 			
 			if (!S_IS_DEFINED(symbolP) && !SF_GET_LOCAL(symbolP)) 
 			    {
@@ -1416,25 +1428,6 @@ static void
 	/* Initialize the stack used to keep track of the matching .bb .be */
 	
 	block_stack = stack_init(512, sizeof(symbolS*));
-	/* JF deal with forward references first... */
-	for (symbolP = symbol_rootP;
-	     symbolP;
-	     symbolP = symbol_next(symbolP)) 
-	    {
-		    
-		    if (symbolP->sy_forward) {
-			    S_SET_VALUE(symbolP, (S_GET_VALUE(symbolP)
-						  + S_GET_VALUE(symbolP->sy_forward)
-						  + symbolP->sy_forward->sy_frag->fr_address));
-			    
-			    if (SF_GET_GET_SEGMENT(symbolP)) {
-				    S_SET_SEGMENT(symbolP, S_GET_SEGMENT(symbolP->sy_forward));
-			    }			/* forward segment also */
-			    
-			    symbolP->sy_forward=0;
-		    }				/* if it has a forward reference */
-	    }				/* walk the symbol chain */
-	
 	
 	/* The symbol list should be ordered according to the following sequence
 	 * order :
@@ -2150,7 +2143,12 @@ static void DEFUN(fixup_segment,(fixP, this_segment_type),
 		    }			/* if there was a + symbol */
 		    
 		    if (pcrel) {
+#ifndef TC_M88K
+			    /* This adjustment is not correct on the m88k,
+			       for which the linker does all the
+			       computation.  */
 			    add_number -= md_pcrel_from(fixP);
+#endif
 			    if (add_symbolP == 0) {
 				    fixP->fx_addsy = & abs_symbol;
 			    }		/* if there's an add_symbol */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: obj-vms.c,v 1.2 1998/02/15 18:49:32 niklas Exp $	*/
+/*	$OpenBSD: obj-vms.c,v 1.3 1998/02/28 00:52:17 niklas Exp $	*/
 
 /* vms.c -- Write out a VAX/VMS object file
    Copyright (C) 1987, 1988, 1992 Free Software Foundation, Inc.
@@ -469,18 +469,6 @@ obj_crawl_symbol_chain (headers)
   symbolS **symbolPP;
   int symbol_number = 0;
 
-  /* JF deal with forward references first... */
-  for (symbolP = symbol_rootP; symbolP; symbolP = symbol_next (symbolP))
-    {
-      if (symbolP->sy_forward)
-	{
-	  S_SET_VALUE (symbolP, S_GET_VALUE (symbolP)
-		       + S_GET_VALUE (symbolP->sy_forward)
-		       + symbolP->sy_forward->sy_frag->fr_address);
-	  symbolP->sy_forward = 0;
-	}			/* if it has a forward reference */
-    }				/* walk the symbol chain */
-
   {				/* crawl symbol table */
     register int symbol_number = 0;
 
@@ -488,7 +476,7 @@ obj_crawl_symbol_chain (headers)
       symbolPP = &symbol_rootP;	/* -> last symbol chain link. */
       while ((symbolP = *symbolPP) != NULL)
 	{
-	  S_GET_VALUE (symbolP) += symbolP->sy_frag->fr_address;
+	  resolve_symbol_value (symbolP);
 
 	  /* OK, here is how we decide which symbols go out into the
 	     brave new symtab.  Symbols that do are:
@@ -4421,7 +4409,8 @@ VMS_Check_For_Main ()
 			       *	inserted.
 			       */
 			      if (S_GET_VALUE (symbolP) >= 2)
-				S_GET_VALUE (symbolP) += 6;
+				S_SET_VALUE (symbolP,
+					     S_GET_VALUE (symbolP) + 6);
 			    }
 			}
 		      /*
@@ -4435,11 +4424,12 @@ VMS_Check_For_Main ()
 		      S_SET_TYPE (symbolP, N_UNDF);
 		      S_GET_OTHER (symbolP) = 0;
 		      S_GET_DESC (symbolP) = 0;
-		      S_GET_VALUE (symbolP) = 0;
+		      S_SET_VALUE (symbolP, 0);
 		      symbolP->sy_name_offset = 0;
 		      symbolP->sy_number = 0;
 		      symbolP->sy_frag = New_Frag;
-		      symbolP->sy_forward = 0;
+		      symbolP->sy_resolved = 0;
+		      symbolP->sy_resolving = 0;
 		      /* this actually inserts at the beginning of the list */
 		      symbol_append (symbol_rootP, symbolP, &symbol_rootP, &symbol_lastP);
 

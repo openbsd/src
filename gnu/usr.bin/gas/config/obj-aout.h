@@ -1,4 +1,4 @@
-/*	$OpenBSD: obj-aout.h,v 1.2 1996/04/23 00:15:59 niklas Exp $	*/
+/*	$OpenBSD: obj-aout.h,v 1.3 1998/02/28 00:52:04 niklas Exp $	*/
 
 /* obj-aout.h, a.out object file format for gas, the assembler.
    Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -87,8 +87,6 @@ typedef struct nlist obj_symbol_type; /* Symbol table entry */
 #define S_IS_STABD(s)		(S_GET_NAME(s) == (char *)0)
 
 /* Accessors */
-/* The value of the symbol */
-#define S_GET_VALUE(s)		(((s)->sy_symbol.n_value))
 /* The name of the symbol */
 #define S_GET_NAME(s)		((s)->sy_symbol.n_un.n_name)
 /* The pointer to the string table */
@@ -103,8 +101,6 @@ typedef struct nlist obj_symbol_type; /* Symbol table entry */
 #define S_GET_DESC(s)		((s)->sy_symbol.n_desc)
 
 /* Modifiers */
-/* Set the value of the symbol */
-#define S_SET_VALUE(s,v)	((s)->sy_symbol.n_value = (unsigned long) (v))
 /* Assume that a symbol cannot be simultaneously in more than on segment */
 /* set segment */
 #define S_SET_SEGMENT(s,seg)	((s)->sy_symbol.n_type &= ~N_TYPE,(s)->sy_symbol.n_type|=SEGMENT_TO_SYMBOL_TYPE(seg))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.6 1998/02/15 21:08:31 niklas Exp $	*/
+/*	$OpenBSD: read.c,v 1.7 1998/02/28 00:51:57 niklas Exp $	*/
 
 /* read.c - read a source file -
 
@@ -21,7 +21,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.6 1998/02/15 21:08:31 niklas Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.7 1998/02/28 00:51:57 niklas Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -1428,9 +1428,8 @@ symbolS *	symbolP;
 			&& (S_GET_SEGMENT(exp.X_add_symbol) == 
 			    S_GET_SEGMENT(exp.X_subtract_symbol))) {
 			    if (exp.X_add_symbol->sy_frag != exp.X_subtract_symbol->sy_frag) {
-				    as_bad("Unknown expression: symbols %s and %s are in different frags.",
-					   S_GET_NAME(exp.X_add_symbol), S_GET_NAME(exp.X_subtract_symbol));
-				    need_pass_2++;
+				    symbolP->sy_value = exp;
+				    break;
 			    }
 			    exp.X_add_number+=S_GET_VALUE(exp.X_add_symbol) -
 				S_GET_VALUE(exp.X_subtract_symbol);
@@ -1463,13 +1462,19 @@ symbolS *	symbolP;
 		    break;
 		    
 	    case SEG_PASS1:		/* Not an error. Just try another pass. */
-		    symbolP->sy_forward=exp.X_add_symbol;
+		    symbolP->sy_value.X_add_symbol = exp.X_add_symbol;
+		    symbolP->sy_value.X_subtract_symbol = NULL;
+		    symbolP->sy_value.X_add_number = 0;
+		    symbolP->sy_value.X_seg = SEG_UNKNOWN;
 		    as_bad("Unknown expression");
 		    know(need_pass_2 == 1);
 		    break;
 		    
 	    case SEG_UNKNOWN:
-		    symbolP->sy_forward=exp.X_add_symbol;
+		    symbolP->sy_value.X_add_symbol = exp.X_add_symbol;
+		    symbolP->sy_value.X_subtract_symbol = NULL;
+		    symbolP->sy_value.X_add_number = 0;
+		    symbolP->sy_value.X_seg = SEG_UNKNOWN;
 		    /* as_warn("unknown symbol"); */
 		    /* need_pass_2 = 1; */
 		    break;

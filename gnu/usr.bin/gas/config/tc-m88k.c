@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-m88k.c,v 1.2 1998/02/15 18:49:38 niklas Exp $	*/
+/*	$OpenBSD: tc-m88k.c,v 1.3 1998/02/28 00:52:20 niklas Exp $	*/
 
 /* m88k.c -- Assembler for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
@@ -226,6 +226,7 @@ md_assemble (op)
      char *op;
 {
   char *param, *thisfrag;
+  char c;
   struct m88k_opcode *format;
   struct m88k_insn insn;
 
@@ -235,14 +236,46 @@ md_assemble (op)
 
   for (param = op; *param != 0 && !isspace (*param); param++)
     ;
-  if (*param != 0)
-    *param++ = 0;
+  c = *param;
+  *param++ = '\0';
 
   /* try to find the instruction in the hash table */
 
   if ((format = (struct m88k_opcode *) hash_find (op_hash, op)) == NULL)
     {
-      as_fatal ("Invalid mnemonic '%s'", op);
+      extern struct hash_control *po_hash;
+      pseudo_typeS *pop;
+      char *hold;
+
+      /* The m88k assembler does not use `.' before pseudo-ops, for
+	 some reason.  So if don't find an opcode, try for a
+	 pseudo-op.  */
+      pop = (pseudo_typeS *) hash_find (po_hash, op);
+
+      if (pop == NULL)
+	{
+	  as_bad ("Invalid mnemonic '%s'", op);
+	  return;
+	}
+
+      /* Restore the character after the opcode.  */
+      *--param = c;
+
+      /* Now we have to hack.  The pseudo-op code expects
+	 input_line_pointer to point to the first non-whitespace
+	 character after the pseudo-op itself.  The calling code has
+	 already advanced input_line_pointer to the end of the line
+	 and inserted a null byte.  We set things up for the pseudo-op
+	 code, and then prepare to return from this function.  */
+      hold = input_line_pointer;
+      *hold = ';';
+      input_line_pointer = param;
+      SKIP_WHITESPACE ();
+
+      (*pop->poc_handler) (pop->poc_val);
+
+      input_line_pointer = hold;
+
       return;
     }
 
@@ -940,6 +973,13 @@ int nbytes;
 
 #ifdef comment
 
+#if 0
+
+/* This routine is never called.  What is it for?
+   Ian Taylor, Cygnus Support 13 Jul 1993 */
+
+#endif /* 0 */
+
 void
 md_number_to_imm (buf, val, nbytes, fixP, seg_type)
 unsigned char *buf;
@@ -1232,6 +1272,13 @@ md_end ()
 
 #ifdef comment
 
+#if 0
+
+/* As far as I can tell, this routine is never called.  What is it
+   doing here?
+   Ian Taylor, Cygnus Support 13 Jul 1993 */
+
+
 /*
  * Risc relocations are completely different, so it needs
  * this machine dependent routine to emit them.
@@ -1339,6 +1386,14 @@ relax_addressT segment_address_in_file;
 } /* tc_aout_fix_to_chars() */
 
 
+#endif /* 0 */
+
+#if 0
+
+/* This routine can be subsumed by s_lcomm in read.c.
+   Ian Taylor, Cygnus Support 13 Jul 1993 */
+
+
 static void
 s_bss()
 {
@@ -1396,6 +1451,117 @@ s_bss()
 
   return;
 }
+
+#endif /* 0 */
+
+#ifdef M88KCOFF
+
+/* These functions are needed if we are linking with obj-coffbfd.c.
+   That file may be replaced by a more BFD oriented version at some
+   point.  If that happens, these functions should be rexamined.
+
+   Ian Lance Taylor, Cygnus Support, 13 July 1993.  */
+
+/* Given a fixS structure (created by a call to fix_new, above),
+   return the BFD relocation type to use for it.  */
+
+short
+tc_coff_fix2rtype (fixp)
+     fixS *fixp;
+{
+  switch (fixp->fx_r_type)
+    {
+    case RELOC_LO16:
+      return R_LVRT16;
+    case RELOC_HI16:
+      return R_HVRT16;
+    case RELOC_PC16:
+      return R_PCR16L;
+    case RELOC_PC26:
+      return R_PCR26L;
+    case RELOC_32:
+      return R_VRT32;
+    case RELOC_IW16:
+      return R_VRT16;
+    default:
+      abort ();
+    }
+}
+
+/* Apply a fixS to the object file.  Since COFF does not use addends
+   in relocs, the addend is actually stored directly in the object
+   file itself.  */
+
+void
+md_apply_fix (fixp, val)
+     fixS *fixp;
+     long val;
+{
+  char *buf;
+
+  buf = fixp->fx_frag->fr_literal + fixp->fx_where;
+
+  switch (fixp->fx_r_type)
+    {
+    case RELOC_IW16:
+      buf[2] = val >> 8;
+      buf[3] = val;
+      break;
+
+    case RELOC_LO16:
+      buf[0] = val >> 8;
+      buf[1] = val;
+      break;
+
+    case RELOC_HI16:
+      buf[0] = val >> 24;
+      buf[1] = val >> 16;
+      break;
+
+    case RELOC_PC16:
+      buf[0] = val >> 10;
+      buf[1] = val >> 2;
+      break;
+
+    case RELOC_PC26:
+      buf[0] |= (val >> 26) & 0x03;
+      buf[1] = val >> 18;
+      buf[2] = val >> 10;
+      buf[3] = val >> 2;
+      break;
+
+    case RELOC_32:
+      buf[0] = val >> 24;
+      buf[1] = val >> 16;
+      buf[2] = val >> 8;
+      buf[3] = val;
+      break;
+
+    default:
+      abort ();
+    }
+}
+
+/* Where a PC relative offset is calculated from.  On the m88k they
+   are calculated from just after the instruction.  */
+
+long
+md_pcrel_from (fixp)
+     fixS *fixp;
+{
+  switch (fixp->fx_r_type)
+    {
+    case RELOC_PC16:
+      return fixp->fx_frag->fr_address + fixp->fx_where - 2;
+    case RELOC_PC26:
+      return fixp->fx_frag->fr_address + fixp->fx_where;
+    default:
+      abort ();
+    }
+  /*NOTREACHED*/
+}
+
+#endif /* M88KCOFF */
 
 /* We have no need to default values of symbols. */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: as.h,v 1.2 1996/04/23 00:15:51 niklas Exp $	*/
+/*	$OpenBSD: as.h,v 1.3 1998/02/28 00:51:54 niklas Exp $	*/
 
 /* as.h - global header file
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -400,10 +400,9 @@ void subsegs_begin();
 /* this one starts the chain of target dependant headers */
 #include "targ-env.h"
 
-/* these define types needed by the interfaces */
+#include "expr.h"
 #include "struc-symbol.h"
 #include "write.h"
-#include "expr.h"
 #include "frags.h"
 #include "hash.h"
 #include "read.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: obj-bout.c,v 1.2 1998/02/15 18:49:24 niklas Exp $	*/
+/*	$OpenBSD: obj-bout.c,v 1.3 1998/02/28 00:52:06 niklas Exp $	*/
 
 /* b.out object file format
    Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -360,17 +360,6 @@ object_headers *headers;
 	symbolS *symbolP;
 	int symbol_number = 0;
 	
-	/* JF deal with forward references first... */
-	for (symbolP = symbol_rootP; symbolP; symbolP = symbol_next(symbolP)) {
-		if (symbolP->sy_forward) {
-			S_SET_VALUE(symbolP, S_GET_VALUE(symbolP)
-				    + S_GET_VALUE(symbolP->sy_forward)
-				    + symbolP->sy_forward->sy_frag->fr_address);
-			
-			symbolP->sy_forward=0;
-		} /* if it has a forward reference */
-	} /* walk the symbol chain */
-	
 	tc_crawl_symbol_chain(headers);
 	
 	symbolPP = & symbol_rootP;	/*->last symbol chain link. */
@@ -379,7 +368,7 @@ object_headers *headers;
 			S_SET_SEGMENT(symbolP, SEG_TEXT);
 		} /* if pusing data into text */
 		
-		S_SET_VALUE(symbolP, S_GET_VALUE(symbolP) + symbolP->sy_frag->fr_address);
+		resolve_symbol_value(symbolP);
 		
 		/* OK, here is how we decide which symbols go out into the
 		   brave new symtab.  Symbols that do are:

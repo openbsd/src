@@ -1,4 +1,4 @@
-/*	$OpenBSD: symbols.h,v 1.2 1998/02/15 18:49:02 niklas Exp $	*/
+/*	$OpenBSD: symbols.h,v 1.3 1998/02/28 00:52:01 niklas Exp $	*/
 
 /* symbols.h -
 
@@ -51,6 +51,11 @@ void local_colon(int n);
 void symbol_begin(void);
 void symbol_table_insert(symbolS *symbolP);
 void verify_symbol_chain(symbolS *rootP, symbolS *lastP);
+void resolve_symbol_value(symbolS *);
+
+/* Get and set the values of symbols.  These used to be macros.  */
+extern valueT S_GET_VALUE(symbolS *);
+extern void S_SET_VALUE(symbolS *, valueT);
 
 #else /* not __STDC__ */
 
@@ -66,6 +71,11 @@ void local_colon();
 void symbol_begin();
 void symbol_table_insert();
 void verify_symbol_chain();
+void resolve_symbol_value();
+
+/* Get and set the values of symbols.  These used to be macros.  */
+extern valueT S_GET_VALUE();
+extern void S_SET_VALUE();
 
 #endif /* not __STDC__ */
 
