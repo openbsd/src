@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.7 2001/03/09 05:34:38 smart Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.8 2001/03/22 03:05:54 smart Exp $	*/
 /*	$NetBSD: uvm.h,v 1.16 1999/06/21 17:25:11 thorpej Exp $	*/
 
 /*
@@ -150,15 +150,11 @@ UVMHIST_DECL(pdhist);
  */
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-
 #define UVM_UNLOCK_AND_WAIT(event,lock,intr,msg, timo) \
 	thread_sleep_msg(event,lock,intr,msg, timo)
-
 #else
-
 #define UVM_UNLOCK_AND_WAIT(event,lock,intr,msg, timo) \
 	thread_sleep_msg(event,NULL,intr,msg, timo)
-
 #endif
 
 /*
@@ -166,13 +162,9 @@ UVMHIST_DECL(pdhist);
  */
 
 #if defined(UVM_PAGE_TRKOWN)
-
 #define UVM_PAGE_OWN(PG, TAG) uvm_page_own(PG, TAG)
-
-#else /* UVM_PAGE_TRKOWN */
-
+#else
 #define UVM_PAGE_OWN(PG, TAG) /* nothing */
-
 #endif /* UVM_PAGE_TRKOWN */
 
 /*

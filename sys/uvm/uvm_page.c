@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.13 2001/03/08 15:21:37 smart Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.14 2001/03/22 03:05:56 smart Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.24 1999/07/22 22:58:38 thorpej Exp $	*/
 
 /* 
@@ -109,8 +109,8 @@ static vaddr_t      virtual_space_end;
 
 /*
  * we use a hash table with only one bucket during bootup.  we will
- * later rehash (resize) the hash table once malloc() is ready.
- * we static allocate the bootstrap bucket below...
+ * later rehash (resize) the hash table once the allocator is ready.
+ * we static allocate the one bootstrap bucket below...
  */
 
 static struct pglist uvm_bootbucket;
@@ -229,7 +229,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	/*
 	 * step 2: init the <obj,offset> => <page> hash table. for now
 	 * we just have one bucket (the bootstrap bucket).   later on we
-	 * will malloc() new buckets as we dynamically resize the hash table.
+	 * will allocate new buckets as we dynamically resize the hash table.
 	 */
 
 	uvm.page_nhash = 1;			/* 1 bucket */
@@ -746,7 +746,7 @@ uvm_page_rehash()
 	MALLOC(newbuckets, struct pglist *, sizeof(struct pglist) * bucketcount,
 					 M_VMPBUCKET, M_NOWAIT);
 	if (newbuckets == NULL) {
-		printf("vm_page_physrehash: WARNING: could not grow page "
+		printf("uvm_page_physrehash: WARNING: could not grow page "
 		    "hash table\n");
 		return;
 	}
@@ -779,7 +779,7 @@ uvm_page_rehash()
 	splx(s);
 
 	/*
-	 * free old bucket array if we malloc'd it previously
+	 * free old bucket array if is not the boot-time table
 	 */
 
 	if (oldbuckets != &uvm_bootbucket)

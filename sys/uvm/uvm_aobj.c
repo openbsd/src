@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.8 2001/03/08 15:21:36 smart Exp $	*/
-/*	$NetBSD: uvm_aobj.c,v 1.20 1999/05/25 00:09:00 thorpej Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.9 2001/03/22 03:05:54 smart Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.21 1999/07/07 05:32:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -719,9 +719,13 @@ uao_flush(uobj, start, end, flags)
  	 */
 	/*
  	 * XXX
- 	 * deal with PGO_DEACTIVATE (for madvise(MADV_SEQUENTIAL))
- 	 * and PGO_FREE (for msync(MSINVALIDATE))
- 	 */
+	 * Deal with:
+	 *
+	 *	PGO_DEACTIVATE	for sequential access, via uvm_fault(), and
+	 *			for MADV_DONTNEED
+	 *
+	 *	PGO_FREE	for MADV_FREE and MSINVALIDATE
+	 */
 	return TRUE;
 }
 
@@ -920,8 +924,8 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 				UVMHIST_LOG(pdhist,
 				    "sleeping, ptmp->flags 0x%x\n",
 				    ptmp->flags,0,0,0);
-				UVM_UNLOCK_AND_WAIT(ptmp, &uobj->vmobjlock, 0,
-				    "uao_get", 0);
+				UVM_UNLOCK_AND_WAIT(ptmp, &uobj->vmobjlock,
+				    FALSE, "uao_get", 0);
 				simple_lock(&uobj->vmobjlock);
 				continue;	/* goto top of pps while loop */
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.6 2001/01/29 02:07:43 niklas Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.7 2001/03/22 03:05:54 smart Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.16 1999/04/08 10:26:21 drochner Exp $	*/
 
 /*
@@ -477,11 +477,10 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 		    ufi->orig_map->pmap, curr_va, (int)paddr, access_type);
 		pmap_enter(ufi->orig_map->pmap, curr_va, paddr, access_type, 0,
 		    access_type);
-
 	}
 
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
-	return(retval);
+	return (retval);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap_i.h,v 1.6 2001/01/29 02:07:42 niklas Exp $	*/
+/*	$OpenBSD: uvm_amap_i.h,v 1.7 2001/03/22 03:05:54 smart Exp $	*/
 /*	$NetBSD: uvm_amap_i.h,v 1.12 1999/03/25 18:48:49 mrg Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ amap_unadd(amap, slot)
 	UVMHIST_FUNC("amap_unadd"); UVMHIST_CALLED(maphist);
 
 	if (slot >= amap->am_nslot)
-		panic("amap_add: offset out of range");
+		panic("amap_unadd: offset out of range");
 
 	if (amap->am_anon[slot] == NULL)
 		panic("amap_unadd: nothing there");

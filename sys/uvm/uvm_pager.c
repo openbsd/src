@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pager.c,v 1.7 2001/03/08 15:21:37 smart Exp $	*/
-/*	$NetBSD: uvm_pager.c,v 1.20 1999/05/26 19:16:36 thorpej Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.8 2001/03/22 03:05:56 smart Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.22 1999/07/22 22:58:39 thorpej Exp $	*/
 
 /*
  *
@@ -328,7 +328,7 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 					if ((pclust->flags & (PG_CLEAN|PG_BUSY))
 					   == PG_CLEAN &&
 					   pmap_is_modified(PMAP_PGARG(pclust)))
-					pclust->flags &= ~PG_CLEAN;
+						pclust->flags &= ~PG_CLEAN;
 					/* now checked */
 					pclust->flags |= PG_CLEANCHK;
 				}
@@ -442,7 +442,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 	struct vm_page *pg, ***ppsp_ptr;/* IN, IN/OUT */
 	int *npages;			/* IN/OUT */
 	int flags;			/* IN */
-	vaddr_t start, stop;	/* IN, IN */
+	vaddr_t start, stop;		/* IN, IN */
 {
 	int result;
 	daddr_t swblk;
@@ -468,8 +468,8 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 		} else {
 			ppsp[0] = pg;
 			*npages = 1;
-		 }
-					  
+		}
+
 		swblk = 0;		/* XXX: keep gcc happy */
 
 	} else {
@@ -538,8 +538,9 @@ ReTry:
 	}
 
 	/*
-	 * a pager error occured.    if we have clustered, we drop the 
-	 * cluster and try again.
+	 * a pager error occured.
+	 * for transient errors, drop to a cluster of 1 page ("pg")
+	 * and try again.  for hard errors, don't bother retrying.
 	 */
 
 	if (*npages > 1 || pg == NULL) {
@@ -581,15 +582,14 @@ ReTry:
  *		[only meaningful if swap-backed (uobj == NULL)]
  */
 
-
-void uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
-
-struct uvm_object *uobj;	/* IN */
-struct vm_page *pg, **ppsp;	/* IN, IN/OUT */
-int *npages;			/* IN/OUT */
-int flags;
-int swblk;			/* valid if (uobj == NULL && PGO_REALLOCSWAP) */
-
+void
+uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
+	struct uvm_object *uobj;	/* IN */
+	struct vm_page *pg, **ppsp;	/* IN, IN/OUT */
+	int *npages;			/* IN/OUT */
+	int flags;
+	int swblk;			/* valid if
+					   (uobj == NULL && PGO_REALLOCSWAP) */
 {
 	int lcv;
 	boolean_t obj_is_alive; 

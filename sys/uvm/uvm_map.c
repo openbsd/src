@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.10 2001/03/15 10:30:57 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.11 2001/03/22 03:05:55 smart Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.56 1999/06/16 19:34:24 thorpej Exp $	*/
 
 /* 
@@ -202,7 +202,6 @@ do {									\
 #define	vm_map_upgrade(map)						\
 	(void) lockmgr(&(map)->lock, LK_UPGRADE, NULL, curproc)
 #endif /* DIAGNOSTIC */
-
 
 /*
  * uvm_mapent_alloc: allocate a map entry
@@ -1760,7 +1759,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 			vm_map_unlock(map);
 			return (KERN_PROTECTION_FAILURE);
 		}
-			current = current->next;
+		current = current->next;
 	}
 
 	/* go back and fix up protections (no need to clip this time). */
@@ -1785,12 +1784,11 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 		 */
 
 		if (current->protection != old_prot) {
-
 			/* update pmap! */
 			pmap_protect(map->pmap, current->start, current->end,
 			    current->protection & MASK(entry));
-
 		}
+
 		current = current->next;
 	}
 	
@@ -1884,7 +1882,7 @@ uvm_map_advice(map, start, end, new_advice)
 	} else {
 		entry = temp_entry->next;
 	}
-	
+
 	while ((entry != &map->header) && (entry->start < end)) {
 		UVM_MAP_CLIP_END(map, entry, end);
 
@@ -2422,8 +2420,7 @@ uvm_map_clean(map, start, end, flags)
 	vaddr_t start, end;
 	int flags;
 {
-	vm_map_entry_t current;
-	vm_map_entry_t entry;
+	vm_map_entry_t current, entry;
 	vsize_t size;
 	struct uvm_object *object;
 	vaddr_t offset;

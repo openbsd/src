@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.9 2001/03/09 17:49:34 art Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.10 2001/03/22 03:05:56 smart Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.23 1999/06/16 17:25:39 minoura Exp $	*/
 
 /*
@@ -841,6 +841,7 @@ sys_madvise(p, v, retval)
 	case KERN_PROTECTION_FAILURE:
 		return (EACCES);
 	}
+
 	return (EINVAL);
 }
 
@@ -1066,8 +1067,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 	 */
 
 	if (flags & MAP_ANON) {
-		
-		foff = UVM_UNKNOWN_OFFSET;		
+		foff = UVM_UNKNOWN_OFFSET;
 		uobj = NULL;
 		if ((flags & MAP_SHARED) == 0)
 			/* XXX: defer amap create */

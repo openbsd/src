@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.11 2001/03/08 15:21:38 smart Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.12 2001/03/22 03:05:57 smart Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.23 1999/04/11 04:04:11 chs Exp $	*/
 
 /*
@@ -553,7 +553,7 @@ uvm_vnp_terminate(vp)
 
 	/*
 	 * must be a valid uvn that is not already dying (because XLOCK
-	 * protects us from that).   the uvn can't in the the ALOCK state
+	 * protects us from that).   the uvn can't in the ALOCK state
 	 * because it is valid, and uvn's that are in the ALOCK state haven't
 	 * been marked valid yet.
 	 */
@@ -1476,7 +1476,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			if ((ptmp->flags & (PG_BUSY|PG_RELEASED)) != 0) {
 				ptmp->flags |= PG_WANTED;
 				UVM_UNLOCK_AND_WAIT(ptmp,
-				    &uobj->vmobjlock, 0, "uvn_get",0);
+				    &uobj->vmobjlock, FALSE, "uvn_get",0);
 				simple_lock(&uobj->vmobjlock);
 				continue;	/* goto top of pps while loop */
 			}
@@ -1736,7 +1736,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 			result = EIO;		/* XXX: error? */
 		} else if (got < PAGE_SIZE * npages && rw == UIO_READ) {
 			memset((void *) (kva + got), 0,
-			      (npages << PAGE_SHIFT) - got);
+			       (npages << PAGE_SHIFT) - got);
 		}
 	}
 
