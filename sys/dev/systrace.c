@@ -941,8 +941,8 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	struct iovec iov;
 	int error = 0;
 
-	DPRINTF(("%s: %u: %p(%d)\n", __func__,
-	    io->strio_pid, io->strio_offs, io->strio_len));
+	DPRINTF(("%s: %u: %p(%lu)\n", __func__,
+	    io->strio_pid, io->strio_offs, (u_long)io->strio_len));
 
 	switch (io->strio_op) {
 	case SYSTR_READ:
@@ -1256,8 +1256,8 @@ systrace_newpolicy(struct fsystrace *fst, int maxents)
 	if (pol == NULL)
 		return (NULL);
 
-	DPRINTF(("%s: allocating %d -> %d\n", __func__,
-		     maxents, maxents * sizeof(int)));
+	DPRINTF(("%s: allocating %d -> %lu\n", __func__,
+		     maxents, (u_long)maxents * sizeof(int)));
 
 	memset((caddr_t)pol, 0, sizeof(struct str_policy));
 
