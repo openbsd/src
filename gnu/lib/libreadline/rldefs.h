@@ -93,10 +93,11 @@ extern int _rl_stricmp (), _rl_strnicmp ();
 #  define KEYMAP_TO_FUNCTION(data)	(Function *)(data)
 #endif
 
-#ifndef savestring
 extern char *xmalloc ();
-#define savestring(x) strcpy (xmalloc (1 + strlen (x)), (x))
-#endif
+#if !defined (savestring)
+extern char *xstrdup (char *);
+#define savestring(x) xstrdup(x)
+#endif /* !savestring */
 
 /* Possible values for _rl_bell_preference. */
 #define NO_BELL 0
