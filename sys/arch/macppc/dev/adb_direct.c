@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.7 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.8 2002/10/18 03:49:16 drahn Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
 /*
@@ -510,6 +510,7 @@ switch_start:
 		break;
 
 	default:
+		;
 #ifdef ADB_DEBUG
 		if (adb_debug)
 			printf_intr("intr: unknown ADB state\n");
@@ -773,12 +774,6 @@ adb_soft_intr(void)
 	u_char *comprout = 0;
 	u_char *compdata = 0;
 
-#if 0
-	s = splhigh();
-	printf_intr("sr: %x\n", (s & 0x0700));
-	splx(s);
-#endif
-
 /*delay(2*ADB_DELAY);*/
 
 	while (adbInCount) {
@@ -816,32 +811,6 @@ adb_soft_intr(void)
 		if (comprout) {
 			((int (*)(u_char *, u_char *, int)) comprout)
 			    (buffer, compdata, cmd);
-#if 0
-#ifdef __NetBSD__
-			asm("	movml #0xffff,sp@-	| save all registers
-				movl %0,a2 		| compdata
-				movl %1,a1 		| comprout
-				movl %2,a0 		| buffer
-				movl %3,d0 		| cmd
-				jbsr a1@ 		| go call the routine
-				movml sp@+,#0xffff	| restore all registers"
-			    :
-			    : "g"(compdata), "g"(comprout),
-				"g"(buffer), "g"(cmd)
-			    : "d0", "a0", "a1", "a2");
-#else					/* for macos based testing */
-			asm
-			{
-				movem.l a0/a1/a2/d0, -(a7)
-				move.l compdata, a2
-				move.l comprout, a1
-				move.l buffer, a0
-				move.w cmd, d0
-				jsr(a1)
-				movem.l(a7)+, d0/a2/a1/a0
-			}
-#endif
-#endif
 		}
 
 		s = splhigh();

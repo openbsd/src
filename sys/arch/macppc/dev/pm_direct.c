@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.8 2002/06/18 04:31:40 itojun Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.9 2002/10/18 03:49:16 drahn Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -206,12 +206,6 @@ struct adbCommand {
 };
 extern	void	adb_pass_up(struct adbCommand *);
 
-#if 0
-/*
- * Define the external functions
- */
-extern int	zshard(int);		/* from zs.c */
-#endif
 
 #ifdef ADB_DEBUG
 /*
@@ -268,11 +262,7 @@ pm_wait_busy(delay)
 {
 	while (PM_IS_ON) {
 #ifdef PM_GRAB_SI
-#if 0
-		zshard(0);		/* grab any serial interrupts */
-#else
 		(void)intr_dispatch(0x70);
-#endif
 #endif
 		if ((--delay) < 0)
 			return 1;	/* timeout */
@@ -290,11 +280,7 @@ pm_wait_free(delay)
 {
 	while (PM_IS_OFF) {
 #ifdef PM_GRAB_SI
-#if 0
-		zshard(0);		/* grab any serial interrupts */
-#else
 		(void)intr_dispatch(0x70);
-#endif
 #endif
 		if ((--delay) < 0)
 			return 0;	/* timeout */
@@ -542,29 +528,6 @@ pm_intr_pm2()
 }
 
 
-#if 0
-/*
- * MRG-based PMgrOp routine
- */
-int
-pm_pmgrop_mrg(pmdata)
-	PMData *pmdata;
-{
-	u_int32_t rval=0;
-
-	asm("
-		movl	%1, a0
-		.word	0xa085
-		movl	d0, %0"
-		: "=g" (rval)
-		: "g" (pmdata)
-		: "a0", "d0" );
-
-	return rval;
-}
-#endif
-
-
 /*
  * My PMgrOp routine
  */
@@ -686,11 +649,7 @@ pm_adb_op(buffer, compRout, data, command)
 		if (read_via_reg(VIA1, vIFR) != 0)
 			pm_intr();
 #ifdef PM_GRAB_SI
-#if 0
-			zshard(0);		/* grab any serial interrupts */
-#else
 			(void)intr_dispatch(0x70);
-#endif
 #endif
 		if ((--ndelay) < 0) {
 			splx(s);
