@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.90 2003/12/04 01:19:37 millert Exp $
+#	$OpenBSD: netstart,v 1.91 2004/01/09 10:02:23 deraadt Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -111,7 +111,7 @@ ifstart() {
 				if [ "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
 					cmd="$cmd broadcast $bcaddr"
 				fi
-				[ "$alias" ] && rtcmd=";route -n add -host $name 127.0.0.1"
+				[ "$alias" ] && rtcmd=";route -qn add -host $name 127.0.0.1"
 				;;
 			inet6) [ "$mask" ] && cmd="$cmd prefixlen $mask"
 				cmd="$cmd $bcaddr"
@@ -199,36 +199,36 @@ fi
 ifconfig lo0 inet localhost
 
 # Use loopback, not the wire.
-route -n add -host $hostname localhost > /dev/null
-route -n add -net 127 127.0.0.1 -reject > /dev/null
+route -qn add -host $hostname localhost > /dev/null
+route -qn add -net 127 127.0.0.1 -reject > /dev/null
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	# IPv6 configurations.
 	ip6kernel=YES
 
 	# Disallow link-local unicast dest without outgoing scope identifiers.
-	route add -inet6 fe80:: -prefixlen 10 ::1 -reject > /dev/null
+	route -q add -inet6 fe80:: -prefixlen 10 ::1 -reject > /dev/null
 
 	# Disallow site-local unicast dest without outgoing scope identifiers.
 	# If you configure site-locals without scope id (it is permissible
 	# config for routers that are not on scope boundary), you may want
 	# to comment the line out.
-	route add -inet6 fec0:: -prefixlen 10 ::1 -reject > /dev/null
+	route -q add -inet6 fec0:: -prefixlen 10 ::1 -reject > /dev/null
 
 	# Disallow "internal" addresses to appear on the wire.
-	route add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject > /dev/null
+	route -q add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject > /dev/null
 
 	# Disallow packets to malicious IPv4 compatible prefix.
-	route add -inet6 ::224.0.0.0 -prefixlen 100 ::1 -reject > /dev/null
-	route add -inet6 ::127.0.0.0 -prefixlen 104 ::1 -reject > /dev/null
-	route add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject > /dev/null
-	route add -inet6 ::255.0.0.0 -prefixlen 104 ::1 -reject > /dev/null
+	route -q add -inet6 ::224.0.0.0 -prefixlen 100 ::1 -reject > /dev/null
+	route -q add -inet6 ::127.0.0.0 -prefixlen 104 ::1 -reject > /dev/null
+	route -q add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject > /dev/null
+	route -q add -inet6 ::255.0.0.0 -prefixlen 104 ::1 -reject > /dev/null
 
 	# Disallow packets to malicious 6to4 prefix.
-	route add -inet6 2002:e000:: -prefixlen 20 ::1 -reject > /dev/null
-	route add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject > /dev/null
-	route add -inet6 2002:0000:: -prefixlen 24 ::1 -reject > /dev/null
-	route add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject > /dev/null
+	route -q add -inet6 2002:e000:: -prefixlen 20 ::1 -reject > /dev/null
+	route -q add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject > /dev/null
+	route -q add -inet6 2002:0000:: -prefixlen 24 ::1 -reject > /dev/null
+	route -q add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject > /dev/null
 
 	# Completely disallow packets to IPv4 compatible prefix.
 	# This may conflict with RFC1933 under following circumstances:
@@ -243,7 +243,7 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	#     asked to forward it.
 	# Due to rare use of IPv4 compatible addresses, and security issues
 	# with it, we disable it by default.
-	route add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject > /dev/null
+	route -q add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject > /dev/null
 
 	rtsolif=""
 else
@@ -289,7 +289,7 @@ fi
 # that name must be in /etc/hosts.
 if [ -f /etc/mygate ]; then
 	route delete default > /dev/null 2>&1
-	route -n add -host default `cat /etc/mygate`
+	route -qn add -host default `cat /etc/mygate`
 fi
 
 # Multicast routing.
@@ -302,13 +302,13 @@ fi
 #	   Any other combination		-reject		config error
 case "$multicast_host:$multicast_router" in
 NO:NO)
-	route -n add -net 224.0.0.0/4 -interface 127.0.0.1 -reject > /dev/null
+	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject > /dev/null
 	;;
 NO:YES)
 	;;
 *:NO)
 	set `if [ $multicast_host = YES ]; then
-		ed -s '!route -n show -inet' <<EOF
+		ed -s '!route -qn show -inet' <<EOF
 /^default/p
 EOF
 	else
@@ -316,11 +316,11 @@ EOF
 /^	inet /p
 EOF
 	fi`
-	route -n add -net 224.0.0.0/4 -interface $2 > /dev/null
+	route -qn add -net 224.0.0.0/4 -interface $2 > /dev/null
 	;;
 *:*)
 	echo 'config error, multicasting disabled until rc.conf is fixed'
-	route -n add -net 224.0.0.0/4 -interface 127.0.0.1 -reject > /dev/null
+	route -qn add -net 224.0.0.0/4 -interface 127.0.0.1 -reject > /dev/null
 	;;
 esac
 
