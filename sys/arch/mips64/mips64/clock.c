@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
+/*	$OpenBSD: clock.c,v 1.3 2004/08/09 21:01:32 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -100,7 +100,7 @@ clockattach(struct device *parent, struct device *self, void *aux)
 	case GALILEO_EV64240:
 	case SGI_INDY:
 	case SGI_O2:
-		printf(" clock on int5 using counter");
+		printf(" ticker on int5 using count register.");
 		set_intr(INTPRI_CLOCK, CR_INT_5, clock_int5);
 		break;
 
