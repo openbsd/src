@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.112 2001/12/09 04:14:14 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.113 2001/12/09 04:20:42 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -189,17 +189,14 @@ struct pool pvpool;
  */
 static struct pool L1_pool;
 static struct pool L23_pool;
-void *pgt_page_alloc __P((unsigned long, int, int));
-void  pgt_page_free __P((void *, unsigned long, int));
+void *pgt_page_alloc(unsigned long, int, int);
+void  pgt_page_free(void *, unsigned long, int);
 
 /*
  * Page table pool back-end.
  */
 void *
-pgt_page_alloc(sz, flags, mtype)
-        unsigned long sz;
-        int flags;
-        int mtype;
+pgt_page_alloc(unsigned long sz, int flags, int mtype)
 {
 	struct vm_page *pg;
 	int nocache = (cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0;
@@ -225,12 +222,16 @@ pgt_page_alloc(sz, flags, mtype)
 }       
    
 void
-pgt_page_free(v, sz, mtype)
-        void *v;
-        unsigned long sz;
-        int mtype;
+pgt_page_free(void *v, unsigned long sz, int mtype)
 {
-        uvm_km_free(kernel_map, (vaddr_t)v, sz);
+	vaddr_t va = (vaddr_t)v;
+	paddr_t pa;
+
+	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+		panic("pgt_page_free");
+	uvm_pagefree(PHYS_TO_VM_PAGE(pa));
+	pmap_kremove(va, sz);
+	uvm_km_free(kernel_map, (vaddr_t)v, sz);
 }
 #endif /* SUN4M */
 
