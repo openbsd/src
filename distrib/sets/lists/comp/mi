@@ -559,6 +559,14 @@
 ./usr/include/ieeefp.h
 ./usr/include/inttypes.h
 ./usr/include/iso646.h
+./usr/include/isofs
+./usr/include/isofs/cd9660
+./usr/include/isofs/cd9660/cd9660_extern.h
+./usr/include/isofs/cd9660/cd9660_mount.h
+./usr/include/isofs/cd9660/cd9660_node.h
+./usr/include/isofs/cd9660/cd9660_rrip.h
+./usr/include/isofs/cd9660/iso.h
+./usr/include/isofs/cd9660/iso_rrip.h
 ./usr/include/kerberosIV/acl.h
 ./usr/include/kerberosIV/com_err.h
 ./usr/include/kerberosIV/kadm.h
