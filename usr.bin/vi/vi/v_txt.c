@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.10 2001/01/29 01:58:53 niklas Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.11 2001/09/19 02:31:31 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -541,7 +541,7 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 	 * This was not documented as far as I know, and is a great test of vi
 	 * clones.
 	 */
-	if (rcol == 0 && !LF_ISSET(TXT_REPLAY) && evp->e_c == '\0') {
+	if (LF_ISSET(TXT_RECORD) && rcol == 0 && evp->e_c == '\0') {
 		if (vip->rep == NULL)
 			goto done;
 
