@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.71 2003/12/02 23:16:29 markus Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.72 2004/01/15 10:15:55 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -67,24 +67,27 @@
 
 #define KEYSIZE_LIMIT	1024
 
-#define ESP_OLD		0x01
-#define ESP_NEW		0x02
-#define AH_OLD		0x04
-#define AH_NEW		0x08
-#define IPCOMP		0x10
+#define ESP_OLD		0x0001
+#define ESP_NEW		0x0002
+#define AH_OLD		0x0004
+#define AH_NEW		0x0008
 
-#define XF_ENC		0x10
-#define XF_AUTH		0x20
-#define DEL_SPI		0x30
-#define GRP_SPI		0x40
-#define FLOW		0x50
-#define FLUSH		0x70
-#define ENC_IP		0x80
-#define XF_COMP		0x90
-#define SHOW		0xa0
-#define MONITOR		0xb0
+#define XF_ENC		0x0100
+#define XF_AUTH		0x0200
+#define DEL_SPI		0x0300
+#define GRP_SPI		0x0400
+#define FLOW		0x0500
+#define FLUSH		0x0700
+#define XF_COMP		0x0900
+#define SHOW		0x0a00
+#define MONITOR		0x0b00
 
-#define CMD_MASK	0xf0
+/* pseudo commands */
+#define IPCOMP		0x1000
+#define TCPMD5		0x2000
+#define ENC_IP		0x4000
+
+#define CMD_MASK	0xff00
 
 #define isencauth(x)	((x)&~CMD_MASK)
 #define iscmd(x,y)	(((x) & CMD_MASK) == (y))
@@ -278,7 +281,7 @@ usage(void)
 {
 	fprintf(stderr, "usage: ipsecadm [command] <modifier...>\n"
 	    "\tCommands: new esp, old esp, new ah, old ah, group, delspi, ip4, ipcomp,\n"
-	    "\t\t  flow, flush, show, monitor\n"
+	    "\t\t  tcpmd5, flow, flush, show, monitor\n"
 	    "\tPossible modifiers:\n"
 	    "\t  -enc <alg>\t\t\tencryption algorithm\n"
 	    "\t  -auth <alg>\t\t\tauthentication algorithm\n"
@@ -310,7 +313,7 @@ usage(void)
 	    "\t  -dontacq\t\t\trequire, without using key mgmt.\n"
 	    "\t  -in\t\t\t\tspecify incoming-packet policy\n"
 	    "\t  -out\t\t\t\tspecify outgoing-packet policy\n"
-	    "\t  -[ah|esp|ip4|ipcomp]\t\tflush a particular protocol\n"
+	    "\t  -[ah|esp|ip4|ipcomp|tcpmd5]\t\tflush a particular protocol\n"
 	    "\t  -srcid\t\t\tsource identity for flows\n"
 	    "\t  -dstid\t\t\tdestination identity for flows\n"
 	    "\t  -srcid_type\t\t\tsource identity type\n"
@@ -488,6 +491,12 @@ main(int argc, char *argv[])
 		smsg.sadb_msg_type = SADB_ADD;
 		smsg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
 		i++;
+	} else if (!strcmp(argv[1], "tcpmd5")) {
+		mode = TCPMD5;
+		smsg.sadb_msg_type = SADB_ADD;
+		smsg.sadb_msg_satype = SADB_X_SATYPE_TCPSIGNATURE;
+		sa.sadb_sa_spi = 0;			/* fixed */
+		i++;
 	} else if (!strcmp(argv[1], "ipcomp")) {
 		mode = IPCOMP;
 		smsg.sadb_msg_type = SADB_ADD;
@@ -551,7 +560,7 @@ main(int argc, char *argv[])
 		}
 		if (!strcmp(argv[i] + 1, "key") && keyp == NULL &&
 		    (i + 1 < argc)) {
-			if (mode & (AH_NEW | AH_OLD)) {
+			if (mode & (AH_NEW | AH_OLD | TCPMD5)) {
 				authp = argv[++i];
 				alen = strlen(authp) / 2;
 			} else {
@@ -593,7 +602,7 @@ main(int argc, char *argv[])
 			}
 			close(fd);
 
-			if (mode & (AH_NEW | AH_OLD)) {
+			if (mode & (AH_NEW | AH_OLD | TCPMD5)) {
 				authp = pptr;
 				alen = sb.st_size / 2;
 			} else {
@@ -680,6 +689,8 @@ main(int argc, char *argv[])
 				smsg.sadb_msg_satype = SADB_SATYPE_AH;
 			else if (!strcmp(argv[i] + 1, "ip4"))
 				smsg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
+			else if (!strcmp(argv[i] + 1, "tcpmd5"))
+				smsg.sadb_msg_satype = SADB_X_SATYPE_TCPSIGNATURE;
 			else if (!strcmp(argv[i] + 1, "ipcomp"))
 				smsg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
 			else {
@@ -1413,7 +1424,7 @@ argfail:
 		exit(1);
 	}
 	if (((mode & (ESP_NEW | ESP_OLD)) && enc && keyp == NULL) ||
-	    ((mode & (AH_NEW | AH_OLD)) && authp == NULL)) {
+	    ((mode & (AH_NEW | AH_OLD | TCPMD5)) && authp == NULL)) {
 		fprintf(stderr, "%s: no key material specified\n", argv[0]);
 		exit(1);
 	}
@@ -1422,7 +1433,7 @@ argfail:
 		exit(1);
 	}
 	if (spi == SPI_LOCAL_USE && !iscmd(mode, FLUSH) && !iscmd(mode, FLOW)
-	    && !iscmd(mode, IPCOMP)) {
+	    && !iscmd(mode, IPCOMP) && !iscmd(mode, TCPMD5)) {
 		fprintf(stderr, "%s: no SPI specified\n", argv[0]);
 		exit(1);
 	}
@@ -1469,7 +1480,7 @@ argfail:
 	iov[cnt].iov_base = &smsg;
 	iov[cnt++].iov_len = sizeof(smsg);
 
-	if (isencauth(mode)) {
+	if (isencauth(mode) || iscmd(mode, TCPMD5)) {	/* XXX */
 		/* SA header */
 		iov[cnt].iov_base = &sa;
 		iov[cnt++].iov_len = sizeof(sa);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.9 2003/12/02 23:16:29 markus Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.10 2004/01/15 10:15:55 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -137,7 +137,7 @@ struct idname sa_types[] = {
 	{ SADB_SATYPE_RIPV2,		"ripv2",		NULL },
 	{ SADB_SATYPE_MIP,		"mip",			NULL },
 	{ SADB_X_SATYPE_IPIP,		"ipip",			NULL },
-	{ SADB_X_SATYPE_TCPSIGNATURE,	"tcpsig",		NULL },
+	{ SADB_X_SATYPE_TCPSIGNATURE,	"tcpmd5",		NULL },
 	{ SADB_X_SATYPE_IPCOMP,		"ipcomp",		NULL },
 	{ 0,				NULL,			NULL }
 };
