@@ -72,6 +72,7 @@ static int current_function_defines_vulnerable_string;
 static int current_function_defines_short_string;
 static int current_function_has_variable_string;
 static int current_function_defines_vsized_array;
+static int current_function_is_inlinable;
 static int saved_optimize_size = -1;
 
 static rtx guard_area, _guard;
@@ -85,7 +86,6 @@ static HOST_WIDE_INT push_frame_offset = 0;
 
 static int search_string_from_argsandvars PARAMS ((int caller));
 static int search_string_from_local_vars PARAMS ((tree block));
-static int search_string_def PARAMS ((tree names));
 static int search_pointer_def PARAMS ((tree names));
 static int search_func_pointer PARAMS ((tree type, int mark));
 static void reset_used_flags_for_insns PARAMS ((rtx insn));
@@ -124,12 +124,11 @@ static void propagate_virtual_stack_vars_in_operand PARAMS ((rtx x, rtx orig));
 
 
 void
-prepare_stack_protection (void)
+prepare_stack_protection (inlinable)
+     int inlinable;
 {
   tree blocks = DECL_INITIAL (current_function_decl);
-  current_function_defines_short_string = FALSE;
-  current_function_has_variable_string = FALSE;
-  current_function_defines_vsized_array = FALSE;
+  current_function_is_inlinable = inlinable && !flag_no_inline;
   push_frame_offset = push_allocated_offset = 0;
 
   /* solve for ssp-ppc-20021125 */
@@ -139,7 +138,7 @@ prepare_stack_protection (void)
   /*
     skip the protection if the function has no block or it is an inline function
   */
-  if (! blocks || DECL_INLINE (current_function_decl)) return;
+  if (! blocks || current_function_is_inlinable) return;
 
   current_function_defines_vulnerable_string = search_string_from_argsandvars (0);
 
@@ -253,6 +252,10 @@ search_string_from_argsandvars (caller)
   __latest_search_decl = current_function_decl;
   __latest_search_result = TRUE;
   
+  current_function_defines_short_string = FALSE;
+  current_function_has_variable_string = FALSE;
+  current_function_defines_vsized_array = FALSE;
+
   /*
     search a string variable from local variables
   */
@@ -351,14 +354,18 @@ search_string_from_local_vars (block)
   return found;
 }
 
-static int
+
+/*
+ * search a character array from the specified type tree
+ */
+int
 search_string_def (type)
      tree type;
 {
   tree tem;
     
-  /* Mark it as defined, so that if it is self-referent
-     we will not get into an infinite recursion of definitions.  */
+  if (! type)
+    return FALSE;
 
   switch (TREE_CODE (type))
     {
@@ -421,8 +428,8 @@ search_pointer_def (type)
 {
   tree tem;
     
-  /* Mark it as defined, so that if it is self-referent
-     we will not get into an infinite recursion of definitions.  */
+  if (! type)
+    return FALSE;
 
   switch (TREE_CODE (type))
     {
@@ -474,8 +481,8 @@ search_func_pointer (type, mark)
 {
   tree tem;
     
-  /* Mark it as defined, so that if it is self-referent
-     we will not get into an infinite recursion of definitions.  */
+  if (! type)
+    return FALSE;
 
   switch (TREE_CODE (type))
     {
@@ -845,6 +852,7 @@ arrange_var_order (block)
 	  if (! DECL_EXTERNAL (types) && ! TREE_STATIC (types)
 	      && TREE_CODE (types) == VAR_DECL
 	      && ! DECL_ARTIFICIAL (types)
+	      && ! DECL_INLINE (types)	/* don't sweep inlined string */
 	      && DECL_RTL (types)
 	      && GET_CODE (DECL_RTL (types)) == MEM)
 	    {
@@ -877,10 +885,10 @@ arrange_var_order (block)
 		      /* skip the variable if it is top of the region
 			 specified by sweep_frame_offset */
 		      offset = AUTO_OFFSET (XEXP (DECL_RTL (types), 0));
-		      if (offset >= sweep_frame_offset - var_size)
+		      if (offset == sweep_frame_offset - var_size)
 			sweep_frame_offset -= var_size;
 		      
-		      else
+		      else if (offset < sweep_frame_offset - var_size)
 			sweep_string_variable (DECL_RTL (types), var_size);
 		    }
 		}
@@ -1755,7 +1763,7 @@ assign_stack_local_for_pseudo_reg (mode, size, align)
   if (! flag_propolice_protection
       || size == 0
       || ! blocks || TREE_CODE (blocks) != BLOCK
-      || DECL_INLINE (current_function_decl)
+      || current_function_is_inlinable
       || ! search_string_from_argsandvars (1)
       || current_function_contains_functions)
     return assign_stack_local (mode, size, align);
