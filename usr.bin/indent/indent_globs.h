@@ -1,4 +1,4 @@
-/* *	$OpenBSD: indent_globs.h,v 1.9 2003/06/12 01:07:27 deraadt Exp $*/
+/* *	$OpenBSD: indent_globs.h,v 1.10 2003/06/25 21:24:53 deraadt Exp $*/
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980, 1993
@@ -206,7 +206,6 @@ struct fstate {
     char        size;
     int         allcaps:1;
 };
-char       *chfont();
 
 struct fstate
             keywordf,		/* keyword font */
