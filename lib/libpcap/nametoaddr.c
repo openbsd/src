@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.6 1997/07/25 20:30:20 mickey Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.7 1999/07/20 04:49:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -25,12 +25,14 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: nametoaddr.c,v 1.38 96/06/17 02:42:50 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/lib/libpcap/nametoaddr.c,v 1.7 1999/07/20 04:49:55 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
+#include <sys/types.h>				/* concession to AIX */
 #include <sys/socket.h>
+#include <sys/time.h>
 
 #ifdef __STDC__
 struct mbuf;
@@ -47,16 +49,16 @@ struct rtentry;
 #include <stdlib.h>
 #include <memory.h>
 #include <netdb.h>
-#include <pcap.h>
-#include <pcap-namedb.h>
 #include <stdio.h>
+
+#include "pcap-int.h"
+
+#include "gencode.h"
+#include <pcap-namedb.h>
 
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif
-
-#include "pcap-int.h"
-#include "gencode.h"
 
 #ifndef NTOHL
 #define NTOHL(x) (x) = ntohl(x)
@@ -191,6 +193,7 @@ struct eproto eproto_db[] = {
 	{ "moprc", ETHERTYPE_MOPRC },
 	{ "decnet", ETHERTYPE_DN },
 	{ "lat", ETHERTYPE_LAT },
+	{ "sca", ETHERTYPE_SCA },
 	{ "lanbridge", ETHERTYPE_LANBRIDGE },
 	{ "vexp", ETHERTYPE_VEXP },
 	{ "vprod", ETHERTYPE_VPROD },
@@ -228,42 +231,44 @@ xdtoi(c)
 		return c - 'A' + 10;
 }
 
-bpf_u_int32
-__pcap_atoin(const char *s)
+int
+__pcap_atoin(const char *s, bpf_u_int32 *addr)
 {
-	bpf_u_int32 addr = 0;
 	u_int n;
+	int len;
 
+	*addr = 0;
+	len = 0;
 	while (1) {
 		n = 0;
 		while (*s && *s != '.')
 			n = n * 10 + *s++ - '0';
-		addr <<= 8;
-		addr |= n & 0xff;
+		*addr <<= 8;
+		*addr |= n & 0xff;
+		len += 8;
 		if (*s == '\0')
-			return addr;
+			return len;
 		++s;
 	}
 	/* NOTREACHED */
 }
 
-bpf_u_int32
-__pcap_atodn(const char *s)
+int
+__pcap_atodn(const char *s, bpf_u_int32 *addr)
 {
 #define AREASHIFT 10
 #define AREAMASK 0176000
 #define NODEMASK 01777
 
-	bpf_u_int32 addr = 0;
 	u_int node, area;
 
 	if (sscanf((char *)s, "%d.%d", &area, &node) != 2)
 		bpf_error("malformed decnet address '%s'", s);
 
-	addr = (area << AREASHIFT) & AREAMASK;
-	addr |= (node & NODEMASK);
+	*addr = (area << AREASHIFT) & AREAMASK;
+	*addr |= (node & NODEMASK);
 
-	return(addr);
+	return(32);
 }
 
 /*
@@ -341,7 +346,7 @@ pcap_ether_hostton(const char *name)
 	if (ether_hostton((char *)name, (struct ether_addr *)a) == 0) {
 		ap = (u_char *)malloc(6);
 		if (ap != NULL)
-			memcpy(ap, a, 6);
+			memcpy((char *)ap, (char *)a, 6);
 	}
 	return (ap);
 }

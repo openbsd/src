@@ -1,7 +1,7 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.9 1998/07/14 00:14:03 deraadt Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.10 1999/07/20 04:49:55 deraadt Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994, 1995, 1996
+ * Copyright (c) 1993, 1994, 1995, 1996, 1998
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,8 +21,8 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #ifndef lint
-static  char rcsid[] =
-    "@(#)Header: pcap-bpf.c,v 1.25 96/06/24 02:50:11 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/lib/libpcap/pcap-bpf.c,v 1.10 1999/07/20 04:49:55 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>			/* optionally get BSD define */
@@ -32,22 +32,21 @@ static  char rcsid[] =
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
-#include <net/bpf.h>
 #include <net/if.h>
 
 #include <ctype.h>
 #include <errno.h>
-#include <stdlib.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "pcap-int.h"
 
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif
-
-#include "pcap-int.h"
 
 int
 pcap_stats(pcap_t *p, struct pcap_stat *ps)
@@ -200,6 +199,14 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 		    "kernel bpf filter out of date");
 		goto bad;
 	}
+	v = 32768;	/* XXX this should be a user-accessible hook */
+	/* Ignore the return value - this is because the call fails on
+	 * BPF systems that don't have kernel malloc.  And if the call
+	 * fails, it's no big deal, we just continue to use the standard
+	 * buffer size.
+	 */
+	(void) ioctl(fd, BIOCSBLEN, (caddr_t)&v);
+
 	(void)strncpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
 	if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) < 0) {
 		snprintf(ebuf, PCAP_ERRBUF_SIZE, "%s: %s",
@@ -212,6 +219,19 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 		    pcap_strerror(errno));
 		goto bad;
 	}
+#if _BSDI_VERSION - 0 >= 199510
+	/* The SLIP and PPP link layer header changed in BSD/OS 2.1 */
+	switch (v) {
+
+	case DLT_SLIP:
+		v = DLT_SLIP_BSDOS;
+		break;
+
+	case DLT_PPP:
+		v = DLT_PPP_BSDOS;
+		break;
+	}
+#endif
 	p->linktype = v;
 
 	/* set timeout */

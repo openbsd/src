@@ -1,7 +1,7 @@
-/*	$OpenBSD: gencode.c,v 1.10 1998/08/31 19:53:19 deraadt Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.11 1999/07/20 04:49:54 deraadt Exp $	*/
 
 /*
- * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
+ * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,8 +21,8 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: gencode.c,v 1.81 96/06/19 23:09:09 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/lib/libpcap/gencode.c,v 1.11 1999/07/20 04:49:54 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -35,15 +35,12 @@ struct rtentry;
 #endif
 
 #include <net/if.h>
-#include <net/bpf.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
 #include <stdlib.h>
 #include <memory.h>
-#include <pcap.h>
-#include <pcap-namedb.h>
 #include <setjmp.h>
 #ifdef __STDC__
 #include <stdarg.h>
@@ -51,28 +48,15 @@ struct rtentry;
 #include <varargs.h>
 #endif
 
-#ifdef HAVE_OS_PROTO_H
-#include "os-proto.h"
-#endif
-
 #include "pcap-int.h"
 
+#include "ethertype.h"
 #include "gencode.h"
+#include "ppp.h"
+#include <pcap-namedb.h>
 
-#ifndef ETHERTYPE_REVARP
-#define ETHERTYPE_REVARP	0x8035
-#endif
-#ifndef	ETHERTYPE_MOPDL
-#define	ETHERTYPE_MOPDL		0x6001
-#endif
-#ifndef	ETHERTYPE_MOPRC
-#define	ETHERTYPE_MOPRC		0x6002
-#endif
-#ifndef	ETHERTYPE_DN
-#define	ETHERTYPE_DN		0x6003
-#endif
-#ifndef	ETHERTYPE_LAT
-#define	ETHERTYPE_LAT		0x6004
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
 #endif
 
 #define JMP(c) ((c)|BPF_JMP|BPF_K)
@@ -147,24 +131,23 @@ static void backpatch(struct block *, struct block *);
 static void merge(struct block *, struct block *);
 static struct block *gen_cmp(u_int, u_int, bpf_int32);
 static struct block *gen_mcmp(u_int, u_int, bpf_int32, bpf_u_int32);
-static struct block *gen_bcmp(u_int, u_int, u_char *);
+static struct block *gen_bcmp(u_int, u_int, const u_char *);
 static struct block *gen_uncond(int);
 static __inline struct block *gen_true(void);
 static __inline struct block *gen_false(void);
 static struct block *gen_linktype(int);
 static struct block *gen_hostop(bpf_u_int32, bpf_u_int32, int, int, u_int, u_int);
-static struct block *gen_ehostop(u_char *, int);
-static struct block *gen_fhostop(u_char *, int);
+static struct block *gen_ehostop(const u_char *, int);
+static struct block *gen_fhostop(const u_char *, int);
 static struct block *gen_dnhostop(bpf_u_int32, int, u_int);
 static struct block *gen_host(bpf_u_int32, bpf_u_int32, int, int);
-static struct block *gen_gateway(u_char *, bpf_u_int32 **, int, int);
+static struct block *gen_gateway(const u_char *, bpf_u_int32 **, int, int);
 static struct block *gen_ipfrag(void);
 static struct block *gen_portatom(int, bpf_int32);
 struct block *gen_portop(int, int, int);
 static struct block *gen_port(int, int, int);
-static int lookup_proto(char *, int);
+static int lookup_proto(const char *, int);
 static struct block *gen_proto(int, int, int);
-static bpf_u_int32 net_mask(bpf_u_int32 *);
 static struct slist *xfer_to_x(struct arth *);
 static struct slist *xfer_to_a(struct arth *);
 static struct block *gen_len(int, int);
@@ -213,11 +196,12 @@ freechunks()
  */
 char *
 sdup(s)
-	char *s;
+	register const char *s;
 {
 	int n = strlen(s) + 1;
 	char *cp = newchunk(n);
-	strcpy(cp, s);
+
+	strlcpy(cp, s, n);
 	return (cp);
 }
 
@@ -425,15 +409,17 @@ gen_mcmp(offset, size, v, mask)
 
 static struct block *
 gen_bcmp(offset, size, v)
-	u_int offset, size;
-	u_char *v;
+	register u_int offset, size;
+	register const u_char *v;
 {
-	struct block *b, *tmp;
+	register struct block *b, *tmp;
 
 	b = NULL;
 	while (size >= 4) {
-		u_char *p = &v[size - 4];
-		bpf_int32 w = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
+		register const u_char *p = &v[size - 4];
+		bpf_int32 w = ((bpf_int32)p[0] << 24) |
+		    ((bpf_int32)p[1] << 16) | ((bpf_int32)p[2] << 8) | p[3];
+
 		tmp = gen_cmp(offset + size - 4, BPF_W, w);
 		if (b != NULL)
 			gen_and(b, tmp);
@@ -441,8 +427,9 @@ gen_bcmp(offset, size, v)
 		size -= 4;
 	}
 	while (size >= 2) {
-		u_char *p = &v[size - 2];
-		bpf_int32 w = (p[0] << 8) | p[1];
+		register const u_char *p = &v[size - 2];
+		bpf_int32 w = ((bpf_int32)p[0] << 8) | p[1];
+
 		tmp = gen_cmp(offset + size - 2, BPF_H, w);
 		if (b != NULL)
 			gen_and(b, tmp);
@@ -489,24 +476,26 @@ init_linktype(type)
 		off_nl = 16;
 		return;
 
+	case DLT_SLIP_BSDOS:
+		/* XXX this may be the same as the DLT_PPP_BSDOS case */
+		off_linktype = -1;
+		/* XXX end */
+		off_nl = 24;
+		return;
+
 	case DLT_NULL:
-		off_linktype = -1;
-		off_nl = 0;
-		return;
-
-	case DLT_LOOP:
-		off_linktype = -1;
+		off_linktype = 0;
 		off_nl = 4;
-		return;
-
-	case DLT_ENC:
-		off_linktype = -1;
-		off_nl = 12;
 		return;
 
 	case DLT_PPP:
 		off_linktype = 2;
 		off_nl = 4;
+		return;
+
+	case DLT_PPP_BSDOS:
+		off_linktype = 5;
+		off_nl = 24;
 		return;
 
 	case DLT_FDDI:
@@ -537,6 +526,21 @@ init_linktype(type)
 		 */
 		off_linktype = 6;
 		off_nl = 8;
+		return;
+
+	case DLT_LOOP:
+		off_linktype = -1;
+		off_nl = 4;
+		return;
+
+	case DLT_ENC:
+		off_linktype = -1;
+		off_nl = 12;
+		return;
+
+	case DLT_RAW:
+		off_linktype = -1;
+		off_nl = 0;
 		return;
 	}
 	bpf_error("unknown data link type 0x%x", linktype);
@@ -572,32 +576,55 @@ gen_false()
 
 static struct block *
 gen_linktype(proto)
-	int proto;
+	register int proto;
 {
+	struct block *b0, *b1;
+
+	/* If we're not using encapsulation and checking for IP, we're done */
+	if (off_linktype == -1 && proto == ETHERTYPE_IP)
+		return gen_true();
+
 	switch (linktype) {
+
 	case DLT_SLIP:
-		if (proto == ETHERTYPE_IP)
-			return gen_true();
-		else
-			return gen_false();
+		return gen_false();
 
 	case DLT_PPP:
 		if (proto == ETHERTYPE_IP)
-			proto = 0x0021;		/* XXX - need ppp.h defs */
+			proto = PPP_IP;			/* XXX was 0x21 */
+		break;
+
+	case DLT_PPP_BSDOS:
+		switch (proto) {
+
+		case ETHERTYPE_IP:
+			b0 = gen_cmp(off_linktype, BPF_H, PPP_IP);
+			b1 = gen_cmp(off_linktype, BPF_H, PPP_VJC);
+			gen_or(b0, b1);
+			b0 = gen_cmp(off_linktype, BPF_H, PPP_VJNC);
+			gen_or(b1, b0);
+			return b0;
+
+		case ETHERTYPE_DN:
+			proto = PPP_DECNET;
+			break;
+
+		case ETHERTYPE_ATALK:
+			proto = PPP_APPLE;
+			break;
+
+		case ETHERTYPE_NS:
+			proto = PPP_NS;
+			break;
+		}
 		break;
 
 	case DLT_LOOP:
-		if (proto == ETHERTYPE_IP)
-			return (gen_cmp(0, BPF_W, (bpf_int32) AF_INET));
-		else
-			return gen_false();
-		break;
-
 	case DLT_ENC:
 	case DLT_NULL:
 		/* XXX */
 		if (proto == ETHERTYPE_IP)
-			return (gen_cmp(0, BPF_W, htonl((bpf_int32) AF_INET)));
+			return (gen_cmp(0, BPF_W, (bpf_int32)htonl(AF_INET)));
 		else
 			return gen_false();
 	}
@@ -648,10 +675,10 @@ gen_hostop(addr, mask, dir, proto, src_off, dst_off)
 
 static struct block *
 gen_ehostop(eaddr, dir)
-	u_char *eaddr;
-	int dir;
+	register const u_char *eaddr;
+	register int dir;
 {
-	struct block *b0, *b1;
+	register struct block *b0, *b1;
 
 	switch (dir) {
 	case Q_SRC:
@@ -682,8 +709,8 @@ gen_ehostop(eaddr, dir)
  */
 static struct block *
 gen_fhostop(eaddr, dir)
-	u_char *eaddr;
-	int dir;
+	register const u_char *eaddr;
+	register int dir;
 {
 	struct block *b0, *b1;
 
@@ -850,8 +877,17 @@ gen_host(addr, mask, proto, dir)
 	case Q_IGMP:
 		bpf_error("'igmp' modifier applied to host");
 
+	case Q_IGRP:
+		bpf_error("'igrp' modifier applied to host");
+
+	case Q_ATALK:
+		bpf_error("ATALK host filtering not implemented");
+
 	case Q_DECNET:
 		return gen_dnhostop(addr, dir, off_nl);
+
+	case Q_SCA:
+		bpf_error("SCA host filtering not implemented");
 
 	case Q_LAT:
 		bpf_error("LAT host filtering not implemented");
@@ -870,7 +906,7 @@ gen_host(addr, mask, proto, dir)
 
 static struct block *
 gen_gateway(eaddr, alist, proto, dir)
-	u_char *eaddr;
+	const u_char *eaddr;
 	bpf_u_int32 **alist;
 	int proto;
 	int dir;
@@ -893,9 +929,9 @@ gen_gateway(eaddr, alist, proto, dir)
 			bpf_error(
 			    "'gateway' supported only on ethernet or FDDI");
 
-		b1 = gen_host(**alist++, 0xffffffffL, proto, Q_OR);
+		b1 = gen_host(**alist++, 0xffffffff, proto, Q_OR);
 		while (*alist) {
-			tmp = gen_host(**alist++, 0xffffffffL, proto, Q_OR);
+			tmp = gen_host(**alist++, 0xffffffff, proto, Q_OR);
 			gen_or(b1, tmp);
 			b1 = tmp;
 		}
@@ -939,6 +975,15 @@ gen_proto_abbrev(proto)
 		gen_and(b0, b1);
 		break;
 
+#ifndef	IPPROTO_IGRP
+#define	IPPROTO_IGRP	9
+#endif
+	case Q_IGRP:
+		b0 =  gen_linktype(ETHERTYPE_IP);
+		b1 = gen_cmp(off_nl + 9, BPF_B, (long)IPPROTO_IGRP);
+		gen_and(b0, b1);
+		break;
+
 	case Q_IP:
 		b1 =  gen_linktype(ETHERTYPE_IP);
 		break;
@@ -954,8 +999,16 @@ gen_proto_abbrev(proto)
 	case Q_LINK:
 		bpf_error("link layer applied in wrong context");
 
+	case Q_ATALK:
+		b1 =  gen_linktype(ETHERTYPE_ATALK);
+		break;
+
 	case Q_DECNET:
 		b1 =  gen_linktype(ETHERTYPE_DN);
+		break;
+
+	case Q_SCA:
+		b1 =  gen_linktype(ETHERTYPE_SCA);
 		break;
 
 	case Q_LAT:
@@ -1087,12 +1140,13 @@ gen_port(port, ip_proto, dir)
 
 static int
 lookup_proto(name, proto)
-	char *name;
-	int proto;
+	register const char *name;
+	register int proto;
 {
-	int v;
+	register int v;
 
 	switch (proto) {
+
 	case Q_DEFAULT:
 	case Q_IP:
 		v = pcap_nametoproto(name);
@@ -1141,8 +1195,16 @@ gen_proto(v, proto, dir)
 		bpf_error("rarp does not encapsulate another protocol");
 		/* NOTREACHED */
 
+	case Q_ATALK:
+		bpf_error("atalk encapsulation is not specifiable");
+		/* NOTREACHED */
+
 	case Q_DECNET:
 		bpf_error("decnet encapsulation is not specifiable");
+		/* NOTREACHED */
+
+	case Q_SCA:
+		bpf_error("sca does not encapsulate another protocol");
 		/* NOTREACHED */
 
 	case Q_LAT:
@@ -1176,6 +1238,10 @@ gen_proto(v, proto, dir)
 		bpf_error("'igmp proto' is bogus");
 		/* NOTREACHED */
 
+	case Q_IGRP:
+		bpf_error("'igrp proto' is bogus");
+		/* NOTREACHED */
+
 	default:
 		abort();
 		/* NOTREACHED */
@@ -1183,29 +1249,14 @@ gen_proto(v, proto, dir)
 	/* NOTREACHED */
 }
 
-/*
- * Left justify 'addr' and return its resulting network mask.
- */
-static bpf_u_int32
-net_mask(addr)
-	bpf_u_int32 *addr;
-{
-	register bpf_u_int32 m = 0xffffffff;
-
-	if (*addr)
-		while ((*addr & 0xff000000) == 0)
-			*addr <<= 8, m <<= 8;
-
-	return m;
-}
-
 struct block *
 gen_scode(name, q)
-	char *name;
+	register const char *name;
 	struct qual q;
 {
 	int proto = q.proto;
 	int dir = q.dir;
+	int tproto;
 	u_char *eaddr;
 	bpf_u_int32 mask, addr, **alist;
 	struct block *b, *tmp;
@@ -1217,7 +1268,12 @@ gen_scode(name, q)
 		addr = pcap_nametonetaddr(name);
 		if (addr == 0)
 			bpf_error("unknown network '%s'", name);
-		mask = net_mask(&addr);
+		/* Left justify network addr and calculate its network mask */
+		mask = 0xffffffff;
+		while (addr && (addr & 0xff000000) == 0) {
+			addr <<= 8;
+			mask <<= 8;
+		}
 		return gen_host(addr, mask, proto, dir);
 
 	case Q_DEFAULT:
@@ -1255,10 +1311,13 @@ gen_scode(name, q)
 			alist = pcap_nametoaddr(name);
 			if (alist == NULL || *alist == NULL)
 				bpf_error("unknown host '%s'", name);
-			b = gen_host(**alist++, 0xffffffffL, proto, dir);
+			tproto = proto;
+			if (off_linktype == -1 && tproto == Q_DEFAULT)
+				tproto = Q_IP;
+			b = gen_host(**alist++, 0xffffffff, tproto, dir);
 			while (*alist) {
-				tmp = gen_host(**alist++, 0xffffffffL,
-					       proto, dir);
+				tmp = gen_host(**alist++, 0xffffffff,
+					       tproto, dir);
 				gen_or(b, tmp);
 				b = tmp;
 			}
@@ -1312,13 +1371,63 @@ gen_scode(name, q)
 }
 
 struct block *
-gen_ncode(v, q)
+gen_mcode(s1, s2, masklen, q)
+	register const char *s1, *s2;
+	register int masklen;
+	struct qual q;
+{
+	register int nlen, mlen;
+	bpf_u_int32 n, m;
+
+	nlen = __pcap_atoin(s1, &n);
+	/* Promote short ipaddr */
+	n <<= 32 - nlen;
+
+	if (s2 != NULL) {
+		mlen = __pcap_atoin(s2, &m);
+		/* Promote short ipaddr */
+		m <<= 32 - mlen;
+		if ((n & ~m) != 0)
+			bpf_error("non-network bits set in \"%s mask %s\"",
+			    s1, s2);
+	} else {
+		/* Convert mask len to mask */
+		if (masklen > 32)
+			bpf_error("mask length must be <= 32");
+		m = 0xffffffff << (32 - masklen);
+		if ((n & ~m) != 0)
+			bpf_error("non-network bits set in \"%s/%d\"",
+			    s1, masklen);
+	}
+
+	switch (q.addr) {
+
+	case Q_NET:
+		return gen_host(n, m, q.proto, q.dir);
+
+	default:
+		bpf_error("Mask syntax for networks only");
+		/* NOTREACHED */
+	}
+}
+
+struct block *
+gen_ncode(s, v, q)
+	register const char *s;
 	bpf_u_int32 v;
 	struct qual q;
 {
 	bpf_u_int32 mask;
 	int proto = q.proto;
 	int dir = q.dir;
+	register int vlen;
+
+	if (s == NULL)
+		vlen = 32;
+	else if (q.proto == Q_DECNET)
+		vlen = __pcap_atodn(s, &v);
+	else
+		vlen = __pcap_atoin(s, &v);
 
 	switch (q.addr) {
 
@@ -1330,7 +1439,18 @@ gen_ncode(v, q)
 		else if (proto == Q_LINK) {
 			bpf_error("illegal link layer address");
 		} else {
-			mask = net_mask(&v);
+			mask = 0xffffffff;
+			if (s == NULL && q.addr == Q_NET) {
+				/* Promote short net number */
+				while (v && (v & 0xff000000) == 0) {
+					v <<= 8;
+					mask <<= 8;
+				}
+			} else {
+				/* Promote short ipaddr */
+				v <<= 32 - vlen;
+				mask <<= 32 - vlen;
+			}
 			return gen_host(v, mask, proto, dir);
 		}
 
@@ -1366,7 +1486,7 @@ gen_ncode(v, q)
 
 struct block *
 gen_ecode(eaddr, q)
-	u_char *eaddr;
+	register const u_char *eaddr;
 	struct qual q;
 {
 	if ((q.addr == Q_HOST || q.addr == Q_DEFAULT) && q.proto == Q_LINK) {
@@ -1456,7 +1576,9 @@ gen_load(proto, index, size)
 	case Q_IP:
 	case Q_ARP:
 	case Q_RARP:
+	case Q_ATALK:
 	case Q_DECNET:
+	case Q_SCA:
 	case Q_LAT:
 	case Q_MOPRC:
 	case Q_MOPDL:
@@ -1477,6 +1599,7 @@ gen_load(proto, index, size)
 	case Q_UDP:
 	case Q_ICMP:
 	case Q_IGMP:
+	case Q_IGRP:
 		s = new_stmt(BPF_LDX|BPF_MSH|BPF_B);
 		s->s.k = off_nl;
 		sappend(s, xfer_to_a(index));

@@ -1,7 +1,7 @@
-/*	$OpenBSD: pcap.h,v 1.6 1996/07/12 13:19:12 mickey Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.7 1999/07/20 04:49:55 deraadt Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994, 1995, 1996
+ * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: pcap.h,v 1.19 96/06/16 22:36:28 leres Exp (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.7 1999/07/20 04:49:55 deraadt Exp $ (LBL)
  */
 
 #ifndef lib_pcap_h
@@ -104,7 +104,7 @@ typedef void (*pcap_handler)(u_char *, const struct pcap_pkthdr *,
 char	*pcap_lookupdev(char *);
 int	pcap_lookupnet(char *, bpf_u_int32 *, bpf_u_int32 *, char *);
 pcap_t	*pcap_open_live(char *, int, int, int, char *);
-pcap_t	*pcap_open_offline(char *, char *);
+pcap_t	*pcap_open_offline(const char *, char *);
 void	pcap_close(pcap_t *);
 int	pcap_loop(pcap_t *, int, pcap_handler, u_char *);
 int	pcap_dispatch(pcap_t *, int, pcap_handler, u_char *);
@@ -129,15 +129,11 @@ int	pcap_minor_version(pcap_t *);
 FILE	*pcap_file(pcap_t *);
 int	pcap_fileno(pcap_t *);
 
-pcap_dumper_t *pcap_dump_open(pcap_t *, char *);
+pcap_dumper_t *pcap_dump_open(pcap_t *, const char *);
 void	pcap_dump_close(pcap_dumper_t *);
 void	pcap_dump(u_char *, const struct pcap_pkthdr *, const u_char *);
 
 /* XXX this guy lives in the bpf tree */
 u_int	bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
 char	*bpf_image(struct bpf_insn *, int);
-
-/* XXX */
-extern	int pcap_fddipad;
-
 #endif

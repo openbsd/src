@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.5 1997/07/25 20:30:18 mickey Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.6 1999/07/20 04:49:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: gencode.h,v 1.33 96/06/23 02:21:09 leres Exp (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/gencode.h,v 1.6 1999/07/20 04:49:54 deraadt Exp $ (LBL)
  */
 
 /* Address qualifiers. */
@@ -41,11 +41,15 @@
 #define Q_UDP		6
 #define Q_ICMP		7
 #define Q_IGMP		8
+#define Q_IGRP		9
 
-#define	Q_DECNET	9
-#define	Q_LAT		10
-#define	Q_MOPRC		11
-#define	Q_MOPDL		12
+
+#define	Q_ATALK		10
+#define	Q_DECNET	11
+#define	Q_LAT		12
+#define Q_SCA		13
+#define	Q_MOPRC		14
+#define	Q_MOPDL		15
 
 /* Directional qualifiers. */
 
@@ -142,9 +146,10 @@ void gen_and(struct block *, struct block *);
 void gen_or(struct block *, struct block *);
 void gen_not(struct block *);
 
-struct block *gen_scode(char *, struct qual);
-struct block *gen_ecode(u_char *, struct qual);
-struct block *gen_ncode(bpf_u_int32, struct qual);
+struct block *gen_scode(const char *, struct qual);
+struct block *gen_ecode(const u_char *, struct qual);
+struct block *gen_mcode(const char *, const char *, int, struct qual);
+struct block *gen_ncode(const char *, bpf_u_int32, struct qual);
 struct block *gen_proto_abbrev(int);
 struct block *gen_relation(int, struct arth *, struct arth *, int);
 struct block *gen_less(int);
@@ -161,7 +166,7 @@ __dead void bpf_error(const char *, ...)
 #endif
 
 void finish_parse(struct block *);
-char *sdup(char *);
+char *sdup(const char *);
 
 struct bpf_insn *icode_to_fcode(struct block *, int *);
 int pcap_parse(void);

@@ -1,7 +1,7 @@
-/*	$OpenBSD: inet.c,v 1.10 1998/08/27 22:36:33 mickey Exp $	*/
+/*	$OpenBSD: inet.c,v 1.11 1999/07/20 04:49:55 deraadt Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995, 1996
+ * Copyright (c) 1994, 1995, 1996, 1997, 1998
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,8 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: inet.c,v 1.16 96/06/23 14:28:22 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/lib/libpcap/inet.c,v 1.11 1999/07/20 04:49:55 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -45,6 +45,7 @@ static char rcsid[] =
 #ifdef HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
+#include <sys/time.h>				/* concession to AIX */
 
 #ifdef __STDC__
 struct mbuf;
@@ -61,19 +62,19 @@ struct rtentry;
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <pcap.h>
+
+#include "pcap-int.h"
 
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif
 
-#include "pcap-int.h"
-
 /* Not all systems have IFF_LOOPBACK */
 #ifdef IFF_LOOPBACK
 #define ISLOOPBACK(p) ((p)->ifr_flags & IFF_LOOPBACK)
 #else
-#define ISLOOPBACK(p) (strcmp((p)->ifr_name, "lo0") == 0)
+#define ISLOOPBACK(p) ((p)->ifr_name[0] == 'l' && (p)->ifr_name[1] == 'o' && \
+    (isdigit((p)->ifr_name[2]) || (p)->ifr_name[2] == '\0'))
 #endif
 
 /*
@@ -144,8 +145,12 @@ pcap_lookupdev(errbuf)
 		 */
 		strncpy(ifr.ifr_name, ifrp->ifr_name, sizeof(ifr.ifr_name));
 		if (ioctl(fd, SIOCGIFFLAGS, (char *)&ifr) < 0) {
+			if (errno == ENXIO)
+				continue;
 			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
-			    "SIOCGIFFLAGS: %s", pcap_strerror(errno));
+			    "SIOCGIFFLAGS: %.*s: %s",
+			    (int)sizeof(ifr.ifr_name), ifr.ifr_name,
+			    pcap_strerror(errno));
 			(void)close(fd);
 			free(ibuf);
 			return (NULL);
@@ -165,7 +170,8 @@ pcap_lookupdev(errbuf)
 	}
 	(void)close(fd);
 	if (mp == NULL) {
-		(void)strcpy(errbuf, "no suitable device found");
+		(void)strlcpy(errbuf, "no suitable device found",
+		    PCAP_ERRBUF_SIZE);
 		free(ibuf);
 		return (NULL);
 	}

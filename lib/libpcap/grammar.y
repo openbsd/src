@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: grammar.y,v 1.5 1997/07/25 20:30:19 mickey Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.6 1999/07/20 04:49:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -23,8 +23,8 @@
  *
  */
 #ifndef lint
-static char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.5 1997/07/25 20:30:19 mickey Exp $ (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.6 1999/07/20 04:49:54 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -37,21 +37,20 @@ struct rtentry;
 #endif
 
 #include <net/if.h>
-#include <net/bpf.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
 #include <stdio.h>
-#include <pcap.h>
+
+#include "pcap-int.h"
+
+#include "gencode.h"
 #include <pcap-namedb.h>
 
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif
-
-#include "pcap-int.h"
-#include "gencode.h"
 
 #define QSET(q, p, d, a) (q).proto = (p),\
 			 (q).dir = (d),\
@@ -65,7 +64,7 @@ static void
 yyerror(char *msg)
 {
 	++n_errors;
-	bpf_error(msg);
+	bpf_error("%s", msg);
 	/* NOTREACHED */
 }
 
@@ -83,7 +82,7 @@ pcap_parse()
 
 %union {
 	int i;
-	u_long h;
+	bpf_u_int32 h;
 	u_char *e;
 	char *s;
 	struct stmt *stmt;
@@ -104,9 +103,9 @@ pcap_parse()
 %type	<rblk>	other
 
 %token  DST SRC HOST GATEWAY
-%token  NET PORT LESS GREATER PROTO BYTE
-%token  ARP RARP IP TCP UDP ICMP IGMP
-%token  DECNET LAT MOPRC MOPDL
+%token  NET MASK PORT LESS GREATER PROTO BYTE
+%token  ARP RARP IP TCP UDP ICMP IGMP IGRP
+%token  ATALK DECNET LAT SCA MOPRC MOPDL
 %token  TK_BROADCAST TK_MULTICAST
 %token  NUM INBOUND OUTBOUND
 %token  LINK
@@ -117,7 +116,7 @@ pcap_parse()
 
 %type	<s> ID
 %type	<e> EID
-%type	<h> HID
+%type	<s> HID
 %type	<i> NUM
 
 %left OR AND
@@ -148,24 +147,24 @@ and:	  AND			{ $$ = $<blk>0; }
 or:	  OR			{ $$ = $<blk>0; }
 	;
 id:	  nid
-	| pnum			{ $$.b = gen_ncode((u_long)$1,
+	| pnum			{ $$.b = gen_ncode(NULL, (bpf_u_int32)$1,
 						   $$.q = $<blk>0.q); }
 	| paren pid ')'		{ $$ = $2; }
 	;
 nid:	  ID			{ $$.b = gen_scode($1, $$.q = $<blk>0.q); }
+	| HID '/' NUM		{ $$.b = gen_mcode($1, NULL, $3,
+				    $$.q = $<blk>0.q); }
+	| HID MASK HID		{ $$.b = gen_mcode($1, $3, 0,
+				    $$.q = $<blk>0.q); }
 	| HID			{
 				  /* Decide how to parse HID based on proto */
 				  $$.q = $<blk>0.q;
 				  switch ($$.q.proto) {
 				  case Q_DECNET:
-					$$.b =
-					    gen_ncode(__pcap_atodn((char *)$1),
-					    $$.q);
+					$$.b = gen_ncode($1, 0, $$.q);
 					break;
 				  default:
-					$$.b =
-					    gen_ncode(__pcap_atoin((char *)$1),
-					    $$.q);
+					$$.b = gen_ncode($1, 0, $$.q);
 					break;
 				  }
 				}
@@ -180,7 +179,7 @@ pid:	  nid
 	| qid and id		{ gen_and($1.b, $3.b); $$ = $3; }
 	| qid or id		{ gen_or($1.b, $3.b); $$ = $3; }
 	;
-qid:	  pnum			{ $$.b = gen_ncode((u_long)$1,
+qid:	  pnum			{ $$.b = gen_ncode(NULL, (bpf_u_int32)$1,
 						   $$.q = $<blk>0.q); }
 	| pid
 	;
@@ -230,8 +229,11 @@ pname:	  LINK			{ $$ = Q_LINK; }
 	| UDP			{ $$ = Q_UDP; }
 	| ICMP			{ $$ = Q_ICMP; }
 	| IGMP			{ $$ = Q_IGMP; }
+	| IGRP			{ $$ = Q_IGRP; }
+	| ATALK			{ $$ = Q_ATALK; }
 	| DECNET		{ $$ = Q_DECNET; }
 	| LAT			{ $$ = Q_LAT; }
+	| SCA			{ $$ = Q_SCA; }
 	| MOPDL			{ $$ = Q_MOPDL; }
 	| MOPRC			{ $$ = Q_MOPRC; }
 	;

@@ -1,7 +1,7 @@
-/*	$OpenBSD: etherent.c,v 1.5 1996/09/16 02:33:04 tholo Exp $	*/
+/*	$OpenBSD: etherent.c,v 1.6 1999/07/20 04:49:54 deraadt Exp $	*/
 
 /*
- * Copyright (c) 1990, 1993, 1994, 1995
+ * Copyright (c) 1990, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,25 +20,25 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
+
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: etherent.c,v 1.18 95/10/07 03:08:12 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/lib/libpcap/etherent.c,v 1.6 1999/07/20 04:49:54 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
 
 #include <ctype.h>
 #include <memory.h>
-#include <pcap.h>
-#include <pcap-namedb.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "pcap-int.h"
+
+#include <pcap-namedb.h>
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif
-
-#include "pcap-int.h"
 
 static __inline int xdtoi(int);
 static __inline int skip_space(FILE *);

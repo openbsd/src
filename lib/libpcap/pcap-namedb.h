@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-namedb.h,v 1.4 1996/07/12 13:19:11 mickey Exp $	*/
+/*	$OpenBSD: pcap-namedb.h,v 1.5 1999/07/20 04:49:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: pcap-namedb.h,v 1.4 96/06/23 02:21:08 leres Exp (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/pcap-namedb.h,v 1.5 1999/07/20 04:49:55 deraadt Exp $ (LBL)
  */
 
 #ifndef lib_pcap_ethers_h
@@ -71,8 +71,8 @@ int	pcap_nametoeproto(const char *);
 #define PROTO_UNDEF		-1
 
 /* XXX move these to pcap-int.h? */
-bpf_u_int32 __pcap_atodn(const char *);
-bpf_u_int32 __pcap_atoin(const char *);
+int __pcap_atodn(const char *, bpf_u_int32 *);
+int __pcap_atoin(const char *, bpf_u_int32 *);
 u_short	__pcap_nametodnaddr(const char *);
 
 #endif

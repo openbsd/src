@@ -1,7 +1,7 @@
-/*	$OpenBSD: savefile.c,v 1.6 1999/07/19 23:25:29 deraadt Exp $	*/
+/*	$OpenBSD: savefile.c,v 1.7 1999/07/20 04:49:56 deraadt Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994, 1995
+ * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,13 +19,7 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- */
-#ifndef lint
-static char rcsid[] =
-    "@(#)Header: savefile.c,v 1.28 95/10/07 03:09:06 leres Exp (LBL)";
-#endif
-
-/*
+ *
  * savefile.c - supports offline use of tcpdump
  *	Extraction/creation by Jeffrey Mogul, DECWRL
  *	Modified by Steve McCanne, LBL.
@@ -36,10 +30,13 @@ static char rcsid[] =
  * dependent values so we can print the dump file on any architecture.
  */
 
+#ifndef lint
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/lib/libpcap/savefile.c,v 1.7 1999/07/20 04:49:56 deraadt Exp $ (LBL)";
+#endif
+
 #include <sys/types.h>
 #include <sys/time.h>
-
-#include <net/bpf.h>
 
 #include <errno.h>
 #include <memory.h>
@@ -68,7 +65,7 @@ static char rcsid[] =
 #define	SWAPLONG(y) \
 ((((y)&0xff)<<24) | (((y)&0xff00)<<8) | (((y)&0xff0000)>>8) | (((y)>>24)&0xff))
 #define	SWAPSHORT(y) \
-	( (((y)&0xff)<<8) | (((y)&0xff00)>>8) )
+	( (((y)&0xff)<<8) | ((u_short)((y)&0xff00)>>8) )
 
 #define SFERR_TRUNC		1
 #define SFERR_BADVERSION	2
@@ -107,7 +104,7 @@ swap_hdr(struct pcap_file_header *hp)
 }
 
 pcap_t *
-pcap_open_offline(char *fname, char *errbuf)
+pcap_open_offline(const char *fname, char *errbuf)
 {
 	register pcap_t *p;
 	register FILE *fp;
@@ -116,7 +113,7 @@ pcap_open_offline(char *fname, char *errbuf)
 
 	p = (pcap_t *)malloc(sizeof(*p));
 	if (p == NULL) {
-		strcpy(errbuf, "out of swap");
+		strlcpy(errbuf, "out of swap", PCAP_ERRBUF_SIZE);
 		return (NULL);
 	}
 
@@ -182,12 +179,16 @@ pcap_open_offline(char *fname, char *errbuf)
 		p->bufsize = BPF_MAXBUFSIZE;
 	p->sf.base = (u_char *)malloc(p->bufsize + BPF_ALIGNMENT);
 	if (p->sf.base == NULL) {
-		strlcpy(errbuf, "out of swap", PCAP_ERRBUFF_SIZE);
+		strlcpy(errbuf, "out of swap", PCAP_ERRBUF_SIZE);
 		goto bad;
 	}
 	p->buffer = p->sf.base + BPF_ALIGNMENT - (linklen % BPF_ALIGNMENT);
 	p->sf.version_major = hdr.version_major;
 	p->sf.version_minor = hdr.version_minor;
+#ifdef PCAP_FDDIPAD
+	/* XXX padding only needed for kernel fcode */
+	pcap_fddipad = 0;
+#endif
 
 	return (p);
  bad:
@@ -241,12 +242,19 @@ sf_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char *buf, int buflen)
 		static u_char *tp = NULL;
 		static int tsize = 0;
 
+		if (hdr->caplen > 65535) {
+			snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
+			    "bogus savefile header");
+			return (-1);
+		}
+
 		if (tsize < hdr->caplen) {
 			tsize = ((hdr->caplen + 1023) / 1024) * 1024;
 			if (tp != NULL)
 				free((u_char *)tp);
 			tp = (u_char *)malloc(tsize);
 			if (tp == NULL) {
+				tsize = 0;
 				snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
 				    "BUFMOD hack malloc");
 				return (-1);
@@ -257,6 +265,14 @@ sf_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char *buf, int buflen)
 			    "truncated dump file");
 			return (-1);
 		}
+		/*
+		 * We can only keep up to buflen bytes.  Since caplen > buflen
+		 * is exactly how we got here, we know we can only keep the
+		 * first buflen bytes and must drop the remainder.  Adjust
+		 * caplen accordingly, so we don't get confused later as
+		 * to how many bytes we have to play with.
+		 */
+		hdr->caplen = buflen;
 		memcpy((char *)buf, (char *)tp, buflen);
 
 	} else {
@@ -321,7 +337,7 @@ pcap_dump(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
  * Initialize so that sf_write() will output to the file named 'fname'.
  */
 pcap_dumper_t *
-pcap_dump_open(pcap_t *p, char *fname)
+pcap_dump_open(pcap_t *p, const char *fname)
 {
 	FILE *f;
 	if (fname[0] == '-' && fname[1] == '\0')

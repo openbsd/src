@@ -1,12 +1,12 @@
-$OpenBSD: README,v 1.4 1996/07/12 13:19:06 mickey Exp $
+$OpenBSD: README,v 1.5 1999/07/20 04:49:54 deraadt Exp $
 $NetBSD: README,v 1.2 1995/03/06 11:38:07 mycroft Exp $
-@(#) $Header: /home/cvs/src/lib/libpcap/README,v 1.4 1996/07/12 13:19:06 mickey Exp $ (LBL)
+@(#) $Header: /home/cvs/src/lib/libpcap/README,v 1.5 1999/07/20 04:49:54 deraadt Exp $ (LBL)
 
-LIBPCAP 0.2
+LIBPCAP 0.4
 Lawrence Berkeley National Laboratory
 Network Research Group
 libpcap@ee.lbl.gov
-ftp://ftp.ee.lbl.gov/libpcap-*.tar.Z
+ftp://ftp.ee.lbl.gov/libpcap.tar.Z
 
 This directory contains source code for libpcap, a system-independent
 interface for user-level packet capture.  libpcap provides a portable

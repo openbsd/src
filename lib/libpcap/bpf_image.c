@@ -1,7 +1,7 @@
-/*	$OpenBSD: bpf_image.c,v 1.6 1999/06/17 15:51:07 brad Exp $	*/
+/*	$OpenBSD: bpf_image.c,v 1.7 1999/07/20 04:49:54 deraadt Exp $	*/
 
 /*
- * Copyright (c) 1990, 1991, 1992, 1994, 1995
+ * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,24 +22,21 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-	"@(#) Header: bpf_image.c,v 1.19 95/11/26 14:02:36 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/lib/libpcap/bpf_image.c,v 1.7 1999/07/20 04:49:54 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
 #include <sys/time.h>
 
-#include <net/bpf.h>
-
-#include <pcap.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "pcap-int.h"
 
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif
-
-#include "pcap-int.h"
 
 char *
 bpf_image(p, n)

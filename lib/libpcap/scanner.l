@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.7 1998/06/26 21:01:03 deraadt Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.8 1999/07/20 04:49:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,8 +23,8 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.7 1998/06/26 21:01:03 deraadt Exp $ (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.8 1999/07/20 04:49:56 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -33,21 +33,22 @@ static char rcsid[] =
 #include <ctype.h>
 #include <unistd.h>
 
-#include <pcap.h>
+#include "pcap-int.h"
+
+#include "gencode.h"
 #include <pcap-namedb.h>
 
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif
 
-#include "pcap-int.h"
-#include "gencode.h"
 #include "grammar.tab.h"
 
 static int stoi(char *);
 static inline int xdtoi(int);
 
 #ifdef FLEX_SCANNER
+#define YY_NO_UNPUT
 #undef YY_INPUT
 #define YY_INPUT(buf, result, max)\
  {\
@@ -92,14 +93,18 @@ tcp		return TCP;
 udp		return UDP;
 icmp		return ICMP;
 igmp		return IGMP;
+igrp		return IGRP;
 
+atalk		return ATALK;
 decnet		return DECNET;
 lat		return LAT;
+sca		return SCA;
 moprc		return MOPRC;
 mopdl		return MOPDL;
 
 host		return HOST;
 net		return NET;
+mask		return MASK;
 port		return PORT;
 proto		return PROTO;
 
@@ -133,7 +138,7 @@ outbound	return OUTBOUND;
 {B}:{B}:{B}:{B}:{B}:{B} { yylval.e = pcap_ether_aton((char *)yytext);
 			  return EID; }
 {B}:+({B}:+)+		{ bpf_error("bogus ethernet address %s", yytext); }
-[A-Za-z0-9]([-_.A-Za-z0-9]*[.A-Za-z0-9])? {
+[A-Za-z0-9][-_.A-Za-z0-9]*[.A-Za-z0-9] {
 			 yylval.s = sdup((char *)yytext); return ID; }
 "\\"[^ !()\n\t]+	{ yylval.s = sdup((char *)yytext + 1); return ID; }
 [^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+i {

@@ -1,6 +1,6 @@
 .\"	$NetBSD: pcap.3,v 1.2.6.1 1996/06/05 18:04:43 cgd Exp $
 .\"
-.\" Copyright (c) 1994
+.\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd June 4, 1999
+.Dd July 5, 1999
 .Dt PCAP 3
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 .Ft "char *"
 .Fn pcap_lookupdev "char *errbuf"
 .Ft uint
-.Fn pcap_lookupnet "char *device" "u_int32_t *netp" "u_int32_t *maskp" "char *errbuf"
+.Fn pcap_lookupnet "char *device" "bpf_u_int32 *netp" "bpf_u_int32 *maskp" "char *errbuf"
 .Ft int
 .Fn pcap_dispatch "pcap_t *p" "int cnt" "pcap_handler callback" "u_char *user"
 .Ft int
@@ -46,9 +46,7 @@
 .Ft int
 .Fn pcap_inject "pcap_t *p" "void *, size_t"
 .Ft int
-.Fn pcap_immediate "pcap_t *p"
-.Ft int
-.Fn pcap_compile "pcap_t *p" "struct bpf_program *fp" "char *str" "int optimize" "u_int32_t netmask"
+.Fn pcap_compile "pcap_t *p" "struct bpf_program *fp" "char *str" "int optimize" "bpf_u_int32 netmask"
 .Ft int
 .Fn pcap_setfilter "pcap_t *p" "struct bpf_program *fp"
 .Ft "u_char *"
@@ -104,6 +102,10 @@ at packets on the network.
 is a string that specifies the network device to open.
 .Fa snaplen
 specifies the maximum number of bytes to capture.
+.Fa promisc
+specifies if the interface is to be put into promiscuous mode.
+(Note that even if this parameter is false, the interface
+could well be in promiscuous mode for some other reason.)
 .Fa to_ms
 specifies the read timeout in milliseconds.
 .Fa errbuf
@@ -175,7 +177,7 @@ Both
 and
 .Fa maskp
 are
-.Fa u_int32_t
+.Fa bpf_u_int32
 pointers.
 A return of \-1 indicates an error in which case
 .Fa errbuf
@@ -188,9 +190,10 @@ specifies the maximum number of packets to process before returning. A
 .Fa cnt
 of \-1 processes all the packets received in one buffer. A
 .Fa cnt
-of 0 processes all packets until an error occurs (or
+of 0 processes all packets until an error occurs,
 .Tn EOF
-is reached).
+is reached, or the read times out (when doing live reads and a non-zero
+read timeout is specified).
 .Fa callback
 specifies a routine to be called with three arguments: a
 .Fa u_char
@@ -199,7 +202,9 @@ pointer which is passed in from
 a pointer to the
 .Fa pcap_pkthdr
 struct (which precede the actual network headers and data),
-and a length. The number of packets read is returned.
+and a
+.Fa u_char
+pointer to the packet data. The number of packets read is returned.
 Zero is returned when
 .Tn EOF
 is reached in a savefile.
@@ -220,15 +225,6 @@ uses
 .Xr write 2
 to inject a raw packet through the network interface.
 .Pp
-.Fn pcap_immediate
-sets
-.Dq immediate
-mode.  If this isn't supported by the underlying packet capture, \-1 is
-returned and the error text can be obtained with
-.Fn pcap_perror
-or
-.Fn pcap_geterr .
-.Pp
 .Fn pcap_compile
 is used to compile the string
 .Fa str
@@ -244,19 +240,33 @@ controls whether optimization on the resulting code is performed.
 specifies the netmask of the local net.
 .Pp
 .Fn pcap_setfilter
-is used to specify the filter program.
+is used to specify a filter program.
 .Fa fp
 is a pointer to an array of
 .Fa bpf_program
 struct, usually the result of a call to
 .Fn pcap_compile .
+.Fn \-1
+is returned on failure;
+.Fn 0
+is returned on success.
 .Pp
 .Fn pcap_loop
 is similar to
 .Fn pcap_dispatch
 except it keeps reading packets until
 .Fa cnt
-packets are processed or an error occurs. A negative
+packets are processed or an error occurs.
+It does
+.Fn not
+return when live read timeouts occur.
+Rather, specifying a non-zero read timeout to
+.Fn pcap_open_live()
+and then calling
+.Fn pcap_dispatch()
+allows the reception and processing of any packets that arrive when the
+timeout occurs.
+A negative
 .Fa cnt
 causes
 .Fn pcap_loop
@@ -292,7 +302,8 @@ returns the name of the savefile.
 .Fn pcap_stats
 returns 0 and fills in a
 .Fa pcap_stat
-struct with packet statistics. If there is an error or the underlying
+struct. The values represent packet statistics from the start of the
+run to the time of the call. If there is an error or the under lying
 packet capture doesn't support packet statistics, \-1 is returned and
 the error text can be obtained with
 .Fn pcap_perror
@@ -326,3 +337,12 @@ closes the savefile.
 .Sh SEE ALSO
 .Xr tcpdump 8
 .\" , tcpslice(1)
+.Sh AUTHORS
+Van Jacobson,
+Craig Leres and
+Steven McCanne, all of the
+Lawrence Berkeley National Laboratory, University of California, Berkeley, CA.
+.Sh BUGS
+Please send bug reports to
+.Xr libpcap@ee.lbl.gov .
+m
