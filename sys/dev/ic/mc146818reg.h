@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc146818reg.h,v 1.3 1997/03/12 19:51:33 pefo Exp $	*/
+/*	$OpenBSD: mc146818reg.h,v 1.4 1997/04/17 21:13:14 mickey Exp $	*/
 /*	$NetBSD: mc146818reg.h,v 1.1 1995/05/04 19:31:18 cgd Exp $	*/
 
 /*
@@ -143,7 +143,7 @@
 #define	MC_BASE_NONE	0x60		/* actually, both of these reset */
 #define	MC_BASE_RESET	0x70
 
-
+#ifndef _LOCORE
 /*
  * RTC register/NVRAM read and write functions -- machine-dependent.
  * Appropriately manipulate RTC registers to get/put data values.
@@ -193,3 +193,5 @@ typedef u_int mc_todregs[MC_NTODREGS];
 		mc146818_write(sc, MC_REGB,				\
 		    mc146818_read(sc, MC_REGB) & ~MC_REGB_SET);		\
 	} while (0);
+#endif
+
