@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.24 2003/06/17 21:56:23 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.25 2003/06/25 21:23:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -45,26 +45,38 @@ union ANY_CTX {
 struct hash_functions {
 	char *name;
 	int digestlen;
-	void (*init)();
-	void (*update)();
-	char * (*end)();
-	char * (*file)();
-	char * (*data)();
+	void (*init)(void *);
+	void (*update)(void *, const unsigned char *, unsigned int);
+	char * (*end)(void *, char *);
+	char * (*file)(char *, char *);
+	char * (*data)(const unsigned char *, unsigned int, char *);
 };
 
 struct hash_functions functions[] = {
 	{
 		"MD5",
 		32,
-		MD5Init, MD5Update, MD5End, MD5File, MD5Data
+		(void (*)(void *))MD5Init,
+		(void (*)(void *, const unsigned char *, unsigned int))MD5Update,
+		(char *(*)(void *, char *))MD5End,
+		(char *(*)(char *, char *))MD5File,
+		(char *(*)(const unsigned char *, unsigned int, char *))MD5Data
 	}, {
 		"SHA1",
 		40,
-		SHA1Init, SHA1Update, SHA1End, SHA1File, SHA1Data
+		(void (*)(void *))SHA1Init,
+		(void (*)(void *, const unsigned char *, unsigned int))SHA1Update,
+		(char *(*)(void *, char *))SHA1End,
+		(char *(*)(char *, char *))SHA1File,
+		(char *(*)(const unsigned char *, unsigned int, char *))SHA1Data
 	}, {
 		"RMD160",
 		40,
-		RMD160Init, RMD160Update, RMD160End, RMD160File, RMD160Data
+		(void (*)(void *))RMD160Init,
+		(void (*)(void *, const unsigned char *, unsigned int))RMD160Update,
+		(char *(*)(void *, char *))RMD160End,
+		(char *(*)(char *, char *))RMD160File,
+		(char *(*)(const unsigned char *, unsigned int, char *))RMD160Data
 	}, {
 		NULL,
 	},
@@ -151,7 +163,8 @@ digest_string(char *string, struct hash_functions *hf)
 {
 	char digest[MAX_DIGEST_LEN + 1];
 
-	(void)hf->data(string, strlen(string), digest);
+	(void)hf->data((unsigned char *)string, (unsigned int)strlen(string),
+	    digest);
 	(void)printf("%s (\"%s\") = %s\n", hf->name, string, digest);
 }
 
@@ -178,7 +191,7 @@ digest_file(char *file, struct hash_functions *hf, int echo)
 	while ((nread = read(fd, data, sizeof(data))) > 0) {
 		if (echo)
 			write(STDOUT_FILENO, data, (size_t)nread);
-		hf->update(&context, data, nread);
+		hf->update(&context, data, (unsigned int)nread);
 	}
 	if (nread == -1) {
 		warn("%s: read error", file);
@@ -291,7 +304,7 @@ digest_filelist(char *file)
 		found = 1;
 		hf->init(&context);
 		while ((nread = read(fd, data, sizeof(data))) > 0)
-			hf->update(&context, data, nread);
+			hf->update(&context, data, (unsigned int)nread);
 		if (nread == -1) {
 			warn("%s: read error", file);
 			error = 1;
@@ -356,7 +369,8 @@ digest_test(struct hash_functions *hf)
 {
 	union ANY_CTX context;
 	int i;
-	char digest[MAX_DIGEST_LEN + 1], buf[1000];
+	char digest[MAX_DIGEST_LEN + 1];
+	unsigned buf[1000];
 	char *test_strings[] = {
 		"",
 		"a",
@@ -374,7 +388,8 @@ digest_test(struct hash_functions *hf)
 
 	for (i = 0; i < 8; i++) {
 		hf->init(&context);
-		hf->update(&context, test_strings[i], strlen(test_strings[i]));
+		hf->update((void *)&context, (unsigned char *)test_strings[i],
+		    (unsigned int)strlen(test_strings[i]));
 		(void)hf->end(&context, digest);
 		(void)printf("%s (\"%s\") = %s\n", hf->name, test_strings[i],
 		    digest);
@@ -384,7 +399,8 @@ digest_test(struct hash_functions *hf)
 	memset(buf, 'a', sizeof(buf));
 	hf->init(&context);
 	for (i = 0; i < 1000; i++)
-		hf->update(&context, buf, sizeof(buf));
+		hf->update(&context, (unsigned char *)buf,
+		    (unsigned int)sizeof(buf));
 	(void)hf->end(&context, digest);
 	(void)printf("%s (one million 'a' characters) = %s\n",
 	    hf->name, digest);
