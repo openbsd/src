@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.1 1999/09/07 02:58:50 jason Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.2 1999/09/07 12:36:20 jason Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -168,7 +168,7 @@ tctrl_attach(parent, self, aux)
 
 	sc->sc_node = ca->ca_ra.ra_node;
 
-	printf("\n");
+	printf(" pri %d\n", pri);
 
 	sc->sc_tft_on = 1;
 
