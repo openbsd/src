@@ -1,4 +1,4 @@
-/* $OpenBSD: pcppi.c,v 1.1 1999/01/02 00:02:44 niklas Exp $ */
+/* $OpenBSD: pcppi.c,v 1.2 2000/06/30 06:55:53 art Exp $ */
 /* $NetBSD: pcppi.c,v 1.1 1998/04/15 20:26:18 drochner Exp $ */
 
 /*
@@ -52,6 +52,7 @@ struct pcppi_softc {
 
 	int sc_bellactive, sc_bellpitch;
 	int sc_slp;
+	struct timeout sc_bell_timeout;
 };
 
 #define __BROKEN_INDIRECT_CONFIG /* XXX */
@@ -164,6 +165,7 @@ pcppi_attach(parent, self, aux)
 	printf("\n");
 
 	sc->sc_bellactive = sc->sc_bellpitch = sc->sc_slp = 0;
+	timeout_set(&sc->sc_bell_timeout, pcppi_bell_stop, sc);
 
 	pa.pa_cookie = sc;
 	while (config_found(self, &pa, 0));
@@ -180,7 +182,7 @@ pcppi_bell(self, pitch, period, slp)
 
 	s1 = spltty(); /* ??? */
 	if (sc->sc_bellactive) {
-		untimeout(pcppi_bell_stop, sc);
+		timeout_del(&sc->sc_bell_timeout);
 		if (sc->sc_slp)
 			wakeup(pcppi_bell_stop);
 	}
@@ -207,7 +209,7 @@ pcppi_bell(self, pitch, period, slp)
 	sc->sc_bellpitch = pitch;
 
 	sc->sc_bellactive = 1;
-	timeout(pcppi_bell_stop, sc, period);
+	timeout_add(&sc->sc_bell_timeout, period);
 	if (slp) {
 		sc->sc_slp = 1;
 		tsleep(pcppi_bell_stop, PCPPIPRI | PCATCH, "bell", 0);
