@@ -8,8 +8,8 @@ Installation is supported from several media types, including:
 	HTTP
 
 Not all methods are supported on all Sparc Systems and some of them
-work only with the new single-floppy installation or the miniroot
-installation, not with the older multi-floppy installation.
+work only with the single-floppy installation or the miniroot
+installation.
 
 
 If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive), you

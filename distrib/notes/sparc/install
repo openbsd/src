@@ -19,38 +19,18 @@ below).
 
 This section of the install document is really broken into several parts:
 
-	- About the "new" and "old" Install Scripts
 	- booting from the installation media
-	- the "new" single floppy or miniroot install script
-	- the "old" multiple floppy install script
+	- the single floppy or miniroot install script
 	- after completing an installation
 	- installing from Sun OS
 	- net boot or diskless setup information
 
-The first section explains why we have two different install scripts.
-The second section gets you up to the point where you've booted the kernel
-from whatever media or setup described in the previous section, to where
-you have to respond to prompts from the install script(s).  The next two
-sections describe the path through the "new" and "old" install scripts, 
-which are quite different, and the remainder are notes which might be
-useful, but outside the bounds of simple "how two" instructions.
+The first section gets you up to the point where you've booted the kernel
+from whatever media, to where you have to respond to prompts from the
+install script(s).  The next two sections describe the path through the
+install scripts, and the remainder are notes which might be useful, but
+outside the bounds of simple "how to" instructions.
 
-
-
-About the "new" and "old" Install Scripts:
-
-The OpenBSD/sparc floppies come in two varieties, a newer single floppy
-"ramdisk" version and the older multi-floppy set.  Both accomplish the 
-same thing, but the install/upgrade scripts and procedures are quite 
-different between the old and new version.
-
-The other difference between the the two forms are in their bootblocks,
-and filesystems.  The "floppy{:--:}OSrev.fs" image is the compressed ramdisk form,
-the "kc{:--:}OSrev.fs" paired with either "inst{:--:}OSrev.fs" or "upgr{:--:}OSrev.fs" comprise a
-bootable kernel floppy and associated install/upgrade filesystem floppy.
-
-The CD-ROM, miniroot and netboot install scripts are essentially the
-same as the new single floppy install script.
 
 
 Booting from the Installation Media:
@@ -218,7 +198,7 @@ or upgrade procedure. Proceed to the section ``Running the installation
 scripts'' below.
 
 
-Installing using the "new" Single Floppy, CD-ROM, tape, miniroot or
+Installing using the Single Floppy, CD-ROM, tape, miniroot or
 netboot procedure:
 
 The following is a walk-through of the steps you will take while
@@ -370,37 +350,6 @@ OpenBSDDISKInstall({:-"wdN" or -:},{:-only -:})
 OpenBSDCommonFS
 		
 OpenBSDCommonURL
-
-Installing using the old Multi-Floppy procedure.
-
-
-If you are upgrading a OpenBSD installation, start the upgrade script:
-
-OpenBSD# sh upgrade.sh
-
-else, start the installation script:
-
-OpenBSD# sh install.sh
-
-
-These scripts will do most of the work of transferring the system from the
-tar files onto your disk. You will frequently be asked for confirmation
-before the script proceeds with each phase of the installation process.
-Occasionally, you'll have to provide a piece of information such as the
-name of the disk you want to install on or IP addresses and domain names
-you want to assign. If your system has more than one disk, you may want
-to look at the output of the dmesg(8) command to see how your disks
-have been identified by the kernel.
-
-The installation script goes through the following phases:
-
-	- determination of the disk to install OpenBSD on
-	- checking of the partition information on the disk
-	- creating and mounting the OpenBSD filesystems
-	- setup of IP configuration
-	- extraction of the distribution tar files
-	- installation of boot programs
-
 
 After completing an installation:
 
