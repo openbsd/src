@@ -1,6 +1,7 @@
-/*	$OpenBSD: read_bsd_terminfo.c,v 1.3 1998/07/25 19:36:11 millert Exp $	*/
+/*	$OpenBSD: read_bsd_terminfo.c,v 1.4 1998/08/16 05:17:53 millert Exp $	*/
 
 /*
+ * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
  * All rights reserved.
  *
@@ -15,13 +16,13 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by SigmaSoft, Th.  Lockert.
- * 4. The name of the author may not be used to endorse or promote products
+ * 4. The name of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
  * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -31,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.3 1998/07/25 19:36:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.4 1998/08/16 05:17:53 millert Exp $";
 #endif
 
 #include <curses.priv.h>
@@ -40,9 +41,7 @@ static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.3 1998/07/25 19:36:11 m
 #include <term_entry.h>
 
 #define PVECSIZ 32
-
-/* XXX - belongs in a header file */
-#define	_PATH_INFODEF	".terminfo /usr/share/misc/terminfo"
+#define	_PATH_TERMINFO	"/usr/share/misc/terminfo"
 
 /*
  * Look up ``tn'' in the BSD terminfo.db file and fill in ``tp''
@@ -57,57 +56,34 @@ _nc_read_bsd_terminfo_entry(tn, tp)
     char  *p;
     char  *dummy;
     char **fname;
-    char  *home;
     int    i;
-    char   pathbuf[PATH_MAX];		/* holds raw path of filenames */
+    char   envterm[PATH_MAX];		/* local copy of $TERMINFO */
+    char   hometerm[PATH_MAX];		/* local copy of $HOME/.terminfo */
     char  *pathvec[PVECSIZ];		/* to point to names in pathbuf */
-    char  *termpath;
     char   namecpy[MAX_NAME_SIZE+1];
     long   num;
     size_t len;
 
     fname = pathvec;
-    p = pathbuf;
-    /*
-     * TERMINFO can have the name of a file to use instead of
-     * /usr/share/misc/terminfo.  If TERMINFO does not hold a file
-     * name then a path of names is searched instead. The path is
-     * found in the TERMINFO variable, or becomes "$HOME/.terminfo
-     * /usr/share/misc/terminfo" if no TERMINFO exists.
-     */
-    if ((termpath = getenv("TERMINFO")) != NULL)
-	strlcpy(pathbuf, termpath, sizeof(pathbuf));
-    else {
-	/* $HOME/.terminfo or just .terminfo if no $HOME */
-	if ((home = getenv("HOME")) != NULL) {
-	    len = strlcpy(pathbuf, home,
-		sizeof(pathbuf) - sizeof(_PATH_INFODEF));
-	    if (len < sizeof(pathbuf) - sizeof(_PATH_INFODEF)) {
-		p+= len;
-		*p++ = '/';
-	    }
-	}
-	strlcpy(p, _PATH_INFODEF, sizeof(pathbuf) - (p - pathbuf));
+    /* $TERMINFO may hold a path to a terminfo file */
+    if ((p = getenv("TERMINFO")) != NULL) {
+	len = strlcpy(envterm, p, sizeof(envterm));
+	if (len < sizeof(envterm))
+	    *fname++ = envterm;
     }
 
-    *fname++ = pathbuf;	/* tokenize path into vector of names */
-    while (*++p)
-	if (*p == ' ' || *p == ':') {
-	    *p = '\0';
-	    while (*++p)
-		if (*p != ' ' && *p != ':')
-		    break;
-	    if (*p == '\0')
-		break;
-	    *fname++ = p;
-	    if (fname >= pathvec + PVECSIZ) {
-		fname--;
-		break;
-	    }
-	}
-    *fname = (char *) 0;			/* mark end of vector */
-    (void) cgetset(NULL);
+    /* Also check $HOME/.terminfo if it exists */
+    if ((p = getenv("HOME")) != NULL) {
+	len = snprintf(hometerm, sizeof(hometerm), "%s/.terminfo", p);
+	if (len < sizeof(hometerm))
+	    *fname++ = hometerm;
+    }
 
+    /* Finally we check the system terminfo file and mark the end of vector */
+    *fname++ = _PATH_TERMINFO;
+    *fname = (char *) 0;
+
+    (void) cgetset(NULL);
     dummy = NULL;
     i = cgetent(&dummy, pathvec, (char *)tn);      
 	
