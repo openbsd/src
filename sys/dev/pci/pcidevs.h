@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.586 2003/01/16 14:20:27 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.587 2003/01/16 20:40:13 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -40,8 +40,13 @@
 /*
  * NOTE: a fairly complete list of PCI codes can be found at:
  *
- *	http://www.yourvote.com/pci/
  *	http://members.hyperlink.net.au/~chart/pci.htm
+ *
+ * A list to be available at:
+ *	http://www.yourvote.com/pci/
+ * But is no longer available because the fuckheads at PCI-SIG such as
+ * Alan Deikman <Alan.Deikman@znyx.com> sicked their lawyers on the
+ * database author.
  *
  * There is a Vendor ID search engine available at:
  *
