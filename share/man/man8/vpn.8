@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.28 2000/01/13 05:15:42 angelos Exp $
+.\" $OpenBSD: vpn.8,v 1.29 2000/01/28 06:21:43 deraadt Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -124,7 +124,7 @@ sysctl -w net.inet.ah.enable=1
 and
 .Bd -literal
 sysctl -w net.inet.ip.ipsec-acl=1
-.Ed.
+.Ed
 .Pp
 if inbound packet verification is desired (strongly recommended).
 .Pp
