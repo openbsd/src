@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.21 1997/07/04 19:22:19 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.22 1997/07/06 18:10:18 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -454,7 +454,7 @@ wdc_ata_start(wdc, xfer)
 	if (xfer->c_skip == 0 || (wdc->sc_flags & WDCF_SINGLE) != 0 ||
 	    d_link->sc_mode == WDM_DMA) {
 		daddr_t blkno = xfer->c_blkno;
-		long cylin, head, sector;
+		int cylin, head, sector;
 		int command;
 
 		if ((wdc->sc_flags & WDCF_SINGLE) != 0)
@@ -476,7 +476,7 @@ wdc_ata_start(wdc, xfer)
 		    && (bp->b_flags & B_FORMAT) == 0
 #endif
 		    ) {
-			long blkdiff;
+			int blkdiff;
 			int i;
 
 			for (i = 0;

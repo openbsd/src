@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdlink.h,v 1.7 1997/07/04 17:02:04 downsj Exp $	*/
+/*	$OpenBSD: wdlink.h,v 1.8 1997/07/06 18:10:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -114,7 +114,7 @@ struct wd_link {
 struct wdc_xfer {
 	struct wdc_link *c_link;	/* controller structure info */
 	struct wd_link *d_link;		/* drive/bus structure info */
-	volatile long c_flags;		/* handle also B_READ and B_WRITE */
+	volatile int c_flags;		/* handle also B_READ and B_WRITE */
 #define C_INUSE 0x01
 #define C_ATAPI 0x02
 #define C_ERROR 0x04
@@ -128,7 +128,7 @@ struct wdc_xfer {
 	int c_skip;		/* bytes already transferred */
 	int c_nblks;		/* number of blocks currently transferring */
 	int c_nbytes;		/* number of bytes currently transferring */
-	u_long c_p_offset;	/* offset of the partition */
+	u_int32_t c_p_offset;	/* offset of the partition */
 	TAILQ_ENTRY(wdc_xfer) c_xferchain;
 	LIST_ENTRY(wdc_xfer) free_list;
 };

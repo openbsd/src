@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.25 1997/04/18 06:12:23 niklas Exp $	*/
+/*	$OpenBSD: wd.c,v 1.26 1997/07/06 18:10:17 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -104,7 +104,7 @@ bdev_decl(wd);
 
 void	wdfinish	__P((struct wd_softc *, struct buf *));
 int	wdsetctlr	__P((struct wd_link *));
-#if !defined(amiga) && !defined(alpha)
+#if !defined(amiga)
 static void bad144intern __P((struct wd_softc *));
 #endif
 int	wdlock		__P((struct wd_link *));
@@ -282,7 +282,7 @@ wdstart(vp)
 	struct wd_link *d_link = wd->d_link;
 	struct wdc_link *ctlr_link = d_link->ctlr_link;
 	struct wdc_xfer *xfer;
-	u_long p_offset; 
+	u_int32_t p_offset; 
 
 	while (d_link->openings > 0) {
 
@@ -572,7 +572,7 @@ wdgetdisklabel(dev, wd)
 
 	if (d_link->sc_state > GEOMETRY)
 		d_link->sc_state = GEOMETRY;
-#if !defined(amiga) && !defined(alpha)
+#if !defined(amiga)
 	if ((lp->d_flags & D_BADSECT) != 0)
 		bad144intern(wd);
 #endif
@@ -623,7 +623,7 @@ wdioctl(dev, xfer, addr, flag, p)
 		return EIO;
 
 	switch (xfer) {
-#if !defined(amiga) && !defined(alpha)
+#if !defined(amiga)
 	case DIOCSBAD:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -823,10 +823,10 @@ wddump(dev, blkno, va, size)
    
 	while (nblks > 0) {
 		daddr_t xlt_blkno = blkno;
-		long cylin, head, sector;
+		int cylin, head, sector;
 
 		if ((lp->d_flags & D_BADSECT) != 0) {
-			long blkdiff;
+			int blkdiff;
 			int i;
 
 			for (i = 0; (blkdiff = d_link->sc_badsect[i]) != -1; i++) {
@@ -908,7 +908,7 @@ wddump(dev, blkno, va, size)
 }
 #endif /* __BDEVSW_DUMP_NEW_TYPE */
 
-#if !defined(amiga) && !defined(alpha)
+#if !defined(amiga)
 /*
  * Internalize the bad sector table.
  */
