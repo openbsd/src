@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2004/01/05 19:04:11 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.28 2004/01/05 19:06:42 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -570,18 +570,13 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	conf->listen_addr.sin_addr.s_addr = INADDR_ANY;
 	conf->listen_addr.sin_port = htons(BGP_PORT);
 
-	if (strcmp(filename, "-") == 0) {
-		fin = stdin;
-		infile = "stdin";
-	} else {
-		if ((fin = fopen(filename, "r")) == NULL) {
-			warn("%s", filename);
-			free(conf);
-			free(mrtconf);
-			return (-1);
-		}
-		infile = filename;
+	if ((fin = fopen(filename, "r")) == NULL) {
+		warn("%s", filename);
+		free(conf);
+		free(mrtconf);
+		return (-1);
 	}
+	infile = filename;
 
 	yyparse();
 
