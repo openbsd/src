@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.69 1999/01/11 15:14:44 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.70 1999/04/28 23:20:51 alex Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -86,6 +86,7 @@
 #	xfs*	XFS filesystem devices
 #	bktr0	video capturing
 #	tuner0	tuner device
+#	wdt0	watchdog timer
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -118,7 +119,7 @@ all)
 	sh MAKEDEV ipl tun0 tun1 tun2
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm local
-	sh MAKEDEV random uk0 uk1 ss0 ss1 pctr bktr0 tuner0
+	sh MAKEDEV random uk0 uk1 ss0 ss1 pctr bktr0 tuner0 wdt0
 	sh MAKEDEV fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H 
 	sh MAKEDEV fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
 	sh MAKEDEV xfs0 music
@@ -267,7 +268,7 @@ fd*)
 	umask 77
 	;;
 
-ccd*|sd*|wd*|raid*)
+ccd*|sd*|wd[0-9]*|raid*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
 	ccd*) name=ccd; blk=16; chr=18;;
@@ -683,6 +684,14 @@ tuner*)
 	mknod tuner$unit c 49 $((unit + 16))
 	chown root.wheel tuner$unit
 	chmod 0644 tuner$unit
+	;;
+
+wdt*)
+	unit=`expr $i : 'wdt\(.*\)'`
+	rm -f wdt$unit
+	mknod wdt$unit c 55 $unit
+	chown root.operator wdt$unit
+	chmod 0440 wdt$unit
 	;;
 
 local)

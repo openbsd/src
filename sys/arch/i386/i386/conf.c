@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.51 1999/01/11 14:28:57 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.52 1999/04/28 23:20:59 alex Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -131,6 +131,12 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
         dev_init(c,n,mmap) }
 
+/* open, close, read, ioctl */
+#define	cdev_wdt_init(c, n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev }
+
 
 #define	mmread	mmrw
 #define	mmwrite	mmrw
@@ -187,6 +193,8 @@ cdev_decl(xfs_dev);
 #endif
 #include "bktr.h"
 cdev_decl(bktr);
+#include "wdt.h"
+cdev_decl(wdt);
 #include "ksyms.h"
 cdev_decl(ksyms);   
 
@@ -278,6 +286,7 @@ struct cdevsw	cdevsw[] =
 	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 53: sequencer I/O */
 	cdev_disk_init(NRAID,raid),	/* 54: RAIDframe disk driver */
+	cdev_wdt_init(NWDT,wdt),	/* 55: WDT50x watchdog timer */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

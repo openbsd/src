@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.107 1999/03/31 18:33:26 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.108 1999/04/28 23:20:58 alex Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -250,6 +250,8 @@ bktr0   at pci? dev ? function ?
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 joy*	at isapnp?
+
+#wdt0	at pci? dev ? function ?	# Ind Computer Source PCI-WDT50x driver
 
 pseudo-device	pctr		1
 pseudo-device	sequencer	1

@@ -1,0 +1,114 @@
+.\" Copyright (c) 1998,1999 Alex Nash
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	$OpenBSD: wdt.4,v 1.1 1999/04/28 23:20:56 alex Exp $
+.\"
+.Dd April 25, 1999
+.Dt WDT 4 i386
+.Os
+.Sh NAME
+.Nm wdt
+.Nd ICS PCI-WDT500/501 watchdog timer device driver
+.Sh SYNOPSIS
+.Cd option WDT_DISABLE_BUZZER
+.Cd wdt0 at pci? dev ? function ?
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the Industrial Computer Source
+PCI-WDT500 and PCI-WDT501 boards.
+.Pp
+For PCI-WDT500 boards, basic watchdog timer functionality is supported.
+For PCI-WDT501 boards, additional access to the onboard buzzer,
+isolated inputs, temperature, and power supply monitors is provided.
+To disable the onboard buzzer on PCI-WDT501 boards, add the
+.Em WDT_DISABLE_BUZZER
+option to your kernel configuration.
+.Pp
+By default the watchdog timer is set to 30 seconds and is refreshed
+by the kernel's timeout processing.  If the kernel crashes, the watchdog
+timer is not reset and the system will reboot (assuming a proper connection
+is made between the WDT50x and motherboard).  Alternatively, the watchdog
+can be reinitialized via a userland process which insures that process
+scheduling, not just kernel timeout processing, is still taking place.
+See the
+.Dv WIOCSCHED
+.Xr ioctl 2
+below for more information.
+.Sh INTERFACE
+The
+.Nm
+driver is controlled via
+.Xr ioctl 2
+calls to
+.Pa /dev/wdt0 .
+The following commands are supported:
+.Bl -tag -width WIOCGETSTATE
+.It Dv WIOCGETSTATE
+Returns the current temperature and board status into the
+wdt_state structure pointer passed to
+.Xr ioctl 2 .
+See
+.Aq Pa dev/pci/wdt50x.h
+for the definition of the wdt_state structure and state bits.
+.It Dv WIOCSCHED
+Places the process into an infinite loop (interrupted only via a signal)
+to guarantee process scheduling.  The driver utilizes the process'
+context to reinitialize the watchdog timeout.  Should process
+scheduling fail, the timeout will not be reinitialized and the system
+will be rebooted.  Note that it is possible to force a reboot by sending
+a SIGSTOP signal to a process in
+.Dv WIOCSCHED
+and waiting for the watchdog timer to expire.
+Since
+.Dv WIOCSCHED
+can have such dramatic consequences, it may only be issued by superuser
+processes regardless of the permissions on
+.Pa /dev/wdt0 .
+.El
+.Sh FILES
+.Bl -tag -width /usr/include/dev/pci/wdt50x.h -compact
+.It Pa /dev/wdt0
+Watchdog control device.
+.It Pa /usr/include/dev/pci/wdt50x.h
+Structure and ioctl definitions to interface with the
+.Nm
+driver.
+.El
+.Sh SEE ALSO
+.Xr ioctl 2
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 2.6 .
+.Sh BUGS
+The ioctl interface isn't generic.
+.Pp
+It's unwise to combine
+.Nm
+with
+.Xr ddb 4
+since the latter may prevent the former from resetting the
+watchdog timeout before it expires.

@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.131 1999/03/23 08:17:16 deraadt Exp $
+$OpenBSD: pcidevs,v 1.132 1999/04/28 23:21:00 alex Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -509,6 +509,7 @@ vendor TEKRAM2		0x1de1	Tekram Technology (2nd ID)
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd ID)
 vendor ADDTRON		0x4033	Addtron
+vendor INDCOMPSRC	0x494f	Industrial Computer Source
 vendor NETVIN		0x4a14	NetVin
 vendor BUSLOGIC2	0x4b10	Buslogic (2nd ID)
 vendor S3		0x5333	S3
@@ -879,6 +880,9 @@ product IBM 0x0036		0x0036	Miami/PCI
 
 /* IDT products */
 product IDT 77201	0x0001	77201/77211 ATM (NICStAR)
+
+/* Industrial Computer Source */
+product INDCOMPSRC WDT50x	0x22c0	WDT 50x Watchdog Timer
 
 /* Integrated Micro Solutions products */
 product IMS 8849		0x8849	8849

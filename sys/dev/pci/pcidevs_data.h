@@ -1431,6 +1431,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "77201/77211 ATM (NICStAR)",
 	},
 	{
+	    PCI_VENDOR_INDCOMPSRC, PCI_PRODUCT_INDCOMPSRC_WDT50x,
+	    0,
+	    "Industrial Computer Source",
+	    "WDT 50x Watchdog Timer",
+	},
+	{
 	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,
 	    0,
 	    "Integrated Micro Solutions",
@@ -5928,6 +5934,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ADDTRON, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Addtron",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_INDCOMPSRC, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Industrial Computer Source",
 	    NULL,
 	},
 	{
