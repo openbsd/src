@@ -4893,6 +4893,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "3DLabs Permedia 2",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV22,
+	    0,
+	    "Texas Instruments",
+	    "TSB12LV22 FireWire",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23,
 	    0,
 	    "Texas Instruments",
