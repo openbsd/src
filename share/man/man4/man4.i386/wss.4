@@ -1,4 +1,4 @@
-.\"   $OpenBSD: wss.4,v 1.8 2000/07/05 13:46:54 aaron Exp $
+.\"   $OpenBSD: wss.4,v 1.9 2001/01/13 15:40:55 espie Exp $
 .\"   $NetBSD: wss.4,v 1.8 1998/01/19 20:22:30 augustss Exp $
 .\"
 .\" Copyright (c) 1995 Michael Long.
@@ -33,9 +33,9 @@
 .Nm wss
 .Nd Windows Sound System hardware driver
 .Sh SYNOPSIS
-.Cd "device wss0 at isa? port 0x530 irq 10 drq 0 drq2 1"
-.Cd "device wss0 at isa? port 0x530 irq 10 drq 0 flags 1"
-.Cd "device wss* at isapnp?"
+.Cd "wss0 at isa? port 0x530 irq 10 drq 0 drq2 1"
+.Cd "wss0 at isa? port 0x530 irq 10 drq 0 flags 1"
+.Cd "wss* at isapnp?"
 .Cd "audio* at wss?"
 .Sh DESCRIPTION
 The
