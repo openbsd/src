@@ -1,9 +1,12 @@
 #!/usr/bin/perl -w
 #
-# $OpenBSD: recover,v 1.3 2000/01/20 18:19:45 millert Exp $
+# $OpenBSD: recover,v 1.4 2000/03/09 21:24:02 millert Exp $
 #
 # Script to (safely) recover nvi edit sessions.
 #
+
+use Fcntl;
+
 $recoverdir = $ARGV[0] || "/var/tmp/vi.recover";
 $sendmail = "/usr/sbin/sendmail";
 
