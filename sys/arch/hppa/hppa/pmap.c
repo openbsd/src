@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.8 1998/12/30 02:11:52 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.9 1999/01/03 04:01:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -1073,15 +1073,28 @@ pmap_enter(pmap, va, pa, prot, wired)
 		pmap->pmap_stats.resident_count++;
 	}
 	else {
-		/*
-		 * We are just changing the protection.
-		 * Flush the current TLB entry to force a fault and reload.
-		 */
+		/* see if we are remapping the page to another PA */
+		if (ppv->pv_tlbpage != tlbpage) {
 #ifdef PMAPDEBUG
-		if (pmapdebug & PDB_ENTER)
-			printf("pmap_enter: changing protection\n");
+			if (pmapdebug & PDB_ENTER)
+				printf("pmap_enter: moving pa %x -> %x\n",
+					ppv->pv_tlbpage, tlbpage);
 #endif
+			tlbprot = ppv->pv_tlbprot;
+			pmap_remove_pv(pmap, va, ppv);
+			pmap_enter_pv(pmap, va, tlbprot, tlbpage, 0, pv);
+		} else {
+			/* We are just changing the protection.  */
+#ifdef PMAPDEBUG
+			if (pmapdebug & PDB_ENTER)
+				printf("pmap_enter: changing protection\n");
+#endif
+		}
 		pv = ppv;
+		/*
+		 * Flush the current TLB entry to force
+		 * a fault and reload.
+		 */
 		pdtlb(space, va);
 		pitlb(space, va);
 	}
@@ -1548,6 +1561,26 @@ pmap_is_referenced(pa)
 	splx(s);
 
 	return pv != NULL;
+}
+
+void
+pmap_changebit(pa, set, reset)
+	vm_offset_t pa;
+	u_int set, reset;
+{
+	register struct pv_entry *pv;
+	int s;
+
+	pv = pmap_find_pv(pa);
+
+	s = splimp();
+	while (pv) {
+		pv->pv_tlbprot |= set;
+		pv->vp_tlbprot &= ~reset;
+		pv = pv->pv_next;
+	}
+	pmap_clear_pv(pv, NULL);
+	splx(s);
 }
 
 int
