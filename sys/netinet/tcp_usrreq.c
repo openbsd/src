@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.87 2004/10/28 19:22:52 mcbride Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.88 2005/02/22 17:28:49 mcbride Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -839,8 +839,8 @@ tcp_ident(oldp, oldlenp, newp, newlen, dodrop)
 
 	s = splsoftnet();
 	switch (tir.faddr.ss_family) {
-	case AF_INET6:
 #ifdef INET6
+	case AF_INET6:
 		inp = in6_pcbhashlookup(&tcbtable, &f6,
 		    fin6->sin6_port, &l6, lin6->sin6_port);
 		break;
