@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.37 1998/03/22 17:27:44 pefo Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.38 1998/05/23 03:14:24 millert Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -183,7 +183,11 @@
 **    MUST NOT be greater than (MAX_SCATTER-1) * PAGE_SIZE.
 */
 
+#ifdef __OpenBSD__
+#define MAX_SIZE  ((MAX_SCATTER-1) * (long) NBPG)
+#else
 #define MAX_SIZE  ((MAX_SCATTER-1) * (long) PAGE_SIZE)
+#endif
 
 /*
 **	other
@@ -245,15 +249,8 @@
 
 #include <scsi/scsiconf.h>
 
-#ifdef __OpenBSD__	/* XXX */
-#define	__BROKEN_INDIRECT_CONFIG
-#undef PAGE_SIZE
-#undef PAGE_MASK
-#define	PAGE_SIZE	NBPG
-#define	PAGE_MASK	(NBPG-1)
-#endif
-
 #ifdef __OpenBSD__
+#define	__BROKEN_INDIRECT_CONFIG
 #ifdef NCR_VERBOSE
 #define bootverbose	NCR_VERBOSE
 #else
@@ -1468,7 +1465,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.37 1998/03/22 17:27:44 pefo Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.38 1998/05/23 03:14:24 millert Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -7446,7 +7443,11 @@ static	int	ncr_scatter
 
 	free = MAX_SCATTER - 1;
 
+#ifdef __OpenBSD__
+	if (vaddr & (NBPG-1)) free -= datalen / NBPG;
+#else
 	if (vaddr & PAGE_MASK) free -= datalen / PAGE_SIZE;
+#endif
 
 	if (free>1)
 		while ((chunk * free >= 2 * datalen) && (chunk>=1024))
@@ -7475,7 +7476,11 @@ static	int	ncr_scatter
 			/*
 			**	continue this segment
 			*/
+#ifdef __OpenBSD__
+			pnext = (paddr & (~(NBPG - 1))) + NBPG;
+#else
 			pnext = (paddr & (~PAGE_MASK)) + PAGE_SIZE;
+#endif
 
 			/*
 			**	Compute max size
