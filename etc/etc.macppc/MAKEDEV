@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.4 2002/02/14 13:29:20 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.36 2002/02/19 21:05:10 todd Exp 
+#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.5 2002/02/23 17:02:03 matthieu Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.40 2002/02/21 18:36:54 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.22 2002/02/21 18:34:11 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.23 2002/02/23 18:29:34 deraadt Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -212,6 +212,7 @@ std)
 	M ksyms		c 43 0 640 kmem
 	M drum		c 3 0 640 kmem
 	M klog		c 6 0 600
+	M xf86		c 2 4 600
 	M reload	c 2 20 640 kmem
 	;;
 
