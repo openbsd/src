@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 2/19/91
-#	$Id: Makefile,v 1.5 1996/02/15 05:02:25 etheisen Exp $
+#	$Id: Makefile,v 1.6 1996/04/03 05:44:45 tholo Exp $
 
 PROG=	passwd
 SRCS=	local_passwd.c yp_passwd.c passwd.c pw_copy.c pw_util.c getpwent.c
@@ -10,6 +10,8 @@ DPADD+= ${LIBRPCSVC}
 #LDADD+= -lrpcsvc -lcrypt
 LDADD+= -lrpcsvc
 CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../usr.sbin/vipw -DYP
+
+.include <bsd.own.mk>	# For Kerberos
 
 .if defined(KERBEROS5)
 SRCS+= krb5_passwd.c
