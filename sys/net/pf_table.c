@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.58 2004/06/23 04:34:17 mcbride Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.59 2004/07/08 23:17:38 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -911,14 +911,14 @@ pfr_prepare_network(union sockaddr_union *sa, int af, int net)
 	if (af == AF_INET) {
 		sa->sin.sin_len = sizeof(sa->sin);
 		sa->sin.sin_family = AF_INET;
-		sa->sin.sin_addr.s_addr = htonl(-1 << (32-net));
+		sa->sin.sin_addr.s_addr = net ? htonl(-1 << (32-net)) : 0;
 	} else if (af == AF_INET6) {
 		sa->sin6.sin6_len = sizeof(sa->sin6);
 		sa->sin6.sin6_family = AF_INET6;
 		for (i = 0; i < 4; i++) {
 			if (net <= 32) {
 				sa->sin6.sin6_addr.s6_addr32[i] =
-				    htonl(-1 << (32-net));
+				    net ? htonl(-1 << (32-net)) : 0;
 				break;
 			}
 			sa->sin6.sin6_addr.s6_addr32[i] = 0xFFFFFFFF;
