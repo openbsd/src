@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgctl.2,v 1.6 1999/05/10 17:56:29 aaron Exp $
+.\"	$OpenBSD: msgctl.2,v 1.7 1999/05/27 14:05:09 aaron Exp $
 .\"	$NetBSD: msgctl.2,v 1.2 1997/03/27 08:20:35 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -48,7 +48,7 @@ The
 system call performs some control operations on the message queue specified
 by
 .Fa msqid .
-
+.Pp
 Each message queue has a data structure associated with it, parts of which
 may be altered by
 .Fn msgctl
@@ -70,7 +70,7 @@ struct msqid_ds {
 	time_t		msg_ctime;	/* time of last msgctl() */
 };
 .Ed
-
+.Pp
 The
 .Bf -literal
 ipc_perm
@@ -93,7 +93,7 @@ struct ipc_perm {
 	key_t	key;	/* user specified msg/sem/shm key */
 };
 .Ed
-
+.Pp
 The operation to be performed by
 .Fn msgctl
 is specified in
@@ -129,18 +129,18 @@ can only be increased by the super-user. Values for
 that exceed the system limit (MSGMNB from
 .Aq Pa sys/msg.h )
 are silently truncated to that limit.
-
+.Pp
 .It Dv IPC_RMID
 Remove the message queue specified by
 .Fa msqid
 and destroy the data associated with it. Only the super-user or a process
-with an effective uid equal to the 
+with an effective UID equal to the 
 .Va msg_perm.cuid
 or
 .Va msg_perm.uid
 values in the data structure associated with the queue can do this.
 .El
-
+.Pp
 The permission to read from or write to a message queue (see
 .Xr msgsnd 2
 and
@@ -150,12 +150,12 @@ is determined by the
 field in the same way as is
 done with files (see
 .Xr chmod 2 ) ,
-but the effective uid can match either the
+but the effective UID can match either the
 .Va msg_perm.cuid
 field or the
 .Va msg_perm.uid
 field, and the
-effective gid can match either
+effective GID can match either
 .Va msg_perm.cgid
 or
 .Va msg_perm.gid .
@@ -170,24 +170,30 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EPERM
 .Fa cmd
-is equal to IPC_SET or IPC_RMID and the caller is not the super-user, nor does
-the effective uid match either the
+is equal to
+.Dv IPC_SET
+or
+.Dv IPC_RMID
+and the caller is not the super-user, nor does
+the effective UID match either the
 .Va msg_perm.uid
 or
 .Va msg_perm.cuid
 fields of the data structure associated with the message queue.
-
+.Pp
 An attempt is made to increase the value of
 .Va msg_qbytes
-through IPC_SET
+through
+.Dv IPC_SET
 but the caller is not the super-user.
 .It Bq Er EACCES
-The command is IPC_STAT
+The command is
+.Dv IPC_STAT
 and the caller has no read permission for this message queue.
 .It Bq Er EINVAL
 .Fa msqid
 is not a valid message queue identifier.
-
+.Pp
 .Va cmd
 is not a valid command.
 .It Bq Er EFAULT

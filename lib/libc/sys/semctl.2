@@ -1,4 +1,4 @@
-.\"	$OpenBSD: semctl.2,v 1.7 1999/05/10 17:56:29 aaron Exp $
+.\"	$OpenBSD: semctl.2,v 1.8 1999/05/27 14:05:10 aaron Exp $
 .\"	$NetBSD: semctl.2,v 1.2 1997/03/27 08:20:40 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -60,13 +60,16 @@ is a union of the following fields:
 	struct  semid_ds *buf;		/* buffer for IPC_{STAT,SET} */
 	u_short *array;			/* array for GETALL & SETALL */
 .Ed
-
+.Pp
 The
 .Bf -literal
 semid_ds
 .Ef
-structure used in the IPC_SET and IPC_STAT commands is defined
-as follows in
+structure used in the
+.Dv IPC_SET
+and
+.Dv IPC_STAT
+commands is defined as follows in
 .Aq Pa sys/sem.h :
 .Bd -literal
 struct semid_ds {
@@ -77,7 +80,7 @@ struct semid_ds {
 	time_t  sem_ctime;		/* last change time */
 };
 .Ed
-
+.Pp
 The
 .Bf -literal
 ipc_perm
@@ -100,7 +103,7 @@ struct ipc_perm {
 	key_t key;		/* user specified msg/sem/shm key */
 };
 .Ed
-
+.Pp
 .Fn semctl
 provides the following operations:
 .Bl -tag -width IPC_RMIDX
@@ -153,13 +156,13 @@ in the data structure associated with the message queue.
 Remove the semaphores associated with
 .Fa semid
 from the system and destroy the data structures associated with it. Only the
-super-user or a process with an effective uid equal to the 
+super-user or a process with an effective UID equal to the 
 .Va sem_perm.cuid
 or
 .Va sem_perm.uid
 values in the data structure associated with the semaphore can do this.
 .El
-
+.Pp
 The permission to read or change a message queue (see
 .Xr semop 2 )
 is determined by the
@@ -167,17 +170,23 @@ is determined by the
 field in the same way as is
 done with files (see
 .Xr chmod 2 ) ,
-but the effective uid can match either the
+but the effective UID can match either the
 .Va sem_perm.cuid
 field or the
 .Va sem_perm.uid
 field, and the
-effective gid can match either
+effective GID can match either
 .Va sem_perm.cgid
 or
 .Va sem_perm.gid .
 .Sh RETURN VALUES
-For the GETVAL, GETPID, GETNCNT and GETZCNT operations,
+For the
+.Dv GETVAL ,
+.Dv GETPID ,
+.Dv GETNCNT ,
+and
+.Dv GETZCNT
+operations,
 .Fn semctl
 returns one of the values described above if successful. All other operations
 will make
@@ -191,8 +200,12 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EPERM
 .Fa cmd
-is equal to IPC_SET or IPC_RMID and the caller is not the super-user, nor does
-the effective uid match either the
+is equal to
+.Dv IPC_SET
+or
+.Dv IPC_RMID
+and the caller is not the super-user, nor does
+the effective UID match either the
 .Va sem_perm.uid
 or
 .Va sem_perm.cuid
@@ -202,7 +215,7 @@ The caller has no operation permission for this semaphore.
 .It Bq Er EINVAL
 .Fa semid
 is not a valid message semaphore identifier.
-
+.Pp
 .Va cmd
 is not a valid command.
 .It Bq Er EFAULT

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: semget.2,v 1.6 1999/05/25 13:06:47 aaron Exp $
+.\"	$OpenBSD: semget.2,v 1.7 1999/05/27 14:05:10 aaron Exp $
 .\"	$NetBSD: semget.2,v 1.2 1997/03/27 08:20:41 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -52,10 +52,13 @@ A new set containing
 .Fa nsems
 semaphores is created if either 
 .Fa key
-is equal to IPC_PRIVATE, or
+is equal to
+.Dv IPC_PRIVATE ,
+or
 .Fa key
-does not have a semaphore set associated with it and the IPC_CREAT bit is
-set in
+does not have a semaphore set associated with it and the
+.Dv IPC_CREAT
+bit is set in
 .Fa semflg .
 .Pp
 The access modes of the created semaphores is specified in
@@ -119,7 +122,11 @@ is set to reflect the error.
 The caller has no permission to access a semaphore set already associated with
 .Fa key .
 .It Bq Er EEXIST
-Both IPC_CREAT and IPC_EXCL are set in
+Both
+.Dv IPC_CREAT
+and
+.Dv IPC_EXCL
+are set in
 .Fa semflg ,
 and a semaphore set is already associated with
 .Fa key .
@@ -137,7 +144,8 @@ A new set of semaphores could not be created because the system limit
 for the number of semaphores or the number of semaphore sets has been
 reached.
 .It Bq Er ENOENT
-IPC_CREAT was not set in
+.Dv IPC_CREAT
+was not set in
 .Fa semflg
 and no semaphore set associated with
 .Fa key

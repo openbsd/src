@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shmat.2,v 1.5 1998/05/11 06:13:50 deraadt Exp $
+.\"	$OpenBSD: shmat.2,v 1.6 1999/05/27 14:05:10 aaron Exp $
 .\"	$NetBSD: shmat.2,v 1.2 1997/03/27 08:20:38 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -62,11 +62,11 @@ the system will round the address down to a multiple of SHMLBA bytes
 (SHMLBA is defined in
 .Aq Pa sys/shm.h
 ).
-
+.Pp
 A shared memory segment can be mapped read-only by specifying the
 SHM_RDONLY flag in
 .Fa shmflg .
-
+.Pp
 .Fn shmdt
 unmaps the shared memory segment that is currently mapped at
 .Fa shmaddr
@@ -77,7 +77,9 @@ must be a value returned by a prior
 call. A shared memory segment will remain existant until it is removed by
 a call to
 .Xr shmctl 2
-with the IPC_RMID command.
+with the
+.Dv IPC_RMID
+command.
 .Sh RETURN VALUES
 .Fn shmat
 returns the address at which the shared memory segment has been mapped into
@@ -99,13 +101,13 @@ map the shared memory segment.
 .It Bq Er EINVAL
 .Fa shmid
 is not a valid shared memory identifier.
-
+.Pp
 .Fa shmaddr
 specifies an illegal address.
 .It Bq Er EMFILE
 The number of shared memory segments has reached the system-wide limit.
 .El
-
+.Pp
 .Fn shmdt
 will fail if:
 .Bl -tag -width Er

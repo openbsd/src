@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shmctl.2,v 1.7 1999/05/10 17:56:29 aaron Exp $
+.\"	$OpenBSD: shmctl.2,v 1.8 1999/05/27 14:05:10 aaron Exp $
 .\"	$NetBSD: shmctl.2,v 1.3 1997/03/27 08:20:39 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -48,13 +48,13 @@ The
 system call performs some control operations on the shared memory area
 specified by
 .Fa shmid .
-
+.Pp
 Each shared memory segment has a data structure associated with it,
 parts of which may be altered by
 .Fn shmctl
 and parts of which determine the actions of
 .Fn shmctl .
-
+.Pp
 This structure is defined as follows in
 .Aq Pa sys/shm.h :
 .Bd -literal
@@ -93,7 +93,7 @@ struct ipc_perm {
 	key_t		key;	/* user specified msg/sem/shm key */
 };
 .Ed
-
+.Pp
 The operation to be performed by
 .Fn shmctl
 is specified in
@@ -121,30 +121,30 @@ has an effective user id equal to either
 or
 .Va shm_perm.uid
 in the data structure associated with the shared memory segment.
-
+.Pp
 .It Dv IPC_RMID
 Remove the shared memory segment specified by
 .Fa shmid
 and destroy the data associated with it. Only the super-user or a process
-with an effective uid equal to the 
+with an effective UID equal to the 
 .Va shm_perm.cuid
 or
 .Va shm_perm.uid
 values in the data structure associated with the queue can do this.
 .El
-
+.Pp
 The read and write permissions on a shared memory identifier
 are determined by the
 .Va shm_perm.mode
 field in the same way as is
 done with files (see
 .Xr chmod 2 ) ,
-but the effective uid can match either the
+but the effective UID can match either the
 .Va shm_perm.cuid
 field or the
 .Va shm_perm.uid
 field, and the
-effective gid can match either
+effective GID can match either
 .Va shm_perm.cgid
 or
 .Va shm_perm.gid .
@@ -159,24 +159,30 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EPERM
 .Fa cmd
-is equal to IPC_SET or IPC_RMID and the caller is not the super-user, nor does
-the effective uid match either the
+is equal to
+.Dv IPC_SET
+or
+.Dv IPC_RMID
+and the caller is not the super-user, nor does
+the effective UID match either the
 .Va shm_perm.uid
 or
 .Va shm_perm.cuid
 fields of the data structure associated with the shared memory segment.
-
+.Pp
 An attempt is made to increase the value of
 .Va shm_qbytes
-through IPC_SET
+through
+.Dv IPC_SET
 but the caller is not the super-user.
 .It Bq Er EACCES
-The command is IPC_STAT
+The command is
+.Dv IPC_STAT
 and the caller has no read permission for this shared memory segment.
 .It Bq Er EINVAL
 .Fa shmid
 is not a valid shared memory segment identifier.
-
+.Pp
 .Va cmd
 is not a valid command.
 .It Bq Er EFAULT

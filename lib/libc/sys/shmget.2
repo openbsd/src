@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shmget.2,v 1.5 1999/05/25 13:06:47 aaron Exp $
+.\"	$OpenBSD: shmget.2,v 1.6 1999/05/27 14:05:10 aaron Exp $
 .\"	$NetBSD: shmget.2,v 1.2 1997/03/27 08:20:39 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -49,9 +49,12 @@ returns the shared memory identifier associated with the key
 .Pp
 A shared memory segment is created if either
 .Fa key
-is equal to IPC_PRIVATE, or
+is equal to
+.Dv IPC_PRIVATE ,
+or
 .Fa key
-does not have a shared memory segment identifier associated with it, and the IPC_CREAT
+does not have a shared memory segment identifier associated with it, and the
+.Dv IPC_CREAT
 bit is set in
 .Fa shmflg .
 .Pp
@@ -102,7 +105,11 @@ A shared memory segment is already associated with
 .Fa key
 and the caller has no permission to access it.
 .It Bq Er EEXIST
-Both IPC_CREAT and IPC_EXCL are set in
+Both
+.Dv IPC_CREAT
+and
+.Dv IPC_EXCL
+are set in
 .Fa shmflg ,
 and a shared memory segment is already associated with
 .Fa key .
@@ -110,7 +117,8 @@ and a shared memory segment is already associated with
 A new shared memory indentifier could not be created because the system limit
 for the number of shared memory identifiers has been reached.
 .It Bq Er ENOENT
-IPC_CREAT was not set in
+.Dv IPC_CREAT
+was not set in
 .Fa shmflg
 and no shared memory segment associated with
 .Fa key

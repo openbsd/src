@@ -1,4 +1,4 @@
-.\"   $OpenBSD: semop.2,v 1.4 1997/11/24 02:07:33 deraadt Exp $
+.\"   $OpenBSD: semop.2,v 1.5 1999/05/27 14:05:10 aaron Exp $
 .\"	$NetBSD: semop.2,v 1.1 1995/10/16 23:49:28 jtc Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -58,7 +58,7 @@ structures in the array contain the following members:
         short   sem_op;         /* semaphore operation */
         short   sem_flg;        /* operation flags */
 .Ed
-
+.Pp
 Each operation (specified in
 .Va sem_op )
 is applied to semaphore number
@@ -89,18 +89,21 @@ semaphore. This is used to leave critical regions.
 is equal to 0. The calling process is blocked until the value of the
 specified semaphore reaches 0.
 .El
-
+.Pp
 The behavior of each operation is influenced by the flags set in
 .Va sem_flg
 in the following way:
 .Bl -tag -width IPC_NOWAITX
-.It IPC_NOWAIT
+.It Dv IPC_NOWAIT
 In the case where the calling process would normally block, waiting
-for a semaphore to reach a certain value, IPC_NOWAIT makes the
+for a semaphore to reach a certain value,
+.Dv IPC_NOWAIT
+makes the
 call return immediately, returning a value of -1 and setting
 .Va errno
-to EAGAIN.
-.It SEM_UNDO
+to
+.Er EAGAIN .
+.It Dv SEM_UNDO
 Keep track of the changes that this call makes to the value of a semaphore,
 so that they can be undone when the calling process terminates. This is
 useful to prevent other processes waiting on a semaphore to block forever,
@@ -119,10 +122,10 @@ will fail if:
 .It Bq Er EINVAL
 There is no semaphore associated with
 .Fa semid .
-
+.Pp
 The semaphore set was removed while the process was waiting for one of
 its semaphores to reach a certain value.
-
+.Pp
 .It Bq Er EACCES
 The calling process has no permission to access the specified semaphore set.
 .It Bq Er E2BIG
@@ -135,10 +138,12 @@ in one of the sem_buf structures is less than 0, or greater than the actual
 number of semaphores in the set specified by
 .Fa semid .
 .It Bq Er ENOSPC
-SEM_UNDO was requested, and there is not enough space left in the kernel to
+.Dv SEM_UNDO
+was requested, and there is not enough space left in the kernel to
 store the unfo information.
 .It Bq Er EAGAIN
-The requested operation can not immediately be performed, and IPC_NOWAIT
+The requested operation can not immediately be performed, and
+.Dv IPC_NOWAIT
 was set in
 .Va sem_flg .
 .It Bq Er EFAULT
@@ -150,4 +155,6 @@ points to an illegal address.
 .Sh BUGS
 In case of a removed semaphore identifier,
 .Va errno
-should be set to EIDRM, but OpenBSD does not define this error.
+should be set to
+.Er EIDRM ,
+but OpenBSD does not define this error.
