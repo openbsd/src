@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.5 2002/03/14 03:15:56 millert Exp $	*/
+/*	$OpenBSD: boot.c,v 1.6 2002/08/13 02:05:56 drahn Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -66,14 +66,6 @@ char bootfile[128];
 int boothowto;
 int debug;
 
-#ifdef POWERPC_BOOT_ELF
-int	elf_exec(int, Elf32_Ehdr *, u_int32_t *, void **);
-#endif
-
-#ifdef POWERPC_BOOT_AOUT
-int	aout_exec(int, struct exec *, u_int32_t *, void **);
-#endif
-
 static void
 prom2boot(dev)
 	char *dev;
@@ -100,23 +92,20 @@ parseargs(str, howtop)
 		_rtt();
 
 	*howtop = 0;
-	if (str[0] == '\0') {
+	if (str[0] == '\0')
 		return;
-	}
+
 	cp = str;
 	while (*cp != 0) {
 		/* check for - */
-		if (*cp == '-') {
-			/* start of options found */
-			break;
-		}
-		while (*cp != 0 && *cp != ' ') {
-			/* character in the middle of the name, skip */
-			cp++;
-		}
-		while (*cp == ' ') {
+		if (*cp == '-')
+			break;	/* start of options found */
+
+		while (*cp != 0 && *cp != ' ')
+			cp++;	/* character in the middle of the name, skip */
+
+		while (*cp == ' ')
 			*cp++ = 0;
-		}
 	}
 	if (!*cp)
 		return;
