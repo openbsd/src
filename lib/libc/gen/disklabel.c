@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.4 1997/07/23 21:04:04 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.5 2000/07/19 15:25:13 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -168,7 +168,7 @@ gettype(t, names)
 	for (nm = names; *nm; nm++)
 		if (strcasecmp(t, *nm) == 0)
 			return (nm - names);
-	if (isdigit(*t))
+	if (isdigit((u_char)*t))
 		return (atoi(t));
 	return (0);
 }

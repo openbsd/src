@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcwd.c,v 1.5 1998/08/14 21:39:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getcwd.c,v 1.6 2000/07/19 15:25:13 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -190,7 +190,7 @@ getcwd(pt, size)
 		 * Check for length of the current name, preceding slash,
 		 * leading slash.
 		 */
-		if (bpt - pt <= dp->d_namlen + (first ? 1 : 2)) {
+		if (bpt - pt < dp->d_namlen + (first ? 1 : 2)) {
 			size_t len, off;
 			char *npt;
 

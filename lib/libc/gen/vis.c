@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vis.c,v 1.4 1997/07/25 20:30:05 mickey Exp $";
+static char rcsid[] = "$OpenBSD: vis.c,v 1.5 2000/07/19 15:25:13 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -51,7 +51,8 @@ vis(dst, c, flag, nextc)
 	int c, nextc;
 	register int flag;
 {
-	if (((u_int)c <= UCHAR_MAX && isascii(c) && isgraph(c)) ||
+	if (((u_int)c <= UCHAR_MAX && isascii((u_char)c) &&
+	    isgraph((u_char)c)) ||
 	   ((flag & VIS_SP) == 0 && c == ' ') ||
 	   ((flag & VIS_TAB) == 0 && c == '\t') ||
 	   ((flag & VIS_NL) == 0 && c == '\n') ||
