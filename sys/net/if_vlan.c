@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.29 2001/12/11 05:13:37 jason Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.30 2002/02/13 20:38:29 jason Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -180,7 +180,6 @@ vlan_start(struct ifnet *ifp)
 {
 	struct ifvlan *ifv;
 	struct ifnet *p;
-	struct ether_vlan_header *evl;
 	struct mbuf *m, *m0;
 	int error;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
@@ -250,41 +249,29 @@ vlan_start(struct ifnet *ifp)
 			m->m_pkthdr.rcvif = ifp;
 			m->m_flags |= M_PROTO1;
 		} else {
-			if (m->m_len < sizeof(struct ether_header) &&
-			    (m = m_pullup(m, sizeof(struct ether_header)))
-			    == NULL) {
-				ifp->if_ierrors++;
-				continue;
-			}
+			struct ether_vlan_header evh;
 
-			if (m->m_flags & M_PKTHDR) {
-				MGETHDR(m0, MT_DATA, M_DONTWAIT);
-			} else {
-				MGET(m0, MT_DATA, M_DONTWAIT);
-			}
+			m_copydata(m, 0, sizeof(struct ether_header),
+			    (caddr_t)&evh);
+			evh.evl_proto = evh.evl_encap_proto;
+			evh.evl_encap_proto = htons(ETHERTYPE_8021Q);
+			evh.evl_tag = htons(ifv->ifv_tag);
+			m_adj(m, sizeof(struct ether_header));
 
+			m0 = m_prepend(m, sizeof(struct ether_vlan_header),
+			    M_DONTWAIT);
 			if (m0 == NULL) {
 				ifp->if_ierrors++;
-				m_freem(m);
 				continue;
 			}
 
+			/* m_prepend() doesn't adjust m_pkthdr.len */
 			if (m0->m_flags & M_PKTHDR)
-				M_MOVE_PKTHDR(m0, m);
+				m0->m_pkthdr.len +=
+				    sizeof(struct ether_vlan_header);
 
-			m0->m_flags &= ~M_PROTO1;
-			m0->m_next = m;
-			m0->m_len = sizeof(struct ether_vlan_header);
-
-			evl = mtod(m0, struct ether_vlan_header *);
-			bcopy(mtod(m, char *),
-			    evl, sizeof(struct ether_header));
-			evl->evl_proto = evl->evl_encap_proto;
-			evl->evl_encap_proto = htons(ETHERTYPE_8021Q);
-			evl->evl_tag = htons(ifv->ifv_tag);
-
-			m->m_len -= sizeof(struct ether_header);
-			m->m_data += sizeof(struct ether_header);
+			m_copyback(m0, 0, sizeof(struct ether_vlan_header),
+			    (caddr_t)&evh);
 
 			m = m0;
 		}
