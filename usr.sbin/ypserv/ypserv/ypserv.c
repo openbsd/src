@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.7 1997/01/15 23:44:34 millert Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.8 1997/03/30 20:51:20 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,10 +32,11 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.7 1997/01/15 23:44:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.8 1997/03/30 20:51:20 maja Exp $";
 #endif
 
 #include "yp.h"
+#include "ypv1.h"
 #include <stdio.h>
 #include <stdlib.h>/* getenv, exit */
 #include <rpc/pmap_clnt.h> /* for pmap_unset */
@@ -113,6 +114,109 @@ closedown()
 			exit(0);
 	}
 	(void) alarm(_RPCSVC_CLOSEDOWN);
+}
+
+static void
+ypprog_1(struct svc_req *rqstp, register SVCXPRT *transp)
+{
+	union {
+		domainname ypproc_domain_1_arg;
+		domainname ypproc_domain_nonack_1_arg;
+		yprequest ypproc_match_1_arg;
+		yprequest ypproc_first_1_arg;
+		yprequest ypproc_next_1_arg;
+		yprequest ypproc_poll_1_arg;
+		yprequest ypproc_push_1_arg;
+		yprequest ypproc_pull_1_arg;
+		yprequest ypproc_get_1_arg;
+	} argument;
+	char *result;
+	xdrproc_t xdr_argument, xdr_result;
+	char *(*local)(char *, struct svc_req *);
+
+	_rpcsvcdirty = 1;
+	switch (rqstp->rq_proc) {
+	case YPOLDPROC_NULL:
+		xdr_argument = (xdrproc_t) xdr_void;
+		xdr_result = (xdrproc_t) xdr_void;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_null_1_svc;
+		break;
+
+	case YPOLDPROC_DOMAIN:
+		xdr_argument = (xdrproc_t) xdr_domainname;
+		xdr_result = (xdrproc_t) xdr_bool;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_domain_1_svc;
+		break;
+
+	case YPOLDPROC_DOMAIN_NONACK:
+		xdr_argument = (xdrproc_t) xdr_domainname;
+		xdr_result = (xdrproc_t) xdr_bool;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_domain_nonack_1_svc;
+		break;
+
+	case YPOLDPROC_MATCH:
+		xdr_argument = (xdrproc_t) xdr_yprequest;
+		xdr_result = (xdrproc_t) xdr_ypresponse;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_match_1_svc;
+		break;
+
+	case YPOLDPROC_FIRST:
+		xdr_argument = (xdrproc_t) xdr_yprequest;
+		xdr_result = (xdrproc_t) xdr_ypresponse;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_first_1_svc;
+		break;
+
+	case YPOLDPROC_NEXT:
+		xdr_argument = (xdrproc_t) xdr_yprequest;
+		xdr_result = (xdrproc_t) xdr_ypresponse;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_next_1_svc;
+		break;
+
+	case YPOLDPROC_POLL:
+		xdr_argument = (xdrproc_t) xdr_yprequest;
+		xdr_result = (xdrproc_t) xdr_ypresponse;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_poll_1_svc;
+		break;
+
+	case YPOLDPROC_PUSH:
+		xdr_argument = (xdrproc_t) xdr_yprequest;
+		xdr_result = (xdrproc_t) xdr_void;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_push_1_svc;
+		break;
+
+	case YPOLDPROC_PULL:
+		xdr_argument = (xdrproc_t) xdr_yprequest;
+		xdr_result = (xdrproc_t) xdr_void;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_pull_1_svc;
+		break;
+
+	case YPOLDPROC_GET:
+		xdr_argument = (xdrproc_t) xdr_yprequest;
+		xdr_result = (xdrproc_t) xdr_void;
+		local = (char *(*)(char *, struct svc_req *)) ypproc_get_1_svc;
+		break;
+
+	default:
+		svcerr_noproc(transp);
+		_rpcsvcdirty = 0;
+		return;
+	}
+	(void) memset((char *)&argument, 0, sizeof (argument));
+	if (!svc_getargs(transp, xdr_argument, (caddr_t) &argument)) {
+		svcerr_decode(transp);
+		_rpcsvcdirty = 0;
+		return;
+	}
+	result = (*local)((char *)&argument, rqstp);
+	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
+		svcerr_systemerr(transp);
+	}
+	if (!svc_freeargs(transp, xdr_argument, (caddr_t) &argument)) {
+		_msgout("unable to free arguments");
+		exit(1);
+	}
+	_rpcsvcdirty = 0;
+	return;
 }
 
 static void
@@ -320,6 +424,7 @@ char *argv[];
 #endif
 		sock = RPC_ANYSOCK;
 		(void) pmap_unset(YPPROG, YPVERS);
+		(void) pmap_unset(YPPROG, YPOLDVERS);
 	}
 
 	ypopenlog();	/* open log file */
@@ -344,6 +449,10 @@ char *argv[];
 		}
 		if (!_rpcpmstart)
 			proto = IPPROTO_UDP;
+		if (!svc_register(transp, YPPROG, YPOLDVERS, ypprog_1, proto)) {
+			_msgout("unable to register (YPPROG, YPOLDVERS, udp).");
+			exit(1);
+		}
 		if (!svc_register(transp, YPPROG, YPVERS, ypprog_2, proto)) {
 			_msgout("unable to register (YPPROG, YPVERS, udp).");
 			exit(1);
@@ -361,6 +470,10 @@ char *argv[];
 		}
 		if (!_rpcpmstart)
 			proto = IPPROTO_TCP;
+		if (!svc_register(transp, YPPROG, YPOLDVERS, ypprog_1, proto)) {
+			_msgout("unable to register (YPPROG, YPOLDVERS, tcp).");
+			exit(1);
+		}
 		if (!svc_register(transp, YPPROG, YPVERS, ypprog_2, proto)) {
 			_msgout("unable to register (YPPROG, YPVERS, tcp).");
 			exit(1);

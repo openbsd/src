@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.9 1997/03/11 09:12:27 maja Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.10 1997/03/30 20:51:21 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,11 +32,12 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.9 1997/03/11 09:12:27 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.10 1997/03/30 20:51:21 maja Exp $";
 #endif
 
 #include <rpc/rpc.h>
 #include "yp.h"
+#include "ypv1.h"
 #include <rpcsvc/ypclnt.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -563,3 +564,425 @@ ypproc_maplist_2_svc(argp, rqstp)
 	return (&res);
 }
 
+void *
+ypproc_null_1_svc(argp, rqstp)
+	void *argp;
+        struct svc_req *rqstp;
+{
+	static char *result;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+
+	YPLOG("null_1: caller=[%s].%d, auth_ok=%s",
+	      inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok));
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
+	result = NULL;
+
+	return ((void *)&result);
+}
+
+bool_t *
+ypproc_domain_1_svc(argp, rqstp)
+	domainname *argp;
+        struct svc_req *rqstp;
+{
+	static bool_t result; /* is domain_served? */
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+	static char domain_path[MAXPATHLEN];
+	struct stat finfo;
+
+	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, *argp);
+	result = (bool_t) ((stat(domain_path, &finfo) == 0) &&
+				    (finfo.st_mode & S_IFDIR));
+
+	YPLOG("domain_1: caller=[%s].%d, auth_ok=%s, domain=%s, served=%s",
+	      inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), 
+	      TORF(ok), *argp, TORF(result));
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
+	return (&result);
+}
+
+bool_t *
+ypproc_domain_nonack_1_svc(argp, rqstp)
+	domainname *argp;
+        struct svc_req *rqstp;
+{
+	static bool_t result; /* is domain served? */
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+	static char domain_path[MAXPATHLEN];
+	struct stat finfo;
+
+	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, *argp);
+	result = (bool_t) ((stat(domain_path, &finfo) == 0) &&
+				    (finfo.st_mode & S_IFDIR));
+
+	YPLOG(
+	  "domain_nonack_1: caller=[%s].%d, auth_ok=%s, domain=%s, served=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
+	  *argp, TORF(result));
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
+	if (!result) {
+		return(NULL); /* don't send nack */
+	}
+
+	return (&result);
+}
+
+ypresponse *
+ypproc_match_1_svc(argp, rqstp)
+	yprequest *argp;
+        struct svc_req *rqstp;
+{
+	static ypresponse res;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+	int secure;
+
+	res.yp_resptype = YPMATCH_RESPTYPE;
+	res.ypmatch_resp_valptr = "";
+	res.ypmatch_resp_valsize = 0;
+
+	if (argp->yp_reqtype != YPMATCH_REQTYPE) {
+		res.ypmatch_resp_status = YP_BADARGS;
+		return(&res);
+	}
+
+	secure = ypdb_secure(argp->ypmatch_req_domain, argp->ypmatch_req_map);
+
+	YPLOG(
+	  "match_1: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s, key=%.*s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
+	  TORF(ok), TORF(secure),
+	  argp->ypmatch_req_domain,  argp->ypmatch_req_map,
+	  argp->ypmatch_req_keysize, argp->ypmatch_req_keyptr);
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
+		res.ypmatch_resp_status = YP_YPERR;
+	} else {
+		res.ypmatch_resp_val =
+		      ypdb_get_record(argp->ypmatch_req_domain,
+				      argp->ypmatch_req_map,
+				      argp->ypmatch_req_keydat,
+				      FALSE);
+	}
+
+#ifdef DEBUG
+	yplog("  match1_status: %s",
+	      yperr_string(ypprot_err(res.ypmatch_resp_status)));
+#endif
+
+	return (&res);
+}
+
+ypresponse *
+ypproc_first_1_svc(argp, rqstp)
+	yprequest *argp;
+        struct svc_req *rqstp;
+{
+	static ypresponse res;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+	int secure;
+
+	res.yp_resptype = YPFIRST_RESPTYPE;
+	res.ypfirst_resp_valptr  = res.ypfirst_resp_keyptr  = "";
+	res.ypfirst_resp_valsize = res.ypfirst_resp_keysize = 0;
+
+	if (argp->yp_reqtype != YPREQ_NOKEY) {
+		res.ypfirst_resp_status = YP_BADARGS;
+		return(&res);
+	}
+
+	secure = ypdb_secure(argp->ypfirst_req_domain, argp->ypfirst_req_map);
+
+	YPLOG( "first_1: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
+	  TORF(ok), TORF(secure),
+	  argp->ypfirst_req_domain, argp->ypfirst_req_map);
+	
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
+		res.ypfirst_resp_status = YP_YPERR;
+	} else {
+		res.ypfirst_resp_val =
+		      ypdb_get_first(argp->ypfirst_req_domain,
+				     argp->ypfirst_req_map,
+				     FALSE);
+	}
+
+#ifdef DEBUG
+	yplog("  first1_status: %s",
+	      yperr_string(ypprot_err(res.ypfirst_resp_status)));
+#endif
+
+	return (&res);
+}
+
+ypresponse *
+ypproc_next_1_svc(argp, rqstp)
+	yprequest *argp;
+        struct svc_req *rqstp;
+{
+	static ypresponse res;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+	int secure;
+
+	res.yp_resptype = YPNEXT_RESPTYPE;
+	res.ypnext_resp_valptr  = res.ypnext_resp_keyptr  = "";
+	res.ypnext_resp_valsize = res.ypnext_resp_keysize = 0;
+
+	if (argp->yp_reqtype != YPNEXT_REQTYPE) {
+		res.ypnext_resp_status = YP_BADARGS;
+		return(&res);
+	}
+
+	secure = ypdb_secure(argp->ypnext_req_domain, argp->ypnext_req_map);
+
+	YPLOG(
+	  "next_1: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s, key=%.*s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
+	  TORF(ok), TORF(secure),
+	  argp->ypnext_req_domain,  argp->ypnext_req_map,
+	  argp->ypnext_req_keysize, argp->ypnext_req_keyptr);
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
+	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
+		res.ypnext_resp_status = YP_YPERR;
+	} else {
+		res.ypnext_resp_val =
+		      ypdb_get_next(argp->ypnext_req_domain,
+				    argp->ypnext_req_map,
+				    argp->ypnext_req_keydat,
+				    FALSE);
+	}
+
+#ifdef DEBUG
+	yplog("  next1_status: %s",
+	      yperr_string(ypprot_err(res.ypnext_resp_status)));
+#endif
+
+	return (&res);
+}
+
+ypresponse *
+ypproc_poll_1_svc(argp, rqstp)
+	yprequest *argp;
+        struct svc_req *rqstp;
+{
+	static ypresponse res;
+	ypresp_order order;
+	ypresp_master master;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+	int secure;
+
+	res.yp_resptype = YPPOLL_RESPTYPE;
+	res.yppoll_resp_domain = argp->yppoll_req_domain;
+	res.yppoll_resp_map = argp->yppoll_req_map;
+	res.yppoll_resp_ordernum = 0;
+	res.yppoll_resp_owner = "";
+
+	if (argp->yp_reqtype != YPPOLL_REQTYPE) {
+		return(&res);
+	}
+
+	secure = ypdb_secure(argp->yppoll_req_domain, argp->yppoll_req_map);
+
+	YPLOG( "poll_1: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
+	  TORF(ok), TORF(secure),
+	  argp->yppoll_req_domain, argp->yppoll_req_map);
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
+	if (!(secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED))) {
+		order = ypdb_get_order(argp->yppoll_req_domain,
+				       argp->yppoll_req_map);
+		master = ypdb_get_master(argp->yppoll_req_domain,
+					 argp->yppoll_req_map);
+		res.yppoll_resp_ordernum = order.ordernum;
+		res.yppoll_resp_owner = master.peer;
+	}
+
+#ifdef DEBUG
+	yplog("  poll1_status: %s", "none");
+#endif
+	return (&res);
+}
+
+void *
+ypproc_push_1_svc(argp, rqstp)
+	yprequest *argp;
+        struct svc_req *rqstp;
+{
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+	int secure;
+	pid_t	pid;
+	char	yppush_proc[] = YPPUSH_PROC;
+
+	if (argp->yp_reqtype != YPPUSH_REQTYPE) {
+		return(NULL);
+	}
+
+	secure = ypdb_secure(argp->yppush_req_domain, argp->yppush_req_map);
+
+	YPLOG( "push_1: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
+	  TORF(ok), TORF(secure),
+	  argp->yppush_req_domain, argp->yppush_req_map);
+
+	if (ntohs(caller->sin_port) >= IPPORT_RESERVED)
+		ok = FALSE;
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
+	pid = vfork();
+
+	if (pid == -1) {
+		svcerr_systemerr(rqstp->rq_xprt);
+		return(NULL);
+		
+	}
+
+	if (pid == 0) {
+		execl(yppush_proc, "yppush", "-d", argp->yppush_req_domain,
+		      argp->yppush_req_map, NULL);
+		_exit(1);
+	}
+	
+	return (NULL);
+}
+
+void *
+ypproc_pull_1_svc(argp, rqstp)
+	yprequest *argp;
+        struct svc_req *rqstp;
+{
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+	int secure;
+	pid_t	pid;
+	char	ypxfr_proc[] = YPXFR_PROC;
+
+	if (argp->yp_reqtype != YPPULL_REQTYPE) {
+		return(NULL);
+	}
+
+	secure = ypdb_secure(argp->yppull_req_domain, argp->yppull_req_map);
+
+	YPLOG( "pull_1: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
+	  TORF(ok), TORF(secure),
+	  argp->yppull_req_domain, argp->yppull_req_map);
+
+	if (ntohs(caller->sin_port) >= IPPORT_RESERVED)
+		ok = FALSE;
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
+	pid = vfork();
+
+	if (pid == -1) {
+		svcerr_systemerr(rqstp->rq_xprt);
+		return(NULL);
+		
+	}
+
+	if (pid == 0) {
+		execl(ypxfr_proc, "ypxfr", "-d", argp->yppull_req_domain,
+		      argp->yppull_req_map, NULL);
+		_exit(1);
+	}
+	
+	return (NULL);
+}
+
+void *
+ypproc_get_1_svc(argp, rqstp)
+	yprequest *argp;
+        struct svc_req *rqstp;
+{
+	char *res;
+	struct sockaddr_in *caller = svc_getcaller(rqstp->rq_xprt);
+	int ok = acl_check_host(&caller->sin_addr);
+	int secure;
+	pid_t	pid;
+	char	ypxfr_proc[] = YPXFR_PROC;
+
+	if (argp->yp_reqtype != YPGET_REQTYPE) {
+		return(NULL);
+	}
+
+	secure = ypdb_secure(argp->ypget_req_domain, argp->ypget_req_map);
+
+	YPLOG( "get_1: caller=[%s].%d, auth_ok=%s, secure=%s, domain=%s, map=%s, owner=%s",
+	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port),
+	  TORF(ok), TORF(secure),
+	  argp->ypget_req_domain, argp->ypget_req_map,
+	  argp->ypget_req_owner);
+
+	if (ntohs(caller->sin_port) >= IPPORT_RESERVED)
+		ok = FALSE;
+
+	if (!ok) {
+		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
+		return(NULL);
+	}
+
+	pid = vfork();
+
+	if (pid == -1) {
+		svcerr_systemerr(rqstp->rq_xprt);
+		return(NULL);
+		
+	}
+
+	if (pid == 0) {
+		execl(ypxfr_proc, "ypxfr", "-d", argp->ypget_req_domain, "-h",
+		      argp->ypget_req_owner, argp->yppush_req_map, NULL);
+		_exit(1);
+	}
+	
+	return (NULL);
+}
