@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.63 2004/03/16 09:19:25 jmc Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.64 2004/03/17 14:42:20 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -550,16 +550,6 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	cp->ia = (void *) &cp->sin.sin_addr;
 	cp->blacklists = sdl_lookup(blacklists, cp->af, cp->ia);
 	cp->stutter = (greylist && cp->blacklists == NULL) ? 0 : stutter;
-	if (cp->blacklists != NULL) {
-		blackcount++;
-		if (greylist && blackcount > maxblack) {
-			closecon(cp); /* close and free */
-			return;
-		}
-		cp->lists = strdup(loglists(cp));
-	}
-	else
-		cp->lists = NULL;
 	strlcpy(cp->addr, inet_ntoa(sin->sin_addr), sizeof(cp->addr));
 	tmp = strdup(ctime(&t));
 	if (tmp == NULL)
@@ -575,6 +565,16 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	cp->s = t;
 	strlcpy(cp->rend, "\n", sizeof cp->rend);
 	clients++;
+	if (cp->blacklists != NULL) {
+		blackcount++;
+		if (greylist && blackcount > maxblack) {
+			closecon(cp); /* close and free */
+			return;
+		}
+		cp->lists = strdup(loglists(cp));
+	}
+	else
+		cp->lists = NULL;
 }
 
 void
