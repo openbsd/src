@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.12 2005/04/01 22:10:23 hshoexer Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.13 2005/04/01 22:15:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -82,11 +82,8 @@ main(int argc, char *argv[])
 	struct sensor	 sensor;
 	struct limits_t	*limit;
 	size_t		 len;
-	time_t		 next_report, last_report = 0;
-	time_t		 next_check;
-	int		 mib[3];
-	int		 i, sleeptime, watch_cnt;
-	int 		 ch;
+	time_t		 next_report, last_report = 0, next_check;
+	int		 mib[3], i, sleeptime, watch_cnt, ch;
 
 	while ((ch = getopt(argc, argv, "d")) != -1) {
 		switch (ch) {
@@ -207,7 +204,7 @@ void
 execute(char *command)
 {
 	char *argp[] = {"sh", "-c", command, NULL};
-	
+
 	switch (fork ()) {
 	case -1:
 		syslog(LOG_CRIT, "execute: fork() failed");
@@ -252,7 +249,7 @@ report(time_t last_report)
 				}
 				i++;
 				if (cmd[i] == '\0') {
-					buf[n++] = '\0'; 
+					buf[n++] = '\0';
 					break;
 				}
 
