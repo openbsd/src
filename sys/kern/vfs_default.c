@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.24 2004/05/14 04:00:33 tedu Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.25 2004/06/09 22:54:14 tedu Exp $  */
 
 /*
  *    Portions of this code are:
@@ -225,18 +225,7 @@ int
 vop_generic_unlock(v)
 	void *v;
 {
-	struct vop_unlock_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-
-	struct vnode *vp = ap->a_vp;
-
-	if (vp->v_vnlock == NULL)
-		return (0);
-	return (lockmgr(vp->v_vnlock, LK_RELEASE, NULL, ap->a_p));
+	return (0);
 }
 
 /*
@@ -246,16 +235,7 @@ int
 vop_generic_islocked(v)
 	void *v;
 {
-	struct vop_islocked_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-	} */ *ap = v;
-
-	struct vnode *vp = ap->a_vp;
-
-	if (vp->v_vnlock == NULL)
-		return (0);
-	return (lockstatus(vp->v_vnlock));
+	return (0);
 }
 
 struct filterops generic_filtops = 
