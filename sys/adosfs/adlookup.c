@@ -1,4 +1,4 @@
-/*	$OpenBSD: adlookup.c,v 1.10 1997/11/10 23:57:04 niklas Exp $	*/
+/*	$OpenBSD: adlookup.c,v 1.11 1997/12/18 00:59:01 gene Exp $	*/
 /*	$NetBSD: adlookup.c,v 1.17 1996/10/25 23:13:58 cgd Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ adosfs_lookup(v)
 	 */
 	if (flags & ISDOTDOT) {
 		if (vdp->v_type == VDIR && (vdp->v_flag & VROOT)) 
-			panic("adosfs .. attemped through root");
+			panic("adosfs .. attempted lookup through root");
 		/*
 		 * cannot get `..' while `vdp' is locked
 		 * e.g. procA holds lock on `..' and waits for `vdp'
