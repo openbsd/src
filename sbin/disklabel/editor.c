@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.33 1998/04/11 10:14:19 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.34 1998/04/14 20:02:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.33 1998/04/11 10:14:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.34 1998/04/14 20:02:48 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -148,10 +148,17 @@ editor(lp, f)
 
 #if defined(OLD_SCSI)
 	/* Some ports use the old scsi system that doesn't get the geom right */
-	if (strcmp(label.d_typename, "fictitious") == 0)
+	if (strcmp(label.d_packname, "fictitious") == 0)
 		puts("Warning, driver-generated label.  Disk parameters may be "
 		    "incorrect.");
 #endif
+	/* Set d_bbsize and d_sbsize as neccesary */
+	if (strcmp(label.d_packname, "fictitious") == 0) {
+		if (label.d_bbsize == 0)
+			label.d_bbsize = BBSIZE;
+		if (label.d_sbsize == 0)
+			label.d_sbsize = SBSIZE;
+	}
 
 	puts("\nInitial label editor (enter '?' for help at any prompt)");
 	lastlabel = label;
