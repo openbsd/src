@@ -1,5 +1,5 @@
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.5 1996/08/25 10:11:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.6 1996/09/05 12:28:23 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -285,7 +285,7 @@ register struct state * const	sp;
 		if (!doaccess && issetugid() == 0) {
 			if ((p = TZDIR) == NULL)
 				return -1;
-			if ((strlen(p) + strlen(name) + 1) >= sizeof fullname)
+			if (strlen(p) + 1 + strlen(name) + 1 >= sizeof fullname)
 				return -1;
 			(void) strcpy(fullname, p);
 			(void) strcat(fullname, "/");
