@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.9 1997/02/05 11:14:24 downsj Exp $	*/
+/*	$OpenBSD: exec.c,v 1.10 1997/03/25 20:30:41 niklas Exp $	*/
 /*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
@@ -35,12 +35,11 @@
  */
 
 #include <sys/param.h>
+#include <sys/exec.h>
 #include <sys/reboot.h>
 #ifndef INSECURE
 #include <sys/stat.h>
 #endif
-#include <a.out.h>
-#include <string.h>
 
 #include "stand.h"
 

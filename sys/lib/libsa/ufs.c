@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs.c,v 1.9 1997/02/16 14:39:37 mickey Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.10 1997/03/25 20:30:44 niklas Exp $	*/
 /*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
@@ -74,8 +74,6 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <lib/libkern/libkern.h>
-
-#include <string.h>
 
 #include "stand.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.c,v 1.1 1997/02/16 14:51:58 mickey Exp $	*/
+/*	$OpenBSD: unixdev.c,v 1.2 1997/03/25 20:30:46 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,11 +34,9 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/fcntl.h>
 #include <sys/syscall.h>
-#include <string.h>
-#define open uopen
-#include <fcntl.h>
-#undef open
+
 #include "libsa.h"
 #include "unixdev.h"
 
