@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.30 2003/07/29 18:38:35 deraadt Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.31 2004/02/02 08:37:56 grange Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -1532,6 +1532,10 @@ device_feature(int argc, char *argv[])
 		req.features = WDSF_WRITE_CACHE_DS;
 	else if (strcmp(argv[0], "apmdisable") == 0)
 		req.features = WDSF_APM_DS;
+	else if (strcmp(argv[0], "podenable") == 0)
+		req.features = WDSF_POD_EN;
+	else if (strcmp(argv[0], "poddisable") == 0)
+		req.features = WDSF_POD_DS;
 	else if (strcmp(argv[0], "puisenable") == 0)
 		req.features = WDSF_PUIS_EN;
 	else if (strcmp(argv[0], "puisdisable") == 0)
