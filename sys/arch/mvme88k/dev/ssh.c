@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.20 2003/12/26 10:41:43 miod Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.21 2004/01/02 23:48:01 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -209,11 +209,19 @@ sshmatch(pdp, vcf, args)
 {
 	struct confargs *ca = args;
 
-	if (badvaddr((vaddr_t)IIOV(ca->ca_vaddr), 4)) {
-	    return(0);
+	if (badvaddr((vaddr_t)IIOV(ca->ca_vaddr), 4) == 0)
+		return (1);
+
+	/*
+	 * For some reason, if the SCSI hardware is not ``warmed'' by the
+	 * BUG (netboot or boot from external SCSI controller), badvaddr()
+	 * will always fail, although the hardware is there.
+	 */
+	if (brdtyp == BRD_187 || brdtyp == BRD_197) {
+		/* do something to enable the controller??? */
 	}
 
-	return (1);
+	return (0);
 }
 
 void
