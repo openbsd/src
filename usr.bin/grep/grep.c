@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.17 2003/06/25 17:28:00 millert Exp $	*/
+/*	$OpenBSD: grep.c,v 1.18 2003/07/10 16:49:12 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -30,6 +30,7 @@
 #include <sys/limits.h>
 #include <sys/stat.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <getopt.h>
@@ -229,8 +230,7 @@ free_patterns(void)
 int
 main(int argc, char *argv[])
 {
-	char *tmp;
-	int c, i;
+	int c, lastc, prevoptind, i;
 
 	switch (__progname[0]) {
 	case 'e':
@@ -260,17 +260,17 @@ main(int argc, char *argv[])
 #endif
 	}
 
+	lastc = '\0';
+	prevoptind = 0;
 	while ((c = getopt_long(argc, argv, optstr,
 				long_options, NULL)) != -1) {
 		switch (c) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			tmp = argv[optind - 1];
-			if (tmp[0] == '-' && tmp[1] == c && !tmp[2])
-				Aflag = Bflag = strtol(++tmp, NULL, 10);
+			if (optind == prevoptind && isdigit(lastc))
+				Aflag = Bflag = (Aflag * 10) + (c - '0');
 			else
-				Aflag = Bflag = strtol(argv[optind] + 1,
-				    NULL, 10);
+				Aflag = Bflag = c - '0';
 			break;
 		case 'A':
 			Aflag = strtol(optarg, NULL, 10);
@@ -397,6 +397,8 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+		lastc = c;
+		prevoptind = optind;
 	}
 
 	argc -= optind;
