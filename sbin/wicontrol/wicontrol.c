@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.41 2002/10/10 20:27:46 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.42 2002/10/11 13:33:14 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.41 2002/10/10 20:27:46 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.42 2002/10/11 13:33:14 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -635,7 +635,7 @@ wi_dumpinfo(iface)
 	wreq.wi_type = WI_RID_CARD_ID;
 	wreq.wi_len = 5;
 	wi_getval(iface, &wreq);
-	chip_id = wreq.wi_val[0];
+	chip_id = letoh16(wreq.wi_val[0]);
 
 	/* Check for WEP support. */
 	bzero((char *)&wreq, sizeof(wreq));
