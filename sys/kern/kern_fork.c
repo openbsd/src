@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.29 2000/03/03 11:31:42 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.30 2000/03/03 11:46:09 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -228,7 +228,7 @@ again:
 		}
 		if (!doingzomb) {
 			doingzomb = 1;
-			p2 = zombproc.lh_first;
+			p2 = LIST_FIRST(&zombproc);
 			goto again;
 		}
 	}
