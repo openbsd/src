@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.51 2003/12/31 11:18:24 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.52 2003/12/31 22:14:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -557,14 +557,13 @@ pfctl_show_ifaces(int opts)
 	return (0);
 }
 
-void 
+void
 print_iface(struct pfi_if *p, int opts)
 {
 	time_t	tzero = p->pfif_tzero;
 	int	flags = (opts & PF_OPT_VERBOSE) ? p->pfif_flags : 0;
 	int	first = 1;
 	int	i, af, dir, act;
-	
 
 	printf("%s", p->pfif_name);
 	oprintf(flags, PFI_IFLAG_INSTANCE, "instance", &first, 0);

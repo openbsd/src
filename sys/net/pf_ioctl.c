@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.97 2003/12/31 11:18:25 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.98 2003/12/31 22:14:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1300,7 +1300,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		state->creation = time.tv_sec;
 		state->packets[0] = state->packets[1] = 0;
 		state->bytes[0] = state->bytes[1] = 0;
-		
+
 		if (pf_insert_state(kif, state)) {
 			pfi_maybe_destroy(kif);
 			pool_put(&pf_state_pl, state);

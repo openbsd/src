@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.186 2003/12/31 11:18:24 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.187 2003/12/31 22:14:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1112,7 +1112,7 @@ ifa_load(void)
 			h->tail = n;
 		}
 	}
-		
+
 	iftab = h;
 	freeifaddrs(ifap);
 }
@@ -1144,8 +1144,8 @@ ifa_exists(const char *ifa_name, int group_ok)
 			    !strncmp(n->ifname, buf, IFNAMSIZ))
 				break;
 		if (n != NULL && n->ifa_flags &
-		    (PF_IFA_FLAG_DYNAMIC | PF_IFA_FLAG_CLONABLE)) 
-			return (n); 	/* XXX */
+		    (PF_IFA_FLAG_DYNAMIC | PF_IFA_FLAG_CLONABLE))
+			return (n);	/* XXX */
 	}
 	return (NULL);
 }

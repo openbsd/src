@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.433 2003/12/31 11:18:24 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.434 2003/12/31 22:14:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1571,7 +1571,7 @@ pfrule		: action dir logquick interface route af proto fromto
 				if ((r.rpool.opts & PF_POOL_TYPEMASK) ==
 				    PF_POOL_NONE && ($5.host->next != NULL ||
 				    $5.host->addr.type == PF_ADDR_TABLE ||
-				    DYNIF_MULTIADDR($5.host->addr))) 
+				    DYNIF_MULTIADDR($5.host->addr)))
 					r.rpool.opts |= PF_POOL_ROUNDROBIN;
 				if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 				    PF_POOL_ROUNDROBIN &&
@@ -2962,7 +2962,7 @@ natrule		: nataction interface af proto fromto tag redirpool pool_opts
 				    disallow_alias($7->host, "interface (%s) "
 				    "is only supported in round-robin "
 				    "redirection pools"))
-					YYERROR; 
+					YYERROR;
 				if ($7->host->next != NULL) {
 					if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 					    PF_POOL_ROUNDROBIN) {

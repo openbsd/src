@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.414 2003/12/31 11:18:25 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.415 2003/12/31 22:14:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -241,7 +241,7 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
 #define LOCKED_IF(r, k) (((r)->rule_flag & PFRULE_IFBOUND) ? (k) :    \
 	((r)->rule_flag & PFRULE_GRBOUND) ? (k)->pfik_parent :	       \
 	(k)->pfik_parent->pfik_parent)
-	
+
 static __inline int pf_src_compare(struct pf_src_node *, struct pf_src_node *);
 static __inline int pf_state_compare_lan_ext(struct pf_state *,
 	struct pf_state *);
@@ -2033,7 +2033,7 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
 		}
 
 		r->evaluations++;
-		if (r->kif != NULL && 
+		if (r->kif != NULL &&
 		    (r->kif != kif && r->kif != kif->pfik_parent) == !r->ifnot)
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)

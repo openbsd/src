@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.3 2003/12/31 15:32:43 markus Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.4 2003/12/31 22:14:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -136,7 +136,7 @@ pfi_attach_ifnet(struct ifnet *ifp)
 	s = splsoftnet();
 	pfi_update++;
 	if (ifp->if_index >= pfi_indexlim) {
-		/* 
+		/*
 		 * grow pfi_index2kif,  similar to ifindex2ifnet code in if.c
 		 */
 		size_t m, n, oldlim;
@@ -404,7 +404,7 @@ pfi_instance_add(struct ifnet *ifp, int net, int flags)
 	struct ifaddr	*ia;
 	int		 got4 = 0, got6 = 0;
 	int		 net2, af;
-	
+
 	if (ifp == NULL)
 		return;
 	TAILQ_FOREACH(ia, &ifp->if_addrlist, ifa_list) {
@@ -713,7 +713,7 @@ pfi_clr_istats(const char *name, int *nzero, int flags)
 	struct pfi_kif	*p;
 	int		 n = 0, s;
 	long		 tzero = time.tv_sec;
-	
+
 	s = splsoftnet();
 	ACCEPT_FLAGS(PFI_FLAG_GROUP|PFI_FLAG_INSTANCE);
 	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
@@ -759,7 +759,7 @@ struct pfi_kif *
 pfi_lookup_if(const char *name)
 {
 	struct pfi_kif	*p, key;
-	
+
 	strlcpy(key.pfik_name, name, sizeof(key.pfik_name));
 	p = RB_FIND(pfi_ifhead, &pfi_ifs, &key);
 	return (p);

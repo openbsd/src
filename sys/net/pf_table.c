@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.43 2003/12/31 11:18:25 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.44 2003/12/31 22:14:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -58,7 +58,7 @@
 	((flags & PFR_FLAG_USERIOCTL) ?		\
 	copyout((from), (to), (size)) :		\
 	(bcopy((from), (to), (size)), 0))
-	
+
 #define	FILLIN_SIN(sin, addr)			\
 	do {					\
 		(sin).sin_len = sizeof(sin);	\
