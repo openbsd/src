@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.76 2004/06/06 16:49:09 cedric Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.77 2004/06/22 07:35:20 cedric Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -841,8 +841,7 @@ in_pcbrtentry(inp)
 				break;
 			ro->ro_dst.sa_family = AF_INET;
 			ro->ro_dst.sa_len = sizeof(ro->ro_dst);
-			satortin(&ro->ro_dst)->rtin_dst = inp->inp_faddr;
-			satortin(&ro->ro_dst)->rtin_src = inp->inp_laddr;
+			satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
 			rtalloc(ro);
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.166 2004/06/21 23:50:37 tholo Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.167 2004/06/22 07:35:20 cedric Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -98,7 +98,6 @@ ip_output(struct mbuf *m0, ...)
 	int len, error = 0;
 	struct route iproute;
 	struct sockaddr_in *dst;
-	struct sockaddr_rtin *rtin;
 	struct in_ifaddr *ia;
 	struct mbuf *opt;
 	struct route *ro;
@@ -175,7 +174,6 @@ ip_output(struct mbuf *m0, ...)
 			bzero((caddr_t)ro, sizeof (*ro));
 		}
 
-		rtin = satortin(&ro->ro_dst);
 		dst = satosin(&ro->ro_dst);
 
 		/*
@@ -183,17 +181,15 @@ ip_output(struct mbuf *m0, ...)
 		 * destination and is still up.  If not, free it and try again.
 		 */
 		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-				  rtin->rtin_dst.s_addr != ip->ip_dst.s_addr ||
-				  rtin->rtin_src.s_addr != ip->ip_src.s_addr)) {
+				  dst->sin_addr.s_addr != ip->ip_dst.s_addr)) {
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)0;
 		}
 
 		if (ro->ro_rt == 0) {
-			rtin->rtin_family = AF_INET;
-			rtin->rtin_len = sizeof(*rtin);
-			rtin->rtin_dst = ip->ip_dst;
-			rtin->rtin_src = ip->ip_src;
+			dst->sin_family = AF_INET;
+			dst->sin_len = sizeof(*dst);
+			dst->sin_addr = ip->ip_dst;
 		}
 
 		/*
@@ -234,14 +230,6 @@ ip_output(struct mbuf *m0, ...)
 
 			if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 				dst = satosin(ro->ro_rt->rt_gateway);
-                        else if (rtin->rtin_src.s_addr) {
-                                if (ro != &iproute) {
-                                        iproute.ro_dst = ro->ro_dst;
-                                        rtin = satortin(&iproute.ro_dst);
-                                        dst = satosin(&iproute.ro_dst);
-                                }
-                                rtin->rtin_src.s_addr = 0;
-                        }
 		}
 
 		/* Set the source IP address */
@@ -353,7 +341,6 @@ ip_output(struct mbuf *m0, ...)
 			bzero((caddr_t)ro, sizeof (*ro));
 		}
 
-		rtin = satortin(&ro->ro_dst);
 		dst = satosin(&ro->ro_dst);
 
 		/*
@@ -361,17 +348,15 @@ ip_output(struct mbuf *m0, ...)
 		 * destination and is still up.  If not, free it and try again.
 		 */
 		if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-				  rtin->rtin_dst.s_addr != ip->ip_dst.s_addr ||
-				  rtin->rtin_src.s_addr != ip->ip_src.s_addr)) {
+				  dst->sin_addr.s_addr != ip->ip_dst.s_addr)) {
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)0;
 		}
 
 		if (ro->ro_rt == 0) {
-			rtin->rtin_family = AF_INET;
-			rtin->rtin_len = sizeof(*rtin);
-			rtin->rtin_dst = ip->ip_dst;
-			rtin->rtin_src = ip->ip_src;
+			dst->sin_family = AF_INET;
+			dst->sin_len = sizeof(*dst);
+			dst->sin_addr = ip->ip_dst;
 		}
 
 		/*
@@ -412,14 +397,6 @@ ip_output(struct mbuf *m0, ...)
 
 			if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 				dst = satosin(ro->ro_rt->rt_gateway);
-                        else if (rtin->rtin_src.s_addr) {
-                                if (ro != &iproute) {
-                                        iproute.ro_dst = ro->ro_dst;
-                                        rtin = satortin(&iproute.ro_dst);
-                                        dst = satosin(&iproute.ro_dst);
-                                }
-                                rtin->rtin_src.s_addr = 0;
-                        }
 		}
 
 		/* Set the source IP address */
