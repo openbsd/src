@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nslookup.8,v 1.2 2003/02/18 11:05:12 jakob Exp $
+.\"	$OpenBSD: nslookup.8,v 1.3 2003/02/19 11:49:42 jakob Exp $
 .\"
 .\" ++Copyright++ 1985, 1989
 .\" -
@@ -87,7 +87,8 @@ is the host name or Internet address of a name server.
 .Pp
 Non-interactive mode is used when the name or Internet address
 of the host to be looked up
-is given as the first argument. The optional second argument specifies
+is given as the first argument.
+The optional second argument specifies
 the host name or address of a name server.
 .Pp
 The options listed under the
@@ -96,9 +97,11 @@ command below can be specified in
 the
 .Pa .nslookuprc
 file in the user's home directory if they are listed
-one per line.  Options can also be specified
+one per line.
+Options can also be specified
 on the command line if they precede the arguments and are prefixed with
-a hyphen.  For example, to change the default query type to host information,
+a hyphen.
+For example, to change the default query type to host information,
 and the initial timeout to 10 seconds, type:
 .Bd -literal -offset indent
 	nslookup -query=hinfo  -timeout=10
@@ -131,7 +134,8 @@ the name of the host is returned.
 If
 .Ar host
 is a name and does not have a trailing period, the default
-domain name is appended to the name.  (This behavior depends on the state of the
+domain name is appended to the name.
+(This behavior depends on the state of the
 .Ic set
 options
 .Ic domain , srchlist , defname ,
@@ -187,7 +191,8 @@ abbreviation =
 .It Xo
 .Oo Ic no Oc Ns Ic debug
 .Xc
-Turn debugging mode on.  A lot more information is printed about the
+Turn debugging mode on.
+A lot more information is printed about the
 packet sent to the server and the resulting answer.
 .Pp
 (Default =
@@ -242,7 +247,8 @@ Change the default domain name to
 and the domain search list
 to
 .Ar name1 , name2 ,
-etc.  A maximum of 6 names separated by slashes (/)
+etc.
+A maximum of 6 names separated by slashes (/)
 can be specified.
 For example,
 .Bd -literal -offset indent
@@ -369,7 +375,8 @@ abbreviation =
 .It Ic timeout Ns = Ns Ar number
 Change the initial timeout interval for waiting for a reply to
 .Ar number
-seconds. Each retry doubles the timeout period.
+seconds.
+Each retry doubles the timeout period.
 .Pp
 (Default = 5 seconds; abbreviation =
 .Ic ti )
