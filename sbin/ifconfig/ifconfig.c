@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.123 2004/12/07 10:26:49 jmc Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.124 2004/12/07 20:32:10 mcbride Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.123 2004/12/07 10:26:49 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.124 2004/12/07 20:32:10 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -729,7 +729,8 @@ printif(struct ifreq *ifrm, int ifaliases)
 					(*p->af_status)(1);
 			} else {
 				for (p = afs; p->af_name; p++) {
-					if (ifa->ifa_addr->sa_family == p->af_af)
+					if (ifa->ifa_addr->sa_family ==
+					    p->af_af)
 						(*p->af_status)(0);
 				}
 			}
@@ -1214,7 +1215,7 @@ setifnwid(const char *val, int d)
 void
 setifbssid(const char *val, int d)
 {
-	
+
 	struct ieee80211_bssid bssid;
 	struct ether_addr *ea;
 
@@ -1226,7 +1227,6 @@ setifbssid(const char *val, int d)
 		if (ea == NULL) {
 			warnx("malformed BSSID: %s", val);
 			return;
-			
 		}
 		memcpy(&bssid.i_bssid, ea->ether_addr_octet,
 		    sizeof(bssid.i_bssid));
@@ -1262,7 +1262,7 @@ setifnwkey(const char *val, int d)
 		nwkey.i_wepon |= IEEE80211_NWKEY_PERSIST;
 		goto set_nwkey;
 	} else {
-  set_nwkey:
+ set_nwkey:
 		if (isdigit(val[0]) && val[1] == ':') {
 			/* specifying a full set of four keys */
 			nwkey.i_defkid = val[0] - '0';
@@ -1434,7 +1434,10 @@ ieee80211_status(void)
 			fputs("<not displayed> ", stdout);
 		} else {
 			nwkey_verbose = 0;
-			/* check to see non default key or multiple keys defined */
+			/*
+			 * check to see non default key
+			 * or multiple keys defined
+			 */
 			if (nwkey.i_defkid != 1) {
 				nwkey_verbose = 1;
 			} else {
@@ -1464,7 +1467,10 @@ ieee80211_status(void)
 				if (nwkey.i_key[i].i_keylen < 0) {
 					fputs("persist", stdout);
 				} else {
-					/* XXX - sanity check nwkey.i_key[i].i_keylen */
+					/*
+					 * XXX
+					 * sanity check nwkey.i_key[i].i_keylen
+					 */
 					print_string(nwkey.i_key[i].i_keydat,
 					    nwkey.i_key[i].i_keylen);
 				}
@@ -1692,7 +1698,8 @@ settimeslot(const char *val, int d)
 					ts_flag |= RANGE_CHANNEL;
 					ts_start = ts;
 				} else {
-					ts_map |= get_ts_map(ts_flag, ts_start, ts);
+					ts_map |= get_ts_map(ts_flag,
+					    ts_start, ts);
 					ts_flag = 0;
 				}
 				ptr++;
@@ -1716,7 +1723,7 @@ unsigned long get_ts_map(int ts_flag, int ts_start, int ts_stop)
 	if ((ts_flag & (SINGLE_CHANNEL | RANGE_CHANNEL)) == 0)
 		return 0;
 	if (ts_flag & RANGE_CHANNEL) { /* Range of channels */
-		for(i = ts_start; i <= ts_stop; i++) {
+		for (i = ts_start; i <= ts_stop; i++) {
 			mask = 1 << (i - 1);
 			map |=mask;
 		}
@@ -2230,16 +2237,16 @@ in6_alias(struct in6_ifreq *creq)
 			printf(" pltime ");
 			if (lifetime->ia6t_preferred) {
 				printf("%s", lifetime->ia6t_preferred < t
-					? "0"
-					: sec2str(lifetime->ia6t_preferred - t));
+				    ? "0" :
+				    sec2str( lifetime->ia6t_preferred - t));
 			} else
 				printf("infty");
 
 			printf(" vltime ");
 			if (lifetime->ia6t_expire) {
 				printf("%s", lifetime->ia6t_expire < t
-					? "0"
-					: sec2str(lifetime->ia6t_expire - t));
+				    ? "0"
+				    : sec2str(lifetime->ia6t_expire - t));
 			} else
 				printf("infty");
 		}
@@ -2593,11 +2600,11 @@ prefix(void *val, int size)
 			break;
 	for (; bit != 0; bit--)
 		if (name[byte] & (1 << bit))
-			return(0);
+			return (0);
 	byte++;
 	for (; byte < size; byte++)
 		if (name[byte])
-			return(0);
+			return (0);
 	return (plen);
 }
 #endif /*INET6*/
@@ -2839,7 +2846,8 @@ getifgroups(void)
 			err(1, "SIOCGIFGROUP");
 
 	len = ifgr.ifgr_len;
-	ifgr.ifgr_groups = (struct ifg_req *)calloc(len / sizeof(struct ifg_req),
+	ifgr.ifgr_groups =
+	    (struct ifg_req *)calloc(len / sizeof(struct ifg_req),
 	    sizeof(struct ifg_req));
 	if (ifgr.ifgr_groups == NULL)
 		err(1, "getifgroups");
@@ -3142,9 +3150,9 @@ pppoe_status(void)
 	long diff_time;
 	unsigned long day, hour, min, sec;
 	int e;
-		
+
 	day = hour = min = sec = 0; /* XXX make gcc happy */
-		
+
 	memset(&state, 0, sizeof(state));
 	memset(&temp_time, 0, sizeof(temp_time));
 
@@ -3164,7 +3172,7 @@ pppoe_status(void)
 		err(1, "PPPOEGETSESSION");
 
 	printf("state: ");
-	switch(state.state) {
+	switch (state.state) {
 	case PPPOE_STATE_INITIAL:
 		printf("initial"); break;
 	case PPPOE_STATE_PADI_SENT:
@@ -3196,7 +3204,7 @@ pppoe_status(void)
 			diff_time %= 60;
 
 			sec = diff_time;
-		}     
+		}
 		printf(" time: ");
 		if (day != 0) printf("%ldd ", day);
 		printf("%ld:%ld:%ld", hour, min, sec);
@@ -3214,7 +3222,7 @@ setpppoe_dev(const char *val, int d)
 	strlcpy(parms.ifname, name, sizeof(parms.ifname));
 	if (ioctl(s, PPPOEGETPARMS, &parms))
 		return;
-	
+
 	strlcpy(parms.eth_ifname, val, sizeof(parms.eth_ifname));
 
 	if (ioctl(s, PPPOESETPARMS, &parms))
@@ -3282,27 +3290,27 @@ sec2str(time_t total)
 			first = 0;
 			n = snprintf(p, end - p, "%dd", days);
 			if (n < 0 || n >= end - p)
-				return(result);
+				return (result);
 			p += n;
 		}
 		if (!first || hours) {
 			first = 0;
 			n = snprintf(p, end - p, "%dh", hours);
 			if (n < 0 || n >= end - p)
-				return(result);
+				return (result);
 			p += n;
 		}
 		if (!first || mins) {
 			first = 0;
 			n = snprintf(p, end - p, "%dm", mins);
 			if (n < 0 || n >= end - p)
-				return(result);
+				return (result);
 			p += n;
 		}
 		snprintf(p, end - p, "%ds", secs);
 	} else
 		snprintf(p, end - p, "%lu", (u_long)total);
 
-	return(result);
+	return (result);
 }
 #endif /* INET6 */
