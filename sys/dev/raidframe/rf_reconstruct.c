@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_reconstruct.c,v 1.13 2002/12/16 07:01:05 tdeval Exp $	*/
+/*	$OpenBSD: rf_reconstruct.c,v 1.14 2003/01/19 14:27:01 tdeval Exp $	*/
 /*	$NetBSD: rf_reconstruct.c,v 1.26 2000/06/04 02:05:13 oster Exp $	*/
 
 /*
@@ -568,7 +568,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t row, RF_RowCol_t col)
 		 */
 
 		if (raidPtr->raid_cinfo[row][col].ci_vp != NULL) {
-			printf("Closing the open device: %s\n",
+			printf("Closing the opened device: %s\n",
 			    raidPtr->Disks[row][col].devname);
 			vp = raidPtr->raid_cinfo[row][col].ci_vp;
 			ac = raidPtr->Disks[row][col].auto_configured;
@@ -643,7 +643,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t row, RF_RowCol_t col)
 		spareDiskPtr = &raidPtr->Disks[row][col];
 		spareDiskPtr->status = rf_ds_used_spare;
 
-		printf("RECON: initiating in-place reconstruction on\n");
+		printf("RECON: Initiating in-place reconstruction on\n");
 		printf("       row %d col %d -> spare at row %d col %d.\n",
 		    row, col, row, col);
 
