@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.97 2004/11/06 18:57:59 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.98 2004/12/11 07:28:05 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.97 2004/11/06 18:57:59 otto Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.98 2004/12/11 07:28:05 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -978,7 +978,12 @@ partition_cmp(const void *e1, const void *e2)
 	struct partition *p1 = *(struct partition **)e1;
 	struct partition *p2 = *(struct partition **)e2;
 
-	return((int)(p1->p_offset - p2->p_offset));
+	if (p1->p_offset < p2->p_offset)
+		return -1;
+	else if (p1->p_offset > p2->p_offset)
+		return 1;
+	else
+		return 0;
 }
 
 char *
@@ -1183,7 +1188,8 @@ has_overlap(struct disklabel *lp, u_int32_t *freep, int resolve)
 				    / sizeof(**spp);
 				printf("\nError, partitions %c and %c overlap:\n",
 				    'a' + i, 'a' + j);
-				puts("         size   offset    fstype   [fsize bsize   cpg]");
+				printf("#    %13.13s %13.13s  fstype "
+				    "[fsize bsize  cpg]\n", "size", "offset");
 				display_partition(stdout, lp, NULL, i, 0);
 				display_partition(stdout, lp, NULL, j, 0);
 
