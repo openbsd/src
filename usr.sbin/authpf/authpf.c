@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.78 2004/04/25 19:24:52 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.79 2004/04/28 00:22:39 djm Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -86,7 +86,7 @@ main(int argc, char *argv[])
 {
 	int		 lockcnt = 0, n, pidfd;
 	FILE		*config;
-	struct in_addr	 ina;
+	struct in6_addr	 ina;
 	struct passwd	*pw;
 	char		*cp;
 	uid_t		 uid;
@@ -113,7 +113,8 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	*cp = '\0';
-	if (inet_pton(AF_INET, ipsrc, &ina) != 1) {
+	if (inet_pton(AF_INET, ipsrc, &ina) != 1 &&
+	    inet_pton(AF_INET6, ipsrc, &ina) != 1) {
 		syslog(LOG_ERR,
 		    "cannot determine IP from SSH_CLIENT %s", ipsrc);
 		exit(1);
@@ -690,24 +691,32 @@ static void
 authpf_kill_states(void)
 {
 	struct pfioc_state_kill	psk;
-	struct in_addr		target;
+	struct pf_addr target;
 
 	memset(&psk, 0, sizeof(psk));
-	psk.psk_af = AF_INET;
+	memset(&target, 0, sizeof(target));
 
-	inet_pton(AF_INET, ipsrc, &target);
+	if (inet_pton(AF_INET, ipsrc, &target.v4) == 1)
+		psk.psk_af = AF_INET;
+	else if (inet_pton(AF_INET6, ipsrc, &target.v6) == 1)
+		psk.psk_af = AF_INET6;
+	else {
+		syslog(LOG_ERR, "inet_pton(%s) failed", ipsrc);
+		return;
+	}
 
 	/* Kill all states from ipsrc */
-	psk.psk_src.addr.v.a.addr.v4 = target;
+	memcpy(&psk.psk_src.addr.v.a.addr, &target,
+	    sizeof(psk.psk_src.addr.v.a.addr));
 	memset(&psk.psk_src.addr.v.a.mask, 0xff,
 	    sizeof(psk.psk_src.addr.v.a.mask));
 	if (ioctl(dev, DIOCKILLSTATES, &psk))
 		syslog(LOG_ERR, "DIOCKILLSTATES failed (%m)");
 
 	/* Kill all states to ipsrc */
-	psk.psk_af = AF_INET;
 	memset(&psk.psk_src, 0, sizeof(psk.psk_src));
-	psk.psk_dst.addr.v.a.addr.v4 = target;
+	memcpy(&psk.psk_dst.addr.v.a.addr, &target,
+	    sizeof(psk.psk_dst.addr.v.a.addr));
 	memset(&psk.psk_dst.addr.v.a.mask, 0xff,
 	    sizeof(psk.psk_dst.addr.v.a.mask));
 	if (ioctl(dev, DIOCKILLSTATES, &psk))
