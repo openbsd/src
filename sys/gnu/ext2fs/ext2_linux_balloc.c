@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_linux_balloc.c,v 1.1 1996/06/24 03:34:56 downsj Exp $	*/
+/*	$OpenBSD: ext2_linux_balloc.c,v 1.2 1996/07/13 21:21:15 downsj Exp $	*/
 
 /*
  *  modified for Lites 1.1
@@ -43,11 +43,11 @@
 #include <gnu/ext2fs/fs.h>
 #include <sys/stat.h>
 
-#ifdef i386
-#include <gnu/ext2fs/i386-bitops.h>
-#else
-#error Provide an bitops.h file, please !
+#if defined(__GNUC__)
+#define INLINE	__inline__
 #endif
+
+#include <gnu/ext2fs/ext2_bitops.c>
 
 #define in_range(b, first, len)		((b) >= (first) && (b) <= (first) + (len) - 1)
 
@@ -145,7 +145,7 @@ static int load__block_bitmap (struct mount * mp,
 	return 0;
 }
 
-static inline int load_block_bitmap (struct mount * mp,
+static INLINE int load_block_bitmap (struct mount * mp,
 				     unsigned int block_group)
 {
 	struct ext2_sb_info *sb = VFSTOUFS(mp)->um_e2fs;
@@ -215,7 +215,7 @@ void ext2_free_blocks (struct mount * mp, unsigned long block,
 			    block, count);
 
 	for (i = 0; i < count; i++) {
-		if (!clear_bit (bit + i, bh->b_data))
+		if (!ext2fs_clear_bit (bit + i, bh->b_data))
 			printf ("ext2_free_blocks: "
 				      "bit already cleared for block %lu", 
 				      block);
@@ -288,7 +288,7 @@ repeat:
 
 		ext2_debug ("goal is at %d:%d.\n", i, j); 
 
-		if (!test_bit(j, bh->b_data)) {
+		if (!ext2fs_test_bit(j, bh->b_data)) {
 #ifdef EXT2FS_DEBUG
 			goal_hits++;
 			ext2_debug ("goal bit allocated.\n");
@@ -305,7 +305,7 @@ repeat:
 			 * next 64-bit boundary is simple..
 			 */
 			int end_goal = (j + 63) & ~63;
-			j = find_next_zero_bit(bh->b_data, end_goal, j);
+			j = ext2fs_fnzb(bh->b_data, end_goal, j);
 			if (j < end_goal)
 				goto got_block;
 		}
@@ -322,13 +322,14 @@ repeat:
 		 * cyclicly search through the rest of the groups.
 		 */
 		p = ((char *) bh->b_data) + (j >> 3);
-		r = memscan(p, 0, (EXT2_BLOCKS_PER_GROUP(sb) - j + 7) >> 3);
+		r = ext2fs_memscan(p, 0,
+				   (EXT2_BLOCKS_PER_GROUP(sb) - j + 7) >> 3);
 		k = (r - ((char *) bh->b_data)) << 3;
 		if (k < EXT2_BLOCKS_PER_GROUP(sb)) {
 			j = k;
 			goto search_back;
 		}
-		k = find_next_zero_bit ((unsigned long *) bh->b_data, 
+		k = ext2fs_fnzb ((unsigned long *) bh->b_data, 
 					EXT2_BLOCKS_PER_GROUP(sb),
 					j);
 		if (k < EXT2_BLOCKS_PER_GROUP(sb)) {
@@ -357,13 +358,13 @@ repeat:
 	}
 	bitmap_nr = load_block_bitmap (mp, i);
 	bh = sb->s_block_bitmap[bitmap_nr];
-	r = memscan(bh->b_data, 0, EXT2_BLOCKS_PER_GROUP(sb) >> 3);
+	r = ext2fs_memscan(bh->b_data, 0, EXT2_BLOCKS_PER_GROUP(sb) >> 3);
 	j = (r - bh->b_data) << 3;
 
 	if (j < EXT2_BLOCKS_PER_GROUP(sb))
 		goto search_back;
 	else
-		j = find_first_zero_bit ((unsigned long *) bh->b_data,
+		j = ext2fs_ffzb ((unsigned long *) bh->b_data,
 					 EXT2_BLOCKS_PER_GROUP(sb));
 	if (j >= EXT2_BLOCKS_PER_GROUP(sb)) {
 		printf ( "ext2_new_block: "
@@ -378,7 +379,8 @@ search_back:
 	 * bitmap.  Now search backwards up to 7 bits to find the
 	 * start of this group of free blocks.
 	 */
-	for (k = 0; k < 7 && j > 0 && !test_bit (j - 1, bh->b_data); k++, j--);
+	for (k = 0; k < 7 && j > 0 && !ext2fs_test_bit (j - 1, bh->b_data);
+		k++, j--);
 	
 got_block:
 
@@ -394,7 +396,7 @@ got_block:
 			    "Allocating block in system zone - "
 			    "%dth block = %u in group %u", j, tmp, i);
 
-	if (set_bit (j, bh->b_data)) {
+	if (ext2fs_set_bit (j, bh->b_data)) {
 		printf ( "ext2_new_block: "
 			 "bit already set for block %d", j);
 		goto repeat;
@@ -411,7 +413,7 @@ got_block:
 		*prealloc_block = tmp + 1;
 		for (k = 1;
 		     k < 8 && (j + k) < EXT2_BLOCKS_PER_GROUP(sb); k++) {
-			if (set_bit (j + k, bh->b_data))
+			if (ext2fs_set_bit (j + k, bh->b_data))
 				break;
 			(*prealloc_count)++;
 		}	
@@ -485,12 +487,12 @@ static unsigned long ext2_count_free_blocks (struct mount * mp)
 }
 
 
-static inline int block_in_use (unsigned long block,
+static INLINE int block_in_use (unsigned long block,
 				struct ext2_sb_info * sb,
 				unsigned char * map)
 {
-	return test_bit ((block - sb->s_es->s_first_data_block) %
-			 EXT2_BLOCKS_PER_GROUP(sb), map);
+	return ext2fs_test_bit ((block - sb->s_es->s_first_data_block) %
+			 	 EXT2_BLOCKS_PER_GROUP(sb), map);
 }
 
 static void ext2_check_blocks_bitmap (struct mount * mp)
@@ -517,12 +519,12 @@ static void ext2_check_blocks_bitmap (struct mount * mp)
 		bitmap_nr = load_block_bitmap (mp, i);
 		bh = sb->s_block_bitmap[bitmap_nr];
 
-		if (!test_bit (0, bh->b_data))
+		if (!ext2fs_test_bit (0, bh->b_data))
 			printf ( "ext2_check_blocks_bitmap: "
 				    "Superblock in group %d is marked free", i);
 
 		for (j = 0; j < desc_blocks; j++)
-			if (!test_bit (j + 1, bh->b_data))
+			if (!ext2fs_test_bit (j + 1, bh->b_data))
 				printf ("ext2_check_blocks_bitmap: "
 					    "Descriptor block #%d in group "
 					    "%d is marked free", j, i);

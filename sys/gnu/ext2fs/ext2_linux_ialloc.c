@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_linux_ialloc.c,v 1.1 1996/06/24 03:34:57 downsj Exp $	*/
+/*	$OpenBSD: ext2_linux_ialloc.c,v 1.2 1996/07/13 21:21:16 downsj Exp $	*/
 
 /*
  *  modified for Lites 1.1
@@ -45,11 +45,11 @@
 #include <gnu/ext2fs/fs.h>
 #include <sys/stat.h>
 
-#if (i386)
-#include <gnu/ext2fs/i386-bitops.h>
-#else
-#error please provide bit operation functions
+#if defined(__GNUC__)
+#define INLINE	__inline__
 #endif
+
+#include <gnu/ext2fs/ext2_bitops.c>
 
 /* this is supposed to mark a buffer dirty on ready for delayed writing
  */
@@ -231,7 +231,7 @@ void ext2_free_inode (struct inode * inode)
 	bit = (inode->i_number - 1) % EXT2_INODES_PER_GROUP(sb);
 	bitmap_nr = load_inode_bitmap (ITOV(inode)->v_mount, block_group);
 	bh = sb->s_inode_bitmap[bitmap_nr];
-	if (!clear_bit (bit, bh->b_data))	
+	if (!ext2fs_clear_bit (bit, bh->b_data))	
 		printf ( "ext2_free_inode:"
 		      "bit already cleared for inode %lu", inode->i_number);
 	else {
@@ -403,10 +403,10 @@ repeat:
 	}
 	bitmap_nr = load_inode_bitmap (ITOV(dir)->v_mount, i);
 	bh = sb->s_inode_bitmap[bitmap_nr];
-	if ((j = find_first_zero_bit ((unsigned long *) bh->b_data,
+	if ((j = ext2fs_ffzb ((unsigned long *) bh->b_data,
 				      EXT2_INODES_PER_GROUP(sb))) <
 	    EXT2_INODES_PER_GROUP(sb)) {
-		if (set_bit (j, bh->b_data)) {
+		if (ext2fs_set_bit (j, bh->b_data)) {
 			printf ( "ext2_new_inode:"
 				      "bit already set for inode %d", j);
 			goto repeat;
