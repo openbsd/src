@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.50 2004/10/21 20:47:29 grange Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.51 2004/12/25 00:06:30 espie Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
 MLINKS+=	protoize.1 unprotoize.1
@@ -13,7 +13,7 @@ MAN+=		f/g77.1
 MLINKS+=	gcc.1 g++.1 gcc.1 c++.1
 MLINKS+=	g77.1 f77.1
 .endif
-V=3.3.2
+V=3.3.5
 
 FAKE_FILES=/usr/share/info/g77.info-21 \
 	/usr/share/info/gcc.info-25 \
@@ -173,7 +173,9 @@ depend: config.status
 FILES= ${.CURDIR}/gcc/unwind.h
 .if ${M_ARCH} == "i386"
 FILES+=${.CURDIR}/gcc/config/i386/mmintrin.h \
-	${.CURDIR}/gcc/config/i386/xmmintrin.h
+	${.CURDIR}/gcc/config/i386/xmmintrin.h \
+	${.CURDIR}/gcc/config/i386/emmintrin.h \
+	${.CURDIR}/gcc/config/i386/pmmintrin.h
 .elif ${M_ARCH} == "powerpc"
 FILES+=${.CURDIR}/gcc/config/rs6000/altivec.h
 .endif
