@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.36 2003/05/08 12:37:13 vincent Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.37 2003/08/15 23:09:57 vincent Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -14,6 +14,7 @@ static FILE	*ffp;
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <ctype.h>
 
 /*
  * Open a file for reading.
@@ -435,17 +436,20 @@ int
 d_makename(LINE *lp, char *fn, int len)
 {
 	int i;
-	char *p, *np;
+	char *p, *ep;
 
 	strlcpy(fn, curbp->b_fname, len);
 	p = lp->l_text;
+	ep = lp->l_text + llength(lp);
 	for (i = 0; i < NAME_FIELD; i++) {
-		np = strpbrk(p, "\t ");
-		if (np == NULL)
-			return ABORT;
-		p = np + 1;
-		while (*p != '\0' && strchr("\t ", *p))
+		while (p < ep && isspace(*p))
 			p++;
+		while (p < ep && !isspace(*p))
+			p++;
+		while (p < ep && isspace(*p))
+			p++;
+		if (p == ep)
+			return (ABORT);
 	}
 	strlcat(fn, p, len);
 	return lgetc(lp, 2) == 'd';
