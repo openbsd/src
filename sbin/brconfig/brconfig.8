@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.41 2003/03/07 06:30:38 david Exp $
+.\"	$OpenBSD: brconfig.8,v 1.42 2003/05/10 20:56:36 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -354,7 +354,7 @@ bridge:
 	-enc 3des -auth md5 -keyfile keyfile2 -authkeyfile authkeyfile2
 .Ed
 .Pp
-Setup ingress flows so that traffic is allowed between the two bridges
+Set up ingress flows so that traffic is allowed between the two bridges
 for the above associations:
 .Bd -literal
 (on bridge1) # ipsecadm flow -dst 4.3.2.1 -out \\
@@ -421,7 +421,7 @@ commands are used to add and delete span ports to and from a bridge.
 .Xr isakmpd 8
 .Sh AUTHORS
 The
-.Xr brconfig 8
+.Nm
 command and the
 .Xr bridge 4
 kernel interface were written by
