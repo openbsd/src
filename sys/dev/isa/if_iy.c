@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iy.c,v 1.3 1997/11/07 08:07:00 niklas Exp $	*/
+/*	$OpenBSD: if_iy.c,v 1.4 1999/02/28 03:23:38 jason Exp $	*/
 /*	$NetBSD: if_iy.c,v 1.4 1996/05/12 23:52:53 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
@@ -847,16 +847,8 @@ int iobase, rxlen;
 	eh = mtod(top, struct ether_header *);
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, top);
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 &&
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr, 
-				sizeof(eh->ether_dhost)) != 0) {
-			m_freem(top);
-			return;
-		}
-	}
 #endif
 	m_adj(top, sizeof(struct ether_header));
 	ether_input(ifp, eh, top);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.2 1998/09/12 07:48:07 fgsch Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.3 1999/02/28 03:23:37 jason Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -991,20 +991,8 @@ smc91cxx_read(sc)
 	 * Hand the packet off to bpf listeners.  If there's a bpf listener,
 	 * we need to check if the packet is ours.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
-#ifdef __NetBSD__
-		    ether_cmp(eh->ether_dhost, LLADDR(ifp->if_sadl))) {
-#else
-		    ether_cmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr)) {
-#endif
-			m_freem(m);
-			goto out;
-		}
-	}
 #endif
 
 	/*

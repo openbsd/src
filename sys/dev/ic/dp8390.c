@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.1 1998/09/22 06:41:12 fgsch Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.2 1999/02/28 03:23:36 jason Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -1000,26 +1000,8 @@ dp8390_read(sc, buf, len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to bpf.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
-#ifdef __NetBSD__
-		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-#else
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-#endif
-		    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
 
 	/* Fix up data start offset in mbuf to point past ether header. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fe.c,v 1.11 1997/11/07 08:06:53 niklas Exp $	*/
+/*	$OpenBSD: if_fe.c,v 1.12 1999/02/28 03:23:38 jason Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -2077,22 +2077,8 @@ fe_get_packet(sc, len)
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-	  	    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-			    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return (1);
-		}
-	}
 #endif
 
 	/* Fix up data start offset in mbuf to point past ether header. */

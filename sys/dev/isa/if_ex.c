@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.3 1999/02/13 01:02:21 fgsch Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.4 1999/02/28 03:23:38 jason Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -769,25 +769,8 @@ ex_rx_intr(sc)
 			}
 #endif
 #if NBPFILTER > 0
-			if (ifp->if_bpf != NULL) {
+			if (ifp->if_bpf != NULL)
 				bpf_mtap(ifp->if_bpf, ipkt);
-				/*
- 				 * Note that the interface cannot be in 
-				 * promiscuous mode if there are no BPF 
-				 * listeners. And if we are in promiscuous 
- 				 * mode, we have to check if this packet is 
-				 * really ours.
- 				 */
-				if ((ifp->if_flags & IFF_PROMISC) &&
-		    		    (eh->ether_dhost[0] & 1) == 0 &&
-		    		    bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr, 
-			 	    sizeof(eh->ether_dhost)) != 0 &&
-		    		    bcmp(eh->ether_dhost, etherbroadcastaddr, 
-			 	    sizeof(eh->ether_dhost)) != 0) {
-					m_freem(ipkt);
-					goto rx_another;
-				}
-			}
 #endif
 			m_adj(ipkt, sizeof(struct ether_header));
 			ether_input(ifp, eh, ipkt);

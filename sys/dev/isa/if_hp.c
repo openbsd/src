@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_hp.c,v 1.4 1996/05/05 13:38:41 mickey Exp $       */
+/*    $OpenBSD: if_hp.c,v 1.5 1999/02/28 03:23:38 jason Exp $       */
 /*    $NetBSD: if_hp.c,v 1.21 1995/12/24 02:31:31 mycroft Exp $       */
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
@@ -812,14 +812,6 @@ hpread(ns, buf, len)
 	if (ns->ns_bpf)
 		bpf_tap(ns->ns_bpf, buf, len + sizeof(struct ether_header));
 #endif
-
-	if ((ns->ns_if.if_flags & IFF_PROMISC)
-	    && bcmp(eh->ether_dhost, ns->ns_addrp,
-		sizeof(eh->ether_dhost)) != 0
-	    && bcmp(eh->ether_dhost, etherbroadcastaddr,
-		sizeof(eh->ether_dhost)) != 0)
-		return;
-
 	/*
 	       * Pull packet off interface.  Off is nonzero if packet
 	       * has trailing header; hpget will then force this header
