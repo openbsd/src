@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.129 2001/07/04 06:34:18 mickey Exp $
+#	$OpenBSD: Makefile,v 1.130 2001/09/01 16:15:19 drahn Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -23,7 +23,7 @@ BIN1=	bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
 	mailer.conf
 
 .if (${MACHINE} == "alpha" || ${MACHINE} == "hppa" || \
-     ${MACHINE} == "i386" || ${MACHINE} == "powerpc")
+     ${MACHINE} == "i386" || ${MACHINE} == "macppc")
 BIN1+=	wsconsctl.conf
 .endif
 
