@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.61 2001/11/18 20:46:49 aaron Exp $	*/
+/*	$OpenBSD: locore.s,v 1.62 2001/12/01 07:51:32 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -2093,6 +2093,7 @@ syscall1:
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	_C_LABEL(cpl),%ebx
+	movl	TF_EAX(%esp),%esi	# syscall no
 #endif /* DIAGNOSTIC */
 	call	_C_LABEL(syscall)
 2:	/* Check for ASTs on exit to user mode. */
@@ -2112,15 +2113,45 @@ syscall1:
 	jne	3f
 	INTRFASTEXIT
 3:	sti
-	pushl	$4f
+	movl	TF_ESP(%esp),%edi	# user stack pointer
+	leal	4(%edi),%edi		# parameters (in userspace)
+	cmpl	$SYS_syscall,%esi
+	jne	5f
+	pushl	%edi
+	CALL	_C_LABEL(fuword)
+	movl	%eax,%esi		# indirect syscall no for SYS_syscall
+	leal	4(%edi),%edi		# shift parameters
+	jmp	6f
+5:	
+	cmpl	$SYS___syscall,%esi
+	jne	6f
+	pushl	%edi
+	CALL	_C_LABEL(fuword)
+	movl	%eax,%esi		# indirect syscall no for SYS___syscall
+	leal	8(%edi),%edi		# shift parameters (quad alignment)
+6:
+	leal	8(%edi),%ecx
+	pushl	%ecx
+	call	_C_LABEL(fuword)
+	movl	%eax,(%esp)		# 3rd syscall arg
+	leal	4(%edi),%ecx
+	pushl	%ecx
+	call	_C_LABEL(fuword)
+	movl	%eax,(%esp)		# 2nd syscall arg
+	pushl	%edi
+	call	_C_LABEL(fuword)
+	movl	%eax,(%esp)		# 1st syscall arg
+	pushl	%esi			# syscall no
+	pushl	_C_LABEL(cpl)		# current spl
+	pushl	$4f			# format string
 	call	_C_LABEL(printf)
-	addl	$4,%esp
-#if defined(DDB) && 0
+	addl	$24,%esp
+#if defined(DDB)
 	int	$3
 #endif /* DDB */
 	movl	%ebx,_C_LABEL(cpl)
 	jmp	2b
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
+4:	.asciz	"WARNING: SPL (0x%x) NOT LOWERED ON syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT\n"
 #endif /* DIAGNOSTIC */
 
 #include <i386/isa/vector.s>
