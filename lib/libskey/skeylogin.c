@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.14 1997/07/23 06:53:12 millert Exp $
+ * $Id: skeylogin.c,v 1.15 1997/07/23 07:16:57 millert Exp $
  */
 
 #include <sys/param.h>
@@ -177,7 +177,7 @@ skeylookup(mp, name)
 /* Get the next entry in the One-time Password database.
  * Return codes:
  * -1: error in opening database
- *  0: next entry found, file R/W pointer positioned at beginning of record
+ *  0: next entry found and stored in mp
  *  1: no more entries, file R/W pointer positioned at EOF
  */
 int
@@ -185,7 +185,7 @@ skeygetnext(mp)
 	struct skey *mp;
 {
 	long recstart = 0;
-	char *cp, *ht = NULL;
+	char *cp;
 	struct stat statbuf;
 
 	/* See if _PATH_SKEYKEYS exists, and create it if not */
@@ -219,11 +219,8 @@ skeygetnext(mp)
 			continue;
 		/* Save hash type if specified, else use md4 */
 		if (isalpha(*cp)) {
-			ht = cp;
 			if ((cp = strtok(NULL, " \t")) == NULL)
 				continue;
-		} else {
-			ht = "md4";
 		}
 		mp->n = atoi(cp);
 		if ((mp->seed = strtok(NULL, " \t")) == NULL)
@@ -233,17 +230,7 @@ skeygetnext(mp)
 		/* Got a real entry */
 		break;
 	}
-	if (!feof(mp->keyfile)) {
-		(void)fseek(mp->keyfile, recstart, SEEK_SET);
-		/* Set hash type */
-		if (ht && skey_set_algorithm(ht) == NULL) {
-			warnx("Unknown hash algorithm %s, using %s", ht,
-			      skey_get_algorithm());
-		}
-		return 0;
-	} else {
-		return 1;
-	}
+	return(feof(mp->keyfile));
 }
 
 /* Verify response to a s/key challenge.
