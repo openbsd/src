@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: exec.c,v 1.10 2000/01/29 19:52:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.11 2000/08/22 18:46:04 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -194,7 +194,7 @@ execvp(name, argv)
 	char **memp;
 	register int cnt, lp, ln;
 	register char *p;
-	int eacces = 0, etxtbsy = 0;
+	int eacces = 0;
 	char *bp, *cur, *path, buf[MAXPATHLEN];
 
 	/*
