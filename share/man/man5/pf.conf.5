@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.229 2003/05/06 15:52:27 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.230 2003/05/10 00:45:43 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1974,7 +1974,7 @@ in BNF:
 .Bd -literal
 line           = ( option | pf-rule | nat-rule | binat-rule | rdr-rule
                  | antispoof-rule | altq-rule | queue-rule | anchor-rule
-                 | trans-anchors )
+                 | trans-anchors | load-anchors )
 
 option         = set ( [ timeout ( timeout | { timeout-list } ) ] |
                  [ optimization [ default | normal
@@ -2032,6 +2032,8 @@ anchor-rule    = anchor string [ ( in | out ) ] [ on ifspec ] [ af ]
 
 trans-anchors  = ( nat-anchor | rdr-anchor | binat-anchor ) string
                  [ on ifspec ] [ af ] [ proto ] [ protospec ] [ hosts ]
+
+load-anchor    = load anchorname:rulesetname from filename
 
 queueopts-list = queueopts-list queueopts | queueopts
 queueopts      = [ bandwidth bandwidth-spec ] |
