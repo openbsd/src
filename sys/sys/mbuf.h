@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.49 2001/07/01 23:04:44 dhartmei Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.50 2001/07/02 01:34:47 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -584,17 +584,17 @@ struct m_tag *m_tag_first __P((struct mbuf *));
 struct m_tag *m_tag_next __P((struct mbuf *, struct m_tag *));
 
 /* Packet tag types */
-#define	PACKET_TAG_NONE				0  /* Nadda */
-#define	PACKET_TAG_IPSEC_IN_DONE		1  /* IPsec applied, in */
-#define	PACKET_TAG_IPSEC_OUT_DONE		2  /* IPsec applied, out */
+#define PACKET_TAG_NONE				0  /* Nadda */
+#define PACKET_TAG_IPSEC_IN_DONE		1  /* IPsec applied, in */
+#define PACKET_TAG_IPSEC_OUT_DONE		2  /* IPsec applied, out */
 #define PACKET_TAG_IPSEC_IN_CRYPTO_DONE		3  /* NIC IPsec crypto done */
 #define PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED	4  /* NIC IPsec crypto req'ed */
 #define PACKET_TAG_IPSEC_IN_COULD_DO_CRYPTO	5  /* NIC notifies IPsec */
-#define	PACKET_TAG_IPSEC_PENDING_TDB		6  /* Reminder to do IPsec */
+#define PACKET_TAG_IPSEC_PENDING_TDB		6  /* Reminder to do IPsec */
 #define PACKET_TAG_BRIDGE			7  /* Bridge processing done */
 #define PACKET_TAG_GIF				8  /* GIF processing done */
 #define PACKET_TAG_GRE				9  /* GRE processing done */
-#define	PACKET_TAG_IN_PACKET_CHECKSUM		10 /* NIC checksumming done */
+#define PACKET_TAG_IN_PACKET_CHECKSUM		10 /* NIC checksumming done */
 #define PACKET_TAG_PF_GENERATED			11 /* PF generated, pass always */
 
 #ifdef MBTYPES
