@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.40 2001/10/11 22:03:12 frantzen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.41 2001/10/15 16:22:22 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -160,13 +160,13 @@ typedef struct {
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token  ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
-%token	MINTTL IPV6ADDR ERROR
+%token	MINTTL IPV6ADDR ERROR ALLOWOPTS
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.interface>	interface if_list if_item_not if_item
 %type	<v.number>	port icmptype icmp6type minttl
-%type	<v.i>	dir log quick af keep nodf
+%type	<v.i>	dir log quick af keep nodf allowopts
 %type	<v.b>	action flag flags blockspec
 %type	<v.range>	dport rport
 %type	<v.proto>	proto proto_list proto_item
@@ -198,7 +198,7 @@ varset		: STRING PORTUNARY STRING
 		}
 		;
 
-pfrule		: action dir log quick interface af proto fromto flags icmpspec keep nodf minttl
+pfrule		: action dir log quick interface af proto fromto flags icmpspec keep nodf minttl allowopts
 		{
 			struct pf_rule r;
 
@@ -227,6 +227,7 @@ pfrule		: action dir log quick interface af proto fromto flags icmpspec keep nod
 				r.rule_flag |= PFRULE_NODF;
 			if ($13)
 				r.min_ttl = $13;
+			r.allow_opts = $14;
 
 			expand_rule(&r, $5, $7, $8.src.host, $8.src.port,
 			    $8.dst.host, $8.dst.port, $10);
@@ -712,6 +713,9 @@ nodf		: /* empty */			{ $$ = 0; }
 		| NODF				{ $$ = 1; }
 		;
 
+allowopts	: /* empty */			{ $$ = 0; }
+		| ALLOWOPTS			{ $$ = 1; }
+
 natrule		: NAT interface proto FROM ipspec TO ipspec ARROW address
 		{
 			struct pf_nat nat;
@@ -1011,6 +1015,10 @@ rule_consistent(struct pf_rule *r)
 		yyerror("modulate state can only be applied to TCP rules");
 		problems++;
 	}
+	if (r->allow_opts && r->action != PF_PASS) {
+		yyerror("allow-opts can only be specified for pass rules");
+		problems++;
+	}
 	return (-problems);
 }
 
@@ -1170,6 +1178,7 @@ lookup(char *s)
 		int	 k_val;
 	} keywords[] = {
 		{ "all",	ALL},
+		{ "allow-opts",	ALLOWOPTS},
 		{ "any",	ANY},
 		{ "binat",	BINAT},
 		{ "block",	BLOCK},

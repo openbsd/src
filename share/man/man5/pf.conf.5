@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.24 2001/10/11 19:52:28 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.25 2001/10/15 16:22:22 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -51,7 +51,7 @@ rule       = action ( "in" | "out" )
              hosts
              [ flags ] ( [ icmp-type ] | [ ipv6-icmp-type ] )
              [ "keep state" ] [ "modulate state" ]
-             [ "no-df" ] [ "min-ttl" number ] .
+             [ "no-df" ] [ "min-ttl" number ] [ "allow-opts" ] .
 
 action     = "pass" | "block" [ return ] | "scrub" .
 return     = "return-rst" |
@@ -258,6 +258,20 @@ This parameter is only valid for rules that cover protocols icmp or
 ipv6-icmp.
 The protocol and the icmp type indicator (icmp-type or ipv6-icmp-type)
 must match.
+.Ss allow-opts
+By default, packets which contain IP options are blocked.
+When
+.Em allow-opts
+is specified for a
+.Em pass
+rule, packets that pass the filter based on that rule (last matching)
+do so even if they contain IP options.
+For packets that match state, the rule that initially created the
+state is used.
+The implicit
+.Em pass
+rule that is used when a packet doesn't match any rules does not
+allow IP options.
 .Sh MACROS
 .Em pfctl
 supports macro definition and expansion like:

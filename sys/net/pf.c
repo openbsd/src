@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.162 2001/10/13 23:07:19 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.163 2001/10/15 16:22:21 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -220,14 +220,14 @@ struct pf_binat		*pf_get_binat(int, struct ifnet *, u_int8_t,
 			    struct pf_addr *, struct pf_addr *, int);
 struct pf_rdr		*pf_get_rdr(struct ifnet *, u_int8_t,
 			    struct pf_addr *, struct pf_addr *, u_int16_t, int);
-int			 pf_test_tcp(int, struct ifnet *, struct mbuf *, int,
-			    int, void *, struct pf_pdesc *);
-int			 pf_test_udp(int, struct ifnet *, struct mbuf *, int,
-			    int, void *, struct pf_pdesc *);
-int			 pf_test_icmp(int, struct ifnet *, struct mbuf *,
-			    int, int, void *, struct pf_pdesc *);
-int			 pf_test_other(int, struct ifnet *, struct mbuf *,
-			    void *, struct pf_pdesc *);
+int			 pf_test_tcp(struct pf_rule **, int, struct ifnet *,
+			    struct mbuf *, int, int, void *, struct pf_pdesc *);
+int			 pf_test_udp(struct pf_rule **, int, struct ifnet *,
+			    struct mbuf *, int, int, void *, struct pf_pdesc *);
+int			 pf_test_icmp(struct pf_rule **, int, struct ifnet *,
+			    struct mbuf *, int, int, void *, struct pf_pdesc *);
+int			 pf_test_other(struct pf_rule **, int, struct ifnet *,
+			    struct mbuf *, void *, struct pf_pdesc *);
 int			 pf_test_state_tcp(struct pf_state **, int,
 			    struct ifnet *, struct mbuf *, int, int,
 			    void *, struct pf_pdesc *);
@@ -383,7 +383,8 @@ pf_compare_rules(struct pf_rule *a, struct pf_rule *b)
 	    a->flags != b->flags ||
 	    a->flagset != b->flagset ||
 	    a->rule_flag != b->rule_flag ||
-	    a->min_ttl != b->min_ttl)
+	    a->min_ttl != b->min_ttl ||
+	    a->allow_opts != b->allow_opts)
 		return (1);
 	if (memcmp(&a->src, &b->src, sizeof(struct pf_rule_addr)))
 		return (1);
@@ -2711,18 +2712,20 @@ pf_map_port_range(struct pf_rdr *rdr, u_int16_t port)
 
 
 int
-pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
-    int ipoff, int off, void *h, struct pf_pdesc *pd)
+pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
+    struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd)
 {
 	struct pf_nat *nat = NULL;
 	struct pf_binat *binat = NULL;
 	struct pf_rdr *rdr = NULL;
 	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr;
 	struct tcphdr *th = pd->hdr.tcp;
-	struct pf_rule *r, *rm = NULL;
+	struct pf_rule *r;
 	u_int16_t bport, nport = 0, af = pd->af;
 	u_short reason;
 	int rewrite = 0, error;
+
+	*rm = NULL;
 
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT */
@@ -2802,24 +2805,25 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		else if ((r->flagset & th->th_flags) != r->flags)
 			r = TAILQ_NEXT(r, entries);
 		else {
-			rm = r;
-			if (rm->quick)
+			*rm = r;
+			if ((*rm)->quick)
 				break;
 			r = TAILQ_NEXT(r, entries);
 		}
 	}
 
-	if (rm != NULL) {
-		rm->packets++;
-		rm->bytes += pd->tot_len;
+	if (*rm != NULL) {
+		(*rm)->packets++;
+		(*rm)->bytes += pd->tot_len;
 		REASON_SET(&reason, PFRES_MATCH);
 
 		/* XXX will log packet before rewrite */
-		if (rm->log)
-			PFLOG_PACKET(ifp, h, m, af, direction, reason, rm);
+		if ((*rm)->log)
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, *rm);
 
-		if ((rm->action == PF_DROP) &&
-		    ((rm->rule_flag & PFRULE_RETURNRST) || rm->return_icmp)) {
+		if (((*rm)->action == PF_DROP) &&
+		    (((*rm)->rule_flag & PFRULE_RETURNRST) ||
+		    (*rm)->return_icmp)) {
 			/* undo NAT/RST changes, if they have taken place */
 			if (nat != NULL ||
 			    (binat != NULL && direction == PF_OUT)) {
@@ -2832,21 +2836,22 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 				    &th->th_sum, &baddr, bport, 0, af);
 				rewrite++;
 			}
-			if (rm->rule_flag & PFRULE_RETURNRST)
+			if ((*rm)->rule_flag & PFRULE_RETURNRST)
 				pf_send_reset(off, th, pd, af);
 			else 
-				pf_send_icmp(m, rm->return_icmp >> 8,
-				    rm->return_icmp & 255, af);
+				pf_send_icmp(m, (*rm)->return_icmp >> 8,
+				    (*rm)->return_icmp & 255, af);
 		}
 
-		if (rm->action == PF_DROP) {
+		if ((*rm)->action == PF_DROP) {
 			if (nport && nat != NULL)
 				pf_put_sport(IPPROTO_TCP, nport);
 			return (PF_DROP);
 		}
 	}
 
-	if (((rm != NULL) && rm->keep_state) || nat != NULL || binat != NULL || rdr != NULL) {
+	if (((*rm != NULL) && (*rm)->keep_state) || nat != NULL ||
+	    binat != NULL || rdr != NULL) {
 		/* create new state */
 		u_int16_t len;
 		struct pf_state *s;
@@ -2859,8 +2864,9 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			return (PF_DROP);
 		}
 
-		s->rule = rm;
-		s->log = rm && (rm->log & 2);
+		s->rule = *rm;
+		s->allow_opts = *rm && (*rm)->allow_opts;
+		s->log = *rm && ((*rm)->log & 2);
 		s->proto = IPPROTO_TCP;
 		s->direction = direction;
 		s->af = af;
@@ -2893,8 +2899,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 		s->src.seqlo = ntohl(th->th_seq);
 		s->src.seqhi = s->src.seqlo + len + 1;
-		if (th->th_flags == TH_SYN && rm != NULL
-		    && rm->keep_state == PF_STATE_MODULATE) {
+		if (th->th_flags == TH_SYN && *rm != NULL
+		    && (*rm)->keep_state == PF_STATE_MODULATE) {
 			/* Generate sequence number modulator */
 			while ((s->src.seqdiff = arc4random()) == 0)
 				;
@@ -2929,8 +2935,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 }
 
 int
-pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
-    int ipoff, int off, void *h, struct pf_pdesc *pd)
+pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
+    struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd)
 {
 	struct pf_nat *nat = NULL;
 	struct pf_binat *binat = NULL;
@@ -2938,9 +2944,11 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr;
 	struct udphdr *uh = pd->hdr.udp;
 	u_int16_t bport, nport = 0, af = pd->af;
-	struct pf_rule *r, *rm = NULL;
+	struct pf_rule *r;
 	u_short reason;
 	int rewrite = 0, error;
+
+	*rm = NULL;
 
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT */
@@ -3022,23 +3030,23 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		else if (r->direction != direction)
 			r = TAILQ_NEXT(r, entries);
 		else {
-			rm = r;
-			if (rm->quick)
+			*rm = r;
+			if ((*rm)->quick)
 				break;
 			r = TAILQ_NEXT(r, entries);
 		}
 	}
 
-	if (rm != NULL) {
-		rm->packets++;
-		rm->bytes += pd->tot_len;
+	if (*rm != NULL) {
+		(*rm)->packets++;
+		(*rm)->bytes += pd->tot_len;
 		REASON_SET(&reason, PFRES_MATCH);
 
 		/* XXX will log packet before rewrite */
-		if (rm->log)
-			PFLOG_PACKET(ifp, h, m, af, direction, reason, rm);
+		if ((*rm)->log)
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, *rm);
 
-		if ((rm->action == PF_DROP) && rm->return_icmp) {
+		if (((*rm)->action == PF_DROP) && (*rm)->return_icmp) {
 			/* undo NAT/RST changes, if they have taken place */
 			if (nat != NULL ||
 			    (binat != NULL && direction == PF_OUT)) {
@@ -3052,18 +3060,19 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 				rewrite++;
 		
 			}
-			pf_send_icmp(m, rm->return_icmp >> 8,
-			    rm->return_icmp & 255, af);
+			pf_send_icmp(m, (*rm)->return_icmp >> 8,
+			    (*rm)->return_icmp & 255, af);
 		}
 
-		if (rm->action == PF_DROP) {
+		if ((*rm)->action == PF_DROP) {
 			if (nport && nat != NULL)
 				pf_put_sport(IPPROTO_UDP, nport);
 			return (PF_DROP);
 		}
 	}
 
-	if ((rm != NULL && rm->keep_state) || nat != NULL || binat != NULL || rdr != NULL) {
+	if ((*rm != NULL && (*rm)->keep_state) || nat != NULL ||
+	    binat != NULL || rdr != NULL) {
 		/* create new state */
 		u_int16_t len;
 		struct pf_state *s;
@@ -3076,8 +3085,9 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			return (PF_DROP);
 		}
 
-		s->rule = rm;
-		s->log = rm && (rm->log & 2);
+		s->rule = *rm;
+		s->allow_opts = *rm && (*rm)->allow_opts;
+		s->log = *rm && ((*rm)->log & 2);
 		s->proto = IPPROTO_UDP;
 		s->direction = direction;
 		s->af = af;
@@ -3131,19 +3141,21 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 }
 
 int
-pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
-    int ipoff, int off, void *h, struct pf_pdesc *pd)
+pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
+    struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd)
 {
 	struct pf_nat *nat = NULL;
 	struct pf_binat *binat = NULL;
 	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr;
-	struct pf_rule *r, *rm = NULL;
+	struct pf_rule *r;
 	u_short reason;
 	u_int16_t icmpid, af = pd->af;
 	u_int8_t icmptype, icmpcode;
 #ifdef INET6
 	int rewrite = 0;
 #endif /* INET6 */
+
+	*rm = NULL;
 
 	switch (pd->proto) {
 #ifdef INET
@@ -3254,27 +3266,27 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		else if (r->code && r->code != icmpcode + 1)
 			r = TAILQ_NEXT(r, entries);
 		else {
-			rm = r;
-			if (rm->quick)
+			*rm = r;
+			if ((*rm)->quick)
 				break;
 			r = TAILQ_NEXT(r, entries);
 		}
 	}
 
-	if (rm != NULL) {
-		rm->packets++;
-		rm->bytes +=  pd->tot_len;
+	if (*rm != NULL) {
+		(*rm)->packets++;
+		(*rm)->bytes +=  pd->tot_len;
 		REASON_SET(&reason, PFRES_MATCH);
 
 		/* XXX will log packet before rewrite */
-		if (rm->log)
-			PFLOG_PACKET(ifp, h, m, af, direction, reason, rm);
+		if ((*rm)->log)
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, *rm);
 
-		if (rm->action != PF_PASS)
+		if ((*rm)->action != PF_PASS)
 			return (PF_DROP);
 	}
 
-	if ((rm != NULL && rm->keep_state) || nat != NULL || binat != NULL) {
+	if ((*rm != NULL && (*rm)->keep_state) || nat != NULL || binat != NULL) {
 		/* create new state */
 		u_int16_t len;
 		struct pf_state *s;
@@ -3284,8 +3296,9 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		if (s == NULL)
 			return (PF_DROP);
 
-		s->rule	 = rm;
-		s->log	 = rm && (rm->log & 2);
+		s->rule = *rm;
+		s->allow_opts = *rm && (*rm)->allow_opts;
+		s->log = *rm && ((*rm)->log & 2);
 		s->proto = pd->proto;
 		s->direction = direction;
 		s->af = af;
@@ -3338,13 +3351,15 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 }
 
 int
-pf_test_other(int direction, struct ifnet *ifp, struct mbuf *m,
-    void *h, struct pf_pdesc *pd)
+pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
+    struct mbuf *m, void *h, struct pf_pdesc *pd)
 {
-	struct pf_rule *r, *rm = NULL;
+	struct pf_rule *r;
 	struct pf_binat *binat = NULL;
 	struct pf_addr *saddr = pd->src, *daddr = pd->dst;
 	u_int8_t af = pd->af;
+
+	*rm = NULL;
 
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT */
@@ -3406,23 +3421,23 @@ pf_test_other(int direction, struct ifnet *ifp, struct mbuf *m,
 		else if (r->direction != direction)
 			r = TAILQ_NEXT(r, entries);
 		else {
-			rm = r;
-			if (rm->quick)
+			*rm = r;
+			if ((*rm)->quick)
 				break;
 			r = TAILQ_NEXT(r, entries);
 		}
 	}
 
-	if (rm != NULL) {
+	if (*rm != NULL) {
 		u_short reason;
 
-		rm->packets++;
-		rm->bytes += pd->tot_len;
+		(*rm)->packets++;
+		(*rm)->bytes += pd->tot_len;
 		REASON_SET(&reason, PFRES_MATCH);
-		if (rm->log)
-			PFLOG_PACKET(ifp, h, m, af, direction, reason, rm);
+		if ((*rm)->log)
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, *rm);
 
-		if (rm->action != PF_PASS)
+		if ((*rm)->action != PF_PASS)
 			return (PF_DROP);
 	}
 	return (PF_PASS);
@@ -4370,7 +4385,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			r = s->rule;
 			log = s->log;
 		} else if (s == NULL)
-			action = pf_test_tcp(dir, ifp, m, 0, off, h, &pd);
+			action = pf_test_tcp(&r, dir, ifp, m, 0, off, h, &pd);
 		break;
 	}
 
@@ -4388,7 +4403,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			r = s->rule;
 			log = s->log;
 		} else if (s == NULL)
-			action = pf_test_udp(dir, ifp, m, 0, off, h, &pd);
+			action = pf_test_udp(&r, dir, ifp, m, 0, off, h, &pd);
 		break;
 	}
 
@@ -4410,12 +4425,12 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			}
 			log = s->log;
 		} else if (s == NULL)
-			action = pf_test_icmp(dir, ifp, m, 0, off, h, &pd);
+			action = pf_test_icmp(&r, dir, ifp, m, 0, off, h, &pd);
 		break;
 	}
 
 	default:
-		action = pf_test_other(dir, ifp, m, h, &pd);
+		action = pf_test_other(&r, dir, ifp, m, h, &pd);
 		break;
 	}
 
@@ -4425,6 +4440,15 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	}
 
 done:
+	if (action != PF_DROP && h->ip_hl > 5 &&
+	    !((s && s->allow_opts) || (r && r->allow_opts))) {
+		action = PF_DROP;
+		REASON_SET(&reason, PFRES_SHORT);
+		log = 1;
+		DPFPRINTF(PF_DEBUG_MISC,
+		    ("pf: dropping packet with ip options\n"));
+	}
+
 	if (log) {
 		struct pf_rule r0;
 
@@ -4538,7 +4562,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			r = s->rule;
 			log = s->log;
 		} else if (s == NULL)
-			action = pf_test_tcp(dir, ifp, m, 0, off, h, &pd);
+			action = pf_test_tcp(&r, dir, ifp, m, 0, off, h, &pd);
 		break;
 	}
 
@@ -4556,7 +4580,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			r = s->rule;
 			log = s->log;
 		} else if (s == NULL)
-			action = pf_test_udp(dir, ifp, m, 0, off, h, &pd);
+			action = pf_test_udp(&r, dir, ifp, m, 0, off, h, &pd);
 		break;
 	}
 
@@ -4578,12 +4602,12 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			}
 			log = s->log;
 		} else if (s == NULL)
-			action = pf_test_icmp(dir, ifp, m, 0, off, h, &pd);
+			action = pf_test_icmp(&r, dir, ifp, m, 0, off, h, &pd);
 		break;
 	}
 
 	default:
-		action = pf_test_other(dir, ifp, m, h, &pd);
+		action = pf_test_other(&r, dir, ifp, m, h, &pd);
 		break;
 	}
 
@@ -4593,6 +4617,8 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	}
 
 done:   
+	/* XXX handle IPv6 options, if not allowed. not implemented. */
+
 	if (log) {
 		struct pf_rule r0;
 

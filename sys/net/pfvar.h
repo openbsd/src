@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.53 2001/09/27 17:49:12 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.54 2001/10/15 16:22:21 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -213,13 +213,13 @@ struct pf_rule {
 	u_int8_t	 proto;
 	u_int8_t	 type;
 	u_int8_t	 code;
-	
 
 	u_int8_t	 flags;
 	u_int8_t	 flagset;
 
 	u_int8_t	 rule_flag;
 	u_int8_t	 min_ttl;	/* minimum ttl for packet normalize */
+	u_int8_t	 allow_opts;
 };
 
 #define	PFRULE_RETURNRST	0x01
@@ -254,6 +254,7 @@ struct pf_state {
 	u_int8_t	 proto;
 	u_int8_t	 direction;
 	u_int8_t	 log;
+	u_int8_t	 allow_opts;
 };
 
 #define		MATCH_TUPLE(h,r,d,i,a) \
