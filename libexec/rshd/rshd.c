@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.49 2003/06/02 19:38:24 millert Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.50 2003/08/12 21:21:45 millert Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$OpenBSD: rshd.c,v 1.49 2003/06/02 19:38:24 millert Exp $";
+static char *rcsid = "$OpenBSD: rshd.c,v 1.50 2003/08/12 21:21:45 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -58,12 +58,13 @@ static char *rcsid = "$OpenBSD: rshd.c,v 1.49 2003/06/02 19:38:24 millert Exp $"
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <arpa/inet.h>
-#include <netdb.h>
 
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netdb.h>
 #include <paths.h>
+#include <poll.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -113,6 +114,11 @@ void desrw_set_key(des_cblock *, des_key_schedule *);
 #else
 #define	OPTIONS	"alnL"
 #endif
+
+#define	P_SOCKREAD	0
+#define	P_PIPEREAD	1
+#define	P_CRYPTREAD	2
+#define	P_CRYPTWRITE	3
 
 int
 main(int argc, char *argv[])
@@ -178,17 +184,17 @@ main(int argc, char *argv[])
 #endif
 
 	fromlen = sizeof (from);
-	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0) {
+	if (getpeername(STDIN_FILENO, (struct sockaddr *)&from, &fromlen) < 0) {
 		/* syslog(LOG_ERR, "getpeername: %m"); */
 		exit(1);
 	}
 	if (keepalive &&
-	    setsockopt(0, SOL_SOCKET, SO_KEEPALIVE, (char *)&on,
+	    setsockopt(STDIN_FILENO, SOL_SOCKET, SO_KEEPALIVE, (char *)&on,
 	    sizeof(on)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m");
 	linger.l_onoff = 1;
 	linger.l_linger = 60;			/* XXX */
-	if (setsockopt(0, SOL_SOCKET, SO_LINGER, (char *)&linger,
+	if (setsockopt(STDIN_FILENO, SOL_SOCKET, SO_LINGER, (char *)&linger,
 	    sizeof (linger)) < 0)
 		syslog(LOG_WARNING, "setsockopt (SO_LINGER): %m");
 	doit((struct sockaddr *)&from);
@@ -208,7 +214,7 @@ doit(struct sockaddr *fromp)
 	struct passwd *pwd;
 	u_short port;
 	in_port_t *portp;
-	fd_set ready, readfrom;
+	struct pollfd pfd[4];
 	int cc, nfd, pv[2], s = 0, one = 1;
 	pid_t pid;
 	char *hostname, *errorstr, *errorhost = (char *) NULL;
@@ -236,7 +242,6 @@ doit(struct sockaddr *fromp)
 	long		authopts;
 #ifdef CRYPT
 	int		pv1[2], pv2[2];
-	fd_set		wready, writeto;
 #endif
 
 	if (sizeof(fromaddr) < fromp->sa_len) {
@@ -288,8 +293,8 @@ doit(struct sockaddr *fromp)
 			ipproto = ip->p_proto;
 		else
 			ipproto = IPPROTO_IP;
-		if (!getsockopt(0, ipproto, IP_OPTIONS, (char *)&opts,
-		    &optsize) && optsize != 0) {
+		if (!getsockopt(STDIN_FILENO, ipproto, IP_OPTIONS,
+		    (char *)&opts, &optsize) && optsize != 0) {
 			for (i = 0; (void *)&opts.ipopt_list[i] - (void *)&opts <
 			    optsize; ) {
 				u_char c = (u_char)opts.ipopt_list[i];
@@ -322,7 +327,7 @@ doit(struct sockaddr *fromp)
 		if ((cc = read(STDIN_FILENO, &c, 1)) != 1) {
 			if (cc < 0)
 				syslog(LOG_NOTICE, "read: %m");
-			shutdown(0, 1+1);
+			shutdown(STDIN_FILENO, SHUT_RDWR);
 			exit(1);
 		}
 		if (c == 0)
@@ -445,8 +450,8 @@ doit(struct sockaddr *fromp)
 			struct sockaddr_in local_addr;
 
 			rc = sizeof(local_addr);
-			if (getsockname(0, (struct sockaddr *)&local_addr,
-			    &rc) < 0) {
+			if (getsockname(STDIN_FILENO,
+			    (struct sockaddr *)&local_addr, &rc) < 0) {
 				syslog(LOG_ERR, "getsockname: %m");
 				error("rshd: getsockname: %m");
 				exit(1);
@@ -592,52 +597,35 @@ fail:
 #endif
 #endif
 			{
-				(void) close(0);
-				(void) close(1);
+				(void) close(STDIN_FILENO);
+				(void) close(STDOUT_FILENO);
 			}
-			(void) close(2);
+			(void) close(STDERR_FILENO);
 			(void) close(pv[1]);
 
-			FD_ZERO(&readfrom);
-			FD_SET(s, &readfrom);
-			FD_SET(pv[0], &readfrom);
-			if (pv[0] > s)
-				nfd = pv[0];
-			else
-				nfd = s;
+			pfd[P_SOCKREAD].fd = s;
+			pfd[P_SOCKREAD].events = POLLIN;
+			pfd[P_PIPEREAD].fd = pv[0];
+			pfd[P_PIPEREAD].events = POLLIN;
+			nfd = 2;
 #ifdef CRYPT
 #ifdef KERBEROS
 			if (doencrypt) {
-				FD_ZERO(&writeto);
-				FD_SET(pv2[0], &writeto);
-				FD_SET(pv1[0], &readfrom);
-
-				nfd = MAX(nfd, pv2[0]);
-				nfd = MAX(nfd, pv1[0]);
+				pfd[P_CRYPTREAD].fd = pv1[0];
+				pfd[P_CRYPTREAD].events = POLLIN;
+				pfd[P_CRYPTWRITE].fd = pv2[0];
+				pfd[P_CRYPTWRITE].events = POLLOUT;
+				nfd += 2;
 			} else
 #endif
 #endif
 				ioctl(pv[0], FIONBIO, (char *)&one);
 
 			/* should set s nbio! */
-			nfd++;
 			do {
-				ready = readfrom;
-#ifdef CRYPT
-#ifdef KERBEROS
-				if (doencrypt) {
-					wready = writeto;
-					if (select(nfd, &ready,
-					    &wready, (fd_set *) 0,
-					    (struct timeval *) 0) < 0)
-						break;
-				} else
-#endif
-#endif
-					if (select(nfd, &ready, (fd_set *)0,
-					  (fd_set *)0, (struct timeval *)0) < 0)
-						break;
-				if (FD_ISSET(s, &ready)) {
+				if (poll(pfd, nfd, INFTIM) < 0)
+					break;
+				if (pfd[P_SOCKREAD].revents & POLLIN) {
 					int	ret;
 #ifdef CRYPT
 #ifdef KERBEROS
@@ -648,17 +636,18 @@ fail:
 #endif
 						ret = read(s, &sig, 1);
 					if (ret <= 0)
-						FD_CLR(s, &readfrom);
+						pfd[P_SOCKREAD].revents = 0;
 					else
 						killpg(pid, sig);
 				}
-				if (FD_ISSET(pv[0], &ready)) {
+				if (pfd[P_PIPEREAD].revents & POLLIN) {
 					errno = 0;
 					cc = read(pv[0], buf, sizeof(buf));
 					if (cc <= 0) {
-						shutdown(s, 1+1);
-						FD_CLR(pv[0], &readfrom);
+						shutdown(s, SHUT_RDWR);
+						pfd[P_PIPEREAD].revents = 0;
 					} else {
+
 #ifdef CRYPT
 #ifdef KERBEROS
 						if (doencrypt)
@@ -673,37 +662,39 @@ fail:
 				}
 #ifdef CRYPT
 #ifdef KERBEROS
-				if (doencrypt && FD_ISSET(pv1[0], &ready)) {
+				if (doencrypt &&
+				    (pfd[P_CRYPTREAD].revents & POLLIN)) {
 					errno = 0;
 					cc = read(pv1[0], buf, sizeof(buf));
 					if (cc <= 0) {
-						shutdown(pv1[0], 1+1);
-						FD_CLR(pv1[0], &readfrom);
+						shutdown(pv1[0], SHUT_RDWR);
+						pfd[P_CRYPTREAD].revents = 0;
 					} else
 						(void) des_write(STDOUT_FILENO,
 						    buf, cc);
 				}
 
-				if (doencrypt && FD_ISSET(pv2[0], &wready)) {
+				if (doencrypt &&
+				    (pfd[P_CRYPTWRITE].revents & POLLIN)) {
 					errno = 0;
 					cc = des_read(STDIN_FILENO,
 					    buf, sizeof(buf));
 					if (cc <= 0) {
-						shutdown(pv2[0], 1+1);
-						FD_CLR(pv2[0], &writeto);
+						shutdown(pv2[0], SHUT_RDWR);
+						pfd[P_CRYPTWRITE].revents = 0;
 					} else
 						(void) write(pv2[0], buf, cc);
 				}
 #endif
 #endif
 
-			} while (FD_ISSET(s, &readfrom) ||
+			} while ((pfd[P_SOCKREAD].revents & POLLIN) ||
 #ifdef CRYPT
 #ifdef KERBEROS
-			    (doencrypt && FD_ISSET(pv1[0], &readfrom)) ||
+			    (doencrypt && (pfd[P_CRYPTREAD].revents & POLLIN)) ||
 #endif
 #endif
-			    FD_ISSET(pv[0], &readfrom));
+			    (pfd[P_PIPEREAD].revents & POLLIN));
 			exit(0);
 		}
 		setsid();
