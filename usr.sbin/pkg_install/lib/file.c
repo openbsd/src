@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.3 1996/12/29 12:19:08 graichen Exp $	*/
+/*	$OpenBSD: file.c,v 1.4 1997/01/17 07:14:15 millert Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: file.c,v 1.3 1996/12/29 12:19:08 graichen Exp $";
+static const char *rcsid = "$OpenBSD: file.c,v 1.4 1997/01/17 07:14:15 millert Exp $";
 #endif
 
 /*
@@ -440,10 +440,10 @@ unpack(char *pkg, char *flist)
      * compressed.
      */
     if (strcmp(pkg, "-")) {
-	cp = rindex(pkg, '.');
+	cp = strrchr(pkg, '.');
 	if (cp) {
 	    strcpy(suffix, cp + 1);
-	    if (index(suffix, 'z') || index(suffix, 'Z'))
+	    if (strchr(suffix, 'z') || strchr(suffix, 'Z'))
 		strcpy(args, "-z");
 	}
     }

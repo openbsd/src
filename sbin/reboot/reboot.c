@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.5 1997/01/15 23:41:38 millert Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.6 1997/01/17 07:12:20 millert Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.5 1997/01/15 23:41:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.6 1997/01/17 07:12:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ main(argc, argv)
 	char *p, *user;
 
 	/* Get our name */
-	p = rindex(*argv, '/');
+	p = strrchr(*argv, '/');
 	if(p == NULL) p = *argv;
 	else p++;
 

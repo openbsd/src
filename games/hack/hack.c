@@ -380,7 +380,7 @@ pickup(all)
 			char c;
 
 			pline("Pick up %s ? [ynaq]", doname(obj));
-			while(!index("ynaq ", (c = readchar())))
+			while(!strchr("ynaq ", (c = readchar())))
 				bell();
 			if(c == 'q') return;
 			if(c == 'n') continue;
@@ -571,7 +571,7 @@ register struct monst *mtmp;
 	for(x = u.ux-1; x <= u.ux+1; x++) for(y = u.uy-1; y <= u.uy+1; y++){
 		if(x == u.ux && y == u.uy) continue;
 		if((mtmp = m_at(x,y)) && !mtmp->mimic && !mtmp->mtame &&
-			!mtmp->mpeaceful && !index("Ea", mtmp->data->mlet) &&
+			!mtmp->mpeaceful && !strchr("Ea", mtmp->data->mlet) &&
 			!mtmp->mfroz && !mtmp->msleep &&  /* aplvax!jcn */
 			(!mtmp->minvis || See_invisible))
 			return(1);

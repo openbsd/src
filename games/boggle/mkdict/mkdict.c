@@ -83,7 +83,7 @@ main(argc, argv)
 
 	for (nwords = 1;
 	    fgets(buf[current], MAXWORDLEN + 1, stdin) != NULL; ++nwords) {
-		if ((p = index(buf[current], '\n')) == NULL) {
+		if ((p = strchr(buf[current], '\n')) == NULL) {
 			fprintf(stderr,
 			    "mkdict: word too long: %s\n", buf[current]);
 			while ((ch = getc(stdin)) != EOF && ch != '\n')

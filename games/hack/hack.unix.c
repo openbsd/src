@@ -19,7 +19,7 @@ static char rcsid[] = "$NetBSD: hack.unix.c,v 1.4 1996/02/06 22:47:25 jtc Exp $"
 
 #include <stdio.h>
 #include <errno.h>
-#include "hack.h"	/* mainly for index() which depends on BSD */
+#include "hack.h"
 
 #include	<sys/types.h>		/* for time_t and stat */
 #include	<sys/stat.h>
@@ -100,7 +100,7 @@ gethdate(name) char *name; {
     register char *np;
   	if(stat(name, &hbuf))
   		error("Cannot get status of %s.",
-  			(np = rindex(name, '/')) ? np+1 : name);
+  			(np = strrchr(name, '/')) ? np+1 : name);
   
    version using PATH from: seismo!gregc@ucsf-cgl.ARPA (Greg Couch) */
 
@@ -114,11 +114,11 @@ gethdate(name) char *name; {
 
 register char *np, *path;
 char filename[MAXPATHLEN+1];
-	if (index(name, '/') != NULL || (path = getenv("PATH")) == NULL)
+	if (strchr(name, '/') != NULL || (path = getenv("PATH")) == NULL)
 		path = "";
 
 	for (;;) {
-		if ((np = index(path, ':')) == NULL)
+		if ((np = strchr(path, ':')) == NULL)
 			np = path + strlen(path);	/* point to end str */
 		if (np - path <= 1)			/* %% */
 			(void) strcpy(filename, name);
@@ -134,7 +134,7 @@ char filename[MAXPATHLEN+1];
 		path = np + 1;
 	}
 	error("Cannot get status of %s.",
-		(np = rindex(name, '/')) ? np+1 : name);
+		(np = strrchr(name, '/')) ? np+1 : name);
 }
 
 uptodate(fd) {
@@ -429,6 +429,6 @@ register char *s;
 {
 	register char *lp;
 
-	while((lp = index(s, '.')) || (lp = index(s, '/')))
+	while((lp = strchr(s, '.')) || (lp = strchr(s, '/')))
 		*lp = '_';
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.2 1996/06/26 05:41:57 deraadt Exp $	*/
+/*	$OpenBSD: term.c,v 1.3 1997/01/17 07:13:44 millert Exp $	*/
 /*	$NetBSD: term.c,v 1.6 1994/12/07 05:08:12 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: term.c,v 1.2 1996/06/26 05:41:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: term.c,v 1.3 1997/01/17 07:13:44 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ get_termcap_entry(userarg, tcapbufp)
 
 	/* Try ttyname(3); check for dialup or other mapping. */
 	if (ttypath = ttyname(STDERR_FILENO)) {
-		if (p = rindex(ttypath, '/'))
+		if (p = strrchr(ttypath, '/'))
 			++p;
 		else
 			p = ttypath;
@@ -151,7 +151,7 @@ askuser(dflt)
 			return (dflt);
 		}
 
-		if (p = index(answer, '\n'))
+		if (p = strchr(answer, '\n'))
 			*p = '\0';
 		if (answer[0])
 			return (answer);

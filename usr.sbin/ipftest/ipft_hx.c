@@ -39,7 +39,7 @@
 
 #ifndef	lint
 static	char	sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_hx.c,v 1.2 1996/07/18 04:59:23 dm Exp $";
+static	char	rcsid[] = "$Id: ipft_hx.c,v 1.3 1997/01/17 07:14:06 millert Exp $";
 #endif
 
 extern	int	opts;
@@ -93,14 +93,14 @@ int	cnt, *dir;
  	ip = (struct ip *)buf;
 	*ifn = NULL;
 	while (fgets(line, sizeof(line)-1, tfp)) {
-		if ((s = index(line, '\n'))) {
+		if ((s = strchr(line, '\n'))) {
 			if (s == line)
 				return (char *)ip - buf;
 			*s = '\0';
 		}
-		if ((s = index(line, '\r')))
+		if ((s = strchr(line, '\r')))
 			*s = '\0';
-		if ((s = index(line, '#')))
+		if ((s = strchr(line, '#')))
 			*s = '\0';
 		if (!*line)
 			continue;

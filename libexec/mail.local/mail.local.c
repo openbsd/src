@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.10 1997/01/15 23:41:01 millert Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.11 1997/01/17 07:12:03 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -209,7 +209,7 @@ store(from)
 	}
 
 	/* If message not newline terminated, need an extra. */
-	if (!index(line, '\n'))
+	if (!strchr(line, '\n'))
 		(void)putc('\n', fp);
 	/* Output a newline; note, empty messages are allowed. */
 	(void)putc('\n', fp);

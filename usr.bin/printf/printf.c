@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.2 1996/06/26 05:37:59 deraadt Exp $	*/
+/*	$OpenBSD: printf.c,v 1.3 1997/01/17 07:13:06 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: printf.c,v 1.2 1996/06/26 05:37:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.3 1997/01/17 07:13:06 millert Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -190,16 +190,16 @@ main(argc, argv)
 				}
 
 				/* skip to field width */
-				for (; index(SKIP1, *fmt); ++fmt) ;
+				for (; strchr(SKIP1, *fmt); ++fmt) ;
 				fieldwidth = *fmt == '*' ? getint() : 0;
 
 				/* skip to possible '.', get following precision */
-				for (; index(SKIP2, *fmt); ++fmt) ;
+				for (; strchr(SKIP2, *fmt); ++fmt) ;
 				if (*fmt == '.')
 					++fmt;
 				precision = *fmt == '*' ? getint() : 0;
 
-				for (; index(SKIP2, *fmt); ++fmt) ;
+				for (; strchr(SKIP2, *fmt); ++fmt) ;
 				if (!*fmt) {
 					warnx ("missing format character");
 					return(1);
@@ -446,7 +446,7 @@ getint()
 	if (!*gargv)
 		return(0);
 
-	if (index(number, **gargv))
+	if (strchr(number, **gargv))
 		return(atoi(*gargv++));
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.2 1996/05/26 01:04:39 deraadt Exp $	*/
+/*	$OpenBSD: kvm.c,v 1.3 1997/01/17 07:11:56 millert Exp $	*/
 
 /*	$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $	*/
 
@@ -363,7 +363,7 @@ kvm_dbopen(kd, uf)
 	char kversion[_POSIX2_LINE_MAX];
 	char dbname[MAXPATHLEN];
 
-	if ((cp = rindex(uf, '/')) != 0)
+	if ((cp = strrchr(uf, '/')) != 0)
 		uf = cp + 1;
 
 	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db", _PATH_VARDB, uf);

@@ -150,7 +150,7 @@ krb_get_pw_in_tkt(user, instance, realm, service, sinstance, life, password)
 #ifdef NOENCRYPTION
 /*
  * $Source: /home/cvs/src/kerberosIV/krb/Attic/get_in_tkt.c,v $
- * $Author: tholo $
+ * $Author: millert $
  *
  * Copyright 1985, 1986, 1987, 1988 by the Massachusetts Institute
  * of Technology.
@@ -165,7 +165,7 @@ krb_get_pw_in_tkt(user, instance, realm, service, sinstance, life, password)
 
 #ifndef	lint
 static char rcsid_read_password_c[] =
-"Bones$Header: /home/cvs/src/kerberosIV/krb/Attic/get_in_tkt.c,v 1.2 1996/02/05 10:06:40 tholo Exp $";
+"Bones$Header: /home/cvs/src/kerberosIV/krb/Attic/get_in_tkt.c,v 1.3 1997/01/17 07:11:54 millert Exp $";
 #endif /* lint */
 
 #include <des.h>
@@ -251,7 +251,7 @@ placebo_read_pw_string(s,max,prompt,verify)
 	    clearerr(stdin);
 	    continue;
 	}
-	if ((ptr = index(s, '\n')))
+	if ((ptr = strchr(s, '\n')))
 	    *ptr = '\0';
 	if (verify) {
 	    printf("\nVerifying, please re-enter %s",prompt);
@@ -260,7 +260,7 @@ placebo_read_pw_string(s,max,prompt,verify)
 		clearerr(stdin);
 		continue;
 	    }
-            if ((ptr = index(key_string, '\n')))
+            if ((ptr = strchr(key_string, '\n')))
 	    *ptr = '\0';
 	    if (strcmp(s,key_string)) {
 		printf("\n\07\07Mismatch - try again\n");

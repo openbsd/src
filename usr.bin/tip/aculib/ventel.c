@@ -1,4 +1,4 @@
-/*	$OpenBSD: ventel.c,v 1.3 1996/06/26 05:40:57 deraadt Exp $	*/
+/*	$OpenBSD: ventel.c,v 1.4 1997/01/17 07:13:38 millert Exp $	*/
 /*	$NetBSD: ventel.c,v 1.4 1995/10/29 00:50:04 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ventel.c,v 1.3 1996/06/26 05:40:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ventel.c,v 1.4 1997/01/17 07:13:38 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -71,7 +71,7 @@ ven_dialer(num, acu)
 {
 	register char *cp;
 	register int connected = 0;
-	char *msg, *index(), line[80];
+	char *msg, line[80];
 	static int gobble(), vensync();
 	static void echo();
 	struct termios	cntrl;
@@ -115,10 +115,10 @@ ven_dialer(num, acu)
 	if (connected || timeout || !boolean(value(VERBOSE)))
 		return (connected);
 	/* call failed, parse response for user */
-	cp = index(line, '\r');
+	cp = strchr(line, '\r');
 	if (cp)
 		*cp = '\0';
-	for (cp = line; cp = index(cp, ' '); cp++)
+	for (cp = line; cp = strchr(cp, ' '); cp++)
 		if (cp[1] == ' ')
 			break;
 	if (cp) {

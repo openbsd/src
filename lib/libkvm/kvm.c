@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.4 1996/05/10 12:58:30 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.5 1997/01/17 07:11:59 millert Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.4 1996/05/10 12:58:30 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.5 1997/01/17 07:11:59 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -712,7 +712,7 @@ kvm_dbopen(kd, uf)
 	char kversion[_POSIX2_LINE_MAX];
 	char dbname[MAXPATHLEN];
 
-	if ((cp = rindex(uf, '/')) != 0)
+	if ((cp = strrchr(uf, '/')) != 0)
 		uf = cp + 1;
 
 	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db", _PATH_VARDB, uf);

@@ -231,7 +231,7 @@ register int pl = (obj->quan != 1);
 		if(*p == 's' || *p == 'z' || *p == 'x' ||
 		    (*p == 'h' && p[-1] == 's'))
 			Strcat(buf, "es");	/* boxes */
-		else if(*p == 'y' && !index(vowels, p[-1]))
+		else if(*p == 'y' && !strchr(vowels, p[-1]))
 			Strcpy(p, "ies");	/* rubies, zruties */
 		else
 			Strcat(buf, "s");
@@ -286,7 +286,7 @@ register char *bp = xname(obj);
 		Strcat(bp, " (weapon in hand)");
 	if(obj->unpaid)
 		Strcat(bp, " (unpaid)");
-	if(!strcmp(prefix, "a ") && index(vowels, *bp))
+	if(!strcmp(prefix, "a ") && strchr(vowels, *bp))
 		Strcpy(prefix, "an ");
 	bp = strprepend(bp, prefix);
 	return(bp);
@@ -296,7 +296,7 @@ register char *bp = xname(obj);
 setan(str,buf)
 register char *str,*buf;
 {
-	if(index(vowels,*str))
+	if(strchr(vowels,*str))
 		Sprintf(buf, "an %s", str);
 	else
 		Sprintf(buf, "a %s", str);
@@ -375,7 +375,7 @@ char *un, *dn, *an;
 		while(digit(*bp)) bp++;
 		while(*bp == ' ') bp++;
 	} else {
-		p = rindex(bp, '(');
+		p = strrchr(bp, '(');
 		if(p) {
 			if(p > bp && p[-1] == ' ') p[-1] = 0;
 			else *p = 0;
@@ -524,7 +524,7 @@ typfnd:
 	otmp = mksobj(typ);
 	if(heavy)
 		otmp->owt += 15;
-	if(cnt > 0 && index("%?!*)", let) &&
+	if(cnt > 0 && strchr("%?!*)", let) &&
 		(cnt < 4 || (let == WEAPON_SYM && typ <= ROCK && cnt < 20)))
 		otmp->quan = cnt;
 

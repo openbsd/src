@@ -1,7 +1,7 @@
-/*	$OpenBSD: str.c,v 1.2 1996/06/04 08:43:46 niklas Exp $	*/
+/*	$OpenBSD: str.c,v 1.3 1997/01/17 07:14:17 millert Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: str.c,v 1.2 1996/06/04 08:43:46 niklas Exp $";
+static const char *rcsid = "$OpenBSD: str.c,v 1.3 1997/01/17 07:14:17 millert Exp $";
 #endif
 
 /*
@@ -84,7 +84,7 @@ suffix(char *str, char *suff)
     char *idx;
     Boolean ret = FALSE;
 
-    idx = rindex(str, '.');
+    idx = strrchr(str, '.');
     if (idx && !strcmp(idx + 1, suff))
 	ret = TRUE;
     return ret;
@@ -96,7 +96,7 @@ nuke_suffix(char *str)
 {
     char *idx;
 
-    idx = rindex(str, '.');
+    idx = strrchr(str, '.');
     if (idx)
 	*idx = '\0';  /* Yow!  Don't try this on a const! */
 }

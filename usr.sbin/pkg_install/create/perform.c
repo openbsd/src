@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.3 1996/12/29 12:18:28 graichen Exp $	*/
+/*	$OpenBSD: perform.c,v 1.4 1997/01/17 07:14:13 millert Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.3 1996/12/29 12:18:28 graichen Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.4 1997/01/17 07:14:13 millert Exp $";
 #endif
 
 /*
@@ -62,7 +62,7 @@ pkg_perform(char **pkgs)
     plist.head = plist.tail = NULL;
 
     /* Break the package name into base and desired suffix (if any) */
-    if ((cp = rindex(pkg, '.')) != NULL) {
+    if ((cp = strrchr(pkg, '.')) != NULL) {
 	suffix = cp + 1;
 	*cp = '\0';
     }
@@ -205,7 +205,7 @@ make_dist(char *home, char *pkg, char *suffix, Package *plist)
     args[nargs++] = "-c";
     args[nargs++] = "-f";
     args[nargs++] = tball;
-    if (index(suffix, 'z'))	/* Compress/gzip? */
+    if (strchr(suffix, 'z'))	/* Compress/gzip? */
 	args[nargs++] = "-z";
     if (Dereference)
 	args[nargs++] = "-h";
@@ -219,7 +219,7 @@ make_dist(char *home, char *pkg, char *suffix, Package *plist)
     }
 
     if (Verbose)
-        if (index(suffix, 'z'))
+        if (strchr(suffix, 'z'))
 	    printf("Creating gzip'd tar ball in '%s'\n", tball);
         else
 	    printf("Creating tar ball in '%s'\n", tball);

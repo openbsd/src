@@ -13,9 +13,6 @@
 #if !defined(__SVR4) && !defined(__GNUC__)
 #include <strings.h>
 #endif
-#if !defined(__SVR4) && defined(__GNUC__)
-extern	char	*index();
-#endif
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/file.h>
@@ -37,7 +34,7 @@ extern	char	*index();
 
 #ifndef	lint
 static	char	sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ipf.c,v 1.7 1996/10/08 07:33:31 niklas Exp $";
+static	char	rcsid[] = "$Id: ipf.c,v 1.8 1997/01/17 07:12:16 millert Exp $";
 #endif
 
 #if	SOLARIS
@@ -180,14 +177,14 @@ char	*name, *file;
 		/*
 		 * treat both CR and LF as EOL
 		 */
-		if ((s = index(line, '\n')))
+		if ((s = strchr(line, '\n')))
 			*s = '\0';
-		if ((s = index(line, '\r')))
+		if ((s = strchr(line, '\r')))
 			*s = '\0';
 		/*
 		 * # is comment marker, everything after is a ignored
 		 */
-		if ((s = index(line, '#')))
+		if ((s = strchr(line, '#')))
 			*s = '\0';
 
 		if (!*line)
@@ -251,17 +248,17 @@ char	*opt;
 
 	flag = 0;
 
-	if (index(opt, 'p')) {
+	if (strchr(opt, 'p')) {
 		flag |= FF_LOGPASS;
 		if (opts & OPT_VERBOSE)
 			printf("set log flag: pass\n");
 	}
-	if (index(opt, 'm') && (*opt == 'n' || *opt == 'N')) {
+	if (strchr(opt, 'm') && (*opt == 'n' || *opt == 'N')) {
 		flag |= FF_LOGNOMATCH;
 		if (opts & OPT_VERBOSE)
 			printf("set log flag: nomatch\n");
 	}
-	if (index(opt, 'b') || index(opt, 'd')) {
+	if (strchr(opt, 'b') || strchr(opt, 'd')) {
 		flag |= FF_LOGBLOCK;
 		if (opts & OPT_VERBOSE)
 			printf("set log flag: block\n");

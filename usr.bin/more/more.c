@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.6 1996/10/14 15:23:54 etheisen Exp $	*/
+/*	$OpenBSD: more.c,v 1.7 1997/01/17 07:12:53 millert Exp $	*/
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
  * All rights reserved.
@@ -201,9 +201,7 @@ char *argv[];
     if (nfiles > 1)
 	prnames++;
     if (!no_intty && nfiles == 0) {
-	char *rindex();
-
-	p = rindex(argv[0], '/');
+	p = strrchr(argv[0], '/');
 	fputs("usage: ",stderr);
 	fputs(p ? p + 1 : argv[0],stderr);
 	fputs(" [-dfln] [+linenum | +/pattern] name1 name2 ...\n",stderr);

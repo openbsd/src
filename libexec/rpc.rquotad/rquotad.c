@@ -313,7 +313,7 @@ hasquota(fs, qfnamep)
 	}
 	strcpy(buf, fs->fs_mntops);
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
-		if (cp = index(opt, '='))
+		if (cp = strchr(opt, '='))
 			*cp++ = '\0';
 		if (strcmp(opt, usrname) == 0)
 			break;

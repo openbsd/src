@@ -36,7 +36,7 @@ dowhatis()
 		if(q != '\t')
 		while(fgets(buf,BUFSZ,fp))
 		    if(*buf == q) {
-			ep = index(buf, '\n');
+			ep = strchr(buf, '\n');
 			if(ep) *ep = 0;
 			/* else: bad data file */
 			/* Expand tab 'by hand' */
@@ -82,7 +82,7 @@ int strip;	/* nr of chars to be stripped from each line (0 or 1) */
 	bufr = (char *) alloc((unsigned) CO);
 	bufr[CO-1] = 0;
 	while(fgets(bufr,CO-1,fp) && (!strip || *bufr == '\t') && !got_intrup){
-		ep = index(bufr, '\n');
+		ep = strchr(bufr, '\n');
 		if(ep)
 			*ep = 0;
 		if(page_line(bufr+strip)) {
@@ -286,9 +286,9 @@ dohelp()
 	char c;
 
 	pline ("Long or short help? ");
-	while (((c = readchar ()) != 'l') && (c != 's') && !index(quitchars,c))
+	while (((c = readchar ()) != 'l') && (c != 's') && !strchr(quitchars,c))
 		bell ();
-	if (!index(quitchars, c))
+	if (!strchr(quitchars, c))
 		(void) page_file((c == 'l') ? HELP : SHELP, FALSE);
 	return(0);
 }

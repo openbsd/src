@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.2 1996/06/11 12:53:39 deraadt Exp $	*/
+/*	$OpenBSD: fio.c,v 1.3 1997/01/17 07:12:46 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.5 1996/06/08 19:48:22 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.2 1996/06/11 12:53:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fio.c,v 1.3 1997/01/17 07:12:46 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -398,7 +398,7 @@ expand(name)
 	for (cp = &xname[l-1]; *cp == '\n' && cp > xname; cp--)
 		;
 	cp[1] = '\0';
-	if (index(xname, ' ') && stat(xname, &sbuf) < 0) {
+	if (strchr(xname, ' ') && stat(xname, &sbuf) < 0) {
 		fprintf(stderr, "\"%s\": Ambiguous.\n", name);
 		return NOSTR;
 	}

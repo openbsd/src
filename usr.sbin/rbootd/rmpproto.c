@@ -341,7 +341,7 @@ SendBootRepl(req, rconn, filelist)
 	 *  stripped file name and spoof the client into thinking that it
 	 *  really got what it wanted.
 	 */
-	filename = (filename = rindex(filepath,'/'))? ++filename: filepath;
+	filename = (filename = strrchr(filepath,'/'))? ++filename: filepath;
 
 	/*
 	 *  Check that this is a valid boot file name.

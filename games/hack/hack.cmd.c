@@ -234,7 +234,7 @@ char sym;
 	register char *dp;
 
 	u.dz = 0;
-	if(!(dp = index(sdir, sym))) return(0);
+	if(!(dp = strchr(sdir, sym))) return(0);
 	u.dx = xdir[dp-sdir];
 	u.dy = ydir[dp-sdir];
 	u.dz = zdir[dp-sdir];
@@ -249,7 +249,7 @@ boolean s;
 	if(s) pline("In what direction?");
 	dirsym = readchar();
 	if(!movecmd(dirsym) && !u.dz) {
-		if(!index(quitchars, dirsym))
+		if(!strchr(quitchars, dirsym))
 			pline("What a strange direction!");
 		return(0);
 	}

@@ -76,7 +76,7 @@ instructions()
 	case 0:
 		if (!(path = getenv("PAGER")))
 			path = _PATH_MORE;
-		if (pager = rindex(path, '/'))
+		if (pager = strrchr(path, '/'))
 			++pager;
 		pager = path;
 		execlp(path, pager, _PATH_INSTR, (char *)NULL);

@@ -665,7 +665,7 @@ char			*offensive;
 	obscene->fd = fd;
 	obscene->inf = NULL;
 	obscene->path = offensive;
-	if ((sp = rindex(offensive, '/')) == NULL)
+	if ((sp = strrchr(offensive, '/')) == NULL)
 		obscene->name = offensive;
 	else
 		obscene->name = ++sp;
@@ -766,7 +766,7 @@ int	check_for_offend;
 			return FALSE;
 	}
 
-	if ((sp = rindex(file, '/')) == NULL)
+	if ((sp = strrchr(file, '/')) == NULL)
 		sp = file;
 	else
 		sp++;
@@ -774,7 +774,7 @@ int	check_for_offend;
 		DPRINTF(2, (stderr, "FALSE (file starts with '.')\n"));
 		return FALSE;
 	}
-	if ((sp = rindex(sp, '.')) != NULL) {
+	if ((sp = strrchr(sp, '.')) != NULL) {
 		sp++;
 		for (i = 0; suflist[i] != NULL; i++)
 			if (strcmp(sp, suflist[i]) == 0) {

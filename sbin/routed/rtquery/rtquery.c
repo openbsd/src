@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtquery.c,v 1.4 1997/01/15 23:41:11 millert Exp $	*/
+/*	$OpenBSD: rtquery.c,v 1.5 1997/01/17 07:12:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -616,7 +616,7 @@ getnet(char *name,
 
 	/* Detect and separate "1.2.3.4/24"
 	 */
-	if (0 != (mname = rindex(name,'/'))) {
+	if (0 != (mname = strrchr(name,'/'))) {
 		i = (int)(mname - name);
 		if (i > sizeof(hname)-1)	/* name too long */
 			return 0;

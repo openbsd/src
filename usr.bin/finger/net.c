@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.2 1996/06/26 05:33:18 deraadt Exp $	*/
+/*	$OpenBSD: net.c,v 1.3 1997/01/17 07:12:33 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)net.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: net.c,v 1.2 1996/06/26 05:33:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: net.c,v 1.3 1997/01/17 07:12:33 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -60,9 +60,9 @@ netfinger(name)
 	struct servent *sp;
 	struct sockaddr_in sin;
 	int s;
-	char *alist[1], *host, *rindex();
+	char *alist[1], *host;
 
-	if (!(host = rindex(name, '@')))
+	if (!(host = strrchr(name, '@')))
 		return;
 	*host++ = NULL;
 	if (inet_aton(host, &sin.sin_addr) == 0) {

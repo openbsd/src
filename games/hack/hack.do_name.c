@@ -170,7 +170,7 @@ register struct obj *obj;
 	otemp.quan = 1;
 	otemp.onamelth = 0;
 	str = xname(&otemp);
-	pline("Call %s %s: ", index(vowels,*str) ? "an" : "a", str);
+	pline("Call %s %s: ", strchr(vowels,*str) ? "an" : "a", str);
 	getlin(buf);
 	clrlin();
 	if(!*buf || *buf == '\033')

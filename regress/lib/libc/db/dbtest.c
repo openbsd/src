@@ -530,12 +530,12 @@ u_int
 setflags(s)
 	char *s;
 {
-	char *p, *index();
+	char *p;
 
 	for (; isspace(*s); ++s);
 	if (*s == '\n' || *s == '\0')
 		return (0);
-	if ((p = index(s, '\n')) != NULL)
+	if ((p = strchr(s, '\n')) != NULL)
 		*p = '\0';
 	if (!strcmp(s, "R_CURSOR"))		return (R_CURSOR);
 	if (!strcmp(s, "R_FIRST"))		return (R_FIRST);
@@ -592,9 +592,9 @@ setinfo(type, s)
 	static BTREEINFO ib;
 	static HASHINFO ih;
 	static RECNOINFO rh;
-	char *eq, *index();
+	char *eq;
 
-	if ((eq = index(s, '=')) == NULL)
+	if ((eq = strchr(s, '=')) == NULL)
 		err("%s: illegal structure set statement", s);
 	*eq++ = '\0';
 	if (!isdigit(*eq))
@@ -688,10 +688,10 @@ rfile(name, lenp)
 	struct stat sb;
 	void *p;
 	int fd;
-	char *np, *index();
+	char *np;
 
 	for (; isspace(*name); ++name);
-	if ((np = index(name, '\n')) != NULL)
+	if ((np = strchr(name, '\n')) != NULL)
 		*np = '\0';
 	if ((fd = open(name, O_RDONLY, 0)) < 0 ||
 	    fstat(fd, &sb))

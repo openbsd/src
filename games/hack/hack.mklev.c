@@ -679,7 +679,7 @@ register struct mkroom *croom;
 	if(!num || num >= TRAPNUM) {
 		nopierc = (dlevel < 4) ? 1 : 0;
 		nomimic = (dlevel < 9 || goldseen ) ? 1 : 0;
-		if(index(fut_geno, 'M')) nomimic = 1;
+		if(strchr(fut_geno, 'M')) nomimic = 1;
 		kind = rn2(TRAPNUM - nopierc - nomimic);
 		/* note: PIERC = 7, MIMIC = 8, TRAPNUM = 9 */
 	} else kind = num;

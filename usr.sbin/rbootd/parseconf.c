@@ -130,7 +130,7 @@ ParseConfig()
 		if (*line == '\0' || *line == '#')	/* ignore comment */
 			continue;
 
-		if ((cp = index(line,'#')) != NULL)	/* trash comments */
+		if ((cp = strchr(line,'#')) != NULL)	/* trash comments */
 			*cp = '\0';
 
 		cp = line;				/* init `cp' */

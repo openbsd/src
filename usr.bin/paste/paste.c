@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.3 1997/01/15 23:43:02 millert Exp $	*/
+/*	$OpenBSD: paste.c,v 1.4 1997/01/17 07:13:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.3 1997/01/15 23:43:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: paste.c,v 1.4 1997/01/17 07:13:02 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -149,7 +149,7 @@ parallel(argv)
 					putchar(ch);
 				continue;
 			}
-			if (!(p = index(buf, '\n'))) {
+			if (!(p = strchr(buf, '\n'))) {
 				(void)fprintf(stderr,
 				    "paste: %s: input line too long.\n",
 				    lp->name);
@@ -192,7 +192,7 @@ sequential(argv)
 		}
 		if (fgets(buf, sizeof(buf), fp)) {
 			for (cnt = 0, dp = delim;;) {
-				if (!(p = index(buf, '\n'))) {
+				if (!(p = strchr(buf, '\n'))) {
 					(void)fprintf(stderr,
 					    "paste: %s: input line too long.\n",
 					    *argv);

@@ -59,7 +59,7 @@ main(argc, argv)
 
 	(void) srand(getpid());
 	issetuid = getuid() != geteuid();
-	if (p = rindex(*argv, '/'))
+	if (p = strrchr(*argv, '/'))
 		p++;
 	else
 		p = *argv;

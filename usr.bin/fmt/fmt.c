@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.2 1996/06/26 05:33:21 deraadt Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.3 1997/01/17 07:12:35 millert Exp $	*/
 /*	$NetBSD: fmt.c,v 1.4 1995/09/01 01:29:41 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-static char rcsid[] = "$OpenBSD: fmt.c,v 1.2 1996/06/26 05:33:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fmt.c,v 1.3 1997/01/17 07:12:35 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -288,7 +288,7 @@ split(line)
 		 */
 		if (*cp == '\0') {
 			*cp2++ = ' ';
-			if (index(".:!", cp[-1]))
+			if (strchr(".:!", cp[-1]))
 				*cp2++ = ' ';
 		}
 		while (*cp == ' ')

@@ -236,7 +236,7 @@ char *argv[];
 				register char *gp = genocided;
 
 				while(pm < mons+CMNUM+2){
-					if(!index(sfoo, pm->mlet))
+					if(!strchr(sfoo, pm->mlet))
 						*gp++ = pm->mlet;
 					pm++;
 				}

@@ -39,7 +39,7 @@ outrip(){
 	(void) sprintf(buf, "killed by%s",
 		!strncmp(killer, "the ", 4) ? "" :
 		!strcmp(killer, "starvation") ? "" :
-		index(vowels, *killer) ? " an" : " a");
+		strchr(vowels, *killer) ? " an" : " a");
 	center(8, buf);
 	(void) strcpy(buf, killer);
  	{

@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.2 1996/06/11 12:53:43 deraadt Exp $	*/
+/*	$OpenBSD: list.c,v 1.3 1997/01/17 07:12:49 millert Exp $	*/
 /*	$NetBSD: list.c,v 1.4 1996/06/08 19:48:30 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: list.c,v 1.2 1996/06/11 12:53:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: list.c,v 1.3 1997/01/17 07:12:49 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -705,7 +705,7 @@ matchsubj(str, mesg)
 	 * Now look, ignoring case, for the word in the string.
 	 */
 
-	if (value("searchheaders") && (cp = index(str, ':'))) {
+	if (value("searchheaders") && (cp = strchr(str, ':'))) {
 		*cp++ = '\0';
 		cp2 = hfield(str, mp);
 		cp[-1] = ':';

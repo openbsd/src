@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.2 1996/06/26 05:40:35 deraadt Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.3 1997/01/17 07:13:32 millert Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tftp.c,v 1.2 1996/06/26 05:40:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftp.c,v 1.3 1997/01/17 07:13:32 millert Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -383,7 +383,6 @@ tpacket(s, tp, n)
 	   { "#0", "RRQ", "WRQ", "DATA", "ACK", "ERROR" };
 	register char *cp, *file;
 	u_short op = ntohs(tp->th_opcode);
-	char *index();
 
 	if (op < RRQ || op > ERROR)
 		printf("%s opcode=%x ", s, op);
@@ -395,7 +394,7 @@ tpacket(s, tp, n)
 	case WRQ:
 		n -= 2;
 		file = cp = tp->th_stuff;
-		cp = index(cp, '\0');
+		cp = strchr(cp, '\0');
 		printf("<file=%s, mode=%s>\n", file, cp + 1);
 		break;
 

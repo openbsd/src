@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.2 1996/06/26 05:34:21 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.3 1997/01/17 07:12:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.2 1996/06/26 05:34:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.3 1997/01/17 07:12:39 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,7 +61,7 @@ addfile(name)
 		exit(1);
 	}
 	while (fgets(buf, sizeof(buf), fp)) {
-		if (!(p = index(buf, '\n'))) {
+		if (!(p = strchr(buf, '\n'))) {
 			(void)fprintf(stderr, "hexdump: line too long.\n");
 			while ((ch = getchar()) != '\n' && ch != EOF);
 			continue;
@@ -171,7 +171,7 @@ size(fs)
 			 * skip any special chars -- save precision in
 			 * case it's a %s format.
 			 */
-			while (index(spec + 1, *++fmt));
+			while (strchr(spec + 1, *++fmt));
 			if (*fmt == '.' && isdigit(*++fmt)) {
 				prec = atoi(fmt);
 				while (isdigit(*++fmt));
@@ -243,10 +243,10 @@ rewrite(fs)
 			if (fu->bcnt) {
 				sokay = USEBCNT;
 				/* skip to conversion character */
-				for (++p1; index(spec, *p1); ++p1);
+				for (++p1; strchr(spec, *p1); ++p1);
 			} else {
 				/* skip any special chars, field width */
-				while (index(spec + 1, *++p1));
+				while (strchr(spec + 1, *++p1));
 				if (*p1 == '.' && isdigit(*++p1)) {
 					sokay = USEPREC;
 					prec = atoi(p1);

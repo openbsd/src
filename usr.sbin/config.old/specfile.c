@@ -1,4 +1,4 @@
-/*	$OpenBSD: specfile.c,v 1.2 1997/01/12 07:43:37 downsj Exp $	*/
+/*	$OpenBSD: specfile.c,v 1.3 1997/01/17 07:14:00 millert Exp $	*/
 /*	$NetBSD: specfile.c,v 1.10 1995/08/17 17:22:22 thorpej Exp $	*/
 
 #ifndef lint
@@ -433,7 +433,7 @@ read_file(filename, fatal_on_open, override)
 	    case BEFORE_FILENAME: {
 		kf_name = ns(str);
                 if (strncmp(kf_name, "OPTIONS/", 8) == 0) {
-                    kf_name = ns(index(kf_name, '/') + 1);
+                    kf_name = ns(strchr(kf_name, '/') + 1);
                     is_option++;
                 }
 		parse_state = BEFORE_SPEC;

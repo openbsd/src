@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.3 1996/06/11 12:53:42 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.4 1997/01/17 07:12:47 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.7 1996/06/08 19:48:28 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.3 1996/06/11 12:53:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.4 1997/01/17 07:12:47 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -282,7 +282,7 @@ execute(linebuf, contxt)
 		return(0);
 	}
 	cp2 = word;
-	while (*cp && index(" \t0123456789$^.:/-+*'\"", *cp) == NOSTR)
+	while (*cp && strchr(" \t0123456789$^.:/-+*'\"", *cp) == NOSTR)
 		*cp2++ = *cp++;
 	*cp2 = '\0';
 

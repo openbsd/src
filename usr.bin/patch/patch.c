@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.8 1996/09/24 04:19:28 millert Exp $	*/
+/*	$OpenBSD: patch.c,v 1.9 1997/01/17 07:13:04 millert Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: patch.c,v 1.8 1996/09/24 04:19:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: patch.c,v 1.9 1997/01/17 07:13:04 millert Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -301,7 +301,7 @@ char **argv;
 		Strcpy(rejname, outname);
 #ifndef FLEXFILENAMES
 		{
-		    char *s = rindex(rejname,'/');
+		    char *s = strrchr(rejname,'/');
 
 		    if (!s)
 			s = rejname;

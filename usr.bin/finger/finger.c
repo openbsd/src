@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.5 1997/01/15 23:42:28 millert Exp $	*/
+/*	$OpenBSD: finger.c,v 1.6 1997/01/17 07:12:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -48,7 +48,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)finger.c	5.22 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$OpenBSD: finger.c,v 1.5 1997/01/15 23:42:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: finger.c,v 1.6 1997/01/17 07:12:31 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -188,7 +188,6 @@ userlist(argc, argv)
 	struct utmp user;
 	struct passwd *pw;
 	int dolocal, *used;
-	char *index();
 
 	if (!(used = (int *)calloc((u_int)argc, (u_int)sizeof(int)))) {
 		(void)fprintf(stderr, "finger: out of space.\n");
@@ -197,7 +196,7 @@ userlist(argc, argv)
 
 	/* pull out all network requests */
 	for (i = 0, dolocal = 0, nettail = &nethead; i < argc; i++) {
-		if (!index(argv[i], '@')) {
+		if (!strchr(argv[i], '@')) {
 			dolocal = 1;
 			continue;
 		}

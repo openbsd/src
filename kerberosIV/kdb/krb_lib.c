@@ -1,4 +1,4 @@
-/*	$Id: krb_lib.c,v 1.2 1996/09/16 18:48:51 millert Exp $	*/
+/*	$Id: krb_lib.c,v 1.3 1997/01/17 07:11:52 millert Exp $	*/
 
 /*-
  * Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -108,8 +108,8 @@ kerb_get_principal(name, inst, principal, max, more)
      * preceeded by a backslash. 
      */
     wild = 0;
-    if (index(name, '*') || index(name, '?') ||
-	index(inst, '*') || index(inst, '?'))
+    if (strchr(name, '*') || strchr(name, '?') ||
+	strchr(inst, '*') || strchr(inst, '?'))
 	wild = 1;
 
     if (!wild) {
@@ -214,8 +214,8 @@ kerb_get_dba(name, inst, dba, max, more)
      */
 
     wild = 0;
-    if (index(name, '*') || index(name, '?') ||
-	index(inst, '*') || index(inst, '?'))
+    if (strchr(name, '*') || strchr(name, '?') ||
+	strchr(inst, '*') || strchr(inst, '?'))
 	wild = 1;
 
     if (!wild) {

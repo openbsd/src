@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.13 1996/09/16 02:19:37 millert Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.14 1997/01/17 07:14:04 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -730,7 +730,7 @@ hasquota(fs, type, qfnamep)
 	char **qfnamep;
 {
 	register char *opt;
-	char *cp, *index(), *strtok();
+	char *cp;
 	static char initname, usrname[100], grpname[100];
 	static char buf[BUFSIZ];
 
@@ -741,7 +741,7 @@ hasquota(fs, type, qfnamep)
 	}
 	strcpy(buf, fs->fs_mntops);
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
-		if ((cp = index(opt, '=')))
+		if ((cp = strchr(opt, '=')))
 			*cp++ = '\0';
 		if (type == USRQUOTA && strcmp(opt, usrname) == 0)
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.2 1996/06/26 05:41:49 deraadt Exp $	*/
+/*	$OpenBSD: str.c,v 1.3 1997/01/17 07:13:40 millert Exp $	*/
 /*	$NetBSD: str.c,v 1.7 1995/08/31 22:13:47 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: str.c,v 1.2 1996/06/26 05:41:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.3 1997/01/17 07:13:40 millert Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -141,7 +141,7 @@ bracket(s)
 	default:				/* "[\###*n]" or "[#*n]" */
 		if ((p = strpbrk(s->str + 2, "*]")) == NULL)
 			return (0);
-		if (p[0] != '*' || index(p, ']') == NULL)
+		if (p[0] != '*' || strchr(p, ']') == NULL)
 			return (0);
 		s->str += 1;
 		genseq(s);

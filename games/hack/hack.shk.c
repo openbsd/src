@@ -608,7 +608,7 @@ register struct bill_x *bp;
 		return;
 	if(ESHK(shopkeeper)->billct == BILLSZ ||
 	  ((tmp = shtypes[rooms[ESHK(shopkeeper)->shoproom].rtype-8]) && tmp != obj->olet)
-	  || index("_0", obj->olet)) {
+	  || strchr("_0", obj->olet)) {
 		pline("%s seems not interested.", Monnam(shopkeeper));
 		return;
 	}
@@ -985,7 +985,7 @@ online(x,y) {
 follower(mtmp)
 register struct monst *mtmp;
 {
-	return( mtmp->mtame || index("1TVWZi&, ", mtmp->data->mlet)
+	return( mtmp->mtame || strchr("1TVWZi&, ", mtmp->data->mlet)
 #ifndef QUEST
 		|| (mtmp->isshk && ESHK(mtmp)->following)
 #endif QUEST

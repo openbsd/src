@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcmd1.c,v 1.3 1996/06/26 05:43:15 deraadt Exp $	*/
+/*	$OpenBSD: lcmd1.c,v 1.4 1997/01/17 07:13:51 millert Exp $	*/
 /*	$NetBSD: lcmd1.c,v 1.6 1996/02/08 20:45:00 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lcmd1.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lcmd1.c,v 1.3 1996/06/26 05:43:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lcmd1.c,v 1.4 1997/01/17 07:13:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ register struct value *a;
 			*pp = a->v_str;
 		*pp = 0;
 		shf = *(sh = argv);
-		if (*sh = rindex(shf, '/'))
+		if (*sh = strrchr(shf, '/'))
 			(*sh)++;
 		else
 			*sh = shf;

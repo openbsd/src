@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 1996/10/10 09:55:08 michaels Exp $
+/*	$OpenBSD: util.c,v 1.3 1997/01/17 07:12:42 millert Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: util.c,v 1.2 1996/10/10 09:55:08 michaels Exp $
+ * $Id: util.c,v 1.3 1997/01/17 07:12:42 millert Exp $
  */
 
 
@@ -162,7 +162,7 @@ patprep(name)
 
 	/* skip trailing metacharacters */
 	for (; p >= name; p--)
-		if (index(LOCATE_REG, *p) == NULL)
+		if (strchr(LOCATE_REG, *p) == NULL)
 			break;
 
 	/* 
@@ -172,7 +172,7 @@ patprep(name)
 	 *        |----< p
 	 */
 	if (p >= name && 
-	    (index(p, '[') != NULL || index(p, ']') != NULL)) {
+	    (strchr(p, '[') != NULL || strchr(p, ']') != NULL)) {
 		for (p = name; *p != '\0'; p++)
 			if (*p == ']' || *p == '[')
 				break;
@@ -183,7 +183,7 @@ patprep(name)
 		 * '*\*[a-z]'
 		 *    |-------< p
 		 */
-		if (p >= name && index(LOCATE_REG, *p) != NULL)
+		if (p >= name && strchr(LOCATE_REG, *p) != NULL)
 			p = name - 1;
 	}
 	
@@ -193,7 +193,7 @@ patprep(name)
 
 	else {
 		for (endmark = p; p >= name; p--)
-			if (index(LOCATE_REG, *p) != NULL)
+			if (strchr(LOCATE_REG, *p) != NULL)
 				break;
 		for (++p;
 		    (p <= endmark) && subp < (globfree + sizeof(globfree));)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.2 1996/06/26 05:39:38 deraadt Exp $	*/
+/*	$OpenBSD: ci.c,v 1.3 1997/01/17 07:13:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -145,7 +145,7 @@
 #include <ci.h>
 #include <del.h>
 
-char *index(),*getenv(),*rindex();
+char *getenv();
 extern char _argbreak;
 long atol();
 double atof();
@@ -295,7 +295,7 @@ char *cmdfpath;			/* search list for command files */
     /* check for redirection of output */
 
     if (!ciexit) {
-	outname = rindex (p,'>');
+	outname = strrchr (p,'>');
 	    if (outname) {
             if (outname == p || *(outname+1) == 0
              || ((*(outname-1) != ' ') && (*(outname-1) != '\t'))) {
@@ -383,7 +383,7 @@ char *cmdfpath;			/* search list for command files */
     	  break;
 
     	default:		/* list cmds, etc. */
-    	  equals = index (cmd,'=');
+    	  equals = strchr (cmd,'=');
     	  if (equals == cmd)  cmd++;
 
     	  if (equals) {
@@ -397,7 +397,7 @@ char *cmdfpath;			/* search list for command files */
 		*equals = '=';	/* if user doesn't want extra =, kill */
 		equals = 0;
 	  }
-    	  star = index (cmd,'*');
+    	  star = strchr (cmd,'*');
     	  if (star)  *star = 0;
     	  if (star && equals) {	/* list vars */
     	    printf ("\n");
@@ -555,7 +555,7 @@ char *topic,*helppath;
   	}
   }
   else {				/* chop at * */
-  	star = index (topic,'*');
+  	star = strchr (topic,'*');
   	if (star)  *star = 0;
   }
 
@@ -787,7 +787,7 @@ char *arg;
   	eptr->ci_ufloat = atof (arg);
   	break;
   case ci_tbool:
-  	eptr->ci_ubool = (index("yYtT",*arg) != 0);
+  	eptr->ci_ubool = (strchr("yYtT",*arg) != 0);
   	break;
   case ci_tcint:
   	*(eptr->ci_ucint.ci_ival) =

@@ -1,6 +1,6 @@
-/*	$OpenBSD: plist.c,v 1.2 1996/06/04 08:43:45 niklas Exp $	*/
+/*	$OpenBSD: plist.c,v 1.3 1997/01/17 07:14:16 millert Exp $	*/
 #ifndef lint
-static const char *rcsid = "$OpenBSD: plist.c,v 1.2 1996/06/04 08:43:45 niklas Exp $";
+static const char *rcsid = "$OpenBSD: plist.c,v 1.3 1997/01/17 07:14:16 millert Exp $";
 #endif
 
 /*
@@ -430,7 +430,7 @@ delete_hierarchy(char *dir, Boolean ign_err, Boolean nukedirs)
     if (!nukedirs)
 	return 0;
     while (cp2) {
-	if ((cp2 = rindex(cp1, '/')) != NULL)
+	if ((cp2 = strrchr(cp1, '/')) != NULL)
 	    *cp2 = '\0';
 	if (!isemptydir(dir))
 	    return 0;

@@ -41,7 +41,7 @@
 
 #ifndef	lint
 static	char	sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipt.c,v 1.6 1996/10/08 07:33:36 niklas Exp $";
+static	char	rcsid[] = "$Id: ipt.c,v 1.7 1997/01/17 07:14:08 millert Exp $";
 #endif
 
 extern	int	fr_check();
@@ -131,14 +131,14 @@ char *argv[];
 			/*
 			 * treat both CR and LF as EOL
 			 */
-			if ((s = index(line, '\n')))
+			if ((s = strchr(line, '\n')))
 				*s = '\0';
-			if ((s = index(line, '\r')))
+			if ((s = strchr(line, '\r')))
 				*s = '\0';
 			/*
 			 * # is comment marker, everything after is a ignored
 			 */
-			if ((s = index(line, '#')))
+			if ((s = strchr(line, '#')))
 				*s = '\0';
 
 			if (!*line)

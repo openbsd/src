@@ -1,4 +1,4 @@
-/*	$OpenBSD: hayes.c,v 1.4 1996/11/03 18:33:02 millert Exp $	*/
+/*	$OpenBSD: hayes.c,v 1.5 1997/01/17 07:13:36 millert Exp $	*/
 /*	$NetBSD: hayes.c,v 1.5 1996/11/01 23:56:33 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: hayes.c,v 1.4 1996/11/03 18:33:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: hayes.c,v 1.5 1997/01/17 07:13:36 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -304,8 +304,8 @@ hay_sync()
 		ioctl(FD, FIONREAD, &len);
 		if (len) {
 			len = read(FD, dumbuf, min(len, DUMBUFLEN));
-			if (index(dumbuf, '0') || 
-		   	(index(dumbuf, 'O') && index(dumbuf, 'K')))
+			if (strchr(dumbuf, '0') || 
+		   	(strchr(dumbuf, 'O') && strchr(dumbuf, 'K')))
 				return(1);
 #ifdef DEBUG
 			dumbuf[len] = '\0';

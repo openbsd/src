@@ -117,7 +117,7 @@ main(argc, argv)
 			register char *p;
 
 			for (p = keys = optarg; *p; ++p)
-				if (!index(keylist, *p)) {
+				if (!strchr(keylist, *p)) {
 					(void)fprintf(stderr,
 					    "arithmetic: unknown key.\n");
 					exit(1);
@@ -365,7 +365,7 @@ opnum(op)
 {
 	char *p;
 
-	if (op == 0 || (p = index(keylist, op)) == NULL) {
+	if (op == 0 || (p = strchr(keylist, op)) == NULL) {
 		(void)fprintf(stderr,
 		    "arithmetic: bug: op %c not in keylist %s\n", op, keylist);
 		exit(1);

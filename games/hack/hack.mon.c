@@ -170,7 +170,7 @@ register struct monst *mtmp;
 		panic("bad monster %c (%d)",mdat->mlet,mdat->mlevel);
 
 	/* regenerate monsters */
-	if((!(moves%20) || index(MREGEN, mdat->mlet)) &&
+	if((!(moves%20) || strchr(MREGEN, mdat->mlet)) &&
 	    mtmp->mhp < mtmp->mhpmax)
 		mtmp->mhp++;
 
@@ -182,8 +182,8 @@ register struct monst *mtmp;
 		/* Nymphs and Leprechauns do not easily wake up */
 		if(cansee(mtmp->mx,mtmp->my) &&
 			(!Stealth || (mdat->mlet == 'e' && rn2(10))) &&
-			(!index("NL",mdat->mlet) || !rn2(50)) &&
-			(Aggravate_monster || index("d1", mdat->mlet)
+			(!strchr("NL",mdat->mlet) || !rn2(50)) &&
+			(Aggravate_monster || strchr("d1", mdat->mlet)
 				|| (!rn2(7) && !mtmp->mimic)))
 			mtmp->msleep = 0;
 		else return(0);
@@ -196,7 +196,7 @@ register struct monst *mtmp;
 	if(mtmp->mconf && !rn2(50)) mtmp->mconf = 0;
 
 	/* some monsters teleport */
-	if(mtmp->mflee && index("tNL", mdat->mlet) && !rn2(40)){
+	if(mtmp->mflee && strchr("tNL", mdat->mlet) && !rn2(40)){
 		rloc(mtmp);
 		return(0);
 	}
@@ -219,7 +219,7 @@ register struct monst *mtmp;
 		mtmp->mflee ||
 		mtmp->mconf ||
 		(mtmp->minvis && !rn2(3)) ||
-		(index("BIuy", mdat->mlet) && !rn2(4)) ||
+		(strchr("BIuy", mdat->mlet) && !rn2(4)) ||
 		(mdat->mlet == 'L' && !u.ugold && (mtmp->mgold || rn2(2))) ||
 		(!mtmp->mcansee && !rn2(4)) ||
 		mtmp->mpeaceful
@@ -229,7 +229,7 @@ register struct monst *mtmp;
 			return(tmp == 2);
 	}
 
-	if(!index("Ea", mdat->mlet) && nearby &&
+	if(!strchr("Ea", mdat->mlet) && nearby &&
 	 !mtmp->mpeaceful && u.uhp > 0 && !scared) {
 		if(mhitu(mtmp))
 			return(1);	/* monster died (e.g. 'y' or 'F') */
@@ -299,7 +299,7 @@ register struct monst *mtmp;
 	}
 
 	/* spit fire ('D') or use a wand ('1') when appropriate */
-	if(index("D1", msym))
+	if(strchr("D1", msym))
 		inrange(mtmp);
 
 	if(msym == 'U' && !mtmp->mcan && canseemon(mtmp) &&
@@ -316,7 +316,7 @@ not_special:
 	appr = 1;
 	if(mtmp->mflee) appr = -1;
 	if(mtmp->mconf || Invis ||  !mtmp->mcansee ||
-		(index("BIy", msym) && !rn2(3)))
+		(strchr("BIy", msym) && !rn2(3)))
 		appr = 0;
 	omx = mtmp->mx;
 	omy = mtmp->my;
@@ -344,8 +344,8 @@ not_special:
 	}
 
 	/* look for gold or jewels nearby */
-	likegold = (index("LOD", msym) != NULL);
-	likegems = (index("ODu", msym) != NULL);
+	likegold = (strchr("LOD", msym) != NULL);
+	likegems = (strchr("ODu", msym) != NULL);
 	likeobjs = mtmp->mhide;
 #define	SRCHRADIUS	25
 	{ xchar mind = SRCHRADIUS;		/* not too far away */
@@ -384,7 +384,7 @@ not_special:
 	cnt = mfndpos(mtmp,poss,info,
 		msym == 'u' ? NOTONL :
 		(msym == '@' || msym == '1') ? (ALLOW_SSM | ALLOW_TRAPS) :
-		index(UNDEAD, msym) ? NOGARLIC : ALLOW_TRAPS);
+		strchr(UNDEAD, msym) ? NOGARLIC : ALLOW_TRAPS);
 		/* ALLOW_ROCK for some monsters ? */
 	chcnt = 0;
 	chi = -1;
@@ -687,7 +687,7 @@ register struct monst *mtmp;
 	    extern char fut_geno[];
 	    u.nr_killed[tmp]++;
 	    if((nk = u.nr_killed[tmp]) > MAXMONNO &&
-		!index(fut_geno, mdat->mlet))
+		!strchr(fut_geno, mdat->mlet))
 		    charcat(fut_geno,  mdat->mlet);
 	}
 
@@ -700,9 +700,9 @@ register struct monst *mtmp;
 	/* give experience points */
 	tmp = 1 + mdat->mlevel * mdat->mlevel;
 	if(mdat->ac < 3) tmp += 2*(7 - mdat->ac);
-	if(index("AcsSDXaeRTVWU&In:P", mdat->mlet))
+	if(strchr("AcsSDXaeRTVWU&In:P", mdat->mlet))
 		tmp += 2*mdat->mlevel;
-	if(index("DeV&P",mdat->mlet)) tmp += (7*mdat->mlevel);
+	if(strchr("DeV&P",mdat->mlet)) tmp += (7*mdat->mlevel);
 	if(mdat->mlevel > 6) tmp += 50;
 	if(mdat->mlet == ';') tmp += 1000;
 
@@ -753,11 +753,11 @@ register struct monst *mtmp;
 		stackobj(fobj);
 	} else
 #endif	NOWORM
-	if(!letter(tmp) || (!index("mw", tmp) && !rn2(3))) tmp = 0;
+	if(!letter(tmp) || (!strchr("mw", tmp) && !rn2(3))) tmp = 0;
 
 	if(ACCESSIBLE(levl[x][y].typ))	/* might be mimic in wall or dead eel*/
 	    if(x != u.ux || y != u.uy)	/* might be here after swallowed */
-		if(index("NTVm&",mdat->mlet) || rn2(5)) {
+		if(strchr("NTVm&",mdat->mlet) || rn2(5)) {
 		register struct obj *obj2 = mkobj_at(tmp,x,y);
 		if(cansee(x,y))
 			atl(x,y,obj2->olet);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.3 1996/06/26 05:37:21 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.4 1997/01/17 07:12:57 millert Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.3 1996/06/26 05:37:21 deraadt Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.4 1997/01/17 07:12:57 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -434,7 +434,7 @@ inetprint(in, port, proto)
 	int width;
 
 	sprintf(line, "%.*s.", (Aflag && !nflag) ? 12 : 16, inetname(in));
-	cp = index(line, '\0');
+	cp = strchr(line, '\0');
 	if (!nflag && port)
 		sp = getservbyport((int)port, proto);
 	if (sp || port == 0)
@@ -464,7 +464,7 @@ inetname(inp)
 	if (first && !nflag) {
 		first = 0;
 		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
-		    (cp = index(domain, '.')))
+		    (cp = strchr(domain, '.')))
 			(void) strcpy(domain, cp + 1);
 		else
 			domain[0] = 0;
@@ -482,7 +482,7 @@ inetname(inp)
 		if (cp == 0) {
 			hp = gethostbyaddr((char *)inp, sizeof (*inp), AF_INET);
 			if (hp) {
-				if ((cp = index(hp->h_name, '.')) &&
+				if ((cp = strchr(hp->h_name, '.')) &&
 				    !strcmp(cp + 1, domain))
 					*cp = 0;
 				cp = hp->h_name;

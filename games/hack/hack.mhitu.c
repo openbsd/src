@@ -63,11 +63,11 @@ register struct monst *mtmp;
 		mtmp->minvis = 0;
 		pmon(mtmp);
 	}
-	if(!index("1&DuxynNF",mdat->mlet))
+	if(!strchr("1&DuxynNF",mdat->mlet))
 		tmp = hitu(mtmp,d(mdat->damn,mdat->damd));
 	else
 		tmp = 0;
-	if(index(UNDEAD, mdat->mlet) && midnight())
+	if(strchr(UNDEAD, mdat->mlet) && midnight())
 		tmp += hitu(mtmp,d(mdat->damn,mdat->damd));
 
 	ctmp = tmp && !mtmp->mcan &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: t3000.c,v 1.3 1996/06/26 05:40:54 deraadt Exp $	*/
+/*	$OpenBSD: t3000.c,v 1.4 1997/01/17 07:13:37 millert Exp $	*/
 /*	$NetBSD: t3000.c,v 1.3 1995/10/29 00:49:57 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: t3000.c,v 1.3 1996/06/26 05:40:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: t3000.c,v 1.4 1997/01/17 07:13:37 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -298,8 +298,8 @@ if (len == 0) len = 1;
 			buf[len] = '\0';
 			printf("t3000_sync: (\"%s\")\n\r", buf);
 #endif
-			if (index(buf, '0') || 
-		   	   (index(buf, 'O') && index(buf, 'K')))
+			if (strchr(buf, '0') || 
+		   	   (strchr(buf, 'O') && strchr(buf, 'K')))
 				return(1);
 		}
 		/*

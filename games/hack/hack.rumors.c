@@ -10,7 +10,6 @@ static char rcsid[] = "$NetBSD: hack.rumors.c,v 1.3 1995/03/23 08:31:24 cgd Exp 
 #include	"hack.h"		/* for RUMORFILE and BSD (index) */
 #define	CHARSZ	8			/* number of bits in a char */
 extern long *alloc();
-extern char *index();
 int n_rumors = 0;
 int n_used_rumors = -1;
 char *usedbits;
@@ -29,7 +28,7 @@ skipline(rumf) register FILE *rumf; {
 char line[COLNO];
 	while(1) {
 		if(!fgets(line, sizeof(line), rumf)) return(0);
-		if(index(line, '\n')) return(1);
+		if(strchr(line, '\n')) return(1);
 	}
 }
 
@@ -37,7 +36,7 @@ outline(rumf) register FILE *rumf; {
 char line[COLNO];
 register char *ep;
 	if(!fgets(line, sizeof(line), rumf)) return;
-	if((ep = index(line, '\n')) != 0) *ep = 0;
+	if((ep = strchr(line, '\n')) != 0) *ep = 0;
 	pline("This cookie has a scrap of paper inside! It reads: ");
 	pline(line);
 }

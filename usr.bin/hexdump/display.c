@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.3 1996/06/26 05:34:17 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.4 1997/01/17 07:12:37 millert Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: display.c,v 1.3 1996/06/26 05:34:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.4 1997/01/17 07:12:37 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -201,7 +201,7 @@ bpad(pr)
 	pr->flags = F_BPAD;
 	*pr->cchar = 's';
 	for (p1 = pr->fmt; *p1 != '%'; ++p1);
-	for (p2 = ++p1; *p1 && index(spec, *p1); ++p1);
+	for (p2 = ++p1; *p1 && strchr(spec, *p1); ++p1);
 	while (*p2++ = *p1++);
 }
 

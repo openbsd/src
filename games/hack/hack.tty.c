@@ -216,7 +216,7 @@ register int c;
 	while((c = readchar()) != '\n') {
 	    if(flags.cbreak) {
 		if(c == ' ') break;
-		if(s && index(s,c)) {
+		if(s && strchr(s,c)) {
 			morc = c;
 			break;
 		}

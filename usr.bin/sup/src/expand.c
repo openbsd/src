@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.2 1996/06/26 05:39:40 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.3 1997/01/17 07:13:20 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -134,7 +134,7 @@ static void glob(as)
 			while (*pathp) pathp++;
 		}
 	}
-	while (*cs == 0 || index(globchars, *cs) == 0) {
+	while (*cs == 0 || strchr(globchars, *cs) == 0) {
 		if (*cs == 0) {
 			if (lstat(path, &stb) >= 0) addone(path, "");
 			goto endit;

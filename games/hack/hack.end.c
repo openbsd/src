@@ -95,11 +95,11 @@ register char *st1;
 	if(*st1 == 'd' && st1[1] == 'r') killer = "drowning"; else
 	if(*st1 == 'p') killer = "panic"; else
 	if(*st1 == 't') killer = "trickery"; else
-	if(!index("bcd", *st1)) killer = st1;
+	if(!strchr("bcd", *st1)) killer = st1;
 	paybill();
 	clearlocks();
 	if(flags.toplin == 1) more();
-	if(index("bcds", *st1)){
+	if(strchr("bcds", *st1)){
 #ifdef WIZARD
 	    if(!wizard)
 #endif WIZARD
@@ -426,7 +426,7 @@ char linebuf[BUFSZ];
 	if(killed) Sprintf(eos(linebuf), " by %s%s",
 	  (!strncmp(t1->death, "trick", 5) || !strncmp(t1->death, "the ", 4))
 		? "" :
-	  index(vowels,*t1->death) ? "an " : "a ",
+	  strchr(vowels,*t1->death) ? "an " : "a ",
 	  t1->death);
 	Sprintf(eos(linebuf), ".");
 	if(t1->maxhp) {
@@ -538,7 +538,7 @@ prscore(argc,argv) int argc; char **argv; {
 		if(!argv[1][2]){
 			argc--;
 			argv++;
-		} else if(!argv[1][3] && index("CFKSTWX", argv[1][2])) {
+		} else if(!argv[1][3] && strchr("CFKSTWX", argv[1][2])) {
 			argv[1]++;
 			argv[1][0] = '-';
 		} else	argv[1] += 2;
@@ -638,7 +638,7 @@ prscore(argc,argv) int argc; char **argv; {
 	   .hacklog or something in his home directory. */
 	flags.beginner = (total_score < 6000);
 	for(i=0; i<6; i++)
-	    if(!index(totchars, "CFKSTWX"[i])) {
+	    if(!strchr(totchars, "CFKSTWX"[i])) {
 		flags.beginner = 1;
 		if(!pl_character[0]) pl_character[0] = "CFKSTWX"[i];
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stree.c,v 1.2 1996/06/26 05:39:48 deraadt Exp $	*/
+/*	$OpenBSD: stree.c,v 1.3 1997/01/17 07:13:21 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -30,6 +30,9 @@
  **********************************************************************
  * HISTORY
  * $Log: stree.c,v $
+ * Revision 1.3  1997/01/17 07:13:21  millert
+ * r?index -> strr?chr
+ *
  * Revision 1.2  1996/06/26 05:39:48  deraadt
  * rcsid
  *
@@ -277,7 +280,7 @@ char *p;
 		return (x);
 	(void) strncpy(buf, p, sizeof(buf)-1);
 	buf[MAXPATHLEN] = '\0';
-	while ((p = rindex(buf, '/')) != NULL) {
+	while ((p = strrchr(buf, '/')) != NULL) {
 		while (p >= buf && *(p-1) == '/')
 			p--;
 		if (p == buf)

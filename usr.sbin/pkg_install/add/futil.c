@@ -1,7 +1,7 @@
-/*	$OpenBSD: futil.c,v 1.2 1996/06/04 08:43:33 niklas Exp $	*/
+/*	$OpenBSD: futil.c,v 1.3 1997/01/17 07:14:11 millert Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: futil.c,v 1.2 1996/06/04 08:43:33 niklas Exp $";
+static const char *rcsid = "$OpenBSD: futil.c,v 1.3 1997/01/17 07:14:11 millert Exp $";
 #endif
 
 /*
@@ -42,7 +42,7 @@ make_hierarchy(char *dir)
     else
 	cp1 = cp2 = dir;
     while (cp2) {
-	if ((cp2 = index(cp1, '/')) !=NULL )
+	if ((cp2 = strchr(cp1, '/')) !=NULL )
 	    *cp2 = '\0';
 	if (fexists(dir)) {
 	    if (!isdir(dir))

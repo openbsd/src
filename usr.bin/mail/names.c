@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.2 1996/06/11 12:53:45 deraadt Exp $	*/
+/*	$OpenBSD: names.c,v 1.3 1997/01/17 07:12:50 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: names.c,v 1.2 1996/06/11 12:53:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: names.c,v 1.3 1997/01/17 07:12:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -204,7 +204,7 @@ yankword(ap, wbuf)
 		for (cp2 = wbuf; *cp && (*cp2++ = *cp++) != '>';)
 			;
 	else
-		for (cp2 = wbuf; *cp && !index(" \t,(", *cp); *cp2++ = *cp++)
+		for (cp2 = wbuf; *cp && !strchr(" \t,(", *cp); *cp2++ = *cp++)
 			;
 	*cp2 = '\0';
 	return cp;

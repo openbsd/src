@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.5 1996/08/06 18:48:15 deraadt Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.6 1997/01/17 07:13:26 millert Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.5 1996/08/06 18:48:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.6 1997/01/17 07:13:26 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -385,10 +385,10 @@ inetprint(in, port, proto)
 	char *proto;
 {
 	struct servent *sp = 0;
-	char line[80], *cp, *index();
+	char line[80], *cp;
 
 	sprintf(line, "%.*s.", 16, inetname(*in));
-	cp = index(line, '\0');
+	cp = strchr(line, '\0');
 	if (!nflag && port)
 		sp = getservbyport(port, proto);
 	if (sp || port == 0)
@@ -396,7 +396,7 @@ inetprint(in, port, proto)
 	else
 		sprintf(cp, "%d", ntohs((u_short)port));
 	/* pad to full column to clear any garbage */
-	cp = index(line, '\0');
+	cp = strchr(line, '\0');
 	while (cp - line < 22)
 		*cp++ = ' ';
 	*cp = '\0';

@@ -63,7 +63,7 @@ register otyp;
 	otmp->quan = 1;
 	otmp->olet = let;
 	otmp->otyp = otyp;
-	otmp->dknown = index("/=!?*", let) ? 0 : 1;
+	otmp->dknown = strchr("/=!?*", let) ? 0 : 1;
 	switch(let) {
 	case WEAPON_SYM:
 		otmp->quan = (otmp->otyp <= ROCK) ? rn1(6,6) : 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: courier.c,v 1.3 1996/06/26 05:40:52 deraadt Exp $	*/
+/*	$OpenBSD: courier.c,v 1.4 1997/01/17 07:13:34 millert Exp $	*/
 /*	$NetBSD: courier.c,v 1.5 1995/10/29 00:49:50 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: courier.c,v 1.3 1996/06/26 05:40:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: courier.c,v 1.4 1997/01/17 07:13:34 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -280,8 +280,8 @@ coursync()
 			buf[len] = '\0';
 			printf("coursync: (\"%s\")\n\r", buf);
 #endif
-			if (index(buf, '0') || 
-		   	   (index(buf, 'O') && index(buf, 'K')))
+			if (strchr(buf, '0') || 
+		   	   (strchr(buf, 'O') && strchr(buf, 'K')))
 				return(1);
 		}
 		/*

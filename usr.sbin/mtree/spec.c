@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.5 1997/01/03 21:40:51 millert Exp $	*/
+/*	$OpenBSD: spec.c,v 1.6 1997/01/17 07:14:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: spec.c,v 1.5 1997/01/03 21:40:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: spec.c,v 1.6 1997/01/17 07:14:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ spec()
 			continue;
 
 		/* Find end of line. */
-		if ((p = index(buf, '\n')) == NULL)
+		if ((p = strchr(buf, '\n')) == NULL)
 			err("line %d too long", lineno);
 
 		/* See if next line is continuation line. */
@@ -123,7 +123,7 @@ spec()
 				continue;
 			}
 
-		if (index(p, '/'))
+		if (strchr(p, '/'))
 			err("slash character in file name");
 
 		if (!strcmp(p, "..")) {

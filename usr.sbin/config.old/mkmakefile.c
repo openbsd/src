@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.2 1997/01/12 07:43:35 downsj Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.3 1997/01/17 07:13:59 millert Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.29 1996/06/10 02:32:26 thorpej Exp $	*/
 
 /*
@@ -358,7 +358,7 @@ tail(fn)
 {
 	register char *cp;
 
-	cp = rindex(fn, '/');
+	cp = strrchr(fn, '/');
 	if (cp == 0)
 		return (fn);
 	return (cp+1);

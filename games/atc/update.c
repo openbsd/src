@@ -224,7 +224,6 @@ command(pp)
 	PLANE	*pp;
 {
 	static char	buf[50], *bp, *comm_start;
-	char	*index();
 
 	buf[0] = '\0';
 	bp = buf;
@@ -232,7 +231,7 @@ command(pp)
 		(pp->fuel < LOWFUEL) ? '*' : ' ',
 		(pp->dest_type == T_AIRPORT) ? 'A' : 'E', pp->dest_no);
 
-	comm_start = bp = index(buf, '\0');
+	comm_start = bp = strchr(buf, '\0');
 	if (pp->altitude == 0)
 		(void)sprintf(bp, "Holding @ A%d", pp->orig_no);
 	else if (pp->new_dir >= MAXDIR || pp->new_dir < 0)
@@ -240,11 +239,11 @@ command(pp)
 	else if (pp->new_dir != pp->dir)
 		(void)sprintf(bp, "%d", dir_deg(pp->new_dir));
 
-	bp = index(buf, '\0');
+	bp = strchr(buf, '\0');
 	if (pp->delayd)
 		(void)sprintf(bp, " @ B%d", pp->delayd_no);
 
-	bp = index(buf, '\0');
+	bp = strchr(buf, '\0');
 	if (*comm_start == '\0' && 
 	    (pp->status == S_UNMARKED || pp->status == S_IGNORED))
 		strcpy(bp, "---------");

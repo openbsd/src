@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)getNAME.c	5.4 (Berkeley) 1/20/91";*/
-static char rcsid[] = "$Id: getNAME.c,v 1.2 1997/01/15 23:40:59 millert Exp $";
+static char rcsid[] = "$Id: getNAME.c,v 1.3 1997/01/17 07:12:01 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -181,7 +181,7 @@ split(line, name)
 	register char *cp, *dp;
 	char *sp, *sep;
 
-	cp = index(line, '-');
+	cp = strchr(line, '-');
 	if (cp == 0)
 		return;
 	sp = cp + 1;
@@ -191,7 +191,7 @@ split(line, name)
 	while (*sp && (*sp == ' ' || *sp == '\t'))
 		sp++;
 	for (sep = "", dp = line; dp && *dp; dp = cp, sep = "\n") {
-		cp = index(dp, ',');
+		cp = strchr(dp, ',');
 		if (cp) {
 			register char *tp;
 

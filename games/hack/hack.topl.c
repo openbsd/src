@@ -34,7 +34,7 @@ doredotopl(){
 
 redotoplin() {
 	home();
-	if(index(toplines, '\n')) cl_end();
+	if(strchr(toplines, '\n')) cl_end();
 	putstr(toplines);
 	cl_end();
 	tlx = curx;
@@ -129,7 +129,7 @@ register char *line,*arg1,*arg2,*arg3,*arg4,*arg5,*arg6;
 	register int n,n0;
 
 	if(!line || !*line) return;
-	if(!index(line, '%')) (void) strcpy(pbuf,line); else
+	if(!strchr(line, '%')) (void) strcpy(pbuf,line); else
 	(void) sprintf(pbuf,line,arg1,arg2,arg3,arg4,arg5,arg6);
 	if(flags.toplin == 1 && !strcmp(pbuf, toplines)) return;
 	nscr();		/* %% */

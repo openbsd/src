@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.12 1997/01/15 23:41:02 millert Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.13 1997/01/17 07:12:08 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -609,7 +609,7 @@ void
 setup_term(fd)
 	int fd;
 {
-	register char *cp = index(term+ENVSIZE, '/');
+	register char *cp = strchr(term+ENVSIZE, '/');
 	char *speed;
 	struct termios tt;
 
@@ -618,7 +618,7 @@ setup_term(fd)
 	if (cp) {
 		*cp++ = '\0';
 		speed = cp;
-		cp = index(speed, '/');
+		cp = strchr(speed, '/');
 		if (cp)
 			*cp++ = '\0';
 		cfsetspeed(&tt, atoi(speed));
@@ -632,7 +632,7 @@ setup_term(fd)
 	if (cp) {
 		*cp++ = '\0';
 		speed = cp;
-		cp = index(speed, '/');
+		cp = strchr(speed, '/');
 		if (cp)
 			*cp++ = '\0';
 		tcgetattr(fd, &tt);

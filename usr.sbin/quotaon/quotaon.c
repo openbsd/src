@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quotaon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: quotaon.c,v 1.7 1996/05/04 12:28:18 deraadt Exp $";
+static char *rcsid = "$Id: quotaon.c,v 1.8 1997/01/17 07:14:19 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -69,14 +69,14 @@ main(argc, argv)
 	char **argv;
 {
 	register struct fstab *fs;
-	char *qfnp, *whoami, *rindex();
+	char *qfnp, *whoami;
 	long argnum, done = 0;
 	int i, offmode = 0, errs = 0;
 	extern char *optarg;
 	extern int optind;
 	int ch;
 
-	whoami = rindex(*argv, '/') + 1;
+	whoami = strrchr(*argv, '/') + 1;
 	if (whoami == (char *)1)
 		whoami = *argv;
 	if (strcmp(whoami, "quotaoff") == 0)
@@ -206,7 +206,7 @@ hasquota(fs, type, qfnamep)
 	char **qfnamep;
 {
 	register char *opt;
-	char *cp, *index(), *strtok();
+	char *cp;
 	static char initname, usrname[100], grpname[100];
 	static char buf[BUFSIZ];
 
@@ -217,7 +217,7 @@ hasquota(fs, type, qfnamep)
 	}
 	strcpy(buf, fs->fs_mntops);
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
-		if (cp = index(opt, '='))
+		if (cp = strchr(opt, '='))
 			*cp++ = '\0';
 		if (type == USRQUOTA && strcmp(opt, usrname) == 0)
 			break;

@@ -117,12 +117,12 @@ extern char readchar();
 
 	printf("\nAre you an experienced player? [ny] ");
 
-	while(!index("ynYN \n\004", (exper = readchar())))
+	while(!strchr("ynYN \n\004", (exper = readchar())))
 		bell();
 	if(exper == '\004')		/* Give him an opportunity to get out */
 		end_of_input();
 	printf("%c\n", exper);		/* echo */
-	if(index("Nn \n", exper)) {
+	if(strchr("Nn \n", exper)) {
 		exper = 0;
 		goto beginner;
 	}
@@ -321,7 +321,7 @@ register char *ep = getenv("INVENT");
 register int type;
 	while(ep && *ep) {
 		type = atoi(ep);
-		ep = index(ep, ',');
+		ep = strchr(ep, ',');
 		if(ep) while(*ep == ',' || *ep == ' ') ep++;
 		if(type <= 0 || type > NROFOBJECTS) continue;
 		trop->trotyp = type;
@@ -343,7 +343,7 @@ register int type;
 
 plnamesuffix() {
 register char *p;
-	if(p = rindex(plname, '-')) {
+	if(p = strrchr(plname, '-')) {
 		*p = 0;
 		pl_character[0] = p[1];
 		pl_character[1] = 0;
@@ -360,7 +360,7 @@ char pc;
 		/* so that rolesyms[] is defined */
 	register char *cp;
 
-	if(cp = index(rolesyms, pc))
+	if(cp = strchr(rolesyms, pc))
 		return(cp - rolesyms);
 	return(-1);
 }

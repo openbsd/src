@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.5 1997/01/15 23:44:32 millert Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.6 1997/01/17 07:14:32 millert Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.5 1997/01/15 23:44:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: makedbm.c,v 1.6 1997/01/17 07:14:32 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -208,7 +208,7 @@ create_database(infile,database,
 	}
 	snprintf(db_outfile, sizeof(db_outfile), "%s%s", database, YPDB_SUFFIX);
 
-	slash = rindex(database, '/');
+	slash = strrchr(database, '/');
 	if (slash != NULL) 
 		slash[1] = 0; 			/* truncate to dir */
 	else

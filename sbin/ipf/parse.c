@@ -34,7 +34,7 @@
 
 #ifndef	lint
 static	char	sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: parse.c,v 1.7 1996/10/08 07:33:32 niklas Exp $";
+static	char	rcsid[] = "$Id: parse.c,v 1.8 1997/01/17 07:12:18 millert Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -423,7 +423,7 @@ char *to;
 	int	r = 0;
 	char	*s;
 
-	s = index(to, ':');
+	s = strchr(to, ':');
 	fdp->fd_ifp = NULL;
 	if (s) {
 		*s++ = '\0';
@@ -465,13 +465,13 @@ u_char	*cp;
 	/*
 	 * is it possibly hostname/num ?
 	 */
-	if ((s = index(**seg, '/'))) {
+	if ((s = strchr(**seg, '/'))) {
 		*s++ = '\0';
 		if (!isdigit(*s))
 			return -1;
-		if (index(s, '.'))
+		if (strchr(s, '.'))
 			*msk = inet_addr(s);
-		if (!index(s, '.') && !index(s, 'x')) {
+		if (!strchr(s, '.') && !strchr(s, 'x')) {
 			/*
 			 * set x most significant bits
 			 */
@@ -651,7 +651,7 @@ u_char *mask;
 			fp = &tcpfm;
 			continue;
 		}
-		if (!(t = index(flagset, *s))) {
+		if (!(t = strchr(flagset, *s))) {
 			(void)fprintf(stderr, "unknown flag (%c)\n", *s);
 			return 0;
 		}

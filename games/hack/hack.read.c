@@ -195,9 +195,9 @@ doread() {
 	    pline("What monster do you want to genocide (Type the letter)? ");
 			getlin(buf);
 		} while(strlen(buf) != 1 || !monstersym(*buf));
-		if(!index(fut_geno, *buf))
+		if(!strchr(fut_geno, *buf))
 			charcat(fut_geno, *buf);
-		if(!index(genocided, *buf))
+		if(!strchr(genocided, *buf))
 			charcat(genocided, *buf);
 		else {
 			pline("Such monsters do not exist in this world.");
@@ -398,7 +398,7 @@ doread() {
 		for(mtmp = fmon; mtmp; mtmp = mtmp->nmon) {
 		    if(dist(mtmp->mx,mtmp->my) < 3) {
 			mtmp->mhp -= num;
-			if(index("FY", mtmp->data->mlet))
+			if(strchr("FY", mtmp->data->mlet))
 			    mtmp->mhp -= 3*num;	/* this might well kill 'F's */
 			if(mtmp->mhp < 1) {
 			    killed(mtmp);
@@ -532,7 +532,7 @@ register char ch;
 	/*
 	 * can't genocide certain monsters
 	 */
-	if (index("12 &:", ch))
+	if (strchr("12 &:", ch))
 		return FALSE;
 
 	if (ch == pm_eel.mlet)

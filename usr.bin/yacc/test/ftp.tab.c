@@ -1,6 +1,6 @@
 #ifndef lint
 /*static char yysccsid[] = "from: @(#)yaccpar	1.9 (Berkeley) 02/21/93";*/
-static char yyrcsid[] = "$OpenBSD: ftp.tab.c,v 1.2 1996/04/21 23:45:32 deraadt Exp $";
+static char yyrcsid[] = "$OpenBSD: ftp.tab.c,v 1.3 1997/01/17 07:13:55 millert Exp $";
 #endif
 #include <stdlib.h>
 #define YYBYACC 1
@@ -16,7 +16,7 @@ static char yyrcsid[] = "$OpenBSD: ftp.tab.c,v 1.2 1996/04/21 23:45:32 deraadt E
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";*/
-static char rcsid[] = "$Id: ftp.tab.c,v 1.2 1996/04/21 23:45:32 deraadt Exp $";
+static char rcsid[] = "$Id: ftp.tab.c,v 1.3 1997/01/17 07:13:55 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,7 +60,6 @@ static	int cmd_bytesz;
 char	cbuf[512];
 char	*fromname;
 
-char	*index();
 #line 65 "ftp.tab.c"
 #define A 257
 #define B 258
@@ -586,7 +585,7 @@ yylex()
 			if (strncasecmp(cbuf, "PASS", 4) != NULL)
 				setproctitle("%s: %s", proctitle, cbuf);
 #endif /* SETPROCTITLE */
-			if ((cp = index(cbuf, '\r'))) {
+			if ((cp = strchr(cbuf, '\r'))) {
 				*cp++ = '\n';
 				*cp = '\0';
 			}

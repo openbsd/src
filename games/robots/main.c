@@ -76,7 +76,7 @@ char	**av;
 				else {
 					Scorefile = av[0];
 # ifdef	FANCY
-					sp = rindex(Scorefile, '/');
+					sp = strrchr(Scorefile, '/');
 					if (sp == NULL)
 						sp = Scorefile;
 					if (strcmp(sp, "pattern_roll") == 0)
