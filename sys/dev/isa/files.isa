@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.41 1998/07/05 07:20:00 downsj Exp $
+#	$OpenBSD: files.isa,v 1.42 1998/09/11 10:02:58 fgsch Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -75,9 +75,8 @@ attach	bt at isa
 file	dev/isa/bt.c			bt needs-count
 
 # Adaptec AIC-6[32]60 ICs
-device	aic: scsi
-attach	aic at isa
-file	dev/isa/aic6360.c		aic
+attach	aic at isa with aic_isa: isa_dma
+file	dev/isa/aic_isa.c		aic_isa
 
 # Adaptec AHA-154x family
 device	aha: scsi, isa_dma
@@ -270,11 +269,11 @@ file	dev/isa/gus.c			gus needs-flag
 #
 # PCMCIA PCIC (i82365SL and compatibles):
 #
-device pcicmaster { [irq = -1], [iomem = -1], [iosiz = 0] }
-attach pcicmaster at isa
-device pcic: pcmciabus
-attach pcic at pcicmaster
-file dev/isa/pcmcia_pcic.c  pcic | pcicmaster
+#device pcicmaster { [irq = -1], [iomem = -1], [iosiz = 0] }
+#attach pcicmaster at isa
+#device pcic: pcmciabus
+#attach pcic at pcicmaster
+#file dev/isa/pcmcia_pcic.c  pcic | pcicmaster
 
-file dev/isa/pcmcia_isa.c  pcmcia
+#file dev/isa/pcmcia_isa.c  pcmcia
 
