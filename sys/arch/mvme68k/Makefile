@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1995/11/07 08:48:35 deraadt Exp $
+#	$Id: Makefile,v 1.3 1995/11/07 21:16:25 deraadt Exp $
 
 # from: @(#)Makefile	8.1 (Berkeley) 6/11/93
 #
@@ -25,7 +25,7 @@ tags:
 		>> tags
 	sort -o tags tags
 
-SUBDIR+=stand
+SUBDIR+=stand ../m68k
 
 obj:	_SUBDIRUSE
 
