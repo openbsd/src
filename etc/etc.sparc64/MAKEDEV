@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.11 2001/09/05 14:26:45 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.12 2001/09/05 14:31:51 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -282,8 +282,7 @@ cgthree*)M cgthree$U c 55 $U 666;;
 cgsix*)M cgsix$U c 67 $U 666;;
 cgfourteen*)M cgfourteen$U c 99 $U 666;;
 tcx*)M tcx$U c 109 $U 666;;
-fd)
-	RMlist="mkdir -p fd;$RMlist" n=0
+fd)RMlist="mkdir -p fd;$RMlist" n=0
 	while [ $n -lt 64 ];do M fd/$n c 24 $n;n=$(($n+1));done
 	MKlist="$MKlist;chmod 555 fd";;
 st*)
@@ -342,8 +341,7 @@ vnd*)
     dodisk vnd $U 8 110 $U 0
 	dodisk svnd $U 8 110 $U 128;;
 uk*)M uk$U c 60 $U 640 operator;;
-ss*)
-	M ss$U c 59 $U 440 operator
+ss*)M ss$U c 59 $U 440 operator
 	RMlist="$RMlist scan$U"
 	MKlist="$MKlist;umask 77;ln -s ss$U scan$U";;
 st*)
@@ -354,20 +352,17 @@ st*)
 		M ${pre}rst$U	c 18 $n 660 operator
 		n=$(($n+1))
 	done;;
-ses*)
-	M ses$U c 4 $U 640 operator;;
+ses*)M ses$U c 4 $U 640 operator;;
 ch*)M ch$U c 19 $U 660 operator;;
 lkm)M lkm c 112 0 640 kmem;;
 xfs*)M xfs$U c 51 $U 600;;
-*random)
-	n=0
+*random)n=0
 	for pre in " " s u p a
 	do
 		M ${pre}random c 119 $n 644
 		n=$(($n+1))
 	done;;
-audio*)
-	M sound$U	c 69 $U
+audio*)M sound$U	c 69 $U
 	M mixer$U	c 69 $(($U+16))
 	M audio$U	c 69 $(($U+128))
 	M audioctl$U	c 69 $(($U+192))
@@ -375,20 +370,15 @@ audio*)
 	[ -e mixer ] || ln -s mixer$U mixer
 	[ -e sound ] || ln -s sound$U sound
 	[ -e audioctl ] || ln -s audioctl$U audioctl;;
-pf*)
-	M pf c 73 0 600;;
-altq)
-	RMlist="mkdir -p altq;$RMlist"
+pf*)M pf c 73 0 600;;
+altq)RMlist="mkdir -p altq;$RMlist"
 	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
 		M altq/$d c 74 $U 644
 		U=$(($U+1))
 	done;;
-bpf*)
-	M bpf$U c 105 $U 600;;
-tun*)
-	M tun$U c 105 $U 600;;
-local)
-	test -s $T.local && sh $T.local;;
+bpf*)M bpf$U c 105 $U 600;;
+tun*)M tun$U c 105 $U 600;;
+local)test -s $T.local && sh $T.local;;
 
 *)
 	echo $i: unknown device
