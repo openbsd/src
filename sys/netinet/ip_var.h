@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.16 2001/05/01 09:55:49 provos Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.17 2001/05/20 19:19:57 fgsch Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ struct mbuf *
 void	 ip_stripoptions __P((struct mbuf *, struct mbuf *));
 int	 ip_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 void	 ipintr __P((void));
-void	 ipv4_input __P((struct mbuf *, ...));
+void	 ipv4_input __P((struct mbuf *));
 int	 rip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 void	 rip_init __P((void));
 void	 rip_input __P((struct mbuf *, ...));

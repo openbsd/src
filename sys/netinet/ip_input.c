@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.70 2001/05/20 08:35:11 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.71 2001/05/20 19:19:57 fgsch Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -280,7 +280,7 @@ ipintr()
 		if ((m->m_flags & M_PKTHDR) == 0)
 			panic("ipintr no HDR");
 #endif
-		ipv4_input(m, 0, NULL, 0);
+		ipv4_input(m);
 	}
 }
 
@@ -289,39 +289,20 @@ ipintr()
  * try to reassemble.  Process options.  Pass to next level.
  */
 void
-ipv4_input(struct mbuf *m, ...)
+ipv4_input(m)
+	struct mbuf *m;
 {
 	register struct ip *ip;
 	register struct ipq *fp;
 	struct in_ifaddr *ia;
 	struct ipqent *ipqe;
 	int hlen, mff;
-	va_list ap;
-	int extra;
 #ifdef IPSEC
 	int error, s;
 	struct tdb *tdb;
 	struct tdb_ident *tdbi;
 	struct m_tag *mtag;
 #endif /* IPSEC */
-
-	va_start(ap, m);
-	extra = va_arg(ap, int);
-	va_end(ap);
-
-	if (extra) {
-		struct mbuf *newpacket;
-
-		if (!(newpacket = m_split(m, extra, M_NOWAIT))) {
-			m_freem(m);
-			return;
-		}
-
-		newpacket->m_flags |= m->m_flags;
-		m_freem(m);
-		m = newpacket;
-		extra = 0;
-	}
 
 	/*
 	 * If no IP addresses have been set yet but the interfaces
