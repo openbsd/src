@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.23 1999/10/07 19:15:24 aaron Exp $
+.\"	$OpenBSD: find.1,v 1.24 1999/12/04 22:42:31 millert Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd August 31, 1996
+.Dd December 4, 1999
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -137,6 +137,9 @@ True if the difference between the file last access time and the time
 was started, rounded up to the next full minute, is
 .Ar n
 minutes.
+.It Ic -anewer Ar file
+True if the current file has a more recent last access time than
+.Ar file  .
 .It Ic -atime Ar n
 True if the difference between the file last access time and the time
 .Nm
@@ -150,6 +153,9 @@ information and the time
 was started, rounded up to the next full minute, is
 .Ar n
 minutes.
+.It Ic -cnewer Ar file
+True if the current file has a more recent last change time than
+.Ar file  .
 .It Ic -ctime Ar n
 True if the difference between the time of last change of file status
 information and the time

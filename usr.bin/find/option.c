@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.c,v 1.8 1997/11/28 09:39:17 deraadt Exp $	*/
+/*	$OpenBSD: option.c,v 1.9 1999/12/04 22:42:32 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)option.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: option.c,v 1.8 1997/11/28 09:39:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: option.c,v 1.9 1999/12/04 22:42:32 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,9 +59,11 @@ static OPTION options[] = {
 	{ ")",		N_CLOSEPAREN,	c_closeparen,	O_ZERO },
 	{ "-a",		N_AND,		NULL,		O_NONE },
 	{ "-amin",	N_AMIN,		c_amin,		O_ARGV },
+	{ "-anewer",	N_ANEWER,	c_anewer,	O_ARGV },
 	{ "-and",	N_AND,		NULL,		O_NONE },
 	{ "-atime",	N_ATIME,	c_atime,	O_ARGV },
 	{ "-cmin",	N_CMIN,		c_cmin,		O_ARGV },
+	{ "-cnewer",	N_CNEWER,	c_cnewer,	O_ARGV },
 	{ "-ctime",	N_CTIME,	c_ctime,	O_ARGV },
 	{ "-depth",	N_DEPTH,	c_depth,	O_ZERO },
 	{ "-empty",	N_EMPTY,	c_empty,	O_ZERO },

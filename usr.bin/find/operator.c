@@ -1,4 +1,4 @@
-/*	$OpenBSD: operator.c,v 1.4 1999/01/04 21:36:01 millert Exp $	*/
+/*	$OpenBSD: operator.c,v 1.5 1999/12/04 22:42:32 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,10 +38,11 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)operator.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: operator.c,v 1.4 1999/01/04 21:36:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: operator.c,v 1.5 1999/12/04 22:42:32 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <err.h>
 #include <fts.h>

@@ -1,4 +1,4 @@
-/* *	$OpenBSD: find.h,v 1.7 1997/11/13 08:30:33 deraadt Exp $*/
+/* *	$OpenBSD: find.h,v 1.8 1999/12/04 22:42:31 millert Exp $*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,8 +40,8 @@
 /* node type */
 enum ntype {
 	N_AND = 1, 				/* must start > 0 */
-	N_AMIN, N_ATIME, N_CLOSEPAREN, N_CMIN, N_CTIME, N_DEPTH,
-	N_EMPTY, N_EXEC, N_EXECDIR,
+	N_AMIN, N_ANEWER, N_ATIME, N_CLOSEPAREN, N_CMIN, N_CNEWER, N_CTIME,
+	N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR,
 	N_EXPR, N_FOLLOW, N_FSTYPE, N_GROUP, N_INUM, N_LINKS, N_LS,
 	N_MMIN, N_MAXDEPTH,
 	N_MINDEPTH, N_MTIME, N_NAME, N_NEWER, N_NOGROUP, N_NOT, N_NOUSER,
@@ -69,7 +69,7 @@ typedef struct _plandata {
 		mode_t _m_data;			/* mode mask */
 		nlink_t _l_data;		/* link count */
 		off_t _o_data;			/* file size */
-		time_t _t_data;			/* time value */
+		struct timespec _t_data;	/* time value */
 		uid_t _u_data;			/* uid */
 		short _mt_data;			/* mount flags */
 		struct _plandata *_p_data[2];	/* PLAN trees */
@@ -96,6 +96,8 @@ typedef struct _plandata {
 #define	o_data		p_un._o_data
 #define	p_data		p_un._p_data
 #define	t_data		p_un._t_data
+#define	sec_data	p_un._t_data.tv_sec
+#define	nsec_data	p_un._t_data.tv_nsec
 #define	u_data		p_un._u_data
 #define	e_argv		p_un.ex._e_argv
 #define	e_orig		p_un.ex._e_orig

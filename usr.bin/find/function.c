@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.16 1999/10/04 21:26:10 millert Exp $	*/
+/*	$OpenBSD: function.c,v 1.17 1999/12/04 22:42:32 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.16 1999/10/04 21:26:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.17 1999/12/04 22:42:32 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -134,7 +134,7 @@ find_parsenum(plan, option, vp, endch)
  */
 #define	TIME_CORRECT(p, ttype)						\
 	if ((p)->type == ttype && (p)->flags == F_LESSTHAN)		\
-		++((p)->t_data);
+		++((p)->sec_data);
 
 /*
  * -amin n functions --
@@ -150,7 +150,7 @@ f_amin(plan, entry)
 	extern time_t now;
 
 	COMPARE((now - entry->fts_statp->st_atime +
-	    60 - 1) / 60, plan->t_data);
+	    60 - 1) / 60, plan->sec_data);
 }
 
 PLAN *
@@ -162,7 +162,7 @@ c_amin(arg)
 	ftsoptions &= ~FTS_NOSTAT;
 
 	new = palloc(N_AMIN, f_amin);
-	new->t_data = find_parsenum(new, "-amin", arg, NULL);
+	new->sec_data = find_parsenum(new, "-amin", arg, NULL);
 	TIME_CORRECT(new, N_AMIN);
 	return (new);
 }
@@ -180,7 +180,7 @@ f_atime(plan, entry)
 {
 
 	COMPARE((now - entry->fts_statp->st_atime +
-	    SECSPERDAY - 1) / SECSPERDAY, plan->t_data);
+	    SECSPERDAY - 1) / SECSPERDAY, plan->sec_data);
 }
  
 PLAN *
@@ -192,7 +192,7 @@ c_atime(arg)
 	ftsoptions &= ~FTS_NOSTAT;
 
 	new = palloc(N_ATIME, f_atime);
-	new->t_data = find_parsenum(new, "-atime", arg, NULL);
+	new->sec_data = find_parsenum(new, "-atime", arg, NULL);
 	TIME_CORRECT(new, N_ATIME);
 	return (new);
 }
@@ -211,7 +211,7 @@ f_cmin(plan, entry)
 	extern time_t now;
 
 	COMPARE((now - entry->fts_statp->st_ctime +
-	    60 - 1) / 60, plan->t_data);
+	    60 - 1) / 60, plan->sec_data);
 }
 
 PLAN *
@@ -223,7 +223,7 @@ c_cmin(arg)
 	ftsoptions &= ~FTS_NOSTAT;
 
 	new = palloc(N_CMIN, f_cmin);
-	new->t_data = find_parsenum(new, "-cmin", arg, NULL);
+	new->sec_data = find_parsenum(new, "-cmin", arg, NULL);
 	TIME_CORRECT(new, N_CMIN);
 	return (new);
 }
@@ -241,7 +241,7 @@ f_ctime(plan, entry)
 {
 
 	COMPARE((now - entry->fts_statp->st_ctime +
-	    SECSPERDAY - 1) / SECSPERDAY, plan->t_data);
+	    SECSPERDAY - 1) / SECSPERDAY, plan->sec_data);
 }
  
 PLAN *
@@ -253,7 +253,7 @@ c_ctime(arg)
 	ftsoptions &= ~FTS_NOSTAT;
 
 	new = palloc(N_CTIME, f_ctime);
-	new->t_data = find_parsenum(new, "-ctime", arg, NULL);
+	new->sec_data = find_parsenum(new, "-ctime", arg, NULL);
 	TIME_CORRECT(new, N_CTIME);
 	return (new);
 }
@@ -838,7 +838,7 @@ f_mtime(plan, entry)
 {
 
 	COMPARE((now - entry->fts_statp->st_mtime + SECSPERDAY - 1) /
-	    SECSPERDAY, plan->t_data);
+	    SECSPERDAY, plan->sec_data);
 }
  
 PLAN *
@@ -850,7 +850,7 @@ c_mtime(arg)
 	ftsoptions &= ~FTS_NOSTAT;
 
 	new = palloc(N_MTIME, f_mtime);
-	new->t_data = find_parsenum(new, "-mtime", arg, NULL);
+	new->sec_data = find_parsenum(new, "-mtime", arg, NULL);
 	TIME_CORRECT(new, N_MTIME);
 	return (new);
 }
@@ -869,7 +869,7 @@ f_mmin(plan, entry)
 	extern time_t now;
 
 	COMPARE((now - entry->fts_statp->st_mtime + 60 - 1) /
-	    60, plan->t_data);
+	    60, plan->sec_data);
 }
 
 PLAN *
@@ -881,7 +881,7 @@ c_mmin(arg)
 	ftsoptions &= ~FTS_NOSTAT;
 
 	new = palloc(N_MMIN, f_mmin);
-	new->t_data = find_parsenum(new, "-mmin", arg, NULL);
+	new->sec_data = find_parsenum(new, "-mmin", arg, NULL);
 	TIME_CORRECT(new, N_MMIN);
 	return (new);
 }
@@ -923,7 +923,10 @@ f_newer(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	return (entry->fts_statp->st_mtime > plan->t_data);
+
+	return (entry->fts_statp->st_mtimespec.tv_sec > plan->t_data.tv_sec ||
+	    (entry->fts_statp->st_mtimespec.tv_sec == plan->t_data.tv_sec &&
+	    entry->fts_statp->st_mtimespec.tv_nsec > plan->t_data.tv_nsec));
 }
  
 PLAN *
@@ -938,7 +941,75 @@ c_newer(filename)
 	if (stat(filename, &sb))
 		err(1, "%s", filename);
 	new = palloc(N_NEWER, f_newer);
-	new->t_data = sb.st_mtime;
+	memcpy(&new->t_data, &sb.st_mtimespec, sizeof(struct timespec));
+	return (new);
+}
+ 
+/*
+ * -anewer file functions --
+ *
+ *	True if the current file has been accessed more recently
+ *	then the access time of the file named by the pathname
+ *	file.
+ */
+int
+f_anewer(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+
+	return (entry->fts_statp->st_atimespec.tv_sec > plan->t_data.tv_sec ||
+	    (entry->fts_statp->st_atimespec.tv_sec == plan->t_data.tv_sec &&
+	    entry->fts_statp->st_atimespec.tv_nsec > plan->t_data.tv_nsec));
+}
+ 
+PLAN *
+c_anewer(filename)
+	char *filename;
+{
+	PLAN *new;
+	struct stat sb;
+    
+	ftsoptions &= ~FTS_NOSTAT;
+
+	if (stat(filename, &sb))
+		err(1, "%s", filename);
+	new = palloc(N_NEWER, f_newer);
+	memcpy(&new->t_data, &sb.st_atimespec, sizeof(struct timespec));
+	return (new);
+}
+ 
+/*
+ * -cnewer file functions --
+ *
+ *	True if the current file has been changed more recently
+ *	then the inode change time of the file named by the pathname
+ *	file.
+ */
+int
+f_cnewer(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+
+	return (entry->fts_statp->st_ctimespec.tv_sec > plan->t_data.tv_sec ||
+	    (entry->fts_statp->st_ctimespec.tv_sec == plan->t_data.tv_sec &&
+	    entry->fts_statp->st_ctimespec.tv_nsec > plan->t_data.tv_nsec));
+}
+ 
+PLAN *
+c_cnewer(filename)
+	char *filename;
+{
+	PLAN *new;
+	struct stat sb;
+    
+	ftsoptions &= ~FTS_NOSTAT;
+
+	if (stat(filename, &sb))
+		err(1, "%s", filename);
+	new = palloc(N_NEWER, f_newer);
+	memcpy(&new->t_data, &sb.st_ctimespec, sizeof(struct timespec));
 	return (new);
 }
  
@@ -1376,11 +1447,9 @@ palloc(t, f)
 {
 	PLAN *new;
 
-	if ((new = malloc(sizeof(PLAN)))) {
+	if ((new = calloc(1, sizeof(PLAN)))) {
 		new->type = t;
 		new->eval = f;
-		new->flags = 0;
-		new->next = NULL;
 		return (new);
 	}
 	err(1, NULL);
