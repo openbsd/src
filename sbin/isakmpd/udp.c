@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.16 1999/10/01 14:08:05 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.42 1999/09/30 12:59:27 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.17 2000/01/26 15:22:17 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.45 2000/01/25 06:51:20 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -128,8 +128,7 @@ static struct transport *
 udp_make (struct sockaddr_in *laddr)
 {
   struct udp_transport *t = 0;
-  int s;
-  int on;
+  int s, on;
 
   t = malloc (sizeof *t);
   if (!t)
@@ -164,8 +163,8 @@ udp_make (struct sockaddr_in *laddr)
     {
       log_error ("udp_make: setsockopt (%d, %d, %d, %p, %d)", s, SOL_SOCKET,
 		 (laddr->sin_addr.s_addr == INADDR_ANY
-		   && conf_get_str ("General", "Listen-on"))
-		  ? SO_REUSEPORT : SO_REUSEADDR,
+		  && conf_get_str ("General", "Listen-on"))
+		 ? SO_REUSEPORT : SO_REUSEADDR,
 		 &on, sizeof on);
       goto err;
     }
