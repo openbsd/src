@@ -1,11 +1,16 @@
-# $OpenBSD: Makefile,v 1.2 2003/07/01 06:43:03 niklas Exp $
+# $OpenBSD: Makefile,v 1.3 2003/07/01 07:08:31 niklas Exp $
 
-REGRESS_TARGETS=	test-none test-nover test-single test-minor-1 \
-			test-minor-2 test-major-1 test-major-2 \
-			test-nover-single-1 test-nover-single-2
+.include <bsd.own.mk>
+
+REGRESS_TARGETS=	test-none test-single test-minor-1 test-minor-2 \
+			test-major-1 test-major-2
+.if (${ELF_TOOLCHAIN} == "yes")
+REGRESS_TARGETS+=	test-nover test-nover-single-1 test-nover-single-2
+.endif
 
 .include <bsd.obj.mk>
 
+.if (${ELF_TOOLCHAIN} == "yes")
 DIR_NOVER=${.CURDIR}/../libnover
 
 OBJDIR_NOVER!=	if [ -d $(DIR_NOVER)/${__objdir} ]; then \
@@ -13,6 +18,7 @@ OBJDIR_NOVER!=	if [ -d $(DIR_NOVER)/${__objdir} ]; then \
 		else \
 			echo "$(DIR_NOVER)"; \
 		fi
+.endif
 
 DIR_10=${.CURDIR}/../lib10
 
@@ -57,9 +63,11 @@ clean:
 test-none:	make-lib clean
 	sh ${.CURDIR}/test.sh ${PROGPATH} '%ERROR%'
 
+.if (${ELF_TOOLCHAIN} == "yes")
 test-nover:	make-lib clean
 	cp ${OBJDIR_NOVER}/libtest.so lib/
 	sh ${.CURDIR}/test.sh ${PROGPATH} none
+.endif
 
 test-single:	make-lib clean
 	cp ${OBJDIR_10}/libtest.so.1.0 lib/
@@ -81,6 +89,7 @@ test-major-2:	make-lib clean
 	cp ${OBJDIR_11}/libtest.so.1.1 ${OBJDIR_20}/libtest.so.2.0 lib/
 	sh ${.CURDIR}/test.sh ${PROGPATH} 2.0
 
+.if (${ELF_TOOLCHAIN} == "yes")
 test-nover-single-1:	make-lib clean
 	cp ${OBJDIR_NOVER}/libtest.so ${OBJDIR_10}/libtest.so.1.0 lib/
 	sh ${.CURDIR}/test.sh ${PROGPATH} none
@@ -88,5 +97,6 @@ test-nover-single-1:	make-lib clean
 test-nover-single-2:	make-lib clean
 	cp ${OBJDIR_10}/libtest.so.1.0 ${OBJDIR_NOVER}/libtest.so lib/
 	sh ${.CURDIR}/test.sh ${PROGPATH} none
+.endif
 
 .include <bsd.regress.mk>
