@@ -1,4 +1,4 @@
-/* $OpenBSD: ym.c,v 1.3 1998/12/29 09:10:30 deraadt Exp $ */
+/* $OpenBSD: ym.c,v 1.4 1999/01/02 00:02:48 niklas Exp $ */
 
 
 /*
@@ -134,7 +134,7 @@ ym_attach(sc)
   sc->mic_mute = 1;
   ym_mute(sc, SA3_MIC, sc->mic_mute);
 
-  audio_attach_mi(&ym_hw_if, 0, &sc->sc_ad1848, &sc->sc_dev);
+  audio_attach_mi(&ym_hw_if, &sc->sc_ad1848, &sc->sc_dev);
 }
 
 static __inline int

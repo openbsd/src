@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.5 1998/11/03 21:05:07 downsj Exp $ */
+/*      $OpenBSD: sv.c,v 1.6 1999/01/02 00:02:49 niklas Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -412,7 +412,7 @@ sv_attach(parent, self, aux)
 
   sv_init_mixer(sc);
 
-  audio_attach_mi(&sv_hw_if, 0, sc, &sc->sc_dev);
+  audio_attach_mi(&sv_hw_if, sc, &sc->sc_dev);
 }
 
 #ifdef AUDIO_DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.17 1998/11/03 21:15:00 downsj Exp $	*/
+/*	$OpenBSD: pas.c,v 1.18 1999/01/02 00:02:46 niklas Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -113,20 +114,20 @@ void	pasconf __P((int, int, int, int));
 struct audio_hw_if pas_hw_if = {
 	sbdsp_open,
 	sbdsp_close,
-	NULL,
+	0,
 	sbdsp_query_encoding,
 	sbdsp_set_params,
 	sbdsp_round_blocksize,
-	NULL,
-	sbdsp_dma_init_output,
-	sbdsp_dma_init_input,
-	sbdsp_dma_output,
-	sbdsp_dma_input,
+	0,
+	0,
+	0,
+	0,
+	0,
 	sbdsp_haltdma,
 	sbdsp_haltdma,
 	sbdsp_speaker_ctl,
 	pas_getdev,
-	NULL,
+	0,
 	sbdsp_mixer_set_port,
 	sbdsp_mixer_get_port,
 	sbdsp_mixer_query_devinfo,
@@ -135,8 +136,8 @@ struct audio_hw_if pas_hw_if = {
 	sb_round,
         sb_mappage,
 	sbdsp_get_props,
-	NULL,
-	NULL
+	sbdsp_trigger_output,
+	sbdsp_trigger_input
 };
 
 /* The Address Translation code is used to convert I/O register addresses to
@@ -459,7 +460,7 @@ pasattach(parent, self, aux)
 	sprintf(pas_device.name, "pas,%s", pasnames[sc->model]);
 	sprintf(pas_device.version, "%d", sc->rev);
 
-	audio_attach_mi(&pas_hw_if, 0, &sc->sc_sbdsp, &sc->sc_sbdsp.sc_dev);
+	audio_attach_mi(&pas_hw_if, &sc->sc_sbdsp, &sc->sc_sbdsp.sc_dev);
 }
 
 int

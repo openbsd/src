@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.15 1998/11/20 15:57:19 deraadt Exp $	*/
+/*	$OpenBSD: audio.c,v 1.16 1999/01/02 00:02:39 niklas Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -390,9 +390,8 @@ au_check_ports(sc, ports, mi, cls, name, mname, tbl)
  * probed/attached to the hardware driver.
  */
 void
-audio_attach_mi(ahwp, mhwp, hdlp, dev)
+audio_attach_mi(ahwp, hdlp, dev)
 	struct audio_hw_if *ahwp;
-	struct midi_hw_if *mhwp;
 	void *hdlp;
 	struct device *dev;
 {
@@ -404,14 +403,19 @@ audio_attach_mi(ahwp, mhwp, hdlp, dev)
 		arg.hdl = hdlp;
 		(void)config_found(dev, &arg, audioprint);
 	}
-	if (mhwp != NULL) {
-		arg.type = AUDIODEV_TYPE_MIDI;
-		arg.hwif = mhwp;
-		arg.hdl = hdlp;
-		(void)config_found(dev, &arg, audioprint);
-	}
 }
 
+#include "midi.h"
+
+#if NAUDIO == 0 && (NMIDI > 0 || NMIDIBUS > 0)
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/audioio.h>
+#include <dev/audio_if.h>
+#endif
+
+#if NAUDIO > 0 || (NMIDI > 0 || NMIDIBUS > 0)
 int
 audioprint(aux, pnp)
 	void *aux;
@@ -428,6 +432,12 @@ audioprint(aux, pnp)
 		case AUDIODEV_TYPE_MIDI:
 			type = "midi";
 			break;
+		case AUDIODEV_TYPE_OPL:
+			type = "opl";
+			break;
+		case AUDIODEV_TYPE_MPU:
+			type = "mpu";
+			break;
 		default:
 			panic("audioprint: unknown type %d", arg->type);
 		}
@@ -435,6 +445,8 @@ audioprint(aux, pnp)
 	}
 	return (UNCONF);
 }
+
+#endif /* NAUDIO > 0 || (NMIDI > 0 || NMIDIBUS > 0) */
 
 #ifdef AUDIO_DEBUG
 void	audio_printsc __P((struct audio_softc *));

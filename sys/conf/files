@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.101 1998/12/26 12:35:10 provos Exp $
+#	$OpenBSD: files,v 1.102 1999/01/02 00:02:48 niklas Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -13,14 +13,18 @@ define	audio {}
 define	scsi {}
 define	ifmedia
 define	mii {[phy = -1]}
+define	midibus { }
+define	midisyn
 
 # audio device attributes
 define	mulaw
 define	auconv
 
-# audio device, attaches to audio hardware driver
+# audio and midi devices, attaches to audio hardware driver
 device	audio
 attach	audio at audio
+device	midi
+attach	midi at midibus
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # and fddi.
@@ -97,6 +101,11 @@ file	dev/ic/ne2000.c		ne
 device	com: tty
 file	dev/ic/com.c		com & (com_isa | com_commulti | com_pcmcia | com_pica | com_algor | com_gsc) needs-flag
 
+# OPL2/OPL3 FM synth driver
+device	opl: midibus, midisyn
+file	dev/ic/opl.c			opl
+file	dev/ic/oplinstrs.c		opl
+
 # Cyclades Cyclom multiport serial cards
 device	cy: tty
 file	dev/ic/cy.c		cy & (cy_isa | cy_pci)	needs-flag
@@ -140,6 +149,8 @@ pseudo-device strip: ifnet
 pseudo-device random
 pseudo-device enc: ifnet
 
+pseudo-device sequencer
+
 pseudo-device ksyms
 file	dev/ksyms.c	ksyms needs-flag
 
@@ -169,7 +180,7 @@ file ddb/db_write_cmd.c			ddb
 file ddb/db_usrreq.c			ddb
 file ddb/db_hangman.c			ddb
 file dev/auconv.c			auconv
-file dev/audio.c			audio			needs-flag
+file dev/audio.c			audio | midi |midibus	needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/ic/ncr5380sbc.c		ncr5380sbc
 file dev/ic/ncr53c7xx.c			ncr53c7xx
@@ -178,7 +189,10 @@ file dev/ic/pdq.c			pdq
 file dev/ic/pdq_ifsubr.c		pdq
 file dev/ic/dp8390.c			dp8390nic
 file dev/ic/rtl80x9.c			rtl80x9
+file dev/midi.c				midi | midibus		needs-flag
+file dev/midisyn.c			midisyn
 file dev/mulaw.c			mulaw
+file dev/sequencer.c			sequencer		needs-flag
 file dev/vnd.c				vnd			needs-flag
 file dev/rnd.c
 file isofs/cd9660/cd9660_bmap.c		cd9660

@@ -104,13 +104,35 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/nvram.h>
 #include <i386/isa/timerreg.h>
-#include <i386/isa/spkrreg.h>
+
+#include "pcppi.h"
+#if (NPCPPI > 0)
+#include <dev/isa/pcppivar.h>
+
+#define __BROKEN_INDIRECT_CONFIG /* XXX */
+#ifdef __BROKEN_INDIRECT_CONFIG
+int sysbeepmatch __P((struct device *, void *, void *));
+#else
+int sysbeepmatch __P((struct device *, struct cfdata *, void *));
+#endif
+void sysbeepattach __P((struct device *, struct device *, void *));
+
+struct cfattach sysbeep_ca = {
+	sizeof(struct device), sysbeepmatch, sysbeepattach
+};
+
+struct cfdriver sysbeep_cd = {
+	NULL, "sysbeep", DV_DULL
+};
+
+static int ppi_attached;
+static pcppi_tag_t ppicookie;
+#endif /* PCPPI */
 
 void	spinwait __P((int));
 void	findcpuspeed __P((void));
 int	clockintr __P((void *));
 int	gettick __P((void));
-void	sysbeepstop __P((void *));
 void	sysbeep __P((int, int));
 int	rtcget __P((mc_todregs *));
 void	rtcput __P((mc_todregs *));
@@ -275,48 +297,40 @@ delay(n)
 	}
 }
 
-static int beeping;
+#if (NPCPPI > 0)
+int
+sysbeepmatch(parent, match, aux)
+	struct device *parent;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
+{
+	return (!ppi_attached);
+}
 
 void
-sysbeepstop(arg)
-	void *arg;
+sysbeepattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
+	printf("\n");
 
-	/* disable counter 2 */
-	disable_intr();
-	outb(PITAUX_PORT, inb(PITAUX_PORT) & ~PIT_SPKR);
-	enable_intr();
-	beeping = 0;
+	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
+	ppi_attached = 1;
 }
+#endif
 
 void
 sysbeep(pitch, period)
 	int pitch, period;
 {
-	static int last_pitch;
-	extern int cold;
-
-	if (cold)
-		return;		/* Can't beep yet. */
-
-	if (beeping)
-		untimeout(sysbeepstop, 0);
-	if (pitch == 0 || period == 0) {
-		sysbeepstop(0);
-		last_pitch = 0;
-		return;
-	}
-	if (!beeping || last_pitch != pitch) {
-		disable_intr();
-		outb(TIMER_MODE, TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
-		outb(TIMER_CNTR2, TIMER_DIV(pitch) % 256);
-		outb(TIMER_CNTR2, TIMER_DIV(pitch) / 256);
-		outb(PITAUX_PORT, inb(PITAUX_PORT) | PIT_SPKR);	/* enable counter 2 */
-		enable_intr();
-	}
-	last_pitch = pitch;
-	beeping = 1;
-	timeout(sysbeepstop, 0, period);
+#if (NPCPPI > 0)
+	if (ppi_attached)
+		pcppi_bell(ppicookie, pitch, period, 0);
+#endif
 }
 
 unsigned int delaycount;	/* calibrated loop variable (1 millisecond) */

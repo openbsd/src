@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.49 1998/09/11 09:45:14 fgsch Exp $	*/
+/*	$OpenBSD: conf.c,v 1.50 1999/01/02 00:02:56 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -170,6 +170,10 @@ cdev_decl(mcd);
 #include "tun.h"
 #include "audio.h"
 cdev_decl(audio);
+#include "midi.h"
+cdev_decl(midi);
+#include "sequencer.h"
+cdev_decl(music);
 cdev_decl(svr4_net);
 #include "joy.h"
 #include "apm.h"
@@ -269,6 +273,8 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 51 */
 #endif
+	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
+	cdev_midi_init(NSEQUENCER,sequencer),	/* 53: sequencer I/O */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

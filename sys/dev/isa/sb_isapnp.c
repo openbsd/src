@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isapnp.c,v 1.5 1998/05/13 20:07:47 deraadt Exp $	*/
+/*	$OpenBSD: sb_isapnp.c,v 1.6 1999/01/02 00:02:47 niklas Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.3 1997/03/20 11:03:11 mycroft Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 #include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>
@@ -107,14 +108,22 @@ sb_isapnp_attach(parent, self, aux)
 	} else
 		sc->sc_drq16 = DRQUNK;
 
-	/*
-	 * isapnp is a child if isa, and we needs isa for the dma
-	 * routines
-	 */
-	sc->sc_isa = parent->dv_parent;
+#if NMIDI > 0
+	if (ia->ipa_nio > 1) {
+		sc->sc_mpu_sc.iobase = ia->ipa_io[1].base;
+		sc->sc_mpu_sc.ioh = ia->ipa_io[1].h;
+	} else
+		sc->sc_mpu_sc.iobase = 0;
+#endif
 
-	if (!sbmatch(sc))
+	if (!sbmatch(sc)) {
+		printf("%s: sbmatch failed\n", sc->sc_dev.dv_xname);
 		return;
+	}
 
+	printf("%s: %s %s", sc->sc_dev.dv_xname, ia->ipa_devident,
+	       ia->ipa_devclass);
+
+	sc->sc_isa = parent;
 	sbattach(sc);
 }

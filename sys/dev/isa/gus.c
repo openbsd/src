@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.18 1998/11/03 21:14:59 downsj Exp $	*/
+/*	$OpenBSD: gus.c,v 1.19 1999/01/02 00:02:45 niklas Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -1039,7 +1039,8 @@ gusattach(parent, self, aux)
 	 * Attach to the generic audio layer
 	 */
 
-	audio_attach_mi(&gus_hw_if, 0, HAS_CODEC(sc) ? (void *)&sc->sc_codec : (void *)sc, &sc->sc_dev);
+	audio_attach_mi(&gus_hw_if,
+	    HAS_CODEC(sc) ? (void *)&sc->sc_codec : (void *)sc, &sc->sc_dev);
 }
 
 int

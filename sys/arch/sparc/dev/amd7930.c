@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.14 1998/11/03 21:22:36 downsj Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.15 1999/01/02 00:02:49 niklas Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -316,7 +316,7 @@ amd7930attach(parent, self, args)
 
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
-	audio_attach_mi(&sa_hw_if, 0, sc, &sc->sc_dev);
+	audio_attach_mi(&sa_hw_if, sc, &sc->sc_dev);
 }
 
 static void

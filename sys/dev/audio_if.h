@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.7 1998/11/03 21:00:10 downsj Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.8 1999/01/02 00:02:39 niklas Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -125,23 +125,6 @@ struct audio_hw_if {
 		    void (*)(void *), void *, struct audio_params *));
 };
 
-struct midi_info {
-	char	*name;		/* Name of MIDI hardware */
-	int	props;
-};
-#define MIDI_PROP_OUT_INTR 1
-
-struct midi_hw_if {
-	int	(*open)__P((void *, int, 	/* open hardware */
-			    void (*)__P((void *, int)),
-			    void (*)__P((void *)),
-			    void *));
-	void	(*close)__P((void *));		/* close hardware */
-	int	(*output)__P((void *, int));	/* output a byte */
-	void	(*getinfo)__P((void *, struct midi_info *));
-	int	(*ioctl)__P((u_long, caddr_t, int, struct proc *));
-};
-
 struct audio_attach_args {
 	int	type;
 	void	*hwif;		/* either audio_hw_if * or midi_hw_if * */
@@ -149,9 +132,12 @@ struct audio_attach_args {
 };
 #define	AUDIODEV_TYPE_AUDIO	0
 #define	AUDIODEV_TYPE_MIDI	1
+#define AUDIODEV_TYPE_OPL	2
+#define AUDIODEV_TYPE_MPU	3
 
 /* Attach the MI driver(s) to the MD driver. */
-extern void	audio_attach_mi __P((struct audio_hw_if *, struct midi_hw_if *, void *, struct device *));
+void	audio_attach_mi __P((struct audio_hw_if *, void *, struct device *));
+int	audioprint __P((void *, const char *));
 
 /* Device identity flags */
 #define SOUND_DEVICE		0

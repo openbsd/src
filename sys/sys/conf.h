@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.27 1998/08/30 17:11:33 art Exp $	*/
+/*	$OpenBSD: conf.h,v 1.28 1999/01/02 00:02:56 niklas Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -317,8 +317,16 @@ extern struct cdevsw cdevsw[];
 /* open, close, read, write, ioctl */
 #define cdev_audio_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,select), dev_init(c,n,mmap) }
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
+	dev_init(c,n,mmap) }
+
+/* open, close, read, write, ioctl, poll */
+#define cdev_midi_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
+	(dev_type_mmap((*))) enodev }
 
 #define	cdev_svr4_net_init(c,n) { \
 	dev_init(c,n,open), (dev_type_close((*))) enodev, \
@@ -425,6 +433,8 @@ cdev_decl(ptc);
 cdev_decl(ctty);
 
 cdev_decl(audio);
+cdev_decl(midi);
+cdev_decl(sequencer);
 
 cdev_decl(cn);
 

@@ -1,7 +1,7 @@
-#	$OpenBSD: files.isa,v 1.48 1998/12/27 09:41:56 deraadt Exp $
+#	$OpenBSD: files.isa,v 1.49 1999/01/02 00:02:45 niklas Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
-# Config.new file and device description for machine-independent ISA code.
+# Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
@@ -231,16 +231,23 @@ file	dev/isa/if_sm_isa.c		sm_isa
 # ISA Sound hardware
 #
 
+# MPU401 MIDI UART compatibles
+define	mpu401
+file	dev/isa/mpu401.c		mpu401 & midi
+
 # the SoundBlaster DSP, or close likenesses; used by other drivers
-define	sbdsp
+define	sbdsp { }
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
-device	sb: audio, isa_dma, sbdsp, mulaw, opti, auconv
+device	sb: audio, isa_dma, sbdsp, mulaw, opti, auconv, mpu401, midibus
 file	dev/isa/sb.c			sb needs-flag
 
 attach	sb at isa with sb_isa
 file	dev/isa/sb_isa.c		sb & (sb_isa | sb_isapnp) needs-flag
+
+attach	opl at sbdsp with opl_sb
+file	dev/isa/opl_sb.c		opl_sb
 
 # Soundcards based on Sierra's Aria chipset.
 # Such as the Prometheus Aria 16 or the Diamond
@@ -286,6 +293,20 @@ device	gus: audio, isa_dma, ics2101, ad1848, mulaw, auconv
 attach	gus at isa
 file	dev/isa/gus.c			gus needs-flag
 
+# Yamaha OPL2/OPL3 FM synth
+attach	opl at isa with opl_isa
+file	dev/isa/opl_isa.c		opl_isa
+
+# PC PPI + TIMER 1 (speaker interface)
+device  pcppi {}
+attach  pcppi at isa
+file	dev/isa/pcppi.c	pcppi	needs-flag
+device spkr
+attach spkr at pcppi
+file	dev/isa/spkr.c		spkr	needs-flag
+attach midi at pcppi with midi_pcppi: midisyn
+file	dev/isa/midi_pcppi.c    midi_pcppi
+
 #
 # PCMCIA PCIC (i82365SL and compatibles):
 #
@@ -296,4 +317,3 @@ file	dev/isa/gus.c			gus needs-flag
 #file dev/isa/pcmcia_pcic.c  pcic | pcicmaster
 
 #file dev/isa/pcmcia_isa.c  pcmcia
-

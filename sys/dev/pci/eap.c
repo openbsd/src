@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.3 1998/11/03 21:06:39 downsj Exp $	*/
+/*	$OpenBSD: eap.c,v 1.4 1999/01/02 00:02:49 niklas Exp $	*/
 /*	$NetBSD: eap.c,v 1.17 1998/08/25 04:56:01 thorpej Exp $	*/
 
 /*
@@ -478,7 +478,7 @@ eap_attach(parent, self, aux)
 	ctl.un.mask = 1 << EAP_MIC_VOL;
 	eap_mixer_set_port(sc, &ctl);
 
-        audio_attach_mi(&eap_hw_if, 0, sc, &sc->sc_dev);
+        audio_attach_mi(&eap_hw_if, sc, &sc->sc_dev);
 }
 
 int

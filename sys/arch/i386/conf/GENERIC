@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.95 1998/12/28 03:50:38 jason Exp $
+#	$OpenBSD: GENERIC,v 1.96 1999/01/02 00:02:54 niklas Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -213,7 +213,18 @@ wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6 # Gravis UltraSound (drq2 is record drq)
 ym*	at isapnp?
-#spkr0	at pckbd? port 0x61
+
+# OPL[23] FM syntheziers
+#opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at sb?
+
+# MIDI support
+midi*	at pcppi?		# MIDI interface to the PC speaker
+midi*	at sb?			# SB MPU401 port
+midi*	at opl?			# OPL FM synth
+
+# The spkr driver provides a simple tone interface to the built in speaker.
+#spkr0	at pcppi?		# PC speaker
 
 #Audio Support
 audio*  at sb?

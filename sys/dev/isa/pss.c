@@ -1,4 +1,4 @@
-/*	$OpenBSD: pss.c,v 1.16 1998/11/03 21:15:01 downsj Exp $ */
+/*	$OpenBSD: pss.c,v 1.17 1999/01/02 00:02:46 niklas Exp $ */
 /*	$NetBSD: pss.c,v 1.38 1998/01/12 09:43:44 thorpej Exp $	*/
 
 /*
@@ -1050,7 +1050,7 @@ pssattach(parent, self, aux)
     (void)pss_set_treble(sc, AUDIO_MAX_GAIN/2);
     (void)pss_set_bass(sc, AUDIO_MAX_GAIN/2);
 
-    audio_attach_mi(&pss_audio_if, 0, sc->ad1848_sc, &sc->ad1848_sc->sc_dev);
+    audio_attach_mi(&pss_audio_if, sc->ad1848_sc, &sc->ad1848_sc->sc_dev);
 }
 
 void

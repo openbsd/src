@@ -1,5 +1,5 @@
-/*	$OpenBSD: sbdspvar.h,v 1.8 1998/04/26 21:03:01 provos Exp $	*/
-/*	$NetBSD: sbdspvar.h,v 1.33 1997/10/19 07:42:44 augustss Exp $	*/
+/*	$OpenBSD: sbdspvar.h,v 1.9 1999/01/02 00:02:47 niklas Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.37 1998/08/10 00:20:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -34,6 +34,11 @@
  * SUCH DAMAGE.
  *
  */
+
+#include "midi.h"
+#if NMIDI > 0
+#include <dev/isa/mpu401var.h>
+#endif
 
 #define SB_MASTER_VOL	0
 #define SB_MIDI_VOL	1
@@ -94,15 +99,18 @@ struct sbdsp_softc {
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
 	void	*sc_ih;			/* interrupt vectoring */
+	struct device *sc_isa;
 
 	int	sc_iobase;		/* I/O port base address */
 	int	sc_irq;			/* interrupt */
+	int	sc_ist;			/* interrupt share type */
 	int	sc_drq8;		/* DMA (8-bit) */
 	int	sc_drq16;		/* DMA (16-bit) */
 
-	struct	device *sc_isa;		/* pointer to ISA parent */
-
-	u_short	sc_open;		/* reference count of open calls */
+	int	sc_open;		/* reference count of open calls */
+#define SB_CLOSED 0
+#define SB_OPEN_AUDIO 1
+#define SB_OPEN_MIDI 2
 	int	sc_openflags;		/* flags used on open */
 	u_char	sc_fullduplex;		/* can do full duplex */
 
@@ -123,19 +131,25 @@ struct sbdsp_softc {
 		struct	sbmode *modep;
 		u_char	bmode;
 		int	dmachan;	/* DMA channel */
+		int	blksize;	/* Block size, preadjusted */
 		u_char	run;
 #define SB_NOTRUNNING 0		/* Not running, not initialized */
-#define SB_DMARUNNING 1		/* DMA has been initialized */
-#define SB_PCMRUNNING 2		/* DMA&PCM running (looping mode) */
 #define SB_RUNNING 3		/* non-looping mode */
+#define SB_LOOPING 2		/* DMA&PCM running (looping mode) */
 	} sc_i, sc_o;			/* Input and output state */
 
 	u_long	sc_interrupts;		/* number of interrupts taken */
-	void	(*sc_intr8)(void*);	/* dma completion intr handler */
+
+	int	(*sc_intr8)(void*);	/* dma completion intr handler */
 	void	*sc_arg8;		/* arg for sc_intr8() */
-	void	(*sc_intr16)(void*);	/* dma completion intr handler */
+	int	(*sc_intr16)(void*);	/* dma completion intr handler */
 	void	*sc_arg16;		/* arg for sc_intr16() */
-	void	(*sc_mintr)(void*, int);/* midi input intr handler */
+	void	(*sc_intrp)(void*);	/* PCM output intr handler */
+	void	*sc_argp;		/* arg for sc_intrp() */
+	void	(*sc_intrr)(void*);	/* PCM input intr handler */
+	void	*sc_argr;		/* arg for sc_intrr() */
+	void	(*sc_intrm)(void*, int);/* midi input intr handler */
+	void	*sc_argm;		/* arg for sc_intrm() */
 
 	u_int	sc_mixer_model;
 #define SBM_NONE	0
@@ -161,6 +175,11 @@ struct sbdsp_softc {
 	u_int	sc_version;		/* DSP version */
 #define SBVER_MAJOR(v)	(((v)>>8) & 0xff)
 #define SBVER_MINOR(v)	((v)&0xff)
+
+#if NMIDI > 0
+	int	sc_hasmpu;
+	struct	mpu401_softc sc_mpu_sc;	/* MPU401 Uart state */
+#endif
 };
 
 #define ISSBPRO(sc) ((sc)->sc_model == SB_PRO || (sc)->sc_model == SB_JAZZ)
@@ -190,10 +209,10 @@ int	sbdsp_get_avail_out_ports __P((void *));
 int	sbdsp_speaker_ctl __P((void *, int));
 
 int	sbdsp_commit __P((void *));
-int	sbdsp_dma_init_input __P((void *, void *, int));
-int	sbdsp_dma_init_output __P((void *, void *, int));
-int	sbdsp_dma_output __P((void *, void *, int, void (*)(void *), void*));
-int	sbdsp_dma_input __P((void *, void *, int, void (*)(void *), void*));
+int	sbdsp_trigger_output __P((void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *));
+int	sbdsp_trigger_input __P((void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *));
 
 int	sbdsp_haltdma __P((void *));
 
@@ -225,4 +244,11 @@ int	sb_mappage __P((void *, void *, int, int));
 
 int	sbdsp_get_props __P((void *));
 
+
+int	sbdsp_midi_open __P((void *, int, 
+			     void (*iintr)__P((void *, int)),
+			     void (*ointr)__P((void *)), void *arg));
+void	sbdsp_midi_close __P((void *));
+int	sbdsp_midi_output __P((void *, int));
+void	sbdsp_midi_getinfo __P((void *, struct midi_info *));
 #endif

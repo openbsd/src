@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.48 1998/10/04 23:34:37 niklas Exp $
+#	$OpenBSD: files.i386,v 1.49 1999/01/02 00:02:53 niklas Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -162,6 +162,9 @@ device	pms
 attach	pms at pckbd
 file	arch/i386/isa/pms.c		pms needs-flag
 
+device sysbeep
+attach sysbeep at pcppi
+
 # Floppy disk controller
 # XXX temporarily conflicts with arc, will soon move to files.isa
 device	fdc {drive = -1}
@@ -172,11 +175,6 @@ device	fd: disk, isa_dma
 attach	fd at fdc
 file	dev/isa/fd.c		fd needs-flag
 major	{fd = 2}
-
-# PC speaker
-device	spkr: tty
-attach	spkr at pckbd
-file	arch/i386/isa/spkr.c		spkr needs-flag
 
 # Adaptec AHA-284x VL SCSI controllers
 # device declaration in sys/conf/files
