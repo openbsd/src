@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.c,v 1.12 1997/07/21 21:10:37 deraadt Exp $	*/
+/*	$OpenBSD: encap.c,v 1.13 1997/07/23 12:07:04 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -163,13 +163,14 @@ va_dcl
 {
 #define SENDERR(e) do { error = e; goto flush;} while (0)
     struct sockaddr_encap encapdst, encapgw, encapnetmask;
-    int fl, fl2, len, emlen, error = 0;
+    struct flow *flow, *flow2, *flow3, *flow4;
+    int len, emlen, error = 0;
     struct in_addr alts, altm;
-    struct flow *flow, *flow2;
     struct encap_msghdr *emp;
     struct tdb *tdbp, *tdbp2;
     caddr_t buffer = 0;
     struct socket *so;
+    struct mbuf *m0;
     u_int32_t spi;
     va_list ap;
 
@@ -189,7 +190,7 @@ va_dcl
     emp = mtod(m, struct encap_msghdr *);
 
     emlen = emp->em_msglen;
-    if ((len < emlen))
+    if (len < emlen)
       SENDERR(EINVAL);
 
     if (m->m_len < emlen)
@@ -398,14 +399,21 @@ va_dcl
 
 	    emp->em_gen_spi = spi;
 	    
-	    /* If we're using a buffer, copy the data back to the mbuf */
+	    /* If we're using a buffer, copy the data back to an mbuf. */
 	    if (buffer)
 	      m_copyback(m, 0, emlen, buffer);
 
-	    /* Send it back to us */
-	    if (sbappendaddr(&so->so_rcv, &encap_src, m, 
-			     (struct mbuf *)0) == 0)
+	    m0 = m_copy(m, 0, (int) M_COPYALL);
+	    if (m0 == NULL)
 	      SENDERR(ENOBUFS);
+
+	    /* Send it back to us */
+	    if (sbappendaddr(&so->so_rcv, &encap_src, m0,
+			     (struct mbuf *) 0) == 0)
+	    {
+		m_freem(m0);
+	      	SENDERR(ENOBUFS);
+	    }
 	    else
 	      sorwakeup(so);		/* wakeup  */
 
@@ -451,51 +459,46 @@ va_dcl
             if (tdbp == NULL)
               SENDERR(ENOENT);
 
-	    fl = fl2 = 0;
+	    flow = flow2 = flow3 = flow4 = (struct flow *) NULL;
 
 	    emp->em_ena_isrc.s_addr &= emp->em_ena_ismask.s_addr;
 	    emp->em_ena_idst.s_addr &= emp->em_ena_idmask.s_addr;
 
-	    flow = find_flow(emp->em_ena_isrc, emp->em_ena_ismask,
-			     emp->em_ena_idst, emp->em_ena_idmask,
-			     emp->em_ena_protocol, emp->em_ena_sport,
-			     emp->em_ena_dport, tdbp);
-	    if ((flow != (struct flow *) NULL) &&
-		!(emp->em_ena_flags & ENABLE_FLAG_REPLACE))
-	      SENDERR(EEXIST);
+	    flow3 = find_global_flow(emp->em_ena_isrc, emp->em_ena_ismask,
+			     	     emp->em_ena_idst, emp->em_ena_idmask,
+			     	     emp->em_ena_protocol, emp->em_ena_sport,
+			     	     emp->em_ena_dport);
+	    if (flow3 != (struct flow *) NULL)
+	      if (!(emp->em_ena_flags & ENABLE_FLAG_REPLACE))
+	     	SENDERR(EEXIST);
 
 	    /* Check for 0.0.0.0/255.255.255.255 if the flow is local */
 	    if (emp->em_ena_flags & ENABLE_FLAG_LOCAL)
 	    {
 		alts.s_addr = INADDR_ANY;
 		altm.s_addr = INADDR_BROADCAST;
-		flow2 = find_flow(alts, altm, emp->em_ena_idst,
-				  emp->em_ena_idmask, emp->em_ena_protocol,
-				  emp->em_ena_sport, emp->em_ena_dport, tdbp);
-		if ((flow2 != (struct flow *) NULL) &&
-		    !(emp->em_ena_flags & ENABLE_FLAG_REPLACE))
-		  SENDERR(EEXIST);
+		flow4 = find_global_flow(alts, altm, emp->em_ena_idst,
+				         emp->em_ena_idmask,
+					 emp->em_ena_protocol,
+				    	 emp->em_ena_sport, emp->em_ena_dport);
+		if (flow4 != (struct flow *) NULL)
+		  if (!(emp->em_ena_flags & ENABLE_FLAG_REPLACE))
+		    SENDERR(EEXIST);
 	    }
 
+	    flow = get_flow();
 	    if (flow == (struct flow *) NULL)
-	    {
-	    	flow = get_flow();
-	    	if (flow == (struct flow *) NULL)
-	      	  SENDERR(ENOBUFS);
+	      SENDERR(ENOBUFS);
 
-	    	flow->flow_src.s_addr = emp->em_ena_isrc.s_addr;
-	    	flow->flow_dst.s_addr = emp->em_ena_idst.s_addr;
-	    	flow->flow_srcmask.s_addr = emp->em_ena_ismask.s_addr;
-	    	flow->flow_dstmask.s_addr = emp->em_ena_idmask.s_addr;
-	    	flow->flow_proto = emp->em_ena_protocol;
-	    	flow->flow_sport = emp->em_ena_sport;
-	    	flow->flow_dport = emp->em_ena_dport;
+	    flow->flow_src.s_addr = emp->em_ena_isrc.s_addr;
+	    flow->flow_dst.s_addr = emp->em_ena_idst.s_addr;
+	    flow->flow_srcmask.s_addr = emp->em_ena_ismask.s_addr;
+	    flow->flow_dstmask.s_addr = emp->em_ena_idmask.s_addr;
+	    flow->flow_proto = emp->em_ena_protocol;
+	    flow->flow_sport = emp->em_ena_sport;
+	    flow->flow_dport = emp->em_ena_dport;
 
-		fl = 1;
-	    }
-
-	    if ((emp->em_ena_flags & ENABLE_FLAG_LOCAL) &&
-		(flow2 == (struct flow *) NULL))
+	    if (emp->em_ena_flags & ENABLE_FLAG_LOCAL)
 	    {
 	    	flow2 = get_flow();
 	    	if (flow2 == (struct flow *) NULL)
@@ -512,13 +515,10 @@ va_dcl
 	    	flow2->flow_sport = emp->em_ena_sport;
 	    	flow2->flow_dport = emp->em_ena_dport;
 
-		fl2 = 1;
-
 	    	put_flow(flow2, tdbp);
 	    }
 
-	    if (fl == 1)
-	      put_flow(flow, tdbp);
+	    put_flow(flow, tdbp);
 
 	    /* Setup the encap fields */
 	    encapdst.sen_len = SENT_IP4_LEN;
@@ -570,9 +570,8 @@ va_dcl
 	    
 	    if (error)
 	    {
-		if (fl)
-		  delete_flow(flow, tdbp);
-		if ((emp->em_ena_flags & ENABLE_FLAG_LOCAL) && (fl2))
+	 	delete_flow(flow, tdbp);
+		if (flow2)
 		  delete_flow(flow2, tdbp);
 		SENDERR(error);
 	    }
@@ -605,14 +604,17 @@ va_dcl
 			      (struct sockaddr *) &encapnetmask, 0,
 			      (struct rtentry **) 0);
 
-		    if (fl)
-		      delete_flow(flow, tdbp);
-
-		    if (fl2)
-		      delete_flow(flow2, tdbp);
+		    delete_flow(flow, tdbp);
+		    delete_flow(flow2, tdbp);
 		    SENDERR(error);
 	    	}
 	    }
+
+	    if (flow3)
+	      delete_flow(flow3, flow3->flow_sa);
+
+	    if (flow4)
+	      delete_flow(flow4, flow4->flow_sa);
 
 	    error = 0;
 
