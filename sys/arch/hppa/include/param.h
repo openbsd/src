@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.20 2003/03/29 00:59:32 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.21 2003/04/16 07:26:07 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -66,9 +66,7 @@
 #define	SSIZE		(4)		/* initial stack size/NBPG */
 #define	SINCR		(1)		/* increment of stack/NBPG */
 
-#define	USHIFT		(3)		/* log2(UPAGES) */
-#define	UPAGES		(1<<USHIFT)	/* pages of u-area */
-#define	USPACE		(UPAGES * NBPG)	/* pages for user struct and kstack */
+#define	USPACE		(4 * NBPG)	/* pages for user struct and kstack */
 
 #ifndef	MSGBUFSIZE
 #define	MSGBUFSIZE	2*NBPG		/* default message buffer size */
