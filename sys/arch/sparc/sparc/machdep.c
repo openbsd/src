@@ -334,12 +334,12 @@ allocsys(v)
 	 */
 	if (bufpages == 0)
 		bufpages = (physmem / ((100/BUFCACHEPERCENT) / CLSIZE));
-	/* Restrict to at most 70% filled kvm */
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
 	}
+	/* Restrict to at most 70% filled kvm */
 	if (nbuf * MAXBSIZE >
 	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
 		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
