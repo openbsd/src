@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.8 2000/12/14 05:13:10 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.9 2000/12/14 18:33:32 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -417,13 +417,19 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	 * destinations exist but are not used, possibly leading to an
 	 * explosion in the number of acquired SAs).
 	 */
-	if (((ipo->ipo_dst.sa.sa_family == AF_INET) &&
+	if (
+#ifdef INET
+	    ((ipo->ipo_dst.sa.sa_family == AF_INET) &&
 	     (ipo->ipo_dst.sin.sin_addr.s_addr != INADDR_ANY) &&
 	     (ipo->ipo_dst.sin.sin_addr.s_addr != INADDR_BROADCAST)) ||
+#endif /* INET */
+#ifdef INET6
 	    ((ipo->ipo_dst.sa.sa_family == AF_INET6) &&
 	     !IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_dst.sin6.sin6_addr) &&
 	     bcmp(&ipo->ipo_dst.sin6.sin6_addr, &in6mask128,
-		  sizeof(in6mask128))))
+		  sizeof(in6mask128))) ||
+#endif /* INET6 */
+	    0)
 	{
 	    if (ipo->ipo_last_searched <= ipsec_last_added)
 	    {
