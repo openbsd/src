@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: popen.c,v 1.11 2002/01/02 20:18:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.12 2002/01/16 01:28:54 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -60,14 +60,10 @@ popen(program, type)
 	const char *program;
 	const char *type;
 {
-	struct pid *cur;
+	struct pid * volatile cur;
 	FILE *iop;
 	int pdes[2];
 	pid_t pid;
-
-#ifdef __GNUC__
-	(void)&cur;
-#endif
 
 	if ((*type != 'r' && *type != 'w') || type[1] != '\0') {
 		errno = EINVAL;

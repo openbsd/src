@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.4 1998/11/29 19:56:57 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.5 2002/01/16 01:28:54 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/24 03:58:50 cgd Exp $	*/
 
 /*
@@ -325,16 +325,13 @@ getanswer(choices, def)
 	char   *choices;
 	bool    def;
 {
-	int     ch;		/* input */
-	int     loop;		/* counter */
-	int     oldx, oldy;	/* original coordinates on screen */
+	         int ch;	 /* input */
+	volatile int loop;	 /* counter */
+	volatile int oldx, oldy; /* original coordinates on screen */
 
 	getyx(stdscr, oldy, oldx);
 	alarm(0);		/* make sure alarm is off */
 
-#if __GNUC__
-	(void)&loop;		/* XXX quiet gcc */
-#endif
 	for (loop = 3; loop; --loop)
 	for (loop = 3; loop; --loop)
 		/* try for 3 times */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2001/11/17 19:54:56 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2002/01/16 01:28:54 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.24 2001/11/17 19:54:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.25 2002/01/16 01:28:54 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,16 +118,11 @@ seterrmsg(char *s)
 /* ed: line editor */
 int
 main(argc, argv)
-	int argc;
-	char **argv;
+	volatile int argc;
+	char ** volatile argv;
 {
 	int c, n;
 	long status = 0;
-
-#ifdef __GNUC__
-	(void)&argc;
-	(void)&argv;
-#endif
 
 	home = getenv("HOME");
 

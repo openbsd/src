@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.29 2001/11/14 19:50:23 deraadt Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.30 2002/01/16 01:28:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.29 2001/11/14 19:50:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.30 2002/01/16 01:28:54 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -379,12 +379,10 @@ pw_edit(notsetuid, filename)
 	const char *filename;
 {
 	int pstat;
-	char *p, *editor;
+	char *p;
+	char * volatile editor;
 	char *argp[] = {"sh", "-c", NULL, NULL};
 
-#ifdef __GNUC__
-	(void)&editor;
-#endif
 	if (!filename) {
 		filename = pw_lck;
 		if (!filename)

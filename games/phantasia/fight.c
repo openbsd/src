@@ -1,4 +1,4 @@
-/*	$OpenBSD: fight.c,v 1.6 2002/01/04 16:16:32 art Exp $	*/
+/*	$OpenBSD: fight.c,v 1.7 2002/01/16 01:28:54 millert Exp $	*/
 /*	$NetBSD: fight.c,v 1.2 1995/03/24 03:58:39 cgd Exp $	*/
 
 /*
@@ -41,17 +41,13 @@ void
 encounter(particular)
 	int     particular;
 {
-	bool    firsthit = Player.p_blessing;	/* set if player gets the
-						 * first hit */
-	int     flockcnt = 1;	/* how many time flocked */
+	int flockcnt = 1;	/* how many time flocked */
+	volatile bool firsthit = Player.p_blessing;	/* set if player gets
+							 * the first hit */
 
 	/* let others know what we are doing */
 	Player.p_status = S_MONSTER;
 	writerecord(&Player, Fileloc);
-
-#if __GNUC__
-	(void)&firsthit;	/* XXX shut up gcc */
-#endif
 
 #ifdef SYS5
 	flushinp();

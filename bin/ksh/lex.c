@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.14 1999/06/15 01:18:34 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.15 2002/01/16 01:28:54 millert Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1124,11 +1124,9 @@ set_prompt(to, s)
 		 */
 		{
 			struct shf *shf;
-			char *ps1;
+			char * volatile ps1;
 			Area *saved_atemp;
-#ifdef __GNUC__
-			(void)&ps1;
-#endif
+
 			ps1 = str_val(global("PS1"));
 			shf = shf_sopen((char *) 0, strlen(ps1) * 2,
 				SHF_WR | SHF_DYNAMIC, (struct shf *) 0);

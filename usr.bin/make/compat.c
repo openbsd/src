@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.45 2001/12/02 00:13:16 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.46 2002/01/16 01:28:54 millert Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -167,14 +167,14 @@ CompatRunCommand(cmdp, gnp)
     char	  *cmdStart;	/* Start of expanded command */
     char *cp, *bp = NULL;
     bool	  silent,	/* Don't print command */
-		  errCheck,	/* Check errors */
 		  doExecute;	/* Execute the command */
+    volatile bool errCheck;	/* Check errors */
     int 	  reason;	/* Reason for child's death */
     int 	  status;	/* Description of child's death */
     int 	  cpid; 	/* Child actually found */
     int		  stat; 	/* Status of fork */
     LstNode	  cmdNode;	/* Node where current command is located */
-    char	  **av; 	/* Argument vector for thing to exec */
+    char	  ** volatile av; /* Argument vector for thing to exec */
     int 	  argc; 	/* Number of arguments in av or 0 if not
 				 * dynamically allocated */
     bool	  local;	/* true if command should be executed
@@ -183,12 +183,6 @@ CompatRunCommand(cmdp, gnp)
     GNode	  *gn = (GNode *)gnp;
     static char *shargv[4] = { _PATH_BSHELL };
 
-    /* Avoid clobbered variable warnings by forcing the compiler
-     * to ``unregister'' variables.  */
-#if __GNUC__
-    (void)&av;
-    (void)&errCheck;
-#endif
     silent = gn->type & OP_SILENT;
     errCheck = !(gn->type & OP_IGNORE);
     doExecute = !noExecute;
