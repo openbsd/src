@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.84 2002/06/11 02:12:37 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.85 2002/06/11 02:27:19 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -280,6 +280,7 @@ struct pf_rule {
 #define	PFRULE_RETURNRST	0x01
 #define	PFRULE_NODF		0x02
 #define	PFRULE_FRAGMENT		0x04
+#define	PFRULE_FRAGCACHE	0x10	/* non-buffering frag cache */
 
 struct pf_state_host {
 	struct pf_addr	addr;
@@ -462,6 +463,8 @@ struct pf_status {
 
 #define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
 #define PFFRAG_FRAG_HIWAT	1000	/* Number of fragmented packets */
+#define PFFRAG_FRCENT_HIWAT	50000	/* Number of fragment cache entries */
+#define PFFRAG_FRCACHE_HIWAT	10000	/* Number of fragment descriptors */
 
 /*
  * ioctl parameter structures
