@@ -51,7 +51,8 @@ typedef	int32_t			register_t;
 typedef	unsigned long		vm_size_t;
 typedef	unsigned long		vm_offset_t;
 
-/* This is only to make some unneeded function declaration happy */
-#define	label_t	void
+typedef struct label_t {
+        int val[40]; /* double check this XXX */
+} label_t;
 
 #endif	/* _MACHTYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.1 1996/09/30 16:34:39 ws Exp $	*/
+/*	$NetBSD: Locore.c,v 1.2 1996/11/06 20:19:50 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -71,7 +71,7 @@ setrunqueue(p)
  * Calls should be made at splstatclock().
  */
 void
-remrq(p)
+remrunqueue(p)
 	struct proc *p;
 {
 	int which = p->p_priority >> 2;
@@ -79,7 +79,7 @@ remrq(p)
 
 #ifdef	DIAGNOSTIC	
 	if (!(whichqs & (0x80000000 >> which)))
-		panic("remrq");
+		panic("remrunqueue");
 #endif
 	p->p_forw->p_back = p->p_back;
 	p->p_back->p_forw = p->p_forw;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.1 1996/09/30 16:34:19 ws Exp $	*/
+/*	$NetBSD: ansi.h,v 1.2 1996/11/15 22:38:57 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -54,6 +54,8 @@
 #define	_BSD_TIME_T_	long			/* time() */
 struct __gnuc_va_list__;
 #define	_BSD_VA_LIST_	struct __gnuc_va_list__ * /* va_list */
+#define _BSD_CLOCKID_T_	int
+#define _BSD_TIMER_T_	int
 
 /*
  * Runes (wchar_t) is declared to be an ``int'' instead of the more natural

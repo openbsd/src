@@ -107,6 +107,7 @@ trap(frame)
 			}
 			map = kernel_map;
 		}
+printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 		goto brain_damage;
 	case EXC_DSI|EXC_USER:
 		{
@@ -121,7 +122,7 @@ trap(frame)
 			    == KERN_SUCCESS)
 				break;
 		}
-printf("dsi on addr %x iar %x\n", frame->dsisr, frame->srr0);
+printf("dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 		trapsignal(p, SIGSEGV, EXC_DSI);
 		break;
 	case EXC_ISI|EXC_USER:
@@ -350,7 +351,7 @@ setusr(content)
 
 int
 copyin(udaddr, kaddr, len)
-	void *udaddr;
+	const void *udaddr;
 	void *kaddr;
 	size_t len;
 {
@@ -377,7 +378,7 @@ copyin(udaddr, kaddr, len)
 
 int
 copyout(kaddr, udaddr, len)
-	void *kaddr;
+	const void *kaddr;
 	void *udaddr;
 	size_t len;
 {

@@ -39,11 +39,11 @@ file	arch/powerpc/powerpc/trap.c
 file	arch/powerpc/powerpc/vm_machdep.c
 file	dev/cons.c
 file	dev/cninit.c
-file    arch/ppc/ppc/setjmp.S                   ddb
-file    arch/ppc/ppc/db_memrw.c                 ddb
-file    arch/ppc/ppc/db_disasm.c                ddb
-file    arch/ppc/ppc/db_interface.c             ddb
-file    arch/ppc/ppc/db_trace.c                 ddb
+file    arch/powerpc/powerpc/setjmp.S                   ddb
+file    arch/powerpc/powerpc/db_memrw.c                 ddb
+file    arch/powerpc/powerpc/db_disasm.c                ddb
+file    arch/powerpc/powerpc/db_interface.c             ddb
+file    arch/powerpc/powerpc/db_trace.c                 ddb
 
 # FirePower specific code
 #device firepower: openfirm
