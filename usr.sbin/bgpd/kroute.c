@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.114 2005/03/13 15:52:34 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.115 2005/03/14 08:44:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -95,6 +95,7 @@ void			 kif_clear(void);
 int			 kif_kr_insert(struct kroute_node *);
 int			 kif_kr_remove(struct kroute_node *);
 
+int			 kroute_validate(struct kroute *kr);
 void			 knexthop_validate(struct knexthop_node *);
 struct kroute_node	*kroute_match(in_addr_t);
 void			 kroute_attach_nexthop(struct knexthop_node *,
@@ -382,8 +383,7 @@ kr_show_route(struct imsg *imsg)
 			bzero(&snh, sizeof(snh));
 			memcpy(&snh.addr, &h->nexthop, sizeof(snh.addr));
 			if (h->kroute != NULL)
-				if (!(h->kroute->r.flags & F_DOWN))
-					snh.valid = 1;
+				snh.valid = kroute_validate(&h->kroute->r);
 			send_imsg_session(IMSG_CTL_SHOW_NEXTHOP, imsg->hdr.pid,
 			    &snh, sizeof(snh));
 		}
@@ -729,6 +729,24 @@ kif_kr_remove(struct kroute_node *kr)
  * nexthop validation
  */
 
+int
+kroute_validate(struct kroute *kr)
+{
+	struct kif_node		*kif;
+
+	if (kr->flags & F_DOWN)
+		return (0);
+
+	if ((kif = kif_find(kr->ifindex)) == NULL) {
+		log_warnx("interface with index %d not found, "
+		    "referenced from route for %s/%u",
+		    kr->ifindex, inet_ntoa(kr->prefix),
+		    kr->prefixlen);
+		return (1);
+	} else
+		return (kif->k.link_state != LINK_STATE_DOWN);
+}
+
 void
 knexthop_validate(struct knexthop_node *kn)
 {
@@ -736,8 +754,8 @@ knexthop_validate(struct knexthop_node *kn)
 	struct kroute_nexthop	 n;
 	int			 was_valid = 0;
 
-	if (kn->kroute != NULL && (!(kn->kroute->r.flags & F_DOWN)))
-		was_valid = 1;
+	if (kn->kroute != NULL)
+		was_valid = kroute_validate(&kn->kroute->r);
 
 	bzero(&n, sizeof(n));
 	memcpy(&n.nexthop, &kn->nexthop, sizeof(n.nexthop));
@@ -749,10 +767,7 @@ knexthop_validate(struct knexthop_node *kn)
 			if (was_valid)
 				send_nexthop_update(&n);
 		} else {					/* match */
-			if (kr->r.flags & F_DOWN) {		/* is down */
-				if (was_valid)
-					send_nexthop_update(&n);
-			} else {				/* valid */
+			if (kroute_validate(&kr->r)) {		/* valid */
 				n.valid = 1;
 				n.connected = kr->r.flags & F_CONNECTED;
 				if ((n.gateway.v4.s_addr =
@@ -760,7 +775,10 @@ knexthop_validate(struct knexthop_node *kn)
 					n.gateway.af = AF_INET;
 				memcpy(&n.kr, &kr->r, sizeof(n.kr));
 				send_nexthop_update(&n);
-			}
+			} else					/* down */
+				if (was_valid)
+					send_nexthop_update(&n);
+
 			kroute_attach_nexthop(kn, kr);
 		}
 		break;
@@ -989,7 +1007,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 				bzero(&nh, sizeof(nh));
 				memcpy(&nh.nexthop, &n->nexthop,
 				    sizeof(nh.nexthop));
-				if (!(kkr->kr->r.flags & F_DOWN)) {
+				if (kroute_validate(&n->kroute->r)) {
 					nh.valid = 1;
 					nh.connected = 1;
 					if ((nh.gateway.v4.s_addr =
