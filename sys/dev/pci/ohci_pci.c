@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.3 1999/08/13 08:55:57 fgsch Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.4 1999/08/23 21:54:39 fgsch Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.9 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
@@ -99,6 +99,10 @@ ohci_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr;
 	usbd_status r;
+
+	/* Disable interrupts, so we don't can any spurious ones. */
+	bus_space_write_4(sc->iot, sc->ioh, 
+			  OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
