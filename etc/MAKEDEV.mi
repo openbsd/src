@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.41 2002/02/25 01:10:26 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.42 2002/03/31 21:49:12 fgsch Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -412,6 +412,7 @@ target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
+target(all, bktr, 0)dnl
 target(ramd, tty0, 0, 1, 2, 3)dnl
 twrget(ramd, wsdisp, ttyC, 0)dnl
 target(ramd, wt, 0)dnl
