@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.7 2004/06/22 18:57:18 marco Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.8 2004/07/12 23:57:14 marco Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -599,9 +599,6 @@ mpt_send_ioc_init(mpt_softc_t *mpt, u_int32_t who)
 /*
  * Utiltity routine to read configuration headers and pages
  */
-
-int
-mpt_read_cfg_header(mpt_softc_t *, int, int, int, fCONFIG_PAGE_HEADER *);
 
 int
 mpt_read_cfg_header(mpt_softc_t *mpt, int PageType, int PageNumber,

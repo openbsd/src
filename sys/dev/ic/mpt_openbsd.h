@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.h,v 1.6 2004/03/20 03:54:16 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.h,v 1.7 2004/07/12 23:57:14 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
@@ -204,6 +204,7 @@ typedef struct mpt_softc {
 	uint8_t		mpt_max_buses;
 	uint8_t         fw_download_boot;
 	uint32_t        fw_image_size;
+	uint32_t	im_support;
 
 	/* Port facts */
 	uint16_t	mpt_ini_id;

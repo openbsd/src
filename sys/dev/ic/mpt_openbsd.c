@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.13 2004/06/30 00:45:04 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.14 2004/07/12 23:57:14 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -398,6 +398,8 @@ void
 mpt_attach(mpt_softc_t *mpt)
 {
 	struct scsi_link *lptr = &mpt->sc_link;
+	struct _CONFIG_PAGE_IOC_2 iocp2;
+	int rv;
 
 	mpt->bus = 0;		/* XXX ?? */
 
@@ -424,6 +426,31 @@ mpt_attach(mpt_softc_t *mpt)
 #ifdef MPT_DEBUG
 	mpt->verbose = 2;
 #endif
+
+	/* Read IOC page 2 to figure out if we have IM */
+	rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_IOC, 2,
+	    0, &iocp2.Header);
+	if (rv) {
+		mpt_prt(mpt, "Could not retrieve IOC PAGE 2 to determine"
+		    "RAID capabilities.");
+	}
+	else {
+		mpt->im_support = iocp2.CapabilitiesFlags &
+		    (MPI_IOCPAGE2_CAP_FLAGS_IS_SUPPORT |
+		     MPI_IOCPAGE2_CAP_FLAGS_IME_SUPPORT |
+		     MPI_IOCPAGE2_CAP_FLAGS_IM_SUPPORT);
+
+		if (mpt->verbose > 1) {
+			mpt_prt(mpt, "IOC Page 2: %x %x %x %x %x",
+			    iocp2.CapabilitiesFlags,
+			    iocp2.NumActiveVolumes,
+			    iocp2.MaxVolumes,
+			    iocp2.NumActivePhysDisks,
+			    iocp2.MaxPhysDisks);
+			mpt_prt(mpt, "IM support: %x", mpt->im_support);
+		}
+	}
+
 	(void) config_found(&mpt->mpt_dev, lptr, scsiprint);
 
 	/* done attaching now walk targets and PPR them */
