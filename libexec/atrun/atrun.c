@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.16 2002/03/16 18:40:00 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.17 2002/05/11 17:45:26 millert Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -71,7 +71,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.16 2002/03/16 18:40:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.17 2002/05/11 17:45:26 millert Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -168,11 +168,6 @@ run_file(filename, uid, gid)
 		    filename);
 		exit(EXIT_FAILURE);
 	}
-	PRIV_START
-
-	stream = fopen(filename, "r");
-
-	PRIV_END
 
 	if (pw->pw_expire && time(NULL) >= pw->pw_expire) {
 		syslog(LOG_ERR, "Userid %u has expired - aborting job %s",
@@ -180,11 +175,14 @@ run_file(filename, uid, gid)
 		exit(EXIT_FAILURE);
 	}
 
-	if (stream == NULL)
-		perr("Cannot open input file");
+	PRIV_START
 
-	if ((fd_in = dup(fileno(stream))) < 0)
-		perr("Error duplicating input file descriptor");
+	fd_in = open(filename, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0);
+
+	PRIV_END
+
+	if (fd_in < 0)
+		perr("Cannot open input file");
 
 	if (fstat(fd_in, &buf) == -1)
 		perr("Error in fstat of input file descriptor");
@@ -224,12 +222,14 @@ run_file(filename, uid, gid)
 		syslog(LOG_ERR, "out of memory - aborting");
 		exit(EXIT_FAILURE);
 	}
+	if ((stream = fdopen(dup(fd_in), "r")) == NULL)
+		perr("Error duplicating input file descriptor");
 	if (fscanf(stream, fmt, &nuid, &ngid, mailbuf, &send_mail) != 4) {
 		syslog(LOG_ERR, "File %s is in wrong format - aborting",
 		    filename);
-		free(fmt);
 		exit(EXIT_FAILURE);
 	}
+	(void) fclose(stream);
 	free(fmt);
 	if (mailbuf[0] == '-') {
 		syslog(LOG_ERR, "illegal mail name %s in %s", mailbuf, filename);
@@ -246,7 +246,6 @@ run_file(filename, uid, gid)
 		    filename, ngid, gid);
 		exit(EXIT_FAILURE);
 	}
-	(void)fclose(stream);
 
 	PRIV_START
 
