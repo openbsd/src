@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.19 2000/02/07 04:57:17 assar Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.20 2000/03/15 03:18:02 aaron Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -269,6 +269,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	u_int8_t SecPerClust;
 	int	ronly, error;
 	int	bsize = 0, dtype = 0, tmp;
+	u_long dirsperblk;
 
 	/*
 	 * Disallow multiple mounts of the same device.
@@ -366,7 +367,9 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		pmp->pm_HiddenSects = getushort(b33->bpbHiddenSecs);
 		pmp->pm_HugeSectors = pmp->pm_Sectors;
 	}
-	if (pmp->pm_HugeSectors > 0xffffffff / pmp->pm_BytesPerSec + 1) {
+
+	dirsperblk = pmp->pm_BytesPerSec / sizeof(struct direntry);
+	if (pmp->pm_HugeSectors > 0xffffffff / dirsperblk + 1) {
 	        /*
 		 * We cannot deal currently with this size of disk
 		 * due to fileid limitations (see msdosfs_getattr and
