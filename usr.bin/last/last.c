@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.6 1997/07/25 02:23:34 mickey Exp $	*/
+/*	$OpenBSD: last.c,v 1.7 1997/08/21 05:46:56 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.6 1997/07/25 02:23:34 mickey Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.7 1997/08/21 05:46:56 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,9 +89,9 @@ static time_t	currentout;			/* current logout value */
 static long	maxrec;				/* records to display */
 static char	*file = _PATH_WTMP;		/* wtmp file */
 static int	fulltime = 0;			/* Display seconds? */
-static time_t	snaptime;		        /* if != 0, we will only
-	                                         * report users logged in
-		                                 * at this snapshot time
+static time_t	snaptime;			/* if != 0, we will only
+						 * report users logged in
+						 * at this snapshot time
 						 */
 
 void	 addarg __P((int, char *));
@@ -153,9 +153,9 @@ main(argc, argv)
 		case '?':
 		default:
 			(void)fprintf(stderr,
-				      "usage: last [-#] [-f file] [-T] [-t tty]"
-				      " [-h host] [-d [MMDD]hhmm[.SS]]"
-			              " [user ...]\n");
+			    "usage: last [-#] [-f file] [-T] [-t tty]"
+			    " [-h host] [-d [[yy]yy[mm[dd[hh]]]]mm[.ss]]"
+			    " [user ...]\n");
 			exit(1);
 		}
 
@@ -197,19 +197,19 @@ checkargs()
 	for (step = arglist; step; step = step->next)
 		switch (step->type) {
 		case HOST_TYPE:
-			(void)fprintf(stderr, "Warning: Ignoring hostname "
-				              "flag\n");
+			(void)fprintf(stderr,
+			    "Warning: Ignoring hostname flag\n");
 			break;
 		case TTY_TYPE:
 			if (!ttyflag) { /* don't print this twice */ 
-				(void)fprintf(stderr, "Warning: Ignoring "
-						      "tty flag\n");
+				(void)fprintf(stderr,
+				    "Warning: Ignoring tty flag\n");
 				ttyflag = 1;
 			}
 			break;
 		case USER_TYPE:
-			(void)fprintf(stderr, "Warning: Ignoring "
-				              "username[s]\n");
+			(void)fprintf(stderr,
+			    "Warning: Ignoring username[s]\n");
 			break;
 		default:
 			/* PRINT NOTHING */
@@ -507,74 +507,74 @@ ttyconv(arg)
 /* 
  * dateconv --
  * 	Convert the snapshot time in command line given in the format
- * 	[[CC]YY][MMDD]hhmm[.SS]] to a time_t.
+ * 	[[yy]yy][mmdd]hhmm[.ss]] to a time_t.
  * 	Derived from atime_arg1() in usr.bin/touch/touch.c
  */
 time_t
 dateconv(arg)
-        char *arg;
+	char *arg;
 {
-        time_t timet;
-        struct tm *t;
-        int yearset;
-        char *p;
+	time_t timet;
+	struct tm *t;
+	int yearset;
+	char *p;
 
-        /* Start with the current time. */
-        if (time(&timet) < 0)
-                err(1, "time");
-        if ((t = localtime(&timet)) == NULL)
-                err(1, "localtime");
+	/* Start with the current time. */
+	if (time(&timet) < 0)
+		err(1, "time");
+	if ((t = localtime(&timet)) == NULL)
+		err(1, "localtime");
 
-        /* [[CC]YY][MMDD]hhmm[.SS] */
-        if ((p = strchr(arg, '.')) == NULL)
-                t->tm_sec = 0; 		/* Seconds defaults to 0. */
-        else {
-                if (strlen(p + 1) != 2)
-                        goto terr;
-                *p++ = '\0';
-                t->tm_sec = ATOI2(p);
-        }
+	/* [[yy]yy][mmdd]hhmm[.ss] */
+	if ((p = strchr(arg, '.')) == NULL)
+		t->tm_sec = 0; 		/* Seconds defaults to 0. */
+	else {
+		if (strlen(p + 1) != 2)
+			goto terr;
+		*p++ = '\0';
+		t->tm_sec = ATOI2(p);
+	}
 
-        yearset = 0;
-        switch (strlen(arg)) {
-        case 12:                	/* CCYYMMDDhhmm */
-                t->tm_year = ATOI2(arg);
-                t->tm_year *= 100;
-                yearset = 1;
-                /* FALLTHOUGH */
-        case 10:                	/* YYMMDDhhmm */
-                if (yearset) {
-                        yearset = ATOI2(arg);
-                        t->tm_year += yearset;
-                } else {
-                        yearset = ATOI2(arg);
-                        if (yearset < 69)
-                                t->tm_year = yearset + 2000;
-                        else
-                                t->tm_year = yearset + 1900;
-                }
-                t->tm_year -= 1900;     /* Convert to UNIX time. */
-                /* FALLTHROUGH */
-        case 8:				/* MMDDhhmm */
-                t->tm_mon = ATOI2(arg);
-                --t->tm_mon;    	/* Convert from 01-12 to 00-11 */
-                t->tm_mday = ATOI2(arg);
-                t->tm_hour = ATOI2(arg);
-                t->tm_min = ATOI2(arg);
-                break;
-        case 4:				/* hhmm */
-                t->tm_hour = ATOI2(arg);
-                t->tm_min = ATOI2(arg);
-                break;
-        default:
-                goto terr;
-        }
-        t->tm_isdst = -1;       	/* Figure out DST. */
-        timet = mktime(t);
-        if (timet == -1)
-terr:           errx(1,
-        "out of range or illegal time specification: [[CC]YY][MMDD]hhmm[.SS]");
-        return timet;
+	yearset = 0;
+	switch (strlen(arg)) {
+	case 12:			/* ccyymmddhhmm */
+		t->tm_year = ATOI2(arg);
+		t->tm_year *= 100;
+		yearset = 1;
+		/* FALLTHOUGH */
+	case 10:			/* yymmddhhmm */
+		if (yearset) {
+			yearset = ATOI2(arg);
+			t->tm_year += yearset;
+		} else {
+			yearset = ATOI2(arg);
+			if (yearset < 69)
+				t->tm_year = yearset + 2000;
+			else
+				t->tm_year = yearset + 1900;
+		}
+		t->tm_year -= 1900;     /* Convert to UNIX time. */
+		/* FALLTHROUGH */
+	case 8:				/* MMDDhhmm */
+		t->tm_mon = ATOI2(arg);
+		--t->tm_mon;    	/* Convert from 01-12 to 00-11 */
+		t->tm_mday = ATOI2(arg);
+		t->tm_hour = ATOI2(arg);
+		t->tm_min = ATOI2(arg);
+		break;
+	case 4:				/* hhmm */
+		t->tm_hour = ATOI2(arg);
+		t->tm_min = ATOI2(arg);
+		break;
+	default:
+		goto terr;
+	}
+	t->tm_isdst = -1;       	/* Figure out DST. */
+	timet = mktime(t);
+	if (timet == -1)
+terr:	   errx(1,
+	"out of range or illegal time specification: [[yy]yy][mmdd]hhmm[.ss]");
+	return timet;
 }
 
 

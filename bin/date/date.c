@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.7 1997/07/23 14:39:13 kstailey Exp $	*/
+/*	$OpenBSD: date.c,v 1.8 1997/08/21 05:46:55 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: date.c,v 1.7 1997/07/23 14:39:13 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: date.c,v 1.8 1997/08/21 05:46:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -251,6 +251,6 @@ usage()
 {
 	(void)fprintf(stderr,
 	    "usage: date [-nu] [-d dst] [-r seconds] [-t west] [+format]\n");
-	(void)fprintf(stderr, "		   [yy[mm[dd[hh]]]]mm[.ss]]\n");
+	(void)fprintf(stderr, "		   [[[yy]yy[mm[dd[hh]]]]mm[.ss]]\n");
 	exit(1);
 }
