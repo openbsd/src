@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 1996/09/01 15:27:29 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1996/09/16 02:32:34 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.11 1996/03/15 22:39:39 scottr Exp $	*/
 
 /*
@@ -92,6 +92,9 @@ main(argc, argv)
 	char *inputdev;
 	char *symtbl = "./restoresymtable";
 	char *p, name[MAXPATHLEN];
+
+	/* Temp files should *not* be readable.  We set permissions later. */
+	(void) umask(077);
 
 	if (argc < 2)
 		usage();
