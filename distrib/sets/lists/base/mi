@@ -2607,6 +2607,7 @@
 ./var/spool/lpd
 ./var/spool/mqueue
 ./var/spool/output
+./var/spool/smtpd
 ./var/spool/uucp
 ./var/spool/uucppublic
 ./var/ssyslog
