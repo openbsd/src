@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.22 2001/03/07 07:33:53 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.23 2001/03/07 07:36:34 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -793,8 +793,7 @@ policy_callback (char *name)
 
 	case IPSEC_ID_KEY_ID:
 	  remote_id_type = "Key ID";
-	  remote_id = calloc (2 * (id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ) +
-			      1, sizeof (char));
+	  remote_id = calloc (2 * (id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ) + 1, sizeof (char));
 	  if (!remote_id)
 	    {
 		log_print ("policy_callback: calloc (%d, %d) failed",
@@ -993,7 +992,7 @@ policy_callback (char *name)
 		    log_print ("policy_callback: calloc (%d, %d) failed", 2 * (idremotesz - ISAKMP_ID_DATA_OFF) + 1, sizeof (char));
 		    goto bad;
 	        }
-              for (i = 0; i < id_sz - ISAKMP_ID_DATA_OFF; i++)
+              for (i = 0; i < idremotesz - ISAKMP_ID_DATA_OFF; i++)
 	        {
 		    remote_filter[2 * i] = hextab[*(idremote + ISAKMP_ID_DATA_OFF) >> 4];
 		    remote_filter[2 * i + 1] = hextab[*(idremote + ISAKMP_ID_DATA_OFF) & 0xF];
@@ -1187,7 +1186,7 @@ policy_callback (char *name)
 		    log_print ("policy_callback: calloc (%d, %d) failed", 2 * (idlocalsz - ISAKMP_ID_DATA_OFF) + 1, sizeof (char));
 		    goto bad;
 	        }
-              for (i = 0; i < id_sz - ISAKMP_ID_DATA_OFF; i++)
+              for (i = 0; i < idremotesz - ISAKMP_ID_DATA_OFF; i++)
 	        {
 		    local_filter[2 * i] = hextab[*(idlocal + ISAKMP_ID_DATA_OFF) >> 4];
 		    local_filter[2 * i + 1] = hextab[*(idlocal + ISAKMP_ID_DATA_OFF) & 0xF];
