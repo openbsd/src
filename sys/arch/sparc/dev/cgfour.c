@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfour.c,v 1.19 2003/06/02 23:27:53 millert Exp $	*/
+/*	$OpenBSD: cgfour.c,v 1.20 2003/06/04 04:11:37 deraadt Exp $	*/
 /*	$NetBSD: cgfour.c,v 1.13 1997/05/24 20:16:06 pk Exp $	*/
 
 /*
@@ -7,10 +7,6 @@
  * Copyright (c) 1995 Theo de Raadt.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * All advertising materials mentioning features or use of this software
- * must display the following acknowledgement:
- *	This product includes software developed by Theo de Raadt.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
