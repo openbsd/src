@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.29 2003/02/04 12:35:33 jakob Exp $
+#	$OpenBSD: changelist,v 1.30 2003/02/21 08:59:46 jakob Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -55,7 +55,6 @@
 /etc/mrouted.conf
 /etc/mygate
 /etc/myname
-/etc/named.boot
 /etc/netgroup
 /etc/netstart
 /etc/networks
