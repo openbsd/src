@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.20 2005/01/03 22:45:52 brad Exp $ */
+/*	$OpenBSD: if_url.c,v 1.21 2005/03/03 07:16:53 itojun Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -184,7 +184,9 @@ static const struct url_type {
 	/* Micronet SP128AR */
 	{{ USB_VENDOR_MICRONET, USB_PRODUCT_MICRONET_SP128AR}, 0},
 	/* Abocom RTL8151 and TrendNet TU-ET100C */
-	{{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_RTL8151}, 0}
+	{{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_RTL8151}, 0},
+	/* OQO model 01 */
+	{{ USB_VENDOR_OQO, USB_PRODUCT_OQO_ETHER01}, 0}
 };
 #define url_lookup(v, p) ((struct url_type *)usb_lookup(url_devs, v, p))
 
