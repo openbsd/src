@@ -17,6 +17,10 @@
 
 #define	NOBUF	512			/* Output buffer size.		*/
 
+#ifndef TCSASOFT
+#define TCSASOFT	0
+#endif
+
 char	obuf[NOBUF];			/* Output buffer.		*/
 int	nobuf;				/* buffer count			*/
 
@@ -54,6 +58,16 @@ ttopen()
 		nt.c_iflag &= ~(BRKINT|PARMRK|INLCR|IGNCR|ICRNL|IXON);
 		nt.c_oflag &= ~OPOST;
 		nt.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+
+#if !TCSASOFT
+		/*
+		 * If we don't have TCSASOFT, force terminal to
+		 * 8 bits, no parity.
+		 */
+		nt.c_iflag &= ~ISTRIP;
+		nt.c_cflag &= ~(CSIZE|PARENB);
+		nt.c_cflag |= CS8;
+#endif
 
 		ttysavedp = TRUE;
 	}
