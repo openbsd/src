@@ -1,4 +1,4 @@
-/*	$OpenBSD: nohup.c,v 1.9 2002/05/29 18:33:39 deraadt Exp $	*/
+/*	$OpenBSD: nohup.c,v 1.10 2003/02/16 03:09:50 cloder Exp $	*/
 /*	$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
 #endif
-static char rcsid[] = "$OpenBSD: nohup.c,v 1.9 2002/05/29 18:33:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nohup.c,v 1.10 2003/02/16 03:09:50 cloder Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -94,7 +94,7 @@ main(argc, argv)
 
 	execvp(argv[1], &argv[1]);
 	exit_status = (errno == ENOENT) ? EXIT_NOTFOUND : EXIT_NOEXEC;
-	err(exit_status, argv[1]);
+	err(exit_status, "%s", argv[1]);
 }
 
 static void
