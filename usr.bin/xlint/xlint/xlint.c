@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.15 2004/02/19 21:09:47 brad Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.16 2004/05/11 02:08:07 millert Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.15 2004/02/19 21:09:47 brad Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.16 2004/05/11 02:08:07 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -122,7 +122,7 @@ static	const	char *basename(const char *, int);
 static	void	appdef(char ***, const char *);
 static	void	usage(void);
 static	void	fname(const char *, int);
-static	void	runchild(const char *, char *const *, const char *);
+static	int	runchild(const char *, char *const *, const char *);
 static	void	findlibs(char *const *);
 static	int	rdok(const char *);
 static	void	lint2(void);
@@ -531,6 +531,7 @@ fname(name, last)
 	const	char *bn, *suff;
 	char	**args, *ofn, *path;
 	size_t	len;
+	int	error;
 
 	bn = basename(name, '/');
 	suff = basename(bn, '.');
@@ -588,9 +589,11 @@ fname(name, last)
 	appcstrg(&args, name);
 	appcstrg(&args, cppout);
 
-	runchild(path, args, cppout);
+	error = runchild(path, args, cppout);
 	free(path);
 	freelst(&args);
+	if (error)
+		return;
 
 	/* run lint1 */
 
@@ -603,9 +606,11 @@ fname(name, last)
 	appcstrg(&args, cppout);
 	appcstrg(&args, ofn);
 
-	runchild(path, args, ofn);
+	error = runchild(path, args, ofn);
 	free(path);
 	freelst(&args);
+	if (error)
+		return;
 
 	appcstrg(&p2in, ofn);
 	free(ofn);
@@ -613,7 +618,7 @@ fname(name, last)
 	free(args);
 }
 
-static void
+static int
 runchild(path, args, crfn)
 	const	char *path, *crfn;
 	char	*const *args;
@@ -646,20 +651,21 @@ runchild(path, args, crfn)
 		exit(1);
 		/* NOTREACHED */
 	}
+	currfn = NULL;
 
 	while ((rv = wait(&status)) == -1 && errno == EINTR) ;
 	if (rv == -1) {
 		warn("wait");
-		terminate(-1);
+		return(-1);
 	}
 	if (WIFSIGNALED(status)) {
 		signo = WTERMSIG(status);
 		warnx("%s got SIG%s", path, sys_signame[signo]);
-		terminate(-1);
+		return(-1);
 	}
 	if (WEXITSTATUS(status) != 0)
-		terminate(-1);
-	currfn = NULL;
+		return(-1);
+	return(0);
 }
 
 static void
@@ -729,7 +735,7 @@ lint2()
 	applst(&args, l2libs);
 	applst(&args, p2in);
 
-	runchild(path, args, p2out);
+	(void)runchild(path, args, p2out);
 	free(path);
 	freelst(&args);
 	free(args);
