@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: list,v 1.22 2002/04/19 23:20:23 deraadt Exp $
+#	$OpenBSD: list,v 1.23 2002/04/28 19:25:09 deraadt Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
@@ -61,10 +61,10 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 #COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec/bootxx
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/group		etc
-COPY	${DESTDIR}/etc/protocols	etc
-COPY	${DESTDIR}/etc/services		etc
-COPY	${DESTDIR}/etc/spwd.db		etc
+COPY	${DESTDIR}/etc/group		etc/group
+COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
+COPY	${CURDIR}/../../miniroot/services	etc/services
+COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 
 # and the common installation tools
 COPY	${TOPDIR}/inst-common/termcap.vt	usr/share/misc/termcap
