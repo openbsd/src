@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 1999/04/20 20:38:11 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 1999/05/05 02:40:34 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -54,10 +54,15 @@ bdev_decl(sw);
 #include "ch.h"
 #include "ss.h"
 #include "uk.h"
+#if 0
 #include "fd.h"
+#include "ft.h"
+#else
+#define NFD 0
+#define NFT 0
+#endif
 bdev_decl(fd);
 cdev_decl(fd);
-#include "ft.h"
 bdev_decl(ft);
 cdev_decl(ft);
 
@@ -98,9 +103,15 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 cdev_decl(mm);
 cdev_decl(sw);
 #include "pty.h"
+#if 0
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
+#else
+#define	NWSKBD 0
+#define	NWSDISPLAY 0
+#define	NWSMOUSE 0
+#endif
 #include "bpfilter.h"   
 #include "tun.h"
 
