@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.86 1998/08/19 04:25:46 form Exp $
+#	$OpenBSD: rc,v 1.87 1998/08/25 18:19:40 marc Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -445,7 +445,15 @@ fi
 [ -f /etc/rc.local ] && . /etc/rc.local
 
 echo -n standard daemons:
+
+# $apmd_flags is imported from /etc/rc.conf;
+# don't run daemon if $apmd_flags == NO or /usr/sbin/apmd doesn't exist
+if [ "X${apmd_flags}" != X"NO" -a -x /usr/sbin/apmd ]; then
+        echo -n ' apmd';        /usr/sbin/apmd ${apmd_flags}
+fi
+
 echo -n ' cron';		cron
+
 echo '.'
 
 date
