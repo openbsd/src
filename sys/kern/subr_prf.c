@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.45 2002/10/14 20:15:23 art Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.46 2003/01/13 18:32:03 weingart Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -88,6 +88,7 @@ extern int uvm_doswapencrypt;
 #define TOLOG		0x04	/* to the kernel message buffer */
 #define TOBUFONLY	0x08	/* to the buffer (only) [for sprintf] */
 #define TODDB		0x10	/* to ddb console */
+#define TOCOUNT		0x20	/* act like [v]snprintf */
 
 /* max size buffer kprintf needs to print quad_t [size in base 8 + \0] */
 #define KPRINTF_BUFSIZE		(sizeof(quad_t) * NBBY / 3 + 2)
@@ -575,7 +576,7 @@ vsprintf(buf, fmt, ap)
 		logwakeup();
 	consintr = savintr;		/* reenable interrupts */
 	buf[len] = 0;
-	return (0);
+	return (len);
 }
 
 /*
@@ -588,13 +589,14 @@ snprintf(char *buf, size_t size, const char *fmt, ...)
 	va_list ap;
 	char *p;
 
-	if (size < 1)
-		return (-1);
 	p = buf + size - 1;
+	if (size < 1)
+		p = buf;
 	va_start(ap, fmt);
-	retval = kprintf(fmt, TOBUFONLY, &p, buf, ap);
+	retval = kprintf(fmt, TOBUFONLY | TOCOUNT, &p, buf, ap);
 	va_end(ap);
-	*(p) = 0;	/* null terminate */
+	if (size > 0)
+		*(p) = 0;	/* null terminate */
 	return(retval);
 }
 
@@ -611,11 +613,12 @@ vsnprintf(buf, size, fmt, ap)
 	int retval;
 	char *p;
 
-	if (size < 1)
-		return (-1);
 	p = buf + size - 1;
-	retval = kprintf(fmt, TOBUFONLY, &p, buf, ap);
-	*(p) = 0;	/* null terminate */
+	if (size < 1)
+		p = buf;
+	retval = kprintf(fmt, TOBUFONLY | TOCOUNT, &p, buf, ap);
+	if (size > 0)
+		*(p) = 0;	/* null terminate */
 	return(retval);
 }
 
@@ -695,17 +698,19 @@ vsnprintf(buf, size, fmt, ap)
 	    flags&SHORTINT ? (u_long)(u_short)va_arg(ap, int) : \
 	    (u_long)va_arg(ap, u_int))
 
-#define KPRINTF_PUTCHAR(C) {						\
-	if (oflags == TOBUFONLY) {					\
+#define KPRINTF_PUTCHAR(C) do {					\
+	int chr = (C);							\
+	ret += 1;							\
+	if (oflags & TOBUFONLY) {					\
 		if ((vp != NULL) && (sbuf == tailp)) {			\
-			ret += 1;		/* indicate error */	\
-			goto overflow;					\
-		}							\
-		*sbuf++ = (C);						\
+			if (!(oflags & TOCOUNT))				\
+				goto overflow;				\
+		} else							\
+			*sbuf++ = chr;					\
 	} else {							\
-		kputchar((C), oflags, (struct tty *)vp);			\
+		kputchar(chr, oflags, (struct tty *)vp);			\
 	}								\
-}
+} while(0)
 
 int
 kprintf(fmt0, oflags, vp, sbuf, ap)
@@ -734,7 +739,7 @@ kprintf(fmt0, oflags, vp, sbuf, ap)
 	char buf[KPRINTF_BUFSIZE]; /* space for %c, %[diouxX] */
 	char *tailp = NULL;	/* tail pointer for snprintf */
 
-	if (oflags == TOBUFONLY && (vp != NULL))
+	if ((oflags & TOBUFONLY) && (vp != NULL))
 		tailp = *(char **)vp;
 
 	fmt = (char *)fmt0;
@@ -745,7 +750,6 @@ kprintf(fmt0, oflags, vp, sbuf, ap)
 	 */
 	for (;;) {
 		while (*fmt != '%' && *fmt) {
-			ret++;
 			KPRINTF_PUTCHAR(*fmt++);
 		}
 		if (*fmt == 0)
@@ -764,7 +768,7 @@ reswitch:	switch (ch) {
 		/* XXX: non-standard '%:' format */
 #ifndef __powerpc__
 		case ':':
-			if (oflags != TOBUFONLY) {
+			if (!(oflags & TOBUFONLY)) {
 				cp = va_arg(ap, char *);
 				kprintf(cp, oflags, vp,
 				    NULL, va_arg(ap, va_list));
@@ -789,7 +793,6 @@ reswitch:	switch (ch) {
 
 			z = buf;
 			while (*z) {
-				ret++;
 				KPRINTF_PUTCHAR(*z++);
 			}
 
@@ -797,10 +800,8 @@ reswitch:	switch (ch) {
 				tmp = 0;
 				while ((n = *b++) != 0) {
 					if (_uquad & (1 << (n - 1))) {
-						ret++;
 						KPRINTF_PUTCHAR(tmp ? ',':'<');
 						while ((n = *b) > ' ') {
-							ret++;
 							KPRINTF_PUTCHAR(n);
 							b++;
 						}
@@ -811,7 +812,6 @@ reswitch:	switch (ch) {
 					}
 				}
 				if (tmp) {
-					ret++;
 					KPRINTF_PUTCHAR('>');
 				}
 			}
@@ -1130,9 +1130,6 @@ number:			if ((dprec = prec) >= 0)
 		else if (flags & HEXPREFIX)
 			realsz+= 2;
 
-		/* adjust ret */
-		ret += width > realsz ? width : realsz;
-
 		/* right-adjusting blank padding */
 		if ((flags & (LADJUST|ZEROPAD)) == 0) {
 			n = width - realsz;
@@ -1172,7 +1169,7 @@ number:			if ((dprec = prec) >= 0)
 	}
 
 done:
-	if ((oflags == TOBUFONLY) && (vp != NULL))
+	if ((oflags & TOBUFONLY) && (vp != NULL))
 		*(char **)vp = sbuf;
 overflow:
 	return (ret);
