@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_swap.c,v 1.31 2001/07/26 19:37:13 art Exp $	*/
-/*	$NetBSD: uvm_swap.c,v 1.32 2000/01/11 06:57:51 chs Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.32 2001/07/31 13:34:46 art Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.34 2000/02/07 20:16:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
