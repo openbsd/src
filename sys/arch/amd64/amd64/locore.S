@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.5 2004/02/22 19:20:09 tom Exp $	*/
+/*	$OpenBSD: locore.S,v 1.6 2004/02/23 01:19:52 tom Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 2003/04/26 19:34:45 fvdl Exp $	*/
 
 /*
@@ -192,6 +192,8 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
+	.globl	_C_LABEL(bootapiver), _C_LABEL(bootargc), _C_LABEL(bootargv)
+	.globl	_C_LABEL(boot_consdev)
 	.globl	_C_LABEL(gdtstore)
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
@@ -205,6 +207,10 @@ _C_LABEL(cpu_vendor):	.space	16	# vendor string returned by `cpuid'
 _C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
 _C_LABEL(esym):		.quad	0	# ptr to end of syms
 _C_LABEL(atdevbase):	.quad	0	# location of start of iomem in virtual
+_C_LABEL(bootapiver):	.long	0	# /boot API version
+_C_LABEL(bootargc):	.long	0	# /boot argc
+_C_LABEL(bootargv):	.quad	0	# /boot argv
+_C_LABEL(boot_consdev):	.long	0	# console device (temporary)
 _C_LABEL(proc0paddr):	.quad	0
 _C_LABEL(PTDpaddr):	.quad	0	# paddr of PTD, for libkvm
 #ifndef REALBASEMEM
@@ -246,7 +252,7 @@ tmpstk:
 
 /*
  * Some hackage to deal with 64bit symbols in 32 bit mode.
- * This may not be needed it things are cleaned up a little.
+ * This may not be needed if things are cleaned up a little.
  */
 
 
@@ -262,6 +268,8 @@ start:	movw	$0x1234,0x472			# warm boot
 	/*
 	 * Load parameters from stack
 	 * (howto, bootdev, bootapiver, esym, extmem, cnvmem, ac, av)
+	 *
+	 * XXX boot_consdev temporarily tacked on to the end
 	 */
 	movl	4(%esp),%eax
 	movl	%eax, RELOC(boothowto)
@@ -276,10 +284,23 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl    %eax,(%ebp)
 	movl    $KERNBASE_HI,4(%ebp)
 1:
-        movl    20(%esp), %eax
+	movl	20(%esp), %eax
 	movl	%eax, RELOC(biosextmem)
-        movl    24(%esp), %eax
+	movl	24(%esp), %eax
 	movl	%eax, RELOC(biosbasemem)
+
+	movl	12(%esp), %eax
+	movl	%eax, RELOC(bootapiver)
+	movl	28(%esp), %eax
+	movl	%eax, RELOC(bootargc)
+	movl	32(%esp), %eax
+	movl	$RELOC(bootargv), %ebx
+	movl	%eax, (%ebx)
+	xorl	%eax, %eax
+	movl	%eax, 4(%ebx)
+
+	movl	36(%esp), %eax
+	movl	%eax, RELOC(boot_consdev)
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 2004/02/03 12:09:47 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 2004/02/23 01:19:52 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -48,9 +48,11 @@ machdep(void)
 	printf("probing:");
 	/* probe for a model number, gateA20() neds ps2model */
 	gateA20(1);	CKPT('1');
-	memprobe();	CKPT('2');
+	/* initialise a console (and probe for com* devices) */
+	cninit();	CKPT('2');
+	memprobe();	CKPT('3');
 	printf("\n");
 
-	diskprobe();	CKPT('3');
+	diskprobe();	CKPT('4');
 			CKPT('Z');
 }
