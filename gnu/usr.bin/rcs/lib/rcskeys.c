@@ -27,6 +27,12 @@ Report problems and direct all questions to:
 */
 
 /* $Log: rcskeys.c,v $
+/* Revision 1.3  1996/05/31 13:04:51  deraadt
+/* retain -Z options to rcs commands even though they do not work (rcs
+/* commands spawn children which do not inherit the -Z option...) but also
+/* look in the RCSLOCALID environment variable. cvs sets this to "OpenBSD",
+/* as read from the options file.
+/*
 /* Revision 1.2  1996/04/19 12:40:09  mickey
 /* -L<string> option added to support LOCALID behaviour.
 /* maybe set up in RCSINIT environment variable.
@@ -69,7 +75,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(keysId, "$Id: rcskeys.c,v 1.2 1996/04/19 12:40:09 mickey Exp $")
+libId(keysId, "$Id: rcskeys.c,v 1.3 1996/05/31 13:04:51 deraadt Exp $")
 
 char local_id[keylength+1];
 char const *Keyword[] = {
@@ -85,10 +91,16 @@ char const *Keyword[] = {
 setRCSlocalId(string)
 	char const *string;
 {
+	static int num;
+
 	if (strlen(string) > keylength)
 		error("LocalId is too long");
 	strcpy(local_id, string);
 	Keyword[LocalId] = local_id;
+
+	if (num++)
+		setenv("RCSLOCALID", local_id, 1);
+
 }
 
 	enum markers

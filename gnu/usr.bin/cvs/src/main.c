@@ -870,7 +870,8 @@ parseopts()
 		*p = '\0';
 
 	    if (!strncmp(buf, "tag=", 4)) {
-		RCS_citag = strdup(buf+4);
+		char *RCS_citag = strdup(buf+4);
+		setenv("RCSLOCALID", RCS_citag, 1);
 	    } else if (!strncmp(buf, "umask=", 6)) {
 		int mode;
 

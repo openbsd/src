@@ -416,7 +416,6 @@ extern int trace;		/* Show all commands */
 extern int noexec;		/* Don't modify disk anywhere */
 extern int readonlyfs;		/* fail on all write locks; succeed all read locks */
 extern int logoff;		/* Don't write history entry */
-extern char *RCS_citag;		/* special -Z tag for RCS */
 
 extern char hostname[];
 

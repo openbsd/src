@@ -17,8 +17,6 @@
    -1 for error (and errno is set to indicate the error), positive for
    error (and an error message has been printed), or zero for success.  */
 
-char *RCS_citag;
-
 int
 RCS_settag(path, tag, rev)
     const char *path;
@@ -150,8 +148,6 @@ RCS_checkout (rcsfile, workfile, tag, options, sout, flags, noerr)
 	run_arg ("-l");
     if (flags & RCS_FLAGS_FORCE)
 	run_arg ("-f");
-    if (RCS_citag)
-	run_arg (RCS_citag);
     run_arg (rcsfile);
     if (workfile != NULL && workfile[0] != '\0')
 	run_arg (workfile);
@@ -184,8 +180,6 @@ RCS_checkin (rcsfile, workfile, message, rev, flags, noerr)
 	run_arg ("-q");
     if (flags & RCS_FLAGS_MODTIME)
 	run_arg ("-d");
-    if (RCS_citag)
-	run_arg (RCS_citag);
     run_args ("-m%s", make_message_rcslegal (message));
     if (workfile != NULL)
 	run_arg (workfile);
