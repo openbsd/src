@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.612 2003/04/02 22:32:04 jason Exp $
+	$OpenBSD: pcidevs,v 1.613 2003/04/19 11:50:57 henning Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1192,6 +1192,7 @@ product DLINK DGE550T		0x4000	DGE-550T
 /* Davicom Technologies */
 product DAVICOM DM9100		0x9100	DM9100
 product DAVICOM DM9102		0x9102	DM9102
+product DAVICOM DM9009		0x9009	DM9009
 
 /* DEC products */
 product DEC 21050		0x0001	21050 PCI-PCI
