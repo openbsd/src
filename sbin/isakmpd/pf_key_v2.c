@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.82 2001/08/14 19:38:38 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.83 2001/08/14 20:24:40 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1653,6 +1653,7 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
       addr = 0;
     }
 
+  len = sizeof *addr + PF_KEY_V2_ROUND (laddr->sa_len);
   addr = calloc (1, len);
   if (!addr)
     goto cleanup;
