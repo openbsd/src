@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.1 2003/10/19 18:38:06 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.2 2003/11/14 23:03:55 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -33,19 +33,15 @@
 .Sh SYNOPSIS
 .Nm pkg_create
 .Bk -words
-.Op Fl Ohv
+.Op Fl hv
 .Op Fl P Ar dpkgs
 .Op Fl C Ar cpkgs
 .Op Fl p Ar prefix
 .Op Fl i Ar iscript
 .Op Fl k Ar dscript
 .Op Fl r Ar rscript
-.Op Fl s Ar fake-prefix
 .Op Fl S Ar fake-base
-.Op Fl t Ar template
-.Op Fl X Ar excludefile
 .Op Fl D Ar displayfile
-.Op Fl m Ar mtreefile
 .Fl c Ar comment
 .Fl d Ar description
 .Fl f Ar packlist
@@ -93,30 +89,13 @@ Fetch long description for package from file
 or, if preceded by
 .Dq \&- ,
 the argument itself.
-.It Fl Y
-Assume a default answer of
-.Dq Yes
-for any questions asked.
-.It Fl N
-Assume a default answer of
-.Dq \&No
-for any questions asked.
-.It Fl O
-Go into a
-.Dq packing list only
-mode.
-This is used to do
-.Dq fake pkg_add
-operations when a package is installed.
-In such cases, it is necessary to know what the final, adjusted packing
-list will look like.
 .It Fl v
 Turn on verbose output.
 .It Fl h
 Force
 .Xr tar
 to follow symbolic links, so that the files they point to
-are dumped, rather than the links themselves.
+are dumped, rather than the links themselves (deprecated).
 .It Fl i Ar iscript
 Set
 .Ar iscript
@@ -126,22 +105,12 @@ It will be invoked automatically
 when the package is later installed.
 .It Fl P Ar dpkgs
 Set the initial package dependency list to
-.Ar dpkgs .
-This is assumed to be a whitespace separated list of package names
-and is meant as a convenient shorthand for specifying multiple
-.Cm @pkgdep
-directives in the packing list (see
-.Sx PACKING LIST DETAILS
-section below).
+.Ar dpkgs 
+(deprecated).
 .It Fl C Ar cpkgs
 Set the initial package conflict list to
-.Ar cpkgs .
-This is assumed to be a whitespace separated list of package names
-and is meant as a convenient shorthand for specifying multiple
-.Cm @pkgcfl
-directives in the packing list (see
-.Sx PACKING LIST DETAILS
-section below).
+.Ar cpkgs 
+(deprecated).
 .It Fl p Ar prefix
 Set
 .Ar prefix
@@ -149,11 +118,6 @@ as the initial directory
 .Dq base
 to start from in selecting files for
 the package, and to record as the base for installing the package.
-.It Fl s Ar fake-prefix
-Set
-.Ar fake-prefix
-as the real initial directory
-to start from in selecting files for the package.
 .It Fl S Ar fake-base
 Set
 .Ar fake-base
@@ -175,62 +139,12 @@ This can be any executable program (or shell script).
 It will be invoked automatically
 at installation/deinstallation time to determine whether or not
 installation/deinstallation should proceed.
-.It Fl t Ar template
-Use
-.Ar template
-as the input to
-.Xr mkstemp 3 .
-By default, this is the string
-.Pa /tmp/instmp.XXXXXX ,
-but it may be necessary to override it in the situation where
-space in your
-.Pa /tmp
-directory is limited.
-Be sure to leave some number of
-.Dq X
-characters for
-.Xr mkstemp 3
- to fill in with a unique ID.
-.It Fl X Ar excludefile
-Pass
-.Ar excludefile
-as a
-.Fl exclude-from
-argument to
-.Xr tar
-when creating final package.
-See
-.Xr tar
-man page (or run
-.Xr tar
-with
-.Fl -help
-flag) for further information on using this flag.
 .It Fl D Ar displayfile
 Display the file (using
 .Xr more 1 )
 after installing the package.
 Useful for things like
 legal notices on almost-free software, etc.
-.It Fl m Ar mtreefile
-Run
-.Xr mtree 8
-with input from mtreefile before the package is installed.
-.Xr mtree
-is invoked as
-.Cm mtree
-.Fl u
-.Fl f
-.Ar mtreefile
-.Fl d
-.Fl e
-.Fl p
-.Pa prefix ,
-where
-.Pa prefix
-is the name of the first directory named by a
-.Cm @cwd
-directive.
 .El
 .Sh PACKING LIST DETAILS
 The
@@ -256,14 +170,6 @@ All subsequent filenames will be assumed relative to this directory.
 Note:
 .Cm @cd
 is also an alias for this command.
-.It Cm @src Ar directory
-Set the internal directory pointer for creation
-.Em only
-to
-.Ar directory .
-That is to say that it overrides
-.Cm @cwd
-for package creation but not extraction.
 .It Cm @exec Ar command
 Execute
 .Ar command
@@ -390,17 +296,6 @@ ends with a slash, it is a directory.
 Extra
 .Ar command
 to execute when removing extra files.
-.It Cm @mtree Ar name
-Declare
-.Pa name
-as an
-.Xr mtree 8
-input file to be used at install time (see
-.Fl m
-above).
-Only the first
-.Cm @mtree
-directive is honored.
 .It Cm @display Ar name
 Declare
 .Pa name

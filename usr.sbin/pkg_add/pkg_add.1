@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.4 2003/11/08 19:17:29 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.5 2003/11/14 23:03:55 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -26,8 +26,6 @@
 .Sh SYNOPSIS
 .Nm pkg_add
 .Op Fl vInfRMS
-.Op Fl t Ar template
-.Op Fl p Ar prefix
 .Ar pkg-name Op Ar ...
 .Sh DESCRIPTION
 The
@@ -53,13 +51,10 @@ packages and may not be installed using
 .Nm pkg_add .
 .Ed
 .Pp
-Package names may be specified as filenames (which normally consist of the
+Each package name may be specified as a filename (which normally consists of the
 package name itself plus the
-.Dq .tgz ,
-.Dq .tar.gz ,
-or
-.Dq .tar
-suffix) or URL referring to FTP, HTTP, or SCP locations.
+.Dq .tgz
+suffix) or an URL referring to FTP, HTTP, or SCP locations.
 For example, the following is valid:
 .Pp
 .Ic pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/m4-1.4.tgz
@@ -241,21 +236,6 @@ path shown above).
 Finally, the staging area is deleted and the program terminates.
 .El
 .Pp
-The
-.Ar install
-and
-.Ar require
-scripts are called with the environment variable
-.Ev PKG_PREFIX
-set to the installation prefix (see the
-.Fl p
-option above).
-This allows a package author to write a script
-that reliably performs some action on the directory where the package
-is installed, even if the user might change it with the
-.Fl p
-flag to
-.Cm pkg_add .
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_TMPDIR
 .It Ev PKG_PATH
