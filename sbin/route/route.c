@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.13 1996/12/14 17:23:54 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.14 1996/12/14 17:36:33 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.13 1996/12/14 17:23:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.14 1996/12/14 17:36:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -388,7 +388,7 @@ routename(sa)
 		return (link_ntoa((struct sockaddr_dl *)sa));
 
 	case AF_ISO:
-		(void) sprintf(line, "iso %s",
+		(void) snprintf(line, sizeof line, "iso %s",
 		    iso_ntoa(&((struct sockaddr_iso *)sa)->siso_addr));
 		break;
 
