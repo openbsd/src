@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.3 1997/09/30 00:07:25 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.4 1997/10/02 14:58:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -263,6 +263,10 @@ Xquit(cmd, disk, mbr, tt, offset)
 	mbr_t *tt;
 	int offset;
 {
+	extern int modified;
+
+	if (modified == 0)
+		exit(0);
 
 	if(ask_yn("You really want to quit?"))
 		exit(0);

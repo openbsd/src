@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.5 1997/10/02 14:55:30 deraadt Exp $	*/
+/*	$OpenBSD: user.c,v 1.6 1997/10/02 14:58:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -109,6 +109,8 @@ USER_init(disk, tt)
 	return(0);
 }
 
+int modified;
+
 int
 USER_modify(disk, tt, offset)
 	disk_t *disk;
@@ -118,7 +120,7 @@ USER_modify(disk, tt, offset)
 	char mbr_buf[DEV_BSIZE];
 	mbr_t mbr;
 	cmd_t cmd;
-	int i, st, fd, modified = 0;
+	int i, st, fd;
 
 
 	/* Set up command table pointer */
