@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 1997/02/06 20:03:59 kstailey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 1997/02/21 06:07:28 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -491,7 +491,7 @@ trap(type, code, v, frame)
 			vftype = VM_PROT_WRITE;
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		} else
-			ftype = VM_PROT_READ;
+			vftype = ftype = VM_PROT_READ;
 		va = trunc_page((vm_offset_t)v);
 
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 1997/02/04 17:23:20 deraadt Exp $ */
+/*	$OpenBSD: trap.c,v 1.14 1997/02/21 06:07:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -578,7 +578,7 @@ copyfault:
 			vftype = VM_PROT_WRITE;
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		} else
-			ftype = VM_PROT_READ;
+			vftype = ftype = VM_PROT_READ;
 		va = trunc_page((vm_offset_t)v);
 
 		if (map == kernel_map && va == 0) {
