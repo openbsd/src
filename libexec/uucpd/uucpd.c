@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: uucpd.c,v 1.5 1996/10/26 04:59:20 millert Exp $";
+static char rcsid[] = "$Id: uucpd.c,v 1.6 1996/12/03 01:29:54 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -221,11 +221,12 @@ register int n;
 		if (read(0, &c, 1) <= 0)
 			return(-1);
 		c &= 0177;
-		if (c == '\n' || c == '\r') {
+		if (c == '\r') {
 			*p = '\0';
 			return(0);
 		}
-		*p++ = c;
+		if (c != '\n')
+			*p++ = c;
 	}
 	return(-1);
 }
