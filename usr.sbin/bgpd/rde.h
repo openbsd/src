@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.61 2004/11/23 13:07:01 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.62 2004/12/23 15:08:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -50,22 +50,22 @@ struct rde_peer {
 	LIST_ENTRY(rde_peer)		 peer_l; /* list of all peers */
 	struct aspath_head		 path_h; /* list of all as paths */
 	struct peer_config		 conf;
-	enum peer_state			 state;
-	u_int32_t			 prefix_cnt;
-	u_int32_t			 remote_bgpid;
 	struct bgpd_addr		 remote_addr;
 	struct bgpd_addr		 local_v4_addr;
 	struct bgpd_addr		 local_v6_addr;
-	u_int32_t			 up_pcnt;
-	u_int32_t			 up_acnt;
-	u_int32_t			 up_nlricnt;
-	u_int32_t			 up_wcnt;
 	struct uptree_prefix		 up_prefix;
 	struct uptree_attr		 up_attrs;
 	struct uplist_attr		 updates;
 	struct uplist_prefix		 withdraws;
 	struct uplist_attr		 updates6;
 	struct uplist_prefix		 withdraws6;
+	u_int32_t			 prefix_cnt;
+	u_int32_t			 remote_bgpid;
+	u_int32_t			 up_pcnt;
+	u_int32_t			 up_acnt;
+	u_int32_t			 up_nlricnt;
+	u_int32_t			 up_wcnt;
+	enum peer_state			 state;
 };
 
 #define AS_SET			1
@@ -109,16 +109,16 @@ enum attrtypes {
 
 struct attr {
 	TAILQ_ENTRY(attr)		 entry;
+	u_char				*data;
+	u_int16_t			 len;
 	u_int8_t			 flags;
 	u_int8_t			 type;
-	u_int16_t			 len;
-	u_char				*data;
 };
 
 struct mpattr {
 	void		*reach;
-	u_int16_t	 reach_len;
 	void		*unreach;
+	u_int16_t	 reach_len;
 	u_int16_t	 unreach_len;
 };
 
@@ -153,20 +153,17 @@ LIST_HEAD(prefix_head, prefix);
 struct rde_aspath {
 	LIST_ENTRY(rde_aspath)		 path_l, peer_l, nexthop_l;
 	struct prefix_head		 prefix_h;
+	struct attr_list		 others;
 	struct rde_peer			*peer;
-
-	/* path attributes */
 	struct aspath			*aspath;
 	struct nexthop			*nexthop;	/* may be NULL */
-	struct attr_list		 others;
+	char				 pftable[PFTABLE_LEN];
 	u_int32_t			 med;		/* multi exit disc */
 	u_int32_t			 lpref;		/* local pref */
-	u_int8_t			 origin;
-
 	u_int16_t			 flags;	/* internally used */
 	u_int16_t			 prefix_cnt; /* # of prefixes */
 	u_int16_t			 active_cnt; /* # of active prefixes */
-	char				 pftable[PFTABLE_LEN];
+	u_int8_t			 origin;
 };
 
 enum nexthop_state {
@@ -178,6 +175,9 @@ enum nexthop_state {
 struct nexthop {
 	LIST_ENTRY(nexthop)	nexthop_l;
 	struct aspath_head	path_h;
+	struct bgpd_addr	exit_nexthop;
+	struct bgpd_addr	true_nexthop;
+	struct bgpd_addr	nexthop_net;
 #if 0
 	/*
 	 * currently we use the boolean nexthop state, this could be exchanged
@@ -186,9 +186,6 @@ struct nexthop {
 	u_int32_t		costs;
 #endif
 	enum nexthop_state	state;
-	struct bgpd_addr	exit_nexthop;
-	struct bgpd_addr	true_nexthop;
-	struct bgpd_addr	nexthop_net;
 	u_int8_t		nexthop_netlen;
 	u_int8_t		flags;
 #define NEXTHOP_CONNECTED	0x01

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.72 2004/11/18 17:07:38 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.73 2004/12/23 15:08:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -111,10 +111,10 @@ struct msg_header {
 
 struct msg_open {
 	struct msg_header	 header;
-	u_int8_t		 version;
+	u_int32_t		 bgpid;
 	u_int16_t		 myas;
 	u_int16_t		 holdtime;
-	u_int32_t		 bgpid;
+	u_int8_t		 version;
 	u_int8_t		 optparamlen;
 };
 
@@ -153,25 +153,25 @@ struct peer {
 		struct capabilities	ann;
 		struct capabilities	peer;
 	}			 capa;
-	u_int32_t		 remote_bgpid;
-	u_int16_t		 holdtime;
-	enum session_state	 state;
-	enum session_state	 prev_state;
+	struct sockaddr_storage	 sa_local;
+	struct sockaddr_storage	 sa_remote;
+	struct msgbuf		 wbuf;
+	struct buf_read		*rbuf;
+	struct peer		*next;
 	time_t			 ConnectRetryTimer;
 	time_t			 KeepaliveTimer;
 	time_t			 HoldTimer;
 	time_t			 IdleHoldTimer;
 	time_t			 IdleHoldResetTimer;
-	u_int			 IdleHoldTime;
 	int			 fd;
-	struct sockaddr_storage	 sa_local;
-	struct sockaddr_storage	 sa_remote;
-	struct msgbuf		 wbuf;
-	struct buf_read		*rbuf;
+	int			 lasterr;
+	u_int			 IdleHoldTime;
+	u_int32_t		 remote_bgpid;
+	enum session_state	 state;
+	enum session_state	 prev_state;
+	u_int16_t		 holdtime;
 	u_int8_t		 auth_established;
 	u_int8_t		 depend_ok;
-	int			 lasterr;
-	struct peer		*next;
 };
 
 struct peer	*peers;
