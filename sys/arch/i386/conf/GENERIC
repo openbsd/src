@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.312 2002/07/12 21:01:40 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.313 2002/07/12 21:35:48 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -468,8 +468,8 @@ bktr0	at pci? dev ? function ?
 #rtii0	at isa? port 0x30c	# AIMS Lab Radiotrack II FM Radio Card
 
 # FM-Radio support
-#radio*	at bktr?
-#radio*	at fms?
+radio*	at bktr?
+radio*	at fms?
 #radio*	at gtp?
 #radio*	at sfr0
 #radio*	at sf2r0
