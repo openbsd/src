@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_util.c,v 1.6 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: cd9660_util.c,v 1.7 2003/11/04 21:54:01 mickey Exp $	*/
 /*	$NetBSD: cd9660_util.c,v 1.12 1997/01/24 00:27:33 cgd Exp $	*/
 
 /*-
@@ -57,6 +57,14 @@
 #include <isofs/cd9660/cd9660_extern.h>
 
 /*
+ * XXX: limited support for loading of Unicode
+ * conversion routine as a kld at a run-time.
+ * Should be removed when native Unicode kernel
+ * interfaces have been introduced.
+ */
+u_char (*cd9660_wchar2char)(u_int32_t wchar) = NULL;
+
+/*
  * Get one character out of an iso filename
  * Obey joliet_level
  * Return number of bytes consumed
@@ -82,6 +90,11 @@ isochar(isofn, isoend, joliet_level, c)
               *c = *isofn;
               break;
       }
+
+      /* XXX: if Unicode conversion routine is loaded then use it */
+      if (cd9660_wchar2char != NULL)
+	      *c = cd9660_wchar2char((*(isofn - 1) << 8) | *isofn);
+
       return 2;
 }
 
