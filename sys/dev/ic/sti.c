@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.39 2005/01/23 16:53:21 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.40 2005/01/23 16:55:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -309,7 +309,9 @@ sti_attach_common(sc, codebase)
 			/* rom has already been mapped */
 			if (p != cc->regions) {
 				if (bus_space_map(sc->memt, *p,
-				    r.length << PGSHIFT, 0, &fbh)) {
+				    r.length << PGSHIFT,
+				    r.cache ? BUS_SPACE_MAP_CACHEABLE : 0,
+				    &fbh)) {
 #ifdef STIDEBUG
 					printf("already mapped region\n");
 #endif

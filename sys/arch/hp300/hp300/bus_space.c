@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.1 2005/01/14 22:39:27 miod Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.2 2005/01/23 16:55:17 miod Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.6 2002/09/27 15:36:02 provos Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@ bus_space_map(t, bpa, size, flags, bshp)
 {
 	u_long kva;
 	int error;
+	pt_entry_t ptemask;
 
 	switch (HP300_TAG_BUS(t)) {
 	case HP300_BUS_INTIO:
@@ -101,9 +102,13 @@ bus_space_map(t, bpa, size, flags, bshp)
 		return (error);
 
 	/*
-	 * Map the range.  The range is always cache-inhibited on the hp300.
+	 * Map the range.
 	 */
-	physaccess((caddr_t)kva, (caddr_t)bpa, size, PG_RW | PG_CI);
+	if (flags & BUS_SPACE_MAP_CACHEABLE)
+		ptemask = PG_RW;
+	else
+		ptemask = PG_RW | PG_CI;
+	physaccess((caddr_t)kva, (caddr_t)bpa, size, ptemask);
 
 	/*
 	 * All done.
