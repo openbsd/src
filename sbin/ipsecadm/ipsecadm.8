@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.30 2000/09/20 21:28:23 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.31 2000/09/29 19:10:08 angelos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -171,7 +171,6 @@ have (input or output).
 Allowed modifiers are:
 .Fl src ,
 .Fl dst ,
-.Fl spi , 
 .Fl proto ,
 .Fl addr ,
 .Fl transport ,
@@ -201,9 +200,7 @@ and
 .Fl out
 modifiers are used to specify the direction.
 By default, flows are assumed to apply to outgoing packets.
-If the
-.Fl spi
-is not specified, the kernel will attempt to find an appropriate
+The kernel will attempt to find an appropriate
 Security Association from those already present (an SA that matches
 the destination address, if set, and the security protocol).
 If the destination address is set to all zeroes (0.0.0.0) or left
@@ -598,7 +595,7 @@ ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3 \e\
 .Pp
 Setup a flow using the above SA:
 .Bd -literal
-ipsecadm flow -dst 169.20.12.2 -spi 1001 -proto ah \e\ 
+ipsecadm flow -dst 169.20.12.2 -proto ah \e\ 
 	-addr 10.1.1.0 255.255.255.0 10.0.0.0 255.0.0.0 -out
 .Ed
 .Pp
@@ -613,7 +610,7 @@ ipsecadm new esp -enc blf -auth md5 -spi 1002 -dst 169.20.12.3 \e\
 Setup an ingress flow on for the inbound SA:
 .Bd -literal
 ipsecadm flow -addr 10.0.0.0 255.0.0.0 10.1.1.0 255.255.255.0 \e\ 
-	-dst 10.10.32.1 -spi 1002 -proto esp -in
+	-dst 169.20.12.2 -spi 1002 -proto esp -in
 .Ed
 .Pp
 Setup a bypass flow:
