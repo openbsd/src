@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-syms,v 1.43 2002/12/06 02:37:13 marc Exp $
+.\"	$OpenBSD: doc-syms,v 1.44 2003/02/12 23:07:28 deraadt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -197,6 +197,7 @@
 .	if "\\$1"3.1"  \&OpenBSD 3.1\\*(aa\\$2
 .	if "\\$1"3.2"  \&OpenBSD 3.2\\*(aa\\$2
 .	if "\\$1"3.3"  \&OpenBSD 3.3\\*(aa\\$2
+.	if "\\$1"3.4"  \&OpenBSD 3.4\\*(aa\\$2
 .\}
 .if \\n(.$==1 \{\
 .	if "\\$1"1.2"  \&OpenBSD 1.2\\*(aa
@@ -214,6 +215,7 @@
 .	if "\\$1"3.1"  \&OpenBSD 3.1\\*(aa
 .	if "\\$1"3.2"  \&OpenBSD 3.2\\*(aa
 .	if "\\$1"3.3"  \&OpenBSD 3.3\\*(aa
+.	if "\\$1"3.4"  \&OpenBSD 3.4\\*(aa
 .	if "\\$1"."    \&OpenBSD\\$1\\*(aa
 .	if "\\$1","    \&OpenBSD\\$1\\*(aa
 .\}

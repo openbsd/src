@@ -1,9 +1,9 @@
-From deraadt@do-not-reply.openbsd.org Sat Nov  1 11:48:48 MST 2002
+From deraadt@do-not-reply.openbsd.org Sat May  1 11:48:48 MST 2003
 Return-Path: root
-Date: Nov 1 11:48:48 MST 2002
+Date: May 1 11:48:48 MST 2003
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
-Subject: Welcome to OpenBSD 3.2!  Secure by Default!
+Subject: Welcome to OpenBSD 3.3!  Secure by Default!
 
 This message attempts to describe the most basic initial questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
@@ -26,7 +26,7 @@ further information regarding configuration in the file /usr/X11R6/README.
 
 Several popular binary packages (pre-compiled applications) are available
 for most architectures.  If you installed from a CD-ROM the packages
-are on the same CD-ROM you installed from in the directory 3.2/packages.
+are on the same CD-ROM you installed from in the directory 3.3/packages.
 
 CD-ROM Space permitted us to include a subset of the following packages
 for the most common architectures.  Please see the FTP sites if you find
@@ -955,17 +955,17 @@ something you need missing.
   zsnes-1.36.tgz
 
 These and many other packages are also available via ftp at
-      ftp://ftp.openbsd.org/pub/OpenBSD/3.2/packages/
+      ftp://ftp.openbsd.org/pub/OpenBSD/3.3/packages/
 If you do not find a package you want on the CD, please go look at your
 nearest FTP mirror site.
 
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute:
   # mount /dev/cd0a /cdrom
-  # pkg_add -v /cdrom/3.2/packages/i386/emacs-20.7.tgz
+  # pkg_add -v /cdrom/3.3/packages/i386/emacs-20.7.tgz
 or alternatively install them via FTP this way:
   # pkg_add -v \
-    ftp://ftp.openbsd.org/pub/OpenBSD/3.2/packages/i386/emacs-20.7.tgz
+    ftp://ftp.openbsd.org/pub/OpenBSD/3.3/packages/i386/emacs-20.7.tgz
 
 You are STRONGLY urged to use ssh instead of telnet, rlogin, or rsh!  ssh is
 included in all OpenBSD systems.  The implementation is OpenSSH, which we are
