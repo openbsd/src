@@ -1,12 +1,12 @@
-/*	$OpenBSD: sigreturn.S,v 1.2 2004/02/22 21:28:22 miod Exp $	*/
-/*	$NetBSD: __sigreturn14.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
+/*	$OpenBSD: amd64.h,v 1.1 2004/02/27 17:36:17 deraadt Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * William Jolitz.
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,25 +32,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sigreturn.s	5.2 (Berkeley) 12/17/90"
+ *	@(#)sparc.h	8.1 (Berkeley) 6/6/93
  */
-
-#include <machine/asm.h>
-
-#include "SYS.h"
 
 /*
- * We must preserve the state of the registers as the user has set them up.
+ * offset (in bytes) of the code from the entry address of a routine.
+ * (see asgnsamples for use and explanation.)
  */
-#if 0	/* XXXfvdl fix later, but this one is really low priority */
-#ifdef GPROF
-#undef ENTRY
-#define MCOUNT_SYMBOL	__mcount
-#define	ENTRY(x) \
-	.globl _/**/x; _ALIGN_TEXT; _/**/x:  pusha ; \
-	.data; 1:; .long 0; .text; movl $1b,%eax; call MCOUNT_SYMBOL; popa ; nop
-#endif /* GPROF */
-#endif
+#define OFFSET_OF_CODE	0
+#define	UNITS_TO_CODE	(OFFSET_OF_CODE / sizeof(UNIT))
 
-OSYSCALL(sigreturn)
-	ret
+enum opermodes { dummy };
+typedef enum opermodes	operandenum;

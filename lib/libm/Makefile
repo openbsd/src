@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.31 2004/02/08 18:03:48 deraadt Exp $
+#  $OpenBSD: Makefile,v 1.32 2004/02/27 17:36:13 deraadt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -63,7 +63,7 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
 	    s_ilogb.S s_ilogbf.S s_log1p.S s_log1pf.S s_logb.S s_logbf.S \
 	    s_rint.S s_rintf.S s_scalbn.S s_scalbnf.S s_significand.S \
 	    s_significandf.S s_sin.S s_sinf.S s_tan.S s_tanf.S
-.elif (${MACHINE_ARCH} == "x86_64")
+.elif (${MACHINE_ARCH} == "amd64")
 .PATH:	${.CURDIR}/arch/x86_64
 CPPFLAGS+=-I${.CURDIR}/arch/x86_64
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \

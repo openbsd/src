@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.11 2004/02/01 07:21:56 drahn Exp $
+#	$OpenBSD: Makefile,v 1.12 2004/02/27 17:36:14 deraadt Exp $
 
 .if make(obj)
-SUBDIR= alpha arm hppa i386 m68k m88k powerpc sparc sparc64 vax x86_64
+SUBDIR= alpha arm hppa i386 m68k m88k powerpc sparc sparc64 vax amd64
 .else
 SUBDIR= ${MACHINE_ARCH}
 .endif

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.99 2004/02/01 06:16:50 brad Exp $
+#	$OpenBSD: Makefile,v 1.100 2004/02/27 17:36:11 deraadt Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -128,7 +128,7 @@ cross-env:	.PHONY
 ${CROSSDIRS}:
 	@-mkdir -p ${CROSSDIR}
 	@case ${TARGET} in \
-		alpha|hppa|i386|m68k|m88k|powerpc|sparc|sparc64|vax) \
+		alpha|hppa|i386|m68k|m88k|powerpc|sparc|sparc64|vax|amd64) \
 			echo ${TARGET} ;;\
 		amiga|hp300|mac68k|mvme68k) \
 			echo m68k ;;\
@@ -138,8 +138,6 @@ ${CROSSDIRS}:
 			echo powerpc ;;\
 		sgi) \
 			echo mips ;;\
-		amd64) \
-			echo x86_64 ;;\
 		*) \
 			(echo Unknown arch ${TARGET} >&2) ; exit 1;; \
 	esac > ${CROSSDIR}/TARGET_ARCH

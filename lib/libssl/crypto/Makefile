@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.35 2004/01/29 03:05:33 deraadt Exp $
+# $OpenBSD: Makefile,v 1.36 2004/02/27 17:36:13 deraadt Exp $
 
 LIB=	crypto
 
@@ -7,7 +7,7 @@ SSL_SRC=	${.CURDIR}/../${SSLEAYDIST}
 LCRYPTO_SRC=	${SSL_SRC}/crypto
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "arm" || \
-    ${MACHINE_ARCH} == "vax" || ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "vax" || ${MACHINE_ARCH} == "amd64" || \
     ${MACHINE_ARCH} == "alpha"
 CFLAGS+= -DL_ENDIAN
 .else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.1 2004/02/10 14:18:14 drahn Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.2 2004/02/27 17:36:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -31,7 +31,7 @@
 
 #define	DL_MALLOC_ALIGN	8	/* Arch constraint or otherwise */
 
-#define	MACHID	EM_X86_64	/* ELF e_machine ID value checked */
+#define	MACHID	EM_AMD64	/* ELF e_machine ID value checked */
 
 #define	RELTYPE	Elf32_Rela
 #define	RELSIZE	sizeof(Elf32_Rela)
