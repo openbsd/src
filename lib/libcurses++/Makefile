@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1999/05/27 23:21:20 millert Exp $
+#	$OpenBSD: Makefile,v 1.3 1999/05/27 23:22:25 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -12,7 +12,7 @@ CFLAGS+= -I${.CURDIR} -I${.CURDIR}/../libcurses ${CURSESTRACE}
 
 includes:
 	@test -d ${DESTDIR}/usr/include/g++ || \
-	    install -d -o root -g bin -m 755 /usr/include/g++
+	    install -d -o root -g bin -m 755 ${DESTDIR}/usr/include/g++
 	@for i in ${HEADERS}; do \
 	    cmp -s ${DESTDIR}/usr/include/g++/$$i ${.CURDIR}/$$i || \
 		${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) \
