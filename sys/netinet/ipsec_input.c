@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.37 2001/05/11 17:20:11 aaron Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.38 2001/05/20 08:33:33 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -261,6 +261,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 #ifdef INET6
     struct ip6_hdr *ip6, ip6n;
 #endif /* INET6 */
+    struct m_tag *mtag;
+    struct tdb_ident *tdbi;
 
     af = tdbp->tdb_dst.sa.sa_family;
     sproto = tdbp->tdb_sproto;
@@ -450,23 +452,21 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
      * Record what we've done to the packet (under what SA it was
      * processed).
      */
-    /* XXX We need a better packets-attributes framework */
-    if (m->m_pkthdr.tdbi)
-      free(m->m_pkthdr.tdbi, M_TEMP);
-
-    MALLOC(m->m_pkthdr.tdbi, void *, sizeof(struct tdb_ident), M_TEMP,
-	   M_NOWAIT);
-    if (m->m_pkthdr.tdbi == NULL)
+    mtag = m_tag_get(PACKET_TAG_IPSEC_DONE, sizeof(struct tdb_ident),
+		     M_NOWAIT);
+    if (mtag == NULL)
     {
 	m_freem(m);
 	IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
 	return ENOMEM;
     }
 
-    bcopy(&tdbp->tdb_dst, &(((struct tdb_ident *) m->m_pkthdr.tdbi)->dst),
-	  sizeof(union sockaddr_union));
-    ((struct tdb_ident *) m->m_pkthdr.tdbi)->proto = tdbp->tdb_sproto;
-    ((struct tdb_ident *) m->m_pkthdr.tdbi)->spi = tdbp->tdb_spi;
+    tdbi = (struct tdb_ident *)(mtag + 1);
+    bcopy(&tdbp->tdb_dst, &tdbi->dst, sizeof(union sockaddr_union));
+    tdbi->proto = tdbp->tdb_sproto;
+    tdbi->spi = tdbp->tdb_spi;
+
+    m_tag_prepend(m, mtag);
 
     if (sproto == IPPROTO_ESP)
     {
