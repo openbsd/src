@@ -1,4 +1,4 @@
-.\" $OpenBSD: cue.4,v 1.3 2000/09/06 14:23:43 aaron Exp $
+.\" $OpenBSD: cue.4,v 1.4 2001/05/03 02:25:33 aaron Exp $
 .\" $NetBSD: cue.4,v 1.2 2000/01/16 13:54:39 augustss Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999, 2000
@@ -51,7 +51,7 @@ This includes the following adapters:
 .Bl -tag -width -offset indent -compact
 .It Tn CATC Netmate
 .It Tn CATC Netmate II
-.It Tn Belkin F5U011/F5U111
+.It Tn Belkin F5U111
 .El
 .Pp
 The USB-EL1202A supports a 512-bit multicast hash filter, single perfect
@@ -59,8 +59,7 @@ filter entry for the station address and promiscuous mode.
 Packets are
 received and transmitted over separate USB bulk transfer endpoints.
 .Pp
-The CATC adapter supports only 10Mbps half-duplex mode, hence there
-are no
+The CATC adapter supports only 10Mbps half-duplex mode, hence there are no
 .Xr ifmedia 4
 modes to select.
 .Pp
