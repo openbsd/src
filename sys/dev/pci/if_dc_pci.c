@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.5 2000/08/02 19:01:07 aaron Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.6 2000/09/13 00:29:35 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -377,6 +377,23 @@ void dc_pci_attach(parent, self, aux)
 		command = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFDD);
 		command &= ~(DC_CFDD_SNOOZE_MODE|DC_CFDD_SLEEP_MODE);
 		pci_conf_write(pc, pa->pa_tag, DC_PCI_CFDD, command);
+	}
+
+	/*
+	 * If we discover later (in dc_attach_common()) that we have an
+	 * MII with no PHY, we need to have the 21143 drive the LEDs.
+	 * Except there are some systems like the NEC VersaPro NoteBook PC
+	 * which have no LEDs, and twiddling these bits has adverse effects
+	 * on them. (I.e. you suddenly can't get a link.)
+	 *
+	 * If mii_phy_probe() returns an error, we leave the DC_TULIP_LEDS
+	 * bit set, else we clear it. Since our dc(4) driver is split into
+	 * bus-dependent and bus-independent parts, we must do set this bit
+	 * here while we are able to do PCI configuration reads.
+	 */
+	if (DC_IS_INTEL(sc)) {
+		if (pci_conf_read(pc, pa->pa_tag, DC_PCI_CSID) != 0x80281033)
+			sc->dc_flags |= DC_TULIP_LEDS;
 	}
 
 	/*

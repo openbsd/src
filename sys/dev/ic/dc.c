@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.11 2000/09/07 20:26:15 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.12 2000/09/13 00:29:34 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_dc.c,v 1.19 2000/08/01 19:34:13 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_dc.c,v 1.22 2000/09/07 18:51:04 wpaul Exp $
  */
 
 /*
@@ -1321,7 +1321,7 @@ void dc_attach_common(sc)
 	struct dc_softc *sc;
 {
 	struct ifnet		*ifp;
-	int			mac_offset;
+	int			error = 0, mac_offset;
 
 	dc_eeprom_width(sc);
 
@@ -1392,6 +1392,7 @@ void dc_attach_common(sc)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, dc_ifmedia_upd, dc_ifmedia_sts);
 	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		error = ENXIO;
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
@@ -1400,22 +1401,23 @@ void dc_attach_common(sc)
 	if (DC_IS_DAVICOM(sc) && sc->dc_revision >= DC_REVISION_DM9102A)
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_HPNA_1,0,NULL);
 
-	/* if (error && DC_IS_INTEL(sc)) {
-		sc->dc_pmode = DC_PMODE_SYM;
-		sc->dc_flags |= DC_21143_NWAY;
-		mii_phy_probe(dev, &sc->dc_miibus,
-		    dc_ifmedia_upd, dc_ifmedia_sts);
-		error = 0;
+	if (DC_IS_INTEL(sc)) {
+		if (error) {
+			sc->dc_pmode = DC_PMODE_SYM;
+			sc->dc_flags |= DC_21143_NWAY;
+			mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+			error = 0;
+		} else {
+			/* we have a PHY, so we must clear this bit */
+			sc->dc_flags &= ~DC_TULIP_LEDS;
+		}
 	}
 
 	if (error) {
 		printf("dc%d: MII without any PHY!\n", sc->dc_unit);
-		bus_teardown_intr(dev, sc->dc_irq, sc->dc_intrhand);
-		bus_release_resource(dev, SYS_RES_IRQ, 0, sc->dc_irq);
-		bus_release_resource(dev, DC_RES, DC_RID, sc->dc_res);
 		error = ENXIO;
 		goto fail;
-	} */
+	}
 
 	/*
 	 * Call MI attach routines.
@@ -2341,6 +2343,17 @@ void dc_init(xsc)
 
 	/* Enable transmitter. */
 	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_TX_ON);
+
+	/*
+	 * If this is an Intel 21143 and we're not using the
+	 * MII port, program the LED control pins so we get
+	 * link and activity indications.
+	 */
+	if (sc->dc_flags & DC_TULIP_LEDS) {
+		CSR_WRITE_4(sc, DC_WATCHDOG,
+		    DC_WDOG_CTLWREN|DC_WDOG_LINK|DC_WDOG_ACTIVITY);
+		CSR_WRITE_4(sc, DC_WATCHDOG, 0);
+	}
 
 	/*
 	 * Load the RX/multicast filter. We do this sort of late

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.7 2000/08/02 19:01:06 aaron Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.8 2000/09/13 00:29:35 aaron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_dcreg.h,v 1.9 2000/08/02 16:31:11 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_dcreg.h,v 1.11 2000/09/07 18:51:04 wpaul Exp $
  */
 
 /*
@@ -343,6 +343,9 @@
 #define DC_WDOG_RXWDOGDIS	0x00000010
 #define DC_WDOG_RXWDOGCLK	0x00000020
 #define DC_WDOG_MUSTBEZERO	0x00000100
+#define DC_WDOG_AUIBNC		0x00100000
+#define DC_WDOG_ACTIVITY	0x00200000
+#define DC_WDOG_LINK		0x00800000
 #define DC_WDOG_CTLWREN		0x08000000
 
 /*
@@ -678,6 +681,7 @@ struct dc_softc {
 #define DC_21143_NWAY		0x00000800
 #define DC_128BIT_HASH		0x00001000
 #define DC_64BIT_HASH		0x00002000
+#define DC_TULIP_LEDS		0x00004000
 
 /*
  * register space access macros
