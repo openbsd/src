@@ -1,3 +1,5 @@
+.\"	$OpenBSD: fingerd.8,v 1.4 1996/12/08 13:29:53 downsj Exp $
+.\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -30,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fingerd.8	8.1 (Berkeley) 6/4/93
-.\"	$Id: fingerd.8,v 1.3 1996/07/16 17:55:42 millert Exp $ 
+.\"	$Id: fingerd.8,v 1.4 1996/12/08 13:29:53 downsj Exp $ 
 .\"
 .Dd June 4, 1993
 .Dt FINGERD 8
@@ -44,6 +46,7 @@
 .Op Fl l
 .Op Fl u
 .Op Fl m
+.Op Fl M
 .Op Fl p
 .Op Fl S
 .Op Fl P Ar filename
@@ -118,6 +121,10 @@ is usually a login name; however, matching will also be done on the
 users' real names, unless the
 .Fl m
 option is supplied.
+.It Fl M
+Enables matching of
+.Ar user
+names.  This is disabled by default if the system is running YP.
 .It Fl p
 Prevents
 .Nm finger

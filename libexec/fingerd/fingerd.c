@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: fingerd.c,v 1.4 1996/07/16 17:55:43 millert Exp $";
+static char rcsid[] = "$Id: fingerd.c,v 1.5 1996/12/08 13:29:54 downsj Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -76,7 +76,7 @@ main(argc, argv)
 	logging = secure = user_required = short_list = 0;
 	openlog("fingerd", LOG_PID | LOG_CONS, LOG_DAEMON);
 	opterr = 0;
-	while ((ch = getopt(argc, argv, "sluSmpP:")) != EOF)
+	while ((ch = getopt(argc, argv, "sluSmMpP:")) != EOF)
 		switch (ch) {
 		case 'l':
 			logging = 1;
@@ -96,6 +96,9 @@ main(argc, argv)
 			break;
 		case 'm':
 			av[ac++] = "-m";
+			break;
+		case 'M':
+			av[ac++] = "-M";
 			break;
 		case 'p':
 			av[ac++] = "-p";
