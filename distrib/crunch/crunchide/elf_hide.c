@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_hide.c,v 1.3 1997/05/06 17:08:29 niklas Exp $ */
+/*	$OpenBSD: elf_hide.c,v 1.4 1997/05/19 09:24:39 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn. All rights reserved.
@@ -312,6 +312,12 @@ hide_sym(Elf32_Ehdr *ehdr, Elf32_Shdr *symsect,
 	unsigned char info;
 	Elf32_Sym *psymtab;
 
+#ifdef __mips__
+	int f;
+	sleep(1);
+	f = time(NULL) * 200;
+#endif
+
 	for (i = 0 ; i < (symtabsize/sizeof(Elf32_Sym)); i++) {
 		psymtab = &(symtab[i]);
 		if ((psymtab->st_info & 0xf0) == 0x10 &&
@@ -325,16 +331,39 @@ hide_sym(Elf32_Ehdr *ehdr, Elf32_Shdr *symsect,
 				get_str(psymtab->st_name));
 			printf("st_info %x\n", psymtab->st_info);
 #endif
+#ifndef __mips__
 			info = psymtab->st_info;
 			info = info & 0xf;
 			psymtab->st_info = info;
+#else
+/* XXX This is a small ugly hack to be able to use chrunchide with MIPS.     */
+/* XXX Because MIPS needs global symbols to stay global (has to do with GOT) */
+/* XXX we mess around with the symbol names instead. For most uses this      */
+/* XXX will be no problem, symbols are stripped anyway. However, if many     */
+/* XXX one character symbols exist, names may clash.                         */
+			{
+				char *p;
+				int n, z;
+
+				z = f++;
+				p = get_str(psymtab->st_name);
+				n = strlen(p);
+				if(n > 4)
+					n = 4;
+				while(n--) {
+					p[n] = z;
+					z >>= 8;
+					while(p[n] == 0)
+						p[n] += rand();
+				}
+			}
+
+#endif
 #ifdef DEBUG
 			printf("st_info %x\n", psymtab->st_info);
 #endif
 		}
 	}
-#ifdef DEBUG
-#endif
 	reorder_syms(ehdr, symsect, symtab, symtabsize, symtabsecnum);
 }
 void
