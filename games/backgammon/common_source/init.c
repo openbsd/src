@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $	*/
+/*	$OpenBSD: init.c,v 1.4 2001/02/18 03:32:52 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.4 2001/02/18 03:32:52 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,4 +107,4 @@ int	p[5];
 int	rscore;
 int	table[6][6];
 int	wscore;
-struct termios	old, noech, raw;
+struct termios	old, noech, traw;

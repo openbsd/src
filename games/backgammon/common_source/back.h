@@ -1,4 +1,4 @@
-/*	$OpenBSD: back.h,v 1.4 1999/07/31 21:57:40 pjanzen Exp $	*/
+/*	$OpenBSD: back.h,v 1.5 2001/02/18 03:32:52 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -130,7 +130,7 @@ extern	const char	*const *Colorptr;	/* color of current player,
 						 * capitalized */
 extern	int	colen;		/* length of color of current player */
 
-extern	struct termios	old, noech, raw;/* original tty status */
+extern	struct termios	old, noech, traw;/* original tty status */
 
 extern	int	curr;		/* row position of cursor */
 extern	int	curc;		/* column position of cursor */

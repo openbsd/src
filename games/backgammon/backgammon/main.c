@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 2001/01/04 20:37:54 todd Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 2001/02/18 03:32:49 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 2001/01/04 20:37:54 todd Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 2001/02/18 03:32:49 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,6 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.7 2001/01/04 20:37:54 todd Exp $";
 /* #define MAXUSERS 35	*/		/* maximum number of users */
 
 extern const char   *const instr[];		/* text of instructions */
-speed_t ospeed;				/* tty output speed */
 
 const char   *const helpm[] = {		/* help message */
 	"Enter a space or newline to roll, or",
@@ -118,9 +117,8 @@ main (argc,argv)
 		errexit("backgammon(gtty)");
 	noech = old;
 	noech.c_lflag &= ~ECHO;
-	raw = noech;
-	raw.c_lflag &= ~ICANON;	/* set up modes */
-	ospeed = cfgetospeed(&old);	/* for termlib */
+	traw = noech;
+	traw.c_lflag &= ~ICANON;	/* set up modes */
 
 /* check user count */
 #if 0
@@ -144,10 +142,10 @@ main (argc,argv)
 	args[acnt] = '\0';
 	if (tflag) {		/* clear screen */
 		noech.c_oflag &= ~(ONLCR | OXTABS);
-		raw.c_oflag &= ~(ONLCR | OXTABS);
+		traw.c_oflag &= ~(ONLCR | OXTABS);
 		clear();
 	}
-	fixtty(&raw);		/* go into raw mode */
+	fixtty(&traw);		/* go into raw mode */
 
 	/* check if restored game and save flag for later */
 	if ((rfl = rflag)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttext2.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $	*/
+/*	$OpenBSD: ttext2.c,v 1.4 2001/02/18 03:32:52 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ttext2.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: ttext2.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: ttext2.c,v 1.4 2001/02/18 03:32:52 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -145,7 +145,7 @@ text(txt)
 			writel(a);
 			writec('\n');
 		} else {
-			fixtty(&raw);
+			fixtty(&traw);
 			writel(prompt);
 			/* if begscr is set we're past the rules screens */
 			if (!begscr) {
@@ -192,6 +192,6 @@ text(txt)
 			begin = txt;
 		}
 	}
-	fixtty(&raw);
+	fixtty(&traw);
 	return(0);
 }
