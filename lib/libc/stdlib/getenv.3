@@ -1,5 +1,5 @@
-.\" Copyright (c) 1988, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1988, 1991, 1993
+.\"    The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the American National Standards Committee X3, on Information
@@ -33,10 +33,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)getenv.3	6.11 (Berkeley) 6/29/91
-.\"	$Id: getenv.3,v 1.1.1.1 1995/10/18 08:42:17 deraadt Exp $
+.\"	$OpenBSD: getenv.3,v 1.2 1996/08/10 05:03:00 tholo Exp $
 .\"
-.Dd June 29, 1991
+.Dd December 11, 1993
 .Dt GETENV 3
 .Os
 .Sh NAME
@@ -75,7 +74,7 @@ function obtains the current value of the environment variable,
 .Ar name .
 If the variable
 .Ar name
-is not in the current environment ,
+is not in the current environment,
 a null pointer is returned.
 .Pp
 The
@@ -121,7 +120,7 @@ return zero if successful; otherwise the global variable
 is set to indicate the error and a
 \-1 is returned.
 .Sh ERRORS
-.Bl -tag -width Er
+.Bl -tag -width [ENOMEM]
 .It Bq Er ENOMEM
 The function
 .Fn setenv

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *     The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)putenv.c	5.4 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: putenv.c,v 1.1.1.1 1995/10/18 08:42:18 deraadt Exp $";
+static char *rcsid = "$OpenBSD: putenv.c,v 1.2 1996/08/10 05:03:00 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -43,17 +42,17 @@ int
 putenv(str)
 	const char *str;
 {
-	register char *p, *equal;
+	char *p, *equal;
 	int rval;
 
-	if (!(p = strdup(str)))
-		return(1);
-	if (!(equal = strchr(p, '='))) {
+	if ((p = strdup(str)) == NULL)
+		return (-1);
+	if ((equal = strchr(p, '=')) == NULL) {
 		(void)free(p);
-		return(1);
+		return (-1);
 	}
 	*equal = '\0';
 	rval = setenv(p, equal + 1, 1);
 	(void)free(p);
-	return(rval);
+	return (rval);
 }
