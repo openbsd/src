@@ -1,4 +1,4 @@
-/*	$OpenBSD: des_rw.c,v 1.2 2002/07/15 22:11:34 deraadt Exp $	*/
+/*	$OpenBSD: des_rw.c,v 1.3 2002/07/15 22:54:26 deraadt Exp $	*/
 /*	$NetBSD: des_rw.c,v 1.2 1995/03/21 07:58:30 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)des_rw.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: des_rw.c,v 1.2 2002/07/15 22:11:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: des_rw.c,v 1.3 2002/07/15 22:54:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,9 +79,7 @@ static des_key_schedule	*key_schedule;
 static int nstored = 0;
 
 void
-desrw_set_key(inkey, insched)
-	des_cblock 	*inkey;
-	des_key_schedule*insched;
+desrw_set_key(des_cblock *inkey, des_key_schedule *insched)
 {
 	key = inkey;
 	key_schedule = insched;
@@ -89,7 +87,7 @@ desrw_set_key(inkey, insched)
 }
 
 void
-desrw_clear_key()
+desrw_clear_key(void)
 {
 	bzero((char *) key, sizeof(C_Block));
 	bzero((char *) key_schedule, sizeof(Key_schedule));
@@ -97,10 +95,7 @@ desrw_clear_key()
 	
 
 int
-des_read(fd, bp, len)
-	int fd;
-	void *bp;
-	int len;
+des_read(int fd, void *bp, int len)
 {
 	long net_len, rd_len;
 	int nreturned = 0;
@@ -138,12 +133,8 @@ des_read(fd, bp, len)
 		/* pipe must have closed, return 0 */
 		return(0);
 	}
-	(void) des_pcbc_encrypt((des_cblock *)des_inbuf,	/* inbuf */
-			    (des_cblock *)storage,		/* outbuf */
-			    rd_len,				/* length */
-			    *key_schedule,			/* DES key */
-			    key,				/* IV */
-			    DECRYPT);				/* direction */
+	(void) des_pcbc_encrypt((des_cblock *)des_inbuf,
+	    (des_cblock *)storage, rd_len, *key_schedule, key, DECRYPT);
 
 	if(net_len < 8)
 		store_ptr = storage + 8 - net_len;
@@ -168,10 +159,7 @@ des_read(fd, bp, len)
 static unsigned char	des_outbuf[10240];	/* > longest write */
 
 int
-des_write(fd, bp, len)
-	int fd;
-	void *bp;
-	int len;
+des_write(int fd, void *bp, int len)
 {
 	static	int	seeded = 0;
 	static	char	garbage_buf[8];
@@ -192,11 +180,8 @@ des_write(fd, bp, len)
 	/* pcbc_encrypt outputs in 8-byte (64 bit) increments */
 
 	(void) des_pcbc_encrypt((des_cblock *)((len < 8) ? garbage_buf : buf),
-			    (des_cblock *)des_outbuf,
-			    (len < 8) ? 8 : len,
-			    *key_schedule,		/* DES key */
-			    key,			/* IV */
-			    ENCRYPT);
+	    (des_cblock *)des_outbuf,    (len < 8) ? 8 : len,
+	    *key_schedule, key, ENCRYPT);
 
 	/* tell the other end the real amount, but send an 8-byte padded
 	   packet */

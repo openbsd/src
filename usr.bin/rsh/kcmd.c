@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcmd.c,v 1.3 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: kcmd.c,v 1.4 2002/07/15 22:54:26 deraadt Exp $	*/
 /*	$NetBSD: kcmd.c,v 1.2 1995/03/21 07:58:32 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char Xsccsid[] = "derived from @(#)rcmd.c 5.17 (Berkeley) 6/27/88";
 static char sccsid[] = "@(#)kcmd.c	8.2 (Berkeley) 8/19/93";
 #else
-static char rcsid[] = "$OpenBSD: kcmd.c,v 1.3 2002/06/12 06:07:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: kcmd.c,v 1.4 2002/07/15 22:54:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,21 +79,10 @@ int	kcmd(int *, char **, u_short, char *, char *, char *,
 	    struct sockaddr_in *, long);
 
 int
-kcmd(sock, ahost, rport, locuser, remuser, cmd, fd2p, ticket, service, realm,
-    cred, schedule, msg_data, laddr, faddr, authopts)
-	int *sock;
-	char **ahost;
-	u_short rport;
-	char *locuser, *remuser, *cmd;
-	int *fd2p;
-	KTEXT ticket;
-	char *service;
-	char *realm;
-	CREDENTIALS *cred;
-	Key_schedule schedule;
-	MSG_DAT *msg_data;
-	struct sockaddr_in *laddr, *faddr;
-	long authopts;
+kcmd(int *sock, char **ahost, u_short rport, char *locuser, char *remuser,
+    char *cmd, int *fd2p, KTEXT ticket, char *service, char *realm,
+    CREDENTIALS *cred, Key_schedule schedule, MSG_DAT *msg_data,
+    struct sockaddr_in *laddr, struct sockaddr_in *faddr, long authopts)
 {
 	int s, timo = 1;
 	sigset_t mask, oldmask;
@@ -284,8 +273,7 @@ bad:
 }
 
 int
-getport(alport)
-	int *alport;
+getport(int *alport)
 {
 	struct sockaddr_in sin;
 	int s;

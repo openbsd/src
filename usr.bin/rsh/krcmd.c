@@ -1,4 +1,4 @@
-/*	$OpenBSD: krcmd.c,v 1.1 2002/05/06 22:23:53 deraadt Exp $	*/
+/*	$OpenBSD: krcmd.c,v 1.2 2002/07/15 22:54:26 deraadt Exp $	*/
 /*	$NetBSD: krcmd.c,v 1.2 1995/03/21 07:58:36 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)krcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: krcmd.c,v 1.1 2002/05/06 22:23:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: krcmd.c,v 1.2 2002/07/15 22:54:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,38 +72,19 @@ int	krcmd_mutual(char **, u_short, char *, char *, int *, char *,
  *	returns a socket attached to the destination, -1 or krb error on error 
  *	if fd2p is non-NULL, another socket is filled in for it
  */
-
 int
-krcmd(ahost, rport, remuser, cmd, fd2p, realm)
-	char	**ahost;
-	u_short	rport;
-	char	*remuser, *cmd;
-	int	*fd2p;
-	char	*realm;
+krcmd(char **ahost, u_short rport, char *remuser, char *cmd, int *fd2p,
+    char *realm)
 {
-	int		sock = -1, err = 0;
-	KTEXT_ST	ticket;
-	long		authopts = 0L;
+	int sock = -1, err = 0;
 	char myrealm[REALM_SZ];
+	long authopts = 0L;
+	KTEXT_ST ticket;
 
-	err = kcmd(
-		&sock,
-		ahost,
-		rport,
-		NULL,	/* locuser not used */
-		remuser,
-		cmd,
-		fd2p,
-		&ticket,
-		SERVICE_NAME,
-		realm,
-		(CREDENTIALS *)  NULL,		/* credentials not used */
-		(void *) NULL,		/* key schedule not used */
-		(MSG_DAT *) NULL,		/* MSG_DAT not used */
-		(struct sockaddr_in *) NULL,	/* local addr not used */
-		(struct sockaddr_in *) NULL,	/* foreign addr not used */
-		authopts
-	);
+	err = kcmd(&sock, ahost, rport, NULL, remuser, cmd, fd2p,
+	    &ticket, SERVICE_NAME, realm, (CREDENTIALS *) NULL,
+	    (void *) NULL, (MSG_DAT *) NULL, (struct sockaddr_in *) NULL,
+	    (struct sockaddr_in *) NULL, authopts);
 
 	if (err > KSUCCESS && err < MAX_KRB_ERRORS) {
 		if (krb_get_lrealm(myrealm, 0) == KSUCCESS)
@@ -116,40 +97,19 @@ krcmd(ahost, rport, remuser, cmd, fd2p, realm)
 }
 
 int
-krcmd_mutual(ahost, rport, remuser, cmd, fd2p, realm, cred, sched)
-	char		**ahost;
-	u_short		rport;
-	char		*remuser, *cmd;
-	int		*fd2p;
-	char		*realm;
-	CREDENTIALS	*cred;
-	Key_schedule	sched;
+krcmd_mutual(char **ahost, u_short rport, char *remuser, char *cmd, int *fd2p,
+    char *realm, CREDENTIALS *cred, Key_schedule sched)
 {
-	int		sock, err;
-	KTEXT_ST	ticket;
-	MSG_DAT		msg_dat;
-	struct sockaddr_in	laddr, faddr;
+	struct sockaddr_in laddr, faddr;
 	long authopts = KOPT_DO_MUTUAL;
 	char myrealm[REALM_SZ];
+	KTEXT_ST ticket;
+	MSG_DAT msg_dat;
+	int sock, err;
 
-	err = kcmd(
-		&sock,
-		ahost,
-		rport,
-		NULL,	/* locuser not used */
-		remuser,
-		cmd,
-		fd2p,
-		&ticket,
-		SERVICE_NAME,
-		realm,
-		cred,		/* filled in */
-		sched,		/* filled in */
-		&msg_dat,	/* filled in */
-		&laddr,		/* filled in */
-		&faddr,		/* filled in */
-		authopts
-	);
+	err = kcmd(&sock, ahost, rport, NULL, remuser, cmd, fd2p,
+	    &ticket, SERVICE_NAME, realm, cred, sched, &msg_dat,
+	    &laddr, &faddr, authopts);
 
 	if (err > KSUCCESS && err < MAX_KRB_ERRORS) {
 		if (krb_get_lrealm(myrealm, 0) == KSUCCESS)
