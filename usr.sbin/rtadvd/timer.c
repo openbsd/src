@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.7 2002/05/29 14:34:05 itojun Exp $	*/
+/*	$OpenBSD: timer.c,v 1.8 2002/06/10 19:57:35 espie Exp $	*/
 /*	$KAME: timer.c,v 1.7 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ rtadvd_add_timer(void (*timeout)(void *),
 
 	if ((newtimer = malloc(sizeof(*newtimer))) == NULL) {
 		syslog(LOG_ERR,
-		       "<%s> can't allocate memory", __FUNCTION__);
+		       "<%s> can't allocate memory", __func__);
 		exit(1);
 	}
 
@@ -73,12 +73,12 @@ rtadvd_add_timer(void (*timeout)(void *),
 
 	if (timeout == NULL) {
 		syslog(LOG_ERR,
-		       "<%s> timeout function unspecified", __FUNCTION__);
+		       "<%s> timeout function unspecified", __func__);
 		exit(1);
 	}
 	if (update == NULL) {
 		syslog(LOG_ERR,
-		       "<%s> update function unspecified", __FUNCTION__);
+		       "<%s> update function unspecified", __func__);
 		exit(1);
 	}
 	newtimer->expire = timeout;
@@ -167,7 +167,7 @@ rtadvd_timer_rest(struct rtadvd_timer *timer)
 	if (TIMEVAL_LEQ(timer->tm, now)) {
 		syslog(LOG_DEBUG,
 		       "<%s> a timer must be expired, but not yet",
-		       __FUNCTION__);
+		       __func__);
 		returnval.tv_sec = returnval.tv_usec = 0;
 	}
 	else

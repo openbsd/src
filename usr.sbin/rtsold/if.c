@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.12 2002/05/31 21:24:28 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.13 2002/06/10 19:57:35 espie Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -89,38 +89,38 @@ interface_up(char *name)
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 
 	if (ioctl(ifsock, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
-		warnmsg(LOG_WARNING, __FUNCTION__, "ioctl(SIOCGIFFLAGS): %s",
+		warnmsg(LOG_WARNING, __func__, "ioctl(SIOCGIFFLAGS): %s",
 		    strerror(errno));
 		return(-1);
 	}
 	if (!(ifr.ifr_flags & IFF_UP)) {
 		ifr.ifr_flags |= IFF_UP;
 		if (ioctl(ifsock, SIOCSIFFLAGS, (caddr_t)&ifr) < 0)
-			warnmsg(LOG_ERR, __FUNCTION__,
+			warnmsg(LOG_ERR, __func__,
 			    "ioctl(SIOCSIFFLAGS): %s", strerror(errno));
 		return(-1);
 	}
 
-	warnmsg(LOG_DEBUG, __FUNCTION__, "checking if %s is ready...", name);
+	warnmsg(LOG_DEBUG, __func__, "checking if %s is ready...", name);
 
 	llflag = get_llflag(name);
 	if (llflag < 0) {
-		warnmsg(LOG_WARNING, __FUNCTION__,
+		warnmsg(LOG_WARNING, __func__,
 		    "get_llflag() failed, anyway I'll try");
 		return 0;
 	}
 
 	if (!(llflag & IN6_IFF_NOTREADY)) {
-		warnmsg(LOG_DEBUG, __FUNCTION__, "%s is ready", name);
+		warnmsg(LOG_DEBUG, __func__, "%s is ready", name);
 		return(0);
 	} else {
 		if (llflag & IN6_IFF_TENTATIVE) {
-			warnmsg(LOG_DEBUG, __FUNCTION__, "%s is tentative",
+			warnmsg(LOG_DEBUG, __func__, "%s is tentative",
 			    name);
 			return IFS_TENTATIVE;
 		}
 		if (llflag & IN6_IFF_DUPLICATED)
-			warnmsg(LOG_DEBUG, __FUNCTION__, "%s is duplicated",
+			warnmsg(LOG_DEBUG, __func__, "%s is duplicated",
 			    name);
 		return -1;
 	}
@@ -137,7 +137,7 @@ interface_status(struct ifinfo *ifinfo)
 	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(ifsock, SIOCGIFFLAGS, &ifr) < 0) {
-		warnmsg(LOG_ERR, __FUNCTION__, "ioctl(SIOCGIFFLAGS) on %s: %s",
+		warnmsg(LOG_ERR, __func__, "ioctl(SIOCGIFFLAGS) on %s: %s",
 		    ifname, strerror(errno));
 		return(-1);
 	}
@@ -157,7 +157,7 @@ interface_status(struct ifinfo *ifinfo)
 
 	if (ioctl(ifsock, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
 		if (errno != EINVAL) {
-			warnmsg(LOG_DEBUG, __FUNCTION__,
+			warnmsg(LOG_DEBUG, __func__,
 			    "ioctl(SIOCGIFMEDIA) on %s: %s",
 			    ifname, strerror(errno));
 			return(-1);
@@ -229,7 +229,7 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 		memcpy(addr, LLADDR(sdl), ETHER_ADDR_LEN);
 		break;
 	default:
-		warnmsg(LOG_ERR, __FUNCTION__,
+		warnmsg(LOG_ERR, __func__,
 		    "unsupported link type(%d)", sdl->sdl_type);
 		exit(1);
 	}
@@ -318,12 +318,12 @@ get_llflag(const char *name)
 	int s;
 
 	if ((s = socket(PF_INET6, SOCK_DGRAM, 0)) < 0) {
-		warnmsg(LOG_ERR, __FUNCTION__, "socket(SOCK_DGRAM): %s",
+		warnmsg(LOG_ERR, __func__, "socket(SOCK_DGRAM): %s",
 		    strerror(errno));
 		exit(1);
 	}
 	if (getifaddrs(&ifap) != 0) {
-		warnmsg(LOG_ERR, __FUNCTION__, "etifaddrs: %s",
+		warnmsg(LOG_ERR, __func__, "etifaddrs: %s",
 		    strerror(errno));
 		exit(1);
 	}
@@ -342,7 +342,7 @@ get_llflag(const char *name)
 		strncpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
 		memcpy(&ifr6.ifr_ifru.ifru_addr, sin6, sin6->sin6_len);
 		if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) < 0) {
-			warnmsg(LOG_ERR, __FUNCTION__,
+			warnmsg(LOG_ERR, __func__,
 			    "ioctl(SIOCGIFAFLAG_IN6): %s", strerror(errno));
 			exit(1);
 		}
@@ -367,12 +367,12 @@ get_llflag(const char *name)
 	maxif = if_maxindex() + 1;
 	iflist = (struct ifreq *)malloc(maxif * BUFSIZ);	/* XXX */
 	if (iflist == NULL) {
-		warnmsg(LOG_ERR, __FUNCTION__, "not enough core");
+		warnmsg(LOG_ERR, __func__, "not enough core");
 		exit(1);
 	}
 
 	if ((s = socket(PF_INET6, SOCK_DGRAM, 0)) < 0) {
-		warnmsg(LOG_ERR, __FUNCTION__, "socket(SOCK_DGRAM): %s",
+		warnmsg(LOG_ERR, __func__, "socket(SOCK_DGRAM): %s",
 		    strerror(errno));
 		exit(1);
 	}
@@ -380,7 +380,7 @@ get_llflag(const char *name)
 	ifconf.ifc_req = iflist;
 	ifconf.ifc_len = maxif * BUFSIZ;	/* XXX */
 	if (ioctl(s, SIOCGIFCONF, &ifconf) < 0) {
-		warnmsg(LOG_ERR, __FUNCTION__, "ioctl(SIOCGIFCONF): %s",
+		warnmsg(LOG_ERR, __func__, "ioctl(SIOCGIFCONF): %s",
 		    strerror(errno));
 		exit(1);
 	}
@@ -403,7 +403,7 @@ get_llflag(const char *name)
 		strncpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
 		memcpy(&ifr6.ifr_ifru.ifru_addr, sin6, sin6->sin6_len);
 		if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) < 0) {
-			warnmsg(LOG_ERR, __FUNCTION__,
+			warnmsg(LOG_ERR, __func__,
 			    "ioctl(SIOCGIFAFLAG_IN6): %s", strerror(errno));
 			exit(1);
 		}

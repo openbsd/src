@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.9 2002/05/31 21:24:27 itojun Exp $	*/
+/*	$OpenBSD: dump.c,v 1.10 2002/06/10 19:57:35 espie Exp $	*/
 /*	$KAME: dump.c,v 1.10 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ rtsold_dump_file(dumpfile)
 	char *dumpfile;
 {
 	if ((fp = fopen(dumpfile, "w")) == NULL) {
-		warnmsg(LOG_WARNING, __FUNCTION__, "open a dump file(%s): %s",
+		warnmsg(LOG_WARNING, __func__, "open a dump file(%s): %s",
 		    dumpfile, strerror(errno));
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.5 2002/05/29 14:34:05 itojun Exp $	*/
+/*	$OpenBSD: dump.c,v 1.6 2002/06/10 19:57:35 espie Exp $	*/
 /*	$KAME: dump.c,v 1.27 2002/05/29 14:23:55 itojun Exp $	*/
 
 /*
@@ -208,7 +208,7 @@ rtadvd_dump_file(dumpfile)
 {
 	if ((fp = fopen(dumpfile, "w")) == NULL) {
 		syslog(LOG_WARNING, "<%s> open a dump file(%s)",
-		       __FUNCTION__, dumpfile);
+		       __func__, dumpfile);
 		return;
 	}
 

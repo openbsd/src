@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.23 2002/05/31 22:09:14 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.24 2002/06/10 19:57:35 espie Exp $	*/
 /*	$KAME: rtsold.c,v 1.51 2002/05/31 22:00:11 itojun Exp $	*/
 
 /*
@@ -203,14 +203,14 @@ main(argc, argv)
 	 * uses the socket.
 	 */
 	if ((s = sockopen()) < 0) {
-		warnmsg(LOG_ERR, __FUNCTION__, "failed to open a socket");
+		warnmsg(LOG_ERR, __func__, "failed to open a socket");
 		exit(1);
 		/*NOTREACHED*/
 	}
 	maxfd = s;
 #ifdef USE_RTSOCK
 	if ((rtsock = rtsock_open()) < 0) {
-		warnmsg(LOG_ERR, __FUNCTION__, "failed to open a socket");
+		warnmsg(LOG_ERR, __func__, "failed to open a socket");
 		exit(1);
 		/*NOTREACHED*/
 	}
@@ -230,7 +230,7 @@ main(argc, argv)
 
 	/* configuration per interface */
 	if (ifinit()) {
-		warnmsg(LOG_ERR, __FUNCTION__,
+		warnmsg(LOG_ERR, __func__,
 		    "failed to initilizatoin interfaces");
 		exit(1);
 		/*NOTREACHED*/
@@ -239,7 +239,7 @@ main(argc, argv)
 		argv = autoifprobe();
 	while (argv && *argv) {
 		if (ifconfig(*argv)) {
-			warnmsg(LOG_ERR, __FUNCTION__,
+			warnmsg(LOG_ERR, __func__,
 			    "failed to initialize %s", *argv);
 			exit(1);
 			/*NOTREACHED*/
@@ -249,7 +249,7 @@ main(argc, argv)
 
 	/* setup for probing default routers */
 	if (probe_init()) {
-		warnmsg(LOG_ERR, __FUNCTION__,
+		warnmsg(LOG_ERR, __func__,
 		    "failed to setup for probing routers");
 		exit(1);
 		/*NOTREACHED*/
@@ -258,7 +258,7 @@ main(argc, argv)
 	/* dump the current pid */
 	if (!once) {
 		if (pidfile(NULL) < 0) {
-			warnmsg(LOG_ERR, __FUNCTION__,
+			warnmsg(LOG_ERR, __func__,
 			    "failed to open a pid log file: %s",
 			    strerror(errno));
 		}
@@ -299,7 +299,7 @@ main(argc, argv)
 		e = select(maxfd + 1, selectfdp, NULL, NULL, timeout);
 		if (e < 1) {
 			if (e < 0 && errno != EINTR) {
-				warnmsg(LOG_ERR, __FUNCTION__, "select: %s",
+				warnmsg(LOG_ERR, __func__, "select: %s",
 				    strerror(errno));
 			}
 			continue;
@@ -326,19 +326,19 @@ ifconfig(char *ifname)
 	int flags;
 
 	if ((sdl = if_nametosdl(ifname)) == NULL) {
-		warnmsg(LOG_ERR, __FUNCTION__,
+		warnmsg(LOG_ERR, __func__,
 		    "failed to get link layer information for %s", ifname);
 		return(-1);
 	}
 	if (find_ifinfo(sdl->sdl_index)) {
-		warnmsg(LOG_ERR, __FUNCTION__,
+		warnmsg(LOG_ERR, __func__,
 		    "interface %s was already configured", ifname);
 		free(sdl);
 		return(-1);
 	}
 
 	if ((ifinfo = malloc(sizeof(*ifinfo))) == NULL) {
-		warnmsg(LOG_ERR, __FUNCTION__, "memory allocation failed");
+		warnmsg(LOG_ERR, __func__, "memory allocation failed");
 		free(sdl);
 		return(-1);
 	}
@@ -459,7 +459,7 @@ make_packet(struct ifinfo *ifinfo)
 	char *buf;
 
 	if ((lladdroptlen = lladdropt_length(ifinfo->sdl)) == 0) {
-		warnmsg(LOG_INFO, __FUNCTION__,
+		warnmsg(LOG_INFO, __func__,
 		    "link-layer address option has null length"
 		    " on %s. Treat as not included.", ifinfo->ifname);
 	}
@@ -468,7 +468,7 @@ make_packet(struct ifinfo *ifinfo)
 
 	/* allocate buffer */
 	if ((buf = malloc(packlen)) == NULL) {
-		warnmsg(LOG_ERR, __FUNCTION__,
+		warnmsg(LOG_ERR, __func__,
 		    "memory allocation failed for %s", ifinfo->ifname);
 		return(-1);
 	}
@@ -504,7 +504,7 @@ rtsol_check_timer()
 	for (ifinfo = iflist; ifinfo; ifinfo = ifinfo->next) {
 		if (TIMEVAL_LEQ(ifinfo->expire, now)) {
 			if (dflag > 1)
-				warnmsg(LOG_DEBUG, __FUNCTION__,
+				warnmsg(LOG_DEBUG, __func__,
 				    "timer expiration on %s, "
 				    "state = %d", ifinfo->ifname,
 				    ifinfo->state);
@@ -529,7 +529,7 @@ rtsol_check_timer()
 				ifinfo->active = interface_status(ifinfo);
 
 				if (oldstatus != ifinfo->active) {
-					warnmsg(LOG_DEBUG, __FUNCTION__,
+					warnmsg(LOG_DEBUG, __func__,
 					    "%s status is changed"
 					    " from %d to %d",
 					    ifinfo->ifname,
@@ -558,7 +558,7 @@ rtsol_check_timer()
 				if (ifinfo->probes < MAX_RTR_SOLICITATIONS)
 					sendpacket(ifinfo);
 				else {
-					warnmsg(LOG_INFO, __FUNCTION__,
+					warnmsg(LOG_INFO, __func__,
 					    "No answer after sending %d RSs",
 					    ifinfo->probes);
 					ifinfo->probes = 0;
@@ -574,7 +574,7 @@ rtsol_check_timer()
 	}
 
 	if (TIMEVAL_EQ(rtsol_timer, tm_max)) {
-		warnmsg(LOG_DEBUG, __FUNCTION__, "there is no timer");
+		warnmsg(LOG_DEBUG, __func__, "there is no timer");
 		return(NULL);
 	} else if (TIMEVAL_LT(rtsol_timer, now))
 		/* this may occur when the interval is too small */
@@ -583,7 +583,7 @@ rtsol_check_timer()
 		TIMEVAL_SUB(&rtsol_timer, &now, &returnval);
 
 	if (dflag > 1)
-		warnmsg(LOG_DEBUG, __FUNCTION__, "New timer is %ld:%08ld",
+		warnmsg(LOG_DEBUG, __func__, "New timer is %ld:%08ld",
 		    (long)returnval.tv_sec, (long)returnval.tv_usec);
 
 	return(&returnval);
@@ -639,7 +639,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 		}
 		break;
 	default:
-		warnmsg(LOG_ERR, __FUNCTION__,
+		warnmsg(LOG_ERR, __func__,
 		    "illegal interface state(%d) on %s",
 		    ifinfo->state, ifinfo->ifname);
 		return;
@@ -648,14 +648,14 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 	/* reset the timer */
 	if (TIMEVAL_EQ(ifinfo->timer, tm_max)) {
 		ifinfo->expire = tm_max;
-		warnmsg(LOG_DEBUG, __FUNCTION__,
+		warnmsg(LOG_DEBUG, __func__,
 		    "stop timer for %s", ifinfo->ifname);
 	} else {
 		gettimeofday(&now, NULL);
 		TIMEVAL_ADD(&now, &ifinfo->timer, &ifinfo->expire);
 
 		if (dflag > 1)
-			warnmsg(LOG_DEBUG, __FUNCTION__,
+			warnmsg(LOG_DEBUG, __func__,
 			    "set timer for %s to %d:%d", ifinfo->ifname,
 			    (int)ifinfo->timer.tv_sec,
 			    (int)ifinfo->timer.tv_usec);
