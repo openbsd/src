@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.37 2004/05/11 04:00:46 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.38 2004/06/03 04:07:38 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -231,6 +231,7 @@ xe*	at pcmcia? function ?			# Xircom ethernet
 xl*	at pci? dev ? function ?		# 3C9xx ethernet
 xl*	at cardbus? dev ? function ?		# 3C575 ethernet
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
+rl*	at cardbus? dev ? function ?		# RealTek 81[23]9 ethernet
 #tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet
 #tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
 #vr*	at pci? dev ? function ?		# VIA Rhine ethernet
