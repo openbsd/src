@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.3 2001/06/25 02:52:41 hin Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.4 2001/06/25 02:54:02 hin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -277,6 +277,8 @@ main(int argc, char **argv)
 	krb5_free_context(context);
 	krb5_free_principal(context, princ);
 	krb5_cc_close(context, ccache);
+
+	closelog();
 
 	return 0;
 }
