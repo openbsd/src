@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.125 1999/07/30 00:31:27 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.126 1999/08/10 23:07:24 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1990,7 +1990,7 @@ check_kernel() {
 		echo	"Warning, no kernel installed!"
 		echo	"You did not unpack a file set containing a kernel."
 		echo	"This is needed to boot.  Please note that the install"
-		echo	"install kernel is not suitable for general use."
+		echo	"kernel is not suitable for general use."
 		echo -n	"Escape to shell add /mnt/bsd by hand? [y] "
 		getresp "y"
 		case "$resp" in
