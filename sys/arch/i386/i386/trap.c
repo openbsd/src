@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 1997/02/04 02:16:51 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 1997/02/04 17:04:37 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -186,8 +186,16 @@ trap(frame)
 		    resume_iret[], resume_pop_ds[], resume_pop_es[];
 	struct trapframe *vframe;
 	int resume;
+	vm_prot_t vftype, ftype;
 
 	cnt.v_trap++;
+
+	/* SIGSEGV and SIGBUS need this */
+	if (frame.tf_err & PGEX_W) {
+		vftype = VM_PROT_WRITE;
+		ftype = VM_PROT_READ | VM_PROT_WRITE;
+	} else
+		ftype = vftype = VM_PROT_READ;
 
 #ifdef DEBUG
 	if (trapdebug) {
@@ -281,15 +289,15 @@ trap(frame)
 		}
 #endif
 	case T_SEGNPFLT|T_USER:
-		trapsignal(p, SIGSEGV, type &~ T_USER, SEGV_MAPERR, (caddr_t)rcr2());
+		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, (caddr_t)rcr2());
 		goto out;
 
 	case T_STKFLT|T_USER:
-		trapsignal(p, SIGSEGV, type &~ T_USER, SEGV_MAPERR, (caddr_t)rcr2());
+		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, (caddr_t)rcr2());
 		goto out;
 
 	case T_ALIGNFLT|T_USER:
-		trapsignal(p, SIGBUS, type &~ T_USER, BUS_ADRALN, (caddr_t)rcr2());
+		trapsignal(p, SIGBUS, vftype, BUS_ADRALN, (caddr_t)rcr2());
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
@@ -362,7 +370,6 @@ trap(frame)
 		register struct vmspace *vm = p->p_vmspace;
 		register vm_map_t map;
 		int rv;
-		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
 		unsigned nss, v;
 		caddr_t vv = (caddr_t)rcr2();
@@ -380,10 +387,6 @@ trap(frame)
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
-		if (frame.tf_err & PGEX_W)
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
-		else
-			ftype = VM_PROT_READ;
 
 #ifdef DIAGNOSTIC
 		if (map == kernel_map && va == 0) {
@@ -437,7 +440,7 @@ trap(frame)
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		trapsignal(p, SIGSEGV, T_PAGEFLT, SEGV_ACCERR, vv);
+		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, vv);
 		break;
 	}
 
