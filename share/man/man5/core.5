@@ -1,4 +1,4 @@
-.\"	$OpenBSD: core.5,v 1.10 2003/06/02 23:30:14 millert Exp $
+.\"	$OpenBSD: core.5,v 1.11 2003/11/07 08:55:24 jmc Exp $
 .\"	$NetBSD: core.5,v 1.4 1994/11/30 19:31:11 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -38,6 +38,7 @@
 .Nd memory image file format
 .Sh SYNOPSIS
 .Fd #include <sys/param.h>
+.Fd #include <sys/core.h>
 .Sh DESCRIPTION
 A small number of signals which cause abnormal termination of a process
 also cause a record of the process's in-core state to be written
@@ -59,16 +60,12 @@ Files which would be larger than the limit are not created.
 .Pp
 The
 .Pa programname.core
-file consists of the
-.Fa u .
-area, whose size (in pages) is defined by the
+file consists of the u-area, whose size (in pages) is defined by the
 .Dv UPAGES
 manifest in the
-.Aq Pa sys/param.h
+.Aq Pa machine/param.h
 file.
-The
-.Fa u .
-area starts with a
+The u-area starts with a
 .Fa user
 structure as given in
 .Aq Pa sys/user.h .
@@ -80,22 +77,86 @@ The amount of data space image in the
 .Pa programname.core
 file is given (in pages) by the variable
 .Fa u_dsize
-in the
-.Fa u .
-area.
+in the u-area.
 The amount of stack image in the core file is given (in pages) by the variable
 .Fa u_ssize
-in the
-.Ar u .
-area.
+in the u-area.
 The size of a
 .Dq page
 is given by the constant
-.Dv NBPG
-(also from
-.Aq Pa sys/param.h ) .
+.Dv PAGE_SIZE ,
+defined in
+.Aq Pa machine/param.h .
+The
+.Fa user
+structure is defined as:
+.Bd -unfilled -offset indent
+struct	user {
+	struct	pcb u_pcb;
+
+	struct	pstats u_stats;
+
+	/*
+	 * Remaining fields only for core dump and/or ptrace--
+	 * not valid at other times!
+	 */
+	struct	kinfo_proc u_kproc;
+	struct	md_coredump u_md;
+};
+.Ed
+.Pp
+.Fa md_coredump
+is defined in the header file
+.Aq Pa machine/pcb.h .
+.Pp
+The on-disk core file consists of a header followed by a number of segments.
+Each segment is preceded by a
+.Fa coreseg
+structure giving the segment's type,
+the virtual address where the bits resided in process address space
+and the size of the segment.
+.Pp
+The core header specifies the lengths of the core header itself and
+each of the following core segment headers to allow for any machine
+dependent alignment requirements.
+.Bd -unfilled -offset indent
+struct coreseg {
+	u_int32_t c_midmag;		/* magic, id, flags */
+	u_long	c_addr;		/* Virtual address of segment */
+	u_long	c_size;		/* Size of this segment */
+};
+.Ed
+.Bd -unfilled -offset indent
+struct core {
+	u_int32_t c_midmag;		/* magic, id, flags */
+	u_int16_t c_hdrsize;   /* Size of this header (machdep algn) */
+	u_int16_t c_seghdrsize;	/* Size of a segment header */
+	u_int32_t c_nseg;		/* # of core segments */
+	char	c_name[MAXCOMLEN+1];	/* Copy of p->p_comm */
+	u_int32_t c_signo;		/* Killing signal */
+	u_long	c_ucode;		/* Hmm ? */
+	u_long	c_cpusize;	/* Size of machine dependent segment */
+	u_long	c_tsize;		/* Size of traditional text segment */
+	u_long	c_dsize;		/* Size of traditional data segment */
+	u_long	c_ssize;		/* Size of traditional stack segment */
+};
+.Ed
+.Pp
+The core structure's
+.Fa c_midmag field
+is an a.out midmag number with a
+.Dv COREMAGIC
+magic number (see
+.Xr a.out 5 )
+and flags from the following list:
+.Bd -unfilled -offset indent
+#define CORE_CPU	1
+#define CORE_DATA	2
+#define CORE_STACK	4
+.Ed
 .Sh SEE ALSO
 .Xr gdb 1 ,
+.Xr pmdb 1 ,
 .Xr setrlimit 2 ,
 .Xr sigaction 2
 .Sh HISTORY
