@@ -1,4 +1,4 @@
-/*	$OpenBSD: termcap.c,v 1.1 1998/07/23 21:10:28 millert Exp $	*/
+/*	$OpenBSD: termcap.c,v 1.2 1998/10/08 04:31:29 millert Exp $	*/
 /*	$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: termcap.c,v 1.1 1998/07/23 21:10:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: termcap.c,v 1.2 1998/10/08 04:31:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,40 +91,45 @@ tgetent(bp, name)
 	pvec = pathvec;
 	tbuf = bp;
 	p = pathbuf;
-	cp = getenv("TERMCAP");
-	/*
-	 * TERMCAP can have one of two things in it. It can be the name
-	 * of a file to use instead of /usr/share/misc/termcap. In this
-	 * case it better start with a "/". Or it can be an entry to
-	 * use so we don't have to read the file. In this case it
-	 * has to already have the newlines crunched out.  If TERMCAP
-	 * does not hold a file name then a path of names is searched
-	 * instead.  The path is found in the TERMPATH variable, or becomes
-	 * "$HOME/.termcap /usr/share/misc/termcap" if no TERMPATH exists.
-	 */
-	if (!cp || *cp != '/') {	/* no TERMCAP or it holds an entry */
-		if ((termpath = getenv("TERMPATH")) != NULL)
-			strncpy(pathbuf, termpath, sizeof(pathbuf) - 1);
-		else {
-			if ((home = getenv("HOME")) != NULL) {
-				/* set up default */
-				/* $HOME first */
-				strncpy(pathbuf, home, sizeof(pathbuf) - 1 -
-				    strlen(_PATH_DEF) - 1);
-				pathbuf[sizeof(pathbuf) - 1 -
-				    strlen(_PATH_DEF) - 1] = '\0';
-				p += strlen(pathbuf);	/* path, looking in */
-				*p++ = '/';
-			}	/* if no $HOME look in current directory */
-			strncpy(p, _PATH_DEF, sizeof(pathbuf) -1 -
-			    (p - pathbuf));
-		}
-	}
-	else				/* user-defined name in TERMCAP */
-		strncpy(pathbuf, cp, sizeof(pathbuf) - 1); /* still can be tokenized */
-	pathbuf[sizeof(pathbuf) - 1] = '\0';
 
-	*fname++ = pathbuf;	/* tokenize path into vector of names */
+	if (!issetugid()) {
+		cp = getenv("TERMCAP");
+		/*
+		 * TERMCAP can have one of two things in it. It can be the name
+		 * of a file to use instead of /usr/share/misc/termcap. In this
+		 * case it better start with a "/". Or it can be an entry to
+		 * use so we don't have to read the file. In this case it
+		 * has to already have the newlines crunched out.  If TERMCAP
+		 * does not hold a file name then a path of names is searched
+		 * instead.  The path is found in the TERMPATH variable, or
+		 * becomes "$HOME/.termcap /usr/share/misc/termcap" if no
+		 * TERMPATH exists.
+		 */
+		if (!cp || *cp != '/') { /* no TERMCAP or it holds an entry */
+			if ((termpath = getenv("TERMPATH")) != NULL)
+				strncpy(pathbuf, termpath, sizeof(pathbuf) - 1);
+			else {
+				if ((home = getenv("HOME")) != NULL) {
+					/* set up default */
+					/* $HOME first */
+					strncpy(pathbuf, home, sizeof(pathbuf) -
+					    1 - strlen(_PATH_DEF) - 1);
+					pathbuf[sizeof(pathbuf) - 1 -
+					    strlen(_PATH_DEF) - 1] = '\0';
+					p += strlen(pathbuf);	/* path, looking in */
+					*p++ = '/';
+				}	/* if no $HOME look in current dir */
+				strncpy(p, _PATH_DEF, sizeof(pathbuf) -1 -
+				    (p - pathbuf));
+			}
+		} else {		/* user-defined name in TERMCAP */
+			/* still can be tokenized */
+			strncpy(pathbuf, cp, sizeof(pathbuf) - 1);
+		}
+		pathbuf[sizeof(pathbuf) - 1] = '\0';
+
+		*fname++ = pathbuf;	/* tokenize path into vector of names */
+	}
 	while (*++p)
 		if (*p == ' ' || *p == ':') {
 			*p = '\0';
