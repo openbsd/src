@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.75 2003/12/16 03:29:06 mcbride Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.76 2003/12/16 11:14:25 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -60,7 +60,7 @@
 .Ar parent-interface
 .Nm ifconfig
 .Ar carp-interface
-.Cm vhid 
+.Cm vhid
 .Ar host-id
 .Nm ifconfig
 .Ar pfsync-interface
@@ -392,7 +392,7 @@ If the driver is a carp pseudo-device, set the authentication key to
 There is no passphrase by default.
 .It Cm syncif Ar iface
 If the driver is a pfsync pseudo-device, use the specified interface
-to send and recieve pfsync state synchronisation messages.
+to send and receive pfsync state synchronisation messages.
 .It Fl syncif
 If the driver is a pfsync pseudo-device, stop sending pfsync state
 synchronisation messages over the network.
