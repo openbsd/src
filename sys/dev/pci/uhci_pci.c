@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.10 2001/06/12 15:40:33 niklas Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.11 2001/06/12 19:11:59 mickey Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.14 2000/01/25 11:26:06 augustss Exp $	*/
 
 /*
@@ -142,11 +142,11 @@ uhci_pci_attach(parent, self, aux)
 		break;
 	}
 
-	r = uhci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		printf(": init failed, error=%d\n", r);
-		return;
-	}
+	uhci_run(&sc->sc, 0);			/* stop the controller */
+						/* disable interrupts */
+	bus_space_barrier(sc->sc.iot, sc->sc.ioh, 0, sc->sc.sc_size,
+	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
+	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
@@ -165,6 +165,12 @@ uhci_pci_attach(parent, self, aux)
 		return;
 	}
 	printf(": %s\n", intrstr);
+
+	r = uhci_init(&sc->sc);
+	if (r != USBD_NORMAL_COMPLETION) {
+		printf(": init failed, error=%d\n", r);
+		return;
+	}
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,

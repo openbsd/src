@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.20 2001/05/03 02:20:33 aaron Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.21 2001/06/12 19:11:58 mickey Exp $	*/
 /*	$NetBSD: uhci.c,v 1.135 2001/04/01 14:59:52 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -162,7 +162,6 @@ struct uhci_pipe {
 Static void		uhci_busreset(uhci_softc_t *);
 Static void		uhci_shutdown(void *v);
 Static void		uhci_power(int, void *);
-Static usbd_status	uhci_run(uhci_softc_t *, int run);
 Static uhci_soft_td_t  *uhci_alloc_std(uhci_softc_t *);
 Static void		uhci_free_std(uhci_softc_t *, uhci_soft_td_t *);
 Static uhci_soft_qh_t  *uhci_alloc_sqh(uhci_softc_t *);
