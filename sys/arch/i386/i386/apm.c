@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.17 1997/12/11 00:58:44 rees Exp $	*/
+/*	$OpenBSD: apm.c,v 1.18 1997/12/11 01:03:51 rees Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -514,11 +514,7 @@ apm_set_powstate(dev, state)
 	return 0;
 }
 
-#ifdef HANDBOOK
-int apmidleon = 0;
-#else
 int apmidleon = 1;
-#endif
 
 void
 apm_cpu_busy()
