@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.68 2004/03/10 16:10:57 hshoexer Exp $	*/
+/*	$OpenBSD: message.c,v 1.69 2004/03/10 23:08:49 hshoexer Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -108,6 +108,13 @@ static struct field *fields[] = {
   isakmp_id_fld, isakmp_cert_fld, isakmp_certreq_fld, isakmp_hash_fld,
   isakmp_sig_fld, isakmp_nonce_fld, isakmp_notify_fld, isakmp_delete_fld,
   isakmp_vendor_fld, isakmp_attribute_fld
+};
+
+static u_int16_t min_payload_lengths[] = {
+  0, ISAKMP_SA_SZ, ISAKMP_PROP_SZ, ISAKMP_TRANSFORM_SZ, ISAKMP_KE_SZ,
+  ISAKMP_ID_SZ, ISAKMP_CERT_SZ, ISAKMP_CERTREQ_SZ, ISAKMP_HASH_SZ,
+  ISAKMP_SIG_SZ, ISAKMP_NONCE_SZ, ISAKMP_NOTIFY_SZ, ISAKMP_DELETE_SZ,
+  ISAKMP_VENDOR_SZ, ISAKMP_ATTRIBUTE_SZ
 };
 
 /*
@@ -283,9 +290,24 @@ message_parse_payloads (struct message *msg, struct payload *p, u_int8_t next,
 	}
 
       /*
-       * Decode the payload length field.
+       * Decode and validate the payload length field.
        */
       len = GET_ISAKMP_GEN_LENGTH (buf);
+
+      if ((payload < ISAKMP_PAYLOAD_RESERVED_MIN)
+	   && (len < min_payload_lengths[payload]))
+	{
+	  log_print ("message_parse_payloads: payload too short: %u", len);
+	  message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
+	  return -1;
+	}
+  
+      if (buf + len > (u_int8_t *)msg->iov[0].iov_base + msg->iov[0].iov_len)
+	{
+	  log_print ("message_parse_payloads: payload too long: %u", len);
+	  message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
+	  return -1;
+	}
 
       /* Ignore private payloads.  */
       if (next >= ISAKMP_PAYLOAD_PRIVATE_MIN)
@@ -874,7 +896,8 @@ message_validate_sa (struct message *msg, struct payload *p)
    * Let the DOI validate the situation, at the same time it tells us what
    * the length of the situation field is.
    */
-  if (exchange->doi->validate_situation (p->p + ISAKMP_SA_SIT_OFF, &len))
+  if (exchange->doi->validate_situation (p->p + ISAKMP_SA_SIT_OFF, &len,
+      GET_ISAKMP_GEN_LENGTH (p->p) - ISAKMP_SA_SIT_OFF))
     {
       log_print ("message_validate_sa: situation not supported");
       message_drop (msg, ISAKMP_NOTIFY_SITUATION_NOT_SUPPORTED, 0, 1, 1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.86 2004/02/27 19:14:57 hshoexer Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.87 2004/03/10 23:08:48 hshoexer Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ static int ipsec_validate_id_information (u_int8_t, u_int8_t *, u_int8_t *,
 static int ipsec_validate_key_information (u_int8_t *, size_t);
 static int ipsec_validate_notification (u_int16_t);
 static int ipsec_validate_proto (u_int8_t);
-static int ipsec_validate_situation (u_int8_t *, size_t *);
+static int ipsec_validate_situation (u_int8_t *, size_t *, size_t);
 static int ipsec_validate_transform_id (u_int8_t, u_int8_t);
 
 static struct doi ipsec_doi = {
@@ -851,34 +851,22 @@ ipsec_validate_proto (u_int8_t proto)
 }
 
 static int
-ipsec_validate_situation (u_int8_t *buf, size_t *sz)
+ipsec_validate_situation (u_int8_t *buf, size_t *sz, size_t len)
 {
-  int sit = GET_IPSEC_SIT_SIT (buf);
-  int off;
-
-  if (sit & (IPSEC_SIT_SECRECY | IPSEC_SIT_INTEGRITY))
+  if (len < IPSEC_SIT_SIT_OFF + IPSEC_SIT_SIT_LEN)
     {
-      /*
-       * XXX All the roundups below, round up to 32 bit boundaries given
-       * that the situation field is aligned.  This is not necessarily so,
-       * but I interpret the drafts as this is like this they want it.
-       */
-      off = ROUNDUP_32 (GET_IPSEC_SIT_SECRECY_LENGTH (buf));
-      off += ROUNDUP_32 (GET_IPSEC_SIT_SECRECY_CAT_LENGTH (buf + off));
-      off += ROUNDUP_32 (GET_IPSEC_SIT_INTEGRITY_LENGTH (buf + off));
-      off += ROUNDUP_32 (GET_IPSEC_SIT_INTEGRITY_CAT_LENGTH (buf + off));
-      *sz = off + IPSEC_SIT_SZ;
+      log_print ("ipsec_validate_situation: payload too short: %u",
+	         (unsigned int)len);
+      return -1;
     }
-  else
-    *sz = IPSEC_SIT_SIT_LEN;
 
   /* Currently only "identity only" situations are supported.  */
-#ifdef notdef
-  return
-    sit & ~(IPSEC_SIT_IDENTITY_ONLY | IPSEC_SIT_SECRECY | IPSEC_SIT_INTEGRITY);
-#else
-  return sit & ~IPSEC_SIT_IDENTITY_ONLY;
-#endif
+  if (GET_IPSEC_SIT_SIT (buf) != IPSEC_SIT_IDENTITY_ONLY)
+    return 1;
+
+  *sz = IPSEC_SIT_SIT_LEN;
+
+  return 0;
 }
 
 static int
