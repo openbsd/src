@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.121 2004/12/01 15:57:44 jmc Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.122 2004/12/07 00:10:05 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.121 2004/12/01 15:57:44 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.122 2004/12/07 00:10:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -348,7 +348,7 @@ void	getsock(int);
 void	printif(struct ifreq *, int);
 void	printb(char *, unsigned short, char *);
 void	status(int, struct sockaddr_dl *);
-void	usage(void);
+void	usage(int);
 const char *get_string(const char *, const char *, u_int8_t *, int *);
 void	print_string(const u_int8_t *, int);
 char	*sec2str(time_t);
@@ -428,8 +428,11 @@ main(int argc, char *argv[])
 	int Cflag = 0;
 	int i;
 
-	if (argc < 2)
-		usage();
+	/* If no args at all, print all interfaces.  */
+	if (argc < 2) {
+		printif(NULL, ifaliases);
+		exit(0);
+	}
 	argc--, argv++;
 	if (!strcmp(*argv, "-a"))
 		aflag = 1;
@@ -447,11 +450,13 @@ main(int argc, char *argv[])
 		mflag = 1;
 		argc--, argv++;
 		if (argc < 1)
-			usage();
+			usage(1);
 		if (strlcpy(name, *argv, sizeof(name)) >= IFNAMSIZ)
 			errx(1, "interface name '%s' too long", *argv);
 	} else if (!strcmp(*argv, "-C")) {
 		Cflag = 1;
+	} else if (*argv[0] == '-') {
+		usage(0);
 	} else if (strlcpy(name, *argv, sizeof(name)) >= IFNAMSIZ)
 		errx(1, "interface name '%s' too long", *argv);
 	argc--, argv++;
@@ -468,13 +473,13 @@ main(int argc, char *argv[])
 	}
 	if (Cflag) {
 		if (argc > 0 || mflag || aflag)
-			usage();
+			usage(1);
 		list_cloners();
 		exit(0);
 	}
 	if (aflag) {
 		if (argc > 0)
-			usage();
+			usage(0);
 		printif(NULL, ifaliases);
 		exit(0);
 	}
@@ -2693,8 +2698,9 @@ ipx_getaddr(const char *addr, int which)
 		printf("Attempt to set IPX netmask will be ineffectual\n");
 }
 
+/* Print usage, exit(value) if value is non-zero. */
 void
-usage(void)
+usage(int value)
 {
 	fprintf(stderr,
 	    "usage: ifconfig interface [address_family] [address [dest_address]]\n"
@@ -2724,7 +2730,7 @@ usage(void)
 	    "       ifconfig -m interface [address_family]\n"
 	    "       ifconfig interface create\n"
 	    "       ifconfig interface destroy\n");
-	exit(1);
+	exit(value);
 }
 
 static int __tag = 0;
