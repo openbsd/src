@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.61 2001/03/11 05:56:43 aaron Exp $
+.\"	$OpenBSD: afterboot.8,v 1.62 2001/08/25 14:57:44 aaron Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -426,9 +426,9 @@ for authentication.
 Check for any local changes needed in the files
 .Pa /etc/rc.conf ,
 .Pa /etc/rc.local ,
-.Pa rc.securelevel ,
+.Pa /etc/rc.securelevel ,
 and
-.Pa rc.shutdown.
+.Pa /etc/rc.shutdown .
 Turning on something like the Network Time Protocol in
 .Pa /etc/rc.conf
 requires making sure the package is installed.
@@ -584,7 +584,11 @@ filling up disk space from normal running processes and database updates.
 .Pp
 The /altroot filesystem can optionally be used to provide a backup of the
 root filesystem on a daily basis.  To take advantage of this, you must
-have an entry in /etc/fstab with 'xx' for the mount option:
+have an entry in
+.Pa /etc/fstab
+with
+.Dq xx
+for the mount option:
 .Bd -literal -offset indent
 /dev/wd0j /altroot ffs xx 0 0
 .Ed
@@ -594,7 +598,9 @@ and you must add a line to root's crontab:
 ROOTBACKUP=1
 .Ed
 .Pp
-so that the /etc/daily script will make a daily backup of the root filesystem.
+so that the
+.Pa /etc/daily
+script will make a daily backup of the root filesystem.
 .Ss Other files in /etc
 Look at the other files in
 .Pa /etc
@@ -660,7 +666,7 @@ The
 .Ox
 ports collection includes a large set of Third-Party software.
 A lot of it is available as binary packages, that you can download from
-.Pa ftp://ftp.openbsd.org/
+.Pa ftp://ftp.openbsd.org
 or a mirror, and install using
 .Xr pkg_add 1 .
 See
@@ -806,8 +812,8 @@ boot time in the kernel image.
 .Xr ext_srvtab 8 ,
 .Xr ifconfig 8 ,
 .Xr inetd 8 ,
-.Xr mtree 8 ,
 .Xr mount 8 ,
+.Xr mtree 8 ,
 .Xr named 8 ,
 .Xr newaliases 8 ,
 .Xr rbootd 8 ,
