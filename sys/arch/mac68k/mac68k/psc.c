@@ -1,9 +1,9 @@
-/*	$OpenBSD: psc.c,v 1.5 2004/12/08 20:35:03 miod Exp $	*/
-/*	$NetBSD: psc.c,v 1.5 1998/08/12 05:42:46 scottr Exp $	*/
+/*	$OpenBSD: psc.c,v 1.6 2004/12/14 14:50:55 martin Exp $	*/
+/*	$NetBSD: psc.c,v 1.8 2004/03/26 12:15:46 wiz Exp $	*/
 
 
 /*-
- * Copyright (c) 1997 David Huang <khym@bga.com>
+ * Copyright (c) 1997 David Huang <khym@azeotrope.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 #include <machine/cpu.h>
 #include <machine/psc.h>
 
+static void	psc_kill_dma(void);
 int		psc_lev3_intr(void *);
 static void	psc_lev3_noint(void *);
 int		psc_lev4_intr(void *);
@@ -83,24 +84,47 @@ void *psc6_iarg[3] = {
 };
 
 /*
+ * Make excessively sure that all PSC DMA is shut down.
+ */
+void
+psc_kill_dma()
+{
+	int	i;
+
+	for (i = 0; i < 9; i++) {
+		psc_reg2(PSC_CTLBASE + (i << 4)) = 0x8800;
+		psc_reg2(PSC_CTLBASE + (i << 4)) = 0x1000;
+		psc_reg2(PSC_CMDBASE + (i << 5)) = 0x1100;
+		psc_reg2(PSC_CMDBASE + (i << 5) + PSC_SET1) = 0x1100;
+	}
+}
+
+/*
  * Setup the interrupt vectors and disable most of the PSC interrupts
  */
 void
 psc_init()
 {
+	int	s, i;
+
 	/*
 	 * Only Quadra AVs have a PSC.
 	 */
 	if (current_mac_model->class == MACH_CLASSAV) {
+		s = splhigh();
+		psc_kill_dma();
 		intr_establish(psc_lev3_intr, NULL, 3, "psc");
 		intr_establish(psc_lev4_intr, NULL, 4, "psc");
 		intr_establish(psc_lev5_intr, NULL, 5, "psc");
 		intr_establish(psc_lev6_intr, NULL, 6, "psc");
-		psc_reg1(PSC_LEV3_IER) = 0x01; /* disable level 3 interrupts */
-		psc_reg1(PSC_LEV4_IER) = 0x09; /* disable level 4 interrupts */
-		psc_reg1(PSC_LEV4_IER) = 0x86; /* except for SCC */
-		psc_reg1(PSC_LEV5_IER) = 0x03; /* disable level 5 interrupts */
-		psc_reg1(PSC_LEV6_IER) = 0x07; /* disable level 6 interrupts */
+		for (i = 3; i < 7; i++) {
+			/* Clear any flags */
+			psc_reg1(PSC_ISR_BASE + 0x10 * i) = 0x0F;
+			/* Clear any interrupt enable */
+			psc_reg1(PSC_IER_BASE + 0x10 * i) = 0x0F;
+		}
+		psc_reg1(PSC_LEV4_IER) = 0x86; /* enable SCC */
+		splx(s);
 	}
 }
 
