@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.34 2000/02/07 06:09:08 itojun Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.35 2000/04/26 19:03:11 chris Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -107,6 +107,11 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #if NBRIDGE > 0
 #include <net/if_bridge.h>
 #endif
+
+#include "vlan.h"
+#if NVLAN > 0
+#include <net/if_vlan_var.h>
+#endif /* NVLAN > 0 */
 
 #ifdef INET6
 #ifndef INET
@@ -568,6 +573,16 @@ ether_input(ifp, eh, m)
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		ifp->if_imcasts++;
 
+	etype = ntohs(eh->ether_type);
+
+#if NVLAN > 0
+	if (etype == vlan_proto) {
+		if (vlan_input(eh, m) < 0)
+			ifp->if_data.ifi_noproto++;
+		return;
+       }
+#endif /* NVLAN > 0 */
+
 #if NBRIDGE > 0
 	/*
 	 * Tap the packet off here for a bridge, if configured and
@@ -597,7 +612,6 @@ ether_input(ifp, eh, m)
 	}
 
 decapsulate:
-	etype = ntohs(eh->ether_type);
 	switch (etype) {
 #ifdef INET
 	case ETHERTYPE_IP:
