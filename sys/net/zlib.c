@@ -137,6 +137,8 @@ typedef uLong (*check_func) OF((uLong check, Bytef *buf, uInt len));
 	   (*((strm)->zfree))((strm)->opaque, (voidpf)(addr), (size))
 #define TRY_FREE(s, p, n) {if (p) ZFREE(s, p, n);}
 
+#ifndef NO_DEFLATE
+
 /* deflate.h -- internal compression state
  * Copyright (C) 1995 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h 
@@ -421,7 +423,6 @@ local void ct_align      OF((deflate_state *s));
 local void ct_stored_block OF((deflate_state *s, charf *buf, ulg stored_len,
                           int eof));
 local void ct_stored_type_only OF((deflate_state *s));
-
 
 /*+++++*/
 /* deflate.c -- compress data using the deflation algorithm
@@ -2602,7 +2603,7 @@ local void copy_block(s, buf, len, header)
         put_byte(s, *buf++);
     }
 }
-
+#endif /* NO_DEFLATE */
 
 /*+++++*/
 /* infblock.h -- header to use infblock.c
