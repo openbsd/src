@@ -27,6 +27,9 @@
 .\"
 .\"	@(#)intro.me	8.1 (Berkeley) 6/8/93
 .\"
+.if n \{\
+.po 5n
+.\}
 .UC 7
 .ll 6.5i
 .lt 6.5i
@@ -64,13 +67,13 @@ Berkeley, California  94720
 .pp
 This document describes
 the text processing facilities
-available on the \*U\(dg
+available on the \*U**
 .(f
-\(dg\*U is a trademark
+**\*U is a trademark
 of AT&T Bell Laboratories
 .)f
 operating system
-via \*N\(dg and the
+via \*N and the
 \-me
 macro package.
 It is assumed
@@ -89,12 +92,8 @@ of the \-me macro package
 are not explained.
 For a complete discussion of this
 and other issues,
-see
-.ul
-The \-me Reference Manual
-and
-.ul
-The \*N/\*T Reference Manual.
+see /usr/share/doc/usd/20.meref:
+.i "The \-me Reference Manual" .
 .pp
 \*N, a computer program
 that runs on the \*U operating system,
@@ -139,31 +138,26 @@ call the \*N formatter by typing
 as a request to the \*U shell:
 .(b
 nroff \-me \-T\c
-.i "type files"
+.i "type file ..."
 .)b
 where
 .i type
 describes the type of terminal
 you are outputting to.
 Common values are
-.b dtc
-for a DTC 300s
-(daisy-wheel type)
-printer and
-.b lpr
-for the line printer.
+.b ascii
+for console viewing with a pager such as less(1),
+and
+.b ps
+for PostScript previewers and printers.
 If the
 .b \-T
 flag is omitted,
-a
-.q "lowest common denominator"
-terminal is assumed;
-this is good for previewing output
-on most terminals.
+.b ps
+is assumed.
 A complete description of options
 to the \*N command can be found in
-.ul
-The \*N/\*T Reference Manual.
+the groff(1) manual page.
 .pp
 The word
 .i argument
@@ -437,7 +431,7 @@ sometimes called the
 of the output page.
 Most of these requests adjust the placing
 of
-.q "white space"
+.q "whitespace"
 (blank lines or spaces).
 In these explanations,
 characters in italics
@@ -483,10 +477,10 @@ followed by the line
 followed by a single blank line.
 .pp
 The
-.b .in \ \c
-.i +N
+.b .in\ + \c
+.i N
 request
-changes the amount of white space
+changes the amount of whitespace
 on the left of the page
 (the
 .i indent ).
@@ -722,7 +716,7 @@ by the requests
 and
 .b .)l .
 For example,
-type:
+typing:
 .(b
 Alternatives to avoid deadlock are:
 \&.(l
@@ -823,7 +817,7 @@ in fill mode
 (for text),
 type
 .b ".(l\ F"
-(Throughout this section,
+(throughout this section,
 comments applied to
 .b .(l
 also apply to
@@ -989,7 +983,7 @@ are printed at the bottom of the current page.
 .i "Delayed text"
 is intended to be a variant form
 of footnote;
-the text is printed only 
+the text is printed only
 when explicitly called for,
 such as at the end of each chapter.
 .i Indexes
@@ -1339,7 +1333,7 @@ for more information.
 If
 .b .ip
 is used
-with no argument at all
+with no argument at all,
 no hanging tag will be printed.
 For example,
 the input:
