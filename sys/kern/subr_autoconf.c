@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.13 1996/10/18 14:46:35 niklas Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.14 1996/11/21 12:47:15 mickey Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
  * ioconf.c exports exactly two names: cfdata and cfroots.  All system
  * devices and drivers are found via these tables.
  */
-extern struct cfdata cfdata[];
 extern short cfroots[];
 
 #define	ROOT ((struct device *)NULL)

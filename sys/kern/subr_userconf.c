@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.10 1996/09/06 15:35:09 maja Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.11 1996/11/21 12:47:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -41,7 +41,6 @@
 
 extern char *locnames[];
 extern short locnamp[];
-extern struct cfdata cfdata[];
 extern short cfroots[];
 extern int cfroots_size;
 extern int pv_size;

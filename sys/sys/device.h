@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.8 1996/07/02 07:58:39 deraadt Exp $	*/
+/*	$OpenBSD: device.h,v 1.9 1996/11/21 12:47:17 mickey Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -97,6 +97,7 @@ struct cfdata {
 	void	(**cf_ivstubs)		/* config-generated vectors, if any */
 			__P((void));
 };
+extern struct cfdata cfdata[];
 #define FSTATE_NOTFOUND	0	/* has not been found */
 #define	FSTATE_FOUND	1	/* has been found */
 #define	FSTATE_STAR	2	/* duplicable */
