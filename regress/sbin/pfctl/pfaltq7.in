@@ -1,0 +1,12 @@
+# more complicated case to provoke queue id assignment errors:
+# -differently named queues have same priority, must get different qids
+# goes back to the historical queue ID assignment algorithm with priq
+# was: qid = priority + 1
+
+altq on lo0 tbrsize 1824 bandwidth 10Mb priq queue eins
+queue eins priority 2 priq(default)
+
+altq on tun0 tbrsize 1824 bandwidth 33600b priq queue zwei
+queue zwei priority 2 priq(default)
+
+

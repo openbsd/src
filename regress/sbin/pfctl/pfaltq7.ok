@@ -1,0 +1,4 @@
+queue eins priority 2 priq( default ) 
+[ qid=1 ifname=lo0 ifbandwidth=10Mb ]
+queue zwei priority 2 priq( default ) 
+[ qid=2 ifname=tun0 ifbandwidth=33.60Kb ]
