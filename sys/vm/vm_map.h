@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.h,v 1.13 2001/05/10 07:59:06 art Exp $	*/
+/*	$OpenBSD: vm_map.h,v 1.14 2001/05/10 14:51:21 art Exp $	*/
 /*	$NetBSD: vm_map.h,v 1.11 1995/03/26 20:39:10 jtc Exp $	*/
 
 /* 
@@ -230,6 +230,15 @@ struct vm_map {
 #define VM_MAP_WIREFUTURE	0x04		/* rw: wire future mappings */
 #define	VM_MAP_BUSY		0x08		/* rw: map is busy */
 #define	VM_MAP_WANTLOCK		0x10		/* rw: want to write-lock */
+
+#ifdef _KERNEL
+#define	vm_map_modflags(map, set, clear)				\
+do {									\
+	simple_lock(&(map)->flags_lock);				\
+	(map)->flags = ((map)->flags | (set)) & ~(clear);		\
+	simple_unlock(&(map)->flags_lock);				\
+} while (0)
+#endif /* _KERNEL */
 
 /*
  *     Interrupt-safe maps must also be kept on a special list,

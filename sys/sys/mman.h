@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.8 2001/03/09 14:20:50 art Exp $	*/
+/*	$OpenBSD: mman.h,v 1.9 2001/05/10 14:51:20 art Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -81,6 +81,8 @@
 #define	MADV_SEQUENTIAL	2	/* expect sequential page references */
 #define	MADV_WILLNEED	3	/* will need these pages */
 #define	MADV_DONTNEED	4	/* dont need these pages */
+#define	MADV_SPACEAVAIL	5	/* insure that resources are reserved */
+#define	MADV_FREE	6	/* pages are empty, free them */
 
 /*
  * Flags to msync

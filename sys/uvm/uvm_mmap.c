@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.12 2001/05/10 07:59:06 art Exp $	*/
-/*	$NetBSD: uvm_mmap.c,v 1.28 1999/07/06 02:31:05 cgd Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.13 2001/05/10 14:51:21 art Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.29 1999/07/07 06:02:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -621,7 +621,7 @@ sys_msync(p, v, retval)
 	/*
 	 * translate MS_ flags into PGO_ flags
 	 */
-	uvmflags = (flags & MS_INVALIDATE) ? PGO_FREE : 0;
+	uvmflags = PGO_CLEANIT | (flags & MS_INVALIDATE) ? PGO_FREE : 0;
 	if (flags & MS_SYNC)
 		uvmflags |= PGO_SYNCIO;
 	else
@@ -843,7 +843,7 @@ sys_madvise(p, v, retval)
 	} */ *uap = v;
 	vaddr_t addr;
 	vsize_t size, pageoff;
-	int advice;
+	int advice, rv;;
 	
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
@@ -857,15 +857,76 @@ sys_madvise(p, v, retval)
 	size += pageoff;
 	size = (vsize_t) round_page(size);
 
-	if ((int)size < 0)
+	if ((ssize_t)size <= 0)
 		return (EINVAL);
-	
-	switch (uvm_map_advice(&p->p_vmspace->vm_map, addr, addr+size,
-			 advice)) {
+
+	switch (advice) {
+	case MADV_NORMAL:
+	case MADV_RANDOM:
+	case MADV_SEQUENTIAL:
+		rv = uvm_map_advice(&p->p_vmspace->vm_map, addr, addr + size,
+		    advice);
+		break;
+
+	case MADV_WILLNEED:
+		/*
+		 * Activate all these pages, pre-faulting them in if
+		 * necessary.
+		 */
+		/*
+		 * XXX IMPLEMENT ME.
+		 * Should invent a "weak" mode for uvm_fault()
+		 * which would only do the PGO_LOCKED pgo_get().
+		 */
+		return (0);
+
+	case MADV_DONTNEED:
+		/*
+		 * Deactivate all these pages.  We don't need them
+		 * any more.  We don't, however, toss the data in
+		 * the pages.
+		 */
+		rv = uvm_map_clean(&p->p_vmspace->vm_map, addr, addr + size,
+		    PGO_DEACTIVATE);
+		break;
+
+	case MADV_FREE:
+		/*
+		 * These pages contain no valid data, and may be
+		 * grbage-collected.  Toss all resources, including
+		 * backing store; note that if the page is not backed
+		 * by swap, it will be cleaned first, for good measure.
+		 */
+		rv = uvm_map_clean(&p->p_vmspace->vm_map, addr, addr + size,
+		    PGO_FREE);
+		break;
+
+	case MADV_SPACEAVAIL:
+		/*
+		 * XXXMRG What is this?  I think it's:
+		 *
+		 *	Ensure that we have allocated backing-store
+		 *	for these pages.
+		 *
+		 * This is going to require changes to the page daemon,
+		 * as it will free swap space allocated to pages in core.
+		 * There's also what to do for device/file/anonymous memory.
+		 */
+		return (EINVAL);
+
+	default:
+		return (EINVAL);
+	}
+
+	switch (rv) {
 	case KERN_SUCCESS:
 		return (0);
-	case KERN_PROTECTION_FAILURE:
-		return (EACCES);
+	case KERN_NO_SPACE:
+		return (EAGAIN);
+	case KERN_INVALID_ADDRESS:
+		return (ENOMEM);
+	case KERN_FAILURE:
+		return (EIO);
 	}
 
 	return (EINVAL);
