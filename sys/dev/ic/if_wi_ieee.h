@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wavelan_ieee.h,v 1.2 2000/02/03 00:56:45 angelos Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.1 2001/05/15 02:40:36 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -34,8 +34,8 @@
  *	From: if_wavelan_ieee.h,v 1.1 1999/05/05 07:36:50 wpaul Exp $
  */
 
-#ifndef _IF_WAVELAN_IEEE_H
-#define _IF_WAVELAN_IEEE_H
+#ifndef _IF_WI_IEEE_H
+#define _IF_WI_IEEE_H
 
 /*
  * This header defines a simple command interface to the FreeBSD
@@ -130,7 +130,6 @@ struct wi_mgmt_hdr {
 	u_int16_t		seq_ctl;
 };
 
-#if (defined(__FreeBSD__) && !defined(KERNEL)) || (!defined(__FreeBSD__) && !defined(_KERNEL))
 struct wi_counters {
 	u_int32_t		wi_tx_unicast_frames;
 	u_int32_t		wi_tx_multicast_frames;
@@ -197,6 +196,13 @@ struct wi_counters {
 #define WI_RID_MCAST_PM_BUF	0xFC17 /* PM buffering of mcast */
 #define WI_RID_ENCRYPTION	0xFC20 /* enable/disable WEP */
 #define WI_RID_AUTHTYPE		0xFC21 /* specify authentication type */
+#define WI_RID_P2_TX_CRYPT_KEY	0xFC23
+#define WI_RID_P2_CRYPT_KEY0	0xFC24
+#define WI_RID_P2_CRYPT_KEY1	0xFC25
+#define WI_RID_MICROWAVE_OVEN	0xFC25
+#define WI_RID_P2_CRYPT_KEY2	0xFC26
+#define WI_RID_P2_CRYPT_KEY3	0xFC27
+#define WI_RID_P2_ENCRYPTION	0xFC28
 
 /*
  * Network parameters, dynamic configuration entities
@@ -300,7 +306,5 @@ struct wi_ltv_keys {
 #define WI_RID_CCA_TIME		0xFDC4 /* clear chan assess time */
 #define WI_RID_MAC_PROC_DELAY	0xFDC5 /* MAC processing delay time */
 #define WI_RID_DATA_RATES	0xFDC6 /* supported data rates */
-#endif
-
 
 #endif

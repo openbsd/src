@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.12 2000/10/13 18:58:10 chris Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.13 2001/05/15 02:40:36 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -51,7 +51,7 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <dev/pcmcia/if_wavelan_ieee.h>
+#include <dev/ic/if_wi_ieee.h>
 #endif
 
 #include <stdio.h>
@@ -66,7 +66,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wicontrol.c,v 1.12 2000/10/13 18:58:10 chris Exp $";
+	"@(#) $Id: wicontrol.c,v 1.13 2001/05/15 02:40:36 millert Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));

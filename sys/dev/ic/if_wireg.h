@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.10 2001/04/04 20:13:12 mickey Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.1 2001/05/15 02:40:36 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -34,97 +34,6 @@
  *	From: if_wireg.h,v 1.5 1999/07/20 20:03:42 wpaul Exp $
  */
 
-struct wi_counters {
-	u_int32_t		wi_tx_unicast_frames;
-	u_int32_t		wi_tx_multicast_frames;
-	u_int32_t		wi_tx_fragments;
-	u_int32_t		wi_tx_unicast_octets;
-	u_int32_t		wi_tx_multicast_octets;
-	u_int32_t		wi_tx_deferred_xmits;
-	u_int32_t		wi_tx_single_retries;
-	u_int32_t		wi_tx_multi_retries;
-	u_int32_t		wi_tx_retry_limit;
-	u_int32_t		wi_tx_discards;
-	u_int32_t		wi_rx_unicast_frames;
-	u_int32_t		wi_rx_multicast_frames;
-	u_int32_t		wi_rx_fragments;
-	u_int32_t		wi_rx_unicast_octets;
-	u_int32_t		wi_rx_multicast_octets;
-	u_int32_t		wi_rx_fcs_errors;
-	u_int32_t		wi_rx_discards_nobuf;
-	u_int32_t		wi_tx_discards_wrong_sa;
-	u_int32_t		wi_rx_WEP_cant_decrypt;
-	u_int32_t		wi_rx_msg_in_msg_frags;
-	u_int32_t		wi_rx_msg_in_bad_msg_frags;
-};
-
-/*
- * Encryption controls. We can enable or disable encryption as
- * well as specify up to 4 encryption keys. We can also specify
- * which of the four keys will be used for transmit encryption.
- */
-#define WI_RID_ENCRYPTION	0xFC20
-#define WI_RID_AUTHTYPE		0xFC21
-#define WI_RID_P2_TX_CRYPT_KEY	0xFC23
-#define WI_RID_P2_CRYPT_KEY0	0xFC24
-#define WI_RID_P2_CRYPT_KEY1	0xFC25
-#define WI_RID_MICROWAVE_OVEN	0xFC25
-#define WI_RID_P2_CRYPT_KEY2	0xFC26
-#define WI_RID_P2_CRYPT_KEY3	0xFC27
-#define WI_RID_P2_ENCRYPTION	0xFC28
-#define WI_RID_DEFLT_CRYPT_KEYS	0xFCB0
-#define WI_RID_TX_CRYPT_KEY	0xFCB1
-#define WI_RID_WEP_AVAIL	0xFD4F
-struct wi_key {
-	u_int16_t		wi_keylen;
-	u_int8_t		wi_keydat[14];
-};
-
-struct wi_ltv_keys {
-	u_int16_t		wi_len;
-	u_int16_t		wi_type;
-	struct wi_key		wi_keys[4];
-};
-
-struct wi_softc	{
-#ifndef __FreeBSD__
-	struct device		sc_dev;
-#endif	/* !__FreeBSD__ */
-	struct arpcom		arpcom;
-	struct ifmedia		ifmedia;
-	bus_space_handle_t	wi_bhandle;
-	bus_space_tag_t		wi_btag;
-	int			wi_tx_data_id;
-	int			wi_tx_mgmt_id;
-	int			wi_gone;
-	int			wi_if_flags;
-	u_int16_t		wi_ptype;
-	u_int16_t		wi_portnum;
-	u_int16_t		wi_max_data_len;
-	u_int16_t		wi_rts_thresh;
-	u_int16_t		wi_ap_density;
-	u_int16_t		wi_tx_rate;
-	u_int16_t		wi_create_ibss;
-	u_int16_t		wi_channel;
-	u_int16_t		wi_pm_enabled;
-	u_int16_t		wi_max_sleep;
-	char			wi_node_name[32];
-	char			wi_net_name[32];
-	char			wi_ibss_name[32];
-	u_int8_t		wi_txbuf[1596];
-	int			wi_has_wep;
-	int			wi_use_wep;
-	int			wi_tx_key;
-	struct wi_ltv_keys	wi_keys;
-	struct wi_counters	wi_stats;
-	void			*sc_ih;
-	struct pcmcia_io_handle	sc_pcioh;
-	int			sc_io_window;
-	struct pcmcia_function	*sc_pf;
-	struct timeout		sc_timo;
-	int			sc_prism2;
-};
-
 #define WI_TIMEOUT	50000	/* XXX just a guess at a good value.  */
 
 #define WI_PORT0	0
@@ -140,7 +49,7 @@ struct wi_softc	{
 /* Default TX rate: 2Mbps, auto fallback */
 #define WI_DEFAULT_TX_RATE	3
 
-/* Default network name: ANY */
+/* Default network name (wildcard) */
 #define WI_DEFAULT_NETNAME	""
 
 #define WI_DEFAULT_AP_DENSITY	1
@@ -155,15 +64,9 @@ struct wi_softc	{
 
 #define WI_DEFAULT_MAX_SLEEP	100
 
-#ifdef __FreeBSD__
-#define WI_DEFAULT_NODENAME	"FreeBSD WaveLAN/IEEE node"
-
-#define WI_DEFAULT_IBSS		"FreeBSD IBSS"
-#else	/* !__FreeBSD__ */
 #define WI_DEFAULT_NODENAME	"WaveLAN/IEEE node"
 
 #define WI_DEFAULT_IBSS		"IBSS"
-#endif	/* __FreeBSD__ */
 
 #define WI_DEFAULT_CHAN		3
 

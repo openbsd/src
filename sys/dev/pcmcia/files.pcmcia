@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.34 2001/03/29 01:39:32 aaron Exp $
+#	$OpenBSD: files.pcmcia,v 1.35 2001/05/15 02:40:35 millert Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -70,9 +70,8 @@ attach	cnw at pcmcia
 file	dev/pcmcia/if_cnw.c			cnw
 
 # Lucent WaveLAN
-device wi: ether, ifnet
-attach wi at pcmcia
-file dev/pcmcia/if_wi.c				wi
+attach	wi at pcmcia with wi_pcmcia
+file	dev/pcmcia/if_wi_pcmcia.c		wi_pcmcia
 
 # AMD 79c930-based 802.11 cards (including BayStack 650 FH card).
 device awi: ether, ifnet

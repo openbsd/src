@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.32 2001/05/14 21:45:25 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.1 2001/05/15 02:40:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -35,9 +35,9 @@
  */
 
 /*
- * Lucent WaveLAN/IEEE 802.11 PCMCIA driver for FreeBSD.
+ * Lucent WaveLAN/IEEE 802.11 driver for OpenBSD.
  *
- * Written by Bill Paul <wpaul@ctr.columbia.edu>
+ * Originally written by Bill Paul <wpaul@ctr.columbia.edu>
  * Electrical Engineering Department
  * Columbia University, New York City
  */
@@ -57,13 +57,6 @@
  * This driver does not use the HCF or HCF Light at all. Instead, it
  * programs the Hermes controller directly, using information gleaned
  * from the HCF Light code and corresponding documentation.
- *
- * This driver supports both the PCMCIA and ISA versions of the
- * WaveLAN/IEEE cards. Note however that the ISA card isn't really
- * anything of the sort: it's actually a PCMCIA bridge adapter
- * that fits into an ISA slot, into which a PCMCIA WaveLAN card is
- * inserted. Consequently, you need to use the pccard support for
- * both the ISA and PCMCIA adapters.
  */
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
@@ -100,19 +93,13 @@
 
 #include <machine/bus.h>
 
-#include <i386/isa/icu.h>
-
-#include <dev/pcmcia/pcmciareg.h>
-#include <dev/pcmcia/pcmciavar.h>
-#include <dev/pcmcia/pcmciadevs.h>
-#include <dev/pcmcia/if_wireg.h>
-#include <dev/pcmcia/if_wavelan_ieee.h>
+#include <dev/ic/if_wireg.h>
+#include <dev/ic/if_wi_ieee.h>
+#include <dev/ic/if_wivar.h>
 
 #define BPF_MTAP(if,mbuf) bpf_mtap((if)->if_bpf, (mbuf))
 #define BPFATTACH(if_bpf,if,dlt,sz)
 #define STATIC
-#define WI_PRT_FMT "%s"
-#define WI_PRT_ARG(sc) (sc)->sc_dev.dv_xname
 
 #ifdef WIDEBUG
 
@@ -133,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.32 2001/05/14 21:45:25 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.1 2001/05/15 02:40:35 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -142,9 +129,7 @@ static u_int8_t	wi_mcast_addr[6] = { 0x01, 0x60, 0x1D, 0x00, 0x01, 0x00 };
 
 STATIC void wi_reset		__P((struct wi_softc *));
 STATIC int wi_ioctl		__P((struct ifnet *, u_long, caddr_t));
-STATIC void wi_init		__P((void *));
 STATIC void wi_start		__P((struct ifnet *));
-STATIC void wi_stop		__P((struct wi_softc *));
 STATIC void wi_watchdog		__P((struct ifnet *));
 STATIC void wi_shutdown		__P((void *));
 STATIC void wi_rxeof		__P((struct wi_softc *));
@@ -165,243 +150,29 @@ STATIC void wi_inquire		__P((void *));
 STATIC void wi_setdef		__P((struct wi_softc *, struct wi_req *));
 STATIC int wi_mgmt_xmit		__P((struct wi_softc *, caddr_t, int));
 
-int	wi_pcmcia_match		__P((struct device *, void *, void *));
-void	wi_pcmcia_attach	__P((struct device *, struct device *, void *));
-int	wi_pcmcia_detach	__P((struct device *, int));
-int	wi_pcmcia_activate	__P((struct device *, enum devact));
 int	wi_intr			__P((void *));
+int	wi_attach		__P((struct wi_softc *));
+void	wi_init			__P((void *));
+void	wi_stop			__P((struct wi_softc *));
 
 /* Autoconfig definition of driver back-end */
 struct cfdriver wi_cd = {
 	NULL, "wi", DV_IFNET
 };
 
-struct cfattach wi_ca = {
-	sizeof (struct wi_softc), wi_pcmcia_match, wi_pcmcia_attach,
-	wi_pcmcia_detach, wi_pcmcia_activate
-};
-
-static const struct wi_pcmcia_product {
-	u_int32_t	pp_vendor;
-	u_int32_t	pp_product;
-	const char	*pp_cisinfo[4];
-	const char	*pp_name;
-	int		pp_prism2;
-} wi_pcmcia_products[] = {
-	{ PCMCIA_VENDOR_LUCENT,
-	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_CIS_LUCENT_WAVELAN_IEEE,
-	  "WaveLAN/IEEE",
-	  0 },
-
-	{ PCMCIA_VENDOR_3COM,
-	  PCMCIA_PRODUCT_3COM_3CRWE737A,
-	  PCMCIA_CIS_3COM_3CRWE737A,
-	  "3Com AirConnect Wireless LAN",
-	  1 },
-
-	{ PCMCIA_VENDOR_COREGA,
-	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11,
-	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCC_11,
-	  "Corega Wireless LAN PCC-11",
-	  1 },
-
-	{ PCMCIA_VENDOR_COREGA,
-	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCA_11,
-	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCA_11,
-	  "Corega Wireless LAN PCCA-11",
-	  1 },
-
-	{ PCMCIA_VENDOR_INTERSIL,
-	  PCMCIA_PRODUCT_INTERSIL_PRISM2,
-	  PCMCIA_CIS_INTERSIL_PRISM2,
-	  "Intersil Prism II",
-	  1 },
-
-	{ PCMCIA_VENDOR_SAMSUNG,
-	  PCMCIA_PRODUCT_SAMSUNG_SWL_2000N,
-	  PCMCIA_CIS_SAMSUNG_SWL_2000N,
-	  "Samsung MagicLAN SWL-2000N",
-	  1 },
-
-	{ PCMCIA_VENDOR_LUCENT,
-	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_CIS_SMC_2632W,
-	  "SMC 2632 EZ Connect Wireless PC Card",
-	  1 },
-
-	{ PCMCIA_VENDOR_LUCENT,
-	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_CIS_NANOSPEED_PRISM2,
-	  "NANOSPEED ROOT-RZ2000 WLAN Card",
-	  1 },
-
-	{ PCMCIA_VENDOR_ELSA,
-	  PCMCIA_PRODUCT_ELSA_XI300_IEEE,
-	  PCMCIA_CIS_ELSA_XI300_IEEE,
-	  "XI300 Wireless LAN",
-	  1 },
-
-	{ PCMCIA_VENDOR_COMPAQ,
-	  PCMCIA_PRODUCT_COMPAQ_NC5004,
-	  PCMCIA_CIS_COMPAQ_NC5004,
-	  "Compaq Agency NC5004 Wireless Card",
-	  1 },
-
-	{ PCMCIA_VENDOR_CONTEC,
-	  PCMCIA_PRODUCT_CONTEC_FX_DS110_PCC,
-	  PCMCIA_CIS_CONTEC_FX_DS110_PCC,
-	  "Contec FLEXLAN/FX-DS110-PCC",
-	  1 },
-
-	{ PCMCIA_VENDOR_TDK,
-	  PCMCIA_PRODUCT_TDK_LAK_CD011WL,
-	  PCMCIA_CIS_TDK_LAK_CD011WL,
-	  "TDK LAK-CD011WL",
-	  1 },
-
-	{ PCMCIA_VENDOR_LUCENT,
-	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_CIS_NEC_CMZ_RT_WP,
-	  "NEC Wireless Card CMZ-RT-WP",
-	  1 },
-
-	{ PCMCIA_VENDOR_LUCENT,
-	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_CIS_NTT_ME_WLAN,
-	  "NTT-ME 11Mbps Wireless LAN PC Card",
-	  1 },
-
-	{ PCMCIA_VENDOR_ADDTRON,
-	  PCMCIA_PRODUCT_ADDTRON_AWP100,
-	  PCMCIA_CIS_ADDTRON_AWP100,
-	  "Addtron AWP-100",
-	  1 },
-
-	{ PCMCIA_VENDOR_LUCENT,
-	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_CIS_CABLETRON_ROAMABOUT,
-	  "Cabletron RoamAbout",
-	  0 },
-
-	{ PCMCIA_VENDOR_IODATA2,
-	  PCMCIA_PRODUCT_IODATA2_WNB11PCM,
-	  PCMCIA_CIS_IODATA2_WNB11PCM,
-	  "I-O DATA WN-B11/PCM",
-	  1 },
-
-	{ PCMCIA_VENDOR_LINKSYS,
-	  PCMCIA_PRODUCT_LINKSYS_WPC11,
-	  PCMCIA_CIS_LINKSYS_WPC11,
-	  "Linksys WPC11",
-	  1 },
-
-	{ 0,
-	  0,
-	  { NULL, NULL, NULL, NULL },
-	  NULL,
-	  0 }
-};
-
-static const struct wi_pcmcia_product *wi_lookup __P((struct pcmcia_attach_args *pa));
-
-const struct wi_pcmcia_product *
-wi_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	const struct wi_pcmcia_product *pp;
-
-	/*
-	 * match by CIS information first
-	 * XXX: Farallon SkyLINE 11mb uses PRISM II but vendor ID
-	 *	and product ID is the same as Lucent WaveLAN
-	 */
-	for (pp = wi_pcmcia_products; pp->pp_name != NULL; pp++) {
-		if (pa->card->cis1_info[0] != NULL &&
-		    pp->pp_cisinfo[0] != NULL &&
-		    strcmp(pa->card->cis1_info[0], pp->pp_cisinfo[0]) == 0 &&
-		    pa->card->cis1_info[1] != NULL &&
-		    pp->pp_cisinfo[1] != NULL &&
-		    strcmp(pa->card->cis1_info[1], pp->pp_cisinfo[1]) == 0)
-			return pp;
-	}
-
-	/* match by vendor/product id */
-	for (pp = wi_pcmcia_products; pp->pp_name != NULL; pp++) {
-		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
-		    pa->manufacturer == pp->pp_vendor &&
-		    pa->product != PCMCIA_PRODUCT_INVALID &&
-		    pa->product == pp->pp_product)
-			return pp;
-	}
-
-	return NULL;
-}
-
 int
-wi_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+wi_attach(sc)
+	struct wi_softc *sc;
 {
-	struct pcmcia_attach_args *pa = aux;
-
-	if (wi_lookup(pa) != NULL)
-		return 1;
-	return 0;
-}
-
-void
-wi_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct wi_softc		*sc = (struct wi_softc *)self;
-	struct pcmcia_attach_args *pa = aux;
-	struct pcmcia_function	*pf = pa->pf;
-	struct pcmcia_config_entry *cfe = pf->cfe_head.sqh_first;
-	const struct wi_pcmcia_product *pp;
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_gen	gen;
 	struct ifnet		*ifp;
-	int			state = 0;
-
-	sc->sc_pf = pf;
-
-	/* Enable the card. */
-	pcmcia_function_init(pf, cfe);
-	if (pcmcia_function_enable(pf)) {
-		printf(": function enable failed\n");
-		goto bad;
-	}
-	state++;
-
-	if (pcmcia_io_alloc(pf, 0, WI_IOSIZ, WI_IOSIZ, &sc->sc_pcioh)) {
-		printf(": can't alloc i/o space\n");
-		goto bad;
-	}
-	state++;
-
-	if (pcmcia_io_map(pf, PCMCIA_WIDTH_IO16, 0, WI_IOSIZ, &sc->sc_pcioh,
-	    &sc->sc_io_window)) {
-		printf(": can't map io space\n");
-		goto bad;
-	}
-	state++;
 
 	sc->wi_gone = 0;
-	sc->wi_btag = sc->sc_pcioh.iot;
-	sc->wi_bhandle = sc->sc_pcioh.ioh;
-
-	pp = wi_lookup(pa);
-	if (pp == NULL) {
-		/* should not happen */
-		sc->sc_prism2 = 0;
-	} else
-		sc->sc_prism2 = pp->pp_prism2;
 
 	/* Make sure interrupts are disabled. */
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
-	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
+	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xffff);
 
 	wi_reset(sc);
 
@@ -474,6 +245,7 @@ wi_pcmcia_attach(parent, self, aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
+	printf("\n");
 
 #if NBPFILTER > 0
 	BPFATTACH(&sc->arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
@@ -482,75 +254,9 @@ wi_pcmcia_attach(parent, self, aux)
 
 	shutdownhook_establish(wi_shutdown, sc);
 
-	/* Establish the interrupt. */
-	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, wi_intr, sc);
-	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		goto bad;
-	}
-	printf("\n");
-
 	wi_init(sc);
 	wi_stop(sc);
-	return;
 
-bad:
-	if (state > 2)
-		pcmcia_io_unmap(pf, sc->sc_io_window);
-	if (state > 1)
-		pcmcia_io_free(pf, &sc->sc_pcioh);
-	if (state > 0)
-		pcmcia_function_disable(pf);
-}
-
-int
-wi_pcmcia_detach(dev, flags)
-	struct device *dev;
-	int flags;
-{
-	struct wi_softc *sc = (struct wi_softc *)dev;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
-	int rv = 0;
-
-	pcmcia_io_unmap(sc->sc_pf, sc->sc_io_window);
-	pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
-
-	ether_ifdetach(ifp);
-	if_detach(ifp);
-
-	return (rv);
-}
-
-int
-wi_pcmcia_activate(dev, act)
-	struct device *dev;
-	enum devact act;
-{
-	struct wi_softc *sc = (struct wi_softc *)dev;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
-	int s;
-
-	s = splnet();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		pcmcia_function_enable(sc->sc_pf);
-		printf("%s:", WI_PRT_ARG(sc));
-		sc->sc_ih =
-		    pcmcia_intr_establish(sc->sc_pf, IPL_NET, wi_intr, sc);
-		printf("\n");
-		wi_init(sc);
-		break;
-
-	case DVACT_DEACTIVATE:
-		ifp->if_timer = 0;
-		if (ifp->if_flags & IFF_RUNNING)
-			wi_stop(sc);
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-		pcmcia_function_disable(sc->sc_pf);
-		break;
-	}
-	splx(s);
 	return (0);
 }
 
@@ -1002,7 +708,8 @@ wi_write_record(sc, ltv)
 				for (i = 0; i < 4; i++) {
 					ws.wi_len = 4;
 					ws.wi_type = WI_RID_P2_CRYPT_KEY0 + i;
-					memcpy(ws.wi_str, &wk->wi_keys[i].wi_keydat, 5);
+					bcopy(&wk->wi_keys[i].wi_keydat,
+					    ws.wi_str, 5);
 					ws.wi_str[5] = '\0';
 					error = wi_write_record(sc,
 					    (struct wi_ltv_gen *)&ws);
