@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.12 2002/03/09 01:11:11 art Exp $	*/
+/*	$OpenBSD: pool.h,v 1.13 2002/11/24 18:43:33 pb Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -50,10 +50,6 @@
 #define KERN_POOL_NPOOLS	1
 #define KERN_POOL_NAME		2
 #define KERN_POOL_POOL		3
-
-#if defined(_KERNEL_OPT)
-#include "opt_pool.h"
-#endif
 
 #include <sys/lock.h>
 #include <sys/queue.h>
