@@ -1,11 +1,15 @@
-# $OpenBSD: Makefile.inc,v 1.7 1999/11/24 05:35:31 d Exp $
+# $OpenBSD: Makefile.inc,v 1.8 2000/01/06 07:10:26 d Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
 
-.PATH: ${.CURDIR}/man
+.PATH: ${LIBC_RSRCDIR}/man
 
 MAN+=	\
+	pthread_attr_init.3 \
+	pthread_attr_setstackaddr.3 \
+	pthread_attr_setstacksize.3 \
+	pthread_attr_setdetachstate.3 \
 	pthread_cleanup_pop.3 \
 	pthread_cleanup_push.3 \
 	pthread_cond_broadcast.3 \
@@ -39,6 +43,7 @@ MAN+=	\
 	pthread_rwlockattr_init.3 \
 	pthread_rwlockattr_setpshared.3 \
 	pthread_self.3 \
+	pthread_set_name_np.3 \
 	pthread_setspecific.3 \
 	pthread_sigmask.3 \
 	pthread_single_np.3 \
@@ -60,5 +65,9 @@ MLINKS+=flockfile.3 funlockfile.3 \
 	getc_unlocked.3 getchar_unlocked.3 \
 	putc_unlocked.3 putchar_unlocked.3 \
 	pthread_suspend_np.3 pthread_resume_np.3 \
-	pthread_single_np.3 pthread_multi_np.3
+	pthread_single_np.3 pthread_multi_np.3 \
+	pthread_attr_init.3 pthread_attr_destroy.3 \
+	pthread_attr_setstackaddr.3 pthread_attr_getstackaddr.3 \
+	pthread_attr_setstacksize.3 pthread_attr_getstacksize.3 \
+	pthread_attr_setdetachstate.3 pthread_attr_getdetachstate.3
 	
