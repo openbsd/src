@@ -7,6 +7,8 @@
 ./usr/include/ansidecl.h
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
+./usr/include/dlfcn.h
+./usr/include/link.h
 ./usr/include/powerpc/adbsys.h
 ./usr/include/powerpc/ansi.h
 ./usr/include/powerpc/asm.h
