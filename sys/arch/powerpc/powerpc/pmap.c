@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 2000/01/14 05:42:17 rahnds Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 2000/03/20 07:05:53 rahnds Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -67,6 +67,22 @@ static int npgs;
 static u_int nextavail;
 
 static struct mem_region *mem, *avail;
+
+#if 1
+void
+dump_avail()
+{
+	int cnt;
+	struct mem_region *mp;
+	extern struct mem_region *avail;
+	
+	for (cnt = 0, mp = avail; mp->size; mp++) {
+		printf("memory region %x: start %x, size %x\n",
+				cnt, mp->size, mp->start);
+		cnt++;
+	}
+}
+#endif
 
 /*
  * This is a cache of referenced/modified bits.
@@ -296,8 +312,20 @@ pmap_bootstrap(kernelstart, kernelend)
 	 * Get memory.
 	 */
 	(fw->mem_regions)(&mem, &avail);
-	for (mp = mem; mp->size; mp++)
+	/* work around repeated entries bug */
+	for (mp = mem; mp->size; mp++) {
+		if (mp[1].start == mp[0].start) {
+			int i;
+			i = 0;
+			do {
+				mp[0+i].size = mp[1+i].size;
+				mp[0+i].start = mp[1+i].start;
+			} while ( mp[0+(i++)].size != 0);
+		}
+	}
+	for (mp = mem; mp->size; mp++) {
 		physmem += btoc(mp->size);
+	}
 
 	/*
 	 * Count the number of available entries.
@@ -1420,6 +1448,7 @@ addbatmap(u_int32_t vaddr, u_int32_t raddr, u_int32_t wimg)
 void
 pmap_activate(struct proc *p)
 {
+#if 0
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
@@ -1430,6 +1459,7 @@ pmap_activate(struct proc *p)
 		pcb->pcb_pm = pmap;
 	}
 	curpcb=pcb;
+#endif
 	return;
 }
 /* ??? */

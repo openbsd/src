@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.2 1998/08/22 18:31:59 rahnds Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.3 2000/03/20 07:05:53 rahnds Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -114,9 +114,28 @@ mbattach(parent, self, aux)
 	}
 
 	/* The following machines have a PCI bus */
-	if (system_type != OFWMACH) {
+	if (system_type == APPL) {
+		char name[32];
+		int node;
+		for (node = OF_child(OF_peer(0)); node; node= OF_peer(node)) {
+			bzero (name, sizeof(name));
+			if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
+			{
+				printf ("name not found on node %x\n");
+				continue;
+			}
+			if (strcmp(name, "pci") == 0) {
+				nca.ca_name = "mpcpcibr";
+				nca.ca_node = node;
+				nca.ca_bus = &sc->sc_bus;
+				config_found(self, &nca, mbprint);
+			} 
+
+		}
+	} else if (system_type != OFWMACH) {
 		nca.ca_name = "mpcpcibr";
 		nca.ca_bus = &sc->sc_bus;
+		nca.ca_node = OF_finddevice("/pci");
 		config_found(self, &nca, mbprint);
 	}
 }

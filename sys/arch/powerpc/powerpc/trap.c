@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.16 2000/01/14 05:42:17 rahnds Exp $	*/
+/*	$OpenBSD: trap.c,v 1.17 2000/03/20 07:05:53 rahnds Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -334,7 +334,8 @@ syscall_bad:
 	default:
 	
 brain_damage:
-		printf("trap type %x at %x\n", type, frame->srr0);
+		printf("trap type %x at %x lr %x\n",
+			type, frame->srr0, frame->lr);
 /*
 mpc_print_pci_stat();
 */

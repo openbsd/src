@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.33 2000/02/22 19:27:58 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.34 2000/03/20 07:05:52 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -72,7 +72,6 @@
 #include <machine/bus.h>
 #include <machine/pio.h>
 
-#include <powerpc/pci/mpc106reg.h>
 /*
  * Global variables used here and there
  */
@@ -171,7 +170,7 @@ initppc(startkernel, endkernel, args)
 	 * XXX We use the page just above the interrupt vector as
 	 * message buffer
 	 */
-	initmsgbuf(0x3000, MSGBUFSIZE);
+	initmsgbuf((void *)0x3000, MSGBUFSIZE);
 
 where = 3;
 	curpcb = &proc0paddr->u_pcb;
@@ -198,15 +197,17 @@ where = 3;
 	battable[0].batu = BATU(0x00000000);
 
 #if 1
-	battable[1].batl = BATL(MPC106_V_ISA_IO_SPACE, BAT_I);
-	battable[1].batu = BATU(MPC106_P_ISA_IO_SPACE);
+	battable[1].batl = BATL(0x80000000, BAT_I);
+	battable[1].batu = BATU(0x80000000);
 	segment8_mapped = 1;
+#if 0
 	if(system_type == POWER4e) {
 		/* Map ISA I/O */
 		addbatmap(MPC106_V_ISA_IO_SPACE, MPC106_P_ISA_IO_SPACE, BAT_I);
 		battable[1].batl = BATL(0xbfffe000, BAT_I);
 		battable[1].batu = BATU(0xbfffe000);
 	}
+#endif
 #endif
 
 	/*
@@ -360,6 +361,9 @@ where = 3;
          */
 	consinit();
 
+#if 0
+	dump_avail();
+#endif
 #if NIPKDB > 0
 	/*
 	 * Now trap to IPKDB
@@ -1173,6 +1177,12 @@ mapiodev(pa, len)
 	spa = trunc_page(pa);
 	off = pa - spa;
 	size = round_page(off+len);
+	if ((pa >= 0x80000000) && ((pa+len) < 0x90000000)) {
+		extern int segment8_mapped;
+		if (segment8_mapped) {
+			return (void *)pa;
+		}
+	}
 #ifdef UVM
 	va = vaddr = uvm_km_valloc(phys_map, size);
 #else
@@ -1182,12 +1192,6 @@ mapiodev(pa, len)
 	if (va == 0) 
 		return NULL;
 
-	if (pa >= 0x80000000 && pa+len < 0x90000000) {
-		extern int segment8_mapped;
-		if (segment8_mapped) {
-			return (void *)pa;
-		}
-	}
 	for (; size > 0; size -= NBPG) {
 #if 0
 		pmap_enter(vm_map_pmap(phys_map), vaddr, spa,

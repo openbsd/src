@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.12 1999/11/09 00:20:42 rahnds Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.13 2000/03/20 07:05:53 rahnds Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -327,6 +327,10 @@ ofwenablepcimemio(char *name, int qhandle)
 }
 #include <machine/bat.h>
 /* HACK */
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
+#include <powerpc/pci/pcibrvar.h>
 #include <powerpc/pci/mpc106reg.h>
 void
 ofwconprobe()
