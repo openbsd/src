@@ -32,7 +32,7 @@ SRCS+=	abs.c div.c labs.c ldiv.c
 SRCS+=	abs.c div.c labs.c ldiv.c
 .endif
 
-.if (${MACHINE_ARCH} == "vax")
+.if (${MACHINE_ARCH} == "vax") || (${MACHINE_ARCH} == "m68k")
 SRCS+=	insque.S remque.S
 .else
 SRCS+=	insque.c remque.c
