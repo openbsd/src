@@ -1,4 +1,4 @@
-/* *	$OpenBSD: md.c,v 1.4 1998/03/26 19:46:59 niklas Exp $*/
+/* *	$OpenBSD: md.c,v 1.5 2000/02/01 21:01:39 espie Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -314,9 +314,8 @@ int n;
 
 	for (; n; n--, r++) {
 		r->r_address = md_swap_long(r->r_address);
-		bits = ((int *)r)[1];
-		r->r_symbolnum = md_swap_long(bits) & 0x00ffffff;
-		bits = ((unsigned char *)r)[7];
+		bits = md_swap_long(((int *)r)[1]);
+		r->r_symbolnum = (bits>>8) & 0x00ffffff ;
 		r->r_pcrel = (bits >> 7) & 1;
 		r->r_length = (bits >> 5) & 3;
 		r->r_extern = (bits >> 4) & 1;
@@ -338,8 +337,8 @@ int n;
 
 	for (; n; n--, r++) {
 		r->r_address = md_swap_long(r->r_address);
-		((int *)r)[1] = md_swap_long(r->r_symbolnum) & 0xffffff00;
-		bits = (r->r_pcrel & 1) << 7;
+		bits = (r->r_symbolnum & 0x00ffffff) << 8;
+		bits |= (r->r_pcrel & 1) << 7;
 		bits |= (r->r_length & 3) << 5;
 		bits |= (r->r_extern & 1) << 4;
 		bits |= (r->r_baserel & 1) << 3;
@@ -348,7 +347,7 @@ int n;
 #ifdef N_SIZE
 		bits |= (r->r_copy & 1);
 #endif
-		((unsigned char *)r)[7] = bits;
+		((int *)r)[1] = md_swap_long(bits);
 	}
 }
 

@@ -1,4 +1,4 @@
-/* *	$OpenBSD: md.h,v 1.3 1998/03/26 19:46:40 niklas Exp $*/
+/* *	$OpenBSD: md.h,v 1.4 2000/02/01 21:01:39 espie Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -31,8 +31,12 @@
  */
 
 
-#if defined(CROSS_LINKER) && defined(XHOST) && XHOST==sparc
+#if defined(CROSS_LINKER) 
+#include <sys/endian.h>
+
+#if BYTE_ORDER != LITTLE_ENDIAN
 #define NEED_SWAP
+#endif
 #endif
 
 #define	MAX_ALIGNMENT		(sizeof (long))

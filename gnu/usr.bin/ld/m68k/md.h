@@ -1,11 +1,24 @@
-/* * $OpenBSD: md.h,v 1.2 1998/03/26 19:47:01 niklas Exp $*/
+/* * $OpenBSD: md.h,v 1.3 2000/02/01 21:01:39 espie Exp $*/
 /*
  *	- m68k dependent definitions
  */
 
-#if defined(CROSS_LINKER) && defined(XHOST) && XHOST==i386
+#if defined(CROSS_LINKER) 
+#include <sys/endian.h>
+
+#if BYTE_ORDER != BIG_ENDIAN
 #define NEED_SWAP
 #endif
+
+#undef __LDPGSZ
+#undef ELF_TARG_DATA
+#undef ELF_TARG_MACH
+#undef relocation_info
+#undef MID_MACHINE
+#define MID_MACHINE MID_M68K
+#include <m68k/exec.h>
+#endif
+
 
 #define	MAX_ALIGNMENT		(sizeof (long))
 
@@ -133,8 +146,8 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 #define md_swapout_so_debug(d)			swap_so_debug(d)
 #define md_swapin_rrs_hash(f,n)			swap_rrs_hash(f,n)
 #define md_swapout_rrs_hash(f,n)		swap_rrs_hash(f,n)
-#define md_swapin_sod(l,n)			swapin_link_object(l,n)
-#define md_swapout_sod(l,n)			swapout_link_object(l,n)
+#define md_swapin_sod(l,n)			swapin_sod(l,n)
+#define md_swapout_sod(l,n)			swapout_sod(l,n)
 #define md_swapout_got(g,n)			swap_longs((long*)(g),n)
 #define md_swapin_ranlib_hdr(h,n)		swap_ranlib_hdr(h,n)
 #define md_swapout_ranlib_hdr(h,n)		swap_ranlib_hdr(h,n)

@@ -1,13 +1,15 @@
-/* * $OpenBSD: md.h,v 1.1 1999/02/09 05:35:14 smurph Exp $*/
+/* * $OpenBSD: md.h,v 1.2 2000/02/01 21:01:40 espie Exp $*/
 /*
  *	- m68k dependent definitions
  */
 
-#if defined(CROSS_LINKER) && defined(XHOST) && XHOST==i386
+#if defined(CROSS_LINKER) 
+#include <sys/endian.h>
+
+#if BYTE_ORDER != BIG_ENDIAN
 #define NEED_SWAP
 #endif
 
-#if defined(CROSS_LINKER)
 #undef MID_MACHINE
 /* XXX */
 #define MID_MACHINE 151

@@ -1,12 +1,17 @@
-/*	$OpenBSD: md.h,v 1.3 1998/03/26 19:47:15 niklas Exp $  */
+/*	$OpenBSD: md.h,v 1.4 2000/02/01 21:01:41 espie Exp $  */
 /*	$NetBSD: md.h,v 1.3 1996/02/22 00:20:06 pk Exp $  */
 
 /*
  *	- ns32k dependent definitions
  */
 
-#if defined(CROSS_LINKER) && defined(XHOST) && (XHOST==m68k || XHOST==sparc)
+#if defined(CROSS_LINKER) 
+#include <sys/endian.h>
+
+#if BYTE_ORDER != LITTLE_ENDIAN
 #define NEED_SWAP
+#endif
+
 #endif
 
 #define	MAX_ALIGNMENT		(sizeof (long))

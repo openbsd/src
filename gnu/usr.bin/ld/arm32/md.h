@@ -1,4 +1,4 @@
-/*	$OpenBSD: md.h,v 1.1 1996/06/17 00:10:44 deraadt Exp $	*/
+/*	$OpenBSD: md.h,v 1.2 2000/02/01 21:01:39 espie Exp $	*/
 /*	$NetBSD: md.h,v 1.1 1996/05/17 21:51:10 mark Exp $	*/
 
 /*
@@ -32,6 +32,13 @@
  */
 
 /* First cut for arm32 */
+#if defined(CROSS_LINKER)
+#include <sys/endian.h>
+#if BYTE_ORDER != LITTLE_ENDIAN
+#define NEED_SWAP
+#endif
+
+#endif
 
 #define	MAX_ALIGNMENT		(sizeof (long))
 

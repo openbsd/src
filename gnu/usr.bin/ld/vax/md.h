@@ -1,4 +1,4 @@
-/*	$OpenBSD: md.h,v 1.5 1998/05/16 07:44:26 niklas Exp $	*/
+/*	$OpenBSD: md.h,v 1.6 2000/02/01 21:01:43 espie Exp $	*/
 /*	$NetBSD: md.h,v 1.1 1995/10/19 13:10:20 ragge Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -32,8 +32,12 @@
  */
 
 
-#if defined(CROSS_LINKER) && defined(XHOST) && XHOST==sparc
+#if defined(CROSS_LINKER) 
+#include <sys/endian.h>
+#if BYTE_ORDER != LITTLE_ENDIAN
 #define NEED_SWAP
+#endif
+
 #endif
 
 /* Remove definitions from the host exec.h */
