@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.5 1997/06/19 13:58:38 kstailey Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.6 1997/08/05 21:49:54 grr Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -728,7 +728,7 @@ c_exec(wp)
 			if (e->savefd[i] > 0)
 				close(e->savefd[i]);
 			/* keep anything > 2 private */
-			if (i > 2 && e->savefd[i])
+			if (!Flag(FSH) && i > 2 && e->savefd[i])
 				fd_clexec(i);
 		}
 		e->savefd = NULL; 

@@ -1,5 +1,5 @@
 '\" t
-.\"	$OpenBSD: sh.1,v 1.2 1997/01/02 17:41:47 downsj Exp $
+.\"	$OpenBSD: sh.1,v 1.3 1997/08/05 21:49:56 grr Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -421,11 +421,20 @@ zero or one non-IFS white space characters delimit a field.
 As a special case, leading and trailing IFS white space is stripped (\fIi.e.\fP,
 no leading or trailing empty field is created by it); leading or trailing
 non-IFS white space does create an empty field.
-Example: if \fBIFS\fP is set to `<space>:', the sequence of characters
-`<space>A<space>:<space><space>B::D' contains four fields: `A', `B', `' and `D'.
+.PP
+Example: if \fBIFS\fP is set to `<space>:', and VAR is set to 
+`<space>A<space>:<space><space>B::D', the substitution for $VAR results
+in four fields: `A', `B', `' and `D'.
 Note that if the \fBIFS\fP parameter is set to the null string, no
 field splitting is done; if the parameter is unset, the default value
 of space, tab and newline is used.
+.PP
+Also, note that the field splitting applies only to immediate result of
+the substitution.  Using the previous example, the substitution for $VAR:E
+results in the fields: `A', `B', `' and `D:E', not `A', `B', `', `D' and `E'.
+This behavior is POSIX compliant, but incompatible with some other shell
+implementations which do field splitting on the word which contained the
+substitution or use \fBIFS\fP\ as a general whitespace delimiter.
 .PP
 The results of substitution are, unless otherwise specified, also subject
 to brace expansion and file name expansion (see the relevant sections
@@ -1381,9 +1390,6 @@ The command is executed without forking, replacing the shell process.
 .sp
 If no arguments are given, any IO redirection is permanent and the shell
 is not replaced.
-Any file descriptors greater than 2 which are opened or \fIdup\fP(2)-ed
-in this way are not made available to other executed commands (\fIi.e.\fP,
-commands that are not built-in to the shell).
 .\"}}}
 .\"{{{  exit [status]
 .IP "\fBexit\fP [\fIstatus\fP]"
@@ -2312,6 +2318,14 @@ jobs are sent a \fBHUP\fP signal and the shell exits.
 /etc/profile
 .br
 /etc/suid_profile
+.\"}}}
+.\"{{{  Notes
+.SH NOTES
+Sh is implemented as a runtime option of pdksh, with only those ksh features
+whose syntax or semantics are incompatible with a traditional Bourne
+shell disabled.  Since this leaves some ksh extensions exposed, caution
+should be used where backwards compatibility with traditional Bourne or
+POSIX compliant shells is an issue.
 .\"}}}
 .\"{{{  Bugs
 .SH BUGS
