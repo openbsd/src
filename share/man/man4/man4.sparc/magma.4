@@ -1,4 +1,4 @@
-.\"	$OpenBSD: magma.4,v 1.9 2002/10/01 21:02:19 miod Exp $
+.\"	$OpenBSD: magma.4,v 1.10 2003/05/07 08:13:20 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1998 Iain Hibbert
@@ -54,7 +54,7 @@ The device minor numbers for this driver are encoded as follows:
       |   |   |   |   |   |   |   |
       |   |   |   |   +---+---+---+---> port number
       |   |   |   |
-      |   |   |   +-------------------> dialout (on tty ports)
+      |   |   |   +-------------------> dial-out (on tty ports)
       |   |   |
       |   |   +-----------------------> unused
       |   |
@@ -102,16 +102,16 @@ The driver was loosely based upon the
 Cyclades Cyclom device driver written
 by Andrew Herbert and Timo Rossi.
 .Sh TODO
-CD1190 parallel support
+CD1190 parallel support.
 .Pp
-bpp input
+bpp input.
 .Pp
-Dialout (cua) devices are not yet supported.
+Dial-out (cua) devices are not yet supported.
 .Pp
-mdmbuf is unsupported
+mdmbuf is unsupported.
 .Pp
-automatic XON/XOFF handshaking could be implemented fairly easily.
+Automatic XON/XOFF handshaking could be implemented fairly easily.
 .Pp
-it would be good if the tty port waited for the FIFO to empty before allowing
+It would be good if the tty port waited for the FIFO to empty before allowing
 a close, so that I could turn off the channel interrupts at that time.
 It can be done.
