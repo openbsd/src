@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.13 2003/05/14 08:50:37 canacar Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.14 2003/06/21 21:01:15 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.13 2003/05/14 08:50:37 canacar Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.14 2003/06/21 21:01:15 dhartmei Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -62,7 +62,9 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 	u_int hdrlen;
 	u_int caplen = h->caplen;
 	const struct ip *ip;
+#ifdef INET6
 	const struct ip6_hdr *ip6;
+#endif
 	const struct pfloghdr *hdr;
 	u_int32_t res;
 	char reason[128], *why;
@@ -147,11 +149,13 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 			default_print((const u_char *)ip,
 			    caplen - hdrlen);
 	} else {
+#ifdef INET6
 		ip6 = (struct ip6_hdr *)(p + hdrlen);
 		ip6_print((const u_char *)ip6, length);
 		if (xflag)
 			default_print((const u_char *)ip6,
 			    caplen - hdrlen);
+#endif
 	}
 
 out:
@@ -166,7 +170,9 @@ pflog_old_if_print(u_char *user, const struct pcap_pkthdr *h,
 	u_int length = h->len;
 	u_int caplen = h->caplen;
 	const struct ip *ip;
+#ifdef INET6
 	const struct ip6_hdr *ip6;
+#endif
 	const struct old_pfloghdr *hdr;
 	u_short res;
 	char reason[128], *why;
@@ -232,11 +238,13 @@ pflog_old_if_print(u_char *user, const struct pcap_pkthdr *h,
 			default_print((const u_char *)ip,
 			    caplen - OLD_PFLOG_HDRLEN);
 	} else {
+#ifdef INET6
 		ip6 = (struct ip6_hdr *)(p + OLD_PFLOG_HDRLEN);
 		ip6_print((const u_char *)ip6, length);
 		if (xflag)
 			default_print((const u_char *)ip6,
 			    caplen - OLD_PFLOG_HDRLEN);
+#endif
 	}
 
 out:
