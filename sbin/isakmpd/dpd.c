@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.4 2004/08/10 15:59:10 ho Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.5 2004/12/08 16:08:10 markus Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -154,12 +154,17 @@ dpd_handle_notify(struct message *msg, struct payload *p)
 	switch (notify) {
 	case ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE:
 		/* The other peer wants to know we're alive.  */
-		if (p_seq <= isakmp_sa->dpd_rseq) {
+		if (p_seq < isakmp_sa->dpd_rseq ||
+		    (p_seq == isakmp_sa->dpd_rseq &&
+		    ++isakmp_sa->dpd_rdupcount >= DPD_RETRANS_MAX)) {
 			log_print("dpd_handle_notify: bad R_U_THERE seqno "
 			    "%u <= %u", p_seq, isakmp_sa->dpd_rseq);
 			return;
 		}
-		isakmp_sa->dpd_rseq = p_seq;
+		if (isakmp_sa->dpd_rseq != p_seq) {
+			isakmp_sa->dpd_rdupcount = 0;
+			isakmp_sa->dpd_rseq = p_seq;
+		}
 		message_send_dpd_notify(isakmp_sa,
 		    ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE_ACK, p_seq);
 		break;
@@ -213,6 +218,7 @@ dpd_timer_reset(struct sa *sa, u_int32_t time_passed, enum dpd_tstate mode)
 	gettimeofday(&tv, 0);
 	switch (mode) {
 	case DPD_TIMER_NORMAL:
+		sa->dpd_failcount = 0;
 		tv.tv_sec += dpd_timer_interval(time_passed);
 		sa->dpd_event = timer_add_event("dpd_event", dpd_event, sa,
 		    &tv);
@@ -294,6 +300,8 @@ dpd_event(void *v_sa)
 #endif
 
 	isakmp_sa->dpd_event = 0;
+	if (isakmp_sa->flags & SA_FLAG_REPLACED)
+		return;
 
 	/* Check if there's been any incoming SA activity since last time.  */
 	args.isakmp_sa = isakmp_sa;
@@ -344,6 +352,8 @@ dpd_check_event(void *v_sa)
 	struct sa	*sa;
 
 	isakmp_sa->dpd_event = 0;
+	if (isakmp_sa->flags & SA_FLAG_REPLACED)
+		return;
 
 	if (++isakmp_sa->dpd_failcount < DPD_RETRANS_MAX) {
 		LOG_DBG((LOG_MESSAGE, 10, "dpd_check_event: "

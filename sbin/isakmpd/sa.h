@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.41 2004/08/10 15:59:10 ho Exp $	 */
+/* $OpenBSD: sa.h,v 1.42 2004/12/08 16:08:10 markus Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -213,6 +213,7 @@ struct sa {
 	u_int32_t	dpd_seq;	/* sent */
 	u_int32_t	dpd_rseq;	/* recieved */
 	u_int32_t	dpd_failcount;	/* # of subsequent failures */
+	u_int32_t	dpd_rdupcount;	/* # of subsequent duplicates */
 	struct event   *dpd_event;	/* time of next event */
 #endif
 };
