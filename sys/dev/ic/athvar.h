@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.3 2004/12/18 03:40:59 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.4 2005/02/17 21:02:24 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@
 #define _DEV_ATH_ATHVAR_H
 
 #include <net80211/ieee80211_radiotap.h>
-
 #include <dev/ic/ar5xxx.h>
 
 #include "gpio.h"
@@ -121,22 +120,6 @@ struct ath_stats {
 
 #define	SIOCGATHSTATS	_IOWR('i', 137, struct ifreq)
 
-struct ath_diag {
-	char	ad_name[IFNAMSIZ];	/* if name, e.g. "ath0" */
-	u_int16_t ad_id;
-#define	ATH_DIAG_DYN	0x8000		/* allocate buffer in caller */
-#define	ATH_DIAG_IN	0x4000		/* copy in parameters */
-#define	ATH_DIAG_OUT	0x0000		/* copy out results (always) */
-#define	ATH_DIAG_ID	0x0fff
-	u_int16_t ad_in_size;		/* pack to fit, yech */
-	caddr_t	ad_in_data;
-	caddr_t	ad_out_data;
-	u_int	ad_out_size;
-
-};
-
-#define	SIOCGATHDIAG	_IOWR('i', 138, struct ath_diag)
-
 /*
  * Radio capture format.
  */
@@ -195,15 +178,9 @@ struct ath_node {
 struct ath_buf {
 	TAILQ_ENTRY(ath_buf)	bf_list;
 	bus_dmamap_t		bf_dmamap;	/* DMA map of the buffer */
-#ifdef __FreeBSD__
-	int			bf_nseg;
-	bus_dma_segment_t	bf_segs[ATH_MAX_SCATTER];
-	bus_size_t		bf_mapsize;
-#else
-#define bf_nseg		bf_dmamap->dm_nsegs
-#define bf_mapsize	bf_dmamap->dm_mapsize
-#define bf_segs		bf_dmamap->dm_segs
-#endif
+#define bf_nseg			bf_dmamap->dm_nsegs
+#define bf_mapsize		bf_dmamap->dm_mapsize
+#define bf_segs			bf_dmamap->dm_segs
 	struct ath_desc		*bf_desc;	/* virtual addr of desc */
 	bus_addr_t		bf_daddr;	/* physical addr of desc */
 	struct mbuf		*bf_m;		/* mbuf for buf */
@@ -228,7 +205,7 @@ struct ath_softc {
 #endif
 	int			(*sc_newstate)(struct ieee80211com *,
 					enum ieee80211_state, int);
-	void 			(*sc_node_free)(struct ieee80211com *,
+	void			(*sc_node_free)(struct ieee80211com *,
 					struct ieee80211_node *);
 	void			(*sc_node_copy)(struct ieee80211com *,
 					struct ieee80211_node *,
@@ -248,6 +225,7 @@ struct ath_softc {
 	struct ath_hal		*sc_ah;		/* Atheros HAL */
 	unsigned int		sc_invalid  : 1,/* disable hardware accesses */
 				sc_doani    : 1,/* dynamic noise immunity */
+				sc_hasveol  : 1,/* tx VEOL support */
 				sc_probing  : 1;/* probing AP on beacon miss */
 						/* rate tables */
 	const HAL_RATE_TABLE	*sc_rates[IEEE80211_MODE_MAX];
@@ -309,10 +287,10 @@ struct ath_softc {
 	ath_task_t		sc_bmisstask;	/* bmiss int processing */
 
 #ifdef __OpenBSD__
-	struct timeval		sc_last_ch;	
-	struct timeout		sc_cal_to;	
-	struct timeval		sc_last_beacon;	
-        struct timeout		sc_scan_to;
+	struct timeval		sc_last_ch;
+	struct timeout		sc_cal_to;
+	struct timeval		sc_last_beacon;
+	struct timeout		sc_scan_to;
 #else
 	struct callout		sc_cal_ch;	/* callout handle for cals */
 	struct callout		sc_scan_ch;	/* callout handle for scan */
@@ -325,7 +303,7 @@ struct ath_softc {
 	u_int			sc_flags;	/* misc flags */
 #endif
 
-        u_int8_t                sc_broadcast_addr[IEEE80211_ADDR_LEN];
+	u_int8_t                sc_broadcast_addr[IEEE80211_ADDR_LEN];
 
 #if NGPIO > 0
 	struct gpio_chipset_tag sc_gpio_gc;	/* gpio(4) framework */
@@ -333,7 +311,42 @@ struct ath_softc {
 #endif
 };
 
+/* unaligned little endian access */     
+#define LE_READ_2(p)							\
+	((u_int16_t)							\
+	 ((((u_int8_t *)(p))[0]      ) | (((u_int8_t *)(p))[1] <<  8)))
+#define LE_READ_4(p)							\
+	((u_int32_t)							\
+	 ((((u_int8_t *)(p))[0]      ) | (((u_int8_t *)(p))[1] <<  8) |	\
+	 (((u_int8_t *)(p))[2] << 16) | (((u_int8_t *)(p))[3] << 24)))
 
+#ifdef AR_DEBUG
+enum {
+	ATH_DEBUG_XMIT		= 0x00000001,	/* basic xmit operation */
+	ATH_DEBUG_XMIT_DESC	= 0x00000002,	/* xmit descriptors */
+	ATH_DEBUG_RECV		= 0x00000004,	/* basic recv operation */
+	ATH_DEBUG_RECV_DESC	= 0x00000008,	/* recv descriptors */
+	ATH_DEBUG_RATE		= 0x00000010,	/* rate control */
+	ATH_DEBUG_RESET		= 0x00000020,	/* reset processing */
+	ATH_DEBUG_MODE		= 0x00000040,	/* mode init/setup */
+	ATH_DEBUG_BEACON	= 0x00000080,	/* beacon handling */
+	ATH_DEBUG_WATCHDOG	= 0x00000100,	/* watchdog timeout */
+	ATH_DEBUG_INTR		= 0x00001000,	/* ISR */
+	ATH_DEBUG_TX_PROC	= 0x00002000,	/* tx ISR proc */
+	ATH_DEBUG_RX_PROC	= 0x00004000,	/* rx ISR proc */
+	ATH_DEBUG_BEACON_PROC	= 0x00008000,	/* beacon ISR proc */
+	ATH_DEBUG_CALIBRATE	= 0x00010000,	/* periodic calibration */
+	ATH_DEBUG_ANY		= 0xffffffff
+};
+#define	IFF_DUMPPKTS(_ifp, _m) \
+	((ath_debug & _m) || \
+	    ((_ifp)->if_flags & (IFF_DEBUG|IFF_LINK2)) == (IFF_DEBUG|IFF_LINK2))
+#define	DPRINTF(_m,X)	if (ath_debug & (_m)) printf X
+#else
+#define	IFF_DUMPPKTS(_ifp, _m) \
+	(((_ifp)->if_flags & (IFF_DEBUG|IFF_LINK2)) == (IFF_DEBUG|IFF_LINK2))
+#define	DPRINTF(_m, X)
+#endif
 
 /*
  * Wrapper code
@@ -396,13 +409,8 @@ void	ath_suspend(struct ath_softc *, int);
 int	ath_activate(struct device *, enum devact);
 void	ath_power(int, void *);
 #endif
-#ifdef __FreeBSD__
-void	ath_shutdown(struct ath_softc *);
-void	ath_intr(void *);
-#else
 void	ath_shutdown(void *);
 int	ath_intr(void *);
-#endif
 
 /*
  * HAL definitions to comply with local coding convention.
@@ -473,7 +481,7 @@ int	ath_intr(void *);
 	((*(_ah)->ah_resetStationBeaconTimers)((_ah)))
 #define	ath_hal_beacontimers(_ah, _bs, _tsf, _dc, _cc) \
 	((*(_ah)->ah_setStationBeaconTimers)((_ah), (_bs), (_tsf), \
-		(_dc), (_cc)))
+	 (_dc), (_cc)))
 #define	ath_hal_setassocid(_ah, _bss, _associd) \
 	((*(_ah)->ah_writeAssocid)((_ah), (_bss), (_associd), 0))
 #define	ath_hal_getregdomain(_ah, _prd) \
@@ -484,15 +492,15 @@ int	ath_intr(void *);
 	((*(_ah)->ah_detach)(_ah))
 
 #define ath_hal_gpiocfgoutput(_ah, _gpio) \
-        ((*(_ah)->ah_gpioCfgOutput)((_ah), (_gpio)))
+	((*(_ah)->ah_gpioCfgOutput)((_ah), (_gpio)))
 #define ath_hal_gpiocfginput(_ah, _gpio) \
-        ((*(_ah)->ah_gpioCfgInput)((_ah), (_gpio)))
+	((*(_ah)->ah_gpioCfgInput)((_ah), (_gpio)))
 #define ath_hal_gpioget(_ah, _gpio) \
-        ((*(_ah)->ah_gpioGet)((_ah), (_gpio)))
+	((*(_ah)->ah_gpioGet)((_ah), (_gpio)))
 #define ath_hal_gpioset(_ah, _gpio, _b) \
-        ((*(_ah)->ah_gpioSet)((_ah), (_gpio), (_b)))
+	((*(_ah)->ah_gpioSet)((_ah), (_gpio), (_b)))
 #define ath_hal_gpiosetintr(_ah, _gpio, _b) \
-        ((*(_ah)->ah_gpioSetIntr)((_ah), (_gpio), (_b)))
+	((*(_ah)->ah_gpioSetIntr)((_ah), (_gpio), (_b)))
 
 #define	ath_hal_setopmode(_ah) \
 	((*(_ah)->ah_setPCUConfig)((_ah)))
@@ -506,7 +514,7 @@ int	ath_intr(void *);
 	((*(_ah)->ah_stopDmaReceive)((_ah)))
 #define	ath_hal_getdiagstate(_ah, _id, _indata, _insize, _outdata, _outsize) \
 	((*(_ah)->ah_getDiagState)((_ah), (_id), \
-		(_indata), (_insize), (_outdata), (_outsize)))
+	 (_indata), (_insize), (_outdata), (_outsize)))
 
 #define	ath_hal_setuptxqueue(_ah, _type, _qinfo) \
 	((*(_ah)->ah_setupTxQueue)((_ah), (_type), (_qinfo)))
@@ -526,15 +534,15 @@ int	ath_intr(void *);
 #define	ath_hal_rxprocdesc(_ah, _ds, _dspa, _dsnext) \
 	((*(_ah)->ah_procRxDesc)((_ah), (_ds), (_dspa), (_dsnext)))
 #define	ath_hal_setuptxdesc(_ah, _ds, _plen, _hlen, _atype, _txpow, \
-		_txr0, _txtr0, _keyix, _ant, _flags, \
-		_rtsrate, _rtsdura) \
+	    _txr0, _txtr0, _keyix, _ant, _flags, \
+	    _rtsrate, _rtsdura) \
 	((*(_ah)->ah_setupTxDesc)((_ah), (_ds), (_plen), (_hlen), (_atype), \
-		(_txpow), (_txr0), (_txtr0), (_keyix), (_ant), \
-		(_flags), (_rtsrate), (_rtsdura)))
+	    (_txpow), (_txr0), (_txtr0), (_keyix), (_ant), \
+	    (_flags), (_rtsrate), (_rtsdura)))
 #define	ath_hal_setupxtxdesc(_ah, _ds, \
-		_txr1, _txtr1, _txr2, _txtr2, _txr3, _txtr3) \
+	    _txr1, _txtr1, _txr2, _txtr2, _txr3, _txtr3) \
 	((*(_ah)->ah_setupXTxDesc)((_ah), (_ds), \
-		(_txr1), (_txtr1), (_txr2), (_txtr2), (_txr3), (_txtr3)))
+	    (_txr1), (_txtr1), (_txr2), (_txtr2), (_txr3), (_txtr3)))
 #define	ath_hal_filltxdesc(_ah, _ds, _l, _first, _last) \
 	((*(_ah)->ah_fillTxDesc)((_ah), (_ds), (_l), (_first), (_last)))
 #define	ath_hal_txprocdesc(_ah, _ds) \
