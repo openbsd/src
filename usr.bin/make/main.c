@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.58 2002/12/30 02:29:24 millert Exp $ */
+/*	$OpenBSD: main.c,v 1.59 2002/12/30 22:12:38 millert Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -300,10 +300,11 @@ MainParseArgs(argc, argv)
 			break;
 		case -1:
 			/* Check for variable assignments and targets. */
-			if (!Parse_DoVar(argv[optind], VAR_CMD)) {
+			if (argv[optind] != NULL &&
+			    !Parse_DoVar(argv[optind], VAR_CMD)) {
 				if (!*argv[optind])
 					Punt("illegal (null) argument.");
-				if (strcmp(argv[optind], "--") != 0)
+				if (strcmp(argv[optind], "-") != 0)
 					Lst_AtEnd(create, estrdup(argv[optind]));
 			}
 			optind++;	/* skip over non-option */
