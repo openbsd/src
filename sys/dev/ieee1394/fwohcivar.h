@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohcivar.h,v 1.2 2002/12/13 02:52:04 tdeval Exp $	*/
+/*	$OpenBSD: fwohcivar.h,v 1.3 2002/12/30 11:12:12 tdeval Exp $	*/
 /*	$NetBSD: fwohcivar.h,v 1.17 2002/01/16 01:47:37 eeh Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ typedef struct fwohci_handler {
 	u_int32_t		   fh_tcode;	/* ARRQ   / ARRS   / IR   */
 	u_int32_t		   fh_key1;	/* addrhi / srcid  / chan */
 	u_int32_t		   fh_key2;	/* addrlo / tlabel / tag  */
+	u_int32_t		   fh_key3;	/*    node_id  :  count   */
 	int			 (*fh_handler)(struct fwohci_softc *, void *,
 					       struct fwohci_pkt *);
 	void			  *fh_handarg;
