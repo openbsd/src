@@ -12,8 +12,8 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.9/2.95.3/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.9/2.95.3/specs
 ./usr/lib/libacl.so.5.0
-./usr/lib/libc.so.27.0
-./usr/lib/libc_r.so.5.0
+./usr/lib/libc.so.27.1
+./usr/lib/libc_r.so.5.1
 ./usr/lib/libcrypto.so.4.1
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.8.0
@@ -680,7 +680,6 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/auviavar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcivar.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cs4280_image.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cs4280reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cs4281reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cy82c693reg.ph
@@ -713,7 +712,6 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/ncrreg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/neo-coeff.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/neoreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pccbbreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pccbbvar.ph
@@ -738,8 +736,6 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/siop_pci_common.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgareg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgavar.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/ti_fw.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/ti_fw2.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/ubsecreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/ubsecvar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/vga_pcivar.ph

@@ -1027,7 +1027,6 @@
 ./usr/share/man/cat4/i386/pctr.0
 ./usr/share/man/cat4/i386/pss.0
 ./usr/share/man/cat4/i386/sb.0
-./usr/share/man/cat4/i386/scd.0
 ./usr/share/man/cat4/i386/sea.0
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/i386/spkr.0
@@ -1399,6 +1398,7 @@
 ./usr/share/man/cat5/phones.0
 ./usr/share/man/cat5/pmax
 ./usr/share/man/cat5/powerpc
+./usr/share/man/cat5/primes.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
 ./usr/share/man/cat5/rcsfile.0

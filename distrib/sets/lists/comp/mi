@@ -331,7 +331,6 @@
 ./usr/include/dev/pci/bktr/bktr_tuner.h
 ./usr/include/dev/pci/cmpcireg.h
 ./usr/include/dev/pci/cmpcivar.h
-./usr/include/dev/pci/cs4280_image.h
 ./usr/include/dev/pci/cs4280reg.h
 ./usr/include/dev/pci/cs4281reg.h
 ./usr/include/dev/pci/cy82c693reg.h
@@ -364,7 +363,6 @@
 ./usr/include/dev/pci/isesvar.h
 ./usr/include/dev/pci/maestro_reg.h
 ./usr/include/dev/pci/ncrreg.h
-./usr/include/dev/pci/neo-coeff.h
 ./usr/include/dev/pci/neoreg.h
 ./usr/include/dev/pci/pccbbreg.h
 ./usr/include/dev/pci/pccbbvar.h
@@ -390,8 +388,6 @@
 ./usr/include/dev/pci/siop_pci_common.h
 ./usr/include/dev/pci/tgareg.h
 ./usr/include/dev/pci/tgavar.h
-./usr/include/dev/pci/ti_fw.h
-./usr/include/dev/pci/ti_fw2.h
 ./usr/include/dev/pci/ubsecreg.h
 ./usr/include/dev/pci/ubsecvar.h
 ./usr/include/dev/pci/vga_pcivar.h
