@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.24 1998/03/26 20:28:11 art Exp $	*/
+/*	$OpenBSD: login.c,v 1.25 1998/07/05 20:30:46 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.24 1998/03/26 20:28:11 art Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.25 1998/07/05 20:30:46 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -315,7 +315,22 @@ main(argc, argv)
 			rval = pwcheck(username, p, salt, pwd->pw_passwd);
 #endif
 		} else {
-			rval = pwcheck(username, p, salt, "*");
+#ifdef SKEY
+			if (strcasecmp(p, "s/key") == 0)
+				(void)skey_authenticate(username);
+			else
+#endif
+			{
+				useconds_t us;
+
+				/*
+				 * Sleep between 1 and 3 seconds
+				 * to emulate a crypt.
+				 */
+				us = arc4random() % 3000000;
+				usleep(us);
+			}
+			rval = 1;
 		}
 		memset(p, 0, strlen(p));
 
