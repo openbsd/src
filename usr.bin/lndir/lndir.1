@@ -1,0 +1,139 @@
+.\" $OpenBSD: lndir.1,v 1.1 1996/08/19 05:47:26 downsj Exp $
+.\" $XConsortium: lndir.man /main/9 1995/12/15 14:00:35 gildea $
+.\"
+.\" Copyright (c) 1993, 1994  X Consortium
+.\" 
+.\" Permission is hereby granted, free of charge, to any person obtaining
+.\" a copy of this software and associated documentation files (the
+.\" "Software"), to deal in the Software without restriction, including
+.\" without limitation the rights to use, copy, modify, merge, publish,
+.\" distribute, sublicense, and/or sell copies of the Software, and to
+.\" permit persons to whom the Software is furnished to do so, subject to
+.\" the following conditions:
+.\" 
+.\" The above copyright notice and this permission notice shall be
+.\" included in all copies or substantial portions of the Software.
+.\" 
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+.\" EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+.\" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+.\" IN NO EVENT SHALL THE X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR
+.\" OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+.\" ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+.\" OTHER DEALINGS IN THE SOFTWARE.
+.\" 
+.\" Except as contained in this notice, the name of the X Consortium shall
+.\" not be used in advertising or otherwise to promote the sale, use or
+.\" other dealings in this Software without prior written authorization
+.\" from the X Consortium.
+.\" 
+.TH LNDIR 1 "" "OpenBSD"
+.SH NAME
+lndir \- create a shadow directory of symbolic links to another directory tree
+.SH SYNOPSIS
+.B lndir
+[
+.B \-e
+.I exceptfile
+]
+[
+.B \-s
+] [
+.B \-i
+]
+.I \|fromdir\|
+[
+.I todir
+]
+.SH DESCRIPTION
+The
+.I lndir
+program makes a shadow copy 
+.I todir 
+of a directory tree
+.I fromdir, 
+except that the shadow is not
+populated with real files but instead with symbolic links pointing at
+the real files in the 
+.I fromdir
+directory tree.  This is usually useful for maintaining source code for
+different machine architectures.  You create a shadow directory
+containing links to the real source, which you will have usually
+mounted from a remote machine.  You can build in the shadow tree, and
+the object files will be in the shadow directory, while the
+source files in the shadow directory are just symlinks to the real
+files.
+.PP
+This scheme has the advantage that if you update the source, you need not 
+propagate the change to the other architectures by hand, since all
+source in all shadow directories are symlinks to the real thing: just cd
+to the shadow directory and recompile away.
+.PP
+The
+.I todir
+argument is optional and defaults to the current directory.  The
+.I fromdir
+argument may be relative (e.g., ../src) and is relative to
+.I todir
+(not the current directory).
+.PP 
+.\" CVS.adm is used by the Concurrent Versions System.
+Note that RCS, SCCS, CVS and CVS.adm directories are not shadowed, in
+addition to any specified on the command line with \fB\-e\fP arguments.
+.PP
+If you add files, simply run
+.I lndir
+again.  New files will be silently added.  Old files will be
+checked that they have the correct link.
+.PP
+Deleting files is a more painful problem; the symlinks will
+just point into never never land.
+.PP
+If a file in \fIfromdir\fP is a symbolic link, \fIlndir\fP will make
+the same link in \fItodir\fP rather than making a link back to the
+(symbolic link) entry in \fIfromdir.\fP  The \fB\-i\fP flag
+changes this behavior.
+.SH OPTIONS
+.IP \-e
+Add the specified file to the list of excluded files/directories.  This is
+effective in all directories searched by \fIlndir\fP.  This option may be
+specified as many times as needed.
+.IP \-s
+Normally \fIlndir\fP outputs the name of each subdirectory as it
+descends into it.  The \fB\-s\fP option suppresses these status
+messages.
+.IP \-i
+Causes the program to not treat symbolic links in \fIfromdir\fP
+specially.  The link created in \fItodir\fP will point back to the
+corresponding (symbolic link) file in \fIfromdir\fP.
+If the link is to a directory, this is almost certainly the wrong thing.
+.IP
+This option exists mostly to emulate the behavior the C version of
+\fIlndir\fP had in X11R6.  Its use is not recommended.
+.SH DIAGNOSTICS
+The program displays the name of each subdirectory it enters, followed
+by a colon.  The \fB\-s\fP option suppresses these messages.
+.PP
+A warning message is displayed if the symbolic link cannot be created.
+The usual problem is that a regular file of the same name already
+exists.
+.PP
+If the link already exists but doesn't point to the correct file, the
+program prints the link name and the location where it does point.
+.SH BUGS
+The
+.I patch
+program gets upset if it cannot change the files.  You should never run
+.I patch
+from a shadow directory anyway.
+.PP
+You need to use something like
+.nf
+	find todir \|\-type l \|\-print \||\| xargs rm
+.fi
+to clear out all files before you can relink (if fromdir moved, for instance).
+Something like
+.nf
+	 find . \|\\! \|\-type d \|\-print
+.fi
+will find all files that are not directories.
