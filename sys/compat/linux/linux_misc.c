@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.36 2001/07/03 15:32:34 jasoni Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.37 2001/07/03 21:56:26 jasoni Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -211,12 +211,12 @@ linux_sys_wait4(p, v, retval)
 }
 
 int
-linux_sys_setresgid(p, v, retval)
+linux_sys_setresgid16(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_setresgid_args /* {
+	struct linux_sys_setresgid16_args /* {
 		syscallarg(gid_t) rgid;
 		syscallarg(gid_t) egid;
 		syscallarg(gid_t) sgid;
@@ -278,12 +278,12 @@ linux_sys_setresgid(p, v, retval)
 }
 
 int
-linux_sys_getresgid(p, v, retval)
+linux_sys_getresgid16(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_getresgid_args /* {
+	struct linux_sys_getresgid16_args /* {
 		syscallarg(gid_t *) rgid;
 		syscallarg(gid_t *) egid;
 		syscallarg(gid_t *) sgid;

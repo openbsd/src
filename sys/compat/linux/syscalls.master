@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.29 2001/07/03 15:32:34 jasoni Exp $
+	$OpenBSD: syscalls.master,v 1.30 2001/07/03 21:56:26 jasoni Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -274,9 +274,9 @@
 168	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 169	STD		{ int linux_sys_nfsservctl(void); }
-170	STD		{ int linux_sys_setresgid(gid_t rgid, gid_t egid, \
+170	STD		{ int linux_sys_setresgid16(gid_t rgid, gid_t egid, \
 			    gid_t sgid); }
-171	STD		{ int linux_sys_getresgid(gid_t *rgid, gid_t *egid, \
+171	STD		{ int linux_sys_getresgid16(gid_t *rgid, gid_t *egid, \
 			    gid_t *sgid); }
 172	STD		{ int linux_sys_prctl(void); }
 173	STD     	{ int linux_sys_rt_sigreturn( \
