@@ -847,7 +847,7 @@ history_expand (hstring, output)
       string[0] = string[1] = history_expansion_char;
       string[2] = ':';
       string[3] = 's';
-      strlcpy (string + 4, hstring, l - 4);
+      strlcpy (string + 4, hstring, l + 1);
       l += 4;
     }
   else

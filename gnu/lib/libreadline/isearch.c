@@ -110,6 +110,7 @@ rl_display_search (search_string, reverse_p, where)
 #endif /* NOTDEF */
 
   message[msglen++] = '(';
+  message[msglen] = '\0';
 
   if (reverse_p)
     {
