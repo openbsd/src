@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipnat.c,v 1.30 1999/07/23 19:48:02 kjell Exp $    */
+/*    $OpenBSD: ipnat.c,v 1.31 1999/07/25 19:14:43 hugh Exp $    */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -67,7 +67,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.30 1999/07/23 19:48:02 kjell Exp $";
+static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.31 1999/07/25 19:14:43 hugh Exp $";
 #endif
 
 
@@ -941,8 +941,9 @@ int opts;
 			if (*line)
 				fprintf(stderr, "%d: syntax error in \"%s\"\n",
 					linenum, line);
-		} else if ((opts & OPT_VERBOSE) && np) {
-			printnat(np, opts &  OPT_VERBOSE, NULL);
+		} else {
+			if ((opts & OPT_VERBOSE) && np)
+				printnat(np, opts &  OPT_VERBOSE, NULL);
 			if (!(opts & OPT_NODO)) {
 				if (opts & OPT_REM) {
 					if (ioctl(fd, SIOCADNAT, np) == -1)
