@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.42 2000/11/10 05:24:58 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.43 2000/12/12 03:41:22 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -83,67 +83,27 @@
 /*
  * Maximum number of addresses to cache
  */
-#ifndef BRIDGE_RTABLE_MAX
-#define BRIDGE_RTABLE_MAX	100
+#ifndef	BRIDGE_RTABLE_MAX
+#define	BRIDGE_RTABLE_MAX	100
 #endif
+
+/* spanning tree defaults */
+#define	BSTP_DEFAULT_MAX_AGE		(20 * 256)
+#define	BSTP_DEFAULT_HELLO_TIME		(2 * 256)
+#define	BSTP_DEFAULT_FORWARD_DELAY	(15 * 256)
+#define	BSTP_DEFAULT_HOLD_TIME		(1 * 256)
+#define	BSTP_DEFAULT_BRIDGE_PRIORITY	0x8000
+#define	BSTP_DEFAULT_PORT_PRIORITY	0x80
+#define	BSTP_DEFAULT_PATH_COST		55
 
 /*
  * Timeout (in seconds) for entries learned dynamically
  */
-#ifndef BRIDGE_RTABLE_TIMEOUT
-#define BRIDGE_RTABLE_TIMEOUT	240
+#ifndef	BRIDGE_RTABLE_TIMEOUT
+#define	BRIDGE_RTABLE_TIMEOUT	240
 #endif
 
 extern int ifqmaxlen;
-
-/*
- * Bridge filtering rules
- */
-SIMPLEQ_HEAD(brl_head, brl_node);
-
-struct brl_node {
-	SIMPLEQ_ENTRY(brl_node)	brl_next;	/* next rule */
-	struct ether_addr	brl_src;	/* source mac address */
-	struct ether_addr	brl_dst;	/* destination mac address */
-	u_int8_t		brl_action;	/* what to do with match */
-	u_int8_t		brl_flags;	/* comparision flags */
-};
-
-/*
- * Bridge interface list
- */
-struct bridge_iflist {
-	LIST_ENTRY(bridge_iflist)	next;		/* next in list */
-	struct brl_head			bif_brlin;	/* input rules */
-	struct brl_head			bif_brlout;	/* output rules */
-	struct				ifnet *ifp;	/* member interface */
-	u_int32_t			bif_flags;	/* member flags */
-};
-
-/*
- * Bridge route node
- */
-struct bridge_rtnode {
-	LIST_ENTRY(bridge_rtnode)	brt_next;	/* next in list */
-	struct				ifnet *brt_if;	/* destination ifs */
-	u_int8_t			brt_flags;	/* address flags */
-	u_int8_t			brt_age;	/* age counter */
-	struct				ether_addr brt_addr;	/* dst addr */
-};
-
-/*
- * Software state for each bridge
- */
-struct bridge_softc {
-	struct				ifnet sc_if;	/* the interface */
-	u_int32_t			sc_brtmax;	/* max # addresses */
-	u_int32_t			sc_brtcnt;	/* current # addrs */
-	u_int32_t			sc_brttimeout;	/* timeout ticks */
-	u_int32_t			sc_hashkey;	/* hash key */
-	struct timeout			sc_brtimeout;	/* timeout state */
-	LIST_HEAD(, bridge_iflist)	sc_iflist;	/* interface list */
-	LIST_HEAD(bridge_rthead, bridge_rtnode)	*sc_rts;/* hash table */
-};
 
 struct bridge_softc bridgectl[NBRIDGE];
 
@@ -205,6 +165,11 @@ bridgeattach(unused)
 
 		sc->sc_brtmax = BRIDGE_RTABLE_MAX;
 		sc->sc_brttimeout = BRIDGE_RTABLE_TIMEOUT;
+		sc->sc_bridge_max_age = BSTP_DEFAULT_MAX_AGE;
+		sc->sc_bridge_hello_time = BSTP_DEFAULT_HELLO_TIME;
+		sc->sc_bridge_forward_delay= BSTP_DEFAULT_FORWARD_DELAY;
+		sc->sc_bridge_priority = BSTP_DEFAULT_BRIDGE_PRIORITY;
+		sc->sc_hold_time = BSTP_DEFAULT_HOLD_TIME;
 		timeout_set(&sc->sc_brtimeout, bridge_timer, sc);
 		LIST_INIT(&sc->sc_iflist);
 		ifp = &sc->sc_if;
@@ -237,16 +202,15 @@ bridge_ioctl(ifp, cmd, data)
 	struct ifbreq *req = (struct ifbreq *)data;
 	struct ifbaconf *baconf = (struct ifbaconf *)data;
 	struct ifbareq *bareq = (struct ifbareq *)data;
-	struct ifbcachereq *bcachereq = (struct ifbcachereq *)data;
+	struct ifbrparam *bparam = (struct ifbrparam *)data;
 	struct ifbifconf *bifconf = (struct ifbifconf *)data;
-	struct ifbcachetoreq *bcacheto = (struct ifbcachetoreq *)data;
 	struct ifbrlreq *brlreq = (struct ifbrlreq *)data;
 	struct ifbrlconf *brlconf = (struct ifbrlconf *)data;
 	struct ifreq ifreq;
 	int error = 0, s;
 	struct bridge_iflist *p;
 
-	s = splsoftnet();
+	s = splnet();
 	switch (cmd) {
 	case SIOCBRDGADD:
 		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
@@ -325,9 +289,12 @@ bridge_ioctl(ifp, cmd, data)
 			error = ENOMEM;
 			break;
 		}
+		bzero(p, sizeof(struct bridge_iflist));
 
 		p->ifp = ifs;
 		p->bif_flags = IFBIF_LEARNING | IFBIF_DISCOVER;
+		p->bif_priority = BSTP_DEFAULT_PORT_PRIORITY;
+		p->bif_path_cost = BSTP_DEFAULT_PATH_COST;
 		SIMPLEQ_INIT(&p->bif_brlin);
 		SIMPLEQ_INIT(&p->bif_brlout);
 		LIST_INSERT_HEAD(&sc->sc_iflist, p, next);
@@ -378,6 +345,9 @@ bridge_ioctl(ifp, cmd, data)
 			break;
 		}
 		req->ifbr_ifsflags = p->bif_flags;
+		req->ifbr_state = p->bif_state;
+		req->ifbr_priority = p->bif_priority;
+		req->ifbr_portno = p->ifp->if_index & 0xff;
 		break;
 	case SIOCBRDGSIFFLGS:
 		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
@@ -399,7 +369,34 @@ bridge_ioctl(ifp, cmd, data)
 			error = ESRCH;
 			break;
 		}
+		if ((req->ifbr_ifsflags & IFBIF_STP) &&
+		    (ifs->if_type != IFT_ETHER)) {
+			error = EINVAL;
+			break;
+		}
 		p->bif_flags = req->ifbr_ifsflags;
+		break;
+	case SIOCBRDGSIFPRIO:
+		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+			break;
+		ifs = ifunit(req->ifbr_ifsname);
+		if (ifs == NULL) {
+			error = ENOENT;
+			break;
+		}
+		if ((caddr_t)sc != ifs->if_bridge) {
+			error = ESRCH;
+			break;
+		}
+		LIST_FOREACH(p, &sc->sc_iflist, next) {
+			if (p->ifp == ifs)
+				break;
+		}
+		if (p == LIST_END(&sc->sc_iflist)) {
+			error = ESRCH;
+			break;
+		}
+		p->bif_priority = req->ifbr_priority;
 		break;
 	case SIOCBRDGRTS:
 		error = bridge_rtfind(sc, baconf);
@@ -437,24 +434,24 @@ bridge_ioctl(ifp, cmd, data)
 		error = bridge_rtdaddr(sc, &bareq->ifba_dst);
 		break;
 	case SIOCBRDGGCACHE:
-		bcachereq->ifbc_size = sc->sc_brtmax;
+		bparam->ifbrp_csize = sc->sc_brtmax;
 		break;
 	case SIOCBRDGSCACHE:
 		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
 			break;
-		sc->sc_brtmax = bcachereq->ifbc_size;
+		sc->sc_brtmax = bparam->ifbrp_csize;
 		bridge_rttrim(sc);
 		break;
 	case SIOCBRDGSTO:
 		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
 			break;
-		sc->sc_brttimeout = bcacheto->ifbct_time;
+		sc->sc_brttimeout = bparam->ifbrp_ctime;
 		timeout_del(&sc->sc_brtimeout);
-		if (bcacheto->ifbct_time != 0)
+		if (bparam->ifbrp_ctime != 0)
 			timeout_add(&sc->sc_brtimeout, sc->sc_brttimeout * hz);
 		break;
 	case SIOCBRDGGTO:
-		bcacheto->ifbct_time = sc->sc_brttimeout;
+		bparam->ifbrp_ctime = sc->sc_brttimeout;
 		break;
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == IFF_UP)
@@ -528,9 +525,24 @@ bridge_ioctl(ifp, cmd, data)
 	case SIOCBRDGGRL:
 		error = bridge_brlconf(sc, brlconf);
 		break;
+	case SIOCBRDGGPRI:
+	case SIOCBRDGGMA:
+	case SIOCBRDGGHT:
+	case SIOCBRDGGFD:
+		break;
+	case SIOCBRDGSPRI:
+	case SIOCBRDGSFD:
+	case SIOCBRDGSMA:
+	case SIOCBRDGSHT:
+		error = suser(prc->p_ucred, &prc->p_acflag);
+		break;
 	default:
 		error = EINVAL;
 	}
+
+	if (!error)
+		error = bstp_ioctl(ifp, cmd, data);
+
 	splx(s);
 	return (error);
 }
@@ -583,6 +595,9 @@ bridge_bifconf(sc, bifc)
 		    sizeof(breq.ifbr_ifsname)-1);
 		breq.ifbr_ifsname[sizeof(breq.ifbr_ifsname) - 1] = '\0';
 		breq.ifbr_ifsflags = p->bif_flags;
+		breq.ifbr_state = p->bif_state;
+		breq.ifbr_priority = p->bif_priority;
+		breq.ifbr_portno = p->ifp->if_index & 0xff;
 		error = copyout((caddr_t)&breq,
 		    (caddr_t)(bifc->ifbic_req + i), sizeof(breq));
 		if (error)
@@ -849,6 +864,9 @@ bridge_start(ifp)
 {
 }
 
+/*
+ * Loop through each bridge interface and process their input queues.
+ */
 void
 bridgeintr(void)
 {
@@ -870,7 +888,7 @@ bridgeintr(void)
 }
 
 /*
- * Loop through each bridge interface and process their input queues.
+ * Process a single frame.  Frame must be freed or queued before returning.
  */
 void
 bridgeintr_frame(sc, m)
@@ -908,6 +926,14 @@ bridgeintr_frame(sc, m)
 		return;
 	}
 
+	if ((ifl->bif_flags & IFBIF_STP) &&
+	    ((ifl->bif_state == BSTP_IFSTATE_BLOCKING) ||
+	     (ifl->bif_state == BSTP_IFSTATE_LISTENING) ||
+	     (ifl->bif_state == BSTP_IFSTATE_DISABLED))) {
+		m_freem(m);
+		return;
+	}
+
 	if (m->m_pkthdr.len < sizeof(eh)) {
 		m_freem(m);
 		return;
@@ -929,6 +955,17 @@ bridgeintr_frame(sc, m)
 	      eh.ether_shost[4] == 0 &&
 	      eh.ether_shost[5] == 0))
 		bridge_rtupdate(sc, src, src_if, 0, IFBAF_DYNAMIC);
+
+	if ((ifl->bif_flags & IFBIF_STP) &&
+	    (ifl->bif_state == BSTP_IFSTATE_LEARNING)) {
+		m_freem(m);
+		return;
+	}
+
+	/*
+	 * At this point, the port either doesn't participate in stp or
+	 * it's in the forwarding state
+	 */
 
 	/*
 	 * If packet is unicast, destined for someone on "this"
@@ -1017,6 +1054,12 @@ bridgeintr_frame(sc, m)
 		m_freem(m);
 		return;
 	}
+	if ((ifl->bif_flags & IFBIF_STP) &&
+	    (ifl->bif_state == BSTP_IFSTATE_DISABLED ||
+	     ifl->bif_state == BSTP_IFSTATE_BLOCKING)) {
+		m_free(m);
+		return;
+	}
 	if (bridge_filterrule(&ifl->bif_brlout, &eh) == BRL_ACTION_BLOCK) {
 		m_freem(m);
 		return;
@@ -1070,7 +1113,31 @@ bridge_input(ifp, eh, m)
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
 		return (m);
 
+	LIST_FOREACH(ifl, &sc->sc_iflist, next) {
+		if (ifl->ifp == ifp)
+			break;
+	}
+	if (ifl == LIST_END(&sc->sc_iflist))
+		return (m);
+
 	if (m->m_flags & (M_BCAST | M_MCAST)) {
+		/* Tap off 802.1D packets, they do not get forwarded */
+		if (bcmp(eh->ether_dhost, bstp_etheraddr, ETHER_ADDR_LEN) == 0) {
+			m = bstp_input(sc, ifp, eh, m);
+			if (m == NULL)
+				return (NULL);
+		}
+
+		/*
+		 * No need to queue frames for ifs in the blocking, disabled,
+		 *  or listening state
+		 */
+		if ((ifl->bif_flags & IFBIF_STP) &&
+		    ((ifl->bif_state == BSTP_IFSTATE_BLOCKING) ||
+		     (ifl->bif_state == BSTP_IFSTATE_LISTENING) ||
+		     (ifl->bif_state == BSTP_IFSTATE_DISABLED)))
+			return (m);
+
 		/*
 		 * make a copy of 'm' with 'eh' tacked on to the
 		 * beginning.  Return 'm' for local processing
@@ -1094,6 +1161,17 @@ bridge_input(ifp, eh, m)
 		schednetisr(NETISR_BRIDGE);
 		return (m);
 	}
+
+	/*
+	 * No need to queue frames for ifs in the blocking, disabled, or
+	 * listening state
+	 */
+	if ((ifl->bif_flags & IFBIF_STP) &&
+	    ((ifl->bif_state == BSTP_IFSTATE_BLOCKING) ||
+	     (ifl->bif_state == BSTP_IFSTATE_LISTENING) ||
+	     (ifl->bif_state == BSTP_IFSTATE_DISABLED)))
+		return (m);
+
 
 	/*
 	 * Unicast, make sure it's not for us.
@@ -1155,6 +1233,11 @@ bridge_broadcast(sc, ifp, eh, m)
 		 */
 		dst_if = p->ifp;
 		if (dst_if->if_index == ifp->if_index)
+			continue;
+
+		if ((p->bif_flags & IFBIF_STP) &&
+		    (p->bif_state == BSTP_IFSTATE_BLOCKING ||
+		     p->bif_state == BSTP_IFSTATE_DISABLED))
 			continue;
 
 		if ((p->bif_flags & IFBIF_DISCOVER) == 0 &&

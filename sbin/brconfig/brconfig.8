@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.18 2000/11/06 01:08:06 aaron Exp $
+.\"	$OpenBSD: brconfig.8,v 1.19 2000/12/12 03:41:21 jason Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -187,6 +187,32 @@ rule will match all frames (good for creating a catchall policy).
 .It Cm rulefile Ar filename
 Load a set of rules from the file
 .Ar filename .
+.It Cm stp Ar interface
+Enable spanning tree protocol on
+.Ar interface .
+.It Cm -stp Ar interface
+Disable spanning tree protocol on
+.Ar interface .
+.It Cm maxage Ar time
+Set the time (in seconds) that a spanning tree protocol configuration is valid.
+Defaults to 20 seconds, minimum of 1, maximum of 255.
+.It Cm fwddelay Ar time
+Set the time (in seconds) before an interface begins forwarding packets.
+Defaults to 15 seconds, minimum of 1, maximum of 255.
+.It Cm hellotime Ar time
+Set the time (in seconds) between broadcasting spanning tree protocol
+configuration packets.
+Defaults to 2 seconds, minimum of 1, maximum of 255.
+.It Cm priority Ar num
+Set the spanning priority of this bridge to
+.Ar num .
+Defaults to 32768, minimum of 0, maximum of 65535.
+.It Cm ifpriority Ar interface Ar num
+Set the spanning tree priority of
+.Ar interface
+to
+.Ar num .
+Defaults to 128, minimum of 0, maximum of 255.
 .El
 .Sh EXAMPLES
 .Bl -tag -width brconfig
@@ -310,6 +336,19 @@ Note:  It is possible to put all the following commands in the
 and
 .Xr bridgename.if 8
 files, using the ! operator.
+.Sh SPANNING TREE
+The bridge has support for 802.1D Spanning Tree Protocol (STP), which can
+be used to detect and remove loops in a network topology.  Using the
+.Cm stp
+or
+.Cm -stp
+commands
+to
+.Nm brconfig
+STP can be enabled or disabled on each port.
+STP will not work on
+.Xr enc 4
+members because they lack a hardware MAC address.
 .Sh SEE ALSO
 .Xr bridge 4 ,
 .Xr enc 4 ,

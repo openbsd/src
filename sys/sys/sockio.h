@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.16 2000/04/26 18:37:37 chris Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.17 2000/12/12 03:41:23 jason Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -96,34 +96,44 @@
 #define	SIOCGIFPSRCADDR	_IOWR('i', 71, struct ifreq)	/* get gif psrc addr */
 #define	SIOCGIFPDSTADDR	_IOWR('i', 72, struct ifreq)	/* get gif pdst addr */
 
-#define	SIOCBRDGADD	_IOWR('i', 60, struct ifbreq)	/* add bridge ifs */
-#define	SIOCBRDGDEL	_IOWR('i', 61, struct ifbreq)	/* del bridge ifs */
+#define	SIOCBRDGADD	 _IOW('i', 60, struct ifbreq)	/* add bridge ifs */
+#define	SIOCBRDGDEL	 _IOW('i', 61, struct ifbreq)	/* del bridge ifs */
 #define	SIOCBRDGGIFFLGS	_IOWR('i', 62, struct ifbreq)	/* get brdg if flags */
-#define	SIOCBRDGSIFFLGS	_IOWR('i', 63, struct ifbreq)	/* set brdg if flags */
-#define	SIOCBRDGSCACHE	_IOWR('i', 64, struct ifbcachereq) /* set cache size */
-#define	SIOCBRDGGCACHE	_IOWR('i', 65, struct ifbcachereq) /* get cache size */
+#define	SIOCBRDGSIFFLGS	 _IOW('i', 63, struct ifbreq)	/* set brdg if flags */
+#define	SIOCBRDGSCACHE	 _IOW('i', 64, struct ifbrparam)/* set cache size */
+#define	SIOCBRDGGCACHE	_IOWR('i', 65, struct ifbrparam)/* get cache size */
 #define	SIOCBRDGIFS	_IOWR('i', 66, struct ifbreq)	/* get member ifs */
 #define	SIOCBRDGRTS	_IOWR('i', 67, struct ifbaconf)	/* get addresses */
 #define	SIOCBRDGSADDR	_IOWR('i', 68, struct ifbareq)	/* set addr flags */
-#define	SIOCBRDGSTO	_IOWR('i', 69, struct ifbcachetoreq) /* cache timeout */
-#define	SIOCBRDGGTO	_IOWR('i', 70, struct ifbcachetoreq) /* cache timeout */
-#define	SIOCBRDGDADDR	_IOWR('i', 71, struct ifbareq)	/* delete addr */
-#define	SIOCBRDGFLUSH	_IOWR('i', 72, struct ifbreq)	/* flush addr cache */
+#define	SIOCBRDGSTO	 _IOW('i', 69, struct ifbrparam)/* cache timeout */
+#define	SIOCBRDGGTO	_IOWR('i', 70, struct ifbrparam)/* cache timeout */
+#define	SIOCBRDGDADDR	 _IOW('i', 71, struct ifbareq)	/* delete addr */
+#define	SIOCBRDGFLUSH	 _IOW('i', 72, struct ifbreq)	/* flush addr cache */
 
 #define SIOCGENCSA	_IOWR('i', 73, struct ifsa)	/* get enc sa */
-#define SIOCSENCDSTSA	_IOW('i', 74, struct ifsa)	/* set enc sa */
-#define SIOCSENCSRCSA	_IOW('i', 75, struct ifsa)	/* set enc sa */
-#define SIOCSENCCLEARSA	_IOW('i', 76, struct ifsa)	/* set enc sa */
+#define SIOCSENCDSTSA	 _IOW('i', 74, struct ifsa)	/* set enc sa */
+#define SIOCSENCSRCSA	 _IOW('i', 75, struct ifsa)	/* set enc sa */
+#define SIOCSENCCLEARSA	 _IOW('i', 76, struct ifsa)	/* set enc sa */
 
-#define SIOCBRDGARL	_IOWR('i', 77, struct ifbrlreq)	/* add bridge rule */
-#define SIOCBRDGFRL	_IOWR('i', 78, struct ifbrlreq)	/* flush brdg rules */
+#define SIOCBRDGARL	 _IOW('i', 77, struct ifbrlreq)	/* add bridge rule */
+#define SIOCBRDGFRL	 _IOW('i', 78, struct ifbrlreq)	/* flush brdg rules */
 #define SIOCBRDGGRL	_IOWR('i', 79, struct ifbrlconf)/* get bridge rules */
+#define	SIOCBRDGGPRI	_IOWR('i', 80, struct ifbrparam)/* get priority */
+#define	SIOCBRDGSPRI	 _IOW('i', 80, struct ifbrparam)/* set priority */
+#define	SIOCBRDGGHT	_IOWR('i', 81, struct ifbrparam)/* get hello time */
+#define	SIOCBRDGSHT	 _IOW('i', 81, struct ifbrparam)/* set hello time */
+#define	SIOCBRDGGFD	_IOWR('i', 82, struct ifbrparam)/* get forward delay */
+#define	SIOCBRDGSFD	 _IOW('i', 82, struct ifbrparam)/* set forward delay */
+#define	SIOCBRDGGMA	_IOWR('i', 83, struct ifbrparam)/* get max age */
+#define	SIOCBRDGSMA	 _IOW('i', 83, struct ifbrparam)/* set max age */
+#define	SIOCBRDGSIFPRIO	 _IOW('i', 84, struct ifbreq)	/* set if priority */
 
-#define GRESADDRS       _IOW('i', 101, struct ifreq)
-#define GRESADDRD       _IOW('i', 102, struct ifreq)   
+#define	SIOCBRDGS
+#define GRESADDRS        _IOW('i', 101, struct ifreq)
+#define GRESADDRD        _IOW('i', 102, struct ifreq)   
 #define GREGADDRS       _IOWR('i', 103, struct ifreq)
 #define GREGADDRD       _IOWR('i', 104, struct ifreq)
-#define GRESPROTO       _IOW('i' , 105, struct ifreq)
+#define GRESPROTO        _IOW('i', 105, struct ifreq)
 #define GREGPROTO       _IOWR('i', 106, struct ifreq)
 
 #define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */

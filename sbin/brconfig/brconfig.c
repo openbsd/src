@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.9 2000/11/10 04:42:13 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.10 2000/12/12 03:41:22 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -57,10 +57,16 @@ int bridge_clrflag __P((int, char *, short));
 int bridge_ifsetflag __P((int, char *, char *, u_int32_t));
 int bridge_ifclrflag __P((int, char *, char *, u_int32_t));
 int bridge_list __P((int, char *, char *));
+int bridge_cfg __P((int, char *, char *));
 int bridge_addrs __P((int, char *, char *));
 int bridge_addaddr __P((int, char *, char *, char *));
 int bridge_deladdr __P((int, char *, char *));
 int bridge_maxaddr __P((int, char *, char *));
+int bridge_maxage __P((int, char *, char *));
+int bridge_priority __P((int, char *, char *));
+int bridge_fwddelay __P((int, char *, char *));
+int bridge_hellotime __P((int, char *, char *));
+int bridge_ifprio __P((int, char *, char *, char *));
 int bridge_timeout __P((int, char *, char *));
 int bridge_flush __P((int, char *));
 int bridge_flushall __P((int, char *));
@@ -83,7 +89,15 @@ int bridge_rulefile __P((int, char *, char *));
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
 #define	IFBAFBITS	"\020\1STATIC"
-#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER\3BLOCKNONIP"
+#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4STP"
+
+char *stpstates[] = {
+	"disabled",
+	"listening",
+	"learning",
+	"forwarding",
+	"blocking",
+};
 
 void
 usage()
@@ -300,6 +314,57 @@ main(argc, argv)
 			if (error)
 				return (error);
 		}
+		else if (strcmp("hellotime", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("hellotime requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_hellotime(sock, brdg, argv[0]);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("fwddelay", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("fwddelay requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_fwddelay(sock, brdg, argv[0]);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("maxage", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("maxage requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_maxage(sock, brdg, argv[0]);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("priority", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("priority requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_priority(sock, brdg, argv[0]);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("ifpriority", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc < 2) {
+				warnx("ifpriority requires 2 arguments");
+				return (EX_USAGE);
+			}
+			error = bridge_ifprio(sock, brdg, argv[0], argv[1]);
+			if (error)
+				return (error);
+			argc--; argv++;
+		}
 		else if (strcmp("rules", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
@@ -341,6 +406,28 @@ main(argc, argv)
 				return (EX_USAGE);
 			}
 			error = bridge_timeout(sock, brdg, argv[0]);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("stp", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("stp requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifsetflag(sock, brdg, argv[0],
+			    IFBIF_STP);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("-stp", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("-stp requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifclrflag(sock, brdg, argv[0],
+			    IFBIF_STP);
 			if (error)
 				return (error);
 		}
@@ -530,6 +617,46 @@ bridge_flush(s, brdg)
 }
 
 int
+bridge_cfg(s, brdg, delim)
+	int s;
+	char *brdg, *delim;
+{
+	struct ifbrparam ifbp;
+	u_int16_t pri;
+	u_int8_t ht, fd, ma;
+
+	strlcpy(ifbp.ifbrp_name, brdg, sizeof(ifbp.ifbrp_name));
+	if (ioctl(s, SIOCBRDGGPRI, (caddr_t)&ifbp)) {
+		warn("%s", brdg);
+		return (EX_IOERR);
+	}
+	pri = ifbp.ifbrp_prio;
+
+	if (ioctl(s, SIOCBRDGGHT, (caddr_t)&ifbp)) {
+		warn("%s", brdg);
+		return (EX_IOERR);
+	}
+	ht = ifbp.ifbrp_hellotime;
+
+	if (ioctl(s, SIOCBRDGGFD, (caddr_t)&ifbp)) {
+		warn("%s", brdg);
+		return (EX_IOERR);
+	}
+	fd = ifbp.ifbrp_fwddelay;
+
+	if (ioctl(s, SIOCBRDGGFD, (caddr_t)&ifbp)) {
+		warn("%s", brdg);
+		return (EX_IOERR);
+	}
+	ma = ifbp.ifbrp_maxage;
+
+	printf("%spriority %u hellotime %u fwddelay %u maxage: %u\n",
+	    delim, pri, ht, fd, ma);
+
+	return (0);
+}
+
+int
 bridge_list(s, brdg, delim)
 	int s;
 	char *brdg, *delim;
@@ -556,6 +683,11 @@ bridge_list(s, brdg, delim)
 		strlcpy(buf, reqp->ifbr_ifsname, sizeof(buf));
 		printf("%s%s ", delim, buf);
 		printb("flags", reqp->ifbr_ifsflags, IFBIFBITS);
+		printf("\n\t\t\t");
+		printf("port %u priority %u",
+		    reqp->ifbr_portno, reqp->ifbr_priority);
+		if (reqp->ifbr_ifsflags & IFBIF_STP)
+			printf(" %s", stpstates[reqp->ifbr_state]);
 		printf("\n");
 		bridge_rules(s, brdg, buf, delim);
 	}
@@ -604,19 +736,21 @@ bridge_timeout(s, brdg, arg)
 	int s;
 	char *brdg, *arg;
 {
-	struct ifbcachetoreq ifbct;
+	struct ifbrparam bp;
 	u_int32_t newtime;
 	char *endptr;
 
+	errno = 0;
 	newtime = strtoul(arg, &endptr, 0);
-	if (arg[0] == '\0' || endptr[0] != '\0') {
+	if (arg[0] == '\0' || endptr[0] != '\0' ||
+	    (errno == ERANGE && newtime == ULONG_MAX)) {
 		printf("invalid arg for timeout: %s\n", arg);
 		return (EX_USAGE);
 	}
 
-	strlcpy(ifbct.ifbct_name, brdg, sizeof(ifbct.ifbct_name));
-	ifbct.ifbct_time = newtime;
-	if (ioctl(s, SIOCBRDGSTO, (caddr_t)&ifbct) < 0) {
+	strlcpy(bp.ifbrp_name, brdg, sizeof(bp.ifbrp_name));
+	bp.ifbrp_ctime = newtime;
+	if (ioctl(s, SIOCBRDGSTO, (caddr_t)&bp) < 0) {
 		warn("%s", brdg);
 		return (EX_IOERR);
 	}
@@ -624,23 +758,132 @@ bridge_timeout(s, brdg, arg)
 }
 
 int
+bridge_maxage(s, brdg, arg)
+	int s;
+	char *brdg, *arg;
+{
+	struct ifbrparam bp;
+	u_int32_t v;
+	char *endptr;
+
+	errno = 0;
+	v = strtoul(arg, &endptr, 0);
+	if (arg[0] == '\0' || endptr[0] != '\0' ||
+	    (errno == ERANGE && v == ULONG_MAX) || (v > 0xff)) {
+		printf("invalid arg for maxage: %s\n", arg);
+		return (EX_USAGE);
+	}
+
+	strlcpy(bp.ifbrp_name, brdg, sizeof(bp.ifbrp_name));
+	bp.ifbrp_maxage = v;
+	if (ioctl(s, SIOCBRDGSMA, (caddr_t)&bp) < 0) {
+		warn("%s", brdg);
+		return (EX_IOERR);
+	}
+	return (0);
+	
+}
+
+int
+bridge_priority(s, brdg, arg)
+	int s;
+	char *brdg, *arg;
+{
+	struct ifbrparam bp;
+	u_int32_t v;
+	char *endptr;
+
+	errno = 0;
+	v = strtoul(arg, &endptr, 0);
+	if (arg[0] == '\0' || endptr[0] != '\0' ||
+	    (errno == ERANGE && v == ULONG_MAX) || (v > 0xffff)) {
+		printf("invalid arg for maxage: %s\n", arg);
+		return (EX_USAGE);
+	}
+
+	strlcpy(bp.ifbrp_name, brdg, sizeof(bp.ifbrp_name));
+	bp.ifbrp_prio = v;
+	if (ioctl(s, SIOCBRDGSPRI, (caddr_t)&bp) < 0) {
+		warn("%s", brdg);
+		return (EX_IOERR);
+	}
+	return (0);
+}
+
+int
+bridge_fwddelay(s, brdg, arg)
+	int s;
+	char *brdg, *arg;
+{
+	struct ifbrparam bp;
+	u_int32_t v;
+	char *endptr;
+
+	errno = 0;
+	v = strtoul(arg, &endptr, 0);
+	if (arg[0] == '\0' || endptr[0] != '\0' ||
+	    (errno == ERANGE && v == ULONG_MAX) || (v > 0xff)) {
+		printf("invalid arg for fwddelay: %s\n", arg);
+		return (EX_USAGE);
+	}
+
+	strlcpy(bp.ifbrp_name, brdg, sizeof(bp.ifbrp_name));
+	bp.ifbrp_fwddelay = v;
+	if (ioctl(s, SIOCBRDGSFD, (caddr_t)&bp) < 0) {
+		warn("%s", brdg);
+		return (EX_IOERR);
+	}
+	return (0);
+	
+}
+
+int
+bridge_hellotime(s, brdg, arg)
+	int s;
+	char *brdg, *arg;
+{
+	struct ifbrparam bp;
+	u_int32_t v;
+	char *endptr;
+
+	errno = 0;
+	v = strtoul(arg, &endptr, 0);
+	if (arg[0] == '\0' || endptr[0] != '\0' ||
+	    (errno == ERANGE && v == ULONG_MAX) || (v > 0xff)) {
+		printf("invalid arg for hellotime: %s\n", arg);
+		return (EX_USAGE);
+	}
+
+	strlcpy(bp.ifbrp_name, brdg, sizeof(bp.ifbrp_name));
+	bp.ifbrp_hellotime = v;
+	if (ioctl(s, SIOCBRDGSHT, (caddr_t)&bp) < 0) {
+		warn("%s", brdg);
+		return (EX_IOERR);
+	}
+	return (0);
+	
+}
+
+int
 bridge_maxaddr(s, brdg, arg)
 	int s;
 	char *brdg, *arg;
 {
-	struct ifbcachereq ifbc;
+	struct ifbrparam bp;
 	u_int32_t newsize;
 	char *endptr;
 
+	errno = 0;
 	newsize = strtoul(arg, &endptr, 0);
-	if (arg[0] == '\0' || endptr[0] != '\0') {
+	if (arg[0] == '\0' || endptr[0] != '\0' ||
+	    (errno == ERANGE && newsize == ULONG_MAX)) {
 		printf("invalid arg for maxaddr: %s\n", arg);
 		return (EX_USAGE);
 	}
 
-	strlcpy(ifbc.ifbc_name, brdg, sizeof(ifbc.ifbc_name));
-	ifbc.ifbc_size = newsize;
-	if (ioctl(s, SIOCBRDGSCACHE, (caddr_t)&ifbc) < 0) {
+	strlcpy(bp.ifbrp_name, brdg, sizeof(bp.ifbrp_name));
+	bp.ifbrp_csize = newsize;
+	if (ioctl(s, SIOCBRDGSCACHE, (caddr_t)&bp) < 0) {
 		warn("%s", brdg);
 		return (EX_IOERR);
 	}
@@ -668,6 +911,34 @@ bridge_deladdr(s, brdg, addr)
 		return (EX_IOERR);
 	}
 
+	return (0);
+}
+
+int
+bridge_ifprio(s, brdg, ifname, val)
+	int s;
+	char *brdg, *ifname, *val;
+{
+	struct ifbreq breq;
+	u_int32_t v;
+	char *endptr;
+
+	strlcpy(breq.ifbr_name, brdg, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
+
+	errno = 0;
+	v = strtoul(val, &endptr, 0);
+	if (val[0] == '\0' || endptr[0] != '\0' ||
+	    (errno == ERANGE && v == ULONG_MAX) || (v > 0xff)) {
+		printf("invalid arg for ifpriority: %s\n", val);
+		return (EX_USAGE);
+	}
+	breq.ifbr_priority = v;
+
+	if (ioctl(s, SIOCBRDGSIFPRIO, (caddr_t)&breq) < 0) {
+		warn("%s: %s", brdg, val);
+		return (EX_IOERR);
+	}
 	return (0);
 }
 
@@ -768,8 +1039,7 @@ bridge_status(s, brdg)
 	char *brdg;
 {
 	struct ifreq ifr;
-	struct ifbcachereq ifbc;
-	struct ifbcachetoreq ifbct;
+	struct ifbrparam bp1, bp2;
 	int err;
 
 	strlcpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name));
@@ -784,25 +1054,30 @@ bridge_status(s, brdg)
 	printb("flags", ifr.ifr_flags, IFFBITS);
 	printf("\n");
 
+	printf("\tConfiguration:\n");
+	err = bridge_cfg(s, brdg, "\t\t");
+	if (err)
+		return (err);
+
 	printf("\tInterfaces:\n");
 	err = bridge_list(s, brdg, "\t\t");
 	if (err)
 		return (err);
 
-	strlcpy(ifbc.ifbc_name, brdg, sizeof(ifbc.ifbc_name));
-	if (ioctl(s, SIOCBRDGGCACHE, (caddr_t)&ifbc) < 0) {
+	strlcpy(bp1.ifbrp_name, brdg, sizeof(bp1.ifbrp_name));
+	if (ioctl(s, SIOCBRDGGCACHE, (caddr_t)&bp1) < 0) {
 		warn("%s", brdg);
 		return (EX_IOERR);
 	}
 
-	strlcpy(ifbct.ifbct_name, brdg, sizeof(ifbct.ifbct_name));
-	if (ioctl(s, SIOCBRDGGTO, (caddr_t)&ifbct) < 0) {
+	strlcpy(bp2.ifbrp_name, brdg, sizeof(bp2.ifbrp_name));
+	if (ioctl(s, SIOCBRDGGTO, (caddr_t)&bp2) < 0) {
 		warn("%s", brdg);
 		return (EX_IOERR);
 	}
 
 	printf("\tAddresses (max cache: %u, timeout: %u):\n",
-	    ifbc.ifbc_size, ifbct.ifbct_time);
+	    bp1.ifbrp_csize, bp2.ifbrp_ctime);
 
 	err = bridge_addrs(s, brdg, "\t\t");
 	return (err);
