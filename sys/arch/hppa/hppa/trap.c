@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.76 2004/06/10 21:13:55 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.77 2004/06/16 02:09:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -333,6 +333,8 @@ trap(type, frame)
 		break;
 
 	case T_CONDITION | T_USER:
+		sv.sival_int = va;
+		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTDIV, sv);
 		break;
 
 	case T_PRIV_OP | T_USER:
