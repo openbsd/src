@@ -452,7 +452,7 @@
  * Normally we expect you will connect to a remote site, e.g., the Lynx starting
  * site:
  */
-#define STARTFILE "http://lynx.isc.org/"
+#define STARTFILE "http://www.OpenBSD.org/"
 /*
  * As an alternative, you may want to use a local URL.  A good choice for this
  * is the user's home directory:
