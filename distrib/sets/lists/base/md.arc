@@ -6,10 +6,10 @@
 ./usr/bin/ldd
 ./usr/include/mips
 ./usr/include/readline
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.1
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.1/2.7.2.1
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.1/2.7.2.1/include
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.1/2.7.2.1/include/objc
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.2
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.2/2.7.2.1
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.2/2.7.2.1/include
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.2/2.7.2.1/include/objc
 ./usr/lib/libacl.so.4.0
 ./usr/lib/libc.so.17.3
 ./usr/lib/libcurses.so.3.1
@@ -379,7 +379,7 @@
 ./usr/libexec/ld.so
 ./usr/mdec/mbr
 ./usr/mdec/msdos5mb.gz
-./usr/mipsel-unknown-openbsd2.1
-./usr/mipsel-unknown-openbsd2.1/bin
-./usr/mipsel-unknown-openbsd2.1/lib
-./usr/mipsel-unknown-openbsd2.1/lib/ldscripts
+./usr/mipsel-unknown-openbsd2.2
+./usr/mipsel-unknown-openbsd2.2/bin
+./usr/mipsel-unknown-openbsd2.2/lib
+./usr/mipsel-unknown-openbsd2.2/lib/ldscripts
