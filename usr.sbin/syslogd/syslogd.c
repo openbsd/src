@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.34 2000/02/22 19:28:06 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.35 2000/08/17 22:00:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.34 2000/02/22 19:28:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.35 2000/08/17 22:00:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -884,6 +884,7 @@ domark(signo)
 	int signo;
 {
 	struct filed *f;
+	int save_errno = errno;
 
 	now = time((time_t *)NULL);
 	MarkSeq += TIMERINTVL;
@@ -902,6 +903,7 @@ domark(signo)
 		}
 	}
 	(void)alarm(TIMERINTVL);
+	errno = save_errno;
 }
 
 /*
@@ -964,6 +966,7 @@ init(signo)
 	char *p;
 	char cline[LINE_MAX];
  	char prog[NAME_MAX+1];
+	int save_errno = errno;
 
 	dprintf("init\n");
 
@@ -1001,6 +1004,7 @@ init(signo)
 		(*nextp)->f_next = (struct filed *)calloc(1, sizeof(*f));
 		cfline("*.PANIC\t*", (*nextp)->f_next, "*");
 		Initialized = 1;
+		errno = save_errno;
 		return;
 	}
 
@@ -1088,8 +1092,10 @@ init(signo)
 		}
 	}
 
-	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: restart", LocalHostName, ADDDATE);
+	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: restart", LocalHostName,
+	    ADDDATE);
 	dprintf("syslogd: restarted\n");
+	errno = save_errno;
 }
 
 /*
