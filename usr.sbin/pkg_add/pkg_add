@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.68 2004/10/11 12:39:04 espie Exp $
+# $OpenBSD: pkg_add,v 1.69 2004/10/11 12:50:09 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -99,10 +99,10 @@ use OpenBSD::Error;
 
 sub install
 {
-	my ($self, $archive, $destdir, $verbose, $not) = @_;
+	my ($self, $state) = @_;
 	my $user = $self->{name};
-	print "adding user $user\n" if $verbose;
-	return if $not;
+	print "adding user $user\n" if $state->{verbose};
+	return if $state->{not};
 	my $ok = $self->check();
 	if (defined $ok) {
 		if ($ok == 0) {
@@ -110,14 +110,14 @@ sub install
 		}
 	} else {
 		my $l=[];
-		push(@$l, "-v") if $verbose;
+		push(@$l, "-v") if $state->{verbose};
 		main::add_entry($l, '-u', $self->{uid});
 		main::add_entry($l, '-g', $self->{group});
 		main::add_entry($l, '-L', $self->{class});
 		main::add_entry($l, '-c', $self->{comment});
 		main::add_entry($l, '-d', $self->{home});
 		main::add_entry($l, '-s', $self->{shell});
-		VSystem($verbose, '/usr/sbin/useradd', @$l, $user);
+		VSystem($state->{verbose}, '/usr/sbin/useradd', @$l, $user);
 	}
 }
 
@@ -126,10 +126,10 @@ use OpenBSD::Error;
 
 sub install
 {
-	my ($self, $archive, $destdir, $verbose, $not) = @_;
+	my ($self, $state) = @_;
 	my $group = $self->{name};
-	print "adding group $group\n" if $verbose;
-	return if $not;
+	print "adding group $group\n" if $state->{verbose};
+	return if $state->{not};
 	my $ok = $self->check();
 	if (defined $ok) {
 		if ($ok == 0) {
@@ -137,9 +137,9 @@ sub install
 		}
 	} else {
 		my $l=[];
-		push(@$l, "-v") if $verbose;
+		push(@$l, "-v") if $state->{verbose};
 		main::add_entry($l, '-g', $self->{gid});
-		VSystem($verbose, '/usr/sbin/groupadd', @$l, $group);
+		VSystem($state->{verbose}, '/usr/sbin/groupadd', @$l, $group);
 	}
 }
 
@@ -150,16 +150,18 @@ use File::Path;
 
 sub install
 {
-	my ($self, $archive, $destdir, $verbose, $not) = @_;
+	my ($self, $state) = @_;
 	my $fullname = $self->fullname();
 
-	my $file=$archive->next();
+	my $file=$state->{archive}->next();
 	if ($file->{name} ne $self->{name}) {
 		Fatal "Error: archive does not match", $file->{name}, "!=",
 		$self->{name}, "\n";
 	}
-	print "extracting ", $destdir, $fullname, "\n" if $verbose;
-	return if $not;
+	my $destdir = $state->{destdir};
+
+	print "extracting $destdir$fullname\n" if $state->{verbose};
+	return if $state->{not};
 	$file->{name} = $fullname;
 	$file->{cwd} = $self->{cwd};
 	$file->{destdir} = $destdir;
@@ -173,8 +175,9 @@ use File::Copy;
 
 sub install
 {
-	my ($self, $archive, $destdir, $verbose, $not) = @_;
+	my ($self, $state) = @_;
 
+	my $destdir = $state->{destdir};
 	my $filename = $destdir.$self->fullname();
 	my $orig = $self->{copyfrom};
 	if (!defined $orig) {
@@ -195,11 +198,11 @@ sub install
 			}
 		}
 	} else {
-		if ($not) {
+		if ($state->{not}) {
 			print "The file $filename would be installed from $origname\n";
 		} else {
 			if (!copy($origname, $filename)) {
-				print STDERR "File $filename could not be installed:\n\t$!\n";
+				Warn "File $filename could not be installed:\n\t$!\n";
 			}
 			$self->set_modes($filename);
 			print "The file $filename has been installed from $origname\n";
@@ -218,8 +221,8 @@ package OpenBSD::PackingElement::Mandir;
 
 sub install
 {
-	my ($self, $archive, $destdir, $verbose, $not) = @_;
-	$self->SUPER::install($archive, $destdir, $verbose, $not);
+	my ($self, $state) = @_;
+	$self->SUPER::install($state);
 	print "You may wish to add ", $self->fullname(), " to /etc/man.conf\n";
 }
 
@@ -229,21 +232,22 @@ use OpenBSD::Error;
 
 sub install
 {
-	my ($self, $archive, $destdir, $verbose, $not) = @_;
-	$self->SUPER::install($archive, $destdir, $verbose, $not);
-	return if $not;
-	my $fullname = $destdir.$self->fullname();
-	VSystem($verbose, 
+	my ($self, $state) = @_;
+	$self->SUPER::install($state);
+	return if $state->{not};
+	my $fullname = $state->{destdir}.$self->fullname();
+	VSystem($state->{verbose}, 
 	    "install-info", "--info-dir=".dirname($fullname), $fullname);
 }
 
 package OpenBSD::PackingElement::Shell;
 sub install
 {
-	my ($self, $archive, $destdir, $verbose, $not) = @_;
-	$self->SUPER::install($archive, $destdir, $verbose, $not);
-	return if $not;
+	my ($self, $state) = @_;
+	$self->SUPER::install($state);
+	return if $state->{not};
 	my $fullname = $self->fullname();
+	my $destdir = $state->{destdir};
 	# go append to /etc/shells if needed
 	open(my $shells, '<', $destdir.'/etc/shells') or return;
 	local $_;
@@ -261,11 +265,12 @@ sub install
 package OpenBSD::PackingElement::Dir;
 sub install
 {
-	my ($self, $archive, $destdir, $verbose, $not) = @_;
+	my ($self, $state) = @_;
 	my $fullname = $self->fullname();
+	my $destdir = $state->{destdir};
 
-	print "new directory ", $destdir, $fullname, "\n" if $verbose;
-	return if $not;
+	print "new directory ", $destdir, $fullname, "\n" if $state->{verbose};
+	return if $state->{not};
 	File::Path::mkpath($destdir.$fullname);
 	$self->set_modes($destdir.$fullname);
 }
@@ -275,20 +280,20 @@ use OpenBSD::Error;
 
 sub install
 {
-	my ($self, $archive, $destdir, $verbose, $not) = @_;
+	my ($self, $state) = @_;
 
-	main::ensure_ldconfig($verbose) unless $not;
-	print "exec ", $self->{expanded}, "\n" if $verbose or $not;
-	System('/bin/sh', '-c', $self->{expanded}) unless $not;
+	main::ensure_ldconfig($state->{verbose}) unless $state->{not};
+	print "exec ", $self->{expanded}, "\n" if $state->{beverbose};
+	System('/bin/sh', '-c', $self->{expanded}) unless $state->{not};
 }
 
 package OpenBSD::PackingElement::Lib;
 
 sub install
 {
-	my ($self, $archive, $destdir, $verbose, $not) = @_;
-	$self->SUPER::install($archive, $destdir, $verbose, $not);
-	$self->mark_ldconfig_directory($destdir);
+	my ($self, $state) = @_;
+	$self->SUPER::install($state);
+	$self->mark_ldconfig_directory($state->{destdir});
 }
 
 package OpenBSD::PackingElement::Arch;
@@ -705,6 +710,7 @@ sub really_add($$)
 	my $plist = $handle->{plist};
 	my $dir = $handle->info();
 	my $pkgname = $plist->pkgname();
+	$state->{archive} = $handle;
 
 	validate_plist($plist, $destdir);
 
@@ -725,7 +731,7 @@ sub really_add($$)
 
 	$plist->{done} = [];
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
-		eval { $item->install($handle, $destdir, $verbose, $not); };
+		eval { $item->install($state); };
 		if ($@) {
 			Warn $@;
 			$errors++;
