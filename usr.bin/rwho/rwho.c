@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwho.c,v 1.3 1996/08/30 11:10:32 deraadt Exp $	*/
+/*	$OpenBSD: rwho.c,v 1.4 1996/08/30 15:15:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: rwho.c,v 1.3 1996/08/30 11:10:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwho.c,v 1.4 1996/08/30 15:15:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -142,7 +142,8 @@ main(argc, argv)
 		}
 		(void) close(f);
 	}
-	qsort((char *)myutmp, nusers, sizeof (struct myutmp), utmpcmp);
+	qsort((char *)myutmp, nusers, sizeof (struct myutmp),
+	    (int (*)())utmpcmp);
 	mp = myutmp;
 	width = 0;
 	for (i = 0; i < nusers; i++) {
