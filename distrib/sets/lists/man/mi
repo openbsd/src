@@ -471,12 +471,14 @@
 ./usr/share/man/cat1/perlxs.0
 ./usr/share/man/cat1/perlxstut.0
 ./usr/share/man/cat1/pfbtops.0
+./usr/share/man/cat1/pgrep.0
 ./usr/share/man/cat1/pic.0
 ./usr/share/man/cat1/piconv.0
 ./usr/share/man/cat1/pkg.0
 ./usr/share/man/cat1/pkg_create.0
 ./usr/share/man/cat1/pkg_delete.0
 ./usr/share/man/cat1/pkg_info.0
+./usr/share/man/cat1/pkill.0
 ./usr/share/man/cat1/pl2pm.0
 ./usr/share/man/cat1/pod2html.0
 ./usr/share/man/cat1/pod2latex.0

@@ -347,8 +347,10 @@
 ./usr/bin/perldoc
 ./usr/bin/perlivp
 ./usr/bin/pfbtops
+./usr/bin/pgrep
 ./usr/bin/pic
 ./usr/bin/piconv
+./usr/bin/pkill
 ./usr/bin/pl2pm
 ./usr/bin/pod2html
 ./usr/bin/pod2latex
