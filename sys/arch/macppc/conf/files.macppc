@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.15 2002/09/06 19:30:12 drahn Exp $
+#	$OpenBSD: files.macppc,v 1.16 2002/09/14 11:02:09 deraadt Exp $
 
 #
 # macppc-specific configuration info
@@ -218,8 +218,8 @@ include "dev/usb/files.usb"
 include "dev/ieee1394/files.ieee1394"
 
 # Sun HME Ethernet controllers
-device  hme: ether, ifnet, mii, ifmedia
-file    dev/ic/hme.c                   
+device	hme: ether, ifnet, mii, ifmedia
+file	dev/ic/hme.c
 
 attach	hme at pci with hme_pci
 file	dev/pci/if_hme_pci.c		hme_pci
