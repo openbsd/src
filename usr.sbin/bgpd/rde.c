@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.10 2003/12/20 14:36:46 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.11 2003/12/20 15:09:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -296,7 +296,7 @@ rde_update_dispatch(struct imsg *imsg)
 	memcpy(&len, p, 2);
 	withdrawn_len = ntohs(len);
 	p += 2;
-	if (imsg->hdr.len - IMSG_HEADER_SIZE < 2 + withdrawn_len + 2) {
+	if (imsg->hdr.len < IMSG_HEADER_SIZE + 2 + withdrawn_len + 2) {
 		rde_update_err(peer->conf.id, ERR_UPD_ATTRLIST);
 		return (-1);
 	}
@@ -315,8 +315,8 @@ rde_update_dispatch(struct imsg *imsg)
 	memcpy(&len, p, 2);
 	attrpath_len = ntohs(len);
 	p += 2;
-	if (imsg->hdr.len - IMSG_HEADER_SIZE <
-	    2 + withdrawn_len + 2 + attrpath_len) {
+	if (imsg->hdr.len <
+	    IMSG_HEADER_SIZE + 2 + withdrawn_len + 2 + attrpath_len) {
 		rde_update_err(peer->conf.id, ERR_UPD_ATTRLIST);
 		return (-1);
 	}
