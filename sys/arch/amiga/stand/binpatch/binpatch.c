@@ -1,4 +1,4 @@
-/*	$OpenBSD: binpatch.c,v 1.4 1997/01/17 07:12:27 millert Exp $	*/
+/*	$OpenBSD: binpatch.c,v 1.5 1999/03/02 16:09:39 espie Exp $	*/
 /*	$NetBSD: binpatch.c,v 1.6 1995/08/18 15:28:28 chopps Exp $	*/
 
 /* Author: Markus Wild mw@eunet.ch ???   */
@@ -33,8 +33,8 @@ SYNOPSIS
 \t%s [-b|-w|-l] [-o offset] -a address [-r value] binary
 ";
 static char desusage[] = "DESCRIPTION
-\tAllows the patching of BSD binaries, for example,a distributed
-\tkernel. Recient additions allows the user to index into an array
+\tAllows the patching of BSD binaries, for example, a distributed
+\tkernel. Recent additions allows the user to index into an array
 \tand assign a value. Binpatch has internal variables to allow
 \tyou to test it on itself under NetBSD.
 OPTIONS
