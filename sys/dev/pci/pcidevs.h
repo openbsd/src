@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.609 2003/03/19 21:27:36 millert Exp 
+ *		OpenBSD: pcidevs,v 1.610 2003/03/28 18:42:35 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2150,7 +2150,7 @@
 #define	PCI_PRODUCT_SIS_85C501	0x0406		/* 85C501 */
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
 #define	PCI_PRODUCT_SIS_85C596	0x0496		/* 85C596 */
-#define	PCI_PRODUCT_SIS_SiS530	0x0530		/* SiS530 Host-PCI */
+#define	PCI_PRODUCT_SIS_530	0x0530		/* 530 Host-PCI */
 #define	PCI_PRODUCT_SIS_540	0x0540		/* 540 Host-PCI */
 #define	PCI_PRODUCT_SIS_550	0x0550		/* 550 Host-PCI */
 #define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 EIDE */
@@ -2195,7 +2195,7 @@
 #define	PCI_PRODUCT_SIS_6204	0x6204		/* 6204 */
 #define	PCI_PRODUCT_SIS_6205	0x6205		/* 6205 */
 #define	PCI_PRODUCT_SIS_6300	0x6300		/* 6300 */
-#define	PCI_PRODUCT_SIS_530	0x6306		/* 530 VGA */
+#define	PCI_PRODUCT_SIS_530_VGA	0x6306		/* 530 VGA */
 #define	PCI_PRODUCT_SIS_6326	0x6326		/* 6326 AGP Video */
 #define	PCI_PRODUCT_SIS_5597_USB	0x7001		/* 5597/5598 USB */
 #define	PCI_PRODUCT_SIS_7002	0x7002		/* 7002 USB */
