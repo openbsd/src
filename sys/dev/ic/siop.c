@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.26 2003/06/09 02:28:13 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.27 2003/06/28 22:16:55 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
 
 /*
@@ -428,29 +428,28 @@ siop_intr(v)
 		}
 
 		if (dstat & ~(DSTAT_SIR | DSTAT_DFE | DSTAT_SSI)) {
-		printf("DMA IRQ:");
-		if (dstat & DSTAT_IID)
-			printf(" Illegal instruction");
-		if (dstat & DSTAT_BF)
-			printf(" bus fault");
-		if (dstat & DSTAT_MDPE)
-			printf(" parity");
-		if (dstat & DSTAT_DFE)
-			printf(" dma fifo empty");
-		else
-			siop_clearfifo(&sc->sc_c);
-		printf(", DSP=0x%x DSA=0x%x: ",
-		    (int)(bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
-			SIOP_DSP) - sc->sc_c.sc_scriptaddr),
-		    bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA));
-		if (siop_cmd)
-			printf("last msg_in=0x%x status=0x%x\n",
-			    siop_cmd->cmd_tables->msg_in[0],
-			    letoh32(siop_cmd->cmd_tables->status));
-		else 
-			printf("%s: current DSA invalid\n",
-			    sc->sc_c.sc_dev.dv_xname);
-		need_reset = 1;
+			printf("%s: DMA IRQ:", sc->sc_c.sc_dev.dv_xname);
+			if (dstat & DSTAT_IID)
+				printf(" illegal instruction");
+			if (dstat & DSTAT_BF)
+				printf(" bus fault");
+			if (dstat & DSTAT_MDPE)
+				printf(" parity");
+			if (dstat & DSTAT_DFE)
+				printf(" dma fifo empty");
+			else
+				siop_clearfifo(&sc->sc_c);
+			printf(", DSP=0x%x DSA=0x%x: ",
+			    (int)(bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
+				SIOP_DSP) - sc->sc_c.sc_scriptaddr),
+			    bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA));
+			if (siop_cmd)
+				printf("last msg_in=0x%x status=0x%x\n",
+				    siop_cmd->cmd_tables->msg_in[0],
+				    letoh32(siop_cmd->cmd_tables->status));
+			else 
+				printf("current DSA invalid\n");
+			need_reset = 1;
 		}
 	}
 	if (istat & ISTAT_SIP) {
@@ -1234,11 +1233,13 @@ siop_handle_reset(sc)
 				    siop_cmd, tag);
 			}
 		}
-		sc->sc_c.targets[target]->status = TARST_ASYNC;
-		sc->sc_c.targets[target]->flags &= ~TARF_ISWIDE;
-		sc->sc_c.targets[target]->period =
-		    sc->sc_c.targets[target]->offset = 0;
-		siop_update_xfer_mode(&sc->sc_c, target);
+		if (sc->sc_c.targets[target]->status != TARST_PROBING) {
+			sc->sc_c.targets[target]->status = TARST_ASYNC;
+			sc->sc_c.targets[target]->flags &= ~TARF_ISWIDE;
+			sc->sc_c.targets[target]->period =
+			    sc->sc_c.targets[target]->offset = 0;
+			siop_update_xfer_mode(&sc->sc_c, target);
+		}
 	}
 	/* Next commands from the urgent list */
 	for (siop_cmd = TAILQ_FIRST(&sc->urgent_list); siop_cmd != NULL;
