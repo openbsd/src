@@ -1164,6 +1164,7 @@
 ./usr/share/man/cat4/rt.0
 ./usr/share/man/cat4/rtfps.0
 ./usr/share/man/cat4/rtii.0
+./usr/share/man/cat4/sbus.0
 ./usr/share/man/cat4/scsi.0
 ./usr/share/man/cat4/scsibus.0
 ./usr/share/man/cat4/sd.0
@@ -1222,6 +1223,7 @@
 ./usr/share/man/cat4/sparc64/audiocs.0
 ./usr/share/man/cat4/sparc64/autoconf.0
 ./usr/share/man/cat4/sparc64/be.0
+./usr/share/man/cat4/sparc64/beeper.0
 ./usr/share/man/cat4/sparc64/cgsix.0
 ./usr/share/man/cat4/sparc64/cgthree.0
 ./usr/share/man/cat4/sparc64/comkbd.0
