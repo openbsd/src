@@ -418,7 +418,7 @@ Kernel Installation:
 
 	Enter "halt" at the prompt to halt the system.  When the
 	system is halted, remove the "inst-20" floppy from the floppy
-	drive, and replace it with the OpenBSD 2.0 kernel-copy floppy
+	drive, and replace it with the OpenBSD 2.1 kernel-copy floppy
 	that you previously booted from.  Reboot with that floppy.
 	with that floppy.
 
@@ -447,13 +447,13 @@ Kernel Installation:
 	Once the system is halted, remove the kernel-copy floppy from
 	the floppy disk drive, and hit any key to reboot.
 
-Congratulations, you have successfully installed OpenBSD 2.0.  When you
+Congratulations, you have successfully installed OpenBSD 2.1.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
 protect it and the "root" account with good passwords.
 
-Some of the files in the OpenBSD 2.0 distribution might need to be
+Some of the files in the OpenBSD 2.1 distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified, as well.  If you are unfamiliar with

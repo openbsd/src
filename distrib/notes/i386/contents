@@ -1,8 +1,8 @@
-The i386-specific portion of the OpenBSD 2.0 release is found in the
+The i386-specific portion of the OpenBSD 2.1 release is found in the
 "i386" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../2.0/i386/
+.../2.1/i386/
 		INSTALL.i386	Installation notes; this file.
 
 		bins/		i386 binary distribution sets;
@@ -16,7 +16,7 @@ out as follows:
 				installation section, below.
 
 There are four i386 floppy images to be found in the "i386/floppy"
-subdirectory of the OpenBSD 2.0 distribution.  Two of them are bootable
+subdirectory of the OpenBSD 2.1 distribution.  Two of them are bootable
 kernel-copy floppies, one is an installation floppy, and one is an
 upgrade floppy.  They are all described in more detail below.  There
 are gzipped versions of each available, for easier downloading.  (The
@@ -60,12 +60,12 @@ Upgrade floppy:
 	floppies.  This floppy is named "upgr20.fs"
 
 The OpenBSD/i386 binary distribution sets contain the binaries which
-comprise the OpenBSD 2.0 release for the i386.  There are seven binary
+comprise the OpenBSD 2.1 release for the i386.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-subdirectories of the "i386/bins" subdirectory of the OpenBSD 2.0
+subdirectories of the "i386/bins" subdirectory of the OpenBSD 2.1
 distribution tree, and are as follows:
 
-	base20	The OpenBSD/i386 2.0 base binary distribution.  You
+	base20	The OpenBSD/i386 2.1 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
