@@ -3620,6 +3620,7 @@ rest_of_compilation (decl)
       if (DECL_INLINE (decl) || flag_inline_functions)
 	TIMEVAR (integration_time,
 		 {
+                   current_function_is_leaf = leaf_function_p ();
 		   lose = function_cannot_inline_p (decl);
 		   if (lose || ! optimize)
 		     {

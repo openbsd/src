@@ -53,10 +53,10 @@ extern struct obstack *function_maybepermanent_obstack;
    This is overridden on RISC machines.  */
 #ifndef INTEGRATE_THRESHOLD
 /* Inlining small functions might save more space then not inlining at
-   all.  Assume 1 instruction for the call and 1.5 insns per argument.  */
+   all.  Assume 2 instruction for the call/ret and 1.5 insns per argument.  */
 #define INTEGRATE_THRESHOLD(DECL) \
   (optimize_size \
-   ? (1 + (3 * list_length (DECL_ARGUMENTS (DECL))) / 2) \
+   ? (2 + (1 + 3 * list_length (DECL_ARGUMENTS (DECL))) / 2) \
    : (8 * (8 + list_length (DECL_ARGUMENTS (DECL)))))
 #endif
 
@@ -91,10 +91,12 @@ static tree copy_and_set_decl_abstract_origin PROTO((tree));
    function.  Increasing values mean more agressive inlining.
    This affects currently only functions explicitly marked as
    inline (or methods defined within the class definition for C++).
-   The default value of 10000 is arbitrary but high to match the
-   previously unlimited gcc capabilities.  */
+   The default value of 240 is much lower than before and
+   matches better with the 3.0.1 numbers.
+   We allow double the size for leaf functions.
+ */
 
-int inline_max_insns = 10000;
+int inline_max_insns = 240;
 
 
 /* Returns the Ith entry in the label_map contained in MAP.  If the
@@ -157,6 +159,10 @@ function_cannot_inline_p (fndecl)
 
   if (current_function_cannot_inline)
     return current_function_cannot_inline;
+
+  /* Prefer leaf functions */
+  if (current_function_is_leaf)
+    max_insns *= 2;
 
   /* If its not even close, don't even look.  */
   if (get_max_uid () > 3 * max_insns)
@@ -232,7 +238,7 @@ function_cannot_inline_p (fndecl)
   result = DECL_RTL (DECL_RESULT (fndecl));
   if (result && GET_CODE (result) == PARALLEL)
     return N_("inline functions not supported for this return value type");
-
+       
   return 0;
 }
 
