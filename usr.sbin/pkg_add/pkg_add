@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.112 2004/11/13 12:09:01 espie Exp $
+# $OpenBSD: pkg_add,v 1.113 2004/11/13 12:33:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -244,7 +244,7 @@ sub solve_dependencies
 
 sub check_lib_specs
 {
-	my ($verbose, $base, $specs) = @_;
+	my ($verbose, $base, $specs, $available) = @_;
 	my $dir;
 	for my $spec (split(/,/, $specs)) {
 		print "checking libspec $spec " if $verbose;
@@ -256,15 +256,12 @@ sub check_lib_specs
 		}
 		if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/) {
 			my ($libname, $major, $minor) = ($1, $2, $3);
-			my @candidates = 
-			    grep { /^lib\Q$libname\E\.so\.$major\.(\d+)$/ 
-			    	&& $1 >= $minor } 
-			    OpenBSD::Vstat::vreaddir($dir);
-			if (@candidates == 0) {
+			my $exists = $available->{"$dir/lib$libname.so.$major"};
+			if ((defined $exists) && $exists >= $minor) {
+				print "found $dir/lib$libname.so.$major.$exists\n" if $verbose;
+			} else {
 				print "not found\n" if $verbose;
 				return undef;
-			} else {
-			    print "found ", $candidates[0], "\n" if $verbose;
 			}
 		} else {
 			print "bad spec\n" if $verbose;
@@ -504,10 +501,18 @@ sub install_package
 		print "Can't install $pkg: can't resolve $dep\n";
 		return ();
 	}
+
+	# grab libraries
+	my $available = {};
+	for my $dep (@{$handle->{solved_dependencies}}) {
+		my $plist = OpenBSD::PackingList->from_installation($dep, 
+			\&OpenBSD::PackingList::LibraryOnly);
+		$plist->visit('available_lib', $available);
+	}
 	for my $dep (@{$plist->{libdepend}}) {
 		return () if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
 		if (!check_lib_specs($state->{very_verbose}, 
-		    $state->{destdir}.$plist->pkgbase(), $dep->{libspec})) {
+		    $state->{destdir}.$plist->pkgbase(), $dep->{libspec}, $available)) {
 			Warn "Can't install $pkg: incorrect libspec: ",
 			    $dep->{libspec}, "\n";
 			return () unless $forced{libdepends};
