@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.14 2002/07/18 04:33:03 mickey Exp $
+#	$OpenBSD: Makefile.hppa,v 1.15 2002/07/25 21:17:18 mickey Exp $
 
 # Makefile for OpenBSD
 #
@@ -46,8 +46,8 @@ CMACHFLAGS=	-mfast-indirect-calls -mportable-runtime -mno-space-regs
 COPTS?=		-Os
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-T ${HPPA}/conf/ld.script -Ttext 80000 -Map bsd.map
-STRIPFLAGS=	-g -X -x
+LINKFLAGS=	-X -T ${HPPA}/conf/ld.script -Ttext 80000 -Map bsd.map
+STRIPFLAGS=	-g -x
 
 .if ${IDENT:M-DDDB} != ""
 CFLAGS+=	-fno-omit-frame-pointer
@@ -123,7 +123,6 @@ SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
-LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
