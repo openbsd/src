@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.8 2000/11/08 21:27:19 ericj Exp $ */
+/* $OpenBSD: intr.h,v 1.9 2001/04/12 10:35:01 art Exp $ */
 /* $NetBSD: intr.h,v 1.25 2000/05/23 05:12:56 thorpej Exp $ */
 
 /*
@@ -57,7 +57,7 @@
 #define	spllowersoftclock()	alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT)
 
 /* IPL-raising functions/macros */
-static __inline int _splraise __P((int)) __attribute__ ((unused));
+static __inline int _splraise __P((int));
 static __inline int
 _splraise(s)
 	int s;
