@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_swap.c,v 1.10 1999/05/24 17:08:37 weingart Exp $	*/
+/*	$OpenBSD: vm_swap.c,v 1.11 1999/07/06 16:53:04 deraadt Exp $	*/
 /*	$NetBSD: vm_swap.c,v 1.64 1998/11/08 19:45:17 mycroft Exp $	*/
 
 /*
@@ -534,9 +534,9 @@ swap_on(p, sdp)
 #ifdef SWAP_TO_FILES
 	struct vattr va;
 #endif
-#ifdef NFS
+#if defined(NFSSERVER) || defined(NFSCLIENT)
 	extern int (**nfsv2_vnodeop_p) __P((void *));
-#endif /* NFS */
+#endif /* defined(NFSSERVER) || defined(NFSCLIENT) */
 	dev_t dev = sdp->swd_dev;
 	char *name;
 
@@ -570,11 +570,11 @@ swap_on(p, sdp)
 			goto bad;
 
 		sdp->swd_bsize = vp->v_mount->mnt_stat.f_iosize;
-#ifdef NFS
+#if defined(NFSSERVER) || defined(NFSCLIENT)
 		if (vp->v_op == nfsv2_vnodeop_p)
 			sdp->swd_maxactive = 2; /* XXX */
 		else
-#endif /* NFS */
+#endif /* defined(NFSSERVER) || defined(NFSCLIENT) */
 			sdp->swd_maxactive = 8; /* XXX */
 		break;
 #endif
