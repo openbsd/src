@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_types.h,v 1.5 2000/10/18 18:40:22 jason Exp $	*/
+/*	$OpenBSD: if_types.h,v 1.6 2000/10/18 19:00:13 jason Exp $	*/
 /*	$NetBSD: if_types.h,v 1.7 1995/02/27 09:10:24 glass Exp $	*/
 
 /*
@@ -97,9 +97,9 @@
 #define	IFT_PROPVIRTUAL	0x35		/* Proprietary Virtual/internal */
 #define	IFT_PROPMUX	0x36		/* Proprietary Multiplexing */
 #define IFT_ENC		0x37		/* Encapsulation */
-#define	IFT_BRIDGE	0x38		/* bridge interfaces */
 
 /* private usage... how should we define these? */
+#define	IFT_BRIDGE	0xe8		/* bridge interfaces */
 #define	IFT_GIF		0xf0
 #define	IFT_DUMMY	0xf1
 #define IFT_PVC		0xf2
