@@ -10,6 +10,12 @@ all:
 install:
 	cd ${.OBJDIR} && exec ${MAKE} pure_install
 	
+clean:
+	cd ${.OBJDIR} && exec ${MAKE} clean
+
+cleandir:
+	cd ${.OBJDIR} && rm -fr *
+
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
 LNDIR=          /usr/bin/lndir
