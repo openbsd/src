@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.13 1996/08/15 11:51:54 shawn Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.14 1996/08/30 00:11:26 downsj Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -353,6 +353,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "iomega", "jaz 1GB",		 ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_REMOV,
 	 "IOMEGA", "ZIP 100",		 ""},	  SDEV_NOMODESENSE},
+	{{T_DIRECT, T_FIXED,
+	 "IBM", "0661467",               "G"},    SDEV_NOMODESENSE},
 
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
