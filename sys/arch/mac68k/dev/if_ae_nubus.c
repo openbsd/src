@@ -1,5 +1,5 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.9 1997/03/17 20:26:01 scottr Exp $	*/
-/*	$OpenBSD: if_ae_nubus.c,v 1.3 1997/03/18 01:02:50 briggs Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.11 1997/03/19 08:04:39 scottr Exp $	*/
+/*	$OpenBSD: if_ae_nubus.c,v 1.4 1997/03/25 04:58:43 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -31,6 +31,18 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Some parts are derived from code adapted for MacBSD by Brad Parker
+ * <brad@fcr.com>.
+ *
+ * Currently supports:
+ *	Apple NB Ethernet Card
+ *	Apple NB Ethernet Card II
+ *	Interlan A310 NuBus Ethernet card
+ *	Cayman Systems GatorCard
+ *	Asante MacCon II/E
+ *	Kinetics EtherPort SE/30
+ */
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,7 +71,9 @@ static int	ae_nubus_match __P((struct device *, void *, void *));
 static void	ae_nubus_attach __P((struct device *, struct device *, void *));
 static int	ae_nb_card_vendor __P((struct nubus_attach_args *));
 static int	ae_nb_get_enaddr __P((struct nubus_attach_args *, u_int8_t *));
+#ifdef DEBUG
 static void	ae_nb_watchdog __P((struct ifnet *));
+#endif
 
 struct cfattach ae_nubus_ca = {
 	sizeof(struct ae_softc), ae_nubus_match, ae_nubus_attach
@@ -115,7 +129,9 @@ ae_nubus_attach(parent, self, aux)
 {
 	struct ae_softc *sc = (struct ae_softc *) self;
 	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
+#ifdef DEBUG
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+#endif
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 	int i,success;
@@ -129,7 +145,6 @@ ae_nubus_attach(parent, self, aux)
 
 	sc->sc_regt = sc->sc_buft = bst;
 	sc->sc_flags = self->dv_cfdata->cf_flags;
-	sc->regs_rev = 0;
 	sc->use16bit = 1;
 	sc->vendor = ae_nb_card_vendor(na);
 	strncpy(sc->type_str, nubus_get_card_name(na->fmt),
@@ -142,7 +157,10 @@ ae_nubus_attach(parent, self, aux)
 	switch (sc->vendor) {
 	case AE_VENDOR_APPLE:	/* Apple-compatible cards */
 	case AE_VENDOR_ASANTE:
-		sc->regs_rev = 1;
+		/* Map register offsets */
+		for (i = 0; i < 16; i++) /* reverse order, longword aligned */
+			sc->sc_reg_map[i] = (15 - i) << 2;
+
 		if (bus_space_subregion(bst, bsh,
 		    AE_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
@@ -174,6 +192,10 @@ ae_nubus_attach(parent, self, aux)
 		break;
 
 	case AE_VENDOR_DAYNA:
+		/* Map register offsets */
+		for (i = 0; i < 16; i++) /* normal order, longword aligned */
+			sc->sc_reg_map[i] = i << 2;
+
 		if (bus_space_subregion(bst, bsh,
 		    DP_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
@@ -201,7 +223,10 @@ ae_nubus_attach(parent, self, aux)
 		break;
 
 	case AE_VENDOR_FARALLON:
-		sc->regs_rev = 1;
+		/* Map register offsets */
+		for (i = 0; i < 16; i++) /* reverse order, longword aligned */
+			sc->sc_reg_map[i] = (15 - i) << 2;
+
 		if (bus_space_subregion(bst, bsh,
 		    AE_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
@@ -232,6 +257,10 @@ ae_nubus_attach(parent, self, aux)
 		break;
 
 	case AE_VENDOR_INTERLAN:
+		/* Map register offsets */
+		for (i = 0; i < 16; i++) /* normal order, longword aligned */
+			sc->sc_reg_map[i] = i << 2;
+
 		if (bus_space_subregion(bst, bsh,
 		    GC_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
 			printf(": failed to map register space\n");
@@ -263,6 +292,10 @@ ae_nubus_attach(parent, self, aux)
 		break;
 
 	case AE_VENDOR_KINETICS:
+		/* Map register offsets */
+		for (i = 0; i < 16; i++) /* normal order, longword aligned */
+			sc->sc_reg_map[i] = i << 2;
+
 		sc->use16bit = 0;
 		if (bus_space_subregion(bst, bsh,
 		    KE_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
@@ -296,7 +329,9 @@ ae_nubus_attach(parent, self, aux)
 		return;
 	}
 
+#ifdef DEBUG
 	ifp->if_watchdog = ae_nb_watchdog;	/* Override watchdog */
+#endif
 	if (aesetup(sc)) {
 		bus_space_unmap(bst, bsh, NBMEMSIZE);
 		return;
@@ -376,23 +411,23 @@ ae_nb_get_enaddr(na, ep)
 	return 0;
 }
 
+#ifdef DEBUG
 static void
 ae_nb_watchdog(ifp)
 	struct ifnet *ifp;
 {
 	struct ae_softc *sc = ifp->if_softc;
 
-#if 1
 /*
  * This is a kludge!  The via code seems to miss slot interrupts
  * sometimes.  This kludges around that by calling the handler
  * by hand if the watchdog is activated. -- XXX (akb)
  */
 	(*via2itab[1])((void *) 1);
-#endif
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
 
 	aereset(sc);
 }
+#endif

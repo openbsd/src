@@ -1,4 +1,5 @@
-/*	$NetBSD: if_aevar.h,v 1.5 1997/02/28 08:56:07 scottr Exp $	*/
+/*	$NetBSD: if_aevar.h,v 1.7 1997/03/19 08:04:40 scottr Exp $	*/
+/*	$OpenBSD: if_aevar.h,v 1.2 1997/03/25 04:58:44 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -27,32 +28,31 @@ struct ae_softc {
 	bus_space_tag_t	sc_buft;	/* Buffer space tag */
 	bus_space_handle_t sc_bufh;	/* Buffer space handle */
 
+	bus_size_t	sc_reg_map[16];	/* register map (offsets) */
+
 /*	struct	intrhand sc_ih;	*/
 
 	struct arpcom sc_arpcom;/* ethernet common */
 	int	sc_flags;	/* interface flags, from config */
 
 	char	type_str[INTERFACE_NAME_LEN];	/* type string */
-	u_short	type;		/* interface type code */
-	u_char	vendor;		/* interface vendor */
-	u_char	regs_rev;	/* registers are reversed */
-	u_char	use16bit;	/* use word-width transfers */
-
-	u_char  cr_proto;	/* values always set in CR */
+	u_int	type;		/* interface type code */
+	u_int	vendor;		/* interface vendor */
+	u_int	use16bit;	/* use word-width transfers */
+	u_int8_t cr_proto;	/* values always set in CR */
 
 	int	mem_size;	/* total shared memory size */
 	int	mem_ring;	/* start of RX ring-buffer (in smem) */
 
-	u_char  txb_cnt;	/* Number of transmit buffers */
-	u_char  txb_inuse;	/* number of transmit buffers active */
-
-	u_char  txb_new;	/* pointer to where new buffer will be added */
-	u_char  txb_next_tx;	/* pointer to next buffer ready to xmit */
-	u_short txb_len[8];	/* buffered xmit buffer lengths */
-	u_char  tx_page_start;	/* first page of TX buffer area */
-	u_char  rec_page_start;	/* first page of RX ring-buffer */
-	u_char  rec_page_stop;	/* last page of RX ring-buffer */
-	u_char  next_packet;	/* pointer to next unread RX packet */
+	u_short	txb_cnt;	/* Number of transmit buffers */
+	u_short	txb_inuse;	/* Number of transmit buffers active */
+	u_short	txb_new;	/* pointer to where new buffer will be added */
+	u_short	txb_next_tx;	/* pointer to next buffer ready to xmit */
+	u_short	txb_len[8];	/* buffered xmit buffer lengths */
+	u_short	tx_page_start;	/* first page of TX buffer area */
+	u_short	rec_page_start;	/* first page of RX ring-buffer */
+	u_short	rec_page_stop;	/* last page of RX ring-buffer */
+	u_short	next_packet;	/* pointer to next unread RX packet */
 };
 
 int	ae_size_card_memory __P((

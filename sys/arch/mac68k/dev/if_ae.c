@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ae.c,v 1.10 1997/03/08 16:16:52 briggs Exp $	*/
-/*	$NetBSD: if_ae.c,v 1.57 1997/03/04 15:12:04 scottr Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.11 1997/03/25 04:58:43 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.60 1997/03/19 08:04:38 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -12,9 +12,6 @@
  * the above copyright and these terms are retained.  Under no circumstances is
  * the author responsible for the proper functioning of this software, nor does
  * the author assume any responsibility for damages incurred with its use.
- *
- * Adapted for MacBSD by Brad Parker <brad@fcr.com>.
- *
  */
 
 #include "bpfilter.h"
@@ -66,13 +63,12 @@ static inline int ae_ring_copy __P(( struct ae_softc *, int, caddr_t, int));
 #define	ETHER_ADDR_LEN	6
 
 
-#define REG_MAP(sc, reg)	((sc)->regs_rev ? (0x0f-(reg))<<2 : (reg)<<2)
 #define NIC_GET(sc, reg)	(bus_space_read_1((sc)->sc_regt,	\
 				    (sc)->sc_regh,			\
-				    (REG_MAP(sc, reg))))
+				    ((sc)->sc_reg_map[reg])))
 #define NIC_PUT(sc, reg, val)	(bus_space_write_1((sc)->sc_regt,	\
 				    (sc)->sc_regh,			\
-				    (REG_MAP(sc, reg)), (val)))
+				    ((sc)->sc_reg_map[reg]), (val)))
   
 struct cfdriver ae_cd = {
 	NULL, "ae", DV_IFNET
