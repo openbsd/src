@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.6 2000/01/08 04:49:22 deraadt Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.7 2000/01/08 05:28:08 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -56,6 +56,8 @@
 #include <netinet6/icmp6.h>
 
 #include <net/net_osdep.h>
+
+#include <dev/rndvar.h>
 
 #define SDL(s) ((struct sockaddr_dl *)s)
 
