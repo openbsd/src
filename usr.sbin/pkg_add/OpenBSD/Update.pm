@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.21 2004/11/11 11:16:40 espie Exp $
+# $OpenBSD: Update.pm,v 1.22 2004/11/11 12:15:28 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -111,10 +111,14 @@ sub extract
 package OpenBSD::PackingElement::ScriptFile;
 sub updatable() { 0 }
 
-package OpenBSD::PackingElement::ExeclikeAction;
+package OpenBSD::PackingElement::FINSTALL;
+sub updatable() { 1 }
+
+package OpenBSD::PackingElement::Unexec;
 sub updatable() { 0 }
 
 package OpenBSD::PackingElement::LibDepend;
+use OpenBSD::Error;
 sub validate_depend
 {
 	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
@@ -125,7 +129,7 @@ sub validate_depend
 	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
 	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
 		$state->{okay} = 0;
-		return;
+		Warn "Can't update forward dependency of $wanting on $toreplace\n";
 	}
 }
 
@@ -156,6 +160,7 @@ sub unmark_lib
 }
 
 package OpenBSD::PackingElement::NewDepend;
+use OpenBSD::Error;
 sub validate_depend
 {
 	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
@@ -166,6 +171,7 @@ sub validate_depend
 	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
 	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
 		$state->{okay} = 0;
+		Warn "Can't update forward dependency of $wanting on $toreplace\n";
 	}
 }
 
@@ -173,10 +179,11 @@ package OpenBSD::Update;
 use OpenBSD::RequiredBy;
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
+use OpenBSD::Error;
 
 sub can_do
 {
-	my ($toreplace, $replacement, $state) = @_;
+	my ($toreplace, $replacement, $state, $forced) = @_;
 
 	my $wantlist = [];
 	my $r = OpenBSD::RequiredBy->new($toreplace);
@@ -185,7 +192,10 @@ sub can_do
 	my $plist = OpenBSD::PackingList->from_installation($toreplace);
 	$plist->visit('can_update', $state);
 	if ($state->{okay} == 0) {
-		print "Old package contains impossible to update elements\n";
+		Warn "Old package contains impossible to update elements\n";
+	}
+	if ($forced->{update}) {
+		$state->{okay} = 1;
 	}
 	if (-f $$r) {
 		$wantlist = $r->list();
@@ -200,6 +210,9 @@ sub can_do
 		}
 	}
 
+	if ($forced->{updatedepends}) {
+		$state->{okay} = 1;
+	}
 	eval {
 		OpenBSD::Delete::validate_plist($plist, $state->{destdir});
 	};

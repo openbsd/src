@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.20 2004/11/07 13:47:12 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.21 2004/11/11 12:15:28 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -170,6 +170,10 @@ library specifications may not be fulfilled.
 install even if not running as root.
 .It Ar scripts
 install scripts may fail.
+.It Ar update
+unsafe update: old packing-list will run scripts that may fail.
+.It Ar updatedepends
+force update even if forward dependencies no longer match.
 .El
 .It Fl L Ar localbase
 Install a package under
