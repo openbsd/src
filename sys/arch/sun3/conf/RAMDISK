@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.17 2001/01/03 02:03:28 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.18 2001/06/23 19:46:59 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.3.4.1 1996/08/19 23:35:10 gwr Exp $
 
 # Machine architecture; required by config(8)
@@ -22,7 +22,6 @@ option		DIAGNOSTIC
 option		FFS
 option		NFSCLIENT
 #option		CD9660
-option		KERNFS
 option		INET
 option		BOOT_CONFIG
 option		SWAPPAGER

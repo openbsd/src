@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.12 2001/05/17 17:45:51 jason Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.13 2001/06/23 19:46:57 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -29,7 +29,6 @@ maxusers	8			# estimated number of users
 
 # File system options
 option		FFS		# Fast file system
-option		KERNFS		# pseudo-fs to get at kernel internals
 
 # Networking options
 option		INET		# Internet protocol suite

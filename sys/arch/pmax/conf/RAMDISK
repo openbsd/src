@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.4 2001/05/17 00:57:58 pvalchev Exp $
+#	$OpenBSD: RAMDISK,v 1.5 2001/06/23 19:46:58 deraadt Exp $
 #
 # RAMDISK kernel for the distribition ramdisk
 #
@@ -30,7 +30,6 @@ option		FFS			# fast filesystem
 option		FIFO			# posix fifo support
 option		CD9660			# iso9660 cdrom filesystem
 option		MSDOSFS			# msdos filesystem
-option		KERNFS			# kernel data-structure filesystem
 # networking
 option		INET			# the networking stuff
 option		NFSCLIENT		# nfs client code

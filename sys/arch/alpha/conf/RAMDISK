@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.43 2001/05/16 09:06:31 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.44 2001/06/23 19:46:56 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -28,7 +28,6 @@ maxusers	8			# estimated number of users
 
 # File system options
 option		FFS		# Fast file system
-option		KERNFS		# pseudo-fs to get at kernel internals
 
 # Networking options
 option		INET		# Internet protocol suite

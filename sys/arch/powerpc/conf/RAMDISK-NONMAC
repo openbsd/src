@@ -26,7 +26,6 @@ option		NFSCLIENT
 option		CD9660
 option		MSDOSFS
 options		FIFO
-options		KERNFS
 option		FFS
 #option		QUOTA
 option		MFS
