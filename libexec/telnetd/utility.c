@@ -1,4 +1,4 @@
-/*	$OpenBSD: utility.c,v 1.3 1996/09/27 02:48:52 deraadt Exp $	*/
+/*	$OpenBSD: utility.c,v 1.4 1996/12/06 15:26:28 deraadt Exp $	*/
 /*	$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utility.c,v 1.3 1996/09/27 02:48:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utility.c,v 1.4 1996/12/06 15:26:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,13 +95,14 @@ ttloop()
 stilloob(s)
     int	s;		/* socket number */
 {
-    static struct timeval timeout = { 0 };
+    struct timeval timeout;
     fd_set	excepts;
     int value;
 
     do {
 	FD_ZERO(&excepts);
 	FD_SET(s, &excepts);
+	bzero(&timeout, sizeof timeout);
 	value = select(s+1, (fd_set *)0, (fd_set *)0, &excepts, &timeout);
     } while ((value == -1) && (errno == EINTR));
 
