@@ -19,7 +19,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: chap_ms.c,v 1.8 2001/04/05 02:24:05 brian Exp $
+ * $OpenBSD: chap_ms.c,v 1.9 2001/07/09 00:47:36 brian Exp $
  *
  */
 
@@ -180,7 +180,7 @@ GenerateNTResponse(char *AuthenticatorChallenge, char *PeerChallenge,
 
 #ifndef __FreeBSD__
 #define LENGTH 20
-char *
+static char *
 SHA1_End(SHA_CTX *ctx, char *buf)
 {
     int i;
