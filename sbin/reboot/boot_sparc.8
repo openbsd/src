@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.10 1999/07/08 19:58:30 deraadt Exp $
+.\"	$OpenBSD: boot_sparc.8,v 1.11 1999/07/08 20:23:53 deraadt Exp $
 .\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -51,9 +51,10 @@ An automatic consistency check of the file systems will be performed
 and unless this fails, the system will resume multi-user operations.
 .Pp
 .Ss Cold starts
-The SPARC system currently uses the SunOS bootstrap loaders.
-This will be changed in a future version of the system.
-The SunOS boot will attempt to load
+System boot blocks are installed near the start of the boot disk
+using the procedure described in
+.Xr installboot 8 .
+The boot program attempts to load
 .Pa bsd
 from partition
 .Dq a
@@ -141,4 +142,3 @@ system bootstrap
 .Xr rc 8 ,
 .Xr shutdown 8 ,
 .Xr syslogd 8
-
