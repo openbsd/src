@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_ahsha1.c,v 1.2 1997/07/01 22:18:04 provos Exp $ */
+/* $OpenBSD: xf_ahsha1.c,v 1.3 1997/07/11 23:50:22 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -63,7 +63,7 @@ char **argv;
 	int klen, i;
 
 	struct encap_msghdr *em;
-	struct ahsha1_xdata *xd;
+	struct ah_old_xencap *xd;
 
 	if (argc != 5) {
 	  fprintf(stderr, "usage: %s src dst spi key\n", argv[0]);
@@ -71,23 +71,22 @@ char **argv;
 	}
 
 	klen = strlen(argv[4])/2;
-	if (klen > AHSHA1_KMAX)
-	  klen = AHSHA1_KMAX;
 
 	em = (struct encap_msghdr *)&buf[0];
 	
-	em->em_msglen = EMT_SETSPI_FLEN + 4 + klen;
+	em->em_msglen = EMT_SETSPI_FLEN + AH_OLD_XENCAP_LEN + klen;
 	em->em_version = PFENCAP_VERSION_1;
 	em->em_type = EMT_SETSPI;
 	em->em_spi = htonl(strtoul(argv[3], NULL, 16));
 	em->em_src.s_addr = inet_addr(argv[1]);
 	em->em_dst.s_addr = inet_addr(argv[2]);
-	em->em_alg = XF_AHSHA1;
-	xd = (struct ahsha1_xdata *)(em->em_dat);
+	em->em_alg = XF_OLD_AH;
+	em->em_sproto = IPPROTO_AH;
 
-	xd->amx_klen = klen;
-	xd->amx_alen = AHSHA1_ALEN;
-	
+	xd = (struct ah_old_xencap *)(em->em_dat);
+
+	xd->amx_hash_algorithm = ALG_AUTH_SHA1;
+	xd->amx_keylen = klen;
 
 	for (i = 0; i < klen; i++ )
 	  xd->amx_key[i] = x2i(&(argv[4][2*i]));

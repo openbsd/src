@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_grp.c,v 1.4 1997/07/02 06:59:38 provos Exp $ */
+/* $OpenBSD: xf_grp.c,v 1.5 1997/07/11 23:50:25 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -63,12 +63,12 @@ char **argv;
 
 	struct encap_msghdr *em;
 
-	if ((argc < 3) || (argc > 9) || ((argc % 2) != 1)) {
-	     fprintf(stderr, "usage: %s dst1 spi1 [ dst2 spi2 [ dst3 spi3 [ dst4 spi4 ] ] ] \n", argv[0]);
+	if ((argc < 4) || (argc > 13) || ((argc % 3) != 1)) {
+	     fprintf(stderr, "usage: %s dst1 spi1 proto1 [ dst2 spi2 proto2 [ dst3 spi3 proto3 [ dst4 spi4 proto4] ] ] \n", argv[0]);
 	     return 0;
 	}
 
-	for (i=0; i<argc/2-1; i++) {
+	for (i=0; i<argc/3-1; i++) {
 	     bzero(buf, EMT_GRPSPIS_FLEN);
 
 	     em = (struct encap_msghdr *)&buf[0];
@@ -77,10 +77,13 @@ char **argv;
 	     em->em_version = PFENCAP_VERSION_1;
 	     em->em_type = EMT_GRPSPIS;
 
-	     em->em_rel_spi = htonl(strtoul(argv[2*i+2], NULL, 16));
-	     em->em_rel_dst.s_addr = inet_addr(argv[2*i+1]);
-	     em->em_rel_spi2 = htonl(strtoul(argv[2*i+4], NULL, 16));
-	     em->em_rel_dst2.s_addr = inet_addr(argv[2*i+3]);
+	     em->em_rel_spi = htonl(strtoul(argv[3*i+2], NULL, 16));
+	     em->em_rel_dst.s_addr = inet_addr(argv[3*i+1]);
+	     em->em_rel_sproto = atoi(argv[3*i+3]) ? IPPROTO_ESP : IPPROTO_AH;
+
+	     em->em_rel_spi2 = htonl(strtoul(argv[3*i+5], NULL, 16));
+	     em->em_rel_dst2.s_addr = inet_addr(argv[3*i+4]);
+	     em->em_rel_sproto = atoi(argv[3*i+6]) ? IPPROTO_ESP : IPPROTO_AH;
 	
 	     if (!xf_set(em))
 		  break;

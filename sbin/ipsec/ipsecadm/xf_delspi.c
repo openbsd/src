@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_delspi.c,v 1.3 1997/07/01 22:18:04 provos Exp $ */
+/* $OpenBSD: xf_delspi.c,v 1.4 1997/07/11 23:50:23 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -62,12 +62,12 @@ char **argv;
 
 	struct encap_msghdr *em;
 
-	if (argc != 4) {
-	  fprintf(stderr, "usage: %s dst spi chaindelete\n", argv[0]);
+	if (argc != 5) {
+	  fprintf(stderr, "usage: %s dst spi fespah chaindelete\n", argv[0]);
 	  return 0;
 	}
 
-	chain = atoi(argv[3]);
+	chain = atoi(argv[4]);
 	em = (struct encap_msghdr *)&buf[0];
 	em->em_version = PFENCAP_VERSION_1;
 	
@@ -80,6 +80,7 @@ char **argv;
 	}
 	em->em_gen_spi = htonl(strtoul(argv[2], NULL, 16));
 	em->em_gen_dst.s_addr = inet_addr(argv[1]);
+	em->em_gen_sproto = atoi(argv[3]) ? IPPROTO_ESP : IPPROTO_AH;
 
 	return xf_set(em);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_espdes.c,v 1.3 1997/07/01 22:18:07 provos Exp $ */
+/* $OpenBSD: xf_espdes.c,v 1.4 1997/07/11 23:50:24 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -63,7 +63,7 @@ char **argv;
 	int i;
 
 	struct encap_msghdr *em;
-	struct espdes_xdata *xd;
+	struct esp_old_xencap *xd;
 
 	if (argc != 6) {
 	  fprintf(stderr, "usage: %s src dst spi iv key\n", argv[0]);
@@ -72,22 +72,26 @@ char **argv;
 	
 	em = (struct encap_msghdr *)&buf[0];
 	
-	em->em_msglen = EMT_SETSPI_FLEN + ESP_ULENGTH;
+	em->em_msglen = EMT_SETSPI_FLEN + ESP_OLD_XENCAP_LEN + 4 + 8;
 	em->em_version = PFENCAP_VERSION_1;
 	em->em_type = EMT_SETSPI;
 	em->em_spi = htonl(strtoul(argv[3], NULL, 16));
 	em->em_src.s_addr = inet_addr(argv[1]);
 	em->em_dst.s_addr = inet_addr(argv[2]);
-	em->em_alg = XF_ESPDES;
-	xd = (struct espdes_xdata *)(em->em_dat);
+	em->em_alg = XF_OLD_ESP;
+	em->em_sproto = IPPROTO_ESP;
 
+	xd = (struct esp_old_xencap *)(em->em_dat);
+
+	xd->edx_enc_algorithm = ALG_ENC_DES;
 	xd->edx_ivlen = 4;
+	xd->edx_keylen = 8;
 
 	for (i = 0; i < 4; i++)
-	  xd->edx_iv[i] = x2i(&(argv[4][2*i]));
+	  xd->edx_data[i] = x2i(&(argv[4][2*i]));
 
 	for (i = 0; i < 8; i++)
-	  xd->edx_iv[i+8] = x2i(&(argv[5][2*i]));
+	  xd->edx_data[i+4] = x2i(&(argv[5][2*i]));
 
 	return xf_set(em);
 }

@@ -83,8 +83,8 @@ char **argv;
 	struct sockaddr_encap *dst, *msk, *gw;
 	u_char *opts;
 
-	if (argc != 10)
-	  fprintf(stderr, "usage: %s isrc isrcmask idst idstmask odst spi proto sport dport\n", argv[0]), exit(1);
+	if (argc != 11)
+	  fprintf(stderr, "usage: %s isrc isrcmask idst idstmask odst spi fespah proto sport dport\n", argv[0]), exit(1);
 	
 	sd = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC);
 	if (sd < 0)
@@ -111,18 +111,18 @@ char **argv;
 	dst->sen_ip_dst.s_addr = inet_addr(argv[3]);
 	dst->sen_proto = dst->sen_sport = dst->sen_dport = 0;
 
-	if (atoi(argv[7]) >= 0)
+	if (atoi(argv[8]) >= 0)
 	{
 		dst->sen_proto = atoi(argv[7]);
 		msk->sen_proto = 0xff;
-		if (atoi(argv[8]) >= 0)
-		{
-			dst->sen_sport = atoi(argv[8]);
-			msk->sen_sport = 0xffff;
-		}
 		if (atoi(argv[9]) >= 0)
 		{
-			dst->sen_dport = atoi(argv[9]);
+			dst->sen_sport = atoi(argv[9]);
+			msk->sen_sport = 0xffff;
+		}
+		if (atoi(argv[10]) >= 0)
+		{
+			dst->sen_dport = atoi(argv[10]);
 			msk->sen_dport = 0xffff;
 		}
 	}
@@ -132,6 +132,7 @@ char **argv;
 	gw->sen_type = SENT_IPSP;
 	gw->sen_ipsp_dst.s_addr = inet_addr(argv[5]);
 	gw->sen_ipsp_spi = htonl(strtoul(argv[6], NULL, 16));
+	gw->sen_ipsp_sproto = atoi(argv[7]) == 1 ? IPPROTO_ESP : IPPROTO_AH;
 
 	msk->sen_len = SENT_IP4_LEN;
 	msk->sen_family = AF_ENCAP;
