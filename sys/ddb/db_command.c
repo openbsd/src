@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.11 1997/01/27 07:53:53 deraadt Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.12 1997/07/07 19:45:20 niklas Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -144,7 +144,7 @@ db_cmd_list(table)
 
 	for (cmd = table; cmd->name != 0; cmd++) {
 	    db_printf("%-12s", cmd->name);
-	    db_end_line();
+	    db_end_line(12);
 	}
 }
 
@@ -402,7 +402,7 @@ db_help_cmd()
 
 	while (cmd->name != 0) {
 	    db_printf("%-12s", cmd->name);
-	    db_end_line();
+	    db_end_line(12);
 	    cmd++;
 	}
 }

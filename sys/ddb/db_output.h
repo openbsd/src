@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.h,v 1.7 1996/07/24 21:58:04 niklas Exp $ */
+/*	$OpenBSD: db_output.h,v 1.8 1997/07/07 19:45:25 niklas Exp $ */
 /*	$NetBSD: db_output.h,v 1.9 1996/04/04 05:13:50 cgd Exp $	*/
 
 /* 
@@ -40,4 +40,4 @@ int db_printf __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 int kdbprintf __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
-void db_end_line __P((void));
+void db_end_line __P((int));

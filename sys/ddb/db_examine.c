@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.6 1997/07/06 23:09:24 niklas Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.7 1997/07/07 19:45:22 niklas Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ db_examine_cmd(addr, have_addr, count, modif)
 	if (count == -1)
 		count = 1;
 
-	db_examine((db_addr_t) addr, db_examine_format, count);
+	db_examine((db_addr_t)addr, db_examine_format, count);
 }
 
 void
@@ -173,7 +173,7 @@ db_examine(addr, fmt, count)
 				break;
 			}
 			if (db_print_position() != 0)
-				db_end_line();
+				db_end_line(width);
 		}
 	}
 	db_next = addr;

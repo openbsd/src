@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.11 1997/07/03 21:24:13 niklas Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.12 1997/07/07 19:45:23 niklas Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /* 
@@ -251,9 +251,10 @@ kdbprintf(fmt, va_alist)
  * End line if too long.
  */
 void
-db_end_line()
+db_end_line(space)
+	int space;
 {
-	if (db_output_position >= db_max_width)
+	if (db_output_position >= db_max_width - space)
 	    db_printf("\n");
 }
 
