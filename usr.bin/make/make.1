@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.26 2000/01/02 15:59:52 espie Exp $
+.\"	$OpenBSD: make.1,v 1.27 2000/01/19 17:28:52 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1166,11 +1166,18 @@ The determination of
 .Va .OBJDIR
 is contorted to the point of absurdity.
 .Pp
-In the presence of several
-.Ic .MAIN
-special targets,
-.Nm
-silently ignores all but the first.
+If you specify the same target several times in normal dependency rules,
+.Nm 
+silently ignores all commands after the first non empty set of commands,
+e.g., in 
+.Bd -literal
+a:
+	@echo "Executed"
+a:
+	@echo "Bad luck"
+.Ed
+.Pp
+@echo "Bad luck" will be silently ignored.
 .Pp
 .Va .TARGETS
 is not set to the default target when
