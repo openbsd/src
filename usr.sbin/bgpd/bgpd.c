@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.40 2003/12/26 20:59:54 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.41 2003/12/26 21:40:40 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -172,8 +172,8 @@ main(int argc, char *argv[])
 		fatal("fcntl");
 
 	/* fork children */
-	rde_main(&conf, pipe_m2r, pipe_s2r);
-	session_main(&conf, pipe_m2s, pipe_s2r);
+	rde_pid = rde_main(&conf, pipe_m2r, pipe_s2r);
+	io_pid = session_main(&conf, pipe_m2s, pipe_s2r);
 
 	setproctitle("parent");
 
