@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.21 1999/04/18 19:27:34 deraadt Exp $
+# 	$OpenBSD: RAMDISK,v 1.22 1999/06/23 17:02:06 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -62,10 +62,10 @@ vmel0	at mainbus0				# sun4
 iommu0	at mainbus0				# sun4m
 sbus0	at iommu0				# sun4m
 
-audioamd0 at mainbus0				# sun4c
-audioamd0 at obio0				# sun4m
-audioamd0 at sbus0 slot ? offset ?		# sun4m
-audio*	at audioamd?
+#audioamd0 at mainbus0				# sun4c
+#audioamd0 at obio0				# sun4m
+#audioamd0 at sbus0 slot ? offset ?		# sun4m
+#audio*	at audioamd?
 
 auxreg0	at mainbus0				# sun4c
 auxreg0	at obio0				# sun4m
