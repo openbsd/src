@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.4 1999/01/20 19:29:50 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.5 1999/02/02 15:13:57 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -97,6 +97,12 @@ define vmmap_pmap	offsetof(struct vm_map, pmap)
 # export iomod
 struct	iomod
 member	io_command
+
+# export mbuf
+struct	mbuf
+member	m_len
+member	m_next
+member	m_data
 
 # saved state fields
 define	TF_SIZE		sizeof(struct trapframe)
