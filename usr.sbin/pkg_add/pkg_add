@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.105 2004/11/11 12:29:20 espie Exp $
+# $OpenBSD: pkg_add,v 1.106 2004/11/11 12:45:15 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -82,7 +82,7 @@ sub can_install($$)
 
 	require OpenBSD::Update;
 
-	my $plist = OpenBSD::Update::can_do($l[0], $pkgname, $state, \%forced);
+	my $plist = OpenBSD::Update::can_do($l[0], $pkgname, $state);
 	if ($plist) {
 		$plist->{dir} = installed_info($l[0]);
 		return $plist;
@@ -153,6 +153,13 @@ sub pre_add($$)
 	if ($toreplace ne '1') {
 		$plist->{replacing} = $toreplace;
 		$avoid = $toreplace->pkgname();
+
+		require OpenBSD::Update;
+
+		if (!OpenBSD::Update::is_safe($plist, $state)) {
+			print "Can't safely update $avoid to $pkgname\n";
+			$errors++;
+		}
 	}
 	# second handling of conflicts
 	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);

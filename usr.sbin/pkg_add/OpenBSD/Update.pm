@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.22 2004/11/11 12:15:28 espie Exp $
+# $OpenBSD: Update.pm,v 1.23 2004/11/11 12:45:15 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -23,9 +23,9 @@ use OpenBSD::Delete;
 package OpenBSD::PackingElement;
 sub can_update
 {
-	my ($self, $state) = @_;
+	my ($self, $install, $state) = @_;
 
-	if (!$self->updatable()) {
+	if (!$self->updatable($install)) {
 		$state->{okay} = 0;
 	}
 }
@@ -34,7 +34,7 @@ sub validate_depend
 {
 }
 
-sub updatable() { 1 }
+sub updatable($) { 1 }
 
 sub extract
 {
@@ -109,13 +109,19 @@ sub extract
 }
 
 package OpenBSD::PackingElement::ScriptFile;
-sub updatable() { 0 }
+sub updatable($) { 0 }
 
 package OpenBSD::PackingElement::FINSTALL;
-sub updatable() { 1 }
+sub updatable($) { !$_[0] }
+
+package OpenBSD::PackingElement::FDEINSTALL;
+sub updatable($) { $_[0] }
+
+package OpenBSD::PackingElement::Exec;
+sub updatable($) { !$_[0] }
 
 package OpenBSD::PackingElement::Unexec;
-sub updatable() { 0 }
+sub updatable($) { $_[0] }
 
 package OpenBSD::PackingElement::LibDepend;
 use OpenBSD::Error;
@@ -183,18 +189,18 @@ use OpenBSD::Error;
 
 sub can_do
 {
-	my ($toreplace, $replacement, $state, $forced) = @_;
+	my ($toreplace, $replacement, $state) = @_;
 
 	my $wantlist = [];
 	my $r = OpenBSD::RequiredBy->new($toreplace);
 	$state->{okay} = 1;
 	$state->{libs_to_check} = [];
 	my $plist = OpenBSD::PackingList->from_installation($toreplace);
-	$plist->visit('can_update', $state);
+	$plist->visit('can_update', 0, $state);
 	if ($state->{okay} == 0) {
 		Warn "Old package contains impossible to update elements\n";
 	}
-	if ($forced->{update}) {
+	if ($state->{forced}->{update}) {
 		$state->{okay} = 1;
 	}
 	if (-f $$r) {
@@ -210,13 +216,14 @@ sub can_do
 		}
 	}
 
-	if ($forced->{updatedepends}) {
+	if ($state->{forced}->{updatedepends}) {
 		$state->{okay} = 1;
 	}
 	eval {
-		OpenBSD::Delete::validate_plist($plist, $state->{destdir});
+		OpenBSD::Delete::validate_plist($plist, $state);
 	};
 	if ($@) {
+		Warn "$@";
 		return 0;
 	}
 
@@ -224,6 +231,17 @@ sub can_do
 	$plist->{libs_to_check} = $state->{libs_to_check};
 	
 	return $state->{okay} ? $plist : 0;
+}
+
+sub is_safe
+{
+	my ($plist, $state) = @_;
+	$state->{okay} = 1;
+	$plist->visit('can_update', 1, $state);
+	if ($state->{okay} == 0) {
+		Warn "New package contains unsafe operations\n";
+	}
+	return $state->{okay} || $state->{forced}->{update};
 }
 
 # create a packing-list with only the libraries we want to keep around.
