@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.14 1997/08/07 09:07:54 niklas Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.15 1997/08/13 04:03:28 mickey Exp $	*/
 
 	.file	"bootbios.S"
 
@@ -71,9 +71,9 @@ ebpb:	.long	16		/* hidden sectors */
 
 1:	/* set up stack (%ss:%esp) */
 	cli			/* disable interrupts w/o stack */
-	# movw	$BOOTREL, %ax
+	# movw	$(BOOTREL >> 4), %ax
 	.byte	0xb8
-	.word	BOOTREL
+	.word	BOOTREL >> 4
 	movl	%ax, %ss
 	movl	%ax, %es	/* relocate there */
 	data32
@@ -94,7 +94,7 @@ ebpb:	.long	16		/* hidden sectors */
 
 	/* jump to relocated code */
 	data32
-	ljmp $BOOTREL, $2f
+	ljmp $(BOOTREL >> 4), $2f
 1:	.asciz	"loading /boot"
 
 2:	DBGMSG(GO_RELOC)
@@ -105,9 +105,9 @@ ebpb:	.long	16		/* hidden sectors */
 	popl	%ds
 
 	/* set up %es, (where we will load /boot to) */
-	# movw	$(START >> 4), %ax
+	# movw	$(LOADADDR >> 4), %ax
 	.byte	0xb8
-	.word	START >> 4
+	.word	LOADADDR >> 4
 	movl	%ax, %es
 
 #ifdef SERIAL
@@ -227,7 +227,7 @@ ebpb:	.long	16		/* hidden sectors */
 	 * reload CS register
 	 */
 	data32
-	ljmp	$8, $1f+(BOOTREL << 4)
+	ljmp	$8, $1f+BOOTREL
 
 1:	/*
 	 * 32bit mode
@@ -248,7 +248,7 @@ ebpb:	.long	16		/* hidden sectors */
 	pushl	$BOOTMAGIC	/* use some magic */
 
 	/* jmp	/boot */
-	ljmp	$8, $(START + 0x20)
+	ljmp	$8, $(LOADADDR + 0x20)
 	/* not reached */
 
 /*
@@ -316,7 +316,7 @@ Lchr:
 	.byte	0xf | 0 | 0x40 | 0x80	# hilimit, xx, 32bit, 4k granularity
 	.byte	0			# hibase
 Gdtr:	.word	. - 1b
-	.long	(BOOTREL << 4) + 1b
+	.long	BOOTREL + 1b
 
 	.globl	_block_table
 _block_table:

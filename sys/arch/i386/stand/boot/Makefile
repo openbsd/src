@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.9 1997/08/02 22:23:07 mickey Exp $
+#	$OpenBSD: Makefile,v 1.10 1997/08/13 04:03:29 mickey Exp $
 
 PROG=	boot
 SRCS=	srt0.S boot.c cmd.c kentry.c conf.c
 #AFLAGS+=-Wa,-R
 # AFLAGS+=-Wa,-a
 LD=ld
-LDFLAGS+=-nostdlib -Ttext $(START) -z -x -Bstatic
+LDFLAGS+=-nostdlib -Ttext $(LINKADDR) -z -x -Bstatic
 INSTALL_STRIP=
 MAN=	boot.8
 S	=${.CURDIR}/../../../..
@@ -21,13 +21,19 @@ machine-links:
 	@ln -fs ${.CURDIR}/../.. i386
 	@ln -fs ${.CURDIR}/../../include machine
 
+kentry.o: kentry.c
+	@echo ${COMPILE.c} ${.IMPSRC}
+	@${COMPILE.c} -S -o tmp.s ${.IMPSRC}
+	@sed 's/ret/lret/g' tmp.s | ${AS} -f -o $@
+	@rm tmp.s
+
 ${PROG}: $(OBJS) $(DPADD)
 	$(LD) $(LDFLAGS) -o $(PROG) $(OBJS) $(LDADD)
 	@size $(PROG)
 
 .include <bsd.prog.mk>
 
-CPPFLAGS+=-DBOOTMAGIC=$(BOOTMAGIC)
+CPPFLAGS+=-DBOOTMAGIC=$(BOOTMAGIC) ${DEBUGFLAGS}
 CFLAGS+=$(SACFLAGS)
 .ifdef NO_NET
 CPPFLAGS+=-DNO_NET

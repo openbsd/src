@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.13 1997/08/02 22:23:09 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.14 1997/08/13 04:03:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -59,7 +59,7 @@
 	movl	%ax, %ds	; \
 	movl	%ax, %es	; \
 	data32			; \
-	movl	$(0xb8000 - START), %eax	; \
+	movl	$(0xb8000 - LINKADDR), %eax	; \
 	data32			; \
 	addr32			; \
 	movl	$0x4f314f30, (%eax)
@@ -91,7 +91,7 @@
 								\
 	/* ljmp	$S16TEXT, $1f */;				\
 	.byte	0xea;		/* Change to 16bit mode */	\
-	.long	1f - START;					\
+	.long	1f - LINKADDR;					\
 	.word	S16TEXT;					\
 1:								\
 	gidt_debug1;						\
@@ -101,10 +101,10 @@
 	andl 	$~CR0_PE, %eax;					\
 	movl	%eax, %cr0;					\
 								\
-	/* ljmp	(START >> 4), $1f */;				\
+	/* ljmp	(LINKADDR >> 4), $1f */;			\
 	.byte	0xea;		/* load real mode cs:ip */	\
 	.word	1f;						\
-	.word	(START >> 4);					\
+	.word	(LINKADDR >> 4);				\
 1:								\
 	xorl	%eax, %eax;	/* setup: %ds, %es, %ss */	\
 	movl	%ax, %ds;					\
@@ -207,7 +207,7 @@ pmm_init:
 	.align 3
 idt:
 #define idte(e)	\
-	.word IPROC(e), S32TEXT, (0x80|SDT_SYS386TGT) << 8, (START >> 16)
+	.word IPROC(e), S32TEXT, (0x80|SDT_SYS386TGT) << 8, (LINKADDR >> 16)
 		/* internal (0-31) */
 	idte(de); idte(db); idte(nmi); idte(bp); idte(of); idte(br)
 	idte(ud); idte(nm); idte(df);  idte(fo); idte(ts); idte(np)
@@ -258,18 +258,18 @@ gdt:
 	.byte	0			# hibase
 		/* 0x18 : 16 bit code */
 	.word	0xFFFF			# lolimit
-	.word	(START & 0xffff)	# lobase
-	.byte	(START >> 16) & 0xff	# midbase
+	.word	(LINKADDR & 0xffff)	# lobase
+	.byte	(LINKADDR >> 16) & 0xff	# midbase
 	.byte	SDT_MEMERA | 0 | 0x80	# RXAC, dpl = 0, present
 	.byte	0xf | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
-	.byte	(START >> 20) & 0xff	# hibase
+	.byte	(LINKADDR >> 20) & 0xff	# hibase
 		/* 0x20 : 16 bit data */
 	.word	0xFFFF			# lolimit
-	.word	(START & 0xffff)	# lobase
-	.byte	(START >> 16) & 0xff	# midbase
+	.word	(LINKADDR & 0xffff)	# lobase
+	.byte	(LINKADDR >> 16) & 0xff	# midbase
 	.byte	SDT_MEMRWA | 0 | 0x80	# RXAC, dpl = 0, present
 	.byte	0xf | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
-	.byte	(START >> 20) & 0xff	# hibase
+	.byte	(LINKADDR >> 20) & 0xff	# hibase
 
 Gdtr:	.word	. - gdt - 1
 	.long	gdt
