@@ -1,4 +1,4 @@
-.\"	$OpenBSD: it.4,v 1.1 2003/05/20 20:29:38 grange Exp $
+.\"	$OpenBSD: it.4,v 1.2 2003/05/21 09:40:17 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Julien Bordet <zejames@greygats.org>
 .\" All rights reserved.
@@ -35,7 +35,10 @@
 The
 .Nm
 driver provides support for the
-.Tn IT8705F, IT8712F and SiS950 hardware monitors to be used with the
+.Tn IT8705F , IT8712F
+and
+.Tn SiS950
+hardware monitors to be used with the
 .Xr sysctl 3
 interface.
 .Pp
@@ -59,8 +62,7 @@ Most supported devices possess 15 sensors:
 .It Li "Temp" Ta "uK" Ta "CPU Temperature"
 .El
 .Pp
-For some devices sensors names and numbers will be
-different.
+For some devices, sensors' names and numbers will be different.
 .Pp
 Due to hardware limitations, fresh sensor data is only available every
 1.5 seconds.
@@ -75,6 +77,6 @@ driver first appeared in
 The
 .Nm
 driver was written by
-.An Julien Bordet <zejames@greyhats.org> .
+.An Julien Bordet Aq zejames@greyhats.org .
 .Sh BUGS
 Interrupt support is unimplemented.
