@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.17 2000/09/05 05:06:58 fgsch Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.18 2001/05/17 03:19:35 fgsch Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ void	pcic_event_process __P((struct pcic_handle *, struct pcic_event *));
 void	pcic_queue_event __P((struct pcic_handle *, int));
 
 void	pcic_wait_ready __P((struct pcic_handle *));
+void	pcic_delay __P((int));
 
 u_int8_t st_pcic_read __P((struct pcic_handle *, int));
 void	st_pcic_write __P((struct pcic_handle *, int, int));
@@ -1398,7 +1399,7 @@ pcic_chip_socket_enable(pch)
 	 * wait 300ms until power fails (Tpf).  Then, wait 100ms since
 	 * we are changing Vcc (Toff).
 	 */
-	delay((300 + 100) * 1000);
+	pcic_delay((300 + 100) * 1000);
 
 	if (h->vendor == PCIC_VENDOR_VADEM_VG469) {
 		reg = pcic_read(h, PCIC_VG469_VSELECT);
@@ -1418,7 +1419,7 @@ pcic_chip_socket_enable(pch)
 	 * some machines require some more time to be settled
 	 * (another 200ms is added here).
 	 */
-	delay((100 + 20 + 200) * 1000);
+	pcic_delay((100 + 20 + 200) * 1000);
 
 	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV |
 	    PCIC_PWRCTL_OE | PCIC_PWRCTL_PWR_ENABLE);
@@ -1494,7 +1495,22 @@ pcic_chip_socket_disable(pch)
 	/*
 	 * wait 300ms until power fails (Tpf).
 	 */
-	delay(300 * 1000);
+	pcic_delay(300 * 1000);
+}
+
+void
+pcic_delay(ms)
+	int ms;
+{
+	extern int cold;
+	int ticks;
+
+	ticks = (hz * ms) / 1000000;
+
+	if (cold)
+		delay(ms);
+	else
+		tsleep(&ticks, PWAIT, "pcicdel", ticks);
 }
 
 u_int8_t
