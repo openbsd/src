@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.5 1997/04/14 18:47:53 gene Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.6 1997/04/18 22:08:07 gene Exp $	*/
 /*  adb_direct.c 1.91 1/20/97 jpw */
 
 /*
@@ -146,10 +146,10 @@ struct ADBDevEntry	{
  * Used to hold ADB commands that are waiting to be sent out.
  */
 struct adbCmdHoldEntry {
-        u_char outBuf[MAX_ADB_MSG_LENGTH];	/* our message */
-        u_char *saveBuf;        /* buffer to know where to save result */
-        u_char *compRout;	/* completion routine pointer */
-        u_char *data;		/* completion routine data pointer */
+        u_char	outBuf[MAX_ADB_MSG_LENGTH];	/* our message */
+        u_char	*saveBuf;	/* buffer to know where to save result */
+        u_char	*compRout;	/* completion routine pointer */
+        u_char	*data;		/* completion routine data pointer */
 };
 
 /*
@@ -190,42 +190,43 @@ struct ADBDevEntry ADBDevTable[16];     /* our ADB device table */
 int     ADBNumDevices;          /* number of ADB devices found with ADBReInit */
 
 extern struct mac68k_machine_S mac68k_machine;
-extern int zshard(int);
+
+extern int	zshard __P((int));
 
 
 /*
  * The following are private routines.
  */
-void print_single __P((unsigned char *));
-void adb_intr __P((void));
-void adb_intr_II __P((void));
-void adb_intr_IIsi __P((void));
-void adb_intr_cuda __P((void));
-int send_adb_II __P((unsigned char *, unsigned char *, void *, void *, int));
-int send_adb_IIsi __P((unsigned char *, unsigned char *, void *, void *, int));
-int send_adb_cuda __P((unsigned char *, unsigned char *, void *, void *, int));
-void adb_handle_unsol __P((unsigned char *));
-void adb_op_comprout __P((void));
-void adb_reinit __P((void));
-int count_adbs __P((void));
-int get_ind_adb_info __P((ADBDataBlock *, int));
-int get_adb_info __P((ADBDataBlock *, int));
-int set_adb_info __P((ADBSetInfoBlock *, int));
-void adb_setup_hw_type __P((void));
-int adb_op __P((Ptr, Ptr, Ptr, short));
-void adb_handle_unsol __P((unsigned char *));
-int adb_op_sync __P((Ptr, Ptr, Ptr, short));
-void adb_read_II __P((unsigned char *));
-void adb_cleanup __P((unsigned char *));
-void adb_cleanup_IIsi __P((unsigned char *));
-void adb_comp_exec __P((void));
-int adb_cmd_result __P((unsigned char *));
-int adb_cmd_extra __P((unsigned char *));
-int adb_guess_next_device __P((void));
-int adb_prog_switch_enable __P((void));
-int adb_prog_switch_disable __P((void));
+void	print_single __P((unsigned char *));
+void	adb_intr __P((void));
+void	adb_intr_II __P((void));
+void	adb_intr_IIsi __P((void));
+void	adb_intr_cuda __P((void));
+int	send_adb_II __P((unsigned char *, unsigned char *, void *, void *, int));
+int	send_adb_IIsi __P((unsigned char *, unsigned char *, void *, void *, int));
+int	send_adb_cuda __P((unsigned char *, unsigned char *, void *, void *, int));
+void 	db_handle_unsol __P((unsigned char *));
+void	adb_op_comprout __P((void));
+void	adb_reinit __P((void));
+int	count_adbs __P((void));
+int	get_ind_adb_info __P((ADBDataBlock *, int));
+int	get_adb_info __P((ADBDataBlock *, int));
+int	set_adb_info __P((ADBSetInfoBlock *, int));
+void	adb_setup_hw_type __P((void));
+int	adb_op __P((Ptr, Ptr, Ptr, short));
+void	adb_handle_unsol __P((unsigned char *));
+int	adb_op_sync __P((Ptr, Ptr, Ptr, short));
+void	adb_read_II __P((unsigned char *));
+void	adb_cleanup __P((unsigned char *));
+void	adb_cleanup_IIsi __P((unsigned char *));
+void	adb_comp_exec __P((void));
+int	adb_cmd_result __P((unsigned char *));
+int	adb_cmd_extra __P((unsigned char *));
+int	adb_guess_next_device __P((void));
+int	adb_prog_switch_enable __P((void));
+int	adb_prog_switch_disable __P((void));
 /* we should create this and it will be the public version */
-int send_adb __P((unsigned char *, void *, void *));
+int	send_adb __P((unsigned char *, void *, void *));
 
   
 /*
@@ -1289,6 +1290,7 @@ adb_handle_unsol(u_char *in)
                 
         case ADB_HW_PB:
 		return;		/* how does PM handle "unsolicited" messages? */
+
         case ADB_HW_UNKNOWN:
                 return;
         }
@@ -1343,9 +1345,12 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
 		break;
 
         case ADB_HW_PB:
-		result = pm_adb_op(
-                    (u_char *) buffer, (void *) compRout,
-                    (void *) data, (int) command);
+ 		result = pm_adb_op((u_char *)buffer, (void *)compRout,
+ 		    (void *)data, (int)command);
+ 		if (result == 0)
+ 			return 0;
+ 		else
+ 			return -1;
                 break;
 
         case ADB_HW_CUDA:
@@ -1475,10 +1480,12 @@ adb_reinit(void)
 	int	nonewtimes;	/* times thru loop w/o any new devices */
 	ADBDataBlock data;	/* temp. holder for getting device info */
 
+	(void)(&s);		/* XXX workaround gcc bug */
+
         /* Make sure we are not interrupted while building the table. */
        	s = splhigh();
 
-        ADBNumDevices=0;	/* no devices yet */
+        ADBNumDevices = 0;	/* no devices yet */
 
         /* Let intr routines know we are running reinit */
         adbStarting = 1;
