@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/08/15 11:36:33 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/08/29 02:11:14 millert Exp $
 
 MAN=	man/ci.1 man/co.1 man/ident.1 man/merge.1 man/rcs.1 man/rcsclean.1 \
         man/rcsdiff.1 man/rcsfile.5 man/rcsfreeze.1 man/rcsintro.1 \
@@ -6,7 +6,7 @@ MAN=	man/ci.1 man/co.1 man/ident.1 man/merge.1 man/rcs.1 man/rcsclean.1 \
 GNUCFLAGS=	CFLAGS="${CFLAGS}"
 CLEANFILES=	man/rcsfile.5 src/conf.h
 
-all:	config.status
+all:	config.status rcsfile.5
 	${MAKE} ${GNUCFLAGS} LDFLAGS=${LDSTATIC}
 
 .FORCE:	.IGNORE
@@ -17,7 +17,9 @@ config: .FORCE
 
 config.status:
 	sh ${.CURDIR}/configure --with-diffutils --prefix=/usr
-	pic -n ${.CURDIR}/man/rcsfile.5in > man/rcsfile.5
+
+rcsfile.5:
+	(cd man ; ${MAKE} ${GNUCFLAGS} rcsfile.5)
 
 install: maninstall
 	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
