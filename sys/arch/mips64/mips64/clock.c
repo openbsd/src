@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.5 2004/08/10 20:15:47 deraadt Exp $ */
+/*	$OpenBSD: clock.c,v 1.6 2004/08/11 17:05:31 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -36,7 +36,6 @@
 #include <mips64/dev/clockvar.h>
 #include <mips64/archtype.h>
 
-int	clock_started = 0;
 
 /* Definition of the driver for autoconfig. */
 int	clockmatch(struct device *, void *, void *);
@@ -44,6 +43,7 @@ void	clockattach(struct device *, struct device *, void *);
 intrmask_t clock_int5_dummy(intrmask_t, struct trap_frame *);
 intrmask_t clock_int5(intrmask_t, struct trap_frame *);
 void clock_int5_init(struct clock_softc *);
+void	md_clk_attach(struct device *, struct device *, void *);
 
 struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL, NULL, 0
@@ -53,11 +53,11 @@ struct cfattach clock_ca = {
 	sizeof(struct clock_softc), clockmatch, clockattach
 };
 
-void	md_clk_attach(struct device *, struct device *, void *);
-
+int	clock_started = 0;
 u_int32_t cpu_counter_last;
 u_int32_t cpu_counter_interval;
 u_int32_t pendingticks;
+u_int32_t ticktime;
 
 #define	SECDAY	(24*SECHOUR)	/* seconds per day */
 #define	SECYR	(365*SECDAY)	/* seconds per common year */
@@ -102,6 +102,7 @@ clockattach(struct device *parent, struct device *self, void *aux)
 	case SGI_O2:
 		printf(" ticker on int5 using count register.");
 		set_intr(INTPRI_CLOCK, CR_INT_5, clock_int5);
+		ticktime = sys_config.cpu[0].clock / 2000;
 		break;
 
 	default:
@@ -221,29 +222,31 @@ nanodelay(int n)
 
 /*
  * Return the best possible estimate of the time in the timeval
- * to which tvp points.  Unfortunately, we can't read the hardware registers.
- * We guarantee that the time will be greater than the value obtained by a
- * previous call.
+ * to which tvp points.  We guarantee that the time will be greater
+ * than the value obtained by a previous call.
  */
 void
 microtime(struct timeval *tvp)
 {
-	int s = splclock();
 	static struct timeval lasttime;
+	u_int32_t clkdiff;
+	int s = splclock();
 
 	*tvp = time;
-#ifdef notdef
-		tvp->tv_usec += clkread();
-		while (tvp->tv_usec >= 1000000) {
+	clkdiff = (cp0_get_count() - cpu_counter_last) * 1000;
+	tvp->tv_usec += clkdiff / ticktime;
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
-#endif
+
 	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
+	    tvp->tv_usec <= lasttime.tv_usec) {
+		tvp->tv_usec++;
+		if (tvp->tv_usec >= 1000000) {
+			tvp->tv_sec++;
+			tvp->tv_usec -= 1000000;
+		}
 	}
 	lasttime = *tvp;
 	splx(s);
@@ -266,8 +269,6 @@ cpu_initclocks()
 	hz = sc->sc_clock.clk_hz;
 	stathz = sc->sc_clock.clk_stathz;
 	profhz = sc->sc_clock.clk_profhz;
-
-	printf("Starting clocks %d/%d/%d hz\n", hz, stathz, profhz);
 
 	/* Start the clock.  */
 	if (sc->sc_clock.clk_init != NULL)
