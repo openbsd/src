@@ -244,6 +244,8 @@ void hide_syms(char *filename)
 		return;
 	}
 
+	lseek(inf, 0, SEEK_SET);
+
 	if (buf[0] == 0x7f &&
 		(buf[1] == 'E' || buf[1] == 'O') &&
 		buf[2] == 'L' &&
