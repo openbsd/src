@@ -180,7 +180,10 @@ tdb_init(struct tdb *tdbp, struct mbuf *m)
 	  if (xsp->xf_type == alg)
 	    return (*(xsp->xf_init))(tdbp, xsp, m);
 
-	printf("tdbinit: no alg %d for spi %x, addr %x\n", alg, tdbp->tdb_spi, ntohl(tdbp->tdb_dst.s_addr));
+#ifdef ENCDEBUG
+	if (encdebug)
+	  printf("tdbinit: no alg %d for spi %x, addr %x\n", alg, tdbp->tdb_spi, ntohl(tdbp->tdb_dst.s_addr));
+#endif
 	
 	m_freem(m);
 	return EINVAL;
@@ -192,7 +195,7 @@ ipsp_kern(int off, char **bufp, int len)
 {
     struct tdb *tdbp;
     int i, k;
-    char *b, buf[512];
+    char *b;
 
     if (off != 0)
       return 0;
@@ -216,18 +219,11 @@ ipsp_kern(int off, char **bufp, int len)
       {
 	  /* Being paranoid to avoid buffer overflows */
 
-	  if (strlen(tdbp->tdb_xform->xf_name) >= 200)
-	    return 0;
-
-	  b = (char *)&(tdbp->tdb_dst.s_addr);
-	  k += sprintf(buf, 
-		"SPI=%x, destination=%d.%d.%d.%d, interface=%s\n algorithm=%d (%s)\n next SPI=%x, previous SPI=%x\n", 
-		ntohl(tdbp->tdb_spi), ((int)b[0] & 0xff), ((int)b[1] & 0xff), 
-		((int)b[2] & 0xff), ((int)b[3] & 0xff), 
-		(tdbp->tdb_rcvif ? tdbp->tdb_rcvif->if_xname : "none"),
-		tdbp->tdb_xform->xf_type, tdbp->tdb_xform->xf_name,
-		(tdbp->tdb_onext ? ntohl(tdbp->tdb_onext->tdb_spi) : 0),
-		(tdbp->tdb_inext ? ntohl(tdbp->tdb_inext->tdb_spi) : 0));
+          k += 126 + strlen(tdbp->tdb_xform->xf_name);
+          if (tdbp->tdb_rcvif)
+            k += strlen(tdbp->tdb_rcvif->if_xname);
+          else
+            k += 4;
       }
 
     if (k == 0)
