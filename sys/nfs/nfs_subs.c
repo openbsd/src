@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.11 1996/09/21 11:06:19 deraadt Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.12 1996/09/25 11:57:25 niklas Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1074,8 +1074,6 @@ nfsm_strtmbuf(mb, bpos, cp, siz)
 void
 nfs_init()
 {
-	register int i;
-
 #if !defined(alpha) && defined(DIAGNOSTIC)
 	/*
 	 * Check to see if major data structures haven't bloated.
