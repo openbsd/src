@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.32 2002/02/19 12:18:24 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.33 2002/02/23 01:22:54 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -460,6 +460,11 @@ Clears the
 bit from a matching ip packet.
 .Ss min-ttl <number>
 Enforces a minimum ttl for matching ip packets.
+.Pp
+Normalization occurs before filtering, scrub rules and pass/block
+rules are evaluated independantly.
+Hence, their relative position in the rule set is not relevant,
+and packets can't be blocked before normalization.
 .Sh EXAMPLES
 .Bd -literal
 # The external interface is kue0 (157.161.48.183, the only routable address)
