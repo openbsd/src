@@ -418,7 +418,7 @@ void convert_num (buf, str, base, size)
 			break;
 		}
 		if (tval >= base) {
-			warn ("Bogus number: %s: digit %d not in base %d\n",
+			warn ("Bogus number: %s: digit %d not in base %d",
 			      str, tval, base);
 			break;
 		}
@@ -458,7 +458,7 @@ void convert_num (buf, str, base, size)
 			putLong (buf, -(unsigned long)val);
 			break;
 		      default:
-			warn ("Unexpected integer size: %d\n", size);
+			warn ("Unexpected integer size: %d", size);
 			break;
 		}
 	} else {
@@ -473,7 +473,7 @@ void convert_num (buf, str, base, size)
 			putULong (buf, val);
 			break;
 		      default:
-			warn ("Unexpected integer size: %d\n", size);
+			warn ("Unexpected integer size: %d", size);
 			break;
 		}
 	}

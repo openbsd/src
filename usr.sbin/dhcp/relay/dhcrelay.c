@@ -291,7 +291,7 @@ void relay (ip, packet, length, from_port, from, hfrom)
 				break;
 		}
 		if (!out) {
-			warn ("packet to bogus giaddr %s.\n",
+			warn ("packet to bogus giaddr %s.",
 			      inet_ntoa (packet -> giaddr));
 			return;
 		}

@@ -897,7 +897,7 @@ struct client_lease *packet_to_lease (packet)
 	lease = (struct client_lease *)malloc (sizeof (struct client_lease));
 
 	if (!lease) {
-		warn ("dhcpoffer: no memory to record lease.\n");
+		warn ("dhcpoffer: no memory to record lease.");
 		return (struct client_lease *)0;
 	}
 
@@ -910,7 +910,7 @@ struct client_lease *packet_to_lease (packet)
 				(unsigned char *)
 					malloc (packet->options [i].len + 1);
 			if (!lease->options [i].data) {
-				warn ("dhcpoffer: no memory for option %d\n",
+				warn ("dhcpoffer: no memory for option %d",
 				      i);
 				free_client_lease (lease);
 				return (struct client_lease *)0;

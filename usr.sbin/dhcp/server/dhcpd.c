@@ -326,7 +326,7 @@ void lease_pinged (from, packet, length)
 	}
 
 	if (!lp -> state && ! lp -> releasing) {
-		warn ("ICMP Echo Reply for %s arrived late or is spurious.\n",
+		warn ("ICMP Echo Reply for %s arrived late or is spurious.",
 		      piaddr (from));
 		return;
 	}

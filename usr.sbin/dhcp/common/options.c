@@ -481,7 +481,7 @@ char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 	/* Figure out the size of the data. */
 	for (i = 0; dhcp_options [code].format [i]; i++) {
 		if (!numhunk) {
-			warn ("%s: Excess information in format string: %s\n",
+			warn ("%s: Excess information in format string: %s",
 			      dhcp_options [code].name,
 			      &(dhcp_options [code].format [i]));
 			break;
@@ -533,7 +533,7 @@ char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 		      case 'e':
 			break;
 		      default:
-			warn ("%s: garbage in format string: %s\n",
+			warn ("%s: garbage in format string: %s",
 			      dhcp_options [code].name,
 			      &(dhcp_options [code].format [i]));
 			break;
@@ -558,7 +558,7 @@ char *pretty_print_option (code, data, len, emit_commas, emit_quotes)
 		numhunk = len / hunksize;
 	/* See if we got an exact number of hunks. */
 	if (numhunk > 0 && numhunk * hunksize < len)
-		warn ("%s: %d extra bytes at end of array\n",
+		warn ("%s: %d extra bytes at end of array",
 		      dhcp_options [code].name,
 		      len - numhunk * hunksize);
 
