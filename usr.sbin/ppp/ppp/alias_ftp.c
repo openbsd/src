@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_ftp.c,v 1.9 2001/06/07 09:32:55 brian Exp $
+ * $OpenBSD: alias_ftp.c,v 1.10 2001/06/27 16:15:13 brian Exp $
  */
 
 /*
@@ -131,7 +131,7 @@ int maxpacketsize  /* The maximum size this packet can grow to (including header
  * properly terminated with CRLF.
  */
     pflags = GetProtocolFlags(link);
-    if (dlen <= MAX_MESSAGE_SIZE && (pflags & WAIT_CRLF)) {
+    if (dlen <= MAX_MESSAGE_SIZE && !(pflags & WAIT_CRLF)) {
 	ftp_message_type = FTP_UNKNOWN_MESSAGE;
 
 	if (ntohs(tc->th_dport) == FTP_CONTROL_PORT_NUMBER) {
