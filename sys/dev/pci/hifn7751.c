@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.123 2002/07/16 21:27:39 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.124 2002/07/21 19:08:26 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -109,6 +109,7 @@ void	hifn_rng(void *);
 void	hifn_tick(void *);
 void	hifn_abort(struct hifn_softc *);
 void	hifn_alloc_slot(struct hifn_softc *, int *, int *, int *, int *);
+void	hifn_write_waw_4(struct hifn_softc *, int, bus_size_t, u_int32_t);
 
 struct hifn_stats hifnstats;
 
@@ -192,6 +193,19 @@ hifn_attach(parent, self, aux)
 	cmd = pci_conf_read(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT);
 	cmd &= 0xffff0000;
 	pci_conf_write(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT, cmd);
+
+	if (sc->sc_flags & HIFN_IS_7811) {
+		u_int32_t revid;
+
+		READ_REG_1(sc, HIFN_1_REVID);
+		if (revid == 0x2)
+			sc->sc_flags |= HIFN_NO_BURSTWRITE;
+	}
+
+	if (sc->sc_flags & HIFN_NO_BURSTWRITE) {
+		sc->sc_waw_lastgroup = -1;
+		sc->sc_waw_lastreg = 0xffffffff;
+	}
 
 	sc->sc_dmat = pa->pa_dmat;
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_dma), 1,
@@ -2278,4 +2292,30 @@ hifn_callback(sc, cmd, macbuf)
 	bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
 	free(cmd, M_DEVBUF);
 	crypto_done(crp);
+}
+
+void
+hifn_write_waw_4(sc, reggrp, reg, val)
+	struct hifn_softc *sc;
+	int reggrp;
+	bus_size_t reg;
+	u_int32_t val;
+{
+	/*
+	 * 7811 PB3 rev/2 parts lock-up on burst writes to Group 0
+	 * and Group 1 registers; avoid conditions that could create
+	 * burst writes by doing a read in between the writes.
+	 */
+	if (sc->sc_waw_lastgroup != reggrp)
+		goto chipit;
+	if (sc->sc_waw_lastreg == reg - 4)
+		bus_space_read_4(sc->sc_st1, sc->sc_sh1, HIFN_1_REVID);
+
+chipit:
+	sc->sc_waw_lastgroup = reggrp;
+	sc->sc_waw_lastreg = reg;
+	if (reggrp == 0)
+		bus_space_write_4(sc->sc_st0, sc->sc_sh0, reg, val);
+	else
+		bus_space_write_4(sc->sc_st1, sc->sc_sh1, reg, val);
 }

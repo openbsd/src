@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.35 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.36 2002/07/21 19:08:26 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -351,11 +351,6 @@ typedef struct hifn_desc {
 
 #define	HIFN_UNLOCK_SECRET1	0xf4
 #define	HIFN_UNLOCK_SECRET2	0xfc
-
-#define	WRITE_REG_1(sc,reg,val)	\
-    bus_space_write_4((sc)->sc_st1, (sc)->sc_sh1, reg, val)
-#define	READ_REG_1(sc,reg) \
-    bus_space_read_4((sc)->sc_st1, (sc)->sc_sh1, reg)
 
 /*********************************************************************
  * Structs for board commands 

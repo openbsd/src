@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.42 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.43 2002/07/21 19:08:26 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -155,6 +155,7 @@ struct hifn_softc {
 #define	HIFN_HAS_RNG		1
 #define	HIFN_HAS_PUBLIC		2
 #define	HIFN_IS_7811		4
+#define	HIFN_NO_BURSTWRITE	8
 	struct timeout sc_rngto, sc_tickto;
 	int sc_rngfirst;
 	int sc_rnghz;
@@ -162,12 +163,32 @@ struct hifn_softc {
 	struct hifn_session sc_sessions[2048];
 	pci_chipset_tag_t sc_pci_pc;
 	pcitag_t sc_pci_tag;
+	bus_size_t sc_waw_lastreg;
+	int sc_waw_lastgroup;
 };
 
-#define	WRITE_REG_0(sc,reg,val) \
-    bus_space_write_4((sc)->sc_st0, (sc)->sc_sh0, reg, val)
+#define WRITE_REG_0(sc,reg,val)						\
+	do {								\
+		if (sc->sc_flags & HIFN_NO_BURSTWRITE)			\
+			hifn_write_waw_4((sc), 0, (reg), (val));	\
+		else							\
+			bus_space_write_4((sc)->sc_st0, (sc)->sc_sh0,	\
+			    (reg), (val));				\
+	} while (0)
+
+#define WRITE_REG_1(sc,reg,val)						\
+	do {								\
+		if (sc->sc_flags & HIFN_NO_BURSTWRITE)			\
+			hifn_write_waw_4((sc), 1, (reg), (val));	\
+		else							\
+			bus_space_write_4((sc)->sc_st1, (sc)->sc_sh1,	\
+			    (reg), (val));				\
+	} while (0)
+
 #define	READ_REG_0(sc,reg) \
     bus_space_read_4((sc)->sc_st0, (sc)->sc_sh0, reg)
+#define	READ_REG_1(sc,reg) \
+    bus_space_read_4((sc)->sc_st1, (sc)->sc_sh1, reg)
 
 /*
  *  hifn_command_t
