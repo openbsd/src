@@ -1,4 +1,5 @@
 /*	$NetBSD: crt0.c,v 1.15 1995/06/15 21:41:55 pk Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.2 1997/06/24 17:15:53 tholo Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -32,7 +33,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "%W% (Erasmus) %G%";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.2 1997/06/24 17:15:53 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>

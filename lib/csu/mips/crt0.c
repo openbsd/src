@@ -1,4 +1,5 @@
 /*	$NetBSD: crt0.c,v 1.7 1995/06/03 13:16:15 pk Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.2 1997/06/24 17:15:51 tholo Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -31,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "@(#)crt0.c	5.7 (Berkeley) 7/3/91"; */
-static char rcsid[] = "$Id: crt0.c,v 1.1 1996/05/19 20:34:32 pefo Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.2 1997/06/24 17:15:51 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
