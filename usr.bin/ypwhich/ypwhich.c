@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.9 1998/01/18 20:13:08 maja Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.10 1999/03/19 22:21:27 deraadt Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypwhich.c,v 1.9 1998/01/18 20:13:08 maja Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.10 1999/03/19 22:21:27 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -57,8 +57,6 @@ static char rcsid[] = "$Id: ypwhich.c,v 1.9 1998/01/18 20:13:08 maja Exp $";
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 
-#include "yplib_host.h"
-
 struct ypalias {
 	char *alias, *name;
 } ypaliases[] = {
@@ -76,7 +74,7 @@ void
 usage()
 {
 	fprintf(stderr, "Usage:\n");
-	fprintf(stderr, "\typwhich [-d domain] [[-h host] [-t] -m [mname] | host]\n");
+	fprintf(stderr, "\typwhich [-d domain] [[-t] -m [mname] | host]\n");
 	fprintf(stderr, "\typwhich -x\n");
 	exit(1);
 }
@@ -151,8 +149,6 @@ main(argc, argv)
 	struct sockaddr_in sin;
 	int notrans, mode, getmap;
 	int c, r, i;
-	CLIENT *client;
-	char	*host = NULL;
 
 	map = NULL;
 	getmap = notrans = mode = 0;
@@ -161,16 +157,13 @@ main(argc, argv)
 	if (domain == NULL)
 		errx(1, "YP domain name not set");
 
-	while ((c = getopt(argc, argv, "xd:h:mt")) != -1)
+	while ((c = getopt(argc, argv, "xd:mt")) != -1)
 		switch(c) {
 		case 'x':
 			for (i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
 				printf("Use \"%s\" for \"%s\"\n",
 				    ypaliases[i].alias, ypaliases[i].name);
 			exit(0);
-		case 'h':
-			host = optarg;
-			break;
 		case 'd':
 			domain = optarg;
 			break;
@@ -221,19 +214,13 @@ main(argc, argv)
 	if (argc > 1)
 		usage();
 
-	if (host == NULL) {
-		client = yp_bind_local(YPPROG,YPVERS);
-	} else {
-		client = yp_bind_host(host,YPPROG,YPVERS,0,1);
-	}
-	
 	if (argv[0]) {
 		map = argv[0];
 		for (i=0; (!notrans) && i<sizeof ypaliases/sizeof ypaliases[0]; i++)
 			if (strcmp(map, ypaliases[i].alias) == 0)
 				map = ypaliases[i].name;
 
-		r = yp_master_host(client, domain, map, &master);
+		r = yp_master(domain, map, &master);
 		switch (r) {
 		case 0:
 			printf("%s\n", master);
@@ -251,13 +238,13 @@ main(argc, argv)
 	}
 
 	ypml = NULL;
-	r = yp_maplist_host(client, domain, &ypml);
+	r = yp_maplist(domain, &ypml);
 	r = 0;
 	switch(r) {
 	case 0:
 		for (y = ypml; y; ) {
 			ypml = y;
-			r = yp_master_host(client, domain, ypml->map, &master);
+			r = yp_master(domain, ypml->map, &master);
 			switch(r) {
 			case 0:
 				printf("%s %s\n", ypml->map, master);

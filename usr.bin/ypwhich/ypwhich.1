@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypwhich.1,v 1.5 1998/10/30 00:24:45 aaron Exp $
+.\"	$OpenBSD: ypwhich.1,v 1.6 1999/03/19 22:21:27 deraadt Exp $
 .\"	$NetBSD: ypwhich.1,v 1.3 1996/05/13 02:43:46 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ypwhich.1,v 1.5 1998/10/30 00:24:45 aaron Exp $
+.\"	$Id: ypwhich.1,v 1.6 1999/03/19 22:21:27 deraadt Exp $
 .\"
 .Dd February 23, 1994
 .Dt YPWHICH 1
@@ -41,7 +41,6 @@
 .Nm ypwhich
 .Op Fl d Ar domain
 .Oo
-.Op Fl h Ar host
 .Op Fl t
 .Fl m Op Ar mname
 |
@@ -70,10 +69,6 @@ The options are as follows:
 .Bl -tag -width indent
 .It Fl d Ar domain
 Specify a domain other than the default domain.
-.It Fl h Ar host
-Specify which host to ask when 
-.Fl m
-is given.
 .It Fl t
 Inhibit translation of map nicknames
 to their corresponding map names.
