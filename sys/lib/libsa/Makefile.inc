@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.9 1997/06/20 21:43:16 grr Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2001/06/23 01:47:40 drahn Exp $
 #	$NetBSD: Makefile.inc,v 1.5 1996/09/30 16:01:18 ws Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
@@ -22,6 +22,9 @@ SAMAKE+= NO_NET=""
 .endif
 .if defined(SA_ZLIB)
 SAMAKE+= SA_ZLIB=""
+.endif
+.if defined(USE_LOADFILE)
+SAMAKE+= USE_LOADFILE=""
 .endif
 
 ${SALIB}:		.NOTMAIN __always_make_salib
