@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.4 2004/12/29 01:52:27 dlg Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.5 2005/03/07 11:12:04 pascoe Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $")
 
 #include <machine/bus.h>
 
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/usb_pci.h>
 
@@ -190,6 +191,10 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
 	
+	/* Enable workaround for dropped interrupts as required */
+	if (sc->sc.sc_id_vendor == PCI_VENDOR_VIATECH)
+		sc->sc.sc_flags |= EHCIF_DROPPED_INTR_WORKAROUND;
+
 	/*
 	 * Find companion controllers.  According to the spec they always
 	 * have lower function numbers so they should be enumerated already.
