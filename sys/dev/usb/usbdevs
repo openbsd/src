@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.131 2005/01/26 12:58:40 dlg Exp $
+$OpenBSD: usbdevs,v 1.132 2005/02/12 10:08:36 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -567,6 +567,7 @@ product ATEN UC1284		0x2001	Parallel
 product ATEN UC10T		0x2002	10Mbps Ethernet
 product ATEN UC110T		0x2007	UC-110T Ethernet
 product ATEN UC232A		0x2008	Serial
+product ATEN UC210T		0x2009	UC210T Ethernet
 product ATEN DSB650C		0x4000	DSB-650C
 
 /* ATI products */
@@ -612,6 +613,7 @@ product BILLIONTON USB100	0x0986	USB100N 10/100 Ethernet
 product BILLIONTON USBLP100	0x0987	USB100LP
 product BILLIONTON USBEL100	0x0988	USB100EL
 product BILLIONTON USBE100	0x8511	USBE100
+product BILLIONTON USB2AR	0x90ff	USB2AR Ethernet
 
 /* Broadcom products */
 product BROADCOM BCM2033	0x2000	BCM2033
@@ -883,6 +885,7 @@ product HAUPPAUGE WINTV_USB_FM	0x4d12	WinTV FM
 
 /* Hawking Technologies products */
 product HAWKING UF100		0x400c	10/100 Ethernet
+product ABOCOM UF200		0x420a	UF200 Ethernet
 
 /* Hitachi, Ltd. products */
 product HITACHI DZMV100A	0x0004	DVD-CAM DZ-MV100A Camcorder
@@ -1614,6 +1617,9 @@ product DIAMOND2 SUPRA2890	0x0b4a	SupraMax 2890 56K
 product DIAMOND2 RIO600USB	0x5001	Rio 600
 product DIAMOND2 RIO800USB	0x5002	Rio 800
 product DIAMOND2 PSAPLAY120	0x5003	Nike psa[play 120
+
+/* Surecom products */
+product ACERCM EP1427X2		0x0893	EP-1427X-2 Ethernet
 
 /* Susteen, Inc. products */
 product SUSTEEN DCU11		0x0528	Ericsson DCU-10/11
