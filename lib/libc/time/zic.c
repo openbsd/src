@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)zic.c	7.107";
-static char rcsid[] = "$OpenBSD: zic.c,v 1.17 2003/02/14 18:24:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: zic.c,v 1.18 2003/04/05 00:48:02 tdeval Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -102,7 +102,7 @@ static void	associate P((void));
 static int	ciequal P((const char * ap, const char * bp));
 static void	convert P((long val, char * buf));
 static void	dolink P((const char * fromfile, const char * tofile));
-static void	doabbr P((char * abbr, const char * format,
+static void	doabbr P((char * abbr, size_t size, const char * format,
 			const char * letters, int isdst));
 static void	eat P((const char * name, int num));
 static void	eats P((const char * name, int num,
@@ -1553,20 +1553,21 @@ const char * const	name;
 }
 
 static void
-doabbr(abbr, format, letters, isdst)
+doabbr(abbr, size_t, format, letters, isdst)
 char * const		abbr;
+size_t			size;
 const char * const	format;
 const char * const	letters;
 const int		isdst;
 {
 	if (strchr(format, '/') == NULL) {
 		if (letters == NULL)
-			(void) strcpy(abbr, format);
-		else	(void) sprintf(abbr, format, letters);
+			strlcpy(abbr, format, size);
+		else	snprintf(abbr, size, format, letters);
 	} else if (isdst)
-		(void) strcpy(abbr, strchr(format, '/') + 1);
+		strlcpy(abbr, strchr(format, '/') + 1, size);
 	else {
-		(void) strcpy(abbr, format);
+		strlcpy(abbr, format, size);
 		*strchr(abbr, '/') = '\0';
 	}
 }
@@ -1620,7 +1621,7 @@ const int			zonecount;
 		startoff = zp->z_gmtoff;
 		if (zp->z_nrules == 0) {
 			stdoff = zp->z_stdoff;
-			doabbr(startbuf, zp->z_format,
+			doabbr(startbuf, sizeof(startbuf), zp->z_format,
 				(char *) NULL, stdoff != 0);
 			type = addtype(oadd(zp->z_gmtoff, stdoff),
 				startbuf, stdoff != 0, startttisstd,
@@ -1705,7 +1706,9 @@ const int			zonecount;
 					if (ktime < starttime) {
 						startoff = oadd(zp->z_gmtoff,
 							stdoff);
-						doabbr(startbuf, zp->z_format,
+						doabbr(startbuf,
+							sizeof(startbuf),
+							zp->z_format,
 							rp->r_abbrvar,
 							rp->r_stdoff != 0);
 						continue;
@@ -1713,15 +1716,17 @@ const int			zonecount;
 					if (*startbuf == '\0' &&
 					    startoff == oadd(zp->z_gmtoff,
 					    stdoff)) {
-						doabbr(startbuf, zp->z_format,
+						doabbr(startbuf,
+							sizeof(startbuf),
+							zp->z_format,
 							rp->r_abbrvar,
 							rp->r_stdoff != 0);
 					}
 				}
 				eats(zp->z_filename, zp->z_linenum,
 					rp->r_filename, rp->r_linenum);
-				doabbr(buf, zp->z_format, rp->r_abbrvar,
-					rp->r_stdoff != 0);
+				doabbr(buf, sizeof(buf), zp->z_format,
+					rp->r_abbrvar, rp->r_stdoff != 0);
 				offset = oadd(zp->z_gmtoff, rp->r_stdoff);
 				type = addtype(offset, buf, rp->r_stdoff != 0,
 					rp->r_todisstd, rp->r_todisgmt);
@@ -1733,7 +1738,8 @@ const int			zonecount;
 				zp->z_format != NULL &&
 				strchr(zp->z_format, '%') == NULL &&
 				strchr(zp->z_format, '/') == NULL)
-					(void) strcpy(startbuf, zp->z_format);
+					strlcpy(startbuf, zp->z_format,
+					    sizeof(startbuf));
 			eat(zp->z_filename, zp->z_linenum);
 			if (*startbuf == '\0')
 error(_("can't determine time zone abbreviation to use just after until time"));
@@ -1771,7 +1777,7 @@ int		type;
 		ttisstds[0] = ttisstds[type];
 		ttisgmts[0] = ttisgmts[type];
 		if (abbrinds[type] != 0)
-			(void) strcpy(chars, &chars[abbrinds[type]]);
+			strlcpy(chars, &chars[abbrinds[type]], sizeof(chars));
 		abbrinds[0] = 0;
 		charcnt = strlen(chars) + 1;
 		typecnt = 1;
@@ -2153,7 +2159,7 @@ const char * const	string;
 		error(_("too many, or too long, time zone abbreviations"));
 		(void) exit(EXIT_FAILURE);
 	}
-	(void) strcpy(&chars[charcnt], string);
+	strlcpy(&chars[charcnt], string, sizeof(chars) - charcnt);
 	charcnt += eitol(i);
 }
 
