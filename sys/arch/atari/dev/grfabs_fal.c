@@ -1,6 +1,7 @@
-/*	$NetBSD: grfabs_fal.c,v 1.1 1995/08/20 18:17:32 leo Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.2 1996/01/02 20:59:20 leo Exp $	*/
 
 /*
+ * Copyright (c) 1995 Thomas Gerner.
  * Copyright (c) 1995 Leo Weppelman.
  * All rights reserved.
  *
@@ -44,6 +45,7 @@
 #include <machine/mfp.h>
 #include <atari/atari/device.h>
 #include <atari/dev/grfabs_reg.h>
+#include <atari/dev/grfabs_fal.h>
 
 /*
  * Function decls
@@ -57,7 +59,7 @@ static view_t	  *falcon_alloc_view __P((dmode_t *, dimen_t *, u_char));
 static void	  falcon_free_view __P((view_t *));
 static void	  falcon_remove_view __P((view_t *));
 static int	  falcon_use_colormap __P((view_t *, colormap_t *));
-static void	  falcon_dedect __P((dmode_t *));
+static void	  falcon_detect __P((dmode_t *));
 
 /*
  * Our function switch table
@@ -85,6 +87,58 @@ static dmode_t vid_modes[] = {
 };
 
 /*
+ * The following table contains timing values for the various video modes.
+ * I have only a multisync monitor, therefore I can not say if this values
+ * are useful at other monitors.
+ * Use other video modes at YOUR OWN RISK.
+ * THERE IS NO WARRENTY ABOUT THIS VALUES TO WORK WITH A PARTICULAR
+ * MONITOR. -- Thomas
+ */
+static struct videl videlinit[] = {
+	{ RES_FALAUTO,		/* autodedect				*/
+	0x0, 0x0, 0x0,   0x0, 0x0,   0x0,  0x0,  0x0,  0x0,   0x0,  0x0,  0x0,
+	0x0, 0x0,   0x0,   0x0,  0x0,  0x0,   0x0,   0x0,   0x0 },
+
+	{ RES_FAL_STHIGH,	/* sthigh, 640x400, 2 colors		*/ 
+	0x2, 0x0, 0x28,  0x0, 0x400, 0xc6, 0x8d, 0x15, 0x273, 0x50, 0x96, 0x0, 
+	0x0, 0x419, 0x3af, 0x8f, 0x8f, 0x3af, 0x415, 0x186, 0x8 },
+
+	{ RES_FAL_STMID,	/* stmid, 640x200, 4 colors		*/
+	0x2, 0x0, 0x50,  0x1, 0x0,   0x17, 0x12, 0x1,  0x20e, 0xd,  0x11, 0x0, 
+	0x0, 0x419, 0x3af, 0x8f, 0x8f, 0x3af, 0x415, 0x186, 0x9 },
+
+	{ RES_FAL_STLOW,	/* stlow, 320x200, 16 colors		*/
+	0x2, 0x0, 0x50,  0x0, 0x0,   0x17, 0x12, 0x1,  0x20e, 0xd,  0x11, 0x0, 
+	0x0, 0x419, 0x3af, 0x8f, 0x8f, 0x3af, 0x415, 0x186, 0x5 },
+
+	{ RES_FAL_TTLOW,	/* ttlow, 320x480, 256 colors		*/
+	0x2, 0x0, 0xa0,  0x0, 0x10,  0xc6, 0x8d, 0x15, 0x29a, 0x7b, 0x96, 0x0, 
+	0x0, 0x419, 0x3ff, 0x3f, 0x3f, 0x3ff, 0x415, 0x186, 0x4 },
+
+	{ RES_VGA2,		/* vga, 640x480, 2 colors		*/
+	0x2, 0x0, 0x28,  0x0, 0x400, 0xc6, 0x8d, 0x15, 0x273, 0x50, 0x96, 0x0, 
+	0x0, 0x419, 0x3ff, 0x3f, 0x3f, 0x3ff, 0x415, 0x186, 0x8 },
+
+	{ RES_VGA4,		/* vga, 640x480, 4 colors		*/
+	0x2, 0x0, 0x50,  0x1, 0x0,   0x17, 0x12, 0x1,  0x20e, 0xd,  0x11, 0x0, 
+	0x0, 0x419, 0x3ff, 0x3f, 0x3f, 0x3ff, 0x415, 0x186, 0x8 },
+
+	{ RES_VGA16,		/* vga, 640x480, 16 colors		*/
+	0x2, 0x0, 0xa0,  0x1, 0x0,   0xc6, 0x8d, 0x15, 0x2a3, 0x7c, 0x96, 0x0, 
+	0x0, 0x419, 0x3ff, 0x3f, 0x3f, 0x3ff, 0x415, 0x186, 0x8 },
+
+	{ RES_VGA256,		/* vga, 640x480, 256 colors		*/
+	0x2, 0x0, 0x140, 0x1, 0x10,  0xc6, 0x8d, 0x15, 0x2ab, 0x84, 0x96, 0x0, 
+	0x0, 0x419, 0x3ff, 0x3f, 0x3f, 0x3ff, 0x415, 0x186, 0x8 },
+
+	{ RES_DIRECT,		/* direct video, 320x200, 65536 colors	*/
+	0x2, 0x0, 0x140, 0x0, 0x100, 0xc6, 0x8d, 0x15, 0x2ac, 0x91, 0x96, 0x0, 
+	0x0, 0x419, 0x3ff, 0x3f, 0x3f, 0x3ff, 0x415, 0x186, 0x4 },
+
+	{ 0xffff }		/* end of list				*/
+};
+
+/*
  * XXX: called from ite console init routine.
  * Initialize list of posible video modes.
  */
@@ -102,9 +156,10 @@ MODES	*modelp;
 
 	for (i = 0; (dm = &vid_modes[i])->name != NULL; i++) {
 		if (dm->vm_reg == RES_FALAUTO) {
-			falcon_dedect(dm);
+			falcon_detect(dm);
 			LIST_INSERT_HEAD(modelp, dm, link);
-		}
+		} else
+			LIST_INSERT_HEAD(modelp, dm, link);
 	}
 
 	/*
@@ -114,22 +169,62 @@ MODES	*modelp;
 		VIDEO->vd_fal_rgb[i] = CM_L2FAL(gra_def_color16[i]);
 }
 
+static struct videl *
+falcon_getreg(vm_reg)
+u_short vm_reg;
+{
+	int i;
+	struct videl *vregs;
+	
+	for (i = 0; (vregs = &videlinit[i])->vm_reg != 0xffff; i++)
+		if (vregs->vm_reg == vm_reg)
+			return vregs;
+
+	return &videlinit[0]; /* should never happen */
+}
+
 static void
-falcon_dedect(dm)
+falcon_detect(dm)
 dmode_t *dm;
 {
 	u_short	falshift, stshift;
-	short	interlace, doublescan;
+	struct videl *vregs;
 
-	interlace = (VIDEO->vd_fal_ctrl & 0x2) >>1;
-	doublescan = VIDEO->vd_fal_ctrl & 0x1;
+	/*
+	 * First get the the videl register values
+	 */
+
+	vregs = falcon_getreg(dm->vm_reg);
+
+	vregs->vd_syncmode	= VIDEO->vd_sync;
+	vregs->vd_line_wide	= VIDEO->vd_line_wide;
+	vregs->vd_vert_wrap	= VIDEO->vd_vert_wrap;
+	vregs->vd_st_res	= VIDEO->vd_st_res;
+	vregs->vd_fal_res	= VIDEO->vd_fal_res;
+	vregs->vd_h_hold_tim	= VIDEO->vd_h_hold_tim;
+	vregs->vd_h_bord_beg	= VIDEO->vd_h_bord_beg;
+	vregs->vd_h_bord_end	= VIDEO->vd_h_bord_end;
+	vregs->vd_h_dis_beg	= VIDEO->vd_h_dis_beg;
+	vregs->vd_h_dis_end	= VIDEO->vd_h_dis_end;
+	vregs->vd_h_ss		= VIDEO->vd_h_ss;
+	vregs->vd_h_fs		= VIDEO->vd_h_fs;
+	vregs->vd_h_hh		= VIDEO->vd_h_hh;
+	vregs->vd_v_freq_tim	= VIDEO->vd_v_freq_tim;
+	vregs->vd_v_bord_beg	= VIDEO->vd_v_bord_beg;
+	vregs->vd_v_bord_end	= VIDEO->vd_v_bord_end;
+	vregs->vd_v_dis_beg	= VIDEO->vd_v_dis_beg;
+	vregs->vd_v_dis_end	= VIDEO->vd_v_dis_end;
+	vregs->vd_v_ss		= VIDEO->vd_v_ss;
+	vregs->vd_fal_ctrl	= VIDEO->vd_fal_ctrl;
+	vregs->vd_fal_mode	= VIDEO->vd_fal_mode;
+	
 
 	/*
 	 * Calculate the depth of the screen
 	 */
 
-	falshift = VIDEO->vd_fal_res;
-	stshift = VIDEO->vd_st_res;
+	falshift = vregs->vd_fal_res;
+	stshift = vregs->vd_st_res;
 
 	if (falshift & 0x400)		/* 2 color */
 		dm->depth = 1;
@@ -147,15 +242,18 @@ dmode_t *dm;
 	 * Now calculate the screen hight
 	 */
 
-	dm->size.height = VIDEO->vd_v_dis_end - VIDEO->vd_v_dis_beg;
-	if (!interlace) dm->size.height >>=1;
-	if (doublescan) dm->size.height >>=1;
+	dm->size.height = vregs->vd_v_dis_end - vregs->vd_v_dis_beg;
+	if (!((vregs->vd_fal_mode & 0x2) >> 1)) /* if not interlaced */
+		dm->size.height >>=1;
+	if (vregs->vd_fal_mode & 0x1)		/* if doublescan */
+		dm->size.height >>=1;
 
 	/*
 	 * And the width
 	 */
 
-	dm->size.width = VIDEO->vd_vert_wrap * 16 / dm->depth;
+	dm->size.width = vregs->vd_vert_wrap * 16 / dm->depth;
+
 }
 
 static void
@@ -164,6 +262,9 @@ view_t *v;
 {
 	dmode_t	*dm = v->mode;
 	bmap_t	*bm = v->bitmap;
+	struct videl *vregs;
+
+	vregs = falcon_getreg(dm->vm_reg);
 
 	if (dm->current_view) {
 		/*
@@ -177,14 +278,38 @@ view_t *v;
 	falcon_use_colormap(v, v->colormap);
 
 	/* XXX: should use vbl for this	*/
-	/* 
-	 * Falcon: here should set the videl to switch the video mode.
-	 * This will be added later.
-	 * At the moment we set only the video base.
-	 */
 	VIDEO->vd_raml   =  (u_long)bm->hw_address & 0xff;
 	VIDEO->vd_ramm   = ((u_long)bm->hw_address >>  8) & 0xff;
 	VIDEO->vd_ramh   = ((u_long)bm->hw_address >> 16) & 0xff;
+
+	VIDEO->vd_v_freq_tim	= vregs->vd_v_freq_tim;
+	VIDEO->vd_v_ss		= vregs->vd_v_ss;
+	VIDEO->vd_v_bord_beg	= vregs->vd_v_bord_beg;
+	VIDEO->vd_v_bord_end	= vregs->vd_v_bord_end;
+	VIDEO->vd_v_dis_beg	= vregs->vd_v_dis_beg;
+	VIDEO->vd_v_dis_end	= vregs->vd_v_dis_end;
+	VIDEO->vd_h_hold_tim	= vregs->vd_h_hold_tim;
+	VIDEO->vd_h_ss		= vregs->vd_h_ss;
+	VIDEO->vd_h_bord_beg	= vregs->vd_h_bord_beg;
+	VIDEO->vd_h_bord_end	= vregs->vd_h_bord_end;
+	VIDEO->vd_h_dis_beg	= vregs->vd_h_dis_beg;
+	VIDEO->vd_h_dis_end	= vregs->vd_h_dis_end;
+#if 0 /* This seems not to be necessary -- Thomas */
+	VIDEO->vd_h_fs		= vregs->vd_h_fs;
+	VIDEO->vd_h_hh		= vregs->vd_h_hh;
+#endif
+	VIDEO->vd_sync          = vregs->vd_syncmode;
+	VIDEO->vd_fal_res       = 0;
+	if (dm->depth == 2)
+		VIDEO->vd_st_res        = vregs->vd_st_res;
+	else {
+		VIDEO->vd_st_res        = 0;
+		VIDEO->vd_fal_res       = vregs->vd_fal_res;
+	}
+	VIDEO->vd_vert_wrap     = vregs->vd_vert_wrap;
+	VIDEO->vd_line_wide     = vregs->vd_line_wide;
+	VIDEO->vd_fal_ctrl      = vregs->vd_fal_ctrl;
+	VIDEO->vd_fal_mode      = vregs->vd_fal_mode;
 }
 
 static void
