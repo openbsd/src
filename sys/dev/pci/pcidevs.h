@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.327 2000/09/28 18:57:07 aaron Exp 
+ *		OpenBSD: pcidevs,v 1.329 2000/10/08 19:34:08 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1336,6 +1336,8 @@
 #define	PCI_PRODUCT_SYMBIOS_895	0x000c		/* 53c895 */
 #define	PCI_PRODUCT_SYMBIOS_895A	0x0012		/* 53c895A */
 #define	PCI_PRODUCT_SYMBIOS_896	0x000b		/* 53c896 */
+#define	PCI_PRODUCT_SYMBIOS_1510	0x0010		/* 53c1510 */
+#define	PCI_PRODUCT_SYMBIOS_1510D	0x000a		/* 53c1510D */
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC */
