@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.1.1.1 1998/06/23 18:46:42 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.2 1998/07/08 19:31:13 mickey Exp $	*/
 /*	$NOWHERE: libsa.h,v 2.2 1998/06/22 19:34:47 mickey Exp $	*/
 
 /*
@@ -32,6 +32,8 @@
  */
 
 #include <lib/libsa/stand.h>
+
+#define	DEFAULT_KERNEL_ADDRESS	0x12000
 
 void pdc_init __P((void));
 void getbinfo __P((void));
