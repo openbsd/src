@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.21 2003/03/12 19:11:02 jason Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.22 2004/04/16 22:54:48 xsa Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ ae_size_card_memory(bst, bsh, ofs)
 	bus_space_handle_t bsh;
 	int ofs;
 {
-	int i1, i2, i3, i4;
+	int i1, i2, i3, i4, i8;
 
 	/*
 	 * banks; also assume it will generally mirror in upper banks
@@ -90,11 +90,29 @@ ae_size_card_memory(bst, bsh, ofs)
 	i2 = (8192 * 1);
 	i3 = (8192 * 2);
 	i4 = (8192 * 3);
+	i8 = (8192 * 4);
 
-	bus_space_write_2(bst, bsh, ofs + i1, 0x1111);
-	bus_space_write_2(bst, bsh, ofs + i2, 0x2222);
-	bus_space_write_2(bst, bsh, ofs + i3, 0x3333);
+	bus_space_write_2(bst, bsh, ofs + i8, 0x8888);
 	bus_space_write_2(bst, bsh, ofs + i4, 0x4444);
+	bus_space_write_2(bst, bsh, ofs + i3, 0x3333);
+	bus_space_write_2(bst, bsh, ofs + i2, 0x2222);
+	bus_space_write_2(bst, bsh, ofs + i1, 0x1111);
+
+	/*
+	 * 1) If the memory range is decoded completely, it does not
+	 *    matter what we write first: High tags written into
+	 *    the void are lost.
+	 * 2) If the memory range is not decoded completely (banks are
+	 *    mirrored), high tags are overwritten by lower ones.
+	 * 3) Lazy implementation of pathological cases - none found yet.
+	 */
+
+	if (bus_space_read_2(bst, bsh, ofs + i1) == 0x1111 &&
+	    bus_space_read_2(bst, bsh, ofs + i2) == 0x2222 &&
+	    bus_space_read_2(bst, bsh, ofs + i3) == 0x3333 &&
+	    bus_space_read_2(bst, bsh, ofs + i4) == 0x4444 &&
+	    bus_space_read_2(bst, bsh, ofs + i8) == 0x8888)
+		return 8192 * 8;
 
 	if (bus_space_read_2(bst, bsh, ofs + i1) == 0x1111 &&
 	    bus_space_read_2(bst, bsh, ofs + i2) == 0x2222 &&
