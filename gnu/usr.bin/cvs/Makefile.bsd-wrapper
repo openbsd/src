@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 1996/08/13 02:35:15 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 1996/08/13 02:45:41 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ CLEANFILES=	man/cvs.cat1 man/cvs.cat5 man/cvsbug.cat8 lib/getdate.c \
 
 .if defined(KERBEROS)
 KRB=--with-krb4=/usr
-.fi
+.endif
 
 all:	config.status
 	${MAKE} ${GNUCFLAGS} LDFLAGS=${LDSTATIC}
