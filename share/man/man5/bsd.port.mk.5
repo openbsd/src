@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.108 2003/07/14 18:51:37 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.109 2003/07/14 23:47:17 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -436,6 +436,7 @@ See also
 Macros passed to make and configure invocations.
 Set based on corresponding INSTALL_* variables.
 .It Ev BIN_PACKAGES
+User settings.
 If set to
 .Sq Yes ,
 the
@@ -475,6 +476,7 @@ or
 target will be processed in a subdirectory of the working directory,
 specifically, in ${WRKDIR}/directory.
 .It Ev BULK
+User settings.
 If set to
 .Sq Yes ,
 successful package builds and installations will clean
@@ -706,6 +708,7 @@ and patchfiles will be located.
 See target
 .Ar fetch .
 .It Ev ECHO_MSG
+User settings.
 Used to display
 .Sq ===> Configuring for foo
 and similar informative messages.
@@ -782,6 +785,7 @@ Can be used to go through excessively paranoid firewalls.
 See BUILD_DEPENDS for specification.
 Fetch dependencies are checked at the beginning of the extract stage.
 .It Ev FETCH_SYMLINK_DISTFILES
+User settings.
 Set to
 .Sq Yes
 to link distribution files off
@@ -979,12 +983,14 @@ User settings.
 Beware of the full implications of this mechanism, namely that it disables
 entirely the basic authentication mechanisms of the ports tree.
 .It Ev NO_DEPENDS
+User settings.
 Don't verify build of dependencies.
 Do not use in any ports Makefile.
 This is only meant as a user convenience when, e.g., you just want to browse
 through a given port's source and do not wish to trigger the build of
 dependencies.
 .It Ev NO_IGNORE
+User settings.
 If set to
 .Sq Yes ,
 avoid ignoring a port for the usual reasons.
@@ -1170,6 +1176,7 @@ Creation of a separate working directory is mandatory.
 If, at a later time, a full build with all subpackages is required,
 all the work will need to be done again.
 .It Ev REFETCH
+User settings.
 If set to true,
 .Ar checksum
 will analyze ${CHECKSUM_FILE}, and try retrieving files with the correct
