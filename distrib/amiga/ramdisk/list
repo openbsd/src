@@ -1,7 +1,7 @@
-#	$OpenBSD: list,v 1.1 1997/05/15 08:58:08 niklas Exp $
+#	$OpenBSD: list,v 1.2 1997/05/18 13:17:19 niklas Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
-# Sparc extra's
+# Amiga extra's
 LINK	instbin			sbin/disklabel
 LINK	instbin			sbin/mount_ados
 
