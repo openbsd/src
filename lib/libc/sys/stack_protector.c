@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.4 2003/03/03 19:52:41 deraadt Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.5 2003/07/18 23:05:13 david Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -28,12 +28,15 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(list)
-static char rcsid[] = "$OpenBSD: stack_protector.c,v 1.4 2003/03/03 19:52:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: stack_protector.c,v 1.5 2003/07/18 23:05:13 david Exp $";
 #endif
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <signal.h>
+#include <string.h>
 #include <syslog.h>
+#include <unistd.h>
 
 long __guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static void __guard_setup(void) __attribute__ ((constructor));

@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: grammar.y,v 1.11 2003/05/14 08:50:37 canacar Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.12 2003/07/18 23:05:13 david Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -24,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.11 2003/05/14 08:50:37 canacar Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.12 2003/07/18 23:05:13 david Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -42,6 +42,7 @@ struct rtentry;
 #include <net/pfvar.h>
 
 #include <stdio.h>
+#include <string.h>
 
 #include "pcap-int.h"
 

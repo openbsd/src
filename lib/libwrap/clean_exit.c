@@ -1,4 +1,4 @@
-/*	$OpenBSD: clean_exit.c,v 1.1 1997/02/26 03:06:50 downsj Exp $	*/
+/*	$OpenBSD: clean_exit.c,v 1.2 2003/07/18 23:05:13 david Exp $	*/
 
 /*
   * clean_exit() cleans up and terminates the program. It should be called
@@ -14,11 +14,12 @@
 #if 0
 static char sccsid[] = "@(#) clean_exit.c 1.4 94/12/28 17:42:19";
 #else
-static char rcsid[] = "$OpenBSD: clean_exit.c,v 1.1 1997/02/26 03:06:50 downsj Exp $";
+static char rcsid[] = "$OpenBSD: clean_exit.c,v 1.2 2003/07/18 23:05:13 david Exp $";
 #endif
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "tcpd.h"
