@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.5 2004/07/15 13:55:10 mpech Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.6 2004/07/15 17:15:33 millert Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pkill.c,v 1.5 2004/07/15 13:55:10 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: pkill.c,v 1.6 2004/07/15 17:15:33 millert Exp $";
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -422,7 +422,7 @@ int
 killact(struct kinfo_proc2 *kp)
 {
 
-	if (kill(kp->p_pid, signum) == -1) {
+	if (kill(kp->p_pid, signum) == -1 && errno != ESRCH) {
 		warn("signalling pid %d", (int)kp->p_pid);
 		return (-1);
 	}
