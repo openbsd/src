@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.9 1997/06/23 12:13:45 kstailey Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.10 1997/06/23 22:20:25 kstailey Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -20,6 +20,11 @@ config: .FORCE
 
 config.status:
 	/bin/sh ${.CURDIR}/configure --prefix=/usr
+
+.ifdef NOMAN
+maninstall:
+        @echo NOMAN is set
+.endif
 
 install:	maninstall
 	${FSFMAKE} prefix=${DESTDIR}/usr bindir=${DESTDIR}/usr/bin \
