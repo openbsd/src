@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.8 1997/10/14 17:11:10 pefo Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.9 1998/01/11 20:42:01 provos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -67,6 +67,7 @@ struct dos_partition {
 #define DOSPTYP_FAT16S	0x04		/* 16-bit FAT, less than 32M */
 #define DOSPTYP_EXTEND	0x05		/* Extended; contains sub-partitions */
 #define DOSPTYP_FAT16B	0x06		/* 16-bit FAT, more than 32M */
+#define DOSPTYP_FAT32	0x0b		/* 32-bit FAT */
 #define DOSPTYP_FAT16C	0x0e		/* 16-bit FAT, CHS-mapped */
 #define DOSPTYP_ONTRACK	0x54
 #define	DOSPTYP_LINUX	0x83		/* That other thing */
