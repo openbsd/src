@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.19 2004/10/18 14:37:20 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.20 2004/11/07 13:47:12 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,7 +25,7 @@
 .Nd install software package distributions
 .Sh SYNOPSIS
 .Nm pkg_add
-.Op Fl aInv
+.Op Fl aInrv
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
 .Op Fl Q Ar quick-destdir
@@ -126,6 +126,14 @@ If scripts exist for a given package, do not execute them.
 .It Fl n
 Don't actually install a package, just report the steps that
 would be taken if it was.
+.It Fl r
+Allow replacing existing packages.
+This is an experimental option for now:
+the code will try to take every precaution to make sure the update can
+proceed before removing the old package and adding the new one, and it
+should also handle shared libraries correctly.
+But this functionality has seen very little testing yet, and since it is
+rather powerful, it can break a system in a thorough way.
 .It Fl A Ar arch
 Assume
 .Ar arch
@@ -373,6 +381,18 @@ Initial design.
 .It "Marc Espie"
 Complete rewrite.
 .El
+.Sh BUGS
+The
+.Fl r
+option has not seen wide-testing yet and is almost certainly full of bugs.
+In particular, failure modes are untested, and a large number of code paths
+have not seen actual use yet.
+This options only handles atomic updates of single packages, there is no code
+to replace multiple packages with another set of equivalent multiple packages.
+For instance, since this option will often replace a package with 
+a newer package by creating an extra stub package for older shared libraries, 
+reversing the effect of pkg_add -r without wiping out most installed packages
+will be impossible.
 .Sh CAVEATS
 Package extraction does need a temporary area that
 can hold executable scripts.
