@@ -431,3 +431,5 @@
 ./usr/mdec/stboot
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/twereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/twevar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/netnatm
+./usr/libdata/perl5/site_perl/m88k-openbsd/netnatm/natm.ph

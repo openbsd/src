@@ -1731,3 +1731,5 @@
 ./usr/mdec/stboot
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/twereg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/twevar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/netnatm
+./usr/libdata/perl5/site_perl/m68k-openbsd/netnatm/natm.ph

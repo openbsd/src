@@ -50,3 +50,5 @@
 ./usr/mdec/xxboot
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/twereg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/twevar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/netnatm
+./usr/libdata/perl5/site_perl/vax-openbsd/netnatm/natm.ph

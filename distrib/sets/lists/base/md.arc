@@ -487,3 +487,5 @@
 ./usr/mipsel-unknown-openbsd2.8/lib/ldscripts
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/twereg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/twevar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/netnatm
+./usr/libdata/perl5/site_perl/mips-openbsd/netnatm/natm.ph

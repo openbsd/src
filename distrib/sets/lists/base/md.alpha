@@ -1677,3 +1677,5 @@
 ./usr/share/info/ld.info-3
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/twereg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/twevar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/netnatm
+./usr/libdata/perl5/site_perl/alpha-openbsd/netnatm/natm.ph

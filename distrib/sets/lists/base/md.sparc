@@ -1724,3 +1724,5 @@
 ./usr/sbin/screenblank
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/twereg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/twevar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/netnatm
+./usr/libdata/perl5/site_perl/sparc-openbsd/netnatm/natm.ph
