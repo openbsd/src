@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.23 2002/09/06 22:33:47 deraadt Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.24 2002/09/12 17:43:14 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.23 2002/09/06 22:33:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.24 2002/09/12 17:43:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ main(argc, argv, envp)
 	register struct qstream *sp;
 	register struct qdatagram *dqp;
 	struct qstream *nextsp;
-	int nfds;
+	int nfds, nullfd;
 	const int on = 1;
 	int rfd, size, len;
 	socklen_t getsockoptlen;
@@ -382,6 +382,18 @@ main(argc, argv, envp)
 		fprintf(ddt, "bootfile = %s\n", bootfile);
 	}		
 #endif
+
+#ifdef DEBUG
+		if (!debug)
+#endif
+		{
+			nullfd = open(_PATH_DEVNULL, O_RDWR);
+			if (nullfd < 0) {
+				fprintf(stderr, "open /dev/null failed: %s\n",
+					strerror(errno));
+				exit(1);
+			}
+		}
 
 	/*
 	 * Chroot if desired.
@@ -641,12 +653,11 @@ main(argc, argv, envp)
 		if (!debug)
 #endif
 		{
-			n = open(_PATH_DEVNULL, O_RDONLY);
-			(void) dup2(n, 0);
-			(void) dup2(n, 1);
-			(void) dup2(n, 2);
-			if (n > 2)
-				(void) my_close(n);
+			(void) dup2(nullfd, 0);
+			(void) dup2(nullfd, 1);
+			(void) dup2(nullfd, 2);
+			if (nullfd > 2)
+				(void) my_close(nullfd);
 		}
 	}
 #else
@@ -655,7 +666,7 @@ main(argc, argv, envp)
 #endif
 	{
 #ifdef HAVE_DAEMON
-		daemon(1, 0);
+		daemon(1, 1);
 #else
 		switch (fork()) {
 		case -1:
@@ -669,12 +680,6 @@ main(argc, argv, envp)
 			/* parent */
 			exit(0);
 		}
-		n = open(_PATH_DEVNULL, O_RDONLY);
-		(void) dup2(n, 0);
-		(void) dup2(n, 1);
-		(void) dup2(n, 2);
-		if (n > 2)
-			(void) my_close(n);
 #if defined(SYSV) || defined(hpux)
 		setpgrp();
 #else
@@ -704,6 +709,11 @@ main(argc, argv, envp)
 		}
 #endif /* SYSV */
 #endif /* HAVE_DAEMON */
+		(void) dup2(nullfd, 0);
+		(void) dup2(nullfd, 1);
+		(void) dup2(nullfd, 2);
+		if (nullfd > 2)
+			(void) my_close(nullfd);
 	}
 #endif /* USE_SETSID */
 #ifdef WANT_PIDFILE
