@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.32 2005/01/03 01:02:45 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.33 2005/01/03 13:01:27 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,14 +25,16 @@
 .Nd install software package distributions
 .Sh SYNOPSIS
 .Nm pkg_add
+.Bk -words
 .Op Fl acInqrvx
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
-.Op Fl F Ar keyword
+.Op Fl F Ar keywords
 .Op Fl L Ar localbase
 .Op Fl P Ar type
 .Op Fl Q Ar quick-destdir
 .Ar pkg-name Op Ar ...
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
