@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.25 1998/08/21 19:25:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.26 1998/08/21 20:33:12 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,6 +43,7 @@ static char rcsid[] = "$OpenBSD: nlist.c,v 1.25 1998/08/21 19:25:36 millert Exp 
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <a.out.h>		/* pulls in nlist.h */
@@ -65,7 +66,7 @@ __aout_fdnlist(fd, list)
 	register struct nlist *list;
 {
 	register struct nlist *p, *s;
-	register void *strtab;
+	register char *strtab;
 	register off_t stroff, symoff;
 	register u_long symsize;
 	register int nent, cc;
@@ -83,23 +84,21 @@ __aout_fdnlist(fd, list)
 	stroff = symoff + symsize;
 
 	/* Read in the size of the string table. */
+	if (lseek(fd, N_STROFF(exec), SEEK_SET) == -1)
+		return (-1);
 	if (read(fd, (char *)&strsize, sizeof(strsize)) != sizeof(strsize))
 		return (-1);
 
 	/*
-	 * Map string table into our address space.  This gives us
-	 * an easy way to randomly access all the strings, without
-	 * making the memory allocation permanent as with malloc/free
-	 * (i.e., munmap will return it to the system).  We try to
-	 * get a clean snapshot via MAP_COPY but that does not work
-	 * for cdevs (like /dev/ksyms) so we try without if that fails.
+	 * Read in the string table.  Since OpenBSD's malloc(3) returns
+	 * memory to the system on free this does not cause bloat.
 	 */
-	if ((strtab = mmap(NULL, (size_t)strsize, PROT_READ, MAP_COPY|MAP_FILE,
-	    fd, stroff)) == MAP_FAILED)
-		strtab = mmap(NULL, (size_t)strsize, PROT_READ, 0, fd,
-		    stroff);
-	if (strtab == MAP_FAILED)
+	strsize -= sizeof(strsize);
+	if ((strtab = (char *)malloc(strsize)) == NULL)
 		return (-1);
+	if (read(fd, strtab, strsize) != strsize)
+		return (-1);
+
 	/*
 	 * clean out any left-over information for all valid entries.
 	 * Type and value defined to be 0 if not found; historical
@@ -127,12 +126,12 @@ __aout_fdnlist(fd, list)
 			break;
 		symsize -= cc;
 		for (s = nbuf; cc > 0; ++s, cc -= sizeof(*s)) {
-			register int soff = s->n_un.n_strx;
+			char *sname = strtab + s->n_un.n_strx - sizeof(int);
 
-			if (soff == 0 || (s->n_type & N_STAB) != 0)
+			if (s->n_un.n_strx == 0 || (s->n_type & N_STAB) != 0)
 				continue;
 			for (p = list; !ISLAST(p); p++)
-				if (!strcmp(&((char *)strtab)[soff], p->n_un.n_name)) {
+				if (!strcmp(sname, p->n_un.n_name)) {
 					p->n_value = s->n_value;
 					p->n_type = s->n_type;
 					p->n_desc = s->n_desc;
@@ -142,7 +141,7 @@ __aout_fdnlist(fd, list)
 				}
 		}
 	}
-	munmap(strtab, strsize);
+	free(strtab);
 	return (nent);
 }
 #endif /* _NLIST_DO_AOUT */
