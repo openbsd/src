@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2002/07/16 01:22:48 provos Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2002/07/19 14:38:58 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -277,6 +277,8 @@ action		: PERMIT
 	$$ = ICPOLICY_NEVER;
 }
 %%
+
+int yyerror(char *, ...);
 
 int
 yyerror(char *fmt, ...)

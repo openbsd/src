@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.l,v 1.7 2002/07/19 14:38:58 itojun Exp $	*/
+/*	$OpenBSD: filter.h,v 1.1 2002/07/19 14:38:57 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -29,77 +29,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-%x incl
 
-%{
-#include <sys/types.h>
-#include <sys/tree.h>
-
-#include <sys/time.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <err.h>
-#include <stdarg.h>
-#include <string.h>
-
-#include "intercept.h"
-#include "systrace.h"
-#include "y.tab.h"
-
-int yyerror(char *fmt, ...);
-int yylex(void);
-
-char *mystring;
-int myoff;
-
-#define YY_INPUT(buf,result,max_size) \
-{ \
-	int len = strlen(mystring + myoff); \
-	if (max_size < len) \
-		len = max_size; \
-	if (len == 0) \
-		result = YY_NULL; \
-	else { \
-		memcpy(buf, mystring + myoff, len); \
-		myoff += len; \
-		result = len; \
-	} \
-}
-%}
-
-%%
-deny		{ return DENY; }
-permit		{ return PERMIT; }
-and		{ return AND; }
-or		{ return OR; }
-not		{ return NOT; }
-match		{ return MATCH; }
-then		{ return THEN; }
-eq		{ return EQ; }
-neq		{ return NEQ; }
-sub		{ return SUB; }
-nsub		{ return NSUB; }
-inpath		{ return INPATH; }
-true		{ return TRUE; }
-"->"		{ return THEN; }
-\(		{ return LBRACE; }
-\)		{ return RBRACE; }
-[\$A-Za-z][\.\(\)\/A-Za-z_\-0-9]* { yylval.string = strdup(yytext); return STRING; }
-[0-9]+		{ yylval.number = atoi(yytext); return NUMBER; }
-\"[^\"]+\" { char line[1024];
-	 strlcpy(line, yytext + 1, sizeof(line));
-	 line[strlen(line)-1] = '\0';
-	 yylval.string = strdup(line);
-	 return CMDSTRING; }
-\[		{ return LSQBRACE; }
-\]		{ return RSQBRACE; }
-\ 		{ ; }
-\n		{ ; }
-\t		{ ; }
-"#".*\n		{ ; }
-.		{ yyerror("illegal token"); }
-%%
-#ifndef yywrap
-int yywrap() { return 1; }
-#endif
+int filter_fnmatch(struct intercept_translate *, struct logic *);
+int filter_stringmatch(struct intercept_translate *, struct logic *);
+int filter_negstringmatch(struct intercept_translate *, struct logic *);
+int filter_substrmatch(struct intercept_translate *, struct logic *);
+int filter_negsubstrmatch(struct intercept_translate *, struct logic *);
+int filter_inpath(struct intercept_translate *, struct logic *);
+int filter_true(struct intercept_translate *, struct logic *);

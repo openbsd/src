@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.6 2002/07/14 22:34:55 provos Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.7 2002/07/19 14:38:57 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -44,7 +44,15 @@
 
 char *error_msg = "error";
 
-void
+static void ic_trans_free(struct intercept_translate *);
+static int ic_print_filename(char *, size_t, struct intercept_translate *);
+static int ic_get_filename(struct intercept_translate *, int, pid_t, void *);
+static int ic_get_string(struct intercept_translate *, int, pid_t, void *);
+static int ic_get_linkname(struct intercept_translate *, int, pid_t, void *);
+static int ic_get_sockaddr(struct intercept_translate *, int, pid_t, void *);
+static int ic_print_sockaddr(char *, size_t, struct intercept_translate *);
+
+static void
 ic_trans_free(struct intercept_translate *trans)
 {
 	if (trans->trans_data)
@@ -109,7 +117,7 @@ intercept_translate_print(struct intercept_translate *trans)
 	return (trans->trans_print);
 }
 
-int
+static int
 ic_print_filename(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	strlcpy(buf, tl->trans_data, buflen);
@@ -117,7 +125,7 @@ ic_print_filename(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
-int
+static int
 ic_get_filename(struct intercept_translate *trans, int fd, pid_t pid,
     void *addr)
 {
@@ -139,7 +147,7 @@ ic_get_filename(struct intercept_translate *trans, int fd, pid_t pid,
 	return (0);
 }
 
-int
+static int
 ic_get_string(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 {
 	char *name;
@@ -163,7 +171,7 @@ ic_get_string(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 	return (0);
 }
 
-int
+static int
 ic_get_linkname(struct intercept_translate *trans, int fd, pid_t pid,
     void *addr)
 {
@@ -185,7 +193,7 @@ ic_get_linkname(struct intercept_translate *trans, int fd, pid_t pid,
 	return (0);
 }
 
-int
+static int
 ic_get_sockaddr(struct intercept_translate *trans, int fd, pid_t pid,
     void *addr)
 {
@@ -213,7 +221,7 @@ ic_get_sockaddr(struct intercept_translate *trans, int fd, pid_t pid,
 #define offsetof(s, e)	((size_t)&((s *)0)->e)
 #endif
 
-int
+static int
 ic_print_sockaddr(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	char host[NI_MAXHOST];

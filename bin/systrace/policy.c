@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.12 2002/07/07 23:14:43 provos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.13 2002/07/19 14:38:58 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -45,6 +45,14 @@
 
 #include "intercept.h"
 #include "systrace.h"
+
+static int psccompare(struct policy_syscall *, struct policy_syscall *);
+static int policycompare(struct policy *, struct policy *);
+static int polnrcompare(struct policy *, struct policy *);
+static void systrace_setupdir(void);
+static char *systrace_policyfilename(char *, const char *);
+static int systrace_predicatematch(char *);
+static int systrace_writepolicy(struct policy *);
 
 static int
 psccompare(struct policy_syscall *a, struct policy_syscall *b)
@@ -154,7 +162,7 @@ systrace_initpolicy(char *file)
 }
 
 struct policy *
-systrace_findpolicy(char *name)
+systrace_findpolicy(const char *name)
 {
 	struct policy tmp;
 
@@ -190,7 +198,7 @@ systrace_newpolicynr(int fd, struct policy *tmp)
 }
 
 struct policy *
-systrace_newpolicy(char *emulation, char *name)
+systrace_newpolicy(const char *emulation, const char *name)
 {
 	struct policy *tmp;
 
@@ -217,7 +225,8 @@ systrace_newpolicy(char *emulation, char *name)
 }
 
 struct filterq *
-systrace_policyflq(struct policy *policy, char *emulation, char *name)
+systrace_policyflq(struct policy *policy, const char *emulation,
+    const char *name)
 {
 	struct policy_syscall tmp2, *tmp;
 
@@ -241,7 +250,7 @@ systrace_policyflq(struct policy *policy, char *emulation, char *name)
 }
 
 int
-systrace_modifypolicy(int fd, int policynr, char *name, short action)
+systrace_modifypolicy(int fd, int policynr, const char *name, short action)
 {
 	struct policy *policy;
 	int res;
@@ -250,16 +259,16 @@ systrace_modifypolicy(int fd, int policynr, char *name, short action)
 		return (-1);
 
 	res = intercept_modifypolicy(fd, policynr, policy->emulation,
-		    name, action);
+	    name, action);
 
 	return (res);
 }
 
 char *
-systrace_policyfilename(char *dirname, char *name)
+systrace_policyfilename(char *dirname, const char *name)
 {
 	static char file[2*MAXPATHLEN];
-	char *p;
+	const char *p;
 	int i, plen;
 
 	if (strlen(name) + strlen(dirname) + 1 >= sizeof(file))
@@ -286,7 +295,7 @@ systrace_policyfilename(char *dirname, char *name)
 }
 
 int
-systrace_addpolicy(char *name)
+systrace_addpolicy(const char *name)
 {
 	char *file = NULL;
 

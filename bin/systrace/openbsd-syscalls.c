@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.7 2002/07/06 19:14:19 nordin Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.8 2002/07/19 14:38:58 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -84,14 +84,8 @@
 
 #include "intercept.h"
 
-/* Callback into main library */
-void intercept_child_info(pid_t, pid_t);
-void intercept_syscall(int, pid_t, int, char *, int, char *, void *, int);
-void intercept_syscall_result(int, pid_t, int, char *, int, char *, void *,
-    int, int, void *);
-
 struct emulation {
-	char *name;		/* Emulation name */
+	const char *name;	/* Emulation name */
 	char **sysnames;	/* Array of system call names */
 	int  nsysnames;		/* Number of */
 };
@@ -116,13 +110,40 @@ struct obsd_data {
 	struct emulation *commit;
 };
 
-int
+static int obsd_init(void);
+static int obsd_attach(int, pid_t);
+static int obsd_report(int, pid_t);
+static int obsd_detach(int, pid_t);
+static int obsd_open(void);
+static struct intercept_pid *obsd_getpid(pid_t);
+static void obsd_freepid(struct intercept_pid *);
+static void obsd_clonepid(struct intercept_pid *, struct intercept_pid *);
+static struct emulation *obsd_find_emulation(const char *);
+static int obsd_set_emulation(pid_t, const char *);
+static struct emulation *obsd_switch_emulation(struct obsd_data *);
+static const char *obsd_syscall_name(pid_t, int);
+static int obsd_syscall_number(const char *, const char *);
+static short obsd_translate_policy(short);
+static short obsd_translate_flags(short);
+static int obsd_translate_errno(int);
+static int obsd_answer(int, pid_t, short, int, short);
+static int obsd_newpolicy(int);
+static int obsd_assignpolicy(int, pid_t, int);
+static int obsd_modifypolicy(int, int, int, short);
+static int obsd_replace(int, pid_t, struct intercept_replace *);
+static int obsd_io(int, pid_t, int, void *, u_char *, size_t);
+static char *obsd_getcwd(int, pid_t, char *, size_t);
+static int obsd_restcwd(int);
+static int obsd_argument(int, void *, int, void **);
+static int obsd_read(int);
+
+static int
 obsd_init(void)
 {
 	return (0);
 }
 
-int
+static int
 obsd_attach(int fd, pid_t pid)
 {
 	if (ioctl(fd, STRIOCATTACH, &pid) == -1)
@@ -131,7 +152,7 @@ obsd_attach(int fd, pid_t pid)
 	return (0);
 }
 
-int
+static int
 obsd_report(int fd, pid_t pid)
 {
 	if (ioctl(fd, STRIOCREPORT, &pid) == -1)
@@ -140,7 +161,7 @@ obsd_report(int fd, pid_t pid)
 	return (0);
 }
 
-int
+static int
 obsd_detach(int fd, pid_t pid)
 {
 	if (ioctl(fd, STRIOCDETACH, &pid) == -1)
@@ -149,7 +170,7 @@ obsd_detach(int fd, pid_t pid)
 	return (0);
 }
 
-int
+static int
 obsd_open(void)
 {
 	char *path = "/dev/systrace";
@@ -174,7 +195,7 @@ obsd_open(void)
 	return (cfd);
 }
 
-struct intercept_pid *
+static struct intercept_pid *
 obsd_getpid(pid_t pid)
 {
 	struct intercept_pid *icpid;
@@ -196,14 +217,14 @@ obsd_getpid(pid_t pid)
 	return (icpid);
 }
 
-void
+static void
 obsd_freepid(struct intercept_pid *ipid)
 {
 	if (ipid->data != NULL)
 		free(ipid->data);
 }
 
-void
+static void
 obsd_clonepid(struct intercept_pid *opid, struct intercept_pid *npid)
 {
 	if (opid->data == NULL) {
@@ -216,8 +237,8 @@ obsd_clonepid(struct intercept_pid *opid, struct intercept_pid *npid)
 	memcpy(npid->data, opid->data, sizeof(struct obsd_data));
 }
 
-struct emulation *
-obsd_find_emulation(char *name)
+static struct emulation *
+obsd_find_emulation(const char *name)
 {
 	struct emulation *tmp;
 
@@ -234,8 +255,8 @@ obsd_find_emulation(char *name)
 	return (tmp);
 }
 
-int
-obsd_set_emulation(pid_t pidnr, char *name)
+static int
+obsd_set_emulation(pid_t pidnr, const char *name)
 {
 	struct emulation *tmp;
 	struct intercept_pid *pid;
@@ -254,7 +275,7 @@ obsd_set_emulation(pid_t pidnr, char *name)
 	return (0);
 }
 
-struct emulation *
+static struct emulation *
 obsd_switch_emulation(struct obsd_data *data)
 {
 	data->current = data->commit;
@@ -263,7 +284,7 @@ obsd_switch_emulation(struct obsd_data *data)
 	return (data->current);
 }
 
-char *
+static const char *
 obsd_syscall_name(pid_t pidnr, int number)
 {
 	struct intercept_pid *pid;
@@ -280,8 +301,8 @@ obsd_syscall_name(pid_t pidnr, int number)
 	return (current->sysnames[number]);
 }
 
-int
-obsd_syscall_number(char *emulation, char *name)
+static int
+obsd_syscall_number(const char *emulation, const char *name)
 {
 	struct emulation *current;
 	int i;
@@ -297,7 +318,7 @@ obsd_syscall_number(char *emulation, char *name)
 	return (-1);
 }
 
-short
+static short
 obsd_translate_policy(short policy)
 {
 	switch (policy) {
@@ -311,7 +332,7 @@ obsd_translate_policy(short policy)
 	}
 }
 
-short
+static short
 obsd_translate_flags(short flags)
 {
 	switch (flags) {
@@ -322,13 +343,13 @@ obsd_translate_flags(short flags)
 	}
 }
 
-int
+static int
 obsd_translate_errno(int errno)
 {
 	return (errno);
 }
 
-int
+static int
 obsd_answer(int fd, pid_t pid, short policy, int errno, short flags)
 {
 	struct systrace_answer ans;
@@ -344,7 +365,7 @@ obsd_answer(int fd, pid_t pid, short policy, int errno, short flags)
 	return (0);
 }
 
-int
+static int
 obsd_newpolicy(int fd)
 {
 	struct systrace_policy pol;
@@ -359,7 +380,7 @@ obsd_newpolicy(int fd)
 	return (pol.strp_num);
 }
 
-int
+static int
 obsd_assignpolicy(int fd, pid_t pid, int num)
 {
 	struct systrace_policy pol;
@@ -374,7 +395,7 @@ obsd_assignpolicy(int fd, pid_t pid, int num)
 	return (0);
 }
 
-int
+static int
 obsd_modifypolicy(int fd, int num, int code, short policy)
 {
 	struct systrace_policy pol;
@@ -390,7 +411,7 @@ obsd_modifypolicy(int fd, int num, int code, short policy)
 	return (0);
 }
 
-int
+static int
 obsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
 {
 	struct systrace_replace replace;
@@ -432,7 +453,7 @@ obsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
 	return (ret);
 }
 
-int
+static int
 obsd_io(int fd, pid_t pid, int op, void *addr, u_char *buf, size_t size)
 {
 	struct systrace_io io;
@@ -461,7 +482,7 @@ obsd_getcwd(int fd, pid_t pid, char *buf, size_t size)
 	return (path);
 }
 
-int
+static int
 obsd_restcwd(int fd)
 {
 	int res;
@@ -471,7 +492,7 @@ obsd_restcwd(int fd)
 	return (res);
 }
 
-int
+static int
 obsd_argument(int off, void *pargs, int argsize, void **pres)
 {
 	register_t *args = (register_t *)pargs;
@@ -484,7 +505,7 @@ obsd_argument(int off, void *pargs, int argsize, void **pres)
 	return (0);
 }
 
-int
+static int
 obsd_read(int fd)
 {
 	struct str_message msg;
@@ -492,7 +513,8 @@ obsd_read(int fd)
 	struct obsd_data *data;
 	struct emulation *current;
 
-	char name[SYSTR_EMULEN+1], *sysname;
+	char name[SYSTR_EMULEN+1];
+	const char *sysname;
 	int code;
 
 	if (read(fd, &msg, sizeof(msg)) != sizeof(msg))

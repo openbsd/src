@@ -1,7 +1,10 @@
-#	$OpenBSD: Makefile,v 1.6 2002/07/11 12:57:41 provos Exp $
+#	$OpenBSD: Makefile,v 1.7 2002/07/19 14:38:57 itojun Exp $
 
 PROG=	systrace
-CFLAGS+= -I.
+CFLAGS+=-I.
+CFLAGS+=-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith \
+	-Wno-uninitialized -Werror
+CFLAGS+=-DYY_NO_UNPUT
 SRCS=	filter.c intercept-translate.c intercept.c \
 	openbsd-syscalls.c util.c \
 	policy.c systrace-errno.h systrace-error.c \

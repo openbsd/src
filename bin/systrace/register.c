@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.6 2002/07/16 14:28:17 provos Exp $	*/
+/*	$OpenBSD: register.c,v 1.7 2002/07/19 14:38:58 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -42,12 +42,6 @@
 
 #define X(x)	if ((x) == -1) \
 	err(1, "%s:%d: intercept failed", __func__, __LINE__)
-
-extern short trans_cb(int, pid_t, int, char *, int, char *, void *, int,
-    struct intercept_tlq *, void *);
-extern short gen_cb(int, pid_t, int, char *, int, char *, void *, int,
-    void *);
-extern void execres_cb(int, pid_t, int, char *, char *, void *);
 
 void
 systrace_initcb(void)

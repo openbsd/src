@@ -1,4 +1,4 @@
-/*	$OpenBSD: alias.c,v 1.1 2002/07/09 15:22:27 provos Exp $	*/
+/*	$OpenBSD: alias.c,v 1.2 2002/07/19 14:38:57 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -49,7 +49,10 @@
 static SPLAY_HEAD(alitr, systrace_alias) aliasroot;
 static SPLAY_HEAD(revtr, systrace_revalias) revroot;
 
-int
+static int aliascompare(struct systrace_alias *, struct systrace_alias *);
+static int revcompare(struct systrace_revalias *, struct systrace_revalias *);
+
+static int
 aliascompare(struct systrace_alias *a, struct systrace_alias *b)
 {
 	int diff;
@@ -60,7 +63,7 @@ aliascompare(struct systrace_alias *a, struct systrace_alias *b)
 	return (strcmp(a->name, b->name));
 }
 
-int
+static int
 revcompare(struct systrace_revalias *a, struct systrace_revalias *b)
 {
 	int diff;
@@ -87,7 +90,7 @@ systrace_initalias(void)
 }
 
 struct systrace_alias *
-systrace_find_alias(char *emulation, char *name)
+systrace_find_alias(const char *emulation, const char *name)
 {
 	struct systrace_alias tmp;
 
@@ -98,7 +101,7 @@ systrace_find_alias(char *emulation, char *name)
 }
 
 struct systrace_revalias *
-systrace_find_reverse(char *emulation, char *name)
+systrace_find_reverse(const char *emulation, const char *name)
 {
 	struct systrace_revalias tmp;
 
@@ -109,7 +112,7 @@ systrace_find_reverse(char *emulation, char *name)
 }
 
 struct systrace_revalias *
-systrace_reverse(char *emulation, char *name)
+systrace_reverse(const char *emulation, const char *name)
 {
 	struct systrace_revalias tmp, *reverse;
 
@@ -137,7 +140,8 @@ systrace_reverse(char *emulation, char *name)
 }
 
 struct systrace_alias *
-systrace_new_alias(char *emulation, char *name, char *aemul, char *aname)
+systrace_new_alias(const char *emulation, const char *name,
+    char *aemul, char *aname)
 {
 	struct systrace_alias *alias;
 	struct systrace_revalias *reverse;
@@ -163,7 +167,8 @@ systrace_new_alias(char *emulation, char *name, char *aemul, char *aname)
 }
 
 void
-systrace_switch_alias(char *emulation, char *name, char *aemul, char *aname)
+systrace_switch_alias(const char *emulation, const char *name,
+    char *aemul, char *aname)
 {
 	struct systrace_alias *alias;
 	struct systrace_revalias *reverse;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.h,v 1.7 2002/07/16 01:22:48 provos Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.8 2002/07/19 14:38:57 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -44,7 +44,7 @@ struct intercept_system {
 	int (*detach)(int, pid_t);
 	int (*report)(int, pid_t);
 	int (*read)(int);
-	int (*getsyscallnumber)(char *, char *);
+	int (*getsyscallnumber)(const char *, const char *);
 	char *(*getcwd)(int, pid_t, char *, size_t);
 	int (*restcwd)(int);
 	int (*io)(int, pid_t, int, void *, u_char *, size_t);
@@ -125,20 +125,21 @@ int intercept_detach(int, pid_t);
 int intercept_read(int);
 int intercept_newpolicy(int);
 int intercept_assignpolicy(int, pid_t, int);
-int intercept_modifypolicy(int, int, char *, char *, short);
+int intercept_modifypolicy(int, int, const char *, const char *, short);
+void intercept_child_info(pid_t, pid_t);
 
 int intercept_replace_init(struct intercept_replace *);
 int intercept_replace_add(struct intercept_replace *, int, u_char *, size_t);
 int intercept_replace(int, pid_t, struct intercept_replace *);
 
 int intercept_register_sccb(char *, char *,
-    short (*)(int, pid_t, int, char *, int, char *, void *, int,
+    short (*)(int, pid_t, int, const char *, int, const char *, void *, int,
 	struct intercept_tlq *, void *),
     void *);
 void *intercept_sccb_cbarg(char *, char *);
 
-int intercept_register_gencb(short (*)(int, pid_t, int, char *, int, char *, void *, int, void *), void *);
-int intercept_register_execcb(void (*)(int, pid_t, int, char *, char *, void *), void *);
+int intercept_register_gencb(short (*)(int, pid_t, int, const char *, int, const char *, void *, int, void *), void *);
+int intercept_register_execcb(void (*)(int, pid_t, int, const char *, const char *, void *), void *);
 
 struct intercept_translate *intercept_register_translation(char *, char *,
     int, struct intercept_translate *);
@@ -163,5 +164,9 @@ int intercept_existpids(void);
 
 char *intercept_get_string(int, pid_t, void *);
 char *intercept_filename(int, pid_t, void *, int);
+void intercept_syscall(int, pid_t, int, const char *, int, const char *,
+    void *, int);
+void intercept_syscall_result(int, pid_t, int, const char *, int, const char *,
+    void *, int, int, void *);
 
 #endif /* _INTERCEPT_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.28 2002/07/17 04:50:19 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.29 2002/07/19 14:38:58 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -47,6 +47,7 @@
 
 #include "intercept.h"
 #include "systrace.h"
+#include "util.h"
 
 pid_t pid;
 int fd;
@@ -59,14 +60,19 @@ int noalias = 0;		/* Do not do system call aliasing */
 char *username = NULL;		/* Username in automatic mode */
 char cwd[MAXPATHLEN];		/* Current working directory of process */
 
+static void child_handler(int);
+static void usage(void);
+static int requestor_start(char *);
+
 /*
  * Generate human readable output and setup replacements if available.
  */
 
 void
-make_output(char *output, size_t outlen, char *binname, pid_t pid,
-    int policynr, char *policy, int nfilters, char *emulation, char *name,
-    int code, struct intercept_tlq *tls, struct intercept_replace *repl)
+make_output(char *output, size_t outlen, const char *binname, pid_t pid,
+    int policynr, const char *policy, int nfilters, const char *emulation,
+    const char *name, int code, struct intercept_tlq *tls,
+    struct intercept_replace *repl)
 {
 	struct intercept_translate *tl;
 	char *p, *line;
@@ -101,7 +107,7 @@ make_output(char *output, size_t outlen, char *binname, pid_t pid,
 
 short
 trans_cb(int fd, pid_t pid, int policynr,
-    char *name, int code, char *emulation,
+    const char *name, int code, const char *emulation,
     void *args, int argsize, struct intercept_tlq *tls, void *cbarg)
 {
 	short action, future;
@@ -112,7 +118,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 	struct intercept_translate alitl[SYSTRACE_MAXALIAS];
 	struct systrace_alias *alias = NULL;
 	struct filterq *pflq = NULL;
-	char *binname = NULL;
+	const char *binname = NULL;
 	char output[_POSIX2_LINE_MAX];
 
 	action = ICPOLICY_PERMIT;
@@ -202,8 +208,8 @@ trans_cb(int fd, pid_t pid, int policynr,
 }
 
 short
-gen_cb(int fd, pid_t pid, int policynr, char *name, int code,
-    char *emulation, void *args, int argsize, void *cbarg)
+gen_cb(int fd, pid_t pid, int policynr, const char *name, int code,
+    const char *emulation, void *args, int argsize, void *cbarg)
 {
 	char output[_POSIX2_LINE_MAX];
 	struct policy *policy;
@@ -248,7 +254,8 @@ gen_cb(int fd, pid_t pid, int policynr, char *name, int code,
 }
 
 void
-execres_cb(int fd, pid_t pid, int policynr, char *emulation, char *name, void *arg)
+execres_cb(int fd, pid_t pid, int policynr, const char *emulation,
+    const char *name, void *arg)
 {
 	struct policy *policy;
 
@@ -305,7 +312,7 @@ execres_cb(int fd, pid_t pid, int policynr, char *emulation, char *name, void *a
 	fprintf(stderr, "Terminating %d: %s\n", pid, name);
 }
 
-void
+static void
 child_handler(int sig)
 {
 	int s = errno, status;
@@ -320,7 +327,7 @@ child_handler(int sig)
 	errno = s;
 }
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr,
@@ -328,7 +335,7 @@ usage(void)
 	exit(1);
 }
 
-int
+static int
 requestor_start(char *path)
 {
 	char *argv[2];

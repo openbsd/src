@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.14 2002/07/09 15:22:27 provos Exp $	*/
+/*	$OpenBSD: filter.c,v 1.15 2002/07/19 14:38:57 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -44,13 +44,21 @@
 
 #include "intercept.h"
 #include "systrace.h"
+#include "filter.h"
 
 extern int allow;
 extern int noalias;
 extern int connected;
 extern char cwd[];
 
-int
+static void logic_free(struct logic *);
+static int filter_match(struct intercept_tlq *, struct logic *);
+static void filter_review(struct filterq *);
+static void filter_policyrecord(struct policy *, struct filter *, const char *,
+    const char *, char *);
+static void filter_replace(char *, size_t, char *, char *);
+
+static int
 filter_match(struct intercept_tlq *tls, struct logic *logic)
 {
 	struct intercept_translate *tl;
@@ -127,7 +135,7 @@ filter_evaluate(struct intercept_tlq *tls, struct filterq *fls, int *pflags)
 	return (ICPOLICY_ASK);
 }
 
-void
+static void
 logic_free(struct logic *logic)
 {
 	if (logic->left)
@@ -151,7 +159,7 @@ filter_free(struct filter *filter)
 	free(filter);
 }
 
-void
+static void
 filter_review(struct filterq *fls)
 {
 	struct filter *filter;
@@ -165,9 +173,9 @@ filter_review(struct filterq *fls)
 	}
 }
 
-void
+static void
 filter_policyrecord(struct policy *policy, struct filter *filter,
-    char *emulation, char *name, char *rule)
+    const char *emulation, const char *name, char *rule)
 {
 	/* Record the filter in the policy */
 	if (filter == NULL) {
@@ -258,8 +266,8 @@ filter_parse_simple(char *rule, short *paction, short *pfuture)
 }
 
 void
-filter_modifypolicy(int fd, int policynr, char *emulation, char *name,
-    short future)
+filter_modifypolicy(int fd, int policynr, const char *emulation,
+    const char *name, short future)
 {
 	struct systrace_revalias *reverse = NULL;
 
@@ -331,7 +339,7 @@ filter_prepolicy(int fd, struct policy *policy)
 
 short
 filter_ask(struct intercept_tlq *tls, struct filterq *fls,
-    int policynr, char *emulation, char *name,
+    int policynr, const char *emulation, const char *name,
     char *output, short *pfuture, int *pflags)
 {
 	char line[2*MAXPATHLEN], *p;
@@ -465,7 +473,7 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 
 }
 
-void
+static void
 filter_replace(char *buf, size_t buflen, char *match, char *repl)
 {
 	while (strrpl(buf, buflen, match, repl) != NULL)

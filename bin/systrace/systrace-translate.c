@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.5 2002/07/14 22:34:55 provos Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.6 2002/07/19 14:38:58 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -52,7 +52,16 @@
 		*p++ = (c); \
 } while (0)
 
-int
+static int print_oflags(char *, size_t, struct intercept_translate *);
+static int linux_print_oflags(char *, size_t, struct intercept_translate *);
+static int print_modeflags(char *, size_t, struct intercept_translate *);
+static int print_number(char *, size_t, struct intercept_translate *);
+static int print_uname(char *, size_t, struct intercept_translate *);
+static int print_uname(char *, size_t, struct intercept_translate *);
+static int get_argv(struct intercept_translate *, int, pid_t, void *);
+static int print_argv(char *, size_t, struct intercept_translate *);
+
+static int
 print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	char str[32], *p;
@@ -96,7 +105,7 @@ print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
-int
+static int
 linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	char str[32], *p;
@@ -139,7 +148,7 @@ linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
-int
+static int
 print_modeflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	int mode = (int)tl->trans_addr;
@@ -150,7 +159,7 @@ print_modeflags(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
-int
+static int
 print_number(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	int number = (int)tl->trans_addr;
@@ -160,7 +169,7 @@ print_number(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
-int
+static int
 print_uname(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	struct passwd *pw;
@@ -172,7 +181,7 @@ print_uname(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
-int
+static int
 get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 {
 	char *arg;
@@ -182,7 +191,7 @@ get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 
 	buf[0] = '\0';
 	while (1) {
-		if (intercept.io(fd, pid, INTERCEPT_READ, addr + off,
+		if (intercept.io(fd, pid, INTERCEPT_READ, (char *)addr + off,
 			(void *)&arg, sizeof(char *)) == -1) {
 			warn("%s: ioctl", __func__);
 			return (NULL);
@@ -213,7 +222,7 @@ get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 	return (0);
 }
 
-int
+static int
 print_argv(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	snprintf(buf, buflen, "%s", (char *)tl->trans_data);

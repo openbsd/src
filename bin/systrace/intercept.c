@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.16 2002/07/16 01:22:48 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.17 2002/07/19 14:38:57 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -53,21 +53,27 @@ struct intercept_syscall {
 	char name[64];
 	char emulation[16];
 
-	short (*cb)(int, pid_t, int, char *, int, char *, void *, int,
-	    struct intercept_tlq *, void *);
+	short (*cb)(int, pid_t, int, const char *, int, const char *, void *,
+	    int, struct intercept_tlq *, void *);
 	void *cb_arg;
 
 	struct intercept_tlq tls;
 };
+
+static int sccompare(struct intercept_syscall *, struct intercept_syscall *);
+static int pidcompare(struct intercept_pid *, struct intercept_pid *);
+static struct intercept_syscall *intercept_sccb_find(const char *,
+    const char *);
+static void sigusr1_handler(int);
 
 static SPLAY_HEAD(pidtree, intercept_pid) pids;
 static SPLAY_HEAD(sctree, intercept_syscall) scroot;
 
 /* Generic callback functions */
 
-void (*intercept_newimagecb)(int, pid_t, int, char *, char *, void *) = NULL;
+void (*intercept_newimagecb)(int, pid_t, int, const char *, const char *, void *) = NULL;
 void *intercept_newimagecbarg = NULL;
-short (*intercept_gencb)(int, pid_t, int, char *, int, char *, void *, int, void *) = NULL;
+short (*intercept_gencb)(int, pid_t, int, const char *, int, const char *, void *, int, void *) = NULL;
 void *intercept_gencbarg = NULL;
 
 int
@@ -114,7 +120,7 @@ intercept_init(void)
 }
 
 struct intercept_syscall *
-intercept_sccb_find(char *emulation, char *name)
+intercept_sccb_find(const char *emulation, const char *name)
 {
 	struct intercept_syscall tmp;
 
@@ -165,7 +171,7 @@ intercept_sccb_cbarg(char *emulation, char *name)
 
 int
 intercept_register_sccb(char *emulation, char *name,
-    short (*cb)(int, pid_t, int, char *, int, char *, void *, int,
+    short (*cb)(int, pid_t, int, const char *, int, const char *, void *, int,
 	struct intercept_tlq *, void *),
     void *cbarg)
 {
@@ -197,7 +203,7 @@ intercept_register_sccb(char *emulation, char *name,
 }
 
 int
-intercept_register_gencb(short (*cb)(int, pid_t, int, char *, int, char *, void *, int, void *), void *arg)
+intercept_register_gencb(short (*cb)(int, pid_t, int, const char *, int, const char *, void *, int, void *), void *arg)
 {
 	intercept_gencb = cb;
 	intercept_gencbarg = arg;
@@ -206,7 +212,7 @@ intercept_register_gencb(short (*cb)(int, pid_t, int, char *, int, char *, void 
 }
 
 int
-intercept_register_execcb(void (*cb)(int, pid_t, int, char *, char *, void *), void *arg)
+intercept_register_execcb(void (*cb)(int, pid_t, int, const char *, const char *, void *), void *arg)
 {
 	intercept_newimagecb = cb;
 	intercept_newimagecbarg = arg;
@@ -481,7 +487,7 @@ intercept_get_string(int fd, pid_t pid, void *addr)
 	int off = 0, done = 0;
 
 	do {
-		if (intercept.io(fd, pid, INTERCEPT_READ, addr + off,
+		if (intercept.io(fd, pid, INTERCEPT_READ, (char *)addr + off,
 			&name[off], 4) == -1) {
 			warn("%s: ioctl", __func__);
 			return (NULL);
@@ -546,8 +552,8 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 }
 
 void
-intercept_syscall(int fd, pid_t pid, int policynr, char *name, int code,
-    char *emulation, void *args, int argsize)
+intercept_syscall(int fd, pid_t pid, int policynr, const char *name, int code,
+    const char *emulation, void *args, int argsize)
 {
 	short action, flags = 0;
 	struct intercept_syscall *sc;
@@ -608,7 +614,7 @@ intercept_syscall(int fd, pid_t pid, int policynr, char *name, int code,
 
 void
 intercept_syscall_result(int fd, pid_t pid, int policynr,
-    char *name, int code, char *emulation, void *args, int argsize,
+    const char *name, int code, const char *emulation, void *args, int argsize,
     int result, void *rval)
 {
 	struct intercept_pid *icpid;
@@ -658,8 +664,8 @@ intercept_assignpolicy(int fd, pid_t pid, int policynr)
 }
 
 int
-intercept_modifypolicy(int fd, int policynr, char *emulation, char *name,
-    short policy)
+intercept_modifypolicy(int fd, int policynr, const char *emulation,
+    const char *name, short policy)
 {
 	int code;
 
