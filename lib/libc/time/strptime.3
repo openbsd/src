@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strptime.3,v 1.3 1998/04/25 08:08:24 deraadt Exp $
+.\"	$OpenBSD: strptime.3,v 1.4 1998/04/25 08:10:44 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,9 +55,11 @@ using the format specified by
 .Pp
 The
 .Fa format
-string consists of zero or more conversion specifications and ordinary
-characters.  All ordinary characters are copied directly into the
-buffer.  A conversion specification consists of a percent sign `%'
+string consists of zero or more directives. A directive is composed
+of either one or more white-space as defined by
+.Fn isspace ,
+an ordinary character (neither `%' nor a white-space), or a conversion
+specification. A conversion specification consists of a percent sign `%'
 followed by one or two conversion characters which specify the
 replacement required.  There must be white-space or other
 non-alphanumeric characters between any two conversion specifications.
