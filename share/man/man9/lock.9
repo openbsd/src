@@ -83,7 +83,7 @@ implemented with machine-dependent locking primitives.
 Simplelocks are usually used only by the high-level lock manager and
 to protect short, critical sections of code.
 Simplelocks are the only
-locks that can be be used inside an interrupt handler.
+locks that can be used inside an interrupt handler.
 For a simplelock to be used in an interrupt handler, care must be taken to
 disable the interrupt, acquire the lock, do any processing, release
 the simplelock and re-enable the interrupt.
