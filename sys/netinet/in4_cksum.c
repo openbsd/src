@@ -1,5 +1,5 @@
-/*	$OpenBSD: in4_cksum.c,v 1.4 2001/06/24 23:45:16 angelos Exp $	*/
-
+/*	$OpenBSD: in4_cksum.c,v 1.5 2001/12/06 02:23:46 itojun Exp $	*/
+/*	$KAME: in4_cksum.c,v 1.10 2001/11/30 10:06:15 itojun Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.13 1996/10/13 02:03:03 christos Exp $	*/
 
 /*
@@ -92,13 +92,13 @@
 
 int
 in4_cksum(m, nxt, off, len)
-	register struct mbuf *m;
+	struct mbuf *m;
 	u_int8_t nxt;
-	register int off, len;
+	int off, len;
 {
-	register u_int16_t *w;
-	register int sum = 0;
-	register int mlen = 0;
+	u_int16_t *w;
+	int sum = 0;
+	int mlen = 0;
 	int byte_swapped = 0;
 	struct ipovly ipov;
 
@@ -146,7 +146,7 @@ in4_cksum(m, nxt, off, len)
 			 * of a word spanning between this mbuf and the
 			 * last mbuf.
 			 *
-			 * s_util.c[0] is already saved when scanning previous 
+			 * s_util.c[0] is already saved when scanning previous
 			 * mbuf.
 			 */
 			s_util.c[1] = *(u_int8_t *)w;
