@@ -90,31 +90,20 @@ write_key_file(const char *keyfile, const char *user,
 	FILE *fd;
 
 	fd = safe_create(keyfile);
-	if (fd == NULL) {
-		fprintf(stderr, "unable to create \"%s\"\n", keyfile);
-		return;
-	}
-	if (user != NULL) {
-		if (set_user(fd, user) == -1) {
-			fprintf(stderr, "unable to set file owner\n");
-			fclose(fd);
-			return;
-		}
-	}
+	if (fd == NULL)
+		fatal("unable to create \"%s\"", keyfile);
+	if (user != NULL)
+		if (set_user(fd, user) == -1)
+			fatal("unable to set file owner");
 	fprintf(fd, "key \"%s\" {\n\talgorithm hmac-md5;\n"
 		"\tsecret \"%.*s\";\n};\n", keyname,
 		(int)isc_buffer_usedlength(secret),
 		(char *)isc_buffer_base(secret));
 	fflush(fd);
-	if (ferror(fd)) {
-		fprintf(stderr, "write to %s failed\n", keyfile);
-		fclose(fd);
-		return;
-	}
-	if (fclose(fd)) {
-		fprintf(stderr, "fclose(%s) failed\n", keyfile);
-		return;
-	}
+	if (ferror(fd))
+		fatal("write to %s failed", keyfile);
+	if (fclose(fd))
+		fatal("fclose(%s) failed", keyfile);
 }
 
 int
