@@ -617,6 +617,7 @@
 ./usr/include/dev/usb/ugraphire_rdesc.h
 ./usr/include/dev/usb/uhcireg.h
 ./usr/include/dev/usb/uhcivar.h
+./usr/include/dev/usb/uhidev.h
 ./usr/include/dev/usb/ukbdvar.h
 ./usr/include/dev/usb/urio.h
 ./usr/include/dev/usb/usb.h
@@ -650,6 +651,7 @@
 ./usr/include/dev/wscons/wsmousevar.h
 ./usr/include/dev/wscons/wsmuxvar.h
 ./usr/include/dev/wsfont
+./usr/include/dev/wsfont/bold8x16-iso1.h
 ./usr/include/dev/wsfont/bold8x16.h
 ./usr/include/dev/wsfont/gallant12x22.h
 ./usr/include/dev/wsfont/lucida16x29.h

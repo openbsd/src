@@ -1003,6 +1003,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uhcireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uhcivar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uhidev.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ukbdvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/usb.ph
@@ -1036,6 +1037,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wscons/wsmousevar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wscons/wsmuxvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wsfont
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wsfont/bold8x16-iso1.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wsfont/bold8x16.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wsfont/gallant12x22.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/wsfont/lucida16x29.ph

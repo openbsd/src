@@ -617,6 +617,7 @@
 ./usr/share/man/cat1/unlimit.0
 ./usr/share/man/cat1/unvis.0
 ./usr/share/man/cat1/uptime.0
+./usr/share/man/cat1/usbhidaction.0
 ./usr/share/man/cat1/usbhidctl.0
 ./usr/share/man/cat1/users.0
 ./usr/share/man/cat1/uudecode.0
@@ -1311,6 +1312,7 @@
 ./usr/share/man/cat4/ugen.0
 ./usr/share/man/cat4/uhci.0
 ./usr/share/man/cat4/uhid.0
+./usr/share/man/cat4/uhidev.0
 ./usr/share/man/cat4/uhub.0
 ./usr/share/man/cat4/uk.0
 ./usr/share/man/cat4/ukbd.0

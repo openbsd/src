@@ -455,6 +455,7 @@
 ./usr/bin/unprotoize
 ./usr/bin/unvis
 ./usr/bin/uptime
+./usr/bin/usbhidaction
 ./usr/bin/usbhidctl
 ./usr/bin/users
 ./usr/bin/uudecode
