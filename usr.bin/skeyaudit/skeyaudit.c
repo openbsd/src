@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.6 1997/07/24 03:43:59 millert Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.7 1997/09/09 00:04:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -199,6 +199,7 @@ runsendmail(user, uid, gid, pidp)
 		initgroups(user, gid);
 		setegid(gid);
 		setgid(gid);
+		setlogin(user);
 		seteuid(uid);
 		setuid(uid);
 
