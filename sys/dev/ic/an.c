@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.5 2000/06/18 18:42:08 tholo Exp $	*/
+/*	$OpenBSD: an.c,v 1.6 2000/06/19 00:12:41 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -891,8 +891,10 @@ int an_ioctl(ifp, command, data)
 	sc = ifp->if_softc;
 	ifr = (struct ifreq *)data;
 
-	if (sc->an_gone)
+	if (sc->an_gone) {
+		splx(s);
 		return(ENODEV);
+	}
 
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);

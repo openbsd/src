@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.12 2000/06/18 04:02:11 aaron Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.13 2000/06/19 00:12:41 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -135,7 +135,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.12 2000/06/18 04:02:11 aaron Exp $";
+	"$OpenBSD: if_wi.c,v 1.13 2000/06/19 00:12:41 aaron Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1040,8 +1040,10 @@ STATIC int wi_ioctl(ifp, command, data)
 	sc = ifp->if_softc;
 	ifr = (struct ifreq *)data;
 
-	if (sc->wi_gone)
+	if (sc->wi_gone) {
+		splx(s);
 		return(ENODEV);
+	}
 
 	DPRINTF (WID_IOCTL, ("wi_ioctl: command %lu data %p", command, data));
 
