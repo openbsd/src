@@ -1,3 +1,4 @@
+/*	$OpenBSD: mixerctl.c,v 1.2 1998/04/26 22:27:30 provos Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.9 1997/10/19 07:46:04 augustss Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: audioctl.c,v 1.2 1998/04/26 22:27:25 provos Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.12 1997/10/19 07:44:12 augustss Exp $	*/
 
 /*
