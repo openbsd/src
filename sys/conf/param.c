@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.7 1999/11/26 16:22:03 art Exp $	*/
+/*	$OpenBSD: param.c,v 1.8 2000/03/21 14:55:52 deraadt Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ int	vm_cache_max = NTEXT;	/* XXX these probably needs some measurements */
 #define	NVNODE (NPROC * 2 + NTEXT + 100)
 int	desiredvnodes = NVNODE;
 int	maxfiles = 3 * (NPROC + MAXUSERS) + 80;
-int	ncallout = 16 + NPROC;
+int	ncallout = (16 + NPROC) * 2;
 #ifdef REAL_CLISTS
 int	nclist = 60 + 12 * MAXUSERS;
 #endif
