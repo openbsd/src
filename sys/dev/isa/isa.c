@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.25 1997/12/25 13:18:07 downsj Exp $	*/
+/*	$OpenBSD: isa.c,v 1.26 1997/12/25 13:28:45 downsj Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -185,7 +185,8 @@ isascan(parent, match)
 			dev = config_make_softc(parent, cf);
 			ia2 = ia;
 
-			isa_drq_alloc(sc, ia.ia_drq);
+			if (ia.ia_drq != DRQUNK)
+				isa_drq_alloc(sc, ia.ia_drq);
 		}
 		free(dev, M_DEVBUF);
 		return;
@@ -194,7 +195,8 @@ isascan(parent, match)
 	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0) {
 		config_attach(parent, dev, &ia, isaprint);
 
-		isa_drq_alloc(sc, ia.ia_drq);
+		if (ia.ia_drq != DRQUNK)
+			isa_drq_alloc(sc, ia.ia_drq);
 	} else
 		free(dev, M_DEVBUF);
 }
