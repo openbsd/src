@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.40 1998/10/03 08:00:46 matthieu Exp $
+#	$OpenBSD: install.md,v 1.41 1998/10/07 18:42:08 millert Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -78,7 +78,6 @@ md_get_partition_range() {
 md_installboot() {
 	echo "Installing boot block..."
 	cp /usr/mdec/boot /mnt/boot
-	sync; sync; sync
 	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot ${1}
 
 	echo
@@ -267,4 +266,12 @@ installed system, enter halt at the command prompt. Once the system has
 halted, reset the machine and boot from the disk.
 
 __congratulations_1
+}
+
+hostname() {
+	case $# in
+		0)      cat /kern/hostname ;;
+		1)      echo "$1" > /kern/hostname ;;
+		*)      echo "usage: hostname [name-of-host]"
+	esac
 }
