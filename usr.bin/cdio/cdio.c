@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.3 1996/08/24 08:20:21 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.4 1997/02/23 02:29:02 niklas Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -415,11 +415,16 @@ int play (arg)
 	if (! arg || ! *arg) {
 		/* Play the whole disc */
 		if (msf)
-			return play_blocks (0, msf2lba (toc_buffer[n].addr.msf.minute,
-							toc_buffer[n].addr.msf.second,
-							toc_buffer[n].addr.msf.frame));
+			return
+			  play_blocks (msf2lba (toc_buffer[0].addr.msf.minute,
+						toc_buffer[0].addr.msf.second,
+						toc_buffer[0].addr.msf.frame),
+				       msf2lba (toc_buffer[n].addr.msf.minute,
+						toc_buffer[n].addr.msf.second,
+						toc_buffer[n].addr.msf.frame));
 		else
-			return play_blocks (0, ntohl(toc_buffer[n].addr.lba));
+			return play_blocks (ntohl (toc_buffer[0].addr.lba),
+					    ntohl (toc_buffer[n].addr.lba));
 	}
 
 	if (strchr (arg, '#')) {
