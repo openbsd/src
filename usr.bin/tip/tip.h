@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.8 1997/09/01 23:24:26 deraadt Exp $	*/
+/*	$OpenBSD: tip.h,v 1.9 1998/07/12 05:27:03 todd Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -181,6 +181,7 @@ typedef
 #define PRIV	02		/* priviledged, root execute only */
 
 extern int	vflag;		/* verbose during reading of .tiprc file */
+extern int	noesc;		/* no escape `~' char */
 extern value_t	vtable[];	/* variable table */
 
 #ifndef ACULOG
@@ -244,6 +245,7 @@ int	repdes[2];		/* read process sychronization channel */
 int	FD;			/* open file descriptor to remote host */
 int	AC;			/* open file descriptor to dialer (v831 only) */
 int	vflag;			/* print .tiprc initialization sequence */
+int	noesc;			/* no `~' escape char */
 int	sfd;			/* for ~< operation */
 int	pid;			/* pid of tipout */
 uid_t	uid, euid;		/* real and effective user id's */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.8 1997/09/01 23:24:26 deraadt Exp $	*/
+/*	$OpenBSD: tip.c,v 1.9 1998/07/12 05:27:04 todd Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tip.c,v 1.8 1997/09/01 23:24:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tip.c,v 1.9 1998/07/12 05:27:04 todd Exp $";
 #endif /* not lint */
 
 /*
@@ -107,6 +107,10 @@ main(argc, argv)
 
 		case 'v':
 			vflag++;
+			break;
+
+		case 'n':
+			noesc++;
 			break;
 
 		case '0': case '1': case '2': case '3': case '4':
@@ -371,8 +375,10 @@ tipin()
 	while (1) {
 		gch = getchar()&STRIP_PAR;
 		if ((gch == character(value(ESCAPE))) && bol) {
-			if (!(gch = escape()))
-				continue;
+			if (!noesc) {
+				if (!(gch = escape()))
+					continue;
+			}
 		} else if (!cumode && gch == character(value(RAISECHAR))) {
 			setboolean(value(RAISE), !boolean(value(RAISE)));
 			continue;
