@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.7 1996/07/02 04:11:15 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.8 1996/07/19 03:09:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: process.c,v 1.7 1996/07/02 04:11:15 deraadt Exp $";
+static char rcsid[] = "$Id: process.c,v 1.8 1996/07/19 03:09:41 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -56,6 +56,7 @@ static char rcsid[] = "$Id: process.c,v 1.7 1996/07/02 04:11:15 deraadt Exp $";
 #include <syslog.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <paths.h>
 #include "talkd.h"
 
@@ -67,6 +68,7 @@ process_request(mp, rp)
 	register CTL_RESPONSE *rp;
 {
 	register CTL_MSG *ptr;
+	char *s;
 
 	rp->vers = TALK_VERSION;
 	rp->type = mp->type;
@@ -89,6 +91,12 @@ process_request(mp, rp)
 		rp->answer = BADCTLADDR;
 		return;
 	}
+	for (s = mp->l_name; *s; s++)
+		if (!isprint(*s)) {
+			syslog(LOG_NOTICE, "Illegal user name. Aborting");
+			rp->answer = FAILED;
+			return;
+		}
 	if (memcmp(&satosin(&rp->addr)->sin_addr,
 		   &satosin(&mp->ctl_addr)->sin_addr,
 		   sizeof(struct in_addr))) {

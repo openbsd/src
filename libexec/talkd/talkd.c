@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.5 1996/07/18 00:18:54 deraadt Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.6 1996/07/19 03:09:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)talkd.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: talkd.c,v 1.5 1996/07/18 00:18:54 deraadt Exp $";
+static char rcsid[] = "$Id: talkd.c,v 1.6 1996/07/19 03:09:41 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -107,7 +107,7 @@ main(argc, argv)
 			(struct sockaddr *)&response.addr, &len);
 		if (cc != sizeof (request)) {
 			if (cc < 0 && errno != EINTR)
-				syslog(LOG_WARNING, "recv: %m");
+				syslog(LOG_WARNING, "recvfrom: %m");
 			continue;
 		}
 		lastmsgtime = time(0);
