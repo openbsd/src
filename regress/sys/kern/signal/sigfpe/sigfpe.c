@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 void check_oflow(void);
-void check_div0(void);
+void check_div0(int);
 void timedout(int);
 __dead void usage(void);
 
@@ -39,7 +39,7 @@ main(int argc, char **argv)
 	if (oflag)
 		check_oflow();
 	else
-		check_div0();
+		check_div0(0);
 
 	exit(0);
 }
@@ -60,12 +60,12 @@ check_oflow(void)
 }
 
 void
-check_div0(void)
+check_div0(int zero)
 {
 	int i;
 
 	alarm(10);
-	i = 1 / 0;
+	i = 1 / zero;
 	alarm(0);
 }
 
