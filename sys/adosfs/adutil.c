@@ -1,4 +1,4 @@
-/*	$OpenBSD: adutil.c,v 1.6 1996/06/10 07:25:19 deraadt Exp $	*/
+/*	$OpenBSD: adutil.c,v 1.7 1996/08/10 03:24:36 deraadt Exp $	*/
 /*	$NetBSD: adutil.c,v 1.10.4.2 1996/05/27 10:21:29 is Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ adoscksum(bp, n)
 int
 adoscaseequ(name1, name2, len, inter)
 	const u_char *name1, *name2;
-	int len;
+	int len, inter;
 {
 	while (len-- > 0) 
 		if (CapitalChar(*name1++, inter) != 
