@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.42 2000/12/18 07:00:17 mickey Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.43 2000/12/30 21:56:44 angelos Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.42 2000/12/18 07:00:17 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.43 2000/12/30 21:56:44 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -177,9 +177,6 @@ void	setipxframetype __P((char *, int));
 void    setatrange __P((char *, int));
 void    setatphase __P((char *, int));  
 void    gifsettunnel __P((char *, char *));
-void	dstsa __P((char *));
-void	srcsa __P((char *));
-void	clearsa __P((char *));
 #ifdef INET6
 void 	setia6flags __P((char *, int));
 void	setia6pltime __P((char *, int));
@@ -272,9 +269,6 @@ const struct	cmd {
 	{ "-vlandev",	1,		0,		unsetvlandev },
 #endif	/* INET_ONLY */
 	{ "giftunnel",  NEXTARG2,       0,              gifsettunnel } ,
-	{ "dstsa",	NEXTARG,	0,		dstsa } ,
-	{ "srcsa",	NEXTARG,	0,		srcsa } ,
-	{ "clearsa",	NEXTARG,	0,		clearsa } ,
 	{ "link0",	IFF_LINK0,	0,		setifflags } ,
 	{ "-link0",	-IFF_LINK0,	0,		setifflags } ,
 	{ "link1",	IFF_LINK1,	0,		setifflags } ,
@@ -823,97 +817,6 @@ gifsettunnel(src, dst)
 
 	freeaddrinfo(srcres);
 	freeaddrinfo(dstres);
-}
-
-static void
-handlesa(cmd, sa)
-        int cmd;
-	char *sa;
-{
-	char *p1, *p2, *p;
-	struct ifsa ifsa;
-	struct addrinfo *res;
-	struct protoent *prnt;
-	int ecode;
-
-	bzero(&ifsa, sizeof(ifsa));
-
-	strlcpy(ifsa.sa_ifname, name, sizeof ifsa.sa_ifname);
-
-	p1 = strchr(sa, '/');
-	if (p1 == NULL)
-		errx(1, "invalid SA");
-	else
-		*(p1++) = '\0';
-
-	if (*p1 == '/')
-		errx(1, "missing SPI");
-
-	p2 = strchr(p1, '/');
-	if (p2 == NULL)
-		errx(1, "invalid SA");
-	else
-		*(p2++) = '\0';
-
-	if (*p2 == '\0')
-		errx(1, "invalid security protocol");
-
-	if ((ecode = getaddrinfo(sa, NULL, NULL, &res)) != 0)
-		errx(1, "error in parsing address string: %s",
-		     gai_strerror(ecode));
-
-	bcopy(res->ai_addr, &ifsa.sa_dst, res->ai_addr->sa_len);
-
-	freeaddrinfo(res);
-
-	ifsa.sa_spi = htonl(strtoul(p1, &p, 16));
-	if ((p == NULL) || ((*p != '\0') && (*p != '/')))
-		errx(1, "bad SPI");
-
-	ifsa.sa_proto = strtoul(p2, &p, 10);
-	if ((p == NULL) || (*p != '\0')) {
-		prnt = getprotobyname(p2);
-		if (prnt == NULL)
-			errx(1, "bad security protocol");
-		ifsa.sa_proto = prnt->p_proto;
-	}
-
-	if (ioctl(s, cmd, (caddr_t)&ifsa) < 0) {
-		switch (cmd) {
-	      	case SIOCSENCDSTSA:
-			warn("SIOCSENCDSTSA");
-		  	break;
-
-	      	case SIOCSENCSRCSA:
-		  	warn("SIOCSENCSRCSA");
-		  	break;
-
-	      	case SIOCSENCCLEARSA:
-		  	warn("SIOCSENCCLEARSA");
-		  	break;
-	  	}
-	}
-}
-
-void
-dstsa(sa)
-        char *sa;
-{
-        handlesa(SIOCSENCDSTSA, sa);
-}
-
-void
-srcsa(sa)
-        char *sa;
-{
-        handlesa(SIOCSENCSRCSA, sa);
-}
-
-void
-clearsa(sa)
-        char *sa;
-{
-        handlesa(SIOCSENCCLEARSA, sa);
 }
 
 void
@@ -2366,9 +2269,6 @@ usage()
 		"\t[ metric n ]\n"
 		"\t[ mtu n ]\n"
 		"\t[ nwid netword_id ]\n"
-		"\t[ dstsa address/spi/protocol ]\n"
-		"\t[ srcsa address/spi/protocol ]\n"
-		"\t[ clearsa address/spi/protocol ]\n"
 		"\t[ giftunnel srcaddress dstaddress ]\n"
 		"\t[ vlan n vlandev interface ]\n"
 		"\t[ arp | -arp ]\n"

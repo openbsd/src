@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.48 2000/10/17 21:56:06 naddy Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.49 2000/12/30 21:56:43 angelos Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -182,15 +182,6 @@ Clear the IPv6 anycast address bit.
 Specify the address to use to represent broadcasts to the
 network.
 The default broadcast address is the address with a host part of all 1's.
-.It Cm clearsa
-Remove the binding between an SA and an
-.Xr enc 4
-interface, such as established with the
-.Cm srcsa
-or
-.Cm dstsa
-flags.
-If the all-zeroes SA is specified, the sending SA is cleared by default.
 .It Cm debug
 Enable driver dependent debugging code; usually, this turns on
 extra console error logging.
@@ -215,45 +206,6 @@ the system will not attempt to
 transmit messages through that interface.
 If possible, the interface will be reset to disable reception as well.
 This action automatically disables routes using the interface.
-.It Cm dstsa
-Bind an
-.Xr ipsec 4
-Security Association (SA) to an
-.Xr enc 4
-interface.
-The interface can then be used in conjunction with the
-.Xr bridge 4
-to establish virtual Local Area Networks (LANs).
-The SA is specified as
-.Ar address/SPI/protocol ,
-where
-.Ar address
-is an IPv4 or IPv6 address,
-.Ar SPI
-is a hexadecimal number, and
-.Ar protocol
-is a decimal number identifying the security protocol (typically 50
-for ESP, 51 for AH, or 4 for IP-in-IP).
-The SA must exist for the operation to be successfully completed.
-Typically, such SAs would be
-established via
-.Xr ipsecadm 1 .
-This SA will be used to send packets to a remote host via
-.Xr ipsec 4 .
-If the
-.Ar 0.0.0.0/0/0
-or
-.Ar ::/0/0
-SA is specified, any existing binding between the corresponding
-.Xr enc 4
-interface and the SA is cleared (in fact, just the SPI and the protocol
-part of the SA have to be set to zero).
-Only one SA may be bound to an
-.Xr enc 4
-interface at a time.
-SAs may not be bound to the
-.Dq enc0
-interface.
 .It Cm giftunnel
 Set the source and destination tunnel addresses on a
 .Xr gif 4
@@ -435,31 +387,6 @@ AppleTalk uses this scheme instead of
 netmasks though
 .Ox
 implements it internally as a set of netmasks.
-.It Cm srcsa
-Similar to
-.Cm dstsa ,
-this operation binds an
-.Xr ipsec 4
-SA to an
-.Xr enc 4
-interface.
-The SAs bound via this operation are receiving SAs.
-Any packets received over one of these SAs, will be made to appear as if
-it arrived by the corresponding
-.Xr enc 4
-interface.
-If the interface is part of a bridge, the packets will be
-delivered to the bridge.
-Contrary to the
-.Cm dstsa
-flag, multiple SAs may be bound to an
-.Xr enc 4
-interface via this operation.
-Similar to the
-.Cm dstsa
-flag, no SAs may be bound to the
-.Dq enc0
-interface.
 .It Cm tentative
 (inet6 only)
 Set the IPv6 tentative address bit.
