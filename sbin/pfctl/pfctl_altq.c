@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.75 2003/06/20 16:53:48 deraadt Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.76 2003/08/20 13:03:35 henning Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -385,6 +385,11 @@ eval_pfqueue_cbq(struct pfctl *pf, struct pf_altq *pa)
 {
 	struct cbq_opts	*opts;
 	u_int		 ifmtu;
+
+	if (pa->priority >= CBQ_MAXPRI) {
+		warnx("priority out of range: max %d", CBQ_MAXPRI - 1);
+		return (-1);
+	}
 
 	ifmtu = getifmtu(pa->ifname);
 	opts = &pa->pq_u.cbq_opts;
