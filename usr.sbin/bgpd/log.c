@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.37 2004/05/21 11:58:32 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.38 2004/06/01 20:27:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "bgpd.h"
@@ -77,6 +78,8 @@ log_init(int n_debug)
 
 	if (!debug)
 		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
+
+	tzset();
 }
 
 void
