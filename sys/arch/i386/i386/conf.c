@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.53 1999/07/18 22:40:53 csapuntz Exp $	*/
+/*	$OpenBSD: conf.c,v 1.54 1999/07/30 19:05:09 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -53,8 +53,6 @@ bdev_decl(wt);
 #include "st.h"
 #include "cd.h"
 #include "uk.h"
-#include "acd.h"
-bdev_decl(acd);
 #include "mcd.h"
 bdev_decl(mcd);
 #include "vnd.h"
@@ -86,7 +84,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NSCD,scd),	/* 15: Sony CD-ROM */
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
 	bdev_disk_init(NRD,rd),		/* 17: ram disk driver */
-	bdev_disk_init(NACD,acd),	/* 18: ATAPI CD-ROM */
+	bdev_notdef,			/* 18 */
 	bdev_disk_init(NRAID,raid),	/* 19: RAIDframe disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -153,7 +151,6 @@ cdev_decl(scd);
 #include "vt.h"
 cdev_decl(pc);
 #include "ss.h"
-cdev_decl(acd);
 #include "lpt.h"
 cdev_decl(lpt);
 #include "ch.h"
@@ -242,7 +239,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ocis_init(NAPM,apm),	/* 21: Advancded Power Management */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
-	cdev_disk_init(NACD,acd),	/* 24: ATAPI CD-ROM */
+	cdev_notdef(),			/* 24 */
 #if 0
 	cdev_ocis_init(NPCMCIA,pcmcia), /* 25: PCMCIA Bus */
 #else
@@ -429,7 +426,6 @@ static struct {
 	{ "sd", 4 },
 #if 0
 	/* XXX It's not clear at all that recognizing these will help us */
-	{ "acd", 18 },
 	{ "cd", 6 },
 	{ "mcd", 7 },		/* XXX I wonder if any BIOSes support this */
 	{ "scd", 15 }		/* 	-	   "		-	   */

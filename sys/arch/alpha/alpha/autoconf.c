@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 1998/07/01 02:29:39 angelos Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 1999/07/30 19:05:49 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -141,7 +141,6 @@ struct nam2blk {
 	{ "cd",		3 },
 	{ "rd",		6 },
 	{ "sd",		8 },
-	{ "acd",	4 },
 	{ "wd",		0 },
 #if 0
 	{ "fd",		XXX },

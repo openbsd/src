@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 1999/07/25 04:38:25 csapuntz Exp $	*/
+/*	$OpenBSD: conf.c,v 1.20 1999/07/30 19:05:49 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -49,8 +49,6 @@ bdev_decl(wd);
 bdev_decl(sw);
 #include "st.h"
 #include "cd.h"
-#include "acd.h"
-bdev_decl(acd);
 #include "sd.h"
 #include "ss.h"
 #include "uk.h"
@@ -65,7 +63,7 @@ struct bdevsw	bdevsw[] =
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),		/* 2: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
-	bdev_disk_init(NACD,acd),	/* 4: ATAPI CD-ROM */
+	bdev_notdef(),			/* 4 */
 	bdev_notdef(),			/* 5 */
 	bdev_disk_init(NRD,rd),		/* 6: ram disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 7: concatenated disk driver */
@@ -121,7 +119,6 @@ cdev_decl(rd);
 #endif
 cdev_decl(prom);			/* XXX XXX XXX */
 cdev_decl(wd);
-cdev_decl(acd);
 #include "cy.h"
 cdev_decl(cy);
 #ifdef XFS
@@ -170,7 +167,7 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 34: random data source */
 	cdev_gen_ipf(NIPF,ipl),		/* 35: IP filter log */
 	cdev_disk_init(NWD,wd), 	/* 36: ST506/ESDI/IDE disk */
-	cdev_disk_init(NACD,acd),	/* 37: ATAPI CD-ROM */
+	cdev_notdef(),			/* 37 */
         cdev_tty_init(NCY,cy),          /* 38: Cyclom serial port */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 39: Kernel symbols device */
 	cdev_notdef(),			/* 40 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.28 1997/10/28 10:52:18 niklas Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.29 1999/07/30 19:05:09 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -148,7 +148,7 @@ static const char *devname[] = {
 	"",		/* 15 */
 	"",		/* 16 */
 	"rd",		/* 17 = rd */
-	"acd",		/* 18 = acd */
+	"",		/* 18 */
 	"",		/* 19 */
 	""		/* 20 */
 };
@@ -232,10 +232,6 @@ extern	struct cfdriver cd_cd;
 #if NMCD > 0
 extern	struct cfdriver mcd_cd;
 #endif
-#include "acd.h"
-#if NACD > 0
-extern	struct cfdriver acd_cd;
-#endif
 #include "fd.h"
 #if NFD > 0
 extern	struct cfdriver fd_cd;
@@ -267,9 +263,6 @@ struct	genericconf {
 #endif
 #if NRD > 0
 	{ &rd_cd,  "rd",  17 },
-#endif
-#if NACD > 0
-	{ &acd_cd,  "acd",  18 },
 #endif
 	{ 0 }
 };
