@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	6.12 (Berkeley) 7/29/91
-.\"	$Id: su.1,v 1.1.1.1 1995/10/18 08:46:09 deraadt Exp $
+.\"	$Id: su.1,v 1.2 1996/01/07 09:51:21 deraadt Exp $
 .\"
 .Dd July 29, 1991
 .Dt SU 1
@@ -137,9 +137,13 @@ and
 options are mutually exclusive; the last one specified
 overrides any previous ones.
 .Pp
-Only users in group 0 (normally
+If group 0 (normally
 .Dq wheel )
-can
+has users listed then only those users can
+.Nm su
+to
+.Dq root .
+Otherwise, anyone can
 .Nm su
 to
 .Dq root .
