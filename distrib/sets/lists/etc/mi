@@ -106,6 +106,7 @@
 ./etc/ssh_config
 ./etc/sshd_config
 ./etc/ssl/openssl.cnf
+./etc/ssl/x509v3.cnf
 ./etc/sysctl.conf
 ./etc/syslog.conf
 ./etc/ttys
