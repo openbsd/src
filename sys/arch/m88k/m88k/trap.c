@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.5 2004/06/07 10:28:47 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.6 2004/06/22 05:01:05 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -736,7 +736,6 @@ m88110_trap(unsigned type, struct trapframe *frame)
 			frame->tf_exip = frame->tf_enip;
 		else
 			frame->tf_exip += 4;
-		frame->tf_enip = 0;
 		splx(s);
 		return;
 #if 0
@@ -823,7 +822,6 @@ m88110_trap(unsigned type, struct trapframe *frame)
 			    (frame->tf_exip & XIP_ADDR) <=
 			      (unsigned)&guarded_access_end) {
 				frame->tf_exip = (unsigned)&guarded_access_bad;
-				frame->tf_enip = 0;
 				return;
 			}
 		}
@@ -1011,7 +1009,6 @@ m88110_user_fault:
 		 */
 		if (result != 0 && p->p_addr->u_pcb.pcb_onfault != NULL) {
 			frame->tf_exip = p->p_addr->u_pcb.pcb_onfault;
-			frame->tf_enip = 0;
 			frame->tf_dsr = frame->tf_isr = 0;
 			/*
 			 * Continue as if the fault had been resolved.
@@ -1452,7 +1449,7 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	 * shown above.
 	 * Given this,
 	 * 1. If the system call returned 0, need to jmp r1.
-	 *	   exip += 8
+	 *    exip += 8
 	 * 2. If the system call returned an errno > 0, increment
 	 *    exip += 4 and plug the value in r2. This will have us
 	 *    executing "br err" on return to user space.
@@ -1481,7 +1478,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 			tf->tf_exip = tf->tf_enip + 4;
 		else
 			tf->tf_exip += 4 + 4;
-		tf->tf_enip = 0;
 		break;
 	case ERESTART:
 		/*
@@ -1498,7 +1494,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 			tf->tf_exip = tf->tf_enip;
 		else
 			tf->tf_exip += 4;
-		tf->tf_enip = 0;
 		break;
 	default:
 		if (p->p_emul->e_errno)
@@ -1510,7 +1505,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 			tf->tf_exip = tf->tf_enip;
 		else
 			tf->tf_exip += 4;
-		tf->tf_enip = 0;
 		break;
 	}
 
@@ -1549,7 +1543,6 @@ child_return(arg)
 			tf->tf_exip = tf->tf_enip + 4;
 		else
 			tf->tf_exip += 4 + 4;
-		tf->tf_enip = 0;
 	}
 
 	userret(p, tf, p->p_sticks);

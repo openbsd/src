@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.50 2004/01/29 21:39:05 deraadt Exp $   */
+/*   $OpenBSD: eh.S,v 1.51 2004/06/22 05:01:08 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1602,12 +1602,6 @@ ASLOCAL(fpu_enable)
 	st	r27,  r31,  GENREG_OFF(27)
 	st	r28,  r31,  GENREG_OFF(28)
 	st	r29,  r31,  GENREG_OFF(29)
-#ifdef JEFF_DEBUG
-	/* mark beginning of frame with notable value */
-	or.u	r20,  r0,   hi16(0x12345678)
-	or	r20,  r20,  lo16(0x12345678)
-	st	r20,  r31,  GENREG_OFF(0)
-#endif
 
 	/* get and save IPL */
 	bsr.n	_C_LABEL(getipl)
@@ -2249,6 +2243,8 @@ GLOBAL(m88110_reset_handler)
 	ld	r10, r30, REG_OFF(EF_EPSR)
 	st	r10, r31, REG_OFF(EF_EPSR)
 	ld	r10, r30, REG_OFF(EF_EXIP)
+	st	r10, r31, REG_OFF(EF_EXIP)
+	ld	r10, r30, REG_OFF(EF_ENIP)
 	st	r10, r31, REG_OFF(EF_ENIP)
 	ld	r10, r30, REG_OFF(EF_DSR)
 	st	r10, r31, REG_OFF(EF_DSR)
@@ -2471,12 +2467,9 @@ ASLOCAL(m88110_have_pcb)
 	ldcr	TMP,  EPSR
 	st	TMP,  r31,  REG_OFF(EF_EPSR)
 	ldcr	TMP2, EXIP
-	/* if the instruction was NOT in the delay slot, ignore ENIP */
-	bb0.n	0,    TMP2, 1f
-	 st	TMP2, r31,  REG_OFF(EF_EXIP)
 	ldcr	TMP3, ENIP
+	st	TMP2, r31,  REG_OFF(EF_EXIP)
 	st	TMP3, r31,  REG_OFF(EF_ENIP)
-1:
 
 	/* get and store the cpu number */
 	extu	TMP,  FLAGS,  FLAG_CPU_FIELD_WIDTH<0>	/* TMP = cpu# */
@@ -2545,9 +2538,7 @@ ASLOCAL(m88110_setup_phase_two)
 
 	or.u	TMP,  r0,   hi16(_ASM_LABEL(m88110_fpu_enable))
 	or	TMP,  TMP,  lo16(_ASM_LABEL(m88110_fpu_enable))
-	stcr	TMP,  EXIP	/* jump to here m88110_fpu_enable */
-	addu	TMP,  TMP,  4
-	stcr	TMP,  ENIP	/* and then continue after that */
+	stcr	TMP,  EXIP	/* jump to m88110_fpu_enable upon RTE */
 
 	set	FLAGS, FLAGS, 1<FLAG_ENABLING_FPU>
 	xcr	FLAGS, FLAGS, SR1
@@ -2637,12 +2628,6 @@ ASLOCAL(m88110_fpu_enable)
 	st	r27,  r31,  GENREG_OFF(27)
 	st	r28,  r31,  GENREG_OFF(28)
 	st	r29,  r31,  GENREG_OFF(29)
-#ifdef JEFF_DEBUG
-	/* mark beginning of frame with notable value */
-	or.u	r20,  r0,   hi16(0x12345678)
-	or	r20,  r20,  lo16(0x12345678)
-	st	r20,  r31,  GENREG_OFF(0)
-#endif
 
 	/* get and save IPL */
 	bsr.n	_C_LABEL(getipl)
