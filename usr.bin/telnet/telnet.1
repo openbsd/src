@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.16 1999/06/05 01:21:42 aaron Exp $
+.\"	$OpenBSD: telnet.1,v 1.17 1999/07/20 12:49:25 aaron Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -1125,6 +1125,12 @@ Displays the legal
 .Pq Ic unset
 commands.
 .El
+.It Ic skey Ar sequence challenge
+The
+.Ic skey
+command computes a response to the S/Key challenge. See
+.Xr skey 1
+for more information on the S/Key system.
 .It Ic slc Ar state
 The
 .Ic slc
