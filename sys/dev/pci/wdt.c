@@ -1,3 +1,5 @@
+/*	$OpenBSD: wdt.c,v 1.2 2001/02/03 06:17:56 mickey Exp $	*/
+
 /*-
  * Copyright (c) 1998,1999 Alex Nash
  * All rights reserved.
@@ -23,7 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: wdt.c,v 1.1 1999/04/28 23:21:04 alex Exp $
  */
 
 #include <sys/types.h>
@@ -32,16 +33,16 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 #include <sys/proc.h>
+
 #include <machine/bus.h>
+
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include "wdt50x.h"
-#include "wdt.h"
-
-#if NWDT > 0
+#include <dev/pci/wdt50x.h>
 
 struct wdt_softc {
 	/* wdt_dev must be the first item in the struct */
@@ -58,6 +59,7 @@ struct wdt_softc {
 
 	/* watchdog timeout */
 	unsigned		timeout_secs;
+	struct timeout		timeout;
 
 	/* device access through bus space */
 	bus_space_tag_t		iot;
@@ -359,7 +361,7 @@ wdt_timeout (void *arg)
 		wdt_set_timeout(wdt, wdt->timeout_secs);
 
 	/* schedule another timeout in half the countdown time */
-	timeout(wdt_timeout, arg, wdt->timeout_secs * hz / 2);
+	timeout_add(&wdt->timeout, wdt->timeout_secs * hz / 2);
 }
 
 /*
@@ -372,7 +374,7 @@ static void
 wdt_timer_disable (struct wdt_softc *wdt)
 {
 	(void)bus_space_read_1(wdt->iot, wdt->ioh, WDT_DISABLE_TIMER);
-	untimeout(wdt_timeout, wdt);
+	timeout_del(&wdt->timeout);
 }
 
 /*
@@ -400,7 +402,8 @@ wdt_timer_enable (struct wdt_softc *wdt, unsigned seconds)
 	wdt_timer_disable(wdt);
 	wdt->timeout_secs = seconds;
 
-	timeout(wdt_timeout, wdt, hz * seconds / 2);
+	timeout_set(&wdt->timeout, wdt_timeout, wdt);
+	timeout_add(&wdt->timeout, hz * seconds / 2);
 	wdt_set_timeout(wdt, seconds);
 
 	/* re-enable clock interrupts */
@@ -603,5 +606,3 @@ wdt_sched (struct wdt_softc *wdt, struct proc *p)
 
 	return(error);
 }
-
-#endif /* NWDT > 0 */
