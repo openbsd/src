@@ -1,5 +1,5 @@
-/*	$OpenBSD: gencode.h,v 1.2 1996/03/04 15:47:20 mickey Exp $	*/
-/*	$NetBSD: gencode.h,v 1.2 1995/03/06 11:38:24 mycroft Exp $	*/
+/*	$OpenBSD */
+/*	$NetBSD: gencode.h,v 1.2.6.1 1996/06/05 18:04:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994
@@ -63,7 +63,7 @@
 
 struct stmt {
 	int code;
-	long k;
+	int32_t k;
 };
 
 struct slist {
@@ -75,14 +75,14 @@ struct slist {
  * A bit vector to represent definition sets.  We assume TOT_REGISTERS
  * is smaller than 8*sizeof(atomset).
  */
-typedef u_long atomset;
+typedef u_int32_t atomset;
 #define ATOMMASK(n) (1 << (n))
 #define ATOMELEM(d, n) (d & ATOMMASK(n))
 
 /*
  * An unbounded set.
  */
-typedef u_long *uset;
+typedef u_int32_t *uset;
 
 /*
  * Total number of atomic entities, including accumulator (A) and index (X).
@@ -117,8 +117,8 @@ struct block {
 	atomset def, kill;
 	atomset in_use;
 	atomset out_use;
-	long oval;
-	long val[N_ATOMS];
+	int32_t oval;
+	int32_t val[N_ATOMS];
 };
 
 struct arth {
@@ -150,7 +150,7 @@ void gen_not(struct block *);
 
 struct block *gen_scode(char *, struct qual);
 struct block *gen_ecode(u_char *, struct qual);
-struct block *gen_ncode(u_long, struct qual);
+struct block *gen_ncode(u_int32_t, struct qual);
 struct block *gen_proto_abbrev(int);
 struct block *gen_relation(int, struct arth *, struct arth *, int);
 struct block *gen_less(int);

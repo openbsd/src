@@ -1,5 +1,5 @@
-/*	$OpenBSD: gencode.c,v 1.2 1996/03/04 15:47:18 mickey Exp $	*/
-/*	$NetBSD: gencode.c,v 1.2 1995/03/06 11:38:21 mycroft Exp $	*/
+/*	$OpenBSD */
+/*	$NetBSD: gencode.c,v 1.2.6.1 1996/06/05 18:04:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994
@@ -26,7 +26,7 @@ static char rcsid[] =
     "@(#) Header: gencode.c,v 1.55 94/06/20 19:07:53 leres Exp (LBL)";
 #endif
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 
@@ -130,29 +130,29 @@ static inline void syntax(void);
 
 static void backpatch(struct block *, struct block *);
 static void merge(struct block *, struct block *);
-static struct block *gen_cmp(u_int, u_int, long);
-static struct block *gen_mcmp(u_int, u_int, long, u_long);
+static struct block *gen_cmp(u_int, u_int, int32_t);
+static struct block *gen_mcmp(u_int, u_int, int32_t, u_int32_t);
 static struct block *gen_bcmp(u_int, u_int, u_char *);
 static struct block *gen_uncond(int);
 static inline struct block *gen_true(void);
 static inline struct block *gen_false(void);
 static struct block *gen_linktype(int);
-static struct block *gen_hostop(u_long, u_long, int, int, u_int, u_int);
+static struct block *gen_hostop(u_int32_t, u_int32_t, int, int, u_int, u_int);
 static struct block *gen_ehostop(u_char *, int);
 #ifdef FDDI
 static struct block *gen_fhostop(u_char *, int);
 #endif
-static struct block *gen_dnhostop(u_long, int, u_int);
-static struct block *gen_host(u_long, u_long, int, int);
-static struct block *gen_gateway(u_char *, u_long **, int, int);
+static struct block *gen_dnhostop(u_int32_t, int, u_int);
+static struct block *gen_host(u_int32_t, u_int32_t, int, int);
+static struct block *gen_gateway(u_char *, u_int32_t **, int, int);
 static struct block *gen_ipfrag(void);
-static struct block *gen_portatom(int, long);
+static struct block *gen_portatom(int, int32_t);
 struct block *gen_portop(int, int, int);
 static struct block *gen_port(int, int, int);
 static int lookup_proto(char *, int);
 static struct block *gen_proto(int, int, int);
-static u_long net_mask(u_long *);
-static u_long net_mask(u_long *);
+static u_int32_t net_mask(u_int32_t *);
+static u_int32_t net_mask(u_int32_t *);
 static struct slist *xfer_to_x(struct arth *);
 static struct slist *xfer_to_a(struct arth *);
 static struct block *gen_len(int, int);
@@ -164,8 +164,8 @@ newchunk(n)
 	struct chunk *cp;
 	int k, size;
 
-	/* XXX Round up to nearest long. */
-	n = (n + sizeof(long) - 1) & ~(sizeof(long) - 1);
+	/* XXX Round to structure boundary. */
+	n = ALIGN(n);
 
 	cp = &chunks[cur_chunk];
 	if (n > cp->n_left) {
@@ -247,12 +247,12 @@ syntax()
 	bpf_error("syntax error in filter expression");
 }
 
-static u_long netmask;
+static u_int32_t netmask;
 static int snaplen;
 
 int
 pcap_compile(pcap_t *p, struct bpf_program *program,
-	     char *buf, int optimize, u_long mask)
+	     char *buf, int optimize, u_int32_t mask)
 {
 	extern int n_errors;
 	int len;
@@ -372,7 +372,7 @@ gen_not(b)
 static struct block *
 gen_cmp(offset, size, v)
 	u_int offset, size;
-	long v;
+	int32_t v;
 {
 	struct slist *s;
 	struct block *b;
@@ -390,8 +390,8 @@ gen_cmp(offset, size, v)
 static struct block *
 gen_mcmp(offset, size, v, mask)
 	u_int offset, size;
-	long v;
-	u_long mask;
+	int32_t v;
+	u_int32_t mask;
 {
 	struct block *b = gen_cmp(offset, size, v);
 	struct slist *s;
@@ -414,7 +414,7 @@ gen_bcmp(offset, size, v)
 	b = NULL;
 	while (size >= 4) {
 		u_char *p = &v[size - 4];
-		long w = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
+		int32_t w = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
 		tmp = gen_cmp(offset + size - 4, BPF_W, w);
 		if (b != NULL)
 			gen_and(b, tmp);
@@ -423,7 +423,7 @@ gen_bcmp(offset, size, v)
 	}
 	while (size >= 2) {
 		u_char *p = &v[size - 2];
-		long w = (p[0] << 8) | p[1];
+		int32_t w = (p[0] << 8) | p[1];
 		tmp = gen_cmp(offset + size - 2, BPF_H, w);
 		if (b != NULL)
 			gen_and(b, tmp);
@@ -431,7 +431,7 @@ gen_bcmp(offset, size, v)
 		size -= 2;
 	}
 	if (size > 0) {
-		tmp = gen_cmp(offset, BPF_B, (long)v[0]);
+		tmp = gen_cmp(offset, BPF_B, (int32_t)v[0]);
 		if (b != NULL)
 			gen_and(b, tmp);
 		b = tmp;
@@ -547,13 +547,13 @@ gen_linktype(proto)
 			proto = 0x0021;		/* XXX - need ppp.h defs */
 		break;
 	}
-	return gen_cmp(off_linktype, BPF_H, (long)proto);
+	return gen_cmp(off_linktype, BPF_H, (int32_t)proto);
 }
 
 static struct block *
 gen_hostop(addr, mask, dir, proto, src_off, dst_off)
-	u_long addr;
-	u_long mask;
+	u_int32_t addr;
+	u_int32_t mask;
 	int dir, proto;
 	u_int src_off, dst_off;
 {
@@ -587,7 +587,7 @@ gen_hostop(addr, mask, dir, proto, src_off, dst_off)
 		abort();
 	}
 	b0 = gen_linktype(proto);
-	b1 = gen_mcmp(offset, BPF_W, (long)addr, mask);
+	b1 = gen_mcmp(offset, BPF_W, (int32_t)addr, mask);
 	gen_and(b0, b1);
 	return b1;
 }
@@ -679,7 +679,7 @@ gen_fhostop(eaddr, dir)
  */
 static struct block *
 gen_dnhostop(addr, dir, base_off)
-	u_long addr;
+	u_int32_t addr;
 	int dir;
 	u_int base_off;
 {
@@ -720,23 +720,23 @@ gen_dnhostop(addr, dir, base_off)
 	b0 = gen_linktype(ETHERTYPE_DN);
 	/* Check for pad = 1, long header case */
 	tmp = gen_mcmp(base_off + 2, BPF_H,
-				(long)ntohs(0x0681), (long)ntohs(0x07FF));
-	b1 = gen_cmp(base_off + 2 + 1 + offset_lh, BPF_H, (long)ntohs(addr));
+				(int32_t)ntohs(0x0681), (int32_t)ntohs(0x07FF));
+	b1 = gen_cmp(base_off + 2 + 1 + offset_lh, BPF_H, (int32_t)ntohs(addr));
 	gen_and(tmp, b1);
 	/* Check for pad = 0, long header case */
-	tmp = gen_mcmp(base_off + 2, BPF_B, (long)0x06, (long)0x7);
-	b2 = gen_cmp(base_off + 2 + offset_lh, BPF_H, (long)ntohs(addr));
+	tmp = gen_mcmp(base_off + 2, BPF_B, (int32_t)0x06, (int32_t)0x7);
+	b2 = gen_cmp(base_off + 2 + offset_lh, BPF_H, (int32_t)ntohs(addr));
 	gen_and(tmp, b2);
 	gen_or(b2, b1);
 	/* Check for pad = 1, short header case */
 	tmp = gen_mcmp(base_off + 2, BPF_H,
-				(long)ntohs(0x0281), (long)ntohs(0x07FF));
-	b2 = gen_cmp(base_off + 2 + 1 + offset_sh, BPF_H, (long)ntohs(addr));
+				(int32_t)ntohs(0x0281), (int32_t)ntohs(0x07FF));
+	b2 = gen_cmp(base_off + 2 + 1 + offset_sh, BPF_H, (int32_t)ntohs(addr));
 	gen_and(tmp, b2);
 	gen_or(b2, b1);
 	/* Check for pad = 0, short header case */
-	tmp = gen_mcmp(base_off + 2, BPF_B, (long)0x02, (long)0x7);
-	b2 = gen_cmp(base_off + 2 + offset_sh, BPF_H, (long)ntohs(addr));
+	tmp = gen_mcmp(base_off + 2, BPF_B, (int32_t)0x02, (int32_t)0x7);
+	b2 = gen_cmp(base_off + 2 + offset_sh, BPF_H, (int32_t)ntohs(addr));
 	gen_and(tmp, b2);
 	gen_or(b2, b1);
 
@@ -747,8 +747,8 @@ gen_dnhostop(addr, dir, base_off)
 
 static struct block *
 gen_host(addr, mask, proto, dir)
-	u_long addr;
-	u_long mask;
+	u_int32_t addr;
+	u_int32_t mask;
 	int proto;
 	int dir;
 {
@@ -806,7 +806,7 @@ gen_host(addr, mask, proto, dir)
 static struct block *
 gen_gateway(eaddr, alist, proto, dir)
 	u_char *eaddr;
-	u_long **alist;
+	u_int32_t **alist;
 	int proto;
 	int dir;
 {
@@ -853,19 +853,19 @@ gen_proto_abbrev(proto)
 
 	case Q_TCP:
 		b0 = gen_linktype(ETHERTYPE_IP);
-		b1 = gen_cmp(off_nl + 9, BPF_B, (long)IPPROTO_TCP);
+		b1 = gen_cmp(off_nl + 9, BPF_B, (int32_t)IPPROTO_TCP);
 		gen_and(b0, b1);
 		break;
 
 	case Q_UDP:
 		b0 =  gen_linktype(ETHERTYPE_IP);
-		b1 = gen_cmp(off_nl + 9, BPF_B, (long)IPPROTO_UDP);
+		b1 = gen_cmp(off_nl + 9, BPF_B, (int32_t)IPPROTO_UDP);
 		gen_and(b0, b1);
 		break;
 
 	case Q_ICMP:
 		b0 =  gen_linktype(ETHERTYPE_IP);
-		b1 = gen_cmp(off_nl + 9, BPF_B, (long)IPPROTO_ICMP);
+		b1 = gen_cmp(off_nl + 9, BPF_B, (int32_t)IPPROTO_ICMP);
 		gen_and(b0, b1);
 		break;
 
@@ -926,7 +926,7 @@ gen_ipfrag()
 static struct block *
 gen_portatom(off, v)
 	int off;
-	long v;
+	int32_t v;
 {
 	struct slist *s;
 	struct block *b;
@@ -951,29 +951,29 @@ gen_portop(port, proto, dir)
 	struct block *b0, *b1, *tmp;
 
 	/* ip proto 'proto' */
-	tmp = gen_cmp(off_nl + 9, BPF_B, (long)proto);
+	tmp = gen_cmp(off_nl + 9, BPF_B, (int32_t)proto);
 	b0 = gen_ipfrag();
 	gen_and(tmp, b0);
 
 	switch (dir) {
 	case Q_SRC:
-		b1 = gen_portatom(0, (long)port);
+		b1 = gen_portatom(0, (int32_t)port);
 		break;
 
 	case Q_DST:
-		b1 = gen_portatom(2, (long)port);
+		b1 = gen_portatom(2, (int32_t)port);
 		break;
 
 	case Q_OR:
 	case Q_DEFAULT:
-		tmp = gen_portatom(0, (long)port);
-		b1 = gen_portatom(2, (long)port);
+		tmp = gen_portatom(0, (int32_t)port);
+		b1 = gen_portatom(2, (int32_t)port);
 		gen_or(tmp, b1);
 		break;
 
 	case Q_AND:
-		tmp = gen_portatom(0, (long)port);
-		b1 = gen_portatom(2, (long)port);
+		tmp = gen_portatom(0, (int32_t)port);
+		b1 = gen_portatom(2, (int32_t)port);
 		gen_and(tmp, b1);
 		break;
 
@@ -1059,7 +1059,7 @@ gen_proto(v, proto, dir)
 	case Q_DEFAULT:
 	case Q_IP:
 		b0 = gen_linktype(ETHERTYPE_IP);
-		b1 = gen_cmp(off_nl + 9, BPF_B, (long)v);
+		b1 = gen_cmp(off_nl + 9, BPF_B, (int32_t)v);
 		gen_and(b0, b1);
 		return b1;
 
@@ -1112,11 +1112,11 @@ gen_proto(v, proto, dir)
 /*
  * Left justify 'addr' and return its resulting network mask.
  */
-static u_long
+static u_int32_t
 net_mask(addr)
-	u_long *addr;
+	u_int32_t *addr;
 {
-	register u_long m = 0xffffffff;
+	register u_int32_t m = 0xffffffff;
 
 	if (*addr)
 		while ((*addr & 0xff000000) == 0)
@@ -1133,7 +1133,7 @@ gen_scode(name, q)
 	int proto = q.proto;
 	int dir = q.dir;
 	u_char *eaddr;
-	u_long mask, addr, **alist;
+	u_int32_t mask, addr, **alist;
 	struct block *b, *tmp;
 	int port, real_proto;
 
@@ -1236,10 +1236,10 @@ gen_scode(name, q)
 
 struct block *
 gen_ncode(v, q)
-	u_long v;
+	u_int32_t v;
 	struct qual q;
 {
-	u_long mask;
+	u_int32_t mask;
 	int proto = q.proto;
 	int dir = q.dir;
 
@@ -1632,16 +1632,16 @@ gen_byteop(op, idx, val)
 		abort();
 
 	case '=':
-		return gen_cmp((u_int)idx, BPF_B, (long)val);
+		return gen_cmp((u_int)idx, BPF_B, (int32_t)val);
 
 	case '<':
-		b = gen_cmp((u_int)idx, BPF_B, (long)val);
+		b = gen_cmp((u_int)idx, BPF_B, (int32_t)val);
 		b->s.code = JMP(BPF_JGE);
 		gen_not(b);
 		return b;
 
 	case '>':
-		b = gen_cmp((u_int)idx, BPF_B, (long)val);
+		b = gen_cmp((u_int)idx, BPF_B, (int32_t)val);
 		b->s.code = JMP(BPF_JGT);
 		return b;
 
@@ -1665,7 +1665,7 @@ struct block *
 gen_broadcast(proto)
 	int proto;
 {
-	u_long hostmask;
+	u_int32_t hostmask;
 	struct block *b0, *b1, *b2;
 	static u_char ebroadcast[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
@@ -1685,9 +1685,9 @@ gen_broadcast(proto)
 	case Q_IP:
 		b0 = gen_linktype(ETHERTYPE_IP);
 		hostmask = ~netmask;
-		b1 = gen_mcmp(off_nl + 16, BPF_W, (long)0, hostmask);
+		b1 = gen_mcmp(off_nl + 16, BPF_W, (int32_t)0, hostmask);
 		b2 = gen_mcmp(off_nl + 16, BPF_W,
-			      (long)(~0 & hostmask), hostmask);
+			      (int32_t)(~0 & hostmask), hostmask);
 		gen_or(b1, b2);
 		gen_and(b0, b2);
 		return b2;
@@ -1731,7 +1731,7 @@ gen_multicast(proto)
 
 	case Q_IP:
 		b0 = gen_linktype(ETHERTYPE_IP);
-		b1 = gen_cmp(off_nl + 16, BPF_B, (long)224);
+		b1 = gen_cmp(off_nl + 16, BPF_B, (int32_t)224);
 		b1->s.code = JMP(BPF_JGE);
 		gen_and(b0, b1);
 		return b1;

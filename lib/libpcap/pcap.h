@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcap.h,v 1.4 1996/05/07 05:55:50 deraadt Exp $	*/
-/*	$NetBSD: pcap.h,v 1.3 1996/05/02 00:18:28 cgd Exp $	*/
+/*	$OpenBSD */
+/*	$NetBSD: pcap.h,v 1.3.4.1 1996/06/05 18:04:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -103,7 +103,7 @@ typedef void (*pcap_handler)(u_char *, const struct pcap_pkthdr *,
 			     const u_char *);
 
 char	*pcap_lookupdev(char *);
-int	pcap_lookupnet(char *, u_long *, u_long *, char *);
+int	pcap_lookupnet(char *, u_int32_t *, u_int32_t *, char *);
 pcap_t	*pcap_open_live(char *, int, int, int, char *);
 pcap_t	*pcap_open_offline(char *, char *);
 void	pcap_close(pcap_t *);
@@ -111,13 +111,12 @@ int	pcap_loop(pcap_t *, int, pcap_handler, u_char *);
 int	pcap_dispatch(pcap_t *, int, pcap_handler, u_char *);
 const u_char*
 	pcap_next(pcap_t *, struct pcap_pkthdr *);
-int	pcap_inject(pcap_t *, const void *, size_t);
 int	pcap_stats(pcap_t *, struct pcap_stat *);
 int	pcap_setfilter(pcap_t *, struct bpf_program *);
 void	pcap_perror(pcap_t *, char *);
 char	*pcap_strerror(int);
 char	*pcap_geterr(pcap_t *);
-int	pcap_compile(pcap_t *, struct bpf_program *, char *, int, u_long);
+int	pcap_compile(pcap_t *, struct bpf_program *, char *, int, u_int32_t);
 /* XXX */
 int	pcap_freecode(pcap_t *, struct bpf_program *);
 int	pcap_datalink(pcap_t *);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: nametoaddr.c,v 1.2 1996/03/04 15:47:22 mickey Exp $	*/
-/*	$NetBSD: nametoaddr.c,v 1.3 1995/04/29 05:42:23 cgd Exp $	*/
+/*	$OpenBSD */
+/*	$NetBSD: nametoaddr.c,v 1.3.6.1 1996/06/05 18:04:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994
@@ -65,24 +65,24 @@ static inline int xdtoi(int);
  *  Convert host name to internet address.
  *  Return 0 upon failure.
  */
-u_long **
+u_int32_t **
 pcap_nametoaddr(const char *name)
 {
 #ifndef h_addr
-	static u_long *hlist[2];
+	static u_int32_t *hlist[2];
 #endif
-	u_long **p;
+	u_int32_t **p;
 	struct hostent *hp;
 
 	if ((hp = gethostbyname(name)) != NULL) {
 #ifndef h_addr
-		hlist[0] = (u_long *)hp->h_addr;
+		hlist[0] = (u_int32_t *)hp->h_addr;
 		NTOHL(hp->h_addr);
 		return hlist;
 #else
-		for (p = (u_long **)hp->h_addr_list; *p; ++p)
+		for (p = (u_int32_t **)hp->h_addr_list; *p; ++p)
 			NTOHL(**p);
-		return (u_long **)hp->h_addr_list;
+		return (u_int32_t **)hp->h_addr_list;
 #endif
 	}
 	else

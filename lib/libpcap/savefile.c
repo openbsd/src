@@ -1,4 +1,4 @@
-/*	$OpenBSD: savefile.c,v 1.2 1996/03/04 15:47:30 mickey Exp $	*/
+/*	$OpenBSD */
 /*	$NetBSD: savefile.c,v 1.2 1995/03/06 11:39:10 mycroft Exp $	*/
 
 /*
@@ -207,38 +207,15 @@ sf_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char *buf, int buflen)
 	}
 
 	if (hdr->caplen > buflen) {
-		/*
-		 * This can happen due to Solaris 2.3 systems tripping
-		 * over the BUFMOD problem and not setting the snapshot
-		 * correctly in the savefile header.  If the caplen isn't
-		 * grossly wrong, try to salvage.
-		 */
-		static u_char *tp = NULL;
-		static int tsize = 0;
+		sprintf(p->errbuf, "bad dump file format");
+		return (-1);
+	}
 
-		if (tsize < hdr->caplen) {
-			tsize = ((hdr->caplen + 1023) / 1024) * 1024;
-			if (tp != NULL)
-				free((u_char *)tp);
-			tp = (u_char *)malloc(tsize);
-			if (tp == NULL) {
-				sprintf(p->errbuf, "BUFMOD hack malloc");
-				return (-1);
-			}
-		}
-		if (fread((char *)tp, hdr->caplen, 1, fp) != 1) {
-			sprintf(p->errbuf, "truncated dump file");
-			return (-1);
-		}
-		memcpy((char *)buf, (char *)tp, buflen);
+	/* read the packet itself */
 
-	} else {
-		/* read the packet itself */
-
-		if (fread((char *)buf, hdr->caplen, 1, fp) != 1) {
-			sprintf(p->errbuf, "truncated dump file");
-			return (-1);
-		}
+	if (fread((char *)buf, hdr->caplen, 1, fp) != 1) {
+		sprintf(p->errbuf, "truncated dump file");
+		return (-1);
 	}
 	return (0);
 }
@@ -258,11 +235,8 @@ pcap_offline_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 		struct pcap_pkthdr h;
 
 		status = sf_next_packet(p, &h, p->buffer, p->bufsize);
-		if (status) {
-			if (status == 1)
-				return (0);
-			return (status);
-		}
+		if (status)
+			return (-1);
 
 		if (fcode == NULL ||
 		    bpf_filter(fcode, p->buffer, h.len, h.caplen)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: etherent.c,v 1.2 1996/03/04 15:47:17 mickey Exp $	*/
+/*	$OpenBSD */
 /*	$NetBSD: etherent.c,v 1.2 1995/03/06 11:38:14 mycroft Exp $	*/
 
 /*

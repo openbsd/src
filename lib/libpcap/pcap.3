@@ -1,5 +1,5 @@
-.\"	$OpenBSD: pcap.3,v 1.3 1996/03/04 15:47:27 mickey Exp $
-.\"	$NetBSD: pcap.3,v 1.2 1995/03/06 11:39:03 mycroft Exp $
+.\"	$OpenBSD
+.\"	$NetBSD: pcap.3,v 1.2.6.1 1996/06/05 18:04:43 cgd Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,9 +40,9 @@ pcap_dumper_t *pcap_dump_open(pcap_t *p, char *fname)
 .ft B
 char errbuf[PCAP_ERRBUF_SIZE];
 char *pcap_lookupdev(char *errbuf)
-int pcap_lookupnet(char *device, u_long *netp,
+int pcap_lookupnet(char *device, u_int32_t *netp,
 .ti +8
-u_long *maskp, char *errbuf)
+u_int32_t *maskp, char *errbuf)
 .ft
 .LP
 .ft B
@@ -68,7 +68,7 @@ int pcap_immediate(pcap_t *p)
 .ft B
 int pcap_compile(pcap_t *p, struct bpf_program *fp,
 .ti +8
-char *str, int optimize, u_long netmask)
+char *str, int optimize, u_int32_t netmask)
 int pcap_setfilter(pcap_t *p, struct bpf_program *fp)
 .ft
 .LP
@@ -174,7 +174,7 @@ Both
 and
 .I maskp
 are
-.I u_long
+.I u_int32_t
 pointers.
 A return of -1 indicates an error in which case
 .I errbuf

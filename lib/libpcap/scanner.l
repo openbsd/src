@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.2 1996/03/04 15:47:30 mickey Exp $	*/
+/*	$OpenBSD */
 /*	$NetBSD: scanner.l,v 1.2 1995/03/06 11:39:12 mycroft Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_image.c,v 1.2 1996/03/04 15:47:16 mickey Exp $	*/
+/*	$OpenBSD */
 /*	$NetBSD: bpf_image.c,v 1.2 1995/03/06 11:38:11 mycroft Exp $	*/
 
 /*

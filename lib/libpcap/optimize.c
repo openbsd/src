@@ -1,5 +1,5 @@
-/*	$OpenBSD: optimize.c,v 1.2 1996/03/04 15:47:24 mickey Exp $	*/
-/*	$NetBSD: optimize.c,v 1.3 1995/04/29 05:42:28 cgd Exp $	*/
+/*	$OpenBSD */
+/*	$NetBSD: optimize.c,v 1.3.6.1 1996/06/05 18:04:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -100,8 +100,8 @@ static int atomdef(struct stmt *);
 static void compute_local_ud(struct block *);
 static void find_ud(struct block *);
 static void init_val(void);
-static long F(int, long, long);
-static inline void vstore(struct stmt *, long *, long, int);
+static int32_t F(int, int32_t, int32_t);
+static inline void vstore(struct stmt *, int32_t *, int32_t, int);
 static void opt_blk(struct block *, int);
 static int use_conflict(struct block *, struct block *);
 static void opt_j(struct edge *);
@@ -112,11 +112,11 @@ static inline void link_inedge(struct edge *, struct block *);
 static void find_inedges(struct block *);
 static void opt_root(struct block **);
 static void opt_loop(struct block *, int);
-static void fold_op(struct stmt *, long, long);
+static void fold_op(struct stmt *, int32_t, int32_t);
 static inline struct slist *this_op(struct slist *);
 static void opt_not(struct block *);
 static void opt_peep(struct block *);
-static void opt_stmt(struct stmt *, long[], int);
+static void opt_stmt(struct stmt *, int32_t[], int);
 static void deadstmt(struct stmt *, struct stmt *[]);
 static void opt_deadstores(struct block *);
 static void opt_blk(struct block *, int);
@@ -142,8 +142,8 @@ struct edge **edges;
 static int nodewords;
 static int edgewords;
 struct block **levels;
-u_long *space;
-#define BITS_PER_WORD (8*sizeof(u_long))
+u_int32_t *space;
+#define BITS_PER_WORD (8*sizeof(u_int32_t))
 /*
  * True if a is in uset {p}
  */
@@ -167,7 +167,7 @@ u_long *space;
  */
 #define SET_INTERSECT(a, b, n)\
 {\
-	register u_long *_x = a, *_y = b;\
+	register u_int32_t *_x = a, *_y = b;\
 	register int _n = n;\
 	while (--_n >= 0) *_x++ &= *_y++;\
 }
@@ -177,7 +177,7 @@ u_long *space;
  */
 #define SET_SUBTRACT(a, b, n)\
 {\
-	register u_long *_x = a, *_y = b;\
+	register u_int32_t *_x = a, *_y = b;\
 	register int _n = n;\
 	while (--_n >= 0) *_x++ &=~ *_y++;\
 }
@@ -187,7 +187,7 @@ u_long *space;
  */
 #define SET_UNION(a, b, n)\
 {\
-	register u_long *_x = a, *_y = b;\
+	register u_int32_t *_x = a, *_y = b;\
 	register int _n = n;\
 	while (--_n >= 0) *_x++ |= *_y++;\
 }
@@ -248,7 +248,7 @@ find_dom(root)
 {
 	int i;
 	struct block *b;
-	u_long *x;
+	u_int32_t *x;
 
 	/*
 	 * Initialize sets to contain all nodes.
@@ -499,8 +499,8 @@ find_ud(root)
  */
 struct valnode {
 	int code;
-	long v0, v1;
-	long val;
+	int32_t v0, v1;
+	int32_t val;
 	struct valnode *next;
 };
 
@@ -514,7 +514,7 @@ static int maxval;
 
 struct vmapinfo {
 	int is_const;
-	long const_val;
+	int32_t const_val;
 };
 
 struct vmapinfo *vmap;
@@ -531,10 +531,10 @@ init_val()
 }
 
 /* Because we really don't have an IR, this stuff is a little messy. */
-static long
+static int32_t
 F(code, v0, v1)
 	int code;
-	long v0, v1;
+	int32_t v0, v1;
 {
 	u_int hash;
 	int val;
@@ -567,8 +567,8 @@ F(code, v0, v1)
 static inline void
 vstore(s, valp, newval, alter)
 	struct stmt *s;
-	long *valp;
-	long newval;
+	int32_t *valp;
+	int32_t newval;
 	int alter;
 {
 	if (alter && *valp == newval)
@@ -580,9 +580,9 @@ vstore(s, valp, newval, alter)
 static void
 fold_op(s, v0, v1)
 	struct stmt *s;
-	long v0, v1;
+	int32_t v0, v1;
 {
-	long a, b;
+	int32_t a, b;
 
 	a = vmap[v0].const_val;
 	b = vmap[v1].const_val;
@@ -660,7 +660,7 @@ opt_peep(b)
 	struct slist *s;
 	struct slist *next, *last;
 	int val;
-	long v;
+	int32_t v;
 
 	s = b->stmts;
 	if (s == 0)
@@ -848,11 +848,11 @@ opt_peep(b)
 static void
 opt_stmt(s, val, alter)
 	struct stmt *s;
-	long val[];
+	int32_t val[];
 	int alter;
 {
 	int op;
-	long v;
+	int32_t v;
 
 	switch (s->code) {
 
@@ -1086,7 +1086,7 @@ opt_blk(b, do_stmts)
 	struct slist *s;
 	struct edge *p;
 	int i;
-	long aval;
+	int32_t aval;
 
 	/*
 	 * Initialize the atom values.
@@ -1230,7 +1230,7 @@ opt_j(ep)
 	 */
  top:
 	for (i = 0; i < edgewords; ++i) {
-		register u_long x = ep->edom[i];
+		register u_int32_t x = ep->edom[i];
 
 		while (x != 0) {
 			k = ffs(x) - 1;
@@ -1763,7 +1763,7 @@ static void
 opt_init(root)
 	struct block *root;
 {
-	u_long *p;
+	u_int32_t *p;
 	int i, n, max_stmts;
 
 	/*
@@ -1785,11 +1785,11 @@ opt_init(root)
 	 */
 	levels = (struct block **)malloc(n_blocks * sizeof(*levels));
 
-	edgewords = n_edges / (8 * sizeof(u_long)) + 1;
-	nodewords = n_blocks / (8 * sizeof(u_long)) + 1;
+	edgewords = n_edges / (8 * sizeof(u_int32_t)) + 1;
+	nodewords = n_blocks / (8 * sizeof(u_int32_t)) + 1;
 
 	/* XXX */
-	space = (u_long *)malloc(2 * n_blocks * nodewords * sizeof(*space)
+	space = (u_int32_t *)malloc(2 * n_blocks * nodewords * sizeof(*space)
 				 + n_edges * edgewords * sizeof(*space));
 	p = space;
 	all_dom_sets = p;
