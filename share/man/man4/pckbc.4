@@ -1,4 +1,4 @@
-.\" $OpenBSD: pckbc.4,v 1.9 2003/06/06 10:29:41 jmc Exp $
+.\" $OpenBSD: pckbc.4,v 1.10 2003/11/08 16:55:35 miod Exp $
 .\" $NetBSD: pckbc.4,v 1.2 2000/06/16 06:42:31 augustss Exp $
 .\"
 .\" Copyright (c) 1999
@@ -32,8 +32,8 @@
 .Nm pckbc
 .Nd PC (ISA) keyboard controller driver
 .Sh SYNOPSIS
-.Cd "pckbc* at isa?"
-.Cd "pckbc* at ebus?"
+.Cd "pckbc* at isa?          " Pq "alpha, i386, pegasos"
+.Cd "pckbc* at ebus?         " Pq "sparc64"
 .Cd "pckbd* at pckbc?"
 .Cd "pms*   at pckbc?"
 .Cd "pmsi*  at pckbc?"
