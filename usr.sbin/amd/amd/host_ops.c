@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.10 2002/08/05 07:24:26 pvalchev Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.11 2003/04/04 00:43:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -72,7 +72,7 @@
  */
 #define MAKE_MNTPT(mntpt, ex, mf) { \
 			if (strcmp((ex)->ex_dir, "/") == 0) \
-				strcpy((mntpt), (mf)->mf_mount); \
+				strlcpy((mntpt), (mf)->mf_mount, sizeof((mntpt))); \
 			else \
 				snprintf((mntpt), sizeof(mntpt), "%s%s", (mf)->mf_mount, (ex)->ex_dir); \
 }
