@@ -139,20 +139,13 @@ si_match(parent, vcf, aux)
 	/* Figure out the bus type and look for the appropriate adapter. */
 	switch (ca->ca_bustype) {
 	case BUS_VME16:
-		/* AFAIK, the `si' can only exist on the vmes. */
-		if (strcmp(ra->ra_name, "si") || cpumod == SUN4_100)
-			return (0);
 		break;
 
 	case BUS_OBIO:
-		/* AFAIK, an `sw' can only exist on the obio. */
-		if (strcmp(ra->ra_name, "sw") || cpumod != SUN4_100)
+		/* An `sw' can only exist on the 4/100 obio. */
+		if (cpumod != SUN4_100)
 			return (0);
 		break;
-
-	default:
-		/* Don't know what we ended up with ... */
-		return (0);
 	}
 
 	/* Default interrupt priority always splbio == 2 */
@@ -213,10 +206,6 @@ si_attach(parent, self, aux)
 		 */
 		intr_establish(ra->ra_intr[0].int_pri, &ncr5380->sc_ih);
 		break;
-
-	default:
-		printf("\n");
-		panic("si_attach: unknown bus type 0x%x", ca->ca_bustype);
 	}
 
 	ncr5380->sc_adapter_type = ca->ca_bustype;
