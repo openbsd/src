@@ -1,4 +1,3 @@
-.
 ./altroot
 ./bin
 ./bin/[
@@ -1241,6 +1240,19 @@
 ./usr/share/sendmail/domain/generic.m4
 ./usr/share/sendmail/domain/sigmasoft.m4
 ./usr/share/sendmail/feature
+./usr/share/sendmail/feature/accept_unqualified_senders.m4
+./usr/share/sendmail/feature/accept_unresolvable_domains.m4
+./usr/share/sendmail/feature/access_db.m4
+./usr/share/sendmail/feature/blacklist_recipients.m4
+./usr/share/sendmail/feature/local_lmtp.m4
+./usr/share/sendmail/feature/loose_relay_check.m4
+./usr/share/sendmail/feature/promiscuous_relay.m4
+./usr/share/sendmail/feature/rbl.m4
+./usr/share/sendmail/feature/relay_based_on_MX.m4
+./usr/share/sendmail/feature/relay_entire_domain.m4
+./usr/share/sendmail/feature/relay_hosts_only.m4
+./usr/share/sendmail/feature/relay_local_from.m4
+./usr/share/sendmail/ostype/qnx.m4
 ./usr/share/sendmail/feature/allmasquerade.m4
 ./usr/share/sendmail/feature/always_add_domain.m4
 ./usr/share/sendmail/feature/bestmx_is_local.m4
