@@ -29,10 +29,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_openbsd.c,v 1.6 2002/06/28 05:01:28 millert Exp $
+ * $Id: aic7xxx_openbsd.c,v 1.7 2002/07/01 23:31:05 smurph Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_freebsd.c,v 1.26 2001/07/18 21:39:47 gibbs Exp $
- * $OpenBSD: aic7xxx_openbsd.c,v 1.6 2002/06/28 05:01:28 millert Exp $
+ * $OpenBSD: aic7xxx_openbsd.c,v 1.7 2002/07/01 23:31:05 smurph Exp $
  */
 
 #include <dev/ic/aic7xxx_openbsd.h>
@@ -519,7 +519,7 @@ ahc_attach(ahc)
 	ahc_lock(ahc, &s);
 	
 	ahc_controller_info(ahc, ahc_info);
-	printf("%s: %s\n", ahc_name(ahc), ahc_info);
+	printf("%s: %s %s\n", ahc_name(ahc), ahc_info, (ahc->flags & AHC_SCB_BTT) ? "BTT" : "");
 	/*
 	 * Initialize the software queue.
 	 */
@@ -926,9 +926,9 @@ get_scb:
 		panic("ahc: queuing for busy target");
 #endif
 	
+	scb->flags = SCB_FREE;
 	scb->io_ctx = xs;
 	hscb = scb->hscb;
-	
 	hscb->control = 0;
 	
 	timeout_set(&xs->stimeout, ahc_timeout, scb);

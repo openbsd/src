@@ -30,10 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_openbsd.h,v 1.5 2002/06/28 00:34:54 smurph Exp $
+ * $Id: aic7xxx_openbsd.h,v 1.6 2002/07/01 23:31:05 smurph Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_freebsd.h,v 1.12 2001/07/18 21:39:47 gibbs Exp $
- * $OpenBSD: aic7xxx_openbsd.h,v 1.5 2002/06/28 00:34:54 smurph Exp $
+ * $OpenBSD: aic7xxx_openbsd.h,v 1.6 2002/07/01 23:31:05 smurph Exp $
  */
 
 #ifndef _AIC7XXX_OPENBSD_H_
@@ -688,6 +688,8 @@ ahc_platform_dump_card_state(ahc)
 	struct ahc_softc *ahc;
 {
 	/* Nothing to do here for OpenBSD */
+	printf("FEATURES = 0x%x, FLAGS = 0x%x, CHIP = 0x%x BUGS =0x%x\n", 
+	       ahc->features, ahc->flags, ahc->chip, ahc->bugs);
 }
 /**************************** Transfer Settings *******************************/
 void      ahc_notify_xfer_settings_change(struct ahc_softc *,
