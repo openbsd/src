@@ -59,6 +59,14 @@ about:
 	audio driver for sun4m machines
 	floppy driver for sun4m (can boot/install from ramdisk floppies though)
 	interrupt driven SCSI driver for Sun 4/100's and 4/200's
+        VME mti 16-port serial card
+        VME alm2 16-port serial card
+        VME mcp 4-port serial card 
+        VME IPI controller
+        VME cgfive framebuffer
+        VME cgnine framebuffer
+        VME GP/GP2 Graphics Processor
+        SBus cgeight framebuffers
         SBus GS framebuffer (aka cgtwelve)
         SBus GT framebuffer ("Graphics Tower")
         SS20 SX framebuffer (aka cgfourteen)
