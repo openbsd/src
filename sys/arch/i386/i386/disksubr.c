@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.17 1997/01/24 11:17:09 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.18 1997/04/05 21:56:02 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -412,12 +412,12 @@ bounds_check_with_label(bp, lp, wlabel)
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsector = lp->d_partitions[RAW_PART].p_offset + LABELSECTOR;
-	int sz;
+	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
-	sz = howmany(bp->b_bcount, lp->d_secsize);
+#define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 
-	if (bp->b_blkno + sz > p->p_size) {
-		sz = p->p_size - bp->b_blkno;
+	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
+		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
@@ -433,9 +433,9 @@ bounds_check_with_label(bp, lp, wlabel)
 	}
 
 	/* Overwriting disk label? */
-	if (bp->b_blkno + p->p_offset <= labelsector &&
+	if (bp->b_blkno + blockpersec(p->p_offset, lp) <= labelsector &&
 #if LABELSECTOR != 0
-	    bp->b_blkno + p->p_offset + sz > labelsector &&
+	    bp->b_blkno + blockpersec(p->p_offset, lp) + sz > labelsector &&
 #endif
 	    (bp->b_flags & B_READ) == 0 && !wlabel) {
 		bp->b_error = EROFS;
@@ -443,8 +443,8 @@ bounds_check_with_label(bp, lp, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) /
-	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
+	bp->b_cylin = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	    lp->d_secpercyl;
 	return (1);
 
 bad:
