@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.12 2002/12/19 00:39:01 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.13 2003/01/14 11:40:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -150,6 +150,7 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 		PZDEV_PRINT(pzdev);
 #endif
 
+	blk += dp->fsoff;
 	blk <<= DEV_BSHIFT;
 	if ((pzdev->pz_class & PCL_CLASS_MASK) == PCL_SEQU) {
 		/* rewind and re-read to seek */

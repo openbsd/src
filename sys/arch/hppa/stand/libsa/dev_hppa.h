@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_hppa.h,v 1.4 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: dev_hppa.h,v 1.5 2003/01/14 11:40:18 mickey Exp $	*/
 
 
 #define IOPGSHIFT	11
@@ -9,6 +9,7 @@ struct disklabel;
 struct hppa_dev {
 	dev_t	bootdev;
 	struct pz_device *pz_dev;	/* device descriptor */
+	daddr_t fsoff;			/* offset to the file system */
 	daddr_t	last_blk;		/* byte offset for last read blk */
 	size_t	last_read;		/* amount read last time */
 	struct disklabel *label;
