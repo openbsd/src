@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.78 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: message.c,v 1.79 2004/06/14 10:04:22 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -515,6 +515,7 @@ message_validate_delete(struct message *msg, struct payload *p)
 	/* Only accept authenticated DELETEs. */
 	if ((msg->flags & MSG_AUTHENTICATED) == 0) {
 		log_print("message_validate_delete: got unauthenticated DELETE");
+		message_free(msg);
 		return -1;
 	}
 
