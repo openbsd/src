@@ -1,4 +1,4 @@
-.\"	$OpenBSD: asc.4,v 1.3 2003/03/06 20:02:40 jason Exp $
+.\"	$OpenBSD: asc.4,v 1.4 2003/05/25 23:03:56 miod Exp $
 .\"
 .\" Copyright (c) 1996 Jonathan Stone.
 .\" Copyright (c) 2000 Matt Thomas.
@@ -41,7 +41,7 @@ VAXstation 4000 SCSI controller
 .Sh SYNOPSIS
 .Cd "asc* at vsbus? csr 0x200c0080" Pq VS4000/60 or VLC
 .Cd "asc* at vsbus? csr 0x25000080" Pq VS4000/9x
-.Cd "asc* at tc?" Pq Not yet supported
+.\" .Cd "asc* at tc?"
 .Cd "scsibus* at asc?"
 .Sh DESCRIPTION
 The
@@ -88,7 +88,9 @@ will suffer.
 .Xr intro 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
-.Xr st 4
+.Xr ss 4 ,
+.Xr st 4 ,
+.Xr uk 4
 .Sh HISTORY
 The
 .Nm
