@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.216 2002/06/07 21:14:02 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.217 2002/06/07 21:25:35 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -628,12 +628,12 @@ pf_purge_expired_states(void)
 			KASSERT(peer->state == cur->state);
 			RB_REMOVE(pf_state_tree, &tree_lan_ext, peer);
 
-
 			/* release NAT resources */
 			if (STATE_TRANSLATE(cur->state))
 				pf_put_sport(cur->state->proto,
 					htons(cur->state->gwy.port));
-
+			if (cur->state->rule.ptr != NULL)
+				cur->state->rule.ptr->states--;
 			pool_put(&pf_state_pl, cur->state);
 			pool_put(&pf_tree_pl, cur);
 			pool_put(&pf_tree_pl, peer);
@@ -3168,16 +3168,20 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	    binat != NULL || rdr != NULL) {
 		/* create new state */
 		u_int16_t len;
-		struct pf_state *s;
+		struct pf_state *s = NULL;
 
 		len = pd->tot_len - off - (th->th_off << 2);
-		s = pool_get(&pf_state_pl, PR_NOWAIT);
+		if (*rm == NULL || !(*rm)->max_states ||
+		    (*rm)->states < (*rm)->max_states)
+			s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
 			if (nport && nat != NULL)
 				pf_put_sport(IPPROTO_TCP, nport);
 			REASON_SET(&reason, PFRES_MEMORY);
 			return (PF_DROP);
 		}
+		if (*rm != NULL)
+			(*rm)->states++;
 
 		s->rule.ptr = *rm;
 		s->allow_opts = *rm && (*rm)->allow_opts;
@@ -3417,14 +3421,18 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	if ((*rm != NULL && (*rm)->keep_state) || nat != NULL ||
 	    binat != NULL || rdr != NULL) {
 		/* create new state */
-		struct pf_state *s;
+		struct pf_state *s = NULL;
 
-		s = pool_get(&pf_state_pl, PR_NOWAIT);
+		if (*rm == NULL || !(*rm)->max_states ||
+		    (*rm)->states < (*rm)->max_states)
+			s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
 			if (nport && nat != NULL)
 				pf_put_sport(IPPROTO_UDP, nport);
 			return (PF_DROP);
 		}
+		if (*rm != NULL)
+			(*rm)->states++;
 
 		s->rule.ptr = *rm;
 		s->allow_opts = *rm && (*rm)->allow_opts;
@@ -3682,11 +3690,15 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	if (!state_icmp && ((*rm != NULL && (*rm)->keep_state) ||
 	    nat != NULL || rdr != NULL || binat != NULL)) {
 		/* create new state */
-		struct pf_state *s;
+		struct pf_state *s = NULL;
 
-		s = pool_get(&pf_state_pl, PR_NOWAIT);
+		if (*rm == NULL || !(*rm)->max_states ||
+		    (*rm)->states < (*rm)->max_states)
+			s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL)
 			return (PF_DROP);
+		if (*rm != NULL)
+			(*rm)->states++;
 
 		s->rule.ptr = *rm;
 		s->allow_opts = *rm && (*rm)->allow_opts;
@@ -3886,11 +3898,15 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	if ((*rm != NULL && (*rm)->keep_state) || nat != NULL ||
 	    rdr != NULL || binat != NULL) {
 		/* create new state */
-		struct pf_state *s;
+		struct pf_state *s = NULL;
 
-		s = pool_get(&pf_state_pl, PR_NOWAIT);
+		if (*rm == NULL || !(*rm)->max_states ||
+		    (*rm)->states < (*rm)->max_states)
+			s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL)
 			return (PF_DROP);
+		if (*rm != NULL)
+			(*rm)->states++;
 
 		s->rule.ptr = *rm;
 		s->allow_opts = *rm && (*rm)->allow_opts;

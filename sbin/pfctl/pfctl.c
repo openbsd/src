@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.68 2002/06/06 22:22:44 mickey Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.69 2002/06/07 21:25:35 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -410,9 +410,10 @@ pfctl_show_rules(int dev, int opts, int format)
 		default:
 			print_rule(&pr.rule);
 			if (opts & PF_OPT_VERBOSE)
-				printf("[ Evaluations: %-10llu  Packets: %-10llu  "
-				    "Bytes: %-10llu ]\n\n", pr.rule.evaluations,
-				    pr.rule.packets, pr.rule.bytes);
+				printf("[ Evaluations: %-8llu  Packets: %-8llu  "
+				    "Bytes: %-10llu  States: %-6u]\n\n",
+				    pr.rule.evaluations, pr.rule.packets,
+				    pr.rule.bytes, pr.rule.states);
 		}
 	}
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.74 2002/06/07 19:33:03 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.75 2002/06/07 21:25:35 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -170,6 +170,12 @@ typedef struct {
 			struct node_host	*address;
 			struct range		 rport;
 		}			*redirection;
+		struct {
+			int		action;
+			struct {
+				u_int32_t	max_states;
+			}		options;
+		}			keep_state;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -180,13 +186,13 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token  ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
-%token	NOROUTE FRAGMENT USER GROUP MAXMSS
+%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.interface>	interface if_list if_item_not if_item
 %type	<v.number>	port icmptype icmp6type minttl uid gid maxmss
-%type	<v.i>	no dir log quick af keep nodf allowopts fragment
+%type	<v.i>	no dir log quick af nodf allowopts fragment
 %type	<v.b>	action flag flags blockspec
 %type	<v.range>	dport rport
 %type	<v.proto>	proto proto_list proto_item
@@ -200,6 +206,7 @@ typedef struct {
 %type	<v.route>	route
 %type	<v.redirection>	redirection
 %type	<v.string>	label
+%type	<v.keep_state>	keep keep_opts
 %%
 
 ruleset		: /* empty */
@@ -249,7 +256,8 @@ pfrule		: action dir log quick interface route af proto fromto
 			r.flags = $12.b1;
 			r.flagset = $12.b2;
 
-			r.keep_state = $14;
+			r.keep_state = $14.action;
+			r.max_states = $14.options.max_states;
 
 			if ($15)
 				r.rule_flag |= PFRULE_FRAGMENT;
@@ -958,9 +966,25 @@ icmp6type	: STRING			{
 		}
 		;
 
-keep		: /* empty */			{ $$ = 0; }
-		| KEEP STATE			{ $$ = PF_STATE_NORMAL; }
-		| MODULATE STATE		{ $$ = PF_STATE_MODULATE; }
+keep		: /* empty */			{ $$.action = 0; }
+		| KEEP STATE keep_opts		{
+			$$.action = PF_STATE_NORMAL;
+			$$.options = $3.options;
+		}
+		| MODULATE STATE keep_opts	{
+			$$.action = PF_STATE_MODULATE;
+			$$.options = $3.options;
+		}
+		;
+
+keep_opts	: /* empty */			{ $$.options.max_states = 0; }
+		| '(' MAXIMUM NUMBER ')'	{
+			if ($3 <= 0) {
+				yyerror("illegal keep states max value %d", $3);
+				YYERROR;
+			}
+			$$.options.max_states = $3;
+		}
 		;
 
 fragment	: /* empty */			{ $$ = 0; }
@@ -1840,6 +1864,7 @@ lookup(char *s)
 		{ "label",	LABEL},
 		{ "log",	LOG},
 		{ "log-all",	LOGALL},
+		{ "max",	MAXIMUM},
 		{ "max-mss",	MAXMSS},
 		{ "min-ttl",	MINTTL},
 		{ "modulate",	MODULATE},

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.48 2002/06/07 19:41:23 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.49 2002/06/07 21:25:36 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -53,7 +53,7 @@ rule           = action ( "in" | "out" )
                  hosts
                  [ user ] [ group ] [ flags ]
                  [ icmp-type | ipv6-icmp-type ]
-                 [ "keep state" ] [ "modulate state" ]
+                 [ ( "keep" | "modulate" ) "state" [ "(" "max" number ")" ] ]
                  [ "fragment" ] [ "no-df" ] [ "min-ttl" number ]
                  [ "max-mss" number ] [ "allow-opts" ]
                  [ "label" string ] .
@@ -461,6 +461,11 @@ see
 .Xr nat.conf 5
 .Pc
 implicitly create state for connections.
+.Pp
+The "(max <number>)" option can be used to limit the number of concurrent
+states a rule can create to the specified maximum.
+When this limit is reached, further packets matching the rule that would
+create state are dropped, until existing states time out.
 .Sh STATE MODULATION
 Much of the security derived from TCP is attributable to how well the
 initial sequence numbers (ISNs) are chosen.

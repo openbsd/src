@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.77 2002/06/07 19:30:40 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.78 2002/06/07 21:25:35 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -682,6 +682,8 @@ print_rule(struct pf_rule *r)
 		printf("keep state ");
 	else if (r->keep_state == PF_STATE_MODULATE)
 		printf("modulate state ");
+	if (r->max_states)
+		printf("(max %u) ", r->max_states);
 	if (r->rule_flag & PFRULE_FRAGMENT)
 		printf("fragment ");
 	if (r->rule_flag & PFRULE_NODF)
