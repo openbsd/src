@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_syscallargs.h,v 1.16 2001/02/02 19:46:38 tholo Exp $	*/
+/*	$OpenBSD: freebsd_syscallargs.h,v 1.17 2001/08/26 04:14:26 deraadt Exp $	*/
 
 /*
  * System call argument lists.
@@ -7,7 +7,21 @@
  * created from	OpenBSD: syscalls.master,v 1.15 2001/02/02 19:45:09 tholo Exp 
  */
 
-#define	syscallarg(x)	union { x datum; register_t pad; }
+#ifdef	syscallarg
+#undef	syscallarg
+#endif
+
+#define	syscallarg(x)							\
+	union {								\
+		register_t pad;						\
+		struct { x datum; } le;					\
+		struct {						\
+			int8_t pad[ (sizeof (register_t) < sizeof (x))	\
+				? 0					\
+				: sizeof (register_t) - sizeof (x)];	\
+			x datum;					\
+		} be;							\
+	}
 
 struct freebsd_sys_open_args {
 	syscallarg(char *) path;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_sysent.c,v 1.7 1999/06/07 07:18:35 deraadt Exp $	*/
+/*	$OpenBSD: hpux_sysent.c,v 1.8 2001/08/26 04:14:26 deraadt Exp $	*/
 
 /*
  * System call switch table.

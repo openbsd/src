@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_syscallargs.h,v 1.8 2001/05/16 05:05:10 millert Exp $	*/
+/*	$OpenBSD: ultrix_syscallargs.h,v 1.9 2001/08/26 04:14:27 deraadt Exp $	*/
 
 /*
  * System call argument lists.
@@ -7,7 +7,21 @@
  * created from	OpenBSD: syscalls.master,v 1.7 1999/06/07 07:17:48 deraadt Exp 
  */
 
-#define	syscallarg(x)	union { x datum; register_t pad; }
+#ifdef	syscallarg
+#undef	syscallarg
+#endif
+
+#define	syscallarg(x)							\
+	union {								\
+		register_t pad;						\
+		struct { x datum; } le;					\
+		struct {						\
+			int8_t pad[ (sizeof (register_t) < sizeof (x))	\
+				? 0					\
+				: sizeof (register_t) - sizeof (x)];	\
+			x datum;					\
+		} be;							\
+	}
 
 struct ultrix_sys_open_args {
 	syscallarg(char *) path;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.53 2001/06/26 20:07:26 dugsong Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.54 2001/08/26 04:11:12 deraadt Exp $	*/
 
 /*
  * System call argument lists.
@@ -7,7 +7,21 @@
  * created from;	OpenBSD: syscalls.master,v 1.47 2001/06/26 19:56:52 dugsong Exp 
  */
 
-#define	syscallarg(x)	union { x datum; register_t pad; }
+#ifdef	syscallarg
+#undef	syscallarg
+#endif
+
+#define	syscallarg(x)							\
+	union {								\
+		register_t pad;						\
+		struct { x datum; } le;					\
+		struct {						\
+			int8_t pad[ (sizeof (register_t) < sizeof (x))	\
+				? 0					\
+				: sizeof (register_t) - sizeof (x)];	\
+			x datum;					\
+		} be;							\
+	}
 
 struct sys_exit_args {
 	syscallarg(int) rval;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_sysent.c,v 1.8 2001/05/16 05:05:10 millert Exp $	*/
+/*	$OpenBSD: ultrix_sysent.c,v 1.9 2001/08/26 04:14:27 deraadt Exp $	*/
 
 /*
  * System call switch table.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_syscallargs.h,v 1.31 2001/05/16 05:05:09 millert Exp $	*/
+/*	$OpenBSD: svr4_syscallargs.h,v 1.32 2001/08/26 04:14:27 deraadt Exp $	*/
 
 /*
  * System call argument lists.
@@ -7,7 +7,21 @@
  * created from	OpenBSD: syscalls.master,v 1.30 2000/08/23 19:31:35 fgsch Exp 
  */
 
-#define	syscallarg(x)	union { x datum; register_t pad; }
+#ifdef	syscallarg
+#undef	syscallarg
+#endif
+
+#define	syscallarg(x)							\
+	union {								\
+		register_t pad;						\
+		struct { x datum; } le;					\
+		struct {						\
+			int8_t pad[ (sizeof (register_t) < sizeof (x))	\
+				? 0					\
+				: sizeof (register_t) - sizeof (x)];	\
+			x datum;					\
+		} be;							\
+	}
 
 struct svr4_sys_open_args {
 	syscallarg(char *) path;
