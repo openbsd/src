@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbdmap.h,v 1.15 2005/01/18 22:18:11 drahn Exp $ */
+/* $OpenBSD: zaurus_kbdmap.h,v 1.16 2005/01/25 23:30:55 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -181,7 +181,7 @@ static const char xt_keymap[] = {
     /* KC(90), */	RAWKEY_Null, /* NC */
     /* KC(91), */	RAWKEY_Null, /* NC */
     /* KC(92), */	RAWKEY_Null, /* NC */
-    /* KC(93), */	RAWKEY_Begin, /* KS_Mode_switch Fn */
+    /* KC(93), */	RAWKEY_Alt_R, /* KS_Mode_switch Fn */
 };
 #endif
 
