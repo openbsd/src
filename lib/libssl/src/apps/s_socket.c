@@ -86,11 +86,9 @@ static struct hostent *GetHostByName(char *name);
 static void ssl_sock_cleanup(void);
 #endif
 static int ssl_sock_init(void);
-static int init_client_ip(int *sock,unsigned char ip[4], int port);
 static int init_server(int *sock, int port);
 static int init_server_long(int *sock, int port,char *ip);
 static int do_accept(int acc_sock, int *sock, char **host);
-static int host_ip(char *str, unsigned char ip[4]);
 
 #ifdef OPENSSL_SYS_WIN16
 #define SOCKET_PROTOCOL	0 /* more microsoft stupidity */
@@ -185,50 +183,41 @@ static int ssl_sock_init(void)
 	return(1);
 	}
 
-int init_client(int *sock, char *host, int port)
+int init_client(int *sock, char *host, char *port, int af)
 	{
-	unsigned char ip[4];
-	short p=0;
+	struct addrinfo hints, *ai_top, *ai;
+	int i, s;
 
-	if (!host_ip(host,&(ip[0])))
+	memset(&hints, '\0', sizeof(hints));
+	hints.ai_family = af;
+	hints.ai_socktype = SOCK_STREAM;
+
+	if ((i = getaddrinfo(host, port, &hints, &ai_top)) != 0 ||
+	    ai_top == NULL || ai_top->ai_addr == NULL)
 		{
-		return(0);
+		BIO_printf(bio_err,"getaddrinfo: %s\n", gai_strerror(i));
+		return (0);
 		}
-	if (p != 0) port=p;
-	return(init_client_ip(sock,ip,port));
-	}
 
-static int init_client_ip(int *sock, unsigned char ip[4], int port)
-	{
-	unsigned long addr;
-	struct sockaddr_in them;
-	int s,i;
-
-	if (!ssl_sock_init()) return(0);
-
-	memset((char *)&them,0,sizeof(them));
-	them.sin_family=AF_INET;
-	them.sin_port=htons((unsigned short)port);
-	addr=(unsigned long)
-		((unsigned long)ip[0]<<24L)|
-		((unsigned long)ip[1]<<16L)|
-		((unsigned long)ip[2]<< 8L)|
-		((unsigned long)ip[3]);
-	them.sin_addr.s_addr=htonl(addr);
-
-	s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
-	if (s == INVALID_SOCKET) { perror("socket"); return(0); }
-
+	for (ai = ai_top; ai != NULL; ai = ai->ai_next)
+		{
+		s=socket(ai->ai_addr->sa_family, SOCK_STREAM, SOCKET_PROTOCOL);
+		if (s == INVALID_SOCKET) { continue; }
 #ifndef OPENSSL_SYS_MPE
-	i=0;
-	i=setsockopt(s,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
-	if (i < 0) { perror("keepalive"); return(0); }
+		i=0;
+		i=setsockopt(s,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
+		if (i == -1) { close(s); continue; }
 #endif
+		if ((i = connect(s, ai->ai_addr, ai->ai_addr->sa_len)) == 0)
+			{ *sock=s; freeaddrinfo(ai_top); return (1);}
 
-	if (connect(s,(struct sockaddr *)&them,sizeof(them)) == -1)
-		{ close(s); perror("connect"); return(0); }
-	*sock=s;
-	return(1);
+		close(s);
+		}
+
+	perror("connect");
+	close(s);
+	freeaddrinfo(ai_top);
+	return(0);
 	}
 
 int do_server(int port, int *ret, int (*cb)(), char *context)
@@ -410,12 +399,13 @@ end:
 	}
 
 int extract_host_port(char *str, char **host_ptr, unsigned char *ip,
-	     short *port_ptr)
+	     char **port_ptr)
 	{
 	char *h,*p;
 
 	h=str;
-	p=strchr(str,':');
+	p=strrchr(str,'/'); /* IPv6 host/port */
+	if (p == NULL) { p=strrchr(str,':'); }
 	if (p == NULL)
 		{
 		BIO_printf(bio_err,"no port defined\n");
@@ -423,58 +413,11 @@ int extract_host_port(char *str, char **host_ptr, unsigned char *ip,
 		}
 	*(p++)='\0';
 
-	if ((ip != NULL) && !host_ip(str,ip))
-		goto err;
 	if (host_ptr != NULL) *host_ptr=h;
 
-	if (!extract_port(p,port_ptr))
-		goto err;
-	return(1);
-err:
-	return(0);
-	}
+	if (port_ptr != NULL && p != NULL && *p != '\0')
+		*port_ptr = p;
 
-static int host_ip(char *str, unsigned char ip[4])
-	{
-	unsigned int in[4]; 
-	int i;
-
-	if (sscanf(str,"%u.%u.%u.%u",&(in[0]),&(in[1]),&(in[2]),&(in[3])) == 4)
-		{
-		for (i=0; i<4; i++)
-			if (in[i] > 255)
-				{
-				BIO_printf(bio_err,"invalid IP address\n");
-				goto err;
-				}
-		ip[0]=in[0];
-		ip[1]=in[1];
-		ip[2]=in[2];
-		ip[3]=in[3];
-		}
-	else
-		{ /* do a gethostbyname */
-		struct hostent *he;
-
-		if (!ssl_sock_init()) return(0);
-
-		he=GetHostByName(str);
-		if (he == NULL)
-			{
-			BIO_printf(bio_err,"gethostbyname failure\n");
-			goto err;
-			}
-		/* cast to short because of win16 winsock definition */
-		if ((short)he->h_addrtype != AF_INET)
-			{
-			BIO_printf(bio_err,"gethostbyname addr is not AF_INET\n");
-			return(0);
-			}
-		ip[0]=he->h_addr_list[0][0];
-		ip[1]=he->h_addr_list[0][1];
-		ip[2]=he->h_addr_list[0][2];
-		ip[3]=he->h_addr_list[0][3];
-		}
 	return(1);
 err:
 	return(0);
