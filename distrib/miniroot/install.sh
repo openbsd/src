@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.106 2002/07/13 13:18:05 krw Exp $
+#	$OpenBSD: install.sh,v 1.107 2002/07/13 16:32:13 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -90,9 +90,7 @@ if [ -f /etc/fstab ]; then
 else
 	# Install the shadowed disktab file; lets us write to it for temporary
 	# purposes without mounting the miniroot read-write.
-	if [ -f /etc/disktab.shadow ]; then
-		cp /etc/disktab.shadow /tmp/disktab.shadow
-	fi
+	[ -f /etc/disktab.shadow ] && cp /etc/disktab.shadow /tmp/disktab.shadow
 
 	while : ; do
 		if [ -z "$ROOTDISK" ]; then

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.246 2002/07/13 13:18:05 krw Exp $
+#	$OpenBSD: install.sub,v 1.247 2002/07/13 16:32:13 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -511,25 +511,20 @@ configure_ifs() {
 	_if_ip=$2
 	_if_mask=$3
 
-	if [ $_up = "UP" ]; then
-		ifconfig $_if_name delete down
-	fi
+	[ $_up = "UP" ] && ifconfig $_if_name delete down
 
-	if [ ! -x /sbin/dhclient ]; then
-		echo "DHCP install not supported\n"
-	else
-		_dhcp_prompt=" (or 'dhcp')"
-	fi
+	[ -x /sbin/dhclient ] && _dhcp_prompt=" (or 'dhcp')"
 
 	# Get IP address
 	resp=
 	while [ -z "$resp" ] ; do
 		ask "IP address${_dhcp_prompt}?" "$_if_ip"
 		if [ ! -x /sbin/dhclient -a "$resp" == "dhcp" ]; then
+			echo "DHCP is not supported."
 			resp=
 		fi
-		_if_ip=$resp
 	done
+	_if_ip=$resp
 
 	# Get symbolic name
 	_hostname=`hostname`
@@ -559,10 +554,8 @@ __EOT
 If the default is not satisfactory, and you wish to use another
 media, copy that line from above (e.g. "media 100baseTX")
 __EOT
-		ask "Media directives?" "$_if_extra"
-		if [ "$resp" ]; then
-			_if_extra=$resp
-		fi
+		ask "Media directives?"
+		_if_extra=$resp
 	fi
 
 	# Configure the interface. If it
@@ -669,7 +662,7 @@ enable_network() {
 	hostname=`cat /etc/myname`
 	hostname $hostname
 
-	_didnet=1
+	DIDNET=y
 
 	# set the address for the loopback interface
 	ifconfig lo0 inet localhost
@@ -896,11 +889,11 @@ __EOT
 get_get_files () {
 	local _files=$1 _src=$2
 
+	GET_FILES=
+
 	get_sets "$_files" "$_src"
 
 	[ "$SETS" ] || return
-
-	GET_FILES=
 
 	cat << __EOT
 
@@ -914,9 +907,7 @@ __EOT
 		# $SETS contains only .tgz and .tar.gz file names and 'bsd'.
 		case $_f in
 		base*|bsd|comp*|etc*|game*|man*|misc*)
-			if ! isin ${_f} ${SETSDONE}; then
-				GET_FILES=`addel ${_f} ${GET_FILES}`
-			fi
+			isin $_f $SETSDONE || GET_FILES=`addel $_f $GET_FILES`
 			;;
 		esac
 	done
@@ -989,7 +980,7 @@ encode_for_url() {
 install_url() {
 	local _f _file_list _url_type=$1 _url_base _url_login _url_pass _oifs
 
-	[ "$_didnet" ] || donetconfig
+	donetconfig
 
 	cat << __EOT
 
@@ -1195,7 +1186,7 @@ __EOT
 				echo "I/O error accessing $_drive; retrying"
 				sleep 10
 			else
-				echo "Cannot access $_drive. Aborting."
+				echo "Cannot access $_drive."
 				return
 			fi
 		else
@@ -1250,7 +1241,7 @@ __EOT
 
 	# Mount the CD-ROM
 	if ! mount -t ${_fstype} -o ro /dev/${_drive}${_part} /mnt2 ; then
-		echo "Cannot mount CD-ROM drive. Aborting."
+		echo "Cannot mount CD-ROM drive."
 		return
 	fi
 
@@ -1348,7 +1339,7 @@ __EOT
 
 	# Mount the disk read-only
 	if ! mount $_fstype -o ro,$_fsopts /dev/${_drive}${_partition} /mnt2; then
-		echo "Cannot mount disk. Aborting."
+		echo "Cannot mount disk."
 		return 1
 	fi
 
@@ -1369,7 +1360,7 @@ install_nfs() {
 		return
 	fi
 
-	[ "$_didnet" ] || donetconfig
+	donetconfig
 
 	# Get the IP address of the server
 	ask_until "Server IP address or hostname?" "$_nfs_server_ip"
@@ -1390,7 +1381,7 @@ install_nfs() {
 
 	# Mount the server
 	if ! mount_nfs $_nfs_tcp -o ro ${_nfs_server_ip}:${_nfs_server_path} /mnt2 ; then
-		echo "Cannot mount NFS server. Aborting."
+		echo "Cannot mount NFS server."
 		return
 	fi
 
@@ -1412,16 +1403,14 @@ __EOT
 	TAPE=/dev/${resp##*/}
 	if [ ! -c $TAPE ]; then
 		echo "$TAPE does not exist or is not a character special file."
-		echo "Aborting."
 		return
 	fi
 	export TAPE
 
 	# Rewind the tape device
-	echo -n "Rewinding tape..."
+	echo -n "Rewinding ${TAPE} (mt rewind)..."
 	if ! mt rewind ; then
-		echo "$TAPE may not be attached to the system or may not be"
-		echo "a tape device. Aborting."
+		echo "FAILED."
 		return
 	fi
 	echo "done."
@@ -1441,14 +1430,14 @@ __EOT
 	done
 
 	# Skip to correct file.
-	echo -n "Skipping to source file..."
 	if [ $_nskip -ne 0 ]; then
+		echo -n "Skipping to source file (mt fsf ${_nskip})..."
 		if ! mt fsf $_nskip ; then
-			echo "Could not skip $_nskip files. Aborting."
+			echo "FAILED. Could not skip $_nskip files."
 			return
 		fi
+		echo "done."
 	fi
-	echo "done."
 
 cat << __EOT
 
@@ -1666,9 +1655,7 @@ munge_fstab() {
 		_opt="$(echo ${_opt} | \
 			sed -e 's/^softdep$//; s/^softdep,//; s/,softdep,/,/; s/,softdep$//;')"
 
-		if [ "$_mp" = "/" ]; then
-			_mp=
-		fi
+		[ "$_mp" = "/" ] && _mp=
 
 		echo $_dev /mnt$_mp $_fstype $_opt $_rest
 	done < /tmp/fstab > /etc/fstab
@@ -1688,9 +1675,7 @@ mount_fs() {
 	while read _dev _mp _fstype _opt _rest; do
 		# If not the root filesystem, make sure the mount
 		# point is present.
-		if [ "$_mp" != "/mnt" ]; then
-			mkdir -p $_mp
-		fi
+		[ "$_mp" = "/mnt" ] || mkdir -p $_mp
 
 		# Mount the filesystem. If the mount fails, exit.
 		if ! mount -v -t $_fstype $_async -o $_opt $_dev $_mp ; then
@@ -1792,12 +1777,14 @@ get_fqdn() {
 }
 
 donetconfig() {
-	_didnet=1
+	local _nam
+
+	[ "$DIDNET" ] && return
+
+	DIDNET=y
 
 	_nam=
-	if [ -f /tmp/myname ]; then
-		_nam=`cat /tmp/myname`
-	fi
+	[ -f /tmp/myname ] && _nam=`cat /tmp/myname`
 
 	ask_until "Enter system hostname (short form, e.g. 'foo'):" "$_nam"
 	hostname $resp
