@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.41 2004/05/04 22:23:01 mickey Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.42 2004/05/05 10:51:23 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -286,17 +286,6 @@ main(int argc, char *argv[])
 		fprintf(stderr, "got link\n");
 	}
 
-	priv_script_init("PREINIT", NULL);
-	if (ifi->client->alias)
-		priv_script_write_params("alias_", ifi->client->alias);
-	priv_script_go();
-
-	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) != -1)
-		add_protocol("AF_ROUTE", routefd, routehandler, ifi);
-
-	/* set up the interface */
-	discover_interfaces(ifi);
-
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		error("no such user: _dhcp");
 
@@ -307,6 +296,17 @@ main(int argc, char *argv[])
 
 	close(pipe_fd[0]);
 	privfd = pipe_fd[1];
+
+	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) != -1)
+		add_protocol("AF_ROUTE", routefd, routehandler, ifi);
+
+	priv_script_init("PREINIT", NULL);
+	if (ifi->client->alias)
+		priv_script_write_params("alias_", ifi->client->alias);
+	priv_script_go();
+
+	/* set up the interface */
+	discover_interfaces(ifi);
 
 	if (chroot(_PATH_VAREMPTY) == -1)
 		error("chroot");
