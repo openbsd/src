@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.37 2005/01/24 17:42:26 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.38 2005/01/24 18:48:23 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -110,15 +110,16 @@ static struct cvs_cmd {
 	},
 	{
 		CVS_OP_ANNOTATE, "annotate", { "ann"        }, cvs_annotate,
-		"[-flR] [-D date | -r rev] file ...",
-		"",
+		"[-flR] [-D date | -r rev] ...",
+		"D:flRr:",
 		"Show last revision where each line was modified",
 		NULL,
 	},
 	{
 		CVS_OP_CHECKOUT, "checkout", { "co",  "get" }, cvs_checkout,
-		"",
-		"",
+		"[-AcflNnPpRs] [-D date | -r rev] [-d dir] [-j rev] [-k kopt] "
+		"[-t id] module ...",
+		"AcD:d:fj:k:lNnPRr:st:",
 		"Checkout sources for editing",
 		NULL,
 	},
@@ -190,7 +191,7 @@ static struct cvs_cmd {
 #endif
 	{
 		CVS_OP_LOG, "log",      { "lo"         }, cvs_getlog,
-		"",
+		"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
 		"",
 		"Print out history information for files",
 		NULL,
@@ -218,15 +219,15 @@ static struct cvs_cmd {
 	},
 	{
 		CVS_OP_RELEASE, "release",  {}, NULL,
-		"",
-		"",
+		"[-d]",
+		"d",
 		"Indicate that a Module is no longer in use",
 		NULL,
 	},
 	{
 		CVS_OP_REMOVE, "remove",   { "rm", "delete" }, cvs_remove,
 		"[-flR] file ...",
-		"",
+		"flR",
 		"Remove an entry from the repository",
 		NULL,
 	},
@@ -254,14 +255,14 @@ static struct cvs_cmd {
 	{
 		CVS_OP_STATUS, "status",   { "st", "stat" }, cvs_status,
 		"[-lRv]",
-		"",
+		"lRv",
 		"Display status information on checked out files",
 		NULL,
 	},
 	{
 		CVS_OP_TAG, "tag",      { "ta", "freeze" }, cvs_tag,
-		"[-bdl] [-D date | -r rev] tagname",
-		"",
+		"[-bcdFflR] [-D date | -r rev] tagname",
+		"bcD:dFflRr:",
 		"Add a symbolic tag to checked out version of files",
 		NULL,
 	},
@@ -274,7 +275,8 @@ static struct cvs_cmd {
 	},
 	{
 		CVS_OP_UPDATE, "update",   { "up", "upd" }, cvs_update,
-		"",
+		"[-ACdflPpR] [-D date | -r rev] [-I ign] [-j rev] [-k kopt] "
+		"[-t id] ...",
 		"",
 		"Bring work tree in sync with repository",
 		NULL,
