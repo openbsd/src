@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.34 2002/05/10 15:50:55 art Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.35 2002/05/10 15:54:03 art Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -177,15 +177,6 @@ void fxp_scb_cmd(struct fxp_softc *, u_int8_t);
  * (1536 bytes), if an underrun occurs.
  */
 static int tx_threshold = 64;
-
-/*
- * Number of completed TX commands at which point an interrupt
- * will be generated to garbage collect the attached buffers.
- * Must be at least one less than FXP_NTXCB, and should be
- * enough less so that the transmitter doesn't becomes idle
- * during the buffer rundown (which would reduce performance).
- */
-#define FXP_CXINT_THRESH 120
 
 /*
  * TxCB list index mask. This is used to do list wrap-around.
