@@ -2406,6 +2406,7 @@
 ./usr/share/zoneinfo/America/Aruba
 ./usr/share/zoneinfo/America/Asuncion
 ./usr/share/zoneinfo/America/Atka
+./usr/share/zoneinfo/America/Bahia
 ./usr/share/zoneinfo/America/Barbados
 ./usr/share/zoneinfo/America/Belem
 ./usr/share/zoneinfo/America/Belize
@@ -2414,6 +2415,7 @@
 ./usr/share/zoneinfo/America/Boise
 ./usr/share/zoneinfo/America/Buenos_Aires
 ./usr/share/zoneinfo/America/Cambridge_Bay
+./usr/share/zoneinfo/America/Campo_Grande
 ./usr/share/zoneinfo/America/Cancun
 ./usr/share/zoneinfo/America/Caracas
 ./usr/share/zoneinfo/America/Catamarca
@@ -2519,6 +2521,7 @@
 ./usr/share/zoneinfo/America/Thule
 ./usr/share/zoneinfo/America/Thunder_Bay
 ./usr/share/zoneinfo/America/Tijuana
+./usr/share/zoneinfo/America/Toronto
 ./usr/share/zoneinfo/America/Tortola
 ./usr/share/zoneinfo/America/Vancouver
 ./usr/share/zoneinfo/America/Virgin
@@ -2965,6 +2968,7 @@
 ./usr/share/zoneinfo/posix/America/Aruba
 ./usr/share/zoneinfo/posix/America/Asuncion
 ./usr/share/zoneinfo/posix/America/Atka
+./usr/share/zoneinfo/posix/America/Bahia
 ./usr/share/zoneinfo/posix/America/Barbados
 ./usr/share/zoneinfo/posix/America/Belem
 ./usr/share/zoneinfo/posix/America/Belize
@@ -2973,6 +2977,7 @@
 ./usr/share/zoneinfo/posix/America/Boise
 ./usr/share/zoneinfo/posix/America/Buenos_Aires
 ./usr/share/zoneinfo/posix/America/Cambridge_Bay
+./usr/share/zoneinfo/posix/America/Campo_Grande
 ./usr/share/zoneinfo/posix/America/Cancun
 ./usr/share/zoneinfo/posix/America/Caracas
 ./usr/share/zoneinfo/posix/America/Catamarca
@@ -3078,6 +3083,7 @@
 ./usr/share/zoneinfo/posix/America/Thule
 ./usr/share/zoneinfo/posix/America/Thunder_Bay
 ./usr/share/zoneinfo/posix/America/Tijuana
+./usr/share/zoneinfo/posix/America/Toronto
 ./usr/share/zoneinfo/posix/America/Tortola
 ./usr/share/zoneinfo/posix/America/Vancouver
 ./usr/share/zoneinfo/posix/America/Virgin
@@ -3525,6 +3531,7 @@
 ./usr/share/zoneinfo/right/America/Aruba
 ./usr/share/zoneinfo/right/America/Asuncion
 ./usr/share/zoneinfo/right/America/Atka
+./usr/share/zoneinfo/right/America/Bahia
 ./usr/share/zoneinfo/right/America/Barbados
 ./usr/share/zoneinfo/right/America/Belem
 ./usr/share/zoneinfo/right/America/Belize
@@ -3533,6 +3540,7 @@
 ./usr/share/zoneinfo/right/America/Boise
 ./usr/share/zoneinfo/right/America/Buenos_Aires
 ./usr/share/zoneinfo/right/America/Cambridge_Bay
+./usr/share/zoneinfo/right/America/Campo_Grande
 ./usr/share/zoneinfo/right/America/Cancun
 ./usr/share/zoneinfo/right/America/Caracas
 ./usr/share/zoneinfo/right/America/Catamarca
@@ -3638,6 +3646,7 @@
 ./usr/share/zoneinfo/right/America/Thule
 ./usr/share/zoneinfo/right/America/Thunder_Bay
 ./usr/share/zoneinfo/right/America/Tijuana
+./usr/share/zoneinfo/right/America/Toronto
 ./usr/share/zoneinfo/right/America/Tortola
 ./usr/share/zoneinfo/right/America/Vancouver
 ./usr/share/zoneinfo/right/America/Virgin
