@@ -56,7 +56,8 @@ Supported devices {:-include-:}:
 		Hydra.
 		ASDG.
 		A4066.
-		Ariadne.
+		Ariadne (currently broken).
+		AriadneII.
 		Quicknet.
 		Via a supported ISA bridge:
 			NE[12]000, SMC/WD 8003/8013/8216 and 3COM 3c503.
