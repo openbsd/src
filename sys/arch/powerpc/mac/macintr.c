@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.5 2000/07/28 13:09:01 rahnds Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.6 2000/07/31 03:47:35 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -117,12 +117,24 @@ macintr_match(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
+	char type[40];
 
 	/*
-	 * Only check name, to allow legacy interrupt controllers
-	 * to slip in here.
+	 * Match entry according to "present" openfirmware entry.
 	 */
 	if (strcmp(ca->ca_name, "interrupt-controller") == 0 ) {
+		OF_getprop(ca->ca_node, "device_type", type, sizeof(type));
+		if (strcmp(type,  "interrupt-controller") == 0) {
+			return 1;
+		}
+	}
+
+	/*
+	 * Check name for legacy interrupt controller, this is
+	 * faked to allow old firmware which does not have an entry
+	 * to attach to this device.
+	 */
+	if (strcmp(ca->ca_name, "legacy-interrupt-controller") == 0 ) {
 		return 1;
 	}
 	return 0;

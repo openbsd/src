@@ -164,7 +164,7 @@ obio_attach(parent, self, aux)
 	 */
 	if (need_interrupt_controller) {
 		/* force attachment of legacy interrupt controllers */
-		ca.ca_name = "interrupt-controller";
+		ca.ca_name = "legacy-interrupt-controller";
 		ca.ca_node = 0;
 
 		ca.ca_nreg  = 0;
