@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re.c,v 1.3 2004/06/05 17:26:12 deraadt Exp $	*/
+/*	$OpenBSD: if_re.c,v 1.4 2004/06/05 18:35:09 pvalchev Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -164,7 +164,6 @@ struct re_pci_softc {
 int redebug = 0;
 #define DPRINTF(x)	if (redebug) printf x
 
-/* XXX add the rest from pcidevs */
 const struct pci_matchid re_devices[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169 },
 };
@@ -923,19 +922,14 @@ re_attach(struct device *parent, struct device *self, void *aux)
 	/* Reset the adapter. */
 	re_reset(sc);
 
-#if 0
-	hw_rev = re_hwrevs;
-	hwrev = CSR_READ_4(sc, RL_TXCFG) & RL_TXCFG_HWREV;
-	while (hw_rev->rl_desc != NULL) {
-		if (hw_rev->rl_rev == hwrev) {
-			sc->rl_type = hw_rev->rl_type;
-			break;
-		}
-		hw_rev++;
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_REALTEK_RT8139:
+		sc->rl_type = RL_8139CPLUS;
+		break;
+	default:
+		sc->rl_type = RL_8169;
+		break;
 	}
-#endif
-	/* XXX Add proper check */
-	sc->rl_type = RL_8169;
 
 	if (sc->rl_type == RL_8169) {
 
