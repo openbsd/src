@@ -783,6 +783,7 @@
 ./usr/sbin/ext_srvtab
 ./usr/sbin/fsinfo
 ./usr/sbin/host
+./usr/sbin/httpd
 ./usr/sbin/inetd
 ./usr/sbin/iostat
 ./usr/sbin/ipftest
