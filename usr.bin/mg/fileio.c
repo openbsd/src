@@ -8,6 +8,9 @@ static FILE    *ffp;
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/dir.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 /*
  * Open a file for reading.
@@ -143,32 +146,60 @@ ffgetline(buf, nbuf, nbytes)
 
 #ifndef NO_BACKUP
 /*
- * Rename the file "fname" into a backup
- * copy. On Unix the backup has the same name as the
- * original file, with a "~" on the end; this seems to
- * be newest of the new-speak. The error handling is
- * all in "file.c". The "unlink" is perhaps not the
- * right thing here; I don't care that much as
- * I don't enable backups myself.
+ * Make a backup copy of "fname".  On Unix the backup has the same
+ * name as the original file, with a "~" on the end; this seems to
+ * be newest of the new-speak. The error handling is all in "file.c".
+ * We do a copy instead of a rename since otherwise another process
+ * with an open fd will get the backup, not the new file.  This is
+ * a problem when using mg with things like crontab and vipw.
  */
 int
 fbackupfile(fn)
 	char  *fn;
 {
+	struct stat sb;
+	int    from, to, serrno;
+	size_t nread;
+	size_t len;
+	char   buf[BUFSIZ];
 	char  *nname;
 
-	if ((nname = malloc((unsigned) (strlen(fn) + 1 + 1))) == NULL) {
-		ewprintf("Can't get %d bytes", strlen(fn) + 1);
+	len = strlen(fn);
+	if ((nname = malloc(len + 1 + 1)) == NULL) {
+		ewprintf("Can't get %d bytes", len + 1 + 1);
 		return (ABORT);
 	}
 	(void) strcpy(nname, fn);
-	(void) strcat(nname, "~");
-	if (rename(fn, nname) < 0) {
-		free(nname);
+	(void) strcpy(nname + len, "~");
+
+	if (stat(fn, &sb) == -1) {
+		ewprintf("Can't stat %s", fn);
 		return (FALSE);
 	}
+
+	if ((from = open(fn, O_RDONLY)) == -1)
+		return (FALSE);
+	to = open(nname, O_WRONLY|O_CREAT|O_TRUNC, (sb.st_mode & 0777));
+	if (to == -1) {
+		serrno = errno;
+		close(from);
+		errno = serrno;
+		return (FALSE);
+	}
+	while ((nread = read(from, buf, sizeof(buf))) > 0) {
+		if (write(to, buf, nread) != nread) {
+		    nread = -1;
+		    break;
+		}
+	}
+	serrno = errno;
+	close(from);
+	close(to);
+	if (nread == -1)
+		unlink(nname);
 	free(nname);
-	return (TRUE);
+	errno = serrno;
+	return (nread == -1 ? FALSE : TRUE);
 }
 #endif
 
