@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.5 2000/07/02 01:08:05 mickey Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.6 2001/06/04 23:15:49 mickey Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -205,7 +205,7 @@ ifelse(NAME, `bcopy',
 	.align	4
 #endif
 
-ENTRY(memcpy)
+LEAF_ENTRY(memcpy)
 ALTENTRY(memmove)
 	copy	arg0, t1
 	copy	arg1, arg0
@@ -239,7 +239,7 @@ ifelse(NAME, `spcopy',
  */
 	.import	curproc, data
 	.import	copy_on_fault, code
-ENTRY(spcopy)
+LEAF_ENTRY(spcopy)
 	ldw	HPPA_FRAME_ARG(4)(sp), ret1
 	comb,>=,n r0, ret1, L(spcopy, ret)
 `

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcpy.S,v 1.2 2001/03/28 18:20:45 mickey Exp $	*/
+/*	$OpenBSD: strlcpy.S,v 1.3 2001/06/04 23:15:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2001 Michael Shalayeff
@@ -30,11 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: strlcpy.S,v 1.2 2001/03/28 18:20:45 mickey Exp $"
+	.asciz "$OpenBSD: strlcpy.S,v 1.3 2001/06/04 23:15:49 mickey Exp $"
 	.align	4
 #endif
 
@@ -42,7 +42,7 @@
  *
  * it will never be a string of 2^32, so we assume 2^31 as a max size
  */
-ENTRY(strlcpy)
+LEAF_ENTRY(strlcpy)
 
 	addi	1, arg1, ret0
 	subi	1, arg2, t2
