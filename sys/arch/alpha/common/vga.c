@@ -1,4 +1,4 @@
-/*	$OpenBSD: vga.c,v 1.2 1997/07/05 10:36:12 niklas Exp $	*/
+/*	$OpenBSD: vga.c,v 1.3 1997/07/06 16:13:19 niklas Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -44,12 +44,12 @@ struct cfdriver vga_cd = {
 	NULL, "vga", DV_DULL,
 };
 
-static void	vga_cursor __P((void *, int, int, int));
-static void	vga_putstr __P((void *, int, int, char *, int));
-static void	vga_copycols __P((void *, int, int, int,int));
-static void	vga_erasecols __P((void *, int, int, int));
-static void	vga_copyrows __P((void *, int, int, int));
-static void	vga_eraserows __P((void *, int, int));
+void	vga_cursor __P((void *, int, int, int));
+void	vga_putstr __P((void *, int, int, char *, int));
+void	vga_copycols __P((void *, int, int, int, int));
+void	vga_erasecols __P((void *, int, int, int));
+void	vga_copyrows __P((void *, int, int, int));
+void	vga_eraserows __P((void *, int, int));
 
 struct wscons_emulfuncs vga_emulfuncs = {
 	vga_cursor,
@@ -60,9 +60,9 @@ struct wscons_emulfuncs vga_emulfuncs = {
 	vga_eraserows,
 };
 
-static int	vgaprint __P((void *, const char *));
-static int	vgaioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int	vgammap __P((void *, off_t, int));
+int	vgaprint __P((void *, const char *));
+int	vgaioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	vgammap __P((void *, off_t, int));
 
 /*
  * The following functions implement back-end configuration grabbing
@@ -201,7 +201,7 @@ vga_wscons_console(vc)
         wscons_attach_console(&wo);
 }
 
-static int
+int
 vgaprint(aux, pnp)
 	void *aux;
 	const char *pnp;
@@ -212,7 +212,7 @@ vgaprint(aux, pnp)
 	return (UNCONF);
 }
 
-static int
+int
 vgaioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
@@ -225,7 +225,7 @@ vgaioctl(v, cmd, data, flag, p)
 	return -1;
 }
 
-static int
+int
 vgammap(v, offset, prot)
 	void *v;
 	off_t offset;
@@ -240,7 +240,7 @@ vgammap(v, offset, prot)
  * The following functions implement the MI ANSI terminal emulation on
  * a VGA display.
  */
-static void
+void
 vga_cursor(id, on, row, col)
 	void *id;
 	int on, row, col;
@@ -270,7 +270,7 @@ vga_cursor(id, on, row, col)
 	bus_space_write_1(iot, ioh_d, VGA_IO_D_6845_DATA, pos);
 }
 
-static void
+void
 vga_putstr(id, row, col, cp, len)
 	void *id;
 	int row, col;
@@ -290,7 +290,7 @@ vga_putstr(id, row, col, cp, len)
 	}
 }
 
-static void
+void
 vga_copycols(id, row, srccol, dstcol, ncols)
 	void *id;
 	int row, srccol, dstcol, ncols;
@@ -306,24 +306,23 @@ vga_copycols(id, row, srccol, dstcol, ncols)
 	    ncols);
 }
 
-static void
+void
 vga_erasecols(id, row, startcol, ncols)
 	void *id;
 	int row, startcol, ncols;
 {
 	struct vga_config *vc = id;
-	bus_size_t off, count;
+	bus_size_t off;
 	u_int16_t val;
 
 	off = (row * vc->vc_ncol + startcol) * 2;
-	count = ncols * 2;
 
 	val = (vc->vc_at << 8) | ' ';
 
-	bus_space_set_region_2(vc->vc_memt, vc->vc_memh, off, val, count);
+	bus_space_set_region_2(vc->vc_memt, vc->vc_memh, off, val, ncols);
 }
 
-static void
+void
 vga_copyrows(id, srcrow, dstrow, nrows)
 	void *id;
 	int srcrow, dstrow, nrows;
@@ -339,7 +338,7 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 	    nrows * vc->vc_ncol);
 }
 
-static void
+void
 vga_eraserows(id, startrow, nrows)
 	void *id;
 	int startrow, nrows;
@@ -353,5 +352,5 @@ vga_eraserows(id, startrow, nrows)
 
 	val = (vc->vc_at << 8) | ' ';
 
-	bus_space_set_region_2(vc->vc_memt,  vc->vc_memh, off, val, count);
+	bus_space_set_region_2(vc->vc_memt, vc->vc_memh, off, val, count);
 }
