@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.36 1998/01/02 05:42:49 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.37 1998/01/09 16:21:55 csapuntz Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1063,12 +1063,19 @@ sys_link(p, v, retval)
 	register struct vnode *vp;
 	struct nameidata nd;
 	int error;
+	int flags;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, link), p);
+
+	flags = LOCKPARENT;
+	if (vp->v_type == VDIR) {
+		flags |= STRIPSLASHES;
+	}
+
+	NDINIT(&nd, CREATE, flags, UIO_USERSPACE, SCARG(uap, link), p);
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	if (nd.ni_vp) {
@@ -1993,14 +2000,23 @@ sys_rename(p, v, retval)
 	register struct vnode *tvp, *fvp, *tdvp;
 	struct nameidata fromnd, tond;
 	int error;
+	int flags;
 
 	NDINIT(&fromnd, DELETE, WANTPARENT | SAVESTART, UIO_USERSPACE,
 	    SCARG(uap, from), p);
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
 	fvp = fromnd.ni_vp;
-	NDINIT(&tond, RENAME, LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART,
-	    UIO_USERSPACE, SCARG(uap, to), p);
+
+	flags = LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART;
+        /*	
+	 * rename("foo/", "bar/");  is  OK
+	 */
+	if (fvp->v_type == VDIR)
+		flags |= STRIPSLASHES;
+
+	NDINIT(&tond, RENAME, flags,
+	       UIO_USERSPACE, SCARG(uap, to), p);
 	if ((error = namei(&tond)) != 0) {
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
@@ -2077,7 +2093,9 @@ sys_mkdir(p, v, retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, path), p);
+
+	NDINIT(&nd, CREATE, LOCKPARENT | STRIPSLASHES, 
+	       UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;

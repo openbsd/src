@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.13 1998/01/09 15:16:20 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.14 1998/01/09 16:21:56 csapuntz Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -130,6 +130,24 @@ namei(ndp)
 		ndp->ni_vp = NULL;
 		return (error);
 	}
+
+	/*
+	 *  Strip trailing slashes, as requested 
+	 */
+	if (cnp->cn_flags & STRIPSLASHES) {
+		char *end = cnp->cn_pnbuf + ndp->ni_pathlen - 2;
+
+		cp = end;
+		while (cp >= cnp->cn_pnbuf &&
+		       (*cp == '/')) cp--;
+
+		/* Still some remaining characters in the buffer */
+		if (cp >= cnp->cn_pnbuf) {
+			ndp->ni_pathlen -= (end - cp);
+			*(cp + 1) = '\0';
+		}
+	}
+	
 	ndp->ni_loopcnt = 0;
 
 	/*
