@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.11 1998/07/13 02:11:33 millert Exp $	*/
+/*	$OpenBSD: last.c,v 1.12 2000/12/12 09:16:03 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.11 1998/07/13 02:11:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.12 2000/12/12 09:16:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -162,7 +162,7 @@ main(argc, argv)
 		default:
 			(void)fprintf(stderr,
 			    "usage: last [-#] [-cns] [-f file] [-T] [-t tty]"
-			    " [-h host] [-d [[yy]yy[mm[dd[hh]]]]mm[.ss]]"
+			    " [-h host] [-d [[CC]YY][MMDD]hhmm[.SS]"
 			    " [user ...]\n");
 			exit(1);
 		}
@@ -566,7 +566,7 @@ ttyconv(arg)
 /* 
  * dateconv --
  * 	Convert the snapshot time in command line given in the format
- * 	[[yy]yy][mmdd]hhmm[.ss]] to a time_t.
+ * 	[[CC]YY][MMDD]hhmm[.ss]] to a time_t.
  * 	Derived from atime_arg1() in usr.bin/touch/touch.c
  */
 time_t
