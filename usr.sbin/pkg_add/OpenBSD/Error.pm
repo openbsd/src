@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.8 2004/12/06 12:35:36 espie Exp $
+# $OpenBSD: Error.pm,v 1.9 2004/12/12 11:26:16 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -20,7 +20,8 @@ use warnings;
 
 package OpenBSD::Error;
 our @ISA=qw(Exporter);
-our @EXPORT=qw(System VSystem Copy Fatal Warn Usage set_usage);
+our @EXPORT=qw(System VSystem Copy Fatal Warn Usage set_usage 
+    try throw catch catchall rethrow);
 
 sub System
 {
@@ -61,7 +62,7 @@ sub Copy
 sub Fatal
 {
 	require Carp;
-	Carp::croak @_;
+	Carp::croak "Expected: @_";
 }
 
 sub Warn
@@ -94,7 +95,11 @@ sub fatal
 {
 	my $self = shift;
 	require Carp;
-	Carp::croak ($self->{pkgname}, ':', @_);
+	if (defined $self->{pkgname}) {
+		Carp::croak("Expected: ", $self->{pkgname}, ':', @_);
+	} else {
+		Carp::croak("Expected: ", @_);
+	}
 }
 
 sub print
@@ -143,7 +148,7 @@ sub Usage
 {
 	my $code = 0;
 	if (@_) {
-		print STDERR "Error: ", @_, "\n";
+		print STDERR "$0: ", @_, "\n";
 		$code = 1;
 	}
 	print STDERR "Usage: ", shift(@usage_line), "\n";
@@ -151,6 +156,73 @@ sub Usage
 		print STDERR "       $l\n";
 	}
 	exit($code);
+}
+
+sub dienow
+{
+	my ($error, $handler) = @_;
+	if ($error) {
+		if ($error =~ m/^(Expected:\s+)?(.*?)(?:\s+at\s+(.*)\s+line\s+(\d+)\.?)?$/) {
+			local $_ = $2;
+			$OpenBSD: Error.pm,v 1.9 2004/12/12 11:26:16 espie Exp $3;
+			$OpenBSD: Error.pm,v 1.9 2004/12/12 11:26:16 espie Exp $4;
+			$OpenBSD: Error.pm,v 1.9 2004/12/12 11:26:16 espie Exp $error;
+
+			$handler->exec($error, $1, $2, $3, $4);
+		} else {
+			die "Fatal error: can't parse $error";
+		}
+	}
+}
+
+sub try(&@) 
+{
+	my ($try, $catch) = @_;
+	eval { &$try };
+	dienow($@, $catch);
+}
+
+sub throw 
+{
+	require Carp;
+	Carp::croak "Expected: @_";
+
+}
+
+sub rethrow
+{
+	my $e = shift;
+	die $e if $e;
+}
+
+sub catch(&)
+{
+		bless $_[0], "OpenBSD::Error::catch";
+}
+
+sub catchall(&)
+{
+	bless $_[0], "OpenBSD::Error::catchall";
+}
+
+our ($FileName, $Line, $FullMessage);
+
+package OpenBSD::Error::catch;
+sub exec
+{
+	my ($self, $full, $e) = @_;
+	if ($e) {
+		&$self;
+	} else {
+		die $full;
+	}
+}
+
+package OpenBSD::Error::catchall;
+sub exec
+{
+	my ($self, $full, $e) = @_;
+	&$self;
 }
 
 1;

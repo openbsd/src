@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.23 2004/12/02 00:37:54 espie Exp $
+# $OpenBSD: Add.pm,v 1.24 2004/12/12 11:26:16 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -34,10 +34,11 @@ sub manpages_index
 		if ($state->{not}) {
 			print "Merging manpages in $destdir$k: ", join(@l), "\n";
 		} else {
-			eval { OpenBSD::Makewhatis::merge($destdir.$k, \@l); };
-			if ($@) {
-				print STDERR "Error in makewhatis: $@\n";
-			}
+			try { 
+				OpenBSD::Makewhatis::merge($destdir.$k, \@l); 
+			} catchall {
+				print STDERR "Error in makewhatis: $_\n";
+			};
 		}
 	}
 }

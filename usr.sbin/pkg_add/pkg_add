@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.137 2004/12/09 18:46:00 espie Exp $
+# $OpenBSD: pkg_add,v 1.138 2004/12/12 11:26:15 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -303,12 +303,13 @@ sub really_add($$)
 		my $donesize = 0;
 		$plist->{done} = [];
 		for my $item (@{$plist->{items}}) {
-			eval { $item->extract($state); };
-			if ($@) {
-				Warn $@;
+			try { 
+				$item->extract($state); 
+			} catchall {
+				Warn $_;
 				$errors++;
 				last;
-			}
+			};
 			push(@{$plist->{done}}, $item);
 			if (defined $item->{size}) {
 				$donesize += $item->{size};
@@ -328,18 +329,17 @@ sub really_add($$)
 		OpenBSD::ProgressMeter::set_header($plist->{replacing}->pkgname()." (deleting)");
 		$state->set_pkgname($plist->{replacing}->pkgname());
 		require OpenBSD::Delete;
-		eval {
+		try {
 		    OpenBSD::Delete::delete_plist($plist->{replacing}, $state);
-		};
-		if ($@) {
-			Warn $@;
+		} catchall {
+			Warn $_;
 			if ($not) {
 				Fatal "Deinstallation of ", 
 				    $plist->{replacing}->pkgname(), " failed";
 		    	} else {
 				OpenBSD::Add::borked_installation($plist, $dir);
 			}
-		}
+		};
 
 		delete_installed($plist->{replacing}->pkgname());
 
@@ -355,12 +355,13 @@ sub really_add($$)
 	my $donesize = 0;
 	$state->{end_faked} = 0;
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
-		eval { $item->install($state); };
-		if ($@) {
-			Warn $@;
+		try { 
+			$item->install($state); }
+		catchall {
+			Warn $_;
 			$errors++;
 			last;
-		}
+		};
 		push(@{$plist->{done}}, $item);
 		if (defined $item->{size}) {
                         $donesize += $item->{size};
@@ -378,11 +379,12 @@ sub really_add($$)
 	OpenBSD::ProgressMeter::next();
 
 	if (!($interrupted || $errors)) {
-		eval { do_script($plist, INSTALL, $state, "POST-INSTALL") };
-		if ($@) {
-			Warn $@;
+		try { 
+			do_script($plist, INSTALL, $state, "POST-INSTALL") 
+		} catchall {
+			Warn $_;
 			$errors++;
-		}
+		};
 	}
 
 	unlink($dir.CONTENTS);
@@ -535,7 +537,7 @@ sub install_package
 
 	my $handle = $cache->{$pkg};
 	if ($errors > 0) {
-		Fatal "Fatal error" unless defined $handle;
+		$state->fatal("Fatal error") unless defined $handle;
 	} else {
 		return () unless defined $handle;
 	}
@@ -608,20 +610,20 @@ set_usage('pkg_add [-acInqrvvx] [-A arch] [-B pkg-destdir] [-f keys]',
 
 our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r, $opt_q, $opt_c);
 $opt_v = 0;
-eval { getopts('aqchvnrxIL:f:B:A:P:Q:',
+try { 
+	getopts('aqchvnrxIL:f:B:A:P:Q:',
 	{'v' => sub {++$opt_v;},
 	 'h' => sub { Usage(); },
 	 'f' => sub { 
 	 		for my $o (split/,/, shift) { 
 				$forced{$o} = 1;
 			}
-	    	}}); };
-if ($@) {
-	chomp($@);
-	$@ =~ s/\s+at.*?$//;
-	Usage($@);
-}
+	    	}}); 
+} catchall {
+	Usage($_);
+};
 
+try {
 $opt_L = '/usr/local' unless defined $opt_L;
 
 my $state = new OpenBSD::Error;
@@ -683,7 +685,7 @@ if ($< && !$forced{nonroot}) {
 	if ($state->{not}) {
 		Warn "$0 should be run as root\n";
 	} else {
-		Fatal "$0 must be run as root";
+		Fatal "must be run as root";
 	}
 }
 
@@ -713,7 +715,8 @@ if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
 }
 $state->delayed_output();
-if ($dielater) {
-	print STDERR $dielater;
+rethrow $dielater;
+} catch {
+	print STDERR "$0: $_\n";
 	exit(1);
-}
+};

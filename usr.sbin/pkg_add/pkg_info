@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.23 2004/12/06 15:19:11 espie Exp $
+# $OpenBSD: pkg_info,v 1.24 2004/12/12 11:26:16 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -246,36 +246,35 @@ sub print_info
 
 set_usage('pkg_info [-cDdfIiKkLMpqRrsUv] [-E fname] [-e pkgname] [-l str] pkgname...', 'pkg_info [-Aa flags]');
 
-eval { getopts('cDdfhIikKLmpqRrsvhe:E:MU:l:aA',
-	{'e' =>
-		sub {
-			my $pat = shift;
-			my @list;
-			if ($pat =~ m/\//) {
-				@list = find_by_path($pat);
-			} else {
-				@list = find_by_spec($pat);
-			}
-			if (@list == 0) {
-				$exit_code = 1;
-			}
-			push(@ARGV, @list);
-			$terse = 1;
-		},
-	 'h' => sub {	Usage(); },
-	 'E' =>
-	 	sub {
-			require File::Spec;
+try { 
+	getopts('cDdfhIikKLmpqRrsvhe:E:MU:l:aA',
+	    {'e' =>
+		    sub {
+			    my $pat = shift;
+			    my @list;
+			    if ($pat =~ m/\//) {
+				    @list = find_by_path($pat);
+			    } else {
+				    @list = find_by_spec($pat);
+			    }
+			    if (@list == 0) {
+				    $exit_code = 1;
+			    }
+			    push(@ARGV, @list);
+			    $terse = 1;
+		    },
+	     'h' => sub {	Usage(); },
+	     'E' =>
+		    sub {
+			    require File::Spec;
 
-			push(@sought_files, File::Spec->rel2abs(shift));
+			    push(@sought_files, File::Spec->rel2abs(shift));
 
-		}
-	}); };
-if ($@) {
-	chomp($@);
-	$@ =~ s/\s+at.*?$//;
-	Usage($@);
-}
+		    }
+	}); 
+} catchall {
+	Usage($_);
+};
 
 if ($opt_D) {
 	$opt_M = 1;

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.30 2004/12/10 12:02:37 jmc Exp $
+# $OpenBSD: pkg_create,v 1.31 2004/12/12 11:26:16 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -279,7 +279,8 @@ set_usage(
 '[-U undisplayfile] [-W wantedlib] -c desc -d desc -f packinglist pkgname');
 
 my $plist = new OpenBSD::PackingList;
-eval { getopts('hp:f:c:d:vi:k:r:M:U:S:hs:OA:L:B:D:P:W:n', 
+try { 
+	getopts('hp:f:c:d:vi:k:r:M:U:S:hs:OA:L:B:D:P:W:n', 
 	{'D' => 
 		sub { 
 			local $_ = shift;
@@ -300,12 +301,10 @@ eval { getopts('hp:f:c:d:vi:k:r:M:U:S:hs:OA:L:B:D:P:W:n',
 	 'W' => sub {
 	 		OpenBSD::PackingElement::Wantlib->add($plist, shift);
 		}
-	}); };
-if ($@) {
-	chomp($@);
-	$@ =~ s/\s+at.*?$//;
-	Usage($@);
-}
+	}); 
+} catchall {
+	Usage($_);
+};
 
 if (@ARGV == 0) {
 	$regen_package = 1;
@@ -313,6 +312,7 @@ if (@ARGV == 0) {
 	Usage "Exactly one single package name is required";
 }
 
+try {
 my $dir = OpenBSD::Temp::dir();
 my $dir2 = $dir;
 
@@ -448,7 +448,7 @@ for my $contentsfile (@contents) {
 			}
 		}
 	}
-    ) or die "Can't open packing list $contentsfile";
+    ) or Fatal "Can't open packing list $contentsfile";
 }
 
 if (!$plist->has('name') && $ARGV[0] =~ m|([^/]+)$|) {
@@ -510,7 +510,7 @@ my $wname;
 if ($regen_package) {
 	$wname = $plist->pkgname().".tgz";
 } else {
-	$plist->tofile($dir.CONTENTS) or die "Can't write packing list";
+	$plist->tofile($dir.CONTENTS) or Fatal "Can't write packing list";
 	$wname = $ARGV[0];
 }
 
@@ -522,5 +522,9 @@ if ($opt_n) {
 	exit(0);
 } else {
 	print "Creating gzip'd tar ball in '$wname'\n" if $opt_v;
-	System(@cmd) == 0 or die "tar failed";
+	System(@cmd) == 0 or Fatal "tar failed";
 }
+} catch {
+	print STDERR "$0: $_\n";
+	exit(1);
+};

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.38 2004/12/02 00:19:26 espie Exp $
+# $OpenBSD: Update.pm,v 1.39 2004/12/12 11:26:16 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -259,13 +259,12 @@ sub can_do
 	}
 
 	if ($state->{okay}) {
-		eval {
+		try {
 			OpenBSD::Delete::validate_plist($plist, $state);
-		};
-		if ($@) {
-			Warn "$@";
+		} catchall {
+			Warn "$_";
 			return 0;
-		}
+		};
 	}
 
 	$plist->{wantlist} = \@wantlist;

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.80 2004/12/06 12:35:36 espie Exp $
+# $OpenBSD: pkg_delete,v 1.81 2004/12/12 11:26:16 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -34,19 +34,18 @@ our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B, $op
 
 $opt_v = 0;
 
-eval { getopts('vchxDdnf:qpS:L:B:I',
-	{'v' => sub {++$opt_v;},
-	 'h' => sub { Usage(); },
-	 'f' => sub { 
-	 		for my $o (split/,/, shift) { 
-				$forced{$o} = 1;
-			}
-	    	}}); };
-if ($@) {
-	chomp($@);
-	$@ =~ s/\s+at.*?$//;
-	Usage($@);
-}
+try { 
+	getopts('vchxDdnf:qpS:L:B:I',
+	    {'v' => sub {++$opt_v;},
+	     'h' => sub { Usage(); },
+	     'f' => sub { 
+			    for my $o (split/,/, shift) { 
+				    $forced{$o} = 1;
+			    }
+	    	}}); 
+} catchall {
+	Usage($_);
+};
 
 if ($opt_D) {
 	$opt_I = 1;
@@ -70,6 +69,7 @@ if (defined $opt_d) {
 my %done;
 my $removed;
 
+try {
 my $state = new OpenBSD::Error;
 $state->{not} = $opt_n;
 $state->{quick} = $opt_q;
@@ -211,7 +211,8 @@ if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
 }
 $state->delayed_output();
-if ($dielater) {
-	print STDERR $dielater;
+rethrow $dielater;
+} catch {
+	print STDERR "$0: $_\n";
 	exit(1);
-}
+};

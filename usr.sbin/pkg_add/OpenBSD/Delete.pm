@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.14 2004/12/02 00:37:55 espie Exp $
+# $OpenBSD: Delete.pm,v 1.15 2004/12/12 11:26:16 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -134,10 +134,11 @@ sub delete_plist
 		print "remove dependency on $name\n" 
 		    if $state->{very_verbose} or $state->{not};
 		local $@;
-		eval { OpenBSD::RequiredBy->new($name)->delete($pkgname) unless $state->{not}; };
-		if ($@) {
-			print STDERR "$@\n";
-		}
+		try { 
+			OpenBSD::RequiredBy->new($name)->delete($pkgname) unless $state->{not}; 
+		} catchall {
+			print STDERR "$_\n";
+		};
 		$removed->{$name} = 1;
 	};
 
