@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.6 2005/01/26 21:29:36 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.7 2005/02/12 05:23:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -56,14 +56,8 @@ struct cfattach pxaohci_ca = {
 int
 pxaohci_match(struct device *parent, void *match, void *aux)
 {
-	struct pxaip_attach_args *pxa = aux;
-
-	if (((cputype & ~CPU_ID_XSCALE_COREREV_MASK) != CPU_ID_PXA27X) ||
-	    (pxa->pxa_addr != PXA2X0_USBHC_BASE) ||
-	    (pxa->pxa_intr != PXA2X0_INT_USBH1))
+	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) != CPU_ID_PXA27X)
 		return (0);
-
-	pxa->pxa_size = PXA2X0_USBHC_SIZE;
 
 	return (1);
 }
@@ -78,17 +72,17 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc.iot = pxa->pxa_iot;
 	sc->sc.sc_bus.dmatag = pxa->pxa_dmat;
-	sc->sc_intr = pxa->pxa_intr;
+	sc->sc_intr = PXA2X0_INT_USBH1;
 	sc->sc_ih = NULL;
 	sc->sc.sc_size = 0;
 
 	/* Map I/O space */
-	if (bus_space_map(sc->sc.iot, pxa->pxa_addr, pxa->pxa_size, 0,
+	if (bus_space_map(sc->sc.iot, PXA2X0_USBHC_BASE, PXA2X0_USBHC_SIZE, 0,
 	    &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		return;
 	}
-	sc->sc.sc_size = pxa->pxa_size;
+	sc->sc.sc_size = PXA2X0_USBHC_SIZE;
 
 	/* XXX copied from ohci_pci.c. needed? */
 	bus_space_barrier(sc->sc.iot, sc->sc.ioh, 0, sc->sc.sc_size,
