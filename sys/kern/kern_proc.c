@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.2 1996/03/03 17:19:51 niklas Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.3 1997/11/24 03:22:41 deraadt Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -203,10 +203,10 @@ enterpgrp(p, pgid, mksess)
 		if (p->p_pid != pgid)
 			panic("enterpgrp: new pgrp and pid != pgid");
 #endif
-		MALLOC(pgrp, struct pgrp *, sizeof(struct pgrp), M_PGRP,
-		    M_WAITOK);
 		if ((np = pfind(savepid)) == NULL || np != p)
 			return (ESRCH);
+		MALLOC(pgrp, struct pgrp *, sizeof(struct pgrp), M_PGRP,
+		    M_WAITOK);
 		if (mksess) {
 			register struct session *sess;
 
