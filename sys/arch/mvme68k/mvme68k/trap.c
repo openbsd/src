@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 1997/02/02 00:43:21 deraadt Exp $ */
+/*	$OpenBSD: trap.c,v 1.11 1997/02/04 02:49:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -339,6 +339,7 @@ copyfault:
 		i = SIGILL;
 		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */
 		typ = ILL_COPROC;
+		v = frame.f_pc;
 		break;
 
 #ifdef FPCOPROC
@@ -362,6 +363,7 @@ copyfault:
 		typ = FPE_FLTRES;
 		ucode = code;
 		i = SIGFPE;
+		v = frame.f_pc;
 		break;
 #endif
 
@@ -376,6 +378,7 @@ copyfault:
 		/* XXX need to FRESTORE */
 		typ = FPE_FLTINV;
 		i = SIGFPE;
+		v = frame.f_pc;
 		break;
 #endif
 
@@ -391,7 +394,9 @@ copyfault:
 		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
 		typ = ILL_ILLOPC;
 		i = SIGILL;
+		v = frame.f_pc;
 		break;
+
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
 #ifdef COMPAT_HPUX
 		if (p->p_emul == &emul_hpux)
@@ -401,6 +406,7 @@ copyfault:
 		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
 		typ = ILL_PRVOPC;
 		i = SIGILL;
+		v = frame.f_pc;
 		break;
 
 	case T_ZERODIV|T_USER:	/* Divide by zero */
@@ -412,6 +418,7 @@ copyfault:
 		ucode = frame.f_format;	/* XXX was FPE_INTDIV_TRAP */
 		typ = FPE_INTDIV;
 		i = SIGFPE;
+		v = frame.f_pc;
 		break;
 
 	case T_CHKINST|T_USER:	/* CHK instruction trap */
@@ -426,6 +433,7 @@ copyfault:
 		ucode = frame.f_format;	/* XXX was FPE_SUBRNG_TRAP */
 		typ = FPE_FLTSUB;
 		i = SIGFPE;
+		v = frame.f_pc;
 		break;
 
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
@@ -438,8 +446,9 @@ copyfault:
 		}
 #endif
 		ucode = frame.f_format;	/* XXX was FPE_INTOVF_TRAP */
-		typ = FPE_FLTOVF;
-		i = SIGFPE;
+		typ = ILL_ILLTRP;
+		i = SIGILL;
+		v = frame.f_pc;
 		break;
 
 	/*
