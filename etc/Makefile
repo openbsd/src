@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 1996/09/23 05:04:37 downsj Exp $
+#	$OpenBSD: Makefile,v 1.28 1996/11/30 16:40:22 michaels Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -15,8 +15,8 @@ BINOWN= root
 BINGRP= wheel
 BIN1=	aliases bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
 	daily dm.conf ftpusers ftpchroot gettytab group hosts hosts.equiv \
-	hosts.lpd ifaliases inetd.conf ksh.kshrc man.conf monthly motd \
-	myname netstart newsyslog.conf phones printcap protocols rc \
+	hosts.lpd ifaliases inetd.conf ksh.kshrc locate.rc man.conf monthly \
+	motd myname netstart newsyslog.conf phones printcap protocols rc \
 	rc.local remote rpc security services shells syslog.conf virc weekly \
 	etc.${MACHINE}/disktab
 
@@ -103,8 +103,6 @@ distribution-etc-root-var: distrib-dirs
 		${DESTDIR}/var/cron/log
 	install -c -o nobody -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/db/locate.database
-	install -c -o root -g wheel -m 644 /dev/null \
-		${DESTDIR}/etc/locate.rc			
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/lastlog
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
