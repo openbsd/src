@@ -4,5 +4,5 @@ operator:*:2:20::0:0:System &:/usr/guest/operator:/sbin/nologin
 bin:*:3:7::0:0:Binaries Commands and Source,,,:/:/sbin/nologin
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/usr/libexec/uucp/uucico
 games:*:7:13::0:0:Games pseudo-user:/usr/games:/sbin/nologin
-nobody:*:32767:9999::0:0:Unprivileged user:/nonexistent:/sbin/nologin
+nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin
 ingres:*:267:74::0:0:& Group:/usr/ingres:/sbin/nologin
