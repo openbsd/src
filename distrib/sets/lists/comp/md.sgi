@@ -1,4 +1,3 @@
-./usr/bin/gasp
 ./usr/bin/objcopy
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
@@ -114,7 +113,6 @@
 ./usr/include/g++/type_traits.h
 ./usr/include/g++/vector.h
 ./usr/include/ieeefp.h
-./usr/include/link.h
 ./usr/include/mips64/ansi.h
 ./usr/include/mips64/arcbios.h
 ./usr/include/mips64/archtype.h
@@ -214,6 +212,7 @@
 ./usr/lib/gcc-lib/mips64-unknown-openbsd3.6/2.95.3/cc1
 ./usr/lib/gcc-lib/mips64-unknown-openbsd3.6/2.95.3/cc1obj
 ./usr/lib/gcc-lib/mips64-unknown-openbsd3.6/2.95.3/cc1plus
+./usr/lib/gcc-lib/mips64-unknown-openbsd3.6/2.95.3/collect2
 ./usr/lib/gcc-lib/mips64-unknown-openbsd3.6/2.95.3/cpp0
 ./usr/lib/gcc-lib/mips64-unknown-openbsd3.6/2.95.3/f771
 ./usr/lib/gcc-lib/mips64-unknown-openbsd3.6/2.95.3/include
@@ -227,7 +226,8 @@
 ./usr/lib/gcc-lib/mips64-unknown-openbsd3.6/2.95.3/include/typeinfo
 ./usr/lib/gcc-lib/mips64-unknown-openbsd3.6/2.95.3/libgcc.a
 ./usr/lib/gcc-lib/mips64-unknown-openbsd3.6/2.95.3/specs
-./usr/lib/libmmalloc.a
+./usr/lib/libbfd.a
+./usr/lib/libbfd.la
 ./usr/lib/libopcodes.a
 ./usr/lib/libstdc++_p.a
 ./usr/libdata/ldscripts
