@@ -1,4 +1,4 @@
-/*	$OpenBSD: cksum.c,v 1.2 1996/06/26 05:32:01 deraadt Exp $	*/
+/*	$OpenBSD: cksum.c,v 1.3 1997/06/27 19:02:54 deraadt Exp $	*/
 /*	$NetBSD: cksum.c,v 1.7 1995/09/02 05:45:18 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: cksum.c,v 1.2 1996/06/26 05:32:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cksum.c,v 1.3 1997/06/27 19:02:54 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -76,6 +76,8 @@ main(argc, argv)
 	int (*cfncn) __P((int, u_int32_t *, u_int32_t *));
 	void (*pfncn) __P((char *, u_int32_t, u_int32_t));
 	extern char *__progname;
+
+	setlocale(LC_ALL, "");
 
 	if (!strcmp(__progname, "sum")) {
 		cfncn = csum1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chown.c,v 1.5 1997/05/31 06:14:29 deraadt Exp $	*/
+/*	$OpenBSD: chown.c,v 1.6 1997/06/27 19:02:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94"; */
-static char *rcsid = "$Id: chown.c,v 1.5 1997/05/31 06:14:29 deraadt Exp $";
+static char *rcsid = "$Id: chown.c,v 1.6 1997/06/27 19:02:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -80,6 +80,8 @@ main(argc, argv)
 	int Hflag, Lflag, Pflag, ch, fts_options, hflag, rval;
 	char *cp;
 	
+	setlocale(LC_ALL, "");
+
 	myname = (cp = strrchr(*argv, '/')) ? cp + 1 : *argv;
 	ischown = myname[2] == 'o';
 	
