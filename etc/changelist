@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.17 2001/05/30 02:11:05 deraadt Exp $
+#	$OpenBSD: changelist,v 1.18 2001/06/10 02:31:09 deraadt Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -90,6 +90,7 @@
 /root/.rhosts
 /root/.shosts
 /root/.ssh/authorized_keys
+/root/.ssh/authorized_keys2
 /var/cron/allow
 /var/cron/deny
 /var/cron/tabs/root
