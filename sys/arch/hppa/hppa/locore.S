@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.41 2001/03/28 18:24:51 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.42 2001/03/28 20:58:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -79,12 +79,12 @@
 /*
  * hv-specific instructions
  */
-#define	DR_PAGE0	.word (5 << 26) | (0x70 << 5)
-#define	DR_PAGE1	.word (5 << 26) | (0x72 << 5)
-#define	MTCPU_T(x,t) .word (5 << 26) | ((t) << 21) | ((x) << 16) | (0xc0 << 5)
-#define	MTCPU_C(x,t) .word (5 << 26) | ((t) << 21) | ((x) << 16) | (0x12 << 5)
-#define	MFCPU_T(r,x) .word (5 << 26) | ((r) << 21) | (0xa0 << 5) | (x)
-#define	MFCPU_C(r,x) .word (5 << 26) | ((r) << 21) | ((x) << 16) | (0x30 << 5)
+#define	DR_PAGE0	diag (0x70 << 5)
+#define	DR_PAGE1	diag (0x72 << 5)
+#define	MTCPU_T(x,t)	diag ((t) << 21) | ((x) << 16) | (0xc0 << 5)
+#define	MTCPU_C(x,t)	diag ((t) << 21) | ((x) << 16) | (0x12 << 5)
+#define	MFCPU_T(r,x)	diag ((r) << 21) | (0xa0 << 5) | (x)
+#define	MFCPU_C(r,x)	diag ((r) << 21) | ((x) << 16) | (0x30 << 5)
 
 	.import	$global$, data
 	.import pdc, data
@@ -990,7 +990,7 @@ hpmc_v
 					/* 64 */
 
 	.export	TLABEL(hpmc), entry
-TLABEL(hpmc)
+ENTRY(TLABEL(hpmc))
 	/* TODO: save cpu context */
 	/* TODO: save PIM info */
 	/* TODO: call pdc appropriately */
@@ -1007,9 +1007,10 @@ TLABEL(hpmc)
 hpmc_never_dies
 	b	hpmc_never_dies
 	nop
+EXIT(TLABEL(hpmc))
 
 	.export TLABEL(emu), entry
-TLABEL(emu)
+ENTRY(TLABEL(emu))
 	/* restore %r1 from CTRAP() */
 	mfctl	tr7, r1
 
@@ -1128,6 +1129,7 @@ $fpusw_done
 	mfctl	tr2, t1
 	rfi
 	nop
+EXIT(TLABEL(emu))
 
 #ifdef FPEMUL
 	.export TLABEL(excpt), entry
@@ -1136,7 +1138,7 @@ $fpusw_done
 	 *
 	 * iisq:iioq - exception triggered instruction
 	 */
-TLABEL(excpt)
+ENTRY(TLABEL(excpt))
 	mtctl	sp, tr3
 	mtctl	r31, tr2
 
@@ -1204,11 +1206,13 @@ TLABEL(excpt)
 	mfctl	tr7, r1
 	rfi
 	nop
+EXIT(TLABEL(excpt))
 
 	.export	$sfu_emu, entry
-$sfu_emu
+ENTRY($sfu_emu)
 	bv	r0(rp)
 	ldo	1(r0), ret0	/* none supported by now */
+EXIT($sfu_emu)
 
 #endif /* FPEMUL */
 
@@ -1235,14 +1239,14 @@ $sfu_emu
 #if defined(HP7000_CPU) || defined(HP7100_CPU)
 ENTRY(desidhash_s)
 ALTENTRY(desidhash_x)
-	MFCPU_T(DR_CPUCFG,t1)
-	MFCPU_T(DR_CPUCFG,t1)
+	MFCPU_T(DR_CPUCFG,22)	/* t1 */
+	MFCPU_T(DR_CPUCFG,22)
 	depi	0, DR0_PCXS_DHE, 3, t1	/* 3 4 DR0_PCXS_DOMAIN|DR0_PCXS_IHE */
 	depi	1, DR0_PCXS_EQWSTO, 1, t1
 	depi	0, DR0_PCXS_DHPMC, 1, t1
 	depi	0, DR0_PCXS_ILPMC, 1, t1
-	MTCPU_T(t1,DR_CPUCFG)
-	MTCPU_T(t1,DR_CPUCFG)
+	MTCPU_T(22,DR_CPUCFG)
+	MTCPU_T(22,DR_CPUCFG)
 	bv	0(rp)
 	extru	t1, 4, 5, ret0	/* return chip revision */
 EXIT(desidhash_s)
@@ -1253,14 +1257,14 @@ EXIT(desidhash_s)
  * void desidhash_t(void)
  */
 ENTRY(desidhash_t)
-	MFCPU_T(DR_CPUCFG,t1)
-	MFCPU_T(DR_CPUCFG,t1)
+	MFCPU_T(DR_CPUCFG,22)	/* t1 */
+	MFCPU_T(DR_CPUCFG,22)
 	depi	0, DR0_PCXT_IHE, 1, t1
 	depi	0, DR0_PCXT_DHE, 1, t1
 	depi	0, DR0_PCXT_DHPMC, 1, t1
 	depi	0, DR0_PCXT_ILPMC, 1, t1
-	MTCPU_T(t1,DR_CPUCFG)
-	MTCPU_T(t1,DR_CPUCFG)
+	MTCPU_T(22,DR_CPUCFG)
+	MTCPU_T(22,DR_CPUCFG)
 	bv	0(rp)
 	extru	t1, 4, 5, ret0	/* return chip revision */
 EXIT(desidhash_t)
@@ -1408,12 +1412,12 @@ ENTRY(pbtlb_l)
 	rsm	(PSW_R|PSW_I), t4
 	ldil	L%0xc041, t1
 	dep	arg0, 30, 3, t1
-	MTCPU_T(t1,DR_DTLB)
+	MTCPU_T(22,DR_DTLB)	/* t1 */
 	mtsp	r0, sr1
 	idtlba	r0,(sr1,r0)
 	idtlbp	r0,(sr1,r0)
 	zdepi	-1, 18, 1, t1
-	MTCPU_T(t1,DR_DTLB)
+	MTCPU_T(22,DR_DTLB)
 	bv	0(rp)
 	mtsm	t4
 EXIT(pbtlb_l)
@@ -1422,14 +1426,14 @@ EXIT(pbtlb_l)
  * int desidhash_l(void)
  */
 ENTRY(desidhash_l)
-	MFCPU_C(DR_CPUCFG,t1)
+	MFCPU_C(DR_CPUCFG,22)	/* t1 */
 	depi	0, DR0_PCXL_L2IHASH_EN, 2, t1	/* + DR0_PCXL_L2DHASH_EN */
 	depi	0, DR0_PCXL_L2IHPMC, 1, t1	/* don't reset */
 	depi	0, DR0_PCXL_L2DHPMC, 1, t1	/* don't reset */
 	depi	0, DR0_PCXL_L1IHPMC, 1, t1	/* don't reset */
 	depi	0, DR0_PCXL_L2PARERR,1, t1	/* don't reset */
 		/* set DR0_PCXL_L1ICACHE_EN ??? */
-	MTCPU_C(t1,DR_CPUCFG)
+	MTCPU_C(22,DR_CPUCFG)
 	bv	0(rp)
 	extru	t1, 4, 5, ret0	/* return chip revision */
 EXIT(desidhash_l)
@@ -1579,7 +1583,7 @@ $tlb_missend
 
 	.align	64
 	.export	TLABEL(all), entry
-TLABEL(all)
+ENTRY(TLABEL(all))
 	/* r1 still has trap type */
 
 	/*
@@ -1845,10 +1849,11 @@ $trapnowvirt
 
 	.export	$trap$all$end, entry
 $trap$all$end
+EXIT(TLABEL(all))
 
 	.align	32
 	.export	TLABEL(ibrk), entry
-TLABEL(ibrk)
+ENTRY(TLABEL(ibrk))
 	mtctl	t1, tr2
 	mtctl	t2, tr3
 
@@ -1907,7 +1912,7 @@ $ibrk_exit
 	mfctl	tr7, r1
 	rfi
 	nop
-
+EXIT(TLABEL(ibrk))
 
 	.import	dcache_stride, data
 ENTRY(fdcache)
