@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.6 1997/01/21 18:10:39 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.7 1997/06/17 14:43:33 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.22 1996/01/04 20:11:20 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.6 1997/01/21 18:10:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.7 1997/06/17 14:43:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -154,9 +154,9 @@ struct	cmd {
 void 	adjust_nsellength();
 int	getinfo __P((struct ifreq *));
 void	getsock __P((int));
-void	printall __P((void));
+void	printif __P((struct ifreq *));
 void 	printb __P((char *, unsigned short, char *));
-void 	status();
+void 	status __P((int));
 void 	usage();
 
 /*
@@ -227,16 +227,17 @@ main(argc, argv)
 	if (aflag) {
 		if (argc > 0)
 			usage();
-		printall();
+		printif(NULL);
 		exit(0);
 	}
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (getinfo(&ifr) < 0)
-		exit(1);
 	if (argc == 0) {
-		status();
+		printif(&ifr);
 		exit(0);
 	}
+
+	if (getinfo(&ifr) < 0)
+		exit(1);
 	while (argc > 0) {
 		register struct cmd *p;
 
@@ -348,11 +349,12 @@ getinfo(ifr)
 }
 
 void
-printall()
+printif(ifrm)
+	struct ifreq *ifrm;
 {
 	char *inbuf = NULL;
 	struct ifconf ifc;
-	struct ifreq ifreq, *ifr;
+	struct ifreq ifreq, *ifrp;
 	int i, len = 8192;
 
 	getsock(af);
@@ -369,22 +371,39 @@ printall()
 			break;
 		len *= 2;
 	}
-	ifr = ifc.ifc_req;
+	ifrp = ifc.ifc_req;
 	ifreq.ifr_name[0] = '\0';
 	for (i = 0; i < ifc.ifc_len; ) {
-		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
-		i += sizeof(ifr->ifr_name) +
-			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
-				? ifr->ifr_addr.sa_len
+		ifrp = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
+		i += sizeof(ifrp->ifr_name) +
+			(ifrp->ifr_addr.sa_len > sizeof(struct sockaddr)
+				? ifrp->ifr_addr.sa_len
 				: sizeof(struct sockaddr));
-		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
-			     sizeof(ifr->ifr_name)))
+
+		if (ifrm && strncmp(ifrm->ifr_name, ifrp->ifr_name,
+		    sizeof(ifrp->ifr_name)))
 			continue;
-		strncpy(name, ifr->ifr_name, sizeof(ifr->ifr_name));
-		ifreq = *ifr;
-		if (getinfo(&ifreq) < 0)
+		strncpy(name, ifrp->ifr_name, sizeof(ifrp->ifr_name));
+		if (ifrp->ifr_addr.sa_family == AF_LINK) {
+			ifreq = ifr = *ifrp;
+			if (getinfo(&ifreq) < 0)
+				continue;
+			status(1);
 			continue;
-		status();
+		}
+		if (!strncmp(ifreq.ifr_name, ifrp->ifr_name,
+		    sizeof(ifrp->ifr_name))) {
+			register struct afswtch *p = afp;
+
+			ifr = *ifrp;
+			if ((p = afp) != NULL) {
+				(*p->af_status)(1);
+			} else for (p = afs; p->af_name; p++) {
+				ifr.ifr_addr.sa_family = p->af_af;
+				(*p->af_status)(0);
+			}
+			continue;
+		}
 	}
 	free(inbuf);
 }
@@ -511,7 +530,8 @@ setifmetric(val)
  * specified, show it and it only; otherwise, show them all.
  */
 void
-status()
+status(link)
+	int link;
 {
 	register struct afswtch *p = afp;
 
@@ -520,11 +540,13 @@ status()
 	if (metric)
 		printf(" metric %d", metric);
 	putchar('\n');
-	if ((p = afp) != NULL) {
-		(*p->af_status)(1);
-	} else for (p = afs; p->af_name; p++) {
-		ifr.ifr_addr.sa_family = p->af_af;
-		(*p->af_status)(0);
+	if (link == 0) {
+		if ((p = afp) != NULL) {
+			(*p->af_status)(1);
+		} else for (p = afs; p->af_name; p++) {
+			ifr.ifr_addr.sa_family = p->af_af;
+			(*p->af_status)(0);
+		}
 	}
 }
 
@@ -540,16 +562,6 @@ in_status(force)
 		if (errno == EPROTONOSUPPORT)
 			return;
 		err(1, "socket");
-	}
-	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
-		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
-			if (!force)
-				return;
-			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-		} else
-			warn("SIOCGIFADDR");
 	}
 	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 	sin = (struct sockaddr_in *)&ifr.ifr_addr;
