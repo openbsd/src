@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.107 2002/07/05 21:21:17 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.108 2002/07/08 19:41:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -182,10 +182,17 @@ ubsec_attach(parent, self, aux)
 		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821))
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820))
 		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG |
 		    UBS_FLAGS_LONGCTX | UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821)) {
+		sc->sc_statmask |= BS_STAT_MCR1_ALLEMPTY |
+		    BS_STAT_MCR2_ALLEMPTY;
+		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG |
+		    UBS_FLAGS_LONGCTX | UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY;
+	}
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
