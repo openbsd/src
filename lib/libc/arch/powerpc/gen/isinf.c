@@ -1,4 +1,4 @@
-/*	$OpenBSD: isinf.c,v 1.2 2000/03/01 17:31:22 todd Exp $	*/
+/*	$OpenBSD: isinf.c,v 1.3 2001/05/11 21:40:00 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,33 +34,34 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)isinf.c	5.1 (Berkeley) 3/18/91";*/
-static char rcsid[] = "$OpenBSD: isinf.c,v 1.2 2000/03/01 17:31:22 todd Exp $";
+static char rcsid[] = "$OpenBSD: isinf.c,v 1.3 2001/05/11 21:40:00 drahn Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
+int
 isnan(d)
 	double d;
 {
 	register struct IEEEdp {
-		u_int manl : 32;
-		u_int manh : 20;
-		u_int  exp : 11;
 		u_int sign :  1;
+		u_int  exp : 11;
+		u_int manh : 20;
+		u_int manl : 32;
 	} *p = (struct IEEEdp *)&d;
 
 	return(p->exp == 2047 && (p->manh || p->manl));
 }
 
+int
 isinf(d)
 	double d;
 {
 	register struct IEEEdp {
-		u_int manl : 32;
-		u_int manh : 20;
-		u_int  exp : 11;
 		u_int sign :  1;
+		u_int  exp : 11;
+		u_int manh : 20;
+		u_int manl : 32;
 	} *p = (struct IEEEdp *)&d;
 
 	return(p->exp == 2047 && !p->manh && !p->manl);
