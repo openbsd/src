@@ -1,4 +1,4 @@
-.\"	$OpenBSD: routed.8,v 1.31 2001/01/05 05:12:41 angelos Exp $
+.\"	$OpenBSD: routed.8,v 1.32 2001/01/05 05:17:45 angelos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -492,6 +492,8 @@ blanks:
 Indicates that the other parameters on the line apply to the interface
 name
 .Ar ifname .
+This typically is the first entry in all lines in
+.It Pa /etc/gateways .
 .It Cm subnet Ns \&= Ns Ar nname[/mask][,metric]
 Advertises a route to network
 .Ar nname
