@@ -14,7 +14,7 @@ SHELL = /bin/sh
 
 DISTFILES = \
 	.cvsignore ChangeLog Makefile.in README.txt \
-	SCC.mak scc.c scc.def pubscc.h
+	SCC.mak SCC.dsp scc.c scc.def pubscc.h
 
 all:
 .PHONY:	all

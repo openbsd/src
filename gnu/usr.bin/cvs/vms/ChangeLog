@@ -1,3 +1,9 @@
+1999-02-26  Jim Kingdon  <http://www.cyclic.com>
+
+	* options.h: Make RELATIVE_REPOS the default, as in
+	../src/options.h.in.
+	Remove CVS_DIFFDATE; removed from CVS on 27 Jun 1996.
+
 1998-05-12  Jim Meyering  <meyering@ascend.com>
 
 	* Makefile.in (distclean): New rule to remove Makefile.

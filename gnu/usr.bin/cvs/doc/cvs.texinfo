@@ -1,13 +1,13 @@
 \input texinfo  @c -*-texinfo-*-
 @comment Documentation for CVS.
-@comment Copyright (C) 1992, 1993 Signum Support AB
+@comment Copyright (C) 1992, 1993, 1999 Signum Support AB
 @comment Copyright (C) 1993 Free Software Foundation, Inc.
 
 @comment This file is part of the CVS distribution.
 
 @comment CVS is free software; you can redistribute it and/or modify
 @comment it under the terms of the GNU General Public License as published by
-@comment the Free Software Foundation; either version 1, or (at your option)
+@comment the Free Software Foundation; either version 2, or (at your option)
 @comment any later version.
 
 @comment CVS is distributed in the hope that it will be useful,
@@ -1182,14 +1182,93 @@ non-@code{dead} state.
 
 The @file{CVS} directory in each repository directory
 contains information such as file attributes (in a file
-called @file{CVS/fileattr}; see fileattr.h in the CVS
-source distribution for more documentation).  In the
+called @file{CVS/fileattr}.  In the
 future additional files may be added to this directory,
 so implementations should silently ignore additional
 files.
 
 This behavior is implemented only by @sc{cvs} 1.7 and
 later; for details see @ref{Watches Compatibility}.
+
+The format of the fileattr file is a series of entries
+of the following form (where @samp{@{} and @samp{@}}
+means the text between the braces can be repeated zero
+or more times):
+
+@var{ent-type} @var{filename} <tab> @var{attrname} = @var{attrval}
+  @{; @var{attrname} = @var{attrval}@} <linefeed>
+
+@var{ent-type} is @samp{F} for a file, in which case the entry specifies the
+attributes for that file.
+
+@var{ent-type} is @samp{D},
+and @var{filename} empty, to specify default attributes
+to be used for newly added files.
+
+Other @var{ent-type} are reserved for future expansion.  CVS 1.9 and older
+will delete them any time it writes file attributes.
+CVS 1.10 and later will preserve them.
+
+Note that the order of the lines is not significant;
+a program writing the fileattr file may
+rearrange them at its convenience.
+
+There is currently no way of quoting tabs or linefeeds in the
+filename, @samp{=} in @var{attrname},
+@samp{;} in @var{attrval}, etc.  Note: some implementations also
+don't handle a NUL character in any of the fields, but
+implementations are encouraged to allow it.
+
+By convention, @var{attrname} starting with @samp{_} is for an attribute given
+special meaning by CVS; other @var{attrname}s are for user-defined attributes
+(or will be, once implementations start supporting user-defined attributes).
+
+Builtin attributes:
+
+@table @code
+@item _watched
+Present means the file is watched and should be checked out
+read-only.
+
+@item _watchers
+Users with watches for this file.  Value is
+@var{watcher} > @var{type} @{ , @var{watcher} > @var{type} @}
+where @var{watcher} is a username, and @var{type}
+is zero or more of edit,unedit,commit separated by
+@samp{+} (that is, nothing if none; there is no "none" or "all" keyword).
+
+@item _editors
+Users editing this file.  Value is
+@var{editor} > @var{val} @{ , @var{editor} > @var{val} @}
+where @var{editor} is a username, and @var{val} is
+@var{time}+@var{hostname}+@var{pathname}, where
+@var{time} is when the @code{cvs edit} command (or
+equivalent) happened,
+and @var{hostname} and @var{pathname} are for the working directory.
+@end table
+
+Example:
+
+@c FIXME: sanity.sh should contain a similar test case
+@c so we can compare this example from something from
+@c Real Life(TM).  See cvsclient.texi (under Notify) for more
+@c discussion of the date format of _editors.
+@example
+Ffile1 _watched=;_watchers=joe>edit,mary>commit
+Ffile2 _watched=;_editors=sue>8 Jan 1975+workstn1+/home/sue/cvs
+D _watched=
+@end example
+
+means that the file @file{file1} should be checked out
+read-only.  Furthermore, joe is watching for edits and
+mary is watching for commits.  The file @file{file2}
+should be checked out read-only; sue started editing it
+on 8 Jan 1975 in the directory @file{/home/sue/cvs} on
+the machine @code{workstn1}.  Future files which are
+added should be checked out read-only.  To represent
+this example here, we have shown a space after
+@samp{D}, @samp{Ffile1}, and @samp{Ffile2}, but in fact
+there must be a single tab character there and no spaces.
 
 @node Locks
 @subsection CVS locks in the repository
@@ -1210,7 +1289,7 @@ operating systems or databases.
 
 @cindex #cvs.tfl
 Any file in the repository with a name starting
-with @file{#cvs.rfl} is a read lock.  Any file in
+with @file{#cvs.rfl.} is a read lock.  Any file in
 the repository with a name starting with
 @file{#cvs.wfl} is a write lock.  Old versions of CVS
 (before CVS 1.5) also created files with names starting
@@ -1225,7 +1304,7 @@ be true for creating a directory under most operating
 systems).  If it fails because the directory already
 existed, wait for a while and try again.  After
 obtaining the @file{#cvs.lock} lock, create a file
-whose name is @file{#cvs.rfl} followed by information
+whose name is @file{#cvs.rfl.} followed by information
 of your choice (for example, hostname and process
 identification number).  Then remove the
 @file{#cvs.lock} directory to release the master lock.
@@ -1236,7 +1315,7 @@ read lock.
 To obtain a writelock, first create the
 @file{#cvs.lock} directory, as with a readlock.  Then
 check that there are no files whose names start with
-@file{#cvs.rfl}.  If there are, remove
+@file{#cvs.rfl.}.  If there are, remove
 @file{#cvs.lock}, wait for a while, and try again.  If
 there are no readers, then create a file whose name is
 @file{#cvs.wfl} followed by information of your choice
@@ -1292,14 +1371,12 @@ cvs commit: Rebuilding administrative file database
 @end example
 
 @noindent
-@cindex checkoutlist
 and update the checked out copy in
 @file{$CVSROOT/CVSROOT}.  If it does not, there is
 something wrong (@pxref{BUGS}).  To add your own files
 to the files to be updated in this fashion, you can add
-them to the @file{checkoutlist} administrative file.
-@c FIXME: checkoutlist probably should be documented
-@c somewhat more completely.
+them to the @file{checkoutlist} administrative file
+(@pxref{checkoutlist}).
 
 @cindex modules.db
 @cindex modules.pag
@@ -1433,7 +1510,7 @@ revision for a removed file.  @var{timestamp} is the
 timestamp of the file at the time that @sc{cvs} created
 it; if the timestamp differs with the actual
 modification time of the file it means the file has
-been modified.  It is in Universal Time (UT), stored in
+been modified.  It is stored in
 the format used by the ISO C asctime() function (for
 example, @samp{Sun Apr  7 01:29:26 1996}).  One may
 write a string which is not in that format, for
@@ -1442,8 +1519,10 @@ file should always be considered to be modified.  This
 is not a special case; to see whether a file is
 modified a program should take the timestamp of the file
 and simply do a string compare with @var{timestamp}.
-@var{conflict} indicates that there was
-a conflict; if it is the same as the actual
+If there was a conflict, @var{conflict} can be set to
+the modification time of the file after the file has been
+written with conflict markers (@pxref{Conflicts example}).
+Thus if @var{conflict} is subsequently the same as the actual
 modification time of the file it means that the user
 has obviously not resolved the conflict.  @var{options}
 contains sticky options (for example @samp{-kb} for a
@@ -1454,6 +1533,19 @@ contains a pair of timestamps separated by a space,
 rather than a single timestamp, you are dealing with a
 version of @sc{cvs} earlier than @sc{cvs} 1.5 (not
 documented here).
+
+The timezone on the timestamp in CVS/Entries (local or
+universal) should be the same as the operating system
+stores for the timestamp of the file itself.  For
+example, on Unix the file's timestamp is in universal
+time (UT), so the timestamp in CVS/Entries should be
+too.  On @sc{vms}, the file's timestamp is in local
+time, so @sc{cvs} on @sc{vms} should use local time.
+This rule is so that files do not appear to be modified
+merely because the timezone changed (for example, to or
+from summer time).
+@c See comments and calls to gmtime() and friends in
+@c src/vers_ts.c (function time_stamp).
 
 If the first character of a line in @file{Entries} is
 @samp{D}, then it indicates a subdirectory.  @samp{D}
@@ -2191,6 +2283,11 @@ The @samp{--allow-root} option specifies the allowable
 different @sc{cvsroot} directory will not be allowed to
 connect.  If there is more than one @sc{cvsroot}
 directory which you want to allow, repeat the option.
+(Unfortunately, many versions of @code{inetd} have very small
+limits on the number of arguments and/or the total length
+of the command.  The usual solution to this problem is
+to have @code{inetd} run a shell script which then invokes
+@sc{cvs} with the necessary arguments.)
 
         If your @code{inetd} wants a symbolic service
 name instead of a raw port number, then put this in
@@ -2404,9 +2501,6 @@ but no one has done so as of this writing.
 @c closes enough holes to recommend it (plus it is
 @c *very* easy to accidentally screw up a setup of this
 @c type).
-Furthermore, there may be other ways in which having
-access to @sc{cvs} allows people to gain more general
-access to the system; no one has done a careful audit.
 
 Note that because the @file{$CVSROOT/CVSROOT} directory
 contains @file{passwd} and other files which are used
@@ -2430,8 +2524,8 @@ using pserver.
 @c someone who wants to play with it, document it, &c.
 
 In summary, anyone who gets the password gets
-repository access, and some measure of general system
-access as well.  The password is available to anyone
+repository access (which may imply some measure of general system
+access as well).  The password is available to anyone
 who can sniff network packets or read a protected
 (i.e., user read-only) file.  If you want real
 security, get Kerberos.
@@ -3613,6 +3707,7 @@ copy the changes onto another branch.
 * Merging more than once::      Merging from a branch several times
 * Merging two revisions::       Merging differences between two revisions
 * Merging adds and removals::   What if files are added or removed?
+* Merging and keywords::        Avoiding conflicts due to keyword substitution
 @end menu
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4010,6 +4105,10 @@ A conflict can result from a merge operation.  If that
 happens, you should resolve it before committing the
 new revision.  @xref{Conflicts example}.
 
+If your source files contain keywords (@pxref{Keyword substitution}),
+you might be getting more conflicts than strictly necessary.  See
+@ref{Merging and keywords}, for information on how to avoid this.
+
 The @code{checkout} command also supports the @samp{-j @var{branch}} flag.  The
 same effect as above could be achieved with this:
 
@@ -4163,6 +4262,142 @@ cvs update -jbranchtag
 After these commands are executed and a @samp{cvs commit} is done,
 file @file{a} will be removed and file @file{d} added in the main branch.
 @c (which was determined by trying it)
+
+@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@node Merging and keywords
+@section Merging and keywords
+@cindex Merging, and keyword substitution
+@cindex Keyword substitution, and merging
+@cindex -j (merging branches), and keyword substitution
+@cindex -kk, to avoid conflicts during a merge
+
+If you merge files containing keywords (@pxref{Keyword
+substitution}), you will normally get numerous
+conflicts during the merge, because the keywords are
+expanded differently in the revisions which you are
+merging.
+
+Therefore, you will often want to specify the
+@samp{-kk} (@pxref{Substitution modes}) switch to the
+merge command line.  By substituting just the name of
+the keyword, not the expanded value of that keyword,
+this option ensures that the revisions which you are
+merging will be the same as each other, and avoid
+spurious conflicts.
+
+For example, suppose you have a file like this:
+
+@example
+       +---------+
+      _! 1.1.2.1 !   <-  br1
+     / +---------+
+    /
+   /
++-----+    +-----+
+! 1.1 !----! 1.2 !
++-----+    +-----+
+@end example
+
+and your working directory is currently on the trunk
+(revision 1.2).  Then you might get the following
+results from a merge:
+
+@example
+$ cat file1
+key $@asis{}Revision: 1.2 $
+. . .
+$ cvs update -j br1
+U file1
+RCS file: /cvsroot/first-dir/file1,v
+retrieving revision 1.1
+retrieving revision 1.1.2.1
+Merging differences between 1.1 and 1.1.2.1 into file1
+rcsmerge: warning: conflicts during merge
+$ cat file1
+@asis{}<<<<<<< file1
+key $@asis{}Revision: 1.2 $
+@asis{}=======
+key $@asis{}Revision: 1.1.2.1 $
+@asis{}>>>>>>> 1.1.2.1
+. . .
+@end example
+
+What happened was that the merge tried to merge the
+differences between 1.1 and 1.1.2.1 into your working
+directory.  So, since the keyword changed from
+@code{Revision: 1.1} to @code{Revision: 1.1.2.1},
+@sc{cvs} tried to merge that change into your working
+directory, which conflicted with the fact that your
+working directory had contained @code{Revision: 1.2}.
+
+Here is what happens if you had used @samp{-kk}:
+
+@example
+$ cat file1
+key $@asis{}Revision: 1.2 $
+. . .
+$ cvs update -kk -j br1
+U file1
+RCS file: /cvsroot/first-dir/file1,v
+retrieving revision 1.1
+retrieving revision 1.1.2.1
+Merging differences between 1.1 and 1.1.2.1 into file1
+$ cat file1
+key $@asis{}Revision$
+. . .
+@end example
+
+What is going on here is that revision 1.1 and 1.1.2.1
+both expand as plain @code{Revision}, and therefore
+merging the changes between them into the working
+directory need not change anything.  Therefore, there
+is no conflict.
+
+There is, however, one major caveat with using
+@samp{-kk} on merges.  Namely, it overrides whatever
+keyword expansion mode @sc{cvs} would normally have
+used.  In particular, this is a problem if the mode had
+been @samp{-kb} for a binary file.  Therefore, if your
+repository contains binary files, you will need to deal
+with the conflicts rather than using @samp{-kk}.
+
+@ignore
+The following seems rather confusing, possibly buggy,
+and in general, in need of much more thought before it
+is a recommended technique.  For one thing, does it
+apply on Windows as well as on Unix?
+
+Unchanged binary files will undergo the same keyword substitution
+but will not be checked in on a subsequent
+@code{cvs commit}.  Be aware that binary files containing keyword
+strings which are present in or below the working directory
+will most likely remain corrupt until repaired, however.  A simple 
+@code{cvs update -A} is sufficient to fix these otherwise unaltered binary files
+if the merge is being done to the main branch but
+this must be done after the merge has been committed or the merge itself
+will be lost.
+
+For Example:
+@example
+cvs update -Akk -jbranchtag
+cvs commit
+cvs update -A
+@end example
+
+@noindent
+will update the current directory from the main trunk of the
+repository, substituting the base keyword strings for keywords,
+and merge changes made on the branch @samp{branchtag} into the new
+work files, performing the same keyword substitution on that file set before
+comparing the two sets.  The final @code{cvs update -A} will restore any
+corrupted binary files as well as resetting the sticky @samp{-kk} tags which
+were present on the files in and below the working directory.
+Unfortunately, this doesn't work as well with an arbitrary branch tag, as the
+@samp{-r @var{branchtag}} switch does not reset the sticky @samp{-kk}
+switches attached to the working files as @samp{-A} does.  The workaround
+for this is to release the working directory after the merge has been
+committed and check it out again.
+@end ignore
 
 @c ---------------------------------------------------------------------
 @node Recursive behavior
@@ -6514,7 +6749,7 @@ It has a command, @code{what}, which is very similar to
 without @sc{rcs} have @sc{sccs}.  Since @code{what}
 looks for the character sequence @code{@@(#)} it is
 easy to include keywords that are detected by either
-command.  Simply prefix the @sc{rcs} keyword with the
+command.  Simply prefix the keyword with the
 magic @sc{sccs} phrase, like this:
 
 @example
@@ -6547,6 +6782,7 @@ and @code{troff} you can embed the null-character
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node Substitution modes
 @section Substitution modes
+@cindex Keyword substitution, changing modes
 @cindex -k (keyword substitution)
 @cindex Kflag
 
@@ -6559,7 +6795,7 @@ option to @code{cvs add} and @code{cvs admin}; the
 latter is set by the @samp{-k} or @samp{-A} options to @code{cvs
 checkout} or @code{cvs update}.  @code{cvs diff} also
 has a @samp{-k} option.  For some examples,
-see @ref{Binary files}.
+see @ref{Binary files}, and @ref{Merging and keywords}.
 @c The fact that -A is overloaded to mean both reset
 @c sticky options and reset sticky tags/dates is
 @c somewhat questionable.  Perhaps there should be
@@ -6595,7 +6831,7 @@ keyword, generate the string @code{$@asis{}Revision$}
 instead of @code{$@asis{}Revision: 5.7 $}.  This option
 is useful to ignore differences due to keyword
 substitution when comparing different revisions of a
-file.
+file (@pxref{Merging and keywords}).
 
 @item -ko
 Generate the old keyword string, present in the working
@@ -7667,6 +7903,11 @@ if you want files retrieved even when there is no match for the
 tag or date.  (The most recent revision of the file
 will be used).
 
+Note that even with @samp{-f}, a tag that you specify
+must exist (that is, in some file, not necessary in
+every file).  This is so that @sc{cvs} will continue to
+give an error if you mistype a tag name.
+
 @need 800
 @samp{-f} is available with these commands:
 @code{annotate}, @code{checkout}, @code{export},
@@ -7782,9 +8023,11 @@ The tag specification is sticky when you use this
 with @code{checkout} or @code{update} to make your own
 copy of a file: @sc{cvs} remembers the tag and continues to use it on
 future update commands, until you specify otherwise (for more information
-on sticky tags/dates, @pxref{Sticky tags}).  The
-tag can be either a symbolic or numeric tag.
-@xref{Tags}.
+on sticky tags/dates, @pxref{Sticky tags}).
+
+The tag can be either a symbolic or numeric tag, as
+described in @ref{Tags}, or the name of a branch, as
+described in @ref{Branching and merging}.
 
 Specifying the @samp{-q} global option along with the
 @samp{-r} command option is often useful, to suppress
@@ -7830,13 +8073,16 @@ are likely to disappear in the future.  This command
 @emph{does} work recursively, so extreme care should be
 used.
 
+@cindex cvsadmin
 On unix, if there is a group named @code{cvsadmin},
-only members of that group can run @code{cvs admin}.
-This group should exist on the server, or any system
-running the non-client/server @sc{cvs}.  To disallow
-@code{cvs admin} for all users, create a group with no
-users in it.  On NT, the @code{cvsadmin} feature does
-not exist and all users can run @code{cvs admin}.
+only members of that group can run @code{cvs admin}
+(except for the @code{cvs admin -k} command, which can
+be run by anybody).  This group should exist on the
+server, or any system running the non-client/server
+@sc{cvs}.  To disallow @code{cvs admin} for all users,
+create a group with no users in it.  On NT, the
+@code{cvsadmin} feature does not exist and all users
+can run @code{cvs admin}.
 
 @menu
 * admin options::               admin options
@@ -7890,6 +8136,7 @@ Might not work together with @sc{cvs}.  Erase the login
 names appearing in the comma-separated list
 @var{logins} from the access list of the RCS file.  If
 @var{logins} is omitted, erase the entire access list.
+There can be no space between @samp{-e} and its argument.
 
 @item -I
 Run interactively, even if the standard input is not a
@@ -10314,7 +10561,7 @@ Operate recursively (default).  @xref{Recursive
 behavior}.
 
 @item -r @var{tag}
-Checkout revision @var{tag} (is sticky).  See @ref{Common options}.
+Checkout revision @var{tag}.  See @ref{Common options}.
 @end table
 
 @item history [@var{options}] [@var{files}@dots{}]
@@ -10747,7 +10994,7 @@ file, which defines the modules inside the repository.
 
 @menu
 * modules::                     Defining modules
-* Wrappers::                    Treat directories as files
+* Wrappers::                    Specify binary-ness based on file name
 * commit files::                The commit support files
 * commitinfo::                  Pre-commit checking
 * verifymsg::                   How are log messages evaluated?
@@ -10756,6 +11003,7 @@ file, which defines the modules inside the repository.
 * loginfo::                     Where should log messages be sent?
 * rcsinfo::                     Templates for the log messages
 * cvsignore::                   Ignoring files via cvsignore
+* checkoutlist::                Adding your own administrative files
 * history file::                History information
 * Variables::                   Various variables are expanded
 * config::                      Miscellaneous CVS configuration
@@ -11515,7 +11763,7 @@ fi
 The @file{verifymsg} file contains this line:
 
 @example
-^tc     /usr/cvssupport/bugid.edit
+^tc     /usr/cvssupport/bugid.verify
 @end example
 
 The @file{rcsinfo} file contains this line:
@@ -11973,6 +12221,54 @@ way to specify comments.
 @c changing it raises all the usual compatibility
 @c issues and I'm also not sure what to change it to.
 
+@node checkoutlist
+@appendixsec The checkoutlist file
+@cindex checkoutlist
+
+It may be helpful to use @sc{cvs} to maintain your own
+files in the @file{CVSROOT} directory.  For example,
+suppose that you have a script @file{logcommit.pl}
+which you run by including the following line in the
+@file{commitinfo} administrative file:
+
+@example
+ALL   $CVSROOT/CVSROOT/logcommit.pl
+@end example
+
+To maintain @file{logcommit.pl} with @sc{cvs} you would
+add the following line to the @file{checkoutlist}
+administrative file:
+
+@example
+logcommit.pl
+@end example
+
+The format of @file{checkoutlist} is one line for each
+file that you want to maintain using @sc{cvs}, giving
+the name of the file.
+
+After setting up @file{checkoutlist} in this fashion,
+the files listed there will function just like
+@sc{cvs}'s built-in administrative files.  For example,
+when checking in one of the files you should get a
+message such as:
+
+@example
+cvs commit: Rebuilding administrative file database
+@end example
+
+and the checked out copy in the @file{CVSROOT}
+directory should be updated.
+
+Note that listing @file{passwd} (@pxref{Password
+authentication server}) in @file{checkoutlist} is not
+recommended for security reasons.
+
+For information about keeping a checkout out copy in a
+more general context than the one provided by
+@file{checkoutlist}, see @ref{Keeping a checked out
+copy}.
+
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node history file
 @appendixsec The history file
@@ -12122,7 +12418,7 @@ The default is @samp{yes}.  For more on pserver, see
 Enable support for saving special device files,
 symbolic links, file permissions and ownerships in the
 repository.  The default value is @samp{no}.
-@xref{Special Files} for the full implications of using
+@xref{Special Files}, for the full implications of using
 this keyword.
 
 @cindex TopLevelAdmin, in CVSROOT/config
@@ -12505,6 +12801,20 @@ produced it should work fine.
 @c so it doesn't seem particularly specific to any one
 @c test.
 
+@item cvs [server aborted]: Cannot check out files into the repository itself
+The obvious cause for this message (especially for
+non-client/server @sc{cvs}) is that the @sc{cvs} root
+is, for example, @file{/usr/local/cvsroot} and you try
+to check out files when you are in a subdirectory, such
+as @file{/usr/local/cvsroot/test}.  However, there is a
+more subtle cause, which is that the temporary
+directory on the server is set to a subdirectory of the
+root (which is also not allowed).  If this is the
+problem, set the temporary directory to somewhere else,
+for example @file{/var/tmp}; see @code{TMPDIR} in
+@ref{Environment variables}, for how to set the
+temporary directory.
+
 @c For one example see basica-1a10 in the testsuite
 @c For another example, "cvs co ." on NT; see comment
 @c at windows-NT/filesubr.c (expand_wild).
@@ -12620,6 +12930,22 @@ have printed a message, which will appear before the
 above message.  For more information on setting up a
 @sc{cvs} client and server, see @ref{Remote repositories}.
 
+@item cvs [update aborted]: EOF in key in RCS file @var{file},v
+@itemx cvs [checkout aborted]: EOF while looking for end of string in RCS file @var{file},v
+This means that there is a syntax error in the given
+@sc{rcs} file.  Note that this might be true even if @sc{rcs} can
+read the file OK; @sc{cvs} does more error checking of
+errors in the RCS file.  That is why you may see this
+message when upgrading from @sc{cvs} 1.9 to @sc{cvs}
+1.10.  The likely cause for the original corruption is
+hardware, the operating system, or the like.  Of
+course, if you find a case in which @sc{cvs} seems to
+corrupting the file, by all means report it,
+(@pxref{BUGS}).
+There are quite a few variations of this error message,
+depending on exactly where in the @sc{rcs} file @sc{cvs}
+finds the syntax error.
+
 @cindex mkmodules
 @item cvs commit: Executing 'mkmodules'
 This means that your repository is set up for a version
@@ -12655,6 +12981,22 @@ set to a non-empty value and re-create the RCS file.
 @c and of itself, as there are the environment
 @c variables the system login name, &c, and it depends
 @c on the version of CVS.
+
+@item cvs [checkout aborted]: no such tag @var{tag}
+This message means that @sc{cvs} isn't familiar with
+the tag @var{tag}.  Usually this means that you have
+mistyped a tag name; however there are (relatively
+obscure) cases in which @sc{cvs} will require you to
+@c Search sanity.sh for "no such tag" to see some of
+@c the relatively obscure cases.
+try a few other @sc{cvs} commands involving that tag,
+before you find one which will cause @sc{cvs} to update
+the @file{val-tags} file; see discussion of val-tags in
+@ref{File permissions}.  You only need to worry about
+this once for a given tag; when a tag is listed in
+@file{val-tags}, it stays there.  Note that using
+@samp{-f} to not require tag matches does not override
+this check; see @ref{Common options}.
 
 @item *PANIC* administration files missing
 This typically means that there is a directory named
@@ -12701,6 +13043,9 @@ older expects the logfile as an argument whereas the
 logfile to be specified with a @samp{-f} option.  Of
 course, if you don't need @file{log.pl} you can just
 comment it out of @file{loginfo}.
+
+@item cvs [update aborted]: unexpected EOF reading @var{file},v
+See @samp{EOF in key in RCS file}.
 
 @item cvs [login aborted]: unrecognized auth response from @var{server}
 This message typically means that the server is not set
@@ -12840,6 +13185,10 @@ program trying to use port 2401.  This is AIX's problem
 in the sense that port 2401 is registered for use with
 @sc{cvs}.  I hear that there is an AIX patch available
 to address this problem.
+
+Another good debugging tool is the @samp{-d}
+(debugging) option to inetd.  Consult your system
+documentation for more information.
 @end table
 
 @node Other problems
@@ -12849,6 +13198,17 @@ Here is a list of problems which do not fit into the
 above categories.  They are in no particular order.
 
 @itemize @bullet
+@item
+On Windows, if there is a 30 second or so delay when
+you run a @sc{cvs} command, it may mean that you have
+your home directory set to @file{C:/}, for example (see
+@code{HOMEDRIVE} and @code{HOMEPATH} in
+@ref{Environment variables}).  CVS expects the home
+directory to not end in a slash, for example @file{C:}
+or @file{C:\cvs}.
+@c FIXCVS: CVS should at least detect this and print an
+@c error, presumably.
+
 @item
 If you are running @sc{cvs} 1.9.18 or older, and
 @code{cvs update} finds a conflict and tries to

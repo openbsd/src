@@ -217,6 +217,10 @@ The @var{text} should be supplied to the
 user.  Compatibility note: @sc{cvs} 1.9.10 and older clients will print
 @code{unrecognized auth response} and @var{text}, and then exit, upon
 receiving this response.
+Note that @var{text} for this response, or the @var{text} in an @code{E}
+response, is not designed for machine parsing.  More vigorous use of
+@var{code}, or future extensions, will be needed to prove a cleaner
+machine-parseable indication of what the error was.
 @end table
 
 @c If you are thinking of putting samp or code around BEGIN AUTH REQUEST
@@ -506,6 +510,16 @@ exception is @samp{gzip-file-contents}.  Unrecognized requests will
 always elicit a response from the server, even if that request begins
 with a capital letter.
 
+The term @dfn{command} means a request which expects a response (except
+@code{valid-requests}).  The general model is that the client transmits
+a great number of requests, but nothing happens until the very end when
+the client transmits a command.  Although the intention is that
+transmitting several commands in one connection should be legal,
+existing servers probably have some bugs with some combinations of more
+than one command, and so clients may find it necessary to make several
+connections in some cases.  This should be thought of as a workaround
+rather than a desired attribute of the protocol.
+
 @node Requests
 @section Requests
 
@@ -794,7 +808,8 @@ affect the @code{ci} request or other relevant requests if any.
 @item Modified @var{filename} \n
 Response expected: no.  Additional data: mode, \n, file transmission.
 Send the server a copy of one locally modified file.  @var{filename} is
-relative to the most recent repository sent with @code{Directory}.  If
+a file within the most recent directory sent with @code{Directory}; it
+must not contain @samp{/}.  If
 the user is operating on only some files in a directory, only those
 files need to be included.  This can also be sent without @code{Entry},
 if there is no entry for the file.
@@ -836,8 +851,9 @@ investigation, the more conservative course of action is to stick to
 
 @item Unchanged @var{filename} \n
 Response expected: no.  Tell the server that @var{filename} has not been
-modified in the checked out directory.  The name is relative to the most
-recent repository sent with @code{Directory}.
+modified in the checked out directory.  The @var{filename} is
+a file within the most recent directory sent with @code{Directory}; it
+must not contain @samp{/}.
 
 @item UseUnchanged \n
 Response expected: no.  To specify the version of the protocol described
@@ -846,10 +862,13 @@ not do anything) and clients must issue it.
 
 @item Notify @var{filename} \n
 Response expected: no.
-Tell the server that a @code{edit} or @code{unedit} command has taken
+Tell the server that an @code{edit} or @code{unedit} command has taken
 place.  The server needs to send a @code{Notified} response, but such
 response is deferred until the next time that the server is sending
-responses.  Response expected: no.  Additional data:
+responses.
+The @var{filename} is a file within the most recent directory sent with
+@code{Directory}; it must not contain @samp{/}.
+Additional data:
 @example
 @var{notification-type} \t @var{time} \t @var{clienthost} \t
 @var{working-dir} \t @var{watches} \n
@@ -867,8 +886,16 @@ time as an opaque string rather than interpreting it).
 @var{clienthost} is the name of the host on which the edit or unedit
 took place, and @var{working-dir} is the pathname of the working
 directory where the edit or unedit took place.  @var{watches} are the
-temporary watches to set.  If @var{watches} is followed by \t then the
+temporary watches, zero or more of the following characters in the
+following order: @samp{E} for edit, @samp{U} for unedit, @samp{C} for
+commit, and all other letters should be silently ignored for future
+expansion.  If @var{notification-type} is @samp{E} the temporary watches
+are set; if it is @samp{U} they are cleared.
+If @var{watches} is followed by \t then the
 \t and the rest of the line should be ignored, for future expansion.
+
+The @var{time}, @var{clienthost}, and @var{working-dir} fields may not
+contain the characters @samp{+}, @samp{,}, @samp{>}, @samp{;}, or @samp{=}.
 
 Note that a client may be capable of performing an @code{edit} or
 @code{unedit} operation without connecting to the server at that time,
@@ -1101,7 +1128,9 @@ Response expected: yes.  Actually do a @code{cvs import} command.  This
 uses any previous @code{Argument}, @code{Directory}, @code{Entry}, or
 @code{Modified} requests, if they have been sent.  The
 last @code{Directory} sent specifies the working directory at the time
-of the operation.  The files to be imported are sent in @code{Modified}
+of the operation - unlike most commands, the repository field of each
+@code{Directory} request is ignored (it merely must point somewhere
+within the root).  The files to be imported are sent in @code{Modified}
 requests (files which the client knows should be ignored are not sent;
 the server must still process the CVSROOT/cvsignore file unless -I ! is
 sent).  A log message must have been specified with a @code{-m}
@@ -1557,6 +1586,13 @@ extending this one, for graceful handling of @code{Valid-responses}).
 
 @item M @var{text} \n
 A one-line message for the user.
+Note that the format of @var{text} is not designed for machine parsing.
+Although sometimes scripts and clients will have little choice, the
+exact text which is output is subject to vary at the discretion of the
+server and the example output given in this document is just that,
+example output.  Servers are encouraged to use the @samp{MT} response,
+and future versions of this document will hopefully standardize more of
+the @samp{MT} tags; see @ref{Text tags}.
 
 @item Mbinary \n
 Additional data: file transmission (note: compressed file transmissions
@@ -1654,6 +1690,12 @@ feature, or if it's not appropriate for this particular message, it just
 omits the errno-code (in that case there are two spaces after
 @samp{error}).  Text is an error message such as that provided by
 strerror(), or any other message the server wants to use.
+The @var{text} is like the @code{M} response, in the sense that it is
+not particularly intended to be machine-parsed; servers may wish to
+print an error message with @code{MT} responses, and then issue a
+@code{error} response without @var{text} (although it should be noted
+that @code{MT} currently has no way of flagging the output as intended
+for standard error, the way that the @code{E} response does).
 
 @item ok \n
 The command completed successfully.

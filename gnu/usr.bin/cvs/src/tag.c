@@ -914,6 +914,13 @@ tag_check_valid_join (join_tag, argc, argv, local, aflag, repository)
 		   join_tag);
 
         *s = '\0';
+	/* hmmm...  I think it makes sense to allow -j:<date>, but
+	 * for now this fixes a bug where CVS just spins and spins (I
+	 * think in the RCS code) looking for a zero length tag.
+	 */
+	if (!*c)
+	    error (1, 0,
+		   "argument to join may not contain a date specifier without a tag");
     }
 
     tag_check_valid (c, argc, argv, local, aflag, repository);

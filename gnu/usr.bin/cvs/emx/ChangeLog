@@ -1,3 +1,12 @@
+1999-03-27  Jim Kingdon  <http://www.cyclic.com>
+
+	* Makefile.in (LIB_OBJECTS, LIB_SOURCES): Remove vasprintf.
+
+1999-02-26  Jim Kingdon  <http://www.cyclic.com>
+
+	* options.h: Make RELATIVE_REPOS the default, as in
+	../src/options.h.in.
+
 1998-08-24  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* Makefile.in (rcscmds.o): New rule, so we can supply -I for

@@ -1,3 +1,7 @@
+1999-03-26  Jim Kingdon  <http://www.cyclic.com>
+
+	* getopt.h: Don't declare the arguments to getopt.
+
 1999-02-09  Jim Kingdon  <http://www.cyclic.com>
 
 	* vasprintf.c: Removed; there is apparently no clean, portable

@@ -688,7 +688,8 @@ diff_run (argc, argv, out, callbacks_arg)
 
   /* Set the jump buffer, so that diff may abort execution without
      terminating the process. */
-  if ((val = setjmp (diff_abort_buf)) != 0)
+  val = setjmp (diff_abort_buf);
+  if (val != 0)
     {
       optind = optind_old;
       if (opened_file)

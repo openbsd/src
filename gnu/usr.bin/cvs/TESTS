@@ -22,8 +22,7 @@ require expr.
 
 With CVS 1.10 people also had trouble with the Solaris sort program
 not behaving the way that the testsuite expects (with Solaris, lines
-starting with tabs sort before blank lines).  I suspect this is fixed
-now that the testsuite sets LC_COLLATE.
+starting with tabs sort before blank lines).
 
 If there is some unexpected output, that is a failure which can be
 somewhat hard to track down.  Finding out which test is producing the
@@ -146,3 +145,8 @@ workaround).
 
 b.  pass stdin to the program under test (sanity.sh, again, handles
 this by bypassing dotest).
+
+c.  have a send-expect type dialog with the program under test
+    (e.g. see server-7 or pserver-4 which want to talk the CVS
+    protocol, or the many tests which need to answer the prompt of "cvs
+    release", e.g. deep-5).

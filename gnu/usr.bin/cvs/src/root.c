@@ -7,8 +7,6 @@
  * Name of Root
  * 
  * Determine the path to the CVSROOT and set "Root" accordingly.
- * If this looks like of modified clone of Name_Repository() in
- * repos.c, it is... 
  */
 
 #include "cvs.h"

@@ -406,21 +406,21 @@ piped_child (command, tofdp, fromfdp)
     if (pid == 0)
     {
 	if (dup2 (to_child_pipe[0], STDIN_FILENO) < 0)
-	    error (1, errno, "cannot dup2");
+	    error (1, errno, "cannot dup2 pipe");
 	if (close (to_child_pipe[1]) < 0)
-	    error (1, errno, "cannot close");
+	    error (1, errno, "cannot close pipe");
 	if (close (from_child_pipe[0]) < 0)
-	    error (1, errno, "cannot close");
+	    error (1, errno, "cannot close pipe");
 	if (dup2 (from_child_pipe[1], STDOUT_FILENO) < 0)
-	    error (1, errno, "cannot dup2");
+	    error (1, errno, "cannot dup2 pipe");
 
 	execvp (command[0], command);
-	error (1, errno, "cannot exec");
+	error (1, errno, "cannot exec %s", command[0]);
     }
     if (close (to_child_pipe[0]) < 0)
-	error (1, errno, "cannot close");
+	error (1, errno, "cannot close pipe");
     if (close (from_child_pipe[1]) < 0)
-	error (1, errno, "cannot close");
+	error (1, errno, "cannot close pipe");
 
     *tofdp = to_child_pipe[1];
     *fromfdp = from_child_pipe[0];
@@ -433,7 +433,7 @@ close_on_exec (fd)
      int fd;
 {
 #if defined (FD_CLOEXEC) && defined (F_SETFD)
-  if (fcntl (fd, F_SETFD, 1))
-    error (1, errno, "can't set close-on-exec flag on %d", fd);
+    if (fcntl (fd, F_SETFD, 1))
+	error (1, errno, "can't set close-on-exec flag on %d", fd);
 #endif
 }

@@ -45,7 +45,7 @@ TEST_OBJS = example.o minigzip.o
 # build_zlib.com added for CVS
 DISTFILES = README INDEX ChangeLog configure Makefile.*[a-z0-9] Make_vms.com \
 	    descrip.mms zlib.def zlib.rc algorithm.doc *.[ch] \
-	    build_zlib.com
+	    build_zlib.com zlib.dsp .cvsignore
 
 # For CVS, just build libz.a
 all: libz.a

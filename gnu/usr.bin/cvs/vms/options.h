@@ -78,18 +78,22 @@
 #endif
 
 /*
- * The Repository file holds the path to the directory within the source
- * repository that contains the RCS ,v files for each CVS working directory.
- * This path is either a full-path or a path relative to CVSROOT.
+ * The Repository file holds the path to the directory within the
+ * source repository that contains the RCS ,v files for each CVS
+ * working directory.  This path is either a full-path or a path
+ * relative to CVSROOT.
  * 
- * The only advantage that I can see to having a relative path is that One can
- * change the physical location of the master source repository, change one's
- * CVSROOT environment variable, and CVS will work without problems.  I
- * recommend using full-paths.
+ * The big advantage that I can see to having a relative path is that
+ * one can change the physical location of the master source
+ * repository, change the contents of CVS/Root files in your
+ * checked-out code, and CVS will work without problems.
+ *
+ * Therefore, RELATIVE_REPOS is now the default.  In the future, this
+ * is likely to disappear entirely as a compile-time (or other) option,
+ * so if you have other software which relies on absolute pathnames,
+ * update them.
  */
-#ifndef RELATIVE_REPOS
-/* #define	RELATIVE_REPOS	 */
-#endif
+#define RELATIVE_REPOS 1
 
 /*
  * When committing or importing files, you must enter a log message.
@@ -128,18 +132,6 @@
 
 #ifndef CVS_BADROOT
 /* #define	CVS_BADROOT */
-#endif
-
-/*
- * The "cvs diff" command accepts all the single-character options that GNU
- * diff (1.15) accepts.  Except -D.  GNU diff uses -D as a way to put
- * cpp-style #define's around the output differences.  CVS, by default, uses
- * -D to specify a free-form date (like "cvs diff -D '1 week ago'").  If
- * you would prefer that the -D option of "cvs diff" work like the GNU diff
- * option, then comment out this define.
- */
-#ifndef CVS_DIFFDATE
-#define	CVS_DIFFDATE
 #endif
 
 /*

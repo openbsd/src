@@ -722,6 +722,9 @@ notify_proc (repository, filter)
     return (pclose (pipefp));
 }
 
+/* FIXME: this function should have a way to report whether there was
+   an error so that server.c can know whether to report Notified back
+   to the client.  */
 void
 notify_do (type, filename, who, val, watches, repository)
     int type;
@@ -743,6 +746,11 @@ notify_do (type, filename, who, val, watches, repository)
     switch (type)
     {
 	case 'E':
+	    if (strpbrk (val, ",>;=\n") != NULL)
+	    {
+		error (0, 0, "invalid character in editor value");
+		return;
+	    }
 	    editor_set (filename, who, val);
 	    break;
 	case 'U':
@@ -864,7 +872,14 @@ notify_do (type, filename, who, val, watches, repository)
 		    {
 			char *cp;
 			args.notifyee = xstrdup (line + len + 1);
-			cp = strchr (args.notifyee, ':');
+
+                        /* There may or may not be more
+                           colon-separated fields added to this in the
+                           future; in any case, we ignore them right
+                           now, and if there are none we make sure to
+                           chop off the final newline, if any. */
+			cp = strpbrk (args.notifyee, ":\n");
+
 			if (cp != NULL)
 			    *cp = '\0';
 			break;

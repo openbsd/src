@@ -175,6 +175,7 @@ PowerPC or RS/6000:
 	IBM RS/6000 running AIX 4.1 (1.9)
 	Lynx 2.3.1 120495 (1.6.86) (footnote 9)
 	Lynx 2.5 (1.9) (footnote 10)
+	MkLinux DR3 GENERIC #6 (1.10.5.1) (presumably LinuxPPC too)
 SPARC:
 	Sun SPARC running SunOS 4.1.x (1.10)
 	Sun SPARCstation 10 running Solaris 2.3 using gcc and cc (about 1.4A2)

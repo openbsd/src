@@ -1,3 +1,7 @@
+1999-04-09  Jim Kingdon  <http://www.cyclic.com>
+
+	* Makefile.in (DISTFILES): Add SCC.dsp.
+
 1998-09-21  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* README.txt: Also mention HAHTsite.

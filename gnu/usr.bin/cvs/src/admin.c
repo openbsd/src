@@ -120,34 +120,10 @@ admin (argc, argv)
     struct admin_data admin_data;
     int c;
     int i;
+    int only_k_option;
 
     if (argc <= 1)
 	usage (admin_usage);
-
-#ifdef CVS_ADMIN_GROUP
-    grp = getgrnam(CVS_ADMIN_GROUP);
-     /* skip usage right check if group CVS_ADMIN_GROUP does not exist */
-    if (grp != NULL)
-    {
-	char *me = getcaller();
-	char **grnam = grp->gr_mem;
-	int denied = 1;
-	
-	while (*grnam)
-	{
-	    if (strcmp(*grnam, me) == 0) 
-	    {
-		denied = 0;
-		break;
-	    }
-	    grnam++;
-	}
-
-	if (denied)
-	    error (1, 0, "usage is restricted to members of the group %s",
-		   CVS_ADMIN_GROUP);
-    }
-#endif
 
     wrap_setup ();
 
@@ -157,9 +133,13 @@ admin (argc, argv)
        example, admin_data->branch should be not `-bfoo' but simply `foo'. */
 
     optind = 0;
+    only_k_option = 1;
     while ((c = getopt (argc, argv,
-			"+ib::c:a:A:e:l::u::LUn:N:m:o:s:t::IqxV:k:")) != -1)
+			"+ib::c:a:A:e::l::u::LUn:N:m:o:s:t::IqxV:k:")) != -1)
     {
+	if (c != 'k')
+	    only_k_option = 0;
+
 	switch (c)
 	{
 	    case 'i':
@@ -211,6 +191,11 @@ admin (argc, argv)
 		break;
 
 	    case 'e':
+		if (optarg == NULL)
+		{
+		    error (1, 0,
+			   "removing entire access list not yet implemented");
+		}
 		arg_add (&admin_data, 'e', optarg);
 		break;
 
@@ -352,6 +337,33 @@ admin (argc, argv)
     }
     argc -= optind;
     argv += optind;
+
+#ifdef CVS_ADMIN_GROUP
+    grp = getgrnam(CVS_ADMIN_GROUP);
+     /* skip usage right check if group CVS_ADMIN_GROUP does not exist */
+    if (grp != NULL)
+    {
+	char *me = getcaller();
+	char **grnam = grp->gr_mem;
+	/* The use of `cvs admin -k' is unrestricted.  However, any
+	   other option is restricted.  */
+	int denied = ! only_k_option;
+	
+	while (*grnam)
+	{
+	    if (strcmp(*grnam, me) == 0) 
+	    {
+		denied = 0;
+		break;
+	    }
+	    grnam++;
+	}
+
+	if (denied)
+	    error (1, 0, "usage is restricted to members of the group %s",
+		   CVS_ADMIN_GROUP);
+    }
+#endif
 
     for (i = 0; i < admin_data.ac; ++i)
     {

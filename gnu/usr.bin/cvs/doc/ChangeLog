@@ -1,3 +1,166 @@
+1999-07-16  Tom Tromey  <tromey@cygnus.com>
+
+	* cvs.texinfo (admin): Mention admin -k exception.  Add cvsadmin
+	to index.
+
+1999-07-14  Larry Jones  <larry.jones@sdrc.com>
+
+	* cvs.texinfo (Password authentication server): Note inetd limits
+	and suggest using shell script to avoid.
+
+1999-06-01  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvsclient.texi (Requests): For the import command, the
+	repository given to the Directory requests is ignored.
+
+1999-05-27  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvsclient.texi (Requests): Clarify that Modified, Is-modified,
+	Notify and Unchanged must specify a file within the current
+	directory.
+
+1999-05-24  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.texinfo (checkoutlist): New node, contains more complete
+	documentation of this feature.
+	(CVSROOT storage): Refer to the new node when mentioning
+	checkoutlist.
+	(Administrative files): Update the menu entry for Wrappers.
+
+1999-05-17  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvsclient.texi (Requests): For Notify request, strike duplicate
+	"Response expected: no" and fix "a edit" -> "an edit".
+
+1999-05-14  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.texinfo (Working directory storage): Try to be more clear
+	about the conflict field.
+
+1999-05-11  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.texinfo (config): Use comma after @xref (thanks to Pavel
+	Roskin for the report/fix).
+
+1999-05-10  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvsclient.texi (Requests): Document restrictions on characters
+	in Notify requests.
+
+1999-05-04  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.texinfo (Password authentication security): Remove sentence
+	about how no one has audited pserver for holes; a lot of holes
+	have been closed, looking for, &c, since that was written.
+	In the summary, reword to reflect the fact that sniffing a
+	readonly password does not imply general system access (as far as
+	I know, of course).
+
+	* cvs.texinfo (Connection): Also suggest inetd -d.
+
+1999-04-28  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvsclient.texi (Requests): Say what goes in the "watches" field
+	of the "Notify" request.
+
+	* cvs.texinfo (Common options): -r is for branches too.
+
+	* cvs.texinfo (Error messages): Add "no such tag" message.
+	(Common options): -f does not override val-tags check.
+
+1999-04-26  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.texinfo (Locks): #cvs.rfl locks must start with "#cvs.rfl."
+	not just "#cvs.rfl".  As far as I know CVS has always implemented
+	the former behavior, and this just fixes the documentation.
+
+1999-04-23  Yoshiki Hayashi of u-tokyo.ac.jp
+
+	* cvs.texinfo (verifymsg): Correct wrong file name (bugid.edit ->
+	bugid.verify).
+
+1999-04-22  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvsclient.texi (Responses): The text in the "M" response is not
+	designed for machine parsing.  Likewise for "error" in regular
+	protocol.  Likewise for "E" and "error" in authentication protocol.
+
+1999-04-19  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.texinfo (Error messages): Add "Cannot check out files into
+	the repository itself".
+
+1999-04-16  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.texinfo (Other problems): Add the Windows problem with home
+	directory ending in a slash.
+
+1999-04-14  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.texinfo (CVS in repository): Include the format of the
+	fileattr file here, rather than referring to the CVS source code.
+
+1999-04-09  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.texinfo (Working directory storage): Whether the timestamp
+	in CVS/Entries is local or universal actually depends on the system.
+
+1999-04-05  Derek Price
+	<http://www-personal.engin.umich.edu/~oberon/resume.html>
+
+	* cvs.texinfo (export options): Remove notation that the -r
+	tag is sticky.  'cvs export' doesn't store that data.
+
+1999-04-08  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.texinfo (Error messages): Add "EOF in RCS file" and
+	"unexpected EOF" (in RCS file) messages.
+
+1999-03-25  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.texinfo (admin options): Say there can be no space between
+	-e and its argument (since the previous sentence said the argument
+	can be omitted, this is the only possibility).
+
+1999-02-26  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.texinfo (Merging and keywords): When including conflict
+	markers, put @asis{} at the start of the line, in case this file
+	itself is in CVS.  Thanks to Derek Price for pointing this out.
+
+1999-02-25  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.texinfo: Refer to "keywords" not "RCS keywords".  We had
+	only used the latter term in a few places, and it seems like a
+	somewhat odd term in that this style of keyword is by no means
+	specific to RCS.
+	(Merging a branch): Remove spurious ")".  Use ref, not xref, after
+	"see".
+	(Merging a branch, Substitution modes): Make sure that @ref is
+	followed by comma, since info wants that.
+	(Merging and keywords): Use samp not code for "-kk".  Something of
+	a judgement call, but the rest of the manual uses samp and that
+	seems better to me.
+	(Merging and keywords): Rewrite, to (a) better motivate the
+	discussion based on what the user wants to do, (b) fix up lots of
+	convoluted sentences, (c) move the discussion of the binary files
+	to the end, that is get across the basic idea first and then
+	embellish it.  Remove a few unnecessary index entries.  Expand
+	example.  Just tell people to avoid -kk with binary files (comment
+	out the discussion of using -A after the commit).
+
+1999-01-29  Derek Price
+	<http://www-personal.engin.umich.edu/~oberon/resume.html>
+
+	* cvs.texinfo:  Added new node/section on merging and keywords.  It
+	contains advice on how to avoid RCS keyword conflicts when merging
+	and avoid corrupting your binary files while doing it.
+
+1999-02-24  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvsclient.texi (Request intro): Add paragraph about transmitting
+	more than one command.
+
 1999-01-29  Jim Kingdon  <http://www.cyclic.com>
 
 	* cvs.texinfo: Use EXAMPLE.COM EXAMPLE.ORG and EXAMPLE.NET instead

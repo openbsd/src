@@ -7,9 +7,6 @@
  * 
  * Print Log Information
  * 
- * This line exists solely to test some pcl-cvs/ChangeLog stuff.  You
- * can delete it, if indeed it's still here when you read it.  -Karl
- *
  * Prints the RCS "log" (rlog) information for the specified files.  With no
  * argument, prints the log information for all the files in the directory
  * (recursive by default).

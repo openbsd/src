@@ -277,7 +277,7 @@ diff (argc, argv)
 		break;
 	    case 131:
 		/* --ifdef.  */
-		strcat_and_allocate (&opts, &opts_allocated, " -D");
+		strcat_and_allocate (&opts, &opts_allocated, " --ifdef=");
 		strcat_and_allocate (&opts, &opts_allocated, optarg);
 		break;
 	    case 129: case 130:           case 132: case 133: case 134:

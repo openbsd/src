@@ -1,3 +1,452 @@
+1999-07-28  Eric Sink   <eric@sourcegear.com>
+
+	* sanity.sh: before running basicc-11, we need to see if
+	the cwd has been deleted (by basicc-8).  If so, we
+	recreate it to allow basicc-11 to proceed.  This may be
+	something that only happens under the Linux 2.2 kernel.
+
+1999-07-18  Karl Fogel  <kfogel@floss.red-bean.com>
+
+	* edit.c (notify_do): chop newline, if any, from the value
+	obtained from CVSROOT/users.  Otherwise it just gets passed along
+	in the argument to the notification program (usually mail), which
+	will misinterpret it as signifying the end of the command.
+
+1999-07-19  Larry Jones  <larry.jones@sdrc.com>
+
+	* rcs.c (RCS_delete_revs): In the WIN32 kludge, be sure that the result
+	of RCS_getexpand is not NULL before trying to use what it points to.
+	(Patch submitted by Timothy L. Taylor <ttaylor@mitre.org>.)
+
+1999-07-16  Tom Tromey  <tromey@cygnus.com>
+
+	* admin.c (admin): Allow `-k' options to be used unrestricted.
+
+1999-06-23  Jim Kingdon  <http://www.cyclic.com>
+
+	* sanity.sh (symlinks2): New test, for symlinks in working
+	directory without PreservePermissions.  This test (modulo a few
+	details not relevant to testing whether we are following symlinks)
+	worked remote as of now, or either remote or local for CVS 1.9.
+	* subr.c (get_file): Revert 1998-02-15 change to special-case
+	symlinks.  This makes the above test work local too.
+	* rcs.c (RCS_checkin): Move the logic to handle special-case
+	symlinks (and other files other than regular files) here, and make
+	it only happen if PreservePermissions is on.
+
+1999-06-18  Larry Jones  <larry.jones@sdrc.com>
+
+	* sanity.sh (devcom3-9a): Be less specific about the expected
+	error message (BSD/OS 4.0 has a bug that can cause exec* to fail
+	with EACCES instead of ENOENT).
+
+1999-06-08  Larry Jones  <larry.jones@sdrc.com>
+
+	* sanity.sh (diff-4, dirs2-10, tagf-13, importc-7, conflicts2-142b8):
+	Use ${PROG} instead of "cvs".
+
+1999-06-05  Jim Kingdon  <http://www.cyclic.com>
+
+	* recurse.c (do_recursion, do_dir_proc): Make the SERVER_ACTIVE
+	#ifdef be only around the check for server_active.  Modulo a few
+	cosmetic tweaks, same as a patch submitted by Johannes Stezenbach
+	of propack-data.de.
+
+1999-06-01  Jim Kingdon  <http://www.cyclic.com>
+
+	* sanity.sh: Add comment about rcs2-7 failures on certain days.
+
+	Make "cvs status -v" on a removed file work:
+	* status.c (cvsstatus): Reindent the client code.
+	(status_fileproc): Don't need a CVS/Entries listing to show the
+	tags.
+	* sanity.sh (rmadd2): New test rmadd2-16 tests the existing
+	behavior with "cvs log"; new test rmadd2-17 tests the new behavior
+	with "cvs status".
+
+	* sanity.sh (basicc): To match no output in dotest, put the empty
+	regexp first.  Remove tests which check that first-dir exists,
+	since that isn't true in the case where the OS let us delete it.
+	(dotest_internal): Fix so that things work with two regexps, with
+	an empty one first.
+
+1999-05-28  Larry Jones  <larry.jones@sdrc.com>
+
+	* sanity.sh (server-4): Replace bogus directory with real one since
+	the server now checks it.
+
+1999-05-27  Jim Kingdon  <http://www.cyclic.com>
+
+	* sanity.sh (spacefiles): Clean up -c, top, and -b at end.
+	(spacefiles, files): Fix bad references to CVSROOT_DIRNAME.
+
+	Fix two problems pointed out by Olaf Kirch of swb.de/caldera.de:
+	* server.c (outside_root): New function, contains expanded version
+	of code from serve_directory.
+	(serve_directory): Call outside_root.
+	(outside_dir): New function
+	(serve_modified, serve_is_modified, serve_notify,
+	serve_questionable, serve_unchanged): Call outside_dir.
+	* sanity.sh (server2): New tests, for these fixes.
+
+1999-05-26  Jim Kingdon  <http://www.cyclic.com>
+
+	* cvs.h, subr.c (xmalloc): Return void* not char*, like xrealloc
+	has done for some time.
+	* modules.c (do_module): If we find the module as a directory/file
+	(rather than in the modules file), skip a bunch of processing
+	which was unnecessary and also broken in most of the cases
+	now tested for by the spacefiles sanity.sh test.
+	* sanity.sh (spacefiles): New test, for specifying filenames
+	(containing spaces, or starting with '-', or starting with '/') to
+	"cvs co".
+
+1999-05-25  Jim Kingdon  <http://www.cyclic.com>
+
+	* client.c (update_entries): Make the old DONT_USE_PATCH code the
+	only code.  This means that if people are still on CVS 1.9
+	servers, then CVS will fall back to transferring entire files.
+	This is better than looking for an external "patch" program which
+	causes no end of troubles (especially on Windows, but someone just
+	posted to info-cvs about a problem with the Solaris patch).  (This
+	change was run by devel-cvs and feedback was positive).
+
+	* subr.c (xmalloc, xrealloc): The new error.c does not support
+	%lu; use sprintf instead.
+
+1999-05-25 Derek Price
+	<http://www-personal.engin.umich.edu/~oberon/resume.html>
+
+	* sanity.sh (server): Escaped a few more newlines in
+	another awk script.  Solaris awk still don't like 'em.
+
+1999-05-25 Derek Price
+	<http://www-personal.engin.umich.edu/~oberon/resume.html>
+	and Jim Kingdon
+
+	* log.c: Remove comment which said "you can delete [this line]"
+	and which stuck around for over 3 years.
+	* sanity.sh (errmsg2 & tagdate): Added tests to prove the
+	current functionality with respect to combining -r and -D.
+
+1999-05-20  Larry Jones  <larry.jones@sdrc.com>
+
+	* server.c (pserver_authenticate_connection): Previous changes
+	broke verify_and_exit (reported by Robert Fitzsimons, thanks).
+	* sanity.sh (pserver): New tests pserver-7 and pserver-8 for this.
+
+1999-05-18 Derek Price
+	<http://www-personal.engin.umich.edu/~oberon/resume.html>
+
+	* sanity.sh (keyword2): Escaped a newline in an awk script.
+	Apparently Solaris awk don't like 'em.
+
+1999-05-18  Jim Kingdon  <http://www.cyclic.com>
+
+	* sanity.sh (basicc): Allow the behavior whereby unlink(".")
+	succeeds.  Reported by Jeremy Buhler and Pavel Roskin.
+
+1999-05-17  Steve Cameron of Compaq
+
+	* sanity.sh: Modified to no longer use "test -e" for existence
+	test as it has turned out to be not portable enough.  Instead use
+	"test -f", "test -d", etc.
+	[SCO Unixware 7 apparently doesn't always support it -kingdon]
+
+1999-05-17  Jim Kingdon  <http://www.cyclic.com>
+
+	* version.c: Push version number to 1.10.6.1.
+
+	* version.c: Version 1.10.6.
+
+1999-05-16  Jim Kingdon  <http://www.cyclic.com>
+
+	* update.c (patch_file): When we are passing vn_rcs to
+	RCS_checkout, pass vn_tag as well.
+	* sanity.sh (keyword): In test keyword-22, test for the fixed
+	behavior rather than the buggy behavior.  Adjust keyword-23.  Add
+	test keyword-24, to see whether keyword-23 really worked.
+
+1999-05-12  Larry Jones  <larry.jones@sdrc.com>
+
+	* sanity.sh (pserver-4, pserver-5): Bogus error messages from
+	non-root initgroups on some 4.4BSD derived systems now show up
+	in different places in the output.
+
+1999-05-12  Jim Kingdon  <http://www.cyclic.com>
+
+	* import.c (import): Don't allow the user to supply a repository
+	directory which takes us out of the cvsroot.
+	* sanity.sh (importc): New tests importc-10 to importc-12, for this.
+
+1999-05-11  Larry Jones  <larry.jones@sdrc.com>
+
+	* server.c (serve_notify): Allocate enough memory to hold the
+	"misformed Notify request" message in pending_error_text.
+
+1999-05-11  Jim Kingdon  <http://www.cyclic.com>
+
+	* server.c (switch_to_user): Ignore EPERM from initgroups.  Fixes
+	pserver-4 in testsuite.
+	(pserver_authenticate_connection): Only print "I LOVE YOU" after
+	switch_to_user has come back successfully.
+
+	* server.c (pserver_authenticate_connection): Call error_exit
+	rather than reinventing the wheel ourselves.
+	(switch_to_user): Check for errors from setuid, setgid, and
+	initgroups.  Fix the #ifdef's (the previous code would skip the
+	setuid call if SETXID_SUPPORT).
+
+1999-05-10  Jim Kingdon  <http://www.cyclic.com>
+
+	* server.c (serve_notify), edit.c (notify_do): Check for
+	and reject characters which will get confused with delimiters.
+	* sanity.sh (server): New tests server-7 through server-15 test
+	for this and for other notify behaviors.
+
+	* rcs.c (RCS_tag2rev): Also look for a physical branch with
+	RCS_getversion.
+	* sanity.sh (tagf): Adjust tagf-12 and following tests to test for
+	the fixed behavior rather than the broken behavior.
+
+1999-05-07  Jim Kingdon  <http://www.cyclic.com>
+
+	* server.c (server_notify): Also set last_node to NULL.
+	* sanity.sh (server): New tests server-6 and server-7, for this.
+
+1999-05-05  Jim Kingdon  <http://www.cyclic.com>
+
+	* rcs.c (rcs_internal_lockfile): Remove unused variable lockfile.
+
+	* add.c (add): Look for directories with the same name in a
+	different case where appropriate (analogous to fopen_case).
+	In client code, add comment about how this doesn't do quite
+	everything.
+
+1999-05-03  Jim Meyering  <meyering@ascend.com>
+
+	Remove rcs-style ,file, lock files upon signal.
+	* rcs.c (rcs_lockfile): New file-scoped global.
+	(rcs_cleanup): New function (similar to patch_cleanup).
+	(rcs_internal_lockfile): Register rcs_cleanup the first time this
+	function is called.  Rename uses of local `lockfile' to refer to new
+	global, `rcs_lockfile'.  Don't free the lock file name string, now
+	that it's global.
+	(rcs_internal_unlockfile): Rename `lockfile', as above, and carefully
+	free and NULL-out the global, rcs_lockfile.
+
+1999-04-30  Jim Kingdon  <http://www.cyclic.com>
+
+	* rcs.c (annotate_fileproc): Don't cast NULL in passing it to
+	RCS_deltas.  Because there is a prototype in scope the cast is
+	unnecessary (per HACKING's ANSI C or SunOS4 rule), and in fact it
+	was causing failures on UNICOS because it cast to size_t instead
+	of size_t*.  (Thanks to Dean Kopesky for reporting this).
+
+1999-04-29  Jim Kingdon  <http://www.cyclic.com>
+
+	* sanity.sh: If invoked without any arguments, print a usage
+	message (thanks to Pavel Roskin for a report/patch).
+
+	* run.c (piped_child): Make the error messages more verbose.
+	(close_on_exec): Reindent.
+	* sanity.sh (devcom3): Several errors are possible in devcom3-9a.
+	Adjust for change to piped_child error message.
+
+1999-04-28  Jim Kingdon  <http://www.cyclic.com>
+
+	* sanity.sh (devcom3): Add some tests of the CVS/Notify file and
+	disconnected "cvs edit".
+
+	* main.c (opt_usage): Remove -b.
+
+1999-04-20 Derek Price
+	<http://www-personal.engin.umich.edu/~oberon/resume.html>
+
+	* rcs.c (RCS_delete_revs):  RCS_delete_revs uses an
+	RCS_checkout call to get a new copy of a revision to be
+	used internally after old revisions were deleted and it was
+	performing keyword substitutions.  This munged all the
+	the revisions of the file on the branch containing the
+	deleted revisions and its sub-branches, as the original they
+	were being patched from was incorrect.  Corrected this by
+	passing in "-ko" as an option to RCS_checkout.
+	* sanity.sh (keywordlog):  modified this test to verify the
+	correct behavior of 'cvs admin -o'.
+	[Fixed use of \$ in keywordlog test; added code in RCS_delete_revs
+	to abort on binary file on Windows -kingdon]
+
+1999-04-21  Derek Price
+	<http://www-personal.engin.umich.edu/~oberon/resume.html>
+	and Jim Kingdon
+
+	* tag.c (tag_check_valid): A bug was causing CVS to spin
+	indefinately when -j:<date> was specified.  CVS now returns
+	an error.
+	* sanity.sh: Added a test (tagdate-12) to test this.
+
+1999-04-19  Jim Kingdon  <http://www.cyclic.com>
+
+	* sanity.sh (backuprecover): Clean up the repository at the end.
+
+1999-04-18  Derek Price
+	<http://www-personal.engin.umich.edu/~oberon/resume.html>
+
+	* sanity.sh added a test (backuprecover) to test cvs behavior
+	with a repository that is out of date relative to the
+	developer's workspaces.
+	[Fix --keep code; move test to "Repository Storage" section since
+	it doesn't really exercise the diff/diff3 library. -kingdon]
+
+1999-04-13  Derek Price
+	<http://www-personal.engin.umich.edu/~oberon/resume.html>
+
+	* sanity.sh (diff):  Tests to verify correct operation of
+	the --ifdef parameter to cvs diff.
+	[indentation fixed -kingdon].
+
+1999-04-13  Derek Price
+	<http://www-personal.engin.umich.edu/~oberon/resume.html>
+	for Noah Friedman  <friedman@splode.com>
+
+        * diff.c (diff): Put "--ifdef=" in opts string, not "-D"; the
+        latter is confused by pserver for a date spec.
+
+1999-04-14  Jim Kingdon  <http://www.cyclic.com>
+
+	* fileattr.h: Adjust comments to reflect the official version of
+	the fileattr format now being in cvs.texinfo.
+
+1999-04-05  Jim Kingdon
+
+	* sanity.sh (watch5): Remove nonstandard --keep code.  Don't pass
+	-f to rm when cleaning up (that tends to mask bugs).  Add watch5
+	to list of tests at start.  Add comment explaining why we consider
+	the behavior we test for the right one.  Rename a few tests which
+	had been erroneously named watch6* instead of watch5*.
+	* client.c (update_entries): Add comment with brief discussion of
+	whether there is a better way.
+
+1999-04-05  Derek Price
+	<http://www-personal.engin.umich.edu/~oberon/resume.html>
+
+	* client.c (update_entries):  Only call mark_up_to_date
+	(which deletes the CVS/Base/<filename> file for watched
+	and edited files) on commit.
+	* sanity.sh:  Make sure the CVS/Base/<filename> file for
+	a watched and edited file is not removed on a status or
+	update of a touched/unmodfied file.
+
+1999-03-30  Larry Jones  <larry.jones@sdrc.com>
+
+	* client.c (get_responses_and_close), commit.c (commit),
+	update.c (do_update): If the sleep(1) call returns prematurely
+	(due to the way wakeup is scheduled or receiving a signal), do
+	it again.
+
+1999-03-26  Jim Kingdon  <http://www.cyclic.com>
+
+	* server.c (server): Add comment about Gzip-stream vs. RQ_ROOTLESS.
+
+	* sanity.sh (modules3-11b): Adjust exact text of error message to
+	reflect 1999-03-24 change to dirswitch.
+
+1999-03-25  Jim Kingdon  <http://www.cyclic.com>
+
+	* admin.c (admin): Make argument to -e optional, to match the
+	documentation.
+	* sanity.sh (admin-19a-2): Test for this.
+
+	* server.c (serve_root): Update comment about checking for missing
+	Root request.
+
+1999-03-24  Jim Kingdon  <http://www.cyclic.com>
+
+	* server.c (dirswitch): Also check dir here, similar to
+	what server_pathname_check does for other cases.
+	* sanity.sh (files): Adjust files-14 to test for this.
+
+1999-03-24  Derek Price
+	<http://www-personal.engin.umich.edu/~oberon/resume.html>
+	and Jim Kingdon
+
+	* sanity.sh: added a test (files-13) to test .. indirection
+	in a path and another (files-14) to make sure we still fail
+	out when the '..' indirection takes us into the $CVSROOT
+	directory or beyond.
+
+1999-03-24  Larry Jones  <larry.jones@sdrc.com>
+
+	* rcs.c: Change enum constants ADD and DELETE to something less
+	likely to run into conflicts.
+
+1999-03-21  Jim Kingdon  <http://www.cyclic.com>
+
+	* sanity.sh (tagf): New test, tests for moving a branch tag to a
+	non-branch tag and trying to recover.
+
+1999-03-12  Jim Kingdon  <http://www.cyclic.com>
+
+	* sanity.sh (branches): Tweak test branches-5 to test the case in
+	which one modifies a file and then branches it.
+
+1999-03-09  John Bley of duke.edu
+
+	* mkmodules.c (filelist): Missed a NULL in this struct (should
+	have 3 members, only had 2).
+
+1999-03-07  Jim Kingdon  <http://www.cyclic.com>
+
+	* sanity.sh (Index): Rename new test from rm_CVS/Root to rmroot
+	(we don't have a formal rule about funky punctuation in test names
+	but both underscore and a slash is too funky for me :-)).
+	Reindent a few tests which were off.
+
+	* root.c: Remove the sentence which had the improper English;
+	there isn't really a need for that sentence and it isn't
+	particularly accurate any more.
+
+1999-02-27  Derek Price
+	<http://www-personal.engin.umich.edu/~oberon/resume.html>
+
+	* sanity.sh:  Added rm_CVS/Root test to test that CVS uses
+	$CVSROOT rather than dumping core when running remotely and
+	the admin file CVS/Root is deleted from the workspace.
+
+	Also, altered a few 'cvs commit' 's in regular expressions to
+	fit the .${PROG} commit. portability syntax.
+
+	* recurse.c:  Stopped CVS from dumping core in the case tested
+	above.
+
+	* root.c:  Fixed somebody's improper english.
+
+1999-02-25  Larry Jones  <larry.jones@sdrc.com>
+
+	* sanity.sh (keyword2-12): Use ${QUESTION} instead of ? in the
+	expected result.
+
+1999-02-24  Jim Kingdon  <http://www.cyclic.com>
+
+	* sanity.sh (keyword2): Restore the original \\\$ instead of $.
+	The latter ends up working due to various kludgy semantics in the
+	shell and regular expressions, but the former is cleaner.
+
+	* sanity.sh (keyword2): Protect keywords against accidental
+	expansion in sanity.sh itself (most occurrences had this, but not
+	all).
+
+1999-02-23  Derek Price  <http://www.cyclic.com>
+	and Jim Kingdon.
+
+	* sanity.sh (keyword2): New test, tests for merging with -kk.
+
+1999-02-22  Jim Kingdon  <http://www.cyclic.com>
+
+	* version.c: Ease version number to 1.10.5.1.
+
+	* version.c: Version 1.10.5.
+
 1999-02-18  Jim Kingdon  <http://www.cyclic.com>
 
 	* sanity.sh (files): New test, for a relatively obscure spurious

@@ -457,13 +457,15 @@ diff3_run (argc, argv, out, callbacks_arg)
 			       tag_strings[0], tag_strings[1], tag_strings[2]);
   else if (merge)
     {
-      if (! freopen (file[rev_mapping[FILE0]], "r", stdin))
+      FILE *mfp = fopen (file[rev_mapping[FILE0]], "r");
+      if (! mfp)
 	diff3_perror_with_exit (file[rev_mapping[FILE0]]);
-      conflicts_found
-	= output_diff3_merge (stdin, diff3, mapping, rev_mapping,
+      conflicts_found = output_diff3_merge (mfp, diff3, mapping, rev_mapping,
 			      tag_strings[0], tag_strings[1], tag_strings[2]);
-      if (ferror (stdin))
+      if (ferror (mfp))
 	diff3_fatal ("read error");
+      if (fclose(mfp) != 0)
+	perror_with_name (file[rev_mapping[FILE0]]);
     }
   else
     {

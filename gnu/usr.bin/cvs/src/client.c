@@ -1690,8 +1690,8 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	free (size_string);
 
 	/* Note that checking this separately from writing the file is
-	   a race condition: if the existing or lack thereof of the
-	   file changes between now and the actually calls which
+	   a race condition: if the existence or lack thereof of the
+	   file changes between now and the actual calls which
 	   operate on it, we lose.  However (a) there are so many
 	   cases, I'm reluctant to try to fix them all, (b) in some
 	   cases the system might not even have a system call which
@@ -1882,87 +1882,14 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	}
 	else if (data->contents == UPDATE_ENTRIES_PATCH)
 	{
-#ifdef DONT_USE_PATCH
-	    /* Hmm.  We support only Rcs-diff, and the server supports
-	       only Patched (or else it would have sent Rcs-diff instead).
+	    /* You might think we could just leave Patched out of
+	       Valid-responses and not get this response.  However, if
+	       memory serves, the CVS 1.9 server bases this on -u
+	       (update-patches), and there is no way for us to send -u
+	       or not based on whether the server supports "Rcs-diff".  
+
 	       Fall back to transmitting entire files.  */
 	    patch_failed = 1;
-#else /* Use patch.  */
-	    int retcode;
-	    char *backup;
-	    struct stat s;
-
-	    backup = xmalloc (strlen (filename) + 5);
-	    strcpy (backup, filename);
-	    strcat (backup, "~");
-	    if (unlink_file (backup) < 0
-		&& !existence_error (errno))
-	    {
-		error (0, errno, "cannot remove %s", backup);
-	    }
-	    if (!isfile (filename))
-	        error (1, 0, "patch original file %s does not exist",
-		       short_pathname);
-	    if ( CVS_STAT (temp_filename, &s) < 0)
-	        error (1, errno, "can't stat patch file %s", temp_filename);
-	    if (s.st_size == 0)
-	        retcode = 0;
-	    else
-	    {
-		/* This behavior (in which -b takes an argument) is
-		   supported by GNU patch 2.1.  Apparently POSIX.2
-		   specifies a -b option without an argument.  GNU
-		   patch 2.1.5 implements this and therefore won't
-		   work here.  GNU patch versions after 2.1.5 are said
-		   to have a kludge which checks if the last 4 args
-		   are `-b SUFFIX ORIGFILE PATCHFILE' and if so emit a
-		   warning (I think -s suppresses it), and then behave
-		   as CVS expects.
-
-		   Of course this is yet one more reason why in the long
-		   run we want Rcs-diff to replace Patched.  */
-
-	        run_setup (PATCH_PROGRAM);
-		run_arg ("-f");
-		run_arg ("-s");
-		run_arg ("-b");
-		run_arg ("~");
-		run_arg (filename);
-		run_arg (temp_filename);
-		retcode = run_exec (DEVNULL, RUN_TTY, RUN_TTY, RUN_NORMAL);
-	    }
-	    if (unlink_file (temp_filename) < 0)
-		error (0, errno, "cannot remove %s", temp_filename);
-	    if (retcode == 0)
-	    {
-		if (unlink_file (backup) < 0)
-		    error (0, errno, "cannot remove %s", backup);
-	    }
-	    else
-	    {
-	        int old_errno = errno;
-		char *path_tmp;
-
-	        if (isfile (backup))
-		    rename_file (backup, filename);
-       
-		/* Get rid of the patch reject file.  */
-		path_tmp = xmalloc (strlen (filename) + 10);
-		strcpy (path_tmp, filename);
-		strcat (path_tmp, ".rej");
-		if (unlink_file (path_tmp) < 0
-		    && !existence_error (errno))
-		    error (0, errno, "cannot remove %s", path_tmp);
-		free (path_tmp);
-
-		error (retcode == -1 ? 1 : 0, retcode == -1 ? old_errno : 0,
-		       "could not patch %s%s", filename,
-		       retcode == -1 ? "" : "; will refetch");
-
-		patch_failed = 1;
-	    }
-	    free (backup);
-#endif /* Use patch.  */
 	}
 	else
 	{
@@ -2177,7 +2104,17 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	else if (local_timestamp == NULL)
 	{
 	    local_timestamp = file_timestamp;
-	    mark_up_to_date (filename);
+
+	    /* Checking for command_name of "commit" doesn't seem like
+	       the cleanest way to handle this, but it seem to roughly
+	       parallel what the :local: code which calls
+	       mark_up_to_date ends up amounting to.  Some day, should
+	       think more about what the Checked-in response means
+	       vis-a-vis both Entries and Base and clarify
+	       cvsclient.texi accordingly.  */
+
+	    if (!strcmp (command_name, "commit"))
+		mark_up_to_date (filename);
 	}
 
 	Register (ent_list, filename, vn, local_timestamp,
@@ -3664,9 +3601,12 @@ get_responses_and_close ()
     {
 	time_t now;
 
-	(void) time (&now);
-	if (now == last_register_time)
+	for (;;)
+	{
+	    (void) time (&now);
+	    if (now != last_register_time) break;
 	    sleep (1);			/* to avoid time-stamp races */
+	}
     }
 
     return errs;
