@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.h,v 1.1.1.1 2001/08/15 14:37:10 fgsch Exp $	*/
+/*	$OpenBSD: test.h,v 1.2 2001/09/20 15:33:17 todd Exp $	*/
 
 #ifndef _h_test_
 #define _h_test_
@@ -120,4 +120,4 @@ __panic(type, errstr, filenm, lineno, fmt)
 #define OK		(0)
 #define NOTOK		(-1)
 
-#endif _h_test_
+#endif /* _h_test_ */
