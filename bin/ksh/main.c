@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 1999/08/04 19:11:13 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 1999/11/14 17:56:47 millert Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -530,10 +530,15 @@ command(comm)
 	const char *comm;
 {
 	register Source *s;
+	Source *volatile sold;
+	int i;
 
 	s = pushs(SSTRING, ATEMP);
 	s->start = s->str = comm;
-	return shell(s, FALSE);
+	sold = source;
+	i = shell(s, FALSE);
+	source = sold;
+	return i;
 }
 
 /*
