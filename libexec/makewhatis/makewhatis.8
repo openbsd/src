@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makewhatis.8,v 1.7 2000/04/12 21:48:04 aaron Exp $
+.\"	$OpenBSD: makewhatis.8,v 1.8 2000/04/23 22:14:27 espie Exp $
 .\"	$NetBSD: makewhatis.8,v 1.2.2.1 1997/11/10 19:57:45 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,10 +43,16 @@
 .Nd create a whatis.db database
 .Sh SYNOPSIS
 .Nm makewhatis
+.Op Fl p
 .Op Ar manpath ...
 .Nm makewhatis
+.Op Fl p
 .Fl d Ar manpath
 .Ar files ...
+.Nm makewhatis
+.Op Fl p
+.Fl t
+.Ar files
 .Sh DESCRIPTION
 .Nm
 strips the NAME lines from compiled or raw
@@ -70,9 +76,7 @@ Man pages compressed with
 .Xr compress 1
 and
 .Xr gzip 1
-are uncompressed before processing, unformatted man pages
-will be processed by
-.Xr getNAME 8 .
+are uncompressed before processing.
 .Pp
 If the
 .Fl d
@@ -84,12 +88,37 @@ with an existing
 .Pa whatis.db
 database in
 .Ar manpath .
+.Pp
+If the 
+.Fl p
+option is used,
+.Nm
+is less forgiving and warns about incorrect man pages.
+.Pp
+The
+.Fl t
+option can be used to check a set of potential man pages without
+changing any 
+.Pa whatis.db
+database.
 .Sh FILES
-.Bl -tag -width whatis.db -compact
+.Bl -tag -width /etc/man.conf -compact
 .It Pa whatis.db
-index to man pages in directory.
+index to man pages in directory,
+.It Pa /etc/man.conf
+man configuration information.
 .El
+.Sh BUGS
+.Nm
+should parse 
+.Pa /etc/man.conf
+and deal with extra configuration information. In particular, it does not
+handle
+.Xr nroff 1
+me format.
+Likewise, its use of
+heuristics to retrieve subjects from most man pages is not 100% accurate.
 .Sh SEE ALSO
+.Xr nroff 1 , 
 .Xr man 1 ,
-.Xr man.conf 5 ,
-.Xr getNAME 8
+.Xr man.conf 5 .
