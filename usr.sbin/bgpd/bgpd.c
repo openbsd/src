@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.35 2003/12/26 16:54:10 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.36 2003/12/26 17:15:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -171,11 +171,9 @@ main(int argc, char *argv[])
 	    fcntl(pipe_s2r[1], F_SETFL, O_NONBLOCK) == -1)
 		fatal("fcntl", errno);
 
-	if ((rde_pid = rde_main(&conf, pipe_m2r, pipe_s2r)) < 0)
-		fatal("could not start route decision engine", 0);
-
-	if ((io_pid = session_main(&conf, pipe_m2s, pipe_s2r)) < 0)
-		fatal("could not start session engine", 0);
+	/* fork children */
+	rde_main(&conf, pipe_m2r, pipe_s2r);
+	session_main(&conf, pipe_m2s, pipe_s2r);
 
 	setproctitle("parent");
 
@@ -216,25 +214,35 @@ main(int argc, char *argv[])
 			}
 
 		if ((nfds = poll(pfd, i, INFTIM)) == -1)
-			if (errno != EINTR)
-				fatal("poll error", errno);
+			if (errno != EINTR) {
+				log_err("poll error");
+				quit = 1;
+			}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_SESSION].revents & POLLOUT))
-			if ((n = msgbuf_write(&ibuf_se.w)) < 0)
-				fatal("pipe write error", errno);
+			if ((n = msgbuf_write(&ibuf_se.w)) < 0) {
+				log_err("pipe write error (to SE)");
+				quit = 1;
+			}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_ROUTE].revents & POLLOUT))
-			if ((n = msgbuf_write(&ibuf_rde.w)) < 0)
-				fatal("pipe write error", errno);
+			if ((n = msgbuf_write(&ibuf_rde.w)) < 0) {
+				log_err("pipe write error (to RDE)");
+				quit = 1;
+			}
 
 		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
 			nfds--;
-			dispatch_imsg(&ibuf_se, PFD_PIPE_SESSION, &mrtconf);
+			if (dispatch_imsg(&ibuf_se, PFD_PIPE_SESSION,
+			    &mrtconf) == -1)
+				quit = 1;
 		}
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
 			nfds--;
-			dispatch_imsg(&ibuf_rde, PFD_PIPE_ROUTE, &mrtconf);
+			if (dispatch_imsg(&ibuf_rde, PFD_PIPE_ROUTE,
+			    &mrtconf) == -1)
+				quit = 1;
 		}
 
 		if (nfds > 0 && pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
@@ -244,8 +252,10 @@ main(int argc, char *argv[])
 
 		for (j = PFD_MRT_START; j < i && nfds > 0 ; j++) {
 			if (pfd[j].revents & POLLOUT) {
-				if ((n = msgbuf_write(&mrt[i]->msgbuf)) < 0)
-					fatal("pipe write error", errno);
+				if ((n = msgbuf_write(&mrt[i]->msgbuf)) < 0) {
+					log_err("pipe write error (MRT)");
+					quit = 1;
+				}
 			}
 		}
 
@@ -337,37 +347,41 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 				len = imsg.hdr.len - IMSG_HEADER_SIZE;
 				wbuf = buf_open(len);
 				if (wbuf == NULL)
-					fatal("buf_open error", 0);
+					return (-1);
 				if (buf_add(wbuf, imsg.data, len) == -1)
-					fatal("buf_add error", 0);
+					return (-1);
 				if ((n = buf_close(&m->msgbuf, wbuf)) < 0)
-					fatal("buf_close error", 0);
+					return (-1);
 				break;
 			}
 			break;
 		case IMSG_KROUTE_CHANGE:
 			if (idx != PFD_PIPE_ROUTE)
-				fatal("route request not from RDE", 0);
-			if (kroute_change(rfd, imsg.data))
-				fatal("kroute_change error", errno);
+				logit(LOG_CRIT, "route request not from RDE");
+			else if (kroute_change(rfd, imsg.data))
+				return (-1);
 			break;
 		case IMSG_KROUTE_DELETE:
 			if (idx != PFD_PIPE_ROUTE)
-				fatal("route request not from RDE", 0);
-			if (kroute_delete(rfd, imsg.data))
-				fatal("kroute_delete error", errno);
+				logit(LOG_CRIT, "route request not from RDE");
+			else if (kroute_delete(rfd, imsg.data))
+				return (-1);
 			break;
 		case IMSG_NEXTHOP_ADD:
 			if (idx != PFD_PIPE_ROUTE)
-				fatal("nexthop request not from RDE", 0);
-			memcpy(&ina, imsg.data, sizeof(ina));
-			kroute_nexthop_add(ina);
+				logit(LOG_CRIT, "nexthop request not from RDE");
+			else {
+				memcpy(&ina, imsg.data, sizeof(ina));
+				kroute_nexthop_add(ina);
+			}
 			break;
 		case IMSG_NEXTHOP_REMOVE:
 			if (idx != PFD_PIPE_ROUTE)
-				fatal("nexthop request not from RDE", 0);
-			memcpy(&ina, imsg.data, sizeof(ina));
-			kroute_nexthop_delete(ina);
+				logit(LOG_CRIT, "nexthop request not from RDE");
+			else {
+				memcpy(&ina, imsg.data, sizeof(ina));
+				kroute_nexthop_delete(ina);
+			}
 			break;
 		default:
 			break;
