@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.6 1997/01/24 19:57:07 niklas Exp $	*/
+/*	$OpenBSD: asm.h,v 1.7 1999/09/26 11:07:32 kstailey Exp $	*/
 /*	$NetBSD: asm.h,v 1.11 1996/11/30 02:48:57 jtc Exp $	*/
 
 /* 
@@ -613,6 +613,13 @@ label:	ASCIZ msg;						\
 
 #define	CALLSYS_NOERROR(name)					\
 	ldiq	v0, SYSCALLNUM(name);				\
+	call_pal PAL_OSF1_callsys
+
+#define NETBSD_SYSCALLNUM(name)					\
+	___CONCAT(NETBSD_SYS_,name)
+
+#define NETBSD_CALLSYS_NOERROR(name)				\
+	ldiq	v0, NETBSD_SYSCALLNUM(name);			\
 	call_pal PAL_OSF1_callsys
 
 /*

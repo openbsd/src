@@ -1,4 +1,4 @@
-/*	$OpenBSD: genassym.c,v 1.5 1996/10/30 22:38:10 niklas Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.6 1999/09/26 11:07:32 kstailey Exp $	*/
 /*	$NetBSD: genassym.c,v 1.9 1996/08/20 23:00:24 cgd Exp $	*/
 
 /*
@@ -54,6 +54,10 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <err.h>
+
+#ifdef COMPAT_NETBSD
+# include <compat/netbsd/netbsd_syscall.h>
+#endif
 
 void	def __P((char *, long));
 int	main __P((int argc, char **argv));
@@ -182,6 +186,10 @@ main(argc, argv)
 	/* Syscalls called from sigreturn. */
 	def("SYS_sigreturn", SYS_sigreturn);
 	def("SYS_exit", SYS_exit);
+#ifdef COMPAT_NETBSD
+	def("NETBSD_SYS___sigreturn14", NETBSD_SYS___sigreturn14);
+	def("NETBSD_SYS_exit", NETBSD_SYS_exit);
+#endif
 
 	exit(0);
 }

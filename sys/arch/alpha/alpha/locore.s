@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.9 1997/07/08 10:55:53 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.10 1999/09/26 11:07:32 kstailey Exp $	*/
 /*	$NetBSD: locore.s,v 1.27 1996/12/03 19:54:16 cgd Exp $	*/
 
 /*
@@ -165,6 +165,27 @@ NESTED(sigcode,0,0,ra,0,0)
 	CALLSYS_NOERROR(exit)		/* and call exit() with it. */
 XNESTED(esigcode,0)
 	END(sigcode)
+
+/**************************************************************************/
+
+#ifdef COMPAT_NETBSD
+/*
+ * NetBSD signal trampoline code.  Almost identical to the normal one.
+ */
+
+NESTED(netbsd_sigcode,0,0,ra,0,0)
+	lda	sp, -16(sp)		/* save the sigcontext pointer */
+	stq	a2, 0(sp)
+	jsr	ra, (t12)		/* call the signal handler (t12==pv) */
+	ldq	a0, 0(sp)		/* get the sigcontext pointer */
+	lda	sp, 16(sp)
+	NETBSD_CALLSYS_NOERROR(__sigreturn14)/* and call sigreturn() with it. */
+	mov	v0, a0			/* if that failed, get error code */
+	NETBSD_CALLSYS_NOERROR(exit)		/* and call exit() with it. */
+XNESTED(netbsd_esigcode,0)
+	END(netbsd_sigcode)
+
+#endif /* COMPAT_NETBSD */
 
 /**************************************************************************/
 

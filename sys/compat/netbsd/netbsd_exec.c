@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_exec.c,v 1.4 1999/09/19 16:16:49 kstailey Exp $	 */
+/*	$OpenBSD: netbsd_exec.c,v 1.5 1999/09/26 11:07:32 kstailey Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -44,39 +44,42 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#if 0
-#include <machine/netbsd_machdep.h>
-#endif
 
 #include <compat/netbsd/netbsd_util.h>
 #include <compat/netbsd/netbsd_syscall.h>
 #include <compat/netbsd/netbsd_exec.h>
+#include <compat/netbsd/netbsd_signal.h>
 
-static void *netbsd_copyargs __P((struct exec_package *, struct ps_strings *,
-			       void *, void *));
+#include <machine/netbsd_machdep.h>
 
-extern char sigcode[], esigcode[];
+#ifdef _KERN_DO_ELF64
+
+static void *netbsd_elf64_copyargs __P((struct exec_package *,
+		struct ps_strings *, void *, void *));
+
+extern char netbsd_sigcode[], netbsd_esigcode[];
 extern struct sysent netbsd_sysent[];
 extern char *netbsd_syscallnames[];
+
 
 struct emul emul_elf64_netbsd = {
 	"netbsd",
 	NULL,
-	sendsig,
+	netbsd_sendsig,
 	NETBSD_SYS_syscall,
 	NETBSD_SYS_MAXSYSCALL,
 	netbsd_sysent,
 	netbsd_syscallnames,
 	0,
-	netbsd_copyargs,
+	netbsd_elf64_copyargs,
 	setregs,
 	exec_elf64_fixup,
-	sigcode,
-	esigcode,
+	netbsd_sigcode,
+	netbsd_esigcode,
 };
 
 static void *
-netbsd_copyargs(pack, arginfo, stack, argp)
+netbsd_elf64_copyargs(pack, arginfo, stack, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	void *stack;
@@ -86,6 +89,7 @@ netbsd_copyargs(pack, arginfo, stack, argp)
 
 	if (!(a = (AuxInfo *)elf64_copyargs(pack, arginfo, stack, argp)))
 		return (NULL);
+
 	return (a);
 }
 
@@ -118,3 +122,5 @@ netbsd_elf64_probe(p, epp, itp, pos, os)
 		*os = OOS_NETBSD;
 	return (0);
 }
+
+#endif /* _KERN_DO_ELF64 */
