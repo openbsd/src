@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.10 2004/01/15 20:55:47 vincent Exp $	*/
+/*	$OpenBSD: grep.c,v 1.11 2004/06/12 15:04:41 vincent Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -26,6 +26,8 @@
 #include "def.h"
 #include "kbd.h"
 #include "funmap.h"
+
+#include <ctype.h>
 
 static int	compile_goto_error(int, int);
 static int	next_error(int, int);
@@ -123,13 +125,39 @@ static int
 gid(int f, int n)
 {
 	char command[NFILEN + 20];
-	char prompt[NFILEN];
+	char prompt[NFILEN], c;
 	BUFFER *bp;
 	MGWIN *wp;
+	int i, j;
 
-	if (eread("Run gid (with args): ", prompt, NFILEN, EFNEW|EFCR) == ABORT)
+	/* catch ([^\s(){}]+)[\s(){}]* */
+
+	i = curwp->w_doto;
+	/* Skip delimiters we are currently on */
+	while (i > 0 && ((c = lgetc(curwp->w_dotp, i)) == '(' || c == ')' ||
+	    c == '{' || c == '}' || isspace(c)))
+		i--;
+	/* Skip the symbol itself */
+	for (; i > 0; i--) {
+		c = lgetc(curwp->w_dotp, i - 1);
+		if (isspace(c) || c == '(' || c == ')' ||
+		    c == '{' || c == '}')
+			break;
+	}
+	/* Fill the symbol in prompt[] */
+	for (j = 0; j < sizeof(prompt) - 1 && i < llength(curwp->w_dotp);
+	    j++, i++) {
+		c = lgetc(curwp->w_dotp, i);
+		if (isspace(c) || c == '(' || c == ')' ||
+		    c == '{' || c == '}')
+			break;
+		prompt[j] = c;
+	}
+	prompt[j] = '\0';
+
+	if (eread("Run gid (with args): ", prompt, NFILEN,
+	    (j ? EFDEF : 0)|EFNEW|EFCR) == ABORT)
 		return ABORT;
-
 	(void)snprintf(command, sizeof command, "gid %s", prompt);
 
 	if ((bp = compile_mode("*gid*", command)) == NULL)
