@@ -9,7 +9,7 @@ paper.ps: ${SRCS}
 	${TBL} ${SRCS} | ${ROFF} > ${.TARGET}
 
 install: ${SRCS}
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${BINDIR}/${DIR}
+	install -c -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} \
+	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${DOCDIR}/${DIR}
 
 .include <bsd.doc.mk>
