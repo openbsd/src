@@ -1,9 +1,3 @@
-./dev/audio
-./dev/audioctl
-./dev/mixer
-./dev/scan0
-./dev/scan1
-./dev/sound
 ./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/iopctl

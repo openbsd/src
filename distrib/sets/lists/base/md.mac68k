@@ -1,4 +1,3 @@
-./dev/scan0
 ./sbin/ldconfig
 ./usr/bin/c++filt
 ./usr/bin/ldd

@@ -1,5 +1,3 @@
-./dev/scan0
-./dev/scan1
 ./sbin/fdisk
 ./sbin/ldconfig
 ./sbin/pdisk

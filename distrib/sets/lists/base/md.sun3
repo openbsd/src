@@ -1,8 +1,3 @@
-./dev/scan0
-./dev/scan1
-./dev/vme16
-./dev/vme24
-./dev/vme32
 ./sbin/ldconfig
 ./usr/bin/c++filt
 ./usr/bin/ldd

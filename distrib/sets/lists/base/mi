@@ -43,8 +43,6 @@
 ./bin/test
 ./dev
 ./dev/MAKEDEV
-./dev/altq
-./dev/fd
 ./etc
 ./etc/afs
 ./etc/amd
