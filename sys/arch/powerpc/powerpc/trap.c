@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 1998/08/22 17:54:26 rahnds Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 1998/08/25 08:02:23 pefo Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -91,6 +91,24 @@ trap(frame)
 			trapsignal(p, SIGTRAP, type, TRAP_TRACE, sv);
 		}
 		break;
+
+	case EXC_MCHK:
+		{
+			faultbuf *fb;
+
+			if (fb = p->p_addr->u_pcb.pcb_onfault) {
+				p->p_addr->u_pcb.pcb_onfault = 0;
+				frame->srr0 = fb->pc;		/* PC */
+				frame->srr1 = fb->sr;		/* SR */
+				frame->fixreg[1] = fb->sp;	/* SP */
+				frame->fixreg[3] = 1;		/* != 0 */
+				frame->cr = fb->cr;
+				bcopy(&fb->regs[0], &frame->fixreg[13], 19*4);
+				return;
+			}
+		}
+		goto brain_damage;
+
 	case EXC_DSI:
 		{
 			vm_map_t map;
@@ -117,10 +135,12 @@ trap(frame)
 			    == KERN_SUCCESS)
 				break;
 			if (fb = p->p_addr->u_pcb.pcb_onfault) {
-				frame->srr0 = (*fb)[0];
-				frame->fixreg[1] = (*fb)[1];
-				frame->cr = (*fb)[2];
-				bcopy(&(*fb)[3], &frame->fixreg[13], 19);
+				p->p_addr->u_pcb.pcb_onfault = 0;
+				frame->srr0 = fb->pc;		/* PC */
+				frame->fixreg[1] = fb->sp;	/* SP */
+				frame->fixreg[3] = 1;		/* != 0 */
+				frame->cr = fb->cr;
+				bcopy(&fb->regs[0], &frame->fixreg[13], 19*4);
 				return;
 			}
 			map = kernel_map;
@@ -160,6 +180,9 @@ ppc_dumpbt(frame);
 				break;
 		}
 printf("isi iar %x\n", frame->srr0);
+	case EXC_MCHK|EXC_USER:
+/* XXX Likely that returning from this trap is bogus... */
+/* XXX Have to make sure that sigreturn does the right thing. */
 		sv.sival_int = frame->srr0;
 		trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR, sv);
 		break;
@@ -397,6 +420,31 @@ setusr(content)
 }
 
 int
+badaddr(addr, len)
+	char *addr;
+	u_int32_t len;
+{
+	faultbuf env;
+	u_int32_t v;
+
+	if (setfault(env))
+		return EACCES;
+	switch(len) {
+	case 4:
+		v = *((volatile u_int32_t *)addr);
+		break;
+	case 2:
+		v = *((volatile u_int16_t *)addr);
+		break;
+	default:
+		v = *((volatile u_int8_t *)addr);
+		break;
+	}
+	curpcb->pcb_onfault = 0;
+	return(0);
+}
+
+int
 copyin(udaddr, kaddr, len)
 	const void *udaddr;
 	void *kaddr;
@@ -433,8 +481,9 @@ copyout(kaddr, udaddr, len)
 	size_t l;
 	faultbuf env;
 
-	if (setfault(env))
+	if (setfault(env)) {
 		return EACCES;
+	}
 	while (len > 0) {
 		p = USER_ADDR + ((u_int)udaddr & ~SEGMENT_MASK);
 		l = (USER_ADDR + SEGMENT_LENGTH) - p;
