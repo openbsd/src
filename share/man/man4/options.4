@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.8 1998/03/16 07:44:52 deraadt Exp $
+.\"	$OpenBSD: options.4,v 1.9 1998/03/16 23:28:09 gene Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -57,9 +57,9 @@ compiler.
 On those architectures that support it, this enables binary
 compatibility with
 .At V.4
-(and thus also Solaris)
-applications built for the same architecture.  This option is
-supported on the sparc and i386 architectures.
+binaries built for the same architecture.  This currently includes
+the sparc, and i386.  Possibly the most widely-known operating system
+based on this binary architecture is Sun's Solaris 2.x.
 See
 .Xr compat_svr4 8 .
 .It Cd option COMPAT_LINUX
@@ -82,7 +82,7 @@ See
 .It Cd option COMPAT_ULTRIX
 On those architectures that support it, this enables binary
 compatibility with
-.Em Ultrix
+.Tn Ultrix
 applications built for the same architecture.  This option is
 available on the little-endian MIPS platforms like the pmax and arc.
 See
@@ -123,9 +123,10 @@ See
 .Xr compat_osf1 8 .
 .It Cd option COMPAT_NOMID
 Enable compatibility with a.out executables that lack a machine id.
-On the i386, this includes NetBSD 0.8's ZMAGIC format, and 386BSD
-and BSDI's QMAGIC, NMAGIC, and OMAGIC a.out formats.  On the hp300
-this enables certain old 4.3BSD binaries to work as well.
+On the i386, this includes NetBSD 0.8's ZMAGIC format, 386BSD and BSDI's
+QMAGIC, NMAGIC, and OMAGIC a.out formats.  On the hp300 and other m68k
+architectures this permits
+certain old 4.3BSD binaries to work, though it's use is discouraged now.
 .It Cd option COMPAT_43
 Use of this option is discouraged. It enables compatibility with
 .Bx 4.3 .
@@ -209,9 +210,11 @@ This is the most commonly used file system on the Linux operating system,
 and is provided here for compatibility. Some specific features
 of
 .Em EXT2FS 
-under linux, such as the behavior on errors are not implemented in the same
-fashion. This file system can't be
-used with uid_t or gid_t values greater than 65535. See
+like the "behavior on errors" are not implemented. This file system can't be
+used with uid_t or gid_t values greater than 65535. Also, the filesystem will not
+function correctly on architectures with differing byte-orders.  That is,
+a big-endian machine will not be able to read an ext2fs filesystem created
+on an i386 or other little-endian machine.  See
 .Xr mount_ext2fs 8
 for details.
 .It Cd option MFS
@@ -221,10 +224,11 @@ This file system stores files in swappable memory, and produces
 notable performance improvements when it is used as the file store
 for
 .Pa /tmp
-and similar file systems. See
+or similar mount points. Unfortunately, it is known to contain some bugs
+render it unstable, and it is not yet recommended for production.  See
 .Xr mount_mfs 8
 for details.
-.It Cd option NFSCLIENT
+.It Cd option NFS
 Include the client side of the
 .Em NFS
 (Network File System) remote file sharing protocol.
@@ -235,20 +239,20 @@ work. See
 .Xr mount_nfs 8
 and
 .Xr nfsiod 8
-for details.
+for details on NFS.
 .It Cd option CD9660
 Includes code for the ISO 9660 + Rock Ridge file system, which is the
-standard file system on many CD-ROMs. Useful mostly if you have a CD
+standard file system used on many CD-ROMs. It is useful mostly if you have a CD
 drive. See
 .Xr mount_cd9660 8
 for details.
 .It Cd option MSDOSFS
-Includes the
+Includes support for the
 .Tn MS-DOS
 FAT file system.
-This also impliments the
+The kernel also implements the 
 .Tn Windows 95
-extensions which permit the use of longer, mixed case file names.
+extensions which permit the use of longer, mixed-case file names.
 See
 .Xr mount_msdos 8
 and
@@ -263,10 +267,10 @@ See
 .Xr mount_fdesc 8
 for details.
 Note that this facility is redundant, and thus unneeded on most
+.Ox
 systems, since the
 .Xr fd 4
-pseudodevice driver already provides identical functionality.
-On most
+pseudodevice driver already provides identical functionality. On most
 systems, instances of
 .Xr fd 4
 are mknoded under
@@ -290,7 +294,7 @@ Includes code for a loopback file system. This permits portions of the file
 hierarchy to be re-mounted in other places. The code really exists to
 provide an example of a stackable file system layer. See
 .Xr mount_null 8
-for details.
+for details.  Most 
 .It Cd option PORTAL
 Includes the (experimental) portal filesystem. This permits
 interesting tricks like opening TCP sockets by opening files in the
@@ -312,7 +316,7 @@ for details.
 .It Cd option UMAPFS
 Includes a loopback file system in which user and group ids may be
 remapped -- this can be useful when mounting alien file systems with
-different uids and gids than the local system.
+different uids and gids than the local system (eg, remote NFS).  See
 See
 .Xr mount_umap 8
 for details.
@@ -322,7 +326,8 @@ be mounted on top of each other in such a way that both file systems
 remain visible -- this permits tricks like allowing writing (and the
 deleting of files) on a read-only file system like a CD-ROM by
 mounting a local writable file system on top of the read-only file
-system. See
+system. This filesystem is still experimental and is known to be somewhat
+unstable. See
 .Xr mount_union 8
 for details.
 .El
@@ -349,6 +354,7 @@ for details.
 Enables kernel support for file system quotas. See
 .Xr quotaon 8 ,
 .Xr edquota 8 ,
+.Xr repquota 8 ,
 and
 .Xr quota 1
 for details. Note that quotas only work on
@@ -358,11 +364,11 @@ file systems, although
 permits them to be accessed over 
 .Em NFS .
 .It Cd option FIFO
-Augments the system to permit the use of
+Adds support for
 .At V
 style FIFOs (i.e.
 .Dq named pipes
-). This option is recommended.
+). This option is recommended in almost all cases as many programs use these.
 .It Cd option NVNODE=integer
 This option sets the size of the cache used by the name-to-inode translation
 routines, (a.k.a. the
@@ -390,11 +396,11 @@ they can't be cleared if the securelevel is greater than 0. See also
 .Ss Miscellaneous Options
 .Bl -ohang
 .It Cd option LKM
-Enable loadable kernel modules. See
+Enable support for loadable kernel modules. See
 .Xr lkm 4
 for details.
 .Em NOTE:
-not available on all architectures.
+This option is not yet available on all architectures.
 .It Cd option INSECURE
 Hardwires the kernel security level at -1. This means that the system
 always runs in secure level 0 mode, even when running multiuser. See
@@ -534,12 +540,17 @@ for details.
 Include support for OSI tunneling over IP.
 .It Cd option CCITT,LLC,HDLC
 Include support for the X.25 protocol stack.
-The state of this code is currently unknown, and probably contains
+The state of this code is currently unknown. It probably contains
 bugs.
 .It Cd option IPX,IPXIP
-Include support for Internetwork Packet Exchange protocol.
+Include support for Internetwork Packet Exchange protocol commonly in
+use by
+.Tn Novell NetWare .
 .It Cd option NETATALK
-Include support for AppleTalk.
+Include kernel support for the AppleTalk family of protocols.  This suite
+of supporting code is sometimes called
+.Em netatalk 
+support.
 .It Cd option TCP_COMPAT_42
 Use of this option is
 .Em extremely
@@ -699,8 +710,6 @@ between 5% and 10% of total available RAM.
 .Xr ns 4 ,
 .Xr iso 4 ,
 .Xr mrouted 8 ,
-.Xr mount_lfs 8 ,
-.Xr newlfs 8 ,
 .Xr mount_mfs 8 ,
 .Xr mount_nfs 8 ,
 .Xr mount_cd9660 8 ,
@@ -722,7 +731,7 @@ between 5% and 10% of total available RAM.
 The
 .Nm
 man page first appeared in
-.Nx 1.3 .
+.Ox 2.3 .
 .Sh BUGS
 The
 .Em INET
