@@ -1,3 +1,5 @@
+/*	$OpenBSD: binary.c,v 1.4 2003/06/22 22:38:50 deraadt Exp $	*/
+
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -22,8 +24,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: binary.c,v 1.3 2003/06/22 22:24:13 deraadt Exp $
  */
 
 #include <ctype.h>
