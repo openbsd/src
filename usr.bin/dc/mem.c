@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1 2003/09/19 17:58:25 otto Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 2003/09/28 19:17:21 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: mem.c,v 1.1 2003/09/19 17:58:25 otto Exp $";
+static const char rcsid[] = "$OpenBSD: mem.c,v 1.2 2003/09/28 19:17:21 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/err.h>
@@ -77,8 +77,10 @@ brealloc(void *p, size_t sz)
 	void *q;
 
 	q = realloc(p, sz);
-	if (q == NULL)
+	if (q == NULL) {
+		free(p);
 		err(1, "realloc failed");
+	}
 	return q;
 }
 
