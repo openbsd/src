@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.h,v 1.32 2003/06/04 07:31:17 ho Exp $	*/
+/*	$OpenBSD: sa.h,v 1.33 2004/02/27 09:01:19 ho Exp $	*/
 /*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@ struct exchange;
 struct keystate;
 struct message;
 struct payload;
+struct proto_attr;
 struct sa;
 struct transport;
 
@@ -82,6 +83,19 @@ struct proto {
 
   /* DOI-specific data.  */
   void *data;
+
+  /* Proposal transforms data, for validating the responders selection.  */
+  TAILQ_HEAD (proto_attr_head, proto_attr) xfs;
+  size_t xf_cnt;
+};
+
+struct proto_attr {
+  /* Link to next transform.  */
+  TAILQ_ENTRY (proto_attr) next;
+
+  /* Transform attribute data and size, suitable for attribute_map().  */
+  u_int8_t *attrs;
+  size_t len;
 };
 
 struct sa {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.73 2004/02/20 11:31:10 hshoexer Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.74 2004/02/27 09:01:18 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -445,6 +445,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
   struct ipsec_sa *isa = msg->isakmp_sa->data;
   struct hash *hash = hash_get (isa->hash);
   struct sockaddr *src;
+  struct proto_attr *pa;
 
   if (!ipsec_add_hash_payload (msg, hash->hashsize))
     return -1;
@@ -778,6 +779,23 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	  proto->no = suite_no + 1;
 	  proto->proto = protocol_num;
 	  proto->sa = TAILQ_FIRST (&exchange->sa_list);
+	  proto->xf_cnt = transform_cnt[prop_no];
+	  TAILQ_INIT (&proto->xfs);
+	  for (xf_no = 0; xf_no < proto->xf_cnt; xf_no++)
+	    {
+	      pa = (struct proto_attr *)calloc (1, sizeof *pa);
+	      if (!pa)
+		goto bail_out;
+	      pa->len = transform_len[prop_no][xf_no];
+	      pa->attrs = (u_int8_t *)malloc (pa->len);
+	      if (!pa->attrs)
+		{
+		  free (pa);
+		  goto bail_out;
+		}
+	      memcpy (pa->attrs, transform[prop_no][xf_no], pa->len);
+	      TAILQ_INSERT_TAIL (&proto->xfs, pa, next);
+	    }
 	  TAILQ_INSERT_TAIL (&TAILQ_FIRST (&exchange->sa_list)->protos, proto,
 			     link);
 

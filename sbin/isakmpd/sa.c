@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.74 2004/01/06 00:22:48 hshoexer Exp $	*/
+/*	$OpenBSD: sa.c,v 1.75 2004/02/27 09:01:19 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 
 #include "sysdep.h"
 
+#include "attribute.h"
 #include "conf.h"
 #include "connection.h"
 #include "cookie.h"
@@ -137,7 +138,7 @@ sa_find (int (*check) (struct sa *, void *), void *arg)
   return 0;
 }
 
-/* Check if SA is an ISAKMP SA with an initiar cookie equal to ICOOKIE.  */
+/* Check if SA is an ISAKMP SA with an initiator cookie equal to ICOOKIE.  */
 static int
 sa_check_icookie (struct sa *sa, void *icookie)
 {
@@ -711,6 +712,7 @@ proto_free (struct proto *proto)
 {
   int i;
   struct sa *sa = proto->sa;
+  struct proto_attr *pa;
 
   for (i = 0; i < 2; i++)
     if (proto->spi[i])
@@ -726,10 +728,16 @@ proto_free (struct proto *proto)
 	sa->doi->free_proto_data (proto->data);
       free (proto->data);
     }
+  if (proto->xf_cnt)
+    while ((pa = TAILQ_FIRST (&proto->xfs)) != NULL)
+      {
+	if (pa->attrs)
+	  free (pa->attrs);
+	TAILQ_REMOVE (&proto->xfs, pa, next);
+	free (pa);
+      }
 
-  /* XXX Use class LOG_SA instead?  */
-  LOG_DBG ((LOG_MISC, 90, "proto_free: freeing %p", proto));
-
+  LOG_DBG ((LOG_SA, 90, "proto_free: freeing %p", proto));
   free (proto);
 }
 
@@ -848,6 +856,127 @@ sa_isakmp_upgrade (struct message *msg)
   sa_enter (sa);
 }
 
+#define ATTRS_SIZE (IKE_ATTR_BLOCK_SIZE + 1)	 /* XXX Should be dynamic.  */
+
+struct attr_validation_state {
+  u_int8_t *attrp[ATTRS_SIZE];
+  u_int8_t checked[ATTRS_SIZE];
+  int phase;				/* IKE (1) or IPSEC (2) attrs? */
+  int mode;				/* 0 = 'load', 1 = check */
+};
+
+/* Validate an attribute. Return 0 on match.  */
+static int
+sa_validate_xf_attrs (u_int16_t type, u_int8_t *value, u_int16_t len,
+		      void *arg)
+{
+  struct attr_validation_state *avs = (struct attr_validation_state *)arg;
+
+  LOG_DBG ((LOG_SA, 95, "sa_validate_xf_attrs: phase %d mode %d type %d "
+	    "len %d", avs->phase, avs->mode, type, len));
+
+  /* Make sure the phase and type are valid.  */
+  if (avs->phase == 1)
+    {
+      if (type < IKE_ATTR_ENCRYPTION_ALGORITHM || type > IKE_ATTR_BLOCK_SIZE)
+	return 1;
+    }
+  else if (avs->phase == 2)
+    {
+      if (type < IPSEC_ATTR_SA_LIFE_TYPE || type > IPSEC_ATTR_ECN_TUNNEL)
+	return 1;
+    }
+  else
+    return 1;
+
+  if (avs->mode == 0) /* Load attrs.  */
+    {
+      avs->attrp[type] = value;
+      return 0;
+    }
+
+  /* Checking for a missing attribute is an immediate failure.  */
+  if (!avs->attrp[type])
+    return 1;
+
+  /* Match the loaded attribute against this one, mark it as checked.  */
+  avs->checked[type]++;
+  return memcmp (avs->attrp[type], value, len);
+}
+
+/*
+ * This function is used to validate the returned proposal (protection suite)
+ * we get from the responder against a proposal we sent. Only run as initiator.
+ * We return 0 if a match is found (in any transform of this proposal), 1 
+ * otherwise. Also see note in sa_add_transform() below.
+ */
+static int
+sa_validate_proto_xf (struct proto *match, struct payload *xf, int phase)
+{
+  struct proto_attr *pa;
+  struct attr_validation_state *avs;
+  int i, found = 0;
+  u_int8_t xf_id;
+
+  if (!match->xf_cnt)
+    return 0;
+
+  if (match->proto != GET_ISAKMP_PROP_PROTO (xf->context->p))
+    {
+      LOG_DBG ((LOG_SA, 70, "sa_validate_proto_xf: proto %p (#%d) "
+		"protocol mismatch", match, match->no));
+      return 1;
+    }
+
+  avs = (struct attr_validation_state *)calloc (1, sizeof *avs);
+  if (!avs)
+    {
+      log_error ("sa_validate_proto_xf: calloc (1, %lu)",
+		 (unsigned long)sizeof *avs);
+      return 1;
+    }
+  avs->phase = phase;
+
+  /* Load the "proposal candidate" attribute set.  */
+  (void)attribute_map (xf->p + ISAKMP_TRANSFORM_SA_ATTRS_OFF,
+		       GET_ISAKMP_GEN_LENGTH (xf->p) 
+		       - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
+		       sa_validate_xf_attrs, avs);
+  xf_id = GET_ISAKMP_TRANSFORM_ID (xf->p);
+
+  /* Check against the transforms we suggested.  */
+  avs->mode++;
+  for (pa = TAILQ_FIRST (&match->xfs); pa && !found;
+       pa = TAILQ_NEXT (pa, next))
+    {
+      if (xf_id != GET_ISAKMP_TRANSFORM_ID (pa->attrs))
+	continue;
+
+      memset (avs->checked, 0, sizeof avs->checked);
+      if (attribute_map (pa->attrs + ISAKMP_TRANSFORM_SA_ATTRS_OFF,
+			 pa->len - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
+			 sa_validate_xf_attrs, avs) == 0)
+	found++;
+
+      LOG_DBG ((LOG_SA, 80, "sa_validate_proto_xf: attr_map "
+		"xf %p proto %p pa %p found %d", xf, match, pa, found));
+
+      if (!found)
+	continue;
+
+      /* Require all attributes present and checked.  XXX perhaps not?  */
+      for (i = 0; i < sizeof avs->checked; i++)
+	if (avs->attrp[i] && !avs->checked[i])
+	  found = 0;
+
+      LOG_DBG ((LOG_SA, 80, "sa_validate_proto_xf: req_attr "
+		"xf %p proto %p pa %p found %d", xf, match, pa, found));
+    }
+  free (avs);
+
+  return found ? 0 : 1;
+}
+
 /*
  * Register the chosen transform XF into SA.  As a side effect set PROTOP
  * to point at the corresponding proto structure.  INITIATOR is true if we
@@ -869,11 +998,28 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
 		   (unsigned long)sizeof *proto);
     }
   else
-    /* Find the protection suite that were chosen.  */
-    for (proto = TAILQ_FIRST (&sa->protos);
-	 proto && proto->no != GET_ISAKMP_PROP_NO (prop->p);
-	 proto = TAILQ_NEXT (proto, link))
-      ;
+    {
+      /*
+       * RFC 2408, section 4.2 states the responder SHOULD use the proposal 
+       * number from the initiator (i.e us), in it's selected proposal to make
+       * this lookup easier. Most vendors follow this. One noted exception is
+       * the CiscoPIX (and perhaps other Cisco products).
+       *
+       * We start by matching on the proposal number, as before.
+       */
+      for (proto = TAILQ_FIRST (&sa->protos);
+	   proto && proto->no != GET_ISAKMP_PROP_NO (prop->p);
+	   proto = TAILQ_NEXT (proto, link))
+	;
+      /*
+       * If we did not find a match, search through all proposals and xforms.
+       */
+      if (!proto || sa_validate_proto_xf (proto, xf, sa->phase) != 0)
+	for (proto = TAILQ_FIRST (&sa->protos);
+	     proto && sa_validate_proto_xf (proto, xf, sa->phase) != 0;
+	     proto = TAILQ_NEXT (proto, link))
+	  ;
+    }
   if (!proto)
     return -1;
   *protop = proto;
@@ -947,15 +1093,15 @@ sa_teardown_all (void)
   int i;
   struct sa *sa;
 
-  LOG_DBG((LOG_MISC, 70, "sa_teardown_all:"));
-  /* Get Phase 2 SAs. */
+  LOG_DBG ((LOG_SA, 70, "sa_teardown_all:"));
+  /* Get Phase 2 SAs.  */
   for (i = 0; i <= bucket_mask; i++)
     for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
       if (sa->phase == 2)
 	{
-	  /* Teardown the phase 2 SAs by name, similar to ui_teardown. */
-	  LOG_DBG((LOG_MISC, 70, "sa_teardown_all: tearing down SA %s",
-	      sa->name));
+	  /* Teardown the phase 2 SAs by name, similar to ui_teardown.  */
+	  LOG_DBG ((LOG_SA, 70, "sa_teardown_all: tearing down SA %s",
+		    sa->name));
 	  connection_teardown (sa->name);
 	  sa_delete (sa, 1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.42 2003/12/04 21:13:35 miod Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.43 2004/02/27 09:01:18 ho Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ ike_phase_1_initiator_send_SA (struct message *msg)
   int i, value, update_nextp;
   struct payload *p;
   struct proto *proto;
+  struct proto_attr *pa;
   int group_desc = -1, new_group_desc;
 
   /* Get the list of transforms.  */
@@ -284,8 +285,24 @@ ike_phase_1_initiator_send_SA (struct message *msg)
   proto->no = 1;
   proto->proto = ISAKMP_PROTO_ISAKMP;
   proto->sa = TAILQ_FIRST (&exchange->sa_list);
-  TAILQ_INSERT_TAIL (&TAILQ_FIRST (&exchange->sa_list)->protos, proto,
-		     link);
+  proto->xf_cnt = conf->cnt;
+  TAILQ_INIT (&proto->xfs);
+  for (i = 0; i < proto->xf_cnt; i++)
+    {
+      pa = (struct proto_attr *)calloc (1, sizeof *pa);
+      if (!pa)
+	goto bail_out;
+      pa->len = transform_len[i];
+      pa->attrs = (u_int8_t *)malloc (pa->len);
+      if (!pa->attrs)
+	{
+	  free (pa);
+	  goto bail_out;
+	}
+      memcpy (pa->attrs, transform[i], pa->len);
+      TAILQ_INSERT_TAIL (&proto->xfs, pa, next);
+    }
+  TAILQ_INSERT_TAIL (&TAILQ_FIRST (&exchange->sa_list)->protos, proto, link);
 
   sa_len = ISAKMP_SA_SIT_OFF + IPSEC_SIT_SIT_LEN;
   sa_buf = malloc (sa_len);
