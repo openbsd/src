@@ -1,4 +1,4 @@
-/*	$OpenBSD: photurisd.c,v 1.10 2001/01/28 22:45:15 niklas Exp $	*/
+/*	$OpenBSD: photurisd.c,v 1.11 2001/03/08 21:41:47 deraadt Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$OpenBSD: photurisd.c,v 1.10 2001/01/28 22:45:15 niklas Exp $";
+static char rcsid[] = "$OpenBSD: photurisd.c,v 1.11 2001/03/08 21:41:47 deraadt Exp $";
 #endif 
 
 #define _PHOTURIS_C_
@@ -190,7 +190,7 @@ main(int argc, char **argv)
      init_attributes(); 
 
      if (init_identities(NULL,NULL) == -1)
-	  exit(-1);
+	  exit(1);
      
      init_schedule();
 

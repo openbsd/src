@@ -1,4 +1,4 @@
-/*	$OpenBSD: startkey.c,v 1.2 2001/01/28 22:45:20 niklas Exp $	*/
+/*	$OpenBSD: startkey.c,v 1.3 2001/03/08 21:41:51 deraadt Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: startkey.c,v 1.2 2001/01/28 22:45:20 niklas Exp $";
+static char rcsid[] = "$OpenBSD: startkey.c,v 1.3 2001/03/08 21:41:51 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -85,14 +85,14 @@ main(int argc, char **argv)
 	for (len=0, i=0; i<argc; i++) {
 	     if (strchr(argv[i], '=')  == NULL) {
 		  fprintf(stderr, "missing = in %s\n", argv[i]);
-		  exit(-1);
+		  exit(1);
 	     }
 	     len += strlen(argv[i])+1;
 	}
 
 	if (chdir(dir) == -1) {
 		fprintf(stderr, "Can't change dir to %s\n", dir);
-		exit(-1);
+		exit(1);
 	}
 
 	fd = open(PHOTURIS_FIFO, O_WRONLY | O_NONBLOCK, 0);
@@ -100,12 +100,12 @@ main(int argc, char **argv)
 	if (fd == -1)
 	{
 		perror("open()");
-		exit(-1);
+		exit(1);
 	}
 	
 	if ((buffer = calloc(len, sizeof(char))) == NULL) {
 	     perror("calloc()");
-	     exit(-1);
+	     exit(1);
 	}
 
 	for (i=0; i<argc; i++) {
@@ -116,7 +116,7 @@ main(int argc, char **argv)
 	if (write(fd, buffer, strlen(buffer)) != strlen(buffer))
 	{
 	     perror("write()");
-	     exit(-1);
+	     exit(1);
 	}
 
 	free(buffer);

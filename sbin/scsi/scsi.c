@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.6 2000/01/22 20:25:07 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.7 2001/03/08 21:41:50 deraadt Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -482,7 +482,7 @@ void mode_sense(int fd, u_char *data, int len, int pc, int page)
 	if (SCSIREQ_ERROR(scsireq))
 	{
 		scsi_debug(stderr, 0, scsireq);
-		exit(-1);
+		exit(1);
 	}
 
 	free(scsireq);
@@ -505,7 +505,7 @@ void mode_select(int fd, u_char *data, int len, int perm)
 	if (SCSIREQ_ERROR(scsireq))
 	{
 		scsi_debug(stderr, 0, scsireq);
-		exit(-1);
+		exit(1);
 	}
 
 	free(scsireq);
@@ -569,7 +569,7 @@ static char *mode_lookup(int page)
 		skipwhite(modes);
 		if (getc(modes) != START_ENTRY) {
 			fprintf(stderr, "Expected %c.\n", START_ENTRY);
-			exit(-1);
+			exit(1);
 		}
 
 		match = 1;
@@ -670,7 +670,7 @@ edit_check(void *hook, int letter, void *arg, int count, char *name)
 {
 	if (letter != 'i' && letter != 'b') {
 		fprintf(stderr, "Can't edit format %c.\n", letter);
-		exit(-1);
+		exit(1);
 	}
 
 	if (editind >= sizeof(editinfo) / sizeof(editinfo[0])) {
@@ -686,7 +686,7 @@ edit_defaults(void *hook, int letter, void *arg, int count, char *name)
 {
 	if (letter != 'i' && letter != 'b') {
 		fprintf(stderr, "Can't edit format %c.\n", letter);
-		exit(-1);
+		exit(1);
 	}
 
 	editinfo[editind].default_value = ((long)arg);
@@ -699,7 +699,7 @@ edit_report(void *hook, int letter, void *arg, int count, char *name)
 	if (editinfo[editind].can_edit) {
 		if (letter != 'i' && letter != 'b') {
 			fprintf(stderr, "Can't report format %c.\n", letter);
-			exit(-1);
+			exit(1);
 		}
 
 		fprintf(edit_file, "%s:  %ld\n", name, (long)arg);
@@ -726,7 +726,7 @@ edit_get(void *hook, char *name)
 		if (strncmp(name, line, strlen(name)) != 0) {
 			fprintf(stderr, "Expected \"%s\" and read \"%s\"\n",
 			name, line);
-			exit(-1);
+			exit(1);
 		}
 
 		arg = strtoul(line + strlen(name) + 2, 0, 0);
@@ -790,13 +790,13 @@ mode_edit(int fd, int page, int edit, int argc, char *argv[])
 	if (edit) {
 		if (!fmt) {
 			fprintf(stderr, "Sorry: can't edit without a format.\n");
-			exit(-1);
+			exit(1);
 		}
 
 		if (pagectl != 0 && pagectl != 3) {
 			fprintf(stderr,
 "It only makes sense to edit page 0 (current) or page 3 (saved values)\n");
-			exit(-1);
+			exit(1);
 		}
 
 		verbose = 1;
