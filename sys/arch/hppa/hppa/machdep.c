@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.71 2002/05/13 19:11:15 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.72 2002/05/14 00:25:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -291,6 +291,7 @@ void
 hppa_init(start)
 	paddr_t start;
 {
+	struct pdc_model pdc_model PDC_ALIGNMENT;
 	extern int kernel_text;
 	vaddr_t v, v1;
 	int error, cpu_features = 0;
@@ -366,6 +367,15 @@ hppa_init(start)
 
 	/* may the scientific guessing begin */
 	cpu_features = 0;
+
+	/* identify system type */
+	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_INFO,
+	    &pdc_model)) < 0) {
+#ifdef DEBUG
+		printf("WARNING: PDC_MODEL error %d\n", error);
+#endif
+		pdc_model.hvers = 0;
+	}
 
 	/* BTLB params */
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
@@ -452,6 +462,49 @@ hppa_init(start)
 			LDILDO(trap_ep_T_ITLBMISSNA, p->itlbnah);
 #undef LDILDO
 		}
+	}
+
+	{
+		const char *p, *q;
+		char buf[32];
+		int lev, hv;
+
+		lev = 0xa + (*cpu_desidhash)();
+		hv = pdc_model.hvers >> 4;
+		if (!hv) {
+			p = "(UNKNOWN)";
+			q = lev == 0xa? "1.0" : "1.1";
+		} else {
+			p = hppa_mod_info(HPPA_TYPE_BOARD, hv);
+			if (!p) {
+				sprintf(buf, "(UNKNOWN 0x%x)", hv);
+				p = buf;
+			}
+
+			switch (pdc_model.arch_rev) {
+			default:
+			case 0:
+				q = "1.0";
+#ifdef COMPAT_HPUX
+				cpu_model_hpux = HPUX_SYSCONF_CPUPA10;
+#endif
+				break;
+			case 4:
+				q = "1.1";
+#ifdef COMPAT_HPUX
+				cpu_model_hpux = HPUX_SYSCONF_CPUPA11;
+#endif
+				break;
+			case 8:
+				q = "2.0";
+#ifdef COMPAT_HPUX
+				cpu_model_hpux = HPUX_SYSCONF_CPUPA20;
+#endif
+				break;
+			}
+		}
+
+		sprintf(cpu_model, "HP9000/%s PA-RISC %s%x", p, q, lev);
 	}
 
 	/* we hope this won't fail */
@@ -546,11 +599,9 @@ hppa_init(start)
 void
 cpu_startup()
 {
-	struct pdc_model pdc_model PDC_ALIGNMENT;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
-	int base, residual;
-	int err, i;
+	int i, base, residual;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -566,51 +617,7 @@ cpu_startup()
 	 */
 	printf(version);
 
-	/* identify system type */
-	if ((err = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_INFO,
-	    &pdc_model)) < 0) {
-#ifdef DEBUG
-		printf("WARNING: PDC_MODEL error %d\n", err);
-#endif
-	} else {
-		const char *p, *q;
-		char buf[32];
-		int lev;
-
-		i = pdc_model.hvers >> 4;
-		p = hppa_mod_info(HPPA_TYPE_BOARD, i);
-		if (!p) {
-			sprintf(buf, "(UNKNOWN 0x%x)", i);
-			p = buf;
-		}
-
-		switch (pdc_model.arch_rev) {
-		default:
-		case 0:
-			q = "1.0";
-#ifdef COMPAT_HPUX
-			cpu_model_hpux = HPUX_SYSCONF_CPUPA10;
-#endif
-			break;
-		case 4:
-			q = "1.1";
-#ifdef COMPAT_HPUX
-			cpu_model_hpux = HPUX_SYSCONF_CPUPA11;
-#endif
-			break;
-		case 8:
-			q = "2.0";
-#ifdef COMPAT_HPUX
-			cpu_model_hpux = HPUX_SYSCONF_CPUPA20;
-#endif
-			break;
-		}
-
-		lev = 'a' + (*cpu_desidhash)();
-		sprintf(cpu_model, "HP9000/%s PA-RISC %s%c", p, q, lev);
-		printf("%s\n", cpu_model);
-	}
-
+	printf("%s\n", cpu_model);
 	printf("real mem = %d (%d reserved for PROM, %d used by OpenBSD)\n",
 	    ctob(totalphysmem), ctob(resvmem), ctob(physmem));
 
