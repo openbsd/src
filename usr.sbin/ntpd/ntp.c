@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.43 2004/12/13 12:36:02 dtucker Exp $ */
+/*	$OpenBSD: ntp.c,v 1.44 2004/12/13 12:39:15 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -19,6 +19,7 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -72,6 +73,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	struct ntp_peer		*p;
 	struct ntp_peer		**idx2peer = NULL;
 	struct timespec		 tp;
+	struct stat		 stb;
 	time_t			 nextaction;
 	void			*newp;
 
@@ -93,6 +95,10 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
 		fatal(NULL);
 
+	if (stat(pw->pw_dir, &stb) == -1)
+		fatal("stat");
+	if (stb.st_uid != 0 || (stb.st_mode & (S_IWGRP|S_IWOTH)) != 0)
+		fatal("bad privsep dir permissions");
 	if (chroot(pw->pw_dir) == -1)
 		fatal("chroot");
 	if (chdir("/") == -1)
