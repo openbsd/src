@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.28 2004/10/10 16:45:00 mickey Exp $	*/
+/*	$OpenBSD: nm.c,v 1.29 2005/01/03 14:49:39 espie Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: nm.c,v 1.28 2004/10/10 16:45:00 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: nm.c,v 1.29 2005/01/03 14:49:39 espie Exp $";
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -118,7 +118,7 @@ char typeletter(struct nlist *, int);
 
 void	 pipe2cppfilt(void);
 void	 usage(void);
-char	*symname(struct nlist *);
+char	*symname(struct nlist *, int);
 int	process_file(int, const char *);
 int	show_archive(int, const char *, FILE *);
 int	show_file(int, int, const char *, FILE *fp, off_t, union hdr *);
@@ -612,8 +612,8 @@ char *stab;
 /*
  * show_file()
  *	show symbols from the object file pointed to by fp.  The current
- *	file pointer for fp is expected to be at the beginning of an a.out
- *	header.
+ *	file pointer for fp is expected to be at the beginning of an object
+ *	file header.
  */
 int
 show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union hdr *head)
@@ -845,9 +845,9 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 }
 
 char *
-symname(struct nlist *sym)
+symname(struct nlist *sym, int aout)
 {
-	if (demangle && sym->n_un.n_name[0] == '_')
+	if (demangle && sym->n_un.n_name[0] == '_' && aout)
 		return sym->n_un.n_name + 1;
 	else
 		return sym->n_un.n_name;
@@ -888,10 +888,10 @@ print_symbol(const char *name, struct nlist *sym, int aout)
 	}
 
 	if (SYMBOL_TYPE(sym->n_type) == N_INDR && show_extensions) {
-		printf("%s -> %s\n", symname(sym), symname(sym+1));
+		printf("%s -> %s\n", symname(sym, aout), symname(sym+1, aout));
 	}
 	else
-		(void)puts(symname(sym));
+		(void)puts(symname(sym, aout));
 }
 
 char *
