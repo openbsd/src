@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 1996/11/11 19:43:27 kstailey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 1997/05/06 19:47:12 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -110,7 +110,12 @@ cdev_decl(ms);
 #include "lpt.h"
 cdev_decl(lpt);
 cdev_decl(rd);
-
+cdev_decl(ipl);
+#ifdef IPFILTER
+#define NIPF 1
+#else
+#define NIPF 0
+#endif
 
 cdev_decl(prom);			/* XXX XXX XXX */
 
@@ -152,6 +157,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scanner_init(NSS,ss),	/* 32: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 33: SCSI unknown */
 	cdev_random_init(1,random),	/* 34: random data source */
+	cdev_gen_ipf(NIPF,ipl),		/* 35: IP filter log */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -228,6 +234,7 @@ static int chrtoblktbl[] = {
 	/* 32 */	NODEV,
 	/* 33 */	NODEV,
 	/* 34 */	NODEV,
+	/* 35 */	NODEV,
 };
 
 /*
