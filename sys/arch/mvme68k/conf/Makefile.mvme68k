@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.18 2002/12/02 09:00:24 miod Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.19 2002/12/25 21:10:26 miod Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -21,10 +21,6 @@
 
 .include <bsd.own.mk>
 
-AS?=	as
-CC?=	cc
-CPP?=	cpp
-LD?=	ld
 MKDEP?=	mkdep
 SIZE?=	size
 STRIP?=	strip
@@ -49,7 +45,7 @@ CMACHFLAGS=	-m68060 -Wa,-m68030
 .endif
 CMACHFLAGS+=	-msoft-float -fno-stack-protector
 
-COPTS?=	-O2
+COPTS?=		-O2
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-Ttext 0x10000 -z -e start

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.27 2002/12/02 09:00:25 miod Exp $
+#	$OpenBSD: Makefile.sparc,v 1.28 2002/12/25 21:10:26 miod Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
 # Makefile for OpenBSD
@@ -24,10 +24,6 @@
 
 .include <bsd.own.mk>
 
-AS?=	as
-CC?=	cc
-CPP?=	cpp
-LD?=	ld
 MKDEP?=	mkdep
 SIZE?=	size
 STRIP?=	strip

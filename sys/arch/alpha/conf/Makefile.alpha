@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.26 2002/12/02 09:00:21 miod Exp $
+#	$OpenBSD: Makefile.alpha,v 1.27 2002/12/25 21:10:23 miod Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -18,10 +18,6 @@
 
 .include <bsd.own.mk>
 
-AS?=	as
-CC?=	cc
-CPP?=	cpp
-LD?=	ld
 MKDEP?=	mkdep
 SIZE?=	size
 STRIP?=	strip

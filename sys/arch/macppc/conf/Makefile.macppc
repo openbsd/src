@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.9 2002/12/02 09:00:24 miod Exp $
+#	$OpenBSD: Makefile.macppc,v 1.10 2002/12/25 21:10:26 miod Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -25,10 +25,6 @@
 
 .include <bsd.own.mk>
 
-AS?=	as
-CC?=	cc
-CPP?=	cpp
-LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
 SIZE?=	size

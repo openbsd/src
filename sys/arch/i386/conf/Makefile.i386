@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.32 2002/12/02 09:00:23 miod Exp $
+#	$OpenBSD: Makefile.i386,v 1.33 2002/12/25 21:10:26 miod Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -24,10 +24,6 @@
 
 .include <bsd.own.mk>
 
-AS?=	as
-CC?=	cc
-CPP?=	cpp
-LD?=	ld
 MKDEP?=	mkdep
 SIZE?=	size
 STRIP?=	strip
@@ -50,7 +46,7 @@ CMACHFLAGS=
 .endif
 CMACHFLAGS+=	-fno-stack-protector
 
-COPTS?=	-O2
+COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-z -Ttext D0100000 -e start

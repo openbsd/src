@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.22 2002/12/02 09:00:24 miod Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.23 2002/12/25 21:10:26 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -23,10 +23,6 @@
 
 .include <bsd.own.mk>
 
-AS?= 	as
-CC?=    cc
-CPP?=   cpp
-LD?=    ld
 MKDEP?=	mkdep
 SIZE?=	size
 STRIP?= strip
