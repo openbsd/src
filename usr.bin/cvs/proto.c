@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.31 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: proto.c,v 1.32 2004/12/08 05:36:14 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -172,6 +172,9 @@ static FILE *cvs_server_inlog = NULL;
 static FILE *cvs_server_outlog = NULL;
 
 static pid_t cvs_subproc_pid;
+
+/* last directory sent with cvs_senddir() */
+static char cvs_lastdir[MAXPATHLEN] = "";
 
 
 /*
@@ -930,12 +933,18 @@ cvs_recvraw(struct cvsroot *root, void *dst, size_t len)
 /*
  * cvs_senddir()
  *
- * Send a `Directory' request along with the 2 paths that follow it.
+ * Send a `Directory' request along with the 2 paths that follow it.  If
+ * the directory info to be sent is the same as the last info sent, the
+ * call does nothing and simply returns without an error.
  */
 int
 cvs_senddir(struct cvsroot *root, CVSFILE *dir)
 {
 	char lbuf[MAXPATHLEN], rbuf[MAXPATHLEN];
+
+	cvs_file_getpath(dir, lbuf, sizeof(lbuf));
+	if (strcmp(lbuf, cvs_lastdir) == 0)
+		return (0);
 
 	if (dir->cf_ddat->cd_repo == NULL)
 		strlcpy(rbuf, root->cr_dir, sizeof(rbuf));
@@ -943,11 +952,12 @@ cvs_senddir(struct cvsroot *root, CVSFILE *dir)
 		snprintf(rbuf, sizeof(rbuf), "%s/%s", root->cr_dir,
 		    dir->cf_ddat->cd_repo);
 
-	cvs_file_getpath(dir, lbuf, sizeof(lbuf));
 
 	if ((cvs_sendreq(root, CVS_REQ_DIRECTORY, lbuf) < 0) ||
 	    (cvs_sendln(root, rbuf) < 0))
 		return (-1);
+
+	strlcpy(cvs_lastdir, lbuf, sizeof(cvs_lastdir));
 
 	return (0);
 }
