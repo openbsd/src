@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.5 2005/02/09 16:32:32 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.6 2005/02/09 16:37:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -429,6 +429,7 @@ start:
 	/* elect backup designated router */
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 		if (nbr->priority == 0 || nbr == dr ||	/* not electable */
+		    nbr->state & NBR_STA_DOWN ||	/* not available */
 		    nbr->dr.s_addr == nbr->addr.s_addr)	/* don't elect DR */
 			continue;
 		if (bdr != NULL) {
@@ -446,14 +447,14 @@ start:
 	    inet_ntop(AF_INET, &bdr->addr, b4, sizeof(b4)) : "none");
 	/* elect designated router */
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
-		if (nbr->priority == 0 || (nbr != dr &&
-		    nbr->dr.s_addr != nbr->addr.s_addr))
+		if (nbr->priority == 0 || nbr->state & NBR_STA_DOWN ||
+		    (nbr != dr && nbr->dr.s_addr != nbr->addr.s_addr))
 			/* only DR may be elected check priority too */
 			continue;
 		if (dr == NULL || bdr == NULL)
 			dr = nbr;
 		else
-			dr = if_elect(bdr, nbr);
+			dr = if_elect(dr, nbr);
 	}
 	log_debug("if_act_elect: dr %s", dr ?
 	    inet_ntop(AF_INET, &dr->addr, b4, sizeof(b4)) : "none");
