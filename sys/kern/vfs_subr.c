@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.55 2001/03/16 16:05:28 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.56 2001/03/16 16:10:31 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1721,7 +1721,7 @@ vfs_unmountall()
 
  retry:
 	allerror = 0;
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
+	for (mp = CIRCLEQ_LAST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	     mp = nmp) {
 		nmp = CIRCLEQ_PREV(mp, mnt_list);
 		if ((error = dounmount(mp, MNT_FORCE, curproc)) != 0) {
