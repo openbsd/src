@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.12 1998/05/14 10:19:12 niklas Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.13 1998/07/14 05:38:58 jason Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -402,10 +402,12 @@ amd7930_query_encoding(addr, fp)
 	void *addr;
 	struct audio_encoding *fp;
 {
-	switch (fp->index) {	/* ??? */
+	switch (fp->index) {
 	case 0:
-		strcpy(fp->name, "MU-Law");
+		strcpy(fp->name, AudioEmulaw);
 		fp->encoding = AUDIO_ENCODING_ULAW;
+		fp->precision = 8;
+		fp->flags = 0;
 		break;
 	default:
 		return (EINVAL);
