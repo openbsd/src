@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.3 1999/07/15 19:21:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1999/07/15 19:23:22 deraadt Exp $
 
 BINDIR?=	/usr/bin
 PROG=	bc
-SRCS=	bcwrap.c
+SRCS=	wrap-anything.c
 NOMAN=
 
 COPTS=-DWRAP=\"/usr/bin/gnubc\" -DBLOCK

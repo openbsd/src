@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwrap.c,v 1.7 1999/07/15 19:21:11 deraadt Exp $	*/
+/*	$OpenBSD: wrap-anything.c,v 1.1 1999/07/15 19:23:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
