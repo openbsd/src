@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipnat.c,v 1.39 2001/01/17 05:01:01 fgsch Exp $	*/
+/*	$OpenBSD: ipnat.c,v 1.40 2001/01/30 04:26:49 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -43,7 +43,7 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <ctype.h>
-#include <netinet/ip_compat.h>
+#include <netinet/ip_fil_compat.h>
 #include <netinet/ip_fil.h>
 #include <netinet/ip_proxy.h>
 #include <netinet/ip_nat.h>
@@ -74,6 +74,7 @@ static	char	thishost[MAXHOSTNAMELEN];
 
 
 extern	char	*optarg;
+char	*nlistf = NULL, *memf = NULL;
 extern	ipnat_t	*natparse __P((char *, int));
 extern	void	natparsefile __P((int, char *, int));
 extern	void	printnat __P((ipnat_t *, int, void *));

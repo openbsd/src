@@ -1,4 +1,4 @@
-/*	$OpenBSD: natparse.c,v 1.8 2001/01/23 02:24:12 fgsch Exp $	*/
+/*	$OpenBSD: natparse.c,v 1.9 2001/01/30 04:26:50 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -41,7 +41,7 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <ctype.h>
-#include <netinet/ip_compat.h>
+#include <netinet/ip_fil_compat.h>
 #include <netinet/ip_fil.h>
 #include <netinet/ip_proxy.h>
 #include <netinet/ip_nat.h>
@@ -317,10 +317,6 @@ int linenum;
 			linenum, *cpp);
 		return NULL;
 	}
-
-	/* TCP only by default */
-	ipn.in_flags |= IPN_TCP;
-	proto = "tcp";
 
 	cpp++;
 
@@ -600,8 +596,10 @@ int linenum;
 				return NULL;
 		} else if (genmask("255.255.255.255", (u_32_t *)&ipn.in_inmsk))
 			return NULL;
-		if (*cpp) {
-			ipn.in_flags &= ~IPN_TCP;	/* override default */
+		if (!*cpp) {
+			ipn.in_flags |= IPN_TCP; /* XXX- TCP only by default */
+			proto = "tcp";
+		} else {
 			if (!strcasecmp(*cpp, "tcp"))
 				ipn.in_flags |= IPN_TCP;
 			else if (!strcasecmp(*cpp, "udp"))
