@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 1997/05/21 01:16:33 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 1997/05/23 18:31:28 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2.4.3 1996/07/04 07:05:32 leo Exp $
 
 # Revision is 2.1
@@ -27,6 +27,7 @@ CRUNCHGENOPTS?=
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		${.CURDIR}/mtree.conf
+RAWLABEL?=	-r
 
 .ifndef DESTDIR
 all:
@@ -43,7 +44,7 @@ bsd:
 all: ${CBIN} bsd
 	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w -r ${VND} ${DISKTYPE}
+	disklabel -w ${RAWLABEL} ${VND} ${DISKTYPE}
 	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE} || \
 	    ${NEWFS_WILL_FAIL}
 	mount ${VND_DEV} ${MOUNT_POINT}
