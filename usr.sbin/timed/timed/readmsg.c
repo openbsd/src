@@ -1,4 +1,4 @@
-/*	$OpenBSD: readmsg.c,v 1.14 2003/08/19 19:41:21 deraadt Exp $	*/
+/*	$OpenBSD: readmsg.c,v 1.15 2003/11/19 19:17:59 dhartmei Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -192,7 +192,8 @@ again:
 
 		pfd[0].fd = sock;
 		pfd[0].events = POLLIN;
-		if (!poll(pfd, 1, rwait.tv_sec * 1000)) {
+		if (!poll(pfd, 1, rwait.tv_sec * 1000 +
+		    rwait.tv_usec / 1000)) {
 			if (rwait.tv_sec == 0 && rwait.tv_usec == 0)
 				return(0);
 			continue;
