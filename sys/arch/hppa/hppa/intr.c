@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.17 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: intr.c,v 1.18 2004/05/04 23:53:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -42,27 +42,31 @@ void softtty(void);
 
 struct hppa_iv {
 	char pri;
-	char bit;
+	char irq;
 	char flags;
 #define	HPPA_IV_CALL	0x01
 #define	HPPA_IV_SOFT	0x02
 	char pad;
+	int pad2;
 	int (*handler)(void *);
 	void *arg;
 	struct hppa_iv *next;
 	struct hppa_iv *share;
-	int pad2[3];
+	u_int bit;
+	int *cnt;
 } __packed;
 
 register_t kpsw = PSL_Q | PSL_P | PSL_C | PSL_D;
+extern int intrcnt[];
 volatile int cpu_inintr, cpl = IPL_NESTED;
 u_long cpu_mask;
-struct hppa_iv *intr_list, intr_store[8*2*CPU_NINTS], *intr_more = intr_store;
-struct hppa_iv intr_table[CPU_NINTS] = {
-	{ IPL_SOFTCLOCK, 0, HPPA_IV_SOFT, 0, (int (*)(void *))&softclock },
-	{ IPL_SOFTNET  , 0, HPPA_IV_SOFT, 0, (int (*)(void *))&softnet },
+struct hppa_iv intr_store[8*2*CPU_NINTS] __attribute__ ((aligned(32))),
+    *intr_more = intr_store, *intr_list;
+struct hppa_iv intr_table[CPU_NINTS] __attribute__ ((aligned(32))) = {
+	{ IPL_SOFTCLOCK, 0, HPPA_IV_SOFT, 0, 0, (int (*)(void *))&softclock },
+	{ IPL_SOFTNET  , 0, HPPA_IV_SOFT, 0, 0, (int (*)(void *))&softnet },
 	{ 0 }, { 0 },
-	{ IPL_SOFTTTY  , 0, HPPA_IV_SOFT, 0, (int (*)(void *))&softtty }
+	{ IPL_SOFTTTY  , 0, HPPA_IV_SOFT, 0, 0, (int (*)(void *))&softtty }
 };
 volatile u_long ipending, imask[NIPL] = {
 	0,
@@ -117,13 +121,13 @@ cpu_intr_init(void)
 			if (!bit--)
 				panic("cpu_intr_init: out of bits");
 
-			iv->bit = 31 - bit;
 			iv->next = NULL;
+			iv->bit = 1 << bit;
 			intr_table[bit] = *iv;
 			mask |= (1 << bit);
 			imask[(int)iv->pri] |= (1 << bit);
 		} else {
-			iv->bit = 31 - bit;
+			iv->bit = 1 << bit;
 			iv->next = intr_table[bit].next;
 			intr_table[bit].next = iv;
 		}
@@ -171,10 +175,11 @@ cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *), void *arg,
 	}
 
 	iv->pri = pri;
-	iv->bit = irq;
+	iv->irq = irq;
 	iv->flags = 0;
 	iv->handler = handler;
 	iv->arg = arg;
+	iv->cnt = &intrcnt[pri];
 	iv->next = intr_list;
 	intr_list = iv;
 
@@ -195,10 +200,12 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 
 	iv = &intr_table[irq];
 	iv->pri = pri;
-	iv->bit = 31 - irq;
+	iv->irq = irq;
+	iv->bit = 1 << irq;
 	iv->flags = 0;
 	iv->handler = handler;
 	iv->arg = arg;
+	iv->cnt = &intrcnt[pri];
 	iv->next = NULL;
 	iv->share = NULL;
 
