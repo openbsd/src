@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.125 2003/05/17 18:35:04 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.126 2003/05/17 18:45:15 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -106,6 +106,7 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_amd_reg.h>
 #include <dev/pci/pciide_apollo_reg.h>
 #include <dev/pci/pciide_cmd_reg.h>
+#include <dev/pci/pciide_sii3112_reg.h>
 #include <dev/pci/pciide_cy693_reg.h>
 #include <dev/pci/pciide_sis_reg.h>
 #include <dev/pci/pciide_acer_reg.h>
@@ -226,6 +227,9 @@ void cmd_channel_map(struct pci_attach_args *,
 			struct pciide_softc *, int);
 int  cmd_pci_intr(void *);
 void cmd646_9_irqack(struct channel_softc *);
+
+void sii3112_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void sii3112_setup_channel(struct channel_softc*);
 
 void cy693_chip_map(struct pciide_softc*, struct pci_attach_args*);
 void cy693_setup_channel(struct channel_softc*);
@@ -409,6 +413,10 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
 	{ PCI_PRODUCT_CMDTECH_680,	/* CMD Technology PCI0680 */
 	  IDE_PCI_CLASS_OVERRIDE,
 	  cmd680_chip_map
+	},
+	{ PCI_PRODUCT_CMDTECH_3112,	/* SiI 3112 SATA */
+	  IDE_PCI_CLASS_OVERRIDE,	/* XXX: subclass RAID */
+	  sii3112_chip_map
 	}
 };
 
@@ -3055,6 +3063,120 @@ cmd680_setup_channel(chp)
 		    IDEDMA_CTL(chp->channel),
 		    idedma_ctl);
 	}
+	pciide_print_modes(cp);
+}
+
+void
+sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	struct pciide_channel *cp;
+	bus_size_t cmdsize, ctlsize;
+	pcireg_t interface;
+	int channel;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	printf(": DMA");
+	pciide_mapreg_dma(sc, pa);
+
+	/*
+	 * Rev. <= 0x01 of the 3112 have a bug that can cause data
+	 * corruption if DMA transfers cross an 8K boundary.  This is
+	 * apparently hard to tickle, but we'll go ahead and play it
+	 * safe.
+	 */
+	if (PCI_REVISION(pa->pa_class) <= 0x01) {
+		sc->sc_dma_maxsegsz = 8192;
+		sc->sc_dma_boundary = 8192;
+	}
+
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.PIO_cap = 4;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+		sc->sc_wdcdev.DMA_cap = 2;
+		sc->sc_wdcdev.UDMA_cap = 6;
+	}
+	sc->sc_wdcdev.set_modes = sii3112_setup_channel;
+
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+
+	/* 
+	 * The 3112 can be told to identify as a RAID controller.
+	 * In this case, we have to fake interface
+	 */
+	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
+		interface = PCI_INTERFACE(pa->pa_class);
+	} else {
+		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
+		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
+	}
+
+	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    pciide_pci_intr);
+		if (cp->hw_ok == 0)
+			continue;
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
+	}
+}
+
+void
+sii3112_setup_channel(struct channel_softc *chp)
+{
+	struct ata_drive_datas *drvp;
+	int drive;
+	u_int32_t idedma_ctl, dtm;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc*)cp->wdc_channel.wdc;
+
+	/* setup DMA if needed */
+	pciide_channel_dma_setup(cp);
+
+	idedma_ctl = 0;
+	dtm = 0;
+
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		/* If no drive, skip */
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		if (drvp->drive_flags & DRIVE_UDMA) {
+			/* use Ultra/DMA */
+			drvp->drive_flags &= ~DRIVE_DMA;
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+			dtm |= DTM_IDEx_DMA;
+		} else if (drvp->drive_flags & DRIVE_DMA) {
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+			dtm |= DTM_IDEx_DMA;
+		} else {
+			dtm |= DTM_IDEx_PIO;
+		}
+	}
+
+	/*
+	 * Nothing to do to setup modes; it is meaningless in S-ATA
+	 * (but many S-ATA drives still want to get the SET_FEATURE
+	 * command).
+	 */
+	if (idedma_ctl != 0) {
+		/* Add software bits in status register */
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL(chp->channel), idedma_ctl);
+	}
+	pci_conf_write(sc->sc_pc, sc->sc_tag,
+	    chp->channel == 0 ? SII3112_DTM_IDE0 : SII3112_DTM_IDE1, dtm);
 	pciide_print_modes(cp);
 }
 
