@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.7 1999/05/16 00:34:40 ho Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.8 1999/08/02 22:51:16 deraadt Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ struct ether_addr {
 };
 
 /*
- * Structure of a 10Mb/s Ethernet header.
+ * Structure of a Ethernet header.
  */
 #define	ETHER_ADDR_LEN	6
 

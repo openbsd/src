@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.15 1999/07/18 21:36:40 ho Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.16 1999/08/02 22:51:15 deraadt Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -431,7 +431,7 @@ arpintr()
 }
 
 /*
- * ARP for Internet protocols on 10 Mb/s Ethernet.
+ * ARP for Internet protocols on Ethernet.
  * Algorithm is that given in RFC 826.
  * In addition, a sanity check is performed on the sender
  * protocol address, to catch impersonators.
@@ -648,7 +648,7 @@ arp_ifinit(ac, ifa)
 }
 
 /*
- * Called from 10 Mb/s Ethernet interrupt handlers
+ * Called from Ethernet interrupt handlers
  * when ether packet type ETHERTYPE_REVARP
  * is received.  Common length and type checks are done here,
  * then the protocol-specific routine is called.
@@ -681,7 +681,7 @@ out:
 }
 
 /*
- * RARP for Internet protocols on 10 Mb/s Ethernet.
+ * RARP for Internet protocols on Ethernet.
  * Algorithm is that given in RFC 903.
  * We are only using for bootstrap purposes to get an ip address for one of
  * our interfaces.  Thus we support no user-interface.
