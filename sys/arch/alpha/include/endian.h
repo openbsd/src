@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.8 1997/11/09 23:05:00 niklas Exp $	*/
+/*	$OpenBSD: endian.h,v 1.9 1999/05/10 16:02:07 espie Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -32,7 +32,7 @@
 #ifndef _ALPHA_ENDIAN_H_
 #define _ALPHA_ENDIAN_H_
 
-#define BYTE_ORDER 1234
+#define BYTE_ORDER LITTLE_ENDIAN
 #include <sys/endian.h>
 
 #endif /* _ALPHA_ENDIAN_H_ */

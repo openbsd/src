@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.2 1998/12/05 17:29:50 mickey Exp $	*/
+/*	$OpenBSD: endian.h,v 1.3 1999/05/10 16:02:08 espie Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -58,7 +58,7 @@
 #endif /* __GNUC__ */
 
 
-#define	BYTE_ORDER	4321
+#define	BYTE_ORDER	BIG_ENDIAN
 #include <sys/endian.h>
 
 #endif /* !_MACHINE_ENDIAN_H_ */

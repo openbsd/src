@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.11 1997/11/09 23:05:13 niklas Exp $	*/
+/*	$OpenBSD: endian.h,v 1.12 1999/05/10 16:02:14 espie Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -32,7 +32,7 @@
 #ifndef _PMAX_ENDIAN_H_
 #define _PMAX_ENDIAN_H_
 
-#define BYTE_ORDER 1234
+#define BYTE_ORDER LITTLE_ENDIAN
 #include <sys/endian.h>
 
 #endif /* _PMAX_ENDIAN_H_ */

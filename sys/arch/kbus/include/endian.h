@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.3 1997/11/10 00:10:15 niklas Exp $ */
+/*	$OpenBSD: endian.h,v 1.4 1999/05/10 16:02:09 espie Exp $ */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -32,7 +32,7 @@
 #ifndef _KBUS_ENDIAN_H_
 #define _KBUS_ENDIAN_H_
 
-#define BYTE_ORDER 4321
+#define BYTE_ORDER BIG_ENDIAN
 #include <sys/endian.h>
 
 #endif /* _KBUS_ENDIAN_H_ */

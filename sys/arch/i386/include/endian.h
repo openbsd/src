@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.10 1997/11/10 10:55:29 niklas Exp $	*/
+/*	$OpenBSD: endian.h,v 1.11 1999/05/10 16:02:08 espie Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -64,7 +64,7 @@
 
 #endif	/* __GNUC__ */
 
-#define BYTE_ORDER 1234
+#define BYTE_ORDER LITTLE_ENDIAN
 #include <sys/endian.h>
 
 #endif /* _I386_ENDIAN_H_ */
