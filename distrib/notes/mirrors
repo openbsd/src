@@ -11,6 +11,12 @@ ftp://ftp.tut.ac.jp/OpenBSD == ftp://ftp.jp.openbsd.org/OpenBSD
 
 ftp://ftp.dti.ad.jp/pub/OpenBSD
 
+Sweden:
+
+ftp://ftp.stacken.kth.se/pub/OpenBSD ==
+	ftp://ftp.se.openbsd.org/pub/OpenBSD
+	ftp://ftp1.se.openbsd.org/pub/OpenBSD
+
 Switzerland:
 
 ftp://web.eunet.ch/pub/OpenBSD ==
