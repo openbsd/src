@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isapnp.c,v 1.11 1999/03/08 11:17:08 deraadt Exp $	*/
+/*	$OpenBSD: sb_isapnp.c,v 1.12 1999/03/16 17:56:13 deraadt Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.3 1997/03/20 11:03:11 mycroft Exp $	*/
 
 /*
@@ -75,6 +75,10 @@ sb_isapnp_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
+	struct isa_attach_args *ia = aux;
+
+	if (ia->ipa_ndrq < 1)
+		return 0;
 	return 1;
 }
 
@@ -97,15 +101,15 @@ sb_isapnp_attach(parent, self, aux)
 	sc->sc_ic = ia->ia_ic;
 	sc->sc_drq8 = ia->ipa_drq[0].num;
 	
-        if (ia->ipa_ndrq > 1 && ia->ipa_drq[0].num != ia->ipa_drq[1].num) {
-        	/* Some cards have the 16 bit drq first */
-        	if (sc->sc_drq8 >= 4) {
-                	sc->sc_drq16 = sc->sc_drq8;
-                        sc->sc_drq8 = ia->ipa_drq[1].num;
-                } else
-                	sc->sc_drq16 = ia->ipa_drq[1].num;
-        } else
-        	sc->sc_drq16 = DRQUNK;
+	if (ia->ipa_ndrq > 1 && ia->ipa_drq[0].num != ia->ipa_drq[1].num) {
+		/* Some cards have the 16 bit drq first */
+		if (sc->sc_drq8 >= 4) {
+			sc->sc_drq16 = sc->sc_drq8;
+			sc->sc_drq8 = ia->ipa_drq[1].num;
+		} else
+			sc->sc_drq16 = ia->ipa_drq[1].num;
+	} else
+		sc->sc_drq16 = DRQUNK;
 
 #if NMIDI > 0
 	if (ia->ipa_nio > 1) {
@@ -120,6 +124,6 @@ sb_isapnp_attach(parent, self, aux)
 		return;
 	}
 
-        sc->sc_isa = parent->dv_parent;
+	sc->sc_isa = parent->dv_parent;
 	sbattach(sc);
 }
