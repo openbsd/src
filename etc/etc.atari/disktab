@@ -1,5 +1,5 @@
 #
-#	$NetBSD: disktab,v 1.1.1.1 1995/03/30 05:44:08 leo Exp $
+#	$NetBSD: disktab,v 1.1.1.1.6.1 1996/05/30 13:51:13 leo Exp $
 #
 # Disk geometry and partition layout tables. 
 # Key:
@@ -43,7 +43,7 @@ floppyhd|floppy3hd|3inhd|Atari 3.5in High Density Floppy:\
 	:pa#2880:oa#0:ba#4096:fa#512:\
 	:pb#0:ob#0:\
 	:pc#2880:oc#0:
-floppybt|Atari 3.5in Boot Floppy:\
+floppybt|miniroot|Atari 3.5in Boot Floppy:\
 	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#60:\
 	:ts=3500:\
 	:ta=4.4BSD:pa#2160:oa#0:ba#4096:fa#512:\
