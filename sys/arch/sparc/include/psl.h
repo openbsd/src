@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.4 2000/07/06 15:25:04 ho Exp $	*/
+/*	$OpenBSD: psl.h,v 1.5 2000/07/07 11:49:39 art Exp $	*/
 /*	$NetBSD: psl.h,v 1.12 1997/03/10 21:49:11 pk Exp $ */
 
 /*
@@ -171,49 +171,55 @@ static __inline int name() \
 	return (oldipl); \
 }
 
-SPL(splsoftint, 1)
-#define	spllowersoftclock	splsoftint
+SPLHOLD(splsoftint, 1)
 #define	splsoftclock		splsoftint
 #define	splsoftnet		splsoftint
 
+SPL(spllowersoftclock, 1)
+
 /* audio software interrupts are at software level 4 */
 #define	PIL_AUSOFT	4
-SPL(splausoft, PIL_AUSOFT)
+SPLHOLD(splausoft, PIL_AUSOFT)
 
 /* floppy software interrupts are at software level 4 too */
 #define PIL_FDSOFT	4
-SPL(splfdsoft, PIL_FDSOFT)
+SPLHOLD(splfdsoft, PIL_FDSOFT)
 
 /* Block devices */
-SPL(splbio, 5)
+#define PIL_BIO 5
+SPLHOLD(splbio, PIL_BIO)
 
 /* network hardware interrupts are at level 6 */
 #define	PIL_NET	6
-SPL(splnet, PIL_NET)
+SPLHOLD(splnet, PIL_NET)
 
 /* tty input runs at software level 6 */
 #define	PIL_TTY	6
-SPL(spltty, PIL_TTY)
+SPLHOLD(spltty, PIL_TTY)
 
 /*
  * Memory allocation (must be as high as highest network, tty, or disk device)
  */
-SPL(splimp, 7)
+SPLHOLD(splimp, 7)
+
+/*
+ * remove.
+ */
 SPLHOLD(splpmap, 7)
 
-SPL(splclock, PIL_CLOCK)
+SPLHOLD(splclock, PIL_CLOCK)
 
 /* fd hardware interrupts are at level 11 */
-SPL(splfd, 11)
+SPLHOLD(splfd, 11)
 
 /* zs hardware interrupts are at level 12 */
-SPL(splzs, 12)
+SPLHOLD(splzs, 12)
 
 /* audio hardware interrupts are at level 13 */
-SPL(splaudio, 13)
+SPLHOLD(splaudio, 13)
 
 /* second sparc timer interrupts at level 14 */
-SPL(splstatclock, 14)
+SPLHOLD(splstatclock, 14)
 
 static __inline int splhigh()
 {
