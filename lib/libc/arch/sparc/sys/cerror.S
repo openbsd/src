@@ -37,24 +37,24 @@
 
 #if defined(SYSLIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: cerror.S,v 1.2 1996/08/19 08:18:02 tholo Exp $"
+	.asciz "$OpenBSD: cerror.S,v 1.3 2002/08/11 23:01:30 art Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "DEFS.h"
 #include "SYS.h"
 
-	.globl	_errno
+	.globl	_C_LABEL(errno)
 #ifdef PIC
-FUNC(cerror)
-	ld	[%g1 + _errno], %g1
+FUNC(_C_LABEL(__cerror))
+	ld	[%g1 + _C_LABEL(errno)], %g1
 	st	%o0, [%g1]
 	mov	-1, %o0
 	retl
 	 mov	-1, %o1
 #else
-FUNC(cerror)
-	sethi	%hi(_errno), %g1
-	st	%o0, [%g1 + %lo(_errno)]
+FUNC(_C_LABEL(__cerror))
+	sethi	%hi(_C_LABEL(errno)), %g1
+	st	%o0, [%g1 + %lo(_C_LABEL(errno))]
 	mov	-1, %o0
 	retl
 	 mov	-1, %o1

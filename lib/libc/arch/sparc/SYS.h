@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.11 2002/02/19 22:12:37 millert Exp $
+ *	$OpenBSD: SYS.h,v 1.12 2002/08/11 23:01:30 art Exp $
  */
 
 #include <machine/asm.h>
@@ -43,23 +43,25 @@
 
 #ifdef __STDC__
 #define _CAT(x,y) x##y
-#define __ENTRY(p,x) ENTRY(p##x)
 #else
 #define _CAT(x,y) x/**/y
-#define __ENTRY(p,x) ENTRY(p/**/x)
 #endif
 
+#define __ENTRY(p,x) ENTRY(_CAT(p,x)) ; .weak x ; x = _CAT(p,x)
+
 /*
- * ERROR branches to cerror.  This is done with a macro so that I can
- * change it to be position independent later, if need be.
+ * ERROR branches to cerror.
  */
 #ifdef PIC
 #define	ERROR() \
 	PIC_PROLOGUE(%g1,%g2); \
-	ld [%g1+cerror],%g2; jmp %g2; nop
+	ld [%g1+_C_LABEL(__cerror)],%g2; jmp %g2; nop
 #else
 #define	ERROR() \
-	sethi %hi(cerror),%g1; or %lo(cerror),%g1,%g1; jmp %g1; nop
+	sethi %hi(_C_LABEL(__cerror)),%g1; \
+	or %lo(_C_LABEL(__cerror)),%g1,%g1; \
+	jmp %g1; \
+	nop
 #endif
 
 /*
@@ -93,25 +95,10 @@
 	__ENTRY(p,x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL
 
-#ifdef _THREAD_SAFE
-/*
- * For the thread_safe versions, we prepend _thread_sys_ to the function
- * name so that the 'C' wrapper can go around the real name.
- */
 # define SYSCALL(x)		__SYSCALL(_thread_sys_,x)
 # define RSYSCALL(x)		__RSYSCALL(_thread_sys_,x)
 # define PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
 # define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
 # define SYSENTRY(x)		__ENTRY(_thread_sys_,x)
-#else /* _THREAD_SAFE */
-/*
- * The non-threaded library defaults to traditional syscalls where
- * the function name matches the syscall name.
- */
-# define SYSCALL(x)		__SYSCALL(,x)
-# define RSYSCALL(x)		__RSYSCALL(,x)
-# define PSEUDO(x,y)		__PSEUDO(,x,y)
-# define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(,x,y)
-# define SYSENTRY(x)		__ENTRY(,x)
-#endif /* _THREAD_SAFE */
-	.globl	cerror
+
+	.globl	_C_LABEL(__cerror)
