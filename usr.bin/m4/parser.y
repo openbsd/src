@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: parser.y,v 1.1 2004/05/12 21:17:03 espie Exp $ */
+/* $OpenBSD: parser.y,v 1.2 2004/06/22 19:21:34 otto Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -40,8 +40,20 @@ top	: expr { end_result = $1; }
 expr 	: expr '+' expr { $$ = $1 + $3; }
      	| expr '-' expr { $$ = $1 - $3; }
      	| expr '*' expr { $$ = $1 * $3; }
-	| expr '/' expr { $$ = $1 / $3; }
-	| expr '%' expr { $$ = $1 % $3; }
+	| expr '/' expr {
+		if ($3 == 0) {
+			yyerror("division by zero");
+			exit(1);
+		}
+		$$ = $1 / $3;
+	}
+	| expr '%' expr { 
+		if ($3 == 0) {
+			yyerror("modulo zero");
+			exit(1);
+		}
+		$$ = $1 % $3;
+	}
 	| expr LSHIFT expr { $$ = $1 << $3; }
 	| expr RSHIFT expr { $$ = $1 >> $3; }
 	| expr '<' expr { $$ = $1 < $3; }
