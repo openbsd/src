@@ -6,11 +6,11 @@
 .Nd emacs-like text editor
 .Sh SYNOPSIS
 .Nm mg
-.Op files
+.Op Ar
 .Sh DESCRIPTION
 .Nm
-is intented intended to be a small, fast, and portable editor for
-people who can't (or don't want to) run real emacs thing for one
+is intended to be a small, fast, and portable editor for
+people who can't (or don't want to) run the real emacs for one
 reason or another, or are not familiar with the
 .Xr vi 1
 editor.  It is compatible with emacs because there shouldn't
@@ -19,37 +19,41 @@ be any reason to learn more editor types than emacs or
 .Pp
 Normal editing commands should be identical to Gnu Emacs.  It differs
 primarily in not having special modes for tasks other than straight
-editing, e.g. mail and news, and in not having special modes that
+editing, e.g., mail and news, and in not having special modes that
 support various programming languages.  It does have text justification
 and auto-fill mode.  It is written directly in C, so there is no
-language in which you can write extensions.  However you can rebind
+language in which you can write extensions.  However, you can rebind
 keys and change some parameters.  There are no limits to line length
 or format.  Command, buffer, and file name completion and listing can
-be done using space and ? respectively.
-.Pp
+be done using the spacebar and
+.Ql ? ,
+respectively.
 .Pp
 The one major difference is in configuration files.  Gnu Emacs uses
 a configuration file 
-.IR .emacs ,
+.Pa .emacs ,
 which is written in Lisp.
 .Nm
 uses its own configuration files, which contain extend mode Emacs
-commands (i.e. commands that you could type after doing m-x).
+commands (i.e., commands that you could type after doing m-x).
 There are two configuration files, 
-.IR .mg ,
+.Pa .mg ,
 and
-.IR .mg-TERM .
-TERM here represents the name of you terminal type.  E.g. if
-your terminal type is set to vt100,
+.Pa .mg-TERM .
+Here,
+.Ev TERM
+represents the name of you terminal type; e.g., if your terminal type
+is set to
+.Dq vt100 ,
 .Nm
 will use
-.I .mg-vt100
+.Pa .mg-vt100
 as a startup file.  The terminal type startup file is used
 first.  If either of these files does not exist, 
 .Nm
 will look for a file by the same name (but without the leading
 dot) in
-.IR /usr/local/lib/mg .
+.Pa /usr/local/lib/mg .
 .Pp
 See the manual for a full list of the commands that can
 go in the files. The most commonly  
@@ -79,38 +83,37 @@ global-set-key ^[^[[A exchange-point-and-mark
 global-set-key ^[^[[H beginning-of-buffer
 .Ed
 .Pp
-Here's another example sequence that you may find useful.  By default ()
-and [] are recognized as brackets, so bracket matching can be done.
-The following defines {} as brackets, and turns on the mode that causes
+Here's another example sequence that you may find useful.  By default,
+.Dq ()
+and
+.Dq []
+are recognized as brackets, so bracket matching can be done.
+The following defines
+.Dq {}
+as brackets, and turns on the mode that causes
 the cursor to "blink" to show you matching brackets.
 .Bd -literal -offset indent
 global-set-key } blink-matching-paren-hack
 blink-matching-paren
 set-default-mode blink
 .Ed
-.Pp
-.Sh ARGUMENTS
-.Nm
-does not take any options.  The only arguments you can pass it are
-file names.  It will do a find-file on each one, reading it into
-a buffer.  It will leave the last buffer on the screen.
-.Sh "SEE ALSO"
+.Sh FILES
+.Bl -tag -width /usr/local/lib/mg -compact
+.It Pa ~/.mg
+normal startup file
+.It Pa ~/.mg-TERM
+terminal-specific startup file
+.It Pa /usr/local/lib/mg
+directory for system-wide startup files
+.El
+.Sh SEE ALSO
 .Xr vi 1
 .Sh BUGS
-When you type ? to list possible file names, buffer names, etc.,
+When you type
+.Ql ?
+to list possible file names, buffer names, etc.,
 a help buffer is created for the possibilities.  In Gnu Emacs,
 this buffer goes away the next time you type a real command.
 In
-.Nm ,
+.Nm mg ,
 you must use "m-x 1" to get rid of it.
-.Sh FILES
-.Pp
-.Bl -tag -width /etc/passwd -compact
-.It ~/.mg
-normal startup file
-.It ~/.mg-TERM
-terminal-specific startup file
-.It /usr/local/lib/mg
-Directory for system-wide startup files.  (Files in
-this directory do not have the leading dot).
-.El
