@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.80 2003/09/29 20:29:04 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.81 2003/10/06 06:31:28 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -115,7 +115,7 @@ int pmap_con_dbg = CD_NONE;
  * Alignment checks for pages (must lie on page boundaries).
  */
 
-#define PAGE_ALIGNED(ad)	(((vm_offset_t)(ad) & PAGE_MASK) == 0)
+#define PAGE_ALIGNED(ad)	(((vaddr_t)(ad) & PAGE_MASK) == 0)
 #define	CHECK_PAGE_ALIGN(ad,who) \
 	if (!PAGE_ALIGNED(ad)) \
 		printf("%s: addr  %x not page aligned.\n", who, ad)
@@ -788,15 +788,15 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 
 	*phys_start += kernel_pmap_size;
 	*virt_start += kernel_pmap_size;
-	
+
 	/* make sure page tables are page aligned!! XXX smurph */
 	*phys_start = round_page(*phys_start);
 	*virt_start = round_page(*virt_start);
-	
+
 	/* save pointers to where page table entries start in physical memory */
 	kpdt_phys = *phys_start;
 	kpdt_virt = (kpdt_entry_t)*virt_start;
-	
+
 	/* might as well round up to a page - XXX smurph */
 	pdt_size = round_page(MAX_KERNEL_PDT_SIZE);
 	kernel_pmap_size += pdt_size;
@@ -958,7 +958,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	}
 #endif
 
-	for (; ptable->size != (size_t)(-1); ptable++){
+	for (; ptable->size != (vsize_t)(-1); ptable++){
 		if (ptable->size) {
 			pmap_map(ptable->virt_start, ptable->phys_start,
 			    ptable->phys_start + ptable->size,
@@ -1171,7 +1171,7 @@ pmap_create(void)
 	segdt = (sdt_entry_t *)uvm_km_zalloc(kernel_map, s);
 	if (segdt == NULL)
 		panic("pmap_create: kmem_alloc failure");
-	
+
 	/*
 	 * Initialize pointer to segment table both virtual and physical.
 	 */
@@ -2477,7 +2477,7 @@ pmap_deactivate(struct proc *p)
 {
 	pmap_t pmap = vm_map_pmap(&p->p_vmspace->vm_map);
 	int cpu = cpu_number();
-	
+
 	if (pmap != kernel_pmap) {
 		/*
 		 * we expect the spl is already raised to sched level.

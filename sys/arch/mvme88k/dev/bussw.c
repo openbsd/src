@@ -1,8 +1,8 @@
-/*	$OpenBSD: bussw.c,v 1.7 2003/06/02 07:06:56 deraadt Exp $ */
+/*	$OpenBSD: bussw.c,v 1.8 2003/10/06 06:31:26 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -53,10 +53,10 @@ struct bussw_softc {
 void    bussw_attach(struct device *, struct device *, void *);
 int     bussw_match(struct device *, void *, void *);
 
-struct cfattach bussw_ca = { 
+struct cfattach bussw_ca = {
 	sizeof(struct bussw_softc), bussw_match, bussw_attach
-}; 
- 
+};
+
 struct cfdriver bussw_cd = {
 	NULL, "bussw", DV_DULL, 0
 };
@@ -72,14 +72,15 @@ bussw_match(parent, vcf, args)
 {
 	struct confargs *ca = args;
 	struct bussw_reg *bussw;
+
 	/* Don't match if wrong cpu */
-	if (brdtyp != BRD_197) return (0);	/* The only one... */
-	
+	if (brdtyp != BRD_197)
+		return (0);
+
 	bussw = (struct bussw_reg *)(IIOV(ca->ca_paddr));
-	if (badvaddr((vm_offset_t)bussw, 4)) {
-	    printf("==> busswitch: failed address check.\n");
-	    return (0);
-	}
+	if (badvaddr((vaddr_t)bussw, 4))
+		return (0);
+
 	return (1);
 }
 
@@ -177,7 +178,7 @@ busswabort(eframe)
 
 	struct bussw_softc *sc = (struct bussw_softc *)bussw_cd.cd_devs[0];
         struct bussw_reg *bs  = sc->sc_bussw;
-	
+
 	if (bs->bs_intr1 & BS_INTR1_ABORT_INT) {
 		bs->bs_intr1 |= BS_INTR1_ABORT_ICLR;
 		nmihand(frame);
