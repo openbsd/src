@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.22 2000/04/15 11:45:58 aaron Exp $
+.\"	$OpenBSD: ping.8,v 1.23 2000/09/26 14:48:22 aaron Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -61,7 +61,7 @@ uses the
 protocol's mandatory
 .Tn ECHO_REQUEST
 datagram to elicit an
-.Tn ICMP ECHO_RESPONSE
+.Tn ICMP ECHO_REPLY
 from a host or gateway.
 .Tn ECHO_REQUEST
 datagrams
@@ -78,9 +78,9 @@ packet.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl c Ar count
-Stop after sending (and receiving)
+Stop after sending
 .Ar count
-.Tn ECHO_RESPONSE
+.Tn ECHO_REQUEST
 packets.
 .It Fl D
 Set the
@@ -189,11 +189,11 @@ Use the specified time-to-live.
 Verbose output.
 .Tn ICMP
 packets other than
-.Tn ECHO_RESPONSE
+.Tn ECHO_REPLY
 that are received are listed.
 .It Fl w Ar maxwait
-Specifies the number of seconds to wait for a response to a packet
-before transmitting the next one.
+Specifies the maximum number of seconds to wait for a response to
+a packet before transmitting the next one.
 The default is 10.
 .El
 .Pp
