@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pxeboot.8,v 1.2 2004/03/21 21:44:58 tom Exp $
+.\"	$OpenBSD: pxeboot.8,v 1.3 2004/12/04 00:46:58 jmc Exp $
 .\" Copyright (c) 2004 Tom Cosgrove
 .\" Copyright (c) 2003 Matthias Drochner
 .\" Copyright (c) 1999 Doug White
@@ -156,6 +156,8 @@ PXE-specific second-stage bootstrap
 .It Pa /etc/boot.conf
 .Nm
 configuration file (read from TFTP server)
+.It Pa /etc/dhcpd.conf
+DHCPD configuration file
 .It Pa /tftpboot
 Default root directory for
 .Xr tftpd 8
