@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.4 2000/01/18 05:39:35 itojun Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.5 2000/02/28 11:57:32 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,8 +38,8 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.4 2000/01/18 05:39:35 itojun Exp $");*/
-/*__RCSID("KAME Id: inet6.c,v 1.4 1999/12/02 04:47:27 itojun Exp");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.5 2000/02/28 11:57:32 itojun Exp $");*/
+/*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,8 @@ static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #endif
-#include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/in6_var.h>
 #include <netinet6/pim6_var.h>
 
 #include <arpa/inet.h>
@@ -81,96 +81,6 @@ struct	socket sockb;
 
 char	*inet6name __P((struct in6_addr *));
 void	inet6print __P((struct in6_addr *, int, char *));
-
-#if 0
-/*
- * Print a summary of connections related to an Internet
- * protocol.  For TCP, also give state of connection.
- * Listening processes (aflag) are suppressed unless the
- * -a (all) flag is specified.
- */
-void
-ip6protopr(off, name)
-	u_long off;
-	char *name;
-{
-	struct in6pcb cb;
-	register struct in6pcb *prev, *next;
-	int istcp;
-	static int first = 1;
-
-	if (off == 0)
-		return;
-	istcp = strcmp(name, "tcp6") == 0;
-	kread(off, (char *)&cb, sizeof (struct in6pcb));
-	in6pcb = cb;
-	prev = (struct in6pcb *)off;
-	if (in6pcb.in6p_next == (struct in6pcb *)off)
-		return;
-	while (in6pcb.in6p_next != (struct in6pcb *)off) {
-		next = in6pcb.in6p_next;
-		kread((u_long)next, (char *)&in6pcb, sizeof (in6pcb));
-		if (in6pcb.in6p_prev != prev) {
-			printf("???\n");
-			break;
-		}
-		if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_laddr)) {
-			prev = next;
-			continue;
-		}
-		kread((u_long)in6pcb.in6p_socket, (char *)&sockb, sizeof (sockb));
-		if (istcp) {
-#ifdef TCP6
-			kread((u_long)in6pcb.in6p_ppcb,
-			    (char *)&tcp6cb, sizeof (tcp6cb));
-#else
-			kread((u_long)in6pcb.in6p_ppcb,
-			    (char *)&tcpcb, sizeof (tcpcb));
-#endif
-		}
-		if (first) {
-			printf("Active Internet6 connections");
-			if (aflag)
-				printf(" (including servers)");
-			putchar('\n');
-			if (Aflag)
-				printf("%-8.8s ", "PCB");
-			printf(Aflag ?
-				"%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
-				"%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
-				"Proto", "Recv-Q", "Send-Q",
-				"Local Address", "Foreign Address", "(state)");
-			first = 0;
-		}
-		if (Aflag) {
-			if (istcp)
-				printf("%8p ", in6pcb.in6p_ppcb);
-			else
-				printf("%8p ", next);
-		}
-		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
-			sockb.so_snd.sb_cc);
-		/* xxx */
-		inet6print(&in6pcb.in6p_laddr, (int)in6pcb.in6p_lport, name);
-		inet6print(&in6pcb.in6p_faddr, (int)in6pcb.in6p_fport, name);
-		if (istcp) {
-#ifdef TCP6
-			if (tcp6cb.t_state < 0 || tcp6cb.t_state >= TCP6_NSTATES)
-				printf(" %d", tcp6cb.t_state);
-			else
-				printf(" %s", tcp6states[tcp6cb.t_state]);
-#else
-			if (tcpcb.t_state < 0 || tcpcb.t_state >= TCP_NSTATES)
-				printf(" %d", tcpcb.t_state);
-			else
-				printf(" %s", tcpstates[tcpcb.t_state]);
-#endif
-		}
-		putchar('\n');
-		prev = next;
-	}
-}
-#endif
 
 static	char *ip6nh[] = {
 	"hop by hop",
@@ -485,9 +395,8 @@ ip6_stats(off, name)
 			printf("\t\t%s: %qu\n", ip6nh[i],
 			       ip6stat.ip6s_nxthist[i]);
 		}
-	if (ip6stat.ip6s_m1 || sflag <= 1)
-		printf("\tMbuf statics:\n");
-	p(ip6s_m1, "\t\t%qu one mbuf\n");
+	printf("\tMbuf statics:\n");
+	printf("\t\t%qu one mbuf\n", ip6stat.ip6s_m1);
 	for (first = 1, i = 0; i < 32; i++) {
 		char ifbuf[IFNAMSIZ];
 		if (ip6stat.ip6s_m2m[i] != 0) {		
@@ -500,10 +409,112 @@ ip6_stats(off, name)
 			       ip6stat.ip6s_m2m[i]);
 		}
 	}
-	p(ip6s_mext1, "\t\t%qu one ext mbuf\n");
-	p(ip6s_mext2m, "\t\t%qu two or more ext mbuf\n");
+	printf("\t\t%qu one ext mbuf\n", ip6stat.ip6s_mext1);
+	printf("\t\t%qu two or more ext mbuf\n", ip6stat.ip6s_mext2m);	
 	p(ip6s_exthdrtoolong, "\t%qu packet%s whose headers are not continuous\n");
 	p(ip6s_nogif, "\t%qu tunneling packet%s that can't find gif\n");
+	p(ip6s_toomanyhdr, "\t%qu packet%s discarded due to too may headers\n");
+
+	if (ip6stat.ip6s_exthdrget || ip6stat.ip6s_exthdrget0) {
+		p(ip6s_exthdrget, "\t%qu use%s of IP6_EXTHDR_GET\n");
+		p(ip6s_exthdrget0, "\t%qu use%s of IP6_EXTHDR_GET0\n");
+		p(ip6s_pulldown, "\t%qu call%s to m_pulldown\n");
+		p(ip6s_pulldown_alloc,
+		    "\t%qu mbuf allocation%s in m_pulldown\n");
+		if (ip6stat.ip6s_pulldown_copy != 1) {
+			p1(ip6s_pulldown_copy,
+			    "\t%qu mbuf copies in m_pulldown\n");
+		} else {
+			p1(ip6s_pulldown_copy,
+			    "\t%qu mbuf copy in m_pulldown\n");
+		}
+		p(ip6s_pullup, "\t%qu call%s to m_pullup\n");
+		p(ip6s_pullup_alloc, "\t%qu mbuf allocation%s in m_pullup\n");
+		if (ip6stat.ip6s_pullup_copy != 1) {
+			p1(ip6s_pullup_copy, "\t%qu mbuf copies in m_pullup\n");
+		} else {
+			p1(ip6s_pullup_copy, "\t%qu mbuf copy in m_pullup\n");
+		}
+		p(ip6s_pullup_fail, "\t%qu failure%s in m_pullup\n");
+		p(ip6s_pullup2, "\t%qu call%s to m_pullup2\n");
+		p(ip6s_pullup2_alloc, "\t%qu mbuf allocation%s in m_pullup2\n");
+		if (ip6stat.ip6s_pullup2_copy != 1) {
+			p1(ip6s_pullup2_copy,
+			    "\t%qu mbuf copies in m_pullup2\n");
+		} else {
+			p1(ip6s_pullup2_copy, "\t%qu mbuf copy in m_pullup2\n");
+		}
+		p(ip6s_pullup2_fail, "\t%qu failure%s in m_pullup2\n");
+	}
+
+	/* for debugging source address selection */
+#define PRINT_SCOPESTAT(s,i) do {\
+		switch(i) { /* XXX hardcoding in each case */\
+		case 1:\
+			p(s, "\t\t%qu node-local%s\n");\
+			break;\
+		case 2:\
+			p(s,"\t\t%qu link-local%s\n");\
+			break;\
+		case 5:\
+			p(s,"\t\t%qu site-local%s\n");\
+			break;\
+		case 14:\
+			p(s,"\t\t%qu global%s\n");\
+			break;\
+		default:\
+			printf("\t\t%qu addresses scope=%x\n",\
+			       ip6stat.s, i);\
+		}\
+	} while(0);
+
+	p(ip6s_sources_none,
+	  "\t%qu failure%s of source address selection\n");
+	for (first = 1, i = 0; i < 16; i++) {
+		if (ip6stat.ip6s_sources_sameif[i]) {
+			if (first) {
+				printf("\tsource addresses on an outgoing I/F\n");
+				first = 0;
+			}
+			PRINT_SCOPESTAT(ip6s_sources_sameif[i], i);
+		}
+	}
+	for (first = 1, i = 0; i < 16; i++) {
+		if (ip6stat.ip6s_sources_otherif[i]) {
+			if (first) {
+				printf("\tsource addresses on a non-outgoing I/F\n");
+				first = 0;
+			}
+			PRINT_SCOPESTAT(ip6s_sources_otherif[i], i);
+		}
+	}
+	for (first = 1, i = 0; i < 16; i++) {
+		if (ip6stat.ip6s_sources_samescope[i]) {
+			if (first) {
+				printf("\tsource addresses of same scope\n");
+				first = 0;
+			}
+			PRINT_SCOPESTAT(ip6s_sources_samescope[i], i);
+		}
+	}
+	for (first = 1, i = 0; i < 16; i++) {
+		if (ip6stat.ip6s_sources_otherscope[i]) {
+			if (first) {
+				printf("\tsource addresses of a different scope\n");
+				first = 0;
+			}
+			PRINT_SCOPESTAT(ip6s_sources_otherscope[i], i);
+		}
+	}
+	for (first = 1, i = 0; i < 16; i++) {
+		if (ip6stat.ip6s_sources_deprecated[i]) {
+			if (first) {
+				printf("\tdeprecated source addresses\n");
+				first = 0;
+			}
+			PRINT_SCOPESTAT(ip6s_sources_deprecated[i], i);
+		}
+	}
 #undef p
 #undef p1
 }
