@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.8 2001/09/28 13:09:06 art Exp $	*/
+/*	$OpenBSD: gem.c,v 1.9 2001/09/29 16:43:15 art Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -506,7 +506,7 @@ gem_reset_rx(struct gem_softc *sc)
 	gem_disable_rx(sc);
 	bus_space_write_4(t, h, GEM_RX_CONFIG, 0);
 	/* Wait till it finishes */
-	for (i=TRIES; i--; delay(100))
+	for (i = TRIES; i--; delay(100))
 		if ((bus_space_read_4(t, h, GEM_RX_CONFIG) & 1) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_RX_CONFIG) & 1) != 0)
@@ -519,7 +519,7 @@ gem_reset_rx(struct gem_softc *sc)
 	/* Finally, reset the ERX */
 	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_RX);
 	/* Wait till it finishes */
-	for (i=TRIES; i--; delay(100))
+	for (i = TRIES; i--; delay(100))
 		if ((bus_space_read_4(t, h, GEM_RESET) & GEM_RESET_RX) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_RESET) & GEM_RESET_RX) != 0) {
@@ -548,7 +548,7 @@ gem_reset_tx(struct gem_softc *sc)
 	gem_disable_tx(sc);
 	bus_space_write_4(t, h, GEM_TX_CONFIG, 0);
 	/* Wait till it finishes */
-	for (i=TRIES; i--; delay(100))
+	for (i = TRIES; i--; delay(100))
 		if ((bus_space_read_4(t, h, GEM_TX_CONFIG) & 1) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_TX_CONFIG) & 1) != 0)
@@ -561,7 +561,7 @@ gem_reset_tx(struct gem_softc *sc)
 	/* Finally, reset the ETX */
 	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_TX);
 	/* Wait till it finishes */
-	for (i=TRIES; i--; delay(100))
+	for (i = TRIES; i--; delay(100))
 		if ((bus_space_read_4(t, h, GEM_RESET) & GEM_RESET_TX) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_RESET) & GEM_RESET_TX) != 0) {
@@ -589,7 +589,7 @@ gem_disable_rx(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_RX_CONFIG, cfg);
 
 	/* Wait for it to finish */
-	for (i=TRIES; i--; delay(100)) 
+	for (i = TRIES; i--; delay(100)) 
 		if ((bus_space_read_4(t, h, GEM_MAC_RX_CONFIG) &
 			GEM_MAC_RX_ENABLE) == 0)
 			return (0);
@@ -613,7 +613,7 @@ gem_disable_tx(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_TX_CONFIG, cfg);
 
 	/* Wait for it to finish */
-	for (i=TRIES; i--; delay(100)) 
+	for (i = TRIES; i--; delay(100)) 
 		if ((bus_space_read_4(t, h, GEM_MAC_TX_CONFIG) &
 			GEM_MAC_TX_ENABLE) == 0)
 			return (0);
