@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.107 2001/06/25 03:31:47 hin Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.108 2001/06/27 12:34:17 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1082,8 +1082,6 @@ mvme68k
 ..
 mvme88k
 ..
-pmax
-..
 powerpc
 ..
 sparc
@@ -1129,8 +1127,6 @@ mvme68k
 ..
 mvme88k
 ..
-pmax
-..
 powerpc
 ..
 sparc
@@ -1169,8 +1165,6 @@ mvme68k
 ..
 mvme88k
 ..
-pmax
-..
 powerpc
 ..
 sparc
@@ -1203,8 +1197,6 @@ mac68k
 mvme68k
 ..
 mvme88k
-..
-pmax
 ..
 powerpc
 ..
@@ -1249,8 +1241,6 @@ mvme68k
 ..
 mvme88k
 ..
-pmax
-..
 powerpc
 ..
 sparc
@@ -1284,8 +1274,6 @@ mvme68k
 ..
 mvme88k
 ..
-pmax
-..
 powerpc
 ..
 sparc
@@ -1318,8 +1306,6 @@ mac68k
 mvme68k
 ..
 mvme88k
-..
-pmax
 ..
 powerpc
 ..
@@ -1366,8 +1352,6 @@ mvme68k
 ..
 mvme88k
 ..
-pmax
-..
 powerpc
 ..
 sparc
@@ -1406,8 +1390,6 @@ mvme68k
 ..
 mvme88k
 ..
-pmax
-..
 powerpc
 ..
 sparc
@@ -1440,8 +1422,6 @@ mac68k
 mvme68k
 ..
 mvme88k
-..
-pmax
 ..
 powerpc
 ..
@@ -1486,8 +1466,6 @@ mvme68k
 ..
 mvme88k
 ..
-pmax
-..
 powerpc
 ..
 sparc
@@ -1521,8 +1499,6 @@ mvme68k
 ..
 mvme88k
 ..
-pmax
-..
 powerpc
 ..
 sparc
@@ -1555,8 +1531,6 @@ mac68k
 mvme68k
 ..
 mvme88k
-..
-pmax
 ..
 powerpc
 ..
@@ -1606,8 +1580,6 @@ mvme68k
 ..
 mvme88k
 ..
-pmax
-..
 powerpc
 ..
 sparc
@@ -1655,8 +1627,6 @@ mac68k
 mvme68k
 ..
 mvme88k
-..
-pmax
 ..
 powerpc
 ..
