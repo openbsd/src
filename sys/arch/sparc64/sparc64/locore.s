@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.10 2002/02/19 03:04:41 jason Exp $	*/
+/*	$OpenBSD: locore.s,v 1.11 2002/02/19 03:15:27 jason Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5662,7 +5662,7 @@ _C_LABEL(cpu_initialize):
 	sethi	%hi(_C_LABEL(cpus)), %l1
 	ldxa	[%g0] ASI_MID_REG, %l2
 	LDPTR	[%l1 + %lo(_C_LABEL(cpus))], %l1
-	sllx	%l2, 17, %l2			! Isolate UPAID from CPU reg
+	srax	%l2, 17, %l2			! Isolate UPAID from CPU reg
 	and	%l2, 0x1f, %l2
 0:
 	ld	[%l1 + CI_UPAID], %l3		! Load UPAID
