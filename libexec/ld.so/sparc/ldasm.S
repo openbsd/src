@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.1 2002/07/27 13:19:26 art Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.2 2002/07/27 13:56:36 art Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -80,14 +80,16 @@
 	.global	_dl_start
 	.type	_dl_start,@function
 _dl_start:
-	mov	0, %fp			/* Erect a fence post for ourselves */
-	mov	%g1, %l1		/* save ps_strings */
-	sub	%sp, DL_DATA_SIZE, %sp	/* make room for dl_data */
-	mov	%sp, %o3
+	sub	%g0, %g0, %fp		! clear frame
+	mov	%g1, %l1		! save ps_strings
+	sub	%sp, DL_DATA_SIZE, %sp	! make room for dl_data
+	add	%sp, ARGC, %l3
 
-	mov	%g0, %o2
-	call	_dl_boot_bind
-	 add	%sp, ARGC+DL_DATA_SIZE, %o0	/* &argc - 8 */
+	add	%l3, DL_DATA_SIZE, %o0
+	mov	0, %o2			! dynp = 0
+	mov	%o0, %l0
+	call	_dl_boot_bind		! _dl_boot_bind(sp,loff,dynp,dl_data)
+	 mov	%l3, %o3
 
 	mov	%l3, %o4
 	ld	[%l0], %l3		! argc = *sp
@@ -96,7 +98,7 @@ _dl_start:
 	add	%l0, 16, %o1		! envp = sp + 16 +
 	add	%o1, %l3, %o1		!	+ argc
 
-	add	%o4, (7*8), %l2
+	add	%o4, (7*4), %l2
 	ld	[%l2], %o2		! loff = dl_data[AUX_base];
 
 	call	_dl_boot		! _dl_boot(argv,envp,loff,dynp,dl_data)
