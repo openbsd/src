@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.58 2005/01/01 23:10:43 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.59 2005/01/02 01:46:17 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1388,6 +1388,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	bus_addr_t iobase;
 	bus_size_t iosize;
 	int s;
+	u_int8_t skrs;
 	u_int32_t command;
 	char *revstr = NULL;
 
@@ -1470,7 +1471,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sk_rev = (sk_win_read_1(sc, SK_CONFIG) >> 4);
 
 	/* bail out here if chip is not recognized */
-	if ( sc->sk_type != SK_GENESIS && ! SK_YUKON_FAMILY(sc->sk_type)) {
+	if (sc->sk_type != SK_GENESIS && ! SK_YUKON_FAMILY(sc->sk_type)) {
 		printf("%s: unknown chip type\n",sc->sk_dev.dv_xname);
 		goto fail;
 	}
@@ -1499,10 +1500,10 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	/* Read and save vital product data from EEPROM. */
 	sk_vpd_read(sc);
 
+	skrs = sk_win_read_1(sc, SK_EPROM0);
 	if (sc->sk_type == SK_GENESIS) {
-		u_int8_t val = sk_win_read_1(sc, SK_EPROM0);
 		/* Read and save RAM size and RAMbuffer offset */
-		switch(val) {
+		switch(skrs) {
 		case SK_RAMSIZE_512K_64:
 			sc->sk_ramsize = 0x80000;
 			sc->sk_rboff = SK_RBOFF_0;
@@ -1521,13 +1522,15 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		default:
 			printf("%s: unknown ram size: %d\n",
-			       sc->sk_dev.dv_xname, val);
+			       sc->sk_dev.dv_xname, skrs);
 			goto fail;
 			break;
 		}
 	} else {
-		u_int8_t val = sk_win_read_1(sc, SK_EPROM0);
-		sc->sk_ramsize =  ( val == 0 ) ?  0x20000 : (( val * 4 )*1024);
+		if (skrs == 0x00)
+			sc->sk_ramsize = 0x20000;
+		else
+			sc->sk_ramsize = skrs * (1<<12);
 		sc->sk_rboff = SK_RBOFF_0;
 	}
 
@@ -1594,7 +1597,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 	/* Yukon Lite Rev A0 needs special test, from sk98lin driver */
-		if ( sc->sk_type == SK_YUKON ) {
+		if (sc->sk_type == SK_YUKON) {
 			uint32_t flashaddr;
 			uint8_t testbyte;
 			
@@ -1616,8 +1619,8 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	default:
 		sc->sk_name = "Unkown Marvell";
 	}
-		
-	if ( sc->sk_type == SK_YUKON_LITE ) {
+
+	if (sc->sk_type == SK_YUKON_LITE) {
 		switch (sc->sk_rev) {
 		case SK_YUKON_LITE_REV_A0:
 			revstr = "A0";
@@ -1637,7 +1640,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: %s", sc->sk_dev.dv_xname, sc->sk_name);
 	if (revstr != NULL)
 		printf(" rev. %s", revstr);
-        printf(" (0x%x)\n", sc->sk_rev);
+	printf(" (0x%x)\n", sc->sk_rev);
 
 	skca.skc_port = SK_PORT_A;
 	(void)config_found(&sc->sk_dev, &skca, skcprint);
