@@ -1,4 +1,4 @@
-/* $OpenBSD: isp_target.c,v 1.11 2003/03/03 20:58:46 mjacob Exp $ */
+/* $OpenBSD: isp_target.c,v 1.12 2003/09/18 09:44:18 jmc Exp $ */
 /*
  * Machine and OS Independent Target Mode Code for the Qlogic SCSI/FC adapters.
  *
@@ -1091,7 +1091,7 @@ isp_handle_ctio2(struct ispsoftc *isp, ct2_entry_t *ct)
 		/*
 		 * CTIO rejected by the firmware - invalid data direction.
 		 */
-		isp_prt(isp, ISP_LOGERR, "CTIO2 had wrong data directiond");
+		isp_prt(isp, ISP_LOGERR, "CTIO2 had wrong data direction");
 		break;
 
 	case CT_RSELTMO:
