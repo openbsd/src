@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.23 2003/06/03 02:56:13 millert Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.24 2003/06/25 21:18:55 deraadt Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ void	impstats(u_long, u_long);
 void	intpr(int, u_long);
 
 void	pr_rthdr(int);
-void	pr_encaphdr();
+void	pr_encaphdr(void);
 void	pr_family(int);
 void	rt_stats(u_long);
 char	*ns_phost(struct sockaddr *);
