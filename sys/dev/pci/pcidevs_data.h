@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.558 2002/10/24 11:43:38 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.559 2002/10/24 11:58:40 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1643,8 +1643,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Netelligent 10/100 TX",
 	},
 	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5iDL380,
-	    "Smart Array 5i DL380",
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5300_2,
+	    "Smart Array 5300 rev.2",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5i_2,
+	    "Smart Array 5i/532 rev.2",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P,
