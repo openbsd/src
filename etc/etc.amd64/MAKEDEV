@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.8 2004/08/09 19:57:23 otto Exp 
-#	OpenBSD: MAKEDEV.common,v 1.16 2005/03/01 13:35:59 otto Exp 
+#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.9 2005/03/29 16:39:35 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.17 2005/03/29 16:40:08 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.73 2005/02/07 06:14:18 david Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -70,7 +70,6 @@
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uscanner*	Scanners
 # Special purpose devices:
-#	apm	Power management device
 #	audio*	Audio devices
 #	bktr*	Video frame grabbers
 #	bpf*	Berkeley Packet Filter
@@ -380,11 +379,6 @@ audio*)
 	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
-apm*)
-	M apm	c 21 0 644
-	M apmctl	c 21 8 644
-	;;
-
 uscanner*)
 	M uscanner$U c 77 $U 660
 	;;
@@ -582,9 +576,9 @@ all)
 	R uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	R tuner0 radio0 music0 speaker audio0 wdt0 wt0 uk0 random joy0
 	R joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02
-	R tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 apm
-	R crypto pf pctr systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2
-	R raid3 std st0 st1 fd mcd0
+	R tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 crypto
+	R pf pctr systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std
+	R st0 st1 fd mcd0
 	;;
 
 wd*|sd*|raid*|ccd*)
