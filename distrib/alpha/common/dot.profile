@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.4 2001/12/05 19:50:46 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.5 2002/04/01 01:31:39 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -87,20 +87,13 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		echo -n '(I)nstall, (U)pgrade, or (S)hell? '
 		read _forceloop
 		case "$_forceloop" in
-			i*|I*)
-				/install
-				;;
-
-			u*|U*)
-				/upgrade
-				;;
-
-			s*|S*)
-				;;
-
-			*)
-				_forceloop=""
-				;;
+		i*|I*)	/install
+			;;
+		u*|U*)	/upgrade
+			;;
+		s*|S*)	;;
+		*)	_forceloop=""
+			;;
 		esac
 	done
 fi

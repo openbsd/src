@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.11 2001/12/05 19:50:46 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.12 2002/04/01 01:31:39 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/07/18 04:13:09 briggs Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -36,8 +36,6 @@ export TERM=hp300h
 umask 022
 set -o emacs # emacs-style command line editing
 
-TMPWRITEABLE=/tmp/writeable
-
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 	export DONEPROFILE
@@ -50,9 +48,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	echo 'Remounting /dev/rd0a as root...'
 	mount -u /dev/rd0a /
 
-	# tell install.md we've done it
-	> ${TMPWRITEABLE}
-
 	# pull in the functions that people will use from the shell prompt.
 	. /.commonutils
 	. /.instutils
@@ -63,20 +58,13 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		echo -n '(I)nstall, (U)pgrade, or (S)hell? '
 		read _forceloop
 		case "$_forceloop" in
-			i*|I*)
-				/install
-				;;
-
-			u*|U*)
-				/upgrade
-				;;
-
-			s*|S*)
-				;;
-
-			*)
-				_forceloop=""
-				;;
+		i*|I*)	/install
+			;;
+		u*|U*)	/upgrade
+			;;
+		s*|S*)	;;
+		*)	_forceloop=""
+			;;
 		esac
 	done
 fi

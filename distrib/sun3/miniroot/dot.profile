@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.6 2001/12/05 19:50:46 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.7 2002/04/01 01:31:39 deraadt Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -38,7 +38,6 @@ set -o emacs # emacs-style command line editing
 # the TERM/EDITOR stuff is really well enough parameterized to be moved
 # into install.sub where it could use the routines there and be invoked
 # from the various (semi) MI install and upgrade scripts
-
 # terminals believed to be in termcap, default TERM
 TERMS="sun vt* pcvt* dumb"
 TERM=sun
@@ -69,20 +68,13 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		echo -n '(I)nstall, (U)pgrade, or (S)hell? '
 		read _forceloop
 		case "$_forceloop" in
-			i*|I*)
-				/install
-				;;
-
-			u*|U*)
-				/upgrade
-				;;
-
-			s*|S*)
-				;;
-
-			*)
-				_forceloop=""
-				;;
+		i*|I*)	/install
+			;;
+		u*|U*)	/upgrade
+			;;
+		s*|S*)	;;
+		*)	_forceloop=""
+			;;
 		esac
 	done
 fi
