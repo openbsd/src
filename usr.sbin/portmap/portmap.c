@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: portmap.c,v 1.1.1.1 1995/10/18 08:47:57 deraadt Exp $";
+static char rcsid[] = "$Id: portmap.c,v 1.2 1996/05/05 16:15:28 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -230,7 +230,7 @@ reg_service(rqstp, xprt)
 {
 	struct pmap reg;
 	struct pmaplist *pml, *prevpml, *fnd;
-	int ans, port;
+	long ans, port;
 	caddr_t t;
 	
 	if (debugging)
