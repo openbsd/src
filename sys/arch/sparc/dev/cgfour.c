@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfour.c,v 1.16 2002/09/23 18:13:38 miod Exp $	*/
+/*	$OpenBSD: cgfour.c,v 1.17 2002/11/06 21:06:20 miod Exp $	*/
 /*	$NetBSD: cgfour.c,v 1.13 1997/05/24 20:16:06 pk Exp $	*/
 
 /*
@@ -246,6 +246,7 @@ cgfourattach(parent, self, args)
 	    PFOUR_COLOR_OFF_COLOR, round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_setcolormap(&sc->sc_sunfb, cgfour_setcolor);
 
 	cgfour_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	cgfour_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
@@ -256,7 +257,7 @@ cgfourattach(parent, self, args)
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, &cgfour_stdscreen, -1,
-		    cgfour_setcolor, cgfour_burner);
+		    cgfour_burner);
 	}
 
 	waa.console = isconsole;

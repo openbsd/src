@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.13 2002/10/12 01:09:43 krw Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.14 2002/11/06 21:06:20 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -291,14 +291,14 @@ tcxattach(parent, self, args)
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, &tcx_stdscreen, -1,
-		    tcx_setcolor, tcx_burner);
+		    tcx_burner);
+		shutdownhook_establish(tcx_prom, sc);
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
-	printf("%s: %dx%d, depth %d, id %d, rev %d, sense %d\n",
+	printf("%s: %dx%d, id %d, rev %d, sense %d\n",
 	    self->dv_xname, sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height,
-	    sc->sc_sunfb.sf_depth,
 	    (sc->sc_thc->thc_config & THC_CFG_FBID) >> THC_CFG_FBID_SHIFT,
 	    (sc->sc_thc->thc_config & THC_CFG_REV) >> THC_CFG_REV_SHIFT,
 	    (sc->sc_thc->thc_config & THC_CFG_SENSE) >> THC_CFG_SENSE_SHIFT

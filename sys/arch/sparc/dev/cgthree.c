@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.17 2002/09/23 18:13:38 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.18 2002/11/06 21:06:20 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -319,6 +319,7 @@ cgthreeattach(parent, self, args)
 	    round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_setcolormap(&sc->sc_sunfb, cgthree_setcolor);
 
 	cgthree_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	cgthree_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
@@ -329,7 +330,7 @@ cgthreeattach(parent, self, args)
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, &cgthree_stdscreen, -1,
-		    cgthree_setcolor, cgthree_burner);
+		    cgthree_burner);
 	}
 #if defined(SUN4C) || defined(SUN4M)
 	if (sbus)

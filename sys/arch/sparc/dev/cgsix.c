@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.21 2002/09/23 18:13:38 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.22 2002/11/06 21:06:20 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -346,6 +346,7 @@ cgsixattach(parent, self, args)
 	    CGSIX_VID_OFFSET, round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_setcolormap(&sc->sc_sunfb, cgsix_setcolor);
 
 	/*
 	 * Old rev. cg6 cards do not like the current acceleration code.
@@ -372,7 +373,7 @@ cgsixattach(parent, self, args)
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, &cgsix_stdscreen, -1,
-		    cgsix_setcolor, cgsix_burner);
+		    cgsix_burner);
 	}
 
 #if defined(SUN4C) || defined(SUN4M)

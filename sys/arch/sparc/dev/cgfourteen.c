@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.18 2002/10/12 01:09:43 krw Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.19 2002/11/06 21:06:20 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -245,12 +245,16 @@ cgfourteenattach(parent, self, args)
 	/*
 	 * Sanity checks
 	 */
-	if (ca->ca_ra.ra_len < 0x10000)
+	if (ca->ca_ra.ra_len < 0x10000) {
+		printf("\n");
 		panic("cgfourteen: expected %x bytes of control "
 		    "registers, got %x", 0x10000, ca->ca_ra.ra_len);
-	if (ca->ca_ra.ra_nreg < CG14_NREG)
+	}
+	if (ca->ca_ra.ra_nreg < CG14_NREG) {
+		printf("\n");
 		panic("cgfourteen: expected %d registers, got %d",
 		    CG14_NREG, ca->ca_ra.ra_nreg);
+	}
 
 	printf(", %dMB", ca->ca_ra.ra_reg[CG14_REG_VRAM].rr_len >> 20);
 
@@ -337,7 +341,8 @@ cgfourteenattach(parent, self, args)
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, &cgfourteen_stdscreen,
 		    sc->sc_sunfb.sf_depth == 8 ? -1 : 0,
-		    cgfourteen_setcolor, cgfourteen_burner);
+		    cgfourteen_burner);
+		shutdownhook_establish(cgfourteen_prom, sc);
 	}
 
 	waa.console = isconsole;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgeight.c,v 1.16 2002/09/23 18:13:38 miod Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.17 2002/11/06 21:06:20 miod Exp $	*/
 /*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ cgeightattach(parent, self, args)
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, &cgeight_stdscreen, -1,
-		    NULL, cgeight_burner);
+		    cgeight_burner);
 	}
 
 	waa.console = isconsole;

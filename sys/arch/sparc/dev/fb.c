@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.21 2002/09/05 09:31:20 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.22 2002/11/06 21:06:20 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -350,11 +350,10 @@ fbwscons_init(sf, isconsole)
 }
 
 void
-fbwscons_console_init(sf, wsc, row, setcolor, burner)
+fbwscons_console_init(sf, wsc, row, burner)
 	struct sunfb *sf;
 	struct wsscreen_descr *wsc;
 	int row;
-	void (*setcolor)(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 	void (*burner)(void *, u_int, u_int);
 {
 	long defattr;
@@ -387,17 +386,7 @@ fbwscons_console_init(sf, wsc, row, setcolor, burner)
 	 * Select appropriate color settings to mimic a
 	 * black on white Sun console.
 	 */
-	if (sf->sf_depth == 8 && setcolor != NULL) {
-		setcolor(sf, WSCOL_BLACK, 0, 0, 0);
-		setcolor(sf, 255, 0, 0, 0);
-		setcolor(sf, WSCOL_RED, 255, 0, 0);
-		setcolor(sf, WSCOL_GREEN, 0, 255, 0);
-		setcolor(sf, WSCOL_BROWN, 154, 85, 46);
-		setcolor(sf, WSCOL_BLUE, 0, 0, 255);
-		setcolor(sf, WSCOL_MAGENTA, 255, 255, 0);
-		setcolor(sf, WSCOL_CYAN, 0, 255, 255);
-		setcolor(sf, WSCOL_WHITE, 255, 255, 255);
-	} else if (sf->sf_depth > 8) {
+	if (sf->sf_depth > 8) {
 		wscol_white = 0;
 		wscol_black = 255;
 		wskernel_bg = 0;
@@ -418,6 +407,24 @@ fbwscons_console_init(sf, wsc, row, setcolor, burner)
 	/* remember screen burner routine */
 	fb_burner = burner;
 	fb_cookie = sf;
+}
+
+void
+fbwscons_setcolormap(sf, setcolor)
+	struct sunfb *sf;
+	void (*setcolor)(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
+{
+	if (sf->sf_depth <= 8 && setcolor != NULL) {
+		setcolor(sf, WSCOL_BLACK, 0, 0, 0);
+		setcolor(sf, 255, 0, 0, 0);
+		setcolor(sf, WSCOL_RED, 255, 0, 0);
+		setcolor(sf, WSCOL_GREEN, 0, 255, 0);
+		setcolor(sf, WSCOL_BROWN, 154, 85, 46);
+		setcolor(sf, WSCOL_BLUE, 0, 0, 255);
+		setcolor(sf, WSCOL_MAGENTA, 255, 255, 0);
+		setcolor(sf, WSCOL_CYAN, 0, 255, 255);
+		setcolor(sf, WSCOL_WHITE, 255, 255, 255);
+	}
 }
 
 #if defined(SUN4)

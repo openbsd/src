@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.4 2002/09/23 18:13:38 miod Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.5 2002/11/06 21:06:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
@@ -260,15 +260,16 @@ cgtwelveattach(parent, self, args)
 	if (isconsole) {
 		if (sc->sc_sunfb.sf_depth == 1) {
 			fbwscons_console_init(&sc->sc_sunfb,
-			    &cgtwelve_stdscreen, -1, NULL, NULL);
+			    &cgtwelve_stdscreen, -1, NULL);
 		} else {
 			/*
 			 * Since the screen has been cleared, restart at the
 			 * top of the screen.
 			 */
 			fbwscons_console_init(&sc->sc_sunfb,
-			    &cgtwelve_stdscreen, 0, NULL, cgtwelve_burner);
+			    &cgtwelve_stdscreen, 0, cgtwelve_burner);
 		}
+		shutdownhook_establish(cgtwelve_prom, sc);
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);

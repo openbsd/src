@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.10 2002/09/23 18:13:38 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.11 2002/11/06 21:06:20 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -284,6 +284,7 @@ p9100attach(parent, self, args)
 	    round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_setcolormap(&sc->sc_sunfb, p9100_setcolor);
 
 	p9100_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	p9100_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
@@ -309,7 +310,7 @@ p9100attach(parent, self, args)
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, &p9100_stdscreen, -1,
-		    p9100_setcolor, p9100_burner);
+		    p9100_burner);
 	}
 
 	waa.console = isconsole;

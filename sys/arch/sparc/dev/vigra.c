@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.4 2002/10/12 01:09:43 krw Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.5 2002/11/06 21:06:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
@@ -243,6 +243,7 @@ vigraattach(parent, self, args)
 	 */
 	fbwscons_init(&sc->sc_sunfb,
 	    isconsole && (sc->sc_sunfb.sf_width != 800));
+	fbwscons_setcolormap(&sc->sc_sunfb, vigra_setcolor);
 
 	vigra_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
 	vigra_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
@@ -263,7 +264,7 @@ vigraattach(parent, self, args)
 		}
 
 		fbwscons_console_init(&sc->sc_sunfb, &vigra_stdscreen, row,
-		    vigra_setcolor, vigra_burner);
+		    vigra_burner);
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
