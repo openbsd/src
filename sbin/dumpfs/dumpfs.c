@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.10 1999/07/18 16:03:56 deraadt Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.11 2001/04/13 02:39:06 gluk Exp $	*/
 /*	$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.10 1999/07/18 16:03:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.11 2001/04/13 02:39:06 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -223,15 +223,15 @@ dumpfs(name)
 		}
 	}
 	printf("\ncs[].cs_(nbfree,ndir,nifree,nffree):\n\t");
+	afs.fs_csp = calloc(1, afs.fs_cssize);
 	for (i = 0, j = 0; i < afs.fs_cssize; i += afs.fs_bsize, j++) {
 		size = afs.fs_cssize - i < afs.fs_bsize ?
 		    afs.fs_cssize - i : afs.fs_bsize;
-		afs.fs_csp[j] = calloc(1, size);
 		if (lseek(fd,
 		    (off_t)(fsbtodb(&afs, (afs.fs_csaddr + j * afs.fs_frag))) *
 		    dev_bsize, SEEK_SET) == (off_t)-1)
 			goto err;
-		if (read(fd, afs.fs_csp[j], size) != size)
+		if (read(fd, (char *)afs.fs_csp + i, size) != size)
 			goto err;
 	}
 	for (i = 0; i < afs.fs_ncg; i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.9 2001/04/06 20:43:31 gluk Exp $	*/
+/*	$OpenBSD: setup.c,v 1.10 2001/04/13 02:39:05 gluk Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.9 2001/04/06 20:43:31 gluk Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.10 2001/04/13 02:39:05 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -328,11 +328,11 @@ setup(dev)
 	 * read in the summary info.
 	 */
 	asked = 0;
+	sblock.fs_csp = calloc(1, sblock.fs_cssize);
 	for (i = 0, j = 0; i < sblock.fs_cssize; i += sblock.fs_bsize, j++) {
 		size = sblock.fs_cssize - i < sblock.fs_bsize ?
 		    sblock.fs_cssize - i : sblock.fs_bsize;
-		sblock.fs_csp[j] = (struct csum *)calloc(1, (unsigned)size);
-		if (bread(fsreadfd, (char *)sblock.fs_csp[j],
+		if (bread(fsreadfd, (char *)sblock.fs_csp + i,
 		    fsbtodb(&sblock, sblock.fs_csaddr + j * sblock.fs_frag),
 		    size) != 0 && !asked) {
 			pfatal("BAD SUMMARY INFORMATION");
@@ -456,8 +456,8 @@ readsb(listerr)
 	altsblock.fs_optim = sblock.fs_optim;
 	altsblock.fs_rotdelay = sblock.fs_rotdelay;
 	altsblock.fs_maxbpg = sblock.fs_maxbpg;
-	memcpy(altsblock.fs_csp, sblock.fs_csp,
-		sizeof sblock.fs_csp);
+	memcpy(altsblock.fs_ocsp, sblock.fs_ocsp, sizeof sblock.fs_ocsp);
+	altsblock.fs_csp = sblock.fs_csp;
 	altsblock.fs_maxcluster = sblock.fs_maxcluster;
 	altsblock.fs_contigdirs = sblock.fs_contigdirs;
 	altsblock.fs_avgfilesize = sblock.fs_avgfilesize;

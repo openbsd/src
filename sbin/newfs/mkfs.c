@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.16 2001/04/04 22:06:38 gluk Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.17 2001/04/13 02:39:06 gluk Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.16 2001/04/04 22:06:38 gluk Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.17 2001/04/13 02:39:06 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -576,6 +576,12 @@ next:
 	sblock.fs_csaddr = cgdmin(&sblock, 0);
 	sblock.fs_cssize =
 	    fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
+
+	/*
+	 * The superblock fields 'fs_csmask' and 'fs_csshift' are no
+	 * longer used. However, we still initialise them so that the
+	 * filesystem remains compatible with old kernels.
+	 */
 	i = sblock.fs_bsize / sizeof(struct csum);
 	sblock.fs_csmask = ~(i - 1);
 	for (sblock.fs_csshift = 0; i > 1; i >>= 1)
