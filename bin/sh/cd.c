@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.10 1997/06/18 19:15:48 kstailey Exp $	*/
+/*	$OpenBSD: cd.c,v 1.11 1997/06/18 20:15:45 kstailey Exp $	*/
 /*	$NetBSD: cd.c,v 1.15 1996/03/01 01:58:58 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: cd.c,v 1.10 1997/06/18 19:15:48 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: cd.c,v 1.11 1997/06/18 20:15:45 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -288,7 +288,7 @@ getpwd()
 				copyfd(pip[1], 1);
 				close(pip[1]);
 			}
-			(void) execl("/bin/pwd", "pwd", (char *)0);
+			(void) execl("/bin/pwd", "pwd", NULL);
 			error("Cannot exec /bin/pwd");
 		}
 		(void) close(pip[1]);
@@ -303,7 +303,7 @@ getpwd()
 		pip[0] = -1;
 		status = waitforjob(jp);
 		if (status != 0)
-			error((char *)0);
+			error(NULL);
 		if (i < 0 || p == buf || p[-1] != '\n')
 			error("pwd command failed");
 		p[-1] = '\0';

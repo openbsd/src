@@ -1,4 +1,4 @@
-/*	$OpenBSD: shell.h,v 1.5 1996/10/20 00:55:05 millert Exp $	*/
+/*	$OpenBSD: shell.h,v 1.6 1997/06/18 20:15:47 kstailey Exp $	*/
 /*	$NetBSD: shell.h,v 1.9 1996/03/01 01:59:00 jtc Exp $	*/
 
 /*-
@@ -61,7 +61,7 @@
 #ifdef __STDC__
 typedef void *pointer;
 #ifndef NULL
-#define NULL (void *)0
+#define NULL (void *)0 
 #endif
 #else /* not __STDC__ */
 typedef char *pointer;

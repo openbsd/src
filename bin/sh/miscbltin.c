@@ -1,4 +1,4 @@
-/*	$OpenBSD: miscbltin.c,v 1.3 1996/12/14 12:18:20 mickey Exp $	*/
+/*	$OpenBSD: miscbltin.c,v 1.4 1997/06/18 20:15:46 kstailey Exp $	*/
 /*	$NetBSD: miscbltin.c,v 1.15 1995/06/12 19:44:16 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: miscbltin.c,v 1.3 1996/12/14 12:18:20 mickey Exp $";
+static char rcsid[] = "$OpenBSD: miscbltin.c,v 1.4 1997/06/18 20:15:46 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -286,7 +286,7 @@ static const struct limits limits[] = {
 #ifdef RLIMIT_SWAP
 	{ "swap(kbytes)",		RLIMIT_SWAP,	1024, 'w' },
 #endif
-	{ (char *) 0,			0,		   0,  '\0' }
+	{ NULL,				0,		   0,  '\0' }
 };
 
 int
