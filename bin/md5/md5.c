@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.29 2004/05/02 17:53:29 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.30 2004/05/04 18:41:57 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -538,14 +538,10 @@ digest_test(struct hash_functions *hf)
 __dead void
 usage(void)
 {
-	/* We only list the algorithms when invoked as cksum. */
+	fprintf(stderr, "usage: %s [-p | -t | -x | -c [checklist ...] | "
+	    "-s string | file ...]\n", __progname);
 	if (strcmp(__progname, "cksum") == 0)
-		fprintf(stderr,
-		    "usage: cksum [-a cksum|md4|md5|rmd160|sha1|sha256|sha384|"
-		    "sha512|sum|sysvsum]\n             [-o 1|2] ");
-	else
-		fprintf(stderr, "usage: %s ", __progname);
-	fprintf(stderr, "[-p | -t | -x | -c [checklist ...] | "
-	    "-s string | file ...]\n");
+		fprintf(stderr, "             [-a algorithm] [-o 1 | 2]\n");
+
 	exit(EXIT_FAILURE);
 }
