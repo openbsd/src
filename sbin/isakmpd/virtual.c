@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.14 2005/04/04 19:31:11 deraadt Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.15 2005/04/05 18:06:06 cloder Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -44,6 +44,8 @@
 #include "if.h"
 #include "exchange.h"
 #include "log.h"
+#include "message.h"
+#include "nat_traversal.h"
 #include "transport.h"
 #include "virtual.h"
 #include "udp.h"
@@ -259,27 +261,30 @@ virtual_bind(const struct sockaddr *addr)
 	((struct transport *)v->main)->virtual = (struct transport *)v;
 
 #if defined (USE_NAT_TRAVERSAL)
-	memcpy(&tmp_sa, addr, sysdep_sa_len((struct sockaddr *)addr));
+	if (!disable_nat_t) {
+		memcpy(&tmp_sa, addr, sysdep_sa_len((struct sockaddr *)addr));
 
-	/* Get port. */
-	stport = udp_encap_default_port
-	    ? udp_encap_default_port : UDP_ENCAP_DEFAULT_PORT_STR;
-	port = text2port(stport);
-	if (port == 0) {
-		log_print("virtual_bind: bad encap port \"%s\"", stport);
-		v->main->vtbl->remove(v->main);
-		free(v);
-		return 0;
-	}
+		/* Get port. */
+		stport = udp_encap_default_port
+		    ? udp_encap_default_port : UDP_ENCAP_DEFAULT_PORT_STR;
+		port = text2port(stport);
+		if (port == 0) {
+			log_print("virtual_bind: bad encap port \"%s\"",
+			    stport);
+			v->main->vtbl->remove(v->main);
+			free(v);
+			return 0;
+		}
 
-	sockaddr_set_port((struct sockaddr *)&tmp_sa, port);
-	v->encap = udp_encap_bind((struct sockaddr *)&tmp_sa);
-	if (!v->encap) {
-		v->main->vtbl->remove(v->main);
-		free(v);
-		return 0;
+		sockaddr_set_port((struct sockaddr *)&tmp_sa, port);
+		v->encap = udp_encap_bind((struct sockaddr *)&tmp_sa);
+		if (!v->encap) {
+			v->main->vtbl->remove(v->main);
+			free(v);
+			return 0;
+		}
+		((struct transport *)v->encap)->virtual = (struct transport *)v;
 	}
-	((struct transport *)v->encap)->virtual = (struct transport *)v;
 #endif
 	v->encap_is_active = 0;
 
@@ -516,18 +521,20 @@ virtual_clone(struct transport *vt, struct sockaddr *raddr)
 		v2->main->virtual = (struct transport *)v2;
 	}
 #if defined (USE_NAT_TRAVERSAL)
-	stport = udp_encap_default_port ? udp_encap_default_port :
-	    UDP_ENCAP_DEFAULT_PORT_STR;
-	port = text2port(stport);
-	if (port == 0) {
-		log_print("virtual_clone: port string \"%s\" not convertible "
-		    "to in_port_t", stport);
-		free(t);
-		return 0;
+	if (!disable_nat_t) {
+		stport = udp_encap_default_port ? udp_encap_default_port :
+		    UDP_ENCAP_DEFAULT_PORT_STR;
+		port = text2port(stport);
+		if (port == 0) {
+			log_print("virtual_clone: port string \"%s\" not convertible "
+			    "to in_port_t", stport);
+			free(t);
+			return 0;
+		}
+		sockaddr_set_port(raddr, port);
+		v2->encap = v->encap->vtbl->clone(v->encap, raddr);
+		v2->encap->virtual = (struct transport *)v2;
 	}
-	sockaddr_set_port(raddr, port);
-	v2->encap = v->encap->vtbl->clone(v->encap, raddr);
-	v2->encap->virtual = (struct transport *)v2;
 #endif
 	LOG_DBG((LOG_TRANSPORT, 50, "virtual_clone: old %p new %p (%s is %p)",
 	    v, t, v->encap_is_active ? "encap" : "main",
@@ -542,20 +549,20 @@ static struct transport *
 virtual_create(char *name)
 {
 	struct virtual_transport *v;
-	struct transport	 *t, *t2;
+	struct transport	 *t, *t2 = 0;
 
 	t = transport_create("udp_physical", name);
 	if (!t)
 		return 0;
 
 #if defined (USE_NAT_TRAVERSAL)
-	t2 = transport_create("udp_encap", name);
-	if (!t2) {
-		t->vtbl->remove(t);
-		return 0;
+	if (!disable_nat_t) {
+		t2 = transport_create("udp_encap", name);
+		if (!t2) {
+			t->vtbl->remove(t);
+			return 0;
+		}
 	}
-#else
-	t2 = 0;
 #endif
 
 	v = (struct virtual_transport *)calloc(1, sizeof *v);

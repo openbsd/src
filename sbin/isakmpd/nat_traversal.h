@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.h,v 1.2 2004/06/21 23:27:10 ho Exp $	*/
+/*	$OpenBSD: nat_traversal.h,v 1.3 2005/04/05 18:06:06 cloder Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -26,6 +26,11 @@
 
 #ifndef _NAT_TRAVERSAL_H_
 #define _NAT_TRAVERSAL_H_
+
+/*
+ * Set if -T is given on the command line to disable NAT-T support.
+ */
+extern int	disable_nat_t;
 
 void	nat_t_init(void);
 int	nat_t_add_vendor_payloads(struct message *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.11 2005/04/04 19:31:11 deraadt Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.12 2005/04/05 18:06:06 cloder Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -47,6 +47,8 @@
 #include "transport.h"
 #include "util.h"
 #include "virtual.h"
+
+int	disable_nat_t = 0;
 
 /*
  * NAT-T capability of the other peer is determined by a particular vendor
@@ -146,6 +148,9 @@ nat_t_add_vendor_payload(struct message *msg, char *hash)
 	size_t	 buflen = nat_t_hashsize + ISAKMP_GEN_SZ;
 	u_int8_t *buf;
 
+	if (disable_nat_t)
+		return 0;
+
 	buf = malloc(buflen);
 	if (!buf) {
 		log_error("nat_t_add_vendor_payload: malloc (%lu) failed",
@@ -168,6 +173,9 @@ nat_t_add_vendor_payloads(struct message *msg)
 {
 	int i = 0;
 
+	if (disable_nat_t)
+		return 0;
+
 	if (!nat_t_hashes)
 		if (nat_t_setup_hashes())
 			return 0;  /* XXX should this be an error?  */
@@ -186,6 +194,9 @@ nat_t_check_vendor_payload(struct message *msg, struct payload *p)
 	u_int8_t *pbuf = p->p;
 	size_t	  vlen;
 	int	  i = 0;
+
+	if (disable_nat_t)
+		return;
 
 	/* Already checked? */
 	if (p->flags & PL_MARK ||

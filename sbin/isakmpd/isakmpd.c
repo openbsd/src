@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.75 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.76 2005/04/05 18:06:06 cloder Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -52,7 +52,9 @@
 #include "init.h"
 #include "libcrypto.h"
 #include "log.h"
+#include "message.h"
 #include "monitor.h"
+#include "nat_traversal.h"
 #include "sa.h"
 #include "timer.h"
 #include "transport.h"
@@ -121,7 +123,7 @@ usage(void)
 	    "usage: %s [-4] [-6] [-a] [-c config-file] [-d] [-D class=level]\n"
 	    "          [-f fifo] [-i pid-file] [-K] [-n] [-N udpencap-port]\n"
 	    "          [-p listen-port] [-L] [-l packetlog-file] [-r seed]\n"
-	    "          [-R report-file] [-v]\n",
+	    "          [-R report-file] [-T] [-v]\n",
 	    sysdep_progname());
 	exit(1);
 }
@@ -136,7 +138,7 @@ parse_args(int argc, char *argv[])
 	int             do_packetlog = 0;
 #endif
 
-	while ((ch = getopt(argc, argv, "46ac:dD:f:i:KnN:p:Ll:r:R:v")) != -1) {
+	while ((ch = getopt(argc, argv, "46ac:dD:f:i:KnN:p:Ll:r:R:Tv")) != -1) {
 		switch (ch) {
 		case '4':
 			bind_family |= BIND_FAMILY_INET4;
@@ -191,7 +193,7 @@ parse_args(int argc, char *argv[])
 			app_none++;
 			break;
 
-#ifdef USE_NAT_TRAVERSAL
+#if defined(USE_NAT_TRAVERSAL)
 		case 'N':
 			udp_encap_default_port = optarg;
 			break;
@@ -223,6 +225,12 @@ parse_args(int argc, char *argv[])
 		case 'R':
 			report_file = optarg;
 			break;
+
+#if defined(USE_NAT_TRAVERSAL)
+		case 'T':
+			disable_nat_t = 1;
+			break;
+#endif
 
 		case 'v':
 			verbose_logging = 1;

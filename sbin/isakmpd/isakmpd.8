@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.67 2005/02/25 14:14:31 hshoexer Exp $
+.\" $OpenBSD: isakmpd.8,v 1.68 2005/04/05 18:06:05 cloder Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -55,6 +55,7 @@
 .Op Fl l Ar packetlog-file
 .Op Fl r Ar seed
 .Op Fl R Ar report-file
+.Op Fl T
 .Op Fl v
 .Ek
 .Sh DESCRIPTION
@@ -267,6 +268,10 @@ but this can be changed by feeding
 the file name as an argument to the
 .Fl R
 flag.
+.It Fl T
+When this option is given, NAT-Traversal will disabled and
+.Nm
+will not advertise support for NAT-Traversal to its peers.
 .It Fl v
 Enables verbose logging.
 Normally,
@@ -580,6 +585,8 @@ The ISAKMP/Oakley key management protocol is described in the RFCs
 .%T RFC 2408
 and
 .%T RFC 2409 .
+NAT-Traversal is described in
+.%T RFC 3947 .
 This implementation was done 1998 by Niklas Hallqvist and Niels Provos,
 sponsored by Ericsson Radio Systems.
 .Sh CAVEATS
