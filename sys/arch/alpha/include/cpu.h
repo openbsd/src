@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.9 2000/11/08 21:27:18 ericj Exp $ */
+/* $OpenBSD: cpu.h,v 1.10 2001/01/20 21:24:05 art Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -88,10 +88,71 @@
  */
 
 #include <machine/alpha_cpu.h>
-#include <machine/alpha.h>
+#include <machine/frame.h>
 
 #ifdef _KERNEL
-#include <machine/frame.h>
+
+#include <machine/bus.h>
+
+struct pcb;
+struct proc;
+struct reg;
+struct rpb;
+struct trapframe;
+
+extern int bootdev_debug;
+
+void	XentArith(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
+void	XentIF(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
+void	XentInt(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
+void	XentMM(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
+void	XentRestart(void);					/* MAGIC */
+void	XentSys(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
+void	XentUna(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
+void	alpha_init(u_long, u_long, u_long, u_long, u_long);
+int	alpha_pa_access(u_long);
+void	ast(struct trapframe *);
+int	badaddr(void *, size_t);
+int	badaddr_read(void *, size_t, void *);
+void	child_return(void *);
+u_int64_t console_restart(struct trapframe *);
+void	do_sir(void);
+void	dumpconf(void);
+void	exception_return(void);					/* MAGIC */
+void	frametoreg(struct trapframe *, struct reg *);
+long	fswintrberr(void);					/* MAGIC */
+void	init_bootstrap_console(void);
+void	init_prom_interface(struct rpb *);
+void	interrupt(unsigned long, unsigned long, unsigned long,
+	    struct trapframe *);
+void	machine_check(unsigned long, struct trapframe *, unsigned long,
+	    unsigned long);
+u_int64_t hwrpb_checksum(void);
+void	hwrpb_restart_setup(void);
+void	regdump(struct trapframe *);
+void	regtoframe(struct reg *, struct trapframe *);
+void	savectx(struct pcb *);
+void    switch_exit(struct proc *);				/* MAGIC */
+void	switch_trampoline(void);				/* MAGIC */
+void	syscall(u_int64_t, struct trapframe *);
+void	trap(unsigned long, unsigned long, unsigned long, unsigned long,
+	    struct trapframe *);
+void	trap_init(void);
+void	enable_nsio_ide(bus_space_tag_t);
+char *	dot_conv(unsigned long);
+
+void	release_fpu(int);
+void	synchronize_fpstate(struct proc *, int);
+
+/* Multiprocessor glue; cpu.c */
+struct cpu_info;
+int	cpu_iccb_send(long, const char *);
+void	cpu_iccb_receive(void);
+void	cpu_hatch(struct cpu_info *);
+void	cpu_halt_secondary(unsigned long);
+void	cpu_spinup_trampoline(void);				/* MAGIC */
+void	cpu_pause(unsigned long);
+void	cpu_resume(unsigned long);
 
 /*
  * Machine check information.
