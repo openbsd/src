@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.5 1996/06/26 05:40:07 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.6 1997/01/06 18:50:50 maja Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.5 1996/06/26 05:40:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.6 1997/01/06 18:50:50 maja Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -178,7 +178,7 @@ barlabels(row)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
 			if (row > wnd->_maxy - linesperregion)
 				break;
-			mvwprintw(wnd, row++, 0, "%3.3s   Kps|", cur.dk_name[i]);
+			mvwprintw(wnd, row++, 0, "%4.4s  Kps|", cur.dk_name[i]);
 			mvwaddstr(wnd, row++, 0, "      tps|");
 			if (secs)
 				mvwaddstr(wnd, row++, 0, "     msec|");
