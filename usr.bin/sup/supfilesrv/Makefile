@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1995/12/17 12:58:14 deraadt Exp $
+#	$Id: Makefile,v 1.3 1996/02/03 10:05:04 deraadt Exp $
 
 PROG=	supfilesrv
 MAN=	supservers.8
@@ -10,7 +10,7 @@ DPADD+=	${LIBUTIL}
 BINOWN=	root
 BINGRP=	daemon
 BINMODE=555
-BINDIR=	/usr/bin
+BINDIR=	/usr/sbin
 CFLAGS+=-I${.CURDIR}/../src
 .PATH:	${.CURDIR}/../src
 
