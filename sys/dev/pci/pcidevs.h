@@ -624,6 +624,7 @@
 
 /* Accton products */
 #define	PCI_PRODUCT_ACCTON_5030	0x1211		/* MPX 5030/5038 */
+#define	PCI_PRODUCT_ACCTON_EN2242	0x1216		/* EN2242 */
 #define	PCI_PRODUCT_ACCTON_EN1217	0x1217		/* EN1217 */
 
 /* Addtron products */
