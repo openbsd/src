@@ -33,7 +33,7 @@
 .\"
 .Dd June 6, 1993
 .Dt LPR 1
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm lpr
 .Nd off line print
@@ -51,7 +51,7 @@
 .Op Fl cdfghlnmprstv
 .Op Ar name ...
 .Sh DESCRIPTION
-.Nm Lpr
+.Nm lpr
 uses a spooling daemon to print the named files when facilities
 become available.  If no names appear, the standard input is assumed.
 .Pp
@@ -61,7 +61,7 @@ use the appropriate filters to print the data accordingly.
 .Bl -tag -width indent
 .It Fl c
 The files are assumed to contain data produced by
-.Xr cifplot 1
+.Xr cifplot 1 .
 .It Fl d
 The files are assumed to contain data from
 .Em tex
@@ -137,6 +137,7 @@ is the number of copies desired of each file named.  For example,
 .Bd -literal -offset indent
 lpr \-#3 foo.c bar.c more.c
 .Ed
+.Pp
 would result in 3 copies of the file foo.c, followed by 3 copies
 of the file bar.c, etc.  On the other hand,
 .Bd -literal -offset indent
@@ -180,7 +181,7 @@ instead of the file name.
 .It Fl U Ar user
 User name to print on the burst page,
 also for accounting purposes.
-This option is only honored if the real user-id is daemon
+This option is only honored if the real user ID is daemon
 (or that specified in the printcap file instead of daemon),
 and is intended for those instances where print filters wish to requeue jobs.
 .It Fl i Op numcols
@@ -205,19 +206,23 @@ Specifies an alternate default printer.
 .Sh FILES
 .Bl -tag -width /var/spool/output/*/tf* -compact
 .It Pa /etc/passwd
-Personal identification.
+personal identification
 .It Pa /etc/printcap
-Printer capabilities data base.
+printer capabilities database
 .It Pa /usr/sbin/lpd*
-Line printer daemons.
+line printer daemons
 .It Pa /var/spool/output/*
-Directories used for spooling.
+directories used for spooling
 .It Pa /var/spool/output/*/cf*
-Daemon control files.
+daemon control files
 .It Pa /var/spool/output/*/df*
-Data files specified in "cf" files.
+data files specified in
+.Dq cf
+files
 .It Pa /var/spool/output/*/tf*
-Temporary copies of "cf" files.
+temporary copies of
+.Dq cf
+files
 .El
 .Sh SEE ALSO
 .Xr lpq 1 ,
@@ -234,7 +239,7 @@ command appeared in
 .Bx 3 .
 .Sh DIAGNOSTICS
 If you try to spool too large a file, it will be truncated.
-.Nm Lpr
+.Nm lpr
 will object to printing binary files.
 If a user other than root prints a file and spooling is disabled,
 .Nm lpr
