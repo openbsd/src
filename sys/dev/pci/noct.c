@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.2 2002/06/04 21:25:16 jason Exp $	*/
+/*	$OpenBSD: noct.c,v 1.3 2002/06/21 03:26:40 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -73,6 +73,12 @@ void noct_rng_disable(struct noct_softc *);
 void noct_rng_init(struct noct_softc *);
 void noct_rng_intr(struct noct_softc *);
 void noct_rng_tick(void *);
+
+void noct_pkh_enable(struct noct_softc *);
+void noct_pkh_disable(struct noct_softc *);
+void noct_pkh_init(struct noct_softc *);
+void noct_pkh_intr(struct noct_softc *);
+void noct_pkh_tick(void *);
 
 u_int64_t noct_read_8(struct noct_softc *, u_int32_t);
 void noct_write_8(struct noct_softc *, u_int32_t, u_int64_t);
@@ -156,6 +162,7 @@ noct_attach(parent, self, aux)
 	printf(": %s, %uMB\n", intrstr, sc->sc_ramsize);
 
 	noct_rng_init(sc);
+	noct_pkh_init(sc);
 
 	return;
 
@@ -177,6 +184,11 @@ noct_intr(vsc)
 	if (reg & BRDGSTS_RNG_INT) {
 		r = 1;
 		noct_rng_intr(sc);
+	}
+
+	if (reg & BRDGSTS_PKP_INT) {
+		r = 1;
+		noct_pkh_intr(sc);
 	}
 
 	return (r);
@@ -257,6 +269,204 @@ noct_ram_read(sc, adr)
 	dat <<= 32;
 	dat |= NOCT_READ_4(sc, NOCT_EA_CTX_DAT_0);
 	return (dat);
+}
+
+void
+noct_pkh_disable(sc)
+	struct noct_softc *sc;
+{
+	u_int32_t r;
+
+	/* Turn off PK irq */
+	NOCT_WRITE_4(sc, NOCT_BRDG_CTL,
+	    NOCT_READ_4(sc, NOCT_BRDG_CTL) & ~(BRDGCTL_PKIRQ_ENA));
+
+	/* Turn of PK interrupts */
+	NOCT_READ_4(sc, NOCT_PKH_IER);
+	r &= ~(PKHIER_CMDSI | PKHIER_SKSWR | PKHIER_SKSOFF | PKHIER_PKHLEN |
+	    PKHIER_PKHOPCODE | PKHIER_BADQBASE | PKHIER_LOADERR |
+	    PKHIER_STOREERR | PKHIER_CMDERR | PKHIER_ILL | PKHIER_PKERESV |
+	    PKHIER_PKEWDT | PKHIER_PKENOTPRIME |
+	    PKHIER_PKE_B | PKHIER_PKE_A | PKHIER_PKE_M | PKHIER_PKE_R |
+	    PKHIER_PKEOPCODE);
+	NOCT_WRITE_4(sc, NOCT_PKH_IER, r);
+
+	/* Disable PK unit */
+	r = NOCT_READ_4(sc, NOCT_PKH_CSR);
+	r &= ~PKHCSR_PKH_ENA;
+	NOCT_WRITE_4(sc, NOCT_PKH_CSR, r);
+	for (;;) {
+		r = NOCT_READ_4(sc, NOCT_PKH_CSR);
+		if ((r & PKHCSR_PKH_BUSY) == 0)
+			break;
+	}
+
+	/* Clear status bits */
+	r |= PKHCSR_CMDSI | PKHCSR_SKSWR | PKHCSR_SKSOFF | PKHCSR_PKHLEN |
+	    PKHCSR_PKHOPCODE | PKHCSR_BADQBASE | PKHCSR_LOADERR |
+	    PKHCSR_STOREERR | PKHCSR_CMDERR | PKHCSR_ILL | PKHCSR_PKERESV |
+	    PKHCSR_PKEWDT | PKHCSR_PKENOTPRIME |
+	    PKHCSR_PKE_B | PKHCSR_PKE_A | PKHCSR_PKE_M | PKHCSR_PKE_R |
+	    PKHCSR_PKEOPCODE;
+	NOCT_WRITE_4(sc, NOCT_PKH_CSR, r);
+}
+
+void
+noct_pkh_enable(sc)
+	struct noct_softc *sc;
+{
+	u_int64_t adr;
+
+	sc->sc_pkhwp = 0;
+
+	adr = sc->sc_pkhmap->dm_segs[0].ds_addr;
+	NOCT_WRITE_4(sc, NOCT_PKH_Q_BASE_HI, (adr >> 32) & 0xffffffff);
+	NOCT_WRITE_4(sc, NOCT_PKH_Q_LEN, NOCT_PKH_QLEN);
+	NOCT_WRITE_4(sc, NOCT_PKH_Q_BASE_LO, (adr >> 0) & 0xffffffff);
+
+	NOCT_WRITE_4(sc, NOCT_PKH_IER,
+	    PKHIER_CMDSI | PKHIER_SKSWR | PKHIER_SKSOFF | PKHIER_PKHLEN |
+	    PKHIER_PKHOPCODE | PKHIER_BADQBASE | PKHIER_LOADERR |
+	    PKHIER_STOREERR | PKHIER_CMDERR | PKHIER_ILL | PKHIER_PKERESV |
+	    PKHIER_PKEWDT | PKHIER_PKENOTPRIME |
+	    PKHIER_PKE_B | PKHIER_PKE_A | PKHIER_PKE_M | PKHIER_PKE_R |
+	    PKHIER_PKEOPCODE);
+
+	NOCT_WRITE_4(sc, NOCT_PKH_CSR,
+	    NOCT_READ_4(sc, NOCT_PKH_CSR) | PKHCSR_PKH_ENA);
+
+	NOCT_WRITE_4(sc, NOCT_BRDG_CTL,
+	    NOCT_READ_4(sc, NOCT_BRDG_CTL) | BRDGCTL_PKIRQ_ENA);
+}
+
+void
+noct_pkh_init(sc)
+	struct noct_softc *sc;
+{
+	bus_dma_segment_t seg;
+	int rseg;
+
+	if (bus_dmamem_alloc(sc->sc_dmat, NOCT_PKH_BUFSIZE,
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+		printf("%s: failed pkh buf alloc\n", sc->sc_dv.dv_xname);
+		goto fail;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, NOCT_PKH_BUFSIZE,
+	    (caddr_t *)&sc->sc_pkhcmd, BUS_DMA_NOWAIT)) {
+		printf("%s: failed pkh buf map\n", sc->sc_dv.dv_xname);
+		goto fail_1;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, NOCT_PKH_BUFSIZE, rseg,
+	    NOCT_PKH_BUFSIZE, 0, BUS_DMA_NOWAIT, &sc->sc_pkhmap)) {
+		printf("%s: failed pkh map create\n", sc->sc_dv.dv_xname);
+		goto fail_2;
+	}
+	if (bus_dmamap_load_raw(sc->sc_dmat, sc->sc_pkhmap,
+	    &seg, rseg, NOCT_PKH_BUFSIZE, BUS_DMA_NOWAIT)) {
+		printf("%s: failed pkh buf load\n", sc->sc_dv.dv_xname);
+		goto fail_3;
+	}
+
+	noct_pkh_disable(sc);
+	noct_pkh_enable(sc);
+
+	if (hz > 100)
+		sc->sc_pkhtick = hz/100;
+	else
+		sc->sc_pkhtick = 1;
+	timeout_set(&sc->sc_pkhto, noct_pkh_tick, sc);
+	timeout_add(&sc->sc_pkhto, sc->sc_pkhtick);
+
+	return;
+
+fail_3:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_pkhmap);
+fail_2:
+	bus_dmamem_unmap(sc->sc_dmat,
+	    (caddr_t)sc->sc_pkhcmd, NOCT_PKH_BUFSIZE);
+fail_1:
+	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+fail:
+	sc->sc_pkhcmd = NULL;
+	sc->sc_pkhmap = NULL;
+}
+
+void
+noct_pkh_intr(sc)
+	struct noct_softc *sc;
+{
+	u_int32_t csr;
+
+	csr = NOCT_READ_4(sc, NOCT_PKH_CSR);
+	NOCT_WRITE_4(sc, NOCT_PKH_CSR, csr |
+	    PKHCSR_CMDSI | PKHCSR_SKSWR | PKHCSR_SKSOFF | PKHCSR_PKHLEN |
+	    PKHCSR_PKHOPCODE | PKHCSR_BADQBASE | PKHCSR_LOADERR |
+	    PKHCSR_STOREERR | PKHCSR_CMDERR | PKHCSR_ILL | PKHCSR_PKERESV |
+	    PKHCSR_PKEWDT | PKHCSR_PKENOTPRIME |
+	    PKHCSR_PKE_B | PKHCSR_PKE_A | PKHCSR_PKE_M | PKHCSR_PKE_R |
+	    PKHCSR_PKEOPCODE);
+
+	if (csr & PKHCSR_CMDSI)
+		sc->sc_pkhbusy = 0;
+
+	if (csr & PKHCSR_SKSWR)
+		printf("%s: sks write error\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_SKSOFF)
+		printf("%s: sks offset error\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_PKHLEN)
+		printf("%s: pkh invalid length\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_PKHOPCODE)
+		printf("%s: pkh bad opcode\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_BADQBASE)
+		printf("%s: pkh base qbase\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_LOADERR)
+		printf("%s: pkh load error\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_STOREERR)
+		printf("%s: pkh store error\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_CMDERR)
+		printf("%s: pkh command error\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_ILL)
+		printf("%s: pkh illegal access\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_PKERESV)
+		printf("%s: pke reserved error\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_PKEWDT)
+		printf("%s: pke watchdog\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_PKENOTPRIME)
+		printf("%s: pke not prime\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_PKE_B)
+		printf("%s: pke bad 'b'\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_PKE_A)
+		printf("%s: pke bad 'a'\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_PKE_M)
+		printf("%s: pke bad 'm'\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_PKE_R)
+		printf("%s: pke bad 'r'\n", sc->sc_dv.dv_xname);
+	if (csr & PKHCSR_PKEOPCODE)
+		printf("%s: pke bad opcode\n", sc->sc_dv.dv_xname);
+}
+
+void
+noct_pkh_tick(vsc)
+	void *vsc;
+{
+	struct noct_softc *sc = vsc;
+	struct noct_pkh_cmd_nop *nop;
+	int s;
+
+	s = splnet();
+	if (sc->sc_pkhbusy)
+		goto out;
+	nop = &sc->sc_pkhcmd[sc->sc_pkhwp].nop;
+	nop->op = PKH_OP_SI | PKH_OP_CODE_NOP;
+	nop->unused[0] = nop->unused[1] = nop->unused[2] = nop->unused[3] = 0;
+	nop->unused[4] = nop->unused[5] = nop->unused[6] = 0;
+	sc->sc_pkhbusy = 1;
+	if (++sc->sc_pkhwp == NOCT_PKH_ENTRIES)
+		sc->sc_pkhwp = 0;
+	NOCT_WRITE_4(sc, NOCT_PKH_Q_PTR, sc->sc_pkhwp);
+out:
+	splx(s);
+	timeout_add(&sc->sc_pkhto, sc->sc_pkhtick);
 }
 
 void
@@ -376,7 +586,6 @@ fail_1:
 fail:
 	sc->sc_rngbuf = NULL;
 	sc->sc_rngmap = NULL;
-	return;
 }
 
 void

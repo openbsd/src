@@ -1,4 +1,4 @@
-/*	$OpenBSD: noctvar.h,v 1.1 2002/06/02 18:15:03 jason Exp $	*/
+/*	$OpenBSD: noctvar.h,v 1.2 2002/06/21 03:26:40 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -44,9 +44,15 @@ struct noct_softc {
 	void *sc_ih;
 	u_int sc_ramsize;
 	u_int64_t *sc_rngbuf;
+	union noct_pkh_cmd *sc_pkhcmd;
 	bus_dmamap_t sc_rngmap;
+	bus_dmamap_t sc_pkhmap;
 	struct timeout sc_rngto;
 	int sc_rngtick;
+	struct timeout sc_pkhto;
+	int sc_pkhtick;
+	int sc_pkhbusy;
+	u_int32_t sc_pkhwp;		/* pkh write pointer */
 };
 
 #define	NOCT_READ_4(sc,r) \
@@ -60,3 +66,7 @@ struct noct_softc {
 #define	NOCT_RNG_QLEN		15
 #define	NOCT_RNG_ENTRIES	(1 << NOCT_RNG_QLEN)
 #define	NOCT_RNG_BUFSIZE	(NOCT_RNG_ENTRIES * sizeof(u_int64_t))
+
+#define	NOCT_PKH_QLEN		15
+#define	NOCT_PKH_ENTRIES	(1 << NOCT_PKH_QLEN)
+#define	NOCT_PKH_BUFSIZE	(NOCT_PKH_ENTRIES * sizeof(union noct_pkh_cmd))

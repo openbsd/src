@@ -1,4 +1,4 @@
-/*	$OpenBSD: noctreg.h,v 1.2 2002/06/20 20:31:59 jason Exp $	*/
+/*	$OpenBSD: noctreg.h,v 1.3 2002/06/21 03:26:40 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -234,3 +234,67 @@
 #define	PKHSKS_LOC_CACHEONLY	0x00001000
 #define	PKHSKS_ADDR		0x00000fff	/* address mask */
 
+#define	PKH_OP_CODE_MOD		0x00000000	/* a mod m */
+#define	PKH_OP_CODE_RMOD	0x10000000	/* R mod m */
+#define	PKH_OP_CODE_ADD		0x20000000	/* (a + b) mod m */
+#define	PKH_OP_CODE_SUB		0x30000000	/* (a - b) mod m */
+#define	PKH_OP_CODE_ADDINV	0x40000000	/* -a mod m */
+#define	PKH_OP_CODE_MUL		0x50000000	/* (a * b) mod m */
+#define	PKH_OP_CODE_MULINV	0x60000000	/* 1/a mod m */
+#define	PKH_OP_CODE_EXP		0x70000000	/* g^e mod m */
+#define	PKH_OP_CODE_LOAD	0x80000000	/* load bn cache */
+#define	PKH_OP_CODE_STORE	0x90000000	/* store bn cache */
+#define	PKH_OP_CODE_RSAPRIV	0xa0000000	/* rsa private key op */
+#define	PKH_OP_CODE_DSASIGN	0xb0000000	/* dsa sign op */
+#define	PKH_OP_CODE_NOP		0xf0000000	/* no-op */
+#define	PKH_OP_SI		0x08000000	/* set interrupt */
+
+/* pkh arithmetic commands */
+struct noct_pkh_cmd_arith {
+	volatile u_int32_t	op;		/* opcode/si, 0x0 - 0x7 */
+	volatile u_int32_t	r;		/* r offset */
+	volatile u_int32_t	m;		/* m length, m offset */
+	volatile u_int32_t	a;		/* a length, a offset */
+	volatile u_int32_t	b;		/* b length, b offset */
+	volatile u_int32_t	c;		/* c offset */
+	volatile u_int32_t	unused[2];	/* reserved */
+};
+
+/* pkh load/store bn cache commands */
+struct noct_pkh_cmd_cache {
+	volatile u_int32_t	op;		/* opcode/si, 0x8-0x9 */
+	volatile u_int32_t	r;		/* r offset */
+	volatile u_int32_t	addrhi;		/* host address, msw */
+	volatile u_int32_t	addrlo;		/* host address, lsw */
+	volatile u_int32_t	len;		/* data length (0-4096) */
+	volatile u_int32_t	unused[3];	/* reserved */
+};
+
+/* pkh rsa private command */
+struct noct_pkh_cmd_rsapriv {
+	volatile u_int32_t	op;		/* opcode/si, 0xa */
+	volatile u_int32_t	par;		/* n, keylen, sksoffset */
+	volatile u_int32_t	unused[6];	/* reserved */
+};
+
+/* pkh dsa sign command */
+struct noct_pkh_cmd_dsasign {
+	volatile u_int32_t	op;		/* opcode/si, 0xb */
+	volatile u_int32_t	par;		/* n, keylen, sksoffset */
+	volatile u_int32_t	unused[6];	/* reserved */
+};
+
+/* pkh nop command */
+struct noct_pkh_cmd_nop {
+	volatile u_int32_t	op;		/* opcode/si, 0xf */
+	volatile u_int32_t	unused[7];	/* reserved */
+};
+
+/* pkh generic command */
+union noct_pkh_cmd {
+	struct noct_pkh_cmd_arith	arith;
+	struct noct_pkh_cmd_cache	cache;
+	struct noct_pkh_cmd_rsapriv	rsapriv;
+	struct noct_pkh_cmd_dsasign	dsasign;
+	struct noct_pkh_cmd_nop		nop;
+};
