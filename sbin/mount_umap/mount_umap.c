@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_umap.c,v 1.10 2002/06/09 08:13:08 todd Exp $	*/
+/*	$OpenBSD: mount_umap.c,v 1.11 2003/05/12 23:41:16 tedu Exp $	*/
 /*	$NetBSD: mount_umap.c,v 1.5 1996/04/13 01:32:05 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.10 2002/06/09 08:13:08 todd Exp $";
+static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.11 2003/05/12 23:41:16 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,8 +101,8 @@ main(argc, argv)
 	struct umap_args args;
 	FILE *fp, *gfp;
 	long d1, d2;
-	id_t umapdata[UMAPFILEENTRIES][2];
-	id_t gmapdata[GMAPFILEENTRIES][2];
+	u_long umapdata[UMAPFILEENTRIES][2];
+	u_long gmapdata[GMAPFILEENTRIES][2];
 	int ch, count, gnentries, mntflags, unentries;
 	char *gmapfile, *umapfile, *source, *target, buf[20];
 
@@ -225,7 +225,7 @@ main(argc, argv)
 
 
 	/* Setup mount call args. */
-	args.target = source;
+	args.la.target = source;
 	args.unentries = unentries;
 	args.umapdata  = umapdata;
 	args.gnentries = gnentries;
