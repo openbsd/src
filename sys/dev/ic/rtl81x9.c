@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.24 2004/05/07 01:42:48 tedu Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.25 2004/05/19 11:36:59 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -686,12 +686,12 @@ rl_rxeof(sc)
 		wrap = (sc->rl_cdata.rl_rx_buf + RL_RXBUFLEN) - rxbufpos;
 
 		if (total_len > wrap) {
-			m = m_devget(rxbufpos - RL_ETHER_ALIGN,
-			    wrap + RL_ETHER_ALIGN, 0, ifp, NULL);
+			m = m_devget(rxbufpos - ETHER_ALIGN,
+			    wrap + ETHER_ALIGN, 0, ifp, NULL);
 			if (m == NULL)
 				ifp->if_ierrors++;
 			else {
-				m_adj(m, RL_ETHER_ALIGN);
+				m_adj(m, ETHER_ALIGN);
 				m_copyback(m, wrap, total_len - wrap,
 					sc->rl_cdata.rl_rx_buf);
 				m = m_pullup(m, sizeof(struct ether_header));
@@ -700,12 +700,12 @@ rl_rxeof(sc)
 			}
 			cur_rx = (total_len - wrap + ETHER_CRC_LEN);
 		} else {
-			m = m_devget(rxbufpos - RL_ETHER_ALIGN,
-			    total_len + RL_ETHER_ALIGN, 0, ifp, NULL);
+			m = m_devget(rxbufpos - ETHER_ALIGN,
+			    total_len + ETHER_ALIGN, 0, ifp, NULL);
 			if (m == NULL)
 				ifp->if_ierrors++;
 			else
-				m_adj(m, RL_ETHER_ALIGN);
+				m_adj(m, ETHER_ALIGN);
 			cur_rx += total_len + 4 + ETHER_CRC_LEN;
 		}
 

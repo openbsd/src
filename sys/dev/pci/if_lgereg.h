@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lgereg.h,v 1.1 2001/09/04 20:36:38 nate Exp $	*/
+/*	$OpenBSD: if_lgereg.h,v 1.2 2004/05/19 11:37:00 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -553,7 +553,6 @@ struct lge_softc {
 	bus_space_read_1(sc->lge_btag, sc->lge_bhandle, reg)
 
 #define LGE_TIMEOUT		1000
-#define ETHER_ALIGN		2
 #define LGE_RXLEN		1536
 #define LGE_MIN_FRAMELEN	60
 

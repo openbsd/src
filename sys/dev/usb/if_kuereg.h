@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kuereg.h,v 1.4 2001/10/31 04:24:44 nate Exp $ */
+/*	$OpenBSD: if_kuereg.h,v 1.5 2004/05/19 11:37:00 brad Exp $ */
 /*	$NetBSD: if_kuereg.h,v 1.11 2001/01/21 02:35:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -115,7 +115,6 @@ struct kue_ether_desc {
 #define KUE_RXFILT_MULTICAST		0x0010
 
 #define KUE_TIMEOUT		1000
-#define ETHER_ALIGN		2
 #define KUE_BUFSZ		1536
 #define KUE_MIN_FRAMELEN	60
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.8 2004/03/19 21:57:36 miod Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.9 2004/05/19 11:36:59 brad Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2035,8 +2035,6 @@ struct bge_gib {
  * alignes the packet after the Ethernet header at a 32-bit
  * boundary.
  */
-
-#define ETHER_ALIGN 2
 
 #define BGE_FRAMELEN		1518
 #define BGE_MAX_FRAMELEN	1536

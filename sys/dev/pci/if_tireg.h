@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.13 2003/02/26 19:02:50 nate Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.14 2004/05/19 11:37:00 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -767,8 +767,6 @@ struct ti_tx_desc {
  * alignes the packet after the Ethernet header at a 32-bit
  * boundary.
  */
-
-#define ETHER_ALIGN 2
 
 #define TI_FRAMELEN		1518
 #define TI_JUMBO_FRAMELEN	9018

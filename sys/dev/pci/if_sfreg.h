@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sfreg.h,v 1.6 2003/06/29 17:19:17 avsm Exp $	*/
+/*	$OpenBSD: if_sfreg.h,v 1.7 2004/05/19 11:37:00 brad Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -997,8 +997,6 @@ struct sf_type {
 };
 
 #define SF_INC(x, y)	(x) = (x + 1) % y
-
-#define ETHER_ALIGN 2
 
 /*
  * Note: alignment is important here: each list must be aligned to

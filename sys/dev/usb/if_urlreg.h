@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urlreg.h,v 1.4 2002/07/29 02:59:05 nate Exp $ */
+/*	$OpenBSD: if_urlreg.h,v 1.5 2004/05/19 11:37:00 brad Exp $ */
 /*	$NetBSD: if_urlreg.h,v 1.1 2002/03/28 21:09:11 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -41,9 +41,6 @@
 
 #define	URL_TX_TIMEOUT		1000
 #define	URL_TIMEOUT		10000
-
-#define	ETHER_ALIGN		2
-
 
 /* Packet length */
 #define	URL_MAX_MTU		1536

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.9 2004/04/07 15:47:52 mickey Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.10 2004/05/19 11:36:59 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -313,8 +313,6 @@
 
 #define RL_RXCFG_CONFIG		(RL_RX_FIFOTHRESH|RL_RX_MAXDMA|RL_RX_BUF_SZ)
 #define RL_TXCFG_CONFIG		(RL_TXCFG_IFG|RL_TX_MAXDMA)
-
-#define RL_ETHER_ALIGN		2
 
 struct rl_chain_data {
 	u_int16_t		cur_rx;

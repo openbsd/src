@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.11 2003/10/12 02:53:59 jason Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.12 2004/05/19 11:37:00 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -495,7 +495,6 @@ struct vr_softc {
 	bus_space_read_1(sc->vr_btag, sc->vr_bhandle, reg)
 
 #define VR_TIMEOUT		1000
-#define ETHER_ALIGN		2
 
 /*
  * General constants that are fun to know.

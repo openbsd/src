@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.h,v 1.24 2003/11/14 18:02:24 pdeuskar Exp $*/
-/* $OpenBSD: if_em.h,v 1.5 2004/04/26 17:17:15 deraadt Exp $ */
+/* $OpenBSD: if_em.h,v 1.6 2004/05/19 11:37:00 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -195,7 +195,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_NUM_MULTICAST_ADDRESSES     128
 #define PCI_ANY_ID                      (~0U)
-#define ETHER_ALIGN                     2
 
 /* Defines for printing debug information */
 #define DEBUG_INIT  0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.16 2004/04/26 05:16:41 deraadt Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.17 2004/05/19 11:37:00 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -448,7 +448,6 @@ struct sis_softc {
 	bus_space_read_4(sc->sis_btag, sc->sis_bhandle, reg)
 
 #define SIS_TIMEOUT		1000
-#define ETHER_ALIGN		2
 #define SIS_RXLEN		1536
 #define SIS_MIN_FRAMELEN	60
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.33 2003/10/21 18:58:49 jmc Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.34 2004/05/19 11:36:59 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -768,7 +768,6 @@ struct dc_softc {
 	bus_space_read_4(sc->dc_btag, sc->dc_bhandle, reg)
 
 #define DC_TIMEOUT		1000
-#define ETHER_ALIGN		2
 
 /*
  * General constants that are fun to know.

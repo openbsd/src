@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stereg.h,v 1.5 2003/06/29 17:20:03 avsm Exp $ */
+/*	$OpenBSD: if_stereg.h,v 1.6 2004/05/19 11:37:00 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -458,7 +458,6 @@ struct ste_desc_onefrag {
 #define STE_TIMEOUT		1000
 #define STE_MIN_FRAMELEN	60
 #define STE_PACKET_SIZE		1536
-#define ETHER_ALIGN		2
 #define STE_RX_LIST_CNT		128
 #define STE_TX_LIST_CNT		256
 #define STE_INC(x, y)		(x) = (x + 1) % y

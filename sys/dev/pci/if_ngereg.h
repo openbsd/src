@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ngereg.h,v 1.3 2002/09/21 15:29:46 nate Exp $	*/
+/*	$OpenBSD: if_ngereg.h,v 1.4 2004/05/19 11:37:00 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -678,7 +678,6 @@ struct nge_softc {
 	bus_space_read_4(sc->nge_btag, sc->nge_bhandle, reg)
 
 #define NGE_TIMEOUT		1000
-#define ETHER_ALIGN		2
 #define NGE_RXLEN		1536
 #define NGE_MIN_FRAMELEN	60
 

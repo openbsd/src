@@ -107,7 +107,6 @@
 #define AXE_CONFIG_NO		1
 #define AXE_IFACE_IDX		0
 
-#define ETHER_ALIGN		2
 /*
  * The interrupt endpoint is currently unused
  * by the ASIX part.
