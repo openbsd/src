@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.29 2003/09/28 07:55:19 otto Exp $	*/
+/*	$OpenBSD: inp.c,v 1.30 2003/11/21 21:25:59 mickey Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: inp.c,v 1.29 2003/09/28 07:55:19 otto Exp $";
+static const char     rcsid[] = "$OpenBSD: inp.c,v 1.30 2003/11/21 21:25:59 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -252,10 +252,13 @@ plan_a(const char *filename)
 	if (i_womp == MAP_FAILED) {
 		perror("mmap failed");
 		i_womp = NULL;
+		close(ifd);
 		return false;
 	}
 
 	close(ifd);
+	if (i_size)
+		madvise(i_womp, i_size, MADV_SEQUENTIAL);
 
 	/* estimate the number of lines */
 	lines_allocated = i_size / 25;
