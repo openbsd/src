@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.4 2005/03/07 16:44:53 miod Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.5 2005/03/13 23:05:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -359,6 +359,10 @@ rfx_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		if (error != 0)
 			return (error);
 		rfx_loadcmap(sc, cm->index, cm->count);
+		break;
+
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.23 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.24 2005/03/13 23:05:22 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -342,6 +342,10 @@ tcx_ioctl(dev, cmd, data, flags, p)
 			if (sc->sc_cplane != NULL)
 				tcx_reset(sc, 32);
 		}
+		break;
+
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
 		break;
 
 	default:

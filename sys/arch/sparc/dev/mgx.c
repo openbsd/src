@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.8 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.9 2005/03/13 23:05:22 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -246,6 +246,10 @@ mgx_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		if (error != 0)
 			return (error);
 		mgx_loadcmap(sc, cm->index, cm->count);
+		break;
+
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.28 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.29 2005/03/13 23:05:22 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -388,6 +388,10 @@ cgfourteen_ioctl(dev, cmd, data, flags, p)
 			if (sc->sc_32)
 				cgfourteen_reset(sc, 32);
 		}
+		break;
+
+	case WSDISPLAYIO_GVIDEO:
+	case WSDISPLAYIO_SVIDEO:
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.2 2005/03/07 16:44:52 miod Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.3 2005/03/13 23:05:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
@@ -295,6 +295,10 @@ cgtwelve_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			/* Starting X11, switch to 32 bit mode */
 			cgtwelve_reset(sc, 32);
 		}
+		break;
+
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
 		break;
 
 	default:

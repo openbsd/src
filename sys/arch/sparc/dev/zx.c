@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.10 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.11 2005/03/13 23:05:22 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -324,6 +324,10 @@ zx_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	case WSDISPLAYIO_SMODE:
 		zx_reset(sc, *(u_int *)data);
+		break;
+
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
 		break;
 
 	default:
