@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2003/06/02 09:10:34 miod Exp $
+#	$OpenBSD: Makefile,v 1.17 2005/02/20 15:34:06 miod Exp $
 
 LIB=sa
 
@@ -36,7 +36,6 @@ SRCS= ${SRC_net} ${SRC_sa} ${SRC_mvme} ${SRC_here} ${SRC_kern}
 #DEFS= -DCOMPAT_UFS
 DEFS= -D__INTERNAL_LIBSA_CREAD
 INCL= -I${.CURDIR} -I${.CURDIR}/../libbug -I${S}/lib/libsa -I${S}
-COPTS= -m68060 -Wa,-m68030
 CFLAGS+= ${XCFLAGS} -O2 ${COPTS} ${DEFS} ${DBG} ${INCL}
 
 .PATH:  ${DIR_SA} ${DIR_KERN} 

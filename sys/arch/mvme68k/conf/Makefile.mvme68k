@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.25 2004/10/08 07:11:04 grange Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.26 2005/02/20 15:34:03 miod Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -38,16 +38,10 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 
-.if empty(IDENT:M-DM68060)
-CMACHFLAGS=	-m68020
-.else
-CMACHFLAGS=	-m68060 -Wa,-m68030
-.endif
-CMACHFLAGS+=	-msoft-float
+CMACHFLAGS+=	-msoft-float -fno-builtin-printf -fno-builtin-log
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
-CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-log
 
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} ${PIPE}
