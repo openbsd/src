@@ -1,4 +1,4 @@
-static char *rcs_id = "$Id: use_adf.c,v 1.5 2000/02/01 03:24:14 deraadt Exp $";
+static char *rcs_id = "$Id: use_adf.c,v 1.6 2002/05/29 19:01:48 deraadt Exp $";
 /*
  * Copyright (c) 1995 Kenneth Stailey
  * All rights reserved.
@@ -83,8 +83,7 @@ main(int argc, char *argv[])
     exit(1);
   }
 	
-  strcpy(device, "/dev/");
-  strcat(device, logical_name);
+  snprintf(device, sizeof device, "/dev/%s", logical_name);
 
   if ((sfd = open(device, O_RDONLY)) < 0) {
     fprintf(stderr, "open of %s failed: ", device);

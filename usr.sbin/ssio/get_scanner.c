@@ -1,4 +1,4 @@
-static char *rcs_id = "$Id: get_scanner.c,v 1.3 1999/05/23 17:19:23 aaron Exp $";
+static char *rcs_id = "$Id: get_scanner.c,v 1.4 2002/05/29 19:01:47 deraadt Exp $";
 /*
  * Copyright (c) 1995 Kenneth Stailey
  * All rights reserved.
@@ -114,7 +114,7 @@ main(int argc, char *argv[])
     }
   }
 
-  sprintf(device_special, "/dev/%s", logical_name);
+  snprintf(device_special, sizeof device_special, "/dev/%s", logical_name);
   if ((s_fd = open(device_special, O_RDONLY)) < 0) {
     perror("open of scanner");
     exit(-1);
