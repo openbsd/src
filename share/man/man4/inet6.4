@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.2 1999/12/19 03:14:27 itojun Exp $
+.\"	$OpenBSD: inet6.4,v 1.3 1999/12/25 02:10:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -110,7 +110,7 @@ can be obtained by setting
 field into 0, or by using the address contained in variable
 .Dv in6addr_any .
 .Pp
-The implementation intentionally does not support RFC1993 IPv4 mapped address
+The implementation intentionally does not support RFC2553 IPv4 mapped address
 .Pq IPv4 traffic on top of AF_INET6 socket ,
 due to its possible negative impact to security and access control.
 .Pp
