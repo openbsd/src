@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.92 1998/11/03 05:10:41 downsj Exp $
+#	$OpenBSD: rc,v 1.93 1998/11/11 09:22:49 downsj Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -371,6 +371,10 @@ fi
 
 if [ "X${httpd_flags}" != X"NO"  ]; then
 	echo -n ' httpd';		/usr/sbin/httpd ${httpd_flags}
+fi
+
+if [ "X${ftpd_flags}" != X"NO" ]; then
+	echo -n ' ftpd';		/usr/libexec/ftpd ${ftpd_flags}
 fi
 
 # $smtpfwdd_flags is imported from /etc/rc.conf;
