@@ -1,4 +1,4 @@
-/*	$OpenBSD: xfs_syscalls.c,v 1.5 1998/09/17 20:50:25 art Exp $	*/
+/*	$OpenBSD: xfs_syscalls.c,v 1.6 1998/09/18 02:41:44 art Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -52,7 +52,7 @@
 
 #ifndef XFS
 int
-sys_xfspioctl(struct proc *p, void *v, int *i)
+sys_xfspioctl(struct proc *p, void *v, register_t *i)
 {
 	return ENOSYS;
 }
@@ -191,7 +191,7 @@ struct sys_xfspioctl_args {
 #endif /* ACTUALLY_LKM_NOT_KERNEL */
 
 static int
-xfs_pioctl_call(struct proc *p, void *v, int *i)
+xfs_pioctl_call(struct proc *p, void *v, register_t *i)
 {
 	int error;
 	struct ViceIoctl vice_ioctl;
@@ -291,10 +291,10 @@ xfs_pioctl_call(struct proc *p, void *v, int *i)
 
 #ifdef ACTUALLY_LKM_NOT_KERNEL
 static int
-xfs_syscall(struct proc *p, void *v, int *i)
+xfs_syscall(struct proc *p, void *v, register_t *i)
 #else
 int
-sys_xfspioctl(struct proc *p, void *v, int *i)
+sys_xfspioctl(struct proc *p, void *v, register_t *i)
 #endif
 {
 	struct sys_xfspioctl_args *arg = (struct sys_xfspioctl_args *) v;
