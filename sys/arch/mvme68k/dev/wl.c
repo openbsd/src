@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.15 2004/07/02 17:57:29 miod Exp $ */
+/*	$OpenBSD: wl.c,v 1.16 2004/07/30 09:50:15 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -33,6 +33,7 @@
 #include <sys/time.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
+#include <sys/evcount.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
@@ -113,9 +114,12 @@ struct cl_info {
 
 struct wlsoftc {
 	struct device	sc_dev;
-	struct evcnt	sc_txintrcnt;
-	struct evcnt	sc_rxintrcnt;
-	struct evcnt	sc_mxintrcnt;
+	struct evcount	sc_txintrcnt;
+	char		sc_txintrname[16 + 3];
+	struct evcount	sc_rxintrcnt;
+	char		sc_rxintrname[16 + 3];
+	struct evcount	sc_mxintrcnt;
+	char		sc_mxintrname[16 + 3];
 
 	time_t		sc_rotime;	/* time of last ring overrun */
 	time_t		sc_fotime;	/* time of last fifo overrun */
@@ -331,9 +335,18 @@ wlattach(parent, self, aux)
 	vmeintr_establish(ca->ca_vec + 2, &sc->sc_ih_t);
 	vmeintr_establish(ca->ca_vec + 3, &sc->sc_ih_r);
 
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_txintrcnt);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_rxintrcnt);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_mxintrcnt);
+	snprintf(sc->sc_txintrname, sizeof sc->sc_txintrname,
+	    "%s_tx", self->dv_xname);
+	evcount_attach(&sc->sc_txintrcnt, sc->sc_txintrname,
+	    (void *)&sc->sc_ih_t.ih_ipl, &evcount_intr);
+	snprintf(sc->sc_rxintrname, sizeof sc->sc_rxintrname,
+	    "%s_rx", self->dv_xname);
+	evcount_attach(&sc->sc_rxintrcnt, sc->sc_rxintrname,
+	    (void *)&sc->sc_ih_r.ih_ipl, &evcount_intr);
+	snprintf(sc->sc_mxintrname, sizeof sc->sc_mxintrname,
+	    "%s_mx", self->dv_xname);
+	evcount_attach(&sc->sc_mxintrcnt, sc->sc_mxintrname,
+	    (void *)&sc->sc_ih_m.ih_ipl, &evcount_intr);
 
 	p = sc->sc_memkv;
 	s = splhigh();
@@ -1123,7 +1136,7 @@ cl_mintr(sc)
 	printf("stk 0x%x mir 0x%x chan 0x%x\n",
 	    sc->cl_reg->cl_stk, mir, channel);
 
-	sc->sc_mxintrcnt.ev_count++;
+	sc->sc_mxintrcnt.ec_count++;
 
 	if (misr & MISR_TIMER1) {
 		/* timers are not currently used?? */
@@ -1181,7 +1194,7 @@ cl_txintr(sc)
 	printf("stk 0x%x tir 0x%x chan 0x%x cmr 0x%x tisr 0x%x tftc 0x%x\n",
 	    sc->cl_reg->cl_stk, tir, chan, cmr, tisr, tftc);
 
-	sc->sc_txintrcnt.ev_count++;
+	sc->sc_txintrcnt.ec_count++;
 	sc->sc_cl[chan].txcnt++;
 	tp = sc->sc_cl[chan].tty;
 
@@ -1256,7 +1269,7 @@ cl_rxintr(sc)
 	/*printf("stk 0x%x rir 0x%x chan 0x%x cmr 0x%x risrl 0x%x\n",
 	    sc->cl_reg->cl_stk, rir, chan, cmr, risrl);*/
 
-	sc->sc_rxintrcnt.ev_count++;
+	sc->sc_rxintrcnt.ec_count++;
 	sc->sc_cl[chan].rxcnt++;
 
 	if (risrl & RISRL_TIMEOUT) {

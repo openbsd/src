@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.9 2004/03/26 00:04:49 miod Exp $ */
+/*	$OpenBSD: ssh.c,v 1.10 2004/07/30 09:50:15 miod Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -46,6 +46,7 @@
 #include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/evcount.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.7 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.8 2004/07/30 09:50:15 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -42,20 +42,16 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/evcount.h>
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
 #include <machine/autoconf.h>
 
-#ifdef mvme88k
-#include <mvme88k/dev/vsreg.h>
-#include <mvme88k/dev/vsvar.h>
-#include <mvme88k/dev/vme.h>
-#include <machine/mmu.h>
-#else
 #include <mvme68k/dev/vsreg.h>
 #include <mvme68k/dev/vsvar.h>
 #include <mvme68k/dev/vme.h>
-#endif
 
 int	vsmatch(struct device *, void *, void *);
 void	vsattach(struct device *, struct device *, void *);
@@ -130,8 +126,13 @@ vsattach(parent, self, auxp)
 
 	vmeintr_establish(sc->sc_nvec, &sc->sc_ih_n);
 	vmeintr_establish(sc->sc_evec, &sc->sc_ih_e);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_n);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_e);
+
+	evcount_attach(&sc->sc_intrcnt_n, self->dv_xname,
+	    (void *)&sc->sc_ih_n.ih_ipl, &evcount_intr);
+	snprintf(sc->sc_intrname_e, sizeof sc->sc_intrname_e,
+	    "%s_err", self->dv_xname);
+	evcount_attach(&sc->sc_intrcnt_e, self->dv_xname,
+	    (void *)&sc->sc_ih_e.ih_ipl, &evcount_intr);
 
 	/*
 	 * attach all scsi units on us, watching for boot device
@@ -168,7 +169,7 @@ vs_nintr(arg)
 	printf("Normal Interrupt!!!\n");
 #endif 
 	vs_intr(sc);
-	sc->sc_intrcnt_n.ev_count++;
+	sc->sc_intrcnt_n.ec_count++;
 	return (1);
 }
 
@@ -183,7 +184,7 @@ vs_eintr(arg)
 	printf("Error Interrupt!!!\n");
 #endif
 	vs_intr(sc);
-	sc->sc_intrcnt_e.ev_count++;
+	sc->sc_intrcnt_e.ec_count++;
 	return (1);
 }
 

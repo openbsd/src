@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.16 2004/05/20 16:43:51 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.17 2004/07/30 09:50:15 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -44,6 +44,7 @@
 #include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/evcount.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

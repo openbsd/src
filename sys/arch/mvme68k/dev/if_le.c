@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.27 2004/07/02 17:57:29 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.28 2004/07/30 09:50:15 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -40,6 +40,7 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/evcount.h>
 
 #include <net/if.h>
 
@@ -392,13 +393,6 @@ leattach(parent, self, aux)
 		printf(": unknown bus type\n");
 		return;
 	}
-	evcnt_attach(&sc->sc_dev, "intr", &lesc->sc_intrcnt);
-	evcnt_attach(&sc->sc_dev, "errs", &lesc->sc_errcnt);
-
-	/*
-	if (lebustype == BUS_VMES) 
-		vleinit(sc);
-	*/
 
 	am7990_config(sc);
 
@@ -420,4 +414,7 @@ leattach(parent, self, aux)
 		break;
 #endif
 	}
+
+	evcount_attach(&lesc->sc_intrcnt, self->dv_xname,
+	    (void *)&lesc->sc_ih.ih_ipl, &evcount_intr);
 }

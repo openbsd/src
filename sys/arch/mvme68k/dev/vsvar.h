@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.4 2003/06/02 23:27:50 millert Exp $ */
+/*	$OpenBSD: vsvar.h,v 1.5 2004/07/30 09:50:15 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,10 +60,9 @@ struct vs_tinfo {
 
 struct	vs_softc {
 	struct	device sc_dev;
-	struct	intrhand sc_ih_e;
-	struct	intrhand sc_ih_n;
-	struct	evcnt sc_intrcnt_e;
-	struct	evcnt sc_intrcnt_n;
+	struct	intrhand sc_ih_e, sc_ih_n;
+	struct	evcount sc_intrcnt_e, sc_intrcnt_n;
+	char	sc_intrname_e[16 + 4];
 	u_short  sc_ipl;
    u_short  sc_evec;
    u_short  sc_nvec;

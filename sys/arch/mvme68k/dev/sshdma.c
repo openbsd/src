@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.9 2004/07/02 17:57:29 miod Exp $ */
+/*	$OpenBSD: sshdma.c,v 1.10 2004/07/30 09:50:15 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -37,8 +37,11 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/evcount.h>
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
 #include <machine/autoconf.h>
 #include <mvme68k/dev/sshreg.h>
 #include <mvme68k/dev/sshvar.h>
@@ -167,7 +170,8 @@ void *auxp;
 #endif
 	}
 
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcount_attach(&sc->sc_intrcnt, self->dv_xname,
+	    (void *)&sc->sc_ih.ih_ipl, &evcount_intr);
 
 	/*
 	 * attach all scsi units on us, watching for boot device
@@ -204,7 +208,7 @@ afsc_dmaintr(arg)
 	sc->sc_dstat = rp->ssh_dstat;
 	sc->sc_sstat0 = rp->ssh_sstat0;
 	sshintr(sc);
-	sc->sc_intrcnt.ev_count++;
+	sc->sc_intrcnt.ec_count++;
 	return (1);
 }
 

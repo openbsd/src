@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.16 2004/07/02 17:57:29 miod Exp $ */
+/*	$OpenBSD: zs.c,v 1.17 2004/07/30 09:50:15 miod Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -40,12 +40,14 @@
 #include <sys/syslog.h>
 #include <sys/fcntl.h>
 #include <sys/device.h>
+#include <sys/evcount.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <dev/cons.h>
+
 #include <mvme68k/dev/scc.h>
 
 #include "pcc.h"
@@ -107,7 +109,7 @@ struct zs {
 struct zssoftc {
 	struct device  sc_dev;
 	struct zs   sc_zs[2];
-	struct evcnt   sc_intrcnt;
+	struct evcount   sc_intrcnt;
 	struct intrhand   sc_ih;
 	int      sc_flags;
 };
@@ -209,6 +211,8 @@ zsattach(parent, self, args)
 	sc->sc_ih.ih_fn = zsirq;
 	sc->sc_ih.ih_arg = (void *)self->dv_unit;
 	sc->sc_ih.ih_ipl = zs_level;
+	sc->sc_ih.ih_wantframe = 0;
+
 	switch (ca->ca_bustype) {
 #if NPCC > 0
 	case BUS_PCC:
@@ -300,7 +304,8 @@ zsattach(parent, self, args)
 	}
 	initirq = 1;
 
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcount_attach(&sc->sc_intrcnt, self->dv_xname,
+	    (void *)&sc->sc_ih.ih_ipl, &evcount_intr);
 }
 
 void
@@ -775,7 +780,7 @@ zsirq(arg)
 		zs_extint(zp);
 	ZWRITE0(&zp->scc, 0x38);	/* reset highest IUS */
 
-	sc->sc_intrcnt.ev_count++;
+	sc->sc_intrcnt.ec_count++;
 	return (1);
 }
 
