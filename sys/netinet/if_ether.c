@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.23 2000/11/27 14:57:52 ho Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.24 2000/11/27 16:20:43 ho Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -462,11 +462,13 @@ in_arpinput(m)
 	op = ntohs(ea->arp_op);
 	if ((op != ARPOP_REQUEST) && (op != ARPOP_REPLY))
 		goto out;
+#if notyet
 	if ((op == ARPOP_REPLY) && (m->m_flags & (M_BCAST|M_MCAST))) {
 		log(LOG_ERR,
 		    "arp: received reply to broadcast or multicast address\n");
 		goto out;
 	}
+#endif
 	bcopy((caddr_t)ea->arp_spa, (caddr_t)&isaddr, sizeof (isaddr));
 	bcopy((caddr_t)ea->arp_tpa, (caddr_t)&itaddr, sizeof (itaddr));
 	for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
@@ -484,7 +486,7 @@ in_arpinput(m)
 	if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)ac->ac_enaddr,
 	    sizeof (ea->arp_sha)))
 		goto out;	/* it's from me, ignore it. */
-	if (ea->arp_sha[0] & 1) {
+	if (ETHER_IS_MULTICAST (&ea->arp_sha[0])) {
 		if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)etherbroadcastaddr,
 		    sizeof (ea->arp_sha)))
 		    log(LOG_ERR,
