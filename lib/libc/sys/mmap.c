@@ -32,7 +32,7 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mmap.c,v 1.6 1997/04/26 08:50:12 tholo Exp $";
+static char rcsid[] = "$OpenBSD: mmap.c,v 1.7 1997/11/14 21:24:39 deraadt Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ quad_t __syscall(quad_t, ...);
  */
 caddr_t
 mmap(addr, len, prot, flags, fd, offset)
-	caddr_t addr;
+	void	*addr;
 	size_t	len;
 	int	prot;
 	int	flags;
