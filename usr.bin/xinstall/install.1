@@ -1,4 +1,4 @@
-.\"	$OpenBSD: install.1,v 1.4 1996/08/08 20:49:27 millert Exp $
+.\"	$OpenBSD: install.1,v 1.5 1997/04/17 19:13:55 millert Exp $
 .\"	$NetBSD: install.1,v 1.4 1994/11/14 04:57:17 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -121,9 +121,11 @@ rename fails, the existing target is left untouched.
 .It Fl s
 .Nm Install
 exec's the command
-.Xr strip  1
+.Pa /usr/bin/strip
 to strip binaries so that install can be portable over a large
-number of systems and binary types.
+number of systems and binary types.  If the environment variable
+.Ev STRIP
+is set, it is used instead.
 .El
 .Pp
 By default,
@@ -155,6 +157,15 @@ option, temporary files named INS@XXXXXX,
 where XXXXXX is decided by
 .Xr mkstemp 3 ,
 are created in the target directory.
+.Sh ENVIRONMENT
+.Nm
+utilizes the following environment variables.
+.Bl -tag -width "STRIP"
+.It Ev STRIP
+For an alternate
+.Xr strip 1
+program to run.  Default is
+.Pa /usr/bin/strip .
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr chgrp 1 ,
