@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.1.1.1 2004/04/21 15:24:08 aoyama Exp $	*/
+/* $OpenBSD: machdep.c,v 1.2 2004/05/04 15:27:15 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -203,7 +203,7 @@ extern char *esym;
 
 int machtype = LUNA_88K2;	/* XXX: aoyama */
 int cputyp = CPU_88100;		/* XXX: aoyama */
-int boothowto = RB_ASKNAME;	/* XXX: should be set in boot loader and locore.S */
+int boothowto;			/* XXX: should be set in boot loader and locore.S */
 int bootdev;			/* XXX: should be set in boot loader and locore.S */
 int cpuspeed;
 double cycles_per_microsecond;	/* used in locore.S:delay() */

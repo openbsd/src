@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.27 2004/04/24 19:51:49 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.28 2004/05/04 15:27:20 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -234,6 +234,13 @@ setroot()
 
 	printf("boot device: %s\n",
 	    (bootdv) ? bootdv->dv_xname : "<unknown>");
+
+	/*
+	 * If 'swap generic' and we could not determine the boot device,
+	 * ask the user.
+	 */
+	if (mountroot == NULL && bootdv == NULL)
+		boothowto |= RB_ASKNAME;
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
