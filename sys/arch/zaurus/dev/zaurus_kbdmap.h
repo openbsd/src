@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbdmap.h,v 1.9 2005/01/14 18:42:31 drahn Exp $ */
+/* $OpenBSD: zaurus_kbdmap.h,v 1.10 2005/01/14 21:12:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -21,17 +21,17 @@
 static const keysym_t zkbd_keydesc_us[] = {
     KC(0),	KS_Control_L,
     KC(2),	KS_Tab,		KS_Tab,		KS_Caps_Lock,
-    KC(3),	KS_f2,	/* Addr, */
-    KC(4),	KS_f1,	/* Cal, */
-    KC(5),	KS_f3,	/* Mail, */
-    KC(6),	KS_f4,	/* Home, */
+    KC(3),	KS_Cmd_Screen1,	KS_f2,				/* Addr, */
+    KC(4),	KS_Cmd_Screen0,	KS_f1,				/* Cal, */
+    KC(5),	KS_Cmd_Screen2,	KS_f3,				/* Mail, */
+    KC(6),	KS_Cmd_Screen3,	KS_f4,				/* Home, */
     KC(8),	KS_1,		KS_exclam,
     KC(9),	KS_2,		KS_quotedbl,
     KC(10),	KS_q,
     KC(11),	KS_w,		KS_W,		KS_asciicircum,
     KC(12),	KS_a,
     KC(13),	KS_z,
-    /* KC(14),	US, (left japanese) */
+    KC(14),	KS_Cmd,		KS_Alt_L,
     KC(16),	KS_3,		KS_numbersign,
     KC(17),	KS_4,		KS_dollar,
     KC(18),	KS_e,		KS_E,		KS_equal,
@@ -59,7 +59,7 @@ static const keysym_t zkbd_keydesc_us[] = {
     KC(43),	KS_h,		KS_H,		KS_colon,
     KC(44),	KS_n,
     KC(45),	KS_comma,	KS_slash,	KS_greater,
-    KC(46),	KS_f5,	/* Menu, */
+    KC(46),	KS_Cmd_Screen4,	KS_f5,				/* Menu, */
     KC(48),	KS_9,		KS_parenright,
     KC(49),	KS_i,		KS_I,	
     KC(50),	KS_j,		KS_J,		KS_asterisk,
