@@ -1,12 +1,12 @@
-/*	$OpenBSD: usbdevs.h,v 1.3 1999/08/27 09:08:52 fgsch Exp $	*/
+/*	$OpenBSD: usbdevs.h,v 1.4 1999/08/29 10:32:21 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: usbdevs,v 1.3 1999/08/27 09:08:03 fgsch Exp 
+ *		OpenBSD: usbdevs,v 1.4 1999/08/29 10:31:13 fgsch Exp 
  */
-/*	$NetBSD: usbdevs,v 1.39 1999/08/25 23:23:17 augustss Exp $	*/
+/*	$NetBSD: usbdevs,v 1.40 1999/08/28 10:00:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,37 +50,41 @@
  */
 
 #define	USB_VENDOR_NEC	0x0409		/* NEC */
-#define	USB_VENDOR_KODAK	0x040a		/* Eastman Kodak co. */
+#define	USB_VENDOR_KODAK	0x040a		/* Eastman Kodak Corp. */
 #define	USB_VENDOR_CATC	0x0423		/* Computer Access Technology Corp. */
 #define	USB_VENDOR_GRAVIS	0x0428		/* Advanced Gravis Computer Tech. Ltd. */
-#define	USB_VENDOR_NANAO	0x0440		/* NANAO Corporation */
+#define	USB_VENDOR_NANAO	0x0440		/* NANAO Corp. */
+#define	USB_VENDOR_THRUST	0x044f		/* Thrustmaster */
 #define	USB_VENDOR_TI	0x0451		/* Texas Instruments */
 #define	USB_VENDOR_GENIUS	0x0458		/* KYE Systems Corp. */
 #define	USB_VENDOR_MICROSOFT	0x045e		/* Microsoft */
 #define	USB_VENDOR_KENSINGTON	0x0461		/* Primax Electronics */
-#define	USB_VENDOR_CHERRY	0x046a		/* Cherry Mikroschalter GMBH */
+#define	USB_VENDOR_CHERRY	0x046a		/* Cherry Mikroschalter GmbH */
 #define	USB_VENDOR_LOGITECH	0x046d		/* Logitech Inc. */
 #define	USB_VENDOR_BTC	0x046e		/* Behavior Tech. Computer */
 #define	USB_VENDOR_PHILIPS	0x0471		/* Philips */
 #define	USB_VENDOR_CONNECTIX	0x0478		/* Connectix Corp. */
+#define	USB_VENDOR_LUCENT	0x047e		/* Lucent */
 #define	USB_VENDOR_STMICRO	0x0483		/* STMicroelectronics */
 #define	USB_VENDOR_ACER	0x04a5		/* Acer Peripheral Inc. */
 #define	USB_VENDOR_CYPRESS	0x04b4		/* Cypress Semiconductor */
 #define	USB_VENDOR_EPSON	0x04b8		/* Seiko Epson Corp. */
 #define	USB_VENDOR_3COM	0x04c1		/* U.S. Robotics */
-#define	USB_VENDOR_KONICA	0x04c8		/* Konica Corporation */
+#define	USB_VENDOR_KONICA	0x04c8		/* Konica Corp. */
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
 #define	USB_VENDOR_BROTHER	0x04f9		/* Brother Industries Corp. */
 #define	USB_VENDOR_JAZZ	0x04fa		/* Dallas Semiconductor */
 #define	USB_VENDOR_KAWATSU	0x050f		/* Kawatsu Semiconductor, Inc. */
 #define	USB_VENDOR_AKS	0x0529		/* Fast Security AG */
 #define	USB_VENDOR_VISION	0x0533		/* Alcatel Mobile Phones */
-#define	USB_VENDOR_ATEN	0x0557		/* ATEN International Co. ltd. */
-#define	USB_VENDOR_PERACOM	0x0565		/* Peracom Networks, Inc. */
-#define	USB_VENDOR_WACOM	0x056a		/* WACOM Co. Ltd. */
+#define	USB_VENDOR_ATEN	0x0557		/* ATEN International Corp. Ltd. */
+#define	USB_VENDOR_PERACOM	0x0565		/* Peracom Networks Inc. */
+#define	USB_VENDOR_WACOM	0x056a		/* WACOM Corp. Ltd. */
 #define	USB_VENDOR_EIZO	0x056d		/* EIZO */
-#define	USB_VENDOR_AGILER	0x056e		/* Elecom Co., Ltd. */
-#define	USB_VENDOR_IOMEGA	0x059b		/* Iomega Corporation */
+#define	USB_VENDOR_AGILER	0x056e		/* Elecom Corp. Ltd. */
+#define	USB_VENDOR_ROCKFIRE	0x0583		/* Rockfire */
+#define	USB_VENDOR_IOMEGA	0x059b		/* Iomega Corp. */
+#define	USB_VENDOR_OMNIVISION	0x05a9		/* OmniVision */
 #define	USB_VENDOR_BELKIN	0x05ab		/* In-System Design */
 #define	USB_VENDOR_APPLE	0x05ac		/* Apple Computer */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
@@ -111,7 +115,10 @@
 /* Gravis products */
 #define	USB_PRODUCT_GRAVIS_GAMEPADPRO	0x4001		/* GamePad Pro */
 
-/* Unixtar products */
+/* Thrustmaster products */
+#define	USB_PRODUCT_THRUST_FUSION_PAD	0xa0a3		/* Fusion Digital Gamepad */
+
+/* Texas Intel products */
 #define	USB_PRODUCT_TI_UTUSB41	0x1446		/* UT-USB41 hub */
 
 /* Genius products */
@@ -131,7 +138,7 @@
 #define	USB_PRODUCT_CHERRY_MY3000KBD	0x0001		/* My3000 keyboard */
 #define	USB_PRODUCT_CHERRY_MY3000HUB	0x0003		/* My3000 hub */
 
-/* Behavior Technology Corporation products */
+/* Behavior Technology Computer products */
 #define	USB_PRODUCT_BTC_BTC7932	0x6782		/* Keyboard with mouse port */
 
 /* Philips products */
@@ -140,6 +147,9 @@
 
 /* Connectix products */
 #define	USB_PRODUCT_CONNECTIX_QUICKCAM	0x0001		/* QuickCam */
+
+/* Lucent products */
+#define	USB_PRODUCT_LUCENT_EVALKIT	0x1001		/* USS-720 evaluation kit */
 
 /* STMicroelectronics products */
 #define	USB_PRODUCT_STMICRO_COMMUNICATOR	0x7554		/* USB Communicator */
@@ -151,12 +161,12 @@
 #define	USB_PRODUCT_CYPRESS_MOUSE	0x0001		/* mouse */
 
 /* Epson products */
-#define	USB_PRODUCT_EPSON_PRINTER3	0x0003		/* printer adapter */
+#define	USB_PRODUCT_EPSON_PRINTER3	0x0003		/* ISD USB Smart Cable */
 
 /* 3Com products */
-#define	USB_PRODUCT_3COM_USR56K	0x3021		/* U.S.Robotics 56000 Voice USB Modem */
+#define	USB_PRODUCT_3COM_USR56K	0x3021		/* U.S.Robotics 56000 Voice Faxmodem Pro */
 
-/* Konica Corporation Products */
+/* Konica Corp. Products */
 #define	USB_PRODUCT_KONICA_CAMERA	0x0720		/* Digital Color Camera */
 
 /* Shuttle Technology products */
@@ -193,8 +203,14 @@
 /* Agiler products */
 #define	USB_PRODUCT_AGILER_MOUSE29UO	0x0002		/* mouse 29UO */
 
+/* Rockfire products */
+#define	USB_PRODUCT_ROCKFIRE_GAMEPAD	0x2033		/* gamepad 203USB */
+
 /* Iomega products */
 #define	USB_PRODUCT_IOMEGA_ZIP100	0x0001		/* Zip 100 */
+
+/* OmniVision Technologies Inc. products */
+#define	USB_PRODUCT_OMNIVISION_OV511	0x0511		/* OV511 Camera */
 
 /* Belkin products */
 #define	USB_PRODUCT_BELKIN_F5U002	0x0002		/* Parallel printer adapter */
@@ -214,7 +230,7 @@
 #define	USB_PRODUCT_MACALLY_MOUSE1	0x0101		/* mouse */
 
 /* MultiTech products */
-#define	USB_PRODUCT_MULTITECH_MT5634ZBA	0xf101		/* MT5634ZBA */
+#define	USB_PRODUCT_MULTITECH_ATLAS	0xf101		/* MT5634ZBA-USB modem */
 
 /* ADS products */
 #define	USB_PRODUCT_ADS_ENET	0x0008		/* Ethernet adapter */
