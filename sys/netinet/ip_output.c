@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.145 2002/05/28 17:01:43 jasoni Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.146 2002/05/31 02:41:44 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -557,15 +557,12 @@ sendit:
 
 		tdb = gettdb(sspi, &sdst, sproto);
 		if (tdb == NULL) {
+			DPRINTF(("ip_output: unknown TDB"));
 			error = EHOSTUNREACH;
 			splx(s);
 			m_freem(m);
 			goto done;
 		}
-
-		/* Latch to PCB */
-		if (inp)
-		        tdb_add_inp(tdb, inp, 0);
 
 		/* Check if we are allowed to fragment */
 		if (ip_mtudisc && (ip->ip_off & IP_DF) && tdb->tdb_mtu &&
@@ -1140,27 +1137,35 @@ ip_ctloutput(op, so, level, optname, mp)
 			if (opt16val == 0) {
 				switch (optname) {
 				case IP_IPSEC_LOCAL_ID:
-					if (inp->inp_ipsec_localid != NULL)
-						ipsp_reffree(inp->inp_ipsec_localid);
-					inp->inp_ipsec_localid = NULL;
+					if (inp->inp_ipo != NULL &&
+					    inp->inp_ipo->ipo_srcid != NULL) {
+						ipsp_reffree(inp->inp_ipo->ipo_srcid);
+						inp->inp_ipo->ipo_srcid = NULL;
+					}
 					break;
 
 				case IP_IPSEC_REMOTE_ID:
-					if (inp->inp_ipsec_remoteid != NULL)
-						ipsp_reffree(inp->inp_ipsec_remoteid);
-					inp->inp_ipsec_remoteid = NULL;
+					if (inp->inp_ipo != NULL &&
+					    inp->inp_ipo->ipo_dstid != NULL) {
+						ipsp_reffree(inp->inp_ipo->ipo_dstid);
+						inp->inp_ipo->ipo_dstid = NULL;
+					}
 					break;
 
 				case IP_IPSEC_LOCAL_CRED:
-					if (inp->inp_ipsec_localcred != NULL)
-						ipsp_reffree(inp->inp_ipsec_localcred);
-					inp->inp_ipsec_localcred = NULL;
+					if (inp->inp_ipo != NULL &&
+					    inp->inp_ipo->ipo_local_cred != NULL) {
+						ipsp_reffree(inp->inp_ipo->ipo_local_cred);
+						inp->inp_ipo->ipo_local_cred = NULL;
+					}
 					break;
 
 				case IP_IPSEC_LOCAL_AUTH:
-					if (inp->inp_ipsec_localauth != NULL)
-						ipsp_reffree(inp->inp_ipsec_localauth);
-					inp->inp_ipsec_localauth = NULL;
+					if (inp->inp_ipo != NULL &&
+					    inp->inp_ipo->ipo_local_auth != NULL) {
+						ipsp_reffree(inp->inp_ipo->ipo_local_auth);
+						inp->inp_ipo->ipo_local_auth = NULL;
+					}
 					break;
 				}
 
@@ -1174,6 +1179,16 @@ ip_ctloutput(op, so, level, optname, mp)
 				break;
 			}
 
+			/* Allocate if needed */
+			if (inp->inp_ipo == NULL) {
+				inp->inp_ipo = ipsec_add_policy(inp,
+				    AF_INET, IPSP_DIRECTION_OUT);
+				if (inp->inp_ipo == NULL) {
+					error = ENOBUFS;
+					break;
+				}
+			}
+
 			MALLOC(ipr, struct ipsec_ref *,
 			       sizeof(struct ipsec_ref) + m->m_len - 2,
 			       M_CREDENTIALS, M_NOWAIT);
@@ -1181,6 +1196,7 @@ ip_ctloutput(op, so, level, optname, mp)
 				error = ENOBUFS;
 				break;
 			}
+
 			ipr->ref_count = 1;
 			ipr->ref_malloctype = M_CREDENTIALS;
 			ipr->ref_len = m->m_len - 2;
@@ -1196,9 +1212,9 @@ ip_ctloutput(op, so, level, optname, mp)
 					FREE(ipr, M_CREDENTIALS);
 					error = EINVAL;
 				} else {
-					if (inp->inp_ipsec_localid != NULL)
-						ipsp_reffree(inp->inp_ipsec_localid);
-					inp->inp_ipsec_localid = ipr;
+					if (inp->inp_ipo->ipo_srcid != NULL)
+						ipsp_reffree(inp->inp_ipo->ipo_srcid);
+					inp->inp_ipo->ipo_srcid = ipr;
 				}
 				break;
 			case IP_IPSEC_REMOTE_ID:
@@ -1209,9 +1225,9 @@ ip_ctloutput(op, so, level, optname, mp)
 					FREE(ipr, M_CREDENTIALS);
 					error = EINVAL;
 				} else {
-					if (inp->inp_ipsec_remoteid != NULL)
-						ipsp_reffree(inp->inp_ipsec_remoteid);
-					inp->inp_ipsec_remoteid = ipr;
+					if (inp->inp_ipo->ipo_dstid != NULL)
+						ipsp_reffree(inp->inp_ipo->ipo_dstid);
+					inp->inp_ipo->ipo_dstid = ipr;
 				}
 				break;
 			case IP_IPSEC_LOCAL_CRED:
@@ -1220,9 +1236,9 @@ ip_ctloutput(op, so, level, optname, mp)
 					FREE(ipr, M_CREDENTIALS);
 					error = EINVAL;
 				} else {
-					if (inp->inp_ipsec_localcred != NULL)
-						ipsp_reffree(inp->inp_ipsec_localcred);
-					inp->inp_ipsec_localcred = ipr;
+					if (inp->inp_ipo->ipo_local_cred != NULL)
+						ipsp_reffree(inp->inp_ipo->ipo_local_cred);
+					inp->inp_ipo->ipo_local_cred = ipr;
 				}
 				break;
 			case IP_IPSEC_LOCAL_AUTH:
@@ -1231,9 +1247,9 @@ ip_ctloutput(op, so, level, optname, mp)
 					FREE(ipr, M_CREDENTIALS);
 					error = EINVAL;
 				} else {
-					if (inp->inp_ipsec_localauth != NULL)
-						ipsp_reffree(inp->inp_ipsec_localauth);
-					inp->inp_ipsec_localauth = ipr;
+					if (inp->inp_ipo->ipo_local_auth != NULL)
+						ipsp_reffree(inp->inp_ipo->ipo_local_auth);
+					inp->inp_ipo->ipo_local_auth = ipr;
 				}
 				break;
 			}
@@ -1370,17 +1386,21 @@ ip_ctloutput(op, so, level, optname, mp)
 #else
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(u_int16_t);
+			ipr = NULL;
 			switch (optname) {
 			case IP_IPSEC_LOCAL_ID:
-				ipr = inp->inp_ipsec_localid;
+				if (inp->inp_ipo != NULL)
+					ipr = inp->inp_ipo->ipo_srcid;
 				opt16val = IPSP_IDENTITY_NONE;
 				break;
 			case IP_IPSEC_REMOTE_ID:
-				ipr = inp->inp_ipsec_remoteid;
+				if (inp->inp_ipo != NULL)
+					ipr = inp->inp_ipo->ipo_dstid;
 				opt16val = IPSP_IDENTITY_NONE;
 				break;
 			case IP_IPSEC_LOCAL_CRED:
-				ipr = inp->inp_ipsec_localcred;
+				if (inp->inp_ipo != NULL)
+					ipr = inp->inp_ipo->ipo_local_cred;
 				opt16val = IPSP_CRED_NONE;
 				break;
 			case IP_IPSEC_REMOTE_CRED:
@@ -1388,7 +1408,8 @@ ip_ctloutput(op, so, level, optname, mp)
 				opt16val = IPSP_CRED_NONE;
 				break;
 			case IP_IPSEC_LOCAL_AUTH:
-				ipr = inp->inp_ipsec_localauth;
+				if (inp->inp_ipo != NULL)
+					ipr = inp->inp_ipo->ipo_local_auth;
 				break;
 			case IP_IPSEC_REMOTE_AUTH:
 				ipr = inp->inp_ipsec_remoteauth;
