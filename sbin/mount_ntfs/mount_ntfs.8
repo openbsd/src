@@ -1,0 +1,188 @@
+.\" $NetBSD: mount_ntfs.8,v 1.13 2003/02/14 16:21:48 grant Exp $
+.\"
+.\" Copyright (c) 1993,1994 Christopher G. Demetriou
+.\" Copyright (c) 1999 Semen Ustimenko
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgment:
+.\"      This product includes software developed by Christopher G. Demetriou.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	Id: mount_ntfs.8,v 1.3 1999/05/04 11:34:33 jkoshy Exp
+.\"
+.Dd October 31, 2001
+.Dt MOUNT_NTFS 8
+.Os
+.Sh NAME
+.Nm mount_ntfs
+.Nd mount an NTFS file system
+.Sh SYNOPSIS
+.Nm mount_ntfs
+.Op Fl a
+.Op Fl i
+.Op Fl u Ar uid
+.Op Fl g Ar gid
+.Op Fl m Ar mask
+.Pa special
+.Pa node
+.Sh DESCRIPTION
+The
+.Nm
+command attaches the NTFS filesystem residing on the device
+.Pa special
+to the global filesystem namespace at the location
+indicated by
+.Pa node .
+This command is normally executed by
+.Xr mount 8
+at boot time, but can be used by any user to mount an
+NTFS file system on any directory that they own (provided,
+of course, that they have appropriate access to the device that
+contains the file system).
+.Pp
+The supported NTFS versions include both NTFS4, as used by Microsoft
+Windows NT 4.0, and NTFS5, as used by Microsoft Windows 2000 and XP.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl a
+Force behaviour to return MS-DOS 8.3 names also on
+.Fn readdir .
+.It Fl i
+Make name lookup case insensitive for all names except POSIX names.
+.It Fl u Ar uid
+Set the owner of the files in the file system to
+.Ar uid .
+The default owner is the owner of the directory
+on which the file system is being mounted.
+.It Fl g Ar gid
+Set the group of the files in the file system to
+.Ar gid .
+The default group is the group of the directory
+on which the file system is being mounted.
+.It Fl m Ar mask
+Specify the maximum file permissions for files
+in the file system.
+.El
+.Sh FEATURES
+.Ss NTFS file attributes
+NTFS file attributes can be accessed in following way:
+.Bd -literal -offset indent
+foo[[:ATTRTYPE]:ATTRNAME]
+.Ed
+.Pp
+.Sq ATTRTYPE
+is one of identifier listed in $AttrDef file of volume.
+Default is $DATA.
+.Sq ATTRNAME
+is an attribute name.
+Default is none.
+.Pp
+.Sy Examples :
+.Pp
+To get volume name (in Unicode):
+.Bd -literal -offset indent
+# cat /mnt/\\$Volume:\\$VOLUME_NAME
+.Ed
+.Pp
+To read directory raw data:
+.Bd -literal -offset indent
+# cat /mnt/foodir:\\$INDEX_ROOT:\\$I30
+.Ed
+.Ss Limited support for writing
+There is limited writing ability for files.
+Limitations:
+.Bl -bullet -compact
+.It
+file must be nonresident
+.It
+file must
+.Em not
+contain any holes (uninitialized areas)
+.It
+file can't be compressed
+.El
+.Pp
+Note that that it's not currently possible to create or remove files
+on NTFS filesystem.
+.Pp
+.Sy Warning :
+do not mount NTFS filesystems read-write.
+The write support is not very useful and is not tested well.
+It's not safe to write to any file on NTFS, you might damage the filesystem.
+Unless you want to debug NTFS filesystem code, mount the NTFS filesystem
+read-only.
+.Sh SEE ALSO
+.Xr mount 2 ,
+.Xr unmount 2 ,
+.Xr fstab 5 ,
+.Xr disklabel 8 ,
+.Xr mbrlabel 8 ,
+.Xr mount 8
+.Sh HISTORY
+Support for NTFS first appeared in
+.Fx 3.0 .
+It has been ported to
+.Nx
+and first appeared in
+.Nx 1.5 .
+.Sh AUTHORS
+NTFS kernel implementation,
+.Nm
+and this manual were originally written by
+.An Semen Ustimenko Aq semenu@FreeBSD.org .
+.Pp
+The
+.Nx
+port was done by
+.An Christos Zoulas
+.Aq christos@NetBSD.org
+and
+.An Jaromir Dolecek
+.Aq jdolecek@NetBSD.org .
+.Sh BUGS
+The write support should be enhanced to actually be able change
+file size, and to create and remove files and directories.
+It's not very useful right now.
+.Pp
+If the attempt to mount NTFS gives you error like this:
+.Bd -literal
+# mount -t ntfs /dev/wd0k /mnt
+mount_ntfs: /dev/wd0k on /mnt: Invalid argument
+.Ed
+.Pp
+make sure that appropriate partition has correct entry in the
+disk label, particularly that the partition offset is correct.
+If the NTFS partition is the first partition on the disk, the
+offset should be '63' on i386 (see
+.Xr disklabel 8 ) .
+.Xr mbrlabel 8
+could help you to setup the disk label correctly.
+.Pp
+If you mark the NTFS partition as
+.Ql dynamic
+under Microsoft Windows XP,
+it won't be possible to access it under
+.Nx
+anymore.
