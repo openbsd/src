@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.14 1997/06/24 02:26:18 dgregor Exp $	*/
+/*	$OpenBSD: inet.c,v 1.15 1997/06/25 07:56:18 provos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.14 1997/06/24 02:26:18 dgregor Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.15 1997/06/25 07:56:18 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -610,6 +610,7 @@ ah_stats(off, name)
         p(ahs_wrap, "\t%u packet%s where counter wrapping was detected\n");
         p(ahs_replay, "\t%u possibly replayed packet%s received\n");
         p(ahs_badauthl, "\t%u packet%s with bad authenticator length received\n");
+	p(ahs_invalid, "\t%u packet%s attempted to use an invalid tdb\n");
 #undef p
 }
 
@@ -642,6 +643,7 @@ esp_stats(off, name)
         p(esps_wrap, "\t%u packet%s where counter wrapping was detected\n");
         p(esps_replay, "\t%u possibly replayed packet%s received\n"); 
         p(esps_badilen, "\t%u packet%s with payload not a multiple of 8 received\n");
+	p(esps_invalid, "\t%u packet%s attempted to use an invalid tdb\n");
 
 #undef p
 }
