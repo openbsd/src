@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.10 2002/03/30 09:33:51 mickey Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.11 2002/10/03 23:59:43 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -61,7 +61,8 @@
 #define		AMI_INITTARG(i)	(((i) >> 16) & 0xff)
 #define		AMI_INITCHAN(i)	(((i) >> 24) & 0xff)
 #define	AMI_PCI_SIG	0xa0
-#define		AMI_SIGNATURE	0x3344
+#define		AMI_SIGNATURE_1	0xcccc		/* older adapters */
+#define		AMI_SIGNATURE_2	0x3344		/* newer adapters */
 #define	AMI_PCI_SGL	0xa4
 #define		AMI_SGL_LHC	0x00000299
 #define		AMI_SGL_HLC	0x00000199
@@ -123,17 +124,23 @@ ami_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct ami_pci_device *pami;
+	pcireg_t sig;
 
-	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_I2O_STANDARD)
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_I2O &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_I2O_STANDARD)
 		return (0);
 
 	for (pami = ami_pci_devices; pami->vendor; pami++) {
 		if (pami->vendor == PCI_VENDOR(pa->pa_id) &&
-		    pami->product == PCI_PRODUCT(pa->pa_id) &&
-		    (!pami->flags & AMI_CHECK_SIGN ||
-		     (pci_conf_read(pa->pa_pc, pa->pa_tag, AMI_PCI_SIG) &
-			  0xffff) == AMI_SIGNATURE))
-			return (1);
+		    pami->product == PCI_PRODUCT(pa->pa_id)) {
+			if (!(pami->flags & AMI_CHECK_SIGN))
+				return (1);
+			sig = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    AMI_PCI_SIG) & 0xffff;
+			if (sig == AMI_SIGNATURE_1 ||
+			    sig == AMI_SIGNATURE_2)
+				return (1);
+		}
 	}
 	return (0);
 }
