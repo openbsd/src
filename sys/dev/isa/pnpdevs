@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.60 1999/03/10 18:45:37 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.61 1999/03/10 22:14:16 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -274,6 +274,7 @@ we		PNP81C8	# SMC EtherElite Ultra 16
 #		PNP81F0	# Proteon ISA Token Ring (1347)
 #		PNP81FF	# Cabletron E2000 Series DNI
 le		PNP8200	# Cabletron E2100 Series DNI
+le		PNP8201	# BOCALANcard COMBO	(ie. BRI1001)
 #		PNP8209	# Zenith Data Systems Z-Note
 #		PNP820A	# Zenith Data Systems NE2000-Compatible
 #		PNP8213	# Xircom Pocket Ethernet II
