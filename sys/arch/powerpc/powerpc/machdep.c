@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.34 2000/03/20 07:05:52 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.35 2000/03/23 04:01:55 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1129,9 +1129,13 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 	off = bpa - spa;
 	len = size+off;
 
+printf("mem_add_mapping bpa %x size %x, spa %x epa %x\n",
+	bpa, size, spa, epa);
+#if 0
 	if (epa <= spa) {
 		panic("bus_mem_add_mapping: overflow");
 	}
+#endif
 	if (ppc_malloc_ok == 0) { 
 		bus_size_t alloc_size;
 
