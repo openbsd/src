@@ -1,4 +1,4 @@
-/*	$OpenBSD: resource.h,v 1.6 2003/12/11 22:55:22 millert Exp $	*/
+/*	$OpenBSD: resource.h,v 1.7 2003/12/11 23:02:30 millert Exp $	*/
 /*	$NetBSD: resource.h,v 1.14 1996/02/09 18:25:27 christos Exp $	*/
 
 /*
@@ -117,10 +117,10 @@ int	donice(struct proc *, struct proc *, int);
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	getpriority(int, int);
+int	getpriority(int, id_t);
 int	getrlimit(int, struct rlimit *);
 int	getrusage(int, struct rusage *);
-int	setpriority(int, int, int);
+int	setpriority(int, id_t, int);
 int	setrlimit(int, const struct rlimit *);
 __END_DECLS
 

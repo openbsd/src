@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.63 2003/12/10 23:10:08 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.64 2003/12/11 23:02:30 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -193,13 +193,13 @@
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
 95	STD		{ int sys_fsync(int fd); }
-96	STD		{ int sys_setpriority(int which, int who, int prio); }
+96	STD		{ int sys_setpriority(int which, id_t who, int prio); }
 97	STD		{ int sys_socket(int domain, int type, int protocol); }
 98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
 			    socklen_t namelen); }
 99	COMPAT_43	{ int sys_accept(int s, caddr_t name, \
 			    int *anamelen); } oaccept
-100	STD		{ int sys_getpriority(int which, int who); }
+100	STD		{ int sys_getpriority(int which, id_t who); }
 101	COMPAT_43	{ int sys_send(int s, caddr_t buf, int len, \
 			    int flags); } osend
 102	COMPAT_43	{ int sys_recv(int s, caddr_t buf, int len, \

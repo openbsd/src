@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.25 2003/12/11 22:55:22 millert Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.26 2003/12/11 23:02:30 millert Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@ sys_getpriority(curp, v, retval)
 {
 	register struct sys_getpriority_args /* {
 		syscallarg(int) which;
-		syscallarg(int) who;
+		syscallarg(id_t) who;
 	} */ *uap = v;
 	register struct proc *p;
 	register int low = NZERO + PRIO_MAX + 1;
@@ -126,7 +126,7 @@ sys_setpriority(curp, v, retval)
 {
 	register struct sys_setpriority_args /* {
 		syscallarg(int) which;
-		syscallarg(int) who;
+		syscallarg(id_t) who;
 		syscallarg(int) prio;
 	} */ *uap = v;
 	register struct proc *p;

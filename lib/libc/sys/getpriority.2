@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpriority.2,v 1.9 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: getpriority.2,v 1.10 2003/12/11 23:02:30 millert Exp $
 .\"	$NetBSD: getpriority.2,v 1.4 1995/02/27 12:33:15 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -41,9 +41,9 @@
 .Fd #include <sys/time.h>
 .Fd #include <sys/resource.h>
 .Ft int
-.Fn getpriority "int which" "int who"
+.Fn getpriority "int which" "id_t who"
 .Ft int
-.Fn setpriority "int which" "int who" "int prio"
+.Fn setpriority "int which" "id_t who" "int prio"
 .Sh DESCRIPTION
 The scheduling priority of the process, process group, or user,
 as indicated by
