@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.16 2000/09/07 19:21:30 art Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.17 2001/06/23 05:45:13 art Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -182,6 +182,8 @@ hashinit(elements, type, flags, hashmask)
 		continue;
 	hashsize >>= 1;
 	hashtbl = malloc((u_long)hashsize * sizeof(*hashtbl), type, flags);
+	if (hashtbl == NULL)
+		return NULL;
 	for (i = 0; i < hashsize; i++)
 		LIST_INIT(&hashtbl[i]);
 	*hashmask = hashsize - 1;
