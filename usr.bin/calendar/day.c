@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.2 1997/08/26 23:37:21 millert Exp $	*/
+/*	$OpenBSD: day.c,v 1.3 1998/02/23 05:48:42 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.2 1997/08/26 23:37:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: day.c,v 1.3 1998/02/23 05:48:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,10 +97,8 @@ void setnnames(void)
 
 	for (i = 0; i < 7; i++) {
 		tm.tm_wday = i;
-		strftime(buf, sizeof(buf), "%a", &tm);
-		for (l = strlen(buf);
-		     l > 0 && isspace((int)buf[l - 1]);
-		     l--)
+		l = strftime(buf, sizeof(buf), "%a", &tm);
+		for (; l > 0 && isspace((int)buf[l - 1]); l--)
 			;
 		buf[l] = '\0';
 		if (ndays[i].name != NULL)
@@ -109,10 +107,8 @@ void setnnames(void)
 			errx(1, "cannot allocate memory");
 		ndays[i].len = strlen(buf);
 
-		strftime(buf, sizeof(buf), "%A", &tm);
-		for (l = strlen(buf);
-		     l > 0 && isspace((int)buf[l - 1]);
-		     l--)
+		l = strftime(buf, sizeof(buf), "%A", &tm);
+		for (; l > 0 && isspace((int)buf[l - 1]); l--)
 			;
 		buf[l] = '\0';
 		if (fndays[i].name != NULL)
@@ -124,10 +120,8 @@ void setnnames(void)
 
 	for (i = 0; i < 12; i++) {
 		tm.tm_mon = i;
-		strftime(buf, sizeof(buf), "%b", &tm);
-		for (l = strlen(buf);
-		     l > 0 && isspace((int)buf[l - 1]);
-		     l--)
+		l = strftime(buf, sizeof(buf), "%b", &tm);
+		for (; l > 0 && isspace((int)buf[l - 1]); l--)
 			;
 		buf[l] = '\0';
 		if (nmonths[i].name != NULL)
@@ -136,10 +130,8 @@ void setnnames(void)
 			errx(1, "cannot allocate memory");
 		nmonths[i].len = strlen(buf);
 
-		strftime(buf, sizeof(buf), "%B", &tm);
-		for (l = strlen(buf);
-		     l > 0 && isspace((int)buf[l - 1]);
-		     l--)
+		l = strftime(buf, sizeof(buf), "%B", &tm);
+		for (; l > 0 && isspace((int)buf[l - 1]); l--)
 			;
 		buf[l] = '\0';
 		if (fnmonths[i].name != NULL)
