@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.8 1997/01/24 19:58:10 niklas Exp $	*/
+/*	$OpenBSD: esp.c,v 1.9 1998/08/04 23:15:20 millert Exp $	*/
 /*	$NetBSD: esp.c,v 1.26 1996/12/05 01:39:40 cgd Exp $	*/
 
 #ifdef __sparc__
@@ -1011,7 +1011,7 @@ esp_done(sc, ecb)
 #ifdef ESP_DEBUG
 	if (esp_debug & ESP_SHOWMISC) {
 		if (xs->resid != 0)
-			printf("resid=%d ", xs->resid);
+			printf("resid=%lu ", xs->resid);
 		if (xs->error == XS_SENSE)
 			printf("sense=0x%02x\n", xs->sense.error_code);
 		else
@@ -1656,7 +1656,7 @@ espintr(sc)
 			if (sc->sc_dleft == 0 &&
 			    (sc->sc_espstat & ESPSTAT_TC) == 0)
 				printf("%s: !TC [intr %x, stat %x, step %d]"
-				       " prevphase %x, resid %x\n",
+				       " prevphase %x, resid %lx\n",
 					sc->sc_dev.dv_xname,
 					sc->sc_espintr,
 					sc->sc_espstat,
