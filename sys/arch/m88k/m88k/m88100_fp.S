@@ -1,4 +1,4 @@
-/* $OpenBSD: m88100_fp.S,v 1.1 2004/04/29 14:33:27 miod Exp $	*/
+/* $OpenBSD: m88100_fp.S,v 1.2 2004/07/22 18:58:34 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -1561,9 +1561,6 @@ return:
 	ld	r1,r31,0		/* ld return address */
 	jmp	r1
 
-	data
-
-
 /* If either S1 or S2 is a signalling NaN, then set the invalid operation */
 /* bit of the FPSR. If the invalid operation user handler flag is set and */
 /* then NaN is signalling, then branch to the handler routine to go to the */
@@ -1572,7 +1569,6 @@ return:
 /* a quiet S1 to the result. A signalling NaN must be made quiet before */
 /* it can be written, but a signalling S2 is not modified in this routine */
 /* if S1 is a NaN. */
-	text
 ASLOCAL(NaN)
 	bb0.n	s1nan,r12,S2sigcheck	/* S1 is not a NaN */
 	 st	r1,r31,0		/* save return address */
@@ -1661,8 +1657,6 @@ ASLOCAL(FPnan_return)
 				/* double to double, so return */
 	ld	r1,r31, 0	/* retrieve return address */
 	jmp	r1
-
-	data
 
 /*
  * infinity
@@ -1992,8 +1986,6 @@ nohandlero:
 inf_return:
 	ld	r1,r31,0	/* load return address */
 	jmp	r1
-
-	data
 
 #define FADD	denorm_FADD
 #define FSUB	denorm_FSUB
@@ -2393,9 +2385,6 @@ TRNCdS2:
 return:
 	ld	r1,r31,0	/* load return address */
 	jmp	r1
-
-	data
-
 
 /* S1 and/or S2 is an infinity, and the other operand may be a zero. */
 /* Knowing which operands are infinity, check the remaining operands for zeros. */
