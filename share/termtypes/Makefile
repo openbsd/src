@@ -1,17 +1,10 @@
-#	$OpenBSD: Makefile,v 1.14 2000/02/17 18:54:15 millert Exp $
+#	$OpenBSD: Makefile,v 1.15 2000/02/17 19:58:34 millert Exp $
 #
 # Take termcap/terminfo master file and generate termcap/terminfo .db files
 # master: http://www.tuxedo.org/~esr/terminfo/termtypes.master.gz
 
 MAN=	termcap.5
 CLEANFILES+= terminfo.src termcap.src terminfo.db termcap.db
-
-# Use the tic we just built if possible
-.if exists(../../usr.bin/tic/tic)
-TIC=	../../usr.bin/tic/tic
-.else
-TIC=	/usr/bin/tic
-.endif
 
 all: terminfo.db termcap.db
 
@@ -65,3 +58,12 @@ realinstall:
 	ln -fs ${BINDIR}/misc/termcap ${DESTDIR}/etc/termcap
 
 .include <bsd.prog.mk>
+
+# Use the tic we just built if possible
+.if exists(${.CURDIR}/../../usr.bin/tic/${__objdir}/tic)
+TIC=	${.CURDIR}/../../usr.bin/tic/${__objdir}/tic
+.elif exists(../../usr.bin/tic/tic)
+TIC=	../../usr.bin/tic/tic
+.else
+TIC=	/usr/bin/tic
+.endif
