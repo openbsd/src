@@ -1,4 +1,4 @@
-/*      $OpenBSD: sod.c,v 1.3 2001/05/12 10:39:54 art Exp $       */
+/*      $OpenBSD: sod.c,v 1.4 2001/05/31 10:16:30 art Exp $       */
 /*  
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -139,7 +139,7 @@ _dl_maphints()
 {
 	caddr_t		addr;
 
-	if ((hfd = _dl_open(_PATH_LD_HINTS, O_RDONLY)) == -1) {
+	if ((hfd = _dl_open(_PATH_LD_HINTS, O_RDONLY)) < 0) {
 		hheader = (struct hints_header *)-1;
 		return;
 	}
