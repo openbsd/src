@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.9 1996/09/26 09:13:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.10 1996/09/27 18:37:11 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -212,6 +212,8 @@ getanswer(answer, anslen, iquery)
 				continue;
 			*ap++ = bp;
 			n = strlen(bp) + 1;
+			if (n > MAXHOSTNAMELEN)
+				bp[MAXHOSTNAMELEN-1] = '\0';
 			bp += n;
 			buflen -= n;
 			continue;
@@ -237,6 +239,7 @@ getanswer(answer, anslen, iquery)
 			cp += n;
 			continue;
 		}
+
 		if (haveanswer) {
 			if (n != host.h_length) {
 				cp += n;
@@ -251,12 +254,12 @@ getanswer(answer, anslen, iquery)
 			getclass = class;
 			host.h_addrtype = (class == C_IN) ? AF_INET : AF_UNSPEC;
 			if (host.h_addrtype == AF_INET)
-				host.h_length = sizeof(struct in_addr);
+				host.h_length = INADDRSZ;
 			if (!iquery) {
 				host.h_name = bp;
-				if (strlen(bp) >= MAXHOSTNAMELEN)
-					host.h_name[MAXHOSTNAMELEN-1] = '\0';
 				bp += strlen(bp) + 1;
+				if (strlen(host.h_name) >= MAXHOSTNAMELEN)
+					host.h_name[MAXHOSTNAMELEN-1] = '\0';
 			}
 		}
 
@@ -270,8 +273,6 @@ getanswer(answer, anslen, iquery)
 			break;
 		}
 		bcopy(cp, *hap++ = bp, n);
-		if (n >= MAXHOSTNAMELEN)
-			bp[MAXHOSTNAMELEN-1] = '\0';
 		bp +=n;
 		cp += n;
 		haveanswer++;
@@ -577,7 +578,7 @@ _yphostent(line)
 
 	host.h_name = NULL;
 	host.h_addr_list = h_addr_ptrs;
-	host.h_length = sizeof(u_int32_t);
+	host.h_length = INADDRSZ;
 	host.h_addrtype = AF_INET;
 	hap = h_addr_ptrs;
 	buf = host_addrs;
