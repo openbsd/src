@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 2001/06/25 05:07:47 angelos Exp $
+#	$OpenBSD: Makefile,v 1.38 2001/06/27 18:45:10 art Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -69,7 +69,7 @@ MLINKS+=kthread.9 kthread_create.9 kthread.9 kthread_exit.9 \
 MLINKS+=log.9 addlog.9
 MLINKS+=md5.9 MD5Init.9 md5.9 MD5Transform.9
 MLINKS+=pfind.9 pgfind.9
-MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
+MLINKS+=pool.9 pool_init.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_put.9 pool.9 pool_prime.9 pool.9 pool_sethiwat.9 \
 	pool.9 pool_setlowat.9
 MLINKS+=powerhook_establish.9 powerhook_disestablish.9
