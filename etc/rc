@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.54 1997/11/08 20:45:33 deraadt Exp $
+#	$OpenBSD: rc,v 1.55 1997/11/19 23:44:21 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -76,6 +76,12 @@ echo 'starting network'
 mount /usr >/dev/null 2>&1
 mount /var >/dev/null 2>&1
 
+# clean up left-over files
+rm -f /etc/nologin
+rm -f /var/spool/lock/LCK.*
+rm -f /var/spool/uucp/STST/*
+(cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
+
 # $named_flags is imported from /etc/rc.conf;
 # if $named_flags != NO, named is run.
 if [ "X${named_flags}" != X"NO" ]; then
@@ -112,12 +118,6 @@ fi
 if [ "X${photurisd_flags}" != X"NO" -a -e /etc/photuris/photuris.conf ]; then
 	echo 'starting photurisd';	photurisd ${photurisd_flags}
 fi
-
-# clean up left-over files
-rm -f /etc/nologin
-rm -f /var/spool/lock/LCK.*
-rm -f /var/spool/uucp/STST/*
-(cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 
 echo -n 'starting rpc daemons:'
 
