@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.25 2004/06/24 18:19:25 millert Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.26 2004/06/24 21:06:47 millert Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.25 2004/06/24 18:19:25 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.26 2004/06/24 21:06:47 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -922,7 +922,7 @@ again:
 
 	len = orglen;
 	ret = (sysctl(mib, 4, kd->argbuf, &len, NULL, 0) < 0);
-	if (ret && errno == ENOMEM && env) {
+	if (ret && errno == ENOMEM) {
 		orglen *= 2;
 		buf = _kvm_realloc(kd, kd->argbuf, orglen);
 		if (buf == NULL)
