@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.71 2005/02/25 14:14:31 hshoexer Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.72 2005/02/25 14:21:20 hshoexer Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -136,7 +136,7 @@ parse_args(int argc, char *argv[])
 	int             do_packetlog = 0;
 #endif
 
-	while ((ch = getopt(argc, argv, "46ac:dD:f:i:KnN:p:P:Ll:r:R:v")) != -1) {
+	while ((ch = getopt(argc, argv, "46ac:dD:f:i:KnN:p:Ll:r:R:v")) != -1) {
 		switch (ch) {
 		case '4':
 			bind_family |= BIND_FAMILY_INET4;
