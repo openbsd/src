@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.110 2003/09/08 20:44:52 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.111 2003/09/16 20:46:11 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -243,8 +243,8 @@ int boothowto;	/* set in locore.S */
 int bootdev;	/* set in locore.S */
 int cputyp;	/* set in locore.S */
 int brdtyp;	/* set in locore.S */
-int cpumod = 0; /* set in mvme_bootstrap() */
-int cpuspeed = 25;   /* 25 MHZ XXX should be read from NVRAM */
+int cpumod;	/* set in mvme_bootstrap() */
+int cpuspeed;
 
 vm_offset_t first_addr = 0;
 vm_offset_t last_addr = 0;
@@ -383,32 +383,29 @@ getcpuspeed()
 	struct mvmeprom_brdid brdid;
 	int speed = 0;
 	int i, c;
+
 	bugbrdid(&brdid);
-	for (i=0; i<4; i++) {
-		c=(unsigned char)brdid.speed[i];
-		c-= '0';
-		speed *=10;
-		speed +=c;
+
+	for (i = 0; i < 4; i++) {
+		c = (unsigned char)brdid.speed[i];
+		if (c == ' ')
+			c = '0';
+		else if (c > '9' || c < '0')
+			goto fail;
+		speed = speed * 10 + (c - '0');
 	}
 	speed = speed / 100;
 	return (speed);
-}
 
-int
-getscsiid()
-{
-	struct mvmeprom_brdid brdid;
-	int scsiid = 0;
-	int i, c;
-	bugbrdid(&brdid);
-	for (i=0; i<2; i++) {
-		c=(unsigned char)brdid.scsiid[i];
-		scsiid *=10;
-		c-= '0';
-		scsiid +=c;
-	}
-	printf("SCSI ID = %d\n", scsiid);
-	return (7); /* hack! */
+fail:
+	/*
+	 * If we end up here, the board information block is
+	 * damaged and we can't trust it.
+	 * Suppose we are running at 25MHz and hope for the best.
+	 */
+	printf("WARNING: Board Configuration Data invalid, "
+	    "replace NVRAM and restore values\n");
+	return (25);
 }
 
 void
@@ -417,7 +414,6 @@ identifycpu()
 	cpuspeed = getcpuspeed();
 	snprintf(cpu_model, sizeof cpu_model,
 	    "Motorola MVME%x, %dMHz", brdtyp, cpuspeed);
-	printf("Model: %s\n", cpu_model);
 }
 
 /*
@@ -2326,8 +2322,10 @@ mvme_bootstrap()
 	brdtyp = brdid.model;
 
 	/* to support the M8120.  It's based off of MVME187 */
-	if (brdtyp == BRD_8120)
+	if (brdtyp == BRD_8120) {
 		brdtyp = BRD_187;
+		/* XXX Need to flag the 8120 has a second cl(4) device on-board */
+	}
 
 	/* 
 	 * set up interrupt and fp exception handlers 
@@ -2405,17 +2403,32 @@ mvme_bootstrap()
 	cmmu_init();
 	master_cpu = cmmu_cpu_number();
 	set_cpu_number(master_cpu);
-	printf("CPU%d is master CPU\n", master_cpu);
 
-#ifdef notevenclose
-	if (brdtyp == BRD_188 && (boothowto & RB_MINIROOT)) {
+	/*
+	 * If we have more than one CPU, mention which one is the master.
+	 * We will also want to spin up slave CPUs on the long run...
+	 */
+	switch (brdtyp) {
+	case BRD_188:
+		printf("CPU%d is master CPU\n", master_cpu);
+
+#if 0
 		int i;
-		for (i=0; i<MAX_CPUS; i++) {
+		for (i = 0; i < MAX_CPUS; i++) {
 			if (!spin_cpu(i))
 				printf("CPU%d started\n", i);
 		}
-	}
 #endif 
+		break;
+	case BRD_197:
+		/*
+		 * In the 197DP case, mention which CPU is the master
+		 * there too...
+		 * XXX TBD
+		 */
+		break;
+	}
+
 	avail_start = first_addr;
 	avail_end = last_addr;
 	/*

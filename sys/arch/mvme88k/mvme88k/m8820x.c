@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.16 2003/08/21 20:45:43 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.17 2003/09/16 20:46:11 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -771,35 +771,56 @@ m8820x_cpu_configuration_print(master)
 
 	simple_lock(&print_lock);
 
-	printf("Processor %d: ", cpu);
-	if (proctype)
-		printf("Architectural Revision 0x%x UNKNOWN CPU TYPE Version 0x%x\n",
-		       proctype, procvers);
-	else
-		printf("M88100 Version 0x%x\n", procvers);
+	printf("cpu%d: ", cpu);
+	if (proctype != 0) {
+		printf("unknown model arch 0x%x rev 0x%x\n",
+		    proctype, procvers);
+		simple_unlock(&print_lock);
+		return;
+	}
 
-#ifndef ERRATA__XXX_USR
-	if (procvers < 2)
-		printf("WARNING: M88100 bug workaround code not enabled!!!\n");
+	printf("M88100 rev 0x%x", procvers);
+#if 0	/* not useful yet */
+	if (brdtyp == BRD_188)
+		printf(", %s", master ? "master" : "slave");
 #endif
+	printf(", %d CMMU", cpu_cmmu_ratio);
 
-	for (mmu = cpu*cpu_cmmu_ratio; mmu < (cpu+1)*cpu_cmmu_ratio; mmu++) {
+	for (mmu = cpu * cpu_cmmu_ratio; mmu < (cpu + 1) * cpu_cmmu_ratio;
+	    mmu++) {
 		int idr = m8820x_cmmu_get(mmu, CMMU_IDR);
 		int mmuid = (0xe00000 & idr)>>21;
+		int access = m8820x_cmmu[mmu].cmmu_access;
 
-		printf(" %s %s Cache: ",
-		       (m8820x_cmmu[mmu].cmmu_access == CMMU_ACS_BOTH) ?  "Spv and User" :
-		       ((m8820x_cmmu[mmu].cmmu_access == CMMU_ACS_USER) ? "User        " :
-			"Supervisor  "),
-		       (m8820x_cmmu[mmu].which == INST_CMMU) ?   "Instruction" :
-		       "Data       ");
-		if (mmutypes[mmuid][0] == 'U')
-			printf("Type 0x%x ", mmuid);
+		if ((mmu - cpu * cpu_cmmu_ratio) % 2 == 0)
+			printf("\ncpu%d: ", cpu);
 		else
-			printf("%s ", mmutypes[mmuid]);
-		printf("Version 0x%x\n", (idr & 0x1f0000)>>16);
+			printf(", ");
+
+		if (mmutypes[mmuid][0] == 'U')
+			printf("unknown model id 0x%x", mmuid);
+		else
+			printf("%s", mmutypes[mmuid]);
+		printf(" rev 0x%x, %s %scache",
+		    (idr & 0x1f0000) >> 16,
+		    access == CMMU_ACS_BOTH ? "global" :
+		    (access == CMMU_ACS_USER ? "user" : "sup"),
+		    m8820x_cmmu[mmu].which == INST_CMMU ? "I" : "D");
 	}
-	printf  (" Configured as %s and started\n", master ? "master" : "slave");
+	printf("\n");
+
+#ifndef ERRATA__XXX_USR
+	{
+		static int errata_warn = 0;
+
+		if (proctype != 0 && procvers < 2) {
+			if (!errata_warn++)
+				printf("WARNING: M88100 bug workaround code "
+				    "not enabled.\nPlease recompile the kernel "
+				    "with option ERRATA__XXX_USR !\n");
+		}
+	}
+#endif
 
 	simple_unlock(&print_lock);
 }

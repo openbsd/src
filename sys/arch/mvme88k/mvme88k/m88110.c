@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.7 2003/08/20 20:33:47 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.8 2003/09/16 20:46:11 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -310,12 +310,18 @@ m88110_cpu_configuration_print(int master)
 
 	simple_lock(&print_lock);
 
-	printf("Processor %d: ", cpu);
-	if (proctype)
-		printf("Architectural Revision 0x%x UNKNOWN CPU TYPE Version 0x%x\n",
-		       proctype, procvers);
-	else
-		printf("M88110 Version 0x%x\n", procvers);
+	printf("cpu%d: ", cpu);
+	if (proctype != 1) {
+		printf("unknown model arch 0x%x version 0x%x\n",
+		    proctype, procvers);
+		simple_unlock(&print_lock);
+		return;
+	}
+
+	printf("M88110 version 0x%x", procvers);
+	if (mc88410_present())
+		printf(", external M88410 cache controller");
+	printf("\n");
 
 	simple_unlock(&print_lock);
         CMMU_UNLOCK;
