@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.569 2002/12/08 23:51:35 grange Exp 
+ *		OpenBSD: pcidevs,v 1.570 2002/12/10 23:50:03 miod Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1180,6 +1180,7 @@
 #define	PCI_PRODUCT_DEC_DEFPA	0x000f		/* DEFPA */
 #define	PCI_PRODUCT_DEC_21041	0x0014		/* 21041 */
 #define	PCI_PRODUCT_DEC_DGLPB	0x0016		/* DGLPB (OPPO) */
+#define	PCI_PRODUCT_DEC_ZLXPL2	0x0017		/* ZLXP-L2 (Pixelvision) */
 #define	PCI_PRODUCT_DEC_21142	0x0019		/* 21142/3 */
 /* Farallon apparently used DEC's vendor ID by mistake */
 #define	PCI_PRODUCT_DEC_PN9000SX	0x001a		/* Farallon PN9000SX */
