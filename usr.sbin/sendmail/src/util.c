@@ -384,11 +384,11 @@ makelower(p)
 */
 
 void
-buildfname(gecos, login, buf, buflen)
+buildfname(gecos, login, buf, bufsiz)
 	register char *gecos;
 	char *login;
 	char *buf;
-	int buflen;
+	int bufsiz;
 {
 	register char *p;
 	register char *bp = buf;
@@ -397,13 +397,13 @@ buildfname(gecos, login, buf, buflen)
 		gecos++;
 
 	for (p = gecos; *p != '\0' && *p != ',' && *p != ';' && *p != '%'
-		&& ((bp - buf) <= (buflen - 1)); p++)
+		&& ((bp - buf) <= (bufsiz - 1)); p++)
 	{
 		if (*p == '&')
 		{
-			snprintf(bp, SPACELEFT(buf, bp), "%s",  login);
+			(void) strncpy(bp, login, (bufsiz - (bp - buf) - 1));
+			buf[bufsiz - 1] = '\0';
 			*bp = toupper(*bp);
-			bp += strlen(bp);
 			while (*bp != '\0')
 				bp++;
 		}
@@ -1869,7 +1869,7 @@ get_column(line, col, delim, buf, buflen)
 	char *p;
 	char *begin, *end;
 	int i;
-	char delimbuf[3];
+	char delimbuf[4];
 	
 	if (delim == '\0')
 		strcpy(delimbuf, "\n\t ");
