@@ -1,4 +1,4 @@
-.\"     $OpenBSD: securelevel.7,v 1.9 2000/06/29 18:12:42 hugh Exp $
+.\"     $OpenBSD: securelevel.7,v 1.10 2001/03/11 05:48:26 aaron Exp $
 .\"
 .\" Copyright (c) 2000 Hugh Graham
 .\"
@@ -140,8 +140,9 @@ to 0 with the
 .Xr sysctl 8
 utility.
 .Sh FILES
-.Bl -tag -compact
+.Bl -tag -width /etc/rc.securelevel -compact
 .It Pa /etc/rc.securelevel
+commands that run before the security level changes
 .El
 .Sh SEE ALSO
 .Xr chflags 2 ,
