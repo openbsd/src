@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile,v 1.11 2002/08/30 10:24:16 markus Exp $
+# $OpenBSD: Makefile,v 1.12 2002/08/30 15:08:11 markus Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -1018,7 +1018,7 @@ ${.OBJDIR}/${SSL_SRC}/Makefile.org: ${.CURDIR}/${SSL_SRC}/Makefile.org
 
 
 .if ${.OBJDIR} == ${.CURDIR}
-clean: prereq
+clean:
 	@cd ${.OBJDIR}/crypto && ${MAKE} clean
 	@cd ${.OBJDIR}/ssl && ${MAKE} clean
 	@rm -f ${MUNGEDFILES}
