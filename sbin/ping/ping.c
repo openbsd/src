@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.16 1997/02/04 16:44:14 kstailey Exp $	*/
+/*	$OpenBSD: ping.c,v 1.17 1997/05/29 15:55:34 kstailey Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.16 1997/02/04 16:44:14 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.17 1997/05/29 15:55:34 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -159,8 +159,12 @@ double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
 
+#ifdef SIGINFO
+int reset_kerninfo;
+#endif
+
 void fill __P((char *, char *));
-void catcher(), finish();
+void catcher(), prtsig(), finish(), summary(int);
 int in_cksum __P((u_short *, int));
 void pinger();
 char *pr_addr __P((u_long));
@@ -445,6 +449,9 @@ main(argc, argv)
 
 	(void)signal(SIGINT, finish);
 	(void)signal(SIGALRM, catcher);
+#ifdef SIGINFO
+	(void)signal(SIGINFO, prtsig);
+#endif
 
 	while (preload--)		/* fire off them quickies */
 		pinger();
@@ -512,6 +519,15 @@ catcher()
 		(void)signal(SIGALRM, finish);
 		(void)alarm((u_int)waittime);
 	}
+}
+
+/*
+ * Print statistics when SIGINFO is received.
+ */
+void
+prtsig()
+{
+	summary(0);
 }
 
 /*
@@ -804,19 +820,18 @@ in_cksum(addr, len)
 	return(answer);
 }
 
-/*
- * finish --
- *	Print out statistics, and give up.
- */
 void
-finish()
+summary(header)
+	int header;
 {
 	register int i;
 
-	(void)signal(SIGINT, SIG_IGN);
-	(void)putchar('\n');
+	(void)putchar('\r');
 	(void)fflush(stdout);
-	(void)printf("--- %s ping statistics ---\n", hostname);
+
+	if (header)
+		(void)printf("--- %s ping statistics ---\n", hostname);
+
 	(void)printf("%ld packets transmitted, ", ntransmitted);
 	(void)printf("%ld packets received, ", nreceived);
 	if (nrepeats)
@@ -835,6 +850,18 @@ finish()
 		(void)printf("round-trip min/avg/max = %.3f/%.3f/%.3f ms\n",
 		    tmin, ((double)i) / 1000.0, tmax);
 	}
+}
+
+/*
+ * finish --
+ *	Print out statistics, and give up.
+ */
+void
+finish()
+{
+	(void)signal(SIGINT, SIG_IGN);
+
+	summary(1);
 	exit(nreceived ? 0 : 1);
 }
 
