@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.118 1999/11/01 20:50:44 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.119 1999/11/01 20:51:11 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -315,15 +315,16 @@ cpu_startup()
 	msgbufmapped = 1;
 
 	/* Boot arguments are in page 1 */
-	if (bootapiver >= 2) {
+	if (bootapiver & BAPIV_VECTOR) {
 		pa = (vm_offset_t)bootargv;
 		for (i = 0; i < btoc(bootargc); i++, pa += NBPG)
 			pmap_enter(pmap_kernel(),
 			    (vm_offset_t)((caddr_t)bootargp + i * NBPG), pa,
 			    VM_PROT_READ|VM_PROT_WRITE, TRUE,
 			    VM_PROT_READ|VM_PROT_WRITE);
+		bios_getopt();
 	} else
-		bootargp = NULL;
+		panic("/boot is too old: upgrade");
 
 	printf(version);
 	startrtclock();
