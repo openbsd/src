@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.7 2003/12/26 22:41:01 henning Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.8 2004/01/05 22:33:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -101,7 +101,7 @@
  */
 
 /*
- * compare two prefixes with equal pt_entry. Returns an integer greater than or
+ * Compare two prefixes with equal pt_entry. Returns an integer greater than or
  * less than 0, according to whether the prefix p1 is more or less preferred
  * than the prefix p2. p1 should be used for the new prefix and p2 for a
  * already added prefix.
@@ -150,8 +150,8 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		if ((asp1->flags.med - asp2->flags.med) != 0)
 			return (asp1->flags.med - asp2->flags.med);
 
-	/* 6. EBGP is cooler than IBGP */
 	/*
+	 * 6. EBGP is cooler than IBGP 
 	 * It is absolutely important that the ebgp value in peer_config.ebgp
 	 * is bigger than all other ones (IBGP, confederations)
 	 */
