@@ -1,0 +1,25 @@
+# $OpenBSD: krb.extra,v 1.1 2001/05/14 14:38:20 hin Exp $
+#
+# This file holds some configuration options that are not normally used.
+# Please see krb.extra(5) for more information about this file - only
+# the most commonly used variables are listed here.
+#
+# You can specify a number of VARIABLE = VALUE pairs in this file. Empty lines
+# and lines beginning with a hash (#) are ignored.
+
+# kdc_timeout specifies how many seconds to wait for a respons from the KDC.
+# Default is 4 seconds.
+#kdc_timeout=4
+
+# kdc_timesync makes KerberosIV store the time difference between the client
+# and the KDC. This makes it possible to use KerberosIV if for some reason you
+# cannot syncronize the clocks. Default is no.
+#kdc_timesync=yes
+
+# To get KerberosIV tickets via a http proxy, use krb4_proxy to specify what
+# proxy to user. Default is to not use a proxy.
+#krb4_proxy=proxy
+
+# If your network uses NAT (Network Address Translation), this enables some
+# code that will make your life easier. Default is no.
+#nat_in_use=yes
