@@ -23,6 +23,9 @@ dnl XXX remove the following lines once floppyB is working
 				IMPORTANT! Please note that, as the moment of
 				writing, this floppy image is not working
 				correctly; your mileage may vary.
+				However, it will work correctly when used
+				as a miniroot and booted from the disk's
+				swap area.
 
 OpenBSDdistsets
 
