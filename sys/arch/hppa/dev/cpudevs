@@ -1,0 +1,145 @@
+$OpenBSD: cpudevs,v 1.1 1998/09/29 07:00:46 mickey Exp $
+
+/*
+ * Copyright (c) 1998 Michael Shalayeff
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Michael Shalayeff.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Board types
+ */
+
+#board	HP705		0x302	705 (Bushmaster)
+
+board	HP710		0x300	710 (Bushmaster)
+
+board	HP712_60	0x600	712/60 (Gekko)
+board	HP712_80	0x601	712/80 (Gekko)
+board	HP712_3		0x602	712 (Gekko)
+board	HP712_100	0x605	712/100 (Gekko)
+
+board	HP715_33	0x311	715/33 (Scorpio)
+board	HP715_50	0x310	715/50 (Scorpio)
+board	HP715T_50	0x312	715T/50 (Scorpio (up 4XXt))
+board	HP715S_50	0x314	715S/50 (Scorpio (up 4XXs))
+board	HP715_75	0x316	715/75 (Scorpio)
+
+#board	HP720		0x200	720 (Cobra)
+#board	HP725		0xFFF	725 (Scorpio ?)
+
+#board	HP730		0x202	730 (King Cobra)
+#board	HP735		0x203	735 (Hardball)
+#board	HP735_125	0x206	735/125 (Hardball)
+
+#board	HP743i_1	0x603	743i1
+#board	HP743i_2	0x604	743i2
+#board	HP743i_3	0x619	743i3
+#board	HP743v_1	0x617	743v1
+#board	HP743v_2	0x618	743v2
+
+#board	HP750		0x201	750	Coral
+#board	HP755		0xFFD	755	Coral II ?
+
+#board	HP7GL_1		0x606	7GL1
+#board	HP7GL_2		0x607	7GL2
+#board	HP7GL_3		0x608	7GL3
+
+#board	HP770_100	0x585   J-class J200 
+#board	HP770_120	0x586   J-class J210
+#board	HP777_100	0x592   C-class C200
+#board	HP777_120	0x58E   C-class C210
+
+#board	HP810		0x100
+#board	HP815		0x103
+#board	HP822		0x101
+#board	HP825		0x008
+#board	HP827		0x102
+#board	HP835		0x00a
+#board	HP840		0x004
+#board	HP842		0x104
+#board	HP845		0x00b
+#board	HP850		0x080
+#board	HP850_OPDC	0x00C
+#board	HP852		0x105
+#board	HP855		0x081
+#board	HP860		0x082	PN10C
+#board	HP870		0x083
+
+/*
+ * CORE devices
+ */
+type	cpu	 0	native processor
+type	memory	 1	memory
+type	b_dma	 2	Type-B DMA (NIO Transit, Parallel, ... )
+type	b_direct 3	Type-B Direct
+type	a_dma	 4	Type-A DMA (NIO HPIB, LAN, ... )
+type	a_direct 5	Type-A Direct (RS232, HIL, ... )
+type	other	 6	other
+type	bcp	 7	Bus Converter Port
+type	cio	 8	CIO adapter
+type	console	 9	console
+type	fio	10	foreign I/O module
+type	bha	11	bus adaptor
+type	multi	12	Multiple-Type I/O
+type	faulty	31	broken
+
+cpu	HP7100LC	4	PA-RISC 7100LC
+
+memory	ARCH	0x8	architected memory module
+memory	PDEP	0x9	processor-dependent memory module
+
+other	SPECFB	0x48	Spectograph frame buffer
+other	SPECCTL	0x49	Spectograph control
+
+bha	ASP	0x70	Core Bus Adapter (ASP/Hardball)
+bha	EISA	0x76	EISA Bus Adapter
+bha	VME	0x78	VME Bus Adapter
+bha	LASI	0x81	LASI Bus Adapter
+bha	WAX	0x8e	WAX ??? Bus Adapter
+
+fio	SCSI	0x71	Core SCSI
+fio	FWSCSI	0x7c	Core FW SCSI
+fio	LAN	0x72	Core LAN
+fio	FDDI	0x7d	Core FDDI
+fio	HIL	0x73	Core HIL
+fio	CENT	0x74	Core Centronics
+fio	RS232	0x75	Core RS-232
+fio	SGC	0x77	SGC Graphics
+fio	A1	0x7a	Core audio (type 1)
+fio	A1NB	0x7e	Core audio (type 1, no beeper)
+fio	A2	0x7f	Core audio (type 2)
+fio	A2NB	0x7b	Core audio (type 2, no beeper)
+fio	HPIB	0x80	Core HPIB
+
+fio	GSCSI	0x82	Gekko Core SCSI
+fio	GPCFD	0x83	Gekko PC floppy controller
+fio	GPCIO	0x84	Gekko PS/2 port
+fio	GSGC	0x85	Gekko SGC Graphics
+fio	GLAN	0x8a	Gekko Core LAN
+fio	GRS232	0x8c	Gekko Core RS232
+
