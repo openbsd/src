@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbc.c,v 1.5 1996/11/23 21:45:55 kstailey Exp $	*/
+/*	$OpenBSD: sbc.c,v 1.6 1997/01/18 17:58:37 briggs Exp $	*/
 /*	$NetBSD: sbc.c,v 1.9 1996/06/19 01:47:28 scottr Exp $	*/
 
 /*
@@ -348,17 +348,7 @@ sbc_attach(parent, self, args)
 	 */
 	ncr5380_init(ncr_sc);
 	ncr5380_reset_scsibus(ncr_sc);
-	config_found(self, &(ncr_sc->sc_link), sbc_print);
-}
-
-static int
-sbc_print(aux, name)
-	void *aux;
-	const char *name;
-{
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
+	config_found(self, &(ncr_sc->sc_link), scsiprint);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.10 1996/11/23 21:45:53 kstailey Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.11 1997/01/18 17:58:38 briggs Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.31 1996/06/23 15:02:58 briggs Exp $	*/
 
 /*
@@ -197,7 +197,6 @@ extern __inline__ void finish_req(SC_REQ *reqp)
 /*
  * Auto config stuff....
  */
-int	ncr_cprint __P((void *auxp, const char *));
 void	ncr_attach __P((struct device *, struct device *, void *));
 int	ncr_match __P((struct device *, void *, void *));
 
@@ -274,21 +273,9 @@ void		*auxp;
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, ncr_cprint);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
 
-/*
- * print diag if name is NULL else just extra
- */
-int
-ncr_cprint(auxp, name)
-void	*auxp;
-const char *name;
-{
-	if (name == NULL)
-		return (UNCONF);
-	return (QUIET);
-}
 /*
  * End of auto config stuff....
  */
