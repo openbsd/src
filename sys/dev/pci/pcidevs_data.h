@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.34 1998/03/11 08:20:31 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.35 1998/03/17 10:49:26 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -447,10 +447,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "CL-GD5480",
 	},
 	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD6729,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6729,
 	    0,
 	    "Cirrus Logic",
-	    "CL-GD6729",
+	    "CL-PD6729",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6832,
+	    0,
+	    "Cirrus Logic",
+	    "CL-PD6832",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7542,
@@ -619,6 +625,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compaq",
 	    "NetFlex 3/P",
+	},
+	{
+	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_COMPEXE,
+	    0,
+	    "Compex",
+	    "Compex Ethernet",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
@@ -1125,6 +1137,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ITT3204 MPEG Decoder",
 	},
 	{
+	    PCI_VENDOR_KTI, PCI_PRODUCT_KTI_KTIE,
+	    0,
+	    "KTI",
+	    "KTI Ethernet",
+	},
+	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
 	    0,
 	    "LeadTek Research",
@@ -1213,6 +1231,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Neomagic",
 	    "NM3160",
+	},
+	{
+	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_NV5000,
+	    0,
+	    "NetVin",
+	    "NetVin 5000",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810,
@@ -1609,6 +1633,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "STB (2nd PCI Vendor ID)",
 	    "Velocity128",
+	},
+	{
+	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
+	    0,
+	    "Surecom Technology",
+	    "Surecom NE-34",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C101,
@@ -2083,6 +2113,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Winbond Electronics",
 	    "Linksys EtherPCI LAN Card II",
+	},
+	{
+	    PCI_VENDOR_WINBOND2, PCI_PRODUCT_WINBOND2_W89C940,
+	    0,
+	    "Winbond Electronics (2nd PCI Vendor ID)",
+	    "Linksys EtherPCI LAN Card",
 	},
 	{
 	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221,
@@ -4701,6 +4737,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_COMPEX, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Compex",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_PMCSIERRA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "PMC-Sierra",
@@ -4815,6 +4857,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_NETVIN, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "NetVin",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_BUSLOGIC2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Buslogic (2nd PCI Vendor ID)",
@@ -4857,9 +4905,21 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_WINBOND2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Winbond Electronics (2nd PCI Vendor ID)",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_COMPUTONE, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Computone Corperation",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_KTI, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "KTI",
 	    NULL,
 	},
 	{

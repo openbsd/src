@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.34 1998/03/11 08:20:31 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.35 1998/03/17 10:49:26 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -482,6 +482,7 @@
 #define	PCI_VENDOR_MKC	0x11cc		/* Michels & Kleberhoff Computer */
 #define	PCI_VENDOR_HAL	0x11cd		/* HAL Computer Systems */
 #define	PCI_VENDOR_ZORAN	0x11de		/* Zoran Corporation */
+#define	PCI_VENDOR_COMPEX	0x11f6		/* Compex */
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
@@ -501,6 +502,7 @@
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_BUSLOGIC2	0x4b10		/* Buslogic (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_NETPOWER2	0x5700		/* NetPower (2nd PCI Vendor ID) */
@@ -508,7 +510,9 @@
 #define	PCI_VENDOR_QUANCM	0x8008		/* Quancm Electronic GmbH */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
 #define	PCI_VENDOR_TRIGEM2	0x8800		/* Trigem Computer (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_WINBOND2	0x8c4a		/* Winbond Electronics (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_COMPUTONE	0x8e0e		/* Computone Corperation */
+#define	PCI_VENDOR_KTI	0x8e2e		/* KTI */
 #define	PCI_VENDOR_ADP	0x9004		/* Adaptec */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
@@ -626,7 +630,8 @@
 #define	PCI_PRODUCT_CIRRUS_CL_GD5436	0x00ac		/* CL-GD5436 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD5446	0x00b8		/* CL-GD5446 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD5480	0x00bc		/* CL-GD5480 */
-#define	PCI_PRODUCT_CIRRUS_CL_GD6729	0x1100		/* CL-GD6729 */
+#define	PCI_PRODUCT_CIRRUS_CL_PD6729	0x1100		/* CL-PD6729 */
+#define	PCI_PRODUCT_CIRRUS_CL_PD6832	0x1110		/* CL-PD6832 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7542	0x1200		/* CL-GD7542 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7543	0x1202		/* CL-GD7543 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7541	0x1204		/* CL-GD7541 */
@@ -664,6 +669,9 @@
 #define	PCI_PRODUCT_COMPAQ_DP4000	0xb011		/* Deskpro 4000 5233MMX */
 #define	PCI_PRODUCT_COMPAQ_NF3P_BNC	0xf150		/* NetFlex 3/P w/ BNC */
 #define	PCI_PRODUCT_COMPAQ_NF3P	0xf130		/* NetFlex 3/P */
+
+/* Compex */
+#define	PCI_PRODUCT_COMPEX_COMPEXE	0x1401		/* Compex Ethernet */
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
@@ -788,6 +796,9 @@
 #define	PCI_PRODUCT_ITT_AGX016	0x0001		/* AGX016 */
 #define	PCI_PRODUCT_ITT_ITT3204	0x0002		/* ITT3204 MPEG Decoder */
 
+/* KTI */
+#define	PCI_PRODUCT_KTI_KTIE	0x3000		/* KTI Ethernet */
+
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
 
@@ -818,6 +829,9 @@
 
 /* NeoMagic */
 #define	PCI_PRODUCT_NEOMAGIC_NM3160	0x0004		/* NM3160 */
+
+/* NetVin */
+#define	PCI_PRODUCT_NETVIN_NV5000	0x5000		/* NetVin 5000 */
 
 /* NCR/Symbios Logic products */
 #define	PCI_PRODUCT_SYMBIOS_810	0x0001		/* 53c810 */
@@ -920,6 +934,9 @@
 
 /* STB products */
 #define	PCI_PRODUCT_STB2_RIVA128	0x0018		/* Velocity128 */
+
+/* Surecom products */
+#define	PCI_PRODUCT_SURECOM_NE34	0x0e34		/* Surecom NE-34 */
 
 /* Symphony Labs products */
 #define	PCI_PRODUCT_SYMPHONY_82C101	0x0001		/* 82C101 */
@@ -1031,6 +1048,9 @@
 /* Winbond Electronics products */
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* Linksys EtherPCI LAN Card II */
+
+/* Winbond Electronics products (PCI products set 2) */
+#define	PCI_PRODUCT_WINBOND2_W89C940	0x1980		/* Linksys EtherPCI LAN Card */
 
 /* Zeinet products */
 #define	PCI_PRODUCT_ZEINET_1221	0x0001		/* 1221 */
