@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.9 2002/03/30 22:52:58 miod Exp $
+dnl	$OpenBSD: install,v 1.10 2002/04/08 00:10:53 miod Exp $
 OpenBSDInstallPrelude
 
 For most systems, the easiest way to install OpenBSD/MACHINE OSREV is via
@@ -6,46 +6,33 @@ diskless booting over an Ethernet network.  You will need both the
 "boot.mop" image and the "bsd.rd" kernel to boot.  You will also need a
 machine configured as a rarp, MOP, bootparam, and NFS server.
 
-Should your VAX have supported SCSI, however, we provide a floppy image
-that can be written onto a disk in another system, and when booted on
-the VAX will present you with the standard install prompt. If this is
-the case, you can skip ahead to the "ready to install OpenBSD" section.
-
-This document will shortly provide examples on how to set up services
-for an OpenBSD netboot server. But if more information is required,
-the following resources may be helpful:
-
-The OpenBSD manpages for rarpd(8), mopd(8), nfsd(8), mountd(8),
-rpc.bootparamd(8), bootparams(5), and diskless(8). These pages are
-available online at: <http://www.openbsd.org/cgi-bin/man.cgi>
-
-Brian Chase <bdc@world.std.com> has written a guide for booting a VAX
-off of a network.  It was written for NetBSD/MACHINE, but the procedure is
-virtually identical on OpenBSD, and the document covers the use of
-several different platforms as servers.
- 
-The guide is available at:
-<http://world.std.com/~bdc/projects/vaxen/VAX-netboot-HOWTO>
- 
-And finally, there is an OpenBSD/MACHINE mailing list at <vax@openbsd.org>
-whose readers would generally be pleased to help.
-
+Should your VAX support SCSI, however, we provide a floppy image that can be
+written onto a disk in another system, and when booted on the VAX will
+present you with the standard install prompt. If this is the case, you can
+skip ahead to the "ready to install OpenBSD" section.
 
 Booting from Network:
 
-When you turn on your VAX, it will run a set of self-diagnostic ROM routines.
-Depending on the model of VAX you have, it may take quite a while.  When 
-it is done, you will see a >>> prompt (also called the chevron prompt) on the
-console.  Typing "show dev" or "show ethernet" to get the VAX ethernet 
-device's MAC address usually works; also try "TEST 50" on MicroVAXen 2000
-and 3100.
+If you wish to boot over the network, you need to either have another
+OpenBSD system on the network, or something else capable of running the
+mopd(8) program.  Source code may be found under usr.sbin/mopd in the
+OpenBSD source tree, and is reasonably portable among UN*X-like operating
+systems.  For more information on diskless booting under OpenBSD, see
+the diskless(8) manual page.
+
+When you turn on your VAX, it will run a set of self-diagnostic ROM
+routines. Depending on the model of VAX you have, it may take quite a while.
+When it is done, you will see a >>> prompt (also called the chevron prompt)
+on the console.  Typing "show dev" or "show ethernet" to get the VAX
+ethernet device's MAC address usually works; also try "TEST 50" on
+MicroVAXen 2000 and 3100.
 
 You will need to create an /etc/ethers file on the bootserver.  This file
 will be used by rarpd to answer rarp (ethernet address->IP address) requests.
 The format of this file is the ethernet address followed by the machine
 name or address.  Here is an example:
 
-08:00:2b:24:72:00		quickvax
+	08:00:2b:24:72:00		quickvax
 
 Then start rarpd (or configure /etc/rc.conf to always start rarpd).
 
@@ -56,24 +43,36 @@ Note that all non alphanumeric characters must be stripped and the
 mac portion must be lower case, the extension upper.
 Start mopd by typing "mopd -a".
 
-rpc.bootparamd's configuration file is /etc/bootparams.  The format for this
-file is described in the diskless(8) and bootparams(5) manpages.  Enable
-rpc.bootparamd in /etc/rc.conf by changing the value of "bootparamd_flags". 
-Also, make sure "portmap" is "YES"; you will need portmap running.  
+Finally, you need to add an entry for your MACHINE in /etc/bootparams.  For
+example:
 
-nfsd and mountd configuration are described in their respective manual pages.
-Make a separate directory for your VAX's /, make sure it is exported via NFS, 
-and place "bsd.rd" there.
+	quickvax	root=myserver:/export/MACHINE
+
+Where myserver is the name of your server machine and `/export/MACHINE' is
+the directory that holds the ramdisk kernel image (`bsd.rd').
+Enable rpc.bootparamd in /etc/rc.conf by changing the value of
+"bootparamd_flags". Also, make sure "portmap" is "YES"; you will need
+portmap running.
+
+Now run `rpc.bootparamd' and make sure that the directory is NFS exported to
+the client.  See the manual pages on your server system if you need more
+information about exporting filesystems.
+
+You are now ready to mopboot your MACHINE. 
 
 Typing "B <DEVICE>", where <DEVICE> is your VAX's ethernet device, at the 
 chevron prompt should then load the OpenBSD booter.
 
+
+Installing using the netboot procedure:
+
 OpenBSDInstallPart2
 
-	After setting up your bootserver, boot from it as described above.
+	Boot your machine from the installation media as described above.
 
 	The OpenBSD bootloader will appear, and a countdown should begin;
-	type any key on the console and type "boot bsd.rd".  
+	type any key on the console to interrupt and type
+		boot bsd.rd
 
 	It will take a while to load the kernel especially on a slow
 	machine, or from a slow network connection, most likely more than
@@ -86,9 +85,11 @@ OpenBSDInstallPart2
 OpenBSDBootMsgs
 
 	You will next be asked for your terminal type.
-	If you are installing from a serial console you should choose
-	the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt100).
+dnl uncomment once display console is available
+dnl	If you are installing from a serial console you should choose
+dnl	the terminal type from amongst those listed.
+dnl	(If your terminal type is xterm, just use vt100).
+	Just hit return to select the default (vt100).
 
 OpenBSDInstallPart3
 
