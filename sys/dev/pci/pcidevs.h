@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.663 2003/08/07 17:53:19 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.664 2003/08/12 19:36:30 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2111,6 +2111,7 @@
 #define	PCI_PRODUCT_TI_PCI1451	0xac52		/* PCI1451 PCI-CardBus */
 #define	PCI_PRODUCT_TI_PCI1421	0xac53		/* PCI1421 PCI-CardBus */
 #define	PCI_PRODUCT_TI_PCI1520	0xac55		/* PCI1520 PCI-CardBus */
+#define	PCI_PRODUCT_TI_PCI1510	0xac56		/* PCI1510 PCI-CardBus */
 #define	PCI_PRODUCT_TI_PCI2040	0xac60		/* PCI2040 PCI-DSP */
 
 /* Topic */
