@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.2 2005/01/14 02:22:01 deraadt Exp $
+dnl	$OpenBSD: install,v 1.3 2005/01/14 08:24:44 deraadt Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -13,8 +13,7 @@ After starting up some sort of terminal emulator on the Zaurus
 and becoming root, perform the following operation:
 
 	# insmod -f zbsdmod.o
-	# mknod /dev/zboot c 99 0
-	# cp bsd.rd /dev/zboot
+	# cp bsd.rd /proc/zboot
 
 A few seconds later, OpenBSD will boot on your Zaurus.
 
@@ -22,7 +21,6 @@ If you already have a bsd.rd or bsd kernel contained in a FFS
 partition on the C3000 hard drive, you can instead use 
 
 	# insmod -f zbsdmod.o
-	# mknod /dev/zboot c 99 0
 	# zboot
 
 OpenBSDInstallPart2
