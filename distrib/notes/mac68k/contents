@@ -12,12 +12,12 @@ distribution sets.  The binary distribution sets can be found in the
 "mac68k/" of the OpenBSD 2.2 distribution tree, and
 are as follows:
 
-	bsd22	The OpenBSD/mac68k 2.2 kernel binary.  You MUST
+	bsd22.tar.gz	The OpenBSD/mac68k 2.2 kernel binary.  You MUST
 		install this file.  It is the kernel that you need
 		to boot the system.
 		[ 1.2MB uncompressed ]
 
-	bsd22-genericsbc The OpenBSD/mac68k kernel binary.  This is
+	bsd22-genericsbc.tar.gz The OpenBSD/mac68k kernel binary.  This is
 		identical in every way to bsd22.tar.gz accept that
 		it enables a different SCSI driver which may allow
 		some otherwise incompatible SCSI disks to function
