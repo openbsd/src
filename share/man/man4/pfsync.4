@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfsync.4,v 1.12 2003/12/24 19:49:00 mcbride Exp $
+.\"	$OpenBSD: pfsync.4,v 1.13 2004/03/13 09:16:45 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -45,12 +45,12 @@ interface.
 If configured with a physical synchronisation interface,
 .Nm
 will also send state changes out on that interface using IP multicast,
-and insert state changes recieved on that interface from other systems
+and insert state changes received on that interface from other systems
 into the state table.
 .Pp
 By default, all local changes to the state table are exposed via
 .Nm .
-However, state changes from packets recieved by
+However, state changes from packets received by
 .Nm
 over the network are not rebroadcast.
 States created by a rule marked with the
