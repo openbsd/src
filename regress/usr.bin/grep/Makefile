@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.11 2004/10/03 19:24:58 otto Exp $
+# $OpenBSD: Makefile,v 1.12 2005/04/03 19:15:17 otto Exp $
 
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 \
-	t18 t19 t20 t21 t22
+	t18 t19 t20 t21 t22 t23
 
 t1:
 	grep t.s ${.CURDIR}/in | diff - ${.CURDIR}/t1.out
@@ -88,7 +88,10 @@ t21:
 t22:
 	grep -l 'a.*b' ${.CURDIR}/t22.in
 
+t23:
+	egrep -w 'word1|word2|word3' ${.CURDIR}/t23.in
+
 .PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20
-.PHONY: t21 t22
+.PHONY: t21 t22 t23
 
 .include <bsd.regress.mk>
