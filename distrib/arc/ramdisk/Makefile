@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/05/19 10:33:19 pefo Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/05/24 10:25:13 deraadt Exp $
 
 # NOTE! We don't do crunched yet!
 
@@ -14,12 +14,12 @@ LISTS=		${.CURDIR}/list
 MOUNT_POINT=	/mnt
 MTREE=		${.CURDIR}/mtree.conf
 
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
-REALIMAGE!=	echo /tmp/image.${PID}
+REALIMAGE!=	echo /var/tmp/image.${PID}
 
 
 DISKTYPE=       rdroot
@@ -60,9 +60,6 @@ rd_setup:
 	mount ${VND_DEV} ${MOUNT_POINT}
 
 rd_teardown:
-	sync
-	cat /*bin/* > /dev/null
-	sync
 	@df -i ${MOUNT_POINT}
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND}
@@ -101,3 +98,4 @@ beforeinstall:
 	cp ${BSD.RD} ${DESTDIR}/snapshot
 
 .include <bsd.obj.mk>
+.include <bsd.subdir.mk>
