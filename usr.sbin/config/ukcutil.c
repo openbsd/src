@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.7 2001/12/05 10:11:23 deraadt Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.8 2001/12/10 23:15:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.7 2001/12/05 10:11:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.8 2001/12/10 23:15:34 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -1004,6 +1004,8 @@ add_read(prompt, field, dev, len, val)
 	cmd_t cmd;
 	struct cfdata *cd;
 	struct cfdriver *cdrv;
+
+	*val = -1;
 
 	while (!ok) {
 		printf("%s ? ", prompt);
