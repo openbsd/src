@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.7 1998/07/24 00:07:35 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.8 2000/11/17 05:22:59 millert Exp $	*/
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 
@@ -117,7 +117,7 @@
 #define HAVE_SYS_MMAN_H 1
 
 /* Define if you have <sys/select.h> */
-#define HAVE_SYS_SELECT_H 1
+/* #undef HAVE_SYS_SELECT_H */
 
 /* Define if you have the System V style pty calls. */
 /* #undef HAVE_SYS5_PTY */
