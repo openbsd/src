@@ -55,7 +55,7 @@ krb_get_lrealm_f(char *r, int n, const char *fname)
 	}
 	fclose(f);
     }
-    return ret;
+    return (*r == '#' ? KFAILURE : ret);
 }
 
 int
