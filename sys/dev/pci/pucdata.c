@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.2 1999/11/14 01:27:57 downsj Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.3 2000/07/27 19:26:01 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -522,6 +522,52 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+	    },
+	},
+
+	/*NEC PK-UG-X008 */
+	{   /* "NEC PK-UG-X008", */
+	    {	0x1033,	0x007d,	0x1033,	0x8012	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+	    },
+	},
+
+	/* Lava Computers 2SP-PCI */
+	{   /* "Lava Computers 2SP-PCI parallel port", */
+	    {	0x1407,	0x8000,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00 },
+	    },
+	},
+
+	/* Lava Computers 2SP-PCI and Quattro-PCI serial ports */
+	{   /* "Lava Computers dual serial port", */
+	    {	0x1407,	0x0100,	0,	0	},
+	    {	0xffff,	0xfffc,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
+	    },
+	},
+
+	/* US Robotics (3Com) PCI Modems */
+	{   /* "US Robotics (3Com) 3CP5609 PCI 16550 Modem", */
+	    {	0x12b9,	0x1008,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+	    },
+	},
+
+	/* IBM 33L4618: AT&T/Lucent Venus Modem */
+	{   /* "IBM 33L4618: AT&T/Lucent Venus Modem", */
+	    {	0x11c1,	0x0480,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08 },
 	    },
 	},
 
