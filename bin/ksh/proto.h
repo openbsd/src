@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.3 1996/11/21 07:59:34 downsj Exp $	*/
+/*	$OpenBSD: proto.h,v 1.4 1998/06/25 19:02:15 millert Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -242,6 +242,7 @@ char *	snptreef	ARGS((char *s, int n, const char *fmt, ...));
 struct op *	tcopy	ARGS((struct op *t, Area *ap));
 char *	wdcopy		ARGS((const char *wp, Area *ap));
 char *	wdscan		ARGS((const char *wp, int c));
+char *	wdstrip		ARGS((const char *wp));
 void 	tfree		ARGS((struct op *t, Area *ap));
 /* var.c */
 void 	newblock	ARGS((void));

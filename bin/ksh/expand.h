@@ -1,9 +1,10 @@
-/*	$OpenBSD: expand.h,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: expand.h,v 1.2 1998/06/25 19:01:56 millert Exp $	*/
 
 /*
  * Expanding strings
  */
 
+#define X_EXTRA		8	/* this many extra bytes in X string */
 
 #if 0				/* Usage */
 	XString xs;
@@ -17,9 +18,9 @@
 	return Xclose(xs, xp);	/* resize string */
 /*
  * NOTE:
- *	The Xcheck and Xinit macros have a magic + 8 in the lengths.  This is
- *	so that you can put up to 4 characters in a XString before calling
- *	Xcheck.  (See yylex in lex.c)
+ *     The Xcheck and Xinit macros have a magic + X_EXTRA in the lengths.
+ *     This is so that you can put up to X_EXTRA characters in a XString
+ *     before calling Xcheck. (See yylex in lex.c)
  */
 #endif /* 0 */
 
@@ -35,7 +36,7 @@ typedef char * XStringP;
 #define	Xinit(xs, xp, length, area) do { \
 			(xs).len = length; \
 			(xs).areap = (area); \
-			(xs).beg = alloc((xs).len + 8, (xs).areap); \
+			(xs).beg = alloc((xs).len + X_EXTRA, (xs).areap); \
 			(xs).end = (xs).beg + (xs).len; \
 			xp = (xs).beg; \
 		} while (0)

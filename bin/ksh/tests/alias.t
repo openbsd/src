@@ -89,3 +89,24 @@ expected-stdout:
 	is z
 ---
 
+name: alias-8
+description:
+	Check that newlines in an alias don't cause the command to be lost.
+stdin:
+	alias foo='
+	
+	
+	echo hi
+	
+	
+	
+	echo there
+	
+	
+	'
+	foo
+expected-stdout:
+	hi
+	there
+---
+

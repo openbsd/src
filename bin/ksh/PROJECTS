@@ -1,4 +1,4 @@
-$OpenBSD: PROJECTS,v 1.3 1996/10/01 02:05:30 downsj Exp $
+$OpenBSD: PROJECTS,v 1.4 1998/06/25 19:01:38 millert Exp $
 
 Things to be done in pdksh (see also the NOTES file):
 
@@ -99,8 +99,7 @@ Things to be done in pdksh (see also the NOTES file):
 	  care of, but more needs doing.
 
 	* remove static limits created by fixed sized arrays
-	  (eg, getsc_(line[]), ident[], heres[], PATH, states(lex.c),
-	  buffer size in emacs/vi code)
+	  (eg, ident[], heres[], PATH, buffer size in emacs/vi code)
 
 	* merge the emacs and vi code (should reduce the size of the shell and
 	  make maintenance easier); handle SIGWINCH while editing a line.

@@ -1,4 +1,4 @@
-$OpenBSD: BUG-REPORTS,v 1.5 1996/11/21 07:59:24 downsj Exp $
+$OpenBSD: BUG-REPORTS,v 1.6 1998/06/25 19:01:27 millert Exp $
 
 List of reported problems (problems reported and fixed before 5.0.4 not
 included).  Unresolved problems (may or may not still exist) marked by *,
@@ -65,11 +65,6 @@ problems believed to be fixed marked by x.
   et al) don't work in shell scripts.
   [see Mail.10:49]
 
-* pdksh 5.2.4, - (reported by Gabor Zahemszky): echo ${foo[*]#/} generates
-  bad substsitution error, newer ksh's don't (older ones do);
-  error includes {...#@(/)}.
-  [see Mail.XXX:XXX]
-
 * pdksh 5.2.4, - (reported by Gabor Zahemszky): emacs: ^P steps through
   multiline commands - should go to start of command.
   [see Mail.XXX:XXX]
@@ -82,11 +77,16 @@ problems believed to be fixed marked by x.
   select and read operations.
   [see Mail.XXX:XXX]
 
-* pdksh 5.2.8, - : extended pattern globing doesn't handle nested parens ().
-
 * pdksh 5.2.10, - (reported by Simon J. Gerraty): in emacs, <ESC><ESC> applied
   to a word with a macro does not complete the word (only expands the macro).
   [see Mail.XXX]
+
+* pdksh 5.2.12, - (reported by Han Holl <jeholl@euronet.nl>): pdksh does not
+  parse the whole script before executing, so some syntax errors are not
+  detected (if the shell exits before reading the whole file).
+  [see Mail.XXX]
+
+* pdksh 5.2.12, - : MAILCHECK isn't preserved from the envirnment on startup.
 
 --------------------- put fixed problems below this line ---------------------
 
@@ -1115,3 +1115,111 @@ x pdksh 5.2.11, - (reported by Herbert Thielen via Larry Daffner): shell leaves
   [see Mail.XXX]
   [fixed in 5.2.12: call main.c(cleanup_proc_env()) from exec.c(execute()).]
 
+x pdksh 5.2.12, - (reported with fix by Eric J. Chet via Thomas Gellekum):
+  . can cause core dump when cleaning up.
+  [see Mail.XXX]
+  [fixed in 5.2.13: call shf_close() before quitenv()]
+
+x pdksh 5.2.12, - (reported by Bruce Burns): test with a single -t option
+  always returns true (does a string test instead of isatty(1)).
+  [see Mail.XXX]
+  [fixed in 5.2.13: do the isatty(1) unless in posix mode]
+
+x pdksh 5.2.12, - (reported by David Tamkin): aliases ending in "; "
+  cause continuation prompt to be printed.
+  [see Mail.XXX]
+  [fixed in 5.2.13: syn.c(c_list) now handles blank lines, removed cf=CONTIN
+   in syn.c(get_command)]
+
+x pdksh 5.2.12, - (reported by Herbert Thielen via Larry Daffner): set
+  does not allow +o and -o options in the same command line.
+  [see Mail.XXX]
+  [fixed in 5.2.13: changed ksh_getopt to remove exclusion code.]
+
+x pdksh 5.2.12, - (reported by Han Holl <jeholl@euronet.nl>):
+  set -A foo -- bar doesn't skip the --.
+  [see Mail.XXX]
+  [fixed in 5.2.13: changed misc.c(parse_args) so A takes an option]
+
+x pdksh 5.2.12, - (reported by David Tamkin): -e (errexit) should be ignored
+  when processing profile and ENV.
+  [see Mail.XXX]
+  [fixed in 5.2.13: errexit saved/cleared/restored in main()]
+
+x pdksh 5.2.12, - (reported by Han Holl <jeholl@euronet.nl>):
+  [ -x foo ] succeeds for root if foo exists.
+  [see Mail.XXX]
+  [fixed in 5.2.13: changed c_test.c(test_access) to use stat in this case]
+
+x pdksh 5.2.4, - (reported by Gabor Zahemszky): echo ${foo[*]#/} generates
+  bad substsitution error, newer ksh's don't (older ones do);
+  error includes {...#@(/)}.
+  [fixed in 5.2.13: moved the @(..) hack from yylex() to expand()]
+
+x pdksh 5.2.8, - : extended pattern globing doesn't handle nested parens (),
+  e.g., [[ aby = +(a|b(x|y)) ]]
+
+x pdksh 5.2.12, - (reported by Marc Olzheim <marcolz@stack.nl>):
+  "echo a | (echo b | echo c)" causes a core dump.
+  [see Mail.XXX]
+  [fixed in 5.2.13: clear XPIPEI,XPIPEO at start of jobs.c(exchild)]
+
+x pdksh 5.2.12, - (reported by Curt Finch <curt@pnk.com>): in an interactive
+  shell, globbing isn't done on redirections if the command is part of
+  a pipeline.  e.g., in "cat < /tmp/*gz | grep foo", the /tmp/*gz is
+  not expanded.
+  [see Mail.XXX]
+  [fixed in 5.2.13: clear XPIPEI,XPIPEO at start of jobs.c(exchild)]
+
+x pdksh 5.2.12, - (reported with fix by Greg A. Woods <woods@most.weird.com>):
+  in emacs, ^[_ (aka ^[.) gets the word from the previous line relative to
+  where the current line came from in the history.  It should get it from
+  the last executed line ala at&t ksh.
+  [see Mail.XXX]
+  [fixed in 5.2.13: use absolute last command]
+
+x pdksh 5.2.12, - (reported by Gabor Zahemszky): MAILCHECK and MAIL
+  don't report `new mail' unless MAIL is re-assigned.
+  [see Mail.XXX]
+  [fixed in 5.2.13: mail code was using variables memory, which was later
+   trashed by exporting the MAIL variable.  Fixed by saving copy of value.]
+
+x pdksh 5.2.12, - (reported by Gabor Zahemszky): memory gets badly fragmented
+  when reversing a (large) file using a simple while read loop and variable
+  contatenation.
+  [see Mail.XXX]
+  [fixed in 5.2.13: alloc.c changed to allow malloc() to deal with large
+   blocks.]
+
+x pdksh 5.2.12, - (reported by Bernd Eggink <eggink@rrz.uni-hamburg.de>)
+  ksh style functions don't save/reset/restore OPTIND.
+  [see Mail.XXX]
+  [fixed in 5.2.13: save and restore user_opt for ksh-style functions.]
+
+x pdksh 5.2.12, - (reported by Marc Olzheim <marcolz@stack.nl>)
+  ${..%..} stuff don't work in SH mode.
+  [see Mail.XXX]
+  [fixed in 5.2.13: removed ifdef KSH from misc.c(do_gmatch)]
+
+x pdksh 5.2.12, - (reported with fix by George Robbins
+  <grr@shandakor.tharsis.com>)
+  in sh, "exec 3>&1" does not keep fd 3 open in executed commands.
+  [see Mail.XXX]
+  [fixed in 5.2.13: c_sh.c(c_exec): added ifdef KSH around fd_clexec() call]
+
+x pdksh 5.2.12, - (reported with fix by George White
+  <gwhite@bodnext.bio.dfo.ca>)
+  in remove_temps(main.c), space for name field is not allocated correctly.
+  [see Mail.XXX]
+  [fixed in 5.2.13: initialize t->name in new structure]
+
+x pdksh 5.2.12, - (reported with fix by Marc Olzheim <marcolz@stack.nl>):
+  when at (past) end of the line, word/command completion will skip back
+  [see Mail.XXX]
+  [fixed in 5.2.13: edit.c(x_locate_word): delete special handling of
+   end-of-buffer]
+
+x pdksh 5.2.12, - (reported by Mike Kelly <tfsmiles@ecst.csuchico.edu>):
+  doting a directory (or a empty path) is allowed.
+  [see Mail.XXX]
+  [fixed in 5.2.13: exec.c(search_access): don't do non-regular files for R_OK]

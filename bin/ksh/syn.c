@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.8 1997/09/01 18:30:12 deraadt Exp $	*/
+/*	$OpenBSD: syn.c,v 1.9 1998/06/25 19:02:20 millert Exp $	*/
 
 /*
  * shell parser (C version)
@@ -7,16 +7,15 @@
 #include "sh.h"
 #include "c_test.h"
 
-struct multiline_state {
-	int	on;		/* set in multiline commands (\n becomes ;) */
-	int	start_token;	/* token multiline is for (eg, FOR, {, etc.) */
-	int	start_line;	/* line multiline command started on */
+struct nesting_state {
+	int	start_token;	/* token than began nesting (eg, FOR) */
+	int	start_line;	/* line nesting began on */
 };
 
 static void	yyparse		ARGS((void));
 static struct op *pipeline	ARGS((int cf));
 static struct op *andor		ARGS((void));
-static struct op *c_list	ARGS((void));
+static struct op *c_list	ARGS((int multi));
 static struct ioword *synio	ARGS((int cf));
 static void	musthave	ARGS((int c, int cf));
 static struct op *nested	ARGS((int type, int smark, int emark));
@@ -33,8 +32,8 @@ static struct op *block		ARGS((int type, struct op *t1, struct op *t2,
 static struct op *newtp		ARGS((int type));
 static void	syntaxerr	ARGS((const char *what))
 						GCC_FUNC_ATTR(noreturn);
-static void	multiline_push ARGS((struct multiline_state *save, int tok));
-static void	multiline_pop ARGS((struct multiline_state *saved));
+static void	nesting_push ARGS((struct nesting_state *save, int tok));
+static void	nesting_pop ARGS((struct nesting_state *saved));
 static int	assign_command ARGS((char *s));
 static int	inalias ARGS((struct source *s));
 #ifdef KSH
@@ -48,7 +47,7 @@ static void	dbtestp_error ARGS((Test_env *te, int offset, const char *msg));
 
 static	struct	op	*outtree; /* yyparse output */
 
-static struct multiline_state multiline;	/* \n changed to ; */
+static struct nesting_state nesting;	/* \n changed to ; */
 
 static	int	reject;		/* token(cf) gets symbol again */
 static	int	symbol;		/* yylex value */
@@ -66,9 +65,8 @@ yyparse()
 	int c;
 
 	ACCEPT;
-	yynerrs = 0;
 
-	outtree = c_list();
+	outtree = c_list(source->type == SSTRING);
 	c = tpeek(0);
 	if (c == 0 && !outtree)
 		outtree = newtp(TEOF);
@@ -116,37 +114,41 @@ andor()
 }
 
 static struct op *
-c_list()
+c_list(multi)
+	int multi;
 {
-	register struct op *t, *p, *tl = NULL;
+	register struct op *t = NULL, *p, *tl = NULL;
 	register int c;
+	int have_sep;
 
-	t = andor();
-	if (t != NULL) {
+	while (1) {
+		p = andor();
 		/* Token has always been read/rejected at this point, so
-		 * we don't worray about what flags to pass token()
+		 * we don't worry about what flags to pass token()
 		 */
-		while ((c = token(0)) == ';' || c == '&' || c == COPROC ||
-		       (c == '\n' && (multiline.on || inalias(source))))
-		{
-			if (c == '&' || c == COPROC) {
-				int type = c == '&' ? TASYNC : TCOPROC;
-				if (tl)
-					tl->right = block(type, tl->right,
-							  NOBLOCK, NOWORDS);
-				else
-					t = block(type, t, NOBLOCK, NOWORDS);
-			}
-			if ((p = andor()) == NULL)
-				return (t);
-			if (tl == NULL)
-				t = tl = block(TLIST, t, p, NOWORDS);
-			else
-				tl = tl->right = block(TLIST, tl->right, p, NOWORDS);
-		}
-		REJECT;
+		c = token(0);
+		have_sep = 1;
+		if (c == '\n' && (multi || inalias(source))) {
+			if (!p) /* ignore blank lines */
+				continue;
+		} else if (!p)
+			break;
+		else if (c == '&' || c == COPROC)
+			p = block(c == '&' ? TASYNC : TCOPROC,
+				  p, NOBLOCK, NOWORDS);
+		else if (c != ';')
+			have_sep = 0;
+		if (!t)
+			t = p;
+		else if (!tl)
+			t = tl = block(TLIST, t, p, NOWORDS);
+		else
+			tl = tl->right = block(TLIST, tl->right, p, NOWORDS);
+		if (!have_sep)
+			break;
 	}
-	return (t);
+	REJECT;
+	return t;
 }
 
 static struct ioword *
@@ -187,12 +189,12 @@ nested(type, smark, emark)
 	int type, smark, emark;
 {
 	register struct op *t;
-	struct multiline_state old_multiline;
+	struct nesting_state old_nesting;
 
-	multiline_push(&old_multiline, smark);
-	t = c_list();
+	nesting_push(&old_nesting, smark);
+	t = c_list(TRUE);
 	musthave(emark, KEYWORD|ALIAS);
-	multiline_pop(&old_multiline);
+	nesting_pop(&old_nesting);
 	return (block(type, t, NOBLOCK, NOWORDS));
 }
 
@@ -204,18 +206,13 @@ get_command(cf)
 	register int c, iopn = 0, syniocf;
 	struct ioword *iop, **iops;
 	XPtrV args, vars;
-	struct multiline_state old_multiline;
+	struct nesting_state old_nesting;
 
 	iops = (struct ioword **) alloc(sizeofN(struct ioword *, NUFILE+1),
 					ATEMP);
 	XPinit(args, 16);
 	XPinit(vars, 16);
 
-	/* Don't want to pass CONTIN if reading interactively as just hitting
-	 * return would print PS2 instead of PS1.
-	 */
-	if (multiline.on || inalias(source))
-		cf = CONTIN;
 	syniocf = KEYWORD|ALIAS;
 	switch (c = token(cf|KEYWORD|ALIAS|VARASN)) {
 	  default:
@@ -296,7 +293,7 @@ get_command(cf)
 	  {
 		static const char let_cmd[] = { CHAR, 'l', CHAR, 'e',
 						CHAR, 't', EOS };
-		syniocf &= ~(KEYWORD|ALIAS);
+		/* Leave KEYWORD in syniocf (allow if (( 1 )) then ...) */
 		t = newtp(TCOM);
 		ACCEPT;
 		XPput(args, wdcopy(let_cmd, ATEMP));
@@ -308,7 +305,7 @@ get_command(cf)
 
 #ifdef KSH
 	  case DBRACKET: /* [[ .. ]] */
-		syniocf &= ~(KEYWORD|ALIAS);
+		/* Leave KEYWORD in syniocf (allow if [[ -n 1 ]] then ...) */
 		t = newtp(TDBRACKET);
 		ACCEPT;
 		{
@@ -334,37 +331,37 @@ get_command(cf)
 			yyerror("%s: bad identifier\n",
 				c == FOR ? "for" : "select");
 		t->str = str_save(ident, ATEMP);
-		multiline_push(&old_multiline, c);
+		nesting_push(&old_nesting, c);
 		t->vars = wordlist();
 		t->left = dogroup();
-		multiline_pop(&old_multiline);
+		nesting_pop(&old_nesting);
 		break;
 
 	  case WHILE:
 	  case UNTIL:
-		multiline_push(&old_multiline, c);
+		nesting_push(&old_nesting, c);
 		t = newtp((c == WHILE) ? TWHILE : TUNTIL);
-		t->left = c_list();
+		t->left = c_list(TRUE);
 		t->right = dogroup();
-		multiline_pop(&old_multiline);
+		nesting_pop(&old_nesting);
 		break;
 
 	  case CASE:
 		t = newtp(TCASE);
 		musthave(LWORD, 0);
 		t->str = yylval.cp;
-		multiline_push(&old_multiline, c);
+		nesting_push(&old_nesting, c);
 		t->left = caselist();
-		multiline_pop(&old_multiline);
+		nesting_pop(&old_nesting);
 		break;
 
 	  case IF:
-		multiline_push(&old_multiline, c);
+		nesting_push(&old_nesting, c);
 		t = newtp(TIF);
-		t->left = c_list();
+		t->left = c_list(TRUE);
 		t->right = thenpart();
 		musthave(FI, KEYWORD|ALIAS);
-		multiline_pop(&old_multiline);
+		nesting_pop(&old_nesting);
 		break;
 
 	  case BANG:
@@ -434,7 +431,7 @@ dogroup()
 		c = '}';
 	else
 		syntaxerr((char *) 0);
-	list = c_list();
+	list = c_list(TRUE);
 	musthave(c, KEYWORD|ALIAS);
 	return list;
 }
@@ -446,7 +443,7 @@ thenpart()
 
 	musthave(THEN, KEYWORD|ALIAS);
 	t = newtp(0);
-	t->left = c_list();
+	t->left = c_list(TRUE);
 	if (t->left == NULL)
 		syntaxerr((char *) 0);
 	t->right = elsepart();
@@ -460,13 +457,13 @@ elsepart()
 
 	switch (token(KEYWORD|ALIAS|VARASN)) {
 	  case ELSE:
-		if ((t = c_list()) == NULL)
+		if ((t = c_list(TRUE)) == NULL)
 			syntaxerr((char *) 0);
 		return (t);
 
 	  case ELIF:
 		t = newtp(TELIF);
-		t->left = c_list();
+		t->left = c_list(TRUE);
 		t->right = thenpart();
 		return (t);
 
@@ -524,7 +521,8 @@ casepart(endtok)
 	t->vars = (char **) XPclose(ptns);
 	musthave(')', 0);
 
-	t->left = c_list();
+	t->left = c_list(TRUE);
+	/* Note: Posix requires the ;; */
 	if ((tpeek(CONTIN|KEYWORD|ALIAS)) != endtok)
 		musthave(BREAK, CONTIN|KEYWORD|ALIAS);
 	return (t);
@@ -535,32 +533,23 @@ function_body(name, ksh_func)
 	char *name;
 	int ksh_func;	/* function foo { ... } vs foo() { .. } */
 {
-	XString xs;
-	char *xp, *p;
+	char *sname, *p;
 	struct op *t;
 	int old_func_parse;
 
-	Xinit(xs, xp, 16, ATEMP);
-	for (p = name; ; ) {
-		if ((*p == EOS && Xlength(xs, xp) == 0)
-		    || (*p != EOS && *p != CHAR && *p != QCHAR
-			&& *p != OQUOTE && *p != CQUOTE))
-		{
-			p = snptreef((char *) 0, 32, "%S", name);
-			yyerror("%s: invalid function name\n", p);
-		}
-		Xcheck(xs, xp);
-		if (*p == EOS) {
-			Xput(xs, xp, '\0');
-			break;
-		} else if (*p == CHAR || *p == QCHAR) {
-			Xput(xs, xp, p[1]);
-			p += 2;
-		} else
-			p++;	/* OQUOTE/CQUOTE */
-	}
+	sname = wdstrip(name);
+	/* Check for valid characters in name.  posix and ksh93 say only
+	 * allow [a-zA-Z_0-9] but this allows more as old pdksh's have
+	 * allowed more (the following were never allowed:
+	 *	nul space nl tab $ ' " \ ` ( ) & | ; = < >
+	 *  C_QUOTE covers all but = and adds # [ ? *)
+	 */
+	for (p = sname; *p; p++)
+		if (ctype(*p, C_QUOTE) || *p == '=')
+			yyerror("%s: invalid function name\n", sname);
+
 	t = newtp(TFUNCT);
-	t->str = Xclose(xs, xp);
+	t->str = sname;
 	t->u.ksh_func = ksh_func;
 
 	/* Note that POSIX allows only compound statements after foo(), sh and
@@ -596,6 +585,7 @@ wordlist()
 	XPtrV args;
 
 	XPinit(args, 16);
+	/* Posix does not do alias expansion here... */
 	if ((c = token(CONTIN|KEYWORD|ALIAS)) != IN) {
 		if (c != ';') /* non-POSIX, but at&t ksh accepts a ; here */
 			REJECT;
@@ -709,10 +699,9 @@ syntaxerr(what)
     Again:
 	switch (c) {
 	case 0:
-		if (multiline.on && multiline.start_token) {
-			multiline.on = FALSE; /* avoid infinate loops */
-			c = multiline.start_token;
-			source->errline = multiline.start_line;
+		if (nesting.start_token) {
+			c = nesting.start_token;
+			source->errline = nesting.start_line;
 			what = "unmatched";
 			goto Again;
 		}
@@ -748,21 +737,20 @@ syntaxerr(what)
 }
 
 static void
-multiline_push(save, tok)
-	struct multiline_state *save;
+nesting_push(save, tok)
+	struct nesting_state *save;
 	int tok;
 {
-	*save = multiline;
-	multiline.on = TRUE;
-	multiline.start_token = tok;
-	multiline.start_line = source->line;
+	*save = nesting;
+	nesting.start_token = tok;
+	nesting.start_line = source->line;
 }
 
 static void
-multiline_pop(saved)
-	struct multiline_state *saved;
+nesting_pop(saved)
+	struct nesting_state *saved;
 {
-	multiline = *saved;
+	nesting = *saved;
 }
 
 static struct op *
@@ -785,10 +773,8 @@ struct op *
 compile(s)
 	Source *s;
 {
-	yynerrs = 0;
-	multiline.on = s->type == SSTRING;
-	multiline.start_token = 0;
-	multiline.start_line = 0;
+	nesting.start_token = 0;
+	nesting.start_line = 0;
 	herep = heres;
 	source = s;
 	yyparse();
@@ -803,7 +789,7 @@ compile(s)
  *	a=[ab]
  *	$ x=typeset; $x a=[ab]; echo "$a"
  *	a=a
- *	$
+ *	$ 
  */
 static int
 assign_command(s)

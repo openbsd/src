@@ -1,8 +1,7 @@
-$OpenBSD: NOTES,v 1.3 1996/10/01 02:05:29 downsj Exp $
+$OpenBSD: NOTES,v 1.4 1998/06/25 19:01:37 millert Exp $
 
-General features of at&t ksh that are not (yet) in pdksh:
-    - exported aliases.
-    - exported functions.
+General features of at&t ksh88 that are not (yet) in pdksh:
+    - exported aliases and functions (not in ksh93).
     - set -t.
     - signals/traps not cleared during functions.
     - trap DEBUG, local ERR and EXIT traps in functions.
@@ -461,6 +460,15 @@ at&t ksh bugs:
 	hi there
 	ksh: echo:  not found
 	$ 
+    - (SunOS M-12/28/93d): 
+	$ cat -n << X $(
+	> echo foo
+	> )
+	> X
+	> echo bar
+	)
+	./ksh93: X: cannot open [No such file or directory]
+	Memory fault (core dumped)
 
 POSIX sh questions (references are to POSIX 1003.2-1992)
 	- arithmetic expressions: how are empty expressions treated?

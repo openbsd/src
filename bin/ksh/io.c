@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.4 1997/06/19 13:58:42 kstailey Exp $	*/
+/*	$OpenBSD: io.c,v 1.5 1998/06/25 19:02:00 millert Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -7,6 +7,8 @@
 #include <ctype.h>
 #include "sh.h"
 #include "ksh_stat.h"
+
+static int initio_done;
 
 /*
  * formatted output functions
@@ -127,7 +129,10 @@ void
 error_prefix(fileline)
 	int fileline;
 {
-	shf_fprintf(shl_out, "%s: ", kshname + (*kshname == '-'));
+	/* Avoid foo: foo[2]: ... */
+	if (!fileline || !source || !source->file
+	    || strcmp(source->file, kshname) != 0)
+		shf_fprintf(shl_out, "%s: ", kshname + (*kshname == '-'));
 	if (fileline && source && source->file != NULL) {
 		shf_fprintf(shl_out, "%s[%d]: ", source->file,
 			source->errline > 0 ? source->errline : source->line);
@@ -147,6 +152,8 @@ shellf(fmt, va_alist)
 {
 	va_list va;
 
+	if (!initio_done) /* shl_out may not be set up yet... */
+		return;
 	SH_VA_START(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);
@@ -191,6 +198,7 @@ initio()
 	shf_fdopen(1, SHF_WR, shl_stdout);	/* force buffer allocation */
 	shf_fdopen(2, SHF_WR, shl_out);
 	shf_fdopen(2, SHF_WR, shl_spare);	/* force buffer allocation */
+	initio_done = 1;
 }
 
 /* A dup2() with error checking */

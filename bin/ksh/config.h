@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.2 1996/08/25 11:56:34 downsj Exp $	*/
+/*	$OpenBSD: config.h,v 1.3 1998/06/25 19:01:49 millert Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -250,6 +250,9 @@
 /* Define if you have the getgroups function.  */
 /* #undef HAVE_GETGROUPS */
 
+/* Define if you have the getpagesize function.  */
+#define HAVE_GETPAGESIZE 1
+
 /* Define if you have the getrusage function.  */
 /* #undef HAVE_GETRUSAGE */
 
@@ -285,6 +288,9 @@
 
 /* Define if you have the ulimit function.  */
 /* #undef HAVE_ULIMIT */
+
+/* Define if you have the valloc function.  */
+#define HAVE_VALLOC 1
 
 /* Define if you have the wait3 function.  */
 #define HAVE_WAIT3 1

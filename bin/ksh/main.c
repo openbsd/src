@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1997/09/12 00:32:53 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1998/06/25 19:02:10 millert Exp $	*/
 
 /*
  * startup, main loop, enviroments and error handling
@@ -26,7 +26,7 @@ static int	is_restricted ARGS((char *name));
 
 static const char	initifs [] = "IFS= \t\n"; /* must be R/W */
 
-static const	char   initsubs [] =
+static const	char   initsubs [] = 
   "${PS2=> } ${PS3=#? } ${PS4=+ }";
 
 static const char version_param[] =
@@ -91,15 +91,14 @@ main(argc, argv)
 	int argi;
 	Source *s;
 	struct block *l;
-	int restricted;
+	int restricted, errexit;
 	char **wp;
 	struct env env;
-	int euid;
 
 #ifdef MEM_DEBUG
-	chmem_push("+c", 1);
-	/*chmem_push("+cd", 1);*/
-#endif
+	chmem_set_defaults("ct", 1);
+	/* chmem_push("+c", 1); */
+#endif /* MEM_DEBUG */
 
 #ifdef OS2
 	setmode (0, O_BINARY);
@@ -168,7 +167,14 @@ main(argc, argv)
 		}
 	}
 #endif /* HAVE_CONFSTR && _CS_PATH */
-	path = def_path;
+
+	/* Set PATH to def_path (will set the path global variable).
+	 * (import of environment below will probably change this setting).
+	 */
+	{
+		struct tbl *vp = global("PATH");
+		setstr(vp, def_path);
+	}
 
 
 	/* Turn on nohup by default for how - will change to off
@@ -248,20 +254,22 @@ main(argc, argv)
 			;
 	}
 
-	euid = geteuid();
-	safe_prompt = euid ? "$ " : "# ";
+
+	ksheuid = geteuid();
+	safe_prompt = ksheuid ? "$ " : "# ";
 	{
 		struct tbl *vp = global("PS1");
 
 		/* Set PS1 if it isn't set, or we are root and prompt doesn't
 		 * contain a #.
 		 */
-		if (!(vp->flag & ISSET) || (!euid && !strchr(str_val(vp), '#')))
+		if (!(vp->flag & ISSET)
+		    || (!ksheuid && !strchr(str_val(vp), '#')))
 			setstr(vp, safe_prompt);
 	}
 
 	/* Set this before parsing arguments */
-	Flag(FPRIVILEGED) = getuid() != euid || getgid() != getegid();
+	Flag(FPRIVILEGED) = getuid() != ksheuid || getgid() != getegid();
 
 	/* this to note if monitor is set on command line (see below) */
 	Flag(FMONITOR) = 127;
@@ -302,7 +310,7 @@ main(argc, argv)
 		s->u.shf = shf_fdopen(0, SHF_RD | can_seek(0),
 				      (struct shf *) 0);
 		if (isatty(0) && isatty(2)) {
-			Flag(FTALKING) = 1;
+			Flag(FTALKING) = Flag(FTALKING_I) = 1;
 			/* The following only if isatty(0) */
 			s->flags |= SF_TTY;
 			s->u.shf->flags |= SHF_INTERRUPT;
@@ -337,6 +345,8 @@ main(argc, argv)
 	/* Disable during .profile/ENV reading */
 	restricted = Flag(FRESTRICTED);
 	Flag(FRESTRICTED) = 0;
+	errexit = Flag(FERREXIT);
+	Flag(FERREXIT) = 0;
 
 	/* Do this before profile/$ENV so that if it causes problems in them,
 	 * user will know why things broke.
@@ -408,6 +418,8 @@ main(argc, argv)
 		/* After typeset command... */
 		Flag(FRESTRICTED) = 1;
 	}
+	if (errexit)
+		Flag(FERREXIT) = 1;
 
 	if (Flag(FTALKING)) {
 		hist_init(s);
@@ -450,10 +462,10 @@ include(name, argc, argv, intr_ok)
 	newenv(E_INCL);
 	i = ksh_sigsetjmp(e->jbuf, 0);
 	if (i) {
-		quitenv();
 		source = sold;
-		if (s)
+		if (s) /* Do this before quitenv(), which frees the memory */
 			shf_close(s->u.shf);
+		quitenv();
 		if (old_argv) {
 			e->loc->argv = old_argv;
 			e->loc->argc = old_argc;
@@ -660,6 +672,9 @@ unwind(i)
 					kill(0, sig);
 				}
 			}
+#ifdef MEM_DEBUG
+			chmem_allfree();
+#endif /* MEM_DEBUG */
 			exit(exstat);
 			/* NOTREACHED */
 		  }
@@ -786,6 +801,7 @@ remove_temps(tp)
 				    sizeof(struct temp) + strlen(tp->name) + 1,
 				    APERM);
 				memset(t, 0, sizeof(struct temp));
+				t->name = (char *) &t[1];
 				strcpy(t->name, tp->name);
 				t->next = delayed_remove;
 				delayed_remove = t;

@@ -1,9 +1,8 @@
 name: glob-bad-1
 description:
 	Check that globbing isn't done when glob has syntax error
-perl-setup:
-	mkdir("[x", 0777) || die "couldn't make directory [x - $!\n";
-	&touch("[x/foo");
+file-setup: dir 755 "[x"
+file-setup: file 644 "[x/foo"
 stdin:
 	echo [*
 	echo *[x
@@ -17,10 +16,9 @@ expected-stdout:
 name: glob-bad-2
 description:
 	Check that symbolic links aren't stat()'d
-perl-setup:
-	mkdir("dir", 0777) || die "couldn't make directory dir - $!\n";
-	&touch("dir/abc");
-	symlink("non-existent-file", "dir/abc");
+file-setup: dir 755 "dir"
+file-setup: symlink 644 "dir/abc"
+	non-existant-file
 stdin:
 	echo d*/*
 	echo d*/abc
@@ -32,8 +30,11 @@ expected-stdout:
 name: glob-range-1
 description:
 	Test range matching
-perl-setup:
-	&touch(".bc", "abc", "bbc", "cbc", "-bc");
+file-setup: file 644 ".bc"
+file-setup: file 644 "abc"
+file-setup: file 644 "bbc"
+file-setup: file 644 "cbc"
+file-setup: file 644 "-bc"
 stdin:
 	echo [ab-]*
 	echo [-ab]*
@@ -52,8 +53,7 @@ name: glob-range-2
 description:
 	Test range matching
 	(at&t ksh fails this; POSIX says invalid)
-perl-setup:
-	&touch("abc");
+file-setup: file 644 "abc"
 stdin:
 	echo [a--]*
 expected-stdout:
@@ -63,8 +63,7 @@ expected-stdout:
 name: glob-range-3
 description:
 	Check that globbing matches the right things...
-perl-setup:
-	&touch("a\302c");
+file-setup: file 644 "aÂc"
 stdin:
 	echo a[Á-Ú]*
 expected-stdout:
@@ -74,8 +73,7 @@ expected-stdout:
 name: glob-range-4
 description:
 	Results unspecified according to POSIX
-perl-setup:
-	&touch(".bc");
+file-setup: file 644 ".bc"
 stdin:
 	echo [a.]*
 expected-stdout:
@@ -86,8 +84,12 @@ name: glob-range-5
 description:
 	Results unspecified according to POSIX
 	(at&t ksh treats this like [a-cc-e]*)
-perl-setup:
-	&touch("abc", "bbc", "cbc", "dbc", "ebc", "-bc");
+file-setup: file 644 "abc"
+file-setup: file 644 "bbc"
+file-setup: file 644 "cbc"
+file-setup: file 644 "dbc"
+file-setup: file 644 "ebc"
+file-setup: file 644 "-bc"
 stdin:
 	echo [a-c-e]*
 expected-stdout:

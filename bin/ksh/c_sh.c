@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.6 1997/08/05 21:49:54 grr Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.7 1998/06/25 19:01:46 millert Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -10,6 +10,7 @@
 #include "ksh_times.h"
 
 static	char *clocktos ARGS((clock_t t));
+
 
 /* :, false and true */
 int
@@ -179,15 +180,16 @@ c_dot(wp)
 	char **argv;
 	int argc;
 	int i;
+	int err;
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
 		return 1;
 
 	if ((cp = wp[builtin_opt.optind]) == NULL)
 		return 0;
-	file = search(cp, path, R_OK, (int *) 0);
+	file = search(cp, path, R_OK, &err);
 	if (file == NULL) {
-		bi_errorf("%s: not found", cp);
+		bi_errorf("%s: %s", cp, err ? strerror(err) : "not found");
 		return 1;
 	}
 
@@ -353,7 +355,7 @@ c_read(wp)
 				expanding = 0;
 				if (c == '\n') {
 					c = 0;
-					if (Flag(FTALKING) && isatty(fd)) {
+					if (Flag(FTALKING_I) && isatty(fd)) {
 						/* set prompt in case this is
 						 * called from .profile or $ENV
 						 */
@@ -656,10 +658,10 @@ c_times(wp)
 	struct tms all;
 
 	(void) ksh_times(&all);
-	shprintf("Shell: %8s user ", clocktos(all.tms_utime));
-	shprintf("%8s system\n", clocktos(all.tms_stime));
-	shprintf("Kids:  %8s user ", clocktos(all.tms_cutime));
-	shprintf("%8s system\n", clocktos(all.tms_cstime));
+	shprintf("Shell: %8ss user ", clocktos(all.tms_utime));
+	shprintf("%8ss system\n", clocktos(all.tms_stime));
+	shprintf("Kids:  %8ss user ", clocktos(all.tms_cutime));
+	shprintf("%8ss system\n", clocktos(all.tms_cstime));
 
 	return 0;
 }
@@ -672,22 +674,49 @@ timex(t, f)
 	struct op *t;
 	int f;
 {
+#define TF_NONE		0
+#define TF_NOREAL	BIT(1)		/* don't report real time */
+#define TF_POSIX	BIT(2)		/* report in posix format */
 	int rv;
-	struct tms t0, t1;
+	struct tms t0, t1, tms;
 	clock_t t0t, t1t;
+	clock_t real;
+	int tf = TF_NONE;
 	extern clock_t j_usrtime, j_systime; /* computed by j_wait */
 
-	j_usrtime = j_systime = 0;
 	t0t = ksh_times(&t0);
-	rv = execute(t->left, f);
-	t1t = ksh_times(&t1);
+	if (t->left) {
+		/*
+		 * Two ways of getting cpu usage of a command: just use t0
+		 * and t1 (which will get cpu usage from other jobs that
+		 * finish while we are executing t->left), or get the
+		 * cpu usage of t->left. at&t ksh does the former, while
+		 * pdksh tries to do the later (the j_usrtime hack doesn't
+		 * really work as it only counts the last job).
+		 */
+		j_usrtime = j_systime = 0;
+		rv = execute(t->left, f);
+		t1t = ksh_times(&t1);
+		real = t1t - t0t;
+		tms.tms_utime = t1.tms_utime - t0.tms_utime + j_usrtime;
+		tms.tms_stime = t1.tms_stime - t0.tms_stime + j_systime;
+	} else { /* ksh93 - report shell times (shell+kids) */
+		tf |= TF_NOREAL;
+		real = 0;
+		tms.tms_utime = t0.tms_utime + t0.tms_cutime;
+		tms.tms_stime = t0.tms_stime + t0.tms_cstime;
+		rv = 0;
+	}
 
-	shf_fprintf(shl_out, "%8s real ", clocktos(t1t - t0t));
-	shf_fprintf(shl_out, "%8s user ",
-	       clocktos(t1.tms_utime - t0.tms_utime + j_usrtime));
-	shf_fprintf(shl_out, "%8s system ",
-	       clocktos(t1.tms_stime - t0.tms_stime + j_systime));
-	shf_fprintf(shl_out, newline);
+	if (!(tf & TF_NOREAL))
+		shf_fprintf(shl_out,
+			tf & TF_POSIX ? "real %8s\n" : "%8ss real ",
+			clocktos(real));
+	shf_fprintf(shl_out, tf & TF_POSIX ? "user %8s\n" : "%8ss user ",
+		clocktos(tms.tms_utime));
+	shf_fprintf(shl_out, tf & TF_POSIX ? "user %8s\n" : "%8ss system\n",
+		clocktos(tms.tms_stime));
+	shf_flush(shl_out);
 
 	return rv;
 }
@@ -696,16 +725,18 @@ static char *
 clocktos(t)
 	clock_t t;
 {
-	static char temp[20];
+	static char temp[22]; /* enough for 64 bit clock_t */
 	register int i;
 	register char *cp = temp + sizeof(temp);
 
+	/* note: posix says must use max precision, ie, if clk_tck is
+	 * 1000, must print 3 places after decimal (if non-zero, else 1).
+	 */
 	if (CLK_TCK != 100)	/* convert to 1/100'ths */
 	    t = (t < 1000000000/CLK_TCK) ?
 		    (t * 100) / CLK_TCK : (t / CLK_TCK) * 100;
 
 	*--cp = '\0';
-	*--cp = 's';
 	for (i = -2; i <= 0 || t > 0; i++) {
 		if (i == 0)
 			*--cp = '.';
@@ -727,9 +758,16 @@ c_exec(wp)
 		for (i = 0; i < NUFILE; i++) {
 			if (e->savefd[i] > 0)
 				close(e->savefd[i]);
-			/* keep anything > 2 private */
+			/*
+			 * For ksh keep anything > 2 private,
+			 * for sh, let them be (POSIX says what
+			 * happens is unspecified and the bourne shell
+			 * keeps them open).
+			 */
+#ifdef KSH
 			if (!Flag(FSH) && i > 2 && e->savefd[i])
 				fd_clexec(i);
+#endif /* KSH */
 		}
 		e->savefd = NULL; 
 	}

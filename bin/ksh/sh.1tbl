@@ -1,5 +1,5 @@
 '\" t
-.\"	$OpenBSD: sh.1tbl,v 1.4 1998/03/18 03:04:56 marc Exp $
+.\"	$OpenBSD: sh.1tbl,v 1.5 1998/06/25 19:02:17 millert Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -1117,6 +1117,11 @@ the \fB$0\fP parameter is set to the name of the function
 parameter assignments preceeding function calls are not kept in
 the shell environment
 (executing Bourne-style functions will keep assignments).
+.IP \ \ \(bu
+\fBOPTIND\fP is saved/reset and restored on entry and exit from the function
+so \fBgetopts\fP can be used properly both inside and outside the function
+(Bourne-style functions leave \fBOPTIND\fP untouched, so using \fBgetopts\fP
+inside a function interferes with using \fBgetopts\fP outside the function).
 .nr PD \n(P2
 In the future, the following differences will also be added:
 .nr P2 \n(PD
@@ -1210,6 +1215,11 @@ a i in 1 2; do echo i=$i j=$j; done
 .ft P
 .RE
 uses parameter \fBi\fP in posix mode, \fBj\fP in non-posix mode.
+.IP \ \ \(bu
+test: in posix mode, the expression "\fB-t\fP" (preceded by
+some number of "\fB!\fP" arguments) is always true as it is a non-zero length
+string; in non-posix mode, it tests if file descriptor 1 is a tty (\fIi.e.\fP,
+the \fIfd\fP argument to the \fB-t\fP test may be left out and defaults to 1).
 .nr PD \n(P2
 .\"}}}
 .\"{{{  Command Execution (built-in commands)
@@ -1285,11 +1295,23 @@ environment the command is used in.
 The null command.
 Exit status is set to zero.
 .\"}}}
-.\"{{{  alias [ -d | -t [ -r ] ] [-x] [name1[=value1] ...]
-.IP "\fBalias\fP [ \fB\-d\fP | \fB\-t\fP [\fB\-r\fP] ] [\fB\-x\fP] [\fIname1\fP[\fB=\fP\fIvalue1\fP] ...]"
-Without arguments, \fBalias\fP lists all aliases and their values.  For
-any name without a value, its value is listed.  Any name with a value
-defines an alias (see Aliases above).
+.\"{{{  alias [ -d | +-t [ -r ] ] [+-px] [+-] [name1[=value1] ...]
+.IP "\fBalias\fP [ \fB\-d\fP | \fB\(+-t\fP [\fB\-r\fP] ] [\fB\(+-px\fP] [\fB\(+-\fP] [\fIname1\fP[\fB=\fP\fIvalue1\fP] ...]"
+Without arguments, \fBalias\fP lists all aliases.
+For any name without a value, the existing alias is listed.
+Any name with a value defines an alias (see Aliases above).
+.sp
+When listing aliases, one of two formats is used: 
+normally, aliases are listed as \fIname\fP\fB=\fP\fIvalue\fP, where
+\fIvalue\fP is quoted; if options were preceded with \fB+\fP 
+or a lone \fB+\fP is given on the command line, only \fIname\fP
+is printed.
+In addition, if the \fB\-p\fP option is used, each alias
+is prefixed with the string "\fBalias\fP\ ".
+.sp
+The \fB\-x\fP option sets (\fB+x\fP clears) the export attribute of an alias,
+or, if no names are given, lists the aliases with the export attribute
+(exporting an alias has no affect).
 .sp
 The \fB\-x\fP option sets the export attribute of an alias, or, if no
 names are given, lists the aliases with the export attribute
@@ -1394,6 +1416,10 @@ The command is executed without forking, replacing the shell process.
 .sp
 If no arguments are given, any IO redirection is permanent and the shell
 is not replaced.
+Any file descriptors which are opened or \fIdup\fP(2)-ed
+in this way are made available to other executed commands
+(note that the Korn shell differs here: it does not pass on
+file descriptors greater than 2).
 .\"}}}
 .\"{{{  exit [status]
 .IP "\fBexit\fP [\fIstatus\fP]"
@@ -1441,9 +1467,7 @@ options.
 \fIoptstring\fP contains the option letters that
 \fBgetopts\fP is to recognize.  If a letter is followed by a colon, the
 option is expected to have an argument.
-Arguments containing options must all start with either a \fB\-\fP or
-a \fB+\fP, options that do not take arguments may be grouped in a single
-argument.
+Options that do not take arguments may be grouped in a single argument.
 If an option takes an argument and the option character is not the last
 character of the argument it is found in, the remainder of the argument
 is taken to be the option's argument, otherwise, the next argument is
@@ -1854,41 +1878,43 @@ T}
 \fIfile\fP \-ef \fIfile\fP	T{
 first \fIfile\fP is the same file as second \fIfile\fP
 T}
-\-t [\fIfd\fP]	T{
+\-t\ [\fIfd\fP]	T{
 file descriptor is a tty device.
-Default value of \fIfd\fP is 1.
+If the posix option (\fBset \-o posix\fP, see POSIX Mode above) is not
+set, \fIfd\fP may be left out, in which case it is taken to be 1
+(the behaviour differs due to the special POSIX rules described below).
 T}
 \fIstring\fP	T{
 \fIstring\fP is not empty
 T}
-\-z \fIstring\fP	T{
+\-z\ \fIstring\fP	T{
 \fIstring\fP is empty
 T}
-\-n \fIstring\fP	T{
+\-n\ \fIstring\fP	T{
 \fIstring\fP is not empty
 T}
-\fIstring\fP = \fIstring\fP	T{
+\fIstring\fP\ =\ \fIstring\fP	T{
 strings are equal
 T}
-\fIstring\fP != \fIstring\fP	T{
+\fIstring\fP\ !=\ \fIstring\fP	T{
 strings are not equal
 T}
-\fInumber\fP \-eq \fInumber\fP	T{
+\fInumber\fP\ \-eq\ \fInumber\fP	T{
 numbers compare equal
 T}
-\fInumber\fP \-ne \fInumber\fP	T{
+\fInumber\fP\ \-ne\ \fInumber\fP	T{
 numbers compare not equal
 T}
-\fInumber\fP \-ge \fInumber\fP	T{
+\fInumber\fP\ \-ge\ \fInumber\fP	T{
 numbers compare greater than or equal
 T}
-\fInumber\fP \-gt \fInumber\fP	T{
+\fInumber\fP\ \-gt\ \fInumber\fP	T{
 numbers compare greater than
 T}
-\fInumber\fP \-le \fInumber\fP	T{
+\fInumber\fP\ \-le\ \fInumber\fP	T{
 numbers compare less than or equal
 T}
-\fInumber\fP \-lt \fInumber\fP	T{
+\fInumber\fP\ \-lt\ \fInumber\fP	T{
 numbers compare less than
 T}
 .TE
@@ -1964,8 +1990,8 @@ The original Korn shell's \fBDEBUG\fP trap and the handling of \fBERR\fP and
 .IP \fBtrue\fP
 A command that exits with a zero value.
 .\"}}}
-.\"{{{  typeset [[+-Ulrtux] [-L[n]] [-R[n]] [-Z[n]] [-i[n]] | -f [-tux]] [name[=value] ...]
-.IP "\fBtypeset\fP [[\(+-Ulrtux] [\fB\-L\fP[\fIn\fP]] [\fB\-R\fP[\fIn\fP]] [\fB\-Z\fP[\fIn\fP]] [\fB\-i\fP[\fIn\fP]] | \fB\-f\fP [\fB\-tux\fP]] [\fIname\fP[\fB=\fP\fIvalue\fP] ...]"
+.\"{{{  typeset [[+-Ulprtux] [-L[n]] [-R[n]] [-Z[n]] [-i[n]] | -f [-tux]] [name[=value] ...]
+.IP "\fBtypeset\fP [[\(+-Ulprtux] [\fB\-L\fP[\fIn\fP]] [\fB\-R\fP[\fIn\fP]] [\fB\-Z\fP[\fIn\fP]] [\fB\-i\fP[\fIn\fP]] | \fB\-f\fP [\fB\-tux\fP]] [\fIname\fP[\fB=\fP\fIvalue\fP] ...]"
 Display or set parameter attributes.
 With no \fIname\fP arguments, parameter attributes are displayed: if no options
 arg used, the current attributes of all parameters are printed as typeset
@@ -2028,6 +2054,11 @@ Lower case attribute: all  upper case characters in values are converted to
 lower case.
 (In the original Korn shell, this parameter meant `long integer' when used
 with the \fB\-i\fP option).
+T}
+\-p	T{
+Print complete typeset commands that can be used to re-create the
+attributes (but not the values) of parameters.
+This is the default action (option exists for ksh93 compatability).
 T}
 \-r	T{
 Readonly attribute: parameters with the this attribute may not be assigned to
@@ -2348,7 +2379,7 @@ ftp.cs.mun.ca:pub/pdksh/.
 This shell is based on the public domain 7th edition Bourne shell clone by
 Charles Forsyth and parts of the BRL shell by Doug A.\& Gwyn, Doug Kingston,
 Ron Natalie, Arnold Robbins, Lou Salkind and others.  The first release
-was created by Eric Gisin, and it was subsequently maintained by
+of pdksh was created by Eric Gisin, and it was subsequently maintained by
 John R.\& MacMillan (chance!john@sq.sq.com), and
 Simon J.\& Gerraty (sjg@zen.void.oz.au).  The current maintainer is
 Michael Rendell (michael@cs.mun.ca).

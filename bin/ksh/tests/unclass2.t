@@ -15,12 +15,12 @@ name: xxx-set-option-1
 description:
 	Check option parsing in set
 stdin:
-	set -A -vs A 1 3 2
-	echo ${A[*]}
+	set -vsA foo -- A 1 3 2
+	echo ${foo[*]}
 expected-stderr:
-	echo ${A[*]}
+	echo ${foo[*]}
 expected-stdout:
-	1 2 3
+	1 2 3 A
 ---
 
 name: xxx-exec-1
@@ -148,19 +148,16 @@ name: env-prompt
 description:
 	Check that prompt not printed when processing ENV
 env-setup: !ENV=./foo!
-perl-setup:
-	system("cat > foo << EOF
-	XXX=12
-	PS1='X '
+file-setup: file 644 "foo"
+	XXX=_
+	PS1=X
 	false && echo hmmm
-	EOF
-	");
 arguments: !-i!
 stdin:
 	echo hi${XXX}there
 expected-stdout:
-	hi12there
+	hi_there
 expected-stderr: !
-	X X 
+	XX
 ---
 

@@ -1,6 +1,6 @@
-$OpenBSD: README,v 1.5 1996/11/21 07:59:26 downsj Exp $
+$OpenBSD: README,v 1.6 1998/06/25 19:01:42 millert Exp $
 
-Last updated October '96 for pdksh-5.2.12.
+Last updated October '97 for pdksh-5.2.13.
 	(check ftp://ftp.cs.mun.ca:/pub/pdksh/ or
 	 http://www.cs.mun.ca/~michael/pdksh/ for new versions/patches)
 
@@ -187,4 +187,4 @@ as well as the following, if relevant (if you aren't sure, include them)
 	* the contents of config.log (this is created by the configure script)
 	* if you are using gcc (the GNU C compiler), which version it is.
 
-Michael Rendell, michael@cs.mun.ca.
+Michael Rendell, michael@cs.mun.ca

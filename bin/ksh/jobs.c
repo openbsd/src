@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.6 1997/06/19 13:58:43 kstailey Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.7 1998/06/25 19:02:02 millert Exp $	*/
 
 /*
  * Process and job control
@@ -439,12 +439,13 @@ exchild(t, flags, close_fd)
 	Job		*j;
 	int		rv = 0;
 	int		forksleep;
-	int		orig_flags = flags;
 	int		ischild;
 
-	flags &= ~(XFORK|XPCLOSE|XCCLOSE|XCOPROC);
 	if (flags & XEXEC)
-		return execute(t, flags);
+		/* Clear XFORK|XPCLOSE|XCCLOSE|XCOPROC|XPIPEO|XPIPEI|XXCOM|XBGND
+		 * (also done in another execute() below)
+		 */
+		return execute(t, flags & (XEXEC | XERROK));
 
 #ifdef JOB_SIGS
 	/* no SIGCHLD's while messing with job and process lists */
@@ -459,6 +460,8 @@ exchild(t, flags, close_fd)
 
 	/* link process into jobs list */
 	if (flags&XPIPEI) {	/* continuing with a pipe */
+		if (!last_job)
+			internal_errorf(1, "exchild: XPIPEI and no last_job - pid %d", (int) procpid);
 		j = last_job;
 		last_proc->next = p;
 		last_proc = p;
@@ -583,13 +586,13 @@ exchild(t, flags, close_fd)
 #endif /* JOBS */
 
 	/* used to close pipe input fd */
-	if (close_fd >= 0 && (((orig_flags & XPCLOSE) && !ischild)
-			      || ((orig_flags & XCCLOSE) && ischild)))
+	if (close_fd >= 0 && (((flags & XPCLOSE) && !ischild)
+			      || ((flags & XCCLOSE) && ischild)))
 		close(close_fd);
 	if (ischild) {		/* child */
 #ifdef KSH
 		/* Do this before restoring signal */
-		if (orig_flags & XCOPROC)
+		if (flags & XCOPROC)
 			coproc_cleanup(FALSE);
 #endif /* KSH */
 #ifdef JOB_SIGS
@@ -616,7 +619,7 @@ exchild(t, flags, close_fd)
 				SS_RESTORE_IGN|SS_FORCE);
 			setsig(&sigtraps[SIGQUIT], SIG_IGN,
 				SS_RESTORE_IGN|SS_FORCE);
-			if (!(orig_flags & (XPIPEI | XCOPROC))) {
+			if (!(flags & (XPIPEI | XCOPROC))) {
 				int fd = open("/dev/null", 0);
 				(void) ksh_dup2(fd, 0, TRUE);
 				close(fd);
@@ -631,7 +634,7 @@ exchild(t, flags, close_fd)
 		Flag(FTALKING) = 0;
 		tty_close();
 		cleartraps();
-		execute(t, flags|XEXEC); /* no return */
+		execute(t, (flags & XERROK) | XEXEC); /* no return */
 		internal_errorf(0, "exchild: execute() returned");
 		unwind(LLEAVE);
 		/* NOTREACHED */
@@ -647,7 +650,7 @@ exchild(t, flags, close_fd)
 #endif /* TTY_PGRP */
 		j_startjob(j);
 #ifdef KSH
-		if (orig_flags & XCOPROC) {
+		if (flags & XCOPROC) {
 			j->coproc_id = coproc.id;
 			coproc.njobs++; /* n jobs using co-process output */
 			coproc.job = (void *) j; /* j using co-process input */

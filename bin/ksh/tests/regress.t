@@ -768,3 +768,197 @@ expected-stdout:
 	BLAH
 ---
 
+name: regression-50
+description:
+	Check that aliases do not use continuation prompt after trailing
+	semi-colon.
+file-setup: file 644 "env"
+	PS1=Y
+	PS2=X
+env-setup: !ENV=./env!
+arguments: !-i!
+stdin:
+	alias foo='echo hi ; '
+	foo
+	foo echo there
+expected-stdout: 
+	hi
+	hi
+	there
+expected-stderr: !
+	YYYY
+---
+
+name: regression-51
+description:
+	Check that set allows both +o and -o options on same command line.
+stdin:
+	set a b c
+	set -o noglob +o allexport
+	echo A: $*, *
+expected-stdout: 
+	A: a b c, *
+---
+
+name: regression-52
+description:
+	Check that globing works in pipelined commands
+file-setup: file 644 "env"
+	PS1=P
+file-setup: file 644 "abc"
+	stuff
+env-setup: !ENV=./env!
+arguments: !-i!
+stdin:
+	sed 's/^/X /' < ab*
+	echo mark 1
+	sed 's/^/X /' < ab* | sed 's/^/Y /'
+	echo mark 2
+expected-stdout: 
+	X stuff
+	mark 1
+	Y X stuff
+	mark 2
+expected-stderr: !
+	PPPPP
+---
+
+name: regression-53
+description:
+	Check that getopts works in functions
+stdin:
+	#!/bin/ksh
+	
+	bfunc() {
+	    echo bfunc: enter "(args: $*; OPTIND=$OPTIND)"
+	    while getopts B oc; do
+		case $oc in
+		  (B)
+		    echo bfunc: B option
+		    ;;
+		  (*)
+		    echo bfunc: odd option "($oc)"
+		    ;;
+		esac
+	    done
+	    echo bfunc: leave
+	}
+	
+	function kfunc {
+	    echo kfunc: enter "(args: $*; OPTIND=$OPTIND)"
+	    while getopts K oc; do
+		case $oc in
+		  (K)
+		    echo kfunc: K option
+		    ;;
+		  (*)
+		    echo bfunc: odd option "($oc)"
+		    ;;
+		esac
+	    done
+	    echo kfunc: leave
+	}
+	
+	set -- -f -b -k -l
+	echo "line 1: OPTIND=$OPTIND"
+	getopts kbfl optc
+	echo "line 2: ret=$?, optc=$optc, OPTIND=$OPTIND"
+	bfunc -BBB blah
+	echo "line 3: OPTIND=$OPTIND"
+	getopts kbfl optc
+	echo "line 4: ret=$?, optc=$optc, OPTIND=$OPTIND"
+	kfunc -KKK blah
+	echo "line 5: OPTIND=$OPTIND"
+	getopts kbfl optc
+	echo "line 6: ret=$?, optc=$optc, OPTIND=$OPTIND"
+	echo
+	
+	OPTIND=1
+	set -- -fbkl
+	echo "line 10: OPTIND=$OPTIND"
+	getopts kbfl optc
+	echo "line 20: ret=$?, optc=$optc, OPTIND=$OPTIND"
+	bfunc -BBB blah
+	echo "line 30: OPTIND=$OPTIND"
+	getopts kbfl optc
+	echo "line 40: ret=$?, optc=$optc, OPTIND=$OPTIND"
+	kfunc -KKK blah
+	echo "line 50: OPTIND=$OPTIND"
+	getopts kbfl optc
+	echo "line 60: ret=$?, optc=$optc, OPTIND=$OPTIND"
+expected-stdout: 
+	line 1: OPTIND=1
+	line 2: ret=0, optc=f, OPTIND=2
+	bfunc: enter (args: -BBB blah; OPTIND=2)
+	bfunc: B option
+	bfunc: B option
+	bfunc: leave
+	line 3: OPTIND=2
+	line 4: ret=0, optc=b, OPTIND=3
+	kfunc: enter (args: -KKK blah; OPTIND=1)
+	kfunc: K option
+	kfunc: K option
+	kfunc: K option
+	kfunc: leave
+	line 5: OPTIND=3
+	line 6: ret=0, optc=k, OPTIND=4
+	
+	line 10: OPTIND=1
+	line 20: ret=0, optc=f, OPTIND=2
+	bfunc: enter (args: -BBB blah; OPTIND=2)
+	bfunc: B option
+	bfunc: B option
+	bfunc: leave
+	line 30: OPTIND=2
+	line 40: ret=1, optc=?, OPTIND=2
+	kfunc: enter (args: -KKK blah; OPTIND=1)
+	kfunc: K option
+	kfunc: K option
+	kfunc: K option
+	kfunc: leave
+	line 50: OPTIND=2
+	line 60: ret=1, optc=?, OPTIND=2
+---
+
+
+name: regression-54
+description:
+	Check that ; is not required before the then in if (( ... )) then ...
+stdin:
+	if (( 1 )) then
+	    echo ok dparen
+	fi
+	if [[ -n 1 ]] then
+	    echo ok dbrackets
+	fi
+expected-stdout: 
+	ok dparen
+	ok dbrackets
+---
+
+
+name: regression-55
+description:
+	Check ${foo:%bar} is allowed (ksh88 allows it...)
+stdin:
+	x=fooXbarXblah
+	echo 1 ${x%X*}
+	echo 2 ${x:%X*}
+	echo 3 ${x%%X*}
+	echo 4 ${x:%%X*}
+	echo 5 ${x#*X}
+	echo 6 ${x:#*X}
+	echo 7 ${x##*X}
+	echo 8 ${x:##*X}
+expected-stdout: 
+	1 fooXbar
+	2 fooXbar
+	3 foo
+	4 foo
+	5 barXblah
+	6 barXblah
+	7 blah
+	8 blah
+---
+
+

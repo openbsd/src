@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.4 1997/06/19 13:58:38 kstailey Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.5 1998/06/25 19:01:47 millert Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -157,6 +157,12 @@ c_test(wp)
 			}
 			if (argc == 1) {
 				opnd1 = (*te.getopnd)(&te, TO_NONOP, 1);
+				/* Historically, -t by itself test if fd 1
+				 * is a file descriptor, but POSIX says its
+				 * a string test...
+				 */
+				if (!Flag(FPOSIX) && strcmp(opnd1, "-t") == 0)
+				    break;
 				res = (*te.eval)(&te, TO_STNZE, opnd1,
 						(char *) 0, 1);
 				if (invert & 1)
@@ -326,11 +332,13 @@ test_eval(te, op, opnd1, opnd2, do_eval)
 		if (opnd1 && !bi_getn(opnd1, &res)) {
 			te->flags |= TEF_ERROR;
 			res = 0;
-		} else
+		} else {
+			/* generate error if in FPOSIX mode? */
 			res = isatty(opnd1 ? res : 0);
+		}
 		return res;
 	  case TO_FILUID: /* -O */
-		return test_stat(opnd1, &b1) == 0 && b1.st_uid == geteuid();
+		return test_stat(opnd1, &b1) == 0 && b1.st_uid == ksheuid;
 	  case TO_FILGID: /* -G */
 		return test_stat(opnd1, &b1) == 0 && b1.st_gid == getegid();
 	/*
@@ -410,15 +418,20 @@ test_stat(path, statb)
 	return stat(path, statb);
 }
 
-/* Another nasty kludge to handle Korn's bizarre /dev/fd hack */
+/* Routine to handle Korn's /dev/fd hack, and to deal with X_OK on
+ * non-directories when running as root.
+ */
 static int
 test_eaccess(path, mode)
 	const char *path;
 	int mode;
 {
+	int res;
+
 #if !defined(HAVE_DEV_FD)
 	int fd;
 
+	/* Note: doesn't handle //dev/fd, etc.. (this is ok) */
 	if (strncmp(path, "/dev/fd/", 8) == 0 && getn(path + 8, &fd)) {
 		int flags;
 
@@ -431,7 +444,28 @@ test_eaccess(path, mode)
 	}
 #endif /* !HAVE_DEV_FD */
 
-	return eaccess(path, mode);
+	/* On most (all?) unixes, access() says everything is executable for
+	 * root - avoid this on files by using stat().
+	 */
+	if ((mode & X_OK) && ksheuid == 0) {
+		struct stat statb;
+
+		if (stat(path, &statb) < 0)
+			res = -1;
+		else if (S_ISDIR(statb.st_mode))
+			res = 0;
+		else
+			res = (statb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH))
+				? 0 : -1;
+		/* Need to check other permissions?  If so, use access() as
+		 * this will deal with root on NFS.
+		 */
+		if (res == 0 && (mode & (R_OK|W_OK)))
+			res = eaccess(path, mode);
+	} else
+		res = eaccess(path, mode);
+
+	return res;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.5 1997/01/02 09:34:10 downsj Exp $	*/
+/*	$OpenBSD: sh.h,v 1.6 1998/06/25 19:02:19 millert Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -30,6 +30,7 @@
 /* just a useful subset of what stdlib.h would have */
 extern char * getenv  ARGS((const char *));
 extern void * malloc  ARGS((size_t));
+extern void * realloc ARGS((void *, size_t));
 extern int    free    ARGS((void *));
 extern int    exit    ARGS((int));
 extern int    rand    ARGS((void));
@@ -238,7 +239,8 @@ extern int ksh_execve(char *cmd, char **args, char **env);
 #endif /* HAVE_SIGSETJMP */
 
 /* Find a integer type that is at least 32 bits (or die) - SIZEOF_* defined
- * by autoconf (assumes an 8 bit byte, but I'm not concerned)
+ * by autoconf (assumes an 8 bit byte, but I'm not concerned).
+ * NOTE: INT32 may end up being more than 32 bits.
  */
 #if SIZEOF_INT >= 4
 # define INT32	int
@@ -355,6 +357,7 @@ typedef INT32 Tflag;
 EXTERN	const char *kshname;	/* $0 */
 EXTERN	pid_t	kshpid;		/* $$, shell pid */
 EXTERN	pid_t	procpid;	/* pid of executing process */
+EXTERN	int	ksheuid;	/* effective uid of shell */
 EXTERN	int	exstat;		/* exit status */
 EXTERN	int	subst_exstat;	/* exit status of last $(..)/`..` */
 EXTERN	const char *safe_prompt; /* safe prompt if PS1 substitution fails */
@@ -427,7 +430,8 @@ EXTERN	struct env {
 #define OF_CMDLINE	0x01	/* command line */
 #define OF_SET		0x02	/* set builtin */
 #define OF_SPECIAL	0x04	/* a special variable changing */
-#define OF_ANY		(OF_CMDLINE | OF_SET | OF_SPECIAL)
+#define OF_INTERNAL	0x08	/* set internally by shell */
+#define OF_ANY		(OF_CMDLINE | OF_SET | OF_SPECIAL | OF_INTERNAL)
 
 struct option {
     const char	*name;	/* long name of option */
@@ -484,6 +488,7 @@ enum sh_flag {
 	FVIESCCOMPLETE,	/* enable ESC as file name completion in command mode */
 #endif
 	FXTRACE,	/* -x: execution trace */
+	FTALKING_I,	/* (internal): initial shell was interactive */
 	FNFLAGS /* (place holder: how many flags are there) */
 };
 
@@ -621,6 +626,7 @@ EXTERN int ifs0 I__(' ');	/* for "$*" */
 
 typedef struct {
 	int		optind;
+	int		uoptind;/* what user sees in $OPTIND */
 	char		*optarg;
 	int		flags;	/* see GF_* */
 	int		info;	/* see GI_* */
@@ -629,6 +635,7 @@ typedef struct {
 } Getopt;
 
 EXTERN Getopt builtin_opt;	/* for shell builtin commands */
+EXTERN Getopt user_opt;		/* parsing state for getopts builtin command */
 
 
 #ifdef KSH

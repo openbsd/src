@@ -1,4 +1,182 @@
-$OpenBSD: ChangeLog,v 1.5 1996/11/21 07:59:25 downsj Exp $
+Mon Oct 27 12:38:05 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* made pdksh-5.2.13 distribution
+
+Mon Oct 27 12:21:51 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* c_sh.c(c_dot): use search() error argument to report problem
+	  correctly.
+	* exec.c(search_access): don't set *errnop if it is already set.
+	* exec.c(search_access): extended non-regular file check from
+	  just X_OK to both X_OK and R_OK.
+
+Wed Oct 22 11:49:02 NDT 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* edit.c(x_locate_word): don't skip trailing space if at end
+	  of buffer (based on fix from Marc Olzheim).
+
+Fri Aug 15 22:06:53 NDT 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* eval.c(varsub,expand), lex.c(yylex): allow :%, :#, :%% and :##
+	  to be compatable with ksh88.
+
+Sat Aug  2 12:13:30 NDT 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* syn.c(get_command): case MDPAREN/DBRACKET: do not
+	  clear KEYWORD|ALIAS from syniocf.
+
+Tue Jul 29 16:24:38 NDT 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* c_sh.c(c_exec): added ifdef KSH around fd_clexec()
+	  (based on fix from George Robins).
+
+Tue Jun  3 12:52:05 NDT 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* misc.c(do_gmatch): removed ifdef KSH about @(..|..) code as it
+	  is needed in SH mode for ${..%..} stuff.
+
+Mon May 19 16:10:06 NDT 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* table.h(struct block): added getopt_state and flags fields;
+	  added BF_DOGETOPTS.
+	* sh.h,c_ksh.c: moved user_opt decl/defn from c_ksh.c to sh.h.
+	* var.c(getspec): added case for V_OPTIND.
+	* var.c(popblock): if BF_DOGETOPTS set, restore user_opt.
+	* exec.c(comexec): case CFUNC: save user_opt for ksh-style functions.
+	* c_ksh.c(getopts_reset,c_getopts): removed getopts_noreset variable
+	  and code.
+	* sh.h(Getopts): added uoptind field.
+
+Fri May 16 11:40:22 NDT 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* io.c(error_prefix): don't print kshname if it is the
+	  same as the source file name.
+
+Thu Mar 13 10:42:31 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* mail.c(mbset): save a copy of the path so it can't get trashed
+	  (eg, by exporting a varibale).
+
+Wed Feb 26 11:24:06 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* emacs.c(x_prev_histword): get word from last command entered,
+	  not from last command relative to current location in history
+	  (fix from Greg A. Woods).
+
+Sun Feb 16 13:18:52 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* sh.h(FTALKING_I): new define
+	* misc.c(options[]): added anonymous options for internal use:
+	  changed all code using options to not assume null option name
+	  is the end of options (use NELEM()) instead.
+	  Added slot for FTALKING_I
+
+	* c_sh.c(c_read), exec.c(iosetup): test FTALKING_I instead of FTALKING.
+	* main.c(main): set FTALKING_I.
+
+Fri Jan 10 16:36:36 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* jobs.c(exchild): use orig_flags instead of flags when testing
+	  XPIPEI/XPIPEO; clear all flags except XEXEC and XERROK.
+
+Tue Jan  7 11:16:08 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* lex.h(yynerrs): deleted (not used); deleted all assignments of it.
+
+Fri Jan  3 13:40:29 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* lex.c(yylex): case STBRACE: interpret ( | ) as patterns;
+	  case SPATTERN: allow ( as an alias for @(.
+
+Thu Jan  2 15:44:07 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* main.c(main): set PATH to def_path in startup.
+
+Thu Jan  2 10:19:43 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* exec.c(comexec): ifdef KSH the setting of $_; only set $_ to
+	  last arg if interactive.
+
+Wed Jan  1 13:38:26 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* lex.c(yylex),eval.c(expand),tree.c(tputS,wdscan,wdstrip):
+	  changed OSUBST/CSUBST encoding to have { or x after xSUBST.
+
+	* lex.c(yylex): case ${: don't prepend @( and append ) to trim patterns.
+	* eval.c(expand): prepend MAGIC @ and append MAGIC ) to trim patterns.
+
+	* syn.c(function_body): call wdstrip().
+	* tree.c(wdstrip): new function.
+
+	* lex.c(yylex): moved handling of < and > into one location.
+
+Wed Dec 11 13:00:05 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* sh.h(ksheuid): new variable.
+	* main.c(main): set/use ksheuid.
+	* misc.c(change_flag): set ksheuid.
+	* c_test.c(test_eval): use ksheuid
+	* c_test.c(test_eaccess): if doing X_OK and user is root, use
+	  stat to avoid false positives on files.
+
+Mon Dec  9 12:08:56 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* main.c(main): save/clear/restore FERREXIT flag while processing
+	  profile and ENV.
+
+Wed Dec  4 12:25:23 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* misc.c(parse_args): change -A option handling - make getopts
+	  gather the option (A: vs A).
+
+Thu Nov 21 15:42:57 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* c_ksh.c(c_alias): accept + options; don't print alias definition
+	  if + option used; allow export flag to be cleared; added -p
+	  option.
+
+Thu Nov 21 14:35:47 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* tree.c(ptree),c_ksh.c(c_typeset): print ksh functions as
+	  "function foo...", sh functions as "foo()...".
+
+	* c_ksh.c(c_typeset): accept -p flag (does nothing).
+
+Wed Nov 20 11:36:08 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* c_ksh.c(c_typeset): simplified option exclusion code.
+
+	* misc.c(ksh_getopt): allow options in same command line to start
+	  with either + or - (if appropriate).  [code existed to similate
+	  ksh88 typeset behaviour which disallowed "typeset +x -i foo"]
+
+Wed Nov 13 12:02:59 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* syn.c(c_list): added multi argument; changed all calls to pass
+	  TRUE, except one in yyparse(); changed logic to accept and
+	  ignore blank lines if multi flag is set.
+	* syn.c(get_command): removed multiline.on/cf=CONTIN test/assignment.
+	* syn.c(struct multiline_state,struct nesting_state,multiline,nesting,
+	  multiline_push,multiline_pop,nesting_push,nesting_pop): renamed
+	  *multiline* to *nesting*; removed struct multiline_state.on field
+	  (deleted all references).
+
+Mon Nov  4 16:29:50 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* c_test.c(c_test): in special < 5 arg code: if single arg is
+	  -t and not in FPOSIX mode, don't decide its a string test.
+
+Wed Oct 30 11:34:39 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* main.c(include): call quitenv() after shf_close()
+	  (fix from Eric J. Chet).
+
+Wed Oct 30 11:23:17 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* exec.c(comexec): case CFUNC: set $0 to kshname if non-function
+	  function.
+
+$OpenBSD: ChangeLog,v 1.6 1998/06/25 19:01:31 millert Exp $
 
 Tue Oct 29 11:34:58 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.6 1997/06/19 13:58:39 kstailey Exp $	*/
+/*	$OpenBSD: edit.c,v 1.7 1998/06/25 19:01:50 millert Exp $	*/
 
 /*
  * Command line editing - common code
@@ -725,15 +725,7 @@ x_locate_word(buf, buflen, pos, startp, is_commandp)
 		*is_commandp = 0;
 		return 0;
 	}
-
-	if (pos == buflen) {
-		if (pos == 0) { /* empty buffer? */
-			*startp = pos;
-			*is_commandp = 1;
-			return 0;
-		}
-		pos--;
-	}
+	/* The case where pos == buflen happens to take care of itself... */
 
 	start = pos;
 	/* Keep going backwards to start of word (has effect of allowing

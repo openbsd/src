@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/local/bin/perl
 
 #
 # Test harness for pdksh tests.
@@ -57,6 +57,16 @@
 #					    USER, LOGNAME, HOME, PATH, SHELL
 #					(values taken from the environment of
 #					the test harness).
+#	file-setup		    mps Used to create files, directories
+#					and symlinks.  First word is either
+#					file, dir or symlink; second word is
+#					permissions; this is followed by a
+#					quoted word that is the name of the
+#					file; the end-quote should be followed
+#					by a newline, then the file data
+#					(if any).  The first word may be
+#					preceeded by a ! to strip the trailing
+#					newline in a symlink.
 #	time-limit		    	Time limit - the program is sent a
 #					SIGKILL N seconds.  Default is no
 #					limit.
@@ -82,6 +92,8 @@
 #	M	value can be multiple lines (prefixed by a tab) and consists
 #		of multiple fields, delimited by a field seperator character.
 #		The value must start and end with the f-s-c.
+#	p	tag takes parameters (used with m).
+#	s	tag can be used several times.
 #
 
 require 'signal.ph';
@@ -91,20 +103,22 @@ require 'getopts.pl';
 ($prog = $0) =~ s#.*/##;
 
 $Usage = <<EOF ;
-Usage: $prog [-s test-set] [-p prog] [-v] test-name ...
+Usage: $prog [-s test-set] [-p prog] [-v] [-e e=v] test-name ...
 	-p p	Use p as the program to test
 	-s s	Read tests from file s; if s is a directory, it is recursively
 		scaned for test files (which end in .t).
 	-t t	Use t as default time limit for tests (default is unlimited)
+	-P	program (-p) string has multiple words, and the program is in
+		the path (kludge option)
 	-v	Verbose mode: print reason test failed.
+	-e e=v	Set the environment variable e to v for all tests
+		(if no =v is given, the current value is used)
     test-name(s) specifies the name of the test(s) to run; if none are
     specified, all tests are run.
 EOF
 
 #
-# r - required
-# m - can be multi-line
-# M - multi-line, but without trailing newline
+# See comment above for flag meanings
 #
 %test_fields = (
 	    'name',			'r',
@@ -115,6 +129,7 @@ EOF
 	    'perl-setup',		'm',
 	    'perl-cleanup',		'm',
 	    'env-setup',		'M',
+	    'file-setup',		'mps',
 	    'time-limit',		'',
 	    'expected-fail',		'',
 	    'expected-exit',		'',
@@ -142,7 +157,7 @@ $nxpassed = 0;
 
 %known_tests = ();
 
-if (!&Getopts('p:s:t:v')) {
+if (!&Getopts('p:Ps:t:ve:')) {
     print STDERR $Usage;
     exit 1;
 }
@@ -157,6 +172,7 @@ if (defined $opt_t) {
 	if $opt_t !~ /^\d+$/ || $opt_t <= 0;
     $default_time_limit = $opt_t;
 }
+$program_kludge = defined $opt_P ? $opt_P : 0;
 
 # Note which tests are to be run.
 %do_test = ();
@@ -167,6 +183,14 @@ $all_tests = @ARGV == 0;
 %new_env = ();
 foreach $env (('USER', 'LOGNAME', 'HOME', 'PATH', 'SHELL')) {
     $new_env{$env} = $ENV{$env} if defined $ENV{$env};
+}
+if (defined $opt_e) {
+    # XXX need a way to allow many -e arguments...
+    if ($opt_e =~ /^([a-zA-Z_]\w*)(|=(.*))$/) {
+	$new_env{$1} = $2 eq '' ? $ENV{$1} : $3;
+    } else {
+	die "$0: bad -e argument: $opt_e\n";
+    }
 }
 %old_env = %ENV;
 
@@ -183,8 +207,10 @@ chop($pwd = `pwd 2> /dev/null`);
 die "$prog: couldn't get current working directory\n" if $pwd eq '';
 die "$prog: couldn't cd to $pwd - $!\n" if !chdir($pwd);
 
-$test_prog = "$pwd/$test_prog" if substr($test_prog, 0, 1) ne '/';
-die "$prog: $test_prog is not executable - bye\n" if ! -x $test_prog;
+if (!$program_kludge) {
+    $test_prog = "$pwd/$test_prog" if substr($test_prog, 0, 1) ne '/';
+    die "$prog: $test_prog is not executable - bye\n" if ! -x $test_prog;
+}
 
 @trap_sigs = ('TERM', 'QUIT', 'INT', 'PIPE', 'HUP');
 @SIG{@trap_sigs} = ('cleanup_exit') x @trap_sigs;
@@ -282,7 +308,7 @@ process_test_file
     local($ret);
 
     if (!open(IN, $file)) {
-	die "$prog: can't open $file - $!\n";
+	print STDERR "$prog: can't open $file - $!\n";
 	return undef;
     }
     while (1) {
@@ -321,6 +347,47 @@ run_test
     if (!chdir($tempdir)) {
 	print STDERR "$prog: couldn't cd to $tempdir - $!\n";
 	return undef;
+    }
+
+    if (defined $test{'file-setup'}) {
+	local($i);
+	local($type, $perm, $rest, $c, $len, $name);
+
+	for ($i = 0; $i < $test{'file-setup'}; $i++) {
+	    $val = $test{"file-setup:$i"};
+	    #
+	    # format is: type perm "name"
+	    #
+	    ($type, $perm, $rest) =
+		split(' ', $val, 3);
+	    $c = substr($rest, 0, 1);
+	    $len = index($rest, $c, 1) - 1;
+	    $name = substr($rest, 1, $len);
+	    $rest = substr($rest, 2 + $len);
+	    if ($type eq 'file') {
+		return undef if !&write_file($name, $rest);
+		if (!chmod($perm, $name)) {
+		    print STDERR
+		  "$prog:$test{':long-name'}: can't chmod $perm $name - $!\n";
+		    return undef;
+		}
+	    } elsif ($type eq 'dir') {
+		if (!mkdir($name, $perm)) {
+		    print STDERR
+		  "$prog:$test{':long-name'}: can't mkdir $perm $name - $!\n";
+		    return undef;
+		}
+	    } elsif ($type eq 'symlink') {
+		local($oumask) = umask($perm);
+		local($ret) = symlink($rest, $name);
+		umask($oumask);
+		if (!$ret) {
+		    print STDERR
+	    "$prog:$test{':long-name'}: couldn't create symlink $name - $!\n";
+		    return undef;
+		}
+	    }
+	}
     }
 
     if (defined $test{'perl-setup'}) {
@@ -366,7 +433,11 @@ run_test
 		print STDOUT "$prog: couldn't open $tempe in child - $!\n";
 		kill('TERM', $$);
 	}
-	@argv = ($test_prog);
+	if ($program_kludge) {
+	    @argv = split(' ', $test_prog);
+	} else {
+	    @argv = ($test_prog);
+	}
 	if (defined $test{'arguments'}) {
 		push(@argv,
 		     split(substr($test{'arguments'}, 0, 1),
@@ -586,21 +657,21 @@ first_diff
 {
     local($exp, $got) = @_;
     local($lineno, $char) = (1, 1);
-    local($i, $len);
+    local($i, $exp_len, $got_len);
     local($ce, $cg);
 
-    $len = length($exp);
-    if ($len != length($got)) {
-	if ($len < length($got)) {
-	    if (substr($got, 0, $len) eq $exp) {
+    $exp_len = length($exp);
+    $got_len = length($got);
+    if ($exp_len != $got_len) {
+	if ($exp_len < $got_len) {
+	    if (substr($got, 0, $exp_len) eq $exp) {
 		return "got too much output";
 	    }
-	} elsif (substr($exp, 0, $len) eq $got) {
+	} elsif (substr($exp, 0, $got_len) eq $got) {
 	    return "got too little output";
 	}
-	$len = length($got);
     }
-    for ($i = 0; $i < $len; $i++) {
+    for ($i = 0; $i < $exp_len; $i++) {
 	$ce = substr($exp, $i, 1);
 	$cg = substr($got, $i, 1);
 	last if $ce ne $cg;
@@ -610,7 +681,38 @@ first_diff
 	    $char = 1;
 	}
     }
-    return "first difference: line $lineno, char $char"
+    return "first difference: line $lineno, char $char (wanted '"
+	. &format_char($ce) . "', got '"
+	. &format_char($cg) . "'";
+}
+
+sub
+format_char
+{
+    local($ch, $s);
+
+    $ch = ord($_[0]);
+    if ($ch == 10) {
+	return '\n';
+    } elsif ($ch == 13) {
+	return '\r';
+    } elsif ($ch == 8) {
+	return '\b';
+    } elsif ($ch == 9) {
+	return '\t';
+    } elsif ($ch > 127) {
+	$ch -= 127;
+	$s = "M-";
+    } else {
+	$s = '';
+    }
+    if ($ch < 32) {
+	$s .= '^';
+	$ch += ord('@');
+    } elsif ($ch == 127) {
+	return $s . "^?";
+    }
+    return $s . sprintf("%c", $ch);
 }
 
 sub
@@ -644,8 +746,10 @@ read_test
 {
     local($file, $in, *test) = @_;
     local($field, $val, $flags, $do_chop, $need_redo, $start_lineno);
+    local(%cnt, $sfield);
 
     %test = ();
+    %cnt = ();
     while (<$in>) {
 	next if /^\s*$/;
 	next if /^ *#/;
@@ -656,21 +760,43 @@ read_test
 	    return undef;
 	}
 	($field, $val) = ($1, $2);
-	if (defined $test{$field}) {
-	    print STDERR "$prog:$file:$.: multiple \"$field\" fields\n";
-	    return undef;
-	}
+	$sfield = $field;
 	$flags = $test_fields{$field};
 	if (!defined $flags) {
 	    print STDERR "$prog:$file:$.: unrecognized field \"$field\"\n";
 	    return undef;
 	}
+	if ($flags =~ /s/) {
+	    local($cnt) = $cnt{$field}++;
+	    $test{$field} = $cnt{$field};
+	    $cnt = 0 if $cnt eq '';
+	    $sfield .= ":$cnt";
+	} elsif (defined $test{$field}) {
+	    print STDERR "$prog:$file:$.: multiple \"$field\" fields\n";
+	    return undef;
+	}
 	$do_chop = $flags !~ /m/;
 	$need_redo = 0;
-	if ($val eq '' || $val eq '!') {
+	if ($val eq '' || $val eq '!' || $flags =~ /p/) {
 	    if ($flags =~ /[Mm]/) {
-		$do_chop = 1 if $val eq '!';
-		$val = '';
+		if ($flags =~ /p/) {
+		    if ($val =~ /^!/) {
+			$do_chop = 1;
+			$val = $';
+		    } else {
+			$do_chop = 0;
+		    }
+		    if ($val eq '') {
+			print STDERR
+		"$prog:$file:$.: no parameters given for field \"$field\"\n";
+			return undef;
+		    }
+		} else {
+		    if ($val eq '!') {
+			$do_chop = 1;
+		    }
+		    $val = '';
+		}
 		while (<$in>) {
 		    last if !/^\t/;
 		    $val .= $';
@@ -678,6 +804,47 @@ read_test
 		chop $val if $do_chop;
 		$do_chop = 1;
 		$need_redo = 1;
+		#
+		# Syntax check on fields that can several instances
+		# (can give useful line numbers this way)
+		#
+		if ($field eq 'file-setup') {
+		    local($type, $perm, $rest, $c, $len, $name);
+		    #
+		    # format is: type perm "name"
+		    #
+		    if ($val !~ /^[ \t]*(\S+)[ \t]+(\S+)[ \t]+([^ \t].*)/) {
+			print STDERR
+		    "$prog:$file:$.: bad paramter line for file-setup field\n";
+			return undef;
+		    }
+		    ($type, $perm, $rest) = ($1, $2, $3);
+		    if ($type !~ /^(file|dir|symlink)$/) {
+			print STDERR
+		    "$prog:$file:$.: bad file type for file-setup: $type\n";
+			return undef;
+		    }
+		    if ($perm !~ /\d+/) {
+			print STDERR
+		    "$prog:$file:$.: bad permissions for file-setup: $type\n";
+			return undef;
+		    }
+		    $c = substr($rest, 0, 1);
+		    if (($len = index($rest, $c, 1) - 1) <= 0) {
+			print STDERR
+    "$prog:$file:$.: missing end quote for file name in file-setup: $type\n";
+			return undef;
+		    }
+		    $name = substr($rest, 1, $len);
+		    if ($name =~ /^\// || $name =~ /(^|\/)\.\.(\/|$)/) {
+			# Note: this is not a security thing - just a sanity
+			# check - a test can still use symlinks to get at files
+			# outside the test directory.
+			print STDERR
+"$prog:$file:$.: file name in file-setup is absolute or contains ..: $name\n";
+			return undef;
+		    }
+		}
 	    } elsif ($val eq '') {
 		print STDERR
 		    "$prog:$file:$.: no value given for field \"$field\"\n";
@@ -685,7 +852,7 @@ read_test
 	    }
 	}
 	$val .= "\n" if !$do_chop;
-	$test{$field} = $val;
+	$test{$sfield} = $val;
 	redo if $need_redo;
     }
     if ($_ eq '') {
@@ -781,21 +948,6 @@ read_test
 }
 
 sub
-touch
-{
-    local(@files) = @_;
-    local($file);
-
-    foreach $file (@files) {
-	if (!open(T, "> $file")) {
-	    die "Couldn't touch $file\n";
-	}
-	close(T);
-    }
-    return 1;
-}
-
-sub
 tty_msg
 {
     local($msg) = @_;
@@ -811,7 +963,6 @@ never_called_funcs
 {
 	return 0;
 	&tty_msg("hi\n");
-	&touch("/tmp/foo");
 	&never_called_funcs();
 	&catch_sigalrm();
 	$old_env{'foo'} = 'bar';

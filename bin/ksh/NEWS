@@ -1,4 +1,30 @@
-$OpenBSD: NEWS,v 1.5 1996/11/21 07:59:26 downsj Exp $
+Version 5.2.13
+
+* bug fixes
+    * functions: $0 in sh-style functions is now the same as the shell's $0.
+    * .: fixed possible core dump on clean up.
+    * test: a lone -t argument now does a isatty(1) test if not in posix mode.
+    * alias: PS2 no longer printed when expanding alias foo="cmd; ".
+    * set/typeset/getopts: can have options prefixed with both + and -.
+    * typeset -f: now reproduces functions correctly ("function F" vs "F()").
+    * alias: options can start with +.
+    * set -A: a -- marking end of options is now skipped.
+    * errexit option (-e) ignored when reading profile and $ENV files.
+    * test: '-x f' now fails for root if f is a file and has no x bits set.
+    * $_: set to last arg in interactive shells only.
+    * PATH: if $PATH not set on startup, it is set to the default path.
+    * extended globbing: allow (pat|pat) within @(...) and ${foo#...} patterns.
+    * emacs: ^[_ now behaves as it does in at&t ksh (word from _last_ command).
+    * MAIL/MAILCHECK: fixed bug that prevented the `new mail' messages.
+    * ${..%..} and ${..#..} now work if compiled as sh.
+    * sh: fd's greater than 2 are passed on to executed commands.
+    * syntax: accepts "if (( 1 )) then" (also [[ ]]): no ; required before then.
+    * substitution: accepts (and ignores) leading : in %, %%, #, ## substitions.
+    * .: doting directories no longer allowed.
+    * editing: completion after "cmd " now completes files (was command).
+
+
+$OpenBSD: NEWS,v 1.6 1998/06/25 19:01:35 millert Exp $
 
 Version 5.2.12
 

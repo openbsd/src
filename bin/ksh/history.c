@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.7 1997/06/19 13:58:42 kstailey Exp $	*/
+/*	$OpenBSD: history.c,v 1.8 1998/06/25 19:01:58 millert Exp $	*/
 
 /*
  * command history
@@ -27,7 +27,7 @@
 #   ifdef OS2
 #    define HISTFILE "history.ksh"
 #   else /* OS2 */
-#    define HISTFILE ".pdksh_hist"
+#    define HISTFILE ".pdksh_history"
 #   endif /* OS2 */
 #  endif
 
@@ -486,7 +486,7 @@ histnum(n)
 		current = histptr;
 		curpos = last;
 		return last;
-	}  else {
+	} else {
 		current = &history[n];
 		curpos = n;
 		return n;

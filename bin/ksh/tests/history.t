@@ -7,7 +7,8 @@ description:
 	See if we can test history at all
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo hi
 	fc -l
@@ -23,7 +24,8 @@ description:
 	Check if more recent command is executed
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo hi
 	echo there
@@ -42,7 +44,8 @@ description:
 	is re-executed.
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	exec 2>&1
 	echo hi
@@ -61,7 +64,8 @@ description:
 	(ksh88 loops on this)
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	fc -e -
 	echo ok
@@ -76,7 +80,8 @@ description:
 	Check if "fc -e -" command output goes to stdout.
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo abc
 	fc -e - | (read x; echo "A $x")
@@ -94,7 +99,8 @@ description:
 	fc is replaced in history by new command.
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo abc def
 	echo ghi jkl
@@ -117,7 +123,8 @@ description:
 	(ksh88 fails 'cause it lists the fc command)
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo line 1
 	echo line 2
@@ -140,7 +147,8 @@ description:
 	(ksh88 fails 'cause it lists the fc command)
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo line 1
 	echo line 2
@@ -162,7 +170,8 @@ description:
 	Can give number `options' to fc
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo line 1
 	echo line 2
@@ -185,7 +194,8 @@ description:
 	-1 refers to previous command
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo line 1
 	echo line 2
@@ -207,7 +217,8 @@ description:
 	List command stays in history
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo line 1
 	echo line 2
@@ -233,7 +244,8 @@ description:
 	(ksh88 fails 'cause it lists the fc command)
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!HISTSIZE=3!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo line 1
 	echo line 2
@@ -258,7 +270,8 @@ description:
 	fc allows too old/new errors in range specification
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!HISTSIZE=3!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo line 1
 	echo line 2
@@ -284,7 +297,8 @@ description:
 	test -r flag in history
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo line 1
 	echo line 2
@@ -310,7 +324,8 @@ description:
 	If first is newer than last, -r is implied.
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo line 1
 	echo line 2
@@ -336,7 +351,8 @@ description:
 	If first is newer than last, -r is cancelled.
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo line 1
 	echo line 2
@@ -362,7 +378,8 @@ description:
 	Basic substitution
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo abc def
 	echo ghi jkl
@@ -380,7 +397,8 @@ description:
 	Does subst find previous command?
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo abc def
 	echo ghi jkl
@@ -398,7 +416,8 @@ description:
 	Does subst find previous command when no arguments given
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo abc def
 	echo ghi jkl
@@ -417,7 +436,8 @@ description:
 	(ksh88 and ksh93 do not have -g option)
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo abc def asjj sadjhasdjh asdjhasd
 	fc -e - -g a=FooBAR
@@ -434,7 +454,8 @@ description:
 	(ksh88/ksh93 don't have the ? prefix thing so they fail this test)
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo abc def
 	echo ghi jkl
@@ -453,7 +474,8 @@ description:
 	that prints no prompts).
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo abc def
 	fc echo
@@ -474,7 +496,8 @@ description:
 	Correct command is edited when number given
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo line 1
 	echo line 2 is here
@@ -504,7 +527,8 @@ description:
 	(ksh88 fails 'cause it lists the fc command)
 arguments: !-i!
 env-setup: !ENV=./Env!HISTFILE=hist.file!
-perl-setup: system("echo PS1=X > Env");
+file-setup: file 644 "Env"
+	PS1=X
 stdin:
 	echo abc def
 	fc echo

@@ -1,4 +1,4 @@
-$OpenBSD: CONTRIBUTORS,v 1.3 1996/10/01 02:05:25 downsj Exp $
+$OpenBSD: CONTRIBUTORS,v 1.4 1998/06/25 19:01:29 millert Exp $
 
 This is a partial history of this shell gleened from old change logs and
 readmes (most of which are still in the misc directory) and the source
@@ -101,3 +101,11 @@ Other contributors:
       hidden characters (eg, escape codes).
     * Andrew S. Townley (<atownley@informix.com>): fixes for NeXT machines:
       get a controlling if one needed, use correct profile.
+    * Eric J. Chet (<ejc@bazzle.com>): fix for core dump in . (quitenv() called
+      too soon).
+    * Greg A. Woods <woods@most.weird.com>: fix to make ^[_ in emacs work
+      as in at&t ksh.
+    * George Robbins <grr@shandakor.tharsis.com>: fix for sh mode to
+      keep exec'd file descriptors open.
+    * George White <gwhite@bodnext.bio.dfo.ca>: fix here-doc problem under OS/2
+      (memory allocated incorrectly).

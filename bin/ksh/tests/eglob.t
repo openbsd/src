@@ -1,8 +1,9 @@
 name: eglob-bad-1
 description:
 	Check that globbing isn't done when glob has syntax error
-perl-setup:
-	&touch("abcx", "abcz", "bbc");
+file-setup: file 644 "abcx"
+file-setup: file 644 "abcz"
+file-setup: file 644 "bbc"
 stdin:
 	echo !([*)*
 	echo +(a|b[)*
@@ -15,8 +16,9 @@ name: eglob-bad-2
 description:
 	Check that globbing isn't done when glob has syntax error
 	(at&t ksh fails this test)
-perl-setup:
-	&touch("abcx", "abcz", "bbc");
+file-setup: file 644 "abcx"
+file-setup: file 644 "abcz"
+file-setup: file 644 "bbc"
 stdin:
 	echo [a*(]*)z
 expected-stdout:
@@ -27,8 +29,7 @@ name: eglob-infinite-plus
 description:
 	Check that shell doesn't go into infinite loop expanding +(...)
 	expressions.
-perl-setup:
-	&touch("abc");
+file-setup: file 644 "abc"
 time-limit: 3
 stdin:
 	echo +()c
@@ -45,8 +46,7 @@ expected-stdout:
 name: eglob-subst-1
 description:
 	Check that eglobbing isn't done on substitution results
-perl-setup:
-	&touch("abc");
+file-setup: file 644 "abc"
 stdin:
 	x='@(*)'
 	echo $x
@@ -58,26 +58,31 @@ name: eglob-nomatch-1
 description:
 	Check that the pattern doesn't match
 stdin:
-	echo no-file+(a|b)stuff
-	echo no-file+(a*(c)|b)stuff
+	echo 1: no-file+(a|b)stuff
+	echo 2: no-file+(a*(c)|b)stuff
+	echo 3: no-file+((((c)))|b)stuff
 expected-stdout:
-	no-file+(a|b)stuff
-	no-file+(a*(c)|b)stuff
+	1: no-file+(a|b)stuff
+	2: no-file+(a*(c)|b)stuff
+	3: no-file+((((c)))|b)stuff
 ---
 
 name: eglob-match-1
 description:
 	Check that the pattern matches correctly
-perl-setup:
-	&touch("abd", "acd");
+file-setup: file 644 "abd"
+file-setup: file 644 "acd"
+file-setup: file 644 "abac"
 stdin:
-	echo a+(b|c)d
-	echo a!(@(b|B))d
-	echo a[b*(foo|bar)]d
+	echo 1: a+(b|c)d
+	echo 2: a!(@(b|B))d
+	echo 3: *(a(b|c))		# (...|...) can be used within X(..)
+	echo 4: a[b*(foo|bar)]d		# patterns not special inside [...]
 expected-stdout:
-	abd acd
-	acd
-	abd
+	1: abd acd
+	2: acd
+	3: abac
+	4: abd
 ---
 
 name: eglob-case-1
@@ -127,12 +132,14 @@ description:
 	Check eglobing works in trims...
 stdin:
 	x=abcdef
-	echo ${x#*(a|b)cd}
-	echo "${x#*(a|b)cd}"
-	echo ${x#"*(a|b)cd"}
+	echo 1: ${x#*(a|b)cd}
+	echo 2: "${x#*(a|b)cd}"
+	echo 3: ${x#"*(a|b)cd"}
+	echo 4: ${x#a(b|c)}
 expected-stdout:
-	ef
-	ef
-	abcdef
+	1: ef
+	2: ef
+	3: abcdef
+	4: cdef
 ---
 

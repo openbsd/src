@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.6 1997/09/01 18:30:16 deraadt Exp $	*/
+/*	$OpenBSD: var.c,v 1.7 1998/06/25 19:02:27 millert Exp $	*/
 
 #include "sh.h"
 #include "ksh_time.h"
@@ -36,6 +36,7 @@ newblock()
 	static char *const empty[] = {null};
 
 	l = (struct block *) alloc(sizeof(struct block), ATEMP);
+	l->flags = 0;
 	ainit(&l->area);
 	if (!e->loc) {
 		l->argc = 0;
@@ -68,6 +69,8 @@ popblock()
 				setspec(vq);
 			else
 				unsetspec(vq);
+	if (l->flags & BF_DOGETOPTS)
+		user_opt = l->getopts_state;
 	afreeall(&l->area);
 	afree(l, ATEMP);
 }
@@ -883,6 +886,11 @@ getspec(vp)
 		vp->flag |= SPECIAL;
 		break;
 #endif /* HISTORY */
+	  case V_OPTIND:
+		vp->flag &= ~SPECIAL;
+		setint(vp, (long) user_opt.uoptind);
+		vp->flag |= SPECIAL;
+		break;
 	}
 }
 
@@ -894,7 +902,9 @@ setspec(vp)
 
 	switch (special(vp->name)) {
 	  case V_PATH:
-		path = str_val(vp);
+		if (path)
+			afree(path, APERM);
+		path = str_save(str_val(vp), APERM);
 		flushcom(1);	/* clear tracked aliases */
 		break;
 	  case V_IFS:
@@ -902,7 +912,9 @@ setspec(vp)
 		ifs0 = *s;
 		break;
 	  case V_OPTIND:
+		vp->flag &= ~SPECIAL;
 		getopts_reset((int) intval(vp));
+		vp->flag |= SPECIAL;
 		break;
 	  case V_POSIXLY_CORRECT:
 		change_flag(FPOSIX, OF_SPECIAL, 1);
@@ -981,7 +993,9 @@ unsetspec(vp)
 {
 	switch (special(vp->name)) {
 	  case V_PATH:
-		path = def_path;
+		if (path)
+			afree(path, APERM);
+		path = str_save(def_path, APERM);
 		flushcom(1);	/* clear tracked aliases */
 		break;
 	  case V_IFS:

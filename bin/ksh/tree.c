@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.5 1997/09/01 18:30:15 deraadt Exp $	*/
+/*	$OpenBSD: tree.c,v 1.6 1998/06/25 19:02:24 millert Exp $	*/
 
 /*
  * command tree climbing
@@ -153,7 +153,9 @@ ptree(t, indent, shf)
 		fptreef(shf, indent, "%T& ", t->left);
 		break;
 	  case TFUNCT:
-		fptreef(shf, indent, "function %s %T", t->str, t->left);
+		fptreef(shf, indent,
+			t->u.ksh_func ? "function %s %T" : "%s() %T",
+				t->str, t->left);
 		break;
 	  case TTIME:
 		fptreef(shf, indent, "time %T", t->left);
@@ -282,6 +284,13 @@ tputS(wp, shf)
 {
 	register int c, quoted=0;
 
+	/* problems:
+	 *	`...` -> $(...)
+	 *	'foo' -> "foo"
+	 * could change encoding to:
+	 *	OQUOTE ["'] ... CQUOTE ["']
+	 * 	COMSUB [(`] ...\0	(handle $ ` \ and maybe " in `...` case)
+	 */
 	while (1)
 		switch ((c = *wp++)) {
 		  case EOS:
@@ -321,12 +330,14 @@ tputS(wp, shf)
 			break;
 		  case OSUBST:
 			tputc('$', shf);
-			tputc('{', shf);
+			if (*wp++ == '{')
+				tputc('{', shf);
 			while ((c = *wp++) != 0)
 				tputC(c, shf);
 			break;
 		  case CSUBST:
-			tputc('}', shf);
+			if (*wp++ == '}')
+				tputc('}', shf);
 			break;
 #ifdef KSH
 		  case OPAT:
@@ -553,6 +564,7 @@ wdscan(wp, c)
 				;
 			break;
 		  case CSUBST:
+			wp++;
 			if (c == CSUBST && nest == 0)
 				return (char *) wp;
 			nest--;
@@ -568,6 +580,78 @@ wdscan(wp, c)
 				return (char *) wp;
 			if (wp[-1] == CPAT)
 				nest--;
+			break;
+#endif /* KSH */
+		}
+}
+
+/* return a copy of wp without any of the mark up characters and
+ * with quote characters (" ' \) stripped.
+ * (string is allocated from ATEMP)
+ */
+char *
+wdstrip(wp)
+	const char *wp;
+{
+	struct shf shf;
+	int c;
+
+	shf_sopen((char *) 0, 32, SHF_WR | SHF_DYNAMIC, &shf);
+
+	/* problems:
+	 *	`...` -> $(...)
+	 *	x${foo:-"hi"} -> x${foo:-hi}
+	 *	x${foo:-'hi'} -> x${foo:-hi}
+	 */
+	while (1)
+		switch ((c = *wp++)) {
+		  case EOS:
+			return shf_sclose(&shf); /* null terminates */
+		  case CHAR:
+		  case QCHAR:
+			shf_putchar(*wp++, &shf);
+			break;
+		  case COMSUB:
+			shf_putchar('$', &shf);
+			shf_putchar('(', &shf);
+			while (*wp != 0)
+				shf_putchar(*wp++, &shf);
+			shf_putchar(')', &shf);
+			break;
+		  case EXPRSUB:
+			shf_putchar('$', &shf);
+			shf_putchar('(', &shf);
+			shf_putchar('(', &shf);
+			while (*wp != 0)
+				shf_putchar(*wp++, &shf);
+			shf_putchar(')', &shf);
+			shf_putchar(')', &shf);
+			break;
+		  case OQUOTE:
+			break;
+		  case CQUOTE:
+			break;
+		  case OSUBST:
+			shf_putchar('$', &shf);
+			if (*wp++ == '{')
+			    shf_putchar('{', &shf);
+			while ((c = *wp++) != 0)
+				shf_putchar(c, &shf);
+			break;
+		  case CSUBST:
+			if (*wp++ == '}')
+				shf_putchar('}', &shf);
+			break;
+#ifdef KSH
+		  case OPAT:
+			shf_putchar(*wp++, &shf);
+			shf_putchar('(', &shf);
+			break;
+		  case SPAT:
+			shf_putchar('|', &shf);
+			break;
+		  case CPAT:
+			shf_putchar(')', &shf);
 			break;
 #endif /* KSH */
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.2 1996/08/19 20:09:02 downsj Exp $	*/
+/*	$OpenBSD: tree.h,v 1.3 1998/06/25 19:02:25 millert Exp $	*/
 
 /*
  * command trees for compile/execute
@@ -64,8 +64,8 @@ struct op {
 #define EXPRSUB	4		/* $(()) substitution (0 terminated) */
 #define	OQUOTE	5		/* opening " or ' */
 #define	CQUOTE	6		/* closing " or ' */
-#define	OSUBST	7		/* opening ${ substitution */
-#define	CSUBST	8		/* closing } of above */
+#define	OSUBST	7		/* opening ${ subst (followed by { or X) */
+#define	CSUBST	8		/* closing } of above (followed by } or X) */
 #define OPAT	9		/* open pattern: *(, @(, etc. */
 #define SPAT	10		/* seperate pattern: | */
 #define CPAT	11		/* close pattern: ) */
