@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pcmcia.c,v 1.8 2001/08/17 21:52:16 deraadt Exp $	*/
+/*	$OpenBSD: if_wi_pcmcia.c,v 1.9 2001/10/25 16:18:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -183,6 +183,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_IODATA2_WNB11PCM,
 	  PCMCIA_CIS_IODATA2_WNB11PCM,
 	  "I-O DATA WN-B11/PCM",
+	},
+	{ PCMCIA_VENDOR_GEMTEK,
+	  PCMCIA_PRODUCT_GEMTEK_WLAN,
+	  PCMCIA_CIS_GEMTEK_WLAN,
+	  "GEMTEK Prism2_5 WaveLAN Card"
 	},
 	{ 0,
 	  0,
