@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.2 1996/03/03 22:30:32 niklas Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.3 1996/07/29 02:34:30 downsj Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -75,6 +75,8 @@ struct inpcbtable {
 #define	INP_RECVDSTADDR		0x04	/* receive IP dst address */
 #define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR)
 #define	INP_HDRINCL		0x08	/* user supplies entire IP header */
+#define INP_HIGHPORT		0x10	/* user wants "high" port binding */
+#define INP_LOWPORT		0x20	/* user wants "low" port binding */
 
 #define	INPLOOKUP_WILDCARD	1
 #define	INPLOOKUP_SETLOCAL	2

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.13 1996/07/18 05:01:04 dm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.14 1996/07/29 02:34:30 downsj Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -92,6 +92,12 @@ int	ip_directedbcast = IPDIRECTEDBCAST;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
+
+/* from in_pcb.c */
+extern int ipport_firstauto;
+extern int ipport_lastauto;
+extern int ipport_hifirstauto;
+extern int ipport_hilastauto;
 
 extern	struct domain inetdomain;
 extern	struct protosw inetsw[];
@@ -1221,6 +1227,18 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_DIRECTEDBCAST:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_directedbcast));
+	case IPCTL_IPPORT_FIRSTAUTO:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ipport_firstauto));
+	case IPCTL_IPPORT_LASTAUTO:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ipport_lastauto));
+	case IPCTL_IPPORT_HIFIRSTAUTO:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ipport_hifirstauto));
+	case IPCTL_IPPORT_HILASTAUTO:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ipport_hilastauto));
 	default:
 		return (EOPNOTSUPP);
 	}

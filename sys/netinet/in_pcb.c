@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.4 1996/05/14 19:37:34 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.5 1996/07/29 02:34:29 downsj Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -60,6 +60,15 @@
 
 struct	in_addr zeroin_addr;
 
+/*
+ * These configure the range of local port addresses assigned to
+ * "unspecified" outgoing connections/packets/whatever.
+ */
+int ipport_firstauto = IPPORT_RESERVED;		/* 1024 */
+int ipport_lastauto = IPPORT_USERRESERVED;	/* 5000 */
+int ipport_hifirstauto = IPPORT_HIFIRSTAUTO;	/* 40000 */
+int ipport_hilastauto = IPPORT_HILASTAUTO;	/* 44999 */
+
 #define	INPCBHASH(table, faddr, fport, laddr, lport) \
 	&(table)->inpt_hashtbl[(ntohl((faddr)->s_addr) + ntohs((fport)) + ntohs((lport))) & (table->inpt_hash)]
 
@@ -106,6 +115,7 @@ in_pcbbind(v, nam)
 	register struct inpcb *inp = v;
 	register struct socket *so = inp->inp_socket;
 	register struct inpcbtable *table = inp->inp_table;
+	u_int16_t *lastport = &inp->inp_table->inpt_lastport;
 	register struct sockaddr_in *sin;
 	struct proc *p = curproc;		/* XXX */
 	u_int16_t lport = 0;
@@ -170,14 +180,62 @@ in_pcbbind(v, nam)
 		}
 		inp->inp_laddr = sin->sin_addr;
 	}
-	if (lport == 0)
-		do {
-			if (table->inpt_lastport++ < IPPORT_RESERVED ||
-			    table->inpt_lastport > IPPORT_USERRESERVED)
-				table->inpt_lastport = IPPORT_RESERVED;
-			lport = htons(table->inpt_lastport);
-		} while (in_pcblookup(table,
-			    zeroin_addr, 0, inp->inp_laddr, lport, wild));
+	if (lport == 0) {
+		ushort first, last;
+		int count;
+
+		if (inp->inp_flags & INP_HIGHPORT) {
+			first = ipport_hifirstauto;	/* sysctl */
+			last = ipport_hilastauto;
+		} else if (inp->inp_flags & INP_LOWPORT) {
+			if ((error = suser(p->p_ucred, &p->p_acflag)))
+				return (EACCES);
+			first = IPPORT_RESERVED - 1;	/* 1023 */
+			last = IPPORT_RESERVED / 2;	/* traditional - 512 */
+			*lastport = first;		/* restart each time */
+		} else {
+			first = ipport_firstauto;	/* sysctl */
+			last  = ipport_lastauto;
+		}
+		/*
+		 * Simple check to ensure all ports are not used up causing
+		 * a deadlock here.
+		 *
+		 * We split the two cases (up and down) so that the direction
+		 * is not being tested on each round of the loop.
+		 */
+		if (first > last) {
+			/*
+			 * counting down
+			 */
+			count = first - last;
+
+			do {
+				if (count-- <= 0)	/* completely used? */
+					return (EADDRNOTAVAIL);
+				--*lastport;
+				if (*lastport > first || *lastport < last)
+					*lastport = first;
+				lport = htons(*lastport);
+			} while (in_pcblookup(table,
+				 zeroin_addr, 0, inp->inp_laddr, lport, wild));
+		} else {
+			/*
+			 * counting up
+			 */
+			count = last - first;
+
+			do {
+				if (count-- <= 0)	/* completely used? */
+					return (EADDRNOTAVAIL);
+				++*lastport;
+				if (*lastport < first || *lastport > last)
+					*lastport = first;
+				lport = htons(*lastport);
+			} while (in_pcblookup(table,
+				 zeroin_addr, 0, inp->inp_laddr, lport, wild));
+		}
+	}
 	inp->inp_lport = lport;
 	in_pcbrehash(inp);
 	return (0);
