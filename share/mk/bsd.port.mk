@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.40 1998/07/29 15:32:54 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.41 1998/08/08 06:14:58 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -865,7 +865,7 @@ IGNORE= "is only for ${ONLY_FOR_ARCHS}, not ${MACHINE}"
 .endif
 .elif defined(COMES_WITH)
 .if ( ${OPSYS_VER} >= ${COMES_WITH} )
-IGNORE= "comes with ${OPSYS} as of release ${COMES_WITH}"
+IGNORE= "-- ${PKGNAME:C/-[0-9].*//g} comes with ${OPSYS} as of release ${COMES_WITH}"
 .endif
 .endif
 
