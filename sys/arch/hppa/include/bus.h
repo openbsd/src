@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 1998/12/05 15:50:45 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 1998/12/05 17:31:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -284,6 +284,9 @@ bus_space_read_multi_4(bus_space_tag_t t, bus_space_handle_t h,
 
 #define	bus_space_copy_8
 #endif
+
+#define	bus_space_barrier(t, h, o, l, f) \
+	((void)(t), (void)(h), (void)(o), (void)(o), (void)(l), (void)(f))
 
 #define	BUS_SPACE_BARRIER_READ	1
 #define	BUS_SPACE_BARRIER_WRITE	2
