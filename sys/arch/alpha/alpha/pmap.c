@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.39 2003/10/18 20:14:40 jmc Exp $ */
+/* $OpenBSD: pmap.c,v 1.40 2003/12/22 19:59:37 jmc Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -926,7 +926,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	/*
 	 * Set up level three page table (lev3map)
 	 */
-	/* Nothing to do; it's already zero'd */
+	/* Nothing to do; it's already zeroed */
 
 	/*
 	 * Initialize `FYI' variables.  Note we're relying on
@@ -3268,7 +3268,7 @@ pmap_physpage_alloc(int usage, paddr_t *pap)
 	paddr_t pa;
 
 	/*
-	 * Don't ask for a zero'd page in the L1PT case -- we will
+	 * Don't ask for a zeroed page in the L1PT case -- we will
 	 * properly initialize it in the constructor.
 	 */
 

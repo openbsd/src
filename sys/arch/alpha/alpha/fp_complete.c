@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_complete.c,v 1.2 2003/10/18 20:14:40 jmc Exp $	*/
+/*	$OpenBSD: fp_complete.c,v 1.3 2003/12/22 19:59:37 jmc Exp $	*/
 /*	$NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $	*/
 
 /*-
@@ -404,7 +404,7 @@ u_int64_t
 alpha_read_fp_c(struct proc *p)
 {
 	/*
-	 * A possibly-desireable EV6-specific optimization would deviate from
+	 * A possibly desirable EV6-specific optimization would deviate from
 	 * the Alpha Architecture spec and keep some FP_C bits in the FPCR,
 	 * but in a transparent way. Some of the code for that would need to
 	 * go right here.

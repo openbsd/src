@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.15 2003/05/11 19:41:08 deraadt Exp $ */
+/* $OpenBSD: cpu.c,v 1.16 2003/12/22 19:59:37 jmc Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -289,7 +289,7 @@ recognized:
 
 #if defined(MULTIPROCESSOR)
 	if (ma->ma_slot > ALPHA_WHAMI_MAXID) {
-		printf("%s: procssor ID too large, ignoring\n", dev->dv_xname);
+		printf("%s: processor ID too large, ignoring\n", dev->dv_xname);
 		return;
 	}
 
