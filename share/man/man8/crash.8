@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crash.8,v 1.2 2000/03/02 14:46:49 todd Exp $
+.\"	$OpenBSD: crash.8,v 1.3 2000/03/18 21:26:28 deraadt Exp $
 .\" Copyright (c) 1980, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -48,21 +48,37 @@ When the system crashes voluntarily it prints a message of the form
         panic: why i gave up the ghost
 .Ed
 .Pp
-on the console, and enters the kernel debugger
-.Xr ddb 4
-if it is compiled into the kernel.
-If
-.Xr ddb 4
-is not in the kernel, the system takes a dump on a mass storage
-peripheral, and then invokes an automatic reboot procedure as
+on the console and enters the kernel debugger,
+.Xr ddb 4 .
+If the debugger command
+.Ic boot dump
+is enterred, or if the debugger was not compiled into the kernel, or
+the debugger was disabled with
+.Xr sysctl 8 ,
+then the system dumps the contents of physical memory
+onto a mass storage peripheral device.
+The particular device used is determined by the
+.Sq dumps on
+directive in the
+.Xr config 8
+file used to build the kernel.
+.Pp
+After the dump has been written, the system then 
+invokes the automatic reboot procedure as
 described in
 .Xr reboot 8 .
-(If auto-reboot is disabled (in a machine dependent way) the system
-will simply halt at this point.)
-Unless some unexpected inconsistency is encountered in the state
-of the file systems due to hardware or software failure, the system
-will then resume multi-user operations.
+If auto-reboot is disabled (in a machine dependent way) the system
+will simply halt at this point.
 .Pp
+Upon rebooting, and
+unless some unexpected inconsistency is encountered in the state
+of the file systems due to hardware or software failure, the system
+will copy the previously written dump into
+.Pa /var/crash
+using
+.Xr savecore 8 ,
+before resuming multi-user operations.
+.Ss Causes of system failure
 The system has a large number of internal consistency checks; if one
 of these fails, then it will panic with a very short message indicating
 which one failed.
@@ -71,10 +87,12 @@ the error, or a two-word description of the inconsistency.
 A full understanding of most panic messages requires perusal of the
 source code for the system.
 .Pp
-The most common cause of system failures is hardware failure, which
+The most common cause of system failures is hardware failure
+.Pq e.g. bad memory
+which
 can reflect itself in different ways.  Here are the messages which
 are most likely, with some hints as to causes.
-Left unstated in all cases is the possibility that hardware or software
+Left unstated in all cases is the possibility that a hardware or software
 error produced the message in some unexpected way.
 .Bl -tag -width indent
 .It no init
@@ -94,13 +112,14 @@ A unexpected trap has occurred within the system; the trap types are
 machine dependent and can be found listed in
 .Pa /sys/arch/ARCH/include/trap.h .
 .Pp
-The code is the referenced address, and the pc at the
-time of the fault is printed.  These problems tend to be easy to track
-down if they are kernel bugs since the processor stops cold, but random
-flakiness seems to cause this sometimes.
-The kernel debugger
+The code is the referenced address, and the pc is the program counter at the
+time of the fault is printed.
+Hardware flakiness will sometimes generate this panic, but if the cause
+is a kernel bug, 
+the kernel debugger
 .Xr ddb 4
-can be used to locate the instruction and subroutine corresponding
+can be used to locate the instruction and subroutine inside the kernel
+corresponding
 to the PC value.
 If that is insufficient to suggest the nature of the problem,
 more detailed examination of the system status at the time of the trap
@@ -117,28 +136,52 @@ The map may be made larger if necessary.
 .El
 .Pp
 That completes the list of panic types you are likely to see.
-.Pp
+.Ss Analyzing a dump
 When the system crashes it writes (or at least attempts to write)
-an image of memory into the back end of the dump device,
-usually the same as the primary swap
-area.  After the system is rebooted, the program
-.Xr savecore 8
-runs and preserves a copy of this core image and the current
-system in a specified directory for later perusal.  See
-.Xr savecore 8
-for details.
+an image of memory, including the kernel image, onto the dump device.
+On reboot, the kernel image and memory image are separated and preserved in
+.Pa /var/crash .
 .Pp
-To analyze a dump you should begin by running
-.Xr gdb 1 .
-Once gdb starts, use the command
+To analyze the kernel and memory images preserved in
+.Pa bsd.0
+and 
+.Pa bsd.0.core ,
+you should run
+.Xr gdb 1 ,
+loading them in with the following commands:
 .Pp
 .Bd -literal
-        target kcore /dev/mem
+	file /var/crash/bsd.0
+        target kcore /var/crash/bsd.0.core
 .Ed
-NIKLAS NIKLAS.
 .Pp
-Then a traceback and other such things can be gotten.
+After this, you can use the
+.Ic where
+command to show trace of procedure calls that led to the crash.
+.Pp
+For custom-built kernels, it is helpful if you had previously
+configured your kernel to include debugging symbols with
+.Sq makeoptions DEBUG=-ggdb
+.Pq see Xr options 4
+(though you will not be able to boot an unstripped kernel since it uses too
+much memory.)
+In this case, you should use
+.Pa bsd.gdb
+instead of
+.Pa bsd.0 ,
+thus allowing
+.Xr gdb 1
+to show symbolic names for addresses and line numbers from the source.
+.Pp
+If you are sure you have found a reproducible software bug in the kernel,
+and need help in further diagnosis, or already have a fix, use
+.Xr sendbug 1
+to send the developers a detailed description including the entire session
+from
+.Xr gdb 1 .
 .Sh "SEE ALSO"
 .Xr gdb 1 ,
 .Xr ddb 4 ,
-.Xr reboot 8
+.Xr reboot 8 ,
+.Xr savecore 8 ,
+.Xr sendbug 1
