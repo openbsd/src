@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.7 2002/05/30 10:53:44 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.8 2002/05/31 00:56:21 deraadt Exp $	*/
 
 /* misc - miscellaneous flex routines */
 
@@ -28,7 +28,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/misc.c,v 1.7 2002/05/30 10:53:44 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/misc.c,v 1.8 2002/05/31 00:56:21 deraadt Exp $ */
 
 #include "flexdef.h"
 
@@ -46,7 +46,7 @@ int value;
 		return;
 		}
 
-	snprintf( buf, sizeof buf, "#define %s %d\n", defname, value );
+	sprintf( buf, "#define %s %d\n", defname, value );
 	add_action( buf );
 	}
 
@@ -364,7 +364,7 @@ const char msg[];
 int arg;
 	{
 	char errmsg[MAXLINE];
-	(void) snprintf( errmsg, sizeof errmsg, msg, arg );
+	(void) sprintf( errmsg, msg, arg );
 	flexerror( errmsg );
 	}
 
@@ -376,7 +376,7 @@ const char msg[], arg[];
 	{
 	char errmsg[MAXLINE];
 
-	(void) snprintf( errmsg, sizeof errmsg, msg, arg );
+	(void) sprintf( errmsg, msg, arg );
 	flexerror( errmsg );
 	}
 
@@ -414,16 +414,14 @@ int do_infile;
 	*s2 = '\0';
 
 	if ( do_infile )
-		snprintf( directive, sizeof directive, line_fmt,
-			linenum, filename );
+		sprintf( directive, line_fmt, linenum, filename );
 	else
 		{
 		if ( output_file == stdout )
 			/* Account for the line directive itself. */
 			++out_linenum;
 
-		snprintf( directive, sizeof directive, line_fmt,
-			out_linenum, filename );
+		sprintf( directive, line_fmt, out_linenum, filename );
 		}
 
 	/* If output_file is nil then we should put the directive in
@@ -735,8 +733,8 @@ int c;
 #endif
 
 			default:
-				(void) snprintf( rform, sizeof rform,
-					"\\%.3o", (unsigned int) c );
+				(void) sprintf( rform, "\\%.3o",
+						(unsigned int) c );
 				return rform;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.l,v 1.5 2002/05/30 10:53:45 deraadt Exp $	*/
+/*	$OpenBSD: scan.l,v 1.6 2002/05/31 00:56:21 deraadt Exp $	*/
 
 /* scan.l - scanner for flex input */
 
@@ -29,7 +29,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/scan.l,v 1.5 2002/05/30 10:53:45 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/scan.l,v 1.6 2002/05/31 00:56:21 deraadt Exp $ */
 
 #include "flexdef.h"
 #include "parse.h"
@@ -51,7 +51,7 @@
 	return CHAR;
 
 #define RETURNNAME \
-	strlcpy( nmstr, yytext, sizeof nmstr); \
+	strcpy( nmstr, yytext ); \
 	return NAME;
 
 #define PUT_BACK_STRING(str, start) \
@@ -138,7 +138,7 @@ LEXOPT		[aceknopr]
 	^"%"[^sxaceknopr{}].*	synerr( _( "unrecognized '%' directive" ) );
 
 	^{NAME}		{
-			strlcpy( nmstr, yytext, sizeof nmstr );
+			strcpy( nmstr, yytext );
 			didadef = false;
 			BEGIN(PICKUPDEF);
 			}
@@ -186,7 +186,7 @@ LEXOPT		[aceknopr]
 	{WS}		/* separates name and definition */
 
 	{NOT_WS}.*	{
-			strlcpy( (char *) nmdef, yytext, sizeof nmdef);
+			strcpy( (char *) nmdef, yytext );
 
 			/* Skip trailing whitespace. */
 			for ( i = strlen( (char *) nmdef ) - 1;
@@ -279,7 +279,8 @@ LEXOPT		[aceknopr]
 	yyclass		return OPT_YYCLASS;
 
 	\"[^"\n]*\"	{
-			strlcpy( nmstr, yytext + 1, sizeof nmstr);
+			strcpy( nmstr, yytext + 1 );
+			nmstr[strlen( nmstr ) - 1] = '\0';
 			return NAME;
 			}
 
@@ -402,7 +403,7 @@ LEXOPT		[aceknopr]
 	"["({FIRST_CCL_CHAR}|{CCL_EXPR})({CCL_CHAR}|{CCL_EXPR})*	{
 			int cclval;
 
-			strlcpy( nmstr, yytext, sizeof nmstr);
+			strcpy( nmstr, yytext );
 
 			/* Check to see if we've already encountered this
 			 * ccl.
@@ -437,7 +438,7 @@ LEXOPT		[aceknopr]
 			register Char *nmdefptr;
 			Char *ndlookup();
 
-			strlcpy( nmstr, yytext + 1, sizeof nmstr );
+			strcpy( nmstr, yytext + 1 );
 			nmstr[yyleng - 2] = '\0';  /* chop trailing brace */
 
 			if ( (nmdefptr = ndlookup( nmstr )) == 0 )
