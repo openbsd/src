@@ -24,7 +24,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.11 1998/09/22 22:03:02 provos Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.12 1999/06/29 20:33:29 deraadt Exp $ (LBL)";
 #endif
 
 /*
@@ -298,8 +298,12 @@ main(int argc, char **argv)
 			warning("snaplen raised from %d to %d", snaplen, i);
 			snaplen = i;
 		}
-		if (pcap_lookupnet(device, &localnet, &netmask, ebuf) < 0)
-			error("%s", ebuf);
+		if (pcap_lookupnet(device, &localnet, &netmask, ebuf) < 0) {
+			warning("%s", ebuf);
+			localnet = 0;
+			netmask = 0;
+		}
+
 		/*
 		 * Let user own process after socket has been opened.
 		 */
