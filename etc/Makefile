@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.94 1998/12/01 04:33:27 form Exp $
+#	$OpenBSD: Makefile,v 1.95 1999/01/04 02:12:09 millert Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -24,7 +24,7 @@ BIN1=	aliases bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
 # -rw-rw-r--
 BIN2=	motd
 
-NAMEDB=	localhost.rev named.boot root.cache
+NAMEDB=	localhost.rev root.cache
 PCS=	pcs750.bin
 WCS1=	wcs fppwcs poc poc1 poc2 fppoc
 WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
@@ -140,8 +140,11 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/afs; \
 		${INSTALL} -c -o root -g wheel -m 644 README \
 		    ${DESTDIR}/etc/afs)
-	cd namedb; ${INSTALL} -c -o named -g ${BINGRP} -m 644 ${NAMEDB} \
-	    ${DESTDIR}/var/named
+	(cd namedb; \
+	    ${INSTALL} -c -o root -g ${BINGRP} -m 644 named.boot \
+		${DESTDIR}/var/named; \
+	    ${INSTALL} -c -o named -g ${BINGRP} -m 644 ${NAMEDB} \
+		${DESTDIR}/var/named/namedb)
 	/bin/rm -f ${DESTDIR}/etc/localtime
 	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	/bin/rm -f ${DESTDIR}/etc/rmt
