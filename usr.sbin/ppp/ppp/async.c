@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: async.c,v 1.5 1999/05/12 10:03:48 brian Exp $
+ * $Id: async.c,v 1.6 1999/06/02 15:58:40 brian Exp $
  *
  */
 #include <sys/types.h>
@@ -116,7 +116,7 @@ async_LayerPush(struct bundle *bundle, struct link *l, struct mbuf *bp,
 
   cnt = cp - p->async.xbuff;
   mbuf_Free(bp);
-  bp = mbuf_Alloc(cnt, MB_ASYNC);
+  bp = mbuf_Alloc(cnt, MB_ASYNCOUT);
   memcpy(MBUF_CTOP(bp), p->async.xbuff, cnt);
   log_DumpBp(LogASYNC, "Write", bp);
 
@@ -135,7 +135,7 @@ async_Decode(struct async *async, u_char c)
   case HDLC_SYN:
     async->mode &= ~MODE_HUNT;
     if (async->length) {		/* packet is ready. */
-      bp = mbuf_Alloc(async->length, MB_ASYNC);
+      bp = mbuf_Alloc(async->length, MB_ASYNCIN);
       mbuf_Write(bp, async->hbuff, async->length);
       async->length = 0;
       return bp;

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: cbcp.c,v 1.8 1999/05/08 11:06:33 brian Exp $
+ *	$Id: cbcp.c,v 1.9 1999/06/02 15:58:40 brian Exp $
  */
 
 #include <sys/param.h>
@@ -195,7 +195,7 @@ cbcp_Output(struct cbcp *cbcp, u_char code, struct cbcp_data *data)
   struct cbcp_header *head;
   struct mbuf *bp;
 
-  bp = mbuf_Alloc(sizeof *head + data->length, MB_CBCP);
+  bp = mbuf_Alloc(sizeof *head + data->length, MB_CBCPOUT);
   head = (struct cbcp_header *)MBUF_CTOP(bp);
   head->code = code;
   head->id = cbcp->fsm.id;
@@ -630,6 +630,7 @@ cbcp_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
     mbuf_Free(bp);
     return NULL;
   }
+  mbuf_SetType(bp, MB_CBCPIN);
 
   /* XXX check the id */
 
