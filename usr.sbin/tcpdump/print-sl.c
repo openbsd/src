@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sl.c,v 1.4 1996/07/13 11:01:30 mickey Exp $	*/
+/*	$OpenBSD: print-sl.c,v 1.5 1996/08/18 21:47:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -26,7 +26,7 @@ static  char rcsid[] =
 	"@(#)Header: print-sl.c,v 1.36 96/06/23 02:11:46 leres Exp (LBL)";
 #endif
 
-#ifdef HAVE_NET_SLIP_H
+#ifdef CSLIP
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/timeb.h>
