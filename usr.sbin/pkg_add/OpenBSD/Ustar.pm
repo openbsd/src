@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.11 2004/11/01 15:21:48 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.12 2004/11/01 15:44:11 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -94,6 +94,7 @@ sub next
     $mode = oct($mode) & 0xfff;
     $uname =~ s/\0*$//;
     $gname =~ s/\0*$//;
+    $linkname =~ s/\0*$//;
     $uid = oct($uid);
     $gid = oct($gid);
     $uid = $uidcache->lookup($uname, $uid);
