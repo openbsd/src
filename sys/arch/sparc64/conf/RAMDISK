@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.23 2003/05/14 23:32:35 miod Exp $
+# 	$OpenBSD: RAMDISK,v 1.24 2003/06/13 19:21:25 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -45,6 +45,7 @@ hme*	at pci? dev ? function ?
 gem*	at pci? dev ? function ?
 #ti*	at pci? dev ? function ?
 dc*	at pci? dev ? function ?
+em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 
 auxio*	at ebus?
 auxio*	at sbus?

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.82 2003/05/14 23:32:35 miod Exp $
+#	$OpenBSD: GENERIC,v 1.83 2003/06/13 19:21:25 deraadt Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -40,6 +40,7 @@ gem*	at pci? dev ? function ?
 fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
 xl*	at pci? dev ? function ?		# 3C9xx ethernet
 dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
+em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 
 # PCI SCSI
 siop*	at pci? dev ? function ?
