@@ -14,7 +14,7 @@ Functions for connecting the local authentication agent.
 */
 
 #include "includes.h"
-RCSID("$Id: authfd.c,v 1.1 1999/09/26 20:53:33 deraadt Exp $");
+RCSID("$Id: authfd.c,v 1.2 1999/09/28 04:45:35 provos Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -24,9 +24,12 @@ RCSID("$Id: authfd.c,v 1.1 1999/09/26 20:53:33 deraadt Exp $");
 #include "xmalloc.h"
 #include "getput.h"
 
+#include <ssl/rsa.h>
+
 /* Returns the number of the authentication fd, or -1 if there is none. */
 
-int ssh_get_authentication_fd()
+int
+ssh_get_authentication_fd()
 {
   const char *authfd, *authsocket;
   int sock;
@@ -202,8 +205,9 @@ void ssh_close_authentication_connection(AuthenticationConnection *ac)
    The caller must initialize the integers before the call, and free the
    comment after a successful call (before calling ssh_get_next_identity). */
 
-int ssh_get_first_identity(AuthenticationConnection *auth,
-			   int *bitsp, MP_INT *e, MP_INT *n, char **comment)
+int
+ssh_get_first_identity(AuthenticationConnection *auth,
+		       int *bitsp, BIGNUM *e, BIGNUM *n, char **comment)
 {
   unsigned char msg[8192];
   int len, l;
@@ -273,8 +277,9 @@ int ssh_get_first_identity(AuthenticationConnection *auth,
    function.  This returns 0 if there are no more identities.  The caller
    must free comment after a successful return. */
 
-int ssh_get_next_identity(AuthenticationConnection *auth,
-			  int *bitsp, MP_INT *e, MP_INT *n, char **comment)
+int
+ssh_get_next_identity(AuthenticationConnection *auth,
+		      int *bitsp, BIGNUM *e, BIGNUM *n, char **comment)
 {
   /* Return failure if no more entries. */
   if (auth->howmany <= 0)
@@ -283,8 +288,8 @@ int ssh_get_next_identity(AuthenticationConnection *auth,
   /* Get the next entry from the packet.  These will abort with a fatal
      error if the packet is too short or contains corrupt data. */
   *bitsp = buffer_get_int(&auth->identities);
-  buffer_get_mp_int(&auth->identities, e);
-  buffer_get_mp_int(&auth->identities, n);
+  buffer_get_bignum(&auth->identities, e);
+  buffer_get_bignum(&auth->identities, n);
   *comment = buffer_get_string(&auth->identities, NULL);
 
   /* Decrement the number of remaining entries. */
@@ -299,11 +304,12 @@ int ssh_get_next_identity(AuthenticationConnection *auth,
    desired, with 0 corresponding to protocol version 1.0 (no longer supported)
    and 1 corresponding to protocol version 1.1. */
 
-int ssh_decrypt_challenge(AuthenticationConnection *auth,
-			  int bits, MP_INT *e, MP_INT *n, MP_INT *challenge,
-			  unsigned char session_id[16],
-			  unsigned int response_type,
-			  unsigned char response[16])
+int
+ssh_decrypt_challenge(AuthenticationConnection *auth,
+		      int bits, BIGNUM *e, BIGNUM *n, BIGNUM *challenge,
+		      unsigned char session_id[16],
+		      unsigned int response_type,
+		      unsigned char response[16])
 {
   Buffer buffer;
   unsigned char buf[8192];
@@ -318,9 +324,9 @@ int ssh_decrypt_challenge(AuthenticationConnection *auth,
   buffer_init(&buffer);
   buffer_append(&buffer, (char *)buf, 1);
   buffer_put_int(&buffer, bits);
-  buffer_put_mp_int(&buffer, e);
-  buffer_put_mp_int(&buffer, n);
-  buffer_put_mp_int(&buffer, challenge);
+  buffer_put_bignum(&buffer, e);
+  buffer_put_bignum(&buffer, n);
+  buffer_put_bignum(&buffer, challenge);
   buffer_append(&buffer, (char *)session_id, 16);
   buffer_put_int(&buffer, response_type);
 
@@ -405,7 +411,7 @@ int ssh_decrypt_challenge(AuthenticationConnection *auth,
    be used by normal applications. */
 
 int ssh_add_identity(AuthenticationConnection *auth,
-		     RSAPrivateKey *key, const char *comment)
+		     RSA *key, const char *comment)
 {
   Buffer buffer;
   unsigned char buf[8192];
@@ -414,13 +420,14 @@ int ssh_add_identity(AuthenticationConnection *auth,
   /* Format a message to the agent. */
   buffer_init(&buffer);
   buffer_put_char(&buffer, SSH_AGENTC_ADD_RSA_IDENTITY);
-  buffer_put_int(&buffer, key->bits);
-  buffer_put_mp_int(&buffer, &key->n);
-  buffer_put_mp_int(&buffer, &key->e);
-  buffer_put_mp_int(&buffer, &key->d);
-  buffer_put_mp_int(&buffer, &key->u);
-  buffer_put_mp_int(&buffer, &key->p);
-  buffer_put_mp_int(&buffer, &key->q);
+  buffer_put_int(&buffer, BN_num_bits(key->n));
+  buffer_put_bignum(&buffer, key->n);
+  buffer_put_bignum(&buffer, key->e);
+  buffer_put_bignum(&buffer, key->d);
+  /* To keep within the protocol: p < q for ssh. in SSL p > q */
+  buffer_put_bignum(&buffer, key->iqmp); /* ssh key->u */
+  buffer_put_bignum(&buffer, key->q); /* ssh key->p, SSL key->q */
+  buffer_put_bignum(&buffer, key->p); /* ssh key->q, SSL key->p */
   buffer_put_string(&buffer, comment, strlen(comment));
 
   /* Get the length of the message, and format it in the buffer. */
@@ -495,7 +502,7 @@ int ssh_add_identity(AuthenticationConnection *auth,
 /* Removes an identity from the authentication server.  This call is not meant 
    to be used by normal applications. */
 
-int ssh_remove_identity(AuthenticationConnection *auth, RSAPublicKey *key)
+int ssh_remove_identity(AuthenticationConnection *auth, RSA *key)
 {
   Buffer buffer;
   unsigned char buf[8192];
@@ -504,9 +511,9 @@ int ssh_remove_identity(AuthenticationConnection *auth, RSAPublicKey *key)
   /* Format a message to the agent. */
   buffer_init(&buffer);
   buffer_put_char(&buffer, SSH_AGENTC_REMOVE_RSA_IDENTITY);
-  buffer_put_int(&buffer, key->bits);
-  buffer_put_mp_int(&buffer, &key->e);
-  buffer_put_mp_int(&buffer, &key->n);
+  buffer_put_int(&buffer, BN_num_bits(key->n));
+  buffer_put_bignum(&buffer, key->e);
+  buffer_put_bignum(&buffer, key->n);
 
   /* Get the length of the message, and format it in the buffer. */
   len = buffer_len(&buffer);

@@ -15,10 +15,9 @@ with the other side.  This same code is used both on client and server side.
 */
 
 #include "includes.h"
-RCSID("$Id: packet.c,v 1.1 1999/09/26 20:53:36 deraadt Exp $");
+RCSID("$Id: packet.c,v 1.2 1999/09/28 04:45:36 provos Exp $");
 
 #include "xmalloc.h"
-#include "randoms.h"
 #include "buffer.h"
 #include "packet.h"
 #include "bufaux.h"
@@ -70,9 +69,6 @@ static Buffer compression_buffer;
 static int packet_compression = 0;
 #endif /* WITH_ZLIB */
 
-/* Pointer to the random number generator state. */
-static RandomState *random_state;
-
 /* Flag indicating whether this module has been initialized. */
 static int initialized = 0;
 
@@ -82,11 +78,11 @@ static int interactive_mode = 0;
 /* Sets the descriptors used for communication.  Disables encryption until
    packet_set_encryption_key is called. */
 
-void packet_set_connection(int fd_in, int fd_out, RandomState *state)
+void
+packet_set_connection(int fd_in, int fd_out)
 {
   connection_in = fd_in;
   connection_out = fd_out;
-  random_state = state;
   cipher_type = SSH_CIPHER_NONE;
   cipher_set_key(&send_context, SSH_CIPHER_NONE, (unsigned char *)"", 0, 1);
   cipher_set_key(&receive_context, SSH_CIPHER_NONE, (unsigned char *)"", 0, 0);
@@ -105,7 +101,8 @@ void packet_set_connection(int fd_in, int fd_out, RandomState *state)
 
 /* Sets the connection into non-blocking mode. */
 
-void packet_set_nonblocking()
+void
+packet_set_nonblocking()
 {
   /* Set the socket into non-blocking mode. */
 #if defined(O_NONBLOCK) && !defined(O_NONBLOCK_BROKEN)
@@ -130,21 +127,24 @@ void packet_set_nonblocking()
 
 /* Returns the socket used for reading. */
 
-int packet_get_connection_in()
+int
+packet_get_connection_in()
 {
   return connection_in;
 }
 
 /* Returns the descriptor used for writing. */
 
-int packet_get_connection_out()
+int
+packet_get_connection_out()
 {
   return connection_out;
 }
 
 /* Closes the connection and clears and frees internal data structures. */
 
-void packet_close()
+void
+packet_close()
 {
   if (!initialized)
     return;
@@ -174,7 +174,8 @@ void packet_close()
 
 /* Sets remote side protocol flags. */
 
-void packet_set_protocol_flags(unsigned int protocol_flags)
+void
+packet_set_protocol_flags(unsigned int protocol_flags)
 {
   remote_protocol_flags = protocol_flags;
   channel_set_options((protocol_flags & SSH_PROTOFLAG_HOST_IN_FWD_OPEN) != 0);
@@ -182,7 +183,8 @@ void packet_set_protocol_flags(unsigned int protocol_flags)
 
 /* Returns the remote protocol flags set earlier by the above function. */
 
-unsigned int packet_get_protocol_flags()
+unsigned int
+packet_get_protocol_flags()
 {
   return remote_protocol_flags;
 }
@@ -191,7 +193,8 @@ unsigned int packet_get_protocol_flags()
 /* Starts packet compression from the next packet on in both directions. 
    Level is compression level 1 (fastest) - 9 (slow, best) as in gzip. */
 
-void packet_start_compression(int level)
+void
+packet_start_compression(int level)
 {
   if (packet_compression)
     fatal("Compression already enabled.");
@@ -204,8 +207,9 @@ void packet_start_compression(int level)
 /* Encrypts the given number of bytes, copying from src to dest.
    bytes is known to be a multiple of 8. */
 
-void packet_encrypt(CipherContext *cc, void *dest, void *src, 
-		    unsigned int bytes)
+void
+packet_encrypt(CipherContext *cc, void *dest, void *src, 
+	       unsigned int bytes)
 {
   assert((bytes % 8) == 0);
   cipher_encrypt(cc, dest, src, bytes);
@@ -214,8 +218,9 @@ void packet_encrypt(CipherContext *cc, void *dest, void *src,
 /* Decrypts the given number of bytes, copying from src to dest.
    bytes is known to be a multiple of 8. */
 
-void packet_decrypt(CipherContext *cc, void *dest, void *src, 
-		    unsigned int bytes)
+void
+packet_decrypt(CipherContext *cc, void *dest, void *src, 
+	       unsigned int bytes)
 {
   assert((bytes % 8) == 0);
   cipher_decrypt(cc, dest, src, bytes);
@@ -225,8 +230,9 @@ void packet_decrypt(CipherContext *cc, void *dest, void *src,
    key is used for both sending and reception.  However, both directions
    are encrypted independently of each other. */
 
-void packet_set_encryption_key(const unsigned char *key, unsigned int keylen,
-			       int cipher, int is_client)
+void
+packet_set_encryption_key(const unsigned char *key, unsigned int keylen,
+			  int cipher, int is_client)
 {
   cipher_type = cipher;
   if (cipher == SSH_CIPHER_RC4)
@@ -254,7 +260,8 @@ void packet_set_encryption_key(const unsigned char *key, unsigned int keylen,
 
 /* Starts constructing a packet to send. */
 
-void packet_start(int type)
+void
+packet_start(int type)
 {
   char buf[9];
 
@@ -266,7 +273,8 @@ void packet_start(int type)
 
 /* Appends a character to the packet data. */
 
-void packet_put_char(int value)
+void
+packet_put_char(int value)
 {
   char ch = value;
   buffer_append(&outgoing_packet, &ch, 1);
@@ -274,33 +282,38 @@ void packet_put_char(int value)
 
 /* Appends an integer to the packet data. */
 
-void packet_put_int(unsigned int value)
+void
+packet_put_int(unsigned int value)
 {
   buffer_put_int(&outgoing_packet, value);
 }
 
 /* Appends a string to packet data. */
 
-void packet_put_string(const char *buf, unsigned int len)
+void
+packet_put_string(const char *buf, unsigned int len)
 {
   buffer_put_string(&outgoing_packet, buf, len);
 }
 
 /* Appends an arbitrary precision integer to packet data. */
 
-void packet_put_mp_int(MP_INT *value)
+void
+packet_put_bignum(BIGNUM *value)
 {
-  buffer_put_mp_int(&outgoing_packet, value);
+  buffer_put_bignum(&outgoing_packet, value);
 }
 
 /* Finalizes and sends the packet.  If the encryption key has been set,
    encrypts the packet before sending. */
   
-void packet_send()
+void
+packet_send()
 {
   char buf[8], *cp;
   int i, padding, len;
   unsigned long checksum;
+  u_int32_t rand;
 
 #ifdef WITH_ZLIB
   /* If using packet compression, compress the payload of the outgoing
@@ -325,8 +338,12 @@ void packet_send()
   if (cipher_type != SSH_CIPHER_NONE)
     {
       cp = buffer_ptr(&outgoing_packet);
-      for (i = 0; i < padding; i++)
-	cp[7 - i] = random_get_byte(random_state);
+      for (i = 0; i < padding; i++) {
+        if (i % 4 == 0)
+          rand = arc4random();
+        cp[7 - i] = rand & 0xff;
+        rand >>= 8;
+      }
     }
   buffer_consume(&outgoing_packet, 8 - padding);
   
@@ -362,7 +379,8 @@ void packet_send()
    no other data is processed until this returns, so this function should
    not be used during the interactive session. */
 
-int packet_read(int *payload_len_ptr)
+int
+packet_read(int *payload_len_ptr)
 {
   int type, len;
   fd_set set;
@@ -405,7 +423,8 @@ int packet_read(int *payload_len_ptr)
 /* Waits until a packet has been received, verifies that its type matches
    that given, and gives a fatal error and exits if there is a mismatch. */
 
-void packet_read_expect(int *payload_len_ptr, int expected_type)
+void
+packet_read_expect(int *payload_len_ptr, int expected_type)
 {
   int type;
 
@@ -432,7 +451,8 @@ void packet_read_expect(int *payload_len_ptr, int expected_type)
    
    */
 
-int packet_read_poll(int *payload_len_ptr)
+int
+packet_read_poll(int *payload_len_ptr)
 {
   unsigned int len, padded_len;
   unsigned char *ucp;
@@ -525,14 +545,16 @@ int packet_read_poll(int *payload_len_ptr)
 /* Buffers the given amount of input characters.  This is intended to be
    used together with packet_read_poll. */
 
-void packet_process_incoming(const char *buf, unsigned int len)
+void
+packet_process_incoming(const char *buf, unsigned int len)
 {
   buffer_append(&input, buf, len);
 }
 
 /* Returns a character from the packet. */
 
-unsigned int packet_get_char()
+unsigned int
+packet_get_char()
 {
   char ch;
   buffer_get(&incoming_packet, &ch, 1);
@@ -541,7 +563,8 @@ unsigned int packet_get_char()
 
 /* Returns an integer from the packet data. */
 
-unsigned int packet_get_int()
+unsigned int
+packet_get_int()
 {
   return buffer_get_int(&incoming_packet);
 }
@@ -549,9 +572,10 @@ unsigned int packet_get_int()
 /* Returns an arbitrary precision integer from the packet data.  The integer
    must have been initialized before this call. */
 
-void packet_get_mp_int(MP_INT *value, int *length_ptr)
+void
+packet_get_bignum(BIGNUM *value, int *length_ptr)
 {
-  *length_ptr = buffer_get_mp_int(&incoming_packet, value);
+  *length_ptr = buffer_get_bignum(&incoming_packet, value);
 }
 
 /* Returns a string from the packet data.  The string is allocated using
@@ -559,7 +583,8 @@ void packet_get_mp_int(MP_INT *value, int *length_ptr)
    no longer needed.  The length_ptr argument may be NULL, or point to an
    integer into which the length of the string is stored. */
 
-char *packet_get_string(unsigned int *length_ptr)
+char
+*packet_get_string(unsigned int *length_ptr)
 {
   return buffer_get_string(&incoming_packet, length_ptr);
 }
@@ -572,7 +597,8 @@ char *packet_get_string(unsigned int *length_ptr)
    message must not exceed 1024 bytes.  This will automatically call
    packet_write_wait. */
 
-void packet_send_debug(const char *fmt, ...)
+void
+packet_send_debug(const char *fmt, ...)
 {
   char buf[1024];
   va_list args;
@@ -592,7 +618,8 @@ void packet_send_debug(const char *fmt, ...)
    The error message should not contain a newline.  The length of the
    formatted message must not exceed 1024 bytes. */
 
-void packet_disconnect(const char *fmt, ...)
+void
+packet_disconnect(const char *fmt, ...)
 {
   char buf[1024];
   va_list args;
@@ -627,17 +654,19 @@ void packet_disconnect(const char *fmt, ...)
 /* Checks if there is any buffered output, and tries to write some of the
    output. */
 
-void packet_write_poll()
+void
+packet_write_poll()
 {
   int len = buffer_len(&output);
   if (len > 0)
     {
       len = write(connection_out, buffer_ptr(&output), len);
-      if (len <= 0)
+      if (len <= 0) {
 	if (errno == EAGAIN)
 	  return;
         else
 	  fatal("Write failed: %.100s", strerror(errno));
+      }
       buffer_consume(&output, len);
     }
 }
@@ -645,7 +674,8 @@ void packet_write_poll()
 /* Calls packet_write_poll repeatedly until all pending output data has
    been written. */
 
-void packet_write_wait()
+void
+packet_write_wait()
 {
   packet_write_poll();
   while (packet_have_data_to_write())
@@ -660,14 +690,16 @@ void packet_write_wait()
 
 /* Returns true if there is buffered data to write to the connection. */
 
-int packet_have_data_to_write()
+int
+packet_have_data_to_write()
 {
   return buffer_len(&output) != 0;
 }
 
 /* Returns true if there is not too much data to write to the connection. */
 
-int packet_not_very_much_data_to_write()
+int
+packet_not_very_much_data_to_write()
 {
   if (interactive_mode)
     return buffer_len(&output) < 16384;
@@ -677,7 +709,8 @@ int packet_not_very_much_data_to_write()
 
 /* Informs that the current session is interactive.  Sets IP flags for that. */
 
-void packet_set_interactive(int interactive, int keepalives)
+void
+packet_set_interactive(int interactive, int keepalives)
 {
   int on = 1;
 
@@ -726,7 +759,8 @@ void packet_set_interactive(int interactive, int keepalives)
 
 /* Returns true if the current connection is interactive. */
 
-int packet_is_interactive()
+int
+packet_is_interactive()
 {
   return interactive_mode;
 }

@@ -8,4 +8,4 @@ MAN=	scp.1
 
 SRCS=	scp.c xmalloc.c
 
-.include<bsd.prog.mk>
+.include <bsd.prog.mk>

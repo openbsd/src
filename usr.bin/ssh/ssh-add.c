@@ -14,21 +14,22 @@ Adds an identity to the authentication server, or removes an identity.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-add.c,v 1.1 1999/09/26 20:53:37 deraadt Exp $");
+RCSID("$Id: ssh-add.c,v 1.2 1999/09/28 04:45:37 provos Exp $");
 
-#include "randoms.h"
 #include "rsa.h"
 #include "ssh.h"
 #include "xmalloc.h"
 #include "authfd.h"
 
-void delete_file(const char *filename)
+void
+delete_file(const char *filename)
 {
-  RSAPublicKey key;
+  RSA *key;
   char *comment;
   AuthenticationConnection *ac;
 
-  if (!load_public_key(filename, &key, &comment))
+  key = RSA_new();
+  if (!load_public_key(filename, key, &comment))
     {
       printf("Bad key file %s: %s\n", filename, strerror(errno));
       return;
@@ -40,20 +41,21 @@ void delete_file(const char *filename)
     {
       fprintf(stderr,
 	      "Could not open a connection to your authentication agent.\n");
-      rsa_clear_public_key(&key);
+      RSA_free(key);
       xfree(comment);
       return;
     }
-  if (ssh_remove_identity(ac, &key))
+  if (ssh_remove_identity(ac, key))
     fprintf(stderr, "Identity removed: %s (%s)\n", filename, comment);
   else
     fprintf(stderr, "Could not remove identity: %s\n", filename);
-  rsa_clear_public_key(&key);
+  RSA_free(key);
   xfree(comment);
   ssh_close_authentication_connection(ac);
 }
 
-void delete_all()
+void
+delete_all()
 {
   AuthenticationConnection *ac;
   
@@ -76,24 +78,27 @@ void delete_all()
   ssh_close_authentication_connection(ac);
 }
 
-void add_file(const char *filename)
+void
+add_file(const char *filename)
 {
-  RSAPrivateKey key;
-  RSAPublicKey public_key;
+  RSA *key;
+  RSA *public_key;
   AuthenticationConnection *ac;
   char *saved_comment, *comment, *pass;
   int first;
   
-  if (!load_public_key(filename, &public_key, &saved_comment))
+  key = RSA_new();
+  public_key = RSA_new();
+  if (!load_public_key(filename, public_key, &saved_comment))
     {
       printf("Bad key file %s: %s\n", filename, strerror(errno));
       return;
     }
-  rsa_clear_public_key(&public_key);
+  RSA_free(public_key);
   
   pass = xstrdup("");
   first = 1;
-  while (!load_private_key(filename, pass, &key, &comment))
+  while (!load_private_key(filename, pass, key, &comment))
     {
       char buf[1024];
       FILE *f;
@@ -147,23 +152,24 @@ void add_file(const char *filename)
     {
       fprintf(stderr,
 	      "Could not open a connection to your authentication agent.\n");
-      rsa_clear_private_key(&key);
+      RSA_free(key);
       xfree(comment);
       return;
     }
-  if (ssh_add_identity(ac, &key, comment))
+  if (ssh_add_identity(ac, key, comment))
     fprintf(stderr, "Identity added: %s (%s)\n", filename, comment);
   else
     fprintf(stderr, "Could not add identity: %s\n", filename);
-  rsa_clear_private_key(&key);
+  RSA_free(key);
   xfree(comment);
   ssh_close_authentication_connection(ac);
 }
 
-void list_identities()
+void
+list_identities()
 {
   AuthenticationConnection *ac;
-  MP_INT e, n;
+  BIGNUM *e, *n;
   int bits, status;
   char *comment;
   int had_identities;
@@ -174,29 +180,35 @@ void list_identities()
       fprintf(stderr, "Could not connect to authentication server.\n");
       return;
     }
-  mpz_init(&e);
-  mpz_init(&n);
+  e = BN_new();
+  n = BN_new();
   had_identities = 0;
-  for (status = ssh_get_first_identity(ac, &bits, &e, &n, &comment);
+  for (status = ssh_get_first_identity(ac, &bits, e, n, &comment);
        status;
-       status = ssh_get_next_identity(ac, &bits, &e, &n, &comment))
+       status = ssh_get_next_identity(ac, &bits, e, n, &comment))
     {
+      char *buf;
       had_identities = 1;
       printf("%d ", bits);
-      mpz_out_str(stdout, 10, &e);
-      printf(" ");
-      mpz_out_str(stdout, 10, &n);
-      printf(" %s\n", comment);
+      buf = BN_bn2dec(e);
+      assert(buf != NULL);
+      printf("%s ", buf);
+      free (buf);
+      buf = BN_bn2dec(n);
+      assert(buf != NULL);
+      printf("%s %s\n", buf, comment);
+      free (buf);
       xfree(comment);
     }
-  mpz_clear(&e);
-  mpz_clear(&n);
+  BN_clear_free(e);
+  BN_clear_free(n);
   if (!had_identities)
     printf("The agent has no identities.\n");
   ssh_close_authentication_connection(ac);
 }
 
-int main(int ac, char **av)
+int
+main(int ac, char **av)
 {
   struct passwd *pw;
   char buf[1024];

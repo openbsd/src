@@ -13,24 +13,20 @@ Ssh client program.  This program can be used to log into a remote machine.
 The software supports strong authentication, encryption, and forwarding
 of X11, TCP/IP, and authentication connections.
 
+Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
+
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.1 1999/09/26 20:53:38 deraadt Exp $");
+RCSID("$Id: ssh.c,v 1.2 1999/09/28 04:45:37 provos Exp $");
 
 #include "xmalloc.h"
-#include "randoms.h"
 #include "ssh.h"
 #include "packet.h"
 #include "buffer.h"
 #include "authfd.h"
 #include "readconf.h"
 #include "uidswap.h"
-
-/* Random number generator state.  This is initialized in ssh_login, and
-   left initialized.  This is used both by the packet module and by various
-   other functions. */
-RandomState random_state;
 
 /* Flag indicating whether debug mode is on.  This can be set on the
    command line. */
@@ -77,12 +73,13 @@ char *av0;
 int host_private_key_loaded = 0;
 
 /* Host private key. */
-RSAPrivateKey host_private_key;
+RSA *host_private_key = NULL;
 
 
 /* Prints a help message to the user.  This function never returns. */
 
-void usage()
+void
+usage()
 {
   int i;
   
@@ -127,7 +124,8 @@ void usage()
 /* Connects to the given host using rsh (or prints an error message and exits
    if rsh is not available).  This function never returns. */
 
-void rsh_connect(char *host, char *user, Buffer *command)
+void
+rsh_connect(char *host, char *user, Buffer *command)
 {
 #ifdef RSH_PATH
   char *args[10];
@@ -169,7 +167,8 @@ void rsh_connect(char *host, char *user, Buffer *command)
 
 /* Main program for the ssh client. */
 
-int main(int ac, char **av)
+int
+main(int ac, char **av)
 {
   int i, opt, optind, type, exit_status, ok, fwd_port, fwd_host_port, authfd;
   char *optarg, *cp, buf[256];
@@ -222,9 +221,6 @@ int main(int ac, char **av)
   /* Initialize SOCKS (the firewall traversal library). */
   SOCKSinit(av0);
 #endif /* SOCKS */
-
-  /* Set RSA (actually gmp) memory allocation functions. */
-  rsa_set_mp_memory_allocation();
 
   /* Initialize option structure to indicate that no values have been set. */
   initialize_options(&options);
@@ -320,13 +316,7 @@ int main(int ac, char **av)
 	  debug_flag = 1;
 	  fprintf(stderr, "SSH Version %s, protocol version %d.%d.\n",
 		  SSH_VERSION, PROTOCOL_MAJOR, PROTOCOL_MINOR);
-#ifdef RSAREF
-	  fprintf(stderr, "Compiled with RSAREF.\n");
-#elif defined(DO_SSL)
 	  fprintf(stderr, "Compiled with SSL.\n");
-#else  /* RSAREF */
-	  fprintf(stderr, "Standard version.  Does not use RSAREF.\n");
-#endif /* RSAREF */
 	  break;
 
 	case 'q':
@@ -538,13 +528,11 @@ int main(int ac, char **av)
   restore_uid();
 
   /* Open a connection to the remote host.  This needs root privileges if
-     rhosts_authentication is true.  Note that the random_state is not
-     yet used by this call, although a pointer to it is stored, and thus it
-     need not be initialized. */
+     rhosts_authentication is true. */
   ok = ssh_connect(host, options.port, options.connection_attempts,
 		   !options.rhosts_authentication &&
 		   !options.rhosts_rsa_authentication,
-		   original_real_uid, options.proxy_command, &random_state);
+		   original_real_uid, options.proxy_command);
 
   /* If we successfully made the connection, load the host private key in
      case we will need it later for combined rsa-rhosts authentication. 
@@ -552,7 +540,8 @@ int main(int ac, char **av)
      is only readable by root. */
   if (ok)
     {
-      if (load_private_key(HOST_KEY_FILE, "", &host_private_key, NULL))
+      host_private_key = RSA_new();
+      if (load_private_key(HOST_KEY_FILE, "", host_private_key, NULL))
 	host_private_key_loaded = 1;
     }
 
@@ -599,14 +588,13 @@ int main(int ac, char **av)
   options.user_hostfile = tilde_expand_filename(options.user_hostfile,
 						original_real_uid);
 
-  /* Log into the remote system.  This never returns if the login fails. 
-     Note: this initializes the random state, and leaves it initialized. */
-  ssh_login(&random_state, host_private_key_loaded, &host_private_key, 
+  /* Log into the remote system.  This never returns if the login fails. */
+  ssh_login(host_private_key_loaded, host_private_key, 
 	    host, &options, original_real_uid);
 
   /* We no longer need the host private key.  Clear it now. */
   if (host_private_key_loaded)
-    rsa_clear_private_key(&host_private_key);
+    RSA_free(host_private_key); /* Destroys contents safely */
 
   /* Close connection cleanly after attack. */
   cipher_attack_detected = packet_disconnect;
@@ -713,15 +701,21 @@ int main(int ac, char **av)
 	 otherwise for the local connection. */
       if (!got_data)
 	{
+          u_int32_t rand;
+
 	  strcpy(proto, "MIT-MAGIC-COOKIE-1");
-	  for (i = 0; i < 16; i++)
-	    sprintf(data + 2 * i, "%02x", random_get_byte(&random_state));
+          for (i = 0; i < 16; i++) {
+            if (i % 4 == 0)
+              rand = arc4random();
+            sprintf(data + 2 * i, "%02x", rand & 0xff);
+            rand >>= 8;
+          }
 	}
 
       /* Got local authentication reasonable information.  Request forwarding
 	 with authentication spoofing. */
       debug("Requesting X11 forwarding with authentication spoofing.");
-      x11_request_forwarding_with_spoofing(&random_state, proto, data);
+      x11_request_forwarding_with_spoofing(proto, data);
 
       /* Read response from the server. */
       type = packet_read(&plen);

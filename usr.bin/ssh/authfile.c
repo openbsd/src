@@ -15,9 +15,9 @@ for reading the passphrase from the user.
 */
 
 #include "includes.h"
-RCSID("$Id: authfile.c,v 1.2 1999/09/26 21:02:15 deraadt Exp $");
+RCSID("$Id: authfile.c,v 1.3 1999/09/28 04:45:35 provos Exp $");
 
-#include <gmp.h>
+#include <ssl/bn.h>
 #include "xmalloc.h"
 #include "buffer.h"
 #include "bufaux.h"
@@ -32,15 +32,16 @@ RCSID("$Id: authfile.c,v 1.2 1999/09/26 21:02:15 deraadt Exp $");
    will precede the key to provide identification of the key without
    needing a passphrase. */
 
-int save_private_key(const char *filename, const char *passphrase,
-		     RSAPrivateKey *key, const char *comment, 
-		     RandomState *state)
+int
+save_private_key(const char *filename, const char *passphrase,
+		 RSA *key, const char *comment)
 {
   Buffer buffer, encrypted;
   char buf[100], *cp;
   int f, i;
   CipherContext cipher;
   int cipher_type;
+  u_int32_t rand;
 
   /* If the passphrase is empty, use SSH_CIPHER_NONE to ease converting to
      another cipher; otherwise use SSH_AUTHFILE_CIPHER. */
@@ -53,8 +54,9 @@ int save_private_key(const char *filename, const char *passphrase,
   buffer_init(&buffer);
   
   /* Put checkbytes for checking passphrase validity. */
-  buf[0] = random_get_byte(state);
-  buf[1] = random_get_byte(state);
+  rand = arc4random();
+  buf[0] = rand & 0xff;
+  buf[1] = (rand >> 8) & 0xff;
   buf[2] = buf[0];
   buf[3] = buf[1];
   buffer_append(&buffer, buf, 4);
@@ -62,10 +64,10 @@ int save_private_key(const char *filename, const char *passphrase,
   /* Store the private key (n and e will not be stored because they will
      be stored in plain text, and storing them also in encrypted format
      would just give known plaintext). */
-  buffer_put_mp_int(&buffer, &key->d);
-  buffer_put_mp_int(&buffer, &key->u);
-  buffer_put_mp_int(&buffer, &key->p);
-  buffer_put_mp_int(&buffer, &key->q);
+  buffer_put_bignum(&buffer, key->d);
+  buffer_put_bignum(&buffer, key->iqmp);
+  buffer_put_bignum(&buffer, key->q); /* reverse from SSL p */
+  buffer_put_bignum(&buffer, key->p); /* reverse from SSL q */
 
   /* Pad the part to be encrypted until its size is a multiple of 8. */
   while (buffer_len(&buffer) % 8 != 0)
@@ -85,9 +87,9 @@ int save_private_key(const char *filename, const char *passphrase,
   buffer_put_int(&encrypted, 0);  /* For future extension */
 
   /* Store public key.  This will be in plain text. */
-  buffer_put_int(&encrypted, key->bits);
-  buffer_put_mp_int(&encrypted, &key->n);
-  buffer_put_mp_int(&encrypted, &key->e);
+  buffer_put_int(&encrypted, BN_num_bits(key->n));
+  buffer_put_bignum(&encrypted, key->n);
+  buffer_put_bignum(&encrypted, key->e);
   buffer_put_string(&encrypted, comment, strlen(comment));
 
   /* Allocate space for the private part of the key in the buffer. */
@@ -127,8 +129,9 @@ int save_private_key(const char *filename, const char *passphrase,
    was encountered (the file does not exist or is not readable), and
    non-zero otherwise. */
 
-int load_public_key(const char *filename, RSAPublicKey *pub, 
-		    char **comment_return)
+int
+load_public_key(const char *filename, RSA *pub, 
+		char **comment_return)
 {
   int f, i;
   unsigned long len;
@@ -179,11 +182,11 @@ int load_public_key(const char *filename, RSAPublicKey *pub,
   (void)buffer_get_int(&buffer); /* reserved */
 
   /* Read the public key from the buffer. */
-  pub->bits = buffer_get_int(&buffer);
-  mpz_init(&pub->n);
-  buffer_get_mp_int(&buffer, &pub->n);
-  mpz_init(&pub->e);
-  buffer_get_mp_int(&buffer, &pub->e);
+  buffer_get_int(&buffer);
+  pub->n = BN_new();
+  buffer_get_bignum(&buffer, pub->n);
+  pub->e = BN_new();
+  buffer_get_bignum(&buffer, pub->e);
   if (comment_return)
     *comment_return = buffer_get_string(&buffer, NULL);
   /* The encrypted private part is not parsed by this function. */
@@ -197,14 +200,17 @@ int load_public_key(const char *filename, RSAPublicKey *pub,
    (file does not exist or is not readable, or passphrase is bad).
    This initializes the private key. */
 
-int load_private_key(const char *filename, const char *passphrase,
-		     RSAPrivateKey *prv, char **comment_return)
+int
+load_private_key(const char *filename, const char *passphrase,
+		 RSA *prv, char **comment_return)
 {
   int f, i, check1, check2, cipher_type;
   unsigned long len;
   Buffer buffer, decrypted;
   char *cp;
   CipherContext cipher;
+  BN_CTX *ctx;
+  BIGNUM *aux;
 
   /* Read the file into the buffer. */
   f = open(filename, O_RDONLY);
@@ -250,11 +256,11 @@ int load_private_key(const char *filename, const char *passphrase,
   (void)buffer_get_int(&buffer);  /* Reserved data. */
 
   /* Read the public key from the buffer. */
-  prv->bits = buffer_get_int(&buffer);
-  mpz_init(&prv->n);
-  buffer_get_mp_int(&buffer, &prv->n);
-  mpz_init(&prv->e);
-  buffer_get_mp_int(&buffer, &prv->e);
+  buffer_get_int(&buffer);
+  prv->n = BN_new();
+  buffer_get_bignum(&buffer, prv->n);
+  prv->e = BN_new();
+  buffer_get_bignum(&buffer, prv->e);
   if (comment_return)
     *comment_return = buffer_get_string(&buffer, NULL);
   else
@@ -291,22 +297,37 @@ int load_private_key(const char *filename, const char *passphrase,
       /* Bad passphrase. */
       buffer_free(&decrypted);
     fail:
-      mpz_clear(&prv->n);
-      mpz_clear(&prv->e);
+      BN_clear_free(prv->n);
+      BN_clear_free(prv->e);
       if (comment_return)
 	xfree(*comment_return);
       return 0;
     }
 
   /* Read the rest of the private key. */
-  mpz_init(&prv->d);
-  buffer_get_mp_int(&decrypted, &prv->d);
-  mpz_init(&prv->u);
-  buffer_get_mp_int(&decrypted, &prv->u);
-  mpz_init(&prv->p);
-  buffer_get_mp_int(&decrypted, &prv->p);
-  mpz_init(&prv->q);
-  buffer_get_mp_int(&decrypted, &prv->q);
+  prv->d = BN_new();
+  buffer_get_bignum(&decrypted, prv->d);
+  prv->iqmp = BN_new();
+  buffer_get_bignum(&decrypted, prv->iqmp); /* u */
+  /* in SSL and SSH p and q are exchanged */
+  prv->q = BN_new();
+  buffer_get_bignum(&decrypted, prv->q); /* p */
+  prv->p = BN_new();
+  buffer_get_bignum(&decrypted, prv->p); /* q */
+
+  ctx = BN_CTX_new();
+  aux = BN_new();
+
+  BN_sub(aux, prv->q, BN_value_one());
+  prv->dmq1 = BN_new();
+  BN_mod(prv->dmq1, prv->d, aux, ctx);
+
+  BN_sub(aux, prv->p, BN_value_one());
+  prv->dmp1 = BN_new();
+  BN_mod(prv->dmp1, prv->d, aux, ctx);
+
+  BN_clear_free(aux);
+  BN_CTX_free(ctx);
   
   buffer_free(&decrypted);
 

@@ -15,87 +15,58 @@ Buffers.
 */
 
 #include "includes.h"
-RCSID("$Id: bufaux.c,v 1.1 1999/09/26 20:53:33 deraadt Exp $");
+RCSID("$Id: bufaux.c,v 1.2 1999/09/28 04:45:36 provos Exp $");
 
 #include "ssh.h"
-#include "gmp.h"
+#include <ssl/bn.h>
 #include "bufaux.h"
 #include "xmalloc.h"
 #include "getput.h"
 
-/* Stores an MP_INT in the buffer with a 2-byte msb first bit count, followed
+/* Stores an BIGNUM in the buffer with a 2-byte msb first bit count, followed
    by (bits+7)/8 bytes of binary data, msb first. */
 
-void buffer_put_mp_int(Buffer *buffer, MP_INT *value)
+void
+buffer_put_bignum(Buffer *buffer, BIGNUM *value)
 {
-  int bits = mpz_sizeinbase(value, 2);
-  int hex_size = mpz_sizeinbase(value, 16);
-  char *buf = xmalloc(hex_size + 2);
-  int i, oi, byte;
+  int bits = BN_num_bits(value);
+  int bin_size = (bits + 7) / 8;
+  char *buf = xmalloc(bin_size);
+  int oi;
   char msg[2];
   
-  /* Get the value of the number in hex.  Too bad that gmp does not allow
-     us to get it in binary. */
-  mpz_get_str(buf, 16, value);
+  /* Get the value of in binary */
+  oi = BN_bn2bin(value, buf);
+  assert(oi == bin_size);
 
-  /* i is "input index", oi is "output index".  Both point to the same array,
-     and start from the beginning.  "input index" moves twice as fast. */
-  i = 0;
-  oi = 0;
-  /* Check for an odd number of hex digits.  Process the odd digit 
-     separately. */
-  if (hex_size & 1)
-    {
-      sscanf(buf, "%1x", &byte);
-      buf[oi++] = byte;
-      i = 1;
-    }
-
-  /* Convert the hex number into binary representation. */
-  for (; i < hex_size; i += 2)
-    {
-      sscanf(buf + i, "%2x", &byte);
-      buf[oi++] = byte;
-    }
-  
-  assert(oi == ((bits + 7) / 8));
   /* Store the number of bits in the buffer in two bytes, msb first. */
   PUT_16BIT(msg, bits);
   buffer_append(buffer, msg, 2);
   /* Store the binary data. */
   buffer_append(buffer, buf, oi);
   /* Clear the temporary data. */
-  memset(buf, 0, hex_size);
+  memset(buf, 0, bin_size);
   xfree(buf);
 }
 
-/* Retrieves an MP_INT from the buffer. */
+/* Retrieves an BIGNUM from the buffer. */
 
-int buffer_get_mp_int(Buffer *buffer, MP_INT *value)
+int
+buffer_get_bignum(Buffer *buffer, BIGNUM *value)
 {
-  int i, bits, bytes;
-  char *hex;
-  unsigned char buf[2];
+  int bits, bytes;
+  unsigned char buf[2], *bin;
 
   /* Get the number for bits. */
   buffer_get(buffer, (char *)buf, 2);
   bits = GET_16BIT(buf);
   /* Compute the number of binary bytes that follow. */
   bytes = (bits + 7) / 8;
-  /* Allocate space for a corresponding hex string. */
-  hex = xmalloc(2 * bytes + 1);
-  
-  /* Read and convert the binary bytes into a hex string. */
-  for (i = 0; i < bytes; i++)
-    {
-      unsigned char byte;
-      buffer_get(buffer, (char *)&byte, 1);
-      sprintf(hex + 2 * i, "%02x", byte);
-    }
-  /* Read the hex string into a mp-int. */
-  mpz_set_str(value, hex, 16);
-  /* Free the string. */
-  xfree(hex);
+  bin = xmalloc(bytes);
+  buffer_get(buffer, bin, bytes);
+  BN_bin2bn(bin, bytes, value);
+  xfree(bin);
+
   return 2 + bytes;
 }
 

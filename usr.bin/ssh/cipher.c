@@ -12,10 +12,11 @@ Created: Wed Apr 19 17:41:39 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.3 1999/09/26 22:53:25 deraadt Exp $");
+RCSID("$Id: cipher.c,v 1.4 1999/09/28 04:45:36 provos Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
+#include "ssh_md5.h"
 
 /*
  * What kind of tripple DES are these 2 routines?
@@ -120,7 +121,8 @@ detect_cbc_attack(const unsigned char *src,
 /* Names of all encryption algorithms.  These must match the numbers defined
    int cipher.h. */
 static char *cipher_names[] =
-{ "none",
+{
+  "none",
   "no idea",
 #ifdef WITH_DES
   "des",
@@ -129,11 +131,7 @@ static char *cipher_names[] =
 #endif
   "3des",
   "no tss",
-#ifdef WITH_RC4
-  "rc4",
-#else
   "no rc4",
-#endif
   "blowfish"
 };
 
@@ -149,16 +147,14 @@ unsigned int cipher_mask()
   mask |= 1 << SSH_CIPHER_DES;
 #endif
   mask |= 1 << SSH_CIPHER_3DES;	/* Mandatory */
-#ifdef WITH_RC4
-  mask |= 1 << SSH_CIPHER_RC4;
-#endif
   mask |= 1 << SSH_CIPHER_BLOWFISH;
   return mask;
 }
 
 /* Returns the name of the cipher. */
 
-const char *cipher_name(int cipher)
+const
+char *cipher_name(int cipher)
 {
   if (cipher < 0 || cipher >= sizeof(cipher_names) / sizeof(cipher_names[0]))
     fatal("cipher_name: bad cipher number: %d", cipher);
@@ -168,7 +164,8 @@ const char *cipher_name(int cipher)
 /* Parses the name of the cipher.  Returns the number of the corresponding
    cipher, or -1 on error. */
 
-int cipher_number(const char *name)
+int
+cipher_number(const char *name)
 {
   int i;
   for (i = 0; i < sizeof(cipher_names) / sizeof(cipher_names[0]); i++)
@@ -245,12 +242,6 @@ void cipher_set_key(CipherContext *context, int cipher,
       memset(context->u.des3.iv3, 0, sizeof(context->u.des3.iv3));
       break;
 
-#ifdef WITH_RC4
-    case SSH_CIPHER_RC4:
-      rc4_init(&context->u.rc4, key, keylen);
-      break;
-#endif /* WITH_RC4 */
-
     case SSH_CIPHER_BLOWFISH:
       BF_set_key(&context->u.bf.key, keylen, padded);
       memset(context->u.bf.iv, 0, 8);
@@ -289,12 +280,6 @@ void cipher_encrypt(CipherContext *context, unsigned char *dest,
 		       context->u.des3.key3, &context->u.des3.iv3,
 		       dest, (void*)src, len);
       break;
-
-#ifdef WITH_RC4
-    case SSH_CIPHER_RC4:
-      rc4_encrypt(&context->u.rc4, dest, src, len);
-      break;
-#endif /* WITH_RC4 */
 
     case SSH_CIPHER_BLOWFISH:
       swap_bytes(src, dest, len);
@@ -337,13 +322,6 @@ void cipher_decrypt(CipherContext *context, unsigned char *dest,
 		       context->u.des3.key3, &context->u.des3.iv3,
 		       dest, (void*)src, len);
       break;
-
-#ifdef WITH_RC4
-    case SSH_CIPHER_RC4:
-      /* CRC-32 attack? */
-      rc4_decrypt(&context->u.rc4, dest, src, len);
-      break;
-#endif /* WITH_RC4 */
 
     case SSH_CIPHER_BLOWFISH:
       detect_cbc_attack(src, len);

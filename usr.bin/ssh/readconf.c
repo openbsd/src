@@ -14,7 +14,7 @@ Functions for reading the configuration files.
 */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.1 1999/09/26 20:53:37 deraadt Exp $");
+RCSID("$Id: readconf.c,v 1.2 1999/09/28 04:45:36 provos Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -80,7 +80,6 @@ RCSID("$Id: readconf.c,v 1.1 1999/09/26 20:53:37 deraadt Exp $");
      KeepAlives no
      IdentityFile ~/.ssh/identity
      Port 22
-     Cipher idea
      EscapeChar ~
 
 */

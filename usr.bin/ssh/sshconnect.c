@@ -15,11 +15,10 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.2 1999/09/26 22:01:24 deraadt Exp $");
+RCSID("$Id: sshconnect.c,v 1.3 1999/09/28 04:45:37 provos Exp $");
 
-#include <gmp.h>
+#include <ssl/bn.h>
 #include "xmalloc.h"
-#include "randoms.h"
 #include "rsa.h"
 #include "ssh.h"
 #include "packet.h"
@@ -47,8 +46,9 @@ unsigned char session_id[16];
 
 /* Connect to the given ssh server using a proxy command. */
 
-int ssh_proxy_connect(const char *host, int port, uid_t original_real_uid,
-		      const char *proxy_command, RandomState *random_state)
+int
+ssh_proxy_connect(const char *host, int port, uid_t original_real_uid,
+		  const char *proxy_command)
 {
   Buffer command;
   const char *cp;
@@ -143,7 +143,7 @@ int ssh_proxy_connect(const char *host, int port, uid_t original_real_uid,
   buffer_free(&command);
   
   /* Set the connection file descriptors. */
-  packet_set_connection(pout[0], pin[1], random_state);
+  packet_set_connection(pout[0], pin[1]);
 
   return 1;
 }
@@ -190,7 +190,7 @@ int ssh_create_socket(uid_t original_real_uid, int privileged)
 
 int ssh_connect(const char *host, int port, int connection_attempts,
 		int anonymous, uid_t original_real_uid, 
-		const char *proxy_command, RandomState *random_state)
+		const char *proxy_command)
 {
   int sock = -1, attempt, i;
   int on = 1;
@@ -216,8 +216,7 @@ int ssh_connect(const char *host, int port, int connection_attempts,
 
   /* If a proxy command is given, connect using it. */
   if (proxy_command != NULL)
-    return ssh_proxy_connect(host, port, original_real_uid, proxy_command,
-			     random_state);
+    return ssh_proxy_connect(host, port, original_real_uid, proxy_command);
 
   /* No proxy command. */
 
@@ -344,7 +343,7 @@ int ssh_connect(const char *host, int port, int connection_attempts,
 #endif /* SO_LINGER */
 
   /* Set the connection. */
-  packet_set_connection(sock, sock, random_state);
+  packet_set_connection(sock, sock);
 
   return 1;
 }
@@ -352,28 +351,29 @@ int ssh_connect(const char *host, int port, int connection_attempts,
 /* Checks if the user has an authentication agent, and if so, tries to
    authenticate using the agent. */
 
-int try_agent_authentication()
+int
+try_agent_authentication()
 {
   int status, type, bits;
-  MP_INT e, n, challenge;
   char *comment;
   AuthenticationConnection *auth;
   unsigned char response[16];
   unsigned int i;
+  BIGNUM *e, *n, *challenge;
   
   /* Get connection to the agent. */
   auth = ssh_get_authentication_connection();
   if (!auth)
     return 0;
   
-  mpz_init(&e);
-  mpz_init(&n);
-  mpz_init(&challenge);
+  e = BN_new();
+  n = BN_new();
+  challenge = BN_new();
   
   /* Loop through identities served by the agent. */
-  for (status = ssh_get_first_identity(auth, &bits, &e, &n, &comment);
+  for (status = ssh_get_first_identity(auth, &bits, e, n, &comment);
        status;
-       status = ssh_get_next_identity(auth, &bits, &e, &n, &comment))
+       status = ssh_get_next_identity(auth, &bits, e, n, &comment))
     {
       int plen, clen;
 
@@ -383,7 +383,7 @@ int try_agent_authentication()
       
       /* Tell the server that we are willing to authenticate using this key. */
       packet_start(SSH_CMSG_AUTH_RSA);
-      packet_put_mp_int(&n);
+      packet_put_bignum(n);
       packet_send();
       packet_write_wait();
       
@@ -403,14 +403,14 @@ int try_agent_authentication()
 	packet_disconnect("Protocol error during RSA authentication: %d", 
 			  type);
       
-      packet_get_mp_int(&challenge, &clen);
+      packet_get_bignum(challenge, &clen);
       
       packet_integrity_check(plen, clen, type);
 
       debug("Received RSA challenge from server.");
       
       /* Ask the agent to decrypt the challenge. */
-      if (!ssh_decrypt_challenge(auth, bits, &e, &n, &challenge, 
+      if (!ssh_decrypt_challenge(auth, bits, e, n, challenge, 
 				 session_id, 1, response))
 	{
 	  /* The agent failed to authenticate this identifier although it
@@ -435,9 +435,9 @@ int try_agent_authentication()
       if (type == SSH_SMSG_SUCCESS)
 	{
 	  debug("RSA authentication accepted by server.");
-	  mpz_clear(&e);
-	  mpz_clear(&n);
-	  mpz_clear(&challenge);
+	  BN_clear_free(e);
+	  BN_clear_free(n);
+	  BN_clear_free(challenge);
 	  return 1;
 	}
 
@@ -447,9 +447,9 @@ int try_agent_authentication()
 			  type);
     }
 
-  mpz_clear(&e);
-  mpz_clear(&n);
-  mpz_clear(&challenge);
+  BN_clear_free(e);
+  BN_clear_free(n);
+  BN_clear_free(challenge);
 
   debug("RSA authentication using agent refused.");
   return 0;
@@ -458,18 +458,22 @@ int try_agent_authentication()
 /* Computes the proper response to a RSA challenge, and sends the response to
    the server. */
 
-void respond_to_rsa_challenge(MP_INT *challenge, RSAPrivateKey *prv)
+void
+respond_to_rsa_challenge(BIGNUM *challenge, RSA *prv)
 {
   unsigned char buf[32], response[16];
   struct MD5Context md;
-  int i;
+  int i, len;
 
   /* Decrypt the challenge using the private key. */
   rsa_private_decrypt(challenge, challenge, prv);
 
   /* Compute the response. */
   /* The response is MD5 of decrypted challenge plus session id. */
-  mp_linearize_msb_first(buf, 32, challenge);
+  len = BN_num_bytes(challenge);
+  assert(len <= sizeof(buf) && len);
+  memset(buf, 0, sizeof(buf));
+  BN_bn2bin(challenge, buf + sizeof(buf) - len);
   MD5Init(&md);
   MD5Update(&md, buf, 32);
   MD5Update(&md, session_id, 16);
@@ -492,30 +496,34 @@ void respond_to_rsa_challenge(MP_INT *challenge, RSAPrivateKey *prv)
 /* Checks if the user has authentication file, and if so, tries to authenticate
    the user using it. */
 
-int try_rsa_authentication(struct passwd *pw, const char *authfile,
-			   int may_ask_passphrase)
+int
+try_rsa_authentication(struct passwd *pw, const char *authfile,
+		       int may_ask_passphrase)
 {
-  MP_INT challenge;
-  RSAPrivateKey private_key;
-  RSAPublicKey public_key;
+  BIGNUM *challenge;
+  RSA *private_key;
+  RSA *public_key;
   char *passphrase, *comment;
   int type, i;
   int plen, clen;
 
   /* Try to load identification for the authentication key. */
-  if (!load_public_key(authfile, &public_key, &comment))
+  public_key = RSA_new();
+  if (!load_public_key(authfile, public_key, &comment)) {
+    RSA_free(public_key);
     return 0; /* Could not load it.  Fail. */
+  }
 
   debug("Trying RSA authentication with key '%.100s'", comment);
 
   /* Tell the server that we are willing to authenticate using this key. */
   packet_start(SSH_CMSG_AUTH_RSA);
-  packet_put_mp_int(&public_key.n);
+  packet_put_bignum(public_key->n);
   packet_send();
   packet_write_wait();
 
   /* We no longer need the public key. */
-  rsa_clear_public_key(&public_key);
+  RSA_free(public_key);
   
   /* Wait for server's response. */
   type = packet_read(&plen);
@@ -534,16 +542,17 @@ int try_rsa_authentication(struct passwd *pw, const char *authfile,
     packet_disconnect("Protocol error during RSA authentication: %d", type);
 
   /* Get the challenge from the packet. */
-  mpz_init(&challenge);
-  packet_get_mp_int(&challenge, &clen);
+  challenge = BN_new();
+  packet_get_bignum(challenge, &clen);
 
   packet_integrity_check(plen, clen, type);
 
   debug("Received RSA challenge from server.");
 
+  private_key = RSA_new();
   /* Load the private key.  Try first with empty passphrase; if it fails, 
      ask for a passphrase. */
-  if (!load_private_key(authfile, "", &private_key, NULL))
+  if (!load_private_key(authfile, "", private_key, NULL))
     {
       char buf[300];
       /* Request passphrase from the user.  We read from /dev/tty to make
@@ -561,7 +570,7 @@ int try_rsa_authentication(struct passwd *pw, const char *authfile,
 	}
       
       /* Load the authentication file using the pasphrase. */
-      if (!load_private_key(authfile, passphrase, &private_key, NULL))
+      if (!load_private_key(authfile, passphrase, private_key, NULL))
 	{
 	  memset(passphrase, 0, strlen(passphrase));
 	  xfree(passphrase);
@@ -589,13 +598,13 @@ int try_rsa_authentication(struct passwd *pw, const char *authfile,
   xfree(comment);
 
   /* Compute and send a response to the challenge. */
-  respond_to_rsa_challenge(&challenge, &private_key);
+  respond_to_rsa_challenge(challenge, private_key);
   
   /* Destroy the private key. */
-  rsa_clear_private_key(&private_key);
+  RSA_free(private_key);
 
   /* We no longer need the challenge. */
-  mpz_clear(&challenge);
+  BN_clear_free(challenge);
   
   /* Wait for response from the server. */
   type = packet_read(&plen);
@@ -613,11 +622,11 @@ int try_rsa_authentication(struct passwd *pw, const char *authfile,
 /* Tries to authenticate the user using combined rhosts or /etc/hosts.equiv
    authentication and RSA host authentication. */
 
-int try_rhosts_rsa_authentication(const char *local_user, 
-				  RSAPrivateKey *host_key)
+int
+try_rhosts_rsa_authentication(const char *local_user, RSA *host_key)
 {
   int type;
-  MP_INT challenge;
+  BIGNUM *challenge;
   int plen, clen;
 
   debug("Trying rhosts or /etc/hosts.equiv with RSA host authentication.");
@@ -625,9 +634,9 @@ int try_rhosts_rsa_authentication(const char *local_user,
   /* Tell the server that we are willing to authenticate using this key. */
   packet_start(SSH_CMSG_AUTH_RHOSTS_RSA);
   packet_put_string(local_user, strlen(local_user));
-  packet_put_int(host_key->bits);
-  packet_put_mp_int(&host_key->e);
-  packet_put_mp_int(&host_key->n);
+  packet_put_int(BN_num_bits(host_key->n));
+  packet_put_bignum(host_key->e);
+  packet_put_bignum(host_key->n);
   packet_send();
   packet_write_wait();
 
@@ -647,18 +656,18 @@ int try_rhosts_rsa_authentication(const char *local_user,
     packet_disconnect("Protocol error during RSA authentication: %d", type);
 
   /* Get the challenge from the packet. */
-  mpz_init(&challenge);
-  packet_get_mp_int(&challenge, &clen);
+  challenge = BN_new();
+  packet_get_bignum(challenge, &clen);
 
   packet_integrity_check(plen, clen, type);
 
   debug("Received RSA challenge for host key from server.");
 
   /* Compute a response to the challenge. */
-  respond_to_rsa_challenge(&challenge, host_key);
+  respond_to_rsa_challenge(challenge, host_key);
 
   /* We no longer need the challenge. */
-  mpz_clear(&challenge);
+  BN_clear_free(challenge);
   
   /* Wait for response from the server. */
   type = packet_read(&plen);
@@ -1007,8 +1016,8 @@ int read_yes_or_no(const char *prompt, int defval)
    If login fails, this function prints an error and never returns. 
    This function does not require super-user privileges. */
 
-void ssh_login(RandomState *state, int host_key_valid, 
-	       RSAPrivateKey *own_host_key,
+void ssh_login(int host_key_valid, 
+	       RSA *own_host_key,
 	       const char *orighost, 
 	       Options *options, uid_t original_real_uid)
 {
@@ -1016,9 +1025,9 @@ void ssh_login(RandomState *state, int host_key_valid,
   char buf[1024];
   char *password;
   struct passwd *pw;
-  MP_INT key;
-  RSAPublicKey host_key;
-  RSAPublicKey public_key;
+  BIGNUM *key;
+  RSA *host_key;
+  RSA *public_key;
   unsigned char session_key[SSH_SESSION_KEY_LENGTH];
   const char *server_user, *local_user;
   char *cp, *host;
@@ -1027,6 +1036,7 @@ void ssh_login(RandomState *state, int host_key_valid,
   unsigned int supported_ciphers, supported_authentications, protocol_flags;
   HostStatus host_status;
   int payload_len, clen, sum_len = 0;
+  u_int32_t rand;
 
   /* Convert the user-supplied hostname into all lowercase. */
   host = xstrdup(orighost);
@@ -1058,21 +1068,23 @@ void ssh_login(RandomState *state, int host_key_valid,
     check_bytes[i] = packet_get_char();
 
   /* Get the public key. */
-  public_key.bits = packet_get_int();
-  mpz_init(&public_key.e);
-  packet_get_mp_int(&public_key.e, &clen);
+  public_key = RSA_new();
+  packet_get_int();	/* bits */
+  public_key->e = BN_new();
+  packet_get_bignum(public_key->e, &clen);
   sum_len += clen;
-  mpz_init(&public_key.n);
-  packet_get_mp_int(&public_key.n, &clen);
+  public_key->n = BN_new();
+  packet_get_bignum(public_key->n, &clen);
   sum_len += clen;
 
   /* Get the host key. */
-  host_key.bits = packet_get_int();
-  mpz_init(&host_key.e);
-  packet_get_mp_int(&host_key.e, &clen);
+  host_key = RSA_new();
+  packet_get_int();	/* bits */
+  host_key->e = BN_new();
+  packet_get_bignum(host_key->e, &clen);
   sum_len += clen;
-  mpz_init(&host_key.n);
-  packet_get_mp_int(&host_key.n, &clen);
+  host_key->n = BN_new();
+  packet_get_bignum(host_key->n, &clen);
   sum_len += clen;
 
   /* Get protocol flags. */
@@ -1086,25 +1098,26 @@ void ssh_login(RandomState *state, int host_key_valid,
   supported_authentications = packet_get_int();
 
   debug("Received server public key (%d bits) and host key (%d bits).", 
-	public_key.bits, host_key.bits);
+	BN_num_bits(public_key->n), BN_num_bits(host_key->n));
 
   packet_integrity_check(payload_len,
 			 8 + 4 + sum_len + 0 + 4 + 0 + 0 + 4 + 4 + 4,
 			 SSH_SMSG_PUBLIC_KEY);
 
   /* Compute the session id. */
-  compute_session_id(session_id, check_bytes, host_key.bits, &host_key.n, 
-		     public_key.bits, &public_key.n);
+  compute_session_id(session_id, check_bytes, 
+		     BN_num_bits(host_key->n), host_key->n, 
+		     BN_num_bits(public_key->n), public_key->n);
 
   /* Check if the host key is present in the user\'s list of known hosts
      or in the systemwide list. */
   host_status = check_host_in_hostfile(options->user_hostfile, 
-				       host, host_key.bits, 
-				       &host_key.e, &host_key.n);
+				       host, BN_num_bits(host_key->n), 
+				       host_key->e, host_key->n);
   if (host_status == HOST_NEW)
     host_status = check_host_in_hostfile(options->system_hostfile, host, 
-					 host_key.bits, &host_key.e, 
-					 &host_key.n);
+					 BN_num_bits(host_key->n),
+					 host_key->e, host_key->n);
 
   /* Force accepting of the host key for localhost and 127.0.0.1.
      The problem is that if the home directory is NFS-mounted to multiple
@@ -1145,8 +1158,9 @@ void ssh_login(RandomState *state, int host_key_valid,
 	}
       /* If not in strict mode, add the key automatically to the local
 	 known_hosts file. */
-      if (!add_host_to_hostfile(options->user_hostfile, host, host_key.bits, 
-				&host_key.e, &host_key.n))
+      if (!add_host_to_hostfile(options->user_hostfile, host,
+				BN_num_bits(host_key->n), 
+				host_key->e, host_key->n))
 	log("Failed to add the host to the list of known hosts (%.500s).", 
 	    options->user_hostfile);
       else
@@ -1181,68 +1195,63 @@ void ssh_login(RandomState *state, int host_key_valid,
     }
 
   /* Generate a session key. */
-  
-  /* Initialize the random number generator. */
-  sprintf(buf, "%.500s/%.200s", pw->pw_dir, SSH_CLIENT_SEEDFILE);
-  if (stat(buf, &st) < 0)
-    log("Creating random seed file ~/%.900s.  This may take a while.", 
-	SSH_CLIENT_SEEDFILE);
-  else
-    debug("Initializing random; seed file %.900s", buf);
-  random_initialize(state, buf);
+  arc4random_stir();
   
   /* Generate an encryption key for the session.   The key is a 256 bit
      random number, interpreted as a 32-byte key, with the least significant
      8 bits being the first byte of the key. */
-  for (i = 0; i < 32; i++)
-    session_key[i] = random_get_byte(state);
-
-  /* Save the new random state. */
-  random_save(state, buf);
-  random_stir(state); /* This is supposed to be irreversible. */
+  for (i = 0; i < 32; i++) {
+    if (i % 4 == 0)
+      rand = arc4random();
+    session_key[i] = rand & 0xff;
+    rand >>= 8;
+  }
 
   /* According to the protocol spec, the first byte of the session key is
      the highest byte of the integer.  The session key is xored with the
      first 16 bytes of the session id. */
-  mpz_init_set_ui(&key, 0);
+  key = BN_new();
+  BN_set_word(key, 0);
   for (i = 0; i < SSH_SESSION_KEY_LENGTH; i++)
     {
-      mpz_mul_2exp(&key, &key, 8);
+      BN_lshift(key, key, 8);
       if (i < 16)
-	mpz_add_ui(&key, &key, session_key[i] ^ session_id[i]);
+	BN_add_word(key, session_key[i] ^ session_id[i]);
       else
-	mpz_add_ui(&key, &key, session_key[i]);
+	BN_add_word(key, session_key[i]);
     }
 
   /* Encrypt the integer using the public key and host key of the server
      (key with smaller modulus first). */
-  if (mpz_cmp(&public_key.n, &host_key.n) < 0)
+  if (BN_cmp(public_key->n, host_key->n) < 0)
     {
       /* Public key has smaller modulus. */
-      assert(host_key.bits >= public_key.bits + SSH_KEY_BITS_RESERVED);
+      assert(BN_num_bits(host_key->n) >= 
+	     BN_num_bits(public_key->n) + SSH_KEY_BITS_RESERVED);
 
-      rsa_public_encrypt(&key, &key, &public_key, state);
-      rsa_public_encrypt(&key, &key, &host_key, state);
+      rsa_public_encrypt(key, key, public_key);
+      rsa_public_encrypt(key, key, host_key);
     }
   else
     {
       /* Host key has smaller modulus (or they are equal). */
-      assert(public_key.bits >= host_key.bits + SSH_KEY_BITS_RESERVED);
+      assert(BN_num_bits(public_key->n) >=
+	     BN_num_bits(host_key->n) + SSH_KEY_BITS_RESERVED);
 
-      rsa_public_encrypt(&key, &key, &host_key, state);
-      rsa_public_encrypt(&key, &key, &public_key, state);
+      rsa_public_encrypt(key, key, host_key);
+      rsa_public_encrypt(key, key, public_key);
     }
 
-  if (options->cipher == SSH_CIPHER_NOT_SET)
+  if (options->cipher == SSH_CIPHER_NOT_SET) {
     if (cipher_mask() & supported_ciphers & (1 << ssh_cipher_default))
       options->cipher = ssh_cipher_default;
-    else
-      {
-	debug("Cipher %d not supported, using %.100s instead.",
-	      cipher_name(ssh_cipher_default),
-	      cipher_name(SSH_FALLBACK_CIPHER));
-	options->cipher = SSH_FALLBACK_CIPHER;
-      }
+    else {
+      debug("Cipher %d not supported, using %.100s instead.",
+	    cipher_name(ssh_cipher_default),
+	    cipher_name(SSH_FALLBACK_CIPHER));
+      options->cipher = SSH_FALLBACK_CIPHER;
+    }
+  }
 
   /* Check that the selected cipher is supported. */
   if (!(supported_ciphers & (1 << options->cipher)))
@@ -1260,7 +1269,7 @@ void ssh_login(RandomState *state, int host_key_valid,
     packet_put_char(check_bytes[i]);
 
   /* Send the encrypted encryption key. */
-  packet_put_mp_int(&key);
+  packet_put_bignum(key);
 
   /* Send protocol flags. */
   packet_put_int(SSH_PROTOFLAG_SCREEN_NUMBER | SSH_PROTOFLAG_HOST_IN_FWD_OPEN);
@@ -1271,9 +1280,9 @@ void ssh_login(RandomState *state, int host_key_valid,
 
   /* Destroy the session key integer and the public keys since we no longer
      need them. */
-  mpz_clear(&key);
-  rsa_clear_public_key(&public_key);
-  rsa_clear_public_key(&host_key);
+  BN_clear_free(key);
+  RSA_free(public_key);
+  RSA_free(host_key);
 
   debug("Sent encrypted session key.");
   

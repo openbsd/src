@@ -123,9 +123,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Define to use RSAREF. */
 /* #undef RSAREF */
 
-/* Define to use SSL. */
-#define DO_SSL 1
-
 /* Define this to be the path of the rsh program to support executing rsh. */
 #define RSH_PATH "/usr/bin/rsh"
 
@@ -307,9 +304,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Define if you have the setsid function.  */
 #define HAVE_SETSID 1
 
-/* Define if you have the socketpair function.  */
-#define HAVE_SOCKETPAIR 1
-
 /* Define if you have the strchr function.  */
 #define HAVE_STRCHR 1
 
@@ -333,9 +327,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 
 /* Define if you have the <dirent.h> header file.  */
 #define HAVE_DIRENT_H 1
-
-/* Define if you have the <gmp.h> header file.  */
-#define HAVE_GMP_H 1
 
 /* Define if you have the <krb.h> header file.  */
 /* #undef HAVE_KRB_H */
@@ -408,9 +399,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 
 /* Define if you have the gen library (-lgen).  */
 /* #undef HAVE_LIBGEN */
-
-/* Define if you have the gmp library (-lgmp).  */
-#define HAVE_LIBGMP 1
 
 /* Define if you have the krb library (-lkrb).  */
 #define HAVE_LIBKRB 1

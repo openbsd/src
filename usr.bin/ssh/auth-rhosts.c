@@ -16,7 +16,7 @@ the login based on rhosts authentication.  This file also processes
 */
 
 #include "includes.h"
-RCSID("$Id: auth-rhosts.c,v 1.1 1999/09/26 20:53:33 deraadt Exp $");
+RCSID("$Id: auth-rhosts.c,v 1.2 1999/09/28 04:45:35 provos Exp $");
 
 #include "packet.h"
 #include "ssh.h"

@@ -13,14 +13,12 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.2 1999/09/26 21:47:55 deraadt Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.3 1999/09/28 04:45:37 provos Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
 
-#include <gmp.h>
 #include "rsa.h"
-#include "randoms.h"
 #include "cipher.h"
 
 /* The default cipher used if IDEA is not supported by the remote host. 
@@ -181,12 +179,12 @@ only by root, whereas ssh_config should be world-readable. */
 #define SSH_MSG_NONE				0	/* no message */
 #define SSH_MSG_DISCONNECT			1	/* cause (string) */
 #define SSH_SMSG_PUBLIC_KEY			2	/* ck,msk,srvk,hostk */
-#define SSH_CMSG_SESSION_KEY			3	/* key (MP_INT) */
+#define SSH_CMSG_SESSION_KEY			3	/* key (BIGNUM) */
 #define SSH_CMSG_USER				4	/* user (string) */
 #define SSH_CMSG_AUTH_RHOSTS			5	/* user (string) */
-#define SSH_CMSG_AUTH_RSA			6	/* modulus (MP_INT) */
-#define SSH_SMSG_AUTH_RSA_CHALLENGE		7	/* int (MP_INT) */
-#define SSH_CMSG_AUTH_RSA_RESPONSE		8	/* int (MP_INT) */
+#define SSH_CMSG_AUTH_RSA			6	/* modulus (BIGNUM) */
+#define SSH_SMSG_AUTH_RSA_CHALLENGE		7	/* int (BIGNUM) */
+#define SSH_CMSG_AUTH_RSA_RESPONSE		8	/* int (BIGNUM) */
 #define SSH_CMSG_AUTH_PASSWORD			9	/* pass (string) */
 #define SSH_CMSG_REQUEST_PTY		        10	/* TERM, tty modes */
 #define SSH_CMSG_WINDOW_SIZE		        11	/* row,col,xpix,ypix */
@@ -256,7 +254,7 @@ void record_logout(int pid, const char *ttyname);
    connection. */
 int ssh_connect(const char *host, int port, int connection_attempts,
 		int anonymous, uid_t original_real_uid,
-		const char *proxy_command, RandomState *random_state);
+		const char *proxy_command);
 
 /* Starts a dialog with the server, and authenticates the current user on the
    server.  This does not need any extra privileges.  The basic connection
@@ -264,7 +262,7 @@ int ssh_connect(const char *host, int port, int connection_attempts,
    If login fails, this function prints an error and never returns. 
    This initializes the random state, and leaves it initialized (it will also
    have references from the packet module). */
-void ssh_login(RandomState *state, int host_key_valid, RSAPrivateKey *host_key,
+void ssh_login(int host_key_valid, RSA *host_key,
 	       const char *host, Options *options, uid_t original_real_uid);
 
 /*------------ Definitions for various authentication methods. -------*/
@@ -278,10 +276,9 @@ int auth_rhosts(struct passwd *pw, const char *client_user,
 
 /* Tries to authenticate the user using the .rhosts file and the host using
    its host key.  Returns true if authentication succeeds. */
-int auth_rhosts_rsa(RandomState *state,
-		    struct passwd *pw, const char *client_user,
-		    unsigned int bits, MP_INT *client_host_key_e,
-		    MP_INT *client_host_key_n, int ignore_rhosts,
+int auth_rhosts_rsa(struct passwd *pw, const char *client_user,
+		    unsigned int bits, BIGNUM *client_host_key_e,
+		    BIGNUM *client_host_key_n, int ignore_rhosts,
 		    int strict_modes);
 
 /* Tries to authenticate the user using password.  Returns true if
@@ -291,11 +288,11 @@ int auth_password(const char *server_user, const char *password);
 /* Performs the RSA authentication dialog with the client.  This returns
    0 if the client could not be authenticated, and 1 if authentication was
    successful.  This may exit if there is a serious protocol violation. */
-int auth_rsa(struct passwd *pw, MP_INT *client_n, RandomState *state);
+int auth_rsa(struct passwd *pw, BIGNUM *client_n);
 
 /* Parses an RSA key (number of bits, e, n) from a string.  Moves the pointer
    over the key.  Skips any whitespace at the beginning and at end. */
-int auth_rsa_read_key(char **cpp, unsigned int *bitsp, MP_INT *e, MP_INT *n);
+int auth_rsa_read_key(char **cpp, unsigned int *bitsp, BIGNUM *e, BIGNUM *n);
 
 /* Returns the name of the machine at the other end of the socket.  The
    returned string should be freed by the caller. */
@@ -329,18 +326,17 @@ int match_hostname(const char *host, const char *pattern, unsigned int len);
 typedef enum { HOST_OK, HOST_NEW, HOST_CHANGED } HostStatus;
 HostStatus check_host_in_hostfile(const char *filename, 
 				  const char *host, unsigned int bits,
-				  MP_INT *e, MP_INT *n);
+				  BIGNUM *e, BIGNUM *n);
 
 /* Appends an entry to the host file.  Returns false if the entry
    could not be appended. */
 int add_host_to_hostfile(const char *filename, const char *host,
-			 unsigned int bits, MP_INT *e, MP_INT *n);
+			 unsigned int bits, BIGNUM *e, BIGNUM *n);
 
 /* Performs the RSA authentication challenge-response dialog with the client,
    and returns true (non-zero) if the client gave the correct answer to
    our challenge; returns zero if the client gives a wrong answer. */
-int auth_rsa_challenge_dialog(RandomState *state, unsigned int bits,
-			      MP_INT *e, MP_INT *n);
+int auth_rsa_challenge_dialog(unsigned int bits, BIGNUM *e, BIGNUM *n);
 
 /* Reads a passphrase from /dev/tty with echo turned off.  Returns the 
    passphrase (allocated with xmalloc).  Exits if EOF is encountered. 
@@ -352,14 +348,13 @@ char *read_passphrase(const char *prompt, int from_stdin);
    will precede the key to provide identification of the key without
    needing a passphrase. */
 int save_private_key(const char *filename, const char *passphrase,
-		     RSAPrivateKey *private_key, const char *comment,
-		     RandomState *state);
+		     RSA *private_key, const char *comment);
 
 /* Loads the public part of the key file (public key and comment). 
    Returns 0 if an error occurred; zero if the public key was successfully
    read.  The comment of the key is returned in comment_return if it is
    non-NULL; the caller must free the value with xfree. */
-int load_public_key(const char *filename, RSAPublicKey *pub, 
+int load_public_key(const char *filename, RSA *pub, 
 		    char **comment_return);
 
 /* Loads the private key from the file.  Returns 0 if an error is encountered
@@ -368,7 +363,7 @@ int load_public_key(const char *filename, RSAPublicKey *pub,
    in comment_return if it is non-NULL; the caller must free the value 
    with xfree. */
 int load_private_key(const char *filename, const char *passphrase,
-		     RSAPrivateKey *private_key, char **comment_return);
+		     RSA *private_key, char **comment_return);
 
 /*------------ Definitions for logging. -----------------------*/
 
@@ -535,8 +530,7 @@ void x11_request_forwarding(void);
 
 /* Requests forwarding for X11 connections, with authentication spoofing.
    This should be called in the client only.  */
-void x11_request_forwarding_with_spoofing(RandomState *state,
-					  const char *proto, const char *data);
+void x11_request_forwarding_with_spoofing(const char *proto, const char *data);
 
 /* Local Xauthority file (server only). */
 extern char *xauthfile;

@@ -14,11 +14,10 @@ The authentication agent program.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-agent.c,v 1.1 1999/09/26 20:53:37 deraadt Exp $");
+RCSID("$Id: ssh-agent.c,v 1.2 1999/09/28 04:45:37 provos Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
-#include "randoms.h"
 #include "authfd.h"
 #include "buffer.h"
 #include "bufaux.h"
@@ -42,7 +41,7 @@ SocketEntry *sockets = NULL;
 
 typedef struct
 {
-  RSAPrivateKey key;
+  RSA *key;
   char *comment;
 } Identity;
 
@@ -51,7 +50,8 @@ Identity *identities = NULL;
 
 int max_fd = 0;
 
-void process_request_identity(SocketEntry *e)
+void
+process_request_identity(SocketEntry *e)
 {
   Buffer msg;
   int i;
@@ -61,9 +61,9 @@ void process_request_identity(SocketEntry *e)
   buffer_put_int(&msg, num_identities);
   for (i = 0; i < num_identities; i++)
     {
-      buffer_put_int(&msg, identities[i].key.bits);
-      buffer_put_mp_int(&msg, &identities[i].key.e);
-      buffer_put_mp_int(&msg, &identities[i].key.n);
+      buffer_put_int(&msg, BN_num_bits(identities[i].key->n));
+      buffer_put_bignum(&msg, identities[i].key->e);
+      buffer_put_bignum(&msg, identities[i].key->n);
       buffer_put_string(&msg, identities[i].comment, 
 			strlen(identities[i].comment));
     }
@@ -72,23 +72,24 @@ void process_request_identity(SocketEntry *e)
   buffer_free(&msg);
 }
 
-void process_authentication_challenge(SocketEntry *e)
+void
+process_authentication_challenge(SocketEntry *e)
 {
-  int i, pub_bits;
-  MP_INT pub_e, pub_n, challenge;
+  int i, pub_bits, len;
+  BIGNUM *pub_e, *pub_n, *challenge;
   Buffer msg;
   struct MD5Context md;
   unsigned char buf[32], mdbuf[16], session_id[16];
   unsigned int response_type;
 
   buffer_init(&msg);
-  mpz_init(&pub_e);
-  mpz_init(&pub_n);
-  mpz_init(&challenge);
+  pub_e = BN_new();
+  pub_n = BN_new();
+  challenge = BN_new();
   pub_bits = buffer_get_int(&e->input);
-  buffer_get_mp_int(&e->input, &pub_e);
-  buffer_get_mp_int(&e->input, &pub_n);
-  buffer_get_mp_int(&e->input, &challenge);
+  buffer_get_bignum(&e->input, pub_e);
+  buffer_get_bignum(&e->input, pub_n);
+  buffer_get_bignum(&e->input, challenge);
   if (buffer_len(&e->input) == 0)
     {
       /* Compatibility code for old servers. */
@@ -102,12 +103,12 @@ void process_authentication_challenge(SocketEntry *e)
       response_type = buffer_get_int(&e->input);
     }
   for (i = 0; i < num_identities; i++)
-    if (pub_bits == identities[i].key.bits &&
-	mpz_cmp(&pub_e, &identities[i].key.e) == 0 &&
-	mpz_cmp(&pub_n, &identities[i].key.n) == 0)
+    if (pub_bits == BN_num_bits(identities[i].key->n) &&
+	BN_cmp(pub_e, identities[i].key->e) == 0 &&
+	BN_cmp(pub_n, identities[i].key->n) == 0)
       {
 	/* Decrypt the challenge using the private key. */
-	rsa_private_decrypt(&challenge, &challenge, &identities[i].key);
+	rsa_private_decrypt(challenge, challenge, identities[i].key);
 
 	/* Compute the desired response. */
 	switch (response_type)
@@ -120,7 +121,10 @@ void process_authentication_challenge(SocketEntry *e)
 
 	  case 1: /* As of protocol 1.1 */
 	    /* The response is MD5 of decrypted challenge plus session id. */
-	    mp_linearize_msb_first(buf, 32, &challenge);
+	    len = BN_num_bytes(challenge);
+	    assert(len <= 32 && len);
+	    memset(buf, 0, 32);
+	    BN_bn2bin(challenge, buf + 32 - len);
 	    MD5Init(&md);
 	    MD5Update(&md, buf, 32);
 	    MD5Update(&md, session_id, 16);
@@ -147,39 +151,40 @@ void process_authentication_challenge(SocketEntry *e)
   buffer_append(&e->output, buffer_ptr(&msg),
 		buffer_len(&msg));
   buffer_free(&msg);
-  mpz_clear(&pub_e);
-  mpz_clear(&pub_n);
-  mpz_clear(&challenge);
+  BN_clear_free(pub_e);
+  BN_clear_free(pub_n);
+  BN_clear_free(challenge);
 }
 
-void process_remove_identity(SocketEntry *e)
+void
+process_remove_identity(SocketEntry *e)
 {
   unsigned int bits;
-  MP_INT dummy, n;
   unsigned int i;
+  BIGNUM *dummy, *n;
   
-  mpz_init(&dummy);
-  mpz_init(&n);
+  dummy = BN_new();
+  n = BN_new();
   
   /* Get the key from the packet. */
   bits = buffer_get_int(&e->input);
-  buffer_get_mp_int(&e->input, &dummy);
-  buffer_get_mp_int(&e->input, &n);
+  buffer_get_bignum(&e->input, dummy);
+  buffer_get_bignum(&e->input, n);
   
   /* Check if we have the key. */
   for (i = 0; i < num_identities; i++)
-    if (mpz_cmp(&identities[i].key.n, &n) == 0)
+    if (BN_cmp(identities[i].key->n, n) == 0)
       {
 	/* We have this key.  Free the old key.  Since we don\'t want to leave
 	   empty slots in the middle of the array, we actually free the
 	   key there and copy data from the last entry. */
-	rsa_clear_private_key(&identities[i].key);
+	RSA_free(identities[i].key);
 	xfree(identities[i].comment);
 	if (i < num_identities - 1)
 	  identities[i] = identities[num_identities - 1];
 	num_identities--;
-	mpz_clear(&dummy);
-	mpz_clear(&n);
+	BN_clear_free(dummy);
+	BN_clear_free(n);
 
 	/* Send success. */
 	buffer_put_int(&e->output, 1);
@@ -187,8 +192,8 @@ void process_remove_identity(SocketEntry *e)
 	return;
       }
   /* We did not have the key. */
-  mpz_clear(&dummy);
-  mpz_clear(&n);
+  BN_clear(dummy);
+  BN_clear(n);
 
   /* Send failure. */
   buffer_put_int(&e->output, 1);
@@ -197,14 +202,15 @@ void process_remove_identity(SocketEntry *e)
 
 /* Removes all identities from the agent. */
 
-void process_remove_all_identities(SocketEntry *e)
+void
+process_remove_all_identities(SocketEntry *e)
 {
   unsigned int i;
   
   /* Loop over all identities and clear the keys. */
   for (i = 0; i < num_identities; i++)
     {
-      rsa_clear_private_key(&identities[i].key);
+      RSA_free(identities[i].key);
       xfree(identities[i].comment);
     }
 
@@ -219,38 +225,60 @@ void process_remove_all_identities(SocketEntry *e)
 
 /* Adds an identity to the agent. */
 
-void process_add_identity(SocketEntry *e)
+void
+process_add_identity(SocketEntry *e)
 {
-  RSAPrivateKey *k;
+  RSA *k;
   int i;
-
+  BIGNUM *aux;
+  BN_CTX *ctx;
+  
   if (num_identities == 0)
     identities = xmalloc(sizeof(Identity));
   else
     identities = xrealloc(identities, (num_identities + 1) * sizeof(Identity));
-  k = &identities[num_identities].key;
-  k->bits = buffer_get_int(&e->input);
-  mpz_init(&k->n);
-  buffer_get_mp_int(&e->input, &k->n);
-  mpz_init(&k->e);
-  buffer_get_mp_int(&e->input, &k->e);
-  mpz_init(&k->d);
-  buffer_get_mp_int(&e->input, &k->d);
-  mpz_init(&k->u);
-  buffer_get_mp_int(&e->input, &k->u);
-  mpz_init(&k->p);
-  buffer_get_mp_int(&e->input, &k->p);
-  mpz_init(&k->q);
-  buffer_get_mp_int(&e->input, &k->q);
+
+  identities[num_identities].key = RSA_new();
+  k = identities[num_identities].key;
+  buffer_get_int(&e->input); /* bits */
+  k->n = BN_new();
+  buffer_get_bignum(&e->input, k->n);
+  k->e = BN_new();
+  buffer_get_bignum(&e->input, k->e);
+  k->d = BN_new();
+  buffer_get_bignum(&e->input, k->d);
+  k->iqmp = BN_new();
+  buffer_get_bignum(&e->input, k->iqmp);
+  /* SSH and SSL have p and q swapped */
+  k->q = BN_new();
+  buffer_get_bignum(&e->input, k->q); /* p */
+  k->p = BN_new();
+  buffer_get_bignum(&e->input, k->p); /* q */
+
+  /* Generate additional parameters */
+  aux = BN_new();
+  ctx = BN_CTX_new();
+
+  BN_sub(aux, k->q, BN_value_one());
+  k->dmq1 = BN_new();
+  BN_mod(k->dmq1, k->d, aux, ctx);
+
+  BN_sub(aux, k->p, BN_value_one());
+  k->dmp1 = BN_new();
+  BN_mod(k->dmp1, k->d, aux, ctx);
+
+  BN_clear_free(aux);
+  BN_CTX_free(ctx);
+  
   identities[num_identities].comment = buffer_get_string(&e->input, NULL);
 
   /* Check if we already have the key. */
   for (i = 0; i < num_identities; i++)
-    if (mpz_cmp(&identities[i].key.n, &k->n) == 0)
+    if (BN_cmp(identities[i].key->n, k->n) == 0)
       {
 	/* We already have this key.  Clear and free the new data and
 	   return success. */
-	rsa_clear_private_key(k);
+	RSA_free(k);
 	xfree(identities[num_identities].comment);
 
 	/* Send success. */
@@ -267,7 +295,8 @@ void process_add_identity(SocketEntry *e)
   buffer_put_char(&e->output, SSH_AGENT_SUCCESS);
 }
 
-void process_message(SocketEntry *e)
+void
+process_message(SocketEntry *e)
 {
   unsigned int msg_len;
   unsigned int type;
@@ -314,7 +343,8 @@ void process_message(SocketEntry *e)
     }
 }
 
-void new_socket(int type, int fd)
+void
+new_socket(int type, int fd)
 {
   unsigned int i, old_alloc;
 #if defined(O_NONBLOCK) && !defined(O_NONBLOCK_BROKEN)
@@ -351,7 +381,8 @@ void new_socket(int type, int fd)
   buffer_init(&sockets[old_alloc].output);
 }
 
-void prepare_select(fd_set *readset, fd_set *writeset)
+void
+prepare_select(fd_set *readset, fd_set *writeset)
 {
   unsigned int i;
   for (i = 0; i < sockets_alloc; i++)
@@ -483,7 +514,8 @@ void after_select(fd_set *readset, fd_set *writeset)
 int parent_pid = -1;
 char socket_name[1024];
 
-RETSIGTYPE check_parent_exists(int sig)
+RETSIGTYPE
+check_parent_exists(int sig)
 {
   if (kill(parent_pid, 0) < 0)
     {
@@ -495,7 +527,8 @@ RETSIGTYPE check_parent_exists(int sig)
   alarm(10);
 }
 
-int main(int ac, char **av)
+int
+main(int ac, char **av)
 {
   fd_set readset, writeset;
   char buf[1024];

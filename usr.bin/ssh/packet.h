@@ -13,19 +13,18 @@ Interface for the packet protocol functions.
 
 */
 
-/* RCSID("$Id: packet.h,v 1.1 1999/09/26 20:53:36 deraadt Exp $"); */
+/* RCSID("$Id: packet.h,v 1.2 1999/09/28 04:45:36 provos Exp $"); */
 
 #ifndef PACKET_H
 #define PACKET_H
 
-#include <gmp.h>
-#include "randoms.h"
+#include <ssl/bn.h>
 
 /* Sets the socket used for communication.  Disables encryption until
    packet_set_encryption_key is called.  It is permissible that fd_in
    and fd_out are the same descriptor; in that case it is assumed to
    be a socket. */
-void packet_set_connection(int fd_in, int fd_out, RandomState *state);
+void packet_set_connection(int fd_in, int fd_out);
 
 /* Puts the connection file descriptors into non-blocking mode. */
 void packet_set_nonblocking(void);
@@ -74,7 +73,7 @@ void packet_put_char(int ch);
 void packet_put_int(unsigned int value);
 
 /* Appends an arbitrary precision integer to packet data. */
-void packet_put_mp_int(MP_INT *value);
+void packet_put_bignum(BIGNUM *value);
 
 /* Appends a string to packet data. */
 void packet_put_string(const char *buf, unsigned int len);
@@ -111,7 +110,7 @@ unsigned int packet_get_int(void);
 
 /* Returns an arbitrary precision integer from the packet data.  The integer
    must have been initialized before this call. */
-void packet_get_mp_int(MP_INT *value, int *length_ptr);
+void packet_get_bignum(BIGNUM *value, int *length_ptr);
 
 /* Returns a string from the packet data.  The string is allocated using
    xmalloc; it is the responsibility of the calling program to free it when

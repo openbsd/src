@@ -14,7 +14,7 @@ Functions for manipulating the known hosts files.
 */
 
 #include "includes.h"
-RCSID("$Id: hostfile.c,v 1.1 1999/09/26 20:53:36 deraadt Exp $");
+RCSID("$Id: hostfile.c,v 1.2 1999/09/28 04:45:36 provos Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -25,7 +25,8 @@ RCSID("$Id: hostfile.c,v 1.1 1999/09/26 20:53:36 deraadt Exp $");
    the last processed (and maybe modified) character.  Note that this may
    modify the buffer containing the number. */
 
-int auth_rsa_read_mp_int(char **cpp, MP_INT *value)
+int
+auth_rsa_read_bignum(char **cpp, BIGNUM *value)
 {
   char *cp = *cpp;
   int len, old;
@@ -52,8 +53,9 @@ int auth_rsa_read_mp_int(char **cpp, MP_INT *value)
   old = *cp;
   *cp = 0;
 
+  
   /* Parse the number. */
-  if (mpz_set_str(value, *cpp, 10) != 0)
+  if (BN_dec2bn(&value, *cpp) == 0)
     return 0;
 
   /* Restore old terminating character. */
@@ -67,7 +69,8 @@ int auth_rsa_read_mp_int(char **cpp, MP_INT *value)
 /* Parses an RSA key (number of bits, e, n) from a string.  Moves the pointer
    over the key.  Skips any whitespace at the beginning and at end. */
 
-int auth_rsa_read_key(char **cpp, unsigned int *bitsp, MP_INT *e, MP_INT *n)
+int
+auth_rsa_read_key(char **cpp, unsigned int *bitsp, BIGNUM *e, BIGNUM *n)
 {
   unsigned int bits;
   char *cp;
@@ -83,11 +86,11 @@ int auth_rsa_read_key(char **cpp, unsigned int *bitsp, MP_INT *e, MP_INT *n)
     bits = 10 * bits + *cp - '0';
 
   /* Get public exponent. */
-  if (!auth_rsa_read_mp_int(&cp, e))
+  if (!auth_rsa_read_bignum(&cp, e))
     return 0;
 
   /* Get public modulus. */
-  if (!auth_rsa_read_mp_int(&cp, n))
+  if (!auth_rsa_read_bignum(&cp, n))
     return 0;
 
   /* Skip trailing whitespace. */
@@ -105,7 +108,8 @@ int auth_rsa_read_key(char **cpp, unsigned int *bitsp, MP_INT *e, MP_INT *n)
    indicate negation).  Returns true if there is a positive match; zero
    otherwise. */
 
-int match_hostname(const char *host, const char *pattern, unsigned int len)
+int
+match_hostname(const char *host, const char *pattern, unsigned int len)
 {
   char sub[1024];
   int negated;
@@ -142,11 +146,12 @@ int match_hostname(const char *host, const char *pattern, unsigned int len)
       sub[subi] = '\0';
 
       /* Try to match the subpattern against the host name. */
-      if (match_pattern(host, sub))
+      if (match_pattern(host, sub)) {
 	if (negated)
 	  return 0;  /* Fail if host matches any negated subpattern. */
         else
 	  got_positive = 1;
+      }
     }
 
   /* Return success if got a positive match.  If there was a negative match,
@@ -160,17 +165,18 @@ int match_hostname(const char *host, const char *pattern, unsigned int len)
    HOST_NEW if the host is not known, and HOST_CHANGED if the host is known
    but used to have a different host key. */
 
-HostStatus check_host_in_hostfile(const char *filename, 
-				  const char *host, unsigned int bits,
-				  MP_INT *e, MP_INT *n)
+HostStatus
+check_host_in_hostfile(const char *filename, 
+		       const char *host, unsigned int bits,
+		       BIGNUM *e, BIGNUM *n)
 {
   FILE *f;
   char line[8192];
-  MP_INT ke, kn;
   unsigned int kbits, hostlen;
   char *cp, *cp2;
   HostStatus end_return;
   struct stat st;
+  BIGNUM *ke, *kn;
 
   /* Open the file containing the list of known hosts. */
   f = fopen(filename, "r");
@@ -185,8 +191,8 @@ HostStatus check_host_in_hostfile(const char *filename,
     }
 
   /* Initialize mp-int variables. */
-  mpz_init(&ke);
-  mpz_init(&kn);
+  ke = BN_new();
+  kn = BN_new();
   
   /* Cache the length of the host name. */
   hostlen = strlen(host);
@@ -222,15 +228,15 @@ HostStatus check_host_in_hostfile(const char *filename,
       
       /* Extract the key from the line.  This will skip any leading 
 	 whitespace.  Ignore badly formatted lines. */
-      if (!auth_rsa_read_key(&cp, &kbits, &ke, &kn))
+      if (!auth_rsa_read_key(&cp, &kbits, ke, kn))
 	continue;
 
       /* Check if the current key is the same as the previous one. */
-      if (kbits == bits && mpz_cmp(&ke, e) == 0 && mpz_cmp(&kn, n) == 0)
+      if (kbits == bits && BN_cmp(ke, e) == 0 && BN_cmp(kn, n) == 0)
 	{
 	  /* Ok, they match. */
-	  mpz_clear(&ke);
-	  mpz_clear(&kn);
+	  BN_clear_free(ke);
+	  BN_clear_free(kn);
 	  fclose(f);
 	  return HOST_OK;
 	}
@@ -240,8 +246,8 @@ HostStatus check_host_in_hostfile(const char *filename,
       end_return = HOST_CHANGED;
     }
   /* Clear variables and close the file. */
-  mpz_clear(&ke);
-  mpz_clear(&kn);
+  BN_clear_free(ke);
+  BN_clear_free(kn);
   fclose(f);
 
   /* Return either HOST_NEW or HOST_CHANGED, depending on whether we saw a
@@ -252,10 +258,12 @@ HostStatus check_host_in_hostfile(const char *filename,
 /* Appends an entry to the host file.  Returns false if the entry
    could not be appended. */
 
-int add_host_to_hostfile(const char *filename, const char *host,
-			 unsigned int bits, MP_INT *e, MP_INT *n)
+int
+add_host_to_hostfile(const char *filename, const char *host,
+		     unsigned int bits, BIGNUM *e, BIGNUM *n)
 {
   FILE *f;
+  char *buf;
  
   /* Open the file for appending. */
   f = fopen(filename, "a");
@@ -264,10 +272,14 @@ int add_host_to_hostfile(const char *filename, const char *host,
 
   /* Print the host name and key to the file. */
   fprintf(f, "%s %u ", host, bits);
-  mpz_out_str(f, 10, e);
-  fprintf(f, " ");
-  mpz_out_str(f, 10, n);
-  fprintf(f, "\n");
+  buf = BN_bn2dec(e);
+  assert(buf != NULL);
+  fprintf(f, "%s ", buf);
+  free (buf);
+  buf = BN_bn2dec(n);
+  assert(buf != NULL);
+  fprintf(f, "%s\n", buf);
+  free (buf);
 
   /* Close the file. */
   fclose(f);

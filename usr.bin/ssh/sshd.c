@@ -18,9 +18,8 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.1 1999/09/26 20:53:38 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.2 1999/09/28 04:45:37 provos Exp $");
 
-#include <gmp.h>
 #include "xmalloc.h"
 #include "rsa.h"
 #include "ssh.h"
@@ -119,19 +118,16 @@ unsigned char session_id[16];
 /* Any really sensitive data in the application is contained in this structure.
    The idea is that this structure could be locked into memory so that the
    pages do not get written into swap.  However, there are some problems.
-   The private key contains MP_INTs, and we do not (in principle) have
+   The private key contains BIGNUMs, and we do not (in principle) have
    access to the internals of them, and locking just the structure is not
    very useful.  Currently, memory locking is not implemented. */
 struct
 {
-  /* Random number generator. */
-  RandomState random_state;
-  
   /* Private part of server key. */
-  RSAPrivateKey private_key;
+  RSA *private_key;
 
   /* Private part of host key. */
-  RSAPrivateKey host_key;
+  RSA *host_key;
 } sensitive_data;
 
 /* Flag indicating whether the current session key has been used.  This flag
@@ -143,7 +139,7 @@ int received_sighup = 0;
 
 /* Public side of the server key.  This value is regenerated regularly with
    the private key. */
-RSAPublicKey public_key;
+RSA *public_key;
 
 /* Prototypes for various functions defined later in this file. */
 void do_connection(int privileged_port);
@@ -226,11 +222,18 @@ RETSIGTYPE key_regeneration_alarm(int sig)
     {
       /* This should really be done in the background. */
       log("Generating new %d bit RSA key.", options.server_key_bits);
-      random_acquire_light_environmental_noise(&sensitive_data.random_state);
-      rsa_generate_key(&sensitive_data.private_key, &public_key, 
-		       &sensitive_data.random_state, options.server_key_bits);
-      random_stir(&sensitive_data.random_state);
-      random_save(&sensitive_data.random_state, options.random_seed_file);
+
+      if (sensitive_data.private_key != NULL)
+	RSA_free(sensitive_data.private_key);
+      sensitive_data.private_key = RSA_new();
+
+      if (public_key != NULL) 
+	RSA_free(public_key);
+      public_key = RSA_new();
+
+      rsa_generate_key(sensitive_data.private_key, public_key, 
+		       options.server_key_bits);
+      arc4random_stir();
       key_used = 0;
       log("RSA key generation complete.");
     }
@@ -242,7 +245,8 @@ RETSIGTYPE key_regeneration_alarm(int sig)
 
 /* Main program for the daemon. */
 
-int main(int ac, char **av)
+int
+main(int ac, char **av)
 {
   extern char *optarg;
   extern int optind;
@@ -351,9 +355,10 @@ int main(int ac, char **av)
 
   debug("sshd version %.100s", SSH_VERSION);
 
+  sensitive_data.host_key = RSA_new();
   /* Load the host key.  It must have empty passphrase. */
   if (!load_private_key(options.host_key_file, "", 
-			&sensitive_data.host_key, &comment))
+			sensitive_data.host_key, &comment))
     {
       if (debug_flag)
 	fprintf(stderr, "Could not load host key: %s: %s\n",
@@ -415,29 +420,23 @@ int main(int ac, char **av)
 
   /* Check that server and host key lengths differ sufficiently.  This is
      necessary to make double encryption work with rsaref.  Oh, I hate
-     software patents. */
+     software patents. I dont know if this can go? Niels */
   if (options.server_key_bits > 
-      sensitive_data.host_key.bits - SSH_KEY_BITS_RESERVED &&
+      BN_num_bits(sensitive_data.host_key->n) - SSH_KEY_BITS_RESERVED &&
       options.server_key_bits < 
-      sensitive_data.host_key.bits + SSH_KEY_BITS_RESERVED)
+      BN_num_bits(sensitive_data.host_key->n) + SSH_KEY_BITS_RESERVED)
     {
       options.server_key_bits = 
-	sensitive_data.host_key.bits + SSH_KEY_BITS_RESERVED;
+	BN_num_bits(sensitive_data.host_key->n) + SSH_KEY_BITS_RESERVED;
       debug("Forcing server key to %d bits to make it differ from host key.", 
 	    options.server_key_bits);
     }
-
-  /* Initialize memory allocation so that any freed MP_INT data will be
-     zeroed. */
-  rsa_set_mp_memory_allocation();
 
   /* Do not display messages to stdout in RSA code. */
   rsa_set_verbose(0);
 
   /* Initialize the random number generator. */
-  debug("Initializing random number generator; seed file %.200s", 
-	options.random_seed_file);
-  random_initialize(&sensitive_data.random_state, options.random_seed_file);
+  arc4random_stir();
   
   /* Chdir to the root directory so that the current disk can be unmounted
      if desired. */
@@ -459,13 +458,13 @@ int main(int ac, char **av)
 	 be one of those. */
       debug("inetd sockets after dupping: %d, %d", sock_in, sock_out);
 
+      public_key = RSA_new();
+      sensitive_data.private_key = RSA_new();
       /* Generate an rsa key. */
       log("Generating %d bit RSA key.", options.server_key_bits);
-      rsa_generate_key(&sensitive_data.private_key, &public_key,
-		       &sensitive_data.random_state,
-		   options.server_key_bits);
-      random_stir(&sensitive_data.random_state);
-      random_save(&sensitive_data.random_state, options.random_seed_file);
+      rsa_generate_key(sensitive_data.private_key, public_key,
+		       options.server_key_bits);
+      arc4random_stir();
       log("RSA key generation complete.");
     }
   else
@@ -521,13 +520,13 @@ int main(int ac, char **av)
       if (listen(listen_sock, 5) < 0)
 	fatal("listen: %.100s", strerror(errno));
 
+      public_key = RSA_new();
+      sensitive_data.private_key = RSA_new();
       /* Generate an rsa key. */
       log("Generating %d bit RSA key.", options.server_key_bits);
-      rsa_generate_key(&sensitive_data.private_key, &public_key,
-		       &sensitive_data.random_state,
+      rsa_generate_key(sensitive_data.private_key, public_key,
 		       options.server_key_bits);
-      random_stir(&sensitive_data.random_state);
-      random_save(&sensitive_data.random_state, options.random_seed_file);
+      arc4random_stir();
       log("RSA key generation complete.");
 
       /* Schedule server key regeneration alarm. */
@@ -650,7 +649,7 @@ int main(int ac, char **av)
 
   /* Register our connection.  This turns encryption off because we do not
      have a key. */
-  packet_set_connection(sock_in, sock_out, &sensitive_data.random_state);
+  packet_set_connection(sock_in, sock_out);
 
   /* Log the connection. */
   log("Connection from %.100s port %d", 
@@ -783,12 +782,13 @@ int main(int ac, char **av)
 void do_connection(int privileged_port)
 {
   int i;
-  MP_INT session_key_int;
+  BIGNUM *session_key_int;
   unsigned char session_key[SSH_SESSION_KEY_LENGTH];
   unsigned char check_bytes[8];
   char *user;
   unsigned int cipher_type, auth_mask, protocol_flags;
   int plen, slen;
+  u_int32_t rand;
 
   /* Generate check bytes that the client must send back in the user packet
      in order for it to be accepted; this is used to defy ip spoofing 
@@ -797,8 +797,12 @@ void do_connection(int privileged_port)
      outgoing packets and catch the random cookie.  This only affects
      rhosts authentication, and this is one of the reasons why it is
      inherently insecure. */
-  for (i = 0; i < 8; i++)
-    check_bytes[i] = random_get_byte(&sensitive_data.random_state);
+  for (i = 0; i < 8; i++) {
+    if (i % 4 == 0)
+      rand = arc4random();
+    check_bytes[i] = rand & 0xff;
+    rand >>= 8;
+  }
   
   /* Send our public key.  We include in the packet 64 bits of random
      data that must be matched in the reply in order to prevent IP spoofing. */
@@ -807,14 +811,14 @@ void do_connection(int privileged_port)
     packet_put_char(check_bytes[i]);
 
   /* Store our public server RSA key. */
-  packet_put_int(public_key.bits);
-  packet_put_mp_int(&public_key.e);
-  packet_put_mp_int(&public_key.n);
+  packet_put_int(BN_num_bits(public_key->n));
+  packet_put_bignum(public_key->e);
+  packet_put_bignum(public_key->n);
 
   /* Store our public host RSA key. */
-  packet_put_int(sensitive_data.host_key.bits);
-  packet_put_mp_int(&sensitive_data.host_key.e);
-  packet_put_mp_int(&sensitive_data.host_key.n);
+  packet_put_int(BN_num_bits(sensitive_data.host_key->n));
+  packet_put_bignum(sensitive_data.host_key->e);
+  packet_put_bignum(sensitive_data.host_key->n);
 
   /* Put protocol flags. */
   packet_put_int(SSH_PROTOFLAG_HOST_IN_FWD_OPEN);
@@ -851,7 +855,7 @@ void do_connection(int privileged_port)
   packet_write_wait();
 
   debug("Sent %d bit public key and %d bit host key.", 
-	public_key.bits, sensitive_data.host_key.bits);
+	BN_num_bits(public_key->n), BN_num_bits(sensitive_data.host_key->n));
 
   /* Read clients reply (cipher type and session key). */
   packet_read_expect(&plen, SSH_CMSG_SESSION_KEY);
@@ -868,8 +872,8 @@ void do_connection(int privileged_port)
   debug("Encryption type: %.200s", cipher_name(cipher_type));
 
   /* Get the encrypted integer. */
-  mpz_init(&session_key_int);
-  packet_get_mp_int(&session_key_int, &slen);
+  session_key_int = BN_new();
+  packet_get_bignum(session_key_int, &slen);
 
   /* Get protocol flags. */
   protocol_flags = packet_get_int();
@@ -879,45 +883,47 @@ void do_connection(int privileged_port)
 
   /* Decrypt it using our private server key and private host key (key with 
      larger modulus first). */
-  if (mpz_cmp(&sensitive_data.private_key.n, &sensitive_data.host_key.n) > 0)
+  if (BN_cmp(sensitive_data.private_key->n, sensitive_data.host_key->n) > 0)
     {
       /* Private key has bigger modulus. */
-      assert(sensitive_data.private_key.bits >= 
-	     sensitive_data.host_key.bits + SSH_KEY_BITS_RESERVED);
-      rsa_private_decrypt(&session_key_int, &session_key_int,
-			  &sensitive_data.private_key);
-      rsa_private_decrypt(&session_key_int, &session_key_int,
-			  &sensitive_data.host_key);
+      assert(BN_num_bits(sensitive_data.private_key->n) >= 
+	     BN_num_bits(sensitive_data.host_key->n) + SSH_KEY_BITS_RESERVED);
+      rsa_private_decrypt(session_key_int, session_key_int,
+			  sensitive_data.private_key);
+      rsa_private_decrypt(session_key_int, session_key_int,
+			  sensitive_data.host_key);
     }
   else
     {
       /* Host key has bigger modulus (or they are equal). */
-      assert(sensitive_data.host_key.bits >= 
-	     sensitive_data.private_key.bits + SSH_KEY_BITS_RESERVED);
-      rsa_private_decrypt(&session_key_int, &session_key_int,
-			  &sensitive_data.host_key);
-      rsa_private_decrypt(&session_key_int, &session_key_int,
-			  &sensitive_data.private_key);
+      assert(BN_num_bits(sensitive_data.host_key->n) >= 
+	     BN_num_bits(sensitive_data.private_key->n) +
+	     SSH_KEY_BITS_RESERVED);
+      rsa_private_decrypt(session_key_int, session_key_int,
+			  sensitive_data.host_key);
+      rsa_private_decrypt(session_key_int, session_key_int,
+			  sensitive_data.private_key);
     }
 
   /* Compute session id for this session. */
-  compute_session_id(session_id, check_bytes, sensitive_data.host_key.bits,
-		     &sensitive_data.host_key.n, 
-		     sensitive_data.private_key.bits,
-		     &sensitive_data.private_key.n);
+  compute_session_id(session_id, check_bytes,
+		     BN_num_bits(sensitive_data.host_key->n),
+		     sensitive_data.host_key->n, 
+		     BN_num_bits(sensitive_data.private_key->n),
+		     sensitive_data.private_key->n);
 
   /* Extract session key from the decrypted integer.  The key is in the 
      least significant 256 bits of the integer; the first byte of the 
      key is in the highest bits. */
-  mp_linearize_msb_first(session_key, sizeof(session_key), 
-			 &session_key_int);
+  assert(BN_num_bytes(session_key_int) == sizeof(session_key));
+  BN_bn2bin(session_key_int, session_key);
   
   /* Xor the first 16 bytes of the session key with the session id. */
   for (i = 0; i < 16; i++)
     session_key[i] ^= session_id[i];
 
   /* Destroy the decrypted integer.  It is no longer needed. */
-  mpz_clear(&session_key_int);
+  BN_clear_free(session_key_int);
   
   /* Set the session key.  From this on all communications will be
      encrypted. */
@@ -946,9 +952,9 @@ void do_connection(int privileged_port)
   }
 
   /* Destroy the private and public keys.  They will no longer be needed. */
-  rsa_clear_public_key(&public_key);
-  rsa_clear_private_key(&sensitive_data.private_key);
-  rsa_clear_private_key(&sensitive_data.host_key);
+  RSA_free(public_key);
+  RSA_free(sensitive_data.private_key);
+  RSA_free(sensitive_data.host_key);
 
   /* Do the authentication. */
   do_authentication(user, privileged_port);
@@ -959,7 +965,8 @@ void do_connection(int privileged_port)
    in as (received from the clinet).  Privileged_port is true if the
    connection comes from a privileged port (used for .rhosts authentication).*/
 
-void do_authentication(char *user, int privileged_port)
+void
+do_authentication(char *user, int privileged_port)
 {
   int type;
   int authenticated = 0;
@@ -967,7 +974,7 @@ void do_authentication(char *user, int privileged_port)
   struct passwd *pw, pwcopy;
   char *client_user;
   unsigned int client_host_key_bits;
-  MP_INT client_host_key_e, client_host_key_n;
+  BIGNUM *client_host_key_e, *client_host_key_n;
 			 
 #ifdef AFS
   /* If machine has AFS, set process authentication group. */
@@ -1185,34 +1192,33 @@ void do_authentication(char *user, int privileged_port)
 	    client_user = packet_get_string(&ulen);
 
 	    /* Get the client host key. */
-	    mpz_init(&client_host_key_e);
-	    mpz_init(&client_host_key_n);
+	    client_host_key_e = BN_new();
+	    client_host_key_n = BN_new();
 	    client_host_key_bits = packet_get_int();
-	    packet_get_mp_int(&client_host_key_e, &elen);
-	    packet_get_mp_int(&client_host_key_n, &nlen);
+	    packet_get_bignum(client_host_key_e, &elen);
+	    packet_get_bignum(client_host_key_n, &nlen);
 
 	    packet_integrity_check(plen, (4 + ulen) + 4 + elen + nlen, type);
 	  }
 
 	  /* Try to authenticate using /etc/hosts.equiv and .rhosts. */
-	  if (auth_rhosts_rsa(&sensitive_data.random_state,
-			      pw, client_user,
-			      client_host_key_bits, &client_host_key_e,
-			      &client_host_key_n, options.ignore_rhosts,
+	  if (auth_rhosts_rsa(pw, client_user,
+			      client_host_key_bits, client_host_key_e,
+			      client_host_key_n, options.ignore_rhosts,
 			      options.strict_modes))
 	    {
 	      /* Authentication accepted. */
 	      authenticated = 1;
 	      xfree(client_user);
-	      mpz_clear(&client_host_key_e);
-	      mpz_clear(&client_host_key_n);
+	      BN_clear_free(client_host_key_e);
+	      BN_clear_free(client_host_key_n);
 	      break;
 	    }
 	  debug("Rhosts authentication failed for %.100s, remote %.100s.",
 		user, client_user);
 	  xfree(client_user);
-	  mpz_clear(&client_host_key_e);
-	  mpz_clear(&client_host_key_n);
+	  BN_clear_free(client_host_key_e);
+	  BN_clear_free(client_host_key_n);
 	  break;
 	  
 	case SSH_CMSG_AUTH_RSA:
@@ -1225,21 +1231,21 @@ void do_authentication(char *user, int privileged_port)
 	  /* RSA authentication requested. */
 	  {
 	    int nlen;
-	    MP_INT n;
-	    mpz_init(&n);
-	    packet_get_mp_int(&n, &nlen);
+	    BIGNUM *n;
+	    n = BN_new();
+	    packet_get_bignum(n, &nlen);
 
 	    packet_integrity_check(plen, nlen, type);
 	    
-	    if (auth_rsa(pw, &n, &sensitive_data.random_state))
+	    if (auth_rsa(pw, n))
 	      { 
 		/* Successful authentication. */
-		mpz_clear(&n);
+		BN_clear_free(n);
 		log("RSA authentication for %.100s accepted.", user);
 		authenticated = 1;
 		break;
 	      }
-	    mpz_clear(&n);
+	    BN_clear_free(n);
 	    debug("RSA authentication for %.100s failed.", user);
 	  }
 	  break;

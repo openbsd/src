@@ -11,22 +11,19 @@ Created: Wed Apr 19 16:50:42 1995 ylo
 
 */
 
-/* RCSID("$Id: cipher.h,v 1.3 1999/09/26 22:53:25 deraadt Exp $"); */
+/* RCSID("$Id: cipher.h,v 1.4 1999/09/28 04:45:36 provos Exp $"); */
 
 #ifndef CIPHER_H
 #define CIPHER_H
 
 #include "des.h"
-#ifdef WITH_RC4
-#include "rc4.h"
-#endif
 #include "blowfish.h"
 
 /* Cipher types.  New types can be added, but old types should not be removed
    for compatibility.  The maximum allowed value is 31. */
 #define SSH_CIPHER_NOT_SET	-1 /* None selected (invalid number). */
 #define SSH_CIPHER_NONE		0 /* no encryption */
-#define SSH_CIPHER_IDEA		1 /* IDEA CFB -- not implemented */
+#define SSH_CIPHER_IDEA		1 /* IDEA CFB */
 #define SSH_CIPHER_DES		2 /* DES CBC */
 #define SSH_CIPHER_3DES		3 /* 3DES CBC */
 #define SSH_CIPHER_TSS		4 /* TRI's Simple Stream encryption CBC */
@@ -49,9 +46,6 @@ typedef struct {
       des_key_schedule key3;
       des_cblock iv3;
     } des3;
-#ifdef WITH_RC4
-    RC4Context rc4;
-#endif
     struct {
       struct bf_key_st key;
       unsigned char iv[8];
