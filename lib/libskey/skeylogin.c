@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.3 1996/09/27 15:38:59 millert Exp $
+ * $Id: skeylogin.c,v 1.4 1996/09/29 04:30:39 millert Exp $
  */
 
 #include <sys/param.h>
@@ -52,12 +52,12 @@ getskeyprompt(mp, name, prompt)
 
 	sevenbit(name);
 	rval = skeylookup(mp, name);
-	(void)strcpy(prompt, "s/key MD0 55 latour1\n");
+	(void)strcpy(prompt, "skey MD0 55 latour1\n");
 	switch (rval) {
 	case -1:	/* File error */
 		return -1;
 	case 0:		/* Lookup succeeded, return challenge */
-		(void)sprintf(prompt, "s/key MD%d %d %s\n", skey_get_MDX(),
+		(void)sprintf(prompt, "skey MD%d %d %s\n", skey_get_MDX(),
 			      mp->n - 1, mp->seed);
 		return 0;
 	case 1:		/* User not found */
@@ -87,7 +87,7 @@ skeychallenge(mp,name, ss)
 	case -1:	/* File error */
 		return -1;
 	case 0:		/* Lookup succeeded, issue challenge */
-		(void)sprintf(ss, "s/key MD%d %d %s", skey_get_MDX(),
+		(void)sprintf(ss, "skey MD%d %d %s", skey_get_MDX(),
 			      mp->n - 1, mp->seed);
 		return 0;
 	case 1:		/* User not found */
@@ -108,7 +108,7 @@ skeylookup(mp,name)
 	struct skey *mp;
 	char *name;
 {
-	int found, len;
+	int found = 0;
 	long recstart = 0;
 	char *cp;
 	struct stat statbuf;
@@ -126,11 +126,6 @@ skeylookup(mp,name)
 		return -1;
 
 	/* Look up user name in database */
-	len = strlen(name);
-	/* XXX - do we really want to limit it to 8 char usernames? */
-	if (len > 8)
-		len = 8;		/*  Added 8/2/91  -  nmh */
-	found = 0;
 	while (!feof(mp->keyfile)) {
 		recstart = ftell(mp->keyfile);
 		mp->recstart = recstart;
@@ -157,8 +152,7 @@ skeylookup(mp,name)
 			continue;
 		if ((mp->val = strtok(NULL, " \t")) == NULL)
 			continue;
-		if (strlen(mp->logname) == len &&
-		    strncmp(mp->logname, name, len) == 0) {
+		if (strcmp(mp->logname, name) == 0) {
 			found = 1;
 			break;
 		}
@@ -230,16 +224,16 @@ skeyverify(mp,response)
 		return -1;
 	}
 	rip(mp->buf);
-	mp->logname = strtok(mp->buf," \t");
+	mp->logname = strtok(mp->buf, " \t");
 	cp = strtok(NULL," \t") ;
 	cp = strtok(NULL," \t") ;
 	mp->seed = strtok(NULL," \t");
 	mp->val = strtok(NULL," \t");
 	/* And convert file value to hex for comparison */
-	atob8(filekey,mp->val);
+	atob8(filekey, mp->val);
 
 	/* Do actual comparison */
-	if (memcmp(filekey,fkey,8) != 0){
+	if (memcmp(filekey, fkey, 8) != 0){
 		/* Wrong response */
 		(void)setpriority(PRIO_PROCESS, 0, 0);
 		(void)fclose(mp->keyfile);
@@ -349,7 +343,7 @@ skey_authenticate(username)
 	if (i == -2)
 		return 0;
 
-	(void)fprintf(stderr, "[%s]\n", skeyprompt);
+	(void)fprintf(stderr, "%s\n", skeyprompt);
 	(void)fflush(stderr);
 
 	(void)fputs("Response: ", stderr);
