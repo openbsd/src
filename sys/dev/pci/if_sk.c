@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.40 2004/05/24 14:15:43 naddy Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.41 2004/05/29 16:09:41 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -172,8 +172,8 @@ int sk_marv_miibus_readreg(struct device *, int, int);
 void sk_marv_miibus_writereg(struct device *, int, int, int);
 void sk_marv_miibus_statchg(struct device *);
 
-u_int32_t xmac_calchash (caddr_t);
-u_int32_t gmac_calchash (caddr_t);
+u_int32_t sk_xmac_hash(caddr_t);
+u_int32_t sk_yukon_hash(caddr_t);
 void sk_setfilt(struct sk_if_softc *, caddr_t, int);
 void sk_setmulti(struct sk_if_softc *);
 void sk_tick(void *);
@@ -536,55 +536,20 @@ sk_marv_miibus_statchg(dev)
 #define HASH_BITS	6
   
 u_int32_t
-xmac_calchash(caddr_t addr)
+sk_xmac_hash(caddr_t addr)
 {
-	u_int32_t		idx, bit, data, crc;
+	u_int32_t crc;
 
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (idx = 0; idx < 6; idx++) {
-		for (data = *addr++, bit = 0; bit < 8; bit++, data >>= 1)
-			crc = (crc >> 1) ^ (((crc ^ data) & 1) ? XMAC_POLY : 0);
-	}
-
+	crc = ether_crc32_le(addr, ETHER_ADDR_LEN);
 	return (~crc & ((1 << HASH_BITS) - 1));
 }
 
 u_int32_t
-gmac_calchash(caddr_t addr)
+sk_yukon_hash(caddr_t addr)
 {
-	u_int32_t               idx, bit, crc, tmpData, data;
+	u_int32_t crc;
 
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-	
-	for (idx = 0; idx < 6; idx++) {
-		data = *addr++;
-		
-		/* Change bit order in byte. */
-		tmpData = data;
-		for (bit = 0; bit < 8; bit++) {
-			if (tmpData & 1) {
-				data |=  1 << (7 - bit);
-			}
-			else {
-				data &= ~(1 << (7 - bit));
-			}
-			
-			tmpData >>= 1;
-		}
-		
-		crc ^= (data << 24);
-		for (bit = 0; bit < 8; bit++) {
-			if (crc & 0x80000000) {
-				crc = (crc << 1) ^ GMAC_POLY;
-			} else {
-				crc <<= 1;
-			}
-		}
-	}
-	
+	crc = ether_crc32_be(addr, ETHER_ADDR_LEN);
 	return (crc & ((1 << HASH_BITS) - 1));
 }
 
@@ -654,11 +619,11 @@ allmulti:
 			else {
 				switch(sc->sk_type) {
 				case SK_GENESIS:
-					h = xmac_calchash(enm->enm_addrlo);
+					h = sk_xmac_hash(enm->enm_addrlo);
 					break;
 					
 				case SK_YUKON:
-					h = gmac_calchash(enm->enm_addrlo);
+					h = sk_yukon_hash(enm->enm_addrlo);
 					break;
 				}
 				if (h < 32)
