@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.69 2003/06/02 19:03:37 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.70 2003/10/22 11:02:41 henning Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -139,6 +139,7 @@ struct cfdriver txp_cd = {
 
 const struct pci_matchid txp_devices[] = {
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990 },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX95 },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX97 },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990SVR95 },
