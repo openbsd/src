@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.8 2005/01/08 20:35:59 canacar Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.9 2005/03/23 00:26:06 canacar Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -109,6 +109,8 @@ struct sppp {
 	u_short pp_loopcnt;     /* loopback detection counter */
 	u_long  pp_seq;         /* local sequence number */
 	u_long  pp_rseq;        /* remote sequence number */
+	time_t	pp_last_receive;	/* peer's last "sign of life" */
+	time_t	pp_last_activity;	/* second of last payload data s/r */
 	enum ppp_phase pp_phase;	/* phase we're currently in */
 	int	state[IDX_COUNT];	/* state machine */
 	u_char  confid[IDX_COUNT];	/* id of last configuration request */
