@@ -1,4 +1,4 @@
-.\" $OpenBSD: more.1,v 1.4 2003/06/02 19:32:31 millert Exp $
+.\" $OpenBSD: more.1,v 1.5 2003/06/04 03:26:59 millert Exp $
 .\"
 .\" Copyright (c) 1980 The Regents of the University of California.
 .\" All rights reserved.
@@ -133,7 +133,7 @@ An integer specifying the size (in lines) of the window which
 .Nm
 will use instead of the default.
 On a terminal capable of displaying 24 lines, the default
-window size is 22 lines.
+window size is 23 lines.
 .It + Ns Ar linenumber
 Start at the specified
 .Ar linenumber .
@@ -146,14 +146,7 @@ regular expression
 If the program is invoked as
 .Nm page ,
 then the screen is cleared before each screenful is printed (but only
-if a full screenful is being printed), and
-.Ic i
-\- 1 rather
-than
-.Ic i
-\- 2 lines are printed in each screenful, where
-.Ic i
-is the number of lines the terminal can display.
+if a full screenful is being printed).
 .Pp
 If
 .Nm

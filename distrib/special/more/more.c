@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.19 2003/06/04 00:26:12 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.20 2003/06/04 03:26:59 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.19 2003/06/04 00:26:12 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.20 2003/06/04 03:26:59 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -246,7 +246,7 @@ main(int argc, char **argv)
 			noscroll = 1;
 	}
 	if (dlines == 0)
-		dlines = Lpp - (noscroll ? 1 : 2);
+		dlines = Lpp - 1;
 	left = dlines;
 	if (nfiles > 1)
 		prnames++;
@@ -568,6 +568,10 @@ screen(FILE *f, int num_lines)
 			else
 				doclear();
 		}
+		/*
+		 * XXX - should store the *first* line on the screen,
+		 * not the last (but we don't know the file position)
+		 */
 		screen_start.line = Currline;
 		screen_start.chrctr = Ftell(f);
 	}
@@ -602,26 +606,6 @@ copy_file(FILE *f)
 }
 
 static char bell = ctrl('G');
-
-/*
- * See whether the last component of the path name "path" is equal to the
- * string "string".
- */
-int
-tailequ(char *path, char *string)
-{
-	char *tail;
-
-	tail = path + strlen(path);
-	while (tail >= path)
-		if (*(--tail) == '/')
-			break;
-	++tail;
-	while (*tail++ == *string++)
-		if (*tail == '\0')
-			return (1);
-	return (0);
-}
 
 void
 prompt(char *filename)
@@ -918,11 +902,7 @@ command(char *filename, FILE *f)
 			Fseek(f, 0L);
 			Currline = 0; /* skiplns() will make Currline correct */
 			skiplns(initline, f);
-			if (!noscroll) {
-				ret(dlines + 1);
-			} else {
-				ret(dlines);
-			}
+			ret(dlines);
 		    }
 		case ' ':
 		case 'z':
@@ -1446,13 +1426,13 @@ retry:
 			if (Mcol <= 0)
 				Mcol = 80;
 
-			if (tailequ(fnames[0], "page") ||
+			if (strcmp(__progname, "page") == 0 ||
 			    (!hard && tgetflag("ns")))
 				noscroll++;
 			Wrap = tgetflag("am");
 			bad_so = tgetflag ("xs");
 			clearptr = clearbuf;
-			eraseln = tgetstr("ce",&clearptr);
+			eraseln = tgetstr("ce", &clearptr);
 			Clear = tgetstr("cl", &clearptr);
 			Senter = tgetstr("so", &clearptr);
 			Sexit = tgetstr("se", &clearptr);
@@ -1468,7 +1448,7 @@ retry:
 			 */
 			if (tgetflag("ul") || tgetflag("os"))
 				ul_opt = 0;
-			if ((chUL = tgetstr("uc", &clearptr)) == NULL )
+			if ((chUL = tgetstr("uc", &clearptr)) == NULL)
 				chUL = "";
 			if (((ULenter = tgetstr("us", &clearptr)) == NULL ||
 			    (ULexit = tgetstr("ue", &clearptr)) == NULL) &&
