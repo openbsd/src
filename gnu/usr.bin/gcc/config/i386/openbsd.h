@@ -9,10 +9,10 @@
 /* Get perform_* macros to build libgcc.a.  */
 #include <i386/perform.h>
 
+#define OBSD_OLD_GAS
 /* Get generic OpenBSD definitions.  */
 #include <openbsd.h>
 
-#undef CPP_PREDEFINES
 #define CPP_PREDEFINES "-Dunix -Di386 -D__OpenBSD__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(i386) -Amachine(i386)"
 
 #undef SIZE_TYPE
@@ -30,7 +30,7 @@
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-/*	$OpenBSD: openbsd.h,v 1.5 1997/03/28 20:47:21 deraadt Exp $	*/
+/*	$OpenBSD: openbsd.h,v 1.6 1999/01/17 17:41:13 espie Exp $	*/
 
 /* There are conflicting reports about whether this system uses
    a different assembler syntax.  wilson@cygnus.com says # is right.  */

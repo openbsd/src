@@ -1,7 +1,7 @@
 #include <vax/vax.h>
+#define OBSD_OLD_GAS
 #include <openbsd.h>
 
-#undef CPP_PREDEFINES
 #define CPP_PREDEFINES "-Dunix -Dvax -D__OpenBSD__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(vax) -Amachine(vax)"
 
 /* Make gcc agree with <machine/ansi.h> */

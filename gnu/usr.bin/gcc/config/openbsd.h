@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd.h,v 1.13 1999/01/13 00:27:52 espie Exp $	*/
+/*	$OpenBSD: openbsd.h,v 1.14 1999/01/17 17:41:13 espie Exp $	*/
 
 /* OPENBSD_NATIVE is defined when gcc is integrated into the OpenBSD
    source tree so it can be configured appropriately when using the
@@ -32,51 +32,68 @@
 
 #endif
 
-/* We want gcc.c to call mkstemp() for each file it generates.  */
-/* (patched with code from egcs) */
-#define MKTEMP_EACH_FILE
 
-/* CPP_SPEC appropriate for OpenBSD. We only deal with -posix
-	and -pthread */
+/* Controlling the compilation driver 
+ * ---------------------------------- */
 
+/* CPP_SPEC appropriate for OpenBSD. We deal with -posix and -pthread */
 #undef CPP_SPEC
 #define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
 
-/* ASM_SPEC appropriate for OpenBSD.  We only deal
-   with the options for generating PIC code.  */
 
+#ifdef OBSD_OLD_GAS
+/* ASM_SPEC appropriate for OpenBSD.  For some architectures, OpenBSD 
+   still uses a special flavor of gas that needs to be told when generating 
+   pic code. */
 #undef ASM_SPEC
-#define ASM_SPEC " %| %{fpic:-k} %{fPIC:-k -K}"
+#define ASM_SPEC "%{fpic:-k} %{fPIC:-k -K} %|"
+#else
+/* Since we use gas, stdin -> - is a good idea, but we don't want to
+   override native specs just for that. */
+#ifndef ASM_SPEC
+#define ASM_SPEC "%|"
+#endif
+#endif
 
-/* LIB_SPEC appropriate for OpenBSD.  Select the appropriate
-   libc, depending on profiling and threads.  
-	Basically, -lc(_r)?(_p)?, select _r for threads, _p for p or pg
+/* LIB_SPEC appropriate for OpenBSD.  Select the appropriate libc, 
+   depending on profiling and threads.
+   Basically, -lc(_r)?(_p)?, select _r for threads, and _p for p or pg
  */
-
 #undef LIB_SPEC
-/* #define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}" */
 #define LIB_SPEC "-lc%{pthread:_r}%{p:_p}%{!p:%{pg:_p}}"
 
-/* LINK_SPEC appropriate for OpenBSD.  Support
-   for GCC options -static, -assert, and -nostdlib.  */
-
+/* LINK_SPEC appropriate for OpenBSD.  Support for GCC options 
+   -static, -assert, and -nostdlib.  */
 #undef LINK_SPEC
 #define LINK_SPEC \
   "%{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
 
-/* This defines which switch letters take arguments. */
+/* Add the -R arg switch, needed for dynamic library support. */
 #undef SWITCH_TAKES_ARG
 #define SWITCH_TAKES_ARG(CHAR) \
   (DEFAULT_SWITCH_TAKES_ARG(CHAR) \
    || (CHAR) == 'R')
 
-/* We have atexit(3).  */
+/* Runtime target specification 
+ * ---------------------------- */
 
-#define HAVE_ATEXIT
+/* You must redefine CPP_PREDEFINES in any arch specific file. */
+#undef CPP_PREDEFINES
 
-/* Implicit library calls should use memcpy, not bcopy, etc.  */
+/* we want gcc.c to call mkstemps for each file it generates
+   (fix taken from egcs-current). */
+#define MKTEMP_EACH_FILE
 
+/* Implicit calls to library routines
+ * ---------------------------------- */
+/* Use memcpy and memset instead of bcopy and bzero for implicit library
+   calls. */
 #define TARGET_MEM_FUNCTIONS
+
+/* Miscellaneous parameters
+ * ------------------------ */
+/* tell libgcc2.c that OpenBSD targets support atexit */
+#define HAVE_ATEXIT
 
 
 /*

@@ -62,12 +62,12 @@ Boston, MA 02111-1307, USA.
 
 #define MOVD_FLOAT_OK
 
+#define OBSD_OLD_GAS
 /* Get generic OpenBSD definitions. */
 #include <openbsd.h>
 
 /* Names to predefine in the preprocessor for this target machine.  */
 
-#undef CPP_PREDEFINES
 #define CPP_PREDEFINES "-Dunix -Dns32k -Dns32000 -Dns32532 -D__OpenBSD__ -Dpc532 -D__ns32k__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(ns32k) -Amachine(ns32k)"
 
 /* Make gcc agree with <machine/ansi.h> */

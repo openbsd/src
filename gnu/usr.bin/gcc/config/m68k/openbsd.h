@@ -2,6 +2,7 @@
 
 /* Get generic OpenBSD definitions.  */
 
+#define OBSD_OLD_GAS
 #include <openbsd.h>
 
 
@@ -12,7 +13,6 @@
 /* Define __HAVE_68881__ in preprocessor, unless -msoft-float is specified.
    This will control the use of inline 68881 insns in certain macros.  */
 
-#undef CPP_SPEC
 #define CPP_SPEC "%{!msoft-float:-D__HAVE_68881__ -D__HAVE_FPU__} %{posix:-D_POSIX_SOURCE}"
 
 /* Names to predefine in the preprocessor for this target machine.  */
