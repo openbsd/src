@@ -95,6 +95,10 @@ server for this realm.  You can define any number of kerberos slave
 servers similar to the one defined in line three.  The clients will try
 to contact the servers in the order they are defined in @file{krb.conf}.
 
+To disable kerberos on your system place a '#'-sign as the first character
+on the first line in @file{/etc/kerberosIV/krb.conf}. This will disable any
+kerberos authentication on your system.
+
 The @samp{admin server} clause at the first entry states that this is
 the master server
 @cindex master server
