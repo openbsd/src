@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.5 1996/06/21 17:03:26 mickey Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.6 1996/07/02 06:51:56 niklas Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ static TAILQ_HEAD(, lkm_table)	lkmods;	/* table of loaded modules */
 static struct lkm_table	*curp;		/* global for in-progress ops */
 static size_t		nlkms = 0;	/* number of loaded lkms */
 
-static struct lkm_table *lkmalloc __P(());  /* allocate new lkm table entry */
+static struct lkm_table *lkmalloc __P((void));  /* allocate new lkm table entry */
 static void lkmfree __P((struct lkm_table *)); /* free it */
 static struct lkm_table *lkmlookup __P((int, char *, int *));
 static void lkmunreserve __P((void));
@@ -91,6 +91,7 @@ static int _lkm_strmod __P((struct lkm_table *, int));
 #endif
 static int _lkm_exec __P((struct lkm_table *, int));
 
+void lkminit __P((void));
 int lkmexists __P((struct lkm_table *));
 int lkmdispatch __P((struct lkm_table *, int));
 

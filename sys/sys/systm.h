@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.6 1996/06/09 03:40:36 briggs Exp $	*/
+/*	$OpenBSD: systm.h,v 1.7 1996/07/02 06:52:06 niklas Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -40,6 +40,8 @@
  *
  *	@(#)systm.h	8.4 (Berkeley) 2/23/94
  */
+
+#include <machine/stdarg.h>
 
 /*
  * The `securelevel' variable controls the security level of the system.
@@ -140,6 +142,8 @@ void	printf __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void	uprintf __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
+int	vsprintf __P((char *, const char *, va_list))
+    __kprintf_attribute__((__format__(__kprintf__,2,3)));
 int	sprintf __P((char *buf, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
 void	ttyprintf __P((struct tty *, const char *, ...))

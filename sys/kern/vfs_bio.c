@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.8 1996/06/26 19:44:59 tholo Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.9 1996/07/02 06:52:01 niklas Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -380,8 +380,6 @@ void
 bdwrite(bp)
 	struct buf *bp;
 {
-	int setit;
-
 	/*
 	 * If the block hasn't been seen before:
 	 *	(1) Mark it as having been seen,

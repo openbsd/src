@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.10 1996/06/29 18:54:08 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.11 1996/07/02 06:52:05 niklas Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -50,6 +50,8 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/radix.h>
+
+static void if_attachsetup __P((struct ifnet *));
 
 int	ifqmaxlen = IFQ_MAXLEN;
 void	if_slowtimo __P((void *arg));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.6 1996/06/29 18:54:10 deraadt Exp $	*/
+/*	$OpenBSD: if.h,v 1.7 1996/07/02 06:52:04 niklas Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -338,6 +338,7 @@ char	*ether_sprintf __P((u_char *));
 
 void	if_attach __P((struct ifnet *));
 void	if_attachtail __P((struct ifnet *));
+void	if_attachhead __P((struct ifnet *));
 void	if_down __P((struct ifnet *));
 void	if_qflush __P((struct ifqueue *));
 void	if_slowtimo __P((void *));

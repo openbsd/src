@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.3 1996/06/21 12:49:56 mickey Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.4 1996/07/02 06:52:03 niklas Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -93,7 +93,6 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 {
 	struct pfsnode *pfs;
 	struct vnode *vp;
-	struct pfsnode **pp;
 	int error;
 
 loop:
@@ -200,7 +199,6 @@ int
 procfs_freevp(vp)
 	struct vnode *vp;
 {
-	struct pfsnode **pfspp;
 	struct pfsnode *pfs = VTOPFS(vp);
 
 	TAILQ_REMOVE(&pfshead, pfs, list);

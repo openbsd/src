@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.3 1996/06/27 08:43:06 maja Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.4 1996/07/02 06:52:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -34,6 +34,7 @@
 
 #ifdef BOOT_CONFIG
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
@@ -821,6 +822,7 @@ char *cmd;
 	return(0);
 }
 
+void
 user_config()
 {
 	char prompt[] = "UKC> ";
@@ -837,6 +839,7 @@ user_config()
 	printf("Continuing...\n");
 }
 #else BOOT_CONFIG
+void
 user_config()
 {
 	printf("User Kernel Config isn't supported in this kernel\n");
