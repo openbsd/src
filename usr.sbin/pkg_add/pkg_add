@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.29 2004/03/18 16:49:50 tholo Exp $
+# $OpenBSD: pkg_add,v 1.30 2004/03/30 08:55:56 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -478,7 +478,12 @@ sub really_add($$)
 
 	$plist->{done} = [];
 	for my $item (@{$plist->{items}}) {
-		$item->install($handle, $destdir, $opt_v, $opt_n);
+		eval { $item->install($handle, $destdir, $opt_v, $opt_n); };
+		if ($@) {
+			print STDERR "$@";
+			$errors++;
+			last;
+		}
 		push(@{$plist->{done}}, $item);
 		last if $interrupted;
 	}
