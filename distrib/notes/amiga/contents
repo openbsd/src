@@ -5,16 +5,22 @@ out as follows:
 .../2.0/amiga/
 		INSTALL.amiga	This file.
 
-		bins/		amiga binary distribution sets;
-				see below.
-		miniroot/	amiga installation and upgrade
+		kernels/	A generic OpenBSD kernel is found here.
+
+		miniroots/	amiga installation and upgrade
 				file system images; see below.
+
+		tars/		amiga binary distribution sets;
+				see below.
+
+		tars.split/	amiga binary distribution sets
+				splitted in 80k parts.
 
 		utils/		Miscellaneous amiga
 				installation utilities; see
 				installation section, below.
 
-There are two amiga file system images to be found in the "amiga/miniroot"
+There are two amiga file system images to be found in the "amiga/miniroots"
 subdirectory of the OpenBSD 2.0 distribution.  One of them is a upgrade
 image and one is an installation image. They are described in more
 detail below.  There are gzipped versions of each available, for easier
@@ -53,8 +59,9 @@ Upgrade file system:
 The OpenBSD/amiga binary distribution sets contain the binaries which
 comprise the OpenBSD 2.0 release for the amiga.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-subdirectories of the "amiga/bins" subdirectory of the OpenBSD 2.0
-distribution tree, and are as follows:
+subdirectories of the "amiga/tars" subdirectory of the OpenBSD 2.0
+distribution tree, and are as follows (all have ".tar.gz" appended to
+the name given in the table below):
 
 	base20	The OpenBSD/amiga 2.0 base binary distribution.  You
 		MUST install this distribution set.  It contains the
@@ -62,7 +69,7 @@ distribution tree, and are as follows:
 		system to run and be minimally functional.  It
 		includes shared library support, and excludes
 		everything described below.
-		[ 7M gzipped, 20M uncompressed ]
+		[ 11M gzipped, 35M uncompressed ]
 
 	comp20	The OpenBSD/amiga Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
@@ -73,7 +80,7 @@ distribution tree, and are as follows:
 		set).  This set also includes the manual pages for all
 		of the utilities it contains, as well as the system
 		call and library manual pages.
-		[ 5M gzipped, 15M uncompressed ]
+		[ 7M gzipped, 23M uncompressed ]
 
 	etc20	This distribution set contains the system
 		configuration files that reside in /etc and in several
@@ -82,7 +89,7 @@ distribution tree, and are as follows:
 		used if you are upgrading.  (If you are upgrading,
 		it's recommended that you get a copy of this set and
 		CAREFULLY upgrade your configuration files by hand.)
-		[ 60K gzipped, 340K uncompressed ]
+		[ 70K gzipped, 380K uncompressed ]
 
 	games20	This set includes the games and their manual pages.
 		[ 3M gzipped, 7M uncompressed ]
@@ -91,18 +98,18 @@ distribution tree, and are as follows:
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
-		[ 850K gzipped, 3M uncompressed ]
+		[ 2M gzipped, 8M uncompressed ]
 
 	misc20	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
-		[ 2M gzipped, 7M uncompressed ]
+		[ 2M gzipped, 6M uncompressed ]
 
 	text20	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
-		[ 784K gzipped, 3M uncompressed ]
+		[ 1M gzipped, 4M uncompressed ]
 
 The amiga binary distribution sets are distributed in the same form as
 the source distribution sets; catted together, the members of a set
@@ -114,7 +121,4 @@ well for the binary sets, but it is worth noting that if you use that
 method, the files are extracted "below" the current directory.  That
 is, if you want to extract the binaries "into" your system, i.e.
 replace the system binaries with them, you have to run the "tar xvfp"
-from /.  Also note that if you upgrade or install this way, those
-programs that you are using at the time will NOT be replaced.  If you
-follow the normal installation or upgrade procedures, this will be
-taken care of for you.
+from /.
