@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.31 2002/04/02 18:28:26 deraadt Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.32 2002/04/06 23:51:10 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -55,7 +55,8 @@
 .Op Fl d Ar max data length
 .Op Fl r Ar RTS threshold
 .Op Fl f Ar frequency
-.Op Fl A Ar 1|2
+.Op Fl A Ar 1|2|3
+.Op Fl D Ar 0|1|2
 .Op Fl M Ar 0|1
 .Op Fl P Ar 0|1
 .Op Fl R Ar 1|3
@@ -101,7 +102,7 @@ Display the statistics counters for the specified WaveLAN/IEEE
 interface.
 The statistics are updated about once a minute.
 .It Fl l
-For the card in Host AP mode list detected stations.
+List associated stations if the card is in Host AP mode.
 .It Fl e Ar 0|1
 Enable or disable WEP encryption.
 Permitted values are
@@ -147,19 +148,17 @@ Prism-II and Prism-2.5
 NICs support a maximum speed of 11Mbps.
 The following table shows the legal transmit rate settings
 and the corresponding transmit speeds:
-.Bd -filled -offset indent
-.Bl -column "TX rate " "NIC speed "
-.Em "TX rate	NIC speed"
-1	Fixed Low (1Mbps)
-2	Fixed Standard (2Mbps)
-3	Auto Rate Select (High)
-4	Fixed Medium (4Mbps)
-5	Fixed High (5.5Mbps)
-6	Auto Rate Select (Standard)
-7	Auto Rate Select (Medium)
-11	Fixed Turbo (11Mbps)
+.Bl -column "TX rate" "Auto Rate Select (Standard)" -offset indent
+.It Em "TX rate" Ta Em "NIC speed"
+.It 1 Ta "Fixed Low (1Mbps)"
+.It 2 Ta "Fixed Standard (2Mbps)"
+.It 3 Ta "Auto Rate Select (High)"
+.It 4 Ta "Fixed Medium (4Mbps)"
+.It 5 Ta "Fixed High (5.5Mbps)"
+.It 6 Ta "Auto Rate Select (Standard)"
+.It 7 Ta "Auto Rate Select (Medium)"
+.It 11 Ta "Fixed Turbo (11Mbps)"
 .El
-.Ed
 .Pp
 The standard NICs support only settings 1 through 3.
 Turbo NICs support all the above listed speed settings.
@@ -252,25 +251,23 @@ by regional authorities.
 Recognized regulatory authorities include
 the FCC (United States), ETSI (Europe), France and Japan.
 Frequencies in the table are specified in Mhz.
-.Bd -filled -offset indent
-.Bl -column "Channel ID " "FCC   " "ETSI   " "France " "Japan "
+.Bl -column "Channel" "FCCXXXX" "ETSIXXX" "FranceX" "JapanXX" -offset indent
 .Em "Channel	FCC	ETSI	France	Japan"
-1	2412	2412	-	2412
-2	2417	2417	-	2417
-3	2422*	2422*	-	2422
-4	2427	2427	-	2427
-5	2432	2432	-	2432
-6	2437	2437	-	2437
-7	2442	2442	-	2442
-8	2447	2447	-	2447
-9	2452	2452	-	2452
-10	2457*	2457	2457	2457
-11	2462*	2462	2462*	2462
-12	-	2467	2467	2467
-13	-	2472	2472	2472
-14	-	-	-	2484*
+.It 1 Ta "2412	2412	-	2412"
+.It 2 Ta "2417	2417	-	2417"
+.It 3 Ta "2422*	2422*	-	2422"
+.It 4 Ta "2427	2427	-	2427"
+.It 5 Ta "2432	2432	-	2432"
+.It 6 Ta "2437	2437	-	2437"
+.It 7 Ta "2442	2442	-	2442"
+.It 8 Ta "2447	2447	-	2447"
+.It 9 Ta "2452	2452	-	2452"
+.It 10 Ta "2457*	2457	2457	2457"
+.It 11 Ta "2462*	2462	2462*	2462"
+.It 12 Ta "-	2467	2467	2467"
+.It 13 Ta "-	2472	2472	2472"
+.It 14 Ta "-	-	-	2484*"
 .El
-.Ed
 .Pp
 If an illegal channel is specified, the
 NIC will revert to its default channel, normally one of those indicated
@@ -283,17 +280,33 @@ When using multiple channels in close proximity it is suggested
 that channels be separated by at least 25Mhz.
 In the US, this means that only channels 1, 6, and 11 may be used
 simultaneously without interference.
-.It Fl A Ar 1|2
-[Prism2 only] Sets the authentication type for a given interface.
+.It Fl A Ar 1|2|3
+[Prism2/Symbol only] Sets the authentication type for a given interface.
 Permitted values are
 .Ar 1
-(Open System Authentication) or
+(Open System Authentication),
 .Ar 2
-(Shared Key Authentication).
+(Shared Key Authentication) and
+.Ar 3
+(104-bit Shared Key Authentication).
+The 104-bit Shared Key Authentication mode is only available on Symbol cards.
 The default is 1.
 .Pp
 Note: It is not valid to enable Shared Key Authentication
 when no valid WEP keys have been defined.
+.It Fl D Ar 0|1|2
+[Symbol only] Select the antenna diversity.
+Symbol cards have both a primary and auxiliary antenna.
+Either antenna may be used or the card can choose the antenna
+with the best reception.
+.Bl -column "Value" "Autoselect" -offset indent
+.It Sy "Value" Ta Sy "Diversity"
+.It 0 Ta Autoselect
+.It 1 Ta Primary
+.It 2 Ta Auxiliary
+.El
+.Pp
+The default is 0 (Autoselect).
 .It Fl M Ar 0|1
 Enable or disable
 .Dq microwave oven robustness
@@ -325,6 +338,7 @@ The legal values are
 .Ar 3
 (Roaming Disabled).
 The default is 1.
+This option is not available on Symbol cards.
 .It Fl S Ar max sleep interval
 Specify the sleep interval to use when power management is enabled.
 The

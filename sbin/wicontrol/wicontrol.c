@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.31 2002/04/06 22:00:05 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.32 2002/04/06 23:51:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.31 2002/04/06 22:00:05 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.32 2002/04/06 23:51:10 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -503,8 +503,9 @@ struct wi_table wi_table[] = {
 	{ WI_RID_MAX_DATALEN, WI_WORDS, "Maximum data length:\t\t\t"},
 	{ WI_RID_RTS_THRESH, WI_WORDS, "RTS/CTS handshake threshold:\t\t"},
 	{ WI_RID_CREATE_IBSS, WI_BOOL, "Create IBSS:\t\t\t\t" },
+	{ WI_RID_SYMBOL_DIVERSITY, WI_WORDS, "Antenna diversity (0=auto,1=pri,2=aux):\t"},
 	{ WI_RID_MICROWAVE_OVEN, WI_WORDS, "Microwave oven robustness:\t\t"},
-	{ WI_RID_ROAMING_MODE, WI_WORDS, "Roaming mode(1:firm,3:disable):\t\t"},
+	{ WI_RID_ROAMING_MODE, WI_WORDS, "Roaming mode(1=firm,3=disable):\t\t"},
 	{ WI_RID_SYSTEM_SCALE, WI_WORDS, "Access point density:\t\t\t" },
 	{ WI_RID_PM_ENABLED, WI_WORDS, "Power Mgmt (1=on, 0=off):\t\t" },
 	{ WI_RID_MAX_SLEEP, WI_WORDS, "Max sleep time:\t\t\t\t" },
@@ -725,7 +726,7 @@ usage()
 	    "       [-c 0|1] [-q SSID] [-p port type] [-a access point density]\n"
 	    "       [-m MAC address] [-d max data length] [-r RTS threshold]\n"
 	    "       [-f frequency] [-M 0|1] [-P 0|1] [-S max sleep duration]\n"
-	    "       [-A 0|1 ] [-R 1|3]\n", __progname);
+	    "       [-A 1|2|3] [-D 0|1|2] [-R 1|3]\n", __progname);
 	exit(1);
 }
 
@@ -751,6 +752,7 @@ struct wi_func wi_opt[] = {
 	{ 's', wi_setstr, WI_RID_NODENAME, NULL },
 	{ 't', wi_setword, WI_RID_TX_RATE, NULL },
 	{ 'A', wi_setword, WI_RID_CNFAUTHMODE, NULL },
+	{ 'D', wi_setword, WI_RID_SYMBOL_DIVERSITY, NULL },
 	{ 'M', wi_setword, WI_RID_MICROWAVE_OVEN, NULL },
 	{ 'P', wi_setword, WI_RID_PM_ENABLED, NULL },
 	{ 'R', wi_setword, WI_RID_ROAMING_MODE, NULL },
@@ -783,7 +785,7 @@ main(argc, argv)
 	}
 
 	while((ch = getopt(argc, argv,
-	    "a:c:d:e:f:hi:k:lm:n:op:q:r:s:t:v:A:M:S:P:R:T:")) != -1) {
+	    "a:c:d:e:f:hi:k:lm:n:op:q:r:s:t:v:A:D:M:S:P:R:T:")) != -1) {
 	        for (p = 0; ch && wi_opt[p].key; p++)
 		        if (ch == wi_opt[p].key) {
 				if (ch == 'p' && !isdigit(*optarg))
