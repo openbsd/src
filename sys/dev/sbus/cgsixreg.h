@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsixreg.h,v 1.2 2002/07/30 18:07:02 jason Exp $	*/
+/*	$OpenBSD: cgsixreg.h,v 1.3 2002/07/30 23:03:30 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -111,7 +111,7 @@ union bt_cmap {
 #define	CG6_FBC_ARECTX		0x900		/* rectangle drawing, x coord */
 #define	CG6_FBC_ARECTY		0x904		/* rectangle drawing, y coord */
 
-#define	FBC_MODE_MASK	(						\
+#define	FBC_MODE_VAL	(						\
 	  0x00200000 /* GX_BLIT_SRC */					\
 	| 0x00020000 /* GX_MODE_COLOR8 */				\
 	| 0x00008000 /* GX_DRAW_RENDER */				\
@@ -120,7 +120,7 @@ union bt_cmap {
 	| 0x00000200 /* GX_BREAD_0 */					\
 	| 0x00000080 /* GX_BDISP_0 */					\
 )
-#define FBC_MODE_VAL   (						\
+#define	FBC_MODE_MASK	(						\
 	  0x00300000 /* GX_BLIT_ALL */					\
 	| 0x00060000 /* GX_MODE_ALL */					\
 	| 0x00018000 /* GX_DRAW_ALL */					\

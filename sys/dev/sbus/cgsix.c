@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.25 2002/07/30 18:07:02 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.26 2002/07/30 23:03:30 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -319,13 +319,18 @@ cgsix_ioctl(v, cmd, data, flags, p)
 	struct wsdisplay_cmap *cm;
 	struct wsdisplay_fbinfo *wdf;
 	int error;
+	u_int mode;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
 		break;
 	case WSDISPLAYIO_SMODE:
-		sc->sc_mode = *(u_int *)data;
+		mode = *(u_int *)data;
+		if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL &&
+		    mode == WSDISPLAYIO_MODE_EMUL)
+			cgsix_ras_init(sc);
+		sc->sc_mode = mode;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
@@ -734,12 +739,8 @@ cgsix_ras_init(sc)
 	CG6_DRAIN(sc);
 	m = FBC_READ(sc, CG6_FBC_MODE);
 	m &= ~FBC_MODE_MASK;
-#if 0
-	/* XXX doesn't work as advertised */
-	FBC_WRITE(sc, CG6_FBC_MODE, m);
 	m |= FBC_MODE_VAL;
 	FBC_WRITE(sc, CG6_FBC_MODE, m);
-#endif
 }
 
 void
