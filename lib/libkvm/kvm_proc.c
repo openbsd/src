@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.15 2002/06/08 22:32:36 art Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.16 2002/06/20 17:16:56 art Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.15 2002/06/08 22:32:36 art Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.16 2002/06/20 17:16:56 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -712,31 +712,29 @@ kvm_arg_sysctl(kvm_t *kd, const struct kinfo_proc *kp, int nchr, int env)
 	    (kd->argbuf = _kvm_malloc(kd, orglen)) == NULL)
 		return (NULL);
 
-	for (;;) {
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_PROC_ARGS;
-		mib[2] = (int)kp->kp_proc.p_pid;
-		mib[3] = env ? KERN_PROC_ENV : KERN_PROC_ARGV;
+again:
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_PROC_ARGS;
+	mib[2] = (int)kp->kp_proc.p_pid;
+	mib[3] = env ? KERN_PROC_ENV : KERN_PROC_ARGV;
 
-		len = orglen;
-		ret = (sysctl(mib, 4, kd->argbuf, &len, NULL, 0) < 0);
-		if (ret && errno == ENOMEM) {
-			orglen += kd->nbpg;
-			buf = _kvm_realloc(kd, kd->argbuf, orglen);
-			if (buf == NULL)
-				return (NULL);
-			ret = 0;
-		} else
-			break;
-
-		if (ret) {
-			free(kd->argbuf);
-			kd->argbuf = NULL;
-			_kvm_syserr(kd, kd->program, "kvm_arg_sysctl");
+	len = orglen;
+	ret = (sysctl(mib, 4, kd->argbuf, &len, NULL, 0) < 0);
+	if (ret && errno == ENOMEM) {
+		orglen += kd->nbpg;
+		buf = _kvm_realloc(kd, kd->argbuf, orglen);
+		if (buf == NULL)
 			return (NULL);
-		}
+		kd->argbuf = buf;
+		goto again;
 	}
 
+	if (ret) {
+		free(kd->argbuf);
+		kd->argbuf = NULL;
+		_kvm_syserr(kd, kd->program, "kvm_arg_sysctl");
+		return (NULL);
+	}
 #if 0
 	for (argv = (char **)kd->argbuf; *argv != NULL; argv++)
 		if (strlen(*argv) > nchr)
