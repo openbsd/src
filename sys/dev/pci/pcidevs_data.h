@@ -3239,6 +3239,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "86C205",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_300,
+	    "300/305/630 VGA",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C501,
 	    "85C501",
 	},
