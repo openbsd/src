@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.44 2004/05/05 11:40:46 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.45 2004/05/05 13:21:49 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -264,11 +264,6 @@ main(int argc, char *argv[])
 	inaddr_any.s_addr = INADDR_ANY;
 
 	read_client_conf();
-	if ((fd = open(path_dhclient_db, O_RDONLY|O_EXLOCK|O_CREAT, 0)) == -1)
-		error("can't open and lock %s: %m", path_dhclient_db);
-	read_client_leases();
-	rewrite_client_leases();
-	close(fd);
 
 	if (!interface_link_status(ifi->name)) {
 		fprintf(stderr, "%s: no link ", ifi->name);
@@ -296,6 +291,12 @@ main(int argc, char *argv[])
 
 	close(pipe_fd[0]);
 	privfd = pipe_fd[1];
+
+	if ((fd = open(path_dhclient_db, O_RDONLY|O_EXLOCK|O_CREAT, 0)) == -1)
+		error("can't open and lock %s: %m", path_dhclient_db);
+	read_client_leases();
+	rewrite_client_leases();
+	close(fd);
 
 	priv_script_init("PREINIT", NULL);
 	if (ifi->client->alias)
