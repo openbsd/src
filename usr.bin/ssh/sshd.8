@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.58 2000/08/01 17:46:10 deraadt Exp $
+.\" $Id: sshd.8,v 1.59 2000/08/02 16:27:16 provos Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -383,9 +383,10 @@ Specifies whether Kerberos authentication is allowed.
 This can be in the form of a Kerberos ticket, or if
 .Cm PasswordAuthentication
 is yes, the password provided by the user will be validated through
-the Kerberos KDC.
+the Kerberos KDC.  To use this option, the server needs a 
+Kerberos servtab which allows the verification of the KDC's identity.
 Default is
-.Dq yes .
+.Dq no .
 .It Cm KerberosOrLocalPasswd
 If set then if password authentication through Kerberos fails then
 the password will be validated via any additional local mechanism
