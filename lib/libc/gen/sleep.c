@@ -32,98 +32,25 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sleep.c,v 1.6 1996/09/30 12:21:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sleep.c,v 1.7 1997/04/25 04:20:41 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/time.h>
-#include <signal.h>
-#include <unistd.h>
-
-static void sleephandler __P((int));
-static volatile int ringring;
 
 unsigned int
 sleep(seconds)
 	unsigned int seconds;
 {
-	struct itimerval itv, oitv;
-	struct sigaction act, oact;
-	struct timeval diff;
-	sigset_t set, oset;
+	struct timespec rqt, rmt;
 
-	if (!seconds)
-		return 0;
+	if (seconds == 0)
+		return(0);
 
-	sigemptyset(&set);
-	sigaddset(&set, SIGALRM);
-	sigprocmask(SIG_BLOCK, &set, &oset);
+	rqt.tv_sec = seconds;
+	rqt.tv_nsec = 0;
 
-	act.sa_handler = sleephandler;
-	act.sa_flags = 0;
-	sigemptyset(&act.sa_mask);
-	sigaction(SIGALRM, &act, &oact);
+	if (nanosleep(&rqt, &rmt) < 0)
+		;
 
-	timerclear(&itv.it_interval);
-	itv.it_value.tv_sec = seconds;
-	itv.it_value.tv_usec = 0;
-	timerclear(&diff);
-	setitimer(ITIMER_REAL, &itv, &oitv);
-
-	if (timerisset(&oitv.it_value)) {
-		if (timercmp(&oitv.it_value, &itv.it_value, >)) {
-			timersub(&oitv.it_value, &itv.it_value, &oitv.it_value);
-		} else {
-			/*
-			 * The existing timer was scheduled to fire 
-			 * before ours, so we compute the time diff
-			 * so we can add it back in the end.
-			 */
-			timersub(&itv.it_value, &oitv.it_value, &diff);
-			itv.it_value = oitv.it_value;
-			/*
-			 * This is a hack, but we must have time to return
-			 * from the setitimer after the alarm or else it'll
-			 * be restarted.  And, anyway, sleep never did
-			 * anything more than this before.
-			 */
-			oitv.it_value.tv_sec  = 1;
-			oitv.it_value.tv_usec = 0;
-
-			setitimer(ITIMER_REAL, &itv, NULL);
-		}
-	}
-
-	set = oset;
-	sigdelset(&set, SIGALRM);
-	ringring = 0;
- 	(void) sigsuspend(&set);
-
-	if (!ringring) {
-		struct itimerval nulltv;
-		/*
-		 * Interrupted by other signal; allow for pending 
-		 * SIGALRM to be processed before resetting handler,
-		 * after first turning off the timer.
-		 */
-		timerclear(&nulltv.it_interval);
-		timerclear(&nulltv.it_value);
-		(void) setitimer(ITIMER_REAL, &nulltv, &itv);
-	} else
-		timerclear(&itv.it_value);
-	sigprocmask(SIG_SETMASK, &oset, NULL);
-	sigaction(SIGALRM, &oact, NULL);
-	(void) setitimer(ITIMER_REAL, &oitv, NULL);
-
-	if (timerisset(&diff))
-		timeradd(&itv.it_value, &diff, &itv.it_value);
-
-	return (itv.it_value.tv_sec);
-}
-
-/* ARGSUSED */
-static void
-sleephandler(sig)
-	int sig;
-{
-	ringring = 1;
+	return(rmt.tv_sec);
 }
