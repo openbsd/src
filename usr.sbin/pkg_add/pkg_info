@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.17 2004/11/11 11:54:09 espie Exp $
+# $OpenBSD: pkg_info,v 1.18 2004/11/14 13:05:02 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -21,6 +21,7 @@ use warnings;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackageName;
 use OpenBSD::Getopt;
+use OpenBSD::Error;
 
 my $total_size = 0;
 my $pkgs = 0;
@@ -81,8 +82,8 @@ sub find_by_path
 	return @result;
 }
 
-our ($opt_c, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_L, $opt_m,
-    $opt_p, $opt_q, $opt_R, $opt_r, $opt_s, $opt_v, $opt_h, $opt_l, 
+our ($opt_c, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_K, $opt_L, 
+    $opt_m, $opt_p, $opt_q, $opt_R, $opt_r, $opt_s, $opt_v, $opt_h, $opt_l, 
     $opt_a, $opt_M, $opt_U, $opt_A);
 my $terse = 0;
 my $exit_code = 0;
@@ -153,12 +154,15 @@ sub print_info
 			} else {
 				$plist = OpenBSD::PackingList->fromfile($dir.CONTENTS, \&OpenBSD::PackingList::FilesOnly);
 			}
-			die "Bad packing list" unless defined $plist;
+			Fatal "Bad packing list" unless defined $plist;
 		}
 		if ($opt_L) {
 			print $opt_p, "Files:\n" unless $opt_q;
 			for my $item (@{$plist->{items}}) {
 				next unless $item->IsFile();
+				if ($opt_K) {
+					print '@', $item->keyword(), " ";
+				}
 				print $item->fullname(), "\n";
 			}
 			print "\n";
@@ -185,7 +189,7 @@ sub print_info
 	}
 }
 
-getopts('cDdfIikLmpqRrsvhe:MU:l:aA',
+getopts('cDdfIikKLmpqRrsvhe:MU:l:aA',
 	{'e' =>
 		sub {
 			my $pat = shift;
@@ -225,12 +229,16 @@ if (!defined $opt_p) {
 	$opt_p = "";
 }
 
+if ($opt_K && !$opt_L) {
+	Fatal "-K only makes sense with -L";
+}
+
 if (@ARGV == 0 && !$opt_a && !$opt_A) {
-	die "Missing package name(s)";
+	Fatal "Missing package name(s)";
 }
 
 if (@ARGV > 0 && ($opt_a || $opt_A)) {
-	die "Can't specify package name(s) with -a";
+	Fatal "Can't specify package name(s) with -a";
 }
 
 if (@ARGV == 0) {

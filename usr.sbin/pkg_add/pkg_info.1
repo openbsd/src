@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.8 2004/11/11 11:54:09 espie Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.9 2004/11/14 13:05:02 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,7 +25,7 @@
 .Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm pkg_info
-.Op Fl cDdfIikLmpqRrsvhMU
+.Op Fl cDdfIikKLmpqRrsvhMU
 .Op Fl e Ar package
 .Op Fl l Ar prefix
 .Ar pkg-name Op Ar ...
@@ -103,6 +103,10 @@ Show the index entry for each package.
 Show the install script (if any) for each package.
 .It Fl k
 Show the de-install script (if any) for each package.
+.It Fl K
+Prefix file names with category keyword (e.g., @file, @lib...).
+Always used together with
+.Fl L .
 .It Fl L
 Show the files within each package.
 This is different from just
