@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.306 2004/12/04 08:02:13 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.307 2004/12/04 16:07:31 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1917,7 +1917,7 @@ above.
 .El
 .Pp
 Multiple options can be specified, separated by commas:
-.Bd -literal
+.Bd -literal -offset indent
 pass in proto tcp from any to any \e
       port www flags S/SA keep state \e
       (max 100, source-track rule, max-src-nodes 75, \e
@@ -1967,7 +1967,7 @@ keyword kills all existing states originating from hosts exceeding these
 limits.
 For example, the following rules will protect the webserver against
 hosts making more than 100 connections in 10 seconds.
-Any host which connects faster than this rate will have it's address added
+Any host which connects faster than this rate will have its address added
 to the <bad_hosts> table and have all states originating from it flushed.
 Any new packets arriving from this host will be dropped unconditionally
 by the block rule.
@@ -1975,24 +1975,6 @@ by the block rule.
 block quick from <bad_hosts>
 pass in on $ext_if to $webserver port www flags S/SA keep state \e
 	(max-src-conn-rate 100/10, overflow <bad_hosts> flush)
-.Ed
-.Sh OPERATING SYSTEM FINGERPRINTING
-Passive OS Fingerprinting is a mechanism to inspect nuances of a TCP
-connection's initial SYN packet and guess at the host's operating system.
-Unfortunately these nuances are easily spoofed by an attacker so the
-fingerprint is not useful in making security decisions.
-But the fingerprint is typically accurate enough to make policy decisions
-.Pp
-For a list of all valid timeout names, see
-.Sx OPTIONS
-above.
-.Pp
-Multiple options can be specified, separated by commas:
-.Bd -literal
-pass in proto tcp from any to any \e
-      port www flags S/SA keep state \e
-      (max 100, source-track rule, max-src-nodes 75, \e
-      max-src-states 3, tcp.established 60, tcp.closing 5)
 .Ed
 .Sh OPERATING SYSTEM FINGERPRINTING
 Passive OS Fingerprinting is a mechanism to inspect nuances of a TCP
