@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.101 2004/06/14 05:24:04 mcbride Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.102 2004/08/10 20:11:04 markus Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -867,6 +867,8 @@ udp_ctlinput(cmd, sa, v)
 {
 	struct ip *ip = v;
 	struct udphdr *uhp;
+	struct in_addr faddr;
+	struct inpcb *inp;
 	extern int inetctlerrmap[];
 	void (*notify)(struct inpcb *, int) = udp_notify;
 	int errno;
@@ -875,6 +877,9 @@ udp_ctlinput(cmd, sa, v)
 		return NULL;
 	if (sa->sa_family != AF_INET ||
 	    sa->sa_len != sizeof(struct sockaddr_in))
+		return NULL;
+	faddr = satosin(sa)->sin_addr;
+	if (faddr.s_addr == INADDR_ANY)
 		return NULL;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
@@ -888,8 +893,10 @@ udp_ctlinput(cmd, sa, v)
 		return NULL;
 	if (ip) {
 		uhp = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		(void) in_pcbnotify(&udbtable, sa, uhp->uh_dport, ip->ip_src,
-		    uhp->uh_sport, errno, notify);
+		inp = in_pcbhashlookup(&udbtable,
+		    ip->ip_dst, uhp->uh_dport, ip->ip_src, uhp->uh_sport);
+		if (inp && inp->inp_socket != NULL)
+			notify(inp, errno);
 	} else
 		in_pcbnotifyall(&udbtable, sa, errno, notify);
 	return NULL;
