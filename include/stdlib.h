@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.14 2001/11/01 23:52:10 miod Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.15 2001/11/04 23:27:54 krw Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -186,7 +186,7 @@ int	 putenv __P((const char *));
 int	 setenv __P((const char *, const char *, int));
 void	 unsetenv __P((const char *));
 void	 setproctitle __P((const char *, ...))
-	__attribute__((__format__ (printf, 1, 2)));
+	__attribute__((__format__ (__printf__, 1, 2)));
 
 quad_t	 qabs __P((quad_t));
 qdiv_t	 qdiv __P((quad_t, quad_t));
