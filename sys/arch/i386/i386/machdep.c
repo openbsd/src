@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.225 2003/04/17 03:56:20 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.226 2003/04/30 22:37:11 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -312,6 +312,7 @@ int allowaperture = 0;
 #endif
 
 void	winchip_cpu_setup(const char *, int, int);
+void	amd_family5_setup(const char *, int, int);
 void	cyrix3_cpu_setup(const char *, int, int);
 void	cyrix6x86_cpu_setup(const char *, int, int);
 void	natsem6x86_cpu_setup(const char *, int, int);
@@ -766,7 +767,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"K6-2+/III+", 0, 0,
 				"K5 or K6"		/* Default */
 			},
-			NULL
+			amd_family5_setup
 		},
 		/* Family 6 */
 		{
@@ -1180,6 +1181,29 @@ intel586_cpu_setup(cpu_device, model, step)
 	fix_f00f();
 	printf("%s: F00F bug workaround installed\n", cpu_device);
 #endif
+}
+
+void
+amd_family5_setup(cpu_device, model, step)
+	const char *cpu_device;
+	int model, step;
+{
+	switch (model) {
+	case 0:         /* AMD-K5 Model 0 */
+		/*
+		 * According to the AMD Processor Recognition App Note,
+		 * the AMD-K5 Model 0 uses the wrong bit to indicate
+		 * support for global PTEs, instead using bit 9 (APIC)
+		 * rather than bit 13 (i.e. "0x200" vs. 0x2000".  Oops!).
+		 */
+		if (cpu_feature & CPUID_APIC)
+			cpu_feature = (cpu_feature & ~CPUID_APIC) | CPUID_PGE;
+		/*
+		 * XXX But pmap_pg_g is already initialized -- need to kick
+		 * XXX the pmap somehow.  How does the MP branch do this?
+		 */
+		break;
+	}
 }
 
 void
