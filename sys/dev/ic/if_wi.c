@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.109 2004/05/31 19:32:30 mcbride Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.110 2004/06/22 20:48:00 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.109 2004/05/31 19:32:30 mcbride Exp $";
+	"$OpenBSD: if_wi.c,v 1.110 2004/06/22 20:48:00 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1519,7 +1519,7 @@ wi_setdef(sc, wreq)
 	case WI_RID_SYMBOL_DIVERSITY:
 		sc->wi_diversity = letoh16(wreq->wi_val[0]);
 		break;
-	case WI_RID_CNF_ENH_SECURITY:
+	case WI_RID_ENH_SECURITY:
 		sc->wi_enh_security = letoh16(wreq->wi_val[0]);
 		break;
 	case WI_RID_ENCRYPTION:
@@ -1757,7 +1757,7 @@ wi_ioctl(ifp, command, data)
 		case WI_RID_CREATE_IBSS:
 		case WI_RID_MICROWAVE_OVEN:
 		case WI_RID_OWN_SSID:
-		case WI_RID_CNF_ENH_SECURITY:
+		case WI_RID_ENH_SECURITY:
 			/*
 			 * Check for features that may not be supported
 			 * (must be just before default case).
@@ -1770,7 +1770,7 @@ wi_ioctl(ifp, command, data)
 			    !(sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)) ||
 			    (wreq.wi_type == WI_RID_MICROWAVE_OVEN &&
 			    !(sc->wi_flags & WI_FLAGS_HAS_MOR)) ||
-			    (wreq.wi_type == WI_RID_CNF_ENH_SECURITY &&
+			    (wreq.wi_type == WI_RID_ENH_SECURITY &&
 			    !(sc->wi_flags & WI_FLAGS_HAS_ENH_SECURITY)) ||
 			    (wreq.wi_type == WI_RID_OWN_SSID &&
 			    wreq.wi_len != 0))
@@ -1916,7 +1916,7 @@ wi_init_io(sc)
 
 	/* Set Enhanced Security if supported. */
 	if (sc->wi_flags & WI_FLAGS_HAS_ENH_SECURITY)
-		WI_SETVAL(WI_RID_CNF_ENH_SECURITY, sc->wi_enh_security);
+		WI_SETVAL(WI_RID_ENH_SECURITY, sc->wi_enh_security);
 
 	/* Set Roaming Mode unless this is a Symbol card. */
 	if (sc->wi_flags & WI_FLAGS_HAS_ROAMING)
