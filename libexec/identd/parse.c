@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.41 2005/01/04 18:19:26 moritz Exp $	*/
+/*	$OpenBSD: parse.c,v 1.42 2005/04/04 08:55:36 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -22,7 +22,6 @@
 #include <errno.h>
 #include <ctype.h>
 #include <pwd.h>
-#include <nlist.h>
 #include <unistd.h>
 
 #include "identd.h"

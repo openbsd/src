@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.53 2004/09/23 21:10:21 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.54 2005/04/04 08:54:33 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.53 2004/09/23 21:10:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.54 2005/04/04 08:54:33 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -55,7 +55,6 @@ static char rcsid[] = "$OpenBSD: vmstat.c,v 1.53 2004/09/23 21:10:21 deraadt Exp
 
 #include <ctype.h>
 #include <err.h>
-#include <nlist.h>
 #include <paths.h>
 #include <signal.h>
 #include <stdlib.h>
