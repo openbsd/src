@@ -1,0 +1,118 @@
+#	$OpenBSD: files.hppa,v 1.1 1998/07/02 20:48:44 mickey Exp $
+#
+# hppa-specific configuration info
+
+# maxpartitions must be the first item in files.${ARCH}
+maxpartitions 16
+
+maxusers 2 8 64
+
+# NOTE!  The order of these lines is significant!  Don't change them
+# unless you absolutely know what you're doing!
+
+#
+# Mainbus
+#
+
+define	mainbus { }
+device	mainbus: gscbus, eisabus, pcibus
+attach	mainbus at root
+file	arch/hppa/hppa/mainbus.c	mainbus
+
+# generic HP devices
+#include	"../../../dev/hp/file.hp"
+
+major	{ccd = 1}
+major	{vnd = 2}
+
+#
+# Machine-independent SCSI drivers
+#
+
+include "scsi/files.scsi"
+major { sd = 4 }
+major { st = 5 }
+major { cd = 6 }
+
+# RAM disk
+pseudo-device rd
+file	dev/ramdisk.c			rd needs-flag
+file	arch/hppa/dev/rd_root.c		ramdisk_hooks
+major	{rd = 3}
+
+# 
+# raster console routines
+#
+
+define  raster
+include "dev/rcons/files.rcons"
+
+# 
+# "workstation console" routines
+#
+
+include "dev/wscons/files.wscons"
+
+#
+# GSC bus devices
+#
+device	gsc {[scode = -1]}
+attach	gsc at gscbus
+file	arch/hppa/dev/gscbus.c		gsc
+
+device	dca: tty
+attach	dca at gsc
+file	arch/hppa/dev/dca.c		dca needs-flag
+
+device	gkd
+attach	gkd at gsc
+file	arch/hppa/dev/gkd.c		gkd needs-flag
+
+device	sti: raster, wsconsdev
+attach	sti at gsc
+file	arch/hppa/dev/sti.c		sti needs-flag
+
+device	ciolan: ether
+attach	ciolan at gsc
+file	arch/hppa/dev/ciolan.c		ciolan
+
+device	lan: ether
+attach	lan at gsc
+file	arch/hppa/dev/if_i596.c		lan
+
+device	medusa: fddi
+attach	medusa at gsc
+file	arch/hppa/dev/medusa.c		medusa
+
+#
+# HP-UX binary compatibility
+#
+include "compat/hpux/files.hpux"
+file	arch/hppa/hppa/hpux_machdep.c		compat_hpux
+
+# FP emulation
+include "arch/hppa/spmath/files.spmath"
+
+#
+# Non-device files
+#
+
+file	arch/hppa/hppa/autoconf.c
+file	arch/hppa/hppa/conf.c
+file	arch/hppa/hppa/db_memrw.c		ddb
+file	arch/hppa/hppa/machdep.c
+file	arch/hppa/hppa/mem.c
+file	arch/hppa/hppa/movc.S
+file	arch/hppa/hppa/cswtch.S
+file	arch/hppa/hppa/pmap.c
+file	arch/hppa/hppa/sys_machdep.c
+file	arch/hppa/hppa/trap.c
+file	arch/hppa/hppa/vm_machdep.c
+file	arch/hppa/hppa/disksubr.c
+file	arch/hppa/dev/dma.c
+file	arch/hppa/dev/clock.c
+file	netinet/in_cksum.c			inet
+
+file	dev/cons.c
+file	dev/cninit.c
+
