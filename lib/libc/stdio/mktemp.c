@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mktemp.c,v 1.2 1996/08/19 08:32:55 tholo Exp $";
+static char rcsid[] = "$OpenBSD: mktemp.c,v 1.3 1996/12/28 02:33:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -54,12 +54,25 @@ mkstemp(path)
 	return (_gettemp(path, &fd) ? fd : -1);
 }
 
+char *_mktemp __P((char *));
+
 char *
-mktemp(path)
+_mktemp(path)
 	char *path;
 {
 	return(_gettemp(path, (int *)NULL) ? path : (char *)NULL);
 }
+
+__warn_references(mktemp,
+    "warning: mktemp() possibly used unsafely; consider using mkstemp()");
+
+char *
+mktemp(path)
+	char *path;
+{
+	return(_mktemp(path));
+}
+
 
 static int
 _gettemp(path, doopen)
