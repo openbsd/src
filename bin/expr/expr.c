@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.8 1997/09/01 18:29:33 deraadt Exp $	*/
+/*	$OpenBSD: expr.c,v 1.9 1997/11/13 07:57:17 deraadt Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -175,7 +175,8 @@ is_zero_or_null(vp)
 }
 
 void
-nexttoken()
+nexttoken(pat)
+	int pat;
 {
 	char	       *p;
 
@@ -185,7 +186,8 @@ nexttoken()
 	}
 	av++;
 
-	if (p[0] != '\0') {
+	
+	if (pat == 0 && p[0] != '\0') {
 		if (p[1] == '\0') {
 			const char     *x = "|&=<>+-*/%:()";
 			char	       *i;	/* index */
@@ -227,18 +229,18 @@ eval6()
 	struct val     *v;
 
 	if (token == OPERAND) {
-		nexttoken();
+		nexttoken(0);
 		return tokval;
 
 	} else if (token == RP) {
-		nexttoken();
+		nexttoken(0);
 		v = eval0();
 
 		if (token != LP) {
 			error();
 			/* NOTREACHED */
 		}
-		nexttoken();
+		nexttoken(0);
 		return v;
 	} else {
 		error();
@@ -259,7 +261,7 @@ eval5()
 
 	l = eval6();
 	while (token == MATCH) {
-		nexttoken();
+		nexttoken(1);
 		r = eval6();
 
 		/* coerce to both arguments to strings */
@@ -310,7 +312,7 @@ eval4()
 
 	l = eval5();
 	while ((op = token) == MUL || op == DIV || op == MOD) {
-		nexttoken();
+		nexttoken(0);
 		r = eval5();
 
 		if (!to_integer(l) || !to_integer(r)) {
@@ -345,7 +347,7 @@ eval3()
 
 	l = eval4();
 	while ((op = token) == ADD || op == SUB) {
-		nexttoken();
+		nexttoken(0);
 		r = eval4();
 
 		if (!to_integer(l) || !to_integer(r)) {
@@ -373,8 +375,9 @@ eval2()
 	int		v = 0, li, ri;
 
 	l = eval3();
-	while ((op = token) == EQ || op == NE || op == LT || op == GT || op == LE || op == GE) {
-		nexttoken();
+	while ((op = token) == EQ || op == NE || op == LT || op == GT ||
+	    op == LE || op == GE) {
+		nexttoken(0);
 		r = eval3();
 
 		if (is_integer(l, &li) && is_integer(r, &ri)) {
@@ -444,7 +447,7 @@ eval1()
 
 	l = eval2();
 	while (token == AND) {
-		nexttoken();
+		nexttoken(0);
 		r = eval2();
 
 		if (is_zero_or_null(l) || is_zero_or_null(r)) {
@@ -467,7 +470,7 @@ eval0()
 
 	l = eval1();
 	while (token == OR) {
-		nexttoken();
+		nexttoken(0);
 		r = eval1();
 
 		if (is_zero_or_null(l)) {
@@ -492,7 +495,7 @@ main(argc, argv)
 	(void) setlocale(LC_ALL, "");
 	av = argv + 1;
 
-	nexttoken();
+	nexttoken(0);
 	vp = eval0();
 
 	if (token != EOI) {
