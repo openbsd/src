@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.17 2000/09/21 12:03:12 espie Exp $	*/
+/*	$OpenBSD: ld.c,v 1.18 2001/07/08 17:49:44 espie Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -1437,11 +1437,14 @@ enter_global_ref(lsp, name, entry)
 		} else {
 			if ((entry->flags & E_DYNAMIC) == 0)
 				global_alias_count++;
+			if (sp->flags & GS_REFERENCED) {
+				if (!(sp->alias->flags & GS_REFERENCED)) {
+				    sp->alias->flags |= GS_REFERENCED;
+				    if (!sp->alias->defined)
+					undefined_global_sym_count++;
+				}
+			}
 		}
-#if 0
-		if (sp->flags & GS_REFERENCED)
-			sp->alias->flags |= GS_REFERENCED;
-#endif
 	}
 
 	if (entry->flags & E_DYNAMIC) {
