@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.16 2001/06/24 01:58:13 marc Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.17 2001/06/24 22:24:00 provos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -67,7 +67,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.16 2001/06/24 01:58:13 marc Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.17 2001/06/24 22:24:00 provos Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -140,11 +140,12 @@ wi_printstr(wreq)
 	struct wi_req		*wreq;
 {
 	char			*ptr;
-	int			i;
+	int			i, max;
 
 	if (wreq->wi_type == WI_RID_SERIALNO) {
 		ptr = (char *)&wreq->wi_val;
-		for (i = 0; i < (wreq->wi_len - 1) * 2; i++) {
+		max = MIN(sizeof(wreq->wi_val) - 1, (wreq->wi_len - 1) * 2);
+		for (i = 0; i < max; i++) {
 			if (ptr[i] == '\0')
 				ptr[i] = ' ';
 		}
@@ -152,7 +153,8 @@ wi_printstr(wreq)
 		int len = letoh16(wreq->wi_val[0]);
 
 		ptr = (char *)&wreq->wi_val[1];
-		for (i = 0; i < len; i++) {
+		max = MIN(sizeof(wreq->wi_val) - 1, len);
+		for (i = 0; i < max; i++) {
 			if (ptr[i] == '\0')
 				ptr[i] = ' ';
 		}
