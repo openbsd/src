@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ep.4,v 1.2 1998/09/26 22:42:52 fgsch Exp $
+.\"	$OpenBSD: ep.4,v 1.3 1998/09/27 20:37:05 deraadt Exp $
 .\"
 .\" Copyright (c) 1994 Herb Peyerl
 .\" All rights reserved.
@@ -64,8 +64,9 @@ UTP, switchable between 10 and 100 Mbps
 Various models of the
 .Nm
 support different media types or connectors.
-The supported media types are:
-.Bl -tag -width xxxxxxxxxxxxxx -offset indent
+Therefore, the default media type varies based on the model of card.
+The supported media types are as follows.
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxxx
 .It media autoselect
 Attempt to autoselect the media type
 .It media 100baseTX mediaopt full-duplex
@@ -81,7 +82,7 @@ Use 10base5 (Thin-net), half duplex
 .It media 10base2 Op mediaopt half-duplex
 Use 10base2 (Thick-net), half duplex
 .El
-The default media type varies based on the model of card.
+.Pp
 .Pp
 If there are multiple cards in the computer, they are searched for
 in the following order:
@@ -114,8 +115,6 @@ Some models of 3c5x9 have all three connectors on them.
 In the case of these cards; you must configure the transceiver type
 with the 3Com supplied DOS configuration disk before the link0/link1
 flags will operate correctly.
-.Pp
-Plug and Play mode must currently be disabled on these cards.
 .Pp
 Do not specify link flags for the 3c905.
 If you can not get this card to work, try running the 3Com supplied DOS
