@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.14 1998/09/05 16:33:25 millert Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.15 1998/09/24 06:24:20 millert Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -214,7 +214,6 @@ kmem_setup()
 	kvm_t	*kd_kern;
 	char	errbuf[_POSIX2_LINE_MAX];
 	int	i, hdrsz;
-	struct stat st;
 	
 	/*
 	 * Some names we need for the currently running system, others for
@@ -265,18 +264,6 @@ kmem_setup()
 	dumpfd = Open(ddname, O_RDWR);
 
 	dump_sys = kernel ? kernel : _PATH_UNIX;
-
-	/* If no dumpsys, check for dumpsys.gz */
-	if (stat(dump_sys, &st) == -1) {
-		char *gzpath;
-
-		asprintf(&gzpath, "%s.gz", dump_sys);
-		if (stat(gzpath, &st) == -1) {
-			syslog(LOG_ERR, "%s: %m", dump_sys);
-			exit(1);
-		}
-		kernel = dump_sys = gzpath;
-	}
 
 	kd_dump = kvm_openfiles(dump_sys, ddname, NULL, O_RDWR, errbuf);
 	if (kd_dump == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore_old.c,v 1.10 1998/09/05 16:33:25 millert Exp $	*/
+/*	$OpenBSD: savecore_old.c,v 1.11 1998/09/24 06:24:20 millert Exp $	*/
 /*	$NetBSD: savecore_old.c,v 1.1.1.1 1996/03/16 10:25:11 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.10 1998/09/05 16:33:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.11 1998/09/24 06:24:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,6 @@ kmem_setup()
 	FILE *fp;
 	int kmem, i;
 	char *dump_sys, *current_sys;
-	struct stat st;
 	
 	/*
 	 * Some names we need for the currently running system, others for
@@ -235,18 +234,6 @@ kmem_setup()
 		}
 
 	dump_sys = kernel ? kernel : _PATH_UNIX;
-
-	/* If no dumpsys, check for dumpsys.gz */
-	if (stat(dump_sys, &st) == -1) {
-		char *gzpath;
-
-		asprintf(&gzpath, "%s.gz", dump_sys);
-		if (stat(gzpath, &st) == -1) {
-			syslog(LOG_ERR, "%s: %m", dump_sys);
-			exit(1);
-		}
-		kernel = dump_sys = gzpath;
-	}
 
 	if ((nlist(dump_sys, dump_nl)) == -1)
 		syslog(LOG_ERR, "%s: nlist: %s", dump_sys, strerror(errno));
