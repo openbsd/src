@@ -1,4 +1,4 @@
-.\"	$OpenBSD: date.1,v 1.14 1998/09/14 22:31:09 aaron Exp $
+.\"	$OpenBSD: date.1,v 1.15 1998/11/11 22:27:03 aaron Exp $
 .\"	$NetBSD: date.1,v 1.12 1996/03/12 04:32:37 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -60,7 +60,7 @@ Only the superuser may set the date.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl d
+.It Fl d Ar dst
 Set the kernel's value for daylight saving time.
 If
 .Ar dst
@@ -87,7 +87,7 @@ from setting the time for other than the current machine.
 Print out (in specified format) the date and time represented by
 .Ar seconds
 from the Epoch.
-.It Fl t
+.It Fl t Ar minutes_west
 Set the kernel's value for minutes west of
 .Tn GMT .
 .Ar minutes_west
@@ -101,7 +101,9 @@ Display or set the date in
 (universal) time.
 .El
 .Pp
-An operand with a leading plus (``+'') sign signals a user-defined format
+An operand with a leading plus sign
+.Pq Sq +
+signals a user-defined format
 string which specifies the format in which to display the date and time.
 The format string may contain any of the conversion specifications described
 in the 
@@ -111,7 +113,7 @@ A <newline> character is always output after the characters specified by
 the format string.
 The format string for the default display is:
 .Bd -literal -offset indent
-``%a %b %e %H:%M:%S %Z %Y''.
+.Dq %a %b %e %H:%M:%S %Z %Y
 .Ed
 .Pp
 If an operand does not have a leading plus sign, it is interpreted as
@@ -206,9 +208,9 @@ require more than a few seconds.
 On these occasions,
 .Nm
 prints:
-.Ql Network time being set .
+.Dq Network time being set .
 The message
-.Ql Communication error with timed
+.Dq Communication error with timed
 occurs when the communication
 between
 .Nm
