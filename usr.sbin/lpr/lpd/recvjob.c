@@ -146,7 +146,8 @@ readjob()
 		do {
 			if ((size = read(1, cp, 1)) != 1) {
 				if (size < 0)
-					frecverr("%s: Lost connection",printer);
+					frecverr("%s: Lost connection",
+					    printer);
 				return(nfiles);
 			}
 		} while (*cp++ != '\n');
@@ -170,7 +171,8 @@ readjob()
 			 * returns
 			 */
 			strcpy(cp + 6, from);
-			strcpy(tfname, cp);
+			strncpy(tfname, cp, sizeof tfname-1);
+			tfname[sizeof tfname-1] = '\0';
 			tfname[0] = 't';
 			if (!chksize(size)) {
 				(void) write(1, "\2", 1);
@@ -197,7 +199,8 @@ readjob()
 				(void) write(1, "\2", 1);
 				continue;
 			}
-			(void) strcpy(dfname, cp);
+			(void) strncpy(dfname, cp, sizeof dfname-1);
+			dfname[sizeof dfname-1] = '\0';
 			if (index(dfname, '/'))
 				frecverr("readjob: %s: illegal path name",
 					dfname);
