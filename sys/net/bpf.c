@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.40 2003/10/22 18:42:40 canacar Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.41 2003/10/24 04:26:16 canacar Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -105,9 +105,9 @@ bpf_movein(uio, linktype, mp, sockp, filter)
 {
 	struct mbuf *m;
 	int error;
-	int len;
-	int hlen;
-	int slen; /* XXX  u_int ? */
+	u_int hlen;
+	u_int len;
+	u_int slen;
 
 	/*
 	 * Build a sockaddr based on the data link layer type.
@@ -168,7 +168,7 @@ bpf_movein(uio, linktype, mp, sockp, filter)
 	}
 
 	len = uio->uio_resid;
-	if ((unsigned)len > MCLBYTES)
+	if (len > MCLBYTES)
 		return (EIO);
 
 	MGETHDR(m, M_WAIT, MT_DATA);
@@ -190,7 +190,7 @@ bpf_movein(uio, linktype, mp, sockp, filter)
 		goto bad;
 
 	slen = bpf_filter(filter, mtod(m, u_char *), len, len);
-	if (slen == 0 || slen < len) {
+	if (slen < len) {
 		error = EPERM;
 		goto bad;
 	}
