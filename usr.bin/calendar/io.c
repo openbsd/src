@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.4 1998/03/30 06:59:27 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.5 1998/11/08 04:31:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.4 1998/03/30 06:59:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.5 1998/11/08 04:31:13 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,11 +93,13 @@ cal()
 	register char *p;
 	FILE *fp;
 	int ch, l;
-	int month;
-	int day;
 	int var;
 	char buf[2048 + 1];
+	struct event *events, *cur_evt, *tmp;
+	struct match *m;
 
+	events = NULL;
+	cur_evt = NULL;
 	if ((fp = opencal()) == NULL)
 		return;
 	for (printing = 0; fgets(buf, sizeof(buf), stdin) != NULL;) {
@@ -134,34 +136,73 @@ cal()
 			continue;
 		}
 		if (buf[0] != '\t') {
-			printing = isnow(buf, &month, &day, &var) ? 1 : 0;
+			printing = (m = isnow(buf)) ? 1 : 0;
 			if ((p = strchr(buf, '\t')) == NULL)
 				continue;
+			/* Need the following to catch hardwired "variable"
+			 * dates */
 			if (p > buf && p[-1] == '*')
 				var = 1;
+			else
+				var = 0;
 			if (printing) {
 				struct tm tm;
-				char dbuf[30];
+				struct match *foo;
+				char *dsc;
+				
+				dsc = NULL;
+				while (m) {
+				cur_evt = (struct event *) malloc(sizeof(struct event));
+				if (cur_evt == NULL)
+					errx(1, "cannot allocate memory");
 
 				tm.tm_sec = 0;  /* unused */
 				tm.tm_min = 0;  /* unused */
-				tm.tm_hour = 0; /* unused */
+				tm.tm_hour = 12; /* unused */
 				tm.tm_wday = 0; /* unused */
-				tm.tm_mon = month - 1;
-				tm.tm_mday = day;
-				tm.tm_year = tp->tm_year; /* unused */
+				tm.tm_mon = m->month - 1;
+				tm.tm_mday = m->day;
+				tm.tm_year = m->year;
 				tm.tm_isdst = tp->tm_isdst; /* unused */
 				tm.tm_gmtoff = tp->tm_gmtoff; /* unused */
 				tm.tm_zone = tp->tm_zone; /* unused */
-				(void)strftime(dbuf, sizeof(dbuf), "%a %b %d",
-				    &tm);
-				(void)fprintf(fp, "%s%c%s\n",
-				    dbuf + 4/* skip weekdays */,
-				    var ? '*' : ' ', p);
+				(void)strftime(cur_evt->print_date,
+				    sizeof(cur_evt->print_date) - 1,
+				/*    "%a %b %d", &tm);  Skip weekdays */
+				    "%b %d", &tm);
+				strcat(cur_evt->print_date,
+				    (var + m->var) ? "*" : " ");
+				cur_evt->when = mktime(&tm);
+				if (dsc)
+					cur_evt->desc = dsc;
+				else {
+					if ((cur_evt->desc = strdup(p)) == NULL)
+						errx(1, "cannot allocate memory");
+					dsc = cur_evt->desc;
+				}
+				insert(&events, cur_evt);
+				foo = m;
+				m = m->next;
+				free(foo);
+				}
 			}
 		}
-		else if (printing)
-			fprintf(fp, "%s\n", buf);
+		else if (printing) {
+			if ((cur_evt->desc = realloc(cur_evt->desc,
+			    (2 + strlen(cur_evt->desc) + strlen(buf)))) == NULL)
+				errx(1, "cannot allocate memory");
+			strcat(cur_evt->desc, "\n");
+			strcat(cur_evt->desc, buf);
+		}
+	}
+	tmp = events;
+	while (tmp) {
+		(void)fprintf(fp, "%s%s\n", tmp->print_date, tmp->desc);
+		/* Can't free descriptions since they may be shared */
+		(void)realloc(tmp->desc, 0);
+		events = tmp;
+		tmp = tmp->next;
+		free(events);
 	}
 	closecal(fp);
 }
@@ -344,4 +385,37 @@ closecal(fp)
 done:	(void)fclose(fp);
 	(void)unlink(path);
 	while (wait(&status) >= 0);
+}
+
+
+void
+insert(head, cur_evt)
+	struct event **head;
+	struct event *cur_evt;
+{
+	struct event *tmp, *tmp2;
+
+	if (*head) {
+		/* Insert this one in order */
+		tmp = *head;
+		tmp2 = NULL;
+		while (tmp->next &&
+		    tmp->when <= cur_evt->when) {
+			tmp2 = tmp;
+			tmp = tmp->next;
+		}
+		if (tmp->when > cur_evt->when) {
+			cur_evt->next = tmp;
+			if (tmp2)
+				tmp2->next = cur_evt;
+			else
+				*head = cur_evt;
+		} else {
+			cur_evt->next = tmp->next;
+			tmp->next = cur_evt;
+		}
+	} else {
+		*head = cur_evt;
+		cur_evt->next = NULL;
+	}
 }

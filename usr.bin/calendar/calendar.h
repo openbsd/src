@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.h,v 1.2 1998/03/30 06:59:24 deraadt Exp $	*/
+/*	$OpenBSD: calendar.h,v 1.3 1998/11/08 04:31:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,6 +41,23 @@ extern struct tm *tp;
 extern char *calendarFile;
 extern char *optarg;
 
+struct fixs {
+	char *name;
+	int len;
+};
+
+struct event {
+	time_t	when;
+	char	print_date[31];
+	char	*desc;
+	struct event	*next;
+};
+
+struct match {
+	int year, month, day, var;
+	struct match *next;
+};
+
 void	 cal __P((void));
 void	 closecal __P((FILE *));
 int	 getday __P((char *));
@@ -50,7 +67,8 @@ int	 getmonth __P((char *));
 int	 geteaster __P((char *, int));
 int      getpaskha __P((char *, int));
 int      easter __P((int));
-int	 isnow __P((char *, int *, int *, int *));
+void	 insert __P((struct event **, struct event *));
+struct match	*isnow __P((char *));
 FILE	*opencal __P((void));
 void	 settime __P((time_t));
 time_t   Mktime __P((char *));
@@ -65,8 +83,3 @@ void     setnnames __P((void));
 
 extern int f_dayAfter;	/* days after current date */
 extern int f_dayBefore;	/* days before current date */
-
-struct fixs {
-	char *name;
-	int len;
-};

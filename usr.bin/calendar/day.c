@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.5 1998/11/04 11:32:02 pjanzen Exp $	*/
+/*	$OpenBSD: day.c,v 1.6 1998/11/08 04:31:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.5 1998/11/04 11:32:02 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: day.c,v 1.6 1998/11/08 04:31:13 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -231,14 +231,13 @@ time_t Mktime (date)
  * following a line that is matched, that starts with "whitespace", is shown
  * along with the matched line.
  */
-int
-isnow(endp, monthp, dayp, varp)
+struct match *
+isnow(endp)
 	char	*endp;
-	int	*monthp;
-	int	*dayp;
-	int	*varp;
 {
 	int day, flags = 0, month = 0, v1, v2;
+	int monthp, dayp, varp;
+	struct match *matches;
 
 	/*
 	 * CONVENTION
@@ -253,7 +252,7 @@ isnow(endp, monthp, dayp, varp)
 	/* read first field */
 	/* didn't recognize anything, skip it */
 	if (!(v1 = getfield(endp, &endp, &flags)))
-		return (0);
+		return (NULL);
 
 	/* Easter or Easter depending days */
 	if (flags & F_EASTER)
@@ -297,7 +296,7 @@ isnow(endp, monthp, dayp, varp)
 		if (flags & F_ISMONTH) {
 			day = v1;
 			month = v2;
-			*varp = 0;
+			varp = 0;
 		}
 
 		/* {Month} {Weekday,Day} ...  */
@@ -306,7 +305,7 @@ isnow(endp, monthp, dayp, varp)
 			month = v1;
 			/* if no recognizable day, assume the first */
 			day = v2 ? v2 : 1;
-			*varp = 0;
+			varp = 0;
 		}
 	}
 
@@ -319,7 +318,7 @@ isnow(endp, monthp, dayp, varp)
 	    fprintf(stderr, "\nday: %d %s month %d\n", day, endp, month);
 #endif
 
-	    *varp = 1;
+	    varp = 1;
 	    /* variable weekday, SundayLast, MondayFirst ... */
 	    if (day < 0 || day >= 10) {
 
@@ -356,36 +355,45 @@ isnow(endp, monthp, dayp, varp)
 #endif
 	    }
 	    }
+	    else
+		    day = tp->tm_mday + (((day - 1) - tp->tm_wday + 7) % 7);
 	}
 
 	if (!(flags & F_EASTER)) {
-	    *monthp = month;
-	    *dayp = day;
+	    monthp = month;
+	    dayp = day;
 	    day = cumdays[month] + day;
 	}
 	else {
 	    for (v1 = 0; day > cumdays[v1]; v1++)
 		;
-	    *monthp = v1 - 1;
-	    *dayp = day - cumdays[v1 - 1];
-	    *varp = 1;
+	    monthp = v1 - 1;
+	    dayp = day - cumdays[v1 - 1];
+	    varp = 1;
 	}
 
 #if DEBUG
-	fprintf(stderr, "day2: day %d(%d) yday %d\n", *dayp, day, tp->tm_yday);
+	fprintf(stderr, "day2: day %d(%d) yday %d\n", dayp, day, tp->tm_yday);
 #endif
 	/* if today or today + offset days */
-	if (day >= tp->tm_yday - f_dayBefore &&
-	    day <= tp->tm_yday + offset + f_dayAfter)
-		return (1);
+	if ((day >= tp->tm_yday - f_dayBefore &&
+	    day <= tp->tm_yday + offset + f_dayAfter) ||
 
 	/* if number of days left in this year + days to event in next year */
-	if (yrdays - tp->tm_yday + day <= offset + f_dayAfter ||
+	   (yrdays - tp->tm_yday + day <= offset + f_dayAfter ||
 	    /* a year backward, eg. 6 Jan and 10 days before -> 27. Dec */
 	    tp->tm_yday + day - f_dayBefore < 0
-	    )
-		return (1);
-	return (0);
+	    )) {
+		if ((matches = malloc(sizeof(struct match))) == NULL)
+			errx(1,"cannot allocate memory");
+		matches->month = monthp;
+		matches->day   = dayp;
+		matches->var   = varp;
+		matches->year  = tp->tm_year;	/* XXX */
+		matches->next  = NULL;
+		return (matches);
+	}
+	return (NULL);
 }
 
 
