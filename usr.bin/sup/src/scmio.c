@@ -1,4 +1,4 @@
-/*	$OpenBSD: scmio.c,v 1.7 2001/05/04 22:16:16 millert Exp $	*/
+/*	$OpenBSD: scmio.c,v 1.8 2001/05/07 02:06:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -444,11 +444,14 @@ readdata(count, data)		/* read raw data from network */
 	char *p;
 	int n, m, x;
 	int tries;
+	struct timeval timout;
+	static fd_set *readfds;
 	static int bufcnt = 0;
 	static char *bufptr;
 	static char buffer[FILEXFER];
-	static int imask;
-	static struct timeval timout;
+
+	if (readfds)
+		free(readfds);
 
 	if (count < 0) {
 		if (bufptr + count < buffer)
@@ -480,15 +483,22 @@ readdata(count, data)		/* read raw data from network */
 	p = buffer;
 	n = FILEXFER;
 	m = count;
+	readfds = (fd_set *) calloc(howmany(netfile+1, NFDBITS),
+	    sizeof(fd_mask));
+	if (readfds == NULL)
+		return (SCMERR);
 	while (m > 0) {
 		tries = 0;
 		for (;;) {
-			/* XXX - bad select usage, fixme! (millert) */
-			imask = 1 << netfile;
-			if (select(32,(fd_set *)&imask,(fd_set *)0,(fd_set *)0,&timout) < 0)
-				imask = 1;
+			FD_SET(netfile, readfds);
+			if (select(netfile+1, readfds, NULL, NULL, &timout)
+			    == -1) {
+				if (errno == EINTR || errno == EAGAIN)
+					continue;
+				return (scmerr(errno, "Select error on network"));
+			}
 			errno = 0;
-			if (imask)
+			if (FD_ISSET(netfile, readfds))
 				x = read(netfile, p, n);
 			else
 				return (scmerr(-1, "Timeout on network input"));
@@ -757,26 +767,27 @@ int readmstr(msg, buf)		/* read string message */
 void
 crosspatch()
 {
-	fd_set ibits, obits, xbits;
+	fd_set *readfds;
+	size_t rfdsize;
 	int c;
 	char buf[STRINGLENGTH];
 
-	/* XXX - bad select usage--fixme! (millert) */
+	rfdsize = howmany(netfile+1, NFDBITS) * sizeof(fd_mask);
+	if ((readfds = (fd_set *) malloc(rfdsize)) == NULL)
+		return;
 	for (;;) {
-		FD_ZERO(&ibits);
-		FD_ZERO(&obits);
-		FD_ZERO(&xbits);
-		FD_SET(0,&ibits);
-		FD_SET(netfile,&ibits);
-		if ((c = select(16, &ibits, &obits, &xbits, NULL)) < 1) {
+		memset(readfds, 0, rfdsize);
+		FD_SET(0, readfds);
+		FD_SET(netfile, readfds);
+		if ((c = select(netfile+1, readfds, NULL, NULL, NULL)) < 1) {
 			if (c == -1) {
-				if (errno == EINTR)
+				if (errno == EINTR || errno == EAGAIN)
 					continue;
 			}
 			sleep (5);
 			continue;
 		}
-		if (FD_ISSET(netfile, &ibits)) {
+		if (FD_ISSET(netfile, readfds)) {
 			c = read(netfile, buf, sizeof (buf));
 			if (c < 0 && errno == EWOULDBLOCK)
 				c = 0;
@@ -786,7 +797,7 @@ crosspatch()
 				(void) write(1, buf, c);
 			}
 		}
-		if (FD_ISSET(0, &ibits)) {
+		if (FD_ISSET(0, readfds)) {
 			c = read(0, buf, sizeof (buf));
 			if (c < 0 && errno == EWOULDBLOCK)
 				c = 0;
@@ -797,4 +808,5 @@ crosspatch()
 			}
 		}
 	}
+	free(readfds);
 }
