@@ -1,4 +1,4 @@
-/*	$OpenBSD: creatorvar.h,v 1.3 2002/07/26 16:39:04 jason Exp $	*/
+/*	$OpenBSD: creatorvar.h,v 1.4 2002/07/26 16:57:16 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net),
@@ -32,27 +32,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Number of register sets */
-#define	FFB_NREGS		24
-
-/* Register set numbers */
-#define	FFB_REG_PROM		0
-#define	FFB_REG_DAC		1
-#define	FFB_REG_FBC		2
-#define	FFB_REG_DFB8R		3
-#define	FFB_REG_DFB8G		4
-#define	FFB_REG_DFB8B		5
-#define	FFB_REG_DFB8X		6
-#define	FFB_REG_DFB24		7
-#define	FFB_REG_DFB32		8
-#define	FFB_REG_SFB8R		9
-#define	FFB_REG_SFB8G		10
-#define	FFB_REG_SFB8B		11
-#define	FFB_REG_SFB8X		12
-#define	FFB_REG_SFB32		13
-#define	FFB_REG_SFB64		14
-#define	FFB_REG_DFB422A		15
-
 #define FFB_CREATOR		0
 #define FFB_AFB			1
 
@@ -70,6 +49,7 @@ struct creator_softc {
 	int sc_type;
 	u_int sc_mode;
 	struct rasops_info sc_rasops;
+	int32_t sc_fifo_cache;
 };
 
 #define	FBC_WRITE(sc,r,v) \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.13 2002/07/25 19:04:43 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.14 2002/07/26 16:57:16 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -48,6 +48,7 @@
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 
+#include <sparc64/dev/creatorreg.h>
 #include <sparc64/dev/creatorvar.h>
 
 struct wsscreen_descr creator_stdscreen = {
@@ -76,6 +77,8 @@ int	creator_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 	    void *);
 paddr_t creator_mmap(void *, off_t, int);
 static int a2int(char *, int);
+void	creator_ras_fifo_wait(struct creator_softc *, int);
+void	creator_ras_wait(struct creator_softc *);
 
 struct wsdisplay_accessops creator_accessops = {
 	creator_ioctl,
@@ -307,4 +310,36 @@ a2int(char *cp, int deflt)
 	while (*cp != '\0')
 		i = i * 10 + *cp++ - '0';
 	return (i);
+}
+
+void
+creator_ras_fifo_wait(sc, n)
+	struct creator_softc *sc;
+	int n;
+{
+	int32_t cache = sc->sc_fifo_cache;
+
+	if (cache < n) {
+		do {
+			cache = FBC_READ(sc, FFB_FBC_UCSR);
+			cache = (cache & FBC_UCSR_FIFO_MASK) - 8;
+		} while (cache < n);
+	}
+	sc->sc_fifo_cache = cache - n;
+}
+
+void
+creator_ras_wait(sc)
+	struct creator_softc *sc;
+{
+	u_int32_t ucsr, r;
+
+	while (1) {
+		ucsr = FBC_READ(sc, FFB_FBC_UCSR);
+		if ((ucsr & (FBC_UCSR_FB_BUSY|FBC_UCSR_RP_BUSY)) == 0)
+			break;
+		r = ucsr & (FFB_UCSR_READ_ERR | FFB_UCSR_FIFO_OVFL);
+		if (r != 0)
+			FBC_WRITE(sc, FFB_FBC_UCSR, r);
+	}
 }
