@@ -79,6 +79,7 @@
 #	joy*	joystick driver
 #	pcmcia*	PCMCIA card drivers
 #	*rnd	inkernel random number generator
+#	uk*	"unknown SCSI" devices
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -93,7 +94,7 @@ all)
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2
 	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm pcmcia local
-	sh MAKEDEV rnd
+	sh MAKEDEV rnd uk0 uk1
 # MISSING:
 #	sh MAKEDEV mouse-?
 	;;
@@ -438,6 +439,14 @@ pcmcia*)
 	chmod 600 pcmcia/*
 	;;
 
+uk*)
+	unit=`expr $i : 'uk\(.*\)'`
+	rm -f uk$unit
+	mknod uk$unit c 20 $unit
+	chown root.wheel uk$unit
+	chmod 600 uk$unit
+	;;
+	
 local)
 	umask 0
 	sh MAKEDEV.local
