@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.19 2000/03/05 19:20:37 aaron Exp $	*/
+/*	$OpenBSD: edit.c,v 1.20 2000/09/26 16:00:08 aaron Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.19 2000/03/05 19:20:37 aaron Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.20 2000/09/26 16:00:08 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ display(tempname, fd, pw)
 		pw_error(tempname, 1, 1);
 
 	(void)fprintf(fp,
-	    "#Changing user database information for %s.\n", pw->pw_name);
+	    "# Changing user database information for %s.\n", pw->pw_name);
 	if (!uid) {
 		(void)fprintf(fp, "Login: %s\n", pw->pw_name);
 		(void)fprintf(fp, "Encrypted password: %s\n", pw->pw_passwd);
@@ -146,10 +146,10 @@ verify(tempname, pw)
 	struct passwd *pw;
 {
 	ENTRY *ep;
-	char *p;
+	char *p, *q;
 	struct stat sb;
 	FILE *fp;
-	int len, alen, line;
+	unsigned int len, alen, line;
 	static char buf[LINE_MAX];
 
 	if (!(fp = fopen(tempname, "r")))
@@ -187,7 +187,11 @@ verify(tempname, pw)
 					goto bad;
 				}
 				while (isspace(*++p));
-				if (ep->except && strpbrk(p, ep->except)) {
+				for (q = p; *q && isprint(*q); q++) {
+					if (ep->except && strchr(ep->except,*q))
+						break;
+				}
+				if (*q) {
 					warnx(
 				   "illegal character in the \"%s\" field",
 					    ep->prompt);
