@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.119 1999/10/07 04:41:07 deraadt Exp $
+#	$OpenBSD: rc,v 1.120 1999/10/07 05:11:19 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -386,7 +386,7 @@ if [ -f /sbin/ldconfig ]; then
 	ldconfig $shlib_dirs
 fi
 
-if [ ! -f /etc/ssh_host_key ]; then
+if [ ! -f /etc/ssh_host_key -a -x /usr/bin/ssh-keygen ]; then
 	umask 022
 	echo -n "ssh-keygen: generating new host key... "
 	if /usr/bin/ssh-keygen -q -b 1024 -f /etc/ssh_host_key -N ''; then
