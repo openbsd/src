@@ -323,6 +323,9 @@ struct tdb;
 struct socket;
 struct mbuf;
 
+#define EXTLEN(x) (((struct sadb_ext *)(x))->sadb_ext_len * sizeof(uint64_t))
+#define PADUP(x) (((x) + sizeof(uint64_t) - 1) & ~(sizeof(uint64_t) - 1))
+
 struct pfkey_version
 {
     int protocol;
@@ -357,5 +360,33 @@ int pfkeyv2_acquire(struct ipsec_policy *, union sockaddr_union *,
 int pfkey_register(struct pfkey_version *version);
 int pfkey_unregister(struct pfkey_version *version);
 int pfkey_sendup(struct socket *socket, struct mbuf *packet, int more);
+
+int pfkeyv2_create(struct socket *);
+int pfkeyv2_get(struct tdb *, void **, void **);
+int pfkeyv2_policy(struct ipsec_acquire *, void **, void **);
+int pfkeyv2_release(struct socket *);
+int pfkeyv2_send(struct socket *, void *, int);
+int pfkeyv2_sendmessage(void **, int, struct socket *, u_int8_t, int);
+int pfkeyv2_dump_walker(struct tdb *, void *, int);
+int pfkeyv2_flush_walker(struct tdb *, void *, int);
+int pfkeyv2_get_proto_alg(u_int8_t, u_int8_t *, int *);
+
+int pfdatatopacket(void *, int, struct mbuf **);
+
+void export_address(void **, struct sockaddr *);
+void export_identity(void **, struct tdb *, int);
+void export_lifetime(void **, struct tdb *, int);
+void export_credentials(void **, struct tdb *, int);
+void export_sa(void **, struct tdb *);
+void export_key(void **, struct tdb *, int);
+void export_auth(void **, struct tdb *, int);
+
+void import_auth(struct tdb *, struct sadb_x_cred *, int);
+void import_address(struct sockaddr *, struct sadb_address *);
+void import_identity(struct tdb *, struct sadb_ident *, int);
+void import_key(struct ipsecinit *, struct sadb_key *, int);
+void import_lifetime(struct tdb *, struct sadb_lifetime *, int);
+void import_credentials(struct tdb *, struct sadb_x_cred *, int);
+void import_sa(struct tdb *, struct sadb_sa *, struct ipsecinit *);
 #endif /* _KERNEL */
 #endif /* _NET_PFKEY_V2_H */
