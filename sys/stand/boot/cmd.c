@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.3 1997/04/01 04:50:33 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.4 1997/04/07 01:26:00 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -345,6 +345,7 @@ execmd(cmd)
 		break;
 
 	case CMD_REBOOT:
+		printf("Rebooting...\n");
 		cmd->rc = -1;
 		break;
 

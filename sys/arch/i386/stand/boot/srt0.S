@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.4 1997/04/05 18:56:19 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.5 1997/04/07 01:26:00 weingart Exp $	*/
 /*	$NetBSD: srt0.c,v 1.3 1994/10/27 04:21:59 cgd Exp $	*/
 
 /*-
@@ -39,6 +39,7 @@
  *	@(#)srt0.c	5.3 (Berkeley) 4/28/91
  */
 
+#include <machine/asm.h>
 #include <machine/psl.h>
 #define _LOCORE
 #include <machine/segments.h>
@@ -50,6 +51,7 @@
 	.globl	__rtt
 	.globl	_Gdtr
 	.globl	_Idtr_prot
+	.globl  _Idtr_reset
 	.globl	_codeseg
 
 	.text
@@ -99,11 +101,32 @@ __rtt:
 #ifdef DEBUG
 	movl	$0xb8000, %ebx
 	movl	$0x4f514f51, (%ebx)
-	hlt
 #endif
-	movl	$-7, %eax
 	movw	$0x1234, %ax
 	movw	%ax, 0x472	# warm boot
+
+	movl	$0xfe, %eax
+	movl	$0x64, %edx
+	outb	%al, %dx
+	movl	$1, %eax
+	pushl	%eax
+	call	_C_LABEL(usleep)
+	popl	%eax
+
+	movl	$0xfe, %eax
+	movl	$0x64, %edx
+	outb	%al, %dx
+	movl	$1, %eax
+	pushl	%eax
+	call	_C_LABEL(usleep)
+	popl	%eax
+
+#ifdef DEBUG
+	movl	$0xb8000, %ebx
+	movl	$0x07310731, (%ebx)
+#endif
+	lidt    _Idtr_reset
+	int $0x8
 	movl	$0, %esp	# segment violation
 	ret
 
