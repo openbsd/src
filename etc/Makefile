@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 1996/06/17 07:19:27 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 1996/06/21 21:20:49 dm Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -128,7 +128,7 @@ distrib-dirs:
 	install -d -o root -g wheel -m 755 ${DESTDIR}
 	-mtree -def mtree/4.4BSD.dist -p ${DESTDIR}/ -u
 	if [ ! -f ${DESTDIR}/usr/src ]; then \
-		install -d -o root -g wheel -m 755 ${DESTDIR}/usr/src \
+		install -d -o root -g wheel -m 755 ${DESTDIR}/usr/src; \
 	fi
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
 
