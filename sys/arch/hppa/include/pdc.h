@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.8 1998/12/13 06:39:10 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.9 1998/12/14 00:57:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -392,6 +392,12 @@ struct pdc_memmap {	/* PDC_MEMMAP */
 	u_int	hpa;		/* HPA for module */
 	u_int	morepages;	/* additional IO pages */
 	u_int	filler[30];
+};
+
+struct pdc_lan_station_id {	/* PDC_LAN_STATION_ID */
+	u_int8_t addr[6];
+	u_int8_t filler1[2];
+	u_int	filler2[30];
 };
 
 /*
