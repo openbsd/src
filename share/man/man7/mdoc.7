@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.23 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: mdoc.7,v 1.24 2002/12/06 02:36:24 marc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -315,11 +315,20 @@ Produces
 .It Li \&Op Ta Yes Ta Yes Ta "Option (also .Oo and .Oc)."
 .It Li \&Ot Ta Yes Ta Yes Ta "Old style function type (Fortran only)."
 .It Li \&Pa Ta Yes Ta Yes Ta "Pathname or file name."
-.It Li \&St Ta Yes Ta Yes Ta "Standards (-p1003.2, -p1003.1 or -ansiC)."
+.It Li \&St Ta Yes Ta Yes Ta "Standards (see below)."
 .It Li \&Va Ta Yes Ta Yes Ta "Variable name."
 .It Li \&Vt Ta Yes Ta Yes Ta "Variable type (Fortran only)."
 .It Li \&Xr Ta Yes Ta Yes Ta "Manual Page Cross Reference."
 .El
+.Pp
+The known standards for the St macro are:
+.Bd -ragged -offset 4n
+-p1003.1-88, -p1003.1-90, -p1003.1-01, -p1003.1, -p1003.1b, -p1003.1b-93,
+-p1003.1c-95, -p1003.1-96, -p1003.2-92, -p1003.2, -p1387.2-95, -p1387.2,
+-ansiC, -ansiC-89, -ansiC-99, -ieee754, -iso8802-3, -xpg3, -xpg4, -xpg4.2,
+-xpg4.3, -xbd5, -xcu5, -xsh5, -xns5, -xns5.2d2.0, -xcurses4.2, -susv2, and
+-susv3.
+.Ed
 .Ss General Text Domain Macros
 .Bl -column "Name" "Parsed" "Callable" -compact
 .It Em "Name	Parsed	Callable	Description"
