@@ -1,4 +1,4 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.11 2000/12/06 01:07:23 mjacob Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.12 2001/02/12 23:47:49 mjacob Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -54,7 +54,7 @@
 
 
 #define	ISP_PLATFORM_VERSION_MAJOR	1
-#define	ISP_PLATFORM_VERSION_MINOR	0
+#define	ISP_PLATFORM_VERSION_MINOR	1
 
 struct isposinfo {
 	struct device		_dev;
@@ -90,7 +90,6 @@ struct isposinfo {
 
 #define	INLINE			inline
 
-#define	ISP2100_FABRIC		1
 #define	ISP2100_SCRLEN		0x400
 
 #define	MEMZERO			bzero
@@ -345,7 +344,9 @@ isp_wait_complete(isp)
 			usecs += 500;
 		}
 		if (isp->isp_mboxbsy != 0) {
-			isp_prt(isp, ISP_LOGWARN, "Mailbox Cmd (poll) Timeout");
+			isp_prt(isp, ISP_LOGWARN,
+			    "Polled Mailbox Command (0x%x) Timeout",
+			    isp->isp_lastmbxcmd);
 		}
 	} else {
 		int rv = 0;
@@ -365,7 +366,9 @@ isp_wait_complete(isp)
 		if (rv == EWOULDBLOCK) {
 			isp->isp_mboxbsy = 0;
 			isp->isp_osinfo.mboxwaiting = 0;
-			isp_prt(isp, ISP_LOGWARN, "Mailbox Cmd (intr) Timeout");
+			isp_prt(isp, ISP_LOGWARN,
+			    "Interrupting Mailbox Command (0x%x) Timeout",
+			    isp->isp_lastmbxcmd);
 		}
 	}
 }
