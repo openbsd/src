@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.25 2000/06/05 11:02:51 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.26 2000/06/27 18:13:23 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -566,10 +566,10 @@ unsleep(p)
  */
 void
 wakeup(ident)
-	register void *ident;
+	void *ident;
 {
-	register struct slpque *qp;
-	register struct proc *p, **q;
+	struct slpque *qp;
+	struct proc *p, **q;
 	int s;
 
 	s = splhigh();
@@ -591,18 +591,21 @@ restart:
 					updatepri(p);
 				p->p_slptime = 0;
 				p->p_stat = SRUN;
-				if (p->p_flag & P_INMEM)
-					setrunqueue(p);
+
 				/*
 				 * Since curpriority is a user priority,
 				 * p->p_priority is always better than
 				 * curpriority.
 				 */
-				if ((p->p_flag & P_INMEM) == 0)
-					wakeup((caddr_t)&proc0);
-				else
+
+				if ((p->p_flag & P_INMEM) != 0) {
+					setrunqueue(p);
 					need_resched();
+				} else {
+					wakeup((caddr_t)&proc0);
+				}
 				/* END INLINE EXPANSION */
+
 				goto restart;
 			}
 		} else
