@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_group.c,v 1.3 1998/11/17 11:10:17 niklas Exp $	*/
-/*	$EOM: math_group.c,v 1.9 1998/08/09 19:03:47 niklas Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.4 1999/02/26 03:46:57 niklas Exp $	*/
+/*	$EOM: math_group.c,v 1.10 1999/02/25 11:39:14 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -39,13 +39,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "sysdep.h"
+
 #include "gmp_util.h"
+#include "log.h"
 #include "math_2n.h"
 #include "math_ec2n.h"
 #include "math_group.h"
-
-#include "log.h"
-#include "sysdep.h"
 
 /* We do not want to export these definitions */
 int modp_getlen (struct group *);
