@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.33 2004/03/05 20:25:30 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.34 2004/03/05 21:44:26 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -84,7 +84,8 @@ enum suberr_open {
 	ERR_OPEN_BGPID,
 	ERR_OPEN_OPT,
 	ERR_OPEN_AUTH,
-	ERR_OPEN_HOLDTIME
+	ERR_OPEN_HOLDTIME,
+	ERR_OPEN_CAPA
 };
 
 enum opt_params {
