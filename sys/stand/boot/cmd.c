@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.22 1997/08/13 03:49:28 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.23 1997/08/13 14:24:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -264,9 +264,11 @@ readline(buf, to)
 			p = pe = buf;
 			continue;
 		case '\n':
+		case '\r':
 			pe[1] = *pe = '\0';
 			break;
 		case '\b':
+		case '\177':
 			if (p > buf) {
 				putchar('\177');
 				p--;
@@ -405,11 +407,17 @@ Xaddr()
 static int
 Xtty()
 {
-	if (cmd.argc == 1)
-		printf(ttyname(0));
-	else {
-	}
+	dev_t dev;
 
+	if (cmd.argc == 1)
+		printf("%s\n", ttyname(0));
+	else {
+		dev = ttydev(cmd.argv[1]);
+		if (dev == NODEV)
+			printf("%s not a console device\n", cmd.argv[1]);
+		else if (cnset(dev))
+			printf("%s console not present\n", cmd.argv[1]);
+	}
 	return 0;
 }
 

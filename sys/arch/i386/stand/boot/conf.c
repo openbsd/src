@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 1997/08/12 21:46:52 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.6 1997/08/13 14:24:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -94,7 +94,7 @@ struct consdev constab[] = {
 #ifdef _TEST
 	{ unix_probe, unix_init, unix_getc, unix_putc },
 #else
-	{ kbd_probe, kbd_init, kbd_getc, kbd_putc  },
+	{ pc_probe, pc_init, pc_getc, pc_putc },
 	{ com_probe, com_init, com_getc, com_putc },
 #endif
 	{ NULL }

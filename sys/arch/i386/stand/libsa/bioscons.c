@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.2 1997/08/12 23:34:21 mickey Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.3 1997/08/13 14:24:01 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -39,11 +39,17 @@
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/nvram.h>
 #include <dev/cons.h>
+#include <lib/libsa/stand.h>
 
+/* XXX cannot trust NVRAM on this.  Maybe later we make a real probe.  */
+#if 0
 #define PRESENT_MASK (NVRAM_EQUIPMENT_KBD|NVRAM_EQUIPMENT_DISPLAY)
+#else
+#define PRESENT_MASK 0
+#endif
 
 void
-kbd_probe(cn)
+pc_probe(cn)
 	struct consdev *cn;
 {
 	outb(IO_RTC, NVRAM_EQUIPMENT);
@@ -51,44 +57,41 @@ kbd_probe(cn)
 		cn->cn_pri = CN_INTERNAL;
 		/* XXX from i386/conf.c */
 		cn->cn_dev = makedev(12, 0);
+		printf("pc%d detected\n", minor(cn->cn_dev));
 	}
 }
 
 void
-kbd_init(cn)
+pc_init(cn)
 	struct consdev *cn;
 {
-	/* nothing */
+	printf("using pc%d console\n", minor(cn->cn_dev));
 }
 
 int
-kbd_getc(dev)
+pc_getc(dev)
 	dev_t dev;
 {
 	u_int8_t rv;
 
 	if (dev & 0x80) {
-		__asm volatile("movb $1, %%ah\n\t"
-			       DOINT(0x16) "\n\t"
-			       "setnz %%al"
-			       : "=a" (rv) :: "%ecx", "%edx", "cc" );
-		return rv;
+		__asm __volatile(DOINT(0x16) "; setnz %%al" : "=a" (rv) :
+		    "a" (0x100) : "%ecx", "%edx", "cc" );
+		return (rv);
 	}
 
-	__asm __volatile("xorl %%eax, %%eax\n\t"
-			 DOINT(0x16)
-			 : "=a" (rv) :: "%ecx", "edx", "cc" );
-	return rv;
+	__asm __volatile(DOINT(0x16) : "=a" (rv) : "a" (0) :
+	    "%ecx", "edx", "cc" );
+	return (rv);
 }
 
 void
-kbd_putc(dev, c)
+pc_putc(dev, c)
 	dev_t dev;
 	int c;
 {
-	__asm __volatile("movb $0x0e, %%ah\n\t"
-		       DOINT(0x10)
-		       :: "a" (c), "b" (0) : "%ecx", "%edx", "cc" );
+	__asm __volatile(DOINT(0x10) : : "a" (c | 0xe00), "b" (0) :
+	    "%ecx", "%edx", "cc" );
 }
 
 void
@@ -96,21 +99,30 @@ com_probe(cn)
 	struct consdev *cn;
 {
 	register int i, n;
-	__asm __volatile(DOINT(0x11) "\n\t" /* get equipment (9-11 # of coms) */
-		       : "=a" (n) :: "%ecx", "%edx", "cc");
+
+	 /* get equip. (9-11 # of coms) */
+	__asm __volatile(DOINT(0x11) : "=a" (n) : : "%ecx", "%edx", "cc");
 	n >>= 9;
 	n &= 7;
 	for (i = 0; i < n; i++)
-		;
+		printf("com%d detected\n", i);
+	if (n) {
+		cn->cn_pri = CN_NORMAL;
+		/* XXX from i386/conf.c */
+		cn->cn_dev = makedev(8, 0);
+	}
 }
 
 void
 com_init(cn)
 	struct consdev *cn;
 {
-	__asm volatile("movb $0xe2, %%al\n\t"
-		       DOINT(0x14) "\n\t"
-		       :: "d" (minor(cn->cn_dev)) : "%ecx", "cc" );
+	int unit = minor(cn->cn_dev);
+
+	/* 9600-N-1 */
+	__asm __volatile(DOINT(0x14) : : "a" (0xe3), "d" (unit) :
+	    "%ecx", "cc" );
+	printf("using com%d console\n", unit);
 }
 
 int
@@ -118,15 +130,17 @@ com_getc(dev)
 	dev_t dev;
 {
 	register int rv;
-	__asm volatile("movl $2, %%al\n\t"
-		       DOINT(0x14) "\n\t"
-		       : "=a" (rv): "d" (minor(dev)) : "%ecx", "cc" );
 
-	if (!(rv & 0x8000))
-		return 0;
+	if (dev & 0x80) {
+		__asm __volatile(DOINT(0x14) : "=a" (rv) :
+		    "a" (0x300), "d" (minor(dev)) : "%ecx", "cc" );
+		return ((rv & 0x100) == 0x100);
+	}
 
-	if (minor(dev) & 0x80)
-		return 1;
+	do
+		__asm __volatile(DOINT(0x14) "\n\t" : "=a" (rv) :
+		    "a" (0x200), "d" (minor(dev)) : "%ecx", "cc" );
+	while (rv & 0x8000);
 
 	return (rv & 0xff);
 }
@@ -137,7 +151,7 @@ com_putc(dev, c)
 	int c;
 {
 	int rv;
-	__asm volatile("movb $1, %%ah\n\t"
-		       DOINT(0x14) "\n\t"
-		       : "=a" (rv): "d" (minor(dev)), "a" (c) : "%ecx", "cc" );
+
+	__asm __volatile(DOINT(0x14) "\n\t" : "=a" (rv) :
+	    "d" (minor(dev)), "a" (c | 0x100) : "%ecx", "cc" );
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.16 1997/08/12 22:14:36 mickey Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.17 1997/08/13 14:24:02 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,6 +34,8 @@
 
 #include "libsa.h"
 #include "biosdev.h"
+#include <sys/param.h>
+#include <dev/cons.h>
 
 extern int debug;
 
@@ -43,6 +45,12 @@ const char bdevs[][4] = {
 	"", "", "", "", "", "", "", "scd", "", "hd", "acd"
 };
 const int nbdevs = NENTS(bdevs);
+
+const char cdevs[][4] = {
+	"", "", "", "", "", "", "", "",
+	"com", "", "", "", "pc"
+};
+const int ncdevs = NENTS(cdevs);
 
 /* pass dev_t to the open routines */
 int
@@ -160,5 +168,26 @@ char *
 ttyname(fd)
 	int fd;
 {
-	return "tty";
+	static char buf[8];
+
+	sprintf(buf, "%s%d", cdevs[major(cn_tab->cn_dev)],
+	    minor(cn_tab->cn_dev));
+	return (buf);
+}
+
+dev_t
+ttydev(name)
+	char *name;
+{
+	int i, unit = -1;
+	char *no = name + strlen(name) - 1;
+
+	while (no >= name && *no >= '0' && *no <= '9')
+		unit = (unit < 0 ? 0 : (unit * 10)) + *no-- - '0';
+	if (no < name || unit < 0)
+		return (NODEV);
+	for (i = 0; i < ncdevs; i++)
+		if (strncmp(name, cdevs[i], no - name + 1) == 0)
+			return (makedev(i, unit));
+	return (NODEV);
 }

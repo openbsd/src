@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.17 1997/08/13 03:35:08 mickey Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.18 1997/08/13 14:24:01 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -43,11 +43,11 @@ int biosclose __P((struct open_file *));
 int biosioctl __P((struct open_file *, u_long, void *));
 
 /* bioscons.c */
-void kbd_probe __P((struct consdev *));
-void kbd_init __P((struct consdev *));
-int kbd_getc __P((dev_t));
-void kbd_putc __P((dev_t, int));
-void kbd_pollc __P((dev_t, int));
+void pc_probe __P((struct consdev *));
+void pc_init __P((struct consdev *));
+int pc_getc __P((dev_t));
+void pc_putc __P((dev_t, int));
+void pc_pollc __P((dev_t, int));
 void com_probe __P((struct consdev *));
 void com_init __P((struct consdev *));
 int com_getc __P((dev_t));
