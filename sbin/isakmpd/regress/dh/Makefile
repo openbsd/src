@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.5 2000/02/25 17:23:36 niklas Exp $
-#	$EOM: Makefile,v 1.7 2000/02/20 19:58:43 niklas Exp $
+#	$OpenBSD: Makefile,v 1.6 2000/04/07 22:04:24 niklas Exp $
+#	$EOM: Makefile,v 1.10 2000/04/07 20:19:43 niklas Exp $
 
 # Test DH:
 
@@ -11,10 +11,10 @@ TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
 OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
 .PATH:		${TOPSRC} ${TOPSRC}/sysdep/${OS} ${TOPOBJ}
 CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall \
-		-DUSE_EC
+		-DUSE_EC -DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
 NOMAN=
-LDADD+=		-lgmp
-DPADD+=		${LIBGMP}
+LDADD+=		-lcrypto
+DPADD+=		${LIBCRYPTO}
 DEBUG=		-g
 
 .include <bsd.prog.mk>
