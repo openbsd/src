@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.50 2001/08/12 20:03:49 mickey Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.51 2001/08/17 00:01:46 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -873,8 +873,8 @@ txp_alloc_rings(sc)
 	sc->sc_txhir.r_cons = sc->sc_txhir.r_prod = sc->sc_txhir.r_cnt = 0;
 	sc->sc_txhir.r_off = &sc->sc_hostvar->hv_tx_hi_desc_read_idx;
 	for (i = 0; i < TX_ENTRIES; i++) {
-		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_SEGLEN,
-		    TX_ENTRIES - 4, TXP_MAX_PKTLEN, 0,
+		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_PKTLEN,
+		    TX_ENTRIES - 4, TXP_MAX_SEGLEN, 0,
 		    BUS_DMA_NOWAIT, &sc->sc_txd[i].sd_map) != 0) {
 			for (j = 0; j < i; j++) {
 				bus_dmamap_destroy(sc->sc_dmat,
