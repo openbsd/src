@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.18 2003/01/04 22:36:12 deraadt Exp $
+$OpenBSD: README,v 1.19 2003/02/22 06:57:07 kjell Exp $
 $EOM: README,v 1.28 1999/10/10 22:53:24 angelos Exp $
 
 This is isakmpd, a BSD-licensed ISAKMP/Oakley (a.k.a. IKE)
@@ -9,7 +9,7 @@ http://www.openbsd.org/ for details on how to get OpenBSD source.
 
 Isakmpd is being developed under OpenBSD, with OpenBSD as its primary
 target, however, it is ported to Linux with FreeS/WAN IPsec.  The
-makefile support assumes a BSD environment noneheless as it is not too
+makefile support assumes a BSD environment nonetheless as it is not too
 hard to get such an environment to work under other operating systems.
 For example, Red Hat 5.2 shipped with pmake installed.  Read sysdep/README
 for further details about this issue.  Other systems isakmpd has been
