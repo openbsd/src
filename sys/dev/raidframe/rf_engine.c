@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_engine.c,v 1.13 2002/12/16 07:01:03 tdeval Exp $	*/
+/*	$OpenBSD: rf_engine.c,v 1.14 2003/01/19 14:32:00 tdeval Exp $	*/
 /*	$NetBSD: rf_engine.c,v 1.10 2000/08/20 16:51:03 thorpej Exp $	*/
 
 /*
@@ -159,7 +159,8 @@ rf_ConfigureEngine(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	 * thread.
 	 */
 	if (rf_engineDebug) {
-		printf("raid%d: Creating engine thread\n", raidPtr->raidid);
+		printf("raid%d: %s engine thread\n", raidPtr->raidid,
+		    (initproc)?"Starting":"Creating");
 	}
 	if (rf_hook_cookies == NULL) {
 		rf_hook_cookies =
@@ -179,12 +180,12 @@ rf_ConfigureEngine(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		snprintf(&raidname[0], 16, "raid%d", raidPtr->raidid);
 		if (RF_CREATE_THREAD(raidPtr->engine_thread,
 		    rf_DAGExecutionThread, raidPtr, &raidname[0])) {
-			RF_ERRORMSG("RAIDFRAME: Unable to create engine"
+			RF_ERRORMSG("RAIDFRAME: Unable to start engine"
 			    " thread\n");
 			return (ENOMEM);
 		}
 		if (rf_engineDebug) {
-			printf("raid%d: Created engine thread\n",
+			printf("raid%d: Engine thread started\n",
 			    raidPtr->raidid);
 		}
 		RF_THREADGROUP_STARTED(&raidPtr->engine_tg);
@@ -306,7 +307,7 @@ rf_FireNode(RF_DagNode_t *node)
 	switch (node->status) {
 	case rf_fired:
 		/* Fire the do function of a node. */
-		if (rf_engineDebug) {
+		if (rf_engineDebug>1) {
 			printf("raid%d: Firing node 0x%lx (%s)\n",
 			    node->dagHdr->raidPtr->raidid,
 			    (unsigned long) node, node->name);
@@ -327,7 +328,7 @@ rf_FireNode(RF_DagNode_t *node)
 		break;
 	case rf_recover:
 		/* Fire the undo function of a node. */
-		if (rf_engineDebug) {
+		if (rf_engineDebug>1) {
 			printf("raid%d: Firing (undo) node 0x%lx (%s)\n",
 			    node->dagHdr->raidPtr->raidid,
 			    (unsigned long) node, node->name);
@@ -798,7 +799,7 @@ rf_DispatchDAG(RF_DagHeader_t *dag, void (*cbFunc) (void *), void *cbArg)
 		if (rf_ValidateDAG(dag))
 			RF_PANIC();
 	}
-	if (rf_engineDebug) {
+	if (rf_engineDebug>1) {
 		printf("raid%d: Entering DispatchDAG\n", raidPtr->raidid);
 	}
 	raidPtr->dags_in_flight++;	/*
@@ -839,7 +840,7 @@ rf_DAGExecutionThread_pre(RF_ThreadArg_t arg)
 	raidPtr = (RF_Raid_t *) arg;
 
 	if (rf_engineDebug) {
-		printf("raid%d: Creating engine thread\n", raidPtr->raidid);
+		printf("raid%d: Starting engine thread\n", raidPtr->raidid);
 	}
 
 	lastpid = RF_ENGINE_PID + raidPtr->raidid - 1;
@@ -851,13 +852,13 @@ rf_DAGExecutionThread_pre(RF_ThreadArg_t arg)
 
 	if (RF_CREATE_THREAD(raidPtr->engine_thread, rf_DAGExecutionThread,
 	    raidPtr, &raidname[0])) {
-		RF_ERRORMSG("RAIDFRAME: Unable to create engine thread\n");
+		RF_ERRORMSG("RAIDFRAME: Unable to start engine thread\n");
 		return;
 	}
 
 	lastpid = oldpid;
 	if (rf_engineDebug) {
-		printf("raid%d: Created engine thread\n", raidPtr->raidid);
+		printf("raid%d: Engine thread started\n", raidPtr->raidid);
 	}
 	RF_THREADGROUP_STARTED(&raidPtr->engine_tg);
 }

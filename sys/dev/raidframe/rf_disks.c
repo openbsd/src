@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_disks.c,v 1.7 2002/12/16 07:01:03 tdeval Exp $	*/
+/*	$OpenBSD: rf_disks.c,v 1.8 2003/01/19 14:32:00 tdeval Exp $	*/
 /*	$NetBSD: rf_disks.c,v 1.31 2000/06/02 01:17:14 oster Exp $	*/
 
 /*
@@ -653,11 +653,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *buf, RF_RaidDisk_t *diskPtr,
 	}
 	(void) strcpy(diskPtr->devname, p);
 
-#if 0
 	proc = raidPtr->engine_thread;
-#else
-	proc = curproc;
-#endif
 
 	/* Let's start by claiming the component is fine and well... */
 	diskPtr->status = rf_ds_optimal;
@@ -665,7 +661,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *buf, RF_RaidDisk_t *diskPtr,
 	raidPtr->raid_cinfo[row][col].ci_vp = NULL;
 	raidPtr->raid_cinfo[row][col].ci_dev = NULL;
 
-	error = raidlookup(diskPtr->devname, proc, &vp);
+	error = raidlookup(diskPtr->devname, curproc, &vp);
 	if (error) {
 		printf("raidlookup on device: %s failed !\n", diskPtr->devname);
 		if (error == ENXIO) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.21 2002/12/16 07:01:04 tdeval Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.22 2003/01/19 14:32:00 tdeval Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -2222,11 +2222,7 @@ raidmakedisklabel(struct raid_softc *rs)
  * You'll find the original of this in ccd.c
  */
 int
-raidlookup(
-	char		 *path,
-	struct proc	 *p,
-	struct vnode	**vpp	/* result */
-)
+raidlookup(char *path, struct proc *p, struct vnode **vpp /* result */)
 {
 	struct nameidata nd;
 	struct vnode *vp;
@@ -2614,7 +2610,8 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 			vrele(vp);
 
 		} else {
-			VOP_UNLOCK(vp, 0, p);
+			if (VOP_ISLOCKED(vp))
+				VOP_UNLOCK(vp, 0, p);
 			(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, p);
 		}
 	} else {
