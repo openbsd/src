@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.2 2004/01/07 02:17:31 millert Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.3 2004/03/12 00:19:48 deraadt Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pkill.c,v 1.2 2004/01/07 02:17:31 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pkill.c,v 1.3 2004/03/12 00:19:48 deraadt Exp $";
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -301,7 +301,7 @@ main(int argc, char **argv)
 			selected[i] = 0;
 			continue;
 		}
-	
+
 		SLIST_FOREACH(li, &rgidlist, li_chain)
 			if (kp->p_rgid == (gid_t)li->li_number)
 				break;
@@ -370,8 +370,8 @@ main(int argc, char **argv)
 			if (kp->p_ustart_sec > bestsec ||
 			    (kp->p_ustart_sec == bestsec
 			    && kp->p_ustart_usec > bestusec)) {
-			    	bestsec = kp->p_ustart_sec;
-			    	bestusec = kp->p_ustart_usec;
+				bestsec = kp->p_ustart_sec;
+				bestusec = kp->p_ustart_usec;
 				bestidx = i;
 			}
 		}
@@ -533,7 +533,7 @@ makelist(struct listhead *head, enum listtype type, char *src)
 			break;
 		default:
 			usage();
-		};
+		}
 	}
 
 	if (empty)
