@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.125 2001/08/18 22:26:08 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.126 2001/08/19 01:53:26 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2299,13 +2299,26 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		dst = &(*state)->src;
 	}
 
+	/*
+	 * Sequence tracking algorithm from Guido van Rooij's paper:
+	 *   http://www.madison-gurkha.com/publications/tcp_filtering/
+	 *	tcp_filtering.ps
+	 */
+
 	if (src->seqlo == 0) {
 		/* First packet from this end.  Set its state */
 		src->seqlo = end;
-		src->seqhi = end + 1;
 		src->max_win = 1;
 		if (src->state < 1)
 			src->state = 1;
+
+		/*
+		 * May need to slide the window (seqhi may have been set by
+		 * the crappy stack check or if we picked up the connection
+		 * after establishment)
+		 */
+		if (SEQ_GEQ(end + MAX(1, dst->max_win), dst->seqhi))
+			dst->seqhi = end + dst->max_win;
 	}
 
 	if ((th->th_flags & TH_ACK) == 0) {
@@ -2334,17 +2347,6 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	    /* Acking not more than one window back */
 	    (ackskew <= MAXACKWINDOW)) {
 	    /* Acking not more than one window forward */
-
-		if (ackskew < 0) {
-			/* The sequencing algorithm is exteremely lossy
-			 * when there is fragmentation since the full
-			 * packet length can not be determined.  So we
-			 * deduce how much data passed by what the
-			 * other endpoint ACKs.  Thanks Guido!
-			 * (Why MAXACKWINDOW is used)
-			 */
-			dst->seqlo = ack;
-		}
 
 		(*state)->packets++;
 		(*state)->bytes += len;
@@ -2386,22 +2388,53 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		else
 			(*state)->expire = pftv.tv_sec + 24*60*60;
 
-		/* translate source/destination address, if needed */
-		if (STATE_TRANSLATE(*state)) {
-			if (direction == PF_OUT)
-				pf_change_ap(&h->ip_src.s_addr,
-				    &th->th_sport, &h->ip_sum,
-				    &th->th_sum, (*state)->gwy.addr,
-				    (*state)->gwy.port);
-			else
-				pf_change_ap(&h->ip_dst.s_addr,
-				    &th->th_dport, &h->ip_sum,
-				    &th->th_sum, (*state)->lan.addr,
-				    (*state)->lan.port);
-			m_copyback(m, off, sizeof(*th), (caddr_t)th);
-		}
+		/* Fall through to PASS packet */
 
-		return (PF_PASS);
+	} else if (dst->state < 1 &&
+	    SEQ_GEQ(src->seqhi + MAXACKWINDOW, end) &&
+	    /* Within a window forward of the originating packet */
+	    SEQ_GEQ(src->seqlo - MAXACKWINDOW, seq)) {
+	    /* Within a window backward of the originating packet */
+
+		/*
+		 * This is the check for stupid stacks that shotgun SYNs before
+		 * their peer replies.  It also handles the case when PF
+		 * catches an already established stream (the firewall
+		 * rebooted, the state table was flushed, routes changed...)
+		 *
+		 * This must be a little more careful than the above code
+		 * since packet floods will also be caught by the stupid stack
+		 * check.  We won't update the ttl here to mitigate the
+		 * damage of a packet flood -- the ttl will be updated when
+		 * the peer ACKs (then we'll just assume the connection is
+		 * valid)
+		 */
+
+		(*state)->packets++;
+		(*state)->bytes += len;
+
+		/* update max window */
+		if (src->max_win < win)
+			src->max_win = win;
+		/* syncronize sequencing */
+		if (SEQ_GT(end, src->seqlo))
+			src->seqlo = end;
+		/* slide the window of what the other end can send */
+		if (SEQ_GEQ(ack + win, dst->seqhi))
+			dst->seqhi = ack + MAX(win, 1);
+
+		/*
+		 * Cannot set dst->seqhi here since this could be a shotgunned
+		 * SYN and not an already established connection.
+		 */
+
+		if (th->th_flags & TH_FIN)
+			if (src->state < 3)
+				src->state = 3;
+		if (th->th_flags & TH_RST)
+			src->state = dst->state = 5;
+
+		/* Fall through to PASS packet */
 
 	} else {
 		if (pf_status.debug >= PF_DEBUG_MISC) {
@@ -2418,6 +2451,24 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		}
 		return (PF_DROP);
 	}
+
+	/* Any packets which have gotten here are to be passed */
+
+	/* translate source/destination address, if needed */
+	if (STATE_TRANSLATE(*state)) {
+		if (direction == PF_OUT)
+			pf_change_ap(&h->ip_src.s_addr,
+			    &th->th_sport, &h->ip_sum,
+			    &th->th_sum, (*state)->gwy.addr,
+			    (*state)->gwy.port);
+		else
+			pf_change_ap(&h->ip_dst.s_addr,
+			    &th->th_dport, &h->ip_sum,
+			    &th->th_sum, (*state)->lan.addr,
+			    (*state)->lan.port);
+		m_copyback(m, off, sizeof(*th), (caddr_t)th);
+	}
+	return (PF_PASS);
 }
 
 int
