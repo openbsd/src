@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.9 1999/12/16 21:30:35 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2000/01/26 06:22:54 deraadt Exp $
 
 # librpc sources
 .PATH:	${LIBCSRCDIR}/arch/${MACHINE}/rpc ${LIBCSRCDIR}/rpc
@@ -13,7 +13,7 @@ SRCS+=	auth_none.c auth_unix.c  authunix_prot.c bindresvport.c \
 	xdr_rec.c xdr_reference.c xdr_stdio.c
 
 MAN+=	bindresvport.3 getrpcent.3 getrpcport.3 rpc.3 xdr.3 rpcauth.3
-MLINKS+=	bindresvport.3 bindresvport_af.3 \
+MLINKS+=	bindresvport.3 bindresvport_sa.3 \
 		getrpcent.3 getrpcbyname.3 \
 		getrpcent.3 getrpcbynumber.3 \
 		getrpcent.3 endrpcent.3 \

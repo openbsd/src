@@ -1,11 +1,11 @@
-.\"	$OpenBSD: bindresvport.3,v 1.13 1999/12/30 20:50:13 deraadt Exp $
+.\"	$OpenBSD: bindresvport.3,v 1.14 2000/01/26 06:22:55 deraadt Exp $
 .\"
 .Dd August 9, 1997
 .Dt BINDRESVPORT 3
-.Os
+.Os KAME
 .Sh NAME
 .Nm bindresvport ,
-.Nm bindresvport_af
+.Nm bindresvport_sa
 .Nd bind a socket to a privileged IP port
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
@@ -13,11 +13,11 @@
 .Ft int
 .Fn bindresvport "int sd" "struct sockaddr_in *sin"
 .Ft int
-.Fn bindresvport_af "int sd" "struct sockaddr *sa" "int af"
+.Fn bindresvport_sa "int sd" "struct sockaddr *sa"
 .Sh DESCRIPTION
 .Fn bindresvport
 and
-.Fn bindresvport_af
+.Fn bindresvport_sa
 are used to bind a socket descriptor to a privileged
 .Tn IP
 port, that is, a port number in the range 0-1023.
@@ -28,6 +28,12 @@ is a socket descriptor that was returned by a call to
 Only root can bind to a privileged port; this call will fail for any
 other users.
 .Pp
+When
+.Va sin
+is not null,
+.Va sin->sin_family
+must initialized to the address family of the socket, passed by
+.Va sd .
 If the value of
 .Va sin->sin_port
 is non-zero,
@@ -35,10 +41,25 @@ is non-zero,
 attempts to use the specified port.  If that fails, it
 chooses another privileged port number automatically.
 .Pp
-.Fn bindresvport_af
-acts in a similar way, but supports other protocols as well, such
-as
-.Va AF_INET6 .
+It is legal to pass null pointer to
+.Va sin .
+In this case, the caller cannot get the port number
+.Fn bindresvport
+has picked.
+.Pp
+Function prototype of
+.Fn bindresvport
+is biased to
+.Dv AF_INET
+socket.
+.Fn bindresvport_sa
+acts exactly the same, with more neutral function prototype.
+Note that both functions behave exactly the same, and
+both support
+.Dv AF_INET6
+sockets as well as
+.Dv AF_INET
+sockets.
 .Sh RETURN VALUES
 .Fn bindresvport
 returns 0 if it is successful, otherwise \-1 is returned and
@@ -74,7 +95,8 @@ Insufficient resources were available in the system
 to perform the operation.
 .It Bq Er EPFNOSUPPORT
 The protocol family has not been configured into the
-system or no implementation for it exists.
+system, no implementation for it exists,
+or address family did not match between arguments.
 .El
 .Sh SEE ALSO
 .Xr bind 2 ,
