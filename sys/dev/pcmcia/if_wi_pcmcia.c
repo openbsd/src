@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.23 2002/04/05 15:35:15 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.24 2002/04/06 00:58:05 mickey Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -248,6 +248,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_PROXIM_RANGELANDS_8430,
 	  PCMCIA_CIS_PROXIM_RANGELANDS_8430,
 	  "Proxim RangeLAN-DS/LAN PC CARD",
+	},
+	{ PCMCIA_VENDOR_ACTIONTEC,
+	  PCMCIA_PRODUCT_ACTIONTEC_HWC01170,
+	  PCMCIA_CIS_ACTIONTEC_HWC01170,
+	  "ACTIONTEC PRISM Wireless LAN PC CARD",
 	},
 	{ 0,
 	  0,

@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.86 2002/04/02 03:57:05 millert Exp $
+	$OpenBSD: pcmciadevs,v 1.87 2002/04/06 00:58:05 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -83,6 +83,7 @@ vendor IODATA2			0x028a	I-O DATA
 vendor NWN			0x0602	No Wires Needed
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
+vendor ACTIONTEC		0x1668	ACTIONTEC
 vendor LASAT			0x3401	Lasat
 vendor LEXARMEDIA		0x4e01	Lexar Media
 vendor ARCHOS			0x5241	Archos
@@ -114,6 +115,9 @@ product 3COM 3C589		0x0589 3Com 3c589
 product 3COM 3C574		0x0574 3Com 3c574
 product 3COM 3C1		0x0cf1 3Com 3C1
 product 3COM 3CRWE62092A	0x2092 3Com Wireless LAN
+
+/* ACTIONTEC */
+product ACTIONTEC HWC01170	0x101  ACTIONTEC Wireless LAN PC CARD
 
 /* Adaptec */
 product ADAPTEC APA1460_1	0x0001 Adaptec APA-1460/A
