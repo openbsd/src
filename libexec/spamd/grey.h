@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.h,v 1.3 2004/02/26 08:30:01 beck Exp $	*/
+/*	$OpenBSD: grey.h,v 1.4 2004/10/05 21:04:36 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -17,7 +17,7 @@
  */
 
 #define MAX_MAIL 1024 /* how big an email address will we consider */
-#define PASSTIME (60 * 30) /* pass after first retry seen after 30 mins */
+#define PASSTIME (60 * 25) /* pass after first retry seen after 25 mins */
 #define GREYEXP (60 * 60 * 4) /* remove grey entries after 4 hours */
 #define WHITEEXP (60 * 60 * 24 * 36) /* remove white entries after 36 days */
 #define PATH_PFCTL "/sbin/pfctl"

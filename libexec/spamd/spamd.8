@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.50 2004/10/05 15:20:30 beck Exp $
+.\"	$OpenBSD: spamd.8,v 1.51 2004/10/05 21:04:36 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -252,7 +252,7 @@ A previously unseen tuple is added to the
 database, recording the time an initial connection attempt was seen.
 After
 .Em passtime
-minutes (by default 30) if
+minutes (by default 25) if
 .Nm
 sees a retried attempt to deliver mail for the same tuple,
 .Nm
