@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.63 2002/06/29 02:58:14 mickey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.64 2002/07/10 21:53:26 mickey Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -581,6 +581,8 @@ cdev_decl(svr4_net);
 cdev_decl(systrace);
 
 cdev_decl(bio);
+
+cdev_decl(gpr);
 
 cdev_decl(usb);
 cdev_decl(ugen);

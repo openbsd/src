@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpr.c,v 1.4 2002/06/17 20:41:51 fgsch Exp $	*/
+/*	$OpenBSD: gpr.c,v 1.5 2002/07/10 21:53:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002, Federico G. Schwindt
@@ -43,6 +43,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
+#include <sys/conf.h>
 
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciareg.h>
