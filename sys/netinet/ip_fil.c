@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.36 2000/08/10 05:50:25 kjell Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.37 2000/09/07 19:45:04 art Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -170,6 +170,11 @@ int	fr_running = 0;
 struct callout_handle ipfr_slowtimer_ch;
 #endif
 
+#ifdef __OpenBSD__
+#include <sys/timeout.h>
+struct timeout ipfr_slowtimer_to;
+#endif
+
 #if (_BSDI_VERSION >= 199510) && defined(_KERNEL)
 # include <sys/device.h>
 # include <sys/conf.h>
@@ -301,7 +306,10 @@ int iplattach()
 #ifdef	_KERNEL
 # if (__FreeBSD_version >= 300000) && defined(_KERNEL)
 	ipfr_slowtimer_ch = timeout(ipfr_slowtimer, NULL, hz/2);
-# else
+# elif defined(__OpenBSD__)
+	timeout_set(&ipfr_slowtimer_to, ipfr_slowtimer, NULL);
+	timeout_add(&ipfr_slowtimer_to, hz/2);
+#else
 	timeout(ipfr_slowtimer, NULL, hz/2);
 # endif
 #endif
@@ -323,6 +331,8 @@ int ipldetach()
 #ifdef	_KERNEL
 # if (__FreeBSD_version >= 300000)
 	untimeout(ipfr_slowtimer, NULL, ipfr_slowtimer_ch);
+# elif defined(__OpenBSD__)
+	timeout_del(&ipfr_slowtimer_to);
 # else
 #  ifdef __sgi
 	untimeout(ipfr_slowtimer);
