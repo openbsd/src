@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.4 1998/12/05 17:33:01 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.5 1998/12/29 21:47:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -184,9 +184,8 @@ pdtlbe(pa_space_t sp, vm_offset_t off)
 }
 
 #ifdef _KERNEL
-struct pdc_cache;
-void fcacheall __P((struct pdc_cache *));
-void ptlball __P((struct pdc_cache *));
+void fcacheall __P((void));
+void ptlball __P((void));
 int btlb_insert __P((pa_space_t space, vm_offset_t va, vm_offset_t pa,
 		     vm_size_t *lenp, u_int prot));
 hppa_hpa_t cpu_gethpa __P((int n));
