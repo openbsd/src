@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 1998/01/28 13:45:49 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.20 1998/05/06 05:11:16 imp Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.19 1998/01/28 13:45:49 pefo Exp $
+ *      $Id: conf.c,v 1.20 1998/05/06 05:11:16 imp Exp $
  */
 
 #include <sys/param.h>
@@ -115,6 +115,13 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
 
+/* open, close, read, ioctl */
+#define cdev_joy_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+
 cdev_decl(cn);
 cdev_decl(sw);
 cdev_decl(ctty);
@@ -154,6 +161,8 @@ cdev_decl(cd);
 cdev_decl(uk);
 cdev_decl(wd);
 cdev_decl(acd);
+#include "joy.h"
+cdev_decl(joy);
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -189,7 +198,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),       /* 23: concatenated disk driver */
 	cdev_notdef(),			/* 24: */
 	cdev_notdef(),			/* 25: */
-	cdev_notdef(),			/* 26: */
+	cdev_joy_init(NJOY,joy),	/* 26: joystick */
 	cdev_notdef(),			/* 27: */
 	cdev_notdef(),			/* 28: */
 	cdev_notdef(),			/* 29: */
