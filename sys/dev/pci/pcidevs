@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.266 2000/06/12 17:40:13 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.267 2000/06/13 17:12:39 chris Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -980,6 +980,7 @@ product IBM GXT150P		0x001B	GXT-150P 2D Accelerator
 product IBM 0x0020		0x0020	MCA
 product IBM 82351		0x0022	82351 PCI-PCI
 product IBM 0x0036		0x0036	Miami/PCI
+product IBM OLYMPIC		0x003e	Olympic Token Ring
 
 /* IDT products */
 product IDT 77201		0x0001	77201/77211 ATM (NICStAR)
