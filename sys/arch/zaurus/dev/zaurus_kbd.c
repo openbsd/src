@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.7 2005/01/15 17:51:57 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.8 2005/01/17 18:23:34 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -70,12 +70,14 @@ struct zkbd_softc {
 	int sc_nsense;
 	int sc_nstrobe;
 
-	int sc_onkey_pin;
-	int sc_sync_pin;
-	int sc_swa_pin;
-	int sc_swb_pin;
+	short sc_onkey_pin;
+	short sc_sync_pin;
+	short sc_swa_pin;
+	short sc_swb_pin;
 	char *sc_okeystate;
 	char *sc_keystate;
+	char sc_hinge;		/* 0=open, 1=nonsense, 2=backwards, 3=closed */
+	char sc_maxkbdcol;
 
 	struct timeout sc_roll_to;
 
@@ -141,8 +143,8 @@ void
 zkbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zkbd_softc *sc = (struct zkbd_softc *)self;
-	int pin, i;
 	struct wskbddev_attach_args a;
+	int pin, i;
 
 	/* Determine which system we are - XXX */
 
@@ -151,15 +153,16 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_strobe_array = gpio_strobe_pins_c3000;
 		sc->sc_nsense = sizeof(gpio_sense_pins_c3000)/sizeof(int);
 		sc->sc_nstrobe = sizeof(gpio_strobe_pins_c3000)/sizeof(int);
+		sc->sc_maxkbdcol = 10;
 		sc->sc_onkey_pin = 95;
 		sc->sc_sync_pin = 16;
 		sc->sc_swa_pin = 97;
 		sc->sc_swb_pin = 96;
 	} /* XXX */
 
-	sc->sc_okeystate = malloc((sc->sc_nsense * sc->sc_nstrobe),
+	sc->sc_okeystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
 	    M_DEVBUF, M_NOWAIT);
-	sc->sc_keystate = malloc((sc->sc_nsense * sc->sc_nstrobe),
+	sc->sc_keystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
 	    M_DEVBUF, M_NOWAIT);
 
 	/* set all the strobe bits */
@@ -216,11 +219,7 @@ void
 zkbd_poll(void *v)
 {
 	struct zkbd_softc *sc = v;
-	int i, col;
-	int pin;
-	int type;
-	int keysdown = 0;
-	int s;
+	int i, col, pin, type, keysdown = 0, s;
 
 	s = spltty();
 
@@ -249,11 +248,15 @@ zkbd_poll(void *v)
 
 		/* read row */
 		for (i = 0; i < sc->sc_nsense; i++) {
+			int bit;
+
 			if (sc->sc_sense_array[i] == -1) 
 				continue;
 
-			sc->sc_keystate [i + (col * sc->sc_nsense)] =
-			    pxa2x0_gpio_get_bit(sc->sc_sense_array[i]);
+			bit = pxa2x0_gpio_get_bit(sc->sc_sense_array[i]);
+			if (bit && sc->sc_hinge && col < sc->sc_maxkbdcol)
+				continue;
+			sc->sc_keystate[i + (col * sc->sc_nsense)] = bit;
 		}
 
 		/* reset_col */
@@ -323,9 +326,14 @@ zkbd_sync(void *v)
 int
 zkbd_hinge(void *v)
 {
+	struct zkbd_softc *sc = v;
+	int a = pxa2x0_gpio_get_bit(sc->sc_swa_pin) ? 1 : 0;
+	int b = pxa2x0_gpio_get_bit(sc->sc_swb_pin) ? 2 : 0;
+
 #if 0
-	printf("hinge event pressed\n");
+	printf("hinge event A %d B %d\n", a, b);
 #endif
+	sc->sc_hinge = a | b;
 	return 1;
 }
 
