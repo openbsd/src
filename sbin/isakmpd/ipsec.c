@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.27 2000/08/03 07:24:58 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.126 2000/07/13 20:05:07 angelos Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.28 2000/10/07 06:58:47 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.132 2000/10/06 23:49:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -152,7 +152,9 @@ static struct doi ipsec_doi = {
   ipsec_validate_transform_id,
   ipsec_initiator,
   ipsec_responder,
+#ifdef USE_DEBUG
   ipsec_decode_ids
+#endif
 };
 
 int16_t script_quick_mode[] = {
@@ -481,6 +483,12 @@ ipsec_get_keystate (struct message *msg)
    * the ISAKMP SA concatenated with the message ID, and use that as an
    * IV for further cryptographic operations.
    */
+  if (!msg->isakmp_sa->keystate)
+    {
+      log_print ("ipsec_get_keystate: no keystate in ISAKMP SA %p",
+		 msg->isakmp_sa);
+      return 0;
+    }
   ks = crypto_clone_keystate (msg->isakmp_sa->keystate);
   if (!ks)
     return 0;
@@ -551,7 +559,7 @@ ipsec_validate_id_information (u_int8_t type, u_int8_t *extra, u_int8_t *buf,
   u_int8_t proto = GET_IPSEC_ID_PROTO (extra);
   u_int16_t port = GET_IPSEC_ID_PORT (extra);
 
-  LOG_DBG ((LOG_MESSAGE, 0, 
+  LOG_DBG ((LOG_MESSAGE, 0,
 	    "ipsec_validate_id_information: proto %d port %d type %d",
 	    proto, port, type));
   if (type < IPSEC_ID_IPV4_ADDR || type > IPSEC_ID_KEY_ID)
@@ -686,7 +694,7 @@ ipsec_initiator (struct message *msg)
 		 exchange->type, exchange->phase);
       return -1;
     }
-    
+
   switch (exchange->type)
     {
     case ISAKMP_EXCH_ID_PROT:
@@ -732,7 +740,7 @@ ipsec_responder (struct message *msg)
       message_drop (msg, ISAKMP_NOTIFY_UNSUPPORTED_EXCHANGE_TYPE, 0, 1, 0);
       return -1;
     }
-    
+
   LOG_DBG ((LOG_MISC, 30,
 	    "ipsec_responder: phase %d exchange %d step %d", exchange->phase,
 	    exchange->type, exchange->step));
@@ -848,7 +856,7 @@ ipsec_is_attribute_incompatible (u_int16_t type, u_int8_t *value,
 	  return decode_16 (value) < IKE_DURATION_SECONDS
 	    || decode_16 (value) > IKE_DURATION_KILOBYTES;
 	case IKE_ATTR_LIFE_DURATION:
-	  return 0;
+	  return len != 2 && len != 4;
 	case IKE_ATTR_PRF:
 	  return 1;
 	case IKE_ATTR_KEY_LENGTH:
@@ -856,7 +864,7 @@ ipsec_is_attribute_incompatible (u_int16_t type, u_int8_t *value,
 	   * Our crypto routines only allows key-lengths which are multiples
 	   * of an octet.
 	   */
-	  return decode_16 (value) % 8 != 0; 
+	  return decode_16 (value) % 8 != 0;
 	case IKE_ATTR_FIELD_SIZE:
 	  return 1;
 	case IKE_ATTR_GROUP_ORDER:
@@ -871,7 +879,7 @@ ipsec_is_attribute_incompatible (u_int16_t type, u_int8_t *value,
 	  return decode_16 (value) < IPSEC_DURATION_SECONDS
 	    || decode_16 (value) > IPSEC_DURATION_KILOBYTES;
 	case IPSEC_ATTR_SA_LIFE_DURATION:
-	  return 0;
+	  return len != 2 && len != 4;
 	case IPSEC_ATTR_GROUP_DESCRIPTION:
 	  return decode_16 (value) < IKE_GROUP_DESC_MODP_768
 	    || decode_16 (value) > IKE_GROUP_DESC_MODP_1536;
@@ -1278,7 +1286,7 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 	       * over it, so it's obviously still active. We temporarily need
                * to remove the SA from the list to avoid an endless loop.
 	       */
-		   
+
 	      if (sa == msg->isakmp_sa)
 	        {
                   LIST_REMOVE (sa, link);
@@ -1502,7 +1510,7 @@ ipsec_ipv4toa (char *buf, size_t size, u_int8_t *addr)
 		  buf, size, NULL, 0, NI_NUMERICHOST) != 0)
     {
       log_error("ipsec_ipv4toa: getnameinfo() failed");
-      strcpy(buf, "<error>");
+      strcpy (buf, "<error>");
     }
 }
 
@@ -1533,7 +1541,7 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
 	case IPSEC_ID_IPV4_ADDR_SUBNET:
 	  ipsec_ipv4toa (ntop, sizeof(ntop), id + ISAKMP_ID_DATA_OFF);
 	  ipsec_ipv4toa (ntop2, sizeof(ntop2), id + ISAKMP_ID_DATA_OFF + 4);
-	  snprintf (buf, size, "%08x/%08x: %s/%s", 
+	  snprintf (buf, size, "%08x/%08x: %s/%s",
 		    decode_32 (id + ISAKMP_ID_DATA_OFF),
 		    decode_32 (id + ISAKMP_ID_DATA_OFF + 4),
 		    ntop, ntop2);
@@ -1553,7 +1561,7 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
 	}
     }
   else
-    strlcpy(buf, "<noid>", size);
+    strlcpy (buf, "<noid>", size);
 }
 
 char *
@@ -1606,7 +1614,7 @@ ipsec_build_id (char *section, size_t *sz)
 
   SET_ISAKMP_ID_TYPE (p, id);
   SET_ISAKMP_ID_DOI_DATA (p, "\000\000\000");
-  
+
   switch (id)
     {
     case IPSEC_ID_IPV4_ADDR:
@@ -1639,15 +1647,16 @@ ipsec_clone_id (u_int8_t **did, size_t *did_len, u_int8_t *id, size_t id_len)
     }
 
   *did = malloc (id_len);
-  if (*did == NULL) 
+  if (*did == NULL)
     {
+      *did_len = 0;
       log_error ("ipsec_clone_id: malloc(%d) failed", id_len);
       return -1;
     }
 
   *did_len = id_len;
   memcpy (*did, id, id_len);
-    
+
   return 0;
 }
 
