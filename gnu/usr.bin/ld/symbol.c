@@ -1,4 +1,4 @@
-/* * $OpenBSD: symbol.c,v 1.2 1998/03/26 19:46:26 niklas Exp $	- symbol table routines*/
+/* * $OpenBSD: symbol.c,v 1.3 1999/01/23 00:14:13 espie Exp $	- symbol table routines*/
 /*
  */
 
@@ -37,12 +37,14 @@ symtab_init(relocatable_output)
 #define END_SYM		"_end"
 #define DYN_SYM		"__DYNAMIC"
 #define GOT_SYM		"__GLOBAL_OFFSET_TABLE_"
+#define OTHER_SYM		"_GLOBAL_OFFSET_TABLE_"
 #else
 #define ETEXT_SYM	"etext"
 #define EDATA_SYM	"edata"
 #define END_SYM		"end"
 #define DYN_SYM		"_DYNAMIC"
 #define GOT_SYM		"_GLOBAL_OFFSET_TABLE_"
+#define OTHER_SYM		"__GLOBAL_OFFSET_TABLE_"
 #endif
 
 	dynamic_symbol = getsym(DYN_SYM);
@@ -98,6 +100,8 @@ getsym(key)
 	register int hashval;
 	register symbol *bp;
 
+	if (strcmp(key, OTHER_SYM) == 0)
+		key = GOT_SYM;
 	/* Determine the proper bucket.  */
 	hashval = hash_string(key) % SYMTABSIZE;
 
@@ -148,6 +152,9 @@ getsym_soft (key)
 {
 	register int hashval;
 	register symbol *bp;
+
+	if (strcmp(key, OTHER_SYM) == 0)
+		key = GOT_SYM;
 
 	/* Determine which bucket. */
 	hashval = hash_string(key) % SYMTABSIZE;
