@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.10 2001/05/27 00:39:43 angelos Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.11 2001/05/28 05:30:29 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -390,7 +390,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb, struct tdb *tdb2)
 	     * We don't need massage, IPv6 header fields are always in
 	     * net endian
 	     */
-	    return ip6_output(m, NULL, NULL, IPV6_ENCAPSULATED, NULL, NULL);
+	    return ip6_output(m, NULL, NULL, 0, NULL, NULL);
 #endif /* INET6 */
     }
 
