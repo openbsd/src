@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.224 2001/01/27 04:02:44 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.225 2001/01/28 16:31:25 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -123,6 +123,10 @@ ucom*	at uvisor?
 
 # USB Scanners
 uscanner* at uhub? port ?
+
+# USB scanners that use SCSI emulation, e.g., HP5300
+usscanner* at uhub? port ?
+scsibus* at usscanner?
 
 # USB Generic driver
 ugen*	at uhub? port ? configuration ? interface ?
