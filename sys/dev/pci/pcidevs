@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.267 2000/06/13 17:12:39 chris Exp $
+	$OpenBSD: pcidevs,v 1.268 2000/06/13 17:15:39 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -980,7 +980,7 @@ product IBM GXT150P		0x001B	GXT-150P 2D Accelerator
 product IBM 0x0020		0x0020	MCA
 product IBM 82351		0x0022	82351 PCI-PCI
 product IBM 0x0036		0x0036	Miami/PCI
-product IBM OLYMPIC		0x003e	Olympic Token Ring
+product IBM OLYMPIC		0x003e	Olympic
 
 /* IDT products */
 product IDT 77201		0x0001	77201/77211 ATM (NICStAR)
@@ -1649,8 +1649,8 @@ product MOT 	MPC105		0x0001	MPC105 PPC PCI bridge
 product MOT	MPC106		0x0002	MPC106 PPC PCI bridge
 
 /* Xircom products */
-product	XIRCOM X3201_3		0x0002	X3201-3 Fast Ethernet Controller
-product	XIRCOM X3201_3_21143	0x0003	X3201-3 Fast Ethernet Controller (21143)
+product	XIRCOM X3201_3		0x0002	X3201-3
+product	XIRCOM X3201_3_21143	0x0003	X3201-3 (21143)
 
 /* Yamaha products */
 product YAMAHA YMF724E_V	0x0004	724 Audio
