@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.17 2004/04/27 12:05:57 jmc Exp $
+.\"	$OpenBSD: spl.9,v 1.18 2004/09/02 18:48:46 grange Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -180,6 +180,7 @@ should be one of these constants:
 .Pp
 .Bl -tag -width IPL_SOFTCLOCKXX -compact -offset indent
 .It Dv IPL_STATCLOCK
+.It Dv IPL_SCHED
 .It Dv IPL_CLOCK
 .It Dv IPL_VM
 .It Dv IPL_BIO
