@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.3 2002/06/18 19:28:05 angelos Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.4 2002/06/18 22:26:12 angelos Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -655,10 +655,10 @@ ipcomp_output_cb(cp)
 			splx(s);
 			return crypto_dispatch(crp);
 		}
+
 		ipcompstat.ipcomps_noxform++;
 		DPRINTF(("ipcomp_output_cb(): crypto error %d\n",
 		    crp->crp_etype));
-
 		goto baddone;
 	}
 	/* Shouldn't happen... */
@@ -680,7 +680,6 @@ ipcomp_output_cb(cp)
 	}
 
 	/* Adjust the length in the IP header. */
-
 	switch (tdb->tdb_dst.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
@@ -697,11 +696,12 @@ ipcomp_output_cb(cp)
 #endif /* INET6 */
 
 	default:
+		m_freem(m);
 		DPRINTF(("ipcomp_output(): unknown/unsupported protocol "
 		    "family %d, IPCA %s/%08x\n",
 		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst),
 		    ntohl(tdb->tdb_spi)));
-		m_freem(m);
+		crypto_freereq(crp);
 		ipcompstat.ipcomps_nopf++;
 		return EPFNOSUPPORT;
 		break;
