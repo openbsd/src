@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.15 1997/02/03 15:05:04 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.16 1997/02/21 08:55:14 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.72 1996/12/17 11:09:10 is Exp $	*/
 
 /*
@@ -1013,6 +1013,8 @@ Lsetcpu040:
 	andl	d1,d5
 	jeq	Lstartnot040		| it is not 68040
 	movl	#MMU_68040,a0@		| same as hp300 for compat
+	RELOC(_cputype, a0)
+	movl	#CPU_68040,a0@
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 	btst	#7,sp@(3)		| XXX
@@ -1173,36 +1175,6 @@ _esigcode:
  */
 #include <m68k/asm.h>
 
-/*
- * copypage(fromaddr, toaddr)
- *
- * Optimized version of bcopy for a single page-aligned NBPG byte copy.
- * dbra will work better perhaps.
- */
-ENTRY(copypage)
-	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destination address
-	movl	#NBPG/32,d0		| number of 32 byte chunks
-	cmpl	#MMU_68040,_mmutype
-	jne	Lmlloop			| no, use movl
-Lm16loop:
-	.long	0xf6209000		| move16 a0@+,a1@+
-	.long	0xf6209000		| move16 a0@+,a1@+
-	subql	#1,d0
-	jne	Lm16loop
-	rts
-Lmlloop:
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	subql	#1,d0
-	jne	Lmlloop
-	rts
 /*
  * update profiling information for the user
  * addupc(pc, &u.u_prof, ticks)
@@ -2405,8 +2377,10 @@ _fpeaemu60:
 	.data
 	.space	NBPG
 tmpstk:
-	.globl	_mmutype,_fputype,_protorp
+	.globl	_mmutype,_cputype,_fputype,_protorp
 _mmutype:
+	.long	0
+_cputype:
 	.long	0
 _fputype:
 	.long	0
