@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.main,v 1.5 1996/05/30 09:53:16 deraadt Exp $
+#	$OpenBSD: Makefile.main,v 1.6 1997/04/15 22:58:58 maja Exp $
 
 SUBDIR=	
 
-passwd group hosts networks rpc services protocols netid: _SUBDIRUSE
+passwd group hosts ethers networks rpc services protocols netid netgroup: _SUBDIRUSE
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.yp,v 1.6 1997/03/13 09:50:26 maja Exp $
+#	$OpenBSD: Makefile.yp,v 1.7 1997/04/15 22:58:59 maja Exp $
 
 YPDBDIR=/var/yp
 DIR=/etc
@@ -13,6 +13,7 @@ SED=/usr/bin/sed
 STDHOSTS=/usr/sbin/stdhosts
 STDETHERS=/usr/sbin/stdethers
 MKNETID=/usr/sbin/mknetid
+REVNETGROUP=/usr/sbin/revnetgroup
 TOUCH=/usr/bin/touch
 DOMAIN="`/usr/bin/basename ${.CURDIR}`"
 YPPUSH=/usr/sbin/yppush
@@ -24,7 +25,7 @@ YPPUSH=/usr/sbin/yppush
 MAKEDBM-S=$(MAKEDBM) -s
 UNSECURE="True"
 
-all: passwd group hosts ethers networks rpc services protocols netid
+all: passwd group hosts ethers networks rpc services protocols netid netgroup
 
 passwd.time: $(DIR)/master.passwd
 	-@if [ -f $(>) ]; then \
@@ -218,6 +219,28 @@ netid.time: $(DIR)/passwd $(DIR)/group $(DIR)/hosts $(DIR)/netid
 	  fi
 
 
+netgroup.time: $(DIR)/netgroup
+	-@if [ -f $(>) ]; then \
+		$(CAT) $(>) | $(MAKEDBM) - netgroup; \
+		$(CAT) $(>) | $(REVNETGROUP) -u -f - | \
+		$(MAKEDBM) - netgroup.byuser; \
+		$(CAT) $(>) | $(REVNETGROUP) -h -f - | \
+		$(MAKEDBM) - netgroup.byhost; \
+		$(TOUCH) $(@); \
+		$(ECHO) "updated netgroup"; \
+		if [ ! $(NOPUSH) ]; then \
+			$(YPPUSH) -d $(DOMAIN) netgroup; \
+			$(YPPUSH) -d $(DOMAIN) netgroup.byuser; \
+			$(YPPUSH) -d $(DOMAIN) netgroup.byhost; \
+			$(ECHO) "pushed netgroup"; \
+		else \
+			: ; \
+		fi \
+	else \
+		$(ECHO) "couldn't find $(>)"; \
+	fi
+
+
 passwd: passwd.time
 group: group.time
 hosts: hosts.time
@@ -227,6 +250,7 @@ rpc: rpc.time
 services: services.time
 protocols: protocols.time
 netid: netid.time
+netgroup: netgroup.time
 $(DIR)/passwd:
 $(DIR)/group:
 $(DIR)/hosts:
@@ -237,3 +261,5 @@ $(DIR)/services:
 $(DIR)/protocols:
 $(DIR)/netid:
 $(DIR)/master.passwd:
+$(DIR)/netgroup:
+
