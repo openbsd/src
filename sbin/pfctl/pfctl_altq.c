@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.19 2002/12/07 19:12:34 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.20 2002/12/08 00:19:47 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -145,7 +145,7 @@ print_altq(const struct pf_altq *a, unsigned level)
 		return;
 	}
 
-	printf("altq on %s scheduler ", a->ifname);
+	printf("altq on %s ", a->ifname);
 
 	switch(a->scheduler) {
 	case ALTQT_CBQ:

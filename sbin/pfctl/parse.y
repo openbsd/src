@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.244 2002/12/07 23:15:53 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.245 2002/12/08 00:19:47 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -198,6 +198,15 @@ struct filter_opts {
 	char *qname;
 } filter_opts;
 
+struct queue_opts {
+	struct node_queue_bw	queue_bwspec;
+	struct node_queue_opt	scheduler;
+	int			bandwidth;
+	int			priority;
+	int			tbrsize;
+	int			qlimit;
+} queue_opts;
+
 int	yyerror(char *, ...);
 int	rule_consistent(struct pf_rule *);
 int	nat_consistent(struct pf_nat *);
@@ -310,6 +319,7 @@ typedef struct {
 		struct node_queue_opt	queue_options;
 		struct node_queue_bw	queue_bwspec;
 		struct filter_opts	filter_opts;
+		struct queue_opts	queue_opts;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -325,7 +335,6 @@ typedef struct {
 		strcpy(r.anchorname, (a));			\
 	} while (0)
 
-
 %}
 
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
@@ -338,7 +347,7 @@ typedef struct {
 %token	REQUIREORDER YES
 %token	ANTISPOOF FOR
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
-%token	ALTQ SCHEDULER CBQ BANDWIDTH TBRSIZE
+%token	ALTQ CBQ BANDWIDTH TBRSIZE
 %token	QUEUE PRIORITY QLIMIT
 %token	DEFAULT CONTROL BORROW RED ECN RIO
 %token	<v.string> STRING
@@ -376,6 +385,7 @@ typedef struct {
 %type	<v.number>	cbqflags_list cbqflags_item
 %type	<v.queue_bwspec>	bandwidth
 %type	<v.filter_opts>		filter_opts filter_opt filter_opts_l
+%type	<v.queue_opts>		queue_opts queue_opt queue_opts_l
 %%
 
 ruleset		: /* empty */
@@ -624,58 +634,32 @@ antispoof_iflst	: if_item			{ $$ = $1; }
 		}
 		;
 
-
-/* altq stuff */
-
-altqif		: ALTQ interface SCHEDULER schedtype bandwidth qlimit
-		  tbrsize QUEUE qassign	{
+altqif		: ALTQ interface queue_opts QUEUE qassign {
 			struct	pf_altq a;
 
 			if (check_rulestate(PFCTL_STATE_QUEUE))
 				YYERROR;
 
 			memset(&a, 0, sizeof(a));
-			if ($4.qtype == ALTQT_NONE) {
+			if ($3.scheduler.qtype == ALTQT_NONE) {
 				yyerror("no scheduler specified!");
 				YYERROR;
 			}
-			a.scheduler = $4.qtype;
-			a.pq_u.cbq_opts.flags = $4.data.cbq_opts.flags;
-			a.qlimit = $6;
-			a.tbrsize = $7;
-			if ($9 == NULL) {
+			a.scheduler = $3.scheduler.qtype;
+			a.pq_u.cbq_opts.flags =
+			    $3.scheduler.data.cbq_opts.flags;
+			a.qlimit = $3.qlimit;
+			a.tbrsize = $3.tbrsize;
+			if ($5 == NULL) {
 				yyerror("no child queues specified");
 				YYERROR;
 			}
-			if (expand_altq(&a, $2, $9, $5))
+			if (expand_altq(&a, $2, $5, $3.queue_bwspec))
 				YYERROR;
 		}
 		;
 
-qassign		: /* empty */		{ $$ = NULL; }
-		| qassign_item		{ $$ = $1; }
-		| '{' qassign_list '}'	{ $$ = $2; }
-		;
-
-qassign_list	: qassign_item			{ $$ = $1; }
-		| qassign_list comma qassign_item	{
-			$1->tail->next = $3;
-			$1->tail = $3;
-			$$ = $1;
-		}
-		;
-
-qassign_item	: STRING			{
-			$$ = calloc(1, sizeof(struct node_queue));
-			if ($$ == NULL)
-				err(1, "queue_item: calloc");
-			strlcpy($$->queue, $1, PF_QNAME_SIZE);
-			$$->next = NULL;
-			$$->tail = $$;
-		}
-		;
-
-queuespec	: QUEUE STRING bandwidth priority qlimit schedtype qassign {
+queuespec	: QUEUE STRING queue_opts qassign {
 			struct	pf_altq a;
 
 			if (check_rulestate(PFCTL_STATE_QUEUE))
@@ -689,49 +673,59 @@ queuespec	: QUEUE STRING bandwidth priority qlimit schedtype qassign {
 				    "%d chars)", PF_QNAME_SIZE-1);
 				YYERROR;
 			}
-			if ($4 > 255) {
+			if ($3.tbrsize) {
+				yyerror("cannot specify tbrsize for queue");
+				YYERROR;
+			}
+			if ($3.priority > 255) {
 				yyerror("priority out of range: max 255");
 				YYERROR;
 			}
-			a.priority = $4;
-			a.qlimit = $5;
-			a.scheduler = $6.qtype;
+			a.priority = $3.priority;
+			a.qlimit = $3.qlimit;
+			a.scheduler = $3.scheduler.qtype;
 			switch (a.scheduler) {
 			case ALTQT_CBQ:
-				a.pq_u.cbq_opts.flags = $6.data.cbq_opts.flags;
+				a.pq_u.cbq_opts.flags =
+				    $3.scheduler.data.cbq_opts.flags;
+				break;
 			}
-			if (expand_queue(&a, $7, $3))
+			if (expand_queue(&a, $4, $3.queue_bwspec))
 				YYERROR;
-
 		}
 		;
 
-schedtype	: /* empty */			{ $$.qtype = ALTQT_NONE; }
-		| CBQ				{ $$.qtype = ALTQT_CBQ; }
-		| CBQ '(' cbqflags_list ')'	{
-			$$.qtype = ALTQT_CBQ;
-			$$.data.cbq_opts.flags = $3;
+queue_opts	:	{
+			bzero(&queue_opts, sizeof queue_opts);
+			queue_opts.priority = DEFAULT_PRIORITY;
+			queue_opts.qlimit = DEFAULT_QLIMIT;
+			queue_opts.scheduler.qtype = ALTQT_NONE;
+			queue_opts.queue_bwspec.bw_percent = 100;
+		}
+		  queue_opts_l
+			{ $$ = queue_opts; }
+		| /* empty */ {
+			bzero(&queue_opts, sizeof queue_opts);
+			queue_opts.priority = DEFAULT_PRIORITY;
+			queue_opts.qlimit = DEFAULT_QLIMIT;
+			queue_opts.scheduler.qtype = ALTQT_NONE;
+			queue_opts.queue_bwspec.bw_percent = 100;
+			$$ = queue_opts;
 		}
 		;
 
-cbqflags_list	: cbqflags_item				{ $$ |= $1; }
-		| cbqflags_list comma cbqflags_item	{ $$ |= $3; }
+queue_opts_l	: queue_opts_l queue_opt
+		| queue_opt
 		;
 
-
-cbqflags_item	: DEFAULT	{ $$ = CBQCLF_DEFCLASS; }
-		| CONTROL	{ $$ = CBQCLF_CTLCLASS; }
-		| BORROW	{ $$ = CBQCLF_BORROW; }
-		| RED		{ $$ = CBQCLF_RED; }
-		| ECN		{ $$ = CBQCLF_RED|CBQCLF_ECN; }
-		| RIO		{ $$ = CBQCLF_RIO; }
+queue_opt	: bandwidth	{ queue_opts.queue_bwspec = $1; }
+		| priority	{ queue_opts.priority = $1; }
+		| qlimit	{ queue_opts.qlimit = $1; }
+		| schedtype	{ queue_opts.scheduler = $1; }
+		| tbrsize	{ queue_opts.tbrsize = $1; }
 		;
 
-bandwidth	: /* empty */		{
-			$$.bw_absolute = 0;
-			$$.bw_percent = 100;
-		}
-		| BANDWIDTH STRING {
+bandwidth	: BANDWIDTH STRING {
 			double bps;
 			char *cp;
 
@@ -762,10 +756,8 @@ bandwidth	: /* empty */		{
 			}
 			$$.bw_absolute = (u_int32_t)bps;
 		}
-		;
 
-priority	: /* empty */		{ $$ = DEFAULT_PRIORITY; }
-		| PRIORITY number	{
+priority	: PRIORITY number	{
 			if ($2 > 255) {
 				yyerror("priority out of range: max 255");
 				YYERROR;
@@ -774,8 +766,29 @@ priority	: /* empty */		{ $$ = DEFAULT_PRIORITY; }
 		}
 		;
 
-qlimit		: /* empty */		{ $$ = DEFAULT_QLIMIT; }
-		| QLIMIT number		{
+schedtype	: CBQ				{
+			$$.qtype = ALTQT_CBQ;
+			$$.data.cbq_opts.flags = 0;
+		}
+		| CBQ '(' cbqflags_list ')'	{
+			$$.qtype = ALTQT_CBQ;
+			$$.data.cbq_opts.flags = $3;
+		}
+		;
+
+cbqflags_list	: cbqflags_item				{ $$ |= $1; }
+		| cbqflags_list comma cbqflags_item	{ $$ |= $3; }
+		;
+
+cbqflags_item	: DEFAULT	{ $$ = CBQCLF_DEFCLASS; }
+		| CONTROL	{ $$ = CBQCLF_CTLCLASS; }
+		| BORROW	{ $$ = CBQCLF_BORROW; }
+		| RED		{ $$ = CBQCLF_RED; }
+		| ECN		{ $$ = CBQCLF_RED|CBQCLF_ECN; }
+		| RIO		{ $$ = CBQCLF_RIO; }
+		;
+
+qlimit		: QLIMIT number		{
 			if ($2 > 65535) {
 				yyerror("qlimit out of range: max 65535");
 				YYERROR;
@@ -784,14 +797,35 @@ qlimit		: /* empty */		{ $$ = DEFAULT_QLIMIT; }
 		}
 		;
 
-
-tbrsize		: /* empty */		{ $$ = 0; }
-		| TBRSIZE number	{
+tbrsize		: TBRSIZE number	{
 			if ($2 > 65535) {
 				yyerror("tbrsize too big: max 65535");
 				YYERROR;
 			}
 			$$ = $2;
+		}
+		;
+
+qassign		: /* empty */		{ $$ = NULL; }
+		| qassign_item		{ $$ = $1; }
+		| '{' qassign_list '}'	{ $$ = $2; }
+		;
+
+qassign_list	: qassign_item			{ $$ = $1; }
+		| qassign_list comma qassign_item	{
+			$1->tail->next = $3;
+			$1->tail = $3;
+			$$ = $1;
+		}
+		;
+
+qassign_item	: STRING			{
+			$$ = calloc(1, sizeof(struct node_queue));
+			if ($$ == NULL)
+				err(1, "queue_item: calloc");
+			strlcpy($$->queue, $1, PF_QNAME_SIZE);
+			$$->next = NULL;
+			$$->tail = $$;
 		}
 		;
 
@@ -1070,7 +1104,6 @@ fragcache	: /* empty */		{ $$ = 0; }
 		| fragment FRAGCROP	{ $$ = PFRULE_FRAGCROP; }
 		| fragment FRAGDROP	{ $$ = PFRULE_FRAGDROP; }
 		;
-
 
 dir		: /* empty */			{ $$ = 0; }
 		| IN				{ $$ = PF_IN; }
@@ -2271,7 +2304,6 @@ routespec	: route_host			{ $$ = $1; }
 		| '{' route_host_list '}'	{ $$ = $2; }
 		;
 
-
 route		: /* empty */			{
 			$$.host = NULL;
 			$$.rt = 0;
@@ -3186,7 +3218,6 @@ lookup(char *s)
 		{ "rio",		RIO},
 		{ "round-robin",	ROUNDROBIN},
 		{ "route-to",		ROUTETO},
-		{ "scheduler",		SCHEDULER},
 		{ "scrub",		SCRUB},
 		{ "set",		SET},
 		{ "source-hash",	SOURCEHASH},
