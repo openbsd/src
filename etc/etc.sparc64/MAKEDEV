@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.9 2001/09/05 13:45:30 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.10 2001/09/05 13:51:50 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -405,7 +405,7 @@ if [ "$os" = "SunOS" ]; then
 		666)mask=0;;
 		440)mask=227;;
 		esac
-		echo eval `echo "$@"|sed \
+		echo `echo "$@"|sed \
 			's/mknod -m \([0-9]*\) /umask '$mask';mknod /;s/-m [0-9]* //g;\
 			 s/operator/5/g;s/root.kmem/root.2/g;s/root\./root:/g'`
 	}
