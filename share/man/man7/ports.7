@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.37 2003/07/28 20:02:44 sturm Exp $
+.\" $OpenBSD: ports.7,v 1.38 2003/08/15 00:28:05 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -128,13 +128,16 @@ line, e.g., to avoid stopping after each problem.
 .Ed
 .Pp
 The targets that do this are
-.Ar build , checksum , clean , configure ,
+.Ar all , build , checksum , clean , configure ,
 .Ar extract , fake , fetch , install ,
-.Ar distclean , deinstall , reinstall , mirror-distfiles ,
-.Ar obj , package , cdrom-packages , link-categories ,
-.Ar unlink-categories ,
+.Ar distclean , deinstall , reinstall , 
+.Ar package , link-categories , unlink-categories ,
+.Ar describe , show , regress ,
+.Ar lib-depends-check , homepage-links , manpages-check ,
+.Ar license-check , all-dir-depends , build-dir-depends ,
+.Ar run-dir-depends
 and
-.Ar ftp-packages .
+.Ar readmes .
 .Pp
 Target names starting with _ are private to the ports infrastructure,
 should not be invoked directly, and are liable to change without notice.
@@ -197,9 +200,9 @@ When called by the
 or
 .Ar fetch
 targets, this is run in scattered pieces as
-.Ar fetch-depends , lib-depends , build-depends , run-depends
+.Ar lib-depends , build-depends
 and
-.Ar misc-depends .
+.Ar run-depends .
 Defining
 .Ev NO_DEPENDS
 to
@@ -234,7 +237,7 @@ Install the resulting package.
 .Pp
 The following targets are not run during the normal install process.
 .Bl -tag -width fetch-list
-.It Ar depends-list package-depends
+.It Ar print-build-depends print-run-depends
 Print an ordered list of all the compile and run dependencies.
 .It Ar clean
 Remove the expanded source code.
@@ -391,7 +394,7 @@ Where to find/put distfiles, normally
 .Pa distfiles/
 in
 .Ev PORTSDIR .
-.It Ev PACKAGES
+.It Ev PKGREPOSITORYBASE
 Used only for the
 .Ar package
 target; the base directory for the packages tree, normally
@@ -430,21 +433,10 @@ If set to
 let
 .Sq clean
 recurse to dependencies.
-.It Ev NOCLEANDEPENDS
-If defined, don't let
-.Sq clean
-recurse to dependencies (deprecated, use
-.Ev CLEANDEPENDS
-instead).
 .It Ev FETCH_CMD
 Command to use to fetch files.
 Normally
 .Xr ftp 1 .
-.It Ev FORCE_PKG_REGISTER
-If set, overwrite any existing package registration on the system.
-.Po
-Not recommended.
-.Pc
 .It Ev PATCH_DEBUG
 If defined, display verbose output when applying each patch.
 .It Ev INTERACTIVE
