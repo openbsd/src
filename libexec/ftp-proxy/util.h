@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.4 2004/07/06 19:49:11 dhartmei Exp $ */
+/*	$OpenBSD: util.h,v 1.5 2005/02/24 15:49:08 dhartmei Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -46,7 +46,7 @@ struct csiob {
 	int line_buffer_size, io_buffer_size, io_buffer_len, next_byte;
 	unsigned char *io_buffer, *line_buffer;
 	struct sockaddr_in sa, real_sa;
-	char *who;
+	const char *who;
 	char alive, got_eof, data_available;
 	int send_oob_flags;
 };

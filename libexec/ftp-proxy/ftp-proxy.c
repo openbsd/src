@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.39 2005/01/19 20:58:59 millert Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.40 2005/02/24 15:49:08 dhartmei Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -146,8 +146,8 @@ char ClientName[NI_MAXHOST];
 char RealServerName[NI_MAXHOST];
 char OurName[NI_MAXHOST];
 
-char *User = "proxy";
-char *Group;
+const char *User = "proxy";
+const char *Group;
 
 extern int Debug_Level;
 extern int Use_Rdns;
@@ -388,7 +388,7 @@ void
 log_control_command (char *cmd, int client)
 {
 	/* log an ftp control command or reply */
-	char *logstring;
+	const char *logstring;
 	int level = LOG_DEBUG;
 
 	if (!Verbose)
