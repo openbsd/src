@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.5 1996/07/29 22:01:50 niklas Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.6 1996/08/07 06:36:26 tholo Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -424,7 +424,8 @@ findpcb:
 	 * Reset idle time and keep-alive timer.
 	 */
 	tp->t_idle = 0;
-	tp->t_timer[TCPT_KEEP] = tcp_keepidle;
+	if (tp->t_state != TCPS_SYN_RECEIVED)
+		tp->t_timer[TCPT_KEEP] = tcp_keepidle;
 
 	/*
 	 * Process options if not in LISTEN state,
