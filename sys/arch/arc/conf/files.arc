@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.20 1999/08/12 13:06:33 niklas Exp $
+#	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -126,7 +126,6 @@ file	arch/arc/dev/com_lbus.c		com & (com_pica | com_algor)
 device  joy
 attach  joy at isa
 file    arch/arc/isa/joy.c             joy needs-flag
-file    dev/isa/if_ed.c                 ed & (ed_isa | ed_pcmcia) needs-flag
 
 # PC parallel ports (XXX what chip?)
 attach	lpt at pica with lpt_pica
