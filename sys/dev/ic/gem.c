@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.28 2002/09/22 15:56:17 jason Exp $	*/
+/*	$OpenBSD: gem.c,v 1.29 2002/11/26 06:01:27 nate Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -302,7 +302,7 @@ gem_config(sc)
 	 * Unless we are Apple.
 	 */
 	TAILQ_FOREACH(ifm, &sc->sc_media.ifm_list, ifm_list) {
-		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_TX ||
+		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_T ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_SX ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_LX ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_CX) {
@@ -1304,7 +1304,7 @@ gem_mii_statchg(dev)
 		 	v |= GEM_MAC_XIF_ECHO_DISABL;
 
 		switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
-		case IFM_1000_TX:  /* Gigabit using GMII interface */
+		case IFM_1000_T:  /* Gigabit using GMII interface */
 			v |= GEM_MAC_XIF_GMII_MODE;
 			break;
 		default:

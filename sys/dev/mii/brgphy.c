@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.13 2002/11/26 04:37:47 jason Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.14 2002/11/26 06:01:28 nate Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -195,7 +195,7 @@ brgphy_service(sc, mii, cmd)
 #endif
 			(void) brgphy_mii_phy_auto(sc, 1);
 			break;
-		case IFM_1000_TX:
+		case IFM_1000_T:
 			speed = BRGPHY_S1000;
 			goto setit;
 		case IFM_100_T4:
@@ -215,7 +215,7 @@ brgphy_service(sc, mii, cmd)
 			}
 			PHY_WRITE(sc, BRGPHY_MII_ANAR, BRGPHY_SEL_TYPE);
 
-			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_TX)
+			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)
 				break;
 
 			/*
@@ -320,10 +320,10 @@ brgphy_status(sc)
 		switch (PHY_READ(sc, BRGPHY_MII_AUXSTS) &
 			BRGPHY_AUXSTS_AN_RES) {
 		case BRGPHY_RES_1000FD:
-			mii->mii_media_active |= IFM_1000_TX | IFM_FDX;
+			mii->mii_media_active |= IFM_1000_T | IFM_FDX;
 			break;
 		case BRGPHY_RES_1000HD:
-			mii->mii_media_active |= IFM_1000_TX | IFM_HDX;
+			mii->mii_media_active |= IFM_1000_T | IFM_HDX;
 			break;
 		case BRGPHY_RES_100FD:
 			mii->mii_media_active |= IFM_100_TX | IFM_FDX;

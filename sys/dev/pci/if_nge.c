@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.23 2002/09/22 17:53:43 nate Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.24 2002/11/26 06:01:28 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -597,7 +597,7 @@ nge_miibus_statchg(dev)
 	CSR_WRITE_4(sc, NGE_RX_CFG, rxcfg);
 
 	/* If we have a 1000Mbps link, set the mode_1000 bit. */
-	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_TX)
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T)
 		NGE_SETBIT(sc, NGE_CFG, NGE_CFG_MODE_1000);
 	else
 		NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_MODE_1000);
@@ -1549,7 +1549,7 @@ nge_tick(xsc)
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 			sc->nge_link++;
-			if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_TX)
+			if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T)
 				DPRINTF(("%s: gigabit link up\n",
 					 sc->sc_dv.dv_xname));
 			if (!IFQ_IS_EMPTY(&ifp->if_snd))

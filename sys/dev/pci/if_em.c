@@ -1100,11 +1100,7 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 			ifmr->ifm_active |= IFM_100_TX;
 			break;
 		case 1000:
-#if __FreeBSD_version < 500000 
-			ifmr->ifm_active |= IFM_1000_TX;
-#else
 			ifmr->ifm_active |= IFM_1000_T;
-#endif
 			break;
 		}
 		if (sc->link_duplex == FULL_DUPLEX)
@@ -1140,11 +1136,7 @@ em_media_change(struct ifnet *ifp)
 		sc->hw.autoneg_advertised = AUTONEG_ADV_DEFAULT;
 		break;
 	case IFM_1000_SX:
-#if __FreeBSD_version < 500000 
-	case IFM_1000_TX:
-#else
 	case IFM_1000_T:
-#endif
 		sc->hw.autoneg = DO_AUTO_NEG;
 		sc->hw.autoneg_advertised = ADVERTISE_1000_FULL;
 		break;
@@ -1448,15 +1440,9 @@ em_setup_interface(struct em_softc * sc)
 			    0, NULL);
 		ifmedia_add(&sc->media, IFM_ETHER | IFM_100_TX | IFM_FDX, 
 			    0, NULL);
-#if __FreeBSD_version < 500000 
-		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_TX | IFM_FDX, 
-			    0, NULL);
-		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_TX, 0, NULL);
-#else
 		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_T | IFM_FDX, 
 			    0, NULL);
 		ifmedia_add(&sc->media, IFM_ETHER | IFM_1000_T, 0, NULL);
-#endif
 	}
 	ifmedia_add(&sc->media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->media, IFM_ETHER | IFM_AUTO);

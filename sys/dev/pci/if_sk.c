@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.25 2002/06/08 23:32:16 jason Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.26 2002/11/26 06:01:28 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1175,7 +1175,7 @@ skc_attach(parent, self, aux)
 		sc->sk_pmd = IFM_1000_CX;
 		break;
 	case SK_PMD_1000BASETX:
-		sc->sk_pmd = IFM_1000_TX;
+		sc->sk_pmd = IFM_1000_T;
 		break;
 	default:
 		printf("%s: unknown media type: 0x%x\n",

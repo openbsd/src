@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.10 2002/04/10 19:25:07 millert Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.11 2002/11/26 06:01:28 nate Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -178,7 +178,8 @@ int	ifmedia_baudrate(int);
 #define	IFM_10_FL	13		/* 10BaseFL - Fiber */
 #define	IFM_1000_LX	14		/* 1000baseLX - single-mode fiber */
 #define	IFM_1000_CX	15		/* 1000baseCX - 150ohm STP */
-#define	IFM_1000_TX	16		/* 1000baseTX - 4 pair cat 5 */
+#define	IFM_1000_T	16		/* 1000baseT - 4 pair cat 5 */
+#define	IFM_1000_TX	IFM_1000_T	/* for backwards compatibility */
 #define	IFM_HPNA_1	17		/* HomePNA 1.0 (1Mb/s) */
 
 /*
@@ -351,8 +352,10 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_1000_LX,	"1000LX" },			\
 	{ IFM_ETHER|IFM_1000_CX,	"1000baseCX" },			\
 	{ IFM_ETHER|IFM_1000_CX,	"1000CX" },			\
-	{ IFM_ETHER|IFM_1000_TX,	"1000baseTX" },			\
-	{ IFM_ETHER|IFM_1000_TX,	"1000TX" },			\
+	{ IFM_ETHER|IFM_1000_T,		"1000baseT" },			\
+	{ IFM_ETHER|IFM_1000_T,		"1000T" },			\
+	{ IFM_ETHER|IFM_1000_T,		"1000baseTX" },			\
+	{ IFM_ETHER|IFM_1000_T,		"1000TX" },			\
 	{ IFM_ETHER|IFM_HPNA_1,		"HomePNA1" },			\
 	{ IFM_ETHER|IFM_HPNA_1,		"HPNA1" },			\
 									\
@@ -434,7 +437,7 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER|IFM_10_FL,		IF_Mbps(10) },			\
 	{ IFM_ETHER|IFM_1000_LX,	IF_Mbps(1000) },		\
 	{ IFM_ETHER|IFM_1000_CX,	IF_Mbps(1000) },		\
-	{ IFM_ETHER|IFM_1000_TX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_1000_T,		IF_Mbps(1000) },		\
 	{ IFM_ETHER|IFM_HPNA_1,		IF_Mbps(1) },			\
 									\
 	{ IFM_TOKEN|IFM_TOK_STP4,	IF_Mbps(4) },			\

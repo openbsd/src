@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.13 2002/05/04 11:30:06 fgsch Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.14 2002/11/26 06:01:28 nate Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -377,12 +377,12 @@ mii_phy_add_media(sc)
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000THDX) {
 			sc->mii_anegticks = 10;
-			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, 0,
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0,
 			    sc->mii_inst), MII_MEDIA_1000_T);
 		}
 		if (sc->mii_extcapabilities & EXTSR_1000TFDX) {
 			sc->mii_anegticks = 10;
-			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, IFM_FDX,
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX,
 			    sc->mii_inst), MII_MEDIA_1000_T_FDX);
 		}
 	}
