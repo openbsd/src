@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 1999/11/09 04:38:17 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 1999/11/28 23:36:16 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -914,6 +914,7 @@ systype(char *name)
 		{ "V-I Power",	"(POWER4e) V-I ppc vme boards ",  POWER4e},
 		{ "iMac",	"(APPL) Apple iMac ",  APPL},
 		{ "PowerMac",	"(APPL) Apple PowerMac ",  APPL},
+		{ "PowerBook",  "(APPL) Apple Powerbook ",  APPL},
 		{ NULL,"",0}
 	};
 	for (i = 0; systypes[i].name != NULL; i++) {
