@@ -1,5 +1,5 @@
-/* $OpenBSD: alpha_cpu.h,v 1.6 2000/11/08 21:27:15 ericj Exp $ */
-/* $NetBSD: alpha_cpu.h,v 1.41 2000/06/08 03:10:06 thorpej Exp $ */
+/* $OpenBSD: alpha_cpu.h,v 1.7 2002/05/10 10:14:48 art Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.43 2001/12/18 04:18:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -266,6 +266,8 @@ typedef unsigned long alpha_pt_entry_t;
 #define	ALPHA_IF_CODE_FEN	3
 #define	ALPHA_IF_CODE_OPDEC	4
 
+#ifdef _KERNEL
+
 /*
  * Translation Buffer Invalidation definitions [OSF/1 PALcode Specific]
  */
@@ -275,6 +277,8 @@ typedef unsigned long alpha_pt_entry_t;
 #define	ALPHA_TBISI(va)	alpha_pal_tbi(1, (va))		/* ITB entry for va */
 #define	ALPHA_TBISD(va)	alpha_pal_tbi(2, (va))		/* DTB entry for va */
 #define	ALPHA_TBIS(va)	alpha_pal_tbi(3, (va))		/* all for va */
+
+#endif /* _KERNEL */
 
 /*
  * Bits used in the amask instruction [EV56 and later]
@@ -301,6 +305,8 @@ typedef unsigned long alpha_pt_entry_t;
 #define	ALPHA_IMPLVER_EV5	1		/* EV5/EV56/PCA56 */
 #define	ALPHA_IMPLVER_EV6	2		/* EV6 */
 
+#ifdef _KERNEL
+
 /*
  * Maximum processor ID we allow from `whami', and related constants.
  *
@@ -324,6 +330,10 @@ const char	*alpha_dsr_sysname(void);
 unsigned long	alpha_amask(unsigned long);
 unsigned long	alpha_implver(void);
 
+#endif /* _KERNEL */
+
+/* XXX Expose the insn wrappers to userspace, for now. */
+
 static __inline unsigned long
 alpha_rpcc(void)
 {
@@ -335,6 +345,8 @@ alpha_rpcc(void)
 
 #define	alpha_mb()	__asm __volatile("mb" : : : "memory")
 #define	alpha_wmb()	__asm __volatile("mb" : : : "memory")	/* XXX */
+
+#if defined(_KERNEL) || defined(_STANDALONE)
 
 /*
  * Stubs for OSF/1 PALcode operations.
@@ -419,7 +431,7 @@ alpha_pal_swpctx(unsigned long ctx)
 		: "=r" (a0), "=r" (v0)
 		: "i" (PAL_OSF1_swpctx), "0" (a0)
 		/* clobbers t0, t8..t11, a0 (above) */
-		: "$1", "$22", "$23", "$24", "$25");
+		: "$1", "$22", "$23", "$24", "$25", "memory");
 
 	return (v0);
 }
@@ -434,7 +446,7 @@ alpha_pal_swpipl(unsigned long ipl)
 		: "=r" (a0), "=r" (v0)
 		: "i" (PAL_OSF1_swpipl), "0" (a0)
 		/* clobbers t0, t8..t11, a0 (above) */
-		: "$1", "$22", "$23", "$24", "$25");
+		: "$1", "$22", "$23", "$24", "$25", "memory");
 
 	return (v0);
 }
@@ -525,5 +537,7 @@ alpha_pal_wrval(unsigned long val)
 		/* clobbers t0, t8..t11, a0 (above) */
 		: "$1", "$22", "$23", "$24", "$25");
 }
+
+#endif /* _KERNEL */
 
 #endif /* __ALPHA_ALPHA_CPU_H__ */
