@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.17 2004/01/17 18:05:46 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.18 2004/01/20 12:50:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -125,7 +125,7 @@ control_accept(int listenfd)
 	}
 
 	if (uid) {
-		log_err("Connection to control socket with uid %ld", uid);
+		logit(LOG_INFO, "Control connection attempt from uid %ld", uid);
 		return;
 	}
 
