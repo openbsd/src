@@ -353,7 +353,7 @@ out of my makefile:
 	#	-DNDBM -DNEWDB -DYPCOMPAT -- use both plus YP compatility
 	#	-DNIS -- include client NIS support
 	# The really old (V7) DBM library is no longer supported.
-	# See READ_ME for a description of how these flags interact.
+	# See README for a description of how these flags interact.
 	#DBMDEF= -DNDBM -DNEWDB
 	DBMDEF=	-DNDBM -DNIS
 
