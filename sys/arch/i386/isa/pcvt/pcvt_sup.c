@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_sup.c,v 1.7 1999/09/14 18:21:41 aaron Exp $	*/
+/*	$OpenBSD: pcvt_sup.c,v 1.8 1999/09/18 22:54:48 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -547,7 +547,7 @@ vgasetfontattr(struct vgafontattr *data)
 			}
 			bcopy(vsp->Crtat, vsp->Scrollback, vsp->screen_rows *
 			      vsp->maxcol * CHR);
-			vsp->scr_offset = vsp->row - 1;
+			vsp->scr_offset = vsp->row;
 		}
 	}
 	switch_screen(current_video_screen, 0, 0);
