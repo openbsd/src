@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdb_init.c,v 1.4 1998/02/18 11:53:50 art Exp $	*/
+/*	$OpenBSD: kdb_init.c,v 1.5 1999/08/20 11:00:32 art Exp $	*/
 /* $KTH: kdb_init.c,v 1.23 1997/03/30 17:45:05 assar Exp $ */
 
 /*-
@@ -76,9 +76,9 @@ add_principal(char *name, char *instance, enum ap_op aap_op, int maxlife)
 	copy_from_key(new_key, &principal.key_low, &principal.key_high);
 	break;
     }
-    principal.exp_date = 946702799;	/* Happy new century */
-    strncpy(principal.exp_date_txt, "12/31/99", DATE_SZ);
     principal.mod_date = time(0);
+    principal.exp_date = KDBINIT_EXPDATE;
+    strncpy(principal.exp_date_txt, KDBINIT_EXPDATE_TXT, DATE_SZ);
 
     tm = k_localtime(&principal.mod_date);
     principal.attributes = 0;
