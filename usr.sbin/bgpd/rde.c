@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.135 2004/08/05 18:44:19 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.136 2004/08/05 20:56:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1599,7 +1599,9 @@ rde_shutdown(void)
 
 	nexthop_shutdown();
 	path_shutdown();
+	aspath_shutdown();
 	pt_shutdown();
 	peer_shutdown();
+	free(mrt);
 }
 
