@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.11 2000/03/12 01:27:11 itojun Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.12 2000/12/13 21:58:11 provos Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -247,6 +247,15 @@ route_output(m, va_alist)
 		senderr(EACCES);
 	switch (rtm->rtm_type) {
 
+	case RTM_DELETE:
+		error = rtrequest(RTM_DELETE, dst, gate, netmask,
+				rtm->rtm_flags, &saved_nrt);
+		if (error == 0) {
+			(rt = saved_nrt)->rt_refcnt++;
+			goto report;
+		}
+		break;
+
 	case RTM_ADD:
 		if (gate == 0)
 			senderr(EINVAL);
@@ -258,17 +267,7 @@ route_output(m, va_alist)
 			saved_nrt->rt_refcnt--;
 			saved_nrt->rt_genmask = genmask;
 		}
-		break;
-
-	case RTM_DELETE:
-		error = rtrequest(RTM_DELETE, dst, gate, netmask,
-				rtm->rtm_flags, &saved_nrt);
-		if (error == 0) {
-			(rt = saved_nrt)->rt_refcnt++;
-			goto report;
-		}
-		break;
-
+		/* FALLTHROUGH */
 	case RTM_GET:
 	case RTM_CHANGE:
 	case RTM_LOCK:
@@ -356,6 +355,7 @@ route_output(m, va_alist)
 			/*
 			 * Fall into
 			 */
+		case RTM_ADD:
 		case RTM_LOCK:
 			rt->rt_rmx.rmx_locks &= ~(rtm->rtm_inits);
 			rt->rt_rmx.rmx_locks |=
