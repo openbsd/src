@@ -1,5 +1,5 @@
-/*	$OpenBSD: log.c,v 1.9 2000/02/25 17:23:40 niklas Exp $	*/
-/*	$EOM: log.c,v 1.26 2000/02/20 19:58:39 niklas Exp $	*/
+/*	$OpenBSD: log.c,v 1.10 2000/04/07 22:05:38 niklas Exp $	*/
+/*	$EOM: log.c,v 1.27 2000/03/30 14:27:03 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -51,10 +51,16 @@
 
 static void _log_print (int, int, const char *, va_list, int, int);
 
-static FILE *log_output = stderr;
+static FILE *log_output;
 #ifdef USE_DEBUG
 static int log_level[LOG_ENDCLASS];
 #endif
+
+void
+log_init (void)
+{
+  log_output = stderr;
+}
 
 void
 log_to (FILE *f)
