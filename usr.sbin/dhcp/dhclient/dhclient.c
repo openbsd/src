@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.9 2000/07/21 00:33:53 beck Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.10 2000/10/26 20:35:32 beck Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -625,6 +625,24 @@ void dhcp (packet)
 
 	      default:
 		return;
+	}
+
+	if (packet->packet_type != DHCPNAK) {
+		/* RFC2131 table 3 specifies that only DHCPNAK can
+		 * specify yiaddr of 0, Some buggy dhcp servers
+		 * can set yiaddr to 0 on non-DHCPNAK packets
+		 * we ignore those here.
+		 */
+	         struct in_addr tmp;
+		 memset(&tmp, 0, sizeof(struct in_addr));
+
+		 if (memcmp(&tmp, &packet -> raw -> yiaddr, sizeof(tmp)) == 0) 
+		 {
+			note (
+			"%s from %s rejected due to bogus yiaddr of 0.0.0.0.",
+			type, piaddr (packet->client_addr));
+			return;		 
+		 }
 	}
 
 	/* If there's a reject list, make sure this packet's sender isn't
