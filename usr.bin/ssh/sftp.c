@@ -24,7 +24,7 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.23 2002/02/04 21:53:12 djm Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.24 2002/02/05 00:00:46 djm Exp $");
 
 /* XXX: short-form remote directory listings (like 'ls -C') */
 
@@ -40,6 +40,7 @@ RCSID("$OpenBSD: sftp.c,v 1.23 2002/02/04 21:53:12 djm Exp $");
 #include "sftp-int.h"
 
 FILE* infile;
+size_t copy_buffer_len = 32768;
 
 static void
 connect_to_server(char *path, char **args, int *in, int *out, pid_t *sshpid)
@@ -87,7 +88,8 @@ usage(void)
 {
 	fprintf(stderr,
 	    "usage: sftp [-1Cv] [-b batchfile] [-F config] [-o option] [-s subsystem|path]\n"
-	    "            [-S program] [user@]host[:file [file]]\n");
+	    "            [-P direct server path] [-S program] \n"
+	    "            [-B buffer_size] [user@]host[:file [file]]\n");
 	exit(1);
 }
 
@@ -114,7 +116,7 @@ main(int argc, char **argv)
 	ll = SYSLOG_LEVEL_INFO;
 	infile = stdin;		/* Read from STDIN unless changed by -b */
 
-	while ((ch = getopt(argc, argv, "1hvCo:s:S:b:F:P:")) != -1) {
+	while ((ch = getopt(argc, argv, "1hvCo:s:S:b:B:F:P:")) != -1) {
 		switch (ch) {
 		case 'C':
 			addargs(&args, "-C");
@@ -151,6 +153,11 @@ main(int argc, char **argv)
 			break;
 		case 'P':
 			sftp_direct = optarg;
+			break;
+		case 'B':
+			copy_buffer_len = strtol(optarg, &cp, 10);
+			if (copy_buffer_len == 0 || *cp != '\0')
+				fatal("Invalid buffer size \"%s\"", optarg);
 			break;
 		case 'h':
 		default:
