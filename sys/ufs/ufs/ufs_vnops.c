@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.16 1997/11/06 23:07:24 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.17 1997/12/02 17:11:13 csapuntz Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -737,7 +737,7 @@ ufs_link(v)
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	if ((error = VOP_UPDATE(vp, &ts, &ts, !DOINGSOFTDEP(vp))) == 0) {
 		ufs_makedirentry(ip, cnp, &newdir);
-		error = ufs_direnter(dvp, &newdir, cnp, NULL);
+		error = ufs_direnter(dvp, vp, &newdir, cnp, NULL);
 	}
 	if (error) {
 		ip->i_effnlink--;
@@ -790,7 +790,7 @@ ufs_whiteout(v)
 		newdir.d_namlen = cnp->cn_namelen;
 		bcopy(cnp->cn_nameptr, newdir.d_name, (unsigned)cnp->cn_namelen + 1);
 		newdir.d_type = DT_WHT;
-		error = ufs_direnter(dvp, &newdir, cnp, NULL);
+		error = ufs_direnter(dvp, NULL, &newdir, cnp, NULL);
 		break;
 
 	case DELETE:
@@ -1042,7 +1042,7 @@ abortit:
 				goto bad;
 		}
 		ufs_makedirentry(ip, tcnp, &newdir);
-		if ((error = ufs_direnter(tdvp, &newdir, tcnp, NULL)) != 0) {
+		if ((error = ufs_direnter(tdvp, fvp, &newdir, tcnp, NULL)) != 0) {
 			if (doingdirectory && newparent) {
 				dp->i_effnlink--;
 				dp->i_ffs_nlink--;
@@ -1313,7 +1313,7 @@ ufs_mkdir(v)
         if (!DOINGSOFTDEP(dvp) && ((error = VOP_BWRITE(bp)) != 0))
                 goto bad;
         ufs_makedirentry(ip, cnp, &newdir);
-        error = ufs_direnter(dvp, &newdir, cnp, bp);
+        error = ufs_direnter(dvp, tvp, &newdir, cnp, bp);
   
 bad:
         if (error == 0) {
@@ -1728,6 +1728,11 @@ ufs_print(v)
 
 	printf("tag VT_UFS, ino %d, on dev %d, %d", ip->i_number,
 		major(ip->i_dev), minor(ip->i_dev));
+	printf(" flags 0x%x, effnlink %d, nlink %d\n",
+	       ip->i_flag, ip->i_effnlink, ip->i_ffs_nlink);
+	printf("\tmode 0%o, owner %d, group %d, size %qd",
+	       ip->i_ffs_mode, ip->i_ffs_uid, ip->i_ffs_gid, ip->i_ffs_size);
+
 #ifdef FIFO
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
@@ -2064,7 +2069,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 		goto bad;
 
 	ufs_makedirentry(ip, cnp, &newdir);
-	if ((error = ufs_direnter(dvp, &newdir, cnp, NULL)) != 0)
+	if ((error = ufs_direnter(dvp, tvp, &newdir, cnp, NULL)) != 0)
 		goto bad;
 
 	if ((cnp->cn_flags & SAVESTART) == 0)
