@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.73 2001/10/08 14:18:03 aaron Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.74 2001/10/25 16:18:18 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.67 2001/06/12 09:05:33 d Exp 
+ *		OpenBSD: pcmciadevs,v 1.69 2001/10/25 16:17:52 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -68,7 +68,7 @@
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys */
 #define	PCMCIA_VENDOR_NETGEAR	0x0149	/* Netgear */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
-#define	PCMCIA_VENDOR_SYMBOL	0x014d	/* Symbol */
+#define	PCMCIA_VENDOR_SYMBOL2	0x014d	/* Symbol */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent */
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
 #define	PCMCIA_VENDOR_PSION	0x016c	/* Psion */
@@ -82,6 +82,7 @@
 #define	PCMCIA_VENDOR_TELECOMDEVICE	0x021b	/* Telecom Device */
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
+#define	PCMCIA_VENDOR_SYMBOL	0x026c	/* Symbol */
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
@@ -388,6 +389,8 @@
 /* Symbol */
 #define	PCMCIA_CIS_SYMBOL_SPECTRUM24	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SYMBOL_SPECTRUM24	0x0801
+#define	PCMCIA_CIS_SYMBOL2_LA4100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SYMBOL2_LA4100	0x0001
 
 /* Telecom Device */
 #define	PCMCIA_CIS_TELECOMDEVICE_TCD_HPC100	{ NULL, NULL, NULL, NULL }
@@ -435,6 +438,7 @@
 #define	PCMCIA_VENDOR_EDIMAX	-1	/* Edimax */
 #define	PCMCIA_VENDOR_EPSON	-1	/* Seiko Epson Corporation */
 #define	PCMCIA_VENDOR_EXP	-1	/* EXP Computer Inc */
+#define	PCMCIA_VENDOR_GEMTEK	-1	/* GEMTEK */
 #define	PCMCIA_VENDOR_ICOM	-1	/* ICOM Inc */
 #define	PCMCIA_VENDOR_INTERSIL	-1	/* Intersil */
 #define	PCMCIA_VENDOR_PLANET	-1	/* Planet */
@@ -564,3 +568,5 @@
 #define	PCMCIA_PRODUCT_WISECOM_T210CT	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_WISECOM_IPORT	{ "iPort", "10/100 Ethernet Card", NULL, NULL }
 #define	PCMCIA_PRODUCT_WISECOM_IPORT	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_GEMTEK_WLAN	{ "Intersil", "PRISM 2_5 PCMCIA ADAPTER", "ISL37300P", "Eval-RevA" }
+#define	PCMCIA_PRODUCT_GEMTEK_WLAN	PCMCIA_PRODUCT_INVALID
