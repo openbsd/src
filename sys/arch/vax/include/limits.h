@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.3 1997/05/29 00:04:43 niklas Exp $	*/
+/*	$OpenBSD: limits.h,v 1.4 1997/07/24 14:48:56 deraadt Exp $	*/
 /*	$NetBSD: limits.h,v 1.6 1995/12/31 15:05:19 ragge Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *      @(#)limits.h    7.2 (Berkeley) 6/28/90
  */
+
+#ifndef _MACHINE_LIMITS_H_
+#define _MACHINE_LIMITS_H_
 
 #define CHAR_BIT        8               /* number of bits in a char */
 #define MB_LEN_MAX      1               /* no multibyte characters */
@@ -83,3 +86,5 @@
 #define FLT_MAX         1.70141173E+38F
 #define FLT_MIN         2.93873588E-39F
 #endif
+
+#endif /* _MACHINE_LIMITS_H_ */

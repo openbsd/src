@@ -5,4 +5,5 @@
 
 #include <m68k/limits.h>
 
-#endif
+#endif /* _MACHINE_LIMITS_H_ */
+

@@ -31,8 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)limits.h	8.3 (Berkeley) 1/4/94
- *      $Id: limits.h,v 1.3 1997/03/03 20:21:01 rahnds Exp $
+ *      $Id: limits.h,v 1.4 1997/07/24 14:48:51 deraadt Exp $
  */
+
+#ifndef _MACHINE_LIMITS_H_
+#define _MACHINE_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	6		/* Allow 31 bit UTF2 */
@@ -80,3 +83,5 @@
 
 #endif /* !_POSIX_SOURCE */
 #endif /* !_ANSI_SOURCE */
+
+#endif /* _MACHINE_LIMITS_H_ */

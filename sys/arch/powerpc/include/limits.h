@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.2 1996/12/28 06:25:16 rahnds Exp $	*/
+/*	$OpenBSD: limits.h,v 1.3 1997/07/24 14:48:54 deraadt Exp $	*/
 /*	$NetBSD: limits.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -32,6 +32,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _MACHINE_LIMITS_H_
+#define _MACHINE_LIMITS_H_
+
 #define	CHAR_BIT	8		/* bits per char		*/
 #define	MB_LEN_MAX	1		/* no multibyte characters	*/
 #define	CHAR_MIN	0		/* min value in char		*/
@@ -62,3 +65,5 @@
 #define	QUAD_MIN	(-0x7fffffffffffffffLL-1)	/* min signed quad */
 #endif	/* !_POSIX_SOURCE && !_XOPEN_SOURCE */
 #endif	/* !_ANSI_SOURCE */
+
+#endif /* _MACHINE_LIMITS_H_ */
