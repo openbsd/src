@@ -1,4 +1,3 @@
-./usr/bin/dlltool
 ./usr/bin/gasp
 ./usr/bin/gdb
 ./usr/bin/objcopy
