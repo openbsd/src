@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.5 2001/01/30 04:54:50 aaron Exp $ */
+/* $OpenBSD: wskbd.c,v 1.6 2001/01/30 17:33:20 aaron Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -209,17 +209,17 @@ void	wskbd_attach __P((struct device *, struct device *, void *));
 int	wskbd_detach __P((struct device *, int));
 int	wskbd_activate __P((struct device *, enum devact));
 
-static int wskbd_displayioctl
+int wskbd_displayioctl
 	    __P((struct device *, u_long, caddr_t, int, struct proc *p));
 int	wskbd_set_display __P((struct device *, struct wsmux_softc *));
 
-static inline void update_leds __P((struct wskbd_internal *));
-static inline void update_modifier __P((struct wskbd_internal *, u_int, int, int));
-static int internal_command __P((struct wskbd_softc *, u_int *, keysym_t));
-static int wskbd_translate __P((struct wskbd_internal *, u_int, int));
-static int wskbd_enable __P((struct wskbd_softc *, int));
+inline void update_leds __P((struct wskbd_internal *));
+inline void update_modifier __P((struct wskbd_internal *, u_int, int, int));
+int internal_command __P((struct wskbd_softc *, u_int *, keysym_t));
+int wskbd_translate __P((struct wskbd_internal *, u_int, int));
+int wskbd_enable __P((struct wskbd_softc *, int));
 #if NWSDISPLAY > 0
-static void wskbd_holdscreen __P((struct wskbd_softc *, int));
+void wskbd_holdscreen __P((struct wskbd_softc *, int));
 #endif
 
 int	wskbd_do_ioctl __P((struct wskbd_softc *, u_long, caddr_t, 
@@ -280,16 +280,16 @@ struct wsmuxops wskbd_muxops = {
 #endif
 
 #if NWSDISPLAY > 0
-static void wskbd_repeat __P((void *v));
+void wskbd_repeat __P((void *v));
 #endif
 
 static int wskbd_console_initted;
 static struct wskbd_softc *wskbd_console_device;
 static struct wskbd_internal wskbd_console_data;
 
-static void wskbd_update_layout __P((struct wskbd_internal *, kbd_t));
+void wskbd_update_layout __P((struct wskbd_internal *, kbd_t));
 
-static void
+void
 wskbd_update_layout(id, enc)
 	struct wskbd_internal *id;
 	kbd_t enc;
@@ -466,7 +466,7 @@ wskbd_cndetach()
 }
 
 #if NWSDISPLAY > 0
-static void
+void
 wskbd_repeat(v)
 	void *v;
 {
@@ -649,7 +649,7 @@ wskbd_rawinput(dev, buf, len)
 #endif /* WSDISPLAY_COMPAT_RAWKBD */
 
 #if NWSDISPLAY > 0
-static void
+void
 wskbd_holdscreen(sc, hold)
 	struct wskbd_softc *sc;
 	int hold;
@@ -672,7 +672,7 @@ wskbd_holdscreen(sc, hold)
 }
 #endif
 
-static int
+int
 wskbd_enable(sc, on)
 	struct wskbd_softc *sc;
 	int on;
@@ -853,7 +853,7 @@ wskbd_do_ioctl(sc, cmd, data, flag, p)
  * WSKBDIO ioctls, handled in both emulation mode and in ``raw'' mode.
  * Some of these have no real effect in raw mode, however.
  */
-static int
+int
 wskbd_displayioctl(dev, cmd, data, flag, p)
 	struct device *dev;
 	u_long cmd;
@@ -1227,7 +1227,6 @@ wskbd_cnbell(dev, pitch, period, volume)
 	dev_t dev;
 	u_int pitch, period, volume;
 {
-
 	if (!wskbd_console_initted)
 		return;
 
@@ -1237,7 +1236,7 @@ wskbd_cnbell(dev, pitch, period, volume)
 			volume);
 }
 
-static inline void
+inline void
 update_leds(id)
 	struct wskbd_internal *id;
 {
@@ -1260,7 +1259,7 @@ update_leds(id)
 	}
 }
 
-static inline void
+inline void
 update_modifier(id, type, toggle, mask)
 	struct wskbd_internal *id;
 	u_int type;
@@ -1278,7 +1277,7 @@ update_modifier(id, type, toggle, mask)
 	}
 }
 
-static int
+int
 internal_command(sc, type, ksym)
 	struct wskbd_softc *sc;
 	u_int *type;
@@ -1355,7 +1354,7 @@ internal_command(sc, type, ksym)
 	return (0);
 }
 
-static int
+int
 wskbd_translate(id, type, value)
 	struct wskbd_internal *id;
 	u_int type;
@@ -1446,18 +1445,19 @@ wskbd_translate(id, type, value)
 #endif
 	}
 
-	if (sc->sc_repeating) {
+	if (sc != NULL && sc->sc_repeating) {
 		if ((type == WSCONS_EVENT_KEY_UP && value != sc->sc_repkey) ||
 		    (type == WSCONS_EVENT_KEY_DOWN && value == sc->sc_repkey))
 			return (0);
 	}
 
 kbrep:
-	if (sc->sc_repeating) {
+	if (sc != NULL && sc->sc_repeating) {
 		sc->sc_repeating = 0;
 		timeout_del(&sc->sc_repeat_ch);
 	}
-	sc->sc_repkey = value;
+	if (sc != NULL)
+		sc->sc_repkey = value;
 
 	/* If this is a key release or we are in command mode, we are done */
 	if (type != WSCONS_EVENT_KEY_DOWN || iscommand) {
