@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.2 1996/07/16 07:46:16 pefo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.3 1996/09/01 16:50:08 deraadt Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ static u_char lock_state = 0x00,	/* all off */
 	      old_typematic_rate = 0xff;
 static u_short cursor_shape = 0xffff,	/* don't update until set by user */
 	       old_cursor_shape = 0xffff;
-static keymap_t scan_codes[KB_NUM_KEYS];/* keyboard translation table */
+static pccons_keymap_t scan_codes[KB_NUM_KEYS];/* keyboard translation table */
 int pc_xmode = 0;
 
 /*
@@ -674,7 +674,7 @@ pcioctl(dev, cmd, data, flag, p)
 		return 0;
  	}
 	case CONSOLE_SET_KEYMAP: {
-		keymap_t *map = (keymap_t *) data;
+		pccons_keymap_t *map = (pccons_keymap_t *) data;
 		int i;
 
 		if (!data)
@@ -687,13 +687,13 @@ pcioctl(dev, cmd, data, flag, p)
 			    map[i].shift_altgr[KB_CODE_SIZE-1])
 				return EINVAL;
 
-		bcopy(data,scan_codes,sizeof(keymap_t[KB_NUM_KEYS]));
+		bcopy(data, scan_codes, sizeof(pccons_keymap_t[KB_NUM_KEYS]));
 		return 0;
 	}
 	case CONSOLE_GET_KEYMAP:
 		if (!data)
 			return EINVAL;
-		bcopy(scan_codes,data,sizeof(keymap_t[KB_NUM_KEYS]));
+		bcopy(scan_codes, data, sizeof(pccons_keymap_t[KB_NUM_KEYS]));
 		return 0;
 
 	default:
@@ -1331,7 +1331,7 @@ sput(cp, n)
 	async_update();
 }
 
-static keymap_t	scan_codes[KB_NUM_KEYS] = {
+static pccons_keymap_t	scan_codes[KB_NUM_KEYS] = {
 /*  type       unshift   shift     control   altgr     shift_altgr scancode */
     KB_NONE,   "",       "",       "",       "",       "",  /* 0 unused */
     KB_ASCII,  "\033",   "\033",   "\033",   "",       "",  /* 1 ESCape */

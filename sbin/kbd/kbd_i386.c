@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_i386.c,v 1.4 1996/06/30 00:37:09 maja Exp $	*/
+/*	$OpenBSD: kbd_i386.c,v 1.5 1996/09/01 16:48:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Juergen Hannken-Illjes
@@ -43,7 +43,7 @@
 
 struct {
 	char *name[NUM_NAMES];
-	keymap_t map[KB_NUM_KEYS];
+	pccons_keymap_t map[KB_NUM_KEYS];
 } keymaps[] = {
 
   {
@@ -91,7 +91,7 @@ kbd_set(name, verbose)
 	int verbose;
 {
 	int i, j, fd;
-	keymap_t *map = NULL;
+	pccons_keymap_t *map = NULL;
 
 	for (i = 0; keymaps[i].name[0]; i++)
 		for (j = 0; j < NUM_NAMES && keymaps[i].name[j]; j++)
