@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.21 2004/11/18 21:51:43 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.22 2004/11/19 00:02:51 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -260,10 +260,14 @@ installed, and this package must be deinstalled before this package
 is deinstalled.
 The dependency also contains a
 .Ar pkgpath
-.Pq see Ev FULLPKGPATH in Xr bsd.port.mk 5
+(see
+.Ev FULLPKGPATH
+in
+.Xr bsd.port.mk 5 )
 and a
 .Ar default
 package name, in case there is no listing of available packages.
+.Pp
 .It Cm @dir Ar directoryname
 Create directory
 .Pa directoryname
@@ -601,6 +605,7 @@ Expansion of special
 .Cm \&%
 sequences is the same as for
 .Cm @exec .
+.Pp
 .It Cm @wantlib Ar libspec
 Package needs a shared library to work.
 .Ar libspec
