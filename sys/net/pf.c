@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.379 2003/07/29 00:51:32 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.380 2003/07/29 20:56:55 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -203,6 +203,8 @@ u_int16_t		 pf_get_mss(struct mbuf *, int, u_int16_t,
 			    sa_family_t);
 u_int16_t		 pf_calc_mss(struct pf_addr *, sa_family_t,
 				u_int16_t);
+void			 pf_set_rt_ifp(struct pf_state *,
+			    struct pf_addr *);
 int			 pf_check_proto_cksum(struct mbuf *, int, int,
 			    u_int8_t, sa_family_t);
 int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
@@ -2094,6 +2096,32 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 	return (mss);
 }
 
+void
+pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
+{
+	struct pf_rule *r = s->rule.ptr;
+
+	s->rt_ifp = NULL;
+	if (!r->rt || r->rt == PF_FASTROUTE)
+		return;
+	switch (s->af) {
+#ifdef INET
+	case AF_INET:
+		pf_map_addr(AF_INET, &r->rpool, saddr,
+		    &s->rt_addr, NULL);
+		s->rt_ifp = r->rpool.cur->ifp;
+		break;
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
+		pf_map_addr(AF_INET6, &r->rpool, saddr,
+		    &s->rt_addr, NULL);
+		s->rt_ifp = r->rpool.cur->ifp;
+		break;
+#endif /* INET6 */
+	}
+}
+
 int
 pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
     struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *h,
@@ -2362,6 +2390,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->timeout = PFTM_TCP_FIRST_PACKET;
 		s->packets[0] = 1;
 		s->bytes[0] = pd->tot_len;
+		pf_set_rt_ifp(s, saddr);
 
 		if ((pd->flags & PFDESC_TCP_NORM) && pf_normalize_tcp_init(m,
 		    off, pd, th, &s->src, &s->dst)) {
@@ -2639,6 +2668,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->timeout = PFTM_UDP_FIRST_PACKET;
 		s->packets[0] = 1;
 		s->bytes[0] = pd->tot_len;
+		pf_set_rt_ifp(s, saddr);
 		if (pf_insert_state(s)) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			pool_put(&pf_state_pl, s);
@@ -2894,6 +2924,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->timeout = PFTM_ICMP_FIRST_PACKET;
 		s->packets[0] = 1;
 		s->bytes[0] = pd->tot_len;
+		pf_set_rt_ifp(s, saddr);
 		if (pf_insert_state(s)) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			pool_put(&pf_state_pl, s);
@@ -3132,6 +3163,7 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->timeout = PFTM_OTHER_FIRST_PACKET;
 		s->packets[0] = 1;
 		s->bytes[0] = pd->tot_len;
+		pf_set_rt_ifp(s, saddr);
 		if (pf_insert_state(s)) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			if (r->log)
@@ -4472,12 +4504,6 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 				dst->sin_addr.s_addr = naddr.v4.s_addr;
 			ifp = r->rpool.cur->ifp;
 		} else {
-			if (s->rt_ifp == NULL) {
-				pf_map_addr(AF_INET, &r->rpool,
-				    (struct pf_addr *)&ip->ip_src,
-				    &s->rt_addr, NULL);
-				s->rt_ifp = r->rpool.cur->ifp;
-			}
 			if (!PF_AZERO(&s->rt_addr, AF_INET))
 				dst->sin_addr.s_addr =
 				    s->rt_addr.v4.s_addr;
@@ -4638,12 +4664,6 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 			    &naddr, AF_INET6);
 		ifp = r->rpool.cur->ifp;
 	} else {
-		if (s->rt_ifp == NULL) {
-			pf_map_addr(AF_INET6, &r->rpool,
-			    (struct pf_addr *)&ip6->ip6_src,
-			    &s->rt_addr, NULL);
-			s->rt_ifp = r->rpool.cur->ifp;
-		}
 		if (!PF_AZERO(&s->rt_addr, AF_INET6))
 			PF_ACPY((struct pf_addr *)&dst->sin6_addr,
 			    &s->rt_addr, AF_INET6);
