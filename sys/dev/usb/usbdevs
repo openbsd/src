@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.145 2005/03/22 12:49:43 mbalmer Exp $
+$OpenBSD: usbdevs,v 1.146 2005/03/23 14:45:44 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -399,6 +399,7 @@ vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
 vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x148f	Ralink Technology
+vendor CONCEPTRONIC2	0x14b2	Conceptronic
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor OQO		0x1557	OQO
 vendor SOHOWARE		0x15e8	SOHOware
@@ -720,6 +721,7 @@ product BILLIONTON SNAPPORT	0x90ff	SnapPort Ethernet
 /* Conceptronic products */
 product CONCEPTRONIC C11U	0x7100	C11U
 product CONCEPTRONIC WL210	0x7110	WL-210
+product CONCEPTRONIC2 C54RU	0x3c02	C54RU WLAN
 
 /* Concord Camera products */
 product CONCORDCAMERA EYE_Q_3X	0x0100	Eye Q 3x
@@ -1241,6 +1243,7 @@ product MELCO DUBPXXG		0x001c	USB-IDE Bridge: DUB-PxxG
 product MELCO KS11G		0x0027	WLI-USB-KS11G wlan
 product MELCO LUAU2KTX		0x003d	LUA-U2-KTX Ethernet
 product MELCO KB11		0x0044	WLI-USB-KB11 WLAN
+product MELCO KG54		0x0066	WLI-U2-KG54 WLAN
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
