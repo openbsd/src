@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.19 2002/03/14 01:50:04 jason Exp $
+dnl	$OpenBSD: hardware,v 1.20 2002/04/03 21:45:18 jason Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -6,12 +6,14 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 		Ultra 2
 	- PCI based workstations:
 		SUNBlade 100 (onboard ethernet has issues)
+		Enterprise 220R
 		Enterprise 250
 		Netra X1
 		Ultra 5
 		Ultra 10
 		Ultra 30
 dnl XXX uncomment machine entries as they become supported
+dnl XXX Does u60 work? 220R does.
 dnl		Ultra 60 / Enterprise 220R
 dnl		Ultra 80 / Enterprise 420R
 dnl		Ultra 450 / Enterprise 450
