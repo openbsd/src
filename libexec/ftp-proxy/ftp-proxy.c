@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.18 2001/12/14 18:12:41 beck Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.19 2002/01/10 19:35:07 mickey Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -1106,11 +1106,11 @@ main(int argc, char **argv)
 	 * of our end of the server socket so we know our IP address
 	 * from the real server's perspective.
 	 */
-	i = getnameinfo((struct sockaddr *)&client_iob.sa,
-	    sizeof(client_iob.sa), OurName, sizeof(OurName), NULL, 0, flags);
-
 	salen = sizeof(server_iob.sa);
 	getsockname(server_iob.fd, (struct sockaddr *)&server_iob.sa, &salen);
+
+	i = getnameinfo((struct sockaddr *)&server_iob.sa,
+	    sizeof(server_iob.sa), OurName, sizeof(OurName), NULL, 0, flags);
 
 	debuglog(1, "our end of socket to server is %s:%u\n", OurName,
 	    ntohs(server_iob.sa.sin_port));
