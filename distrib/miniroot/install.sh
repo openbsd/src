@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.63 1999/10/08 03:54:13 millert Exp $
+#	$OpenBSD: install.sh,v 1.64 1999/10/14 17:17:46 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -537,12 +537,7 @@ md_questions
 install_sets $THESETS
 
 # XXX
-# XXX should test if network is configured
-# XXX should provide a way to configure the network this late.
-# XXX should re-use more data from previous (ftp) install?
 # XXX should loop until successful install or user abort
-# XXX
-# XXX
 # XXX
 if [ X"$libssl" != X1 ]; then
 	resp=
@@ -557,13 +552,19 @@ if [ X"$libssl" != X1 ]; then
 		getresp "$resp"
 		case "$resp" in
 		f*|F*)
+			# configure network if necessary
+			test -n "$_ifs" && configurenetwork
+
 			THESETS=libssl
-			install_url ftp
+			install_url -ftp -reuse
 			resp=f
 			;;
 		h*|H*)
+			# configure network if necessary
+			test -n "$_ifs" && configurenetwork
+
 			THESETS=libssl
-			install_url http
+			install_url -http -reuse
 			resp=h
 			;;
 		n*|N*)
