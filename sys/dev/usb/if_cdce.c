@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.7 2005/01/23 03:32:35 drahn Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.8 2005/01/27 21:49:53 dlg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -544,6 +544,8 @@ cdce_newbuf(struct cdce_softc *sc, struct cdce_chain *c, struct mbuf *m)
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
+
+	m_adj(m_new, ETHER_ALIGN);
 	c->cdce_mbuf = m_new;
 	return (0);
 }
@@ -644,12 +646,6 @@ cdce_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 
 	ifp->if_ipackets++;
-
-#ifdef __STRICT_ALIGNMENT
-	bcopy(m->m_data, m->m_data + ETHER_ALIGN,
-	    total_len);
-	m->m_data += ETHER_ALIGN;
-#endif
 
 	m->m_pkthdr.len = m->m_len = total_len;
 	m->m_pkthdr.rcvif = ifp;
@@ -828,5 +824,5 @@ cdce_crc32(const void *buf, size_t size)
 	while (size--)
 		crc = cdce_crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
 
-	return (crc ^ ~0U);
+	return (htole32(crc) ^ ~0U);
 }
