@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.7 2001/08/07 15:00:09 markus Exp $
+#	$OpenBSD: install.sub,v 1.8 2001/09/19 00:04:02 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -458,7 +458,7 @@ configurenetwork() {
 			cat << __EOT
 
 You may configure the following network interfaces (the interfaces
-marked with [X] have been succesfully configured):
+marked with [X] have been successfully configured):
 
 __EOT
 
