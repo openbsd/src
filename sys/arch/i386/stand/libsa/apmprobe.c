@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmprobe.c,v 1.12 2004/03/09 19:12:12 tom Exp $	*/
+/*	$OpenBSD: apmprobe.c,v 1.13 2004/03/11 17:41:23 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Michael Shalayeff
@@ -166,8 +166,10 @@ apmprobe(void)
 
 		apm_disconnect();
 
-		if (apm_connect(&ai) != 0)
-			printf(": connect error\n");
+		if (apm_connect(&ai) != 0) {
+			printf("\napm: connect error\n");
+			return;
+		}
 #ifdef DEBUG
 		if (debug)
 			printf("apm[%x cs=%x[%x]/%x[%x] ds=%x[%x] @ %x]",
