@@ -1,4 +1,4 @@
-/* * $OpenBSD: uucplock.c,v 1.8 2002/02/16 21:27:29 millert Exp $*/
+/* * $OpenBSD: uucplock.c,v 1.9 2002/05/26 09:29:02 deraadt Exp $*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@ static const char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 
 #define MAXTRIES 5
 
-#define LOCKTMP "LCKTMP..%d"
+#define LOCKTMP "LCKTMP..%ld"
 #define LOCKFMT "LCK..%s"
 
 #define GORET(level, val) { err = errno; uuerr = (val); \
@@ -78,7 +78,7 @@ uu_lock(ttyname)
 
 	pid = getpid();
 	(void)snprintf(lcktmpname, sizeof(lcktmpname), _PATH_UUCPLOCK LOCKTMP,
-			pid);
+			(long)pid);
 	(void)snprintf(lckname, sizeof(lckname), _PATH_UUCPLOCK LOCKFMT,
 			ttyname);
 	if ((tmpfd = creat(lcktmpname, 0664)) < 0)
@@ -211,7 +211,7 @@ put_pid(fd, pid)
 	char buf[32];
 	int len;
 
-	len = sprintf (buf, "%10d\n", (int)pid);
+	len = snprintf(buf, sizeof buf, "%10ld\n", (long)pid);
 
 	if (write (fd, buf, len) == len) {
 		/* We don't mind too much if ftruncate() fails - see get_pid */

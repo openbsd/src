@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.12 2002/02/16 21:27:55 millert Exp $	*/
+/*	$OpenBSD: time.c,v 1.13 2002/05/26 09:27:10 deraadt Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: time.c,v 1.12 2002/02/16 21:27:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: time.c,v 1.13 2002/05/26 09:27:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,7 +70,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int pid;
+	pid_t pid;
 	int ch, status;
 	struct timeval before, after;
 	struct rusage ru;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: screenblank.c,v 1.12 2002/02/16 21:28:09 millert Exp $	*/
+/*	$OpenBSD: screenblank.c,v 1.13 2002/05/26 09:25:22 deraadt Exp $	*/
 /*	$NetBSD: screenblank.c,v 1.2 1996/02/28 01:18:34 thorpej Exp $	*/
 
 /*-
@@ -342,7 +342,7 @@ logpid()
 	FILE *fp;
 
 	if ((fp = fopen(_PATH_SCREENBLANKPID, "w")) != NULL) {
-		fprintf(fp, "%u\n", getpid());
+		fprintf(fp, "%ld\n", (long)getpid());
 		(void)fclose(fp);
 	}
 }

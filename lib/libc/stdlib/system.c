@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: system.c,v 1.4 2001/09/04 23:35:58 millert Exp $";
+static char *rcsid = "$OpenBSD: system.c,v 1.5 2002/05/26 09:29:02 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -62,7 +62,7 @@ system(command)
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &mask, &omask);
-	switch(pid = vfork()) {
+	switch (pid = vfork()) {
 	case -1:			/* error */
 		sigprocmask(SIG_SETMASK, &omask, NULL);
 		return(-1);
@@ -78,5 +78,5 @@ system(command)
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	(void)signal(SIGINT, intsave);
 	(void)signal(SIGQUIT, quitsave);
-	return(pid == -1 ? -1 : pstat);
+	return (pid == -1 ? -1 : pstat);
 }

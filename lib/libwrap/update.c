@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.4 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: update.c,v 1.5 2002/05/26 09:29:02 deraadt Exp $	*/
 
  /*
   * Routines for controlled update/initialization of request structures.
@@ -19,7 +19,7 @@
 #if 0
 static char sccsid[] = "@(#) update.c 1.1 94/12/28 17:42:56";
 #else
-static char rcsid[] = "$OpenBSD: update.c,v 1.4 2002/02/19 19:39:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: update.c,v 1.5 2002/05/26 09:29:02 deraadt Exp $";
 #endif
 #endif
 
@@ -104,7 +104,7 @@ struct request_info *request_init(struct request_info *request, ...)
     *request = default_info;
     request->fd = -1;
     strlcpy(request->daemon, unknown, sizeof(request->daemon));
-    snprintf(request->pid, sizeof(request->pid), "%d", getpid());
+    snprintf(request->pid, sizeof(request->pid), "%ld", (long)getpid());
     request->client->request = request;
     request->server->request = request;
     r = request_fill(request, ap);

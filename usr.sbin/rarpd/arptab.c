@@ -74,7 +74,7 @@ static char sccsid[] = "@(#)arp.c	8.2 (Berkeley) 1/2/94";
 #include <syslog.h>
 #include <string.h>
 
-static int pid;
+static pid_t pid;
 static int s = -1;
 
 void

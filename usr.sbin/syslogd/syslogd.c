@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.50 2002/05/25 13:54:03 fgsch Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.51 2002/05/26 09:25:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.50 2002/05/25 13:54:03 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.51 2002/05/26 09:25:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ main(argc, argv)
 	if (!Debug) {
 		fp = fopen(PidFile, "w");
 		if (fp != NULL) {
-			fprintf(fp, "%d\n", getpid());
+			fprintf(fp, "%ld\n", (long)getpid());
 			(void) fclose(fp);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.34 2002/05/06 19:25:06 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.35 2002/05/26 09:24:35 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.34 2002/05/06 19:25:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.35 2002/05/26 09:24:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -589,7 +589,7 @@ havelabel:
 	if (mfs) {
 		struct mfs_args args;
 
-		sprintf(buf, "mfs:%d", getpid());
+		sprintf(buf, "mfs:%ld", (long)getpid());
 		args.fspec = buf;
 		args.export_info.ex_root = -2;
 		if (mntflags & MNT_RDONLY)

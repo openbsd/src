@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.39 2001/12/11 01:54:34 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.40 2002/05/26 09:24:35 deraadt Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -333,7 +333,7 @@ write_pid_file (void)
   if (fp != NULL)
     {
       /* XXX Error checking!  */
-      fprintf (fp, "%d\n", getpid ());
+      fprintf (fp, "%ld\n", (long) getpid ());
       fclose (fp);
     }
   else

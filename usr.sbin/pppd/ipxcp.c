@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipxcp.c,v 1.7 2002/02/17 19:42:38 millert Exp $	*/
+/*	$OpenBSD: ipxcp.c,v 1.8 2002/05/26 09:25:21 deraadt Exp $	*/
 
 /*
  * ipxcp.c - PPP IPX Control Protocol.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: ipxcp.c,v 1.6 1998/03/25 03:08:16 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ipxcp.c,v 1.7 2002/02/17 19:42:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: ipxcp.c,v 1.8 2002/05/26 09:25:21 deraadt Exp $";
 #endif
 #endif
 
@@ -1215,7 +1215,7 @@ ipxcp_script(f, script)
     char strnetwork[32], strpid[32];
     char *argv[14],	 strproto_lcl[32], strproto_rmt[32];
 
-    sprintf (strpid,   "%d", getpid());
+    sprintf (strpid,   "%ld", (long)getpid());
     sprintf (strspeed, "%d", baud_rate);
 
     strproto_lcl[0] = '\0';

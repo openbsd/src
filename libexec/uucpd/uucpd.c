@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucpd.c,v 1.22 2002/05/22 06:35:44 deraadt Exp $	*/
+/*	$OpenBSD: uucpd.c,v 1.23 2002/05/26 09:32:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: uucpd.c,v 1.22 2002/05/22 06:35:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uucpd.c,v 1.23 2002/05/26 09:32:08 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -79,9 +79,9 @@ void dologout(void);
 void dologin(struct passwd *, struct sockaddr_in *);
 
 struct	sockaddr_in hisctladdr;
-int hisaddrlen = sizeof hisctladdr;
+int	hisaddrlen = sizeof hisctladdr;
 struct	sockaddr_in myctladdr;
-int mypid;
+pid_t	mypid;
 
 char Username[64], Loginname[64];
 char *nenv[] = {
@@ -117,7 +117,7 @@ char **argv;
 	}
 	if ((childpid = fork()) == 0)
 		doit(&hisctladdr);
-	snprintf(utline, sizeof(utline), "uucp%.4d", childpid);
+	snprintf(utline, sizeof(utline), "uucp%.4ld", (long)childpid);
 	dologout();
 	exit(1);
 #else /* !BSDINETD */
@@ -128,7 +128,7 @@ char **argv;
 	}
 	if (fork())
 		exit(0);
-	snprintf(utline, sizeof(utline), "uucp%.4d", childpid);
+	snprintf(utline, sizeof(utline), "uucp%.4ld", (long)childpid);
 
 	if ((s=open(_PATH_TTY, 2)) >= 0){
 		ioctl(s, TIOCNOTTY, (char *)0);
@@ -260,7 +260,8 @@ void
 dologout()
 {
 	int save_errno = errno;
-	int status, pid, wtmp;
+	int status, wtmp;
+	pid_t pid;
 
 #ifdef BSDINETD
 	while ((pid=wait(&status)) > 0) {
@@ -306,7 +307,7 @@ struct sockaddr_in *sin;
 	wtmp = open(_PATH_WTMP, O_WRONLY|O_APPEND);
 	if (wtmp >= 0) {
 		/* hack, but must be unique and no tty line */
-		(void) snprintf(line, sizeof line, "uucp%.4d", getpid());
+		(void) snprintf(line, sizeof line, "uucp%.4ld", (long)getpid());
 		SCPYN(utmp.ut_line, line);
 		SCPYN(utmp.ut_name, pw->pw_name);
 		SCPYN(utmp.ut_host, remotehost);

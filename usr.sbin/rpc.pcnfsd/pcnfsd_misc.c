@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcnfsd_misc.c,v 1.4 2001/08/19 19:16:12 ericj Exp $	*/
+/*	$OpenBSD: pcnfsd_misc.c,v 1.5 2002/05/26 09:25:22 deraadt Exp $	*/
 /*	$NetBSD: pcnfsd_misc.c,v 1.2 1995/07/25 22:20:42 gwr Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_misc.c 1.5 92/01/24 19:59:13 SMI */
@@ -163,7 +163,7 @@ wlogin(name, req)
 #define	READER_FD	0
 #define	WRITER_FD	1
 
-static int      child_pid;
+static pid_t    child_pid;
 
 static char     cached_user[64] = "";
 static uid_t    cached_uid;
@@ -238,7 +238,8 @@ su_popen(user, cmd, maxtime)
 	int		maxtime;
 {
 	int             p[2];
-	int             parent_fd, child_fd, pid;
+	int             parent_fd, child_fd;
+	pid_t		pid;
 	struct passwd *pw;
 
 	if (strcmp(cached_user, user)) {
@@ -296,14 +297,16 @@ int
 su_pclose(ptr)
 	FILE           *ptr;
 {
-	int             pid, status;
+	int             status;
+	pid_t		pid;
 
 	stop_watchdog();
 
 	fclose(ptr);
 	if (child_pid == -1)
 		return (-1);
-	while ((pid = wait(&status)) != child_pid && pid != -1);
+	while ((pid = wait(&status)) != child_pid && pid != -1)
+		;
 	return (pid == -1 ? -1 : status);
 }
 

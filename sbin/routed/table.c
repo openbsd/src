@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.7 2002/03/14 16:44:24 mpech Exp $	*/
+/*	$OpenBSD: table.c,v 1.8 2002/05/26 09:24:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -1091,7 +1091,7 @@ read_rt(void)
 		strcpy(str, rtm_type_name(m.r.rtm.rtm_type));
 		strp = &str[strlen(str)];
 		if (m.r.rtm.rtm_type <= RTM_CHANGE)
-			strp += sprintf(strp," from pid %d",m.r.rtm.rtm_pid);
+			strp += sprintf(strp," from pid %ld", (long)m.r.rtm.rtm_pid);
 
 		rt_xaddrs(&info, m.r.addrs, &m.r.addrs[RTAX_MAX],
 			  m.r.rtm.rtm_addrs);

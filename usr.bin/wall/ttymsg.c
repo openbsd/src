@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.9 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.10 2002/05/26 09:27:11 deraadt Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #endif
-static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.9 2001/11/19 19:02:17 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.10 2002/05/26 09:27:11 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -139,7 +139,8 @@ ttymsg(iov, iovcnt, line, tmout)
 			continue;
 		}
 		if (errno == EWOULDBLOCK) {
-			int cpid, off = 0;
+			int off = 0;
+			pid_t cpid;
 
 			if (forked) {
 				(void) close(fd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.6 2002/02/17 19:42:27 millert Exp $	*/
+/*	$OpenBSD: preen.c,v 1.7 2002/05/26 09:24:35 deraadt Exp $	*/
 /*	$NetBSD: preen.c,v 1.2 1997/09/14 14:27:30 lukem Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ struct disk {
 	char	*name;			/* disk base name */
 	struct	disk *next;		/* forward link for list of disks */
 	struct	part *part;		/* head of list of partitions on disk */
-	int	pid;			/* If != 0, pid of proc working on */
+	pid_t	pid;			/* If != 0, pid of proc working on */
 } *disks;
 
 int	nrun, ndisks;
@@ -74,9 +74,10 @@ checkfstab(preen, maxrun, docheck, chkit)
 	struct fstab *fsp;
 	struct disk *dk, *nextdisk;
 	struct part *pt;
-	int ret, pid, retcode, passno, sumstatus, status;
+	int ret, retcode, passno, sumstatus, status;
 	long auxdata;
 	char *name;
+	pid_t pid;
 
 	sumstatus = 0;
 	for (passno = 1; passno <= 2; passno++) {
@@ -126,7 +127,7 @@ checkfstab(preen, maxrun, docheck, chkit)
 				if (dk->pid == pid)
 					break;
 			if (dk == 0) {
-				printf("Unknown pid %d\n", pid);
+				printf("Unknown pid %ld\n", (long)pid);
 				continue;
 			}
 			if (WIFEXITED(status))

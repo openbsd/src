@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.19 2002/05/22 08:21:02 deraadt Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.20 2002/05/26 09:24:35 deraadt Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.19 2002/05/22 08:21:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.20 2002/05/26 09:24:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ main(argc, argv)
 	 */
 	daemon(0, 0);
 
-	(void)snprintf(tag, sizeof(tag), "portal:%d", getpid());
+	(void)snprintf(tag, sizeof(tag), "portal:%ld", (long)getpid());
 	args.pa_config = tag;
 
 	/*

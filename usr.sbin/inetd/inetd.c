@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.90 2002/05/22 09:09:32 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.91 2002/05/26 09:25:21 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.90 2002/05/22 09:09:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.91 2002/05/26 09:25:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -646,8 +646,8 @@ main(argc, argv, envp)
 						    sep->se_proto);
 				}
 				if (debug)
-					fprintf(stderr, "%d execl %s\n",
-					    getpid(), sep->se_server);
+					fprintf(stderr, "%ld execl %s\n",
+					    (long)getpid(), sep->se_server);
 				dup2(ctrl, 0);
 				close(ctrl);
 				dup2(0, 1);
@@ -730,9 +730,9 @@ reap(int sig)
 void
 doreap(void)
 {
-	pid_t pid;
-	int status;
 	struct servtab *sep;
+	int status;
+	pid_t pid;
 
 	if (debug)
 		fprintf(stderr, "reaping asked for\n");
@@ -742,7 +742,8 @@ doreap(void)
 		if (pid <= 0)
 			break;
 		if (debug)
-			fprintf(stderr, "%d reaped, status %x\n", pid, status);
+			fprintf(stderr, "%ld reaped, status %x\n",
+			    (long)pid, status);
 		for (sep = servtab; sep; sep = sep->se_next)
 			if (sep->se_wait == pid) {
 				if (WIFEXITED(status) && WEXITSTATUS(status))
@@ -1740,7 +1741,7 @@ logpid()
 	FILE *fp;
 
 	if ((fp = fopen(_PATH_INETDPID, "w")) != NULL) {
-		fprintf(fp, "%u\n", getpid());
+		fprintf(fp, "%ld\n", (long)getpid());
 		(void)fclose(fp);
 	}
 }

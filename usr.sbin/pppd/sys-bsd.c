@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.16 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.17 2002/05/26 09:25:21 deraadt Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.16 2002/02/16 21:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.17 2002/05/26 09:25:21 deraadt Exp $";
 #endif
 #endif
 
@@ -1535,7 +1535,8 @@ lock(dev)
     char *dev;
 {
     char hdb_lock_buffer[12];
-    int fd, pid, n;
+    int fd, n;
+    pid_t pid;
     char *p;
 
     if ((p = strrchr(dev, '/')) != NULL)
@@ -1560,15 +1561,15 @@ lock(dev)
 		    /* pid no longer exists - remove the lock file */
 		    if (unlink(lock_file) == 0) {
 			close(fd);
-			syslog(LOG_NOTICE, "Removed stale lock on %s (pid %d)",
-			       dev, pid);
+			syslog(LOG_NOTICE, "Removed stale lock on %s (pid %ld)",
+			       dev, (long)pid);
 			continue;
 		    } else
 			syslog(LOG_WARNING, "Couldn't remove stale lock on %s",
 			       dev);
 		} else
-		    syslog(LOG_NOTICE, "Device %s is locked by pid %d",
-			   dev, pid);
+		    syslog(LOG_NOTICE, "Device %s is locked by pid %ld",
+			   dev, (long)pid);
 	    }
 	    close(fd);
 	} else
@@ -1578,7 +1579,7 @@ lock(dev)
 	return -1;
     }
 
-    sprintf(hdb_lock_buffer, "%10d\n", getpid());
+    sprintf(hdb_lock_buffer, "%10ld\n", (long)getpid());
     write(fd, hdb_lock_buffer, 11);
 
     close(fd);

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.11 2002/03/27 18:54:09 jbm Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.12 2002/05/26 09:32:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -398,7 +398,7 @@ wsmoused(void)
 			background = TRUE;
 			fp = fopen(pidfile, "w");
 			if (fp != NULL) {
-				fprintf(fp, "%d\n", getpid());
+				fprintf(fp, "%ld\n", (long)getpid());
 				fclose(fp);
 			}
 		}

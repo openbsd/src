@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.21 2002/03/14 16:44:24 mpech Exp $ */
+/*	$OpenBSD: arp.c,v 1.22 2002/05/26 09:25:21 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.21 2002/03/14 16:44:24 mpech Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.22 2002/05/26 09:25:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -91,7 +91,7 @@ int rtmsg(int);
 int set(int, char **);
 void usage(void);
 
-static int pid;
+static pid_t pid;
 static int nflag;	/* no reverse dns lookups */
 static int aflag;	/* do it for all entries */
 static int s = -1;

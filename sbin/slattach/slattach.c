@@ -1,4 +1,4 @@
-/*	$OpenBSD: slattach.c,v 1.12 2002/02/16 21:27:38 millert Exp $	*/
+/*	$OpenBSD: slattach.c,v 1.13 2002/05/26 09:24:35 deraadt Exp $	*/
 /*	$NetBSD: slattach.c,v 1.17 1996/05/19 21:57:39 jonathan Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: slattach.c,v 1.12 2002/02/16 21:27:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: slattach.c,v 1.13 2002/05/26 09:24:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ main(argc, argv)
 	    "%sslip.%s.pid", _PATH_VARRUN, dev + i);
 	truncate(pidfilename, 0); /* If this fails, so will the next one... */
 	if ((pidfile = fopen(pidfilename, "w")) != NULL) {
-		fprintf(pidfile, "%d\n", pid);
+		fprintf(pidfile, "%ld\n", (long)pid);
 		(void) fclose(pidfile);
 	} else {
 		syslog(LOG_ERR, "Failed to create pid file %s: %m", pidfilename);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.9 2002/03/14 06:51:41 mpech Exp $	*/
+/*	$OpenBSD: preen.c,v 1.10 2002/05/26 09:24:35 deraadt Exp $	*/
 /*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
@@ -94,9 +94,10 @@ checkfstab(flags, maxrun, docheck, checkit)
 	struct fstab *fs;
 	struct diskentry *d, *nextdisk;
 	struct partentry *p;
-	int ret, pid, retcode, passno, sumstatus, status;
+	int ret, retcode, passno, sumstatus, status;
 	void *auxarg;
 	char *name;
+	pid_t pid;
 
 	TAILQ_INIT(&badh);
 	TAILQ_INIT(&diskh);
@@ -165,7 +166,7 @@ checkfstab(flags, maxrun, docheck, checkit)
 					break;
 
 			if (d == NULL) {
-				warnx("Unknown pid %d", pid);
+				warnx("Unknown pid %ld", (long)pid);
 				continue;
 			}
 

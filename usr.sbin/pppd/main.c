@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.36 2002/05/08 22:30:55 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.37 2002/05/26 09:25:21 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.36 2002/05/08 22:30:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.37 2002/05/26 09:25:21 deraadt Exp $";
 #endif
 #endif
 
@@ -640,7 +640,7 @@ create_pidfile()
 
     (void) sprintf(pidfilename, "%s%s.pid", _PATH_VARRUN, ifname);
     if ((pidfile = fopen(pidfilename, "w")) != NULL) {
-	fprintf(pidfile, "%d\n", pid);
+	fprintf(pidfile, "%ld\n", (long)pid);
 	(void) fclose(pidfile);
     } else {
 	syslog(LOG_ERR, "Failed to create pid file %s: %m", pidfilename);
@@ -1080,7 +1080,7 @@ device_script(program, in, out)
     char *program;
     int in, out;
 {
-    int pid;
+    pid_t pid;
     int status;
     int errfd;
 
@@ -1157,7 +1157,7 @@ run_program(prog, args, must_exist)
     char **args;
     int must_exist;
 {
-    int pid;
+    pid_t pid;
 
     pid = fork();
     if (pid == -1) {
@@ -1207,7 +1207,7 @@ run_program(prog, args, must_exist)
 	    syslog(LOG_WARNING, "Can't execute %s: %m", prog);
 	_exit(1);
     }
-    MAINDEBUG((LOG_DEBUG, "Script %s started; pid = %d", prog, pid));
+    MAINDEBUG((LOG_DEBUG, "Script %s started; pid = %ld", prog, (long)pid));
     ++n_children;
     return 0;
 }
@@ -1220,7 +1220,8 @@ run_program(prog, args, must_exist)
 static void
 reap_kids()
 {
-    int pid, status;
+    int status;
+    pid_t pid;
 
     if (n_children == 0)
 	return;
@@ -1232,8 +1233,8 @@ reap_kids()
     if (pid > 0) {
 	--n_children;
 	if (WIFSIGNALED(status)) {
-	    syslog(LOG_WARNING, "Child process %d terminated with signal %d",
-		   pid, WTERMSIG(status));
+	    syslog(LOG_WARNING, "Child process %ld terminated with signal %d",
+		   (long)pid, WTERMSIG(status));
 	}
     }
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.45 2002/05/20 23:06:27 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.46 2002/05/26 09:24:35 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.45 2002/05/20 23:06:27 itojun Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.46 2002/05/26 09:24:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1492,8 +1492,8 @@ print_rtmsg(rtm, msglen)
 		pmsg_addrs((char *)(ifam + 1), ifam->ifam_addrs);
 		break;
 	default:
-		(void) printf("pid: %d, seq %d, errno %d, flags:",
-			rtm->rtm_pid, rtm->rtm_seq, rtm->rtm_errno);
+		(void) printf("pid: %ld, seq %d, errno %d, flags:",
+			(long)rtm->rtm_pid, rtm->rtm_seq, rtm->rtm_errno);
 		bprintf(stdout, rtm->rtm_flags, routeflags);
 		pmsg_common(rtm);
 	}

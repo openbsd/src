@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.45 2002/05/22 06:35:44 deraadt Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.46 2002/05/26 09:32:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$OpenBSD: rshd.c,v 1.45 2002/05/22 06:35:44 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rshd.c,v 1.46 2002/05/26 09:32:08 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -215,8 +215,8 @@ doit(fromp)
 	u_short port;
 	in_port_t *portp;
 	fd_set ready, readfrom;
-	int cc, nfd, pv[2], pid, s = 0;
-	int one = 1;
+	int cc, nfd, pv[2], s = 0, one = 1;
+	pid_t pid;
 	char *hostname, *errorstr, *errorhost = (char *) NULL;
 	char *cp, sig, buf[BUFSIZ];
 	char cmdbuf[NCARGS+1], locuser[_PW_NAME_LEN+1], remuser[_PW_NAME_LEN+1];
