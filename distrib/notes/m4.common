@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.8 1999/10/10 22:55:56 deraadt Exp $
+dnl	$OpenBSD: m4.common,v 1.9 2000/04/27 00:36:47 todd Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -185,7 +185,7 @@ dnl
 dnl misc
 dnl
 define({:-OpenBSDdistsets-:},
-{:-		*.tar.gz	MACHINE binary distribution sets;
+{:-		*.tgz		MACHINE binary distribution sets;
 				see below.-:})dnl
 dnl
 define({:-OpenBSDbsd-:},
@@ -418,7 +418,7 @@ define({:-OpenBSDCommonFS-:},
 		most users will want to do).  You may also enter `list'
 		to get a file list or `done' when you are done selecting
 		distribution sets.  You may also use wildcards in place of
-		a file name, eg `*.tar.gz' or even `base*|comp*'.  It is
+		a file name, eg `*.tgz' or even `base*|comp*'.  It is
 		also possible to enter an arbitrary filename and have it
 		treated as a file set.
 
@@ -444,7 +444,7 @@ define({:-OpenBSDCommonURL-:},
 		sets (which is what most users will want to do).  You
 		may also enter `list' to get a file list or `done' when
 		you are done selecting distribution sets.  You may also
-		use wildcards in place of a file name, eg `*.tar.gz' or
+		use wildcards in place of a file name, eg `*.tgz' or
 		even `base*|comp*'.  It is also possible to enter an
 		arbitrary filename and have it treated as a file set.
 
