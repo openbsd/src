@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.110 2000/04/26 22:36:06 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.111 2000/04/27 08:01:28 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1270,6 +1270,7 @@ do_ssh2_kex()
 	memset(kbuf, 0, klen);
 	xfree(kbuf);
 
+	/* XXX precompute? */
 	dsa_make_key_blob(sensitive_data.dsa_host_key, &server_host_key_blob, &sbloblen);
 
 	/* calc H */			/* XXX depends on 'kex' */
@@ -1312,6 +1313,7 @@ do_ssh2_kex()
 	packet_put_string((char *)signature, slen);
 	packet_send();
 	xfree(signature);
+	xfree(server_host_key_blob);
 	packet_write_wait();
 
 	kex_derive_keys(kex, hash, shared_secret);

@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.2 2000/04/26 21:33:53 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.3 2000/04/27 08:01:27 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -231,6 +231,7 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	    dh_server_pub,
 	    shared_secret
 	);
+	xfree(server_host_key_blob);
 	buffer_free(client_kexinit);
 	buffer_free(server_kexinit);
 	xfree(client_kexinit);
@@ -341,6 +342,7 @@ ssh2_try_pubkey(char *filename,
 	buffer_put_char(&b, 1);
 	buffer_put_cstring(&b, KEX_DSS); 
 	buffer_put_string(&b, blob, bloblen);
+	xfree(blob);
 
 	/* generate signature */
 	dsa_sign(k, &signature, &slen, buffer_ptr(&b), buffer_len(&b));

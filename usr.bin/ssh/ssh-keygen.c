@@ -7,7 +7,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh-keygen.c,v 1.20 2000/04/26 21:55:04 deraadt Exp $");
+RCSID("$Id: ssh-keygen.c,v 1.21 2000/04/27 08:01:27 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -130,6 +130,7 @@ do_convert_to_ssh2(struct passwd *pw)
 	dump_base64(stdout, blob, len);
 	fprintf(stdout, SSH_COM_MAGIC_END "\n");
 	key_free(k);
+	xfree(blob);
 	exit(0);
 }
 
@@ -206,6 +207,7 @@ do_print_public(struct passwd *pw)
 	if (!key_write(k, stdout))
 		fprintf(stderr, "key_write failed");
 	key_free(k);
+	xfree(blob);
 	fprintf(stdout, "\n");
 	exit(0);
 }

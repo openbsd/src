@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.1 2000/04/26 21:28:32 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.2 2000/04/27 08:01:25 markus Exp $");
 
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -237,38 +237,40 @@ ssh2_auth_pubkey(struct passwd *pw, unsigned char *raw, unsigned int rlen)
 	}
 	pkblob = packet_get_string(&blen);
 	key = dsa_key_from_blob(pkblob, blen);
-	
-	if (have_sig && key != NULL) {
-		sig = packet_get_string(&slen);
-		packet_done();
-		buffer_init(&b);
-		buffer_append(&b, session_id2, session_id2_len);
-		buffer_put_char(&b, SSH2_MSG_USERAUTH_REQUEST);
-		if (slen + 4 > rlen)
-			fatal("bad rlen/slen");
-		buffer_append(&b, raw, rlen - slen - 4);
+	if (key != NULL) {
+		if (have_sig) {
+			sig = packet_get_string(&slen);
+			packet_done();
+			buffer_init(&b);
+			buffer_append(&b, session_id2, session_id2_len);
+			buffer_put_char(&b, SSH2_MSG_USERAUTH_REQUEST);
+			if (slen + 4 > rlen)
+				fatal("bad rlen/slen");
+			buffer_append(&b, raw, rlen - slen - 4);
 #ifdef DEBUG_DSS
-		buffer_dump(&b);
+			buffer_dump(&b);
 #endif
-		/* test for correct signature */
-		if (user_dsa_key_allowed(pw, key) &&
-		    dsa_verify(key, sig, slen, buffer_ptr(&b), buffer_len(&b)) == 1)
-			authenticated = 1;
-		buffer_clear(&b);
-		xfree(sig);
-	} else if (!have_sig && key != NULL) {
-		packet_done();
-		debug("test key...");
-		/* test whether pkalg/pkblob are acceptable */
-		/* XXX fake reply and always send PK_OK ? */
-		if (user_dsa_key_allowed(pw, key)) {
-			packet_start(SSH2_MSG_USERAUTH_PK_OK);
-			packet_put_string(pkalg, alen);
-			packet_put_string(pkblob, blen);
-			packet_send();
-			packet_write_wait();
-			authenticated = -1;
+			/* test for correct signature */
+			if (user_dsa_key_allowed(pw, key) &&
+			    dsa_verify(key, sig, slen, buffer_ptr(&b), buffer_len(&b)) == 1)
+				authenticated = 1;
+			buffer_clear(&b);
+			xfree(sig);
+		} else {
+			packet_done();
+			debug("test key...");
+			/* test whether pkalg/pkblob are acceptable */
+			/* XXX fake reply and always send PK_OK ? */
+			if (user_dsa_key_allowed(pw, key)) {
+				packet_start(SSH2_MSG_USERAUTH_PK_OK);
+				packet_put_string(pkalg, alen);
+				packet_put_string(pkblob, blen);
+				packet_send();
+				packet_write_wait();
+				authenticated = -1;
+			}
 		}
+		key_free(key);
 	}
 	xfree(pkalg);
 	xfree(pkblob);
