@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.6 1997/05/08 15:52:29 tholo Exp $
+#	$OpenBSD: list,v 1.7 1997/05/11 21:50:07 tholo Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -78,6 +78,11 @@ COPY	${DESTDIR}/etc/group		etc/group
 COPY	${DESTDIR}/etc/protocols	etc/protocols
 COPY	${DESTDIR}/etc/services		etc/services
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
+SYMLINK	/tmp/disktab.shadow		etc/disktab
+SYMLINK	/tmp/fstab.shadow		etc/fstab
+SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
+SYMLINK	/tmp/hosts			etc/hosts
 
 COPYDIR	${DESTDIR}/etc/ppp		etc/ppp
 
