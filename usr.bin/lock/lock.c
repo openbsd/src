@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.8 1997/01/15 23:42:45 millert Exp $	*/
+/*	$OpenBSD: lock.c,v 1.9 1997/07/27 21:29:59 millert Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lock.c,v 1.8 1997/01/15 23:42:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: lock.c,v 1.9 1997/07/27 21:29:59 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -78,15 +78,19 @@ static char rcsid[] = "$OpenBSD: lock.c,v 1.8 1997/01/15 23:42:45 millert Exp $"
 
 #define	TIMEOUT	15
 
-void quit(), bye(), hi();
+int skey_auth __P((char *));
+void quit __P((int));
+void bye __P((int));
+void hi __P((int));
 
 struct timeval	timeout;
 struct timeval	zerotime;
 struct termios	tty, ntty;
 long	nexttime;			/* keep the timeout time */
-int		no_timeout;			/* lock terminal forever */
+int	no_timeout;			/* lock terminal forever */
 
 /*ARGSUSED*/
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -152,7 +156,7 @@ main(argc, argv)
 		/* get key and check again */
 		printf("Key: ");
 		if (!fgets(s, sizeof(s), stdin) || *s == '\n')
-			quit();
+			quit(0);
 		printf("\nAgain: ");
 		/*
 		 * Don't need EOF test here, if we get EOF, then s1 != s
@@ -193,7 +197,7 @@ main(argc, argv)
 		printf("Key: ");
 		if (!fgets(s, sizeof(s), stdin)) {
 			clearerr(stdin);
-			hi();
+			hi(0);
 			continue;
 		}
 		if (usemine) {
@@ -217,7 +221,9 @@ main(argc, argv)
 		if (tcsetattr(0, TCSADRAIN, &ntty) < 0)
 			exit(1);
 	}
-	quit();
+
+	quit(0);
+	exit(0);			/*NOTREACHED*/
 }
 
 #ifdef SKEY
@@ -249,7 +255,8 @@ skey_auth(user)
 #endif
 
 void
-hi()
+hi(dummy)
+	int dummy;
 {
 	struct timeval timval;
 
@@ -266,7 +273,8 @@ hi()
 }
 
 void
-quit()
+quit(dummy)
+	int dummy;
 {
 	putchar('\n');
 	(void)tcsetattr(0, TCSADRAIN, &tty);
@@ -274,7 +282,8 @@ quit()
 }
 
 void
-bye()
+bye(dummy)
+	int dummy;
 {
 	if (!no_timeout) {
 		(void)tcsetattr(0, TCSADRAIN, &tty);
