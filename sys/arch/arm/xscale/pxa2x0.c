@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0.c,v 1.3 2005/01/12 17:14:37 uwe Exp $ */
+/*	$OpenBSD: pxa2x0.c,v 1.4 2005/01/13 17:54:24 drahn Exp $ */
 /*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
@@ -127,11 +127,11 @@ struct pxaip_softc {
 };
 
 /* prototypes */
-static int	pxaip_match(struct device *, void *, void *);
-static void	pxaip_attach(struct device *, struct device *, void *);
-static int 	pxaip_search(struct device *, void *, void *);
-static void	pxaip_attach_critical(struct pxaip_softc *);
-static int	pxaip_print(void *, const char *);
+int	pxaip_match(struct device *, void *, void *);
+void	pxaip_attach(struct device *, struct device *, void *);
+int 	pxaip_search(struct device *, void *, void *);
+void	pxaip_attach_critical(struct pxaip_softc *);
+int	pxaip_print(void *, const char *);
 
 int	pxaip_measure_cpuclock(struct pxaip_softc *);
 
@@ -149,16 +149,16 @@ struct cfdriver pxaip_cd = {
 };
 #endif
 
-static struct pxaip_softc *pxaip_sc;
+struct pxaip_softc *pxaip_sc;
 
-static int
+int
 pxaip_match(struct device *parent, void *match, void *aux)
 {
 
 	return 1;
 }
 
-static void
+void
 pxaip_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pxaip_softc *sc = (struct pxaip_softc *)self;
@@ -198,7 +198,7 @@ pxaip_attach(struct device *parent, struct device *self, void *aux)
 
 }
 
-static int
+int
 pxaip_search(struct device *parent, void *c, void *aux)
 {
 	struct pxaip_softc *sc = aux;
@@ -224,7 +224,7 @@ pxaip_search(struct device *parent, void *c, void *aux)
         return 0;
 }
 
-static void
+void
 pxaip_attach_critical(struct pxaip_softc *sc)
 {
 	struct pxaip_attach_args aa;
@@ -258,7 +258,7 @@ pxaip_attach_critical(struct pxaip_softc *sc)
 #endif
 }
 
-static int
+int
 pxaip_print(void *aux, const char *name)
 {
 	struct pxaip_attach_args *sa = (struct pxaip_attach_args*)aux;
