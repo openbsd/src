@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.16 2004/06/07 20:36:07 mickey Exp $
+#	$OpenBSD: mkioctls,v 1.17 2004/11/24 18:11:15 fgsch Exp $
 
 #
 # Copyright (c) 1994
@@ -49,7 +49,7 @@ BEGIN {
 	print "#include <sys/termios.h>"
 	print "#include <netinet/ip_ipsp.h>"
 	print "#include <net/if_enc.h>"
-	print "#include <net/if_ieee80211.h>"
+	print "#include <net80211/ieee80211.h>"
 	print "#include <net/ppp_defs.h>"
 	print "#include <net/if_ppp.h>"
 	print "#include <net/if_pppvar.h>"

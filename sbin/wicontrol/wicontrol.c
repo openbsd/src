@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.56 2004/10/25 15:35:46 deraadt Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.57 2004/11/24 18:11:15 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -49,7 +49,7 @@
 #else
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <net/if_ieee80211.h>
+#include <net80211/ieee80211.h>
 
 #include <dev/ic/if_wi_ieee.h>
 #include <dev/ic/if_wireg.h>
@@ -68,7 +68,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.56 2004/10/25 15:35:46 deraadt Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.57 2004/11/24 18:11:15 fgsch Exp $";
 #endif
 
 int  wi_getval(char *, struct wi_req *);
