@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.21 1997/10/17 12:04:31 deraadt Exp $
+#	$OpenBSD: install.md,v 1.22 1997/10/17 12:30:09 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -138,9 +138,6 @@ __md_prep_fdisk_1
 	echo
 	fdisk ${_disk}
 	echo
-	echo "Please take note of the offset and size of the BIOS OpenBSD partition"
-	echo "of the disk, as you will may that for the OpenBSD disk label later."
-	echo
 }
 
 md_prep_disklabel()
@@ -174,15 +171,13 @@ md_prep_disklabel()
 
 	# display example
 	cat << \__md_prep_disklabel_1
-If this disk is shared with other operating systems, ensure those operating
-systems have a BIOS partition table entry that spans the space they occupy
-completely.  For safetyp, also make sure all OpenBSD file systems within the
-offset and size specified in the 'A6' BIOS partition table.  (By default, the
-disklabel editor will try to enforce this).
-
-If you are unsure of how to use multiple partitions properly (ie. seperating
-/,  /usr, /tmp, /var, /usr/local, and other things) just split the disk into
-an root and swap partition for now.
+If this disk is shared with other operating systems, those operating systems
+should have a BIOS partition entry that spans the space they occupy completely.
+For safetyp, also make sure all OpenBSD file systems within the offset and size
+specified in the 'A6' BIOS partition table.  (By default, the disklabel editor
+will try to enforce this).  If you are unsure of how to use multiple partitions
+properly (ie. seperating /,  /usr, /tmp, /var, /usr/local, and other things)
+just split the space into a root and swap partition for now.
 
 __md_prep_disklabel_1
 	disklabel -E ${_disk}
