@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.104 2002/06/01 01:35:35 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.105 2002/06/02 06:36:33 deraadt Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -41,7 +41,7 @@ LDIRS=	crypto ddb dev isofs miscfs net netatalk netccitt netinet altq \
 
 # Directories with an includes target
 RDIRS=	../lib/libc_r ../lib/libcom_err ../lib/libcompat ../lib/libcurses \
-	../lib/libcurses++ ../lib/libform ../lib/libssl ../lib/libmenu \
+	../lib/libcurses++ ../lib/libform ../lib/libmenu \
 	../lib/libocurses ../lib/libossaudio ../lib/libpanel ../lib/librpcsvc \
 	../lib/libskey ../lib/libsectok ../lib/libedit ../lib/libpcap \
 	../lib/libutil ../lib/libusbhid ../lib/libwrap ../lib/libz \
@@ -49,7 +49,7 @@ RDIRS=	../lib/libc_r ../lib/libcom_err ../lib/libcompat ../lib/libcurses \
 	../sys/arch/${MACHINE}
 
 # Places using Makefile that needs a prerequisite target met before includes
-PRDIRS=
+PRDIRS=	../lib/libssl
 
 # Directories with an includes target that use Makefile.bsd-wrapper
 WDIRS=	../usr.sbin/httpd ../gnu/egcs/libio ../gnu/egcs/libstdc++ \
