@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.107 2002/07/13 16:32:13 krw Exp $
+#	$OpenBSD: install.sh,v 1.108 2002/07/21 04:57:01 hugh Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -330,8 +330,10 @@ w
 q" | ed /mnt/etc/master.passwd 2> /dev/null
 /mnt/usr/sbin/pwd_mkdb -p -d /mnt/etc /etc/master.passwd
 
+echo -n "Generating initial host.random file ..."
 dd if=/mnt/dev/urandom of=/mnt/var/db/host.random bs=1024 count=64 >/dev/null 2>&1
 chmod 600 /mnt/var/db/host.random >/dev/null 2>&1
+echo "...done."
 
 # Perform final steps common to both an install and an upgrade.
 finish_up
