@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.2 1996/06/26 05:40:21 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.3 1996/10/21 03:51:58 deraadt Exp $	*/
 /*	$NetBSD: display.c,v 1.3 1994/12/09 02:14:13 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: display.c,v 1.2 1996/06/26 05:40:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.3 1996/10/21 03:51:58 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -46,6 +46,7 @@ static char rcsid[] = "$OpenBSD: display.c,v 1.2 1996/06/26 05:40:21 deraadt Exp
  * displaying of text
  */
 #include "talk.h"
+#include <ctype.h>
 
 xwin_t	my_win;
 xwin_t	his_win;
@@ -140,7 +141,7 @@ display(win, text, size)
 			/* check for wraparound */
 			xscroll(win, 0);
 		}
-		if (*text < ' ' && *text != '\t') {
+		if (!isprint(*text) && *text != '\t') {
 			waddch(win->x_win, '^');
 			getyx(win->x_win, win->x_line, win->x_col);
 			if (win->x_col == COLS-1) /* check for wraparound */
