@@ -1,0 +1,118 @@
+.\"	$OpenBSD: tc_init.9,v 1.1 2004/12/18 14:26:03 grange Exp $
+.\"
+.\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd December 15, 2004
+.Dt TC_INIT 9
+.Os
+.Sh NAME
+.Nm tc_init
+.Nd machine-independent binary timescale
+.Sh SYNOPSIS
+.Fd #include <sys/timetc.h>
+.Ft void
+.Fn tc_init "struct timecounter *tc"
+.Sh DESCRIPTION
+The timecounter interface is a machine-independent implementation
+of a binary timescale using whatever hardware support is at hand
+for tracking time.
+.Pp
+A timecounter is a binary counter which has two properties:
+.Bl -bullet -offset indent
+.It
+it runs at a fixed, known frequency
+.It
+it has sufficient bits to not roll over in less than approximately
+max(2 msec, 2/HZ seconds) (the value 2 here is really 1 + delta, for some
+indeterminate value of delta)
+.El
+.Pp
+The interface between the hardware which implements a timecounter and the
+machine-independent code which uses this to keep track of time is a
+.Va timecounter
+structure:
+.Bd -literal -offset indent
+struct timecounter {
+	timecounter_get_t	*tc_get_timecount;
+	timecounter_pps_t	*tc_poll_pps;
+	u_int 			tc_counter_mask;
+	u_int64_t		tc_frequency;
+	char			*tc_name;
+	int			tc_quality;
+	void			*tc_priv;
+	struct timecounter	*tc_next;
+}
+.Ed
+.Pp
+The fields of the
+.Va timecounter
+structure are described below.
+.Bl -tag -width indent
+.It Fn "u_int (*tc_get_timecount)" "struct timecounter *"
+This function reads the counter.
+It is not required to mask any unimplemented bits out, as long as they
+are constant.
+.It Fn "void (*tc_poll_pps)" "struct timecounter *"
+This function is optional and can be set to NULL.
+It will be called whenever the timecounter is rewound, and is intended
+to check for PPS events.
+Normal hardware does not need it but timecounters which latch PPS in
+hardware do.
+.It Va tc_counter_mask
+This mask should mask off any unimplemented bits.
+.It Va tc_frequency
+Frequency of the counter in Hz.
+.It Va tc_name
+Name of the timecounter.
+Can be any null-terminated string.
+.It Va tc_quality
+Used to determine if this timecounter is better than another timecounter \-
+higher means better.
+Negative means ``only use at explicit request''.
+.It Va tc_priv
+Pointer to the timecounter's private parts.
+.It Va tc_next
+For internal use.
+.El
+.Pp
+To register a new timecounter,
+the hardware device driver should fill a
+.Va timecounter
+structure with appropriate values and call the
+.Fn tc_init
+function, giving a pointer to the structure as a
+.Fa tc
+parameter.
+.Sh CODE REFERENCES
+The timecounter framework is implemented in the file
+.Pa sys/kern/kern_tc .
+.Sh SEE ALSO
+.Xr amdpm 4 ,
+.Xr elansc 4 ,
+.Xr gscpm 4 ,
+.Xr ichpcib 4 ,
+.Xr piixpm 4 ,
+.Xr viaenv 4 ,
+.Xr hz 9 ,
+.Xr microtime 9
+.Rs
+.%A Poul-Henning Kamp
+.%T Timecounter: Efficient and precise timekeeping in SMP kernels
+.%J The FreeBSD Project
+.%I http://phk.freebsd.dk/pubs/timecounter.pdf
+.Re
+.Sh HISTORY
+The timecounter interface first appeared in
+.Ox 3.6 .

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.87 2004/12/17 17:32:02 jaredy Exp $
+#	$OpenBSD: Makefile,v 1.88 2004/12/18 14:26:03 grange Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -18,7 +18,7 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
 	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 \
 	shutdownhook_establish.9 sleep.9 spl.9 startuphook_establish.9 \
 	style.9 syscall.9 systrace.9 \
-	time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 vfs.9 \
+	tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 vfs.9 \
 	vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \
 	vflushbuf.9 vget.9 vgone.9 vhold.9 vinvalbuf.9 vput.9 vref.9 \
 	vrele.9 vnode.9 VOP_LOOKUP.9 vn_lock.9 vrecycle.9 vwaitforio.9 \
