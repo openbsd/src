@@ -580,6 +580,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ataio.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/extattr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/kgdb.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/memrange.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/pciio.ph
@@ -588,6 +589,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/timeout.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/termcap.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ufs/ufs/extattr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/usbhid.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_param.ph

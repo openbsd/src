@@ -1680,6 +1680,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/exec_elf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/exec_olf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/exec_script.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sys/extattr.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/extent.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/fcntl.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/file.ph
@@ -1798,6 +1799,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ufs/ufs
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ufs/ufs/dinode.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ufs/ufs/dir.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/ufs/ufs/extattr.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ufs/ufs/inode.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ufs/ufs/quota.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ufs/ufs/ufs_extern.ph

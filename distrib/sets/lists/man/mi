@@ -659,11 +659,21 @@
 ./usr/share/man/cat1/zmore.0
 ./usr/share/man/cat1/znew.0
 ./usr/share/man/cat2
+./usr/share/man/cat2/extattr.0
+./usr/share/man/cat2/extattr_delete_fd.0
+./usr/share/man/cat2/extattr_delete_file.0
+./usr/share/man/cat2/extattr_get_fd.0
+./usr/share/man/cat2/extattr_get_file.0
+./usr/share/man/cat2/extattr_set_fd.0
+./usr/share/man/cat2/extattr_set_file.0
 ./usr/share/man/cat2/i386
 ./usr/share/man/cat3
 ./usr/share/man/cat3/alpha
 ./usr/share/man/cat3/amiga
 ./usr/share/man/cat3/arc
+./usr/share/man/cat3/extattr.0
+./usr/share/man/cat3/extattr_namespace_to_string.0
+./usr/share/man/cat3/extattr_string_to_namespace.0
 ./usr/share/man/cat3/fpgetmask.0
 ./usr/share/man/cat3/fpgetround.0
 ./usr/share/man/cat3/fpgetsticky.0
@@ -678,6 +688,7 @@
 ./usr/share/man/cat3/mvme68k
 ./usr/share/man/cat3/mvme88k
 ./usr/share/man/cat3/mvmeppc
+./usr/share/man/cat3/posix1e.0
 ./usr/share/man/cat3/sparc
 ./usr/share/man/cat3/sparc64
 ./usr/share/man/cat3/sun3
@@ -1631,6 +1642,7 @@
 ./usr/share/man/cat8/editmap.0
 ./usr/share/man/cat8/edquota.0
 ./usr/share/man/cat8/ext_srvtab.0
+./usr/share/man/cat8/extattrctl.0
 ./usr/share/man/cat8/faithd.0
 ./usr/share/man/cat8/faq.0
 ./usr/share/man/cat8/fingerd.0
@@ -1645,6 +1657,7 @@
 ./usr/share/man/cat8/genassym.sh.0
 ./usr/share/man/cat8/getNAME.0
 ./usr/share/man/cat8/getencstat.0
+./usr/share/man/cat8/getextattr.0
 ./usr/share/man/cat8/getty.0
 ./usr/share/man/cat8/group.0
 ./usr/share/man/cat8/groupadd.0
@@ -1884,6 +1897,7 @@
 ./usr/share/man/cat8/sendmail.0
 ./usr/share/man/cat8/sesd.0
 ./usr/share/man/cat8/setencstat.0
+./usr/share/man/cat8/setextattr.0
 ./usr/share/man/cat8/setobjstat.0
 ./usr/share/man/cat8/sftp-server.0
 ./usr/share/man/cat8/showmount.0
@@ -1995,6 +2009,7 @@
 ./usr/share/man/cat9/altq.0
 ./usr/share/man/cat9/amiga
 ./usr/share/man/cat9/arc
+./usr/share/man/cat9/extattr.0
 ./usr/share/man/cat9/hardclock.0
 ./usr/share/man/cat9/hp300
 ./usr/share/man/cat9/hppa

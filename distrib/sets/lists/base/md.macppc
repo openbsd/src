@@ -1725,6 +1725,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/exec_elf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/exec_olf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/exec_script.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/extattr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/extent.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/fcntl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/file.ph
@@ -1843,6 +1844,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ufs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ufs/dinode.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ufs/dir.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ufs/extattr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ufs/inode.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ufs/quota.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ufs/ufs_extern.ph

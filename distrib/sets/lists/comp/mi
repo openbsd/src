@@ -1314,6 +1314,7 @@
 ./usr/include/sys/exec_elf.h
 ./usr/include/sys/exec_olf.h
 ./usr/include/sys/exec_script.h
+./usr/include/sys/extattr.h
 ./usr/include/sys/extent.h
 ./usr/include/sys/fcntl.h
 ./usr/include/sys/file.h
@@ -1432,6 +1433,7 @@
 ./usr/include/ufs/ufs
 ./usr/include/ufs/ufs/dinode.h
 ./usr/include/ufs/ufs/dir.h
+./usr/include/ufs/ufs/extattr.h
 ./usr/include/ufs/ufs/inode.h
 ./usr/include/ufs/ufs/quota.h
 ./usr/include/ufs/ufs/ufs_extern.h

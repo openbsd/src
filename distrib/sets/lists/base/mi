@@ -1262,9 +1262,11 @@
 ./usr/sbin/editmap
 ./usr/sbin/edquota
 ./usr/sbin/ext_srvtab
+./usr/sbin/extattrctl
 ./usr/sbin/faithd
 ./usr/sbin/fs
 ./usr/sbin/getencstat
+./usr/sbin/getextattr
 ./usr/sbin/group
 ./usr/sbin/groupadd
 ./usr/sbin/groupdel
@@ -1355,6 +1357,7 @@
 ./usr/sbin/sendmail
 ./usr/sbin/sesd
 ./usr/sbin/setencstat
+./usr/sbin/setextattr
 ./usr/sbin/setobjstat
 ./usr/sbin/sliplogin
 ./usr/sbin/slstats
