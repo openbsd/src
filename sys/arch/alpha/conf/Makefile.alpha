@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.12 1997/04/19 21:12:51 tholo Exp $
+#	$OpenBSD: Makefile.alpha,v 1.13 1997/04/20 10:57:23 niklas Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -181,5 +181,6 @@ cpuconf.o: cpuconf.c
 	${NORMAL_C}
 
 cpuconf.c: ${ALPHA}/alpha/cpuconf.c
-	cp ../../alpha/cpuconf.c .
+	cp ${ALPHA}/alpha/cpuconf.c .
+
 %RULES
