@@ -1,4 +1,4 @@
-/*	$OpenBSD: acphy.c,v 1.3 2004/10/17 22:33:02 deraadt Exp $	*/
+/*	$OpenBSD: acphy.c,v 1.4 2005/02/05 04:28:23 brad Exp $	*/
 /*	$NetBSD: acphy.c,v 1.13 2003/04/29 01:49:33 thorpej Exp $	*/
 
 /*
@@ -75,19 +75,24 @@ const struct mii_phy_funcs acphy_funcs = {
 	acphy_service, acphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc acphys[] = {
+	{ MII_OUI_xxALTIMA,		MII_MODEL_xxALTIMA_AC101,
+	  MII_STR_xxALTIMA_AC101 },
+	{ MII_OUI_xxALTIMA,		MII_MODEL_xxALTIMA_AC101L,
+	  MII_STR_xxALTIMA_AC101L },
+	{ MII_OUI_xxALTIMA,		MII_MODEL_xxALTIMA_AC_UNKNOWN,
+	  MII_STR_xxALTIMA_AC_UNKNOWN },
+
+	{ 0,				0,
+	  NULL },
+};
+
 int
 acphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxALTIMA &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxALTIMA_AC101)
-		return (10);
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxALTIMA &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxALTIMA_AC101L)
-		return (10);
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxALTIMA &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxALTIMA_AC_UNKNOWN)
+	if (mii_phy_match(ma, acphys) != NULL)
 		return (10);
 
 	return (0);
@@ -99,8 +104,10 @@ acphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	printf(": %s, rev. %d\n", MII_STR_xxALTIMA_AC101, MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, acphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;

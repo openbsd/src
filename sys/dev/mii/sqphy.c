@@ -1,4 +1,4 @@
-/*	$OpenBSD: sqphy.c,v 1.13 2005/02/05 00:14:37 jsg Exp $	*/
+/*	$OpenBSD: sqphy.c,v 1.14 2005/02/05 04:28:23 brad Exp $	*/
 /*	$NetBSD: sqphy.c,v 1.17 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -107,21 +107,24 @@ const struct mii_phy_funcs sqphy_funcs = {
 	sqphy_service, sqphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc sqphys[] = {
+	{ MII_OUI_xxSEEQ,		MII_MODEL_xxSEEQ_80220,
+	  MII_STR_xxSEEQ_80220 },
+	{ MII_OUI_xxSEEQ,		MII_MODEL_xxSEEQ_80225,
+	  MII_STR_xxSEEQ_80225 },
+	{ MII_OUI_xxSEEQ,		MII_MODEL_xxSEEQ_84220,
+	  MII_STR_xxSEEQ_84220 },
+
+	{ 0,				0,
+	  NULL },
+};
+
 int
 sqphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_80220)
-		return (10);
-
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_80225)
-		return (10);
-
-   	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_84220)
+	if (mii_phy_match(ma, sqphys) != NULL)
 		return (10);
 
 	return (0);
@@ -133,22 +136,10 @@ sqphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_80220)
-           printf(": %s, rev. %d\n", MII_STR_xxSEEQ_80220,
-	            MII_REV(ma->mii_id2));
-
-   	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_80225)
-           printf(": %s, rev. %d\n", MII_STR_xxSEEQ_80225,
-	            MII_REV(ma->mii_id2));
-
-   	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxSEEQ &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxSEEQ_84220)
-           printf(": %s, rev. %d\n", MII_STR_xxSEEQ_84220,
-	            MII_REV(ma->mii_id2));
-
+	mpd = mii_phy_match(ma, sqphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
