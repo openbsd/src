@@ -91,7 +91,7 @@ the name given in the table below):
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 70K gzipped, 380K uncompressed ]
 
-	games20	This set includes the games and their manual pages.
+	game20	This set includes the games and their manual pages.
 		[ 3M gzipped, 7M uncompressed ]
 
 	man20	This set includes all of the manual pages for the

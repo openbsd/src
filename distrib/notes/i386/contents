@@ -93,7 +93,7 @@ distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 63K gzipped, 338K uncompressed ]
 
-	games20	This set includes the games and their manual pages.
+	game20	This set includes the games and their manual pages.
 		[ 2.8M gzipped, 6.9M uncompressed ]
 
 	man20	This set includes all of the manual pages for the

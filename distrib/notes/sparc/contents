@@ -43,7 +43,7 @@ subdirectory of the OpenBSD 2.0 distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 62K gzipped, 338K uncompressed ]
 
-	games20	This set includes the games and their manual pages.
+	game20	This set includes the games and their manual pages.
 		[ 2.9M gzipped, 7.4M uncompressed ]
 
 	man20	This set includes all of the manual pages for the
