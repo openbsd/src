@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.23 2005/01/24 20:43:12 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.24 2005/02/16 19:45:59 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -439,7 +439,6 @@ rcs_addsym(RCSFILE *rfp, const char *sym, RCSNUM *snum)
  * found in <data>.
  * Returns 0 on success, or -1 on failure.
  */
-
 BUF*
 rcs_patch(const char *data, const char *patch)
 {
@@ -587,7 +586,6 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
  * returned buffer is dynamically allocated and should be released using
  * cvs_buf_free() once the caller is done using it.
  */
-
 BUF*
 rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 {
@@ -669,7 +667,6 @@ rcs_gethead(RCSFILE *rf)
  *
  * Get an RCS revision by a specific date.
  */
-
 RCSNUM*
 rcs_getrevbydate(RCSFILE *rfp, struct tm *date)
 {
@@ -684,7 +681,6 @@ rcs_getrevbydate(RCSFILE *rfp, struct tm *date)
  * The revision number is given in <rev>.
  * Returns a pointer to the delta on success, or NULL on failure.
  */
-
 static struct rcs_delta*
 rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
 {
@@ -772,7 +768,6 @@ rcs_kflag_usage(void)
  * Parse the contents of file <path>, which are in the RCS format.
  * Returns 0 on success, or -1 on failure.
  */
-
 int
 rcs_parse(RCSFILE *rfp)
 {
@@ -878,7 +873,6 @@ rcs_parse(RCSFILE *rfp)
  * Parse the administrative portion of an RCS file.
  * Returns 0 on success, or -1 on failure.
  */
-
 static int
 rcs_parse_admin(RCSFILE *rfp)
 {
@@ -984,7 +978,6 @@ rcs_parse_admin(RCSFILE *rfp)
  * Returns 1 if the section was parsed OK, 0 if it is the last delta, and
  * -1 on error.
  */
-
 static int
 rcs_parse_delta(RCSFILE *rfp)
 {
@@ -1161,7 +1154,6 @@ rcs_parse_delta(RCSFILE *rfp)
  * Returns 1 if the section was parsed OK, 0 if it is the last delta, and
  * -1 on error.
  */
-
 static int
 rcs_parse_deltatext(RCSFILE *rfp)
 {
@@ -1246,7 +1238,6 @@ rcs_parse_deltatext(RCSFILE *rfp)
  * Parse the access list given as value to the `access' keyword.
  * Returns 0 on success, or -1 on failure.
  */
-
 static int
 rcs_parse_access(RCSFILE *rfp)
 {
@@ -1270,7 +1261,6 @@ rcs_parse_access(RCSFILE *rfp)
  * Parse the symbol list given as value to the `symbols' keyword.
  * Returns 0 on success, or -1 on failure.
  */
-
 static int
 rcs_parse_symbols(RCSFILE *rfp)
 {
@@ -1349,7 +1339,6 @@ rcs_parse_symbols(RCSFILE *rfp)
  * Parse the lock list given as value to the `locks' keyword.
  * Returns 0 on success, or -1 on failure.
  */
-
 static int
 rcs_parse_locks(RCSFILE *rfp)
 {
@@ -1428,7 +1417,6 @@ rcs_parse_locks(RCSFILE *rfp)
  * Parse the list of branches following a `branches' keyword in a delta.
  * Returns 0 on success, or -1 on failure.
  */
-
 static int
 rcs_parse_branches(RCSFILE *rfp, struct rcs_delta *rdp)
 {
@@ -1472,7 +1460,6 @@ rcs_parse_branches(RCSFILE *rfp, struct rcs_delta *rdp)
  *
  * Free the contents of a delta structure.
  */
-
 static void
 rcs_freedelta(struct rcs_delta *rdp)
 {
@@ -1513,7 +1500,6 @@ rcs_freedelta(struct rcs_delta *rdp)
  *
  * Free the contents of the parser data structure.
  */
-
 static void
 rcs_freepdata(struct rcs_pdata *pd)
 {
@@ -1530,7 +1516,6 @@ rcs_freepdata(struct rcs_pdata *pd)
  *
  * Get the next RCS token from the string <str>.
  */
-
 static int
 rcs_gettok(RCSFILE *rfp)
 {
@@ -1654,7 +1639,6 @@ rcs_gettok(RCSFILE *rfp)
  *
  * Push a token back in the parser's token buffer.
  */
-
 static int
 rcs_pushtok(RCSFILE *rfp, const char *tok, int type)
 {
@@ -1680,7 +1664,6 @@ rcs_pushtok(RCSFILE *rfp, const char *tok, int type)
  * operated on.  The <blen> parameter will contain the number of bytes
  * actually copied in <buf>.
  */
-
 size_t
 rcs_stresc(int esc, const char *str, char *buf, size_t *blen)
 {
@@ -1724,7 +1707,6 @@ rcs_stresc(int esc, const char *str, char *buf, size_t *blen)
  *
  * Split the contents of a file into a list of lines.
  */
-
 static struct rcs_foo*
 rcs_splitlines(const char *fcont)
 {
@@ -1802,7 +1784,6 @@ rcs_freefoo(struct rcs_foo *fp)
  * In case of failure, the original buffer is left unmodified.
  * Returns 0 on success, or -1 on failure.
  */
-
 static int
 rcs_growbuf(RCSFILE *rf)
 {
