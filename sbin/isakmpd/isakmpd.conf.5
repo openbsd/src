@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.72 2003/01/19 21:02:15 deraadt Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.73 2003/02/22 06:56:20 kjell Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -61,16 +61,16 @@ Tag=Value
 If the value needs more space than fits on a single line it's possible to
 continue it on the next by ending the first with a backslash character
 immediately before the newline character.
-This method can extend a value for an arbitrary amount of lines.
+This method can extend a value for an arbitrary number of lines.
 .Pp
 Comments can be put anywhere in the file by using a hash mark
 .Pq Sq \&# .
-Then the comment goes on to the end of the line.
+The comment extends to the end of the current line.
 .Pp
 Often the right-hand side values consist of other section names.
 This results in a tree structure.
-Some values are treated as a list of several scalar values, such lists always
-use comma as the separator.
+Some values are treated as a list of several scalar values.
+Such lists always use a comma character as the separator.
 Some values are formatted like this: X,Y:Z, which
 is an offer/accept syntax, where X is a value we offer and Y:Z is a range of
 accepted values, inclusive.
@@ -82,8 +82,8 @@ without restarting
 send a SIGHUP signal to the daemon process.
 .Ss Auto-generated parts of the configuration
 .Pp
-Some predefined section names are recognized by the daemon, voiding the need
-to fully specify the Main Mode transforms and Quick Mode suites, protocols
+Some predefined section names are recognized by the daemon, avoiding the need
+to fully specify the Main Mode transforms and Quick Mode suites, protocols,
 and transforms.
 .Pp
 For Main Mode:
@@ -103,11 +103,10 @@ For Quick Mode:
     {group}  is either GRP1, GRP2 or GRP5
 .Ed
 .Pp
-Example 1: 3DES-SHA means; 3DES encryption, SHA hash, and authorization by
+For example, 3DES-SHA means: 3DES encryption, SHA hash, and authorization by
 pre-shared keys.
-Example 2: QM-ESP-3DES-SHA-PFS-SUITE means; ESP protocol, 3DES encryption,
+Similarly, QM-ESP-3DES-SHA-PFS-SUITE means: ESP protocol, 3DES encryption,
 SHA hash, and use Perfect Forward Security.
-.Pp
 .Pp
 Unless explicitly stated with -GRP1, 2 or 5, transforms and PFS suites
 use DH group 2. There are currently no predefined ESP+AH Quick Mode suites.
@@ -286,11 +285,12 @@ and X.509 CA certificates) allows for maintenance of a list of
 .It Em Cert-directory
 A directory containing PEM certificates that we trust to be valid.
 These certificates are used in preference to those passed in messages and
-are required to have a SubjectAltName extension.
+are required to have a subjectAltName extension containing the certificate
+holder identity; usually IP address, FQDN, or User FQDN, as provided by
+.Xr certpatch 8 .
 .It Em Private-key
 The private key matching the public key of our certificate (which should be
-in the "Cert-directory", and have a subjectAltName matching our ID, so far
-that is our IP-address).
+in the "Cert-directory", and have an appropriate subjectAltName field).
 .El
 .El
 .Ss Referred-to sections

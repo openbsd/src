@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.48 2003/02/05 10:29:49 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.49 2003/02/22 06:56:20 kjell Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -283,8 +283,8 @@ Encoding the ID in the common name is recommended, as it should be unique.
 .Pp
 Now take these certificate signing requests to your CA and process
 them like below.
-You have to add some extensions to the certificate in order to make it
-usable for
+You have to add a subjectAltName extension field
+to the certificate in order to make it usable by
 .Nm isakmpd .
 There are two possible ways to add the extensions to the certificate.
 Either you have to run
