@@ -28,7 +28,7 @@ net_addrcmp(sa1, sa2)
 		return (memcmp(&((struct sockaddr_ns *)sa1)->sns_addr,
 		    &((struct sockaddr_ns *)sa2)->sns_addr,
 		    sizeof(struct ns_addr)));
-	case AF_UNIX:
+	case AF_LOCAL:
 		return (strcmp(((struct sockaddr_un *)sa1)->sun_path,
 		    ((struct sockaddr_un *)sa1)->sun_path));
 	default:
