@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.c,v 1.13 2001/04/11 04:05:16 krw Exp $ */
+/*	$OpenBSD: adwlib.c,v 1.14 2001/07/11 17:31:25 krw Exp $ */
 /* $NetBSD: adwlib.c,v 1.20 2000/07/04 04:17:03 itojun Exp $        */
 
 /*
@@ -75,8 +75,6 @@
 #include <dev/ic/adw.h>
 
 
-/* Static Functions */
-
 int AdwRamSelfTest __P((bus_space_tag_t, bus_space_handle_t, u_int8_t));
 int AdwLoadMCode __P((bus_space_tag_t, bus_space_handle_t, u_int16_t *,
 								u_int8_t));
@@ -86,17 +84,17 @@ int AdwASC38C0800Cabling __P((bus_space_tag_t, bus_space_handle_t,
 int AdwASC38C1600Cabling __P((bus_space_tag_t, bus_space_handle_t,
 								ADW_DVC_CFG *));
 
-static u_int16_t AdwGetEEPROMConfig __P((bus_space_tag_t, bus_space_handle_t,
+u_int16_t AdwGetEEPROMConfig __P((bus_space_tag_t, bus_space_handle_t,
      							ADW_EEPROM *));
-static void AdwSetEEPROMConfig __P((bus_space_tag_t, bus_space_handle_t,
+void AdwSetEEPROMConfig __P((bus_space_tag_t, bus_space_handle_t,
 					                 ADW_EEPROM *));
-static u_int16_t AdwReadEEPWord __P((bus_space_tag_t, bus_space_handle_t, int));
-static void AdwWaitEEPCmd __P((bus_space_tag_t, bus_space_handle_t));
+u_int16_t AdwReadEEPWord __P((bus_space_tag_t, bus_space_handle_t, int));
+void AdwWaitEEPCmd __P((bus_space_tag_t, bus_space_handle_t));
 
-static void AdwInquiryHandling __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
+void AdwInquiryHandling __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
 
-static void AdwSleepMilliSecond __P((u_int32_t));
-static void AdwDelayMicroSecond __P((u_int32_t));
+void AdwSleepMilliSecond __P((u_int32_t));
+void AdwDelayMicroSecond __P((u_int32_t));
 
 
 /*
@@ -1560,7 +1558,7 @@ AdwASC38C1600Cabling(iot, ioh, cfg)
  *
  * Return a checksum based on the EEPROM configuration read.
  */
-static u_int16_t
+u_int16_t
 AdwGetEEPROMConfig(iot, ioh, cfg_buf)
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
@@ -1597,7 +1595,7 @@ AdwGetEEPROMConfig(iot, ioh, cfg_buf)
 /*
  * Read the EEPROM from specified location
  */
-static u_int16_t
+u_int16_t
 AdwReadEEPWord(iot, ioh, eep_word_addr)
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
@@ -1614,7 +1612,7 @@ AdwReadEEPWord(iot, ioh, eep_word_addr)
 /*
  * Wait for EEPROM command to complete
  */
-static void
+void
 AdwWaitEEPCmd(iot, ioh)
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
@@ -1637,7 +1635,7 @@ AdwWaitEEPCmd(iot, ioh)
 /*
  * Write the EEPROM from 'cfg_buf'.
  */
-static void
+void
 AdwSetEEPROMConfig(iot, ioh, cfg_buf)
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
@@ -2217,7 +2215,7 @@ u_int32_t       idle_cmd_parameter;
  * microcode operating variables that affect WDTR, SDTR, and Tag
  * Queuing.
  */
-static void
+void
 AdwInquiryHandling(sc, scsiq)
 ADW_SOFTC	*sc;
 ADW_SCSI_REQ_Q *scsiq;
@@ -2392,7 +2390,7 @@ ADW_SCSI_REQ_Q *scsiq;
 }
 
 
-static void
+void
 AdwSleepMilliSecond(n)
 u_int32_t	n;
 {
@@ -2401,7 +2399,7 @@ u_int32_t	n;
 }
 
 
-static void
+void
 AdwDelayMicroSecond(n)
 u_int32_t	n;
 {

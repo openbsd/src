@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.19 2001/05/16 19:19:28 mickey Exp $ */
+/*	$OpenBSD: adw.c,v 1.20 2001/07/11 17:31:24 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -70,30 +70,30 @@
 /******************************************************************************/
 
 
-static void adw_enqueue __P((ADW_SOFTC *, struct scsi_xfer *, int));
-static struct scsi_xfer *adw_dequeue __P((ADW_SOFTC *));
+void adw_enqueue __P((ADW_SOFTC *, struct scsi_xfer *, int));
+struct scsi_xfer *adw_dequeue __P((ADW_SOFTC *));
 
-static int adw_alloc_controls __P((ADW_SOFTC *));
-static int adw_alloc_carriers __P((ADW_SOFTC *));
-static int adw_create_ccbs __P((ADW_SOFTC *, ADW_CCB *, int));
-static void adw_free_ccb __P((ADW_SOFTC *, ADW_CCB *));
-static void adw_reset_ccb __P((ADW_CCB *));
-static int adw_init_ccb __P((ADW_SOFTC *, ADW_CCB *));
-static ADW_CCB *adw_get_ccb __P((ADW_SOFTC *, int));
-static int adw_queue_ccb __P((ADW_SOFTC *, ADW_CCB *, int));
+int adw_alloc_controls __P((ADW_SOFTC *));
+int adw_alloc_carriers __P((ADW_SOFTC *));
+int adw_create_ccbs __P((ADW_SOFTC *, ADW_CCB *, int));
+void adw_free_ccb __P((ADW_SOFTC *, ADW_CCB *));
+void adw_reset_ccb __P((ADW_CCB *));
+int adw_init_ccb __P((ADW_SOFTC *, ADW_CCB *));
+ADW_CCB *adw_get_ccb __P((ADW_SOFTC *, int));
+int adw_queue_ccb __P((ADW_SOFTC *, ADW_CCB *, int));
 
-static int adw_scsi_cmd __P((struct scsi_xfer *));
-static int adw_build_req __P((struct scsi_xfer *, ADW_CCB *, int));
-static void adw_build_sglist __P((ADW_CCB *, ADW_SCSI_REQ_Q *, ADW_SG_BLOCK *));
-static void adwminphys __P((struct buf *));
-static void adw_isr_callback __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
-static void adw_async_callback __P((ADW_SOFTC *, u_int8_t));
+int adw_scsi_cmd __P((struct scsi_xfer *));
+int adw_build_req __P((struct scsi_xfer *, ADW_CCB *, int));
+void adw_build_sglist __P((ADW_CCB *, ADW_SCSI_REQ_Q *, ADW_SG_BLOCK *));
+void adw_minphys __P((struct buf *));
+void adw_isr_callback __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
+void adw_async_callback __P((ADW_SOFTC *, u_int8_t));
 
-static void adw_print_info __P((ADW_SOFTC *, int));
+void adw_print_info __P((ADW_SOFTC *, int));
 
-static int adw_poll __P((ADW_SOFTC *, struct scsi_xfer *, int));
-static void adw_timeout __P((void *));
-static void adw_reset_bus __P((ADW_SOFTC *));
+int adw_poll __P((ADW_SOFTC *, struct scsi_xfer *, int));
+void adw_timeout __P((void *));
+void adw_reset_bus __P((ADW_SOFTC *));
 
 
 /******************************************************************************/
@@ -122,7 +122,7 @@ struct scsi_device adw_dev =
  * to avoid having to allocate additional resources (since we're used
  * only during resource shortages anyhow.
  */
-static void
+void
 adw_enqueue(sc, xs, infront)
 	ADW_SOFTC      *sc;
 	struct scsi_xfer *xs;
@@ -143,7 +143,7 @@ adw_enqueue(sc, xs, infront)
 /*
  * Pull a scsi_xfer off the front of the software queue.
  */
-static struct scsi_xfer *
+struct scsi_xfer *
 adw_dequeue(sc)
 	ADW_SOFTC      *sc;
 {
@@ -163,7 +163,7 @@ adw_dequeue(sc)
 /******************************************************************************/
 
 
-static int
+int
 adw_alloc_controls(sc)
 	ADW_SOFTC      *sc;
 {
@@ -209,7 +209,7 @@ adw_alloc_controls(sc)
 }
 
 
-static int
+int
 adw_alloc_carriers(sc)
 	ADW_SOFTC      *sc;
 {
@@ -275,7 +275,7 @@ adw_alloc_carriers(sc)
  * Create a set of ccbs and add them to the free list.  Called once
  * by adw_init().  We return the number of CCBs successfully created.
  */
-static int
+int
 adw_create_ccbs(sc, ccbstore, count)
 	ADW_SOFTC      *sc;
 	ADW_CCB        *ccbstore;
@@ -301,7 +301,7 @@ adw_create_ccbs(sc, ccbstore, count)
 /*
  * A ccb is put onto the free list.
  */
-static void
+void
 adw_free_ccb(sc, ccb)
 	ADW_SOFTC      *sc;
 	ADW_CCB        *ccb;
@@ -324,7 +324,7 @@ adw_free_ccb(sc, ccb)
 }
 
 
-static void
+void
 adw_reset_ccb(ccb)
 	ADW_CCB        *ccb;
 {
@@ -333,7 +333,7 @@ adw_reset_ccb(ccb)
 }
 
 
-static int
+int
 adw_init_ccb(sc, ccb)
 	ADW_SOFTC      *sc;
 	ADW_CCB        *ccb;
@@ -372,7 +372,7 @@ adw_init_ccb(sc, ccb)
  *
  * If there are none, see if we can allocate a new one
  */
-static ADW_CCB *
+ADW_CCB *
 adw_get_ccb(sc, flags)
 	ADW_SOFTC      *sc;
 	int             flags;
@@ -429,7 +429,7 @@ adw_ccb_phys_kv(sc, ccb_phys)
 /*
  * Queue a CCB to be sent to the controller, and send it if possible.
  */
-static int
+int
 adw_queue_ccb(sc, ccb, retry)
 	ADW_SOFTC      *sc;
 	ADW_CCB        *ccb;
@@ -618,7 +618,7 @@ adw_attach(sc)
 	 * Fill in the adapter.
 	 */
 	sc->sc_adapter.scsi_cmd = adw_scsi_cmd;
-	sc->sc_adapter.scsi_minphys = adwminphys;
+	sc->sc_adapter.scsi_minphys = adw_minphys;
 
 	/*
          * fill in the prototype scsi_link.
@@ -634,8 +634,8 @@ adw_attach(sc)
 }
 
 
-static void
-adwminphys(bp)
+void
+adw_minphys(bp)
 	struct buf     *bp;
 {
 
@@ -649,7 +649,7 @@ adwminphys(bp)
  * start a scsi operation given the command and the data address.
  * Also needs the unit, target and lu.
  */
-static int
+int
 adw_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -774,7 +774,7 @@ retryagain:
 /*
  * Build a request structure for the Wide Boards.
  */
-static int
+int
 adw_build_req(xs, ccb, flags)
 	struct scsi_xfer *xs;
 	ADW_CCB        *ccb;
@@ -882,7 +882,7 @@ adw_build_req(xs, ccb, flags)
 /*
  * Build scatter-gather list for Wide Boards.
  */
-static void
+void
 adw_build_sglist(ccb, scsiqp, sg_block)
 	ADW_CCB        *ccb;
 	ADW_SCSI_REQ_Q *scsiqp;
@@ -963,7 +963,7 @@ adw_intr(arg)
 /*
  * Poll a particular unit, looking for a particular xs
  */
-static int
+int
 adw_poll(sc, xs, count)
 	ADW_SOFTC      *sc;
 	struct scsi_xfer *xs;
@@ -987,7 +987,7 @@ adw_poll(sc, xs, count)
 }
 
 
-static void
+void
 adw_timeout(arg)
 	void           *arg;
 {
@@ -1084,7 +1084,7 @@ adw_timeout(arg)
 }
 
 
-static void
+void
 adw_reset_bus(sc) 
 	ADW_SOFTC		*sc;
 {
@@ -1112,7 +1112,7 @@ adw_reset_bus(sc)
 /******************************************************************************/
 
 
-static void
+void
 adw_print_info(sc, tid)
 	ADW_SOFTC	*sc;
 	int		 tid;
@@ -1174,7 +1174,7 @@ adw_print_info(sc, tid)
  * Interrupts are disabled by the caller (AdwISR() function), and will be
  * enabled at the end of the caller.
  */
-static void
+void
 adw_isr_callback(sc, scsiq)
 	ADW_SOFTC      *sc;
 	ADW_SCSI_REQ_Q *scsiq;
@@ -1361,7 +1361,7 @@ NO_ERROR:
 /*
  * adw_async_callback() - Adw Library asynchronous event callback function.
  */
-static void
+void
 adw_async_callback(sc, code)
 	ADW_SOFTC	*sc;
 	u_int8_t	code;

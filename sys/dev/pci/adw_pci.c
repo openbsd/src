@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw_pci.c,v 1.8 2001/06/12 15:40:29 niklas Exp $ */
+/*	$OpenBSD: adw_pci.c,v 1.9 2001/07/11 17:31:24 krw Exp $ */
 /* $NetBSD: adw_pci.c,v 1.7 2000/05/26 15:13:46 dante Exp $	 */
 
 /*
@@ -77,8 +77,8 @@
 
 /******************************************************************************/
 
-static int adw_pci_match __P((struct device *, void *, void *));
-static void adw_pci_attach __P((struct device *, struct device *, void *));
+int adw_pci_match __P((struct device *, void *, void *));
+void adw_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach adw_pci_ca =
 {
@@ -91,7 +91,7 @@ struct cfattach adw_pci_ca =
  * If we find one, note it's address (slot) and call
  * the actual probe routine to check it out.
  */
-static int
+int
 adw_pci_match(parent, match, aux)
 	struct device  *parent;
 	void           *match;
@@ -111,7 +111,7 @@ adw_pci_match(parent, match, aux)
 }
 
 
-static void
+void
 adw_pci_attach(parent, self, aux)
 	struct device  *parent, *self;
 	void           *aux;
