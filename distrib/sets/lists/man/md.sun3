@@ -1,5 +1,15 @@
 ./usr/share/man/cat1/ld.so.0
 ./usr/share/man/cat1/ldd.0
+./usr/share/man/cat4/sun3/bwtwo.0
+./usr/share/man/cat4/sun3/cgfour.0
+./usr/share/man/cat4/sun3/cgtwo.0
+./usr/share/man/cat4/sun3/ie.0
+./usr/share/man/cat4/sun3/kmem.0
+./usr/share/man/cat4/sun3/le.0
+./usr/share/man/cat4/sun3/leds.0
+./usr/share/man/cat4/sun3/mem.0
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat8/ldconfig.0
+./usr/share/man/cat8/sun3/MAKEDEV.0
+./usr/share/man/cat8/sun3/makedev.0
