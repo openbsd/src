@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.14 2001/01/06 19:55:06 angelos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.15 2001/01/06 20:01:40 angelos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -181,7 +181,7 @@ int main (argc, argv, envp)
 	read_client_conf ();
 
 	/* Lock the leases file */
-	fd = open(path_dhclient_db, O_RDONLY | O_EXLOCK, 0);
+	fd = open (path_dhclient_db, O_RDONLY | O_EXLOCK, 0);
 	if (fd < 0)
 		error ("can't open and lock %s: %m", path_dhclient_db);
 
@@ -503,11 +503,21 @@ void dhcpack (packet)
 void bind_lease (ip)
 	struct interface_info *ip;
 {
+	int fd;
+
 	/* Remember the medium. */
 	ip -> client -> new -> medium = ip -> client -> medium;
 
+	/* Lock the leases file */
+	fd = open (path_dhclient_db, O_RDONLY | O_EXLOCK, 0);
+	if (fd < 0)
+		error ("can't open and lock %s: %m", path_dhclient_db);
+
 	/* Write out the new lease. */
 	write_client_lease (ip, ip -> client -> new);
+
+	/* Close and unlock lease file */
+	close(fd);
 
 	/* Run the client script with the new parameters. */
 	script_init (ip, (ip -> client -> state == S_REQUESTING
@@ -1711,7 +1721,7 @@ void rewrite_client_leases ()
 		fclose (leaseFile);
 	leaseFile = fopen (path_dhclient_db, "w");
 	if (!leaseFile)
-		error ("can't create /var/db/dhclient.leases: %m");
+		error ("can't create %s: %m", path_dhclient_db);
 
 	/* Write out all the leases attached to configured interfaces that
 	   we know about. */
@@ -1750,7 +1760,7 @@ void write_client_lease (ip, lease)
 	if (!leaseFile) {	/* XXX */
 		leaseFile = fopen (path_dhclient_db, "w");
 		if (!leaseFile)
-			error ("can't create /var/db/dhclient.leases: %m");
+			error ("can't create %s: %m", path_dhclient_db);
 	}
 
 	fprintf (leaseFile, "lease {\n");
