@@ -26,22 +26,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: yplog.h,v 1.1 1995/11/01 16:56:21 deraadt Exp $
+ *	$Id: yplog.h,v 1.2 1996/01/20 00:30:35 chuck Exp $
  */
 
 #ifndef _YPLOG_H_
 #define _YPLOG_H_
 
 __BEGIN_DECLS
-void		yplog_date __P((char *));
-void		yplog_line __P((char *));
-void		yplog_str  __P((char *));
-void		yplog_cat  __P((char *));
-#ifdef _RPC_SVC_H
-void		yplog_call __P((SVCXPRT *));
-#endif
-void		yplog_init __P((char *));
-void		yplog_exit __P(());
+void    yplog __P((const char *, ...));
+void    vyplog __P((const char *, _BSD_VA_LIST_));
+void	ypopenlog __P((void));
+void	ypcloselog __P((void));
 __END_DECLS
 
 #endif /* !_YPLOG_H_ */
