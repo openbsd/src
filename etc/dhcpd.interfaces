@@ -1,0 +1,7 @@
+#	$OpenBSD: dhcpd.interfaces,v 1.1 1998/08/19 04:25:45 form Exp $
+#
+# List of network interfaces served by dhcpd(8).
+#
+# ep0
+# ed0 le0
+# de1

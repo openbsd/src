@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.85 1998/08/18 23:54:41 marc Exp $
+#	$OpenBSD: rc,v 1.86 1998/08/19 04:25:46 form Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -333,6 +333,16 @@ if [ "X${mrouted_flags}" != X"NO" ]; then
 	echo -n ' mrouted';		mrouted $mrouted_flags
 fi
 
+# $dhcpd_flags is imported from /etc/rc.conf
+# If $dhcpd_flags == NO or /etc/dhcpd.conf doesn't exist, then dhcpd isn't run.
+if [ "X${dhcpd_flags}" != X"NO" -a -f /etc/dhcpd.conf ]; then
+	touch /var/db/dhcpd.leases
+	if [ -f /etc/dhcpd.interfaces ]; then
+		dhcpd_ifs=`cat /etc/dhcpd.interfaces | awk -F\# '{ print $1; }'`
+	fi
+	echo -n ' dhcpd';	/usr/sbin/dhcpd ${dhcpd_flags} ${dhcpd_ifs}
+fi
+
 # $rwhod is imported from /etc/rc.conf;
 # if $rwhod == YES, rwhod is run.
 if [ X${rwhod} = X"YES" ]; then
@@ -435,15 +445,7 @@ fi
 [ -f /etc/rc.local ] && . /etc/rc.local
 
 echo -n standard daemons:
-
-# $apmd_flags is imported from /etc/rc.conf;
-# don't run daemon if $apmd_flags == NO or /usr/sbin/apmd doesn't exist
-if [ "X${apmd_flags}" != X"NO" -a -x /usr/sbin/apmd ]; then
-        echo -n ' apmd';        /usr/sbin/apmd ${apmd_flags}
-fi
-
 echo -n ' cron';		cron
-
 echo '.'
 
 date
