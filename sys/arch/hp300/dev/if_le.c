@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.24 1995/12/10 00:49:33 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.26 1996/01/02 21:56:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -59,6 +59,7 @@
 #include <machine/mtpr.h>
 
 #include <hp300/hp300/isr.h>
+
 #ifdef USELEDS
 #include <hp300/hp300/led.h>
 #endif
@@ -75,11 +76,11 @@ struct	le_softc le_softc[NLE];
 
 #define	LE_SOFTC(unit)	&le_softc[unit]
 #define	LE_DELAY(x)	DELAY(x)
-#define	LEINTR_UNIT
 
 int	lematch __P((struct hp_device *));
 void	leattach __P((struct hp_device *));
-int	leintr __P((int));
+int	leintr __P((void *));
+static	int hp300_leintr __P((int));	/* machine-dependent wrapper */
 
 struct	driver ledriver = {
 	lematch, leattach, "le",
@@ -187,11 +188,36 @@ leattach(hd)
 	sc->sc_arpcom.ac_if.if_name = ledriver.d_name;
 	leconfig(sc);
 
-	sc->sc_isr.isr_intr = leintr;
+	sc->sc_isr.isr_intr = hp300_leintr;
 	sc->sc_isr.isr_arg = hd->hp_unit;
 	sc->sc_isr.isr_ipl = hd->hp_ipl;
 	isrlink(&sc->sc_isr);
 	ler0->ler0_status = LE_IE;
 }
 
+static int
+hp300_leintr(unit)
+	int unit;
+{
+	struct le_softc *sc = LE_SOFTC(unit);
+	u_int16_t isr;
+
+#ifdef USELEDS
+	isr = lerdcsr(sc, LE_CSR0);
+
+	if ((isr & LE_C0_INTR) == 0)
+		return (0);
+
+	if (isr & LE_C0_RINT)
+		if (inledcontrol == 0)
+			ledcontrol(0, 0, LED_LANRCV);
+
+	if (isr & LE_C0_TINT)
+		if (inledcontrol == 0)
+			ledcontrol(0, 0, LED_LANXMT);
+#endif /* USELEDS */
+
+	return (leintr(sc));
+}
+		
 #include <dev/ic/am7990.c>
