@@ -1,4 +1,4 @@
-.\"	$OpenBSD: twe.4,v 1.15 2002/10/04 16:17:01 mickey Exp $
+.\"	$OpenBSD: twe.4,v 1.16 2002/12/08 14:59:26 mickey Exp $
 .\"
 .\" Copyright (c) 2000,2001 Michael Shalayeff.  All rights reserved.
 .\" Public Domain.
@@ -56,7 +56,7 @@ To avoid this situation, place
 cards in the lowest numbered slot before other SCSI or RAID disk controllers.
 .Pp
 The current 3ware firmware is known to fail if a redundant configuration
-is selected (RAID0 or RAID10) and the array is heavily used
+is selected (RAID1 or RAID10) and the array is heavily used
 (e.g. installation) before the controller has finished initializing the array.
 In this case, create the array, boot the installation media and
 leave the array idle until all controller activity has ceased.
