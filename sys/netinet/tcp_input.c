@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.34 1999/04/21 21:38:58 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.35 1999/05/24 17:46:40 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1481,8 +1481,12 @@ trimthenstep6:
 	/*
 	 * If the ACK bit is off we drop the segment and return.
 	 */
-	if ((tiflags & TH_ACK) == 0)
-		goto drop;
+	if ((tiflags & TH_ACK) == 0) {
+		if (tp->t_flags & TF_ACKNOW)
+			goto dropafterack;
+		else
+			goto drop;
+	}
 	
 	/*
 	 * Ack processing.
