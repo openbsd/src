@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile,v 1.1 2004/08/06 21:32:56 deraadt Exp $
+# $OpenBSD: Makefile,v 1.2 2004/08/23 14:22:40 pefo Exp $
 
-SUBDIR=
+SUBDIR=	libsa libkern libz boot sgivol
 
 .include <bsd.subdir.mk>
