@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.439 2001/09/05 00:50:47 provos Exp $
+	$OpenBSD: pcidevs,v 1.440 2001/09/05 22:59:21 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -760,6 +760,7 @@ product AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE
 product AMD PCHOME_PCI		0x2001	79c978 PChome-PCI LANCE
 product AMD PCSCSI_PCI		0x2020	53c974 PCscsi-PCI SCSI
 product AMD PCNETS_PCI		0x2040	79C974 PCnet-PCI Ether+SCSI
+product AMD ELANSC520		0x3000	ElanSC520 Host-PCI
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/21910.pdf */
 product AMD SC751_SC		0x7006	751 System Controller
 product AMD SC751_PPB		0x7007	751 PCI-PCI
