@@ -1,5 +1,5 @@
-/*	$OpenBSD: cac.c,v 1.2 2000/12/17 23:07:16 mickey Exp $	*/
-/*	$NetBSD: cac.c,v 1.14 2000/11/08 19:20:35 ad Exp $	*/
+/*	$OpenBSD: cac.c,v 1.3 2001/02/07 04:47:26 mickey Exp $	*/
+/*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -121,6 +121,7 @@ int	cac_ccb_start(struct cac_softc *, struct cac_ccb *);
 int	cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 	int drive, int blkno, int flags, struct scsi_xfer *xs);
 int	cac_get_dinfo __P((struct cac_softc *sc, int target));
+int	cac_flush __P((struct cac_softc *sc));
 void	cac_shutdown __P((void *));
 void	cac_copy_internal_data __P((struct scsi_xfer *xs, void *v, size_t size));
 
@@ -254,6 +255,18 @@ cac_init(struct cac_softc *sc, int startfw)
 	return (0);
 }
 
+int
+cac_flush(sc)
+	struct cac_softc *sc;
+{
+	u_int8_t buf[512];
+
+	memset(buf, 0, sizeof(buf));
+	buf[0] = 1;
+	return cac_cmd(sc, CAC_CMD_FLUSH_CACHE, buf, sizeof(buf), 0, 0, 
+	    CAC_CCB_DATA_OUT, NULL);
+}
+
 /*
  * Shut down all `cac' controllers.
  */
@@ -262,16 +275,12 @@ cac_shutdown(void *cookie)
 {
 	extern struct cfdriver cac_cd;
 	struct cac_softc *sc;
-	u_int8_t buf[512];
 	int i;
 
 	for (i = 0; i < cac_cd.cd_ndevs; i++) {
 		if ((sc = (struct cac_softc *)device_lookup(&cac_cd, i)) == NULL)
 			continue; 
-		memset(buf, 0, sizeof(buf));
-		buf[0] = 1;
-		cac_cmd(sc, CAC_CMD_FLUSH_CACHE, buf, sizeof(buf), 0, 0, 
-		    CAC_CCB_DATA_OUT, NULL);
+		cac_flush(sc);
 	}
 }	
 
@@ -690,11 +699,21 @@ cac_scsi_cmd(xs)
 	case PREVENT_ALLOW:
 		return (COMPLETE);
 
+	case SYNCHRONIZE_CACHE:
+		s = splbio();
+		if (cac_flush(sc)) {
+			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			scsi_done(xs);
+		}
+		splx(s);
+		return (COMPLETE);
+
+
 	case READ_COMMAND:
 	case READ_BIG:
 	case WRITE_COMMAND:
 	case WRITE_BIG:
-	case SYNCHRONIZE_CACHE:
 		s = splbio();
 
 		flags = 0;

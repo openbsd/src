@@ -1,5 +1,5 @@
-/*	$OpenBSD: cac_pci.c,v 1.1 2000/12/17 21:35:02 mickey Exp $	*/
-/*	$NetBSD: cac_pci.c,v 1.7 2000/10/19 15:31:20 ad Exp $	*/
+/*	$OpenBSD: cac_pci.c,v 1.2 2001/02/07 04:47:26 mickey Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.10 2001/01/10 16:48:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,9 +60,6 @@
 #include <dev/ic/cacreg.h>
 #include <dev/ic/cacvar.h>
 
-#define	PCI_CBIO	0x10	/* Configuration base I/O address */
-#define	PCI_CBMA	0x14	/* Configuration base memory address */
-
 void	cac_pci_attach(struct device *, struct device *, void *);
 const struct	cac_pci_type *cac_pci_findtype(struct pci_attach_args *);
 int	cac_pci_match(struct device *, void *, void *);
@@ -94,15 +91,15 @@ struct cac_pci_type {
 	const struct	cac_linkage *ct_linkage;
 	char	*ct_typestr;
 } cac_pci_type[] = {
-	{ 0x40300e11,	0, 		&cac_l0,	"SMART-2/P" },
-	{ 0x40310e11,	0, 		&cac_l0, 	"SMART-2SL" },
-	{ 0x40320e11,	0, 		&cac_l0,	"Smart Array 3200" },
-	{ 0x40330e11,	0, 		&cac_l0,	"Smart Array 3100ES" },
-	{ 0x40340e11,	0, 		&cac_l0,	"Smart Array 221" },
-	{ 0x40400e11,	CT_STARTFW, 	&cac_pci_l0,	"Integrated Array" },
+	{ 0x40300e11,	0,		&cac_l0,	"SMART-2/P" },
+	{ 0x40310e11,	0,		&cac_l0,	"SMART-2SL" },
+	{ 0x40320e11,	0,		&cac_l0,	"Smart Array 3200" },
+	{ 0x40330e11,	0,		&cac_l0,	"Smart Array 3100ES" },
+	{ 0x40340e11,	0,		&cac_l0,	"Smart Array 221" },
+	{ 0x40400e11,	CT_STARTFW,	&cac_pci_l0,	"Integrated Array" },
 	{ 0x40480e11,	CT_STARTFW,	&cac_pci_l0,	"RAID LC2" },
-	{ 0x40500e11,	0,	 	&cac_pci_l0,	"Smart Array 4200" },
-	{ 0x40510e11,	0, 		&cac_pci_l0,	"Smart Array 4200ES" },
+	{ 0x40500e11,	0,		&cac_pci_l0,	"Smart Array 4200" },
+	{ 0x40510e11,	0,		&cac_pci_l0,	"Smart Array 4200ES" },
 	{ 0x40580e11,	0,		&cac_pci_l0,	"Smart Array 431" },
 };
 
@@ -128,9 +125,9 @@ cac_pci_findtype(pa)
 	cp = cac_pci_product;
 	i = 0;
 	while (i < sizeof(cac_pci_product) / sizeof(cac_pci_product[0])) {
-		if (PCI_VENDOR(pa->pa_id) == cp->cp_vendor && 
+		if (PCI_VENDOR(pa->pa_id) == cp->cp_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == cp->cp_product)
-		    	break;
+			break;
 		cp++;
 		i++;
 	}
@@ -173,27 +170,54 @@ cac_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	pcireg_t csr;
+	pcireg_t reg;
+	int memr, ior, i;
 
 	sc = (struct cac_softc *)self;
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	ct = cac_pci_findtype(pa);
 
-	if (pci_mapreg_map(pa, PCI_CBMA, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL))
-		if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-			printf(": can't map memory or i/o space\n");
-			return;
+	/*
+	 * Map the PCI register window.
+	 */
+	memr = -1;
+	ior = -1;
+
+	for (i = 0x10; i <= 0x14; i += 4) {
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
+
+		if (PCI_MAPREG_TYPE(reg) == PCI_MAPREG_TYPE_IO) {
+			if (ior == -1 && PCI_MAPREG_IO_SIZE(reg) != 0)
+				ior = i;
+		} else {
+			if (memr == -1 && PCI_MAPREG_MEM_SIZE(reg) != 0)
+				memr = i;
 		}
+	}
+
+	if (memr != -1) {
+		if (pci_mapreg_map(pa, memr, PCI_MAPREG_TYPE_MEM, 0,
+		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL))
+			memr = -1;
+		else
+			ior = -1;
+	}
+	if (ior != -1)
+		if (pci_mapreg_map(pa, ior, PCI_MAPREG_TYPE_IO, 0,
+		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL))
+			ior = -1;
+	if (memr == -1 && ior == -1) {
+		printf("%s: can't map i/o or memory space\n", self->dv_xname);
+		return;
+	}
 
 	sc->sc_dmat = pa->pa_dmat;
 
 	/* Enable the device. */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		       csr | PCI_COMMAND_MASTER_ENABLE);
+		       reg | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
@@ -237,7 +261,7 @@ cac_pci_l0_completed(struct cac_softc *sc)
 	if ((off = cac_inl(sc, CAC_42REG_DONE_FIFO)) == 0xffffffffU)
 		return (NULL);
 
-	cac_outl(sc, CAC_42REG_DONE_FIFO, 0);	
+	cac_outl(sc, CAC_42REG_DONE_FIFO, 0);
 	off = (off & ~3) - sc->sc_ccbs_paddr;
 	ccb = (struct cac_ccb *)(sc->sc_ccbs + off);
 
@@ -251,8 +275,7 @@ int
 cac_pci_l0_intr_pending(struct cac_softc *sc)
 {
 
-	return (cac_inl(sc, CAC_42REG_INTR_PENDING) & 
-	    cac_inl(sc, CAC_42REG_STATUS));
+	return (cac_inl(sc, CAC_42REG_STATUS) & CAC_42_EXTINT);
 }
 
 void
