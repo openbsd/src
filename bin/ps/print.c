@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.23 2002/01/30 17:52:40 mickey Exp $	*/
+/*	$OpenBSD: print.c,v 1.24 2002/02/10 21:07:00 naddy Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.23 2002/01/30 17:52:40 mickey Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.24 2002/02/10 21:07:00 naddy Exp $";
 #endif
 #endif /* not lint */
 
@@ -399,13 +399,9 @@ started(k, ve)
 	if (!now)
 		(void)time(&now);
 	if (now - k->ki_u.u_start.tv_sec < 24 * SECSPERHOUR) {
-		/* I *hate* SCCS... */
-		static char fmt[] = __CONCAT("%l:%", "M%p");
-		(void)strftime(buf, sizeof(buf) - 1, fmt, tp);
+		(void)strftime(buf, sizeof(buf) - 1, "%l:%M%p", tp);
 	} else if (now - k->ki_u.u_start.tv_sec < 7 * SECSPERDAY) {
-		/* I *hate* SCCS... */
-		static char fmt[] = __CONCAT("%a%", "I%p");
-		(void)strftime(buf, sizeof(buf) - 1, fmt, tp);
+		(void)strftime(buf, sizeof(buf) - 1, "%a%I%p", tp);
 	} else
 		(void)strftime(buf, sizeof(buf) - 1, "%e%b%y", tp);
 	(void)printf("%-*s", v->width, buf);
