@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.14 1998/04/18 07:39:41 deraadt Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.15 1998/05/16 07:32:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -70,7 +70,7 @@ pc_probe(cn)
 {
 	cn->cn_pri = CN_INTERNAL;
 	cn->cn_dev = makedev(12, 0);
-	printf("pc%d detected\n", minor(cn->cn_dev));
+	printf("pc%d ", minor(cn->cn_dev));
 
 #if 0
 	outb(IO_RTC, NVRAM_EQUIPMENT);
@@ -78,7 +78,7 @@ pc_probe(cn)
 		cn->cn_pri = CN_INTERNAL;
 		/* XXX from i386/conf.c */
 		cn->cn_dev = makedev(12, 0);
-		printf("pc%d detected\n", minor(cn->cn_dev));
+		printf("pc%d ", minor(cn->cn_dev));
 	}
 #endif
 }
@@ -87,7 +87,7 @@ void
 pc_init(cn)
 	struct consdev *cn;
 {
-	printf("using pc%d console\n", minor(cn->cn_dev));
+	printf("\nusing pc%d console\n", minor(cn->cn_dev));
 }
 
 int
@@ -129,7 +129,7 @@ com_probe(cn)
 	n >>= 9;
 	n &= 7;
 	for (i = 0; i < n; i++)
-		printf("com%d detected\n", i);
+		printf("com%d ", i);
 	if (n) {
 		cn->cn_pri = CN_NORMAL;
 		/* XXX from i386/conf.c */
@@ -213,7 +213,7 @@ comspeed(dev, sp)
 	outb(comports[minor(dev)] + com_dlbl, newsp);
 	outb(comports[minor(dev)] + com_dlbh, newsp>>8);
 	outb(comports[minor(dev)] + com_cfcr, LCR_8BITS);
-	printf("com%d: console is at %d baud\n", minor(dev), sp);
+	printf("\ncom%d: console is at %d baud\n", minor(dev), sp);
 
 	newsp = com_speed;
 	com_speed = sp;

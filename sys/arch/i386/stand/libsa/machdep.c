@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 1998/04/18 07:39:53 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 1998/05/16 07:32:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -54,6 +54,7 @@ machdep()
 	gateA20(1);   CKPT('1');
 	debug_init(); CKPT('2');
 	/* call console init before doing any io */
+	printf("devices: ");
 	cninit();     CKPT('3');
 #ifndef _TEST
 	memprobe();   CKPT('4');
