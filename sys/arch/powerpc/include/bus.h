@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.8 2000/08/03 03:02:50 rahnds Exp $	*/
+/*	$OpenBSD: bus.h,v 1.9 2000/11/11 17:27:45 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -163,6 +163,28 @@ bus_space_write_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 
 #define	bus_space_write_raw_multi_8 \
     !!! bus_space_write_raw_multi_8 not implemented !!!
+
+/*
+ * Bus read/write barrier methods.
+ *
+ *	void bus_space_barrier __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    bus_size_t len, int flags));
+ * 
+ * Note: powerpc does not currently implement barriers, but we must
+ * provide the flags to MI code.
+ * the processor does have eieio which is effectively the barrier
+ * operator, however due to how memory is mapped this should? not
+ * be required.
+ */
+#define bus_space_barrier(t, h, o, l, f)	\
+	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))  
+#define BUS_SPACE_BARRIER_READ  0x01		/* force read barrier */ 
+#define BUS_SPACE_BARRIER_WRITE 0x02		/* force write barrier */
+/* Compatibility defines */
+#define BUS_BARRIER_READ        BUS_SPACE_BARRIER_READ
+#define BUS_BARRIER_WRITE       BUS_SPACE_BARRIER_WRITE
+
 
 #define	BUS_DMA_WAITOK		0x00
 #define	BUS_DMA_NOWAIT		0x01
