@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.22 2002/01/25 15:50:22 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.23 2002/01/28 03:23:52 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -560,10 +560,9 @@ pool_destroy(struct pool *pp)
 	}
 #endif
 
-	/* Remove all pages */
-	if ((pp->pr_roflags & PR_STATIC) == 0)
-		while ((ph = TAILQ_FIRST(&pp->pr_pagelist)) != NULL)
-			pr_rmpage(pp, ph, NULL);
+	/* Remove all pages. */
+	while ((ph = TAILQ_FIRST(&pp->pr_pagelist)) != NULL)
+		pr_rmpage(pp, ph, NULL);
 
 	/* Remove from global pool list */
 	simple_lock(&pool_head_slock);
@@ -627,12 +626,6 @@ pool_get(struct pool *pp, int flags)
 	void *v;
 
 #ifdef DIAGNOSTIC
-	if (__predict_false((pp->pr_roflags & PR_STATIC) &&
-			    (flags & PR_MALLOCOK))) {
-		pr_printlog(pp, NULL, printf);
-		panic("pool_get: static");
-	}
-
 	if (__predict_false(curproc == NULL && /* doing_shutdown == 0 && XXX*/
 			    (flags & PR_WAITOK) != 0))
 		panic("pool_get: must have NOWAIT");
@@ -1158,18 +1151,6 @@ pool_catchup(struct pool *pp)
 	caddr_t cp;
 	int error = 0;
 
-	if (pp->pr_roflags & PR_STATIC) {
-		/*
-		 * We dropped below the low water mark, and this is not a
-		 * good thing.  Log a warning.
-		 *
-		 * XXX: rate-limit this?
-		 */
-		printf("WARNING: static pool `%s' dropped below low water "
-		    "mark\n", pp->pr_wchan);
-		return (0);
-	}
-
 	while (POOL_NEEDS_CATCHUP(pp)) {
 		/*
 		 * Call the page back-end allocator for more memory.
@@ -1272,9 +1253,6 @@ pool_reclaim(struct pool *pp)
 	struct timeval curtime;
 	struct pool_pagelist pq;
 	int s;
-
-	if (pp->pr_roflags & PR_STATIC)
-		return 0;
 
 	if (pp->pr_drain_hook != NULL) {
 		/*
