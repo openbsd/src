@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.23 2002/07/08 08:52:23 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.24 2002/07/09 22:20:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.23 2002/07/08 08:52:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.24 2002/07/09 22:20:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -188,6 +188,10 @@ main(int argc, char *argv[])
 
 	/* make an entry for ourself */
 	pml = (struct pmaplist *)malloc((u_int)sizeof(struct pmaplist));
+	if (pml == NULL) {
+		syslog(LOG_ERR, "out of memory");
+		exit(1);
+	}
 	pml->pml_next = 0;
 	pml->pml_map.pm_prog = PMAPPROG;
 	pml->pml_map.pm_vers = PMAPVERS;
@@ -227,6 +231,10 @@ main(int argc, char *argv[])
 
 	/* make an entry for ourself */
 	pml = (struct pmaplist *)malloc((u_int)sizeof(struct pmaplist));
+	if (pml == NULL) {
+		syslog(LOG_ERR, "out of memory");
+		exit(1);
+	}
 	pml->pml_map.pm_prog = PMAPPROG;
 	pml->pml_map.pm_vers = PMAPVERS;
 	pml->pml_map.pm_prot = IPPROTO_TCP;
@@ -347,6 +355,12 @@ reg_service(struct svc_req *rqstp, SVCXPRT *xprt)
 		 * add to END of list
 		 */
 		pml = (struct pmaplist *)malloc(sizeof(struct pmaplist));
+		if (pml == NULL) {
+			syslog(LOG_ERR, "out of memory");
+			svcerr_systemerr(xprt);
+			return;
+		}
+
 		pml->pml_map = reg;
 		pml->pml_next = 0;
 		if (pmaplist == 0) {
