@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.69 2000/08/22 14:47:54 millert Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.70 2000/11/09 02:55:42 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.69 2000/08/22 14:47:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.70 2000/11/09 02:55:42 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -66,7 +66,7 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.69 2000/08/22 14:47:54 millert Exp 
  * Inetd uses a configuration file which is read at startup
  * and, possibly, at some later time in response to a hangup signal.
  * The configuration file is ``free format'' with fields given in the
- * order shown below.  Continuation lines for an entry must being with
+ * order shown below.  Continuation lines for an entry must begin with
  * a space or tab.  All fields must be present in each entry.
  *
  *	service name			must be in /etc/services
