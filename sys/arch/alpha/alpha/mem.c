@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.9 1999/11/22 19:21:55 matthieu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.10 2000/07/05 18:30:32 ericj Exp $	*/
 /*	$NetBSD: mem.c,v 1.10 1996/11/13 21:13:10 cgd Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ mmrw(dev, uio, flags)
 kmemphys:
 			/* allow reads only in RAM (except for DEBUG) */
 			if (v < ctob(firstusablepage) ||
-			    v > ctob(lastusablepage + 1))
+			    v > ctob(lastusablepage + 1 + btoc(MSGBUFSIZE)))
 				return (EFAULT);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
