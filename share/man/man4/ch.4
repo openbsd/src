@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ch.4,v 1.6 2000/03/24 14:56:09 niklas Exp $
-.\"	$FreeBSD$
+.\"	$OpenBSD: ch.4,v 1.7 2000/07/10 13:02:25 aaron Exp $
+.\"
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
 .\"
@@ -35,64 +35,68 @@
 .Cd "ch? at scsibus? target ? lun ?"
 .Sh DESCRIPTION
 The
-.Xr ch
-driver provides support for a
-.Em scsi
-juke box. It allows many slots of media to be multiplexed between a number
-of drives.
+.Nm
+driver provides support for SCSI juke boxes.
+It allows many slots of media to be multiplexed between a number of drives.
 .Pp
-A scsi adapter and a logical scsibuss must also be separately configured
-into the system before a scsi changer can be configured.
+A SCSI adapter and a logical scsibus must also be separately configured
+into the system before a SCSI changer can be configured.
 .Pp
-As the scsi adapter is probed during boot, the
-.Em SCSI
-bus is scanned for devices. Any devices found which answer as 'Changer'
-type devices will be 'attached' to the
+As the SCSI adapter is probed during boot, the SCSI bus is scanned for devices.
+Any devices found which answer as
+.Qq Changer
+type devices will be
+.Dq attached
+to the
 .Nm
 driver.
 The first device found will be attached as
 .Em ch0
-and the next,
-.Em ch1
+and the next
+.Em ch1 ,
 etc.
-It is also possible to specify what ch unit a device should
-come on line as; refer to
+It is also possible to specify what
+.Nm
+unit a device should come on-line as; refer to
 .Xr scsi 4
 for details on kernel configuration.
 .Sh KERNEL CONFIGURATION
 In configuring, if an optional
 .Ar count
-is given in the specification, that number of scsi media changers
-are configured; Most storage for them is allocated only when found
-so a large number of configured devices is cheap. (once the first
+is given in the specification, that number of SCSI media changers
+are configured.
+Most storage for them is allocated only when found
+so a large number of configured devices is cheap (once the first
 has included the driver).
 .Sh IOCTLS
 The following
 .Xr ioctl 2
-call applies to the changer. It is defined in
-the header file
-.Em sys/chio.h.
+call applies to the changer.
+It is defined in the header file
+.Aq Pa sys/chio.h .
 .Bl -tag -width DIOCSDINFO
-CHIOOP
-This appears to be a 'do-everything' call.
+.It Dv CHIOOP
+This appears to be a
+.Dq do-everything
+call.
 .El
 .Sh FILES
 .Bl -tag -width /dev/ch[0-9] -compact
 .It Pa /dev/ch[0-9]
 device entries
 .El
-.Sh DIAGNOSTICS
-None.
 .Sh SEE ALSO
 .Xr cd 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4
 .Sh DISCLAIMER
 These manpages were derived from the
 .Fx
-documentation of the generic scsi drivers.  Since naming and calling
-conventions may have diverged or suffered port specific changes, please
-review the appropriate header files and configuration file for your port.
+documentation of the generic SCSI drivers.
+Since naming and calling conventions may have diverged or suffered port
+specific changes, please review the appropriate header files and configuration
+file for your port.
 .Sh HISTORY
 The
 .Nm
