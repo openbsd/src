@@ -1,9 +1,10 @@
-/*	$OpenBSD: certpatch.c,v 1.8 2000/03/08 08:42:27 niklas Exp $	*/
-/*	$EOM: certpatch.c,v 1.7 2000/03/08 02:47:45 ho Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.9 2000/10/07 06:58:55 niklas Exp $	*/
+/*	$EOM: certpatch.c,v 1.9 2000/09/28 12:53:37 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niels Provos.  All rights reserved.
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,13 +65,12 @@
 #  ifdef CRYPTO
 #    include <openssl/rsa.h>
 #  endif
-#  include <openssl/x509.h>
-#  include <openssl/pem.h>
 #else
-#  include <ssl/rsa.h>
-#  include <ssl/x509.h>
-#  include <ssl/pem.h>
+#  include <openssl/rsa.h>
 #endif
+
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 #include "conf.h"
 #include "log.h"
@@ -80,6 +80,7 @@
 #define IDTYPE_IP	"ip"
 #define IDTYPE_FQDN     "fqdn"
 #define IDTYPE_UFQDN    "ufqdn"
+
 int
 main (int argc, char **argv)
 {
