@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.8 1997/02/05 03:25:33 kstailey Exp $
+#	$OpenBSD: services,v 1.9 1997/02/11 04:16:35 gene Exp $
 #
 # Network services, Internet style
 #
@@ -174,8 +174,8 @@ kshell		544/tcp		krcmd	# Kerberos `rsh'
 kerberos-adm	749/tcp			# Kerberos `kadmin' (v5)
 kerberos	750/udp		kdc	# Kerberos (server) udp
 kerberos	750/tcp		kdc	# Kerberos (server) tcp
-kerberos-master	751/udp			# Kerberos admin server udp
-kerberos-master	751/tcp			# Kerberos admin server tcp
+kerberos_master	751/udp	kerberos-master	# Kerberos admin server udp
+kerberos_master	751/tcp	kerberos-master # Kerberos admin server tcp
 krbupdate	760/tcp		kreg	# BSD Kerberos registration
 kpasswd		761/tcp		kpwd	# BSD Kerberos `passwd'
 eklogin		2105/tcp		# Kerberos encrypted `rlogin'
