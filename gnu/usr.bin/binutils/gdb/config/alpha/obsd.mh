@@ -5,4 +5,4 @@ NAT_FILE= nm-obsd.h
 NATDEPFILES= infptrace.o inftarg.o corelow.o alphaobsd-nat.o fork-child.o
 
 MMALLOC = 
-MMALLOC_DISABLE = -DNO_MMALLOC 
+MMALLOC_CFLAGS = -DNO_MMALLOC 
