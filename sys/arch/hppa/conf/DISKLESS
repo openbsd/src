@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.2 1998/11/04 02:32:41 mickey Exp $
+#	$OpenBSD: DISKLESS,v 1.3 1999/02/25 16:46:13 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -10,14 +10,17 @@ machine hppa
 
 # Support for various CPU types
 option	HP7100
+option	HP7150
 option	HP7100LC
 option	HP7200
+option	HP7250
 #option	HP7300
 #option	HP8000
 #option	HP8200
-#option	HP8300
+#option	HP8500
 
 option		FPEMUL
+option		USELEDS		# blink 'em
 
 #option		INSECURE	# default to secure
 
@@ -54,7 +57,7 @@ option		FFS		# UFS
 #option		MFS		# memory file system
 
 
-#option		NFSCLIENT	# Network File System client
+option		NFSCLIENT	# Network File System client
 #option		NFSSERVER	# Network File System server
 
 #option		CD9660		# ISO 9660 + Rock Ridge file system
@@ -106,47 +109,102 @@ maxusers	8
 
 #option	 	COMPAT_HPUX	# HP-UX binary compatibility
 
-config	bsd swap generic
+config	bsd root on nfs swap on nfs
 
 mainbus0	at root		# root "bus"
 
+mem*	at mainbus0
 cpu*	at mainbus0
 pdc0	at mainbus0
 
-lasi*	at mainbus0	# LASI host adapter (LSI ???)
-asp*	at mainbus0
-wax*	at mainbus0
-eba*	at mainbus0	# EISA Bus Adapter
+lasi*	at mainbus0 irq 28	# LASI host adapter (LSI PN???)
+asp*	at mainbus0 irq 28	# this one comes w/ Viper and leds
+#wax*	at mainbus0 irq 28	# Wax may host EISA as well
+eba*	at mainbus0 irq 17	# EISA Bus Adapter (i82350 or TI???)
+#vmeb*	at mainbus0 irq ?	# VME bus adapter
+#pcib*	at mainbus0 irq ?	# PCI bus adapter
 
-#sti*	at mainbus0	# STI graphics
+#sti*	at mainbus0 irq ?	# [H]CRX-{8,24,48}[Z] graphics
+#myri*	at mainbus0 irq ?	# ANSI/VITA-26-1998 Gbit iface
 
-#vme*	at mainbus0	# VME bus adapter
+# internal i/o space
+gsc*	at lasi?		# 712,715/100,725/75,725/100
+gsc*	at asp?			# 7xx
+#gsc*	at wax?			# 715?
 
-gsc*	at lasi?	# internal i/o space
-gsc*	at asp?
-gsc*	at wax?
-
+#vme*	at vmeb?
+#pci*	at pcib?
 eisa*	at eba?
 #eisa*	at wax?
+option	EISA_VERBOSE
+#isa*	at eba?
+#isa*	at wax?
 
-#ncr*	at gsc?		# NCR 53C7xx
-#scsibus* at ncr?
+# GSC devices
 
-#sd*	at scsibus? target ? lun ?
-#st*	at scsibus? target ? lun ?
-#cd*	at scsibus? target ? lun ?
-#ch*	at scsibus? target ? lun ?
-#ss*	at scsibus? target ? lun ?
-#uk*	at scsibus? target ? lun ?
+hil*	at gsc? irq 1	# Human Interface Loop, kbd and mouse
+#hkbd*	at hil? code 0	# keyboard
+#hilnmi0 at kbd? irq 2	# double-break on hil keyboard
+#tb*	at hil? code 1	# graphics tablet
+#hms*	at hil? code 2	# mouse, 3b mouse, 3b trackball, 3b quadrature mouse
+#knob*	at hil? code 3	# knob
+#bbox*	at hil? code 4	# 32 button box
+#dizer*	at hil? code 5	# A & B size digitizers
+#crsr*	at hil? code 6	# cursor for digitizer
+#qbox*	at hil? code 7	# quadrature
 
-ie*	at gsc?		# 82C596 ether
-com*	at gsc?		# serial ports
-lpt*	at gsc?		# LPT centronics iface
-#atwo*	at gsc?		# Audio Type 2 (CS4216)
-#pckbd*	at gsc?		# PC keyboard
-#pms*	at gsc?		# PC mouse
-#fdc*	at gsc?		# PC floppy controller (WD37C65C)
+#medusa* at gsc? irq 4	# FDDI
+com0	at gsc? irq 5	# RS/232 serial port
+com1	at gsc? irq 6	# RS/232 serial port
+lpt0	at gsc? irq 7	# LPT centronics iface
+ie0	at gsc? irq 8	# 82C5[89]6 ether
+#siop0	at gsc? irq 9	# NCR 53C7xx
+#siop1	at gsc? irq 3	# NCR 53C7xx (Fast/Wide)
+#scsibus* at siop?
+#aone*	at gsc? irq 13	# Audio Type 1 (PSB 2160-N)
+#audio* at aone?
+#atwo*	at gsc?	irq 13	# Audio Type 2 (CS4215)
+#audio* at atwo?
+pckbc*	at gsc? irq 27
+pckbd*	at pckbc?	# PS/2 keyboard
+#pms*	at pckbc?	# PS/2 mouse
+fdc*	at gsc?		# PC floppy controller (WD37C65C)
 option	FD_DEBUG
+
+# EISA devices
+#vga*	at eisa? slot ?
+#sh*	at eisa? slot ?	# Interphase Seahawk 4811 EISA/FDDI board
+ep*	at eisa? slot ?
+bha*	at eisa? slot ?
+scsibus* at bha?
+
+# ISA devices
+#vga*	at isa?
+#fdc*	at isa? port 0x3f0 irq 6 drq 2
+#wdc0	at isa? port 0x1f0 irq 14
+#wdc1	at isa? port 0x170 irq 15
+#ie*	at isa? port 0x360 iomem 0xd0000 irq 7
+#ie*	at isa? port 0x300 irq 10
+
+# MI devices
+option	WSEMUL_DUMB
+#wsdisplay*	at vgafb?
+#wsdisplay*	at sti?
+wskbd*		at pckbd?
+#wskbd*		at hkbd?
+#wsmouse*	at pms?
+#wsmouse*	at hms?
+
 #fd*	at fdc?	drive ?	# floppy drives
-#fd0	at fdc0	drive 0	flags 0x20	# floppy drives
+
+#atapibus* at wdc?
+#wd*	at wdc? drive ?
+#acd*	at atapibus? drive ?
+
+sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
+ch*	at scsibus? target ? lun ?
+ss*	at scsibus? target ? lun ?
+uk*	at scsibus? target ? lun ?
 
