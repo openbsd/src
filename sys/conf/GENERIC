@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 1997/06/23 19:04:27 kstailey Exp $
+#	$OpenBSD: GENERIC,v 1.22 1997/06/25 10:28:48 downsj Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -33,6 +33,7 @@ option		LKM		# loadable kernel modules
 option		FFS		# UFS
 option		QUOTA		# UFS quotas
 #option		LFS		# log-structured file system
+option		EXT2FS		# Second Extended Filesystem
 option		MFS		# memory file system
 
 
