@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.15 1997/07/18 18:09:56 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.16 1997/07/24 01:45:29 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -127,8 +127,8 @@ reserve_spi(u_int32_t tspi, struct in_addr src, u_int8_t proto, int *errval)
 	MALLOC(tdbp, struct tdb *, sizeof(*tdbp), M_TDB, M_WAITOK);
 	if (tdbp == NULL)
 	{
-	    spi = 0;
 	    (*errval) = ENOBUFS;
+	    return 0;
 	} 
 
 	bzero((caddr_t) tdbp, sizeof(*tdbp));
