@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.11 1999/09/03 18:01:55 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.12 1999/11/11 12:30:35 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -173,6 +173,43 @@ struct segmap {
 
 typedef struct pmap *pmap_t;
 
+/*
+ * For each managed physical page, there is a list of all currently
+ * valid virtual mappings of that page.  Since there is usually one
+ * (or zero) mapping per page, the table begins with an initial entry,
+ * rather than a pointer; this head entry is empty iff its pv_pmap
+ * field is NULL.
+ *
+ * Note that these are per machine independent page (so there may be
+ * only one for every two hardware pages, e.g.).  Since the virtual
+ * address is aligned on a page boundary, the low order bits are free
+ * for storing flags.  Only the head of each list has flags.
+ *
+ * THIS SHOULD BE PART OF THE CORE MAP
+ */
+struct pvlist {
+	struct		pvlist *pv_next;	/* next pvlist, if any */
+	struct		pmap *pv_pmap;		/* pmap of this va */
+	vaddr_t		pv_va;			/* virtual address */
+	int		pv_flags;		/* flags (below) */
+};
+
+/*
+ * Flags in pv_flags.  Note that PV_MOD must be 1 and PV_REF must be 2
+ * since they must line up with the bits in the hardware PTEs (see pte.h).
+ * SUN4M bits are at a slightly different location in the PTE.
+ * Note: the REF, MOD and ANC flag bits occur only in the head of a pvlist.
+ * The cacheable bit (either PV_NC or PV_C4M) is meaningful in each
+ * individual pv entry.
+ */
+#define PV_MOD		1	/* page modified */
+#define PV_REF		2	/* page referenced */
+#define PV_NC		4	/* page cannot be cached */
+#define PV_REF4M	1	/* page referenced (SRMMU) */
+#define PV_MOD4M	2	/* page modified (SRMMU) */
+#define PV_C4M		4	/* page _can_ be cached (SRMMU) */
+#define PV_ANC		0x10	/* page has incongruent aliases */
+
 #if 0
 struct kvm_cpustate {
 	int		kvm_npmemarr;
@@ -187,7 +224,6 @@ struct kvm_cpustate {
 #define PMAP_NULL	((pmap_t)0)
 
 extern struct pmap	kernel_pmap_store;
-extern vaddr_t	vm_first_phys, vm_num_phys;
 
 /*
  * Since PTEs also contain type bits, we have to have some way
@@ -230,7 +266,6 @@ int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
 
 #define	pmap_kernel()	(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	pmap_count_ptes(pmap)
-#define	managed(pa)	((unsigned)((pa) - vm_first_phys) < vm_num_phys)
 
 #define PMAP_ACTIVATE(pmap, pcb, iscurproc)
 #define PMAP_DEACTIVATE(pmap, pcb)
@@ -271,11 +306,6 @@ struct user;
 void		switchexit __P((vm_map_t, struct user *, int));
 int		mmu_pagein __P((struct pmap *pm, vaddr_t, int));
 void		pmap_writetext __P((unsigned char *, int));
-
-#ifndef MACHINE_NEW_NONCONTIG
-u_int		pmap_free_pages __P((void));
-boolean_t	pmap_next_page __P((paddr_t *));
-#endif
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */
 

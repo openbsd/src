@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.39 1999/11/05 19:21:02 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.40 1999/11/11 12:30:36 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -163,55 +163,28 @@ struct pmap_stats {
 int	pmapdebug = 0;
 #endif
 
-#if 0
-#define	splpmap() splimp()
-#endif
+/*
+ * Given a page number, return the head of its pvlist.
+ */
+static struct pvlist *pvhead __P((int));
+static __inline struct pvlist *
+pvhead(pnum)
+	int pnum;
+{
+	int bank, off;
+
+	bank = vm_physseg_find(pnum, &off);
+	if (bank == -1)
+		return NULL;
+
+	return &vm_physmem[bank].pmseg.pv_head[off];
+}
 
 /*
- * First and last managed physical addresses.
+ * XXX - horrible kludge to let us use "managed" pages to map the pv lists.
+ *       We check this in pmap_enter to see if it's safe to use pvhead.
  */
-paddr_t	vm_first_phys, vm_num_phys;
-
-/*
- * For each managed physical page, there is a list of all currently
- * valid virtual mappings of that page.  Since there is usually one
- * (or zero) mapping per page, the table begins with an initial entry,
- * rather than a pointer; this head entry is empty iff its pv_pmap
- * field is NULL.
- *
- * Note that these are per machine independent page (so there may be
- * only one for every two hardware pages, e.g.).  Since the virtual
- * address is aligned on a page boundary, the low order bits are free
- * for storing flags.  Only the head of each list has flags.
- *
- * THIS SHOULD BE PART OF THE CORE MAP
- */
-struct pvlist {
-	struct		pvlist *pv_next;	/* next pvlist, if any */
-	struct		pmap *pv_pmap;		/* pmap of this va */
-	vaddr_t		pv_va;			/* virtual address */
-	int		pv_flags;		/* flags (below) */
-};
-
-/*
- * Flags in pv_flags.  Note that PV_MOD must be 1 and PV_REF must be 2
- * since they must line up with the bits in the hardware PTEs (see pte.h).
- * SUN4M bits are at a slightly different location in the PTE.
- * Note: the REF, MOD and ANC flag bits occur only in the head of a pvlist.
- * The cacheable bit (either PV_NC or PV_C4M) is meaningful in each
- * individual pv entry.
- */
-#define PV_MOD		1	/* page modified */
-#define PV_REF		2	/* page referenced */
-#define PV_NC		4	/* page cannot be cached */
-#define PV_REF4M	1	/* page referenced (SRMMU) */
-#define PV_MOD4M	2	/* page modified (SRMMU) */
-#define PV_C4M		4	/* page _can_ be cached (SRMMU) */
-#define PV_ANC		0x10	/* page has incongruent aliases */
-
-struct pvlist *pv_table;	/* array of entries, one per physical page */
-
-#define pvhead(pa)	(&pv_table[((pa) - vm_first_phys) >> PGSHIFT])
+static int pmap_initialized = 0;
 
 /*
  * Each virtual segment within each pmap is either valid or invalid.
@@ -341,22 +314,22 @@ u_int	*kernel_segtable_store;		/* 2k of storage to map the kernel */
 u_int	*kernel_pagtable_store;		/* 128k of storage to map the kernel */
 #endif
 
+vaddr_t	virtual_avail;			/* first free virtual page number */
+vaddr_t	virtual_end;			/* last free virtual page number */
+paddr_t phys_avail;			/* first free physical page
+					   XXX - pmap_pa_exists needs this */
+
+/*
+ * XXX - these have to be global for dumpsys()
+ */
 #define	MA_SIZE	32		/* size of memory descriptor arrays */
 struct	memarr pmemarr[MA_SIZE];/* physical memory regions */
 int	npmemarr;		/* number of entries in pmemarr */
-int	cpmemarr;		/* pmap_next_page() state */
-/*static*/ paddr_t	avail_start;	/* first free physical page */
-/*static*/ paddr_t	avail_end;	/* last free physical page */
-#ifdef MACHINE_NONCONTIG
-/*static*/ paddr_t	avail_next;	/* pmap_next_page() state:
-					   next free physical page */
-#endif
+
 /*static*/ vaddr_t	virtual_avail;	/* first free virtual page number */
 /*static*/ vaddr_t	virtual_end;	/* last free virtual page number */
 
-#ifdef MACHINE_NEW_NONCONTIG
-static void pmap_page_upload __P((void));
-#endif
+static void pmap_page_upload __P((paddr_t));
 void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
 
@@ -608,8 +581,10 @@ setpgt4m(ptep, pte)
 	int pte;
 {
 	swap(ptep, pte);
+#if 1
 	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
 		cpuinfo.pcache_flush_line((int)ptep, VA2PA((caddr_t)ptep));
+#endif
 }
 
 /*
@@ -713,7 +688,6 @@ setpte4m(va, pte)
 } while (0)
 
 
-static void get_phys_mem __P((void));
 static void sortm __P((struct memarr *, int));
 void	ctx_alloc __P((struct pmap *));
 void	ctx_free __P((struct pmap *));
@@ -724,32 +698,6 @@ void	pm_check __P((char *, struct pmap *));
 void	pm_check_k __P((char *, struct pmap *));
 void	pm_check_u __P((char *, struct pmap *));
 #endif
-
-
-/*
- * Grab physical memory list and use it to compute `physmem' and
- * `avail_end'. The latter is used in conjuction with
- * `avail_start' and `avail_next' to dispatch left-over
- * physical pages to the VM system.
- */
-static void
-get_phys_mem()
-{
-	struct memarr *mp;
-	int i;
-
-	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
-	sortm(pmemarr, npmemarr);
-	if (pmemarr[0].addr != 0)
-		panic("pmap_bootstrap: no kernel memory?!");
-
-	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
-#ifdef MACHINE_NONCONTIG
-	avail_next = avail_start;
-#endif
-	for (physmem = 0, mp = pmemarr, i = npmemarr; --i >= 0; mp++)
-		physmem += btoc(mp->len);
-}
 
 /*
  * Sort a memory array by address.
@@ -801,147 +749,53 @@ pmap_virtual_space(v_start, v_end)
         *v_end   = virtual_end;
 }
 
-#ifdef MACHINE_NEW_NONCONTIG
 /*
  * Helper routine that hands off available physical pages to the VM system.
  */
 static void
-pmap_page_upload()
+pmap_page_upload(first_pa)
+	paddr_t first_pa;
 {
 	int	n = 0;
 	paddr_t start, end;
 
+	phys_avail = first_pa;
+	
+	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
+	sortm(pmemarr, npmemarr);
+
+	if (pmemarr[0].addr != 0)
+		panic("pmap_page_upload: no memory?");
+
+	/*
+	 * Compute physmem
+	 */
+	physmem = 0;
+	for (n = 0; n < npmemarr; n++)
+		physmem += btoc(pmemarr[n].len);
+
 	for (n = 0; n < npmemarr; n++) {
-		/*
-		 * Assume `avail_start' is always in the first segment; we
-		 * already made that assumption in pmap_bootstrap()..
-		 */
-		start = (n == 0) ? avail_start : pmemarr[n].addr;
+		start = (first_pa > pmemarr[n].addr) ? first_pa :
+						       pmemarr[n].addr;
 		end = pmemarr[n].addr + pmemarr[n].len;
-		if (start == end)
+		if (start >= end)
 			continue;
 
 #if defined(UVM)
-		uvm_page_physload(
-			atop(start),
-			atop(end),
-			atop(start),
-			atop(end), VM_FREELIST_DEFAULT);
+		uvm_page_physload(atop(start), atop(end),
+				  atop(start), atop(end), VM_FREELIST_DEFAULT);
 #else
-		vm_page_physload(
-			atop(start),
-			atop(end),
-			atop(start),
-			atop(end));
+		vm_page_physload(atop(start), atop(end),
+				 atop(start), atop(end));
 #endif
 	}
-
-}
-#endif
-
-#ifdef MACHINE_NONCONTIG
-/*
- * Return the number of page indices in the range of
- * possible return values for pmap_page_index() for
- * all addresses provided by pmap_next_page().  This
- * return value is used to allocate per-page data.
- *
- */
-u_int
-pmap_free_pages()
-{
-	int long bytes;
-	int nmem;
-	struct memarr *mp;
-
-	bytes = -avail_start;
-	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++)
-		bytes += mp->len;
-
-        return atop(bytes);
-}
-
-/*
- * If there are still physical pages available, put the address of
- * the next available one at paddr and return TRUE.  Otherwise,
- * return FALSE to indicate that there are no more free pages.
- * Note that avail_next is set to avail_start in pmap_bootstrap().
- *
- * Imporant:  The page indices of the pages returned here must be
- * in ascending order.
- */
-int
-pmap_next_page(paddr)
-        paddr_t *paddr;
-{
-
-        /* Is it time to skip over a hole? */
-	if (avail_next == pmemarr[cpmemarr].addr + pmemarr[cpmemarr].len) {
-		if (++cpmemarr == npmemarr)
-			return FALSE;
-		avail_next = pmemarr[cpmemarr].addr;
-	}
-
-#ifdef DIAGNOSTIC
-        /* Any available memory remaining? */
-        if (avail_next >= avail_end) {
-		panic("pmap_next_page: too much memory?!");
-	}
-#endif
-
-        /* Have memory, will travel... */
-        *paddr = avail_next;
-        avail_next += NBPG;
-        return TRUE;
-}
-#endif
-
-/*
- * pmap_page_index()
- *
- * Given a physical address, return a page index.
- *
- * There can be some values that we never return (i.e. a hole)
- * as long as the range of indices returned by this function
- * is smaller than the value returned by pmap_free_pages().
- * The returned index does NOT need to start at zero.
- *
- */
-int
-pmap_page_index(pa)
-	paddr_t pa;
-{
-	paddr_t idx;
-	int nmem;
-	struct memarr *mp;
-
-#ifdef  DIAGNOSTIC
-	if (pa < avail_start || pa >= avail_end)
-		panic("pmap_page_index: pa=0x%lx", pa);
-#endif
-
-	for (idx = 0, mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
-		if (pa >= mp->addr && pa < mp->addr + mp->len)
-			break;
-		idx += atop(mp->len);
-	}
-
-	return (int)(idx + atop(pa - mp->addr));
 }
 
 int
 pmap_pa_exists(pa)
 	paddr_t pa;
 {
-	int nmem;
-	struct memarr *mp;
-
-	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
-		if (pa >= mp->addr && pa < mp->addr + mp->len)
-			return 1;
-	}
-
-	return 0;
+	return (pa < phys_avail || (pvhead(atop(pa)) != NULL));
 }
 
 /* update pv_flags given a valid pte */
@@ -1315,7 +1169,7 @@ me_alloc(mh, newpm, newvreg, newvseg)
 {
 	struct mmuentry *me;
 	struct pmap *pm;
-	int i, va, pa, *pte, tpte;
+	int i, va, *pte, tpte;
 	int ctx;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -1423,9 +1277,11 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	do {
 		tpte = getpte4(va);
 		if ((tpte & (PG_V | PG_TYPE)) == (PG_V | PG_OBMEM)) {
-			pa = ptoa(tpte & PG_PFNUM);
-			if (managed(pa))
-				pvhead(pa)->pv_flags |= MR4_4C(tpte);
+			struct pvlist *pv;
+
+			pv = pvhead(tpte & PG_PFNUM);
+			if (pv)
+				pv->pv_flags |= MR4_4C(tpte);
 		}
 		*pte++ = tpte & ~(PG_U|PG_M);
 		va += NBPG;
@@ -1470,7 +1326,7 @@ me_free(pm, pmeg)
 	u_int pmeg;
 {
 	struct mmuentry *me = &mmusegments[pmeg];
-	int i, va, pa, tpte;
+	int i, va, tpte;
 	int vr;
 	struct regmap *rp;
 
@@ -1504,9 +1360,11 @@ if (getcontext4() != 0) panic("me_free: ctx != 0");
 	do {
 		tpte = getpte4(va);
 		if ((tpte & (PG_V | PG_TYPE)) == (PG_V | PG_OBMEM)) {
-			pa = ptoa(tpte & PG_PFNUM);
-			if (managed(pa))
-				pvhead(pa)->pv_flags |= MR4_4C(tpte);
+			struct pvlist *pv;
+
+			pv = pvhead(tpte & PG_PFNUM);
+			if (pv)
+				pv->pv_flags |= MR4_4C(tpte);
 		}
 		va += NBPG;
 	} while (--i > 0);
@@ -2277,8 +2135,7 @@ pv_link4_4c(pv, pm, va, nc)
 					printf(
 			"pv_link: badalias: pid %d, 0x%lx<=>0x%lx, pa 0x%lx\n",
 					curproc ? curproc->p_pid : -1,
-					va, npv->pv_va,
-					vm_first_phys + (pv-pv_table)*NBPG);
+					va, npv->pv_va, -1); /* XXX -1 */
 #endif
 				/* Mark list head `uncached due to aliases' */
 				pv->pv_flags |= PV_ANC;
@@ -2608,8 +2465,7 @@ retry:
 					printf(
 			"pv_link: badalias: pid %d, 0x%lx<=>0x%lx, pa 0x%lx\n",
 					curproc ? curproc->p_pid : -1,
-					va, npv->pv_va,
-					vm_first_phys + (pv-pv_table)*NBPG);
+					va, npv->pv_va, -1); /* XXX -1 */
 #endif
 				/* Mark list head `uncached due to aliases' */
 				pv->pv_flags |= PV_ANC;
@@ -2737,6 +2593,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	caddr_t p;
 	void (*rom_setmap)(int ctx, caddr_t va, int pmeg);
 	int lastpage;
+	paddr_t avail_start;
 	extern char end[];
 #ifdef DDB
 	extern char *esym;
@@ -2880,20 +2737,11 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
 	avail_start = (paddr_t)p - KERNBASE;
 
-	get_phys_mem();
-
 	i = (int)p;
 	vpage[0] = p, p += NBPG;
 	vpage[1] = p, p += NBPG;
 	vmmap = p, p += NBPG;
 	p = reserve_dumppages(p);
-
-	/*
-	 * Allocate virtual memory for pv_table[], which will be mapped
-	 * sparsely in pmap_init().
-	 */
-	pv_table = (struct pvlist *)p;
-	p += round_page(sizeof(struct pvlist) * atop(avail_end - avail_start));
 
 	virtual_avail = (vaddr_t)p;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -3068,9 +2916,8 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		for (p = (caddr_t)trapbase; p < etext; p += NBPG)
 			setpte4(p, getpte4(p) & mask);
 	}
-#if defined(MACHINE_NEW_NONCONTIG)
-	pmap_page_upload();
-#endif
+
+	pmap_page_upload(avail_start);
 }
 #endif
 
@@ -3090,6 +2937,7 @@ pmap_bootstrap4m(void)
 	int reg, seg;
 	unsigned int ctxtblsize;
 	caddr_t pagetables_start, pagetables_end;
+	paddr_t avail_start;
 	extern char end[];
 	extern char etext[];
 	extern caddr_t reserve_dumppages(caddr_t);
@@ -3166,8 +3014,7 @@ pmap_bootstrap4m(void)
 
 	/*
 	 * Reserve memory for MMU pagetables. Some of these have severe
-	 * alignment restrictions. We allocate in a sequence that
-	 * minimizes alignment gaps.
+	 * alignment restrictions.
 	 */
 	pagetables_start = p;
 	/*
@@ -3213,8 +3060,6 @@ pmap_bootstrap4m(void)
 	pagetables_end = p;
 
 	avail_start = (paddr_t)p - KERNBASE;
-
-	get_phys_mem();
 
 	/*
 	 * Since we've statically allocated space to map the entire kernel,
@@ -3293,13 +3138,6 @@ pmap_bootstrap4m(void)
 	vmmap = p, p += NBPG;
 	p = reserve_dumppages(p);
 
-	/*
-	 * Allocate virtual memory for pv_table[], which will be mapped
-	 * sparsely in pmap_init().
-	 */
-	pv_table = (struct pvlist *)p;
-	p += round_page(sizeof(struct pvlist) * atop(avail_end - avail_start));
-
 	virtual_avail = (vaddr_t)p;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
@@ -3376,9 +3214,7 @@ pmap_bootstrap4m(void)
 		kvm_uncache(pagetables_start,
 			    (pagetables_end - pagetables_start) >> PGSHIFT);
 
-#if defined(MACHINE_NEW_NONCONTIG)
-	pmap_page_upload();
-#endif
+	pmap_page_upload(avail_start);
 }
 
 void
@@ -3473,86 +3309,36 @@ pmap_alloc_cpu(sc)
 void
 pmap_init()
 {
-	vsize_t s;
-	int pass1, nmem;
-	struct memarr *mp;
-	vaddr_t sva, va, eva;
-	paddr_t pa = 0;
+	int n, npages;
+	vsize_t size;
+	vaddr_t addr;
 
+#ifdef DEBUG
 	if (PAGE_SIZE != NBPG)
 		panic("pmap_init: CLSIZE!=1");
-
-	/*
-	 * Map pv_table[] as a `sparse' array. This requires two passes
-	 * over the `pmemarr': (1) to determine the number of physical
-	 * pages needed, and (2), to map the correct pieces of virtual
-	 * memory allocated to pv_table[].
-	 */
-
-	s = 0;
-	pass1 = 1;
-
-pass2:
-	sva = eva = 0;
-	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
-		int len;
-		paddr_t addr;
-
-		len = mp->len;
-		if ((addr = mp->addr) < avail_start) {
-			/*
-			 * pv_table[] covers everything above `avail_start'.
-			 */
-			addr = avail_start;
-			len -= avail_start;
-		}
-		len = sizeof(struct pvlist) * atop(len);
-
-		if (addr < avail_start || addr >= avail_end)
-			panic("pmap_init: unmanaged address: 0x%lx", addr);
-
-		va = (vaddr_t)&pv_table[atop(addr - avail_start)];
-		sva = trunc_page(va);
-
-		if (sva < eva) {
-			/* This chunk overlaps the previous in pv_table[] */
-			sva += PAGE_SIZE;
-			if (sva < eva)
-				panic("pmap_init: sva(0x%lx) < eva(0x%lx)",
-				      sva, eva);
-		}
-		eva = round_page(va + len);
-		if (pass1) {
-			/* Just counting */
-			s += eva - sva;
-			continue;
-		}
-
-		/* Map this piece of pv_table[] */
-		for (va = sva; va < eva; va += PAGE_SIZE) {
-			pmap_enter(pmap_kernel(), va, pa,
-				   VM_PROT_READ|VM_PROT_WRITE, 1,
-				   VM_PROT_READ|VM_PROT_WRITE);
-			pa += PAGE_SIZE;
-		}
-		bzero((caddr_t)sva, eva - sva);
-	}
-
-	if (pass1) {
-#if defined(UVM)
-		vaddr_t va = uvm_km_alloc(kernel_map, s);
-		if (!va)
-			panic("pmap_init: Out of mem in kernel_map");
-		pa = pmap_extract(pmap_kernel(), va);
-#else
-		pa = pmap_extract(pmap_kernel(), kmem_alloc(kernel_map, s));
 #endif
-		pass1 = 0;
-		goto pass2;
+
+	npages = 0;
+	for (n = 0; n < vm_nphysseg; n++)
+		npages += vm_physmem[n].end - vm_physmem[n].start;
+
+	size = npages * sizeof(struct pvlist);
+	size = round_page(size);
+#if defined(UVM)
+	addr = uvm_km_zalloc(kernel_map, size);
+#else
+	addr = kmem_alloc(kernel_map, size);
+#endif
+	if (addr == 0)
+		panic("pmap_init: no memory for pv_list");
+
+	for (n = 0; n < vm_nphysseg; n++) {
+		vm_physmem[n].pmseg.pv_head = (struct pvlist *)addr;
+		addr += (vm_physmem[n].end - vm_physmem[n].start) *
+			sizeof(struct pvlist);
 	}
 
-	vm_first_phys = avail_start;
-	vm_num_phys = avail_end - avail_start;
+	pmap_initialized = 1;
 }
 
 
@@ -3918,9 +3704,8 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 			/* if cacheable, flush page as needed */
 			if (perpage && (tpte & PG_NC) == 0)
 				cache_flush_page(va);
-			i = ptoa(tpte & PG_PFNUM);
-			if (managed(i)) {
-				pv = pvhead(i);
+			pv = pvhead(tpte & PG_PFNUM);
+			if (pv) {
 				pv->pv_flags |= MR4_4C(tpte);
 				pv_unlink4_4c(pv, pm, va);
 			}
@@ -3971,7 +3756,7 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 	vaddr_t va, endva;
 	int vr, vs;
 {
-	int i, tpte, perpage, npg;
+	int tpte, perpage, npg;
 	struct pvlist *pv;
 	int nleft;
 	struct regmap *rp;
@@ -4026,9 +3811,8 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 			/* if cacheable, flush page as needed */
 			if (perpage && (tpte & SRMMU_PG_C))
 				cache_flush_page(va);
-			i = ptoa((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
-			if (managed(i)) {
-				pv = pvhead(i);
+			pv = pvhead((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
+			if (pv) {
 				pv->pv_flags |= MR4M(tpte);
 				pv_unlink4m(pv, pm, va);
 			}
@@ -4086,7 +3870,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 	vaddr_t va, endva;
 	int vr, vs;
 {
-	int *pte0, i, pteva, tpte, perpage, npg;
+	int *pte0, pteva, tpte, perpage, npg;
 	struct pvlist *pv;
 	int nleft, pmeg;
 	struct regmap *rp;
@@ -4121,9 +3905,11 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 				continue;
 			}
 			if ((tpte & PG_TYPE) == PG_OBMEM) {
-				i = ptoa(tpte & PG_PFNUM);
-				if (managed(i))
-					pv_unlink4_4c(pvhead(i), pm, va);
+				struct pvlist *pv;
+
+				pv = pvhead(tpte & PG_PFNUM);
+				if (pv)
+					pv_unlink4_4c(pv, pm, va);
 			}
 			nleft--;
 			*pte = 0;
@@ -4181,9 +3967,8 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 			/* if cacheable, flush page as needed */
 			if (perpage && (tpte & PG_NC) == 0)
 				cache_flush_page(va);
-			i = ptoa(tpte & PG_PFNUM);
-			if (managed(i)) {
-				pv = pvhead(i);
+			pv = pvhead(tpte & PG_PFNUM);
+			if (pv) {
 				pv->pv_flags |= MR4_4C(tpte);
 				pv_unlink4_4c(pv, pm, va);
 			}
@@ -4243,7 +4028,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 	vaddr_t va, endva;
 	int vr, vs;
 {
-	int *pte0, i, perpage, npg;
+	int *pte0, perpage, npg;
 	struct pvlist *pv;
 	int nleft;
 	struct regmap *rp;
@@ -4302,9 +4087,8 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 			/* if cacheable, flush page as needed */
 			if (perpage && (tpte & SRMMU_PG_C))
 				cache_flush_page(va);
-			i = ptoa((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
-			if (managed(i)) {
-				pv = pvhead(i);
+			pv = pvhead((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
+			if (pv) {
 				pv->pv_flags |= MR4M(tpte);
 				pv_unlink4m(pv, pm, va);
 			}
@@ -4378,12 +4162,13 @@ pmap_page_protect4_4c(pa, prot)
 	 * Skip unmanaged pages, or operations that do not take
 	 * away write permission.
 	 */
+	pv = pvhead(atop(pa));
 	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) ||
-	     !managed(pa) || prot & VM_PROT_WRITE)
+	     !pv || prot & VM_PROT_WRITE)
 		return;
 	write_user_windows();	/* paranoia */
 	if (prot & VM_PROT_READ) {
-		pv_changepte4_4c(pvhead(pa), 0, PG_W);
+		pv_changepte4_4c(pv, 0, PG_W);
 		return;
 	}
 
@@ -4393,7 +4178,6 @@ pmap_page_protect4_4c(pa, prot)
 	 * The logic is much like that for pmap_remove,
 	 * but we know we are removing exactly one page.
 	 */
-	pv = pvhead(pa);
 	s = splpmap();
 	if ((pm = pv->pv_pmap) == NULL) {
 		splx(s);
@@ -4772,15 +4556,16 @@ pmap_page_protect4m(pa, prot)
 	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
 		printf("pmap_page_protect(0x%lx, 0x%x)\n", pa, prot);
 #endif
+	pv = pvhead(atop(pa));
 	/*
 	 * Skip unmanaged pages, or operations that do not take
 	 * away write permission.
 	 */
-	if (!managed(pa) || prot & VM_PROT_WRITE)
+	if (!pv || prot & VM_PROT_WRITE)
 		return;
 	write_user_windows();	/* paranoia */
 	if (prot & VM_PROT_READ) {
-		pv_changepte4m(pvhead(pa), 0, PPROT_WRITE);
+		pv_changepte4m(pv, 0, PPROT_WRITE);
 		return;
 	}
 
@@ -4790,7 +4575,6 @@ pmap_page_protect4m(pa, prot)
 	 * The logic is much like that for pmap_remove,
 	 * but we know we are removing exactly one page.
 	 */
-	pv = pvhead(pa);
 	s = splpmap();
 	if ((pm = pv->pv_pmap) == NULL) {
 		splx(s);
@@ -5083,15 +4867,11 @@ pmap_enter4_4c(pm, va, pa, prot, wired, access_type)
 	 * since the pvlist no-cache bit might change as a result of the
 	 * new mapping.
 	 */
-	if ((pteproto & PG_TYPE) == PG_OBMEM && managed(pa)) {
-#ifdef DIAGNOSTIC
-		if (!pmap_pa_exists(pa))
-			panic("pmap_enter: no such address: 0x%lx", pa);
-#endif
-		pv = pvhead(pa);
-	} else {
+	if (pmap_initialized && (pteproto & PG_TYPE) == PG_OBMEM)
+		pv = pvhead(atop(pa));
+	else
 		pv = NULL;
-	}
+
 	pteproto |= atop(pa) & PG_PFNUM;
 	if (prot & VM_PROT_WRITE)
 		pteproto |= PG_W;
@@ -5143,8 +4923,6 @@ pmap_enk4_4c(pm, va, prot, wired, pv, pteproto)
 	}
 #endif
 	if (sp->sg_pmeg != seginval && (tpte = getpte4(va)) & PG_V) {
-		int addr;
-
 		/* old mapping exists, and is of the same pa type */
 		if ((tpte & (PG_PFNUM|PG_TYPE)) ==
 		    (pteproto & (PG_PFNUM|PG_TYPE))) {
@@ -5155,6 +4933,7 @@ pmap_enk4_4c(pm, va, prot, wired, pv, pteproto)
 		}
 
 		if ((tpte & PG_TYPE) == PG_OBMEM) {
+			struct pvlist *pv1;
 #ifdef DEBUG
 printf("pmap_enk: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x\n",
 	va, pteproto);
@@ -5164,9 +4943,9 @@ printf("pmap_enk: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x\n",
 			 * If old pa was managed, remove from pvlist.
 			 * If old page was cached, flush cache.
 			 */
-			addr = ptoa(tpte & PG_PFNUM);
-			if (managed(addr))
-				pv_unlink4_4c(pvhead(addr), pm, va);
+			pv1 = pvhead(tpte & PG_PFNUM);
+			if (pv1)
+				pv_unlink4_4c(pv1, pm, va);
 			if ((tpte & PG_NC) == 0) {
 				setcontext4(0);	/* ??? */
 				cache_flush_page((int)va);
@@ -5293,7 +5072,7 @@ sretry:
 		/* definitely a new mapping */
 		int size = NPTESG * sizeof *pte;
 
-		pte = (int *)malloc((u_long)size, M_VMPMAP, M_WAITOK);
+		pte = malloc(size, M_VMPMAP, M_WAITOK);
 		if (sp->sg_pte != NULL) {
 printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			free(pte, M_VMPMAP);
@@ -5329,8 +5108,6 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			}
 		}
 		if (tpte & PG_V) {
-			int addr;
-
 			/* old mapping exists, and is of the same pa type */
 			if ((tpte & (PG_PFNUM|PG_TYPE)) ==
 			    (pteproto & (PG_PFNUM|PG_TYPE))) {
@@ -5354,9 +5131,11 @@ printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa entry\n",
 	curproc->p_comm, curproc->p_pid, va);
 #endif
 			if ((tpte & PG_TYPE) == PG_OBMEM) {
-				addr = ptoa(tpte & PG_PFNUM);
-				if (managed(addr))
-					pv_unlink4_4c(pvhead(addr), pm, va);
+				struct pvlist *pv1;
+
+				pv1 = pvhead(tpte & PG_PFNUM);
+				if (pv1)
+					pv_unlink4_4c(pv1, pm, va);
 				if (doflush && (tpte & PG_NC) == 0)
 					cache_flush_page((int)va);
 			}
@@ -5457,15 +5236,11 @@ pmap_enter4m(pm, va, pa, prot, wired, access_type)
 	 * since the pvlist no-cache bit might change as a result of the
 	 * new mapping.
 	 */
-	if ((pteproto & SRMMU_PGTYPE) == PG_SUN4M_OBMEM && managed(pa)) {
-#ifdef DIAGNOSTIC
-		if (!pmap_pa_exists(pa))
-			panic("pmap_enter: no such address: 0x%lx", pa);
-#endif
-		pv = pvhead(pa);
-	} else {
+	if ((pteproto & SRMMU_PGTYPE) == PG_SUN4M_OBMEM && pmap_initialized)
+		pv = pvhead(atop(pa));
+	else
 		pv = NULL;
-	}
+
 	pteproto |= (atop(pa) << SRMMU_PPNSHIFT);
 
 	if (prot & VM_PROT_WRITE)
@@ -5521,8 +5296,6 @@ pmap_enk4m(pm, va, prot, wired, pv, pteproto)
 
 	tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
 	if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE) {
-		int addr;
-
 		/* old mapping exists, and is of the same pa type */
 
 		if ((tpte & SRMMU_PPNMASK) == (pteproto & SRMMU_PPNMASK)) {
@@ -5533,6 +5306,7 @@ pmap_enk4m(pm, va, prot, wired, pv, pteproto)
 		}
 
 		if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
+			struct pvlist *pv1;
 #ifdef DEBUG
 printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
        "oldpte 0x%x\n", va, pteproto, tpte);
@@ -5542,9 +5316,9 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 			 * If old pa was managed, remove from pvlist.
 			 * If old page was cached, flush cache.
 			 */
-			addr = ptoa((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
-			if (managed(addr))
-				pv_unlink4m(pvhead(addr), pm, va);
+			pv1 = pvhead((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
+			if (pv1)
+				pv_unlink4m(pv1, pm, va);
 			if (tpte & SRMMU_PG_C) {
 				setcontext4m(0);	/* ??? */
 				cache_flush_page((int)va);
@@ -5601,9 +5375,7 @@ rretry:
 
 		sp = (struct segmap *)malloc((u_long)size, M_VMPMAP, M_WAITOK);
 		if (rp->rg_segmap != NULL) {
-#ifdef DEBUG
 printf("pmap_enu4m: segment filled during sleep\n");	/* can this happen? */
-#endif
 			free(sp, M_VMPMAP);
 			goto rretry;
 		}
@@ -5618,7 +5390,7 @@ rgretry:
 		int size, i, *ptd;
 
 		size = SRMMU_L2SIZE * sizeof(long);
-		ptd = (int *)malloc(size, M_VMPMAP, M_WAITOK);
+		ptd = malloc(size, M_VMPMAP, M_WAITOK);
 		if (rp->rg_seg_ptps != NULL) {
 #ifdef DEBUG
 printf("pmap_enu4m: bizarre segment table fill during sleep\n");
@@ -5641,7 +5413,7 @@ sretry:
 		/* definitely a new mapping */
 		int i, size = SRMMU_L3SIZE * sizeof(*pte);
 
-		pte = (int *)malloc((u_long)size, M_VMPMAP, M_WAITOK);
+		pte = malloc(size, M_VMPMAP, M_WAITOK);
 		if (sp->sg_pte != NULL) {
 printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			free(pte, M_VMPMAP);
@@ -5664,8 +5436,6 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 		tpte = pte[VA_SUN4M_VPG(va)];
 
 		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE) {
-			int addr;
-
 			/* old mapping exists, and is of the same pa type */
 			if ((tpte & SRMMU_PPNMASK) ==
 			    (pteproto & SRMMU_PPNMASK)) {
@@ -5690,10 +5460,12 @@ printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa(pte=0x%x) entry\n",
 	curproc->p_comm, curproc->p_pid, (int)va, (int)pte);
 #endif
 			if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
-				addr = ptoa( (tpte & SRMMU_PPNMASK) >>
+				struct pvlist *pv1;
+
+				pv1 = pvhead((tpte & SRMMU_PPNMASK) >>
 					     SRMMU_PPNSHIFT);
-				if (managed(addr))
-					pv_unlink4m(pvhead(addr), pm, va);
+				if (pv1)
+					pv_unlink4m(pv1, pm, va);
 				if (pm->pm_ctx && (tpte & SRMMU_PG_C))
 					cache_flush_page((int)va);
 			}
@@ -5983,8 +5755,8 @@ pmap_clear_modify4_4c(pa)
 {
 	struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && managed(pa)) {
-		pv = pvhead(pa);
+	pv = pvhead(atop(pa));
+	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && pv) {
 		(void) pv_syncflags4_4c(pv);
 		pv->pv_flags &= ~PV_MOD;
 	}
@@ -5999,8 +5771,8 @@ pmap_is_modified4_4c(pa)
 {
 	struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && managed(pa)) {
-		pv = pvhead(pa);
+	pv = pvhead(atop(pa));
+	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && pv) {
 		if (pv->pv_flags & PV_MOD || pv_syncflags4_4c(pv) & PV_MOD)
 			return (1);
 	}
@@ -6016,8 +5788,8 @@ pmap_clear_reference4_4c(pa)
 {
 	struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && managed(pa)) {
-		pv = pvhead(pa);
+	pv = pvhead(atop(pa));
+	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && pv) {
 		(void) pv_syncflags4_4c(pv);
 		pv->pv_flags &= ~PV_REF;
 	}
@@ -6032,8 +5804,8 @@ pmap_is_referenced4_4c(pa)
 {
 	struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && managed(pa)) {
-		pv = pvhead(pa);
+	pv = pvhead(atop(pa));
+	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && pv) {
 		if (pv->pv_flags & PV_REF || pv_syncflags4_4c(pv) & PV_REF)
 			return (1);
 	}
@@ -6061,8 +5833,8 @@ pmap_clear_modify4m(pa)	   /* XXX %%%: Should service from swpagetbl for 4m */
 {
 	struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && managed(pa)) {
-		pv = pvhead(pa);
+	pv = pvhead(atop(pa));
+	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && pv) {
 		(void) pv_syncflags4m(pv);
 		pv->pv_flags &= ~PV_MOD4M;
 	}
@@ -6077,8 +5849,8 @@ pmap_is_modified4m(pa) /* Test performance with SUN4M && SUN4/4C. XXX */
 {
 	struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && managed(pa)) {
-		pv = pvhead(pa);
+	pv = pvhead(atop(pa));
+	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && pv) {
 		if (pv->pv_flags & PV_MOD4M || pv_syncflags4m(pv) & PV_MOD4M)
 		        return(1);
 	}
@@ -6094,8 +5866,8 @@ pmap_clear_reference4m(pa)
 {
 	struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && managed(pa)) {
-		pv = pvhead(pa);
+	pv = pvhead(atop(pa));
+	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && pv) {
 		(void) pv_syncflags4m(pv);
 		pv->pv_flags &= ~PV_REF4M;
 	}
@@ -6110,8 +5882,8 @@ pmap_is_referenced4m(pa)
 {
 	struct pvlist *pv;
 
-	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && managed(pa)) {
-		pv = pvhead(pa);
+	pv = pvhead(atop(pa));
+	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && pv) {
 		if (pv->pv_flags & PV_REF4M || pv_syncflags4m(pv) & PV_REF4M)
 		        return(1);
 	}
@@ -6153,14 +5925,16 @@ pmap_zero_page4_4c(pa)
 {
 	caddr_t va;
 	int pte;
+	struct pvlist *pv;
 
-	if (((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0) && managed(pa)) {
+	pv = pvhead(atop(pa));
+	if (((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0) && pv) {
 		/*
 		 * The following might not be necessary since the page
 		 * is being cleared because it is about to be allocated,
 		 * i.e., is in use by no one.
 		 */
-		pv_flushcache(pvhead(pa));
+		pv_flushcache(pv);
 	}
 	pte = PG_V | PG_S | PG_W | PG_NC | (atop(pa) & PG_PFNUM);
 
@@ -6185,18 +5959,18 @@ pmap_copy_page4_4c(src, dst)
 {
 	caddr_t sva, dva;
 	int spte, dpte;
+	struct pvlist *pv;
 
-	if (managed(src)) {
-		if (CACHEINFO.c_vactype == VAC_WRITEBACK)
-			pv_flushcache(pvhead(src));
-	}
+	pv = pvhead(atop(src));
+	if (pv && CACHEINFO.c_vactype == VAC_WRITEBACK)
+		pv_flushcache(pv);
+
 	spte = PG_V | PG_S | (atop(src) & PG_PFNUM);
 
-	if (managed(dst)) {
-		/* similar `might not be necessary' comment applies */
-		if (CACHEINFO.c_vactype != VAC_NONE)
-			pv_flushcache(pvhead(dst));
-	}
+	pv = pvhead(atop(dst));
+	if (pv && CACHEINFO.c_vactype != VAC_NONE)
+		pv_flushcache(pv);
+
 	dpte = PG_V | PG_S | PG_W | PG_NC | (atop(dst) & PG_PFNUM);
 
 	sva = vpage[0];
@@ -6224,16 +5998,18 @@ pmap_zero_page4m(pa)
 	caddr_t va;
 	int pte;
 	int ctx;
+	struct pvlist *pv;
 
-	if (((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0) && managed(pa)) {
+	pv = pvhead(atop(pa));
+	if (((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0) && pv &&
+		CACHEINFO.c_vactype != VAC_NONE)
 		/*
 		 * The following might not be necessary since the page
 		 * is being cleared because it is about to be allocated,
 		 * i.e., is in use by no one.
 		 */
-		if (CACHEINFO.c_vactype != VAC_NONE)
-			pv_flushcache(pvhead(pa));
-	}
+		pv_flushcache(pv);
+
 	pte = (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
 	       (atop(pa) << SRMMU_PPNSHIFT));
 	if (cpuinfo.flags & CPUFLG_CACHE_MANDATORY)
@@ -6267,19 +6043,19 @@ pmap_copy_page4m(src, dst)
 	caddr_t sva, dva;
 	int spte, dpte;
 	int ctx;
+	struct pvlist *pv;
 
-	if (managed(src)) {
-		if (CACHEINFO.c_vactype == VAC_WRITEBACK)
-			pv_flushcache(pvhead(src));
-	}
+	pv = pvhead(atop(src));
+	if (pv && CACHEINFO.c_vactype == VAC_WRITEBACK)
+		pv_flushcache(pv);
+
 	spte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_S |
 		(atop(src) << SRMMU_PPNSHIFT);
 
-	if (managed(dst)) {
-		/* similar `might not be necessary' comment applies */
-		if (CACHEINFO.c_vactype != VAC_NONE)
-			pv_flushcache(pvhead(dst));
-	}
+	pv = pvhead(atop(dst));
+	if (pv && CACHEINFO.c_vactype != VAC_NONE)
+		pv_flushcache(pv);
+
 	dpte = (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
 	       (atop(dst) << SRMMU_PPNSHIFT));
 	if (cpuinfo.flags & CPUFLG_CACHE_MANDATORY)
@@ -6327,26 +6103,27 @@ kvm_uncache(va, npages)
 	int npages;
 {
 	int pte;
-	paddr_t pa;
+	struct pvlist *pv;
 
 	if (CPU_ISSUN4M) {
 #if defined(SUN4M)
 		int ctx = getcontext4m();
 
-
 		setcontext4m(0);
 		for (; --npages >= 0; va += NBPG) {
 			pte = getpte4m((vaddr_t) va);
+#ifdef DIAGNOSTIC
 			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
 				panic("kvm_uncache: table entry not pte");
-
-			pa = ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
-			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM &&
-			    managed(pa)) {
-				pv_changepte4m(pvhead(pa), 0, SRMMU_PG_C);
+#endif
+			pv = pvhead((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
+			/* XXX - we probably don't need check for OBMEM */
+			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM && pv) {
+				pv_changepte4m(pv, 0, SRMMU_PG_C);
 			}
 			pte &= ~SRMMU_PG_C;
 			setpte4m((vaddr_t) va, pte);
+
 			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
 				cache_flush_page((int)va);
 
@@ -6361,11 +6138,11 @@ kvm_uncache(va, npages)
 			if ((pte & PG_V) == 0)
 				panic("kvm_uncache !pg_v");
 
-			pa = ptoa(pte & PG_PFNUM);
-			if ((pte & PG_TYPE) == PG_OBMEM &&
-			    managed(pa)) {
-				pv_changepte4_4c(pvhead(pa), PG_NC, 0);
-			} 
+			pv = pvhead(pte & PG_PFNUM);
+			/* XXX - we probably don't need to check for OBMEM */
+			if ((pte & PG_TYPE) == PG_OBMEM && pv) {
+				pv_changepte4_4c(pv, PG_NC, 0);
+			}
 			pte |= PG_NC;
 			setpte4(va, pte);
 			if ((pte & PG_TYPE) == PG_OBMEM)
@@ -6873,8 +6650,10 @@ debug_pagetables()
 	test_region(0xfe,0,16*1024*1024);
 	printf("Testing region 0xff: ");
 	test_region(0xff,0,16*1024*1024);
+#if 0	/* XXX avail_start */
 	printf("Testing kernel region 0x%x: ", VA_VREG(KERNBASE));
 	test_region(VA_VREG(KERNBASE), 4096, avail_start);
+#endif
 	cngetc();
 
 	for (i = 0; i < SRMMU_L1SIZE; i++) {

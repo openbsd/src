@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.12 1999/11/05 21:19:23 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.13 1999/11/11 12:30:36 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -44,6 +44,9 @@
  *
  *	@(#)vmparam.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _SPARC_VMPARAM_H_
+#define _SPARC_VMPARAM_H_
 
 /*
  * Machine dependent constants for Sun-4c SPARC
@@ -145,8 +148,6 @@
 
 #define MACHINE_NEW_NONCONTIG
 
-#ifdef MACHINE_NEW_NONCONTIG
-
 #define VM_PHYSSEG_MAX		32	/* we only have one "hole" */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
@@ -155,16 +156,16 @@
  * pmap specific data stored in the vm_physmem[] array
  */
 struct pmap_physseg {
-	/* NULL */
+	struct pvlist *pv_head;
 };
 
 #define VM_NFREELIST		1
 #define VM_FREELIST_DEFAULT	0
-
-#endif
 
 #if defined (_KERNEL) && !defined(_LOCORE)
 struct vm_map;
 vaddr_t		dvma_mapin __P((struct vm_map *, vaddr_t, int, int));
 void		dvma_mapout __P((vaddr_t, vaddr_t, int));
 #endif
+
+#endif /* _SPARC_VMPARAM_H_ */
