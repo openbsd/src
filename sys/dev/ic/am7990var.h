@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990var.h,v 1.6 1996/11/28 23:27:47 niklas Exp $	*/
+/*	$OpenBSD: am7990var.h,v 1.7 1997/08/08 08:05:42 downsj Exp $	*/
 /*	$NetBSD: am7990var.h,v 1.8 1996/07/05 23:57:01 abrown Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ struct am7990_softc {
 	 * Machine-dependent functions:
 	 *
 	 *	read/write CSR
+	 *	hardware reset hook - may be NULL
 	 *	hardware init hook - may be NULL
 	 *	no carrier hook - may be NULL
 	 */
@@ -84,6 +85,7 @@ struct am7990_softc {
 		    __P((struct am7990_softc *, u_int16_t));
 	void	(*sc_wrcsr)
 		    __P((struct am7990_softc *, u_int16_t, u_int16_t));
+	void	(*sc_hwreset) __P((struct am7990_softc *));
 	void	(*sc_hwinit) __P((struct am7990_softc *));
 	void	(*sc_nocarrier) __P((struct am7990_softc *));
 
