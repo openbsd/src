@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.8 2002/12/13 16:36:52 naddy Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.9 2003/04/16 01:36:39 deraadt Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -295,15 +295,16 @@ getinfo(int fd)
 	if (ioctl(fd, AUDIO_GETDEV, &adev) < 0)
 		err(1, "AUDIO_GETDEV");
 	for(;;) {
-	       audio_encoding_t enc;
-	       enc.index = i++;
-	       if (ioctl(fd, AUDIO_GETENC, &enc) < 0)
-		       break;
-	       if (pos)
-		       encbuf[pos++] = ',';
-	       pos += snprintf(encbuf+pos, sizeof(encbuf)-pos, "%s:%d%s",
-			       enc.name, enc.precision,
-	            	       enc.flags & AUDIO_ENCODINGFLAG_EMULATED ? "*" : "");
+		audio_encoding_t enc;
+		enc.index = i++;
+		if (ioctl(fd, AUDIO_GETENC, &enc) < 0)
+			break;
+		if (pos)
+			encbuf[pos++] = ',';
+		snprintf(encbuf+pos, sizeof(encbuf)-pos, "%s:%d%s",
+		    enc.name, enc.precision,
+		    enc.flags & AUDIO_ENCODINGFLAG_EMULATED ? "*" : "");
+		pos += strlen(encbuf+pos);
 	}
 	if (ioctl(fd, AUDIO_GETFD, &fullduplex) < 0)
 		err(1, "AUDIO_GETFD");
