@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.19 1998/06/11 14:17:23 provos Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.20 1998/07/30 08:41:21 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -675,6 +675,12 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	{
 	    if (rest)
 	    {
+		if (ivp == blk)
+		{    
+			bcopy(blk, iv, blks);
+			ivp = iv;
+		}
+
 		bcopy(idat, blk, rest);
 		odat = idat;
 	    }
