@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.17 1996/08/19 00:14:08 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.18 1996/08/19 06:57:02 niklas Exp $
 #	$NetBSD: files.amiga,v 1.48 1996/05/19 21:04:50 veego Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -50,7 +50,6 @@ attach	fdc at mainbus
 device	fd
 attach	fd at fdc
 file	arch/amiga/dev/fd.c		fd needs-flag
-major	{fd = 2}
 
 # graphic devices
 define	grfbus {}
