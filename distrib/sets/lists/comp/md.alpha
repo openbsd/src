@@ -5,7 +5,6 @@
 ./usr/bin/objcopy
 ./usr/bin/objdump
 ./usr/bin/readelf
-./usr/include/alpha/alpha.h
 ./usr/include/alpha/alpha_cpu.h
 ./usr/include/alpha/ansi.h
 ./usr/include/alpha/aout_machdep.h
