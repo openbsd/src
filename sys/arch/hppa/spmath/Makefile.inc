@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2001/03/29 03:58:17 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2002/02/04 22:17:56 mickey Exp $
 #
 #	NOTE:	$S must correspond to the top of the 'sys' tree
 #		$HPPA must correspond to the top of hppa tree
@@ -21,19 +21,19 @@ SPMATHMAKE= \
 	    XMACHINE='${MACHINE}' XMACHINE_ARCH='${MACHINE_ARCH}' \
 
 ${SPMATH}:	.NOTMAIN __always_make_spmath
-	@echo making sure the kern library is up to date...
+	@echo making sure the spmath library is up to date...
 	@${SPMATHMAKE} spmath.o
 
 ${SPMATH_PROF}:	.NOTMAIN __always_make_spmath
-	@echo making sure the profiled kern library is up to date...
+	@echo making sure the profiled spmath library is up to date...
 	@${SPMATHMAKE} spmath.po
 
 clean::		.NOTMAIN __always_make_spmath
-	@echo cleaning the kern library objects
+	@echo cleaning the spmath library objects
 	@${SPMATHMAKE} clean
 
 depend::	.NOTMAIN __always_make_spmath
-	@echo depending the kern library objects
+	@echo depending the spmath library objects
 	@${SPMATHMAKE} depend
 
 __always_make_spmath:	.NOTMAIN
