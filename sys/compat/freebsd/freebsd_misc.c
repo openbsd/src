@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_misc.c,v 1.3 1996/08/02 20:34:46 niklas Exp $	*/
+/*	$OpenBSD: freebsd_misc.c,v 1.4 1997/11/13 07:35:38 deraadt Exp $	*/
 /*	$NetBSD: freebsd_misc.c,v 1.2 1996/05/03 17:03:10 christos Exp $	*/
 
 /*
@@ -103,4 +103,18 @@ freebsd_ntp_adjtime(p, v, retval)
 #endif
 
 	return ENOSYS;	/* XXX */
+}
+
+/*
+ * Argh.
+ * The syscalls.master mechanism cannot handle a system call that is in
+ * two spots in the table.
+ */
+int
+freebsd_sys_poll2(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return (sys_poll(p, v, retval));
 }

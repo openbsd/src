@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.6 1997/11/13 07:27:03 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.7 1997/11/13 07:35:38 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -462,7 +462,7 @@
 250	NOARGS		{ int sys_minherit(caddr_t addr, size_t len, \
 			    int inherit); }
 251	NOARGS		{ int sys_rfork(int flags); }
-252	NOARGS		{ int sys_poll(struct pollfd *fds, usigned long nfds, \
-			    int timeout); }
+252	STD		{ int freebsd_sys_poll2(struct pollfd *fds, \
+			    unsigned long nfds, int timeout); }
 253	NOARGS		{ int sys_issetugid(void); }
 254	NOARGS		{ int sys_lchown(char *path, int uid, int gid); }
