@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.33 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: pci.c,v 1.34 2004/06/25 08:57:10 art Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -261,6 +261,7 @@ pciattach(parent, self, aux)
 			}
 #endif
 			pin = PCI_INTERRUPT_PIN(intr);
+			pa.pa_rawintrpin = pin;
 			if (pin == PCI_INTERRUPT_PIN_NONE) {
 				/* no interrupt */
 				pa.pa_intrpin = 0;

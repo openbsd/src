@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.35 2004/01/31 15:22:26 drahn Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.36 2004/06/25 08:57:10 art Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -136,6 +136,7 @@ struct pci_attach_args {
 	pcitag_t	pa_intrtag;	/* intr. appears to come from here */
 	pci_intr_pin_t	pa_intrpin;	/* intr. appears on this pin */
 	pci_intr_line_t	pa_intrline;	/* intr. routing information */
+	pci_intr_pin_t	pa_rawintrpin;	/* unswizzled pin */
 };
 
 /*
