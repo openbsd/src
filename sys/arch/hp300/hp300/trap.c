@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 1998/03/07 12:41:34 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 1998/05/27 05:40:18 millert Exp $	*/
 /*	$NetBSD: trap.c,v 1.55 1997/07/08 16:56:36 kleink Exp $	*/
 
 /*
@@ -214,8 +214,8 @@ userret(p, fp, oticks, faultaddr, fromtrap)
 	int fromtrap;
 {
 	int sig, s;
-	union sigval sv;
 #ifdef M68040
+	union sigval sv;
 	int beenhere = 0;
 
 again:
