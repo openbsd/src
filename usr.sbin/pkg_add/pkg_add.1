@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.7 2004/01/22 21:11:43 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.8 2004/01/27 13:09:16 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,12 +25,13 @@
 .Nd install software package distributions
 .Sh SYNOPSIS
 .Nm pkg_add
-.Op Fl vIn
+.Op Fl Inv
+.Op Fl f Ar keys
 .Ar pkg-name Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm
-command is used to extract packages that have been previously created
+command is used to install packages created
 with the
 .Xr pkg_create 1
 command.
@@ -41,8 +42,6 @@ tree can be found on the
 FTP site or on the official
 .Ox
 CD.
-These packages are provided as a convenience for quickly installing software
-that would otherwise need to be built manually.
 .Bd -filled -offset indent
 .Em Note :
 System distribution files, e.g. base28.tgz, comp28.tgz, etc., are
@@ -69,6 +68,13 @@ Specifying
 as a package name causes
 .Nm
 to read from the standard input.
+.Pp
+Some packages may depend on other packages.
+When resolving dependencies
+.Nm
+will first look at already installed packages, then match
+dependencies with the list of packages left to install, then
+install default packages that satisfy the dependencies.
 .Pp
 Alternatively, it is possible to add packages interactively from within
 the ftp client,
@@ -105,7 +111,7 @@ or other subtle attacks from miscreants who create dangerous packages.
 Be sure the specified package(s) are from trusted sources.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width keyword
 .It Fl v
 Turn on verbose output.
 .It Fl I
@@ -113,6 +119,11 @@ If an installation script exists for a given package, do not execute it.
 .It Fl n
 Don't actually install a package, just report the steps that
 would be taken if it was.
+.It Fl f Ar keys
+Force installation of the package.
+.Ar keys
+is a comma-separated list of keywords that state what failsafes
+should be waived.
 .El
 .Pp
 By default, when adding packages via FTP, the
@@ -158,7 +169,7 @@ directives, see
 with an already recorded as installed package.
 If it is, installation is terminated.
 .It
-For packages tagged with architecture constraints, 
+For packages tagged with architecture constraints,
 .Nm
 verifies that the current machine architecture agrees with the constraints.
 .It
@@ -171,9 +182,15 @@ directives, see
 .Xr pkg_create 1 )
 are read from the packing list.
 If any of these dependencies are not currently fullfilled,
-an attempt is made to find a package that meets them and install it;
+an attempt is made to find a package that meets them and install it,
+looking first in the list of packages to install passed to
+.Nm ;
 if no adequate package can be found and installed,
 the installation is terminated.
+.It
+.Nm
+checks for collisions with installed file names, read-only file systems,
+and enough space to store files.
 .It
 If the package contains a
 .Ar require
@@ -240,6 +257,12 @@ path shown above).
 Finally, the staging area is deleted and the program terminates.
 .El
 .Pp
+Note that it is safe to interrupt
+.Nm pkg_add
+through
+.Dv SIGINT ,
+as it will safely record an interrupted install as
+.Pa borked.n .
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_TMPDIR
 .It Ev PKG_PATH
@@ -282,11 +305,21 @@ can hold executable scripts.
 .El
 .Pp
 .Nm
-looks through ${PKG_TMPDIR}, ${TMPDIR}, /var/tmp, /tmp, /usr/tmp
+looks through
+.Ev ${PKG_TMPDIR} ,
+.Ev ${TMPDIR} ,
+.Pa /var/tmp ,
+.Pa /tmp ,
+.Pa /usr/tmp
 for such an area, in sequence.
 .Pp
-If ${TMPDIR} and /var/tmp are mounted noexec, you must set PKG_TMPDIR
+If
+.Ev ${TMPDIR}
+and
+.Pa /var/tmp
+are mounted noexec, you must currently set
+.Ev PKG_TMPDIR
 to a suitable area, as
 .Nm
-has no way to check for noexec status except by failing to run installation
+does not check for noexec status except by failing to run installation
 scripts.

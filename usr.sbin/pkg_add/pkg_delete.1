@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.3 2003/11/14 23:03:55 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.4 2004/01/27 13:09:16 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,8 +25,9 @@
 .Nd a utility for deleting previously installed software package distributions
 .Sh SYNOPSIS
 .Nm pkg_delete
-.Op Fl cvDnfq
-.Ar pkg-name Op Ar ...
+.Op Fl cDnqv
+.Op Fl f Ar keys
+.Ar pkgname Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -35,18 +36,22 @@ with the
 .Xr pkg_add 1
 command.
 .Pp
-Package names may be specified either as the package name itself, or as filenames which consist of the package name plus the
+Package names may be specified either as the package name itself, or as a
+filename which consists of the package name plus the
 .Dq .tgz
-,
-.Dq .tar.gz
-, or the
-.Dq .tar
-suffix.
+suffix, or as a full pathname like
+.Pa /var/db/pkg/pkgname ,
+so that shell wildcards can be used.
+.Pp
+Version numbers and flavors
+.Po
+see
+.Xr packages-specs 7
+.Pc
+can be omitted, unless the resulting specification is ambiguous.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
-.It Ar pkg-name Op Ar ...
-The named packages are deinstalled.
+.Bl -tag -width keyword
 .It Fl v
 Turn on verbose output.
 .It Fl D
@@ -54,9 +59,11 @@ If a deinstallation script exists for a given package, do not execute it.
 .It Fl n
 Don't actually deinstall a package, just report the steps that
 would be taken if it were.
-.It Fl f
-Force removal of the package, even if a dependency is recorded or the
-deinstall or require script fails.
+.It Fl f Ar keys
+Force removal of the package.
+.Ar keys
+is a comma-separated list of keywords that state what failsafes
+should be waived.
 .It Fl c
 Delete extra configuration file, mentioned as
 .Bd -literal
@@ -68,17 +75,17 @@ Delete package quickly, do not bother checking md5s before removing files.
 .El
 .Sh TECHNICAL DETAILS
 .Nm
-does pretty much what it says.
-It examines installed package records in
-.Pa /var/db/pkg/<pkg-name> ,
-deletes the package contents, and finally removes the package records.
+examines installed package records for the
+.Ar pkgname
+specified,  checks inter-dependencies between installed packages,
+deletes the package contents in an order respecting dependencies
+(e.g., packages with dependencies get removed first), and finally
+removes the package records.
 .Pp
-If a package is required by other installed packages,
+If a package is required by other installed packages not mentioned in
+the list of packages to remove,
 .Nm
-will list those dependent packages and refuse to delete the package
-(unless the
-.Fl f
-option is given).
+will list those dependent packages and refuse to delete the package.
 .Pp
 If the package contains a
 .Ar require
@@ -92,7 +99,7 @@ then this is executed first as
 .Ed
 .Pp
 (where
-.Ar pkg-name
+.Ar pkgname
 is the name of the package in question and
 .Ar DEINSTALL
 is a keyword denoting that this is a deinstallation)
@@ -104,10 +111,8 @@ option is specified.
 If a
 .Cm deinstall
 script exists for the package, it is executed before any files are removed.
-It is this script's responsibility to clean up any additional messy details
-around the package's installation, since all
-.Nm
-knows how to do is delete the files created in the original distribution.
+Such a script can be used to remove messy dynamic files created by the
+package on installation or during usage.
 The
 .Nm deinstall
 script is called as:

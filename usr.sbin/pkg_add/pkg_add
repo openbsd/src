@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.22 2004/01/22 21:11:43 espie Exp $
+# $OpenBSD: pkg_add,v 1.23 2004/01/27 13:09:16 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -37,6 +37,8 @@ use OpenBSD::PkgCfl;
 use OpenBSD::Vstat;
 use Getopt::Std;
 use File::Copy;
+
+our %forced = ();
 
 # XXX we don't want to load this package all the time
 package OpenBSD::RequiredBy;
@@ -118,8 +120,11 @@ package main;
 
 my $errors = 0;
 
-our ($opt_v, $opt_n, $opt_I);
-getopts('vnI');
+our ($opt_v, $opt_n, $opt_I, $opt_f);
+getopts('vnIf:');
+if ($opt_f) {
+	%forced = map {($_, 1)} split(/,/, $opt_f);
+}
 
 my $conflict_list = {};
 

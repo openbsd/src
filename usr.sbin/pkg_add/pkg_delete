@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.18 2004/01/27 00:13:04 espie Exp $
+# $OpenBSD: pkg_delete,v 1.19 2004/01/27 13:09:16 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -33,6 +33,8 @@ use OpenBSD::PackageInfo;
 use OpenBSD::RequiredBy;
 use OpenBSD::Logger;
 use OpenBSD::Vstat;
+
+our %forced = ();
 
 package OpenBSD::PackingElement;
 sub delete
@@ -312,13 +314,17 @@ sub delete_package
 	remove_packing_info($dir) unless $opt_n;
 }
 
-getopts('vcDdnfqpS:');
+getopts('vcDdnf:qpS:');
 
 if (defined $opt_p) {
 	die "Option p is obsolete";
 }
 if (defined $opt_d) {
 	die "Option d is obsolete";
+}
+
+if ($opt_f) {
+	%forced = map {($_, 1)} split(/,/, $opt_f);
 }
 
 my %done;
