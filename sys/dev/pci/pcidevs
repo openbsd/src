@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.37 1998/03/17 16:28:14 mickey Exp $
+$OpenBSD: pcidevs,v 1.38 1998/03/24 04:00:39 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -156,7 +156,7 @@ vendor YAMAHA		0x1073	Yamaha
 vendor NEXGEN		0x1074	NexGen Microsystems
 vendor AIR		0x1075	Advanced Integration Research
 vendor CHAINTECH	0x1076	Chaintech Computer
-vendor QLOGIC		0x1077	Q Logic
+vendor QLOGIC		0x1077	QLogic
 vendor CYRIX		0x1078	Cyrix Corporation
 vendor IBUS		0x1079	I-Bus
 vendor NETWORTH		0x107a	NetWorth
