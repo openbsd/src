@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.24 2003/11/17 14:48:20 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.25 2003/12/29 10:54:09 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -255,22 +255,13 @@ ASLOCAL(Ldoneloop)
 	addu    r31, r31,48
 	or	r9, r0, r14		/* restore p saved in r14 */
 
-ASLOCAL(Lswnochg)
 	or.u	r31, r0, hi16(_ASM_LABEL(intstack_end))
 	or	r31,r31, lo16(_ASM_LABEL(intstack_end))
 	subu	r31, r31,48
 	bsr.n    _C_LABEL(load_u_area)
 	 or	r2, r0, r9
 	addu	r31, r31,48
-				/* flush tlb of any user addresses */
-	or	r2, r0, 0	/* 0 = user space */
-	or	r3, r0, 0	/* start at addr 0 */
-	subu	r31, r31,48
-	/* r2 = 1 : kernel ? user, r3 = address, r4 = size */
-	/* cmmu_flush_tlb(0, 0, 0xffff) */
-	bsr.n	_C_LABEL(md_cmmu_flush_tlb)
-	 sub	r4, r0, 1		/* flush entire va space */
-	addu	r31, r31,48
+
 	or.u	r10, r0,  hi16(_C_LABEL(curpcb))
 	ld	r10, r10,  lo16(_C_LABEL(curpcb))
 	/* XXX Is this correct/necessary? */

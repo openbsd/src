@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.22 2003/10/05 20:27:47 miod Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.23 2003/12/29 10:54:09 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -78,12 +78,3 @@ int      max_cpus, max_cmmus;
 int      cpu_cmmu_ratio;
 
 struct cmmu_p *cmmu;
-
-void md_cmmu_flush_tlb(unsigned kernel, vaddr_t vaddr, int size);
-
-/* This is here so that process.S doesn't have to decide the CPU type */
-void
-md_cmmu_flush_tlb(unsigned kernel, vaddr_t vaddr, int size)
-{
-	cmmu_flush_tlb(kernel, vaddr, size);
-}
