@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.50 2004/01/08 11:39:41 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.51 2004/01/08 11:40:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -532,7 +532,7 @@ kroute_fetchtable(void)
 
 		kr->flags = F_KERNEL;
 
-		switch(sa->sa_family) {
+		switch (sa->sa_family) {
 		case AF_INET:
 			kr->r.prefix =
 			    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
@@ -671,7 +671,7 @@ kroute_dispatch_msg(void)
 		if (rtm->rtm_errno)			/* failed attempts... */
 			continue;
 
-		switch(sa->sa_family) {
+		switch (sa->sa_family) {
 		case AF_INET:
 			s.r.prefix =
 			    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
