@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.23 2001/07/20 23:02:21 espie Exp $
+#	$OpenBSD: bsd.man.mk,v 1.24 2003/07/07 21:39:27 deraadt Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -41,10 +41,10 @@ TBL?=		tbl
 
 MANALL=	${MAN:S/.1$/.cat1/g:S/.2$/.cat2/g:S/.3$/.cat3/g:S/.3p$/.cat3p/g:S/.4$/.cat4/g:S/.5$/.cat5/g:S/.6$/.cat6/g:S/.7$/.cat7/g:S/.8$/.cat8/g:S/.9$/.cat9/g:S/.1tbl$/.cat1/g:S/.2tbl$/.cat2/g:S/.3tbl$/.cat3/g:S/.4tbl$/.cat4/g:S/.5tbl$/.cat5/g:S/.6tbl$/.cat6/g:S/.7tbl$/.cat7/g:S/.8tbl$/.cat8/g:S/.9tbl$/.cat9/g}
 
+PS2ALL= ${MAN:S/.1$/.ps1/g:S/.2$/.ps2/g:S/.3$/.ps3/g:S/.3p$/.ps3p/g:S/.4$/.ps4/g:S/.5$/.ps5/g:S/.6$/.ps6/g:S/.7$/.ps7/g:S/.8$/.ps8/g:S/.9$/.ps9/g:S/.1tbl$/.ps1/g:S/.2tbl$/.ps2/g:S/.3tbl$/.ps3/g:S/.4tbl$/.ps4/g:S/.5tbl$/.ps5/g:S/.6tbl$/.ps6/g:S/.7tbl$/.ps7/g:S/.8tbl$/.ps8/g:S/.9tbl$/.ps9/g}
+
 .if defined(MANPS)
-
-PSALL= ${MAN:S/.1$/.ps1/g:S/.2$/.ps2/g:S/.3$/.ps3/g:S/.3p$/.ps3p/g:S/.4$/.ps4/g:S/.5$/.ps5/g:S/.6$/.ps6/g:S/.7$/.ps7/g:S/.8$/.ps8/g:S/.9$/.ps9/g:S/.1tbl$/.ps1/g:S/.2tbl$/.ps2/g:S/.3tbl$/.ps3/g:S/.4tbl$/.ps4/g:S/.5tbl$/.ps5/g:S/.6tbl$/.ps6/g:S/.7tbl$/.ps7/g:S/.8tbl$/.ps8/g:S/.9tbl$/.ps9/g}
-
+PSALL=${PS2ALL}
 .endif
 
 .endif
@@ -131,5 +131,5 @@ all: ${MANALL} ${PSALL}
 
 cleandir: cleanman
 cleanman:
-	rm -f ${MANALL} ${PSALL}
+	rm -f ${MANALL} ${PS2ALL}
 .endif
