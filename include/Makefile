@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.48 1998/05/04 10:21:10 provos Exp $
+#	$OpenBSD: Makefile,v 1.49 1998/06/07 23:20:12 millert Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -41,7 +41,7 @@ RDIRS=	../lib/libcom_err ../lib/libcompat ../lib/libcurses ../lib/libform \
 
 WDIRS=	../gnu/lib/libg++/libg++ ../gnu/lib/libg++/libio \
 	../gnu/lib/libg++/librx ../gnu/lib/libg++/libstdc++ \
-	../gnu/usr.bin/gcc
+	../gnu/usr.bin/gcc ../gnu/lib/libgmp
 
 NOOBJ=	noobj
 
