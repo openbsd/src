@@ -1758,6 +1758,7 @@
 ./usr/share/man/cat1/as.0
 ./usr/share/man/cat1/asa.0
 ./usr/share/man/cat1/c++.0
+./usr/share/man/cat1/c++filt.0
 ./usr/share/man/cat1/cc.0
 ./usr/share/man/cat1/cccp.0
 ./usr/share/man/cat1/f77.0
@@ -1766,6 +1767,7 @@
 ./usr/share/man/cat1/g++.0
 ./usr/share/man/cat1/gcc-local.0
 ./usr/share/man/cat1/gcc.0
+./usr/share/man/cat1/gcov.0
 ./usr/share/man/cat1/gprof.0
 ./usr/share/man/cat1/ld.0
 ./usr/share/man/cat1/lex.0

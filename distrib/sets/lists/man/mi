@@ -312,6 +312,7 @@
 ./usr/share/man/cat1/indxbib.0
 ./usr/share/man/cat1/info.0
 ./usr/share/man/cat1/infocmp.0
+./usr/share/man/cat1/infokey.0
 ./usr/share/man/cat1/infotocap.0
 ./usr/share/man/cat1/install-info.0
 ./usr/share/man/cat1/install.0
@@ -529,6 +530,7 @@
 ./usr/share/man/cat1/radioctl.0
 ./usr/share/man/cat1/rcp.0
 ./usr/share/man/cat1/rcs.0
+./usr/share/man/cat1/rcs2log.0
 ./usr/share/man/cat1/rcsclean.0
 ./usr/share/man/cat1/rcsdiff.0
 ./usr/share/man/cat1/rcsfreeze.0
@@ -1093,6 +1095,7 @@
 ./usr/share/man/cat4/gtp.0
 ./usr/share/man/cat4/hifn.0
 ./usr/share/man/cat4/hil.0
+./usr/share/man/cat4/hilid.0
 ./usr/share/man/cat4/hilkbd.0
 ./usr/share/man/cat4/hilms.0
 ./usr/share/man/cat4/hme.0
