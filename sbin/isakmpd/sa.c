@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.8 1999/03/02 15:48:23 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.67 1999/03/02 15:42:57 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.9 1999/03/24 14:41:17 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.68 1999/03/24 11:04:55 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -427,14 +427,13 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
 
   proto->no = GET_ISAKMP_PROP_NO (prop->p);
   proto->proto = GET_ISAKMP_PROP_PROTO (prop->p);
-  proto->spi_sz[!initiator] = GET_ISAKMP_PROP_SPI_SZ (prop->p);
-  if (proto->spi_sz[!initiator])
+  proto->spi_sz[0] = GET_ISAKMP_PROP_SPI_SZ (prop->p);
+  if (proto->spi_sz[0])
     {
-      proto->spi[!initiator] = malloc (proto->spi_sz[!initiator]);
-      if (!proto->spi[!initiator])
+      proto->spi[0] = malloc (proto->spi_sz[0]);
+      if (!proto->spi[0])
 	goto cleanup;
-      memcpy (proto->spi[!initiator], prop->p + ISAKMP_PROP_SPI_OFF,
-	      proto->spi_sz[!initiator]);
+      memcpy (proto->spi[0], prop->p + ISAKMP_PROP_SPI_OFF, proto->spi_sz[0]);
     }
   proto->chosen = xf;
   proto->sa = sa;
