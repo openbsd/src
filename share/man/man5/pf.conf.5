@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.92 2002/10/07 12:39:29 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.93 2002/10/09 14:37:01 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -231,14 +231,51 @@ Example:
 .Bd -literal
     set optimization aggressive
 .Ed
+.Ss block-policy
+The
+.Em block-policy
+option sets the default behaviour for the
+.Em block
+action:
+.Bl -tag -width return -compact
+.It Em drop
+Packet is dropped silently
+.It Em return
+TCP packets are dropped with a TCP RST, UDP packets are dropped with an
+ICMP UNREACHABLE, and all other packets are dropped silently.
+.El
+Example:
+.Bd -literal
+    set block-policy return
+.Ed
 .Sh ACTIONS
 .Bl -tag -width Fl
 .It Em block
 The packet is blocked.
-Optionally, the filter can return a TCP RST or ICMP UNREACHABLE packet
-to the sender, where applicable.
-Returning ICMP packets can have
-an ICMP code set by number or name, TCP RST can have a TTL set.
+There are a number of ways in which a
+.Em block
+rule can behave when blocking a packet. The default behaviour is to
+.Em drop
+packets silently, however this can be overridden or made explicit
+globally by setting the 
+.Em block-policy
+option, or on a per-rule basis with the following options: 
+.Pp
+.Bl -tag -width "return-icmp6" -compact -offset indent
+.It Em  drop
+the packet is silently dropped.
+.It Em return-rst
+applies only to tcp packets, and issues a TCP RST which closes the
+connection.
+.It Em return-icmp
+.It Em return-icmp6
+return ICMP messages for packets which match the rule.
+By default this is an ICMP UNREACHABLE message, however the type 
+of message can be overridden by specifying it as a code or number.
+.It Em return
+returns a TCP RST for tcp packets, an ICMP UNREACHABLE for UDP packets,
+and silently drops all other packets.
+.El
 .It Em pass
 The packet is passed.
 .It Em scrub
@@ -1020,7 +1057,8 @@ option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
 				"high-latency" | "satellite" | 
 				"aggressive" | "conservative" ] ]
                        [ "limit" ( limit | "{" limit-list "}" ) ] |
-                       [ "loginterface" ( interface-name | "none" ) ] ) .
+                       [ "loginterface" ( interface-name | "none" ) ] | .
+                       [ "block-policy" ( "drop" | "return" ) ] ).
 
 pf_rule        = action ( "in" | "out" )
                  [ "log" | "log-all" ] [ "quick" ]
@@ -1049,11 +1087,13 @@ antispoof_rule = "antispoof" [ "log" ] [ "quick" ]
 		 [ af ] .
 
 action         = "pass" | "block" [ return ] | "scrub" .
-return         = "return-rst" [ "(" "ttl" number ")" ] |
-                 "return-icmp"
-                     [ "(" ( icmp-code-name | icmp-code-number ) ")" ] |
-                 "return-icmp6"
-                     [ "(" ( icmp-code-name | icmp-code-number ) ")" ] .
+return         = "drop" |
+                 "return" |
+                 "return-rst" [ "(" "ttl" number ")" ] |
+                 "return-icmp" [ "(" icmpcode ["," icmp6code ] ")" ] |
+                 "return-icmp6" [ "(" icmp6code ")" ] .
+icmpcode	= ( icmp-code-name | icmp-code-number ) .
+icmp6code	= ( icmp6-code-name | icmp6-code-number ) .
 
 ifspec         = ( [ "!" ] interface-name ) | "{" interface-list "}"
 interface-list = [ "!" ] interface-name [ [ "," ] interface-list ] .
