@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.18 1998/11/12 04:30:03 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.19 1998/11/20 02:42:19 millert Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ ffs_mount(mp, path, data, ndp, p)
                         if (fs->fs_clean == 0) {
                                 if (mp->mnt_flag & MNT_FORCE) {
                                         printf(
-"WARNING: %s was not properly dismounted\n",
+"WARNING: %s was not properly unmounted\n",
                                             fs->fs_fsmnt);
                                 } else {
                                         printf(
@@ -563,7 +563,7 @@ ffs_mountfs(devvp, mp, p)
 		fs->fs_flags |= FS_UNCLEAN;
 		if (ronly || (mp->mnt_flag & MNT_FORCE)) {
 			printf(
-"WARNING: %s was not properly dismounted\n",
+"WARNING: %s was not properly unmounted\n",
 			    fs->fs_fsmnt);
 		} else {
 			printf(
