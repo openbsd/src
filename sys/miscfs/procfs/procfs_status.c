@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_status.c,v 1.6 2003/06/02 23:28:11 millert Exp $	*/
+/*	$OpenBSD: procfs_status.c,v 1.7 2004/03/03 06:28:12 tedu Exp $	*/
 /*	$NetBSD: procfs_status.c,v 1.11 1996/03/16 23:52:50 christos Exp $	*/
 
 /*
@@ -105,18 +105,19 @@ procfs_stat_gen(p, s, l)
 	if (sess->s_ttyvp) {
 		snprintf(ps, sizeof(ps), "%sctty", sep);
 		sep = ",";
+		COUNTORCAT(s, l, ps, n);
 	}
-	COUNTORCAT(s, l, ps, n);
 
 	if (SESS_LEADER(p)) {
 		snprintf(ps, sizeof(ps), "%ssldr", sep);
 		sep = ",";
+		COUNTORCAT(s, l, ps, n);
 	}
-	COUNTORCAT(s, l, ps, n);
 
-	if (*sep != ',')
+	if (*sep != ',') {
 		snprintf(ps, sizeof(ps), "noflags");
-	COUNTORCAT(s, l, ps, n);
+		COUNTORCAT(s, l, ps, n);
+	}
 
 	if (p->p_flag & P_INMEM)
 		snprintf(ps, sizeof(ps), " %ld,%ld",
