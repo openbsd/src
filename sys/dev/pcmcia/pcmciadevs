@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.81 2002/01/04 16:24:49 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.82 2002/01/04 16:26:04 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -288,6 +288,7 @@ product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
 
 /* Socket Communications */
 product SOCKET EA_ETHER		0x0000 Socket Communications EA
+product SOCKET LP_WLAN_CF	0x0001 Socket Communications Low Power WLAN
 product SOCKET PAGECARD		0x0003 Socket Communications PageCard
 product SOCKET DUAL_RS232	0x0006 Socket Communications Dual RS232
 product SOCKET LP_ETHER		0x000d Socket Communications LP-E
