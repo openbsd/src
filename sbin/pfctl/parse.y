@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.460 2004/09/21 16:59:11 aaron Exp $	*/
+/*	$OpenBSD: parse.y,v 1.461 2004/12/04 07:58:51 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -118,8 +118,10 @@ struct node_icmp {
 };
 
 enum	{ PF_STATE_OPT_MAX, PF_STATE_OPT_NOSYNC, PF_STATE_OPT_SRCTRACK,
-	    PF_STATE_OPT_MAX_SRC_STATES, PF_STATE_OPT_MAX_SRC_NODES,
-	    PF_STATE_OPT_STATELOCK, PF_STATE_OPT_TIMEOUT };
+	    PF_STATE_OPT_MAX_SRC_STATES, PF_STATE_OPT_MAX_SRC_CONN,
+	    PF_STATE_OPT_MAX_SRC_CONN_RATE, PF_STATE_OPT_MAX_SRC_NODES,
+	    PF_STATE_OPT_OVERLOAD, PF_STATE_OPT_STATELOCK,
+	    PF_STATE_OPT_TIMEOUT };
 
 enum	{ PF_SRCTRACK_NONE, PF_SRCTRACK, PF_SRCTRACK_GLOBAL, PF_SRCTRACK_RULE };
 
@@ -128,6 +130,16 @@ struct node_state_opt {
 	union {
 		u_int32_t	 max_states;
 		u_int32_t	 max_src_states;
+		u_int32_t	 max_src_conn;
+		struct {
+			u_int32_t	limit;
+			u_int32_t	seconds;
+	
+		}		 max_src_conn_rate;
+		struct {
+			u_int8_t	flush;
+			char		tblname[PF_TABLE_NAME_SIZE];
+		}		 overload;
 		u_int32_t	 max_src_nodes;
 		u_int8_t	 src_track;
 		u_int32_t	 statelock;
@@ -393,13 +405,14 @@ typedef struct {
 %token	QUEUE PRIORITY QLIMIT
 %token	LOAD
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
+%token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH
 %token	TAGGED TAG IFBOUND GRBOUND FLOATING STATEPOLICY
 %token	<v.string>		STRING
 %token	<v.i>			PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number icmptype icmp6type uid gid
 %type	<v.number>		tos not yesno natpass
-%type	<v.i>			no dir log af fragcache sourcetrack
+%type	<v.i>			no dir log af fragcache sourcetrack flush
 %type	<v.i>			unaryop statelock
 %type	<v.b>			action nataction scrubaction
 %type	<v.b>			flags flag blockspec
@@ -1577,7 +1590,7 @@ pfrule		: action dir logquick interface route af proto fromto
 						    "multiple definitions");
 						YYERROR;
 					}
-					if (o->data.max_src_nodes == 0) {
+					if (o->data.max_src_states == 0) {
 						yyerror("'max-src-states' must "
 						    "be > 0");
 						YYERROR;
@@ -1585,6 +1598,68 @@ pfrule		: action dir logquick interface route af proto fromto
 					r.max_src_states =
 					    o->data.max_src_states;
 					r.rule_flag |= PFRULE_SRCTRACK;
+					break;
+				case PF_STATE_OPT_OVERLOAD:
+					if (r.overload_tblname[0]) {
+						yyerror("multiple 'overload' "
+						    "table definitions");
+						YYERROR;
+					}
+					if (strlcpy(r.overload_tblname,
+					    o->data.overload.tblname,
+					    PF_TABLE_NAME_SIZE) >=
+					    PF_TABLE_NAME_SIZE) {
+						yyerror("state option: "
+						    "strlcpy");
+						YYERROR;
+					}
+					if (o->data.overload.flush)
+						r.rule_flag |=
+						    PFRULE_SRCTRACK_FLUSH;
+					break;
+				case PF_STATE_OPT_MAX_SRC_CONN:
+					if (r.max_src_conn) {
+						yyerror("state option "
+						    "'max-src-conn' "
+						    "multiple definitions");
+						YYERROR;
+					}
+					if (o->data.max_src_conn == 0) {
+						yyerror("'max-src-conn' "
+						    "must be > 0");
+						YYERROR;
+					}
+					r.max_src_conn =
+					    o->data.max_src_conn;
+					r.rule_flag |= PFRULE_SRCTRACK |
+					    PFRULE_RULESRCTRACK;
+					break;
+				case PF_STATE_OPT_MAX_SRC_CONN_RATE:
+					if (r.max_src_conn_rate.limit) {
+						yyerror("state option "
+						    "'max-src-conn-rate' "
+						    "multiple definitions");
+						YYERROR;
+					}
+					if (!o->data.max_src_conn_rate.limit ||
+					    !o->data.max_src_conn_rate.seconds) {
+						yyerror("'max-src-conn-rate' "
+						    "values must be > 0");
+						YYERROR;
+					}
+					if (o->data.max_src_conn_rate.limit >
+					    PF_THRESHOLD_MAX) {
+						yyerror("'max-src-conn-rate' "
+						   "maximum rate must be < %u",
+						   PF_THRESHOLD_MAX);
+						YYERROR;
+					}
+					r.max_src_conn_rate.limit =
+					    o->data.max_src_conn_rate.limit;
+					r.max_src_conn_rate.seconds =
+					    o->data.max_src_conn_rate.seconds;
+					r.rule_flag |= PFRULE_SRCTRACK |
+					    PFRULE_RULESRCTRACK;
 					break;
 				case PF_STATE_OPT_MAX_SRC_NODES:
 					if (r.max_src_nodes) {
@@ -1626,7 +1701,7 @@ pfrule		: action dir logquick interface route af proto fromto
 				o = o->next;
 				free(p);
 			}
-			if (srctrack) {
+			if (r.rule_flag & PFRULE_SRCTRACK) {
 				if (srctrack == PF_SRCTRACK_GLOBAL &&
 				    r.max_src_nodes) {
 					yyerror("'max-src-nodes' is "
@@ -1634,6 +1709,24 @@ pfrule		: action dir logquick interface route af proto fromto
 					    "'source-track global'");
 					YYERROR;
 				}
+				if (srctrack == PF_SRCTRACK_GLOBAL &&
+				    r.max_src_nodes) {
+					yyerror("'max-src-conn' is "
+					    "incompatible with "
+					    "'source-track global'");
+					YYERROR;
+				}
+				if (srctrack == PF_SRCTRACK_GLOBAL &&
+				    r.max_src_nodes) {
+					yyerror("'max-src-conn-rate' is "
+					    "incompatible with "
+					    "'source-track global'");
+					YYERROR;
+				}
+				if (r.timeout[PFTM_SRC_NODE] <
+				    r.max_src_conn_rate.seconds)
+					r.timeout[PFTM_SRC_NODE] = 
+					    r.max_src_conn_rate.seconds;
 				r.rule_flag |= PFRULE_SRCTRACK;
 				if (srctrack == PF_SRCTRACK_RULE)
 					r.rule_flag |= PFRULE_RULESRCTRACK;
@@ -2713,6 +2806,10 @@ keep		: KEEP STATE state_opt_spec	{
 		}
 		;
 
+flush		: /* empty */			{ $$ = 0; }
+		| FLUSH				{ $$ = 1; }
+		;
+
 state_opt_spec	: '(' state_opt_list ')'	{ $$ = $2; }
 		| /* empty */			{ $$ = NULL; }
 		;
@@ -2748,6 +2845,41 @@ state_opt_item	: MAXIMUM number		{
 				err(1, "state_opt_item: calloc");
 			$$->type = PF_STATE_OPT_MAX_SRC_STATES;
 			$$->data.max_src_states = $2;
+			$$->next = NULL;
+			$$->tail = $$;
+		}
+		| MAXSRCCONN number			{
+			$$ = calloc(1, sizeof(struct node_state_opt));
+			if ($$ == NULL)
+				err(1, "state_opt_item: calloc");
+			$$->type = PF_STATE_OPT_MAX_SRC_CONN;
+			$$->data.max_src_conn = $2;
+			$$->next = NULL;
+			$$->tail = $$;
+		}
+		| MAXSRCCONNRATE number '/' number	{
+			$$ = calloc(1, sizeof(struct node_state_opt));
+			if ($$ == NULL)
+				err(1, "state_opt_item: calloc");
+			$$->type = PF_STATE_OPT_MAX_SRC_CONN_RATE;
+			$$->data.max_src_conn_rate.limit = $2;
+			$$->data.max_src_conn_rate.seconds = $4;
+		}
+		| OVERLOAD '<' STRING '>' flush		{
+			if (strlen($3) >= PF_TABLE_NAME_SIZE) {
+				yyerror("table name '%s' too long", $3);
+				free($3);
+				YYERROR;
+			}
+			$$ = calloc(1, sizeof(struct node_state_opt));
+			if ($$ == NULL)
+				err(1, "state_opt_item: calloc");
+			if (strlcpy($$->data.overload.tblname, $3,
+			    PF_TABLE_NAME_SIZE) >= PF_TABLE_NAME_SIZE)
+				errx(1, "state_opt_item: strlcpy");
+			free($3);
+			$$->type = PF_STATE_OPT_OVERLOAD;
+			$$->data.overload.flush = $5;
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -4340,6 +4472,7 @@ lookup(char *s)
 		{ "fingerprints",	FINGERPRINTS},
 		{ "flags",		FLAGS},
 		{ "floating",		FLOATING},
+		{ "flush",		FLUSH},
 		{ "for",		FOR},
 		{ "fragment",		FRAGMENT},
 		{ "from",		FROM},
@@ -4364,6 +4497,8 @@ lookup(char *s)
 		{ "loginterface",	LOGINTERFACE},
 		{ "max",		MAXIMUM},
 		{ "max-mss",		MAXMSS},
+		{ "max-src-conn",	MAXSRCCONN},
+		{ "max-src-conn-rate",	MAXSRCCONNRATE},
 		{ "max-src-nodes",	MAXSRCNODES},
 		{ "max-src-states",	MAXSRCSTATES},
 		{ "min-ttl",		MINTTL},
@@ -4378,6 +4513,7 @@ lookup(char *s)
 		{ "optimization",	OPTIMIZATION},
 		{ "os",			OS},
 		{ "out",		OUT},
+		{ "overload",		OVERLOAD},
 		{ "pass",		PASS},
 		{ "port",		PORT},
 		{ "priority",		PRIORITY},

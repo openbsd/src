@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.207 2004/11/09 11:26:04 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.208 2004/12/04 07:58:52 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -34,6 +34,8 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/param.h>
+#include <sys/proc.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -470,6 +472,7 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 }
 
 const char	*pf_reasons[PFRES_MAX+1] = PFRES_NAMES;
+const char	*pf_lcounters[LCNT_MAX+1] = LCNT_NAMES;
 const char	*pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
 const char	*pf_scounters[FCNT_MAX+1] = FCNT_NAMES;
 
@@ -572,6 +575,18 @@ print_status(struct pf_status *s, int opts)
 		else
 			printf("%14s\n", "");
 	}
+	if (opts & PF_OPT_VERBOSE) {
+		printf("Limit Counters\n");
+		for (i = 0; i < LCNT_MAX; i++) {
+			printf("  %-25s %14lld ", pf_lcounters[i],
+				    s->lcounters[i]);
+			if (runtime > 0)
+				printf("%14.1f/s\n",
+				    (double)s->lcounters[i] / (double)runtime);
+			else
+				printf("%14s\n", "");
+		}
+	}
 }
 
 void
@@ -591,7 +606,9 @@ print_src_node(struct pf_src_node *sn, int opts)
 	printf(" -> ");
 	aw.v.a.addr = sn->raddr;
 	print_addr(&aw, sn->af, opts & PF_OPT_VERBOSE2);
-	printf(" (%d states)\n", sn->states);
+	printf(" ( states %u, connections %u, rate %u.%u/%us )\n", sn->states,
+	    sn->conn, sn->conn_rate.count / 1000,
+	    (sn->conn_rate.count % 1000) / 100, sn->conn_rate.seconds);
 	if (opts & PF_OPT_VERBOSE) {
 		sec = sn->creation % 60;
 		sn->creation /= 60;
@@ -836,11 +853,32 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			printf("max-src-states %u", r->max_src_states);
 			opts = 0;
 		}
+		if (r->max_src_conn) {
+			if (!opts)
+				printf(", ");
+			printf("max-src-conn %u", r->max_src_conn);
+			opts = 0;
+		}
+		if (r->max_src_conn_rate.limit) {
+			if (!opts)
+				printf(", ");
+			printf("max-src-conn-rate %u/%u",
+			    r->max_src_conn_rate.limit,
+			    r->max_src_conn_rate.seconds);
+			opts = 0;
+		}
 		if (r->max_src_nodes) {
 			if (!opts)
 				printf(", ");
 			printf("max-src-nodes %u", r->max_src_nodes);
 			opts = 0;
+		}
+		if (r->overload_tblname[0]) {
+			if (!opts)
+				printf(", ");
+			printf("overload <%s>", r->overload_tblname);
+			if (r->rule_flag & PFRULE_SRCTRACK_FLUSH)
+				printf(" flush");
 		}
 		if (r->rule_flag & PFRULE_IFBOUND) {
 			if (!opts)
