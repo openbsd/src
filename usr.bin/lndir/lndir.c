@@ -1,4 +1,4 @@
-/*	$OpenBSD: lndir.c,v 1.11 2002/09/23 04:10:14 millert Exp $	*/
+/*	$OpenBSD: lndir.c,v 1.12 2003/04/10 23:21:57 millert Exp $	*/
 /* $XConsortium: lndir.c /main/15 1995/08/30 10:56:18 gildea $ */
 
 /* 
@@ -47,15 +47,15 @@ in this Software without prior written authorization from the X Consortium.
 	%  lndir ../X
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/stat.h>
+
+#include <dirent.h>
 #include <err.h>
 #include <errno.h>
-#include <dirent.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -136,7 +136,7 @@ equivalent(char *lname, char *rname)
 {
 	char *s;
 
-	if (!strcmp(lname, rname))
+	if (strcmp(lname, rname) == 0)
 		return(1);
 	for (s = lname; *s && (s = strchr(s, '/')); s++) {
 		while (s[1] == '/')
@@ -152,10 +152,10 @@ addexcept(char *name)
 
 	new = (struct except *)malloc(sizeof(struct except));
 	if (new == (struct except *)NULL)
-		err(1, "addexcept");
+		err(1, NULL);
 	new->name = strdup(name);
 	if (new->name == (char *)NULL)
-		err(1, "addexcept");
+		err(1, NULL);
 
 	new->next = exceptions;
 	exceptions = new;
@@ -184,7 +184,7 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 	DIR *df;
 
 	if (fs->st_dev == ts->st_dev && fs->st_ino == ts->st_ino) {
-		warn("%s: From and to directories are identical!", fn);
+		warnx("%s: From and to directories are identical!", fn);
 		return(1);
 	}
 
@@ -306,7 +306,7 @@ next:
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-e except] [-si] fromdir todir\n",
+	(void)fprintf(stderr, "usage: %s [-e except] [-si] fromdir [todir]\n",
 	    __progname);
 	exit(1);
 }
