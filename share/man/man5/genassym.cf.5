@@ -1,4 +1,4 @@
-.\"	$OpenBSD: genassym.cf.5,v 1.5 2003/05/21 09:28:09 jmc Exp $
+.\"	$OpenBSD: genassym.cf.5,v 1.6 2004/02/01 13:13:35 miod Exp $
 .\"	$NetBSD: genassym.cf.5,v 1.8 2001/06/19 12:34:27 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthias Pfaller.
@@ -109,6 +109,12 @@ invoked with an extra argument, as in
 the first argument of member will be prefixed by the remembered prefix, before
 being converted to upper case.
 .Pp
+.Em "union foo"
+.br
+is similar to the
+.Em struct
+command, but applies to an union instead of a struct.
+.Pp
 .Em "config <ctype> <gcc constraint> <asm print modifier>"
 .br
 can be used to customize the output of
@@ -132,3 +138,7 @@ files occurred in
 .Ox 2.2 .
 Its use was generalized to all ports for
 .Ox 3.0 .
+The
+.Em union
+command appeared in
+.Ox 3.5 .

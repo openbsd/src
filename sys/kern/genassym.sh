@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.sh,v 1.10 2003/07/02 00:37:31 avsm Exp $
+#	$OpenBSD: genassym.sh,v 1.11 2004/02/01 13:13:37 miod Exp $
 #	$NetBSD: genassym.sh,v 1.9 1998/04/25 19:48:27 matthias Exp $
 
 #
@@ -94,9 +94,23 @@ $0 ~ /^endif/ {
 	next;
 }
 
+/^union[ \t]/ {
+	structname = $2;
+	prefixname = toupper($3);
+	structtype = "union"
+	if (union[structname] == 1)
+		next;
+	else {
+		union[structname] = 1;
+		$0 = "define " toupper(structname) "_SIZEOF sizeof(union " structname ")";
+	}
+	# fall through
+}
+
 /^struct[ \t]/ {
 	structname = $2;
 	prefixname = toupper($3);
+	structtype = "struct"
 	if (struct[structname] == 1)
 		next;
 	else {
@@ -108,9 +122,9 @@ $0 ~ /^endif/ {
 
 /^member[ \t]/ {
 	if (NF > 2)
-		$0 = "define " prefixname toupper($2) " offsetof(struct " structname ", " $3 ")";
+		$0 = "define " prefixname toupper($2) " offsetof(" structtype " " structname ", " $3 ")";
 	else
-		$0 = "define " prefixname toupper($2) " offsetof(struct " structname ", " $2 ")";
+		$0 = "define " prefixname toupper($2) " offsetof(" structtype " " structname ", " $2 ")";
 	# fall through
 }
 
