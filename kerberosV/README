@@ -1,0 +1,21 @@
+Warning!
+
+This is experimental stuff, don't expect things to work correctly at this
+point. Please contact <hin@openbsd.org> if you have questions about the
+kerberosV stuff.
+
+
+
+Things todo, in no particular order:
+
+ - Make sure to not try krb5 auth when no ticket exists. (same goes for krb4)
+ - kadmind
+ - Other servers
+ - ssh and sshd
+ - Test what happens for a user not using kerberos
+ - Test all combinations of compat stuff between client, kdc and server
+ - Slave propagation k5->k5 and k4->k5
+ - Test how to upgrade a realm from k4 to k5
+ - Test compatibility with other k5 implementations, for example MIT and
+   Windows 2000
+ - Logging
