@@ -17,7 +17,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 .\" SOFTWARE.
 .\"
-.\" $OpenBSD: cron.8,v 1.9 2001/02/18 19:48:31 millert Exp $
+.\" $OpenBSD: cron.8,v 1.10 2001/02/19 00:18:33 millert Exp $
 .\"
 .Dd June 6, 1999
 .Dt CRON 8
@@ -99,10 +99,6 @@ the cron daemon will close and reopen its log file.
 This is useful in scripts which rotate and age log files.  
 Naturally this is not relevant if cron was built to use
 .Xr syslog 3 .
-Sh BUGS
-.Nm
-will behave mysteriously if a system clock is reset backward by more than
-59 seconds.  Smaller steps, or steps forward, are handled correctly.
 .Sh SEE ALSO
 .Xr crontab 1 ,
 .Xr crontab 5
