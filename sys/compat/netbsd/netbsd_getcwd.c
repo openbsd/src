@@ -1,4 +1,4 @@
-/* $OpenBSD: netbsd_getcwd.c,v 1.1 1999/09/12 14:15:16 kstailey Exp $ */
+/* $OpenBSD: netbsd_getcwd.c,v 1.2 1999/09/14 01:05:25 kstailey Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*-
@@ -53,6 +53,7 @@ int proc_isunder __P((struct proc *, struct proc*)); /* missing from proc.h */
 #include <sys/dirent.h>
 #include <ufs/ufs/dir.h>	/* XXX only for DIRBLKSIZ */
 
+#include <compat/netbsd/netbsd_signal.h>
 #include <compat/netbsd/netbsd_syscallargs.h>
 
 static int
