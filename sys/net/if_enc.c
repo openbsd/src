@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.33 2001/04/06 04:42:07 csapuntz Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.34 2001/06/08 04:02:19 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -39,38 +39,26 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/proc.h>
-
-#include <machine/cpu.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 #include <net/route.h>
 #include <net/bpf.h>
 
-#include <netinet/ip_ipsp.h>
 #include <net/if_enc.h>
 
 #ifdef	INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/in_var.h>
-#include <netinet/ip_var.h>
-#include <netinet/ip.h>
 #endif
 
 #ifdef INET6
 #ifndef INET
 #include <netinet/in.h>
 #endif
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #endif /* INET6 */
 
