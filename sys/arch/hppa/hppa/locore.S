@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.118 2003/10/16 03:45:07 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.119 2003/11/07 18:43:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -2761,7 +2761,7 @@ link_ok
 	copy	arg1, t2
 	/*
 	 * Either we must be switching to the same process, or
-	 * the the new process' kernel stack must be reasonable.
+	 * the new process' kernel stack must be reasonable.
 	 */
 	comb,=,n arg1, arg2, kstack_ok
 	ldw     P_MD_REGS(arg1), t1
