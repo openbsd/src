@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.19 2003/03/02 16:09:55 krw Exp $
+#	$OpenBSD: install.md,v 1.20 2003/09/19 02:40:11 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ the Apple software, the "Unused" section must be changed to type "OpenBSD" name
 then be edited normally.
 
 WARNING: the MBR partitioning code will HAPPILY overwrite/destroy any HFS
-	 partitions on the disk, including the partition table. Choose the
+         partitions on the disk, including the partition table. Choose the
          MBR option carefully, knowing this fact.
 __EOT
 
@@ -172,7 +172,7 @@ __EOT
 		case $resp in
 		n*|N*)	md_init_mbr $_disk;;
 		esac
-	;;
+		;;
 	esac
 
 	disklabel -r $_disk > /dev/null 2> /tmp/checkfordisklabel
@@ -270,7 +270,6 @@ md_prep_disklabel() {
 	2)	echo "WARNING: The disklabel on $_disk is invalid."
 		ask "Do you want to try and repair the damage using the disklabel editor?" y
 		;;
-
 	esac
 
 	case $resp in
