@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.28 2004/08/05 19:57:17 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.29 2004/08/17 18:23:49 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1597,7 +1597,7 @@ bge_attach(parent, self, aux)
 	/*
 	 * A Broadcom chip was detected. Inform the world.
 	 */
-	printf(": address: %s\n",
+	printf(" address %s\n",
 	    ether_sprintf(sc->arpcom.ac_enaddr));
 
 	/* Allocate the general information block and ring buffers. */
