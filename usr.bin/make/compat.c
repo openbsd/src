@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.16 1999/12/16 17:27:18 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.17 1999/12/16 17:31:51 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.16 1999/12/16 17:27:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.17 1999/12/16 17:31:51 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -350,8 +350,10 @@ CompatRunCommand (cmdp, gnp)
     if (cpid == 0) {
 	if (local) {
 	    execvp(av[0], av);
-	    (void) write (2, av[0], strlen (av[0]));
-	    (void) write (2, ": not found\n", sizeof(": not found"));
+	    if (errno == ENOENT)
+	    	fprintf(stderr, "%s: not found\n", av[0]);
+	    else
+		perror(av[0]);
 	} else {
 	    (void)execv(av[0], av);
 	}
