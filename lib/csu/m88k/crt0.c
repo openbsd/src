@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.5 1997/07/23 20:39:32 kstailey Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.1 2001/06/26 22:42:55 miod Exp $	*/
 
 /*   
  *   Mach Operating System
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.5 1997/07/23 20:39:32 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.1 2001/06/26 22:42:55 miod Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* 

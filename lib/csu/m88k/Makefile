@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2001/03/24 18:40:21 tholo Exp $
+#	$OpenBSD: Makefile,v 1.1 2001/06/26 22:42:55 miod Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
 
 CFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/..
