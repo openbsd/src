@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.25 1997/10/25 04:35:53 deraadt Exp $
+#	$OpenBSD: install.md,v 1.26 1997/10/29 21:43:22 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -128,8 +128,8 @@ swap space.  In the normal case it should be the only partition marked as
 active.  (Unless you are using a multiple-OS booter, but you can adjust that
 later.)  Furthermore, the MBR partitions must NOT overlap each other.
 [If this is a new install, you are most likely going to want to type the
-following fdisk commands: reinit, update, write, quit.]
-The current partition information is:
+following fdisk commands: reinit, update, write, quit. Use the 'manual'
+command to read a full description.]  The current partition information is:
 
 __md_prep_fdisk_1
 	fdisk ${_disk}
