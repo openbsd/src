@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.21 1999/07/20 12:50:33 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.22 1999/12/07 01:10:29 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2289,8 +2289,6 @@ tn(argc, argv)
 
     if (connected) {
 	printf("?Already connected to %s\r\n", hostname);
-	seteuid(getuid());
-	setuid(getuid());
 	return 0;
     }
     if (argc < 2) {
@@ -2340,8 +2338,6 @@ tn(argc, argv)
 	}
     usage:
 	printf("usage: %s [-l user] [-a] host-name [port]\r\n", cmd);
-	seteuid(getuid());
-	setuid(getuid());
 	return 0;
     }
     if (hostp == 0)
@@ -2356,13 +2352,9 @@ tn(argc, argv)
 	temp = sourceroute(hostp, &srp, &srlen);
 	if (temp == 0) {
 	    herror(srp);
-	    seteuid(getuid());
-	    setuid(getuid());
 	    return 0;
 	} else if (temp == -1) {
 	    printf("Bad source route option: %s\r\n", hostp);
-	    seteuid(getuid());
-	    setuid(getuid());
 	    return 0;
 	} else {
 	    abort();
@@ -2425,8 +2417,6 @@ tn(argc, argv)
 		    hostname = _hostname;
 		} else {
 		    herror(hostp);
-		    seteuid(getuid());
-		    setuid(getuid());
 		    return 0;
 		}
 	    }
@@ -2446,8 +2436,6 @@ tn(argc, argv)
 		port = sp->s_port;
 	    else {
 		printf("%s: bad port number\r\n", portp);
-		seteuid(getuid());
-		setuid(getuid());
 		return 0;
 	    }
 	} else {
@@ -2458,8 +2446,6 @@ tn(argc, argv)
 	    sp = getservbyname("telnet", "tcp");
 	    if (sp == 0) {
 		fprintf(stderr, "telnet: tcp/telnet: unknown service\r\n");
-		seteuid(getuid());
-		setuid(getuid());
 		return 0;
 	    }
 	    port = sp->s_port;
@@ -2495,8 +2481,6 @@ tn(argc, argv)
 
     do {
 	net = socket(family, SOCK_STREAM, 0);
-	seteuid(getuid());
-	setuid(getuid());
 	if (net < 0) {
 	    perror("telnet: socket");
 	    return 0;
