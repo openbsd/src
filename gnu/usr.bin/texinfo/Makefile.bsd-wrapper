@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.30 2000/02/09 02:18:36 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.31 2000/02/15 19:40:23 espie Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -34,13 +34,13 @@ config: .FORCE
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	CFLAGS="${CFLAGS} ${COPTS}" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		/bin/sh ${.CURDIR}/configure --prefix=/usr --disable-nls ${CF}
+		/bin/sh ${.CURDIR}/configure --infodir=/usr/share/info --prefix=/usr --disable-nls ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	CFLAGS="${CFLAGS} ${COPTS}" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		/bin/sh ${.CURDIR}/configure --prefix=/usr --disable-nls ${CF}
+		/bin/sh ${.CURDIR}/configure --infodir=/usr/share/info --prefix=/usr --disable-nls ${CF}
 
 .ifdef NOMAN
 maninstall:
