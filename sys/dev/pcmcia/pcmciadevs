@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.83 2002/01/04 17:41:44 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.84 2002/03/28 16:45:52 provos Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -215,6 +215,7 @@ product LINKSYS ETHERFAST	0x0230 Linksys Etherfast 10/100 Ethernet
 product LINKSYS ECARD_1		0x0265 Linksys EthernetCard or D-Link DE-650
 product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
 product LINKSYS2 IWN		0x1612 Instant Wireless Network
+product LINKSYS2 IWN2		0x1613 Instant Wireless Network
 
 /* Lucent WaveLAN/IEEE */
 product LUCENT WAVELAN_IEEE	0x0002 WaveLAN/IEEE
