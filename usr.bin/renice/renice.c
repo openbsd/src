@@ -1,4 +1,4 @@
-/*	$OpenBSD: renice.c,v 1.3 1997/06/20 10:02:31 deraadt Exp $	*/
+/*	$OpenBSD: renice.c,v 1.4 1998/12/20 01:13:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: renice.c,v 1.3 1997/06/20 10:02:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: renice.c,v 1.4 1998/12/20 01:13:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,8 +67,8 @@ main(argc, argv)
 
 	argc--, argv++;
 	if (argc < 2) {
-		fprintf(stderr, "usage: renice priority [ [ -p ] pids ] ");
-		fprintf(stderr, "[ [ -g ] pgrps ] [ [ -u ] users ]\n");
+		fprintf(stderr, "usage: renice priority [[-p] pid ...] ");
+		fprintf(stderr, "[[-g] pgrp ...] [[-u] user ...]\n");
 		exit(1);
 	}
 	prio = atoi(*argv);
