@@ -1,8 +1,8 @@
-/*	$OpenBSD: irongate_bus_mem.c,v 1.3 2001/04/17 14:53:33 art Exp $	*/
-/* $NetBSD: irongate_bus_mem.c,v 1.6 2000/11/29 06:29:10 thorpej Exp $ */
+/*	$OpenBSD: irongate_bus_mem.c,v 1.4 2001/04/18 10:31:03 art Exp $	*/
+/* $NetBSD: irongate_bus_mem.c,v 1.7 2001/04/17 21:52:00 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,12 +68,15 @@ __asm(".arch ev6");
 
 #include <sys/kcore.h>
 
+#include <dev/isa/isareg.h>
+
 extern phys_ram_seg_t mem_clusters[];
 extern int mem_cluster_cnt;
 
 void
 irongate_bus_mem_init2(bus_space_tag_t t, void *v)
 {
+	u_long size, start, end;
 	int i, error;
 
 	/*
@@ -81,16 +84,57 @@ irongate_bus_mem_init2(bus_space_tag_t t, void *v)
 	 * allocate RAM out of the extent map.
 	 */
 	for (i = 0; i < mem_cluster_cnt; i++) {
-		u_quad_t size;
-
+		start = mem_clusters[i].start;
 		size = mem_clusters[i].size & ~PAGE_MASK;
+		end = mem_clusters[i].start + size;
 
-		error = extent_alloc_region(CHIP_MEM_EXTENT(v),
-		    mem_clusters[i].start, size,
-		    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
-		if (error) {
-			printf("WARNING: unable to reserve RAM at 0x%lx - 0x%lx (%d)\n",
-			    mem_clusters[i].start, size, error);
+		if (start <= IOM_BEGIN && end >= IOM_END) {
+			/*
+			 * The ISA hole lies somewhere in this
+			 * memory cluster.  The UP1000 firmware
+			 * doesn't report this to us properly,
+			 * so we have to cope, since devices are
+			 * mapped into the ISA hole, but RAM is
+			 * not.
+			 *
+			 * Sigh, the UP1000 is a really cool machine,
+			 * but it is sometimes too PC-like for my
+			 * taste.
+			 */
+			if (start < IOM_BEGIN) {
+				error = extent_alloc_region(CHIP_MEM_EXTENT(v),
+				    start, (IOM_BEGIN - start),
+				    EX_NOWAIT |
+				    (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+				if (error) {
+					printf("WARNING: unable to reserve "
+					    "chunk from mem cluster %d "
+					    "(0x%lx - 0x%lx)\n", i,
+					    start, (u_long) IOM_BEGIN - 1);
+				}
+			}
+			if (end > IOM_END) {
+				error = extent_alloc_region(CHIP_MEM_EXTENT(v),
+				    IOM_END, (end - IOM_END),
+				    EX_NOWAIT |
+				    (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+				if (error) {
+					printf("WARNING: unable to reserve "
+					    "chunk from mem cluster %d "
+					    "(0x%lx - 0x%lx)\n", i,
+					    (u_long) IOM_END, end - 1);
+				}
+			}
+		} else {
+			error = extent_alloc_region(CHIP_MEM_EXTENT(v),
+			    start, size,
+			    EX_NOWAIT |
+			    (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+			if (error) {
+				printf("WARNING: unable reserve mem cluster %d "
+				    "(0x%lx - 0x%lx)\n", i, start,
+				    start + (size - 1));
+			}
 		}
 	}
 }
