@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.13 1997/05/18 13:00:12 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.14 1997/06/08 17:38:29 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -265,7 +265,7 @@ vndgetdisklabel(dev, sc)
 	lp->d_secsize = 512;
 	lp->d_ntracks = 1;
 	lp->d_nsectors = 100;
-	lp->d_ncylinders = 100;
+	lp->d_ncylinders = sc->sc_size / 100;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 	if (lp->d_secpercyl == 0) {
 		lp->d_secpercyl = 100;
@@ -275,7 +275,7 @@ vndgetdisklabel(dev, sc)
 	strncpy(lp->d_typename, "vnd device", 16);
 	lp->d_type = DTYPE_SCSI;
 	strncpy(lp->d_packname, "fictitious", 16);
-	lp->d_secperunit = 100 * 100;
+	lp->d_secperunit = sc->sc_size;
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
