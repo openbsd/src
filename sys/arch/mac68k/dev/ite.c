@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.13 1997/04/08 04:41:26 briggs Exp $	*/
+/*	$OpenBSD: ite.c,v 1.14 1997/04/14 01:00:35 briggs Exp $	*/
 /*	$NetBSD: ite.c,v 1.32 1997/02/20 00:23:25 scottr Exp $	*/
 
 /*
@@ -177,6 +177,8 @@ struct tty	*ite_tty;		/* Our tty */
 static void	(*putpixel) __P((int x, int y, int *c, int num));
 static void	(*reversepixel) __P((int x, int y, int num));
 
+/* For capslock key functionality */
+#define isealpha(ch)  (((ch)>='A'&&(ch)<='Z')||((ch)>='a'&&(ch)<='z')||((ch)>=0xC0&&(ch)<=0xFF))
 
 /*
  * Bitmap handling functions
@@ -1146,7 +1148,7 @@ itestop(struct tty * tp, int flag)
 int
 ite_intr(adb_event_t * event)
 {
-	static int shift = 0, control = 0;
+	static int shift = 0, control = 0, capslock = 0;
 	int key, press, val, state;
 	char str[10], *s;
 
@@ -1156,6 +1158,8 @@ ite_intr(adb_event_t * event)
 
 	if (val == ADBK_SHIFT)
 		shift = press;
+	else if (val == ADBK_CAPSLOCK)
+		capslock = !capslock;
 	else if (val == ADBK_CONTROL)
 		control = press;
 	else if (press) {
@@ -1186,6 +1190,8 @@ ite_intr(adb_event_t * event)
 			break;
 		default:
 			state = 0;
+			if (capslock && isealpha(keyboard[val][1])) {
+				state = 1;
 			if (shift)
 				state = 1;
 			if (control)
