@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.4 1996/03/19 21:10:49 mickey Exp $	*/
+/*	$OpenBSD: types.h,v 1.5 1996/03/23 19:13:11 tholo Exp $	*/
 /*	$NetBSD: types.h,v 1.24 1995/12/29 01:15:13 jtc Exp $	*/
 
 /*-
@@ -58,15 +58,6 @@ typedef	unsigned long	u_long;
 typedef	unsigned short	ushort;		/* Sys V compatibility */
 typedef	unsigned int	uint;		/* Sys V compatibility */
 #endif
-
-#ifdef	_KERNEL
-/*
- * Boolean data type for use only kernel
- */
-typedef	int	boolean_t;
-#define	TRUE	1
-#define	FALSE	0
-#endif	/* _KERNEL */
 
 typedef	u_int64_t	u_quad_t;	/* quads */
 typedef	int64_t		quad_t;
