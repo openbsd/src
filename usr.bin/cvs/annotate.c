@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.3 2004/12/21 18:32:09 jfb Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.4 2005/01/13 16:32:46 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -54,18 +54,22 @@ int  cvs_annotate_prune (CVSFILE *, void *);
 int
 cvs_annotate(int argc, char **argv)
 {
-	int i, ch, flags;
+	int i, ch, flags, usehead;
 	char *date, *rev;
 	struct cvsroot *root;
 
+	usehead = 0;
 	date = NULL;
 	rev = NULL;
 	flags = CF_SORT|CF_RECURSE|CF_IGNORE|CF_NOSYMS;
 
-	while ((ch = getopt(argc, argv, "D:FflRr:")) != -1) {
+	while ((ch = getopt(argc, argv, "D:flRr:")) != -1) {
 		switch (ch) {
 		case 'D':
 			date = optarg;
+			break;
+		case 'f':
+			usehead = 1;
 			break;
 		case 'l':
 			flags &= ~CF_RECURSE;
@@ -74,10 +78,17 @@ cvs_annotate(int argc, char **argv)
 			flags |= CF_RECURSE;
 			break;
 		case 'r':
+			rev = optarg;
 			break;
 		default:
 			return (EX_USAGE);
 		}
+	}
+
+	if ((date != NULL) && (rev != NULL)) {
+		cvs_log(LP_ERR,
+		    "the -D and -d arguments are mutually exclusive");
+		return (EX_USAGE);
 	}
 
 	argc -= optind;
@@ -104,6 +115,8 @@ cvs_annotate(int argc, char **argv)
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if (cvs_connect(root) < 0)
+			return (EX_PROTOCOL);
+		if (usehead && (cvs_sendarg(root, "-f", 0) < 0))
 			return (EX_PROTOCOL);
 		if (rev != NULL) {
 			if ((cvs_sendarg(root, "-r", 0) < 0) ||
