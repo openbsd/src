@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1996/06/17 06:57:05 downsj Exp $
+#	$OpenBSD: Makefile,v 1.6 1996/09/20 08:25:01 deraadt Exp $
 #	$NetBSD: Makefile,v 1.18 1995/10/17 16:34:04 cgd Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
@@ -16,7 +16,7 @@ CFLAGS+= -D${MACHINE}
 CFLAGS+= -DNUMBOOT=2 -DDOSLABEL
 .endif
 
-.if (${MACHINE} == "pica")
+.if (${MACHINE} == "arc")
 CFLAGS+= -DDOSLABEL
 .endif
 
