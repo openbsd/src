@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.23 2002/04/29 22:58:18 mickey Exp $
+#	$OpenBSD: inter.phone,v 1.24 2002/05/01 15:32:57 mickey Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -612,7 +612,6 @@
 43:512:Innsbruck:Austria
 43:662:Salzburg:Austria
 43:732:Linz:Austria
-45:3:Copenhagen:Denmark
 # UK numbers taken from http://www.warwick.ac.uk/search/Phones/nng.html
 # UK Telephone National Number Group Codes
 # Created: Mon Sep 17 14:56:48 2001
@@ -9219,6 +9218,7 @@
 44:996:Broadband Services:United Kingdom
 44:997:Broadband Services:United Kingdom
 44:998:Broadband Services:United Kingdom
+45:3:Copenhagen:Denmark
 45:6:Aarhus:Denmark
 45:8:Aalborg:Denmark
 45:9:Odense:Denmark
