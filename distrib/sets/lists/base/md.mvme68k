@@ -680,6 +680,13 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/z8530reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/z8530sc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/z8536reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ieee1394
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ieee1394/fwnodereg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ieee1394/fwnodevar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ieee1394/fwohcireg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ieee1394/fwohcivar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ieee1394/ieee1394reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ieee1394/ieee1394var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/ad1848var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/ahareg.ph
@@ -977,6 +984,9 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/stp4020reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/uperf_sbusreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sequencervar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/std
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/std/ieee1212reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/std/ieee1212var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun/disklabel.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun/event_var.ph
