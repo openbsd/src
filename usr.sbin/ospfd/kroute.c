@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.4 2005/02/24 16:28:43 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.5 2005/03/07 10:28:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -99,13 +99,24 @@ int		dispatch_rtmsg(void);
 int		fetchtable(void);
 int		fetchifs(int);
 
-RB_HEAD(kroute_tree, kroute_node)	kroute_tree, krt;
+RB_HEAD(kroute_tree, kroute_node)	krt;
 RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare)
 RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare)
 
-RB_HEAD(kif_tree, kif_node)		kif_tree, kit;
+RB_HEAD(kif_tree, kif_node)		kit;
 RB_PROTOTYPE(kif_tree, kif_node, entry, kif_compare)
 RB_GENERATE(kif_tree, kif_node, entry, kif_compare)
+
+int
+kif_init(void)
+{
+	RB_INIT(&kit);
+
+	if (fetchifs(0) == -1)
+		return (-1);
+
+	return (0);
+}
 
 int
 kr_init(int fs)
@@ -128,10 +139,6 @@ kr_init(int fs)
 	kr_state.rtseq = 1;
 
 	RB_INIT(&krt);
-	RB_INIT(&kit);
-
-	if (fetchifs(0) == -1)
-		return (-1);
 
 	if (fetchtable() == -1)
 		return (-1);
@@ -139,7 +146,8 @@ kr_init(int fs)
 	if (protect_lo() == -1)
 		return (-1);
 
-	event_set(&kr_state.ev, kr_state.fd, EV_READ, kr_dispatch_msg, NULL);
+	event_set(&kr_state.ev, kr_state.fd, EV_READ | EV_PERSIST,
+	    kr_dispatch_msg, NULL);
 	event_add(&kr_state.ev, NULL);
 
 	return (0);
@@ -377,6 +385,18 @@ kif_find(int ifindex)
 	return (RB_FIND(kif_tree, &kit, &s));
 }
 
+struct kif *
+kif_findname(char *ifname)
+{
+	struct kif_node	*kif;
+
+	RB_FOREACH(kif, kif_tree, &kit)
+		if (!strcmp(ifname, kif->k.ifname))
+			return (&kif->k);
+
+	return (NULL);
+}
+
 int
 kif_insert(struct kif_node *kif)
 {
@@ -588,13 +608,12 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	kif->k.media_type = ifd->ifi_type;
 	kif->k.baudrate = ifd->ifi_baudrate;
 
-	main_imsg_compose_ospfe(IMSG_IFINFO, 0, &kif->k, sizeof(kif->k));
-
 	if ((reachable = (flags & IFF_UP) &&
 	    (ifd->ifi_link_state != LINK_STATE_DOWN)) == kif->k.nh_reachable)
 		return;		/* nothing changed wrt nexthop validity */
 
 	kif->k.nh_reachable = reachable;
+	main_imsg_compose_ospfe(IMSG_IFINFO, 0, &kif->k, sizeof(kif->k));
 
 	LIST_FOREACH(kkr, &kif->kroute_l, entry) {
 		/*
@@ -851,9 +870,9 @@ fetchifs(int ifindex)
 		kif->k.link_state = ifm.ifm_data.ifi_link_state;
 		kif->k.media_type = ifm.ifm_data.ifi_type;
 		kif->k.baudrate = ifm.ifm_data.ifi_baudrate;
+		kif->k.mtu = ifm.ifm_data.ifi_mtu;
 		kif->k.nh_reachable = (kif->k.flags & IFF_UP) &&
 		    (ifm.ifm_data.ifi_link_state != LINK_STATE_DOWN);
-
 		if ((sa = rti_info[RTAX_IFP]) != NULL)
 			if (sa->sa_family == AF_LINK) {
 				sdl = (struct sockaddr_dl *)sa;

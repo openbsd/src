@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.6 2005/02/10 14:05:48 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.7 2005/03/07 10:28:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -134,6 +134,7 @@ struct nbr {
 	u_int32_t		 ls_req_cnt;
 
 	int			 state;
+	u_int8_t		 link_state;
 	u_int8_t		 priority;
 	u_int8_t		 options;
 	u_int8_t		 last_rx_options;
@@ -177,7 +178,7 @@ void		 orig_net_lsa(struct iface *);
 /* interface.c */
 int		 if_fsm(struct iface *, enum iface_event);
 
-struct iface	*if_new(char *, unsigned int);
+struct iface	*if_new(struct kif *);
 int		 if_del(struct iface *);
 int		 if_init(struct ospfd_conf *);
 int		 if_shutdown(struct ospfd_conf *);

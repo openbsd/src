@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.8 2005/02/27 08:21:15 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.9 2005/03/07 10:28:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -250,13 +250,15 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 				fatalx("IFINFO imsg with wrong len");
 			kif = imsg.data;
 
-			log_debug("ospfe_dispatch_main: ifindex %d changed",
-			    kif->ifindex);
-
 			LIST_FOREACH(area, &oeconf->area_list, entry) {
 				LIST_FOREACH(iface, &area->iface_list, entry) {
 					if (kif->ifindex == iface->ifindex) {
-						if (kif->flags & IFF_UP) {
+						iface->flags = kif->flags;
+						iface->linkstate =
+						    kif->link_state;
+						if ((kif->flags & IFF_UP) &&
+						    (kif->link_state !=
+						     LINK_STATE_DOWN)) {
 							if_fsm(iface,
 							    IF_EVT_UP);
 						} else {
@@ -266,7 +268,6 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 					}
 				}
 			}
-
 			break;
 		case IMSG_CTL_END:
 			log_debug("ospfe_dispatch_main: IMSG_CTL_END");

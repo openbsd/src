@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.6 2005/02/27 08:21:15 norby Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.7 2005/03/07 10:28:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -140,6 +140,9 @@ main(int argc, char *argv[])
 	}
 
 	log_init(debug);
+
+	/* fetch interfaces early */
+	kif_init();
 
 	/* parse config file */
 	if ((conf = parse_config(conffile, OSPFD_OPT_VERBOSE)) == NULL )

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.9 2005/02/16 15:23:33 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.10 2005/03/07 10:28:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -109,7 +109,7 @@ if_fsm(struct iface *iface, enum iface_event event)
 		/* XXX event outside of the defined fsm, ignore it. */
 		log_debug("fsm_if: interface %s, "
 		    "event %s not expected in state %s", iface->name,
-		    nbr_event_name(event), if_state_name(old_state));
+		    if_event_name(event), if_state_name(old_state));
 		return (0);
 	}
 
@@ -150,15 +150,15 @@ if_fsm(struct iface *iface, enum iface_event event)
 }
 
 struct iface *
-if_new(char *name, unsigned int idx)
+if_new(struct kif *kif)
 {
 	struct sockaddr_in	*sain;
-	struct iface		*iface = NULL;
+	struct iface		*iface;
 	struct ifreq		*ifr;
 	int			 s;
 
 	if ((iface = calloc(1, sizeof(*iface))) == NULL)
-		errx(1, "if_new: calloc");
+		err(1, "if_new: calloc");
 
 	iface->state = IF_STA_DOWN;
 	iface->passive = true;
@@ -168,54 +168,49 @@ if_new(char *name, unsigned int idx)
 
 	evtimer_set(&iface->lsack_tx_timer, ls_ack_tx_timer, iface);
 
-	strlcpy(iface->name, name, sizeof(iface->name));
+	strlcpy(iface->name, kif->ifname, sizeof(iface->name));
 
 	if ((ifr = calloc(1, sizeof(*ifr))) == NULL)
-		errx(1, "if_new: calloc");
+		err(1, "if_new: calloc");
 
 	/* set up ifreq */
-	strlcpy(ifr->ifr_name, name, sizeof(ifr->ifr_name));
+	strlcpy(ifr->ifr_name, kif->ifname, sizeof(ifr->ifr_name));
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-		errx(1, "if_new: socket");
+		err(1, "if_new: socket");
 
+	
 	/* get type */
-	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)ifr) < 0)
-		errx(1, "if_new: cannot get type");
-	if ((ifr->ifr_flags & IFF_POINTOPOINT))
+	if ((kif->flags & IFF_POINTOPOINT))
 		iface->type = IF_TYPE_POINTOPOINT;
-
-	if ((ifr->ifr_flags & IFF_BROADCAST) &&
-	    (ifr->ifr_flags & IFF_MULTICAST))
+	if ((kif->flags & IFF_BROADCAST) &&
+	    (kif->flags & IFF_MULTICAST))
 		iface->type = IF_TYPE_BROADCAST;
 
-	iface->flags = ifr->ifr_flags;
+	/* get mtu, index and flags */
+	iface->mtu = kif->mtu;
+	iface->ifindex = kif->ifindex;
+	iface->flags = kif->flags;
+	iface->linkstate = kif->link_state;
 
 	/* get address */
 	if (ioctl(s, SIOCGIFADDR, (caddr_t)ifr) < 0)
-		errx(1, "if_new: cannot get address");
+		err(1, "if_new: cannot get address");
 	sain = (struct sockaddr_in *) &ifr->ifr_addr;
 	iface->addr = sain->sin_addr;
 
 	/* get mask */
 	if (ioctl(s, SIOCGIFNETMASK, (caddr_t)ifr) < 0)
-		errx(1, "if_new: cannot get mask");
+		err(1, "if_new: cannot get mask");
 	sain = (struct sockaddr_in *) &ifr->ifr_addr;
 	iface->mask = sain->sin_addr;
 
 	/* get p2p dst address */
 	if (iface->type == IF_TYPE_POINTOPOINT) {
 		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)ifr) < 0)
-			errx(1, "if_new: cannot get dst addr");
+			err(1, "if_new: cannot get dst addr");
 		sain = (struct sockaddr_in *) &ifr->ifr_addr;
 		iface->dst = sain->sin_addr;
 	}
-
-	/* get mtu */
-	if (ioctl(s, SIOCGIFMTU, (caddr_t)ifr) < 0)
-		errx(1, "if_new: cannot get mtu");
-
-	iface->mtu = ifr->ifr_mtu;
-	iface->ifindex = idx;
 
 	/* set event handlers for interface */
 	evtimer_set(&iface->hello_timer, if_hello_timer, iface);
@@ -374,8 +369,16 @@ if_act_start(struct iface *iface)
 		return (-1);
 	}
 
+	if (!((iface->flags & IFF_UP) &&
+	    (iface->linkstate != LINK_STATE_DOWN))) {
+		log_debug("if_act_start: interface %s link down",
+		    iface->name);
+		return (0);
+	}
+
 	/* init the dummy local neighbor */
-	iface->self = nbr_new(ospfe_router_id(), iface, 1);
+	if (iface->self == NULL)
+		iface->self = nbr_new(ospfe_router_id(), iface, 1);
 
 	/* up interface */
 		/* ... */
@@ -598,11 +601,6 @@ if_act_reset(struct iface *iface)
 			log_debug("if_act_reset: error killing neighbor %s",
 			    inet_ntoa(nbr->id));
 		}
-	}
-
-	while ((nbr = LIST_FIRST(&iface->nbr_list))) {
-		LIST_REMOVE(nbr, entry);
-		nbr_del(nbr);
 	}
 
 	iface->dr = NULL;

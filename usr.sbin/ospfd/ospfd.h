@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.11 2005/02/27 08:21:15 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.12 2005/03/07 10:28:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -310,19 +310,20 @@ struct ospfd_conf {
 /* kroute */
 struct kroute {
 	struct in_addr	prefix;
-	u_int8_t	prefixlen;
 	struct in_addr	nexthop;
 	u_int16_t	flags;
 	u_short		ifindex;
+	u_int8_t	prefixlen;
 };
 
 struct kif {
-	u_short			 ifindex;
-	int			 flags;
 	char			 ifname[IF_NAMESIZE];
+	u_long			 baudrate;
+	int			 flags;
+	int			 mtu;
+	u_short			 ifindex;
 	u_int8_t		 media_type;
 	u_int8_t		 link_state;
-	u_long			 baudrate;
 	u_int8_t		 nh_reachable;	/* for nexthop verification */
 };
 
@@ -421,16 +422,18 @@ int		 in_cksum(void *, int);
 u_int16_t	 iso_cksum(void *, u_int16_t, u_int16_t);
 
 /* kroute.c */
-int	kr_init(int);
-int	kr_change(struct kroute *);
-int	kr_delete(struct kroute *);
-void	kr_shutdown(void);
-void	kr_fib_couple(void);
-void	kr_fib_decouple(void);
-void	kr_dispatch_msg(int, short, void *);
-int	kr_nexthop_add(struct in_addr);
-void	kr_nexthop_delete(struct in_addr);
-void	kr_show_route(struct imsg *);
-void	kr_ifinfo(char *);
+int		 kif_init(void);
+int		 kr_init(int);
+int		 kr_change(struct kroute *);
+int		 kr_delete(struct kroute *);
+void		 kr_shutdown(void);
+void		 kr_fib_couple(void);
+void		 kr_fib_decouple(void);
+void		 kr_dispatch_msg(int, short, void *);
+int		 kr_nexthop_add(struct in_addr);
+void		 kr_nexthop_delete(struct in_addr);
+void		 kr_show_route(struct imsg *);
+void		 kr_ifinfo(char *);
+struct kif	*kif_findname(char *);
 
 #endif	/* _OSPFD_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2005/02/27 08:21:15 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.6 2005/03/07 10:28:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -85,7 +85,7 @@ int			 symset(const char *, const char *, int);
 char			*symget(const char *);
 int			 atoul(char *, u_long *);
 struct area		*conf_get_area(struct in_addr);
-struct iface		*conf_get_if(char *, unsigned int);
+struct iface		*conf_get_if(struct kif *);
 
 typedef struct {
 	union {
@@ -358,15 +358,15 @@ areaoptsl	: interface nl
 		;
 
 interface	: INTERFACE STRING {
-			unsigned int	idx;
+			struct kif *kif;
 
-			if ((idx = if_nametoindex($2)) == 0 ) {
+			if ((kif = kif_findname($2)) == NULL) {
 				yyerror("unknown interface %s", $2);
 				free($2);
 				YYERROR;
 			}
-			iface = conf_get_if($2, idx);
 			free($2);
+			iface = conf_get_if(kif);
 			if (iface == NULL)
 				YYERROR;
 			iface->area = area;
@@ -870,20 +870,20 @@ conf_get_area(struct in_addr id)
 }
 
 struct iface *
-conf_get_if(char *name, unsigned int idx)
+conf_get_if(struct kif *kif)
 {
 	struct area	*a;
 	struct iface	*i;
 
 	LIST_FOREACH(a, &conf->area_list, entry)
 		LIST_FOREACH(i, &a->iface_list, entry)
-			if (i->ifindex == idx) {
+			if (i->ifindex == kif->ifindex) {
 				yyerror("interface %s already configured",
-				    name);
+				    kif->ifname);
 				return (NULL);
 			}
 
-	i = if_new(name, idx);
+	i = if_new(kif);
 	i->dead_interval = area->dead_interval;
 	i->transfer_delay = area->transfer_delay;
 	i->hello_interval = area->hello_interval;
