@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.37 2002/06/07 04:13:10 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.38 2002/06/07 04:18:56 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -336,7 +336,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCSIFINFO_FLAGS:
 		if (!privileged)
 			return(EPERM);
-		/*FALLTHROUGH*/
+		/* FALLTHROUGH */
 	case OSIOCGIFINFO_IN6:
 	case SIOCGIFINFO_IN6:
 	case SIOCGDRLST_IN6:
@@ -364,7 +364,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCDLIFADDR:
 		if (!privileged)
 			return(EPERM);
-		/*FALLTHROUGH*/
+		/* FALLTHROUGH */
 	case SIOCGLIFADDR:
 		return in6_lifaddr_ioctl(so, cmd, data, ifp, p);
 	}
