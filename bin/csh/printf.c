@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.6 1997/01/15 23:40:22 millert Exp $	*/
+/*	$OpenBSD: printf.c,v 1.7 1997/09/22 05:09:14 millert Exp $	*/
 /*	$NetBSD: printf.c,v 1.6 1995/03/21 09:03:15 cgd Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: printf.c,v 1.6 1997/01/15 23:40:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.7 1997/09/22 05:09:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -131,8 +131,7 @@ next:		for (start = fmt;; ++fmt) {
 			if (!*fmt) {
 				/* avoid infinite loop */
 				if (end == 1) {
-					warnx("missing format character",
-					    NULL, NULL);
+					warnx("missing format character");
 					return (1);
 				}
 				end = 1;
@@ -174,7 +173,7 @@ next:		for (start = fmt;; ++fmt) {
 		/* skip to conversion char */
 		for (; strchr(skip2, *fmt); ++fmt);
 		if (!*fmt) {
-			warnx("missing format character", NULL, NULL);
+			warnx("missing format character");
 			return (1);
 		}
 
@@ -215,7 +214,7 @@ next:		for (start = fmt;; ++fmt) {
 			break;
 		}
 		default:
-			warnx("illegal format character", NULL, NULL);
+			warnx("illegal format character");
 			return (1);
 		}
 		*fmt = nextch;
@@ -348,7 +347,7 @@ getlong(lp)
 		errno = 0;
 		val = strtol(*gargv, &ep, 0);
 		if (*ep != '\0') {
-			warnx("%s: illegal number", *gargv, NULL);
+			warnx("%s: illegal number", *gargv);
 			return (1);
 		}
 		if (errno == ERANGE)

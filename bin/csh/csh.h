@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.2 1996/06/23 14:19:16 deraadt Exp $	*/
+/*	$OpenBSD: csh.h,v 1.3 1997/09/22 05:09:13 millert Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ typedef void *ptr_t;
 
 #include "const.h"
 #include "char.h"
-#include "err.h"
+#include "error.h"
 
 #define xmalloc(i)	Malloc(i)
 #define xrealloc(p, i)	Realloc(p, i)
