@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.20 2001/06/25 01:00:35 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.21 2001/06/25 01:52:55 mickey Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -143,7 +143,7 @@ void		*pull_hdr(struct ifnet *, struct mbuf **, int, int, int,
 		    struct ip *, int *);
 int		 pf_test(int, struct ifnet *, struct mbuf **);
 
-inline signed char
+signed char
 tree_key_compare(struct tree_key *a, struct tree_key *b)
 {
 	/*
@@ -173,7 +173,7 @@ tree_key_compare(struct tree_key *a, struct tree_key *b)
 	return (0);
 }
 
-inline void
+void
 tree_rotate_left(struct tree_node **p)
 {
 	struct tree_node *q = *p;
@@ -189,7 +189,7 @@ tree_rotate_left(struct tree_node **p)
 		(*p)->balance += q->balance;
 }
 
-inline void
+void
 tree_rotate_right(struct tree_node **p)
 {
 	struct tree_node *q = *p;
@@ -319,7 +319,7 @@ tree_remove(struct tree_node **p, struct tree_key *key)
 	return (deltaH);
 }
 
-inline struct state *
+struct state *
 find_state(struct tree_node *p, struct tree_key *key)
 {
 	signed char c;
@@ -410,7 +410,7 @@ purge_expired_states(void)
 	}
 }
 
-inline void
+void
 print_ip(struct ifnet *ifp, struct ip *h)
 {
 	u_int32_t a;
@@ -761,7 +761,7 @@ done:
 	return (error);
 }
 
-inline u_int16_t
+u_int16_t
 fix(u_int16_t cksum, u_int16_t old, u_int16_t new)
 {
 	u_int32_t l = cksum + old - new;
@@ -898,13 +898,13 @@ send_reset(int direction, struct ifnet *ifp, struct ip *h, int off,
 	return;
 }
 
-inline int
+int
 match_addr(u_int8_t n, u_int32_t a, u_int32_t m, u_int32_t b)
 {
 	return (n == !((a & m) == (b & m)));
 }
 
-inline int
+int
 match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 {
 	switch (op) {
