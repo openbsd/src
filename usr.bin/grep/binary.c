@@ -1,4 +1,4 @@
-/*	$OpenBSD: binary.c,v 1.12 2004/05/06 20:18:51 otto Exp $	*/
+/*	$OpenBSD: binary.c,v 1.13 2004/09/15 22:35:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -65,7 +65,7 @@ gzbin_file(gzFile *f)
 	int		i, m;
 	int		ret = 0;
 
-	if (gzseek(f, 0L, SEEK_SET) == -1)
+	if (gzseek(f, (z_off_t)0, SEEK_SET) == -1)
 		return 0;
 
 	if ((m = gzread(f, buf, BUFSIZ)) == 0)
