@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.282 2003/11/18 22:52:38 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.283 2003/11/24 16:06:00 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2370,7 +2370,7 @@ anchor-rule    = "anchor" string [ ( "in" | "out" ) ] [ "on" ifspec ]
 trans-anchors  = ( "nat-anchor" | "rdr-anchor" | "binat-anchor" ) string
                  [ "on" ifspec ] [ af ] [ "proto" ] [ protospec ] [ hosts ]
 
-load-anchor    = "load" anchorname:rulesetname "from" filename
+load-anchor    = "load anchor" anchorname:rulesetname "from" filename
 
 queueopts-list = queueopts-list queueopts | queueopts
 queueopts      = [ "bandwidth" bandwidth-spec ] |
