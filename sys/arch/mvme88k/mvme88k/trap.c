@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.34 2002/03/14 01:26:40 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.35 2002/03/26 01:00:27 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -159,8 +159,12 @@ userret(struct proc *p, struct m88100_saved_state *frame, u_quad_t oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL)
-		addupc_task(p, frame->sxip & ~3,(int)(p->p_sticks - oticks));
+	if (p->p_flag & P_PROFIL) {
+		extern int psratio;
+
+		addupc_task(p, frame->sxip & ~3,
+		    (int)(p->p_sticks - oticks) * psratio);
+	}
 	curpriority = p->p_priority;
 }
 

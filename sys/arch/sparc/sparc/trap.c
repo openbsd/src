@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.36 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.37 2002/03/26 01:00:30 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -237,8 +237,11 @@ userret(p, pc, oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL)
-		addupc_task(p, pc, (int)(p->p_sticks - oticks));
+	if (p->p_flag & P_PROFIL) {
+		extern int psratio;
+
+		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
+	}
 
 	curpriority = p->p_priority;
 }
