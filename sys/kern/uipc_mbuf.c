@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.30 2001/05/18 23:29:33 millert Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.31 2001/05/20 08:31:46 angelos Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -292,7 +292,7 @@ m_prepend(m, len, how)
 	if (m->m_flags & M_PKTHDR) {
 		M_COPY_PKTHDR(mn, m);
 		m->m_flags &= ~M_PKTHDR;
-		m->m_pkthdr.tdbi = NULL;
+		TAILQ_INIT(&m->m_pkthdr.tags);
 	}
 	mn->m_next = m;
 	m = mn;
@@ -597,7 +597,7 @@ m_pullup(n, len)
 		if (n->m_flags & M_PKTHDR) {
 			M_COPY_PKTHDR(m, n);
 			n->m_flags &= ~M_PKTHDR;
-			n->m_pkthdr.tdbi = NULL;
+			TAILQ_INIT(&n->m_pkthdr.tags);
 		}
 	}
 	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
@@ -668,7 +668,7 @@ m_pullup2(n, len)
 			m->m_pkthdr = n->m_pkthdr;
 			m->m_flags = (n->m_flags & M_COPYFLAGS) | M_EXT;
 			n->m_flags &= ~M_PKTHDR;
-			n->m_pkthdr.tdbi = NULL;
+			TAILQ_INIT(&n->m_pkthdr.tags);
 			/* n->m_data is cool. */
 		}
 	}
