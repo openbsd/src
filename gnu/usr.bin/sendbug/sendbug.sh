@@ -21,7 +21,7 @@
 # along with GNU GNATS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$OpenBSD: sendbug.sh,v 1.15 2003/10/01 17:58:17 millert Exp $
+#	$OpenBSD: sendbug.sh,v 1.16 2004/11/29 21:57:45 millert Exp $
 
 # The version of this sendbug.
 VERSION=3.97
@@ -251,7 +251,7 @@ fi
 #  echo "$COMMAND: could not read $DATADIR/gnats/$GNATS_SITE for categories list."
 #  exit 1
 #fi
-CATEGORIES="system user library documentation ports kernel sparc i386 m68k mips ppc arm alpha ns32k vax sparc64"
+CATEGORIES="system user library documentation ports kernel alpha amd64 arm i386 m68k m88k mips ppc sgi sparc sparc64 vax"
 
 if [ -z "$CATEGORIES" ]; then
   echo "$COMMAND: the categories list for $GNATS_SITE was empty!"
@@ -283,7 +283,7 @@ if [ -z "$SEVERITY_C" ]; then
   SEVERITY_C='<[ non-critical | serious | critical ] (one line)>'
 fi
 PRIORITY_C='<[ low | medium | high ] (one line)>'
-CATEGORY_C='<name of the product (one line)>'
+CATEGORY_C='<PR category (one line)>'
 CLASS_C='<[ sw-bug | doc-bug | change-request | support ] (one line)>'
 RELEASE_C='<release number or tag (one line)>'
 ENVIRONMENT_C='<machine, os, target, libraries (multiple lines)>'
