@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.17 2004/05/04 22:50:18 claudio Exp $
+.\"	$OpenBSD: route.4,v 1.18 2004/06/08 14:50:38 cedric Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -311,6 +311,7 @@ Flags include the values:
 #define	RTF_PROTO2    0x4000    /* protocol specific routing flag */
 #define	RTF_PROTO1    0x8000    /* protocol specific routing flag */
 #define	RTF_CLONED    0x10000   /* this is a cloned route */
+#define RTF_SOURCE    0x20000   /* this route has a source selector */
 .Ed
 .Pp
 Specifiers for metric values in rmx_locks and rtm_inits are:
@@ -335,7 +336,9 @@ Specifiers for which addresses are present in the messages are:
 #define RTA_IFP		0x10	/* interface name sockaddr present */
 #define RTA_IFA		0x20	/* interface addr sockaddr present */
 #define RTA_AUTHOR	0x40	/* sockaddr for author of redirect */
-#define RTA_BRD		0x80  /* for NEWADDR, broadcast or p-p dest addr */
+#define RTA_BRD		0x80	/* for NEWADDR, bcast or p-p dest addr */
+#define RTA_SRC		0x100	/* source sockaddr present */
+#define RTA_SRCMASK	0x200	/* source netmask present */
 .Ed
 .Sh SEE ALSO
 .Xr socket 2 ,
