@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.28 2000/04/12 18:05:47 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.29 2000/04/18 06:35:02 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -239,7 +239,15 @@ struct ifnet *ifp;
 
 	if (m == NULL) /* Empty queue */
 	  return;
+ 
+	/* Sanity check */
+	if ((m->m_flags & M_PKTHDR) == 0)
+	{
+	    m_freem(m);
+	    continue;
+	}
 
+	m->m_pkthdr.rcvif = ifp;
 	mp = NULL;
 
 	/* Encapsulate in etherip or ip-in-ip, depending on interface flag */
