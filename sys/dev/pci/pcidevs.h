@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.580 2003/01/12 14:01:50 henning Exp 
+ *		OpenBSD: pcidevs,v 1.581 2003/01/12 14:08:54 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1832,6 +1832,7 @@
 #define	PCI_PRODUCT_NVIDIA_VANTA2	0x002d		/* Vanta */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_ISA	0x0060		/* nForce2 PCI-ISA */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_SMBUS	0x0064		/* nForce2 SMBus */
+#define	PCI_PRODUCT_NVIDIA_NFORCE2_IDE	0x0065		/* nForce2 IDE */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_LAN	0x0066		/* nForce2 LAN */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_USB	0x0067		/* nForce2 USB */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_USB2	0x0068		/* nForce2 USB2 */
