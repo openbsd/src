@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.22 2001/01/27 20:54:41 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.23 2001/02/28 20:33:30 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ pcibiosattach(parent, self, aux)
 	    &rev_min, &mech1, &mech2,
 	    &scmech1, &scmech2, &sc->max_bus);
 
-	printf(": rev. %d.%d found at 0x%lx[0x%lx]\n",
+	printf(": rev. %d.%d @ 0x%lx/0x%lx\n",
 	    rev_maj, rev_min >> 4, pcibios_entry_info.bei_base,
 	    pcibios_entry_info.bei_size);
 
@@ -266,8 +266,8 @@ pcibios_pir_init(sc)
 		for (i = 0; i < pirh->tablesize; i++)
 			cksum += p[i];
 
-		printf("%s: PCI IRQ Routing Table rev. %d.%d found at 0x%lx, "
-		    "size %d bytes (%d entries)\n", sc->sc_dev.dv_xname,
+		printf("%s: PCI IRQ Routing Table rev. %d.%d @ 0x%lx/%d "
+		    "(%d entries)\n", sc->sc_dev.dv_xname,
 		    pirh->version >> 8, pirh->version & 0xff, pa,
 		    pirh->tablesize, (pirh->tablesize - 32) / 16);
 
