@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.6 1997/05/30 08:34:15 downsj Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.7 1997/07/22 10:31:50 deraadt Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1109,7 +1109,7 @@ ffs_clusteralloc(ip, cg, bpref, len)
 			bit = 1;
 		}
 	}
-	if (i == cgp->cg_nclusterblks)
+	if (i >= cgp->cg_nclusterblks)
 		goto fail;
 	/*
 	 * Allocate the cluster that we have found.
