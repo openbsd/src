@@ -116,7 +116,7 @@ installation scripts'' below.
 
 Booting From CD-ROM installation media:
 
-	> b sd(,30,0)bsd	# for Sun4 monitors (may not work)
+	> b sd(,30,0)bsd	# for Sun4 monitors* (not working currently)
         ok boot sd(,6,0)bsd	# for version 1 OpenBOOT ROMs
         ok boot cdrom bsd	# for version 2 OpenBOOT ROMs
 
@@ -140,7 +140,7 @@ Booting from SCSI disk (miniroot or floppy image)
 
 Boot the miniroot by typing the appropriate command at the PROM:
 
-	> b sd(,,1)bsd 			# for sun4 monitors
+	> b sd(,,1)bsd 			# for sun4 monitors*
 	ok boot sd(,,1)bsd 		# for version 1 OpenBOOT ROMs
 	ok boot disk:b bsd 		# for version 2 OpenBOOT ROMs
 	ok boot /sbus/esp/sd@3,0:b bsd  # for version 2 OpenBOOT ROMs 
