@@ -16,7 +16,7 @@ the login based on rhosts authentication.  This file also processes
 */
 
 #include "includes.h"
-RCSID("$Id: auth-rhosts.c,v 1.3 1999/09/29 21:14:15 deraadt Exp $");
+RCSID("$Id: auth-rhosts.c,v 1.4 1999/09/30 05:43:33 deraadt Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -130,8 +130,6 @@ int check_rhosts_file(const char *filename, const char *hostname,
 	  continue;
 	}
 	  
-#ifdef HAVE_INNETGR
-
       /* Verify that host name matches. */
       if (host[0] == '@')
 	{
@@ -152,16 +150,6 @@ int check_rhosts_file(const char *filename, const char *hostname,
       else
 	if (strcmp(user, client_user) != 0)
 	  continue; /* Different username. */
-
-#else /* HAVE_INNETGR */
-
-      if (!casefold_equal(host, hostname) && strcmp(host, ipaddr) != 0)
-	continue; /* Different hostname. */
-
-      if (strcmp(user, client_user) != 0)
-	continue; /* Different username. */
-
-#endif /* HAVE_INNETGR */
 
       /* Found the user and host. */
       fclose(f);
