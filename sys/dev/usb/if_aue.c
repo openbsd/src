@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.17 2001/10/31 04:24:44 nate Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.18 2002/01/03 22:23:43 deraadt Exp $ */
 /*	$NetBSD: if_aue.c,v 1.67 2001/10/10 02:14:16 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -171,7 +171,7 @@ struct aue_type {
 Static const struct aue_type aue_devs[] = {
   { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX1,		  PNA|PII },
   { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX2,		  PII },
-  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX3,		  0 },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_UFE1000,	  0 },
   { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX4,		  PNA },
   { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX5,		  PNA },
   { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX6,		  PII },
