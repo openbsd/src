@@ -1,5 +1,4 @@
-/*      $OpenBSD: extern.h,v 1.5 1997/01/25 21:42:30 deraadt Exp $      */
-/*      $NetBSD: extern.h,v 1.4 1995/09/08 01:06:19 tls Exp $      */
+/*	$NetBSD: extern.h,v 1.11 1997/02/01 10:44:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -36,25 +35,29 @@
  *	@(#)extern.h	8.3 (Berkeley) 10/9/94
  */
 
-struct timeval;
 struct fd_set;
 
 void    abort_remote __P((FILE *));
 void    abortpt __P(());
 void    abortrecv __P(());
 void    abortsend __P(());
+void    aborthttp __P(());
 void	account __P((int, char **));
-int	another __P((int *, char ***, char *));
+void	alarmtimer __P((int));
+int	another __P((int *, char ***, const char *));
+int	auto_fetch __P((int, char **));
 void	blkfree __P((char **));
 void	cd __P((int, char **));
-int	mcd __P((int, char **));
 void	cdup __P((int, char **));
 void	changetype __P((int, int));
 void	cmdabort __P(());
 void	cmdscanner __P((int));
 int	command __P(());
-int	confirm __P((char *, char *));
-FILE   *dataconn __P((char *));
+#ifndef SMALLFTP
+unsigned char complete __P((EditLine *, int));
+#endif /* !SMALLFTP */
+int	confirm __P((const char *, const char *));
+FILE   *dataconn __P((const char *));
 void	delete __P((int, char **));
 void	disconnect __P((int, char **));
 void	do_chmod __P((int, char **));
@@ -64,25 +67,26 @@ char   *domap __P((char *));
 void	doproxy __P((int, char **));
 char   *dotrans __P((char *));
 int     empty __P((struct fd_set *, int));
-void	fatal __P((char *));
 void	get __P((int, char **));
-struct cmd *getcmd __P((char *));
-int	getit __P((int, char **, int, char *));
+struct cmd *getcmd __P((const char *));
+int	getit __P((int, char **, int, const char *));
 int	getreply __P((int));
 int	globulize __P((char **));
-char   *gunique __P((char *));
+char   *gunique __P((const char *));
 void	help __P((int, char **));
-char   *hookup __P((char *, int));
+char   *hookup __P((const char *, int));
 void	idle __P((int, char **));
 int     initconn __P((void));
 void	intr __P(());
+void	list_vertical __P((StringList *));
 void	lcd __P((int, char **));
-int	login __P((char *));
+int	login __P((const char *));
 void	lostpeer __P(());
+void	lpwd __P((int, char **));
 void	ls __P((int, char **));
 void	mabort __P((int));
 void	macdef __P((int, char **));
-void	makeargv __P((void));
+void	makeargv __P(());
 void	makedir __P((int, char **));
 void	mdelete __P((int, char **));
 void	mget __P((int, char **));
@@ -91,33 +95,40 @@ void	modtime __P((int, char **));
 void	mput __P((int, char **));
 char   *onoff __P((int));
 void	newer __P((int, char **));
+void    progressmeter __P((int));
+char   *prompt __P(());
 void	proxabort __P(());
-void    proxtrans __P((char *, char *, char *));
+void    proxtrans __P((const char *, const char *, const char *));
 void    psabort __P(());
+void	psummary __P((int));
 void    pswitch __P((int));
-void    ptransfer __P((char *, long, struct timeval *, struct timeval *));
+void    ptransfer __P((int));
 void	put __P((int, char **));
 void	pwd __P((int, char **));
 void	quit __P((int, char **));
 void	quote __P((int, char **));
-void	quote1 __P((char *, int, char **));
-void    recvrequest __P((char *, char *, char *, char *, int));
+void	quote1 __P((const char *, int, char **));
+void    recvrequest __P((const char *, const char *, const char *,
+	    const char *, int));
 void	reget __P((int, char **));
 char   *remglob __P((char **, int));
+off_t	remotesize __P((const char *, int));
+time_t	remotemodtime __P((const char *, int));
 void	removedir __P((int, char **));
 void	renamefile __P((int, char **));
 void    reset __P((int, char **));
 void	restart __P((int, char **));
 void	rmthelp __P((int, char **));
 void	rmtstatus __P((int, char **));
-int	ruserpass __P((char *, char **, char **, char **));
-void    sendrequest __P((char *, char *, char *, int));
+int	ruserpass __P((const char *, char **, char **, char **));
+void    sendrequest __P((const char *, const char *, const char *, int));
 void	setascii __P((int, char **));
 void	setbell __P((int, char **));
 void	setbinary __P((int, char **));
 void	setcase __P((int, char **));
 void	setcr __P((int, char **));
 void	setdebug __P((int, char **));
+void	setedit __P((int, char **));
 void	setform __P((int, char **));
 void	setftmode __P((int, char **));
 void	setglob __P((int, char **));
@@ -127,28 +138,32 @@ void	setntrans __P((int, char **));
 void	setpassive __P((int, char **));
 void	setpeer __P((int, char **));
 void	setport __P((int, char **));
+void	setpreserve __P((int, char **));
+void	setprogress __P((int, char **));
 void	setprompt __P((int, char **));
 void	setrunique __P((int, char **));
 void	setstruct __P((int, char **));
 void	setsunique __P((int, char **));
 void	settenex __P((int, char **));
 void	settrace __P((int, char **));
+void	setttywidth __P((int));
 void	settype __P((int, char **));
 void	setverbose __P((int, char **));
 void	shell __P((int, char **));
 void	site __P((int, char **));
 void	sizecmd __P((int, char **));
-char   *slurpstring __P((void));
+char   *slurpstring __P(());
 void	status __P((int, char **));
 void	syst __P((int, char **));
-void    tvsub __P((struct timeval *, struct timeval *, struct timeval *));
+int	togglevar __P((int, char **, int *, const char *));
+void	usage __P(());
 void	user __P((int, char **));
-int	http_fetch __P((char *));
+
 
 extern jmp_buf	abortprox;
 extern int	abrtflag;
 extern struct	cmd cmdtab[];
-extern FILE	*cout;
+extern FILE    *cout;
 extern int	data;
 extern char    *home;
 extern jmp_buf	jabort;
@@ -156,3 +171,6 @@ extern int	proxy;
 extern char	reply_string[];
 extern off_t	restart_point;
 extern int	NCMDS;
+
+extern char *__progname;		/* from crt0.o */
+

@@ -1,5 +1,4 @@
-/*      $OpenBSD: ruserpass.c,v 1.3 1996/10/28 00:32:30 millert Exp $      */
-/*      $NetBSD: ruserpass.c,v 1.6 1995/09/08 01:06:43 tls Exp $      */
+/*	$NetBSD: ruserpass.c,v 1.11 1997/01/19 14:19:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -35,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
+#else
+static char rcsid[] = "$NetBSD: ruserpass.c,v 1.11 1997/01/19 14:19:16 lukem Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -80,7 +83,8 @@ static struct toktab {
 
 int
 ruserpass(host, aname, apass, aacct)
-	char *host, **aname, **apass, **aacct;
+	const char *host;
+	char **aname, **apass, **aacct;
 {
 	char *hdir, buf[BUFSIZ], *tmp;
 	char myname[MAXHOSTNAMELEN], *mydomain;
@@ -90,7 +94,7 @@ ruserpass(host, aname, apass, aacct)
 	hdir = getenv("HOME");
 	if (hdir == NULL)
 		hdir = ".";
-	if (strlen(hdir) + 7 < sizeof(buf)) {
+	if (strlen(hdir) + sizeof(".netrc") < sizeof(buf)) {
 		(void) sprintf(buf, "%s/.netrc", hdir);
 	} else {
 		warnx("%s/.netrc: %s", hdir, strerror(ENAMETOOLONG));
@@ -119,7 +123,7 @@ next:
 				continue;
 			/*
 			 * Allow match either for user's input host name
-			 * or official hostname.  Also allow match of 
+			 * or official hostname.  Also allow match of
 			 * incompletely-specified host in local domain.
 			 */
 			if (strcasecmp(host, tokval) == 0)
@@ -143,8 +147,9 @@ next:
 
 		case LOGIN:
 			if (token())
-				if (*aname == 0) { 
-					*aname = malloc((unsigned) strlen(tokval) + 1);
+				if (*aname == 0) {
+					*aname = malloc((unsigned)
+					    strlen(tokval) + 1);
 					(void) strcpy(*aname, tokval);
 				} else {
 					if (strcmp(*aname, tokval))
@@ -181,13 +186,16 @@ next:
 				(void) fclose(cfile);
 				return (0);
 			}
-			while ((c=getc(cfile)) != EOF && c == ' ' || c == '\t');
+			while ((c=getc(cfile)) != EOF)
+				if (c != ' ' && c != '\t')
+					break;
 			if (c == EOF || c == '\n') {
 				printf("Missing macdef name argument.\n");
 				goto bad;
 			}
 			if (macnum == 16) {
-				printf("Limit of 16 macros have already been defined\n");
+				printf(
+"Limit of 16 macros have already been defined\n");
 				goto bad;
 			}
 			tmp = macros[macnum].mac_name;
@@ -197,7 +205,8 @@ next:
 				*tmp++ = c;
 			}
 			if (c == EOF) {
-				printf("Macro definition missing null line terminator.\n");
+				printf(
+"Macro definition missing null line terminator.\n");
 				goto bad;
 			}
 			*tmp = '\0';
@@ -205,19 +214,22 @@ next:
 				while ((c=getc(cfile)) != EOF && c != '\n');
 			}
 			if (c == EOF) {
-				printf("Macro definition missing null line terminator.\n");
+				printf(
+"Macro definition missing null line terminator.\n");
 				goto bad;
 			}
 			if (macnum == 0) {
 				macros[macnum].mac_start = macbuf;
 			}
 			else {
-				macros[macnum].mac_start = macros[macnum-1].mac_end + 1;
+				macros[macnum].mac_start =
+				    macros[macnum-1].mac_end + 1;
 			}
 			tmp = macros[macnum].mac_start;
 			while (tmp != macbuf + 4096) {
 				if ((c=getc(cfile)) == EOF) {
-				printf("Macro definition missing null line terminator.\n");
+				printf(
+"Macro definition missing null line terminator.\n");
 					goto bad;
 				}
 				*tmp = c;
