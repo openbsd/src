@@ -1,6 +1,7 @@
-/*	$OpenBSD: fifo.c,v 1.1 2002/03/10 23:37:47 fgsch Exp $	*/
+/*	$OpenBSD: fifo.c,v 1.2 2002/03/13 15:00:37 fgsch Exp $	*/
 
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 #include <err.h>
 #include <errno.h>
@@ -22,6 +23,7 @@ handler(int s)
 int
 main(int argc, char **argv)
 {
+	struct itimerval it;
 	struct sigaction act;
 
 	unlink(FIFO_PATH);
@@ -34,7 +36,11 @@ main(int argc, char **argv)
 	if (sigaction(SIGALRM, &act, NULL) < 0)
 		err(1, "sigaction");
 
-	alarm(2);
+	it.it_interval.tv_sec = 2;
+	it.it_interval.tv_usec = 0;
+	it.it_value = it.it_interval;
+	if (setitimer(ITIMER_REAL, &it, NULL) < 0)
+		err(1, "setitimer");
 
 	if (open(FIFO_PATH, O_RDONLY) < 0) {
 		if (errno == EINTR)
