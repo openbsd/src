@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.20 2004/03/11 17:12:51 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.21 2004/03/12 10:52:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -978,9 +978,12 @@ int
 community_match(void *data, u_int16_t len, int as, int type)
 {
 	u_int8_t	*p = data;
-	u_int16_t	 eas, etype, l;
+	u_int16_t	 eas, etype;
 
-	for (l = 0; l + 3 < len; len +=4) {
+	ENSURE((len & 0x3) == 0);
+	len >>= 2; /* devide by four */
+
+	for (; len > 0; len--) {
 		eas = *p++;
 		eas <<= 8;
 		eas |= *p++;
