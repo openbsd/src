@@ -1,8 +1,8 @@
-/*	$OpenBSD: conf.c,v 1.7 1999/03/02 15:35:12 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.15 1999/03/02 15:33:33 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 1999/04/05 21:00:40 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.17 1999/04/05 08:30:41 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -316,6 +316,10 @@ conf_get_str (char *section, char *tag)
   return 0;
 }
 
+/*
+ * Build a list of string values out of the comma separated value denoted by
+ * TAG in SECTION.
+ */
 struct conf_list *
 conf_get_list (char *section, char *tag)
 {
@@ -343,12 +347,15 @@ conf_get_list (char *section, char *tag)
 	  continue;
 	}
       list->cnt++;
-      node = malloc (sizeof *node);
+      node = calloc (1, sizeof *node);
       if (!node)
 	goto cleanup;
-      node->field = field;
+      node->field = strdup (field);
+      if (!node->field)
+	goto cleanup;
       TAILQ_INSERT_TAIL (&list->fields, node, link);
     }
+  free (liststr);
   return list;
 
  cleanup:
@@ -375,10 +382,12 @@ conf_get_tag_list (char *section)
     if (strcasecmp (section, cb->section) == 0)
       {
 	list->cnt++;
-	node = malloc (sizeof *node);
+	node = calloc (1, sizeof *node);
 	if (!node)
 	  goto cleanup;
-	node->field = cb->tag;
+	node->field = strdup (cb->tag);
+	if (!node->field)
+	  goto cleanup;
 	TAILQ_INSERT_TAIL (&list->fields, node, link);
       }
   return list;
@@ -481,7 +490,15 @@ conf_get_line (FILE *stream, char *buf, u_int32_t len)
 void
 conf_free_list (struct conf_list *list)
 {
-  while (TAILQ_FIRST (&list->fields))
-    TAILQ_REMOVE (&list->fields, TAILQ_FIRST (&list->fields), link);
+  struct conf_list_node *node = TAILQ_FIRST (&list->fields);
+
+  while (node)
+    {
+      TAILQ_REMOVE (&list->fields, node, link);
+      if (node->field)
+	free (node->field);
+      free (node);
+      node = TAILQ_FIRST (&list->fields);
+    }
   free (list);
 }
