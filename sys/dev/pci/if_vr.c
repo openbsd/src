@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.33 2003/10/10 18:05:12 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.34 2003/10/10 18:12:41 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1566,7 +1566,8 @@ vr_init(xsc)
 				    VR_CMD_TX_ON|VR_CMD_RX_ON|
 				    VR_CMD_RX_GO);
 
-	CSR_WRITE_4(sc, VR_TXADDR, vtophys(&sc->vr_ldata->vr_tx_list[0]));
+	CSR_WRITE_4(sc, VR_TXADDR, sc->sc_listmap->dm_segs[0].ds_addr +
+	    offsetof(struct vr_list_data, vr_tx_list[0]));
 
 	/*
 	 * Enable interrupts.
