@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.61 2003/05/16 17:54:07 nate Exp $
+$OpenBSD: usbdevs,v 1.62 2003/05/16 18:21:47 nate Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -839,7 +839,7 @@ product IODATA USBETT		0x0901	USB ETT
 product IODATA USBETTX		0x0904	USB ETTX
 product IODATA USBETTXS		0x0913	USB ETTX
 product IODATA USBRSAQ		0x0a03	RSAQ1 Serial Adapter
-product	IODATA2 USB2SC		0x0a09	USB2.0-SCSI Bridge USB2-SC
+product IODATA2 USB2SC		0x0a09	USB2.0-SCSI Bridge USB2-SC
 
 /* Iomega products */
 product IOMEGA ZIP100		0x0001	Zip 100
@@ -959,6 +959,7 @@ product LOGITECH WMMOUSE	0xc004	WingMan Gaming Mouse
 product LOGITECH BD58		0xc00c	BD58 mouse
 product LOGITECH UN58A		0xc030	iFeel Mouse
 product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
+product LOGITECH WMRPAD		0xc20a	WingMan RumblePad
 product LOGITECH WMJOY		0xc281	WingMan Force joystick
 product LOGITECH WMFFGP		0xc293	WingMan Formula Force GP (GT-Force)
 product LOGITECH ITOUCH		0xc303	iTouch Keyboard
