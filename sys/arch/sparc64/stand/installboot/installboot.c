@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.5 2004/01/11 23:59:22 pvalchev Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.6 2004/06/24 16:31:02 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.8 2001/02/19 22:48:59 cgd Exp $ */
 
 /*-
@@ -282,8 +282,10 @@ loadprotoblocks(fname, size)
 
 	bp = ap + (hflag ? 32 : 0);
 	marks[MARK_START] = bp - st;
-	if ((fd = loadfile(fname, marks, LOAD_TEXT|LOAD_DATA)) == -1)
+	if ((fd = loadfile(fname, marks, LOAD_TEXT|LOAD_DATA)) == -1) {
+		free((void *)ap);
 		return NULL;
+	}
 	(void)close(fd);
 
 	block_table = (daddr_t *) (bp + nl[X_BLOCKTABLE].n_value - st);
@@ -292,19 +294,19 @@ loadprotoblocks(fname, size)
 	if ((int)(u_long)block_table & 3) {
 		warn("%s: invalid address: block_table = %p",
 		     fname, block_table);
-		free((void *)bp);
+		free((void *)ap);
 		return NULL;
 	}
 	if ((int)(u_long)block_count_p & 3) {
 		warn("%s: invalid address: block_count_p = %p",
 		     fname, block_count_p);
-		free((void *)bp);
+		free((void *)ap);
 		return NULL;
 	}
 	if ((int)(u_long)block_size_p & 3) {
 		warn("%s: invalid address: block_size_p = %p",
 		     fname, block_size_p);
-		free((void *)bp);
+		free((void *)ap);
 		return NULL;
 	}
 	max_block_count = *block_count_p;
