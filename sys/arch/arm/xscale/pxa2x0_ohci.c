@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.10 2005/02/17 22:44:03 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.11 2005/02/18 16:42:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -43,7 +43,6 @@ int	pxaohci_detach(struct device *, int);
 struct pxaohci_softc {
 	ohci_softc_t	sc;
 	void		*sc_ih;
-	void		*sc_gpioih;
 	int		sc_intr;
 };
 
@@ -59,15 +58,6 @@ pxaohci_match(struct device *parent, void *match, void *aux)
 		return (0);
 
 	return (1);
-}
-
-int pxaohci_intr(void *);
-int
-pxaohci_intr(void *arg)
-{
-
-	printf("register: %d\n", pxa2x0_gpio_get_bit(41));
-	return (ohci_intr(arg));
 }
 
 void
@@ -154,8 +144,6 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 	pxa2x0_gpio_set_function(35, GPIO_ALT_FN_2_IN);
 	pxa2x0_gpio_set_function(37, GPIO_ALT_FN_1_OUT);
 	pxa2x0_gpio_set_function(41, GPIO_ALT_FN_2_IN);
-	sc->sc_gpioih = pxa2x0_gpio_intr_establish(41, IST_EDGE_BOTH, IPL_BIO,
-	    ohci_intr, sc, sc->sc.sc_bus.bdev.dv_xname);
 
 	sc->sc.sc_child = config_found((void *) sc, &sc->sc.sc_bus,
 	    usbctlprint);
@@ -171,11 +159,6 @@ pxaohci_detach(struct device *self, int flags)
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
-
-	if (sc->sc_gpioih != NULL) {
-		pxa2x0_gpio_intr_disestablish(sc->sc_gpioih);
-		sc->sc_gpioih = NULL;
-	}
 
 	if (sc->sc_ih != NULL) {
 		pxa2x0_intr_disestablish(sc->sc_ih);
