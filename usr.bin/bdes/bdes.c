@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdes.c,v 1.13 2003/11/15 00:23:02 tedu Exp $	*/
+/*	$OpenBSD: bdes.c,v 1.14 2004/05/16 18:49:12 otto Exp $	*/
 /*	$NetBSD: bdes.c,v 1.2 1995/03/26 03:33:19 glass Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: bdes.c,v 1.13 2003/11/15 00:23:02 tedu Exp $";
+static char rcsid[] = "$OpenBSD: bdes.c,v 1.14 2004/05/16 18:49:12 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,6 +138,8 @@ void 	usage(void);
 					err(1, "encrypt");		\
 				compress(bits1, buf);			\
 			}
+void	expand(Desbuf, char *);
+void	compress(Desbuf, char *);
 #endif
 
 /*
@@ -1026,9 +1028,8 @@ cfbauth(void)
 /*
  * change from 8 bits/Uchar to 1 bit/Uchar
  */
-expand(from, to)
-	Desbuf from;			/* 8bit/unsigned char string */
-	char *to;			/* 1bit/char string */
+void
+expand(Desbuf from, char *to)
 {
 	int i, j;			/* counters in for loop */
 
@@ -1040,9 +1041,8 @@ expand(from, to)
 /*
  * change from 1 bit/char to 8 bits/Uchar
  */
-compress(from, to)
-	char *from;			/* 1bit/char string */
-	Desbuf to;			/* 8bit/unsigned char string */
+void
+compress(char *from, Desbuf to)
 {
 	int i, j;			/* counters in for loop */
 
@@ -1054,13 +1054,14 @@ compress(from, to)
 }
 #endif
 
+extern char *__progname;
 /*
  * message about usage
  */
 void
 usage(void)
 {
-	(void)fprintf(stderr, "%s\n", 
-"usage: bdes [-abdp] [-F bit] [-f bit] [-k key] [-m bit] [-o bit] [-v vector]");
+	(void) fprintf(stderr, "usage: %s %s\n", __progname,
+	    "[-abdp] [-F N] [-f N] [-k key] [-m N] [-o N] [-v vector]");
 	exit(1);
 }
