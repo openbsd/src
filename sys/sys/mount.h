@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.58 2003/08/14 07:46:40 mickey Exp $	*/
+/*	$OpenBSD: mount.h,v 1.59 2005/03/29 17:24:52 pedro Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -252,6 +252,13 @@ struct ntfs_args {
 #define	NTFS_MFLAG_ALLNAMES     0x00000002
 
 /*
+ * Arguments to mount UDF filesystems.
+ */
+struct udf_args {
+	char	*fspec;			/* block special device to mount */
+};
+
+/*
  * Arguments to mount procfs filesystems
  */
 struct procfs_args {
@@ -353,6 +360,7 @@ struct ostatfs {
 #define	MOUNT_NCPFS	"ncpfs"		/* NetWare Network File System */
 #define	MOUNT_XFS	"xfs"		/* xfs */
 #define	MOUNT_NTFS	"ntfs"		/* NTFS */
+#define	MOUNT_UDF	"udf"		/* UDF */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
