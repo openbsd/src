@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: util.c,v 1.18 2002/05/29 09:23:25 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.19 2003/04/06 22:47:14 espie Exp $	*/
 /*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ getwd(pathname)
 
     /* find the inode of root */
     if (stat("/", &st_root) == -1) {
-	(void)sprintf(pathname,
+	(void)snprintf(pathname, MAXPATHLEN, 
 	    "getwd: Cannot stat \"/\" (%s)", strerror(errno));
 	return NULL;
     }
@@ -218,7 +218,7 @@ getwd(pathname)
 
     /* find the inode of the current directory */
     if (lstat(".", &st_cur) == -1) {
-	(void)sprintf(pathname,
+	(void)snprintf(pathname, MAXPATHLEN,
 	    "getwd: Cannot stat \".\" (%s)", strerror(errno));
 	return NULL;
     }
@@ -230,19 +230,19 @@ getwd(pathname)
 	/* look if we found root yet */
 	if (st_cur.st_ino == st_root.st_ino &&
 	    DEV_DEV_COMPARE(st_cur.st_dev, st_root.st_dev)) {
-	    (void)strcpy(pathname, *pathptr != '/' ? "/" : pathptr);
+	    (void)strlcpy(pathname, *pathptr != '/' ? "/" : pathptr, MAXPATHLEN);
 	    return pathname;
 	}
 
 	/* open the parent directory */
 	if (stat(nextpathptr, &st_dotdot) == -1) {
-	    (void)sprintf(pathname,
+	    (void)snprintf(pathname, MAXPATHLEN,
 		"getwd: Cannot stat directory \"%s\" (%s)",
 		nextpathptr, strerror(errno));
 	    return NULL;
 	}
 	if ((dp = opendir(nextpathptr)) == NULL) {
-	    (void)sprintf(pathname,
+	    (void)snprintf(pathname, MAXPATHLEN,
 		"getwd: Cannot open directory \"%s\" (%s)",
 		nextpathptr, strerror(errno));
 	    return NULL;
@@ -265,7 +265,7 @@ getwd(pathname)
 		    continue;
 		(void)strcpy(cur_name_add, d->d_name);
 		if (lstat(nextpathptr, &st_next) == -1) {
-		    (void)sprintf(pathname,
+		    (void)snprintf(pathname, MAXPATHLEN,
 			"getwd: Cannot stat \"%s\" (%s)",
 			d->d_name, strerror(errno));
 		    (void)closedir(dp);
@@ -278,7 +278,7 @@ getwd(pathname)
 	    }
 	}
 	if (d == NULL) {
-	    (void)sprintf(pathname,
+	    (void)snprintf(pathname, MAXPATHLEN,
 		"getwd: Cannot find \".\" in \"..\"");
 	    (void)closedir(dp);
 	    return NULL;

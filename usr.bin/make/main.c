@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.59 2002/12/30 22:12:38 millert Exp $ */
+/*	$OpenBSD: main.c,v 1.60 2003/04/06 22:47:14 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -346,6 +346,7 @@ Main_ParseArgLine(line)
 	char *buf;
 	char *argv0;
 	const char *s;
+	size_t len;
 
 
 	if (line == NULL)
@@ -367,8 +368,9 @@ Main_ParseArgLine(line)
 			break;
 	}
 	argv0 = Var_Value(".MAKE");
-	buf = emalloc(strlen(line) + strlen(argv0) + 2);
-	(void)sprintf(buf, "%s %s", argv0, line);
+	len = strlen(line) + strlen(argv0) + 2;
+	buf = emalloc(len);
+	(void)snprintf(buf, len, "%s %s", argv0, line);
 
 	argv = brk_string(buf, &argc, &args);
 	free(buf);
