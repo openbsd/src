@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.332 2003/04/05 20:18:23 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.333 2003/04/05 20:20:58 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -105,40 +105,7 @@ u_int32_t		 ticket_altqs_active;
 u_int32_t		 ticket_altqs_inactive;
 u_int32_t		 ticket_pabuf;
 
-/* Timeouts */
-int			 pftm_tcp_first_packet = 120;	/* First TCP packet */
-int			 pftm_tcp_opening = 30;		/* No response yet */
-int			 pftm_tcp_established = 24*60*60;  /* established */
-int			 pftm_tcp_closing = 15 * 60;	/* Half closed */
-int			 pftm_tcp_fin_wait = 45;	/* Got both FINs */
-int			 pftm_tcp_closed = 90;		/* Got a RST */
-
-int			 pftm_udp_first_packet = 60;	/* First UDP packet */
-int			 pftm_udp_single = 30;		/* Unidirectional */
-int			 pftm_udp_multiple = 60;	/* Bidirectional */
-
-int			 pftm_icmp_first_packet = 20;	/* First ICMP packet */
-int			 pftm_icmp_error_reply = 10;	/* Got error response */
-
-int			 pftm_other_first_packet = 60;	/* First packet */
-int			 pftm_other_single = 30;	/* Unidirectional */
-int			 pftm_other_multiple = 60;	/* Bidirectional */
-
-int			 pftm_frag = 30;		/* Fragment expire */
-
-int			 pftm_interval = 10;		/* expire interval */
 struct timeout		 pf_expire_to;			/* expire timeout */
-
-int			*pftm_timeouts[PFTM_MAX] = { &pftm_tcp_first_packet,
-				&pftm_tcp_opening, &pftm_tcp_established,
-				&pftm_tcp_closing, &pftm_tcp_fin_wait,
-				&pftm_tcp_closed, &pftm_udp_first_packet,
-				&pftm_udp_single, &pftm_udp_multiple,
-				&pftm_icmp_first_packet, &pftm_icmp_error_reply,
-				&pftm_other_first_packet, &pftm_other_single,
-				&pftm_other_multiple, &pftm_frag,
-				&pftm_interval };
-
 
 struct pool		 pf_tree_pl, pf_rule_pl, pf_addr_pl;
 struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
@@ -272,7 +239,7 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
 	(s)->lan.port != (s)->gwy.port
 
 #define TIMEOUT(r,i) \
-	(((r) && (r)->timeout[(i)]) ? (r)->timeout[(i)] : *pftm_timeouts[(i)])
+	(((r) && (r)->timeout[(i)]) ? (r)->timeout[(i)] : pf_default_rule.timeout[(i)])
 
 static __inline int pf_state_compare(struct pf_tree_node *,
 			struct pf_tree_node *);
@@ -470,7 +437,7 @@ pf_purge_timeout(void *arg)
 	pf_purge_expired_fragments();
 	splx(s);
 
-	timeout_add(to, pftm_interval * hz);
+	timeout_add(to, pf_default_rule.timeout[PFTM_INTERVAL] * hz);
 }
 
 void

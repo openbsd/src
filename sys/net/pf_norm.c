@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.55 2003/02/18 08:05:15 camield Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.56 2003/04/05 20:20:58 cedric Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -121,7 +121,6 @@ int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
 /* Globals */
 struct pool		 pf_frent_pl, pf_frag_pl, pf_cache_pl, pf_cent_pl;
 int			 pf_nfrents, pf_ncache;
-extern int		 pftm_frag;	/* Fragment expire timeout */
 
 void
 pf_normalize_init(void)
@@ -168,7 +167,8 @@ void
 pf_purge_expired_fragments(void)
 {
 	struct pf_fragment	*frag;
-	u_int32_t		 expire = time.tv_sec - pftm_frag;
+	u_int32_t		 expire = time.tv_sec -
+				    pf_default_rule.timeout[PFTM_FRAG];
 
 	while ((frag = TAILQ_LAST(&pf_fragqueue, pf_fragqueue)) != NULL) {
 		KASSERT(BUFFER_FRAGMENTS(frag));

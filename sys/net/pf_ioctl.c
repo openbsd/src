@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.53 2003/04/03 15:27:17 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.54 2003/04/05 20:20:58 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -84,11 +84,15 @@ int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 extern struct timeout	 pf_expire_to;
 
+struct pf_rule		 pf_default_rule;
+
 #define DPFPRINTF(n, x) if (pf_status.debug >= (n)) printf x
 
 void
 pfattach(int num)
 {
+	u_int32_t *timeout = pf_default_rule.timeout;
+
 	pool_init(&pf_tree_pl, sizeof(struct pf_tree_node), 0, 0, 0, "pftrpl",
 	    NULL);
 	pool_init(&pf_rule_pl, sizeof(struct pf_rule), 0, 0, 0, "pfrulepl",
@@ -114,8 +118,31 @@ pfattach(int num)
 	pf_altqs_active = &pf_altqs[0];
 	pf_altqs_inactive = &pf_altqs[1];
 
+	/* default rule should never be garbage collected */
+	pf_default_rule.entries.tqe_prev = &pf_default_rule.entries.tqe_next;
+	pf_default_rule.action = PF_PASS;
+	pf_default_rule.nr = -1;
+
+	/* initialize default timeouts */
+	timeout[PFTM_TCP_FIRST_PACKET] = 120;		/* First TCP packet */
+	timeout[PFTM_TCP_OPENING] = 30;			/* No response yet */
+	timeout[PFTM_TCP_ESTABLISHED] = 24*60*60;	/* Established */
+	timeout[PFTM_TCP_CLOSING] = 15 * 60;		/* Half closed */
+	timeout[PFTM_TCP_FIN_WAIT] = 45;		/* Got both FINs */
+	timeout[PFTM_TCP_CLOSED] = 90;			/* Got a RST */
+	timeout[PFTM_UDP_FIRST_PACKET] = 60;		/* First UDP packet */
+	timeout[PFTM_UDP_SINGLE] = 30;			/* Unidirectional */
+	timeout[PFTM_UDP_MULTIPLE] = 60;		/* Bidirectional */
+	timeout[PFTM_ICMP_FIRST_PACKET] = 20;		/* First ICMP packet */
+	timeout[PFTM_ICMP_ERROR_REPLY] = 10;		/* Got error response */
+	timeout[PFTM_OTHER_FIRST_PACKET] = 60;		/* First packet */
+	timeout[PFTM_OTHER_SINGLE] = 30;		/* Unidirectional */
+	timeout[PFTM_OTHER_MULTIPLE] = 60;		/* Bidirectional */
+	timeout[PFTM_FRAG] = 30;			/* Fragment expire */
+	timeout[PFTM_INTERVAL] = 10;			/* Expire interval */
+
 	timeout_set(&pf_expire_to, pf_purge_timeout, &pf_expire_to);
-	timeout_add(&pf_expire_to, pftm_interval * hz);
+	timeout_add(&pf_expire_to, timeout[PFTM_INTERVAL] * hz);
 
 	pf_normalize_init();
 	pf_status.debug = PF_DEBUG_URGENT;
@@ -1127,8 +1154,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			goto fail;
 		}
-		old = *pftm_timeouts[pt->timeout];
-		*pftm_timeouts[pt->timeout] = pt->seconds;
+		old = pf_default_rule.timeout[pt->timeout];
+		pf_default_rule.timeout[pt->timeout] = pt->seconds;
 		pt->seconds = old;
 		break;
 	}
@@ -1140,7 +1167,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			goto fail;
 		}
-		pt->seconds = *pftm_timeouts[pt->timeout];
+		pt->seconds = pf_default_rule.timeout[pt->timeout];
 		break;
 	}
 

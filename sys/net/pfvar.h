@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.137 2003/03/31 13:15:27 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.138 2003/04/05 20:20:58 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -965,14 +965,13 @@ extern void			 pf_update_anchor_rules(void);
 extern struct pool		 pf_tree_pl, pf_rule_pl, pf_addr_pl;
 extern struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
 extern void			 pf_purge_timeout(void *);
-extern int			 pftm_interval;
 extern void			 pf_purge_expired_states(void);
 extern int			 pf_insert_state(struct pf_state *);
 extern struct pf_state		*pf_find_state(struct pf_state_tree *,
 				    struct pf_tree_node *);
 extern struct pf_anchor		*pf_find_anchor(const char *);
 extern struct ifnet		*status_ifp;
-extern int			*pftm_timeouts[PFTM_MAX];
+extern struct pf_rule		 pf_default_rule;
 extern void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
 				    u_int8_t);
 void				 pf_rm_rule(struct pf_rulequeue *,
