@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.39 2003/05/14 05:17:11 nate Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.40 2003/08/12 19:44:43 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.36 2003/05/14 05:16:58 nate Exp 
+ *	OpenBSD: miidevs,v 1.37 2003/08/12 19:42:37 mickey Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -109,6 +109,8 @@
 /* Altima Communications PHYs */
 #define	MII_MODEL_xxALTIMA_AC101	0x0021
 #define	MII_STR_xxALTIMA_AC101	"AC101 10/100 media interface"
+#define	MII_MODEL_xxALTIMA_AC101L	0x0012
+#define	MII_STR_xxALTIMA_AC101L	"AC101L 10/100 media interface"
 
 /* Broadcom Corp. PHYs */
 #define	MII_MODEL_xxBROADCOM_BCM5400	0x0004
