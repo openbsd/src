@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.42 2000/09/15 22:28:50 aaron Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.43 2000/09/17 00:06:01 aaron Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -824,8 +824,8 @@ epsetmedia(sc, medium)
 	GO_WINDOW(4);
 	switch (medium) {
 	case EPMEDIA_10BASE_T:
-		bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE,
-		    w4_media | ENABLE_UTP);
+		bus_space_write_2(iot, ioh, EP_W4_MEDIA_TYPE, (ENABLE_UTP |
+		    (sc->bustype == EP_BUS_PCMCIA ? MEDIA_LED : 0)));
 		break;
 
 	case EPMEDIA_10BASE_2:

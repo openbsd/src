@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3reg.h,v 1.12 2000/05/29 18:04:07 aaron Exp $	*/
+/*	$OpenBSD: elink3reg.h,v 1.13 2000/09/17 00:06:02 aaron Exp $	*/
 /*	$NetBSD: elink3reg.h,v 1.13 1997/04/27 09:42:34 veego Exp $	*/
 
 /*
@@ -493,6 +493,7 @@
 #define ENABLE_UTP			(JABBER_GUARD_ENABLE|LINKBEAT_ENABLE)
 #define DISABLE_UTP			0x0
 #define LINKBEAT_DETECT			0x800
+#define MEDIA_LED			0x0001	/* Link LED for 3C589E */
 
 /*
  * ep_connectors softc media-preset bitflags
