@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.9 2001/03/11 04:48:12 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.10 2001/05/21 19:52:55 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -49,7 +49,8 @@
 #define MPC750          8
 #define MPC604ev        9
 #define MPC7400         12
-#define MPC7400v         0x800c
+#define MPC7410         0x800c
+#define MPC7450         0x8000
 
 /* only valid on 603(e,ev) and G3, G4 */
 #define HID0_DOZE	(1 << (31-8))
@@ -123,10 +124,13 @@ cpuattach(parent, dev, aux)
 		sprintf(cpu_model, "604ev");
 		break;
 	case MPC7400:
-		sprintf(cpu_model, "7400(G4)");
+		sprintf(cpu_model, "7400");
 		break;
-	case MPC7400v:
-		sprintf(cpu_model, "7400v(G4?)");
+	case MPC7410:
+		sprintf(cpu_model, "7410");
+		break;
+	case MPC7450:
+		sprintf(cpu_model, "7450");
 		break;
 	default:
 		sprintf(cpu_model, "Version %x", cpu);
@@ -167,7 +171,8 @@ cpuattach(parent, dev, aux)
 	case MPC603e:
 	case MPC750:
 	case MPC7400:
-	case MPC7400v:
+	case MPC7410:
+	case MPC7450:
 		/* select DOZE mode */
 		hid0 &= ~(HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM; 
@@ -176,7 +181,7 @@ cpuattach(parent, dev, aux)
 
 	/* if processor is G3 or G4, configure l2 cache */ 
 	if  ( (cpu == MPC750) || (cpu == MPC7400) 
-		|| (cpu == MPC7400v) )
+		|| (cpu == MPC7410))
 	{
 		config_l2cr();
 	}
