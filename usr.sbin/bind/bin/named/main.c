@@ -618,6 +618,8 @@ main(int argc, char *argv[]) {
 
 	isc_app_finish();
 
+	ns_os_closedevnull();
+
 	ns_os_shutdown();
 
 	return (0);
