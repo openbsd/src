@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.8 1997/02/10 12:24:40 downsj Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.9 1997/02/11 17:50:33 kstailey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -3129,6 +3129,9 @@ void
 pmap_update()
 {
 }
+
+extern copypage __P((caddr_t, caddr_t));
+extern zeropage __P((char *));
 
 /*
  *	pmap_copy_page copies the specified (machine independent)
