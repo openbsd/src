@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xargs.1,v 1.6 1998/10/30 00:24:44 aaron Exp $
+.\"	$OpenBSD: xargs.1,v 1.7 1999/08/18 13:09:45 aaron Exp $
 .\"	$NetBSD: xargs.1,v 1.6 1994/11/14 06:51:40 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -55,8 +55,8 @@
 .Op Ar utility Op Ar arguments ...
 .Sh DESCRIPTION
 The
-.Nm xargs
-utility reads space, tab, newline and end-of-file delimited arguments
+.Nm
+utility reads space, tab, newline, and end-of-file delimited arguments
 from the standard input and executes the specified
 .Ar utility
 with them as
@@ -72,9 +72,11 @@ The
 is repeatedly executed until standard input is exhausted.
 .Pp
 Spaces, tabs and newlines may be embedded in arguments using single
-(``\ '\ '')
-.Ek
-or double (``"'') quotes or backslashes (``\e'').
+.Pq Ql '
+or double
+.Pq Ql \&"
+quotes or backslashes
+.Pq Ql \e .
 Single quotes escape all non-single quote characters, excluding newlines,
 up to the matching single quote.
 Double quotes escape all non-double quote characters, excluding newlines,
@@ -85,14 +87,14 @@ The options are as follows:
 .Bl -tag -width indent
 .It Fl 0
 Changes
-.Nm xargs
+.Nm
 to expect NUL
-(``\\0'')
+.Pq Ql \e0
 characters as separators, instead of spaces and newlines.
 This is expected to be used in concert with the
 .Fl print0
 function in
-.Nm find .
+.Xr find 1 .
 .It Fl n Ar number
 Set the maximum number of arguments taken from standard input for each
 invocation of the utility.
@@ -112,13 +114,11 @@ The current default value for
 .Ar number
 is 5000.
 .It Fl s Ar size
-Set the maximum number of bytes for the command line length provided to
+Set the maximum number of bytes for the command-line length provided to
 .Ar utility .
 The sum of the length of the utility name and the arguments passed to
 .Ar utility
-(including
-.Dv NULL
-terminators) will be less than or equal to this number.
+(including null terminators) will be less than or equal to this number.
 The current default value for
 .Ar size
 is
@@ -129,10 +129,10 @@ Echo the command to be executed to standard error immediately before it
 is executed.
 .It Fl x
 Force
-.Nm xargs
+.Nm
 to terminate immediately if a command line containing
 .Ar number
-arguments will not fit in the specified (or default) command line length.
+arguments will not fit in the specified (or default) command-line length.
 .El
 .Pp
 If no
@@ -146,14 +146,14 @@ Undefined behavior may occur if
 reads from the standard input.
 .Pp
 The
-.Nm xargs
+.Nm
 utility exits immediately (without processing any further input) if a
 command line cannot be assembled,
 .Ar utility
-cannot be invoked, an invocation of the utility is terminated by a signal
+cannot be invoked, an invocation of the utility is terminated by a signal,
 or an invocation of the utility exits with a value of 255.
 .Sh DIAGNOSTICS
-.Nm xargs
+.Nm
 exits with one of the following values:
 .Pp
 .Bl -tag -width Ds -compact
@@ -189,9 +189,10 @@ Some other error occurred.
 .Xr find 1
 .Sh STANDARDS
 The
-.Nm xargs
+.Nm
 utility is expected to be
 .St -p1003.2
 compliant.
 .Sh HISTORY
-The meaning of 123, 124, and 125 exit values were taken from GNU xargs.
+The meaning of 123, 124, and 125 exit values were taken from GNU
+.Nm xargs .
