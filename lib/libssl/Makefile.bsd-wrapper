@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.20 2000/04/01 22:18:13 deraadt Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.21 2000/04/04 03:23:02 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -387,13 +387,11 @@ MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	MDC2.3 MDC2_Final.3 \
 	SHA1.3 SHA1_Init.3 SHA1.3 SHA1_Update.3 SHA1.3 SHA1_Final.3 \
 	RC4.3 RC4_set_key.3 \
-	RAND_bytes.3 RAND_pseudo_bytes.3 RAND_bytes.3 RAND_seed.3 \
-	RAND_bytes.3 RAND_add.3 RAND_bytes.3 RAND_status.3 \
-	RAND_bytes.3 RAND_screen.3 RAND_bytes.3 RAND_load_file.3 \
-	RAND_bytes.3 RAND_write_file.3 RAND_bytes.3 RAND_file_name.3 \
-	RAND_bytes.3 RAND_egd.3 RAND_bytes.3 RAND_set_rand_method.3 \
-	RAND_bytes.3 RAND_get_rand_method.3 RAND_bytes.3 RAND_SSLeay.3 \
-	RAND_bytes.3 RAND_cleanup.3 \
+	RAND_bytes.3 RAND_pseudo_bytes.3 \
+	RAND_load_file.3 RAND_file_name.3 \
+	RAND_load_file.3 RAND_write_file.3 \
+	RAND_set_rand_method.3 RAND_get_rand_method.3 \
+	RAND_set_rand_method.3 RAND_SSLeay.3 \
 	CRYPTO_set_locking_callback.3 CRYPTO_set_id_callback.3 \
 	CRYPTO_set_locking_callback.3 CRYPTO_num_locks.3 \
 	RIPEMD160.3 RIPEMD160_Init.3 RIPEMD160.3 RIPEMD160_Update.3 \
