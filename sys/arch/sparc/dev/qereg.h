@@ -1,4 +1,4 @@
-/*	$OpenBSD: qereg.h,v 1.5 2000/11/16 15:47:57 jason Exp $	*/
+/*	$OpenBSD: qereg.h,v 1.6 2001/01/30 07:17:07 jason Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -317,9 +317,14 @@ struct qe_txd {
 /* Buffer and Ring sizes: fixed ring size */
 #define	QE_TX_RING_MAXSIZE	256		/* maximum tx ring size */
 #define	QE_RX_RING_MAXSIZE	256		/* maximum rx ring size */
-#define	QE_TX_RING_SIZE		16
-#define	QE_RX_RING_SIZE		16
+#define	QE_TX_RING_SIZE		16		/* power of 2, <= MAXSIZE */
+#define	QE_RX_RING_SIZE		16		/* power of 2, <= MAXSIZE */
 #define	QE_PKT_BUF_SZ		2048
+
+#define	QE_TX_RING_MAXMASK	(QE_TX_RING_MAXSIZE-1)
+#define	QE_RX_RING_MAXMASK	(QE_RX_RING_MAXSIZE-1)
+#define	QE_TX_RING_MASK		(QE_TX_RING_SIZE-1)
+#define	QE_RX_RING_MASK		(QE_RX_RING_SIZE-1)
 
 /*
  * QE descriptor rings

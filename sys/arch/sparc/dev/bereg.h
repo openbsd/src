@@ -1,4 +1,4 @@
-/*	$OpenBSD: bereg.h,v 1.8 1999/01/07 03:14:42 jason Exp $	*/
+/*	$OpenBSD: bereg.h,v 1.9 2001/01/30 07:17:07 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -257,9 +257,14 @@ struct be_txd {
 /* Buffer and Ring sizes: fixed ring size */
 #define BE_TX_RING_MAXSIZE	256		/* maximum tx ring size */
 #define BE_RX_RING_MAXSIZE	256		/* maximum rx ring size */
-#define BE_TX_RING_SIZE		32
-#define BE_RX_RING_SIZE		32
+#define BE_TX_RING_SIZE		32		/* power of 2, <= MAXSIZE */
+#define BE_RX_RING_SIZE		32		/* power of 2, <= MAXSIZE */
 #define BE_PKT_BUF_SZ		2048
+
+#define	BE_TX_RING_MAXMASK	(BE_TX_RING_MAXSIZE-1)
+#define	BE_RX_RING_MAXMASK	(BE_RX_RING_MAXSIZE-1)
+#define	BE_TX_RING_MASK		(BE_TX_RING_SIZE-1)
+#define	BE_RX_RING_MASK		(BE_RX_RING_SIZE-1)
 
 /*
  * BE descriptor rings

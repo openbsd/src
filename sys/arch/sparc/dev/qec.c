@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.12 1999/07/05 22:30:06 deraadt Exp $	*/
+/*	$OpenBSD: qec.c,v 1.13 2001/01/30 07:17:07 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -38,6 +38,22 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_types.h>
+#include <net/netisr.h>
+#include <net/if_media.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
+#endif
 
 #include <sparc/autoconf.h>
 #include <sparc/cpu.h>
@@ -287,4 +303,87 @@ qec_reset(sc)
 		i = QEC_CTRL_B16;
 
 	qr->ctrl = (qr->ctrl & QEC_CTRL_MODEMASK) | i;
+}
+
+/*
+ * Routine to copy from mbuf chain to transmit buffer in
+ * network buffer memory.
+ */
+int
+qec_put(buf, m)
+	u_int8_t *buf;
+	struct mbuf *m;
+{
+	struct mbuf *n;
+	int len, tlen = 0;
+
+	for (; m != NULL; m = n) {
+		len = m->m_len;
+		if (len == 0) {
+			MFREE(m, n);
+			continue;
+		}
+		bcopy(mtod(m, caddr_t), buf, len);
+		buf += len;
+		tlen += len;
+		MFREE(m, n);
+	}
+	return tlen;
+}
+
+/*
+ * Pull data off an interface.
+ * Len is the length of data, with local net header stripped.
+ * We copy the data into mbufs.  When full cluster sized units are present,
+ * we copy into clusters.
+ */
+struct mbuf *
+qec_get(ifp, buf, totlen)
+	struct ifnet *ifp;
+	u_int8_t *buf;
+	int totlen;
+{
+	struct mbuf *m, *top, **mp;
+	int len, pad;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return (NULL);
+	m->m_pkthdr.rcvif = ifp;
+	m->m_pkthdr.len = totlen;
+	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
+	len = MHLEN;
+	if (totlen >= MINCLSIZE) {
+		MCLGET(m, M_DONTWAIT);
+		if (m->m_flags & M_EXT)
+			len = MCLBYTES;
+	}
+	m->m_data += pad;
+	len -= pad;
+	top = NULL;
+	mp = &top;
+
+	while (totlen > 0) {
+		if (top) {
+			MGET(m, M_DONTWAIT, MT_DATA);
+			if (m == NULL) {
+				m_freem(top);
+				return NULL;
+			}
+			len = MLEN;
+		}
+		if (top && totlen >= MINCLSIZE) {
+			MCLGET(m, M_DONTWAIT);
+			if (m->m_flags & M_EXT)
+				len = MCLBYTES;
+		}
+		m->m_len = len = min(totlen, len);
+		bcopy(buf, mtod(m, caddr_t), len);
+		buf += len;
+		totlen -= len;
+		*mp = m;
+		mp = &m->m_next;
+	}
+
+	return (top);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.13 2000/11/17 17:38:32 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.14 2001/01/30 07:17:07 jason Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -93,9 +93,7 @@ int		qeintr __P((void *));
 int		qe_eint __P((struct qesoftc *, u_int32_t));
 int		qe_rint __P((struct qesoftc *));
 int		qe_tint __P((struct qesoftc *));
-int		qe_put __P((struct qesoftc *, int, struct mbuf *));
 void		qe_read __P((struct qesoftc *, int, int));
-struct mbuf *	qe_get __P((struct qesoftc *, int, int));
 void		qe_mcreset __P((struct qesoftc *));
 void		qe_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int		qe_ifmedia_upd __P((struct ifnet *));
@@ -229,7 +227,7 @@ qestart(ifp)
 		/*
 		 * Copy the mbuf chain into the transmit buffer.
 		 */
-		len = qe_put(sc, bix, m);
+		len = qec_put(sc->sc_bufs->tx_buf[bix & QE_TX_RING_MASK], m);
 
 		/*
 		 * Initialize transmit registers and start transmission
@@ -392,7 +390,7 @@ qe_rint(sc)
 
 		len = (sc->sc_desc->qe_rxd[bix].rx_flags & QE_RXD_LENGTH) - 4;
 		qe_read(sc, bix, len);
-		sc->sc_desc->qe_rxd[(bix + QE_RX_RING_SIZE) % QE_RX_RING_MAXSIZE].rx_flags =
+		sc->sc_desc->qe_rxd[(bix + QE_RX_RING_SIZE) & QE_RX_RING_MAXMASK].rx_flags =
 		    QE_RXD_OWN | QE_RXD_LENGTH;
 
 		if (++bix == QE_RX_RING_MAXSIZE)
@@ -710,17 +708,17 @@ qeinit(sc)
 
 	for (i = 0; i < QE_TX_RING_MAXSIZE; i++)
 		sc->sc_desc->qe_txd[i].tx_addr =
-			(u_int32_t) &sc->sc_bufs_dva->tx_buf[i % QE_TX_RING_SIZE][0];
+			(u_int32_t)sc->sc_bufs_dva->tx_buf[i & QE_TX_RING_MASK];
 	for (i = 0; i < QE_RX_RING_MAXSIZE; i++) {
 		sc->sc_desc->qe_rxd[i].rx_addr =
-			(u_int32_t) &sc->sc_bufs_dva->rx_buf[i % QE_RX_RING_SIZE][0];
-		if ((i / QE_RX_RING_SIZE) == 0)
+			(u_int32_t)sc->sc_bufs_dva->rx_buf[i & QE_RX_RING_MASK];
+		if (i < QE_RX_RING_SIZE)
 			sc->sc_desc->qe_rxd[i].rx_flags =
 				QE_RXD_OWN | QE_RXD_LENGTH;
 	}
 
-	cr->rxds = (u_int32_t) &sc->sc_desc_dva->qe_rxd[0];
-	cr->txds = (u_int32_t) &sc->sc_desc_dva->qe_txd[0];
+	cr->rxds = (u_int32_t)sc->sc_desc_dva->qe_rxd;
+	cr->txds = (u_int32_t)sc->sc_desc_dva->qe_txd;
 
 	sc->sc_first_td = sc->sc_last_td = sc->sc_no_td = 0;
 	sc->sc_last_rd = 0;
@@ -778,34 +776,6 @@ qeinit(sc)
 }
 
 /*
- * Routine to copy from mbuf chain to transmit buffer in
- * network buffer memory.
- */
-int
-qe_put(sc, idx, m)
-	struct qesoftc *sc;
-	int idx;
-	struct mbuf *m;
-{
-	struct mbuf *n;
-	int len, tlen = 0, boff = 0;
-
-	for (; m; m = n) {
-		len = m->m_len;
-		if (len == 0) {
-			MFREE(m, n);
-			continue;
-		}
-		bcopy(mtod(m, caddr_t),
-		      &sc->sc_bufs->tx_buf[idx % QE_TX_RING_SIZE][boff], len);
-		boff += len;
-		tlen += len;
-		MFREE(m, n);
-	}
-	return tlen;
-}
-
-/*
  * Pass a packet to the higher levels.
  */
 void
@@ -830,7 +800,7 @@ qe_read(sc, idx, len)
 	/*
 	 * Pull packet off interface.
 	 */
-	m = qe_get(sc, idx, len);
+	m = qec_get(ifp, sc->sc_bufs->rx_buf[idx & QE_RX_RING_MASK], len);
 	if (m == NULL) {
 		ifp->if_ierrors++;
 		return;
@@ -851,65 +821,6 @@ qe_read(sc, idx, len)
 	/* Pass the packet up, with the ether header sort-of removed. */
 	m_adj(m, sizeof(struct ether_header));
 	ether_input(ifp, eh, m);
-}
-
-/*
- * Pull data off an interface.
- * Len is the length of data, with local net header stripped.
- * We copy the data into mbufs.  When full cluster sized units are present,
- * we copy into clusters.
- */
-struct mbuf *
-qe_get(sc, idx, totlen)
-	struct qesoftc *sc;
-	int idx, totlen;
-{
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct mbuf *m;
-	struct mbuf *top, **mp;
-	int len, pad, boff = 0;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return (NULL);
-	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = totlen;
-	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
-	len = MHLEN;
-	if (totlen >= MINCLSIZE) {
-		MCLGET(m, M_DONTWAIT);
-		if (m->m_flags & M_EXT)
-			len = MCLBYTES;
-	}
-	m->m_data += pad;
-	len -= pad;
-	top = NULL;
-	mp = &top;
-
-	while (totlen > 0) {
-		if (top) {
-			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL) {
-				m_freem(top);
-				return NULL;
-			}
-			len = MLEN;
-		}
-		if (top && totlen >= MINCLSIZE) {
-			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				len = MCLBYTES;
-		}
-		m->m_len = len = min(totlen, len);
-		bcopy(&sc->sc_bufs->rx_buf[idx % QE_RX_RING_SIZE][boff],
-		      mtod(m, caddr_t), len);
-		boff += len;
-		totlen -= len;
-		*mp = m;
-		mp = &m->m_next;
-	}
-
-	return (top);
 }
 
 /*
