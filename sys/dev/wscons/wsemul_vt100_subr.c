@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.5 2001/03/14 02:49:23 mickey Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.6 2001/04/14 04:48:01 aaron Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -42,10 +42,10 @@
 #include <dev/wscons/wsemulvar.h>
 #include <dev/wscons/wsemul_vt100var.h>
 
-static int vt100_selectattribute __P((struct wsemul_vt100_emuldata *,
-				      int, int, int, long *, long *));
-static int vt100_ansimode __P((struct wsemul_vt100_emuldata *, int, int));
-static int vt100_decmode __P((struct wsemul_vt100_emuldata *, int, int));
+int vt100_selectattribute __P((struct wsemul_vt100_emuldata *, int, int, int,
+			       long *, long *));
+int vt100_ansimode __P((struct wsemul_vt100_emuldata *, int, int));
+int vt100_decmode __P((struct wsemul_vt100_emuldata *, int, int));
 #define VTMODE_SET 33
 #define VTMODE_RESET 44
 #define VTMODE_REPORT 55
@@ -628,7 +628,7 @@ wsemul_vt100_handle_csi(edp, c)
  * try to find replacements if the desired appearance
  * is not supported
  */
-static int
+int
 vt100_selectattribute(edp, flags, fgcol, bgcol, attr, bkgdattr)
 	struct wsemul_vt100_emuldata *edp;
 	int flags, fgcol, bgcol;
@@ -748,7 +748,7 @@ wsemul_vt100_handle_dcs(edp)
 	edp->dcstype = 0;
 }
 
-static int
+int
 vt100_ansimode(edp, nr, op)
 	struct wsemul_vt100_emuldata *edp;
 	int nr, op;
@@ -784,7 +784,7 @@ vt100_ansimode(edp, nr, op)
 	return (res);
 }
 
-static int
+int
 vt100_decmode(edp, nr, op)
 	struct wsemul_vt100_emuldata *edp;
 	int nr, op;

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.2 2001/03/07 17:51:29 aaron Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.3 2001/04/14 04:48:00 aaron Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -95,13 +95,11 @@ struct wsemul_sun_emuldata {
 #endif
 };
 
-static u_int	wsemul_sun_output_normal __P((struct wsemul_sun_emuldata *,
-		    u_char, int));
-static u_int	wsemul_sun_output_haveesc __P((struct wsemul_sun_emuldata *,
-		    u_char));
-static u_int	wsemul_sun_output_control __P((struct wsemul_sun_emuldata *,
-		    u_char));
-static void	wsemul_sun_control __P((struct wsemul_sun_emuldata *, u_char));
+u_int wsemul_sun_output_normal __P((struct wsemul_sun_emuldata *, u_char,
+				    int));
+u_int wsemul_sun_output_haveesc __P((struct wsemul_sun_emuldata *, u_char));
+u_int wsemul_sun_output_control __P((struct wsemul_sun_emuldata *, u_char));
+void wsemul_sun_control __P((struct wsemul_sun_emuldata *, u_char));
 
 struct wsemul_sun_emuldata wsemul_sun_console_emuldata;
 
@@ -225,7 +223,7 @@ wsemul_sun_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
 	return (edp);
 }
 
-static inline u_int
+inline u_int
 wsemul_sun_output_normal(edp, c, kernel)
 	struct wsemul_sun_emuldata *edp;
 	u_char c;
@@ -328,7 +326,7 @@ wsemul_sun_output_normal(edp, c, kernel)
 	return (newstate);
 }
 
-static inline u_int
+inline u_int
 wsemul_sun_output_haveesc(edp, c)
 	struct wsemul_sun_emuldata *edp;
 	u_char c;
@@ -351,7 +349,7 @@ wsemul_sun_output_haveesc(edp, c)
 	return (newstate);
 }
 
-static inline void
+inline void
 wsemul_sun_control(edp, c)
 	struct wsemul_sun_emuldata *edp;
 	u_char c;
@@ -475,7 +473,7 @@ setattr:
 	}
 }
 
-static inline u_int
+inline u_int
 wsemul_sun_output_control(edp, c)
 	struct wsemul_sun_emuldata *edp;
 	u_char c;

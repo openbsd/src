@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdutil.c,v 1.1 2000/05/16 23:49:12 mickey Exp $	*/
+/*	$OpenBSD: wskbdutil.c,v 1.2 2001/04/14 04:48:01 aaron Exp $	*/
 /*	$NetBSD: wskbdutil.c,v 1.7 1999/12/21 11:59:13 drochner Exp $	*/
 
 /*-
@@ -183,11 +183,12 @@ static struct compose_tab_s {
 
 static int compose_tab_inorder = 0;
 
-static inline int compose_tab_cmp __P((struct compose_tab_s *, struct compose_tab_s *));
-static keysym_t ksym_upcase __P((keysym_t));
-static void fillmapentry __P((const keysym_t *, int, struct wscons_keymap *));
+inline int compose_tab_cmp __P((struct compose_tab_s *,
+				struct compose_tab_s *));
+keysym_t ksym_upcase __P((keysym_t));
+void fillmapentry __P((const keysym_t *, int, struct wscons_keymap *));
 
-static inline int
+inline int
 compose_tab_cmp(i, j)
 	struct compose_tab_s *i, *j;
 {
@@ -268,7 +269,7 @@ static const u_char latin1_to_upper[256] = {
 	0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0x00,		/* f */
 };
 
-static keysym_t
+keysym_t
 ksym_upcase(ksym)
 	keysym_t ksym;
 {
@@ -282,7 +283,7 @@ ksym_upcase(ksym)
 	return(ksym);
 }
 
-static void
+void
 fillmapentry(kp, len, mapentry)
 	const keysym_t *kp;
 	int len;

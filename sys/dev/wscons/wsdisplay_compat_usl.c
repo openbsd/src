@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.4 2001/02/10 19:42:06 mickey Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.5 2001/04/14 04:48:00 aaron Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -63,20 +63,18 @@ struct usl_syncdata {
 	struct timeout s_detach_ch;
 };
 
-static int usl_sync_init __P((struct wsscreen *, struct usl_syncdata **,
-			      struct proc *, int, int, int));
-static void usl_sync_done __P((struct usl_syncdata *));
-static int usl_sync_check __P((struct usl_syncdata *));
-static struct usl_syncdata *usl_sync_get __P((struct wsscreen *));
+int usl_sync_init __P((struct wsscreen *, struct usl_syncdata **,
+		       struct proc *, int, int, int));
+void usl_sync_done __P((struct usl_syncdata *));
+int usl_sync_check __P((struct usl_syncdata *));
+struct usl_syncdata *usl_sync_get __P((struct wsscreen *));
 
-static int usl_detachproc __P((void *, int,
-			       void (*)(void *, int, int), void *));
-static int usl_detachack __P((struct usl_syncdata *, int));
-static void usl_detachtimeout __P((void *));
-static int usl_attachproc __P((void *, int,
-			       void (*)(void *, int, int), void *));
-static int usl_attachack __P((struct usl_syncdata *, int));
-static void usl_attachtimeout __P((void *));
+int usl_detachproc __P((void *, int, void (*)(void *, int, int), void *));
+int usl_detachack __P((struct usl_syncdata *, int));
+void usl_detachtimeout __P((void *));
+int usl_attachproc __P((void *, int, void (*)(void *, int, int), void *));
+int usl_attachack __P((struct usl_syncdata *, int));
+void usl_attachtimeout __P((void *));
 
 static const struct wscons_syncops usl_syncops = {
 	usl_detachproc,
@@ -92,7 +90,7 @@ static const struct wscons_syncops usl_syncops = {
 #endif
 static int wscompat_usl_synctimeout = WSCOMPAT_USL_SYNCTIMEOUT;
 
-static int
+int
 usl_sync_init(scr, sdp, p, acqsig, relsig, frsig)
 	struct wsscreen *scr;
 	struct usl_syncdata **sdp;
@@ -123,7 +121,7 @@ usl_sync_init(scr, sdp, p, acqsig, relsig, frsig)
 	return (0);
 }
 
-static void
+void
 usl_sync_done(sd)
 	struct usl_syncdata *sd;
 {
@@ -139,7 +137,7 @@ usl_sync_done(sd)
 	free(sd, M_DEVBUF);
 }
 
-static int
+int
 usl_sync_check(sd)
 	struct usl_syncdata *sd;
 {
@@ -150,7 +148,7 @@ usl_sync_check(sd)
 	return (0);
 }
 
-static struct usl_syncdata *
+struct usl_syncdata *
 usl_sync_get(scr)
 	struct wsscreen *scr;
 {
@@ -161,7 +159,7 @@ usl_sync_get(scr)
 	return (sd);
 }
 
-static int
+int
 usl_detachproc(cookie, waitok, callback, cbarg)
 	void *cookie;
 	int waitok;
@@ -191,7 +189,7 @@ usl_detachproc(cookie, waitok, callback, cbarg)
 	return (EAGAIN);
 }
 
-static int
+int
 usl_detachack(sd, ack)
 	struct usl_syncdata *sd;
 	int ack;
@@ -210,7 +208,7 @@ usl_detachack(sd, ack)
 	return (0);
 }
 
-static void
+void
 usl_detachtimeout(arg)
 	void *arg;
 {
@@ -231,7 +229,7 @@ usl_detachtimeout(arg)
 	(void) usl_sync_check(sd);
 }
 
-static int
+int
 usl_attachproc(cookie, waitok, callback, cbarg)
 	void *cookie;
 	int waitok;
@@ -256,7 +254,7 @@ usl_attachproc(cookie, waitok, callback, cbarg)
 	return (EAGAIN);
 }
 
-static int
+int
 usl_attachack(sd, ack)
 	struct usl_syncdata *sd;
 	int ack;
@@ -275,7 +273,7 @@ usl_attachack(sd, ack)
 	return (0);
 }
 
-static void
+void
 usl_attachtimeout(arg)
 	void *arg;
 {
