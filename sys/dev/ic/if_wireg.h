@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.5 2001/06/25 18:04:23 drahn Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.6 2001/10/25 16:39:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -346,6 +346,7 @@ struct wi_ltv_ver {
 #define	WI_NIC_HWB1153	0x8007
 #define	WI_NIC_P2_SST	0x8008  /* Prism2 with SST flush */
 #define	WI_NIC_PRISM2_5	0x800C
+#define	WI_NIC_3874A	0x8013	/* Prism2.5 Mini-PCI */
 };
 
 /*
