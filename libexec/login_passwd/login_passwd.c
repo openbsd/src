@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_passwd.c,v 1.3 2001/06/26 05:03:28 hin Exp $	*/
+/*	$OpenBSD: login_passwd.c,v 1.4 2001/06/29 05:56:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -30,28 +30,27 @@
 
 int
 pwd_login(char *username, char *password, char *wheel, int lastchance, 
-	  char *class)
+    char *class)
 {
 	struct passwd *pwd;
 	char *salt;
 
-
-	if((wheel != NULL) && strcmp(wheel, "yes") != 0) {
-                fprintf(back, BI_VALUE " errormsg %s\n",
-                    auth_mkvalue("you are not in group wheel"));
-                fprintf(back, BI_REJECT "\n");
+	if (wheel != NULL && strcmp(wheel, "yes") != 0) {
+		fprintf(back, BI_VALUE " errormsg %s\n",
+		    auth_mkvalue("you are not in group wheel"));
+		fprintf(back, BI_REJECT "\n");
 		return AUTH_FAILED;
 	}
 
 	pwd = getpwnam(username);
 
 	/* Check for empty password */
-	if((pwd != NULL) && (*pwd->pw_passwd == '\0')) {
+	if (pwd != NULL && *pwd->pw_passwd == '\0') {
 		fprintf(back, BI_AUTH "\n");
 		return AUTH_OK;
 	}
 
-	if(pwd)
+	if (pwd)
 		salt = pwd->pw_passwd;
 	else
 		salt = "xx";
@@ -63,7 +62,7 @@ pwd_login(char *username, char *password, char *wheel, int lastchance,
 	if (!pwd || strcmp(salt, pwd->pw_passwd) != 0)
 		return AUTH_FAILED;
 
-	if(login_check_expire(back, pwd, class, lastchance) == 0)
+	if (login_check_expire(back, pwd, class, lastchance) == 0)
 		fprintf(back, BI_AUTH "\n");
 	else
 		return AUTH_FAILED;
