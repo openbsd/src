@@ -1,4 +1,4 @@
-/*	$OpenBSD: ggbus.c,v 1.9 1997/01/04 12:49:24 niklas Exp $	*/
+/*	$OpenBSD: ggbus.c,v 1.10 1997/09/09 22:41:43 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Niklas Hallqvist
@@ -113,11 +113,13 @@ ggbusattach(parent, self, aux)
 	sc->sc_iot.bs_map = ggbus_io_map;
 	sc->sc_iot.bs_unmap = ggbus_unmap;
 	sc->sc_iot.bs_swapped = 0;
+	sc->sc_iot.bs_shift = 1;
 	if (sc->sc_zargs.serno >= 2) {
 		sc->sc_memt.bs_data = sc;
 		sc->sc_memt.bs_map = ggbus_mem_map;
 		sc->sc_memt.bs_unmap = ggbus_unmap;
 		sc->sc_memt.bs_swapped = 0;
+		sc->sc_memt.bs_shift = 1;
 		sc->sc_status = GG2_STATUS_ADDR(sc->sc_zargs.va);
 
 		/* XXX turn on wait states unconditionally for now. */
