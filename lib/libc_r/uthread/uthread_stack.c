@@ -1,5 +1,8 @@
-/*	$OpenBSD: uthread_stack.c,v 1.3 1999/11/26 00:53:21 d Exp $	*/
-/* David Leonard <david.leonard@csee.uq.edu.au> 1999.
+/*	$OpenBSD: uthread_stack.c,v 1.4 2000/01/06 07:22:46 d Exp $	*/
+/*
+ * Copyright 1999, David Leonard. All rights reserved.
+ * <insert BSD-style license&disclaimer>
+ */
 
 /*
  * Thread stack allocation.
@@ -12,6 +15,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/user.h>
@@ -71,7 +75,7 @@ _thread_stack_alloc(base, size)
 		PANIC("Cannot protect stack red zone");
 
 	/* Find the useful range of the stack. */
-	stack->base = stack->redzone + nbpg;
+	stack->base = (caddr_t)stack->redzone + nbpg;
 	stack->size = size;
 
 	return stack;
