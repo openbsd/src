@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.262 2002/12/18 08:01:47 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.263 2002/12/18 10:02:40 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -559,6 +559,26 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			decide_address_family($6.src.host, &r.af);
 			decide_address_family($6.dst.host, &r.af);
 
+			if ($6.src.port != NULL) {
+				yyerror("source port parameter not supported"
+				    " in rdr-anchor");
+				YYERROR;
+			}
+			if ($6.dst.port != NULL) {
+				if ($6.dst.port->next != NULL) {
+					yyerror("destination port list expansion"
+					    " not supported in rdr-anchor");
+					YYERROR;
+				} else if ($6.dst.port->op != PF_OP_EQ) {
+					yyerror("destination port operators"
+					    " not supported in rdr-anchor");
+					YYERROR;
+				}
+				r.dst.port[0] = $6.dst.port->port[0];
+				r.dst.port[1] = $6.dst.port->port[1];
+				r.dst.port_op = $6.dst.port->op;
+			}
+
 			expand_rdr(&r, $3, $5, $6.src.host, $6.dst.host, NULL);
 		}
 		| BINATANCHOR string interface af proto fromto {
@@ -568,8 +588,19 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 				YYERROR;
 
 			PREPARE_ANCHOR_RULE(r, $2);
-			r.action = PF_NAT;
+			r.action = PF_BINAT;
 			r.af = $4;
+			if ($5 != NULL) {
+				r.proto = $5->proto;
+				free($5);
+			}
+
+			if ($6.src.host != NULL || $6.src.port != NULL ||
+			    $6.dst.host != NULL || $6.dst.port != NULL) {
+				yyerror("fromto parameter not supported"
+				    " in binat-anchor");
+				YYERROR;
+			}
 
 			decide_address_family($6.src.host, &r.af);
 			decide_address_family($6.dst.host, &r.af);
