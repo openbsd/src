@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fe.c,v 1.21 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: if_fe.c,v 1.22 2005/02/17 19:05:36 miod Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -458,7 +458,7 @@ fe_probe_fmv(sc, ia)
 		{ FE_FMV6, 0xFF, 0x0E },
 #else
 	/*
-	 * We can always verify the *first* 2 bits (in Ehternet
+	 * We can always verify the *first* 2 bits (in Ethernet
 	 * bit order) are "no multicast" and "no local" even for
 	 * unknown vendors.
 	 */
@@ -839,7 +839,7 @@ fe_probe_mbh(sc, ia)
 		{ FE_MBH12, 0xFF, 0x0E },
 #else
 	/*
-	 * We can always verify the *first* 2 bits (in Ehternet
+	 * We can always verify the *first* 2 bits (in Ethernet
 	 * bit order) are "global" and "unicast" even for
 	 * unknown vendors.
 	 */

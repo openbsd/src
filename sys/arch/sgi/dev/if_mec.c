@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.7 2005/01/15 05:24:10 brad Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.8 2005/02/17 19:05:35 miod Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -433,7 +433,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->sc_tick_ch, mec_tick, sc);
 
-	/* get ehternet address from ARCBIOS */
+	/* get ethernet address from ARCBIOS */
 	if ((macaddr = Bios_GetEnvironmentVariable("eaddr")) == NULL) {
 		printf(": unable to get MAC address!\n");
 		goto fail_4;
