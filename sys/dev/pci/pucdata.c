@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.30 2003/08/06 22:07:37 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.31 2003/12/09 23:06:56 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -897,6 +897,18 @@ const struct puc_device_description puc_devices[] = {
 	/* Moxa Technologies Co., Ltd. PCI I/O Card 4S RS232/422/485 */
 	{   /* "Moxa Technologies, SmartIO C104H/PCI" */
 	    {	PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C104H,	0, 0	},
+	    {	0xffff,	0xffff,					0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 8 },
+	    },
+	},
+
+	/* Moxa Technologies Co., Ltd. PCI I/O Card 4S RS232 */
+	{   /* "Moxa Technologies, SmartIO CP104/PCI" */
+	    {	PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP104,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
