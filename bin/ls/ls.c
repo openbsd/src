@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.22 2004/04/02 07:31:06 otto Exp $	*/
+/*	$OpenBSD: ls.c,v 1.23 2005/03/10 00:22:08 jaredy Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.22 2004/04/02 07:31:06 otto Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.23 2005/03/10 00:22:08 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -391,7 +391,8 @@ traverse(int argc, char *argv[], int options)
 			break;
 		case FTS_DNR:
 		case FTS_ERR:
-			warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
+			warnx("%s: %s", p->fts_name[0] == '\0' ? p->fts_path :
+			    p->fts_name, strerror(p->fts_errno));
 			rval = 1;
 			break;
 		}
