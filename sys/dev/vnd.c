@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.49 2004/06/27 22:00:59 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.50 2004/06/28 16:43:55 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -471,7 +471,7 @@ vndstrategy(bp)
 			auio.uio_iovcnt = 1;
 			auio.uio_offset = dbtob((off_t)(bp->b_blkno + off));
 			auio.uio_segflg = UIO_SYSSPACE;
-			auio.uio_procp = NULL;
+			auio.uio_procp = p;
 
 			vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY, p);
 			vnd->sc_flags |= VNF_BUSY;
@@ -756,6 +756,7 @@ vndioctl(dev, cmd, addr, flag, p)
 	struct vattr vattr;
 	struct nameidata nd;
 	int error, part, pmask, s;
+	size_t len;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -780,6 +781,12 @@ vndioctl(dev, cmd, addr, flag, p)
 
 		if ((error = vndlock(vnd)) != 0)
 			return (error);
+
+		if ((error = copyinstr(vio->vnd_file, vnd->sc_file,
+		    sizeof(vnd->sc_file), &len))) {
+			vndunlock(vnd);
+			return (error);
+		}
 
 		bzero(vnd->sc_dev.dv_xname, sizeof(vnd->sc_dev.dv_xname));
 		if (snprintf(vnd->sc_dev.dv_xname, sizeof(vnd->sc_dev.dv_xname),
@@ -840,11 +847,10 @@ vndioctl(dev, cmd, addr, flag, p)
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_size = dbtob((off_t)vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
-		strlcpy(vnd->sc_file, vio->vnd_file, sizeof(vnd->sc_file));
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
-			printf("vndioctl: SET vp %p size %x\n",
-			    vnd->sc_vp, vnd->sc_size);
+			printf("vndioctl: SET vp %p size %llx\n",
+			    vnd->sc_vp, (unsigned long long)vnd->sc_size);
 #endif
 
 		/* Attach the disk. */
@@ -1006,7 +1012,7 @@ vndsetcred(vnd, cred)
 
 	/* XXX: Horrible kludge to establish credentials for NFS */
 	aiov.iov_base = tmpbuf;
-	aiov.iov_len = min(DEV_BSIZE, dbtob(vnd->sc_size));
+	aiov.iov_len = MIN(DEV_BSIZE, dbtob((off_t)vnd->sc_size));
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = 0;
