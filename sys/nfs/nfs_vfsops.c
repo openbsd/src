@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.12 1996/06/02 16:47:23 niklas Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.13 1996/09/21 11:06:22 deraadt Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ struct vfsops nfs_vfsops = {
 	nfs_vget,
 	nfs_fhtovp,
 	nfs_vptofh,
-	nfs_init,
+	nfs_vfs_init,
 #ifdef notyet
 	nfs_sysctl
 #endif

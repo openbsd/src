@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.2 1996/03/31 13:15:58 mickey Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.3 1996/09/21 11:06:20 deraadt Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -274,6 +274,7 @@ int nfsm_uiotombuf __P((struct uio *, struct mbuf **, int, caddr_t *));
 int nfsm_disct __P((struct mbuf **, caddr_t *, int, int, caddr_t *));
 int nfs_adv __P((struct mbuf **, caddr_t *, int, int));
 int nfsm_strtmbuf __P((struct mbuf **, char **, char *, long));
+void nfs_vfs_init __P((void));
 void nfs_init __P((void));
 int nfs_loadattrcache __P((struct vnode **, struct mbuf **, caddr_t *,
 			   struct vattr *));

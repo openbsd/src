@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.17 1996/09/04 22:35:27 niklas Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.18 1996/09/21 11:06:08 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -89,6 +89,10 @@
 
 #include <net/if.h>
 #include <net/raw_cb.h>
+
+#if defined(NFSSERVER) || defined(NFSCLIENT)
+extern void nfs_init __P((void));
+#endif
 
 char	copyright[] =
 "Copyright (c) 1982, 1986, 1989, 1991, 1993\n\tThe Regents of the University of California.  All rights reserved.\n\n";
@@ -270,6 +274,9 @@ main(framep)
 	vm_init_limits(p);
 
 	/* Initialize the file systems. */
+#if defined(NFSSERVER) || defined(NFSCLIENT)
+	nfs_init();			/* initialize server/shared data */
+#endif
 	vfsinit();
 
 	/* Start real time and statistics clocks. */

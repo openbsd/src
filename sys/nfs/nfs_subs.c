@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.10 1996/07/27 11:09:39 deraadt Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.11 1996/09/21 11:06:19 deraadt Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1116,17 +1116,9 @@ nfs_init()
 	nfs_ticks = (hz * NFS_TICKINTVL + 500) / 1000;
 	if (nfs_ticks < 1)
 		nfs_ticks = 1;
-#ifdef NFSCLIENT
-	/* Ensure async daemons disabled */
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
-		nfs_iodwant[i] = (struct proc *)0;
-	TAILQ_INIT(&nfs_bufq);
-	nfs_nhinit();			/* Init the nfsnode table */
-#endif /* NFSCLIENT */
 #ifdef NFSSERVER
 	nfsrv_init(0);			/* Init server data structures */
 	nfsrv_initcache();		/* Init the server request cache */
-#endif /* NFSSERVER */
 
 	/*
 	 * Initialize the nqnfs server stuff.
@@ -1138,6 +1130,7 @@ nfs_init()
 		CIRCLEQ_INIT(&nqtimerhead);
 		nqfhhashtbl = hashinit(NQLCHSZ, M_NQLEASE, &nqfhhash);
 	}
+#endif /* NFSSERVER */
 
 	/*
 	 * Initialize reply list and start timer
@@ -1147,6 +1140,18 @@ nfs_init()
 }
 
 #ifdef NFSCLIENT
+void
+nfs_vfs_init()
+{
+	register int i;
+
+	/* Ensure async daemons disabled */
+	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
+		nfs_iodwant[i] = (struct proc *)0;
+	TAILQ_INIT(&nfs_bufq);
+	nfs_nhinit();			/* Init the nfsnode table */
+}
+
 /*
  * Attribute cache routines.
  * nfs_loadattrcache() - loads or updates the cache contents from attributes
