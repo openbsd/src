@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.40 2001/03/07 07:33:53 angelos Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.41 2001/03/29 06:51:25 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -158,9 +158,7 @@ static struct doi ipsec_doi = {
   ipsec_validate_transform_id,
   ipsec_initiator,
   ipsec_responder,
-#ifdef USE_DEBUG
   ipsec_decode_ids
-#endif
 };
 
 int16_t script_quick_mode[] = {
@@ -1680,7 +1678,6 @@ ipsec_get_id (char *section, int *id, struct in_addr *addr,
   return 0;
 }
 
-#ifdef USE_DEBUG
 static void
 ipsec_ipv4toa (char *buf, size_t size, u_int8_t *addr)
 {
@@ -1769,7 +1766,6 @@ ipsec_decode_ids (char *fmt, u_int8_t *id1, size_t id1_len,
   snprintf (result, sizeof result, fmt, s_id1, s_id2);
   return result;
 }
-#endif /* USE_DEBUG */
 
 /*
  * Out of a named section SECTION in the configuration file build an
