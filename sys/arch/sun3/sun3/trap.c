@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57 1996/06/17 15:41:05 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.60 1996/10/13 03:47:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross

@@ -1,7 +1,6 @@
-/*	$NetBSD: sun_disklabel.h,v 1.3 1994/11/21 21:34:20 gwr Exp $	*/
+/*	$NetBSD: sun_disklabel.h,v 1.4 1996/11/20 18:57:19 gwr Exp $	*/
 
 /*
- * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

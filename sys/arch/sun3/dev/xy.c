@@ -1,4 +1,4 @@
-/* $NetBSD: xy.c,v 1.9 1996/03/17 02:04:10 thorpej Exp $ */
+/* $NetBSD: xy.c,v 1.11 1996/10/13 03:47:40 christos Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.9 1996/03/17 02:04:10 thorpej Exp $
+ * id: $NetBSD: xy.c,v 1.11 1996/10/13 03:47:40 christos Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.

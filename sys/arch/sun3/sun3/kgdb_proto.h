@@ -1,21 +1,17 @@
-/*	$NetBSD: kgdb_proto.h,v 1.1 1996/06/15 14:34:37 gwr Exp $ */
+/*	$NetBSD: kgdb_proto.h,v 1.2 1996/11/20 18:57:33 gwr Exp $ */
 
-/*
- * Copyright (c) 1992, 1993
+/*-
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
- * Copyright (c) 1995
- *	The President and Fellows of Harvard College. All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
  * contributed to Berkeley.
  *
  * All advertising materials mentioning features or use of this software
- * must display the following acknowledgements:
+ * must display the following acknowledgement:
  *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory.
- *
- *	This product includes software developed by Harvard University.
+ *	California, Lawrence Berkeley Laboratories.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -45,7 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kgdb_proto.h	8.1 (Berkeley) 6/11/93
+ *	@(#)kgdb_proto.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

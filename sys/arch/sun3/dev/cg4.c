@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.7.4.1 1996/08/08 23:14:47 gwr Exp $	*/
+/*	$NetBSD: cg4.c,v 1.11 1996/10/29 19:54:19 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,16 +1,16 @@
-$NetBSD: README,v 1.2 1994/10/26 09:08:31 cgd Exp $
+$NetBSD: README,v 1.3 1996/11/19 20:58:32 gwr Exp $
 
 NetBSD/sun3 supports the following busses:
 
 Bus:
+mainbus -  An imaginary bus on which the other busses all reside.
+
 obio	-  Devices on the motherboard, accessed by having their "registers"
 	   mapped into the kernel's virtual address space
-obctl	-  Devices on the motherboard accessible only via the 'CONTROL' space,
-	   and supporting instructions on the m68k.
 obmem	-  Devices on the motherboard that are mapped into main memory
 	   by the hardware.  Only true of some framebuffers.
-mainbus -  An imaginary bus on which obio, obctl, obmem, and the prom device
-	   all reside.
+vmes	-  VME D16 space
+vmel	-  VME D32 space
 
 Devices supported:
 
@@ -20,16 +20,4 @@ Device	Type    Description
 zs	CHAR	zilog 8530 serial ports; used for serial ports, keybd, mouse
 le	IFNET	lance ethernet driver
 
-'obctl' Bus: 
-Device	Type    Description
----------------------------------------------------------------------------
-idprom	CHAR	makes idprom contents accessible in user-space
-
-
-The 'prom' device is just wierd as it isn't a real device, but enough
-wrapping so that the prom input/output routines can be used to make
-the prom's idea of the console both a tty, and a console in the netbsd
-sense.
-
-prom	CHAR	prom-based tty and console support
-
+XXX - very much incomplete...

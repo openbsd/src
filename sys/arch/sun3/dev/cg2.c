@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.5 1996/03/17 02:03:43 thorpej Exp $	*/
+/*	$NetBSD: cg2.c,v 1.7 1996/10/13 03:47:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
