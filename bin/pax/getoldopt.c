@@ -1,4 +1,4 @@
-/*	$OpenBSD: getoldopt.c,v 1.5 2002/10/16 18:40:30 millert Exp $	*/
+/*	$OpenBSD: getoldopt.c,v 1.6 2002/10/16 18:44:19 millert Exp $	*/
 /*	$NetBSD: getoldopt.c,v 1.3 1995/03/21 09:07:28 cgd Exp $	*/
 
 /*
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getoldopt.c,v 1.5 2002/10/16 18:40:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: getoldopt.c,v 1.6 2002/10/16 18:44:19 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -19,10 +19,7 @@ static char rcsid[] = "$OpenBSD: getoldopt.c,v 1.5 2002/10/16 18:40:30 millert E
 #include <unistd.h>
 
 int
-getoldopt(argc, argv, optstring)
-	int	argc;
-	char	**argv;
-	char	*optstring;
+getoldopt(int argc, char **argv, char *optstring)
 {
 	static char	*key;		/* Points to next keyletter */
 	static char	use_getopt;	/* !=0 if argv[1][0] was '-' */
@@ -32,7 +29,8 @@ getoldopt(argc, argv, optstring)
 	optarg = NULL;
 
 	if (key == NULL) {		/* First time */
-		if (argc < 2) return EOF;
+		if (argc < 2)
+			return (-1);
 		key = argv[1];
 		if (*key == '-')
 			use_getopt++;
@@ -41,18 +39,18 @@ getoldopt(argc, argv, optstring)
 	}
 
 	if (use_getopt)
-		return getopt(argc, argv, optstring);
+		return (getopt(argc, argv, optstring));
 
 	c = *key++;
 	if (c == '\0') {
 		key--;
-		return EOF;
+		return (-1);
 	}
 	place = strchr(optstring, c);
 
 	if (place == NULL || c == ':') {
 		fprintf(stderr, "%s: unknown option %c\n", argv[0], c);
-		return('?');
+		return ('?');
 	}
 
 	place++;
@@ -63,9 +61,9 @@ getoldopt(argc, argv, optstring)
 		} else {
 			fprintf(stderr, "%s: %c argument missing\n",
 				argv[0], c);
-			return('?');
+			return ('?');
 		}
 	}
 
-	return(c);
+	return (c);
 }
