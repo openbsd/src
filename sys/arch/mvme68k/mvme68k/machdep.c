@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 1997/02/04 17:22:52 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.20 1997/02/14 05:10:17 rahnds Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -545,7 +545,9 @@ identifycpu()
 	switch (mmutype) {
 	case MMU_68040:
 #ifdef FPSP
-		bcopy(&fpsp_tab, &fpvect_tab, &fpvect_end - &fpvect_tab);
+		bcopy(&fpsp_tab, &fpvect_tab,
+			(&fpvect_end - &fpvect_tab) * sizeof (fpvect_tab));
+
 #endif
 		strcat(cpu_model, "+MMU");
 		break;
