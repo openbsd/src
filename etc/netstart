@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.56 2000/01/02 05:14:52 itojun Exp $
+#	$OpenBSD: netstart,v 1.57 2000/01/02 05:21:55 itojun Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -153,10 +153,16 @@ if [ "$ip6kernel" = "YES" -a "x$rtsolif" != "x" ]; then
 	fw=`sysctl -n net.inet6.ip6.forwarding`
 	ra=`sysctl -n net.inet6.ip6.accept_rtadv`
 	if [ "x$fw" = "x0" -a "x$ra" = "x1" ]; then
+		echo "IPv6 autoconf:$rtsolif"
 		rtsol $rtsolif
 	else
 		echo "WARNING: inconsistent config - check /etc/sysctl.conf for IPv6 autoconf"
 	fi
+fi
+if [ "$ip6kernel" = "YES" ]; then
+	# this is to make sure DAD is completed before going further.
+	sleep `sysctl -n net.inet6.ip6.dad_count`
+	sleep 1
 fi
 
 for bn in /etc/bridgename.*; do
