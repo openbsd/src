@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.4 2001/02/03 23:08:41 art Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.5 2001/02/03 23:11:23 art Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -76,7 +76,8 @@ __ctors()
 		(**p++)();
 }
 
-extern void __init(void) __attribute__((section(".init")));
+void __init(void) __attribute__((section(".init")));
+void __fini(void) __attribute__((section(".fini")));
 
 void
 __init()
@@ -94,8 +95,6 @@ __init()
 
 	atexit(__fini);
 }
-
-extern void __fini(void) __attribute__((section(".fini")));
 
 void
 __fini()
