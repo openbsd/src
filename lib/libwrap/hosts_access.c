@@ -1,4 +1,4 @@
-/*	$OpenBSD: hosts_access.c,v 1.6 2000/10/14 00:56:15 itojun Exp $	*/
+/*	$OpenBSD: hosts_access.c,v 1.7 2001/12/13 17:44:47 beck Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -23,7 +23,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-static char rcsid[] = "$OpenBSD: hosts_access.c,v 1.6 2000/10/14 00:56:15 itojun Exp $";
+static char rcsid[] = "$OpenBSD: hosts_access.c,v 1.7 2001/12/13 17:44:47 beck Exp $";
 #endif
 #endif
 
@@ -377,11 +377,12 @@ char   *string;
     struct in6_addr net;
     struct in6_addr mask;
     struct in6_addr addr;
-    int masklen;
+    u_long masklen;
     int fail;
     int i;
     int maskoff;
     int netaf;
+    char *p;
     const int sizoff64 = sizeof(struct in6_addr) - sizeof(struct in_addr);
 
     memset(&addr, 0, sizeof(addr));
@@ -405,7 +406,11 @@ char   *string;
 
     fail = 0;
     if (mask_tok[strspn(mask_tok, "0123456789")] == '\0') {
-	masklen = atoi(mask_tok) + maskoff * 8;
+	errno = 0;   
+	masklen = strtoul(mask_tok, &p, 10);
+	if (!*mask_tok || *p || (errno == ERANGE && masklen == ULONG_MAX))
+	    goto bogusmask;
+	masklen += maskoff * 8;
 	if (0 <= masklen && masklen <= 128) {
 	    memset(&mask, 0, sizeof(mask));
 	    memset(&mask, 0xff, masklen / 8);
@@ -421,6 +426,7 @@ char   *string;
 	  && inet_pton(AF_INET, mask_tok, &mask.s6_addr[12]) == 1) {
 	memset(&mask, 0xff, sizoff64);
     } else
+bogusmask:	    
 	fail++;
     if (fail) {
 	tcpd_warn("bad net/mask expression: %s/%s", net_tok, mask_tok);
