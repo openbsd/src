@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.19 2002/07/03 21:13:06 aaron Exp $	*/
+/*	$OpenBSD: ami.c,v 1.20 2003/02/25 00:26:08 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -364,9 +364,9 @@ ami_attach(sc)
 				sc->sc_maxunits = AMI_BIG_MAX_LDRIVES;
 
 				bcopy (pi->api_fwver, sc->sc_fwver, 16);
-				sc->sc_fwver[16] = '\0';
+				sc->sc_fwver[15] = '\0';
 				bcopy (pi->api_biosver, sc->sc_biosver, 16);
-				sc->sc_biosver[16] = '\0';
+				sc->sc_biosver[15] = '\0';
 				sc->sc_channels = pi->api_channels;
 				sc->sc_targets = pi->api_fcloops;
 				sc->sc_memory = letoh16(pi->api_ramsize);
