@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_auth_unix.c,v 1.5 1998/06/08 16:46:53 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_auth_unix.c,v 1.6 1998/11/22 07:38:25 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -101,7 +101,7 @@ _svcauth_unix(rqst, msg)
 		 * timestamp, hostname len (0), uid, gid, and gids len (0).
 		 */
 		if ((5 + gid_len) * BYTES_PER_XDR_UNIT + str_len > auth_len) {
-			(void) printf("bad auth_len gid %d str %d auth %d\n",
+			(void) printf("bad auth_len gid %u str %u auth %u\n",
 			    gid_len, str_len, auth_len);
 			stat = AUTH_BADCRED;
 			goto done;
