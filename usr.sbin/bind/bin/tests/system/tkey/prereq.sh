@@ -15,9 +15,11 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: prereq.sh,v 1.4.206.1 2004/03/06 10:22:34 marka Exp $
+# $ISC: prereq.sh,v 1.4.206.2 2004/12/08 06:13:02 marka Exp $
 
-if $KEYGEN -a RSA -b 512 -n zone -r $KEYGEN foo > /dev/null 2>&1
+../../genrandom 400 random.data
+
+if $KEYGEN -a RSA -b 512 -n zone -r random.data foo > /dev/null 2>&1
 then
     rm -f foo*
 else
