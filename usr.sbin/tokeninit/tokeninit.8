@@ -1,4 +1,4 @@
-.\" $OpenBSD: tokeninit.8,v 1.1 2000/12/20 02:08:09 millert Exp $
+.\" $OpenBSD: tokeninit.8,v 1.2 2000/12/21 04:52:03 aaron Exp $
 .\"
 .\" Copyright (c) 1995 Migration Associates Corporation. All rights reserved.
 .\"
@@ -36,8 +36,10 @@
 .Dt TOKENINIT 8
 .Os
 .Sh NAME
-.Nm activinit , cryptoinit , snkinit
-.Nd Modify or add user in ActivCard, CRYPTOCard, or SNK-004 authentication system.
+.Nm activinit ,
+.Nm cryptoinit ,
+.Nm snkinit
+.Nd "modify or add user in ActivCard, CRYPTOCard, or SNK-004 authentication system"
 .Sh SYNOPSIS
 .Nm tokeninit
 .Op Fl f
@@ -46,18 +48,18 @@
 .Op Fl s
 .Op Fl v
 .Ar user_ID
-.Op Ar user_ID ...
+.Op Ar ...
 .Sh DESCRIPTION
-.Pp
 The
 .Nm tokeninit
-utility may also be invoked by one of the names:
-.Nm activinit , cryptoinit ,
+utility may also be invoked by one of the following names:
+.Nm activinit ,
+.Nm cryptoinit ,
 or
 .Nm snkinit .
-Depending on the name it was invoked under, it will
+Depending on the name it was invoked as, it will
 initialize the system information to allow one to use the
-ActivCard, CRYPTOCard or SNK-004 digital encryption token to login.
+ActivCard, CRYPTOCard, or SNK-004 digital encryption token to login.
 The
 .Nm tokeninit
 utility is intended for use by the system administrator.
@@ -65,29 +67,31 @@ utility is intended for use by the system administrator.
 Token cards system provides strong user authentication by combining a user's
 unique knowledge (a Personal Identification Number) and a physical object
 (the token) which the user must have in their possession to login.
-The system administrator programs the token with a secret encryption key 
-which is also stored in the database.  The user programs the token with
-a PIN.  To discourage exhaustive attempts to guess the PIN,
+The system administrator programs the token with a secret encryption key
+which is also stored in the database.
+The user programs the token with a PIN.
+To discourage exhaustive attempts to guess the PIN,
 configuration options permit the token to be programmed
 to erase knowledge of the shared secret should the user enter
 an excessive number of incorrect PIN entries.
 .Pp
 The user activates the token by entering their PIN into the token.
 After activating the token, the user enters a random number challenge
-presented by the host computer into the token.  The challenge is encrypted by
-the token and a response displayed.  The user then enters the 
-response at the host computer's prompt, where it is compared with the
-anticipated response.
+presented by the host computer into the token.
+The challenge is encrypted by the token and a response is displayed.
+The user then enters the response at the host computer's prompt,
+where it is compared with the anticipated response.
 .Pp
 Token cards typically support multiple unique encryption keys.
 This facility allows a single token to be used for multiple computer
 systems, or multiple user instances on the same system.
-.Sh OPTIONS
-.Bl -hang
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
 .It Fl f
 Force reinitialization of an existing account.
-The current shared secret stored in the database will be replaced a new
-shared secret.
+The current shared secret stored in the database will be replaced with
+a new shared secret.
 The new shared secret must be entered into the token,
 replacing the current one.
 .It Fl h
@@ -96,9 +100,11 @@ a sequence of 8 octets.
 This is not supported when invoked as
 .Nm snkinit .
 .It Fl m
-Specify the input modes allowed for this user.  Possible modes are
-decimal (dec), hexadecimal (hex), phonebook (phone) and reduced-input (rim).
-Not all modes are available for all types of cards.  Multiple
+Specify the input modes allowed for this user.
+Possible modes are decimal (dec), hexadecimal (hex), phonebook (phone),
+and reduced-input (rim).
+Not all modes are available for all types of cards.
+Multiple
 .Fl m
 options may be specified to enable multiple modes.
 By default only the hexadecimal mode is enabled, except for the SNK-004
@@ -110,13 +116,12 @@ By default,
 .Nm tokeninit
 prompts for a shared secret to enter into the authentication database.
 The
-.Fl s 
-option generates a 64 bit cryptographically strong key for use in the token.
-This shared secret will be saved
-in the database for the user ID specified on the command line.
-After entering the shared secret into the token,
-determine that the checksum computed
-by the token matches the one displayed by
+.Fl s
+option generates a 64-bit cryptographically strong key for use in the token.
+This shared secret will be saved in the database for the user ID
+specified on the command line.
+After entering the shared secret into the token, determine that the
+checksum computed by the token matches the one displayed by
 .Nm tokeninit .
 .It Fl v
 Enable verbose mode.
@@ -125,12 +130,14 @@ will emit messages on the status of each user ID processed.
 .El
 .Sh REDUCED-INPUT MODE
 Reduced-input mode allows the token to predict the next challenge,
-given the current challenge.  This may be used to eliminate the need
-to enter the challenge to the token or may also be used with a paper list.
+given the current challenge.
+This may be used to eliminate the need to enter the challenge to the
+token or may also be used with a paper list.
 Using a program such as
 .Xr x99token 1
-many challenges could be precomputed and printed.  This list should be
-kept secret.  This list can then take the place of an actual token until
+many challenges could be precomputed and printed.
+This list should be kept secret.
+This list can then take the place of an actual token until
 the system has issued all the challenges printed.
 Challenges are predicted by the following algorithm:
 .nf
@@ -148,17 +155,16 @@ The resulting 8 bytes are all ASCII decimal digits and are the next challenge.
 .Sh DIAGNOSTICS
 Diagnostic messages are logged via syslog(3) with the LOG_AUTH facility.
 .Sh FILES
-.Bl -tag -width xetcxcrypto.db
+.Bl -tag -width xetcxcrypto.db -compact
 .It Pa /etc/activ.db
-data base of information for ActivCard system
+database of information for ActivCard system
 .It Pa /etc/crypto.db
-data base of information for CRYPTOCard system
+database of information for CRYPTOCard system
 .It Pa /etc/snk.db
-data base of information for SNK-004 system
+database of information for SNK-004 system
 .El
 .Sh COMMENTS
-A supplier for
-ActivCard tokens may be obtained by contacting:
+A supplier for ActivCard tokens may be obtained by contacting:
 .Pp
 .Bl -inset -offset indent
 .It ActivCard, Inc.
@@ -208,12 +214,12 @@ Fax: (415) 961-7487
 .El
 .Sh BUGS
 Not all modes of all cards are supported.
-.Pp
 .Sh SEE ALSO
 .Xr x99token 1 ,
 .Xr syslog 3 ,
+.Xr login_token 8 ,
 .Xr tokenadm 8 ,
-.Xr tokenls 8 ,
-.Xr login_token 8
-.Sh AUTHOR
-Jack Flory <jpf@mig.com>
+.Xr tokenls 8
+.Sh AUTHORS
+Jack Flory
+.Aq jpf@mig.com

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tokenadm.8,v 1.1 2000/12/20 02:08:08 millert Exp $
+.\" $OpenBSD: tokenadm.8,v 1.2 2000/12/21 04:52:03 aaron Exp $
 .\"
 .\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -36,7 +36,9 @@
 .Dt TOKENADM 8
 .Os
 .Sh NAME
-.Nm activadm , cryptoadm , snkadm
+.Nm activadm ,
+.Nm cryptoadm ,
+.Nm snkadm
 .Nd manage the ActivCard, CRYPTOCard and SNK-004 token databases
 .Sh SYNOPSIS
 .Nm tokenadm
@@ -54,8 +56,9 @@ It may also be invoked as one the following:
 .Nm activadm , cryptoadm ,
 or
 .Nm snkadm .
-The flags available are:
-.Bl -tag -width indent
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
 .It Fl 1
 Display users, one per line.
 .It Fl B
@@ -91,8 +94,9 @@ option.
 .It Fl m
 Add
 [or remove]
-the specified mode of authentication for the user.  Modes available are
-decimal (dec), hexadecimal (hex) and phonebook (phone) and reduced-input (rim).
+the specified mode of authentication for the user.
+Modes available are decimal (dec), hexadecimal (hex), phonebook (phone),
+and reduced-input (rim).
 Not all modes are available for all types of cards.
 The
 .Fl m
@@ -120,4 +124,4 @@ argument.
 .Xr x99token 1 ,
 .Xr login.conf 5 ,
 .Xr login_token 8 ,
-.Xr tokeninit 8 ,
+.Xr tokeninit 8
