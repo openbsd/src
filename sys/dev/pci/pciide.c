@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.31 2000/08/25 15:33:39 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.32 2000/10/16 18:09:56 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -2067,7 +2067,7 @@ cmd_channel_map(pa, sc, channel)
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
 	bus_size_t cmdsize, ctlsize;
 	u_int8_t ctrl = pciide_pci_read(sc->sc_pc, sc->sc_tag, CMD_CTRL);
-	int interface;
+	pcireg_t interface;
 
 	/*
 	 * The 0648/0649 can be told to identify as a RAID controller.
@@ -2102,8 +2102,6 @@ cmd_channel_map(pa, sc, channel)
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return;
 	}
-
-	pciide_print_channels(1, interface);
 
 	/*
 	 * with a CMD PCI64x, if we get here, the first channel is enabled:
@@ -2168,6 +2166,7 @@ cmd_chip_map(sc, pa)
 	struct pci_attach_args *pa;
 {
 	int channel;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 
 	/*
  	 * For a CMD PCI064x, the use of PCI_COMMAND_IO_ENABLE
@@ -2191,6 +2190,8 @@ cmd_chip_map(sc, pa)
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 
+	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cmd_channel_map(pa, sc, channel);
 	}
@@ -2203,6 +2204,22 @@ cmd0643_9_chip_map(sc, pa)
 {
 	struct pciide_channel *cp;
 	int channel;
+	pcireg_t interface;
+
+	/*
+	 * The 0648/0649 can be told to identify as a RAID controller.
+	 * In this case, we have to fake interface
+	 */
+	if (PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_MASS_STORAGE_IDE) {
+		interface = PCIIDE_INTERFACE_SETTABLE(0) |
+		    PCIIDE_INTERFACE_SETTABLE(1);
+		if (pciide_pci_read(pa->pa_pc, pa->pa_tag, CMD_CONF) &
+		    CMD_CONF_DSA1)
+			interface |= PCIIDE_INTERFACE_PCI(0) |
+			    PCIIDE_INTERFACE_PCI(1);
+	} else {
+		interface = PCI_INTERFACE(pa->pa_class);
+	}
 
 	/*
 	 * For a CMD PCI064x, the use of PCI_COMMAND_IO_ENABLE
@@ -2237,6 +2254,8 @@ cmd0643_9_chip_map(sc, pa)
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 	sc->sc_wdcdev.set_modes = cmd0643_9_setup_channel;
+
+	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
 
 	WDCDEBUG_PRINT(("cmd0643_9_chip_map: old timings reg 0x%x 0x%x\n",
 		pci_conf_read(sc->sc_pc, sc->sc_tag, 0x54),
