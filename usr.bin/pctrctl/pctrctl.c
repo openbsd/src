@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctrctl.c,v 1.1 1996/08/08 18:47:03 dm Exp $	*/
+/*	$OpenBSD: pctrctl.c,v 1.2 1996/08/14 03:02:52 dm Exp $	*/
 /*
  * Pentium performance counter driver for OpenBSD.
  * Author: David Mazieres <dm@lcs.mit.edu>
@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
+#include <machine/cpu.h>
 #include <machine/pctr.h>
 
 char *progname;
@@ -93,9 +94,9 @@ readst (void)
 
   for (i = 0; i < PCTR_NUM; i++)
     printf (" ctr%d = %16qd  [%c%c%c %02x (%s)]\n", i, st.pctr_hwc[i],
-	    (st.pctr_fn[i] & PCTR_C) ? 'c' : 'e',
-	    (st.pctr_fn[i] & PCTR_U) ? 'u' : '-',
-	    (st.pctr_fn[i] & PCTR_K) ? 'k' : '-',
+	    (st.pctr_fn[i] & P5CTR_C) ? 'c' : 'e',
+	    (st.pctr_fn[i] & P5CTR_U) ? 'u' : '-',
+	    (st.pctr_fn[i] & P5CTR_K) ? 'k' : '-',
 	    (st.pctr_fn[i] & 0x3f),
 	    (((st.pctr_fn[i] & 0x3f) < pctr_name_size
 	      && pctr_name[st.pctr_fn[i] & 0x3f])
@@ -104,7 +105,7 @@ readst (void)
 }
 
 static void
-setctr (int ctr, u_short val)
+setctr (int ctr, u_int val)
 {
   int fd;
 
@@ -144,6 +145,12 @@ main (int argc, char **argv)
   u_int ctr;
   char *cp;
   u_short fn;
+  pctrval id = __cpuid ();
+
+  if (__hasp6ctr (id)) {
+    fprintf (stderr, "Pentium Pro not supported\n");
+    exit (1);
+  }
 
   if (progname = strrchr (argv[0], '/'))
     progname++;
@@ -167,16 +174,16 @@ main (int argc, char **argv)
       for (cp = argv[3]; *cp; cp++) {
 	switch (*cp) {
 	case 'c':
-	  fn |= PCTR_C;
+	  fn |= P5CTR_C;
 	  break;
 	case 'e':
-	  fn &= ~PCTR_C;
+	  fn &= ~P5CTR_C;
 	  break;
 	case 'k':
-	  fn |= PCTR_K;
+	  fn |= P5CTR_K;
 	  break;
 	case 'u':
-	  fn |= PCTR_U;
+	  fn |= P5CTR_U;
 	  break;
 	default:
 	  usage ();
@@ -187,7 +194,7 @@ main (int argc, char **argv)
       fn = strtoul (argv[3], NULL, 16);
       if (fn & ~0x3f)
 	usage ();
-      fn |= PCTR_K | PCTR_U;
+      fn |= P5CTR_K | P5CTR_U;
     }
     setctr (ctr, fn);
   }
