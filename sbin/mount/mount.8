@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount.8,v 1.23 2000/06/17 20:31:00 niklas Exp $
+.\"	$OpenBSD: mount.8,v 1.24 2000/09/17 21:56:44 pjanzen Exp $
 .\"	$NetBSD: mount.8,v 1.11 1995/07/12 06:23:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -74,7 +74,25 @@ If no arguments are given to
 .Nm mount ,
 this list is printed.
 .Pp
-The options are as follows:
+A mount point
+.Ar node
+must be an existing directory for a mount to succeed
+.Po
+except in the special case of
+.Pa / ,
+of course
+.Pc .
+Only the superuser may mount filesystems unless
+.Va kern.usermount
+is nonzero
+.Po
+see
+.Xr sysctl 8
+.Pc .
+.Pp
+The options to
+.Nm
+are as follows:
 .Bl -tag -width indent
 .It Fl A
 Causes
@@ -309,6 +327,7 @@ file system table
 .Xr mount_umap 8 ,
 .Xr mount_union 8 ,
 .Xr mount_xfs 8 ,
+.Xr sysctl 8 ,
 .Xr umount 8
 .Sh HISTORY
 A
