@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.26 2000/04/24 19:43:35 niklas Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.27 2000/12/16 21:47:48 mickey Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -225,8 +225,9 @@ com_pcmcia_match(parent, match, aux)
 	    i++) {
 		for (j = 0; j < 4; j++)
 			if (com_pcmcia_prod[i].cis1_info[j] &&
-			    strcmp(com_pcmcia_prod[i].cis1_info[j],
-			    pa->card->cis1_info[j]))
+			    pa->card->cis1_info[j] &&
+			    strcmp(pa->card->cis1_info[j],
+			    com_pcmcia_prod[i].cis1_info[j]))
 				break;
 		if (j == 4)
 			return 1;

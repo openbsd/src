@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.31 2000/08/30 20:51:35 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.32 2000/12/16 21:47:49 mickey Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -401,6 +401,7 @@ struct ne2000dev {
     ((card)->product != PCMCIA_PRODUCT_INVALID) && \
     ((card)->product == ne2000devs[(n)].product)) || \
    ((ne2000devs[(n)].cis_info[0]) && (ne2000devs[(n)].cis_info[1]) && \
+    ((card)->cis1_info[0]) && ((card)->cis1_info[1]) && \
     (strcmp((card)->cis1_info[0], ne2000devs[(n)].cis_info[0]) == 0) && \
     (strcmp((card)->cis1_info[1], ne2000devs[(n)].cis_info[1]) == 0))) && \
   ((fct) == ne2000devs[(n)].function))? \
