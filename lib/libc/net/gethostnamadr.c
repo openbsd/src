@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.22 1997/04/15 11:27:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.23 1997/04/27 22:20:47 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -521,7 +521,8 @@ gethostbyname2(name, af)
 			if (!isdigit(*cp) && *cp != '.') 
 				break;
 		}
-	if (isxdigit(name[0]) || name[0] == ':')
+	if ((isxdigit(name[0]) && strchr(name, ':') != NULL) ||
+	    name[0] == ':')
 		for (cp = name;; ++cp) {
 			if (!*cp) {
 				if (*--cp == '.')
