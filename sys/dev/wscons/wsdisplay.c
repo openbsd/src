@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.10 2001/02/08 02:47:11 aaron Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.11 2001/02/09 18:50:50 aaron Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -598,7 +598,7 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 	const struct wsdisplay_accessops *accessops;
 	void *accesscookie;
 {
-	static int hookset;
+	static int hookset = 0;
 	int i, start=0;
 #if NWSKBD > 0
 	struct device *dv;
