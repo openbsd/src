@@ -1419,7 +1419,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/conf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/cpu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/cpu_number.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/cpus.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/db_machdep.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/disklabel.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/endian.ph
