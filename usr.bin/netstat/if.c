@@ -47,6 +47,7 @@ static char *rcsid = "$NetBSD: if.c,v 1.16.4.1 1996/06/04 20:27:06 cgd Exp $";
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netns/ns.h>
@@ -194,7 +195,7 @@ intpr(interval, ifnetaddr)
 				char netnum[8];
 
 				*(union ns_net *) &net = sns->sns_addr.x_net;
-		sprintf(netnum, "%lxH", ntohl(net));
+				sprintf(netnum, "%lxH", ntohl(net));
 				upHex(netnum);
 				printf("ns:%-8s ", netnum);
 				printf("%-17s ",
@@ -205,11 +206,18 @@ intpr(interval, ifnetaddr)
 				{
 				struct sockaddr_dl *sdl =
 					(struct sockaddr_dl *)sa;
-				    cp = (char *)LLADDR(sdl);
-				    n = sdl->sdl_alen;
-				}
 				m = printf("%-11.11s ", "<Link>");
-				goto hexprint;
+				if (sdl->sdl_type == IFT_ETHER ||
+				    sdl->sdl_type == IFT_FDDI)
+					printf("%-17.17s ",
+					    ether_ntoa(LLADDR(sdl)));
+				else {
+					cp = (char *)LLADDR(sdl);
+					n = sdl->sdl_alen;
+					goto hexprint;
+				}
+				}
+				break;
 			default:
 				m = printf("(%d)", sa->sa_family);
 				for (cp = sa->sa_len + (char *)sa;
