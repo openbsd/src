@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.40 2001/04/19 16:22:17 gluk Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.41 2001/04/22 21:33:46 gluk Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -194,7 +194,6 @@ ffs_mount(mp, path, data, ndp, p)
 				mp->mnt_flag &= ~MNT_SOFTDEP;
 			} else
 				error = ffs_flushfiles(mp, flags, p);
-			free(fs->fs_contigdirs, M_WAITOK);
 			ronly = 1;
 		}
 
@@ -408,6 +407,8 @@ success:
 			fs->fs_ronly = ronly;
 			fs->fs_clean = ronly &&
 			    (fs->fs_flags & FS_UNCLEAN) == 0 ? 1 : 0;
+			if (ronly)
+				free(fs->fs_contigdirs, M_WAITOK);
 		}
 		if (!ronly) {
 			if (mp->mnt_flag & MNT_SOFTDEP)
@@ -489,6 +490,7 @@ ffs_reload(mountp, cred, p)
 	 */
 	newfs->fs_csp = fs->fs_csp;
 	newfs->fs_maxcluster = fs->fs_maxcluster;
+	newfs->fs_ronly = fs->fs_ronly;
 	bcopy(newfs, fs, (u_int)fs->fs_sbsize);
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
