@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 1997/07/07 22:16:47 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 1997/07/28 16:27:16 niklas Exp $
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
@@ -41,7 +41,7 @@ MLINKS+=getservent.3 endservent.3 getservent.3 getservbyname.3 \
 MLINKS+=inet.3 addr.3 inet.3 inet_addr.3 inet.3 inet_aton.3 \
 	inet.3 inet_lnaof.3 inet.3 inet_makeaddr.3 inet.3 inet_netof.3 \
 	inet.3 inet_network.3 inet.3 inet_ntoa.3 inet.3 network.3 \
-	inet.3 ntoa.3
+	inet.3 ntoa.3 inet.3 inet_ntop.3 inet.3 inet_pton.3
 MLINKS+=iso_addr.3 iso_ntoa.3
 MLINKS+=link_addr.3 link_ntoa.3
 MLINKS+=ipx.3 ipx_addr.3 ipx.3 ipx_ntoa.3
