@@ -13,8 +13,8 @@ This is difficult to get set up correctly the first time, but easy to
 use afterwards.  (see `Installing using a diskless setup' below).
 
 It is also possible to install OpenBSD "manually" from a running SunOS
-system, using SunOS tools and gnu tar and gunzip (see `Installing from
-SunOS' below).
+system, using SunOS tools and gnu tar and gunzip (see `Installing from SunOS' 
+below).
 
 
 This section of the install document is really broken into several parts:
@@ -40,9 +40,9 @@ useful, but outside the bounds of simple "how two" instructions.
 About the "new" and "old" Install Scripts:
 
 The OpenBSD/sparc floppies come in two varieties, a newer single floppy
-version that is not well tested and the older multi-floppy set.  Both
-accomplish the same thing, but the install/upgrade scripts and procedures
-are quite different between the old and new version.
+"ramdisk" version and the older multi-floppy set.  Both accomplish the 
+same thing, but the install/upgrade scripts and procedures are quite 
+different between the old and new version.
 
 The other difference between the the two forms are in their bootblocks,
 and filesystems.  The "floppy22.fs" image is the compressed ramdisk form,
@@ -61,8 +61,8 @@ does not necessarily wipe out all the partitions on the hard disk, errors
 during the install process can have unforeseen consequences and you will
 probably render the system unbootable if you start, but do not complete
 the installation.  Have the installation media for the prior installation,
-be it a SunOS CD-ROM or *BSD install diskettes is good insurance if you
-want to be able to "go back" for some reason.
+be it a SunOS or OpenBSD CD-ROM or OpenBSD install diskettes is good insurance 
+if you want to be able to "go back" for some reason.
 
 After taking care of all that, bring your system down gracefully using
 the shutdown(8) and/or halt(8) commands.  This will get you to the monitor
@@ -123,7 +123,7 @@ Booting From CD-ROM installation media:
 If the boot is successful, you will get a loader version message,
 executable sizes and then the Kernel copyright and device probe
 messages.  Boot failure modes are typically a lot of CD-ROM drive
-action, but no messages or complaints about magic numbers,
+activity, but no messages or complaints about magic numbers,
 checksums or formats.
 
 Not all sparc systems support bootable CDROMS and the current
