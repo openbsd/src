@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.10 1998/01/28 13:46:20 pefo Exp $ */
+/*      $OpenBSD: param.h,v 1.11 1998/08/30 22:05:35 millert Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,6 +63,8 @@
 #define	_MACHINE	arc
 #define MACHINE_ARCH	"mips"
 #define _MACHINE_ARCH	mips
+
+#define MID_MACHINE	0	/* None but has to be defined */
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
