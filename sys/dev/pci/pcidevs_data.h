@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.170 1999/08/06 22:35:19 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.171 1999/08/10 07:24:12 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -505,6 +505,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "AMD",
 	    "79c970 PCnet-PCI LANCE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCHOME_PCI,
+	    0,
+	    "AMD",
+	    "79c978 PChome-PCI LANCE",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCSCSI_PCI,
