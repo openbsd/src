@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.7 2000/04/14 02:40:01 itojun Exp $
+#	$OpenBSD: Makefile,v 1.8 2004/04/27 22:14:11 pb Exp $
 
 PROG=	ifconfig
 MAN=	ifconfig.8
 
 CPPFLAGS+=-DINET6
-CPPFLAGS+=-DHAVE_IFADDRS_H
 
 # kame scopeid hack
 CPPFLAGS+=-DKAME_SCOPEID
