@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.37 1999/11/05 16:22:08 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.38 1999/11/05 18:07:10 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -339,9 +339,6 @@ struct segmap	kernel_segmap_store[NKREG*NSEGRG];/* the kernel's segmaps */
 u_int 	*kernel_regtable_store;		/* 1k of storage to map the kernel */
 u_int	*kernel_segtable_store;		/* 2k of storage to map the kernel */
 u_int	*kernel_pagtable_store;		/* 128k of storage to map the kernel */
-
-u_int	*kernel_iopte_table;		/* 64k of storage for iommu */
-u_int 	kernel_iopte_table_pa;
 #endif
 
 #define	MA_SIZE	32		/* size of memory descriptor arrays */
@@ -3204,26 +3201,7 @@ pmap_bootstrap4m(void)
 	 * The amount of physical memory that becomes unavailable for
 	 * general VM use is marked by [unavail_start, unavail_end>.
 	 */
-
-	/*
-	 * Reserve memory for I/O pagetables. This takes 64k of memory
-	 * since we want to have 64M of dvma space (this actually depends
-	 * on the definition of DVMA4M_BASE...we may drop it back to 32M).
-	 * The table must be aligned on a (-DVMA4M_BASE/NBPG) boundary
-	 * (i.e. 64K for 64M of dvma space).
-	 */
-#ifdef DEBUG
-	if ((0 - DVMA4M_BASE) % (16*1024*1024))
-	    panic("pmap_bootstrap4m: invalid DVMA4M_BASE of 0x%x", DVMA4M_BASE);
-#endif
-
-	p = (caddr_t) roundup((u_int)p, (0 - DVMA4M_BASE) / 1024);
 	unavail_start = (paddr_t)p - KERNBASE;
-
-	kernel_iopte_table = (u_int *)p;
-	kernel_iopte_table_pa = VA2PA((caddr_t)kernel_iopte_table);
-	p += (0 - DVMA4M_BASE) / 1024;
-
 	pagetables_start = p;
 	/*
 	 * Allocate context table.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.4 1999/01/11 05:11:58 millert Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.5 1999/11/05 18:07:11 art Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -41,6 +41,10 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/ctlreg.h>
@@ -125,8 +129,10 @@ iommu_attach(parent, self, aux)
 	register u_int pbase, pa;
 	register int i, mmupcrsave, s;
 	register iopte_t *tpte_p;
-	extern u_int *kernel_iopte_table;
-	extern u_int kernel_iopte_table_pa;
+	struct pglist mlist;
+	struct vm_page *m;
+	vaddr_t iopte_va;
+	paddr_t iopte_pa;
 
 /*XXX-GCC!*/mmupcrsave=0;
 	iommu_sc = sc;
@@ -171,6 +177,44 @@ iommu_attach(parent, self, aux)
 			(14 - IOMMU_BAR_IBASHFT);
 
 	/*
+	 * Allocate memory for I/O pagetables. This takes 64k of memory
+	 * since we want to have 64M of dvma space (this actually depends
+	 * on the definition of DVMA4M_BASE...we may drop it back to 32M).
+	 * The table must be aligned on a (-DVMA4M_BASE/NBPG) boundary
+	 * (i.e. 64K for 64M of dvma space).
+	 */
+	TAILQ_INIT(&mlist);
+#define DVMA_PTESIZE ((0 - DVMA4M_BASE) / 1024)
+#if defined(UVM)
+	if (uvm_pglistalloc(DVMA_PTESIZE, 0, 0xffffffff, DVMA_PTESIZE,
+			    0, &mlist, 1, 0) ||
+	    (iopte_va = uvm_km_valloc(kernel_map, DVMA_PTESIZE)) == 0)
+		panic("iommu_attach: can't allocate memory for pagetables");
+#else
+	if (vm_page_alloc_memory(DVMA_PTESIZE, 0, 0xffffffff, DVMA_PTESIZE,
+				 0, &mlist, 1, 0) ||
+	    (iopte_va = kmem_alloc_pageable(kernel_map, DVMA_PTESIZE)) == 0)
+		panic("iommu_attach: can't allocate memory for pagetables");
+#endif
+#undef DVMA_PTESIZE
+	m = TAILQ_FIRST(&mlist);
+	iopte_pa = VM_PAGE_TO_PHYS(m);
+	sc->sc_ptes = (iopte_t *) iopte_va;
+
+	while (m) {
+#if defined(UVM)
+		uvm_pagewire(m);
+#else
+		vm_page_wire(m);
+#endif
+		pmap_enter(pmap_kernel(), iopte_va, VM_PAGE_TO_PHYS(m),
+			   VM_PROT_READ|VM_PROT_WRITE, 1,
+			   VM_PROT_READ|VM_PROT_WRITE);
+		iopte_va += NBPG;
+		m = TAILQ_NEXT(m, pageq);
+	}
+
+	/*
 	 * Now we build our own copy of the IOMMU page tables. We need to
 	 * do this since we're going to change the range to give us 64M of
 	 * mappings, and thus we can move DVMA space down to 0xfd000000 to
@@ -178,7 +222,7 @@ iommu_attach(parent, self, aux)
 	 *
 	 * XXX Note that this is rather messy.
 	 */
-	sc->sc_ptes = (iopte_t *) kernel_iopte_table;
+
 
 	/*
 	 * Now discache the page tables so that the IOMMU sees our
@@ -232,7 +276,7 @@ iommu_attach(parent, self, aux)
 
 	sc->sc_reg->io_cr = (sc->sc_reg->io_cr & ~IOMMU_CTL_RANGE) |
 			  (i << IOMMU_CTL_RANGESHFT) | IOMMU_CTL_ME;
-	sc->sc_reg->io_bar = (kernel_iopte_table_pa >> 4) & IOMMU_BAR_IBA;
+	sc->sc_reg->io_bar = (iopte_pa >> 4) & IOMMU_BAR_IBA;
 
 	IOMMU_FLUSHALL(sc);
 	splx(s);
