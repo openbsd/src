@@ -1,8 +1,8 @@
-/*	$OpenBSD: wrterm.c,v 1.3 1997/01/17 07:13:45 millert Exp $	*/
-/*	$NetBSD: wrterm.c,v 1.3 1994/12/07 05:08:16 jtc Exp $	*/
+/*	$OpenBSD: termcap.c,v 1.1 1998/11/16 03:08:41 millert Exp $	*/
+/*	$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $	*/
 
-/*-
- * Copyright (c) 1991, 1993
+/*
+ * Copyright (c) 1980, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,17 +35,117 @@
  */
 
 #ifndef lint
-#if 0
-static char sccsid[] = "@(#)wrterm.c	8.1 (Berkeley) 6/9/93";
-#endif
-static char rcsid[] = "$OpenBSD: wrterm.c,v 1.3 1997/01/17 07:13:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: termcap.c,v 1.1 1998/11/16 03:08:41 millert Exp $";
 #endif /* not lint */
 
+#define	PVECSIZ		32	/* max number of names in path */
+#define	_PATH_DEF	".termcap /usr/share/misc/termcap"
+
+#include <sys/param.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
-#include "extern.h"
+#include <unistd.h>
+
+/*
+ * Get an entry for terminal name in buffer bp from the termcap file.
+ */
+int
+tcgetent(bp, name)
+	char *bp;
+	const char *name;
+{
+	char  *p;
+	char  *cp;
+	char  *dummy;
+	char **fname;
+	char  *home;
+	int    i;
+	char   pathbuf[MAXPATHLEN];	/* holds raw path of filenames */
+	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
+	char **pvec;			/* holds usable tail of path vector */
+	char  *termpath;
+	char  *ttype;
+
+	fname = pathvec;
+	pvec = pathvec;
+
+	if (!issetugid()) {
+		cp = getenv("TERMCAP");
+		/*
+		 * TERMCAP can have one of two things in it. It can be the name
+		 * of a file to use instead of /usr/share/misc/termcap. In this
+		 * case it better start with a "/". Or it can be an entry to
+		 * use so we don't have to read the file. In this case it
+		 * has to already have the newlines crunched out.  If TERMCAP
+		 * does not hold a file name then a path of names is searched
+		 * instead.  The path is found in the TERMPATH variable, or
+		 * becomes "$HOME/.termcap /usr/share/misc/termcap" if no
+		 * TERMPATH exists.
+		 */
+		if (!cp || *cp != '/') { /* no TERMCAP or it holds an entry */
+			if ((termpath = getenv("TERMPATH")) != NULL)
+				strlcpy(pathbuf, termpath, sizeof(pathbuf));
+			else {
+				if ((home = getenv("HOME")) != NULL &&
+				    strlen(home) + sizeof(_PATH_DEF) <
+				    sizeof(pathbuf)) {
+					sprintf(pathbuf, "%s/%s", home,
+					    _PATH_DEF);
+				} else {
+					strlcpy(pathbuf, _PATH_DEF,
+					    sizeof(pathbuf));
+				}
+			}
+		} else {		/* user-defined path in TERMCAP */
+			/* still can be tokenized */
+			strlcpy(pathbuf, cp, sizeof(pathbuf));
+		}
+		*fname++ = pathbuf;	/* tokenize path into vector of names */
+	}
+
+	/* split pathbuf into a vector of paths */
+	p = pathbuf;
+	while (*++p)
+		if (*p == ' ' || *p == ':') {
+			*p = '\0';
+			while (*++p)
+				if (*p != ' ' && *p != ':')
+					break;
+			if (*p == '\0')
+				break;
+			*fname++ = p;
+			if (fname >= pathvec + PVECSIZ) {
+				fname--;
+				break;
+			}
+		}
+	*fname = (char *) 0;			/* mark end of vector */
+	if (cp && *cp && *cp != '/')
+		if (cgetset(cp) < 0)
+			return (-2);
+
+	dummy = NULL;
+	i = cgetent(&dummy, pathvec, (char *)name);
+	
+	if (i == 0 && bp != NULL) {
+		strlcpy(bp, dummy, 1024);
+		if ((cp = strrchr(bp, ':')) != NULL)
+			if (cp[1] != '\0')
+				cp[1] = '\0';
+	}
+	else if (i == 0 && bp == NULL)
+		bp = dummy;
+	else if (dummy != NULL)
+		free(dummy);
+
+	/* no tc reference loop return code in libterm XXX */
+	if (i == -3)
+		return (-1);
+	return (i + 1);
+}
 
 /*
  * Output termcap entry to stdout, quoting characters that would give the
@@ -55,8 +155,8 @@ void
 wrtermcap(bp)
 	char *bp;
 {
-	register int ch;
-	register char *p;
+	int ch;
+	char *p;
 	char *t, *sep;
 
 	/* Find the end of the terminal names. */

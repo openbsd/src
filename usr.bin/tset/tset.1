@@ -1,5 +1,4 @@
-.\"	$OpenBSD: tset.1,v 1.5 1998/10/30 00:24:40 aaron Exp $
-.\"	$NetBSD: tset.1,v 1.4.2.1 1995/12/05 02:53:34 jtc Exp $
+.\"	$OpenBSD: tset.1,v 1.6 1998/11/16 03:08:41 millert Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,15 +33,15 @@
 .\"
 .\"	@(#)tset.1	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd November 15, 1998
 .Dt TSET 1
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm tset
 .Nd terminal initialization
 .Sh SYNOPSIS
 .Nm tset
-.Op Fl IQrSs
+.Op Fl IQqrSs
 .Op Fl
 .Op Fl e Ar ch
 .Op Fl i Ar ch
@@ -51,7 +50,7 @@
 .Op Ar terminal
 .br
 .Nm reset
-.Op Fl IQrSs
+.Op Fl IQqrSs
 .Op Fl
 .Op Fl e Ar ch
 .Op Fl i Ar ch
@@ -64,8 +63,7 @@ initializes terminals.
 .Nm tset
 first determines the type of terminal that you are using.
 This determination is done as follows, using the first terminal type found:
-.sp
-.Bl -bullet -compact -offset indent
+.Bl -enum -offset indent
 .It
 The
 .Ar terminal
@@ -79,7 +77,8 @@ The terminal type associated with the standard error output device in the
 .Pa /etc/ttys
 file.
 .It
-The default terminal type, ``unknown''.
+The default terminal type,
+.Dq unknown .
 .El
 .Pp
 If the terminal type was not specified on the command-line, the
@@ -118,7 +117,10 @@ The options are as follows:
 .Bl -tag -width flag
 .It Fl
 The terminal type is displayed to the standard output, and the terminal is
-not initialized in any way.
+not initialized in any way.  This option has been deprecated in favor of
+the
+.Fl q
+flag.
 .It Fl e Ar ch
 Set the erase character to
 .Ar ch .
@@ -135,6 +137,9 @@ Specify a mapping from a port type to a terminal.
 See below for more information.
 .It Fl Q
 Don't display any values for the erase, interrupt and line kill characters.
+.It Fl q
+The terminal type is displayed to the standard output, and the terminal is
+not initialized in any way.
 .It Fl r
 Print the terminal type to the standard error output.
 .It Fl S
@@ -186,7 +191,9 @@ option is specified, the commands to enter the information into the
 shell's environment are written to the standard output.
 If the
 .Ev SHELL
-environment variable ends in ``csh'', the commands are for
+environment variable ends in
+.Dq csh ,
+the commands are for
 .Xr csh 1 ,
 otherwise, they are for
 .Xr sh 1 .
@@ -240,6 +247,7 @@ for
 .Xr csh 1
 users) it is often desirable to provide information about the type of
 terminal used on such ports.
+.Pp
 The purpose of the
 .Fl m
 option is to
@@ -350,6 +358,34 @@ The
 command appeared in
 .Bx 3.0 .
 .Sh COMPATIBILITY
+The
+.Nm tset
+command now uses the
+.Xr terminfo 5
+database where previous versions used
+.Xr termcap 5 .
+To make the
+.Fl s
+and
+.Fl S
+options still work,
+.Nm tset
+also reads in the terminal entry from
+.Xr termcap 5 .
+However, this info is used for setting
+.Ev TERMCAP
+only.  If the terminal type appears in
+.Xr terminfo 5
+but not in
+.Xr termcap 5 ,
+the
+.Fl q
+option will not set
+.Ev TERMCAP
+and the
+.Fl Q
+option will not work at all.
+.Pp
 The
 .Fl A ,
 .Fl E ,
