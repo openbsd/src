@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpd.c,v 1.6 1998/11/28 04:07:22 millert Exp $";
+static char rcsid[] = "$Id: bootpd.c,v 1.7 1998/11/28 04:11:24 millert Exp $";
 #endif
 
 /*
@@ -609,7 +609,7 @@ handle_request()
 	int32 bootsize = 0;
 	unsigned hlen, hashcode;
 	int32 dest;
-	char realpath[1024];
+	char realpath[MAXPATHLEN];
 	char *clntpath;
 	char *homedir, *bootfile;
 	int n;
