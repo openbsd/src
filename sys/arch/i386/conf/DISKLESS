@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.19 1997/09/26 16:42:58 kstailey Exp $
+#	$OpenBSD: DISKLESS,v 1.20 1997/10/20 01:40:11 todd Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -124,7 +124,7 @@ mms1	at isa? port 0x238 irq 5
 #scsibus* at bt?
 #ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at ncr?
-#sea0	at isa? iomem 0xc8000 irq 5
+#sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
 #scsibus* at sea?
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 #uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.53 1997/10/19 22:10:21 todd Exp $
+#	$OpenBSD: GENERIC,v 1.54 1997/10/20 01:40:11 todd Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -110,7 +110,7 @@ aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
 ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at ncr?
-sea0	at isa? iomem 0xc8000 irq       # Seagate ST0[12] SCSI controllers
+sea0	at isa? iomem 0xc8000 irq 5     # Seagate ST0[12] SCSI controllers
 scsibus* at sea?
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
