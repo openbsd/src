@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.18 2002/07/22 04:02:39 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.19 2002/07/30 03:16:40 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/tree.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,6 +43,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <err.h>
+#include <libgen.h>
 
 #include "intercept.h"
 
@@ -532,13 +534,52 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 			goto error;
 	}
 
-	name = cwd;
 	if (userp) {
+		static char rcwd[2*MAXPATHLEN];
+		int failed = 0;
 		/* If realpath fails then the filename does not exist */
-		if (realpath(cwd, cwd) == NULL)
-			name = "<non-existent filename>";
-	} else
+		if (realpath(cwd, rcwd) == NULL) {
+			char *dir, *file;
+			struct stat st;
+
+			if (errno != EACCES) {
+				failed = 1;
+				goto out;
+			}
+
+			/* Component of path could not be entered */
+			if (strlcpy(rcwd, cwd, sizeof(rcwd)) >= sizeof(rcwd))
+				goto error;
+			if ((file = basename(rcwd)) == NULL)
+				goto error;
+			if ((dir = dirname(rcwd)) == NULL)
+				goto error;
+
+			/* So, try again */
+			if (realpath(dir, rcwd) == NULL) {
+				failed = 1;
+				goto out;
+			}
+			if (strlcat(rcwd, "/", sizeof(rcwd)) >= sizeof(rcwd))
+				goto error;
+			if (strlcat(rcwd, file, sizeof(rcwd)) >= sizeof(rcwd))
+				goto error;
+			/* 
+			 * At this point, filename has to exist and has to
+			 * be a directory.
+			 */
+			if (lstat(rcwd, &st) == -1 || !(st.st_mode & S_IFDIR))
+				failed = 1;
+		}
+	out:
+		if (failed)
+			snprintf(rcwd, sizeof(rcwd),
+			    "/<non-existent filename>: %s", cwd);
+		name = rcwd;
+	} else {
 		simplify_path(cwd);
+		name = cwd;
+	}
 
 
 	/* Restore working directory and change root space after realpath */
