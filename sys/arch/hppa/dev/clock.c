@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.15 2002/05/20 00:16:44 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.16 2002/09/15 09:45:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -104,16 +104,17 @@ inittodr(t)
 	time_t t;
 {
 	struct pdc_tod tod PDC_ALIGNMENT;
-	int 	tbad = 0;
+	int 	error, tbad = 0;
 
-	if (t < 5*SECYR) {
+	if (t < 12*SECYR) {
 		printf ("WARNING: preposterous time in file system");
 		t = 6*SECYR + 186*SECDAY + SECDAY/2;
 		tbad = 1;
 	}
 
-	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_READ,
-		&tod, 0, 0, 0, 0, 0);
+	if ((error = pdc_call((iodcio_t)pdc,
+	    1, PDC_TOD, PDC_TOD_READ, &tod, 0, 0, 0, 0, 0)))
+		printf("clock: failed to fetch (%d)\n", error);
 
 	time.tv_sec = tod.sec;
 	time.tv_usec = tod.usec;
@@ -138,8 +139,11 @@ inittodr(t)
 void
 resettodr()
 {
-	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_WRITE,
-	    time.tv_sec, time.tv_usec);
+	int error;
+
+	if ((error = pdc_call((iodcio_t)pdc, 1, PDC_TOD, PDC_TOD_WRITE,
+	    time.tv_sec, time.tv_usec)))
+		printf("clock: failed to save (%d)\n");
 }
 
 void
