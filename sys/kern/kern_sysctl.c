@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.45 2001/05/14 08:03:14 angelos Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.46 2001/06/03 03:28:41 angelos Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -230,7 +230,7 @@ char domainname[MAXHOSTNAMELEN];
 int domainnamelen;
 long hostid;
 char *disknames = NULL;
-struct disk *diskstats = NULL;
+struct diskstats *diskstats = NULL;
 #ifdef INSECURE
 int securelevel = -1;
 #else
@@ -456,7 +456,7 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if (err)
 			return err;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, diskstats,
-		    disk_count * sizeof(struct disk)));
+		    disk_count * sizeof(struct diskstats)));
 	case HW_DISKCOUNT:
 		return (sysctl_rdint(oldp, oldlenp, newp, disk_count));
 	default:
@@ -964,7 +964,8 @@ sysctl_diskinit(update, p)
 	int update;
 	struct proc *p;
 {
-	struct disk *dk, *ndk;
+	struct diskstats *sdk;
+	struct disk *dk;
 	int i, tlen, l;
 
 	if ((i = lockmgr(&sysctl_disklock, LK_EXCLUSIVE, NULL, p)) != 0)
@@ -981,7 +982,7 @@ sysctl_diskinit(update, p)
 			free(diskstats, M_SYSCTL);
 		diskstats = NULL;
 		disknames = NULL;
-		diskstats = malloc(disk_count * sizeof(struct disk),
+		diskstats = malloc(disk_count * sizeof(struct diskstats),
 		    M_SYSCTL, M_WAITOK);
 		disknames = malloc(tlen, M_SYSCTL, M_WAITOK);
 
@@ -989,17 +990,14 @@ sysctl_diskinit(update, p)
 		    dk = TAILQ_NEXT(dk, dk_link), i++) {
 			l += sprintf(disknames + l, "%s,",
 			    dk->dk_name ? dk->dk_name : "");
-			ndk = diskstats + i;
-			bcopy(dk, ndk, sizeof(struct disk));
-
-			/* Blank out some of the fields, just paranoid */
-			bzero(&ndk->dk_link, sizeof(ndk->dk_link));
-			bzero(&ndk->dk_lock, sizeof(struct lock));
-			ndk->dk_labelsector = 0;
-			ndk->dk_name = NULL;
-			ndk->dk_driver = NULL;
-			ndk->dk_label = NULL;
-			ndk->dk_cpulabel = NULL;
+			sdk = diskstats + i;
+			sdk->ds_busy = dk->dk_busy;
+			sdk->ds_xfer = dk->dk_xfer;
+			sdk->ds_seek = dk->dk_seek;
+			sdk->ds_bytes = dk->dk_bytes;
+			sdk->ds_attachtime = dk->dk_attachtime;
+			sdk->ds_timestamp = dk->dk_timestamp;
+			sdk->ds_time = dk->dk_time;
 		}
 
 		/* Eliminate trailing comma */
@@ -1010,17 +1008,14 @@ sysctl_diskinit(update, p)
 		/* Just update, number of drives hasn't changed */
 		for (dk = TAILQ_FIRST(&disklist), i = 0; dk;
 		    dk = TAILQ_NEXT(dk, dk_link), i++) {
-			ndk = diskstats + i;
-			bcopy(dk, ndk, sizeof(struct disk));
-
-			/* Blank out some of the fields, just paranoid */
-			bzero(&ndk->dk_link, sizeof(ndk->dk_link));
-			bzero(&ndk->dk_lock, sizeof(struct lock));
-			ndk->dk_labelsector = 0;
-			ndk->dk_name = NULL;
-			ndk->dk_driver = NULL;
-			ndk->dk_label = NULL;
-			ndk->dk_cpulabel = NULL;
+			sdk = diskstats + i;
+			sdk->ds_busy = dk->dk_busy;
+			sdk->ds_xfer = dk->dk_xfer;
+			sdk->ds_seek = dk->dk_seek;
+			sdk->ds_bytes = dk->dk_bytes;
+			sdk->ds_attachtime = dk->dk_attachtime;
+			sdk->ds_timestamp = dk->dk_timestamp;
+			sdk->ds_time = dk->dk_time;
 		}
 	}
 	lockmgr(&sysctl_disklock, LK_RELEASE, NULL, p);
