@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.14 2002/10/11 13:31:49 millert Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.15 2002/10/22 19:48:22 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -270,7 +270,7 @@ struct wi_counters {
 
 struct wi_key {
 	u_int16_t		wi_keylen;
-	u_int8_t		wi_keydat[14];
+	u_int8_t		wi_keydat[13];
 };
 
 #define	WI_NLTV_KEYS	4
