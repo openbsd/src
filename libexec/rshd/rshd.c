@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.10 1997/01/15 23:41:03 millert Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.11 1997/02/05 04:18:30 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -55,7 +55,9 @@ static char *rcsid = "$Id: rshd.c,v 1.10 1997/01/15 23:41:03 millert Exp $";
 #include <sys/time.h>
 #include <sys/socket.h>
 
+#include <netinet/in_systm.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
@@ -237,8 +239,8 @@ doit(fromp)
 #ifdef IP_OPTIONS
       {
 	u_char optbuf[BUFSIZ/3], *cp;
-	char lbuf[BUFSIZ], *lp;
-	int optsize = sizeof(optbuf), ipproto;
+	char lbuf[sizeof(optbuf)*3+1], *lp;
+	int optsize = sizeof(optbuf), ipproto, i;
 	struct protoent *ip;
 
 	if ((ip = getprotobyname("ip")) != NULL)
@@ -247,12 +249,19 @@ doit(fromp)
 		ipproto = IPPROTO_IP;
 	if (!getsockopt(0, ipproto, IP_OPTIONS, (char *)optbuf, &optsize) &&
 	    optsize != 0) {
-		lp = lbuf;
-		for (cp = optbuf; optsize > 0; cp++, optsize--, lp += 3)
-			sprintf(lp, " %2.2x", *cp);
+		for (lp = lbuf, i = 0; i < optsize; i++, lp += 3)
+			sprintf(lp, " %2.2x", optbuf[i]);
 		syslog(LOG_NOTICE,
 		    "Connection received from %s using IP options (ignored):%s",
 		    inet_ntoa(fromp->sin_addr), lbuf);
+		for (i = 0; i < optsize; ) {
+			u_char c = optbuf[i];
+			if (c == IPOPT_LSRR || c == IPOPT_SSRR)
+				exit(1);
+			if (c == IPOPT_EOL)
+				break;
+			i += (c == IPOPT_NOP) ? 1 : optbuf[i+1];
+		}
 		if (setsockopt(0, ipproto, IP_OPTIONS,
 		    (char *)NULL, optsize) != 0) {
 			syslog(LOG_ERR, "setsockopt IP_OPTIONS NULL: %m");

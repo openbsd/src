@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.13 1997/01/17 07:12:08 millert Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.14 1997/02/05 04:18:27 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -259,8 +259,8 @@ doit(f, fromp)
 #ifdef IP_OPTIONS
 		{
 		u_char optbuf[BUFSIZ/3], *cp;
-		char lbuf[BUFSIZ], *lp;
-		int optsize = sizeof(optbuf), ipproto;
+		char lbuf[sizeof(optbuf)*3+1], *lp;
+		int optsize = sizeof(optbuf), ipproto, i;
 		struct protoent *ip;
 
 		if ((ip = getprotobyname("ip")) != NULL)
@@ -269,12 +269,19 @@ doit(f, fromp)
 			ipproto = IPPROTO_IP;
 		if (getsockopt(0, ipproto, IP_OPTIONS, (char *)optbuf,
 		    &optsize) == 0 && optsize != 0) {
-			lp = lbuf;
-			for (cp = optbuf; optsize > 0; cp++, optsize--, lp += 3)
-				sprintf(lp, " %2.2x", *cp);
+			for (lp = lbuf, i = 0; i < optsize; i++, lp += 3)
+				sprintf(lp, " %2.2x", optbuf[i]);
 			syslog(LOG_NOTICE,
 			    "Connection received using IP options (ignored):%s",
 			    lbuf);
+			for (i = 0; i < optsize; ) {
+				u_char c = optbuf[i];
+				if (c == IPOPT_LSRR || c == IPOPT_SSRR)
+					exit(1);
+				if (c == IPOPT_EOL)
+					break;
+				i += (c == IPOPT_NOP) ? 1 : optbuf[i+1];
+			}
 			if (setsockopt(0, ipproto, IP_OPTIONS,
 			    (char *)NULL, optsize) != 0) {
 				syslog(LOG_ERR,
