@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.1 2001/03/02 13:27:06 espie Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2001/03/02 13:28:11 espie Exp $
 
 
 # open hashing functions
@@ -11,7 +11,6 @@ SRCS+=	ohash_create_entry.c ohash_delete.c ohash_do.c ohash_entries.c \
 
 MAN+=	ohash_init.3 ohash_interval.3
 MLINKS+=ohash_init.3 ohash_delete.3 \
-	ohash_init.3 ohash_lookup_string.3 \
 	ohash_init.3 ohash_lookup_interval.3 \
 	ohash_init.3 ohash_lookup_memory.3 \
 	ohash_init.3 ohash_find.3 \
