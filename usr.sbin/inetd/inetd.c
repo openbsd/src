@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.37 1997/08/04 19:26:10 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.38 1997/08/29 17:07:04 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.37 1997/08/04 19:26:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.38 1997/08/29 17:07:04 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -402,9 +402,10 @@ main(argc, argv, envp)
 	    }
 	    readable = allsock;
 	    if ((n = select(maxsock + 1, &readable, NULL, NULL, NULL)) <= 0) {
-		    if (n < 0 && errno != EINTR)
+		    if (n < 0 && errno != EINTR) {
 			syslog(LOG_WARNING, "select: %m");
-		    sleep(1);
+			sleep(1);
+		    }
 		    continue;
 	    }
 	    for (sep = servtab; n && sep; sep = sep->se_next)
