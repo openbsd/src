@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.7 2004/12/31 01:00:23 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.8 2005/01/09 18:18:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -1408,8 +1408,8 @@ HAL_BOOL		 ath_hal_init_channels(struct ath_hal *, HAL_CHANNEL *,
     u_int, u_int *, HAL_CTRY_CODE, u_int16_t, HAL_BOOL, HAL_BOOL);
 
 void			 ar5k_radar_alert(struct ath_hal *);
-ieee80211_regdomain_t	*ar5k_regdomain_to_ieee(u_int16_t);
-u_int16_t		 ar5k_regdomain_from_ieee(ieee80211_regdomain_t *);
+ieee80211_regdomain_t	 ar5k_regdomain_to_ieee(u_int16_t);
+u_int16_t		 ar5k_regdomain_from_ieee(ieee80211_regdomain_t);
 u_int32_t		 ar5k_bitswap(u_int32_t, u_int);
 u_int			 ar5k_clocktoh(u_int, HAL_BOOL);
 u_int			 ar5k_htoclock(u_int, HAL_BOOL);
@@ -1421,7 +1421,7 @@ HAL_BOOL		 ar5k_register_timeout(struct ath_hal *, u_int32_t,
 int			 ar5k_eeprom_init(struct ath_hal *);
 int			 ar5k_eeprom_read_mac(struct ath_hal *, u_int8_t *);
 HAL_BOOL		 ar5k_eeprom_regulation_domain(struct ath_hal *,
-    HAL_BOOL, ieee80211_regdomain_t *);
+    HAL_BOOL, ieee80211_regdomain_t);
 
 HAL_BOOL		 ar5k_channel(struct ath_hal *, HAL_CHANNEL *);
 HAL_BOOL		 ar5k_rfregs(struct ath_hal *, HAL_CHANNEL *, u_int);

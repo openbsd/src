@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.7 2004/12/31 03:39:01 espie Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.8 2005/01/09 18:18:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -220,20 +220,18 @@ ath_hal_attach(device, sc, st, sh, status)
 
 	/* Set regulation domain */
 	if ((regdomain =
-	    (u_int16_t)hal->ah_capabilities.cap_eeprom.ee_regdomain) != 0) {
-		ieee_regdomain = *ar5k_regdomain_to_ieee(regdomain);
-		memcpy(&hal->ah_capabilities.cap_regdomain.reg_current,
-		    &ieee_regdomain, sizeof(ieee80211_regdomain_t));
+		hal->ah_capabilities.cap_eeprom.ee_regdomain) != 0) {
+		hal->ah_capabilities.cap_regdomain.reg_current =
+		    ieee_regdomain = ar5k_regdomain_to_ieee(regdomain);
 	} else {
 		ieee_regdomain =
 		    hal->ah_capabilities.cap_regdomain.reg_current;
 
 		/* Try to write default regulation domain to EEPROM */
- 		ar5k_eeprom_regulation_domain(hal, AH_TRUE, &ieee_regdomain);
+ 		ar5k_eeprom_regulation_domain(hal, AH_TRUE, ieee_regdomain);
 	}
 
-	memcpy(&hal->ah_capabilities.cap_regdomain.reg_hw,
-	    &ieee_regdomain, sizeof(ieee80211_regdomain_t));
+	hal->ah_capabilities.cap_regdomain.reg_hw = ieee_regdomain;
 
 	/* Get misc capabilities */
 	if (hal->ah_get_capabilities(hal) != AH_TRUE) {
@@ -474,23 +472,24 @@ ar5k_radar_alert(hal)
 }
 
 u_int16_t
-ar5k_regdomain_from_ieee(regdomain)
-	ieee80211_regdomain_t *regdomain;
+ar5k_regdomain_from_ieee(ieee)
+	ieee80211_regdomain_t ieee;
 {
-	/*
-	 * XXX Fix
-	 */
-	return ((u_int16_t)*regdomain);
+	u_int32_t regdomain = (u_int32_t)ieee;
+
+	if (regdomain & 0xf0000000)
+		return ((u_int16_t)DMN_DEFAULT);
+
+        return (regdomain & 0xff);
 }
 
-ieee80211_regdomain_t *
+ieee80211_regdomain_t
 ar5k_regdomain_to_ieee(regdomain)
 	u_int16_t regdomain;
 {
-	/*
-	 * XXX Fix
-	 */
-	return ((ieee80211_regdomain_t*)&regdomain);
+	ieee80211_regdomain_t ieee = (ieee80211_regdomain_t)regdomain & 0xff;
+
+	return (ieee);
 }
 
 u_int32_t
@@ -974,19 +973,16 @@ HAL_BOOL
 ar5k_eeprom_regulation_domain(hal, write, regdomain)
 	struct ath_hal *hal;
 	HAL_BOOL write;
-	ieee80211_regdomain_t *regdomain;
+	ieee80211_regdomain_t regdomain;
 {
 	/* Read current value */
 	if (write != AH_TRUE) {
-		memcpy(regdomain,
-		    &hal->ah_capabilities.cap_regdomain.reg_current,
-		    sizeof(ieee80211_regdomain_t));
+		regdomain = hal->ah_capabilities.cap_regdomain.reg_current;
 		return (AH_TRUE);
 	}
 
 	/* Try to write a new value */
-	memcpy(&hal->ah_capabilities.cap_regdomain.reg_current, regdomain,
-	    sizeof(ieee80211_regdomain_t));
+	hal->ah_capabilities.cap_regdomain.reg_current = regdomain;
 
 	if (hal->ah_capabilities.cap_eeprom.ee_protect &
 	    AR5K_EEPROM_PROTECT_WR_128_191)

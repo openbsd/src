@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210.c,v 1.8 2004/12/31 01:00:23 reyk Exp $	*/
+/*	$OpenBSD: ar5210.c,v 1.9 2005/01/09 18:18:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -1552,7 +1552,7 @@ ar5k_ar5210_setRegulatoryDomain(hal, regdomain, status)
 
 {
 	if (ar5k_eeprom_regulation_domain(hal, AH_TRUE,
-		ar5k_regdomain_to_ieee((u_int8_t)regdomain)) == AH_TRUE) {
+		ar5k_regdomain_to_ieee(regdomain)) == AH_TRUE) {
 		*status = HAL_OK;
 		return (AH_TRUE);
 	}
@@ -1753,8 +1753,8 @@ ar5k_ar5210_getRegDomain(hal)
 	ieee80211_regdomain_t ieee_regdomain;
 
 	if (ar5k_eeprom_regulation_domain(hal,
-		AH_FALSE, &ieee_regdomain) == AH_TRUE) {
-		regdomain = ar5k_regdomain_from_ieee(&ieee_regdomain);
+		AH_FALSE, ieee_regdomain) == AH_TRUE) {
+		regdomain = ar5k_regdomain_from_ieee(ieee_regdomain);
 		return (regdomain > 0 ? regdomain : hal->ah_regdomain);
 	}
 
