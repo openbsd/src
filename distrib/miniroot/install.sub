@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.364 2005/03/26 01:40:21 krw Exp $
+#	$OpenBSD: install.sub,v 1.365 2005/03/26 03:54:40 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -687,19 +687,6 @@ v4_defroute() {
 	done
 }
 
-# Returns true if $1 contains only alphanumerics
-isalphanumeric() {
-	local _n=$1
-	while [[ ${#_n} -ne 0 ]]; do
-		case $_n in
-		[A-Za-z0-9]*)	;;
-		*)		return 1;;
-		esac
-		_n=${_n#?}
-	done
-	return 0
-}
-
 # Much of this is gratuitously stolen from /etc/netstart.
 enable_network() {
 	local _netfile
@@ -721,15 +708,8 @@ enable_network() {
 		# Strip off /mnt/etc/hostname. prefix
 		if=${hn#/mnt/etc/hostname.}
 
-		# Interface names must be alphanumeric only. We check to avoid
-		# configuring backup or temp files, and to catch the "*" case.
-		if ! isalphanumeric "$if"; then
-			continue
-		fi
-		ifconfig $if > /dev/null 2>&1
-		if [ $? -ne 0 ]; then
-			continue
-		fi
+		# Check for ifconfig'able interface.
+		ifconfig $if >/dev/null 2>&1 || continue
 
 		# Now parse the hostname.* file
 		while :; do
