@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.65 2002/06/10 22:18:48 markus Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.66 2002/06/14 01:07:45 itojun Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.65 2002/06/10 22:18:48 markus Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.66 2002/06/14 01:07:45 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -149,7 +149,8 @@ struct  netrange	at_nr;		/* AppleTalk net range */
 
 int	ipx_type = ETHERTYPE_II;
 char	name[IFNAMSIZ];
-int	flags, metric, mtu, setaddr, setipdst, doalias;
+int	flags, setaddr, setipdst, doalias;
+u_long	metric, mtu;
 int	clearaddr, s;
 int	newaddr = 0;
 int	nsellength = 1;
@@ -917,6 +918,7 @@ setia6flags(vname, value)
 	char *vname;
 	int value;
 {
+
 	if (value < 0) {
 		value = -value;
 		in6_addreq.ifra_flags &= ~value;
@@ -929,6 +931,7 @@ setia6pltime(val, d)
 	char *val;
 	int d;
 {
+
 	setia6lifetime("pltime", val);
 }
 
@@ -937,6 +940,7 @@ setia6vltime(val, d)
 	char *val;
 	int d;
 {
+
 	setia6lifetime("vltime", val);
 }
 
@@ -968,8 +972,12 @@ void
 setifmetric(val)
 	char *val;
 {
+	char *ep = NULL;
+
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ifr.ifr_metric = atoi(val);
+	ifr.ifr_metric = strtoul(val, &ep, 10);
+	if (!ep || *ep)
+		errx(1, "%s: invalid metric", val);
 	if (ioctl(s, SIOCSIFMETRIC, (caddr_t)&ifr) < 0)
 		warn("SIOCSIFMETRIC");
 }
@@ -979,8 +987,12 @@ setifmtu(val, d)
 	char *val;
 	int d;
 {
+	char *ep = NULL;
+
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ifr.ifr_mtu = atoi(val);
+	ifr.ifr_mtu = strtoul(val, &ep, 10);
+	if (!ep || *ep)
+		errx(1, "%s: invalid mtu", val);
 	if (ioctl(s, SIOCSIFMTU, (caddr_t)&ifr) < 0)
 		warn("SIOCSIFMTU");
 }
@@ -1635,9 +1647,9 @@ status(link, sdl)
 	printf("%s: ", name);
 	printb("flags", flags, IFFBITS);
 	if (metric)
-		printf(" metric %d", metric);
+		printf(" metric %lu", metric);
 	if (mtu)
-		printf(" mtu %d", mtu);
+		printf(" mtu %lu", mtu);
 	putchar('\n');
 	if (sdl != NULL && sdl->sdl_type == IFT_ETHER && sdl->sdl_alen)
 		(void)printf("\taddress: %s\n", ether_ntoa(
