@@ -50,6 +50,9 @@
 #include <sys/buf.h>
 #include <sys/trace.h>
 
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
+
 #ifdef TRACE
 int	nvualarm;
 
@@ -106,14 +109,21 @@ vdoualarm(arg)
 }
 #endif
 
-int
-sysarch(p, uap, retval)
+sys_sysarch(p, v, retval)
 	struct proc *p;
-	struct sysarch_args /* {
-		syscallarg(int) op;
-		syscallarg(char *) parms;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
-	return ENOSYS;
+	struct sys_sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(char *) parms;
+	} */ *uap = v;
+	int error = 0;
+
+	switch(SCARG(uap, op)) {
+	default:
+		error = EINVAL;
+		break;
+	}
+	return(error);
 }
