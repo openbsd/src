@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.12 2001/05/26 07:00:02 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.13 2001/05/27 00:38:25 angelos Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -412,4 +412,21 @@ m_tag_init(m)
 	struct mbuf *m;
 {
 	LIST_INIT(&m->m_pkthdr.tags);
+}
+
+/* Get first tag in chain. */
+struct m_tag *
+m_tag_first(m)
+	struct mbuf *m;
+{
+	return (LIST_FIRST(&m->m_pkthdr.tags));
+}
+
+/* Get next tag in chain. */
+struct m_tag *
+m_tag_next(m, t)
+	struct mbuf *m;
+	struct m_tag *t;
+{
+	return (LIST_NEXT(t, m_tag_link));
 }
