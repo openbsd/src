@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.91 2000/05/15 06:10:20 niklas Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.92 2000/05/18 13:44:06 espie Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1033,6 +1033,34 @@ man
 
 # ./usr/share/man/cat1
 cat1
+
+alpha
+..
+amiga
+..
+arc
+..
+hp300
+..
+i386
+..
+mac68k
+..
+mvme68k
+..
+mvme88k
+..
+pmax
+..
+powerpc
+..
+sparc
+..
+sun3
+..
+vax
+..
+
 # ./usr/share/man/cat1
 ..
 
@@ -1061,54 +1089,31 @@ cat3p
 # ./usr/share/man/cat4
 cat4
 
-# ./usr/share/man/cat4/alpha
 alpha
-# ./usr/share/man/cat4/alpha
 ..
-
-# ./usr/share/man/cat4/amiga
 amiga
-# ./usr/share/man/cat4/amiga
 ..
-
-# ./usr/share/man/cat4/hp300
+arc
+..
 hp300
-# ./usr/share/man/cat4/hp300
 ..
-
-# ./usr/share/man/cat4/i386
 i386
-# ./usr/share/man/cat4/i386
 ..
-
-# ./usr/share/man/cat4/mac68k
 mac68k
-# ./usr/share/man/cat4/mac68k
 ..
-
-# ./usr/share/man/cat4/mvme68k
 mvme68k
-# ./usr/share/man/cat4/mvme68k
 ..
-
-# ./usr/share/man/cat4/mvme88k
 mvme88k
-# ./usr/share/man/cat4/mvme88k
 ..
-
-# ./usr/share/man/cat4/pmax
 pmax
-# ./usr/share/man/cat4/pmax
 ..
-
-# ./usr/share/man/cat4/powerpc
 powerpc
-# ./usr/share/man/cat4/powerpc
 ..
-
-# ./usr/share/man/cat4/sparc
 sparc
-# ./usr/share/man/cat4/sparc
+..
+sun3
+..
+vax
 ..
 
 # ./usr/share/man/cat4
@@ -1132,54 +1137,31 @@ cat7
 # ./usr/share/man/cat8
 cat8
 
-# ./usr/share/man/cat8/alpha
 alpha
-# ./usr/share/man/cat8/alpha
 ..
-
-# ./usr/share/man/cat8/amiga
 amiga
-# ./usr/share/man/cat8/amiga
 ..
-
-# ./usr/share/man/cat8/hp300
+arc
+..
 hp300
-# ./usr/share/man/cat8/hp300
 ..
-
-# ./usr/share/man/cat8/i386
 i386
-# ./usr/share/man/cat8/i386
 ..
-
-# ./usr/share/man/cat8/mac68k
 mac68k
-# ./usr/share/man/cat8/mac68k
 ..
-
-# ./usr/share/man/cat8/mvme68k
 mvme68k
-# ./usr/share/man/cat8/mvme68k
 ..
-
-# ./usr/share/man/cat8/mvme88k
 mvme88k
-# ./usr/share/man/cat8/mvme88k
 ..
-
-# ./usr/share/man/cat8/pmax
 pmax
-# ./usr/share/man/cat8/pmax
 ..
-
-# ./usr/share/man/cat8/powerpc
 powerpc
-# ./usr/share/man/cat8/powerpc
 ..
-
-# ./usr/share/man/cat8/sparc
 sparc
-# ./usr/share/man/cat8/sparc
+..
+sun3
+..
+vax
 ..
 
 # ./usr/share/man/cat8
@@ -1198,6 +1180,34 @@ i386
 
 # ./usr/share/man/man1
 man1
+
+alpha
+..
+amiga
+..
+arc
+..
+hp300
+..
+i386
+..
+mac68k
+..
+mvme68k
+..
+mvme88k
+..
+pmax
+..
+powerpc
+..
+sparc
+..
+sun3
+..
+vax
+..
+
 # ./usr/share/man/man1
 ..
 
@@ -1219,54 +1229,31 @@ man3p
 # ./usr/share/man/man4
 man4
 
-# ./usr/share/man/man4/alpha
 alpha
-# ./usr/share/man/man4/alpha
 ..
-
-# ./usr/share/man/man4/amiga
 amiga
-# ./usr/share/man/man4/amiga
 ..
-
-# ./usr/share/man/man4/hp300
+arc
+..
 hp300
-# ./usr/share/man/man4/hp300
 ..
-
-# ./usr/share/man/man4/i386
 i386
-# ./usr/share/man/man4/i386
 ..
-
-# ./usr/share/man/man4/mac68k
 mac68k
-# ./usr/share/man/man4/mac68k
 ..
-
-# ./usr/share/man/man4/mvme68k
 mvme68k
-# ./usr/share/man/man4/mvme68k
 ..
-
-# ./usr/share/man/man4/mvme88k
 mvme88k
-# ./usr/share/man/man4/mvme88k
 ..
-
-# ./usr/share/man/man4/pmax
 pmax
-# ./usr/share/man/man4/pmax
 ..
-
-# ./usr/share/man/man4/powerpc
 powerpc
-# ./usr/share/man/man4/powerpc
 ..
-
-# ./usr/share/man/man4/sparc
 sparc
-# ./usr/share/man/man4/sparc
+..
+sun3
+..
+vax
 ..
 
 # ./usr/share/man/man4
@@ -1290,54 +1277,31 @@ man7
 # ./usr/share/man/man8
 man8
 
-# ./usr/share/man/man8/alpha
 alpha
-# ./usr/share/man/man8/alpha
 ..
-
-# ./usr/share/man/man8/amiga
 amiga
-# ./usr/share/man/man8/amiga
 ..
-
-# ./usr/share/man/man8/hp300
+arc
+..
 hp300
-# ./usr/share/man/man8/hp300
 ..
-
-# ./usr/share/man/man8/i386
 i386
-# ./usr/share/man/man8/i386
 ..
-
-# ./usr/share/man/man8/mac68k
 mac68k
-# ./usr/share/man/man8/mac68k
 ..
-
-# ./usr/share/man/man8/mvme68k
 mvme68k
-# ./usr/share/man/man8/mvme68k
 ..
-
-# ./usr/share/man/man8/mvme88k
 mvme88k
-# ./usr/share/man/man8/mvme88k
 ..
-
-# ./usr/share/man/man8/pmax
 pmax
-# ./usr/share/man/man8/pmax
 ..
-
-# ./usr/share/man/man8/powerpc
 powerpc
-# ./usr/share/man/man8/powerpc
 ..
-
-# ./usr/share/man/man8/sparc
 sparc
-# ./usr/share/man/man8/sparc
+..
+sun3
+..
+vax
 ..
 
 # ./usr/share/man/man8
