@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.33 1996/12/05 17:40:01 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.34 1997/04/07 22:48:08 rees Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -204,7 +204,8 @@ fdprobe(parent, match, aux)
 		printf("\n");
 	}
 #endif
-	if (n != 2 || (fdc->sc_status[0] & 0xf8) != 0x20)
+	/* flags & 0x20 forces the drive to be found even if it won't probe */
+	if (!(fa->fa_flags & 0x20) && (n != 2 || (fdc->sc_status[0] & 0xf8) != 0x20))
 		return 0;
 	/* turn off motor */
 	bus_space_write_1(iot, ioh, fdout, FDO_FRST);
