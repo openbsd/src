@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.11 2003/01/01 16:55:16 mcbride Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.12 2003/01/28 22:45:19 henning Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.11 2003/01/01 16:55:16 mcbride Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.12 2003/01/28 22:45:19 henning Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -91,7 +91,7 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 
 		printf("rule %d/%s: ",
 		    (short)ntohs(hdr->rnr), reason);
-		switch (hdr->action) {
+		switch (ntohs(hdr->action)) {
 		case PF_SCRUB:
 			printf("scrub");
 			break;
