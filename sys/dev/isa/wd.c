@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.27 1997/08/08 21:47:03 niklas Exp $	*/
+/*	$OpenBSD: wd.c,v 1.28 1997/08/08 22:00:10 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -252,7 +252,7 @@ wdstrategy(bp)
 	 */
 	if (WDPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, wd->sc_dk.dk_label,
-	    wdd->sc_dk.dk_cpulabel,
+	    wd->sc_dk.dk_cpulabel,
 	    (d_link->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
 		goto done;
     
