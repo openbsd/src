@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.70 2002/06/09 02:50:29 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.71 2002/07/18 04:35:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -199,7 +199,7 @@ $start_zero_tf
 	stw	r0, U_PCB+PCB_ONFAULT(arg3)
 	stw	r0, U_PCB+PCB_SPACE(arg3)	/* XXX HPPA_SID_KERNEL == 0 */
 	stw	arg3, U_PCB+PCB_UVA(arg3)
-	ldil	L%USPACE, arg0
+	ldil	L%(USPACE+NBPG), arg0		/* normal U plus red zone */
 	add	arg0, arg3, arg0
 	ldil	L%proc0paddr, t1
 	stw	arg3, R%proc0paddr(t1)

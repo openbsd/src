@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.77 2002/07/17 22:08:07 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.78 2002/07/18 04:35:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -89,7 +89,7 @@ int pmapdebug = 0
 
 vaddr_t	virtual_avail;
 paddr_t physical_steal, physical_end;
-vaddr_t pmap_pv_page;
+vaddr_t pmap_pv_page, pmap_pv_page_end;
 
 #if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 int		pmap_hptsize = 256;	/* patchable */
@@ -200,13 +200,18 @@ pmap_pde_alloc(struct pmap *pm, vaddr_t va, struct vm_page **pdep)
 
 	/* special hacking for pre-mapping the kernel */
 	if (!pmap_initialized) {
+		register u_int32_t sm;
+
 		if (physical_steal >= physical_end)
 			panic("pmap_pde_alloc: out of steallage");
 
 		pa = physical_steal;
 		physical_steal += PAGE_SIZE;
-		bzero((void *)pa, PAGE_SIZE);
-		fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+		rsm(0, sm);
+		if (sm & PSW_D)
+			pmap_zero_page(pa);
+		else
+			bzero((void *)pa, PAGE_SIZE);
 		pmap_pde_set(pm, va, pa);
 		pm->pm_stats.resident_count++;	/* count PTP as resident */
 
@@ -292,7 +297,7 @@ pmap_pte_set(pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 	if (!pde)
 		panic("pmap_pte_set: zero pde");
 
-	if (pte && pte < physical_end &&
+	if (pte && pmap_initialized && pte < physical_end &&
 	    hppa_trunc_page(pte) != (paddr_t)&gateway_page)
 		panic("pmap_pte_set: invalid pte");
 
@@ -528,7 +533,8 @@ pmap_bootstrap(vstart)
 
 	addr = hppa_round_page(addr);
 	pmap_pv_page = addr;
-	addr += PAGE_SIZE;
+	pmap_pv_page_end =
+	addr += (totalphysmem / (16 * 1024)) * PAGE_SIZE;
 	size = hppa_round_page(sizeof(struct pv_head) * totalphysmem);
 	bzero ((caddr_t)addr, size);
 	virtual_avail = addr + size;
@@ -542,12 +548,19 @@ pmap_bootstrap(vstart)
 	vm_physmem[0].pmseg.pvhead = (struct pv_head *)addr;
 
 	addr += size;
+	/* map .text to avoid reloading the btlb on heavy faults */
+	for (va = 0; va < (vaddr_t)&etext1; va += PAGE_SIZE)
+		pmap_kenter_pa(va, va, UVM_PROT_RX);
 	/* now we know how much to map */
-	for (va = (vaddr_t)&etext1; va < addr; va += PAGE_SIZE)
-		pmap_kenter_pa(va, va, UVM_PROT_RW);
+	for (; va < addr; va += PAGE_SIZE) {
+		extern struct user *proc0paddr;
 
-	DPRINTF(PDB_INIT, ("bootstrap: mapped %p - 0x%x\n",
-	    &etext1, addr));
+		pmap_kenter_pa(va, va,
+		    (va == (vaddr_t)proc0paddr + USPACE)?
+		    UVM_PROT_NONE : UVM_PROT_RW);
+	}
+
+	DPRINTF(PDB_INIT, ("bootstrap: mapped %p - 0x%x\n", &etext1, addr));
 }
 
 void
@@ -1264,9 +1277,9 @@ pmap_pv_page_alloc(struct pool *pp, int flags)
 	DPRINTF(PDB_FOLLOW|PDB_POOL,
 	    ("pmap_pv_page_alloc(%p, %x)\n", pp, flags));
 
-	if (pmap_pv_page) {
+	if (pmap_pv_page < pmap_pv_page_end) {
 		void *v = (void *)pmap_pv_page;
-		pmap_pv_page = 0;
+		pmap_pv_page += PAGE_SIZE;
 		return (v);
 	}
 
