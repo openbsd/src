@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.81 2003/05/01 23:34:03 jason Exp $
+#	$OpenBSD: GENERIC,v 1.82 2003/05/14 23:32:35 miod Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -94,7 +94,7 @@ ugen*	at uhub? port ? configuration ?		# USB generic device
 #### Standard system devices -- all required for a given architecture
 
 auxio*	at ebus?
-auxio*	at sbus? slot ? offset ?
+auxio*	at sbus?
 beeper*	at ebus?
 
 # SAB82532 based serial ports
@@ -122,9 +122,9 @@ lpt*	at ebus?
 
 # performance counters
 uperf*	at ebus?
-uperf*	at sbus? slot ? offset ?
+uperf*	at sbus?
 
-zs*	at sbus? slot ? offset ?
+zs*	at sbus?
 zstty*	at zs? channel ?
 zskbd*	at zs? channel ?
 wskbd*	at zskbd? console ?
@@ -133,7 +133,7 @@ wskbd*	at zskbd? console ?
 pcons0	at mainbus0				# PROM console
 
 ## Mostek/DS1287 clocks
-clock*	at sbus? slot ? offset ?
+clock*	at sbus?
 clock*	at ebus?
 rtc*	at ebus?
 
@@ -141,26 +141,26 @@ rtc*	at ebus?
 timer*	at mainbus0
 
 ## Lance Ethernet - AMD7990
-le*		at sbus? slot ? offset ?
-ledma*		at sbus? slot ? offset ?
+le*		at sbus?
+ledma*		at sbus?
 le*		at ledma?
-lebuffer*	at sbus? slot ? offset ?
+lebuffer*	at sbus?
 le*		at lebuffer?
 
 # Quad-ethernet glue device, and sub-devices
-qec*		at sbus? slot ? offset ?
+qec*		at sbus?
 qe*		at qec?
 be*		at qec?
 
-hme*		at sbus? slot ? offset ?
+hme*		at sbus?
 
 # Magma serial/parallel port devices
-magma*		at sbus? slot ? offset ?
+magma*		at sbus?
 mtty*		at magma?
 mbpp*		at magma?
 
 # Magma serial/parallel port devices
-spif*		at sbus? slot ? offset ?
+spif*		at sbus?
 stty*		at spif?
 sbpp*		at spif?
 
@@ -179,11 +179,11 @@ scsibus* at atapiscsi?
 #	      devices should be allowed to disconnect for the SCSI bus
 #	      to operate acceptably.
 #
-dma*	at sbus? slot ? offset ?		# SBus
+dma*	at sbus?				# SBus
 esp*	at dma? flags 0x0000			# SBus
-esp*	at sbus? slot ? offset ?
+esp*	at sbus?
 
-isp*	at sbus? slot ? offset ?
+isp*	at sbus?
 option ISP_COMPILE_1000_FW=1
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
@@ -212,23 +212,23 @@ inphy*	at mii? phy ?				# Intel 82555 PHYs
 lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
 ukphy*	at mii? phy ?				# Unknown PHYs
 
-bwtwo*		at sbus? slot ? offset ?	# bw2, sbus mono framebuffer
+bwtwo*		at sbus?			# bw2, sbus mono framebuffer
 wsdisplay*	at bwtwo?
 
-cgsix*		at sbus? slot ? offset ?	# cg6, sbus color framebuffer
+cgsix*		at sbus?			# cg6, sbus color framebuffer
 wsdisplay*	at cgsix?
 
-cgthree*	at sbus? slot ? offset ?	# cg3, sbus color framebuffer
+cgthree*	at sbus?			# cg3, sbus color framebuffer
 wsdisplay*	at cgthree?
 
-audiocs*	at sbus? slot ? offset ?
+audiocs*	at sbus?
 
-asio*		at sbus? slot ? offset ?	# Aurora 210SJ
+asio*		at sbus?			# Aurora 210SJ
 com*		at asio?
-apio*		at sbus? slot ? offset ?	# Aurora 210SJ
+apio*		at sbus?			# Aurora 210SJ
 lpt*		at apio?
 
-stp*		at sbus? slot ? offset ?	# STP4020
+stp*		at sbus?			# STP4020
 pcmcia*		at stp? socket ?
 #com*		at pcmcia? function ?		# PCMCIA modems/serial ports
 wi*		at pci? dev ? function ?	# WaveLAN IEEE 802.11DS

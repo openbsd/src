@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.22 2003/05/13 22:45:11 miod Exp $
+# 	$OpenBSD: RAMDISK,v 1.23 2003/05/14 23:32:35 miod Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -47,9 +47,9 @@ gem*	at pci? dev ? function ?
 dc*	at pci? dev ? function ?
 
 auxio*	at ebus?
-auxio*	at sbus? slot ? offset ?
+auxio*	at sbus?
 #com*	at ebus?
-clock*	at sbus? slot ? offset ?		# Mostek clock 
+clock*	at sbus?				# Mostek clock 
 clock*	at ebus?
 rtc*	at ebus?				# DS1287/M5819 clock
 timer*	at mainbus0				# Timer chip
@@ -58,15 +58,15 @@ timer*	at mainbus0				# Timer chip
 pcons0	at mainbus0				# PROM console
 
 ## Lance Ethernet - AMD7990
-le*	at sbus? slot ? offset ?
-ledma*	at sbus? slot ? offset ?
+le*	at sbus?
+ledma*	at sbus?
 le*	at ledma?
 
 # Quad-ethernet glue device, and sub-devices
-qec*	at sbus? slot ? offset ?
+qec*	at sbus?
 qe*	at qec?
 be*	at qec?
-hme*	at sbus? slot ? offset ?
+hme*	at sbus?
 
 pciide*	at pci? dev ? function ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0a00
@@ -83,10 +83,10 @@ scsibus* at atapiscsi?
 #	      devices should be allowed to disconnect for the SCSI bus
 #	      to operate acceptably.
 #
-dma*	at sbus? slot ? offset ?		# SBus
+dma*	at sbus?				# SBus
 esp*	at dma? flags 0x0000			# SBus
-esp*	at sbus? slot ? offset ?
-isp*	at sbus? slot ? offset ?
+esp*	at sbus?
+isp*	at sbus?
 option ISP_COMPILE_1000_FW=1
 scsibus* at esp?
 
