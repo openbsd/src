@@ -116,6 +116,7 @@ parse_reply(unsigned char *data, int len)
     unsigned char *p;
     char host[128];
     int status;
+    size_t l;
     
     struct dns_reply *r;
     struct resource_record **rr;
@@ -202,14 +203,15 @@ parse_reply(unsigned char *data, int len)
 		dns_free_data(r);
 		return NULL;
 	    }
+	    l = strlen(host);		/* NUL in struct */
 	    (*rr)->u.mx = (struct mx_record*)malloc(sizeof(struct mx_record) + 
-						    strlen(host));
+						    l);
 	    if((*rr)->u.mx == NULL) {
 		dns_free_data(r);
 		return NULL;
 	    }
 	    (*rr)->u.mx->preference = (p[0] << 8) | p[1];
-	    strlcpy((*rr)->u.mx->domain, host, strlen(host));
+	    strlcpy((*rr)->u.mx->domain, host, l + 1);
 	    break;
 	}
 	case T_SRV:{
@@ -218,9 +220,9 @@ parse_reply(unsigned char *data, int len)
 		dns_free_data(r);
 		return NULL;
 	    }
+	    l = strlen(host);		/* NUL in struct */
 	    (*rr)->u.srv = 
-		(struct srv_record*)malloc(sizeof(struct srv_record) + 
-					   strlen(host));
+		(struct srv_record*)malloc(sizeof(struct srv_record) + l);
 	    if((*rr)->u.srv == NULL) {
 		dns_free_data(r);
 		return NULL;
@@ -228,7 +230,7 @@ parse_reply(unsigned char *data, int len)
 	    (*rr)->u.srv->priority = (p[0] << 8) | p[1];
 	    (*rr)->u.srv->weight = (p[2] << 8) | p[3];
 	    (*rr)->u.srv->port = (p[4] << 8) | p[5];
-	    strlcpy((*rr)->u.srv->target, host, strlen(host));
+	    strlcpy((*rr)->u.srv->target, host, l + 1);
 	    break;
 	}
 	case T_TXT:{
@@ -267,8 +269,9 @@ parse_reply(unsigned char *data, int len)
 		return NULL;
 	    }
 	    sig_len = len - 18 - status;
+	    l = strlen(host);		/* NUL in struct */
 	    (*rr)->u.sig = malloc(sizeof(*(*rr)->u.sig)
-				  + strlen(host) + sig_len);
+				  + l + sig_len);
 	    if ((*rr)->u.sig == NULL) {
 		dns_free_data (r);
 		return NULL;
@@ -286,7 +289,7 @@ parse_reply(unsigned char *data, int len)
 	    (*rr)->u.sig->sig_len        = sig_len;
 	    memcpy ((*rr)->u.sig->sig_data, p + 18 + status, sig_len);
 	    (*rr)->u.sig->signer         = &(*rr)->u.sig->sig_data[sig_len];
-	    strlcpy((*rr)->u.sig->signer, host, strlen(host));
+	    strlcpy((*rr)->u.sig->signer, host, l + 1);
 	    break;
 	}
 
