@@ -1,14 +1,14 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2004/02/01 05:26:50 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2004/02/06 02:36:31 drahn Exp $
 #	etc.macppc/Makefile.inc -- macppc-specific etc Makefile targets
 
 .ifdef DESTDIR
 snap_md: bsd distrib1
-	cp ${.CURDIR}/../sys/arch/pegasos/compile/GENERIC/bsd \
+	cp ${.CURDIR}/../sys/arch/cats/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
 
 bsd:
-	cd ${.CURDIR}/../sys/arch/pegasos/conf && config GENERIC
-	cd ${.CURDIR}/../sys/arch/pegasos/compile/GENERIC && \
+	cd ${.CURDIR}/../sys/arch/cats/conf && config GENERIC
+	cd ${.CURDIR}/../sys/arch/cats/compile/GENERIC && \
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 # knows about bsd.rd
