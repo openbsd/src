@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.14 2002/08/07 23:22:41 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.15 2002/08/10 20:28:51 millert Exp $	*/
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.14 2002/08/07 23:22:41 millert Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.15 2002/08/10 20:28:51 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -252,7 +252,6 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 			ecode = e_username;
 			goto eof;
 		}
-		bzero(pw->pw_passwd, strlen(pw->pw_passwd));
 		Debug(DPARS, ("load_entry()...uid %ld, gid %ld\n",
 			      (long)e->pwd->pw_uid, (long)e->pwd->pw_gid))
 	} else if (ch == '*') {
@@ -264,6 +263,7 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 		ecode = e_memory;
 		goto eof;
 	}
+	bzero(e->pwd->pw_passwd, strlen(e->pwd->pw_passwd));
 
 	/* copy and fix up environment.  some variables are just defaults and
 	 * others are overrides.

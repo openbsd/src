@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.35 2002/08/07 23:22:41 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.36 2002/08/10 20:28:51 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.35 2002/08/07 23:22:41 millert Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.36 2002/08/10 20:28:51 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -128,7 +128,6 @@ parse_args(int argc, char *argv[]) {
 		fprintf(stderr, "bailing out.\n");
 		exit(ERROR_EXIT);
 	}
-	bzero(pw->pw_passwd, strlen(pw->pw_passwd));
 	if (strlen(pw->pw_name) >= sizeof User) {
 		fprintf(stderr, "username too long\n");
 		exit(ERROR_EXIT);
@@ -156,7 +155,6 @@ parse_args(int argc, char *argv[]) {
 					ProgramName, optarg);
 				exit(ERROR_EXIT);
 			}
-			bzero(pw->pw_passwd, strlen(pw->pw_passwd));
 			if (strlen(optarg) >= sizeof User)
 				usage("username too long");
 			(void) strcpy(User, optarg);

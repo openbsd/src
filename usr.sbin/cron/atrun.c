@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.4 2002/08/08 18:17:50 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.5 2002/08/10 20:28:51 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: atrun.c,v 1.4 2002/08/08 18:17:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: atrun.c,v 1.5 2002/08/10 20:28:51 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -280,7 +280,6 @@ run_job(atjob *job, char *atfile)
 		log_it("CRON", getpid(), "ORPHANED JOB", atfile);
 		_exit(ERROR_EXIT);
 	}
-	bzero(pw->pw_passwd, strlen(pw->pw_passwd));
 	/* XXX - is this needed now that we do auth_approval? */
 	if (pw->pw_expire && time(NULL) >= pw->pw_expire) {
 		log_it(pw->pw_name, getpid(), "ACCOUNT EXPIRED, JOB ABORTED",

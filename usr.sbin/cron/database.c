@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.10 2002/08/07 23:22:41 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.11 2002/08/10 20:28:51 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: database.c,v 1.10 2002/08/07 23:22:41 millert Exp $";
+static char const rcsid[] = "$OpenBSD: database.c,v 1.11 2002/08/10 20:28:51 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the log]
@@ -192,7 +192,6 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		log_it(fname, getpid(), "ORPHAN", "no passwd entry");
 		goto next_crontab;
 	}
-	bzero(pw->pw_passwd, strlen(pw->pw_passwd));
 
 	if ((crontab_fd = open(tabname, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < OK) {
 		/* crontab not accessible?
