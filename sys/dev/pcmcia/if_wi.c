@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.20 2001/01/14 23:11:10 angelos Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.21 2001/01/16 20:18:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -133,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.20 2001/01/14 23:11:10 angelos Exp $";
+	"$OpenBSD: if_wi.c,v 1.21 2001/01/16 20:18:33 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -195,6 +195,13 @@ wi_pcmcia_match(parent, match, aux)
 	case PCMCIA_VENDOR_LUCENT:
 		/* XXX Per-productid checking here. */
 		return (1);
+
+	case PCMCIA_VENDOR_ELSA:
+		switch (pa->product) {
+		case PCMCIA_PRODUCT_ELSA_XI300_IEEE:
+			return (1);
+		}
+		return (0);
 
 	default:
 		return (0);
