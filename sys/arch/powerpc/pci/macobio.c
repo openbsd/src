@@ -154,7 +154,7 @@ obio_attach(parent, self, aux)
 
 	ca.ca_iot = &sc->sc_membus_space;
 
-	printf(": addr 0x%x\n", ca.ca_baseaddr);
+	printf("\n");
 
 	/*
 	 * This might be a hack, but it makes the interrupt controller 
