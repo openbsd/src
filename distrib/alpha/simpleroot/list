@@ -26,7 +26,6 @@ usr/bin/strings
 usr/bin/tftp
 usr/bin/vi
 usr/mdec
-usr/sbin/chroot
 usr/sbin/rdate
 usr/share/misc/termcap
 var
