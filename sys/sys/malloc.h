@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.45 2001/07/26 13:59:23 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.46 2001/08/11 02:06:24 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define	M_SOCKET	3	/* socket structure */
 #define	M_PCB		4	/* protocol control block */
 #define	M_RTABLE	5	/* routing tables */
-#define	M_HTABLE	6	/* IMP host tables */
+/* 6 - free */
 #define	M_FTABLE	7	/* fragment reassembly header */
 #define	M_ZOMBIE	8	/* zombie proc status */
 #define	M_IFADDR	9	/* interface address */
@@ -93,13 +93,10 @@
 #define	M_UFSMNT	28	/* UFS mount structure */
 #define	M_SHM		29	/* SVID compatible shared memory segments */
 #define	M_VMMAP		30	/* VM map structures */
-#define	M_VMMAPENT	31	/* VM map entry structures */
-#define	M_VMOBJ		32	/* VM object structure */
-#define	M_VMOBJHASH	33	/* VM object hash structure */
+/* 31-33 - free */
 #define	M_VMPMAP	34	/* VM pmap */
 #define	M_VMPVENT	35	/* VM phys-virt mapping entry */
-#define	M_VMPAGER	36	/* XXX: VM pager struct */
-#define	M_VMPGDATA	37	/* XXX: VM pager private data */
+/* 36-37 - free */
 #define	M_FILE		38	/* Open file structure */
 #define	M_FILEDESC	39	/* Open file descriptor table */
 #define	M_LOCKF		40	/* Byte-range locking structures */
@@ -189,7 +186,7 @@
 	"socket",	/* 3 M_SOCKET */ \
 	"pcb",		/* 4 M_PCB */ \
 	"routetbl",	/* 5 M_RTABLE */ \
-	"hosttbl",	/* 6 M_HTABLE */ \
+	NULL,		/* 6 */ \
 	"fragtbl",	/* 7 M_FTABLE */ \
 	"zombie",	/* 8 M_ZOMBIE */ \
 	"ifaddr",	/* 9 M_IFADDR */ \
@@ -214,13 +211,13 @@
 	"UFS mount",	/* 28 M_UFSMNT */ \
 	"shm",		/* 29 M_SHM */ \
 	"VM map",	/* 30 M_VMMAP */ \
-	"VM mapent",	/* 31 M_VMMAPENT */ \
-	"VM object",	/* 32 M_VMOBJ */ \
-	"VM objhash",	/* 33 M_VMOBJHASH */ \
+	NULL,	/* 31 */ \
+	NULL,	/* 32 */ \
+	NULL,	/* 33 */ \
 	"VM pmap",	/* 34 M_VMPMAP */ \
 	"VM pvmap",	/* 35 M_VMPVENT */ \
-	"VM pager",	/* 36 M_VMPAGER */ \
-	"VM pgdata",	/* 37 M_VMPGDATA */ \
+	NULL,	/* 36 */ \
+	NULL,	/* 37 */ \
 	"file",		/* 38 M_FILE */ \
 	"file desc",	/* 39 M_FILEDESC */ \
 	"lockf",	/* 40 M_LOCKF */ \
