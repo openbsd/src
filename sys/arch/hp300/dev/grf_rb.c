@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_rb.c,v 1.10 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: grf_rb.c,v 1.11 2005/01/08 22:13:53 miod Exp $	*/
 /*	$NetBSD: grf_rb.c,v 1.11 1997/03/31 07:34:17 scottr Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
  
 #include <dev/cons.h>
 
+#include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/intiovar.h>
@@ -230,7 +231,7 @@ rb_init(gp, scode, addr)
 		gi->gd_fbsize = gi->gd_fbwidth * gi->gd_fbheight;
 		fboff = (rbp->fbomsb << 8) | rbp->fbolsb;
 		gi->gd_fbaddr = (caddr_t) (*((u_char *)addr + fboff) << 16);
-		if (gi->gd_regaddr >= (caddr_t)DIOIIBASE) {
+		if (gi->gd_regaddr >= (caddr_t)DIOII_BASE) {
 			/*
 			 * For DIO II space the fbaddr just computed is
 			 * the offset from the select code base (regaddr)
@@ -599,7 +600,7 @@ rbox_console_scan(scode, va, arg)
 				dioiidev = (u_char *)va;
 				return ((dioiidev[0x101] + 1) * 0x100000);
 			}
-			return (DIOCSIZE);
+			return (DIO_DEVSIZE);
 		}
 	}
 	return (0);

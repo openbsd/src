@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.19 2004/09/29 07:35:52 miod Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.20 2005/01/08 22:13:53 miod Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -1546,7 +1546,7 @@ dcm_console_scan(scode, va, arg)
 			dioiidev = (u_char *)va;
 			return ((dioiidev[0x101] + 1) * 0x100000);
 		}
-		return (DIOCSIZE);
+		return (DIO_DEVSIZE);
 	}
 	return (0);
 }

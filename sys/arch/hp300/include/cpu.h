@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.24 2004/06/13 21:49:13 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.25 2005/01/08 22:13:54 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
 
 /*
@@ -215,31 +215,6 @@ int	kvtop(caddr_t);
 #define	IIOP(va)	((int)(va)-(int)intiobase+INTIOBASE)
 #define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
 #define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 2mb */
-
-/*
- * External IO space:
- *
- * DIO ranges from select codes 0-63 at physical addresses given by:
- *	0x600000 + (sc - 32) * 0x10000
- * DIO cards are addressed in the range 0-31 [0x600000-0x800000) for
- * their control space and the remaining areas, [0x200000-0x400000) and
- * [0x800000-0x1000000), are for additional space required by a card;
- * e.g. a display framebuffer.
- *
- * DIO-II ranges from select codes 132-255 at physical addresses given by:
- *	0x1000000 + (sc - 132) * 0x400000
- * The address range of DIO-II space is thus [0x1000000-0x20000000).
- *
- * DIO/DIO-II space is too large to map in its entirety, instead devices
- * are mapped into kernel virtual address space allocated from a range
- * of EIOMAPSIZE pages (vmparam.h) starting at ``extiobase''.
- */
-#define	DIOBASE		(0x600000)
-#define	DIOTOP		(0x1000000)
-#define	DIOCSIZE	(0x10000)
-#define	DIOIIBASE	(0x01000000)
-#define	DIOIITOP	(0x20000000)
-#define	DIOIICSIZE	(0x00400000)
 
 /*
  * HP MMU

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_gb.c,v 1.8 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: grf_gb.c,v 1.9 2005/01/08 22:13:53 miod Exp $	*/
 /*	$NetBSD: grf_gb.c,v 1.11 1997/03/31 07:34:15 scottr Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
  
 #include <dev/cons.h>
 
+#include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/intiovar.h>
@@ -602,7 +603,7 @@ gbox_console_scan(scode, va, arg)
 				dioiidev = (u_char *)va;
 				return ((dioiidev[0x101] + 1) * 0x100000);
 			}
-			return (DIOCSIZE);
+			return (DIO_DEVSIZE);
 		}
 	}
 	return (0);
