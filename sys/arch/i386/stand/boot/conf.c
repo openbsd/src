@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 1997/08/13 14:24:00 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 1997/09/02 21:18:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -36,13 +36,13 @@
 #include <netinet/in.h>
 #include <libsa.h>
 #include <lib/libsa/ufs.h>
-#include <lib/libsa/nfs.h>
-#include <lib/libsa/cd9660.h>
 #ifdef notdef
+#include <lib/libsa/cd9660.h>
 #include <lib/libsa/fat.h>
+#include <lib/libsa/nfs.h>
 #include <lib/libsa/tftp.h>
-#endif
 #include <lib/libsa/netif.h>
+#endif
 #include <lib/libsa/unixdev.h>
 #include <biosdev.h>
 #include <dev/cons.h>
@@ -58,8 +58,6 @@ struct fs_ops file_system[] = {
 	  fat_stat,    fat_readdir    },
 	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	  cd9660_stat, cd9660_readdir },
-#endif
-#ifndef NO_NET
 	{ nfs_open,    nfs_close,    nfs_read,    nfs_write,    nfs_seek,
 	  nfs_stat,    nfs_readdir    },
 #endif
@@ -82,7 +80,7 @@ struct devsw	devsw[] = {
 };
 int ndevs = NENTS(devsw);
 
-#ifndef NO_NET
+#ifdef notdef
 struct netif_driver	*netif_drivers[] = {
 	NULL
 };

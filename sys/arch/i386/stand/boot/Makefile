@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1997/08/22 20:16:27 mickey Exp $
+#	$OpenBSD: Makefile,v 1.12 1997/09/02 21:18:12 mickey Exp $
 
 PROG=	boot
 SRCS=	srt0.S boot.c cmd.c conf.c
@@ -35,6 +35,3 @@ ${PROG}: $(OBJS) $(DPADD)
 
 CPPFLAGS+=-DBOOTMAGIC=$(BOOTMAGIC) ${DEBUGFLAGS}
 CFLAGS+=$(SACFLAGS)
-.ifdef NO_NET
-CPPFLAGS+=-DNO_NET
-.endif
