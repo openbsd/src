@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.21 2000/10/18 21:00:37 mickey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.22 2001/04/14 00:11:40 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -101,16 +101,13 @@ dk_establish(dk, dev)
 char *
 readdisklabel(dev, strat, lp, clp, spoofonly)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 	int spoofonly;
 {
 	struct buf *bp;
-	char *msg = NULL;
-   char *tmot = "MOTOROLA";
-	char *mot;
-	int t;
+	int error, i;
 
 	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize == 0)
@@ -118,9 +115,12 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 	lp->d_npartitions = RAW_PART + 1;
-	if (lp->d_partitions[RAW_PART].p_size == 0)
-		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
-	lp->d_partitions[RAW_PART].p_offset = 0;
+	for (i = 0; i < RAW_PART; i++) {
+		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
+	}
+	if (lp->d_partitions[i].p_size == 0)
+		lp->d_partitions[i].p_size = lp->d_secperunit;
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
@@ -131,40 +131,32 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 
 	/* request no partition relocation by driver on I/O operations */
 	bp->b_dev = dev;
-	bp->b_blkno = 0; /* contained in block 0 */
+	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	bp->b_cylin = 0; /* contained in block 0 */
 	(*strat)(bp);
 
-	if (biowait(bp)) {
-		msg = "cpu_disklabel read error\n";
-	} else {
+	error = biowait(bp);
+	if (error == 0)
 		bcopy(bp->b_data, clp, sizeof (struct cpu_disklabel));
-	}
-	
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 
-	if (msg) {
+	if (error)
+		return ("disk label read error");
+
 #if defined(CD9660)
-		if (iso_disklabelspoof(dev, strat, lp) == 0)
-			msg = NULL;
+	if (iso_disklabelspoof(dev, strat, lp) == 0)
+		return (NULL);
 #endif
-		return (msg); 
-	}
-	
-	if (clp->magic1 != DISKMAGIC || clp->magic2 != DISKMAGIC) {
-		msg = "no disk label";
-		return (msg);
-	}
+	if (clp->magic1 != DISKMAGIC || clp->magic2 != DISKMAGIC)
+		return ("no disk label");
 	
 	cputobsdlabel(lp, clp);
 	
-	if (dkcksum(lp) != 0){
-		msg = "disk label corrupted";
-		return (msg);
-	}
+	if (dkcksum(lp) != 0)
+		return ("disk label corrupted");
 
 #ifdef DEBUG
 	if (disksubr_debug > 0) {
@@ -172,7 +164,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 		printclp(clp, "readdisklabel:cpu label");
 	}
 #endif
-	return (msg);
+	return (NULL);
 }
 
 /*
@@ -267,7 +259,7 @@ writedisklabel(dev, strat, lp, clp)
 
 	/* request no partition relocation by driver on I/O operations */
 	bp->b_dev = dev;
-	bp->b_blkno = 0; /* contained in block 0 */
+	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	bp->b_cylin = 0; /* contained in block 0 */
