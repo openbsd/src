@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.40 2004/01/25 21:41:30 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.41 2004/01/25 23:04:11 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -215,18 +215,8 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Set up initial BAT table
 	 */
-	battable[0x0].batl = BATL(0x00000000, BAT_M);
-	battable[0x0].batu = BATU(0x00000000);
-	battable[0x8].batl = BATL(0x80000000, BAT_I);
-	battable[0x8].batu = BATU(0x80000000);
-	battable[0x9].batl = BATL(0x90000000, BAT_I);
-	battable[0x9].batu = BATU(0x90000000);
-	battable[0xf].batl = BATL(0xf0000000, BAT_I);
-	battable[0xf].batu = BATU(0xf0000000);
-	
-	/* XXX */
-	segment8_mapped = 1;
-	segmentC_mapped = 0;
+	battable[0].batl = BATL(0x00000000, BAT_M);
+	battable[0].batu = BATU(0x00000000);
 	
 	/*
 	 * Now setup fixed bat registers
@@ -241,18 +231,6 @@ initppc(startkernel, endkernel, args)
 	/* DBAT0 used similar */
 	ppc_mtdbat0l(battable[0].batl);
 	ppc_mtdbat0u(battable[0].batu);
-
-	/* DBAT1, DBAT2 -> PCI I/O space */
-	ppc_mtdbat1l(battable[8].batl);
-	ppc_mtdbat1u(battable[8].batu);
-	ppc_mtdbat2l(battable[9].batl);
-	ppc_mtdbat2u(battable[9].batu);
-
-	/* IBAT3, DBAT3 -> Raven and BUG */
-	ppc_mtibat3l(battable[0x0f].batl);
-	ppc_mtibat3u(battable[0x0f].batu);
-	ppc_mtdbat3l(battable[0x0f].batl);
-	ppc_mtdbat3u(battable[0x0f].batu);
 
 	/*
 	 * Set up trap vectors
@@ -311,17 +289,16 @@ initppc(startkernel, endkernel, args)
 	 */
 
 	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
-
-	uvmexp.pagesize = 4096;
-	uvm_setpagesize();
 	
 	/*
 	 * Initialize pmap module.
 	 */
+	uvmexp.pagesize = 4096;
+	uvm_setpagesize();
 	pmap_bootstrap(startkernel, endkernel);
 
 #if 1
-	/* MVME2[67]00 max out at 256MB, and we need the other BAT anyway */
+	/* MVME2[67]00 max out at 256MB */
 #else
 	/* use BATs to map 1GB memory, no pageable BATs now */
 	if (physmem > btoc(0x10000000)) {
