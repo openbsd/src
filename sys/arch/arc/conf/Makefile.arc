@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arc,v 1.7 1997/04/19 17:19:49 pefo Exp $
+#	$OpenBSD: Makefile.arc,v 1.8 1997/05/21 10:06:49 pefo Exp $
 
 #	@(#)Makefile.arc	8.2 (Berkeley) 2/16/94
 #
@@ -179,7 +179,6 @@ depend:: .depend
 	mkdep ${AFLAGS} ${CPPFLAGS} ${ARC}/arc/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${ARC}/arc/genassym.c
 
 %RULES
 
