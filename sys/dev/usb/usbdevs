@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.99 2004/07/15 06:18:06 deraadt Exp $
+$OpenBSD: usbdevs,v 1.100 2004/07/16 19:54:20 pedro Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -655,6 +655,7 @@ product DIGITALSTREAM PS2	0x0001	PS/2 Active
 /*product DLINK DSBS25		0x0100	DSB-S25 serial */
 product DLINK DUBE100		0x1a00	10/100 ethernet
 product DLINK DSB650TX4		0x200c	10/100 ethernet
+product DLINK DWL122		0x3700	Wireless DWL122
 product DLINK DSB650C		0x4000	10Mbps ethernet
 product DLINK DSB650TX1		0x4001	10/100 ethernet
 product DLINK DSB650TX		0x4002	10/100 ethernet
