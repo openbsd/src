@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.16 2001/07/18 19:36:57 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.17 2001/08/18 20:50:18 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -99,8 +99,6 @@ int ptebits(paddr_t pa, int bit);
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
 
-void pmap_deactivate __P((struct proc *p));
-void pmap_activate __P((struct proc *p));
 void pmap_real_memory __P((vm_offset_t *start, vm_size_t *size));
 void switchexit __P((struct proc *));
 

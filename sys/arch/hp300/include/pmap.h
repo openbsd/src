@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.7 2001/05/11 23:24:57 millert Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.8 2001/08/18 20:50:18 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.13 1997/06/10 18:58:19 veego Exp $	*/
 
 /* 
@@ -148,10 +148,6 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-
-struct proc;
-void	pmap_activate __P((struct proc *));
-void	pmap_deactivate __P((struct proc *));
 
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.21 2001/07/31 13:30:17 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.22 2001/08/18 20:50:18 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.36 1999/11/13 00:24:39 thorpej Exp $	*/
 
 /* 
@@ -99,7 +99,13 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #ifdef _KERNEL
 __BEGIN_DECLS
 void		*pmap_bootstrap_alloc __P((int));
-void		 pmap_unwire __P((pmap_t, vaddr_t));
+#ifndef pmap_activate
+void		pmap_activate __P((struct proc *));
+#endif
+#ifndef pmap_deactivate
+void		pmap_deactivate __P((struct proc *));
+#endif
+void		pmap_unwire __P((pmap_t, vaddr_t));
 
 #if !defined(pmap_clear_modify)
 boolean_t	 pmap_clear_modify __P((struct vm_page *));

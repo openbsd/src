@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.6 2000/05/28 03:55:21 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.7 2001/08/18 20:50:18 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.17 1997/06/10 18:34:52 veego Exp $	*/
 
 /* 
@@ -136,9 +136,6 @@ struct pmap	kernel_pmap_store;
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-struct proc;
-void	pmap_activate __P((struct proc *));
-void	pmap_deactivate __P((struct proc *));
 #endif	/* _KERNEL */
 
 #endif	/* !_MACHINE_PMAP_H_ */

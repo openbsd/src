@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.8 2001/03/16 14:10:23 art Exp $ */
+/* $OpenBSD: pmap.h,v 1.9 2001/08/18 20:50:18 art Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -214,8 +214,6 @@ void	pmap_emulate_reference(struct proc *p, vaddr_t v,
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 int	pmap_uses_prom_console(void);
 #endif
-void	pmap_activate(struct proc *);
-void	pmap_deactivate(struct proc *);
 
 #define	pmap_pte_pa(pte)	(PG_PFNUM(*(pte)) << PGSHIFT)
 #define	pmap_pte_prot(pte)	(*(pte) & PG_PROT)

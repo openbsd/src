@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.12 2001/08/12 12:03:03 heko Exp $     */
+/*      $OpenBSD: pmap.h,v 1.13 2001/08/18 20:50:18 art Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -145,7 +145,6 @@ extern	struct pmap kernel_pmap_store;
 void	pmap_bootstrap __P((void));
 vaddr_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 void	pmap_pinit __P((pmap_t));
-void	pmap_activate __P((struct proc *));
 
 #endif	/* _KERNEL */
 

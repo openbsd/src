@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.15 2001/08/12 21:34:48 miod Exp $ */
+/*	$OpenBSD: pmap.h,v 1.16 2001/08/18 20:50:18 art Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -91,9 +91,6 @@ extern caddr_t vmmap;
 /**************************************************************************/
 /*** Prototypes for public functions defined in pmap.c ********************/
 /**************************************************************************/
-
-void pmap_activate(struct proc *p);
-void pmap_deactivate(struct proc *p);
 
 vm_offset_t pmap_map(
 		vm_offset_t virt,
