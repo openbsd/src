@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.29 2004/01/19 10:41:34 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.30 2004/01/20 12:50:52 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -89,6 +89,7 @@ static const struct keywords keywords_neighbor[] = {
 	{ "down",	NEIGHBOR_DOWN}
 };
 
+void		 usage(void);
 int		 main(int, char *[]);
 int		 match_keyword(const char *, const struct keywords [], size_t);
 void		 show_summary_head(void);
@@ -112,6 +113,15 @@ int		 show_interface_msg(struct imsg *);
 
 struct imsgbuf	ibuf;
 
+void
+usage(void)
+{
+	extern char	*__progname;
+
+	fprintf(stderr, "usage: %s <command> [arg [...]]\n", __progname);
+	exit (1);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -121,6 +131,18 @@ main(int argc, char *argv[])
 	struct imsg		 imsg;
 	enum actions		 action = SHOW_SUMMARY;
 	struct bgpd_addr	 addr;
+	int			 ch;
+
+	while ((ch = getopt(argc, argv, "")) != -1) {
+		switch (ch) {
+		default:
+			usage();
+			/* not reached */
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		err(1, "control_init: socket");
