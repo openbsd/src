@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.3 1999/02/02 03:44:07 millert Exp $	*/
+/*	$OpenBSD: wc.c,v 1.4 1999/02/02 03:48:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-static char rcsid[] = "$OpenBSD: wc.c,v 1.3 1999/02/02 03:44:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: wc.c,v 1.4 1999/02/02 03:48:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -252,11 +252,11 @@ print_counts(lines, words, chars, name)
 {
 
 	if (doline)
-		(void)printf(" %7qd", (quad_t) lines);
+		(void)printf(" %7qd", lines);
 	if (doword)
-		(void)printf(" %7qd", (quad_t) words);
+		(void)printf(" %7qd", words);
 	if (dochar)
-		(void)printf(" %7qd", (quad_t) chars);
+		(void)printf(" %7qd", chars);
 
 	(void)printf(" %s\n", name);
 }
