@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.2 1998/02/15 18:49:06 niklas Exp $
+#	$OpenBSD: Makefile.m88k,v 1.1 2001/07/25 23:23:41 miod Exp $
 #	from: @(#)Makefile.hp300	6.1 (Berkeley) 3/3/91
 
 #CPPFLAGS+=	-DPIC
