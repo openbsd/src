@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.19 1999/11/10 18:48:47 chris Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.20 2000/03/17 22:05:57 art Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -103,12 +103,6 @@ static int myip_initialized = 0;
 static int revarp_in_progress = 0;
 struct ifnet *myip_ifp = NULL;
 
-static void arptimer __P((void *));
-static void arprequest __P((struct arpcom *, u_int32_t *, u_int32_t *,
-			    u_int8_t *));
-static void in_arpinput __P((struct mbuf *));
-static void arptfree __P((struct llinfo_arp *));
-static struct llinfo_arp *arplookup __P((u_int32_t, int, int ));
 #ifdef DDB
 #include <vm/vm.h>
 
