@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 2000/07/02 03:59:51 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.27 2000/08/08 21:46:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -30,8 +30,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#undef BTLBDEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,6 +276,18 @@ hppa_init(start)
 		printf("WARNING: PDC_BTLB error %d", error);
 #endif
 	} else {
+#ifdef BTLBDEBUG
+		printf("btlb info: minsz=%d, maxsz=%d\n",
+		    pdc_btlb.min_size, pdc_btlb.max_size);
+		printf("btlb fixed: i=%d, d=%d, c=%d\n",
+		    pdc_btlb.finfo.num_i,
+		    pdc_btlb.finfo.num_d,
+		    pdc_btlb.finfo.num_c);
+		printf("btlb varbl: i=%d, d=%d, c=%d\n",
+		    pdc_btlb.vinfo.num_i,
+		    pdc_btlb.vinfo.num_d,
+		    pdc_btlb.vinfo.num_c);
+#endif /* BTLBDEBUG */
 		/* purge TLBs and caches */
 		if (pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
 		    PDC_BTLB_PURGE_ALL) < 0)
