@@ -79,7 +79,8 @@ include "dev/pci/files.pci"
 
 device	mpcpcibr {} : pcibus
 attach	mpcpcibr at mainbus
-file	arch/powerpc/pci/mpcpcibus.c	mpcpcibr
+file	arch/powerpc/pci/mpcpcibus.c		mpcpcibr
+#file	arch/powerpc/pci/pci_addr_fixup.c	mpcpcibr
 
 
 major	{sd = 2}		# hey this was 0 but at slot 2 in bdevsw XXX
@@ -187,13 +188,25 @@ device ams: wsmousedev
 attach ams at adb
 file arch/powerpc/mac/ams.c                      ams
 
+device abtn
+attach abtn at adb
+file arch/powerpc/mac/abtn.c			abtn
+
+device awacs: audio, auconv, mulaw
+attach awacs at obio
+file arch/powerpc/mac/awacs.c			awacs
+
 device nvram
 attach nvram at obio
-file arch/powerpc/mac/nvram.c                    nvram needs-flag
+file arch/powerpc/mac/nvram.c			nvram needs-flag
 
+device gpio {}
+attach gpio at obio with gpio_obio
+attach gpio at gpio with gpio_gpio
+file arch/powerpc/mac/gpio.c			gpio
 
 attach wdc at obio with wdc_obio
-file arch/powerpc/mac/wdc_obio.c                 wdc_obio
+file arch/powerpc/mac/wdc_obio.c		wdc_obio
 
 define grfdev {}
 
@@ -219,6 +232,17 @@ file  arch/powerpc/pci/vgafb.c          	vgafb & vgafb_pci
 attach  vgafb at pci with vgafb_pci
 file    arch/powerpc/pci/vgafb_pci.c             vgafb_pci       needs-flag
 
+
+#
+# CARDBUS
+#
+include	"dev/cardbus/files.cardbus"
+#file	arch/powerpc/powerpc/rbus_machdep.c	cardbus
+
+#
+# Machine-independent PCMCIA drivers
+#
+include "dev/pcmcia/files.pcmcia"
 
 #
 # Machine-independent USB drivers
