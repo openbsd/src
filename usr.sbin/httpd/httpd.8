@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.7 2002/07/22 13:33:18 henning Exp $
+.\"	$OpenBSD: httpd.8,v 1.8 2002/09/18 15:34:45 henning Exp $
 .\" Copyright (c) 1995-1997 David Robinson. All rights reserved.
 .\" Copyright (c) 1997-1999 The Apache Group. All rights reserved.
 .\" Copyright (c) 1998-1999 Bob Beck. All rights reserved.
@@ -49,15 +49,15 @@
 .\" Supercomputing Applications, University of Illinois, Urbana-Champaign.
 .\" For more information on the Apache Group and the Apache HTTP server
 .\" project, please see <http://www.apache.org/>.
-.Dd Feb 1, 1999
+.Dd Sep 18, 2002
 .Dt HTTPD 1
 .Os
 .Sh NAME
 .Nm httpd
-.Nd Apache hypertext transfer protocol server
+.Nd Apache Hypertext Transfer Protocol Server
 .Sh SYNOPSIS
 .Nm httpd
-.Op Fl FhlLSvuVX
+.Op Fl FhlLStTuvVX
 .Op Fl d Ar serverroot
 .Op Fl f Ar config
 .Op Fl c Ar directive
@@ -186,9 +186,13 @@ places where the directive is valid.
 Show the settings as parsed from the config file (currently only shows the
 virtualhost settings).
 .It Fl t
-Run syntax tests for configuration files only. The program immediately exits
-after these syntax parsing with either a return code of 0 (Syntax OK) or
-return code not equal to 0 (Syntax Error).
+Run syntax tests for configuration files only, including DocumentRoot checks.
+The program immediately exits after these syntax parsing with either a return 
+code of 0 (Syntax OK) or return code not equal to 0 (Syntax Error).
+.It Fl T
+Run syntax tests for configuration files only, without DocumentRoot checks.
+The program immediately exits after these syntax parsing with either a return 
+code of 0 (Syntax OK) or return code not equal to 0 (Syntax Error).
 .It Fl X
 Run in single-process mode, for internal debugging purposes only; the daemon
 does not detach from the terminal or fork any children. Do NOT use this mode
