@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: process.c,v 1.3 2002/03/19 07:26:58 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -27,11 +27,13 @@
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <signal.h>
-#include <unistd.h>
 #include <err.h>
+#include <errno.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "pmdb.h"
 #include "symbol.h"
@@ -44,6 +46,12 @@ process_load(struct pstate *ps)
 
 	if (ps->ps_state == LOADED)
 		return (0);
+
+	if (access(*ps->ps_argv, R_OK|X_OK) < 0) {
+		fprintf(stderr, "%s: %s.\n", *ps->ps_argv,
+		    strerror(errno));
+		return (0);
+	}
 
 	switch (ps->ps_pid = fork()) {
 	case 0:
