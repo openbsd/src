@@ -6,9 +6,6 @@ machine		arc
 
 maxusers	8
 
-# does not really do anything anymore, but this replaces "ident GENERIC"
-options		GENERIC
-
 # Need to set locally
 options		TIMEZONE="8*60"		# minutes west of GMT (for)
 options		DST=1			# use daylight savings rules

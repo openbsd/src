@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.5 1996/08/26 11:11:54 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 1996/09/02 11:33:23 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.5 1996/08/26 11:11:54 pefo Exp $
+ *      $Id: machdep.c,v 1.6 1996/09/02 11:33:23 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -208,10 +208,13 @@ mips_init(argc, argv, code)
 		isa_mem_base = PICA_V_ISA_MEM;
 		break;
 
-	case DESKSTATION:
+	case MAGNUM:
 		break;
 
-	case MAGNUM:
+	case DESKSTATION_RPC44:
+		break;
+
+	case DESKSTATION_TYNE:
 		break;
 
 	default:
@@ -224,12 +227,9 @@ mips_init(argc, argv, code)
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
+	 * Default to SINGLE and ASKNAME if no args.
 	 */
-#ifdef GENERIC
 	boothowto = RB_SINGLE | RB_ASKNAME;
-#else
-	boothowto = RB_SINGLE;
-#endif
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
@@ -390,12 +390,16 @@ mips_init(argc, argv, code)
 		strcpy(cpu_model, "ACER PICA_61");
 		break;
 
-	case DESKSTATION:
-		strcpy(cpu_model, "DESKSTATION");
-		break;
-
 	case MAGNUM:
 		strcpy(cpu_model, "MIPS MAGNUM");
+		break;
+
+	case DESKSTATION_RPC44:
+		strcpy(cpu_model, "DESKSTATION_RPC44");
+		break;
+
+	case DESKSTATION_TYNE:
+		strcpy(cpu_model, "DESKSTATION_TYNE");
 		break;
 
 	default:
@@ -432,13 +436,8 @@ mips_init(argc, argv, code)
 		physmem = btoc(physmem);
 		break;
 
-	case MAGNUM:
-		memcfg = in32(R4030_SYS_CONFIG);
-
-		physmem = btoc(physmem);
-		break;
-
-	case DESKSTATION:
+	case DESKSTATION_RPC44:
+	case DESKSTATION_TYNE:
 		/*XXX Need to find out how to size mem */
 		physmem = 1024 * 1024 * 32;
 		mem_layout[0].mem_start = 0x00100000;
@@ -446,6 +445,12 @@ mips_init(argc, argv, code)
 		mem_layout[1].mem_start = 0x00008000;
 		mem_layout[1].mem_size = 0x000a0000 - mem_layout[1].mem_start;
 		mem_layout[2].mem_start = 0x0;
+
+		physmem = btoc(physmem);
+		break;
+
+	case MAGNUM:
+		memcfg = in32(R4030_SYS_CONFIG);
 
 		physmem = btoc(physmem);
 		break;

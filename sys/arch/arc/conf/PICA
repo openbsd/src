@@ -1,13 +1,10 @@
-
+#
 #	Generic configuration file for MIPS R4400 PICA system
 #
 
 machine		arc
 
 maxusers	8
-
-# does not really do anything anymore, but this replaces "ident GENERIC"
-# options		GENERIC
 
 # Need to set locally
 options		TIMEZONE="8*60"		# minutes west of GMT (for)
@@ -49,17 +46,17 @@ options		FDESC		# user file descriptor filesystem
 #options	PORTAL		# portal filesystem (still experimental)
 
 # Networking options
-options		INET		# Internet protocols
-#options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
-options		GATEWAY		# IP packet forwarding
-#options	MULTICAST	# Multicast support
-#options	MROUTING	# Multicast routing support
-#options	ISO		# OSI networking
-#options	TPIP
-#options	EON
+options 	INET		# Internet protocols
+#options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+options 	GATEWAY		# IP packet forwarding
+#options 	MULTICAST	# Multicast support
+#options 	MROUTING	# Multicast routing support
+#options 	ISO		# OSI networking
+#options 	TPIP
+#options 	EON
 
 # Special options
-#options		MACHINE_NONCONTIG # Support noncontigous memory.
+#options 	MACHINE_NONCONTIG # Support noncontigous memory.
 
 # Specify storage configuration
 config		bsd	root on sd0 swap on sd0 and sd1
@@ -70,9 +67,6 @@ config		bsd	root on sd0 swap on sd0 and sd1
 mainbus0	at root
 cpu*		at mainbus0
 
-#
-#	PICA Bus
-#
 pica*		at mainbus0
 
 clock0		at pica?

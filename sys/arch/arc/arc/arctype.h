@@ -1,4 +1,4 @@
-/*	$OpenBSD: arctype.h,v 1.2 1996/07/30 20:24:12 pefo Exp $	*/
+/*	$OpenBSD: arctype.h,v 1.3 1996/09/02 11:33:22 pefo Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,12 +36,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)arctype.h	8.1 (Berkeley) 6/10/93
- *      $Id: arctype.h,v 1.2 1996/07/30 20:24:12 pefo Exp $
+ *      $Id: arctype.h,v 1.3 1996/09/02 11:33:22 pefo Exp $
  */
 
 /*
  * Mother board type byte of "systype" environment variable.
  */
-#define	ACER_PICA_61	0x1	/* Acer Labs Pica 61 */
-#define	DESKSTATION	0x2	/* Deskstation xxx */
-#define	MAGNUM		0x3	/* Mips MAGNUM R4000 */
+#define	ACER_PICA_61		0x1	/* Acer Labs Pica 61 */
+#define	MAGNUM			0x2	/* Mips MAGNUM R4000 */
+#define	DESKSTATION_RPC44	0x3	/* Deskstation xxx */
+#define	DESKSTATION_TYNE	0x4	/* Deskstation xxx */
