@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.34 2004/11/18 15:10:24 markus Exp $	*/
+/*	$OpenBSD: print.c,v 1.35 2004/11/24 19:17:10 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.34 2004/11/18 15:10:24 markus Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.35 2004/11/24 19:17:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -182,8 +182,9 @@ logname(const struct kinfo_proc2 *kp, VARENT *ve)
 void
 state(const struct kinfo_proc2 *kp, VARENT *ve)
 {
+	extern int ncpu;
 	int flag;
-	char *cp;
+	char *cp, state = '\0';
 	VAR *v;
 	char buf[16];
 
@@ -207,7 +208,7 @@ state(const struct kinfo_proc2 *kp, VARENT *ve)
 	case SRUN:
 	case SIDL:
 	case SONPROC:
-		*cp = 'R';
+		state = *cp = 'R';
 		break;
 
 	case SZOMB:
@@ -218,6 +219,7 @@ state(const struct kinfo_proc2 *kp, VARENT *ve)
 		*cp = '?';
 	}
 	cp++;
+
 	if (flag & P_INMEM) {
 	} else
 		*cp++ = 'W';
@@ -246,6 +248,16 @@ state(const struct kinfo_proc2 *kp, VARENT *ve)
 	if ((flag & P_CONTROLT) && kp->p__pgid == kp->p_tpgid)
 		*cp++ = '+';
 	*cp = '\0';
+
+	if (state == 'R' && ncpu && kp->p_cpuid != KI_NOCPU) {
+		char pbuf[16];
+
+		snprintf(pbuf, sizeof pbuf, "/%d", kp->p_cpuid);
+		*++cp = '\0';
+		strlcat(buf, pbuf, sizeof buf);
+		cp = buf + strlen(buf);
+	}
+
 	(void)printf("%-*s", v->width, buf);
 }
 

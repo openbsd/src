@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.50 2004/06/20 01:42:44 aaron Exp $
+.\"	$OpenBSD: ps.1,v 1.51 2004/11/24 19:17:10 deraadt Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -332,6 +332,9 @@ The process is being traced or debugged.
 .It x
 The process is being monitored by
 .Xr systrace 1 .
+.It / Ns Ar n
+On multiprocessor machines, specifies processor number
+.Ar n .
 .El
 .It tt
 An abbreviation for the pathname of the controlling terminal, if any.
