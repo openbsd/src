@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.14 2001/06/28 02:58:55 kjc Exp $
+#	$OpenBSD: MAKEDEV,v 1.15 2002/01/01 02:32:17 miod Exp $
 #	$NetBSD: MAKEDEV,v 1.5 1997/01/01 23:46:23 pk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -161,7 +161,7 @@ ccd*|sd*)
 	;;
 
 vnd*)
-	umask 2 ; unit=${i#vnd}
+	unit=${i#vnd}
 	for name in vnd svnd; do
 		blk=8; chr=19;
 		case $name in
@@ -169,26 +169,17 @@ vnd*)
 		svnd)	off=128;;
 		esac
 		rm -f $name$unit? r$name$unit?
-		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + $off + 0`
-		mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + $off + 1`
-		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + $off + 2`
-		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + $off + 3`
-		mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + $off + 4`
-		mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + $off + 5`
-		mknod ${name}${unit}g	b $blk `expr $unit '*' 8 + $off + 6`
-		mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + $off + 7`
-		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + $off + 0`
-		mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + $off + 1`
-		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + $off + 2`
-		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + $off + 3`
-		mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + $off + 4`
-		mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + $off + 5`
-		mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + $off + 6`
-		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + $off + 7`
-		chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
+		minor=`expr $unit '*' 16 '+' $off`
+		for slice in a b c d e f g h i j k l m n o p
+		do
+			dev=${name}${unit}${slice}
+			mknod $dev b $blk $minor
+			mknod r$dev c $chr $minor
+			minor=$(( $minor + 1 ))
+		done
+		chown root.operator ${name}${unit}? r${name}${unit}?
+		chmod 640 ${name}${unit}? r${name}${unit}?
 	done
-	umask 77
 	;;
 
 pty*)
@@ -270,10 +261,10 @@ cd*)
 	cd*) name=cd;	unit=${i#cd};	chr=9;	blk=6;;
 	esac
 	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-	mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
+	mknod ${name}${unit}a	b $blk `expr $unit '*' 16 + 0`
+	mknod ${name}${unit}c	b $blk `expr $unit '*' 16 + 2`
+	mknod r${name}${unit}a	c $chr `expr $unit '*' 16 + 0`
+	mknod r${name}${unit}c	c $chr `expr $unit '*' 16 + 2`
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
 	;;
