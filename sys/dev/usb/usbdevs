@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.20 2000/07/04 10:27:44 fgsch Exp $
+$OpenBSD: usbdevs,v 1.21 2000/09/14 15:16:40 jakob Exp $
 /* $NetBSD: usbdevs,v 1.88 2000/04/03 12:09:43 augustss Exp $ */
 
 /*
@@ -64,6 +64,7 @@ vendor THRUST		0x044f	Thrustmaster
 vendor TI		0x0451	Texas Instruments
 vendor ANALOGDEVICES	0x0456	Analog Devices, Inc.
 vendor KYE		0x0458	KYE Systems Corp.
+vendor DIAMOND2		0x045a	Diamond (Supra)
 vendor MICROSOFT	0x045e	Microsoft
 vendor PRIMAX		0x0461	Primax Electronics
 vendor AMP		0x0464	AMP, Inc.
@@ -603,6 +604,9 @@ product STMICRO COMMUNICATOR	0x7554	USB Communicator
 /* Sun Microsystems products */
 product SUN KEYBOARD		0x0005	Type 6 USB
 /* XXX The above is a North American PC style keyboard possibly */
+
+/* Diamond (Supra) products */
+product	DIAMOND2 RIO600USB	0x5001	Rio 600 USB
 
 /* TEAC products */
 product TEAC FD05PUB		0x0000	FD-05PUB floppy
