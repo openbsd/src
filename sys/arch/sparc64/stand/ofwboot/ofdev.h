@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.h,v 1.2 2001/08/20 19:55:33 jason Exp $	*/
+/*	$OpenBSD: ofdev.h,v 1.3 2001/08/22 04:30:52 jason Exp $	*/
 /*	$NetBSD: ofdev.h,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ struct of_dev {
 #define	OFDEV_NET	1
 #define	OFDEV_DISK	2
 
-#define	DEFAULT_KERNEL	"/netbsd"
+#define	DEFAULT_KERNEL	"/bsd"
 
 extern char opened_name[];
 extern int floppyboot;
