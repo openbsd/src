@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.140 1999/11/23 22:42:24 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.141 1999/11/28 11:53:23 downsj Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -120,6 +120,7 @@ cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom serial card
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
+lpt*	at puc? port ?
 
 lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 lms1	at isa? port 0x238 irq 5
