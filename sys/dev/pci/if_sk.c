@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.10 2001/02/20 19:39:45 mickey Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.11 2001/03/25 06:30:58 csapuntz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1082,11 +1082,11 @@ skc_attach(parent, self, aux)
 	 */
 	if (pci_io_find(pc, pa->pa_tag, SK_PCI_LOIO, &iobase, &iosize)) {
 		printf(": can't find i/o space\n");
-		return;
+		goto fail;
 	}
 	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->sk_bhandle)) {
 		printf(": can't map i/o space\n");
-		return;
+		goto fail;
 	}
 	sc->sk_btag = pa->pa_iot;
 #else
@@ -1110,7 +1110,7 @@ skc_attach(parent, self, aux)
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
 		printf(": couldn't map interrupt\n");
-		return;
+		goto fail;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
@@ -1120,7 +1120,7 @@ skc_attach(parent, self, aux)
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
-		return;
+		goto fail;
 	}
 	printf(": %s\n", intrstr);
 
