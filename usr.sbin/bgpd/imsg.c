@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.3 2003/12/20 18:39:05 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.4 2003/12/20 21:14:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -97,7 +97,7 @@ imsg_compose(int fd, int type, u_int32_t peerid, u_char *data,
 	wbuf = buf_open(NULL, fd, hdr.len);
 	if (wbuf == NULL)
 		fatal("buf_open error", 0);
-	if (buf_add(wbuf, (u_char *)&hdr, sizeof(hdr)) == -1)
+	if (buf_add(wbuf, &hdr, sizeof(hdr)) == -1)
 		fatal("buf_add error", 0);
 	if (datalen)
 		if (buf_add(wbuf, data, datalen) == -1)

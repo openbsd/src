@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.18 2003/12/20 20:24:57 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.19 2003/12/20 21:14:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -764,17 +764,14 @@ session_open(struct peer *peer)
 
 	if ((buf = buf_open(peer, peer->sock, len)) == NULL)
 		bgp_fsm(peer, EVNT_CON_FATAL);
-	errs += buf_add(buf, (u_char *)&msg.header.marker,
-	    sizeof(msg.header.marker));
-	errs += buf_add(buf, (u_char *)&msg.header.len, sizeof(msg.header.len));
-	errs += buf_add(buf, (u_char *)&msg.header.type,
-	    sizeof(msg.header.type));
-	errs += buf_add(buf, (u_char *)&msg.version, sizeof(msg.version));
-	errs += buf_add(buf, (u_char *)&msg.myas, sizeof(msg.myas));
-	errs += buf_add(buf, (u_char *)&msg.holdtime, sizeof(msg.holdtime));
-	errs += buf_add(buf, (u_char *)&msg.bgpid, sizeof(msg.bgpid));
-	errs += buf_add(buf, (u_char *)&msg.optparamlen,
-	    sizeof(msg.optparamlen));
+	errs += buf_add(buf, &msg.header.marker, sizeof(msg.header.marker));
+	errs += buf_add(buf, &msg.header.len, sizeof(msg.header.len));
+	errs += buf_add(buf, &msg.header.type, sizeof(msg.header.type));
+	errs += buf_add(buf, &msg.version, sizeof(msg.version));
+	errs += buf_add(buf, &msg.myas, sizeof(msg.myas));
+	errs += buf_add(buf, &msg.holdtime, sizeof(msg.holdtime));
+	errs += buf_add(buf, &msg.bgpid, sizeof(msg.bgpid));
+	errs += buf_add(buf, &msg.optparamlen, sizeof(msg.optparamlen));
 
 	if (errs == 0) {
 		if (buf_close(buf) == -1) {
@@ -803,11 +800,9 @@ session_keepalive(struct peer *peer)
 
 	if ((buf = buf_open(peer, peer->sock, len)) == NULL)
 		bgp_fsm(peer, EVNT_CON_FATAL);
-	errs += buf_add(buf, (u_char *)&msg.marker,
-	    sizeof(msg.marker));
-	errs += buf_add(buf, (u_char *)&msg.len, sizeof(msg.len));
-	errs += buf_add(buf, (u_char *)&msg.type,
-	    sizeof(msg.type));
+	errs += buf_add(buf, &msg.marker, sizeof(msg.marker));
+	errs += buf_add(buf, &msg.len, sizeof(msg.len));
+	errs += buf_add(buf, &msg.type, sizeof(msg.type));
 
 	if (errs > 0) {
 		buf_free(buf);
@@ -846,13 +841,11 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 
 	if ((buf = buf_open(peer, peer->sock, len)) == NULL)
 		bgp_fsm(peer, EVNT_CON_FATAL);
-	errs += buf_add(buf, (u_char *)&msg.marker,
-	    sizeof(msg.marker));
-	errs += buf_add(buf, (u_char *)&msg.len, sizeof(msg.len));
-	errs += buf_add(buf, (u_char *)&msg.type,
-	    sizeof(msg.type));
-	errs += buf_add(buf, (u_char *)&errcode, sizeof(errcode));
-	errs += buf_add(buf, (u_char *)&subcode, sizeof(subcode));
+	errs += buf_add(buf, &msg.marker, sizeof(msg.marker));
+	errs += buf_add(buf, &msg.len, sizeof(msg.len));
+	errs += buf_add(buf, &msg.type, sizeof(msg.type));
+	errs += buf_add(buf, &errcode, sizeof(errcode));
+	errs += buf_add(buf, &subcode, sizeof(subcode));
 
 	if (datalen > 0)
 		errs += buf_add(buf, data, datalen);

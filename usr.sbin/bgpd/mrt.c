@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.3 2003/12/20 20:53:30 henning Exp $ */
+/*	$OpenBSD: mrt.c,v 1.4 2003/12/20 21:14:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -51,7 +51,7 @@ static int	mrt_open(struct mrtdump_config *);
 	do {								\
 		u_int16_t	t;					\
 		t = htons((s));						\
-		if (buf_add((x), (u_char *)&t, sizeof(t)) == -1)	\
+		if (buf_add((x), &t, sizeof(t)) == -1)			\
 			fatal("buf_add error", 0);			\
 	} while (0)
 
@@ -59,14 +59,14 @@ static int	mrt_open(struct mrtdump_config *);
 	do {								\
 		u_int32_t	t;					\
 		t = htonl((l));						\
-		if (buf_add((x), (u_char *)&t, sizeof(t)) == -1)	\
+		if (buf_add((x), &t, sizeof(t)) == -1)			\
 			fatal("buf_add error", 0);			\
 	} while (0)
 
 #define DUMP_NLONG(x, l)						\
 	do {								\
 		u_int32_t	t = (l);				\
-		if (buf_add((x), (u_char *)&t, sizeof(t)) == -1)	\
+		if (buf_add((x), &t, sizeof(t)) == -1)			\
 			fatal("buf_add error", 0);			\
 	} while (0)
 
@@ -87,7 +87,7 @@ mrt_dump_bgp_msg(int fd, u_char *pkg, u_int16_t pkglen, int type,
 	buf = buf_open(NULL, fd, hdr.len);
 	if (buf == NULL)
 		fatal("mrt_dump_bgp_msg", errno);
-	if (buf_add(buf, (u_char *)&hdr, sizeof(hdr)) == -1)
+	if (buf_add(buf, &hdr, sizeof(hdr)) == -1)
 		fatal("buf_add error", 0);
 
 	mrt_dump_header(buf, MSG_PROTOCOL_BGP4MP, BGP4MP_MESSAGE, len);
@@ -135,7 +135,7 @@ mrt_dump_entry(int fd, struct prefix *p, u_int16_t snum,
 	buf = buf_open(NULL, fd, hdr.len);
 	if (buf == NULL)
 		fatal("mrt_dump_entry", errno);
-	if (buf_add(buf, (u_char *)&hdr, sizeof(hdr)) == -1)
+	if (buf_add(buf, &hdr, sizeof(hdr)) == -1)
 		fatal("buf_add error", 0);
 
 	mrt_dump_header(buf, MSG_TABLE_DUMP, AFI_IPv4, len);
@@ -200,7 +200,7 @@ mrt_dump_header(struct buf *buf, u_int16_t type, u_int16_t subtype,
 	mrt.subtype = ntohs(subtype);
 	mrt.length = htonl(len);
 
-	if (buf_add(buf, (u_char *)&mrt, sizeof(mrt)) == -1)
+	if (buf_add(buf, &mrt, sizeof(mrt)) == -1)
 		fatal("buf_add error", 0);
 }
 

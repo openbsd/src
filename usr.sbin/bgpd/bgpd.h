@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.4 2003/12/20 20:25:20 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.5 2003/12/20 21:14:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -234,7 +234,7 @@ int		 session_main(struct bgpd_config *, int[2], int[2]);
 
 /* buffer.c */
 struct buf	*buf_open(struct peer *, int, ssize_t);
-int		 buf_add(struct buf *, u_char *, ssize_t);
+int		 buf_add(struct buf *, void *, ssize_t);
 u_char		*buf_reserve(struct buf *, ssize_t);
 int		 buf_close(struct buf *);
 int		 buf_write(struct buf *);
