@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep-os.h,v 1.4 2003/06/03 14:53:11 ho Exp $	*/
+/*	$OpenBSD: sysdep-os.h,v 1.5 2003/08/06 11:20:00 markus Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -38,6 +38,14 @@
 #define CPI_RESERVED_MAX	255
 #define CPI_PRIVATE_MIN		61440
 #define CPI_PRIVATE_MAX		65536
+#endif
+
+#if !defined(SADB_X_EALG_CAST) && defined(SADB_X_EALG_CAST128CBC)
+#define SADB_X_EALG_CAST SADB_X_EALG_CAST128CBC
+#endif
+
+#if !defined(SADB_X_EALG_BLF) && defined(SADB_X_EALG_BLOWFISHCBC)
+#define SADB_X_EALG_BLF SADB_X_EALG_BLOWFISHCBC
 #endif
 
 #endif /* _SYSDEP_OS_H_ */
