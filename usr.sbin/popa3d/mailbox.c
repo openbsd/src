@@ -1,4 +1,4 @@
-/* $OpenBSD: mailbox.c,v 1.4 2002/09/06 19:18:10 deraadt Exp $ */
+/* $OpenBSD: mailbox.c,v 1.5 2003/04/02 00:07:53 deraadt Exp $ */
 
 /*
  * Mailbox access.
@@ -294,9 +294,8 @@ int mailbox_open(char *spool, char *mailbox)
 
 	mailbox_fd = -1;
 
-	pathname = malloc(strlen(spool) + strlen(mailbox) + 2);
-	if (!pathname) return 1;
-	sprintf(pathname, "%s/%s", spool, mailbox);
+	if (asprintf(&pathname, "%s/%s", spool, mailbox) == -1)
+		return 1;
 
 	if (lstat(pathname, &stat)) {
 		free(pathname);

@@ -1,4 +1,4 @@
-/* $OpenBSD: virtual.c,v 1.3 2002/03/27 14:08:43 camield Exp $ */
+/* $OpenBSD: virtual.c,v 1.4 2003/04/02 00:07:53 deraadt Exp $ */
 
 /*
  * Virtual domain support.
@@ -105,10 +105,8 @@ struct passwd *virtual_userpass(char *user, char *pass, int *known)
 	if (strchr(address, '/') || strchr(user, '/'))
 		return NULL;
 
-	pathname = malloc(strlen(VIRTUAL_HOME_PATH) + strlen(address) +
-		strlen(VIRTUAL_AUTH_PATH) + strlen(user) + 4);
-	if (!pathname) return NULL;
-	sprintf(pathname, "%s/%s", VIRTUAL_HOME_PATH, address);
+	if (asprintf(&pathname, "%s/%s", VIRTUAL_HOME_PATH, address) == -1)
+		return NULL;
 
 	if (lstat(pathname, &stat)) {
 		if (errno == ENOENT)
@@ -122,8 +120,11 @@ struct passwd *virtual_userpass(char *user, char *pass, int *known)
 	if (!(address = strdup(address))) return NULL;
 	virtual_domain = address;
 
-	sprintf(pathname, "%s/%s/%s/%s", VIRTUAL_HOME_PATH, address,
-		VIRTUAL_AUTH_PATH, user);
+	free(pathname);
+	
+	if (asprintf(&pathname, "%s/%s/%s/%s", VIRTUAL_HOME_PATH, address,
+	    VIRTUAL_AUTH_PATH, user) == -1)
+		return NULL;
 
 	if ((fd = open(pathname, O_RDONLY)) < 0 && errno != ENOENT) {
 		log_error("open");
@@ -132,15 +133,11 @@ struct passwd *virtual_userpass(char *user, char *pass, int *known)
 
 	free(pathname);
 
-	virtual_spool = malloc(strlen(VIRTUAL_HOME_PATH) +
-		strlen(virtual_domain) +
-		strlen(VIRTUAL_SPOOL_PATH) + 3);
-	if (!virtual_spool) {
+	if (asprintf(&virtual_spool, "%s/%s/%s", VIRTUAL_HOME_PATH,
+	    virtual_domain, VIRTUAL_SPOOL_PATH) == -1) {
 		close(fd);
 		return NULL;
 	}
-	sprintf(virtual_spool, "%s/%s/%s", VIRTUAL_HOME_PATH, virtual_domain,
-		VIRTUAL_SPOOL_PATH);
 
 	size = 0;
 	if (fd >= 0) {
