@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.5 2004/02/07 13:59:45 henning Exp $	*/
+/*	$OpenBSD: socket.c,v 1.6 2004/02/07 17:59:22 henning Exp $	*/
 
 /* BSD socket interface code... */
 
@@ -104,13 +104,6 @@ void
 if_register_fallback(struct interface_info *info)
 {
 	info->wfdesc = if_register_socket(info);
-
-	if (!quiet_interface_discovery)
-		note("Sending on   Socket/%s%s%s",
-		    info->name,
-		    (info->shared_network ? "/" : ""),
-		    (info->shared_network ?
-		    info->shared_network -> name : ""));
 }
 
 ssize_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.4 2004/02/07 11:35:59 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.5 2004/02/07 17:59:22 henning Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -110,16 +110,6 @@ if_register_send(struct interface_info *info)
 	 * don't need to register this interface twice.
 	 */
 	info->wfdesc = info->rfdesc;
-
-	if (!quiet_interface_discovery)
-		note("Sending on   BPF/%s/%s%s%s",
-		    info->name,
-		    print_hw_addr(info->hw_address.htype,
-		    info->hw_address.hlen,
-		    info->hw_address.haddr),
-		    (info->shared_network ? "/" : ""),
-		    (info->shared_network ?
-		    info->shared_network->name : ""));
 }
 
 /*
@@ -221,15 +211,6 @@ if_register_receive(struct interface_info *info)
 
 	if (ioctl(info->rfdesc, BIOCSETF, &p) < 0)
 		error("Can't install packet filter program: %m");
-	if (!quiet_interface_discovery)
-		note("Listening on BPF/%s/%s%s%s",
-		    info->name,
-		    print_hw_addr(info->hw_address.htype,
-		    info->hw_address.hlen,
-		    info->hw_address.haddr),
-		    (info->shared_network ? "/" : ""),
-		    (info->shared_network ?
-		    info->shared_network->name : ""));
 }
 
 ssize_t
