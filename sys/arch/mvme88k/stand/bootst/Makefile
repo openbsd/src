@@ -1,27 +1,25 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.3 1998/08/22 09:25:07 smurph Exp $
+#	$OpenBSD: Makefile,v 1.4 1998/12/15 06:09:51 smurph Exp $
 
-RELOC=0x3F0000 
+RELOC=0xAF0000 
+SIZE?=	size
 
 S=	${.CURDIR}/../../../..
-DEFS= -DSTANDALONE -DCOMPAT_NOLABEL # -DROMPRF
+DEFS= -DSTANDALONE -DCOMPAT_NOLABEL
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
 CFLAGS=	-O2 ${INCPATH} ${DEFS} ${COPTS}
 CLEANFILES+=stboot bootst bootst.bug
 
-#.PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
-#.PATH: ${S}/lib/libsa
-
-.include "${S}/arch/mvme88k/stand/libsa/Makefile.inc"
-.include "${S}/arch/mvme88k/stand/libbug/Makefile.inc"
-.include "${S}/arch/mvme88k/stand/bugcrt/Makefile.inc"
-.include "${S}/arch/mvme88k/stand/libz/Makefile.inc"
 .include "${S}/arch/mvme88k/stand/wrtvid/Makefile.inc"
+.include "${S}/arch/mvme88k/stand/bugcrt/Makefile.inc"
+.include "${S}/arch/mvme88k/stand/libbug/Makefile.inc"
+.include "${S}/arch/mvme88k/stand/libsa/Makefile.inc"
+.include "${S}/arch/mvme88k/stand/libz/Makefile.inc"
 
-SRCS=   bootst.c bcopy.c version.c
+SRCS=   boot.c conf.c dev_tape.c rawfs.c version.c
 
-LIBS=	${LIBSA} ${LIBBUG} ${LIBZ}
+LIBS=	${LIBSA} ${LIBBUG} ${LIBZ} libgcc.a
 
 OBJS= ${SRCS:N*.h:R:S/$/.o/g}
 
