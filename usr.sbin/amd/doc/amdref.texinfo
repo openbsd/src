@@ -36,7 +36,7 @@
 @c OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 @c
 @c	from: @(#)amdref.texinfo	8.1 (Berkeley) 6/6/93
-@c	$Id: amdref.texinfo,v 1.6 2002/07/18 01:44:18 deraadt Exp $
+@c	$Id: amdref.texinfo,v 1.7 2002/07/20 07:21:34 pvalchev Exp $
 @c
 @setfilename amdref.info
 @c @setfilename /usr/local/emacs/info/amd
@@ -758,26 +758,10 @@ continues to the end of the line.  There is no way to escape or change
 the comment lead-in character.
 
 Note that continuation lines and comment support @dfn{only} apply to
-file maps, or ndbm maps built with the @code{mk-amd-map} program.
+file maps.
 
 When caching is enabled, file maps have a default cache mode of
 @code{all} (@pxref{Automount Filesystem}).
-
-@node     ndbm maps, NIS maps, File maps, Map Types
-@comment  node-name,  next,  previous,  up
-@subsection ndbm maps
-@cindex ndbm maps
-
-An ndbm map may be used as a fast access form of a file map.  The program,
-@code{mk-amd-map}, converts a normal map file into an ndbm database.
-This program supports the same continuation and comment conventions that
-are provided for file maps.  Note that ndbm format files may @emph{not}
-be sharable across machine architectures.  The notion of speed generally
-only applies to large maps; a small map, less than a single disk block,
-is almost certainly better implemented as a file map.
-
-ndbm maps do not support cache mode @samp{all} and, when caching is
-enabled, have a default cache mode of @samp{inc} (@pxref{Automount Filesystem}).
 
 @node     NIS maps, Hesiod maps, ndbm maps, Map Types
 @comment  node-name,  next,  previous,  up
