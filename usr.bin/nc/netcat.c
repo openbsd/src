@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.15 2000/09/26 05:19:37 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.16 2000/09/26 17:46:40 ericj Exp $ */
 
 /* Netcat 1.10 RELEASE 960320
  *
@@ -51,10 +51,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-/* Random Numbers aren't too needed here */
-#define SRAND srandom
-#define RAND random
-
 #define SLEAZE_PORT 31337	/* for UDP-scan RTT trick, change if ya want */
 #define BIGSIZ 8192		/* big buffers */
 
@@ -75,8 +71,6 @@ jmp_buf jbuf;			/* timer jump buffer*/
 int     jval = 0;		/* timer crud */
 int     netfd = -1;
 int     ofd = 0;		/* hexdump output fd */
-
-/* extern int h_errno; */
 
 int     gatesidx = 0;		/* LSRR hop count */
 int     gatesptr = 4;		/* initial LSRR pointer, settable */
@@ -206,7 +200,6 @@ comparehosts(hinfo, hp)
 	struct hostent *hp;
 {
 	errno = 0;
-	h_errno = 0;
 	if (strcasecmp(hinfo->name, hp->h_name) != 0) {
 		nlog(0, "DNS fwd/rev mismatch: %s != %s", hinfo->name, hp->h_name);
 		return (1);
@@ -232,7 +225,6 @@ gethinfo(name, numeric)
 	int x;
 
 	errno = 0;
-	h_errno = 0;
 	if (name)
 		hinfo = (struct host_info *) calloc(1, sizeof(struct host_info));
 
@@ -313,7 +305,6 @@ gethinfo(name, numeric)
 	 * Whatever-all went down previously, we should now have a host_info 
 	 * struct with at least one IP address in it.
 	 */
-	h_errno = 0;
 	return (hinfo);
 }
 
@@ -421,7 +412,7 @@ nextport(block)
 
 	y = 70000;			/* high safety count for rnd-tries */
 	while (y > 0) {
-		x = (RAND() & 0xffff);
+		x = (arc4random() & 0xffff);
 		if (block[x] == 1) {	/* try to find a not-done one... */
 			block[x] = 2;
 			break;
@@ -506,9 +497,6 @@ doconnect(rad, rp, lad, lp)
 	rr = setsockopt(nnetfd, SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x));
 	if (rr == -1)
 		nlog(1, NULL);
-
-	/* fill in all the right sockaddr crud */
-	lclend->sin_family = AF_INET;
 
 	/* fill in all the right sockaddr crud */
 	lclend->sin_family = AF_INET;
@@ -1062,6 +1050,7 @@ shovel:
 
 /* main :
    now we pull it all together... */
+int
 main(argc, argv)
 	int     argc;
 	char  **argv;
@@ -1091,7 +1080,6 @@ main(argc, argv)
 
 	errno = 0;
 	gatesptr = 4;
-	h_errno = 0;
 
 	/*
 	 * We want to catch a few of these signals. 
@@ -1108,17 +1096,21 @@ main(argc, argv)
 	 * and hand anything left over to readwrite().
 	 */
 	if (argc == 1) {
-		cp = argv[0];
-		/* XXX - 128 ? */
-		argv = (char **) calloc(1, 128 * sizeof(char *));
-		argv[0] = cp;	/* leave old prog name intact */
-		cp = calloc(1, BIGSIZ);
-		argv[1] = cp;	/* head of new arg block */
-		fprintf(stderr, "Cmd line: ");
-		fflush(stderr);	/* I dont care if it's unbuffered or not! */
-		insaved = read(0, cp, BIGSIZ-1); /* we're gonna fake fgets()
-						 * here */
-		cp[BIGSIZ-1] = '\0';
+		/* Loop until we get a command to try */
+		for (;;) {
+			cp = argv[0];
+			argv = (char **) calloc(1, 128 * sizeof(char *));
+			argv[0] = cp;	/* leave old prog name intact */
+			cp = calloc(1, BIGSIZ);
+			argv[1] = cp;	/* head of new arg block */
+			fprintf(stderr, "Cmd line: ");
+			fflush(stderr);	/* I dont care if it's unbuffered or not! */
+			insaved = read(0, cp, BIGSIZ-1); /* we're gonna fake fgets()
+				 			  * here */
+			cp[BIGSIZ-1] = '\0';
+			if (*cp != '\n' && *cp != '\t')
+				break;
+		}
 		if (insaved <= 0)
 			nlog(1, "wrong");
 		x = findline(cp, insaved);
@@ -1239,7 +1231,6 @@ main(argc, argv)
 	/* other misc initialization */
 	    FD_SET(0, &fds1);	/* stdin *is* initially open */
 	if (o_random) {
-		SRAND(time(0));
 		randports = calloc(1, 65536);   /* big flag array for ports */
 	}
 	if (o_wfile) {
@@ -1256,7 +1247,6 @@ main(argc, argv)
 	if (themaddr)
 		optind++;	/* skip past valid host lookup */
 	errno = 0;
-	h_errno = 0;
 
 	/*
 	 * Handle listen mode here, and exit afterward.  Only does one connect;
@@ -1302,9 +1292,9 @@ main(argc, argv)
 		loport = getpinfo(argv[optind], 0);
 		if (loport == 0)
 			nlog(1, "invalid port %s", argv[optind]);
-		if (hiport > loport) {	/* was it genuinely a range? */
-			Single = 0;	/* multi-mode, case B */
-			if (o_random) {	/* maybe populate the random array */
+		if (hiport > loport) {
+			Single = 0;
+			if (o_random) {	
 				loadports(randports, loport, hiport);
 				curport = nextport(randports);
 			} else
@@ -1376,6 +1366,7 @@ nlog(doexit, fmt)
                         herror(NULL);
 		else
 			putc('\n', stderr);
+		va_end(args);
 	}
  
 	if (doexit)
