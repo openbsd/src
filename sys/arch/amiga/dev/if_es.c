@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_es.c,v 1.7 1996/05/06 08:10:25 mickey Exp $	*/
+/*	$OpenBSD: if_es.c,v 1.8 1996/05/06 09:21:45 niklas Exp $	*/
 /*	$NetBSD: if_es.c,v 1.12 1996/05/01 15:55:28 mhitch Exp $	*/
 
 /*
@@ -968,7 +968,7 @@ esioctl(ifp, command, data)
 	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, command, data)) > 0) {
-		aplx(s);
+		splx(s);
 		return error;
 	}
 
