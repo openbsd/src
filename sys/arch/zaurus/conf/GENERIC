@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 2005/02/12 05:23:35 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.28 2005/02/17 15:35:53 dlg Exp $
 #
 # GENERIC machine description file
 #
@@ -49,6 +49,8 @@ option WSDISPLAY_COMPAT_USL		# VT handling
 option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 option WSDISPLAY_DEFAULTSCREENS=2
 option WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+
+option USBVERBOSE
 
 #config		bsd	swap generic
 config		bsd	root on wd0a
