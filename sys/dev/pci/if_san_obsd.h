@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.h,v 1.2 2004/06/26 20:17:23 mcbride Exp $	*/
+/*	$OpenBSD: if_san_obsd.h,v 1.3 2004/06/26 22:48:14 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -37,32 +37,32 @@
 #ifndef __IF_SAN_OBSD_H
 # define __IF_SAN_OBSD_H
 
-# define IF_IFACE_V35		0x1001
-# define IF_IFACE_T1		0x1002
-# define IF_IFACE_E1		0x1003
-# define IF_IFACE_SYNC_SERIAL	0x1004
+#define IF_IFACE_V35		0x1001
+#define IF_IFACE_T1		0x1002
+#define IF_IFACE_E1		0x1003
+#define IF_IFACE_SYNC_SERIAL	0x1004
 
-# define IF_PROTO_HDLC		0x2001
-# define IF_PROTO_PPP		0x2002
-# define IF_PROTO_CISCO		0x2003
-# define IF_PROTO_FR		0x2004
-# define IF_PROTO_FR_ADD_PVC	0x2005
-# define IF_PROTO_FR_DEL_PVC	0x2006
-# define IF_PROTO_X25		0x2007
-# define WAN_PROTO_X25		0x2007
+#define IF_PROTO_HDLC		0x2001
+#define IF_PROTO_PPP		0x2002
+#define IF_PROTO_CISCO		0x2003
+#define IF_PROTO_FR		0x2004
+#define IF_PROTO_FR_ADD_PVC	0x2005
+#define IF_PROTO_FR_DEL_PVC	0x2006
+#define IF_PROTO_X25		0x2007
+#define WAN_PROTO_X25		0x2007
 
-# define IF_GET_PROTO		0x3001
+#define IF_GET_PROTO		0x3001
 
-# define te1_settings		void
-# define sync_serial_settings	void
+#define te1_settings		void
+#define sync_serial_settings	void
 
-# define ifs_size		data_length
-# define ifs_te1		data
-# define ifs_sync              	data
-# define ifs_cisco             	data
-# define ifs_fr                	data
-# define ifs_fr_pvc            	data
-# define ifs_fr_pvc_info       	data
+#define ifs_size		data_length
+#define ifs_te1			data
+#define ifs_sync		data
+#define ifs_cisco		data
+#define ifs_fr			data
+#define ifs_fr_pvc		data
+#define ifs_fr_pvc_info	data
 
 
 #define WANHDLC_CONF_INTERFACE	0x0001
@@ -75,8 +75,7 @@ typedef struct {
 } wan_dev_conf_t;
 
 typedef struct { int dummy; } cisco_proto, fr_proto, fr_proto_pvc;
-struct if_settings
-{
+struct if_settings {
 	unsigned int	type;
 	unsigned int	data_length;
 	void*		data;
@@ -97,15 +96,15 @@ typedef struct {
 
 /* WANPIPE Generic function interface */
 # if defined(_KERNEL)
-struct ifnet*	wanpipe_generic_alloc (sdla_t*);
-void		wanpipe_generic_free (struct ifnet*);
-int		wanpipe_generic_name (sdla_t*, char*);
-int		wanpipe_generic_register(sdla_t*, struct ifnet*, char*);
-void		wanpipe_generic_unregister(struct ifnet*);
-int		wanpipe_generic_open(struct ifnet*);
-int		wanpipe_generic_close(struct ifnet*);
-int		wanpipe_generic_input(struct ifnet*, struct mbuf*);
-int		wanpipe_generic_tx_timeout(struct ifnet*);
-int		wp_lite_set_proto(struct ifnet*, struct ifreq*);
+struct ifnet	*wanpipe_generic_alloc (sdla_t *);
+void		 wanpipe_generic_free (struct ifnet *);
+int		 wanpipe_generic_name (sdla_t *, char *);
+int		 wanpipe_generic_register(sdla_t *, struct ifnet *, char *);
+void		 wanpipe_generic_unregister(struct ifnet *);
+int		 wanpipe_generic_open(struct ifnet *);
+int		 wanpipe_generic_close(struct ifnet *);
+int		 wanpipe_generic_input(struct ifnet *, struct mbuf *);
+int		 wanpipe_generic_tx_timeout(struct ifnet *);
+int		 wp_lite_set_proto(struct ifnet *, struct ifreq *);
 # endif
 #endif /* __IF_SAN_OBSD_H */

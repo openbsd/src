@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.c,v 1.2 2004/06/26 20:17:23 mcbride Exp $	*/
+/*	$OpenBSD: if_san_obsd.c,v 1.3 2004/06/26 22:48:14 mcbride Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -63,7 +63,6 @@
 #include <dev/pci/if_san_common.h>
 #include <dev/pci/if_san_obsd.h>
 
-/****** Defines & Macros ****************************************************/
 
 #ifdef	_DEBUG_
 #define	STATIC
@@ -71,38 +70,38 @@
 #define	STATIC		static
 #endif
 
-/****** Function Prototypes *************************************************/
 
-static sdla_t* wanpipe_generic_getcard(struct ifnet*);
-static int wanpipe_generic_ioctl(struct ifnet*, u_long, caddr_t);
+static sdla_t *wanpipe_generic_getcard(struct ifnet *);
+static int wanpipe_generic_ioctl(struct ifnet *, u_long, caddr_t);
 static void wanpipe_generic_watchdog(struct ifnet*);
-static void wanpipe_generic_start(struct ifnet*);
+static void wanpipe_generic_start(struct ifnet *);
 
-/****** Global Data **********************************************************
- * Note: All data must be explicitly initialized!!!
- */
-static char* san_ifname_format = "san%d";
 
-/******* WAN Device Driver Entry Points *************************************/
-static sdla_t* wanpipe_generic_getcard(struct ifnet* ifp)
+static char *san_ifname_format = "san%d";
+
+
+
+static sdla_t *
+wanpipe_generic_getcard(struct ifnet *ifp)
 {
 	sdla_t*	card;
 
-	if (ifp->if_softc == NULL){
+	if (ifp->if_softc == NULL) {
 		log(LOG_INFO, "%s: Invalid device private structure pointer\n",
 				ifp->if_xname);
-		return NULL;
+		return (NULL);
 	}
 	card = ((sdla_t*)((wanpipe_common_t*)ifp->if_softc)->card);
-	if (card == NULL){
+	if (card == NULL) {
 		log(LOG_INFO, "%s: Invalid Sangoma device card\n",
-				ifp->if_xname);
-		return NULL;
+		    ifp->if_xname);
+		return (NULL);
 	}
-	return card;
+	return (card);
 }
 
-int wanpipe_generic_name(sdla_t* card, char* ifname)
+int
+wanpipe_generic_name(sdla_t *card, char *ifname)
 {
 	static int	ifunit = 0;
 #if 0
@@ -112,14 +111,15 @@ int wanpipe_generic_name(sdla_t* card, char* ifname)
 	bcopy(if_name, ifname, strlen(if_name));
 #endif
 	snprintf(ifname, IFNAMSIZ+1, san_ifname_format, ifunit++);
-	return 0;
+	return (0);
 }
 
-int wanpipe_generic_register (sdla_t* card, struct ifnet* ifp, char *ifname)
+int
+wanpipe_generic_register (sdla_t *card, struct ifnet *ifp, char *ifname)
 {
-	if (ifname == NULL || strlen(ifname) > IFNAMSIZ){
-		return -EINVAL;
-	}else{
+	if (ifname == NULL || strlen(ifname) > IFNAMSIZ) {
+		return (-EINVAL);
+	} else {
 		bcopy(ifname, ifp->if_xname, strlen(ifname));
 	}
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
@@ -134,61 +134,62 @@ int wanpipe_generic_register (sdla_t* card, struct ifnet* ifp, char *ifname)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 	sppp_attach(ifp);
-#if defined(NBPFILTER)
+#if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_NULL, 4);
-#endif
-	return 0;
+#endif /* NBPFILTER > 0 */
+	return (0);
 }
 
-void wanpipe_generic_unregister (struct ifnet* ifp)
+void
+wanpipe_generic_unregister(struct ifnet *ifp)
 {
 	log(LOG_INFO, "%s: Unregister interface!\n",
-			ifp->if_xname);
+	    ifp->if_xname);
 	sppp_detach(ifp);
 	if_free_sadl(ifp);
 	if_detach(ifp);
 }
 
-
-static void wanpipe_generic_start(struct ifnet* ifp)
+static void
+wanpipe_generic_start(struct ifnet *ifp)
 {
-	sdla_t*		card;
+	sdla_t		*card;
 	struct mbuf	*opkt;
-	int		err = 0;
-#if defined(NBPFILTER)
+	int		 err = 0;
+#if NBPFILTER > 0
 	struct mbuf	m0;
 	u_int32_t	af = AF_INET;
-#endif
+#endif /* NBPFILTER > 0 */
 
-	if ((card = wanpipe_generic_getcard(ifp)) == NULL){
+	if ((card = wanpipe_generic_getcard(ifp)) == NULL) {
 		return;
 	}
-	while (1){
-		if (sppp_isempty(ifp)){
+	while (1) {
+		if (sppp_isempty(ifp)) {
 			/* No more packets in send queue */
 			break;
 		}
 
-		if ((opkt = sppp_dequeue(ifp)) == NULL){
+		if ((opkt = sppp_dequeue(ifp)) == NULL) {
 			/* Should never happened, packet pointer is NULL */
 			break;
 		}
-		if (card->iface_send == NULL){
+		if (card->iface_send == NULL) {
 			m_freem(opkt);
 			break;
 		}
 		/* report the packet to BPF if present and attached */
-#if defined(NBPFILTER)
-		if (ifp->if_bpf){
+#if NBPFILTER > 0
+		if (ifp->if_bpf) {
 			m0.m_next = opkt;
 			m0.m_len = 4;
 			m0.m_data = (char*)&af;
 			bpf_mtap(ifp->if_bpf, &m0);
 		}
-#endif
+#endif /* NBPFILTER > 0 */
 
 		err = card->iface_send(opkt, ifp);
-		if (err){
+		if (err) {
 			break;
 		}
 	}
@@ -196,7 +197,8 @@ static void wanpipe_generic_start(struct ifnet* ifp)
 }
 
 
-static int wanpipe_generic_ioctl(struct ifnet* ifp, u_long cmd, caddr_t data)
+static int
+wanpipe_generic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifreq		*ifr = (struct ifreq*)data;
 	sdla_t			*card;
@@ -205,20 +207,20 @@ static int wanpipe_generic_ioctl(struct ifnet* ifp, u_long cmd, caddr_t data)
 	unsigned long		ts_map;
 	int			err = 0, s;
 
-	if ((card = wanpipe_generic_getcard(ifp)) == NULL){
-		return -EINVAL;
+	if ((card = wanpipe_generic_getcard(ifp)) == NULL) {
+		return (-EINVAL);
 	}
 	s = splnet();
-	switch (cmd){
+	switch (cmd) {
 	case SIOCSIFADDR:
 		err = 1;
 		break;
 
 	case SIOCSIFMEDIA:
 		/* You can't set new media type while card is running */
-		if (card->state != WAN_DISCONNECTED){
+		if (card->state != WAN_DISCONNECTED) {
 			log(LOG_INFO, "%s: Unable to change media type!\n",
-					ifp->if_xname);
+			    ifp->if_xname);
 			err = -EINVAL;
 			goto ioctl_out;
 		}
@@ -230,9 +232,9 @@ static int wanpipe_generic_ioctl(struct ifnet* ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFTIMESLOT:
-		if (card->state != WAN_DISCONNECTED){
+		if (card->state != WAN_DISCONNECTED) {
 			log(LOG_INFO, "%s: Unable to change timeslot map!\n",
-					ifp->if_xname);
+			    ifp->if_xname);
 			err = -EINVAL;
 			goto ioctl_out;
 		}
@@ -255,17 +257,17 @@ static int wanpipe_generic_ioctl(struct ifnet* ifp, u_long cmd, caddr_t data)
 	     	** If down - disable communications.  IFF_UP is taken 
 		** care of before entering this function.
 	     	*/
-		if ((ifp->if_flags & IFF_UP) == 0){
+		if ((ifp->if_flags & IFF_UP) == 0) {
 			/* bring it down */
 			log(LOG_INFO, "%s: Bringing interface down.\n",
-					ifp->if_xname);
-			if (card->iface_down){
+			    ifp->if_xname);
+			if (card->iface_down) {
 				card->iface_down(ifp);
 			}
 		}else{ /* bring it up */ 
 			log(LOG_INFO, "%s: Bringing interface up.\n",
-					ifp->if_xname);
-			if (card->iface_up){
+			    ifp->if_xname);
+			if (card->iface_up) {
 				card->iface_up(ifp);
 			}
 			wanpipe_generic_start(ifp);
@@ -276,20 +278,19 @@ static int wanpipe_generic_ioctl(struct ifnet* ifp, u_long cmd, caddr_t data)
 		err = copyin(ifr->ifr_data,
 				&ifsettings,
 				sizeof(struct if_settings));
-		if (err){
+		if (err) {
 			log(LOG_INFO, "%s: Failed to copy from user space!\n",
 						card->devname);
 			goto ioctl_out;
 		}
-		switch (ifsettings.type){
+		switch (ifsettings.type) {
 		case IF_GET_PROTO:
 			ifsettings.type = common->protocol;
-			err = copyout(&ifsettings,
-					ifr->ifr_data,
-					sizeof(struct if_settings));
-			if (err){
+			err = copyout(&ifsettings, ifr->ifr_data,
+			    sizeof(struct if_settings));
+			if (err) {
 				log(LOG_INFO, "%s: Failed to copy to uspace!\n",
-							card->devname);
+				    card->devname);
 			}
 			break;
 
@@ -299,83 +300,86 @@ static int wanpipe_generic_ioctl(struct ifnet* ifp, u_long cmd, caddr_t data)
 			break;
 
 		default:
-			if (card->iface_ioctl){
-				err = card->iface_ioctl(
-						ifp,
-						cmd,
-						(struct ifreq*)data);
+			if (card->iface_ioctl) {
+				err = card->iface_ioctl(ifp, cmd,
+				    (struct ifreq*)data);
 			}
 			break;
 		}
 		break;
 
 	default:
-		if (card->iface_ioctl){
+		if (card->iface_ioctl) {
 			/* Argument seqeunce is change for Linux order */
 			err = card->iface_ioctl(ifp, cmd, (struct ifreq*)data);
 		}
 		break;
 	}
 
-	if (err){
+	if (err) {
 		err = sppp_ioctl(ifp, cmd, data);
 	}
 ioctl_out:
 	splx(s);
-	return err;
+	return (err);
 }
 
-static void wanpipe_generic_watchdog(struct ifnet* ifp)
+static void
+wanpipe_generic_watchdog(struct ifnet *ifp)
 {
 	return;
 }
 
-int wanpipe_generic_open(struct ifnet* ifp)
+int
+wanpipe_generic_open(struct ifnet *ifp)
 {
-	return 0;
+	return (0);
 }
 
-int wanpipe_generic_close(struct ifnet* ifp)
+int
+wanpipe_generic_close(struct ifnet *ifp)
 {
-	return 0;
+	return (0);
 }
 
-int wanpipe_generic_input(struct ifnet* ifp, struct mbuf* m)
+int
+wanpipe_generic_input(struct ifnet *ifp, struct mbuf *m)
 {
 	sdla_t		*card;
-#if defined(NBPFILTER)
+#if NBPFILTER > 0
 	struct mbuf	m0;
 	u_int32_t	af = AF_INET;
-#endif
+#endif /* NBPFILTER > 0 */
 
-	if ((card = wanpipe_generic_getcard(ifp)) == NULL){
-		return -EINVAL;
+	if ((card = wanpipe_generic_getcard(ifp)) == NULL) {
+		return (-EINVAL);
 	}
 	m->m_pkthdr.rcvif = ifp;
-#if defined(NBPFILTER)
-	if (ifp->if_bpf){
+#if NBPFILTER > 0
+	if (ifp->if_bpf) {
 		m0.m_next = m;
 		m0.m_len = 4;
 		m0.m_data = (char*)&af;
 		bpf_mtap(ifp->if_bpf, &m0);
 	}
-#endif
+#endif /* NBPFILTER > 0 */
 	ifp->if_ipackets ++;
 	ifp->if_ibytes += m->m_len;
 	sppp_input(ifp, m);
-	return 0;
+	return (0);
 }
 
-int wp_lite_set_proto(struct ifnet* ifp, struct ifreq* ifr)
+int
+wp_lite_set_proto(struct ifnet *ifp, struct ifreq *ifr)
 {
-	wanpipe_common_t*	common;
-	struct if_settings*	ifsettings;
-	int			err = 0;
+	wanpipe_common_t	*common;
+	struct if_settings	*ifsettings;
+	int			 err = 0;
 
-	if ((common = ifp->if_softc) == NULL){
+	if ((common = ifp->if_softc) == NULL) {
 		log(LOG_INFO, "%s: Private structure is null!\n",
 				ifp->if_xname);
-		return -EINVAL;
+		return (-EINVAL);
 	}
 	ifsettings = (struct if_settings*)ifr->ifr_data;
 	switch (ifsettings->type) {
@@ -389,7 +393,5 @@ int wp_lite_set_proto(struct ifnet* ifp, struct ifreq* ifr)
 		break;
 	}
 	err = sppp_ioctl(ifp, SIOCSIFFLAGS, ifr);
-	return err;
+	return (err);
 }
-
-/************************************ END **********************************/
