@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.31 2000/05/03 17:58:19 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.32 2000/07/05 23:41:10 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -2010,21 +2010,6 @@ free_grp(grp)
 			free(grp->gr_ptr.gt_net.nt_name);
 	}
 	free((caddr_t)grp);
-}
-
-void
-SYSLOG(int pri, const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-
-	if (debug)
-		vfprintf(stderr, fmt, ap);
-	else
-		vsyslog(pri, fmt, ap);
-
-	va_end(ap);
 }
 
 /*
