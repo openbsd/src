@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.7 1998/05/24 16:28:41 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.8 1998/06/02 16:53:16 millert Exp $	*/
 
 /*
  *	@(#)pathnames.h	5.4 (Berkeley) 6/1/90
@@ -90,7 +90,6 @@
 #define	_PATH_XFERTRACE	"xfer.trace"
 #define _PATH_XFERDDT	"xfer.ddt"
 #define	_PATH_TMPXFER	"xfer.ddt.XXXXXX"
-#define	_PATH_TMPDIR	"/var/tmp"
 
 #else /* BSD */
 
@@ -108,7 +107,6 @@
 #define	_PATH_XFERTRACE	"xfer.trace"
 #define _PATH_XFERDDT	"xfer.ddt"
 #define	_PATH_TMPXFER	"xfer.ddt.XXXXXX"
-#define	_PATH_TMPDIR	"/usr/tmp"
 #endif /* BSD */
 
 #ifndef _PATH_XFER_PREDEFINED
