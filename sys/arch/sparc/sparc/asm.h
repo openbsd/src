@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.3 1999/09/03 18:11:28 art Exp $	*/
+/*	$OpenBSD: asm.h,v 1.4 2000/02/17 21:33:47 art Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 1996/07/01 18:01:26 abrown Exp $ */
 
 /*
@@ -123,3 +123,7 @@
         __asm __volatile("swap [%2],%0" : "=&r" (val) : "0" (val), "r" (loc)); \
 })
 
+#define wrasr(value, asr) _wrasr(value, asr)
+#define _wrasr(value, asr) ({ \
+	__asm __volatile("wr %0, 0, %%asr"#asr : : "r" ((int)(value))); \
+})
