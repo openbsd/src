@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.7 1997/05/01 04:10:39 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.8 1997/07/17 23:15:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -32,16 +32,19 @@
  *
  */
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 
 void gateA20 __P((int));
 void memprobe __P((void));
 void devboot __P((dev_t, char *));
 void *alloca __P((size_t));
+void machdep __P((void));
+u_int apm_init __P((void));
 
 extern u_long	codeseg;
 extern int	boothowto;
 		/* XXX filled in assumption that last file opened is kernel */
 extern int	bootdev;
 extern u_int	cnvmem, extmem;
+extern struct apm_connect_info apminfo;
 extern const char bdevs[19][4];
