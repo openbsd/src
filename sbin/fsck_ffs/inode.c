@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.24 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: inode.c,v 1.25 2003/09/25 04:23:26 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static const char rcsid[] = "$OpenBSD: inode.c,v 1.24 2003/08/25 23:28:15 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: inode.c,v 1.25 2003/09/25 04:23:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -363,8 +363,9 @@ void
 cacheino(struct ufs1_dinode *dp, ino_t inumber)
 {
 	struct inoinfo *inp;
-	struct inoinfo **inpp;
+	struct inoinfo **inpp, **newinpsort;
 	unsigned int blks;
+	long newlistmax;
 
 	blks = howmany(dp->di_size, sblock.fs_bsize);
 	if (blks > NDADDR)
@@ -386,11 +387,13 @@ cacheino(struct ufs1_dinode *dp, ino_t inumber)
 	inp->i_numblks = blks * sizeof(daddr_t);
 	memcpy(&inp->i_blks[0], &dp->di_db[0], (size_t)inp->i_numblks);
 	if (inplast == listmax) {
-		listmax += 100;
-		inpsort = realloc(inpsort,
-		    (unsigned)listmax * sizeof(struct inoinfo *));
-		if (inpsort == NULL)
+		newlistmax = listmax + 100;
+		newinpsort = realloc(inpsort,
+		    (unsigned)newlistmax * sizeof(struct inoinfo *));
+		if (newinpsort == NULL)
 			errexit("cannot increase directory list");
+		inpsort = newinpsort;
+		listmax = newlistmax;
 	}
 	inpsort[inplast++] = inp;
 }
