@@ -39,5 +39,6 @@ main()
 	}
 
 	printf("test_fork PASSED\n");
-	pthread_exit(NULL);
+
+	return 0;
 }

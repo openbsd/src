@@ -28,8 +28,8 @@ void* new_thread(void* arg)
 int
 main()
 {
-	pthread_t thread;
-	int count = 2;
+	pthread_t thread[2];
+	int count = sizeof thread/sizeof thread[0];
 	long i;
 
 	printf("Going to sleep\n");
@@ -37,11 +37,13 @@ main()
 	printf("Done sleeping\n");
 
 	for(i = 0; i < count; i++) {
-		if (pthread_create(&thread, NULL, new_thread, (void *) i)) {
+		if (pthread_create(&thread[i], NULL, new_thread, (void *) i)) {
 			printf("error creating new thread %ld\n", i);
 		}
 	}
-	pthread_exit(NULL);
-	fprintf(stderr, "pthread_exit returned\n");
-	exit(1);
+
+	for (i = 0; i < count; i++)
+		pthread_join(thread[i], NULL);
+
+	return(0);
 }

@@ -72,6 +72,6 @@ main()
 		exit(2);
 	}
 	printf("test_pthread_join PASSED\n");
-	pthread_exit(NULL);
+	return(0);
 }
 

@@ -97,12 +97,15 @@ int test_nocontention_lock(pthread_mutex_t * mutex)
 
 int test_debug_double_lock(pthread_mutex_t * mutex)
 {
+	int ret;
+
 	printf("test_debug_double_lock()\n");
 	if (pthread_mutex_lock(mutex)) {
 		printf("pthread_mutex_lock() ERROR\n");
 		return(NOTOK);
 	}
-	if (pthread_mutex_lock(mutex) != EDEADLK) {
+	if ((ret = pthread_mutex_lock(mutex)) != EDEADLK) {
+		DIE(ret, "test_debug_double_lock: pthread_mutex_lock");
 		printf("double lock error not detected ERROR\n");
 		return(NOTOK);
 	}
@@ -115,6 +118,8 @@ int test_debug_double_lock(pthread_mutex_t * mutex)
 
 int test_debug_double_unlock(pthread_mutex_t * mutex)
 {
+	int ret;
+
 	printf("test_debug_double_unlock()\n");
 	if (pthread_mutex_lock(mutex)) {
 		printf("pthread_mutex_lock() ERROR\n");
@@ -124,7 +129,8 @@ int test_debug_double_unlock(pthread_mutex_t * mutex)
 		printf("pthread_mutex_unlock() ERROR\n");
 		return(NOTOK);
 	}
-	if (pthread_mutex_unlock(mutex) != EPERM) {
+	if ((ret = pthread_mutex_unlock(mutex)) != EPERM) {
+		DIE(ret, "test_debug_double_unlock: mutex_unlock2");
 		printf("double unlock error not detected ERROR\n");
 		return(NOTOK);
 	}
@@ -184,9 +190,7 @@ int test_mutex_debug()
 
 	printf("test_mutex_debug()\n");
 	pthread_mutexattr_init(&mutex_debug_attr);
-#if 0
-	pthread_mutexattr_settype(&mutex_debug_attr, PTHREAD_MUTEXTYPE_DEBUG);
-#endif
+	pthread_mutexattr_settype(&mutex_debug_attr, PTHREAD_MUTEX_ERRORCHECK);
 	if (pthread_mutex_init(&mutex_debug, &mutex_debug_attr)) {
 		printf("pthread_mutex_init() ERROR\n");
 		return(NOTOK);

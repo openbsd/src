@@ -16,8 +16,10 @@
 #include <unistd.h>
 #include "test.h"
 #include <sched.h>
+#include <string.h>
 
 struct sockaddr_in a_sout;
+int success = 0;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_attr_t attr;
 
@@ -28,61 +30,53 @@ void * sock_connect(void* arg)
 {
 	char buf[1024];
 	int fd, tmp;
+	int ret;
 
 	/* Ensure sock_read runs first */
-	if (pthread_mutex_lock(&mutex)) {
-		printf("Error: sock_connect:pthread_mutex_lock()\n");
-		exit(1);
-	}
+	if ((ret = pthread_mutex_lock(&mutex))) 
+		DIE(ret, "sock_connect:pthread_mutex_lock()");
 
 	a_sout.sin_addr.s_addr = htonl(0x7f000001); /* loopback */
 
-	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		printf("Error: sock_connect:socket()\n");
-		exit(1);
-	}
+	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+		DIE(errno, "sock_connect:socket()");
 
 	printf("This should be message #2\n");
-	if (connect(fd, (struct sockaddr *) &a_sout, sizeof(a_sout)) < 0) {
-		printf("Error: sock_connect:connect()\n");
-		exit(1);
-	}
+	if (connect(fd, (struct sockaddr *) &a_sout, sizeof(a_sout)) < 0)
+		DIE(errno, "sock_connect:connect()");
+
 	close(fd);
 		
-	if (pthread_mutex_unlock(&mutex)) {
-		printf("Error: sock_connect:pthread_mutex_lock()\n");
-		exit(1);
-	}
+	if ((ret = pthread_mutex_unlock(&mutex)))
+		DIE(ret, "sock_connect:pthread_mutex_lock()");
 
-	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		printf("Error: sock_connect:socket()\n");
-		exit(1);
-	}
+	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+		DIE(ret, "sock_connect:socket()");
 
 	printf("This should be message #3\n");
 
-	if (connect(fd, (struct sockaddr *) &a_sout, sizeof(a_sout)) < 0) {
-		printf("Error: sock_connect:connect()\n");
-		exit(1);
-	}
+	if (connect(fd, (struct sockaddr *) &a_sout, sizeof(a_sout)) < 0)
+		DIE(errno, "sock_connect:connect()");
 
 	/* Ensure sock_read runs again */
 	pthread_yield();
 	pthread_yield();
 	pthread_yield();
 	pthread_yield();
-	if (pthread_mutex_lock(&mutex)) {
-		printf("Error: sock_connect:pthread_mutex_lock()\n");
-		exit(1);
-	}
+	if ((ret = pthread_mutex_lock(&mutex)))
+		DIE(ret, "sock_connect:pthread_mutex_lock()");
 
-	if ((tmp = read(fd, buf, 1024)) <= 0) {
-		printf("Error: sock_connect:read() == %d\n", tmp);
-		exit(1);
-	}
+	if ((tmp = read(fd, buf, 1024)) <= 0)
+		DIE(errno, "sock_connect:read() == %d", tmp);
+
 	write(fd, MESSAGE6, sizeof(MESSAGE6));
 	printf("%s\n", buf);
 	close(fd);
+	success++;
+
+	if ((ret = pthread_mutex_unlock(&mutex)))
+		DIE(ret, "sock_connect:pthread_mutex_unlock()");
+
 	return(NULL);
 }
 
@@ -102,72 +96,64 @@ void * sock_accept(void* arg)
 	int a_sin_size, a_fd, fd, tmp;
 	short port;
 	char buf[1024];
-
-	if (pthread_mutex_unlock(&mutex)) {
-		printf("Error: sock_accept:pthread_mutex_lock()\n");
-		exit(1);
-	}
+	int ret;
 
 	port = 3276;
 	a_sout.sin_family = AF_INET;
 	a_sout.sin_port = htons(port);
 	a_sout.sin_addr.s_addr = INADDR_ANY;
 
-	if ((a_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		printf("Error: sock_accept:socket()\n");
-		exit(1);
-	}
+	if ((a_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
+		DIE(errno, "sock_accept:socket()");
 
 	while (bind(a_fd, (struct sockaddr *) &a_sout, sizeof(a_sout)) < 0) {
 		if (errno == EADDRINUSE) { 
 			a_sout.sin_port = htons((++port));
 			continue;
 		}
-		printf("Error: sock_accept:bind()\n");
-		exit(1);
+		DIE(errno, "sock_accept:bind()");
 	}
 
-	if (listen(a_fd, 2)) {
-		printf("Error: sock_accept:listen()\n");
-		exit(1);
-	}
+	if (listen(a_fd, 2)) 
+		DIE(errno, "sock_accept:listen()");
 		
 	a_sin_size = sizeof(a_sin);
 	printf("This should be message #1\n");
-	if ((fd = accept(a_fd, &a_sin, &a_sin_size)) < 0) {
-		perror("Error: sock_accept:accept()");
-		exit(1);
-	}
+
+	if ((ret = pthread_create(&thread, &attr, sock_connect, 
+	    (void *)0xdeadbeaf)))
+		DIE(ret, "sock_accept:pthread_create(sock_connect)");
+
+	if ((fd = accept(a_fd, &a_sin, &a_sin_size)) < 0) 
+		DIE(errno, "sock_accept:accept()");
 	
-	if (pthread_mutex_lock(&mutex)) {
-		printf("Error: sock_accept:pthread_mutex_lock()\n");
-		exit(1);
-	}
+	if ((ret = pthread_mutex_lock(&mutex)))
+		DIE(ret, "sock_accept:pthread_mutex_lock()");
+
 	close(fd);
 
 	a_sin_size = sizeof(a_sin);
 	printf("This should be message #4\n");
-	if ((fd = accept(a_fd, &a_sin, &a_sin_size)) < 0) {
-		printf("Error: sock_accept:accept()\n");
-		exit(1);
-	}
+	if ((fd = accept(a_fd, &a_sin, &a_sin_size)) < 0)
+		DIE(errno, "sock_accept:accept()");
 
-	if (pthread_mutex_unlock(&mutex)) {
-		printf("Error: sock_accept:pthread_mutex_lock()\n");
-		exit(1);
-	}
+	if ((ret = pthread_mutex_unlock(&mutex)))
+		DIE(ret, "sock_accept:pthread_mutex_unlock()");
 
 	/* Setup a write thread */
-	if (pthread_create(&thread, &attr, sock_write, &fd)) {
-		printf("Error: sock_accept:pthread_create(sock_write)\n");
-		exit(1);
-	}
-	if ((tmp = read(fd, buf, 1024)) <= 0) {
-		printf("Error: sock_accept:read() == %d\n", tmp);
-		exit(1);
-	}
+	if ((ret = pthread_create(&thread, &attr, sock_write, &fd)))
+		DIE(ret, "sock_accept:pthread_create(sock_write)");
+	if ((tmp = read(fd, buf, 1024)) <= 0)
+		DIE(errno, "sock_accept:read() == %d\n", tmp);
+
 	printf("%s\n", buf);
 	close(fd);
+
+	if ((ret = pthread_mutex_lock(&mutex)))
+		DIE(ret, "sock_accept:pthread_mutex_lock()");
+	success++;
+	if ((ret = pthread_mutex_unlock(&mutex)))
+		DIE(ret, "sock_accept:pthread_mutex_unlock()");
 	return(NULL);
 }
 
@@ -175,36 +161,23 @@ int
 main()
 {
 	pthread_t thread;
+	int ret;
 
 	setbuf(stdout, NULL);
 	setbuf(stderr, NULL);
 
-	/* Ensure sock_read runs first */
-	if (pthread_mutex_lock(&mutex)) {
-		printf("Error: main:pthread_mutex_lock()\n");
-		exit(1);
-	}
-
-	if (pthread_attr_init(&attr)) {
-		printf("Error: main:pthread_attr_init()\n");
-		exit(1);
-	}
+	if ((ret = pthread_attr_init(&attr))) 
+		DIE(ret, "main:pthread_attr_init()");
 #if 0
-	if (pthread_attr_setschedpolicy(&attr, SCHED_FIFO)) {
-		printf("Error: main:pthread_attr_setschedpolicy()\n");
-		exit(1);
-	}
+	if ((ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO)))
+		DIE(ret, "main:pthread_attr_setschedpolicy()");
 #endif
-	if (pthread_create(&thread, &attr, sock_accept, (void *)0xdeadbeaf)) {
-		printf("Error: main:pthread_create(sock_accept)\n");
-		exit(1);
-	}
-	if (pthread_create(&thread, &attr, sock_connect, (void *)0xdeadbeaf)) {
-		printf("Error: main:pthread_create(sock_connect)\n");
-		exit(1);
-	}
+	if ((ret = pthread_create(&thread, &attr, sock_accept,
+	    (void *)0xdeadbeaf)))
+		DIE(ret, "main:pthread_create(sock_accept)");
+
 	printf("initial thread %p going to sleep\n", pthread_self());
-	sleep(3);
-	printf("done sleeping\n");
-	return 0;
+	sleep(2);
+	printf("done sleeping. success = %d\n", success);
+	exit(success == 2?0:1);
 }

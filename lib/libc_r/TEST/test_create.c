@@ -26,13 +26,13 @@ main()
 {
 	pthread_t thread;
 	int i;
+	int ret;
 
 	printf("Original thread stack at %p\n", &i);
-	if (pthread_create(&thread, NULL, new_thread, (void *)0xdeadbeef)) {
-		printf("Error: creating new thread\n");
-	}
-	pthread_exit(NULL);
-	PANIC();
-	return(1);
-	PANIC();
+	if ((ret = pthread_create(&thread, NULL, new_thread, 
+	    (void *)0xdeadbeef)))
+		DIE(ret, "pthread_create");
+	if ((ret = pthread_join(thread, NULL)))
+		DIE(ret, "pthread_join");
+	return(0);
 }

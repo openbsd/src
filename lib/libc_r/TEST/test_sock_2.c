@@ -15,6 +15,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <string.h>
+#include "test.h"
 
 struct sockaddr_in a_sout;
 
@@ -42,52 +43,39 @@ void * sock_accept(void* arg)
 	a_sout.sin_port = htons(port);
 	a_sout.sin_addr.s_addr = INADDR_ANY;
 
-	if ((a_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("Error: sock_accept:socket()");
-		exit(1);
-	}
+	if ((a_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
+		DIE(errno, "sock_accept:socket()");
 
 	while (bind(a_fd, (struct sockaddr *) &a_sout, sizeof(a_sout)) < 0) {
 		if (errno == EADDRINUSE) { 
 			a_sout.sin_port = htons((++port));
 			continue;
 		}
-		perror("Error: sock_accept:bind()");
-		exit(1);
+		DIE(errno, "sock_accept:bind()");
 	}
 
-	if (listen(a_fd, 2)) {
-		perror("Error: sock_accept:listen()");
-		exit(1);
-	}
+	if (listen(a_fd, 2)) 
+		DIE(errno, "sock_accept:listen()");
 		
 	a_sin_size = sizeof(a_sin);
 	printf("This should be message #1\n");
-	if ((fd = accept(a_fd, &a_sin, &a_sin_size)) < 0) {
-		perror("Error: sock_accept:accept()");
-		exit(1);
-	}
+	if ((fd = accept(a_fd, &a_sin, &a_sin_size)) < 0) 
+		DIE(errno, "Error: sock_accept:accept()");
 	close(fd); 
 	sleep(1);
 
 	a_sin_size = sizeof(a_sin);
 	memset(&a_sin, 0, sizeof(a_sin));
 	printf("This should be message #4\n");
-	if ((fd = accept(a_fd, &a_sin, &a_sin_size)) < 0) {
-		perror("Error: sock_accept:accept()");
-		exit(1);
-	}
+	if ((fd = accept(a_fd, &a_sin, &a_sin_size)) < 0)
+		DIE(errno, "sock_accept:accept()");
 
 	/* Setup a write thread */
-	if (pthread_create(&thread, NULL, sock_write, &fd)) {
-		perror("Error: sock_accept:pthread_create(sock_write)");
-		exit(1);
-	}
-	if ((tmp = read(fd, buf, 1024)) <= 0) {
-		tmp = read(fd, buf, 1024);
-		printf("Error: sock_accept:read() == %d %s\n", tmp, strerror(errno));
-		exit(1);
-	}
+	if (pthread_create(&thread, NULL, sock_write, &fd)) 
+		DIE(errno, "sock_accept:pthread_create(sock_write)");
+	if ((tmp = read(fd, buf, 1024)) <= 0)
+		DIE(errno, "Error: sock_accept:read() == %d", tmp);
+
 	printf("%s\n", buf);
 	close(fd);
 	return(NULL);
@@ -97,13 +85,15 @@ int
 main()
 {
 	pthread_t thread;
+	int ret;
 
 	switch(fork()) {
 	case -1:
-		perror("Error: main:fork()");
-		break;
+		DIE(errno, "main:fork()");
+
 	case 0:
 		execl("test_sock_2a", "test_sock_2a", "fork okay", NULL);
+		DIE(errno, "execl");
 	default:
 		break;
 	}
@@ -111,9 +101,12 @@ main()
 	setbuf(stdout, NULL);
 	setbuf(stderr, NULL);
 
-	if (pthread_create(&thread, NULL, sock_accept, (void *)0xdeadbeaf)) {
-		perror("Error: main:pthread_create(sock_accept)");
-		exit(1);
-	}
-	pthread_exit(NULL);
+	if ((ret = pthread_create(&thread, NULL, sock_accept, 
+	    (void *)0xdeadbeaf)))
+		DIE(ret, "main:pthread_create(sock_accept)");
+
+	if ((ret = pthread_join(thread, NULL)))
+		DIE(ret, "main:pthread_join()");
+
+	return (0);
 }

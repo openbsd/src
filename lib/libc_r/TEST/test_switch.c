@@ -80,13 +80,7 @@ main(int argc, char **argv)
 			exit (1);
 		}
 	}
-#if 0 /* This would cause the program to loop forever, and "make
-		 check" would never complete.  */
-	pthread_exit (NULL);
-	fprintf(stderr, "pthread_exit returned\n");
-	exit(1);
-#else
-	sleep (3);
+	sleep (2);
 	for (i = 0; i < count; i++)
 		if (x[i] == 0) {
 			fprintf (stderr, "thread %ld never ran\n", i);
@@ -94,5 +88,4 @@ main(int argc, char **argv)
 		}
 	printf ("\n%s PASSED\n", argv[0]);
 	return 0;
-#endif
 }
