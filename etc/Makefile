@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.119 2001/04/01 19:40:16 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.120 2001/05/04 16:00:05 millert Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -228,6 +228,8 @@ distribution-etc-root-var: distrib-dirs
 	    -O DontBlameSendmail=mapinunsafedirpath
 	${INSTALL} -c -o root -g wheel -m 600 root/root.mail \
 		${DESTDIR}/var/mail/root
+	${INSTALL} -c -o root -g wheel -m 440 ../usr.bin/sudo/sudoers \
+		${DESTDIR}/etc/sudoers
 
 distribution: distribution-etc-root-var
 	(cd ..; ${MAKE} install)
