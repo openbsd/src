@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.h,v 1.4 1998/11/18 17:42:52 deraadt Exp $	*/
+/*	$OpenBSD: tcp.h,v 1.5 1999/01/07 09:14:54 deraadt Exp $	*/
 /*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
 
 /*
@@ -110,4 +110,4 @@ struct tcphdr {
  */
 #define	TCP_NODELAY	0x01	/* don't delay send to coalesce packets */
 #define	TCP_MAXSEG	0x02	/* set maximum segment size */
-#define TCP_SACK_DISABLE	0x300 /* disable SACKs(if enabled by deflt.)*/
+#define	TCP_SACK_DISABLE 0x300	/* disable SACKs(if enabled by deflt.)*/
