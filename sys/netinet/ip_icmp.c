@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.14 1998/12/31 12:55:46 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.15 1999/01/08 01:04:17 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -441,7 +441,7 @@ reflect:
 	}
 
 raw:
-	rip_input(m);
+	rip_input(m, 0);
 	return;
 
 freeit:

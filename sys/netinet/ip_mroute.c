@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.11 1998/12/26 12:35:11 provos Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.12 1999/01/08 01:04:17 deraadt Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -1454,7 +1454,7 @@ ipip_input(m, va_alist)
 
 #ifndef IPSEC
 	if (!have_encap_tunnel) {
-		rip_input(m);
+		rip_input(m, 0);
 		return;
 	}
 #endif
@@ -1478,7 +1478,7 @@ ipip_input(m, va_alist)
 
 #ifdef IPSEC
 	if (!have_encap_tunnel) {
-		rip_input(m);
+		rip_input(m, 0);
 		return;
 	}
 #endif
@@ -1979,7 +1979,7 @@ rsvp_input(m, ifp)
     if (ip_rsvpd != NULL) {
 	if (rsvpdebug)
 	    printf("rsvp_input: Sending packet up old-style socket\n");
-	rip_input(m);
+	rip_input(m, 0);
 	return;
     }
 
