@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.12 1999/10/09 20:35:45 beck Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.13 1999/10/17 16:27:47 provos Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -68,6 +68,26 @@ Specifying
 as a package name causes
 .Nm
 to read from the standard input.
+.Pp
+Alternativly, it is possible to add packages interactivly from within
+the ftp client.  For example, the following works:
+.Bd -literal
+	$ ftp ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/i386
+	250 CWD command successful
+	ftp> ls m*
+	227 Entering Passive Mode (129,128,5,191,164,73)
+	150 Opening ASCII mode data connection for m*.
+	m4-1.4.tgz
+	metamail-2.7.tgz
+	mh-6.8.4.tgz
+	mm-1.0.12.tgz
+	mpeg_lib-1.2.1.tgz
+	mpeg_play-2.4.tgz
+	mpg123-0.59q.tgz
+	mutt-0.95.7i.tgz
+	226 Transfer complete.
+	ftp> get m4-1.4tgz "|pgk_add -v -"
+.Ed
 .Pp
 .Sy Warning:
 Since the
