@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.27 1997/08/05 12:20:37 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.28 1997/11/16 12:08:46 niklas Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -132,6 +132,7 @@ cd*	at	scsibus? target ? lun ?
 sd*	at	scsibus? target ? lun ?
 ss*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?
+ch*	at	scsibus? target ? lun ?
 uk*	at	scsibus? target ? lun ?
 
 # Workstation Console attachments
