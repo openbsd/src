@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.154 2004/11/27 10:01:54 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.155 2004/12/02 21:52:58 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -682,10 +682,10 @@ will be displayed instead of the port being built.
 .It Ev CONFIGURE_ARGS
 Arguments to pass to configure script.
 Defaults are empty, except for
-gnu-style configure, where prefix and sysconfdir are set.
+GNU-style configure, where prefix and sysconfdir are set.
 .It Ev CONFIGURE_ENV
 Basic environment passed to configure script (path and libtool setup).
-gnu-style configure adds a lot more variables.
+GNU-style configure adds a lot more variables.
 .It Ev CONFIGURE_SCRIPT
 Set to name of script invoked by
 .Ar configure
@@ -713,7 +713,7 @@ style.
 If
 .Sq gnu ,
 assume
-gnu configure style.
+GNU configure style.
 Add
 .Sq dest
 if port does not handle DESTDIR correctly, and needs to be configured to
@@ -740,7 +740,7 @@ Add
 if port has no man pages the Imakefile should try installing.
 If
 .Sq simple ,
-there is a configure script, but it does not fit the normal gnu configure
+there is a configure script, but it does not fit the normal GNU configure
 conventions.
 .It Ev COPTS
 User settings.
@@ -969,7 +969,7 @@ Path to the current port's directory, relative to ${PORTSDIR},
 including flavors and subpackages.
 Read-only.
 .It Ev GMAKE
-Location of the gnu make binary, if needed.
+Location of the GNU make binary, if needed.
 Defaults to gmake.
 .It Ev HOMEPAGE
 Set to a link to the homepage of the software, if applicable.
@@ -1416,7 +1416,7 @@ will take care of installing them.
 Location for scripts related to the current port (default: scripts.${ARCH}
 or scripts).
 .It Ev SEPARATE_BUILD
-Many gnu configure ports can be built in a directory distinct from the
+Many GNU configure ports can be built in a directory distinct from the
 place they were unpacked.
 For some specific ports, this is even mandatory.
 Set to
@@ -1536,7 +1536,7 @@ If set to empty, will revert to a file under
 .It Ev USE_GMAKE
 Set to
 .Sq Yes
-if gnu make (${GMAKE}) is needed for correct behavior of this port.
+if GNU make (${GMAKE}) is needed for correct behavior of this port.
 .It Ev USE_LIBTOOL
 Set to
 .Sq Yes
@@ -1636,8 +1636,8 @@ The -DPorts is specific to
 .Ox
 and is always appended.
 .It Ev YACC
-Name of yacc program to pass to gnu-configure, defaults to yacc.
-(gnu-configure would always try to use bison otherwise, which leads to
+Name of yacc program to pass to GNU-configure, defaults to yacc.
+(GNU-configure would always try to use bison otherwise, which leads to
 unreproducible builds.)
 Set to bison if needed.
 .El
