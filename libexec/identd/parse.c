@@ -51,6 +51,23 @@ check_noident(homedir)
 	return 0;
 }
 
+static unsigned char itoa64[] =	 /* 0 ... 63 => ascii - 64 */
+	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+static void to64 __P((char *, u_int32_t, int));
+
+static void
+to64(s, v, n)
+	char *s;
+	u_int32_t v;
+	int n;
+{
+	while (--n >= 0) {
+		*s++ = itoa64[v&0x3f];
+		v >>= 6;
+	}
+}
+
 /*
  * Returns 0 on timeout, -1 on error, #bytes read on success.
  */
@@ -240,6 +257,29 @@ parse(fd, laddr, faddr)
 		return 0;
 	}
 
+	if (token_flag) {
+		char token[21];
+		char *s = token;
+
+		memset(token, 0, sizeof token);
+		to64(s, arc4random(), 4);
+		to64(s + 4, arc4random(), 4);
+		to64(s + 8, arc4random(), 4);
+		to64(s + 12, arc4random(), 4);
+		to64(s + 16, arc4random(), 4);
+
+		syslog(LOG_NOTICE, "token %s == uid %u (%s)", token, uid,
+		    pw->pw_name);
+		n = snprintf(buf, sizeof(buf),
+		    "%d , %d : USERID : OTHER%s%s :%s\r\n",
+		    lport, fport, charset_name ? " , " : "",
+		    charset_name ? charset_name : "", token);
+		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			return 1;
+		}
+		return 0;
+	}
 	if (number_flag) {
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : OTHER%s%s :%d\r\n",

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.6 1998/09/07 16:44:35 aaron Exp $
+.\"	$OpenBSD: identd.8,v 1.7 1998/09/16 20:22:14 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -49,7 +49,7 @@
 .Op Fl p Ar port
 .Op Fl a Ar address
 .Op Fl c Ar charset
-.Op Fl noelVvmNd
+.Op Fl noelVvmNdh
 .Sh DESCRIPTION
 .Nm
 is a server which implements the
@@ -97,6 +97,10 @@ This version does not use kmem or nlist parsing, so this reasoning
 is no longer valid.
 .It Fl b
 Specify operation as a stand alone daemon.
+.It Fl h
+Hide the actual information about the user by providing an opaque
+token instead.  This token is entered into the local system logs
+so that the administrator can later discover who the real user was.
 .It Fl t Ar seconds
 Specifies an idle timeout in seconds where a daemon running in
 "wait" mode will timeout and exit. The default is no timeout.

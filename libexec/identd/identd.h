@@ -1,5 +1,5 @@
 /*
-**	$Id: identd.h,v 1.2 1997/07/23 20:36:28 kstailey Exp $
+**	$Id: identd.h,v 1.3 1998/09/16 20:22:15 deraadt Exp $
 **
 ** identd.h		    Common variables for the Pidentd daemon
 **
@@ -27,6 +27,7 @@ extern int other_flag;
 extern int unknown_flag;
 extern int number_flag;
 extern int noident_flag;
+extern int token_flag;
 
 extern char *charset_name;
 extern char *indirect_host;
