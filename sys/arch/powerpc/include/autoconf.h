@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.1 1997/10/13 10:53:41 pefo Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.2 1998/05/29 04:15:32 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -41,6 +41,7 @@
 /*
  *   System types.
  */
+#define       OFWMACH         0       /* Openfirmware drivers */
 #define	POWER4e		1	/* V.I Power.4e board */
 
 extern int system_type;

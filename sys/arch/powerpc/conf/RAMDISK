@@ -13,6 +13,9 @@ option		NATIVE_ELF
 
 option		FIREPOWERBUGS
 
+# specific define for VI boards
+options		power4e
+
 options		KTRACE
 options		DEBUG
 

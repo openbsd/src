@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.powerpc,v 1.7 1998/04/06 17:29:25 pefo Exp $
+#	$OpenBSD: Makefile.powerpc,v 1.8 1998/05/29 04:15:27 rahnds Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -40,7 +40,7 @@ PPC=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc -L${DESTDIR}/usr/include
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
-		-Dpowerpc -Dpower4e
+		-Dpowerpc
 CWARNFLAGS=	-Werror -Wreturn-type
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
 AFLAGS=		-D_LOCORE

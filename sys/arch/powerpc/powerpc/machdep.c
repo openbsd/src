@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 1997/10/21 18:01:45 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 1998/05/29 04:15:39 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -85,7 +85,12 @@ struct bat battable[16];
 
 int astpending;
 
-int system_type = POWER4e;	/* XXX Hardwire it for now */
+#ifndef SYS_TYPE
+/* XXX Hardwire it for now */
+#define SYS_TYPE POWER4e
+#endif
+
+int system_type = SYS_TYPE;	/* XXX Hardwire it for now */
 
 char ofw_eth_addr[6];		/* Save address of first network ifc found */
 char *bootpath;
@@ -803,4 +808,19 @@ power4e_get_eth_addr()
 		}
 	}
 	return(-1);
+}
+
+typedef void  (void_f) (void);
+void_f *pending_int_f = NULL;
+
+/* call the bus/interrupt controller specific pending interrupt handler
+ * would be nice if the offlevel interrupt code was handled here
+ * instead of being in each of the specific handler code
+ */
+void
+do_pending_int()
+{
+	if (pending_int_f != NULL) {
+		(*pending_int_f)();
+	}
 }

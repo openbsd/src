@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 1997/10/21 11:00:09 pefo Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 1998/05/29 04:15:37 rahnds Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.4 1997/10/21 11:00:09 pefo Exp $
+ *      $Id: autoconf.c,v 1.5 1998/05/29 04:15:37 rahnds Exp $
  */
 
 /*
@@ -93,6 +93,7 @@ configure()
 	(void)splhigh();	/* To be really sure.. */
 	if(config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
+	ofrootfound();
 	(void)spl0();
 
 	setroot();
@@ -128,7 +129,8 @@ static	struct nam2blk {
 	char *name;
 	int  maj;
 } nam2blk[] = {
-	{ "sd",	2 },	/* 2 = sd */
+	{ "sd",		2 },	/* 2 = sd */
+	{ "ofdisk",	4 },	/* 2 = ofdisk */
 };
 
 static int
@@ -241,7 +243,7 @@ printf("bootpath: '%s'\n", bootpath);
 	if(bootdv == NULL) {
 		printf("boot device: lookup '%s' failed.\n", bootdev);
 		boothowto |= RB_ASKNAME; /* Don't Panic :-) */
-		boothowto |= RB_SINGLE;
+		/* boothowto |= RB_SINGLE; */
 	}
 	else {
 		printf("boot device: %s.\n", bootdv->dv_xname);

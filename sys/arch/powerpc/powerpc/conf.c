@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 1997/11/23 05:21:58 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.7 1998/05/29 04:15:38 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -46,6 +46,9 @@ bdev_decl(sw);
 #include "cd.h"
 bdev_decl(cd);
 
+#include "ofdisk.h"
+bdev_decl(ofd);
+
 #include "rd.h"
 bdev_decl(rd);
 
@@ -59,7 +62,7 @@ struct bdevsw bdevsw[] = {
 	bdev_swap_init(1,sw),		/* 1 swap pseudo device */
 	bdev_disk_init(NSD,sd),		/* 2 SCSI Disk */
 	bdev_disk_init(NCD,cd),		/* 3 SCSI CD-ROM */
-	bdev_notdef(),			/* 4 */
+	bdev_disk_init(NOFDISK,ofd),	/* 4 Openfirmware disk */
 	bdev_notdef(),                  /* 5 unknown*/
 	bdev_notdef(),                  /* 6 unknown*/
 	bdev_notdef(),                  /* 7 unknown*/
@@ -93,6 +96,13 @@ cdev_decl(log);
 cdev_decl(sw);
 #include "com.h"
 cdev_decl(com);
+
+#include "ofcons.h"
+cdev_decl(ofc);
+cdev_decl(ofd);
+
+#include "ofrtc.h"
+cdev_decl(ofrtc);
 
 #include <sd.h>
 #include <st.h>
@@ -142,8 +152,8 @@ struct cdevsw cdevsw[] = {
         cdev_notdef(),                  /* 10: SCSI changer */
         cdev_notdef(),                  /* 11 */
         cdev_notdef(),                  /* 12 */
-	cdev_notdef(),			/* 13 */
-        cdev_notdef(),                  /* 14 */
+	cdev_disk_init(NOFDISK,ofd),	/* 13 Openfirmware disk */
+        cdev_tty_init(NOFCONS,ofc),	/* 14 Openfirmware console */
         cdev_notdef(),                  /* 15 */
         cdev_notdef(),                  /* 16 */
 	cdev_disk_init(NRD,rd),		/* 17 ram disk driver*/
@@ -217,7 +227,7 @@ static int chrtoblktbl[] = {
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
 	/* 12 */	NODEV,
-	/* 13 */	NODEV,
+	/* 13 */	4,
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
@@ -284,8 +294,12 @@ blktochr(dev)
 #include <dev/cons.h>
 
 cons_decl(com);
+cons_decl(ofc);
 
 struct consdev constab[] = {
+#if NOFCONS > 0
+	cons_init(ofc),
+#endif
 #if NCOM > 0
 	cons_init(com),
 #endif

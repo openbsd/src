@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.4 1997/10/13 13:42:59 pefo Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.5 1998/05/29 04:15:40 rahnds Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/systm.h>
 
 #include <machine/powerpc.h>
+#include <machine/autoconf.h>
 
 void OF_exit __P((void)) __attribute__((__noreturn__));
 void OF_boot __P((char *bootspec)) __attribute__((__noreturn__));
@@ -90,4 +91,62 @@ ppc_boot(str)
 	char *str;
 {
 	OF_boot(str);
+}
+
+#include <dev/ofw/openfirm.h>
+
+typedef void  (void_f) (void);
+extern void_f *pending_int_f;
+void ofw_do_pending_int();
+extern int system_type;
+
+void
+ofrootfound()
+{
+	int node;
+	struct ofprobe probe;
+		
+	if (!(node = OF_peer(0)))
+		panic("No PROM root");
+	probe.phandle = node;
+	if (!config_rootfound("ofroot", &probe))
+		panic("ofroot not configured");
+	if (system_type == OFWMACH) {
+		pending_int_f = ofw_do_pending_int;
+	}
+}
+void
+ofw_do_pending_int()
+{
+	struct intrhand *ih;
+	int vector;
+	int pcpl;
+	int hwpend;
+	int emsr, dmsr;
+static int processing;
+
+	if(processing)
+		return;
+
+	processing = 1;
+	__asm__ volatile("mfmsr %0" : "=r"(emsr));
+	dmsr = emsr & ~PSL_EE;
+	__asm__ volatile("mtmsr %0" :: "r"(dmsr));
+
+	pcpl = splhigh();		/* Turn off all */
+	if(ipending & SINT_CLOCK) {
+		ipending &= ~SINT_CLOCK;
+		softclock();
+	}
+	if(ipending & SINT_NET) {
+		extern int netisr;
+		int pisr = netisr;
+		netisr = 0;
+		ipending &= ~SINT_NET;
+		softnet(pisr);
+	}
+	ipending &= pcpl;
+	cpl = pcpl;	/* Don't use splx... we are here already! */
+	__asm__ volatile("mtmsr %0" :: "r"(emsr));
+	processing = 0;
 }

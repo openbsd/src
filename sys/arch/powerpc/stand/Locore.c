@@ -1,5 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.5 1997/04/17 02:27:36 briggs Exp $	*/
-/*	$NetBSD: Locore.c,v 1.1 1996/09/30 16:34:58 ws Exp $	*/
+/*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,23 +30,21 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <stand.h>
-#include <openfirm.h>
+
+#include <lib/libsa/stand.h>
+#include <powerpc/stand/openfirm.h>
 
 /*
-#include <machine/cpu.h>
+#include "machine/cpu.h"
 */
 
 static int (*openfirmware)(void *);
 
-static void
-setup();
+static void setup __P((void));
 
-void _start();
-
-#define __dead
-
-void const *__start[3] = { &_start, 0, 0};
+#ifdef XCOFF_GLUE
+asm (".text; .globl _entry; _entry: .long _start,0,0");
+#endif
 
 __dead void
 _start(vpd, res, openfirm, arg, argl)
@@ -57,14 +54,16 @@ _start(vpd, res, openfirm, arg, argl)
 	char *arg;
 	int argl;
 {
-	extern char etext;
+	extern char etext[];
 
+#ifdef	FIRMWORKSBUGS
+	syncicache((void *)RELOC, etext - (char *)RELOC);
+#endif
 	openfirmware = openfirm;	/* Save entry to Open Firmware */
 	setup();
 	main(arg, argl);
 	exit();
 }
-
 
 __dead void
 _rtt()
@@ -335,9 +334,9 @@ OF_claim(virt, size, align)
 		1,
 	};
 
-#ifdef	FIREPOWERBUGS
+#ifdef	FIRMWORKSBUGS
 	/*
-	 * Bug with FirePower machines (actually Firmworks OFW)
+	 * Bug with Firmworks OFW
 	 */
 	if (virt)
 		return virt;
@@ -449,7 +448,8 @@ setup()
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		_rtt();
 	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin)) != sizeof(stdin)
-	    || OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) != sizeof(stdout))
+	    || OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) !=
+	    sizeof(stdout))
 		_rtt();
 }
 
@@ -471,7 +471,7 @@ getchar()
 	int l;
 
 	while ((l = OF_read(stdin, &ch, 1)) != 1)
-		if (l != -2 && l != 0)
+		if (l != -2)
 			return -1;
 	return ch;
 }

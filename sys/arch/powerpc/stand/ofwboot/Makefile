@@ -5,7 +5,7 @@ R=../
 
 PROG=		ofwboot
 SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c cache.c
-.PATH:		${S}/arch/powerpc/powerpc
+.PATH:		${S}/arch/powerpc/stand
 SRCS+=		ofwmagic.S
 #CFLAGS+=	-DDEBUG -DNETIF_DEBUG
 NOMAN=
@@ -18,7 +18,7 @@ BINDIR=         /usr/mdec
 NEWVERSWHAT=	"OpenFirmware Boot"
 
 # For now...
-RELOC=		20000
+RELOC=		20074
 
 ENTRY=		_start
 
@@ -33,8 +33,5 @@ LIBS!=          cd $(.CURDIR)/$(R); $(MAKE) libdep
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -X -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
 	    ${OBJS} ${LIBS}
-#	mv ${PROG} ${PROG}.elf
-#	${OBJCOPY} --input-target=elf32-powerpc \
-#	    --output-target=xcoff-powermac ${PROG}.elf ${PROG}.xcf
 
 .include <bsd.prog.mk>

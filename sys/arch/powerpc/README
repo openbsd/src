@@ -13,6 +13,10 @@ as little possible.
 The current kernel supports only V.I Power.4e PowerPC 604 based VME board.
 More will come in the future.
 
+Support for Openfirmware drivers was reintroduced, in a manner which
+should be compatible with "real" drivers. It is yet to be seen if
+a kernel can have both OF drivers and real drivers. But at least
+both versions can be built.
 
 Other notes:
 	libexec/ftpd (ftpd.o) does not compile with optimization.
@@ -20,6 +24,9 @@ Other notes:
 	Real cause unknown. will compile and work correctly
 	if compiled without -O.
 	(worked around with a makefile change)
+
+	This probably has changed with the introduction of gcc 2.8.X.X
+	but not completely verified (yet).
 
 TODO:
 	ptrace support (that works)

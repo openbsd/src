@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.6 1998/04/06 17:29:24 pefo Exp $
+#	$OpenBSD: GENERIC,v 1.7 1998/05/29 04:15:26 rahnds Exp $
 #
 # PPC GENERIC config file
 #
@@ -6,6 +6,9 @@
 machine		powerpc
 
 maxusers	32
+
+# specific define for VI boards
+options		power4e
 
 # Standard system options
 option		SWAPPAGER	# swap pager (anonymous and swap space)

@@ -1,5 +1,4 @@
-/*	$OpenBSD: netif_of.c,v 1.2 1996/12/28 06:31:15 rahnds Exp $	*/
-/*	$NetBSD: netif_of.c,v 1.1 1996/09/30 16:35:02 ws Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.1 1997/04/16 20:29:19 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -42,8 +41,11 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
+
+#if 0			/* XXX thorpej */
 #include <string.h>
 #include <time.h>
+#endif
 
 #include <net/if.h>
 
@@ -51,12 +53,12 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 
-#include "stand.h"
-#include "net.h"
-#include "netif.h"
+#include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
+#include <lib/libsa/netif.h>
 
-#include "ofdev.h"
-#include "openfirm.h"
+#include <powerpc/stand/ofdev.h>
+#include <powerpc/stand/openfirm.h>
 
 static struct netif netif_of;
 

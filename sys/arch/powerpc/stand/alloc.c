@@ -1,7 +1,10 @@
-/*	$OpenBSD: alloc.c,v 1.4 1997/02/06 23:44:55 rahnds Exp $	*/
-/*	$NetBSD: alloc.c,v 1.1 1996/09/30 16:35:00 ws Exp $	*/
+/*	$NetBSD: alloc.c,v 1.1 1997/04/16 20:29:16 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1996
+ *	Matthias Drochner.  All rights reserved.
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
  * All rights reserved.
@@ -33,162 +36,182 @@
  */
 
 /*
- * Substitute alloc.c for Openfirmware machines
+ * Dynamic memory allocator suitable for use with OpenFirmware.
+ *
+ * Compile options:
+ *
+ *	ALLOC_TRACE	enable tracing of allocations/deallocations
+ *
+ *	ALLOC_FIRST_FIT	use a first-fit allocation algorithm, rather than
+ *			the default best-fit algorithm.
+ *
+ *	DEBUG		enable debugging sanity checks.
  */
-#include <sys/param.h>
 
-#include <openfirm.h>
-#include <stand.h>
+#include <sys/param.h>
+#include <sys/queue.h>
+
+#include <lib/libsa/stand.h>
+
+#include <powerpc/stand/openfirm.h>
 
 /*
- * al tracks the allocated regions, fl tracks the free list
+ * Each block actually has ALIGN(struct ml) + ALIGN(size) bytes allocated
+ * to it, as follows:
+ *
+ * 0 ... (sizeof(struct ml) - 1)
+ *	allocated or unallocated: holds size of user-data part of block.
+ *
+ * sizeof(struct ml) ... (ALIGN(sizeof(struct ml)) - 1)
+ *	allocated: unused
+ *	unallocated: depends on packing of struct fl
+ *
+ * ALIGN(sizeof(struct ml)) ... (ALIGN(sizeof(struct ml)) +
+ *   ALIGN(data size) - 1)
+ *	allocated: user data
+ *	unallocated: depends on packing of struct fl
+ *
+ * 'next' is only used when the block is unallocated (i.e. on the free list).
+ * However, note that ALIGN(sizeof(struct ml)) + ALIGN(data size) must
+ * be at least 'sizeof(struct fl)', so that blocks can be used as structures
+ * when on the free list.
+ */
+
+/*
+ * Memory lists.
  */
 struct ml {
-	struct ml *next;
-	unsigned int size;
-} *al, *fl;
+	unsigned	size;
+	LIST_ENTRY(ml)	list;
+};
+
+/* XXX - this is from NetBSD  */
+#define LIST_HEAD_INITIALIZER(head) { NULL }
+
+LIST_HEAD(, ml) freelist = LIST_HEAD_INITIALIZER(freelist);
+LIST_HEAD(, ml) allocatedlist = LIST_HEAD_INITIALIZER(allocatedlist);
+
+#define	OVERHEAD	ALIGN(sizeof (struct ml))	/* shorthand */
 
 void *
 alloc(size)
 	unsigned size;
 {
-	struct ml **fp, *f;
-	unsigned rsz;
-	
-	size = ALIGN(size) + ALIGN(sizeof(struct ml));
-	for (fp = &fl; f = *fp; fp = &f->next)
-		if (f->size >= size)
-			break;
-	if (!f) {
-		rsz = roundup(size, NBPG);
-		f = OF_claim(0, rsz, NBPG);
-		if (f == (void *)-1)
-			panic("alloc");
-		f->size = rsz;
-	} else {
-		*fp = f->next;
-		if (f->size > roundup(size, NBPG)) {
-			/* if the buffer is larger than necessary, split it */
-			/* still rounding to page size */
-			struct ml *f1;
-			f1 = (struct ml *)((u_int)f + roundup(size, NBPG));
-			f1->size = f->size - roundup(size, NBPG);
-			f->size = roundup(size, NBPG);
-			/* put the unused portion back on free list */
-			f1->next = fl;
-			fl = f1;
+	struct ml *f, *bestf;
+	unsigned bestsize = 0xffffffff;	/* greater than any real size */
+	char *help;
+	int failed;
+
+#ifdef ALLOC_TRACE
+	printf("alloc(%u)", size);
+#endif
+
+	/*
+	 * Account for overhead now, so that we don't get an
+	 * "exact fit" which doesn't have enough space.
+	 */
+	size = ALIGN(size) + OVERHEAD;
+
+#ifdef ALLOC_FIRST_FIT
+	/* scan freelist */
+	for (f = freelist.lh_first; f != NULL && f->size < size;
+	    f = f->list.le_next)
+		/* noop */ ;
+	bestf = f;
+	failed = (bestf == (struct fl *)0);
+#else
+	/* scan freelist */
+	f = freelist.lh_first;
+	while (f != NULL) {
+		if (f->size >= size) {
+			if (f->size == size)	/* exact match */
+				goto found;
+
+			if (f->size < bestsize) {
+				/* keep best fit */
+				bestf = f;
+				bestsize = f->size;
+			}
 		}
+		f = f->list.le_next;
 	}
-		
-	f->next = al;
-	al = f;
-	return (void *)f + ALIGN(sizeof(struct ml));
+
+	/* no match in freelist if bestsize unchanged */
+	failed = (bestsize == 0xffffffff);
+#endif
+
+	if (failed) {	/* nothing found */
+		/*
+		 * Allocate memory from the OpenFirmware, rounded
+		 * to page size, and record the chunk size.
+		 */
+		size = roundup(size, NBPG);
+		help = OF_claim(0, size, NBPG);
+		if (help == (char *)-1)
+			panic("alloc: out of memory");
+
+		f = (struct ml *)help;
+		f->size = size;
+#ifdef ALLOC_TRACE
+		printf("=%lx (new chunk size %u)\n",
+		    (u_long)(help + OVERHEAD), f->f_size);
+#endif
+		goto out;
+	}
+
+	/* we take the best fit */
+	f = bestf;
+
+ found:
+	/* remove from freelist */
+	LIST_REMOVE(f, list);
+	help = (char *)f;
+#ifdef ALLOC_TRACE
+	printf("=%lx (origsize %u)\n", (u_long)(help + OVERHEAD), f->size);
+#endif
+ out:
+	/* place on allocated list */
+	LIST_INSERT_HEAD(&allocatedlist, f, list);
+	return (help + OVERHEAD);
 }
 
 void
 free(ptr, size)
 	void *ptr;
-	unsigned size;
+	unsigned size;	/* only for consistenct check */
 {
-	struct ml *f = (struct ml *)(ptr - ALIGN(sizeof(struct ml)));
-	
-#if IGNORE_FOR_NOW
-	if (f->size != roundup(ALIGN(size) + ALIGN(sizeof(struct ml)), NBPG))
-		panic("free: wrong size (%x != %x)",
-		      f->size,
-		      roundup(ALIGN(size) + ALIGN(sizeof(struct ml)), NBPG));
+	register struct ml *a = (struct ml *)((char*)ptr - OVERHEAD);
+
+#ifdef ALLOC_TRACE
+	printf("free(%lx, %u) (origsize %u)\n", (u_long)ptr, size, a->size);
 #endif
-	f->next = fl;
-	fl = f;
+#ifdef DEBUG
+	if (size > a->size)
+		printf("free %u bytes @%lx, should be <=%u\n",
+		    size, (u_long)ptr, a->size);
+#endif
+
+	/* Remove from allocated list, place on freelist. */
+	LIST_REMOVE(a, list);
+	LIST_INSERT_HEAD(&freelist, a, list);
 }
 
 void
 freeall()
 {
-#ifdef	__notyet__		/* looks like there is a bug in Motorola OFW */
-	struct ml *m1, *m2;
+#ifdef __notyet__		/* Firmware bug ?! */
+	struct ml *m;
 
-	for (m1 = fl; m1; m1 = m2) {
-		m2 = m1->next;
-		OF_release(m1, m1->size);
+	/* Release chunks on freelist... */
+	while ((m = freelist.lh_first) != NULL) {
+		LIST_REMOVE(m, list);
+		OF_release(m, m->size);
 	}
-	for (m1 = al; m1; m1 = m2) {
-		m2 = m1->next;
-		OF_release(m1, m1->size);
+
+	/* ...and allocated list. */
+	while ((m = allocatedlist.lh_first) != NULL) {
+		LIST_REMOVE(m, list);
+		OF_release(m, m->size);
 	}
-#endif
+#endif /* __notyet__ */
 }
-
-#ifdef	__notdef__
-#ifdef	FIREPOWERBUGS
-/*
- * Since firmware insists on running virtual, we manage memory ourselves,
- * hoping that OpenFirmware will not need extra memory.
- * (But then, the callbacks don't work anyway).
- */
-#define	OFMEM_REGIONS	32
-static struct {
-	u_int start;
-	u_int size;
-} OFavail[OFMEM_REGIONS];
-
-void *
-OF_claim(virt, size, align)
-	void *virt;
-	u_int size, align;
-{
-	static int init;
-	int i;
-	u_int addr = -1;
-	
-	if (!init) {
-		int phandle;
-		
-		init = 1;
-
-		if ((phandle = OF_finddevice("/memory")) == -1
-		    || OF_getprop(phandle, "available",
-				  OFavail, sizeof OFavail) <= 0)
-			return (void *)-1;
-	}
-	if (align) {
-		/* Due to the above, anything is page aligned here */
-		for (i = 0; i < OFMEM_REGIONS; i++) {
-			if (!OFavail[i].size)
-				break;
-			if (OFavail[i].size > size) {
-				addr = OFavail[i].start;
-				OFavail[i].start += size;
-				OFavail[i].size -= size;
-				break;
-			}
-		}
-	} else {
-		addr = (u_int)virt;
-		for (i = 0; i < OFMEM_REGIONS; i++) {
-			if (!OFavail[i].size) {
-				addr = -1;
-				break;
-			}
-			if (OFavail[i].start <= addr
-			    && addr + size - OFavail[i].start <= OFavail[i].size) {
-				/* Be lazy here, just cut off anything below addr */
-				size += addr - OFavail[i].start;
-				OFavail[i].start += size;
-				OFavail[i].size -= size;
-				break;
-			}
-		}
-	}
-	return (void *)addr;
-}
-
-/* Since this is called solely immediately before chain, we ignore it. */
-void
-OF_release(virt, size)
-	void *virt;
-	u_int size;
-{
-}
-#endif	/* FIREPOWERBUGS */
-#endif

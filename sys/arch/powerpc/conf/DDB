@@ -13,9 +13,11 @@ option		NATIVE_ELF
 # various hacks due to bugs in Openfirmware implementation
 option		FIREPOWERBUGS
 
+# specific define for VI boards
+options		power4e
+
 #option		IPKDBUSERHACK
 #makeoptions	DEBUG="-g"
-
 options		DDB
 options		KTRACE
 options		SYSCALL_DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.2 1998/05/29 04:15:35 rahnds Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -157,6 +157,10 @@ isabrmatch(parent, cfdata, aux)
 	return (1);
 }
 
+typedef void (void_f) (void);
+extern void_f *pending_int_f;
+void isa_do_pending_int();
+
 void
 isabrattach(parent, self, aux)
 	struct device *parent;
@@ -165,6 +169,8 @@ isabrattach(parent, self, aux)
 {
 	struct isabr_softc *sc = (struct isabr_softc *)self;
 	struct isabus_attach_args iba;
+
+	pending_int_f = isa_do_pending_int;
 
 	printf("\n");
 
@@ -371,7 +377,7 @@ isabr_intr_disestablish(ic, arg)
 }
 
 void
-do_pending_int()
+isa_do_pending_int()
 {
 	struct intrhand *ih;
 	int vector;

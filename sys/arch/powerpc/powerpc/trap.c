@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.7 1998/04/06 20:21:11 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.8 1998/05/29 04:15:41 rahnds Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -260,7 +260,9 @@ syscall_bad:
 	
 brain_damage:
 		printf("trap type %x at %x\n", type, frame->srr0);
+/*
 mpc_print_pci_stat();
+*/
 		panic("trap");
 
 	case EXC_PGM|EXC_USER:

@@ -1,5 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.2 1996/12/28 06:31:17 rahnds Exp $	*/
-/*	$NetBSD: ofdev.c,v 1.1 1996/09/30 16:35:03 ws Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,12 +37,12 @@
 #include <sys/disklabel.h>
 #include <netinet/in.h>
 
-#include <stand.h>
-#include <ufs.h>
-#include <cd9660.h>
-#include <nfs.h>
+#include <lib/libsa/stand.h>
+#include <lib/libsa/ufs.h>
+#include <lib/libsa/cd9660.h>
+#include <lib/libsa/nfs.h>
 
-#include "ofdev.h"
+#include <powerpc/stand/ofdev.h>
 
 extern char bootdev[];
 
@@ -149,13 +148,14 @@ static struct fs_ops file_system_ufs = {
 	ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat
 };
 static struct fs_ops file_system_cd9660 = {
-	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek, cd9660_stat
+	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
+	    cd9660_stat
 };
 static struct fs_ops file_system_nfs = {
 	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
 };
 
-struct fs_ops file_system[2];
+struct fs_ops file_system[3];
 int nfsys;
 
 static struct of_dev ofdev = {
@@ -186,7 +186,7 @@ search_label(devp, off, buf, lp, off0)
 	u_long off0;
 {
 	size_t read;
-	struct mbr_partition *p;
+	struct dos_partition *p;
 	int i;
 	u_long poff;
 	static int recursion;
@@ -200,10 +200,11 @@ search_label(devp, off, buf, lp, off0)
 
 	if (recursion++ <= 1)
 		off0 += off;
-	for (p = (struct mbr_partition *)(buf + MBRPARTOFF), i = 4;
+	for (p = (struct dos_partition *)(buf + DOSPARTOFF), i = 4;
 	     --i >= 0; p++) {
-		if (p->mbr_type == MBR_NETBSD) {
-			poff = get_long(&p->mbr_start) + off0;
+		if (p->dp_typ == DOSPTYP_OPENBSD ||
+		    p->dp_typ == DOSPTYP_NETBSD) {
+			poff = get_long(&p->dp_start) + off0;
 			if (strategy(devp, F_READ, poff + LABELSECTOR,
 				     DEV_BSIZE, buf, &read) == 0
 			    && read == DEV_BSIZE) {
@@ -217,8 +218,8 @@ search_label(devp, off, buf, lp, off0)
 				recursion--;
 				return ERDLAB;
 			}
-		} else if (p->mbr_type == MBR_EXTENDED) {
-			poff = get_long(&p->mbr_start);
+		} else if (p->dp_typ == DOSPTYP_EXTEND) {
+			poff = get_long(&p->dp_start);
 			if (!search_label(devp, poff, buf, lp, off0)) {
 				recursion--;
 				return 0;
@@ -270,8 +271,10 @@ devopen(of, name, file)
 		*cp++ = partition;
 		*cp = 0;
 	}
+#if 0
 	if (*buf != '/')
 		strcat(opened_name, "/");
+#endif
 	strcat(opened_name, buf);
 	*file = opened_name + strlen(fname) + 1;
 	if ((handle = OF_finddevice(fname)) == -1)
@@ -316,7 +319,8 @@ devopen(of, name, file)
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
 		bcopy(&file_system_ufs, file_system, sizeof file_system[0]);
-		bcopy(&file_system_cd9660, file_system + 1, sizeof file_system[0]);
+		bcopy(&file_system_cd9660, file_system + 1,
+		    sizeof file_system[0]);
 		nfsys = 2;
 		return 0;
 	}

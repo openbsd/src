@@ -1,5 +1,5 @@
 #
-# V.I. powerpc-specific configuration info
+# powerpc-specific configuration info
 #
 maxpartitions 16
 
@@ -61,19 +61,27 @@ major   {rd = 17}
 
 device	mpcpcibr {} : pcibus
 attach	mpcpcibr at mainbus
-file	arch/powerpc/pci/mpcpcibus.c
+file	arch/powerpc/pci/mpcpcibus.c	mpcpcibr
 
 device	isabr {} : isabus
 attach	isabr at mainbus
 file	arch/powerpc/isa/isabus.c	isabr
 include "../../../scsi/files.scsi"
-major	{sd = 0}
+major	{sd = 2}		# hey this was 0 but at slot 2 in bdevsw XXX
 major	{cd = 3}
 
 define	pcmcia {}			# XXX dummy decl...
 include	"../../../dev/pci/files.pci"
 include	"../../../dev/isa/files.isa"
-major	{ wd = 4 }
+major	{ wd = 5 }		# Not even in bdevsw XXX
 
 include "../../../dev/isa/files.isapnp"
 file    arch/arc/isa/isapnp_machdep.c   isapnp   
+
+#
+# Openfirmware support
+#
+
+include "../../../dev/ofw/files.ofw"
+file	arch/powerpc/powerpc/opendev.c ofcons | ofnet | ofdisk
+major	{ ofdisk = 4 }

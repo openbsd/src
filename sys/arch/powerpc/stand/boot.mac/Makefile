@@ -1,15 +1,15 @@
-#	$OpenBSD: Makefile,v 1.3 1997/04/27 20:56:35 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 1998/05/29 04:15:56 rahnds Exp $
 #       $NetBSD: Makefile,v 1.1 1996/09/30 16:35:05 ws Exp $
 
 R=              ..
 .PATH:          $(.CURDIR)/$(R)
-RELOC=		4000
-ENTRY=		__start
-LOADADDR=	4000
+RELOC=		20000
+ENTRY=		_entry
+LOADADDR=	20000
 PROG=           boot.mac
 SRCS=           Locore.c boot.c ofdev.c net.c netif_of.c alloc.c
 #CFLAGS+=       -DDEBUG -DNETIF_DEBUG
-CFLAGS+=	-DEXEC_ELF
+CFLAGS+=	-DEXEC_ELF -DXCOFF_GLUE -DMAC
 NOMAN=
 INSTALL_STRIP=
 MAKEELF=        makeelf
@@ -19,6 +19,7 @@ OBJCOPY_ARGS=	-O aixcoff-rs6000 -R .stab -R .stabstr -R .comment
 LDFLAGS=	-X -Ttext $(RELOC) -e $(ENTRY) -T ${.CURDIR}/ld.script
 
 LIBS!=          cd $(.CURDIR)/$(R); $(MAKE) libdep
+CLEANFILES=	hack-coff
 
 $(PROG):        $(OBJS) $(LIBS) hack-coff
 	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) -o ${.TARGET}
@@ -27,6 +28,6 @@ $(PROG):        $(OBJS) $(LIBS) hack-coff
 #	${MAKEELF} $(REAL_VIRT) a.out $(.TARGET)
 
 hack-coff:	hack-coff.c
-	${HOSTCC} -o hack-coff ${.CURDIR}/hack-coff.c
+	${HOSTCC} -I${.CURDIR} -o hack-coff ${.CURDIR}/hack-coff.c
 
 .include <bsd.prog.mk>
