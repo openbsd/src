@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.20 1997/01/26 05:18:29 downsj Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.21 1997/02/02 00:32:02 tholo Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1167,7 +1167,7 @@ sys_lseek(p, v, retval)
 				    cred, p);
 		if (error)
 			return (error);
-		if (vattr.va_size + SCARG(uap, offset) < 0)
+		if ((off_t)vattr.va_size + SCARG(uap, offset) < 0)
 			return (EINVAL);
 		fp->f_offset = SCARG(uap, offset) + vattr.va_size;
 		break;
