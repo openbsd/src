@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.39 2001/01/27 12:03:36 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.40 2001/02/08 22:37:45 angelos Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ x509_hash_enter (X509 *cert)
 
   if (!x509_cert_get_subjects (cert, &n, &id, &len))
     {
-      log_print ("x509_hash_enter: can not retrieve subjects");
+      log_print ("x509_hash_enter: cannot retrieve subjects");
       return 0;
     }
 
