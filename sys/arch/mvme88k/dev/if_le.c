@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.6 2004/05/06 18:37:35 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.7 2004/05/17 08:36:22 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -89,11 +89,11 @@ nvram_cmd(sc, cmd, addr)
 	u_char cmd;
 	u_short addr;
 {
-	int i;
 	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
+	int i;
 
-	for (i=0;i<8;i++) {
-		reg1->ler1_ear=((cmd|(addr<<1))>>i); 
+	for (i = 0; i < 8; i++) {
+		reg1->ler1_ear = ((cmd | (addr << 1)) >> i); 
 		CDELAY; 
 	} 
 }
@@ -106,21 +106,27 @@ nvram_read(sc, nvram_addr)
 {
 	u_short val = 0, mask = 0x04000;
 	u_int16_t wbit;
-	/* these used by macros DO NOT CHANGE!*/
 	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
-	((struct le_softc *)sc)->csr = 0x4f;
+
+	((struct le_softc *)sc)->sc_csr = 0x4f;
 	ENABLE_NVRAM;
 	nvram_cmd(sc, NVRAM_RCL, 0);
 	DISABLE_NVRAM;
 	CDELAY;
 	ENABLE_NVRAM;
 	nvram_cmd(sc, NVRAM_READ, nvram_addr);
-	for (wbit=0; wbit<15; wbit++) {
-		(reg1->ler1_ear & 0x01) ? (val = (val | mask)) : (val = (val & (~mask)));
-		mask = mask>>1;
+	for (wbit = 0; wbit < 15; wbit++) {
+		if (reg1->ler1_ear & 0x01)
+			val |= mask;
+		else
+			val &= ~mask;
+		mask = mask >> 1;
 		CDELAY;
 	}
-	(reg1->ler1_ear & 0x01) ? (val = (val | 0x8000)) : (val = (val & 0x7FFF));
+	if (reg1->ler1_ear & 0x01)
+		val |= 0x8000;
+	else
+		val &= 0x7fff;
 	CDELAY;
 	DISABLE_NVRAM;
 	return (val);
@@ -130,11 +136,11 @@ void
 vleetheraddr(sc)
 	struct am7990_softc *sc;
 {
-	u_char * cp = sc->sc_arpcom.ac_enaddr;
+	u_char *cp = sc->sc_arpcom.ac_enaddr;
 	u_int16_t ival[3];
-	u_char i;
+	int i;
 
-	for (i=0; i<3; i++) {
+	for (i = 0; i < 3; i++) {
 		ival[i] = nvram_read(sc, i);
 	}
 	memcpy(cp, &ival[0], 6);
@@ -145,7 +151,7 @@ vlewrcsr(sc, port, val)
 	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
-	register struct vlereg1 *ler1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
+	struct vlereg1 *ler1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 
 	ler1->ler1_rap = port;
 	ler1->ler1_rdp = val;
@@ -156,7 +162,7 @@ vlerdcsr(sc, port)
 	struct am7990_softc *sc;
 	u_int16_t port;
 {
-	register struct vlereg1 *ler1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
+	struct vlereg1 *ler1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
 
 	ler1->ler1_rap = port;
@@ -169,11 +175,12 @@ void
 vleinit(sc)
 	struct am7990_softc *sc;
 {
-	register struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
+	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 	u_char vec = ((struct le_softc *)sc)->sc_vec;
 	u_char ipl = ((struct le_softc *)sc)->sc_ipl;
-	((struct le_softc *)sc)->csr = 0x4f;
-	WRITE_CSR_AND( ~ipl );
+
+	((struct le_softc *)sc)->sc_csr = 0x4f;
+	WRITE_CSR_AND(ipl);
 	SET_VEC(vec);
 	return;
 }
@@ -183,7 +190,8 @@ void
 vlereset(sc)
 	struct am7990_softc *sc;
 {
-	register struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
+	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
+
 	RESET_HW;
 #ifdef LEDEBUG
 	if (sc->sc_debug) {
@@ -191,14 +199,13 @@ vlereset(sc)
 	}
 #endif
 	SYSFAIL_CL;
-	return;
 }
 
 int
 vle_intr(sc)
 	void *sc;
 {
-	register struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
+	struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 	int rc;
 
 	rc = am7990_intr(sc);
