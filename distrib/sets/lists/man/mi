@@ -68,7 +68,6 @@
 ./usr/share/info/g77.info-2
 ./usr/share/info/g77.info-20
 ./usr/share/info/g77.info-21
-./usr/share/info/g77.info-22
 ./usr/share/info/g77.info-3
 ./usr/share/info/g77.info-4
 ./usr/share/info/g77.info-5
@@ -1594,3 +1593,4 @@
 ./usr/share/man/cat8/certpatch.0
 ./usr/share/man/cat3/fparseln.0
 ./usr/share/man/cat8/rc.shutdown.0
+./usr/share/man/cat4/i386/wi.0
