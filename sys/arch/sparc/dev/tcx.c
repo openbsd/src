@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.17 2003/06/06 19:42:47 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.18 2003/06/15 21:04:11 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -63,9 +63,6 @@
 
 /*
  * color display (TCX) driver.
- *
- * XXX Use of the vertical retrace interrupt to update the colormap is not
- * enabled by default, as it hangs the system on some machines.
  */
 
 #include <sys/param.h>
@@ -274,11 +271,9 @@ tcxattach(parent, self, args)
 	tcx_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	tcx_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
 
-#if 0
 	sc->sc_ih.ih_fun = tcx_intr;
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB);
-#endif
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, &tcx_stdscreen, -1,
@@ -342,21 +337,21 @@ tcx_ioctl(dev, cmd, data, flags, p)
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
-		cm = (struct wsdisplay_cmap *)data;
-		error = bt_getcmap(&sc->sc_cmap, cm);
-		if (error)
-			return (error);
+		if (sc->sc_cplane == NULL) {
+			cm = (struct wsdisplay_cmap *)data;
+			error = bt_getcmap(&sc->sc_cmap, cm);
+			if (error)
+				return (error);
+		}
 		break;
 	case WSDISPLAYIO_PUTCMAP:
-		cm = (struct wsdisplay_cmap *)data;
-		error = bt_putcmap(&sc->sc_cmap, cm);
-		if (error)
-			return (error);
-#if 0
-		tcx_loadcmap_deferred(sc, cm->index, cm->count);
-#else
-		bt_loadcmap(&sc->sc_cmap, sc->sc_bt, cm->index, cm->count, 1);
-#endif
+		if (sc->sc_cplane == NULL) {
+			cm = (struct wsdisplay_cmap *)data;
+			error = bt_putcmap(&sc->sc_cmap, cm);
+			if (error)
+				return (error);
+			tcx_loadcmap_deferred(sc, cm->index, cm->count);
+		}
 		break;
 
 	case WSDISPLAYIO_SMODE:
@@ -556,7 +551,6 @@ tcx_loadcmap_deferred(struct tcx_softc *sc, u_int start, u_int ncolors)
 	u_int32_t thcm;
 
 	thcm = sc->sc_thc->thc_hcmisc;
-	thcm &= ~THC_MISC_RESET;
 	thcm |= THC_MISC_INTEN;
 	sc->sc_thc->thc_hcmisc = thcm;
 }
@@ -569,18 +563,19 @@ tcx_intr(v)
 	u_int32_t thcm;
 
 	thcm = sc->sc_thc->thc_hcmisc;
-	if ((thcm & (THC_MISC_INTEN | THC_MISC_INTR)) !=
-	    (THC_MISC_INTEN | THC_MISC_INTR)) {
-		/* Not expecting an interrupt, it's not for us. */
-		return (0);
+	if (thcm & THC_MISC_INTEN) {
+		thcm &= ~(THC_MISC_INTR | THC_MISC_INTEN);
+
+		/* Acknowledge the interrupt */
+		sc->sc_thc->thc_hcmisc = thcm | THC_MISC_INTR;
+
+		bt_loadcmap(&sc->sc_cmap, sc->sc_bt, 0, 256, 1);
+
+		/* Disable further interrupts now */
+		sc->sc_thc->thc_hcmisc = thcm;
+
+		return (1);
 	}
 
-	/* Acknowledge the interrupt and disable it. */
-	thcm &= ~(THC_MISC_RESET | THC_MISC_INTEN);
-	thcm |= THC_MISC_INTR;
-	sc->sc_thc->thc_hcmisc = thcm;
-
-	bt_loadcmap(&sc->sc_cmap, sc->sc_bt, 0, 256, 1);
-
-	return (1);
+	return (0);
 }
