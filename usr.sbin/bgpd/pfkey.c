@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.5 2004/01/28 11:03:32 markus Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.6 2004/01/28 14:24:29 markus Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -107,13 +107,27 @@ pfkey_send(int sd, uint8_t mtype, struct bgpd_addr *src,
 		break;
 	case SADB_ADD:
 	case SADB_UPDATE:
+	case SADB_DELETE:
 		bzero(&sa, sizeof(sa));
 		sa.sadb_sa_exttype = SADB_EXT_SA;
 		sa.sadb_sa_len = sizeof(sa) / 8;
 		sa.sadb_sa_replay = 0;
 		sa.sadb_sa_spi = spi;
 		sa.sadb_sa_state = SADB_SASTATE_MATURE;
+		break;
+	}
 
+	bzero(&sa_src, sizeof(sa_src));
+	sa_src.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
+	sa_src.sadb_address_len = (sizeof(sa_src) + ROUNDUP(ssrc.ss_len)) / 8;
+
+	bzero(&sa_dst, sizeof(sa_dst));
+	sa_dst.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+	sa_dst.sadb_address_len = (sizeof(sa_dst) + ROUNDUP(sdst.ss_len)) / 8;
+
+	switch (mtype) {
+	case SADB_ADD:
+	case SADB_UPDATE:
 		bzero(&sa_key, sizeof(sa_key));
 		klen = strlen(key) / 2;
 		sa_key.sadb_key_exttype = SADB_EXT_KEY_AUTH;
@@ -134,14 +148,6 @@ pfkey_send(int sd, uint8_t mtype, struct bgpd_addr *src,
 		break;
 	}
 
-	bzero(&sa_src, sizeof(sa_src));
-	sa_src.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
-	sa_src.sadb_address_len = (sizeof(sa_src) + ROUNDUP(ssrc.ss_len)) / 8;
-
-	bzero(&sa_dst, sizeof(sa_dst));
-	sa_dst.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
-	sa_dst.sadb_address_len = (sizeof(sa_dst) + ROUNDUP(sdst.ss_len)) / 8;
-
 	iov_cnt = 0;
 
 	/* msghdr */
@@ -152,6 +158,7 @@ pfkey_send(int sd, uint8_t mtype, struct bgpd_addr *src,
 	switch (mtype) {
 	case SADB_ADD:
 	case SADB_UPDATE:
+	case SADB_DELETE:
 		/* SA hdr */
 		iov[iov_cnt].iov_base = &sa;
 		iov[iov_cnt].iov_len = sizeof(sa);
