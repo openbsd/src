@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.262 2002/09/29 22:52:21 krw Exp $
+#	$OpenBSD: install.sub,v 1.263 2002/09/30 07:07:55 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -386,8 +386,8 @@ get_setsdir() {
 	_mounted=`mount | sed -ne "/\(.*\)\/\(${_mp#/}\)\/*\(.*\) type.*/s//\/\3/p"`
 
 	if [ -z "$_mounted" ]; then
-	    echo "No filesystems mounted at or below ${_mp}."
-	    return
+		echo "No filesystems mounted at or below ${_mp}."
+		return
 	fi
 
 	while : ; do
@@ -573,7 +573,7 @@ configure_ifs() {
 		_if_mask=$resp
 	fi
 
-        _mediaopts=`ifconfig -m $_if_name | sed -n '/media:/D;/media/p'`
+	_mediaopts=`ifconfig -m $_if_name | sed -n '/media:/D;/media/p'`
 	if [ "$_mediaopts" ]; then
 		cat << __EOT
 The default media for $_if_name is
