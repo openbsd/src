@@ -1,4 +1,4 @@
-/* $Id: sc7816.c,v 1.4 2001/06/12 19:35:25 rees Exp $ */
+/* $Id: sc7816.c,v 1.5 2001/06/26 16:26:14 deraadt Exp $ */
 
 /*
 copyright 2000
@@ -126,7 +126,7 @@ scopen(int ttyn, int flags, int *ep)
 int
 scxopen(int ttyn, int flags, int *ep, char *config_path, char *driver_path)
 {
-    int i, r = 0;
+    int r = 0;
 
 #ifdef SCPERF
     SetTime ("scopen() start");
@@ -159,6 +159,8 @@ scxopen(int ttyn, int flags, int *ep, char *config_path, char *driver_path)
 	if (!config_path)
 	    config_path = defaultConfigFilePath;
 	if (DBUpdateReaders(config_path, addReader) < 0) {
+	    int i;
+
 	    if (config_path != defaultConfigFilePath) {
 		/* Something wrong with caller's config file path. */
 		r = SCEDRVR;
@@ -194,7 +196,6 @@ scxopen(int ttyn, int flags, int *ep, char *config_path, char *driver_path)
 int
 openReader(int readerNum, int flags)
 {
-    void *libHandle;
     readerInfo *reader;
 
 #ifdef DEBUG
@@ -207,6 +208,8 @@ openReader(int readerNum, int flags)
 
     if (!reader->driverLoaded) {
 #ifdef DL_READERS
+	void *libHandle;
+
 	if (!reader->driverPath)
 	    return SCEDRVR;
 	libHandle = dlopen(reader->driverPath, RTLD_LAZY);
