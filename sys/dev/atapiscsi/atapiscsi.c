@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.39 2001/03/25 13:11:56 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.40 2001/04/17 18:06:36 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -1179,7 +1179,8 @@ wdc_atapi_intr_complete(chp, xfer, timeout, ret)
 		}		
 	}
 
-        if (chp->wdc->dma_status & ~WDC_DMAST_UNDER) {
+        if ((xfer->c_flags & C_DMA) &&
+	    (chp->wdc->dma_status & ~WDC_DMAST_UNDER)) {
 		drvp->n_dmaerrs++;
 		sc_xfer->error = XS_RESET;
 
@@ -1530,17 +1531,14 @@ wdc_atapi_done(chp, xfer, timeout, ret)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	int doing_dma = xfer->c_flags & C_DMA;
 
-	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
+	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x error 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
-	    (u_int)xfer->c_flags), DEBUG_XFERS);
+	    (u_int)xfer->c_flags, sc_xfer->error), DEBUG_XFERS);
 
 	sc_xfer->flags |= ITSDONE;
 	if (drvp->n_dmaerrs ||
 	    (sc_xfer->error != XS_NOERROR && sc_xfer->error != XS_SENSE &&
 	    sc_xfer->error != XS_SHORTSENSE)) {
-#if 0
-		printf("wdc_atapi_done: sc_xfer->error %d\n", sc_xfer->error);
-#endif
 		drvp->n_dmaerrs = 0;
 		if (doing_dma)
 			wdc_downgrade_mode(drvp);
@@ -1565,6 +1563,7 @@ wdc_atapi_reset(chp, xfer, timeout, ret)
 {
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 
+	WDCDEBUG_PRINT(("wdc_atapi_reset\n"), DEBUG_XFERS);
 	wdccommandshort(chp, xfer->drive, ATAPI_SOFT_RESET);
 	drvp->state = 0;
 
