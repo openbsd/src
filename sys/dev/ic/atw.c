@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.21 2004/07/15 16:21:13 millert Exp $	*/
+/*	$OpenBSD: atw.c,v 1.22 2004/07/19 21:14:17 millert Exp $	*/
 /*	$NetBSD: atw.c,v 1.65 2004/07/15 07:31:05 dyoung Exp $	*/
 
 /*-
@@ -2672,6 +2672,8 @@ atw_detach(struct atw_softc *sc)
 	 */
 	if ((sc->sc_flags & ATWF_ATTACHED) == 0)
 		return (0);
+
+	timeout_del(&sc->sc_scan_to);
 
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
