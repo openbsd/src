@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.40 2001/05/03 14:00:58 espie Exp $
+.\"	$OpenBSD: make.1,v 1.41 2001/05/05 12:57:48 espie Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -945,6 +945,7 @@ The syntax of a for loop is:
 .It Xo
 .Ic \&.for
 .Ar variable
+.Op Ar variable ...
 .Ic in
 .Ar expression
 .Xc
@@ -958,11 +959,17 @@ The syntax of a for loop is:
 After the for
 .Ar expression
 is evaluated, it is split into words.
-The iteration
-.Ar variable
-is successively set to each word, and substituted in the
+On each iteration of the loop, one word is assigned to each 
+.Ar variable ,
+in order,
+and these 
+.Ar variables 
+are substituted in the
 .Ic make-rules
 inside the body of the for loop.
+The number of words must match the number of iteration variables;
+that is, if there are three iteration variables, the number of words
+must be a multiple a three.
 .Sh COMMENTS
 Comments begin with a hash
 .Pq Ql \&#
