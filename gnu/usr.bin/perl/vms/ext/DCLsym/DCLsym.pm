@@ -215,7 +215,7 @@ C<tie> described above.
 If called in a scalar context, C<getsym> returns the value of the symbol whose
 name is given as the argument to the call, or C<undef> if no such symbol
 exists.  Symbols in the local symbol table are always used in preference to
-symbols in the global symbol table.  If called in an array context, C<getsym>
+symbols in the global symbol table.  If called in a list context, C<getsym>
 returns a two-element list, whose first element is the value of the symbol, and
 whose second element is the string 'GLOBAL' or 'LOCAL', indicating the table
 from which the symbol's value was read.

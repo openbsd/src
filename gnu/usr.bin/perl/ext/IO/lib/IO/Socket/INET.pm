@@ -151,8 +151,13 @@ sub configure {
 	$sock->socket(AF_INET, $type, $proto) or
 	    return _error($sock, $!, "$!");
 
-	if ($arg->{Reuse}) {
+	if ($arg->{Reuse} || $arg->{ReuseAddr}) {
 	    $sock->sockopt(SO_REUSEADDR,1) or
+		    return _error($sock, $!, "$!");
+	}
+
+	if ($arg->{ReusePort}) {
+	    $sock->sockopt(SO_REUSEPORT,1) or
 		    return _error($sock, $!, "$!");
 	}
 
@@ -302,7 +307,9 @@ C<IO::Socket::INET> provides.
     Proto	Protocol name (or number)    "tcp" | "udp" | ...
     Type	Socket type                  SOCK_STREAM | SOCK_DGRAM | ...
     Listen	Queue size for listen
-    Reuse	Set SO_REUSEADDR before binding
+    ReuseAddr	Set SO_REUSEADDR before binding
+    Reuse	Set SO_REUSEADDR before binding (deprecated, prefer ReuseAddr)
+    ReusePort	Set SO_REUSEPORT before binding
     Timeout	Timeout	value for various operations
     MultiHomed  Try all adresses for multi-homed hosts
 

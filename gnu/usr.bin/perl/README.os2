@@ -115,7 +115,7 @@ Contents
          -  Threads
       AUTHOR 
       SEE ALSO 
-  
+
 =head1 DESCRIPTION
 
 =head2 Target
@@ -131,20 +131,28 @@ The current state is quite close to this target. Known limitations:
 
 =item *
 
-Some *nix programs use fork() a lot, but currently fork() is not
-supported after I<use>ing dynamically loaded extensions.
+Some *nix programs use fork() a lot; with the mostly useful flavors of perl
+for OS/2 (there are several built simultaneously) this is supported;
+some flavors do not.  Using fork() after I<use>ing dynamically loading
+extensions would not work with very old versions of EMX.
 
 =item *
 
 You need a separate perl executable F<perl__.exe> (see L<perl__.exe>)
-to use PM code in your application (like the forthcoming Perl/Tk).
+if you want to use PM code in your application (as Perl/Tk or OpenGL
+Perl modules do) without having a text-mode window present.
+
+While using the standard F<perl.exe> from a text-mode window is possible
+too, I have seen cases when this causes degradation of the system stability.
+Using F<perl__.exe> avoids such a degradation.
 
 =item *
 
 There is no simple way to access WPS objects. The only way I know
 is via C<OS2::REXX> extension (see L<OS2::REXX>), and we do not have access to
 convenience methods of Object-REXX. (Is it possible at all? I know
-of no Object-REXX API.)
+of no Object-REXX API.)  The C<SOM> extension (currently in alpha-text)
+may eventually remove this shortcoming.
 
 =back
 
@@ -153,7 +161,7 @@ Please keep this list up-to-date by informing me about other items.
 =head2 Other OSes
 
 Since OS/2 port of perl uses a remarkable EMX environment, it can
-run (and build extensions, and - possibly - be build itself) under any
+run (and build extensions, and - possibly - be built itself) under any
 environment which can run EMX. The current list is DOS,
 DOS-inside-OS/2, Win0.3*, Win0.95 and WinNT. Out of many perl flavors,
 only one works, see L<"perl_.exe">.
@@ -178,13 +186,14 @@ has much more functions working (like C<fork>, C<popen> and so on). In
 fact RSX is required if there is no VCPI present. Note the
 RSX requires DPMI.
 
-Only the latest runtime is supported, currently C<0.9c>. Perl may run
+Only the latest runtime is supported, currently C<0.9d fix 03>. Perl may run
 under earlier versions of EMX, but this is not tested.
 
 One can get different parts of EMX from, say
 
-  ftp://ftp.cdrom.com/pub/os2/emx09c/
-  ftp://hobbes.nmsu.edu/os2/unix/emx09c/
+  http://www.leo.org/pub/comp/os/os2/leo/gnu/emx+gcc/
+  http://powerusersbbs.com/pub/os2/dev/   [EMX+GCC Development]
+  http://hobbes.nmsu.edu/pub/os2/dev/emx/v0.9d/
 
 The runtime component should have the name F<emxrt.zip>.
 
@@ -215,9 +224,11 @@ One can get RSX from, say
 
 Contact the author on C<rainer@mathematik.uni-bielefeld.de>.
 
-The latest F<sh.exe> with DOS hooks is available at
+The latest F<sh.exe> with DOS hooks is available in
 
-  ftp://ftp.math.ohio-state.edu/pub/users/ilya/os2/sh_dos.zip
+  ftp://ftp.math.ohio-state.edu/pub/users/ilya/os2/
+
+as F<sh_dos.zip> or under similar names starting with C<sh>, C<pdksh> etc.
 
 =item HPFS
 
@@ -232,15 +243,14 @@ read EMX docs to see how to do it.
 
 To start external programs with complicated command lines (like with
 pipes in between, and/or quoting of arguments), Perl uses an external
-shell. With EMX port such shell should be named <sh.exe>, and located
+shell. With EMX port such shell should be named F<sh.exe>, and located
 either in the wired-in-during-compile locations (usually F<F:/bin>),
 or in configurable location (see L<"PERL_SH_DIR">).
 
-For best results use EMX pdksh. The soon-to-be-available standard
-binary (5.2.12?) runs under DOS (with L<RSX>) as well, meanwhile use
-the binary from
+For best results use EMX pdksh. The standard binary (5.2.14 or later) runs
+under DOS (with L<RSX>) as well, see
 
-  ftp://ftp.math.ohio-state.edu/pub/users/ilya/os2/sh_dos.zip
+  ftp://ftp.math.ohio-state.edu/pub/users/ilya/os2/
 
 =back
 
@@ -267,7 +277,7 @@ rename your program to F<foo.cmd>, and start it by typing
 
 Note that because of stupid OS/2 limitations the full path of the perl
 script is not available when you use C<extproc>, thus you are forced to
-use C<-S> perl switch, and your script should be on path. As a plus
+use C<-S> perl switch, and your script should be on the C<PATH>. As a plus
 side, if you know a full path to your script, you may still start it
 with 
 
@@ -378,27 +388,35 @@ Note also that executable files on OS/2 can have an arbitrary extension,
 but F<.exe> will be automatically appended if no dot is present in the name.  
 The workaround as as simple as that:  since F<blah.> and F<blah> denote the 
 same file, to start an executable residing in file F<n:/bin/blah> (no 
-extension) give an argument C<n:/bin/blah.> to system().
+extension) give an argument C<n:/bin/blah.> (dot appended) to system().
 
-The last note is that currently it is not straightforward to start PM 
-programs from VIO (=text-mode) Perl process and visa versa.  Either ensure
-that shell will be used, as in C<system 'cmd /c epm'>, or start it using
+Perl will correctly start PM programs from VIO (=text-mode) Perl process;
+the opposite is not true: when you start a non-PM program from a PM
+Perl process, it would not run it in a separate session.  If a separate
+session is desired, either ensure
+that shell will be used, as in C<system 'cmd /c myprog'>, or start it using
 optional arguments to system() documented in C<OS2::Process> module.  This
-is considered a bug and should be fixed soon.
-
+is considered to be a feature.
 
 =head1 Frequently asked questions
+
+=head2 "It does not work"
+
+Perl binary distributions come with a F<testperl.cmd> script which tries
+to detect common problems with misconfigured installations.  There is a
+pretty large chance it will discover which step of the installation you
+managed to goof.  C<;-)>
 
 =head2 I cannot run external programs
 
 =over 4
 
-=item
+=item *
 
 Did you run your programs with C<-w> switch? See 
 L<Starting OS/2 (and DOS) programs under Perl>.
 
-=item
+=item *
 
 Do you try to run I<internal> shell commands, like C<`copy a b`>
 (internal for F<cmd.exe>), or C<`glob a*b`> (internal for ksh)? You
@@ -444,7 +462,7 @@ Use one of
 This would start F<find.exe> via F<cmd.exe> via C<sh.exe> via
 C<perl.exe>, but this is a price to pay if you want to use
 non-conforming program. In fact F<find.exe> cannot be started at all
-using C library API only. Otherwise the following command-lines were
+using C library API only. Otherwise the following command-lines would be
 equivalent:
 
   find "pattern" file
@@ -454,7 +472,7 @@ equivalent:
 
 =head2 Automatic binary installation
 
-The most convenient way of installing perl is via perl installer
+The most convenient way of installing a binary distribution of perl is via perl installer
 F<install.exe>. Just follow the instructions, and 99% of the
 installation blues would go away. 
 
@@ -542,26 +560,28 @@ LIBPATH);
 
   unzip perl_mlb.zip -d f:/perllib/lib
 
-If this directory is preserved, you do not need to change
-anything. However, for perl to find it if it is changed, you need to
+If this directory is exactly the same as the prefix which was compiled
+into F<perl.exe>, you do not need to change
+anything. However, for perl to find the library if you use a different
+path, you need to
 C<set PERLLIB_PREFIX> in F<Config.sys>, see L<"PERLLIB_PREFIX">.
 
 =item Additional Perl modules
 
-  unzip perl_ste.zip -d f:/perllib/lib/site_perl
+  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.8.3/
 
-If you do not change this directory, do nothing. Otherwise put this
+Same remark as above applies.  Additionally, if this directory is not
+one of directories on @INC (and @INC is influenced by C<PERLLIB_PREFIX>), you
+need to put this
 directory and subdirectory F<./os2> in C<PERLLIB> or C<PERL5LIB>
 variable. Do not use C<PERL5LIB> unless you have it set already. See
-L<perl/"ENVIRONMENT">. 
+L<perl/"ENVIRONMENT">.
 
 =item Tools to compile Perl modules
 
   unzip perl_blb.zip -d f:/perllib/lib
 
-If this directory is preserved, you do not need to change
-anything. However, for perl to find it if it is changed, you need to
-C<set PERLLIB_PREFIX> in F<Config.sys>, see L<"PERLLIB_PREFIX">.
+Same remark as for F<perl_ste.zip>.
 
 =item Manpages for Perl and utilities
 
@@ -581,7 +601,7 @@ working man to access these files.
 
   unzip perl_pod.zip -d f:/perllib/lib
 
-This is used by by C<perldoc> program (see L<perldoc>), and may be used to
+This is used by the C<perldoc> program (see L<perldoc>), and may be used to
 generate HTML documentation usable by WWW browsers, and
 documentation in zillions of other formats: C<info>, C<LaTeX>,
 C<Acrobat>, C<FrameMaker> and so on.
@@ -604,7 +624,7 @@ Set C<PERL_SH_DIR> (see L<"PERL_SH_DIR">) if you move F<sh.exe> from
 the above location.
 
 B<Note.> It may be possible to use some other sh-compatible shell
-(I<not tested>).
+(file globbing - if done via shell - may break).
 
 =back
 
@@ -689,6 +709,8 @@ on our C<MANPATH>, like this
 
   set MANPATH=c:/man;f:/perllib/man
 
+for Perl manpages in C<f:/perllib/man/man1/> etc.
+
 =head2 HTML
 
 If you have some WWW browser available, installed the Perl
@@ -723,7 +745,29 @@ can be constructed using C<pod2latex>.
 =head1 BUILD
 
 Here we discuss how to build Perl under OS/2. There is an alternative
-(but maybe older) view on L<http://www.shadow.net/~troc/os2perl.html>.
+(but maybe older) view on http://www.shadow.net/~troc/os2perl.html
+
+=head2 The short story
+
+Assume that you are a seasoned porter, so are sure that all the necessary
+tools are already present on your system, and you know how to get the Perl
+source distribution.  Untar it, change to the extract directory, and
+
+  gnupatch -p0 < os2\diff.configure
+  sh Configure -des -D prefix=f:/perllib
+  make
+  make test
+  make install
+  make aout_test
+  make aout_install
+
+This puts the executables in f:/perllib/bin.  Manually move them to the
+C<PATH>, manually move the built F<perl*.dll> to C<LIBPATH> (here F<*> is
+a not-very-meaningful hex checksum), and run
+
+  make installcmd INSTALLCMDDIR=d:/ir/on/path
+
+What follows is a detailed guide through these steps.
 
 =head2 Prerequisites
 
@@ -748,14 +792,16 @@ Possible locations to get this from are
   ftp://ftp.cdrom.com/pub/os2/emx09c/
 
 It is reported that the following archives contain enough utils to
-build perl: gnufutil.zip, gnusutil.zip, gnututil.zip, gnused.zip,
-gnupatch.zip, gnuawk.zip, gnumake.zip and ksh527rt.zip.  Note that
-all these utilities are known to be available from LEO:
+build perl: F<gnufutil.zip>, F<gnusutil.zip>, F<gnututil.zip>, F<gnused.zip>,
+F<gnupatch.zip>, F<gnuawk.zip>, F<gnumake.zip>, F<bsddev.zip> and
+F<ksh527rt.zip> (or a later version).  Note that all these utilities are
+known to be available from LEO:
 
   ftp://ftp.leo.org/pub/comp/os/os2/leo/gnu
 
-Make sure that no copies or perl are currently running.  Later steps
-of the build may fail since an older version of perl.dll loaded into
+If you have I<exactly the same version of Perl> installed already,
+make sure that no copies or perl are currently running.  Later steps
+of the build may fail since an older version of F<perl.dll> loaded into
 memory may be found. 
 
 Also make sure that you have F</tmp> directory on the current drive,
@@ -776,7 +822,7 @@ but may be not installed due to customization. If typing
 
 shows you do not have it, do I<Selective install>, and choose C<Link
 object modules> in I<Optional system utilities/More>. If you get into
-link386, press C<Ctrl-C>.
+link386 prompts, press C<Ctrl-C> to exit.
 
 =head2 Getting perl source
 
@@ -817,27 +863,11 @@ You may also need to apply the patches supplied with the binary
 distribution of perl.
 
 Note also that the F<db.lib> and F<db.a> from the EMX distribution
-are not suitable for multi-threaded compile (note that currently perl
-is not multithread-safe, but is compiled as multithreaded for
+are not suitable for multi-threaded compile (even single-threaded
+flavor of Perl uses multi-threaded C RTL, for
 compatibility with XFree86-OS/2). Get a corrected one from
 
   ftp://ftp.math.ohio-state.edu/pub/users/ilya/os2/db_mt.zip
-
-To make C<-p> filetest work, one may also need to apply the following patch
-to EMX headers:
-
-  --- /emx/include/sys/stat.h.orig	Thu May 23 13:48:16 1996
-  +++ /emx/include/sys/stat.h	Sun Jul 12 14:11:32 1998
-  @@ -53,7 +53,7 @@ struct stat
-   #endif
-
-   #if !defined (S_IFMT)
-  -#define S_IFMT   0160000  /* Mask for file type */
-  +#define S_IFMT   0170000  /* Mask for file type */
-   #define S_IFIFO  0010000  /* Pipe */
-   #define S_IFCHR  0020000  /* Character device */
-   #define S_IFDIR  0040000  /* Directory */
-
 
 =head2 Hand-editing
 
@@ -853,38 +883,26 @@ correct prefix you may avoid the need to specify C<PERLLIB_PREFIX>,
 see L<"PERLLIB_PREFIX">.
 
 I<Ignore the message about missing C<ln>, and about C<-c> option to
-tr>. In fact if you can trace where the latter spurious warning
-comes from, please inform me.
+tr>. The latter is most probably already fixed, if you see it and can trace
+where the latter spurious warning comes from, please inform me.
 
 Now
 
   make
 
 At some moment the built may die, reporting a I<version mismatch> or
-I<unable to run F<perl>>. This means that most of the build has been
-finished, and it is the time to move the constructed F<perl.dll> to
-some I<absolute> location in LIBPATH. After this is done the build
-should finish without a lot of fuss. I<One can avoid the interruption
-if one has the correct prebuilt version of F<perl.dll> on LIBPATH, but
-probably this is not needed anymore, since F<miniperl.exe> is linked
-statically now.>
-
-Warnings which are safe to ignore: I<mkfifo() redefined> inside
-F<POSIX.c>.
+I<unable to run F<perl>>.  This means that you do not have F<.> in
+your LIBPATH, so F<perl.exe> cannot find the needed F<perl67B2.dll> (treat
+these hex digits as line noise).  After this is fixed the build
+should finish without a lot of fuss.
 
 =head2 Testing
-
-If you haven't yet moved perl.dll onto LIBPATH, do it now (alternatively, if
-you have a previous perl installation you'd rather not disrupt until this one
-is installed, copy perl.dll to the t directory).
 
 Now run
 
   make test
 
-All tests should succeed (with some of them skipped).  Note that on one
-of the systems I see intermittent failures of F<io/pipe.t> subtest 9.
-Any help to track what happens with this test is appreciated.
+All tests should succeed (with some of them skipped).
 
 Some tests may generate extra messages similar to
 
@@ -892,16 +910,13 @@ Some tests may generate extra messages similar to
 
 =item A lot of C<bad free>
 
-in database tests related to Berkeley DB. This is a confirmed bug of
-DB. You may disable this warnings, see L<"PERL_BADFREE">.
-
-There is not much we can do with it (but apparently it does not cause 
-any real error with data).
+in database tests related to Berkeley DB. I<This should be fixed already.>
+If it persists, you may disable this warnings, see L<"PERL_BADFREE">.
 
 =item Process terminated by SIGTERM/SIGINT
 
 This is a standard message issued by OS/2 applications. *nix
-applications die in silence. It is considered a feature. One can
+applications die in silence. It is considered to be a feature. One can
 easily disable this by appropriate sighandlers. 
 
 However the test engine bleeds these message to screen in unexpected
@@ -909,15 +924,6 @@ moments. Two messages of this kind I<should> be present during
 testing.
 
 =back
-
-Two F<lib/io_*> tests may generate popups (system error C<SYS3175>), 
-but should succeed anyway.  This is due to a bug of EMX related to 
-fork()ing with dynamically loaded libraries.
-
-I submitted a patch to EMX which makes it possible to fork() with EMX 
-dynamic libraries loaded, which makes F<lib/io*> tests pass without
-skipping offended tests. This means that soon the number of skipped tests
-may decrease yet more.
 
 To get finer test reports, call
 
@@ -951,16 +957,6 @@ know why this should or should not work.
 
 =back
 
-=item F<lib/io_pipe.t>
-
-Checks C<IO::Pipe> module. Some feature of EMX - test fork()s with
-dynamic extension loaded - unsupported now.
-
-=item F<lib/io_sock.t>
-
-Checks C<IO::Socket> module. Some feature of EMX - test fork()s
-with dynamic extension loaded - unsupported now.
-
 =item F<op/stat.t>
 
 Checks C<stat()>. Tests:
@@ -973,11 +969,6 @@ Checks C<atime> and C<mtime> of C<stat()> - unfortunately, HPFS
 provides only 2sec time granularity (for compatibility with FAT?).
 
 =back
-
-=item F<lib/io_udp.t>
-
-It never terminates, apparently some bug in storing the last socket from
-which we obtained a message.
 
 =back
 
@@ -995,7 +986,7 @@ PATH, F<perl.dll> to a location on your LIBPATH.
 
 Run
 
-  make cmdscripts INSTALLCMDDIR=d:/ir/on/path
+  make installcmd INSTALLCMDDIR=d:/ir/on/path
 
 to convert perl utilities to F<.cmd> files and put them on
 PATH. You need to put F<.EXE>-utilities on path manually. They are
@@ -1015,21 +1006,11 @@ test and install by
 
 Manually put F<perl_.exe> to a location on your PATH.
 
-Since C<perl_> has the extensions prebuilt, it does not suffer from
-the I<dynamic extensions + fork()> syndrome, thus the failing tests
-look like
-
-  Failed Test  Status Wstat Total Fail  Failed  List of failed
-  ---------------------------------------------------------------
-  io/fs.t                      26   11  42.31%  2-5, 7-11, 18, 25
-  op/stat.t                    56    5   8.93%  3-4, 20, 35, 39
-  Failed 2/118 test scripts, 98.31% okay. 16/2445 subtests failed, 99.35% okay.
-
 B<Note.> The build process for C<perl_> I<does not know> about all the
 dependencies, so you should make sure that anything is up-to-date,
 say, by doing
 
-  make perl.dll
+  make perl_dll
 
 first.
 
@@ -1060,6 +1041,10 @@ You did not run C<omflibs>. See L<Prerequisites>.
 
 You use an old version of GNU make. See L<Prerequisites>.
 
+=head2 op/sprintf test failure
+
+This can result from a bug in emx sprintf which was fixed in 0.9d fix 03.
+
 =head1 Specific (mis)features of OS/2 port
 
 =head2 C<setpriority>, C<getpriority>
@@ -1068,28 +1053,67 @@ Note that these functions are compatible with *nix, not with the older
 ports of '94 - 95. The priorities are absolute, go from 32 to -95,
 lower is quicker. 0 is the default priority.
 
+B<WARNING>.  Calling C<getpriority> on a non-existing process can lock the
+system before Warp3 fixpak22.
+
 =head2 C<system()>
 
 Multi-argument form of C<system()> allows an additional numeric
 argument. The meaning of this argument is described in
 L<OS2::Process>.
 
+When finding a program to run, Perl first asks the OS to look for executables
+on C<PATH>.  If not found, it looks for a script with possible extensions 
+added in this order: no extension, F<.cmd>, F<.btm>, 
+F<.bat>, F<.pl>.  If found, Perl checks the start of the file for magic
+strings C<"#!"> and C<"extproc ">.  If found, Perl uses the rest of the
+first line as the beginning of the command line to run this script.  The
+only mangling done to the first line is extraction of arguments (currently
+up to 3), and ignoring of the path-part of the "interpreter" name if it can't
+be found using the full path.
+
+E.g., C<system 'foo', 'bar', 'baz'> may lead Perl to finding
+F<C:/emx/bin/foo.cmd> with the first line being
+
+ extproc /bin/bash    -x   -c
+
+If F</bin/bash> is not found, and appending of executable extensions to
+F</bin/bash> does not help either, then Perl looks for an executable F<bash> on
+C<PATH>.  If found in F<C:/emx.add/bin/bash.exe>, then the above system() is
+translated to
+
+  system qw(C:/emx.add/bin/bash.exe -x -c C:/emx/bin/foo.cmd bar baz)
+
+One additional translation is performed: instead of F</bin/sh> Perl uses
+the hardwired-or-customized shell (see C<L<"PERL_SH_DIR">>).
+
+The above search for "interpreter" is recursive: if F<bash> executable is not
+found, but F<bash.btm> is found, Perl will investigate its first line etc.
+The only hardwired limit on the recursion depth is implicit: there is a limit
+4 on the number of additional arguments inserted before the actual arguments
+given to system().  In particular, if no additional arguments are specified
+on the "magic" first lines, then the limit on the depth is 4.
+
+If Perl finds that the found executable is of different type than the
+current session, it will start the new process in a separate session of
+necessary type.  Call via C<OS2::Process> to disable this magic.
+
 =head2 C<extproc> on the first line
 
-If the first chars of a script are C<"extproc ">, this line is treated
+If the first chars of a Perl script are C<"extproc ">, this line is treated
 as C<#!>-line, thus all the switches on this line are processed (twice
-if script was started via cmd.exe).
+if script was started via cmd.exe).  See L<perlrun/DESCRIPTION>.
 
 =head2 Additional modules:
 
-L<OS2::Process>, L<OS2::REXX>, L<OS2::PrfDB>, L<OS2::ExtAttr>. These
+L<OS2::Process>, L<OS2::DLL>, L<OS2::REXX>, L<OS2::PrfDB>, L<OS2::ExtAttr>. These
 modules provide access to additional numeric argument for C<system>
-and to the list of the running processes,
-to DLLs having functions with REXX signature and to REXX runtime, to
+and to the information about the running process,
+to DLLs having functions with REXX signature and to the REXX runtime, to
 OS/2 databases in the F<.INI> format, and to Extended Attributes.
 
 Two additional extensions by Andreas Kaiser, C<OS2::UPM>, and
-C<OS2::FTP>, are included into my ftp directory, mirrored on CPAN.
+C<OS2::FTP>, are included into C<ILYAZ> directory, mirrored on CPAN.
 
 =head2 Prebuilt methods:
 
@@ -1113,6 +1137,7 @@ leaves drive as it is.
 
 =item  C<Cwd::change_drive(name)>
 
+chanes the "current" drive.
 
 =item  C<Cwd::sys_is_absolute(name)>
 
@@ -1148,28 +1173,136 @@ Set current value of extended library search path. If C<type> is
 present and I<true>, works with END_LIBPATH, otherwise with
 C<BEGIN_LIBPATH>. 
 
+=item C<OS2::Error(do_harderror,do_exception)>
+
+Returns	C<undef> if it was not called yet, otherwise bit 1 is
+set if on the previous call do_harderror was enabled, bit
+2 is set if if on previous call do_exception was enabled.
+
+This function enables/disables error popups associated with 
+hardware errors (Disk not ready etc.) and software exceptions.
+
+I know of no way to find out the state of popups I<before> the first call
+to this function.
+
+=item C<OS2::Errors2Drive(drive)>
+
+Returns C<undef> if it was not called yet, otherwise return false if errors
+were not requested to be written to a hard drive, or the drive letter if
+this was requested.
+
+This function may redirect error popups associated with hardware errors
+(Disk not ready etc.) and software exceptions to the file POPUPLOG.OS2 at
+the root directory of the specified drive.  Overrides OS2::Error() specified
+by individual programs.  Given argument undef will disable redirection.
+
+Has global effect, persists after the application exits.
+
+I know of no way to find out the state of redirection of popups to the disk
+I<before> the first call to this function.
+
+=item OS2::SysInfo()
+
+Returns a hash with system information. The keys of the hash are
+
+	MAX_PATH_LENGTH, MAX_TEXT_SESSIONS, MAX_PM_SESSIONS,
+	MAX_VDM_SESSIONS, BOOT_DRIVE, DYN_PRI_VARIATION,
+	MAX_WAIT, MIN_SLICE, MAX_SLICE, PAGE_SIZE,
+	VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION,
+	MS_COUNT, TIME_LOW, TIME_HIGH, TOTPHYSMEM, TOTRESMEM,
+	TOTAVAILMEM, MAXPRMEM, MAXSHMEM, TIMER_INTERVAL,
+	MAX_COMP_LENGTH, FOREGROUND_FS_SESSION,
+	FOREGROUND_PROCESS
+
+=item OS2::BootDrive()
+
+Returns a letter without colon.
+
+=item C<OS2::MorphPM(serve)>, C<OS2::UnMorphPM(serve)>
+
+Transforms the current application into a PM application and back.
+The argument true means that a real message loop is going to be served.
+OS2::MorphPM() returns the PM message queue handle as an integer.
+
+See L<"Centralized management of resources"> for additional details.
+
+=item C<OS2::Serve_Messages(force)>
+
+Fake on-demand retrieval of outstanding PM messages.  If C<force> is false,
+will not dispatch messages if a real message loop is known to
+be present.  Returns number of messages retrieved.
+
+Dies with "QUITing..." if WM_QUIT message is obtained.
+
+=item C<OS2::Process_Messages(force [, cnt])>
+
+Retrieval of PM messages until window creation/destruction.  
+If C<force> is false, will not dispatch messages if a real message loop
+is known to be present.
+
+Returns change in number of windows.  If C<cnt> is given,
+it is incremented by the number of messages retrieved.
+
+Dies with "QUITing..." if WM_QUIT message is obtained.
+
+=item C<OS2::_control87(new,mask)>
+
+the same as L<_control87(3)> of EMX.  Takes integers as arguments, returns
+the previous coprocessor control word as an integer.  Only bits in C<new> which
+are present in C<mask> are changed in the control word.
+
+=item OS2::get_control87()
+
+gets the coprocessor control word as an integer.
+
+=item C<OS2::set_control87_em(new=MCW_EM,mask=MCW_EM)>
+
+The variant of OS2::_control87() with default values good for
+handling exception mask: if no C<mask>, uses exception mask part of C<new>
+only.  If no C<new>, disables all the floating point exceptions.
+
+See L<"Misfeatures"> for details.
+
 =back
 
 (Note that some of these may be moved to different libraries -
 eventually).
 
 
+=head2 Prebuilt variables:
+
+=over 4
+
+=item $OS2::emx_rev
+
+same as _emx_rev of EMX, a string similar to C<0.9c>.
+
+=item $OS2::emx_env
+
+same as _emx_env of EMX, a number similar to 0x8001.
+
+=item $OS2::os_ver
+
+a number C<OS_MAJOR + 0.001 * OS_MINOR>.
+
+=back
+
 =head2 Misfeatures
 
 =over 4
 
-=item
+=item *
 
 Since L<flock(3)> is present in EMX, but is not functional, it is 
 emulated by perl.  To disable the emulations, set environment variable
 C<USE_PERL_FLOCK=0>.
 
-=item
+=item *
 
 Here is the list of things which may be "broken" on
 EMX (from EMX docs):
 
-=over
+=over 4
 
 =item *
 
@@ -1200,13 +1333,60 @@ L<waitpid(3)>:
 
 Note that C<kill -9> does not work with the current version of EMX.
 
-=item
+=item *
 
 Since F<sh.exe> is used for globing (see L<perlfunc/glob>), the bugs
 of F<sh.exe> plague perl as well. 
 
 In particular, uppercase letters do not work in C<[...]>-patterns with
 the current pdksh.
+
+=item *
+
+Unix-domain sockets on OS/2 live in a pseudo-file-system C</sockets/...>.
+To avoid a failure to create a socket with a name of a different form,
+C<"/socket/"> is prepended to the socket name (unless it starts with this
+already).
+
+This may lead to problems later in case the socket is accessed via the
+"usual" file-system calls using the "initial" name.
+
+=item *
+
+Apparently, IBM used a compiler (for some period of time around '95?) which
+changes FP mask right and left.  This is not I<that> bad for IBM's
+programs, but the same compiler was used for DLLs which are used with
+general-purpose applications.  When these DLLs are used, the state of
+floating-point flags in the application is not predictable.
+
+What is much worse, some DLLs change the floating point flags when in
+_DLLInitTerm() (e.g., F<TCP32IP>).  This means that even if you do not I<call>
+any function in the DLL, just the act of loading this DLL will reset your
+flags.  What is worse, the same compiler was used to compile some HOOK DLLs.
+Given that HOOK dlls are executed in the context of I<all> the applications
+in the system, this means a complete unpredictablity of floating point
+flags on systems using such HOOK DLLs.  E.g., F<GAMESRVR.DLL> of B<DIVE>
+origin changes the floating point flags on each write to the TTY of a VIO
+(windowed text-mode) applications.
+
+Some other (not completely debugged) situations when FP flags change include
+some video drivers (?), and some operations related to creation of the windows.
+People who code B<OpenGL> may have more experience on this.
+
+Perl is generally used in the situation when all the floating-point
+exceptions are ignored, as is the default under EMX.  If they are not ignored,
+some benign Perl programs would get a C<SIGFPE> and would die a horrible death.
+
+To circumvent this, Perl uses two hacks.  They help against I<one> type of
+damage only: FP flags changed when loading a DLL.
+
+One of the hacks is to disable floating point exceptions on startup (as
+is the default with EMX).  This helps only with compile-time-linked DLLs
+changing the flags before main() had a chance to be called.
+
+The other hack is to restore FP flags after a call to dlopen().  This helps
+against similar damage done by DLLs _DLLInitTerm() at runtime.  Currently
+no way to switch these hacks off is provided.
 
 =back
 
@@ -1238,11 +1418,80 @@ a dummy implementation.
 
 C<os2_stat> special-cases F</dev/tty> and F</dev/con>.
 
+=item C<mkdir>, C<rmdir>
+
+these EMX functions do not work if the path contains a trailing C</>.
+Perl contains a workaround for this.
+
 =item C<flock>
 
 Since L<flock(3)> is present in EMX, but is not functional, it is 
 emulated by perl.  To disable the emulations, set environment variable
 C<USE_PERL_FLOCK=0>.
+
+=back
+
+=head2 Identifying DLLs
+
+All the DLLs built with the current versions of Perl have ID strings
+identifying the name of the extension, its version, and the version
+of Perl required for this DLL.  Run C<bldlevel DLL-name> to find this
+info.
+
+=head2 Centralized management of resources
+
+Since to call certain OS/2 API one needs to have a correctly initialized
+C<Win> subsystem, OS/2-specific extensions may require getting C<HAB>s and
+C<HMQ>s.  If an extension would do it on its own, another extension could
+fail to initialize.
+
+Perl provides a centralized management of these resources:
+
+=over
+
+=item C<HAB>
+
+To get the HAB, the extension should call C<hab = perl_hab_GET()> in C.  After
+this call is performed, C<hab> may be accessed as C<Perl_hab>.  There is
+no need to release the HAB after it is used.
+
+If by some reasons F<perl.h> cannot be included, use
+
+  extern int Perl_hab_GET(void);
+
+instead.
+
+=item C<HMQ>
+
+There are two cases:
+
+=over
+
+=item *
+
+the extension needs an C<HMQ> only because some API will not work otherwise.
+Use C<serve = 0> below.
+
+=item *
+
+the extension needs an C<HMQ> since it wants to engage in a PM event loop.
+Use C<serve = 1> below.
+
+=back
+
+To get an C<HMQ>, the extension should call C<hmq = perl_hmq_GET(serve)> in C.
+After this call is performed, C<hmq> may be accessed as C<Perl_hmq>.
+
+To signal to Perl that HMQ is not needed any more, call
+C<perl_hmq_UNSET(serve)>.  Perl process will automatically morph/unmorph itself
+into/from a PM process if HMQ is needed/not-needed.  Perl will automatically
+enable/disable C<WM_QUIT> message during shutdown if the message queue is
+served/not-served.
+
+B<NOTE>.  If during a shutdown there is a message queue which did not disable
+WM_QUIT, and which did not process the received WM_QUIT message, the
+shutdown will be automatically cancelled.  Do not call C<perl_hmq_GET(1)>
+unless you are going to process messages on an orderly basis.
 
 =back
 
@@ -1260,29 +1509,19 @@ C<a.out>-style executable, but is linked with C<omf>-style dynamic
 library F<perl.dll>, and with dynamic CRT DLL. This executable is a
 VIO application.
 
-It can load perl dynamic extensions, and it can fork(). Unfortunately,
-with the current version of EMX it cannot fork() with dynamic
-extensions loaded (may be fixed by patches to EMX).
+It can load perl dynamic extensions, and it can fork().
 
 B<Note.> Keep in mind that fork() is needed to open a pipe to yourself.
 
 =head2 F<perl_.exe>
 
-This is a statically linked C<a.out>-style executable. It can fork(),
-but cannot load dynamic Perl extensions. The supplied executable has a
-lot of extensions prebuilt, thus there are situations when it can
-perform tasks not possible using F<perl.exe>, like fork()ing when
-having some standard extension loaded. This executable is a VIO
+This is a statically linked C<a.out>-style executable. It cannot
+load dynamic Perl extensions. The executable supplied in binary
+distributions has a lot of extensions prebuilt, thus the above restriction is 
+important only if you use custom-built extensions. This executable is a VIO
 application.
 
-B<Note.> A better behaviour could be obtained from C<perl.exe> if it
-were statically linked with standard I<Perl extensions>, but
-dynamically linked with the I<Perl DLL> and CRT DLL. Then it would
-be able to fork() with standard extensions, I<and> would be able to
-dynamically load arbitrary extensions. Some changes to Makefiles and
-hint files should be necessary to achieve this.
-
-I<This is also the only executable with does not require OS/2.> The
+I<This is the only executable with does not require OS/2.> The
 friends locked into C<M$> world would appreciate the fact that this
 executable runs under DOS, Win0.3*, Win0.95 and WinNT with an
 appropriate extender. See L<"Other OSes">.
@@ -1292,15 +1531,30 @@ appropriate extender. See L<"Other OSes">.
 This is the same executable as F<perl___.exe>, but it is a PM
 application. 
 
-B<Note.> Usually STDIN, STDERR, and STDOUT of a PM
-application are redirected to C<nul>. However, it is possible to see
+B<Note.> Usually (unless explicitly redirected during the startup)
+STDIN, STDERR, and STDOUT of a PM
+application are redirected to F<nul>. However, it is possible to I<see>
 them if you start C<perl__.exe> from a PM program which emulates a
 console window, like I<Shell mode> of Emacs or EPM. Thus it I<is
 possible> to use Perl debugger (see L<perldebug>) to debug your PM
-application.
+application (but beware of the message loop lockups - this will not
+work if you have a message queue to serve, unless you hook the serving
+into the getc() function of the debugger).
 
-This flavor is required if you load extensions which use PM, like
-the forthcoming C<Perl/Tk>.
+Another way to see the output of a PM program is to run it as
+
+  pm_prog args 2>&1 | cat -
+
+with a shell I<different> from F<cmd.exe>, so that it does not create
+a link between a VIO session and the session of C<pm_porg>.  (Such a link
+closes the VIO window.)  E.g., this works with F<sh.exe> - or with Perl!
+
+  open P, 'pm_prog args 2>&1 |' or die;
+  print while <P>;
+
+The flavor F<perl__.exe> is required if you want to start your program without
+a VIO window present, but not C<detach>ed (run C<help detach> for more info).
+Very useful for extensions which use PM, like C<Perl/Tk> or C<OpenGL>.
 
 =head2 F<perl___.exe>
 
@@ -1326,37 +1580,67 @@ digits (which have absolutely different semantics).
 
 Well, having several executables dynamically linked to the same huge
 library has its advantages, but this would not substantiate the
-additional work to make it compile. The reason is stupid-but-quick
-"hard" dynamic linking used by OS/2.
+additional work to make it compile. The reason is the complicated-to-developers
+but very quick and convenient-to-users "hard" dynamic linking used by OS/2.
+
+There are two distinctive features of the dyna-linking model of OS/2:
+all the references to external functions are resolved at the compile time;
+there is no runtime fixup of the DLLs after they are loaded into memory.
+The first feature is an enormous advantage over other models: it avoids
+conflicts when several DLLs used by an application export entries with
+the same name.  In such cases "other" models of dyna-linking just choose
+between these two entry points using some random criterion - with predictable
+disasters as results.  But it is the second feature which requires the build
+of F<perl.dll>.
 
 The address tables of DLLs are patched only once, when they are
-loaded. The addresses of entry points into DLLs are guaranteed to be
-the same for all programs which use the same DLL, which reduces the
-amount of runtime patching - once DLL is loaded, its code is
-read-only.
+loaded. The addresses of the entry points into DLLs are guaranteed to be
+the same for all the programs which use the same DLL.  This removes the
+runtime fixup - once DLL is loaded, its code is read-only.
 
-While this allows some performance advantages, this makes life
-terrible for developers, since the above scheme makes it impossible
-for a DLL to be resolved to a symbol in the .EXE file, since this
+While this allows some (significant?) performance advantages, this makes life
+much harder for developers, since the above scheme makes it impossible
+for a DLL to be "linked" to a symbol in the F<.EXE> file.  Indeed, this
 would need a DLL to have different relocations tables for the
-executables which use it.
+(different) executables which use this DLL.
 
-However, a Perl extension is forced to use some symbols from the perl
-executable, say to know how to find the arguments provided on the perl
-internal evaluation stack. The solution is that the main code of
-interpreter should be contained in a DLL, and the F<.EXE> file just loads
-this DLL into memory and supplies command-arguments.
+However, a dynamically loaded Perl extension is forced to use some symbols
+from the perl
+executable, e.g., to know how to find the arguments to the functions:
+the arguments live on the perl
+internal evaluation stack. The solution is to put the main code of
+the interpreter into a DLL, and make the F<.EXE> file which just loads
+this DLL into memory and supplies command-arguments.  The extension DLL
+cannot link to symbols in F<.EXE>, but it has no problem linking
+to symbols in the F<.DLL>.
 
 This I<greatly> increases the load time for the application (as well as
-the number of problems during compilation). Since interpreter is in a DLL,
-the CRT is basically forced to reside in a DLL as well (otherwise
-extensions would not be able to use CRT).
+complexity of the compilation). Since interpreter is in a DLL,
+the C RTL is basically forced to reside in a DLL as well (otherwise
+extensions would not be able to use CRT).  There are some advantages if
+you use different flavors of perl, such as running F<perl.exe> and
+F<perl__.exe> simultaneously: they share the memory of F<perl.dll>.
+
+B<NOTE>.  There is one additional effect which makes DLLs more wasteful:
+DLLs are loaded in the shared memory region, which is a scarse resource
+given the 512M barrier of the "standard" OS/2 virtual memory.  The code of
+F<.EXE> files is also shared by all the processes which use the particular
+F<.EXE>, but they are "shared in the private address space of the process";
+this is possible because the address at which different sections
+of the F<.EXE> file are loaded is decided at compile-time, thus all the
+processes have these sections loaded at same addresses, and no fixup
+of internal links inside the F<.EXE> is needed.
+
+Since DLLs may be loaded at run time, to have the same mechanism for for DLLs
+one needs to have the address range of I<any of the loaded> DLLs in the
+system to be available I<in all the processes> which did not load a particular
+DLL yet.  This is why the DLLs are mapped to the shared memory region.
 
 =head2 Why chimera build?
 
 Current EMX environment does not allow DLLs compiled using Unixish
-C<a.out> format to export symbols for data. This forces C<omf>-style
-compile of F<perl.dll>.
+C<a.out> format to export symbols for data (or at least some types of
+data). This forces C<omf>-style compile of F<perl.dll>.
 
 Current EMX environment does not allow F<.EXE> files compiled in
 C<omf> format to fork(). fork() is needed for exactly three Perl
@@ -1364,20 +1648,23 @@ operations:
 
 =over 4
 
-=item explicit fork()
+=item *
 
-in the script, and
+explicit fork() in the script, 
 
-=item open FH, "|-"
+=item *
 
-=item open FH, "-|"
+C<open FH, "|-">
 
-opening pipes to itself.
+=item *
+
+C<open FH, "-|">, in other words, opening pipes to itself.
 
 =back
 
-While these operations are not questions of life and death, a lot of
-useful scripts use them. This forces C<a.out>-style compile of
+While these operations are not questions of life and death, they are
+needed for a lot of
+useful scripts. This forces C<a.out>-style compile of
 F<perl.exe>.
 
 
@@ -1401,22 +1688,41 @@ substituted with F<path2>.
 
 Should be used if the perl library is moved from the default
 location in preference to C<PERL(5)LIB>, since this would not leave wrong
-entries in @INC.  Say, if the compiled version of perl looks for @INC
+entries in @INC.  For example, if the compiled version of perl looks for @INC
 in F<f:/perllib/lib>, and you want to install the library in
 F<h:/opt/gnu>, do
 
   set PERLLIB_PREFIX=f:/perllib/lib;h:/opt/gnu
 
+This will cause Perl with the prebuilt @INC of
+
+  f:/perllib/lib/5.00553/os2
+  f:/perllib/lib/5.00553
+  f:/perllib/lib/site_perl/5.00553/os2
+  f:/perllib/lib/site_perl/5.00553
+  .
+
+to use the following @INC:
+
+  h:/opt/gnu/5.00553/os2
+  h:/opt/gnu/5.00553
+  h:/opt/gnu/site_perl/5.00553/os2
+  h:/opt/gnu/site_perl/5.00553
+  .
+
 =head2 C<PERL_BADLANG>
 
-If 1, perl ignores setlocale() failing. May be useful with some
+If 0, perl ignores setlocale() failing. May be useful with some
 strange I<locale>s.
 
 =head2 C<PERL_BADFREE>
 
-If 1, perl would not warn of in case of unwarranted free(). May be
-useful in conjunction with the module DB_File, since Berkeley DB
-memory handling code is buggy.
+If 0, perl would not warn of in case of unwarranted free(). With older
+perls this might be
+useful in conjunction with the module DB_File, which was buggy when
+dynamically linked and OMF-built.
+
+Should not be set with newer Perls, since this may hide some I<real> problems.
 
 =head2 C<PERL_SH_DIR>
 
@@ -1431,8 +1737,7 @@ environment variable C<USE_PERL_FLOCK=0>.
 
 =head2 C<TMP> or C<TEMP>
 
-Specific for EMX port. Used as storage place for temporary files, most
-notably C<-e> scripts.
+Specific for EMX port. Used as storage place for temporary files.
 
 =head1 Evolution
 
@@ -1446,18 +1751,47 @@ ports by Andreas Kaiser. See C<"setpriority, getpriority">.
 =head2 DLL name mangling
 
 With the release 5.003_01 the dynamically loadable libraries
-should be rebuilt. In particular, DLLs are now created with the names
+should be rebuilt when a different version of Perl is compiled. In particular,
+DLLs (including F<perl.dll>) are now created with the names
 which contain a checksum, thus allowing workaround for OS/2 scheme of
 caching DLLs.
 
+It may be possible to code a simple workaround which would 
+
+=over
+
+=item *
+
+find the old DLLs looking through the old @INC;
+
+=item *
+
+mangle the names according to the scheme of new perl and copy the DLLs to
+these names;
+
+=item *
+
+edit the internal C<LX> tables of DLL to reflect the change of the name
+(probably not needed for Perl extension DLLs, since the internally coded names
+are not used for "specific" DLLs, they used only for "global" DLLs).
+
+=item *
+
+edit the internal C<IMPORT> tables and change the name of the "old"
+F<perl????.dll> to the "new" F<perl????.dll>.
+
+=back
+
 =head2 Threading
 
-As of release 5.003_01 perl is linked to multithreaded CRT
-DLL.  If perl itself is not compiled multithread-enabled, so will not be perl
+As of release 5.003_01 perl is linked to multithreaded C RTL
+DLL.  If perl itself is not compiled multithread-enabled, so will not be perl's
 malloc(). However, extensions may use multiple thread on their own
 risk. 
 
-Needed to compile C<Perl/Tk> for XFree86-OS/2 out-of-the-box.
+This was needed to compile C<Perl/Tk> for XFree86-OS/2 out-of-the-box, and
+link with DLLs for other useful libraries, which typically are compiled
+with C<-Zmt -Zcrtdll>.
 
 =head2 Calls to external programs
 
@@ -1467,21 +1801,21 @@ external program I<via shell>, the F<f:/bin/sh.exe> will be called, or
 whatever is the override, see L<"PERL_SH_DIR">.
 
 Thus means that you need to get some copy of a F<sh.exe> as well (I
-use one from pdksh). The drive F<F:> above is set up automatically during
+use one from pdksh). The path F<F:/bin> above is set up automatically during
 the build to a correct value on the builder machine, but is
 overridable at runtime,
 
 B<Reasons:> a consensus on C<perl5-porters> was that perl should use
 one non-overridable shell per platform. The obvious choices for OS/2
 are F<cmd.exe> and F<sh.exe>. Having perl build itself would be impossible
-with F<cmd.exe> as a shell, thus I picked up C<sh.exe>. Thus assures almost
+with F<cmd.exe> as a shell, thus I picked up C<sh.exe>. This assures almost
 100% compatibility with the scripts coming from *nix. As an added benefit 
 this works as well under DOS if you use DOS-enabled port of pdksh 
 (see L<"Prerequisites">).
 
 B<Disadvantages:> currently F<sh.exe> of pdksh calls external programs
 via fork()/exec(), and there is I<no> functioning exec() on
-OS/2. exec() is emulated by EMX by asyncroneous call while the caller
+OS/2. exec() is emulated by EMX by an asynchronous call while the caller
 waits for child completion (to pretend that the C<pid> did not change). This
 means that 1 I<extra> copy of F<sh.exe> is made active via fork()/exec(),
 which may lead to some resources taken from the system (even if we do
@@ -1510,14 +1844,21 @@ I will include it into distribution. I have no need for such a module, so
 cannot test it.
 
 For the details of the current situation with calling external programs,
-see L<Starting OS/2 (and DOS) programs under Perl>.
+see L<Starting OS/2 (and DOS) programs under Perl>.  Set us mention a couple
+of features:
 
-=over
+=over 4
 
-=item
+=item *
 
-External scripts may be called by name.  Perl will try the same extensions
-as when processing B<-S> command-line switch.
+External scripts may be called by their basename.  Perl will try the same
+extensions as when processing B<-S> command-line switch.
+
+=item *
+
+External scripts starting with C<#!> or C<extproc > will be executed directly,
+without calling the shell, by calling the program specified on the rest of
+the first line.
 
 =back
 
@@ -1525,9 +1866,9 @@ as when processing B<-S> command-line switch.
 
 Perl uses its own malloc() under OS/2 - interpreters are usually malloc-bound
 for speed, but perl is not, since its malloc is lightning-fast.
-Perl-memory-usage-tuned benchmarks show that Perl's malloc is 5 times quickier
-than EMX one.  I do not have convincing data about memory footpring, but
-a (pretty random) benchmark showed that Perl one is 5% better.
+Perl-memory-usage-tuned benchmarks show that Perl's malloc is 5 times quicker
+than EMX one.  I do not have convincing data about memory footprint, but
+a (pretty random) benchmark showed that Perl's one is 5% better.
 
 Combination of perl's malloc() and rigid DLL name resolution creates
 a special problem with library functions which expect their return value to
@@ -1544,12 +1885,12 @@ preliminary.
 
 Most notable problems: 
 
-=over
+=over 4
 
 =item C<COND_WAIT> 
 
 may have a race condition.  Needs a reimplementation (in terms of chaining
-waiting threads, with linker list stored in per-thread structure?).
+waiting threads, with the linked list stored in per-thread structure?).
 
 =item F<os2.c>
 

@@ -122,11 +122,6 @@ struct utsname {
 
 #define PERL_NO_FORCE_LINK		/* no need for PL_force_link_funcs */
 
-/* if USE_WIN32_RTL_ENV is not defined, Perl uses direct Win32 calls
- * to read the environment, bypassing the runtime's (usually broken)
- * facilities for accessing the same.  See note in util.c/my_setenv(). */
-/*#define USE_WIN32_RTL_ENV */
-
 /* Define USE_FIXED_OSFHANDLE to fix MSVCRT's _open_osfhandle() on W95.
    It now uses some black magic to work seamlessly with the DLL CRT and
    works with MSVC++ 4.0+ or GCC/Mingw32
@@ -135,6 +130,12 @@ struct utsname {
 #define USE_FIXED_OSFHANDLE
 #endif
 
+/* Define PERL_WIN32_SOCK_DLOAD to have Perl dynamically load the winsock
+   DLL when needed. Don't use if your compiler supports delayloading (ie, VC++ 6.0)
+	-- BKS 5-29-2000 */
+#if !(defined(_M_IX86) && _MSC_VER >= 1200)
+#define PERL_WIN32_SOCK_DLOAD
+#endif
 #define ENV_IS_CASELESS
 
 #ifndef VER_PLATFORM_WIN32_WINDOWS	/* VC-2.0 headers don't have this */
@@ -153,14 +154,22 @@ struct utsname {
 #  define	F_OK	0
 #endif
 
+/* for waitpid() */
+#ifndef WNOHANG
+#  define WNOHANG	1
+#endif
+
 #define PERL_GET_CONTEXT_DEFINED
 
 /* Compiler-specific stuff. */
 
 #ifdef __BORLANDC__		/* Borland C++ */
 
+#if (__BORLANDC__ <= 0x520)
 #define _access access
 #define _chdir chdir
+#endif
+
 #define _getpid getpid
 #define wcsicmp _wcsicmp
 #include <sys/types.h>
@@ -177,8 +186,6 @@ struct utsname {
 #pragma warn -aus	/* "'foo' is assigned a value that is never used" */
 #pragma warn -use	/* "'foo' is declared but never used" */
 #pragma warn -csu	/* "comparing signed and unsigned values" */
-#pragma warn -pro	/* "call to function with no prototype" */
-#pragma warn -stu	/* "undefined structure 'foo'" */
 
 /* Borland is picky about a bare member function name used as its ptr */
 #ifdef PERL_OBJECT
@@ -187,6 +194,8 @@ struct utsname {
 
 /* Borland C thinks that a pointer to a member variable is 12 bytes in size. */
 #define PERL_MEMBER_PTR_SIZE	12
+
+#define isnan		_isnan
 
 #endif
 
@@ -200,6 +209,8 @@ typedef unsigned short	mode_t;
 /* Visual C thinks that a pointer to a member variable is 16 bytes in size. */
 #define PERL_MEMBER_PTR_SIZE	16
 
+#define isnan		_isnan
+
 #endif /* _MSC_VER */
 
 #ifdef __MINGW32__		/* Minimal Gnu-Win32 */
@@ -211,6 +222,7 @@ typedef long		gid_t;
 #endif
 #define flushall	_flushall
 #define fcloseall	_fcloseall
+#define isnan		_isnan	/* ...same libraries as MSVC */
 
 #ifdef PERL_OBJECT
 #  define MEMBER_TO_FPTR(name)	&(name)
@@ -294,7 +306,7 @@ extern	int	chown(const char *p, uid_t o, gid_t g);
 #define  init_os_extras Perl_init_os_extras
 
 DllExport void		Perl_win32_init(int *argcp, char ***argvp);
-DllExport void		Perl_init_os_extras();
+DllExport void		Perl_init_os_extras(void);
 DllExport void		win32_str_os_error(void *sv, DWORD err);
 DllExport int		RunPerl(int argc, char **argv, char **env);
 
@@ -327,6 +339,7 @@ DllExport void		win32_get_child_IO(child_IO_table* ptr);
 extern FILE *		my_fdopen(int, char *);
 #endif
 extern int		my_fclose(FILE *);
+extern int		my_fstat(int fd, struct stat *sbufptr);
 extern int		do_aspawn(void *really, void **mark, void **sp);
 extern int		do_spawn(char *cmd);
 extern int		do_spawn_nowait(char *cmd);
@@ -477,11 +490,63 @@ struct interp_intern {
     } STMT_END
 #endif
 
+#if defined(USE_FIXED_OSFHANDLE) || defined(PERL_MSVCRT_READFIX)
+#ifdef PERL_CORE
+
+/* C doesn't like repeat struct definitions */
+#ifndef _CRTIMP
+#define _CRTIMP __declspec(dllimport)
+#endif
+
+/*
+ * Control structure for lowio file handles
+ */
+typedef struct {
+    long osfhnd;    /* underlying OS file HANDLE */
+    char osfile;    /* attributes of file (e.g., open in text mode?) */
+    char pipech;    /* one char buffer for handles opened on pipes */
+    int lockinitflag;
+    CRITICAL_SECTION lock;
+} ioinfo;
+
+
+/*
+ * Array of arrays of control structures for lowio files.
+ */
+EXTERN_C _CRTIMP ioinfo* __pioinfo[];
+
+/*
+ * Definition of IOINFO_L2E, the log base 2 of the number of elements in each
+ * array of ioinfo structs.
+ */
+#define IOINFO_L2E	    5
+
+/*
+ * Definition of IOINFO_ARRAY_ELTS, the number of elements in ioinfo array
+ */
+#define IOINFO_ARRAY_ELTS   (1 << IOINFO_L2E)
+
+/*
+ * Access macros for getting at an ioinfo struct and its fields from a
+ * file handle
+ */
+#define _pioinfo(i) (__pioinfo[(i) >> IOINFO_L2E] + ((i) & (IOINFO_ARRAY_ELTS - 1)))
+#define _osfhnd(i)  (_pioinfo(i)->osfhnd)
+#define _osfile(i)  (_pioinfo(i)->osfile)
+#define _pipech(i)  (_pioinfo(i)->pipech)
+
+/* since we are not doing a dup2(), this works fine */
+#define _set_osfhnd(fh, osfh) (void)(_osfhnd(fh) = (long)osfh)
+#endif
+#endif
+
 /*
  * This provides a layer of functions and macros to ensure extensions will
  * get to use the same RTL functions as the core.
  */
 #include "win32iop.h"
+
+#define EXEC_ARGV_CAST(x) ((const char *const *) x)
 
 #endif /* _INC_WIN32_PERL5 */
 

@@ -53,7 +53,6 @@
 #else
 #include <utime.h>
 #endif
-
 #ifdef __GNUC__
 /* Mingw32 defaults to globing command line 
  * So we turn it off like this:
@@ -177,7 +176,9 @@ get_regstr_from(HKEY hkey, const char *valuename, SV **svp)
     if (retval == ERROR_SUCCESS) {
 	DWORD datalen;
 	retval = RegQueryValueEx(handle, valuename, 0, &type, NULL, &datalen);
-	if (retval == ERROR_SUCCESS && type == REG_SZ) {
+	if (retval == ERROR_SUCCESS
+	    && (type == REG_SZ || type == REG_EXPAND_SZ))
+	{
 	    dTHXo;
 	    if (!*svp)
 		*svp = sv_2mortal(newSVpvn("",0));
@@ -435,12 +436,19 @@ win32_os_id(void)
 DllExport int
 win32_getpid(void)
 {
+    int pid;
 #ifdef USE_ITHREADS
     dTHXo;
     if (w32_pseudo_id)
 	return -((int)w32_pseudo_id);
 #endif
-    return _getpid();
+    pid = _getpid();
+    /* Windows 9x appears to always reports a pid for threads and processes
+     * that has the high bit set. So we treat the lower 31 bits as the
+     * "real" PID for Perl's purposes. */
+    if (IsWin95() && pid < 0)
+	pid = -pid;
+    return pid;
 }
 
 /* Tokenize a string.  Words are null-separated, and the list
@@ -567,9 +575,12 @@ do_aspawn(void *vreally, void **vmark, void **vsp)
 			       (const char* const*)argv);
     }
 
-    if (flag != P_NOWAIT) {
+    if (flag == P_NOWAIT) {
+	if (IsWin95())
+	    PL_statusvalue = -1;	/* >16bits hint for pp_system() */
+    }
+    else {
 	if (status < 0) {
-    	    dTHR;
 	    if (ckWARN(WARN_EXEC))
 		Perl_warner(aTHX_ WARN_EXEC, "Can't spawn \"%s\": %s", argv[0], strerror(errno));
 	    status = 255 * 256;
@@ -656,9 +667,12 @@ do_spawn2(char *cmd, int exectype)
 	cmd = argv[0];
 	Safefree(argv);
     }
-    if (exectype != EXECF_SPAWN_NOWAIT) {
+    if (exectype == EXECF_SPAWN_NOWAIT) {
+	if (IsWin95())
+	    PL_statusvalue = -1;	/* >16bits hint for pp_system() */
+    }
+    else {
 	if (status < 0) {
-    	    dTHR;
 	    if (ckWARN(WARN_EXEC))
 		Perl_warner(aTHX_ WARN_EXEC, "Can't %s \"%s\": %s",
 		     (exectype == EXECF_EXEC ? "exec" : "spawn"),
@@ -1020,10 +1034,11 @@ win32_kill(int pid, int sig)
 {
     dTHXo;
     HANDLE hProcess;
+    long child;
 #ifdef USE_ITHREADS
     if (pid < 0) {
 	/* it is a pseudo-forked child */
-	long child = find_pseudo_pid(-pid);
+	child = find_pseudo_pid(-pid);
 	if (child >= 0) {
 	    if (!sig)
 		return 0;
@@ -1033,11 +1048,15 @@ win32_kill(int pid, int sig)
 		return 0;
 	    }
 	}
+	else if (IsWin95()) {
+	    pid = -pid;
+	    goto alien_process;
+	}
     }
     else
 #endif
     {
-	long child = find_pid(pid);
+	child = find_pid(pid);
 	if (child >= 0) {
 	    if (!sig)
 		return 0;
@@ -1048,7 +1067,9 @@ win32_kill(int pid, int sig)
 	    }
 	}
 	else {
-	    hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, pid);
+alien_process:
+	    hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE,
+				   (IsWin95() ? -pid : pid));
 	    if (hProcess) {
 		if (!sig)
 		    return 0;
@@ -1276,8 +1297,6 @@ win32_longpath(char *path)
     return path;
 }
 
-#ifndef USE_WIN32_RTL_ENV
-
 DllExport char *
 win32_getenv(const char *name)
 {
@@ -1378,8 +1397,6 @@ win32_putenv(const char *name)
     }
     return relval;
 }
-
-#endif
 
 static long
 filetime_to_clock(PFILETIME ft)
@@ -1610,7 +1627,7 @@ win32_uname(struct utsname *name)
 	char *arch;
 	GetSystemInfo(&info);
 
-#if defined(__BORLANDC__) || defined(__MINGW32__)
+#if (defined(__BORLANDC__)&&(__BORLANDC__<=0x520)) || defined(__MINGW32__)
 	switch (info.u.s.wProcessorArchitecture) {
 #else
 	switch (info.wProcessorArchitecture) {
@@ -1635,34 +1652,48 @@ DllExport int
 win32_waitpid(int pid, int *status, int flags)
 {
     dTHXo;
+    DWORD timeout = (flags & WNOHANG) ? 0 : INFINITE;
     int retval = -1;
+    long child;
     if (pid == -1)				/* XXX threadid == 1 ? */
 	return win32_wait(status);
 #ifdef USE_ITHREADS
     else if (pid < 0) {
-	long child = find_pseudo_pid(-pid);
+	child = find_pseudo_pid(-pid);
 	if (child >= 0) {
 	    HANDLE hThread = w32_pseudo_child_handles[child];
-	    DWORD waitcode = WaitForSingleObject(hThread, INFINITE);
-	    if (waitcode != WAIT_FAILED) {
+	    DWORD waitcode = WaitForSingleObject(hThread, timeout);
+	    if (waitcode == WAIT_TIMEOUT) {
+		return 0;
+	    }
+	    else if (waitcode != WAIT_FAILED) {
 		if (GetExitCodeThread(hThread, &waitcode)) {
 		    *status = (int)((waitcode & 0xff) << 8);
 		    retval = (int)w32_pseudo_child_pids[child];
 		    remove_dead_pseudo_process(child);
-		    return retval;
+		    return -retval;
 		}
 	    }
 	    else
 		errno = ECHILD;
 	}
+	else if (IsWin95()) {
+	    pid = -pid;
+	    goto alien_process;
+	}
     }
 #endif
     else {
-	long child = find_pid(pid);
+	HANDLE hProcess;
+	DWORD waitcode;
+	child = find_pid(pid);
 	if (child >= 0) {
-	    HANDLE hProcess = w32_child_handles[child];
-	    DWORD waitcode = WaitForSingleObject(hProcess, INFINITE);
-	    if (waitcode != WAIT_FAILED) {
+	    hProcess = w32_child_handles[child];
+	    waitcode = WaitForSingleObject(hProcess, timeout);
+	    if (waitcode == WAIT_TIMEOUT) {
+		return 0;
+	    }
+	    else if (waitcode != WAIT_FAILED) {
 		if (GetExitCodeProcess(hProcess, &waitcode)) {
 		    *status = (int)((waitcode & 0xff) << 8);
 		    retval = (int)w32_child_pids[child];
@@ -1674,12 +1705,25 @@ win32_waitpid(int pid, int *status, int flags)
 		errno = ECHILD;
 	}
 	else {
-	    retval = cwait(status, pid, WAIT_CHILD);
-	    /* cwait() returns "correctly" on Borland */
-#ifndef __BORLANDC__
-	    if (status)
-		*status *= 256;
-#endif
+alien_process:
+	    hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE,
+				   (IsWin95() ? -pid : pid));
+	    if (hProcess) {
+		waitcode = WaitForSingleObject(hProcess, timeout);
+		if (waitcode == WAIT_TIMEOUT) {
+		    return 0;
+		}
+		else if (waitcode != WAIT_FAILED) {
+		    if (GetExitCodeProcess(hProcess, &waitcode)) {
+			*status = (int)((waitcode & 0xff) << 8);
+			CloseHandle(hProcess);
+			return pid;
+		    }
+		}
+		CloseHandle(hProcess);
+	    }
+	    else
+		errno = ECHILD;
 	}
     }
     return retval >= 0 ? pid : retval;                
@@ -1711,7 +1755,7 @@ win32_wait(int *status)
 		*status = (int)((exitcode & 0xff) << 8);
 		retval = (int)w32_pseudo_child_pids[i];
 		remove_dead_pseudo_process(i);
-		return retval;
+		return -retval;
 	    }
 	}
     }
@@ -1755,7 +1799,7 @@ static VOID CALLBACK TimerProc(HWND win, UINT msg, UINT id, DWORD time)
     dTHXo;
     KillTimer(NULL,timerid);
     timerid=0;  
-    sighandler(14);
+    CALL_FPTR(PL_sighandlerp)(14);
 }
 #endif	/* !PERL_OBJECT */
 
@@ -1800,60 +1844,12 @@ win32_crypt(const char *txt, const char *salt)
 {
     dTHXo;
 #ifdef HAVE_DES_FCRYPT
-    dTHR;
     return des_fcrypt(txt, salt, w32_crypt_buffer);
 #else
     Perl_croak(aTHX_ "The crypt() function is unimplemented due to excessive paranoia.");
     return Nullch;
 #endif
 }
-
-/* C doesn't like repeat struct definitions */
-
-#if defined(USE_FIXED_OSFHANDLE) || defined(PERL_MSVCRT_READFIX)
-
-#ifndef _CRTIMP
-#define _CRTIMP __declspec(dllimport)
-#endif
-
-/*
- * Control structure for lowio file handles
- */
-typedef struct {
-    long osfhnd;    /* underlying OS file HANDLE */
-    char osfile;    /* attributes of file (e.g., open in text mode?) */
-    char pipech;    /* one char buffer for handles opened on pipes */
-    int lockinitflag;
-    CRITICAL_SECTION lock;
-} ioinfo;
-
-
-/*
- * Array of arrays of control structures for lowio files.
- */
-EXTERN_C _CRTIMP ioinfo* __pioinfo[];
-
-/*
- * Definition of IOINFO_L2E, the log base 2 of the number of elements in each
- * array of ioinfo structs.
- */
-#define IOINFO_L2E	    5
-
-/*
- * Definition of IOINFO_ARRAY_ELTS, the number of elements in ioinfo array
- */
-#define IOINFO_ARRAY_ELTS   (1 << IOINFO_L2E)
-
-/*
- * Access macros for getting at an ioinfo struct and its fields from a
- * file handle
- */
-#define _pioinfo(i) (__pioinfo[(i) >> IOINFO_L2E] + ((i) & (IOINFO_ARRAY_ELTS - 1)))
-#define _osfhnd(i)  (_pioinfo(i)->osfhnd)
-#define _osfile(i)  (_pioinfo(i)->osfile)
-#define _pipech(i)  (_pioinfo(i)->pipech)
-
-#endif
 
 #ifdef USE_FIXED_OSFHANDLE
 
@@ -1892,10 +1888,6 @@ EXTERN_C _CRTIMP ioinfo* __pioinfo[];
  * with perl95.exe
  *	-- BKS, 1-23-2000
 */
-
-/* since we are not doing a dup2(), this works fine */
-
-#define _set_osfhnd(fh, osfh) (void)(_osfhnd(fh) = osfh)
 
 /* create an ioinfo entry, kill its handle, and steal the entry */
 
@@ -2313,7 +2305,25 @@ win32_abort(void)
 DllExport int
 win32_fstat(int fd,struct stat *sbufptr)
 {
-    return fstat(fd,sbufptr);
+#ifdef __BORLANDC__
+    /* A file designated by filehandle is not shown as accessible
+     * for write operations, probably because it is opened for reading.
+     * --Vadim Konovalov
+     */ 
+    int rc = fstat(fd,sbufptr);
+    BY_HANDLE_FILE_INFORMATION bhfi;
+    if (GetFileInformationByHandle((HANDLE)_get_osfhandle(fd), &bhfi)) {
+        sbufptr->st_mode &= 0xFE00;
+        if (bhfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
+            sbufptr->st_mode |= (S_IREAD + (S_IREAD >> 3) + (S_IREAD >> 6));
+        else
+            sbufptr->st_mode |= ((S_IREAD|S_IWRITE) + ((S_IREAD|S_IWRITE) >> 3)
+              + ((S_IREAD|S_IWRITE) >> 6));
+    }
+    return rc;
+#else
+    return my_fstat(fd,sbufptr);
+#endif
 }
 
 DllExport int
@@ -2391,7 +2401,9 @@ win32_popen(const char *command, const char *mode)
 	/* close saved handle */
 	win32_close(oldfd);
 
+	LOCK_FDPID_MUTEX;
 	sv_setiv(*av_fetch(w32_fdpid, p[parent], TRUE), childpid);
+	UNLOCK_FDPID_MUTEX;
 
 	/* set process id so that it can be returned by perl's open() */
 	PL_forkprocess = childpid;
@@ -2427,7 +2439,9 @@ win32_pclose(FILE *pf)
     int childpid, status;
     SV *sv;
 
+    LOCK_FDPID_MUTEX;
     sv = *av_fetch(w32_fdpid, win32_fileno(pf), TRUE);
+
     if (SvIOK(sv))
 	childpid = SvIVX(sv);
     else
@@ -2440,6 +2454,7 @@ win32_pclose(FILE *pf)
 
     win32_fclose(pf);
     SvIVX(sv) = 0;
+    UNLOCK_FDPID_MUTEX;
 
     if (win32_waitpid(childpid, &status, 0) == -1)
         return -1;
@@ -3259,9 +3274,12 @@ RETRY:
 
     if (mode == P_NOWAIT) {
 	/* asynchronous spawn -- store handle, return PID */
-	w32_child_handles[w32_num_children] = ProcessInformation.hProcess;
-	w32_child_pids[w32_num_children] = ProcessInformation.dwProcessId;
 	ret = (int)ProcessInformation.dwProcessId;
+	if (IsWin95() && ret < 0)
+	    ret = -ret;
+
+	w32_child_handles[w32_num_children] = ProcessInformation.hProcess;
+	w32_child_pids[w32_num_children] = (DWORD)ret;
 	++w32_num_children;
     }
     else  {
@@ -3506,6 +3524,25 @@ win32_dynaload(const char* filename)
 {
     dTHXo;
     HMODULE hModule;
+    char buf[MAX_PATH+1];
+    char *first;
+
+    /* LoadLibrary() doesn't recognize forward slashes correctly,
+     * so turn 'em back. */
+    first = strchr(filename, '/');
+    if (first) {
+	STRLEN len = strlen(filename);
+	if (len <= MAX_PATH) {
+	    strcpy(buf, filename);
+	    filename = &buf[first - filename];
+	    while (*filename) {
+		if (*filename == '/')
+		    *(char*)filename = '\\';
+		++filename;
+	    }
+	    filename = buf;
+	}
+    }
     if (USING_WIDE()) {
 	WCHAR wfilename[MAX_PATH+1];
 	A2WHELPER(filename, wfilename, sizeof(wfilename));
@@ -3821,8 +3858,11 @@ XS(w32_Spawn)
 		&stStartInfo,		/* -> Startup info */
 		&stProcInfo))		/* <- Process info (if OK) */
     {
+	int pid = (int)stProcInfo.dwProcessId;
+	if (IsWin95() && pid < 0)
+	    pid = -pid;
+	sv_setiv(ST(2), pid);
 	CloseHandle(stProcInfo.hThread);/* library source code does this. */
-	sv_setiv(ST(2), stProcInfo.dwProcessId);
 	bSuccess = TRUE;
     }
     XSRETURN_IV(bSuccess);
@@ -3851,6 +3891,9 @@ XS(w32_GetShortPathName)
 
     shortpath = sv_mortalcopy(ST(0));
     SvUPGRADE(shortpath, SVt_PV);
+    if (!SvPVX(shortpath) || !SvLEN(shortpath))
+        XSRETURN_UNDEF;
+
     /* src == target is allowed */
     do {
 	len = GetShortPathName(SvPVX(shortpath),
@@ -3880,6 +3923,9 @@ XS(w32_GetFullPathName)
     filename = ST(0);
     fullpath = sv_mortalcopy(filename);
     SvUPGRADE(fullpath, SVt_PV);
+    if (!SvPVX(fullpath) || !SvLEN(fullpath))
+        XSRETURN_UNDEF;
+
     do {
 	len = GetFullPathName(SvPVX(filename),
 			      SvLEN(fullpath),
@@ -3966,18 +4012,6 @@ Perl_init_os_extras(void)
     char *file = __FILE__;
     dXSUB_SYS;
 
-    w32_perlshell_tokens = Nullch;
-    w32_perlshell_items = -1;
-    w32_fdpid = newAV();		/* XXX needs to be in Perl_win32_init()? */
-    New(1313, w32_children, 1, child_tab);
-    w32_num_children = 0;
-    w32_init_socktype = 0;
-#ifdef USE_ITHREADS
-    w32_pseudo_id = 0;
-    New(1313, w32_pseudo_children, 1, child_tab);
-    w32_num_pseudo_children = 0;
-#endif
-
     /* these names are Activeware compatible */
     newXS("Win32::GetCwd", w32_GetCwd, file);
     newXS("Win32::SetCwd", w32_SetCwd, file);
@@ -4035,14 +4069,48 @@ win32_get_child_IO(child_IO_table* ptbl)
     ptbl->childStdErr	= GetStdHandle(STD_ERROR_HANDLE);
 }
 
-
-#ifdef USE_ITHREADS
+#ifdef HAVE_INTERP_INTERN
 
 #  ifdef PERL_OBJECT
+#    undef Perl_sys_intern_init
+#    define Perl_sys_intern_init CPerlObj::Perl_sys_intern_init
 #    undef Perl_sys_intern_dup
 #    define Perl_sys_intern_dup CPerlObj::Perl_sys_intern_dup
+#    undef Perl_sys_intern_clear
+#    define Perl_sys_intern_clear CPerlObj::Perl_sys_intern_clear
 #    define pPerl this
 #  endif
+
+void
+Perl_sys_intern_init(pTHX)
+{
+    w32_perlshell_tokens	= Nullch;
+    w32_perlshell_vec		= (char**)NULL;
+    w32_perlshell_items		= 0;
+    w32_fdpid			= newAV();
+    New(1313, w32_children, 1, child_tab);
+    w32_num_children		= 0;
+#  ifdef USE_ITHREADS
+    w32_pseudo_id		= 0;
+    New(1313, w32_pseudo_children, 1, child_tab);
+    w32_num_pseudo_children	= 0;
+#  endif
+    w32_init_socktype		= 0;
+}
+
+void
+Perl_sys_intern_clear(pTHX)
+{
+    Safefree(w32_perlshell_tokens);
+    Safefree(w32_perlshell_vec);
+    /* NOTE: w32_fdpid is freed by sv_clean_all() */
+    Safefree(w32_children);
+#  ifdef USE_ITHREADS
+    Safefree(w32_pseudo_children);
+#  endif
+}
+
+#  ifdef USE_ITHREADS
 
 void
 Perl_sys_intern_dup(pTHX_ struct interp_intern *src, struct interp_intern *dst)
@@ -4052,12 +4120,12 @@ Perl_sys_intern_dup(pTHX_ struct interp_intern *src, struct interp_intern *dst)
     dst->perlshell_items	= 0;
     dst->fdpid			= newAV();
     Newz(1313, dst->children, 1, child_tab);
-    Newz(1313, dst->pseudo_children, 1, child_tab);
     dst->pseudo_id		= 0;
-    dst->children->num		= 0;
-    dst->thr_intern.Winit_socktype = src->thr_intern.Winit_socktype;
+    Newz(1313, dst->pseudo_children, 1, child_tab);
+    dst->thr_intern.Winit_socktype = 0;
 }
-#endif
+#  endif /* USE_ITHREADS */
+#endif /* HAVE_INTERP_INTERN */
 
 #ifdef PERL_OBJECT
 #  undef this

@@ -29,7 +29,7 @@ static RXSTRING   rxcommand    = {  9, "RXCOMMAND" };
 static RXSTRING   rxsubroutine = { 12, "RXSUBROUTINE" };
 static RXSTRING   rxfunction   = { 11, "RXFUNCTION" };
 
-static ULONG PERLCALL(PSZ name, ULONG argc, PRXSTRING argv, PSZ queue, PRXSTRING ret);
+static ULONG PERLCALL(PCSZ name, ULONG argc, PRXSTRING argv, PCSZ queue, PRXSTRING ret);
 
 #if 1
  #define Set	RXSHV_SET
@@ -46,7 +46,6 @@ static long incompartment;
 static SV*
 exec_in_REXX(pTHX_ char *cmd, char * handlerName, RexxFunctionHandler *handler)
 {
-    dTHR;
     HMODULE hRexx, hRexxAPI;
     BYTE    buf[200];
     LONG    APIENTRY (*pRexxStart) (LONG, PRXSTRING, PSZ, PRXSTRING, 
@@ -98,7 +97,7 @@ exec_in_REXX(pTHX_ char *cmd, char * handlerName, RexxFunctionHandler *handler)
     if (rc || SvTRUE(GvSV(PL_errgv))) {
 	if (SvTRUE(GvSV(PL_errgv))) {
 	    STRLEN n_a;
-	    Perl_die(aTHX_ "Error inside perl function called from REXX compartment.\n%s", SvPV(GvSV(PL_errgv), n_a)) ;
+	    Perl_die(aTHX_ "Error inside perl function called from REXX compartment:\n%s", SvPV(GvSV(PL_errgv), n_a)) ;
 	}
 	Perl_die(aTHX_ "REXX compartment returned non-zero status %li", rc);
     }
@@ -109,7 +108,7 @@ exec_in_REXX(pTHX_ char *cmd, char * handlerName, RexxFunctionHandler *handler)
 static SV* exec_cv;
 
 static ULONG
-PERLSTART(PSZ name, ULONG argc, PRXSTRING argv, PSZ queue, PRXSTRING ret)
+PERLSTART(PCSZ name, ULONG argc, PRXSTRING argv, PCSZ queue, PRXSTRING ret)
 {
     return PERLCALL(NULL, argc, argv, queue, ret);
 }
@@ -122,7 +121,7 @@ PERLSTART(PSZ name, ULONG argc, PRXSTRING argv, PSZ queue, PRXSTRING ret)
 #define REXX_eval(cmd) REXX_eval_with(cmd,NULL,NULL)
 
 static ULONG
-PERLCALL(PSZ name, ULONG argc, PRXSTRING argv, PSZ queue, PRXSTRING ret)
+PERLCALL(PCSZ name, ULONG argc, PRXSTRING argv, PCSZ queue, PRXSTRING ret)
 {
     dTHX;
     EXCEPTIONREGISTRATIONRECORD xreg = { NULL, _emx_exception };
@@ -130,6 +129,7 @@ PERLCALL(PSZ name, ULONG argc, PRXSTRING argv, PSZ queue, PRXSTRING ret)
     unsigned long len;
     char *str;
     char **arr;
+    SV *res;
     dSP;
 
     DosSetExceptionHandler(&xreg);
@@ -145,47 +145,41 @@ PERLCALL(PSZ name, ULONG argc, PRXSTRING argv, PSZ queue, PRXSTRING ret)
     }
 #endif 
 
+    for (i = 0; i < argc; ++i)
+	XPUSHs(sv_2mortal(newSVpvn(argv[i].strptr, argv[i].strlength)));
+    PUTBACK;
     if (name) {
-	int ac = 0;
-	char **arr = alloca((argc + 1) * sizeof(char *));
-
-	for (i = 0; i < argc; ++i)
-	    arr[ac++] = argv[i].strptr;
-	arr[ac] = NULL;
-
-	rc = perl_call_argv(name, G_SCALAR | G_EVAL, arr);
+	rc = perl_call_pv(name, G_SCALAR | G_EVAL);
     } else if (exec_cv) {
 	SV *cv = exec_cv;
 
 	exec_cv = NULL;
 	rc = perl_call_sv(cv, G_SCALAR | G_EVAL);
-    } else rc = -1;
+    } else
+	rc = -1;
 
     SPAGAIN;
 
-    if (rc == 1 && SvOK(TOPs)) { 
-	str = SvPVx(POPs, len);
-	if (len > 256)
-	    if (DosAllocMem((PPVOID)&ret->strptr, len, PAG_READ|PAG_WRITE|PAG_COMMIT)) {
-		DosUnsetExceptionHandler(&xreg);
-		return 1;
-	    }
-	memcpy(ret->strptr, str, len);
-	ret->strlength = len;
-    }
+    if (rc == 1)			/* must be! */
+	res = POPs;
+    if (rc == 1 && SvOK(res)) { 
+	str = SvPVx(res, len);
+	if (len <= 256			/* Default buffer is 256-char long */
+	    || !CheckOSError(DosAllocMem((PPVOID)&ret->strptr, len,
+					PAG_READ|PAG_WRITE|PAG_COMMIT))) {
+	    memcpy(ret->strptr, str, len);
+	    ret->strlength = len;
+	} else
+	    rc = 0;
+    } else
+	rc = 0;
 
     PUTBACK ;
     FREETMPS ;
     LEAVE ;
 
-    if (rc != 1) {
-	DosUnsetExceptionHandler(&xreg);
-	return 1;
-    }
-
-
     DosUnsetExceptionHandler(&xreg);
-    return 0;
+    return rc == 1 ? 0 : 1;			/* 0 means SUCCESS */
 }
 
 static void

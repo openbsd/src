@@ -15,13 +15,13 @@ my_eadvalue(pTHX_ _ead ead, int index)
 {
     SV *sv;
     int size = _ead_value_size(ead, index);
-    void *p;
+    const char *p;
 
     if (size == -1) {
 	Perl_die(aTHX_ "Error getting size of EA: %s", strerror(errno));
     }
     p = _ead_get_value(ead, index);
-    return  newSVpv((char*)p, size);
+    return  newSVpv(p, size);
 }
 
 #define my_eadreplace(ead, index, sv, flag)	\
@@ -136,7 +136,7 @@ _ead_find(ead, name)
 	_ead	ead
 	char *	name
 
-void *
+const void *
 _ead_get_fea2list(ead)
 	_ead	ead
 
@@ -145,12 +145,12 @@ _ead_get_flags(ead, index)
 	_ead	ead
 	int	index
 
-char *
+const char *
 _ead_get_name(ead, index)
 	_ead	ead
 	int	index
 
-void *
+const void *
 _ead_get_value(ead, index)
 	_ead	ead
 	int	index

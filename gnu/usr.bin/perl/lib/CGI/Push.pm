@@ -7,7 +7,7 @@ package CGI::Push;
 # documentation in manual or html file format (these utilities are part of the
 # Perl 5 distribution).
 
-# Copyright 1995,1996, Lincoln D. Stein.  All rights reserved.
+# Copyright 1995-2000, Lincoln D. Stein.  All rights reserved.
 # It may be used and modified freely, but I do request that this copyright
 # notice remain attached to the file.  You may modify this module as you 
 # wish, but if you redistribute a modified version, please attach a note
@@ -16,8 +16,9 @@ package CGI::Push;
 # The most recent version and complete docs are available at:
 #   http://stein.cshl.org/WWW/software/CGI/
 
-$CGI::Push::VERSION='1.01';
+$CGI::Push::VERSION='1.04';
 use CGI;
+use CGI::Util 'rearrange';
 @ISA = ('CGI');
 
 $CGI::DefaultClass = 'CGI::Push';
@@ -32,71 +33,78 @@ sub do_push {
     # unbuffer output
     $| = 1;
     srand;
-    my ($random) = sprintf("%16.0f",rand()*1E16);
-    my ($boundary) = "----------------------------------$random";
+    my ($random) = sprintf("%08.0f",rand()*1E8);
+    my ($boundary) = "----=_NeXtPaRt$random";
 
     my (@header);
-    my ($type,$callback,$delay,$last_page,$cookie,$target,$expires,@other) =
-	$self->rearrange([TYPE,NEXT_PAGE,DELAY,LAST_PAGE,[COOKIE,COOKIES],TARGET,EXPIRES],@p);
+    my ($type,$callback,$delay,$last_page,$cookie,$target,$expires,$nph,@other) = rearrange([TYPE,NEXT_PAGE,DELAY,LAST_PAGE,[COOKIE,COOKIES],TARGET,EXPIRES,NPH],@p);
     $type = 'text/html' unless $type;
     $callback = \&simple_counter unless $callback && ref($callback) eq 'CODE';
     $delay = 1 unless defined($delay);
     $self->push_delay($delay);
+    $nph = 1 unless defined($nph);
 
     my(@o);
     foreach (@other) { push(@o,split("=")); }
     push(@o,'-Target'=>$target) if defined($target);
     push(@o,'-Cookie'=>$cookie) if defined($cookie);
-    push(@o,'-Type'=>"multipart/x-mixed-replace; boundary=$boundary");
-    push(@o,'-Server'=>"CGI.pm Push Module");
+    push(@o,'-Type'=>"multipart/x-mixed-replace;boundary=\"$boundary\"");
+    push(@o,'-Server'=>"CGI.pm Push Module") if $nph;
     push(@o,'-Status'=>'200 OK');
-    push(@o,'-nph'=>1);
+    push(@o,'-nph'=>1) if $nph;
     print $self->header(@o);
-    print "${boundary}$CGI::CRLF";
-    
-    # now we enter a little loop
-    my @contents;
-    while (1) {
-	last unless (@contents = &$callback($self,++$COUNTER)) && defined($contents[0]);
-	print "Content-type: ${type}$CGI::CRLF$CGI::CRLF" 
-	    unless $type eq 'dynamic';
-	print @contents,"$CGI::CRLF";
-	print "${boundary}$CGI::CRLF";
-	do_sleep($self->push_delay()) if $self->push_delay();
-    }
 
-    # Optional last page
-    if ($last_page && ref($last_page) eq 'CODE') {
-	print "Content-type: ${type}$CGI::CRLF$CGI::CRLF" unless $type =~ /^dynamic|heterogeneous$/i;
-	print  &$last_page($self,$COUNTER),"$CGI::CRLF${boundary}$CGI::CRLF";
+    $boundary = "$CGI::CRLF--$boundary";
+
+    print "WARNING: YOUR BROWSER DOESN'T SUPPORT THIS SERVER-PUSH TECHNOLOGY.${boundary}$CGI::CRLF";
+
+    my (@contents) = &$callback($self,++$COUNTER);
+
+    # now we enter a little loop
+    while (1) {
+        print "Content-type: ${type}$CGI::CRLF$CGI::CRLF" unless $type =~ /^dynamic|heterogeneous$/i;
+        print @contents;
+        @contents = &$callback($self,++$COUNTER);
+        if ((@contents) && defined($contents[0])) {
+            print "${boundary}$CGI::CRLF";
+            do_sleep($self->push_delay()) if $self->push_delay();
+        } else {
+            if ($last_page && ref($last_page) eq 'CODE') {
+                print "${boundary}$CGI::CRLF";
+                do_sleep($self->push_delay()) if $self->push_delay();
+                print "Content-type: ${type}$CGI::CRLF$CGI::CRLF" unless $type =~ /^dynamic|heterogeneous$/i;
+                print  &$last_page($self,$COUNTER);
+            }
+            print "${boundary}--$CGI::CRLF";
+            last;
+        }
     }
+    print "WARNING: YOUR BROWSER DOESN'T SUPPORT THIS SERVER-PUSH TECHNOLOGY.$CGI::CRLF";
 }
 
 sub simple_counter {
     my ($self,$count) = @_;
-    return (
-	    CGI->start_html("CGI::Push Default Counter"),
-	    CGI->h1("CGI::Push Default Counter"),
-	    "This page has been updated ",CGI->strong($count)," times.",
-	    CGI->hr(),
-	    CGI->a({'-href'=>'http://www.genome.wi.mit.edu/ftp/pub/software/WWW/cgi_docs.html'},'CGI.pm home page'),
-	    CGI->end_html
-	    );
+    return $self->start_html("CGI::Push Default Counter"),
+           $self->h1("CGI::Push Default Counter"),
+           "This page has been updated ",$self->strong($count)," times.",
+           $self->hr(),
+           $self->a({'-href'=>'http://www.genome.wi.mit.edu/ftp/pub/software/WWW/cgi_docs.html'},'CGI.pm home page'),
+           $self->end_html;
 }
 
 sub do_sleep {
     my $delay = shift;
     if ( ($delay >= 1) && ($delay!~/\./) ){
-	sleep($delay);
+        sleep($delay);
     } else {
-	select(undef,undef,undef,$delay);
+        select(undef,undef,undef,$delay);
     }
 }
 
 sub push_delay {
-   my ($self,$delay) = CGI::self_or_default(@_);
-   return defined($delay) ? $self->{'.delay'} = 
-	$delay : $self->{'.delay'};
+    my ($self,$delay) = CGI::self_or_default(@_);
+    return defined($delay) ? $self->{'.delay'} = 
+        $delay : $self->{'.delay'};
 }
 
 1;
@@ -117,18 +125,18 @@ CGI::Push - Simple Interface to Server Push
         my($q,$counter) = @_;
         return undef if $counter >= 10;
         return start_html('Test'),
-  	       h1('Visible'),"\n",
+               h1('Visible'),"\n",
                "This page has been called ", strong($counter)," times",
                end_html();
-      }
+    }
 
-     sub last_page {
-	 my($q,$counter) = @_;
-         return start_html('Done'),
-                h1('Finished'),
-                strong($counter),' iterations.',
-                end_html;
-     }
+    sub last_page {
+        my($q,$counter) = @_;
+        return start_html('Done'),
+               h1('Finished'),
+               strong($counter - 1),' iterations.',
+               end_html;
+    }
 
 =head1 DESCRIPTION
 
@@ -142,6 +150,9 @@ page.  The contents of the page will be transmitted to the browser
 in such a way that it will replace what was there beforehand.  The
 technique will work with HTML pages as well as with graphics files, 
 allowing you to create animated GIFs.
+
+Only Netscape Navigator supports server push.  Internet Explorer
+browsers do not.
 
 =head1 USING CGI::Push
 
@@ -185,7 +196,7 @@ redrawing loop and print out the final page (if any)
         return undef if $counter > 100;
         return start_html('testing'),
                h1('testing'),
-	       "This page called $counter times";
+               "This page called $counter times";
     }
 
 You are of course free to refer to create and use global variables
@@ -216,10 +227,12 @@ refresh the page faster.  Fractional values are allowed.
 
 B<If not specified, -delay will default to 1 second>
 
-=item -cookie, -target, -expires
+=item -cookie, -target, -expires, -nph
 
 These have the same meaning as the like-named parameters in
 CGI::header().
+
+If not specified, -nph will default to 1 (as needed for many servers, see below).
 
 =back
 
@@ -237,9 +250,9 @@ look like this:
     sub my_draw_routine {
         my($q,$counter) = @_;
         return header('text/html'),   # note we're producing the header here
-	       start_html('testing'),
+               start_html('testing'),
                h1('testing'),
-	       "This page called $counter times";
+               "This page called $counter times";
     }
 
 You can add any header fields that you like, but some (cookies and
@@ -251,21 +264,21 @@ as shown below:
 
     sub my_draw_routine {
         my($q,$counter) = @_;
-	return undef if $counter > 10;
+        return undef if $counter > 10;
         return header('text/html'),   # note we're producing the header here
-	       start_html('testing'),
+               start_html('testing'),
                h1('testing'),
-	       "This page called $counter times";
+               "This page called $counter times";
     }
 
     sub my_last_page {
-	header(-refresh=>'5; URL=http://somewhere.else/finished.html',
-	       -type=>'text/html'),
-        start_html('Moved'),
-        h1('This is the last page'),
-	'Goodbye!'
-         hr,	
-         end_html; 
+        return header(-refresh=>'5; URL=http://somewhere.else/finished.html',
+                      -type=>'text/html'),
+               start_html('Moved'),
+               h1('This is the last page'),
+               'Goodbye!'
+               hr,
+               end_html; 
     }
 
 =head2 Changing the Page Delay on the Fly
@@ -279,12 +292,17 @@ parameters, push_delay() just returns the current delay.
 
 =head1 INSTALLING CGI::Push SCRIPTS
 
-Server push scripts B<must> be installed as no-parsed-header (NPH)
-scripts in order to work correctly.  On Unix systems, this is most
-often accomplished by prefixing the script's name with "nph-".  
+Server push scripts must be installed as no-parsed-header (NPH)
+scripts in order to work correctly on many servers.  On Unix systems,
+this is most often accomplished by prefixing the script's name with "nph-".  
 Recognition of NPH scripts happens automatically with WebSTAR and 
 Microsoft IIS.  Users of other servers should see their documentation
 for help.
+
+Apache web server from version 1.3b2 on does not need server
+push scripts installed as NPH scripts: the -nph parameter to do_push()
+may be set to a false value to disable the extra headers needed by an
+NPH script.
 
 =head1 AUTHOR INFORMATION
 

@@ -51,59 +51,6 @@ after 5.003_05:
 		perl___ - cannot fork, can dynalink.
 	The build of the first one - perl - is rather convoluted, and
 	  requires a build of miniperl_.
-after 5.003_05:
-	PERLLIB_PREFIX was not active if it matches an element of @INC
-		as a whole.
-	Do not need PERL_SBRK if crtdll-revision is >= 50.
-	Use -Zsmall-conv if crtdll-revision is >= 50 (in static perl!).
-:7: warning: #warning <dirent.h> requires <sys/types.h>
-	We compile miniperl static. It cannot fork, thus there may be
-		problems with pipes (since HAS_FORK is in
-		place). Pipes are required by makemaker.
-	We compile perl___.exe A.OUT and dynamic. It should be able to
-		fork.
-	If we can fork, we my_popen by popen unless "-|". Thus we
-		write a cooky "-1" into the pid array to indicate
-		this.
-	Apparently we can fork, and we can load dynamic extensions
-		now, though probably not simultaneously.
-	*DB tests corrected for OS/2 one-user stat[2].
-	/bin/sh is intercepted and replaced by SH_PATH.
-	Note that having '\\' in the command line of one-arg `system'
-		would trigger call via shell.
-	Segfault with system {'ls'} 'blah'; corrected.
-	Documentation of OS/2-different features added to main PODs.
-	New buitins in Cwd::
-
-		Cwd::current_drive
-		Cwd::sys_chdir		- leaves drive as it is.
-		Cwd::change_drive
-		Cwd::sys_is_absolute	- has drive letter and is_rooted
-		Cwd::sys_is_rooted	- has leading [/\\] (maybe
-					  after a drive)
-		Cwd::sys_is_relative	- changes with current dir
-		Cwd::sys_cwd		- Interface to cwd from EMX.
-		Cwd::sys_abspath(name, dir)	
-					- Really really odious
-					  function. Returns absolute
-					  name of file which would 
-					  have 'name' if CWD were 'dir'.
-					Dir defaults to the current dir.
-		Cwd::extLibpath [type]	- Get/set current value of extended
-		Cwd::extLibpath_set	- library search path.
-			path [type]
-					The optional last argument redirects
-					   to END-path if true,
-					   default is to search BEGIN-path.
-		(Note that some of these may be moved to different
-		  libraries - eventually).
-	Executables: 
-		perl - can fork, can dynalink (but not simultaneously)
-		perl_ - can fork, cannot dynalink
-		perl__ - same as perl___, but PM.
-		perl___ - cannot fork, can dynalink.
-	The build of the first one - perl - is rather convoluted, and
-	  requires a build of miniperl_.
 
 after 5.003_07:
 	custom tmpfile and tmpname which may use $TMP, $TEMP.
@@ -322,3 +269,68 @@ after 5.005_62:
 	  (alas, uppercased - but with /);
 	t/io/fs.t was failing on HPFS386;
 	Remove extra ';' from defines for MQ operations.
+
+pre 5.6.1:
+	Resolved: "Bad free()" messages (e.g., from DB_File) with -Zomf build.
+	   The reason was: when an extension DLL was linked, the order of
+	   libraries was similar to this:
+		f1.obj f2.obj libperl.lib -llibr1 -llibr2
+	   (with C RTL implicitly after this).  When libperl.lib overrides
+	   some C RTL functions, they are correctly resolved when mentioned
+	   in f1.obj and f2.obj.  However, the resolution for libr1.lib and
+	   libr2.lib is implementation-dependent.
+
+	   With -Zomf linking the symbols are resolved for libr1.lib and
+	   libr2.lib *only if* they reside in .obj-file-sections of libperl.lib
+	   which were already "picked up" for symbols in f1.obj f2.obj.
+	   However, libperl.lib is an import library for a .DLL, so *each
+	   symbol in libperl.lib sits in its own pseudo-section*!
+
+	   Corollary: only those symbol from libperl.lib which were already
+	   mentioned in f1.obj f2.obj would be used for libr1.lib and
+	   libr2.lib.  Example: if f1.obj f2.obj do not mention calloc() but
+	   libr1.lib and libr2.lib do, then .lib's will get calloc() of C RTL,
+	   not one of libperl.lib.
+
+	   Solution: create a small duplicate of libperl.lib with overriding
+	   symbols only.  Put it *after* -llibr1 -llibr2 on the link line.
+	   Map strdup() and putenv() to Perl_strdup() and Perl_putenv()
+	   inside this library.
+
+	Resolved: rmdir() and mkdir() do not accept trailing slashes.
+	   Wrappers are implemented.
+	Resolved: when loading modules, FP mask may be erroneously changed by
+	   _DLLInitTerm() (e.g., TCP32IP).
+		Solutions: a) dlopen() saves/restores the FP mask.
+			   b) When starting, reset FP mask to a sane value
+				(if the DLL was compile-time linked).
+	New functions in package OS2:
+		unsigned _control87(unsigned new,unsigned mask)	# as in EMX
+		unsigned get_control87()
+		# with default values good for handling exception mask:
+		unsigned set_control87_em(new=MCW_EM,mask=MCW_EM)
+	    Needed to guard against other situations when the FP mask is
+	    stompted upon.  Apparently, IBM used a compiler (for some period
+	    of time around '95?) which changes FP mask right and left...
+	Resolved: $^X was always uppercased (cosmetic).  Solution:
+	    use argv[0] if it differs from what the OS returns only in case.
+	Resolved: when creating PM message queues, WinCancelShutdown() was
+	    not called even if the application said that it would not serve
+	    messages in this queue.  Could result in PM refusing to shutdown.
+
+	    Solution: resolve WinCancelShutdown at run time, keep the refcount
+	    of who is going to serve the queue.
+	Resolved: Perl_Deregister_MQ() segfaulted (pid/tid not initialized).
+	Resolved: FillWinError() would not fetch the error.
+	    Solution: resolve WinGetLastError at run time, call it.
+	Resolved: OS2::REXX would ignore arguments given to a Perl function
+	    imported into the REXX compartment via REXX_eval_with().
+	Resolved: OS2::REXX would treat arguments given to a Perl function
+	    imported into the REXX compartment via _register() as ASCIIZ
+	    strings inside of binary strings.
+	Resolved: OS2::REXX did not document _register().
+	Resolved: OS2::REXX would not report the error to REXX if an error
+	    condition appeared during a call to Perl function from REXX
+	    compartment.  As a result, the return string was not initialized.
+	A complete example of a mini-application added to OS2::REXX.
+	README.os2 updated to reflect the current state of Perl.

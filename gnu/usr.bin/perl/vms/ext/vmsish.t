@@ -136,6 +136,7 @@ sub do_a_perl {
     local *P;
     open(P,'>vmsish_test.com') || die('not ok ?? : unable to open "vmsish_test.com" for writing');
     print P "\$ set message/facil/sever/ident/text\n";
+    print P "\$ define/nolog/user sys\$error _nla0:\n";
     print P "\$ $Invoke_Perl @_\n";
     close P;
     my $x = `\@vmsish_test.com`;

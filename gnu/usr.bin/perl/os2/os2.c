@@ -8,6 +8,7 @@
 #define SPU_DISABLESUPPRESSION          0
 #define SPU_ENABLESUPPRESSION           1
 #include <os2.h>
+#include "dlfcn.h"
 
 #include <sys/uflags.h>
 
@@ -66,7 +67,7 @@ pthread_join(perl_os_thread tid, void **status)
 	break;
     case pthreads_st_waited:
 	MUTEX_UNLOCK(&start_thread_mutex);
-	croak("join with a thread with a waiter");
+	Perl_croak_nocontext("join with a thread with a waiter");
 	break;
     case pthreads_st_run:
 	thread_join_data[tid].state = pthreads_st_waited;
@@ -79,7 +80,7 @@ pthread_join(perl_os_thread tid, void **status)
 	break;
     default:
 	MUTEX_UNLOCK(&start_thread_mutex);
-	croak("join: unknown thread state: '%s'", 
+	Perl_croak_nocontext("join: unknown thread state: '%s'", 
 	      pthreads_states[thread_join_data[tid].state]);
 	break;
     }
@@ -107,7 +108,7 @@ pthread_startit(void *arg)
 	}
     }
     if (thread_join_data[tid].state != pthreads_st_none)
-	croak("attempt to reuse thread id %i", tid);
+	Perl_croak_nocontext("attempt to reuse thread id %i", tid);
     thread_join_data[tid].state = pthreads_st_run;
     /* Now that we copied/updated the guys, we may release the caller... */
     MUTEX_UNLOCK(&start_thread_mutex);
@@ -146,7 +147,7 @@ pthread_detach(perl_os_thread tid)
     switch (thread_join_data[tid].state) {
     case pthreads_st_waited:
 	MUTEX_UNLOCK(&start_thread_mutex);
-	croak("detach on a thread with a waiter");
+	Perl_croak_nocontext("detach on a thread with a waiter");
 	break;
     case pthreads_st_run:
 	thread_join_data[tid].state = pthreads_st_detached;
@@ -154,7 +155,7 @@ pthread_detach(perl_os_thread tid)
 	break;
     default:
 	MUTEX_UNLOCK(&start_thread_mutex);
-	croak("detach: unknown thread state: '%s'", 
+	Perl_croak_nocontext("detach: unknown thread state: '%s'", 
 	      pthreads_states[thread_join_data[tid].state]);
 	break;
     }
@@ -168,11 +169,11 @@ os2_cond_wait(perl_cond *c, perl_mutex *m)
     int rc;
     STRLEN n_a;
     if ((rc = DosResetEventSem(*c,&n_a)) && (rc != ERROR_ALREADY_RESET))
-	croak("panic: COND_WAIT-reset: rc=%i", rc);		
+	Perl_croak_nocontext("panic: COND_WAIT-reset: rc=%i", rc);		
     if (m) MUTEX_UNLOCK(m);					
     if (CheckOSError(DosWaitEventSem(*c,SEM_INDEFINITE_WAIT))
 	&& (rc != ERROR_INTERRUPT))
-	croak("panic: COND_WAIT: rc=%i", rc);		
+	Perl_croak_nocontext("panic: COND_WAIT: rc=%i", rc);		
     if (rc == ERROR_INTERRUPT)
 	errno = EINTR;
     if (m) MUTEX_LOCK(m);					
@@ -187,6 +188,16 @@ static USHORT loadOrd[2] = { 874, 873 }; /* Query=874, Set=873. */
 #define ORD_SET_ELP	1
 struct PMWIN_entries_t PMWIN_entries;
 
+HMODULE
+loadModule(char *modname)
+{
+    HMODULE h = (HMODULE)dlopen(modname, 0);
+    if (!h)
+	Perl_croak_nocontext("Error loading module '%s': %s", 
+			     modname, dlerror());
+    return h;
+}
+
 APIRET
 loadByOrd(char *modname, ULONG ord)
 {
@@ -196,15 +207,18 @@ loadByOrd(char *modname, ULONG ord)
 	PFN fcn;
 	APIRET rc;
 
-	if ((!hdosc && CheckOSError(DosLoadModule(buf, sizeof buf, 
-						  modname, &hdosc)))
-	    || CheckOSError(DosQueryProcAddr(hdosc, loadOrd[ord], NULL, &fcn)))
-	    croak("This version of OS/2 does not support %s.%i", 
-		  modname, loadOrd[ord]);
+	
+	if (!hdosc) {
+	    hdosc = loadModule(modname);
+	    if (CheckOSError(DosQueryProcAddr(hdosc, loadOrd[ord], NULL, &fcn)))
+		Perl_croak_nocontext(
+			"This version of OS/2 does not support %s.%i", 
+			modname, loadOrd[ord]);	    
+	}
 	ExtFCN[ord] = fcn;
     } 
     if ((long)ExtFCN[ord] == -1) 
-	croak("panic queryaddr");
+	Perl_croak_nocontext("panic queryaddr");
 }
 
 void 
@@ -218,6 +232,8 @@ init_PMWIN_entries(void)
 	918,				/* PeekMsg */
 	915,				/* GetMsg */
 	912,				/* DispatchMsg */
+	753,				/* GetLastError */
+	705,				/* CancelShutdown */
     };
     BYTE buf[20];
     int i = 0;
@@ -226,12 +242,11 @@ init_PMWIN_entries(void)
     if (hpmwin)
 	return;
 
-    if (CheckOSError(DosLoadModule(buf, sizeof buf, "pmwin", &hpmwin)))
-	croak("This version of OS/2 does not support pmwin: error in %s", buf);
-    while (i <= 5) {
+    hpmwin = loadModule("pmwin");
+    while (i < sizeof(ords)/sizeof(int)) {
 	if (CheckOSError(DosQueryProcAddr(hpmwin, ords[i], NULL, 
 					  ((PFN*)&PMWIN_entries)+i)))
-	    croak("This version of OS/2 does not support pmwin.%d", ords[i]);
+	    Perl_croak_nocontext("This version of OS/2 does not support pmwin.%d", ords[i]);
 	i++;
     }
 }
@@ -277,7 +292,7 @@ sys_prio(pid)
   }
   if (pid != psi->procdata->pid) {
       Safefree(psi);
-      croak("panic: wrong pid in sysinfo");
+      Perl_croak_nocontext("panic: wrong pid in sysinfo");
   }
   prio = psi->procdata->threads->priority;
   Safefree(psi);
@@ -373,7 +388,7 @@ spawn_sighandler(int sig)
 }
 
 static int
-result(int flag, int pid)
+result(pTHX_ int flag, int pid)
 {
 	int r, status;
 	Signal_t (*ihand)();     /* place to save signal during system() */
@@ -441,7 +456,7 @@ file_type(char *path)
     ULONG apptype;
     
     if (!(_emx_env & 0x200)) 
-	croak("file_type not implemented on DOS"); /* not OS/2. */
+	Perl_croak_nocontext("file_type not implemented on DOS"); /* not OS/2. */
     if (CheckOSError(DosQueryAppType(path, &apptype))) {
 	switch (rc) {
 	case ERROR_FILE_NOT_FOUND:
@@ -464,14 +479,8 @@ static ULONG os2_mytype;
 /* global PL_Argv[] contains arguments. */
 
 int
-do_spawn_ve(really, flag, execf, inicmd, addflag)
-SV *really;
-U32 flag;
-U32 execf;
-char *inicmd;
-U32 addflag;
+do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 {
-    dTHR;
 	int trueflag = flag;
 	int rc, pass = 1;
 	char *tmps;
@@ -541,7 +550,7 @@ U32 addflag;
 		    if (flag == P_NOWAIT)
 			flag = P_PM;
 		    else if ((flag & 7) != P_PM && (flag & 7) != P_SESSION)
-			warn("Starting PM process with flag=%d, mytype=%d",
+			Perl_warner(aTHX_ WARN_EXEC, "Starting PM process with flag=%d, mytype=%d",
 			     flag, os2_mytype);
 		}
 	    }
@@ -552,7 +561,7 @@ U32 addflag;
 		    if (flag == P_NOWAIT)
 			flag = P_SESSION;
 		    else if ((flag & 7) != P_SESSION)
-			warn("Starting Full Screen process with flag=%d, mytype=%d",
+			Perl_warner(aTHX_ WARN_EXEC, "Starting Full Screen process with flag=%d, mytype=%d",
 			     flag, os2_mytype);
 		}
 	    }
@@ -584,7 +593,7 @@ U32 addflag;
 	}
 
 #if 0
-	rc = result(trueflag, spawnvp(flag,tmps,PL_Argv));
+	rc = result(aTHX_ trueflag, spawnvp(flag,tmps,PL_Argv));
 #else
 	if (execf == EXECF_TRUEEXEC)
 	    rc = execvp(tmps,PL_Argv);
@@ -593,7 +602,7 @@ U32 addflag;
 	else if (execf == EXECF_SPAWN_NOWAIT)
 	    rc = spawnvp(flag,tmps,PL_Argv);
         else				/* EXECF_SPAWN, EXECF_SPAWN_BYFLAG */
-	    rc = result(trueflag, 
+	    rc = result(aTHX_ trueflag, 
 			spawnvp(flag,tmps,PL_Argv));
 #endif 
 	if (rc < 0 && pass == 1
@@ -618,7 +627,7 @@ U32 addflag;
                     if (l >= sizeof scrbuf) {
                        Safefree(scr);
                      longbuf:
-                       warn("Size of scriptname too big: %d", l);
+                       Perl_warner(aTHX_ WARN_EXEC, "Size of scriptname too big: %d", l);
 		       rc = -1;
 		       goto finish;
                     }
@@ -654,7 +663,7 @@ U32 addflag;
 		    }
 		    if (fclose(file) != 0) { /* Failure */
 		      panic_file:
-			warn("Error reading \"%s\": %s", 
+			Perl_warner(aTHX_ WARN_EXEC, "Error reading \"%s\": %s", 
 			     scr, Strerror(errno));
 			buf[0] = 0;	/* Not #! */
 			goto doshell_args;
@@ -698,7 +707,7 @@ U32 addflag;
 			*s++ = 0;
 		    }
 		    if (nargs == -1) {
-			warn("Too many args on %.*s line of \"%s\"",
+			Perl_warner(aTHX_ WARN_EXEC, "Too many args on %.*s line of \"%s\"",
 			     s1 - buf, buf, scr);
 			nargs = 4;
 			argsp = fargs;
@@ -820,7 +829,7 @@ U32 addflag;
 
 /* Try converting 1-arg form to (usually shell-less) multi-arg form. */
 int
-do_spawn3(char *cmd, int execf, int flag)
+do_spawn3(pTHX_ char *cmd, int execf, int flag)
 {
     register char **a;
     register char *s;
@@ -905,7 +914,7 @@ do_spawn3(char *cmd, int execf, int flag)
                 rc = spawnl(flag,shell,shell,copt,cmd,(char*)0);
 	    else {
 		/* In the ak code internal P_NOWAIT is P_WAIT ??? */
-		rc = result(P_WAIT,
+		rc = result(aTHX_ P_WAIT,
 			    spawnl(P_NOWAIT,shell,shell,copt,cmd,(char*)0));
 		if (rc < 0 && ckWARN(WARN_EXEC))
 		    Perl_warner(aTHX_ WARN_EXEC, "Can't %s \"%s\": %s", 
@@ -936,7 +945,7 @@ do_spawn3(char *cmd, int execf, int flag)
     }
     *a = Nullch;
     if (PL_Argv[0])
-	rc = do_spawn_ve(NULL, flag, execf, cmd, mergestderr);
+	rc = do_spawn_ve(aTHX_ NULL, flag, execf, cmd, mergestderr);
     else
     	rc = -1;
     if (news)
@@ -947,12 +956,8 @@ do_spawn3(char *cmd, int execf, int flag)
 
 /* Array spawn.  */
 int
-do_aspawn(really,mark,sp)
-SV *really;
-register SV **mark;
-register SV **sp;
+os2_do_aspawn(pTHX_ SV *really, register SV **mark, register SV **sp)
 {
-    dTHR;
     register char **a;
     int rc;
     int flag = P_WAIT, flag_set = 0;
@@ -978,9 +983,9 @@ register SV **sp;
 	*a = Nullch;
 
 	if (flag_set && (a == PL_Argv + 1)) { /* One arg? */
-	    rc = do_spawn3(a[-1], EXECF_SPAWN_BYFLAG, flag);
+	    rc = do_spawn3(aTHX_ a[-1], EXECF_SPAWN_BYFLAG, flag);
 	} else
-	    rc = do_spawn_ve(really, flag, EXECF_SPAWN, NULL, 0);
+	    rc = do_spawn_ve(aTHX_ really, flag, EXECF_SPAWN, NULL, 0);
     } else
     	rc = -1;
     do_execfree();
@@ -988,38 +993,32 @@ register SV **sp;
 }
 
 int
-do_spawn(cmd)
-char *cmd;
+os2_do_spawn(pTHX_ char *cmd)
 {
-    return do_spawn3(cmd, EXECF_SPAWN, 0);
+    return do_spawn3(aTHX_ cmd, EXECF_SPAWN, 0);
 }
 
 int
-do_spawn_nowait(cmd)
-char *cmd;
+do_spawn_nowait(pTHX_ char *cmd)
 {
-    return do_spawn3(cmd, EXECF_SPAWN_NOWAIT,0);
+    return do_spawn3(aTHX_ cmd, EXECF_SPAWN_NOWAIT,0);
 }
 
 bool
-do_exec(cmd)
-char *cmd;
+Perl_do_exec(pTHX_ char *cmd)
 {
-    do_spawn3(cmd, EXECF_EXEC, 0);
+    do_spawn3(aTHX_ cmd, EXECF_EXEC, 0);
     return FALSE;
 }
 
 bool
-os2exec(cmd)
-char *cmd;
+os2exec(pTHX_ char *cmd)
 {
-    return do_spawn3(cmd, EXECF_TRUEEXEC, 0);
+    return do_spawn3(aTHX_ cmd, EXECF_TRUEEXEC, 0);
 }
 
 PerlIO *
-my_syspopen(cmd,mode)
-char	*cmd;
-char	*mode;
+my_syspopen(pTHX_ char *cmd, char *mode)
 {
 #ifndef USE_POPEN
 
@@ -1069,7 +1068,7 @@ char	*mode;
     fcntl(p[this], F_SETFD, FD_CLOEXEC);
     if (newfd != -1)
 	fcntl(newfd, F_SETFD, FD_CLOEXEC);
-    pid = do_spawn_nowait(cmd);
+    pid = do_spawn_nowait(aTHX_ cmd);
     if (newfd == -1)
 	close(*mode == 'r');		/* It was closed initially */
     else if (newfd != (*mode == 'r')) {	/* Probably this check is not needed */
@@ -1124,16 +1123,16 @@ char	*mode;
 int
 fork(void)
 {
-    croak(PL_no_func, "Unsupported function fork");
+    Perl_croak_nocontext(PL_no_func, "Unsupported function fork");
     errno = EINVAL;
     return -1;
 }
 #endif
 
 /*******************************************************************/
-/* not implemented in EMX 0.9a */
+/* not implemented in EMX 0.9d */
 
-void *	ctermid(x)	{ return 0; }
+char *	ctermid(char *s)	{ return 0; }
 
 #ifdef MYTTYNAME /* was not in emx0.9a */
 void *	ttyname(x)	{ return 0; }
@@ -1147,12 +1146,11 @@ static HMODULE htcp = 0;
 static void *
 tcp0(char *name)
 {
-    static BYTE buf[20];
     PFN fcn;
 
-    if (!(_emx_env & 0x200)) croak("%s requires OS/2", name); /* Die if not OS/2. */
+    if (!(_emx_env & 0x200)) Perl_croak_nocontext("%s requires OS/2", name); /* Die if not OS/2. */
     if (!htcp)
-	DosLoadModule(buf, sizeof buf, "tcp32dll", &htcp);
+	htcp = loadModule("tcp32dll");
     if (htcp && DosQueryProcAddr(htcp, 0, name, &fcn) == 0)
 	return (void *) ((void * (*)(void)) fcn) ();
     return 0;
@@ -1164,17 +1162,18 @@ tcp1(char *name, int arg)
     static BYTE buf[20];
     PFN fcn;
 
-    if (!(_emx_env & 0x200)) croak("%s requires OS/2", name); /* Die if not OS/2. */
+    if (!(_emx_env & 0x200)) Perl_croak_nocontext("%s requires OS/2", name); /* Die if not OS/2. */
     if (!htcp)
 	DosLoadModule(buf, sizeof buf, "tcp32dll", &htcp);
     if (htcp && DosQueryProcAddr(htcp, 0, name, &fcn) == 0)
 	((void (*)(int)) fcn) (arg);
 }
 
-void *	gethostent()	{ return tcp0("GETHOSTENT");  }
-void *	getnetent()	{ return tcp0("GETNETENT");   }
-void *	getprotoent()	{ return tcp0("GETPROTOENT"); }
-void *	getservent()	{ return tcp0("GETSERVENT");  }
+struct hostent *	gethostent()	{ return tcp0("GETHOSTENT");  }
+struct netent *		getnetent()	{ return tcp0("GETNETENT");   }
+struct protoent *	getprotoent()	{ return tcp0("GETPROTOENT"); }
+struct servent *	getservent()	{ return tcp0("GETSERVENT");  }
+
 void	sethostent(x)	{ tcp1("SETHOSTENT",  x); }
 void	setnetent(x)	{ tcp1("SETNETENT",   x); }
 void	setprotoent(x)	{ tcp1("SETPROTOENT", x); }
@@ -1230,7 +1229,7 @@ sys_alloc(int size) {
     if (rc == ERROR_NOT_ENOUGH_MEMORY) {
 	return (void *) -1;
     } else if ( rc ) 
-	croak("Got an error from DosAllocMem: %li", (long)rc);
+	Perl_croak_nocontext("Got an error from DosAllocMem: %li", (long)rc);
     return got;
 }
 
@@ -1264,7 +1263,7 @@ XS(XS_File__Copy_syscopy)
 {
     dXSARGS;
     if (items < 2 || items > 3)
-	croak("Usage: File::Copy::syscopy(src,dst,flag=0)");
+	Perl_croak_nocontext("Usage: File::Copy::syscopy(src,dst,flag=0)");
     {
 	STRLEN n_a;
 	char *	src = (char *)SvPV(ST(0),n_a);
@@ -1288,8 +1287,7 @@ XS(XS_File__Copy_syscopy)
 #include "patchlevel.h"
 
 char *
-mod2fname(sv)
-     SV   *sv;
+mod2fname(pTHX_ SV *sv)
 {
     static char fname[9];
     int pos = 6, len, avlen;
@@ -1299,14 +1297,14 @@ mod2fname(sv)
     char *s;
     STRLEN n_a;
 
-    if (!SvROK(sv)) croak("Not a reference given to mod2fname");
+    if (!SvROK(sv)) Perl_croak_nocontext("Not a reference given to mod2fname");
     sv = SvRV(sv);
     if (SvTYPE(sv) != SVt_PVAV) 
-      croak("Not array reference given to mod2fname");
+      Perl_croak_nocontext("Not array reference given to mod2fname");
 
     avlen = av_len((AV*)sv);
     if (avlen < 0) 
-      croak("Empty array reference given to mod2fname");
+      Perl_croak_nocontext("Empty array reference given to mod2fname");
 
     s = SvPV(*av_fetch((AV*)sv, avlen, FALSE), n_a);
     strncpy(fname, s, 8);
@@ -1338,12 +1336,12 @@ XS(XS_DynaLoader_mod2fname)
 {
     dXSARGS;
     if (items != 1)
-	croak("Usage: DynaLoader::mod2fname(sv)");
+	Perl_croak_nocontext("Usage: DynaLoader::mod2fname(sv)");
     {
 	SV *	sv = ST(0);
 	char *	RETVAL;
 
-	RETVAL = mod2fname(sv);
+	RETVAL = mod2fname(aTHX_ sv);
 	ST(0) = sv_newmortal();
 	sv_setpv((SV*)ST(0), RETVAL);
     }
@@ -1374,17 +1372,32 @@ os2error(int rc)
 }
 
 char *
-os2_execname(void)
+os2_execname(pTHX)
 {
-  char buf[300], *p;
+  char buf[300], *p, *o = PL_origargv[0], ok = 1;
 
   if (_execname(buf, sizeof buf) != 0)
-	return PL_origargv[0];
+	return o;
   p = buf;
   while (*p) {
     if (*p == '\\')
 	*p = '/';
+    if (*p == '/') {
+	if (ok && *o != '/' && *o != '\\')
+	    ok = 0;
+    } else if (ok && tolower(*o) != tolower(*p))
+	ok = 0;	
     p++;
+    o++;
+  }
+  if (ok) { /* PL_origargv[0] matches the real name.  Use PL_origargv[0]: */
+     strcpy(buf, PL_origargv[0]);	/* _execname() is always uppercased */
+     p = buf;
+     while (*p) {
+       if (*p == '\\')
+           *p = '/';
+       p++;
+     }     
   }
   p = savepv(buf);
   SAVEFREEPV(p);
@@ -1412,7 +1425,7 @@ perllib_mangle(char *s, unsigned int l)
 	    }
 	    newl = strlen(newp);
 	    if (newl == 0 || oldl == 0) {
-		croak("Malformed PERLLIB_PREFIX");
+		Perl_croak_nocontext("Malformed PERLLIB_PREFIX");
 	    }
 	    strcpy(ret, newp);
 	    s = ret;
@@ -1434,7 +1447,7 @@ perllib_mangle(char *s, unsigned int l)
 	return s;
     }
     if (l + newl - oldl > STATIC_FILE_LENGTH || newl > STATIC_FILE_LENGTH) {
-	croak("Malformed PERLLIB_PREFIX");
+	Perl_croak_nocontext("Malformed PERLLIB_PREFIX");
     }
     strcpy(ret + newl, s + oldl);
     return ret;
@@ -1456,7 +1469,6 @@ Perl_Register_MQ(int serve)
 	return Perl_hmq;
     DosGetInfoBlocks(&tib, &pib);
     Perl_os2_initial_mode = pib->pib_ultype;
-    Perl_hmq_refcnt = 1;
     /* Try morphing into a PM application. */
     if (pib->pib_ultype != 3)		/* 2 is VIO */
 	pib->pib_ultype = 3;		/* 3 is PM */
@@ -1465,10 +1477,20 @@ Perl_Register_MQ(int serve)
     Perl_hmq = (*PMWIN_entries.CreateMsgQueue)(perl_hab_GET(), 64); 
     if (!Perl_hmq) {
 	static int cnt;
+
+	SAVEINT(cnt);			/* Allow catch()ing. */
 	if (cnt++)
 	    _exit(188);			/* Panic can try to create a window. */
-	croak("Cannot create a message queue, or morph to a PM application");
+	Perl_croak_nocontext("Cannot create a message queue, or morph to a PM application");
     }
+    if (serve) {
+	if ( Perl_hmq_servers <= 0	/* Safe to inform us on shutdown, */
+	     && Perl_hmq_refcnt > 0 )	/* this was switched off before... */
+	    (*PMWIN_entries.CancelShutdown)(Perl_hmq, 0);
+	Perl_hmq_servers++;
+    } else if (!Perl_hmq_servers)	/* Do not inform us on shutdown */
+	(*PMWIN_entries.CancelShutdown)(Perl_hmq, 1);
+    Perl_hmq_refcnt++;
     return Perl_hmq;
 }
 
@@ -1478,14 +1500,14 @@ Perl_Serve_Messages(int force)
     int cnt = 0;
     QMSG msg;
 
-    if (Perl_hmq_servers && !force)
+    if (Perl_hmq_servers > 0 && !force)
 	return 0;
-    if (!Perl_hmq_refcnt)
-	croak("No message queue");
+    if (Perl_hmq_refcnt <= 0)
+	Perl_croak_nocontext("No message queue");
     while ((*PMWIN_entries.PeekMsg)(Perl_hab, &msg, NULLHANDLE, 0, 0, PM_REMOVE)) {
 	cnt++;
 	if (msg.msg == WM_QUIT)
-	    croak("QUITing...");
+	    Perl_croak_nocontext("QUITing...");
 	(*PMWIN_entries.DispatchMsg)(Perl_hab, &msg);
     }
     return cnt;
@@ -1496,10 +1518,10 @@ Perl_Process_Messages(int force, I32 *cntp)
 {
     QMSG msg;
 
-    if (Perl_hmq_servers && !force)
+    if (Perl_hmq_servers > 0 && !force)
 	return 0;
-    if (!Perl_hmq_refcnt)
-	croak("No message queue");
+    if (Perl_hmq_refcnt <= 0)
+	Perl_croak_nocontext("No message queue");
     while ((*PMWIN_entries.GetMsg)(Perl_hab, &msg, NULLHANDLE, 0, 0)) {
 	if (cntp)
 	    (*cntp)++;
@@ -1509,7 +1531,7 @@ Perl_Process_Messages(int force, I32 *cntp)
 	if (msg.msg == WM_CREATE)
 	    return +1;
     }
-    croak("QUITing...");
+    Perl_croak_nocontext("QUITing...");
 }
 
 void
@@ -1518,20 +1540,22 @@ Perl_Deregister_MQ(int serve)
     PPIB pib;
     PTIB tib;
 
-    if (--Perl_hmq_refcnt == 0) {
+    if (serve)
+	Perl_hmq_servers--;
+    if (--Perl_hmq_refcnt <= 0) {
+	init_PMWIN_entries();			/* To be extra safe */
 	(*PMWIN_entries.DestroyMsgQueue)(Perl_hmq);
 	Perl_hmq = 0;
 	/* Try morphing back from a PM application. */
+	DosGetInfoBlocks(&tib, &pib);
 	if (pib->pib_ultype == 3)		/* 3 is PM */
 	    pib->pib_ultype = Perl_os2_initial_mode;
 	else
-	    warn("Unexpected program mode %d when morphing back from PM",
+	    Perl_warn_nocontext("Unexpected program mode %d when morphing back from PM",
 		 pib->pib_ultype);
-    }
+    } else if (serve && Perl_hmq_servers <= 0)	/* Last server exited */
+	(*PMWIN_entries.CancelShutdown)(Perl_hmq, 1);
 }
-
-extern void dlopen();
-void *fakedl = &dlopen;		/* Pull in dynaloading part. */
 
 #define sys_is_absolute(path) ( isALPHA((path)[0]) && (path)[1] == ':' \
 				&& ((path)[2] == '/' || (path)[2] == '\\'))
@@ -1549,7 +1573,7 @@ XS(XS_OS2_Error)
 {
     dXSARGS;
     if (items != 2)
-	croak("Usage: OS2::Error(harderr, exception)");
+	Perl_croak_nocontext("Usage: OS2::Error(harderr, exception)");
     {
 	int	arg1 = SvIV(ST(0));
 	int	arg2 = SvIV(ST(1));
@@ -1559,7 +1583,7 @@ XS(XS_OS2_Error)
 	unsigned long rc;
 
 	if (CheckOSError(DosError(a)))
-	    croak("DosError(%d) failed", a);
+	    Perl_croak_nocontext("DosError(%d) failed", a);
 	ST(0) = sv_newmortal();
 	if (DOS_harderr_state >= 0)
 	    sv_setiv(ST(0), DOS_harderr_state);
@@ -1574,7 +1598,7 @@ XS(XS_OS2_Errors2Drive)
 {
     dXSARGS;
     if (items != 1)
-	croak("Usage: OS2::Errors2Drive(drive)");
+	Perl_croak_nocontext("Usage: OS2::Errors2Drive(drive)");
     {
 	STRLEN n_a;
 	SV  *sv = ST(0);
@@ -1584,12 +1608,12 @@ XS(XS_OS2_Errors2Drive)
 	unsigned long rc;
 
 	if (suppress && !isALPHA(drive))
-	    croak("Non-char argument '%c' to OS2::Errors2Drive()", drive);
+	    Perl_croak_nocontext("Non-char argument '%c' to OS2::Errors2Drive()", drive);
 	if (CheckOSError(DosSuppressPopUps((suppress
 					    ? SPU_ENABLESUPPRESSION 
 					    : SPU_DISABLESUPPRESSION),
 					   drive)))
-	    croak("DosSuppressPopUps(%c) failed", drive);
+	    Perl_croak_nocontext("DosSuppressPopUps(%c) failed", drive);
 	ST(0) = sv_newmortal();
 	if (DOS_suppression_state > 0)
 	    sv_setpvn(ST(0), &DOS_suppression_state, 1);
@@ -1632,7 +1656,7 @@ XS(XS_OS2_SysInfo)
 {
     dXSARGS;
     if (items != 0)
-	croak("Usage: OS2::SysInfo()");
+	Perl_croak_nocontext("Usage: OS2::SysInfo()");
     {
 	ULONG   si[QSV_MAX] = {0};	/* System Information Data Buffer */
 	APIRET  rc	= NO_ERROR;	/* Return code            */
@@ -1642,7 +1666,7 @@ XS(XS_OS2_SysInfo)
 					 QSV_MAX, /* information */
 					 (PVOID)si,
 					 sizeof(si))))
-	    croak("DosQuerySysInfo() failed");
+	    Perl_croak_nocontext("DosQuerySysInfo() failed");
 	EXTEND(SP,2*QSV_MAX);
 	while (i < QSV_MAX) {
 	    ST(j) = sv_newmortal();
@@ -1659,7 +1683,7 @@ XS(XS_OS2_BootDrive)
 {
     dXSARGS;
     if (items != 0)
-	croak("Usage: OS2::BootDrive()");
+	Perl_croak_nocontext("Usage: OS2::BootDrive()");
     {
 	ULONG   si[1] = {0};	/* System Information Data Buffer */
 	APIRET  rc    = NO_ERROR;	/* Return code            */
@@ -1667,7 +1691,7 @@ XS(XS_OS2_BootDrive)
 	
 	if (CheckOSError(DosQuerySysInfo(QSV_BOOT_DRIVE, QSV_BOOT_DRIVE,
 					 (PVOID)si, sizeof(si))))
-	    croak("DosQuerySysInfo() failed");
+	    Perl_croak_nocontext("DosQuerySysInfo() failed");
 	ST(0) = sv_newmortal();
 	c = 'a' - 1 + si[0];
 	sv_setpvn(ST(0), &c, 1);
@@ -1679,7 +1703,7 @@ XS(XS_OS2_MorphPM)
 {
     dXSARGS;
     if (items != 1)
-	croak("Usage: OS2::MorphPM(serve)");
+	Perl_croak_nocontext("Usage: OS2::MorphPM(serve)");
     {
 	bool  serve = SvOK(ST(0));
 	unsigned long   pmq = perl_hmq_GET(serve);
@@ -1694,7 +1718,7 @@ XS(XS_OS2_UnMorphPM)
 {
     dXSARGS;
     if (items != 1)
-	croak("Usage: OS2::UnMorphPM(serve)");
+	Perl_croak_nocontext("Usage: OS2::UnMorphPM(serve)");
     {
 	bool  serve = SvOK(ST(0));
 
@@ -1707,7 +1731,7 @@ XS(XS_OS2_Serve_Messages)
 {
     dXSARGS;
     if (items != 1)
-	croak("Usage: OS2::Serve_Messages(force)");
+	Perl_croak_nocontext("Usage: OS2::Serve_Messages(force)");
     {
 	bool  force = SvOK(ST(0));
 	unsigned long   cnt = Perl_Serve_Messages(force);
@@ -1722,21 +1746,24 @@ XS(XS_OS2_Process_Messages)
 {
     dXSARGS;
     if (items < 1 || items > 2)
-	croak("Usage: OS2::Process_Messages(force [, cnt])");
+	Perl_croak_nocontext("Usage: OS2::Process_Messages(force [, cnt])");
     {
 	bool  force = SvOK(ST(0));
 	unsigned long   cnt;
-	I32 *cntp = NULL;
 
 	if (items == 2) {
+	    I32 cntr;
 	    SV *sv = ST(1);
 	    int fake = SvIV(sv);	/* Force SvIVX */
 	    
 	    if (!SvIOK(sv))
-		croak("Can't upgrade count to IV");
-	    cntp = &SvIVX(sv);
-	}
-	cnt =  Perl_Process_Messages(force, cntp);
+		Perl_croak_nocontext("Can't upgrade count to IV");
+	    cntr = SvIVX(sv);
+	    cnt =  Perl_Process_Messages(force, &cntr);
+	    SvIVX(sv) = cntr;
+	} else {
+	    cnt =  Perl_Process_Messages(force, NULL);
+        }
 	ST(0) = sv_newmortal();
 	sv_setiv(ST(0), cnt);
     }
@@ -1747,7 +1774,7 @@ XS(XS_Cwd_current_drive)
 {
     dXSARGS;
     if (items != 0)
-	croak("Usage: Cwd::current_drive()");
+	Perl_croak_nocontext("Usage: Cwd::current_drive()");
     {
 	char	RETVAL;
 
@@ -1762,7 +1789,7 @@ XS(XS_Cwd_sys_chdir)
 {
     dXSARGS;
     if (items != 1)
-	croak("Usage: Cwd::sys_chdir(path)");
+	Perl_croak_nocontext("Usage: Cwd::sys_chdir(path)");
     {
 	STRLEN n_a;
 	char *	path = (char *)SvPV(ST(0),n_a);
@@ -1779,7 +1806,7 @@ XS(XS_Cwd_change_drive)
 {
     dXSARGS;
     if (items != 1)
-	croak("Usage: Cwd::change_drive(d)");
+	Perl_croak_nocontext("Usage: Cwd::change_drive(d)");
     {
 	STRLEN n_a;
 	char	d = (char)*SvPV(ST(0),n_a);
@@ -1796,7 +1823,7 @@ XS(XS_Cwd_sys_is_absolute)
 {
     dXSARGS;
     if (items != 1)
-	croak("Usage: Cwd::sys_is_absolute(path)");
+	Perl_croak_nocontext("Usage: Cwd::sys_is_absolute(path)");
     {
 	STRLEN n_a;
 	char *	path = (char *)SvPV(ST(0),n_a);
@@ -1813,7 +1840,7 @@ XS(XS_Cwd_sys_is_rooted)
 {
     dXSARGS;
     if (items != 1)
-	croak("Usage: Cwd::sys_is_rooted(path)");
+	Perl_croak_nocontext("Usage: Cwd::sys_is_rooted(path)");
     {
 	STRLEN n_a;
 	char *	path = (char *)SvPV(ST(0),n_a);
@@ -1830,7 +1857,7 @@ XS(XS_Cwd_sys_is_relative)
 {
     dXSARGS;
     if (items != 1)
-	croak("Usage: Cwd::sys_is_relative(path)");
+	Perl_croak_nocontext("Usage: Cwd::sys_is_relative(path)");
     {
 	STRLEN n_a;
 	char *	path = (char *)SvPV(ST(0),n_a);
@@ -1847,7 +1874,7 @@ XS(XS_Cwd_sys_cwd)
 {
     dXSARGS;
     if (items != 0)
-	croak("Usage: Cwd::sys_cwd()");
+	Perl_croak_nocontext("Usage: Cwd::sys_cwd()");
     {
 	char p[MAXPATHLEN];
 	char *	RETVAL;
@@ -1862,7 +1889,7 @@ XS(XS_Cwd_sys_abspath)
 {
     dXSARGS;
     if (items < 1 || items > 2)
-	croak("Usage: Cwd::sys_abspath(path, dir = NULL)");
+	Perl_croak_nocontext("Usage: Cwd::sys_abspath(path, dir = NULL)");
     {
 	STRLEN n_a;
 	char *	path = (char *)SvPV(ST(0),n_a);
@@ -1987,7 +2014,7 @@ XS(XS_Cwd_extLibpath)
 {
     dXSARGS;
     if (items < 0 || items > 1)
-	croak("Usage: Cwd::extLibpath(type = 0)");
+	Perl_croak_nocontext("Usage: Cwd::extLibpath(type = 0)");
     {
 	bool	type;
 	char	to[1024];
@@ -2011,7 +2038,7 @@ XS(XS_Cwd_extLibpath_set)
 {
     dXSARGS;
     if (items < 1 || items > 2)
-	croak("Usage: Cwd::extLibpath_set(s, type = 0)");
+	Perl_croak_nocontext("Usage: Cwd::extLibpath_set(s, type = 0)");
     {
 	STRLEN n_a;
 	char *	s = (char *)SvPV(ST(0),n_a);
@@ -2032,8 +2059,73 @@ XS(XS_Cwd_extLibpath_set)
     XSRETURN(1);
 }
 
+#define get_control87()		_control87(0,0)
+#define set_control87		_control87
+
+XS(XS_OS2__control87)
+{
+    dXSARGS;
+    if (items != 2)
+	croak("Usage: OS2::_control87(new,mask)");
+    {
+	unsigned	new = (unsigned)SvIV(ST(0));
+	unsigned	mask = (unsigned)SvIV(ST(1));
+	unsigned	RETVAL;
+
+	RETVAL = _control87(new, mask);
+	ST(0) = sv_newmortal();
+	sv_setiv(ST(0), (IV)RETVAL);
+    }
+    XSRETURN(1);
+}
+
+XS(XS_OS2_get_control87)
+{
+    dXSARGS;
+    if (items != 0)
+	croak("Usage: OS2::get_control87()");
+    {
+	unsigned	RETVAL;
+
+	RETVAL = get_control87();
+	ST(0) = sv_newmortal();
+	sv_setiv(ST(0), (IV)RETVAL);
+    }
+    XSRETURN(1);
+}
+
+
+XS(XS_OS2_set_control87)
+{
+    dXSARGS;
+    if (items < 0 || items > 2)
+	croak("Usage: OS2::set_control87(new=MCW_EM, mask=MCW_EM)");
+    {
+	unsigned	new;
+	unsigned	mask;
+	unsigned	RETVAL;
+
+	if (items < 1)
+	    new = MCW_EM;
+	else {
+	    new = (unsigned)SvIV(ST(0));
+	}
+
+	if (items < 2)
+	    mask = MCW_EM;
+	else {
+	    mask = (unsigned)SvIV(ST(1));
+	}
+
+	RETVAL = set_control87(new, mask);
+	ST(0) = sv_newmortal();
+	sv_setiv(ST(0), (IV)RETVAL);
+    }
+    XSRETURN(1);
+}
+
 int
-Xs_OS2_init()
+Xs_OS2_init(pTHX)
 {
     char *file = __FILE__;
     {
@@ -2061,6 +2153,9 @@ Xs_OS2_init()
         newXS("Cwd::sys_is_relative", XS_Cwd_sys_is_relative, file);
         newXS("Cwd::sys_cwd", XS_Cwd_sys_cwd, file);
         newXS("Cwd::sys_abspath", XS_Cwd_sys_abspath, file);
+        newXSproto("OS2::_control87", XS_OS2__control87, file, "$$");
+        newXSproto("OS2::get_control87", XS_OS2_get_control87, file, "");
+        newXSproto("OS2::set_control87", XS_OS2_set_control87, file, ";$$");
 	gv = gv_fetchpv("OS2::is_aout", TRUE, SVt_PV);
 	GvMULTI_on(gv);
 #ifdef PERL_IS_AOUT
@@ -2112,6 +2207,8 @@ Perl_OS2_init(char **env)
     }
     MUTEX_INIT(&start_thread_mutex);
     os2_mytype = my_type();		/* Do it before morphing.  Needed? */
+    /* Some DLLs reset FP flags on load.  We may have been linked with them */
+    _control87(MCW_EM, MCW_EM);
 }
 
 #undef tmpnam
@@ -2143,6 +2240,38 @@ my_tmpfile ()
     }
     return fopen(my_tmpnam(NULL), "w+b"); /* Race condition, but
 					     grants TMP. */
+}
+
+#undef rmdir
+
+int
+my_rmdir (__const__ char *s)
+{
+    char buf[MAXPATHLEN];
+    STRLEN l = strlen(s);
+
+    if (s[l-1] == '/' || s[l-1] == '\\') {	/* EMX rmdir fails... */
+	strcpy(buf,s);
+	buf[l - 1] = 0;
+	s = buf;
+    }
+    return rmdir(s);
+}
+
+#undef mkdir
+
+int
+my_mkdir (__const__ char *s, long perm)
+{
+    char buf[MAXPATHLEN];
+    STRLEN l = strlen(s);
+
+    if (s[l-1] == '/' || s[l-1] == '\\') {	/* EMX mkdir fails... */
+	strcpy(buf,s);
+	buf[l - 1] = 0;
+	s = buf;
+    }
+    return mkdir(s, perm);
 }
 
 #undef flock

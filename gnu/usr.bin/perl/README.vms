@@ -29,7 +29,7 @@ install.
 Also note that, as of Perl version 5.005 and later, an ANSI C compliant 
 compiler is required to build Perl.  VAX C is *not* ANSI compliant, as it 
 died a natural death some time before the standard was set.  Therefore 
-VAX C will not compile perl 5.005.  We are sorry about that.
+VAX C will not compile Perl 5.005 or later.  We are sorry about that.
 
 If you are stuck without DEC C (the VAX C license should be good for DEC C,
 but the media charges might prohibit an upgrade), consider getting Gnu C
@@ -52,7 +52,8 @@ to lend a hand we'd love to have you.  Join the Perl Porting Team Now!
 
 The current sources and build procedures have been tested on a VAX using
 DEC C, and on an AXP using DEC C. If you run into problems with
-other compilers, please let us know.
+other compilers, please let us know.  (Note: DEC C was renamed to Compaq C
+around version 6.2).
 
 There are issues with various versions of DEC C, so if you're not running a
 relatively modern version, check the "DEC C issues" section later on in this
@@ -66,7 +67,7 @@ In addition to VMS and DCL you will need two things:
 
 =item 1  A C compiler. 
 
-DEC C or gcc for VMS (AXP or VAX).
+DEC (now Compaq) C or gcc for VMS (AXP or VAX).
 
 =item 2  A make tool. 
 
@@ -87,23 +88,23 @@ You may also want to have on hand:
 =item 1  GUNZIP/GZIP.EXE for VMS 
 
 A de-compressor for *.gz and *.tgz files available from a number 
-of web/ftp sites.
+of web/ftp sites and is distributed on the OpenVMS Freeware CD-ROM 
+from Compaq.
 
     http://www.fsf.org/order/ftp.html
-    ftp://ftp.uu.net/archive/systems/gnu/diffutils*.tar.gz
-    ftp://gatekeeper.dec.com/pub/GNU/diffutils*.tar.gz
-    ftp://ftp.gnu.org/pub/gnu/diffutils*.tar.gz 
-    http://www.openvms.digital.com/cd/GZIP/
-    ftp://ftp.digital.com/pub/VMS/
+    http://www.openvms.compaq.com/freeware/GZIP/
+    ftp://ftp.compaq.com/pub/VMS/
+    http://www.crinoid.com/utils/
 
 =item 2  VMS TAR 
 
 For reading and writing unix tape archives (*.tar files).  Vmstar is also 
-available from a number of web/ftp sites.
+available from a number of web/ftp sites and is distributed on the OpenVMS
+Freeware CD-ROM from Compaq.
 
     ftp://ftp.lp.se/vms/
-    http://www.openvms.digital.com/cd/VMSTAR/
-    ftp://ftp.digital.com/pub/VMS/
+    http://www.openvms.compaq.com/freeware/VMSTAR/
+    ftp://ftp.compaq.com/pub/VMS/
 
 =item 3  UNZIP.EXE for VMS
 
@@ -111,9 +112,9 @@ A combination decompressor and archive reader/writer for *.zip files.
 Unzip is available from a number of web/ftp sites.
 
     http://www.cdrom.com/pub/infozip/UnZip.html
-    http://www.openvms.digital.com/cd/INFO-ZIP/
-    ftp://ftp.digital.com/pub/VMS/
-    ftp://ftp.openvms.digital.com/
+    http://www.openvms.compaq.com/freeware/INFO-ZIP/
+    ftp://ftp.compaq.com/pub/VMS/
+    ftp://ftp.openvms.compaq.com/
     ftp://ftp.madgoat.com/madgoat/
     ftp://ftp.wku.edu/vms/
 
@@ -127,14 +128,23 @@ library on VMS.  Most and slang are available from:
     ftp://space.mit.edu/pub/davis/
     ftp://ftp.wku.edu/vms/narnia/most.zip
 
+=item 5 GNU PATCH and DIFFUTILS for VMS
+
+Patches to Perl are usually distributed as GNU unified or contextual diffs. 
+Such patches are created by the GNU diff program (part of the diffutils
+distribution) and applied with GNU patch.  VMS ports of these utilities are
+available here:
+
+    http://www.crinoid.com/utils/
+
 =back
 
 Please note that UNZIP and GUNZIP are not the same thing (they work with
 different formats).  Many of the useful files from CPAN (the Comprehensive
-Perl Archive Network) are in *.tar.gz format (this includes copies of the
-source code for perl as well as modules and scripts that you may wish to
-add later) hence you probably want to have GUNZIP.EXE and VMSTAR.EXE on
-your VMS machine.
+Perl Archive Network) are in *.tar.gz or *.tgz format (this includes copies 
+of the source code for perl as well as modules and scripts that you may 
+wish to add later) hence you probably want to have GUNZIP.EXE and 
+VMSTAR.EXE on your VMS machine.
 
 If you want to include socket support, you'll need a TCP/IP stack and either
 DEC C, or socket libraries.  See the "Socket Support (optional)" topic 
@@ -178,8 +188,13 @@ As a handy shortcut, the command:
 
 (note the quotation marks and case) will choose reasonable defaults 
 automatically (it takes DEC C over Gnu C, DEC C sockets over SOCKETSHR 
-sockets, and either over no sockets).  More help with configure.com is 
-available from:
+sockets, and either over no sockets).  Some options can be given
+explicitly on the command line; the following example specifies a 
+non-default location for where Perl will be installed:
+
+    @ Configure "-d" "-Dprefix=dka100:[utils.perl5.]"
+
+More help with configure.com is available from:
 
     @ Configure "-h"
 
@@ -339,19 +354,17 @@ and adjust if necessary with SET PROTECTION=(code)/DEFAULT.
 
 =item 2
 
-Create a directory somewhere and either run @perl_setup or 
-define the concealed logical PERL_ROOT to point to it by hand. 
-For example, 
+Decide where you want Perl to be installed (unless you have already done so
+by using the "prefix" configuration parameter -- see the example in the
+"Configuring the Perl build" section).
 
-    CREATE/DIRECTORY dka200:[perl]
-    @PERL_SETUP
-    SHOW LOGICAL PERL_ROOT
-
-or,
-
-    CREATE/DIRECTORY dka200:[perl]
-    DEFINE/TRANS=(CONC,TERM) PERL_ROOT dka200:[perl.]
-
+The DCL script PERL_SETUP.COM that is written by CONFIGURE.COM will help you
+with the definition of the PERL_ROOT and PERLSHR logical names and the PERL
+foreign command  symbol.  Take a look at PERL_SETUP.COM and modify it if you
+want to.  The installation process will execute PERL_SETUP.COM and copy
+files to the directory tree pointed to by the PERL_ROOT logical name defined
+there, so make sure that you have write access to the parent directory of
+what will become the root of your Perl installation.
 
 =item 3
 
@@ -368,10 +381,8 @@ throw a /FORCE switch on the MMS or MMK command.
 
 =back
 
-The DCL script PERL_SETUP.COM that is written by CONFIGURE.COM
-will help you with the definition of PERL_ROOT, PERLSHR and the PERL
-Foreign symbol.  Take a look at PERL_SETUP.COM and modify it if you want 
-to.  Then copy PERL_SETUP.COM to a place accessible to your perl users.  
+Copy PERL_SETUP.COM to a place accessible to your perl users.  
+
 For example:
 
     COPY PERL_SETUP.COM SYS$LIBRARY: 
@@ -417,7 +428,7 @@ You'll need CMKRNL privilege to install the new dcltables.exe.
 
 On systems that are using perl quite a bit, and particularly those with 
 minimal RAM, you can boost the performance of perl by INSTALLing it as
-a known image.  PERLSHR.EXE is typically larger than 2000 blocks
+a known image.  PERLSHR.EXE is typically larger than 2500 blocks
 and that is a reasonably large amount of IO to load each time perl is 
 invoked. 
 
@@ -511,7 +522,7 @@ though the call specified that the change should not persist after
 Perl exited.  This is fixed by DEC CSC patch ALPACRT04_061 or later.
 See also:
 
-    http://ftp.service.digital.com/patches/.new/openvms.html
+    http://ftp.service.compaq.com/patches/.new/openvms.html
 
 =back
 
@@ -536,30 +547,30 @@ specific issues (including both Perl questions and installation problems)
 there is the VMSPERL mailing list.  It is usually a low-volume (10-12
 messages a week) mailing list.
 
-The subscription address is MAJORDOMO@PERL.ORG.  Send a mail message with 
-just the words SUBSCRIBE VMSPERL in the body of the message.
-   
-The VMSPERL mailing list address is VMSPERL@PERL.ORG.  Any mail sent there
-gets echoed to all subscribers of the list.  There is a searchable archive of
-the list on the web at:
+To subscribe, send a mail message to VMSPERL-SUBSCRIBE@PERL.ORG. The VMSPERL
+mailing list address is VMSPERL@PERL.ORG.  Any mail sent there gets echoed
+to all subscribers of the list.  There is a searchable archive of the list
+on the web at:
 
     http://www.xray.mpe.mpg.de/mailing-lists/vmsperl/
    
-To unsubscribe from VMSPERL send the message UNSUBSCRIBE VMSPERL to
-MAJORDOMO@PERL.ORG.  Be sure to do so from the subscribed account that 
-you are canceling.
+To unsubscribe from VMSPERL send a message to VMSPERL-UNSUBSCRIBE@PERL.ORG.
+Be sure to do so from the subscribed account that you are canceling.
 
 =head2 Web sites
 
 Vmsperl pages on the web include:
 
     http://www.sidhe.org/vmsperl/index.html
+    http://www.crinoid.com/
     http://duphy4.physics.drexel.edu/pub/cgi_info.htmlx
-    http://www.xray.mpe.mpg.de/mailing-lists/vmsperl/
     http://www.cpan.org/modules/by-module/VMS/
+    http://www.xray.mpe.mpg.de/mailing-lists/vmsperl/
     http://nucwww.chem.sunysb.edu/htbin/software_list.cgi
     http://www.best.com/~pvhp/vms/
     http://bkfug.kfunigraz.ac.at/~binder/perl.html
+    http://lists.perl.org/showlist.cgi?name=vmsperl
+    http://archive.develooper.com/vmsperl@perl.org/
 
 =head1 SEE ALSO
 
@@ -570,8 +581,9 @@ of extending vmsperl with CPAN modules after Perl has been installed.
 
 =head1 AUTHORS
 
-Last revised 25-February-2000 by Peter Prymmer pvhp@best.com.  
-Revised 27-October-1999 by Craig Berry craig.berry@metamorgs.com.  
+Revised 5-April-2001 by Craig Berry craigberry@mac.com.  
+Revised 25-February-2000 by Peter Prymmer pvhp@best.com.  
+Revised 27-October-1999 by Craig Berry craigberry@mac.com.  
 Revised 01-March-1999 by Dan Sugalski dan@sidhe.org.  
 Originally by Charles Bailey bailey@newman.upenn.edu.
 

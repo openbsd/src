@@ -9,7 +9,7 @@ use Exporter;
 our(@ISA, @EXPORT, $VERSION);
 @ISA = 'Exporter';
 @EXPORT = '&Mksymlists';
-$VERSION = substr q$Revision: 1.4 $, 10;
+$VERSION = substr q$Revision: 1.5 $, 10;
 
 sub Mksymlists {
     my(%spec) = @_;
@@ -49,6 +49,7 @@ sub Mksymlists {
     }
 
     if    ($osname eq 'aix') { _write_aix(\%spec); }
+    elsif ($osname eq 'MacOS'){ _write_aix(\%spec) }
     elsif ($osname eq 'VMS') { _write_vms(\%spec) }
     elsif ($osname eq 'os2') { _write_os2(\%spec) }
     elsif ($osname eq 'MSWin32') { _write_win32(\%spec) }

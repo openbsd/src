@@ -87,7 +87,6 @@ newFH(FILE *fp, char type) {
     HV *stash;
     IO *io;
 
-    dTHR;
     /* Find stash for VMS::Stdio.  We don't do this once at boot
      * to allow for possibility of threaded Perl with per-thread
      * symbol tables.  This code (through io = ...) is really

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -P
 
-# $RCSfile: scan_suid,v $$Revision: 1.4 $$Date: 2000/04/06 17:04:58 $
+# $RCSfile: scan_suid,v $$Revision: 1.5 $$Date: 2001/05/24 18:35:06 $
 
 # Look for new setuid root files.
 

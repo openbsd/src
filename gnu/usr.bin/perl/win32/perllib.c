@@ -338,6 +338,10 @@ RunPerl(int argc, char **argv, char **env)
 EXTERN_C void
 set_w32_module_name(void);
 
+EXTERN_C void
+EndSockets(void);
+
+
 #ifdef __MINGW32__
 EXTERN_C		/* GCC in C++ mode mangles the name, otherwise */
 #endif
@@ -367,6 +371,11 @@ DllMain(HANDLE hModule,		/* DLL module handle */
 	 * process termination or call to FreeLibrary.
 	 */
     case DLL_PROCESS_DETACH:
+	EndSockets();
+#if defined(USE_THREADS) || defined(USE_ITHREADS)
+	if (PL_curinterp)
+	    FREE_THREAD_KEY;
+#endif
 	break;
 
 	/* The attached process creates a new thread. */

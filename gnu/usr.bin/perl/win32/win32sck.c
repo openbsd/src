@@ -39,12 +39,12 @@
 #	define TO_SOCKET(x)	(x)
 #endif	/* USE_SOCKETS_AS_HANDLES */
 
-#ifdef USE_THREADS
+#if defined(USE_THREADS) || defined(USE_ITHREADS)
 #define StartSockets() \
     STMT_START {					\
 	if (!wsock_started)				\
 	    start_sockets();				\
-       set_socktype();                         \
+	set_socktype();                                 \
     } STMT_END
 #else
 #define StartSockets() \
@@ -55,12 +55,6 @@
 	}						\
     } STMT_END
 #endif
-
-#define EndSockets() \
-    STMT_START {					\
-	if (wsock_started)				\
-	    WSACleanup();				\
-    } STMT_END
 
 #define SOCKET_TEST(x, y) \
     STMT_START {					\
@@ -76,6 +70,13 @@ static struct servent* win32_savecopyservent(struct servent*d,
                                              const char *proto);
 
 static int wsock_started = 0;
+
+EXTERN_C void
+EndSockets(void)
+{
+    if (wsock_started)
+	WSACleanup();
+}
 
 void
 start_sockets(void) 
@@ -103,8 +104,8 @@ void
 set_socktype(void)
 {
 #ifdef USE_SOCKETS_AS_HANDLES
-#ifdef USE_THREADS
-    dTHX;
+#if defined(USE_THREADS) || defined(USE_ITHREADS)
+    dTHXo;
     if (!w32_init_socktype) {
 #endif
 	int iSockOpt = SO_SYNCHRONOUS_NONALERT;
@@ -113,7 +114,7 @@ set_socktype(void)
 	 */
 	setsockopt(INVALID_SOCKET, SOL_SOCKET, SO_OPENTYPE,
 		    (char *)&iSockOpt, sizeof(iSockOpt));
-#ifdef USE_THREADS
+#if defined(USE_THREADS) || defined(USE_ITHREADS)
 	w32_init_socktype = 1;
     }
 #endif
@@ -142,7 +143,7 @@ my_fdopen(int fd, char *mode)
     /*
      * If we get here, then fd is actually a socket.
      */
-    Newz(1310, fp, 1, FILE);
+    Newz(1310, fp, 1, FILE);	/* XXX leak, good thing this code isn't used */
     if(fp == NULL) {
 	errno = ENOMEM;
 	return NULL;
@@ -421,18 +422,70 @@ win32_socket(int af, int type, int protocol)
 int
 my_fclose (FILE *pf)
 {
-    int osf, retval;
+    int osf;
     if (!wsock_started)		/* No WinSock? */
 	return(fclose(pf));	/* Then not a socket. */
     osf = TO_SOCKET(fileno(pf));/* Get it now before it's gone! */
-    retval = fclose(pf);	/* Must fclose() before closesocket() */
-    if (osf != -1
-	&& closesocket(osf) == SOCKET_ERROR
-	&& WSAGetLastError() != WSAENOTSOCK)
-    {
-	return EOF;
+    if (osf != -1) {
+	int err;
+	win32_fflush(pf);
+	err = closesocket(osf);
+	if (err == 0) {
+#if defined(USE_FIXED_OSFHANDLE) || defined(PERL_MSVCRT_READFIX)
+            _set_osfhnd(fileno(pf), INVALID_HANDLE_VALUE);
+#endif
+	    (void)fclose(pf);	/* handle already closed, ignore error */
+	    return 0;
+	}
+	else if (err == SOCKET_ERROR) {
+	    err = WSAGetLastError();
+	    if (err != WSAENOTSOCK) {
+		(void)fclose(pf);
+		errno = err;
+		return EOF;
+	    }
+	}
     }
-    return retval;
+    return fclose(pf);
+}
+
+#undef fstat
+int
+my_fstat(int fd, struct stat *sbufptr)
+{
+    /* This fixes a bug in fstat() on Windows 9x.  fstat() uses the
+     * GetFileType() win32 syscall, which will fail on Windows 9x.
+     * So if we recognize a socket on Windows 9x, we return the
+     * same results as on Windows NT/2000.
+     * XXX this should be extended further to set S_IFSOCK on
+     * sbufptr->st_mode.
+     */
+    int osf;
+    if (!wsock_started || IsWinNT())
+	return fstat(fd, sbufptr);
+
+    osf = TO_SOCKET(fd);
+    if (osf != -1) {
+	char sockbuf[256];
+	int optlen = sizeof(sockbuf);
+	int retval;
+
+	retval = getsockopt((SOCKET)osf, SOL_SOCKET, SO_TYPE, sockbuf, &optlen);
+	if (retval != SOCKET_ERROR || WSAGetLastError() != WSAENOTSOCK) {
+#if defined(__BORLANDC__)&&(__BORLANDC__<=0x520)
+	    sbufptr->st_mode = S_IFIFO;
+#else
+	    sbufptr->st_mode = _S_IFIFO;
+#endif
+	    sbufptr->st_rdev = sbufptr->st_dev = (dev_t)fd;
+	    sbufptr->st_nlink = 1;
+	    sbufptr->st_uid = sbufptr->st_gid = sbufptr->st_ino = 0;
+	    sbufptr->st_atime = sbufptr->st_mtime = sbufptr->st_ctime = 0;
+	    sbufptr->st_size = (off_t)0;
+	    return 0;
+	}
+    }
+    return fstat(fd, sbufptr);
 }
 
 struct hostent *

@@ -9,8 +9,8 @@ BEGIN {
 }
 
 use OS2::REXX;
-$rx = load OS2::REXX "ydbautil"     # from RXU17.ZIP
-  or print "1..0 # skipped: cannot find YDBAUTIL.DLL\n" and exit;
+$rx = load OS2::REXX "RXU"     # from RXU1a.ZIP
+  or print "1..0 # skipped: cannot find RXU.DLL\n" and exit;
 
 print "1..7\n", "ok 1\n";
 

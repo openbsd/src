@@ -7,7 +7,7 @@
 ##
 
 chdir 't' if -d 't';
-unshift @INC, "../lib";
+@INC = '../lib';
 $Is_VMS = $^O eq 'VMS';
 $Is_MSWin32 = $^O eq 'MSWin32';
 $ENV{PERL5LIB} = "../lib" unless $Is_VMS;

@@ -122,7 +122,7 @@ I<N.B.> The procedure by which extensions are built and
 tested creates several levels (at least 4) under the
 directory in which the extension's source files live.
 For this reason, you shouldn't nest the source directory
-too deeply in your directory structure, lest you eccedd RMS'
+too deeply in your directory structure, lest you exceed RMS'
 maximum of 8 levels of subdirectory in a filespec.  (You
 can use rooted logical names to get another 8 levels of
 nesting, if you can't place the files near the top of
@@ -167,7 +167,7 @@ translates to the full file specification of the shareable image.
 We have tried to make Perl aware of both VMS-style and Unix-
 style file specifications wherever possible.  You may use 
 either style, or both, on the command line and in scripts, 
-but you may not combine the two styles within a single fle 
+but you may not combine the two styles within a single file 
 specification.  VMS Perl interprets Unix pathnames in much
 the same way as the CRTL (I<e.g.> the first component of
 an absolute path is read as the device name for the
@@ -233,7 +233,7 @@ Perl will wait for the subprocess to complete before continuing.
 
 =head1 PERL5LIB and PERLLIB
 
-The PERL5LIB and PERLLIB logical names work as documented L<perl>,
+The PERL5LIB and PERLLIB logical names work as documented in L<perl>,
 except that the element separator is '|' instead of ':'.  The
 directory specifications may use either VMS or Unix syntax.
 
@@ -516,7 +516,7 @@ true, a warning message is printed, and C<undef> is returned.
 
 =item kill
 
-In most cases, C<kill> kill is implemented via the CRTL's C<kill()>
+In most cases, C<kill> is implemented via the CRTL's C<kill()>
 function, so it will behave according to that function's
 documentation.  If you send a SIGKILL, however, the $DELPRC system
 service is called directly.  This insures that the target
@@ -569,7 +569,7 @@ invoked using C<MCR> or a text file which should be passed to DCL
 as a command procedure.
 
 If LIST consists of the empty string, C<system> spawns an
-interactive DCL subprocess, in the same fashion as typiing
+interactive DCL subprocess, in the same fashion as typing
 B<SPAWN> at the DCL prompt.
 
 Perl waits for the subprocess to complete before continuing
@@ -592,19 +592,21 @@ The array returned by the C<times> operator is divided up
 according to the same rules the CRTL C<times()> routine.  
 Therefore, the "system time" elements will always be 0, since 
 there is no difference between "user time" and "system" time 
-under VMS, and the time accumulated by subprocess may or may 
+under VMS, and the time accumulated by a subprocess may or may 
 not appear separately in the "child time" field, depending on 
 whether L<times> keeps track of subprocesses separately.  Note
 especially that the VAXCRTL (at least) keeps track only of
 subprocesses spawned using L<fork> and L<exec>; it will not
-accumulate the times of suprocesses spawned via pipes, L<system>,
+accumulate the times of subprocesses spawned via pipes, L<system>,
 or backticks.
 
 =item unlink LIST
 
 C<unlink> will delete the highest version of a file only; in
 order to delete all versions, you need to say
+
     1 while (unlink LIST);
+
 You may need to make this change to scripts written for a
 Unix system which expect that after a call to C<unlink>,
 no files with the names passed to C<unlink> will exist.
@@ -644,8 +646,8 @@ time of the file (VMS revision date).
 
 =item waitpid PID,FLAGS
 
-If PID is a subprocess started by a piped L<open>, C<waitpid>
-will wait for that subprocess, and return its final
+If PID is a subprocess started by a piped C<open()> (see L<open>), 
+C<waitpid> will wait for that subprocess, and return its final
 status value.  If PID is a subprocess created in some other way
 (e.g. SPAWNed before Perl was invoked), or is not a subprocess of
 the current process, C<waitpid> will check once per second whether
@@ -661,7 +663,7 @@ The FLAGS argument is ignored in all cases.
 
 The following VMS-specific information applies to the indicated
 "special" Perl variables, in addition to the general information
-in L<perlvar>.  Where there is a conflict, this infrmation
+in L<perlvar>.  Where there is a conflict, this information
 takes precedence.
 
 =over 4
@@ -694,7 +696,7 @@ an element of C<%ENV>, the local symbol table is scanned first, followed
 by the global symbol table..  The characters following C<CLISYM_> are
 significant when an element of C<%ENV> is set or deleted: if the
 complete string is C<CLISYM_LOCAL>, the change is made in the local
-symbol table, otherwise the global symbol table is changed.
+symbol table; otherwise the global symbol table is changed.
 
 =item Any other string
 
@@ -751,7 +753,7 @@ copy of Perl knows about the CRTL's C<setenv()> function.  (This is
 present only in some versions of the DECCRTL; check C<$Config{d_setenv}>
 to see whether your copy of Perl was built with a CRTL that has this
 function.)
-          
+
 When an element of C<%ENV> is set to C<undef>,
 the element is looked up as if it were being read, and if it is
 found, it is deleted.  (An item "deleted" from the CRTL C<environ>
@@ -786,6 +788,14 @@ by saying
 (You can't just say C<$ENV{$key} = $ENV{$key}>, since the
 Perl optimizer is smart enough to elide the expression.)
 
+Don't try to clear C<%ENV> by saying C<%ENV = ();>, it will throw
+a fatal error.  This is equivalent to doing the following from DCL:
+
+    DELETE/LOGICAL *
+
+You can imagine how bad things would be if, for example, the SYS$MANAGER
+or SYS$SYSTEM logicals were deleted.
+
 At present, the first time you iterate over %ENV using
 C<keys>, or C<values>,  you will incur a time penalty as all
 logical names are read, in order to fully populate %ENV.
@@ -796,7 +806,7 @@ to logical name tables caused by other programs.
 You do need to be careful with the logicals representing process-permanent
 files, such as C<SYS$INPUT> and C<SYS$OUTPUT>.  The translations for these
 logicals are prepended with a two-byte binary value (0x1B 0x00) that needs to be
-stripped off if you want to use it. (In previous versions of perl it wasn't
+stripped off if you want to use it. (In previous versions of Perl it wasn't
 possible to get the values of these logicals, as the null byte acted as an
 end-of-string marker)
 
@@ -830,7 +840,7 @@ portably test for successful completion of subprocesses.  The
 low order 8 bits of C<$?> are always 0 under VMS, since the
 termination status of a process may or may not have been
 generated by an exception.  The next 8 bits are derived from
-severity portion of the subprocess' exit status: if the
+the severity portion of the subprocess' exit status: if the
 severity was success or informational, these bits are all 0;
 otherwise, they contain the severity value shifted left one bit.
 As a result, C<$?> will always be zero if the subprocess' exit
@@ -841,7 +851,7 @@ be found in C<$^S> (q.v.).
 =item $^S
 
 Under VMS, this is the 32-bit VMS status value returned by the
-last subprocess to complete.  Unlink C<$?>, no manipulation
+last subprocess to complete.  Unlike C<$?>, no manipulation
 is done to make this look like a POSIX wait(5) value, so it
 may be treated as a normal VMS status value.
 

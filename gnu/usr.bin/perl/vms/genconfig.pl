@@ -229,6 +229,8 @@ foreach (@ARGV) {
                  d_wcstombs d_wctomb d_mblen d_mktime d_strcoll d_strxfrm ]) {
       print OUT "$_='$rtlhas'\n";
     }
+    print OUT "d_stdio_ptr_lval_sets_cnt='undef'\n";
+    print OUT "d_stdio_ptr_lval_nochange_cnt='undef'\n";
     foreach (qw[ d_gettimeod d_uname d_truncate d_wait4 d_index
                  d_pathconf d_fpathconf d_sysconf d_sigsetjmp ]) {
       print OUT "$_='$rtlnew'\n";

@@ -2,11 +2,11 @@
 'di';
 'ig00';
 #
-# $Header: /home/cvs/src/gnu/usr.bin/perl/eg/Attic/wrapsuid,v 1.4 2000/04/06 17:04:49 millert Exp $
+# $Header: /home/cvs/src/gnu/usr.bin/perl/eg/Attic/wrapsuid,v 1.5 2001/05/24 18:35:04 millert Exp $
 #
 # $Log: wrapsuid,v $
-# Revision 1.4  2000/04/06 17:04:49  millert
-# perl-5.6.0 + local changes
+# Revision 1.5  2001/05/24 18:35:04  millert
+# merge in perl 5.6.1 with our local changes
 #
 # Revision 1.1  90/08/11  13:51:29  lwall
 # Initial revision

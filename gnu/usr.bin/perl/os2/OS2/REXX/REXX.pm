@@ -10,7 +10,9 @@ require OS2::DLL;
 # (move infrequently used names to @EXPORT_OK below)
 @EXPORT = qw(REXX_call REXX_eval REXX_eval_with);
 # Other items we are prepared to export if requested
-@EXPORT_OK = qw(drop);
+@EXPORT_OK = qw(drop register);
+
+$VERSION = '1.00';
 
 # We cannot just put OS2::DLL in @ISA, since some scripts would use
 # function interface, not method interface...
@@ -23,6 +25,8 @@ bootstrap OS2::REXX;
 
 # Preloaded methods go here.  Autoload methods go after __END__, and are
 # processed by the autosplit program.
+
+sub register {_register($_) for @_}
 
 sub prefix
 {
@@ -259,11 +263,36 @@ One enables REXX runtime by bracketing your code by
 
 	REXX_call \&subroutine_name;
 
-Inside such a call one has access to REXX variables (see below), and to
+Inside such a call one has access to REXX variables (see below).
+
+An alternative way to execute code inside a REXX compartment is
 
 	REXX_eval EXPR;
 	REXX_eval_with EXPR, 
 		subroutine_name_in_REXX => \&Perl_subroutine
+
+Here C<EXPR> is a REXX code to run; to execute Perl code one needs to put
+it inside Perl_subroutine(), and call this subroutine from REXX, as in
+
+	REXX_eval_with <<EOE, foo => sub { 123 * shift };
+	  say foo(2)
+	EOE
+
+If one needs more Perl subroutines available, one can "import" them into
+REXX from inside Perl_subroutine(); since REXX is not case-sensitive,
+the names should be uppercased.
+
+	use OS2::REXX 'register';
+
+	sub BAR { 123 + shift}
+	sub BAZ { 789 }
+	sub importer { register qw(BAR BAZ) }
+
+	REXX_eval_with <<'EOE', importer => \&importer;
+	  call importer
+	  say bar(34)
+	  say baz()
+	EOE
 
 =head2 Bind scalar variable to REXX variable:
 
@@ -297,6 +326,12 @@ part of the key and it is subject to character set restrictions.
 =head2 Erase REXX variables with given stem (bound or not):
 
 	OS2::REXX::dropall("STEM" [, "STEM" [, ...]]);
+
+=head2 Make Perl functions available in REXX:
+
+	OS2::REXX::register("NAME" [, "NAME" [, ...]]);
+
+Since REXX is not case-sensitive, the names should be uppercase.
 
 =head1 NOTES
 
@@ -333,7 +368,43 @@ overridden. So unless you know better than I do, do not access REXX
 variables (probably tied to Perl variables) or call REXX functions
 which access REXX queues or REXX variables in signal handlers.
 
-See C<t/rx*.t> for examples.
+See C<t/rx*.t> and the next section for examples.
+
+=head1 EXAMPLE
+
+  use OS2::REXX;
+
+  sub Ender::DESTROY { $vrexx->VExit; print "Exiting...\n" }
+
+  $vrexx = OS2::REXX->load('VREXX');
+  REXX_call {			# VOpenWindow takes a stem
+    local $SIG{TERM} = sub {die}; # enable Ender::DESTROY
+    local $SIG{INT} = sub {die};	# enable Ender::DESTROY
+
+    $code = $vrexx->VInit;
+    print "Init code = `$code'\n";
+    die "error initializing VREXX" if $code eq 'ERROR';
+
+    my $ender = bless [], 'Ender'; # Call Ender::DESTROY on exit
+
+    print "VREXX Version ", $vrexx->VGetVersion, "\n";
+
+    tie %pos, 'OS2::REXX', 'POS.' or die;
+    %pos = ( LEFT   => 0, RIGHT  => 7, TOP    => 5, BOTTOM => 0 );
+
+    $id = $vrexx->VOpenWindow('To disconnect:', 'WHITE', 'POS');
+    $vrexx->VForeColor($id, 'BLACK');
+    $vrexx->VSetFont($id, 'TIME', '30');
+    $tlim = time + 60;
+    while ( ($r = $tlim - time) >= 0 ) {
+      $vrexx->VClearWindow($id);
+      $vrexx->VSay($id, 100, 50, (sprintf "%02i:%02i", int($r/60), $r % 60));
+      sleep 1;
+    }
+    print "Close code = `$res'\n" if $res = $vrexx->VCloseWindow($id);
+  };
+
+
 
 =head1 ENVIRONMENT
 

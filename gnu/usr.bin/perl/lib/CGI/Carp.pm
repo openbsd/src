@@ -71,9 +71,9 @@ compiler errors will be caught.  Example:
 
 carpout() does not handle file locking on the log for you at this point.
 
-The real STDERR is not closed -- it is moved to SAVEERR.  Some
+The real STDERR is not closed -- it is moved to CGI::Carp::SAVEERR.  Some
 servers, when dealing with CGI scripts, close their connection to the
-browser when the script closes STDOUT and STDERR.  SAVEERR is used to
+browser when the script closes STDOUT and STDERR.  CGI::Carp::SAVEERR is there to
 prevent this from happening prematurely.
 
 You can pass filehandles to carpout() in a variety of ways.  The "correct"
@@ -142,6 +142,33 @@ of the error message that caused the script to die.  Example:
 In order to correctly intercept compile-time errors, you should call
 set_message() from within a BEGIN{} block.
 
+=head1 MAKING WARNINGS APPEAR AS HTML COMMENTS
+
+It is now also possible to make non-fatal errors appear as HTML
+comments embedded in the output of your program.  To enable this
+feature, export the new "warningsToBrowser" subroutine.  Since sending
+warnings to the browser before the HTTP headers have been sent would
+cause an error, any warnings are stored in an internal buffer until
+you call the warningsToBrowser() subroutine with a true argument:
+
+    use CGI::Carp qw(fatalsToBrowser warningsToBrowser);
+    use CGI qw(:standard);
+    print header();
+    warningsToBrowser(1);
+
+You may also give a false argument to warningsToBrowser() to prevent
+warnings from being sent to the browser while you are printing some
+content where HTML comments are not allowed:
+
+    warningsToBrowser(0);    # disable warnings
+    print "<SCRIPT type=javascript><!--\n";
+    print_some_javascript_code();
+    print "//--></SCRIPT>\n";
+    warningsToBrowser(1);    # re-enable warnings
+
+Note: In this respect warningsToBrowser() differs fundamentally from
+fatalsToBrowser(), which you should never call yourself!
+
 =head1 CHANGE LOG
 
 1.05 carpout() added and minor corrections by Marc Hedlund
@@ -166,7 +193,11 @@ set_message() from within a BEGIN{} block.
 1.12 Changed die() on line 217 to CORE::die to avoid B<-w> warning.
 
 1.13 Added cluck() to make the module orthogonal with Carp.
-    More mod_perl related fixes.
+     More mod_perl related fixes.
+
+1.20 Patch from Ilmari Karonen (perl@itz.pp.sci.fi):  Added
+     warningsToBrowser().  Replaced <CODE> tags with <PRE> in
+     fatalsToBrowser() output.
 
 =head1 AUTHORS
 
@@ -190,18 +221,11 @@ use Carp;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(confess croak carp);
-@EXPORT_OK = qw(carpout fatalsToBrowser wrap set_message cluck);
-
-BEGIN {
-  $] >= 5.005
-    ? eval q#sub ineval { $^S }#
-      : eval q#sub ineval { _longmess() =~ /eval [\{\']/m }#;
-  $@ and die;
-}
+@EXPORT_OK = qw(carpout fatalsToBrowser warningsToBrowser wrap set_message cluck);
 
 $main::SIG{__WARN__}=\&CGI::Carp::warn;
 $main::SIG{__DIE__}=\&CGI::Carp::die;
-$CGI::Carp::VERSION = '1.14';
+$CGI::Carp::VERSION = '1.20';
 $CGI::Carp::CUSTOM_MSG = undef;
 
 # fancy import routine detects and handles 'errorWrap' specially.
@@ -210,6 +234,7 @@ sub import {
     my(%routines);
     grep($routines{$_}++,@_,@EXPORT);
     $WRAP++ if $routines{'fatalsToBrowser'} || $routines{'wrap'};
+    $WARN++ if $routines{'warningsToBrowser'};
     my($oldlevel) = $Exporter::ExportLevel;
     $Exporter::ExportLevel = 1;
     Exporter::import($pkg,keys %routines);
@@ -223,7 +248,7 @@ sub realdie { CORE::die(@_); }
 sub id {
     my $level = shift;
     my($pack,$file,$line,$sub) = caller($level);
-    my($id) = $file=~m|([^/]+)\z|;
+    my($id) = $file=~m|([^/]+)$|;
     return ($file,$line,$id);
 }
 
@@ -235,7 +260,7 @@ sub stamp {
 	$id = $file;
 	($pack,$file) = caller($frame++);
     } until !$file;
-    ($id) = $id=~m|([^/]+)\z|;
+    ($id) = $id=~m|([^/]+)$|;
     return "[$time] $id: ";
 }
 
@@ -243,10 +268,27 @@ sub warn {
     my $message = shift;
     my($file,$line,$id) = id(1);
     $message .= " at $file line $line.\n" unless $message=~/\n$/;
+    _warn($message) if $WARN;
     my $stamp = stamp;
     $message=~s/^/$stamp/gm;
     realwarn $message;
 }
+
+sub _warn {
+    my $msg = shift;
+    if ($EMIT_WARNINGS) {
+	# We need to mangle the message a bit to make it a valid HTML
+	# comment.  This is done by substituting similar-looking ISO
+	# 8859-1 characters for <, > and -.  This is a hack.
+	$msg =~ tr/<>-/\253\273\255/;
+	chomp $msg;
+	print STDOUT "<!-- warning: $msg -->\n";
+    } else {
+	push @WARNINGS, $msg;
+    }
+}
+
+sub ineval { _longmess() =~ /eval [\{\']/m }
 
 # The mod_perl package Apache::Registry loads CGI programs by calling
 # eval.  These evals don't count when looking at the stack backtrace.
@@ -254,12 +296,12 @@ sub _longmess {
     my $message = Carp::longmess();
     my $mod_perl = exists $ENV{MOD_PERL};
     $message =~ s,eval[^\n]+Apache/Registry\.pm.*,,s if $mod_perl;
-    return( $message );    
+    return $message;    
 }
 
 sub die {
   realdie @_ if ineval;
-  my $message = shift;
+  my ($message) = @_;
   my $time = scalar(localtime);
   my($file,$line,$id) = id(1);
   $message .= " at $file line $line." unless $message=~/\n$/;
@@ -299,6 +341,11 @@ sub carpout {
 	( print SAVEERR "Unable to redirect STDERR: $!\n" and exit(1) );
 }
 
+sub warningsToBrowser {
+    $EMIT_WARNINGS = @_ ? shift : 1;
+    _warn(shift @WARNINGS) while $EMIT_WARNINGS and @WARNINGS;
+}
+
 # headers
 sub fatalsToBrowser {
     my($msg) = @_;
@@ -318,6 +365,8 @@ END
     print STDOUT "Content-type: text/html\n\n" 
 	unless $mod_perl;
 
+    warningsToBrowser(1);    # emit warnings before dying
+
     if ($CUSTOM_MSG) {
 	if (ref($CUSTOM_MSG) eq 'CODE') {
 	    &$CUSTOM_MSG($msg); # nicer to perl 5.003 users
@@ -329,14 +378,13 @@ END
     
     my $mess = <<END;
 <H1>Software error:</H1>
-<CODE>$msg</CODE>
+<PRE>$msg</PRE>
 <P>
 $outer_message
 END
     ;
 
-    if ($mod_perl) {
-	my $r = Apache->request;
+    if ($mod_perl && (my $r = Apache->request)) {
 	# If bytes have already been sent, then
 	# we print the message out directly.
 	# Otherwise we make a custom error

@@ -1,12 +1,12 @@
 #
 # Makefile to build perl on Windows NT using Microsoft NMAKE.
 #
-# This is set up to build a perl.exe that runs off a shared library
-# (perl56.dll).  Also makes individual DLLs for the XS extensions.
-#
 
 ##
 ## Make sure you read README.win32 *before* you mess with anything here!
+##
+## If you want a configuration that is the same as ActivePerl (see
+## www.ActiveState.com) make sure you set at least BUILD_FLAVOR below!
 ##
 
 ##
@@ -14,11 +14,71 @@
 ##
 
 #
-# Set these to wherever you want "nmake install" to put your
-# newly built perl.
+# Set these to wherever you want "nmake install" to put your newly
+# built perl.  Setting it to a path with spaces is NOT recommended.
 #
 INST_DRV	= c:
 INST_TOP	= $(INST_DRV)\perl
+
+#
+# uncomment one of the following lines if you are using either
+# Visual C++ 2.x, or Visual C++ 5.x (aka Visual Studio 97) _without_
+# service pack 3 applied.
+#
+# If you have 5.x SP3 or later, or 6.x, no change is required.
+#
+#CCTYPE		= MSVC20
+#CCTYPE		= MSVC_PRE_50SP3
+
+#
+# set the install locations of the compiler include/libraries. Running
+# VCVARS32.BAT is *required* when using Visual C.  Some versions of
+# Visual C earlier than 5.x SP3 don't define MSVCDIR in the environment.
+# If such is the case you may have to set CCHOME explicitly.  Spaces in
+# the path name should not be quoted.
+#
+# If you have run VCVARS32.BAT and have VC 5.x SP3 or later, the defaults
+# should just work.
+#
+#CCHOME		= f:\msvc20
+CCHOME		= $(MSVCDIR)
+CCINCDIR	= $(CCHOME)\include
+CCLIBDIR	= $(CCHOME)\lib
+
+#
+# if you have the source for des_fcrypt(), uncomment CRYPT_SRC and make sure
+# the file exists (see README.win32).  File should be located in the same
+# directory as this makefile.
+#
+# If you didn't set CRYPT_SRC and if you have des_fcrypt() available in a
+# library, uncomment CRYPT_LIB, and make sure the library exists (see
+# README.win32).  Specify the full pathname of the library.
+#
+# If you don't enable one of these, the crypt() builtin will fail to work.
+# (Generally not critical.)
+#
+#CRYPT_SRC	= fcrypt.c
+#CRYPT_LIB	= fcrypt.lib
+
+#
+# uncomment this option if you want to bulk-enable all the options that
+# ActiveState uses to build their ActivePerl distribution.  If you set this,
+# there should be no need to set any of the other options that follow.
+#
+# If you don't enable this, the defaults below will get you the most
+# efficient perl configuration possible that will also be compatible
+# with the build defaults used on Unix platforms.  On the other hand,
+# the ActivePerl configuration will get you fork() emulation at the
+# cost of some added bloat.
+#
+#BUILD_FLAVOR	= ActivePerl
+
+#
+# uncomment next line if you want debug version of perl (big and slow).
+# If not enabled, we automatically try to use maximum optimization
+# with all compilers that are known to have a working optimizer.
+#
+#CFG		= Debug
 
 #
 # Comment this out if you DON'T want your perl installation to be versioned.
@@ -29,7 +89,7 @@ INST_TOP	= $(INST_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-INST_VER	= \5.6.0
+INST_VER = \5.6.1
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -40,27 +100,27 @@ INST_VER	= \5.6.0
 # the same location.  Commenting it out gives you a simpler
 # installation that is easier to understand for beginners.
 #
-INST_ARCH	= \$(ARCHNAME)
+INST_ARCH = \$(ARCHNAME)
 
 #
 # uncomment to enable multiple interpreters.  This is need for fork()
 # emulation.
 #
-#USE_MULTI	= define
+#USE_MULTI = define
 
 #
 # Beginnings of interpreter cloning/threads; still very incomplete.
 # This should be enabled to get the fork() emulation.  This needs
 # USE_MULTI as well.
 #
-#USE_ITHREADS	= define
+#USE_ITHREADS = define
 
 #
 # uncomment to enable the implicit "host" layer for all system calls
 # made by perl.  This needs USE_MULTI above.  This is also needed to
 # get fork().
 #
-#USE_IMP_SYS	= define
+#USE_IMP_SYS = define
 
 #
 # WARNING! This option is deprecated and will eventually go away (enable
@@ -79,21 +139,9 @@ INST_ARCH	= \$(ARCHNAME)
 # uncomment next line if you want to use the PERL_OBJECT build option.
 # DO NOT ENABLE unless you have legacy code that relies on the C++
 # CPerlObj class that was available in 5.005.  This cannot be enabled
-# if you ask for USE_5005THREADS above.
+# if you ask for USE_5005THREADS or USE_MULTI above.
 #
 #USE_OBJECT	= define
-
-#
-# uncomment one of the following lines if you are using either
-# Visual C++ 2.x or Visual C++ 6.x (aka Visual Studio 98)
-#
-#CCTYPE		= MSVC20
-#CCTYPE		= MSVC60
-
-#
-# uncomment next line if you want debug version of perl (big,slow)
-#
-#CFG		= Debug
 
 #
 # uncomment to enable use of PerlCRT.DLL when using the Visual C compiler.
@@ -108,26 +156,13 @@ INST_ARCH	= \$(ARCHNAME)
 
 #
 # uncomment to enable linking with setargv.obj under the Visual C
-# compiler. Setting this options enables perl to expand wildcards in
+# compiler. Setting this option enables perl to expand wildcards in
 # arguments, but it may be harder to use alternate methods like
-# File::DosGlob that are more powerful.  This option is supported only with
-# Visual C.
+# File::DosGlob that are more powerful, or use perl inside shells
+# that do the expansion for you.  This option is supported only
+# with Visual C.
 #
 #USE_SETARGV	= define
-
-#
-# if you have the source for des_fcrypt(), uncomment this and make sure the
-# file exists (see README.win32).  File should be located in the same
-# directory as this file.
-#
-#CRYPT_SRC	= fcrypt.c
-
-#
-# if you didn't set CRYPT_SRC and if you have des_fcrypt() available in a
-# library, uncomment this, and make sure the library exists (see README.win32)
-# Specify the full pathname of the library.
-#
-#CRYPT_LIB	= fcrypt.lib
 
 #
 # set this if you wish to use perl's malloc
@@ -137,18 +172,6 @@ INST_ARCH	= \$(ARCHNAME)
 # if you ask for USE_IMP_SYS above.
 #
 #PERL_MALLOC	= define
-
-#
-# set the install locations of the compiler include/libraries
-# Running VCVARS32.BAT is *required* when using Visual C.
-# Some versions of Visual C don't define MSVCDIR in the environment,
-# so you may have to set CCHOME explicitly (spaces in the path name should
-# not be quoted)
-#
-#CCHOME		= f:\msvc20
-CCHOME		= $(MSVCDIR)
-CCINCDIR	= $(CCHOME)\include
-CCLIBDIR	= $(CCHOME)\lib
 
 #
 # Additional compiler flags can be specified here.
@@ -193,6 +216,19 @@ EXTRALIBDIRS	=
 
 ##################### CHANGE THESE ONLY IF YOU MUST #####################
 
+!IF "$(BUILD_FLAVOR)" == "ActivePerl"
+INST_VER	= 
+INST_ARCH	= 
+USE_MULTI	= define
+USE_ITHREADS	= define
+USE_IMP_SYS	= define
+USE_5005THREADS	= undef
+USE_OBJECT	= undef
+USE_PERLCRT	= undef
+USE_SETARGV	=
+PERL_MALLOC	= undef
+!ENDIF
+
 !IF "$(CRYPT_SRC)$(CRYPT_LIB)" == ""
 D_CRYPT		= undef
 !ELSE
@@ -221,6 +257,10 @@ USE_ITHREADS	= undef
 
 !IF "$(USE_IMP_SYS)" == "define"
 PERL_MALLOC	= undef
+!ENDIF
+
+!IF "$(CCTYPE)" == ""
+CCTYPE		= MSVC60
 !ENDIF
 
 !IF "$(USE_MULTI)" == ""
@@ -284,17 +324,11 @@ ARCHNAME	= $(ARCHNAME)-thread
 
 # Visual Studio 98 specific
 !IF "$(CCTYPE)" == "MSVC60"
-
 # VC 6.0 can load the socket dll on demand.  Makes the test suite
 # run in about 10% less time.
 DELAYLOAD	= -DELAYLOAD:wsock32.dll -DELAYLOAD:shell32.dll delayimp.lib 
+!ENDIF
 
-# VC 6.0 seems capable of compiling perl correctly with optimizations
-# enabled.  Anything earlier fails tests.
-!IF "$(CFG)" == ""
-CFG		= Optimize
-!ENDIF
-!ENDIF
 
 ARCHDIR		= ..\lib\$(ARCHNAME)
 COREDIR		= ..\lib\CORE
@@ -311,7 +345,7 @@ INST_LIB	= $(INST_TOP)$(INST_VER)\lib
 INST_ARCHLIB	= $(INST_LIB)$(INST_ARCH)
 INST_COREDIR	= $(INST_ARCHLIB)\CORE
 INST_POD	= $(INST_LIB)\pod
-INST_HTML	= $(INST_POD)\html
+INST_HTML	= $(INST_TOP)$(INST_VER)\html
 
 #
 # Programs to compile, build .lib files and link
@@ -350,15 +384,16 @@ OPTIMIZE	= -Od -MD -Zi -DDEBUGGING
 !  ENDIF
 LINK_DBG	= -debug -pdb:none
 !ELSE
-!  IF  "$(CFG)" == "Optimize"
 # -O1 yields smaller code, which turns out to be faster than -O2
-#OPTIMIZE	= -O2 -MD -DNDEBUG
 OPTIMIZE	= -O1 -MD -DNDEBUG
-!  ELSE
+# VC 6.0 seems capable of compiling perl correctly with optimizations
+# enabled.  Anything earlier fails tests.
+!  IF "$(CCTYPE)" == "MSVC20" || "$(CCTYPE)" == "MSVC_PRE_50SP3"
 OPTIMIZE	= -Od -MD -DNDEBUG
 !  ENDIF
 LINK_DBG	= -release
 !ENDIF
+
 
 !IF "$(USE_OBJECT)" == "define"
 OPTIMIZE	= $(OPTIMIZE) $(CXX_FLAG)
@@ -687,7 +722,7 @@ CFG_VARS	=					\
 		"INST_ARCH=$(INST_ARCH)"		\
 		"archname=$(ARCHNAME)"			\
 		"cc=$(CC)"				\
-		"ccflags=$(OPTIMIZE:"=\") $(DEFINES) $(BUILDOPT)"	\
+		"ccflags=-nologo $(OPTIMIZE:"=\") $(DEFINES) $(BUILDOPT)"	\
 		"cf_email=$(EMAIL)"			\
 		"d_crypt=$(D_CRYPT)"			\
 		"d_mymalloc=$(PERL_MALLOC)"		\
@@ -830,7 +865,7 @@ perlmain$(o) : perlmain.c
 	$(CC) $(CFLAGS_O) -UPERLDLL $(OBJOUT_FLAG)$@ -c perlmain.c
 
 $(PERLEXE): $(PERLDLL) $(CONFIGPM) $(PERLEXE_OBJ) $(PERLEXE_RES)
-	$(LINK32) -subsystem:console -out:$@ -stack:0x8000000 $(LINK_FLAGS) \
+	$(LINK32) -subsystem:console -out:$@ -stack:0x1000000 $(LINK_FLAGS) \
 	    $(LIBFILES) $(PERLEXE_OBJ) $(SETARGV_OBJ) $(PERLIMPLIB) $(PERLEXE_RES)
 	copy $(PERLEXE) $(WPERLEXE)
 	$(MINIPERL) -I..\lib bin\exetype.pl $(WPERLEXE) WINDOWS
@@ -963,14 +998,23 @@ utils: $(PERLEXE) $(X2P)
 	cd ..\utils
 	$(MAKE) PERL=$(MINIPERL)
 	cd ..\pod
-	copy ..\README.amiga .\perlamiga.pod
-	copy ..\README.cygwin .\perlcygwin.pod
-	copy ..\README.dos .\perldos.pod
-	copy ..\README.hpux .\perlhpux.pod
-	copy ..\README.machten .\perlmachten.pod
-	copy ..\README.os2 .\perlos2.pod
-	copy ..\vms\perlvms.pod .\perlvms.pod
-	copy ..\README.win32 .\perlwin32.pod
+	copy ..\README.aix	.\perlaix.pod
+	copy ..\README.amiga	.\perlamiga.pod
+	copy ..\README.bs2000	.\perlbs2000.pod
+	copy ..\README.cygwin	.\perlcygwin.pod
+	copy ..\README.dos	.\perldos.pod
+	copy ..\README.epoc	.\perlepoc.pod
+	copy ..\README.hpux	.\perlhpux.pod
+	copy ..\README.machten	.\perlmachten.pod
+	copy ..\README.macos	.\perlmacos.pod
+	copy ..\README.mpeix	.\perlmpeix.pod
+	copy ..\README.os2	.\perlos2.pod
+	copy ..\README.os390	.\perlos390.pod
+	copy ..\README.solaris	.\perlsolaris.pod
+	copy ..\README.vmesa	.\perlvmesa.pod
+	copy ..\vms\perlvms.pod	.\perlvms.pod
+	copy ..\README.vos	.\perlvos.pod
+	copy ..\README.win32	.\perlwin32.pod
 	$(MAKE) -f ..\win32\pod.mak converters
 	cd ..\win32
 	$(PERLEXE) $(PL2BAT) $(UTILS)
@@ -981,25 +1025,32 @@ distclean: clean
 	-del /f *.def *.map
 	-del /f $(EXTENSION_DLL) $(EXTENSION_PM)
 	-del /f $(EXTENSION_C) $(DYNALOADER).c $(ERRNO).pm
-	-del /f $(EXTDIR)\DynaLoader\dl_win32.xs
+	-del /f $(EXTDIR)\DynaLoader\dl_win32.xs $(EXTDIR)\DynaLoader\DynaLoader.pm
 	-del /f $(LIBDIR)\.exists $(LIBDIR)\attrs.pm $(LIBDIR)\DynaLoader.pm
-	-del /f $(LIBDIR)\XSLoader.pm
+	-del /f $(LIBDIR)\XSLoader.pm $(EXTDIR)\DynaLoader\XSLoader.pm
+	-del /f $(LIBDIR)\Devel\.exists $(LIBDIR)\File\.exists $(LIBDIR)\Sys\.exists
 	-del /f $(LIBDIR)\Fcntl.pm $(LIBDIR)\IO.pm $(LIBDIR)\Opcode.pm
 	-del /f $(LIBDIR)\ops.pm $(LIBDIR)\Safe.pm $(LIBDIR)\Thread.pm
 	-del /f $(LIBDIR)\SDBM_File.pm $(LIBDIR)\Socket.pm $(LIBDIR)\POSIX.pm
-	-del /f $(LIBDIR)\B.pm $(LIBDIR)\O.pm $(LIBDIR)\re.pm
+	-del /f $(LIBDIR)\B.pm $(EXTDIR)\B\defsubs.h $(LIBDIR)\O.pm $(LIBDIR)\re.pm
 	-del /f $(LIBDIR)\Data\Dumper.pm $(LIBDIR)\ByteLoader.pm
 	-del /f $(LIBDIR)\Devel\Peek.pm $(LIBDIR)\Devel\DProf.pm
 	-del /f $(LIBDIR)\File\Glob.pm
-	-rmdir /s /q $(LIBDIR)\IO || rmdir /s $(LIBDIR)\IO
-	-rmdir /s /q $(LIBDIR)\Thread || rmdir /s $(LIBDIR)\Thread
-	-rmdir /s /q $(LIBDIR)\B || rmdir /s $(LIBDIR)\B
-	-rmdir /s /q $(LIBDIR)\Data || rmdir /s $(LIBDIR)\Data
-	-del /f $(PODDIR)\*.html
-	-del /f $(PODDIR)\*.bat
+	-if exist $(LIBDIR)\IO rmdir /s /q $(LIBDIR)\IO || rmdir /s $(LIBDIR)\IO
+	-if exist $(LIBDIR)\Thread rmdir /s /q $(LIBDIR)\Thread || rmdir /s $(LIBDIR)\Thread
+	-if exist $(LIBDIR)\B rmdir /s /q $(LIBDIR)\B || rmdir /s $(LIBDIR)\B
+	-if exist $(LIBDIR)\Data rmdir /s /q $(LIBDIR)\Data || rmdir /s $(LIBDIR)\Data
+	cd $(PODDIR)
+	-del /f *.html *.bat checkpods \
+	    perlaix.pod perlamiga.pod perlbs2000.pod perlcygwin.pod \
+	    perldos.pod perlepoc.pod perlhpux.pod perlmachten.pod \
+	    perlmacos.pod perlmpeix.pod perlos2.pod perlos390.pod \
+	    perlsolaris.pod perlvmesa.pod perlvms.pod perlvos.pod \
+	    perlwin32.pod pod2html pod2latex pod2man pod2text pod2usage \
+	    podchecker podselect
 	cd ..\utils
-	-del /f h2ph splain perlbug pl2pm c2ph h2xs perldoc dprofpp
-	-del /f *.bat
+	-del /f h2ph splain perlbug pl2pm c2ph h2xs perldoc dprofpp \
+	    *.bat perlcc pstruct
 	cd ..\win32
 	cd ..\x2p
 	-del /f find2perl s2p
@@ -1011,8 +1062,8 @@ distclean: clean
 	cd $(EXTDIR)
 	-del /s *.lib *.def *.map *.pdb *.bs Makefile *$(o) pm_to_blib
 	cd ..\win32
-	-rmdir /s /q $(AUTODIR) || rmdir /s $(AUTODIR)
-	-rmdir /s /q $(COREDIR) || rmdir /s $(COREDIR)
+	-if exist $(AUTODIR) rmdir /s /q $(AUTODIR) || rmdir /s $(AUTODIR)
+	-if exist $(COREDIR) rmdir /s /q $(COREDIR) || rmdir /s $(COREDIR)
 
 install : all installbare installhtml
 
@@ -1080,7 +1131,7 @@ clean :
 	-@erase $(WPERLEXE)
 	-@erase $(PERLDLL)
 	-@erase $(CORE_OBJ)
-	-rmdir /s /q $(MINIDIR) || rmdir /s $(MINIDIR)
+	-if exist $(MINIDIR) rmdir /s /q $(MINIDIR) || rmdir /s $(MINIDIR)
 	-@erase $(WIN32_OBJ)
 	-@erase $(DLL_OBJ)
 	-@erase $(X2P_OBJ)
@@ -1089,3 +1140,19 @@ clean :
 	-@erase ..\x2p\*.exe ..\x2p\*.bat
 	-@erase *.ilk
 	-@erase *.pdb
+ 
+# Handy way to run perlbug -ok without having to install and run the
+# installed perlbug. We don't re-run the tests here - we trust the user.
+# Please *don't* use this unless all tests pass.
+# If you want to report test failures, use "nmake nok" instead.
+ok: utils
+	$(PERLEXE) -I..\lib ..\utils\perlbug -ok -s "(UNINSTALLED)"
+
+okfile: utils
+	$(PERLEXE) -I..\lib ..\utils\perlbug -ok -s "(UNINSTALLED)" -F perl.ok
+ 
+nok: utils
+	$(PERLEXE) -I..\lib ..\utils\perlbug -nok -s "(UNINSTALLED)"
+ 
+nokfile: utils
+	$(PERLEXE) -I..\lib ..\utils\perlbug -nok -s "(UNINSTALLED)" -F perl.nok

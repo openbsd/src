@@ -14,7 +14,7 @@ These are instructions for building Perl under Windows (9x, NT and
 =head1 DESCRIPTION
 
 Before you start, you should glance through the README file
-found in the top-level directory where the Perl distribution
+found in the top-level directory to which the Perl distribution
 was extracted.  Make sure you read and understand the terms under
 which this software is being distributed.
 
@@ -28,10 +28,10 @@ particular, you can safely ignore any information that talks about
 
 You may also want to look at two other options for building
 a perl that will work on Windows NT:  the README.cygwin and
-README.os2 files, which each give a different set of rules to build
-a Perl that will work on Win32 platforms.  Those two methods will
-probably enable you to build a more Unix-compatible perl, but you
-will also need to download and use various other build-time and
+README.os2 files, each of which give a different set of rules to
+build a Perl that will work on Win32 platforms.  Those two methods
+will probably enable you to build a more Unix-compatible perl, but
+you will also need to download and use various other build-time and
 run-time support software described in those files.
 
 This set of instructions is meant to describe a so-called "native"
@@ -70,13 +70,23 @@ A port of dmake for Windows is available from:
 
     http://www.cpan.org/authors/id/GSAR/dmake-4.1pl1-win32.zip
 
-(This is a fixed version of original dmake sources obtained from
+(This is a fixed version of the original dmake sources obtained from
 http://www.wticorp.com/dmake/.  As of version 4.1PL1, the original
-sources did not build as shipped, and had various other problems.
+sources did not build as shipped and had various other problems.
 A patch is included in the above fixed version.)
 
 Fetch and install dmake somewhere on your path (follow the instructions
 in the README.NOW file).
+
+There exists a minor coexistence problem with dmake and Borland C++
+compilers.  Namely, if a distribution has C files named with mixed
+case letters, they will be compiled into appropriate .obj-files named
+with all lowercase letters, and every time dmake is invoked
+to bring files up to date, it will try to recompile such files again.
+For example, Tk distribution has a lot of such files, resulting in
+needless recompiles everytime dmake is invoked.  To avoid this, you
+may use the script "sncfnmcs.pl" after a successful build.  It is
+available in the win32 subdirectory of the Perl source distribution.
 
 =item Command Shell
 
@@ -85,7 +95,7 @@ popular 4DOS/NT shell have incompatibilities that may cause you trouble.
 If the build fails under that shell, try building again with the cmd
 shell.
 
-The nmake Makefile also has known incompatibilites with the
+The nmake Makefile also has known incompatibilities with the
 "command.com" shell that comes with Windows 9x.  You will need to
 use dmake and makefile.mk to build under Windows 9x.
 
@@ -97,20 +107,20 @@ build usually works in this circumstance, but some tests will fail.
 =item Borland C++
 
 If you are using the Borland compiler, you will need dmake.
-(The make that Borland supplies is seriously crippled, and will not
+(The make that Borland supplies is seriously crippled and will not
 work for MakeMaker builds.)
 
-See L/"Make"> above.
+See L</"Make"> above.
 
 =item Microsoft Visual C++
 
 The nmake that comes with Visual C++ will suffice for building.
-You will need to run the VCVARS32.BAT file usually found somewhere
+You will need to run the VCVARS32.BAT file, usually found somewhere
 like C:\MSDEV4.2\BIN.  This will set your build environment.
 
-You can also use dmake to build using Visual C++, provided:
+You can also use dmake to build using Visual C++; provided, however,
 you set OSRELEASE to "microsft" (or whatever the directory name
-under which the Visual C dmake configuration lives) in your environment,
+under which the Visual C dmake configuration lives) in your environment
 and edit win32/config.vc to change "make=nmake" into "make=dmake".  The
 latter step is only essential if you want to use dmake as your default
 make for building extensions using MakeMaker.
@@ -121,13 +131,41 @@ GCC-2.95.2 binaries can be downloaded from:
 
     ftp://ftp.xraylith.wisc.edu/pub/khan/gnu-win32/mingw32/
 
+You also need dmake.  See L</"Make"> above on how to get it.
+
 The GCC-2.95.2 bundle comes with Mingw32 libraries and headers.
 
 Make sure you install the binaries that work with MSVCRT.DLL as indicated
 in the README for the GCC bundle.  You may need to set up a few environment
-variables (usually run from a batch file).
+variables (usually ran from a batch file).
 
-You also need dmake.  See L</"Make"> above on how to get it.
+There are a couple of problems with the version of gcc-2.95.2-msvcrt.exe
+released 7 November 1999:
+
+=over
+
+=item *
+
+It left out a fix for certain command line quotes.  To fix this, be sure
+to download and install the file fixes/quote-fix-msvcrt.exe from the above
+ftp location.
+
+=item *
+
+The definition of the fpos_t type in stdio.h may be wrong.  If your
+stdio.h has this problem, you will see an exception when running the
+test t/lib/io_xs.t.  To fix this, change the typedef for fpos_t from
+"long" to "long long" in the file i386-mingw32msvc/include/stdio.h,
+and rebuild.
+
+=back
+
+A potentially simpler to install (but probably soon-to-be-outdated) bundle
+of the above package with the mentioned fixes already applied is available
+here:
+
+    http://downloads.ActiveState.com/pub/staff/gsar/gcc-2.95.2-msvcrt.zip
+    ftp://ftp.ActiveState.com/pub/staff/gsar/gcc-2.95.2-msvcrt.zip
 
 =back
 
@@ -145,12 +183,12 @@ makefile are setup to build using the GCC compiler.
 
 =item *
 
-Edit the makefile.mk (or Makefile, if using nmake) and change the values
-of INST_DRV and INST_TOP.   You can also enable various build
-flags.  These are explained in the makefiles.
+Edit the makefile.mk (or Makefile, if you're using nmake) and change 
+the values of INST_DRV and INST_TOP.   You can also enable various
+build flags.  These are explained in the makefiles.
 
-You will have to make sure CCTYPE is set correctly, and CCHOME points
-to wherever you installed your compiler.
+You will have to make sure that CCTYPE is set correctly and that 
+CCHOME points to wherever you installed your compiler.
 
 The default value for CCHOME in the makefiles for Visual C++
 may not be correct for some versions.  Make sure the default exists
@@ -161,7 +199,7 @@ enable the appropriate option in the makefile.  des_fcrypt() is not
 bundled with the distribution due to US Government restrictions
 on the export of cryptographic software.  Nevertheless, this routine
 is part of the "libdes" library (written by Eric Young) which is widely
-available worldwide, usually along with SSLeay (for example:
+available worldwide, usually along with SSLeay (for example, 
 "ftp://fractal.mta.ca/pub/crypto/SSLeay/DES/").  Set CRYPT_SRC to the
 name of the file that implements des_fcrypt().  Alternatively, if
 you have built a library that contains des_fcrypt(), you can set
@@ -193,9 +231,9 @@ sure you have done the previous steps correctly.
 Type "dmake test" (or "nmake test").  This will run most of the tests from
 the testsuite (many tests will be skipped).
 
-No tests should typically fail when running Windows NT 4.0.  Under Windows
-2000, test 22 in lib/open3.t is known to fail (cause still unknown).  Many
-tests will fail under Windows 9x due to the inferior command shell.
+There should be no test failures when running under Windows NT 4.0 or
+Windows 2000.  Many tests I<will> fail under Windows 9x due to the inferior
+command shell.
 
 Some test failures may occur if you use a command shell other than the
 native "cmd.exe", or if you are building from a path that contains
@@ -208,7 +246,15 @@ If you're using the Borland compiler, you may see a failure in op/taint.t
 arising from the inability to find the Borland Runtime DLLs on the system
 default path.  You will need to copy the DLLs reported by the messages
 from where Borland chose to install it, into the Windows system directory
-(usually somewhere like C:\WINNT\SYSTEM32), and rerun the test.
+(usually somewhere like C:\WINNT\SYSTEM32) and rerun the test.
+
+If you're using Borland compiler versions 5.2 and below, you may run into
+problems finding the correct header files when building extensions.  For
+example, building the "Tk" extension may fail because both perl and Tk
+contain a header file called "patchlevel.h".  The latest Borland compiler
+(v5.5) is free of this misbehaviour, and it even supports an
+option -VI- for backward (bugward) compatibility for using the old Borland
+search algorithm  to locate header files.
 
 Please report any other failures as described under L<BUGS AND CAVEATS>.
 
@@ -220,7 +266,7 @@ Makefile.  It will also install the pod documentation under
 C<$INST_TOP\$VERSION\lib\pod> and HTML versions of the same under
 C<$INST_TOP\$VERSION\lib\pod\html>.  To use the Perl you just installed,
 you will need to add two components to your PATH environment variable,
-C<$INST_TOP\$VERSION\bin>, and C<$INST_TOP\$VERSION\bin\$ARCHNAME>.
+C<$INST_TOP\$VERSION\bin> and C<$INST_TOP\$VERSION\bin\$ARCHNAME>.
 For example:
 
     set PATH c:\perl\5.6.0\bin;c:\perl\5.6.0\bin\MSWin32-x86;%PATH%
@@ -283,29 +329,42 @@ If you are accustomed to using perl from various command-line
 shells found in UNIX environments, you will be less than pleased
 with what Windows offers by way of a command shell.
 
-The crucial thing to understand about the "cmd" shell (which is
-the default on Windows NT) is that it does not do any wildcard
-expansions of command-line arguments (so wildcards need not be
-quoted).  It also provides only rudimentary quoting.  The only
-(useful) quote character is the double quote (").  It can be used to
-protect spaces in arguments and other special characters.  The
-Windows NT documentation has almost no description of how the
-quoting rules are implemented, but here are some general observations
-based on experiments:  The shell breaks arguments at spaces and
-passes them to programs in argc/argv.  Doublequotes can be used
-to prevent arguments with spaces in them from being split up.
-You can put a double quote in an argument by escaping it with
-a backslash and enclosing the whole argument within double quotes.
-The backslash and the pair of double quotes surrounding the
-argument will be stripped by the shell.
+The crucial thing to understand about the Windows environment is that
+the command line you type in is processed twice before Perl sees it.
+First, your command shell (usually CMD.EXE on Windows NT, and
+COMMAND.COM on Windows 9x) preprocesses the command line, to handle
+redirection, environment variable expansion, and location of the
+executable to run. Then, the perl executable splits the remaining
+command line into individual arguments, using the C runtime library
+upon which Perl was built.
 
-The file redirection characters "<", ">", and "|" cannot be quoted
-by double quotes (there are probably more such).  Single quotes
-will protect those three file redirection characters, but the
-single quotes don't get stripped by the shell (just to make this
-type of quoting completely useless).  The caret "^" has also
-been observed to behave as a quoting character (and doesn't get
-stripped by the shell also).
+It is particularly important to note that neither the shell nor the C
+runtime do any wildcard expansions of command-line arguments (so
+wildcards need not be quoted).  Also, the quoting behaviours of the
+shell and the C runtime are rudimentary at best (and may, if you are
+using a non-standard shell, be inconsistent).  The only (useful) quote
+character is the double quote (").  It can be used to protect spaces
+and other special characters in arguments.
+
+The Windows NT documentation has almost no description of how the
+quoting rules are implemented, but here are some general observations
+based on experiments: The C runtime breaks arguments at spaces and
+passes them to programs in argc/argv.  Double quotes can be used to
+prevent arguments with spaces in them from being split up.  You can
+put a double quote in an argument by escaping it with a backslash and
+enclosing the whole argument within double quotes.  The backslash and
+the pair of double quotes surrounding the argument will be stripped by
+the C runtime.
+
+The file redirection characters "<", ">", and "|" can be quoted by
+double quotes (although there are suggestions that this may not always
+be true).  Single quotes are not treated as quotes by the shell or
+the C runtime, they don't get stripped by the shell (just to make
+this type of quoting completely useless).  The caret "^" has also
+been observed to behave as a quoting character, but this appears
+to be a shell feature, and the caret is not stripped from the command
+line, so Perl still sees it (and the C runtime phase does not treat
+the caret as a quote character).
 
 Here are some examples of usage of the "cmd" shell:
 
@@ -345,6 +404,13 @@ This pipes "foo" to the pager and writes "bar" in the file "blurch":
 Discovering the usefulness of the "command.com" shell on Windows 9x
 is left as an exercise to the reader :)
 
+One particularly pernicious problem with the 4NT command shell for
+Windows NT is that it (nearly) always treats a % character as indicating
+that environment variable expansion is needed.  Under this shell, it is
+therefore important to always double any % characters which you want
+Perl to see (for example, for hash variables), even when they are
+quoted.
+
 =item Building Extensions
 
 The Comprehensive Perl Archive Network (CPAN) offers a wealth
@@ -366,12 +432,12 @@ be built, tested and installed with the standard mantra:
 
 where $MAKE is whatever 'make' program you have configured perl to
 use.  Use "perl -V:make" to find out what this is.  Some extensions
-may not provide a testsuite (so "$MAKE test" may not do anything, or
+may not provide a testsuite (so "$MAKE test" may not do anything or
 fail), but most serious ones do.
 
 It is important that you use a supported 'make' program, and
 ensure Config.pm knows about it.  If you don't have nmake, you can
-either get dmake from the location mentioned earlier, or get an
+either get dmake from the location mentioned earlier or get an
 old version of nmake reportedly available from:
 
     ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe
@@ -419,11 +485,11 @@ be a source of frustration if you use such a perl binary with an
 alternate shell that *does* expand wildcards.
 
 Instead, the following solution works rather well. The nice things
-about it: 1) you can start using it right away 2) it is more powerful,
-because it will do the right thing with a pattern like */*/*.c
-3) you can decide whether you do/don't want to use it 4) you can
-extend the method to add any customizations (or even entirely
-different kinds of wildcard expansion).
+about it are 1) you can start using it right away; 2) it is more 
+powerful, because it will do the right thing with a pattern like
+*/*/*.c; 3) you can decide whether you do/don't want to use it; and
+4) you can extend the method to add any customizations (or even 
+entirely different kinds of wildcard expansion).
 
 	C:\> copy con c:\perl\lib\Wild.pm
 	# Wild.pm - emulate shell @ARGV expansion on shells that don't
@@ -465,7 +531,7 @@ from CPAN.  You may find that many of these extensions are meant to
 be used under the Activeware port of Perl, which used to be the only
 native port for the Win32 platform.  Since the Activeware port does not
 have adequate support for Perl's extension building tools, these
-extensions typically do not support those tools either, and therefore
+extensions typically do not support those tools either and, therefore,
 cannot be built using the generic steps shown in the previous section.
 
 To ensure smooth transitioning of existing code that uses the
@@ -521,7 +587,7 @@ If you use the 4DOS/NT or similar command shell, note that
 refer to all the command line arguments, so you may need to make
 sure that construct works in batch files.  As of this writing,
 4DOS/NT users will need a "ParameterChar = *" statement in their
-4NT.INI file, or will need to execute "setdos /p*" in the 4DOS/NT
+4NT.INI file or will need to execute "setdos /p*" in the 4DOS/NT
 startup file to enable this to work.
 
 =item 3
@@ -575,7 +641,7 @@ Some of the built-in functions do not act exactly as documented in
 L<perlfunc>, and a few are not implemented at all.  To avoid
 surprises, particularly if you have had prior exposure to Perl
 in other operating environments or if you intend to write code
-that will be portable to other environments, see L<perlport>
+that will be portable to other environments.  See L<perlport>
 for a reasonably definitive list of these differences.
 
 Not all extensions available from CPAN may build or work properly
@@ -600,11 +666,11 @@ by C<perl -V>.
 
 =over 4
 
-Gary Ng E<lt>71564.1743@CompuServe.COME<gt>
+=item Gary Ng E<lt>71564.1743@CompuServe.COME<gt>
 
-Gurusamy Sarathy E<lt>gsar@activestate.comE<gt>
+=item Gurusamy Sarathy E<lt>gsar@activestate.comE<gt>
 
-Nick Ing-Simmons E<lt>nick@ni-s.u-net.comE<gt>
+=item Nick Ing-Simmons E<lt>nick@ni-s.u-net.comE<gt>
 
 =back
 
@@ -631,6 +697,6 @@ Support for fork() emulation was added in 5.6 (ActiveState Tool Corp).
 
 Win9x support was added in 5.6 (Benjamin Stuhl).
 
-Last updated: 22 March 2000
+Last updated: 1 April 2001
 
 =cut

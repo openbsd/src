@@ -7,7 +7,7 @@ require Exporter;
 
 $VERSION = '1.0';
 
-# $Id: Soundex.pm,v 1.4 2000/04/06 17:06:55 millert Exp $
+# $Id: Soundex.pm,v 1.5 2001/05/24 18:35:39 millert Exp $
 #
 # Implementation of soundex algorithm as described by Knuth in volume
 # 3 of The Art of Computer Programming, with ideas stolen from Ian
@@ -25,8 +25,8 @@ $VERSION = '1.0';
 # Lukasiewicz, Lissajous -> L222
 #
 # $Log: Soundex.pm,v $
-# Revision 1.4  2000/04/06 17:06:55  millert
-# perl-5.6.0 + local changes
+# Revision 1.5  2001/05/24 18:35:39  millert
+# merge in perl 5.6.1 with our local changes
 #
 # Revision 1.2  1994/03/24  00:30:27  mike
 # Subtle bug (any excuse :-) spotted by Rich Pinder <rpinder@hsc.usc.edu>
@@ -111,7 +111,7 @@ many people seem to prefer an I<unlikely> value like C<Z000>
 can be assigned to C<$soundex_nocode>.
 
 In scalar context C<soundex> returns the soundex code of its first
-argument, and in array context a list is returned in which each element is the 
+argument, and in list context a list is returned in which each element is the 
 soundex code for the corresponding argument passed to C<soundex> e.g.
 
   @codes = soundex qw(Mike Stok);

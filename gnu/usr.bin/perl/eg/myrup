@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $RCSfile: myrup,v $$Revision: 1.4 $$Date: 2000/04/06 17:04:47 $
+# $RCSfile: myrup,v $$Revision: 1.5 $$Date: 2001/05/24 18:35:03 $
 
 # This was a customization of ruptime requested by someone here who wanted
 # to be able to find the least loaded machine easily.  It uses the
