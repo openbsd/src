@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: strptime.c,v 1.1 1998/02/04 22:22:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: strptime.c,v 1.2 1998/03/15 06:49:01 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -68,6 +68,7 @@ strptime(buf, fmt, tm)
 	char c;
 	const char *bp;
 	int alt_format, i, len;
+	int century = TM_YEAR_BASE;
 
 	bp = buf;
 
@@ -131,9 +132,9 @@ literal:
 				return (0);
 			break;
 
-		case 'r':	/* The time in 12-hour clock representation. */
+		case 'r':	/* The time as "%I:%M:%S %p". */
 			_LEGAL_ALT(0);
-			if (!(bp = strptime(bp, _ctloc(t_fmt_ampm), tm)))
+			if (!(bp = strptime(bp, "%I:%M:%S %p", tm)))
 				return (0);
 			break;
 
@@ -210,7 +211,7 @@ literal:
 			if (!(_conv_num(&bp, &i, 0, 99)))
 				return (0);
 
-			tm->tm_year = i * 100;
+			century = i * 100;
 			break;
 
 		case 'd':	/* The day of month. */
@@ -234,7 +235,7 @@ literal:
 			/* FALLTHROUGH */
 		case 'I':
 			_LEGAL_ALT(_ALT_O);
-			if (!(_conv_num(&bp, &tm->tm_hour, 0, 11)))
+			if (!(_conv_num(&bp, &tm->tm_hour, 1, 12)))
 				return (0);
 			break;
 
@@ -242,6 +243,7 @@ literal:
 			_LEGAL_ALT(0);
 			if (!(_conv_num(&bp, &tm->tm_yday, 1, 366)))
 				return (0);
+			tm->tm_yday--;
 			break;
 
 		case 'M':	/* The minute. */
@@ -254,6 +256,7 @@ literal:
 			_LEGAL_ALT(_ALT_O);
 			if (!(_conv_num(&bp, &tm->tm_mon, 1, 12)))
 				return (0);
+			tm->tm_mon--;
 			break;
 
 		case 'p':	/* The locale's equivalent of AM/PM. */
@@ -284,7 +287,7 @@ literal:
 
 		case 'S':	/* The seconds. */
 			_LEGAL_ALT(_ALT_O);
-			if (!(_conv_num(&bp, &tm->tm_sec, 1, 61)))
+			if (!(_conv_num(&bp, &tm->tm_sec, 0, 61)))
 				return (0);
 			break;
 
@@ -315,15 +318,19 @@ literal:
 			tm->tm_year = i - TM_YEAR_BASE;
 			break;
 
-		case 'y':	/* The year within 100 years of the epoch. */
+		case 'y':	/* The year within the century (2 digits). */
 			_LEGAL_ALT(_ALT_E | _ALT_O);
 			if (!(_conv_num(&bp, &i, 0, 99)))
 				return (0);
 
-			if (i <= 68)
-				tm->tm_year = i + 2000 - TM_YEAR_BASE;
-			else
-				tm->tm_year = i + 1900 - TM_YEAR_BASE;
+			if (century == TM_YEAR_BASE) {
+				if (i <= 68)
+					tm->tm_year = i + 2000 - TM_YEAR_BASE;
+				else
+					tm->tm_year = i + 1900 - TM_YEAR_BASE;
+			} else {
+				tm->tm_year = i + century - TM_YEAR_BASE;
+			}
 			break;
 
 		/*
@@ -364,7 +371,7 @@ _conv_num(buf, dest, llim, ulim)
 		*dest += *(*buf)++ - '0';
 	} while ((*dest * 10 <= ulim) && **buf >= '0' && **buf <= '9');
 
-	if (*dest < llim || *dest > ulim)
+	if (*dest < llim || *dest > ulim || isdigit(**buf))
 		return (0);
 
 	return (1);

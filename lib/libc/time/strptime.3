@@ -1,4 +1,4 @@
-.\"	$NetBSD: strptime.3,v 1.4 1998/01/20 21:10:08 mycroft Exp $
+.\"	$OpenBSD: strptime.3,v 1.2 1998/03/15 06:49:00 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 20, 1998
+.Dd March 14, 1998
 .Os
 .Dt STRPTIME 3
 .Sh NAME
@@ -55,15 +55,15 @@ using the format specified by
 .Pp
 The
 .Fa format
-string consists of zero or more conversion specifications and
-ordinary characters.  All ordinary characters are copied directly into
-the buffer.  A conversion specification consists of a percent sign `%'
-followed by one or two conversion characters which specify the replacement
-required. There must be white-space or other non-alphanumeric characters
-between any two conversion specifications.
+string consists of zero or more conversion specifications and ordinary
+characters.  All ordinary characters are copied directly into the
+buffer.  A conversion specification consists of a percent sign `%'
+followed by one or two conversion characters which specify the
+replacement required.  There must be white-space or other
+non-alphanumeric characters between any two conversion specifications.
 .Pp
 The LC_TIME category defines the locale values for the conversion
-specifications. The following conversion specifications are supported:
+specifications.  The following conversion specifications are supported:
 .Bl -tag -width "xxxx"
 .It Cm \&%a
 the day of week, using the locale's weekday names;
@@ -80,11 +80,12 @@ the same as
 .It Cm \&%c
 the date and time, using the locale's date and time format.
 .It Cm \&%C
-the century number [0,99];
-leading zeros are permitted but not required.
+the century number [0,99]; leading zeros are permitted but not required.
+Note that the converted value is added to the current value of the
+``tm_year'' field (in order that the "\&%y" conversion be useful).
 .It Cm \&%d
 the day of month [1,31];
-leading zeros are permitted but required.
+leading zeros are permitted but not required.
 .It Cm \&%D
 the date as %m/%d/%y.
 .It Cm \&%e
@@ -119,7 +120,7 @@ any white-space
 .It Cm \&%p
 the locale's equivalent of a.m. or p.m..
 .It Cm \&%r
-the time (12-hour clock) with %p, using the locale's time format.
+the time as %I:%M:%S %p.
 .It Cm \&%R
 the time as %H:%M.
 .It Cm \&%S
@@ -147,12 +148,15 @@ the date, using the locale's date format.
 .It Cm \&%X
 the time, using the locale's time format.
 .It Cm \&%y
-the year within the 20th century [69,99] or the 21st century [0,68];
-leading zeros are permitted but not required.
+the year within the current century.  When a century is not otherwise
+specified, values in the range 69-99 refer to years in the twentieth
+century (1969 to 1999 inclusive); values in the range 00-68 refer
+to years in the twenty-first century (2000 to 2068 inclusive).
+Leading zeros are permitted but not required.
 .It Cm \&%Y
-the year, including the century (i.e., 1996).
+the year, including the century (i.e., 1998).
 .It Cm \&%%
-A `%' is written. No argument is converted.
+A `%' is written.  No argument is converted.
 .El
 .Ss Modified conversion specifications
 For compatibility, certain conversion specifications can be modified
@@ -160,20 +164,21 @@ by the
 .Cm E
 and
 .Cm O
-modifier characters to indicate that an alternative format or specification
-should be used rather than the one normally used by the unmodified
-conversion specification. As there are currently neither alternative formats
-nor specifications supported by the system, the behavior will be as if the
-unmodified conversion specification were used.
+modifier characters to indicate that an alternative format or
+specification should be used rather than the one normally used by the
+unmodified conversion specification.  As there are currently neither
+alternative formats nor specifications supported by the system, the
+behavior will be as if the unmodified conversion specification were
+used.
 .Sh RETURN VALUES
 If successful, the
 .Nm
 function returns a pointer to the character following the last character
-parsed. Otherwise, a null pointer is returned.
+parsed.  Otherwise, a null pointer is returned.
 .Sh SEE ALSO
 .Xr strftime 3
 .Sh STANDARDS
 The
 .Fn strptime
 function conforms to
-.St -xpg4 .
+.St -xpg4.2 .
