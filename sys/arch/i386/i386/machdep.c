@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.248 2003/10/29 20:03:54 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.249 2003/11/14 07:15:53 kevlo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -323,6 +323,7 @@ void	intel686_cpu_setup(const char *, int, int);
 void	tm86_cpu_setup(const char *, int, int);
 char *	intel686_cpu_name(int);
 char *	cyrix3_cpu_name(int, int);
+char *	tm86_cpu_name(int);
 void	viac3_rnd(void *);
 
 #if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
@@ -932,8 +933,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_586,
 			{
-				0, 0, 0, "TMS5400", "TMS5600", 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, "TMS5x00", 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"TMS5x00"		/* Default */
 			},
 			tm86_cpu_setup
@@ -1689,6 +1690,26 @@ cyrix3_cpu_name(model, step)
 	return name;
 }
 
+char *
+tm86_cpu_name(model)
+	int model;
+{
+	u_int32_t regs[4];
+	char *name = NULL;
+
+	cpuid(0x80860001, regs);
+
+	switch(model) {
+	case 4:
+		if (((regs[1] >> 16) & 0xff) >= 0x3)
+			name = "TMS5800";
+		else 
+			name = "TMS5600";
+	}
+
+	return name;
+}
+
 void
 identifycpu()
 {
@@ -1787,6 +1808,10 @@ identifycpu()
 			} else if (vendor == CPUVENDOR_VIA && family == 6 &&
 				   model >= 7 && model <= 8) {
 				name = cyrix3_cpu_name(model, step);
+			/* Special hack for the TMS5x00 series. */
+			} else if (vendor == CPUVENDOR_TRANSMETA && 
+				  family == 5 && model == 4) {
+				name = tm86_cpu_name(model);
 			} else
 				name = cpup->cpu_family[i].cpu_models[model];
 			if (name == NULL) {
