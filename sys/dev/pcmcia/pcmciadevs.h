@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.34 1999/12/23 17:04:40 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.35 2000/01/31 22:51:48 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.29 1999/12/23 17:03:18 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.30 2000/01/31 22:50:44 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -349,6 +349,7 @@
 #define	PCMCIA_VENDOR_SVEC	-1	/* SVEC/Hawking */
 #define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom */
 #define	PCMCIA_VENDOR_EDIMAX	-1	/* Edimax */
+#define	PCMCIA_VENDOR_CNET	-1	/* CNet */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	PCMCIA_PRODUCT_INVALID
@@ -420,3 +421,6 @@
 #define	PCMCIA_CIS_EDIMAX_NE2000	{ "PCMCIA", "Ethernet", NULL, NULL }
 #define	PCMCIA_PRODUCT_EDIMAX_NE2000	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_STR_EDIMAX_NE2000	"Edimax"
+#define	PCMCIA_CIS_CNET_NE2000	{ "CNet", "CN40BC Ethernet", "D", "NE2000" }
+#define	PCMCIA_PRODUCT_CNET_NE2000	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_STR_CNET_NE2000	"CNet"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.22 1999/12/23 17:07:03 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.23 2000/01/31 22:51:48 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -133,6 +133,10 @@ struct ne2000dev {
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_EDIMAX_NE2000,
       0, -1, { 0x00, 0x00, 0xb4 } },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_CNET_NE2000,
+      0, -1, { 0x00, 0x80, 0xad } },
 
     /*
      * You have to add new entries which contains

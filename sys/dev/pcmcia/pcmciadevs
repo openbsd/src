@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.29 1999/12/23 17:03:18 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.30 2000/01/31 22:50:44 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -214,6 +214,7 @@ vendor TEAC			-1	TEAC
 vendor SVEC			-1	SVEC/Hawking
 vendor AMBICOM			-1	AmbiCom
 vendor EDIMAX			-1	Edimax
+vendor CNET			-1	CNet
 
 product MEGAHERTZ XJ2288	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
@@ -241,3 +242,4 @@ product PROXIM RL2_7200		{ "PROXIM", "LAN&spCARD", "RANGELAN2", NULL } Proxim
 product PROXIM RL2_7400		{ "PROXIM", "LAN&spPC&spCARD", "RANGELAN2", NULL } Proxim
 product PROXIM SYMPHONY		{ "PROXIM", "LAN&spPC&spCARD", "SYMPHONY", NULL } Proxim
 product EDIMAX NE2000		{ "PCMCIA", "Ethernet", NULL, NULL } Edimax
+product CNET NE2000		{ "CNet", "CN40BC&spEthernet", "D", "NE2000" } CNet
