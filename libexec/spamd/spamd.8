@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.16 2003/03/03 08:32:07 cedric Exp $
+.\"	$OpenBSD: spamd.8,v 1.17 2003/03/04 09:22:54 deraadt Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -74,9 +74,9 @@ The SMTP version banner that is reported upon initial connection.
 .Nm
 is designed to be very efficient so that it does not slow down the
 receiving machine.
-SPAM is never accepted, but always rejected with either a 450 or 550
+Spam is never accepted, but always rejected with either a 450 or 550
 error message.
-The normal way that SPAM has been dealt with in the past is to either
+The normal way that spam has been dealt with in the past is to either
 accept and drop, or outright block.
 When configured to use 450 responses,
 .Nm
