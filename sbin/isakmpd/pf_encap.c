@@ -1,8 +1,8 @@
-/*	$OpenBSD: pf_encap.c,v 1.10 1999/03/31 14:27:38 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.52 1999/03/31 14:19:53 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.11 1999/04/05 21:02:48 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.60 1999/04/05 08:07:55 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,6 +48,7 @@
 #include <netinet/ip_ip4.h>
 #include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -69,7 +70,7 @@
 #define ROUNDUP(a) \
   ((a) > 0 ? (1 + (((a) - 1) | (sizeof (long) - 1))) : sizeof (long))
 
-static void pf_encap_deregister_on_demand_connection (in_addr_t, char *);
+static void pf_encap_deregister_on_demand_connection (char *);
 static char *pf_encap_on_demand_connection (in_addr_t);
 static int pf_encap_register_on_demand_connection (in_addr_t, char *);
 static void pf_encap_request_sa (struct encap_msghdr *);
@@ -146,7 +147,8 @@ pf_encap_expire (struct encap_msghdr *emsg)
    * already at the soft expire, and certainly at the hard expire if we
    * haven't started a negotiation by then.
    */
-  if (sa->flags & SA_FLAG_STAYALIVE)
+  if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
+      == SA_FLAG_STAYALIVE)
     {
       /* If we are already renegotiating, don't start over.  */
       if (!exchange_lookup_by_name (sa->name, 2))
@@ -156,10 +158,19 @@ pf_encap_expire (struct encap_msghdr *emsg)
   if (emsg->em_not_type == NOTIFY_HARD_EXPIRE)
     {
       /*
-       * XXX We need to reestablish the on-demand route here.  This we need
-       * even if we have started a new negotiation, considering it might
-       * fail.
+       * If the expired SA is something we know how to renegotiate, and it
+       * has not already been replaced.  Establish routes that requests SAs
+       * from us on use.
        */
+      if (sa->name && (sa->flags & SA_FLAG_REPLACED) == 0)
+	{
+	  /*
+	   * We reestablish the on-demand route here even if we have started
+	   * a new negotiation, considering it might fail.
+	   */
+	  pf_encap_deregister_on_demand_connection (sa->name);
+	  pf_encap_connection (sa->name);
+	}
 
       /* Remove the old SA, it isn't useful anymore.  */
       sa_free (sa);
@@ -170,7 +181,7 @@ static void
 pf_encap_notify (struct encap_msghdr *emsg)
 {
   log_debug_buf (LOG_SYSDEP, 90, "pf_encap_notify: emsg", (u_int8_t *)emsg,
-		 sizeof *emsg);
+		 emsg->em_msglen);
 
   switch (emsg->em_not_type)
     {
@@ -220,7 +231,10 @@ pf_encap_handler (int fd)
    */
   buf = malloc (EMT_NOTIFY_FLEN);
   if (!buf)
-    return;
+    {
+      log_error ("pf_encap_handler: malloc (%d) failed", EMT_NOTIFY_FLEN);
+      return;
+    }
   emsg = (struct encap_msghdr *)buf;
 
   len = read (fd, buf, EMT_NOTIFY_FLEN);
@@ -265,19 +279,19 @@ pf_encap_write (struct encap_msghdr *em)
   n = write (pf_encap_socket, em, em->em_msglen);
   if (n == -1)
     {
-      log_error ("write (%d, ...) failed", pf_encap_socket);
+      log_error ("pf_encap_write: write (%d, ...) failed", pf_encap_socket);
       return -1;
     }
   if ((size_t)n != em->em_msglen)
     {
-      log_error ("write (%d, ...) returned prematurely", pf_encap_socket);
+      log_error ("pf_encap_write: write (%d, ...) returned prematurely", pf_encap_socket);
       return -1;
     }
   return 0;
 }
 
 static void
-pf_encap_finalize_request_sa (void *v_emsg)
+pf_encap_finalize_request_sa (void *v_emsg, int fail)
 {
   struct encap_msghdr *emsg = v_emsg;
 
@@ -285,6 +299,10 @@ pf_encap_finalize_request_sa (void *v_emsg)
   free (emsg);
 }
 
+/*
+ * We are asked to setup an SA that can protect packets like the one described
+ * in EMSG.  We are supposed to deallocate EMSG too.
+ */
 static void
 pf_encap_request_sa (struct encap_msghdr *emsg)
 {
@@ -298,7 +316,7 @@ pf_encap_request_sa (struct encap_msghdr *emsg)
   conn = pf_encap_on_demand_connection (emsg->em_not_dst.s_addr);
   if (!conn)
     /* Not ours.  */
-    return;
+    goto bail_out;
 
   /*
    * If a connection or an SA for this connections already exists, drop it.
@@ -306,15 +324,18 @@ pf_encap_request_sa (struct encap_msghdr *emsg)
    * XXX We are leaking emsg here.
    */
   if (exchange_lookup_by_name (conn, 2) || sa_lookup_by_name (conn, 2))
-    return;
+    goto bail_out;
 
-  if (conn)
-    exchange_establish (conn, pf_encap_finalize_request_sa, emsg);
+  exchange_establish (conn, pf_encap_finalize_request_sa, emsg);
+  return;
+
+ bail_out:
+  free (emsg);
 }
 
 /*
  * Read a PF_ENCAP non-notify packet (e.g. an answer to a request of ours)
- * If we see a notify queue it up as a timeout timing out NOW for the main
+ * If we see a notify queue it up as a timeout timing out now for the main
  * loop to see.
  */
 static struct encap_msghdr *
@@ -400,7 +421,7 @@ pf_encap_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src, int srclen,
   emsg->em_msglen = EMT_RESERVESPI_FLEN;
   emsg->em_type = EMT_RESERVESPI;
   emsg->em_gen_spi = 0;
-  memcpy (&emsg->em_gen_dst, &ipv4_src->sin_addr, sizeof ipv4_src->sin_addr);
+  memcpy (&emsg->em_gen_dst, &ipv4_dst->sin_addr, sizeof ipv4_dst->sin_addr);
   emsg->em_gen_sproto =
     proto == IPSEC_PROTO_IPSEC_ESP ? IPPROTO_ESP : IPPROTO_AH;
 
@@ -780,18 +801,14 @@ pf_encap_enable_spi (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
  * XXX We should add delete support here a la ipsecadm/xf_flow.c the day
  * we want to clean up after us.
  */
-int
+static int
 pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
-		in_addr_t rmask, u_int32_t spi, in_addr_t dst, char *conn)
+		in_addr_t rmask, in_addr_t dst)
 {
   int s = -1;
-  int off, err;
+  int off;
   struct sockaddr_encap *ddst, *msk, *gw;
   struct rt_msghdr *rtmsg = 0;
-
-  err = pf_encap_register_on_demand_connection (dst, conn);
-  if (err)
-    return -1;
 
   rtmsg = calloc (1,
 		  sizeof *rtmsg + 2 * ROUNDUP (SENT_IP4_LEN)
@@ -804,7 +821,7 @@ pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   if (s == -1)
     {
       log_error ("pf_encap_route: "
-		"socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC) failed");
+		 "socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC) failed");
       goto fail;
     }
 
@@ -836,7 +853,7 @@ pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   gw->sen_family = AF_ENCAP;
   gw->sen_type = SENT_IPSP;
   gw->sen_ipsp_dst.s_addr = dst;
-  gw->sen_ipsp_spi = htonl(spi);
+  gw->sen_ipsp_spi = htonl(1);
   gw->sen_ipsp_sproto = 0;	/* XXX Correct?  */
 
   msk->sen_len = SENT_IP4_LEN;
@@ -846,11 +863,30 @@ pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   msk->sen_ip_dst.s_addr = rmask;
 
   rtmsg->rtm_msglen = off + msk->sen_len;
-	
+
+  log_debug (LOG_SYSDEP, 70, "pf_encap_route: rtmsg", rtmsg,
+	     rtmsg->rtm_msglen);
   if (write(s, (caddr_t)rtmsg, rtmsg->rtm_msglen) == -1)
     {
-      log_error("write(%d, ...) failed", s);
-      goto fail;
+      if (errno == EEXIST)
+	{
+	  rtmsg->rtm_type = RTM_CHANGE;
+
+	  log_debug (LOG_SYSDEP, 70, "pf_encap_route: rtmsg", rtmsg,
+		     rtmsg->rtm_msglen);
+	  if (write(s, (caddr_t)rtmsg, rtmsg->rtm_msglen) == -1)
+	    {
+	      log_error("pf_encap_route: write(%d, %p, %d) failed", s, rtmsg,
+			rtmsg->rtm_msglen);
+	      goto fail;
+	    }
+	}
+      else
+	{
+	  log_error("pf_encap_route: write(%d, %p, %d) failed", s, rtmsg,
+		    rtmsg->rtm_msglen);
+	  goto fail;
+	}
     }
 
   /* XXX Local packet route should be setup here.  */
@@ -862,6 +898,8 @@ pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 
   close (s);
   free (rtmsg);
+
+  log_debug (LOG_SYSDEP, 30, "pf_encap_route: done");
   return 0;
 
  fail:
@@ -869,8 +907,84 @@ pf_encap_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
     close (s);
   if (rtmsg)
     free (rtmsg);
-  pf_encap_deregister_on_demand_connection (dst, conn);
   return -1;
+}
+
+int
+pf_encap_connection (char *conn)
+{
+  char *conf, *doi_str, *local_id, *remote_id, *peer, *address;
+  struct in_addr laddr, lmask, raddr, rmask, gwaddr;
+  int lid, rid, err;
+
+  /* Figure out the DOI.  We only handle IPsec so far.  */
+  conf = conf_get_str (conn, "Configuration");
+  if (!conf)
+    {
+      log_print ("pf_encap_connection: no \"Configuration\" specified for %s",
+		 conn);
+      return -1;
+    }
+  doi_str = conf_get_str (conf, "DOI");
+  if (!doi_str)
+    {
+      log_print ("sysdep_conf_init_hook: No DOI specified for %s", conf);
+      return -1;
+    }
+  if (strcasecmp (doi_str, "IPSEC") != 0)
+    {
+      log_print ("sysdep_conf_init_hook: DOI \"%s\" unsupported", doi_str);
+      return -1;
+    }
+
+  local_id = conf_get_str (conn, "Local-ID");
+  remote_id = conf_get_str (conn, "Remote-ID");
+
+  /* At the moment I only do on-demand keying for modes with client IDs.  */
+  if (!local_id || !remote_id)
+    {
+      log_print ("sysdep_conf_init_hook: "
+		 "both Local-ID and Remote-ID required for %s", conn);
+      return -1;
+    }
+
+  if (ipsec_get_id (local_id, &lid, &laddr, &lmask))
+    return -1;
+  if (ipsec_get_id (remote_id, &rid, &raddr, &rmask))
+    return -1;
+
+  peer = conf_get_str (conn, "ISAKMP-peer");
+  if (!peer)
+    {
+      log_print ("sysdep_conf_init_hook: "
+		 "section %s has no \"ISAKMP-peer\" tag", conn);
+	  return -1;
+    }
+  address = conf_get_str (peer, "Address");
+  if (!address)
+    {
+      log_print ("sysdep_conf_init_hook: section %s has no \"Address\" tag",
+		 peer);
+      return -1;
+    }
+  if (!inet_aton (address, &gwaddr))
+    {
+      log_print ("sysdep_conf_init_hook: invalid adress %s in section %s",
+		 address, peer);
+      return -1;
+    }
+
+  err = pf_encap_register_on_demand_connection (gwaddr.s_addr, conn);
+  if (err)
+    return -1;
+
+  if (pf_encap_route (laddr.s_addr, lmask.s_addr, raddr.s_addr, rmask.s_addr,
+		      gwaddr.s_addr))
+    {
+      pf_encap_deregister_on_demand_connection (conn);
+      return -1;
+    }
+  return 0;
 }
 
 /*
@@ -885,7 +999,12 @@ pf_encap_register_on_demand_connection (in_addr_t dst, char *conn)
   if (!node)
     return -1;
   node->dst = dst;
-  node->conn = conn;
+  node->conn = strdup (conn);
+  if (!node->conn)
+    {
+      free (node);
+      return -1;
+    }
   LIST_INSERT_HEAD (&on_demand_connections, node, link);
   return 0;
 }
@@ -894,15 +1013,18 @@ pf_encap_register_on_demand_connection (in_addr_t dst, char *conn)
  * Remove an IP-address to Phase 2 connection name mapping.
  */
 static void
-pf_encap_deregister_on_demand_connection (in_addr_t dst, char *conn)
+pf_encap_deregister_on_demand_connection (char *conn)
 {
   struct on_demand_connection *node;
 
   for (node = LIST_FIRST (&on_demand_connections); node;
        node = LIST_NEXT (node, link))
-    if (dst == node->dst && conn == node->conn)
+    if (strcasecmp (conn, node->conn) == 0)
       {
 	LIST_REMOVE (node, link);
+	free (node->conn);
+	free (node);
+	break;
       }
 }
 
