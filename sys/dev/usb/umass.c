@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.38 2005/03/28 04:46:33 pascoe Exp $ */
+/*	$OpenBSD: umass.c,v 1.39 2005/04/01 06:41:13 pascoe Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -155,10 +155,12 @@
 #include <sys/bus.h>
 #include <machine/clock.h>
 #endif
+#include <machine/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/umassvar.h>
@@ -198,6 +200,8 @@ USB_DECLARE_DRIVER(umass);
 Static void umass_disco(struct umass_softc *sc);
 
 /* generic transfer functions */
+Static usbd_status umass_polled_transfer(struct umass_softc *sc,
+				usbd_xfer_handle xfer);
 Static usbd_status umass_setup_transfer(struct umass_softc *sc,
 				usbd_pipe_handle pipe,
 				void *buffer, int buflen, int flags,
@@ -743,6 +747,65 @@ umass_disco(struct umass_softc *sc)
  */
 
 Static usbd_status
+umass_polled_transfer(struct umass_softc *sc, usbd_xfer_handle xfer)
+{
+	usbd_status err;
+
+	if (sc->sc_dying)
+		return (USBD_IOERROR);
+
+	/*
+	 * If a polled transfer is already in progress, preserve the new
+	 * usbd_xfer_handle and run it after the running one completes.
+	 * This converts the recursive calls into the umass_*_state callbacks
+	 * into iteration, preventing us from running out of stack under
+	 * error conditions.
+	 */
+	if (sc->polling_depth) {
+		if (sc->next_polled_xfer)
+			panic("%s: got polled xfer %p, but %p already "
+			    "pending\n", USBDEVNAME(sc->sc_dev), xfer,
+			    sc->next_polled_xfer);
+
+		DPRINTF(UDMASS_XFER, ("%s: saving polled xfer %p\n",
+		    USBDEVNAME(sc->sc_dev), xfer));
+		sc->next_polled_xfer = xfer;
+
+		return (USBD_IN_PROGRESS);
+	}
+
+	sc->polling_depth++;
+
+start_next_xfer:
+	DPRINTF(UDMASS_XFER, ("%s: start polled xfer %p\n",
+	    USBDEVNAME(sc->sc_dev), xfer));
+	err = usbd_transfer(xfer);
+	if (err && err != USBD_IN_PROGRESS && sc->next_polled_xfer == NULL) {
+		DPRINTF(UDMASS_BBB, ("%s: failed to setup transfer, %s\n",
+		    USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
+		sc->polling_depth--;
+		return (err);
+	}
+
+	if (err && err != USBD_IN_PROGRESS) {
+		DPRINTF(UDMASS_XFER, ("umass_polled_xfer %p has error %s\n",
+		    xfer, usbd_errstr(err)));
+	}
+
+	if (sc->next_polled_xfer != NULL) {
+		DPRINTF(UDMASS_XFER, ("umass_polled_xfer running next "
+		    "transaction %p\n", sc->next_polled_xfer));
+		xfer = sc->next_polled_xfer;
+		sc->next_polled_xfer = NULL;
+		goto start_next_xfer;
+	}
+
+	sc->polling_depth--;
+
+	return (USBD_NORMAL_COMPLETION);
+}
+
+Static usbd_status
 umass_setup_transfer(struct umass_softc *sc, usbd_pipe_handle pipe,
 			void *buffer, int buflen, int flags,
 			usbd_xfer_handle xfer)
@@ -757,10 +820,17 @@ umass_setup_transfer(struct umass_softc *sc, usbd_pipe_handle pipe,
 	usbd_setup_xfer(xfer, pipe, (void *)sc, buffer, buflen,
 	    flags | sc->sc_xfer_flags, sc->timeout, sc->sc_methods->wire_state);
 
-	err = usbd_transfer(xfer);
-	DPRINTF(UDMASS_XFER,("%s: start xfer buffer=%p buflen=%d flags=0x%x "
-	    "timeout=%d\n", USBDEVNAME(sc->sc_dev),
-	    buffer, buflen, flags | sc->sc_xfer_flags, sc->timeout));
+	if (sc->sc_udev->bus->use_polling) {
+		DPRINTF(UDMASS_XFER,("%s: start polled xfer buffer=%p "
+		    "buflen=%d flags=0x%x timeout=%d\n", USBDEVNAME(sc->sc_dev),
+		    buffer, buflen, flags | sc->sc_xfer_flags, sc->timeout));
+		err = umass_polled_transfer(sc, xfer);
+	} else {
+		err = usbd_transfer(xfer);
+		DPRINTF(UDMASS_XFER,("%s: start xfer buffer=%p buflen=%d "
+		    "flags=0x%x timeout=%d\n", USBDEVNAME(sc->sc_dev),
+		    buffer, buflen, flags | sc->sc_xfer_flags, sc->timeout));
+	}
 	if (err && err != USBD_IN_PROGRESS) {
 		DPRINTF(UDMASS_BBB, ("%s: failed to setup transfer, %s\n",
 			USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
@@ -786,7 +856,17 @@ umass_setup_ctrl_transfer(struct umass_softc *sc, usb_device_request_t *req,
 	    USBD_DEFAULT_TIMEOUT, req, buffer, buflen, flags,
 	    sc->sc_methods->wire_state);
 
-	err = usbd_transfer(xfer);
+	if (sc->sc_udev->bus->use_polling) {
+		DPRINTF(UDMASS_XFER,("%s: start polled ctrl xfer buffer=%p "
+		    "buflen=%d flags=0x%x\n", USBDEVNAME(sc->sc_dev), buffer,
+		    buflen, flags));
+		err = umass_polled_transfer(sc, xfer);
+	} else {
+		DPRINTF(UDMASS_XFER,("%s: start ctrl xfer buffer=%p buflen=%d "
+		    "flags=0x%x\n", USBDEVNAME(sc->sc_dev), buffer, buflen,
+		    flags));
+		err = usbd_transfer(xfer);
+	}
 	if (err && err != USBD_IN_PROGRESS) {
 		DPRINTF(UDMASS_BBB, ("%s: failed to setup ctrl transfer, %s\n",
 			 USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
@@ -882,6 +962,7 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 		   umass_callback cb, void *priv)
 {
 	static int dCBWtag = 42;	/* unique for CBW of transfer */
+	usbd_status err;
 
 	DPRINTF(UDMASS_BBB,("%s: umass_bbb_transfer cmd=0x%02x\n",
 		USBDEVNAME(sc->sc_dev), *(u_char *)cmd));
@@ -890,8 +971,10 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 		("sc->sc_wire == 0x%02x wrong for umass_bbb_transfer\n",
 		sc->sc_wire));
 
-	if (sc->sc_dying)
+	if (sc->sc_dying) {
+		sc->polled_xfer_status = USBD_IOERROR;
 		return;
+	}
 
 	/* Be a little generous. */
 	sc->timeout = timeout + USBD_DEFAULT_TIMEOUT;
@@ -983,13 +1066,14 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	sc->transfer_state = TSTATE_BBB_COMMAND;
 
 	/* Send the CBW from host to device via bulk-out endpoint. */
-	if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKOUT],
+	if ((err = umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKOUT],
 			&sc->cbw, UMASS_BBB_CBW_SIZE, 0,
-			sc->transfer_xfer[XFER_BBB_CBW])) {
+			sc->transfer_xfer[XFER_BBB_CBW])))
 		umass_bbb_reset(sc, STATUS_WIRE_FAILED);
-	}
-}
 
+	if (sc->sc_udev->bus->use_polling)
+		sc->polled_xfer_status = err;
+}
 
 Static void
 umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
@@ -1378,6 +1462,8 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 		   void *cmd, int cmdlen, void *data, int datalen, int dir,
 		   u_int timeout, umass_callback cb, void *priv)
 {
+	usbd_status err;
+
 	DPRINTF(UDMASS_CBI,("%s: umass_cbi_transfer cmd=0x%02x, len=%d\n",
 		USBDEVNAME(sc->sc_dev), *(u_char *)cmd, datalen));
 
@@ -1385,8 +1471,10 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 		("sc->sc_wire == 0x%02x wrong for umass_cbi_transfer\n",
 		sc->sc_wire));
 
-	if (sc->sc_dying)
+	if (sc->sc_dying) {
+		sc->polled_xfer_status = USBD_IOERROR;
 		return;
+	}
 
 	/* Be a little generous. */
 	sc->timeout = timeout + USBD_DEFAULT_TIMEOUT;
@@ -1428,8 +1516,12 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 	sc->transfer_state = TSTATE_CBI_COMMAND;
 
 	/* Send the Command Block from host to device via control endpoint. */
-	if (umass_cbi_adsc(sc, cmd, cmdlen, sc->transfer_xfer[XFER_CBI_CB]))
+	if ((err = umass_cbi_adsc(sc, cmd, cmdlen,
+	    sc->transfer_xfer[XFER_CBI_CB])))
 		umass_cbi_reset(sc, STATUS_WIRE_FAILED);
+
+	if (sc->sc_udev->bus->use_polling)
+		sc->polled_xfer_status = err;
 }
 
 Static void

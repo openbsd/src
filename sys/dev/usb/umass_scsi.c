@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.9 2004/07/22 02:40:21 dlg Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.10 2005/04/01 06:41:13 pascoe Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,6 @@ struct umass_scsi_softc {
 	struct scsi_link	sc_link;
 	struct scsi_adapter	sc_adapter;
 
-	usbd_status		sc_sync_status;
 	struct scsi_sense	sc_sense_cmd;
 };
 
@@ -173,7 +172,6 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	struct umass_softc *sc = sc_link->adapter_softc;
-	struct umass_scsi_softc *scbus = (struct umass_scsi_softc *)sc->bus;
 
 	struct scsi_generic *cmd;
 	int cmdlen, dir, s;
@@ -239,28 +237,32 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	if (xs->flags & SCSI_POLL) {
-		/* Use sync transfer. XXX Broken! */
 		DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: sync dir=%d\n", dir));
+		usbd_set_polling(sc->sc_udev, 1);
 		sc->sc_xfer_flags = USBD_SYNCHRONOUS;
-		scbus->sc_sync_status = USBD_INVAL;
+		sc->polled_xfer_status = USBD_INVAL;
 		sc->sc_methods->wire_xfer(sc, sc_link->lun, cmd, cmdlen,
 					  xs->data, xs->datalen, dir,
-					  xs->timeout, 0, xs);
+					  xs->timeout, umass_scsi_cb, xs);
 		sc->sc_xfer_flags = 0;
 		DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: done err=%d\n",
-				      scbus->sc_sync_status));
-		switch (scbus->sc_sync_status) {
-		case USBD_NORMAL_COMPLETION:
-			xs->error = XS_NOERROR;
-			break;
-		case USBD_TIMEOUT:
-			xs->error = XS_TIMEOUT;
-			break;
-		default:
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
+				      sc->polled_xfer_status));
+		if (xs->error == XS_NOERROR) {
+			switch (sc->polled_xfer_status) {
+			case USBD_NORMAL_COMPLETION:
+				xs->error = XS_NOERROR;
+				break;
+			case USBD_TIMEOUT:
+				xs->error = XS_TIMEOUT;
+				break;
+			default:
+				xs->error = XS_DRIVER_STUFFUP;
+				break;
+			}
 		}
-		goto done;
+		usbd_set_polling(sc->sc_udev, 0);
+		DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: done, error=%d\n",
+		    xs->error));
 	} else {
 		DPRINTF(UDMASS_SCSI,
 			("umass_scsi_cmd: async dir=%d, cmdlen=%d"
@@ -378,6 +380,9 @@ umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		panic("%s: Unknown status %d in umass_scsi_cb",
 		      USBDEVNAME(sc->sc_dev), status);
 	}
+
+	if (xs->flags & SCSI_POLL)
+		return;
 
 	xs->flags |= ITSDONE;
 
