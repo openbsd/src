@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altq.conf.5,v 1.1.1.1 2001/06/27 18:23:17 kjc Exp $
+.\"	$OpenBSD: altq.conf.5,v 1.2 2001/06/29 15:44:38 espie Exp $
 .\"	$KAME: altq.conf.5,v 1.8 2001/04/09 16:26:28 thorpej Exp $
 .\"
 .\" Copyright (C) 2000
@@ -130,7 +130,7 @@ PRIQ does not have class hierarchy and parent_name must be ``NULL''
 for PRIQ classes.
 .It Sy red
 Use RED (Random Early Detection) on this class queue.
-RED drops packets with the probability propotional to the average
+RED drops packets with the probability proportional to the average
 queue length.
 .It Sy rio
 Use RIO (RED with In/Out bit) on this class queue.
@@ -908,7 +908,7 @@ must be
 .Sy blue
 for BLUE.
 .It Sy qlimit
-The maxium queue size in number of packets.
+The maximum queue size in number of packets.
 Default value is 60.
 .It Sy packetsize
 The average packet size in number of bytes.  Default value is 1000.
@@ -1042,7 +1042,7 @@ When an incoming packet is in the committed profile, tswtcm takes
 green_action.  When the packet is out of the committed profile but in
 the peak profile, tswtcm takes yellow_action.  Otherwise, tswtcm takes
 red_action.
-cmtd_rate and peak_rate are specified in bits per seccond.
+cmtd_rate and peak_rate are specified in bits per second.
 avg_interval provides the size of time window for averaging incoming
 rate, and is specified in milli-second.  500 msec is ok for normal
 settings.
