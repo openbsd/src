@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.7 1997/05/03 07:48:12 tholo Exp $
+#	$OpenBSD: list,v 1.8 1997/05/03 23:11:08 tholo Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -10,6 +10,7 @@ LINK	instbin			bin/dd
 LINK	instbin			bin/df
 LINK	instbin			bin/ed
 LINK	instbin			bin/expr
+LINK	instbin			bin/hostname
 LINK	instbin			bin/ln
 LINK	instbin			bin/ls
 LINK	instbin			bin/mkdir
