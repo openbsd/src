@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 1996/11/15 09:26:01 downsj Exp $
+#	$OpenBSD: Makefile,v 1.33 1996/11/21 09:02:03 mickey Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
@@ -12,7 +12,7 @@ SUBDIR=	apply apropos arch asa at awk banner basename bdes biff cal calendar \
 	indent \
 	info_mkdb ipcrm ipcs join jot kdump ktrace lam last lastcomm leave \
 	less lex lndir locate lock logger login logname look lorder m4 machine \
-	mail make man mesg mk_cmds mkdep mkfifo mkstr modstat msgs nc \
+	mail make man mesg mk_cmds mkdep mkfifo mkstr mktemp modstat msgs nc \
 	netstat newsyslog \
 	nfsstat nice nohup oldrdist pagesize passwd paste patch pr printenv \
 	printf quota rdist rdistd renice rev rlogin rpcgen rpcinfo rs \
