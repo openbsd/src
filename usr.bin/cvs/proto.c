@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.10 2004/07/29 18:34:55 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.11 2004/07/29 18:49:08 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -61,6 +61,10 @@
 
 
 #define CVS_MTSTK_MAXDEPTH   16
+
+/* request flags */
+#define CVS_REQF_RESP    0x01
+
 
 
 
@@ -127,27 +131,28 @@ struct cvs_req {
 	{ CVS_REQ_ERRIFREADER,   "Error-If-Reader",   0,  NULL },
 	{ CVS_REQ_VALIDRCSOPT,   "Valid-RcsOptions",  0,  NULL },
 	{ CVS_REQ_SET,           "Set",               0,  NULL },
-	{ CVS_REQ_XPANDMOD,      "expand-modules",    0,  NULL },
+	{ CVS_REQ_XPANDMOD,      "expand-modules",    CVS_REQF_RESP,  NULL },
 	{ CVS_REQ_LOG,           "log",               0,  NULL },
-	{ CVS_REQ_CO,            "co",                0,  NULL },
-	{ CVS_REQ_EXPORT,        "export",            0,  NULL },
+	{ CVS_REQ_CO,            "co",                CVS_REQF_RESP,  NULL },
+	{ CVS_REQ_EXPORT,        "export",            CVS_REQF_RESP,  NULL },
 	{ CVS_REQ_RANNOTATE,     "rannotate",         0,  NULL },
 	{ CVS_REQ_RDIFF,         "rdiff",             0,  NULL },
 	{ CVS_REQ_RLOG,          "rlog",              0,  NULL },
-	{ CVS_REQ_RTAG,          "rtag",              0,  NULL },
-	{ CVS_REQ_INIT,          "init",              0,  NULL },
-	{ CVS_REQ_UPDATE,        "update",            0,  NULL },
+	{ CVS_REQ_RTAG,          "rtag",              CVS_REQF_RESP,  NULL },
+	{ CVS_REQ_INIT,          "init",              CVS_REQF_RESP,  NULL },
+	{ CVS_REQ_STATUS,        "status",            CVS_REQF_RESP,  NULL },
+	{ CVS_REQ_UPDATE,        "update",            CVS_REQF_RESP,  NULL },
 	{ CVS_REQ_HISTORY,       "history",           0,  NULL },
-	{ CVS_REQ_IMPORT,        "import",            0,  NULL },
-	{ CVS_REQ_ADD,           "add",               0,  NULL },
-	{ CVS_REQ_REMOVE,        "remove",            0,  NULL },
-	{ CVS_REQ_RELEASE,       "release",           0,  NULL },
+	{ CVS_REQ_IMPORT,        "import",            CVS_REQF_RESP,  NULL },
+	{ CVS_REQ_ADD,           "add",               CVS_REQF_RESP,  NULL },
+	{ CVS_REQ_REMOVE,        "remove",            CVS_REQF_RESP,  NULL },
+	{ CVS_REQ_RELEASE,       "release",           CVS_REQF_RESP,  NULL },
 	{ CVS_REQ_ROOT,          "Root",              0,  NULL },
-	{ CVS_REQ_VALIDRESP,     "Valid-responses",   0,  NULL },
-	{ CVS_REQ_VALIDREQ,      "valid-requests",    0,  NULL },
-	{ CVS_REQ_VERSION,       "version",           0,  NULL },
-	{ CVS_REQ_NOOP,          "noop",              0,  NULL },
-	{ CVS_REQ_DIFF,          "diff",              0,  NULL },
+	{ CVS_REQ_VALIDRESP,     "Valid-responses",   CVS_REQF_RESP,  NULL },
+	{ CVS_REQ_VALIDREQ,      "valid-requests",    CVS_REQF_RESP,  NULL },
+	{ CVS_REQ_VERSION,       "version",           CVS_REQF_RESP,  NULL },
+	{ CVS_REQ_NOOP,          "noop",              CVS_REQF_RESP,  NULL },
+	{ CVS_REQ_DIFF,          "diff",              CVS_REQF_RESP,  NULL },
 };
 
 
@@ -410,49 +415,6 @@ cvs_resp_handle(char *line)
 
 	/* unhandled */
 	return (-1);
-}
-
-
-/*
- * cvs_client_sendinfo()
- *
- * Initialize the connection status by first requesting the list of
- * supported requests from the server.  Then, we send the CVSROOT variable
- * with the `Root' request.
- * Returns 0 on success, or -1 on failure.
- */
-
-static int
-cvs_client_sendinfo(void)
-{
-	/* first things first, get list of valid requests from server */
-	if (cvs_client_sendreq(CVS_REQ_VALIDREQ, NULL, 1) < 0) {
-		cvs_log(LP_ERR, "failed to get valid requests from server");
-		return (-1);
-	}
-
-	/* now share our global options with the server */
-	if (verbosity == 1)
-		cvs_client_sendreq(CVS_REQ_GLOBALOPT, "-q", 0);
-	else if (verbosity == 0)
-		cvs_client_sendreq(CVS_REQ_GLOBALOPT, "-Q", 0);
-
-	if (cvs_nolog)
-		cvs_client_sendreq(CVS_REQ_GLOBALOPT, "-l", 0);
-	if (cvs_readonly)
-		cvs_client_sendreq(CVS_REQ_GLOBALOPT, "-r", 0);
-	if (cvs_trace)
-		cvs_client_sendreq(CVS_REQ_GLOBALOPT, "-t", 0);
-
-	/* now send the CVSROOT to the server */
-	if (cvs_client_sendreq(CVS_REQ_ROOT, cvs_root->cr_dir, 0) < 0)
-		return (-1);
-
-	/* not sure why, but we have to send this */
-	if (cvs_client_sendreq(CVS_REQ_USEUNCHANGED, NULL, 0) < 0)
-		return (-1);
-
-	return (0);
 }
 
 
