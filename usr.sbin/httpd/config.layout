@@ -249,22 +249,3 @@
     logfiledir:    $prefix/logs
     proxycachedir: $prefix/proxy
 </Layout>
-#   OpenBSD apache path layout.
-<Layout OpenBSD>
-    prefix:        /var/www
-    exec_prefix:   /usr
-    bindir:        /usr/bin
-    sbindir:       /usr/sbin
-    libexecdir:    /usr/lib/apache/modules
-    mandir:        /usr/share/man
-    sysconfdir:    /var/www/conf
-    datadir:       /var/www
-    iconsdir:      /var/www/icons
-    htdocsdir:     /var/www/htdocs
-    cgidir:        /var/www/cgi-bin
-    includedir:    /usr/lib/apache/include
-    localstatedir: /var/www
-    runtimedir:    /var/www/logs
-    logfiledir:    /var/www/logs
-    proxycachedir: /var/www/proxy
-</Layout>
