@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mv.1,v 1.16 2002/02/18 21:01:58 mark Exp $
+.\"	$OpenBSD: mv.1,v 1.17 2003/03/12 20:12:35 deraadt Exp $
 .\"	$NetBSD: mv.1,v 1.8 1995/03/21 09:06:51 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -125,7 +125,7 @@ The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
-.Cm $ mv -f foo bar
+.Li $ mv -f foo bar
 .Pp
 Rename file
 .Pa foo
@@ -135,9 +135,9 @@ overwriting
 .Pa bar
 if it already exists.
 .Pp
-.Cm $ mv -i -- -f bar
+.Li $ mv -i -- -f bar
 .br
-.Cm $ mv -i ./-f bar
+.Li $ mv -i ./-f bar
 .Pp
 Either of these commands will rename the file
 .Pa -f

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.22 2003/01/29 16:53:37 jmc Exp $
+.\"	$OpenBSD: atactl.8,v 1.23 2003/03/12 20:12:36 deraadt Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,25 +62,25 @@ If the
 is specified without a
 .Ar command ,
 the
-.Cm identify
+.Li identify
 command is implied.
 .Pp
 The following commands may be used:
 .Pp
 .Bl -tag -width xxxxxxx -compact
-.It Cm identify
+.It Li identify
 Identify the specified device, displaying the device's vendor, product,
 revision strings, supported capabilities and enabled capabilities.
 .Pp
-.It Cm idle
+.It Li idle
 Place the specified device into Idle mode.
 This mode may consume less power than Active mode.
 .Pp
-.It Cm standby
+.It Li standby
 Place the specified device into Standby mode.
 This mode will consume less power than Idle mode.
 .Pp
-.It Cm sleep
+.It Li sleep
 Place the specified device into Sleep mode.
 This mode will consume less power than Standby mode,
 but requires a device reset to resume operation.
@@ -89,25 +89,25 @@ Typically the
 driver performs this reset automatically, but this should still be
 used with caution.
 .Pp
-.It Cm setidle Ar standby-timer
+.It Li setidle Ar standby-timer
 Places the specified device into Idle mode, and sets the Standby timer
 to
 .Ar standby-timer
 seconds.
 A value of 0 will disable the Standby timer.
 .Pp
-.It Cm setstandby Ar standby-timer
+.It Li setstandby Ar standby-timer
 Places the specified device into Standby mode, and sets the Standby timer
 to
 .Ar standby-timer
 seconds.
 A value of 0 will disable the Standby timer.
 .Pp
-.It Cm checkpower
+.It Li checkpower
 Will print out if the device is in Active, Idle, or Standby power
 management mode.
 .Pp
-.It Cm apmset Ar power-management-level
+.It Li apmset Ar power-management-level
 Enables and sets the advanced power management level to the requested
 level on the specified device (if supported).
 Device performance may
@@ -127,17 +127,17 @@ standby mode and are more suitable for optimization for performance.
 Support for advanced power management is indicated by the device with
 .Sq Advanced Power Management feature set
 in the output of the
-.Cm identify
+.Li identify
 command.
 .Pp
-.It Cm apmdisable
+.It Li apmdisable
 Disables support for advanced power management on the specified device.
 Note that devices supporting advanced power management may refuse to
 disable it, resulting in an
 .Sq ATA device returned Aborted Command
 warning.
 .Pp
-.It Cm acousticset Ar acoustic-management-level
+.It Li acousticset Ar acoustic-management-level
 Enables and sets the automatic acoustic management level to the requested
 level on the specified device (if supported).
 Device performance may
@@ -147,25 +147,25 @@ Valid values are 0 up to and including 126.
 Support for automatic acoustic management is indicated by the device with
 .Sq Automatic Acoustic Management feature set
 in the output of the
-.Cm identify
+.Li identify
 command.
 .Pp
-.It Cm acousticdisable
+.It Li acousticdisable
 Disables support for automatic acoustic management on the specified device.
 Note that devices supporting automatic acoustic management may refuse to
 disable it, resulting in an
 .Sq ATA device returned Aborted Command
 warning.
 .Pp
-.It Cm podenable
+.It Li podenable
 Allows the specified device to revert to power-on default (pod) settings
 after a reset.
 .Pp
-.It Cm poddisable
+.It Li poddisable
 Disallows the specified device to revert to power-on default (pod) settings
 after a reset.
 .Pp
-.It Cm puisenable
+.It Li puisenable
 Enables power-up in standby (puis) on the specified device, causing the
 device to wait while spinning up the disks after power-up.
 This may cause problems at boot if the device is too slow in spin-up.
@@ -177,31 +177,31 @@ hardware and software resets.
 Support for power-up in standby is indicated by the device with
 .Sq Power-up in standby feature set
 in the output of the
-.Cm identify
+.Li identify
 command.
 .Pp
-.It Cm puisdisable
+.It Li puisdisable
 Disables power-up in standby (puis) on the specified device, causing the
 device to spin up the disks after power-up.
 This should be the factory
 default setting of the device and it is recommended to leave this
 setting disabled.
 .Pp
-.It Cm puisspinup
+.It Li puisspinup
 Explicitly spins up the device if power-up in standby (puis) mode
 is enabled.
 .Pp
-.It Cm readaheadenable
+.It Li readaheadenable
 Enables read look-ahead on the specified device.
 This may increase performance.
 Support for and status of read look-ahead is indicated by
 the device with
 .Sq read look-ahead
 in the output of the
-.Cm identify
+.Li identify
 command.
 .Pp
-.It Cm readaheaddisable
+.It Li readaheaddisable
 Disables read look-ahead on the specified device.
 This may decrease performance.
 Note that the device may use
@@ -211,8 +211,8 @@ behaviour in implementing this, so it is
 recommended to issue this command on a disk containing any currently
 mounted filesystems.
 .Pp
-.It Cm secsetpass Ar user Ar high|maximum
-.It Cm secsetpass Ar master
+.It Li secsetpass Ar user Ar high|maximum
+.It Li secsetpass Ar master
 Sets password and security level for the specified device.
 There are two passwords, user and master, and two security levels, high and
 maximum.
@@ -222,7 +222,7 @@ this command.
 When the security system is enabled, access to user data on the device is
 denied after a power cycle until the user password is sent to the device with
 the
-.Cm secunlock
+.Li secunlock
 command.
 A master password may be set in addition to the user password.
 The purpose of the master password is to allow an administrator to establish
@@ -231,36 +231,36 @@ the device if the user password is lost.
 Setting the master password does not enable security system.
 Each master password change decrements the master password revision
 code value which is displayed in the
-.Cm identify
+.Li identify
 command output if supported.
 After value 0x0001 is reached the next value will be 0xfffe.
 The security level determines device behavior when the master password is used
 to unlock the device.
 When the security level is set to high the device requires the
-.Cm secunlock
+.Li secunlock
 command if the master password is used to unlock.
 When the security level is set to maximum the device requires a
-.Cm secerase
+.Li secerase
 command if the master password is used to unlock it.
 Execution of the
-.Cm secerase
+.Li secerase
 command erases all user data on the device.
 .Pp
-.It Cm secunlock Ar user|master
+.It Li secunlock Ar user|master
 Unlocks the specified device with user or master password.
 The device will always unlock if a valid user password is received.
 If the security level was set to high during the last
-.Cm secsetpass
+.Li secsetpass
 command, the device will unlock if the master password is received.
 If the security level was set to maximum during the last
-.Cm secsetpass
+.Li secsetpass
 command, the device won't unlock even if the master password is received.
 .Pp
-.It Cm secerase Ar user|master Op Ar enhanced
+.It Li secerase Ar user|master Op Ar enhanced
 Erases all user data and unlocks the specified device.
 Execution of this command with the master password is the only way to unlock a
 device locked at maximum security level with the
-.Cm secsetpass
+.Li secsetpass
 command if the user's password is lost or unknown.
 There are two erase modes: normal and enhanced.
 Default erase mode is normal.
@@ -275,14 +275,14 @@ This command will disable the device lock mode, however, the master password
 will still be stored internally within the device and may be reactivated later
 when a new user password is set.
 .Pp
-.It Cm secfreeze
+.It Li secfreeze
 Prevents changes to passwords until a following power cycle.
 The purpose of this command is to prevent password setting attacks on the
 security system.
 After command completion any other commands that update the device lock mode
 will be aborted.
 .Pp
-.It Cm secdisablepass Ar user|master
+.It Li secdisablepass Ar user|master
 Disables the lock mode for the specified device with user or master password.
 This command won't change the master password.
 The master password will be reactivated when a user password is set.
@@ -290,7 +290,7 @@ The master password will be reactivated when a user password is set.
 Support for the security commands is indicated by the device with
 .Sq Security Mode feature set
 in the output of the
-.Cm identify
+.Li identify
 command.
 .Pp
 .Em WARNING
@@ -299,7 +299,7 @@ Be very careful while playing with these commands.
 Loss of the user and master passwords for the device will result 
 in an inaccessible device.
 .Pp
-.It Cm smartenable
+.It Li smartenable
 Enables SMART (Self-Monitoring, Analysis, and Reporting Technology) on the
 specified device (if supported).
 This causes the device to record information
@@ -307,10 +307,10 @@ for prediction of device degradation and/or faults.
 Support for SMART is indicated by the device with
 .Sq SMART feature set
 in the output of the
-.Cm identify
+.Li identify
 command.
 .Pp
-.It Cm smartdisable
+.It Li smartdisable
 Disables support for SMART on the specified device.
 Note that this means that the device will no longer record any SMART
 information.
@@ -320,7 +320,7 @@ Note that SMART
 be enabled while executing the following commands or the device will
 return an error.
 .Pp
-.It Cm smartstatus
+.It Li smartstatus
 Reads the reliability status of the specified device.
 If the device reports
 that one of its thresholds is exceeded (a strong indication of imminent
@@ -328,10 +328,10 @@ failure), the warning
 .Sq SMART threshold exceeded!
 is printed to stderr and a status of 2 is returned.
 .Pp
-.It Cm smartautosave Ar enable|disable
+.It Li smartautosave Ar enable|disable
 Enables/disables attribute autosave feature on the specified device.
 .Pp
-.It Cm smartoffline Ar subcommand
+.It Li smartoffline Ar subcommand
 Causes the specified device to immediately initiate the optional set of
 activities that collect SMART data in off-line mode and then save this data
 to the device's non-volatile memory, or execute self-diagnostic test
@@ -366,11 +366,11 @@ This option is therefore
 .Em not recommended
 unless the implications are understood.
 .Pp
-.It Cm smartread
+.It Li smartread
 Reads various SMART information from the specified device and prints it to
 stdout.
 .Pp
-.It Cm smartreadlog Ar log
+.It Li smartreadlog Ar log
 Reads specified
 .Ar log
 and prints it to stdout.
@@ -392,7 +392,7 @@ The comprehensive error log.
 The self-test log.
 .El
 .Pp
-.It Cm readattr
+.It Li readattr
 Displays attribute thresholds and values for the specified device.
 Besides attribute values, device vendors may provide additional information
 shown in the last column, ``Raw''.
@@ -402,19 +402,19 @@ SMART must be enabled while executing this command or the device will return
 an error.
 .Pp
 SMART commands and
-.Cm readattr
+.Li readattr
 command are for experts only.
 .Pp
-.It Cm writecachedisable
+.It Li writecachedisable
 Disable the write cache on the specified device (if supported).
 This may decrease performance.
 Support for and status of write caching is indicated by the device with
 .Sq write cache
 in the output of the
-.Cm identify
+.Li identify
 command.
 .Pp
-.It Cm writecacheenable
+.It Li writecacheenable
 Enables the write cache on the specified device (if supported).
 This may increase performance, however data still in the device's cache at
 powerdown
@@ -423,25 +423,25 @@ The
 .Xr wd 4
 driver performs a cache flush automatically before shutdown.
 .Pp
-.It Cm dump
+.It Li dump
 Extracts the records about issued ATA commands from the log buffer.
 The log buffer is cleared after extraction.
 .El
 .Pp
 .Sh EXAMPLES
-.Cm # atactl /dev/wd0c identify
+.Li # atactl /dev/wd0c identify
 .Pp
 Displays the vendor, product, revision strings and capabilities (such as
 support for SMART) as reported by
 .Pa /dev/wd0 .
 .Pp
-.Cm # atactl /dev/wd1c smartenable
+.Li # atactl /dev/wd1c smartenable
 .Pp
 Enables the SMART support on
 .Pa /dev/wd1
 for detection of early warning signs of device failure.
 .Pp
-.Cm 0 * * * * /sbin/atactl /dev/wd0c smartstatus >/dev/null
+.Li 0 * * * * /sbin/atactl /dev/wd0c smartstatus >/dev/null
 .Pp
 In a
 .Xr crontab 5
@@ -459,7 +459,7 @@ will mail it.
 Not all devices are created equally.
 Some may not support the feature sets
 and/or commands needed to perform the requested action, even when the
-.Cm identify
+.Li identify
 command indicates support for the requested action.
 The device will typically respond with an
 .Sq ATA device returned Aborted Command
@@ -486,9 +486,9 @@ standby, read look-ahead and SMART was added in
 .Ox 2.9 .
 .Sh BUGS
 The output from the
-.Cm identify
+.Li identify
 command is rather ugly.
 .Pp
 Disabling read look-head with the
-.Cm readaheaddisable
+.Li readaheaddisable
 might cause problems with mounted filesystems on that device.

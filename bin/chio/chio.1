@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chio.1,v 1.19 2002/11/14 02:57:27 deraadt Exp $
+.\"	$OpenBSD: chio.1,v 1.20 2003/03/12 20:12:34 deraadt Exp $
 .\"	$NetBSD: chio.1,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -88,7 +88,7 @@ the first robotic arm in the changer, the ET would be
 and the EU would be
 .Dq 0 .
 .Sh SUPPORTED COMMANDS
-.Cm # chio move
+.Li # chio move
 .Aq Ar from ET
 .Aq Ar from EU
 .Aq Ar to ET
@@ -103,7 +103,7 @@ If the optional modifier
 .Pa inv
 is specified, the media unit will be inverted before insertion.
 .Pp
-.Cm # chio exchange
+.Li # chio exchange
 .Aq Ar src ET
 .Aq Ar src EU
 .Aq Ar dst1 ET
@@ -144,7 +144,7 @@ Note that not all medium changers support the
 operation; the changer must have multiple free pickers or emulate
 multiple free pickers with transient storage.
 .Pp
-.Cm # chio position
+.Li # chio position
 .Aq Ar to ET
 .Aq Ar to EU
 .Op Ar inv
@@ -157,22 +157,22 @@ is specified, the media unit will be inverted before insertion.
 .Pp
 Note that not all changers behave as expected when issued this command.
 .Pp
-.Cm # chio params
+.Li # chio params
 .Pp
 Report the number of slots, drives, pickers, and portals in the changer,
 and which picker unit the changer is currently configured to use.
 .Pp
-.Cm # chio getpicker
+.Li # chio getpicker
 .Pp
 Report which picker unit the changer is currently configured to use.
 .Pp
-.Cm # chio setpicker
+.Li # chio setpicker
 .Aq Ar unit
 .Pp
 Configure the changer to use picker
 .Aq Ar unit .
 .Pp
-.Cm # chio status
+.Li # chio status
 .Op Aq Ar type
 .Pp
 Report the status of all elements in the changer.
@@ -197,11 +197,11 @@ Element supports passing media (exporting) to an outside human operator.
 Element supports receiving media (importing) from an outside human operator.
 .El
 .Sh EXAMPLES
-.Cm # chio move slot 3 drive 0
+.Li # chio move slot 3 drive 0
 .Pp
 Moves the media in slot 3 (fourth slot) to drive 0 (first drive).
 .Pp
-.Cm # chio setpicker 2
+.Li # chio setpicker 2
 .Pp
 Configures the changer to use picker 2 (third picker) for operations.
 .Sh FILES

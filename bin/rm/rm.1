@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.20 2003/01/11 11:03:53 hugh Exp $
+.\"	$OpenBSD: rm.1,v 1.21 2003/03/12 20:12:36 deraadt Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -139,15 +139,15 @@ If an error occurs,
 .Nm
 exits with a value >0.
 .Sh EXAMPLES
-.Cm $ rm -rf foobar
+.Li $ rm -rf foobar
 .Pp
 Recursively remove all files contained within the
 .Pa foobar
 directory hierarchy.
 .Pp
-.Cm $ rm -- -f
+.Li $ rm -- -f
 .br
-.Cm $ rm ./-f
+.Li $ rm ./-f
 .Pp
 Either of these commands will remove the file
 .Pa -f .

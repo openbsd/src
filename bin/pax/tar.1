@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.39 2002/06/09 05:33:42 todd Exp $
+.\"	$OpenBSD: tar.1,v 1.40 2003/03/12 20:12:35 deraadt Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.39 2002/06/09 05:33:42 todd Exp $
+.\"	$OpenBSD: tar.1,v 1.40 2003/03/12 20:12:35 deraadt Exp $
 .\"
 .Dd February 7, 2001
 .Dt TAR 1
@@ -227,7 +227,7 @@ The options
 can be used to select one of the compiled-in backup devices,
 .Pa /dev/rstN .
 .Sh EXAMPLES
-.Cm $ tar c bonvole sekve
+.Li $ tar c bonvole sekve
 .Pp
 Creates an archive on the default tape drive, containing the files named
 .Pa bonvole
@@ -235,7 +235,7 @@ and
 .Pa sekve
 .
 .Pp
-.Cm $ tar zcf foriru.tar.gz bonvole sekve
+.Li $ tar zcf foriru.tar.gz bonvole sekve
 .Pp
 Outputs a
 .Xr gzip 1
@@ -246,7 +246,7 @@ and
 to a file called
 .Pa foriru.tar.gz
 .Pp
-.Cm $ tar zcvf backup.tar.gz *.c
+.Li $ tar zcvf backup.tar.gz *.c
 .Pp
 Verbosely creates an archive, called
 .Pa backup.tar.gz
@@ -255,7 +255,7 @@ Verbosely creates an archive, called
 function
 .Pa *.c
 .Pp
-.Cm $ tar tvzf backup.tar.gz '*.jpeg'
+.Li $ tar tvzf backup.tar.gz '*.jpeg'
 .Pp
 Verbosely lists, but does not extract, all files ending in
 .Pa .jpeg
