@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcap.3,v 1.7 1999/02/27 21:55:04 deraadt Exp $
+.\"	$OpenBSD: getcap.3,v 1.8 1999/05/10 17:56:28 aaron Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -87,7 +87,7 @@ copy of it in
 will first look for files ending in 
 .Nm .db 
 (see
-.Xr cap_mkdb 1) 
+.Xr cap_mkdb 1 )
 before accessing the ASCII file.
 .Fa buf
 must be retained through all subsequent calls to
@@ -477,8 +477,8 @@ and
 may fail and set 
 .Va errno
 for any of the errors specified for the library functions:
-.Xr fopen 2 , 
-.Xr fclose 2 ,
+.Xr fopen 3 , 
+.Xr fclose 3 ,
 .Xr open 2 ,
 and 
 .Xr close 2 .

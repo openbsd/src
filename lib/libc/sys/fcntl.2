@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.9 1999/02/27 21:56:14 deraadt Exp $
+.\"	$OpenBSD: fcntl.2,v 1.10 1999/05/10 17:56:29 aaron Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -73,8 +73,8 @@ share the same file status flags).
 .It
 The close-on-exec flag associated with the new file descriptor
 is set to remain open across
-.Xr execv 2
-system calls.
+.Xr execv 3
+calls.
 .El
 .It Dv F_GETFD
 Get the close-on-exec flag associated with the file descriptor
