@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.14 1995/12/13 01:25:05 cgd Exp $
+#	$NetBSD: bsd.README,v 1.15 1996/01/22 22:46:06 cgd Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
@@ -86,9 +86,9 @@ MANMODE		Manual mode.
 MANSUBDIR	Subdirectory under the manual page section, i.e. "/vax"
 		or "/tahoe" for machine specific manual pages.
 
-MAN		The manual pages to be installed (use a .1 - .8 suffix).
+MAN		The manual pages to be installed (use a .1 - .9 suffix).
 
-MLINKS		List of manual page links (using a .1 - .8 suffix).  The
+MLINKS		List of manual page links (using a .1 - .9 suffix).  The
 		linked-to file must come first, the linked file second,
 		and there may be multiple pairs.  The files are soft-linked.
 
@@ -102,32 +102,97 @@ manual pages and binaries.
 
 It has no targets.
 
-It sets/uses the following variables:
+It sets the following variables, if they are not already defined (defaults
+are in brackets):
 
-BINGRP		Binary group.
+BSDSRCDIR	The real path to the system sources, so that 'make obj'
+		will work correctly. [/usr/src]
 
-BINOWN		Binary owner.
+BSDOBJDIR	The real path to the system 'obj' tree, so that 'make obj'
+		will work correctly. [/usr/obj]
 
-BINMODE		Binary mode.
+BINGRP		Binary group. [bin]
+
+BINOWN		Binary owner. [bin]
+
+BINMODE		Binary mode. [555]
+
+NONBINMODE	Mode for non-executable files. [444]
+
+MANDIR		Base path for manual installation. [/usr/share/man/cat]
+
+MANGRP		Manual group. [bin]
+
+MANOWN		Manual owner. [bin]
+
+MANMODE		Manual mode. [${NONBINMODE}]
+
+LIBDIR		Base path for library installation. [/usr/lib]
+
+LINTLIBDIR	Base path for lint(1) library installation. [/usr/libdata/lint]
+
+LIBGRP		Library group. [${BINGRP}]
+
+LIBOWN		Library owner. [${BINOWN}]
+
+LIBMODE		Library mode. [${NONBINMODE}]
+
+DOCDIR		Base path for system documentation (e.g. PSD, USD, etc.)
+	        installation. [/usr/share/doc]
+
+DOCGRP		Documentation group. [bin]
+
+DOCOWN		Documentation owner. [bin]
+
+DOCMODE		Documentation mode. [${NONBINMODE}]
+
+NLSDIR		Base path for National Language Support files installation.
+		[/usr/share/nls]
+
+NLSGRP		National Language Support files group. [bin]
+
+NLSOWN		National Language Support files owner. [bin]
+
+NLSMODE		National Language Support files mode. [${NONBINMODE}]
 
 STRIP		The flag passed to the install program to cause the binary
 		to be stripped.  This is to be used when building your
 		own install script so that the entire system can be made
-		stripped/not-stripped using a single nob.
+		stripped/not-stripped using a single knob. [-s]
 
 COPY		The flag passed to the install program to cause the binary
 		to be copied rather than moved.  This is to be used when
 		building our own install script so that the entire system
 		can either be installed with copies, or with moves using
-		a single nob.
+		a single knob. [-c]
 
-MANDIR		Base path for manual installation.
+Additionally, the following variables may be set to modify the behaviour
+of the system build process (default values are in brackets along with
+comments, if set by bsd.own.mk):
 
-MANGRP		Manual group.
+EXPORTABLE_SYSTEM
+		Do not build /usr/src/domestic, even if it is present.
 
-MANOWN		Manual owner.
+SKEY		Compile in support for S/key authentication. [yes, set
+		unconditionally]
 
-MANMODE		Manual mode.
+KERBEROS	Compile in support for Kerberos 4 authentication.
+
+KERBEROS5	Compile in support for Kerberos 5 authentication.
+
+MANZ		Compress manual pages at installation time.
+
+SYS_INCLUDE	Copy or symlink kernel include files into /usr/include.
+		Possible values are "symlinks" or "copies" (which is
+		the same as the variable being unset).
+
+NOPROFILE	Do not build profiled versions of system libraries
+
+NOPIC		Do not build PIC versions of system libraries, and
+		do not build shared libraries.  [set if ${MACHINE_ARCH}
+		is "mips", "vax", or "alpha", unset otherwise.]
+
+NOLINT		Do not build lint libraries. [set, set unconditionally]
 
 This file is generally useful when building your own Makefiles so that
 they use the same default owners etc. as the rest of the tree.
@@ -193,7 +258,7 @@ LINKS		The list of binary links; should be full pathnames, the
 
 			LINKS=	${DESTDIR}/bin/test ${DESTDIR}/bin/[
 
-MAN		Manual pages (should end in .1 - .8).  If no MAN variable is
+MAN		Manual pages (should end in .1 - .9).  If no MAN variable is
 		defined, "MAN=${PROG}.1" is assumed.
 
 PROG		The name of the program to build.  If not supplied, nothing
@@ -303,7 +368,7 @@ LIBMODE		Library mode.
 
 LDADD		Additional loader objects.
 
-MAN		The manual pages to be installed (use a .1 - .8 suffix).
+MAN		The manual pages to be installed (use a .1 - .9 suffix).
 
 SRCS		List of source files to build the library.  Suffix types
 		.s, .c, and .f are supported.  Note, .s files are preferred
