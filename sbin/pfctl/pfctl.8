@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.102 2003/09/18 09:18:51 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.103 2003/12/15 00:02:03 mcbride Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -173,6 +173,8 @@ Flush the queue rules.
 Flush the filter rules.
 .It Fl F Ar state
 Flush the state table (NAT and filter).
+.It Fl F Ar Sources
+Flush the source tracking table.
 .It Fl F Ar info
 Flush the filter information (statistics that are not bound to rules).
 .It Fl F Ar Tables
@@ -261,8 +263,13 @@ is specified as well, the named rulesets currently loaded in the specified
 anchor are shown instead.
 .It Fl s Ar state
 Show the contents of the state table.
+.It Fl s Ar Sources
+Show the contents of the source tracking table.
 .It Fl s Ar info
 Show filter information (statistics and counters).
+When used together with
+.Fl v ,
+source tracking statistics are also shown.
 .It Fl s Ar labels
 Show per-rule statistics (label, evaluations, packets, bytes) of
 filter rules with labels, useful for accounting.

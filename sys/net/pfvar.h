@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.176 2003/12/12 20:05:45 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.177 2003/12/15 00:02:04 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -68,16 +68,17 @@ enum	{ PFTM_TCP_FIRST_PACKET, PFTM_TCP_OPENING, PFTM_TCP_ESTABLISHED,
 	  PFTM_ICMP_FIRST_PACKET, PFTM_ICMP_ERROR_REPLY,
 	  PFTM_OTHER_FIRST_PACKET, PFTM_OTHER_SINGLE,
 	  PFTM_OTHER_MULTIPLE, PFTM_FRAG, PFTM_INTERVAL,
-	  PFTM_ADAPTIVE_START, PFTM_ADAPTIVE_END, PFTM_MAX,
-	  PFTM_PURGE, PFTM_UNTIL_PACKET };
+	  PFTM_ADAPTIVE_START, PFTM_ADAPTIVE_END, PFTM_SRC_NODE,
+	  PFTM_MAX, PFTM_PURGE, PFTM_UNTIL_PACKET };
 enum	{ PF_NOPFROUTE, PF_FASTROUTE, PF_ROUTETO, PF_DUPTO, PF_REPLYTO };
-enum	{ PF_LIMIT_STATES, PF_LIMIT_FRAGS, PF_LIMIT_MAX };
+enum	{ PF_LIMIT_STATES, PF_LIMIT_SRC_NODES, PF_LIMIT_FRAGS, PF_LIMIT_MAX };
 #define PF_POOL_IDMASK		0x0f
 enum	{ PF_POOL_NONE, PF_POOL_BITMASK, PF_POOL_RANDOM,
 	  PF_POOL_SRCHASH, PF_POOL_ROUNDROBIN };
 enum	{ PF_ADDR_ADDRMASK, PF_ADDR_NOROUTE, PF_ADDR_DYNIFTL,
 	  PF_ADDR_TABLE };
 #define PF_POOL_TYPEMASK	0x0f
+#define PF_POOL_STICKYADDR	0x20
 #define	PF_WSCALE_FLAG		0x80
 #define	PF_WSCALE_MASK		0x0f
 
@@ -447,7 +448,6 @@ struct pf_rule {
 	union pf_rule_ptr	 skip[PF_SKIP_COUNT];
 #define PF_RULE_LABEL_SIZE	 64
 	char			 label[PF_RULE_LABEL_SIZE];
-	u_int32_t		 timeout[PFTM_MAX];
 #define PF_QNAME_SIZE		 16
 	char			 ifname[IFNAMSIZ];
 	char			 qname[PF_QNAME_SIZE];
@@ -469,8 +469,13 @@ struct pf_rule {
 	struct pf_anchor	*anchor;
 
 	pf_osfp_t		 os_fingerprint;
+
+	u_int32_t		 timeout[PFTM_MAX];
 	u_int32_t		 states;
 	u_int32_t		 max_states;
+	u_int32_t		 src_nodes;
+	u_int32_t		 max_src_nodes;
+	u_int32_t		 max_src_states;
 	u_int32_t		 qid;
 	u_int32_t		 pqid;
 	u_int32_t		 rt_listid;
@@ -518,6 +523,8 @@ struct pf_rule {
 #define	PFRULE_RETURNICMP	0x0004
 #define	PFRULE_RETURN		0x0008
 #define	PFRULE_NOSYNC		0x0010
+#define PFRULE_SRCTRACK		0x0020  /* track source states */
+#define PFRULE_RULESRCTRACK	0x0040  /* per rule */
 
 /* scrub flags */
 #define	PFRULE_NODF		0x0100
@@ -528,6 +535,20 @@ struct pf_rule {
 
 #define PFSTATE_HIWAT		10000	/* default state table size */
 
+struct pf_src_node {
+	RB_ENTRY(pf_src_node) entry;
+	struct pf_addr	 addr;
+	struct pf_addr	 raddr;
+	union pf_rule_ptr rule;
+	struct ifnet	*ifp;
+	u_int32_t	 bytes;
+	u_int32_t	 packets;
+	u_int32_t        states;
+	u_int32_t	 creation;
+	u_int32_t	 expire;
+	sa_family_t	 af;
+	u_int8_t	 ruletype;
+};
 
 struct pf_state_scrub {
 	u_int16_t	pfss_flags;
@@ -567,6 +588,8 @@ struct pf_state {
 	union pf_rule_ptr nat_rule;
 	struct pf_addr	 rt_addr;
 	struct ifnet	*rt_ifp;
+	struct pf_src_node	*src_node;
+	struct pf_src_node	*nat_src_node;
 	u_int32_t	 creation;
 	u_int32_t	 expire;
 	u_int32_t	 packets[2];
@@ -796,6 +819,10 @@ struct pf_pdesc {
 #define FCNT_STATE_REMOVALS	2
 #define FCNT_MAX		3
 
+#define SCNT_SRC_NODE_SEARCH	0
+#define SCNT_SRC_NODE_INSERT	1
+#define SCNT_SRC_NODE_REMOVALS	2	
+#define SCNT_MAX		3	
 
 #define ACTION_SET(a, x) \
 	do { \
@@ -814,10 +841,12 @@ struct pf_pdesc {
 struct pf_status {
 	u_int64_t	counters[PFRES_MAX];
 	u_int64_t	fcounters[FCNT_MAX];
+	u_int64_t	scounters[SCNT_MAX];
 	u_int64_t	pcounters[2][2][3];
 	u_int64_t	bcounters[2][2];
 	u_int32_t	running;
 	u_int32_t	states;
+	u_int32_t	src_nodes;
 	u_int32_t	since;
 	u_int32_t	debug;
 	char		ifname[IFNAMSIZ];
@@ -961,6 +990,16 @@ struct pfioc_states {
 	} ps_u;
 #define ps_buf		ps_u.psu_buf
 #define ps_states	ps_u.psu_states
+};
+
+struct pfioc_src_nodes {
+	int	psn_len;
+	union {
+		caddr_t		 psu_buf;
+		struct pf_src_node	*psu_src_nodes;
+	} psn_u;
+#define psn_buf		psn_u.psu_buf
+#define psn_src_nodes	psn_u.psu_src_nodes
 };
 
 struct pfioc_if {
@@ -1116,9 +1155,15 @@ struct pfioc_table {
 #define DIOCXBEGIN      _IOWR('D', 81, struct pfioc_trans)
 #define DIOCXCOMMIT     _IOWR('D', 82, struct pfioc_trans)
 #define DIOCXROLLBACK   _IOWR('D', 83, struct pfioc_trans)
+#define DIOCGETSRCNODES		_IOWR('D', 84, struct pfioc_src_nodes)
+#define DIOCCLRSRCNODES		_IO('D', 85)
 
 
 #ifdef _KERNEL
+RB_HEAD(pf_src_tree, pf_src_node);
+RB_PROTOTYPE(pf_src_tree, pf_src_node, entry, pf_src_compare);
+extern struct pf_src_tree tree_src_tracking;
+
 RB_HEAD(pf_state_tree_lan_ext, pf_state);
 RB_PROTOTYPE(pf_state_tree_lan_ext, pf_state,
     entry_lan_ext, pf_state_compare_lan_ext);
@@ -1154,12 +1199,17 @@ extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern void			 pf_rule_set_qid(struct pf_rulequeue *);
 extern u_int32_t		 pf_qname_to_qid(char *);
 extern void			 pf_update_anchor_rules(void);
-extern struct pool		 pf_rule_pl, pf_addr_pl;
+extern struct pool		 pf_src_tree_pl, pf_rule_pl, pf_addr_pl;
 extern struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
 extern struct pool		 pf_state_scrub_pl;
 extern void			 pf_purge_timeout(void *);
+extern void			 pf_purge_expired_src_nodes(void);
 extern void			 pf_purge_expired_states(void);
 extern int			 pf_insert_state(struct pf_state *);
+extern int			 pf_insert_src_node(struct pf_src_node **,
+				    struct pf_rule *, struct pf_addr *,
+				    sa_family_t);
+void				 pf_src_tree_remove_state(struct pf_state *);
 extern struct pf_state		*pf_find_state(struct pf_state *, u_int8_t);
 extern struct pf_anchor		*pf_find_anchor(const char *);
 extern struct pf_ruleset	*pf_find_ruleset(char *, char *);

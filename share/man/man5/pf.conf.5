@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.284 2003/11/29 10:05:55 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.285 2003/12/15 00:02:03 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -234,6 +234,9 @@ command.
 Interval between purging expired states and fragments.
 .It Ar frag
 Seconds before an unassembled fragment is expired.
+.It Ar src.track
+Length of time to retain a source-tracking entry after the last state 
+expires.
 .El
 .Pp
 When a packet matches a stateful connection, the seconds to live for the
@@ -1560,6 +1563,24 @@ option prevents
 .Xr pf 4
 from modifying the source port on TCP and UDP packets.
 .El
+.Pp
+Additionally, the
+.Ar sticky-address
+option can be specified to help ensure that multiple connections from the
+same source are mapped to the same redirection address. This option can be
+used with the
+.Ar random
+and
+.Ar round-robin
+pool options.
+Note that by default these associations are destroyed as soon as there are
+no longer states which refer to them; in order to make the mappings last 
+beyond the lifetime of the states, increase the global options with
+.Ar set timeout source-track
+See
+.Sx STATEFUL TRACKING OPTIONS 
+for more ways to control the source tracking.
+
 .Sh STATEFUL INSPECTION
 .Xr pf 4
 is a stateful packet filter, which means it can track the state of
@@ -1763,17 +1784,31 @@ Prevent state changes for states created by this rule from appearing on the
 interface.
 .It Ar <timeout> <seconds>
 Changes the timeout values used for states created by this rule.
+.Pp
+When the
+.Ar source-tracking
+keyword is specified, the number of states per source ip is tracked.
+The following limits can be set:
+.Pp
+.Bl  -tag -width xxxx -compact
+.It Ar max-src-nodes
+Limits the maximum number of source addresses which can simultaneously
+have state table entries.
+.It Ar max-src-states
+Limits the maximum number of simultaneous state entries that a single
+source address can greate with this rule.
+.El
 For a list of all valid timeout names, see
 .Sx OPTIONS
 above.
 .Pp
 Multiple options can be specified, separated by commas:
 .Bd -literal
-pass in proto tcp from any to any \e
+pass in proto tcp from any to any 
       port www flags S/SA keep state \e
-      (max 100, tcp.established 60, tcp.closing 5)
+      (max 100, source-track rule, max-src-nodes 75, \e
+      max-src-states 3, tcp.established 60, tcp.closing 5)
 .Ed
-.El
 .Sh OPERATING SYSTEM FINGERPRINTING
 Passive OS Fingerprinting is a mechanism to inspect nuances of a TCP
 connection's initial SYN packet and guess at the host's operating system.
@@ -2446,7 +2481,9 @@ tos            = "tos" ( "lowdelay" | "throughput" | "reliability" |
                  [ "0x" ] number )
 
 state-opts     = state-opt [ [ "," ] state-opts ]
-state-opt      = ( "max" number | "no-sync" | timeout )
+state-opt      = ( "max" number | "no-sync" | timeout |
+                 "source-track" [ ( "rule" | "global" ) ] |
+		 "max-src-nodes" number | "max-src-states" number)
 
 fragmentation  = [ "fragment reassemble" | "fragment crop" |
                  "fragment drop-ovl" ]
@@ -2457,7 +2494,7 @@ timeout        = ( "tcp.first" | "tcp.opening" | "tcp.established" |
                  "udp.first" | "udp.single" | "udp.multiple" |
                  "icmp.first" | "icmp.error" |
                  "other.first" | "other.single" | "other.multiple" |
-                 "frag" | "interval" |
+                 "frag" | "interval" | "src.track" |
                  "adaptive.start" | "adaptive.end" ) number
 
 limit-list     = limit-item [ [ "," ] limit-list ]
@@ -2465,7 +2502,7 @@ limit-item     = ( "states" | "frags" ) number
 
 pooltype       = ( "bitmask" | "random" |
                  "source-hash" [ ( hex-key | string-key ) ] |
-                 "round-robin" )
+                 "round-robin" ) [ sticky-address ]
 
 subqueue       = string | "{" queue-list "}"
 queue-list     = string [ [ "," ] string ]

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.40 2003/10/04 17:18:56 mcbride Exp $
+.\"	$OpenBSD: pf.4,v 1.41 2003/12/15 00:02:03 mcbride Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -246,15 +246,17 @@ Specifies the interface for which statistics are accumulated.
 .It Dv DIOCGETSTATUS   Fa "struct pf_status"
 .Bd -literal
 struct pf_status {
-	u_int64_t	 counters[PFRES_MAX];
-	u_int64_t	 fcounters[FCNT_MAX];
-	u_int64_t	 pcounters[2][2][3];
-	u_int64_t	 bcounters[2][2];
-	u_int32_t	 running;
-	u_int32_t	 states;
-	u_int32_t	 since;
-	u_int32_t	 debug;
-	char		 ifname[IFNAMSIZ];
+	u_int64_t	counters[PFRES_MAX];
+	u_int64_t	fcounters[FCNT_MAX];
+	u_int64_t	scounters[SCNT_MAX];
+	u_int64_t	pcounters[2][2][3];
+	u_int64_t	bcounters[2][2];
+	u_int32_t	running;
+	u_int32_t	states;
+	u_int32_t	src_nodes;
+	u_int32_t	since;
+	u_int32_t	debug;
+	char		ifname[IFNAMSIZ];
 };
 .Ed
 .Pp
@@ -638,6 +640,42 @@ The rest of the structure members will come back filled.
 Get the whole list by repeatedly incrementing the
 .Va fp_getnum
 number until the ioctl returns EBUSY.
+.It Dv DIOCGETSRCNODES Fa "struct pfioc_src_nodes"
+.Bd -literal
+struct pfioc_src_nodes {
+        int     psn_len;
+        union { 
+                caddr_t          psu_buf;
+                struct pf_src_node      *psu_src_nodes;
+        } psn_u;
+#define psn_buf         psn_u.psu_buf
+#define psn_src_nodes   psn_u.psu_src_nodes
+};
+.Ed
+.Pp
+Get the list of source nodes kept by the
+.Ar sticky-address
+and
+.Ar source-track
+options.
+The ioctl must be called once with
+.Va psn_len
+set to 0,
+If the ioctl returns without error,
+.Va psn_len
+will be set to the size of the buffer required to hold all the
+.Va pf_src_node
+structures held in the table.
+A buffer of this size should then be allocated, and a pointer to this buffer
+placed in
+.Va psn_buf .
+The ioctl must then be called again to fill this buffer with the actual
+source node data.
+After the ioctl call
+.Va psn_len
+will be set to the length of the buffer actually used.
+.It Dv DIOCCLRSRCNODES Fa "struct pfioc_table"
+Clear the tree of source tracking nodes.
 .El
 .Sh EXAMPLES
 The following example demonstrates how to use the DIOCNATLOOK command

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.192 2003/11/14 13:51:09 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.193 2003/12/15 00:02:03 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -60,6 +60,7 @@ int	 pfctl_clear_stats(int, int);
 int	 pfctl_clear_rules(int, int, char *, char *);
 int	 pfctl_clear_nat(int, int, char *, char *);
 int	 pfctl_clear_altq(int, int);
+int	 pfctl_clear_src_nodes(int, int);
 int	 pfctl_clear_states(int, int);
 int	 pfctl_kill_states(int, int);
 int	 pfctl_get_pool(int, struct pf_pool *, u_int32_t, u_int32_t, int,
@@ -67,8 +68,9 @@ int	 pfctl_get_pool(int, struct pf_pool *, u_int32_t, u_int32_t, int,
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
 int	 pfctl_show_rules(int, int, int, char *, char *);
 int	 pfctl_show_nat(int, int, char *, char *);
+int	 pfctl_show_src_nodes(int, int);
 int	 pfctl_show_states(int, u_int8_t, int);
-int	 pfctl_show_status(int);
+int	 pfctl_show_status(int, int);
 int	 pfctl_show_timeouts(int);
 int	 pfctl_show_limits(int);
 int	 pfctl_debug(int, u_int32_t, int);
@@ -156,12 +158,13 @@ static const struct {
 };
 
 static const char *clearopt_list[] = {
-	"nat", "queue", "rules", "state", "info", "Tables", "osfp", "all", NULL
+	"nat", "queue", "rules", "Sources",
+	"state", "info", "Tables", "osfp", "all", NULL
 };
 
 static const char *showopt_list[] = {
-	"nat", "queue", "rules", "Anchors", "state", "info", "labels",
-	"timeouts", "memory", "Tables", "osfp", "all", NULL
+	"nat", "queue", "rules", "Anchors", "Sources", "state", "info",
+	"labels", "timeouts", "memory", "Tables", "ospf", "all", NULL
 };
 
 static const char *tblcmdopt_list[] = {
@@ -342,6 +345,16 @@ pfctl_clear_altq(int dev, int opts)
 		err(1, "pfctl_clear_altq");
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "altq cleared\n");
+	return (0);
+}
+
+int
+pfctl_clear_src_nodes(int dev, int opts)
+{
+	if (ioctl(dev, DIOCCLRSRCNODES))
+		err(1, "DIOCCLRSRCNODES");
+	if ((opts & PF_OPT_QUIET) == 0)
+		fprintf(stderr, "source tracking entries cleared\n");
 	return (0);
 }
 
@@ -702,6 +715,46 @@ pfctl_show_nat(int dev, int opts, char *anchorname, char *rulesetname)
 }
 
 int
+pfctl_show_src_nodes(int dev, int opts)
+{
+	struct pfioc_src_nodes psn;
+	struct pf_src_node *p;
+	char *inbuf = NULL, *newinbuf = NULL;
+	unsigned len = 0;
+	int i;
+
+	memset(&psn, 0, sizeof(psn));
+	for (;;) {
+		psn.psn_len = len;
+		if (len) {
+			newinbuf = realloc(inbuf, len);
+			if (newinbuf == NULL)
+				err(1, "realloc");
+			psn.psn_buf = inbuf = newinbuf;
+		}
+		if (ioctl(dev, DIOCGETSRCNODES, &psn) < 0) {
+			warn("DIOCGETSRCNODES");
+			return (-1);
+		}
+		if (psn.psn_len + sizeof(struct pfioc_src_nodes) < len)
+			break;
+		if (len == 0 && psn.psn_len == 0)
+			return (0);
+		if (len == 0 && psn.psn_len != 0)
+			len = psn.psn_len;
+		if (psn.psn_len == 0)
+			return (0);	/* no src_nodes */
+		len *= 2;
+	}
+	p = psn.psn_src_nodes;
+	for (i = 0; i < psn.psn_len; i += sizeof(*p)) {
+		print_src_node(p, opts);
+		p++;
+	}
+	return (0);
+}
+
+int
 pfctl_show_states(int dev, u_int8_t proto, int opts)
 {
 	struct pfioc_states ps;
@@ -743,7 +796,7 @@ pfctl_show_states(int dev, u_int8_t proto, int opts)
 }
 
 int
-pfctl_show_status(int dev)
+pfctl_show_status(int dev, int opts)
 {
 	struct pf_status status;
 
@@ -751,7 +804,7 @@ pfctl_show_status(int dev)
 		warn("DIOCGETSTATUS");
 		return (-1);
 	}
-	print_status(&status);
+	print_status(&status, opts);
 	return (0);
 }
 
@@ -1518,8 +1571,11 @@ main(int argc, char *argv[])
 		case 's':
 			pfctl_show_states(dev, 0, opts);
 			break;
+		case 'S':
+			pfctl_show_src_nodes(dev, opts);
+			break;
 		case 'i':
-			pfctl_show_status(dev);
+			pfctl_show_status(dev, opts);
 			break;
 		case 't':
 			pfctl_show_timeouts(dev);
@@ -1535,7 +1591,8 @@ main(int argc, char *argv[])
 			pfctl_show_nat(dev, opts, anchorname, rulesetname);
 			pfctl_show_altq(dev, opts, 0);
 			pfctl_show_states(dev, 0, opts);
-			pfctl_show_status(dev);
+			pfctl_show_src_nodes(dev, opts);
+			pfctl_show_status(dev, opts);
 			pfctl_show_rules(dev, opts, 1, anchorname, rulesetname);
 			pfctl_show_timeouts(dev);
 			pfctl_show_limits(dev);
@@ -1566,6 +1623,9 @@ main(int argc, char *argv[])
 		case 's':
 			pfctl_clear_states(dev, opts);
 			break;
+		case 'S':
+			pfctl_clear_src_nodes(dev, opts);
+			break;
 		case 'i':
 			pfctl_clear_stats(dev, opts);
 			break;
@@ -1574,6 +1634,7 @@ main(int argc, char *argv[])
 			pfctl_clear_nat(dev, opts, anchorname, rulesetname);
 			pfctl_clear_altq(dev, opts);
 			pfctl_clear_states(dev, opts);
+			pfctl_clear_src_nodes(dev, opts);
 			pfctl_clear_stats(dev, opts);
 			pfctl_clear_tables(anchorname, rulesetname, opts);
 			pfctl_clear_fingerprints(dev, opts);

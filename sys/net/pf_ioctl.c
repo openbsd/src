@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.88 2003/12/12 20:05:45 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.89 2003/12/15 00:02:04 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -106,6 +106,8 @@ pfattach(int num)
 	    &pool_allocator_nointr);
 	pool_init(&pf_addr_pl, sizeof(struct pf_addr_dyn), 0, 0, 0, "pfaddrpl",
 	    &pool_allocator_nointr);
+	pool_init(&pf_src_tree_pl, sizeof(struct pf_src_node), 0, 0, 0,
+	    "pfsrctrpl", NULL);
 	pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl",
 	    NULL);
 	pool_init(&pf_altq_pl, sizeof(struct pf_altq), 0, 0, 0, "pfaltqpl",
@@ -120,6 +122,7 @@ pfattach(int num)
 
 	RB_INIT(&tree_lan_ext);
 	RB_INIT(&tree_ext_gwy);
+	RB_INIT(&tree_src_tracking);
 	TAILQ_INIT(&pf_anchors);
 	pf_init_ruleset(&pf_main_ruleset);
 	TAILQ_INIT(&pf_altqs[0]);
@@ -150,11 +153,13 @@ pfattach(int num)
 	timeout[PFTM_OTHER_MULTIPLE] = 60;		/* Bidirectional */
 	timeout[PFTM_FRAG] = 30;			/* Fragment expire */
 	timeout[PFTM_INTERVAL] = 10;			/* Expire interval */
+	timeout[PFTM_SRC_NODE] = 0;			/* Source tracking */
 
 	timeout_set(&pf_expire_to, pf_purge_timeout, &pf_expire_to);
 	timeout_add(&pf_expire_to, timeout[PFTM_INTERVAL] * hz);
 
 	pf_normalize_init();
+	bzero(&pf_status, sizeof(pf_status));
 	pf_status.debug = PF_DEBUG_URGENT;
 }
 
@@ -414,7 +419,9 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 		rule->entries.tqe_prev = NULL;
 		rule->nr = -1;
 	}
-	if (rule->states > 0 || rule->entries.tqe_prev != NULL)
+
+	if (rule->states > 0 || rule->src_nodes > 0 ||
+	    rule->entries.tqe_prev != NULL)
 		return;
 	pf_tag_unref(rule->tag);
 	pf_tag_unref(rule->match_tag);
@@ -732,6 +739,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCRCLRASTATS:
 		case DIOCRTSTADDRS:
 		case DIOCOSFPGET:
+		case DIOCGETSRCNODES:
+		case DIOCCLRSRCNODES:
 			break;
 		default:
 			return (EPERM);
@@ -761,6 +770,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCRGETASTATS:
 		case DIOCRTSTADDRS:
 		case DIOCOSFPGET:
+		case DIOCGETSRCNODES:
 			break;
 		default:
 			return (EACCES);
@@ -774,10 +784,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		else {
 			u_int32_t states = pf_status.states;
 			u_int32_t debug = pf_status.debug;
+			u_int32_t src_nodes = pf_status.src_nodes;
 			bzero(&pf_status, sizeof(struct pf_status));
 			pf_status.running = 1;
 			pf_status.states = states;
 			pf_status.debug = debug;
+			pf_status.states = src_nodes;
 			pf_status.since = time.tv_sec;
 			if (status_ifp != NULL)
 				strlcpy(pf_status.ifname,
@@ -847,6 +859,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		TAILQ_INIT(&rule->rpool.list);
 		/* initialize refcounting */
 		rule->states = 0;
+		rule->src_nodes = 0;
 		rule->entries.tqe_prev = NULL;
 #ifndef INET
 		if (rule->af == AF_INET) {
@@ -1363,12 +1376,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCCLRSTATUS: {
 		u_int32_t	running = pf_status.running;
 		u_int32_t	states = pf_status.states;
+		u_int32_t	src_nodes = pf_status.src_nodes;
 		u_int32_t	since = pf_status.since;
 		u_int32_t	debug = pf_status.debug;
 
 		bzero(&pf_status, sizeof(struct pf_status));
 		pf_status.running = running;
 		pf_status.states = states;
+		pf_status.src_nodes = src_nodes;
 		pf_status.since = since;
 		pf_status.debug = debug;
 		if (status_ifp != NULL)
@@ -1488,6 +1503,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		old_limit = pf_pool_limits[pl->index].limit;
 		pf_pool_limits[pl->index].limit = pl->limit;
+		if (pl->index == PF_LIMIT_SRC_NODES) 
+			pf_default_rule.max_src_nodes = pl->limit;
 		pl->limit = old_limit;
 		break;
 	}
@@ -2204,12 +2221,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 
-	case DIOCOSFPFLUSH:
-		s = splsoftnet();
-		pf_osfp_flush();
-		splx(s);
-		break;
-
 	case DIOCOSFPADD: {
 		struct pf_osfp_ioctl *io = (struct pf_osfp_ioctl *)addr;
 		s = splsoftnet();
@@ -2410,6 +2421,76 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		break;
 	}
+
+	case DIOCGETSRCNODES: {
+		struct pfioc_src_nodes	*psn = (struct pfioc_src_nodes *)addr;
+		struct pf_src_node	*n;
+		struct pf_src_node *p, pstore;
+		u_int32_t		 nr = 0;
+		int			 space = psn->psn_len;
+
+		if (space == 0) {
+			s = splsoftnet();
+			RB_FOREACH(n, pf_src_tree, &tree_src_tracking)
+				nr++;
+			splx(s);
+			psn->psn_len = sizeof(struct pf_src_node) * nr;
+			return (0);
+		}
+
+		s = splsoftnet();
+		p = psn->psn_src_nodes;
+		RB_FOREACH(n, pf_src_tree, &tree_src_tracking) {
+			int	secs = time.tv_sec;
+
+			if ((nr + 1) * sizeof(*p) > (unsigned)psn->psn_len)
+				break;
+
+			bcopy(n, &pstore, sizeof(pstore));
+			if (n->rule.ptr != NULL)
+				pstore.rule.nr = n->rule.ptr->nr;
+			pstore.creation = secs - pstore.creation;
+			if (pstore.expire > secs)
+				pstore.expire -= secs;
+			else
+				pstore.expire = 0;
+			error = copyout(&pstore, p, sizeof(*p));
+			if (error) {
+				splx(s);
+				goto fail;
+			}
+			p++;
+			nr++;
+		}
+		psn->psn_len = sizeof(struct pf_src_node) * nr;
+		splx(s);
+		break;
+	}
+
+	case DIOCCLRSRCNODES: {
+		struct pf_src_node	*n;
+		struct pf_state		*state;
+
+		s = splsoftnet();
+		RB_FOREACH(state, pf_state_tree_lan_ext, &tree_lan_ext) {
+			state->src_node = NULL;
+			state->nat_src_node = NULL;
+		}
+		RB_FOREACH(n, pf_src_tree, &tree_src_tracking) {
+			n->expire = 1;
+			n->states = 0;
+		}
+		pf_purge_expired_src_nodes();
+		pf_status.src_nodes = 0;
+		splx(s);
+		break;
+	}
+
+	case DIOCOSFPFLUSH:
+		s = splsoftnet();
+		pf_osfp_flush();
+		splx(s);
+		break;
 
 	default:
 		error = ENODEV;

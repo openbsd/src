@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.33 2003/07/06 22:01:28 deraadt Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.34 2003/12/15 00:02:03 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -256,6 +256,11 @@ print_state(struct pf_state *s, int opts)
 			printf(", anchor %u", s->anchor.nr);
 		if (s->rule.nr != -1)
 			printf(", rule %u", s->rule.nr);
+		if (s->src_node != NULL)
+			printf(", source-track");
+		if (s->nat_src_node != NULL)
+			printf(", sticky-address");
+		printf("\n");
 		printf("\n");
 	}
 }

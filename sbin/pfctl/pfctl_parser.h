@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.69 2003/11/14 13:51:09 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.70 2003/12/15 00:02:03 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -161,9 +161,10 @@ int	parse_flags(char *);
 int	pfctl_load_anchors(int, int, struct pfr_buffer *);
 
 void	print_pool(struct pf_pool *, u_int16_t, u_int16_t, sa_family_t, int);
+void	print_src_node(struct pf_src_node *, int);
 void	print_rule(struct pf_rule *, int);
 void	print_tabledef(const char *, int, int, struct node_tinithead *);
-void	print_status(struct pf_status *);
+void	print_status(struct pf_status *, int);
 
 int	eval_pfaltq(struct pfctl *, struct pf_altq *, struct node_queue_bw *,
 	    struct node_queue_opt *);

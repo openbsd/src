@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.181 2003/11/14 15:32:33 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.182 2003/12/15 00:02:03 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -193,6 +193,7 @@ const struct pf_timeout pf_timeouts[] = {
 	{ "interval",		PFTM_INTERVAL },
 	{ "adaptive.start",	PFTM_ADAPTIVE_START },
 	{ "adaptive.end",	PFTM_ADAPTIVE_END },
+	{ "src.track",		PFTM_SRC_NODE },
 	{ NULL,			0 }
 };
 
@@ -459,15 +460,18 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 		printf(" round-robin");
 		break;
 	}
+	if (pool->opts & PF_POOL_STICKYADDR)
+		printf(" sticky-address");
 	if (id == PF_NAT && p1 == 0 && p2 == 0)
 		printf(" static-port");
 }
 
 const char	*pf_reasons[PFRES_MAX+1] = PFRES_NAMES;
 const char	*pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
+const char	*pf_scounters[FCNT_MAX+1] = FCNT_NAMES;
 
 void
-print_status(struct pf_status *s)
+print_status(struct pf_status *s, int opts)
 {
 	char	statline[80];
 	time_t	runtime;
@@ -537,6 +541,20 @@ print_status(struct pf_status *s)
 		else
 			printf("%14s\n", "");
 	}
+	if (opts & PF_OPT_VERBOSE) {
+		printf("Source Tracking Table\n");
+		printf("  %-25s %14u %14s\n", "current entries",
+		    s->src_nodes, "");
+		for (i = 0; i < SCNT_MAX; i++) {
+			printf("  %-25s %14lld ", pf_scounters[i],
+				    s->scounters[i]);
+			if (runtime > 0)
+				printf("%14.1f/s\n",
+				    (double)s->scounters[i] / (double)runtime);
+			else
+				printf("%14s\n", "");
+		}
+	}
 	printf("Counters\n");
 	for (i = 0; i < PFRES_MAX; i++) {
 		printf("  %-25s %14llu ", pf_reasons[i],
@@ -546,6 +564,57 @@ print_status(struct pf_status *s)
 			    (double)s->counters[i] / (double)runtime);
 		else
 			printf("%14s\n", "");
+	}
+}
+
+void
+print_src_node(struct pf_src_node *sn, int opts)
+{
+	struct pf_addr_wrap aw;
+	int min, sec;
+
+	memset(&aw, 0, sizeof(aw));
+	if (sn->af == AF_INET)
+		aw.v.a.mask.addr32[0] = 0xffffffff;
+	else
+		memset(&aw.v.a.mask, 0xff, sizeof(aw.v.a.mask));
+
+	aw.v.a.addr = sn->addr;
+	print_addr(&aw, sn->af, opts & PF_OPT_VERBOSE2);
+	printf(" -> ");
+	aw.v.a.addr = sn->raddr;
+	print_addr(&aw, sn->af, opts & PF_OPT_VERBOSE2);
+	printf(" (%d states)\n", sn->states);
+	if (opts & PF_OPT_VERBOSE) {
+		sec = sn->creation % 60;
+		sn->creation /= 60;
+		min = sn->creation % 60;
+		sn->creation /= 60;
+		printf("   age %.2u:%.2u:%.2u", sn->creation, min, sec);
+		if (sn->states == 0) {
+			sec = sn->expire % 60;
+			sn->expire /= 60;
+			min = sn->expire % 60;
+			sn->expire /= 60;
+			printf(", expires in %.2u:%.2u:%.2u",
+			    sn->expire, min, sec);
+		}
+		printf(", %u pkts, %u bytes", sn->packets, sn->bytes);
+		switch (sn->ruletype) {
+		case PF_NAT:
+			if (sn->rule.nr != -1)
+				printf(", nat rule %u", sn->rule.nr);
+			break;
+		case PF_RDR:
+			if (sn->rule.nr != -1)
+				printf(", rdr rule %u", sn->rule.nr);
+			break;
+		case PF_PASS:
+			if (sn->rule.nr != -1)
+				printf(", filter rule %u", sn->rule.nr);
+			break;
+		}
+		printf("\n");
 	}
 }
 
@@ -705,9 +774,11 @@ print_rule(struct pf_rule *r, int verbose)
 	else if (r->keep_state == PF_STATE_SYNPROXY)
 		printf(" synproxy state");
 	opts = 0;
-	if (r->max_states)
+	if (r->max_states || r->max_src_nodes || r->max_src_states)
 		opts = 1;
 	if (r->rule_flag & PFRULE_NOSYNC)
+		opts = 1;
+	if (r->rule_flag & PFRULE_SRCTRACK)
 		opts = 1;
 	for (i = 0; !opts && i < PFTM_MAX; ++i)
 		if (r->timeout[i])
@@ -722,6 +793,28 @@ print_rule(struct pf_rule *r, int verbose)
 			if (!opts)
 				printf(", ");
 			printf("no-sync");
+			opts = 0;
+		}
+		if (r->rule_flag & PFRULE_SRCTRACK) {
+			if (!opts)
+				printf(", ");
+			printf("source-track");
+			if (r->rule_flag & PFRULE_RULESRCTRACK)
+				printf(" rule");
+			else
+				printf(" global");
+			opts = 0;
+		}
+		if (r->max_src_states) {
+			if (!opts)
+				printf(", ");
+			printf("max-src-states %u", r->max_src_states);
+			opts = 0;
+		}
+		if (r->max_src_nodes) {
+			if (!opts)
+				printf(", ");
+			printf("max-src-nodes %u", r->max_src_nodes);
 			opts = 0;
 		}
 		for (i = 0; i < PFTM_MAX; ++i)

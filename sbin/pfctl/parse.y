@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.424 2003/11/29 10:05:55 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.425 2003/12/15 00:02:03 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -112,11 +112,17 @@ struct node_icmp {
 	struct node_icmp	*tail;
 };
 
-enum	{ PF_STATE_OPT_MAX=0, PF_STATE_OPT_NOSYNC=1, PF_STATE_OPT_TIMEOUT=2 };
+enum	{ PF_STATE_OPT_MAX, PF_STATE_OPT_NOSYNC, PF_STATE_OPT_SRCTRACK,
+	  PF_STATE_OPT_MAX_SRC_STATES, PF_STATE_OPT_MAX_SRC_NODES,
+	  PF_STATE_OPT_TIMEOUT };
+
 struct node_state_opt {
 	int			 type;
 	union {
 		u_int32_t	 max_states;
+ 		u_int32_t	 max_src_states;
+ 		u_int32_t	 max_src_nodes;
+ 		u_int8_t	 src_track;
 		struct {
 			int		number;
 			u_int32_t	seconds;
@@ -151,6 +157,7 @@ struct filter_opts {
 #define FOM_ICMP	0x02
 #define FOM_TOS		0x04
 #define FOM_KEEP	0x08
+#define FOM_SRCTRACK	0x10
 	struct node_uid		*uid;
 	struct node_gid		*gid;
 	struct {
@@ -210,6 +217,18 @@ struct table_opts {
 	int			init_addr;
 	struct node_tinithead	init_nodes;
 } table_opts;
+
+struct pool_opts {
+	int			 marker;
+#define POM_TYPE		0x01
+#define POM_STICKYADDRESS	0x02
+	u_int8_t		 opts;
+	int			 type;
+	int			 staticport;
+	struct pf_poolhashkey	*key;
+
+} pool_opts;
+
 
 struct node_hfsc_opts	hfsc_opts;
 
@@ -308,7 +327,6 @@ typedef struct {
 			struct peer	 src, dst;
 			struct node_os	*src_os;
 		}			 fromto;
-		struct pf_poolhashkey	*hashkey;
 		struct {
 			struct node_host	*host;
 			u_int8_t		 rt;
@@ -321,10 +339,6 @@ typedef struct {
 			struct range		 rport;
 		}			*redirection;
 		struct {
-			int			 type;
-			struct pf_poolhashkey	*key;
-		}			 pooltype;
-		struct {
 			int			 action;
 			struct node_state_opt	*options;
 		}			 keep_state;
@@ -332,6 +346,7 @@ typedef struct {
 			u_int8_t	 log;
 			u_int8_t	 quick;
 		}			 logquick;
+		struct pf_poolhashkey	*hashkey;
 		struct node_queue	*queue;
 		struct node_queue_opt	 queue_options;
 		struct node_queue_bw	 queue_bwspec;
@@ -341,6 +356,7 @@ typedef struct {
 		struct queue_opts	 queue_opts;
 		struct scrub_opts	 scrub_opts;
 		struct table_opts	 table_opts;
+		struct pool_opts	 pool_opts;
 		struct node_hfsc_opts	 hfsc_opts;
 	} v;
 	int lineno;
@@ -373,18 +389,18 @@ typedef struct {
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
 %token	QUEUE PRIORITY QLIMIT
 %token	LOAD
+%token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	TAGGED TAG
 %token	<v.string>		STRING
 %token	<v.i>			PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number icmptype icmp6type uid gid
 %type	<v.number>		tos not yesno natpass
-%type	<v.i>			no dir log af fragcache
-%type	<v.i>			staticport unaryop
+%type	<v.i>			no dir log af fragcache sourcetrack
+%type	<v.i>			unaryop 
 %type	<v.b>			action nataction flags flag blockspec
 %type	<v.range>		port rport
 %type	<v.hashkey>		hashkey
-%type	<v.pooltype>		pooltype
 %type	<v.proto>		proto proto_list proto_item
 %type	<v.icmp>		icmpspec
 %type	<v.icmp>		icmp_list icmp_item
@@ -417,6 +433,7 @@ typedef struct {
 %type	<v.queue_opts>		queue_opts queue_opt queue_opts_l
 %type	<v.scrub_opts>		scrub_opts scrub_opt scrub_opts_l
 %type	<v.table_opts>		table_opts table_opt table_opts_l
+%type	<v.pool_opts>		pool_opts pool_opt pool_opts_l
 %%
 
 ruleset		: /* empty */
@@ -878,6 +895,7 @@ antispoof_opt	: label	{
 
 not		: '!'		{ $$ = 1; }
 		| /* empty */	{ $$ = 0; }
+		;
 
 tabledef	: TABLE '<' STRING '>' table_opts {
 			struct node_host	 *h, *nh;
@@ -1141,6 +1159,7 @@ bandwidth	: STRING {
 			}
 			$$.bw_absolute = (u_int32_t)bps;
 		}
+		;
 
 scheduler	: CBQ				{
 			$$.qtype = ALTQT_CBQ;
@@ -1329,6 +1348,7 @@ pfrule		: action dir logquick interface route af proto fromto
 			struct pf_rule		 r;
 			struct node_state_opt	*o;
 			struct node_proto	*proto;
+			int			 srctrack = 0;
 
 			if (check_rulestate(PFCTL_STATE_FILTER))
 				YYERROR;
@@ -1425,6 +1445,38 @@ pfrule		: action dir logquick interface route af proto fromto
 					}
 					r.rule_flag |= PFRULE_NOSYNC;
 					break;
+				case PF_STATE_OPT_SRCTRACK:
+					if (srctrack) {
+						yyerror("state option "
+						    "'source-track' "
+						    "multiple definitons");
+						YYERROR;
+					}
+					srctrack = 1;
+					r.rule_flag |=  o->data.src_track;
+					break;
+				case PF_STATE_OPT_MAX_SRC_STATES:
+					if (r.max_src_states) {
+						yyerror("state option "
+						    "'max-src-states' "
+						    "multiple definitions");
+						YYERROR;
+					}
+					r.max_src_states =
+					    o->data.max_src_states;
+					r.rule_flag |= PFRULE_SRCTRACK;
+					break;
+				case PF_STATE_OPT_MAX_SRC_NODES:
+					if (r.max_src_nodes) {
+						yyerror("state option "
+						    "'max-src-nodes' "
+						    "multiple definitions");
+						YYERROR;
+					}
+					r.max_src_nodes =
+					    o->data.max_src_nodes;
+					r.rule_flag |= PFRULE_SRCTRACK;
+					break;
 				case PF_STATE_OPT_TIMEOUT:
 					if (r.timeout[o->data.timeout.number]) {
 						yyerror("state timeout %s "
@@ -1467,17 +1519,17 @@ pfrule		: action dir logquick interface route af proto fromto
 					    "matching address family found.");
 					YYERROR;
 				}
-				if (r.rpool.opts == PF_POOL_NONE && (
-				    $5.host->next != NULL ||
+				if ((r.rpool.opts & PF_POOL_TYPEMASK) ==
+				    PF_POOL_NONE && ($5.host->next != NULL ||
 				    $5.host->addr.type == PF_ADDR_TABLE))
 					r.rpool.opts = PF_POOL_ROUNDROBIN;
-				if (r.rpool.opts != PF_POOL_ROUNDROBIN)
-					if (disallow_table($5.host, "tables "
-					    "are only supported in round-robin "
-					    "routing pools"))
+				if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
+				    PF_POOL_ROUNDROBIN &&
+				    disallow_table($5.host, "tables are only "
+				    "supported in round-robin routing pools"))
 						YYERROR;
 				if ($5.host->next != NULL) {
-					if (r.rpool.opts !=
+					if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 					    PF_POOL_ROUNDROBIN) {
 						yyerror("r.rpool.opts must "
 						    "be PF_POOL_ROUNDROBIN");
@@ -1720,6 +1772,7 @@ if_item		: STRING			{
 af		: /* empty */			{ $$ = 0; }
 		| INET				{ $$ = AF_INET; }
 		| INET6				{ $$ = AF_INET6; }
+		;
 
 proto		: /* empty */			{ $$ = NULL; }
 		| PROTO proto_item		{ $$ = $2; }
@@ -2380,11 +2433,22 @@ tos		: TOS STRING			{
 		}
 		;
 
+sourcetrack	: SOURCETRACK {
+			$$ = PFRULE_SRCTRACK;
+		}
+		| SOURCETRACK GLOBAL {
+			$$ = PFRULE_SRCTRACK;
+		}
+		| SOURCETRACK RULE {
+			$$ = PFRULE_SRCTRACK ^ PFRULE_RULESRCTRACK;
+		}
+		;
+
 keep		: KEEP STATE state_opt_spec	{
 			$$.action = PF_STATE_NORMAL;
 			$$.options = $3;
 		}
-		| MODULATE STATE state_opt_spec	{
+		| MODULATE STATE state_opt_spec {
 			$$.action = PF_STATE_MODULATE;
 			$$.options = $3;
 		}
@@ -2420,6 +2484,33 @@ state_opt_item	: MAXIMUM number		{
 			if ($$ == NULL)
 				err(1, "state_opt_item: calloc");
 			$$->type = PF_STATE_OPT_NOSYNC;
+			$$->next = NULL;
+			$$->tail = $$;
+		}
+		| MAXSRCSTATES number			{
+			$$ = calloc(1, sizeof(struct node_state_opt));
+			if ($$ == NULL)
+				err(1, "state_opt_item: calloc");
+			$$->type = PF_STATE_OPT_MAX_SRC_STATES;
+			$$->data.max_src_states = $2;
+			$$->next = NULL;
+			$$->tail = $$;
+		}
+		| MAXSRCNODES number			{
+			$$ = calloc(1, sizeof(struct node_state_opt));
+			if ($$ == NULL)
+				err(1, "state_opt_item: calloc");
+			$$->type = PF_STATE_OPT_MAX_SRC_NODES;
+			$$->data.max_src_nodes = $2;
+			$$->next = NULL;
+			$$->tail = $$;
+		}
+		| sourcetrack {
+			$$ = calloc(1, sizeof(struct node_state_opt));
+			if ($$ == NULL)
+				err(1, "state_opt_item: calloc");
+			$$->type = PF_STATE_OPT_SRCTRACK;
+			$$->data.src_track = $1;
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -2511,14 +2602,14 @@ redir_host_list	: host				{ $$ = $1; }
 		;
 
 redirpool	: /* empty */			{ $$ = NULL; }
-		| ARROW redirspec		{
+		| ARROW redirspec 		{
 			$$ = calloc(1, sizeof(struct redirection));
 			if ($$ == NULL)
 				err(1, "redirection: calloc");
 			$$->host = $2;
 			$$->rport.a = $$->rport.b = $$->rport.t = 0;
 		}
-		| ARROW redirspec PORT rport	{
+		| ARROW redirspec PORT rport 	{
 			$$ = calloc(1, sizeof(struct redirection));
 			if ($$ == NULL)
 				err(1, "redirection: calloc");
@@ -2574,35 +2665,63 @@ hashkey		: /* empty */
 		}
 		;
 
-pooltype	: /* empty */
-		{
-			$$.type = PF_POOL_NONE;
-			$$.key = NULL;
-		}
-		| BITMASK
-		{
-			$$.type = PF_POOL_BITMASK;
-			$$.key = NULL;
-		}
-		| RANDOM
-		{
-			$$.type = PF_POOL_RANDOM;
-			$$.key = NULL;
-		}
-		| SOURCEHASH hashkey
-		{
-			$$.type = PF_POOL_SRCHASH;
-			$$.key = $2;
-		}
-		| ROUNDROBIN
-		{
-			$$.type = PF_POOL_ROUNDROBIN;
-			$$.key = NULL;
+pool_opts	:	{ bzero(&pool_opts, sizeof pool_opts); }
+		   pool_opts_l
+			{ $$ = pool_opts; }
+		| /* empty */	{
+			bzero(&pool_opts, sizeof pool_opts);
+			$$ = pool_opts;
 		}
 		;
 
-staticport	: /* empty */			{ $$ = 0; }
-		| STATICPORT			{ $$ = 1; }
+pool_opts_l	: pool_opts_l pool_opt
+		| pool_opt
+		;
+
+pool_opt	: BITMASK	{
+			if (pool_opts.type) {
+				yyerror("pool type cannot be redefined");
+				YYERROR;
+			}
+			pool_opts.type =  PF_POOL_BITMASK;
+		}
+		| RANDOM	{ 
+			if (pool_opts.type) {
+				yyerror("pool type cannot be redefined");
+				YYERROR;
+			}
+			pool_opts.type = PF_POOL_RANDOM;
+		}
+		| SOURCEHASH hashkey {
+			if (pool_opts.type) {
+				yyerror("pool type cannot be redefined");
+				YYERROR;
+			}
+			pool_opts.type = PF_POOL_SRCHASH;
+			pool_opts.key = $2;
+		}
+		| ROUNDROBIN	{ 
+			if (pool_opts.type) {
+				yyerror("pool type cannot be redefined");
+				YYERROR;
+			}
+			pool_opts.type = PF_POOL_ROUNDROBIN;
+		}
+		| STATICPORT	{
+			if (pool_opts.staticport) {
+				yyerror("static-port cannot be redefined");
+				YYERROR;
+			}
+			pool_opts.staticport = 1;
+		}
+		| STICKYADDRESS	{
+			if (filter_opts.marker & POM_STICKYADDRESS) {
+				yyerror("sticky-address cannot be redefined");
+				YYERROR;
+			}
+			pool_opts.marker |= POM_STICKYADDRESS;
+			pool_opts.opts |= PF_POOL_STICKYADDR;
+		}
 		;
 
 redirection	: /* empty */			{ $$ = NULL; }
@@ -2644,8 +2763,7 @@ nataction	: no NAT natpass {
 		}
 		;
 
-natrule		: nataction interface af proto fromto tag redirpool pooltype
-		  staticport
+natrule		: nataction interface af proto fromto tag redirpool pool_opts
 		{
 			struct pf_rule	r;
 
@@ -2727,15 +2845,17 @@ natrule		: nataction interface af proto fromto tag redirpool pooltype
 				}
 
 				r.rpool.opts = $8.type;
-				if (r.rpool.opts == PF_POOL_NONE)
+				if ((r.rpool.opts & PF_POOL_TYPEMASK) ==
+				    PF_POOL_NONE && ($7->host->next != NULL ||
+				    $7->host->addr.type == PF_ADDR_TABLE))
 					r.rpool.opts = PF_POOL_ROUNDROBIN;
-				if (r.rpool.opts != PF_POOL_ROUNDROBIN)
-					if (disallow_table($7->host, "tables "
-					    "are only supported in round-robin "
-					    "redirection pools"))
+				if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
+				    PF_POOL_ROUNDROBIN &&
+				    disallow_table($7->host, "tables are only "
+				    "supported in round-robin redirction pools"))
 						YYERROR;
-				if ($7->host->next) {
-					if (r.rpool.opts !=
+				if ($7->host->next != NULL) {
+					if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 					    PF_POOL_ROUNDROBIN) {
 						yyerror("only round-robin "
 						    "valid for multiple "
@@ -2758,7 +2878,10 @@ natrule		: nataction interface af proto fromto tag redirpool pooltype
 				memcpy(&r.rpool.key, $8.key,
 				    sizeof(struct pf_poolhashkey));
 
-			if ($9 != 0) {
+			 if ($8.opts)
+				r.rpool.opts |= $8.opts;
+
+			if ($8.staticport) {
 				if (r.action != PF_NAT) {
 					yyerror("the 'static-port' option is "
 					    "only valid with nat rules");
@@ -2924,6 +3047,7 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 
 tag		: /* empty */		{ $$ = NULL; }
 		| TAG STRING		{ $$ = $2; }
+		;
 
 route_host	: STRING			{
 			struct node_host	*n;
@@ -2985,24 +3109,24 @@ route		: /* empty */			{
 			$$.rt = PF_FASTROUTE;
 			$$.pool_opts = 0;
 		}
-		| ROUTETO routespec pooltype {
+		| ROUTETO routespec pool_opts {
 			$$.host = $2;
 			$$.rt = PF_ROUTETO;
-			$$.pool_opts = $3.type;
+			$$.pool_opts = $3.type | $3.opts;
 			if ($3.key != NULL)
 				$$.key = $3.key;
 		}
-		| REPLYTO routespec pooltype {
+		| REPLYTO routespec pool_opts {
 			$$.host = $2;
 			$$.rt = PF_REPLYTO;
-			$$.pool_opts = $3.type;
+			$$.pool_opts = $3.type | $3.opts;
 			if ($3.key != NULL)
 				$$.key = $3.key;
 		}
-		| DUPTO routespec pooltype {
+		| DUPTO routespec pool_opts {
 			$$.host = $2;
 			$$.rt = PF_DUPTO;
-			$$.pool_opts = $3.type;
+			$$.pool_opts = $3.type | $3.opts;
 			if ($3.key != NULL)
 				$$.key = $3.key;
 		}
@@ -3016,6 +3140,7 @@ timeout_spec	: STRING number
 				yyerror("unknown timeout %s", $1);
 				YYERROR;
 			}
+		
 		}
 		;
 
@@ -3032,6 +3157,7 @@ limit_spec	: STRING number
 				YYERROR;
 			}
 		}
+		;
 
 limit_list	: limit_list comma limit_spec
 		| limit_spec
@@ -3048,6 +3174,7 @@ yesno		: NO			{ $$ = 0; }
 			else
 				YYERROR;
 		}
+		;
 
 unaryop		: '='		{ $$ = PF_OP_EQ; }
 		| '!' '='	{ $$ = PF_OP_NE; }
@@ -3939,6 +4066,7 @@ lookup(char *s)
 		{ "for",		FOR},
 		{ "fragment",		FRAGMENT},
 		{ "from",		FROM},
+		{ "global",		GLOBAL},
 		{ "group",		GROUP},
 		{ "hfsc",		HFSC},
 		{ "icmp-type",		ICMPTYPE},
@@ -3956,6 +4084,8 @@ lookup(char *s)
 		{ "loginterface",	LOGINTERFACE},
 		{ "max",		MAXIMUM},
 		{ "max-mss",		MAXMSS},
+		{ "max-src-nodes",	MAXSRCNODES},
+		{ "max-src-states",	MAXSRCSTATES},
 		{ "min-ttl",		MINTTL},
 		{ "modulate",		MODULATE},
 		{ "nat",		NAT},
@@ -3990,11 +4120,14 @@ lookup(char *s)
 		{ "return-rst",		RETURNRST},
 		{ "round-robin",	ROUNDROBIN},
 		{ "route-to",		ROUTETO},
+		{ "rule",		RULE},
 		{ "scrub",		SCRUB},
 		{ "set",		SET},
 		{ "source-hash",	SOURCEHASH},
+		{ "source-track",	SOURCETRACK},
 		{ "state",		STATE},
 		{ "static-port",	STATICPORT},
+		{ "sticky-address",	STICKYADDRESS},
 		{ "synproxy",		SYNPROXY},
 		{ "table",		TABLE},
 		{ "tag",		TAG},
