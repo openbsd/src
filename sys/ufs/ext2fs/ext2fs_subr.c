@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.4 2001/06/23 02:07:52 csapuntz Exp $	*/
+/*	$OpenBSD: ext2fs_subr.c,v 1.5 2001/09/18 00:34:49 art Exp $	*/
 /*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
@@ -40,14 +40,14 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <ufs/ext2fs/ext2fs.h>
-#include <ufs/ext2fs/ext2fs_extern.h>
-
-#ifdef _KERNEL
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
+#include <ufs/ext2fs/ext2fs.h>
+#include <ufs/ext2fs/ext2fs_extern.h>
+
+#ifdef _KERNEL
 
 /*
  * Return buffer with the contents of block "offset" from the beginning of
