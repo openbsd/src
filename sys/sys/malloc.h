@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.40 2001/05/11 06:36:59 angelos Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.41 2001/05/14 06:56:55 angelos Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -73,7 +73,7 @@
 #define	M_ZOMBIE	8	/* zombie proc status */
 #define	M_IFADDR	9	/* interface address */
 #define	M_SOOPTS	10	/* socket options */
-
+#define	M_SYSCTL	11	/* sysctl buffers (persistent storage) */
 #define	M_NAMEI		12	/* namei path name buffer */
 #define	M_GPROF		13	/* kernel profiling buffer */
 #define	M_IOCTLOPS	14	/* ioctl data buffer */
@@ -143,7 +143,7 @@
 #define	M_PAGEDEP	78	/* File page dependencies */
 #define	M_INODEDEP	79	/* Inode dependencies */
 #define	M_NEWBLK	80	/* New block allocation */
-#define	M_BMSAFEMAP	81	/* Block or frag allocated from cyl group map */
+#define	M_BMSAFEMAP	81	/* Block or frag alloc'ed from cyl group map */
 #define	M_ALLOCDIRECT	82	/* Block or frag dependency for an inode */
 #define	M_INDIRDEP	83	/* Indirect block dependencies */
 #define	M_ALLOCINDIR	84	/* Block dependency for an indirect block */
@@ -194,7 +194,7 @@
 	"zombie",	/* 8 M_ZOMBIE */ \
 	"ifaddr",	/* 9 M_IFADDR */ \
 	"soopts",	/* 10 M_SOOPTS */ \
-	NULL, \
+	"sysctl",	/* 11 M_SYSCTL */ \
 	"namei",	/* 12 M_NAMEI */ \
 	"gprof",	/* 13 M_GPROF */ \
 	"ioctlops",	/* 14 M_IOCTLOPS */ \
