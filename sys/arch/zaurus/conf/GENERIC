@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.19 2005/01/18 16:29:12 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.20 2005/01/18 17:57:57 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -33,6 +33,8 @@ makeoptions	KERNEL_BASE_PHYS="0xa0200000"
 makeoptions	KERNEL_BASE_VIRT="0xc0200000"
 makeoptions	BOARDTYPE="zaurus"
 
+options		APERTURE
+
 # estimated number of users
 
 maxusers	32
@@ -44,7 +46,7 @@ options 	XSCALE_CACHE_WRITE_THROUGH
 makeoptions	CPUFLAGS="-mcpu=xscale"
 
 #option WSDISPLAY_COMPAT_USL		# VT handling
-#option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 option WSDISPLAY_DEFAULTSCREENS=2
 #option WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 
