@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.26 2003/09/05 16:54:07 jmc Exp $
+.\"     $OpenBSD: nc.1,v 1.27 2004/01/22 13:28:46 markus Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .Nd "arbitrary TCP and UDP connections and listens"
 .Sh SYNOPSIS
 .Nm nc
-.Op Fl 46hklnrtuvzU
+.Op Fl 46hklnrtuvzSU
 .Op Fl i Ar interval
 .Op Fl p Ar source port
 .Op Fl s Ar source ip address
@@ -154,6 +154,8 @@ If port is not specified, port 1080 is used.
 Specifies that
 .Nm
 should just scan for listening daemons, without sending any data to them.
+.It Fl S
+Enables the RFC 2385 TCP MD5 signature option.
 .It Fl U
 Specifies to use Unix Domain Sockets.
 .It Fl X Ar version

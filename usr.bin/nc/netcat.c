@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.64 2003/10/19 22:50:35 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.65 2004/01/22 13:28:46 markus Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -37,6 +37,7 @@
 #include <sys/un.h>
 
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/telnet.h>
 
 #include <err.h>
@@ -71,6 +72,7 @@ int	uflag;					/* UDP - Default to TCP */
 int	vflag;					/* Verbosity */
 int	xflag;					/* Socks proxy */
 int	zflag;					/* Port Scan Flag */
+int	Sflag;					/* TCP MD5 signature option */
 
 int timeout = -1;
 int family = AF_UNSPEC;
@@ -111,7 +113,7 @@ main(int argc, char *argv[])
 	endp = NULL;
 	sv = NULL;
 
-	while ((ch = getopt(argc, argv, "46UX:hi:klnp:rs:tuvw:x:z")) != -1) {
+	while ((ch = getopt(argc, argv, "46UX:hi:klnp:rs:tuvw:x:zS")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -177,6 +179,9 @@ main(int argc, char *argv[])
 			break;
 		case 'z':
 			zflag = 1;
+			break;
+		case 'S':
+			Sflag = 1;
 			break;
 		default:
 			usage(1);
@@ -437,7 +442,7 @@ int
 remote_connect(char *host, char *port, struct addrinfo hints)
 {
 	struct addrinfo *res, *res0;
-	int s, error;
+	int s, error, x = 1;
 
 	if ((error = getaddrinfo(host, port, &hints, &res)))
 		errx(1, "getaddrinfo: %s", gai_strerror(error));
@@ -471,6 +476,11 @@ remote_connect(char *host, char *port, struct addrinfo hints)
 			    ares->ai_addrlen) < 0)
 				errx(1, "bind failed: %s", strerror(errno));
 			freeaddrinfo(ares);
+		}
+		if (Sflag) {
+			if (setsockopt(s, IPPROTO_TCP, TCP_SIGNATURE_ENABLE,
+			    &x, sizeof(x)) == -1)
+				err(1, NULL);
 		}
 
 		if (connect(s, res0->ai_addr, res0->ai_addrlen) == 0)
@@ -519,6 +529,12 @@ local_listen(char *host, char *port, struct addrinfo hints)
 		ret = setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x));
 		if (ret == -1)
 			err(1, NULL);
+		if (Sflag) {
+			ret = setsockopt(s, IPPROTO_TCP, TCP_SIGNATURE_ENABLE,
+			    &x, sizeof(x));
+			if (ret == -1)
+				err(1, NULL);
+		}
 
 		if (bind(s, (struct sockaddr *)res0->ai_addr,
 		    res0->ai_addrlen) == 0)
@@ -730,6 +746,7 @@ help(void)
 	fprintf(stderr, "\tCommand Summary:\n\
 	\t-4		Use IPv4\n\
 	\t-6		Use IPv6\n\
+	\t-S		Enable the TCP MD5 signature option\n\
 	\t-U		Use UNIX domain socket\n\
 	\t-X vers\t	SOCKS version (4 or 5)\n\
 	\t-h		This help text\n\
@@ -753,7 +770,7 @@ help(void)
 void
 usage(int ret)
 {
-	fprintf(stderr, "usage: nc [-46Uhklnrtuvz] [-i interval] [-p source port]\n");
+	fprintf(stderr, "usage: nc [-46SUhklnrtuvz] [-i interval] [-p source port]\n");
 	fprintf(stderr, "\t  [-s ip address] [-w timeout] [-X vers] [-x proxy address [:port]]\n");
 	fprintf(stderr, "\t  [hostname] [port[s...]]\n");
 	if (ret)
