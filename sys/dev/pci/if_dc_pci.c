@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.12 2001/02/09 02:23:36 aaron Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.13 2001/04/06 17:14:14 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -100,12 +100,12 @@ struct dc_type dc_devs[] = {
 	{ 0, 0 }
 };
 
-int dc_pci_probe	__P((struct device *, void *, void *));
-void dc_pci_attach	__P((struct device *, struct device *, void *));
-void dc_pci_acpi	__P((struct device *, void *));
+int dc_pci_match		__P((struct device *, void *, void *));
+void dc_pci_attach		__P((struct device *, struct device *, void *));
+void dc_pci_acpi		__P((struct device *, void *));
 
-extern void dc_read_eeprom	__P((struct dc_softc *, caddr_t, int, int,
-				     int));
+extern void dc_eeprom_width	__P((struct dc_softc *));
+extern void dc_read_srom	__P((struct dc_softc *, int));
 extern void dc_parse_21143_srom	__P((struct dc_softc *));
 
 /*
@@ -113,7 +113,7 @@ extern void dc_parse_21143_srom	__P((struct dc_softc *));
  * IDs against our list and return a device name if we find a match.
  */
 int
-dc_pci_probe(parent, match, aux)
+dc_pci_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -267,8 +267,7 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_type = DC_TYPE_21143;
 			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_REDUCED_MII_POLL;
-			/* Save EEPROM contents so we can parse them later. */
-			dc_read_eeprom(sc, (caddr_t)&sc->dc_srom, 0, 512, 0);
+			dc_read_srom(sc, 9);
 		}
 		break;
 	case PCI_VENDOR_DAVICOM:
@@ -407,7 +406,7 @@ void dc_pci_attach(parent, self, aux)
 	}
 
 	/*
-	 * If we discover later (in dc_attach_common()) that we have an
+	 * If we discover later (in dc_attach) that we have an
 	 * MII with no PHY, we need to have the 21143 drive the LEDs.
 	 * Except there are some systems like the NEC VersaPro NoteBook PC
 	 * which have no LEDs, and twiddling these bits has adverse effects
@@ -465,13 +464,13 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_srm_media |= IFM_ACTIVE | IFM_ETHER;
 	}
 #endif
-
-	dc_attach_common(sc);
+	dc_eeprom_width(sc);
+	dc_attach(sc);
 
 fail:
 	splx(s);
 }
 
 struct cfattach dc_pci_ca = {
-	sizeof(struct dc_softc), dc_pci_probe, dc_pci_attach
+	sizeof(struct dc_softc), dc_pci_match, dc_pci_attach
 };

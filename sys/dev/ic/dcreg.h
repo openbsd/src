@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.11 2001/02/09 03:45:54 aaron Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.12 2001/04/06 17:14:14 aaron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -524,7 +524,7 @@ struct dc_mii_frame {
 #define DC_AL_ANER		0xCC	/* built in PHY autoneg expansion */
 
 #define DC_ADMTEK_PHYADDR	0x1
-#define DC_AL_EE_NODEADDR	4
+#define DC_AL_EE_NODEADDR	8
 /* End of ADMtek specific registers */
 
 /*
@@ -691,7 +691,7 @@ struct dc_softc {
 	int			dc_if_media;
 	u_int32_t		dc_flags;
 	u_int32_t		dc_txthresh;
-	u_int8_t		dc_srom[1024];
+	u_int8_t		*dc_srom;
 	struct dc_mediainfo	*dc_mi;
 	struct dc_list_data	*dc_ldata;
 	caddr_t			dc_ldata_ptr;
@@ -995,6 +995,7 @@ struct dc_eblock_reset {
 #define ETHER_CRC_LEN	4
 #endif
 
-extern void dc_attach_common __P((struct dc_softc *));
-extern int dc_intr __P((void *));
-extern void dc_reset __P((struct dc_softc *));
+extern void dc_attach	__P((struct dc_softc *));
+extern int dc_detach	__P((struct dc_softc *));
+extern int dc_intr	__P((void *));
+extern void dc_reset	__P((struct dc_softc *));

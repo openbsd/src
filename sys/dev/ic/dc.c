@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.24 2001/02/20 19:39:38 mickey Exp $	*/
+/*	$OpenBSD: dc.c,v 1.25 2001/04/06 17:14:13 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -191,6 +191,7 @@ void dc_reset		__P((struct dc_softc *));
 int dc_list_rx_init	__P((struct dc_softc *));
 int dc_list_tx_init	__P((struct dc_softc *));
 
+void dc_read_srom		__P((struct dc_softc *, int));
 void dc_parse_21143_srom	__P((struct dc_softc *));
 void dc_decode_leaf_sia		__P((struct dc_softc *,
 				     struct dc_eblock_sia *));
@@ -1533,6 +1534,17 @@ void dc_decode_leaf_mii(sc, l)
 	return;
 }
 
+void dc_read_srom(sc, bits)
+	struct dc_softc		*sc;
+	int			bits;
+{
+	int size;
+
+	size = 2 << bits;
+	sc->dc_srom = malloc(size, M_DEVBUF, M_NOWAIT);
+	dc_read_eeprom(sc, (caddr_t)sc->dc_srom, 0, (size / 2), 0);
+}
+
 void dc_parse_21143_srom(sc)
 	struct dc_softc		*sc;
 {
@@ -1573,14 +1585,11 @@ void dc_parse_21143_srom(sc)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-void dc_attach_common(sc)
+void dc_attach(sc)
 	struct dc_softc *sc;
 {
 	struct ifnet		*ifp;
 	int			error = 0, mac_offset, tmp;
-
-	if (!DC_IS_XIRCOM(sc))
-		dc_eeprom_width(sc);
 
 	/*
 	 * Get station address from the EEPROM.
@@ -1718,6 +1727,25 @@ void dc_attach_common(sc)
 
 fail:
 	return;
+}
+
+int dc_detach(sc)
+	struct dc_softc		*sc;
+{
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	if (sc->dc_srom)
+		free(sc->dc_srom, M_DEVBUF);
+
+	timeout_del(&sc->dc_tick_tmo);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	return (0);
 }
 
 /*
