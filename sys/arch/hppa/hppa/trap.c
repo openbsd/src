@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.25 2001/01/29 00:01:59 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.26 2001/03/22 23:42:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -30,8 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#undef INTRDEBUG
-#undef TRAPDEBUG
+/* #define INTRDEBUG */
+/* #define TRAPDEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,8 +300,6 @@ ddb_regs = *frame;
 		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
 		break;
 
-	case T_DPROT:
-	case T_IPROT:
 	case T_DATACC:   	case T_USER | T_DATACC:
 	case T_ITLBMISS:	case T_USER | T_ITLBMISS:
 	case T_DTLBMISS:	case T_USER | T_DTLBMISS:
@@ -422,6 +420,8 @@ return;
 		splx(s);
 		break;
 
+	case T_DPROT:
+	case T_IPROT:
 	case T_OVERFLOW:
 	case T_CONDITION:
 	case T_ILLEGAL:
