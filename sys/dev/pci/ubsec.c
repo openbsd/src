@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.20 2000/08/11 19:38:15 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.21 2000/08/12 06:29:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -240,7 +240,10 @@ ubsec_intr(arg)
 			for (i = 1; i < mcr->mcr_pkts; i++) {
 				q = SIMPLEQ_FIRST(&sc->sc_qchip);
 				if (q && q->q_mcr == mcr) {
-					printf("found a share\n");
+#ifdef UBSEC_DEBUG
+					printf("found shared mcr %d out of %d\n",
+					    i, mcr->mcr_pkts);
+#endif
 					SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip,
 					    q, q_next);
 					ubsec_callback(q);
@@ -274,19 +277,17 @@ int
 ubsec_feed(sc)
 	struct ubsec_softc *sc;
 {
+	static int max;
 	struct ubsec_q *q;
-	struct ubsec_mcr *mcr, *mcr2;
-	int npkts, i;
+	struct ubsec_mcr *mcr;
+	int npkts, i, l;
+	void *v, *mcr2;
 	
 	npkts = sc->sc_nqueue;
 	if (npkts > 20)
 		npkts = 20;
-#ifdef not_working_yet
 	if (npkts < 2)
 		goto feed1;
-#else
-	goto feed1;
-#endif
 
 	if (READ_REG(sc, BS_STAT) & BS_STAT_MCR1_FULL)
 		return (0);
@@ -296,7 +297,15 @@ ubsec_feed(sc)
 	if (mcr == NULL)
 		goto feed1;
 
+#ifdef UBSEC_DEBUG
 	printf("merging %d records\n", npkts);
+#endif
+
+	/* XXX temporary aggregation statistics reporting code */
+	if (max < npkts) {
+		max = npkts;
+		printf("%s: new max aggregate %d\n", sc->sc_dv.dv_xname, max);
+	}
 
 	for (mcr2 = mcr, i = 0; i < npkts; i++) {
 		q = SIMPLEQ_FIRST(&sc->sc_queue);
@@ -309,16 +318,19 @@ ubsec_feed(sc)
 		 * a shortened one
 		 */
 		if (i == 0) {
-			bcopy(q->q_mcr, mcr2, sizeof(struct ubsec_mcr));
-			mcr2 += sizeof(struct ubsec_mcr);
+			v = q->q_mcr;
+			l = sizeof(struct ubsec_mcr);
 		} else {
-			void *v;
-
 			v = ((void *)q->q_mcr) + sizeof(struct ubsec_mcr) -
 			    sizeof(struct ubsec_mcr_add);
-			bcopy(v, mcr2, sizeof(struct ubsec_mcr_add));
-			mcr2 += sizeof(struct ubsec_mcr_add);
+			l = sizeof(struct ubsec_mcr_add);
 		}
+#ifdef UBSEC_DEBUG
+		printf("copying %d from %x (mcr %x)\n", l, v, q->q_mcr);
+#endif
+		bcopy(v, mcr2, l);
+		mcr2 += l;
+
 		free(q->q_mcr, M_DEVBUF);
 		q->q_mcr = mcr;
 	}
