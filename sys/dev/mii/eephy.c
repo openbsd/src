@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.12 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.13 2004/12/29 01:30:45 brad Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -95,7 +95,8 @@ eephymatch(struct device *parent, void *match, void *aux)
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_3 ||
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_4 ||
 	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_5 ||
-	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_6))
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_6 ||
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_7))
 		return (10);
 
 	return(0);
