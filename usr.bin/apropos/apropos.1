@@ -1,4 +1,4 @@
-.\"     $OpenBSD: apropos.1,v 1.2 1996/06/26 05:31:14 deraadt Exp $
+.\"     $OpenBSD: apropos.1,v 1.3 1998/03/24 05:40:17 deraadt Exp $
 .\"     $NetBSD: apropos.1,v 1.4 1995/09/04 20:46:17 tls Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -68,7 +68,7 @@ its documentation.
 .Pp
 The options are as follows:
 .Bl -tag -width flag
-.It Fl M
+.It Fl M Ar path
 Override the list of standard directories
 .Nm apropos
 searches for a database named
@@ -80,7 +80,7 @@ must be a colon
 separated list of directories.
 This search path may also be set using the environment variable
 .Ev MANPATH .
-.It Fl m
+.It Fl m path
 Augment the list of standard directories
 .Nm apropos
 searches for its database.
