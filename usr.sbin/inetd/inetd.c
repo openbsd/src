@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.13 1996/07/29 23:45:34 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.14 1996/07/31 11:01:54 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.13 1996/07/29 23:45:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.14 1996/07/31 11:01:54 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -233,7 +233,7 @@ struct biltin {
 	int	bi_socktype;		/* type of socket supported */
 	short	bi_fork;		/* 1 if should fork before call */
 	short	bi_wait;		/* 1 if should wait for child */
-	void	(*bi_fn)();		/* function which performs it */
+	void	(*bi_fn) __P((int, struct servtab *));
 } biltins[] = {
 	/* Echo received data */
 	{ "echo",		SOCK_STREAM,	1, 0,	echo_stream },
@@ -568,13 +568,13 @@ void unregister_rpc __P((struct servtab *));
 void freeconfig __P((struct servtab *));
 void print_service __P((char *, struct servtab *));
 void setup __P((struct servtab *));
-
+struct servtab *getconfigent __P((void));
+struct servtab *enter __P((struct servtab *));
 
 void
 config()
 {
 	register struct servtab *sep, *cp, **sepp;
-	struct servtab *getconfigent(), *enter();
 	long omask;
 	int n;
 
@@ -903,7 +903,9 @@ enter(cp)
 FILE	*fconfig = NULL;
 struct	servtab serv;
 char	line[1024];
-char	*skip(), *nextline();
+char	*skip __P((char **));
+char	*nextline __P((FILE *));
+char	*newstr __P((char *));
 
 int
 setconfig()
@@ -931,7 +933,7 @@ getconfigent()
 {
 	register struct servtab *sep = &serv;
 	int argc;
-	char *cp, *arg, *newstr();
+	char *cp, *arg;
 
 more:
 #ifdef MULOG
@@ -995,7 +997,7 @@ more:
 		if (strncmp(sep->se_proto, "rpc/", 4) == 0) {
 #ifdef RPC
 			char *cp, *ccp;
-			cp = index(sep->se_service, '/');
+			cp = strchr(sep->se_service, '/');
 			if (cp == 0) {
 				syslog(LOG_ERR, "%s: no rpc version",
 				    sep->se_service);
@@ -1027,7 +1029,7 @@ more:
 	if (arg == NULL)
 		goto more;
 	{
-		char	*s = index(arg, '.');
+		char	*s = strchr(arg, '.');
 		if (s) {
 			*s++ = '\0';
 			sep->se_max = atoi(s);
@@ -1036,7 +1038,7 @@ more:
 	}
 	sep->se_wait = strcmp(arg, "wait") == 0;
 	sep->se_user = newstr(skip(&cp));
-	if ((sep->se_group = index(sep->se_user, '.'))) {
+	if ((sep->se_group = strchr(sep->se_user, '.'))) {
 		*sep->se_group++ = '\0';
 	}
 	sep->se_server = newstr(skip(&cp));
@@ -1059,9 +1061,9 @@ more:
 	argc = 0;
 	for (arg = skip(&cp); cp; arg = skip(&cp)) {
 #if MULOG
-		char *colon, *rindex();
+		char *colon;
 
-		if (argc == 0 && (colon = rindex(arg, ':'))) {
+		if (argc == 0 && (colon = strrchr(arg, ':'))) {
 			while (arg < colon) {
 				int	x;
 				char	*ccp;
@@ -1157,7 +1159,7 @@ nextline(fd)
 
 	if (fgets(line, sizeof (line), fd) == NULL)
 		return ((char *)0);
-	cp = index(line, '\n');
+	cp = strchr(line, '\n');
 	if (cp)
 		*cp = '\0';
 	return (line);
@@ -1509,6 +1511,8 @@ print_service(action, sep)
 }
 
 #ifdef MULOG
+char	*rfc931_name __P((struct sockaddr_in *, int));
+
 dolog(sep, ctrl)
 	struct servtab *sep;
 	int		ctrl;
@@ -1517,7 +1521,7 @@ dolog(sep, ctrl)
 	struct sockaddr_in	*sin = (struct sockaddr_in *)&sa;
 	int			len = sizeof(sa);
 	struct hostent		*hp;
-	char			*host, *dp, buf[BUFSIZ], *rfc931_name();
+	char			*host, *dp, buf[BUFSIZ];
 	int			connected = 1;
 
 	if (sep->se_family != AF_INET)
