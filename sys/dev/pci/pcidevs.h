@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.239 2000/04/10 16:17:10 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.240 2000/04/11 13:56:40 ho Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1134,7 +1134,8 @@
 #define	PCI_PRODUCT_NEOMAGIC_NM2160	0x0004		/* Magicgraph NM2160 */
 #define	PCI_PRODUCT_NEOMAGIC_NM2200	0x0005		/* Magicgraph NM2200 */
 #define	PCI_PRODUCT_NEOMAGIC_NM2360	0x0006		/* Magicgraph NM2360 */
-#define	PCI_PRODUCT_NEOMAGIC_MM256AV	0x8005		/* MagicMedia 256AV */
+#define	PCI_PRODUCT_NEOMAGIC_NM256AV	0x8005		/* MagicMedia 256AV */
+#define	PCI_PRODUCT_NEOMAGIC_NM256ZX	0x8006		/* MagicMedia 256ZX */
 
 /* Netgear products */
 #define	PCI_PRODUCT_NETGEAR_GA620	0x620a		/* GA620 */
