@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.20 2000/04/15 02:15:19 aaron Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.21 2000/04/25 19:56:51 aaron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -55,7 +55,7 @@ or
 suffix) or an FTP location in the form of an URL.
 For example, the following is valid:
 .Pp
-.Ic pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/i386/m4-1.4.tgz
+.Ic pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/m4-1.4.tgz
 .Pp
 If the given package names are not found in the current working directory,
 .Nm
@@ -72,7 +72,7 @@ Alternatively, it is possible to add packages interactively from within
 the ftp client.
 For example, the following works:
 .Bd -literal
-	$ ftp ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/i386
+	$ ftp ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386
 	250 CWD command successful
 	ftp> ls m*
 	227 Entering Passive Mode (129,128,5,191,164,73)
