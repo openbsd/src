@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.3 2004/09/21 08:40:45 pefo Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.4 2004/09/30 17:56:18 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -116,15 +116,22 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		}
 
 		switch (ELF64_R_TYPE(relocs->r_info)) {
+			/* XXX Handle non aligned relocs. .eh_frame
+			 * XXX in libstdc++ seems to have them... */
+			u_int64_t robj;
+
 		case R_MIPS_REL32_64:
 			if (ELF64_ST_BIND(sym->st_info) == STB_LOCAL &&
 			    (ELF64_ST_TYPE(sym->st_info) == STT_SECTION ||
 			    ELF64_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
-				*(u_int64_t *)r_addr += loff + sym->st_value;
+				if ((long)r_addr & 7) {
+					_dl_bcopy((char *)r_addr, &robj, sizeof(robj));
+					robj += loff + sym->st_value;
+					_dl_bcopy(&robj, (char *)r_addr, sizeof(robj));
+				} else {
+					*(u_int64_t *)r_addr += loff + sym->st_value;
+				}
 			} else if (this && ((long)r_addr & 7)) {
-				/* XXX Handle non aligned relocs. .eh_frame
-				 * XXX in libstdc++ seems to have them... */
-				u_int64_t robj;
 				_dl_bcopy((char *)r_addr, &robj, sizeof(robj));
 				robj += this->st_value + ooff;
 				_dl_bcopy(&robj, (char *)r_addr, sizeof(robj));
