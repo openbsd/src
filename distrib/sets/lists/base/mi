@@ -1489,6 +1489,8 @@
 ./usr/libexec/sftp-server
 ./usr/libexec/sm.bin
 ./usr/libexec/smrsh
+./usr/libexec/spamd
+./usr/libexec/spamd-setup
 ./usr/libexec/spellprog
 ./usr/libexec/ssh-keysign
 ./usr/libexec/tcpd
