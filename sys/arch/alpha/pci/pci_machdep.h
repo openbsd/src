@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.8 1998/06/28 02:36:23 angelos Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.9 1998/07/01 02:47:37 angelos Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -40,6 +40,11 @@ typedef u_long pcitag_t;
 typedef u_long pci_intr_handle_t;
 
 /*
+ * Forward declarations.
+ */
+struct pci_attach_args;
+
+/*
  * alpha-specific PCI structure and type definitions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
@@ -61,6 +66,11 @@ struct alpha_pci_chipset {
 	void		*(*pc_intr_establish) __P((void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *, char *));
 	void		(*pc_intr_disestablish) __P((void *, void *));
+
+        /* alpha-specific */
+        void            *(*pc_pciide_compat_intr_establish) __P((void *,
+                            struct device *, struct pci_attach_args *, int,
+                            int (*)(void *), void *));
 };
 
 /*
