@@ -1,3 +1,7 @@
+# map all tcp connections from network 10 to the address of the first ppp0
+# interface
+map ppp0 10.0.0.0/8 -> ppp0/32 portmap tcp/udp 10000:20000
+
 # map all tcp connections from 10.1.0.0/16 to 240.1.0.1, changing the source
 # port number to something between 10,000 and 20,000 inclusive.  For all other
 # IP packets, allocate an IP # between 240.1.0.0 and 240.1.0.255, temporarily
