@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.83 2000/11/30 22:53:35 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.84 2000/12/20 19:27:55 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -500,10 +500,14 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 	if (options.proxy_command != NULL && options.check_host_ip)
 		options.check_host_ip = 0;
 
-	if (getnameinfo(hostaddr, hostaddr->sa_len, ntop, sizeof(ntop),
-			NULL, 0, NI_NUMERICHOST) != 0)
-		fatal("check_host_key: getnameinfo failed");
-	ip = xstrdup(ntop);
+	if (options.proxy_command == NULL) {
+		if (getnameinfo(hostaddr, hostaddr->sa_len, ntop, sizeof(ntop),
+				NULL, 0, NI_NUMERICHOST) != 0)
+			fatal("check_host_key: getnameinfo failed");
+		ip = xstrdup(ntop);
+	} else {
+		ip = xstrdup("<no hostip for proxy command>");
+	}
 
 	/*
 	 * Store the host key from the known host file in here so that we can
