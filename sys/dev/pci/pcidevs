@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.378 2001/03/24 20:06:20 fgsch Exp $
+	$OpenBSD: pcidevs,v 1.379 2001/03/26 19:51:34 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -964,9 +964,13 @@ product CREATIVELABS EV1938     0x8938  Ectiva 1938
 
 /* Cyclades products */
 product CYCLADES CYCLOMY_1	0x0100	Cyclom-Y below 1M
-product CYCLADES CYCLOMY_2	0x0101	Cyclom-Y above 1M
+product CYCLADES CYCLOMY_2	0x0101	Cyclom-Y
+product CYCLADES CYCLOM4Y_1	0x0102	Cyclom-4Y below 1M
+product CYCLADES CYCLOM4Y_2	0x0103	Cyclom-4Y
+product CYCLADES CYCLOM8Y_1	0x0104	Cyclom-8Y below 1M
+product CYCLADES CYCLOM8Y_2	0x0105	Cyclom-8Y
 product CYCLADES CYCLOMZ_1	0x0200	Cyclom-Z below 1M
-product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
+product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z
 
 /* Cyrix/National Semiconductor products */
 product CYRIX GXMPCI		0x0001  GXm Host-PCI
