@@ -89,8 +89,8 @@ Bootable installation/upgrade floppies:
 The OpenBSD/sparc binary distribution sets contain the binaries which
 comprise the OpenBSD 2.2 release for the sparc.  There are seven binary
 distribution sets.  These binary distribution sets can be found in
-"sparc" subdirectory of the OpenBSD 2.2 distribution tree, and are as
-follows:
+the "sparc" subdirectory of the OpenBSD 2.2 distribution tree,
+and are as follows:
 
 	base22	The OpenBSD/sparc 2.2 base binary distribution.  You
 		MUST install this distribution set.  It contains the

@@ -17,10 +17,10 @@ out as follows:
 		utils/		The mac68k installation utilities for MacOS.
 
 The OpenBSD/mac68k binary distribution sets contain all the binaries which
-are need to run the OpenBSD 2.2 release for the mac68k.  There are eight binary
-distribution sets.  The binary distribution sets can be found in the
-"mac68k/" of the OpenBSD 2.2 distribution tree, and
-are as follows:
+comprise the OpenBSD 2.2 release for the mac68k.  There are seven binary
+distribution sets.  The binary distribution sets can be found in
+the "mac68k" subdirectory of the OpenBSD 2.2 distribution tree,
+and are as follows:
 
 	bsd-generic.tar.gz	The OpenBSD/mac68k 2.2 kernel binary.  You MUST
 		install this file.  It is the kernel that you need
@@ -28,7 +28,7 @@ are as follows:
 		[ 1.4M uncompressed ]
 
 	bsd-genericsbc.tar.gz The OpenBSD/mac68k kernel binary.  This is
-		identical in every way to bsd22.tar.gz accept that
+		identical in every way to bsd-generic.tar.gz accept that
 		it enables a different SCSI driver which may allow
 		some otherwise incompatible SCSI disks to function
 		with OpenBSD/mac68k.  You must install either this

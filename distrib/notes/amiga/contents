@@ -1,5 +1,5 @@
 The amiga-specific portion of the OpenBSD 2.2 release is found in the
-"amiga" subdirectory of the distribution.  That subdirectory is layed
+"amiga" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
 .../2.2/amiga/
@@ -50,9 +50,8 @@ Installation/upgrade miniroot file system:
 The OpenBSD/amiga binary distribution sets contain the binaries which
 comprise the OpenBSD 2.2 release for the amiga.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-subdirectories of the "amiga/" subdirectory of the OpenBSD 2.2
-distribution tree, and are as follows (all have ".tar.gz" appended to
-the name given in the table below):
+the "amiga" subdirectory of the OpenBSD 2.2 distribution tree,
+and are as follows:
 
 	base22	The OpenBSD/amiga 2.2 base binary distribution.  You
 		MUST install this distribution set.  It contains the

@@ -45,8 +45,8 @@ Bootable installation/upgrade floppy:
 The OpenBSD/powerpc binary distribution sets contain the binaries which
 comprise the OpenBSD 2.2 release for the powerpc.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-subdirectories of the "powerpc/bins" subdirectory of the OpenBSD 2.2
-distribution tree, and are as follows:
+the "powerpc" subdirectory of the OpenBSD 2.2 distribution tree,
+and are as follows:
 
 	base22	The OpenBSD/powerpc 2.2 base binary distribution.  You
 		MUST install this distribution set.  It contains the

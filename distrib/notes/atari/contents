@@ -1,5 +1,5 @@
 The Atari-specific portion of the OpenBSD 2.2 release is found in the
-"atari" subdirectory of the distribution.  That subdirectory is layed
+"atari" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
 .../2.2/atari/

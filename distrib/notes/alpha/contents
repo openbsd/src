@@ -42,8 +42,8 @@ Bootable installation/upgrade floppy:
 The OpenBSD/alpha binary distribution sets contain the binaries which
 comprise the OpenBSD 2.2 release for the alpha.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-subdirectories of the "alpha/bins" subdirectory of the OpenBSD 2.2
-distribution tree, and are as follows:
+the "alpha" subdirectory of the OpenBSD 2.2 distribution tree,
+and are as follows:
 
 	base22	The OpenBSD/alpha 2.2 base binary distribution.  You
 		MUST install this distribution set.  It contains the
