@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.8 2003/03/03 20:17:40 deraadt Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.9 2003/03/04 11:26:04 henning Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -58,7 +58,7 @@ The
 .Aq spamd
 table is used in conjuction with a
 .Xr pf 4
-redirection rule can be used to selectively redirect mail connections
+redirection rule to selectively redirect mail connections
 to the
 .Xr spamd 8
 daemon.
@@ -124,7 +124,7 @@ Additional files given as parameters to
 will be read to configure blacklists. The blacklist file format is
 as follows.
 .Bd -literal -offset indent
-.Ic SPAMD_SOURCE;mylist;"Sorry %A, You are a probably spammer\enBye\en"
+.Ic SPAMD_SOURCE;mylist;"Sorry %A, You are probably spammer\enBye\en"
 .Ic file:/usr/local/share/spammers.txt
 .Ic http://www.somewhere.org/bigspamblocks.txt
 .Ic SPAMD_SOURCE_REMOVE
@@ -139,7 +139,7 @@ as follows.
 The
 .Li SPAMD_SOURCE
 line includes a tag to name the blacklist, and the message to be
-given to any connections that match this list. the message must
+given to any connections that match this list. The message must
 be enclosed in double quotes
 and may include \en to produce a newline in the output. \e\" will produce
 a double quote in the output, and %% will produce a single % in the output.
