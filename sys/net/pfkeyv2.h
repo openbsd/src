@@ -227,8 +227,8 @@ struct sadb_policy {
 #define SADB_EALG_NONE        0
 #define SADB_EALG_DESCBC      2
 #define SADB_EALG_3DESCBC     3
-#define SADB_X_EALG_CAST      4
 #define SADB_X_EALG_SKIPJACK  5
+#define SADB_X_EALG_CAST      6
 #define SADB_X_EALG_BLF       7
 #define SADB_X_EALG_AES       12
 #define SADB_EALG_MAX         12
