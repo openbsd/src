@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.13 1997/03/14 04:32:16 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.14 1997/03/14 05:40:20 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.23 1997/03/13 06:23:17 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.13 1997/03/14 04:32:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.14 1997/03/14 05:40:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -588,7 +588,7 @@ sendrequest(cmd, local, remote, printnames)
 		}
 		closefunc = fclose;
 		if (fstat(fileno(fin), &st) < 0 ||
-		    (st.st_mode&S_IFMT) != S_IFREG) {
+		    (st.st_mode & S_IFMT) != S_IFREG) {
 			printf("%s: not a plain file.\n", local);
 			(void)signal(SIGINT, oldintr);
 			(void)signal(SIGINFO, oldinti);
@@ -962,7 +962,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 		}
 		bufsize = st.st_blksize;
 	}
-	if (!(st.st_mode & S_IFREG)) {
+	if ((st.st_mode & S_IFMT) != S_IFREG) {
 		progress = 0;
 		preserve = 0;
 	}
