@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.87 2002/04/02 03:57:21 millert Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.88 2002/04/06 00:58:32 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.86 2002/04/02 03:57:05 millert Exp 
+ *		OpenBSD: pcmciadevs,v 1.87 2002/04/06 00:58:05 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -90,6 +90,7 @@
 #define	PCMCIA_VENDOR_NWN	0x0602	/* No Wires Needed */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
+#define	PCMCIA_VENDOR_ACTIONTEC	0x1668	/* ACTIONTEC */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat */
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
 #define	PCMCIA_VENDOR_ARCHOS	0x5241	/* Archos */
@@ -132,6 +133,10 @@
 #define	PCMCIA_PRODUCT_3COM_3C1	0x0cf1
 #define	PCMCIA_CIS_3COM_3CRWE62092A	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3CRWE62092A	0x2092
+
+/* ACTIONTEC */
+#define	PCMCIA_CIS_ACTIONTEC_HWC01170	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ACTIONTEC_HWC01170	0x101
 
 /* Adaptec */
 #define	PCMCIA_CIS_ADAPTEC_APA1460_1	{ NULL, NULL, NULL, NULL }
