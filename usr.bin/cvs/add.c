@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.10 2004/12/21 16:48:39 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.11 2004/12/21 17:50:40 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -83,7 +83,13 @@ cvs_add(int argc, char **argv)
 		return (EX_DATAERR);
 
 	root = CVS_DIR_ROOT(cvs_files);
-
+	if (root == NULL) {
+		cvs_log(LP_ERR,
+		    "No CVSROOT specified!  Please use the `-d' option");
+		cvs_log(LP_ERR,
+		    "or set the CVSROOT environment variable.");
+		return (EX_USAGE);
+	}
 	if ((root->cr_method != CVS_METHOD_LOCAL) && (cvs_connect(root) < 0))
 		return (EX_PROTOCOL);
 
@@ -127,7 +133,7 @@ cvs_add_file(CVSFILE *cf, void *arg)
 	}
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_sendreq(root, CVS_REQ_ADD, CVS_FILE_NAME(cf));
+		ret = cvs_sendreq(root, CVS_REQ_ADD, CVS_FILE_NAME(cf));
 	} else {
 		cvs_log(LP_INFO, "scheduling file `%s' for addition",
 		    CVS_FILE_NAME(cf));
