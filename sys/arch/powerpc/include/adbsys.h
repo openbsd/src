@@ -1,4 +1,5 @@
-/*	$NetBSD: adbsys.h,v 1.2 1998/10/20 14:56:31 tsubai Exp $	*/
+/*	$OpenBSD: adbsys.h,v 1.2 2001/03/29 18:41:49 drahn Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.4 2000/12/19 02:59:24 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -119,6 +120,7 @@ typedef struct adb_dev_s{
 #define ADB_PBEXTKBD	24
 #define ADB_DESIGNKBD	27	/* XXX Needs to be verified XXX */
 #define ADB_PBJPKBD	30
+#define ADB_PBG3JPKBD	201
 
 	/* Interesting mouse handler IDs */
 #define ADBMS_100DPI	1
@@ -126,7 +128,8 @@ typedef struct adb_dev_s{
 #define ADBMS_MSA3	3	/* Mouse Systems A3 Mouse */
 #define ADBMS_EXTENDED	4	/* Extended mouse protocol */
 #define ADBMS_USPEED	0x2f	/* MicroSpeed mouse */
-#define ADBMS_UCONTOUR  0x66	/* Contour mouse */
+#define ADBMS_UCONTOUR	0x66	/* Contour mouse */
+#define ADBMS_TURBO	50	/* Kensington Turbo Mouse */
 
 	/* Interesting tablet handler ID */
 #define ADB_ARTPAD	58	/* WACOM ArtPad II tablet */
@@ -138,7 +141,7 @@ typedef struct adb_dev_s{
 	/* Get device info from ADB system */
 typedef struct adb_devinfo_s{
 	adb_dev_t	dev[ADB_MAX_DEVS];
-		/* [addr].addr == -1 if none */ 
+		/* [addr].addr == -1 if none */
 } adb_devinfo_t;
 #define ADBIOCDEVSINFO		_IOR('A', 128, adb_devinfo_t)
 
