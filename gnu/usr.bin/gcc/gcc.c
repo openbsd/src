@@ -1587,12 +1587,12 @@ choose_temp_base ()
 
   len = strlen (base);
   temp_filename = xmalloc (len + strlen (concat (dir_separator_str, 
-                                                 "ccXXXXXX")) + 1);
+                                                 "ccXXXXXXXXXX")) + 1);
   strcpy (temp_filename, base);
   if (len > 0 && temp_filename[len-1] != '/'
       && temp_filename[len-1] != DIR_SEPARATOR)
     temp_filename[len++] = DIR_SEPARATOR;
-  strcpy (temp_filename + len, "ccXXXXXX");
+  strcpy (temp_filename + len, "ccXXXXXXXXXX");
 
   mktemp (temp_filename);
   temp_filename_length = strlen (temp_filename);
