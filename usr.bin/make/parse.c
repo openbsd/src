@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.33 1999/12/18 21:53:32 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.34 1999/12/18 21:56:07 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.33 1999/12/18 21:53:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.34 1999/12/18 21:56:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1009,6 +1009,8 @@ ParseDoDependency (line)
 	 * the end of the targets list
 	 */
 	if ((specType == Not) && (*line != '\0')) {
+	    char *targName;
+
 	    if (Dir_HasWildcards(line)) {
 		/*
 		 * Targets are to be sought only in the current directory,
@@ -1029,9 +1031,7 @@ ParseDoDependency (line)
 		(void)Lst_AtEnd(curTargs, (ClientData)line);
 	    }
 
-	    while(!Lst_IsEmpty(curTargs)) {
-		char	*targName = (char *)Lst_DeQueue(curTargs);
-
+	    while((targName = (char *)Lst_DeQueue(curTargs)) != NULL) {
 		if (!Suff_IsTransform (targName)) {
 		    gn = Targ_FindNode (targName, TARG_CREATE);
 		} else {
@@ -1273,10 +1273,8 @@ ParseDoDependency (line)
 		    return;
 		}
 
-		while (!Lst_IsEmpty (sources)) {
-		    gn = (GNode *) Lst_DeQueue (sources);
-		    ParseDoSrc (tOp, gn->name, curSrcs);
-		}
+		while ((gn = (GNode *)Lst_DeQueue(sources)) != NULL)
+		    ParseDoSrc(tOp, gn->name, curSrcs);
 		Lst_Destroy (sources, NOFREE);
 		cp = line;
 	    } else {
@@ -2028,11 +2026,8 @@ ParseEOF (opened)
 {
     IFile     *ifile;	/* the state on the top of the includes stack */
 
-    if (Lst_IsEmpty (includes)) {
-	return (DONE);
-    }
-
-    ifile = (IFile *) Lst_DeQueue (includes);
+    if ((ifile = (IFile *)Lst_DeQueue(includes)) == NULL)
+    	return DONE;
     free ((Address) fname);
     fname = ifile->fname;
     lineno = ifile->lineno;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.18 1999/12/18 21:53:32 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.19 1999/12/18 21:56:07 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.18 1999/12/18 21:53:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.19 1999/12/18 21:56:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -711,8 +711,7 @@ Compat_Run(targs)
      *	    	  	    could not be made due to errors.
      */
     errors = 0;
-    while (!Lst_IsEmpty (targs)) {
-	gn = (GNode *) Lst_DeQueue (targs);
+    while ((gn = (GNode *)Lst_DeQueue(targs)) != NULL) {
 	CompatMake (gn, gn);
 
 	if (gn->made == UPTODATE) {

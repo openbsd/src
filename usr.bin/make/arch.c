@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.20 1999/12/18 21:53:32 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.21 1999/12/18 21:56:07 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.20 1999/12/18 21:53:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.21 1999/12/18 21:56:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -363,8 +363,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 	    char  *member;
 
 	    Dir_Expand(memName, dirSearchPath, members);
-	    while (!Lst_IsEmpty(members)) {
-		member = (char *)Lst_DeQueue(members);
+	    while ((member = (char *)Lst_DeQueue(members)) != NULL) {
 
 		sprintf(nameBuf, "%s(%s)", libName, member);
 		free(member);

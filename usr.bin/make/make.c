@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.10 1999/12/18 21:53:32 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.11 1999/12/18 21:56:07 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: make.c,v 1.10 1999/12/18 21:53:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.11 1999/12/18 21:56:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -673,8 +673,7 @@ MakeStartJobs ()
 {
     register GNode	*gn;
 
-    while (!Job_Full() && !Lst_IsEmpty (toBeMade)) {
-	gn = (GNode *) Lst_DeQueue (toBeMade);
+    while (!Job_Full() && (gn = (GNode *)Lst_DeQueue(toBeMade)) != NULL) {
 	if (DEBUG(MAKE)) {
 	    printf ("Examining %s...", gn->name);
 	}
@@ -835,8 +834,7 @@ Make_Run (targs)
      * be looked at in a minute, otherwise we add its children to our queue
      * and go on about our business.
      */
-    while (!Lst_IsEmpty (examine)) {
-	gn = (GNode *) Lst_DeQueue (examine);
+    while ((gn = (GNode *)Lst_DeQueue(examine)) != NULL) {
 
 	if (!gn->make) {
 	    gn->make = TRUE;

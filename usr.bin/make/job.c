@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.18 1999/12/18 21:53:32 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.19 1999/12/18 21:56:07 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.18 1999/12/18 21:53:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.19 1999/12/18 21:56:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -3148,12 +3148,14 @@ JobFlagForMigration(hostID)
 static void
 JobRestartJobs()
 {
-    while (!jobFull && !Lst_IsEmpty(stoppedJobs)) {
+    Job *job;
+
+    while (!jobFull && (job = (Job *)Lst_DeQueue(stoppedJobs)) != NULL)  {
 	if (DEBUG(JOB)) {
 	    (void) fprintf(stdout,
 		       "Job queue is not full. Restarting a stopped job.\n");
 	    (void) fflush(stdout);
 	}
-	JobRestart((Job *)Lst_DeQueue(stoppedJobs));
+	JobRestart(job);
     }
 }

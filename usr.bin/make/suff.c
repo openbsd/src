@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.18 1999/12/18 21:53:33 espie Exp $	*/
+/*	$OpenBSD: suff.c,v 1.19 1999/12/18 21:56:07 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.18 1999/12/18 21:53:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.19 1999/12/18 21:56:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1180,9 +1180,7 @@ SuffFindThem (srcs, slst)
 
     rs = (Src *) NULL;
 
-    while (!Lst_IsEmpty (srcs)) {
-	s = (Src *) Lst_DeQueue (srcs);
-
+    while ((s = (Src *)Lst_DeQueue(srcs)) != NULL) {
 	if (DEBUG(SUFF)) {
 	    printf ("\ttrying %s...", s->file);
 	}
@@ -1444,9 +1442,7 @@ SuffExpandChildren(cgnp, pgnp)
 	    /*
 	     * Add all elements of the members list to the parent node.
 	     */
-	    while(!Lst_IsEmpty(members)) {
-		gn = (GNode *)Lst_DeQueue(members);
-
+	    while((gn = (GNode *)Lst_DeQueue(members)) != NULL) {
 		if (DEBUG(SUFF)) {
 		    printf("%s...", gn->name);
 		}
@@ -1512,12 +1508,8 @@ SuffExpandChildren(cgnp, pgnp)
 	exp = Lst_Init();
 	Dir_Expand(cgn->name, path, exp);
 
-	while (!Lst_IsEmpty(exp)) {
-	    /*
-	     * Fetch next expansion off the list and find its GNode
-	     */
-	    cp = (char *)Lst_DeQueue(exp);
-
+	/* Fetch next expansion off the list and find its GNode.  */
+	while ((cp = (char *)Lst_DeQueue(exp)) != NULL) {
 	    if (DEBUG(SUFF)) {
 		printf("%s...", cp);
 	    }
