@@ -6,7 +6,9 @@
 NOPROG=	noprog
 NOMAN=	noman
 
+.if ${MACHINE} == "pmax"
 SUBDIR= boot
+.endif
 
 TPMAX=	../pmax/tags
 SPMAX=	../pmax/pmax/*.[ch] ../pmax/include/*.h \

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2000/05/19 14:49:43 espie Exp $
+#	$OpenBSD: Makefile,v 1.6 2000/05/25 21:54:45 deraadt Exp $
 
 .if ${MACHINE} == "i386"
 PROG=	fed
@@ -8,6 +8,6 @@ LDADD=	-lcurses
 NOPROG=	yes
 .endif
 MAN=	fed.1
-MANSUBDIR=i386
+MANSUBDIR=/i386
 
 .include <bsd.prog.mk>

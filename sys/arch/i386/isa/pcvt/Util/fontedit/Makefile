@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2000/05/19 14:49:44 espie Exp $
+#	$OpenBSD: Makefile,v 1.5 2000/05/25 21:54:46 deraadt Exp $
 
 .if ${MACHINE} == "i386"
 PROG=		fontedit
@@ -7,6 +7,6 @@ CLEANFILES+=	core.fontedit fontedit.core
 NOPROG=		yes
 .endif
 MAN=	fontedit.1
-MANSUBDIR=i386
+MANSUBDIR=/i386
 
 .include <bsd.prog.mk>
