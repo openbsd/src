@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.2 1999/10/29 02:00:23 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.3 1999/11/04 05:16:32 jason Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -164,6 +164,18 @@ va_dcl
     if (m->m_flags & (M_CONF|M_AUTH))
 	m->m_pkthdr.tdbi = NULL;
 
+    m->m_flags &= ~(M_BCAST|M_MCAST);
+    if (eh.ether_dhost[0] & 1)
+    {
+	if (bcmp((caddr_t)etherbroadcastaddr, (caddr_t)eh.ether_dhost,
+	  sizeof(etherbroadcastaddr)) == 0)
+	    m->m_flags |= M_BCAST;
+	else
+	    m->m_flags |= M_BCAST;
+    }
+    if (m->m_flags & (M_BCAST|M_MCAST))
+	m->m_pkthdr.rcvif->if_imcasts++;
+
 #if NBRIDGE > 0
     /*
      * Tap the packet off here for a bridge, if configured and
@@ -171,7 +183,6 @@ va_dcl
      * NULL if it has consumed the packet, otherwise, it
      * gets processed as normal.
      */
-
     if (m->m_pkthdr.rcvif->if_bridge)
     {
 	m = bridge_input(m->m_pkthdr.rcvif, &eh, m);
