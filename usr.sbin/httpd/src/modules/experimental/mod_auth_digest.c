@@ -543,6 +543,7 @@ static const char *set_digest_file(cmd_parms *cmd, void *config,
 				   const char *file)
 {
     ((digest_config_rec *) config)->pwfile = file;
+    ap_server_strip_chroot(((digest_config_rec *) config)->pwfile, 1);
     return NULL;
 }
 
@@ -550,6 +551,7 @@ static const char *set_group_file(cmd_parms *cmd, void *config,
 				  const char *file)
 {
     ((digest_config_rec *) config)->grpfile = file;
+    ap_server_strip_chroot(((digest_config_rec *) config)->grpfile, 1);
     return NULL;
 }
 
