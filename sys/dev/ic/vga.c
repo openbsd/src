@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.21 2001/03/22 12:43:47 mickey Exp $ */
+/* $OpenBSD: vga.c,v 1.22 2001/04/01 20:30:02 mickey Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -1227,7 +1227,7 @@ vga_mapchar(id, uni, index)
 		KASSERT(VGA_SCREEN_CANTWOFONTS(scr->pcs.type));
 		res2 = _vga_mapchar(id, scr->fontset2, uni, &idx2);
 	}
-	if (res2 > res1) {
+	if (res2 >= res1) {
 		*index = idx2 | 0x0800; /* attribute bit 3 */
 		return (res2);
 	}
