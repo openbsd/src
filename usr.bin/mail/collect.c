@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.10 1997/07/22 18:26:24 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.11 1997/07/22 18:54:36 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.10 1997/07/22 18:26:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.11 1997/07/22 18:54:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,16 +152,8 @@ collect(hp, printheaders)
 	longline = 0;
 
 	if (!sigsetjmp(colljmp, 1)) {
-		if (getsub && grabh(hp, GSUBJECT) == SIGINT) {
-			fflush(stdout);
-			fputs("\n(Interrupt -- one more to kill letter)\n",
-			    stderr);
-			if (grabh(hp, GSUBJECT) == SIGINT) {
-				hadintr++;
-				collint(SIGINT);
-				exit(1);
-			}
-		}
+		if (getsub)
+			gethfromtty(hp, GSUBJECT);
 	} else {
 		/*
 		 * Come here for printing the after-signal message.
@@ -401,6 +393,18 @@ cont:
 			goto cont;
 		}
 	}
+
+	if (value("interactive") != NULL) {
+		if (value("askcc") != NULL || value("askbcc") != NULL) {
+			if (value("askcc") != NULL)
+				gethfromtty(hp, GCC);
+			if (value("askbcc") != NULL)
+				gethfromtty(hp, GBCC);
+		} else {
+			puts("EOT");
+			(void)fflush(stdout);
+		}
+	}
 	goto out;
 err:
 	if (collf != NULL) {
@@ -435,8 +439,7 @@ exwrite(name, fp, f)
 {
 	register FILE *of;
 	register int c;
-	long cc;
-	int lc;
+	ssize_t cc, lc;
 	struct stat junk;
 
 	if (f) {
@@ -467,7 +470,7 @@ exwrite(name, fp, f)
 		}
 	}
 	(void)Fclose(of);
-	printf("%d/%ld\n", lc, cc);
+	printf("%d/%d\n", lc, cc);
 	fflush(stdout);
 	return(0);
 }
@@ -677,4 +680,21 @@ savedeadletter(fp)
 		(void)putc(c, dbuf);
 	(void)Fclose(dbuf);
 	rewind(fp);
+}
+
+void
+gethfromtty(hp, gflags)
+	struct header *hp;
+	int gflags;
+{
+	if (grabh(hp, gflags) == SIGINT) {
+		fflush(stdout);
+		fputs("\n(Interrupt -- one more to kill letter)\n",
+		    stderr);
+		if (grabh(hp, gflags) == SIGINT) {
+			hadintr++;
+			collint(SIGINT);
+			exit(1);
+		}
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.6 1997/07/14 15:56:25 millert Exp $	*/
+/*	$OpenBSD: send.c,v 1.7 1997/07/22 18:54:41 millert Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: send.c,v 1.6 1997/07/14 15:56:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: send.c,v 1.7 1997/07/22 18:54:41 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ send(mp, obuf, doign, prefix)
 	struct ignoretab *doign;
 	char *prefix;
 {
-	long count;
+	int count;
 	register FILE *ibuf;
 	char line[LINESIZE];
 	int ishead, infld, ignoring = 0, dostat, firstline;
@@ -315,16 +315,6 @@ mail1(hp, printheaders)
 	 */
 	if ((mtf = collect(hp, printheaders)) == NULL)
 		return;
-	if (value("interactive") != NULL)
-		if (value("askcc") != NULL || value("askbcc") != NULL) {
-			if (value("askcc") != NULL)
-				grabh(hp, GCC);
-			if (value("askbcc") != NULL)
-				grabh(hp, GBCC);
-		} else {
-			puts("EOT");
-			(void)fflush(stdout);
-		}
 	if (fsize(mtf) == 0)
 		if (hp->h_subject == NULL)
 			puts("No message, no subject; hope that's ok");

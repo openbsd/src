@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 1997/07/13 21:21:12 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 1997/07/22 18:54:38 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.6 1997/07/13 21:21:12 millert Exp $
+ *	$OpenBSD: extern.h,v 1.7 1997/07/22 18:54:38 millert Exp $
  */
 
 struct name;
@@ -141,6 +141,7 @@ int	 from __P((void *));
 off_t	 fsize __P((FILE *));
 int	 getfold __P((char *, int));
 int	 gethfield __P((FILE *, char [], int, char **));
+void	 gethfromtty __P((struct header *, int));
 int	 getmsglist __P((char *, int *, int));
 int	 getrawlist __P((char [], char **, int));
 int	 getuserid __P((char []));

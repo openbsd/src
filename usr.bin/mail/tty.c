@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.6 1997/07/14 15:56:25 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.7 1997/07/22 18:54:45 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: tty.c,v 1.6 1997/07/14 15:56:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: tty.c,v 1.7 1997/07/22 18:54:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,13 +79,14 @@ grabh(hp, gflags)
 	sig_t savetstp;
 	sig_t savettou;
 	sig_t savettin;
-	int errs;
+	int errs = 0;
 #ifdef __GNUC__
 	/* Avoid siglongjmp clobbering */
 #ifdef TIOCSTI
 	(void)&extproc;
 #endif
 	(void)&saveint;
+	(void)&errs;
 #endif
 
 	savetstp = signal(SIGTSTP, SIG_DFL);
@@ -117,8 +118,10 @@ grabh(hp, gflags)
 			warn("TIOCEXT: off");
 	}
 # endif	/* TIOCEXT */
-	if (sigsetjmp(intjmp, 1))
+	if (sigsetjmp(intjmp, 1)) {
+		errs = SIGINT;
 		goto out;
+	}
 	saveint = signal(SIGINT, ttyint);
 #endif
 	if (gflags & GTO) {

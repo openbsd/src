@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.8 1997/07/14 00:24:24 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.9 1997/07/22 18:54:34 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd1.c,v 1.8 1997/07/14 00:24:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd1.c,v 1.9 1997/07/22 18:54:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -409,7 +409,7 @@ top(v)
 		if (!lineb)
 			putchar('\n');
 		for (lines = 0; lines < c && lines <= topl; lines++) {
-			if (readline(ibuf, linebuf, LINESIZE) < 0)
+			if (readline(ibuf, linebuf, sizeof(linebuf)) < 0)
 				break;
 			puts(linebuf);
 			lineb = blankline(linebuf);
