@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: mkdep.gcc.sh,v 1.8 1998/09/02 06:40:07 deraadt Exp $
+#	$OpenBSD: mkdep.gcc.sh,v 1.9 2000/02/10 11:39:48 d Exp $
 #	$NetBSD: mkdep.gcc.sh,v 1.9 1994/12/23 07:34:59 jtc Exp $
 #
 # Copyright (c) 1991, 1993
@@ -84,7 +84,7 @@ trap 'rm -rf $DTMP ; trap 2 ; kill -2 $$' 1 2 3 13 15
 if [ x$pflag = x ]; then
 	${CC:-cc} -M "$@" | sed -e 's; \./; ;g' > $TMP
 else
-	${CC:-cc} -M "$@" | sed -e 's;\.o :; :;' -e 's; \./; ;g' > $TMP
+	${CC:-cc} -M "$@" | sed -e 's;\.o[ ]*:; :;' -e 's; \./; ;g' > $TMP
 fi
 
 if [ $? != 0 ]; then
