@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 1999/08/20 09:15:05 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.31 1999/08/20 09:30:55 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5551,23 +5551,26 @@ pmap_enk4m(pm, va, prot, wired, pv, pteproto)
 	struct pvlist *pv;
 	int pteproto;
 {
-	int vr, vs, tpte, s;
+	int tpte, s;
 	struct regmap *rp;
 	struct segmap *sp;
 
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 	if (va < KERNBASE)
 		panic("pmap_enk4m: can't enter va 0x%lx below KERNBASE", va);
 #endif
-	vr = VA_VREG(va);
-	vs = VA_VSEG(va);
-	rp = &pm->pm_regmap[vr];
-	sp = &rp->rg_segmap[vs];
+	rp = &pm->pm_regmap[VA_VREG(va)];
+	sp = &rp->rg_segmap[VA_VSEG(va)];
 
 	s = splpmap();		/* XXX way too conservative */
 
+#ifdef DIAGNOSTIC
 	if (rp->rg_seg_ptps == NULL) /* enter new region */
-		panic("pmap_enk4m: missing kernel region table for va 0x%lx",va);
+		panic("pmap_enk4m: missing region table for va 0x%lx", va);
+	if (sp->sg_pte == NULL) /* If no existing pagetable */
+		panic("pmap_enk4m: missing segment table for va 0x%lx", va);
+#endif
+
 
 	tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
 	if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE) {
@@ -5612,11 +5615,6 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 	 */
 	if (pv != NULL)
 	        pteproto &= ~(pv_link4m(pv, pm, va, (pteproto & SRMMU_PG_C) == 0));
-
-#ifdef DEBUG
-	if (sp->sg_pte == NULL) /* If no existing pagetable */
-		panic("pmap_enk4m: missing segment table for va 0x%lx",va);
-#endif
 
 	tlb_flush_page(va);
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
