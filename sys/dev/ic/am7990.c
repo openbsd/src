@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.11 1998/03/09 09:33:04 deraadt Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.12 1998/06/08 17:14:43 deraadt Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -344,7 +344,7 @@ am7990_init(sc)
 		ifp->if_timer = 0;
 		am7990_start(ifp);
 	} else
-		printf("%s: card failed to initialize\n", sc->sc_dev.dv_xname);
+		printf("%s: controller failed to initialize\n", sc->sc_dev.dv_xname);
 	if (sc->sc_hwinit)
 		(*sc->sc_hwinit)(sc);
 }
