@@ -107,7 +107,6 @@
 ./etc/skel/.login
 ./etc/skel/.mailrc
 ./etc/skel/.profile
-./etc/skel/.rhosts
 ./etc/sliphome/slip.hosts
 ./etc/sliphome/slip.login
 ./etc/spamd.conf
