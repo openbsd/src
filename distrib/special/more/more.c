@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.20 2003/06/04 03:26:59 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.21 2003/06/04 03:37:01 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.20 2003/06/04 03:26:59 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.21 2003/06/04 03:37:01 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -419,7 +419,7 @@ checkf(char *fs, int *clearfirst)
 {
 	struct stat stbuf;
 	FILE *f;
-	int c;
+	int ch;
 
 	if (stat(fs, &stbuf) == -1) {
 		(void)fflush(stdout);
@@ -439,9 +439,9 @@ checkf(char *fs, int *clearfirst)
 	}
 	if (magic(f, fs))
 		return (NULL);
-	c = Getc(f);
-	*clearfirst = (c == '\f');
-	Ungetc(c, f);
+	ch = Getc(f);
+	*clearfirst = (ch == '\f');
+	Ungetc(ch, f);
 	if ((file_size = stbuf.st_size) == 0)
 		file_size = LONG_MAX;
 	return (f);
@@ -497,7 +497,7 @@ putch(int ch)
 void
 screen(FILE *f, int num_lines)
 {
-	int c;
+	int ch;
 	int nchars;
 	int length;			/* length of current line */
 	static int prev_len = 1;	/* length of previous line */
@@ -547,7 +547,7 @@ screen(FILE *f, int num_lines)
 			pstate = 0;
 		}
 		fflush(stdout);
-		if ((c = Getc(f)) == EOF) {
+		if ((ch = Getc(f)) == EOF) {
 			if (clreol)
 				clreos();
 			return;
@@ -555,7 +555,7 @@ screen(FILE *f, int num_lines)
 
 		if (Pause && clreol)
 			clreos();
-		Ungetc(c, f);
+		Ungetc(ch, f);
 		Pause = 0;
 		startup = 0;
 		if ((num_lines = command(NULL, f)) == 0)
@@ -599,10 +599,10 @@ end_it(void)
 void
 copy_file(FILE *f)
 {
-	int c;
+	int ch;
 
-	while ((c = getc(f)) != EOF)
-		putchar(c);
+	while ((ch = getc(f)) != EOF)
+		putchar(ch);
 }
 
 static char bell = ctrl('G');
@@ -648,20 +648,20 @@ prompt(char *filename)
 int
 getline(FILE *f, int *length)
 {
-	int		c;
+	int		ch;
 	char		*p;
 	int		column;
 	static int	colflg;
 
 	p = Line;
 	column = 0;
-	c = Getc(f);
-	if (colflg && c == '\n') {
+	ch = Getc(f);
+	if (colflg && ch == '\n') {
 		Currline++;
-		c = Getc(f);
+		ch = Getc(f);
 	}
 	while (p < &Line[LINSIZ - 1]) {
-		if (c == EOF) {
+		if (ch == EOF) {
 			if (p > Line) {
 				*p = '\0';
 				*length = p - Line;
@@ -670,12 +670,12 @@ getline(FILE *f, int *length)
 			*length = p - Line;
 			return (EOF);
 		}
-		if (c == '\n') {
+		if (ch == '\n') {
 			Currline++;
 			break;
 		}
-		*p++ = c;
-		if (c == '\t') {
+		*p++ = (char)ch;
+		if (ch == '\t') {
 			if (!hardtabs || (column < promptlen && !hard)) {
 				if (hardtabs && eraseln && !dumb) {
 					column = 1 + (column | 7);
@@ -692,23 +692,23 @@ getline(FILE *f, int *length)
 				}
 			} else
 				column = 1 + (column | 7);
-		} else if (c == '\b' && column > 0)
+		} else if (ch == '\b' && column > 0)
 			column--;
-		else if (c == '\r')
+		else if (ch == '\r')
 			column = 0;
-		else if (c == '\f' && stop_opt) {
+		else if (ch == '\f' && stop_opt) {
 			p[-1] = '^';
 			*p++ = 'L';
 			column += 2;
 			Pause++;
-		} else if (c == EOF) {
+		} else if (ch == EOF) {
 			*length = p - Line;
 			return (column);
-		} else if (c >= ' ' && c != RUBOUT)
+		} else if (ch >= ' ' && ch != RUBOUT)
 			column++;
 		if (column >= Mcol && fold_opt)
 			break;
-		c = Getc(f);
+		ch = Getc(f);
 	}
 	if (column >= Mcol && Mcol > 0 && !Wrap)
 		*p++ = '\n';
@@ -831,7 +831,7 @@ command(char *filename, FILE *f)
 {
 	int nlines;
 	int retval;
-	char c;
+	int ch;
 	char colonch;
 	int done;
 	char comchar, cmdbuf[80], *p;
@@ -941,8 +941,8 @@ command(char *filename, FILE *f)
 			putchar('\n');
 
 			while (nlines > 0) {
-				while ((c = Getc(f)) != '\n') {
-					if (c == EOF) {
+				while ((ch = Getc(f)) != '\n') {
+					if (ch == EOF) {
 						retval = 0;
 						done++;
 						goto endsw;
@@ -1333,11 +1333,11 @@ execute(char *filename, char *cmd, char *av0, char *av1, char *av2)
 void
 skiplns(int n, FILE *f)
 {
-	char c;
+	int ch;
 
 	while (n > 0) {
-		while ((c = Getc(f)) != '\n') {
-			if (c == EOF)
+		while ((ch = Getc(f)) != '\n') {
+			if (ch == EOF)
 				return;
 		}
 		n--;
@@ -1684,14 +1684,14 @@ expand(char *outbuf, size_t olen, char *inbuf)
 	size_t len;
 	char *instr;
 	char *outstr;
-	char ch;
+	char c;
 	char temp[200];
 	int changed = 0;
 
 	instr = inbuf;
 	outstr = temp;
-	while ((ch = *instr++) != '\0') {
-		switch (ch) {
+	while ((c = *instr++) != '\0') {
+		switch (c) {
 		case '%':
 			if (!no_intty) {
 				len = strlcpy(outstr, fnames[fnum],
@@ -1701,7 +1701,7 @@ expand(char *outbuf, size_t olen, char *inbuf)
 				outstr += len;
 				changed++;
 			} else
-				*outstr++ = ch;
+				*outstr++ = c;
 			break;
 		case '!':
 			if (!shellp)
@@ -1719,7 +1719,7 @@ expand(char *outbuf, size_t olen, char *inbuf)
 				break;
 			}
 		default:
-			*outstr++ = ch;
+			*outstr++ = c;
 			break;
 		}
 	}
@@ -1783,13 +1783,13 @@ reset_tty(void)
 void
 rdline(FILE *f)
 {
-	char c;
+	int ch;
 	char *p;
 
 	p = Line;
-	while ((c = Getc(f)) != '\n' && c != EOF && p - Line < LINSIZ - 1)
-		*p++ = c;
-	if (c == '\n')
+	while ((ch = Getc(f)) != '\n' && ch != EOF && p - Line < LINSIZ - 1)
+		*p++ = (char)ch;
+	if (ch == '\n')
 		Currline++;
 	*p = '\0';
 }
