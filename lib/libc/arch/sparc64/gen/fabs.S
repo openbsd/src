@@ -1,4 +1,4 @@
-/*	$OpenBSD: fabs.S,v 1.1 2001/08/29 01:45:24 art Exp $	*/
+/*	$OpenBSD: fabs.S,v 1.2 2003/02/08 07:42:31 jason Exp $	*/
 /*	$NetBSD: fabs.S,v 1.2 2000/07/23 07:12:22 eeh Exp $	*/
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,5 @@
 /* fabs - floating absolute value */
 
 ENTRY(fabs)
-	stx	%o0, [%sp + BIAS + 32]	! return value => %f0:f1
-	ldd	[%sp + BIAS + 32], %f0	! (via kernel %o0/%o1 slot)
 	retl
-	 fabss	%f0, %f0		! return absolute value
+	 fabsd	%f0, %f0		! return absolute value
