@@ -1,4 +1,4 @@
-.\" $OpenBSD: strtonum.3,v 1.8 2004/11/22 00:58:39 jmc Exp $
+.\" $OpenBSD: strtonum.3,v 1.9 2005/02/07 08:54:59 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Ted Unangst
 .\"
@@ -107,13 +107,16 @@ was larger than
 .Ar maxval .
 .El
 .Pp
-If an error occurs, errstr will be set to one of the following strings.
-.Bl -tag -width "too large"
-.It "too large"
+If an error occurs,
+.Fa errstr
+will be set to one of the following strings:
+.Pp
+.Bl -tag -width "too largeXX" -compact
+.It too large
 The result was larger than the provided maximum value.
-.It "too small"
+.It too small
 The result was smaller than the provided minimum value.
-.It "invalid"
+.It invalid
 The string did not consist solely of digit characters.
 .El
 .Sh SEE ALSO
@@ -133,7 +136,7 @@ extension.
 The existing alternatives, such as
 .Xr atoi 3
 and
-.Xr strtol 3
+.Xr strtol 3 ,
 are either impossible or difficult to use safely.
 .Sh HISTORY
 The
