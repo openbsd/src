@@ -141,7 +141,7 @@ The phyint command can be used to disable multicast routing on the physical
 interface identified by local IP address <local-addr>, or to associate a
 non-default metric or threshold with the specified physical interface.
 The local IP address <local-addr> may be replaced by the
-interface name (e.g le0).
+interface name (e.g., le0).
 If a phyint is attached to multiple IP subnets, describe each additional subnet
 with the altnet keyword.
 Phyint commands must precede tunnel commands.
@@ -150,7 +150,7 @@ The tunnel command can be used to establish a tunnel link between local
 IP address <local-addr> and remote IP address <remote-addr>, and to associate
 a non-default metric or threshold with that tunnel.
 The local IP address <local-addr> may be replaced by the
-interface name (e.g. le0).  The remote IP address <remote-addr> may
+interface name (e.g., le0).  The remote IP address <remote-addr> may
 be replaced by a host name, if and only if the host name has a single
 IP address associated with it.
 The tunnel must be set
@@ -379,7 +379,7 @@ interfaces along which datagrams belonging to the source-group are
 forwarded. A "p" indicates that no datagrams are being forwarded along
 that interface. An unlisted interface is a leaf subnet with are no
 members of the particular group on that subnet. A "b" on an interface
-indicates that it is a boundary interface, i.e. traffic will not be
+indicates that it is a boundary interface, i.e., traffic will not be
 forwarded on the scoped address on that interface.
 An additional line with a ">" as the first character is printed for
 each source on the subnet.  Note that there can be many sources in

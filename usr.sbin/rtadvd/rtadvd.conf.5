@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.3 2000/03/13 06:16:11 itojun Exp $
+.\"	$OpenBSD: rtadvd.conf.5,v 1.4 2000/03/14 21:31:38 aaron Exp $
 .\" 
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -132,7 +132,7 @@ for each item below.
 Indices vary from 0 to N-1, where N is the
 value of
 .Ic addrs.
-Each index shall follows the name of each item, e.g.
+Each index shall follows the name of each item, e.g.,
 .Dq prefixlen2 .
 .It Cm \&prefixlen
 (num) Prefix length field.
@@ -149,7 +149,7 @@ and Bit 6
 .Li 0x40
 .Pc
 means Autonomous address-configuration flag bit.
-The default value is 0xc0, i.e. both bits are set.
+The default value is 0xc0, i.e., both bits are set.
 .It Cm \&addr
 (str) The address filled into Prefix field.
 Since

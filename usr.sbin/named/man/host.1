@@ -1,4 +1,4 @@
-.\"	$OpenBSD: host.1,v 1.4 2000/03/04 22:19:28 aaron Exp $
+.\"	$OpenBSD: host.1,v 1.5 2000/03/14 21:31:37 aaron Exp $
 .\"
 .\"	@(#)host.1              e07@nikhef.nl (Eric Wassenaar) 961010
 .\"
@@ -40,13 +40,13 @@ The arguments can be either host names (domain names) or numeric
 Internet addresses.
 .PP
 A numeric Internet address consists of four decimal numbers
-separated by dots, e.g. \fB192.16.199.1\fP, representing the
+separated by dots, e.g., \fB192.16.199.1\fP, representing the
 four bytes of the 32-bit address.
 .br
 The default action is to look up the associated host name.
 .PP
 A host name or domain name consists of component names (labels)
-separated by dots, e.g. \fBnikhefh.nikhef.nl\fP
+separated by dots, e.g., \fBnikhefh.nikhef.nl\fP
 .br
 The default action is to look up all of its Internet addresses.
 .PP
@@ -56,7 +56,7 @@ Thus a user in domain "nikhef.nl" can say "host nikhapo",
 and it will actually look up "nikhapo.nikhef.nl".
 In all other cases, the name is tried unchanged.
 Single names with trailing dot are considered top-level domain
-specifications, e.g. "nl."
+specifications, e.g., "nl."
 .PP
 Note that the usual lookup convention for any name that does not end
 with a trailing dot is to try first with the local domain appended,
@@ -570,7 +570,7 @@ the queryname is valid or not. The answer was not authoritative.
 Perhaps recursion was off, and no data was cached locally.
 .TP
 \fIname\fP \fItype\fP record not found [at \fIserver\fP], try again
-Some intermediate failure, e.g. timeout reaching a nameserver.
+Some intermediate failure, e.g., timeout reaching a nameserver.
 .TP
 \fIname\fP \fItype\fP record not found [at \fIserver\fP], server failure
 Some explicit nameserver failure to process the query, due to internal

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lfs_cleanerd.8,v 1.6 1999/07/02 20:11:49 aaron Exp $
+.\"	$OpenBSD: lfs_cleanerd.8,v 1.7 2000/03/14 21:31:39 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,7 +57,7 @@ The daemon will exit within a few minutes
 of when the file system it was cleaning is unmounted.
 .Pp
 Garbage collection on a log-structured file system is done by scanning
-the file system's segments for active, i.e. referenced, data and copying
+the file system's segments for active, i.e., referenced, data and copying
 it to new segments.
 When all of the active data in a given segment has been copied to a new
 segment that segment can be marked as empty, thus reclaiming the space

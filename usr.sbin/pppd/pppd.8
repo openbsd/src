@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.19 1999/09/23 04:12:11 alex Exp $
+.\" $OpenBSD: pppd.8,v 1.20 2000/03/14 21:31:38 aaron Exp $
 .\" manual page [] for pppd 2.3
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\" SH section heading
@@ -44,7 +44,7 @@ used.
 .I <speed>
 Set the baud rate to <speed> (a decimal number).  On systems such as
 4.4BSD and OpenBSD, any speed can be specified.  Other systems
-(e.g. SunOS) allow only a limited set of speeds.
+(e.g., SunOS) allow only a limited set of speeds.
 .TP
 .B active-filter \fIfilter-expression
 Specifies a packet filter to be applied to data packets to determine
@@ -93,7 +93,7 @@ program to dial the modem and start the remote ppp session.  This
 option is privileged if the \fInoauth\fR option is used.
 .TP
 .B crtscts
-Use hardware flow control (i.e. RTS/CTS) to control the flow of data
+Use hardware flow control (i.e., RTS/CTS) to control the flow of data
 on the serial port.  If neither the \fIcrtscts\fR nor the
 \fInocrtscts\fR option is given, the hardware flow control setting
 for the serial port is left unchanged.
@@ -153,7 +153,7 @@ the peer, instead of exiting, as it would without this option.
 .I <local_IP_address>\fB:\fI<remote_IP_address>
 Set the local and/or remote interface IP addresses.  Either one may be
 omitted.  The IP addresses can be specified with a host name or in
-decimal dot notation (e.g. 150.234.56.78).  The default local
+decimal dot notation (e.g., 150.234.56.78).  The default local
 address is the (first) IP address of the system (unless the
 \fInoipdefault\fR
 option is given).  The remote address will be obtained from the peer
@@ -220,7 +220,7 @@ requests Deflate compression in preference to BSD-Compress if the peer
 can do either.)
 .TP
 .B demand
-Initiate the link only on demand, i.e. when data traffic is present.
+Initiate the link only on demand, i.e., when data traffic is present.
 With this option, the remote IP address must be specified by the user
 on the command line or in an options file.  Pppd will initially
 configure the interface and enable it for IP traffic without
@@ -251,7 +251,7 @@ the link was terminated because it was idle.
 .TP
 .B idle \fIn
 Specifies that pppd should disconnect if the link is idle for \fIn\fR
-seconds.  The link is idle when no data packets (i.e. IP packets) are
+seconds.  The link is idle when no data packets (i.e., IP packets) are
 being sent or received.  Note: it is not advisable to use this option
 with the \fIpersist\fR option without the \fIdemand\fR option.
 If the \fBactive-filter\fR
@@ -406,7 +406,7 @@ system password database to be allowed access.
 .TP
 .B maxconnect \fIn
 Terminate the connection when it has been available for network
-traffic for \fIn\fR seconds (i.e. \fIn\fR seconds after the first
+traffic for \fIn\fR seconds (i.e., \fIn\fR seconds after the first
 network control protocol comes up).
 .TP
 .B modem
@@ -453,7 +453,7 @@ name to \fIname\fR.)
 .TP
 .B netmask \fIn
 Set the interface netmask to \fIn\fR, a 32 bit netmask in "decimal dot"
-notation (e.g. 255.255.255.0).  If this option is given, the value
+notation (e.g., 255.255.255.0).  If this option is given, the value
 specified is ORed with the default netmask.  The default netmask is
 chosen based on the negotiated remote IP address; it is the
 appropriate network mask for the class of the remote IP address, ORed
@@ -478,7 +478,7 @@ should only be required if the peer is buggy and gets confused by
 requests from pppd for CCP negotiation.
 .TP
 .B nocrtscts
-Disable hardware flow control (i.e. RTS/CTS) on the serial port.  If
+Disable hardware flow control (i.e., RTS/CTS) on the serial port.  If
 neither the \fIcrtscts\fR nor the \fInocrtscts\fR option is given,
 the hardware flow control setting for the serial port is left
 unchanged.
@@ -643,7 +643,7 @@ completed.  This option is privileged if the \fInoauth\fR option is
 used.
 .TP
 .B xonxoff
-Use software flow control (i.e. XON/XOFF) to control the flow of data on
+Use software flow control (i.e., XON/XOFF) to control the flow of data on
 the serial port.
 .SH OPTIONS FILES
 Options can be taken from files as well as the command line.  Pppd
@@ -750,7 +750,7 @@ on the line, or if the first word is "-", then all IP addresses are
 disallowed.  To allow any address, use "*".
 A word starting with "!" indicates that the
 specified address is \fInot\fR acceptable.  An address may be followed
-by "/" and a number \fIn\fR, to indicate a whole subnet, i.e. all
+by "/" and a number \fIn\fR, to indicate a whole subnet, i.e., all
 addresses which have the same value in the most significant \fIn\fR
 bits.  Note that case is significant in the client and server names
 and in the secret.
@@ -758,7 +758,7 @@ and in the secret.
 If the secret starts with an `@', what follows is assumed to be the
 name of a file from which to read the secret.  A "*" as the client or
 server name matches any name.  When selecting a secret, pppd takes the
-best match, i.e.  the match with the fewest wildcards.
+best match, i.e., the match with the fewest wildcards.
 .LP
 Thus a secrets file contains both secrets for use in authenticating
 other hosts, plus secrets which we use for authenticating ourselves to

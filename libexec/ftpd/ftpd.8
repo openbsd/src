@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.26 1999/12/03 01:22:46 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.27 2000/03/14 21:31:46 aaron Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -219,9 +219,9 @@ SITE request.
 .Pp
 .Bl -column Request -offset indent
 .It Sy Request Ta Sy Description
-.It UMASK Ta change umask, e.g. ``SITE UMASK 002''
-.It IDLE Ta set idle-timer, e.g. ``SITE IDLE 60''
-.It CHMOD Ta change mode of a file, e.g. ``SITE CHMOD 755 filename''
+.It UMASK Ta change umask, e.g., ``SITE UMASK 002''
+.It IDLE Ta set idle-timer, e.g., ``SITE IDLE 60''
+.It CHMOD Ta change mode of a file, e.g., ``SITE CHMOD 755 filename''
 .It HELP Ta give help information.
 .El
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: btree.3,v 1.12 1999/07/09 13:35:15 aaron Exp $
+.\"	$OpenBSD: btree.3,v 1.13 2000/03/14 21:31:39 aaron Exp $
 .\"	$NetBSD: btree.3,v 1.6 1996/05/03 21:26:48 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -96,7 +96,7 @@ The flag value is specified by
 any of the following values:
 .Bl -tag -width XXXXX
 .It Dv R_DUP
-Permit duplicate keys in the tree, i.e. permit insertion if the key to be
+Permit duplicate keys in the tree, i.e., permit insertion if the key to be
 inserted already exists in the tree.
 The default behavior, as described in
 .Xr dbopen 3 ,
@@ -143,7 +143,7 @@ Not currently implemented.
 .It minkeypage
 The minimum number of keys which will be stored on any single page.
 This value is used to determine which keys will be stored on overflow
-pages, i.e. if a key or data item is longer than the pagesize divided
+pages, i.e., if a key or data item is longer than the pagesize divided
 by the minkeypage value, it will be stored on overflow pages instead
 of in the page itself. If
 .Fa minkeypage

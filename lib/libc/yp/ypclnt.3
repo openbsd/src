@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.10 1999/11/30 00:46:19 deraadt Exp $
+.\"	$OpenBSD: ypclnt.3,v 1.11 2000/03/14 21:31:45 aaron Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -137,7 +137,7 @@ to a YP server process.  The client process need not explicitly bind to
 the server, as it happens automatically whenever a lookup occurs.
 The function
 .Fn yp_bind
-is provided for a backup strategy, e.g. a local file, when a YP server process
+is provided for a backup strategy, e.g., a local file, when a YP server process
 is not available.  Each binding uses one socket descriptor on the client
 process, which may be explicitly freed using
 .Fn yp_unbind ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: re_format.7,v 1.7 1999/07/09 13:35:22 aaron Exp $
+.\"	$OpenBSD: re_format.7,v 1.8 2000/03/14 21:31:45 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -130,9 +130,9 @@ for the full
 .Em range
 of characters between those two (inclusive) in the
 collating sequence,
-e.g. `[0-9]' in ASCII matches any decimal digit.
+e.g., `[0-9]' in ASCII matches any decimal digit.
 It is illegal\(dg for two ranges to share an
-endpoint, e.g. `a-c-e'.
+endpoint, e.g., `a-c-e'.
 Ranges are very collating-sequence-dependent,
 and portable programs should avoid relying on them.
 .Pp
@@ -154,7 +154,7 @@ sequence of characters of that collating element.
 The sequence is a single element of the bracket expression's list.
 A bracket expression containing a multi-character collating element
 can thus match more than one character,
-e.g. if the collating sequence includes a `ch' collating element,
+e.g., if the collating sequence includes a `ch' collating element,
 then the RE `[[.ch.]]*c' matches the first five characters
 of `chchcc'.
 .Pp
@@ -236,7 +236,7 @@ alphabet.
 When an alphabetic that exists in multiple cases appears as an
 ordinary character outside a bracket expression, it is effectively
 transformed into a bracket expression containing both cases,
-e.g. `x' becomes `[xX]'.
+e.g., `x' becomes `[xX]'.
 When it appears inside a bracket expression, all case counterparts
 of it are added to the bracket expression, so that (e.g.) `[x]'
 becomes `[xX]' and `[^x]' becomes `[^xX]'.
