@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ioctl.h,v 1.9 1998/05/29 00:41:05 mickey Exp $	*/
+/*	$OpenBSD: pcvt_ioctl.h,v 1.10 1998/09/28 03:00:28 downsj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -255,46 +255,47 @@ struct mousedefs {
 #define VGA_F_TRI	4	/* FAMILY TRIDENT */
 #define VGA_TR8800BR	12	/* Trident TVGA 8800BR */
 #define VGA_TR8800CS	13	/* Trident TVGA 8800CS */
-#define VGA_TR8900B	14	/* Trident TVGA 8900B  */
-#define VGA_TR8900C	15	/* Trident TVGA 8900C  */
+#define VGA_TR8900B	14	/* Trident TVGA 8900B */
+#define VGA_TR8900C	15	/* Trident TVGA 8900C */
 #define VGA_TR8900CL	16	/* Trident TVGA 8900CL */
-#define VGA_TR9000	17	/* Trident TVGA 9000   */
-#define VGA_TR9100	18	/* Trident TVGA 9100   */
-#define VGA_TR9200	19	/* Trident TVGA 9200   */
-#define VGA_TR9440	20	/* Trident TVGA 9440   */
-#define VGA_TR9660	21	/* Trident TVGA 9660   */
-#define VGA_TRUNKNOWN	22	/* Trident unknown     */
+#define VGA_TR9000	17	/* Trident TVGA 9000 */
+#define VGA_TR9100	18	/* Trident TVGA 9100 */
+#define VGA_TR9200	19	/* Trident TVGA 9200 */
+#define VGA_TR9440	20	/* Trident TVGA 9440 */
+#define VGA_TR9660	21	/* Trident TVGA 9660 */
+#define VGA_TR9750	22	/* Trident 3DImage 9750 */
+#define VGA_TRUNKNOWN	23	/* Trident unknown */
 
 #define VGA_F_S3	5	/* FAMILY S3  */
-#define VGA_S3_911	23	/* S3 911 */
-#define VGA_S3_924	24	/* S3 924 */
-#define VGA_S3_80x	25	/* S3 801/805 */
-#define VGA_S3_928	26	/* S3 928 */
-#define	VGA_S3_864	27	/* S3 864 */
-#define	VGA_S3_964	28	/* S3 964 */
-#define	VGA_S3_732	29	/* S3 732 (Trio32) */
-#define	VGA_S3_764	30	/* S3 764 (Trio64) */
-#define	VGA_S3_866	31	/* S3 866 */
-#define VGA_S3_868	32	/* S3 868 */
-#define VGA_S3_968	33	/* S3 968 */
-#define VGA_S3_765	34	/* S3 765 (Trio64 V+) */
-#define VGA_S3_ViRGE	35	/* S3 ViRGE */
-#define VGA_S3_UNKNOWN	36	/* unknown S3 chipset */
+#define VGA_S3_911	24	/* S3 911 */
+#define VGA_S3_924	25	/* S3 924 */
+#define VGA_S3_80x	26	/* S3 801/805 */
+#define VGA_S3_928	27	/* S3 928 */
+#define	VGA_S3_864	28	/* S3 864 */
+#define	VGA_S3_964	29	/* S3 964 */
+#define	VGA_S3_732	30	/* S3 732 (Trio32) */
+#define	VGA_S3_764	31	/* S3 764 (Trio64) */
+#define	VGA_S3_866	32	/* S3 866 */
+#define VGA_S3_868	33	/* S3 868 */
+#define VGA_S3_968	34	/* S3 968 */
+#define VGA_S3_765	35	/* S3 765 (Trio64 V+) */
+#define VGA_S3_ViRGE	36	/* S3 ViRGE */
+#define VGA_S3_UNKNOWN	37	/* unknown S3 chipset */
 
 #define VGA_F_CIR	6	/* FAMILY CIRRUS */
-#define VGA_CL_GD5402	37	/* Cirrus CL-GD5402	*/
-#define VGA_CL_GD5402r1	38	/* Cirrus CL-GD5402r1	*/
-#define VGA_CL_GD5420	39	/* Cirrus CL-GD5420	*/
-#define VGA_CL_GD5420r1	40	/* Cirrus CL-GD5420r1	*/
-#define VGA_CL_GD5422	41	/* Cirrus CL-GD5422	*/
-#define VGA_CL_GD5424	42	/* Cirrus CL-GD5424	*/
-#define VGA_CL_GD5426	43	/* Cirrus CL-GD5426	*/
-#define VGA_CL_GD5428	44	/* Cirrus CL-GD5428	*/
-#define VGA_CL_GD5430	45	/* Cirrus CL-GD543x	*/
-#define	VGA_CL_GD6225	46	/* Cirrus CL-GD62x5	*/
-#define VGA_CL_UNKNOWN	47	/* Unknown Cirrus CL	*/
+#define VGA_CL_GD5402	38	/* Cirrus CL-GD5402	*/
+#define VGA_CL_GD5402r1	39	/* Cirrus CL-GD5402r1	*/
+#define VGA_CL_GD5420	40	/* Cirrus CL-GD5420	*/
+#define VGA_CL_GD5420r1	41	/* Cirrus CL-GD5420r1	*/
+#define VGA_CL_GD5422	42	/* Cirrus CL-GD5422	*/
+#define VGA_CL_GD5424	43	/* Cirrus CL-GD5424	*/
+#define VGA_CL_GD5426	44	/* Cirrus CL-GD5426	*/
+#define VGA_CL_GD5428	45	/* Cirrus CL-GD5428	*/
+#define VGA_CL_GD5430	46	/* Cirrus CL-GD543x	*/
+#define	VGA_CL_GD6225	47	/* Cirrus CL-GD62x5	*/
+#define VGA_CL_UNKNOWN	48	/* Unknown Cirrus CL	*/
 
-#define VGA_MAX_CHIPSET	48	/* max no of chips	*/
+#define VGA_MAX_CHIPSET	49	/* max no of chips	*/
 
 /*****************************************************************************/
 /* NOTE: update the 'scon' utility when adding support for more chipsets !!! */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.16 1998/07/19 10:47:53 downsj Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.17 1998/09/28 03:00:27 downsj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -123,6 +123,7 @@ static int regsaved = 0;	/* registers are saved to savearea */
  *	###############################################################
  *
  *---------------------------------------------------------------------------*/
+
 u_char
 vga_chipset(void)
 {
@@ -272,6 +273,9 @@ vga_chipset(void)
 			case 0xd3:
 				can_do_132col = 1;
 				return(VGA_TR9660);
+
+			case 0xf3:
+				return(VGA_TR9750);
 
 			default:
 				return(VGA_TRUNKNOWN);
@@ -642,6 +646,7 @@ vga_string(int number)
 		"TVGA 9200",
 		"TVGA 9440",
 		"TVGA 9660",
+		"TVGA 9750 (3DImage)",
 		"unknown Trident",
 		"S3 911",
 		"S3 924",
