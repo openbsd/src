@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lmccontrol.8,v 1.1 2000/10/13 16:22:07 chris Exp $
+.\"	$OpenBSD: lmccontrol.8,v 1.2 2000/10/13 19:11:34 aaron Exp $
 .\"
 .\" Copyright (c) 1997-1999 LAN Media Corporation (LMC)
 .\" All rights reserved.  www.lanmedia.com
@@ -48,8 +48,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-command controls the operation of the Lan Media
-devices via the
+command controls the operation of the Lan Media devices via the
 .Xr lmc 4
 driver.
 Most of the parameters that can be changed relate to the
@@ -58,13 +57,15 @@ You can adjust layer 2 protocol keepalives, and line speed.
 Line characteristics which can be adjusted include CRC length,
 internal or external clock source, DS3 scrambler, and DS3 cable length.
 .Pp
-This program controlls the Lan Media SSI,
-HSSI, T1, and DS3 network interfaces.  The SSI is the LMC1000, and runs at
-various speeds up to 10Mbps.  It requires an external CSU/DSU for
-operation on T1/E1 lines.  The HSSI card is the LMC5000, and runs at various
-speeds up to 52Mbps.  It requires an external DSU for operation on DS3 lines.
-The DS3 is the LMC5245 and runs at a speed of
-45Mbps.  It has no internal clock generator, and does not require external DSU for DS3 operation.  The T1 card is the LMC1200 and runs at a speed of 1.544Mbps or
+This program controlls the Lan Media SSI, HSSI, T1, and DS3 network interfaces.
+The SSI is the LMC1000, and runs at various speeds up to 10Mbps.
+It requires an external CSU/DSU for operation on T1/E1 lines.
+The HSSI card is the LMC5000, and runs at various speeds up to 52Mbps.
+It requires an external DSU for operation on DS3 lines.
+The DS3 is the LMC5245 and runs at a speed of 45Mbps.
+It has no internal clock generator, and does not require external
+DSU for DS3 operation.
+The T1 card is the LMC1200 and runs at a speed of 1.544Mbps or
 2Mbps for E1 operation, without CSU/DSU.
 .Pp
 The
@@ -78,7 +79,7 @@ The
 .Nm
 command given without any additional flags retrieves the current card
 settings from the driver and prints them out.
-.Sh OPTIONS
+.Pp
 The options are as follows:
 .Pp
 .Bl -tag -width Fl
@@ -87,36 +88,37 @@ The interface name of the Lan Media card (default is lmc0)
 .It Fl l Ar speed
 To manually specify line speed, in bits per second (for devices without built-in CSU/DSU)
 .It Fl c
-Sets the interface to use an external clock source.  This
-is only valid for SSI/HSSI cards.
+Sets the interface to use an external clock source.
+This is only valid for SSI/HSSI cards.
 .It Fl C
-Set the interface to use internal clocking.  On the SSI card this uses the
-internal baud rate generator.  On the HSSI card it uses the PCI bus clock.
+Set the interface to use internal clocking.
+On the SSI card this uses the internal baud rate generator.
+On the HSSI card it uses the PCI bus clock.
 This is only valid for SSI/HSSI cards.
 .It Fl e
-sets 16 bit CRC
+Sets 16-bit CRC.
 .It Fl E
-sets 32 bit CRC
+Sets 32-bit CRC.
 .It Fl k
-enables layer 2 keepalive
+Enables layer 2 keepalive.
 .It Fl K
-disables layer 2 keepalive
+Disables layer 2 keepalive.
 .It Fl s
-turn DS3 scrambler off
+Turn DS3 scrambler off.
 .It Fl S
-turn DS3 scrambler on
+Turn DS3 scrambler on.
 .It Fl o
-Program the DS3 card for cable lengths of less than 100 feet.  In this mode,
-the card uses lower power to transmit data for short cable runs, which might
-otherwise overdrive a receiver.  This is the default, and will work in most
-situations even with runs more than 100 feet.
+Program the DS3 card for cable lengths of less than 100 feet.
+In this mode, the card uses lower power to transmit data for short cable runs,
+which might otherwise overdrive a receiver.
+This is the default, and will work in most situations even with runs
+more than 100 feet.
 .It Fl O 
 Program the DS3 card for cable length for over 100 feet in length (higher
 power).
 .El
 .Pp
 .Sh EXAMPLES
-
 To set a SSI card for a speed of 2048000 bits/sec with HDLC keepalive off,
 one could use:
 .Bd -unfilled -offset indent
@@ -126,16 +128,15 @@ lmcctl -i lmc0 -l 2048000 -K
 .Sh SEE ALSO
 .Xr lmc 4 ,
 .Xr sppp 4 ,
-.Xr spppcontrol 8 ,
 .Xr hostname.if 8 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
-command first appeared in
-.Nx 1.4 .
+utility first appeared in
+.Ox 2.8 .
 .Sh AUTHOR
 The
 .Nm
-command was written by
+utility was written by
 .An Michael Graff Aq explorer@vix.com .
