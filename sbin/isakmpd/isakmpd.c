@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.8 1999/02/26 03:44:42 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.27 1999/02/25 11:39:09 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.9 1999/03/24 14:43:37 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.28 1999/03/24 11:01:06 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -242,7 +242,7 @@ main (int argc, char *argv[])
        * XXX Some day we might want to deal with an abstract application
        * class instead, with many instantiations possible.
        */
-      if (!app_none)
+      if (!app_none && app_socket >= 0)
 	{
 	  FD_SET (app_socket, rfds);
 	  if (app_socket + 1 > n)
@@ -279,7 +279,7 @@ main (int argc, char *argv[])
 	  transport_send_messages (wfds);
 	  if (FD_ISSET (ui_socket, rfds))
 	    ui_handler ();
-	  if (!app_none && FD_ISSET (app_socket, rfds))
+	  if (!app_none && app_socket >= 0 && FD_ISSET (app_socket, rfds))
 	    app_handler ();
 	}
       timer_handle_expirations ();
