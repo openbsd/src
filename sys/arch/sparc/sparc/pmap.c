@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.47 1999/12/08 10:44:49 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.48 1999/12/08 11:38:38 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5738,7 +5738,21 @@ pmap_kenter_pa4m(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
+#if 1
+	struct pvlist *pv;
+	int pteproto, ctx;
+
+	pteproto = ((pa & PMAP_NC) == 0 ? SRMMU_PG_C : 0) |
+		PMAP_T2PTE_SRMMU(pa) | SRMMU_TEPTE | PPROT_RX_RX | PPROT_S |
+		(atop(pa) << SRMMU_PPNSHIFT) |
+		((prot & VM_PROT_WRITE) ? PPROT_WRITE : 0);
+	pv = pvhead(atop(pa));
+
+	ctx = getcontext4m();
+	pmap_enk4m(pmap_kernel(), va, prot, TRUE, pv, pteproto);
+#else
 	pmap_enter4m(pmap_kernel(), va, pa, prot, TRUE, 0);
+#endif
 }
 
 void
@@ -5749,10 +5763,9 @@ pmap_kenter_pgs4m(va, pgs, npgs)
 {
 	int i;
 
-	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
-		pmap_enter4m(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-			     VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
-	}
+	for (i = 0; i < npgs; i++, va += PAGE_SIZE)
+		pmap_kenter_pa4m(va, VM_PAGE_TO_PHYS(pgs[i]),
+				 VM_PROT_READ|VM_PROT_WRITE);
 }
 
 void
