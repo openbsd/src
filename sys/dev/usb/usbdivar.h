@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdivar.h,v 1.4 1999/08/31 07:42:51 fgsch Exp $	*/
-/*	$NetBSD: usbdivar.h,v 1.24 1999/08/17 20:59:04 augustss Exp $	*/
+/*	$OpenBSD: usbdivar.h,v 1.5 1999/09/27 18:03:56 fgsch Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.35 1999/09/15 21:08:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* From usb_mem.h */
+DECLARE_USB_DMA_T;
+
 struct usbd_request;
 struct usbd_pipe;
 
@@ -46,15 +49,21 @@ struct usbd_endpoint {
 	int			refcnt;
 };
 
-struct usbd_methods {
+struct usbd_bus_methods {
+	usbd_status	      (*open_pipe)__P((struct usbd_pipe *pipe));
+	void		      (*do_poll)__P((struct usbd_bus *));
+	usbd_status	      (*allocm)__P((struct usbd_bus *, usb_dma_t *,
+					    u_int32_t bufsize));
+	void		      (*freem)__P((struct usbd_bus *, usb_dma_t *));
+};
+
+struct usbd_pipe_methods {
 	usbd_status	      (*transfer)__P((usbd_request_handle reqh));
 	usbd_status	      (*start)__P((usbd_request_handle reqh));
 	void		      (*abort)__P((usbd_request_handle reqh));
 	void		      (*close)__P((usbd_pipe_handle pipe));
 	void		      (*cleartoggle)__P((usbd_pipe_handle pipe));
 	void		      (*done)__P((usbd_request_handle reqh));
-	usbd_status	      (*isobuf)__P((usbd_pipe_handle pipe,
-					    u_int32_t bufsize,u_int32_t nbuf));
 };
 
 struct usbd_port {
@@ -80,10 +89,9 @@ struct usb_softc;
 
 struct usbd_bus {
 	/* Filled by HC driver */
-	bdevice			bdev; /* base device, host adapter */
-	usbd_status	      (*open_pipe)__P((struct usbd_pipe *pipe));
+	USBBASEDEVICE		bdev; /* base device, host adapter */
+	struct usbd_bus_methods	*methods;
 	u_int32_t		pipe_size; /* size of a pipe struct */
-	void		      (*do_poll)__P((struct usbd_bus *));
 	/* Filled by usb driver */
 	struct usbd_device     *root_hub;
 	usbd_device_handle	devices[USB_MAX_DEVICES];
@@ -91,6 +99,11 @@ struct usbd_bus {
 	char			use_polling;
 	struct usb_softc       *usbctl;
 	struct usb_device_stats	stats;
+	int 			intr_context;
+	u_int			no_intrs;
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+	bus_dma_tag_t		dmatag;	/* DMA tag */
+#endif
 };
 
 struct usbd_device {
@@ -112,7 +125,7 @@ struct usbd_device {
 	usb_config_descriptor_t *cdesc;	/* full config descr */
 	struct usbd_quirks     *quirks;
 	struct usbd_hub	       *hub; /* only if this is a hub */
-	bdevice		      **subdevs;	/* sub-devices, 0 terminated */
+	device_ptr_t	       *subdevs;	/* sub-devices, 0 terminated */
 };
 
 struct usbd_interface {
@@ -138,7 +151,7 @@ struct usbd_pipe {
 	char			repeat;
 
 	/* Filled by HC driver. */
-	struct usbd_methods    *methods;
+	struct usbd_pipe_methods *methods;
 };
 
 struct usbd_request {
@@ -153,12 +166,26 @@ struct usbd_request {
 	usbd_callback		callback;
 	__volatile char		done;
 
+	/* For control pipe */
 	usb_device_request_t	request;
-	char			isreq;
+
+	/* For isoc */
+	u_int16_t		*frlengths;
+	int			nframes;
+
+	/* For memory allocation */
+	struct usbd_device     *device;
+	usb_dma_t		dmabuf;
+
+	int			rqflags;
+#define URQ_REQUEST	0x01
+#define URQ_AUTO_DMABUF	0x10
+#define URQ_DEV_DMABUF	0x20
 
 	SIMPLEQ_ENTRY(usbd_request) next;
 
-	void		       *hcpriv; /* XXX private use by the HC driver */
+	void		       *hcpriv; /* private use by the HC driver */
+	int			hcprivint; /* ditto */
 
 #if defined(__FreeBSD__)
 	struct callout_handle  timo_handle;
@@ -177,7 +204,7 @@ usbd_status	usbd_setup_pipe __P((usbd_device_handle dev,
 				     usbd_interface_handle iface,
 				     struct usbd_endpoint *,
 				     usbd_pipe_handle *pipe));
-usbd_status	usbd_new_device __P((bdevice *parent, 
+usbd_status	usbd_new_device __P((device_ptr_t parent, 
 				     usbd_bus_handle bus, int depth,
 				     int lowspeed, int port, 
 				     struct usbd_port *));
@@ -190,12 +217,20 @@ void		usb_free_device __P((usbd_device_handle));
 
 usbd_status	usb_insert_transfer __P((usbd_request_handle reqh));
 void		usb_transfer_complete __P((usbd_request_handle reqh));
+void		usb_disconnect_port __P((struct usbd_port *up));
 
 /* Routines from usb.c */
 int		usb_bus_count __P((void));
 void		usb_needs_explore __P((usbd_bus_handle));
-#if 0
-usbd_status	usb_get_bus_handle __P((int, usbd_bus_handle *));
+
+#ifdef DIAGNOSTIC
+#define SPLUSBCHECK \
+	do { int _s = splusb(), _su = splusb(); \
+             if (_s != _su) printf("SPLUSBCHECK failed 0x%x!=0x%x, %s:%d\n", \
+				   _s, _su, __FILE__, __LINE__); \
+        } while (0)
+#else
+#define SPLUSBCHECK
 #endif
 
 /* Locator stuff. */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_port.h,v 1.4 1999/08/19 08:18:39 fgsch Exp $	*/
-/*	$NetBSD: usb_port.h,v 1.9 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$OpenBSD: usb_port.h,v 1.5 1999/09/27 18:03:56 fgsch Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.11 1999/09/11 08:19:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,16 +43,25 @@
  * Macro's to cope with the differences between operating systems.
  */
 
+#if defined(__NetBSD__)
 /*
  * NetBSD
  */
 
-#if defined(__NetBSD__)
 #include "opt_usbverbose.h"
 
+typedef struct device *device_ptr_t;
+#define USBBASEDEVICE struct device
+#define USBDEV(bdev) (&(bdev))
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
+#define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
 
-typedef struct device bdevice;			/* base device */
+#define DECLARE_USB_DMA_T \
+	struct usb_dma_block; \
+	typedef struct { \
+		struct usb_dma_block *block; \
+		u_int offs; \
+	} usb_dma_t
 
 #define usb_timeout(f, d, t, h) timeout((f), (d), (t))
 #define usb_untimeout(f, d, h) untimeout((f), (d))
@@ -124,15 +133,25 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
 #define bswap32(x)		swap32(x)
-#define powerhook_establish(h, sc) /* nothing */
+#define powerhook_establish(h, sc) NULL
+#define powerhook_disestablish(sc) /* nothing */
 
 #define	usbpoll			usbselect
 #define	uhidpoll		uhidselect
 #define	ugenpoll		ugenselect
 
+typedef struct device *device_ptr_t;
+#define USBBASEDEVICE struct device
+#define USBDEV(bdev) (&(bdev))
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
+#define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
 
-typedef struct device bdevice;			/* base device */
+#define DECLARE_USB_DMA_T \
+	struct usb_dma_block; \
+	typedef struct { \
+		struct usb_dma_block *block; \
+		u_int offs; \
+	} usb_dma_t
 
 #define usb_timeout(f, d, t, h) timeout((f), (d), (t))
 #define usb_untimeout(f, d, h) untimeout((f), (d))
@@ -203,12 +222,13 @@ __CONCAT(dname,_attach)(parent, self, aux) \
  */
 
 #include "opt_usb.h"
-/* 
- * The following is not a type def to avoid error messages
- * because of includes in the wrong order.
- */
-#define bdevice device_t
-#define USBDEVNAME(bdev) usbd_devname(&bdev)
+
+#define USBBASEDEVICE device_t
+#define USBDEV(bdev) (bdev)
+#define USBDEVNAME(bdev) usbd_devname(bdev)
+#define USBDEVPTRNAME(bdev) usbd_devname(bdev)
+
+#define DECLARE_USB_DMA_T typedef void * usb_dma_t
 
 /* XXX Change this when FreeBSD has memset
  */
@@ -305,3 +325,8 @@ __CONCAT(dname,_attach)(device_t self)
 
 #undef NONE
 
+
+
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__FreeBSD__)
+#endif

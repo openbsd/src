@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb.h,v 1.4 1999/08/31 07:42:50 fgsch Exp $	*/
-/*	$NetBSD: usb.h,v 1.30 1999/08/29 22:45:41 augustss Exp $	*/
+/*	$OpenBSD: usb.h,v 1.5 1999/09/27 18:03:56 fgsch Exp $	*/
+/*	$NetBSD: usb.h,v 1.34 1999/09/16 21:53:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -220,12 +220,11 @@ typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bEndpointAddress;
-#define UE_IN		0x80
-#define UE_OUT		0x00
+#define UE_GET_DIR(a)	((a) & 0x80)
+#define UE_DIR_IN	0x80
+#define UE_DIR_OUT	0x00
 #define UE_ADDR		0x0f
 #define UE_GET_ADDR(a)	((a) & UE_ADDR)
-#define UE_GET_IN(a)	(((a) >> 7) & 1)
-#define UE_GET_DIR(a)	((a) & 0x80)
 	uByte		bmAttributes;
 #define UE_XFERTYPE	0x03
 #define  UE_CONTROL	0x00
@@ -337,6 +336,7 @@ typedef struct {
 #define UCLASS_AUDIO		1
 #define  USUBCLASS_AUDIOCONTROL	1
 #define  USUBCLASS_AUDIOSTREAM	2
+#define  USUBCLASS_MIDISTREAM	3
 #define UCLASS_CDC		2 /* communication */
 #define	 USUBCLASS_DIRECT_LINE_CONTROL_MODEL	1
 #define  USUBCLASS_ABSTRACT_CONTROL_MODEL	2
@@ -361,8 +361,8 @@ typedef struct {
 #define  USUBCLASS_SCSI		6
 #define  UPROTO_MASS_CBI_I	0
 #define  UPROTO_MASS_CBI	1
-#define  UPROTO_MASS_BULK	80
-#define  UPROTO_MASS_BULK2	2
+#define  UPROTO_MASS_BULK	2
+#define  UPROTO_MASS_BULK_P	80
 #define UCLASS_HUB		9
 #define  USUBCLASS_HUB		0
 #define UCLASS_DATA		10
@@ -408,8 +408,7 @@ struct usb_ctl_request {
 	usb_device_request_t request;
 	void	*data;
 	int	flags;
-/* XXX must match flags in usbdi.h */
-#define USBD_SHORT_XFER_OK	0x04
+#define USBD_SHORT_XFER_OK	0x04	/* allow short reads */
 	int	actlen;		/* actual length transferred */
 };
 

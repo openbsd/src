@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdi.h,v 1.4 1999/08/31 07:42:50 fgsch Exp $	*/
-/*	$NetBSD: usbdi.h,v 1.20 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$OpenBSD: usbdi.h,v 1.5 1999/09/27 18:03:56 fgsch Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.29 1999/09/12 08:23:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,8 +67,6 @@ typedef enum {
 	USBD_STALLED,
 	USBD_INTERRUPTED,
 
-	USBD_XXX,
-
 	USBD_ERROR_MAX,		/* must be last */
 } usbd_status;
 
@@ -81,10 +79,9 @@ typedef void (*usbd_callback) __P((usbd_request_handle, usbd_private_handle,
 #define USBD_EXCLUSIVE_USE	0x01
 
 /* Request flags */
-#define USBD_XFER_OUT		0x01
-#define USBD_XFER_IN		0x02
-#define USBD_SHORT_XFER_OK	0x04	/* allow short reads */
-#define USBD_SYNCHRONOUS	0x08	/* wait for completion */
+#define USBD_NO_COPY		0x01	/* do not copy data to DMA buffer */
+#define USBD_SYNCHRONOUS	0x02	/* wait for completion */
+/* in usb.h #define USBD_SHORT_XFER_OK	0x04*/	/* allow short reads */
 
 #define USBD_NO_TIMEOUT 0
 #define USBD_DEFAULT_TIMEOUT 5000 /* ms = 5 s */
@@ -94,18 +91,22 @@ usbd_status usbd_open_pipe
 	     u_int8_t flags, usbd_pipe_handle *pipe));
 usbd_status usbd_close_pipe	__P((usbd_pipe_handle pipe));
 usbd_status usbd_transfer	__P((usbd_request_handle req));
-usbd_request_handle usbd_alloc_request	__P((void));
+usbd_request_handle usbd_alloc_request	__P((usbd_device_handle));
 usbd_status usbd_free_request	__P((usbd_request_handle reqh));
-usbd_status usbd_setup_request	
+void usbd_setup_request	
 	__P((usbd_request_handle reqh, usbd_pipe_handle pipe,
 	     usbd_private_handle priv, void *buffer,
 	     u_int32_t length, u_int16_t flags, u_int32_t timeout,
 	     usbd_callback));
-usbd_status usbd_setup_default_request
+void usbd_setup_default_request
 	__P((usbd_request_handle reqh, usbd_device_handle dev,
 	     usbd_private_handle priv, u_int32_t timeout,
 	     usb_device_request_t *req,  void *buffer,
 	     u_int32_t length, u_int16_t flags, usbd_callback));
+void usbd_setup_isoc_request	
+	__P((usbd_request_handle reqh, usbd_pipe_handle pipe,
+	     usbd_private_handle priv, u_int16_t *frlengths,
+	     u_int32_t nframes, u_int16_t flags, usbd_callback));
 void usbd_get_request_status
 	__P((usbd_request_handle reqh, usbd_private_handle *priv,
 	     void **buffer, u_int32_t *count, usbd_status *status));
@@ -123,17 +124,16 @@ usbd_status usbd_interface2device_handle
 usbd_status usbd_device2interface_handle
 	__P((usbd_device_handle dev, u_int8_t ifaceno, usbd_interface_handle *iface));
 
-/* Non-standard */
+usbd_device_handle usbd_pipe2device_handle __P((usbd_pipe_handle));
+void *usbd_alloc_buffer __P((usbd_request_handle req, u_int32_t size));
+void usbd_free_buffer __P((usbd_request_handle req));
+void *usbd_get_buffer __P((usbd_request_handle reqh));
 usbd_status usbd_sync_transfer	__P((usbd_request_handle req));
 usbd_status usbd_open_pipe_intr
 	__P((usbd_interface_handle iface, u_int8_t address,
 	     u_int8_t flags, usbd_pipe_handle *pipe,
 	     usbd_private_handle priv, void *buffer,
 	     u_int32_t length, usbd_callback));
-usbd_status usbd_open_pipe_iso
-	__P((usbd_interface_handle iface, u_int8_t address,
-	     u_int8_t flags, usbd_pipe_handle *pipe,
-	     usbd_private_handle priv, u_int32_t bufsize, u_int32_t nbuf));
 usbd_status usbd_do_request 
 	__P((usbd_device_handle pipe, usb_device_request_t *req, void *data));
 usbd_status usbd_do_request_async
@@ -254,7 +254,7 @@ usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 #if defined(__FreeBSD__)
 int usbd_driver_load    __P((module_t mod, int what, void *arg));
 void usbd_device_set_desc __P((device_t device, char *devinfo));
-char *usbd_devname(bdevice *bdev);
+char *usbd_devname(device_t *bdev);
 bus_print_child_t usbd_print_child;
 #endif
 

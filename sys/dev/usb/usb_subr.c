@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_subr.c,v 1.4 1999/08/27 09:00:30 fgsch Exp $	*/
-/*	$NetBSD: usb_subr.c,v 1.38 1999/08/17 20:59:04 augustss Exp $	*/
+/*	$OpenBSD: usb_subr.c,v 1.5 1999/09/27 18:03:56 fgsch Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.48 1999/09/16 19:20:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 #include <sys/proc.h>
 #include <sys/select.h>
 
+#include <machine/bus.h>
+
 #include <dev/usb/usb.h>
 
 #include <dev/usb/usbdi.h>
@@ -78,14 +80,14 @@ char *usbd_get_string __P((usbd_device_handle, int, char *));
 int usbd_getnewaddr __P((usbd_bus_handle bus));
 int usbd_print __P((void *aux, const char *pnp));
 #if defined(__NetBSD__)
-int usbd_submatch __P((bdevice *, struct cfdata *cf, void *));
+int usbd_submatch __P((device_ptr_t, struct cfdata *cf, void *));
 #elif defined(__OpenBSD__)
-int usbd_submatch __P((bdevice *, void *, void *));
+int usbd_submatch __P((device_ptr_t, void *, void *));
 #endif
 void usbd_free_iface_data __P((usbd_device_handle dev, int ifcno));
 void usbd_kill_pipe __P((usbd_pipe_handle));
 usbd_status usbd_probe_and_attach 
-	__P((bdevice *parent, usbd_device_handle dev, int port, int addr));
+	__P((device_ptr_t parent, usbd_device_handle dev, int port, int addr));
 
 
 #ifdef USBVERBOSE
@@ -106,8 +108,7 @@ struct usb_knowndev {
 #include <dev/usb/usbdevs_data.h>
 #endif /* USBVERBOSE */
 
-#ifdef USB_DEBUG
-char *usbd_error_strs[] = {
+const char *usbd_error_strs[] = {
 	"NORMAL_COMPLETION",
 	"IN_PROGRESS",
 	"PENDING_REQUESTS",
@@ -129,33 +130,23 @@ char *usbd_error_strs[] = {
 	"INTERRUPTED",
 	"XXX",
 };
-#endif
 
-char *
+const char *
 usbd_errstr(err)
 	usbd_status err;
 {
 	static char buffer[5];
 
-#ifdef  USB_DEBUG
-	if ( err < USBD_ERROR_MAX ) {
+	if (err < USBD_ERROR_MAX) {
 		return usbd_error_strs[err];
 	} else {
 #if !defined(__OpenBSD__)
 		snprintf(buffer, sizeof buffer, "%d", err);
 #else
 		sprintf(buffer, "%d", err);
-#endif /* !defined(__OpenBSD__) */
+#endif
 		return buffer;
 	}
-#else
-#if !defined(__OpenBSD__)
-	snprintf(buffer, sizeof buffer, "%d", err);
-#else
-	sprintf(buffer, "%d", err);
-#endif /* !defined(__OpenBSD__) */
-	return buffer;
-#endif
 }
 
 usbd_status
@@ -612,7 +603,7 @@ usbd_set_config_index(dev, index, msg)
 		 selfpowered, cdp->bMaxPower * 2));
 #ifdef USB_DEBUG
 	if (!dev->powersrc) {
-		printf("usbd_set_config_index: No power source?\n");
+		DPRINTF(("usbd_set_config_index: No power source?\n"));
 		return (USBD_IOERROR);
 	}
 #endif
@@ -694,7 +685,7 @@ usbd_setup_pipe(dev, iface, ep, pipe)
 	p->running = 0;
 	p->repeat = 0;
 	SIMPLEQ_INIT(&p->queue);
-	r = dev->bus->open_pipe(p);
+	r = dev->bus->methods->open_pipe(p);
 	if (r != USBD_NORMAL_COMPLETION) {
 		DPRINTFN(-1,("usbd_setup_pipe: endpoint=0x%x failed, error="
 			 "%s\n",
@@ -734,7 +725,7 @@ usbd_getnewaddr(bus)
 
 usbd_status
 usbd_probe_and_attach(parent, dev, port, addr)
-	bdevice *parent;
+	device_ptr_t parent;
 	usbd_device_handle dev;
 	int port;
 	int addr;
@@ -742,7 +733,7 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	struct usb_attach_arg uaa;
 	usb_device_descriptor_t *dd = &dev->ddesc;
 	int r, found, i, confi, nifaces;
-	struct device *dv;
+	device_ptr_t dv;
 	usbd_interface_handle ifaces[256]; /* 256 is the absolute max */
 
 #if defined(__FreeBSD__)
@@ -750,7 +741,7 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	 * XXX uaa is a static var. Not a problem as it _should_ be used only
 	 * during probe and attach. Should be changed however.
 	 */
-	bdevice bdev;
+	device_t bdev;
 	bdev = device_add_child(*parent, NULL, -1, &uaa);
 	if (!bdev) {
 	    printf("%s: Device creation failed\n", USBDEVNAME(dev->bus->bdev));
@@ -791,11 +782,11 @@ usbd_probe_and_attach(parent, dev, port, addr)
 		if (r != USBD_NORMAL_COMPLETION) {
 #ifdef USB_DEBUG
 			DPRINTF(("%s: port %d, set config at addr %d failed, "
-				 "error=%s\n", USBDEVNAME(*parent), port,
+				 "error=%s\n", USBDEVPTRNAME(parent), port,
 				 addr, usbd_errstr(r)));
 #else
 			printf("%s: port %d, set config at addr %d failed\n",
-			       USBDEVNAME(*parent), port, addr);
+			       USBDEVPTRNAME(parent), port, addr);
 #endif
 #if defined(__FreeBSD__)
 			device_delete_child(*parent, bdev);
@@ -880,7 +871,7 @@ usbd_probe_and_attach(parent, dev, port, addr)
  */
 usbd_status
 usbd_new_device(parent, bus, depth, lowspeed, port, up)
-	bdevice *parent;
+	device_ptr_t parent;
 	usbd_bus_handle bus;
 	int depth;
 	int lowspeed;
@@ -1183,3 +1174,67 @@ usb_free_device(dev)
 		free(dev->subdevs, M_USB);
 	free(dev, M_USB);
 }
+
+/*
+ * The general mechanism for detaching drivers works as follows: Each
+ * driver is responsible for maintaining a reference count on the
+ * number of outstanding references to its softc (e.g.  from
+ * processing hanging in a read or write).  The detach method of the
+ * driver decrements this counter and flags in the softc that the
+ * driver is dying and then wakes any sleepers.  It then sleeps on the
+ * softc.  Each place that can sleep must maintain the reference
+ * count.  When the reference count drops to -1 (0 is the normal value
+ * of the reference count) the a wakeup on the softc is performed
+ * signaling to the detach waiter that all references are gone.
+ */
+
+/*
+ * Called from process context when we discover that a port has
+ * been disconnected.
+ */
+void
+usb_disconnect_port(up)
+	struct usbd_port *up;
+{
+	usbd_device_handle dev = up->device;
+	char *hubname;
+	int i;
+
+	DPRINTFN(3,("uhub_disconnect: up=%p dev=%p port=%d\n", 
+		    up, dev, up->portno));
+
+#ifdef DIAGNOSTIC
+	if (!dev) {
+		printf("usb_disconnect_port: no device\n");
+		return;
+	}
+#endif
+
+	if (!dev->cdesc) {
+		/* Partially attached device, just drop it. */
+		dev->bus->devices[dev->address] = 0;
+		up->device = 0;
+		return;
+	}
+
+	if (dev->subdevs) {
+		hubname = USBDEVPTRNAME(up->parent->subdevs[0]);
+		for (i = 0; dev->subdevs[i]; i++) {
+			printf("%s: at %s port %d (addr %d) disconnected\n",
+			       USBDEVPTRNAME(dev->subdevs[i]), hubname,
+			       up->portno, dev->address);
+			config_detach(dev->subdevs[i], DETACH_FORCE);
+		}
+	}
+
+	dev->bus->devices[dev->address] = 0;
+	up->device = 0;
+	usb_free_device(dev);
+
+#if defined(__FreeBSD__)
+      device_delete_child(
+	  device_get_parent(((struct softc *)dev->softc)->sc_dev), 
+	  ((struct softc *)dev->softc)->sc_dev);
+#endif
+}
+

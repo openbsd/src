@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdi_util.h,v 1.2 1999/08/27 09:00:30 fgsch Exp $	*/
-/*	$NetBSD: usbdi_util.h,v 1.14 1999/08/07 23:14:17 augustss Exp $	*/
+/*	$OpenBSD: usbdi_util.h,v 1.3 1999/09/27 18:03:56 fgsch Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.17 1999/09/05 19:32:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,6 +93,6 @@ usbd_status usbd_bulk_transfer
 	__P((usbd_request_handle reqh, usbd_pipe_handle pipe, u_int16_t flags,
 	     u_int32_t timeout, void *buf, u_int32_t *size, char *lbl));
 
-void usb_detach_wait __P((bdevice *));
-void usb_detach_wakeup __P((bdevice *));
+void usb_detach_wait __P((device_ptr_t));
+void usb_detach_wakeup __P((device_ptr_t));
 

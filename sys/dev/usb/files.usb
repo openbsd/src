@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.4 1999/08/31 07:46:28 fgsch Exp $
+#	$OpenBSD: files.usb,v 1.5 1999/09/27 18:03:54 fgsch Exp $
 #	$NetBSD: files.usb,v 1.8 1999/06/30 06:44:22 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -24,9 +24,9 @@ file	dev/usb/uhub.c			usb
 attach	uhub at uhub with uhub_uhub
 
 # Audio devices
-#device	uaudio: audio, auconv, mulaw
-#attach	uaudio at uhub
-#file	dev/usb/uaudio.c		uaudio
+device	uaudio: audio, auconv, mulaw
+attach	uaudio at uhub
+file	dev/usb/uaudio.c		uaudio
 
 # Generic devices
 device	ugen

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_mem.c,v 1.4 1999/08/27 09:00:29 fgsch Exp $	*/
-/*	$NetBSD: usb_mem.c,v 1.9 1999/08/16 20:19:55 augustss Exp $	*/
+/*	$OpenBSD: usb_mem.c,v 1.5 1999/09/27 18:03:56 fgsch Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.14 1999/09/13 19:18:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,15 +50,16 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/device.h>		/* for usbdivar.h */
+#include <machine/bus.h>
 
 #ifdef DIAGNOSTIC
 #include <sys/proc.h>
 #endif
 
-#include <machine/bus.h>
-
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>	/* just for usb_dma_t */
 #include <dev/usb/usb_mem.h>
 
 #ifdef USB_DEBUG
@@ -81,11 +82,8 @@ struct usb_frag_dma {
 	LIST_ENTRY(usb_frag_dma) next;
 };
 
-usbd_status	usb_block_allocmem 
-	__P((bus_dma_tag_t, size_t, size_t, usb_dma_block_t **));
-#if 0
-void		usb_block_real_freemem  __P((usb_dma_block_t *));
-#endif
+usbd_status	usb_block_allocmem __P((bus_dma_tag_t, size_t, size_t,
+					usb_dma_block_t **));
 void		usb_block_freemem  __P((usb_dma_block_t *));
 
 LIST_HEAD(, usb_dma_block) usb_blk_freelist = 
@@ -212,12 +210,13 @@ usb_block_freemem(p)
 }
 
 usbd_status
-usb_allocmem(tag, size, align, p)
-	bus_dma_tag_t tag;
+usb_allocmem(bus, size, align, p)
+	usbd_bus_handle bus;
 	size_t size;
 	size_t align;
         usb_dma_t *p;
 {
+	bus_dma_tag_t tag = bus->dmatag;
 	usbd_status r;
 	struct usb_frag_dma *f;
 	usb_dma_block_t *b;
@@ -266,8 +265,8 @@ usb_allocmem(tag, size, align, p)
 }
 
 void
-usb_freemem(tag, p)
-	bus_dma_tag_t tag;
+usb_freemem(bus, p)
+	usbd_bus_handle bus;
         usb_dma_t *p;
 {
 	struct usb_frag_dma *f;

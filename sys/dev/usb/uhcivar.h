@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhcivar.h,v 1.3 1999/08/27 09:00:29 fgsch Exp $	*/
-/*	$NetBSD: uhcivar.h,v 1.12 1999/08/22 23:41:00 augustss Exp $	*/
+/*	$OpenBSD: uhcivar.h,v 1.4 1999/09/27 18:03:55 fgsch Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.14 1999/09/15 10:25:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,6 @@ typedef struct uhci_softc {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	void *sc_ih;			/* interrupt vectoring */
 
-	bus_dma_tag_t sc_dmatag;	/* DMA tag */
 	/* XXX should keep track of all DMA memory */
 #endif /* defined(__FreeBSD__) */
 
@@ -157,7 +156,6 @@ typedef struct uhci_softc {
 	char sc_suspend;
 	usbd_request_handle sc_has_timo;
 
-	int sc_intrs;
 	LIST_HEAD(, uhci_intr_info) sc_intrhead;
 
 	/* Info for the root hub interrupt channel. */
@@ -169,13 +167,15 @@ typedef struct uhci_softc {
 
 	char sc_vendor[16];
 	int sc_id_vendor;
+
+	void *sc_powerhook;
+	device_ptr_t sc_child;
 } uhci_softc_t;
 
 usbd_status	uhci_init __P((uhci_softc_t *));
 int		uhci_intr __P((void *));
-#if 0
-void		uhci_reset __P((void *));
-#endif
+int		uhci_detach __P((device_ptr_t, int));
+int		uhci_activate __P((device_ptr_t, enum devact));
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (uhcidebug) printf x
