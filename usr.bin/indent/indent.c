@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.11 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: indent.c,v 1.12 2002/03/16 00:18:19 vincent Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -47,7 +47,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";*/
-static char rcsid[] = "$OpenBSD: indent.c,v 1.11 2001/11/19 19:02:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: indent.c,v 1.12 2002/03/16 00:18:19 vincent Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -428,7 +428,7 @@ check_type:
 		    || s_com != e_com)	/* must dump end of line */
 		dump_line();
 	    if (ps.tos > 1)	/* check for balanced braces */
-		diag(1, "Stuff missing from end of file.");
+		diag(1, "Missing braces at end of file.");
 
 	    if (verbose) {
 		printf("There were %d output lines and %d comments\n",
