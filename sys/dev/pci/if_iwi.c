@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.20 2004/12/06 20:27:15 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.21 2004/12/10 21:25:53 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -1081,7 +1081,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 
 		m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, caddr_t));
 		m_freem(m);
-		m->m_len = m->m_pkthdr.len;
+		mnew->m_len = mnew->m_pkthdr.len;
 		m = mnew;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, buf->map, m,
