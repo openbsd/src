@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.19 1997/04/06 06:04:26 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.20 1997/04/18 14:27:22 provos Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -47,8 +47,8 @@
 
 #define	b_cylin	b_resid
 
-int fat_types[] = { DOSPTYP_FAT12, DOSPTYP_FAT16S,
-		    DOSPTYP_FAT16B, DOSPTYP_FAT16C, -1 };
+#define BOOT_MAGIC 0xAA55
+#define BOOT_MAGIC_OFF (DOSPARTOFF+NDOSPART*sizeof(struct dos_partition))
 
 void
 dk_establish(dk, dev)
@@ -83,8 +83,8 @@ readdisklabel(dev, strat, lp, osdep)
 	struct dkbad *bdp = &osdep->bad;
 	struct buf *bp;
 	struct disklabel *dlp;
-	char *msg = NULL;
-	int dospartoff, cyl, i, *ip, ourpart = -1;
+	char *msg = NULL, *cp;
+	int dospartoff, cyl, i, ourpart = -1;
 
 	/* minimal requirements for archtypal disk label */
 	if (lp->d_secsize == 0)
@@ -108,68 +108,140 @@ readdisklabel(dev, strat, lp, osdep)
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
 	if (dp) {
-		/* read master boot record */
-		bp->b_blkno = DOSBBSECTOR;
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
-		(*strat)(bp);
-
-		/* if successful, wander through dos partition table */
-		if (biowait(bp)) {
-			msg = "dos partition I/O error";
-			goto done;
-		}
-
-		/* XXX how do we check veracity/bounds of this? */
-		bcopy(bp->b_data + DOSPARTOFF, dp, NDOSPART * sizeof(*dp));
+	        daddr_t part_blkno = DOSBBSECTOR;
+		unsigned long extoff = 0;
+		int wander = 1;
+		int n = 0;
+		unsigned char *p;
 
 		/*
-		 * Search for our MBR partition
+		 * Read dos partition table, follow extended partitions.
+		 * Map the partitions to disklabel entries i-p
 		 */
-		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
-			if (dp2->dp_size && dp2->dp_typ == DOSPTYP_OPENBSD)
-				ourpart = i;
-		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
-			if (dp2->dp_size && dp2->dp_typ == DOSPTYP_386BSD)
-				ourpart = i;
+		while (wander && n < 8) {
+			/* on finding a extended partition wander further */
+			wander = 0;
 
-		if (ourpart != -1) {
-			dp2 = &dp[ourpart];
+			/* read boot record */
+			bp->b_blkno = part_blkno;
+			bp->b_bcount = lp->d_secsize;
+			bp->b_flags = B_BUSY | B_READ;
+			bp->b_cylin = part_blkno / lp->d_secpercyl;
+			(*strat)(bp);
+		     
+			/* if successful, wander through dos partition table */
+			if (biowait(bp)) {
+				msg = "dos partition I/O error";
+				goto done;
+			}
+		     
+                	/* XXX - how do we check veracity/bounds of this? */
+			p = (unsigned char *)bp->b_data + BOOT_MAGIC_OFF;
+			if ((p[0] | (p[1] << 8)) != BOOT_MAGIC) {
+				msg = "dos partition corrupt";
+				goto done;
+			}
+		     
+			bcopy(bp->b_data + DOSPARTOFF, dp, NDOSPART * sizeof(*dp));
 
 			/*
-			 * This is our MBR partition. need sector address
-			 * for SCSI/IDE, cylinder for ESDI/ST506/RLL
+			 * Search for our MBR partition
 			 */
-			dospartoff = dp2->dp_start;
-			cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
+			if (ourpart == -1) {
+				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
+				    i++, dp2++)
+					if (dp2->dp_size &&
+					    dp2->dp_typ == DOSPTYP_OPENBSD)
+						ourpart = i;
+				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
+				    i++, dp2++)
+					if (dp2->dp_size &&
+					    dp2->dp_typ == DOSPTYP_386BSD)
+						ourpart = i;
+			}
 
-			/* XXX build a temporary disklabel */
-			lp->d_partitions[0].p_size = dp2->dp_size;
-			lp->d_partitions[0].p_offset = dp2->dp_start;
-			if (lp->d_ntracks == 0)
-				lp->d_ntracks = dp2->dp_ehd + 1;
-			if (lp->d_nsectors == 0)
-				lp->d_nsectors = DPSECT(dp2->dp_esect);
-			if (lp->d_secpercyl == 0)
-				lp->d_secpercyl = lp->d_ntracks *
-				    lp->d_nsectors;
-		}
+			if (ourpart != -1) {
+				dp2 = &dp[ourpart];
 
-		/*
-		 * In case the disklabel read below fails, we want to provide
-		 * a fake label in which m/n/o/p are MBR partitions 0/1/2/3
-		 */
-		for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
-			if (dp2->dp_start + dp2->dp_size > lp->d_nsectors)
-				continue;
-			lp->d_partitions[12+i].p_size = dp2->dp_size;
-			lp->d_partitions[12+i].p_offset = dp2->dp_start;
-			for (ip = fat_types; *ip != -1; ip++) {
-				if (dp2->dp_typ != *ip)
+				/*
+				 * This is our MBR partition. need sector address
+				 * for SCSI/IDE, cylinder for ESDI/ST506/RLL
+				 */
+				dospartoff = dp2->dp_start + part_blkno;
+				cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
+
+				/* XXX build a temporary disklabel */
+				lp->d_partitions[0].p_size = dp2->dp_size;
+				lp->d_partitions[0].p_offset = dp2->dp_start +
+				    part_blkno;
+				if (lp->d_ntracks == 0)
+					lp->d_ntracks = dp2->dp_ehd + 1;
+				if (lp->d_nsectors == 0)
+					lp->d_nsectors = DPSECT(dp2->dp_esect);
+				if (lp->d_secpercyl == 0)
+					lp->d_secpercyl = lp->d_ntracks *
+					    lp->d_nsectors;
+			}
+
+			/*
+			 * In case the disklabel read below fails, we want to
+			 * provide a fake label in which m/n/o/p are MBR 
+			 * partitions 0/1/2/3
+			 */
+			for (dp2=dp, i=0; i < NDOSPART && !wander; i++, dp2++) {
+				struct partition *pp = &lp->d_partitions[8+n];
+
+/*		       		if (dp2->dp_start + dp2->dp_size > 
+				    lp->d_ncylinders * lp->d_secpercyl)
 					continue;
-				lp->d_partitions[12+i].p_fstype =
-				    FS_MSDOS;
+*/
+
+				if (dp2->dp_size)
+					pp->p_size = dp2->dp_size;
+				if (dp2->dp_start)
+					pp->p_offset =
+					    dp2->dp_start + part_blkno;
+
+				switch (dp2->dp_typ) {
+				case DOSPTYP_UNUSED:
+					for (cp = (char *)dp2;
+					    cp < (char *)(dp2 + 1); cp++)
+						if (*cp)
+							break;
+					/*
+					 * Was it all zeroes?  If so, it is
+					 * an unused entry that we don't
+					 * want to show.
+					 */
+					if (cp == (char *)(dp2 + 1))
+					    continue;
+					lp->d_partitions[8 + n++].p_fstype =
+					    FS_UNUSED;
+					break;
+
+				case DOSPTYP_LINUX:
+					pp->p_fstype = FS_EXT2FS;
+					n++;
+					break;
+
+				case DOSPTYP_FAT12:
+				case DOSPTYP_FAT16S:
+				case DOSPTYP_FAT16B:
+				case DOSPTYP_FAT16C:
+					pp->p_fstype = FS_MSDOS;
+					n++;
+					break;
+				case DOSPTYP_EXTEND:
+					part_blkno = dp2->dp_start + extoff;
+					if (!extoff)
+						extoff = dp2->dp_start;
+					wander = 1;
+					break;
+				default:
+					pp->p_fstype = FS_OTHER;
+					n++;
+					break;
+				}
 			}
 		}
 		lp->d_bbsize = 8192;
