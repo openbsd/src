@@ -1,3 +1,11 @@
 This is a minimal sudo distribution for OpenBSD.  You can get the
 full package at ftp://ftp.cs.colorado.edu/pub/sudo/.  For info on
 sudo please see http://www.courtesan.com/sudo/.
+
+This sudo was configured with the following options:
+    --disable-path-info
+    --with-insults
+    --with-env-editor
+    --with-logfac=LOG_AUTHPRIV
+
+S/Key and Kerberos IV are enabled based on bsd.own.mk

@@ -1,7 +1,7 @@
-/*	$OpenBSD: find_path.c,v 1.7 1998/11/13 22:44:34 millert Exp $	*/
+/*	$OpenBSD: find_path.c,v 1.8 1998/11/21 01:34:52 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.6
+ *  CU sudo version 1.5.7
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,10 +30,6 @@
  *  Todd C. Miller (millert@colorado.edu) Sat Mar 25 21:50:36 MST 1995
  */
 
-#ifndef lint
-static char rcsid[] = "$From: find_path.c,v 1.74 1998/04/06 03:35:34 millert Exp $";
-#endif /* lint */
-
 #include "config.h"
 
 #include <stdio.h>
@@ -58,7 +54,6 @@ static char rcsid[] = "$From: find_path.c,v 1.74 1998/04/06 03:35:34 millert Exp
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include "sudo.h"
-#include <options.h>
 
 #ifndef STDC_HEADERS
 #ifndef __GNUC__		/* gcc has its own malloc */
@@ -75,7 +70,6 @@ extern char *strdup	__P((const char *));
 #endif /* HAVE_STRDUP */
 #endif /* !STDC_HEADERS */
 
-
 #ifndef _S_IFMT
 #define _S_IFMT		S_IFMT
 #endif /* _S_IFMT */
@@ -83,33 +77,37 @@ extern char *strdup	__P((const char *));
 #define _S_IFLNK	S_IFLNK
 #endif /* _S_IFLNK */
 
+#ifndef lint
+static const char rcsid[] = "$From: find_path.c,v 1.80 1998/11/18 04:16:13 millert Exp $";
+#endif /* lint */
 
 /*******************************************************************
  *
  *  find_path()
  *
  *  this function finds the full pathname for a command and
- *  stores it in a statically allocated array, returning a pointer
- *  to the array.
+ *  stores it in a statically allocated array, filling in a pointer
+ *  to the array.  Returns FOUND if the command was found, NOT_FOUND
+ *  if it was not found, or NOT_FOUND_DOT if it would have been found
+ *  but it is in '.' and IGNORE_DOT_PATH is in effect.
  */
 
-char * find_path(file)
-    char *file;			/* file to find */
+int find_path(infile, outfile)
+    char *infile;		/* file to find */
+    char **outfile;		/* result parameter */
 {
     static char command[MAXPATHLEN]; /* qualified filename */
     register char *n;		/* for traversing path */
     char *path = NULL;		/* contents of PATH env var */
     char *origpath;		/* so we can free path later */
     char *result = NULL;	/* result of path/file lookup */
-#ifndef IGNORE_DOT_PATH
     int checkdot = 0;		/* check current dir? */
-#endif /* IGNORE_DOT_PATH */
 
     command[0] = '\0';
 
-    if (strlen(file) >= MAXPATHLEN) {
+    if (strlen(infile) >= MAXPATHLEN) {
 	errno = ENAMETOOLONG;
-	(void) fprintf(stderr, "%s:  path too long:  %s\n", Argv[0], file);
+	(void) fprintf(stderr, "%s: path too long: %s\n", Argv[0], infile);
 	exit(1);
     }
 
@@ -117,22 +115,26 @@ char * find_path(file)
      * If we were given a fully qualified or relative path
      * there is no need to look at PATH.
      */
-    if (strchr(file, '/')) {
-	(void) strcpy(command, file);
-	return(sudo_goodpath(command));
+    if (strchr(infile, '/')) {
+	(void) strcpy(command, infile);
+	if (sudo_goodpath(command)) {
+	    *outfile = command;
+	    return(FOUND);
+	} else
+	    return(NOT_FOUND);
     }
 
     /*
      * grab PATH out of environment and make a local copy
      */
     if ((path = getenv("PATH")) == NULL)
-	return(NULL);
+	return(NOT_FOUND);
 
     if ((path = (char *) strdup(path)) == NULL) {
 	(void) fprintf(stderr, "%s: out of memory!\n", Argv[0]);
 	exit(1);
     }
-    origpath=path;
+    origpath = path;
 
     /* XXX use strtok() */
     do {
@@ -144,9 +146,7 @@ char * find_path(file)
 	 * things like using './' or './/' 
 	 */
 	if (*path == '\0' || (*path == '.' && *(path + 1) == '\0')) {
-#ifndef IGNORE_DOT_PATH
 	    checkdot = 1;
-#endif /* IGNORE_DOT_PATH */
 	    path = n + 1;
 	    continue;
 	}
@@ -154,27 +154,33 @@ char * find_path(file)
 	/*
 	 * resolve the path and exit the loop if found
 	 */
-	if (strlen(path) + strlen(file) + 1 >= MAXPATHLEN) {
-	    (void) fprintf(stderr, "%s:  path too long:  %s\n", Argv[0], file);
+	if (strlen(path) + strlen(infile) + 1 >= MAXPATHLEN) {
+	    (void) fprintf(stderr, "%s: path too long: %s\n", Argv[0], infile);
 	    exit(1);
 	}
-	(void) sprintf(command, "%s/%s", path, file);
+	(void) sprintf(command, "%s/%s", path, infile);
 	if ((result = sudo_goodpath(command)))
 	    break;
 
 	path = n + 1;
 
     } while (n);
-
-#ifndef IGNORE_DOT_PATH
-    /*
-     * check current dir if dot was in the PATH
-     */
-    if (!result && checkdot)
-	result = sudo_goodpath(file);
-#endif /* IGNORE_DOT_PATH */
-
     (void) free(origpath);
 
-    return(result);
+    /*
+     * Check current dir if dot was in the PATH
+     */
+    if (!result && checkdot) {
+	result = sudo_goodpath(infile);
+#ifdef IGNORE_DOT_PATH
+	if (result)
+	    return(NOT_FOUND_DOT);
+#endif /* IGNORE_DOT_PATH */
+    }
+
+    if (result) {
+	*outfile = result;
+	return(FOUND);
+    } else
+	return(NOT_FOUND);
 }

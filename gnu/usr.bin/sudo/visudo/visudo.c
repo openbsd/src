@@ -1,7 +1,7 @@
-/*	$OpenBSD: visudo.c,v 1.8 1998/09/15 02:42:45 millert Exp $	*/
+/*	$OpenBSD: visudo.c,v 1.9 1998/11/21 01:34:54 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.6
+ *  CU sudo version 1.5.7
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,10 +26,6 @@
  *
  *  Todd C. Miller (millert@colorado.edu) Sat Mar 25 21:50:36 MST 1995
  */
-
-#ifndef lint
-static char rcsid[] = "$From: visudo.c,v 1.91 1998/09/08 00:42:02 millert Exp $";
-#endif /* lint */
 
 #include "config.h"
 
@@ -61,7 +57,6 @@ static char rcsid[] = "$From: visudo.c,v 1.91 1998/09/08 00:42:02 millert Exp $"
 #include <netinet/in.h>
 
 #include "sudo.h"
-#include <options.h>
 #include "version.h"
 
 #ifndef STDC_HEADERS
@@ -75,6 +70,10 @@ extern int stat		__P((const char *, struct stat *));
 #if defined(POSIX_SIGNALS) && !defined(SA_RESETHAND)
 #define SA_RESETHAND    0
 #endif /* POSIX_SIGNALS && !SA_RESETHAND */
+
+#ifndef lint
+static const char rcsid[] = "$From: visudo.c,v 1.95 1998/11/18 04:16:13 millert Exp $";
+#endif /* lint */
 
 /*
  * Function prototypes
@@ -147,15 +146,16 @@ int main(argc, argv)
      * If passesd -V then print version, else print usage
      * if any other option...
      */
-    if (argc == 2)
+    if (argc == 2) {
 	if (!strcmp(Argv[1], "-V")) {
 	    (void) printf("visudo version %s\n", version);
 	    exit(0);
 	} else {
 	    usage();
 	}
-    else if (argc != 1)
+    } else if (argc != 1) {
 	usage();
+    }
 
     /* user_pw_ent needs to point to something... */
     if ((user_pw_ent = getpwuid(getuid())) == NULL) {
@@ -322,7 +322,7 @@ int main(argc, argv)
      * rename(2)'d to sudoers.  If the rename(2) fails we try using
      * mv(1) in case stmp and sudoers are on different filesystems.
      */
-    if (rename(stmp, sudoers))
+    if (rename(stmp, sudoers)) {
 	if (errno == EXDEV) {
 	    char *tmpbuf;
 
@@ -356,6 +356,7 @@ int main(argc, argv)
 	    perror("");
 	    Exit(-1);
 	}
+    }
 
     return(0);
 }

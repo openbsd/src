@@ -1,11 +1,11 @@
 .rn '' }`
-''' $OpenBSD: sudo.8,v 1.6 1998/09/15 02:42:45 millert Exp $
+''' $OpenBSD: sudo.8,v 1.7 1998/11/21 01:34:53 millert Exp $
 '''
-''' $RCSfile: sudo.8,v $$Revision: 1.6 $$Date: 1998/09/15 02:42:45 $
+''' $RCSfile: sudo.8,v $$Revision: 1.7 $$Date: 1998/11/21 01:34:53 $
 '''
 ''' $Log: sudo.8,v $
-''' Revision 1.6  1998/09/15 02:42:45  millert
-''' sudo 1.5.6
+''' Revision 1.7  1998/11/21 01:34:53  millert
+''' sudo 1.5.7
 '''
 '''
 .de Sh
@@ -98,7 +98,7 @@
 .nr % 0
 .rr F
 .\}
-.TH sudo 8 "1.5.6" "20/Jan/98" "MAINTENANCE COMMANDS"
+.TH sudo 8 "1.5.7" "5/Nov/98" "MAINTENANCE COMMANDS"
 .UC
 .if n .hy 0
 .if n .na
@@ -214,10 +214,6 @@ user to the local authorities (defined at installation time).
 .PP
 \fBsudo\fR was designed to log via the 4.3 BSD \fIsyslog\fR\|(3) facility but
 can log to a file instead if so desired (or to both syslog and a file).
-.PP
-All preferences are defined at installation time and are derived from
-the options.h and pathnames.h include files as well as as well as the
-Makefile.
 .SH "OPTIONS"
 \fBsudo\fR accepts the following command line options:
 .Ip "-V" 4
@@ -256,10 +252,10 @@ as a user other than \fIroot\fR.  To specify a \fIuid\fR instead of a
 \fIusername\fR, use \*(L"#uid\*(R".
 .Ip "-s" 4
 The \f(CW-s\fR (\fIshell\fR) option runs the shell specified by the \fI\s-1SHELL\s0\fR
-environmental variable if it is set or the shell as specified
+environment variable if it is set or the shell as specified
 in \fIpasswd\fR\|(5).
 .Ip "-H" 4
-The \f(CW-H\fR (\fI\s-1HOME\s0\fR) option sets the \fI\s-1HOME\s0\fR environmental variable
+The \f(CW-H\fR (\fI\s-1HOME\s0\fR) option sets the \fI\s-1HOME\s0\fR environment variable
 to the homedir of the target user (root by default) as specified
 in \fIpasswd\fR\|(5).
 .Ip "--" 4
@@ -283,7 +279,7 @@ currently unreachable.
 Variables that control how dynamic loading and binding is
 done can be used to subvert the program that \fBsudo\fR runs.
 To combat this the \f(CWLD_*\fR, \f(CWSHLIB_PATH\fR (HP\-UX only),
-\f(CWLIBPATH\fR (AIX only), and \f(CW_RLD_*\fR environmental variables are
+\f(CWLIBPATH\fR (AIX only), and \f(CW_RLD_*\fR environment variables are
 removed from the environment passed on to all commands executed.
 \fBsudo\fR will also remove the \f(CWIFS\fR, \f(CWENV\fR, \f(CWBASH_ENV\fR
 and \f(CWKRB_CONF\fR variables as they too can pose a threat.
@@ -291,7 +287,7 @@ and \f(CWKRB_CONF\fR variables as they too can pose a threat.
 To prevent command spoofing, \fBsudo\fR checks "." and "" (both
 denoting current directory) last when searching for a command
 in the user's PATH (if one or both are in the PATH).
-Note, however, that the actual PATH environmental variable
+Note, however, that the actual PATH environment variable
 is \fInot\fR modified and is passed unchanged to the program that
 \fBsudo\fR executes.
 .PP
@@ -330,9 +326,11 @@ date.
 .Ve
 .SH "ENVIRONMENT VARIABLES"
 .PP
-.Vb 10
+.Vb 12
 \& PATH                   Set to a sane value if SECURE_PATH is set
 \& SHELL                  Used to determine shell to run with -s option
+\& USER                   Set to the target user (root unless the -u option
+\&                        is specified)
 \& HOME                   In -s mode, set to homedir of root (or runas user)
 \&                        if built with the SHELL_SETS_HOME option
 \& SUDO_PROMPT            Replaces the default password prompt

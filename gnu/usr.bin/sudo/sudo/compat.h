@@ -1,7 +1,7 @@
-/*	$OpenBSD: compat.h,v 1.6 1998/09/15 02:42:43 millert Exp $	*/
+/*	$OpenBSD: compat.h,v 1.7 1998/11/21 01:34:51 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.6
+ *  CU sudo version 1.5.7
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  $From: compat.h,v 1.39 1998/09/09 00:45:17 millert Exp $
+ *  $From: compat.h,v 1.42 1998/10/21 23:50:10 millert Exp $
  */
 
 #ifndef _SUDO_COMPAT_H
@@ -102,7 +102,7 @@
 #  undef _PASSWD_LEN
 #  define _PASSWD_LEN		256
 #else
-#  if (SHADOW_TYPE == SPW_SECUREWARE)
+#  ifdef  HAVE_GETPRPWNAM
 #    undef _PASSWD_LEN
 #    define _PASSWD_LEN		AUTH_MAX_PASSWD_LENGTH
 #  else
@@ -117,8 +117,8 @@
 #        endif /* SHADOW_TYPE != SPW_NONE */
 #      endif /* PASS_MAX */
 #    endif /* !_PASSWD_LEN */
-#  endif /* HAVE_KERB4 || HAVE_AFS || HAVE_DCE || HAVE_SKEY || HAVE_OPIE */
-#endif /* SPW_SECUREWARE */
+#  endif /* HAVE_GETPRPWNAM */
+#endif /* HAVE_KERB4 || HAVE_AFS || HAVE_DCE || HAVE_SKEY || HAVE_OPIE */
 
 /*
  * Some OS's lack these

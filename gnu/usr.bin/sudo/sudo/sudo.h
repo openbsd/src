@@ -1,7 +1,7 @@
-/*	$OpenBSD: sudo.h,v 1.6 1998/09/15 02:42:45 millert Exp $	*/
+/*	$OpenBSD: sudo.h,v 1.7 1998/11/21 01:34:53 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.6 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.7 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -27,7 +27,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *  $From: sudo.h,v 1.126 1998/09/07 02:51:05 millert Exp $
+ *  $From: sudo.h,v 1.133 1998/11/08 20:56:52 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -111,9 +111,32 @@ struct generic_alias {
 #  define MAXSYSLOGLEN		960
 #endif
 
+/*
+ * syslog(3) parameters
+ */
+
 #define SLOG_SYSLOG              0x01
 #define SLOG_FILE                0x02
 #define SLOG_BOTH                0x03
+
+#if (LOGGING & SLOG_SYSLOG)
+#  include <syslog.h>
+#  ifndef Syslog_ident
+#    define Syslog_ident	"sudo"
+#  endif
+#  ifndef Syslog_options
+#    define Syslog_options	0
+#  endif
+#  if !defined(Syslog_facility) && defined(LOG_NFACILITIES)
+#    define Syslog_facility	LOGFAC
+#  endif
+#  ifndef Syslog_priority_OK
+#    define Syslog_priority_OK	LOG_NOTICE
+#  endif
+#  ifndef Syslog_priority_NO
+#    define Syslog_priority_NO	LOG_ALERT
+#  endif
+#endif	/* LOGGING & SLOG_SYSLOG */
 
 #define VALIDATE_OK              0x00
 #define VALIDATE_NO_USER         0x01
@@ -141,14 +164,22 @@ struct generic_alias {
 #define SPOOF_ATTEMPT            0x0D
 #define BAD_STAMPDIR             0x0E
 #define BAD_STAMPFILE            0x0F
+#define BAD_ALLOCATION           0x10
 
 /*
  * Boolean values
  */
 #undef TRUE
-#define TRUE                     0x01
+#define TRUE                     1
 #undef FALSE
-#define FALSE                    0x00
+#define FALSE                    0
+
+/*
+ * find_path()/load_cmnd() return values
+ */
+#define FOUND                    1
+#define NOT_FOUND                0
+#define NOT_FOUND_DOT		-1
 
 /*
  * Various modes sudo can be in (based on arguments) in octal
@@ -198,8 +229,8 @@ int putenv		__P((const char *));
 #endif
 char *sudo_goodpath	__P((const char *));
 int sudo_setenv		__P((char *, char *));
-char *tgetpass		__P((char *, int, char *, char *));
-char * find_path	__P((char *));
+char *tgetpass		__P((char *, int));
+int find_path		__P((char *, char **));
 void log_error		__P((int));
 void inform_user	__P((int));
 void check_user		__P((void));
@@ -207,7 +238,10 @@ int validate		__P((int));
 void set_perms		__P((int, int));
 void remove_timestamp	__P((void));
 void load_interfaces	__P((void));
+int check_secureware	__P((char *));
+void sia_attempt_auth	__P((void));
 int yyparse		__P((void));
+void pass_warn		__P((FILE *));
 YY_DECL;
 
 

@@ -1,7 +1,7 @@
-/*	$OpenBSD: insults.h,v 1.6 1998/09/15 02:42:44 millert Exp $	*/
+/*	$OpenBSD: insults.h,v 1.7 1998/11/21 01:34:52 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.6
+ *  CU sudo version 1.5.7
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  $From: insults.h,v 1.32 1998/09/07 02:59:36 millert Exp $
+ *  $From: insults.h,v 1.35 1998/10/18 22:00:50 millert Exp $
  */
 
 #ifndef _SUDO_INSULTS_H
@@ -27,13 +27,8 @@
 
 #ifdef USE_INSULTS
 
-#if !defined(HAL_INSULTS) && !defined(GOONS_INSULTS) && !defined(CLASSIC_INSULTS)
-#  define CLASSIC_INSULTS
-#  define CSOPS_INSULTS
-#endif
-
 /*
- * Use one or more set of insults as defined in options.h.
+ * Use one or more set of insults as determined by configure
  */
 
 char *insults[] = {

@@ -1,7 +1,7 @@
-/*	$OpenBSD: parse.c,v 1.8 1998/09/15 02:42:44 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.9 1998/11/21 01:34:53 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.6
+ *  CU sudo version 1.5.7
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,10 +25,6 @@
  *
  * Chris Jepeway <jepeway@cs.utk.edu>
  */
-
-#ifndef lint
-static char rcsid[] = "$From: parse.c,v 1.91 1998/09/07 02:41:33 millert Exp $";
-#endif /* lint */
 
 #include "config.h"
 
@@ -85,7 +81,10 @@ static char rcsid[] = "$From: parse.c,v 1.91 1998/09/07 02:41:33 millert Exp $";
 #endif
 
 #include "sudo.h"
-#include <options.h>
+
+#ifndef lint
+static const char rcsid[] = "$From: parse.c,v 1.97 1998/11/18 04:16:13 millert Exp $";
+#endif /* lint */
 
 /*
  * Globals
@@ -159,12 +158,13 @@ int validate(check_cmnd)
      */
     if (check_cmnd == FALSE)
 	while (top) {
-	    if (host_matches == TRUE)
+	    if (host_matches == TRUE) {
 		/* user may always do validate or list on allowed hosts */
 		if (no_passwd == TRUE)
 		    return(VALIDATE_OK_NOPASS);
 		else
 		    return(VALIDATE_OK);
+	    }
 	    top--;
 	}
     else
@@ -254,7 +254,6 @@ int command_matches(cmnd, user_args, path, sudoers_args)
 	    return(FALSE);
     } else {
 	if (path[plen - 1] != '/') {
-#ifdef FAST_MATCH
 	    char *p;
 
 	    /* Only proceed if the basenames of cmnd and path are the same */
@@ -264,7 +263,6 @@ int command_matches(cmnd, user_args, path, sudoers_args)
 		p++;
 	    if (strcmp(c, p))
 		return(FALSE);
-#endif /* FAST_MATCH */
 
 	    if (stat(path, &pst) < 0)
 		return(FALSE);
@@ -299,11 +297,10 @@ int command_matches(cmnd, user_args, path, sudoers_args)
 		continue;
 	    strcpy(buf, path);
 	    strcat(buf, dent->d_name);
-#ifdef FAST_MATCH
+
 	    /* only stat if basenames are not the same */
 	    if (strcmp(c, dent->d_name))
 		continue;
-#endif /* FAST_MATCH */
 	    if (stat(buf, &pst) < 0)
 		continue;
 	    if (cmnd_st.st_dev == pst.st_dev && cmnd_st.st_ino == pst.st_ino)
@@ -361,23 +358,27 @@ int usergr_matches(group, user)
     char *group;
     char *user;
 {
-    struct group *grpent;
+    struct group *grp;
+    struct passwd *pw;
     char **cur;
 
     /* make sure we have a valid usergroup, sudo style */
     if (*group++ != '%')
 	return(FALSE);
 
-    if ((grpent = getgrnam(group)) == NULL) 
+    if ((grp = getgrnam(group)) == NULL) 
 	return(FALSE);
 
     /*
      * Check against user's real gid as well as group's user list
      */
-    if (grpent->gr_gid == user_gid)
+    if ((pw = getpwnam(user)) == NULL)
+	return(FALSE);
+
+    if (grp->gr_gid == pw->pw_gid)
 	return(TRUE);
 
-    for (cur=grpent->gr_mem; *cur; cur++) {
+    for (cur=grp->gr_mem; *cur; cur++) {
 	if (strcmp(*cur, user) == 0)
 	    return(TRUE);
     }
@@ -411,7 +412,6 @@ int netgr_matches(netgr, host, user)
     /* get the domain name (if any) */
     if (domain == (char *) -1) {
 	if ((domain = (char *) malloc(MAXHOSTNAMELEN)) == NULL) {
-	    perror("malloc");
 	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
 	    exit(1);
 	}

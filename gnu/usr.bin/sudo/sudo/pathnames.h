@@ -1,7 +1,8 @@
-/*	$OpenBSD: pathnames.h,v 1.6 1998/09/15 02:42:45 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.7 1998/11/21 01:34:53 millert Exp $	*/
 
+/* pathnames.h.  Generated automatically by configure.  */
 /*
- *  CU sudo version 1.5.6
+ *  CU sudo version 1.5.7
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +20,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  $From: pathnames.h,v 1.32 1998/09/15 02:25:48 millert Exp $
+ *  $From: pathnames.h.in,v 1.34 1998/09/20 23:10:04 millert Exp $
  */
 
 /*
@@ -34,8 +35,12 @@
 #define _PATH_DEV		"/dev/"
 #endif /* _PATH_DEV */
 
+#ifndef _PATH_TTY
+#define _PATH_TTY		"/dev/tty"
+#endif /* _PATH_TTY */
+
 /*
- * NOTE: _PATH_SUDO_SUDOERS is usually overriden by the Makefile
+ * NOTE: _PATH_SUDO_SUDOERS is usually overriden by the Makefile.
  */
 #ifndef _PATH_SUDO_SUDOERS
 #define _PATH_SUDO_SUDOERS	"/etc/sudoers"
@@ -50,43 +55,38 @@
 #define _PATH_SUDO_STMP		"/etc/stmp"
 #endif /* _PATH_SUDO_STMP */
 
+/*
+ * The following paths are controlled via the configure script.
+ */
+
+/*
+ * Where to put the timestamp files.  Defaults to /var/run/sudo if
+ * /var/run exists, else /tmp/.odus.
+ */
 #ifndef _PATH_SUDO_TIMEDIR
-#define _PATH_SUDO_TIMEDIR	_CONFIG_PATH_TIMEDIR
+#define _PATH_SUDO_TIMEDIR "/var/run/sudo"
 #endif /* _PATH_SUDO_TIMEDIR */
 
-#ifndef _PATH_TTY
-#define _PATH_TTY		"/dev/tty"
-#endif /* _PATH_TTY */
-
 /*
- * The following paths are gleaned via configure but you can override
- * configure's values here if you want.
- */
-
-/*
- * Where to put the sudo log file when logging to a file this
- * is /var/log/sudo.log if /var/log exists, else /var/adm/sudo.log
+ * Where to put the sudo log file when logging to a file.  Defaults to
+ * /var/log/sudo.log if /var/log exists, else /var/adm/sudo.log.
  */
 #ifndef _PATH_SUDO_LOGFILE
-#define _PATH_SUDO_LOGFILE	_CONFIG_PATH_LOGFILE
+#define _PATH_SUDO_LOGFILE "/var/log/sudo.log"
 #endif /* _PATH_SUDO_LOGFILE */
 
 #ifndef _PATH_SENDMAIL
-#define _PATH_SENDMAIL		_CONFIG_PATH_SENDMAIL
+#define _PATH_SENDMAIL "/usr/sbin/sendmail"
 #endif /* _PATH_SENDMAIL */
 
 #ifndef _PATH_VI
-#define _PATH_VI		_CONFIG_PATH_VI
+#define _PATH_VI "/usr/bin/vi"
 #endif /* _PATH_VI */
 
-#ifndef _PATH_PWD
-#define _PATH_PWD		_CONFIG_PATH_PWD
-#endif /* _PATH_PWD */
-
 #ifndef _PATH_MV
-#define _PATH_MV		_CONFIG_PATH_MV
+#define _PATH_MV "/bin/mv"
 #endif /* _PATH_MV */
 
 #ifndef _PATH_BSHELL
-#define _PATH_BSHELL		_CONFIG_PATH_BSHELL
+#define _PATH_BSHELL "/bin/sh"
 #endif /* _PATH_BSHELL */

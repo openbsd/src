@@ -1,7 +1,7 @@
-/*	$OpenBSD: interfaces.c,v 1.6 1998/09/15 02:42:44 millert Exp $	*/
+/*	$OpenBSD: interfaces.c,v 1.7 1998/11/21 01:34:52 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.6
+ *  CU sudo version 1.5.7
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,10 +28,6 @@
  *  Todd C. Miller  Mon May  1 20:48:43 MDT 1995
  */
 
-#ifndef lint
-static char rcsid[] = "$From: interfaces.c,v 1.38 1998/09/14 15:48:05 millert Exp $";
-#endif /* lint */
-
 #include "config.h"
 
 #include <stdio.h>
@@ -55,11 +51,10 @@ static char rcsid[] = "$From: interfaces.c,v 1.38 1998/09/14 15:48:05 millert Ex
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/param.h>
-#ifdef HAVE_SYS_SOCKIO_H
-#include <sys/sockio.h>
-#else
 #include <sys/ioctl.h>
-#endif /* HAVE_SYS_SOCKIO_H */
+#if defined(HAVE_SYS_SOCKIO_H) && !defined(SIOCGIFCONF)
+#include <sys/sockio.h>
+#endif
 #ifdef _ISC
 #include <sys/stream.h>
 #include <sys/sioctl.h>
@@ -75,17 +70,19 @@ static char rcsid[] = "$From: interfaces.c,v 1.38 1998/09/14 15:48:05 millert Ex
 #endif /* _MIPS */
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/time.h>
 #include <net/if.h>
 
 #include "sudo.h"
-#include <options.h>
 #include "version.h"
 
 #if !defined(STDC_HEADERS) && !defined(__GNUC__)
 extern char *malloc	__P((size_t));
 extern char *realloc	__P((VOID *, size_t));
 #endif /* !STDC_HEADERS && !__GNUC__ */
+
+#ifndef lint
+static const char rcsid[] = "$From: interfaces.c,v 1.45 1998/11/18 20:31:25 millert Exp $";
+#endif /* lint */
 
 /*
  * Globals
@@ -129,7 +126,7 @@ void load_interfaces()
     for (;;) {
 	ifconf_buf = ifconf_buf ? realloc(ifconf_buf, len) : malloc(len);
 	if (ifconf_buf == NULL) {
-	    perror("malloc");
+	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
 	    exit(1);
 	}
 	ifconf = (struct ifconf *) ifconf_buf;
@@ -163,7 +160,6 @@ void load_interfaces()
      */
     interfaces = (struct interface *) malloc(sizeof(struct interface) * n);
     if (interfaces == NULL) {
-	perror("malloc");
 	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
 	exit(1);
     }

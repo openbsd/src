@@ -1,7 +1,7 @@
-/*	$OpenBSD: sudo_setenv.c,v 1.6 1998/09/15 02:42:45 millert Exp $	*/
+/*	$OpenBSD: sudo_setenv.c,v 1.7 1998/11/21 01:34:53 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.6
+ *  CU sudo version 1.5.7
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,10 +27,6 @@
  *  Todd C. Miller (millert@colorado.edu) Fri Jun  3 18:32:19 MDT 1994
  */
 
-#ifndef lint
-static char rcsid[] = "$From: sudo_setenv.c,v 1.26 1998/04/06 03:35:47 millert Exp $";
-#endif /* lint */
-
 #include "config.h"
 
 #include <stdio.h>
@@ -48,7 +44,6 @@ static char rcsid[] = "$From: sudo_setenv.c,v 1.26 1998/04/06 03:35:47 millert E
 #include <netinet/in.h>
 
 #include "sudo.h"
-#include <options.h>
 
 #ifndef STDC_HEADERS
 #ifdef HAVE_PUTENV
@@ -58,6 +53,10 @@ extern int putenv	__P((const char *));
 extern int setenv	__P((char *, char *, int));
 #endif /* HAVE_SETENV */
 #endif /* !STDC_HEADERS */
+
+#ifndef lint
+static const char rcsid[] = "$From: sudo_setenv.c,v 1.30 1998/11/18 04:16:13 millert Exp $";
+#endif /* lint */
 
 
 /**********************************************************************

@@ -1,11 +1,11 @@
 .rn '' }`
-''' $OpenBSD: visudo.8,v 1.6 1998/09/15 02:42:45 millert Exp $
+''' $OpenBSD: visudo.8,v 1.7 1998/11/21 01:34:54 millert Exp $ 
 '''
-''' $RCSfile: visudo.8,v $$Revision: 1.6 $$Date: 1998/09/15 02:42:45 $
+''' $RCSfile: visudo.8,v $$Revision: 1.7 $$Date: 1998/11/21 01:34:54 $
 '''
 ''' $Log: visudo.8,v $
-''' Revision 1.6  1998/09/15 02:42:45  millert
-''' sudo 1.5.6
+''' Revision 1.7  1998/11/21 01:34:54  millert
+''' sudo 1.5.7
 '''
 '''
 .de Sh
@@ -98,7 +98,7 @@
 .nr % 0
 .rr F
 .\}
-.TH visudo 8 "1.5.6" "16/Feb/98" "MAINTENANCE COMMANDS"
+.TH visudo 8 "1.5.7" "17/Oct/98" "MAINTENANCE COMMANDS"
 .UC
 .if n .hy 0
 .if n .na
@@ -204,7 +204,7 @@ for parse errors.  If the \fIsudoers\fR file is currently being
 edited you will receive a message to try again later.  In the
 default configuration, the \fIvi\fR\|(1) editor is used, but there is
 a compile time option to allow use of whatever editor the
-environmental variables \f(CWEDITOR\fR or \f(CWVISUAL\fR are set to.
+environment variables \f(CWEDITOR\fR or \f(CWVISUAL\fR are set to.
 .PP
 \fBvisudo\fR parses the \fIsudoers\fR file after the edit and will
 not save the changes if there is a syntax error.  Upon finding

@@ -1,7 +1,7 @@
-/*	$OpenBSD: logging.c,v 1.7 1998/09/15 02:42:44 millert Exp $	*/
+/*	$OpenBSD: logging.c,v 1.8 1998/11/21 01:34:52 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.6 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.7 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -38,10 +38,6 @@
  *  Jeff Nieusma   Thu Mar 21 23:39:04 MST 1991
  */
 
-#ifndef lint
-static char rcsid[] = "$From: logging.c,v 1.97 1998/09/10 22:51:09 millert Exp $";
-#endif /* lint */
-
 #include "config.h"
 
 #include <stdio.h>
@@ -62,16 +58,19 @@ static char rcsid[] = "$From: logging.c,v 1.97 1998/09/10 22:51:09 millert Exp $
 #endif /* HAVE_MALLOC_H && !STDC_HEADERS */
 #include <pwd.h>
 #include <signal.h>
+#include <time.h>
+#include <errno.h>
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <sys/errno.h>
 #include <netinet/in.h>
 
 #include "sudo.h"
-#include <options.h>
+
+#ifndef lint
+static const char rcsid[] = "$From: logging.c,v 1.106 1998/11/18 04:16:13 millert Exp $";
+#endif /* lint */
 
 /*
  * Prototypes for local functions
@@ -163,7 +162,6 @@ void log_error(code)
 
     logline = (char *) malloc(count);
     if (logline == NULL) {
-	perror("malloc");
 	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
 	exit(1);
     }
@@ -286,8 +284,14 @@ void log_error(code)
 		tty, cwd, runas_user);
 	    break;
 
+	case BAD_ALLOCATION:
+	    (void) sprintf(p,
+		"allocation failure; TTY=%s ; PWD=%s ; USER=%s ; COMMAND=",
+		tty, cwd, runas_user);
+	    break;
+
 	default:
-	    strcat(p, "found a wierd error : ");
+	    strcat(p, "found a weird error : ");
 	    break;
     }
 
@@ -442,7 +446,7 @@ void log_error(code)
 
 
 
-#ifdef MAILER
+#ifdef _PATH_SENDMAIL
 /**********************************************************************
  *
  *  send_mail()
@@ -455,7 +459,7 @@ static char *mail_argv[] = { "sendmail", "-t", (char *) NULL };
 
 static void send_mail()
 {
-    char *mailer = MAILER;
+    char *mailer = _PATH_SENDMAIL;
     char *subject = MAILSUBJECT;
     int fd[2];
     char *p;
@@ -536,7 +540,7 @@ static void send_mail()
     /* no mailer defined */
     return;
 }
-#endif /* MAILER */
+#endif /* _PATH_SENDMAIL */
 
 
 
@@ -678,9 +682,14 @@ void inform_user(code)
 		"Your timestamp file has a preposterous date, ignoring.\n");
 	    break;
 
+	case BAD_ALLOCATION:
+	    (void) fprintf(stderr,
+		"Resource allocation failure.\n");
+	    break;
+
 	default:
 	    (void) fprintf(stderr,
-		"Something wierd happened.\n\n");
+		"Something weird happened.\n\n");
 	    break;
     }
 }
@@ -735,6 +744,7 @@ static int appropriate(code)
     case SPOOF_ATTEMPT:
     case BAD_STAMPDIR:
     case BAD_STAMPFILE:
+    case BAD_ALLOCATION:
     default:
 	return (1);
 	break;

@@ -1,7 +1,7 @@
-/*	$OpenBSD: ins_classic.h,v 1.6 1998/09/15 02:42:44 millert Exp $	*/
+/*	$OpenBSD: ins_classic.h,v 1.7 1998/11/21 01:34:52 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.6
+ *  CU sudo version 1.5.7
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  $From: ins_classic.h,v 1.20 1998/09/07 02:59:06 millert Exp $
+ *  $From: ins_classic.h,v 1.21 1998/09/17 16:27:03 millert Exp $
  */
 
 #ifndef _SUDO_INS_CLASSIC_H

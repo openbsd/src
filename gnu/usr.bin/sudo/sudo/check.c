@@ -1,7 +1,7 @@
-/*	$OpenBSD: check.c,v 1.12 1998/11/13 22:44:33 millert Exp $	*/
+/*	$OpenBSD: check.c,v 1.13 1998/11/21 01:34:51 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.6 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.7 (based on Root Group sudo version 1.1)
  *
  * This software comes with no waranty whatsoever, use at your own risk.
  *
@@ -37,10 +37,6 @@
  *  Jeff Nieusma  Thu Mar 21 22:39:07 MST 1991
  */
 
-#ifndef lint
-static char rcsid[] = "$From: check.c,v 1.144 1998/09/18 05:29:26 millert Exp $";
-#endif /* lint */
-
 #include "config.h"
 
 #include <stdio.h>
@@ -57,26 +53,14 @@ static char rcsid[] = "$From: check.c,v 1.144 1998/09/18 05:29:26 millert Exp $"
 #include <strings.h>
 #endif /* HAVE_STRINGS_H */
 #include <fcntl.h>
+#include <time.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 #include <sys/file.h>
 #include <netinet/in.h>
 #include <pwd.h>
 #include <grp.h>
-#include "sudo.h"
-#include <options.h>
-#include "insults.h"
-#include "version.h"
-#if (SHADOW_TYPE == SPW_SECUREWARE)
-#  ifdef __hpux
-#    include <hpsecurity.h>
-#  else
-#    include <sys/security.h>
-#  endif /* __hpux */
-#  include <prot.h>
-#endif /* SPW_SECUREWARE */
 #ifdef HAVE_KERB4
 #  include <krb.h>
 #endif /* HAVE_KERB4 */
@@ -107,6 +91,13 @@ static char rcsid[] = "$From: check.c,v 1.144 1998/09/18 05:29:26 millert Exp $"
 #  include "emul/utime.h"
 #endif /* HAVE_UTIME */
 
+#include "sudo.h"
+#include "insults.h"
+#include "version.h"
+
+#ifndef lint
+static const char rcsid[] = "$From: check.c,v 1.163 1998/11/18 04:16:13 millert Exp $";
+#endif /* lint */
 
 /*
  * Prototypes for local functions
@@ -116,6 +107,7 @@ static void  check_passwd		__P((void));
 static int   touch			__P((char *));
 static void  update_timestamp		__P((void));
 static void  reminder			__P((void));
+static char *expand_prompt		__P((char *, char *, char *));
 #ifdef HAVE_KERB4
 static int   sudo_krb_validate_user	__P((struct passwd *, char *));
 #endif /* HAVE_KERB4 */
@@ -141,18 +133,9 @@ union config_record configure;
 #ifdef HAVE_SKEY
 struct skey skey;
 #endif
-#ifdef HAVE_PAM
-static struct pam_conv conv = {
-	misc_conv,
-	NULL
-};
-#endif
 #ifdef HAVE_OPIE
 struct opie opie;
 #endif
-#if (SHADOW_TYPE == SPW_SECUREWARE) && defined(__alpha)
-extern uchar_t crypt_type;
-#endif /* SPW_SECUREWARE && __alpha */
 
 
 
@@ -180,11 +163,17 @@ void check_user()
 	if (rtn == 2)
 	    reminder();		/* do the reminder if ticket file is new */
 #endif /* NO_MESSAGE */
-#ifdef HAVE_PAM
+
+	/* expand any escapes in the prompt */
+	prompt = expand_prompt(prompt, user_name, shost);
+
+#ifdef HAVE_SIA
+	sia_attempt_auth();
+#elif HAVE_PAM
 	pam_attempt_auth();
-#else  /* !HAVE_PAM */
+#else  /* !HAVE_SIA && !HAVE_PAM */
 	check_passwd();
-#endif /* HAVE_PAM */
+#endif /* HAVE_SIA */
     }
 
     update_timestamp();
@@ -249,15 +238,15 @@ static int check_timestamp()
 
     if (sizeof(_PATH_SUDO_TIMEDIR) + strlen(user_name) + strlen(p) + 2 >
 	sizeof(timestampfile)) {
-	(void) fprintf(stderr, "%s:  path too long:  %s/%s.%s\n", Argv[0],
+	(void) fprintf(stderr, "%s: path too long: %s/%s.%s\n", Argv[0],
 		       _PATH_SUDO_TIMEDIR, user_name, p);
 	exit(1);                                              
     }
-    (void) sprintf(timestampfile, "%s/%s.%s", _PATH_SUDO_TIMEDIR, user_name, p);
+    (void) sprintf(timestampfile, "%s/%s:%s", _PATH_SUDO_TIMEDIR, user_name, p);
 #else
     if (sizeof(_PATH_SUDO_TIMEDIR) + strlen(user_name) + 1 >
 	sizeof(timestampfile)) {
-	(void) fprintf(stderr, "%s:  path too long:  %s/%s\n", Argv[0],
+	(void) fprintf(stderr, "%s: path too long: %s/%s\n", Argv[0],
 		       _PATH_SUDO_TIMEDIR, user_name);
 	exit(1);                                              
     }
@@ -302,7 +291,7 @@ static int check_timestamp()
 	} else {
 	    /* check the time against the timestamp file */
 	    now = time((time_t *) NULL);
-	    if (TIMEOUT && now - statbuf.st_mtime < 60 * TIMEOUT)
+	    if (TIMEOUT && now - statbuf.st_mtime < 60 * TIMEOUT) {
 		/* check for bogus time on the stampfile */
 		if (statbuf.st_mtime > now + 60 * TIMEOUT * 2) {
 		    timestamp_is_old = 2;	/* bogus time value */
@@ -312,8 +301,9 @@ static int check_timestamp()
 		} else {
 		    timestamp_is_old = 0;	/* time value is reasonable */
 		}
-	    else
+	    } else {
 		timestamp_is_old = 1;	/* else make 'em enter password */
+	    }
 	}
     }
     /*
@@ -420,7 +410,7 @@ void remove_timestamp()
 
     if (sizeof(_PATH_SUDO_TIMEDIR) + strlen(user_name) + strlen(p) + 2 >
 	sizeof(timestampfile)) {
-	(void) fprintf(stderr, "%s:  path too long:  %s/%s.%s\n", Argv[0],
+	(void) fprintf(stderr, "%s: path too long: %s/%s.%s\n", Argv[0],
 		       _PATH_SUDO_TIMEDIR, user_name, p);
 	exit(1);                                              
     }
@@ -428,7 +418,7 @@ void remove_timestamp()
 #else
     if (sizeof(_PATH_SUDO_TIMEDIR) + strlen(user_name) + 1 >
 	sizeof(timestampfile)) {
-	(void) fprintf(stderr, "%s:  path too long:  %s/%s\n", Argv[0],
+	(void) fprintf(stderr, "%s: path too long: %s/%s\n", Argv[0],
 		       _PATH_SUDO_TIMEDIR, user_name);
 	exit(1);                                              
     }
@@ -482,11 +472,7 @@ static void check_passwd()
 	}
 
 	--counter;		/* otherwise, try again  */
-#ifdef USE_INSULTS
-	(void) fprintf(stderr, "%s\n", INSULT);
-#else
-	(void) fprintf(stderr, "%s\n", INCORRECT_PASSWORD);
-#endif /* USE_INSULTS */
+	pass_warn(stderr);
     }
     set_perms(PERM_USER, 0);
 
@@ -503,8 +489,8 @@ static void check_passwd()
 #else /* !HAVE_SECURID */
 static void check_passwd()
 {
-    char *pass;			/* this is what gets entered    */
-    register int counter = TRIES_FOR_PASSWORD;
+    char *pass;			/* this is what gets entered */
+    int counter = TRIES_FOR_PASSWORD;
 #if defined(HAVE_KERB4) && defined(USE_GETPASS)
     char kpass[_PASSWD_LEN + 1];
 #endif /* HAVE_KERB4 && USE_GETPASS */
@@ -530,7 +516,7 @@ static void check_passwd()
 #  ifdef USE_GETPASS
 	pass = (char *) getpass(prompt);
 #  else
-	pass = tgetpass(prompt, PASSWORD_TIMEOUT * 60, user_name, shost);
+	pass = tgetpass(prompt, PASSWORD_TIMEOUT * 60);
 #  endif /* USE_GETPASS */
 	reenter = 1;
 	if (authenticate(user_name, pass, &reenter, &message) == 0)
@@ -558,7 +544,7 @@ static void check_passwd()
 	pass = (char *) getpass(prompt);
 #    endif /* HAVE_KERB4 */
 #  else
-	pass = tgetpass(prompt, PASSWORD_TIMEOUT * 60, user_name, shost);
+	pass = tgetpass(prompt, PASSWORD_TIMEOUT * 60);
 #  endif /* USE_GETPASS */
 
 	/* Exit loop on nil password */
@@ -596,41 +582,15 @@ static void check_passwd()
 	 * If we use shadow passwords with a different crypt(3)
 	 * check that here, else use standard crypt(3).
 	 */
-#    if (SHADOW_TYPE != SPW_NONE) && (SHADOW_TYPE != SPW_BSD)
-#      if (SHADOW_TYPE == SPW_ULTRIX4)
+#    ifdef HAVE_GETAUTHUID
 	if (!strcmp(user_passwd, (char *) crypt16(pass, user_passwd)))
 	    return;		/* if the passwd is correct return() */
-#      endif /* ULTRIX4 */
-#      if (SHADOW_TYPE == SPW_SECUREWARE) && !defined(__alpha)
-#        ifdef HAVE_BIGCRYPT
-	if (strcmp(user_passwd, (char *) bigcrypt(pass, user_passwd)) == 0)
-	    return;           /* if the passwd is correct return() */
-#        else
-	if (strcmp(user_passwd, crypt(pass, user_passwd)) == 0)
-	    return;           /* if the passwd is correct return() */
-#        endif /* HAVE_BIGCRYPT */
-#      endif /* SECUREWARE && !__alpha */
-#      if (SHADOW_TYPE == SPW_SECUREWARE) && defined(__alpha)
-	if (crypt_type == AUTH_CRYPT_BIGCRYPT) {
-	    if (!strcmp(user_passwd, bigcrypt(pass, user_passwd)))
-		return;             /* if the passwd is correct return() */
-	} else if (crypt_type == AUTH_CRYPT_CRYPT16) {
-	    if (!strcmp(user_passwd, crypt16(pass, user_passwd)))
-		return;             /* if the passwd is correct return() */
-#        ifdef AUTH_CRYPT_OLDCRYPT
-	} else if (crypt_type == AUTH_CRYPT_OLDCRYPT ||
-		   crypt_type == AUTH_CRYPT_C1CRYPT) {
-	    if (!strcmp(user_passwd, crypt(pass, user_passwd)))
-		return;             /* if the passwd is correct return() */
-#        endif
-	} else {
-	    (void) fprintf(stderr,
-                    "%s: Sorry, I don't know how to deal with crypt type %d.\n",
-                    Argv[0], crypt_type);
-	    exit(1);
-	}
-#      endif /* SECUREWARE && __alpha */
-#    endif /* SHADOW_TYPE != SPW_NONE && SHADOW_TYPE != SPW_BSD */
+#    endif /* HAVE_GETAUTHUID */
+
+#    ifdef HAVE_GETPRPWNAM
+	if (check_secureware(pass))
+	    return;		/* if the passwd is correct return() */
+#    endif /* HAVE_HAVE_GETPRPWNAM */
 
 	/* Normal UN*X password check */
 	if (!strcmp(user_passwd, (char *) crypt(pass, user_passwd)))
@@ -664,11 +624,7 @@ static void check_passwd()
 #endif /* HAVE_AUTHENTICATE */
 
 	--counter;		/* otherwise, try again  */
-#ifdef USE_INSULTS
-	(void) fprintf(stderr, "%s\n", INSULT);
-#else
-	(void) fprintf(stderr, "%s\n", INCORRECT_PASSWORD);
-#endif /* USE_INSULTS */
+	pass_warn(stderr);
     }
 
     if (counter > 0) {
@@ -691,8 +647,8 @@ static void check_passwd()
  *
  *  Validate a user via kerberos.
  */
-static int sudo_krb_validate_user(pw_ent, pass)
-    struct passwd *pw_ent;
+static int sudo_krb_validate_user(pw, pass)
+    struct passwd *pw;
     char *pass;
 {
     char realm[REALM_SZ];
@@ -708,7 +664,7 @@ static int sudo_krb_validate_user(pw_ent, pass)
      * wipe out other kerberos tickets.
      */
     (void) sprintf(tkfile, "%s/tkt%ld", _PATH_SUDO_TIMEDIR,
-		   (long) pw_ent->pw_uid);
+		   (long) pw->pw_uid);
     (void) krb_set_tkt_string(tkfile);
 
     /*
@@ -716,7 +672,7 @@ static int sudo_krb_validate_user(pw_ent, pass)
      * the ruid and euid to be the same here so we setuid to root.
      */
     set_perms(PERM_ROOT, 0);
-    k_errno = krb_get_pw_in_tkt(pw_ent->pw_name, "", realm, "krbtgt", realm,
+    k_errno = krb_get_pw_in_tkt(pw->pw_name, "", realm, "krbtgt", realm,
 	DEFAULT_TKT_LIFE, pass);
 
     /*
@@ -748,6 +704,10 @@ static void pam_attempt_auth()
     pam_handle_t *pamh=NULL;
     int retval;
     register int counter = TRIES_FOR_PASSWORD;
+    struct pam_conv conv = {
+	    misc_conv,
+	    NULL
+    };
 
     set_perms(PERM_ROOT, 0);
     retval = pam_start("sudo", user_name, &conv, &pamh);
@@ -764,11 +724,7 @@ static void pam_attempt_auth()
         }
 
         --counter;
-#ifdef USE_INSULTS
-        (void) fprintf(stderr, "%s\n", INSULT);
-#else
-        (void) fprintf(stderr, "%s\n", INCORRECT_PASSWORD);
-#endif /* USE_INSULTS */
+        pass_warn(stderr);
     }
     set_perms(PERM_USER, 0);
 
@@ -834,7 +790,6 @@ static char *sudo_skeyprompt(user_skey, p)
 	/* allocate space for new prompt */
 	np_size = op_len + strlen(challenge) + 7;
 	if (!(new_prompt = (char *) malloc(np_size))) {
-	    perror("malloc");
 	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
 	    exit(1);
 	}
@@ -843,7 +798,6 @@ static char *sudo_skeyprompt(user_skey, p)
 	if (np_size < op_len + strlen(challenge) + 7) {
 	    np_size = op_len + strlen(challenge) + 7;
 	    if (!(new_prompt = (char *) realloc(new_prompt, np_size))) {
-		perror("malloc");
 		(void) fprintf(stderr, "%s: cannot allocate memory!\n",
 			       Argv[0]);
 		exit(1);
@@ -909,7 +863,6 @@ static char *sudo_opieprompt(user_opie, p)
 	/* allocate space for new prompt */
 	np_size = op_len + strlen(challenge) + 7;
 	if (!(new_prompt = (char *) malloc(np_size))) {
-	    perror("malloc");
 	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
 	    exit(1);
 	}
@@ -918,7 +871,6 @@ static char *sudo_opieprompt(user_opie, p)
 	if (np_size < op_len + strlen(challenge) + 7) {
 	    np_size = op_len + strlen(challenge) + 7;
 	    if (!(new_prompt = (char *) realloc(new_prompt, np_size))) {
-		perror("malloc");
 		(void) fprintf(stderr, "%s: cannot allocate memory!\n",
 			       Argv[0]);
 		exit(1);
@@ -952,7 +904,7 @@ static void reminder()
     (void) fprintf(stderr, "\n%s\n%s\n\n%s\n%s\n\n",
 #else
     (void) fprintf(stderr, "\n%s%s%s\n%s\n%s\n%s\n\n%s\n%s\n\n%s\n%s\n\n",
-	"    CU sudo version ", version, ", based on Root Group sudo version 1.1",
+	"    CU Sudo version ", version, ", based on Root Group sudo version 1.1.",
 	"    sudo version 1.1 is Copyright (C) 1991 The Root Group, Inc.",
 	"    sudo comes with ABSOLUTELY NO WARRANTY.  This is free software,",
 	"    and you are welcome to redistribute it under certain conditions.",
@@ -964,3 +916,92 @@ static void reminder()
     );
 }
 #endif /* NO_MESSAGE */
+
+
+/********************************************************************
+ *
+ *  pass_warn()
+ *
+ *  warn the user that the password was incorrect
+ *  (and insult them if insults are configured).
+ */
+
+void pass_warn(fp)
+    FILE *fp;
+{
+
+#ifdef USE_INSULTS
+    (void) fprintf(fp, "%s\n", INSULT);
+#else
+    (void) fprintf(fp, "%s\n", INCORRECT_PASSWORD);
+#endif /* USE_INSULTS */
+}
+
+/********************************************************************
+ *
+ *  expand_prompt()
+ *
+ *  expand %h and %u in the prompt and pass back the dynamically
+ *  allocated result.  Returns the same string if no escapes.
+ */
+
+static char *expand_prompt(old_prompt, user, host)
+    char *old_prompt;
+    char *user;
+    char *host;
+{
+    size_t len;
+    int subst;
+    char *p, *np, *new_prompt, lastchar;
+
+    /* How much space do we need to malloc for the prompt? */
+    subst = 0;
+    for (p = old_prompt, len = strlen(old_prompt), lastchar = '\0'; *p; p++) {
+	if (lastchar == '%') {
+	    if (*p == 'h') {
+		len += strlen(shost) - 2;
+		subst = 1;
+	    } else if (*p == 'u') {
+		len += strlen(user_name) - 2;
+		subst = 1;
+	    }
+	}
+
+	if (lastchar == '%' && *p == '%') {
+	    lastchar = '\0';
+	    len--;
+	} else
+	    lastchar = *p;
+    }
+
+    if (subst) {
+	if ((new_prompt = (char *) malloc(len + 1)) == NULL) {
+	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
+	    exit(1);
+	}
+	for (p = prompt, np = new_prompt; *p; p++) {
+	    if (lastchar == '%' && (*p == 'h' || *p == 'u' || *p == '%')) {
+		/* substiture user/host name */
+		if (*p == 'h') {
+		    np--;
+		    strcpy(np, shost);
+		    np += strlen(shost);
+		} else if (*p == 'u') {
+		    np--;
+		    strcpy(np, user_name);
+		    np += strlen(user_name);
+		}
+	    } else
+		*np++ = *p;
+
+	    if (lastchar == '%' && *p == '%')
+		lastchar = '\0';
+	    else
+		lastchar = *p;
+	}
+	*np = '\0';
+    } else
+	new_prompt = prompt;
+
+    return(new_prompt);
+}
