@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.19 2003/06/16 06:36:40 itojun Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.20 2003/07/19 11:48:58 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -352,7 +352,7 @@ obsd_translate_errno(int nerrno)
 }
 
 static int
-obsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int errno,
+obsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int nerrno,
     short flags, struct elevate *elevate)
 {
 	struct systrace_answer ans;
@@ -362,7 +362,7 @@ obsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int errno,
 	ans.stra_seqnr = seqnr;
 	ans.stra_policy = obsd_translate_policy(policy);
 	ans.stra_flags = obsd_translate_flags(flags);
-	ans.stra_error = obsd_translate_errno(errno);
+	ans.stra_error = obsd_translate_errno(nerrno);
 
 	if (elevate != NULL) {
 		if (elevate->e_flags & ELEVATE_UID) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.27 2003/06/16 06:36:40 itojun Exp $	*/
+/*	$OpenBSD: filter.c,v 1.28 2003/07/19 11:48:57 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -182,6 +182,7 @@ filter_evaluate(struct intercept_tlq *tls, struct filterq *fls,
 			/* Profile feedback optimization */
 			filter->match_count++;
 			if (last != NULL && last->match_action == action &&
+			    last->match_flags == filter->match_flags &&
 			    filter->match_count > last->match_count) {
 				TAILQ_REMOVE(fls, last, next);
 				TAILQ_INSERT_AFTER(fls, filter, last, next);
@@ -492,10 +493,9 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 	struct filter *filter;
 	struct policy *policy;
 	short action;
-	int first = 1, isalias;
+	int first = 1, isalias, isprompt = 0;
 
 	*pfuture = ICPOLICY_ASK;
-	icpid->uflags = 0;
 
 	isalias = systrace_find_reverse(emulation, name) != NULL;
 
@@ -543,6 +543,11 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 	}
 
 	while (1) {
+		/* Special policy active that allows only yes or no */
+		if (icpid->uflags & PROCESS_PROMPT) {
+			fprintf(stderr, "isprompt\n");
+			isprompt = 1;
+		}
 		filter = NULL;
 
 		if (!allow) {
@@ -557,7 +562,7 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 			}
 
 			if (fgets(line, sizeof(line), stdin) == NULL)
-				errx(1, "EOF");
+				errx(1, "EOF on policy input request");
 			p = line;
 			strsep(&p, "\n");
 		} else if (!first) {
@@ -608,6 +613,9 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 		}
 
 		if (filter_parse_simple(line, &action, pfuture) != -1) {
+			/* Yes or no, no in-kernel policy allowed */
+			if (isprompt)
+				*pfuture = ICPOLICY_ASK;
 			if (*pfuture == ICPOLICY_ASK)
 				goto out;
 			/* We have a policy decision */
@@ -621,16 +629,32 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 			snprintf(line, sizeof(line), "true then %s", compose);
 		}
 
+		if (isprompt) {
+			printf("Answer only \"permit\" or \"deny\". "
+			    "This is a prompt.\n");
+			continue;
+		}
+
 		if (fls == NULL) {
 			printf("Syntax error.\n");
 			continue;
 		}
 
-		if (filter_parse(line, &filter) == -1)
+		if (filter_parse(line, &filter) == -1) {
+			printf("Parse error.\n");
 			continue;
+		}
 
 		TAILQ_INSERT_TAIL(fls, filter, next);
 		action = filter_evaluate(tls, fls, icpid);
+
+		/* If we get a prompt flag here, we ask again */
+		if (icpid->uflags & PROCESS_PROMPT) {
+			filter_policyrecord(policy, filter, emulation, name, line);
+			printf("Answer only \"permit\" or \"deny\". "
+			    "This is a prompt.\n");
+			continue;
+		}
 		if (action == ICPOLICY_ASK) {
 			TAILQ_REMOVE(fls, filter, next);
 			printf("Filter unmatched. Freeing it\n");

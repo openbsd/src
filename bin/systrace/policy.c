@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.28 2003/06/19 06:26:19 pvalchev Exp $	*/
+/*	$OpenBSD: policy.c,v 1.29 2003/07/19 11:48:58 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -129,7 +129,7 @@ systrace_setupdir(char *path)
 		if (!(sb.st_mode & S_IFDIR))
 			errx(1, "Not a directory: \"%s\"", policydir);
 	} else if (mkdir(policydir, 0700) == -1)
-		err(1, "mdkdir(%s)", policydir);
+		err(1, "mkdir(%s)", policydir);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.15 2003/06/16 06:36:40 itojun Exp $	*/
+/*	$OpenBSD: register.c,v 1.16 2003/07/19 11:48:58 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -151,6 +151,9 @@ systrace_initcb(void)
 	X(intercept_register_sccb("native", "socket", trans_cb, NULL));
 	intercept_register_translation("native", "socket", 0, &ic_sockdom);
 	intercept_register_translation("native", "socket", 1, &ic_socktype);
+	X(intercept_register_sccb("native", "kill", trans_cb, NULL));
+	intercept_register_translation("native", "kill", 0, &ic_pidname);
+	intercept_register_translation("native", "kill", 1, &ic_signame);
 
 	X(intercept_register_sccb("linux", "open", trans_cb, NULL));
 	tl = intercept_register_translink("linux", "open", 0);

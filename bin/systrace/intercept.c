@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.40 2003/06/16 06:36:40 itojun Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.41 2003/07/19 11:48:57 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -613,6 +613,7 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 			errx(1, "cwd too long");
 	}
 
+	/* Need concatenated path for simplifypath */
 	if (havecwd && name[0] != '/') {
 		if (strlcat(cwd, "/", sizeof(cwd)) >= sizeof(cwd))
 			goto error;
@@ -718,7 +719,7 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 	flags = 0;
 
 	icpid = intercept_getpid(pid);
-		
+
 	/* Special handling for the exec call */
 	if (!strcmp(name, "execve")) {
 		void *addr;

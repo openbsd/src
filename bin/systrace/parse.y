@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2003/05/29 00:39:12 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.15 2003/07/19 11:48:58 sturm Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -66,7 +66,7 @@ extern int iamroot;
 
 %}
 
-%token	AND OR NOT LBRACE RBRACE LSQBRACE RSQBRACE THEN MATCH PERMIT DENY
+%token	AND OR NOT LBRACE RBRACE LSQBRACE RSQBRACE THEN MATCH PERMIT DENY ASK
 %token	EQ NEQ TRUE SUB NSUB INPATH LOG COMMA IF USER GROUP EQUAL NEQUAL AS
 %token	COLON RE LESSER GREATER
 %token	<string> STRING
@@ -120,6 +120,10 @@ fullexpression	: expression THEN action errorcode logcode elevate predicate
 
 		if ($5)
 			flags |= SYSCALL_LOG;
+
+		/* Special policy that allows only yes or no */
+		if ($3 == ICPOLICY_ASK)
+			flags |= PROCESS_PROMPT;
 
 		if ($4 != NULL)
 			free($4);
@@ -444,6 +448,10 @@ typeoff		: /* empty */
 action		: PERMIT
 {
 	$$ = ICPOLICY_PERMIT;
+}
+		| ASK
+{
+	$$ = ICPOLICY_ASK;
 }
 		| DENY
 {

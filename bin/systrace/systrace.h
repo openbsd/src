@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.22 2003/06/16 06:36:40 itojun Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.23 2003/07/19 11:48:58 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -129,6 +129,7 @@ TAILQ_HEAD(tmplqueue, template);
 #define PROCESS_INHERIT_POLICY	0x01	/* Process inherits policy */
 #define PROCESS_DETACH		0x02	/* Process gets detached */
 #define SYSCALL_LOG		0x04	/* Log this system call */
+#define PROCESS_PROMPT		0x08	/* Prompt but nothing else */
 
 void systrace_parameters(void);
 int systrace_initpolicy(char *, char *);
