@@ -1,5 +1,5 @@
-/*	$OpenBSD: faithd.c,v 1.8 2000/09/16 10:33:45 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.29 2000/09/12 05:20:35 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.9 2000/10/06 02:46:58 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.31 2000/10/05 22:20:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -119,7 +119,8 @@ static int map4to6 __P((struct sockaddr_in *, struct sockaddr_in6 *));
 static void sig_child __P((int));
 static void sig_terminate __P((int));
 static void start_daemon __P((void));
-static void exit_stderr __P((const char *, ...));
+static void exit_stderr __P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 #ifndef HAVE_GETIFADDRS
 static unsigned int if_maxindex __P((void));
 #endif
@@ -183,10 +184,10 @@ inetd_main(int argc, char **argv)
 
 	melen = sizeof(me);
 	if (getsockname(STDIN_FILENO, (struct sockaddr *)&me, &melen) < 0)
-		exit_failure("getsockname");
+		exit_failure("getsockname: %s", ERRSTR);
 	fromlen = sizeof(from);
 	if (getpeername(STDIN_FILENO, (struct sockaddr *)&from, &fromlen) < 0)
-		exit_failure("getpeername");
+		exit_failure("getpeername: %s", ERRSTR);
 	if (getnameinfo((struct sockaddr *)&me, melen, NULL, 0,
 	    sbuf, sizeof(sbuf), NI_NUMERICHOST) == 0)
 		service = sbuf;

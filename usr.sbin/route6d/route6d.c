@@ -1,5 +1,5 @@
-/*	$OpenBSD: route6d.c,v 1.9 2000/08/13 00:48:39 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.35 2000/08/13 00:39:44 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.10 2000/10/06 02:46:58 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.36 2000/10/05 22:20:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.9 2000/08/13 00:48:39 itojun Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.10 2000/10/06 02:46:58 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -253,9 +253,12 @@ struct in6_addr *plen2mask __P((int));
 struct riprt *rtsearch __P((struct netinfo6 *));
 int ripinterval __P((int));
 time_t ripsuptrig __P((void));
-void fatal __P((const char *, ...));
-void trace __P((int, const char *, ...));
-void tracet __P((int, const char *, ...));
+void fatal __P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
+void trace __P((int, const char *, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
+void tracet __P((int, const char *, ...))
+	__attribute__((__format__(__printf__, 2, 3)));
 unsigned int if_maxindex __P((void));
 struct ifc *ifc_find __P((char *));
 struct iff *iff_find __P((struct ifc *, int));
@@ -530,7 +533,7 @@ init()
 	hints.ai_flags = AI_PASSIVE;
 	error = getaddrinfo(NULL, port, &hints, &res);
 	if (error)
-		fatal(gai_strerror(error));
+		fatal("%s", gai_strerror(error));
 	if (res->ai_next)
 		fatal(":: resolved to multiple address");
 
@@ -563,7 +566,7 @@ init()
 	hints.ai_socktype = SOCK_DGRAM;
 	error = getaddrinfo(RIP6_DEST, port, &hints, &res);
 	if (error)
-		fatal(gai_strerror(error));
+		fatal("%s", gai_strerror(error));
 	if (res->ai_next)
 		fatal("%s resolved to multiple address", RIP6_DEST);
 	memcpy(&ripsin, res->ai_addr, res->ai_addrlen);

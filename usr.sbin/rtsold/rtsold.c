@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtsold.c,v 1.8 2000/08/13 18:24:00 itojun Exp $	*/
-/*	$KAME: rtsold.c,v 1.26 2000/08/13 18:17:15 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.9 2000/10/06 02:46:58 itojun Exp $	*/
+/*	$KAME: rtsold.c,v 1.27 2000/10/05 22:20:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -252,7 +252,7 @@ main(argc, argv)
 
 		if ((fp = fopen(pidfilename, "w")) == NULL)
 			warnmsg(LOG_ERR, __FUNCTION__,
-				"failed to open a log file(%s)",
+				"failed to open a log file(%s): %s",
 				pidfilename, strerror(errno));
 		else {
 			fprintf(fp, "%d\n", pid);
@@ -552,8 +552,8 @@ rtsol_check_timer()
 		TIMEVAL_SUB(&rtsol_timer, &now, &returnval);
 
 	if (dflag > 1)
-		warnmsg(LOG_DEBUG, __FUNCTION__, "New timer is %d:%08d",
-		       returnval.tv_sec, returnval.tv_usec);
+		warnmsg(LOG_DEBUG, __FUNCTION__, "New timer is %ld:%08ld",
+			(long)returnval.tv_sec, (long)returnval.tv_usec);
 
 	return(&returnval);
 }
@@ -704,7 +704,8 @@ warnmsg(priority, func, msg, va_alist)
 		}
 	} else {
 		snprintf(buf, sizeof(buf), "<%s> %s", func, msg);
-		vsyslog(priority, buf, ap);
+		msg = buf;
+		vsyslog(priority, msg, ap);
 	}
 	va_end(ap);
 }

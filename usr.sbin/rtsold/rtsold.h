@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtsold.h,v 1.4 2000/08/13 18:24:00 itojun Exp $	*/
-/*	$KAME: rtsold.h,v 1.9 2000/08/13 06:15:00 itojun Exp $	*/
+/*	$OpenBSD: rtsold.h,v 1.5 2000/10/06 02:46:58 itojun Exp $	*/
+/*	$KAME: rtsold.h,v 1.10 2000/10/05 22:20:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,11 +64,8 @@ extern struct timeval tm_max;
 extern int dflag;
 struct ifinfo *find_ifinfo __P((int ifindex));
 void rtsol_timer_update __P((struct ifinfo *ifinfo));
-#ifdef __STDC__
-extern void warnmsg __P((int, const char *, const char *, ...));
-#else
-extern void warnmsg __P((int, const char *, const char *, va_list));
-#endif
+extern void warnmsg __P((int, const char *, const char *, ...))
+     __attribute__((__format__(__printf__, 3, 4)));
 
 /* if.c */
 extern int ifinit __P((void));
