@@ -170,6 +170,7 @@
 ./usr/include/mvme88k/board.h
 ./usr/include/mvme88k/bug.h
 ./usr/include/mvme88k/bugio.h
+./usr/include/mvme88k/bus.h
 ./usr/include/mvme88k/cdefs.h
 ./usr/include/mvme88k/cmmu.h
 ./usr/include/mvme88k/conf.h

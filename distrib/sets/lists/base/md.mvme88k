@@ -1423,6 +1423,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/board.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/bug.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/bugio.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/bus.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/cdefs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/cmmu.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/conf.ph
