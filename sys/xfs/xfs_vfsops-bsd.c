@@ -38,7 +38,7 @@
 
 #include <xfs/xfs_locl.h>
 
-RCSID("$Id: xfs_vfsops-bsd.c,v 1.2 2000/02/01 04:12:19 assar Exp $");
+RCSID("$Id: xfs_vfsops-bsd.c,v 1.3 2000/02/07 04:57:19 assar Exp $");
 
 /*
  * XFS vfs operations.
@@ -126,10 +126,7 @@ xfs_vget(struct mount * mp,
 int
 xfs_fhtovp(struct mount * mp,
 	   struct fid * fhp,
-	   struct mbuf * nam,
-	   struct vnode ** vpp,
-	   int *exflagsp,
-	   struct ucred ** credanonp)
+	   struct vnode ** vpp)
 {
 #ifdef ARLA_KNFS
     static struct ucred fhtovpcred;
@@ -187,12 +184,6 @@ xfs_fhtovp(struct mount * mp,
 	fhtovpcred.cr_ngroups = 0;
       
 	*vpp = vp;
-#ifdef MNT_EXPUBLIC
-	*exflagsp = MNT_EXPUBLIC;
-#else
-	*exflagsp = 0;
-#endif
-	*credanonp = &fhtovpcred;
 
 	XFSDEB(XDEBVFOPS, ("xfs_fhtovp done\n"));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfsmount.h,v 1.10 1998/02/08 22:41:44 tholo Exp $	*/
+/*	$OpenBSD: msdosfsmount.h,v 1.11 2000/02/07 04:57:17 assar Exp $	*/
 /*	$NetBSD: msdosfsmount.h,v 1.16 1997/10/17 11:24:24 ws Exp $	*/
 
 /*-
@@ -205,6 +205,6 @@ int msdosfs_root __P((struct mount *, struct vnode **));
 int msdosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
 int msdosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int msdosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int msdosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *, struct vnode **, int *, struct ucred **));
+int msdosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int msdosfs_vptofh __P((struct vnode *, struct fid *));
 int msdosfs_init __P((struct vfsconf *));

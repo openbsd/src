@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vfsops.c,v 1.9 1999/05/31 17:34:50 millert Exp $	*/
+/*	$OpenBSD: union_vfsops.c,v 1.10 2000/02/07 04:57:17 assar Exp $	*/
 /*	$NetBSD: union_vfsops.c,v 1.10 1995/06/18 14:47:47 cgd Exp $	*/
 
 /*
@@ -480,7 +480,7 @@ union_statfs(mp, sbp, p)
 				  struct proc *)))nullop)
 
 #define union_fhtovp ((int (*) __P((struct mount *, struct fid *, \
-	    struct mbuf *, struct vnode **, int *, struct ucred **)))eopnotsupp)
+	    struct vnode **)))eopnotsupp)
 #define union_quotactl ((int (*) __P((struct mount *, int, uid_t, caddr_t, \
 	    struct proc *)))eopnotsupp)
 #define union_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
@@ -488,6 +488,8 @@ union_statfs(mp, sbp, p)
 #define union_vget ((int (*) __P((struct mount *, ino_t, struct vnode **))) \
 	    eopnotsupp)
 #define union_vptofh ((int (*) __P((struct vnode *, struct fid *)))eopnotsupp)
+#define union_checkexp ((int (*) __P((struct mount *, struct mbuf *,	\
+	int *, struct ucred **)))eopnotsupp)
 
 struct vfsops union_vfsops = {
 	union_mount,
@@ -501,5 +503,6 @@ struct vfsops union_vfsops = {
 	union_fhtovp,
 	union_vptofh,
 	union_init,
-	union_sysctl
+	union_sysctl,
+	union_checkexp
 };

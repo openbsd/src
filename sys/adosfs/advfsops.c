@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.15 1999/05/31 17:34:44 millert Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.16 2000/02/07 04:57:15 assar Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -61,8 +61,8 @@ int	 adosfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
 int	 adosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int	 adosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	 adosfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	 adosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-    struct vnode **, int *, struct ucred **));
+int	 adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+
 int	 adosfs_vptofh __P((struct vnode *, struct fid *));
 
 int	 adosfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
@@ -659,13 +659,10 @@ struct ifid {
 };
 
 int
-adosfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
+adosfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
 {
 	struct ifid *ifhp = (struct ifid *)fhp;
 	struct adosfsmount *amp = VFSTOADOSFS(mp);
@@ -680,13 +677,6 @@ adosfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	printf("adfhtovp(%x, %x, %x)\n", mp, fhp, vpp);
 #endif
 	
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &amp->export, nam);
-	if (np == NULL)
-		return (EACCES);
-
 	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);

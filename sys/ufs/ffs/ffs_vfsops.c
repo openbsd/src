@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.27 2000/01/14 19:17:56 art Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.28 2000/02/07 04:57:18 assar Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -80,7 +80,8 @@ struct vfsops ffs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	ffs_init,
-	ffs_sysctl
+	ffs_sysctl,
+	ufs_check_export
 };
 
 extern u_long nextgennumber;
@@ -1083,17 +1084,12 @@ retry:
  * - check that the inode number is valid
  * - call ffs_vget() to get the locked inode
  * - check for an unallocated inode (i_mode == 0)
- * - check that the given client host has export rights and return
- *   those rights via. exflagsp and credanonp
  */
 int
-ffs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
+ffs_fhtovp(mp, fhp, vpp)
 	register struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
 {
 	register struct ufid *ufhp;
 	struct fs *fs;
@@ -1103,7 +1099,7 @@ ffs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	if (ufhp->ufid_ino < ROOTINO ||
 	    ufhp->ufid_ino >= fs->fs_ncg * fs->fs_ipg)
 		return (ESTALE);
-	return (ufs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp));
+	return (ufs_fhtovp(mp, ufhp, vpp));
 }
 
 /*

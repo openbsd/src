@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_vfsops-bsd.h,v 1.1 1999/04/30 01:59:01 art Exp $ */
+/* $Id: xfs_vfsops-bsd.h,v 1.2 2000/02/07 04:57:19 assar Exp $ */
 
 #ifndef _xfs_vfsops_bsd_h
 #define _xfs_vfsops_bsd_h
@@ -74,10 +74,7 @@ xfs_vget(struct mount * mp,
 int
 xfs_fhtovp(struct mount * mp,
 	   struct fid * fhp,
-	   struct mbuf * nam,
-	   struct vnode ** vpp,
-	   int *exflagsp,
-	   struct ucred ** credanonp);
+	   struct vnode ** vpp);
 
 int
 xfs_vptofh(struct vnode * vp,

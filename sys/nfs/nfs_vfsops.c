@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.29 2000/01/06 03:35:37 smurph Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.30 2000/02/07 04:57:17 assar Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -74,6 +74,9 @@ extern int nfs_ticks;
 
 int nfs_sysctl
     __P((int *, u_int, void *, size_t *, void *, size_t, struct proc *));
+int nfs_checkexp
+    __P((struct mount *mp, struct mbuf *nam,
+	 int *extflagsp, struct ucred **credanonp));
 
 /*
  * nfs vfs operations.
@@ -90,7 +93,8 @@ struct vfsops nfs_vfsops = {
 	nfs_fhtovp,
 	nfs_vptofh,
 	nfs_vfs_init,
-	nfs_sysctl
+	nfs_sysctl,
+	nfs_checkexp
 };
 
 extern u_int32_t nfs_procids[NFS_NPROCS];
@@ -967,13 +971,10 @@ nfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
  */
 /* ARGSUSED */
 int
-nfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
+nfs_fhtovp(mp, fhp, vpp)
 	register struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
 {
 
 	return (EINVAL);
@@ -1019,5 +1020,19 @@ nfs_quotactl(mp, cmd, uid, arg, p)
 	struct proc *p;
 {
 
+	return (EOPNOTSUPP);
+}
+
+/*
+ * check export permission, not supported
+ */
+/* ARGUSED */
+int
+nfs_checkexp(mp, nam, exflagsp, credanonp)
+	register struct mount *mp;
+	struct mbuf *nam;
+	int *exflagsp;
+	struct ucred **credanonp;
+{
 	return (EOPNOTSUPP);
 }

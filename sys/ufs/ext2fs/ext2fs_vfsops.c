@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.10 1999/05/31 17:34:53 millert Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.11 2000/02/07 04:57:18 assar Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -67,8 +67,6 @@
 #include <ufs/ext2fs/ext2fs_extern.h>
 
 int ext2fs_sbupdate __P((struct ufsmount *, int));
-int ext2fs_check_export __P((struct mount *, struct ufid *, struct mbuf *,
-	struct vnode **, int *, struct ucred **));
 
 struct vfsops ext2fs_vfsops = {
 	ext2fs_mount,
@@ -82,56 +80,11 @@ struct vfsops ext2fs_vfsops = {
 	ext2fs_fhtovp,
 	ext2fs_vptofh,
 	ext2fs_init,
+	ext2fs_sysctl,
+	ufs_check_export
 };
 
 extern u_long ext2gennumber;
-
-/*
- * This is the generic part of fhtovp called after the underlying
- * filesystem has validated the file handle.
- *
- * Verify that a host should have access to a filesystem, and if so
- * return a vnode for the presented file handle.
- */
-int
-ext2fs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp)
-	register struct mount *mp;
-	struct ufid *ufhp;
-	struct mbuf *nam;
-	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
-{
-	register struct inode *ip;
-	register struct netcred *np;
-	register struct ufsmount *ump = VFSTOUFS(mp);
-	struct vnode *nvp;
-	int error;
-
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &ump->um_export, nam);
-	if (np == NULL)
-		return (EACCES);
-
-	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
-		*vpp = NULLVP;
-		return (error);
-	}
-	ip = VTOI(nvp);
-	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0 || 
-		ip->i_e2fs_gen != ufhp->ufid_gen) {
-		vput(nvp);
-		*vpp = NULLVP;
-		return (ESTALE);
-	}
-	*vpp = nvp;
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
-	return (0);
-}   
-
 
 /*
  * Called by main() when ext2fs is going to be mounted as root.
@@ -947,14 +900,14 @@ ext2fs_vget(mp, ino, vpp)
  *   those rights via. exflagsp and credanonp
  */
 int
-ext2fs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
+ext2fs_fhtovp(mp, fhp, vpp)
 	register struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
 {
+	register struct inode *ip;
+	struct vnode *nvp;
+	int error;
 	register struct ufid *ufhp;
 	struct m_ext2fs *fs;
 
@@ -963,7 +916,20 @@ ext2fs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	if ((ufhp->ufid_ino < EXT2_FIRSTINO && ufhp->ufid_ino != EXT2_ROOTINO) ||
 		ufhp->ufid_ino >= fs->e2fs_ncg * fs->e2fs.e2fs_ipg)
 		return (ESTALE);
-	return (ext2fs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp));
+
+	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
+		*vpp = NULLVP;
+		return (error);
+	}
+	ip = VTOI(nvp);
+	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0 || 
+		ip->i_e2fs_gen != ufhp->ufid_gen) {
+		vput(nvp);
+		*vpp = NULLVP;
+		return (ESTALE);
+	}
+	*vpp = nvp;
+	return (0);
 }
 
 /*
@@ -984,6 +950,23 @@ ext2fs_vptofh(vp, fhp)
 	ufhp->ufid_ino = ip->i_number;
 	ufhp->ufid_gen = ip->i_e2fs_gen;
 	return (0);
+}
+
+/*
+ * no sysctl for ext2fs
+ */
+
+int
+ext2fs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
 }
 
 /*

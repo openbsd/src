@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vfsops.c,v 1.7 1999/05/31 17:34:49 millert Exp $	*/
+/*	$OpenBSD: fdesc_vfsops.c,v 1.8 2000/02/07 04:57:16 assar Exp $	*/
 /*	$NetBSD: fdesc_vfsops.c,v 1.21 1996/02/09 22:40:07 christos Exp $	*/
 
 /*
@@ -68,8 +68,7 @@ int	fdesc_quotactl __P((struct mount *, int, uid_t, caddr_t,
 int	fdesc_statfs __P((struct mount *, struct statfs *, struct proc *));
 int	fdesc_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	fdesc_vget __P((struct mount *, ino_t, struct vnode **));
-int	fdesc_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-			  struct vnode **, int *, struct ucred **));
+int	fdesc_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	fdesc_vptofh __P((struct vnode *, struct fid *));
 
 /*
@@ -242,7 +241,7 @@ fdesc_sync(mp, waitfor, uc, p)
 }
 
 #define fdesc_fhtovp ((int (*) __P((struct mount *, struct fid *, \
-	    struct mbuf *, struct vnode **, int *, struct ucred **)))eopnotsupp)
+	    struct vnode **)))eopnotsupp)
 #define fdesc_quotactl ((int (*) __P((struct mount *, int, uid_t, caddr_t, \
 	    struct proc *)))eopnotsupp)
 #define fdesc_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
@@ -251,6 +250,9 @@ fdesc_sync(mp, waitfor, uc, p)
 	    eopnotsupp)
 #define fdesc_vptofh ((int (*) __P((struct vnode *, struct fid *)))eopnotsupp)
  
+#define fdesc_checkexp ((int (*) __P((struct mount *, struct mbuf *,	\
+	int *, struct ucred **)))eopnotsupp)
+
 struct vfsops fdesc_vfsops = {
 	fdesc_mount,
 	fdesc_start,
@@ -263,6 +265,6 @@ struct vfsops fdesc_vfsops = {
 	fdesc_fhtovp,
 	fdesc_vptofh,
 	fdesc_init,
-	fdesc_sysctl
+	fdesc_sysctl,
+	fdesc_checkexp
 };
-

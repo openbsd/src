@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vfsops.c,v 1.7 1999/05/31 17:34:50 millert Exp $	*/
+/*	$OpenBSD: portal_vfsops.c,v 1.8 2000/02/07 04:57:16 assar Exp $	*/
 /*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
 
 /*
@@ -247,7 +247,7 @@ portal_statfs(mp, sbp, p)
 				  struct proc *)))nullop)
 
 #define portal_fhtovp ((int (*) __P((struct mount *, struct fid *, \
-	    struct mbuf *, struct vnode **, int *, struct ucred **)))eopnotsupp)
+	    struct vnode **)))eopnotsupp)
 #define portal_quotactl ((int (*) __P((struct mount *, int, uid_t, caddr_t, \
 	    struct proc *)))eopnotsupp)
 #define portal_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
@@ -255,6 +255,8 @@ portal_statfs(mp, sbp, p)
 #define portal_vget ((int (*) __P((struct mount *, ino_t, struct vnode **))) \
 	    eopnotsupp)
 #define portal_vptofh ((int (*) __P((struct vnode *, struct fid *)))eopnotsupp)
+#define portal_checkexp ((int (*) __P((struct mount *, struct mbuf *,	\
+	int *, struct ucred **)))eopnotsupp)
 
 struct vfsops portal_vfsops = {
 	portal_mount,
@@ -268,5 +270,6 @@ struct vfsops portal_vfsops = {
 	portal_fhtovp,
 	portal_vptofh,
 	portal_init,
-	portal_sysctl
+	portal_sysctl,
+	portal_checkexp
 };

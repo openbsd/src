@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.14 1999/05/31 17:34:50 millert Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.15 2000/02/07 04:57:17 assar Exp $	*/
 /*	$NetBSD: umap_vfsops.c,v 1.9 1996/02/09 22:41:05 christos Exp $	*/
 
 /*
@@ -66,8 +66,7 @@ int	umapfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
 int	umapfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int	umapfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	umapfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	umapfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-			   struct vnode **, int *, struct ucred **));
+int	umapfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	umapfs_vptofh __P((struct vnode *, struct fid *));
 
 /*
@@ -391,15 +390,12 @@ umapfs_vget(mp, ino, vpp)
 }
 
 int
-umapfs_fhtovp(mp, fidp, nam, vpp, exflagsp, credanonp)
+umapfs_fhtovp(mp, fidp, vpp)
 	struct mount *mp;
 	struct fid *fidp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred**credanonp;
 {
-	return VFS_FHTOVP(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, fidp, nam, vpp, exflagsp, credanonp);
+	return VFS_FHTOVP(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, fidp, vpp);
 }
 
 int
@@ -412,7 +408,8 @@ umapfs_vptofh(vp, fhp)
 
 #define umapfs_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
 	    size_t, struct proc *)))eopnotsupp)
- 
+#define umapfs_checkexp ((int (*) __P((struct mount *, struct mbuf *,	\
+	int *, struct ucred **)))eopnotsupp)
 
 struct vfsops umap_vfsops = {
 	umapfs_mount,
@@ -426,5 +423,6 @@ struct vfsops umap_vfsops = {
 	umapfs_fhtovp,
 	umapfs_vptofh,
 	umapfs_init,
-	umapfs_sysctl
+	umapfs_sysctl,
+	umapfs_checkexp
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.8 1998/08/06 19:35:13 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.9 2000/02/07 04:57:19 assar Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -158,8 +158,9 @@ void dqflush __P((struct vnode *));
 int ufs_start __P((struct mount *, int, struct proc *));
 int ufs_root __P((struct mount *, struct vnode **));
 int ufs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
-int ufs_check_export __P((struct mount *, struct ufid *, struct mbuf *,
-			  struct vnode **, int *, struct ucred **));
+int ufs_fhtovp __P((struct mount *, struct ufid *, struct vnode **));
+int ufs_check_export __P((struct mount *, struct mbuf *, int *,
+		struct ucred **));
 
 /* ufs_vnops.c */
 int ufs_vinit __P((struct mount *, int (**) __P((void *)),

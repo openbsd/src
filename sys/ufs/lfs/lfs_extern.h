@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_extern.h,v 1.4 1998/02/08 22:41:51 tholo Exp $	*/
+/*	$OpenBSD: lfs_extern.h,v 1.5 2000/02/07 04:57:18 assar Exp $	*/
 /*	$NetBSD: lfs_extern.h,v 1.5 1996/02/12 15:20:12 christos Exp $	*/
 
 /*-
@@ -119,9 +119,10 @@ int lfs_unmount __P((struct mount *, int, struct proc *));
 int lfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int lfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int lfs_vget __P((struct mount *, ino_t, struct vnode **));
-int lfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *, struct vnode **, int *, struct ucred **));
+int lfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int lfs_vptofh __P((struct vnode *, struct fid *));
-
+int lfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		    struct proc *));
 
 int lfs_valloc		__P((void *));
 int lfs_vfree		__P((void *));

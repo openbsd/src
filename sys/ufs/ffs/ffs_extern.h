@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.8 1999/12/05 08:30:38 art Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.9 2000/02/07 04:57:18 assar Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*-
@@ -115,8 +115,7 @@ int ffs_flushfiles __P((struct mount *, int, struct proc *));
 int ffs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int ffs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int ffs_vget __P((struct mount *, ino_t, struct vnode **));
-int ffs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-		    struct vnode **, int *, struct ucred **));
+int ffs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int ffs_vptofh __P((struct vnode *, struct fid *));
 int ffs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vfsops.c,v 1.6 1997/11/06 05:59:28 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_vfsops.c,v 1.7 2000/02/07 04:57:19 assar Exp $	*/
 /*	$NetBSD: ufs_vfsops.c,v 1.4 1996/02/09 22:36:12 christos Exp $	*/
 
 /*
@@ -167,6 +167,32 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 
 
 /*
+ * Verify a remote client has export rights and return these rights via.
+ * exflagsp and credanonp.
+ */
+int
+ufs_check_export(mp, nam, exflagsp, credanonp)
+	register struct mount *mp;
+	struct mbuf *nam;
+	int *exflagsp;
+	struct ucred **credanonp;
+{
+	register struct netcred *np;
+	register struct ufsmount *ump = VFSTOUFS(mp);
+
+	/*
+	 * Get the export permission structure for this <mp, client> tuple.
+	 */
+	np = vfs_export_lookup(mp, &ump->um_export, nam);
+	if (np == NULL)
+		return (EACCES);
+
+	*exflagsp = np->netc_exflags;
+	*credanonp = &np->netc_anon;
+	return (0);
+}
+
+/*
  * Initial UFS filesystems, done only once.
  */
 int
@@ -188,31 +214,16 @@ ufs_init(vfsp)
 /*
  * This is the generic part of fhtovp called after the underlying
  * filesystem has validated the file handle.
- *
- * Verify that a host should have access to a filesystem, and if so
- * return a vnode for the presented file handle.
  */
 int
-ufs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp)
+ufs_fhtovp(mp, ufhp, vpp)
 	register struct mount *mp;
 	struct ufid *ufhp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
 {
 	register struct inode *ip;
-	register struct netcred *np;
-	register struct ufsmount *ump = VFSTOUFS(mp);
 	struct vnode *nvp;
 	int error;
-
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &ump->um_export, nam);
-	if (np == NULL)
-		return (EACCES);
 
 	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
@@ -225,7 +236,5 @@ ufs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp)
 		return (ESTALE);
 	}
 	*vpp = nvp;
-	*exflagsp = np->netc_exflags;
-	*credanonp = &np->netc_anon;
 	return (0);
 }

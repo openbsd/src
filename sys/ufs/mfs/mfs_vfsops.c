@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.11 1999/12/06 07:28:06 art Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.12 2000/02/07 04:57:18 assar Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -81,7 +81,8 @@ struct vfsops mfs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	mfs_init,
-	ffs_sysctl
+	ffs_sysctl,
+	mfs_checkexp
 };
 
 /*
@@ -298,4 +299,18 @@ mfs_statfs(mp, sbp, p)
 		bcopy(&mp->mnt_stat.mount_info.mfs_args,
 		    &sbp->mount_info.mfs_args, sizeof(struct mfs_args));
 	return (error);
+}
+
+/*
+ * check export permission, not supported
+ */
+/* ARGUSED */
+int
+mfs_checkexp(mp, nam, exflagsp, credanonp)
+	register struct mount *mp;
+	struct mbuf *nam;
+	int *exflagsp;
+	struct ucred **credanonp;
+{
+	return (EOPNOTSUPP);
 }

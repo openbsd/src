@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vfsops.c,v 1.10 1999/05/31 17:34:49 millert Exp $	*/
+/*	$OpenBSD: null_vfsops.c,v 1.11 2000/02/07 04:57:16 assar Exp $	*/
 /*	$NetBSD: null_vfsops.c,v 1.11 1996/05/10 22:50:56 jtk Exp $	*/
 
 /*
@@ -67,8 +67,7 @@ int	nullfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
 int	nullfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int	nullfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	nullfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	nullfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-			   struct vnode **, int *, struct ucred **));
+int	nullfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	nullfs_vptofh __P((struct vnode *, struct fid *));
 /*
  * Mount null layer
@@ -351,13 +350,10 @@ nullfs_vget(mp, ino, vpp)
 }
 
 int
-nullfs_fhtovp(mp, fidp, nam, vpp, exflagsp, credanonp)
+nullfs_fhtovp(mp, fidp, vpp)
 	struct mount *mp;
 	struct fid *fidp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred**credanonp;
 {
 
 	return (EOPNOTSUPP);
@@ -375,6 +371,9 @@ nullfs_vptofh(vp, fhp)
 #define nullfs_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
            size_t, struct proc *)))eopnotsupp)
 
+#define nullfs_checkexp ((int (*) __P((struct mount *, struct mbuf *,	\
+	int *, struct ucred **)))eopnotsupp)
+
 struct vfsops null_vfsops = {
 	nullfs_mount,
 	nullfs_start,
@@ -387,5 +386,6 @@ struct vfsops null_vfsops = {
 	nullfs_fhtovp,
 	nullfs_vptofh,
 	nullfs_init,
-	nullfs_sysctl
+	nullfs_sysctl,
+	nullfs_checkexp
 };
