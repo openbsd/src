@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.c,v 1.11 2004/07/20 03:50:27 deraadt Exp $	*/
+/*	$OpenBSD: fsort.c,v 1.12 2004/09/14 22:57:58 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fsort.c,v 1.11 2004/07/20 03:50:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fsort.c,v 1.12 2004/09/14 22:57:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ static char rcsid[] = "$OpenBSD: fsort.c,v 1.11 2004/07/20 03:50:27 deraadt Exp 
 u_char **keylist = 0, *buffer = 0, *linebuf = 0;
 size_t bufsize, linebuf_size;
 struct tempfile fstack[MAXFCT];
-extern char *toutpath;
+extern char toutpath[];
 #define FSORTMAX 4
 int PANIC = FSORTMAX;
 
