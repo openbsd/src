@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.30 2005/03/05 03:30:29 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.31 2005/03/05 05:02:15 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1099,18 +1099,18 @@ rcs_parse(RCSFILE *rfp)
 	rfp->rf_flags &= ~RCS_SLOCK;
 	rfp->rf_pdata = pdp;
 
-	if (rcs_parse_admin(rfp) < 0) {
+	if ((ret = rcs_parse_admin(rfp)) < 0) {
 		rcs_freepdata(pdp);
 		return (-1);
-	}
-
-	for (;;) {
-		ret = rcs_parse_delta(rfp);
-		if (ret == 0)
-			break;
-		else if (ret == -1) {
-			rcs_freepdata(pdp);
-			return (-1);
+	} else if (ret == RCS_TOK_NUM) {
+		for (;;) {
+			ret = rcs_parse_delta(rfp);
+			if (ret == 0)
+				break;
+			else if (ret == -1) {
+				rcs_freepdata(pdp);
+				return (-1);
+			}
 		}
 	}
 
@@ -1163,7 +1163,8 @@ rcs_parse(RCSFILE *rfp)
  * rcs_parse_admin()
  *
  * Parse the administrative portion of an RCS file.
- * Returns 0 on success, or -1 on failure.
+ * Returns the type of the first token found after the admin section on
+ * success, or -1 on failure.
  */
 static int
 rcs_parse_admin(RCSFILE *rfp)
@@ -1179,10 +1180,14 @@ rcs_parse_admin(RCSFILE *rfp)
 		if (tok == RCS_TOK_ERR) {
 			cvs_log(LP_ERR, "parse error in RCS admin section");
 			return (-1);
-		} else if (tok == RCS_TOK_NUM) {
-			/* assume this is the start of the first delta */
+		} else if ((tok == RCS_TOK_NUM) || (tok == RCS_TOK_DESC)) {
+			/*
+			 * Assume this is the start of the first delta or
+			 * that we are dealing with an empty RCS file and
+			 * we just found the description.
+			 */
 			rcs_pushtok(rfp, RCS_TOKSTR(rfp), tok);
-			return (0);
+			return (tok);
 		}
 
 		rk = NULL;
@@ -1853,7 +1858,7 @@ rcs_gettok(RCSFILE *rfp)
 	} else if (ch == ':') {
 		type = RCS_TOK_COLON;
 	} else if (isalpha(ch)) {
-		type = RCS_TOK_STRING;
+		type = RCS_TOK_ID;
 		*(bp++) = ch;
 		for (;;) {
 			ch = getc(pdp->rp_file);
