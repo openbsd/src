@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.28 1997/10/18 10:37:16 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.29 1997/12/05 00:09:50 provos Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1284,7 +1284,7 @@ cd_read_subchannel(cd, mode, format, track, data, len)
 	_lto2b(len, scsi_cmd.data_len);
 	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(struct scsi_read_subchannel), (u_char *)data, len,
-	    CDRETRIES, 5000, NULL, SCSI_DATA_IN||SCSI_SILENT);
+	    CDRETRIES, 5000, NULL, SCSI_DATA_IN|SCSI_SILENT);
 }
 
 /*
