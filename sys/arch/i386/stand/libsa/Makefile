@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 1997/08/27 21:08:49 mickey Exp $
+#	$OpenBSD: Makefile,v 1.25 1997/09/02 20:58:15 mickey Exp $
 
 
 LIB=	sa
@@ -14,8 +14,8 @@ DIR_KERN=$S/lib/libkern
 
 # i386 stuff (so, it will possibly load in the same 64k)
 SRCS=	gidt.S debug_i386.S alloca.S \
-	machdep.c dev_i386.c exec_i386.c biosdev.c gateA20.c memprobe.c \
-	bioscons.c time.c
+	machdep.c dev_i386.c exec_i386.c cmd_i386.c \
+	biosdev.c bioscons.c gateA20.c memprobe.c time.c
 
 # stand routines
 SRCS+=	alloc.c exit.c exec.c getfile.c gets.c globals.c strcmp.c strlen.c \
@@ -57,4 +57,5 @@ install:
 .include <bsd.lib.mk>
 
 CPPFLAGS+=-DLINKADDR=${LINKADDR} -DHEAP_LIMIT=${HEAP_LIMIT} ${DEBUGFLAGS}
+CPPFLAGS+=-I${.CURDIR}/../boot
 CFLAGS+=${SACFLAGS} -D__INTERNAL_LIBSA_CREAD

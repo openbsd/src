@@ -1,7 +1,7 @@
-/*	$OpenBSD: libsa.h,v 1.16 1997/09/02 20:58:16 mickey Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.1 1997/09/02 20:58:15 mickey Exp $	*/
 
 /*
- * Copyright (c) 1996 Michael Shalayeff
+ * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,17 +32,20 @@
  *
  */
 
-#include <lib/libsa/stand.h>
+#include <sys/param.h>
+#include "libsa.h"
+#include <cmd.h>
 
-void gateA20 __P((int));
-void memprobe __P((void));
-void devboot __P((dev_t, char *));
-void *alloca __P((size_t));
-void machdep __P((void));
-void time_print __P((void));
+static int Xdiskinfo __P((void));
 
-extern const char bdevs[][4];
-extern const int nbdevs;
-extern int bootdev; /* XXX pass through the global to exec_i386 */
+const struct cmd_table cmd_machine[] = {
+	{ "diskinfo", CMDT_CMD, Xdiskinfo },
+	{ NULL, 0 }
+};
 
-#define MACHINE_CMD	cmd_machine /* we have i386 specific sommands */
+static int
+Xdiskinfo()
+{
+	return 0;
+}
+
