@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.167 2004/06/22 07:35:20 cedric Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.168 2004/11/10 03:27:27 mcbride Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -837,7 +837,8 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		m->m_pkthdr.len = mhlen + len;
 		m->m_pkthdr.rcvif = (struct ifnet *)0;
 		mhip->ip_off = htons((u_int16_t)mhip->ip_off);
-		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
+		if ((ifp != NULL) &&
+		    (ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
 		    ifp->if_bridge == NULL) {
 			m->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
 			ipstat.ips_outhwcsum++;
@@ -857,7 +858,8 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	m->m_pkthdr.len = hlen + firstlen;
 	ip->ip_len = htons((u_int16_t)m->m_pkthdr.len);
 	ip->ip_off |= htons(IP_MF);
-	if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
+	if ((ifp != NULL) &&
+	    (ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
 	    ifp->if_bridge == NULL) {
 		m->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
 		ipstat.ips_outhwcsum++;
@@ -870,14 +872,16 @@ sendorfree:
 	 * If there is no room for all the fragments, don't queue
 	 * any of them.
 	 */
-	s = splnet();
-	if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments &&
-	    error == 0) {
-		error = ENOBUFS;
-		ipstat.ips_odropped++;
-		IFQ_INC_DROPS(&ifp->if_snd);
+	if (ifp != NULL) {
+		s = splnet();
+		if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments &&
+		    error == 0) {
+			error = ENOBUFS;
+			ipstat.ips_odropped++;
+			IFQ_INC_DROPS(&ifp->if_snd);
+		}
+		splx(s);
 	}
-	splx(s);
 	if (error) {
 		for (m = m0; m; m = m0) {
 			m0 = m->m_nextpkt;
