@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.34 2003/04/14 22:24:58 pvalchev Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.35 2003/04/15 07:22:46 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.34 2003/04/14 22:24:58 pvalchev Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.35 2003/04/15 07:22:46 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -587,7 +587,7 @@ init()
 	int	i, error;
 	const int int0 = 0, int1 = 1, int255 = 255;
 	struct	addrinfo hints, *res;
-	char	port[12];
+	char	port[NI_MAXSERV];
 
 	ifc = (struct ifc *)NULL;
 	nifc = 0;
