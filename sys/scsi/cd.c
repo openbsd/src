@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.45 1999/10/14 05:23:02 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.46 1999/10/16 19:30:18 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1227,6 +1227,7 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	for (tocidx = hdr[TOC_HEADER_STARTING_TRACK]; 
 	     tocidx <= hdr[TOC_HEADER_ENDING_TRACK]; 
 	     tocidx++) {
+		is_data = ent[TOC_ENTRY_CONTROL_ADDR_TYPE] & 4;
 		ent += TOC_ENTRY_SZ;
 		nlba = ((cd->sc_link->quirks & ADEV_LITTLETOC) ?
 			ent[TOC_ENTRY_MSF_LBA] |
@@ -1237,7 +1238,6 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 			ent[TOC_ENTRY_MSF_LBA + 1] << 16 |
 			ent[TOC_ENTRY_MSF_LBA + 2] << 8 |
 			ent[TOC_ENTRY_MSF_LBA + 3]);
-		is_data = ent[TOC_ENTRY_CONTROL_ADDR_TYPE] & 4;
 
 		lp->d_partitions[i].p_fstype =
 			is_data ? FS_UNUSED : FS_OTHER;
