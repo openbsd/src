@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.9,v 1.7 2003/03/06 04:03:40 david Exp $
+.\"	$OpenBSD: printf.9,v 1.8 2003/06/11 17:28:51 tedu Exp $
 .\"     $NetBSD: kprintf.9,v 1.6 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 .Os
 .Sh NAME
 .Nm printf ,
-.Nm sprintf ,
+.Nm snprintf ,
 .Nm vprintf ,
 .Nm uprintf ,
 .Nm ttyprintf ,
@@ -55,7 +55,8 @@
 .Fa "..."
 .Fc
 .Ft int
-.Fo "sprintf"
+.Fo "snprintf"
+.Fa "size_t len"
 .Fa "char *buf"
 .Fa "const char *format"
 .Fa "..."
@@ -81,7 +82,7 @@
 .Sh DESCRIPTION
 The
 .Fn printf ,
-.Fn sprintf ,
+.Fn snprintf ,
 .Fn vprintf ,
 .Fn uprintf ,
 .Fn ttyprintf ,
@@ -185,7 +186,7 @@ This format specifier is only available to
 .El
 .Sh RETURN VALUES
 The
-.Fn sprintf
+.Fn snprintf
 function returns the number of characters it placed in the buffer
 .Fa buf .
 .Sh EXAMPLES

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kern.9,v 1.7 2003/06/10 17:56:35 millert Exp $
+.\"	$OpenBSD: kern.9,v 1.8 2003/06/11 17:28:51 tedu Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -168,10 +168,6 @@ and
 .Ft size_t
 .Fn strlen "const char *s"
 .Ft char *
-.Fn strcat "char *s" "const char *append"
-.Ft char *
-.Fn strcpy "char *dst" "const char *src"
-.Ft char *
 .Fn strncpy "char *dst" "const char *src" "size_t len"
 .Ft size_t
 .Fn strlcpy "char *dst" "const char *src" "size_t size"
@@ -187,8 +183,6 @@ and
 .Pp
 Those functions have the same semantics as their libc counterparts,
 .Xr strlen 3 ,
-.Xr strcat 3 ,
-.Xr strcpy 3 ,
 .Xr strncpy 3 ,
 .Xr strlcpy 3 ,
 .Xr strlcat 3 ,
@@ -247,8 +241,6 @@ The
 .Fn memchr ,
 .Fn memcmp ,
 .Fn strlen ,
-.Fn strcat ,
-.Fn strcpy ,
 .Fn strncpy ,
 .Fn strcmp ,
 .Fn strncmp
