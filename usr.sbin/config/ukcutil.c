@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.2 2000/01/08 23:23:37 d Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.3 2000/08/08 21:42:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.2 2000/01/08 23:23:37 d Exp $";
+static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.3 2000/08/08 21:42:40 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -212,7 +212,7 @@ pdev(devno)
 		pnum(*i);
 		i++;
 	}
-	printf("\n");
+	printf(" flags 0x%x\n", cd->cf_flags);
 }
 
 int
@@ -431,6 +431,7 @@ change(devno)
 				ln++;
 				l++;
 			}
+			modify("flags", &cd->cf_flags);
 
 			if (share) {
 				if (bcmp(adjust((caddr_t)cd->cf_loc),
@@ -518,6 +519,13 @@ change_history(devno,str)
 			if (*str == ' ') str++;
 			ln++;
 			l++;
+		}
+
+		if (*str) {
+			cd->cf_flags = atoi(str);
+			if (*str == '-') str++;
+			while ((*str >= '0') && (*str <= '9')) str++;
+			if (*str == ' ') str++;
 		}
 
 		if (share) {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_config.8,v 1.12 2000/06/15 00:23:56 deraadt Exp $
+.\"	$OpenBSD: boot_config.8,v 1.13 2000/08/08 21:42:39 deraadt Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson
 .\" All rights reserved.
@@ -112,11 +112,11 @@ driver.
 .Pp
 .Bd -literal
 .No UKC> Ic find ne
-24 ne0 at isa0 port 0x240 size 0 iomem 0xd8000 iosiz 0 irq 9 drq -1 drq2 -1
-25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1
-26 ne* at isapnp0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1
-27 ne* at pci* dev -1 function -1
-28 ne* at pcmcia* function -1 irq -1
+24 ne0 at isa0 port 0x240 size 0 iomem 0xd8000 iosiz 0 irq 9 drq -1 drq2 -1 flags 0x0
+25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1 flags 0x0
+26 ne* at isapnp0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 flags 0x0
+27 ne* at pci* dev -1 function -1 flags 0x0
+28 ne* at pcmcia* function -1 irq -1 flags 0x0
 UKC>
 .Ed
 .Pp
@@ -127,7 +127,7 @@ command. The device can be specified by either name or number.
 .Pp
 .Bd -literal
 .No UKC> Ic change ne1
-25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1
+25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1 flags 0x0
 .No change (y/n) ? Ic y
 .No port [0x300] ?
 .No size [0] ?
@@ -136,8 +136,9 @@ command. The device can be specified by either name or number.
 .No irq [10] ? Ic 5
 .No drq [-1] ?
 .No drq2 [-1] ?
+.No flags [0] ?
 25 ne1 changed
-25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 5 drq -1 drq2 -1
+25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 5 drq -1 drq2 -1 flags 0x0
 UKC>
 .Ed
 .Pp
@@ -149,11 +150,11 @@ disable mcd0.
 .Pp
 .Bd -literal
 .No UKC> Ic find mcd0
- 29 mcd0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1
+ 29 mcd0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1 flags 0x0
 .No UKC> Ic disable mcd0
  29 mcd0 disabled
 .No UKC> Ic find 29
- 29 mcd0 at isa0 disable port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1
+ 29 mcd0 at isa0 disable port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1 flags 0x0
 .Ed
 .Pp
 The show command is useful for finding which devices have a certain attribute.
@@ -161,17 +162,17 @@ It can also be used to find those devices with a particular value for
 an attribute.
 .Bd -literal
 .No UKC> Ic show slot
-  2 ahc* at eisa0 slot -1
- 10 uha* at eisa0 slot -1
- 12 ep0 at eisa0 slot -1
- 17 ep* at eisa0 slot -1
-102 ahb* at eisa0 slot -1
-103 fea* at eisa0 slot -1
+  2 ahc* at eisa0 slot -1 flags 0x0
+ 10 uha* at eisa0 slot -1 flags 0x0
+ 12 ep0 at eisa0 slot -1 flags 0x0
+ 17 ep* at eisa0 slot -1 flags 0x0
+102 ahb* at eisa0 slot -1 flags 0x0
+103 fea* at eisa0 slot -1 flags 0x0
 .No UKC> Ic show port 0x300
- 25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1
- 72 we1 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 10 drq -1 drq2 -1
- 75 el0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 9 drq -1 drq2 -1
- 77 ie1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1
+ 25 ne1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1 flags 0x0
+ 72 we1 at isa0 port 0x300 size 0 iomem 0xcc000 iosiz 0 irq 10 drq -1 drq2 -1 flags 0x0
+ 75 el0 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 9 drq -1 drq2 -1 flags 0x0
+ 77 ie1 at isa0 port 0x300 size 0 iomem -1 iosiz 0 irq 10 drq -1 drq2 -1 flags 0x0
 UKC>
 .Ed
 .Pp
@@ -180,14 +181,14 @@ kernel. If a new device is added, following devices will be renumbered.
 .Pp
 .Bd -literal
 .No UKC> Ic find ep
- 11 ep0 at isa0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 drq2 -1
- 12 ep0 at eisa0 slot -1
- 13 ep0 at pci* dev -1 function -1
- 14 ep* at isapnp0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1
- 15 ep* at isa0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 drq2 -1
- 16 ep* at eisa0 slot -1
- 17 ep* at pci* dev -1 function -1
- 18 ep* at pcmcia* dev -1 irq -1
+ 11 ep0 at isa0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 drq2 -1 flags 0x0
+ 12 ep0 at eisa0 slot -1 flags 0x0
+ 13 ep0 at pci* dev -1 function -1 flags 0x0
+ 14 ep* at isapnp0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 flags 0x0
+ 15 ep* at isa0 port -1 size 0 iomem -1 iosiz 0 irq -1 drq -1 drq2 -1 flags 0x0
+ 16 ep* at eisa0 slot -1 flags 0x0
+ 17 ep* at pci* dev -1 function -1 flags 0x0
+ 18 ep* at pcmcia* dev -1 irq -1 flags 0x0
 .No UKC> Ic add ep1
 .No "Clone Device (DevNo, 'q' or '?') ?" Ic 13
 .No "Insert before Device (DevNo, 'q' or '?')" Ic 14
@@ -197,8 +198,9 @@ kernel. If a new device is added, following devices will be renumbered.
 .No change (y/n) ? Ic y
 .No dev [-1] ? Ic 14
 .No function [-1] ?
+.No flags [0] ? 18
  14 ep1 changed
- 14 ep1 at pci* dev 14 function -1
+ 14 ep1 at pci* dev 14 function -1 flags 0x12
 UKC>
 .Ed
 .Pp
