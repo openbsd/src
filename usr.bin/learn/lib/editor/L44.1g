@@ -30,7 +30,7 @@ selunit()
     if (strcmp(dobuff, "bye") == 0)
       wrapup(0);
     level = todo = dobuff;
-    sprintf(s, "../L%s", dobuff);
+    snprintf(s, sizeof s, "../L%s", dobuff);
     if (access(s, 04) == 0)
       return;
     printf("no such lesson\n");
@@ -39,7 +39,7 @@ selunit()
 retry:
   f=scrin;
   if (f==NULL) {
-    sprintf(fnam, "../L%s", level);
+    snprintf(fnam, sizeof fnam, "../L%s", level);
     f = fopen(fnam, "r");
     if (f==NULL) {
       fprintf(stderr, "No script for lesson %s.\n", level);
@@ -76,7 +76,7 @@ retry:
   }
   if (best < 0 && nsave) {
     nsave--;
-    strcpy(level, saved);
+    strlcpy(level, saved, sizeof level);
     goto retry;
   }
   if (best <0) {
@@ -87,10 +87,10 @@ retry:
     todo = 0;
     return;
   }
-  strcpy (dobuff, posslev[best]);
+  strlcpy(dobuff, posslev[best], sizeof dobuff);
   if (alts>1) {
     nsave=1;
-    strcpy (saved, level);
+    strcpy(saved, level, sizeof saved);
   }
   todo = dobuff;
   fclose(f);
