@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.h,v 1.4 2000/03/08 03:35:29 jasoni Exp $	*/
+/*	$OpenBSD: linux_signal.h,v 1.5 2000/06/07 14:11:38 niklas Exp $	*/
 /* 	$NetBSD: linux_signal.h,v 1.4 1995/08/27 20:51:51 fvdl Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 #define LINUX_SIGWINCH	28
 #define LINUX_SIGIO	29
 #define LINUX_SIGPWR	30
+#define LINUX_SIGUNUSED	31
 #define LINUX_NSIG	32
 
 #define LINUX__NSIG 		64
@@ -89,6 +90,7 @@ struct linux_old_sigaction {
 	u_long			sa_flags;
 	void			(*sa_restorer) __P((void));
 };
+
 struct linux_sigaction {
 	linux_handler_t		sa__handler;
 	u_long			sa_flags;
@@ -105,6 +107,12 @@ struct linux_sigaction {
 #define LINUX_SA_NOMASK		0x40000000
 #define LINUX_SA_ONESHOT	0x80000000
 #define LINUX_SA_ALLBITS	0xf8000001
+
+struct linux_sigaltstack {
+	void	*ss_sp;
+	int	ss_flags;
+	size_t	ss_size;
+};
 
 extern int bsd_to_linux_sig[];
 extern int linux_to_bsd_sig[];
