@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_de.c,v 1.12 1996/08/21 22:27:52 deraadt Exp $       */
+/*    $OpenBSD: if_de.c,v 1.13 1996/08/23 16:24:50 niklas Exp $       */
 /*    $NetBSD: if_de.c,v 1.22.4.1 1996/06/03 20:32:07 cgd Exp $       */
 
 /*-
@@ -165,7 +165,7 @@ typedef bus_io_size_t tulip_csrptr_t;
 
 #define	TULIP_PCI_CSRSIZE	8
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 typedef volatile tulip_uint32_t *tulip_csrptr_t;
 
 /*
@@ -2433,7 +2433,7 @@ tulip_pci_attach(
 #endif
     int retval, idx, revinfo, id;
 #if !defined(TULIP_IOMAPPED) && !defined(__bsdi__) && \
-	!(defined(__NetBSD__) || defined(__OpenBSD__))
+	!defined(__NetBSD__) && !defined(__OpenBSD__)
     vm_offset_t pa_csrs;
 #endif
     unsigned csrsize = TULIP_PCI_CSRSIZE;
