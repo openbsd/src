@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.176 2003/06/03 12:18:57 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.177 2003/06/13 12:10:42 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1222,7 +1222,8 @@ pfctl_show_anchors(int dev, int opts, char *anchorname)
 			return (-1);
 		}
 		mnr = pa.nr;
-		printf("%u anchors:\n", mnr);
+		if (!(opts & PF_OPT_QUIET))
+			printf("%u anchors:\n", mnr);
 		for (nr = 0; nr < mnr; ++nr) {
 			pa.nr = nr;
 			if (ioctl(dev, DIOCGETANCHOR, &pa)) {
@@ -1245,7 +1246,8 @@ pfctl_show_anchors(int dev, int opts, char *anchorname)
 			return (-1);
 		}
 		mnr = pr.nr;
-		printf("%u rulesets in anchor %s:\n", mnr, anchorname);
+		if (!(opts & PF_OPT_QUIET))
+			printf("%u rulesets in anchor %s:\n", mnr, anchorname);
 		for (nr = 0; nr < mnr; ++nr) {
 			pr.nr = nr;
 			if (ioctl(dev, DIOCGETRULESET, &pr))
