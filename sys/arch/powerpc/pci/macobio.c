@@ -204,10 +204,9 @@ macobio_print(aux, macobio)
 	void *aux;
 	const char *macobio;
 {
+#ifdef MACOBIOVERBOSE
 	struct confargs *ca = aux;
 
-#if 0
-/* no reason to clutter the screen with unneccessary printfs */
 	if (macobio)
 		printf("%s at %s", ca->ca_name, macobio);
 
@@ -215,8 +214,9 @@ macobio_print(aux, macobio)
 		printf(" offset 0x%x", ca->ca_reg[0]);
 
 	return UNCONF;
-#endif
+#else
 	return QUIET;
+#endif
 }
 
 typedef int mac_intr_handle_t;
