@@ -1,4 +1,4 @@
-# $OpenBSD: Vstat.pm,v 1.1 2003/12/21 18:41:23 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.2 2003/12/24 02:31:28 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -45,11 +45,12 @@ sub init_dirinfo()
     open(my $cmd1, "/sbin/mount|") or print STDERR "Can't run mount\n";
     while (<$cmd1>) {
 	    chomp;
-	    if (m/^.*?\s+on\s+(.*?)\s+type\s+.*?\s+\((.*?)\)$/) {
+	    if (m/^.*?\s+on\s+(.*?)\s+type\s+.*?(?:\s+\((.*?)\))?$/) {
 		my ($mntpoint, $opts) = ($1, $2);
 		$dirinfo->{"$mntpoint"} = { mnt => $mntpoint } 
 		    unless defined $dirinfo->{"$mntpoint"};
 		my $i = $dirinfo->{"$mntpoint"};
+		next unless defined $opts;
 		for my $o (split /,\s*/, $opts) {
 		    if ($o eq 'read-only') {
 			$i->{ro} = 1;
