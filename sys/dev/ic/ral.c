@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.21 2005/03/11 19:58:04 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.22 2005/03/11 20:01:54 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1906,6 +1906,7 @@ int
 ral_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ral_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifaddr *ifa;
 	int s, error = 0;
 
@@ -1918,7 +1919,7 @@ ral_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			arp_ifinit(&sc->sc_ic.ic_ac, ifa);
+			arp_ifinit(&ic->ic_ac, ifa);
 			ral_init(ifp);
 			break;
 #endif
@@ -1936,6 +1937,20 @@ ral_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				ral_stop(ifp, 1);
+		}
+		break;
+
+	case SIOCS80211CHANNEL:
+		/*
+		 * This allows for fast channel switching in monitor mode
+		 * (used by kismet). In IBSS mode, we must explicitly reset
+		 * the interface to generate a new beacon frame.
+		 */
+		error = ieee80211_ioctl(ifp, cmd, data);
+		if (error == ENETRESET &&
+		    ic->ic_opmode == IEEE80211_M_MONITOR) {
+			ral_set_chan(sc, ic->ic_ibss_chan);
+			error = 0;
 		}
 		break;
 
