@@ -145,26 +145,24 @@ ep_eisa_attach(parent, self, aux)
 		model = EISA_PRODUCT_TCM5093;
 	else
 		model = "unknown model!";
-	printf(": %s\n", model);
+	printf(": <%s> ", model);
 
 	if (eisa_intr_map(ec, irq, &ih)) {
-		printf("%s: couldn't map interrupt (%d)\n",
-		    sc->sc_dev.dv_xname, irq);
+		printf("couldn't map interrupt (%d)\n", irq);
 		return;
 	}
 	intrstr = eisa_intr_string(ec, ih);
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_EDGE, IPL_NET,
 	    epintr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf("couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
+		printf("interrupting at %s, ", sc->sc_dev.dv_xname,
 		    intrstr);
 
 	epconfig(sc, conn);

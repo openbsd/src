@@ -156,7 +156,7 @@ ep_pci_attach(parent, self, aux)
 		model = "unknown model!";
 	}
 
-	printf(": %s\n", model);
+	printf(": <%s> ", model);
 
 	epconfig(sc, conn);
 

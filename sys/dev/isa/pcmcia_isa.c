@@ -1,4 +1,4 @@
-/*	$Id: pcmcia_isa.c,v 1.2 1996/04/29 14:16:47 hvozda Exp $	*/
+/*	$Id: pcmcia_isa.c,v 1.3 1996/05/03 07:59:36 deraadt Exp $	*/
 /*
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -103,7 +103,7 @@ pcmcia_isa_init(parent, cf, aux, pca, flag)
 		       pa, pa->pba_maddr, pa->pba_msize);
 		printf("PCA %p mem %p size %d chip %x memh %x\n",
 		       pca, pca->scratch_mem, pca->scratch_memsiz,
-		       pca->scratch_chipset, pca->scratch_memh);
+		       pca->pa_bc, pca->scratch_memh);
 #endif
 	}
 	return 1;

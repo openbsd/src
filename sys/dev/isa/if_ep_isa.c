@@ -207,7 +207,7 @@ ep_isa_attach(parent, self, aux)
 	GO_WINDOW(0);
 	conn = inw(iobase + EP_W0_CONFIG_CTRL);
 
-	printf(": 3Com 3C509 Ethernet\n");
+	printf(": <3Com 3C509 Ethernet> ");
 
 	epconfig(sc, conn);
 

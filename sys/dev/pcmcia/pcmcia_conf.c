@@ -1,4 +1,4 @@
-/*	$Id: pcmcia_conf.c,v 1.2 1996/04/29 14:17:21 hvozda Exp $	*/
+/*	$Id: pcmcia_conf.c,v 1.3 1996/05/03 07:59:41 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -606,6 +606,7 @@ pcmcia_bestvalue(card, dentries, nentries, rmatch)
 {
 	int bestmatch, thismatch;
 	register int i;
+
 	for (i = 0, bestmatch = 0; i < nentries; i++) {
 		if ((thismatch = pcmcia_matchvalue(card, &dentries[i])) >
 		    bestmatch) {

@@ -107,7 +107,6 @@ epconfig(sc, conn)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	sc->ep_connectors = 0;
-	printf("%s: ", sc->sc_dev.dv_xname);
 	if (conn & IS_AUI) {
 		printf("aui");
 		sc->ep_connectors |= AUI;
