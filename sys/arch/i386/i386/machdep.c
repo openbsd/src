@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.304 2004/07/02 23:22:58 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.305 2004/07/05 05:18:42 david Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1553,6 +1553,7 @@ void
 identifycpu(struct cpu_info *ci)
 {
 	extern char cpu_vendor[];
+	extern char cpu_brandstr[];
 #ifdef CPUDEBUG
 	extern int cpu_cache_eax, cpu_cache_ebx, cpu_cache_ecx, cpu_cache_edx;
 #else
@@ -1562,6 +1563,8 @@ identifycpu(struct cpu_info *ci)
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif, cachesize;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
+	char *brandstr_from, *brandstr_to;
+	int skipspace;
 
 	char *cpu_device = ci->ci_dev.dv_xname;
 	/* XXX SMP XXX void (*cpu_setup)(const char *, int, int); */
@@ -1614,6 +1617,8 @@ identifycpu(struct cpu_info *ci)
 			if (family > CPU_MAXFAMILY)
 				family = CPU_MAXFAMILY;
 			class = family - 3;
+			if (class > CPUCLASS_686)
+				class = CPUCLASS_686;
 			modifier = "";
 			name = "";
 			token = "";
@@ -1622,6 +1627,16 @@ identifycpu(struct cpu_info *ci)
 			token = cpup->cpu_id;
 			vendor = cpup->cpu_vendor;
 			vendorname = cpup->cpu_vendorname;
+			/*
+			 * Special hack for the VIA C3 series.
+			 *
+			 * VIA bought Centaur Technology from IDT in Aug 1999
+			 * and marketed the processors as VIA Cyrix III/C3.
+			 */
+			if (vendor == CPUVENDOR_IDT && family >= 6) {
+				vendor = CPUVENDOR_VIA;
+				vendorname = "VIA";
+			}
 			modifier = modifiers[modif];
 			if (family > CPU_MAXFAMILY) {
 				family = CPU_MAXFAMILY;
@@ -1634,10 +1649,21 @@ identifycpu(struct cpu_info *ci)
 			if (vendor == CPUVENDOR_INTEL && family == 6 &&
 			    (model == 5 || model == 7)) {
 				name = intel686_cpu_name(model);
+			/* Special hack for the VIA C3 series. */
+			} else if (vendor == CPUVENDOR_VIA && family == 6 &&
+				   model == 7) {
+				name = cyrix3_cpu_name(model, step);
+			/* Special hack for the TMS5x00 series. */
+			} else if (vendor == CPUVENDOR_TRANSMETA && 
+				  family == 5 && model == 4) {
+				name = tm86_cpu_name(model);
 			} else
 				name = cpup->cpu_family[i].cpu_models[model];
-			if (name == NULL)
+			if (name == NULL) {
 				name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
+				if (name == NULL)
+					name = "";
+			}
 			class = cpup->cpu_family[i].cpu_class;
 			ci->cpu_setup = cpup->cpu_family[i].cpu_setup;
 		}
@@ -1652,17 +1678,35 @@ identifycpu(struct cpu_info *ci)
 			cachesize = intel_cachetable[(cpu_cache_edx & 0xFF) - 0x40];
 	}
 
+	/* Remove leading and duplicated spaces from cpu_brandstr */
+	brandstr_from = brandstr_to = cpu_brandstr;
+	skipspace = 1;
+	while (*brandstr_from != '\0') {
+		if (!skipspace || *brandstr_from != ' ') {
+			skipspace = 0;
+			*(brandstr_to++) = *brandstr_from;
+		}
+		if (*brandstr_from == ' ')
+			skipspace = 1;
+		brandstr_from++;
+	}
+	*brandstr_to = '\0';
+
+	if (cpu_brandstr[0] == '\0') {
+		snprintf(cpu_brandstr, 48 /* sizeof(cpu_brandstr) */,
+		    "%s %s%s", vendorname, modifier, name);
+	}
 	if ((ci->ci_flags & CPUF_BSP) == 0) {
 		if (cachesize > -1) {
 			snprintf(cpu_model, sizeof(cpu_model),
-				"%s %s%s (%s%s%s%s-class, %dKB L2 cache)",
-				vendorname, modifier, name,
+				"%s (%s%s%s%s-class, %dKB L2 cache)",
+				cpu_brandstr,
 				((*token) ? "\"" : ""), ((*token) ? token : ""),
 				((*token) ? "\" " : ""), classnames[class], cachesize);
 		} else {
 			snprintf(cpu_model, sizeof(cpu_model),
-				"%s %s%s (%s%s%s%s-class)",
-				vendorname, modifier, name,
+				"%s (%s%s%s%s-class)",
+				cpu_brandstr,
 				((*token) ? "\"" : ""), ((*token) ? token : ""),
 				((*token) ? "\" " : ""), classnames[class]);
 		}
