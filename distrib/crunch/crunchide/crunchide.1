@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crunchide.1,v 1.6 2003/05/08 09:17:56 jmc Exp $
+.\"	$OpenBSD: crunchide.1,v 1.7 2003/05/21 11:39:59 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 University of Maryland
@@ -37,8 +37,7 @@
 .Op Fl k Ar keep-symbol
 .Op Ar object-file ...
 .Sh DESCRIPTION
-
-.Nm Crunchide
+.Nm
 hides the global symbols of
 .Ar object-file
 such that they are ignored by subsequent runs of the linker,
@@ -47,15 +46,16 @@ Some symbols may be left visible via the
 .Fl k Ar keep-symbol
 and
 .Fl f Ar keep-list-file
-options.  The
+options.
+The
 .Ar keep-list-file
 must contain a list of symbols to keep visible, one symbol per line.
 Note that the C compiler prepends an underscore in front of
 symbols, so to keep the C function ``foo'' visible, the option
-\&``-k _foo'' must be used.
-
+.Dq -k _foo
+must be used.
 .Pp
-.Nm Crunchide
+.Nm
 is designed as a companion program for
 .Xr crunchgen 1 ,
 which automates the process of creating crunched binaries from
@@ -63,16 +63,18 @@ multiple component programs.
 .Sh NOTES
 The ELF version of
 .Nm crunchide
-mangles the symboltable beyond recognition.
+mangles the symbol table beyond recognition.
 It is therefore not advisable to try to run
 .Xr nm 1
-on a crunched object file. This is due to the nature of the ELF symboltable
+on a crunched object file.
+This is due to the nature of the ELF symbol table
 and how some arches uses the symbol attributes for their GOT build.
 .Sh SEE ALSO
 .Xr crunchgen 1 ,
 .Xr ld 1
 .Sh AUTHORS
-.Nm Crunch
-was written by James da Silva <jds@cs.umd.edu>.
-.sp 0
+.Nm
+was written by James da Silva
+.Aq jds@cs.umd.edu .
+.Pp
 Copyright (c) 1994 University of Maryland.  All Rights Reserved.
