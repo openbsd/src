@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.yppasswdd.c,v 1.9 1997/08/19 07:00:51 niklas Exp $	*/
+/*	$OpenBSD: rpc.yppasswdd.c,v 1.10 2001/11/27 01:02:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: rpc.yppasswdd.c,v 1.9 1997/08/19 07:00:51 niklas Exp $";
+static char rcsid[] = "$OpenBSD: rpc.yppasswdd.c,v 1.10 2001/11/27 01:02:48 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -90,8 +90,16 @@ main(argc, argv)
 			} else if (strcmp("-m", argv[i]) == 0) {
 				domake = 1;
 				while (i < argc) {
-					strcat(make_arg, " ");
-					strcat(make_arg, argv[i]);
+					if (strlcat(make_arg, " ",
+					    sizeof(make_arg)) >=
+					    sizeof(make_arg) ||
+					    strlcat(make_arg, argv[i],
+					    sizeof(make_arg)) >=
+					    sizeof(make_arg)) {
+						(void) fprintf(stderr,
+						    "-m argument too long.\n");
+						exit(1);
+					}
 					i++;
 				}
 			} else if (strcmp("-d", argv[i]) == 0
