@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.28 2002/10/16 18:40:30 millert Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.29 2002/10/16 19:20:02 millert Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
+static const char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.28 2002/10/16 18:40:30 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ar_io.c,v 1.29 2002/10/16 19:20:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ static struct stat arsb;		/* stat of archive device at open */
 static int invld_rec;			/* tape has out of spec record size */
 static int wr_trail = 1;		/* trailer was rewritten in append */
 static int can_unlnk = 0;		/* do we unlink null archives?  */
-char *arcname;				/* printable name of archive */
+const char *arcname;			/* printable name of archive */
 const char *gzip_program;		/* name of gzip program */
 static pid_t zpid = -1;			/* pid of child process */
 
@@ -104,7 +104,7 @@ static void ar_start_gzip(int, const char *, int);
  */
 
 int
-ar_open(char *name)
+ar_open(const char *name)
 {
 	struct mtget mb;
 
@@ -1227,7 +1227,7 @@ ar_next(void)
 		 */
 		if (ar_open(buf) >= 0) {
 			if (freeit) {
-				(void)free(arcname);
+				(void)free((char *)arcname);
 				freeit = 0;
 			}
 			if ((arcname = strdup(buf)) == NULL) {
@@ -1254,7 +1254,7 @@ void
 ar_start_gzip(int fd, const char *gzip_program, int wr)
 {
 	int fds[2];
-	char *gzip_flags;
+	const char *gzip_flags;
 
 	if (pipe(fds) < 0)
 		err(1, "could not pipe");

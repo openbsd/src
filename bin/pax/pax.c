@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.21 2002/10/16 18:40:30 millert Exp $	*/
+/*	$OpenBSD: pax.c,v 1.22 2002/10/16 19:20:02 millert Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -39,16 +39,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
+static const char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pax.c,v 1.21 2002/10/16 18:40:30 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pax.c,v 1.22 2002/10/16 19:20:02 millert Exp $";
 #endif
 #endif /* not lint */
 

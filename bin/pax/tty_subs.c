@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subs.c,v 1.9 2002/10/16 17:43:10 millert Exp $	*/
+/*	$OpenBSD: tty_subs.c,v 1.10 2002/10/16 19:20:02 millert Exp $	*/
 /*	$NetBSD: tty_subs.c,v 1.5 1995/03/21 09:07:52 cgd Exp $	*/
 
 /*-
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
+static const char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tty_subs.c,v 1.9 2002/10/16 17:43:10 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tty_subs.c,v 1.10 2002/10/16 19:20:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ tty_init(void)
  */
 
 void
-tty_prnt(char *fmt, ...)
+tty_prnt(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -148,7 +148,7 @@ tty_read(char *str, int len)
  */
 
 void
-paxwarn(int set, char *fmt, ...)
+paxwarn(int set, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -177,7 +177,7 @@ paxwarn(int set, char *fmt, ...)
  */
 
 void
-syswarn(int set, int errnum, char *fmt, ...)
+syswarn(int set, int errnum, const char *fmt, ...)
 {
 	va_list ap;
 

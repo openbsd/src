@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.12 2002/10/16 18:40:30 millert Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.13 2002/10/16 19:20:02 millert Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
+static const char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cpio.c,v 1.12 2002/10/16 18:40:30 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cpio.c,v 1.13 2002/10/16 19:20:02 millert Exp $";
 #endif
 #endif /* not lint */
 

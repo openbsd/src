@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.14 2002/10/16 18:40:30 millert Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.15 2002/10/16 19:20:02 millert Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
+static const char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.14 2002/10/16 18:40:30 millert Exp $";
+static const char rcsid[] = "$OpenBSD: sel_subs.c,v 1.15 2002/10/16 19:20:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.14 2002/10/16 18:40:30 millert E
 #include "sel_subs.h"
 #include "extern.h"
 
-static int str_sec(char *, time_t *);
+static int str_sec(const char *, time_t *);
 static int usr_match(ARCHD *);
 static int grp_match(ARCHD *);
 static int trng_match(ARCHD *);
@@ -534,12 +534,16 @@ trng_match(ARCHD *arcn)
  */
 
 static int
-str_sec(char *p, time_t *tval)
+str_sec(const char *p, time_t *tval)
 {
 	struct tm *lt;
-	char *dot, *t;
+	const char *dot, *t;
+	size_t len;
 	int bigyear;
-	int yearset = 0;
+	int yearset;
+
+	yearset = 0;
+	len = strlen(p);
 
 	for (t = p, dot = NULL; *t; ++t) {
 		if (isdigit(*t))
@@ -554,16 +558,16 @@ str_sec(char *p, time_t *tval)
 	lt = localtime(tval);
 
 	if (dot != NULL) {			/* .SS */
-		*dot++ = '\0';
-		if (strlen(dot) != 2)
+		if (strlen(++dot) != 2)
 			return(-1);
 		lt->tm_sec = ATOI2(dot);
 		if (lt->tm_sec > 61)
 			return(-1);
+		len -= 3;
 	} else
 		lt->tm_sec = 0;
 
-	switch (strlen(p)) {
+	switch (len) {
 	case 12:				/* cc */
 		bigyear = ATOI2(p);
 		lt->tm_year = (bigyear * 100) - TM_YEAR_BASE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.22 2002/10/16 17:43:10 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.23 2002/10/16 19:20:02 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -49,9 +49,9 @@
 /*
  * ar_io.c
  */
-extern char *arcname;
+extern const char *arcname;
 extern const char *gzip_program;
-int ar_open(char *);
+int ar_open(const char *);
 void ar_close(void);
 void ar_drain(void);
 int ar_set_wr(void);
@@ -169,7 +169,7 @@ int next_file(ARCHD *);
  */
 void ls_list(ARCHD *, time_t, FILE *);
 void ls_tty(ARCHD *);
-void safe_print(char *, FILE *);
+void safe_print(const char *, FILE *);
 u_long asc_ul(char *, int, int);
 int ul_asc(u_long, char *, int, int);
 #ifndef LONG_OFF_T
@@ -180,7 +180,7 @@ int uqd_asc(u_quad_t, char *, int, int);
 /*
  * getoldopt.c
  */
-int getoldopt(int, char **, char *);
+int getoldopt(int, char **, const char *);
 
 /*
  * options.c
@@ -189,7 +189,7 @@ extern FSUB fsub[];
 extern int ford[];
 void options(int, char **);
 OPLIST * opt_next(void);
-int opt_add(char *);
+int opt_add(const char *);
 int bad_opt(void);
 char *chdname;
 
@@ -296,7 +296,7 @@ int ustar_wr(ARCHD *);
  * tty_subs.c
  */
 int tty_init(void);
-void tty_prnt(char *, ...);
+void tty_prnt(const char *, ...);
 int tty_read(char *, int);
-void paxwarn(int, char *, ...);
-void syswarn(int, int, char *, ...);
+void paxwarn(int, const char *, ...);
+void syswarn(int, int, const char *, ...);

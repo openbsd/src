@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.11 2002/10/16 17:43:10 millert Exp $	*/
+/*	$OpenBSD: cache.c,v 1.12 2002/10/16 19:20:02 millert Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
+static const char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cache.c,v 1.11 2002/10/16 17:43:10 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cache.c,v 1.12 2002/10/16 19:20:02 millert Exp $";
 #endif
 #endif /* not lint */
 

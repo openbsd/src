@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.14 2002/10/16 17:43:10 millert Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.15 2002/10/16 19:20:02 millert Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
+static const char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.14 2002/10/16 17:43:10 millert Exp $";
+static const char rcsid[] = "$OpenBSD: gen_subs.c,v 1.15 2002/10/16 19:20:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 	struct stat *sbp;
 	char f_mode[MODELEN];
 	char f_date[DATELEN];
-	char *timefrmt;
+	const char *timefrmt;
 
 	/*
 	 * if not verbose, just print the file name
@@ -170,7 +170,7 @@ ls_tty(ARCHD *arcn)
 {
 	char f_date[DATELEN];
 	char f_mode[MODELEN];
-	char *timefrmt;
+	const char *timefrmt;
 
 	if (ltmfrmt == NULL) {
 		/*
@@ -195,10 +195,10 @@ ls_tty(ARCHD *arcn)
 }
 
 void
-safe_print(char *str, FILE *fp)
+safe_print(const char *str, FILE *fp)
 {
 	char visbuf[5];
-	char *cp;
+	const char *cp;
 
 	/*
 	 * if printing to a tty, use vis(3) to print special characters.

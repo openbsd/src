@@ -1,4 +1,4 @@
-/*	$OpenBSD: getoldopt.c,v 1.6 2002/10/16 18:44:19 millert Exp $	*/
+/*	$OpenBSD: getoldopt.c,v 1.7 2002/10/16 19:20:02 millert Exp $	*/
 /*	$NetBSD: getoldopt.c,v 1.3 1995/03/21 09:07:28 cgd Exp $	*/
 
 /*
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getoldopt.c,v 1.6 2002/10/16 18:44:19 millert Exp $";
+static const char rcsid[] = "$OpenBSD: getoldopt.c,v 1.7 2002/10/16 19:20:02 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -19,7 +19,7 @@ static char rcsid[] = "$OpenBSD: getoldopt.c,v 1.6 2002/10/16 18:44:19 millert E
 #include <unistd.h>
 
 int
-getoldopt(int argc, char **argv, char *optstring)
+getoldopt(int argc, char **argv, const char *optstring)
 {
 	static char	*key;		/* Points to next keyletter */
 	static char	use_getopt;	/* !=0 if argv[1][0] was '-' */

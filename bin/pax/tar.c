@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.27 2002/10/16 18:40:30 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.28 2002/10/16 19:20:02 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
+static const char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.27 2002/10/16 18:40:30 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tar.c,v 1.28 2002/10/16 19:20:02 millert Exp $";
 #endif
 #endif /* not lint */
 

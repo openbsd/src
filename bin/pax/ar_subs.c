@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.20 2002/10/16 18:40:30 millert Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.21 2002/10/16 19:20:02 millert Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
+static const char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.20 2002/10/16 18:40:30 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ar_subs.c,v 1.21 2002/10/16 19:20:02 millert Exp $";
 #endif
 #endif /* not lint */
 
