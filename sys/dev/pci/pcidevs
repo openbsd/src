@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.175 1999/08/27 05:52:02 downsj Exp $
+$OpenBSD: pcidevs,v 1.176 1999/08/27 06:06:11 downsj Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -862,7 +862,7 @@ product DOLPHIN PCISCI		0x0658	PCI-SCI
 product EMULEX LPPFC		0x10df	Light Pulse FibreChannel
 
 /* Ensoniq products */
-product ENSONIQ	SB64PCI		0x1371	SoundBlaster 64PCI
+product ENSONIQ	AUDIOPCI97	0x1371	AudioPCI97
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 
 /* ESS Technology Inc products */
@@ -912,6 +912,11 @@ product IDT 77201	0x0001	77201/77211 ATM (NICStAR)
 
 /* Industrial Computer Source */
 product INDCOMPSRC WDT50x	0x22c0	WDT 50x Watchdog Timer
+
+/* Initio Corporation */
+product INITIO INIC940		0x9400	INIC-940 SCSI
+product INITIO INIC941		0x9401	INIC-941 SCSI
+product INITIO INIC950		0x9500	INIC-950 SCSI
 
 /* Integrated Micro Solutions products */
 product IMS 8849		0x8849	8849
