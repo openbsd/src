@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.58 2001/06/26 19:43:14 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.59 2001/06/26 19:51:04 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -2067,10 +2067,11 @@ pull_hdr(struct ifnet *ifp, struct mbuf *m, int ipoff, int off, void *p,
 }
 
 int
-pf_test(int direction, struct ifnet *ifp, struct mbuf *m)
+pf_test(int dir, struct ifnet *ifp, struct mbuf *m)
 {
 	u_short action, reason = 0, log = 0;
 	struct ip *h;
+	struct pf_state *s;
 	int off;
 
 	if (!pf_status.running)
@@ -2105,14 +2106,14 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf *m)
 
 		if (!pull_hdr(ifp, m, 0, off, &th, sizeof(th), h,
 		      &action, &reason)) {
-			log = 1;
+			log = action != PF_PASS;
 			goto done;
 		}
-		if (pf_test_state_tcp(direction, ifp, m, 0, off, h, &th))
+		if ((s = pf_test_state_tcp(dir, ifp, m, 0, off, h, &th))) {
 			action = PF_PASS;
-		else
-			action = pf_test_tcp(direction, ifp, m, 0, off, h,
-			    &th);
+			log = s->log;
+		} else
+			action = pf_test_tcp(dir, ifp, m, 0, off, h, &th);
 		break;
 	}
 
@@ -2121,14 +2122,14 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf *m)
 
 		if (!pull_hdr(ifp, m, 0, off, &uh, sizeof(uh), h,
 		      &action, &reason)) {
-			log = 1;
+			log = action != PF_PASS;
 			goto done;
 		}
-		if (pf_test_state_udp(direction, ifp, m, 0, off, h, &uh))
+		if ((s = pf_test_state_udp(dir, ifp, m, 0, off, h, &uh))) {
 			action = PF_PASS;
-		else
-			action = pf_test_udp(direction, ifp, m, 0, off, h,
-			    &uh);
+			log = s->log;
+		} else
+			action = pf_test_udp(dir, ifp, m, 0, off, h, &uh);
 		break;
 	}
 
@@ -2137,14 +2138,14 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf *m)
 
 		if (!pull_hdr(ifp, m, 0, off, &ih, sizeof(ih), h,
 		      &action, &reason)) {
-			log = 1;
+			log = action != PF_PASS;
 			goto done;
 		}
-		if (pf_test_state_icmp(direction, ifp, m, 0, off, h, &ih))
+		if ((s = pf_test_state_icmp(dir, ifp, m, 0, off, h, &ih))) {
 			action = PF_PASS;
-		else
-			action = pf_test_icmp(direction, ifp, m, 0, off, h,
-			    &ih);
+			log = s->log;
+		} else
+			action = pf_test_icmp(dir, ifp, m, 0, off, h, &ih);
 		break;
 	}
 
@@ -2155,15 +2156,15 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf *m)
 
 done:
 	if (ifp == status_ifp) {
-		pf_status.bytes[direction] += h->ip_len;
-		pf_status.packets[direction][action]++;
+		pf_status.bytes[dir] += h->ip_len;
+		pf_status.packets[dir][action]++;
 	}
-	if (log && action != PF_PASS) {
+	if (log) {
 		struct pf_rule r;
 
 		r.ifp = ifp;
 		r.action = action;
-		PFLOG_PACKET(h, m, AF_INET, direction, reason, -1, &r);
+		PFLOG_PACKET(h, m, AF_INET, dir, reason, -1, &r);
 	}
 	return (action);
 }
