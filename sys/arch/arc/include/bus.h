@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.6 1996/09/18 17:20:54 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.7 1996/10/17 18:58:58 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -119,8 +119,6 @@ struct arc_isa_busmap {
     ((void)(*(volatile u_int64_t *)((h) + (o)) = (v)))
 
 /* These are extensions to the general NetBSD bus interface.  */
-#define	bus_io_read_raw_multi_1(t, h, o, a, c)	\
-					insb((h) + (o), (a), (c))
 #define	bus_io_read_raw_multi_2(t, h, o, a, c)	\
 					insw((h) + (o), (a), ((c) >> 1))
 #define	bus_io_read_raw_multi_4(t, h, o, a, c)	\
@@ -130,8 +128,6 @@ struct arc_isa_busmap {
 				!!! bus_io_read_raw_multi_8 unimplemented !!!
 #endif
 
-#define	bus_io_write_raw_multi_1(t, h, o, a, c)	\
-					outsb((h) + (o), (a), (c))
 #define	bus_io_write_raw_multi_2(t, h, o, a, c)	\
 					outsw((h) + (o), (a), ((c) >> 1))
 #define	bus_io_write_raw_multi_4(t, h, o, a, c)	\
