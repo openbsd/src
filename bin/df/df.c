@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.20 1997/11/20 21:19:00 millert Exp $	*/
+/*	$OpenBSD: df.c,v 1.21 1998/08/17 21:33:05 deraadt Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.20 1997/11/20 21:19:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.21 1998/08/17 21:33:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -465,8 +465,11 @@ posixprint(mntbuf, mntsize, maxwidth)
 		sfsp = &mntbuf[i];
 		used = sfsp->f_blocks - sfsp->f_bfree;
 		avail = sfsp->f_bavail + used;
-		percentused = (used * 100 / avail)
-			+ ((used % avail) ? 1 : 0);
+		if (avail == 0)
+			percentused = 100;
+		else
+			percentused = (used * 100 / avail) +
+			    ((used % avail) ? 1 : 0);
 
 		(void) printf ("%-*.*s %*ld %10ld %11ld %5d%%   %s\n",
 			maxwidth, maxwidth, sfsp->f_mntfromname,
