@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2005/01/18 15:03:38 grange Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2005/01/31 21:35:50 grange Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -136,7 +136,7 @@ void stacktrace(struct trap_frame *);
 void logstacktrace(struct trap_frame *);
 int  kdbpeek(void *);
 /* extern functions printed by name in stack backtraces */
-extern void idle __P((void));
+extern void idle(void);
 #endif	/* DDB || DEBUG */
 
 #if defined(DDB)
@@ -1125,7 +1125,7 @@ cpu_singlestep(p)
 
 /* forward */
 char *fn_name(long addr);
-void stacktrace_subr __P((struct trap_frame *, int (*)(const char*, ...)));
+void stacktrace_subr(struct trap_frame *, int (*)(const char*, ...));
 
 /*
  * Print a stack backtrace.
@@ -1147,7 +1147,7 @@ logstacktrace(regs)
 void
 stacktrace_subr(regs, printfn)
 	struct trap_frame *regs;
-	int (*printfn) __P((const char*, ...));
+	int (*printfn)(const char*, ...);
 {
 	long pc, sp, fp, ra, va, subr;
 	long a0, a1, a2, a3;

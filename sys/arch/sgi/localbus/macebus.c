@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.10 2004/09/27 19:20:49 pefo Exp $ */
+/*	$OpenBSD: macebus.c,v 1.11 2005/01/31 21:35:50 grange Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -437,7 +437,7 @@ static intrmask_t intrtype[INTMASKSIZE];
 static intrmask_t intrmask[INTMASKSIZE];
 static intrmask_t intrlevel[INTMASKSIZE];
 
-static int fakeintr __P((void *));
+static int fakeintr(void *);
 static int fakeintr(void *a) {return 0;}
 
 /*

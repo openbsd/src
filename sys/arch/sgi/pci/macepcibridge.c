@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.6 2004/10/20 12:49:15 pefo Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.7 2005/01/31 21:35:50 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -156,7 +156,7 @@ struct _perr_map {
 };
 
 
-static int      mace_pcibrprint __P((void *, const char *pnp));
+static int      mace_pcibrprint(void *, const char *pnp);
 
 
 int
@@ -437,7 +437,7 @@ mace_pcibr_intr_establish(lcv, ih, level, func, arg, name)
 	void *lcv;
 	pci_intr_handle_t ih;
 	int level;
-	int (*func) __P((void *));
+	int (*func)(void *);
 	void *arg;
 	char *name;
 {

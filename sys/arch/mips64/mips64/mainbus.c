@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.3 2004/08/10 20:15:47 deraadt Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.4 2005/01/31 21:35:50 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -40,9 +40,9 @@ struct mainbus_softc {
 };
 
 /* Definition of the mainbus driver. */
-static int	mbmatch __P((struct device *, void *, void *));
-static void	mbattach __P((struct device *, struct device *, void *));
-static int	mbprint __P((void *, const char *));
+static int	mbmatch(struct device *, void *, void *);
+static void	mbattach(struct device *, struct device *, void *);
+static int	mbprint(void *, const char *);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct mainbus_softc), mbmatch, mbattach
@@ -51,11 +51,11 @@ struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL, NULL, 0
 };
 
-void	*mb_intr_establish __P((void *, u_long, int, int, int (*)(void *), void *, char
- *));
-void	mb_intr_disestablish __P((void *, void *));
-caddr_t	mb_cvtaddr __P((struct confargs *));
-int	mb_matchname __P((struct confargs *, char *));
+void	*mb_intr_establish(void *, u_long, int, int, int (*)(void *),
+	    void *, char *);
+void	mb_intr_disestablish(void *, void *);
+caddr_t	mb_cvtaddr(struct confargs *);
+int	mb_matchname(struct confargs *, char *);
 
 static int
 mbmatch(parent, cfdata, aux)
@@ -158,7 +158,7 @@ mb_intr_establish(icp, irq, type, level, ih_fun, ih_arg, ih_what)
         u_long irq;     /* XXX pci_intr_handle_t compatible XXX */
         int type;
         int level;
-        int (*ih_fun) __P((void *));
+        int (*ih_fun)(void *);
         void *ih_arg;
         char *ih_what;
 {

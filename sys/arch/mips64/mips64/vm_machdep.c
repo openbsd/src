@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 2004/09/20 10:29:57 pefo Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.7 2005/01/31 21:35:50 grange Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-extern void proc_trampoline __P((void));
+extern void proc_trampoline(void);
 /*
  * Finish a fork operation, with process p2 nearly set up.
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm7000.h,v 1.1 2005/01/18 15:03:38 grange Exp $ */
+/*	$OpenBSD: rm7000.h,v 1.2 2005/01/31 21:35:49 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -87,12 +87,12 @@
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-int	rm7k_perfcntr __P((int, long, long, long));
-void	rm7k_perfintr __P((struct trap_frame *));
-int	rm7k_watchintr __P((struct trap_frame *));
-void	cp0_setperfcount __P((int));
-void	cp0_setperfctrl __P((int));
-int	cp0_getperfcount __P((void));
+int	rm7k_perfcntr(int, long, long, long);
+void	rm7k_perfintr(struct trap_frame *);
+int	rm7k_watchintr(struct trap_frame *);
+void	cp0_setperfcount(int);
+void	cp0_setperfctrl(int);
+int	cp0_getperfcount(void);
 __END_DECLS
 #endif /* _KERNEL */
 

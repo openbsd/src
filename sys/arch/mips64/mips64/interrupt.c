@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.10 2005/01/18 15:03:38 grange Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.11 2005/01/31 21:35:50 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -336,7 +336,7 @@ generic_intr_establish(icp, irq, type, level, ih_fun, ih_arg, ih_what)
         u_long irq;	/* XXX pci_intr_handle_t compatible XXX */
         int type;
         int level;
-        int (*ih_fun) __P((void *));
+        int (*ih_fun)(void *);
         void *ih_arg;
         char *ih_what;
 {

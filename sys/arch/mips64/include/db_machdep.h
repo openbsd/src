@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.6 2005/01/04 21:14:35 espie Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.7 2005/01/31 21:35:49 grange Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -45,7 +45,7 @@ typedef vaddr_t		db_addr_t;
 
 #define	SOFTWARE_SSTEP		/* Need software single step */
 #define	SOFTWARE_SSTEP_EMUL	/* next_instr_address() emulates 100% */
-db_addr_t	next_instr_address __P((db_addr_t, boolean_t));
+db_addr_t	next_instr_address(db_addr_t, boolean_t);
 #define	BKPT_SIZE   (4)
 #define	BKPT_SET(ins)	(BREAK_DDB)
 #define	DB_VALID_BREAKPOINT(addr)	(((addr) & 3) == 0)
@@ -72,7 +72,7 @@ db_addr_t	next_instr_address __P((db_addr_t, boolean_t));
 #define	inst_load(i)	(db_inst_type(i) == IT_LOAD)
 #define	inst_store(i)	(db_inst_type(i) == IT_STORE)
 
-int db_inst_type __P((int));
-void db_machine_init __P((void));
+int db_inst_type(int);
+void db_machine_init(void);
 
 #endif	/* !_MIPS_DB_MACHDEP_H_ */

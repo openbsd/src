@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.3 2004/09/15 16:05:18 pefo Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.4 2005/01/31 21:35:50 grange Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.3 2004/09/15 16:05:18 pefo Exp $
+ *      $Id: db_disasm.c,v 1.4 2005/01/31 21:35:50 grange Exp $
  */
 
 #include <sys/param.h>
@@ -120,9 +120,9 @@ static char *c0_reg[32] = {
 	"c0r24","c0r25","ecc","cacheerr","taglo","taghi","errepc","c0r31"
 };
 
-int  kdbpeek __P((void *));
+int  kdbpeek(void *);
 
-static int md_printins __P((int ins, int mdbdot));
+static int md_printins(int ins, int mdbdot);
 
 db_addr_t
 db_disasm(loc, altfmt)
