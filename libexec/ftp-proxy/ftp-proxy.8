@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.39 2004/02/24 20:39:30 millert Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.40 2004/03/16 08:50:07 jmc Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -194,7 +194,7 @@ A typical way to do this would be to use a
 .Xr pf.conf 5
 rule such as
 .Bd -literal -offset 2n
-int_if = xl0
+int_if = \&"xl0\&"
 rdr pass on $int_if proto tcp from any to any port 21 -> 127.0.0.1 port 8021
 .Ed
 .Pp
