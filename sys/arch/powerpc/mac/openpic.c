@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.9 2001/02/20 04:20:35 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.10 2001/04/08 05:00:26 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -222,6 +222,8 @@ fakeintr(arg)
 	return 0;
 }
 
+void nameinterrupt( int replace, char *newstr);
+
 /*
  * Register an interrupt handler.
  */
@@ -246,6 +248,7 @@ openpic_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 printf("mac_intr_establish, hI %d L %d ", irq, type);
 #endif
 
+	nameinterrupt(irq, name);
 	irq = mapirq(irq);
 #if 0
 printf("vI %d ", irq);

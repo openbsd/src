@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.55 2001/03/29 19:02:06 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.56 2001/04/08 05:00:27 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1481,4 +1481,35 @@ kcopy(from, to, size)
 	curproc->p_addr->u_pcb.pcb_onfault = oldh;
 
 	return 0;
+}
+void
+nameinterrupt(replace, newstr)
+	int replace;
+	char *newstr;
+{
+#define NENTRIES 66
+	char intrname[NENTRIES][30];
+	char *p, *src;
+	int i;
+	extern char intrnames[];
+	extern char eintrnames[];
+
+	if (replace > NENTRIES) {
+		return;
+	}
+	src = intrnames;
+
+	for (i = 0; i < NENTRIES; i++) {
+		src += strlcpy(intrname[i], src, 30);
+		src+=1; /* skip the NUL */
+	}
+
+	strcat(intrname[replace], "/");
+	strcat(intrname[replace], newstr);
+
+	p = intrnames;
+	for (i = 0; i < NENTRIES; i++) {
+		p += strlcpy(p, intrname[i], eintrnames - p);
+		p += 1; /* skip the NUL */
+	}
 }

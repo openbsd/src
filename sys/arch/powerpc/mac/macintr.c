@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.6 2000/07/31 03:47:35 rahnds Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.7 2001/04/08 05:00:26 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -224,6 +224,8 @@ fakeintr(arg)
 	return 0;
 }
 
+void nameinterrupt( int replace, char *newstr);
+
 /*
  * Register an interrupt handler.
  */
@@ -248,7 +250,7 @@ macintr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 printf("macintr_establish, hI %d L %d ", irq, type);
 printf("addr reg0 %x\n", INT_STATE_REG0);
 #endif
-
+	nameinterrupt(irq, name);
 	irq = mapirq(irq);
 #if 0
 printf("vI %d ", irq);
