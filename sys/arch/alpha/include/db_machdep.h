@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.6 1997/07/19 20:50:50 niklas Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.7 1997/07/23 23:32:43 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -65,10 +65,11 @@ db_regs_t		ddb_regs;
 #define	FIXUP_PC_AFTER_BREAK(regs) ((regs)->tf_regs[FRAME_PC] -= sizeof(int))
 
 #define SOFTWARE_SSTEP
+#define DB_VALID_BREAKPOINT(addr) db_valid_breakpoint(addr)
 
 /* Hack to skip GCC "unused" warnings. */
 #define	inst_trap_return(ins)	((ins) & 0)		/* XXX */
-#define	inst_return(ins)	((ins) == 0x6bfa8001)
+#define	inst_return(ins)	(((ins) & 0xfc000000) == 0x68000000)
 
 int inst_call __P((u_int));
 int inst_branch __P((u_int));
@@ -78,5 +79,6 @@ db_addr_t branch_taken __P((u_int, db_addr_t,
     register_t (*) __P((db_regs_t *, int)), db_regs_t *));
 db_addr_t next_instr_address __P((db_addr_t, int));
 int kdb_trap __P((int, int, db_regs_t *));
+int db_valid_breakpoint __P((db_addr_t));
 
 #endif	/* _ALPHA_DB_MACHDEP_H_ */
