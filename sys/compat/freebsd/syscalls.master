@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.10 1999/05/31 17:34:45 millert Exp $
+	$OpenBSD: syscalls.master,v 1.11 1999/06/07 07:17:46 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -104,7 +104,7 @@
 40	STD		{ int compat_43_freebsd_sys_lstat(char *path, \
 			    struct ostat *ub); } olstat
 41	NOARGS		{ int sys_dup(u_int fd); }
-42	NOARGS		{ int sys_pipe(void); }
+42	NOARGS		{ int sys_opipe(void); }
 43	NOARGS		{ gid_t sys_getegid(void); }
 44	NOARGS		{ int sys_profil(caddr_t samples, u_int size, \
 			    u_int offset, u_int scale); }

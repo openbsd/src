@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.12 1999/06/07 01:41:01 deraadt Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.13 1999/06/07 07:17:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -156,7 +156,7 @@ int
 #if defined(__FreeBSD__)
 pipe(p, uap, retval)
 #else /* (__NetBSD__) || (__OpenBSD__) */
-sys_pipe(p, v, retval)
+sys_opipe(p, v, retval)
 #endif
 	struct proc *p;
 	void *v;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.29 1999/05/22 21:27:21 weingart Exp $
+#	$OpenBSD: Makefile.inc,v 1.30 1999/06/07 07:17:56 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -6,16 +6,16 @@
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/sys ${LIBCSRCDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S \
+SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S \
 	sbrk.S sigpending.S sigprocmask.S sigreturn.S \
 	sigsuspend.S syscall.S
 
 LSRCS+=	Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
-	Lint_pipe.c Lint_sbrk.c \
+	Lint_sbrk.c \
 	Lint_sigpending.c Lint_sigprocmask.c Lint_sigreturn.c \
 	Lint_sigsuspend.c Lint_syscall.c
 DPSRCS+= Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
-	Lint_pipe.c Lint_sbrk.c \
+	Lint_sbrk.c \
 	Lint_sigpending.c Lint_sigprocmask.c Lint_sigreturn.c \
 	Lint_sigsuspend.c Lint_syscall.c
 
@@ -43,7 +43,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o msync.o \
 	munlock.o munmap.o nanosleep.o nfssvc.o \
 	ntp_gettime.o ntp_adjtime.o \
-	open.o pathconf.o poll.o profil.o quotactl.o \
+	open.o pathconf.o pipe.o poll.o profil.o quotactl.o \
 	read.o readlink.o readv.o reboot.o recvfrom.o recvmsg.o rename.o \
 	revoke.o rfork.o \
 	rmdir.o select.o semconfig.o semget.o semop.o sendmsg.o sendto.o \

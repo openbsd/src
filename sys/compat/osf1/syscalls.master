@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.5 1998/02/17 01:48:07 millert Exp $
+	$OpenBSD: syscalls.master,v 1.6 1999/06/07 07:17:47 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.2 1995/10/07 06:27:28 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -87,7 +87,7 @@
 39	NOARGS		{ int sys_setpgid(int pid, int pgid); }
 40	UNIMPL		old lstat
 41	NOARGS		{ int sys_dup(u_int fd); }
-42	NOARGS		{ int sys_pipe(void); }
+42	NOARGS		{ int sys_opipe(void); }
 43	UNIMPL		set_program_attributes
 44	UNIMPL		profil
 45	STD		{ int osf1_sys_open(char *path, int flags, int mode); }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.21 1999/06/07 01:40:01 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.22 1999/06/07 07:17:42 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -835,10 +835,36 @@ sys_getsockopt(p, v, retval)
 	return (error);
 }
 
+int
+sys_pipe(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct filedesc *fdp = p->p_fd;
+	register struct sys_pipe_args /* {
+		syscallarg(int *) fdp;
+	} */ *uap = v;
+	int error;
+
+	if ((error = sys_opipe(p, v, retval)) == -1)
+		return (error);
+	
+	error = copyout((caddr_t)retval, (caddr_t)SCARG(uap, fdp),
+	    2 * sizeof (int));
+	if (error) {
+		ffree(fdp->fd_ofiles[retval[0]]);
+		fdp->fd_ofiles[retval[0]] = NULL;
+		ffree(fdp->fd_ofiles[retval[1]]);
+		fdp->fd_ofiles[retval[1]] = NULL;
+	}
+	return (error);
+}
+
 #ifdef OLD_PIPE
 /* ARGSUSED */
 int
-sys_pipe(p, v, retval)
+sys_opipe(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;

@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.23 1998/03/06 21:58:10 niklas Exp $
+	$OpenBSD: syscalls.master,v 1.24 1999/06/07 07:17:48 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -90,7 +90,7 @@
 39	STD		{ int svr4_sys_pgrpsys(int cmd, int pid, int pgid); }
 40	UNIMPL		xenix
 41	NOARGS		{ int sys_dup(u_int fd); }
-42	NOARGS		{ int sys_pipe(void); }
+42	NOARGS		{ int sys_opipe(void); }
 43	STD		{ int svr4_sys_times(struct tms *tp); }
 44	UNIMPL		profil
 45	UNIMPL		plock
