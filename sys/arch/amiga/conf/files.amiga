@@ -1,5 +1,5 @@
-#	$OpenBSD: files.amiga,v 1.12 1996/05/02 07:31:53 niklas Exp $
-#	$NetBSD: files.amiga,v 1.44 1996/04/27 20:51:08 veego Exp $
+#	$OpenBSD: files.amiga,v 1.13 1996/05/09 22:42:53 niklas Exp $
+#	$NetBSD: files.amiga,v 1.45 1996/05/07 00:34:17 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -115,7 +115,7 @@ device	gvpbus {}
 attach	gvpbus at zbus
 file	arch/amiga/dev/gvpbus.c		gvpbus
 
-device	le:	ifnet, ether
+# device defined in sys/conf/files
 attach	le at zbus with le_zbus
 file	arch/amiga/dev/if_le.c		le_zbus needs-flag
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_le.c,v 1.4 1996/05/02 06:44:06 niklas Exp $	*/
-/*	$NetBSD: if_le.c,v 1.20 1996/04/22 02:33:08 christos Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.5 1996/05/09 22:43:24 niklas Exp $	*/
+/*	$NetBSD: if_le.c,v 1.21 1996/05/07 00:35:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -61,53 +61,43 @@
 
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
+
+#include <dev/ic/am7990reg.h>
+#include <dev/ic/am7990var.h>
+
 #include <amiga/dev/zbusvar.h>
 #include <amiga/dev/if_levar.h>
-#include <dev/ic/am7990reg.h>
-#define LE_NEED_BUF_CONTIG
-#include <dev/ic/am7990var.h>
 
 /* offsets for:	   ID,   REGS,    MEM */
 int	lestd[] = { 0, 0x4000, 0x8000 };
 
-#define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
-#define	LE_DELAY(x)	DELAY(x)
-
 int le_zbus_match __P((struct device *, void *, void *));
 void le_zbus_attach __P((struct device *, struct device *, void *));
-int leintr __P((void *));
 
 struct cfattach le_zbus_ca = {
 	sizeof(struct le_softc), le_zbus_match, le_zbus_attach
 };
 
-struct cfdriver le_cd = {
-	NULL, "le", DV_IFNET
-};
+hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
+hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
 
-integrate void
-lehwinit(sc)
-	struct le_softc *sc;
-{
-}
-
-integrate void
+hide void
 lewrcsr(sc, port, val)
-	struct le_softc *sc;
+	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
-	struct lereg1 *ler1 = sc->sc_r1;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
 	ler1->ler1_rap = port;
 	ler1->ler1_rdp = val;
 }
 
-integrate u_int16_t
+hide u_int16_t
 lerdcsr(sc, port)
-	struct le_softc *sc;
+	struct am7990_softc *sc;
 	u_int16_t port;
 {
-	struct lereg1 *ler1 = sc->sc_r1;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
 
 	ler1->ler1_rap = port;
@@ -138,11 +128,12 @@ le_zbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct le_softc *sc = (void *)self;
+	struct le_softc *lesc = (struct le_softc *)self;
+	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct zbus_args *zap = aux;
 	u_long ser;
 
-	sc->sc_r1 = (struct lereg1 *)(lestd[1] + (int)zap->va);
+	lesc->sc_r1 = (struct lereg1 *)(lestd[1] + (int)zap->va);
 	sc->sc_mem = (void *)(lestd[2] + (int)zap->va);
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;
@@ -150,6 +141,10 @@ le_zbus_attach(parent, self, aux)
 	sc->sc_copytobuf = am7990_copytobuf_contig;
 	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
 	sc->sc_zerobuf = am7990_zerobuf_contig;
+
+	sc->sc_rdcsr = lerdcsr;
+	sc->sc_wrcsr = lewrcsr;
+	sc->sc_hwinit = NULL;
 
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_addr = 0x8000;
@@ -175,7 +170,7 @@ le_zbus_attach(parent, self, aux)
 		break;
 
 	default:
-		panic("leattach: bad manid");
+		panic("le_zbus_attach: bad manid");
 	}
 
 	/*
@@ -186,13 +181,10 @@ le_zbus_attach(parent, self, aux)
 	sc->sc_arpcom.ac_enaddr[4] = (ser >>  8) & 0xff;
 	sc->sc_arpcom.ac_enaddr[5] = (ser      ) & 0xff;
 
-	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
-	leconfig(sc);
+	am7990_config(sc);
 
-	sc->sc_isr.isr_intr = leintr;
-	sc->sc_isr.isr_arg = sc;
-	sc->sc_isr.isr_ipl = 2;
-	add_isr(&sc->sc_isr);
+	lesc->sc_isr.isr_intr = am7990_intr;
+	lesc->sc_isr.isr_arg = sc;
+	lesc->sc_isr.isr_ipl = 2;
+	add_isr(&lesc->sc_isr);
 }
-
-#include <dev/ic/am7990.c>
