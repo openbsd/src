@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.4 1998/02/25 03:45:14 angelos Exp $	*/
+/*	$OpenBSD: in.c,v 1.5 1998/02/25 04:53:09 angelos Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -458,7 +458,7 @@ in_broadcast(in, ifp)
 	 * If ifp is NULL, check against all the local interfaces.
 	 */
         for (ifn = if_first; ifn != if_target; ifn = ifn->if_list.tqe_next)
-	  for (ifa = ifp->if_addrlist.tqh_first; ifa;
+	  for (ifa = ifn->if_addrlist.tqh_first; ifa;
 	       ifa = ifa->ifa_list.tqe_next)
 		if (ifa->ifa_addr->sa_family == AF_INET &&
 		    (in.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
