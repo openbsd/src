@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioskbd.S,v 1.9 1997/08/07 11:38:39 niklas Exp $	*/
+/*	$OpenBSD: bioskbd.S,v 1.10 1997/08/08 00:27:54 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -46,15 +46,8 @@
  *
  */
 ENTRY(kbd_probe)
-	movb	$NVRAM_EQUIPMENT, %al
-	outb	%al, $IO_RTC
-	inb	$(IO_RTC+1), %al
-	xorl	%edx, %edx
-	andb	$(NVRAM_EQUIPMENT_KBD|NVRAM_EQUIPMENT_DISPLAY), %al
-	cmpb	$(NVRAM_EQUIPMENT_KBD|NVRAM_EQUIPMENT_DISPLAY), %al
-	jne	1f
-	incl	%edx
-1:	movl	%edx, %eax
+	xorl	%eax, %eax
+	incl	%eax
 	ret
 
 /*
