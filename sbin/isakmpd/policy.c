@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.45 2001/08/25 22:22:11 niklas Exp $	*/
+/*	$OpenBSD: policy.c,v 1.46 2001/08/26 01:48:12 niklas Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1473,7 +1473,8 @@ policy_callback (char *name)
 		}
 	      break;
 
-	    case IPSEC_ID_DER_ASN1_GN: /* XXX -- not sure what's in this.  */
+	    case IPSEC_ID_DER_ASN1_GN:
+	      /* XXX -- not sure what's in this.  */
 	      local_filter_type = "ASN1 GN";
 	      break;
 
