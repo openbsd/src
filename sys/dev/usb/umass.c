@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.31 2004/07/21 07:48:04 dlg Exp $ */
+/*	$OpenBSD: umass.c,v 1.32 2004/07/21 07:49:07 dlg Exp $ */
 /*	$NetBSD: umass.c,v 1.98 2003/09/08 19:30:59 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -848,6 +848,9 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	KASSERT(sc->sc_wire & UMASS_WPROTO_BBB,
 		("sc->sc_wire == 0x%02x wrong for umass_bbb_transfer\n",
 		sc->sc_wire));
+
+	if (sc->sc_dying)
+		return;
 
 	/* Be a little generous. */
 	sc->timeout = timeout + USBD_DEFAULT_TIMEOUT;
