@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.6 1998/11/03 03:42:05 millert Exp $
+.\"	$OpenBSD: calendar.1,v 1.7 1998/11/03 03:52:50 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Op Fl a
 .Op Fl A Ar num
 .Op Fl B Ar num
-.Op Fl t Ar [[[yy]yy][mm]]dd
+.Op Fl t Ar [[[cc]yy][mm]]dd
 .Op Fl f Ar calendarfile
 .Sh DESCRIPTION
 The
@@ -75,7 +75,7 @@ days (backward, past).
 Use
 .Pa calendarfile
 as the default calendar file.
-.It Fl t Ar [[[yy]yy][mm]]dd
+.It Fl t Ar [[[cc]yy][mm]]dd
 Act like the specified value is ``today'' instead of using the current date.
 .El
 .Pp
