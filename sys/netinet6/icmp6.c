@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.59 2002/05/31 04:27:00 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.60 2002/06/08 21:22:02 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2987,6 +2987,9 @@ icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				&icmp6_mtudisc_lowat);
 	case ICMPV6CTL_ND6_DEBUG:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_debug);
+	case ICMPV6CTL_ND6_DRLIST:
+	case ICMPV6CTL_ND6_PRLIST:
+		return nd6_sysctl(name[0], oldp, oldlenp, newp, newlen);
 	default:
 		return ENOPROTOOPT;
 	}

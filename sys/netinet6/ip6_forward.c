@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.22 2002/06/07 04:13:10 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.23 2002/06/08 21:22:03 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -519,12 +519,10 @@ senderr:
 		return;
 	switch (error) {
 	case 0:
-#if 1
 		if (type == ND_REDIRECT) {
 			icmp6_redirect_output(mcopy, rt);
 			return;
 		}
-#endif
 		goto freecopy;
 
 	case EMSGSIZE:

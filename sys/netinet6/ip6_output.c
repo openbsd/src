@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.65 2002/06/07 21:47:44 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.66 2002/06/08 21:22:03 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -427,7 +427,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 
 	/* Source address validation */
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src) &&
-	    (flags & IPV6_DADOUTPUT) == 0) {
+	    (flags & IPV6_UNSPECSRC) == 0) {
 		error = EOPNOTSUPP;
 		ip6stat.ip6s_badscope++;
 		goto bad;

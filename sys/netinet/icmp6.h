@@ -1,5 +1,5 @@
-/*	$OpenBSD: icmp6.h,v 1.22 2002/05/29 02:59:12 itojun Exp $	*/
-/*	$KAME: icmp6.h,v 1.39 2001/02/06 03:48:06 itojun Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.23 2002/06/08 21:22:02 itojun Exp $	*/
+/*	$KAME: icmp6.h,v 1.71 2002/05/27 04:18:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -570,7 +570,9 @@ struct icmp6stat {
 #define ICMPV6CTL_MTUDISC_HIWAT	16
 #define ICMPV6CTL_MTUDISC_LOWAT	17
 #define ICMPV6CTL_ND6_DEBUG	18
-#define ICMPV6CTL_MAXID		19
+#define ICMPV6CTL_ND6_DRLIST	19
+#define ICMPV6CTL_ND6_PRLIST	20
+#define ICMPV6CTL_MAXID		21
 
 #define ICMPV6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -592,6 +594,8 @@ struct icmp6stat {
 	{ "mtudisc_hiwat", CTLTYPE_INT }, \
 	{ "mtudisc_lowat", CTLTYPE_INT }, \
 	{ "nd6_debug", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
 }
 
 #define RTF_PROBEMTU	RTF_PROTO1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.41 2002/05/31 02:39:25 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.42 2002/06/08 21:22:02 itojun Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -270,13 +270,8 @@ struct rtentry *
 
 /* INET6 stuff */
 int	in6_pcbnotify(struct inpcbtable *, struct sockaddr *,
-			   u_int, struct sockaddr *, u_int, int, void *,
-			   void (*)(struct inpcb *, int));
-struct 	in6_addr *in6_selectsrc(struct sockaddr_in6 *,
-				     struct ip6_pktopts *,
-				     struct ip6_moptions *,
-				     struct route_in6 *,
-				     struct in6_addr *, int *);
+	u_int, struct sockaddr *, u_int, int, void *,
+	void (*)(struct inpcb *, int));
 int	in6_selecthlim(struct inpcb *, struct ifnet *);
 int	in6_pcbsetport(struct in6_addr *, struct inpcb *);
 #endif /* _KERNEL */
