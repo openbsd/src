@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2001/06/27 19:29:16 markus Exp $
+#	$OpenBSD: Makefile,v 1.22 2003/07/28 09:49:56 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -10,7 +10,7 @@ BINMODE?=555
 BINDIR=	/usr/bin
 MAN=	ssh-keygen.1
 
-SRCS=	ssh-keygen.c
+SRCS=	ssh-keygen.c moduli.c
 
 .include <bsd.prog.mk>
 
