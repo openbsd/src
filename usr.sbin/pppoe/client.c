@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.18 2004/05/06 20:29:03 deraadt Exp $	*/
+/*	$OpenBSD: client.c,v 1.19 2004/06/14 19:22:39 canacar Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -256,7 +256,7 @@ send_padr(int bfd, u_int8_t *srv, struct ether_addr *myea,
 		iov[idx].iov_base = &n->type;
 		iov[idx++].iov_len = sizeof(n->type) + sizeof(n->len);
 		if (n->len) {
-			iov[idx].iov_base = &n->val;
+			iov[idx].iov_base = n->val;
 			iov[idx++].iov_len = n->len;
 		}
 		ph->len += sizeof(n->type) + sizeof(n->len) + n->len;
