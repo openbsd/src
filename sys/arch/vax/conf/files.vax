@@ -94,14 +94,14 @@ attach	uba at cmi with uba_cmi
 file	arch/vax/uba/uba_cmi.c		uba_cmi
 
 # BI bus definitions
-include "arch/vax/bi/files.bi"
+#include "arch/vax/bi/files.bi"
 
-attach	bi at mainbus with bi_mainbus
-file	arch/vax/bi/bi_mainbus.c	bi_mainbus
+#attach	bi at mainbus with bi_mainbus
+#file	arch/vax/bi/bi_mainbus.c	bi_mainbus
 
 # VAX CPUs at BI, do not belong in MI code.
-attach	cpu at bi with cpu_bi
-attach	mem at bi with mem_bi
+#attach	cpu at bi with cpu_bi
+#attach	mem at bi with mem_bi
 
 # TS11 at UBA
 device	ts: tape
