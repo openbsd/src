@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aereg.h,v 1.5 1997/03/08 16:16:53 briggs Exp $	*/
+/*	$OpenBSD: if_aereg.h,v 1.6 2002/06/03 20:01:36 deraadt Exp $	*/
 /*	$NetBSD: if_aereg.h,v 1.14 1997/02/24 07:34:20 scottr Exp $	*/
 
 /*
@@ -39,9 +39,9 @@ struct ae_ring {
  * Compile-time config flags
  */
 /*
- * This sets the default for enabling/disablng the tranceiver.
+ * This sets the default for enabling/disablng the transceiver.
  */
-#define AE_FLAGS_DISABLE_TRANCEIVER	0x0001
+#define AE_FLAGS_DISABLE_TRANSCEIVER	0x0001
 
 /*
  * This disables the use of double transmit buffers.

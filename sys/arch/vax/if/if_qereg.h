@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qereg.h,v 1.4 2000/04/27 03:14:43 bjc Exp $ */
+/*	$OpenBSD: if_qereg.h,v 1.5 2002/06/03 20:01:36 deraadt Exp $ */
 /*	$NetBSD: if_qereg.h,v 1.5 1999/06/20 00:04:47 ragge Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -114,7 +114,7 @@ struct qedevice {
 #define QE_ILOOP 	0x0100		/* Internal loopback		*/
 #define QE_ELOOP	0x0200		/* External loopback		*/
 #define QE_STIM_ENABLE	0x0400		/* Sanity timer enable		*/
-#define QE_POWERUP	0x1000		/* Tranceiver power on		*/
+#define QE_POWERUP	0x1000		/* Transceiver power on		*/
 #define QE_CARRIER	0x2000		/* Carrier detect		*/
 #define QE_RCV_INT	0x8000		/* Receiver interrupt		*/
  

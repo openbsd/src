@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_edreg.h,v 1.2 1997/01/16 09:24:41 niklas Exp $	*/
+/*	$OpenBSD: if_edreg.h,v 1.3 2002/06/03 20:01:36 deraadt Exp $	*/
 /*	$NetBSD: if_edreg.h,v 1.4 1995/05/08 02:40:54 chopps Exp $	*/
 
 /*
@@ -10,9 +10,9 @@
  * Compile-time config flags
  */
 /*
- * This sets the default for enabling/disablng the tranceiver.
+ * This sets the default for enabling/disablng the transceiver.
  */
-#define ED_FLAGS_DISABLE_TRANCEIVER	0x0001
+#define ED_FLAGS_DISABLE_TRANSCEIVER	0x0001
 
 /*
  * This forces the board to be used in 8/16-bit mode even if it autoconfigs

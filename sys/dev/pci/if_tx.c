@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tx.c,v 1.22 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: if_tx.c,v 1.23 2002/06/03 20:01:36 deraadt Exp $	*/
 /* $FreeBSD: src/sys/pci/if_tx.c,v 1.45 2001/02/07 20:11:02 semenu Exp $ */
 
 /*-
@@ -1215,7 +1215,7 @@ epic_ifmedia_upd(ifp)
 	case EPIC_QS6612_PHY:
 		break;
 	case EPIC_AC101_PHY:
-		/* We have to powerup fiber tranceivers */
+		/* We have to powerup fiber transceivers */
 		if (IFM_SUBTYPE(media) == IFM_100_FX)
 			sc->miicfg |= MIICFG_694_ENABLE;
 		else
@@ -1224,7 +1224,7 @@ epic_ifmedia_upd(ifp)
 	
 		break;
 	case EPIC_LXT970_PHY:
-		/* We have to powerup fiber tranceivers */
+		/* We have to powerup fiber transceivers */
 		cfg = PHY_READ(sc->physc, MII_LXTPHY_CONFIG);
 		if (IFM_SUBTYPE(media) == IFM_100_FX)
 			cfg |= CONFIG_LEDC1 | CONFIG_LEDC0;

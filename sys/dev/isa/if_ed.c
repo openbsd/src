@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.49 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.50 2002/06/03 20:01:37 deraadt Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -1197,7 +1197,7 @@ ed_find_3Com(sc, cf, ia)
 
 	/*
 	 * Unmap PROM - select NIC registers.  The proper setting of the
-	 * tranceiver is set in edinit so that the attach code is given a
+	 * transceiver is set in edinit so that the attach code is given a
 	 * chance to set the default based on a compile-time config option.
 	 */
 	bus_space_write_1(iot, ioh, asicbase + ED_3COM_CR, ED_3COM_CR_XSEL);
@@ -1656,12 +1656,12 @@ edattach(parent, self, aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
-	 * Set default state for LINK0 flag (used to disable the tranceiver
+	 * Set default state for LINK0 flag (used to disable the transceiver
 	 * for AUI operation), based on compile-time config option.
 	 */
 	switch (sc->vendor) {
 	case ED_VENDOR_3COM:
-		if (cf->cf_flags & ED_FLAGS_DISABLE_TRANCEIVER)
+		if (cf->cf_flags & ED_FLAGS_DISABLE_TRANSCEIVER)
 			ifp->if_flags |= IFF_LINK0;
 		break;
 	case ED_VENDOR_WD_SMC:
@@ -1883,7 +1883,7 @@ edinit(sc)
 	NIC_PUT(iot, ioh, nicbase, ED_P0_TCR, 0);
 
 	/*
-	 * If this is a 3Com board, the tranceiver must be software enabled
+	 * If this is a 3Com board, the transceiver must be software enabled
 	 * (there is no settable hardware default).
 	 */
 	switch (sc->vendor) {

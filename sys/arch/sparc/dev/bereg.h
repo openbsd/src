@@ -1,4 +1,4 @@
-/*	$OpenBSD: bereg.h,v 1.9 2001/01/30 07:17:07 jason Exp $	*/
+/*	$OpenBSD: bereg.h,v 1.10 2002/06/03 20:01:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -206,14 +206,14 @@ struct be_cregs {
 #define BE_CR_QMASK_RXSERR	0x00000001	/* rx sbus error ack */
 
 /*
- * BE Tranceiver registers
+ * BE Transceiver registers
  */
 struct be_tregs {
-	volatile u_int32_t	tcvr_pal;	/* tranceiver pal */
+	volatile u_int32_t	tcvr_pal;	/* transceiver pal */
 	volatile u_int32_t	mgmt_pal;	/* management pal */
 };
 
-/* be_tregs.tcvr_pal: tranceiver pal */
+/* be_tregs.tcvr_pal: transceiver pal */
 #define	TCVR_PAL_SERIAL		0x00000001	/* serial mode enable */
 #define TCVR_PAL_EXTLBACK	0x00000002	/* external loopback */
 #define TCVR_PAL_MSENSE		0x00000004	/* media sense */
@@ -289,7 +289,7 @@ struct be_bufs {
 #define BE_PHY_EXTERNAL		0
 #define BE_PHY_INTERNAL		1
 
-/* Tranceiver types */
+/* Transceiver types */
 #define BE_TCVR_NONE		0
 #define BE_TCVR_INTERNAL	1
 #define BE_TCVR_EXTERNAL	2
