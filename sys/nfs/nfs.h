@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.11 2001/06/25 03:28:05 csapuntz Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.12 2001/08/19 18:16:31 art Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -134,20 +134,6 @@
 	 ((time.tv_sec - (np)->n_mtime) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
 	  (time.tv_sec - (np)->n_mtime) / 10))
 #endif
-
-/*
- * Expected allocation sizes for major data structures. If the actual size
- * of the structure exceeds these sizes, then malloc() will be allocating
- * almost twice the memory required. This is used in nfs_init() to warn
- * the sysadmin that the size of a structure should be reduced.
- * (These sizes are always a power of 2. If the kernel malloc() changes
- *  to one that does not allocate space in powers of 2 size, then this all
- *  becomes bunk!)
- */
-#define NFS_NODEALLOC	256
-#define NFS_MNTALLOC	512
-#define NFS_SVCALLOC	256
-#define NFS_UIDALLOC	128
 
 /*
  * Structures for the nfssvc(2) syscall. Not that anyone but nfsd and mount_nfs
