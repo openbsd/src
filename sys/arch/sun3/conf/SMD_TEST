@@ -8,57 +8,57 @@
 include "arch/sun3/conf/std.sun3"
 
 # Machines to be supported by this kernel
-options 	GENERIC
-options 	FPU_EMULATE
-options 	HAVECACHE		# Sun3/260 VAC
+option	 	GENERIC
+option	 	FPU_EMULATE
+option	 	HAVECACHE		# Sun3/260 VAC
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	4
 
 # Standard system options
-options 	KTRACE				# system call tracing support
+option	 	KTRACE				# system call tracing support
 
 # Debugging options.  Uncomment either this:
-options 	DDB
+option	 	DDB
 # ... or these two: (for KGDB on another machine)
 #makeoptions DEBUG="-g"			# symbols for kgdb + nm
-#options 	KGDB
+#option 	KGDB
 
 # Filesystem options
-options 	NFSSERVER	# nfs server support
-options 	NFSCLIENT	# nfs client support
-options 	FFS		# ufs file system
+option	 	NFSSERVER	# nfs server support
+option	 	NFSCLIENT	# nfs client support
+option	 	FFS		# ufs file system
 #
-options 	CD9660		# ISO 9660 + Rock Ridge file system
-options 	FDESC		# /dev/fd/*
-options 	FIFO		# FIFOs; RECOMMENDED
-options 	KERNFS		# /kern
-options 	NULLFS		# loopback file system
-options 	PROCFS		# /proc
-options 	UNION		# union file system
-options 	MFS		# memory-based filesystem
+option	 	CD9660		# ISO 9660 + Rock Ridge file system
+option	 	FDESC		# /dev/fd/*
+option	 	FIFO		# FIFOs; RECOMMENDED
+option	 	KERNFS		# /kern
+option	 	NULLFS		# loopback file system
+option	 	PROCFS		# /proc
+option	 	UNION		# union file system
+option	 	MFS		# memory-based filesystem
 
 # Networking options
-options 	INET		# IP prototol stack support
-#options	GATEWAY		# IP packet forwarding
-options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+option	 	INET		# IP prototol stack support
+#option		GATEWAY		# IP packet forwarding
+option	 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 # XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
-options 	NFS_BOOT_RWSIZE=1024
+option	 	NFS_BOOT_RWSIZE=1024
 
 # Compatability options
-options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
-options 	COMPAT_43	# and 4.3BSD and ...
-options 	COMPAT_10	# NetBSD 1.0
-options 	COMPAT_11	# NetBSD 1.1
-options 	COMPAT_12	# NetBSD 1.2
+option	 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
+option	 	COMPAT_43	# and 4.3BSD and ...
+option	 	COMPAT_10	# NetBSD 1.0
+option	 	COMPAT_11	# NetBSD 1.1
+option	 	COMPAT_12	# NetBSD 1.2
 
 # Sun3-specific debugging options
-#options 	PMAP_DEBUG
-#options 	VMFAULT_TRACE
-#options 	SYSCALL_DEBUG
-#options 	EXEC_DEBUG
-options 	DIAGNOSTIC
-#options 	SCSIDEBUG
+#option 	PMAP_DEBUG
+#option 	VMFAULT_TRACE
+#option 	SYSCALL_DEBUG
+#option 	EXEC_DEBUG
+option	 	DIAGNOSTIC
+#option 	SCSIDEBUG
 
 config		bsd swap generic
 

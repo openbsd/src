@@ -11,44 +11,44 @@
 include "arch/sun3/conf/std.sun3"
 
 # Machines to be supported by this kernel
-options 	FPU_EMULATE		# XXX - Should not be needed!
-options 	HAVECACHE		# Sun3/260 VAC
+option	 	FPU_EMULATE		# XXX - Should not be needed!
+option	 	HAVECACHE		# Sun3/260 VAC
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	2
 
 # Debugging options.  Uncomment either this:
-#options 	DDB
+#option 	DDB
 # ... or these two: (for KGDB on another machine)
-makeoptions DEBUG="-g"			# symbols for kgdb + nm
-options 	KGDB
+#makeoptions DEBUG="-g"			# symbols for kgdb + nm
+#option	 	KGDB
 
 # Enable the hooks used for initializing the ram-disk.
-options 	RAMDISK_HOOKS
-options 	MINIROOTSIZE=512	# 256K
+option	 	RAMDISK_HOOKS
+option	 	MINIROOTSIZE=512	# 256K
 
 # Filesystem options
 # May need NFSCLIENT to get miniroot image
-options 	NFSCLIENT	# nfs client support
+option	 	NFSCLIENT	# nfs client support
 # Need FFS for the ramdisk image
-options 	FFS		# ufs file system
-options 	FIFO		# FIFOs; RECOMMENDED
+option	 	FFS		# ufs file system
+option	 	FIFO		# FIFOs; RECOMMENDED
 
 # Networking options
-options 	INET		# IP prototol stack support
-options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+option	 	INET		# IP prototol stack support
+option	 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 # XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
-options 	NFS_BOOT_RWSIZE=1024
+option	 	NFS_BOOT_RWSIZE=1024
 
 # Compatability options
-#options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
-#options 	COMPAT_43	# and 4.3BSD and ...
-#options 	COMPAT_10	# NetBSD 1.0
-options 	COMPAT_11	# NetBSD 1.1
-options 	COMPAT_12	# NetBSD 1.2
+#option 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
+#option 	COMPAT_43	# and 4.3BSD and ...
+#option 	COMPAT_10	# NetBSD 1.0
+option	 	COMPAT_11	# NetBSD 1.1
+option	 	COMPAT_12	# NetBSD 1.2
 
 # Sun3-specific debugging options
-options 	DIAGNOSTIC
+option	 	DIAGNOSTIC
 
 # The config program assumes all devices have partions...
 # Is it OK to put swap on a non-existent partition?
@@ -127,4 +127,3 @@ pseudo-device	rd	2		# RAM-disk
 pseudo-device	loop	1		# network loopback
 pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	2		# PPP
-
