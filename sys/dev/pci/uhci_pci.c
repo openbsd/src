@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.6 2000/03/26 21:47:30 aaron Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.7 2000/03/27 00:55:59 aaron Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.14 2000/01/25 11:26:06 augustss Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ uhci_pci_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s", intrstr);
+	printf(": %s\n", intrstr);
 
 	/* Verify that the PIRQD enable bit is set, some BIOS's don't do that*/
 	legsup = pci_conf_read(pc, pa->pa_tag, PCI_LEGSUP);
