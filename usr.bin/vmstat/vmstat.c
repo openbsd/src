@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.93 2004/11/28 14:05:24 miod Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.94 2004/12/24 22:38:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.93 2004/11/28 14:05:24 miod Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.94 2004/12/24 22:38:22 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,9 +92,7 @@ struct nlist namelist[] = {
 	{ "_nselcoll" },
 #define X_POOLHEAD	7		/* sysctl */
 	{ "_pool_head" },
-#define X_ALLEVENTS	8		/* no sysctl */
-	{ "_allevents" },
-#define X_END		9		/* no sysctl */
+#define X_END		8
 	{ "" },
 };
 
@@ -702,8 +700,6 @@ cpustats(void)
 void
 dointr(void)
 {
-	struct evcntlist allevents;
-	struct evcnt evcnt, *evptr;
 	struct device dev;
 
 	time_t uptime;
@@ -776,24 +772,6 @@ dointr(void)
 		inttotal += cnt;
 	}
 
-	kread(X_ALLEVENTS, &allevents, sizeof allevents);
-	evptr = allevents.tqh_first;
-	while (evptr) {
-		if (kvm_read(kd, (long)evptr, (void *)&evcnt,
-		    sizeof evcnt) != sizeof evcnt)
-			errx(1, "event chain trashed: %s", kvm_geterr(kd));
-		if (strcmp(evcnt.ev_name, "intr") == 0) {
-			if (kvm_read(kd, (long)evcnt.ev_dev, (void *)&dev,
-			    sizeof dev) != sizeof dev)
-				errx(1, "event chain trashed: %s", kvm_geterr(kd));
-			if (evcnt.ev_count)
-				(void)printf("%-16.16s %20llu %8llu\n",
-				    dev.dv_xname,
-				    evcnt.ev_count, evcnt.ev_count / uptime);
-			inttotal += evcnt.ev_count;
-		}
-		evptr = evcnt.ev_list.tqe_next;
-	}
 	(void)printf("%-16s %20llu %8llu\n", "Total", inttotal,
 	    inttotal / uptime);
 }
