@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.2 2002/09/09 22:15:16 miod Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.3 2002/09/20 11:17:56 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
@@ -74,14 +74,6 @@
 
 #include <dev/cons.h>	/* for prom console hook */
 
-/*
- * Define CG12_MONO to only use the overlay plane of the CG12, thus having
- * a very fast, though monochrome, framebuffer.
- */
-#ifdef	SMALL_KERNEL
-#define	CG12_MONO
-#endif
-
 /* per-display variables */
 struct cgtwelve_softc {
 	struct	sunfb	sc_sunfb;	/* common base device */
@@ -92,9 +84,7 @@ struct cgtwelve_softc {
 	volatile struct cgtwelve_apu *sc_apu;
 	volatile struct cgtwelve_dac *sc_ramdac;	/* RAMDAC registers */
 	volatile u_char *sc_overlay;	/* overlay or enable plane */
-#ifndef CG12_MONO
 	volatile u_long *sc_inten;	/* true color plane */
-#endif
 
 	int	sc_highres;
 	int	sc_nscreens;
@@ -105,20 +95,34 @@ struct wsscreen_descr cgtwelve_stdscreen = {
 	0, 0,	/* will be filled in */
 	0,
 	0, 0,
-#ifdef CG12_MONO
-	WSSCREEN_UNDERLINE | WSSCREEN_REVERSE
-#else
 	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
-#endif
+};
+
+struct wsscreen_descr cgtwelve_monoscreen = {
+	"std",
+	0, 0,	/* will be filled in */
+	0,
+	0, 0,
+	WSSCREEN_UNDERLINE | WSSCREEN_REVERSE
 };
 
 const struct wsscreen_descr *cgtwelve_scrlist[] = {
 	&cgtwelve_stdscreen,
 };
 
+const struct wsscreen_descr *cgtwelve_monoscrlist[] = {
+	&cgtwelve_monoscreen,
+};
+
 struct wsscreen_list cgtwelve_screenlist = {
-	sizeof(cgtwelve_scrlist) / sizeof(struct wsscreen_descr *), cgtwelve_scrlist
+	sizeof(cgtwelve_scrlist) / sizeof(struct wsscreen_descr *),
+	    cgtwelve_scrlist
+};
+
+struct wsscreen_list cgtwelve_monoscreenlist = {
+	sizeof(cgtwelve_monoscrlist) / sizeof(struct wsscreen_descr *),
+	    cgtwelve_monoscrlist
 };
 
 int cgtwelve_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -129,7 +133,6 @@ int cgtwelve_show_screen(void *, void *, int, void (*cb)(void *, int, int),
     void *);
 paddr_t cgtwelve_mmap(void *, off_t, int);
 void cgtwelve_reset(struct cgtwelve_softc *);
-#ifndef CG12_MONO
 void cgtwelve_burner(void *, u_int, u_int);
 void cgtwelve_prom(void *);
 
@@ -137,7 +140,6 @@ static __inline__ void cgtwelve_ramdac_wraddr(struct cgtwelve_softc *sc,
     u_int32_t addr);
 void cgtwelve_initcmap(struct cgtwelve_softc *);
 void cgtwelve_darkcmap(struct cgtwelve_softc *);
-#endif
 
 struct wsdisplay_accessops cgtwelve_accessops = {
 	cgtwelve_ioctl,
@@ -145,12 +147,10 @@ struct wsdisplay_accessops cgtwelve_accessops = {
 	cgtwelve_alloc_screen,
 	cgtwelve_free_screen,
 	cgtwelve_show_screen,
-#ifndef CG12_MONO
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
-	cgtwelve_burner,
-#endif
+	cgtwelve_burner
 };
 
 int cgtwelvematch(struct device *, void *, void *);
@@ -177,11 +177,6 @@ cgtwelvematch(parent, vcf, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
-
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
@@ -202,11 +197,11 @@ cgtwelveattach(parent, self, args)
 	struct cgtwelve_softc *sc = (struct cgtwelve_softc *)self;
 	struct confargs *ca = args;
 	struct wsemuldisplaydev_attach_args waa;
-	int node;
+	int fb_depth, node;
 	int isconsole = 0;
 	char *ps;
 
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
+	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags & FB_USERMASK;
 	node = ca->ca_ra.ra_node;
 
 	printf(": %s", getpropstring(node, "model"));
@@ -232,19 +227,21 @@ cgtwelveattach(parent, self, args)
 	/*
 	 * Compute framebuffer size
 	 */
-#ifdef CG12_MONO
-	fb_setsize(&sc->sc_sunfb, 1, CG12_WIDTH, CG12_HEIGHT,
+	if (ISSET(sc->sc_sunfb.sf_flags, FB_FORCELOW))
+		fb_depth = 1;
+	else
+		fb_depth = 32;
+
+	fb_setsize(&sc->sc_sunfb, fb_depth, CG12_WIDTH, CG12_HEIGHT,
 	    node, ca->ca_bustype);
 
-	/* the prom will report depth == 32, so compensate */
-	sc->sc_sunfb.sf_depth = 1;
-	sc->sc_sunfb.sf_linebytes = sc->sc_sunfb.sf_width / 8;
-	sc->sc_sunfb.sf_fbsize = sc->sc_sunfb.sf_height *
-		sc->sc_sunfb.sf_linebytes;
-#else
-	fb_setsize(&sc->sc_sunfb, 32, CG12_WIDTH, CG12_HEIGHT,
-	    node, ca->ca_bustype);
-#endif
+	if (fb_depth == 1 && sc->sc_sunfb.sf_depth == 32) {
+		/* the prom will report depth == 32, so compensate */
+		sc->sc_sunfb.sf_depth = 1;
+		sc->sc_sunfb.sf_linebytes = sc->sc_sunfb.sf_width / 8;
+		sc->sc_sunfb.sf_fbsize = sc->sc_sunfb.sf_height *
+		    sc->sc_sunfb.sf_linebytes;
+	}
 
 	sc->sc_highres = sc->sc_sunfb.sf_width == CG12_WIDTH_HR;
 
@@ -255,26 +252,25 @@ cgtwelveattach(parent, self, args)
 	    sc->sc_highres ? CG12_OFF_OVERLAY0_HR : CG12_OFF_OVERLAY0,
 	    round_page(sc->sc_highres ? CG12_SIZE_OVERLAY_HR :
 	        CG12_SIZE_OVERLAY));
-#ifndef CG12_MONO
-	sc->sc_inten = mapiodev(ca->ca_ra.ra_reg,
-	    sc->sc_highres ? CG12_OFF_INTEN_HR : CG12_OFF_INTEN,
-	    round_page(sc->sc_highres ? CG12_SIZE_COLOR24_HR :
-	        CG12_SIZE_COLOR24));
-#endif
+	if (sc->sc_sunfb.sf_depth != 1)
+		sc->sc_inten = mapiodev(ca->ca_ra.ra_reg,
+		    sc->sc_highres ? CG12_OFF_INTEN_HR : CG12_OFF_INTEN,
+		    round_page(sc->sc_highres ? CG12_SIZE_COLOR24_HR :
+		        CG12_SIZE_COLOR24));
 
 	/* reset cursor & frame buffer controls */
 	cgtwelve_reset(sc);
 
-#ifndef CG12_MONO
-	/* enable video */
-	cgtwelve_burner(sc, 1, 0);
-#endif
+	if (sc->sc_sunfb.sf_depth != 1) {
+		/* enable video */
+		cgtwelve_burner(sc, 1, 0);
+	}
 
-#ifdef CG12_MONO
-	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_overlay;
-#else
-	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_inten;
-#endif
+	if (sc->sc_sunfb.sf_depth == 1)
+		sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_overlay;
+	else 
+		sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_inten;
+
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole);
 
@@ -283,17 +279,17 @@ cgtwelveattach(parent, self, args)
 	cgtwelve_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
 
 	if (isconsole) {
-#ifdef CG12_MONO
-		fbwscons_console_init(&sc->sc_sunfb, &cgtwelve_stdscreen, -1,
-		    NULL, NULL);
-#else
-		/*
-		 * Since the screen has been cleared, restart at the top
-		 * of the screen.
-		 */
-		fbwscons_console_init(&sc->sc_sunfb, &cgtwelve_stdscreen, 0,
-		    NULL, cgtwelve_burner);
-#endif
+		if (sc->sc_sunfb.sf_depth == 1) {
+			fbwscons_console_init(&sc->sc_sunfb,
+			    &cgtwelve_stdscreen, -1, NULL, NULL);
+		} else {
+			/*
+			 * Since the screen has been cleared, restart at the
+			 * top of the screen.
+			 */
+			fbwscons_console_init(&sc->sc_sunfb,
+			    &cgtwelve_stdscreen, 0, NULL, cgtwelve_burner);
+		}
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
@@ -306,7 +302,10 @@ cgtwelveattach(parent, self, args)
 	printf("\n");
 
 	waa.console = isconsole;
-	waa.scrdata = &cgtwelve_screenlist;
+	if (sc->sc_sunfb.sf_depth == 1)
+		waa.scrdata = &cgtwelve_monoscreenlist;
+	else
+		waa.scrdata = &cgtwelve_screenlist;
 	waa.accessops = &cgtwelve_accessops;
 	waa.accesscookie = sc;
 	config_found(self, &waa, wsemuldisplaydevprint);
@@ -325,11 +324,10 @@ cgtwelve_ioctl(dev, cmd, data, flags, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-#ifdef CG12_MONO
-		*(u_int *)data = WSDISPLAY_TYPE_SUNBW;
-#else
-		*(u_int *)data = WSDISPLAY_TYPE_SUN24;
-#endif
+		if (sc->sc_sunfb.sf_depth == 1)
+			*(u_int *)data = WSDISPLAY_TYPE_SUNBW;
+		else
+			*(u_int *)data = WSDISPLAY_TYPE_SUN24;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
@@ -367,7 +365,9 @@ void
 cgtwelve_reset(sc)
 	struct cgtwelve_softc *sc;
 {
-#ifndef CG12_MONO
+	if (sc->sc_sunfb.sf_depth == 1)
+		return;
+
 	/*
 	 * Select the overlay plane as sc_overlay.
 	 */
@@ -414,7 +414,6 @@ cgtwelve_reset(sc)
 	    sc->sc_highres ? CG12_SIZE_COLOR24_HR : CG12_SIZE_COLOR24);
 
 	shutdownhook_establish(cgtwelve_prom, sc);
-#endif
 }
 
 /*
@@ -434,15 +433,15 @@ cgtwelve_mmap(v, offset, prot)
 
 	/* Allow mapping as a dumb framebuffer from offset 0 */
 	if (offset >= 0 && offset < sc->sc_sunfb.sf_fbsize) {
-#ifdef CG12_MONO
-		return (REG2PHYS(&sc->sc_phys,
-		    (sc->sc_highres ? CG12_OFF_OVERLAY0_HR :
-		    CG12_OFF_OVERLAY0) + offset) | PMAP_NC);
-#else
-		return (REG2PHYS(&sc->sc_phys,
-		    (sc->sc_highres ? CG12_OFF_INTEN_HR :
-		    CG12_OFF_INTEN) + offset) | PMAP_NC);
-#endif
+		if (sc->sc_sunfb.sf_depth == 1) {
+			return (REG2PHYS(&sc->sc_phys,
+			    (sc->sc_highres ? CG12_OFF_OVERLAY0_HR :
+			    CG12_OFF_OVERLAY0) + offset) | PMAP_NC);
+		} else {
+			return (REG2PHYS(&sc->sc_phys,
+			    (sc->sc_highres ? CG12_OFF_INTEN_HR :
+			    CG12_OFF_INTEN) + offset) | PMAP_NC);
+		}
 	}
 
 	return (-1);	/* not a user-map offset */
@@ -491,7 +490,6 @@ cgtwelve_show_screen(v, cookie, waitok, cb, cbarg)
 	return (0);
 }
 
-#ifndef CG12_MONO
 /*
  * Simple Bt462 programming routines.
  */
@@ -538,6 +536,9 @@ void cgtwelve_burner(v, on, flags)
 {
 	struct cgtwelve_softc *sc = v;
 
+	if (sc->sc_sunfb.sf_depth == 1)
+		return;
+
 	if (on)
 		cgtwelve_initcmap(sc);
 	else
@@ -583,4 +584,3 @@ cgtwelve_prom(v)
 	 */
 	cn_tab = &consdev_prom;
 }
-#endif

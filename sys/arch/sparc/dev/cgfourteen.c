@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.14 2002/09/09 22:15:16 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.15 2002/09/20 11:17:56 fgsch Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -87,13 +87,6 @@
  *
  * XXX should bring hardware cursor code back
  */
-
-/*
- * Define CG14_LOWCOLOR to stick to 8 bit mode, thus having a faster console.
- */
-#ifdef	SMALL_KERNEL
-#define	CG14_LOWCOLOR
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,11 +203,6 @@ cgfourteenmatch(parent, vcf, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
-
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
@@ -241,12 +229,12 @@ cgfourteenattach(parent, self, args)
 	struct cgfourteen_softc *sc = (struct cgfourteen_softc *)self;
 	struct confargs *ca = args;
 	struct wsemuldisplaydev_attach_args waa;
-	int node, i;
+	int fb_depth, node, i;
 	u_int32_t *lut;
 	int isconsole = 0;
 	char *nam;
 
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
+	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags & FB_USERMASK;
 
 	node = ca->ca_ra.ra_node;
 	nam = getpropstring(node, "model");
@@ -260,8 +248,8 @@ cgfourteenattach(parent, self, args)
 	 * Sanity checks
 	 */
 	if (ca->ca_ra.ra_len < 0x10000)
-		panic("\ncgfourteen: expected %x bytes of control registers, got %x",
-		    0x10000, ca->ca_ra.ra_len);
+		panic("\ncgfourteen: expected %x bytes of control "
+		    "registers, got %x", 0x10000, ca->ca_ra.ra_len);
 	if (ca->ca_ra.ra_nreg < CG14_NREG)
 		panic("\ncgfourteen: expected %d registers, got %d",
 		    CG14_NREG, ca->ca_ra.ra_nreg);
@@ -294,25 +282,27 @@ cgfourteenattach(parent, self, args)
 	 */
 	sc->sc_phys = ca->ca_ra.ra_reg[CG14_REG_VRAM];
 
-#ifdef CG14_LOWCOLOR
-	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, node, ca->ca_bustype);
-#else
-	fb_setsize(&sc->sc_sunfb, 32, 1152, 900, node, ca->ca_bustype);
+	if (ISSET(sc->sc_sunfb.sf_flags, FB_FORCELOW))
+		fb_depth = 8;
+	else
+		fb_depth = 32;
+
+	fb_setsize(&sc->sc_sunfb, fb_depth, 1152, 900, node, ca->ca_bustype);
 
 	/*
-	 * The prom will report depth == 8, since this is the mode it will get
-	 * initialized in.
-	 * Try to compensate and enable 32 bit mode, unless it would not fit in
-	 * the video memory. Note that, in this case, the VSIMM will usually
-	 * not appear in the OBP device tree!
+	 * The prom will report depth == 8, since this is the mode
+	 * it will get initialized in.
+	 * Try to compensate and enable 32 bit mode, unless it would
+	 * not fit in the video memory. Note that, in this case, the
+	 * VSIMM will usually not appear in the OBP device tree!
 	 */
-	if (sc->sc_sunfb.sf_depth == 8 && sc->sc_sunfb.sf_fbsize * 4 <=
+	if (fb_depth == 32 && sc->sc_sunfb.sf_depth == 8 &&
+	    sc->sc_sunfb.sf_fbsize * 4 <=
 	    ca->ca_ra.ra_reg[CG14_REG_VRAM].rr_len) {
 		sc->sc_sunfb.sf_depth = 32;
 		sc->sc_sunfb.sf_linebytes *= 4;
 		sc->sc_sunfb.sf_fbsize *= 4;
 	}
-#endif
 
 	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(&ca->ca_ra.ra_reg[CG14_REG_VRAM],
 	    0,	/* CHUNKY_XBGR */

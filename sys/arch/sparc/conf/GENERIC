@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.55 2002/08/31 10:47:18 miod Exp $
+#	$OpenBSD: GENERIC,v 1.56 2002/09/20 11:17:55 fgsch Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -256,16 +256,16 @@ cgeight0 at obio0 addr 0x0b300000 level 4	# sun4/100 P4
 wsdisplay* at cgeight?
 
 # Sun "tcx" accelerated color framebuffer.
-tcx*	at sbus? slot ? offset ?
+tcx*	at sbus? slot ? offset ? flags 0x0000
 wsdisplay* at tcx?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
-cgfourteen0 at obio0 addr 0x9c000000		# sun4m
-cgfourteen1 at obio0 addr 0x90000000		# sun4m
+cgfourteen0 at obio0 addr 0x9c000000 flags 0x0000	# sun4m
+cgfourteen1 at obio0 addr 0x90000000 flags 0x0000	# sun4m
 wsdisplay* at cgfourteen?
 
 # Sun "cgtwelve" (GS) accelerated 24-bit framebuffer.
-cgtwelve*	at sbus? slot ? offset ?
+cgtwelve*	at sbus? slot ? offset ? flags 0x0000
 wsdisplay* at cgtwelve?
 
 # Vigra VS10 or VS12 framebuffer.

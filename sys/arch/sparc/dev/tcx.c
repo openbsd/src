@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.8 2002/09/09 22:15:16 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.9 2002/09/20 11:17:56 fgsch Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -95,14 +95,6 @@
 
 #include <dev/cons.h>	/* for prom console hook */
 
-/*
- * Define TCX_LOWDEPTH to only use the 8 bit color mode of the S24, for faster
- * console output.
- */
-#ifdef	SMALL_KERNEL
-#define	TCX_LOWDEPTH
-#endif
-
 /* per-display variables */
 struct tcx_softc {
 	struct	sunfb sc_sunfb;			/* common base part */
@@ -197,14 +189,8 @@ tcxmatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
-
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
 
 	if (strcmp(ra->ra_name, "SUNW,tcx"))
 		return (0);
@@ -226,12 +212,12 @@ tcxattach(parent, self, args)
 	struct tcx_softc *sc = (struct tcx_softc *)self;
 	struct confargs *ca = args;
 	struct wsemuldisplaydev_attach_args waa;
-	int node = 0, i;
+	int fb_depth, node = 0, i;
 	volatile struct bt_regs *bt;
 	int isconsole = 0;
 	char *nam = NULL;
 
-	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
+	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags & FB_USERMASK;
 
 	if (ca->ca_ra.ra_nreg < TCX_NREG)
 		panic("\ntcx: expected %d registers, got %d", TCX_NREG,
@@ -262,12 +248,12 @@ tcxattach(parent, self, args)
 
 	isconsole = node == fbnode;
 
-#ifdef TCX_LOWDEPTH
-	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, node, ca->ca_bustype);
-#else
-	fb_setsize(&sc->sc_sunfb, node_has_property(node, "tcx-8-bit") ?
-	    8 : 32, 1152, 900, node, ca->ca_bustype);
-#endif
+	if (ISSET(sc->sc_sunfb.sf_flags, FB_FORCELOW))
+		fb_depth = 8;
+	else
+		fb_depth = node_has_property(node, "tcx-8-bit") ?  8 : 32,
+
+	fb_setsize(&sc->sc_sunfb, fb_depth, 1152, 900, node, ca->ca_bustype);
 
 	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(&ca->ca_ra.ra_reg[
 	    sc->sc_sunfb.sf_depth == 8 ? TCX_REG_DFB8 : TCX_REG_DFB24],
