@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $Id: math.h,v 1.2 1995/10/28 00:57:18 deraadt Exp $
+ * $Id: math.h,v 1.3 1998/03/02 00:53:19 millert Exp $
  */
 
 #ifndef _MATH_H_
@@ -64,6 +64,7 @@ extern  _LIB_VERSION_TYPE  _LIB_VERSION;
 #define _XOPEN_ fdlibm_xopen
 #define _POSIX_ fdlibm_posix
 
+#ifndef __cplusplus
 struct exception {
 	int type;
 	char *name;
@@ -71,6 +72,7 @@ struct exception {
 	double arg2;
 	double retval;
 };
+#endif
 
 #define	HUGE		MAXFLOAT
 
