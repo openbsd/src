@@ -818,6 +818,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/xmaciireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/ydsreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/ydsvar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/yukonreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pckbc
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pckbc/pckbdreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pckbc/pckbdvar.ph

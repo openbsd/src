@@ -1108,6 +1108,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/xmaciireg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/ydsreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/ydsvar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/yukonreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pckbc
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pckbc/pckbdreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pckbc/pckbdvar.ph

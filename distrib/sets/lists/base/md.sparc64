@@ -544,6 +544,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/xmaciireg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/ydsreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/ydsvar.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/yukonreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pckbc
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pckbc/pckbdreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pckbc/pckbdvar.ph
