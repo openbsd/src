@@ -1,4 +1,4 @@
-/*	$OpenBSD: genassym.c,v 1.7 1997/01/16 09:23:20 niklas Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.8 1997/02/21 08:59:01 niklas Exp $	*/
 /*	$NetBSD: genassym.c,v 1.29 1996/12/17 07:32:55 is Exp $	*/
 
 /*
@@ -171,7 +171,14 @@ main()
 	printf("#define\tISR_FORW %p\n", (void *)&isr->isr_forw);
 	printf("#define\tISR_INTR %p\n", (void *)&isr->isr_intr);
 	printf("#define\tISR_ARG %p\n", (void *)&isr->isr_arg);
+	printf("#define\tMMU_68030 %d\n", MMU_68030);
 	printf("#define\tMMU_68040 %d\n", MMU_68040);
+	printf("#define\tMMU_68060 %d\n", MMU_68060);
+	printf("#define\tMMU_68851 %d\n", MMU_68851);
+	printf("#define\tCPU_68020 %d\n", CPU_68020);
+	printf("#define\tCPU_68030 %d\n", CPU_68030);
+	printf("#define\tCPU_68040 %d\n", CPU_68040);
+	printf("#define\tCPU_68060 %d\n", CPU_68060);
 #ifdef DRACO
 	printf("#define\tDRACO %d\n", DRACO);
 #endif
