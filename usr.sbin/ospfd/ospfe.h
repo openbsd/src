@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.4 2005/02/09 20:40:23 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.5 2005/02/09 20:47:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -39,7 +39,7 @@ TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
 #define	NBR_STA_XCHNG		0x0040
 #define	NBR_STA_LOAD		0x0080
 #define	NBR_STA_FULL		0x0100
-#define	NBR_STA_ACTIVE		0xfffc
+#define	NBR_STA_ACTIVE		(~NBR_STA_DOWN)
 #define	NBR_STA_FLOOD		(NBR_STA_XCHNG | NBR_STA_LOAD | NBR_STA_FULL)
 #define	NBR_STA_ADJFORM		(NBR_STA_XSTRT | NBR_STA_SNAP | NBR_STA_FLOOD)
 #define	NBR_STA_BIDIR		(NBR_STA_2_WAY | NBR_STA_ADJFORM)
