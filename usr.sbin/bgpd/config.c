@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.16 2004/01/06 03:43:50 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.17 2004/01/07 01:15:54 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -38,7 +38,6 @@ int
 merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
     struct peer *peer_l)
 {
-	enum reconf_action	 reconf = RECONF_NONE;
 	struct peer		*p;
 
 	/* merge conf (new) into xconf (old)  */
@@ -46,14 +45,12 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 		logit(LOG_CRIT, "configuration error: AS not given");
 		return (1);
 	}
-	if (xconf->as != conf->as) {
+	if (xconf->as != conf->as)
 		xconf->as = conf->as;
-		reconf = RECONF_REINIT;
-	}
-	if (conf->bgpid && xconf->bgpid != conf->bgpid) {
+
+	if (conf->bgpid && xconf->bgpid != conf->bgpid)
 		xconf->bgpid = conf->bgpid;
-		reconf = RECONF_REINIT;
-	}
+
 	if (!xconf->bgpid)
 		xconf->bgpid = get_bgpid();
 
@@ -72,28 +69,12 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 	memcpy(&xconf->listen_addr, &conf->listen_addr,
 	    sizeof(xconf->listen_addr));
 
-	if ((xconf->flags & BGPD_FLAG_NO_FIB_UPDATE) !=
-	    (conf->flags & BGPD_FLAG_NO_FIB_UPDATE)) {
-		if (!(conf->flags & BGPD_FLAG_NO_FIB_UPDATE))
-			kroute_fib_couple();
-		else
-			kroute_fib_decouple();
-	}
-
 	xconf->flags = conf->flags;
 	xconf->log = conf->log;
-
-	/*
-	 * as we cannot get the negotiated holdtime in the main process,
-	 * the session engine needs to check it against the possibly new values
-	 * and decide on session reestablishment.
-	 */
-
 	xconf->holdtime = conf->holdtime;
 	xconf->min_holdtime = conf->min_holdtime;
 
 	for (p = peer_l; p != NULL; p = p->next) {
-		p->conf.reconf_action = reconf;
 		p->conf.ebgp = (p->conf.remote_as != xconf->as);
 		if (!p->conf.id)
 			p->conf.id = get_id(p);
