@@ -470,7 +470,12 @@ nextstate:
 readerr:
 	if ((feof(fp) && smtpmode) || ferror(fp))
 	{
-		const char *errmsg = errstring(errno);
+		const char *errmsg;
+
+		if (feof(fp))
+			errmsg = "unexpected close";
+		else
+			errmsg = errstring(errno);
 
 		if (tTd(30, 1))
 			dprintf("collect: premature EOM: %s\n", errmsg);
@@ -566,10 +571,9 @@ readerr:
 			problem = "read timeout";
 		if (LogLevel > 0 && feof(fp))
 			sm_syslog(LOG_NOTICE, e->e_id,
-			    "collect: %s on connection from %.100s, sender=%s: %s",
+			    "collect: %s on connection from %.100s, sender=%s",
 			    problem, host,
-			    shortenstring(e->e_from.q_paddr, MAXSHORTSTR),
-			    errstring(errno));
+			    shortenstring(e->e_from.q_paddr, MAXSHORTSTR));
 		if (feof(fp))
 			usrerr("451 4.4.1 collect: %s on connection from %s, from=%s",
 				problem, host,
