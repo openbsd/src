@@ -1,4 +1,4 @@
-/*	$OpenBSD: impys.S,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
+/*	$OpenBSD: impys.S,v 1.6 2002/01/04 08:50:30 miod Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.
@@ -66,7 +66,7 @@ pm	.equ	       10		/* value of -1 used in shifting */
 
 	.text
 
-ENTRY(impys)
+LEAF_ENTRY(impys)
 	stws,ma		pu,4(sp)		; save registers on stack
 	stws,ma		pl,4(sp)		; save registers on stack
 	stws,ma		op1,4(sp)		; save registers on stack
