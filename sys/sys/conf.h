@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.h,v 1.8 1996/05/04 18:51:02 mickey Exp $	*/
-/*	$NetBSD: conf.h,v 1.32 1996/03/30 21:52:04 christos Exp $	*/
+/*	$OpenBSD: conf.h,v 1.9 1996/05/06 11:31:09 deraadt Exp $	*/
+/*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -187,6 +187,12 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev, D_TAPE }
+
+#define cdev_scanner_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, \
+	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
 
 /* open, close, read, write, ioctl, stop, tty */
 #define	cdev_tty_init(c,n) { \
