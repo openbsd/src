@@ -1,5 +1,3 @@
-/*	$OpenBSD: print-snmp.c,v 1.4 1996/07/13 11:01:30 mickey Exp $	*/
-
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -41,14 +39,14 @@
  #	responsibility for the use of this software.
  #	@(#)snmp.awk.x	1.1 (LANL) 1/15/90
  */
+
 #ifndef lint
-static char rcsid[] =
-    "@(#) Id: print-snmp.c,v 3.10 91/01/17 01:18:13 loverso Exp Locker: loverso (jlv)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-snmp.c,v 1.5 1996/12/12 16:22:27 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 
 #include <stdio.h>
 #include <ctype.h>
@@ -161,8 +159,8 @@ char *GenericTrap[] = {
 struct {
 	char	*name;
 	char	**Id;
-	int	numIDs;
-} Class[] = {
+	    int	numIDs;
+    } Class[] = {
 	defineCLASS(Universal),
 #define	UNIVERSAL	0
 	defineCLASS(Application),
@@ -260,7 +258,8 @@ struct be {
 		u_int32_t uns;
 		const u_char *str;
 	} data;
-	u_char form, class, id;		/* tag info */
+	u_short id;
+	u_char form, class;		/* tag info */
 	u_char type;
 #define BE_ANY		255
 #define BE_NONE		0
@@ -315,7 +314,7 @@ static int truncated;
  * O/w, this returns the number of bytes parsed from "p".
  */
 static int
-asn1_parse(register const u_char *p, int len, struct be *elem)
+asn1_parse(register const u_char *p, u_int len, struct be *elem)
 {
 	u_char form, class, id;
 	int i, hdr;
@@ -340,8 +339,8 @@ asn1_parse(register const u_char *p, int len, struct be *elem)
 	class = form >> 1;		/* bits 7&6 -> bits 1&0, range 0-3 */
 	form &= 0x1;			/* bit 5 -> bit 0, range 0-1 */
 #else
-	form = (*p & ASN_FORM_BITS) >> ASN_FORM_SHIFT;
-	class = (*p & ASN_CLASS_BITS) >> ASN_CLASS_SHIFT;
+	form = (u_char)(*p & ASN_FORM_BITS) >> ASN_FORM_SHIFT;
+	class = (u_char)(*p & ASN_CLASS_BITS) >> ASN_CLASS_SHIFT;
 #endif
 	elem->form = form;
 	elem->class = class;
@@ -354,12 +353,16 @@ asn1_parse(register const u_char *p, int len, struct be *elem)
 		for (id = 0; *p & ASN_BIT8 && len > 0; len--, hdr++, p++) {
 			if (vflag)
 				printf("|%.2x", *p);
-			id += *p & ~ASN_BIT8;
+			id = (id << 7) | (*p & ~ASN_BIT8);
 		}
 		if (len == 0 && *p & ASN_BIT8) {
 			ifNotTruncated fputs("[Xtagfield?]", stdout);
 			return -1;
 		}
+		elem->id = id = (id << 7) | *p;
+		--len;
+		++hdr;
+		++p;
 	}
 	if (len < 1) {
 		ifNotTruncated fputs("[no asnlen]", stdout);
@@ -398,7 +401,7 @@ asn1_parse(register const u_char *p, int len, struct be *elem)
 		ifNotTruncated printf("[class?%c/%d]", *Form[form], class);
 		return -1;
 	}
-	if (id >= Class[class].numIDs) {
+	if ((int)id >= Class[class].numIDs) {
 		ifNotTruncated printf("[id?%c/%s/%d]", *Form[form],
 			Class[class].name, id);
 		return -1;
@@ -595,9 +598,11 @@ asn1_print(struct be *elem)
 		for (i = asnlen; printable && i-- > 0; p++)
 			printable = isprint(*p) || isspace(*p);
 		p = elem->data.str;
-		if (printable)
+		if (printable) {
+			putchar('"');
 			(void)fn_print(p, p + asnlen);
-		else
+			putchar('"');
+		} else
 			for (i = asnlen; i-- > 0; p++) {
 				printf(first ? "%.2x" : "_%.2x", *p);
 				first = 0;
@@ -648,7 +653,7 @@ asn1_print(struct be *elem)
  * This is not currently used.
  */
 static void
-asn1_decode(u_char *p, int length)
+asn1_decode(u_char *p, u_int length)
 {
 	struct be elem;
 	int i = 0;
@@ -707,7 +712,7 @@ asn1_decode(u_char *p, int length)
  * Decode SNMP varBind
  */
 static void
-varbind_print(u_char pduid, const u_char *np, int length, int error)
+varbind_print(u_char pduid, const u_char *np, u_int length, int error)
 {
 	struct be elem;
 	int count = 0, ind;
@@ -728,7 +733,7 @@ varbind_print(u_char pduid, const u_char *np, int length, int error)
 
 	for (ind = 1; length > 0; ind++) {
 		const u_char *vbend;
-		int vblength;
+		u_int vblength;
 
 		if (!error || ind == error)
 			fputs(" ", stdout);
@@ -786,7 +791,7 @@ varbind_print(u_char pduid, const u_char *np, int length, int error)
  * Decode SNMP PDUs: GetRequest, GetNextRequest, GetResponse, and SetRequest
  */
 static void
-snmppdu_print(u_char pduid, const u_char *np, int length)
+snmppdu_print(u_char pduid, const u_char *np, u_int length)
 {
 	struct be elem;
 	int count = 0, error;
@@ -859,7 +864,7 @@ snmppdu_print(u_char pduid, const u_char *np, int length)
  * Decode SNMP Trap PDU
  */
 static void
-trap_print(const u_char *np, int length)
+trap_print(const u_char *np, u_int length)
 {
 	struct be elem;
 	int count = 0, generic;
@@ -946,7 +951,7 @@ trap_print(const u_char *np, int length)
  * Decode SNMP header and pass on to PDU printing routines
  */
 void
-snmp_print(const u_char *np, int length)
+snmp_print(const u_char *np, u_int length)
 {
 	struct be elem, pdu;
 	int count = 0;

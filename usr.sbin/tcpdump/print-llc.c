@@ -1,7 +1,5 @@
-/*	$OpenBSD: print-llc.c,v 1.4 1996/07/13 11:01:25 mickey Exp $	*/
-
 /*
- * Copyright (c) 1992, 1993, 1994, 1995
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,21 +17,18 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- */
-
-/*
+ *
  * Code by Matt Thomas, Digital Equipment Corporation
  *	with an awful lot of hacking by Jeffrey Mogul, DECWRL
  */
 
 #ifndef lint
-static  char rcsid[] =
-	"@(#)Header: print-llc.c,v 1.17 95/09/26 02:03:40 leres Exp";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.5 1996/12/12 16:22:33 bitblt Exp $";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 
 #include <netinet/in.h>
 
@@ -65,7 +60,7 @@ static struct tok cmd2str[] = {
  * Returns non-zero IFF it succeeds in printing the header
  */
 int
-llc_print(const u_char *p, int length, int caplen,
+llc_print(const u_char *p, u_int length, u_int caplen,
 	  const u_char *esrc, const u_char *edst)
 {
 	struct llc llc;
@@ -110,7 +105,7 @@ llc_print(const u_char *p, int length, int caplen,
 		p += sizeof(llc);
 
 		/* This is an encapsulated Ethernet packet */
-		et = EXTRACT_SHORT(&llc.ethertype[0]);
+		et = EXTRACT_16BITS(&llc.ethertype[0]);
 		ret = ether_encap_print(et, p, length, caplen);
 		if (ret)
 			return (ret);

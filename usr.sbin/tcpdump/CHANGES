@@ -1,5 +1,118 @@
-$OpenBSD: CHANGES,v 1.4 1996/07/13 11:01:05 mickey Exp $
-@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/CHANGES,v 1.4 1996/07/13 11:01:05 mickey Exp $ (LBL)
+@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/CHANGES,v 1.5 1996/12/12 16:23:05 bitblt Exp $ (LBL)
+
+v3.3 Sat Nov 30 20:56:27 PST 1996
+
+- Added Linux support.
+
+- GRE encapsulated packet printer thanks to John Hawkinson
+  (jhawk@mit.edu)
+
+- Rewrite gmt2local() to avoid problematic os dependencies.
+
+- Suppress nfs truncation message on errors.
+
+- Add missing m4 quoting in AC_LBL_UNALIGNED_ACCESS autoconf macro.
+  Reported by Joachim Ott (ott@ardala.han.de)
+
+- Enable "ip_hl vs. ip_vhl" workaround for OSF4 too.
+
+- Print arp hardware type in host order. Thanks to Onno van der Linden
+  (onno@simplex.nl)
+
+- Avoid solaris compiler warnings. Thanks to Bruce Barnett
+  (barnett@grymoire.crd.ge.com)
+
+- Fix rip printer to not print one more route than is actually in the
+  packet. Thanks to Jean-Luc Richier (Jean-Luc.Richier@imag.fr) and
+  Bill Fenner (fenner@parc.xerox.com)
+
+- Use autoconf endian detection since BYTE_ORDER isn't defined on all systems.
+
+- Fix dvmrp printer truncation checks and add a dvmrp probe printer.
+  Thanks to Danny J. Mitzel (mitzel@ipsilon.com)
+
+- Rewrite ospf printer to improve truncation checks.
+
+- Don't parse tcp options past the EOL. As noted by David Sacerdote
+  (davids@secnet.com). Also, check tcp options to make sure they ar
+  actually in the tcp header (in addition to the normal truncation
+  checks). Fix the SACK code to print the N blocks (instead of the
+  first block N times).
+
+- Don't say really small UDP packets are truncated just because they
+  aren't big enough to be a RPC. As noted by David Sacerdote.
+
+v3.2.1 Sun Jul 14 03:02:26 PDT 1996
+
+- Added rfc1716 icmp codes as suggested by Martin Fredriksson
+  (martin@msp.se)
+
+- Print mtu for icmp unreach need frag packets. Thanks to John
+  Hawkinson (jhawk@mit.edu)
+
+- Decode icmp router discovery messages. Thanks to Jeffrey Honig
+  (jch@bsdi.com)
+
+- Added a printer entry for DLT_IEEE802 as suggested by Tak Kushida
+  (kushida@trl.ibm.co.jp)
+
+- Check igmp checksum if possible. Thanks to John Hawkinson.
+
+- Made changes for SINIX. Thanks to Andrej Borsenkow
+  (borsenkow.msk@sni.de)
+
+- Use autoconf's idea of the top level directory in install targets.
+  Thanks to John Hawkinson.
+
+- Avoid infinite loop in tcp options printing code. Thanks to Jeffrey
+  Mogul (mogul@pa.dec.com)
+
+- Avoid using -lsocket in IRIX 5.2 and earlier since it breaks snoop.
+  Thanks to John Hawkinson.
+
+- Added some more packet truncation checks.
+
+- On systems that have it, use sigset() instead of signal() since
+  signal() has different semantics on these systems.
+
+- Fixed some more alignment problems on the alpha.
+
+- Add code to massage unprintable characters in the domain and ipx
+  printers. Thanks to John Hawkinson.
+
+- Added explicit netmask support. Thanks to Steve Nuchia
+  (steve@research.oknet.com)
+
+- Add "sca" keyword (for DEC cluster services) as suggested by Terry
+  Kennedy (terry@spcvxa.spc.edu)
+
+- Add "atalk" keyword as suggested by John Hawkinson.
+
+- Added an igrp printer. Thanks to Francis Dupont
+  (francis.dupont@inria.fr)
+
+- Print IPX net numbers in hex a la Novell Netware. Thanks to Terry
+  Kennedy (terry@spcvxa.spc.edu)
+
+- Fixed snmp extended tag field parsing bug. Thanks to Pascal Hennequin
+  (pascal.hennequin@hugo.int-evry.fr)
+
+- Added some ETHERTYPEs missing on some systems.
+
+- Added truncated packet macros and various checks.
+
+- Fixed endian problems with the DECnet printer.
+
+- Use $CC when checking gcc version. Thanks to Carl Lindberg
+  (carl_lindberg@blacksmith.com)
+
+- Fixes for AIX (although this system is not yet supported). Thanks to
+  John Hawkinson.
+
+- Fix bugs in the autoconf misaligned accesses code fragment.
+
+- Include sys/param.h to get BYTE_ORDER in a few places. Thanks to
+  Pavlin Ivanov Radoslavov (pavlin@cs.titech.ac.jp)
 
 v3.2 Sun Jun 23 02:28:10 PDT 1996
 

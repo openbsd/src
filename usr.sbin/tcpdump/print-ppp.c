@@ -1,5 +1,3 @@
-/*	$OpenBSD: print-ppp.c,v 1.4 1996/07/13 11:01:28 mickey Exp $	*/
-
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -22,8 +20,8 @@
  */
 
 #ifndef lint
-static  char rcsid[] =
-	"@(#)Header: print-ppp.c,v 1.21 96/06/03 02:54:07 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ppp.c,v 1.5 1996/12/12 16:22:28 bitblt Exp $ (LBL)";
 #endif
 
 #ifdef PPP
@@ -59,8 +57,8 @@ void
 ppp_if_print(u_char *user, const struct pcap_pkthdr *h,
 	     register const u_char *p)
 {
-	register int length = h->len;
-	register int caplen = h->caplen;
+	register u_int length = h->len;
+	register u_int caplen = h->caplen;
 	const struct ip *ip;
 
 	ts_print(&h->ts);

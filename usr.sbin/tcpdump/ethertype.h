@@ -1,7 +1,5 @@
-/*	$OpenBSD: ethertype.h,v 1.5 1996/11/12 07:54:56 mickey Exp $	*/
-
 /*
- * Copyright (c) 1993, 1994
+ * Copyright (c) 1993, 1994, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,14 +18,19 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: ethertype.h,v 1.4 94/06/14 20:11:45 leres Exp (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/ethertype.h,v 1.6 1996/12/12 16:22:56 bitblt Exp $ (LBL)
  */
 
-/* Map between Ethernet protocol types and names */
+/* Types missing from some systems */
 
-/* Add other Ethernet packet types here */
+#ifndef ETHERTYPE_NS
+#define ETHERTYPE_NS		0x0600
+#endif
 #ifndef	ETHERTYPE_SPRITE
 #define	ETHERTYPE_SPRITE	0x0500
+#endif
+#ifndef ETHERTYPE_TRAIL
+#define ETHERTYPE_TRAIL		0x1000
 #endif
 #ifndef	ETHERTYPE_MOPDL
 #define	ETHERTYPE_MOPDL		0x6001
@@ -40,6 +43,12 @@
 #endif
 #ifndef	ETHERTYPE_LAT
 #define	ETHERTYPE_LAT		0x6004
+#endif
+#ifndef ETHERTYPE_SCA
+#define ETHERTYPE_SCA		0x6007
+#endif
+#ifndef ETHERTYPE_REVARP
+#define ETHERTYPE_REVARP	0x8035
 #endif
 #ifndef	ETHERTYPE_LANBRIDGE
 #define	ETHERTYPE_LANBRIDGE	0x8038
@@ -56,19 +65,12 @@
 #ifndef	ETHERTYPE_VPROD
 #define	ETHERTYPE_VPROD		0x805c
 #endif
-#ifndef	ETHERTYPE_LOOPBACK
-#define	ETHERTYPE_LOOPBACK	0x9000
-#endif
-#ifndef ETHERTYPE_8022
-#define ETHERTYPE_8022		0x0004
-#endif
 #ifndef ETHERTYPE_ATALK
 #define ETHERTYPE_ATALK		0x809b
 #endif
 #ifndef ETHERTYPE_AARP
 #define ETHERTYPE_AARP		0x80f3
 #endif
-#ifndef ETHERTYPE_NS
-#define ETHERTYPE_NS		0x0600
+#ifndef	ETHERTYPE_LOOPBACK
+#define	ETHERTYPE_LOOPBACK	0x9000
 #endif
-

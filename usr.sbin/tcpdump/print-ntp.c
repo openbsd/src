@@ -1,5 +1,3 @@
-/*	$OpenBSD: print-ntp.c,v 1.4 1996/07/13 11:01:26 mickey Exp $	*/
-
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -26,13 +24,12 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-ntp.c,v 1.20 96/06/23 02:11:46 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ntp.c,v 1.5 1996/12/12 16:22:31 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 
 #if __STDC__
@@ -61,26 +58,20 @@ static void p_ntp_delta(const struct l_fixedpt *, const struct l_fixedpt *);
  * Print ntp requests
  */
 void
-ntp_print(register const u_char *cp, int length)
+ntp_print(register const u_char *cp, u_int length)
 {
 	register const struct ntpdata *bp;
-	register const u_char *ep;
 	int mode, version, leapind;
 	static char rclock[5];
-
-#define TCHECK(var, l) if ((u_char *)&(var) > ep - l) goto trunc
 
 	bp = (struct ntpdata *)cp;
 	/* Note funny sized packets */
 	if (length != sizeof(struct ntpdata))
 		(void)printf(" [len=%d]", length);
 
-	/* 'ep' points to the end of available data. */
-	ep = snapend;
+	TCHECK(bp->status);
 
-	TCHECK(bp->status, sizeof(bp->status));
-
-	version = (bp->status & VERSIONMASK) >> 3;
+	version = (int)(bp->status & VERSIONMASK) >> 3;
 	printf(" v%d", version);
 
 	leapind = bp->status & LEAPMASK;
@@ -135,28 +126,28 @@ ntp_print(register const u_char *cp, int length)
 
 	}
 
-	TCHECK(bp->stratum, sizeof(bp->stratum));
+	TCHECK(bp->stratum);
 	printf(" strat %d", bp->stratum);
 
-	TCHECK(bp->ppoll, sizeof(bp->ppoll));
+	TCHECK(bp->ppoll);
 	printf(" poll %d", bp->ppoll);
 
 	/* Can't TCHECK bp->precision bitfield so bp->distance + 0 instead */
-	TCHECK(bp->distance, 0);
+	TCHECK2(bp->distance, 0);
 	printf(" prec %d", bp->precision);
 
 	if (!vflag)
 		return;
 
-	TCHECK(bp->distance, sizeof(bp->distance));
+	TCHECK(bp->distance);
 	fputs(" dist ", stdout);
 	p_sfix(&bp->distance);
 
-	TCHECK(bp->dispersion, sizeof(bp->dispersion));
+	TCHECK(bp->dispersion);
 	fputs(" disp ", stdout);
 	p_sfix(&bp->dispersion);
 
-	TCHECK(bp->refid, sizeof(bp->refid));
+	TCHECK(bp->refid);
 	fputs(" ref ", stdout);
 	/* Interpretation depends on stratum */
 	switch (bp->stratum) {
@@ -186,19 +177,19 @@ ntp_print(register const u_char *cp, int length)
 		break;
 	}
 
-	TCHECK(bp->reftime, sizeof(bp->reftime));
+	TCHECK(bp->reftime);
 	putchar('@');
 	p_ntp_time(&(bp->reftime));
 
-	TCHECK(bp->org, sizeof(bp->org));
+	TCHECK(bp->org);
 	fputs(" orig ", stdout);
 	p_ntp_time(&(bp->org));
 
-	TCHECK(bp->rec, sizeof(bp->rec));
+	TCHECK(bp->rec);
 	fputs(" rec ", stdout);
 	p_ntp_delta(&(bp->org), &(bp->rec));
 
-	TCHECK(bp->xmt, sizeof(bp->xmt));
+	TCHECK(bp->xmt);
 	fputs(" xmt ", stdout);
 	p_ntp_delta(&(bp->org), &(bp->xmt));
 
@@ -206,7 +197,6 @@ ntp_print(register const u_char *cp, int length)
 
 trunc:
 	fputs(" [|ntp]", stdout);
-#undef TCHECK
 }
 
 static void

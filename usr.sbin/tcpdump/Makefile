@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1996/11/12 08:31:56 mickey Exp $
+#	$OpenBSD: Makefile,v 1.6 1996/12/12 16:23:03 bitblt Exp $
 #	$NetBSD: Makefile,v 1.6 1995/03/07 23:18:39 mycroft Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -37,7 +37,8 @@ SRCS=	tcpdump.c addrtoname.c \
 	print-fddi.c print-llc.c print-sunrpc.c \
 	print-wb.c print-decnet.c print-isoclns.c print-ipx.c \
 	print-atm.c print-dvmrp.c print-krb.c print-pim.c print-netbios.c \
-	util.c bpf_dump.c parsenfsfh.c version.c
+	util.c bpf_dump.c parsenfsfh.c version.c machdep.c print-igrp.c \
+        print-gre.c
 
 AWKS =	atime.awk packetdat.awk send-ack.awk stime.awk
 

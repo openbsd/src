@@ -1,5 +1,3 @@
-/*	$OpenBSD: print-egp.c,v 1.4 1996/07/13 11:01:20 mickey Exp $	*/
-
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -21,8 +19,8 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-egp.c,v 1.19 96/06/23 02:11:45 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/print-egp.c,v 1.5 1996/12/12 16:22:39 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -138,13 +136,12 @@ char *egp_reasons[] = {
 };
 
 static void
-egpnrprint(register const struct egp_packet *egp, register int length)
+egpnrprint(register const struct egp_packet *egp, register u_int length)
 {
-	register const u_char *cp, *ep;
-#define TCHECK(n) if (cp > ep - n) goto trunc
+	register const u_char *cp;
 	u_int32_t addr;
 	register u_int32_t net;
-	register int netlen;
+	register u_int netlen;
 	int gateways, distances, networks;
 	int t_gateways;
 	char *comma;
@@ -164,13 +161,12 @@ egpnrprint(register const struct egp_packet *egp, register int length)
 		netlen = 0;
 	}
 	cp = (u_char *)(egp + 1);
-	ep = snapend;
 
 	t_gateways = egp->egp_intgw + egp->egp_extgw;
 	for (gateways = 0; gateways < t_gateways; ++gateways) {
 		/* Pickup host part of gateway address */
 		addr = 0;
-		TCHECK(4 - netlen);
+		TCHECK2(cp[0], 4 - netlen);
 		switch (netlen) {
 
 		case 1:
@@ -183,28 +179,28 @@ egpnrprint(register const struct egp_packet *egp, register int length)
 			addr = (addr << 8) | *cp++;
 		}
 		addr |= net;
-		TCHECK(1);
+		TCHECK2(cp[0], 1);
 		distances = *cp++;
 		printf(" %s %s ",
-		       gateways < egp->egp_intgw ? "int" : "ext",
+		       gateways < (int)egp->egp_intgw ? "int" : "ext",
 		       ipaddr_string(&addr));
 
 		comma = "";
 		putchar('(');
 		while (--distances >= 0) {
-			TCHECK(2);
+			TCHECK2(cp[0], 2);
 			printf("%sd%d:", comma, (int)*cp++);
 			comma = ", ";
 			networks = *cp++;
 			while (--networks >= 0) {
 				/* Pickup network number */
-				TCHECK(1);
+				TCHECK2(cp[0], 1);
 				addr = (u_int32_t)*cp++ << 24;
 				if (IN_CLASSB(addr)) {
-					TCHECK(1);
+					TCHECK2(cp[0], 1);
 					addr |= (u_int32_t)*cp++ << 16;
 				} else if (!IN_CLASSA(addr)) {
-					TCHECK(2);
+					TCHECK2(cp[0], 2);
 					addr |= (u_int32_t)*cp++ << 16;
 					addr |= (u_int32_t)*cp++ << 8;
 				}
@@ -219,7 +215,7 @@ trunc:
 }
 
 void
-egp_print(register const u_char *bp, register int length,
+egp_print(register const u_char *bp, register u_int length,
 	  register const u_char *bp2)
 {
 	register const struct egp_packet *egp;

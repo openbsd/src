@@ -1,7 +1,5 @@
-/*	$OpenBSD: print-wb.c,v 1.4 1996/07/13 11:01:33 mickey Exp $	*/
-
 /*
- * Copyright (c) 1993, 1994, 1995
+ * Copyright (c) 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,8 +20,8 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-wb.c,v 1.18 95/10/18 22:21:27 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-wb.c,v 1.5 1996/12/12 16:22:24 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -51,7 +49,7 @@ static char rcsid[] =
 #define DOP_ALIGN 4
 #define DOP_ROUNDUP(x)	((((int)(x)) + (DOP_ALIGN - 1)) & ~(DOP_ALIGN - 1))
 #define DOP_NEXT(d)\
-	((struct dophdr*)((u_char *)(d) + \
+	((struct dophdr *)((u_char *)(d) + \
 			  DOP_ROUNDUP(ntohs((d)->dh_len) + sizeof(*(d)))))
 
 /*
@@ -127,7 +125,7 @@ struct pkt_rreq {
         u_int32_t pr_id;           /* source id of drawops to be repaired */
         struct PageID pr_page;           /* page of drawops */
         u_int32_t pr_sseq;         /* start seqno */
-        u_int32_t pr_eseq;         /* end seqno*/
+        u_int32_t pr_eseq;         /* end seqno */
 };
 
 /*
@@ -175,7 +173,7 @@ struct pkt_prep {
 };
 
 static int
-wb_id(const struct pkt_id *id, int len)
+wb_id(const struct pkt_id *id, u_int len)
 {
 	int i;
 	const char *cp;
@@ -200,11 +198,14 @@ wb_id(const struct pkt_id *id, int len)
 	len -= sizeof(*io) * nid;
 	io = (struct id_off *)(id + 1);
 	cp = (char *)(io + nid);
-	if ((u_char *)cp + len <= snapend)
-		fn_print((u_char *)cp, (u_char *)cp + len);
+	if ((u_char *)cp + len <= snapend) {
+		putchar('"');
+		(void)fn_print((u_char *)cp, (u_char *)cp + len);
+		putchar('"');
+	}
 
 	c = '<';
-	for (i = 0; i < nid && (u_char*)io < snapend; ++io, ++i) {
+	for (i = 0; i < nid && (u_char *)io < snapend; ++io, ++i) {
 		printf("%c%s:%u",
 		    c, ipaddr_string(&io->id), (u_int32_t)ntohl(io->off));
 		c = ',';
@@ -217,7 +218,7 @@ wb_id(const struct pkt_id *id, int len)
 }
 
 static int
-wb_rreq(const struct pkt_rreq *rreq, int len)
+wb_rreq(const struct pkt_rreq *rreq, u_int len)
 {
 	printf(" wb-rreq:");
 	if (len < sizeof(*rreq) || (u_char *)(rreq + 1) > snapend)
@@ -233,7 +234,7 @@ wb_rreq(const struct pkt_rreq *rreq, int len)
 }
 
 static int
-wb_preq(const struct pkt_preq *preq, int len)
+wb_preq(const struct pkt_preq *preq, u_int len)
 {
 	printf(" wb-preq:");
 	if (len < sizeof(*preq) || (u_char *)(preq + 1) > snapend)
@@ -247,19 +248,19 @@ wb_preq(const struct pkt_preq *preq, int len)
 }
 
 static int
-wb_prep(const struct pkt_prep *prep, int len)
+wb_prep(const struct pkt_prep *prep, u_int len)
 {
 	int n;
-	const struct pgstate* ps;
-	const u_char* ep = snapend;
+	const struct pgstate *ps;
+	const u_char *ep = snapend;
 
 	printf(" wb-prep:");
 	if (len < sizeof(*prep)) {
 		return (-1);
 	}
 	n = ntohl(prep->pp_n);
-	ps = (const struct pgstate*)(prep + 1);
-	while (--n >= 0 && (u_char*)ps < ep) {
+	ps = (const struct pgstate *)(prep + 1);
+	while (--n >= 0 && (u_char *)ps < ep) {
 		const struct id_off *io, *ie;
 		char c = '<';
 
@@ -267,16 +268,16 @@ wb_prep(const struct pkt_prep *prep, int len)
 		    (u_int32_t)ntohl(ps->slot),
 		    ipaddr_string(&ps->page.p_sid),
 		    (u_int32_t)ntohl(ps->page.p_uid));
-		io = (struct id_off*)(ps + 1);
-		for (ie = io + ps->nid; io < ie && (u_char*)io < ep; ++io) {
+		io = (struct id_off *)(ps + 1);
+		for (ie = io + ps->nid; io < ie && (u_char *)io < ep; ++io) {
 			printf("%c%s:%u", c, ipaddr_string(&io->id),
 			    (u_int32_t)ntohl(io->off));
 			c = ',';
 		}
 		printf(">");
-		ps = (struct pgstate*)io;
+		ps = (struct pgstate *)io;
 	}
-	return ((u_char*)ps <= ep? 0 : -1);
+	return ((u_char *)ps <= ep? 0 : -1);
 }
 
 
@@ -322,7 +323,7 @@ wb_dops(const struct dophdr *dh, u_int32_t ss, u_int32_t es)
 			}
 		}
 		dh = DOP_NEXT(dh);
-		if ((u_char*)dh >= snapend) {
+		if ((u_char *)dh > snapend) {
 			printf("[|wb]");
 			break;
 		}
@@ -332,7 +333,7 @@ wb_dops(const struct dophdr *dh, u_int32_t ss, u_int32_t es)
 }
 
 static int
-wb_rrep(const struct pkt_rrep *rrep, int len)
+wb_rrep(const struct pkt_rrep *rrep, u_int len)
 {
 	const struct pkt_dop *dop = &rrep->pr_dop;
 
@@ -349,13 +350,13 @@ wb_rrep(const struct pkt_rrep *rrep, int len)
 	    (u_int32_t)ntohl(dop->pd_eseq));
 
 	if (vflag)
-		return (wb_dops((const struct dophdr*)(dop + 1),
+		return (wb_dops((const struct dophdr *)(dop + 1),
 		    ntohl(dop->pd_sseq), ntohl(dop->pd_eseq)));
 	return (0);
 }
 
 static int
-wb_drawop(const struct pkt_dop *dop, int len)
+wb_drawop(const struct pkt_dop *dop, u_int len)
 {
 	printf(" wb-dop:");
 	len -= sizeof(*dop);
@@ -369,7 +370,7 @@ wb_drawop(const struct pkt_dop *dop, int len)
 	    (u_int32_t)ntohl(dop->pd_eseq));
 
 	if (vflag)
-		return (wb_dops((const struct dophdr*)(dop + 1),
+		return (wb_dops((const struct dophdr *)(dop + 1),
 				ntohl(dop->pd_sseq), ntohl(dop->pd_eseq)));
 	return (0);
 }
@@ -378,11 +379,11 @@ wb_drawop(const struct pkt_dop *dop, int len)
  * Print whiteboard multicast packets.
  */
 void
-wb_print(register const void *hdr, register int len)
+wb_print(register const void *hdr, register u_int len)
 {
-	register const struct pkt_hdr* ph;
+	register const struct pkt_hdr *ph;
 
-	ph = (const struct pkt_hdr*)hdr;
+	ph = (const struct pkt_hdr *)hdr;
 	len -= sizeof(*ph);
 	if (len < 0 || (u_char *)(ph + 1) <= snapend) {
 		if (ph->ph_flags)

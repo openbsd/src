@@ -1,7 +1,5 @@
-/*	$OpenBSD: print-krb.c,v 1.1 1996/07/13 11:01:25 mickey Exp $	*/
-
 /*
- * Copyright (c) 1995
+ * Copyright (c) 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,13 +22,12 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-krb.c,v 1.3 95/10/08 15:15:17 leres Exp";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-krb.c,v 1.2 1996/12/12 16:22:33 bitblt Exp $";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <netinet/in.h>
@@ -47,10 +44,10 @@ static char rcsid[] =
 #include "interface.h"
 #include "addrtoname.h"
 
-const u_char *c_print(register const u_char *s, register const u_char *ep);
-const u_char *krb4_print_hdr(const u_char *cp);
-void krb4_print(const u_char *cp);
-void krb_print(const u_char *dat, int length);
+const u_char *c_print(register const u_char *, register const u_char *);
+const u_char *krb4_print_hdr(const u_char *);
+void krb4_print(const u_char *);
+void krb_print(const u_char *, u_int);
 
 
 #define AUTH_MSG_KDC_REQUEST			1<<1
@@ -113,19 +110,19 @@ static struct tok kerr2str[] = {
 
 /* little endian (unaligned) to host byte order */
 /* XXX need to look at this... */
-#define vtohlp(x)	    ((( ((char*)(x))[0] )      )  | \
-			     (( ((char*)(x))[1] ) <<  8)  | \
-			     (( ((char*)(x))[2] ) << 16)  | \
-			     (( ((char*)(x))[3] ) << 24))
-#define vtohsp(x)          ((( ((char*)(x))[0] )      )  | \
-			     (( ((char*)(x))[1] ) <<  8))
+#define vtohlp(x)	    ((( ((char *)(x))[0] )      )  | \
+			     (( ((char *)(x))[1] ) <<  8)  | \
+			     (( ((char *)(x))[2] ) << 16)  | \
+			     (( ((char *)(x))[3] ) << 24))
+#define vtohsp(x)          ((( ((char *)(x))[0] )      )  | \
+			     (( ((char *)(x))[1] ) <<  8))
 /* network (big endian) (unaligned) to host byte order */
-#define ntohlp(x)	    ((( ((char*)(x))[3] )      )  | \
-			     (( ((char*)(x))[2] ) <<  8)  | \
-			     (( ((char*)(x))[1] ) << 16)  | \
-			     (( ((char*)(x))[0] ) << 24))
-#define ntohsp(x)          ((( ((char*)(x))[1] )      )  | \
-			     (( ((char*)(x))[0] ) <<  8))
+#define ntohlp(x)	    ((( ((char *)(x))[3] )      )  | \
+			     (( ((char *)(x))[2] ) <<  8)  | \
+			     (( ((char *)(x))[1] ) << 16)  | \
+			     (( ((char *)(x))[0] ) << 24))
+#define ntohsp(x)          ((( ((char *)(x))[1] )      )  | \
+			     (( ((char *)(x))[0] ) <<  8))
 
 
 
@@ -163,14 +160,13 @@ krb4_print_hdr(const u_char *cp)
 {
 	cp+=2;
 
-#define TCHECK		if (cp >= snapend)  goto trunc
 #define PRINT		if ((cp=c_print(cp, snapend))==NULL) goto trunc
 
-	TCHECK;
+	TCHECK2(cp, 0);
 	PRINT;
-	TCHECK;
+	TCHECK2(cp, 0);
 	putchar('.'); PRINT;
-	TCHECK;
+	TCHECK2(cp, 0);
 	putchar('@'); PRINT;
 	return(cp);
 
@@ -178,7 +174,6 @@ trunc:
 	fputs(tstr, stdout);
 	return(NULL);
 
-#undef TCHECK
 #undef PRINT
 }
 
@@ -189,7 +184,6 @@ krb4_print(const u_char *cp)
 	u_char type;
 	u_short len;
 
-#define TCHECK		if (cp >= snapend) goto trunc
 #define PRINT		if ((cp=c_print(cp, snapend))==NULL) goto trunc
 /*  True if struct krb is little endian */
 #define IS_LENDIAN(kp)	(((kp)->type & 0x01) != 0)
@@ -213,45 +207,45 @@ krb4_print(const u_char *cp)
 		if ((cp = krb4_print_hdr(cp)) == NULL)
 			return;
 		 cp += 4; 	  /* ctime */
-		 TCHECK;
+		 TCHECK2(cp, 0);
 		 printf(" %dmin ", *cp++ * 5);
-		 TCHECK;
+		 TCHECK2(cp, 0);
 		 PRINT;
-		 TCHECK;
+		 TCHECK2(cp, 0);
 		 putchar('.');  PRINT;
 		 break;
 
 	case AUTH_MSG_APPL_REQUEST:
 		cp += 2;
-		TCHECK;
+		TCHECK2(cp, 0);
 		printf("v%d ", *cp++);
-		TCHECK;
+		TCHECK2(cp, 0);
 		PRINT;
-		TCHECK;
+		TCHECK2(cp, 0);
 		printf(" (%d)", *cp++);
-		TCHECK;
+		TCHECK2(cp, 0);
 		printf(" (%d)", *cp);
-		TCHECK;
+		TCHECK2(cp, 0);
 		break;
 
 	case AUTH_MSG_KDC_REPLY:
 		if ((cp = krb4_print_hdr(cp)) == NULL)
 			return;
 		cp += 10;	/* timestamp + n + exp + kvno */
-		TCHECK;
+		TCHECK2(cp, 0);
 		len = KTOHSP(kp, cp);
 		printf(" (%d)", len);
-		TCHECK;
+		TCHECK2(cp, 0);
 		break;
 
 	case AUTH_MSG_ERR_REPLY:
 		if ((cp = krb4_print_hdr(cp)) == NULL)
 			return;
 		cp += 4; 	  /* timestamp */
-		TCHECK;
+		TCHECK2(cp, 0);
 		printf(" %s ", tok2str(kerr2str, NULL, KTOHSP(kp, cp)));
 		cp += 4;
-		TCHECK;
+		TCHECK2(cp, 0);
 		PRINT;
 		break;
 
@@ -263,11 +257,10 @@ krb4_print(const u_char *cp)
 	return;
 trunc:
 	fputs(tstr, stdout);
-#undef TCHECK
 }
 
 void
-krb_print(const u_char *dat, int length)
+krb_print(const u_char *dat, u_int length)
 {
 	register const struct krb *kp;
 
@@ -288,7 +281,7 @@ krb_print(const u_char *dat, int length)
 
 	case 4:
 		printf(" v%d", kp->pvno);
-		krb4_print((const u_char*)kp);
+		krb4_print((const u_char *)kp);
 		break;
 
 	case 106:

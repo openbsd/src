@@ -1,5 +1,3 @@
-/*	$OpenBSD: util.c,v 1.4 1996/07/13 11:01:35 mickey Exp $	*/
-
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -22,8 +20,8 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: util.c,v 1.48 96/06/23 02:26:42 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.5 1996/12/12 16:22:20 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -32,9 +30,11 @@ static char rcsid[] =
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <errno.h>
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#include <pcap.h>
 #include <stdio.h>
 #if __STDC__
 #include <stdarg.h>
@@ -62,7 +62,6 @@ fn_print(register const u_char *s, register const u_char *ep)
 	register u_char c;
 
 	ret = 1;			/* assume truncated */
-	putchar('"');
 	while (ep == NULL || s < ep) {
 		c = *s++;
 		if (c == '\0') {
@@ -80,7 +79,6 @@ fn_print(register const u_char *s, register const u_char *ep)
 		}
 		putchar(c);
 	}
-	putchar('"');
 	return(ret);
 }
 
@@ -97,7 +95,6 @@ fn_printn(register const u_char *s, register u_int n,
 	register u_char c;
 
 	ret = 1;			/* assume truncated */
-	putchar('"');
 	while (ep == NULL || s < ep) {
 		if (n-- <= 0) {
 			ret = 0;
@@ -115,7 +112,6 @@ fn_printn(register const u_char *s, register u_int n,
 		}
 		putchar(c);
 	}
-	putchar('"');
 	return(ret);
 }
 
@@ -201,7 +197,7 @@ warning(fmt, va_alist)
 {
 	va_list ap;
 
-	(void)fprintf(stderr, "%s: warning: ", program_name);
+	(void)fprintf(stderr, "%s: WARNING: ", program_name);
 #if __STDC__
 	va_start(ap, fmt);
 #else
@@ -223,7 +219,7 @@ char *
 copy_argv(register char **argv)
 {
 	register char **p;
-	register int len = 0;
+	register u_int len = 0;
 	char *buf;
 	char *src, *dst;
 
@@ -275,68 +271,59 @@ savestr(register const char *str)
 	return (p);
 }
 
-
 char *
 read_infile(char *fname)
 {
+	register int fd, cc;
+	register char *cp;
 	struct stat buf;
-	int fd;
-	char *p;
 
 	fd = open(fname, O_RDONLY);
 	if (fd < 0)
-		error("can't open '%s'", fname);
+		error("can't open %s: %s", fname, pcap_strerror(errno));
 
 	if (fstat(fd, &buf) < 0)
-		error("can't stat '%s'", fname);
+		error("can't stat %s: %s", fname, pcap_strerror(errno));
 
-	p = malloc((u_int)buf.st_size + 1);
-	if (p == NULL)
-		error("read_infile: malloc");
-	if (read(fd, p, (int)buf.st_size) != buf.st_size)
-		error("problem reading '%s'", fname);
+	cp = malloc((u_int)buf.st_size + 1);
+	cc = read(fd, cp, (int)buf.st_size);
+	if (cc < 0)
+		error("read %s: %s", fname, pcap_strerror(errno));
+	if (cc != buf.st_size)
+		error("short read %s (%d != %d)", fname, cc, (int)buf.st_size);
+	cp[(int)buf.st_size] = '\0';
 
-	p[(int)buf.st_size] = '\0';
-
-	return p;
+	return (cp);
 }
 
+/*
+ * Returns the difference between gmt and local time in seconds.
+ * Use gmtime() and localtime() to keep things simple.
+ */
 int32_t
-gmt2local()
+gmt2local(void)
 {
-	register int t;
-#if !defined(HAVE_ALTZONE) && !defined(HAVE_TIMEZONE)
-	struct timeval tv;
-	struct timezone tz;
-	register struct tm *tm;
-#endif
+	register int dt, dir;
+	register struct tm *gmt, *loc;
+	time_t t;
+	struct tm sgmt;
 
-	t = 0;
-#if !defined(HAVE_ALTZONE) && !defined(HAVE_TIMEZONE)
-	if (gettimeofday(&tv, &tz) < 0)
-		error("gettimeofday");
-	tm = localtime((time_t *)&tv.tv_sec);
-#ifdef HAVE_TM_GMTOFF
-	t = tm->tm_gmtoff;
-#else
-	t = tz.tz_minuteswest * -60;
-	/* XXX Some systems need this, some auto offset tz_minuteswest... */
-	if (tm->tm_isdst)
-		t += 60 * 60;
-#endif
-#endif
+	t = time(NULL);
+	gmt = &sgmt;
+	*gmt = *gmtime(&t);
+	loc = localtime(&t);
+	dt = (loc->tm_hour - gmt->tm_hour) * 60 * 60 +
+	    (loc->tm_min - gmt->tm_min) * 60;
 
-#ifdef HAVE_TIMEZONE
-	tzset();
-	t = -timezone;
-	if (daylight)
-		t += 60 * 60;
-#endif
+	/*
+	 * If the year or julian day is different, we span 00:00 GMT
+	 * and must add or subtract a day. Check the year first to
+	 * avoid problems when the julian day wraps.
+	 */
+	dir = loc->tm_year - gmt->tm_year;
+	if (dir == 0)
+		dir = loc->tm_yday - gmt->tm_yday;
+	dt += dir * 24 * 60 * 60;
 
-#ifdef HAVE_ALTZONE
-	tzset();
-	t = -altzone;
-#endif
-
-	return (t);
+	return (dt);
 }

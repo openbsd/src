@@ -1,5 +1,3 @@
-/*	$OpenBSD: print-domain.c,v 1.4 1996/07/13 11:01:18 mickey Exp $	*/
-
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -22,13 +20,12 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-domain.c,v 1.29 96/06/19 00:49:25 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-domain.c,v 1.5 1996/12/12 16:22:40 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 
 #if __STDC__
@@ -48,6 +45,7 @@ struct rtentry;
 #include <netinet/tcpip.h>
 
 #undef NOERROR					/* Solaris sucks */
+#undef T_UNSPEC					/* SINIX does too */
 #include <arpa/nameser.h>
 
 #include <stdio.h>
@@ -56,7 +54,7 @@ struct rtentry;
 #include "addrtoname.h"
 #include "extract.h"                    /* must come after interface.h */
 
-/* Compatiblity */
+/* Compatibility */
 #ifndef T_TXT
 #define T_TXT		16		/* text strings */
 #endif
@@ -164,9 +162,9 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 				i = *cp++;
 				continue;
 			}
-			do {
-				putchar(*cp++);
-			} while (--i);
+			if (fn_printn(cp, i, snapend))
+				break;
+			cp += i;
 			putchar('.');
 			i = *cp++;
 			if (!compress)
@@ -184,11 +182,8 @@ ns_cprint(register const u_char *cp, register const u_char *bp)
 	register u_int i;
 
 	i = *cp++;
-	if (cp + i < snapend)
-		do {
-			putchar(*cp++);
-		} while (--i);
-	return (cp);
+	(void)fn_printn(cp, i, snapend);
+	return (cp + i);
 }
 
 static struct tok type2str[] = {
@@ -316,7 +311,7 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 	case T_MX:
 		putchar(' ');
 		(void)ns_nprint(cp + 2, bp);
-		printf(" %d", EXTRACT_SHORT(cp));
+		printf(" %d", EXTRACT_16BITS(cp));
 		break;
 
 	case T_TXT:
@@ -328,11 +323,11 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 	        printf(" %.*s", len, cp);
 		break;
 	}
-	return (rp);		/* XXX This isn't always right*/
+	return (rp);		/* XXX This isn't always right */
 }
 
 void
-ns_print(register const u_char *bp, int length)
+ns_print(register const u_char *bp, u_int length)
 {
 	register const HEADER *np;
 	register int qdcount, ancount, nscount, arcount;

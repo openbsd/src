@@ -1,5 +1,3 @@
-/*	$OpenBSD: addrtoname.h,v 1.4 1996/07/13 11:01:07 mickey Exp $	*/
-
 /*
  * Copyright (c) 1990, 1992, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -20,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: addrtoname.h,v 1.13 95/05/04 17:52:44 mccanne Exp (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.h,v 1.5 1996/12/12 16:22:59 bitblt Exp $ (LBL)
  */
 
 /* Name to address translation routines. */

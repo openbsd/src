@@ -1,5 +1,3 @@
-/*	$OpenBSD: ospf.h,v 1.4 1996/07/13 11:01:14 mickey Exp $	*/
-
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.

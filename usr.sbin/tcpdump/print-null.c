@@ -1,5 +1,3 @@
-/*	$OpenBSD: print-null.c,v 1.4 1996/07/13 11:01:27 mickey Exp $	*/
-
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -22,8 +20,8 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#)Header: print-null.c,v 1.18 96/06/03 02:53:51 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-null.c,v 1.5 1996/12/12 16:22:30 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -48,17 +46,21 @@ struct rtentry;
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 
+#include <pcap.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "interface.h"
 #include "addrtoname.h"
-#include "pcap.h"
+#include "interface.h"
 
 #define	NULL_HDRLEN 4
 
+#ifndef AF_NS
+#define AF_NS		6		/* XEROX NS protocols */
+#endif
+
 static void
-null_print(const u_char *p, const struct ip *ip, int length)
+null_print(const u_char *p, const struct ip *ip, u_int length)
 {
 	u_int family;
 
@@ -87,8 +89,8 @@ null_print(const u_char *p, const struct ip *ip, int length)
 void
 null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
-	int length = h->len;
-	int caplen = h->caplen;
+	u_int length = h->len;
+	u_int caplen = h->caplen;
 	const struct ip *ip;
 
 	ts_print(&h->ts);

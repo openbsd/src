@@ -1,5 +1,3 @@
-/*	$OpenBSD: print-arp.c,v 1.4 1996/07/13 11:01:15 mickey Exp $	*/
-
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -22,8 +20,8 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-arp.c,v 1.35 96/06/20 21:07:34 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-arp.c,v 1.5 1996/12/12 16:22:43 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -44,16 +42,21 @@ struct rtentry;
 
 #include "interface.h"
 #include "addrtoname.h"
+#include "ethertype.h"
 #include "extract.h"			/* must come after interface.h */
 
-#ifndef ETHERTYPE_TRAIL
-#define ETHERTYPE_TRAIL 0x1000
+/* Compatibility */
+#ifndef REVARP_REQUEST
+#define REVARP_REQUEST		3
+#endif
+#ifndef REVARP_REPLY
+#define REVARP_REPLY		4
 #endif
 
 static u_char ezero[6];
 
 void
-arp_print(register const u_char *bp, int length, int caplen)
+arp_print(register const u_char *bp, u_int length, u_int caplen)
 {
 	register const struct ether_arp *ap;
 	register const struct ether_header *eh;
@@ -70,9 +73,9 @@ arp_print(register const u_char *bp, int length, int caplen)
 		return;
 	}
 
-	pro = EXTRACT_SHORT(&ap->arp_pro);
-	hrd = EXTRACT_SHORT(&ap->arp_hrd);
-	op = EXTRACT_SHORT(&ap->arp_op);
+	pro = EXTRACT_16BITS(&ap->arp_pro);
+	hrd = EXTRACT_16BITS(&ap->arp_hrd);
+	op = EXTRACT_16BITS(&ap->arp_op);
 
 	if ((pro != ETHERTYPE_IP && pro != ETHERTYPE_TRAIL)
 	    || ap->arp_hln != sizeof(SHA(ap))
@@ -123,5 +126,5 @@ arp_print(register const u_char *bp, int length, int caplen)
 		return;
 	}
 	if (hrd != ARPHRD_ETHER)
-		printf(" hardware #%d", ap->arp_hrd);
+		printf(" hardware #%d", hrd);
 }

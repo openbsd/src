@@ -1,5 +1,3 @@
-/*	$OpenBSD: print-fddi.c,v 1.4 1996/07/13 11:01:22 mickey Exp $	*/
-
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -22,8 +20,8 @@
  */
 
 #ifndef lint
-static  char rcsid[] =
-	"@(#)Header: print-fddi.c,v 1.30 96/06/03 03:05:50 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-fddi.c,v 1.5 1996/12/12 16:22:38 bitblt Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_FDDI
@@ -229,7 +227,7 @@ extract_fddi_addrs(const struct fddi_header *fddip, char *fsrc, char *fdst)
  * Print the FDDI MAC header
  */
 static inline void
-fddi_print(register const struct fddi_header *fddip, register int length,
+fddi_print(register const struct fddi_header *fddip, register u_int length,
 	   register const u_char *fsrc, register const u_char *fdst)
 {
 	char *srcname, *dstname;
@@ -251,7 +249,7 @@ fddi_print(register const struct fddi_header *fddip, register int length,
 }
 
 static inline void
-fddi_smt_print(const u_char *p, int length)
+fddi_smt_print(const u_char *p, u_int length)
 {
 	printf("<SMT printer not yet implemented>");
 }
@@ -266,8 +264,8 @@ void
 fddi_if_print(u_char *pcap, const struct pcap_pkthdr *h,
 	      register const u_char *p)
 {
-	int caplen = h->caplen;
-	int length = h->len;
+	u_int caplen = h->caplen;
+	u_int length = h->len;
 	const struct fddi_header *fddip = (struct fddi_header *)p;
 	extern u_short extracted_ethertype;
 	struct ether_header ehdr;
@@ -281,7 +279,7 @@ fddi_if_print(u_char *pcap, const struct pcap_pkthdr *h,
 	/*
 	 * Get the FDDI addresses into a canonical form
 	 */
-	extract_fddi_addrs(fddip, (char*)ESRC(&ehdr), (char*)EDST(&ehdr));
+	extract_fddi_addrs(fddip, (char *)ESRC(&ehdr), (char *)EDST(&ehdr));
 	/*
 	 * Some printers want to get back at the link level addresses,
 	 * and/or check that they're not walking off the end of the packet.

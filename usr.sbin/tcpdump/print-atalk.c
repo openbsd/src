@@ -1,7 +1,5 @@
-/*	$OpenBSD: print-atalk.c,v 1.4 1996/07/13 11:01:15 mickey Exp $	*/
-
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,14 +20,14 @@
  *
  * Format and print AppleTalk packets.
  */
+
 #ifndef lint
-static  char rcsid[] =
-	"@(#)Header: print-atalk.c,v 1.40 95/10/07 22:13:43 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.5 1996/12/12 16:22:43 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 
 #if __STDC__
@@ -80,9 +78,9 @@ struct aarp {
 
 static char tstr[] = "[|atalk]";
 
-static void atp_print(const struct atATP *, int);
+static void atp_print(const struct atATP *, u_int);
 static void atp_bitmap_print(u_char);
-static void nbp_print(const struct atNBP *, int, u_short, u_char, u_char);
+static void nbp_print(const struct atNBP *, u_int, u_short, u_char, u_char);
 static const char *print_cstring(const char *, const u_char *);
 static const struct atNBPtuple *nbp_tuple_print(const struct atNBPtuple *,
 						const u_char *,
@@ -90,14 +88,14 @@ static const struct atNBPtuple *nbp_tuple_print(const struct atNBPtuple *,
 static const struct atNBPtuple *nbp_name_print(const struct atNBPtuple *,
 					       const u_char *);
 static const char *ataddr_string(u_short, u_char);
-static void ddp_print(const u_char *, int, int, u_short, u_char, u_char);
+static void ddp_print(const u_char *, u_int, int, u_short, u_char, u_char);
 static const char *ddpskt_string(int);
 
 /*
  * Print AppleTalk Datagram Delivery Protocol packets.
  */
 void
-atalk_print(register const u_char *bp, int length)
+atalk_print(register const u_char *bp, u_int length)
 {
 	register const struct LAP *lp;
 	register const struct atDDP *dp;
@@ -130,11 +128,11 @@ atalk_print(register const u_char *bp, int length)
 			return;
 		}
 		dp = (const struct atDDP *)bp;
-		snet = EXTRACT_SHORT(&dp->srcNet);
+		snet = EXTRACT_16BITS(&dp->srcNet);
 		printf("%s.%s", ataddr_string(snet, dp->srcNode),
 		    ddpskt_string(dp->srcSkt));
 		printf(" > %s.%s:",
-		    ataddr_string(EXTRACT_SHORT(&dp->dstNet), dp->dstNode),
+		    ataddr_string(EXTRACT_16BITS(&dp->dstNet), dp->dstNode),
 		    ddpskt_string(dp->dstSkt));
 		bp += ddpSize;
 		length -= ddpSize;
@@ -156,7 +154,7 @@ atalk_print(register const u_char *bp, int length)
 
 /* XXX should probably pass in the snap header and do checks like arp_print() */
 void
-aarp_print(register const u_char *bp, int length)
+aarp_print(register const u_char *bp, u_int length)
 {
 	register const struct aarp *ap;
 
@@ -188,7 +186,7 @@ aarp_print(register const u_char *bp, int length)
 }
 
 static void
-ddp_print(register const u_char *bp, register int length, register int t,
+ddp_print(register const u_char *bp, register u_int length, register int t,
 	  register u_short snet, register u_char snode, u_char skt)
 {
 
@@ -209,7 +207,7 @@ ddp_print(register const u_char *bp, register int length, register int t,
 }
 
 static void
-atp_print(register const struct atATP *ap, int length)
+atp_print(register const struct atATP *ap, u_int length)
 {
 	char c;
 	u_int32_t data;
@@ -225,7 +223,7 @@ atp_print(register const struct atATP *ap, int length)
 	case atpReqCode:
 		(void)printf(" atp-req%s %d",
 			     ap->control & atpXO? " " : "*",
-			     EXTRACT_SHORT(&ap->transID));
+			     EXTRACT_16BITS(&ap->transID));
 
 		atp_bitmap_print(ap->bitmap);
 
@@ -248,7 +246,7 @@ atp_print(register const struct atATP *ap, int length)
 	case atpRspCode:
 		(void)printf(" atp-resp%s%d:%d (%d)",
 			     ap->control & atpEOM? "*" : " ",
-			     EXTRACT_SHORT(&ap->transID), ap->bitmap, length);
+			     EXTRACT_16BITS(&ap->transID), ap->bitmap, length);
 		switch (ap->control & (atpXO|atpSTS)) {
 		case atpXO:
 			(void)printf(" [XO]");
@@ -263,7 +261,7 @@ atp_print(register const struct atATP *ap, int length)
 		break;
 
 	case atpRelCode:
-		(void)printf(" atp-rel  %d", EXTRACT_SHORT(&ap->transID));
+		(void)printf(" atp-rel  %d", EXTRACT_16BITS(&ap->transID));
 
 		atp_bitmap_print(ap->bitmap);
 
@@ -292,10 +290,10 @@ atp_print(register const struct atATP *ap, int length)
 
 	default:
 		(void)printf(" atp-0x%x  %d (%d)", ap->control,
-			     EXTRACT_SHORT(&ap->transID), length);
+			     EXTRACT_16BITS(&ap->transID), length);
 		break;
 	}
-	data = EXTRACT_LONG(&ap->userData);
+	data = EXTRACT_32BITS(&ap->userData);
 	if (data != 0)
 		(void)printf(" 0x%x", data);
 }
@@ -332,12 +330,12 @@ atp_bitmap_print(register u_char bm)
 }
 
 static void
-nbp_print(register const struct atNBP *np, int length, register u_short snet,
+nbp_print(register const struct atNBP *np, u_int length, register u_short snet,
 	  register u_char snode, register u_char skt)
 {
 	register const struct atNBPtuple *tp =
 			(struct atNBPtuple *)((u_char *)np + nbpHeaderSize);
-	int i = length;
+	int i;
 	const u_char *ep;
 
 	length -= nbpHeaderSize;
@@ -372,10 +370,10 @@ nbp_print(register const struct atNBP *np, int length, register u_short snet,
 			(void)printf(" [ntup=%d]", np->control & 0xf);
 		if (tp->enumerator)
 			(void)printf(" [enum=%d]", tp->enumerator);
-		if (EXTRACT_SHORT(&tp->net) != snet ||
+		if (EXTRACT_16BITS(&tp->net) != snet ||
 		    tp->node != snode || tp->skt != skt)
 			(void)printf(" [addr=%s.%d]",
-			    ataddr_string(EXTRACT_SHORT(&tp->net),
+			    ataddr_string(EXTRACT_16BITS(&tp->net),
 			    tp->node), tp->skt);
 		break;
 
@@ -398,7 +396,7 @@ nbp_print(register const struct atNBP *np, int length, register u_short snet,
 static const char *
 print_cstring(register const char *cp, register const u_char *ep)
 {
-	register int length;
+	register u_int length;
 
 	if (cp >= (const char *)ep) {
 		fputs(tstr, stdout);
@@ -444,9 +442,9 @@ nbp_tuple_print(register const struct atNBPtuple *tp,
 		(void)printf(" %d", tp->skt);
 
 	/* if the address doesn't match the src address, it's an anomaly */
-	if (EXTRACT_SHORT(&tp->net) != snet || tp->node != snode)
+	if (EXTRACT_16BITS(&tp->net) != snet || tp->node != snode)
 		(void)printf(" [addr=%s]",
-		    ataddr_string(EXTRACT_SHORT(&tp->net), tp->node));
+		    ataddr_string(EXTRACT_16BITS(&tp->net), tp->node));
 
 	return (tpn);
 }

@@ -1,5 +1,3 @@
-/*	$OpenBSD: addrtoname.c,v 1.4 1996/07/13 11:01:06 mickey Exp $	*/
-
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -24,8 +22,8 @@
  *  and address to string conversion routines
  */
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: addrtoname.c,v 1.48 96/06/19 00:50:15 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.5 1996/12/12 16:23:00 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -162,11 +160,11 @@ getname(const u_char *ap)
 	u_int32_t addr;
 	static struct hnamemem *p;		/* static for longjmp() */
 
-#ifndef TCPDUMP_ALIGN
+#ifndef LBL_ALIGN
 	addr = *(const u_int32_t *)ap;
 #else
 	/*
-	 * Deal with alignment.
+	 * Extract 32 bits in network order, dealing with alignment.
 	 */
 	switch ((long)ap & 3) {
 
@@ -175,26 +173,26 @@ getname(const u_char *ap)
 		break;
 
 	case 2:
-#if BYTE_ORDER == LITTLE_ENDIAN
-		addr = ((u_int32_t)*(u_short *)(ap + 2) << 16) |
-			(u_int32_t)*(u_short *)ap;
-#else
+#ifdef WORDS_BIGENDIAN
 		addr = ((u_int32_t)*(u_short *)ap << 16) |
 			(u_int32_t)*(u_short *)(ap + 2);
+#else
+		addr = ((u_int32_t)*(u_short *)(ap + 2) << 16) |
+			(u_int32_t)*(u_short *)ap;
 #endif
 		break;
 
 	default:
-#if BYTE_ORDER == LITTLE_ENDIAN
-		addr = ((u_int32_t)ap[3] << 24) |
-			((u_int32_t)ap[2] << 16) |
-			((u_int32_t)ap[1] << 8) |
-			(u_int32_t)ap[0];
-#else
+#ifdef WORDS_BIGENDIAN
 		addr = ((u_int32_t)ap[0] << 24) |
 			((u_int32_t)ap[1] << 16) |
 			((u_int32_t)ap[2] << 8) |
 			(u_int32_t)ap[3];
+#else
+		addr = ((u_int32_t)ap[3] << 24) |
+			((u_int32_t)ap[2] << 16) |
+			((u_int32_t)ap[1] << 8) |
+			(u_int32_t)ap[0];
 #endif
 		break;
 	}
@@ -740,7 +738,7 @@ dnaddr_string(u_short dnaddr)
 
 /* Return a zero'ed hnamemem struct and cuts down on calloc() overhead */
 struct hnamemem *
-newhnamemem()
+newhnamemem(void)
 {
 	register struct hnamemem *p;
 	static struct hnamemem *ptr = NULL;

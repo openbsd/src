@@ -1,7 +1,5 @@
-/*	$OpenBSD: tcpdump.c,v 1.5 1996/11/12 08:52:38 mickey Exp $	*/
-
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,12 +18,13 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
+
 #ifndef lint
-char copyright[] =
-    "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995\n\
+static const char copyright[] =
+    "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996\n\
 The Regents of the University of California.  All rights reserved.\n";
-static  char rcsid[] =
-    "@(#)Header: tcpdump.c,v 1.109 96/06/22 14:46:37 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.6 1996/12/12 16:22:21 bitblt Exp $ (LBL)";
 #endif
 
 /*
@@ -38,10 +37,6 @@ static  char rcsid[] =
 
 #include <sys/types.h>
 #include <sys/time.h>
-#ifdef __osf__
-#include <sys/sysinfo.h>
-#include <sys/proc.h>
-#endif
 
 #include <netinet/in.h>
 
@@ -54,6 +49,7 @@ static  char rcsid[] =
 
 #include "interface.h"
 #include "addrtoname.h"
+#include "machdep.h"
 
 int fflag;			/* don't translate "foreign" IP address */
 int nflag;			/* leave addresses as numbers */
@@ -72,7 +68,7 @@ int dflag;			/* print filter code */
 
 char *program_name;
 
-int32_t thiszone=0;		/* seconds offset from gmt to local time */
+int32_t thiszone;		/* seconds offset from gmt to local time */
 
 /* Externs */
 extern void bpf_dump(struct bpf_program *, int);
@@ -80,9 +76,6 @@ extern void bpf_dump(struct bpf_program *, int);
 /* Forwards */
 RETSIGTYPE cleanup(int);
 extern __dead void usage(void) __attribute__((volatile));
-#ifdef __osf__
-static void abort_on_misalignment(void);
-#endif
 
 /* Length of saved portion of packet. */
 int snaplen = DEFAULT_SNAPLEN;
@@ -99,6 +92,7 @@ struct printer {
 
 static struct printer printers[] = {
 	{ ether_if_print,	DLT_EN10MB },
+	{ ether_if_print,	DLT_IEEE802 },
 	{ sl_if_print,		DLT_SLIP },
 	{ ppp_if_print,		DLT_PPP },
 	{ fddi_if_print,	DLT_FDDI },
@@ -122,18 +116,6 @@ lookup_printer(int type)
 
 static pcap_t *pd;
 
-/* OSF magic */
-#ifdef __osf__
-static void
-abort_on_misalignment()
-{
-	static int buf[2] = { SSIN_UACPROC, UAC_SIGBUS };
-
-	if (setsysinfo(SSI_NVPAIRS, (caddr_t)buf, 1, 0, 0) < 0)
-		error("setsysinfo: %s", pcap_strerror(errno));
-}
-#endif
-
 extern int optind;
 extern int opterr;
 extern char *optarg;
@@ -147,11 +129,7 @@ main(int argc, char **argv)
 	pcap_handler printer;
 	struct bpf_program fcode;
 	u_char *pcap_userdata;
-	char errbuf[PCAP_ERRBUF_SIZE];
-
-#ifdef __osf__
-	abort_on_misalignment();
-#endif
+	char ebuf[PCAP_ERRBUF_SIZE];
 
 	cnt = -1;
 	device = NULL;
@@ -163,11 +141,16 @@ main(int argc, char **argv)
 	else
 		program_name = argv[0];
 
+	if (abort_on_misalignment(ebuf) < 0)
+		error("%s", ebuf);
+
 	opterr = 0;
 	while ((op = getopt(argc, argv, "c:defF:i:lnNOpqr:s:StT:vw:xY")) != EOF)
 		switch (op) {
 		case 'c':
 			cnt = atoi(optarg);
+			if (cnt <= 0)
+				error("invalid packet count %s", optarg);
 			break;
 
 		case 'd':
@@ -224,6 +207,8 @@ main(int argc, char **argv)
 
 		case 's':
 			snaplen = atoi(optarg);
+			if (snaplen <= 0)
+				error("invalid snaplen %s", optarg);
 			break;
 
 		case 'S':
@@ -285,29 +270,29 @@ main(int argc, char **argv)
 		 */
 		setuid(getuid());
 
-		pd = pcap_open_offline(RFileName, errbuf);
+		pd = pcap_open_offline(RFileName, ebuf);
 		if (pd == NULL)
-			error(errbuf);
+			error("%s", ebuf);
 		localnet = 0;
 		netmask = 0;
 		if (fflag != 0)
 			error("-f and -r options are incompatible");
 	} else {
 		if (device == NULL) {
-			device = pcap_lookupdev(errbuf);
+			device = pcap_lookupdev(ebuf);
 			if (device == NULL)
-				error(errbuf);
+				error("%s", ebuf);
 		}
-		pd = pcap_open_live(device, snaplen, !pflag, 1000, errbuf);
+		pd = pcap_open_live(device, snaplen, !pflag, 1000, ebuf);
 		if (pd == NULL)
-			error(errbuf);
+			error("%s", ebuf);
 		i = pcap_snapshot(pd);
 		if (snaplen < i) {
 			warning("snaplen raised from %d to %d", snaplen, i);
 			snaplen = i;
 		}
-		if (pcap_lookupnet(device, &localnet, &netmask, errbuf) < 0)
-			error(errbuf);
+		if (pcap_lookupnet(device, &localnet, &netmask, ebuf) < 0)
+			error("%s", ebuf);
 		/*
 		 * Let user own process after socket has been opened.
 		 */
@@ -318,12 +303,8 @@ main(int argc, char **argv)
 	else
 		cmdbuf = copy_argv(&argv[optind]);
 
-	/* XXX padding only needed for kernel fcode */
-	if (RFileName != NULL)
-		pcap_fddipad = 0;
-
 	if (pcap_compile(pd, &fcode, cmdbuf, Oflag, netmask) < 0)
-		error(pcap_geterr(pd));
+		error("%s", pcap_geterr(pd));
 	if (dflag) {
 		bpf_dump(&fcode, dflag);
 		exit(0);
@@ -335,11 +316,11 @@ main(int argc, char **argv)
 	(void)signal(SIGHUP, cleanup);
 
 	if (pcap_setfilter(pd, &fcode) < 0)
-		error(pcap_geterr(pd));
+		error("%s", pcap_geterr(pd));
 	if (WFileName) {
 		pcap_dumper_t *p = pcap_dump_open(pd, WFileName);
 		if (p == NULL)
-			error(pcap_geterr(pd));
+			error("%s", pcap_geterr(pd));
 		printer = pcap_dump;
 		pcap_userdata = (u_char *)p;
 	} else {
@@ -385,7 +366,7 @@ cleanup(int signo)
 
 /* Like default_print() but data need not be aligned */
 void
-default_print_unaligned(register const u_char *cp, register int length)
+default_print_unaligned(register const u_char *cp, register u_int length)
 {
 	register u_int i, s;
 	register int nshorts;
@@ -406,7 +387,7 @@ default_print_unaligned(register const u_char *cp, register int length)
 }
 
 void
-default_print(register const u_char *bp, register int length)
+default_print(register const u_char *bp, register u_int length)
 {
 	register const u_short *sp;
 	register u_int i;
@@ -432,7 +413,7 @@ default_print(register const u_char *bp, register int length)
 }
 
 __dead void
-usage()
+usage(void)
 {
 	extern char version[];
 

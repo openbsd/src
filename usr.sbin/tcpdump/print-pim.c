@@ -1,7 +1,5 @@
-/*	$OpenBSD: print-pim.c,v 1.1 1996/07/13 11:01:28 mickey Exp $	*/
-
 /*
- * Copyright (c) 1995
+ * Copyright (c) 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,13 +20,12 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-pim.c,v 1.4 95/10/07 22:13:12 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pim.c,v 1.2 1996/12/12 16:22:29 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <netinet/in.h>
@@ -47,9 +44,8 @@ static char rcsid[] =
 #include "interface.h"
 #include "addrtoname.h"
 
-
 void
-pim_print(register const u_char *bp, register int len)
+pim_print(register const u_char *bp, register u_int len)
 {
     register const u_char *ep;
     register u_char type;

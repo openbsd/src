@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 1995
+ * Copyright (c) 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -131,7 +131,9 @@ extern int		vttoif_tab[];
 #define	nfstov_type(a)	ntov_type[fxdr_unsigned(u_int32_t,(a))&0x7]
 
 /* File types */
-typedef enum { NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5 } nfstype;
+typedef enum {
+    NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5
+} tcpdump_nfstype;
 
 /* Structs for common parts of the rpc's */
 struct nfsv2_time {

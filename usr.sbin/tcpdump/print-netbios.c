@@ -1,5 +1,3 @@
-/*	$OpenBSD: print-netbios.c,v 1.1 1996/11/12 07:54:55 mickey Exp $	*/
-
 /*
  * Copyright (c) 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -19,25 +17,19 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- */
-
-/*
+ *
  * Format and print NETBIOS packets.
  * Contributed by Brad Parker (brad@fcr.com).
  */
-#ifndef lint
-static  char rcsid[] =
-    "@(#)Header: print-netbios.c,v 1.5 96/06/03 02:53:36 leres Exp";
-#endif
 
-#ifdef __STDC__
-#include <stdlib.h>
+#ifndef lint
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-netbios.c,v 1.2 1996/12/12 16:22:32 bitblt Exp $";
 #endif
-#include <stdio.h>
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -47,6 +39,10 @@ static  char rcsid[] =
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 
+#ifdef __STDC__
+#include <stdlib.h>
+#endif
+#include <stdio.h>
 #include <string.h>
 
 #include "interface.h"
@@ -58,10 +54,8 @@ static  char rcsid[] =
  * Print NETBIOS packets.
  */
 void
-netbios_print(const u_char *p, int length)
+netbios_print(struct p8022Hdr *nb, u_int length)
 {
-	struct p8022Hdr *nb = (struct p8022Hdr *)p;
-
 	if (length < p8022Size) {
 		(void)printf(" truncated-netbios %d", length);
 		return;
@@ -85,12 +79,12 @@ netbios_print(const u_char *p, int length)
 
 #ifdef never
 	(void)printf("%s.%d > ",
-		     ipxaddr_string(EXTRACT_LONG(ipx->srcNet), ipx->srcNode),
-		     EXTRACT_SHORT(ipx->srcSkt));
+		     ipxaddr_string(EXTRACT_32BITS(ipx->srcNet), ipx->srcNode),
+		     EXTRACT_16BITS(ipx->srcSkt));
 
 	(void)printf("%s.%d:",
-		     ipxaddr_string(EXTRACT_LONG(ipx->dstNet), ipx->dstNode),
-		     EXTRACT_SHORT(ipx->dstSkt));
+		     ipxaddr_string(EXTRACT_32BITS(ipx->dstNet), ipx->dstNode),
+		     EXTRACT_16BITS(ipx->dstSkt));
 
 	if ((u_char *)(ipx + 1) > snapend) {
 		printf(" [|ipx]");
@@ -98,7 +92,7 @@ netbios_print(const u_char *p, int length)
 	}
 
 	/* take length from ipx header */
-	length = EXTRACT_SHORT(&ipx->length);
+	length = EXTRACT_16BITS(&ipx->length);
 
 	ipx_decode(ipx, (u_char *)ipx + ipxSize, length - ipxSize);
 #endif

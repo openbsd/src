@@ -1,7 +1,5 @@
-/*	$OpenBSD: print-atm.c,v 1.1 1996/07/13 11:01:15 mickey Exp $	*/
-
 /*
- * Copyright (c) 1994, 1995
+ * Copyright (c) 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,13 +19,12 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-atm.c,v 1.4 95/10/07 22:13:49 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atm.c,v 1.2 1996/12/12 16:22:42 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 
 #if __STDC__
@@ -49,8 +46,9 @@ struct rtentry;
 #include <stdio.h>
 #include <pcap.h>
 
-#include "interface.h"
 #include "addrtoname.h"
+#include "ethertype.h"
+#include "interface.h"
 
 /*
  * This is the top level routine of the printer.  'p' is the points
@@ -61,8 +59,8 @@ struct rtentry;
 void
 atm_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
-	int caplen = h->caplen;
-	int length = h->len;
+	u_int caplen = h->caplen;
+	u_int length = h->len;
 	u_short ethertype;
 
 	ts_print(&h->ts);

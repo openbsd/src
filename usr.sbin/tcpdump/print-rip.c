@@ -1,5 +1,3 @@
-/*	$OpenBSD: print-rip.c,v 1.4 1996/07/13 11:01:29 mickey Exp $	*/
-
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -22,13 +20,12 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-rip.c,v 1.30 96/06/24 22:12:54 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-rip.c,v 1.5 1996/12/12 16:22:28 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <netinet/in.h>
@@ -70,13 +67,13 @@ rip_entry_print(register int vers, register const struct rip_netinfo *ni)
 {
 	register u_char *cp, *ep;
 
-	if (EXTRACT_SHORT(&ni->rip_family) != AF_INET) {
+	if (EXTRACT_16BITS(&ni->rip_family) != AF_INET) {
 
-		printf(" [family %d:", EXTRACT_SHORT(&ni->rip_family));
+		printf(" [family %d:", EXTRACT_16BITS(&ni->rip_family));
 		cp = (u_char *)&ni->rip_tag;
 		ep = (u_char *)&ni->rip_metric + sizeof(ni->rip_metric);
 		for (; cp < ep; cp += 2)
-			printf(" %04x", EXTRACT_SHORT(cp));
+			printf(" %04x", EXTRACT_16BITS(cp));
 		printf("]");
 	} else if (vers < 2) {
 		/* RFC 1058 */
@@ -89,20 +86,20 @@ rip_entry_print(register int vers, register const struct rip_netinfo *ni)
 		if (ni->rip_router)
 			printf("->%s", ipaddr_string(&ni->rip_router));
 		if (ni->rip_tag)
-			printf(" tag %04x", EXTRACT_SHORT(&ni->rip_tag));
+			printf(" tag %04x", EXTRACT_16BITS(&ni->rip_tag));
 		printf("}");
 	}
-	printf("(%d)", EXTRACT_LONG(&ni->rip_metric));
+	printf("(%d)", EXTRACT_32BITS(&ni->rip_metric));
 }
 
 void
-rip_print(const u_char *dat, int length)
+rip_print(const u_char *dat, u_int length)
 {
 	register const struct rip *rp;
 	register const struct rip_netinfo *ni;
 	register int i, j, trunc;
 
-	i = min(length, snapend - dat) - (sizeof(*rp) - sizeof(*ni));
+	i = min(length, snapend - dat) - sizeof(*rp);
 	if (i < 0)
 		return;
 
@@ -128,9 +125,9 @@ rip_print(const u_char *dat, int length)
 		break;
 
 	case RIPCMD_TRACEON:
-		printf(" rip-traceon %d: ", length);
+		printf(" rip-traceon %d: \"", length);
 		(void)fn_print((const u_char *)(rp + 1), snapend);
-		putchar('\n');
+		fputs("\"\n", stdout);
 		break;
 
 	case RIPCMD_TRACEOFF:

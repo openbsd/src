@@ -1,21 +1,20 @@
-$OpenBSD: README,v 1.4 1996/07/13 11:01:06 mickey Exp $
-@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/README,v 1.4 1996/07/13 11:01:06 mickey Exp $ (LBL)
+@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/README,v 1.5 1996/12/12 16:23:02 bitblt Exp $ (LBL)
 
-TCPDUMP 3.2
+TCPDUMP 3.3
 Lawrence Berkeley National Laboratory
 Network Research Group
 tcpdump@ee.lbl.gov
-ftp://ftp.ee.lbl.gov/tcpdump-*.tar.Z
+ftp://ftp.ee.lbl.gov/tcpdump.tar.Z
 
 This directory contains source code for tcpdump, a tool for network
 monitoring and data acquisition.  The original distribution is
-available via anonymous ftp to ftp.ee.lbl.gov, in tcpdump-*.tar.Z.
+available via anonymous ftp to ftp.ee.lbl.gov, in tcpdump.tar.Z.
 
 Tcpdump now uses libcap, a system-independent interface for user-level
 packet capture.  Before building tcpdump, you must first retrieve and
 build libpcap, also from LBL, in:
 
-	ftp://ftp.ee.lbl.gov/libpcap-*.tar.Z.
+	ftp://ftp.ee.lbl.gov/libpcap.tar.Z
 
 Once libpcap is built (either install it or make sure it's in
 ../libpcap), you can build tcpdump using the procedure in the INSTALL
@@ -39,7 +38,12 @@ all the input.
 Richard Stevens gives an excellent treatment of the Internet
 protocols in his book ``TCP/IP Illustrated, Volume 1''.
 If you want to learn more about tcpdump and how to interpret
-it's output, pick up this book.
+its output, pick up this book.
+
+Some tools for viewing and analyzing tcpdump trace files are available
+from the Internet Traffic Archive:
+
+	http://town.hall.org/Archives/pub/ITA/
 
 Problems, bugs, questions, desirable enhancements, source code
 contributions, etc., should be sent to the email address

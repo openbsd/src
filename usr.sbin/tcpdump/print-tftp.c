@@ -1,5 +1,3 @@
-/*	$OpenBSD: print-tftp.c,v 1.4 1996/07/13 11:01:32 mickey Exp $	*/
-
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -24,13 +22,12 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-tftp.c,v 1.23 96/06/23 02:11:47 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tftp.c,v 1.5 1996/12/12 16:22:25 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 
 #include <netinet/in.h>
 
@@ -70,24 +67,21 @@ static struct tok err2str[] = {
  * Print trivial file transfer program requests
  */
 void
-tftp_print(register const u_char *bp, int length)
+tftp_print(register const u_char *bp, u_int length)
 {
 	register const struct tftphdr *tp;
 	register const char *cp;
-	register const u_char *ep, *p;
-	register int opcode;
-#define TCHECK(var, l) if ((u_char *)&(var) > ep - l) goto trunc
+	register const u_char *p;
+	register int opcode, i;
 	static char tstr[] = " [|tftp]";
 
 	tp = (const struct tftphdr *)bp;
-	/* 'ep' points to the end of available data. */
-	ep = snapend;
 
 	/* Print length */
 	printf(" %d", length);
 
 	/* Print tftp request type */
-	TCHECK(tp->th_opcode, sizeof(tp->th_opcode));
+	TCHECK(tp->th_opcode);
 	opcode = ntohs(tp->th_opcode);
 	cp = tok2str(op2str, "tftp-#%d", opcode);
 	printf(" %s", cp);
@@ -99,7 +93,6 @@ tftp_print(register const u_char *bp, int length)
 
 	case RRQ:
 	case WRQ:
-		putchar(' ');
 		/*
 		 * XXX Not all arpa/tftp.h's specify th_stuff as any
 		 * array; use address of th_block instead
@@ -109,28 +102,29 @@ tftp_print(register const u_char *bp, int length)
 #else
 		p = (u_char *)&tp->th_block;
 #endif
-		if (fn_print(p, ep)) {
-			fputs(&tstr[1], stdout);
-			return;
-		}
+		fputs(" \"", stdout);
+		i = fn_print(p, snapend);
+		putchar('"');
+		if (i)
+			goto trunc;
 		break;
 
 	case ACK:
 	case DATA:
-		TCHECK(tp->th_block, sizeof(tp->th_block));
+		TCHECK(tp->th_block);
 		printf(" block %d", ntohs(tp->th_block));
 		break;
 
 	case ERROR:
 		/* Print error code string */
-		TCHECK(tp->th_code, sizeof(tp->th_code));
-		printf(" %s ", tok2str(err2str, "tftp-err-#%d",
+		TCHECK(tp->th_code);
+		printf(" %s ", tok2str(err2str, "tftp-err-#%d \"",
 				       ntohs(tp->th_code)));
 		/* Print error message string */
-		if (fn_print((const u_char *)tp->th_data, ep)) {
-			fputs(&tstr[1], stdout);
-			return;
-		}
+		i = fn_print((const u_char *)tp->th_data, snapend);
+		putchar('"');
+		if (i)
+			goto trunc;
 		break;
 
 	default:
@@ -141,5 +135,5 @@ tftp_print(register const u_char *bp, int length)
 	return;
 trunc:
 	fputs(tstr, stdout);
-#undef TCHECK
+	return;
 }

@@ -1,5 +1,3 @@
-/*	$OpenBSD: print-ipx.c,v 1.4 1996/07/13 11:01:24 mickey Exp $	*/
-
 /*
  * Copyright (c) 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -19,20 +17,18 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- */
-
-/*
+ *
  * Format and print Novell IPX packets.
  * Contributed by Brad Parker (brad@fcr.com).
  */
+
 #ifndef lint
-static  char rcsid[] =
-    "@(#)Header: print-ipx.c,v 1.10 96/05/16 12:46:02 leres Exp";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipx.c,v 1.5 1996/12/12 16:22:35 bitblt Exp $";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <netinet/in.h>
@@ -56,40 +52,36 @@ static  char rcsid[] =
 #include "extract.h"
 
 
-static const char *ipxaddr_string(u_int32_t net, const u_char *node);
-void ipx_decode(const struct ipxHdr *ipx, const u_char *datap, int length);
-void ipx_sap_print(const u_short *ipx, int length);
-void ipx_rip_print(const u_short *ipx, int length);
+static const char *ipxaddr_string(u_int32_t, const u_char *);
+void ipx_decode(const struct ipxHdr *, const u_char *, u_int);
+void ipx_sap_print(const u_short *, u_int);
+void ipx_rip_print(const u_short *, u_int);
 
 /*
  * Print IPX datagram packets.
  */
 void
-ipx_print(const u_char *p, int length)
+ipx_print(const u_char *p, u_int length)
 {
 	const struct ipxHdr *ipx = (const struct ipxHdr *)p;
 
-	if (length < ipxSize) {
-		(void)printf(" truncated-ipx %d", length);
-		return;
-	}
+	TCHECK(ipx->srcSkt);
 	(void)printf("%s.%x > ",
-		     ipxaddr_string(EXTRACT_LONG(ipx->srcNet), ipx->srcNode),
-		     EXTRACT_SHORT(&ipx->srcSkt));
+		     ipxaddr_string(EXTRACT_32BITS(ipx->srcNet), ipx->srcNode),
+		     EXTRACT_16BITS(&ipx->srcSkt));
 
 	(void)printf("%s.%x:",
-		     ipxaddr_string(EXTRACT_LONG(ipx->dstNet), ipx->dstNode),
-		     EXTRACT_SHORT(&ipx->dstSkt));
-
-	if ((u_char *)(ipx + 1) > snapend) {
-		printf(" [|ipx]");
-		return;
-	}
+		     ipxaddr_string(EXTRACT_32BITS(ipx->dstNet), ipx->dstNode),
+		     EXTRACT_16BITS(&ipx->dstSkt));
 
 	/* take length from ipx header */
-	length = EXTRACT_SHORT(&ipx->length);
+	TCHECK(ipx->length);
+	length = EXTRACT_16BITS(&ipx->length);
 
 	ipx_decode(ipx, (u_char *)ipx + ipxSize, length - ipxSize);
+	return;
+trunc:
+	printf("[|ipx %d]", length);
 }
 
 static const char *
@@ -97,18 +89,18 @@ ipxaddr_string(u_int32_t net, const u_char *node)
 {
     static char line[256];
 
-    sprintf(line, "%u.%02x:%02x:%02x:%02x:%02x:%02x",
+    sprintf(line, "%x.%02x:%02x:%02x:%02x:%02x:%02x",
 	    net, node[0], node[1], node[2], node[3], node[4], node[5]);
 
     return line;
 }
 
 void
-ipx_decode(const struct ipxHdr *ipx, const u_char *datap, int length)
+ipx_decode(const struct ipxHdr *ipx, const u_char *datap, u_int length)
 {
     register u_short dstSkt;
 
-    dstSkt = EXTRACT_SHORT(&ipx->dstSkt);
+    dstSkt = EXTRACT_16BITS(&ipx->dstSkt);
     switch (dstSkt) {
       case IPX_SKT_NCP:
 	(void)printf(" ipx-ncp %d", length);
@@ -132,16 +124,12 @@ ipx_decode(const struct ipxHdr *ipx, const u_char *datap, int length)
 }
 
 void
-ipx_sap_print(const u_short *ipx, int length)
+ipx_sap_print(const u_short *ipx, u_int length)
 {
     int command, i;
 
-    if (length < 2) {
-	(void)printf(" truncated-sap %d", length);
-	return;
-    }
-
-    command = EXTRACT_SHORT(ipx);
+    TCHECK(ipx[0]);
+    command = EXTRACT_16BITS(ipx);
     ipx++;
     length -= 2;
 
@@ -153,9 +141,12 @@ ipx_sap_print(const u_short *ipx, int length)
 	else
 	    (void)printf("ipx-sap-nearest-req");
 
-	if (length > 0)
-	    (void)printf(" %x '%.48s'", EXTRACT_SHORT(&ipx[0]),
-			 (char*)&ipx[1]);
+	if (length > 0) {
+	    TCHECK(ipx[1]);
+	    (void)printf(" %x '", EXTRACT_16BITS(&ipx[0]));
+	    fn_print((u_char *)&ipx[1], (u_char *)&ipx[1] + 48);
+	    putchar('\'');
+	}
 	break;
 
       case 2:
@@ -166,10 +157,11 @@ ipx_sap_print(const u_short *ipx, int length)
 	    (void)printf("ipx-sap-nearest-resp");
 
 	for (i = 0; i < 8 && length > 0; i++) {
-	    (void)printf(" %x '%.48s' addr %s",
-			 EXTRACT_SHORT(&ipx[0]), (char *)&ipx[1],
-			 ipxaddr_string(EXTRACT_LONG(&ipx[25]),
-					(u_char *)&ipx[27]));
+	    TCHECK2(ipx[27], 1);
+	    (void)printf(" %x '", EXTRACT_16BITS(&ipx[0]));
+	    fn_print((u_char *)&ipx[1], (u_char *)&ipx[1] + 48);
+	    printf("' addr %s",
+		ipxaddr_string(EXTRACT_32BITS(&ipx[25]), (u_char *)&ipx[27]));
 	    ipx += 32;
 	    length -= 64;
 	}
@@ -178,34 +170,36 @@ ipx_sap_print(const u_short *ipx, int length)
 	    (void)printf("ipx-sap-?%x", command);
 	break;
     }
+	return;
+trunc:
+	printf("[|ipx %d]", length);
 }
 
 void
-ipx_rip_print(const u_short *ipx, int length)
+ipx_rip_print(const u_short *ipx, u_int length)
 {
     int command, i;
 
-    if (length < 2) {
-	(void)printf(" truncated-ipx %d", length);
-	return;
-    }
-
-    command = EXTRACT_SHORT(ipx);
+    TCHECK(ipx[0]);
+    command = EXTRACT_16BITS(ipx);
     ipx++;
     length -= 2;
 
     switch (command) {
       case 1:
 	(void)printf("ipx-rip-req");
-	if (length > 0)
-	    (void)printf(" %u/%d.%d", EXTRACT_LONG(&ipx[0]),
-			 EXTRACT_SHORT(&ipx[2]), EXTRACT_SHORT(&ipx[3]));
+	if (length > 0) {
+	    TCHECK(ipx[3]);
+	    (void)printf(" %u/%d.%d", EXTRACT_32BITS(&ipx[0]),
+			 EXTRACT_16BITS(&ipx[2]), EXTRACT_16BITS(&ipx[3]));
+	}
 	break;
       case 2:
 	(void)printf("ipx-rip-resp");
 	for (i = 0; i < 50 && length > 0; i++) {
-	    (void)printf(" %u/%d.%d", EXTRACT_LONG(&ipx[0]),
-			 EXTRACT_SHORT(&ipx[2]), EXTRACT_SHORT(&ipx[3]));
+	    TCHECK(ipx[3]);
+	    (void)printf(" %u/%d.%d", EXTRACT_32BITS(&ipx[0]),
+			 EXTRACT_16BITS(&ipx[2]), EXTRACT_16BITS(&ipx[3]));
 
 	    ipx += 4;
 	    length -= 8;
@@ -214,5 +208,8 @@ ipx_rip_print(const u_short *ipx, int length)
       default:
 	    (void)printf("ipx-rip-?%x", command);
     }
+	return;
+trunc:
+	printf("[|ipx %d]", length);
 }
 

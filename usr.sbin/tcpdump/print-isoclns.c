@@ -1,7 +1,5 @@
-/*	$OpenBSD: print-isoclns.c,v 1.4 1996/07/13 11:01:24 mickey Exp $	*/
-
 /*
- * Copyright (c) 1992, 1993, 1994, 1995
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,15 +17,13 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- */
-
-/*
+ *
  * Original code by Matt Thomas, Digital Equipment Corporation
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-isoclns.c,v 1.11 95/10/19 20:27:45 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-isoclns.c,v 1.5 1996/12/12 16:22:34 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -54,11 +50,11 @@ struct rtentry;
 #define	ISIS	131
 #define	NULLNS	0
 
-static int osi_cksum(const u_char *, int, const u_char *, u_char *, u_char *);
-static void esis_print(const u_char *, int);
+static int osi_cksum(const u_char *, u_int, const u_char *, u_char *, u_char *);
+static void esis_print(const u_char *, u_int);
 
 void
-isoclns_print(const u_char *p, int length, int caplen,
+isoclns_print(const u_char *p, u_int length, u_int caplen,
 	      const u_char *esrc, const u_char *edst)
 {
 	if (caplen < 1) {
@@ -136,7 +132,7 @@ struct esis_hdr {
 };
 
 static void
-esis_print(const u_char *p, int length)
+esis_print(const u_char *p, u_int length)
 {
 	const u_char *ep;
 	int li = p[1];
@@ -287,7 +283,7 @@ esis_print(const u_char *p, int length)
 }
 
 static int
-osi_cksum(register const u_char *p, register int len,
+osi_cksum(register const u_char *p, register u_int len,
 	  const u_char *toff, u_char *cksum, u_char *off)
 {
 	int x, y, f = (len - ((toff - p) + 1));

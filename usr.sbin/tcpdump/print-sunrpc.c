@@ -1,7 +1,5 @@
-/*	$OpenBSD: print-sunrpc.c,v 1.4 1996/07/13 11:01:31 mickey Exp $	*/
-
 /*
- * Copyright (c) 1992, 1993, 1994, 1995
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,13 +20,12 @@
  */
 
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-sunrpc.c,v 1.22 95/10/19 20:27:46 leres Exp (LBL)";
+static const char rcsid[] =
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sunrpc.c,v 1.5 1996/12/12 16:22:26 bitblt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 
 #if __STDC__
@@ -71,7 +68,7 @@ static struct tok proc2str[] = {
 static char *progstr(u_int32_t);
 
 void
-sunrpcrequest_print(register const u_char *bp, register int length,
+sunrpcrequest_print(register const u_char *bp, register u_int length,
 		    register const u_char *bp2)
 {
 	register const struct rpc_msg *rp;

@@ -1,5 +1,3 @@
-/*	$OpenBSD: llc.h,v 1.4 1996/07/13 11:01:11 mickey Exp $	*/
-
 /*
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -20,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: llc.h,v 1.4 94/06/14 20:11:46 leres Exp (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/llc.h,v 1.5 1996/12/12 16:22:52 bitblt Exp $ (LBL)
  */
 
 /*

@@ -1,5 +1,3 @@
-/*	$OpenBSD: decnet.h,v 1.4 1996/07/13 11:01:08 mickey Exp $	*/
-
 /*
  * Copyright (c) 1992, 1994, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -20,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: decnet.h,v 1.5 96/06/23 02:11:44 leres Exp (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/decnet.h,v 1.5 1996/12/12 16:22:57 bitblt Exp $ (LBL)
  */
 
 typedef unsigned char byte[1];		/* single byte field */
@@ -453,30 +451,3 @@ struct dcmsg				/* disconnect confirm message */
     word	dc_src;			/* source link address */
     word	dc_reason;		/* reason code */
   };
-
-/*
- * Like the macros in extract.h, except that since DECNET is a little-endian
- * protocol, the BYTE_ORDER sense is reversed.
- */
-#define	EXTRACT_8BITS(p)	(*(p))
-#if BYTE_ORDER == BIG_ENDIAN
-#define EXTRACT_16BITS(p)\
-	((u_short)\
-		(*((u_char *)p+1)<<8|\
-		 *((u_char *)p+0)<<0))
-#define EXTRACT_32BITS(p)\
-		(*((u_char *)p+3)<<24|\
-		 *((u_char *)p+2)<<16|\
-		 *((u_char *)p+1)<<8|\
-		 *((u_char *)p+0)<<0)
-#else
-#define EXTRACT_16BITS(p)\
-	((u_short)\
-		(*((u_char *)p+0)<<8|\
-		 *((u_char *)p+1)<<0))
-#define EXTRACT_32BITS(p)\
-		(*((u_char *)p+0)<<24|\
-		 *((u_char *)p+1)<<16|\
-		 *((u_char *)p+2)<<8|\
-		 *((u_char *)p+3)<<0)
-#endif
