@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.sysdep,v 1.6 1999/07/17 22:07:31 niklas Exp $
-#	$EOM: Makefile.sysdep,v 1.6 1999/07/17 22:10:49 niklas Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.7 1999/08/26 22:32:03 niklas Exp $
+#	$EOM: Makefile.sysdep,v 1.10 1999/08/26 11:40:48 niklas Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -34,19 +34,22 @@
 # This code was written under funding by Ericsson Radio Systems.
 #
 
-LDADD+=		-lgmp -lcrypto
-DPADD+=		${LIBGMP} ${LIBCRYPTO}
+LDADD+=		-lgmp
+DPADD+=		${LIBGMP}
 
-SRCS+=		pf_key_v2.c
-CFLAGS+=	-DUSE_PF_KEY_V2
+IPSEC_SRCS=	pf_key_v2.c
+IPSEC_CFLAGS=	-DUSE_PF_KEY_V2
 
-USE_KEYNOTE=	yes
-
-.ifdef USE_KEYNOTE
-LDADD+=		-lkeynote -lcrypto -lm
-#DPADD+=	
-
-SRCS+=		policy.c
-CFLAGS+=	-DUSE_KEYNOTE
+# Some OpenBSD systems do not provide dlopen(3).
+.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips" && ${MACHINE_ARCH} != "powerpc" && ${MACHINE_ARCH} != "vax"
+HAVE_DLOPEN=	defined
+CFLAGS+=	-DSYMBOL_PREFIX='"_"'
 .endif
 
+USE_LIBCRYPTO=	defined
+USE_KEYNOTE=	defined
+
+.ifndef USE_LIBCRYPTO
+DESLIB=		-ldes
+DESLIBDEP=	${LIBDES}
+.endif
