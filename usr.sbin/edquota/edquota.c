@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.16 1997/06/30 06:05:01 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.17 1997/08/20 05:32:17 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -53,6 +53,7 @@ static char *rcsid = "$Id: edquota.c,v 1.16 1997/06/30 06:05:01 deraadt Exp $";
 #include <sys/file.h>
 #include <sys/wait.h>
 #include <ufs/ufs/quota.h>
+#include <err.h>
 #include <errno.h>
 #include <fstab.h>
 #include <pwd.h>
@@ -94,7 +95,7 @@ int	cvtatos __P((time_t, char *, time_t *));
 void
 usage()
 {
-	fprintf(stderr, "%s%s%s%s",
+	(void)fprintf(stderr, "%s%s%s%s",
 		"Usage: edquota [-u] [-p username] username ...\n",
 		"\tedquota -g [-p groupname] groupname ...\n",
 		"\tedquota [-u] -t\n", "\tedquota -g -t\n");
@@ -117,10 +118,8 @@ main(argc, argv)
 
 	if (argc < 2)
 		usage();
-	if (getuid()) {
-		fprintf(stderr, "edquota: permission denied\n");
-		exit(1);
-	}
+	if (getuid())
+		errx(1, strerror(EPERM));
 	quotatype = USRQUOTA;
 	while ((ch = getopt(argc, argv, "ugtp:")) != -1) {
 		switch(ch) {
@@ -158,11 +157,8 @@ main(argc, argv)
 		}
 		exit(0);
 	}
-	tmpfd = mkstemp(tmpfil);
-	if (tmpfd == -1) {
-		fprintf(stderr, "edquota: cannot open file\n");
-		exit(1);
-	}
+	if ((tmpfd = mkstemp(tmpfil)) == -1)
+		errx(1, tmpfil);
 	if (tflag) {
 		protoprivs = getprivs(0, quotatype);
 		if (writetimes(protoprivs, tmpfd, quotatype) == 0) {
@@ -204,24 +200,24 @@ getentry(name, quotatype)
 	struct group *gr;
 
 	if (alldigits(name))
-		return (atoi(name));
+		return(atoi(name));
 	switch(quotatype) {
 	case USRQUOTA:
 		if ((pw = getpwnam(name)))
-			return (pw->pw_uid);
-		fprintf(stderr, "%s: no such user\n", name);
+			return(pw->pw_uid);
+		warnx("%s: no such user", name);
 		break;
 	case GRPQUOTA:
 		if ((gr = getgrnam(name)))
-			return (gr->gr_gid);
-		fprintf(stderr, "%s: no such group\n", name);
+			return(gr->gr_gid);
+		warnx("%s: no such group", name);
 		break;
 	default:
-		fprintf(stderr, "%d: unknown quota type\n", quotatype);
+		warnx("%d: unknown quota type", quotatype);
 		break;
 	}
 	sleep(1);
-	return (-1);
+	return(-1);
 }
 
 /*
@@ -251,14 +247,12 @@ getprivs(id, quotatype)
 		if (!hasquota(fs, quotatype, &qfpathname))
 			continue;
 		qupsize = sizeof(*qup) + strlen(qfpathname);
-		if ((qup = (struct quotause *)malloc(qupsize)) == NULL) {
-			fprintf(stderr, "edquota: out of memory\n");
-			exit(2);
-		}
+		if ((qup = (struct quotause *)malloc(qupsize)) == NULL)
+			errx(2, "out of memory");
 		if (quotactl(fs->fs_file, qcmd, id, (char *)&qup->dqblk) != 0) {
 	    		if (errno == EOPNOTSUPP && !warned) {
 				warned++;
-				fprintf(stderr, "Warning: %s\n",
+				(void)fprintf(stderr, "Warning: %s\n",
 				    "Quotas are not compiled into this kernel");
 				sleep(3);
 			}
@@ -269,12 +263,12 @@ getprivs(id, quotatype)
 					free(qup);
 					continue;
 				}
-				fprintf(stderr, "Creating quota file %s\n",
+				(void)fprintf(stderr, "Creating quota file %s\n",
 				    qfpathname);
 				sleep(3);
-				(void) fchown(fd, getuid(),
+				(void)fchown(fd, getuid(),
 				    getentry(quotagroup, GRPQUOTA));
-				(void) fchmod(fd, 0640);
+				(void)fchmod(fd, 0640);
 			}
 			lseek(fd, (off_t)(id * sizeof(struct dqblk)), L_SET);
 			switch (read(fd, &qup->dqblk, sizeof(struct dqblk))) {
@@ -291,8 +285,7 @@ getprivs(id, quotatype)
 				break;
 
 			default:		/* ERROR */
-				fprintf(stderr, "edquota: read error in ");
-				perror(qfpathname);
+				warn("read error in %s", qfpathname);
 				close(fd);
 				free(qup);
 				continue;
@@ -309,7 +302,7 @@ getprivs(id, quotatype)
 		qup->next = 0;
 	}
 	endfsent();
-	return (quphead);
+	return(quphead);
 }
 
 /*
@@ -333,10 +326,8 @@ putprivs(id, quotatype, quplist)
 		} else {
 			lseek(fd, (off_t)(id * sizeof (struct dqblk)), 0);
 			if (write(fd, &qup->dqblk, sizeof (struct dqblk)) !=
-			    sizeof (struct dqblk)) {
-				fprintf(stderr, "edquota: ");
-				perror(qup->qfname);
-			}
+			    sizeof (struct dqblk))
+				warn(qup->qfname);
 			close(fd);
 		}
 	}
@@ -359,8 +350,8 @@ editit(tmpfile)
 		ed = _PATH_VI;
 	p = (char *)malloc(strlen(ed) + 1 + strlen(tmpfile) + 1);
 	if (!p)
-		return (0);
-	sprintf(p, "%s %s", ed, tmpfile);
+		return(0);
+	(void)sprintf(p, "%s %s", ed, tmpfile);
 	argp[2] = p;
 
 	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGHUP));
@@ -369,7 +360,7 @@ editit(tmpfile)
 		extern errno;
 
 		if (errno == EPROCLIM) {
-			fprintf(stderr, "You have too many processes\n");
+			warnx("you have too many processes");
 			free(p);
 			return(0);
 		}
@@ -379,7 +370,7 @@ editit(tmpfile)
 		}
 		perror("fork");
 		free(p);
-		return (0);
+		return(0);
 	}
 	if (pid == 0) {
 		sigsetmask(omask);
@@ -398,8 +389,8 @@ editit(tmpfile)
 	}
 	sigsetmask(omask);
 	if (!WIFEXITED(stat) || WEXITSTATUS(stat) != 0)
-		return (0);
-	return (1);
+		return(0);
+	return(1);
 }
 
 /*
@@ -417,24 +408,21 @@ writeprivs(quplist, outfd, name, quotatype)
 
 	ftruncate(outfd, 0);
 	lseek(outfd, 0, L_SET);
-	if ((fd = fdopen(dup(outfd), "w")) == NULL) {
-		fprintf(stderr, "edquota: ");
-		perror(tmpfil);
-		exit(1);
-	}
-	fprintf(fd, "Quotas for %s %s:\n", qfextension[quotatype], name);
+	if ((fd = fdopen(dup(outfd), "w")) == NULL)
+		err(1, tmpfil);
+	(void)fprintf(fd, "Quotas for %s %s:\n", qfextension[quotatype], name);
 	for (qup = quplist; qup; qup = qup->next) {
-		fprintf(fd, "%s: %s %d, limits (soft = %d, hard = %d)\n",
+		(void)fprintf(fd, "%s: %s %d, limits (soft = %d, hard = %d)\n",
 		    qup->fsname, "blocks in use:",
 		    dbtob(qup->dqblk.dqb_curblocks) / 1024,
 		    dbtob(qup->dqblk.dqb_bsoftlimit) / 1024,
 		    dbtob(qup->dqblk.dqb_bhardlimit) / 1024);
-		fprintf(fd, "%s %d, limits (soft = %d, hard = %d)\n",
+		(void)fprintf(fd, "%s %d, limits (soft = %d, hard = %d)\n",
 		    "\tinodes in use:", qup->dqblk.dqb_curinodes,
 		    qup->dqblk.dqb_isoftlimit, qup->dqblk.dqb_ihardlimit);
 	}
 	fclose(fd);
-	return (1);
+	return(1);
 }
 
 /*
@@ -455,46 +443,45 @@ readprivs(quplist, infd)
 	lseek(infd, 0, L_SET);
 	fd = fdopen(dup(infd), "r");
 	if (fd == NULL) {
-		fprintf(stderr, "Can't re-read temp file!!\n");
-		return (0);
+		warnx("can't re-read temp file!!");
+		return(0);
 	}
 	/*
 	 * Discard title line, then read pairs of lines to process.
 	 */
-	(void) fgets(line1, sizeof (line1), fd);
+	(void)fgets(line1, sizeof (line1), fd);
 	while (fgets(line1, sizeof (line1), fd) != NULL &&
 	       fgets(line2, sizeof (line2), fd) != NULL) {
 		if ((fsp = strtok(line1, " \t:")) == NULL) {
-			fprintf(stderr, "%s: bad format\n", line1);
-			return (0);
+			warnx("%s: bad format", line1);
+			return(0);
 		}
 		if ((cp = strtok((char *)0, "\n")) == NULL) {
-			fprintf(stderr, "%s: %s: bad format\n", fsp,
-			    &fsp[strlen(fsp) + 1]);
-			return (0);
+			warnx("%s: %s: bad format", fsp, &fsp[strlen(fsp) + 1]);
+			return(0);
 		}
 		cnt = sscanf(cp,
 		    " blocks in use: %d, limits (soft = %d, hard = %d)",
 		    &dqblk.dqb_curblocks, &dqblk.dqb_bsoftlimit,
 		    &dqblk.dqb_bhardlimit);
 		if (cnt != 3) {
-			fprintf(stderr, "%s:%s: bad format\n", fsp, cp);
-			return (0);
+			warnx("%s:%s: bad format", fsp, cp);
+			return(0);
 		}
 		dqblk.dqb_curblocks = btodb(dqblk.dqb_curblocks * 1024);
 		dqblk.dqb_bsoftlimit = btodb(dqblk.dqb_bsoftlimit * 1024);
 		dqblk.dqb_bhardlimit = btodb(dqblk.dqb_bhardlimit * 1024);
 		if ((cp = strtok(line2, "\n")) == NULL) {
-			fprintf(stderr, "%s: %s: bad format\n", fsp, line2);
-			return (0);
+			warnx("%s: %s: bad format", fsp, line2);
+			return(0);
 		}
 		cnt = sscanf(cp,
 		    "\tinodes in use: %d, limits (soft = %d, hard = %d)",
 		    &dqblk.dqb_curinodes, &dqblk.dqb_isoftlimit,
 		    &dqblk.dqb_ihardlimit);
 		if (cnt != 3) {
-			fprintf(stderr, "%s: %s: bad format\n", fsp, line2);
-			return (0);
+			warnx("%s: %s: bad format", fsp, line2);
+			return(0);
 		}
 		for (qup = quplist; qup; qup = qup->next) {
 			if (strcmp(fsp, qup->fsname))
@@ -525,8 +512,7 @@ readprivs(quplist, infd)
 			if (dqblk.dqb_curblocks == qup->dqblk.dqb_curblocks &&
 			    dqblk.dqb_curinodes == qup->dqblk.dqb_curinodes)
 				break;
-			fprintf(stderr,
-			    "%s: cannot change current allocation\n", fsp);
+			warnx("%s: cannot change current allocationn", fsp);
 			break;
 		}
 	}
@@ -544,7 +530,7 @@ readprivs(quplist, infd)
 		qup->dqblk.dqb_isoftlimit = 0;
 		qup->dqblk.dqb_ihardlimit = 0;
 	}
-	return (1);
+	return(1);
 }
 
 /*
@@ -562,22 +548,21 @@ writetimes(quplist, outfd, quotatype)
 
 	ftruncate(outfd, 0);
 	lseek(outfd, 0, L_SET);
-	if ((fd = fdopen(dup(outfd), "w")) == NULL) {
-		fprintf(stderr, "edquota: ");
-		perror(tmpfil);
-		exit(1);
-	}
-	fprintf(fd, "Time units may be: days, hours, minutes, or seconds\n");
-	fprintf(fd, "Grace period before enforcing soft limits for %ss:\n",
+	if ((fd = fdopen(dup(outfd), "w")) == NULL)
+		err(1, tmpfil);
+	(void)fprintf(fd,
+	    "Time units may be: days, hours, minutes, or seconds\n");
+	(void)fprintf(fd,
+	    "Grace period before enforcing soft limits for %ss:\n",
 	    qfextension[quotatype]);
 	for (qup = quplist; qup; qup = qup->next) {
-		fprintf(fd, "%s: block grace period: %s, ",
+		(void)fprintf(fd, "%s: block grace period: %s, ",
 		    qup->fsname, cvtstoa(qup->dqblk.dqb_btime));
-		fprintf(fd, "file grace period: %s\n",
+		(void)fprintf(fd, "file grace period: %s\n",
 		    cvtstoa(qup->dqblk.dqb_itime));
 	}
 	fclose(fd);
-	return (1);
+	return(1);
 }
 
 /*
@@ -598,35 +583,35 @@ readtimes(quplist, infd)
 	lseek(infd, 0, L_SET);
 	fd = fdopen(dup(infd), "r");
 	if (fd == NULL) {
-		fprintf(stderr, "Can't re-read temp file!!\n");
-		return (0);
+		warnx("can't re-read temp file!!");
+		return(0);
 	}
 	/*
 	 * Discard two title lines, then read lines to process.
 	 */
-	(void) fgets(line1, sizeof (line1), fd);
-	(void) fgets(line1, sizeof (line1), fd);
+	(void)fgets(line1, sizeof (line1), fd);
+	(void)fgets(line1, sizeof (line1), fd);
 	while (fgets(line1, sizeof (line1), fd) != NULL) {
 		if ((fsp = strtok(line1, " \t:")) == NULL) {
-			fprintf(stderr, "%s: bad format\n", line1);
-			return (0);
+			warnx("%s: bad format", line1);
+			return(0);
 		}
 		if ((cp = strtok((char *)0, "\n")) == NULL) {
-			fprintf(stderr, "%s: %s: bad format\n", fsp,
+			warnx("%s: %s: bad format", fsp,
 			    &fsp[strlen(fsp) + 1]);
-			return (0);
+			return(0);
 		}
 		cnt = sscanf(cp,
 		    " block grace period: %d %s file grace period: %d %s",
 		    (int *)&btime, bunits, (int *)&itime, iunits);
 		if (cnt != 4) {
-			fprintf(stderr, "%s:%s: bad format\n", fsp, cp);
-			return (0);
+			warnx("%s:%s: bad format", fsp, cp);
+			return(0);
 		}
 		if (cvtatos(btime, bunits, &bseconds) == 0)
-			return (0);
+			return(0);
 		if (cvtatos(itime, iunits, &iseconds) == 0)
-			return (0);
+			return(0);
 		for (qup = quplist; qup; qup = qup->next) {
 			if (strcmp(fsp, qup->fsname))
 				continue;
@@ -649,7 +634,7 @@ readtimes(quplist, infd)
 		qup->dqblk.dqb_btime = 0;
 		qup->dqblk.dqb_itime = 0;
 	}
-	return (1);
+	return(1);
 }
 
 /*
@@ -663,16 +648,20 @@ cvtstoa(time)
 
 	if (time % (24 * 60 * 60) == 0) {
 		time /= 24 * 60 * 60;
-		sprintf(buf, "%d day%s", (int) time, time == 1 ? "" : "s");
+		(void)sprintf(buf, "%d day%s", (int)time,
+		    time == 1 ? "" : "s");
 	} else if (time % (60 * 60) == 0) {
 		time /= 60 * 60;
-		sprintf(buf, "%d hour%s", (int) time, time == 1 ? "" : "s");
+		(void)sprintf(buf, "%d hour%s", (int)time,
+		    time == 1 ? "" : "s");
 	} else if (time % 60 == 0) {
 		time /= 60;
-		sprintf(buf, "%d minute%s", (int) time, time == 1 ? "" : "s");
+		(void)sprintf(buf, "%d minute%s", (int)time,
+		    time == 1 ? "" : "s");
 	} else
-		sprintf(buf, "%d second%s", (int) time, time == 1 ? "" : "s");
-	return (buf);
+		(void)sprintf(buf, "%d second%s", (int)time,
+		    time == 1 ? "" : "s");
+	return(buf);
 }
 
 /*
@@ -694,11 +683,11 @@ cvtatos(time, units, seconds)
 	else if (bcmp(units, "day", 3) == 0)
 		*seconds = time * 24 * 60 * 60;
 	else {
-		printf("%s: bad units, specify %s\n", units,
+		(void)printf("%s: bad units, specify %s\n", units,
 		    "days, hours, minutes, or seconds");
-		return (0);
+		return(0);
 	}
-	return (1);
+	return(1);
 }
 
 /*
@@ -728,9 +717,9 @@ alldigits(s)
 	c = *s++;
 	do {
 		if (!isdigit(c))
-			return (0);
+			return(0);
 	} while ((c = *s++));
-	return (1);
+	return(1);
 }
 
 /*
@@ -748,8 +737,8 @@ hasquota(fs, type, qfnamep)
 	static char buf[BUFSIZ];
 
 	if (!initname) {
-		sprintf(usrname, "%s%s", qfextension[USRQUOTA], qfname);
-		sprintf(grpname, "%s%s", qfextension[GRPQUOTA], qfname);
+		(void)sprintf(usrname, "%s%s", qfextension[USRQUOTA], qfname);
+		(void)sprintf(grpname, "%s%s", qfextension[GRPQUOTA], qfname);
 		initname = 1;
 	}
 	strcpy(buf, fs->fs_mntops);
@@ -762,12 +751,12 @@ hasquota(fs, type, qfnamep)
 			break;
 	}
 	if (!opt)
-		return (0);
+		return(0);
 	if (cp) {
 		*qfnamep = cp;
-		return (1);
+		return(1);
 	}
-	(void) sprintf(buf, "%s/%s.%s", fs->fs_file, qfname, qfextension[type]);
+	(void)sprintf(buf, "%s/%s.%s", fs->fs_file, qfname, qfextension[type]);
 	*qfnamep = buf;
-	return (1);
+	return(1);
 }
