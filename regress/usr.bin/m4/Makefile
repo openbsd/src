@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.3 2000/07/01 14:18:39 espie Exp $
+#	$OpenBSD: Makefile,v 1.4 2000/07/02 01:21:04 espie Exp $
 #	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:33 lukem Exp $
 
 NOMAN=
 NOPROG=
 
-FIBOMAX=12
+FIBOMAX=25
 
 CLEANFILES+= ff_after_dnl.m4 fibo.out
 
