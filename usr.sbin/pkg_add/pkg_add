@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.34 2004/07/14 10:44:03 espie Exp $
+# $OpenBSD: pkg_add,v 1.35 2004/07/20 18:58:41 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -93,6 +93,18 @@ sub install
 	$file->{destdir} = $destdir;
 	$file->create();
 	$self->set_modes($destdir.$fullname);
+}
+
+package OpenBSD::PackingElement::InfoFile;
+use File::Basename;
+
+sub install
+{
+	my ($self, $archive, $destdir, $verbose, $not) = @_;
+	$self->SUPER::install($archive, $destdir, $verbose, $not);
+	return if $not;
+	my $fullname = $destdir.$self->fullname();
+	system("install-info", "--info-dir=".dirname($fullname), $fullname);
 }
 
 package OpenBSD::PackingElement::Dir;

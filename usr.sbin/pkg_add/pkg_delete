@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.26 2004/07/18 12:00:21 espie Exp $
+# $OpenBSD: pkg_delete,v 1.27 2004/07/20 18:58:41 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -65,7 +65,7 @@ sub remove_dirs
 		next if defined $remaining->{$d};
 		my $realname = $state->{destdir}.$d;
 		if (!rmdir $realname) {
-			    print "Error deleting directory $realname\n";
+			    print "Error deleting directory $realname: $!\n";
 		}
 	}
 }
@@ -172,6 +172,18 @@ sub delete
 		$self->log_pkgname($state);
 		OpenBSD::Logger::log "rm $state->{destdirname}$name\n";
 	}
+}
+
+package OpenBSD::PackingElement::InfoFile;
+use File::Basename;
+sub delete
+{
+	my ($self, $state) = @_;
+	unless ($state->{not}) {
+	    my $fullname = $state->{destdir}.$self->fullname();
+	    system("install-info", "--delete", "--info-dir=".dirname($fullname), $fullname);
+	}
+	$self->SUPER::delete($state);
 }
 
 package OpenBSD::PackingElement::Extra;

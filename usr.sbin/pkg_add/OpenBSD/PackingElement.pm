@@ -1,4 +1,4 @@
-# $OpenBSD: PackingElement.pm,v 1.11 2004/07/14 10:44:03 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.12 2004/07/20 18:58:41 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -150,6 +150,8 @@ sub expand
 }
 sub IsFile() { 0 }
 
+sub NoDuplicateNames() { 0 }
+
 sub fullname($)
 {
 	return $_[0]->{fullname};
@@ -161,12 +163,18 @@ use File::Spec;
 use OpenBSD::PackageInfo qw(is_info_name);
 __PACKAGE__->setKeyword('file');
 
+sub needs_keyword
+{
+	my $self = shift;
+	return $self->stringize() =~ m/\^@/;
+}
+
 sub write
 {
 	my ($self, $fh) = @_;
 	print $fh "\@ignore\n" if defined $self->{ignore};
 	print $fh "\@comment no checksum\n" if defined $self->{nochecksum};
-	if ($self->stringize() =~ m/^\@/) {
+	if ($self->needs_keyword()) {
 		$self->SUPER::write($fh);
 	} else {
 		print $fh $self->stringize(), "\n";
@@ -244,6 +252,15 @@ sub make_hardlink
 }
 
 sub IsFile() { 1 }
+
+sub NoDuplicateNames() { 1 }
+
+package OpenBSD::PackingElement::InfoFile;
+our @ISA=qw(OpenBSD::PackingElement::File);
+__PACKAGE__->setKeyword('info');
+sub keyword() { "info" }
+
+sub needs_keyword { 1 }
 
 package OpenBSD::PackingElement::Ignore;
 our @ISA=qw(OpenBSD::PackingElement);
@@ -571,6 +588,8 @@ sub destate
 
 package OpenBSD::PackingElement::Dirs;
 
+sub NoDuplicateNames() { 1 }
+
 package OpenBSD::PackingElement::DirRm;
 our @ISA=qw(OpenBSD::PackingElement::Dirs OpenBSD::PackingElement);
 
@@ -616,6 +635,8 @@ sub add_md5
 	my ($self, $md5) = @_;
 	$self->{md5} = $md5;
 }
+
+sub needs_keyword { 0 }
 
 sub write
 {

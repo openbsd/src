@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.12 2004/07/13 00:35:38 espie Exp $
+# $OpenBSD: pkg_create,v 1.13 2004/07/20 18:58:41 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -65,24 +65,18 @@ sub archive_cmd
 	return ();
 }
 
-package OpenBSD::PackingList;
-use OpenBSD::md5;
-
-sub archive_cmd
-{
-	my ($self, $dir, $base) = @_;
-	my $fh;
-	my @use_cwd = ();
-	my @cmd = ();
-	for my $item (@{$self->{items}}) {
-		push(@cmd, $item->archive_cmd(\$fh, \@use_cwd, $dir, $base));
-	}
-	return @cmd;
-}
+package OpenBSD::PackingElement;
 
 sub compute_checksum
 {
-	my ($self, $base, $stash) = @_;
+}
+
+package OpenBSD::PackingElement::File;
+use OpenBSD::md5;
+
+sub compute_checksum
+{
+	my ($self, $plist, $base, $stash) = @_;
 	my $fname = $self->fullname();
 	if (-l "$base/$fname") {
 		my $value = readlink "$base/$fname";
@@ -107,14 +101,45 @@ sub compute_checksum
 	}
 }
 
+package OpenBSD::PackingElement::InfoFile;
+sub compute_checksum
+{
+	my ($self, $plist, $base, $stash) = @_;
+	$self->SUPER::compute_checksum($plist, $base, $stash);
+	my $fname = $self->fullname();
+	for (my $i = 1; ; $i++) {
+		if (-e "$base/$fname-$i") {
+			my $file = OpenBSD::PackingElement::File->add($plist, $self->{name}."-".$i);
+			$file->compute_checksum($plist, $base, $stash);
+		} else {
+			last;
+		}
+	}
+}
+
+package OpenBSD::PackingList;
+
+sub archive_cmd
+{
+	my ($self, $dir, $base) = @_;
+	my $fh;
+	my @use_cwd = ();
+	my @cmd = ();
+	for my $item (@{$self->{items}}) {
+		push(@cmd, $item->archive_cmd(\$fh, \@use_cwd, $dir, $base));
+	}
+	return @cmd;
+}
+
 sub makesum
 {
 	my ($self, $base) = @_;
 	my $stash = {};
-	for my $item (@{$self->{items}}) {
-		if ($item->IsFile()) {
-			compute_checksum($item, $base, $stash);
-		}
+	my $oldlist = $self->{items};
+	$self->{items} = [];
+	for my $item (@$oldlist) {
+		push @{$self->{items}}, $item;
+		$item->compute_checksum($self, $base, $stash);
 	}
 }
 
@@ -123,7 +148,7 @@ sub avert_duplicates
 	my ($self) = @_;
 	my $allfiles = {};
 	for my $item (@{$self->{items}}) {
-		if ($item->IsFile() || $item->isa("OpenBSD::PackingElement::DirRm")) {
+		if ($item->NoDuplicateNames()) {
 			my $n = $item->fullname();
 			if (defined $allfiles->{$n}) {
 				print STDERR "Error in packing-list: duplicate file $n\n";
