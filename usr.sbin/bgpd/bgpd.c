@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.48 2004/01/01 23:09:08 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.49 2004/01/01 23:46:47 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -95,7 +95,7 @@ main(int argc, char *argv[])
 	pid_t			 io_pid = 0, rde_pid = 0;
 	char			*conffile;
 	int			 debug = 0;
-	int			 ch, i, j, n, nfds;
+	int			 ch, i, j, n, nfds, csock;
 	int			 pipe_m2s[2];
 	int			 pipe_m2r[2];
 	int			 pipe_s2r[2];
@@ -171,6 +171,9 @@ main(int argc, char *argv[])
 	    fcntl(pipe_s2r[1], F_SETFL, O_NONBLOCK) == -1)
 		fatal("fcntl");
 
+	if ((csock = control_init()) == -1)
+		fatalx("control socket setup failed");
+
 	/* fork children */
 	rde_pid = rde_main(&conf, pipe_m2r, pipe_s2r);
 	io_pid = session_main(&conf, pipe_m2s, pipe_s2r);
@@ -188,6 +191,7 @@ main(int argc, char *argv[])
 	close(pipe_m2r[1]);
 	close(pipe_s2r[0]);
 	close(pipe_s2r[1]);
+	close(csock);
 
 	imsg_init(&ibuf_se, pipe_m2s[0]);
 	imsg_init(&ibuf_rde, pipe_m2r[0]);
@@ -289,6 +293,7 @@ main(int argc, char *argv[])
 		i = waitpid(-1, NULL, WNOHANG);
 	} while (i > 0 || (i == -1 && errno == EINTR));
 
+	control_cleanup();
 	kroute_shutdown();
 
 	logit(LOG_CRIT, "Terminating");

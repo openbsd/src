@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.16 2004/01/01 23:40:25 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.17 2004/01/01 23:46:47 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -63,7 +63,7 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 	ssize_t			 datalen = 0;
 	size_t			 av, left;
 
-	av = ibuf->r.wpos; 
+	av = ibuf->r.wpos;
 
 	if (IMSG_HEADER_SIZE > av)
 		return (0);

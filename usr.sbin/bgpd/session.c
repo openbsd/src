@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.53 2004/01/01 23:09:09 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.54 2004/01/01 23:46:47 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -22,6 +22,7 @@
 
 #include <sys/mman.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -45,12 +46,8 @@
 #define	PFD_LISTEN	0
 #define PFD_PIPE_MAIN	1
 #define PFD_PIPE_ROUTE	2
-#define PFD_PEERS_START	3
-
-enum blockmodes {
-	BM_NORMAL,
-	BM_NONBLOCK
-};
+#define	PFD_SOCK_CTL	3
+#define PFD_PEERS_START	4
 
 void	session_sighdlr(int);
 int	setup_listener(void);
@@ -64,7 +61,6 @@ void	session_close_connection(struct peer *);
 void	session_terminate(void);
 void	change_state(struct peer *, enum session_state, enum session_events);
 int	session_setup_socket(struct peer *);
-void	session_socket_blockmode(int, enum blockmodes);
 void	session_accept(int);
 int	session_connect(struct peer *);
 void	session_open(struct peer *);
@@ -84,10 +80,11 @@ void	session_down(struct peer *);
 
 struct peer	*getpeerbyip(in_addr_t);
 
-struct bgpd_config	*conf = NULL, *nconf = NULL;
+struct bgpd_config	*nconf = NULL;
 volatile sig_atomic_t	 session_quit = 0;
 int			 pending_reconf = 0;
 int			 sock = -1;
+int			 csock = -1;
 struct imsgbuf		 ibuf_rde;
 struct imsgbuf		 ibuf_main;
 
@@ -132,12 +129,13 @@ setup_listener(void)
 int
 session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 {
-	int		 nfds, i, j, timeout;
+	int		 nfds, i, j, timeout, npeers;
 	pid_t		 pid;
 	time_t		 nextaction;
 	struct passwd	*pw;
 	struct peer	*p, *peers[OPEN_MAX], *last, *next;
 	struct pollfd	 pfd[OPEN_MAX];
+	struct ctl_conn	*ctl_conn;
 
 	conf = config;
 
@@ -177,6 +175,8 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 	init_conf(conf);
 	imsg_init(&ibuf_rde, pipe_s2r[0]);
 	imsg_init(&ibuf_main, pipe_m2s[1]);
+	TAILQ_INIT(&ctl_conns);
+	csock = control_listen();
 	init_peers();
 
 	while (session_quit == 0) {
@@ -189,6 +189,8 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 		pfd[PFD_PIPE_ROUTE].events = POLLIN;
 		if (ibuf_rde.w.queued > 0)
 			pfd[PFD_PIPE_ROUTE].events |= POLLOUT;
+		pfd[PFD_SOCK_CTL].fd = csock;
+		pfd[PFD_SOCK_CTL].events = POLLIN;
 
 		nextaction = time(NULL) + 240;	/* loop every 240s at least */
 		i = PFD_PEERS_START;
@@ -256,6 +258,16 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 			}
 		}
 
+		npeers = i;
+
+		TAILQ_FOREACH(ctl_conn, &ctl_conns, entries) {
+			pfd[i].fd = ctl_conn->ibuf.sock;
+			pfd[i].events = POLLIN;
+			if (ctl_conn->ibuf.w.queued > 0)
+				pfd[i].events |= POLLOUT;
+			i++;
+		}
+
 		timeout = nextaction - time(NULL);
 		if (timeout < 0)
 			timeout = 0;
@@ -282,11 +294,19 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 			session_dispatch_imsg(&ibuf_rde, PFD_PIPE_ROUTE);
 		}
 
-		for (j = PFD_PEERS_START; nfds > 0 && j < i; j++) {
-			nfds -= session_dispatch_msg(&pfd[j], peers[j]);
+		if (nfds > 0 && pfd[PFD_SOCK_CTL].revents & POLLIN) {
+			nfds--;
+			control_accept(csock);
 		}
+
+		for (j = PFD_PEERS_START; nfds > 0 && j < npeers; j++)
+			nfds -= session_dispatch_msg(&pfd[j], peers[j]);
+
+		for (; nfds > 0 && j < i; j++)
+			nfds -= control_dispatch_msg(&pfd[j], j);
 	}
 
+	control_shutdown();
 	logit(LOG_INFO, "session engine exiting");
 	_exit(0);
 }

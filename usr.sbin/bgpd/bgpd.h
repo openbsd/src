@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.45 2004/01/01 23:09:08 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.46 2004/01/01 23:46:47 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <poll.h>
 #include <stdarg.h>
 #include <syslog.h>
 
@@ -83,6 +84,11 @@ enum reconf_action {
 	RECONF_KEEP,
 	RECONF_REINIT,
 	RECONF_DELETE
+};
+
+enum blockmodes {
+	BM_NORMAL,
+	BM_NONBLOCK
 };
 
 struct buf {
@@ -209,7 +215,8 @@ enum imsg_type {
 	IMSG_KROUTE_DELETE,
 	IMSG_NEXTHOP_ADD,
 	IMSG_NEXTHOP_REMOVE,
-	IMSG_NEXTHOP_UPDATE
+	IMSG_NEXTHOP_UPDATE,
+	IMSG_CTL_SHOW_NEIGHBOR
 };
 
 struct imsg_hdr {
@@ -256,6 +263,7 @@ struct kroute_nexthop {
 void		 send_nexthop_update(struct kroute_nexthop *);
 
 /* session.c */
+void		 session_socket_blockmode(int, enum blockmodes);
 int		 session_main(struct bgpd_config *, int[2], int[2]);
 
 /* buffer.c */
@@ -315,5 +323,9 @@ void	kroute_fib_decouple(void);
 int	kroute_dispatch_msg(void);
 int	kroute_nexthop_add(in_addr_t);
 void	kroute_nexthop_delete(in_addr_t);
+
+/* control.c */
+int	control_init(void);
+void	control_cleanup(void);
 
 #endif /* __BGPD_H__ */
