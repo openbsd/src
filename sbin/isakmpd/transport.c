@@ -1,4 +1,4 @@
-/*	$OpenBSD: transport.c,v 1.21 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: transport.c,v 1.22 2003/06/20 09:14:14 ho Exp $	*/
 /*	$EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -294,9 +294,20 @@ transport_send_messages (fd_set *fds)
 	      if (msg->xmits > conf_get_num ("General", "retransmits",
 					     RETRANSMIT_DEFAULT))
 		{
-		  log_print ("transport_send_messages: "
-			     "giving up on message %p",
-			     msg);
+		  log_print ("transport_send_messages: giving up on "
+			     "message %p", msg);
+		  /* Be more verbose here.  */
+		  if (exchange->phase == 1)
+		    {
+		      log_print ("transport_send_messages: either this "
+				 "message did not reach the other peer");
+		      if (exchange->initiator)
+			log_print ("transport_send_messages: or the response"
+				   "message did not reach us back");
+		      else
+			log_print ("transport_send_messages: or this is "
+				   "an attempted IKE scan");
+		    }
 		  exchange->last_sent = 0;
 		}
 	      else
