@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.47 2000/12/13 15:33:24 mickey Exp $	*/
+/*	$OpenBSD: sd.c,v 1.48 2001/06/22 14:35:43 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -382,18 +382,17 @@ sdopen(dev, flag, fmt, p)
 	} else {
 		/* Check that it is still responding and ok. */
 		error = scsi_test_unit_ready(sc_link,
-					     SCSI_IGNORE_ILLEGAL_REQUEST |
-					     SCSI_IGNORE_MEDIA_CHANGE |
-					     SCSI_IGNORE_NOT_READY);
+		    SCSI_IGNORE_ILLEGAL_REQUEST |
+		    SCSI_IGNORE_MEDIA_CHANGE |
+		    SCSI_IGNORE_NOT_READY);
 		if (error)
 			goto bad3;
 
 		/* Start the pack spinning if necessary. */
 		if ((sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
 			error = scsi_start(sc_link, SSS_START,
-					   SCSI_IGNORE_ILLEGAL_REQUEST |
-					   SCSI_IGNORE_MEDIA_CHANGE |
-					   SCSI_SILENT);
+			    SCSI_IGNORE_ILLEGAL_REQUEST |
+			    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 			if (error)
 				goto bad3;
 		}
@@ -402,8 +401,7 @@ sdopen(dev, flag, fmt, p)
 
 		/* Lock the pack in. */
 		error = scsi_prevent(sc_link, PR_PREVENT,
-				     SCSI_IGNORE_ILLEGAL_REQUEST |
-				     SCSI_IGNORE_MEDIA_CHANGE);
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 		if (error)
 			goto bad;
 
@@ -430,7 +428,7 @@ sdopen(dev, flag, fmt, p)
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= sd->sc_dk.dk_label->d_npartitions ||
-	     sd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
+	    sd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
 		error = ENXIO;
 		goto bad;
 	}
@@ -680,8 +678,8 @@ sdstart(v)
 		blkno =
 		    bp->b_blkno / (sd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 		if (SDPART(bp->b_dev) != RAW_PART) {
-		     p = &sd->sc_dk.dk_label->d_partitions[SDPART(bp->b_dev)];
-		     blkno += p->p_offset;
+			p = &sd->sc_dk.dk_label->d_partitions[SDPART(bp->b_dev)];
+			blkno += p->p_offset;
 		}
 		nblks = howmany(bp->b_bcount, sd->sc_dk.dk_label->d_secsize);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.28 2001/02/18 22:38:44 fgsch Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.29 2001/06/22 14:35:42 deraadt Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ scsi_free_xs(xs, flags)
  */
 static __inline struct scsi_xfer *
 scsi_make_xs(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
-	     retries, timeout, bp, flags)
+    retries, timeout, bp, flags)
 	struct scsi_link *sc_link;
 	struct scsi_generic *scsi_cmd;
 	int cmdlen;
@@ -239,7 +239,7 @@ scsi_test_unit_ready(sc_link, flags)
 	scsi_cmd.opcode = TEST_UNIT_READY;
 
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-			     sizeof(scsi_cmd), 0, 0, 5, 10000, NULL, flags);
+	    sizeof(scsi_cmd), 0, 0, 5, 10000, NULL, flags);
 }
 
 /*
@@ -257,7 +257,7 @@ scsi_change_def(sc_link, flags)
 	scsi_cmd.how = SC_SCSI_2;
 
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-			     sizeof(scsi_cmd), 0, 0, 2, 100000, NULL, flags);
+	    sizeof(scsi_cmd), 0, 0, 2, 100000, NULL, flags);
 }
 
 /*
@@ -277,9 +277,9 @@ scsi_inquire(sc_link, inqbuf, flags)
 	scsi_cmd.length = sizeof(struct scsi_inquiry_data);
 
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-			     sizeof(scsi_cmd), (u_char *) inqbuf,
-			     sizeof(struct scsi_inquiry_data), 2, 10000, NULL,
-			     SCSI_DATA_IN | flags);
+	    sizeof(scsi_cmd), (u_char *) inqbuf,
+	    sizeof(struct scsi_inquiry_data), 2, 10000, NULL,
+	    SCSI_DATA_IN | flags);
 }
 
 /*
@@ -296,7 +296,7 @@ scsi_prevent(sc_link, type, flags)
 	scsi_cmd.opcode = PREVENT_ALLOW;
 	scsi_cmd.how = type;
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-			     sizeof(scsi_cmd), 0, 0, 2, 5000, NULL, flags);
+	    sizeof(scsi_cmd), 0, 0, 2, 5000, NULL, flags);
 }
 
 /*
@@ -317,8 +317,8 @@ scsi_start(sc_link, type, flags)
 	scsi_cmd.byte2 = 0x00;
 	scsi_cmd.how = type;
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-			     sizeof(scsi_cmd), 0, 0, 2,
-			     type == SSS_START ? 30000 : 10000, NULL, flags);
+	    sizeof(scsi_cmd), 0, 0, 2,
+	    type == SSS_START ? 30000 : 10000, NULL, flags);
 }
 
 /*
@@ -578,14 +578,14 @@ sc_err1(xs, async)
 		error = EIO;
 		break;
 
-        case XS_RESET:
-                if (xs->retries) {
-                        SC_DEBUG(xs->sc_link, SDEV_DB3,
-                            ("restarting command destroyed by reset\n"));
-                        goto retry;
-                }
-                error = EIO;
-                break;
+	case XS_RESET:
+		if (xs->retries) {
+			SC_DEBUG(xs->sc_link, SDEV_DB3,
+			    ("restarting command destroyed by reset\n"));
+			goto retry;
+		}
+		error = EIO;
+		break;
 
 	default:
 		sc_print_addr(xs->sc_link);
@@ -701,8 +701,8 @@ scsi_interpret_sense(xs)
 			break;
 		case SKEY_UNIT_ATTENTION:
 			if (sense->add_sense_code == 0x29 &&
-                            sense->add_sense_code_qual == 0x00)
-                                return (ERESTART); /* device or bus reset */
+			    sense->add_sense_code_qual == 0x00)
+				return (ERESTART); /* device or bus reset */
 			if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) != 0 ||
@@ -1235,7 +1235,7 @@ show_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
 	u_char *b = (u_char *) xs->cmd;
-	int     i = 0;
+	int	i = 0;
 
 	sc_print_addr(xs->sc_link);
 	printf("command: ");

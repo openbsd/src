@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.12 2001/04/30 21:21:54 csapuntz Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.13 2001/06/22 14:35:43 deraadt Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -364,7 +364,7 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		scsi_scsi_cmd(sc_link, 0, 0, 0, 0, GENRETRY, 2000, NULL,
-		      SCSI_RESET);
+		    SCSI_RESET);
 		return 0;
 	}
 	default:

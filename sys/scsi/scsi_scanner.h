@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_scanner.h,v 1.8 1999/05/11 23:25:43 kstailey Exp $	*/
+/*	$OpenBSD: scsi_scanner.h,v 1.9 2001/06/22 14:35:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -100,9 +100,9 @@ struct scsi_set_window {
 };
 
 struct scsi_window_data {
-	u_int8_t reserved[6];	     /* window header */
-	u_int8_t window_desc_len[2]; /* ditto */
-	u_int8_t window_id;	     /* must be zero */
+	u_int8_t reserved[6];		/* window header */
+	u_int8_t window_desc_len[2];	/* ditto */
+	u_int8_t window_id;		/* must be zero */
 	u_int8_t res1:7;
 	u_int8_t auto_bit:1;
 	u_int8_t x_res[2];
@@ -114,10 +114,10 @@ struct scsi_window_data {
 	u_int8_t brightness;
 	u_int8_t threshold;
 	u_int8_t contrast;
-	u_int8_t image_comp;	    /* image composition (data type) */
+	u_int8_t image_comp;		/* image composition (data type) */
 	u_int8_t bits_per_pixel;
 	u_int8_t halftone_pattern[2];
-	u_int8_t rif:1;		    /* reverse image format (mono negative) */
+	u_int8_t rif:1;			/* reverse image format (mono negative) */
 	u_int8_t res2:4;
 	u_int8_t pad_type:3;
 	u_int8_t bit_ordering[2];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.26 2001/04/30 21:21:54 csapuntz Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.27 2001/06/22 14:35:43 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -105,8 +105,8 @@ struct scsi_adapter {
 	void		(*scsi_minphys) __P((struct buf *));
 	int		(*open_target_lu) __P((void));
 	int		(*close_target_lu) __P((void));
-	int             (*ioctl) __P((struct scsi_link *, u_long cmd,
-					 caddr_t addrp, int flag));
+	int		(*ioctl) __P((struct scsi_link *, u_long cmd,
+			    caddr_t addrp, int flag));
 };
 
 /*
@@ -122,9 +122,9 @@ struct scsi_adapter {
  * or one of these three items.
  */
 
-#define SCSIRET_NOERROR   0     /* No Error */
-#define SCSIRET_RETRY    -1     /* Retry the command that got this sense */
-#define SCSIRET_CONTINUE -2     /* Continue with standard sense processing */
+#define SCSIRET_NOERROR   0	/* No Error */
+#define SCSIRET_RETRY    -1	/* Retry the command that got this sense */
+#define SCSIRET_CONTINUE -2	/* Continue with standard sense processing */
 
 /*
  * These entry points are called by the low-end drivers to get services from
@@ -168,23 +168,23 @@ struct scsi_link {
 #define	SDEV_OPEN	 	0x0008	/* at least 1 open session */
 #define	SDEV_DBX		0x00f0	/* debuging flags (scsi_debug.h) */
 #define	SDEV_EJECTING		0x0100	/* eject on device close */
-#define	SDEV_ATAPI              0x0200  /* device is ATAPI */
+#define	SDEV_ATAPI		0x0200	/* device is ATAPI */
 #define	SDEV_2NDBUS		0x0400	/* device is a 'second' bus device */
 	u_int16_t quirks;		/* per-device oddities */
-#define	SDEV_AUTOSAVE	      0x0001	/* do implicit SAVEDATAPOINTER on disconnect */
-#define	SDEV_NOSYNC	      0x0002	/* does not grok SDTR */
-#define	SDEV_NOWIDE	      0x0004	/* does not grok WDTR */
-#define	SDEV_NOTAGS	      0x0008	/* lies about having tagged queueing */
-#define	SDEV_NOLUNS	      0x0010	/* does not grok LUNs */
-#define	SDEV_FORCELUNS	      0x0020	/* prehistoric drive/ctlr groks LUNs */
-#define	SDEV_NOMODESENSE      0x0040	/* removable media/optical drives */
-#define	SDEV_NOSTARTUNIT      0x0080	/* do not issue start unit requests in sd.c */
-#define	SDEV_NOSYNCCACHE      0x0100    /* no SYNCHRONIZE_CACHE */
-#define	ADEV_NOSENSE          0x0200    /* No request sense - ATAPI */
-#define	ADEV_LITTLETOC        0x0400    /* little-endian TOC - ATAPI */
-#define	ADEV_NOCAPACITY       0x0800
-#define	ADEV_NOTUR            0x1000
-#define	ADEV_NODOORLOCK       0x2000
+#define	SDEV_AUTOSAVE		0x0001	/* do implicit SAVEDATAPOINTER on disconnect */
+#define	SDEV_NOSYNC		0x0002	/* does not grok SDTR */
+#define	SDEV_NOWIDE		0x0004	/* does not grok WDTR */
+#define	SDEV_NOTAGS		0x0008	/* lies about having tagged queueing */
+#define	SDEV_NOLUNS		0x0010	/* does not grok LUNs */
+#define	SDEV_FORCELUNS		0x0020	/* prehistoric drive/ctlr groks LUNs */
+#define	SDEV_NOMODESENSE	0x0040	/* removable media/optical drives */
+#define	SDEV_NOSTARTUNIT	0x0080	/* do not issue start unit requests in sd.c */
+#define	SDEV_NOSYNCCACHE	0x0100	/* no SYNCHRONIZE_CACHE */
+#define	ADEV_NOSENSE		0x0200	/* No request sense - ATAPI */
+#define	ADEV_LITTLETOC		0x0400	/* little-endian TOC - ATAPI */
+#define	ADEV_NOCAPACITY		0x0800
+#define	ADEV_NOTUR		0x1000
+#define	ADEV_NODOORLOCK		0x2000
 	u_int8_t inquiry_flags;		/* copy of flags from probe INQUIRY */
 	struct	scsi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */
@@ -284,7 +284,7 @@ struct scsi_xfer {
 #define	SCSI_DATA_OUT	0x01000	/* expect data to flow OUT of memory	*/
 #define	SCSI_TARGET	0x02000	/* This defines a TARGET mode op.	*/
 #define	SCSI_ESCAPE	0x04000	/* Escape operation			*/
-#define SCSI_URGENT     0x08000	/* Urgent operation (e.g., HTAG)        */
+#define SCSI_URGENT	0x08000	/* Urgent operation (e.g., HTAG)	*/
 #define	SCSI_PRIVATE	0xf0000	/* private to each HBA flags */
 
 /*
@@ -305,8 +305,8 @@ struct scsi_xfer {
 #define XS_SELTIMEOUT	3	/* The device timed out.. turned off?	  */
 #define XS_TIMEOUT	4	/* The Timeout reported was caught by SW  */
 #define XS_BUSY		5	/* The device busy, try again later?	  */
-#define XS_SHORTSENSE   6       /* Check the ATAPI sense for the error */
-#define XS_RESET        8       /* bus was reset; possible retry command  */
+#define XS_SHORTSENSE   6	/* Check the ATAPI sense for the error */
+#define XS_RESET	8	/* bus was reset; possible retry command  */
 
 caddr_t scsi_inqmatch __P((struct scsi_inquiry_data *, caddr_t, int,
 	int, int *));
@@ -391,8 +391,7 @@ _2btol(bytes)
 {
 	register u_int32_t rv;
 
-	rv = (bytes[0] << 8) |
-	     bytes[1];
+	rv = (bytes[0] << 8) | bytes[1];
 	return (rv);
 }
 
@@ -402,9 +401,7 @@ _3btol(bytes)
 {
 	register u_int32_t rv;
 
-	rv = (bytes[0] << 16) |
-	     (bytes[1] << 8) |
-	     bytes[2];
+	rv = (bytes[0] << 16) | (bytes[1] << 8) | bytes[2];
 	return (rv);
 }
 
@@ -414,10 +411,8 @@ _4btol(bytes)
 {
 	register u_int32_t rv;
 
-	rv = (bytes[0] << 24) |
-	     (bytes[1] << 16) |
-	     (bytes[2] << 8) |
-	     bytes[3];
+	rv = (bytes[0] << 24) | (bytes[1] << 16) |
+	    (bytes[2] << 8) | bytes[3];
 	return (rv);
 }
 
@@ -460,8 +455,7 @@ _2ltol(bytes)
 {
 	register u_int32_t rv;
 
-	rv = bytes[0] |
-	     (bytes[1] << 8);
+	rv = bytes[0] | (bytes[1] << 8);
 	return (rv);
 }
 
@@ -471,9 +465,7 @@ _3ltol(bytes)
 {
 	register u_int32_t rv;
 
-	rv = bytes[0] |
-	     (bytes[1] << 8) |
-	     (bytes[2] << 16);
+	rv = bytes[0] | (bytes[1] << 8) | (bytes[2] << 16);
 	return (rv);
 }
 
@@ -483,10 +475,8 @@ _4ltol(bytes)
 {
 	register u_int32_t rv;
 
-	rv = bytes[0] |
-	     (bytes[1] << 8) |
-	     (bytes[2] << 16) |
-	     (bytes[3] << 24);
+	rv = bytes[0] | (bytes[1] << 8) |
+	    (bytes[2] << 16) | (bytes[3] << 24);
 	return (rv);
 }
 

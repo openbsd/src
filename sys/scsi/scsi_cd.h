@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_cd.h,v 1.5 1999/07/20 06:21:59 csapuntz Exp $	*/
+/*	$OpenBSD: scsi_cd.h,v 1.6 2001/06/22 14:35:42 deraadt Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -21,33 +21,33 @@
 #define _SCSI_SCSI_CD_H 1
 
 struct scsi_cd_write_params_page {
-        u_int8_t page_code;
-        u_int8_t page_len;
-        u_int8_t write_type;
-#define WRITE_TYPE_DUMMY        0x10    /* do not actually write blocks */
-#define WRITE_TYPE_MASK         0x0f    /* session write type */
-        u_int8_t track_mode;
-#define TRACK_MODE_MULTI_SESS   0xc0    /* multisession write type */
-#define TRACK_MODE_FP           0x20    /* fixed packet (if in packet mode) */
-#define TRACK_MODE_COPY         0x10    /* 1st higher gen of copy prot track */
-#define TRACK_MODE_PREEPMPASIS  0x01    /* audio w/ preemphasis (audio) */
-#define TRACK_MODE_INCREMENTAL  0x01    /* incremental data track (data) */
-#define TRACK_MODE_ALLOW_COPY   0x02    /* digital copy is permitted */
-#define TRACK_MODE_DATA         0x04    /* this is a data track */
-#define TRACK_MODE_4CHAN        0x08    /* four channel audio */
-        u_int8_t dbtype;
-#define DBTYPE_MASK             0x0f    /* data block type */
-        u_int8_t reserved1[2];
-        u_int8_t host_appl_code;
-#define HOST_APPL_CODE_MASK     0x3f    /* host application code of disk */
-        u_int8_t session_format;
-        u_int8_t reserved2;
-        u_int8_t packet_size[4];
-        u_int8_t audio_pause_len[2];
-        u_int8_t media_cat_number[16];
-        u_int8_t isrc[14];
-        u_int8_t sub_header[4];
-        u_int8_t vendir_unique[4];
+	u_int8_t page_code;
+	u_int8_t page_len;
+	u_int8_t write_type;
+#define WRITE_TYPE_DUMMY	0x10	/* do not actually write blocks */
+#define WRITE_TYPE_MASK		0x0f	/* session write type */
+	u_int8_t track_mode;
+#define TRACK_MODE_MULTI_SESS	0xc0	/* multisession write type */
+#define TRACK_MODE_FP		0x20	/* fixed packet (if in packet mode) */
+#define TRACK_MODE_COPY		0x10	/* 1st higher gen of copy prot track */
+#define TRACK_MODE_PREEPMPASIS	0x01	/* audio w/ preemphasis (audio) */
+#define TRACK_MODE_INCREMENTAL	0x01	/* incremental data track (data) */
+#define TRACK_MODE_ALLOW_COPY	0x02	/* digital copy is permitted */
+#define TRACK_MODE_DATA		0x04	/* this is a data track */
+#define TRACK_MODE_4CHAN	0x08	/* four channel audio */
+	u_int8_t dbtype;
+#define DBTYPE_MASK		0x0f	/* data block type */
+	u_int8_t reserved1[2];
+	u_int8_t host_appl_code;
+#define HOST_APPL_CODE_MASK	0x3f	/* host application code of disk */
+	u_int8_t session_format;
+	u_int8_t reserved2;
+	u_int8_t packet_size[4];
+	u_int8_t audio_pause_len[2];
+	u_int8_t media_cat_number[16];
+	u_int8_t isrc[14];
+	u_int8_t sub_header[4];
+	u_int8_t vendir_unique[4];
 };
 
 #ifdef CDDA
@@ -68,8 +68,8 @@ struct scsi_cd_write_params_page {
 #endif /* CDDA */
 
 union scsi_cd_pages {
-        struct scsi_cd_write_params_page write_params;
-        struct cd_audio_page audio;
+	struct scsi_cd_write_params_page write_params;
+	struct cd_audio_page audio;
 };
 
 struct scsi_cd_mode_data {
@@ -79,8 +79,8 @@ struct scsi_cd_mode_data {
 };
 
 #define AUDIOPAGESIZE \
-        (sizeof(struct scsi_mode_header) + sizeof(struct scsi_blk_desc) \
-            + sizeof(struct cd_audio_page))
+	(sizeof(struct scsi_mode_header) + sizeof(struct scsi_blk_desc) \
+	    + sizeof(struct cd_audio_page))
 
 #endif /*_SCSI_SCSI_CD_H*/
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.10 2001/03/15 20:08:43 mjacob Exp $	*/
+/*	$OpenBSD: ch.c,v 1.11 2001/06/22 14:35:42 deraadt Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ struct ch_softc {
 	/*
 	 * Quirks; see below.
 	 */
-	int             sc_settledelay; /* delay for settle */
+	int		sc_settledelay; /* delay for settle */
 
 };
 
@@ -419,9 +419,9 @@ ch_exchange(sc, ce)
 	 * Check the request against the changer's capabilities.
 	 */
 	if (((sc->sc_exchangemask[ce->ce_srctype] &
-	     (1 << ce->ce_fdsttype)) == 0) ||
+	    (1 << ce->ce_fdsttype)) == 0) ||
 	    ((sc->sc_exchangemask[ce->ce_fdsttype] &
-	     (1 << ce->ce_sdsttype)) == 0))
+	    (1 << ce->ce_sdsttype)) == 0))
 		return (EINVAL);
 
 	/*

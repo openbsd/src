@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.1 1999/07/25 07:09:20 csapuntz Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.2 2001/06/22 14:35:43 deraadt Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -81,11 +81,11 @@ struct sd_softc {
 	} params;
 	struct buf buf_queue;
 	u_int8_t type;
-        struct disk_name {
-                char vendor[9];         /* disk vendor/manufacturer */
-                char product[17];       /* disk product model */
-                char revision[5];       /* drive/firmware revision */
-        } name;
+	struct disk_name {
+		char vendor[9];		/* disk vendor/manufacturer */
+		char product[17];	/* disk product model */
+		char revision[5];	/* drive/firmware revision */
+	} name;
 	const struct sd_ops *sc_ops;	/* our bus-dependent ops vector */
 
 	void *sc_sdhook;		/* our shutdown hook */

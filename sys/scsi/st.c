@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.28 2000/04/08 19:19:33 csapuntz Exp $	*/
+/*	$OpenBSD: st.c,v 1.29 2001/06/22 14:35:43 deraadt Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
 #define DEF_FIXED_BSIZE  512
 #define	ST_RETRIES	4	/* only on non IO commands */
 
-#define STMODE(z)	( minor(z)       & 0x03)
+#define STMODE(z)	( minor(z)	 & 0x03)
 #define STDSTY(z)	((minor(z) >> 2) & 0x03)
 #define STUNIT(z)	((minor(z) >> 4)       )
 #define CTLMODE	3
@@ -530,10 +530,8 @@ stopen(dev, flags, mode, p)
 	/*
 	 * Catch any unit attention errors.
 	 */
-	error = scsi_test_unit_ready(sc_link,
-				     SCSI_IGNORE_MEDIA_CHANGE |
-				     (stmode == CTLMODE ?
-					SCSI_IGNORE_NOT_READY : 0));
+	error = scsi_test_unit_ready(sc_link, SCSI_IGNORE_MEDIA_CHANGE |
+	    (stmode == CTLMODE ? SCSI_IGNORE_NOT_READY : 0));
 	if (error)
 		goto bad;
 
@@ -1087,7 +1085,7 @@ stread(dev, uio, iomode)
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	return (physio(ststrategy, NULL, dev, B_READ,
-		       st->sc_link->adapter->scsi_minphys, uio));
+	    st->sc_link->adapter->scsi_minphys, uio));
 }
 
 int
@@ -1099,7 +1097,7 @@ stwrite(dev, uio, iomode)
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	return (physio(ststrategy, NULL, dev, B_WRITE,
-		       st->sc_link->adapter->scsi_minphys, uio));
+	    st->sc_link->adapter->scsi_minphys, uio));
 }
 
 /*

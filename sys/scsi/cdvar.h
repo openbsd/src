@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdvar.h,v 1.1 1999/07/20 06:21:59 csapuntz Exp $	*/
+/*	$OpenBSD: cdvar.h,v 1.2 2001/06/22 14:35:42 deraadt Exp $	*/
 /*	$NetBSD: cdvar.h,v 1.10 1999/02/02 13:02:49 bouyer Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ struct cd_softc {
 #define	CDF_LABELLING	0x08		/* writing label */
 #define	CDF_ANCIENT	0x10		/* disk is ancient; for minphys */
 #ifdef CDDA
-#define CDF_CDDA        0x20             
+#define CDF_CDDA	0x20
 #endif
 	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct cd_parms {

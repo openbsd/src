@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssvar.h,v 1.7 1997/03/10 02:29:41 kstailey Exp $	*/
+/*	$OpenBSD: ssvar.h,v 1.8 2001/06/22 14:35:43 deraadt Exp $	*/
 /*	$NetBSD: ssvar.h,v 1.2 1996/03/30 21:47:11 christos Exp $	*/
 
 /*
@@ -65,10 +65,10 @@ struct ss_softc {
 	int flags;
 #define SSF_TRIGGERED	0x01	/* read operation has been primed */
 #define	SSF_LOADED	0x02	/* parameters loaded */
-	struct scsi_link *sc_link;	/* contains our targ, lun, etc.	      */
+	struct scsi_link *sc_link;	/* contains our targ, lun, etc.	*/
 	struct scan_io sio;
 	struct buf buf_queue;		/* the queue of pending IO operations */
-	struct quirkdata *quirkdata;	/* if we have a rogue entry	      */
+	struct quirkdata *quirkdata;	/* if we have a rogue entry */
 	struct ss_special special;	/* special handlers for spec. devices */
 };
 

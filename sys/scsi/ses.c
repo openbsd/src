@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.1 2000/02/21 08:23:30 mjacob Exp $ */
+/*	$OpenBSD: ses.c,v 1.2 2001/06/22 14:35:43 deraadt Exp $ */
 /*	$NetBSD: ses.c,v 1.3 2000/01/21 21:19:57 mjacob Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
@@ -272,7 +272,7 @@ ses_attach(parent, self, aux)
 	switch (softc->ses_type) {
 	case SES_SES:
 	case SES_SES_SCSI2:
-        case SES_SES_PASSTHROUGH:
+	case SES_SES_PASSTHROUGH:
 		softc->ses_vec.softc_init = ses_softc_init;
 		softc->ses_vec.init_enc = ses_init_enc;
 		softc->ses_vec.get_encstat = ses_get_encstat;
@@ -280,7 +280,7 @@ ses_attach(parent, self, aux)
 		softc->ses_vec.get_objstat = ses_get_objstat;
 		softc->ses_vec.set_objstat = ses_set_objstat;
 		break;
-        case SES_SAFT:
+	case SES_SAFT:
 		softc->ses_vec.softc_init = safte_softc_init;
 		softc->ses_vec.init_enc = safte_init_enc;
 		softc->ses_vec.get_encstat = safte_get_encstat;
@@ -288,7 +288,7 @@ ses_attach(parent, self, aux)
 		softc->ses_vec.get_objstat = safte_get_objstat;
 		softc->ses_vec.set_objstat = safte_set_objstat;
 		break;
-        case SES_SEN:
+	case SES_SEN:
 		break;
 	case SES_NONE:
 	default:
@@ -306,13 +306,13 @@ ses_attach(parent, self, aux)
 	case SES_SES:
 		tname = "SCSI-3 SES Device";
 		break;
-        case SES_SES_PASSTHROUGH:
+	case SES_SES_PASSTHROUGH:
 		tname = "SES Passthrough Device";
 		break;
-        case SES_SEN:
+	case SES_SEN:
 		tname = "UNISYS SEN Device (NOT HANDLED YET)";
 		break;
-        case SES_SAFT:
+	case SES_SAFT:
 		tname = "SAF-TE Compliant Device";
 		break;
 	}
@@ -392,7 +392,7 @@ sesopen(dev, flags, fmt, p)
 	}
 	error = scsipi_adapter_addref(softc->sc_link);
 	if (error != 0)
-                goto out;
+		goto out;
 
 
 	softc->ses_flags |= SES_FLAG_OPEN;
@@ -436,7 +436,7 @@ sesioctl(dev, cmd, arg_addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t arg_addr;
-	int flag;       
+	int flag;
 	struct proc *p;
 {
 	ses_encstat tmp;

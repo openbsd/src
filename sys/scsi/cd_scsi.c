@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd_scsi.c,v 1.2 2000/07/18 06:26:29 csapuntz Exp $	*/
+/*	$OpenBSD: cd_scsi.c,v 1.3 2001/06/22 14:35:42 deraadt Exp $	*/
 /*	$NetBSD: cd_scsi.c,v 1.14 1998/08/31 22:28:06 cgd Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ cd_scsibus_get_mode(cd, data, page, len, flags)
 {
 	struct scsi_mode_sense scsi_cmd;
 
-#ifdef DIAGNOSTIC       
+#ifdef DIAGNOSTIC
 	if (len == 0 || len > 256) {
 		printf ("cd_scsibus_get_mode: Mode page %02x request "
 		    "bad size: %d bytes\n", page, len);

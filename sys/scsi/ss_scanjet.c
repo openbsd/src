@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.22 2001/03/25 04:23:46 fgsch Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.23 2001/06/22 14:35:43 deraadt Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -363,15 +363,16 @@ scanjet_ctl_read(ss, buf, size, flags)
 #ifdef SCANJETDEBUG
 static void show_es(char *es)
 {
-  char *p = es;
-  while (*p) {
-    if (*p == '\033')
-      printf("[Esc]");
-    else
-      printf("%c", *p);
-    ++p;
-  }
-  printf("\n");
+	char *p = es;
+
+	while (*p) {
+		if (*p == '\033')
+			printf("[Esc]");
+		else
+			printf("%c", *p);
+		++p;
+	}
+	printf("\n");
 }
 #endif
 
@@ -393,7 +394,7 @@ scanjet_set_window(ss, flags)
 	p += sprintf(p, "\033*f%ldY", ss->sio.scan_y_origin / 4);
 	p += sprintf(p, "\033*a%dR", ss->sio.scan_x_resolution);
 	p += sprintf(p, "\033*a%dS", ss->sio.scan_y_resolution);
-     
+
 	switch (ss->sio.scan_image_mode) {
 	case SIM_BINARY_MONOCHROME:
 		ss->sio.scan_bits_per_pixel = 1;

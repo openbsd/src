@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.10 2001/04/08 03:16:10 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.11 2001/06/22 14:35:42 deraadt Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -175,8 +175,8 @@ struct scsi_changedef {
 #define MODE_SELECT		0x15
 #define MODE_SENSE		0x1a
 #define START_STOP		0x1b
-#define RESERVE      		0x16
-#define RELEASE      		0x17
+#define RESERVE			0x16
+#define RELEASE			0x17
 #define PREVENT_ALLOW		0x1e
 #define POSITION_TO_ELEMENT	0x2b
 #define	CHANGE_DEFINITION	0x40
@@ -273,22 +273,22 @@ struct scsi_sense_data {
 /*32*/	u_int8_t extra_bytes[14];
 };
 
-#define SKEY_NO_SENSE           0x00
-#define SKEY_RECOVERED_ERROR    0x01
-#define SKEY_NOT_READY          0x02
-#define SKEY_MEDIUM_ERROR       0x03
-#define SKEY_HARDWARE_ERROR     0x04
-#define SKEY_ILLEGAL_REQUEST    0x05
-#define SKEY_UNIT_ATTENTION     0x06
-#define SKEY_WRITE_PROTECT      0x07
-#define SKEY_BLANK_CHECK        0x08
-#define SKEY_VENDOR_UNIQUE      0x09
-#define SKEY_COPY_ABORTED       0x0A
-#define SKEY_ABORTED_COMMAND    0x0B
-#define SKEY_EQUAL              0x0C
-#define SKEY_VOLUME_OVERFLOW    0x0D
-#define SKEY_MISCOMPARE         0x0E
-#define SKEY_RESERVED           0x0F
+#define SKEY_NO_SENSE		0x00
+#define SKEY_RECOVERED_ERROR	0x01
+#define SKEY_NOT_READY		0x02
+#define SKEY_MEDIUM_ERROR	0x03
+#define SKEY_HARDWARE_ERROR	0x04
+#define SKEY_ILLEGAL_REQUEST	0x05
+#define SKEY_UNIT_ATTENTION	0x06
+#define SKEY_WRITE_PROTECT	0x07
+#define SKEY_BLANK_CHECK	0x08
+#define SKEY_VENDOR_UNIQUE	0x09
+#define SKEY_COPY_ABORTED	0x0A
+#define SKEY_ABORTED_COMMAND	0x0B
+#define SKEY_EQUAL		0x0C
+#define SKEY_VOLUME_OVERFLOW	0x0D
+#define SKEY_MISCOMPARE		0x0E
+#define SKEY_RESERVED		0x0F
 
 struct scsi_blk_desc {
 	u_int8_t density;
