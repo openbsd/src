@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.10 2003/02/24 02:56:55 deraadt Exp $
+.\"	$OpenBSD: kqueue.2,v 1.11 2003/04/02 19:00:26 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -268,12 +268,12 @@ available before returning.
 .It Dv EVFILT_WRITE
 Takes a descriptor as the identifier, and returns whenever
 it is possible to write to the descriptor.
-For sockets, pipes, and fifos,
+For sockets, pipes, and FIFOs,
 .Va data
 will contain the amount of space remaining in the write buffer.
 The filter will set
 .Dv EV_EOF
-when the reader disconnects, and for the fifo case,
+when the reader disconnects, and for the FIFO case,
 this may be cleared by use of
 .Dv EV_CLEAR .
 Note that this filter is not supported for vnodes.
@@ -482,5 +482,5 @@ The
 system and this manual page were written by
 .An Jonathan Lemon Aq jlemon@FreeBSD.org .
 .Sh BUGS
-It is currently not possible to watch fifos, AIO, or a vnode that
+It is currently not possible to watch FIFOs, AIO, or a vnode that
 resides on anything but a UFS file system.

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnode.9,v 1.15 2003/03/08 23:17:18 jmc Exp $
+.\"     $OpenBSD: vnode.9,v 1.16 2003/04/02 19:00:26 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -211,7 +211,7 @@ There is no safe way of defining new v_tags for loadable file systems.
 The v_tag attribute is read-only.
 .Pp
 The v_type attribute indicates what type of file (e.g. directory,
-regular, fifo) this vnode is.
+regular, FIFO) this vnode is.
 This is used by the generic code to ensure for various checks.
 For example, the
 .Xr read 2 
