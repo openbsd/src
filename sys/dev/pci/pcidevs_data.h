@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.286 2000/07/19 22:04:17 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.287 2000/07/19 22:45:57 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -4941,28 +4941,64 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "X3201-3 (21143)",
 	},
 	{
-	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724E_V,
-	    0,
-	    "Yamaha",
-	    "724 Audio",
-	},
-	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724,
 	    0,
 	    "Yamaha",
-	    "DS-1 Audio",
+	    "724",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724F,
+	    0,
+	    "Yamaha",
+	    "724F",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF734,
+	    0,
+	    "Yamaha",
+	    "734",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF737,
+	    0,
+	    "Yamaha",
+	    "737",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF738,
+	    0,
+	    "Yamaha",
+	    "738",
 	},
 	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740,
 	    0,
 	    "Yamaha",
-	    "DS-1L Audio",
+	    "740",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740C,
+	    0,
+	    "Yamaha",
+	    "740C",
 	},
 	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF744,
 	    0,
 	    "Yamaha",
-	    "DS-1S Audio",
+	    "744",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF754,
+	    0,
+	    "Yamaha",
+	    "754",
+	},
+	{
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF738_TEG,
+	    0,
+	    "Yamaha",
+	    "738",
 	},
 	{
 	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221,

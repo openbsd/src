@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.286 2000/07/19 22:04:17 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.287 2000/07/19 22:45:57 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1684,10 +1684,16 @@
 #define	PCI_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 (21143) */
 
 /* Yamaha products */
-#define	PCI_PRODUCT_YAMAHA_YMF724E_V	0x0004		/* 724 Audio */
-#define	PCI_PRODUCT_YAMAHA_YMF724	0x000d		/* DS-1 Audio */
-#define	PCI_PRODUCT_YAMAHA_YMF740	0x000d		/* DS-1L Audio */
-#define	PCI_PRODUCT_YAMAHA_YMF744	0x0010		/* DS-1S Audio */
+#define	PCI_PRODUCT_YAMAHA_YMF724	0x0004		/* 724 */
+#define	PCI_PRODUCT_YAMAHA_YMF724F	0x000d		/* 724F */
+#define	PCI_PRODUCT_YAMAHA_YMF734	0x0005		/* 734 */
+#define	PCI_PRODUCT_YAMAHA_YMF737	0x0008		/* 737 */
+#define	PCI_PRODUCT_YAMAHA_YMF738	0x0020		/* 738 */
+#define	PCI_PRODUCT_YAMAHA_YMF740	0x000a		/* 740 */
+#define	PCI_PRODUCT_YAMAHA_YMF740C	0x000c		/* 740C */
+#define	PCI_PRODUCT_YAMAHA_YMF744	0x0010		/* 744 */
+#define	PCI_PRODUCT_YAMAHA_YMF754	0x0012		/* 754 */
+#define	PCI_PRODUCT_YAMAHA_YMF738_TEG	0x0006		/* 738 */
 
 /* Zeinet products */
 #define	PCI_PRODUCT_ZEINET_1221	0x0001		/* 1221 */
