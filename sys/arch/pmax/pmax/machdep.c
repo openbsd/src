@@ -97,7 +97,7 @@
 #include <pmax/pmax/cons.h>
 
 
-#include <mips/mips/mips_machdep.c>	/* XXX */
+#include <pmax/pmax/mips_machdep.c>	/* XXX */
 
 
 #include "pm.h"

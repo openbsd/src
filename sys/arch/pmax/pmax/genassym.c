@@ -1,8 +1,11 @@
-/*	$NetBSD: stdarg.h,v 1.11 1996/02/26 23:29:08 jonathan Exp $	*/
+/*	$NetBSD: genassym.c,v 1.9 1996/04/07 14:27:00 jonathan Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Ralph Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,33 +35,47 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
+ *	@(#)genassym.c	8.2 (Berkeley) 9/23/93
  */
 
-#ifndef _PMAX_STDARG_H_
-#define	_PMAX_STDARG_H_
+#include <stdio.h>
+#include <stddef.h>
+#include <sys/param.h>
+#include <sys/buf.h>
+#include <sys/map.h>
+#include <sys/proc.h>
+#include <sys/mbuf.h>
+#include <sys/user.h>
 
-#include <machine/ansi.h>
+#include <machine/reg.h>
 
-typedef _BSD_VA_LIST_	va_list;
+#define	def(N,V)	printf("#define\t%s %d\n", N, V)
+#define	defx(N,V)	printf("#define\t%s 0x%lx\n", N, V)
+#define	off(N,S,M)	def(N, (int)offsetof(S, M))
 
-#define	__va_promote(type) \
-	(((sizeof(type) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
+int
+main()
+{
 
-#define	va_start(ap, last) \
-	(ap = ((char *)&(last) + __va_promote(last)))
+	off("P_FORW", struct proc, p_forw);
+	off("P_BACK", struct proc, p_back);
+	off("P_PRIORITY", struct proc, p_priority);
+	off("P_ADDR", struct proc, p_addr);
 
-#ifdef _KERNEL
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type)))[-1]
-#else
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type) == sizeof(int) ? sizeof(type) : \
-		sizeof(type) > sizeof(int) ? \
-		(-(int)(ap) & (sizeof(type) - 1)) + sizeof(type) : \
-		(abort(), 0)))[-1]
-#endif
+	off("P_UPTE", struct proc, p_md.md_upte);
+	off("U_PCB_REGS", struct user, u_pcb.pcb_regs);
 
-#define	va_end(ap)	((void) 0)
+	off("U_PCB_FPREGS", struct user, u_pcb.pcb_regs[F0]);
+	off("U_PCB_CONTEXT", struct user, u_pcb.pcb_context);
+	off("U_PCB_ONFAULT", struct user, u_pcb.pcb_onfault);
+	off("U_PCB_SEGTAB", struct user, u_pcb.pcb_segtab);
 
-#endif /* !_PMAX_STDARG_H_ */
+	defx("VM_MIN_ADDRESS", VM_MIN_ADDRESS);
+	defx("VM_MIN_KERNEL_ADDRESS", VM_MIN_KERNEL_ADDRESS);
+
+	off("V_SWTCH", struct vmmeter, v_swtch);
+
+	def("SIGILL", SIGILL);
+	def("SIGFPE", SIGFPE);
+	exit(0);
+}

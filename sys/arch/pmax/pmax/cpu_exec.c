@@ -1,8 +1,11 @@
-/*	$NetBSD: stdarg.h,v 1.11 1996/02/26 23:29:08 jonathan Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.4 1995/04/25 19:16:46 mellon Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by Ralph
+ * Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,33 +35,70 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
+ *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
 
-#ifndef _PMAX_STDARG_H_
-#define	_PMAX_STDARG_H_
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/vnode.h>
+#include <sys/exec.h>
+#include <sys/resourcevar.h>
+#include <vm/vm.h>
 
-#include <machine/ansi.h>
+#include <sys/exec_ecoff.h>
+#include <machine/reg.h>
 
-typedef _BSD_VA_LIST_	va_list;
+/*
+ * cpu_exec_aout_makecmds():
+ *	cpu-dependent a.out format hook for execve().
+ * 
+ * Determine of the given exec package refers to something which we
+ * understand and, if so, set up the vmcmds for it.
+ *
+ */
+int
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	return ENOEXEC;
+}
 
-#define	__va_promote(type) \
-	(((sizeof(type) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
+#ifdef COMPAT_ULTRIX
+extern struct emul emul_ultrix;
 
-#define	va_start(ap, last) \
-	(ap = ((char *)&(last) + __va_promote(last)))
+void
+cpu_exec_ecoff_setregs(p, pack, stack, retval)
+	struct proc *p;
+	struct exec_package *pack;
+	u_long stack;
+	register_t *retval;
+{
+	struct ecoff_aouthdr *eap;
 
-#ifdef _KERNEL
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type)))[-1]
-#else
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type) == sizeof(int) ? sizeof(type) : \
-		sizeof(type) > sizeof(int) ? \
-		(-(int)(ap) & (sizeof(type) - 1)) + sizeof(type) : \
-		(abort(), 0)))[-1]
+	setregs(p, pack, stack, retval);
+	eap = (struct ecoff_aouthdr *)
+	    ((caddr_t)pack->ep_hdr + sizeof(struct ecoff_filehdr));
+	p->p_md.md_regs[GP] = eap->ea_gp_value;
+}
+
+/*
+ * cpu_exec_ecoff_hook():
+ *	cpu-dependent ECOFF format hook for execve().
+ * 
+ * Do any machine-dependent diddling of the exec package when doing ECOFF.
+ *
+ */
+int
+cpu_exec_ecoff_hook(p, epp, eap)
+	struct proc *p;
+	struct exec_package *epp;
+	struct ecoff_aouthdr *eap;
+{
+
+	epp->ep_emul = &emul_ultrix;
+	return 0;
+}
 #endif
-
-#define	va_end(ap)	((void) 0)
-
-#endif /* !_PMAX_STDARG_H_ */

@@ -110,7 +110,7 @@ assym.h: genassym
 genassym: genassym.o
 	${CC} -o $@ genassym.o
 
-genassym.o: ${S}/arch/mips/mips/genassym.c
+genassym.o: ${S}/arch/pmax/pmax/genassym.c
 	${NORMAL_C_C}
 
 param.c: $S/conf/param.c
@@ -156,7 +156,7 @@ depend:: .depend
 	mkdep ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore.S ${PMAX}/pmax/fp.S
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${S}/arch/mips/mips/genassym.c
+	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${S}/arch/pmax/pmax/genassym.c
 
 
 # depend on root or device configuration

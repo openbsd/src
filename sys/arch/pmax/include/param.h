@@ -46,7 +46,7 @@
  * Machine-dependent constants (VM, etc) common across MIPS cpus
  */
 
-#include <mips/mips_param.h>
+#include <pmax/mips_param.h>
 
 /*
  * Machine dependent constants for DEC Station 3100.

@@ -215,3 +215,6 @@ file	arch/pmax/pmax/conf-glue.c
 include "../../../compat/ultrix/files.ultrix"
 
 # Configs
+file	arch/pmax/pmax/cpu_exec.c
+file	arch/pmax/pmax/mem.c
+file	arch/pmax/pmax/process_machdep.c

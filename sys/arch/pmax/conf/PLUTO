@@ -1,0 +1,54 @@
+#
+#	PLUTO - specific config(8) file for pluto
+#
+
+machine		pmax
+
+options		CPU_R3000
+options		DS3100
+options		HZ=256
+options		NKMEMCLUSTERS=1024
+options		TIMEZONE=0
+options		DST=0
+
+maxusers	8
+
+options		SWAPPAGER
+options		VNODEPAGER
+options		DEVPAGER
+
+options		COMPAT_43
+options		NATIVE_ELF
+options		FFS
+options		FIFO
+options		INET
+options		NFSCLIENT
+options		NFSSERVER
+options		KTRACE
+
+config		netbsd	root on rz0a swap on rz0b dumps on rz0b
+
+mainbus0	at root
+
+cpu*		at mainbus0
+clock0		at mainbus0
+pm0		at mainbus0
+dc0		at mainbus0
+le0		at mainbus0
+sii0		at mainbus0
+oldscsibus*	at sii?
+rz0		at oldscsibus? target ? drive ?
+rz1		at oldscsibus? target ? drive ?
+rz2		at oldscsibus? target ? drive ?
+rz3		at oldscsibus? target ? drive ?
+rz4		at oldscsibus? target ? drive ?
+rz5		at oldscsibus? target ? drive ?
+tz0		at oldscsibus? target ? drive ?
+tz1		at oldscsibus? target ? drive ?
+
+pseudo-device	loop
+pseudo-device	rasterconsole	1
+pseudo-device	fb		1
+pseudo-device	sl		1
+pseudo-device	bpfilter	8
+pseudo-device	pty		32
