@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.11 1997/10/06 15:27:40 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.12 1997/10/06 19:37:27 kstailey Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -238,7 +238,9 @@ ufs_access(v)
 	 */
 	if (mode & VWRITE) {
 		switch (vp->v_type) {
+#ifdef QUOTA
 			int error;
+#endif
 		case VDIR:
 		case VLNK:
 		case VREG:
