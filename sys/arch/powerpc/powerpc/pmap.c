@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.71 2002/07/12 20:28:55 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.72 2002/07/15 17:01:25 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -344,10 +344,11 @@ pteidx(sr_t sr, vaddr_t va)
 	return hash & pmap_ptab_mask;
 }
 
-#define PTED_VA_PTEGIDX_M 0x07
-#define PTED_VA_HID_M	  0x08
-#define PTED_VA_MANAGED_M 0x10
-#define PTED_VA_WIRED_M   0x20
+#define PTED_VA_PTEGIDX_M	0x07
+#define PTED_VA_HID_M		0x08
+#define PTED_VA_MANAGED_M	0x10
+#define PTED_VA_WIRED_M		0x20
+#define PTED_VA_EXEC_M		0x40
 
 static inline u_int32_t
 PTED_HID(struct pte_desc *pted)
@@ -496,6 +497,9 @@ pmap_enter(pm, va, pa, prot, flags)
 	 */
 	pte_insert(pted);
 
+        if (prot & VM_PROT_EXECUTE)
+        	pm->pm_exec[va >> ADDR_SR_SHIFT]++;
+
 	splx(s);
 
 	/* only instruction sync executable pages */
@@ -598,6 +602,11 @@ pmap_remove_pg(pmap_t pm, vaddr_t va)
 
 	pmap_hash_remove(pted);
 
+	if (pted->pted_va & PTED_VA_EXEC_M) {
+		pm->pm_exec[pted->pted_va >> ADDR_SR_SHIFT]--;
+		pted->pted_va &= ~PTED_VA_EXEC_M;
+	}
+
 	pted->pted_pte.pte_hi &= ~PTE_VALID;
 
 	if (PTED_MANAGED(pted))
@@ -666,6 +675,9 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	pte_insert(pted);
 	pted->pted_va |= PTED_VA_WIRED_M;
 
+        if (prot & VM_PROT_EXECUTE)
+        	pm->pm_exec[va >> ADDR_SR_SHIFT]++;
+
 	splx(s);
 
 }
@@ -711,6 +723,11 @@ pmap_kremove_pg(vaddr_t va)
 	 * or that the mapping is not present in the hash table.
 	 */
 	pmap_hash_remove(pted);
+
+	if (pted->pted_va & PTED_VA_EXEC_M) {
+		pm->pm_exec[pted->pted_va >> ADDR_SR_SHIFT]--;
+		pted->pted_va &= ~PTED_VA_EXEC_M;
+	}
 
 	if (PTED_MANAGED(pted))
 		pmap_remove_pv(pted);
@@ -807,6 +824,10 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 		pte->pte_lo |= PTE_RO;
 
 	pted->pted_va = va & ~PAGE_MASK;
+
+	if (prot & VM_PROT_EXECUTE)
+		pted->pted_va  |= PTED_VA_EXEC_M;
+
 	pted->pted_pmap = pm;
 }
 

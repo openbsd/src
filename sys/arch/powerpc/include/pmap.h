@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.26 2002/07/12 20:28:55 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.27 2002/07/15 17:01:26 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -84,6 +84,7 @@ void pmap_kenter_cache( vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 struct pmap {
 	sr_t pm_sr[16];		/* segments used in this pmap */
 	struct pmapvp *pm_vp[VP_SR_SIZE];	/* virtual to physical table */
+	u_int32_t pm_exec[16];	/* segments used in this pmap */
 	int pm_refs;		/* ref count */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
