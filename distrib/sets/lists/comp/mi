@@ -3121,6 +3121,11 @@
 ./usr/share/man/cat3/event_loop.0
 ./usr/share/man/cat3/event_pending.0
 ./usr/share/man/cat3/event_set.0
+./usr/share/man/cat3/evtimer_add.0
+./usr/share/man/cat3/evtimer_del.0
+./usr/share/man/cat3/evtimer_initialized.0
+./usr/share/man/cat3/evtimer_pending.0
+./usr/share/man/cat3/evtimer_set.0
 ./usr/share/man/cat3/exec.0
 ./usr/share/man/cat3/execl.0
 ./usr/share/man/cat3/execle.0
@@ -4505,11 +4510,6 @@
 ./usr/share/man/cat3/timegm.0
 ./usr/share/man/cat3/timelocal.0
 ./usr/share/man/cat3/timeout.0
-./usr/share/man/cat3/timeout_add.0
-./usr/share/man/cat3/timeout_del.0
-./usr/share/man/cat3/timeout_initialized.0
-./usr/share/man/cat3/timeout_pending.0
-./usr/share/man/cat3/timeout_set.0
 ./usr/share/man/cat3/timeradd.0
 ./usr/share/man/cat3/timerclear.0
 ./usr/share/man/cat3/timercmp.0
