@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.24 2002/03/28 20:48:37 mickey Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.25 2002/03/30 00:35:45 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -135,10 +135,15 @@ transmitted packets.
 .It Fl t Ar tx rate
 Set the transmit rate of the specified interface.
 The legal values
-for the transmit rate vary depending on whether the interface is a
-standard WaveLAN/IEEE or a WaveLAN/IEEE Turbo adapter.
-The standard NICs support a maximum transmit rate of 2Mbps while the
-turbo NICs support a maximum speed of 6Mbps.
+for the transmit rate vary depending on the adapter type.
+The standard WaveLAN/IEEE NICs support a maximum transmit rate of 2Mbps,
+and the
+.Sq Turbo
+NICs support a maximum speed of 6Mbps.
+The WaveLAN/IEEE
+.Sq Turbo 11Mb ,
+Prism-II and Prism-2.5
+NICs support a maximum speed of 11Mbps.
 The following table shows the legal transmit rate settings
 and the corresponding transmit speeds:
 .Bd -filled -offset indent
@@ -159,15 +164,13 @@ The standard NICs support only settings 1 through 3.
 Turbo NICs support all the above listed speed settings.
 The default driver setting is 3 (auto rate select).
 .It Fl n Ar network name
-Set the name of the service set (IBSS) that this station wishes to join.
+Set the name of the service set (BSS or IBSS) or ad-hoc network
+that this station wishes to join.
 The
 .Ar network name
 can be any text string up to 30 characters in length.
 The default name is the empty string which should allow
 the station to connect to the first available access point.
-The interface should be set for BSS mode using the
-.Fl p
-flag in order for this to work.
 .It Fl s Ar station name
 Sets the
 .Ar station name
@@ -181,29 +184,31 @@ The Lucent WaveMANAGER sofware can poll the names of remote hosts.
 Permitted values are 0 (don't create IBSS) and 1 (enable creation of IBSS).
 The default is 0.
 .Pp
-Note: this option is provided for experimental purposes only: enabling
-the creation of an IBSS on a host system doesn't appear to actually work.
+Note: older firmware revisions don't support the creation of a service set.
 .It Fl q Ar SSID
 Specify the name of an IBSS (SSID) to create on a given interface.
 The
 .Ar SSID
 can be any text string up to 30 characters long.
 .Pp
-Note: this option is provided for experimental purposes only: enabling
-the creation of an IBSS on a host system doesn't appear to actually work.
+Note: older firmware revisions don't have IBSS support.
 .It Fl p Ar port type
 Set the
 .Ar port type
 for a specified interface.
 The legal values for
 .Ar port type
-are 1 (BSS mode) and 3 (ad-hoc) mode.
+are 1 (BSS mode), 3 (ad-hoc mode) and 6 (hostap mode).
 In ad-hoc mode, the station can communicate directly with any other
 stations within direct radio range (provided that they are also
 operating in ad-hoc mode).
-In BSS mode, hosts must associate with a service set controlled by
-an access point, which relays traffic between end stations.
-The default setting is 3 (ad-hoc mode).
+In BSS (aka infrastructure) mode, hosts must associate with a service set
+controlled by an access point, which relays traffic between end stations.
+The default setting is 1 (BSS mode).
+The hostap mode is only available on Prism-II and Prism-2.5-based NICs.
+In this mode, the NIC, in conjuction with the
+.Xr wi 4
+driver, acts as an access point.
 .It Fl a Ar access_point_density
 Specify the
 .Ar access point density
@@ -268,7 +273,13 @@ For NICs sold in Japan, the default channel is 14, and it is
 the only available channel for pre-11Mbps NICs.
 Note that two stations must be set to the same channel in order to
 communicate.
-.It Fl A Ar 0|1
+Note also that the channels do overlap; the bandwidth required for
+each channel is about 20Mhz.
+When using multiple channels in close proximity it is suggested
+that channels be separated by at least 25Mhz.
+In the US, this means that only channels 1, 6, and 11 may be used
+simultaneously without interference.
+.It Fl A Ar 1|2
 [Prism2 only] Sets the authentication type for a given interface.
 Permitted values are
 .Ar 1
@@ -283,6 +294,12 @@ when no valid WEP keys have been defined.
 Enable or disable
 .Dq microwave oven robustness
 on a given interface.
+When enabled, smaller packets are used to reduce the impact of
+consumer microwave ovens that operate in the 2.4Ghz frequency range.
+This option may also be useful when there are 2.4Ghz cordless
+telephones in the area.
+Only works in BSS mode and requires access point support.
+Requires Lucent firmware version >= 7.28.
 .It Fl P Ar 0|1
 Enable or disable power management on a given interface.
 Enabling power management uses an alternating sleep/wake protocol to help
