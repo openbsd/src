@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vipw.8,v 1.7 2003/06/02 23:36:55 millert Exp $
+.\"	$OpenBSD: vipw.8,v 1.8 2003/06/14 22:45:11 millert Exp $
 .\"	$NetBSD: vipw.8,v 1.4 1995/01/20 19:19:56 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -75,7 +75,7 @@ and the new information is not available to programs.
 .Pp
 Which type of cipher is used to encrypt the password information
 depends on the configuration in
-.Xr passwd.conf 5 .
+.Xr login.conf 5 .
 .Sh ENVIRONMENT
 If the following environment variable exists it will be utilized by
 .Nm vipw :
@@ -90,7 +90,7 @@ will be invoked instead of the default editor
 .Xr chpass 1 ,
 .Xr passwd 1 ,
 .Xr passwd 5 ,
-.Xr passwd.conf 5 ,
+.Xr login.conf 5 ,
 .Xr adduser 8 ,
 .Xr pwd_mkdb 8
 .Sh HISTORY

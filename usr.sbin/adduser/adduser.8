@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.30 2003/06/12 12:59:48 jmc Exp $
+.\"	$OpenBSD: adduser.8,v 1.31 2003/06/14 22:45:11 millert Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -116,7 +116,7 @@ their owner.
 Encrypt local passwords using
 .Ar method
 of encryption as described in
-.Xr passwd.conf 5 .
+.Xr login.conf 5 .
 .It Fl group Ar login_group
 Specify the default login group.
 A value of
@@ -274,7 +274,7 @@ This value is generated automatically, but can be specified at the
 discretion of the person invoking the program.
 .It Sy password
 If not empty, the password is encrypted according to
-.Xr passwd.conf 5 .
+.Xr login.conf 5 .
 If empty, the account will be automatically disabled to prevent spurious
 access to it.
 .El
@@ -395,7 +395,7 @@ Do not send a welcome message.
 .Xr group 5 ,
 .Xr login.conf 5 ,
 .Xr passwd 5 ,
-.Xr passwd.conf 5 ,
+.Xr login.conf 5 ,
 .Xr shells 5 ,
 .Xr nologin 8 ,
 .Xr pwd_mkdb 8 ,
