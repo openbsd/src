@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.65 2004/01/11 20:13:00 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.66 2004/01/11 22:01:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -87,9 +87,15 @@ struct bgpd_addr {
 	union {
 		struct in_addr		v4;
 		struct in6_addr		v6;
+		u_int8_t		addr8[16];
+		u_int16_t		addr16[8];
+		u_int32_t		addr32[4];
 	} ba;		    /* 128-bit address */
 #define v4	ba.v4
 #define v6	ba.v6
+#define addr8	ba.addr8
+#define addr16	ba.addr16
+#define addr32	ba.addr32
 };
 
 struct bgpd_config {
@@ -268,8 +274,8 @@ void	kr_shutdown(void);
 void	kr_fib_couple(void);
 void	kr_fib_decouple(void);
 int	kr_dispatch_msg(void);
-int	kr_nexthop_add(in_addr_t);
-void	kr_nexthop_delete(in_addr_t);
+int	kr_nexthop_add(struct bgpd_addr *);
+void	kr_nexthop_delete(struct bgpd_addr *);
 void	kr_show_route(struct imsg *);
 
 /* control.c */
