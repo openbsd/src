@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.45 2002/02/16 21:27:48 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.46 2002/03/30 18:16:05 vincent Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.45 2002/02/16 21:27:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.46 2002/03/30 18:16:05 vincent Exp $";
 #endif /* not lint */
 
 /*
@@ -235,7 +235,7 @@ main(argc, argv)
 			break;
 		case 'h':
 			if (uid) {
-				warn("-h option: %s", strerror(EPERM));
+				warnx("-h option: %s", strerror(EPERM));
 				quickexit(1);
 			}
 			if ((fqdn = strdup(optarg)) == NULL) {
