@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_option_space.3,v 1.15 2005/01/06 03:50:46 itojun Exp $
+.\"	$OpenBSD: inet6_option_space.3,v 1.16 2005/01/06 10:50:40 jmc Exp $
 .\"	$KAME: inet6_option_space.3,v 1.11 2005/01/05 03:00:44 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -41,8 +41,6 @@
 .Nm inet6_option_find
 .Nd IPv6 Hop-by-Hop and Destination Option Manipulation
 .\"
-.Sh LIBRARY
-.Lb libc
 .Sh SYNOPSIS
 .In sys/types.h
 .In netinet/in.h
@@ -65,12 +63,12 @@ Manipulating and parsing IPv6's Hop-by-Hop and Destination options is
 complicated by the need to properly align and pad data as well as the
 need to manipulate ancillary information that is not part of the data
 stream.
-RFC2292 defines a set of functions, which are implemented as
-part of the Kame libraries, to support help developers create, change,
-and parse Hop-by-Hope and Destination options.
+RFC 2292 defines a set of functions, which are implemented as
+part of the Kame libraries, to help developers create, change,
+and parse Hop-by-Hop and Destination options.
 All of the prototypes
 for the option functions are defined in the
-.In netinet/in.h
+.Aq Pa netinet/in.h
 header file.
 .\"
 .Ss inet6_option_space
@@ -102,7 +100,7 @@ structures, where
 is the number of options to be stored in the object.
 Usually this has
 no impact because it is assumed that most Hop-by-Hop and Destination
-option headers carry only one option as indicated in appendix B of RFC2460.
+option headers carry only one option as indicated in appendix B of RFC 2460.
 .\"
 .Ss inet6_option_init
 The
@@ -112,13 +110,13 @@ a Hop-by-Hop or Destination option.
 It returns
 .Li 0
 on success and
-.Li -1
+.Li \-1
 when an error occurs.
 .Pp
 The
 .Fa bp
 argument points to a previously allocated area of memory which must be
-large enough to contain all the arguments that the application indents
+large enough to contain all the arguments that the application intends
 to add later via
 .Fn inet6_option_append
 and
@@ -156,10 +154,11 @@ This function appends a Hop-by-Hop option or a Destination option into
 an ancillary data object previously initialized by a call to
 .Fn inet6_option_init .
 The
-.Fn inet6_option_append function returns
+.Fn inet6_option_append
+function returns
 .Li 0
 if it succeeds or
-.Li -1
+.Li \-1
 when an error occurs.
 .Pp
 The
@@ -214,7 +213,7 @@ Alignments may be specified as
 .Li 4 ,
 or
 .Li 8
-bytes, which is no alignment, 16 bit, 32 bit and 64 bit alignments
+bytes, which is no alignment, 16-bit, 32-bit and 64-bit alignments
 respectively.
 .Pp
 The
@@ -268,7 +267,7 @@ determine if padding must be appended at the end of the option.
 (The
 .Fn inet6_option_append
 function does not need a data length argument
-since the option data length must already be stored by the caller)
+since the option data length must already be stored by the caller.)
 .Pp
 The
 .Fa multx
@@ -295,13 +294,13 @@ argument points to the 8-bit option type field, which is followed by
 the 8-bit option data length, and then the option data.
 When no more
 options remain to be processed, the return value is
-.Li -1
+.Li \-1
 and
 .Fa *tptrp
 is
 .Dv NULL
 and when an error occurs, the return value is
-.Li -1
+.Li \-1
 but the
 .Fa *tptrp
 argument is not
@@ -310,7 +309,7 @@ This set of return values allows a program to easily loop through all
 the options in an ancillary data object, checking for the error and
 end of stream conditions along the way.
 .Pp
-When a valid option is returned the
+When a valid option is returned, the
 .Fa cmsg
 argument points to a
 .Li cmsghdr
@@ -351,7 +350,7 @@ function allows an application to search for a particular option type
 in an ancillary data object.
 The
 .Fa cmsg
-argument is a pointer to
+argument is a pointer to a
 .Li cmsghdr
 structure in which the
 .Li cmsg_level
@@ -369,12 +368,15 @@ The
 argument is handled exactly as in the
 .Fn inet6_option_next
 function described above.
-.Pa
+.Pp
 The
-.fn inet6_option_find
+.Fn inet6_option_find
 function starts searching for an option of the specified type
 beginning after the value of
 .Fa *tptrp .
+.\"
+.Sh EXAMPLES
+RFC 2292 gives comprehensive examples in chapter 6.
 .\"
 .Sh DIAGNOSTICS
 The
@@ -384,7 +386,7 @@ and
 functions return
 .Li 0
 on success or
-.Li -1
+.Li \-1
 on an error.
 .Pp
 The
@@ -398,37 +400,34 @@ When
 or
 .Fn inet6_option_find
 detect an error they return
-.Li -1
+.Li \-1
 setting
 .Fa *tptrp
-to non
+to a non
 .Dv NULL
 value.
-.\"
-.Sh EXAMPLES
-RFC2292 gives comprehensive examples in chapter 6.
 .\"
 .Sh SEE ALSO
 .Rs
 .%A W. Stevens
 .%A M. Thomas
 .%T "Advanced Sockets API for IPv6"
-.%N RFC2292
+.%N RFC 2292
 .%D February 1998
 .Re
 .Rs
 .%A S. Deering
 .%A R. Hinden
 .%T "Internet Protocol, Version 6 (IPv6) Specification"
-.%N RFC2460
+.%N RFC 2460
 .%D December 1998
 .Re
-.\"
-.Sh HISTORY
-The implementation first appeared in KAME advanced networking kit.
 .\"
 .Sh STANDARDS
 The functions are documented in
 .Dq Advanced Sockets API for IPv6
-(RFC2292).
+(RFC 2292).
+.\"
+.Sh HISTORY
+The implementation first appeared in KAME advanced networking kit.
 .\"
