@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.6 2005/02/10 14:05:48 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.7 2005/02/19 10:19:56 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -591,7 +591,7 @@ orig_rtr_lsa(struct area *area)
 			if (nbr) {
 				log_debug("orig_rtr_lsa: point-to-point, "
 				    "interface %s", iface->name);
-				rtr_link.id = nbr->addr.s_addr;
+				rtr_link.id = nbr->id.s_addr;
 				rtr_link.data = iface->addr.s_addr;
 				rtr_link.type = LINK_TYPE_POINTTOPOINT;
 				rtr_link.metric = htons(iface->metric);
