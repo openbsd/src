@@ -4,16 +4,3 @@ models and devices are now supported.
 
 In addition to the providing SunOS 4.1 compatibility, OpenBSD OSREV will
 also run some number of SunOS 5 (SVR4) executables in binary emulation mode.
-
-OpenBSD/sparc has gone though several development cycles since it's origin,
-but the OpenBSD/sparc OSREV release should be considered as "under active
-development" rather than a production ready release.  There are still known
-problems with the kernel and missing support for some common devices.
-
-What this means is that if you try to install OpenBSD/sparc as a replacement
-for SunOS or Solaris in a production environment, you will get the features
-mentioned above, but probably not a stable/reliable system.  On the other
-hand, if you're looking for an operating system for a personal workstation
-or for working with unix tools and internals, you might find OpenBSD/sparc
-quite satisfactory as released.
-
