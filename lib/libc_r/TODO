@@ -1,6 +1,20 @@
 
 This is a list of things that still need to be done:
 
+* Add 
+      pthread_condattr_[gs]etpshared()	-- and add warn_references
+      pthread_mutexattr_[gs]etprioceiling()
+      pthread_mutexattr_[gs]etprotocol()
+      pthread_mutexattr_[gs]etpshared()
+      pthread_mutex_[gs]etprioceiling()
+      sched_setparam()
+      sched_setscheduler()
+
+* Add _warn_references to the schedprio stuff
+* Quiz jb about pthread_llist_remove.. change name to _thread_llist_remove?
+	- what pthread_setprio() and pthread_yield() for?
+	- shouldn't pthread_yield() be marked depreciated?
+
 * Add thread stuff to the other archs in libc/arch/; ie change
   some usages of ENTRY to SYSENTRY in some .S files and add
   the new macros to their SYS.h. 
@@ -36,4 +50,4 @@ This is a list of things that still need to be done:
 * Figure out what to do with the configuration system variables (_SC_*)
   that are defined by POSIX 1003.1c (at least update sysconf(3))
 
-$OpenBSD: TODO,v 1.5 1999/01/10 22:51:14 d Exp $
+$OpenBSD: TODO,v 1.6 1999/01/17 23:43:47 d Exp $
