@@ -4,4 +4,6 @@ block drop in log quick on ! lo0 inet from 127.0.0.0/8 to any
 block drop in on ! lo0 from (lo0:network) to any
 block drop in log quick on ! lo0 inet from (lo0:network) to any
 block drop in on ! lo from (lo:network) to any
+block drop in from (lo) to any
 block drop in log quick on ! lo inet from (lo:network) to any
+block drop in log quick inet from (lo) to any

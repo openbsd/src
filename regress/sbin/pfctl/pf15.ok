@@ -23,9 +23,4 @@ scrub in on lo0 inet6 from fe80::1 to any fragment reassemble
 scrub in inet from ! 127.0.0.1 to any fragment reassemble
 scrub in inet6 from ! ::1 to any fragment reassemble
 scrub in on lo0 inet6 from ! fe80::1 to any fragment reassemble
-scrub in inet from ! 127.0.0.1 to any fragment reassemble
-scrub in inet6 from ! ::1 to any fragment reassemble
-scrub in on lo0 inet6 from ! fe80::1 to any fragment reassemble
 scrub in on ! lo0 all fragment reassemble
-scrub in on ! lo all fragment reassemble
-scrub in from (lo:network) to (lo) fragment reassemble
