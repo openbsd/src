@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.8 2003/10/27 20:58:46 millert Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.9 2005/01/14 22:47:06 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -41,34 +41,31 @@
 #include <unistd.h>
 #include <a.out.h>
 
-extern off_t lseek();
-
-struct exec head;
-char *file;
+struct	exec head;
+char	*file;
 
 /* Virtual addresses of the symbols we frob. */
-long rd_root_image_va, rd_root_size_va;
+long	rd_root_image_va, rd_root_size_va;
 
 /* Offsets relative to start of data segment. */
-long rd_root_image_off, rd_root_size_off;
+long	rd_root_image_off, rd_root_size_off;
 
 /* value in the location at rd_root_size_off */
-int rd_root_size_val;
+int	rd_root_size_val;
 
 /* pointers to pieces of mapped file */
-char *dataseg;
+char	*dataseg;
 
 /* and lengths */
-int data_len;
-int data_off;
-int data_pgoff;
+int	data_len;
+int	data_off;
+int	data_pgoff;
 
 void	find_rd_root_image(char *);
 __dead void usage(void);
 
 int
-main(argc,argv)
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch, fd, n, xflag;
 	int *ip;
@@ -121,9 +118,7 @@ main(argc,argv)
 		printf("%s: no symbols\n", file);
 		exit(1);
 	}
-	if (head.a_trsize ||
-		head.a_drsize)
-	{
+	if (head.a_trsize || head.a_drsize) {
 		printf("%s: has relocations\n", file);
 		exit(1);
 	}
@@ -152,11 +147,8 @@ main(argc,argv)
 	data_off -= data_pgoff;
 	data_len += data_pgoff;
 	/* map in in... */
-	dataseg = mmap(NULL,	/* any address is ok */
-				   data_len, /* length */
-				   PROT_READ | PROT_WRITE,
-				   MAP_SHARED,
-				   fd, data_off);
+	dataseg = mmap(NULL, data_len, PROT_READ | PROT_WRITE,
+	    MAP_SHARED, fd, data_off);
 	if (dataseg == MAP_FAILED) {
 		printf("%s: can not map data seg\n", file);
 		perror(file);
@@ -171,7 +163,7 @@ main(argc,argv)
 	rd_root_size_val = *ip;
 #ifdef	DEBUG
 	printf("rd_root_size  val: 0x%08X (%d blocks)\n",
-		rd_root_size_val, (rd_root_size_val >> 9));
+	    rd_root_size_val, (rd_root_size_val >> 9));
 #endif
 
 	/*
@@ -216,28 +208,25 @@ struct nlist wantsyms[] = {
 };
 
 void
-find_rd_root_image(file)
-	char *file;
+find_rd_root_image(char *file)
 {
-	int data_va;
-	int std_entry;
+	int data_va, std_entry;
 
 	if (nlist(file, wantsyms)) {
 		printf("%s: no rd_root_image symbols?\n", file);
 		exit(1);
 	}
-	std_entry = N_TXTADDR(head) +
-	    (head.a_entry & (N_PAGSIZ(head)-1));
+	std_entry = N_TXTADDR(head) + (head.a_entry & (N_PAGSIZ(head)-1));
 	data_va = N_DATADDR(head);
 	if (head.a_entry != std_entry) {
 		printf("%s: warning: non-standard entry point: 0x%08x\n",
-			   file, head.a_entry);
+		    file, head.a_entry);
 		printf("\texpecting entry=0x%X\n", std_entry);
 		data_va += (head.a_entry - std_entry);
 	}
 
 	rd_root_size_off = wantsyms[0].n_value - data_va;
-	rd_root_image_off     = wantsyms[1].n_value - data_va;
+	rd_root_image_off = wantsyms[1].n_value - data_va;
 #ifdef	DEBUG
 	printf(".data segment  va: 0x%08X\n", data_va);
 	printf("rd_root_size   va: 0x%08X\n", wantsyms[0].n_value);
