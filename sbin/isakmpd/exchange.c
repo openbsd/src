@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.16 1999/04/27 21:07:40 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.95 1999/04/27 09:40:33 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.17 1999/04/30 11:47:26 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.100 1999/04/29 22:11:50 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -278,11 +278,13 @@ exchange_run (struct message *msg)
 	       * see retransmits of the last message of the peer
 	       * later.
 	       */
+	      msg->flags |= MSG_LAST;
 	      if (exchange->step > 0)
-		msg->flags |= MSG_LAST;
-	      if (exchange->last_sent)
-		message_free (exchange->last_sent);
-	      exchange->last_sent = msg;
+		{
+		  if (exchange->last_sent)
+		    message_free (exchange->last_sent);
+		  exchange->last_sent = msg;
+		}
 
 	      /*
 	       * After we physically have sent our last message we need to
@@ -360,7 +362,7 @@ exchange_run (struct message *msg)
 	    case -1:
 	      log_print ("exchange_run: exchange_validate failed");
 	      /* XXX Is this the best error notification type?  */
-	      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 0, 1);
+	      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 1);
 	      return;
 	    }
 	}
@@ -1129,6 +1131,10 @@ exchange_free_aux (void *v_exch)
 
   if (exchange->last_received)
     message_free (exchange->last_received);
+  if (exchange->last_sent)
+    message_free (exchange->last_sent);
+  if (exchange->in_transit)
+    message_free (exchange->in_transit);
   if (exchange->nonce_i)
     free (exchange->nonce_i);
   if (exchange->nonce_r)
