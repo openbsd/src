@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.11 2001/12/20 17:41:48 mickey Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.12 2001/12/20 17:48:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -201,6 +201,7 @@ wi_pci_attach(parent, self, aux)
 
 		memt = iot;
 		memh = ioh;
+		sc->sc_pci = 1;
 	}
 
 	sc->wi_btag = iot;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.7 2001/10/25 19:40:06 mickey Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.8 2001/12/20 17:48:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -78,25 +78,31 @@
  * register space access macros
  */
 #define CSR_WRITE_4(sc, reg, val)	\
-	bus_space_write_4(sc->wi_btag, sc->wi_bhandle, reg, val)
+	bus_space_write_4(sc->wi_btag, sc->wi_bhandle,	\
+	    (sc->sc_pci? reg * 2: reg) , val)
 #define CSR_WRITE_2(sc, reg, val)	\
-	bus_space_write_2(sc->wi_btag, sc->wi_bhandle, reg, val)
+	bus_space_write_2(sc->wi_btag, sc->wi_bhandle,	\
+	    (sc->sc_pci? reg * 2: reg) , val)
 #define CSR_WRITE_1(sc, reg, val)	\
-	bus_space_write_1(sc->wi_btag, sc->wi_bhandle, reg, val)
+	bus_space_write_1(sc->wi_btag, sc->wi_bhandle,	\
+	    (sc->sc_pci? reg * 2: reg) , val)
 
 #define CSR_READ_4(sc, reg)		\
-	bus_space_read_4(sc->wi_btag, sc->wi_bhandle, reg)
+	bus_space_read_4(sc->wi_btag, sc->wi_bhandle,	\
+	    (sc->sc_pci? reg * 2: reg))
 #define CSR_READ_2(sc, reg)		\
-	bus_space_read_2(sc->wi_btag, sc->wi_bhandle, reg)
+	bus_space_read_2(sc->wi_btag, sc->wi_bhandle,	\
+	    (sc->sc_pci? reg * 2: reg))
 #define CSR_READ_1(sc, reg)		\
-	bus_space_read_1(sc->wi_btag, sc->wi_bhandle, reg)
+	bus_space_read_1(sc->wi_btag, sc->wi_bhandle,	\
+	    (sc->sc_pci? reg * 2: reg))
 
 #define CSR_READ_RAW_2(sc, ba, dst, sz) \
-	bus_space_read_raw_multi_2((sc)->wi_btag, (sc)->wi_bhandle, (ba), \
-		(dst), (sz))
+	bus_space_read_raw_multi_2((sc)->wi_btag, (sc)->wi_bhandle, \
+	    (sc->sc_pci? ba * 2: ba), (dst), (sz))
 #define CSR_WRITE_RAW_2(sc, ba, dst, sz) \
-	bus_space_write_raw_multi_2((sc)->wi_btag, (sc)->wi_bhandle, (ba), \
-		(dst), (sz))
+	bus_space_write_raw_multi_2((sc)->wi_btag, (sc)->wi_bhandle, \
+	    (sc->sc_pci? ba * 2: ba), (dst), (sz))
 
 /*
  * The WaveLAN/IEEE cards contain an 802.11 MAC controller which Lucent

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.3 2001/06/09 20:17:21 millert Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.4 2001/12/20 17:48:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -74,6 +74,7 @@ struct wi_softc	{
 	struct timeout		sc_timo;
 	int			sc_prism2;
 	int			sc_prism2_ver;
+	int			sc_pci;
 };
 
 #define WI_PRT_FMT "%s"
