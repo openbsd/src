@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.33 2004/11/11 11:16:40 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.34 2004/11/11 15:32:28 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -299,14 +299,32 @@ sub visit
 	}
 }
 
+my $plist_cache = {};
+
 sub from_installation
 {
-	my ($o, $name, @args) = @_;
+	my ($o, $pkgname, $code) = @_;
 
 	require OpenBSD::PackageInfo;
 
-	return $o->fromfile(OpenBSD::PackageInfo::installed_contents($name), 
-	    @args);
+	if (defined $plist_cache->{\&defaultCode}->{$pkgname}) {
+		return $plist_cache->{\&defaultCode}->{$pkgname};
+	}
+	$code = \&defaultCode if !defined $code;
+
+	if (!defined $plist_cache->{$code}->{$pkgname}) {
+	    my $plist =
+	    	$o->fromfile(OpenBSD::PackageInfo::installed_contents($pkgname), 
+		    $code);
+	    if (defined $plist) {
+	    	$plist->{code} = $code;
+		$plist_cache->{$code}->{$pkgname} = $plist;
+		return $plist;
+	    } else {
+	    	return undef;
+	    }
+	} 
+	return $plist_cache->{$code}->{$pkgname};
 }
 
 sub to_installation
@@ -315,7 +333,18 @@ sub to_installation
 
 	require OpenBSD::PackageInfo;
 
-	$self->tofile(OpenBSD::PackageInfo::installed_contents($self->pkgname()));
+	my $pkgname = $self->pkgname();
+
+	$self->tofile(OpenBSD::PackageInfo::installed_contents($pkgname));
+	$plist_cache->{\&defaultCode}->{$pkgname} = $self;
+}
+
+
+sub forget
+{
+	my ($self) = @_;
+
+	delete $plist_cache->{$self->{code}}->{$self->pkgname()};
 }
 
 1;
