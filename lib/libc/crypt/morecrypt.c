@@ -1,4 +1,4 @@
-/*	$Id: morecrypt.c,v 1.1 1995/12/16 12:55:31 deraadt Exp $ */
+/*	$Id: morecrypt.c,v 1.2 1995/12/17 05:49:38 deraadt Exp $ */
 
 /*
  * FreeSec: libcrypt
@@ -207,6 +207,313 @@ ascii_to_bin(ch)
 	if (ch >= '.')
 		return(ch - '.');
 	return(0);
+}
+
+void
+des_init()
+{
+	int	i, j, b, k, inbit, obit;
+	u_int32_t	*p, *il, *ir, *fl, *fr;
+
+	old_rawkey0 = old_rawkey1 = 0;
+	saltbits = 0;
+	old_salt = 0;
+	bits24 = (bits28 = bits32 + 4) + 4;
+
+	/*
+	 * Invert the S-boxes, reordering the input bits.
+	 */
+	for (i = 0; i < 8; i++)
+		for (j = 0; j < 64; j++) {
+			b = (j & 0x20) | ((j & 1) << 4) | ((j >> 1) & 0xf);
+			u_sbox[i][j] = sbox[i][b];
+		}
+
+	/*
+	 * Convert the inverted S-boxes into 4 arrays of 8 bits.
+	 * Each will handle 12 bits of the S-box input.
+	 */
+	for (b = 0; b < 4; b++)
+		for (i = 0; i < 64; i++)
+			for (j = 0; j < 64; j++)
+				m_sbox[b][(i << 6) | j] =
+					(u_sbox[(b << 1)][i] << 4) |
+					u_sbox[(b << 1) + 1][j];
+
+	/*
+	 * Set up the initial & final permutations into a useful form, and
+	 * initialise the inverted key permutation.
+	 */
+	for (i = 0; i < 64; i++) {
+		init_perm[final_perm[i] = IP[i] - 1] = i;
+		inv_key_perm[i] = 255;
+	}
+
+	/*
+	 * Invert the key permutation and initialise the inverted key
+	 * compression permutation.
+	 */
+	for (i = 0; i < 56; i++) {
+		u_key_perm[i] = key_perm[i] - 1;
+		inv_key_perm[key_perm[i] - 1] = i;
+		inv_comp_perm[i] = 255;
+	}
+
+	/*
+	 * Invert the key compression permutation.
+	 */
+	for (i = 0; i < 48; i++) {
+		inv_comp_perm[comp_perm[i] - 1] = i;
+	}
+
+	/*
+	 * Set up the OR-mask arrays for the initial and final permutations,
+	 * and for the key initial and compression permutations.
+	 */
+	for (k = 0; k < 8; k++) {
+		for (i = 0; i < 256; i++) {
+			*(il = &ip_maskl[k][i]) = 0;
+			*(ir = &ip_maskr[k][i]) = 0;
+			*(fl = &fp_maskl[k][i]) = 0;
+			*(fr = &fp_maskr[k][i]) = 0;
+			for (j = 0; j < 8; j++) {
+				inbit = 8 * k + j;
+				if (i & bits8[j]) {
+					if ((obit = init_perm[inbit]) < 32)
+						*il |= bits32[obit];
+					else
+						*ir |= bits32[obit-32];
+					if ((obit = final_perm[inbit]) < 32)
+						*fl |= bits32[obit];
+					else
+						*fr |= bits32[obit - 32];
+				}
+			}
+		}
+		for (i = 0; i < 128; i++) {
+			*(il = &key_perm_maskl[k][i]) = 0;
+			*(ir = &key_perm_maskr[k][i]) = 0;
+			for (j = 0; j < 7; j++) {
+				inbit = 8 * k + j;
+				if (i & bits8[j + 1]) {
+					if ((obit = inv_key_perm[inbit]) == 255)
+						continue;
+					if (obit < 28)
+						*il |= bits28[obit];
+					else
+						*ir |= bits28[obit - 28];
+				}
+			}
+			*(il = &comp_maskl[k][i]) = 0;
+			*(ir = &comp_maskr[k][i]) = 0;
+			for (j = 0; j < 7; j++) {
+				inbit = 7 * k + j;
+				if (i & bits8[j + 1]) {
+					if ((obit=inv_comp_perm[inbit]) == 255)
+						continue;
+					if (obit < 24)
+						*il |= bits24[obit];
+					else
+						*ir |= bits24[obit - 24];
+				}
+			}
+		}
+	}
+
+	/*
+	 * Invert the P-box permutation, and convert into OR-masks for
+	 * handling the output of the S-box arrays setup above.
+	 */
+	for (i = 0; i < 32; i++)
+		un_pbox[pbox[i] - 1] = i;
+
+	for (b = 0; b < 4; b++)
+		for (i = 0; i < 256; i++) {
+			*(p = &psbox[b][i]) = 0;
+			for (j = 0; j < 8; j++) {
+				if (i & bits8[j])
+					*p |= bits32[un_pbox[8 * b + j]];
+			}
+		}
+
+	des_initialised = 1;
+}
+
+void
+setup_salt(salt)
+	int32_t salt;
+{
+	u_int32_t	obit, saltbit;
+	int	i;
+
+	if (salt == old_salt)
+		return;
+	old_salt = salt;
+
+	saltbits = 0;
+	saltbit = 1;
+	obit = 0x800000;
+	for (i = 0; i < 24; i++) {
+		if (salt & saltbit)
+			saltbits |= obit;
+		saltbit <<= 1;
+		obit >>= 1;
+	}
+}
+
+int
+do_des(l_in, r_in, l_out, r_out, count)
+	u_int32_t l_in, r_in, *l_out, *r_out;
+	int count;
+{
+	/*
+	 *	l_in, r_in, l_out, and r_out are in pseudo-"big-endian" format.
+	 */
+	u_int32_t	mask, rawl, rawr, l, r, *kl, *kr, *kl1, *kr1;
+	u_int32_t	f, r48l, r48r;
+	int	i, j, b, round;
+
+	if (count == 0) {
+		return(1);
+	} else if (count > 0) {
+		/*
+		 * Encrypting
+		 */
+		kl1 = en_keysl;
+		kr1 = en_keysr;
+	} else {
+		/*
+		 * Decrypting
+		 */
+		count = -count;
+		kl1 = de_keysl;
+		kr1 = de_keysr;
+	}
+
+	/*
+	 *	Do initial permutation (IP).
+	 */
+	l = ip_maskl[0][l_in >> 24]
+	  | ip_maskl[1][(l_in >> 16) & 0xff]
+	  | ip_maskl[2][(l_in >> 8) & 0xff]
+	  | ip_maskl[3][l_in & 0xff]
+	  | ip_maskl[4][r_in >> 24]
+	  | ip_maskl[5][(r_in >> 16) & 0xff]
+	  | ip_maskl[6][(r_in >> 8) & 0xff]
+	  | ip_maskl[7][r_in & 0xff];
+	r = ip_maskr[0][l_in >> 24]
+	  | ip_maskr[1][(l_in >> 16) & 0xff]
+	  | ip_maskr[2][(l_in >> 8) & 0xff]
+	  | ip_maskr[3][l_in & 0xff]
+	  | ip_maskr[4][r_in >> 24]
+	  | ip_maskr[5][(r_in >> 16) & 0xff]
+	  | ip_maskr[6][(r_in >> 8) & 0xff]
+	  | ip_maskr[7][r_in & 0xff];
+
+	while (count--) {
+		/*
+		 * Do each round.
+		 */
+		kl = kl1;
+		kr = kr1;
+		round = 16;
+		while (round--) {
+			/*
+			 * Expand R to 48 bits (simulate the E-box).
+			 */
+			r48l	= ((r & 0x00000001) << 23)
+				| ((r & 0xf8000000) >> 9)
+				| ((r & 0x1f800000) >> 11)
+				| ((r & 0x01f80000) >> 13)
+				| ((r & 0x001f8000) >> 15);
+
+			r48r	= ((r & 0x0001f800) << 7)
+				| ((r & 0x00001f80) << 5)
+				| ((r & 0x000001f8) << 3)
+				| ((r & 0x0000001f) << 1)
+				| ((r & 0x80000000) >> 31);
+			/*
+			 * Do salting for crypt() and friends, and
+			 * XOR with the permuted key.
+			 */
+			f = (r48l ^ r48r) & saltbits;
+			r48l ^= f ^ *kl++;
+			r48r ^= f ^ *kr++;
+			/*
+			 * Do sbox lookups (which shrink it back to 32 bits)
+			 * and do the pbox permutation at the same time.
+			 */
+			f = psbox[0][m_sbox[0][r48l >> 12]]
+			  | psbox[1][m_sbox[1][r48l & 0xfff]]
+			  | psbox[2][m_sbox[2][r48r >> 12]]
+			  | psbox[3][m_sbox[3][r48r & 0xfff]];
+			/*
+			 * Now that we've permuted things, complete f().
+			 */
+			f ^= l;
+			l = r;
+			r = f;
+		}
+		r = l;
+		l = f;
+	}
+	/*
+	 * Do final permutation (inverse of IP).
+	 */
+	*l_out	= fp_maskl[0][l >> 24]
+		| fp_maskl[1][(l >> 16) & 0xff]
+		| fp_maskl[2][(l >> 8) & 0xff]
+		| fp_maskl[3][l & 0xff]
+		| fp_maskl[4][r >> 24]
+		| fp_maskl[5][(r >> 16) & 0xff]
+		| fp_maskl[6][(r >> 8) & 0xff]
+		| fp_maskl[7][r & 0xff];
+	*r_out	= fp_maskr[0][l >> 24]
+		| fp_maskr[1][(l >> 16) & 0xff]
+		| fp_maskr[2][(l >> 8) & 0xff]
+		| fp_maskr[3][l & 0xff]
+		| fp_maskr[4][r >> 24]
+		| fp_maskr[5][(r >> 16) & 0xff]
+		| fp_maskr[6][(r >> 8) & 0xff]
+		| fp_maskr[7][r & 0xff];
+	return(0);
+}
+
+int
+des_cipher(in, out, salt, count)
+	const char *in;
+	char *out;
+	int32_t salt;
+	int count;
+{
+	u_int32_t l_out, r_out, rawl, rawr;
+	u_int32_t x[2];
+	int	retval;
+
+	if (!des_initialised)
+		des_init();
+
+	setup_salt(salt);
+
+#if 0
+	rawl = ntohl(*((u_int32_t *) in)++);
+	rawr = ntohl(*((u_int32_t *) in));
+#else
+	memcpy(x, in, sizeof x);
+	rawl = ntohl(x[0]);
+	rawr = ntohl(x[1]);
+#endif
+	retval = do_des(rawl, rawr, &l_out, &r_out, count);
+
+#if 0
+	*((u_int32_t *) out)++ = htonl(l_out);
+	*((u_int32_t *) out) = htonl(r_out);
+#else
+	x[0] = htonl(l_out);
+	x[1] = htonl(r_out);
+	memcpy(out, x, sizeof x);
+#endif
+	return(retval);
 }
 
 int
