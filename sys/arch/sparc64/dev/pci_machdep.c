@@ -420,7 +420,7 @@ pci_intr_map(pc, tag, pin, line, ihp)
 	}
 
 	if (OF_mapintr(node, &interrupts, sizeof(interrupts), 
-		sizeof(interrupts)) > 0) {
+		sizeof(interrupts)) < 0) {
 		printf("OF_mapintr failed\n");
 	}
 	/* Try to find an IPL for this type of device. */
