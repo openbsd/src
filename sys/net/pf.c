@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.85 2001/06/28 22:36:09 dugsong Exp $ */
+/*	$OpenBSD: pf.c,v 1.86 2001/06/28 22:38:16 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -73,7 +73,7 @@ struct pf_tree_node {
 		u_int16_t	 port[2];
 		u_int8_t	 proto;
 	}			 key;
-	void			*state;
+	struct pf_state		*state;
 	struct pf_tree_node	*parent;
 	struct pf_tree_node	*left;
 	struct pf_tree_node	*right;
@@ -108,7 +108,6 @@ TAILQ_HEAD(pf_fragqueue, pf_fragment)	pf_fragqueue;
 TAILQ_HEAD(pf_rulequeue, pf_rule)	pf_rules[2];
 TAILQ_HEAD(pf_natqueue, pf_nat)		pf_nats[2];
 TAILQ_HEAD(pf_rdrqueue, pf_rdr)		pf_rdrs[2];
-TAILQ_HEAD(pf_statequeue, pf_state)	pf_states;
 struct pf_rulequeue	*pf_rules_active;
 struct pf_rulequeue	*pf_rules_inactive;
 struct pf_natqueue	*pf_nats_active;
@@ -131,81 +130,86 @@ u_int32_t		 ticket_rdrs_inactive = 0;
 u_int16_t		 pf_next_port_tcp = 50001;
 u_int16_t		 pf_next_port_udp = 50001;
 
-struct pool		pf_tree_pl;
-struct pool		pf_rule_pl;
-struct pool		pf_nat_pl;
-struct pool		pf_rdr_pl;
-struct pool		pf_state_pl;
-struct pool		pf_frent_pl;
-struct pool		pf_frag_pl;
-int			pf_nfrents;
+struct pool		 pf_tree_pl;
+struct pool		 pf_rule_pl;
+struct pool		 pf_nat_pl;
+struct pool		 pf_rdr_pl;
+struct pool		 pf_state_pl;
+struct pool		 pf_frent_pl;
+struct pool		 pf_frag_pl;
+int			 pf_nfrents;
 
 /*
  * Prototypes
  */
 
-int		 tree_key_compare(struct pf_tree_key *, struct pf_tree_key *);
-void		 tree_rotate_left(struct pf_tree_node **);
-void		 tree_rotate_right(struct pf_tree_node **);
-int		 tree_insert(struct pf_tree_node **, struct pf_tree_key *,
-		    void *);
-int		 tree_remove(struct pf_tree_node **, struct pf_tree_key *);
-void		*find_state(struct pf_tree_node *, struct pf_tree_key *);
-void		 insert_state(struct pf_state *);
-void		 purge_expired_states(void);
+int			 tree_key_compare(struct pf_tree_key *,
+			    struct pf_tree_key *);
+void			 tree_rotate_left(struct pf_tree_node **);
+void			 tree_rotate_right(struct pf_tree_node **);
+int			 tree_insert(struct pf_tree_node **, struct pf_tree_node *,
+			    struct pf_tree_key *, struct pf_state *);
+int		 	 tree_remove(struct pf_tree_node **, struct pf_tree_node *,
+			    struct pf_tree_key *);
+struct pf_tree_node	*tree_first(struct pf_tree_node *);
+struct pf_tree_node	*tree_next(struct pf_tree_node *);
+struct pf_tree_node	*tree_search(struct pf_tree_node *, struct pf_tree_key *);
+struct pf_state		*find_state(struct pf_tree_node *, struct pf_tree_key *);
+void			 insert_state(struct pf_state *);
+void			 purge_expired_states(void);
 
-void		 print_host(u_int32_t, u_int16_t);
-void		 print_state(int, struct pf_state *);
-void		 print_flags(u_int8_t);
+void			 print_host(u_int32_t, u_int16_t);
+void			 print_state(int, struct pf_state *);
+void			 print_flags(u_int8_t);
 
-void		 pfattach(int);
-int		 pfopen(dev_t, int, int, struct proc *);
-int		 pfclose(dev_t, int, int, struct proc *);
-int		 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
+void			 pfattach(int);
+int			 pfopen(dev_t, int, int, struct proc *);
+int			 pfclose(dev_t, int, int, struct proc *);
+int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
-u_int16_t	 cksum_fixup(u_int16_t, u_int16_t, u_int16_t);
-void		 change_ap(u_int32_t *, u_int16_t *, u_int16_t *, u_int16_t *,
-		    u_int32_t, u_int16_t);
-void		 change_a(u_int32_t *, u_int16_t *, u_int32_t);
-void		 change_icmp(u_int32_t *, u_int16_t *, u_int32_t *, u_int32_t,
-		    u_int16_t, u_int16_t *, u_int16_t *, u_int16_t *,
-		    u_int16_t *);
-void		 send_reset(int, struct ifnet *, struct ip *, int,
-		    struct tcphdr *);
-int		 match_addr(u_int8_t, u_int32_t, u_int32_t, u_int32_t);
-int		 match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
-struct pf_nat	*get_nat(struct ifnet *, u_int8_t, u_int32_t);
-struct pf_rdr	*get_rdr(struct ifnet *, u_int8_t, u_int32_t, u_int16_t);
-int		 pf_test_tcp(int, struct ifnet *, struct mbuf *,
-		    int, int, struct ip *, struct tcphdr *);
-int		 pf_test_udp(int, struct ifnet *, struct mbuf *,
-		    int, int, struct ip *, struct udphdr *);
-int		 pf_test_icmp(int, struct ifnet *, struct mbuf *,
-		    int, int, struct ip *, struct icmp *);
-int		 pf_test_other(int, struct ifnet *, struct mbuf *,
-		    struct ip *);
-struct pf_state	*pf_test_state_tcp(int, struct ifnet *, struct mbuf *,
-		    int, int, struct ip *, struct tcphdr *);
-struct pf_state	*pf_test_state_udp(int, struct ifnet *, struct mbuf *,
-		    int, int, struct ip *, struct udphdr *);
-struct pf_state	*pf_test_state_icmp(int, struct ifnet *, struct mbuf *,
-		    int, int, struct ip *, struct icmp *);
-void		*pull_hdr(struct ifnet *, struct mbuf *, int, int, void *, int,
-		    struct ip *, u_short *, u_short *);
-int		 pflog_packet(struct mbuf *, int, u_short, u_short,
-		    struct pf_rule *);
+u_int16_t		 cksum_fixup(u_int16_t, u_int16_t, u_int16_t);
+void			 change_ap(u_int32_t *, u_int16_t *, u_int16_t *,
+			    u_int16_t *, u_int32_t, u_int16_t);
+void			 change_a(u_int32_t *, u_int16_t *, u_int32_t);
+void			 change_icmp(u_int32_t *, u_int16_t *, u_int32_t *,
+			    u_int32_t, u_int16_t, u_int16_t *, u_int16_t *,
+			    u_int16_t *, u_int16_t *);
+void			 send_reset(int, struct ifnet *, struct ip *, int,
+			    struct tcphdr *);
+int			 match_addr(u_int8_t, u_int32_t, u_int32_t, u_int32_t);
+int			 match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
+struct pf_nat		*get_nat(struct ifnet *, u_int8_t, u_int32_t);
+struct pf_rdr		*get_rdr(struct ifnet *, u_int8_t, u_int32_t, u_int16_t);
+int			 pf_test_tcp(int, struct ifnet *, struct mbuf *,
+			    int, int, struct ip *, struct tcphdr *);
+int			 pf_test_udp(int, struct ifnet *, struct mbuf *,
+			    int, int, struct ip *, struct udphdr *);
+int			 pf_test_icmp(int, struct ifnet *, struct mbuf *,
+			    int, int, struct ip *, struct icmp *);
+int			 pf_test_other(int, struct ifnet *, struct mbuf *,
+			    struct ip *);
+struct pf_state		*pf_test_state_tcp(int, struct ifnet *, struct mbuf *,
+			    int, int, struct ip *, struct tcphdr *);
+struct pf_state		*pf_test_state_udp(int, struct ifnet *, struct mbuf *,
+			    int, int, struct ip *, struct udphdr *);
+struct pf_state		*pf_test_state_icmp(int, struct ifnet *, struct mbuf *,
+			    int, int, struct ip *, struct icmp *);
+void			*pull_hdr(struct ifnet *, struct mbuf *, int, int, void *,
+			    int, struct ip *, u_short *, u_short *);
+int			 pflog_packet(struct mbuf *, int, u_short, u_short,
+			    struct pf_rule *);
 
-int		 pf_normalize_ip(struct mbuf **, int, struct ifnet *,
-		    struct ip *, u_short *);
+int			 pf_normalize_ip(struct mbuf **, int, struct ifnet *,
+			    struct ip *, u_short *);
 
-void		 purge_expired_fragments(void);
-void		 pf_ip2key(struct pf_tree_key *, struct ip *);
-void		 pf_remove_fragment(struct pf_fragment *);
-void		 pf_flush_fragments(void);
-void		 pf_free_fragment(struct pf_fragment *);
-struct pf_fragment *pf_find_fragment(struct ip *);
-struct mbuf	*pf_reassemble(struct mbuf **, struct pf_fragment *,
-		    struct pf_frent *, int);
+void			 purge_expired_fragments(void);
+void			 pf_ip2key(struct pf_tree_key *, struct ip *);
+void			 pf_remove_fragment(struct pf_fragment *);
+void			 pf_flush_fragments(void);
+void			 pf_free_fragment(struct pf_fragment *);
+struct pf_fragment	*pf_find_fragment(struct ip *);
+struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment *,
+			    struct pf_frent *, int);
 
 #if NPFLOG > 0
 #define		 PFLOG_PACKET(x,a,b,c,d,e) \
@@ -265,72 +269,82 @@ tree_key_compare(struct pf_tree_key *a, struct pf_tree_key *b)
 }
 
 void
-tree_rotate_left(struct pf_tree_node **p)
+tree_rotate_left(struct pf_tree_node **n)
 {
-	struct pf_tree_node *q = *p;
+	struct pf_tree_node *q = *n, *p = (*n)->parent;
 
-	*p = (*p)->right;
-	q->right = (*p)->left;
-	(*p)->left = q;
+	(*n)->parent = (*n)->right;
+	*n = (*n)->right;
+	(*n)->parent = p;
+	q->right = (*n)->left;
+	if (q->right)
+		q->right->parent = q;
+	(*n)->left = q;
 	q->balance--;
-	if ((*p)->balance > 0)
-		q->balance -= (*p)->balance;
-	(*p)->balance--;
+	if ((*n)->balance > 0)
+		q->balance -= (*n)->balance;
+	(*n)->balance--;
 	if (q->balance < 0)
-		(*p)->balance += q->balance;
+		(*n)->balance += q->balance;
 }
 
 void
-tree_rotate_right(struct pf_tree_node **p)
+tree_rotate_right(struct pf_tree_node **n)
 {
-	struct pf_tree_node *q = *p;
+	struct pf_tree_node *q = *n, *p = (*n)->parent;
 
-	*p = (*p)->left;
-	q->left = (*p)->right;
-	(*p)->right = q;
+	(*n)->parent = (*n)->left;
+	*n = (*n)->left;
+	(*n)->parent = p;
+	q->left = (*n)->right;
+	if (q->left)
+		q->left->parent = q;
+	(*n)->right = q;
 	q->balance++;
-	if ((*p)->balance < 0)
-		q->balance -= (*p)->balance;
-	(*p)->balance++;
+	if ((*n)->balance < 0)
+		q->balance -= (*n)->balance;
+	(*n)->balance++;
 	if (q->balance > 0)
-		(*p)->balance += q->balance;
+		(*n)->balance += q->balance;
 }
 
 int
-tree_insert(struct pf_tree_node **p, struct pf_tree_key *key, void *state)
+tree_insert(struct pf_tree_node **n, struct pf_tree_node *p,
+    struct pf_tree_key *key, struct pf_state *state)
 {
 	int deltaH = 0;
 
-	if (*p == NULL) {
-		*p = pool_get(&pf_tree_pl, PR_NOWAIT);
-		if (*p == NULL) {
+	if (*n == NULL) {
+		*n = pool_get(&pf_tree_pl, PR_NOWAIT);
+		if (*n == NULL) {
 			return (0);
 		}
-		bcopy(key, &(*p)->key, sizeof(struct pf_tree_key));
-		(*p)->state = state;
-		(*p)->balance = 0;
-		(*p)->left = (*p)->right = NULL;
+		bcopy(key, &(*n)->key, sizeof(struct pf_tree_key));
+		(*n)->state = state;
+		(*n)->balance = 0;
+		(*n)->parent = p;
+		(*n)->left = (*n)->right = NULL;
 		deltaH = 1;
-	} else if (tree_key_compare(key, &(*p)->key) > 0) {
-		if (tree_insert(&(*p)->right, key, state)) {
-			(*p)->balance++;
-			if ((*p)->balance == 1)
+	} else if (tree_key_compare(key, &(*n)->key) > 0) {
+		if (tree_insert(&(*n)->right, *n, key, state)) {
+			(*n)->balance++;
+			if ((*n)->balance == 1)
 				deltaH = 1;
-			else if ((*p)->balance == 2) {
-				if ((*p)->right->balance == -1)
-					tree_rotate_right(&(*p)->right);
-				tree_rotate_left(p);
+			else if ((*n)->balance == 2) {
+				if ((*n)->right->balance == -1)
+					tree_rotate_right(&(*n)->right);
+				tree_rotate_left(n);
 			}
 		}
 	} else {
-		if (tree_insert(&(*p)->left, key, state)) {
-			(*p)->balance--;
-			if ((*p)->balance == -1)
+		if (tree_insert(&(*n)->left, *n, key, state)) {
+			(*n)->balance--;
+			if ((*n)->balance == -1)
 				deltaH = 1;
-			else if ((*p)->balance == -2) {
-				if ((*p)->left->balance == 1)
-					tree_rotate_left(&(*p)->left);
-				tree_rotate_right(p);
+			else if ((*n)->balance == -2) {
+				if ((*n)->left->balance == 1)
+					tree_rotate_left(&(*n)->left);
+				tree_rotate_right(n);
 			}
 		}
 	}
@@ -338,70 +352,75 @@ tree_insert(struct pf_tree_node **p, struct pf_tree_key *key, void *state)
 }
 
 int
-tree_remove(struct pf_tree_node **p, struct pf_tree_key *key)
+tree_remove(struct pf_tree_node **n, struct pf_tree_node *p,
+    struct pf_tree_key *key)
 {
 	int deltaH = 0;
 	int c;
 
-	if (*p == NULL)
+	if (*n == NULL)
 		return (0);
-	c = tree_key_compare(key, &(*p)->key);
+	c = tree_key_compare(key, &(*n)->key);
 	if (c < 0) {
-		if (tree_remove(&(*p)->left, key)) {
-			(*p)->balance++;
-			if ((*p)->balance == 0)
+		if (tree_remove(&(*n)->left, *n, key)) {
+			(*n)->balance++;
+			if ((*n)->balance == 0)
 				deltaH = 1;
-			else if ((*p)->balance == 2) {
-				if ((*p)->right->balance == -1)
-					tree_rotate_right(&(*p)->right);
-				tree_rotate_left(p);
-				if ((*p)->balance == 0)
+			else if ((*n)->balance == 2) {
+				if ((*n)->right->balance == -1)
+					tree_rotate_right(&(*n)->right);
+				tree_rotate_left(n);
+				if ((*n)->balance == 0)
 					deltaH = 1;
 			}
 		}
 	} else if (c > 0) {
-		if (tree_remove(&(*p)->right, key)) {
-			(*p)->balance--;
-			if ((*p)->balance == 0)
+		if (tree_remove(&(*n)->right, *n, key)) {
+			(*n)->balance--;
+			if ((*n)->balance == 0)
 				deltaH = 1;
-			else if ((*p)->balance == -2) {
-				if ((*p)->left->balance == 1)
-					tree_rotate_left(&(*p)->left);
-				tree_rotate_right(p);
-				if ((*p)->balance == 0)
+			else if ((*n)->balance == -2) {
+				if ((*n)->left->balance == 1)
+					tree_rotate_left(&(*n)->left);
+				tree_rotate_right(n);
+				if ((*n)->balance == 0)
 					deltaH = 1;
 			}
 		}
 	} else {
-		if ((*p)->right == NULL) {
-			struct pf_tree_node *p0 = *p;
+		if ((*n)->right == NULL) {
+			struct pf_tree_node *n0 = *n;
 
-			*p = (*p)->left;
-			pool_put(&pf_tree_pl, p0);
+			*n = (*n)->left;
+			if (*n != NULL)
+				(*n)->parent = p;
+			pool_put(&pf_tree_pl, n0);
 			deltaH = 1;
-		} else if ((*p)->left == NULL) {
-			struct pf_tree_node *p0 = *p;
+		} else if ((*n)->left == NULL) {
+			struct pf_tree_node *n0 = *n;
 
-			*p = (*p)->right;
-			pool_put(&pf_tree_pl, p0);
+			*n = (*n)->right;
+			if (*n != NULL)
+				(*n)->parent = p;
+			pool_put(&pf_tree_pl, n0);
 			deltaH = 1;
 		} else {
-			struct pf_tree_node **qq = &(*p)->left;
+			struct pf_tree_node **qq = &(*n)->left;
 
 			while ((*qq)->right != NULL)
 				qq = &(*qq)->right;
-			bcopy(&(*qq)->key, &(*p)->key, sizeof(struct pf_tree_key));
-			(*p)->state = (*qq)->state;
+			bcopy(&(*qq)->key, &(*n)->key, sizeof(struct pf_tree_key));
+			(*n)->state = (*qq)->state;
 			bcopy(key, &(*qq)->key, sizeof(struct pf_tree_key));
-			if (tree_remove(&(*p)->left, key)) {
-				(*p)->balance++;
-				if ((*p)->balance == 0)
+			if (tree_remove(&(*n)->left, *n, key)) {
+				(*n)->balance++;
+				if ((*n)->balance == 0)
 					deltaH = 1;
-				else if ((*p)->balance == 2) {
-					if ((*p)->right->balance == -1)
-						tree_rotate_right(&(*p)->right);
-					tree_rotate_left(p);
-					if ((*p)->balance == 0)
+				else if ((*n)->balance == 2) {
+					if ((*n)->right->balance == -1)
+						tree_rotate_right(&(*n)->right);
+					tree_rotate_left(n);
+					if ((*n)->balance == 0)
 						deltaH = 1;
 				}
 			}
@@ -451,15 +470,56 @@ pflog_packet(struct mbuf *m, int af, u_short dir, u_short reason,
 	return (0);
 }
 
-void *
-find_state(struct pf_tree_node *p, struct pf_tree_key *key)
+struct pf_tree_node *
+tree_first(struct pf_tree_node *n)
+{
+	if (n == NULL)
+		return (NULL);
+	/* go up to root, so the caller can pass any node. useful? */
+	while (n->parent)
+		n = n->parent;
+	while (n->left)
+		n = n->left;
+	return (n);
+}
+
+struct pf_tree_node *
+tree_next(struct pf_tree_node *n)
+{
+	if (n == NULL)
+		return (NULL);
+	if (n->right) {
+		n = n->right;
+		while (n->left)
+			n = n->left;
+	} else {
+		if (n->parent && (n == n->parent->left))
+			n = n->parent;
+		else {
+			while (n->parent && (n == n->parent->right))
+				n = n->parent;
+			n = n->parent;
+		}
+	}
+	return (n);
+}
+
+struct pf_tree_node *
+tree_search(struct pf_tree_node *n, struct pf_tree_key *key)
 {
 	int c;
 
-	while (p && (c = tree_key_compare(&p->key, key)))
-		p = (c > 0) ? p->left : p->right;
+	while (n && (c = tree_key_compare(&n->key, key)))
+		n = (c > 0) ? n->left : n->right;
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
-	return (p ? p->state : NULL);
+	return (n);
+}
+
+struct pf_state *
+find_state(struct pf_tree_node *n, struct pf_tree_key *key)
+{
+	n = tree_search(n, key);
+	return (n ? n->state : NULL);
 }
 
 void
@@ -476,7 +536,7 @@ insert_state(struct pf_state *state)
 	if (find_state(tree_lan_ext, &key) != NULL)
 		printf("pf: ERROR! insert invalid\n");
 	else {
-		tree_insert(&tree_lan_ext, &key, state);
+		tree_insert(&tree_lan_ext, NULL, &key, state);
 		if (find_state(tree_lan_ext, &key) != state)
 			printf("pf: ERROR! insert failed\n");
 	}
@@ -489,12 +549,10 @@ insert_state(struct pf_state *state)
 	if (find_state(tree_ext_gwy, &key) != NULL)
 		printf("pf: ERROR! insert invalid\n");
 	else {
-		tree_insert(&tree_ext_gwy, &key, state);
+		tree_insert(&tree_ext_gwy, NULL, &key, state);
 		if (find_state(tree_ext_gwy, &key) != state)
 			printf("pf: ERROR! insert failed\n");
 	}
-
-	TAILQ_INSERT_TAIL(&pf_states, state, entries);
 
 	pf_status.fcounters[FCNT_STATE_INSERT]++;
 	pf_status.states++;
@@ -503,39 +561,45 @@ insert_state(struct pf_state *state)
 void
 purge_expired_states(void)
 {
+	struct pf_tree_node *cur, *next;
 	struct pf_tree_key key;
-	struct pf_state *cur, *next;
 
-	for (cur = TAILQ_FIRST(&pf_states); cur != NULL; cur = next) {
-		next = TAILQ_NEXT(cur, entries);
-		if (cur->expire <= pftv.tv_sec) {
-			key.proto = cur->proto;
-			key.addr[0].s_addr = cur->lan.addr;
-			key.port[0] = cur->lan.port;
-			key.addr[1].s_addr = cur->ext.addr;
-			key.port[1] = cur->ext.port;
-			/* sanity checks can be removed later */
-			if (find_state(tree_lan_ext, &key) != cur)
-				printf("pf: ERROR! remove invalid\n");
-			tree_remove(&tree_lan_ext, &key);
+	cur = tree_first(tree_ext_gwy);
+	while (cur != NULL) {
+		if (cur->state->expire <= pftv.tv_sec) {
+			key.proto = cur->state->proto;
+			key.addr[0].s_addr = cur->state->lan.addr;
+			key.port[0] = cur->state->lan.port;
+			key.addr[1].s_addr = cur->state->ext.addr;
+			key.port[1] = cur->state->ext.port;
+			/* remove state from second tree */
+			if (find_state(tree_lan_ext, &key) != cur->state)
+				printf("pf: ERROR: remove invalid!\n");
+			tree_remove(&tree_lan_ext, NULL, &key);
 			if (find_state(tree_lan_ext, &key) != NULL)
-				printf("pf: ERROR! remove failed\n");
-			key.proto   = cur->proto;
-			key.addr[0].s_addr = cur->ext.addr;
-			key.port[0] = cur->ext.port;
-			key.addr[1].s_addr = cur->gwy.addr;
-			key.port[1] = cur->gwy.port;
-			if (find_state(tree_ext_gwy, &key) != cur)
-				printf("pf: ERROR! remove invalid\n");
-			tree_remove(&tree_ext_gwy, &key);
-			if (find_state(tree_ext_gwy, &key) != NULL)
-				printf("pf: ERROR! remove failed\n");
-			TAILQ_REMOVE(&pf_states, cur, entries);
-			pool_put(&pf_state_pl, cur);
-			cur = next;
+				printf("pf: ERROR: remove failed\n");
+			/* free state */
+			pool_put(&pf_state_pl, cur->state);
+			/*
+			 * remove state from tree being traversed, use next
+			 * state's key to search after removal, since removal
+			 * can invalidate pointers.
+			 */
+			next = tree_next(cur);
+			if (next) {
+				key = next->key;
+				tree_remove(&tree_ext_gwy, NULL, &cur->key);
+				cur = tree_search(tree_ext_gwy, &key);
+				if (cur == NULL)
+					printf("pf: ERROR: next not refound\n");
+			} else {
+				tree_remove(&tree_ext_gwy, NULL, &cur->key);
+				cur = NULL;
+			}
 			pf_status.fcounters[FCNT_STATE_REMOVALS]++;
 			pf_status.states--;
-		}
+		} else
+			cur = tree_next(cur);
 	}
 }
 
@@ -610,7 +674,6 @@ pfattach(int num)
 	TAILQ_INIT(&pf_nats[1]);
 	TAILQ_INIT(&pf_rdrs[0]);
 	TAILQ_INIT(&pf_rdrs[1]);
-	TAILQ_INIT(&pf_states);
 	pf_rules_active = &pf_rules[0];
 	pf_rules_inactive = &pf_rules[1];
 	pf_nats_active = &pf_nats[0];
@@ -731,7 +794,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int32_t *ticket = (u_int32_t *)addr;
 		struct pf_rulequeue *old_rules;
 		struct pf_rule *rule;
-		struct pf_state *state;
+		struct pf_tree_node *n;
 
 		if (*ticket != ticket_rules_inactive) {
 			error = EBUSY;
@@ -741,7 +804,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		/* Swap rules, keep the old. */
 		s = splsoftnet();
 		/* Rules are about to get freed, clear rule pointers in states */
-		TAILQ_FOREACH(state, &pf_states, entries) state->rule = NULL;
+		for (n = tree_first(tree_ext_gwy); n != NULL; n = tree_next(n))
+			n->state->rule = NULL;
 		old_rules = pf_rules_active;
 		pf_rules_active = pf_rules_inactive;
 		pf_rules_inactive = old_rules;
@@ -993,10 +1057,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCLRSTATES: {
-		struct pf_state *state;
+		struct pf_tree_node *n;
+
 		s = splsoftnet();
-		TAILQ_FOREACH(state, &pf_states, entries)
-			state->expire = 0;
+		for (n = tree_first(tree_ext_gwy); n != NULL; n = tree_next(n))
+			n->state->expire = 0;
 		purge_expired_states();
 		splx(s);
 		break;
@@ -1004,22 +1069,22 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCGETSTATE: {
 		struct pfioc_state *ps = (struct pfioc_state *)addr;
-		struct pf_state *state;
+		struct pf_tree_node *n;
 		u_int32_t nr;
 
 		nr = 0;
 		s = splsoftnet();
-		state = TAILQ_FIRST(&pf_states);
-		while ((state != NULL) && (nr < ps->nr)) {
-			state = TAILQ_NEXT(state, entries);
+		n = tree_first(tree_ext_gwy);
+		while ((n != NULL) && (nr < ps->nr)) {
+			n = tree_next(n);
 			nr++;
 		}
-		if (state == NULL) {
+		if (n == NULL) {
 			error = EBUSY;
 			splx(s);
 			break;
 		}
-		bcopy(state, &ps->state, sizeof(struct pf_state));
+		bcopy(n->state, &ps->state, sizeof(struct pf_state));
 		splx(s);
 		microtime(&pftv);
 		ps->state.creation = pftv.tv_sec - ps->state.creation;
@@ -2200,7 +2265,7 @@ pf_find_fragment(struct ip *ip)
 
 		pf_ip2key(&key, ip);
 		
-		frag = find_state(tree_fragment, &key);
+		frag = (struct pf_fragment *)find_state(tree_fragment, &key);
 
 		if (frag != NULL) {
 			microtime(&frag->fr_timeout);
@@ -2222,7 +2287,7 @@ pf_remove_fragment(struct pf_fragment *frag)
 		key.port[0] = frag->fr_id;
 		key.port[1] = 0;
 
-		tree_remove(&tree_fragment, &key);
+		tree_remove(&tree_fragment, NULL, &key);
 		TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
 }
 
@@ -2249,7 +2314,6 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		if (frag == NULL)
 			goto drop_fragment;
 
-		microtime(&frag->fr_timeout);
 		frag->fr_flags = 0;
 		frag->fr_src = frent->fr_ip->ip_src;
 		frag->fr_dst = frent->fr_ip->ip_dst;
@@ -2259,7 +2323,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 
 		pf_ip2key(&key, frent->fr_ip);
 
-		tree_insert(&tree_fragment, &key, frag);
+		tree_insert(&tree_fragment, NULL, &key, (struct pf_state *)frag);
 		TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
 
 		DPFPRINTF((__FUNCTION__": insert new fragment\n"));
