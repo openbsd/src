@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.88 1998/08/28 04:42:38 millert Exp $
+#	$OpenBSD: rc,v 1.89 1998/09/19 02:31:51 todd Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -97,6 +97,22 @@ if [ "X${named_flags}" != X"NO" -a "X${named_chroot}" != "X" ]; then
 fi
 syslogd ${syslogd_flags}
 
+# /etc/ifaliases, if it exists, contains the names of additional IP
+# addresses for each interface. It is formatted as a series of lines
+# that contain
+#	interface address netmask
+if [ -f /etc/ifaliases ]; then
+(
+	# delete comments and blank lines
+	set -- `sed -e 's/#.*$//' /etc/ifaliases | grep -v '^$'`
+	while [ $# -ge 3 ] ; do
+		ifconfig $1 inet alias $2 netmask $3
+		route -n add -host $2 localhost
+		shift 3
+	done
+)
+fi
+
 # $named_flags, $named_user, and $named_chroot are imported from /etc/rc.conf;
 # if $named_flags != NO, named is run.
 if [ "X${named_flags}" != X"NO" ]; then
@@ -114,22 +130,6 @@ if [ "X${named_flags}" != X"NO" ]; then
 		named_flags="-t ${named_chroot} ${named_flags}"
 	fi
 	echo 'starting named';		named $named_flags
-fi
-
-# /etc/ifaliases, if it exists, contains the names of additional IP
-# addresses for each interface. It is formatted as a series of lines
-# that contain
-#	interface address netmask
-if [ -f /etc/ifaliases ]; then
-(
-	# delete comments and blank lines
-	set -- `sed -e 's/#.*$//' /etc/ifaliases | grep -v '^$'`
-	while [ $# -ge 3 ] ; do
-		ifconfig $1 inet alias $2 netmask $3
-		route -n add -host $2 localhost
-		shift 3
-	done
-)
 fi
 
 if [ X"${ipfilter}" = X"YES" -a X"${ipmon_flags}" != X"NO" ]; then
