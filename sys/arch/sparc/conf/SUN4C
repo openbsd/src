@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4C,v 1.48 2004/02/29 21:44:12 miod Exp $
+#	$OpenBSD: SUN4C,v 1.49 2004/05/09 22:08:04 miod Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -92,6 +92,7 @@ esp*	at dma? flags 0xff0f				# depending on model
 
 #sun4c, sun4m
 isp*	at sbus?
+options ISP_COMPILE_1000_FW=1
 
 # sun4/300 and sun4c Ethernet - an AMD 7990 LANCE
 le0	at sbus0					# sun4c on-board
