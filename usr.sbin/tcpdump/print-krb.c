@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996
+ * Copyright (c) 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-krb.c,v 1.3 1999/07/28 20:41:36 jakob Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-krb.c,v 1.4 1999/09/16 18:03:14 brad Exp $";
 #endif
 
 #include <sys/param.h>
@@ -73,38 +73,38 @@ void krb_print(const u_char *, u_int);
 #define KERB_ERR_NULL_KEY			10
 
 struct krb {
-    u_char pvno;		/* Protocol Version */
-    u_char type;		/* Type+B */
+	u_char pvno;		/* Protocol Version */
+	u_char type;		/* Type+B */
 };
 
 static char tstr[] = " [|kerberos]";
 
 static struct tok type2str[] = {
-    { AUTH_MSG_KDC_REQUEST,		"KDC_REQUEST" },
-    { AUTH_MSG_KDC_REPLY,		"KDC_REPLY" },
-    { AUTH_MSG_APPL_REQUEST,		"APPL_REQUEST" },
-    { AUTH_MSG_APPL_REQUEST_MUTUAL,	"APPL_REQUEST_MUTUAL" },
-    { AUTH_MSG_ERR_REPLY,		"ERR_REPLY" },
-    { AUTH_MSG_PRIVATE,			"PRIVATE" },
-    { AUTH_MSG_SAFE,			"SAFE" },
-    { AUTH_MSG_APPL_ERR,		"APPL_ERR" },
-    { AUTH_MSG_DIE,			"DIE" },
-    { 0,				NULL }
+	{ AUTH_MSG_KDC_REQUEST,		"KDC_REQUEST" },
+	{ AUTH_MSG_KDC_REPLY,		"KDC_REPLY" },
+	{ AUTH_MSG_APPL_REQUEST,	"APPL_REQUEST" },
+	{ AUTH_MSG_APPL_REQUEST_MUTUAL,	"APPL_REQUEST_MUTUAL" },
+	{ AUTH_MSG_ERR_REPLY,		"ERR_REPLY" },
+	{ AUTH_MSG_PRIVATE,		"PRIVATE" },
+	{ AUTH_MSG_SAFE,		"SAFE" },
+	{ AUTH_MSG_APPL_ERR,		"APPL_ERR" },
+	{ AUTH_MSG_DIE,			"DIE" },
+	{ 0,				NULL }
 };
 
 static struct tok kerr2str[] = {
-    { KERB_ERR_OK,			"OK" },
-    { KERB_ERR_NAME_EXP,		"NAME_EXP" },
-    { KERB_ERR_SERVICE_EXP,		"SERVICE_EXP" },
-    { KERB_ERR_AUTH_EXP,		"AUTH_EXP" },
-    { KERB_ERR_PKT_VER,			"PKT_VER" },
-    { KERB_ERR_NAME_MAST_KEY_VER,	"NAME_MAST_KEY_VER" },
-    { KERB_ERR_SERV_MAST_KEY_VER,	"SERV_MAST_KEY_VER" },
-    { KERB_ERR_BYTE_ORDER,		"BYTE_ORDER" },
-    { KERB_ERR_PRINCIPAL_UNKNOWN,	"PRINCIPAL_UNKNOWN" },
-    { KERB_ERR_PRINCIPAL_NOT_UNIQUE,	"PRINCIPAL_NOT_UNIQUE" },
-    { KERB_ERR_NULL_KEY,		"NULL_KEY"},
-    { 0,				NULL}
+	{ KERB_ERR_OK,			"OK" },
+	{ KERB_ERR_NAME_EXP,		"NAME_EXP" },
+	{ KERB_ERR_SERVICE_EXP,		"SERVICE_EXP" },
+	{ KERB_ERR_AUTH_EXP,		"AUTH_EXP" },
+	{ KERB_ERR_PKT_VER,		"PKT_VER" },
+	{ KERB_ERR_NAME_MAST_KEY_VER,	"NAME_MAST_KEY_VER" },
+	{ KERB_ERR_SERV_MAST_KEY_VER,	"SERV_MAST_KEY_VER" },
+	{ KERB_ERR_BYTE_ORDER,		"BYTE_ORDER" },
+	{ KERB_ERR_PRINCIPAL_UNKNOWN,	"PRINCIPAL_UNKNOWN" },
+	{ KERB_ERR_PRINCIPAL_NOT_UNIQUE,"PRINCIPAL_NOT_UNIQUE" },
+	{ KERB_ERR_NULL_KEY,		"NULL_KEY"},
+	{ 0,				NULL}
 };
 
 
@@ -152,13 +152,13 @@ c_print(register const u_char *s, register const u_char *ep)
 	}
 	if (flag)
 		return NULL;
-	return(s);
+	return (s);
 }
 
 const u_char *
 krb4_print_hdr(const u_char *cp)
 {
-	cp+=2;
+	cp += 2;
 
 #define PRINT		if ((cp = c_print(cp, snapend)) == NULL) goto trunc
 
@@ -172,7 +172,7 @@ krb4_print_hdr(const u_char *cp)
 
 trunc:
 	fputs(tstr, stdout);
-	return(NULL);
+	return (NULL);
 
 #undef PRINT
 }
