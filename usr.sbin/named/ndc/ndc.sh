@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: ndc.sh,v 1.6 1998/05/22 19:34:46 millert Exp $
+#	$OpenBSD: ndc.sh,v 1.7 1998/05/23 18:51:27 millert Exp $
 
 USAGE='echo \
 	"usage: $0 \
@@ -10,16 +10,15 @@ USAGE='echo \
 PATH=%DESTSBIN%:/bin:/usr/bin:/usr/ucb:$PATH
 PIDFILE=%PIDDIR%/named.pid
 NAMED_CMD=named
+RUNNING=0
 
 if [ -f $PIDFILE ]
 then
 	PID=`sed 1q $PIDFILE`
 	NAMED_CMD=`tail -1 $PIDFILE`
-	if kill -0 $PID >/dev/null 2>&1; then
-		RUNNING=1
-	else
-		RUNNING=0
-	fi
+	case "`kill -0 $PID 2>&1`" in
+		""|*"not permitted"*)	RUNNING=1;;
+	esac
 	PS=`%PS% $PID | tail -1 | grep $PID`
 	[ `echo $PS | wc -w` -ne 0 ] || {
 		if [ $RUNNING -eq 1 ]; then
@@ -30,7 +29,6 @@ then
 	}
 else
 	PS="named (no pid file) not running"
-	RUNNING=0
 fi
 
 for ARG
