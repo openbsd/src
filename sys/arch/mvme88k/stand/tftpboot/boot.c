@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.1 2004/01/26 19:48:34 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.2 2004/01/28 08:45:13 miod Exp $ */
 /*	$NetBSD: boot.c,v 1.2 1995/09/23 03:42:52 gwr Exp $ */
 
 /*-
@@ -40,17 +40,20 @@
 #include "stand.h"
 #include "libsa.h"
 
-int debug;
-int errno;
 extern char *version;
-char    line[80];
+char line[80];
 
 int
 main()
 {
 	char *cp, *file;
-	int     io, flag, ret;
-	int     ask = 0;
+	int flag, ret;
+	int ask = 0;
+
+	/* skip first argument, it's our own name */
+	bugargs.arg_start = bugargs.nbarg_start;
+	bugargs.arg_end = bugargs.nbarg_end;
+	*bugargs.arg_end = '\0';	/* just stay on the safe side */
 
 	printf("\n>> OpenBSD/mvme88k tftpboot [%s]\n", version);
 
