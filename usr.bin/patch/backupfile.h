@@ -1,4 +1,4 @@
-/*	$OpenBSD: backupfile.h,v 1.5 2003/07/21 14:32:21 deraadt Exp $	*/
+/*	$OpenBSD: backupfile.h,v 1.6 2003/07/28 18:35:36 otto Exp $	*/
 
 /*
  * backupfile.h -- declarations for making Emacs style backup file names
@@ -34,5 +34,5 @@ enum backup_type {
 extern enum backup_type backup_type;
 extern char	*simple_backup_suffix;
 
-char		*find_backup_file_name(char *file);
-enum backup_type get_version(char *version);
+char		*find_backup_file_name(const char *file);
+enum backup_type get_version(const char *version);

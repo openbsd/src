@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.19 2003/07/28 16:13:53 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.20 2003/07/28 18:35:36 otto Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: util.c,v 1.19 2003/07/28 16:13:53 millert Exp $";
+static const char     rcsid[] = "$OpenBSD: util.c,v 1.20 2003/07/28 18:35:36 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -14,12 +14,11 @@ static const char     rcsid[] = "$OpenBSD: util.c,v 1.19 2003/07/28 16:13:53 mil
 #include <paths.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "EXTERN.h"
 #include "common.h"
-#include "INTERN.h"
 #include "util.h"
 #include "backupfile.h"
 
@@ -27,9 +26,10 @@ static const char     rcsid[] = "$OpenBSD: util.c,v 1.19 2003/07/28 16:13:53 mil
 /* Rename a file, copying it if necessary. */
 
 int
-move_file(char *from, char *to)
+move_file(const char *from, const char *to)
 {
-	int	i, fromfd;
+	int	fromfd;
+	ssize_t	i;
 
 	/* to stdout? */
 
@@ -69,11 +69,12 @@ move_file(char *from, char *to)
 /* Backup the original file.  */
 
 int
-backup_file(char *orig)
+backup_file(const char *orig)
 {
-	char	bakname[MAXPATHLEN], *s, *simplename;
-	dev_t	orig_device;
-	ino_t	orig_inode;
+	struct stat	filestat;
+	char		bakname[MAXPATHLEN], *s, *simplename;
+	dev_t		orig_device;
+	ino_t		orig_inode;
 
 	if (backup_type == none || stat(orig, &filestat) != 0)
 		return 0;			/* nothing to do */
@@ -128,9 +129,10 @@ backup_file(char *orig)
  * Copy a file.
  */
 int
-copy_file(char *from, char *to)
+copy_file(const char *from, const char *to)
 {
-	int	tofd, fromfd, i;
+	int	tofd, fromfd;
+	ssize_t	i;
 
 	tofd = open(to, O_CREAT|O_TRUNC|O_WRONLY, 0666);
 	if (tofd < 0)
@@ -150,25 +152,18 @@ copy_file(char *from, char *to)
  * Allocate a unique area for a string.
  */
 char *
-savestr(char *s)
+savestr(const char *s)
 {
-	char	*rv, *t;
+	char	*rv;
 
 	if (!s)
 		s = "Oops";
-	t = s;
-	while (*t++)
-		;
-	rv = malloc((size_t) (t - s));
+	rv = strdup(s);
 	if (rv == NULL) {
 		if (using_plan_a)
 			out_of_mem = TRUE;
 		else
 			fatal("out of memory\n");
-	} else {
-		t = rv;
-		while ((*t++ = *s++))
-			;
 	}
 	return rv;
 }
@@ -177,7 +172,7 @@ savestr(char *s)
  * Vanilla terminal output (buffered).
  */
 void
-say(char *fmt, ...)
+say(const char *fmt, ...)
 {
 	va_list	ap;
 
@@ -191,7 +186,7 @@ say(char *fmt, ...)
  * Terminal output, pun intended.
  */
 void
-fatal(char *fmt, ...)
+fatal(const char *fmt, ...)
 {
 	va_list	ap;
 
@@ -206,7 +201,7 @@ fatal(char *fmt, ...)
  * Say something from patch, something from the system, then silence . . .
  */
 void
-pfatal(char *fmt, ...)
+pfatal(const char *fmt, ...)
 {
 	va_list	ap;
 	int	errnum = errno;
@@ -223,10 +218,11 @@ pfatal(char *fmt, ...)
  * Get a response from the user, somehow or other.
  */
 void
-ask(char *fmt, ...)
+ask(const char *fmt, ...)
 {
 	va_list	ap;
-	int	ttyfd, r;
+	int	ttyfd;
+	ssize_t	r;
 	bool	tty2 = isatty(2);
 
 	va_start(ap, fmt);
@@ -298,7 +294,7 @@ ignore_signals(void)
  */
 
 void
-makedirs(char *filename, bool striplast)
+makedirs(const char *filename, bool striplast)
 {
 	char	*tmpbuf;
 
@@ -323,12 +319,13 @@ makedirs(char *filename, bool striplast)
  * Make filenames more reasonable.
  */
 char *
-fetchname(char *at, int strip_leading, int assume_exists)
+fetchname(const char *at, int strip_leading, int assume_exists)
 {
-	char	*fullname, *name, *t, tmpbuf[200];
-	int	sleading = strip_leading;
+	char		*fullname, *name, *t, tmpbuf[200];
+	int		sleading = strip_leading;
+	struct stat	filestat;
 
-	if (!at || *at == '\0')
+	if (at == NULL || *at == '\0')
 		return NULL;
 	while (isspace(*at))
 		at++;

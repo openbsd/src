@@ -1,4 +1,4 @@
-/*	$OpenBSD: backupfile.c,v 1.15 2003/07/28 16:13:53 millert Exp $	*/
+/*	$OpenBSD: backupfile.c,v 1.16 2003/07/28 18:35:36 otto Exp $	*/
 
 /*
  * backupfile.c -- make Emacs style backup file names Copyright (C) 1990 Free
@@ -17,47 +17,21 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: backupfile.c,v 1.15 2003/07/28 16:13:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: backupfile.c,v 1.16 2003/07/28 18:35:36 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
+#include <dirent.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "backupfile.h"
 
-/*
- * DIRHEADER: This definition indicates which directory library header to
- * use.
- */
-#define DIRENT
-
-#ifdef DIRENT
-#include <dirent.h>
-#ifdef direct
-#undef direct
-#endif
-#define direct dirent
-#define NLENGTH(direct) (strlen((direct)->d_name))
-#else				/* !DIRENT */
-#define NLENGTH(direct) ((direct)->d_namlen)
-#endif				/* !DIRENT */
 
 #define ISDIGIT(c) (isascii (c) && isdigit (c))
-
-#include <unistd.h>
-
-#if defined (_POSIX_VERSION)
-/*
- * POSIX does not require that the d_ino field be present, and some systems
- * do not provide it.
- */
-#define REAL_DIR_ENTRY(dp) 1
-#else
-#define REAL_DIR_ENTRY(dp) ((dp)->d_ino != 0)
-#endif
 
 /* Which type of backup file names are generated. */
 enum backup_type backup_type = none;
@@ -68,12 +42,12 @@ enum backup_type backup_type = none;
  */
 char           *simple_backup_suffix = "~";
 
-static char    *concat(char *, char *);
-static char    *make_version_name(char *, int);
-static int      max_backup_version(char *, char *);
-static int      version_number(char *, char *, int);
-static int      argmatch(char *, char **);
-static void     invalid_arg(char *, char *, int);
+static char    *concat(const char *, const char *);
+static char    *make_version_name(const char *, int);
+static int      max_backup_version(const char *, const char *);
+static int      version_number(const char *, const char *, int);
+static int      argmatch(const char *, const char **);
+static void     invalid_arg(const char *, const char *, int);
 
 /*
  * Return the name of the new backup file for file FILE, allocated with
@@ -81,7 +55,7 @@ static void     invalid_arg(char *, char *, int);
  * is the root directory. Do not call this function if backup_type == none.
  */
 char *
-find_backup_file_name(char *file)
+find_backup_file_name(const char *file)
 {
 	char	*dir, *base_versions;
 	int	highest_backup;
@@ -89,10 +63,10 @@ find_backup_file_name(char *file)
 	if (backup_type == simple)
 		return concat(file, simple_backup_suffix);
 	base_versions = concat(basename(file), ".~");
-	if (base_versions == 0)
+	if (base_versions == NULL)
 		return NULL;
 	dir = dirname(file);
-	if (dir == 0) {
+	if (dir == NULL) {
 		free(base_versions);
 		return NULL;
 	}
@@ -110,21 +84,21 @@ find_backup_file_name(char *file)
  * to it.
  */
 static int
-max_backup_version(char *file, char *dir)
+max_backup_version(const char *file, const char *dir)
 {
 	DIR	*dirp;
-	struct direct	*dp;
+	struct dirent	*dp;
 	int	highest_version, this_version, file_name_length;
 
 	dirp = opendir(dir);
-	if (!dirp)
+	if (dirp == NULL)
 		return 0;
 
 	highest_version = 0;
 	file_name_length = strlen(file);
 
-	while ((dp = readdir(dirp)) != 0) {
-		if (!REAL_DIR_ENTRY(dp) || NLENGTH(dp) <= file_name_length)
+	while ((dp = readdir(dirp)) != NULL) {
+		if (dp->d_namlen <= file_name_length)
 			continue;
 
 		this_version = version_number(file, dp->d_name, file_name_length);
@@ -140,7 +114,7 @@ max_backup_version(char *file, char *dir)
  * Return 0 if out of memory.
  */
 static char *
-make_version_name(char *file, int version)
+make_version_name(const char *file, int version)
 {
 	char	*backup_name;
 
@@ -155,10 +129,10 @@ make_version_name(char *file, int version)
  * already have ".~" appended to it.
  */
 static int
-version_number(char *base, char *backup, int base_length)
+version_number(const char *base, const char *backup, int base_length)
 {
-	int	version;
-	char	*p;
+	int		version;
+	const char	*p;
 
 	version = 0;
 	if (!strncmp(base, backup, base_length) && ISDIGIT(backup[base_length])) {
@@ -175,7 +149,7 @@ version_number(char *base, char *backup, int base_length)
  * memory, return 0.
  */
 static char  *
-concat(char *str1, char *str2)
+concat(const char *str1, const char *str2)
 {
 	char	*newstr;
 
@@ -191,7 +165,7 @@ concat(char *str1, char *str2)
  * than one element).
  */
 static int
-argmatch(char *arg, char **optlist)
+argmatch(const char *arg, const char **optlist)
 {
 	int	i;	/* Temporary index in OPTLIST. */
 	int	arglen;	/* Length of ARG. */
@@ -226,7 +200,7 @@ argmatch(char *arg, char **optlist)
  * is the return value from argmatch.
  */
 static void
-invalid_arg(char *kind, char *value, int problem)
+invalid_arg(const char *kind, const char *value, int problem)
 {
 	fprintf(stderr, "patch: ");
 	if (problem == -1)
@@ -236,7 +210,7 @@ invalid_arg(char *kind, char *value, int problem)
 	fprintf(stderr, " %s `%s'\n", kind, value);
 }
 
-static char *backup_args[] = {
+static const char *backup_args[] = {
 	"never", "simple", "nil", "existing", "t", "numbered", 0
 };
 
@@ -250,11 +224,11 @@ static enum backup_type backup_types[] = {
  * accepted.
  */
 enum backup_type
-get_version(char *version)
+get_version(const char *version)
 {
 	int	i;
 
-	if (version == 0 || *version == 0)
+	if (version == NULL || *version == '\0')
 		return numbered_existing;
 	i = argmatch(version, backup_args);
 	if (i >= 0)

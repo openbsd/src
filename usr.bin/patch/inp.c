@@ -1,7 +1,7 @@
-/*	$OpenBSD: inp.c,v 1.18 2003/07/23 07:31:21 otto Exp $	*/
+/*	$OpenBSD: inp.c,v 1.19 2003/07/28 18:35:36 otto Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: inp.c,v 1.18 2003/07/23 07:31:21 otto Exp $";
+static const char     rcsid[] = "$OpenBSD: inp.c,v 1.19 2003/07/28 18:35:36 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -11,15 +11,14 @@ static const char     rcsid[] = "$OpenBSD: inp.c,v 1.18 2003/07/23 07:31:21 otto
 #include <ctype.h>
 #include <libgen.h>
 #include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "EXTERN.h"
 #include "common.h"
 #include "util.h"
 #include "pch.h"
-#include "INTERN.h"
 #include "inp.h"
 
 
@@ -35,9 +34,12 @@ static LINENUM	tiline[2] = {-1, -1};	/* 1st line in each buffer */
 static LINENUM	lines_per_buf;	/* how many lines per buffer */
 static int	tireclen;	/* length of records in tmp file */
 
-static bool	rev_in_string(char *);
-static bool	plan_a(char *);	/* returns false if insufficient memory */
-static void	plan_b(char *);
+static bool	rev_in_string(const char *);
+
+/* returns false if insufficient memory */
+static bool	plan_a(const char *);
+
+static void	plan_b(const char *);
 
 /* New patch--prepare to edit another file. */
 
@@ -65,7 +67,7 @@ re_input(void)
 /* Constuct the line index, somehow or other. */
 
 void
-scan_input(char *filename)
+scan_input(const char *filename)
 {
 	if (!plan_a(filename))
 		plan_b(filename);
@@ -78,13 +80,14 @@ scan_input(char *filename)
 /* Try keeping everything in memory. */
 
 static bool
-plan_a(char *filename)
+plan_a(const char *filename)
 {
-	int	ifd, statfailed;
-	char	*s, lbuf[MAXLINELEN];
-	LINENUM	iline;
+	int		ifd, statfailed;
+	char		*s, lbuf[MAXLINELEN];
+	LINENUM		iline;
+	struct stat 	filestat;
 
-	if (!filename || *filename == '\0')
+	if (filename == NULL || *filename == '\0')
 		return FALSE;
 
 	statfailed = stat(filename, &filestat);
@@ -110,7 +113,7 @@ plan_a(char *filename)
 	    /* No one can write to it.  */
 	    (filestat.st_mode & 0222) == 0 ||
 	    /* I can't write to it.  */
-	    ((filestat.st_mode & 0022) == 0 && filestat.st_uid != myuid)) {
+	    ((filestat.st_mode & 0022) == 0 && filestat.st_uid != getuid())) {
 		char	*cs = NULL, *filebase, *filedir;
 		struct stat	cstat;
 
@@ -208,7 +211,7 @@ plan_a(char *filename)
 	i_ptr = (char **) malloc((iline + 2) * sizeof(char *));
 
 	if (i_ptr == NULL) {	/* shucks, it was a near thing */
-		free((char *) i_womp);
+		free(i_womp);
 		return FALSE;
 	}
 	/* now scan the buffer and build pointer array */
@@ -252,7 +255,7 @@ plan_a(char *filename)
 /* Keep (virtually) nothing in memory. */
 
 static void
-plan_b(char *filename)
+plan_b(const char *filename)
 {
 	FILE	*ifp;
 	int	i = 0, maxlen = 1;
@@ -357,10 +360,10 @@ ifetch(LINENUM line, int whichbuf)
  * True if the string argument contains the revision number we want.
  */
 static bool
-rev_in_string(char *string)
+rev_in_string(const char *string)
 {
-	char	*s;
-	int	patlen;
+	const char	*s;
+	int		patlen;
 
 	if (revision == NULL)
 		return TRUE;

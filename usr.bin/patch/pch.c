@@ -1,7 +1,7 @@
-/*	$OpenBSD: pch.c,v 1.24 2003/07/25 02:12:45 millert Exp $	*/
+/*	$OpenBSD: pch.c,v 1.25 2003/07/28 18:35:36 otto Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pch.c,v 1.24 2003/07/25 02:12:45 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pch.c,v 1.25 2003/07/28 18:35:36 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -9,14 +9,13 @@ static const char rcsid[] = "$OpenBSD: pch.c,v 1.24 2003/07/25 02:12:45 millert 
 
 #include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "EXTERN.h"
 #include "common.h"
 #include "util.h"
-#include "INTERN.h"
 #include "pch.h"
 
 /* Patch (diff listing) abstract type. */
@@ -30,9 +29,9 @@ static LINENUM	p_end = -1;	/* last line in hunk */
 static LINENUM	p_max;		/* max allowed value of p_end */
 static LINENUM	p_context = 3;	/* # of context lines */
 static LINENUM	p_input_line = 0;	/* current line # from patch file */
-static char	**p_line = NULL;	/* the text of the hunk */
+static char	**p_line = NULL;/* the text of the hunk */
 static short	*p_len = NULL;	/* length of each line */
-static char	*p_char = NULL;/* +, -, and ! */
+static char	*p_char = NULL;	/* +, -, and ! */
 static int	hunkmax = INITHUNKMAX;	/* size of above arrays to begin with */
 static int	p_indent;	/* indent to patch */
 static LINENUM	p_base;		/* where to intuit this time */
@@ -42,12 +41,15 @@ static LINENUM	p_sline;	/* and the line number for it */
 static LINENUM	p_hunk_beg;	/* line number of current hunk */
 static LINENUM	p_efake = -1;	/* end of faked up lines--don't free */
 static LINENUM	p_bfake = -1;	/* beg of faked up lines */
+static FILE	*pfp = NULL;	/* patch file pointer */
+static char	*bestguess = NULL;	/* guess at correct filename */
 
 static void	grow_hunkmax(void);
 static int	intuit_diff_type(void);
-static void	next_intuit_at(long, long);
-static void	skip_to(long, long);
+static void	next_intuit_at(LINENUM, LINENUM);
+static void	skip_to(LINENUM, LINENUM);
 static char	*pgets(char *, int, FILE *);
+
 
 /*
  * Prepare to look for the next patch in the patch file.
@@ -55,12 +57,12 @@ static char	*pgets(char *, int, FILE *);
 void
 re_patch(void)
 {
-	p_first = NULL;
-	p_newfirst = NULL;
-	p_ptrn_lines = NULL;
-	p_repl_lines = NULL;
+	p_first = 0;
+	p_newfirst = 0;
+	p_ptrn_lines = 0;
+	p_repl_lines = 0;
 	p_end = (LINENUM) - 1;
-	p_max = NULL;
+	p_max = 0;
 	p_indent = 0;
 }
 
@@ -68,9 +70,11 @@ re_patch(void)
  * Open the patch file at the beginning of time.
  */
 void
-open_patch_file(char *filename)
+open_patch_file(const char *filename)
 {
-	if (filename == NULL || !*filename || strEQ(filename, "-")) {
+	struct stat filestat;
+
+	if (filename == NULL || *filename == '\0' || strEQ(filename, "-")) {
 		pfp = fopen(TMPPATNAME, "w");
 		if (pfp == NULL)
 			pfatal("can't create %s", TMPPATNAME);
@@ -115,13 +119,13 @@ grow_hunkmax(void)
 	 * since p_len can move into p_line's old space, and p_char can move into
 	 * p_len's old space.  Not on PDP-11's however.  But it doesn't matter.
 	 */
-	assert(p_line != NULL &&p_len != NULL &&p_char != NULL);
+	assert(p_line != NULL && p_len != NULL && p_char != NULL);
 
 	p_line = realloc(p_line, hunkmax * sizeof(char *));
 	p_len = realloc(p_len, hunkmax * sizeof(short));
 	p_char = realloc(p_char, hunkmax * sizeof(char));
 
-	if (p_line != NULL &&p_len != NULL &&p_char != NULL)
+	if (p_line != NULL && p_len != NULL && p_char != NULL)
 		return;
 	if (!using_plan_a)
 		fatal("out of memory\n");
@@ -171,8 +175,7 @@ there_is_another_patch(void)
 		}
 		ask("File to patch: ");
 		if (*buf != '\n') {
-			if (bestguess)
-				free(bestguess);
+			free(bestguess);
 			bestguess = savestr(buf);
 			filearg[0] = fetchname(buf, 0, FALSE);
 		}
@@ -264,7 +267,7 @@ intuit_diff_type(void)
 			for (t = revision; *t && !isspace(*t); t++)
 				;
 			*t = '\0';
-			if (!*revision) {
+			if (*revision == '\0') {
 				free(revision);
 				revision = NULL;
 			}
@@ -335,10 +338,10 @@ scan_exit:
 		else if (newname)
 			filearg[0] = savestr(newname);
 	}
-	if (bestguess) {
-		free(bestguess);
-		bestguess = NULL;
-	}
+
+	free(bestguess);
+	bestguess = NULL;
+
 	if (filearg[0] != NULL)
 		bestguess = savestr(filearg[0]);
 	else if (indtmp != NULL)
@@ -371,7 +374,7 @@ scan_exit:
  * Remember where this patch ends so we know where to start up again.
  */
 static void
-next_intuit_at(long file_pos, long file_line)
+next_intuit_at(LINENUM file_pos, LINENUM file_line)
 {
 	p_base = file_pos;
 	p_bline = file_line;
@@ -381,7 +384,7 @@ next_intuit_at(long file_pos, long file_line)
  * Basically a verbose fseek() to the actual diff listing.
  */
 static void
-skip_to(long file_pos, long file_line)
+skip_to(LINENUM file_pos, LINENUM file_line)
 {
 	char	*ret;
 

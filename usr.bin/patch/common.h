@@ -1,8 +1,6 @@
-/*	$OpenBSD: common.h,v 1.18 2003/07/22 21:50:21 millert Exp $	*/
+/*	$OpenBSD: common.h,v 1.19 2003/07/28 18:35:36 otto Exp $	*/
 
 #define DEBUGGING
-
-#include <stdio.h>
 
 /* constants */
 
@@ -39,55 +37,41 @@ typedef long    LINENUM;	/* must be signed */
 
 /* globals */
 
-EXT int         Argc;		/* guess */
-EXT char      **Argv;
-EXT int         Argc_last;	/* for restarting plan_b */
-EXT char      **Argv_last;
+extern int 	filemode;
 
-EXT struct stat filestat;	/* file statistics area */
-EXT int filemode INIT(0644);
+extern char	buf[MAXLINELEN];/* general purpose buffer */
 
-EXT char        buf[MAXLINELEN];/* general purpose buffer */
-EXT FILE       *ofp INIT(NULL);	/* output file pointer */
-EXT FILE       *rejfp INIT(NULL);	/* reject file pointer */
-
-EXT int         myuid;		/* cache getuid return value */
-
-EXT bool using_plan_a INIT(TRUE);	/* try to keep everything in memory */
-EXT bool out_of_mem INIT(FALSE);/* ran out of memory in plan a */
+extern bool	using_plan_a;	/* try to keep everything in memory */
+extern bool	out_of_mem;	/* ran out of memory in plan a */
 
 #define MAXFILEC 2
-EXT int filec   INIT(0);	/* how many file arguments? */
-EXT char       *filearg[MAXFILEC];
-EXT bool ok_to_create_file INIT(FALSE);
-EXT char       *bestguess INIT(NULL);	/* guess at correct filename */
 
-EXT char       *outname INIT(NULL);
+extern char	*filearg[MAXFILEC];
+extern bool	ok_to_create_file;
+extern char	*outname;
+extern char	*origprae;
 
-EXT char       *origprae INIT(NULL);
+extern char	*TMPOUTNAME;
+extern char	*TMPINNAME;
+extern char	*TMPREJNAME;
+extern char	*TMPPATNAME;
+extern bool	toutkeep;
+extern bool	trejkeep;
 
-EXT char       *TMPOUTNAME;
-EXT char       *TMPINNAME;
-EXT char       *TMPREJNAME;
-EXT char       *TMPPATNAME;
-EXT bool toutkeep INIT(FALSE);
-EXT bool trejkeep INIT(FALSE);
-
-EXT LINENUM last_offset INIT(0);
 #ifdef DEBUGGING
-EXT int debug   INIT(0);
+extern int	debug;
 #endif
-EXT LINENUM maxfuzz INIT(2);
-EXT bool force  INIT(FALSE);
-EXT bool batch  INIT(FALSE);
-EXT bool verbose INIT(TRUE);
-EXT bool reverse INIT(FALSE);
-EXT bool noreverse INIT(FALSE);
-EXT bool skip_rest_of_patch INIT(FALSE);
-EXT int strippath INIT(957);
-EXT bool canonicalize INIT(FALSE);
+
+extern bool	force;
+extern bool	batch;
+extern bool	verbose;
+extern bool	reverse;
+extern bool	noreverse;
+extern bool	skip_rest_of_patch;
+extern int	strippath;
+extern bool	canonicalize;
 /* TRUE if -C was specified on command line.  */
-EXT bool check_only  INIT(FALSE);
+extern bool	check_only;
 
 
 #define CONTEXT_DIFF 1
@@ -95,12 +79,9 @@ EXT bool check_only  INIT(FALSE);
 #define ED_DIFF 3
 #define NEW_CONTEXT_DIFF 4
 #define UNI_DIFF 5
-EXT int diff_type INIT(0);
 
-EXT bool do_defines INIT(FALSE);/* patch using ifdef, ifndef, etc. */
-EXT char        if_defined[128];/* #ifdef xyzzy */
-EXT char        not_defined[128];	/* #ifndef xyzzy */
-EXT char        else_defined[] INIT("#else\n");	/* #else */
-EXT char        end_defined[128];	/* #endif xyzzy */
+extern int	diff_type;
+extern char	*revision;	/* prerequisite revision, if any */
+extern LINENUM	input_lines;	/* how long is input file in lines */
 
-EXT char       *revision INIT(NULL);	/* prerequisite revision, if any */
+
