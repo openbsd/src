@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2000/06/09 16:26:51 mickey Exp $
+#	$OpenBSD: Makefile,v 1.5 2000/06/10 20:51:53 deraadt Exp $
 
 PROG=	chmod
 CFLAGS+=-DSUPPORT_DOT
@@ -8,7 +8,7 @@ LINKS=	${BINDIR}/chmod ${BINDIR}/chgrp \
 
 # XXX compatibility
 afterinstall:
-	ln -fs ${DESTDIR}/sbin/chown ${DESTDIR}/usr/sbin/chown
+	ln -fs /sbin/chown ${DESTDIR}/usr/sbin/chown
 	ln -fs ${BINDIR}/chgrp ${DESTDIR}/usr/sbin/chgrp
 
 .include <bsd.prog.mk>
