@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.2 2000/02/12 09:45:49 niklas Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.3 2000/02/13 10:56:41 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -555,7 +555,7 @@ gdt_scsi_cmd(xs)
 		}
 		if (blockno >= gdt->sc_hdr[target].hd_size ||
 		    blockno + blockcnt > gdt->sc_hdr[target].hd_size) {
-			printf("%s: out of bounds %d-%d >= %d\n",
+			printf("%s: out of bounds %u-%u >= %u\n",
 			    gdt->sc_dev.dv_xname, blockno, blockcnt,
 			    gdt->sc_hdr[target].hd_size);
 			xs->error = XS_DRIVER_STUFFUP;
