@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.4 2001/04/06 04:42:06 csapuntz Exp $	*/
+/*	$OpenBSD: aac.c,v 1.5 2001/06/27 01:55:28 niklas Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -632,7 +632,7 @@ aac_scsi_cmd(xs)
 
 	lock = AAC_LOCK(sc);
 
-	/* Don't double enqueue if we came from gdt_chain. */
+	/* Don't double enqueue if we came from aac_chain. */
 	if (xs != LIST_FIRST(&sc->sc_queue))
 		aac_enqueue(sc, xs, 0);
 
@@ -1222,8 +1222,8 @@ aacminphys(bp)
 
 #if 1
 #if 0	/* As this is way more than MAXPHYS it's really not necessary. */
-	if (bp->b_bcount > ((GDT_MAXOFFSETS - 1) * PAGE_SIZE))
-		bp->b_bcount = ((GDT_MAXOFFSETS - 1) * PAGE_SIZE);
+	if (bp->b_bcount > ((AAC_MAXOFFSETS - 1) * PAGE_SIZE))
+		bp->b_bcount = ((AAC_MAXOFFSETS - 1) * PAGE_SIZE);
 #endif
 #else
 	for (off = PAGE_SIZE, pa = vtophys(buf); off < bp->b_bcount;
