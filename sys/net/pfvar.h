@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.65 2002/03/25 22:03:01 frantzen Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.66 2002/03/27 18:16:21 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -187,6 +187,7 @@ struct pf_rule_addr {
 	u_int16_t	port[2];
 	u_int8_t	not;
 	u_int8_t	port_op;
+	u_int8_t	noroute;
 };
 
 struct pf_rule {
@@ -600,6 +601,7 @@ int	pf_match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
 void	pf_normalize_init(void);
 int	pf_normalize_ip(struct mbuf **, int, struct ifnet *, u_short *);
 void	pf_purge_expired_fragments(void);
+int	pf_routable(struct pf_addr *addr, int af); 
 
 extern struct pf_rulequeue *pf_rules_active;
 extern struct pf_status pf_status;

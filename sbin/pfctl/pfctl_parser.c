@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.62 2002/03/12 08:15:03 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.63 2002/03/27 18:16:23 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -705,12 +705,15 @@ print_rule(struct pf_rule *r)
 	}
 	if (PF_AZERO(&r->src.addr, AF_INET6) &&
 	    PF_AZERO(&r->src.mask, AF_INET6) &&
+	    !r->src.noroute && !r->dst.noroute &&
 	    !r->src.port_op && PF_AZERO(&r->dst.addr, AF_INET6) &&
 	    PF_AZERO(&r->dst.mask, AF_INET6) && !r->dst.port_op)
 		printf("all ");
 	else {
 		printf("from ");
-		if (PF_AZERO(&r->src.addr, AF_INET6) &&
+		if (r->src.noroute)
+			printf("no-route ");
+		else if (PF_AZERO(&r->src.addr, AF_INET6) &&
 		    PF_AZERO(&r->src.mask, AF_INET6))
 			printf("any ");
 		else {
@@ -725,7 +728,9 @@ print_rule(struct pf_rule *r)
 			    r->proto == IPPROTO_TCP ? "tcp" : "udp");
 
 		printf("to ");
-		if (PF_AZERO(&r->dst.addr, AF_INET6) &&
+		if (r->dst.noroute)
+			printf("no-route ");
+		else if (PF_AZERO(&r->dst.addr, AF_INET6) &&
 		    PF_AZERO(&r->dst.mask, AF_INET6))
 			printf("any ");
 		else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.20 2002/02/26 07:25:33 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.21 2002/03/27 18:16:21 mickey Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -587,16 +587,19 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 			r = r->skip[PF_SKIP_AF];
 		else if (r->proto && r->proto != pd->proto)
 			r = r->skip[PF_SKIP_PROTO];
-		else if (!PF_AZERO(&r->src.mask, af) &&
+		else if (r->src.noroute && pf_routable(pd->src, af))  
+			r = TAILQ_NEXT(r, entries);
+		else if (!r->src.noroute && !PF_AZERO(&r->src.mask, af) &&
 		    !PF_MATCHA(r->src.not, &r->src.addr, &r->src.mask,
 			    pd->src, af))
 			r = r->skip[PF_SKIP_SRC_ADDR];
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 			    r->src.port[0], r->src.port[1], th->th_sport))
 			r = r->skip[PF_SKIP_SRC_PORT];
-		else if (!PF_AZERO(&r->dst.mask, af) &&
-			    !PF_MATCHA(r->dst.not,
-			    &r->dst.addr, &r->dst.mask,
+		else if (r->dst.noroute && pf_routable(pd->dst, af))
+			r = TAILQ_NEXT(r, entries);
+		else if (!r->dst.noroute && !PF_AZERO(&r->dst.mask, af) &&
+		    !PF_MATCHA(r->dst.not, &r->dst.addr, &r->dst.mask,
 			    pd->dst, af))
 			r = r->skip[PF_SKIP_DST_ADDR];
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,

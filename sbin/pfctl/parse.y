@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.56 2002/02/27 18:11:45 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.57 2002/03/27 18:16:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -72,6 +72,7 @@ struct node_host {
 	struct pf_addr		 mask;
 	u_int8_t		 af;
 	u_int8_t		 not;
+	u_int8_t		 noroute;
 	struct node_host	*next;
 };
 
@@ -171,6 +172,7 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token  ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
+%token	NOROUTE
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
@@ -437,6 +439,12 @@ host_list	: xhost				{ $$ = $1; }
 
 xhost		: '!' host			{ $$ = $2; $$->not = 1; }
 		| host				{ $$ = $1; }
+		| NOROUTE			{
+			$$ = calloc(1, sizeof(struct node_host));
+			if ($$ == NULL)
+				err(1, "xhost: calloc");
+			$$->noroute = 1;
+		}
 		;
 
 host		: address			{
@@ -1213,12 +1221,14 @@ void expand_rule_hosts(struct pf_rule *r,
 					r->proto = proto->proto;
 					r->src.addr = src_host->addr;
 					r->src.mask = src_host->mask;
+					r->src.noroute = src_host->noroute;
 					r->src.not = src_host->not;
 					r->src.port[0] = src_port->port[0];
 					r->src.port[1] = src_port->port[1];
 					r->src.port_op = src_port->op;
 					r->dst.addr = dst_host->addr;
 					r->dst.mask = dst_host->mask;
+					r->dst.noroute = dst_host->noroute;
 					r->dst.not = dst_host->not;
 					r->dst.port[0] = dst_port->port[0];
 					r->dst.port[1] = dst_port->port[1];
@@ -1373,6 +1383,7 @@ lookup(char *s)
 		{ "nat",	NAT},
 		{ "no",		NO},
 		{ "no-df",	NODF},
+		{ "no-route",	NOROUTE},
 		{ "on",		ON},
 		{ "out",	OUT},
 		{ "pass",	PASS},

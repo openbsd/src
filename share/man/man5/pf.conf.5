@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.35 2002/03/17 18:22:45 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.36 2002/03/27 18:16:17 mickey Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -68,8 +68,8 @@ af	       = "inet" | "inet6" .
 proto-list     = ( proto-name | proto-number ) [ "," proto-list ] .
 
 hosts          = "all" |
-                 "from" ( "any" | host | "{" host-list "}" ) [ port ]
-                 "to"   ( "any" | host | "{" host-list "}" ) [ port ] .
+                 "from" ( "any" ! "no-route" | host | "{" host-list "}" ) [ port ]
+                 "to"   ( "any" | "no-route" | host | "{" host-list "}" ) [ port ] .
 
 host           = [ "!" ] address [ "/" mask-bits ] .
 address        = ( interface-name | host-name | ipv4-dotted-quad |
@@ -219,7 +219,14 @@ The rule applies only to packets with the specified source and destination
 addresses/ports.
 .Pp
 Addresses can be specified in CIDR notation (matching netblocks), as
-symbolic host names or interface names.
+symbolic host names or interface names, or as any of the following keywords:
+.Bl -tag -width no-route -compact
+.It Em any
+means any address;
+.It Em no-route
+means any address which is not currently routable.
+.El
+.Pp
 Host name resolution and interface to address translation are done at
 rule set load-time.
 When the address of an interface (or host name) changes (by DHCP or PPP,
@@ -488,6 +495,9 @@ block return-rst  out log on $ext_if proto tcp all
 block return-rst  in  log on $ext_if proto tcp all
 block return-icmp out log on $ext_if proto udp all
 block return-icmp in  log on $ext_if proto udp all
+
+# block anything coming form source we have no back routes for
+block in from no-route to any
 
 # block and log outgoing packets that don't have our address as source,
 # they are either spoofed or something is misconfigured (NAT disabled,

@@ -10,12 +10,13 @@
 @9 block in log quick on tun0 inet from 172.16.0.0/12 to any 
 @10 block in log quick on tun0 inet from 192.168.0.0/16 to any 
 @11 block in log quick on tun0 inet from 255.255.255.255/32 to any 
-@12 pass out on tun0 inet proto icmp all icmp-type echoreq code 0 keep state 
-@13 pass in on tun0 inet proto icmp all icmp-type echoreq code 0 keep state 
-@14 pass out on tun0 proto udp all keep state 
-@15 pass in on tun0 proto udp from any to any port = domain keep state 
-@16 pass out on tun0 proto tcp all keep state 
-@17 pass in on tun0 proto tcp from any to any port = ssh keep state 
-@18 pass in on tun0 proto tcp from any to any port = smtp keep state 
-@19 pass in on tun0 proto tcp from any to any port = domain keep state 
-@20 pass in on tun0 proto tcp from any to any port = auth keep state 
+@12 block in log quick from no-route to any 
+@13 pass out on tun0 inet proto icmp all icmp-type echoreq code 0 keep state 
+@14 pass in on tun0 inet proto icmp all icmp-type echoreq code 0 keep state 
+@15 pass out on tun0 proto udp all keep state 
+@16 pass in on tun0 proto udp from any to any port = domain keep state 
+@17 pass out on tun0 proto tcp all keep state 
+@18 pass in on tun0 proto tcp from any to any port = ssh keep state 
+@19 pass in on tun0 proto tcp from any to any port = smtp keep state 
+@20 pass in on tun0 proto tcp from any to any port = domain keep state 
+@21 pass in on tun0 proto tcp from any to any port = auth keep state 

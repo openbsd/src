@@ -17,6 +17,8 @@ block in log quick on tun0 from 172.16.0.0/12	to any
 block in log quick on tun0 from 192.168.0.0/16	to any
 block in log quick on tun0 from 255.255.255.255/32 to any
 
+block in log quick from no-route to any
+
 pass out on tun0 inet proto icmp all icmp-type 8 code 0 keep state
 pass in  on tun0 inet proto icmp all icmp-type 8 code 0 keep state
 
