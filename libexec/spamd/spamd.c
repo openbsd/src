@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.27 2003/03/28 17:52:24 jason Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.28 2003/03/28 20:35:24 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -83,8 +83,8 @@ int      parse_configline(char *);
 void     parse_configs(void);
 void     do_config(void);
 int      append_error_string (struct con *, size_t, char *, int, void *);
-void     build_reply(struct  con *);
-void     doreply(struct con *);
+char    *build_reply(struct  con *);
+char    *doreply(struct con *);
 void     setlog(char *, size_t, char *);
 void     initcon(struct con *, int, struct sockaddr_in *);
 void     closecon(struct con *);
@@ -390,11 +390,14 @@ no_mem:
 }
 
 
-void
+char *
 build_reply(struct con *cp)
 {
 	struct sdlist **matches;
+	static char matchlists[80];
 	int off = 0;
+
+	matchlists[0] = '\0';
 
 	matches = sdl_lookup(blacklists, cp->af, cp->ia);
 	if (matches == NULL) {
@@ -405,10 +408,20 @@ build_reply(struct con *cp)
 		goto bad;
 	}
 	for (; *matches; matches++) {
-		int used = 0;
+		int used = 0, s = sizeof(matchlists) - 4; 
 		char *c = cp->obuf + off;
 		int left = cp->osize - off;
 
+		/* don't report an insane amount of lists in the logs.
+		 * just truncate and indicate with ...
+		 */
+		if (strlen(matchlists) + strlen(matches[0]->tag) + 1 
+		    >= s) 
+			strlcat(matchlists, " ...", sizeof(matchlists));
+		else {
+			strlcat(matchlists, " ", s);
+			strlcat(matchlists, matches[0]->tag, s);
+		}
 		used = append_error_string(cp, off, matches[0]->string,
 		    cp->af, cp->ia);
 		if (used == -1)
@@ -430,7 +443,7 @@ build_reply(struct con *cp)
 			cp->obuf[off] = '\0';
 		}
 	}
-	return;
+	return matchlists;
 bad:
 	/* Out of memory, or no match. give generic reply */
 	asprintf(&cp->obuf,
@@ -444,18 +457,19 @@ bad:
 		cp->obuf = "450 Try again\n";
 	} else
 		cp->osize = strlen(cp->obuf) + 1;
+	return matchlists;
 }
 
-void
+char *
 doreply(struct con *cp)
 {
 	if (reply) {
 		if (!cp->obufalloc)
 			errx(1, "shouldn't happen");
 		snprintf(cp->obuf, cp->osize, "%s %s\n", nreply, reply);
-		return;
+		return("");
 	}
-	build_reply(cp);
+	return (build_reply(cp));
 }
 
 void
@@ -466,6 +480,8 @@ setlog(char *p, size_t len, char *f)
 	s = strsep(&f, ":");
 	if (!s)
 		return;
+	while (*f == ' ' || *f == '\t')
+		f++;
 	s = strsep(&f, " \t");
 	if (s == NULL)
 		return;
@@ -609,9 +625,8 @@ nextstate(struct con *cp)
 
 	spam:
 	case 50:
-		syslog_r(LOG_INFO, &sdata, "%s: %s -> %s %ldsec",
-		    cp->addr, cp->mail, cp->rcpt, (long)(t - cp->s));
-		doreply(cp);
+		syslog_r(LOG_INFO, &sdata, "%s: %s -> %s %ldsec by lists:%s",
+		    cp->addr, cp->mail, cp->rcpt, (long)(t - cp->s), doreply(cp));
 		cp->op = cp->obuf;
 		cp->ol = strlen(cp->op);
 		cp->state = 99;
