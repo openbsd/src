@@ -1,4 +1,5 @@
-/*	$Id: ike_aggressive.c,v 1.1 1999/04/19 19:59:53 niklas Exp $	*/
+/*	$OpenBSD: ike_aggressive.c,v 1.2 1999/04/27 21:11:53 niklas Exp $	*/
+/*	$EOM: ike_aggressive.c,v 1.2 1999/04/25 22:12:33 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -111,7 +112,20 @@ initiator_send_AUTH (struct message *msg)
 {
   msg->exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
 
-  return ike_phase_1_send_AUTH (msg);
+  if (ike_phase_1_send_AUTH (msg))
+    return -1;
+
+  /*
+   * RFC 2407 4.6.3 says that, among others, INITIAL-CONTACT MUST NOT
+   * be sent in Aggressive Mode.  This leaves us with the choice of
+   * doing it in an informational exchange of its own with no delivery
+   * guarantee or in the first Quick Mode, or not at all.
+   * draft-jenkins-ipsec-rekeying-01.txt has some text that requires
+   * INITIAL-CONTACT in phase 1, thus contradicting what we learned
+   * above.  I will bring this up in the IPsec list.  For now we don't
+   * do INITIAL-CONTACT at all when using aggressive mode.
+   */
+  return 0;
 }
 
 /*

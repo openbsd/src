@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_main_mode.c,v 1.10 1999/04/19 21:01:16 niklas Exp $	*/
-/*	$EOM: ike_main_mode.c,v 1.76 1999/04/16 21:24:43 niklas Exp $	*/
+/*	$OpenBSD: ike_main_mode.c,v 1.11 1999/04/27 21:11:53 niklas Exp $	*/
+/*	$EOM: ike_main_mode.c,v 1.77 1999/04/25 22:12:34 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -64,6 +64,7 @@
 #include "util.h"
 
 static int initiator_send_ID_AUTH (struct message *);
+static int responder_send_ID_AUTH (struct message *);
 static int responder_send_KE_NONCE (struct message *);
 
 int (*ike_main_mode_initiator[]) (struct message *) = {
@@ -81,7 +82,7 @@ int (*ike_main_mode_responder[]) (struct message *) = {
   ike_phase_1_recv_KE_NONCE,
   responder_send_KE_NONCE,
   ike_phase_1_recv_ID_AUTH,
-  ike_phase_1_responder_send_ID_AUTH
+  responder_send_ID_AUTH
 };
 
 static int
@@ -92,7 +93,10 @@ initiator_send_ID_AUTH (struct message *msg)
   if (ike_phase_1_send_ID (msg))
     return -1;
 
-  return ike_phase_1_send_AUTH (msg);
+  if (ike_phase_1_send_AUTH (msg))
+    return -1;
+
+  return ipsec_initial_contact (msg);
 }
 
 /* Send our public DH value and a nonce to the initiator.  */
@@ -112,4 +116,15 @@ responder_send_KE_NONCE (struct message *msg)
 			      ike_phase_1_post_exchange_KE_NONCE);
 
   return 0;
+}
+
+static int
+responder_send_ID_AUTH (struct message *msg)
+{
+  msg->exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
+
+  if (ike_phase_1_responder_send_ID_AUTH (msg))
+    return -1;
+
+  return ipsec_initial_contact (msg);
 }

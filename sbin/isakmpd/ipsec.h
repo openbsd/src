@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.h,v 1.7 1999/04/19 19:54:54 niklas Exp $	*/
-/*	$EOM: ipsec.h,v 1.34 1999/04/02 00:57:49 niklas Exp $	*/
+/*	$OpenBSD: ipsec.h,v 1.8 1999/04/27 21:11:54 niklas Exp $	*/
+/*	$EOM: ipsec.h,v 1.35 1999/04/25 22:12:37 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -135,6 +135,7 @@ extern int ipsec_esp_enckeylength (struct proto *);
 extern int ipsec_gen_g_x (struct message *);
 extern int ipsec_get_id (char *, int *, struct in_addr *, struct in_addr *);
 extern void ipsec_init (void);
+extern int ipsec_initial_contact (struct message *msg);
 extern int ipsec_is_attribute_incompatible (u_int16_t, u_int8_t *, u_int16_t,
 					    void *);
 extern int ipsec_keymat_length (struct proto *);
