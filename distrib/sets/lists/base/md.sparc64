@@ -7,10 +7,10 @@
 ./etc/firmware/atu-rfmd2958-int
 ./etc/firmware/atu-rfmd2958smc-ext
 ./etc/firmware/atu-rfmd2958smc-int
-./etc/firmware/symbol-eprim
-./etc/firmware/symbol-esec
 ./etc/firmware/kue
 ./etc/firmware/kue-license
+./etc/firmware/symbol-eprim
+./etc/firmware/symbol-esec
 ./etc/firmware/symbol-license
 ./etc/firmware/tigon1
 ./etc/firmware/tigon2
@@ -1072,6 +1072,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_pflog.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_pfsync.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_ppp.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_pppoe.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_pppvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_slvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/net/if_sppp.ph

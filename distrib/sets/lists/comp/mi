@@ -943,6 +943,7 @@
 ./usr/include/net/if_pflog.h
 ./usr/include/net/if_pfsync.h
 ./usr/include/net/if_ppp.h
+./usr/include/net/if_pppoe.h
 ./usr/include/net/if_pppvar.h
 ./usr/include/net/if_slvar.h
 ./usr/include/net/if_sppp.h

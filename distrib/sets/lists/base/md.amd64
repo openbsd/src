@@ -1652,6 +1652,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/if_pflog.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/if_pfsync.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/if_ppp.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/net/if_pppoe.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/if_pppvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/if_slvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/net/if_sppp.ph
