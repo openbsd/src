@@ -1,10 +1,8 @@
-/*	$OpenBSD: biosboot.S,v 1.11 1997/07/29 16:48:38 flipk Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.12 1997/07/30 19:40:45 flipk Exp $	*/
 
 	.file	"bootbios.S"
 
 #include <machine/asm.h>
-#include <machine/param.h>
-#include <machine/specialreg.h>
 #define _LOCORE
 #include <machine/segments.h>
 #undef _LOCORE
