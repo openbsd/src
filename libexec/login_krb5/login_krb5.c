@@ -1,7 +1,7 @@
-/*	$OpenBSD: login_krb5.c,v 1.12 2001/08/12 21:55:46 millert Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.13 2002/02/06 09:18:31 hin Exp $	*/
 
 /*-
- * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
+ * Copyright (c) 2001, 2002 Hans Insulander <hin@openbsd.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -121,8 +121,8 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 				exit(1);
 			}
 			
-			ret = krb524_convert_creds_kdc(context, ccache,
-						       &cred, &c);
+			ret = krb524_convert_creds_kdc_ccache(context, ccache,
+							      &cred, &c);
 			if (ret != 0) {
 				krb5_syslog(context, LOG_ERR, ret,
 					    "convert");
