@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.43 2001/01/27 12:03:33 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.44 2001/02/08 22:37:34 angelos Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -343,6 +343,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
    */
   for (i = 0; i < nprinc; i++)
     {
+      LOG_DBG ((LOG_MISC, 40, "check_policy: adding authorizer [%s]", principal[i]));
       if (LK (kn_add_authorizer, (isakmp_sa->policy_id, principal[i])) == -1)
         {
 	  int j;
