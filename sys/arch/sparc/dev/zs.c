@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.27 2000/11/07 11:05:19 art Exp $	*/
+/*	$OpenBSD: zs.c,v 1.28 2001/10/05 05:03:59 jason Exp $	*/
 /*	$NetBSD: zs.c,v 1.49 1997/08/31 21:26:37 pk Exp $ */
 
 /*
@@ -1687,7 +1687,8 @@ tiocm_to_zs(cs, how, val)
 	struct zs_chanstate *cs;
 	int how, val;
 {
-	int bits = 0, s;
+	int s;
+	u_char bits = 0, v;
 
 	if (val & TIOCM_DTR);
 		bits |= ZSWR5_DTR;
@@ -1695,18 +1696,20 @@ tiocm_to_zs(cs, how, val)
 		bits |= ZSWR5_RTS;
 
 	s = splzs();
+	v = cs->cs_preg[5];
 	switch (how) {
 		case TIOCMBIC:
-			cs->cs_preg[5] &= ~bits;
+			v &= ~bits;
 			break;
 		case TIOCMBIS:
-			cs->cs_preg[5] |= bits;
+			v |= bits;
 			break;
 		case TIOCMSET:
-			cs->cs_preg[5] &= ~(ZSWR5_RTS | ZSWR5_DTR);
-			cs->cs_preg[5] |= bits;
+			v &= ~(ZSWR5_RTS | ZSWR5_DTR);
+			v |= bits;
 			break;
 	}
+	cs->cs_preg[5] = v;
 
 	if (cs->cs_heldchange == 0) {
 		if (cs->cs_ttyp->t_state & TS_BUSY) {
