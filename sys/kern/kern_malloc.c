@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.26 2001/05/05 20:57:00 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.27 2001/05/06 00:47:46 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -434,19 +434,9 @@ void
 kmeminit()
 {
 #ifdef KMEMSTATS
-	register long indx;
+	long indx;
 #endif
 	int npg;
-
-#if	((MAXALLOCSAVE & (MAXALLOCSAVE - 1)) != 0)
-		ERROR!_kmeminit:_MAXALLOCSAVE_not_power_of_2
-#endif
-#if	(MAXALLOCSAVE > MINALLOCSIZE * 32768)
-		ERROR!_kmeminit:_MAXALLOCSAVE_too_big
-#endif
-#if	(MAXALLOCSAVE < PAGE_SIZE)
-		ERROR!_kmeminit:_MAXALLOCSAVE_too_small
-#endif
 
 #ifdef DIAGNOSTIC
 	if (sizeof(struct freelist) > (1 << MINBUCKET))
