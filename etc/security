@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.66 2003/12/28 19:51:31 otto Exp $
+#	$OpenBSD: security,v 1.67 2004/08/25 19:17:30 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -689,3 +689,27 @@ if [ -s /etc/changelist ] ; then
 		fi
 	done
 fi
+
+# Make backups of the labels for any mounted disks and produce diffs
+# when they change.
+for d in `df -ln | sed -n 's:^/dev/\([a-z]*[0-9]*\)[a-p].*$:\1:p' | sort -u`; do
+	file=/var/backups/disklabel.$d
+	CUR=$file.current
+	BACK=$file.backup
+	if disklabel $d > /var/backups/disklabel.$d 2>&1 ; then
+		if [ -s $CUR ] ; then
+			diff -u $CUR $file > $OUTPUT
+			if [ -s $OUTPUT ] ; then
+	echo "\n======\n${d} diffs (-OLD  +NEW)\n======"
+				cat $OUTPUT
+				cp -p $CUR $BACK
+				cp -p $file $CUR
+				chown root:wheel $CUR $BACK
+			fi
+		else
+			cp -p $file $CUR
+			chown root:wheel $CUR
+		fi
+	fi
+	rm -f $file
+done
