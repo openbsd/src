@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.10 2004/10/11 10:30:33 espie Exp $
+# $OpenBSD: pkg_info,v 1.11 2004/11/09 10:46:57 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -44,8 +44,8 @@ sub get_line
 }
 
 our ($opt_c, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_L, $opt_m,
-    $opt_p, $opt_q, $opt_R, $opt_r, $opt_v, $opt_h, $opt_e, $opt_l, $opt_a,
-    $opt_M, $opt_U);
+    $opt_p, $opt_q, $opt_R, $opt_r, $opt_s, $opt_v, $opt_h, $opt_e, $opt_l, 
+    $opt_a, $opt_M, $opt_U);
 
 sub print_info
 {
@@ -100,11 +100,11 @@ sub print_info
 			print "\n";
 		}
 		my $plist;
-		if ($opt_f || $opt_L) {
+		if ($opt_f || $opt_L || $opt_s) {
 			require OpenBSD::PackingOld;
 			require OpenBSD::PackingList;
 
-			if ($opt_f) {
+			if ($opt_f || $opt_s) {
 				$plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
 			} else {
 				$plist = OpenBSD::PackingList->fromfile($dir.CONTENTS, \&OpenBSD::PackingList::FilesOnly);
@@ -119,6 +119,17 @@ sub print_info
 			}
 			print "\n";
 		}
+		if ($opt_s) {
+			my $size = 0;
+			for my $item (@{$plist->{items}}) {
+				next unless $item->IsFile();
+				if (defined $item->{size}) {
+					$size += $item->{size};
+				}
+			}
+			print "Size: $size\n";
+		}
+
 		if ($opt_f) {
 			print $opt_p, "Packing list:\n" unless $opt_q;
 			$plist->write(\*STDOUT);
@@ -128,7 +139,7 @@ sub print_info
 	}
 }
 
-getopts('cDdfIikLmpqRrvheMU:l:a');
+getopts('cDdfIikLmpqRrsvheMU:l:a');
 
 if (defined $opt_e) {
 	die "Error: -e is not yet supported";

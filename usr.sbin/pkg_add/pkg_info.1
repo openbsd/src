@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.4 2004/10/11 10:30:33 espie Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.5 2004/11/09 10:46:57 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,7 +25,7 @@
 .Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm pkg_info
-.Op Fl cDdfIikLmpqRrvhMU
+.Op Fl cDdfIikLmpqRrsvhMU
 .Op Fl e Ar package
 .Op Fl l Ar prefix
 .Ar pkg-name Op Ar ...
@@ -131,6 +131,8 @@ raw info (basically, assume a non-human reading).
 Show which packages require a given package.
 .It Fl r
 Show the requirements script (if any) for each package.
+.It Fl s
+Show an estimate of the total size of each package.
 .It Fl U
 Show the deinstall-message file (if any) for each package.
 .It Fl v
