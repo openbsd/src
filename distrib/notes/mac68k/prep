@@ -34,4 +34,17 @@ partitioning it with MacOS partitions of the correct size.  If you do this,
 simply select the "Convert" button when choosing partitions to build a
 filesystem on in Mkfs (see below).
 
-You are now set to install OpenBSD on your hard drive.
+Before moving on, you should assure that your machine is running the correct
+software on the MacOS side.  In the Memory control panel, you should turn
+Virtual Memory off whenever you are planning to use the BSD/Mac68k Booter.
+You should also assure that your machine is using 32-bit addressing.  If
+there is no "Addressing:" option in your Memory control panel and your
+machien is supported, your probably will need Mode32.  Mode32 is a control
+panel and extension combination which enable 32-bit addressing on older Macs
+which do not use it by default.  This program is available from any Info-Mac
+mirror.  Finally, we recommend strongly that, at least for the purposes of
+setting the system up, you run with the machine's montior in 1-bit ("Black
+and White" in the mOnitors control panel) mode.
+
+All of that done and accounted for, you are now set to install OpenBSD on
+your hard drive.
