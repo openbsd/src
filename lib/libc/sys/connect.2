@@ -111,7 +111,11 @@ and the connection cannot
 be completed immediately.
 It is possible to
 .Xr select 2
-for completion by selecting the socket for writing.
+for completion by selecting the socket for writing, and also use
+.Xr getsockopt 2
+with
+.Dv SO_ERROR
+to check for error conditions.
 .It Bq Er EALREADY
 The socket is non-blocking
 and a previous connection attempt
