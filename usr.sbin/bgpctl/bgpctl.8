@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.6 2004/01/05 16:29:20 henning Exp $
+.\" $OpenBSD: bgpctl.8,v 1.7 2004/01/06 16:48:06 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -30,31 +30,27 @@ program controls the
 .Xr bgpd 8
 daemon.
 The commands are as follows:
-.Pp
-.Bl -tag -width xxxxxx -compact
+.Bl -tag -width xxxxxx
 .It Li show summary
 Show a list of all neighbors, including information about the session state
 and message counters.
-.Pp
 .It Li show neighbor Ar address Ar modifier
 Show detailed information about the neighbor identified by
 .Ar address ,
 according to the given
 .Ar modifier :
+.Pp
 .Bl -tag -width messages -compact
 .It Li messages
 Show statistics about sent and received BGP messages.
 .It Li timers
 Show the BGP timers.
 .El
-.Pp
 .It Li reload
 Reload the configuration file.
-.Pp
 .It Li fib couple
 Insert the learned routes into the Forward Information Base aka the kernel
 routing table.
-.Pp
 .It Li fib decouple
 Remove the learned routes into the Forward Information Base aka the kernel
 routing table.
