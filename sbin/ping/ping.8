@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.9 1995/10/02 19:47:11 pk Exp $
+.\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -160,6 +160,9 @@ Verbose output.
 packets other than
 .Tn ECHO_RESPONSE
 that are received are listed.
+.It Fl w Ar maxwait
+Specifies the number of seconds to wait for a response to a packet
+before transmitting the next one.  The default is 10.
 .El
 .Pp
 In addition, the following options may be used for multicast pings:
@@ -171,9 +174,6 @@ Disable the loopback, so the transmitting host doesn't see the ICMP
 requests.
 .It Fl t Ar ttl
 Use the specified time-to-live.
-.It Fl w Ar maxwait
-Specifies the number of seconds to wait for a response to a packet
-before transmitting the next one.  The default is 10.
 .El
 .Pp
 When using
