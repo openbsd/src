@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.120 2002/11/21 19:34:25 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.121 2002/12/05 22:40:41 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1394,6 +1394,7 @@ ubsec_callback2(sc, q)
 
 	switch (q->q_type) {
 #ifndef UBSEC_NO_RNG
+	case UBS_CTXOP_RNGSHA1:
 	case UBS_CTXOP_RNGBYPASS: {
 		struct ubsec_q2_rng *rng = (struct ubsec_q2_rng *)q;
 		u_int32_t *p;
