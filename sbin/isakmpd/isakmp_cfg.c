@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.8 2002/06/01 07:44:21 deraadt Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.9 2002/06/06 19:03:10 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -266,7 +266,8 @@ responder_send_ATTR (struct message *msg)
   struct isakmp_cfg_attr *attr;
   struct sockaddr *sa;
   u_int32_t value;
-  char *id_string;
+  char *id_string, *field;
+  sa_family_t family;
 
   /*
    * XXX I can only assume it is the client who was the initiator
@@ -348,7 +349,7 @@ responder_send_ATTR (struct message *msg)
   if (!attrp)
     {
       log_error ("responder_send_ATTR: calloc (1, %lu) failed",
-	(unsigned long)attrlen);
+		 (unsigned long)attrlen);
       goto fail;
     }
 
@@ -369,90 +370,152 @@ responder_send_ATTR (struct message *msg)
       switch (attr->type)
 	{
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS:
-	case ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS:
-	  sa = conf_get_address (id_string, "Address");
-	  if (!sa)
-	    {
-	      /* XXX What to do?  */
-	      attr->length = 0;
-	      break;
-	    }
-	  if ((attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS
-	       && sa->sa_family != AF_INET)
-	      || (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS
-		  && sa->sa_family != AF_INET6))
-	    {
-	      /* XXX What to do?  */
-	      free (sa);
-	      attr->length = 0;
-	      break;
-	    }
-
-	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_addrdata (sa),
-		  attr->length);
-	  free (sa);
+	case ISAKMP_CFG_ATTR_INTERNAL_IP4_NETMASK:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP4_SUBNET:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP4_DHCP:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP4_DNS:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP4_NBNS:
+	  family = AF_INET;
 	  break;
 
-	case ISAKMP_CFG_ATTR_INTERNAL_IP4_NETMASK:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS:
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_NETMASK:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_DHCP:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS:
+	  family = AF_INET6;
+	  break;
+
+	default:
+	  family = 0;
+	  break;
+	}
+
+      switch (attr->type)
+	{
+	case ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS:
+	  field = "Address";
 	  break;
 
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_SUBNET:
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET:
+	  field = "Address"; /* XXX or "Network" */
 	  break;
-
+	  
+	case ISAKMP_CFG_ATTR_INTERNAL_IP4_NETMASK:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_NETMASK:
+	  field = "Netmask";
+	  break;
+	  
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_DHCP:
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_DHCP:
+	  field = "DHCP-server";
 	  break;
-
+	  
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_DNS:
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS:
-	  sa = conf_get_address (id_string, "Nameserver");
-	  if (!sa)
-	    {
-	      /* XXX What to do?  */
-	      attr->length = 0;
-	      break;
-	    }
-	  if ((attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_DNS
-	       && sa->sa_family != AF_INET)
-	      || (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS
-		  && sa->sa_family != AF_INET6))
-	    {
-	      /* XXX What to do?  */
-	      attr->length = 0;
-	      free (sa);
-	      break;
-	    }
-
-	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_addrdata (sa),
-		  attr->length);
-	  free (sa);
+	  field = "Nameserver";
 	  break;
-
+	  
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_NBNS:
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS:
-	  sa = conf_get_address (id_string, "WINS-server");
+	  field = "WINS-server";
+	  break;
+
+	default:
+	  field = 0;
+	}
+	    
+      switch (attr->type)
+	{
+	case ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP4_NETMASK:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_NETMASK:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP4_DHCP:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_DHCP:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP4_DNS:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP4_NBNS:
+	case ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS:
+	  sa = conf_get_address (id_string, field);
 	  if (!sa)
 	    {
-	      /* XXX What to do?  */
+	      LOG_DBG ((LOG_NEGOTIATION, 10, "responder_send_ATTR: "
+			"attribute not found: %s", field));
 	      attr->length = 0;
 	      break;
 	    }
-	  if ((attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_NBNS
-	       && sa->sa_family != AF_INET)
-	      || (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS
-		  && sa->sa_family != AF_INET6))
+
+	  if (sa->sa_family != family)
 	    {
-	      /* XXX What to do?  */
-	      attr->length = 0;
+	      log_print ("responder_send_ATTR: attribute %s - expected %s "
+			 "got %s data", field, 
+			 (family == AF_INET ? "IPv4" : "IPv6"),
+			 (sa->sa_family == AF_INET ? "IPv4" : "IPv6"));
 	      free (sa);
+	      attr->length = 0;
 	      break;
 	    }
+
+	  /* Temporary limit length for the _SUBNET types. */
+	  if (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_SUBNET)
+	    attr->length = 4;
+	  else if (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET)
+	    attr->length = 16;
 
 	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_addrdata (sa),
 		  attr->length);
 	  free (sa);
+
+	  /* _SUBNET types need some extra work. */
+	  if (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_SUBNET)
+	    {
+	      sa = conf_get_address (id_string, "Netmask");
+	      if (!sa)
+		{
+		  LOG_DBG ((LOG_NEGOTIATION, 10, "responder_send_ATTR: "
+			    "attribute not found: Netmask"));
+		  attr->length = 0;
+		  break;
+		}
+	      if (sa->sa_family != AF_INET)
+		{
+		  log_print ("responder_send_ATTR: attribute Netmask - "
+			     "expected IPv4 got IPv6 data");
+		  free (sa);
+		  attr->length = 0;
+		  break;
+		}
+	      memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF + attr->length,
+		      sockaddr_addrdata (sa), attr->length);
+	      attr->length = 8;
+	      free (sa);
+	    }
+	  else if (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET)
+	    {
+	      int prefix = conf_get_num (id_string, "Prefix", -1);
+
+	      if (prefix == -1)
+		{
+		  log_print ("responder_send_ATTR: "
+			     "attribute not found: Prefix");
+		  attr->length = 0;
+		  break;
+		}
+	      else if (prefix < -1 || prefix > 128)
+		{
+		  log_print ("responder_send_ATTR: attribute Prefix - "
+			     "invalid value %d", prefix);
+		  attr->length = 0;
+		  break;
+		}
+
+	      *(attrp + off + ISAKMP_ATTR_VALUE_OFF + 16) = (u_int8_t)prefix;
+	      attr->length = 17;
+	    }
 	  break;
 
 	case ISAKMP_CFG_ATTR_INTERNAL_ADDRESS_EXPIRY:
@@ -512,14 +575,17 @@ decode_attribute (u_int16_t type, u_int8_t *value, u_int16_t len, void *vie)
       && type <= ISAKMP_CFG_ATTR_PRIVATE_MAX)
     return 0;
   if (type == 0 || type >= ISAKMP_CFG_ATTR_FUTURE_MIN)
-    /* XXX Log!  */
-    return -1;
+    {
+      LOG_DBG ((LOG_NEGOTIATION, 30, "decode_attribute: invalid attr type %u",
+		type));
+      return -1;
+    }
 
   attr = calloc (1, sizeof *attr);
   if (!attr)
     {
       log_error ("decode_attribute: calloc (1, %lu) failed",
-	(unsigned long)sizeof *attr);
+		 (unsigned long)sizeof *attr);
       return -1;
     }
   attr->type = type;
