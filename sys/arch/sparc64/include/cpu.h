@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.4 2001/08/19 05:12:47 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 2001/09/04 15:19:16 jason Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -245,7 +245,7 @@ struct intrhand {
 	volatile u_int64_t	*ih_map;	/* Interrupt map reg */
 	volatile u_int64_t	*ih_clr;	/* clear interrupt reg */
 };
-extern struct intrhand *intrhand[15];
+extern struct intrhand *intrhand[];
 extern struct intrhand *intrlev[MAXINTNUM];
 
 void	intr_establish __P((int level, struct intrhand *));
