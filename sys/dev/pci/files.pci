@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.36 1999/02/19 02:52:25 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.37 1999/03/11 18:20:13 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -152,3 +152,7 @@ device	aeon: crypto
 attach	aeon at pci
 file	dev/pci/aeon.c			aeon
 
+# Winbond W89C840F ethernet
+device	wb: ether, ifnet
+attach	wb at pci
+file	dev/pci/if_wb.c			wb
