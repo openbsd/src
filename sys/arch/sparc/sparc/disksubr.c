@@ -489,7 +489,7 @@ sun_dkioctl(dk, cmd, data, partition)
 	register struct partition *p;
 
 	switch (cmd) {
-	case DKIOCGGEOM:
+	case SUNOS_DKIOCGGEOM:
 #define geom	((struct sun_dkgeom *)data)
 		bzero(data, sizeof(*geom));
 		geom->sdkc_ncylinders = dk->dk_label.d_ncylinders;
@@ -503,11 +503,11 @@ sun_dkioctl(dk, cmd, data, partition)
 			dk->dk_label.d_ncylinders + dk->dk_label.d_acylinders;
 #undef geom
 		break;
-	case DKIOCINFO:
+	case SUNOS_DKIOCINFO:
 		/* Homey don't do DKIOCINFO */
 		bzero(data, sizeof(struct sun_dkctlr));
 		break;
-	case DKIOCGPART:
+	case SUNOS_DKIOCGPART:
 		if (dk->dk_label.d_secpercyl == 0)
 			return (ERANGE);	/* XXX */
 		p = &dk->dk_label.d_partitions[partition];
