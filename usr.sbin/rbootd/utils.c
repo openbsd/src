@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.4 2001/01/17 00:33:04 pjanzen Exp $	*/
+/*	$OpenBSD: utils.c,v 1.5 2002/03/14 16:44:25 mpech Exp $	*/
 /*	$NetBSD: utils.c,v 1.5.2.1 1995/11/14 08:45:46 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: utils.c,v 1.4 2001/01/17 00:33:04 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.5 2002/03/14 16:44:25 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -86,7 +86,7 @@ DispPkt(rconn, direct)
 	static char ReadFmt[] = "\t\tRetCode:%u Offset:%lx SessID:%x\n";
 
 	struct tm *tmp;
-	register struct rmp_packet *rmp;
+	struct rmp_packet *rmp;
 	int i, omask;
 	u_int32_t t;
 
@@ -212,8 +212,8 @@ GetEtherAddr(addr)
 {
 	static char Hex[] = "0123456789abcdef";
 	static char etherstr[RMP_ADDRLEN*3];
-	register int i;
-	register char *cp;
+	int i;
+	char *cp;
 
 	/*
 	 *  For each byte in `addr', convert it to "<hexchar><hexchar>:".
@@ -249,10 +249,10 @@ GetEtherAddr(addr)
 */
 void
 DspFlnm(size, flnm)
-	register u_int size;
-	register char *flnm;
+	u_int size;
+	char *flnm;
 {
-	register int i;
+	int i;
 
 	(void) fprintf(DbgFp, "\n\t\tFile Name (%u): <", size);
 	for (i = 0; i < size; i++)
@@ -310,7 +310,7 @@ NewClient(addr)
 void
 FreeClients()
 {
-	register CLIENT *ctmp;
+	CLIENT *ctmp;
 
 	while (Clients != NULL) {
 		ctmp = Clients;
@@ -410,7 +410,7 @@ NewConn(rconn)
 */
 void
 FreeConn(rtmp)
-	register RMPCONN *rtmp;
+	RMPCONN *rtmp;
 {
 	/*
 	 *  If the file descriptor is in use, close the file.
@@ -446,7 +446,7 @@ FreeConn(rtmp)
 void
 FreeConns()
 {
-	register RMPCONN *rtmp;
+	RMPCONN *rtmp;
 
 	while (RmpConns != NULL) {
 		rtmp = RmpConns;
@@ -477,7 +477,7 @@ FreeConns()
 */
 void
 AddConn(rconn)
-	register RMPCONN *rconn;
+	RMPCONN *rconn;
 {
 	if (RmpConns != NULL)
 		rconn->next = RmpConns;
@@ -505,9 +505,9 @@ AddConn(rconn)
 */
 RMPCONN *
 FindConn(rconn)
-	register RMPCONN *rconn;
+	RMPCONN *rconn;
 {
-	register RMPCONN *rtmp;
+	RMPCONN *rtmp;
 
 	for (rtmp = RmpConns; rtmp != NULL; rtmp = rtmp->next)
 		if (bcmp((char *)&rconn->rmp.hp_hdr.saddr[0],
@@ -535,9 +535,9 @@ FindConn(rconn)
 */
 void
 RemoveConn(rconn)
-	register RMPCONN *rconn;
+	RMPCONN *rconn;
 {
-	register RMPCONN *thisrconn, *lastrconn;
+	RMPCONN *thisrconn, *lastrconn;
 
 	if (RmpConns == rconn) {		/* easy case */
 		RmpConns = RmpConns->next;

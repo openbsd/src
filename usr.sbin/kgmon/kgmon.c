@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.8 2002/03/14 06:51:42 mpech Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.9 2002/03/14 16:44:25 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: kgmon.c,v 1.8 2002/03/14 06:51:42 mpech Exp $";
+static char *rcsid = "$OpenBSD: kgmon.c,v 1.9 2002/03/14 16:44:25 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -302,7 +302,7 @@ void
 dumpstate(kvp)
 	struct kvmvars *kvp;
 {
-	register FILE *fp;
+	FILE *fp;
 	struct rawarc rawarc;
 	struct tostruct *tos;
 	u_long frompc;

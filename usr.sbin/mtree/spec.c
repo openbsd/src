@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.14 2002/03/09 18:49:09 millert Exp $	*/
+/*	$OpenBSD: spec.c,v 1.15 2002/03/14 16:44:25 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: spec.c,v 1.14 2002/03/09 18:49:09 millert Exp $";
+static const char rcsid[] = "$OpenBSD: spec.c,v 1.15 2002/03/14 16:44:25 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,8 @@ static void	 unset(char *, NODE *);
 NODE *
 spec()
 {
-	register NODE *centry, *last;
-	register char *p;
+	NODE *centry, *last;
+	char *p;
 	NODE ginfo, *root;
 	int c_cur, c_next;
 	char buf[2048];
@@ -173,9 +173,9 @@ noparent:		error("no parent node");
 static void
 set(t, ip)
 	char *t;
-	register NODE *ip;
+	NODE *ip;
 {
-	register int type;
+	int type;
 	char *kw, *val = NULL;
 	struct group *gr;
 	struct passwd *pw;
@@ -309,9 +309,9 @@ set(t, ip)
 static void
 unset(t, ip)
 	char *t;
-	register NODE *ip;
+	NODE *ip;
 {
-	register char *p;
+	char *p;
 
 	while ((p = strtok(t, "\n\t ")))
 		ip->flags &= ~parsekey(p, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.10 2002/02/16 21:28:01 millert Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.11 2002/03/14 16:44:24 mpech Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -72,10 +72,10 @@ static int emitload(FILE *);
 int
 mkmakefile()
 {
-	register FILE *ifp, *ofp;
-	register int lineno;
-	register int (*fn)(FILE *);
-	register char *ifname;
+	FILE *ifp, *ofp;
+	int lineno;
+	int (*fn)(FILE *);
+	char *ifname;
 	char line[BUFSIZ], buf[200];
 
 	(void)sprintf(buf, "arch/%s/conf/Makefile.%s", machine, machine);
@@ -155,7 +155,7 @@ bad:
  */
 static const char *
 srcpath(fi)
-	register struct files *fi;
+	struct files *fi;
 {
 #if 1
 	/* Always have source, don't support object dirs for kernel builds. */
@@ -176,10 +176,10 @@ srcpath(fi)
 
 static int
 emitdefs(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register struct nvlist *nv;
-	register char *sp;
+	struct nvlist *nv;
+	char *sp;
 
 	if (fputs("IDENT=", fp) < 0)
 		return (1);
@@ -224,11 +224,11 @@ emitdefs(fp)
 
 static int
 emitobjs(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register struct files *fi;
-	register struct objects *oi;
-	register int lpos, len, sp;
+	struct files *fi;
+	struct objects *oi;
+	int lpos, len, sp;
 
 	if (fputs("OBJS=", fp) < 0)
 		return (1);
@@ -287,13 +287,13 @@ emitsfiles(fp)
 
 static int
 emitfiles(fp, suffix)
-	register FILE *fp;
+	FILE *fp;
 	int suffix;
 {
-	register struct files *fi;
-	register struct config *cf;
-	register int lpos, len, sp;
-	register const char *fpath;
+	struct files *fi;
+	struct config *cf;
+	int lpos, len, sp;
+	const char *fpath;
 	char swapname[100];
 
 	if (fprintf(fp, "%cFILES=", toupper(suffix)) < 0)
@@ -359,10 +359,10 @@ emitfiles(fp, suffix)
  */
 static int
 emitrules(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register struct files *fi;
-	register const char *cp, *fpath;
+	struct files *fi;
+	const char *cp, *fpath;
 	int ch;
 	char buf[200];
 
@@ -395,10 +395,10 @@ emitrules(fp)
  */
 static int
 emitload(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register struct config *cf;
-	register const char *nm, *swname;
+	struct config *cf;
+	const char *nm, *swname;
 	int first;
 
 	if (fputs("all:", fp) < 0)

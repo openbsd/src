@@ -1,4 +1,4 @@
-/*	$OpenBSD: parseconf.c,v 1.5 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: parseconf.c,v 1.6 2002/03/14 16:44:25 mpech Exp $	*/
 /*	$NetBSD: parseconf.c,v 1.4 1995/10/06 05:12:16 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: parseconf.c,v 1.5 2001/09/04 23:35:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: parseconf.c,v 1.6 2002/03/14 16:44:25 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -88,8 +88,8 @@ ParseConfig()
 	CLIENT *client;
 	u_int8_t *addr;
 	char line[C_LINELEN];
-	register char *cp, *bcp;
-	register int i, j;
+	char *cp, *bcp;
+	int i, j;
 	int linecnt = 0;
 	sigset_t mask, omask;
 
@@ -254,9 +254,9 @@ ParseAddr(str)
 	char *str;
 {
 	static u_int8_t addr[RMP_ADDRLEN];
-	register char *cp;
-	register unsigned i;
-	register int part, subpart;
+	char *cp;
+	unsigned int i;
+	int part, subpart;
 
 	bzero((char *)&addr[0], RMP_ADDRLEN);	/* zero static buffer */
 
@@ -318,8 +318,8 @@ GetBootFiles()
 {
 	DIR *dfd;
 	struct stat statb;
-	register struct dirent *dp;
-	register int i;
+	struct dirent *dp;
+	int i;
 
 	/*
 	 *  Free the current list of boot files.

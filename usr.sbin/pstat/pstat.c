@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.29 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.30 2002/03/14 16:44:25 mpech Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.29 2002/02/16 21:28:07 millert Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.30 2002/03/14 16:44:25 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -230,9 +230,9 @@ struct e_vnode {
 void
 vnodemode()
 {
-	register struct e_vnode *e_vnodebase, *endvnode, *evp;
-	register struct vnode *vp;
-	register struct mount *maddr, *mp = NULL;
+	struct e_vnode *e_vnodebase, *endvnode, *evp;
+	struct vnode *vp;
+	struct mount *maddr, *mp = NULL;
 	int numvnodes;
 
 	e_vnodebase = loadvnodes(&numvnodes);
@@ -297,7 +297,7 @@ vnode_print(avnode, vp)
 {
 	char *type, flags[16]; 
 	char *fp = flags;
-	register int flag;
+	int flag;
 
 	/*
 	 * set type
@@ -367,7 +367,7 @@ int
 ufs_print(vp) 
 	struct vnode *vp;
 {
-	register int flag;
+	int flag;
 	struct inode inode, *ip = &inode;
 	char flagbuf[16], *flags = flagbuf;
 	char *name;
@@ -425,7 +425,7 @@ int
 ext2fs_print(vp) 
 	struct vnode *vp;
 {
-	register int flag;
+	int flag;
 	struct inode inode, *ip = &inode;
 	char flagbuf[16], *flags = flagbuf;
 
@@ -473,7 +473,7 @@ nfs_print(vp)
 {
 	struct nfsnode nfsnode, *np = &nfsnode;
 	char flagbuf[16], *flags = flagbuf;
-	register int flag;
+	int flag;
 	char *name;
 	mode_t type;
 
@@ -524,7 +524,7 @@ getmnt(maddr)
 		struct mount *maddr;
 		struct mount mount;
 	} *mhead = NULL;
-	register struct mtab *mt;
+	struct mtab *mt;
 
 	for (mt = mhead; mt != NULL; mt = mt->next)
 		if (maddr == mt->maddr)
@@ -542,7 +542,7 @@ void
 mount_print(mp)
 	struct mount *mp;
 {
-	register int flags;
+	int flags;
 
 #define ST	mp->mnt_stat
 	(void)printf("*** MOUNT ");
@@ -813,9 +813,9 @@ struct {
 
 void
 ttyprt(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register int i, j;
+	int i, j;
 	pid_t pgid;
 	char *name, state[20];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmp.c,v 1.3 1996/09/21 19:11:19 maja Exp $ */
+/*	$OpenBSD: cmp.c,v 1.4 2002/03/14 16:44:25 mpech Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,14 +30,14 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: cmp.c,v 1.3 1996/09/21 19:11:19 maja Exp $";
+static char rcsid[] = "$OpenBSD: cmp.c,v 1.4 2002/03/14 16:44:25 mpech Exp $";
 #endif
 
 #include "os.h"
 
 int
 mopCmpEAddr(addr1, addr2)
-	register u_char *addr1, *addr2;
+	u_char *addr1, *addr2;
 {
         return(bcmp((char *)addr1, (char *)addr2, 6));
 }

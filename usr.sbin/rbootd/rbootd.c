@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.12 2002/02/20 02:00:01 miod Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.13 2002/03/14 16:44:25 mpech Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: rbootd.c,v 1.12 2002/02/20 02:00:01 miod Exp $";
+static char rcsid[] = "$OpenBSD: rbootd.c,v 1.13 2002/03/14 16:44:25 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -327,7 +327,7 @@ main(argc, argv)
 void
 DoTimeout()
 {
-	register RMPCONN *rtmp;
+	RMPCONN *rtmp;
 	struct timeval now;
 
 	(void) gettimeofday(&now, (struct timezone *)0);
@@ -363,9 +363,9 @@ DoTimeout()
 
 CLIENT *
 FindClient(rconn)
-	register RMPCONN *rconn;
+	RMPCONN *rconn;
 {
-	register CLIENT *ctmp;
+	CLIENT *ctmp;
 
 	for (ctmp = Clients; ctmp != NULL; ctmp = ctmp->next)
 		if (bcmp((char *)&rconn->rmp.hp_hdr.saddr[0],

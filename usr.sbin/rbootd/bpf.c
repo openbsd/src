@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.6 2002/02/19 21:04:09 miod Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.7 2002/03/14 16:44:25 mpech Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: bpf.c,v 1.6 2002/02/19 21:04:09 miod Exp $";
+static char rcsid[] = "$OpenBSD: bpf.c,v 1.7 2002/03/14 16:44:25 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -319,7 +319,7 @@ BpfRead(rconn, doread)
 	RMPCONN *rconn;
 	int doread;
 {
-	register int datlen, caplen, hdrlen;
+	int datlen, caplen, hdrlen;
 	static u_int8_t *bp = NULL, *ep = NULL;
 	int cc;
 

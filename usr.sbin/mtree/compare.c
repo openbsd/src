@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.14 2002/02/16 21:28:05 millert Exp $	*/
+/*	$OpenBSD: compare.c,v 1.15 2002/03/14 16:44:25 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: compare.c,v 1.14 2002/02/16 21:28:05 millert Exp $";
+static const char rcsid[] = "$OpenBSD: compare.c,v 1.15 2002/03/14 16:44:25 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,8 +85,8 @@ static char *ftype(u_int);
 int
 compare(name, s, p)
 	char *name;
-	register NODE *s;
-	register FTSENT *p;
+	NODE *s;
+	FTSENT *p;
 {
 	u_int32_t len, val;
 	int fd, label;
@@ -400,7 +400,7 @@ rlink(name)
 	char *name;
 {
 	static char lbuf[MAXPATHLEN];
-	register int len;
+	int len;
 
 	if ((len = readlink(name, lbuf, sizeof(lbuf)-1)) == -1)
 		error("%s: %s", name, strerror(errno));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.12 2002/02/16 21:28:03 millert Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.13 2002/03/14 16:44:25 mpech Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -214,7 +214,7 @@ sigheader(signo)
 static void
 header(void)
 {
-	register int i;
+	int i;
 
 	/* Main Headers. */
 	if (ISSET(todo, SHOW_TTY))
@@ -260,7 +260,7 @@ static void
 disk_stats(etime)
 double etime;
 {
-	register int dn;
+	int dn;
 	double atime, mbps;
 
 	for (dn = 0; dn < dk_ndrive; ++dn) {
@@ -294,7 +294,7 @@ static void
 disk_stats2(etime)
 double etime;
 {
-	register int dn;
+	int dn;
 	double atime;
 
 	for (dn = 0; dn < dk_ndrive; ++dn) {
@@ -317,7 +317,7 @@ double etime;
 static void
 cpustats()
 {
-	register int state;
+	int state;
 	double time;
 
 	time = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: put.c,v 1.2 1996/09/21 19:12:01 maja Exp $ */
+/*	$OpenBSD: put.c,v 1.3 2002/03/14 16:44:25 mpech Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: put.c,v 1.2 1996/09/21 19:12:01 maja Exp $";
+static char rcsid[] = "$OpenBSD: put.c,v 1.3 2002/03/14 16:44:25 mpech Exp $";
 #endif
 
 #include <stddef.h>
@@ -40,8 +40,8 @@ static char rcsid[] = "$OpenBSD: put.c,v 1.2 1996/09/21 19:12:01 maja Exp $";
 
 void
 mopPutChar(pkt, index, value)
-	register u_char *pkt;
-	register int    *index;
+	u_char *pkt;
+	int    *index;
 	u_char   value;
 {
 	pkt[*index] = value;
@@ -50,8 +50,8 @@ mopPutChar(pkt, index, value)
 
 void
 mopPutShort(pkt, index, value)
-	register u_char *pkt;
-	register int    *index;
+	u_char *pkt;
+	int    *index;
 	u_short  value;
 {
         int i;
@@ -64,8 +64,8 @@ mopPutShort(pkt, index, value)
 
 void
 mopPutLong(pkt, index, value)
-	register u_char *pkt;
-	register int    *index;
+	u_char *pkt;
+	int    *index;
 	u_long   value;
 {
         int i;
@@ -78,8 +78,8 @@ mopPutLong(pkt, index, value)
 
 void
 mopPutMulti(pkt, index, value, size)
-	register u_char *pkt,*value;
-	register int    *index,size;
+	u_char *pkt,*value;
+	int    *index,size;
 {
 	int i;
 
@@ -91,8 +91,8 @@ mopPutMulti(pkt, index, value, size)
 
 void
 mopPutTime(pkt, index, value)
-	register u_char *pkt;
-	register int    *index;
+	u_char *pkt;
+	int    *index;
 	time_t value;
 {
 	time_t tnow;
@@ -121,8 +121,8 @@ mopPutTime(pkt, index, value)
 
 void
 mopPutHeader(pkt, index, dst, src, proto, trans)
-	register u_char *pkt;
-	register int    *index;
+	u_char *pkt;
+	int    *index;
 	char	 dst[], src[];
 	u_short	 proto;
 	int	 trans;
@@ -158,7 +158,7 @@ mopPutHeader(pkt, index, dst, src, proto, trans)
 
 void
 mopPutLength(pkt, trans, len)
-	register u_char *pkt;
+	u_char *pkt;
 	int	 trans;
 	u_short	 len;
 {

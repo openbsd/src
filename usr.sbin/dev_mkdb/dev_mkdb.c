@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_mkdb.c,v 1.6 2002/02/16 21:28:01 millert Exp $	*/
+/*	$OpenBSD: dev_mkdb.c,v 1.7 2002/03/14 16:44:24 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: dev_mkdb.c,v 1.6 2002/02/16 21:28:01 millert Exp $";
+static char rcsid[] = "$Id: dev_mkdb.c,v 1.7 2002/03/14 16:44:24 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,8 +67,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register DIR *dirp;
-	register struct dirent *dp;
+	DIR *dirp;
+	struct dirent *dp;
 	struct stat sb;
 	struct {
 		mode_t type;

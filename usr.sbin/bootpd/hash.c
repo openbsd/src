@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: hash.c,v 1.1.1.1 1995/10/18 08:47:27 deraadt Exp $";
+static char rcsid[] = "$Id: hash.c,v 1.2 2002/03/14 16:44:24 mpech Exp $";
 #endif
 
 
@@ -88,8 +88,8 @@ hash_tbl *
 hash_Init(tablesize)
 	unsigned tablesize;
 {
-	register hash_tbl *hashtblptr;
-	register unsigned totalsize;
+	hash_tbl *hashtblptr;
+	unsigned int totalsize;
 
 	if (tablesize > 0) {
 		totalsize = sizeof(hash_tbl)
@@ -178,9 +178,9 @@ hash_Reset(hashtable, free_data)
 unsigned
 hash_HashFunction(string, len)
 	unsigned char *string;
-	register unsigned len;
+	unsigned int len;
 {
-	register unsigned accum;
+	unsigned int accum;
 
 	accum = 0;
 	for (; len > 0; len--) {
@@ -204,7 +204,7 @@ hash_Exists(hashtable, hashcode, compare, key)
 	hash_cmpfp compare;
 	hash_datum *key;
 {
-	register hash_member *memberptr;
+	hash_member *memberptr;
 
 	memberptr = (hashtable->table)[hashcode % (hashtable->size)];
 	while (memberptr) {
@@ -354,8 +354,8 @@ hash_datum *
 hash_NextEntry(hashtable)
 	hash_tbl *hashtable;
 {
-	register unsigned bucket;
-	register hash_member *memberptr;
+	unsigned int bucket;
+	hash_member *memberptr;
 
 	/*
 	 * First try to pick up where we left off.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.6 2001/07/07 18:26:20 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.7 2002/03/14 16:44:24 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -621,7 +621,7 @@ masktrim(struct sockaddr_in *ap)
 masktrim(struct sockaddr_in_new *ap)
 #endif
 {
-	register char *cp;
+	char *cp;
 
 	if (ap->sin_addr.s_addr == 0) {
 		ap->sin_len = 0;

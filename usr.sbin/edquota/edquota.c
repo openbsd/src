@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.29 2002/02/16 21:28:01 millert Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.30 2002/03/14 16:44:24 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -244,8 +244,8 @@ getprivs(id, quotatype)
 	u_int id;
 	int quotatype;
 {
-	register struct fstab *fs;
-	register struct quotause *qup, *quptail;
+	struct fstab *fs;
+	struct quotause *qup, *quptail;
 	struct quotause *quphead;
 	int qcmd, qupsize, fd;
 	u_int mid;
@@ -335,7 +335,7 @@ putprivs(id, quotatype, quplist)
 	int quotatype;
 	struct quotause *quplist;
 {
-	register struct quotause *qup;
+	struct quotause *qup;
 	int qcmd, fd;
 
 	qcmd = QCMD(Q_SETQUOTA, quotatype);
@@ -425,7 +425,7 @@ writeprivs(quplist, outfd, name, quotatype)
 	char *name;
 	int quotatype;
 {
-	register struct quotause *qup;
+	struct quotause *qup;
 	FILE *fd;
 
 	ftruncate(outfd, 0);
@@ -455,10 +455,10 @@ readprivs(quplist, infd)
 	struct quotause *quplist;
 	int infd;
 {
-	register struct quotause *qup;
+	struct quotause *qup;
 	FILE *fd;
 	int cnt;
-	register char *cp;
+	char *cp;
 	struct dqblk dqblk;
 	char *fsp, line1[BUFSIZ], line2[BUFSIZ];
 
@@ -567,7 +567,7 @@ writetimes(quplist, outfd, quotatype)
 	int outfd;
 	int quotatype;
 {
-	register struct quotause *qup;
+	struct quotause *qup;
 	char *cvtstoa();
 	FILE *fd;
 
@@ -598,10 +598,10 @@ readtimes(quplist, infd)
 	struct quotause *quplist;
 	int infd;
 {
-	register struct quotause *qup;
+	struct quotause *qup;
 	FILE *fd;
 	int cnt;
-	register char *cp;
+	char *cp;
 	time_t itime, btime, iseconds, bseconds;
 	char *fsp, bunits[10], iunits[10], line1[BUFSIZ];
 
@@ -722,7 +722,7 @@ void
 freeprivs(quplist)
 	struct quotause *quplist;
 {
-	register struct quotause *qup, *nextqup;
+	struct quotause *qup, *nextqup;
 
 	for (qup = quplist; qup; qup = nextqup) {
 		nextqup = qup->next;
@@ -756,7 +756,7 @@ hasquota(fs, type, qfnamep)
 	int type;
 	char **qfnamep;
 {
-	register char *opt;
+	char *opt;
 	char *cp;
 	static char initname, usrname[100], grpname[100];
 	static char buf[BUFSIZ];

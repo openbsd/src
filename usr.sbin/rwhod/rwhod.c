@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.21 2002/02/17 19:42:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.22 2002/03/14 16:44:25 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -316,7 +316,7 @@ handleread(s)
  */
 int
 verify(p)
-	register char *p;
+	char *p;
 {
 	char c;
 
@@ -351,9 +351,9 @@ int	alarmcount;
 void
 timer()
 {
-	register struct neighbor *np;
-	register struct whoent *we = mywd.wd_we, *wlast;
-	register int i;
+	struct neighbor *np;
+	struct whoent *we = mywd.wd_we, *wlast;
+	int i;
 	struct stat stb;
 	double avenrun[3];
 	time_t now;
@@ -467,11 +467,11 @@ quit(msg)
 
 void
 rt_xaddrs(cp, cplim, rtinfo)
-	register caddr_t cp, cplim;
-	register struct rt_addrinfo *rtinfo;
+	caddr_t cp, cplim;
+	struct rt_addrinfo *rtinfo;
 {
-	register struct sockaddr *sa;
-	register int i;
+	struct sockaddr *sa;
+	int i;
 
 	memset(rtinfo->rti_info, 0, sizeof(rtinfo->rti_info));
 	for (i = 0; (i < RTAX_MAX) && (cp < cplim); i++) {
@@ -490,9 +490,9 @@ int
 configure(s)
 	int s;
 {
-	register struct neighbor *np;
-	register struct if_msghdr *ifm;
-	register struct ifa_msghdr *ifam;
+	struct neighbor *np;
+	struct if_msghdr *ifm;
+	struct ifa_msghdr *ifam;
 	struct sockaddr_dl *sdl;
 	size_t needed;
 	int mib[6], flags = 0, len;
@@ -571,8 +571,8 @@ Sendto(s, buf, cc, flags, to, tolen)
 	const struct sockaddr *to;
 	socklen_t tolen;
 {
-	register struct whod *w = (struct whod *)buf;
-	register struct whoent *we;
+	struct whod *w = (struct whod *)buf;
+	struct whoent *we;
 	struct sockaddr_in *sin = (struct sockaddr_in *)to;
 	int ret;
 

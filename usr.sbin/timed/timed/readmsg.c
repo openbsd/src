@@ -1,4 +1,4 @@
-/*	$OpenBSD: readmsg.c,v 1.8 2001/05/05 05:10:04 mickey Exp $	*/
+/*	$OpenBSD: readmsg.c,v 1.9 2002/03/14 16:44:25 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)readmsg.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.8 $"
+#ident "$Revision: 1.9 $"
 #endif
 
 #include "globals.h"
@@ -85,8 +85,8 @@ readmsg(int type, char *machfrom, struct timeval *intvl,
 	static struct tsplist *tail = &msgslist;
 	static int msgcnt = 0;
 	struct tsplist *prev;
-	register struct netinfo *ntp;
-	register struct tsplist *ptr;
+	struct netinfo *ntp;
+	struct tsplist *ptr;
 	ssize_t n;
 
 	if (trace) {

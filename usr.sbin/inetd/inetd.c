@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.88 2002/02/16 21:28:03 millert Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.89 2002/03/14 16:44:25 mpech Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.88 2002/02/16 21:28:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.89 2002/03/14 16:44:25 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -327,10 +327,10 @@ main(argc, argv, envp)
 {
 	extern char *optarg;
 	extern int optind;
-	register struct servtab *sep;
-	register struct passwd *pwd;
-	register struct group *grp = NULL;
-	register int tmpint;
+	struct servtab *sep;
+	struct passwd *pwd;
+	struct group *grp = NULL;
+	int tmpint;
 	struct sigaction sa, sapipe;
 	int ch, dofork;
 	pid_t pid;
@@ -732,7 +732,7 @@ doreap(void)
 {
 	pid_t pid;
 	int status;
-	register struct servtab *sep;
+	struct servtab *sep;
 
 	if (debug)
 		fprintf(stderr, "reaping asked for\n");
@@ -785,7 +785,7 @@ config(int sig)
 void
 doconfig(void)
 {
-	register struct servtab *sep, *cp, **sepp;
+	struct servtab *sep, *cp, **sepp;
 	int n, add;
 	char protoname[10];
 	sigset_t omask;
@@ -1014,7 +1014,7 @@ retry(int sig)
 void
 doretry(void)
 {
-	register struct servtab *sep;
+	struct servtab *sep;
 
 	timingout = 0;
 	for (sep = servtab; sep; sep = sep->se_next) {
@@ -1041,7 +1041,7 @@ die(int sig)
 void
 dodie(void)
 {
-	register struct servtab *sep;
+	struct servtab *sep;
 
 	for (sep = servtab; sep; sep = sep->se_next) {
 		if (sep->se_fd == -1)
@@ -1067,7 +1067,7 @@ int bump_nofile(void);
 
 void
 setup(sep)
-	register struct servtab *sep;
+	struct servtab *sep;
 {
 	int on = 1;
 	int r;
@@ -1141,7 +1141,7 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 
 void
 register_rpc(sep)
-	register struct servtab *sep;
+	struct servtab *sep;
 {
 	int n;
 	struct sockaddr_in sin;
@@ -1175,7 +1175,7 @@ register_rpc(sep)
 
 void
 unregister_rpc(sep)
-	register struct servtab *sep;
+	struct servtab *sep;
 {
 	int n;
 
@@ -1194,7 +1194,7 @@ struct servtab *
 enter(cp)
 	struct servtab *cp;
 {
-	register struct servtab *sep;
+	struct servtab *sep;
 	sigset_t omask;
 
 	sep = (struct servtab *)malloc(sizeof (*sep));
@@ -1289,7 +1289,7 @@ endconfig()
 struct servtab *
 getconfigent()
 {
-	register struct servtab *sep;
+	struct servtab *sep;
 	int argc;
 	char *cp, *arg, *s;
 	char *hostdelim;
@@ -1585,7 +1585,7 @@ skip:
 
 void
 freeconfig(cp)
-	register struct servtab *cp;
+	struct servtab *cp;
 {
 	int i;
 
@@ -1713,7 +1713,7 @@ inetd_setproctitle(a, s)
 	int s;
 {
 	int size;
-	register char *cp;
+	char *cp;
 	struct sockaddr_in sin;
 	char buf[80];
 
@@ -1855,7 +1855,7 @@ char *endring;
 void
 initring()
 {
-	register int i;
+	int i;
 
 	endring = ring;
 
@@ -1870,7 +1870,7 @@ chargen_stream(s, sep)		/* Character generator */
 	int s;
 	struct servtab *sep;
 {
-	register char *rs;
+	char *rs;
 	int len;
 	char text[LINESIZ+2];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.9 2000/11/15 01:49:52 angelos Exp $	*/
+/*	$OpenBSD: hash.c,v 1.10 2002/03/14 16:44:24 mpech Exp $	*/
 /*	$NetBSD: hash.c,v 1.4 1996/11/07 22:59:43 gwr Exp $	*/
 
 /*
@@ -97,8 +97,8 @@ static void *
 poolalloc(size)
 	size_t size;
 {
-	register char *p;
-	register size_t alloc;
+	char *p;
+	size_t alloc;
 	static char *pool;
 	static size_t nleft;
 
@@ -124,11 +124,11 @@ poolalloc(size)
  */
 static void
 ht_init(ht, sz)
-	register struct hashtab *ht;
+	struct hashtab *ht;
 	size_t sz;
 {
-	register struct hashent **h;
-	register u_int n;
+	struct hashent **h;
+	u_int n;
 
 	h = emalloc(sz * sizeof *h);
 	ht->ht_tab = h;
@@ -145,10 +145,10 @@ ht_init(ht, sz)
  */
 static void
 ht_expand(ht)
-	register struct hashtab *ht;
+	struct hashtab *ht;
 {
-	register struct hashent *p, **h, **oldh, *q;
-	register u_int n, i;
+	struct hashent *p, **h, **oldh, *q;
+	u_int n, i;
 
 	n = ht->ht_size * 2;
 	h = emalloc(n * sizeof *h);
@@ -178,8 +178,8 @@ newhashent(name, h)
 	const char *name;
 	u_int h;
 {
-	register struct hashent *hp;
-	register char *m;
+	struct hashent *hp;
+	char *m;
 
 	m = poolalloc(sizeof(*hp) + ALIGNBYTES);
 	hp = (struct hashent *)ALIGN(m);
@@ -194,9 +194,9 @@ newhashent(name, h)
  */
 static inline u_int
 hash(str)
-	register const char *str;
+	const char *str;
 {
-	register u_int h;
+	u_int h;
 
 	for (h = 0; *str;)
 		h = (h << 5) + h + *str++;
@@ -216,13 +216,13 @@ initintern()
  */
 const char *
 intern(s)
-	register const char *s;
+	const char *s;
 {
-	register struct hashtab *ht;
-	register struct hashent *hp, **hpp;
-	register u_int h;
-	register char *p;
-	register size_t l;
+	struct hashtab *ht;
+	struct hashent *hp, **hpp;
+	u_int h;
+	char *p;
+	size_t l;
 
 	ht = &strings;
 	h = hash(s);
@@ -242,7 +242,7 @@ intern(s)
 struct hashtab *
 ht_new()
 {
-	register struct hashtab *ht;
+	struct hashtab *ht;
 
 	ht = emalloc(sizeof *ht);
 	ht_init(ht, 8);
@@ -254,11 +254,11 @@ ht_new()
  */
 int
 ht_remove(ht, nam)
-	register struct hashtab *ht;
-	register const char *nam;
+	struct hashtab *ht;
+	const char *nam;
 {
-	register struct hashent *hp, *thp;
-	register u_int h;
+	struct hashent *hp, *thp;
+	u_int h;
 
 	h = hash(nam);
 	hp = ht->ht_tab[h & ht->ht_mask];
@@ -287,13 +287,13 @@ ht_remove(ht, nam)
  */
 int
 ht_insrep(ht, nam, val, replace)
-	register struct hashtab *ht;
-	register const char *nam;
+	struct hashtab *ht;
+	const char *nam;
 	void *val;
 	int replace;
 {
-	register struct hashent *hp, **hpp;
-	register u_int h;
+	struct hashent *hp, **hpp;
+	u_int h;
 
 	h = hash(nam);
 	hpp = &ht->ht_tab[h & ht->ht_mask];
@@ -313,11 +313,11 @@ ht_insrep(ht, nam, val, replace)
 
 void *
 ht_lookup(ht, nam)
-	register struct hashtab *ht;
-	register const char *nam;
+	struct hashtab *ht;
+	const char *nam;
 {
-	register struct hashent *hp, **hpp;
-	register u_int h;
+	struct hashent *hp, **hpp;
+	u_int h;
 
 	h = hash(nam);
 	hpp = &ht->ht_tab[h & ht->ht_mask];

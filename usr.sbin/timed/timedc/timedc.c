@@ -1,4 +1,4 @@
-/*	$Id: timedc.c,v 1.6 2002/01/19 00:32:04 mickey Exp $	*/
+/*	$Id: timedc.c,v 1.7 2002/03/14 16:44:25 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)timedc.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.6 $"
+#ident "$Revision: 1.7 $"
 #endif
 
 #include "timedc.h"
@@ -69,7 +69,7 @@ volatile sig_atomic_t gotintr;
 int
 main(int argc, char *argv[])
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	openlog("timedc", LOG_ODELAY, LOG_AUTH);
 
@@ -157,9 +157,9 @@ sigintr(signo)
 static struct cmd *
 getcmd(char *name)
 {
-	register char *p, *q;
-	register struct cmd *c, *found;
-	register int nmatches, longest;
+	char *p, *q;
+	struct cmd *c, *found;
+	int nmatches, longest;
 	extern struct cmd cmdtab[];
 	extern int NCMDS;
 
@@ -191,8 +191,8 @@ getcmd(char *name)
 void
 makeargv()
 {
-	register char *cp;
-	register char **argp = margv;
+	char *cp;
+	char **argp = margv;
 
 	margc = 0;
 	for (cp = cmdline; *cp;) {
@@ -221,11 +221,11 @@ help(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct cmd *c;
+	struct cmd *c;
 	extern struct cmd cmdtab[];
 
 	if (argc == 1) {
-		register int i, j, w;
+		int i, j, w;
 		int columns, width = 0, lines;
 		extern int NCMDS;
 
@@ -259,7 +259,7 @@ help(argc, argv)
 		return;
 	}
 	while (--argc > 0) {
-		register char *arg;
+		char *arg;
 		arg = *++argv;
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)

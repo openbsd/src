@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfinfo.c,v 1.3 1997/02/03 05:10:59 downsj Exp $	*/
+/*	$OpenBSD: grfinfo.c,v 1.4 2002/03/14 16:44:24 mpech Exp $	*/
 
 /* 
  * Copyright (c) 1987-1993, The University of Utah and
@@ -52,7 +52,7 @@ main(argc, argv)
 {
 	extern int optind, optopt;
 	extern char *optarg;
-	register int c;
+	int c;
 
 	pname = argv[0];
 	while ((c = getopt(argc, argv, "at")) != -1)
@@ -115,7 +115,7 @@ printall()
 char *
 tname()
 {
-	register struct grf_info *gp;
+	struct grf_info *gp;
 
 	for (gp = info; gp->grf_id >= 0; gp++)
 		if (gi.gd_id == gp->grf_id)

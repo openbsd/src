@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.c,v 1.1 1997/04/15 22:06:11 maja Exp $ */
+/* $OpenBSD: hash.c,v 1.2 2002/03/14 16:44:25 mpech Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -40,7 +40,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hash.c,v 1.1 1997/04/15 22:06:11 maja Exp $";
+static const char rcsid[] = "$OpenBSD: hash.c,v 1.2 2002/03/14 16:44:25 mpech Exp $";
 #endif
 
 /*
@@ -55,11 +55,11 @@ static const char rcsid[] = "$OpenBSD: hash.c,v 1.1 1997/04/15 22:06:11 maja Exp
 u_int32_t
 hash(keyarg, len)
 	const void *keyarg;
-	register size_t len;
+	size_t len;
 {
-	register const u_char *key;
-	register size_t loop;
-	register u_int32_t h;
+	const u_char *key;
+	size_t loop;
+	u_int32_t h;
 
 #define HASHC   h = *key++ + 65599 * h
 

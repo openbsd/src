@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)bad144.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: bad144.c,v 1.10 2002/02/16 21:28:01 millert Exp $";
+static char *rcsid = "$Id: bad144.c,v 1.11 2002/03/14 16:44:24 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -97,7 +97,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct bt_bad *bt;
+	struct bt_bad *bt;
 	daddr_t	sn, bn[126];
 	int i, f, nbad, new, bad, errs;
 
@@ -343,7 +343,7 @@ daddr_t
 getold(f, bad)
 struct dkbad *bad;
 {
-	register int i;
+	int i;
 	daddr_t sn;
 	char msg[80];
 
@@ -373,8 +373,8 @@ struct dkbad *bad;
 int
 checkold()
 {
-	register int i;
-	register struct bt_bad *bt;
+	int i;
+	struct bt_bad *bt;
 	daddr_t sn, lsn = 0;
 	int errors = 0, warned = 0;
 
@@ -469,7 +469,7 @@ int
 blkcopy(f, s1, s2)
 daddr_t s1, s2;
 {
-	register int tries, n;
+	int tries, n;
 
 	if (buf == (char *)NULL) {
 		buf = malloc((unsigned)dp->d_secsize);
@@ -634,7 +634,7 @@ format(fd, blk)
 	int fd;
 	daddr_t blk;
 {
-	register struct formats *fp;
+	struct formats *fp;
 	static char *buf;
 	static char bufsize;
 	struct format_op fop;

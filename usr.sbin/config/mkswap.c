@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkswap.c,v 1.8 2002/02/16 21:28:01 millert Exp $	*/
+/*	$OpenBSD: mkswap.c,v 1.9 2002/03/14 16:44:24 mpech Exp $	*/
 /*	$NetBSD: mkswap.c,v 1.5 1996/08/31 20:58:27 mycroft Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ static int mkoneswap(struct config *);
 int
 mkswap()
 {
-	register struct config *cf;
+	struct config *cf;
 
 	for (cf = allcf; cf != NULL; cf = cf->cf_next)
 		if (cf->cf_root != NULL && mkoneswap(cf))
@@ -84,10 +84,10 @@ dev_t d;
 
 static int
 mkoneswap(cf)
-	register struct config *cf;
+	struct config *cf;
 {
-	register struct nvlist *nv;
-	register FILE *fp;
+	struct nvlist *nv;
+	FILE *fp;
 	char fname[200];
 	char *mountroot;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmpproto.c,v 1.6 2001/01/17 00:27:21 pjanzen Exp $	*/
+/*	$OpenBSD: rmpproto.c,v 1.7 2002/03/14 16:44:25 mpech Exp $	*/
 /*	$NetBSD: rmpproto.c,v 1.5.2.1 1995/11/14 08:45:44 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: rmpproto.c,v 1.6 2001/01/17 00:27:21 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: rmpproto.c,v 1.7 2002/03/14 16:44:25 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -179,9 +179,9 @@ int
 SendServerID(rconn)
 	RMPCONN *rconn;
 {
-	register struct rmp_packet *rpl;
-	register char *src, *dst;
-	register u_int8_t *size;
+	struct rmp_packet *rpl;
+	char *src, *dst;
+	u_int8_t *size;
 
 	rpl = &rconn->rmp;			/* cache ptr to RMP packet */
 
@@ -233,10 +233,10 @@ SendFileNo(req, rconn, filelist)
 	RMPCONN *rconn;
 	char *filelist[];
 {
-	register struct rmp_packet *rpl;
-	register char *src, *dst;
-	register u_int8_t *size;
-	register int i;
+	struct rmp_packet *rpl;
+	char *src, *dst;
+	u_int8_t *size;
+	int i;
 
 	GETWORD(req->r_brpl.rmp_seqno, i);	/* SeqNo is really FileNo */
 	rpl = &rconn->rmp;			/* cache ptr to RMP packet */
@@ -299,9 +299,9 @@ SendBootRepl(req, rconn, filelist)
 	int retval;
 	char *filename, filepath[RMPBOOTDATA+1];
 	RMPCONN *oldconn;
-	register struct rmp_packet *rpl;
-	register char *src, *dst1, *dst2;
-	register u_int8_t i;
+	struct rmp_packet *rpl;
+	char *src, *dst1, *dst2;
+	u_int8_t i;
 
 	/*
 	 *  If another connection already exists, delete it since we
@@ -414,8 +414,8 @@ SendReadRepl(rconn)
 {
 	int retval = 0;
 	RMPCONN *oldconn;
-	register struct rmp_packet *rpl, *req;
-	register int size = 0;
+	struct rmp_packet *rpl, *req;
+	int size = 0;
 	int madeconn = 0;
 
 	/*
@@ -576,7 +576,7 @@ BootDone(rconn)
 */
 int
 SendPacket(rconn)
-	register RMPCONN *rconn;
+	RMPCONN *rconn;
 {
 	/*
 	 *  Set Ethernet Destination address to Source (BPF and the enet

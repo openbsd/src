@@ -1,4 +1,4 @@
-/*	$OpenBSD: testdb.c,v 1.3 1998/08/19 06:47:55 millert Exp $	*/
+/*	$OpenBSD: testdb.c,v 1.4 2002/03/14 16:44:25 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)testdb.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: testdb.c,v 1.3 1998/08/19 06:47:55 millert Exp $";
+static char *rcsid = "$OpenBSD: testdb.c,v 1.4 2002/03/14 16:44:25 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,8 @@ int
 testdb(dbname)
 	char *dbname;
 {
-	register DB *db;
-	register int cc, kd, ret, dbversionlen;
+	DB *db;
+	int cc, kd, ret, dbversionlen;
 	DBT rec;
 	struct nlist nitem;
 	char dbversion[_POSIX2_LINE_MAX];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advcap.c,v 1.5 2002/02/16 21:28:08 millert Exp $	*/
+/*	$OpenBSD: advcap.c,v 1.6 2002/03/14 16:44:25 mpech Exp $	*/
 /*	$KAME: advcap.c,v 1.5 2001/02/01 09:12:08 jinmei Exp $	*/
 
 /*
@@ -120,8 +120,8 @@ int
 getent(bp, name, cp)
 	char *bp, *name, *cp;
 {
-	register int c;
-	register int i = 0, cnt = 0;
+	int c;
+	int i = 0, cnt = 0;
 	char ibuf[BUFSIZ];
 	int tf;
 
@@ -189,7 +189,7 @@ getent(bp, name, cp)
 int
 tnchktc()
 {
-	register char *p, *q;
+	char *p, *q;
 	char tcname[16];	/* name of similar terminal */
 	char tcbuf[BUFSIZ];
 	char *holdtbuf = tbuf;
@@ -239,7 +239,7 @@ int
 tnamatch(np)
 	char *np;
 {
-	register char *Np, *Bp;
+	char *Np, *Bp;
 
 	Bp = tbuf;
 	if (*Bp == '#')
@@ -264,7 +264,7 @@ tnamatch(np)
  */
 static char *
 tskip(bp)
-	register char *bp;
+	char *bp;
 {
 	int dquote;
 
@@ -311,9 +311,9 @@ long long
 tgetnum(id)
 	char *id;
 {
-	register long long i;
-	register int base;
-	register char *bp = tbuf;
+	long long i;
+	int base;
+	char *bp = tbuf;
 
 	for (;;) {
 		bp = tskip(bp);
@@ -347,7 +347,7 @@ int
 tgetflag(id)
 	char *id;
 {
-	register char *bp = tbuf;
+	char *bp = tbuf;
 
 	for (;;) {
 		bp = tskip(bp);
@@ -375,7 +375,7 @@ char *
 tgetstr(id, area)
 	char *id, **area;
 {
-	register char *bp = tbuf;
+	char *bp = tbuf;
 
 	for (;;) {
 		bp = tskip(bp);
@@ -399,12 +399,12 @@ tgetstr(id, area)
  */
 static char *
 tdecode(str, area)
-	register char *str;
+	char *str;
 	char **area;
 {
-	register char *cp;
-	register int c;
-	register char *dp;
+	char *cp;
+	int c;
+	char *dp;
 	int i;
 	char term;
 

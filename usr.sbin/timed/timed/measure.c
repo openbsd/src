@@ -1,4 +1,4 @@
-/*	$OpenBSD: measure.c,v 1.5 2001/11/23 03:45:51 deraadt Exp $	*/
+/*	$OpenBSD: measure.c,v 1.6 2002/03/14 16:44:25 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)measure.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.5 $"
+#ident "$Revision: 1.6 $"
 #endif
 
 #include "globals.h"
@@ -82,8 +82,8 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 	long min_idelta, min_odelta;
 	struct timeval tdone, tcur, ttrans, twait, tout;
 	u_char packet[PACKET_IN], opacket[64];
-	register struct icmp *icp = (struct icmp *) packet;
-	register struct icmp *oicp = (struct icmp *) opacket;
+	struct icmp *icp = (struct icmp *) packet;
+	struct icmp *oicp = (struct icmp *) opacket;
 	struct ip *ip = (struct ip *) packet;
 
 	min_idelta = min_odelta = 0x7fffffff;

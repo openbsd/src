@@ -1,4 +1,4 @@
-/*	$OpenBSD: loop-bsd.c,v 1.5 2002/02/16 21:28:04 millert Exp $ */
+/*	$OpenBSD: loop-bsd.c,v 1.6 2002/03/14 16:44:25 mpech Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: loop-bsd.c,v 1.5 2002/02/16 21:28:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: loop-bsd.c,v 1.6 2002/03/14 16:44:25 mpech Exp $";
 #endif
 
 #include <stdlib.h>
@@ -169,7 +169,7 @@ Loop()
 			bp = buf;
 			ep = bp + cc;
 			while (bp < ep) {
-				register int caplen, hdrlen;
+				int caplen, hdrlen;
 
 				caplen = bhp->bh_caplen;
 				hdrlen = bhp->bh_hdrlen;

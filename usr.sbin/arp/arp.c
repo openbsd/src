@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.20 2002/03/14 06:51:42 mpech Exp $ */
+/*	$OpenBSD: arp.c,v 1.21 2002/03/14 16:44:24 mpech Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.20 2002/03/14 06:51:42 mpech Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.21 2002/03/14 16:44:24 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -240,9 +240,9 @@ set(argc, argv)
 	int argc;
 	char **argv;
 {
-	register struct sockaddr_inarp *sin;
-	register struct sockaddr_dl *sdl;
-	register struct rt_msghdr *rtm;
+	struct sockaddr_inarp *sin;
+	struct sockaddr_dl *sdl;
+	struct rt_msghdr *rtm;
 	u_char *eaddr;
 	struct ether_addr *ea;
 	char *host = argv[0];
@@ -362,8 +362,8 @@ delete(host, info)
 	const char *host;
 	const char *info;
 {
-	register struct sockaddr_inarp *sin;
-	register struct rt_msghdr *rtm;
+	struct sockaddr_inarp *sin;
+	struct rt_msghdr *rtm;
 	struct sockaddr_dl *sdl;
 
 	sin = &sin_m;
@@ -544,9 +544,9 @@ rtmsg(cmd)
 {
 	static int seq;
 	int rlen;
-	register struct rt_msghdr *rtm;
-	register char *cp;
-	register int l;
+	struct rt_msghdr *rtm;
+	char *cp;
+	int l;
 
 	rtm = &m_rtmsg.m_rtm;
 	cp = m_rtmsg.m_space;

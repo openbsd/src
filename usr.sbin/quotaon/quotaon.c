@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quotaon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: quotaon.c,v 1.11 2001/07/27 20:34:36 pvalchev Exp $";
+static char *rcsid = "$Id: quotaon.c,v 1.12 2002/03/14 16:44:25 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -68,7 +68,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register struct fstab *fs;
+	struct fstab *fs;
 	char *qfnp, *whoami;
 	long argnum, done = 0;
 	int i, offmode = 0, errs = 0;
@@ -157,7 +157,7 @@ usage(whoami)
 }
 
 quotaonoff(fs, offmode, type, qfpathname)
-	register struct fstab *fs;
+	struct fstab *fs;
 	int offmode, type;
 	char *qfpathname;
 {
@@ -189,10 +189,10 @@ quotaonoff(fs, offmode, type, qfpathname)
  * Check to see if target appears in list of size cnt.
  */
 oneof(target, list, cnt)
-	register char *target, *list[];
+	char *target, *list[];
 	int cnt;
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < cnt; i++)
 		if (strcmp(target, list[i]) == 0)
@@ -204,12 +204,12 @@ oneof(target, list, cnt)
  * Check to see if a particular quota is to be enabled.
  */
 hasquota(fs, type, qfnamep, force)
-	register struct fstab *fs;
+	struct fstab *fs;
 	int type;
 	char **qfnamep;
 	int force;
 {
-	register char *opt;
+	char *opt;
 	char *cp;
 	static char initname, usrname[100], grpname[100];
 	static char buf[BUFSIZ];
@@ -244,7 +244,7 @@ hasquota(fs, type, qfnamep, force)
  * MFS is special -- it puts "mfs:" in the kernel's mount table
  */
 readonly(fs)
-	register struct fstab *fs;
+	struct fstab *fs;
 {
 	struct statfs fsbuf;
 

@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.16 2002/03/09 18:49:09 millert Exp $	*/
+/*	$OpenBSD: create.c,v 1.17 2002/03/14 16:44:25 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: create.c,v 1.16 2002/03/09 18:49:09 millert Exp $";
+static const char rcsid[] = "$OpenBSD: create.c,v 1.17 2002/03/14 16:44:25 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,8 +82,8 @@ static void	statf(int, FTSENT *);
 void
 cwalk()
 {
-	register FTS *t;
-	register FTSENT *p;
+	FTS *t;
+	FTSENT *p;
 	time_t clock;
 	char *argv[2], host[MAXHOSTNAMELEN];
 	int indent = 0;
@@ -264,10 +264,10 @@ statd(t, parent, puid, pgid, pmode)
 	gid_t *pgid;
 	mode_t *pmode;
 {
-	register FTSENT *p;
-	register gid_t sgid;
-	register uid_t suid;
-	register mode_t smode;
+	FTSENT *p;
+	gid_t sgid;
+	uid_t suid;
+	mode_t smode;
 	struct group *gr;
 	struct passwd *pw;
 	gid_t savegid = *pgid;

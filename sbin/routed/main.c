@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2002/03/08 11:06:17 mpech Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2002/03/14 16:44:24 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ char copyright[] =
 #if !defined(lint)
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 2002/03/08 11:06:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 2002/03/14 16:44:24 mpech Exp $";
 #endif
 
 #include "defs.h"
@@ -633,7 +633,7 @@ void
 rip_off(void)
 {
 	struct interface *ifp;
-	register naddr addr;
+	naddr addr;
 
 
 	if (rip_sock >= 0 && !mhome) {

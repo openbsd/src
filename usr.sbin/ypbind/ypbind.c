@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.42 2002/02/16 21:28:11 millert Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.43 2002/03/14 16:44:25 mpech Exp $ */
 
 /*
  * Copyright (c) 1997,1998 Theo de Raadt <deraadt@OpenBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.42 2002/02/16 21:28:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.43 2002/03/14 16:44:25 mpech Exp $";
 #endif
 
 #include <sys/param.h>
@@ -282,7 +282,7 @@ ypbindproc_setdom_2x(transp, argp, clnt)
 static void
 ypbindprog_2(rqstp, transp)
 	struct svc_req *rqstp;
-	register SVCXPRT *transp;
+	SVCXPRT *transp;
 {
 	union {
 		domainname ypbindproc_domain_2_arg;

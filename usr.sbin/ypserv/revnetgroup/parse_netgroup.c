@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_netgroup.c,v 1.2 1997/08/18 03:11:35 millert Exp $ */
+/* $OpenBSD: parse_netgroup.c,v 1.3 2002/03/14 16:44:25 mpech Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: parse_netgroup.c,v 1.2 1997/08/18 03:11:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: parse_netgroup.c,v 1.3 2002/03/14 16:44:25 mpech Exp $";
 #endif
 
 /*
@@ -144,8 +144,8 @@ __getnetgrent(hostp, userp, domp)
 void
 __endnetgrent()
 {
-	register struct linelist *lp, *olp;
-	register struct netgrp *gp, *ogp;
+	struct linelist *lp, *olp;
+	struct netgrp *gp, *ogp;
 
 	lp = linehead;
 	while (lp) {
@@ -182,10 +182,10 @@ static int
 parse_netgrp(group)
 	char *group;
 {
-	register char *spos, *epos;
-	register int len, strpos;
+	char *spos, *epos;
+	int len, strpos;
 #ifdef DEBUG
-	register int fields;
+	int fields;
 #endif
 	char *pos, *gpos;
 	struct netgrp *grp;
@@ -293,8 +293,8 @@ static struct linelist *
 read_for_group(group)
 	char *group;
 {
-	register char *pos, *spos, *linep = NULL, *olinep = NULL;
-	register int len, olen;
+	char *pos, *spos, *linep = NULL, *olinep = NULL;
+	int len, olen;
 	int cont;
 	struct linelist *lp;
 	char line[LINSIZ + 1];

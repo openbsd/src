@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.13 2002/02/19 18:57:42 mpech Exp $	*/
+/*	$OpenBSD: timed.c,v 1.14 2002/03/14 16:44:25 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.13 $"
+#ident "$Revision: 1.14 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -147,7 +147,7 @@ main(int argc, char **argv)
 	char *inbuf = NULL, *cp, *cplim;
 	struct ifconf ifc;
 	struct ifreq ifreq, ifreqf, *ifr;
-	register struct netinfo *ntp;
+	struct netinfo *ntp;
 	struct netinfo *ntip;
 	struct netinfo *savefromnet;
 	struct netent *nentp;
@@ -783,7 +783,7 @@ setstatus()
 void
 makeslave(struct netinfo *net)
 {
-	register struct netinfo *ntp;
+	struct netinfo *ntp;
 
 	for (ntp = nettab; ntp != NULL; ntp = ntp->next) {
 		if (ntp->status == SLAVE && ntp != net)
@@ -798,7 +798,7 @@ makeslave(struct netinfo *net)
 static void
 checkignorednets(void)
 {
-	register struct netinfo *ntp;
+	struct netinfo *ntp;
 
 	for (ntp = nettab; ntp != NULL; ntp = ntp->next) {
 		if (!Mflag && ntp->status == SLAVE)
@@ -869,7 +869,7 @@ date()
 void
 addnetname(char *name)
 {
-	register struct nets **netlist = &nets;
+	struct nets **netlist = &nets;
 
 	while (*netlist)
 		netlist = &((*netlist)->next);
@@ -887,8 +887,8 @@ static void
 add_good_host(const char* name,
 	      char perm)		/* 1=not part of the netgroup */
 {
-	register struct goodhost *ghp;
-	register struct hostent *hentp;
+	struct goodhost *ghp;
+	struct hostent *hentp;
 
 	ghp = (struct goodhost*)malloc(sizeof(*ghp));
 	if (!ghp) {
@@ -982,8 +982,8 @@ int					/* 1=trust hp to change our date */
 good_host_name(name)
 	char *name;
 {
-	register struct goodhost *ghp = goodhosts;
-	register char c;
+	struct goodhost *ghp = goodhosts;
+	char c;
 
 	if (!ghp || !Mflag)		/* trust everyone if no one named */
 		return 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.11 2002/03/08 17:22:24 mickey Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.12 2002/03/14 16:44:25 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -363,7 +363,7 @@ tcp_trace(act, ostate, atp, tp, ti, req)
 			printf("(win=%x)", win);
 		flags = ti->ti_flags;
 		if (flags) {
-			register char *cp = "<";
+			char *cp = "<";
 #define	pf(flag, string) { \
 	if (ti->ti_flags&flag) { \
 		(void)printf("%s%s", cp, string); \
@@ -399,8 +399,8 @@ tcp_trace(act, ostate, atp, tp, ti, req)
 	}
 	/* print out timers? */
 	if (tflag) {
-		register char *cp = "\t";
-		register int i;
+		char *cp = "\t";
+		int i;
 
 		for (i = 0; i < TCPT_NTIMERS; i++) {
 			if (timeout_pending(&tp->t_timer[i]))

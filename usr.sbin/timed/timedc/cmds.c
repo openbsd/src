@@ -1,4 +1,4 @@
-/*	$Id: cmds.c,v 1.12 2002/01/19 00:32:04 mickey Exp $	*/
+/*	$Id: cmds.c,v 1.13 2002/03/14 16:44:25 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.12 $"
+#ident "$Revision: 1.13 $"
 #endif
 
 #include "timedc.h"
@@ -188,8 +188,8 @@ clockdiff(argc, argv)
 	char *argv[];
 {
 	struct servent *sp;
-	register long avg;
-	register int avg_cnt;
+	long avg;
+	int avg_cnt;
 	extern int measure(u_long, u_long, char *, struct sockaddr_in *, int);
 	int measure_status;
 
