@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.2 1996/06/30 04:43:34 tholo Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.3 1996/06/30 05:45:55 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.2 1996/06/30 04:43:34 tholo Exp $";
+static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.3 1996/06/30 05:45:55 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,6 +47,7 @@ static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.2 1996/06/30 04:43:34 tholo Ex
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <fstab.h>
 #include <errno.h>
 #include <err.h>
 
@@ -83,6 +84,7 @@ int matchcache __P((const void *, const void *));
 void cacheino __P((ino_t, struct dinode *));
 struct dinode *cached __P((ino_t));
 int main __P((int, char *[]));
+char *rawname __P((char *));
 
 /*
  * Check to see if the indicated inodes are the same
@@ -97,7 +99,7 @@ matchino(key, val)
 	if (k < v)
 		return -1;
 	else if (k > v)
-		return 0;
+		return 1;
 	return 0;
 }
 
@@ -400,6 +402,23 @@ searchdir(ino, blkno, size, filesize, path)
 	}
 }
 
+char *
+rawname(name)
+	char *name;
+{
+	static char newname[MAXPATHLEN];
+	char *p;
+
+	if ((p = strrchr(name, '/')) == NULL)
+		return name;
+	*p = '\0';
+	strcpy(newname, name);
+	*p++ = '/';
+	strcat(newname, "/r");
+	strcat(newname, p);
+	return(newname);
+}
+
 void
 usage()
 {
@@ -412,6 +431,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	struct stat stblock;
+	struct fstab *fsp;
 	int c, iflag = 0;
 	ino_t ino;
 
@@ -439,7 +460,20 @@ main(argc, argv)
 		}
 	if (optind != argc - 1)
 		usage();
+
 	disk = argv[optind];
+
+	if (stat(disk, &stblock) < 0)
+		err(1, "cannot stat %s", disk);
+
+        if (S_ISBLK(stblock.st_mode)) {
+		disk = rawname(disk);
+	}
+	else if (!S_ISCHR(stblock.st_mode)) {
+		if ((fsp = getfsfile(disk)) == NULL)
+			err(1, "cound not find file system %s", disk);
+                disk = rawname(fsp->fs_spec);
+        }
 
 	if ((diskfd = open(disk, O_RDONLY)) < 0)
 		err(1, "cannot open %s", disk);
