@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.11 2005/02/19 09:58:38 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.12 2005/02/19 12:11:18 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -85,47 +85,52 @@ static const struct ieee80211_rateset ral_rateset_11b =
 static const struct ieee80211_rateset ral_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
-int	ral_alloc_tx_ring(struct ral_softc *, struct ral_tx_ring *, int);
-void	ral_reset_tx_ring(struct ral_softc *, struct ral_tx_ring *);
-void	ral_free_tx_ring(struct ral_softc *, struct ral_tx_ring *);
-int	ral_alloc_rx_ring(struct ral_softc *, struct ral_rx_ring *, int);
-void	ral_reset_rx_ring(struct ral_softc *, struct ral_rx_ring *);
-void	ral_free_rx_ring(struct ral_softc *, struct ral_rx_ring *);
-int	ral_media_change(struct ifnet *);
-void	ral_next_scan(void *);
-void	ral_rssadapt_updatestats(void *);
-int	ral_newstate(struct ieee80211com *, enum ieee80211_state, int);
+int		ral_alloc_tx_ring(struct ral_softc *, struct ral_tx_ring *,
+		    int);
+void		ral_reset_tx_ring(struct ral_softc *, struct ral_tx_ring *);
+void		ral_free_tx_ring(struct ral_softc *, struct ral_tx_ring *);
+int		ral_alloc_rx_ring(struct ral_softc *, struct ral_rx_ring *,
+		    int);
+void		ral_reset_rx_ring(struct ral_softc *, struct ral_rx_ring *);
+void		ral_free_rx_ring(struct ral_softc *, struct ral_rx_ring *);
+int		ral_media_change(struct ifnet *);
+void		ral_next_scan(void *);
+void		ral_rssadapt_updatestats(void *);
+int		ral_newstate(struct ieee80211com *, enum ieee80211_state, int);
 uint16_t	ral_eeprom_read(struct ral_softc *, uint8_t);
-void	ral_encryption_intr(struct ral_softc *);
-void	ral_tx_intr(struct ral_softc *);
-void	ral_prio_intr(struct ral_softc *);
-void	ral_decryption_intr(struct ral_softc *);
-void	ral_rx_intr(struct ral_softc *);
-void	ral_beacon_expire(struct ral_softc *);
-void	ral_wakeup_expire(struct ral_softc *);
-uint8_t	ral_plcp_signal(int);
+void		ral_encryption_intr(struct ral_softc *);
+void		ral_tx_intr(struct ral_softc *);
+void		ral_prio_intr(struct ral_softc *);
+void		ral_decryption_intr(struct ral_softc *);
+void		ral_rx_intr(struct ral_softc *);
+void		ral_beacon_expire(struct ral_softc *);
+void		ral_wakeup_expire(struct ral_softc *);
+uint8_t		ral_plcp_signal(int);
 #if 0
-int	ral_tx_bcn(struct ral_softc *, struct mbuf *, struct ieee80211_node *);
+int		ral_tx_bcn(struct ral_softc *, struct mbuf *,
+		    struct ieee80211_node *);
 #endif
-int	ral_tx_mgt(struct ral_softc *, struct mbuf *, struct ieee80211_node *);
-int	ral_tx_data(struct ral_softc *, struct mbuf *, struct ieee80211_node *);
-void	ral_start(struct ifnet *);
-void	ral_watchdog(struct ifnet *);
-int	ral_ioctl(struct ifnet *, u_long, caddr_t);
-void	ral_bbp_write(struct ral_softc *, uint8_t, uint8_t);
-uint8_t	ral_bbp_read(struct ral_softc *, uint8_t);
-void	ral_rf_write(struct ral_softc *, uint8_t, uint32_t);
-void	ral_set_chan(struct ral_softc *, struct ieee80211_channel *);
-void	ral_disable_rf_tune(struct ral_softc *);
-void	ral_enable_tsf_sync(struct ral_softc *);
-void	ral_update_plcp(struct ral_softc *);
-void	ral_update_led(struct ral_softc *, int, int);
-void	ral_set_bssid(struct ral_softc *, uint8_t *);
-void	ral_set_macaddr(struct ral_softc *, uint8_t *);
-int	ral_read_eeprom(struct ral_softc *);
-int	ral_bbp_init(struct ral_softc *);
-int	ral_init(struct ifnet *);
-void	ral_stop(struct ifnet *, int);
+int		ral_tx_mgt(struct ral_softc *, struct mbuf *,
+		    struct ieee80211_node *);
+int		ral_tx_data(struct ral_softc *, struct mbuf *,
+		    struct ieee80211_node *);
+void		ral_start(struct ifnet *);
+void		ral_watchdog(struct ifnet *);
+int		ral_ioctl(struct ifnet *, u_long, caddr_t);
+void		ral_bbp_write(struct ral_softc *, uint8_t, uint8_t);
+uint8_t		ral_bbp_read(struct ral_softc *, uint8_t);
+void		ral_rf_write(struct ral_softc *, uint8_t, uint32_t);
+void		ral_set_chan(struct ral_softc *, struct ieee80211_channel *);
+void		ral_disable_rf_tune(struct ral_softc *);
+void		ral_enable_tsf_sync(struct ral_softc *);
+void		ral_update_plcp(struct ral_softc *);
+void		ral_update_led(struct ral_softc *, int, int);
+void		ral_set_bssid(struct ral_softc *, uint8_t *);
+void		ral_set_macaddr(struct ral_softc *, uint8_t *);
+int		ral_read_eeprom(struct ral_softc *);
+int		ral_bbp_init(struct ral_softc *);
+int		ral_init(struct ifnet *);
+void		ral_stop(struct ifnet *, int);
 
 /*
  * Default values for MAC registers; values taken from the reference driver.
@@ -308,49 +313,7 @@ ral_attach(struct ral_softc *sc)
 	/* retrieve RT2560 revision */
 	sc->asic_rev = RAL_READ(sc, RAL_CSR0);
 
-	if (ral_read_eeprom(sc) != 0) {
-		printf(": could not read EEPROM\n");
-		goto fail;
-	}
-
-	/*
-	 * Allocate Tx and Rx rings.
-	 */
-	if (ral_alloc_tx_ring(sc, &sc->txq, RAL_TX_RING_COUNT) != 0) {
-		printf(": could not allocate Tx ring\n");
-		goto fail;
-	}
-
-	if (ral_alloc_tx_ring(sc, &sc->atimq, RAL_ATIM_RING_COUNT) != 0) {
-		printf(": could not allocate ATIM ring\n");
-		goto fail;
-	}
-
-	if (ral_alloc_tx_ring(sc, &sc->prioq, RAL_PRIO_RING_COUNT) != 0) {
-		printf(": could not allocate Prio ring\n");
-		goto fail;
-	}
-
-	if (ral_alloc_tx_ring(sc, &sc->bcnq, RAL_BEACON_RING_COUNT) != 0) {
-		printf(": could not allocate Beacon ring\n");
-		goto fail;
-	}
-
-	if (ral_alloc_rx_ring(sc, &sc->rxq, RAL_RX_RING_COUNT) != 0) {
-		printf(": could not allocate Rx ring\n");
-		goto fail;
-	}
-
-	ic->ic_phytype = IEEE80211_T_OFDM; /* not only, but not used */
-	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
-	ic->ic_state = IEEE80211_S_INIT;
-
-	/* set device capabilities */
-	ic->ic_caps = IEEE80211_C_MONITOR | IEEE80211_C_IBSS |
-	    IEEE80211_C_SHPREAMBLE | IEEE80211_C_PMGT | IEEE80211_C_TXPMGT |
-	    IEEE80211_C_WEP;
-
-	/* read MAC address */
+	/* retrieve MAC address */
 	val = RAL_READ(sc, RAL_CSR3);
 	ic->ic_myaddr[0] = val & 0xff;
 	ic->ic_myaddr[1] = (val >>  8) & 0xff;
@@ -361,6 +324,53 @@ ral_attach(struct ral_softc *sc)
 	ic->ic_myaddr[5] = (val >> 8) & 0xff;
 
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
+
+	if (ral_read_eeprom(sc) != 0) {
+		printf("%s: could not read EEPROM\n", sc->sc_dev.dv_xname);
+		goto fail1;
+	}
+
+	/*
+	 * Allocate Tx and Rx rings.
+	 */
+	if (ral_alloc_tx_ring(sc, &sc->txq, RAL_TX_RING_COUNT) != 0) {
+		printf("%s: could not allocate Tx ring\n",
+		    sc->sc_dev.dv_xname);
+		goto fail1;
+	}
+
+	if (ral_alloc_tx_ring(sc, &sc->atimq, RAL_ATIM_RING_COUNT) != 0) {
+		printf("%s: could not allocate ATIM ring\n",
+		    sc->sc_dev.dv_xname);
+		goto fail2;
+	}
+
+	if (ral_alloc_tx_ring(sc, &sc->prioq, RAL_PRIO_RING_COUNT) != 0) {
+		printf("%s: could not allocate Prio ring\n",
+		    sc->sc_dev.dv_xname);
+		goto fail3;
+	}
+
+	if (ral_alloc_tx_ring(sc, &sc->bcnq, RAL_BEACON_RING_COUNT) != 0) {
+		printf("%s: could not allocate Beacon ring\n",
+		    sc->sc_dev.dv_xname);
+		goto fail4;
+	}
+
+	if (ral_alloc_rx_ring(sc, &sc->rxq, RAL_RX_RING_COUNT) != 0) {
+		printf("%s: could not allocate Rx ring\n",
+		    sc->sc_dev.dv_xname);
+		goto fail5;
+	}
+
+	ic->ic_phytype = IEEE80211_T_OFDM; /* not only, but not used */
+	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
+	ic->ic_state = IEEE80211_S_INIT;
+
+	/* set device capabilities */
+	ic->ic_caps = IEEE80211_C_MONITOR | IEEE80211_C_IBSS |
+	    IEEE80211_C_SHPREAMBLE | IEEE80211_C_PMGT | IEEE80211_C_TXPMGT |
+	    IEEE80211_C_WEP;
 
 	if (sc->rf_rev == RAL_RF_5222) {
 		/* set supported .11a rates */
@@ -431,8 +441,11 @@ ral_attach(struct ral_softc *sc)
 
 	return 0;
 
-fail:	/*ral_detach(sc);*/
-	return ENXIO;
+fail5:	ral_free_tx_ring(sc, &sc->bcnq);
+fail4:	ral_free_tx_ring(sc, &sc->prioq);
+fail3:	ral_free_tx_ring(sc, &sc->atimq);
+fail2:	ral_free_tx_ring(sc, &sc->txq);
+fail1:	return ENXIO;
 }
 
 int
