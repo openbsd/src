@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.38 2002/07/24 22:58:39 millert Exp $
+.\"	$OpenBSD: printf.3,v 1.39 2003/04/16 23:17:10 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -146,9 +146,14 @@ This pointer should be passed to
 .Xr free 3
 to release the allocated storage when it is no longer needed.
 If sufficient space cannot be allocated, these functions
-will return \-1 and set
+will return \-1.
+The value of
 .Fa ret
-to be a null pointer.
+in this situation is implementation-dependent
+(on
+.Ox ,
+.Fa ret
+will be set to the null pointer, but this behavior should not be relied upon).
 .Pp
 .Fn snprintf
 and
