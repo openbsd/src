@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.48 1998/11/17 06:39:25 form Exp $
+#	$OpenBSD: bsd.port.mk,v 1.49 1998/11/17 07:14:16 form Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -230,6 +230,10 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #
 # Motif support:
 #
+# USE_MOTIF	- Set this in your port if it requires Motif or Lesstif.
+#		  It will be built using Lesstif port unless Motif libraries
+#		  found or HAVE_MOTIF is defined. See also REQUIRES_MOTIF.
+#
 # REQUIRES_MOTIF - Set this in your port if it requires Motif.  It will  be
 #				  built only if HAVE_MOTIF is set.
 # HAVE_MOTIF	- If set, means system has Motif.  Typically set in
@@ -431,6 +435,9 @@ CC=${EGCC}
 .if defined(USE_EGXX)
 BUILD_DEPENDS+= 	${EGXX}:${PORTSDIR}/devel/egcs-stable
 CXX=${EGXX}
+.endif
+.if defined(USE_MOTIF) && !defined(HAVE_MOTIF) && !defined(REQUIRES_MOTIF)
+LIB_DEPENDS+=		Xm.:${PORTSDIR}/x11/lesstif
 .endif
 
 # OpenBSD has perl5 in-tree
@@ -638,7 +645,7 @@ PKG_SUFX?=		.tgz
 PKG_DBDIR?=		/var/db/pkg
 
 # shared/dynamic motif libs
-.if defined(HAVE_MOTIF)
+.if defined(USE_MOTIF) || defined(HAVE_MOTIF)
 .if defined(MOTIF_STATIC)
 MOTIFLIB?=	${X11BASE}/lib/libXm.a
 .else
