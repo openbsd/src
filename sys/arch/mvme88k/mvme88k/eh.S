@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.32 2003/08/13 08:52:44 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.33 2003/08/21 20:45:43 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -2079,14 +2079,14 @@ ASLOCAL(check_ast)
 
 	subu	r31, r31, 32
 	bsr.n	_C_LABEL(setipl)
-	 or	r2,r0,1
+	 or	r2, r0, IPL_SOFTCLOCK
 	/* at ipl 1 now */
 	addu	r31, r31, 32
 	bsr	_C_LABEL(dosoftint)
         /* is this needed? we are going to restore the ipl below XXX nivas */
 	subu	r31, r31, 32
 	bsr.n	_C_LABEL(setipl)
-	 or	r2,r0,0			/* ints are enabled */
+	 or	r2, r0, IPL_NONE		/* ints are enabled */
 	addu	r31, r31, 32
 	/* at ipl 0 now */
 1:
