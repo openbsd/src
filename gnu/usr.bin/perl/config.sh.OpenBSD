@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: config.sh.OpenBSD,v 1.13 1998/05/07 08:46:14 deraadt Exp $
+# $OpenBSD: config.sh.OpenBSD,v 1.14 1998/05/11 20:32:10 millert Exp $
 #
 # This file was produced by running the Configure script.  It holds all
 # the definitions figured out by Configure.  Should you modify any of
@@ -17,6 +17,7 @@
 
 case "`arch |cut -f2 -d.`" in
 "alpha")	_dynaload=0;;
+"pmax")		_dynaload=0;;
 "mips")		_dynaload=0;;
 "powerpc")	_dynaload=0;;
 "vax")		_dynaload=0;;
