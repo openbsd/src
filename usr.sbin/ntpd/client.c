@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.30 2004/08/12 16:33:59 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.31 2004/08/13 12:26:13 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -127,6 +127,7 @@ client_query(struct ntp_peer *p)
 	if (ntp_sendmsg(p->query->fd, (struct sockaddr *)&p->addr->ss,
 	    &p->query->msg, NTP_MSGSIZE_NOAUTH, 0) == -1) {
 		p->next = time(NULL) + INTERVAL_QUERY_PATHETIC;
+		p->deadline = 0;
 		return (-1);
 	}
 
