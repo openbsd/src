@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.8 1996/07/16 22:57:02 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.9 1996/08/06 22:51:05 downsj Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -458,7 +458,7 @@ fi
 
 echo	""
 echo    "Populating filesystems with bootstrapping binaries and config files"
-$DONTDOIT tar -cfX - . | (cd /mnt ; tar -xpf - )
+$DONTDOIT tar -cXf - . | (cd /mnt ; tar -xpf - )
 $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 
 echo	""
