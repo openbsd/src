@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.50 2001/09/28 12:05:38 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.51 2001/10/06 10:52:25 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.50 2001/09/28 12:05:38 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.51 2001/10/06 10:52:25 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -519,7 +519,8 @@ inspect(c, tp)
 
 	while ((isalnum(c = gpbc()) || c == '_') && tp < etp)
 		h = (h << 5) + h + (*tp++ = c);
-	PUTBACK(c);
+	if (c != EOF)
+		PUTBACK(c);
 	*tp = EOS;
 	/* token is too long, it won't match anything, but it can still
 	 * be output. */
