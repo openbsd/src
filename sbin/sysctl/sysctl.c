@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.53 2000/06/30 16:00:10 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.54 2000/11/21 06:18:27 millert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.53 2000/06/30 16:00:10 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.54 2000/11/21 06:18:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -379,8 +379,8 @@ parse(string, flags)
 		} else if (mib[1] == VM_PSSTRINGS) {
 			struct _ps_strings _ps;
 
-			len = sizeof(_ps);
-			if (sysctl(mib, 2, &_ps, &len, NULL, 0) == -1) {
+			size = sizeof(_ps);
+			if (sysctl(mib, 2, &_ps, &size, NULL, 0) == -1) {
 				if (flags == 0)
 					return;
 				if (!nflag)
