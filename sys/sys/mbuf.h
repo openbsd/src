@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.27 2001/05/20 08:31:12 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.28 2001/05/21 03:10:54 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -84,8 +84,8 @@ struct m_hdr {
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
 struct	pkthdr {
 	struct	ifnet *rcvif;		/* rcv interface */
-	int	len;			/* total packet length */
 	TAILQ_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
+	int	len;			/* total packet length */
 };
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
