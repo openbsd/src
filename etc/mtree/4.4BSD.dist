@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.75 1999/06/15 05:42:18 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.76 1999/07/09 19:28:31 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -286,8 +286,8 @@ cat1
 
 # ./usr/local/man/cat2
 cat2
-# ./usr/local/man/cat2
 ..
+# ./usr/local/man/cat2
 
 # ./usr/local/man/cat3
 cat3
@@ -967,6 +967,13 @@ cat1
 
 # ./usr/share/man/cat2
 cat2
+
+# ./usr/share/man/cat2/i386
+i386
+
+# ./usr/share/man/cat2/i386
+..
+
 # ./usr/share/man/cat2
 ..
 
