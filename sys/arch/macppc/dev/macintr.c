@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.10 2002/03/02 17:17:37 drahn Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.11 2002/03/02 17:37:41 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -460,6 +460,9 @@ enable_irq(x)
 	}
 	out32rb(INT_ENABLE_REG0, state0);
 }
+
+int m_virq_inited = 0;
+
 /*
  * Map 64 irqs into 32 (bits).
  */
@@ -468,6 +471,20 @@ mapirq(irq)
 	int irq;
 {
 	int v;
+	int i;
+
+	if (m_virq_inited == 0) {
+		m_virq_max = 0;
+		for (i = 0; i < ICU_LEN; i++) {
+			m_virq[i] = 0;
+		}
+		m_virq_inited = 1;
+	}
+
+	/* irq in table already? */
+	if (m_virq[irq] != 0) {
+		return m_virq[irq];
+	}
 
 	if (irq < 0 || irq >= 64)
 		panic("invalid irq");
