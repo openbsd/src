@@ -1,5 +1,5 @@
-/*	$OpenBSD: symtab.c,v 1.4 1997/02/09 18:55:16 deraadt Exp $	*/
-/*	$NetBSD: symtab.c,v 1.9 1996/11/30 18:04:47 cgd Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.5 1997/07/05 20:51:25 millert Exp $	*/
+/*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: symtab.c,v 1.4 1997/02/09 18:55:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: symtab.c,v 1.5 1997/07/05 20:51:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ static char rcsid[] = "$OpenBSD: symtab.c,v 1.4 1997/02/09 18:55:16 deraadt Exp 
 
 #include <ufs/ufs/dinode.h>
 
-#include <errno.h>
+#include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -376,7 +376,7 @@ removeentry(ep)
 
 /*
  * Table of unused string entries, sorted by length.
- * 
+ *
  * Entries are allocated in STRTBLINCR sized pieces so that names
  * of similar lengths can use the same entry. The value of STRTBLINCR
  * is chosen so that every entry has at least enough space to hold
@@ -419,7 +419,7 @@ savename(name)
 		if (cp == NULL)
 			panic("no space for string table\n");
 	}
-	(void) strcpy(cp, name);
+	(void)strcpy(cp, name);
 	return (cp);
 }
 
@@ -467,13 +467,13 @@ dumpsymtable(filename, checkpt)
 	FILE *fd;
 	struct symtableheader hdr;
 
-	vprintf(stdout, "Check pointing the restore\n");
+	Vprintf(stdout, "Check pointing the restore\n");
 	if (Nflag)
 		return;
 	if ((fd = fopen(filename, "w")) == NULL) {
-		fprintf(stderr, "fopen: %s\n", strerror(errno));
+		warn("fopen");
 		panic("cannot create save file %s for symbol table\n",
-			filename);
+		    filename);
 	}
 	clearerr(fd);
 	/*
@@ -483,7 +483,7 @@ dumpsymtable(filename, checkpt)
 	for (i = WINO; i <= maxino; i++) {
 		for (ep = lookupino(i); ep != NULL; ep = ep->e_links) {
 			ep->e_index = mynum++;
-			(void) fwrite(ep->e_name, sizeof(char),
+			(void)fwrite(ep->e_name, sizeof(char),
 			       (int)allocsize(ep->e_namlen), fd);
 		}
 	}
@@ -510,7 +510,7 @@ dumpsymtable(filename, checkpt)
 			if (ep->e_next != NULL)
 				tep->e_next =
 					(struct entry *)ep->e_next->e_index;
-			(void) fwrite((char *)tep, sizeof(struct entry), 1, fd);
+			(void)fwrite((char *)tep, sizeof(struct entry), 1, fd);
 		}
 	}
 	/*
@@ -521,7 +521,7 @@ dumpsymtable(filename, checkpt)
 			tentry = NULL;
 		else
 			tentry = (struct entry *)entry[i]->e_index;
-		(void) fwrite((char *)&tentry, sizeof(struct entry *), 1, fd);
+		(void)fwrite((char *)&tentry, sizeof(struct entry *), 1, fd);
 	}
 	hdr.volno = checkpt;
 	hdr.maxino = maxino;
@@ -530,13 +530,13 @@ dumpsymtable(filename, checkpt)
 	hdr.dumptime = dumptime;
 	hdr.dumpdate = dumpdate;
 	hdr.ntrec = ntrec;
-	(void) fwrite((char *)&hdr, sizeof(struct symtableheader), 1, fd);
+	(void)fwrite((char *)&hdr, sizeof(struct symtableheader), 1, fd);
 	if (ferror(fd)) {
-		fprintf(stderr, "fwrite: %s\n", strerror(errno));
+		warn("fwrite");
 		panic("output error to file %s writing symbol table\n",
-			filename);
+		    filename);
 	}
-	(void) fclose(fd);
+	(void)fclose(fd);
 }
 
 /*
@@ -555,7 +555,7 @@ initsymtable(filename)
 	register long i;
 	int fd;
 
-	vprintf(stdout, "Initialize symbol table.\n");
+	Vprintf(stdout, "Initialize symbol table.\n");
 	if (filename == NULL) {
 		entrytblsize = maxino / HASHFACTOR;
 		entry = (struct entry **)
@@ -567,11 +567,11 @@ initsymtable(filename)
 		return;
 	}
 	if ((fd = open(filename, O_RDONLY, 0)) < 0) {
-		fprintf(stderr, "open: %s\n", strerror(errno));
+		warn("open");
 		panic("cannot open symbol table file %s\n", filename);
 	}
 	if (fstat(fd, &stbuf) < 0) {
-		fprintf(stderr, "stat: %s\n", strerror(errno));
+		warn("stat");
 		panic("cannot stat symbol table file %s\n", filename);
 	}
 	tblsize = stbuf.st_size - sizeof(struct symtableheader);
@@ -580,7 +580,7 @@ initsymtable(filename)
 		panic("cannot allocate space for symbol table\n");
 	if (read(fd, base, (int)tblsize) < 0 ||
 	    read(fd, (char *)&hdr, sizeof(struct symtableheader)) < 0) {
-		fprintf(stderr, "read: %s\n", strerror(errno));
+		warn("read");
 		panic("cannot read symbol table file %s\n", filename);
 	}
 	switch (command) {
@@ -589,13 +589,9 @@ initsymtable(filename)
 		 * For normal continuation, insure that we are using
 		 * the next incremental tape
 		 */
-		if (hdr.dumpdate != dumptime) {
-			if (hdr.dumpdate < dumptime)
-				fprintf(stderr, "Incremental tape too low\n");
-			else
-				fprintf(stderr, "Incremental tape too high\n");
-			exit(1);
-		}
+		if (hdr.dumpdate != dumptime)
+			errx(1, "Incremental tape too %s",
+			    (hdr.dumpdate < dumptime) ? "low" : "high");
 		break;
 	case 'R':
 		/*

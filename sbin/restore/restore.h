@@ -1,5 +1,5 @@
-/*	$OpenBSD: restore.h,v 1.2 1996/06/23 14:32:18 deraadt Exp $	*/
-/*	$NetBSD: restore.h,v 1.7 1995/03/18 14:59:53 cgd Exp $	*/
+/*	$OpenBSD: restore.h,v 1.3 1997/07/05 20:51:25 millert Exp $	*/
+/*	$NetBSD: restore.h,v 1.8 1997/07/01 05:37:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -65,8 +65,10 @@ extern time_t	dumptime;	/* time that this dump begins */
 extern time_t	dumpdate;	/* time that this dump was made */
 extern char	command;	/* opration being performed */
 extern FILE	*terminal;	/* file descriptor for the terminal input */
+extern char	*tmpdir;	/* where to store temporary files */
 extern int	oldinofmt;	/* reading tape with old format inodes */
 extern int	Bcvt;		/* need byte swapping on inodes and dirs */
+extern char	*__progname;	/* from crt0.o */
 
 /*
  * Each file in the file system is described by one of these entries
@@ -135,8 +137,8 @@ typedef struct rstdirdesc RST_DIR;
 #define	SETINO(ino, map) \
 	map[(u_int)((ino) - 1) / NBBY] |=  1 << ((u_int)((ino) - 1) % NBBY)
 
-#define dprintf		if (dflag) fprintf
-#define vprintf		if (vflag) fprintf
+#define Dprintf		if (dflag) fprintf
+#define Vprintf		if (vflag) fprintf
 
 #define GOOD 1
 #define FAIL 0

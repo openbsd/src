@@ -1,5 +1,5 @@
-/*	$OpenBSD: interactive.c,v 1.3 1996/12/16 17:11:43 deraadt Exp $	*/
-/*	$NetBSD: interactive.c,v 1.9 1995/03/18 14:59:44 cgd Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.4 1997/07/05 20:51:22 millert Exp $	*/
+/*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: interactive.c,v 1.3 1996/12/16 17:11:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: interactive.c,v 1.4 1997/07/05 20:51:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,7 +156,7 @@ loop:
 			fprintf(stderr, "%s: not a directory\n", name);
 			break;
 		}
-		(void) strcpy(curdir, name);
+		(void)strcpy(curdir, name);
 		break;
 	/*
 	 * Delete elements from the extraction list.
@@ -326,13 +326,13 @@ getcmd(curdir, cmd, name, ap)
 	/*
 	 * Read a command line and trim off trailing white space.
 	 */
-	do	{
-		fprintf(stderr, "restore > ");
-		(void) fflush(stderr);
-		(void) fgets(input, BUFSIZ, terminal);
+	do {
+		(void)fprintf(stderr, "%s > ", __progname);
+		(void)fflush(stderr);
+		(void)fgets(input, BUFSIZ, terminal);
 	} while (!feof(terminal) && input[0] == '\n');
 	if (feof(terminal)) {
-		(void) strcpy(cmd, "quit");
+		(void)strcpy(cmd, "quit");
 		return;
 	}
 	for (cp = &input[strlen(input) - 2]; *cp == ' ' || *cp == '\t'; cp--)
@@ -347,7 +347,7 @@ getcmd(curdir, cmd, name, ap)
 	 * If no argument, use curdir as the default.
 	 */
 	if (*cp == '\0') {
-		(void) strcpy(name, curdir);
+		(void)strcpy(name, curdir);
 		return;
 	}
 	nextarg = cp;
@@ -370,9 +370,9 @@ getnext:
 		 * For relative pathnames, prepend the current directory to
 		 * it then canonicalize and return it.
 		 */
-		(void) strcpy(output, curdir);
-		(void) strcat(output, "/");
-		(void) strcat(output, rawname);
+		(void)strcpy(output, curdir);
+		(void)strcat(output, "/");
+		(void)strcat(output, rawname);
 		canon(output, name);
 	}
 	if (glob(name, GLOB_ALTDIRFUNC, NULL, &ap->glob) < 0)
@@ -451,12 +451,12 @@ canon(rawname, canonname)
 	register char *cp, *np;
 
 	if (strcmp(rawname, ".") == 0 || strncmp(rawname, "./", 2) == 0)
-		(void) strcpy(canonname, "");
+		(void)strcpy(canonname, "");
 	else if (rawname[0] == '/')
-		(void) strcpy(canonname, ".");
+		(void)strcpy(canonname, ".");
 	else
-		(void) strcpy(canonname, "./");
-	(void) strcat(canonname, rawname);
+		(void)strcpy(canonname, "./");
+	(void)strcat(canonname, rawname);
 	/*
 	 * Eliminate multiple and trailing '/'s
 	 */
@@ -478,14 +478,14 @@ canon(rawname, canonname)
 			np++;
 		if (np - cp == 1 && *cp == '.') {
 			cp--;
-			(void) strcpy(cp, np);
+			(void)strcpy(cp, np);
 			np = cp;
 		}
 		if (np - cp == 2 && strncmp(cp, "..", 2) == 0) {
 			cp--;
 			while (cp > &canonname[1] && *--cp != '/')
 				/* find beginning of name */;
-			(void) strcpy(cp, np);
+			(void)strcpy(cp, np);
 			np = cp;
 		}
 	}
@@ -504,7 +504,7 @@ printlist(name, basename)
 	struct afile single;
 	RST_DIR *dirp;
 	int entries, len, namelen;
-	char locname[MAXPATHLEN + 1];
+	char locname[MAXPATHLEN];
 
 	dp = pathsearch(name);
 	if (dp == NULL || (!dflag && TSTINO(dp->d_ino, dumpmap) == 0) ||
@@ -522,7 +522,7 @@ printlist(name, basename)
 		}
 	} else {
 		entries = 0;
-		while (dp = rst_readdir(dirp))
+		while ((dp = rst_readdir(dirp)))
 			entries++;
 		rst_closedir(dirp);
 		list = (struct afile *)malloc(entries * sizeof(struct afile));
@@ -535,11 +535,8 @@ printlist(name, basename)
 		fprintf(stderr, "%s:\n", name);
 		entries = 0;
 		listp = list;
-		(void) strncpy(locname, name, MAXPATHLEN);
-		locname[sizeof locname - 1] = '\0';
-		(void) strncat(locname, "/", MAXPATHLEN - strlen(locname));
-		namelen = strlen(locname);
-		while (dp = rst_readdir(dirp)) {
+		namelen = snprintf(locname, sizeof(locname), "%s/", name);
+		while ((dp = rst_readdir(dirp))) {
 			if (dp == NULL)
 				break;
 			if (!dflag && TSTINO(dp->d_ino, dumpmap) == 0)
@@ -553,7 +550,7 @@ printlist(name, basename)
 				fprintf(stderr, "%s%s: name exceeds %d char\n",
 					locname, dp->d_name, MAXPATHLEN);
 			} else {
-				(void) strncat(locname, dp->d_name,
+				(void)strncat(locname, dp->d_name,
 				    (int)dp->d_namlen);
 				mkentry(locname, dp, listp++);
 				entries++;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: utilities.c,v 1.2 1996/06/23 14:32:19 deraadt Exp $	*/
-/*	$NetBSD: utilities.c,v 1.9 1995/03/18 14:59:59 cgd Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.3 1997/07/05 20:51:27 millert Exp $	*/
+/*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.4 (Berkeley) 10/18/94";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.2 1996/06/23 14:32:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.3 1997/07/05 20:51:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ static char rcsid[] = "$OpenBSD: utilities.c,v 1.2 1996/06/23 14:32:19 deraadt E
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 
-#include <errno.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -98,7 +98,7 @@ mktempname(ep)
 	if (ep->e_flags & TMPNAME)
 		badentry(ep, "mktempname: called with TMPNAME");
 	ep->e_flags |= TMPNAME;
-	(void) strcpy(oldname, myname(ep));
+	(void)strcpy(oldname, myname(ep));
 	freename(ep->e_name);
 	ep->e_name = savename(gentempname(ep));
 	ep->e_namlen = strlen(ep->e_name);
@@ -121,7 +121,7 @@ gentempname(ep)
 		i++;
 	if (np == NULL)
 		badentry(ep, "not on ino list");
-	(void) sprintf(name, "%s%d%d", TMPHDR, i, ep->e_ino);
+	(void)snprintf(name, sizeof(name), "%s%ld%d", TMPHDR, i, ep->e_ino);
 	return (name);
 }
 
@@ -133,11 +133,10 @@ renameit(from, to)
 	char *from, *to;
 {
 	if (!Nflag && rename(from, to) < 0) {
-		fprintf(stderr, "warning: cannot rename %s to %s: %s\n",
-		    from, to, strerror(errno));
+		warn("cannot rename %s to %s", from, to);
 		return;
 	}
-	vprintf(stdout, "rename %s to %s\n", from, to);
+	Vprintf(stdout, "rename %s to %s\n", from, to);
 }
 
 /*
@@ -154,10 +153,10 @@ newnode(np)
 	cp = myname(np);
 	if (!Nflag && mkdir(cp, 0777) < 0) {
 		np->e_flags |= EXISTED;
-		fprintf(stderr, "warning: %s: %s\n", cp, strerror(errno));
+		warn(cp);
 		return;
 	}
-	vprintf(stdout, "Make node %s\n", cp);
+	Vprintf(stdout, "Make node %s\n", cp);
 }
 
 /*
@@ -177,10 +176,10 @@ removenode(ep)
 	ep->e_flags &= ~TMPNAME;
 	cp = myname(ep);
 	if (!Nflag && rmdir(cp) < 0) {
-		fprintf(stderr, "warning: %s: %s\n", cp, strerror(errno));
+		warn(cp);
 		return;
 	}
-	vprintf(stdout, "Remove node %s\n", cp);
+	Vprintf(stdout, "Remove node %s\n", cp);
 }
 
 /*
@@ -198,10 +197,10 @@ removeleaf(ep)
 	ep->e_flags &= ~TMPNAME;
 	cp = myname(ep);
 	if (!Nflag && unlink(cp) < 0) {
-		fprintf(stderr, "warning: %s: %s\n", cp, strerror(errno));
+		warn(cp);
 		return;
 	}
-	vprintf(stdout, "Remove leaf %s\n", cp);
+	Vprintf(stdout, "Remove leaf %s\n", cp);
 }
 
 /*
@@ -215,23 +214,21 @@ linkit(existing, new, type)
 
 	if (type == SYMLINK) {
 		if (!Nflag && symlink(existing, new) < 0) {
-			fprintf(stderr,
-			    "warning: cannot create symbolic link %s->%s: %s\n",
-			    new, existing, strerror(errno));
+			warn("cannot create symbolic link %s->%s",
+			    new, existing);
 			return (FAIL);
 		}
 	} else if (type == HARDLINK) {
 		if (!Nflag && link(existing, new) < 0) {
-			fprintf(stderr,
-			    "warning: cannot create hard link %s->%s: %s\n",
-			    new, existing, strerror(errno));
+			warn("cannot create hard link %s->%s",
+			    new, existing);
 			return (FAIL);
 		}
 	} else {
 		panic("linkit: unknown type %d\n", type);
 		return (FAIL);
 	}
-	vprintf(stdout, "Create %s link %s->%s\n",
+	Vprintf(stdout, "Create %s link %s->%s\n",
 		type == SYMLINK ? "symbolic" : "hard", new, existing);
 	return (GOOD);
 }
@@ -245,11 +242,10 @@ addwhiteout(name)
 {
 
 	if (!Nflag && mknod(name, S_IFWHT, 0) < 0) {
-		fprintf(stderr, "warning: cannot create whiteout %s: %s\n",
-		    name, strerror(errno));
+		warn("cannot create whiteout %s", name);
 		return (FAIL);
 	}
-	vprintf(stdout, "Create whiteout %s\n", name);
+	Vprintf(stdout, "Create whiteout %s\n", name);
 	return (GOOD);
 }
 
@@ -268,11 +264,10 @@ delwhiteout(ep)
 	ep->e_flags &= ~TMPNAME;
 	name = myname(ep);
 	if (!Nflag && undelete(name) < 0) {
-		fprintf(stderr, "warning: cannot delete whiteout %s: %s\n",
-		    name, strerror(errno));
+		warn("cannot delete whiteout %s", name);
 		return;
 	}
-	vprintf(stdout, "Delete whiteout %s\n", name);
+	Vprintf(stdout, "Delete whiteout %s\n", name);
 }
 
 /*
@@ -336,7 +331,7 @@ badentry(ep, msg)
 		    "next hashchain name: %s\n", myname(ep->e_next));
 	fprintf(stderr, "entry type: %s\n",
 		ep->e_type == NODE ? "NODE" : "LEAF");
-	fprintf(stderr, "inode number: %ld\n", ep->e_ino);
+	fprintf(stderr, "inode number: %d\n", ep->e_ino);
 	panic("flags: %s\n", flagvalues(ep));
 }
 
@@ -349,20 +344,20 @@ flagvalues(ep)
 {
 	static char flagbuf[BUFSIZ];
 
-	(void) strcpy(flagbuf, "|NIL");
+	(void)strcpy(flagbuf, "|NIL");
 	flagbuf[0] = '\0';
 	if (ep->e_flags & REMOVED)
-		(void) strcat(flagbuf, "|REMOVED");
+		(void)strcat(flagbuf, "|REMOVED");
 	if (ep->e_flags & TMPNAME)
-		(void) strcat(flagbuf, "|TMPNAME");
+		(void)strcat(flagbuf, "|TMPNAME");
 	if (ep->e_flags & EXTRACT)
-		(void) strcat(flagbuf, "|EXTRACT");
+		(void)strcat(flagbuf, "|EXTRACT");
 	if (ep->e_flags & NEW)
-		(void) strcat(flagbuf, "|NEW");
+		(void)strcat(flagbuf, "|NEW");
 	if (ep->e_flags & KEEP)
-		(void) strcat(flagbuf, "|KEEP");
+		(void)strcat(flagbuf, "|KEEP");
 	if (ep->e_flags & EXISTED)
-		(void) strcat(flagbuf, "|EXISTED");
+		(void)strcat(flagbuf, "|EXISTED");
 	return (&flagbuf[1]);
 }
 
@@ -375,7 +370,7 @@ dirlookup(name)
 {
 	struct direct *dp;
 	ino_t ino;
- 
+
 	ino = ((dp = pathsearch(name)) == NULL) ? 0 : dp->d_ino;
 
 	if (ino == 0 || TSTINO(ino, dumpmap) == 0)
@@ -394,7 +389,7 @@ reply(question)
 
 	do	{
 		fprintf(stderr, "%s? [yn] ", question);
-		(void) fflush(stderr);
+		(void)fflush(stderr);
 		c = getc(terminal);
 		while (c != '\n' && getc(terminal) != '\n')
 			if (feof(terminal))

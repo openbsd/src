@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 1996/09/01 15:27:28 deraadt Exp $
-#	$NetBSD: Makefile,v 1.14 1995/03/18 14:59:39 cgd Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/07/05 20:51:20 millert Exp $
+#	$NetBSD: Makefile,v 1.18 1997/06/30 09:47:27 lukem Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	restore
 LINKS=	${BINDIR}/restore ${BINDIR}/rrestore

@@ -1,5 +1,5 @@
-.\"	$OpenBSD: restore.8,v 1.6 1997/04/16 04:07:39 millert Exp $
-.\"	$NetBSD: restore.8,v 1.11 1996/02/02 22:29:33 phil Exp $
+.\"	$OpenBSD: restore.8,v 1.7 1997/07/05 20:51:23 millert Exp $
+.\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,39 +34,39 @@
 .\"
 .\"     @(#)restore.8	8.3 (Berkeley) 6/1/94
 .\"
-.Dd June 1, 1994
+.Dd July 1, 1997
 .Dt RESTORE 8
 .Os BSD 4
 .Sh NAME
 .Nm restore
 .Nd "restore files or file systems from backups made with dump"
 .Sh SYNOPSIS
-.Nm
+.Nm restore
 .Fl i
 .Op Fl chmvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Nm
+.Nm restore
 .Fl R
 .Op Fl cvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Nm
+.Nm restore
 .Fl r
 .Op Fl cvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
-.Nm
+.Nm restore
 .Fl t
 .Op Fl chvy
 .Op Fl b Ar blocksize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Op file ...
-.Nm
+.Nm restore
 .Fl x
 .Op Fl chmvy
 .Op Fl b Ar blocksize
@@ -89,7 +89,7 @@ subsequent incremental backups layered on top of it.
 Single files and
 directory subtrees may be restored from full or partial
 backups.
-.Nm Restore
+.Nm
 works across a network;
 to do this see the
 .Fl f
@@ -141,7 +141,7 @@ those files that are not needed.
 .It Ic extract
 All the files that are on the extraction list are extracted
 from the dump.
-.Nm Restore
+.Nm
 will ask which volume the user wishes to mount.
 The fastest way to extract a few files is to
 start with the last volume, and work towards the first volume.
@@ -175,7 +175,7 @@ It also causes
 to print out information about each file as it is extracted.
 .El
 .It Fl R
-.Nm Restore
+.Nm
 requests a particular tape of a multi volume set on which to restart
 a full restore
 (see the
@@ -216,7 +216,7 @@ restore passes.
 This file should be removed when the last incremental has been
 restored.
 .Pp
-.Nm Restore ,
+.Nm restore ,
 in conjunction with
 .Xr newfs 8
 and
@@ -394,6 +394,19 @@ After a dump read error,
 may have to resynchronize itself.
 This message lists the number of blocks that were skipped over.
 .El
+.Sh ENVIRONMENT
+If the following environment variable exists it will be utilized by
+.Nm restore :
+.Bl -tag -width "TMPDIR" -compact
+.It TMPDIR
+The directory given in TMPDIR will be used
+instead of
+.Pa /tmp
+to store temporary files.
+Refer to
+.Xr environ 7
+for more information.
+.El
 .Sh FILES
 .Bl -tag -width "./restoresymtable" -compact
 .It Pa /dev/rst0
@@ -408,12 +421,13 @@ owner, mode, and time stamps for directories.
 information passed between incremental restores.
 .El
 .Sh SEE ALSO
+.Xr environ 7 ,
 .Xr dump 8 ,
 .Xr newfs 8 ,
 .Xr mount 8 ,
 .Xr rmt 8
 .Sh BUGS
-.Nm Restore
+.Nm
 can get confused when doing incremental restores from
 dumps that were made on active file systems.
 .Pp

@@ -1,5 +1,5 @@
-/*	$OpenBSD: restore.c,v 1.3 1997/06/18 01:46:40 millert Exp $	*/
-/*	$NetBSD: restore.c,v 1.6 1995/03/18 14:59:51 cgd Exp $	*/
+/*	$OpenBSD: restore.c,v 1.4 1997/07/05 20:51:24 millert Exp $	*/
+/*	$NetBSD: restore.c,v 1.9 1997/06/18 07:10:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: restore.c,v 1.3 1997/06/18 01:46:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: restore.c,v 1.4 1997/07/05 20:51:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ listfile(name, ino, type)
 
 	if (TSTINO(ino, dumpmap) == 0)
 		return (descend);
-	vprintf(stdout, "%s", type == LEAF ? "leaf" : "dir ");
+	Vprintf(stdout, "%s", type == LEAF ? "leaf" : "dir ");
 	fprintf(stdout, "%10d\t%s\n", ino, name);
 	return (descend);
 }
@@ -89,16 +89,16 @@ addfile(name, ino, type)
 	char buf[100];
 
 	if (TSTINO(ino, dumpmap) == 0) {
-		dprintf(stdout, "%s: not on the tape\n", name);
+		Dprintf(stdout, "%s: not on the tape\n", name);
 		return (descend);
 	}
 	if (ino == WINO && command == 'i' && !vflag)
 		return (descend);
 	if (!mflag) {
-		(void) sprintf(buf, "./%u", ino);
+		(void)snprintf(buf, sizeof(buf), "./%u", ino);
 		name = buf;
 		if (type == NODE) {
-			(void) genliteraldir(name, ino);
+			(void)genliteraldir(name, ino);
 			return (descend);
 		}
 	}
@@ -143,7 +143,7 @@ deletefile(name, ino, type)
 	return (descend);
 }
 
-/* 
+/*
  * The following four routines implement the incremental
  * restore algorithm. The first removes old entries, the second
  * does renames and calculates the extraction list, the third
@@ -152,7 +152,7 @@ deletefile(name, ino, type)
  *
  * Directories cannot be immediately deleted, as they may have
  * other files in them which need to be moved out first. As
- * directories to be deleted are found, they are put on the 
+ * directories to be deleted are found, they are put on the
  * following deletion list. After all deletions and renames
  * are done, this list is actually deleted.
  */
@@ -169,9 +169,9 @@ removeoldleaves()
 	register struct entry *ep, *nextep;
 	register ino_t i, mydirino;
 
-	vprintf(stdout, "Mark entries to be removed.\n");
-	if (ep = lookupino(WINO)) {
-		vprintf(stdout, "Delete whiteouts\n");
+	Vprintf(stdout, "Mark entries to be removed.\n");
+	if ((ep = lookupino(WINO))) {
+		Vprintf(stdout, "Delete whiteouts\n");
 		for ( ; ep != NULL; ep = nextep) {
 			nextep = ep->e_links;
 			mydirino = ep->e_parent->e_ino;
@@ -193,7 +193,7 @@ removeoldleaves()
 		if (TSTINO(i, usedinomap))
 			continue;
 		for ( ; ep != NULL; ep = ep->e_links) {
-			dprintf(stdout, "%s: REMOVE\n", myname(ep));
+			Dprintf(stdout, "%s: REMOVE\n", myname(ep));
 			if (ep->e_type == LEAF) {
 				removeleaf(ep);
 				freeentry(ep);
@@ -233,7 +233,7 @@ nodeupdates(name, ino, type)
 #		define MODECHG	0x8	/* mode of inode changed */
 
 	/*
-	 * This routine is called once for each element in the 
+	 * This routine is called once for each element in the
 	 * directory hierarchy, with a full path name.
 	 * The "type" value is incorrectly specified as LEAF for
 	 * directories that are not on the dump tape.
@@ -286,7 +286,7 @@ nodeupdates(name, ino, type)
 			removeleaf(np);
 			freeentry(np);
 		} else {
-			dprintf(stdout, "name/inode conflict, mktempname %s\n",
+			Dprintf(stdout, "name/inode conflict, mktempname %s\n",
 				myname(np));
 			mktempname(np);
 		}
@@ -314,7 +314,7 @@ nodeupdates(name, ino, type)
 	 */
 	case INOFND|NAMEFND:
 		ip->e_flags |= KEEP;
-		dprintf(stdout, "[%s] %s: %s\n", keyval(key), name,
+		Dprintf(stdout, "[%s] %s: %s\n", keyval(key), name,
 			flagvalues(ip));
 		break;
 
@@ -350,7 +350,7 @@ nodeupdates(name, ino, type)
 		if (type == NODE)
 			newnode(ep);
 		ep->e_flags |= NEW|KEEP;
-		dprintf(stdout, "[%s] %s: %s\n", keyval(key), name,
+		Dprintf(stdout, "[%s] %s: %s\n", keyval(key), name,
 			flagvalues(ep));
 		break;
 
@@ -374,7 +374,7 @@ nodeupdates(name, ino, type)
 			renameit(myname(ip), name);
 			moveentry(ip, name);
 			ip->e_flags |= KEEP;
-			dprintf(stdout, "[%s] %s: %s\n", keyval(key), name,
+			Dprintf(stdout, "[%s] %s: %s\n", keyval(key), name,
 				flagvalues(ip));
 			break;
 		}
@@ -387,7 +387,7 @@ nodeupdates(name, ino, type)
 		}
 		ep = addentry(name, ino, type|LINK);
 		ep->e_flags |= NEW;
-		dprintf(stdout, "[%s] %s: %s|LINK\n", keyval(key), name,
+		Dprintf(stdout, "[%s] %s: %s|LINK\n", keyval(key), name,
 			flagvalues(ep));
 		break;
 
@@ -404,14 +404,14 @@ nodeupdates(name, ino, type)
 			if (type == NODE)
 			        newnode(ep);
 			ep->e_flags |= NEW|KEEP;
-			dprintf(stdout, "[%s] %s: %s|LINK\n", keyval(key), name,
+			Dprintf(stdout, "[%s] %s: %s|LINK\n", keyval(key), name,
 				flagvalues(ep));
 			break;
 		}
 		if (type == LEAF && lookuptype != LINK)
 			np->e_flags |= EXTRACT;
 		np->e_flags |= KEEP;
-		dprintf(stdout, "[%s] %s: %s\n", keyval(key), name,
+		Dprintf(stdout, "[%s] %s: %s\n", keyval(key), name,
 			flagvalues(np));
 		break;
 
@@ -424,7 +424,7 @@ nodeupdates(name, ino, type)
 	 * that we need to rename, so we delete it from the symbol
 	 * table, and put it on the list to be deleted eventually.
 	 * Conversely if a directory is to be created, it must be
-	 * done immediately, rather than waiting until the 
+	 * done immediately, rather than waiting until the
 	 * extraction phase.
 	 */
 	case ONTAPE|INOFND|MODECHG:
@@ -437,7 +437,8 @@ nodeupdates(name, ino, type)
 			/* changing from leaf to node */
 			for ( ; ip != NULL; ip = ip->e_links) {
 				if (ip->e_type != LEAF)
-					badentry(ip, "NODE and LEAF links to same inode");
+					badentry(ip,
+					   "NODE and LEAF links to same inode");
 				removeleaf(ip);
 				freeentry(ip);
 			}
@@ -453,7 +454,7 @@ nodeupdates(name, ino, type)
 			ip = addentry(name, ino, type);
 		}
 		ip->e_flags |= NEW|KEEP;
-		dprintf(stdout, "[%s] %s: %s\n", keyval(key), name,
+		Dprintf(stdout, "[%s] %s: %s\n", keyval(key), name,
 			flagvalues(ip));
 		break;
 
@@ -462,7 +463,7 @@ nodeupdates(name, ino, type)
 	 * Ignore it.
 	 */
 	case NAMEFND:
-		dprintf(stdout, "[%s] %s: Extraneous name\n", keyval(key),
+		Dprintf(stdout, "[%s] %s: Extraneous name\n", keyval(key),
 			name);
 		descend = FAIL;
 		break;
@@ -511,16 +512,16 @@ keyval(key)
 {
 	static char keybuf[32];
 
-	(void) strcpy(keybuf, "|NIL");
+	(void)strcpy(keybuf, "|NIL");
 	keybuf[0] = '\0';
 	if (key & ONTAPE)
-		(void) strcat(keybuf, "|ONTAPE");
+		(void)strcat(keybuf, "|ONTAPE");
 	if (key & INOFND)
-		(void) strcat(keybuf, "|INOFND");
+		(void)strcat(keybuf, "|INOFND");
 	if (key & NAMEFND)
-		(void) strcat(keybuf, "|NAMEFND");
+		(void)strcat(keybuf, "|NAMEFND");
 	if (key & MODECHG)
-		(void) strcat(keybuf, "|MODECHG");
+		(void)strcat(keybuf, "|MODECHG");
 	return (&keybuf[1]);
 }
 
@@ -533,14 +534,14 @@ findunreflinks()
 	register struct entry *ep, *np;
 	register ino_t i;
 
-	vprintf(stdout, "Find unreferenced names.\n");
+	Vprintf(stdout, "Find unreferenced names.\n");
 	for (i = ROOTINO; i < maxino; i++) {
 		ep = lookupino(i);
 		if (ep == NULL || ep->e_type == LEAF || TSTINO(i, dumpmap) == 0)
 			continue;
 		for (np = ep->e_entries; np != NULL; np = np->e_sibling) {
 			if (np->e_flags == 0) {
-				dprintf(stdout,
+				Dprintf(stdout,
 				    "%s: remove unreferenced name\n",
 				    myname(np));
 				removeleaf(np);
@@ -556,7 +557,7 @@ findunreflinks()
 			if (np->e_type == LEAF) {
 				if (np->e_flags != 0)
 					badentry(np, "unreferenced with flags");
-				dprintf(stdout,
+				Dprintf(stdout,
 				    "%s: remove unreferenced name\n",
 				    myname(np));
 				removeleaf(np);
@@ -581,7 +582,7 @@ removeoldnodes()
 	register struct entry *ep, **prev;
 	long change;
 
-	vprintf(stdout, "Remove old nodes (directories).\n");
+	Vprintf(stdout, "Remove old nodes (directories).\n");
 	do	{
 		change = 0;
 		prev = &removelist;
@@ -613,9 +614,9 @@ createleaves(symtabfile)
 	long curvol;
 
 	if (command == 'R') {
-		vprintf(stdout, "Continue extraction of new leaves\n");
+		Vprintf(stdout, "Continue extraction of new leaves\n");
 	} else {
-		vprintf(stdout, "Extract new leaves.\n");
+		Vprintf(stdout, "Extract new leaves.\n");
 		dumpsymtable(symtabfile, volno);
 	}
 	first = lowerbnd(ROOTINO);
@@ -640,7 +641,7 @@ createleaves(symtabfile)
 		/*
 		 * If we find files on the tape that have no corresponding
 		 * directory entries, then we must have found a file that
-		 * was created while the dump was in progress. Since we have 
+		 * was created while the dump was in progress. Since we have
 		 * no name for it, we discard it knowing that it will be
 		 * on the next incremental tape.
 		 */
@@ -664,7 +665,7 @@ createleaves(symtabfile)
 			removeleaf(ep);
 			ep->e_flags &= ~REMOVED;
 		}
-		(void) extractfile(myname(ep));
+		(void)extractfile(myname(ep));
 		ep->e_flags &= ~(NEW|EXTRACT);
 		/*
 		 * We checkpoint the restore after every tape reel, so
@@ -691,7 +692,7 @@ createfiles()
 	register struct entry *ep;
 	long curvol;
 
-	vprintf(stdout, "Extract requested files\n");
+	Vprintf(stdout, "Extract requested files\n");
 	curfile.action = SKIP;
 	getvol((long)1);
 	skipmaps();
@@ -761,7 +762,7 @@ createfiles()
 			ep = lookupino(next);
 			if (ep == NULL)
 				panic("corrupted symbol table\n");
-			(void) extractfile(myname(ep));
+			(void)extractfile(myname(ep));
 			ep->e_flags &= ~NEW;
 			if (volno != curvol)
 				skipmaps();
@@ -779,16 +780,16 @@ createlinks()
 	register ino_t i;
 	char name[BUFSIZ];
 
-	if (ep = lookupino(WINO)) {
-		vprintf(stdout, "Add whiteouts\n");
+	if ((ep = lookupino(WINO))) {
+		Vprintf(stdout, "Add whiteouts\n");
 		for ( ; ep != NULL; ep = ep->e_links) {
 			if ((ep->e_flags & NEW) == 0)
 				continue;
-			(void) addwhiteout(myname(ep));
+			(void)addwhiteout(myname(ep));
 			ep->e_flags &= ~NEW;
 		}
 	}
-	vprintf(stdout, "Add links\n");
+	Vprintf(stdout, "Add links\n");
 	for (i = ROOTINO; i < maxino; i++) {
 		ep = lookupino(i);
 		if (ep == NULL)
@@ -796,11 +797,11 @@ createlinks()
 		for (np = ep->e_links; np != NULL; np = np->e_links) {
 			if ((np->e_flags & NEW) == 0)
 				continue;
-			(void) strcpy(name, myname(ep));
+			(void)strcpy(name, myname(ep));
 			if (ep->e_type == NODE) {
-				(void) linkit(name, myname(np), SYMLINK);
+				(void)linkit(name, myname(np), SYMLINK);
 			} else {
-				(void) linkit(name, myname(np), HARDLINK);
+				(void)linkit(name, myname(np), HARDLINK);
 			}
 			np->e_flags &= ~NEW;
 		}
@@ -818,7 +819,7 @@ checkrestore()
 	register struct entry *ep;
 	register ino_t i;
 
-	vprintf(stdout, "Check the symbol table.\n");
+	Vprintf(stdout, "Check the symbol table.\n");
 	for (i = WINO; i < maxino; i++) {
 		for (ep = lookupino(i); ep != NULL; ep = ep->e_links) {
 			ep->e_flags &= ~KEEP;
