@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.205 2002/05/05 21:40:22 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.206 2002/05/09 19:58:42 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -40,6 +40,7 @@
 #include <sys/filio.h>
 #include <sys/fcntl.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/time.h>
@@ -275,6 +276,8 @@ int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 			     int, int, void *, struct pf_pdesc *);
 void			 pf_route(struct mbuf **, struct pf_rule *, int);
 void			 pf_route6(struct mbuf **, struct pf_rule *, int);
+int			 pf_user_lookup(uid_t *, uid_t *, int, int, int,
+			     struct pf_pdesc *);
 
 
 #if NPFLOG > 0
@@ -2936,11 +2939,8 @@ pf_match_addr(u_int8_t n, struct pf_addr *a, struct pf_addr *m,
 }
 
 int
-pf_match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
+pf_match(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 {
-	NTOHS(a1);
-	NTOHS(a2);
-	NTOHS(p);
 	switch (op) {
 	case PF_OP_IRG:
 		return (p > a1) && (p < a2);
@@ -2960,6 +2960,23 @@ pf_match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 		return (p >= a1);
 	}
 	return (0); /* never reached */
+}
+
+int
+pf_match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
+{
+	NTOHS(a1);
+	NTOHS(a2);
+	NTOHS(p);
+	return (pf_match(op, a1, a2, p));
+}
+
+int
+pf_match_uid(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t u)
+{
+	if (u == UID_MAX && op != PF_OP_EQ && op != PF_OP_NE)
+		return (0);
+	return (pf_match(op, a1, a2, u));
 }
 
 int
@@ -3177,6 +3194,55 @@ pf_map_port_range(struct pf_rdr *rdr, u_int16_t port)
 	return htons((u_int16_t)nport);
 }
 
+int
+pf_user_lookup(uid_t *ruid, uid_t *euid, int direction, int af, int proto,
+    struct pf_pdesc *pd)
+{
+	struct pf_addr *saddr, *daddr;
+	u_int16_t sport, dport;
+	struct inpcbtable *tb;
+	struct inpcb *inp;
+
+	*ruid = *euid = UID_MAX;
+	if (af != AF_INET)
+		return (0);
+	switch (proto) {
+	case IPPROTO_TCP:
+		sport = pd->hdr.tcp->th_sport;
+		dport = pd->hdr.tcp->th_dport;
+		tb = &tcbtable;
+		break;
+	case IPPROTO_UDP:
+		sport = pd->hdr.udp->uh_sport;
+		dport = pd->hdr.udp->uh_dport;
+		tb = &udbtable;
+		break;
+	default:
+		return (0);
+	}
+	if (direction == PF_IN) {
+		saddr = pd->src;
+		daddr = pd->dst;
+	} else {
+		u_int16_t p;
+
+		p = sport;
+		sport = dport;
+		dport = p;
+		saddr = pd->dst;
+		daddr = pd->src;
+	}
+	inp = in_pcbhashlookup(tb, saddr->v4, sport, daddr->v4, dport);
+	if (inp == NULL) {
+		inp = in_pcblookup(tb, &saddr->v4, sport, &daddr->v4, dport,
+		    INPLOOKUP_WILDCARD);
+		if (inp == NULL)
+			return (0);
+	}
+	*ruid = inp->inp_socket->so_ruid;
+	*euid = inp->inp_socket->so_euid;
+	return (1);
+}
 
 int
 pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
@@ -3187,8 +3253,10 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_rdr *rdr = NULL;
 	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr;
 	struct tcphdr *th = pd->hdr.tcp;
-	struct pf_rule *r;
 	u_int16_t bport, nport = 0, af = pd->af;
+	int xuid = -1;
+	uid_t ruid, euid;
+	struct pf_rule *r;
 	u_short reason;
 	int rewrite = 0, error;
 
@@ -3279,6 +3347,16 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
 		else if ((r->flagset & th->th_flags) != r->flags)
+			r = TAILQ_NEXT(r, entries);
+		else if (r->ruid.op && (xuid != -1 || (xuid =
+		    pf_user_lookup(&ruid, &euid, direction, af, IPPROTO_TCP, pd),
+		    1)) && !pf_match_uid(r->ruid.op, r->ruid.uid[0],
+		    r->ruid.uid[1], ruid))
+			r = TAILQ_NEXT(r, entries);
+		else if (r->euid.op && (xuid != -1 || (xuid =
+		    pf_user_lookup(&ruid, &euid, direction, af, IPPROTO_TCP, pd),
+		    1)) && !pf_match_uid(r->euid.op, r->euid.uid[0],
+		    r->euid.uid[1], euid))
 			r = TAILQ_NEXT(r, entries);
 		else {
 			*rm = r;
@@ -3422,6 +3500,8 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr;
 	struct udphdr *uh = pd->hdr.udp;
 	u_int16_t bport, nport = 0, af = pd->af;
+	int xuid = -1;
+	uid_t ruid, euid;
 	struct pf_rule *r;
 	u_short reason;
 	int rewrite = 0, error;
@@ -3514,6 +3594,16 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    r->dst.port[0], r->dst.port[1], uh->uh_dport))
 			r = r->skip[PF_SKIP_DST_PORT];
 		else if (r->rule_flag & PFRULE_FRAGMENT)
+			r = TAILQ_NEXT(r, entries);
+		else if (r->ruid.op && (xuid != -1 || (xuid =
+		    pf_user_lookup(&ruid, &euid, direction, af, IPPROTO_UDP, pd),
+		    1)) && !pf_match_uid(r->ruid.op, r->ruid.uid[0],
+		    r->ruid.uid[1], ruid))
+			r = TAILQ_NEXT(r, entries);
+		else if (r->euid.op && (xuid != -1 || (xuid =
+		    pf_user_lookup(&ruid, &euid, direction, af, IPPROTO_UDP, pd),
+		    1)) && !pf_match_uid(r->euid.op, r->euid.uid[0],
+		    r->euid.uid[1], euid))
 			r = TAILQ_NEXT(r, entries);
 		else {
 			*rm = r;

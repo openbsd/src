@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.42 2002/05/08 18:54:14 jasoni Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.43 2002/05/09 19:58:42 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -51,7 +51,8 @@ rule           = action ( "in" | "out" )
                  [ "proto" ( proto-name | proto-number |
                              "{" proto-list "}" ) ]
                  hosts
-                 [ flags ] ( [ icmp-type ] | [ ipv6-icmp-type ] )
+                 [ ruid ] [ euid ] [ flags ]
+                 [ icmp-type | ipv6-icmp-type ]
                  [ "keep state" ] [ "modulate state" ]
                  [ "fragment" ] [ "no-df" ] [ "min-ttl" number ]
                  [ "allow-opts" ] [ "label" string ] .
@@ -80,11 +81,15 @@ host           = [ "!" ] address [ "/" mask-bits ] .
 address        = ( interface-name | '(' interface-name ')' | host-name |
                    ipv4-dotted-quad | ipv6-coloned-hex ) .
 host-list      = host [ "," host-list ] .
-port           = "port" ( unary-op | binary-op | "{" port-list "}" ) .
-port-list      = ( unary-op | binary-op ) [ "," port-list ] .
+
+port           = "port" ( unary-op | binary-op | "{" op-list "}" ) .
+ruid           = "ruid" ( unary-op | binary-op | "{" op-list "}" ) .
+euid           = "euid" ( unary-op | binary-op | "{" op-list "}" ) .
+
 unary-op       = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
-                 ( port-name | port-number ) .
-binary-op      = port-number ( "<>" | "><" ) port-number .
+                 ( name | number ) .
+binary-op      = number ( "<>" | "><" ) number .
+op-list        = ( unary-op | binary-op ) [ "," op-list ] .
 
 flags          = "flags" ( flag-set | flag-set "/" flag-set | "/" flag-set ) .
 flag-set       = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] .
@@ -264,6 +269,35 @@ show:
     pass in proto tcp from any port <= 1024 to any
     pass in proto tcp from any to any port 25
     pass in proto tcp from 10.0.0.0/8 port > 1024 to ! 10.1.2.3 port != 22
+.Ed
+.Ss ruid <ruid> euid <euid>
+The rule only applies to packets of sockets owned by the respective real
+and effective user IDs.
+For outgoing connections initiated from the firewall, this is the user
+that opened the connection.
+For incoming connections to the firewall itself, this is the user that
+listens on the destination port.
+For forwarded connections, where the firewall isn't a connection endpoint,
+the user is
+.Em unknown .
+All packets, both outgoing and incoming, of one connection are associated
+with the same user.
+Only TCP and UDP packets can be associated with users, for other protocols
+these parameters are ignored.
+Note that user IDs are stored when a socket is created;
+when a process creates a listening socket as root (for instance, because
+it wants to bind to a privileged port) and subsequently sets another
+user ID (to drop privileges), the socket's uid remains root.
+User IDs can be specified as either numbers or names, the syntax is
+similar to the one for ports.
+The value
+.Em unknown
+matches packets of forwarded connections.
+Example:
+.Bd -literal
+    # allow only specific users to open outgoing connections
+    block out proto { tcp, udp } all
+    pass  out proto { tcp, udp } all ruid { < 1000, dhartmei } keep state
 .Ed
 .Ss flags <a> | <a>/<b> | /<b>
 The rule only applies to TCP packets that have the flags <a> set

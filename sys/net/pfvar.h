@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.69 2002/05/05 21:40:22 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.70 2002/05/09 19:58:42 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -196,6 +196,11 @@ struct pf_addr_dyn {
 #endif /* PF_INET6_ONLY */
 #endif /* PF_INET_INET6 */
 
+struct pf_rule_uid {
+	uid_t		 uid[2];
+	u_int8_t	 op;
+};
+
 struct pf_rule_addr {
 	struct pf_addr_wrap	 addr;
 	struct pf_addr		 mask;
@@ -235,6 +240,9 @@ struct pf_rule {
 
 	u_int16_t		 nr;
 	u_int16_t		 return_icmp;
+
+	struct pf_rule_uid	 ruid;
+	struct pf_rule_uid	 euid;
 
 	u_int8_t		 action;
 	u_int8_t		 direction;
@@ -615,7 +623,9 @@ int	pflog_packet(struct ifnet *, struct mbuf *, int, u_short, u_short,
 	    struct pf_rule *);
 int	pf_match_addr(u_int8_t, struct pf_addr *, struct pf_addr *,
 	    struct pf_addr *, int);
+int	pf_match(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
 int	pf_match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
+int	pf_match_uid(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
 
 void	pf_normalize_init(void);
 int	pf_normalize_ip(struct mbuf **, int, struct ifnet *, u_short *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.61 2002/04/24 18:10:25 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.62 2002/05/09 19:58:42 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -46,6 +46,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <err.h>
+#include <pwd.h>
 
 #include "pfctl_parser.h"
 
@@ -82,6 +83,12 @@ struct node_port {
 	struct node_port	*next;
 };
 
+struct node_uid {
+	uid_t			 uid[2];
+	u_int8_t		 op;
+	struct node_uid		*next;
+};
+
 struct node_icmp {
 	u_int8_t		 code;
 	u_int8_t		 type;
@@ -98,20 +105,11 @@ int			 rule_consistent(struct pf_rule *);
 int			 yyparse(void);
 struct pf_rule_addr	*new_addr(void);
 void		 	 ipmask(struct pf_addr *, u_int8_t);
-void			 expand_rule_hosts(struct pf_rule *,
-			    struct node_if *, struct node_proto *,
-			    struct node_host *, struct node_port *,
-			    struct node_host *, struct node_port *,
-			    struct node_icmp *);
-void			 expand_rule_protos(struct pf_rule *,
-			    struct node_if *, struct node_proto *,
-			    struct node_host *, struct node_port *,
-			    struct node_host *, struct node_port *,
-			    struct node_icmp *);
 void			 expand_rule(struct pf_rule *,
 			    struct node_if *, struct node_proto *,
 			    struct node_host *, struct node_port *,
 			    struct node_host *, struct node_port *,
+			    struct node_uid *, struct node_uid *,
 			    struct node_icmp *);
 
 struct sym {
@@ -148,6 +146,7 @@ typedef struct {
 		struct node_icmp	*icmp;
 		struct node_host	*host;
 		struct node_port	*port;
+		struct node_uid		*uid;
 		struct peer		peer;
 		struct {
 			struct peer	src, dst;
@@ -172,12 +171,12 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token  ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
-%token	NOROUTE FRAGMENT
+%token	NOROUTE FRAGMENT RUID EUID
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.interface>	interface if_list if_item_not if_item
-%type	<v.number>	port icmptype icmp6type minttl
+%type	<v.number>	port icmptype icmp6type minttl uid
 %type	<v.i>	no dir log quick af keep nodf allowopts fragment
 %type	<v.b>	action flag flags blockspec
 %type	<v.range>	dport rport
@@ -187,6 +186,7 @@ typedef struct {
 %type	<v.peer>	ipportspec
 %type	<v.host>	ipspec xhost host address host_list IPV6ADDR
 %type	<v.port>	portspec port_list port_item
+%type	<v.uid>		ruid euid uid_list uid_item
 %type	<v.route>	route
 %type	<v.redirection>	redirection
 %type	<v.string>	label
@@ -213,7 +213,7 @@ varset		: STRING PORTUNARY STRING
 		}
 		;
 
-pfrule		: action dir log quick interface route af proto fromto flags icmpspec keep fragment nodf minttl allowopts label
+pfrule		: action dir log quick interface route af proto fromto ruid euid flags icmpspec keep fragment nodf minttl allowopts label
 		{
 			struct pf_rule r;
 
@@ -234,18 +234,18 @@ pfrule		: action dir log quick interface route af proto fromto flags icmpspec ke
 
 
 			r.af = $7;
-			r.flags = $10.b1;
-			r.flagset = $10.b2;
+			r.flags = $12.b1;
+			r.flagset = $12.b2;
 
-			r.keep_state = $12;
+			r.keep_state = $14;
 
-			if ($13)
-				r.rule_flag |= PFRULE_FRAGMENT;
-			if ($14)
-				r.rule_flag |= PFRULE_NODF;
 			if ($15)
-				r.min_ttl = $15;
-			r.allow_opts = $16;
+				r.rule_flag |= PFRULE_FRAGMENT;
+			if ($16)
+				r.rule_flag |= PFRULE_NODF;
+			if ($17)
+				r.min_ttl = $17;
+			r.allow_opts = $18;
 
 			if ($6.rt) {
 				r.rt = $6.rt;
@@ -268,18 +268,18 @@ pfrule		: action dir log quick interface route af proto fromto flags icmpspec ke
 				}
 			}
 
-			if ($17) {
-				if (strlen($17) >= PF_RULE_LABEL_SIZE) {
+			if ($19) {
+				if (strlen($19) >= PF_RULE_LABEL_SIZE) {
 					yyerror("rule label too long (max "
 					    "%d chars)", PF_RULE_LABEL_SIZE-1);
 					YYERROR;
 				}
-				strlcpy(r.label, $17, sizeof(r.label));
-				free($17);
+				strlcpy(r.label, $19, sizeof(r.label));
+				free($19);
 			}
 
 			expand_rule(&r, $5, $8, $9.src.host, $9.src.port,
-			    $9.dst.host, $9.dst.port, $11);
+			    $9.dst.host, $9.dst.port, $10, $11, $13);
 		}
 		;
 
@@ -617,6 +617,71 @@ port		: NUMBER			{
 				YYERROR;
 			}
 			$$ = s->s_port;
+		}
+		;
+
+ruid		: /* empty */			{ $$ = NULL; }
+		| RUID uid_item			{ $$ = $2; }
+		| RUID '{' uid_list '}'		{ $$ = $3; }
+		;
+
+euid		: /* empty */			{ $$ = NULL; }
+		| EUID uid_item			{ $$ = $2; }
+		| EUID '{' uid_list '}'		{ $$ = $3; }
+		;
+
+uid_list	: uid_item			{ $$ = $1; }
+		| uid_list ',' uid_item		{ $3->next = $1; $$ = $3; }
+		;
+
+uid_item	: uid				{
+			$$ = malloc(sizeof(struct node_uid));
+			if ($$ == NULL)
+				err(1, "uid_item: malloc");
+			$$->uid[0] = $1;
+			$$->uid[1] = $1;
+			$$->op = PF_OP_EQ;
+			$$->next = NULL;
+		}
+		| PORTUNARY uid			{
+			$$ = malloc(sizeof(struct node_uid));
+			if ($$ == NULL)
+				err(1, "uid_item: malloc");
+			$$->uid[0] = $2;
+			$$->uid[1] = $2;
+			$$->op = $1;
+			$$->next = NULL;
+		}
+		| uid PORTBINARY uid		{
+			$$ = malloc(sizeof(struct node_uid));
+			if ($$ == NULL)
+				err(1, "uid_item: malloc");
+			$$->uid[0] = $1;
+			$$->uid[1] = $3;
+			$$->op = $2;
+			$$->next = NULL;
+		}
+		;
+
+uid		: NUMBER			{
+			if ($1 < 0 || $1 >= UID_MAX) {
+				yyerror("illegal uid value %d", $1);
+				YYERROR;
+			}
+			$$ = $1;
+		}
+		| STRING			{
+			if (!strcmp($1, "unknown"))
+				$$ = UID_MAX;
+			else {
+				struct passwd *pw;
+
+				if ((pw = getpwnam($1)) == NULL) {
+					yyerror("unknown user %s", $1);
+					YYERROR;
+				}
+				$$ = pw->pw_uid;
+			}
 		}
 		;
 
@@ -1320,6 +1385,8 @@ struct keywords {
 	int	 k_val;
 };
 
+/* macro gore, but you should've seen the prior indentation nightmare... */
+
 #define CHECK_ROOT(T,r) \
 	do { \
 		if (r == NULL) { \
@@ -1340,126 +1407,24 @@ struct keywords {
 		} \
 	} while (0)
 
-void expand_rule_hosts(struct pf_rule *r,
-    struct node_if *interface, struct node_proto *proto,
-    struct node_host *src_hosts, struct node_port *src_ports,
-    struct node_host *dst_hosts, struct node_port *dst_ports,
-    struct node_icmp *icmp_type)
-{
-	struct node_host *src_host, *dst_host;
-	struct node_port *src_port, *dst_port;
-	int nomatch = 0;
-
-	src_host = src_hosts;
-	while (src_host != NULL) {
-		src_port = src_ports;
-		while (src_port != NULL) {
-			dst_host = dst_hosts;
-			while (dst_host != NULL) {
-				dst_port = dst_ports;
-				while (dst_port != NULL) {
-					memcpy(r->ifname, interface->ifname,
-					  sizeof(r->ifname));
-					r->proto = proto->proto;
-					r->src.addr = src_host->addr;
-					r->src.mask = src_host->mask;
-					r->src.noroute = src_host->noroute;
-					r->src.not = src_host->not;
-					r->src.port[0] = src_port->port[0];
-					r->src.port[1] = src_port->port[1];
-					r->src.port_op = src_port->op;
-					r->dst.addr = dst_host->addr;
-					r->dst.mask = dst_host->mask;
-					r->dst.noroute = dst_host->noroute;
-					r->dst.not = dst_host->not;
-					r->dst.port[0] = dst_port->port[0];
-					r->dst.port[1] = dst_port->port[1];
-					r->dst.port_op = dst_port->op;
-					r->type = icmp_type->type;
-					r->code = icmp_type->code;
-					
-					if ((src_host->af && dst_host->af && 
-						r->af) && (src_host->af != 
-						    dst_host->af || 
-						    src_host->af != r->af || 
-						    dst_host->af != r->af)) {
-						yyerror("address family"
-						    " mismatch");
-						nomatch++;
-					} else if ((src_host->af && 
-						       dst_host->af) && 
-					    (src_host->af != dst_host->af)) {
-						yyerror("address family"
-						    " mismatch");
-						nomatch++;
-					} else if ((src_host->af && r->af) && 
-					    (src_host->af != r->af)) {
-						yyerror("address family"
-						    " mismatch");
-						nomatch++;
-					} else if ((dst_host->af && r->af) && 
-					    (dst_host->af != r->af)) {
-						yyerror("address family"
-						    " mismatch");
-						nomatch++;
-					} else if (src_host->af && !r->af) {
-						r->af = src_host->af;
-					} else if (dst_host->af && !r->af) {
-						r->af= dst_host->af;
-					}
-					
-					if (icmp_type->proto &&
-					    r->proto != icmp_type->proto) {
-						yyerror("icmp-type mismatch");
-						nomatch++;
-					}
-
-					if (rule_consistent(r) < 0 || nomatch)
-						yyerror("skipping rule "
-						    "due to errors");
-					else {
-						r->nr = pf->rule_nr++;
-						pfctl_add_rule(pf, r);
-					}
-					dst_port = dst_port->next;
-				}
-				dst_host = dst_host->next;
-			}
-			src_port = src_port->next;
-		}
-		src_host = src_host->next;
-	}
-}
-
-void expand_rule_protos(struct pf_rule *r,
-    struct node_if *interface, struct node_proto *protos,
-    struct node_host *src_hosts, struct node_port *src_ports,
-    struct node_host *dst_hosts, struct node_port *dst_ports,
-    struct node_icmp *icmp_types)
-{
-	struct node_proto *proto;
-	struct node_icmp *icmp_type;
-
-	proto = protos;
-	while (proto != NULL) {
-		icmp_type = icmp_types;
-		while (icmp_type != NULL) {
-			expand_rule_hosts(r, interface, proto, src_hosts,
-			    src_ports, dst_hosts, dst_ports, icmp_type);
-			icmp_type = icmp_type->next;
-		}
-		proto = proto->next;
-	}
-}
+#define LOOP_THROUGH(T,n,r,C) \
+	do { \
+		T *n = r; \
+		while (n != NULL) { \
+			C; \
+			n = n->next; \
+		} \
+	} while (0)
 
 void
 expand_rule(struct pf_rule *r,
     struct node_if *interfaces, struct node_proto *protos,
     struct node_host *src_hosts, struct node_port *src_ports,
     struct node_host *dst_hosts, struct node_port *dst_ports,
+    struct node_uid *ruids, struct node_uid *euids,
     struct node_icmp *icmp_types)
 {
-	struct node_if *interface;
+	int nomatch = 0;
 
 	CHECK_ROOT(struct node_if, interfaces);
 	CHECK_ROOT(struct node_proto, protos);
@@ -1467,14 +1432,81 @@ expand_rule(struct pf_rule *r,
 	CHECK_ROOT(struct node_port, src_ports);
 	CHECK_ROOT(struct node_host, dst_hosts);
 	CHECK_ROOT(struct node_port, dst_ports);
+	CHECK_ROOT(struct node_uid, ruids);
+	CHECK_ROOT(struct node_uid, euids);
 	CHECK_ROOT(struct node_icmp, icmp_types);
 
-	interface = interfaces;
-	while (interface != NULL) {
-		expand_rule_protos(r, interface, protos, src_hosts,
-		    src_ports, dst_hosts, dst_ports, icmp_types);
-		interface = interface->next;
-	}
+	LOOP_THROUGH(struct node_if, interface, interfaces,
+	LOOP_THROUGH(struct node_proto, proto, protos,
+	LOOP_THROUGH(struct node_icmp, icmp_type, icmp_types,
+	LOOP_THROUGH(struct node_host, src_host, src_hosts,
+	LOOP_THROUGH(struct node_port, src_port, src_ports,
+	LOOP_THROUGH(struct node_host, dst_host, dst_hosts,
+	LOOP_THROUGH(struct node_port, dst_port, dst_ports,
+	LOOP_THROUGH(struct node_uid, ruid, ruids,
+	LOOP_THROUGH(struct node_uid, euid, euids,
+
+		memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
+		r->proto = proto->proto;
+		r->src.addr = src_host->addr;
+		r->src.mask = src_host->mask;
+		r->src.noroute = src_host->noroute;
+		r->src.not = src_host->not;
+		r->src.port[0] = src_port->port[0];
+		r->src.port[1] = src_port->port[1];
+		r->src.port_op = src_port->op;
+		r->dst.addr = dst_host->addr;
+		r->dst.mask = dst_host->mask;
+		r->dst.noroute = dst_host->noroute;
+		r->dst.not = dst_host->not;
+		r->dst.port[0] = dst_port->port[0];
+		r->dst.port[1] = dst_port->port[1];
+		r->dst.port_op = dst_port->op;
+		r->ruid.op = ruid->op;
+		r->ruid.uid[0] = ruid->uid[0];
+		r->ruid.uid[1] = ruid->uid[1];
+		r->euid.op = euid->op;
+		r->euid.uid[0] = euid->uid[0];
+		r->euid.uid[1] = euid->uid[1];
+		r->type = icmp_type->type;
+		r->code = icmp_type->code;
+		
+		if ((src_host->af && dst_host->af && r->af) &&
+		    (src_host->af != dst_host->af || src_host->af != r->af || 
+			    dst_host->af != r->af)) {
+			yyerror("address family mismatch");
+			nomatch++;
+		} else if ((src_host->af && dst_host->af) &&
+		    (src_host->af != dst_host->af)) {
+			yyerror("address family mismatch");
+			nomatch++;
+		} else if ((src_host->af && r->af) &&
+		    (src_host->af != r->af)) {
+			yyerror("address family mismatch");
+			nomatch++;
+		} else if ((dst_host->af && r->af) && 
+		    (dst_host->af != r->af)) {
+			yyerror("address family mismatch");
+			nomatch++;
+		} else if (src_host->af && !r->af) {
+			r->af = src_host->af;
+		} else if (dst_host->af && !r->af) {
+			r->af= dst_host->af;
+		}
+		
+		if (icmp_type->proto && r->proto != icmp_type->proto) {
+			yyerror("icmp-type mismatch");
+			nomatch++;
+		}
+
+		if (rule_consistent(r) < 0 || nomatch)
+			yyerror("skipping rule due to errors");
+		else {
+			r->nr = pf->rule_nr++;
+			pfctl_add_rule(pf, r);
+		}
+
+	)))))))));
 
 	FREE_LIST(struct node_if, interfaces);
 	FREE_LIST(struct node_proto, protos);
@@ -1482,12 +1514,14 @@ expand_rule(struct pf_rule *r,
 	FREE_LIST(struct node_port, src_ports);
 	FREE_LIST(struct node_host, dst_hosts);
 	FREE_LIST(struct node_port, dst_ports);
+	FREE_LIST(struct node_uid, ruids);
+	FREE_LIST(struct node_uid, euids);
 	FREE_LIST(struct node_icmp, icmp_types);
-	
 }
 
 #undef FREE_LIST
 #undef CHECK_ROOT
+#undef LOOP_THROUGH
 
 int
 kw_cmp(k, e)
@@ -1508,6 +1542,7 @@ lookup(char *s)
 		{ "block",	BLOCK},
 		{ "code",	CODE},
 		{ "dup-to",	DUPTO},
+		{ "euid",	EUID},
 		{ "fastroute",	FASTROUTE},
 		{ "flags",	FLAGS},
 		{ "fragment",	FRAGMENT},
@@ -1539,6 +1574,7 @@ lookup(char *s)
 		{ "return-icmp6",RETURNICMP6},
 		{ "return-rst",	RETURNRST},
 		{ "route-to",	ROUTETO},
+		{ "ruid",	RUID},
 		{ "scrub",	SCRUB},
 		{ "state",	STATE},
 		{ "to",		TO},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.67 2002/05/05 21:40:22 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.68 2002/05/09 19:58:42 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,7 +58,9 @@ int		 unmask (struct pf_addr *, u_int8_t);
 void		 print_addr (struct pf_addr_wrap *, struct pf_addr *, u_int8_t);
 void		 print_host (struct pf_state_host *, u_int8_t, int);
 void		 print_seq (struct pf_state_peer *);
+void		 print_op (u_int8_t, const char *, const char *);
 void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);
+void		 print_uid (u_int8_t, uid_t, uid_t, const char *);
 void		 print_flags (u_int8_t);
 
 char *tcpflags = "FSRPAU";
@@ -351,35 +353,55 @@ print_seq(struct pf_state_peer *p)
 }
 
 void
+print_op(u_int8_t op, const char *a1, const char *a2)
+{
+	if (op == PF_OP_IRG)
+		printf("%s >< %s ", a1, a2);
+	else if (op == PF_OP_XRG)
+		printf("%s <> %s ", a1, a2);
+	else if (op == PF_OP_EQ) {
+		printf("= %s ", a1);
+	} else if (op == PF_OP_NE) {
+		printf("!= %s ", a1);
+	} else if (op == PF_OP_LT)
+		printf("< %s ", a1);
+	else if (op == PF_OP_LE)
+		printf("<= %s ", a1);
+	else if (op == PF_OP_GT)
+		printf("> %s ", a1);
+	else if (op == PF_OP_GE)
+		printf(">= %s ", a1);
+}
+
+void
 print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, char *proto)
 {
+	char a1[5], a2[5];
 	struct servent *s = getservbyport(p1, proto);
 
 	p1 = ntohs(p1);
 	p2 = ntohs(p2);
+	snprintf(a1, sizeof(a1), "%u", p1);
+	snprintf(a2, sizeof(a2), "%u", p2);
 	printf("port ");
-	if (op == PF_OP_IRG)
-		printf("%u >< %u ", p1, p2);
-	else if (op == PF_OP_XRG)
-		printf("%u <> %u ", p1, p2);
-	else if (op == PF_OP_EQ) {
-		if (s != NULL)
-			printf("= %s ", s->s_name);
-		else
-			printf("= %u ", p1);
-	} else if (op == PF_OP_NE) {
-		if (s != NULL)
-			printf("!= %s ", s->s_name);
-		else
-			printf("!= %u ", p1);
-	} else if (op == PF_OP_LT)
-		printf("< %u ", p1);
-	else if (op == PF_OP_LE)
-		printf("<= %u ", p1);
-	else if (op == PF_OP_GT)
-		printf("> %u ", p1);
-	else if (op == PF_OP_GE)
-		printf(">= %u ", p1);
+	if (s != NULL && (op == PF_OP_EQ || op == PF_OP_NE))
+		print_op(op, s->s_name, a2);
+	else
+		print_op(op, a1, a2);
+}
+
+void
+print_uid(u_int8_t op, uid_t u1, uid_t u2, const char *t)
+{
+	char a1[5], a2[5];
+
+	snprintf(a1, sizeof(a1), "%u", u1);
+	snprintf(a2, sizeof(a2), "%u", u2);
+	printf("%s ", t);
+	if (u1 == UID_MAX && (op == PF_OP_EQ || op == PF_OP_NE))
+		print_op(op, "unknown", a2);
+	else
+		print_op(op, a1, a2);
 }
 
 void
@@ -780,6 +802,12 @@ print_rule(struct pf_rule *r)
 			print_port(r->dst.port_op, r->dst.port[0],
 			    r->dst.port[1],
 			    r->proto == IPPROTO_TCP ? "tcp" : "udp");
+	}
+	if (r->ruid.op) {
+		print_uid(r->ruid.op, r->ruid.uid[0], r->ruid.uid[1], "ruid");
+	}
+	if (r->euid.op) {
+		print_uid(r->euid.op, r->euid.uid[0], r->euid.uid[1], "euid");
 	}
 	if (r->flags || r->flagset) {
 		printf("flags ");
