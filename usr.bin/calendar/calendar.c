@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.3 1996/09/16 16:36:04 millert Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.4 1996/12/04 09:06:00 deraadt Exp $	*/
 /*	$NetBSD: calendar.c,v 1.8 1995/09/02 05:38:38 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-static char rcsid[] = "$OpenBSD: calendar.c,v 1.3 1996/09/16 16:36:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: calendar.c,v 1.4 1996/12/04 09:06:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -112,6 +112,7 @@ main(argc, argv)
 	if (doall)
 		while ((pw = getpwent()) != NULL) {
 			(void)setegid(pw->pw_gid);
+			(void)initgroups(pw->pw_name, pw->pw_gid);
 			(void)seteuid(pw->pw_uid);
 			if (!chdir(pw->pw_dir))
 				cal();
@@ -140,7 +141,8 @@ cal()
 		if ((p = strchr(buf, '\n')) != NULL)
 			*p = '\0';
 		else
-			while ((ch = getchar()) != '\n' && ch != EOF);
+			while ((ch = getchar()) != '\n' && ch != EOF)
+				;
 		if (buf[0] == '\0')
 			continue;
 		if (buf[0] != '\t')
@@ -254,7 +256,8 @@ getfield(p, endp, flags)
 	int val;
 	char *start, savech;
 
-	for (; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p);
+	for (; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
+		;
 	if (*p == '*') {			/* `*' is current month */
 		*flags |= F_ISMONTH;
 		*endp = p+1;
@@ -262,11 +265,13 @@ getfield(p, endp, flags)
 	}
 	if (isdigit(*p)) {
 		val = strtol(p, &p, 10);	/* if 0, it's failure */
-		for (; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p);
+		for (; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
+			;
 		*endp = p;
 		return (val);
 	}
-	for (start = p; isalpha(*++p););
+	for (start = p; isalpha(*++p);)
+		;
 	savech = *p;
 	*p = '\0';
 	if ((val = getmonth(start)) != 0)
@@ -277,12 +282,13 @@ getfield(p, endp, flags)
 		*p = savech;
 		return (0);
 	}
-	for (*p = savech; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p);
+	for (*p = savech; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
+		;
 	*endp = p;
 	return (val);
 }
 
-char path[MAXPATHLEN + 1];
+char path[MAXPATHLEN];
 
 FILE *
 opencal()
@@ -309,6 +315,8 @@ opencal()
 			(void)close(pdes[1]);
 		}
 		(void)close(pdes[0]);
+		(void)setuid(geteuid());
+		(void)setgid(getegid());
 		execl(_PATH_CPP, "cpp", "-P", "-I.", _PATH_INCLUDE, NULL);
 		warn("execl: %s", _PATH_CPP);
 		_exit(1);
@@ -357,6 +365,8 @@ closecal(fp)
 			(void)close(pdes[0]);
 		}
 		(void)close(pdes[1]);
+		(void)setuid(geteuid());
+		(void)setgid(getegid());
 		execl(_PATH_SENDMAIL, "sendmail", "-i", "-t", "-F",
 		    "\"Reminder Service\"", "-f", "root", NULL);
 		warn("execl: %s", _PATH_SENDMAIL);
@@ -373,7 +383,8 @@ closecal(fp)
 	(void)close(pdes[1]);
 done:	(void)fclose(fp);
 	(void)unlink(path);
-	while (wait(&status) >= 0);
+	while (wait(&status) >= 0)
+		;
 }
 
 static char *months[] = {
