@@ -41,7 +41,7 @@ do
 	status)	echo "$PS";;
 	dumpdb)	kill -INT $PID && echo Dumping Database;;
 	reload)	kill -HUP $PID && echo Reloading Database;;
-	stats)	kill -%ABRT% $PID && echo Dumping Statistics;;
+	stats)	kill -%IOT% $PID && echo Dumping Statistics;;
 	trace)	kill -USR1 $PID && echo Trace Level Incremented;;
 	notrace) kill -USR2 $PID && echo Tracing Cleared;;
 	querylog|qrylog) kill -WINCH $PID && echo Query Logging Toggled;;
