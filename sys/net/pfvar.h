@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.139 2003/04/09 15:32:59 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.140 2003/04/11 14:40:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -961,6 +961,8 @@ extern int			 pf_dynaddr_setup(struct pf_addr_wrap *,
 extern void			 pf_dynaddr_copyout(struct pf_addr_wrap *);
 extern void			 pf_dynaddr_remove(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
+extern void			 pf_rule_set_qid(struct pf_rulequeue *);
+extern u_int32_t		 pf_qname_to_qid(char *);
 extern void			 pf_update_anchor_rules(void);
 extern struct pool		 pf_tree_pl, pf_rule_pl, pf_addr_pl;
 extern struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.336 2003/04/09 18:21:58 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.337 2003/04/11 14:40:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -180,6 +180,8 @@ int			 pf_test_state_other(struct pf_state **, int,
 void			*pf_pull_hdr(struct mbuf *, int, void *, int,
 			    u_short *, u_short *, sa_family_t);
 void			 pf_calc_skip_steps(struct pf_rulequeue *);
+void			 pf_rule_set_qid(struct pf_rulequeue *);
+u_int32_t		 pf_qname_to_qid(char *);
 
 #ifdef INET6
 void			 pf_poolmask(struct pf_addr *, struct pf_addr*,
@@ -803,6 +805,33 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 	}
 	for (i = 0; i < PF_SKIP_COUNT; ++i)
 		PF_SET_SKIP_STEPS(i);
+}
+
+void
+pf_rule_set_qid(struct pf_rulequeue *rules)
+{
+	struct pf_rule *rule;
+
+	TAILQ_FOREACH(rule, rules, entries)
+		if (rule->qname[0] != 0) {
+			rule->qid = pf_qname_to_qid(rule->qname);
+			if (rule->pqname[0] != 0)
+				rule->pqid = pf_qname_to_qid(rule->pqname);
+			else
+				rule->pqid = rule->qid;
+		}
+}
+
+u_int32_t
+pf_qname_to_qid(char *qname)
+{
+	struct pf_altq		*altq;
+
+	TAILQ_FOREACH(altq, pf_altqs_active, entries)
+		if (!strcmp(altq->qname, qname))
+			return (altq->qid);
+
+	return (0);
 }
 
 void

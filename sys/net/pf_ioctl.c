@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.57 2003/04/09 15:32:59 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.58 2003/04/11 14:40:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -654,6 +654,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 
+#ifdef ALTQ
+		/* set queue IDs */
+		if (rs_num == PF_RULESET_FILTER)
+			pf_rule_set_qid(ruleset->rules[rs_num].inactive.ptr);
+#endif
+
 		/* Swap rules, keep the old. */
 		s = splsoftnet();
 		old_rules = ruleset->rules[rs_num].active.ptr;
@@ -825,6 +831,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			} else
 				newrule->ifp = NULL;
 
+#ifdef ALTQ
+			/* set queue IDs */
+			if (newrule->qname[0] != 0) {
+				newrule->qid = pf_qname_to_qid(newrule->qname);
+				if (newrule->pqname[0] != 0)
+					newrule->pqid =
+					    pf_qname_to_qid(newrule->pqname);
+				else
+					newrule->pqid = newrule->qid;
+			}
+#endif
 			if (newrule->rt && !newrule->direction)
 				error = EINVAL;
 			if (pf_dynaddr_setup(&newrule->src.addr, newrule->af))
@@ -1361,6 +1378,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int32_t		*ticket = (u_int32_t *)addr;
 		struct pf_altqqueue	*old_altqs;
 		struct pf_altq		*altq;
+		struct pf_anchor	*anchor;
+		struct pf_ruleset	*ruleset;
 		int			 err;
 
 		if (*ticket != ticket_altqs_inactive) {
@@ -1402,6 +1421,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			pool_put(&pf_altq_pl, altq);
 		}
 		splx(s);
+
+		/* update queue IDs */
+		pf_rule_set_qid(
+		    pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
+		TAILQ_FOREACH(anchor, &pf_anchors, entries) {
+			TAILQ_FOREACH(ruleset, &anchor->rulesets, entries) {
+				pf_rule_set_qid(
+				    ruleset->rules[PF_RULESET_FILTER].active.ptr
+				    );
+			}
+		}
 		break;
 	}
 
