@@ -1,0 +1,437 @@
+OpenBSD New User FAQ Version .2 by Jonathan Katz: jkatz@openbsd.org
+
+These are a few of the questions that seem to be asked every so-often on
+the mailing list. This is very early in the making for such a document, so
+if it doesn't contain what you are looking for, please ask and feel free
+to contribute. This document DOES NOT cover the installation process.
+
+Sections:
+
+1) Non-standard hardware OR "I can't get my hardware to work."
+2) Virtual Consoles
+3) How to compile a kernel
+4) Getting source code
+5) Rebuilding my system
+6) Ethernet quirks
+7) Problems loading X11 (XFree86)
+8) Finding other software (ports).
+9) Where do I get my OpenBSD 2.1 CD?
+10) disklabel and fdisk
+11) Miscellany (HELP!)
+
+-------------------------------------------------------
+
+1) My foobar 1230 SCSI adapter (or other peripheral) has a non-standard
+irq and doesn't work with the GENERIC or INSTALL kernels! 
+
+Yes it does. With a little tinkering and patience, anything can be
+accomplished.  At the OpenBSD boot prompt type "-c". IT should look
+something like this: 
+
+[OpenBSD boot Rev. 1.0a]
+boot>> -c
+
+You will eventually get a 'UKC>' prompt. Here you can type "list" and list
+all the devices that are compiled into this kernel. Once you find the name
+of the device you'd like to change, type "change devicename". UKC will guide
+you through the different attributes of the device that can be configured.
+Once you are finished adding the necessary configurations, you'll be back at
+the UKC> prompt. At the prompt type "quit" and your machine will continue to
+boot, with the updated info.
+
+2) How do I get virtual consoles?
+
+To start, virtual consoles are only supported on the i386 port. The
+default GENERIC kernel (the one you normally get after doing an install)
+has support for virtual consoles compiled in. If you are using an
+older GENERIC kernel, or a different kernel, support for "vt0" (the
+kernel device that controls virtual consoles) may not be included. If
+you are using the 2.1 release GENERIC kernel, you will have virtual
+consoles enabled.
+
+2.1) Now that I know I have virtual consoles, how do I use them?
+
+Unlike Linux, you need to hit cntrl+alt+fn to swap from console to
+console. By default (with the files in /dev from your install, and a newly
+compiled kernel with vt0 support)  you have four (F1 through F4) virtual
+consoles. If you make more ttyC devices in /dev (cd /dev; MAKEDEV ttyC4;
+MAKEDEV ttyC5;  MAKEDEV ttyC6; MAKEDEV ttyC7;) and edit /etc/ttys so that
+all the tty's are on, you will have a standard 8 virtual consoles. 
+
+3) How do I compile a kernel?
+
+Kernels can be compiled in under 9 steps (WOW!) 
+1) get the source code VIA FTP, CTM, or CVS (skip to CVS section if need be)
+2) cd /usr/src/sys/arch/(your_machine_type)/conf
+    NOTE: (your_machine_type) will vary with what kind of
+	processor you use. On my VAX 3400, it would be:
+		/usr/src/sys/arch/vax/conf
+	On my P5/100 it would be:
+		/usr/src/sys/arch/i386/conf
+	On my Sparc IPC it would be:
+		/usr/src/sys/arch/sparc/conf
+3) edit a config file to your liking and save it as a new name. 
+	(vi GENERIC; :w NEW_KERNEL_NAME :q)
+	Things to keep in mind:
+		Make your kernel name snazzy (you don't HAVE to do that).
+		Most people keep their kernel names in caps (general
+			convention).
+4) type "config NEW_KERNEL_NAME"
+	If all goes according to plan it will tell you to 
+	"don't forget to make depend!" If config chokes on 
+	your file, look at what it says and play with your 
+	configuration until you get it right.
+5) cd /usr/src/sys/arch/(your_machine_type)/compile/NEW_KERNEL_NAME
+	NOTE: config makes that DIRECTORY "NEW_KERNEL_NAME" all by
+	itself.
+6) make depend ; make
+7) su (if not root already); cp /bsd /bsd.old; cp bsd /bsd
+8) shutdown/reboot your system.
+9) Enjoy your custom kernel :-)
+
+4) How do I get source code?
+
+OpenBSD source code is obtained VIA CVS, FTP or CTM. If you've ftp'd the
+distribution of OpenBSD, it should be pretty simple for you to figure out
+how to FTP the source. CTM is covered in its own document on the WWW
+server. As for CVS, here is your crash course.  I've found that getting
+code VIA CVS is fast, easy, and means you get newer/better/bugfixed code. 
+
+NOTE: For example purposes I'm using anoncvs.openbsd.org which is a few
+miles of fiber away from me in the United States. You may want to pick a
+nearer cvs site for you to use (especially if you are downloading the
+tree, as downloading OpenBSD's powerful crypto from the States to sites in
+Europe breaks various laws). See the OpenBSD WWW sites for a cvs mirror
+close to home. If these instructions are not working for you, please skip
+to the section that talks about the "pserver" that has been set-up in
+order to aleviate the headache of a proxy/firewall that may be causing you
+some greif.
+
+INITIAL USE:
+cd /usr
+setenv CVSROOT anoncvs@anoncvs.openbsd.org:/cvs
+cvs -z 9 -q get -PA src
+
+UPDATE USE:
+cd /usr/src
+setenv CVSROOT anoncvs@anoncvs.openbsd.org:/cvs
+cvs -z 9 -q up -PAd 
+
+"pserver" WORK-AROUND:
+cd /usr
+setenv CVSROOT :pserver:anoncvs@anoncvs5.usa.openbsd.org:/cvs
+cvs login
+<type any password, it will return ok...work>
+cvs -z9 -q get src ..
+
+[From: Todd Miller... millert@openbsd.org]
+
+A quick explanation of the flags:
+"-z 9"  turns on compression-- the same as "gzip -9"
+"-q"	makes it quiet, as CVS can generate a lot of output
+"-d"	will create and update new directories if your tree does not have
+		them
+"-P"	prunes out old directories
+"-A" 	resets sticky tags
+
+5) How do I rebuild my system?
+
+Depending on what version system you have and what version source you
+have, it can be as easy as four steps, and as legnthy as 22. If
+you have a 2.1 CD (or downloaded 2.1) and are using "-current"
+sources, you should be able to recompile in 4 steps. In order to get 2.1
+(and later) versions to compile on a 2.0 based system, things get a little
+tricky.
+
+5.1) "The Four Steps" (as opposed to the Four Questions)
+
+If you want to be risky, you can just try doing a "make -k build" in
+/usr/src-- the four steps below follow a prudent guideline for making
+a new system.
+
+1) cd /usr/src/share/mk; make install
+2) mkdir /usr/obj; cd /usr/src; make obj
+3) make -k build && make install
+4) make cleandir
+
+A quick explanation:
+1) "fixes" Makefiles and make (if broken, which somestimes happens)
+2) makes the directory for objects, then makes the objects
+3) builds the entire system. "-k" is a flag to make that tries to have
+	make progress if there are any errors. "make build" also builds
+	the dependencies. "make install" makes SURE it gets installed--
+	"make build" is supposed to do the installing.
+4) this cleans up the source tree (deletes out extra binaries, etc)
+
+5.2) The long version. These are very detailed instructions given to
+misc@openbsd.org from Marco Hyman. If you aren't too paranoid, you can 
+actually skip some of the stuff in there, at your own risk. Please read 
+through carefully. If you aren't careful, you can actually hose your
+system up :(
+
+From marc@dumbcat.codewright.com Sun May  4 17:57:34 1997
+Date: Sat, 03 May 1997 12:10:35 -0700
+From: Marco S Hyman <marc@dumbcat.codewright.com>
+To: tech@openbsd.org, misc@openbsd.org
+Subject: From 2.0 to current in 22 steps
+
+Someone (Theo?) recently said that updating from a 2.0 to current was
+a bitch.  That sounded enough like a challenge that I thought I'd try
+it -- and document what I had to do at the same time.  Hope this is
+helpful to others.
+
+Given:
+ o System running 2.0 code
+ o -current source tree mounted as /usr/src.  My -current source lives on a
+   different host, so it happens to be NFS mounted.  This code was current
+   as of 1 May.
+ o An empty /usr/obj on the local disk.
+
+Variables:
+
+ * $arch=i386, the architecture I'm generating the code for
+ * $config=TRAVEL, my configuration file.  This is a copy of ALL with
+   everything I don't use commented out and a few minor changes.  Travel
+   is a Toshiba laptop and I wanted the PCMCIA modem to be com1 and the
+   PCMCIA ethernet card to be either ed0 or ep0, depending upon which
+   flavor or card I happen to be using.
+
+Ok, here are the steps.  Disclaimer mode:
+ - Some may not be necessary.
+ - There may be necessary steps that I missed and just luckely
+   have not run into problems yet.
+ - The order that I did things may be wrong.
+ - Etc.   
+[ FAQ assembler's note: This mailing was hearlded by some as a masterpiece
+rivaling the Magna Carta :) ]
+
+ [ 1] cd /usr/src/share/mk && make install
+      use the new make for everything
+
+ [ 2] cd /usr/src/includes && make includes
+      use the new included for everything
+
+ [ 3] cd /usr/src/bin/pdksh && make && make install && make clean
+      This is installed as /bin/sh which is needed for the next step.
+      The 2.0 /bin/sh does not work with making the object links.
+      The `make clean' step is to get the $arch specific objects
+      out of the source directory.
+
+ [ 4] cd /usr/src && make obj
+      make the obj links so that code is generated on the local disk,
+      not the NFS mounted source disk.  (Note: the kernel is still
+      generated in /sys/arch/$arch/compile/$config).
+
+ [ 5] cd /usr/src/usr.bin/mktemp && make && make install
+      mktemp is required to generate a kernel
+
+ [ 6] cd /usr/src/usr.sbin/config && make depend && make && make install
+      The latest config MUST be used to generate the new kernel.  If you
+      don't use this config you won't get past the "make depend" step
+      of kernel generation.
+
+ [ 7] cd /sys/arch/$arch/conf
+      edit your $config file if necessary.
+
+ [ 8] config $config
+      generate required files to build updated kernel.
+
+ [ 9] cd ../compile/$config && make clean && make depend && make
+      Don't forget the make clean.  It may not be necessary, but doesn't
+      hurt in any case.  The new config may have even warned you to do
+      this.
+
+ [10] mv /bsd /bsd- && mv bsd /
+      Get ready...
+
+ [11] reboot
+      Reboot your box and watch the console to see what's going on.  In
+      my case all went well.  Xdm started and gave me my console login.
+      I ssh'd from another host, su'd, and then re-mounted the current
+      source on /usr/src.  uname -a says:
+
+	OpenBSD travel.codewright.com 2.1 TRAVEL#0 i386
+
+ [12] cd /usr/src && make cleandir
+      We start with this step of the build process because the 
+      /usr/src/share/mk and the include files were installed above.
+
+ [13] cd /usr/src/usr.bin/compile_et && make depend && make && make install
+      this tool is required to build the libraries.
+
+ [14] cd /usr/src/usr.bin/mk_cmds && make depend && make && make install
+      this tool is required to build the libraries
+
+ [15] cd /usr/src/lib && make depend && make && make install
+      Go and have dinner then see a movie.  This should be done
+      just about the time you get back to the console.  At least
+      that's how long it takes on my old pentium portable.
+
+ [16] cd /usr/src/gnu/usr.bin/ld && make depend && make && make install
+      needed for the gnu libraries (libg++ will fail)
+
+ [17] cd /usr/src/gnu/lib && make depend && make && make install
+
+ [18] cd /usr/src/kerberosIV && make build
+
+ [19] cd /usr/src/gnu/usr.bin/texinfo && \
+      make -f Makefile.bsd-wrapper && \
+      make -f Makefile.bsd-wrapper install
+      The updated makeinfo is required by gcc which is generated
+      before makeinfo when doing a standard `make'
+
+ [20] cd /usr/src && make depend && make && make install
+
+ [21] reboot
+      See that everything comes up.  If your source lives on a
+      remote machine (like mine does), mount it on /usr/src.
+
+ [22] cd /usr/src && make build
+      This step is optional.  I like to use the generated system to
+      regenerate the full system just to ensure that all is OK.
+      Probably best to start this before you go to bed.  It might
+      be done by the time you wake up.
+
+As I type this I've completed steps 1-21.  Step 22 is in progress.  I'll
+mail out an update if I run into any problems.  Again, I hope this is
+helpful to others.
+
+// marc
+
+There you have it!
+
+6) Why can't I use my old linux ifconfig commands and flags?
+
+Linux's implementations of "ifconfig" and "route" are not standard.
+OpenBSD's versions are normal. To get my ne2000 clone working, I type:
+
+corinne# ifconfig ed2 205.212.82.80 up
+corinne# route add default 205.212.82.1
+
+That should work to get ANY ethernet interface working, as long as you
+specify the correct IP numbers and interface.
+
+6.1) Whenever I do anything to the network I get a "device timeout"
+	error!?!
+
+This is because you have an incorrect hardware or irq address assigned to
+your ethernet interface. To fix this, reboot the machine with the "-c"
+flag and change the attributes for your ethernet interface. See the
+general instructions in item 1 of this FAQ on how to change how the
+kernel talks to your hardware.
+
+6.2) Hey, my IP Aliasing breaks after trying to add a third host!
+
+Aliasing one additional host usually isn't a big deal. When a user tries
+to alias a third or fourth host, sometimes things break. Adding 
+"netmask 0xffffffff" to the end of your "ifconfig" for adding the aliased
+host solves the problem. i.e.:
+
+sparcy# ifconfig le0 alias 123.45.67.89 netmask 0xffffffff
+
+7) Why won't XFree86 load on my (insert really cool/expensive, you
+know-it-will-work-because-you-checked-it-on-the-compatability-list at
+xfree86.org)  graphics card? 
+
+Some of the X servers require direct access to "/dev/mem" (raw memory) 
+in order to work. By default, the OpenBSD kernel does not allow for this.
+There are two solutions:
+	A) recompile a kernel with "option insecure" in your configuration
+	   file.
+	B) Use the "apature" Loadable Kernel Module (lkm) found in the X11
+	   distribution.
+
+8) Where's pine (or other GNU/semi-free utility)?
+
+All about ports (as cribbed from www.openbsd.org/ports.html)
+  
+OpenBSD is a fairly complete system of its own, but there still is a lot
+of software that one might want see added to their own system.  However,
+one has to draw the line on what to include and leave out, as well as
+having to follow licensing and export restrictions laws.  Because of these
+problems, some software cannot be shipped with the system. We wanted to
+find a way for users to easily get software we don't provide and started
+to look around. We didn't have to look far because a sibling project,
+FreeBSD, has an excellent mechanism for exactly this purpose called "The
+Ports Collection". After thinking about it for a while we decided to try
+and use their collection as is, feeding back necessary patches that make
+the ports work on OpenBSD as well as FreeBSD. 
+
+The ports idea is to have, for each piece of software, a Makefile that
+describes where to download it from, how to alter the sources (if needed)
+and how to build and install it. Furthermore some patches will have to be
+kept in the "port" as well as some administration files for the package
+registry utilities. Normally this information is kept in an hierarchy
+under /usr/ports (this is configurable, and can be changed). The entire
+ports tree can be found at
+	ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports.tar.gz
+
+Note that this isn't a file on their server, rather it archives their
+directories on-the-fly. The entire collection is almost 3.1M tarred and
+gzip'd and will probably be twice that when uncompressed. The ports tree
+is also on the 2.1 CD.
+
+Let's say you managed to get a ports tree sitting under /usr/ports, then
+you should be able to something like this:
+
+	mitnick% su
+	mitnick# cd /usr/ports/archivers/unzip
+	mitnick# make
+	mitnick# make install
+	mitnick# exit
+
+Easy, huh?
+
+9) Where do I get my OpenBSD 2.1 CD?
+
+To preface, because OpenBSD contains powerful crypto, CDs are being
+distributed from Canda, Sweden, and Argentina. CDs cost $30 US plus
+shipping ($3-$8 US, generally). The CDs are a two CD set, complete with
+binaries for the Alpha, i386, Sparc, Amiga, Arc, Mac (68k), Pmax, and
+Motorola 68k VME systems, source code, X11R6.3, XFree86 3.3 (binaries and
+sources). In addition, The CDs are designed to be bootable on multiple
+architectures.
+
+http://www.openbsd.org/orders.html will take you through the credit card
+on-line odering system. To order VIA phone, call +1 (403) 605-8166
+between 8AM and 5PM North American Mountain Standard Time. Please
+have your American Express, Master Card or Visa ready.
+
+10) disklabel and fdisk
+
+disklabel and fdisk are different in OpenBSD than what most users are used
+to in different oprating systems. Both disklabel and fdisk are coverend
+in-depth in various install documents as well as their respective man
+pages. This portion of the FAQ is here only to explain the philosophy of
+the situation.
+
+In OpenBSD, disklabel is the core program used to modify and view a
+system's hard disk. disklabel is used to establish the disk's partitions
+as well as write the OpenBSD disklabel to disk. disklabel is also used to
+display which partitions are which. By running disklabel with an argument
+like "wd0" (think "disklabel wd0") the output will show not only what
+partitions of the disk are used by OpenBSD, but also what partitions ca be
+used to access DOS partitions.
+
+Unlike Linux, DOS, or FreeBSD, OpenBSD's fdisk is not
+full-screen/interactive. fdisk is used to manipulate partitions other than
+OpenBSD partitions as wel as the MBR on various hard disks. If you are
+sharing a disk between DOS and OpenBSD, you can change which partition is
+active with fdisk. fdisk can also be used to display the same partition
+information as disklabel, although the format of the output is different.
+
+11) XXYYZZ (system something) is broken!
+
+The OpenBSD source tree is always evolving. The 2.1 release is wonderful
+and stable; however since the release snapshots will be made with many
+bugfixes every so often.  Make sure you are running the latest code before
+giving up. See the OpenBSD ftp mirrors (as listed on the OpenBSD www
+sites) as well as the CVS section on how to obtain the source. ALSO, watch
+the misc@openbsd.org and announce@openbsd.org mailing lists for vital
+information. As another resource with your problems, check the OpenBSD
+mailing list archive, where it is quite possible that your question or
+concern has already been addressed. PS: always "man (utility)" and
+"apropos (problem)" because the answer you are looking for can lurk in the
+documentation. 
+
+970615 jkatz@openbsd.org
