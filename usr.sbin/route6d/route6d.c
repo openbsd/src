@@ -1,5 +1,5 @@
-/*	$OpenBSD: route6d.c,v 1.11 2000/10/10 13:06:29 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.37 2000/10/10 13:02:30 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.12 2000/11/10 18:15:47 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.39 2000/11/07 16:39:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.11 2000/10/10 13:06:29 itojun Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.12 2000/11/10 18:15:47 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -2135,10 +2135,22 @@ do { \
 	RTFLAG("m", RTF_MASK);
 #endif
 	RTFLAG("C", RTF_CLONING);
+#ifdef RTF_CLONED
+	RTFLAG("c", RTF_CLONED);
+#endif
+#ifdef RTF_PRCLONING
+	RTFLAG("c", RTF_PRCLONING);
+#endif
+#ifdef RTF_WASCLONED
+	RTFLAG("W", RTF_WASCLONED);
+#endif
 	RTFLAG("X", RTF_XRESOLVE);
 	RTFLAG("L", RTF_LLINFO);
 	RTFLAG("S", RTF_STATIC);
 	RTFLAG("B", RTF_BLACKHOLE);
+#ifdef RTF_PROTO3
+	RTFLAG("3", RTF_PROTO3);
+#endif
 	RTFLAG("2", RTF_PROTO2);
 	RTFLAG("1", RTF_PROTO1);
 #undef RTFLAG
@@ -2250,6 +2262,21 @@ rt_entry(rtm, again)
 		(RTF_CLONING|RTF_XRESOLVE|RTF_LLINFO|RTF_BLACKHOLE)) {
 		return;		/* not interested in the link route */
 	}
+	/* do not look at cloned routes */
+#ifdef RTF_WASCLONED
+	if (rtm->rtm_flags & RTF_WASCLONED)
+		return;
+#endif
+#ifdef RTF_CLONED
+	if (rtm->rtm_flags & RTF_CLONED)
+		return;
+#endif
+	/*
+	 * do not look at dynamic routes.
+	 * netbsd/openbsd cloned routes have UGHD.
+	 */
+	if (rtm->rtm_flags & RTF_DYNAMIC)
+		return;
 	rtmp = (char *)(rtm + 1);
 	/* Destination */
 	if ((rtm->rtm_addrs & RTA_DST) == 0)
