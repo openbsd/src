@@ -1,18 +1,16 @@
-#	$OpenBSD: M197,v 1.11 2001/12/13 20:32:56 miod Exp $
+#	$OpenBSD: M197,v 1.12 2001/12/16 23:49:43 miod Exp $
 
 machine mvme88k
 
 include "../../../conf/GENERIC"
 
-option		MVME197		# support for 197 (requires M88110)
+option 		MVME197		# support for 197
 option		"NCPUS=1"	# Number of cpus supported (max 4)
 option		BUGMAP		# use Bug Rom VME Mappings
-
 #option		DEBUG		# print debugging statements
 #option		EH_DEBUG	# debugging code for exception handlers
 
 # Define this if your processor has the xxx.usr bug (mask C82N)
-# In doubt, leave it enabled.
 option		ERRATA__XXX_USR	
 
 maxusers 64
@@ -24,10 +22,10 @@ mainbus0 at root
 
 # ------------------------------ mainbus devices ------------------------
 bugtty0 at mainbus0
-bussw0 at mainbus0 addr 0xfff00000
+busswitch0 at mainbus0 addr 0xfff00000
 
 # ----------------------------- busswitch devices -----------------------
-pcctwo0 at bussw0 offset 0x42000
+pcctwo0 at busswitch0 offset 0x42000
 
 # ------------------------------ pcctwo devices -------------------------
 clock0	at pcctwo0 ipl 5
@@ -46,19 +44,19 @@ vmes0	at vme0
 vmel0	at vme0
 
 # ------------------------------ vmes0 devices -------------------------
-vx0	at vmes0 addr 0xff780000 ipl 3 len 0x10000
-vx1	at vmes0 addr 0xff790000 ipl 3 len 0x10000
-vx2	at vmes0 addr 0xff7a0000 ipl 3 len 0x10000
-vx3	at vmes0 addr 0xff7b0000 ipl 3 len 0x10000
-ve0	at vmes0 addr 0xffff1200 ipl 1 len 0x100
-ve1	at vmes0 addr 0xffff1400 ipl 1 len 0x100
-ve2	at vmes0 addr 0xffff1600 ipl 1 len 0x100
-vs0	at vmes0 addr 0xffff9000 ipl 2 len 0x800
-vs1	at vmes0 addr 0xffff9800 ipl 2 len 0x800
-vs2	at vmes0 addr 0xffff4800 ipl 2 len 0x800
-vs3	at vmes0 addr 0xffff5800 ipl 2 len 0x800
-vs4	at vmes0 addr 0xffff7000 ipl 2 len 0x800
-vs5	at vmes0 addr 0xffff7800 ipl 2 len 0x800
+vx0	at vmes0 addr 0xff780000 ipl 3 vec 0x70 len 0x10000
+vx1	at vmes0 addr 0xff790000 ipl 3 vec 0x71	len 0x10000
+vx2	at vmes0 addr 0xff7a0000 ipl 3 vec 0x72 len 0x10000
+vx3	at vmes0 addr 0xff7b0000 ipl 3 vec 0x73 len 0x10000
+ve0	at vmes0 addr 0xffff1200 ipl 1 vec 0x74 len 0x100
+ve1	at vmes0 addr 0xffff1400 ipl 1 vec 0x75 len 0x100
+ve2	at vmes0 addr 0xffff1600 ipl 1 vec 0x76 len 0x100
+vs0	at vmes0 addr 0xffff9000 ipl 2 vec 0x80 len 0x800
+vs1	at vmes0 addr 0xffff9800 ipl 2 vec 0x82 len 0x800
+vs2	at vmes0 addr 0xffff4800 ipl 2 vec 0x84 len 0x800
+vs3	at vmes0 addr 0xffff5800 ipl 2 vec 0x86 len 0x800
+vs4	at vmes0 addr 0xffff7000 ipl 2 vec 0x88 len 0x800
+vs5	at vmes0 addr 0xffff7800 ipl 2 vec 0x8a len 0x800
 
 # ------------------------------- vs0 devices --------------------------
 scsibus* at vs?

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.13 2001/12/13 08:55:51 smurph Exp $	*/
+/*	$OpenBSD: dart.c,v 1.14 2001/12/16 23:49:46 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -185,11 +185,10 @@ dartmatch(parent, vcf, args)
 	union dartreg *addr;
 
 	/* Don't match if wrong cpu */
-	if (brdtyp != BRD_188) return (0);
+	if (cputyp != CPU_188) return (0);
 	ca->ca_vaddr = ca->ca_paddr; /* 1:1 */
 	addr = (union dartreg *)ca->ca_vaddr;
-	
-	if (badvaddr((vaddr_t)addr, 2)) {
+	if (badvaddr((vaddr_t)addr, 2) <= 0) {
 		printf("==> dart: failed address check.\n");
 		return (0);
 	}
@@ -1139,7 +1138,7 @@ dartcnprobe(cp)
 {
 	int maj;
 
-	if (brdtyp != BRD_188) {
+	if (cputyp != CPU_188) {
 		cp->cn_pri = CN_DEAD;
 		return 0;
 	}

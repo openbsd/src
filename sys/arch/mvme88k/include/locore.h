@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.12 2001/12/13 08:55:51 smurph Exp $	*/
+/*	$OpenBSD: locore.h,v 1.13 2001/12/16 23:49:46 miod Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -40,16 +40,25 @@ int db_are_interrupts_disabled __P((void));
 void fubail __P((void));
 void subail __P((void));
 
+#if defined(MVME187) || defined(MVME188)
 int guarded_access __P((volatile unsigned char *address,
     unsigned len, u_char *vec));
+#endif 
+
 
 /* locore_c_routines.c */
 
-#ifdef M88100
+#if defined(MVME187) || defined(MVME188)
 void dae_print __P((unsigned *eframe));
 void data_access_emulation __P((unsigned *eframe));
 #endif 
-
+#ifdef MVME188
+unsigned int safe_level __P((unsigned mask, unsigned curlevel));
+#if 0
+void block_obio_interrupt __P((unsigned mask));
+void unblock_obio_interrupt __P((unsigned mask));
+#endif
+#endif 
 unsigned spl __P((void));
 unsigned getipl __P((void));
 #ifdef DDB
@@ -71,35 +80,32 @@ void dosoftint __P((void));
 void MY_info __P((struct trapframe *f, caddr_t p, int flags, char *s));
 void MY_info_done __P((struct trapframe *f, int flags));
 void mvme_bootstrap __P((void));
-#ifdef MVME187
-void m187_ext_int __P((u_int v, struct m88100_saved_state *eframe));
-#endif
 #ifdef MVME188
 void m188_reset __P((void));
 void m188_ext_int __P((u_int v, struct m88100_saved_state *eframe));
-unsigned int safe_level __P((unsigned mask, unsigned curlevel));
 #endif
-#ifdef MVME197
-void m197_ext_int __P((u_int v, struct m88100_saved_state *eframe));
+#if defined(MVME187) || defined(MVME197)
+void sbc_ext_int __P((u_int v, struct m88100_saved_state *eframe));
 #endif
+
 
 /* eh.S */
 
 struct proc;
 void proc_do_uret __P((struct proc *));
-#ifdef M88100
+#if defined(MVME187) || defined(MVME188)
 void sigsys __P((void));
 void sigtrap __P((void));
 void stepbpt __P((void));
 void userbpt __P((void));
 void syscall_handler __P((void));
 #endif 
-#ifdef M88110
-void m88110_sigsys __P((void));
-void m88110_sigtrap __P((void));
-void m88110_stepbpt __P((void));
-void m88110_userbpt __P((void));
-void m88110_syscall_handler __P((void));
+#if defined(MVME197)
+void m197_sigsys __P((void));
+void m197_sigtrap __P((void));
+void m197_stepbpt __P((void));
+void m197_userbpt __P((void));
+void m197_syscall_handler __P((void));
 #endif 
 
 /* process.S */

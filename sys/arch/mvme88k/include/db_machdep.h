@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.17 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.18 2001/12/16 23:49:46 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -49,8 +49,7 @@
 
 #include <uvm/uvm_param.h>
 
-#define INTERNAL_SSTEP		/* Use local Single Step routines */
-#define BKPT_SIZE	(4)	/* number of bytes in bkpt inst. */
+#define BKPT_SIZE	(4)		/* number of bytes in bkpt inst. */
 #define BKPT_INST	(0xF000D000 | DDB_ENTRY_BKPT_NO)	/* tb0, 0,r0, vector 130 */
 #define BKPT_SET(inst)	(BKPT_INST)
 
@@ -72,9 +71,7 @@ extern db_regs_t	ddb_regs;	/* register state */
 ({ \
     int ret; \
  \
-    if (cputyp == CPU_88110) \
-            ret = regs->sxip & ~3; \
-    else if (regs->sxip & 2) /* is valid */ \
+    if (regs->sxip & 2) /* is valid */ \
 	ret = regs->sxip & ~3; \
     else if (regs->snip & 2) \
 	ret = regs->snip & ~3; \
@@ -88,15 +85,12 @@ extern db_regs_t	ddb_regs;	/* register state */
  * This is an actual function due to the fact that the sxip
  * or snip could be nooped out due to a jmp or rte
  */
-#define PC_REGS(regs) cputyp == CPU_88110 ? (regs->exip & ~3) :\
-	((regs->sxip & 2) ?  regs->sxip & ~3 : \
+#define PC_REGS(regs) ((regs->sxip & 2) ?  regs->sxip & ~3 : \
 	(regs->snip & 2 ? regs->snip & ~3 : regs->sfip & ~3))
-#define l_PC_REGS(regs) cputyp == CPU_88110 ? (regs->exip & ~3) :\
-	((regs->sxip & 2) ?  regs->sxip : \
+#define l_PC_REGS(regs) ((regs->sxip & 2) ?  regs->sxip : \
 	(regs->snip & 2 ? regs->snip : regs->sfip ))
 
-#define pC_REGS(regs) cputyp == CPU_88110 ? (regs->exip & ~3) :\
-	(regs->sxip & 2) ? regs->sxip : (regs->snip & 2 ? \
+#define pC_REGS(regs) (regs->sxip & 2) ? regs->sxip : (regs->snip & 2 ? \
 				regs->snip : regs->sfip)
 extern int db_noisy;
 #define NOISY(x) if (db_noisy) x
@@ -130,14 +124,8 @@ int ddb_entry_trap __P((int level, db_regs_t *eframe));
 /* we don't want coff support */
 #define DB_NO_COFF 1
 
-#ifdef INTERNAL_SSTEP
-extern register_t getreg_val __P((db_regs_t *, int));
-void db_set_single_step __P((register db_regs_t *));
-void db_clear_single_step __P((register db_regs_t *));
-#else
 /* need software single step */
-#define SOFTWARE_SSTEP 1 /* we need this for mc88100 */
-#endif 
+#define SOFTWARE_SSTEP 1 /* we need this XXX nivas */
 
 /*
  * Debugger can get to any address space

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.12 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: vs.c,v 1.13 2001/12/16 23:49:46 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -56,7 +56,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/param.h>
-#include <machine/cmmu.h>
 
 #if defined(mvme88k)
 #include <mvme88k/dev/vsreg.h>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.15 2001/12/13 20:32:56 miod Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.16 2001/12/16 23:49:43 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -53,20 +53,6 @@ TOUCHFLAGS=	-f -c
 HOSTCC?=	${CC}
 HOSTED_CPPFLAGS?=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS?=	${CFLAGS}
-
-### CPU configuration
-
-.if (${IDENT:M-DMVME187} != "" || ${IDENT:M-DMVME188} != "")
-CPPFLAGS+=	-DM88100
-.endif
-.if (${IDENT:M-DMVME197} != "")
-CPPFLAGS+=	-DM88110
-.endif
-
-# syntaxic sugar for 187, which do not exist with multiple processors
-.if (${IDENT:M-DMVME187} != "" && ${IDENT:M-DNCPUS} == "")
-CPPFLAGS+=	-DNCPUS=1
-.endif
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"

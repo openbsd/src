@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.6 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: syscon.c,v 1.7 2001/12/16 23:49:46 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -117,7 +117,7 @@ sysconmatch(parent, vcf, args)
 	struct sysconreg *syscon;
 
 	/* Don't match if wrong cpu */
-	if (brdtyp != BRD_188) return (0);  /* The only one... */
+	if (cputyp != CPU_188) return (0);
 	/* Uh, MVME188 better have on of these, so always match if it 
 	 * is a MVME188... */
 	syscon = (struct sysconreg *)(IIOV(ca->ca_paddr));

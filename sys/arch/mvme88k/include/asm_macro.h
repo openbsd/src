@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.17 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.18 2001/12/16 23:49:46 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -86,16 +86,6 @@ static __inline__ void set_psr(m88k_psr_type psr)
 {
 	__asm__ __volatile__ ("stcr %0, cr1" :: "r" (psr));
 	__asm__ __volatile__ (FLUSH_PIPELINE_STRING);
-}
-
-/*
- * Gets the PSR. See comments above.
- */
-static __inline__ m88k_psr_type get_psr(void)
-{
-	m88k_psr_type psr;
-	__asm__ __volatile__ ("ldcr %0, cr1" : "=r" (psr));
-	return psr;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.7 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.8 2001/12/16 23:49:46 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -93,9 +93,11 @@ vsmatch(pdp, vcf, args)
 	void *vcf, *args;
 {
 	struct confargs *ca = args;
-	if (badvaddr((unsigned)ca->ca_vaddr, 1))
+	if (!badvaddr((unsigned)ca->ca_vaddr, 1)) {
+		return (1);
+	} else {
 		return (0);
-	return (1);
+	}           
 }
 
 void

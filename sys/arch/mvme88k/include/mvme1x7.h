@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme1x7.h,v 1.7 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: mvme1x7.h,v 1.8 2001/12/16 23:49:46 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -79,6 +79,7 @@
 
 #define LOCAL_IO_DEVS	U(0xFFF00000)	/* local IO devices */
 
+#define PCC2_ADDR	U(0xFFF42000)	/* PCCchip2 Regs */
 #define UTIL_ADDR	U(0xFFC02000)	/* PCCchip2 Regs */
 #define MEM_CTLR	U(0xFFF43000)	/* MEMC040 mem controller */
 #define SCC_ADDR	U(0xFFF45000) 	/* Cirrus Chip */
@@ -96,5 +97,7 @@
 #define TOD_CAL_MON	U(0xFFFC1FFE) 	/* months */
 #define TOD_CAL_YEAR	U(0xFFFC1FFF) 	/* years */
 
-#endif __MACHINE_MVME1X7_H__
+#define M187_IACK	U(0xFFFE0000)
+#define M197_IACK	U(0xFFF00100)
 
+#endif /* __MACHINE_MVME1X7_H__ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.5 2001/12/13 08:55:51 smurph Exp $	*/
+/*	$OpenBSD: intr.h,v 1.6 2001/12/16 23:49:46 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -71,8 +71,9 @@ extern int intrcnt[M88K_NIRQ];
 #define IPL_SOFTNET	1
 #define IPL_BIO		2
 #define IPL_NET		3
+#define IPL_IMP		3
 #define IPL_TTY		3
-#define IPL_IMP		4
+#define IPL_VM		3
 #define IPL_CLOCK	5
 #define IPL_STATCLOCK	5
 #define IPL_HIGH	6
@@ -113,7 +114,7 @@ above...
 #define splclock()		setipl(IPL_CLOCK)
 #define splstatclock()		setipl(IPL_STATCLOCK)
 #define splimp()		setipl(IPL_IMP)
-#define splvm()			setipl(IPL_IMP)
+#define splvm()			setipl(IPL_VM)
 #define splhigh()		setipl(IPL_HIGH)
 
 #define splx(x)		((x) ? setipl((x)) : spl0())

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.17 2001/12/13 08:55:51 smurph Exp $	*/
+/*	$OpenBSD: asm.h,v 1.18 2001/12/16 23:49:46 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -35,11 +35,6 @@
 #else
 #define	_C_LABEL(name)		_/**/name
 #endif
-
-/* Define EH_DEBUG to be non-zero to compile-in various debugging things */
-#ifndef	EH_DEBUG
-#define EH_DEBUG 0
-#endif	EH_DEBUG
 
 #define	_ASM_LABEL(name)	name
 
@@ -214,7 +209,6 @@
 #define FLAG_187			9	/* bit number 9  */
 #define FLAG_188			10	/* bit number 10 */
 #define FLAG_197			11	/* bit number 11 */
-#define FLAG_TBE			12	/* bit number 12 */
 
 /* REGister OFFset into the E.F. (exception frame) */
 #define REG_OFF(reg_num)  ((reg_num) * 4) /* (num * sizeof(register int))  */
@@ -242,21 +236,12 @@
 /*
  * Info about the PSR 
  */
-#define PSR_SHADOW_FREEZE_BIT		0
-#define PSR_INTERRUPT_DISABLE_BIT	1
-#define PSR_FPU_DISABLE_BIT		3
-#define PSR_BIG_ENDIAN_MODE		30
-#define PSR_SUPERVISOR_MODE_BIT		31
-/* 
- * mc88110 PSR bit definitions (MVME197) 
- */
-#define PSR_GRAPHICS_DISABLE_BIT	4
-#define PSR_SERIAL_MODE_BIT		29
-#define PSR_CARRY_BIT			28
-#define PSR_SERIALIZE_BIT		25
+#define	PSR_SHADOW_FREEZE_BIT		0
+#define	PSR_INTERRUPT_DISABLE_BIT	1
+#define	PSR_FPU_DISABLE_BIT		3
+#define	PSR_BIG_ENDIAN_MODE		30
+#define	PSR_SUPERVISOR_MODE_BIT		31
 
-#define DSR_TBE				21
-#define DCTL_MEN			5
 /*
  * Status bits for an SXIP/SNIP/SFIP address.
  */

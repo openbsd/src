@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.8 2001/12/13 08:55:51 smurph Exp $	*/
+/*	$OpenBSD: sshdma.c,v 1.9 2001/12/16 23:49:46 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -66,10 +66,10 @@
 int	afscmatch	__P((struct device *, void *, void *));
 void	afscattach	__P((struct device *, struct device *, void *));
 
-int     afscprint       __P((void *auxp, char *));
-int     sshintr         __P((struct ssh_softc *));
-int     afsc_dmaintr    __P((void *));
-void    sshinitialize   __P((struct ssh_softc *));
+int	afscprint	__P((void *auxp, char *));
+int	sshintr		__P((struct ssh_softc *));
+int	afsc_dmaintr	__P((void *));
+void	sshinitialize	__P((struct ssh_softc *));
 
 struct scsi_adapter afsc_scsiswitch = {
 	ssh_scsicmd,
@@ -86,22 +86,24 @@ struct scsi_device afsc_scsidev = {
 };
 
 struct cfattach ssh_ca = {
-	sizeof(struct ssh_softc), afscmatch, afscattach,
+        sizeof(struct ssh_softc), afscmatch, afscattach,
 };    
-
+ 
 struct cfdriver ssh_cd = {
-	NULL, "ssh", DV_DULL, 0 
+        NULL, "ssh", DV_DULL, 0 
 }; 
 
 int
 afscmatch(pdp, vcf, args)
-struct device *pdp;
-void *vcf, *args;
+	struct device *pdp;
+	void *vcf, *args;
 {
 	struct confargs *ca = args;
+	int ret;
 
-	if (badvaddr((vm_offset_t)IIOV(ca->ca_vaddr), 4)) {
-		return (0);
+	if ((ret = badvaddr((vm_offset_t)IIOV(ca->ca_vaddr), 4)) <=0){
+	    printf("==> ssh: failed address check returning %ld.\n", ret);
+	    return(0);
 	}
 
 	return (1);
@@ -109,8 +111,8 @@ void *vcf, *args;
 
 void
 afscattach(parent, self, auxp)
-struct device *parent, *self;
-void *auxp;
+	struct device *parent, *self;
+	void *auxp;
 {
 	struct ssh_softc *sc = (struct ssh_softc *)self;
 	struct confargs *ca = auxp;
@@ -126,17 +128,14 @@ void *auxp;
 	 * XXX does the clock frequency change for the 33MHz processors?
 	 */
 	sc->sc_clock_freq = cpuspeed * 2;
-	sc->sc_dcntl = SSH_DCNTL_EA;   
+	sc->sc_dcntl = SSH_DCNTL_EA;
 /*X*/	if (sc->sc_clock_freq <= 25)
 /*X*/		sc->sc_dcntl |= (2 << 6);
-/*X*/
-	else if (sc->sc_clock_freq <= 37)
+/*X*/	else if (sc->sc_clock_freq <= 37)
 /*X*/		sc->sc_dcntl |= (1 << 6);
-/*X*/
-	else if (sc->sc_clock_freq <= 50)
+/*X*/	else if (sc->sc_clock_freq <= 50)
 /*X*/		sc->sc_dcntl |= (0 << 6);
-/*X*/
-	else
+/*X*/	else
 /*X*/		sc->sc_dcntl |= (3 << 6);
 
 	sc->sc_ctest0 = SSH_CTEST0_BTD | SSH_CTEST0_EAN;
@@ -162,25 +161,27 @@ void *auxp;
 	switch (ca->ca_bustype) {
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
-		{
-			/*
-			 * Disable caching for the softc. Actually, I want
-			 * to disable cache for acb structures, but they are
-			 * part of softc, and I am disabling the entire softc
-			 * just in case.
-			 */
+	    {
+		/*
+		 * Disable caching for the softc. Actually, I want
+		 * to disable cache for acb structures, but they are
+		 * part of softc, and I am disabling the entire softc
+		 * just in case.
+		 */
 
-			struct pcctworeg *pcc2 = (struct pcctworeg *)ca->ca_master;
+		struct pcctworeg *pcc2 = (struct pcctworeg *)ca->ca_master;
+		
+		pmap_cache_ctrl(pmap_kernel(), trunc_page((vm_offset_t)sc),
+			round_page((vm_offset_t)sc + sizeof(*sc)),
+			CACHE_INH);
 
-			pmap_cache_ctrl(pmap_kernel(), trunc_page((vm_offset_t)sc),
-					round_page((vm_offset_t)sc + sizeof(*sc)),
-					CACHE_INH);
-
-			pcctwointr_establish(PCC2V_NCR, &sc->sc_ih);
-			/* enable interrupts at ca_ipl */
-			pcc2->pcc2_ncrirq = ca->ca_ipl | PCC2_IRQ_IEN;
-			break;
-		}
+		pcctwointr_establish(PCC2V_NCR, &sc->sc_ih);
+/*		intr_establish(PCC2_VECT + SCSIIRQ, &sc->sc_ih);*/
+		/* enable interrupts at ca_ipl */
+		pcc2->pcc2_ncrirq = ca->ca_ipl | PCC2_IRQ_IEN;
+/*		pcc2->pcc2_scsiirq = ca->ca_ipl | PCC2_SCSIIRQ_IEN;*/
+		break;
+	    }
 #endif
 	}
 
@@ -191,18 +192,18 @@ void *auxp;
 	 * (see dk_establish).
 	 */
 	tmp = bootpart;
-	if (ca->ca_paddr != bootaddr)
-		bootpart = -1;		/* invalid flag to dk_establish */
+	if (ca->ca_paddr != bootaddr) 
+		bootpart = -1;          /* invalid flag to dk_establish */
 	config_found(self, &sc->sc_link, scsiprint);
-	bootpart = tmp;		    /* restore old value */
+	bootpart = tmp;             /* restore old value */
 }
 /*
  * print diag if pnp is NULL else just extra
  */
 int
 afscprint(auxp, pnp)
-void *auxp;
-char *pnp;
+	void *auxp;
+	char *pnp;
 {
 	if (pnp == NULL)
 		return (UNCONF);
@@ -211,12 +212,12 @@ char *pnp;
 
 int
 afsc_dmaintr(arg)
-void *arg;
+	void *arg;
 {
 	struct ssh_softc *sc = arg;
 
 	ssh_regmap_p rp;
-	u_char  istat;
+	u_char	istat;
 
 	rp = sc->sc_sshp;
 	istat = rp->ssh_istat;

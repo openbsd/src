@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.8 2001/12/14 04:30:11 smurph Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.9 2001/12/16 23:49:46 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -62,14 +62,6 @@
 #endif
 #endif
 
-#define VME_CMMU_I0	U(0xFFF7E000) 	/* MVME188 code CMMU 0 */
-#define VME_CMMU_I1	U(0xFFF7D000) 	/* MVME188 code CMMU 1 */
-#define VME_CMMU_I2	U(0xFFF7B000) 	/* MVME188 code CMMU 2 */
-#define VME_CMMU_I3	U(0xFFF77000) 	/* MVME188 code CMMU 3 */
-#define VME_CMMU_D0	U(0xFFF6F000) 	/* MVME188 data CMMU 0 */
-#define VME_CMMU_D1	U(0xFFF5F000) 	/* MVME188 data CMMU 1 */
-#define VME_CMMU_D2	U(0xFFF3F000) 	/* MVME188 data CMMU 2 */
-#define VME_CMMU_D3	U(0xFFF7F000) 	/* MVME188 data CMMU 3 */
 
 #define MVME188_EPROM		U(0xFFC00000)
 #define MVME188_EPROM_SIZE	U(0x00080000)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 2001/12/14 02:11:43 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.14 2001/12/16 23:49:46 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -97,7 +97,6 @@
 #include <machine/bugio.h>
 #include <machine/cpu.h>
 #include <machine/mmu.h>	/* DMA_CACHE_SYNC, etc... */
-#include <machine/cmmu.h>
 #include "pcctwo.h"
 #if NPCCTWO > 0 
 #include <mvme88k/dev/pcctwofunc.h>
@@ -192,7 +191,7 @@ clockattach(parent, self, args)
 		sc->sc_profih.ih_ipl = ca->ca_ipl;
 		prof_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
 		pcctwointr_establish(PCC2V_TIMER1, &sc->sc_profih);
-		md.clock_init_func = sbc_initclock;
+		mdfp.clock_init_func = &sbc_initclock;
 		printf(": VME1x7");
 		break;
 #endif /* NPCCTWO */
@@ -203,7 +202,7 @@ clockattach(parent, self, args)
 		sc->sc_profih.ih_wantframe = 1;
 		sc->sc_profih.ih_ipl = ca->ca_ipl;
 		sysconintr_establish(SYSCV_TIMER1, &sc->sc_profih);
-		md.clock_init_func = m188_initclock;
+		mdfp.clock_init_func = &m188_initclock;
 		printf(": VME188");
 		break;
 #endif /* NSYSCON */
@@ -265,7 +264,7 @@ delay(us)
 	 * Do not go to the real timer until vme device is present.
 	 * Or, in the case of MVME188, not at all.
 	 */
-	if (sys_vme2 == NULL || brdtyp == BRD_188) {
+	if (sys_vme2 == NULL || cputyp == CPU_188) {
 		c = 3 * us;
 		while (--c > 0);
 		return (0);

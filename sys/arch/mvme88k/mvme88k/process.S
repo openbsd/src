@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.13 2001/12/13 08:55:52 smurph Exp $	*/
+/*	$OpenBSD: process.S,v 1.14 2001/12/16 23:49:47 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -247,7 +247,7 @@ Lsw2:
 	or	r2, r0, r9		/* r2 = p */
 	or	r14, r0, r9		/* save p in r14 */
 	subu	r31, r31,48
-	/* r2 = (proc *p) */
+	/* r2 = pmap, r3 = pcb, r4 = cpu number */
 	bsr	_pmap_activate		/* _pmap_activate(proc *p)*/ 
 	addu    r31, r31,48
 	or	r9, r0, r14		/* restore p saved in r14 */
@@ -259,18 +259,16 @@ Lswnochg:
 	bsr.n    _load_u_area		    /* load_u_area(p) */
 	or	r2, r0, r9
 	addu	r31, r31,48
-	
-	/* flush tlb of any user addresses */
-	or	r2, r0, 0	/* 0 = user space */
+					/* flush tlb of any user addresses */
+        or	r2, r0, 0	/* 0 = user space */
 	or	r3, r0, 0	/* start at addr 0 */
 	subu	r31, r31,48
 	/* r2 = 1 : kernel ? user, r3 = address, r4 = size */
 	/* cmmu_flush_tlb(0, 0, 0xffff) */
-	bsr.n	_md_cmmu_flush_tlb
+	bsr.n	_cmmu_flush_tlb
 	or	r4, r0, 0xffff		/* cmmu_flush_tlb flushes entire tlb */
 					/* for sizes > 4096		     */
 	addu	r31, r31,48
-	
 	or.u	r10, r0,  hi16(_curpcb)
 	ld	r10, r10,  lo16(_curpcb)
 	/* XXX Is this correct/necessary? */

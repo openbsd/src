@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.17 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.18 2001/12/16 23:49:46 miod Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr. 
@@ -282,7 +282,7 @@ int in_ierint = 0;
 int in_ietint = 0;
 #endif
 
-int  iematch  __P((struct device *, void *, void *));
+int iematch __P((struct device *, void *, void *));
 void ieattach __P((struct device *, struct device *, void *));
 
 struct cfattach ie_ca = {
@@ -352,8 +352,9 @@ iematch(parent, vcf, args)
 	void	*vcf, *args;
 {
 	struct confargs *ca = args;
+	int ret;
 
-	if (badvaddr((unsigned)IIOV(ca->ca_vaddr), 1)){
+	if ((ret = badvaddr((unsigned)IIOV(ca->ca_vaddr), 1)) <=0){
 		return(0);
 	}
 	return(1);                      
@@ -539,7 +540,7 @@ ieintr(v)
 	register u_short status;
 
 	status = sc->scb->ie_status;
-/* printf("I"); */
+/*printf("I");*/
 
 loop:
 	/* Ack interrupts FIRST in case we receive more during the ISR. */
@@ -888,11 +889,11 @@ iexmit(sc)
 #endif
 
 #if 0
-	printf("iexmit base %x cmd %x bfd %x to %x\n",
-	sc->sc_maddr,
-	sc->xmit_cmds[sc->xctail],
-	sc->xmit_buffs[sc->xctail],
-	sc->xmit_cbuffs[sc->xctail]);
+printf("iexmit base %x cmd %x bfd %x to %x\n",
+sc->sc_maddr,
+sc->xmit_cmds[sc->xctail],
+sc->xmit_buffs[sc->xctail],
+sc->xmit_cbuffs[sc->xctail]);
 #endif
 	sc->xmit_buffs[sc->xctail]->ie_xmit_flags |= IE_XMIT_LAST;
 	sc->xmit_buffs[sc->xctail]->ie_xmit_next = 0xffffffff;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctworeg.h,v 1.3 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: pcctworeg.h,v 1.4 2001/12/16 23:49:46 miod Exp $ */
 
 /*
  * Memory map for PCC2 chip found in mvme1x7 boards.
@@ -55,7 +55,6 @@ struct pcctworeg {
 	volatile u_short    pcc2_speed;		/* DO NOT USE */
 	volatile u_short    pcc2_prtdat;
 	volatile u_short    :16;
-	/* The following regs are not valid on MVME197 */
 	volatile u_char     pcc2_ipl;
 	volatile u_char     pcc2_mask;
 };

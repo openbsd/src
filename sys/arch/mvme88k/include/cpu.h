@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.14 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: cpu.h,v 1.15 2001/12/16 23:49:46 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -184,23 +184,18 @@ struct switchframe {
 	void	*sf_proc;		/* proc pointer */
 };
 
-/* This struct defines the machine dependant pointers */
-struct md_p {
+/* This struct defines the machine dependant function pointers */
+
+struct funcp {
 	void (*clock_init_func) __P((void));      /* interval clock init function */
 	void (*statclock_init_func) __P((void));  /* statistics clock init function */
 	void (*delayclock_init_func) __P((void)); /* delay clock init function */
 	void (*delay_func) __P((void));           /* delay clock function */
-	void (*interrupt_func) __P((u_int, struct m88100_saved_state *));       /* interrupt func */
-	void (*fp_precise_func) __P((void));      /* floating point precise function */
-	void (*trap_func) __P((unsigned, struct m88100_saved_state *));
-	void (*syscall_func) __P((register_t, struct m88100_saved_state *));
-	volatile u_char *intr_mask;
-	volatile u_char *intr_ipl;
-	volatile u_char *intr_src;
+   void (*interrupt_func) __P((u_int, struct m88100_saved_state *));       /* interrupt func */
+   void (*fp_precise_func) __P((void));      /* floating point precise function */
 };
 
-extern struct md_p md;
-
+extern struct funcp mdfp;
 
 int badvaddr __P((vm_offset_t va, int size));
 void nmihand __P((void *framep));

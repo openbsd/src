@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.9 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: reg.h,v 1.10 2001/12/16 23:49:46 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -41,30 +41,20 @@ struct reg {
     unsigned fpsr;
     unsigned fpcr;
     unsigned sxip;
-#define exip sxip	/* mc88110 */
+#define exip sxip
     unsigned snip;
-#define enip snip	/* mc88110 */
+#define enip snip
     unsigned sfip;
     unsigned ssbr;
-#define duap ssbr	/* mc88110 */
     unsigned dmt0;
-#define dsr dmt0	/* mc88110 */
     unsigned dmd0;
-#define dlar dmd0	/* mc88110 */
     unsigned dma0;
-#define dpar dma0	/* mc88110 */
     unsigned dmt1;
-#define isr dmt1	/* mc88110 */
     unsigned dmd1;
-#define ilar dmd1	/* mc88110 */
     unsigned dma1;
-#define ipar dma1	/* mc88110 */
     unsigned dmt2;
-#define isap dmt2	/* mc88110 */
     unsigned dmd2;
-#define dsap dmd2	/* mc88110 */
     unsigned dma2;
-#define iuap dma2	/* mc88110 */
     unsigned fpecr;
     unsigned fphs1;
     unsigned fpls1;
@@ -80,6 +70,12 @@ struct reg {
     unsigned scratch1;	   /* used by locore trap handling code */
     unsigned ipfsr;        /* P BUS status - used in inst fault handling */
     unsigned dpfsr;        /* P BUS status - used in data fault handling */
+    unsigned dsr;          /* MVME197 */
+    unsigned dlar;         /* MVME197 */
+    unsigned dpar;         /* MVME197 */
+    unsigned isr;          /* MVME197 */
+    unsigned ilar;         /* MVME197 */
+    unsigned ipar;         /* MVME197 */
     unsigned cpu;          /* cpu number */
 };
 
