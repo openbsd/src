@@ -2959,7 +2959,7 @@ for machine in $build $host $target; do
 		;;
 	*-*-openbsd*)
 		tm_file=${cpu_type}/openbsd.h
-		tmake_file="t-libc-ok t-openbsd"
+		tmake_file="t-libc-ok t-openbsd t-libgcc-pic"
 		# avoid surprises, always provide an xm-openbsd file 
 		xm_file=${cpu_type}/xm-openbsd.h
 		# for egcs in tree, we use our own fragment
@@ -5056,7 +5056,6 @@ for machine in $build $host $target; do
 		;;
 	powerpc-*-openbsd*)
 		tmake_file="${tmake_file} rs6000/t-rs6000 rs6000/t-openbsd"
-		tmake_file="${tmake_file} t-openbsd-libgcc"
 		;;
 	powerpc-*-beos*)
 		cpu_type=rs6000
