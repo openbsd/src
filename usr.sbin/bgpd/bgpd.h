@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.150 2004/11/19 14:43:56 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.151 2004/11/23 13:07:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -158,20 +158,6 @@ enum enforce_as {
 	ENFORCE_AS_ON
 };
 
-struct filter_set {
-	u_int16_t		flags;
-	u_int8_t		prepend_self;
-	u_int8_t		prepend_peer;
-	u_int32_t		localpref;
-	u_int32_t		med;
-	struct bgpd_addr	nexthop;
-	struct {
-		int		as;
-		int		type;
-	} community;
-	char			pftable[PFTABLE_LEN];
-};
-
 enum auth_method {
 	AUTH_NONE,
 	AUTH_MD5SIG,
@@ -207,6 +193,8 @@ struct capabilities {
 	u_int8_t	refresh;	/* route refresh, RFC 2918 */
 };
 
+SIMPLEQ_HEAD(filter_set_head, filter_set);
+
 struct peer_config {
 	u_int32_t		 id;
 	u_int32_t		 groupid;
@@ -224,7 +212,7 @@ struct peer_config {
 	u_int8_t		 passive;
 	u_int16_t		 holdtime;
 	u_int16_t		 min_holdtime;
-	struct filter_set	 attrset;
+	struct filter_set_head	 attrset;
 	enum announce_type	 announce_type;
 	enum enforce_as		 enforce_as;
 	struct peer_auth	 auth;
@@ -238,7 +226,7 @@ struct peer_config {
 struct network_config {
 	struct bgpd_addr	prefix;
 	u_int8_t		prefixlen;
-	struct filter_set	attrset;
+	struct filter_set_head	attrset;
 };
 
 TAILQ_HEAD(network_head, network);
@@ -275,6 +263,7 @@ enum imsg_type {
 	IMSG_RECONF_DONE,
 	IMSG_UPDATE,
 	IMSG_UPDATE_ERR,
+	IMSG_SESSION_ADD,
 	IMSG_SESSION_UP,
 	IMSG_SESSION_DOWN,
 	IMSG_MRT_OPEN,
@@ -291,6 +280,8 @@ enum imsg_type {
 	IMSG_NETWORK_ADD,
 	IMSG_NETWORK_REMOVE,
 	IMSG_NETWORK_FLUSH,
+	IMSG_NETWORK_DONE,
+	IMSG_FILTER_SET,
 	IMSG_CTL_SHOW_NEIGHBOR,
 	IMSG_CTL_END,
 	IMSG_CTL_RELOAD,
@@ -403,7 +394,6 @@ struct session_up {
 	u_int32_t		remote_bgpid;
 	struct bgpd_addr	local_addr;
 	struct bgpd_addr	remote_addr;
-	struct peer_config	conf;
 	struct capabilities	capa_announced;
 	struct capabilities	capa_received;
 };
@@ -491,17 +481,6 @@ enum comp_ops {
 	OP_GT
 };
 
-/* set flags */
-#define	SET_LOCALPREF		0x0001
-#define	SET_MED			0x0002
-#define	SET_NEXTHOP		0x0004
-#define	SET_PREPEND_SELF	0x0008
-#define	SET_PREPEND_PEER	0x0010
-#define	SET_PFTABLE		0x0020
-#define	SET_COMMUNITY		0x0040
-#define	SET_NEXTHOP_REJECT	0x0080
-#define	SET_NEXTHOP_BLACKHOLE	0x0100
-
 struct filter_peers {
 	u_int32_t	peerid;
 	u_int32_t	groupid;
@@ -549,7 +528,32 @@ struct filter_rule {
 	u_int8_t			quick;
 	struct filter_peers		peer;
 	struct filter_match		match;
-	struct filter_set		set;
+	struct filter_set_head		set;
+};
+
+enum action_types {
+	ACTION_SET_LOCALPREF,
+	ACTION_SET_MED,
+	ACTION_SET_PREPEND_SELF,
+	ACTION_SET_PREPEND_PEER,
+	ACTION_SET_NEXTHOP,
+	ACTION_SET_NEXTHOP_REJECT,
+	ACTION_SET_NEXTHOP_BLACKHOLE,
+	ACTION_SET_COMMUNITY,
+/*	ACTION_SCRUB_COMMUNITY, */
+	ACTION_PFTABLE
+};
+
+struct filter_set {
+	SIMPLEQ_ENTRY(filter_set)	entry;
+	enum action_types		type;
+	union {
+		u_int8_t		prepend;
+		u_int32_t		metric;
+		struct bgpd_addr	nexthop;
+		struct filter_community	community;
+		char			pftable[PFTABLE_LEN];
+	} action;
 };
 
 struct rrefresh {

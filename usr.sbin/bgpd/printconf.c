@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.34 2004/11/18 17:07:38 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.35 2004/11/23 13:07:01 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -25,7 +25,7 @@
 #include "session.h"
 
 void		 print_op(enum comp_ops);
-void		 print_set(struct filter_set *);
+void		 print_set(struct filter_set_head *);
 void		 print_mainconf(struct bgpd_config *);
 void		 print_network(struct network_config *);
 void		 print_peer(struct peer_config *, struct bgpd_config *,
@@ -73,26 +73,47 @@ print_op(enum comp_ops op)
 }
 
 void
-print_set(struct filter_set *set)
+print_set(struct filter_set_head *set)
 {
-	if (set->flags) {
-		printf("set { ");
-		if (set->flags & SET_LOCALPREF)
-			printf("localpref %u ", set->localpref);
-		if (set->flags & SET_MED)
-			printf("med %u ", set->med);
-		if (set->flags & SET_NEXTHOP)
-			printf("nexthop %s ", log_addr(&set->nexthop));
-		if (set->flags & SET_NEXTHOP_REJECT)
+	struct filter_set	*s;
+
+	if (SIMPLEQ_EMPTY(set))
+		return;
+
+	printf("set { ");
+	SIMPLEQ_FOREACH(s, set, entry) {
+		switch (s->type) {
+		case ACTION_SET_LOCALPREF:
+			printf("localpref %u ", s->action.metric);
+			break;
+		case ACTION_SET_MED:
+			printf("metric %u ", s->action.metric);
+			break;
+		case ACTION_SET_NEXTHOP:
+			printf("nexthop %s ", log_addr(&s->action.nexthop));
+			break;
+		case ACTION_SET_NEXTHOP_REJECT:
 			printf("nexthop reject ");
-		if (set->flags & SET_NEXTHOP_BLACKHOLE)
+			break;
+		case ACTION_SET_NEXTHOP_BLACKHOLE:
 			printf("nexthop blackhole ");
-		if (set->flags & SET_PREPEND_SELF)
-			printf("prepend-self %u ", set->prepend_self);
-		if (set->flags & SET_PREPEND_PEER)
-			printf("prepend-neighbor %u ", set->prepend_peer);
-		printf("}");
+			break;
+		case ACTION_SET_PREPEND_SELF:
+			printf("prepend-self %u ", s->action.prepend);
+			break;
+		case ACTION_SET_PREPEND_PEER:
+			printf("prepend-neighbor %u ", s->action.prepend);
+			break;
+		case ACTION_SET_COMMUNITY:
+			printf("community %u:%u ", s->action.community.as,
+			    s->action.community.type);
+			break;
+		case ACTION_PFTABLE:
+			printf("pftable %s ", s->action.pftable);
+			break;
+		}
 	}
+	printf("}");
 }
 
 void
@@ -132,7 +153,7 @@ void
 print_network(struct network_config *n)
 {
 	printf("network %s/%u", log_addr(&n->prefix), n->prefixlen);
-	if (n->attrset.flags)
+	if (!SIMPLEQ_EMPTY(&n->attrset))
 		printf(" ");
 	print_set(&n->attrset);
 	printf("\n");
@@ -220,10 +241,10 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 	else if (p->auth.method == AUTH_IPSEC_IKE_ESP)
 		printf("%s\tipsec esp ike\n", c);
 
-	if (p->attrset.flags)
+	if (!SIMPLEQ_EMPTY(&p->attrset))
 		printf("%s\t", c);
 	print_set(&p->attrset);
-	if (p->attrset.flags)
+	if (!SIMPLEQ_EMPTY(&p->attrset))
 		printf("\n");
 
 	print_mrt(p->id, p->groupid, c, "\t");

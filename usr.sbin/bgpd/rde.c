@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.152 2004/11/19 14:43:57 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.153 2004/11/23 13:07:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -267,14 +267,19 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	_exit(0);
 }
 
+struct network_config	 netconf_s, netconf_p;
+struct filter_set_head	*session_set, *parent_set;
+
 void
 rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 {
 	struct imsg		 imsg;
-	struct session_up	 sup;
 	struct peer		 p;
+	struct peer_config	 pconf;
 	struct rrefresh		 r;
 	struct rde_peer		*peer;
+	struct session_up	 sup;
+	struct filter_set	*s;
 	pid_t			 pid;
 	int			 n;
 
@@ -293,11 +298,24 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 		case IMSG_UPDATE:
 			rde_update_dispatch(&imsg);
 			break;
+		case IMSG_SESSION_ADD:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(pconf))
+				fatalx("incorrect size of session request");
+			memcpy(&pconf, imsg.data, sizeof(pconf));
+			peer = peer_add(imsg.hdr.peerid, &pconf);
+			if (peer == NULL) {
+				log_warnx("peer_up: peer id %d already exists",
+				    imsg.hdr.peerid);
+				break;
+			}
+			session_set = &peer->conf.attrset;
+			break;
 		case IMSG_SESSION_UP:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(sup))
 				fatalx("incorrect size of session request");
 			memcpy(&sup, imsg.data, sizeof(sup));
 			peer_up(imsg.hdr.peerid, &sup);
+			session_set = NULL;
 			break;
 		case IMSG_SESSION_DOWN:
 			peer_down(imsg.hdr.peerid);
@@ -316,7 +334,17 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			network_add(imsg.data, 0);
+			memcpy(&netconf_s, imsg.data, sizeof(netconf_s));
+			SIMPLEQ_INIT(&netconf_s.attrset);
+			session_set = &netconf_s.attrset;
+			break;
+		case IMSG_NETWORK_DONE:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			session_set = NULL;
+			network_add(&netconf_s, 0);
 			break;
 		case IMSG_NETWORK_REMOVE:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -324,7 +352,9 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			network_delete(imsg.data, 0);
+			memcpy(&netconf_s, imsg.data, sizeof(netconf_s));
+			SIMPLEQ_INIT(&netconf_s.attrset);
+			network_delete(&netconf_s, 0);
 			break;
 		case IMSG_NETWORK_FLUSH:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
@@ -332,6 +362,22 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				break;
 			}
 			network_flush(0);
+			break;
+		case IMSG_FILTER_SET:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct filter_set)) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			if (session_set == NULL) {
+				log_warnx("rde_dispatch: "
+				    "IMSG_FILTER_SET unexpected");
+				break;
+			}
+			if ((s = malloc(sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			memcpy(s, imsg.data, sizeof(struct filter_set));
+			SIMPLEQ_INSERT_TAIL(session_set, s, entry);
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
@@ -404,6 +450,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
 	struct imsg		 imsg;
 	struct filter_rule	*r;
+	struct filter_set	*s;
 	struct mrt		*xmrt;
 	int			 n;
 
@@ -431,7 +478,13 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
 			break;
 		case IMSG_NETWORK_ADD:
-			network_add(imsg.data, 1);
+			memcpy(&netconf_p, imsg.data, sizeof(netconf_p));
+			SIMPLEQ_INIT(&netconf_p.attrset);
+			parent_set = &netconf_p.attrset;
+			break;
+		case IMSG_NETWORK_DONE:
+			parent_set = NULL;
+			network_add(&netconf_p, 1);
 			break;
 		case IMSG_RECONF_FILTER:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -440,6 +493,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if ((r = malloc(sizeof(struct filter_rule))) == NULL)
 				fatal(NULL);
 			memcpy(r, imsg.data, sizeof(struct filter_rule));
+			SIMPLEQ_INIT(&r->set);
+			parent_set = &r->set;
 			TAILQ_INSERT_TAIL(newrules, r, entry);
 			break;
 		case IMSG_RECONF_DONE:
@@ -457,6 +512,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			memcpy(conf, nconf, sizeof(struct bgpd_config));
 			free(nconf);
 			nconf = NULL;
+			parent_set = NULL;
 			prefix_network_clean(&peerself, reloadtime);
 			while ((r = TAILQ_FIRST(rules_l)) != NULL) {
 				TAILQ_REMOVE(rules_l, r, entry);
@@ -468,6 +524,17 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			break;
 		case IMSG_NEXTHOP_UPDATE:
 			nexthop_update(imsg.data);
+			break;
+		case IMSG_FILTER_SET:
+			if (parent_set == NULL) {
+				log_warnx("rde_dispatch: "
+				    "IMSG_FILTER_SET unexpected");
+				break;
+			}
+			if ((s = malloc(sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			memcpy(s, imsg.data, sizeof(struct filter_set));
+			SIMPLEQ_INSERT_TAIL(parent_set, s, entry);
 			break;
 		case IMSG_MRT_OPEN:
 		case IMSG_MRT_REOPEN:
@@ -1819,6 +1886,7 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 
 	LIST_INIT(&peer->path_h);
 	memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
+	SIMPLEQ_INIT(&peer->conf.attrset);
 	peer->remote_bgpid = 0;
 	peer->state = PEER_NONE;
 	up_init(peer);
@@ -1837,6 +1905,7 @@ peer_remove(struct rde_peer *peer)
 	LIST_REMOVE(peer, hash_l);
 	LIST_REMOVE(peer, peer_l);
 
+	rde_free_set(&peer->conf.attrset);
 	free(peer);
 }
 
@@ -1907,7 +1976,7 @@ peer_up(u_int32_t id, struct session_up *sup)
 {
 	struct rde_peer	*peer;
 
-	peer = peer_add(id, &sup->conf);
+	peer = peer_get(id);
 	if (peer == NULL) {
 		log_warnx("peer_up: peer id %d already exists", id);
 		return;
@@ -2038,6 +2107,7 @@ network_add(struct network_config *nc, int flagstatic)
 		    DIR_DEFAULT_IN);
 		path_update(&peerdynamic, asp, &nc->prefix, nc->prefixlen);
 	}
+	rde_free_set(&nc->attrset);
 }
 
 void

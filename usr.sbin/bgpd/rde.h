@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.60 2004/11/11 13:06:45 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.61 2004/11/23 13:07:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -311,8 +311,8 @@ void		 prefix_network_clean(struct rde_peer *, time_t);
 
 void		 nexthop_init(u_int32_t);
 void		 nexthop_shutdown(void);
-void		 nexthop_modify(struct rde_aspath *, struct bgpd_addr *, int,
-		     sa_family_t);
+void		 nexthop_modify(struct rde_aspath *, struct bgpd_addr *,
+		     enum action_types, sa_family_t);
 void		 nexthop_link(struct rde_aspath *);
 void		 nexthop_unlink(struct rde_aspath *);
 void		 nexthop_update(struct kroute_nexthop *);
@@ -346,7 +346,8 @@ void		 pt_dump(void (*)(struct pt_entry *, void *), void *,
 /* rde_filter.c */
 enum filter_actions rde_filter(struct rde_peer *, struct rde_aspath *,
     struct bgpd_addr *, u_int8_t, enum directions);
-void		 rde_apply_set(struct rde_aspath *, struct filter_set *,
+void		 rde_free_set(struct filter_set_head *);
+void		 rde_apply_set(struct rde_aspath *, struct filter_set_head *,
 		     sa_family_t, struct rde_peer *, enum directions);
 int		 rde_filter_community(struct rde_aspath *, int, int);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.38 2004/09/16 17:36:29 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.39 2004/11/23 13:07:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -287,6 +287,8 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 		case IMSG_NETWORK_ADD:
 		case IMSG_NETWORK_REMOVE:
 		case IMSG_NETWORK_FLUSH:
+		case IMSG_NETWORK_DONE:
+		case IMSG_FILTER_SET:
 			imsg_compose_rde(imsg.hdr.type, 0,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;

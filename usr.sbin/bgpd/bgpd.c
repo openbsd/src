@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.110 2004/10/19 12:02:49 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.111 2004/11/23 13:07:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,6 +40,7 @@ void	sighdlr(int);
 void	usage(void);
 int	main(int, char *[]);
 int	check_child(pid_t, const char *);
+int	send_filterset(struct imsgbuf *, struct filter_set_head *, int, int);
 int	reconfigure(char *, struct bgpd_config *, struct mrt_head *,
 	    struct peer **, struct filter_head *);
 int	dispatch_imsg(struct imsgbuf *, int);
@@ -375,6 +376,25 @@ check_child(pid_t pid, const char *pname)
 }
 
 int
+send_filterset(struct imsgbuf *i, struct filter_set_head *set, int id, int f)
+{
+	struct filter_set	*s;
+
+	for (s = SIMPLEQ_FIRST(set); s != NULL; ) {
+		if (imsg_compose(i, IMSG_FILTER_SET, id, 0, -1, s,
+		    sizeof(struct filter_set)) == -1)
+			return (-1);
+		if (f) {
+			SIMPLEQ_REMOVE_HEAD(set, entry);
+			free(s);
+			s = SIMPLEQ_FIRST(set);
+		} else
+			s = SIMPLEQ_NEXT(s, entry);
+	}
+	return (0);
+}
+
+int
 reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
     struct peer **peer_l, struct filter_head *rules_l)
 {
@@ -398,13 +418,19 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	if (imsg_compose(ibuf_rde, IMSG_RECONF_CONF, 0, 0, -1,
 	    conf, sizeof(struct bgpd_config)) == -1)
 		return (-1);
-	for (p = *peer_l; p != NULL; p = p->next)
+	for (p = *peer_l; p != NULL; p = p->next) {
 		if (imsg_compose(ibuf_se, IMSG_RECONF_PEER, p->conf.id, 0, -1,
 		    &p->conf, sizeof(struct peer_config)) == -1)
 			return (-1);
+		if (send_filterset(ibuf_se, &p->conf.attrset,
+		    p->conf.id, 0) == -1)
+			return (-1);
+	}
 	while ((n = TAILQ_FIRST(&net_l)) != NULL) {
 		if (imsg_compose(ibuf_rde, IMSG_NETWORK_ADD, 0, 0, -1,
 		    &n->net, sizeof(struct network_config)) == -1)
+			return (-1);
+		if (send_filterset(ibuf_rde, &n->net.attrset, 0, 1) == -1)
 			return (-1);
 		TAILQ_REMOVE(&net_l, n, entry);
 		free(n);
@@ -412,6 +438,8 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_FILTER, 0, 0, -1,
 		    r, sizeof(struct filter_rule)) == -1)
+			return (-1);
+		if (send_filterset(ibuf_rde, &r->set, 0, 1) == -1)
 			return (-1);
 		TAILQ_REMOVE(rules_l, r, entry);
 		free(r);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.21 2004/10/08 16:36:42 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.22 2004/11/23 13:07:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "bgpd.h"
@@ -58,61 +59,83 @@ rde_filter(struct rde_peer *peer, struct rde_aspath *asp,
 }
 
 void
-rde_apply_set(struct rde_aspath *asp, struct filter_set *set, sa_family_t af,
-    struct rde_peer *peer, enum directions dir)
+rde_free_set(struct filter_set_head *sh)
 {
-	struct aspath	*new;
-	u_int16_t	 as;
-	u_int8_t	 prepend;
+	struct filter_set	*set;
+
+	while ((set = SIMPLEQ_FIRST(sh)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(sh, entry);
+		free(set);
+	}
+}
+
+void
+rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
+    sa_family_t af, struct rde_peer *peer, enum directions dir)
+{
+	struct filter_set	*set;
+	struct aspath		*new;
+	struct attr		*a;
+	u_int16_t		 as;
+	u_int8_t		 prepend;
 
 	if (asp == NULL)
 		return;
 
-	if (set->flags & SET_PREPEND_SELF && dir != DIR_DEFAULT_IN) {
-		/* don't apply if this is a incoming default override */
-		as = rde_local_as();
-		prepend = set->prepend_self;
-		new = aspath_prepend(asp->aspath, as, prepend);
-		aspath_put(asp->aspath);
-		asp->aspath = new;
-	}
-
-	if (dir == DIR_DEFAULT_OUT)
+	SIMPLEQ_FOREACH(set, sh, entry) {
 		/*
 		 * default outgoing overrides are only allowed to
 		 * set prepend-self
 		 */
-		return;
+		if (dir == DIR_DEFAULT_OUT &&
+		    set->type != ACTION_SET_PREPEND_SELF)
+			continue;
 
-	if (set->flags & SET_PREPEND_PEER) {
-		as = peer->conf.remote_as;
-		prepend = set->prepend_peer;
-		new = aspath_prepend(asp->aspath, as, prepend);
-		aspath_put(asp->aspath);
-		asp->aspath = new;
-	}
-
-	if (set->flags & SET_LOCALPREF)
-		asp->lpref = set->localpref;
-	if (set->flags & SET_MED) {
-		asp->flags |= F_ATTR_MED | F_ATTR_MED_ANNOUNCE;
-		asp->med = set->med;
-	}
-
-	nexthop_modify(asp, &set->nexthop, set->flags, af);
-
-	if (set->flags & SET_PFTABLE)
-		strlcpy(asp->pftable, set->pftable, sizeof(asp->pftable));
-	if (set->flags & SET_COMMUNITY) {
-		struct attr *a;
-
-		if ((a = attr_optget(asp, ATTR_COMMUNITIES)) == NULL) {
-			attr_optadd(asp, ATTR_OPTIONAL|ATTR_TRANSITIVE,
-			    ATTR_COMMUNITIES, NULL, 0);
-			if ((a = attr_optget(asp, ATTR_COMMUNITIES)) == NULL)
-				fatalx("internal community bug");
+		switch (set->type) {
+		case ACTION_SET_LOCALPREF:
+			asp->lpref = set->action.metric;
+		case ACTION_SET_MED:
+			asp->flags |= F_ATTR_MED | F_ATTR_MED_ANNOUNCE;
+			asp->med = set->action.metric;
+		case ACTION_SET_PREPEND_SELF:
+			/* don't apply if this is a incoming default override */
+			if (dir == DIR_DEFAULT_IN) 
+				break;
+			as = rde_local_as();
+			prepend = set->action.prepend;
+			new = aspath_prepend(asp->aspath, as, prepend);
+			aspath_put(asp->aspath);
+			asp->aspath = new;
+			break;
+		case ACTION_SET_PREPEND_PEER:
+			as = peer->conf.remote_as;
+			prepend = set->action.prepend;
+			new = aspath_prepend(asp->aspath, as, prepend);
+			aspath_put(asp->aspath);
+			asp->aspath = new;
+			break;
+		case ACTION_SET_NEXTHOP:
+		case ACTION_SET_NEXTHOP_REJECT:
+		case ACTION_SET_NEXTHOP_BLACKHOLE:
+			nexthop_modify(asp, &set->action.nexthop, set->type,
+			    af);
+			break;
+		case ACTION_SET_COMMUNITY:
+			if ((a = attr_optget(asp, ATTR_COMMUNITIES)) == NULL) {
+				attr_optadd(asp, ATTR_OPTIONAL|ATTR_TRANSITIVE,
+				    ATTR_COMMUNITIES, NULL, 0);
+				if ((a = attr_optget(asp,
+				    ATTR_COMMUNITIES)) == NULL)
+					fatalx("internal community bug");
+			}
+			community_set(a, set->action.community.as,
+			    set->action.community.type);
+			break;
+		case ACTION_PFTABLE:
+			strlcpy(asp->pftable, set->action.pftable,
+			    sizeof(asp->pftable));
+			break;
 		}
-		community_set(a, set->community.as, set->community.type);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.147 2004/11/19 14:43:57 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.148 2004/11/23 13:07:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -89,10 +89,12 @@ struct peer	*new_group(void);
 int		 add_mrtconfig(enum mrt_type, char *, time_t, struct peer *);
 int		 get_id(struct peer *);
 int		 expand_rule(struct filter_rule *, struct filter_peers_l *,
-		    struct filter_match_l *, struct filter_set *);
+		    struct filter_match_l *, struct filter_set_head *);
 int		 str2key(char *, char *, size_t);
 int		 neighbor_consistent(struct peer *);
-int		 merge_filterset(struct filter_set *, struct filter_set *);
+int		 merge_filterset(struct filter_set_head *, struct filter_set *);
+void		 copy_filterset(struct filter_set_head *,
+		    struct filter_set_head *);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -120,7 +122,8 @@ typedef struct {
 		struct filter_prefix_l	*filter_prefix;
 		struct filter_as_l	*filter_as;
 		struct filter_prefixlen	 prefixlen;
-		struct filter_set	 filter_set;
+		struct filter_set	*filter_set;
+		struct filter_set_head	*filter_set_head;
 		struct {
 			struct bgpd_addr	prefix;
 			u_int8_t		len;
@@ -163,7 +166,8 @@ typedef struct {
 %type	<v.filter_as>		filter_as filter_as_l filter_as_h
 %type	<v.filter_as>		filter_as_t filter_as_t_l filter_as_l_h
 %type	<v.prefixlen>		prefixlenop
-%type	<v.filter_set>		filter_set filter_set_l filter_set_opt
+%type	<v.filter_set>		filter_set_opt
+%type	<v.filter_set_head>	filter_set filter_set_l
 %type	<v.filter_prefix>	filter_prefix filter_prefix_l
 %type	<v.filter_prefix>	filter_prefix_h filter_prefix_m
 %type	<v.u8>			unaryop binaryop filter_as_type
@@ -727,12 +731,19 @@ peeropts	: REMOTEAS asnumber	{
 			curpeer->conf.announce_capa = $3;
 		}
 		| SET filter_set_opt	{
-			if (merge_filterset(&curpeer->conf.attrset, &$2) == -1)
+			if (merge_filterset(&curpeer->conf.attrset, $2) == -1)
 				YYERROR;
 		}
 		| SET optnl "{" optnl filter_set_l optnl "}"	{
-			if (merge_filterset(&curpeer->conf.attrset, &$5) == -1)
+			struct filter_set	*s;
+
+			while ((s = SIMPLEQ_FIRST($5)) != NULL) {
+				SIMPLEQ_REMOVE_HEAD($5, entry);
+				if (merge_filterset(&curpeer->conf.attrset, s)
+				    == -1)
 				YYERROR;
+			}
+			free($5);
 		}
 		| mrtdump
 		| REFLECTOR		{
@@ -831,7 +842,7 @@ filterrule	: action quick direction filter_peer_h filter_match_h filter_set
 			r.quick = $2;
 			r.dir = $3;
 
-			if (expand_rule(&r, $4, &$5, &$6) == -1)
+			if (expand_rule(&r, $4, &$5, $6) == -1)
 				YYERROR;
 		}
 		;
@@ -1086,69 +1097,99 @@ filter_as_type	: AS		{ $$ = AS_ALL; }
 		| TRANSITAS	{ $$ = AS_TRANSIT; }
 		;
 
-filter_set	: /* empty */					{
-			bzero(&$$, sizeof($$));
+filter_set	: /* empty */					{ $$ = NULL; }
+		| SET filter_set_opt				{
+			if (($$ = calloc(1, sizeof(struct filter_set_head))) ==
+			    NULL)
+				fatal(NULL);
+			SIMPLEQ_INIT($$);
+			SIMPLEQ_INSERT_TAIL($$, $2, entry);
 		}
-		| SET filter_set_opt				{ $$ = $2; }
 		| SET optnl "{" optnl filter_set_l optnl "}"	{ $$ = $5; }
 		;
 
 filter_set_l	: filter_set_l comma filter_set_opt	{
 			$$ = $1;
-			if (merge_filterset(&$$, &$3) == 1)
+			if (merge_filterset($$, $3) == 1)
 				YYERROR;
 		}
-		| filter_set_opt
+		| filter_set_opt {
+			if (($$ = calloc(1, sizeof(struct filter_set_head))) ==
+			    NULL)
+				fatal(NULL);
+			SIMPLEQ_INIT($$);
+			SIMPLEQ_INSERT_TAIL($$, $1, entry);
+		}
 		;
 
 filter_set_opt	: LOCALPREF number		{
-			$$.flags = SET_LOCALPREF;
-			$$.localpref = $2;
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_LOCALPREF;
+			$$->action.metric = $2;
 		}
 		| MED number			{
-			$$.flags = SET_MED;
-			$$.med = $2;
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_MED;
+			$$->action.metric = $2;
 		}
 		| METRIC number			{	/* alias for MED */
-			$$.flags = SET_MED;
-			$$.med = $2;
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_MED;
+			$$->action.metric = $2;
 		}
 		| NEXTHOP address		{
-			$$.flags = SET_NEXTHOP;
-			memcpy(&$$.nexthop, &$2, sizeof($$.nexthop));
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_NEXTHOP;
+			memcpy(&$$->action.nexthop, &$2,
+			    sizeof($$->action.nexthop));
 		}
 		| NEXTHOP BLACKHOLE		{
-			$$.flags = SET_NEXTHOP_BLACKHOLE;
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_NEXTHOP_BLACKHOLE;
 		}
 		| NEXTHOP REJECT		{
-			$$.flags = SET_NEXTHOP_REJECT;
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_NEXTHOP_REJECT;
 		}
 		| PREPEND_SELF number		{
-			$$.flags = SET_PREPEND_SELF;
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_PREPEND_SELF;
 			if ($2 > 128) {
 				yyerror("to many prepends");
 				YYERROR;
 			}
-			$$.prepend_self = $2;
+			$$->action.prepend = $2;
 		}
 		| PREPEND_PEER number		{
-			$$.flags = SET_PREPEND_PEER;
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_PREPEND_PEER;
 			if ($2 > 128) {
 				yyerror("to many prepends");
 				YYERROR;
 			}
-			$$.prepend_peer = $2;
+			$$->action.prepend = $2;
 		}
 		| PFTABLE string		{
-			$$.flags = SET_PFTABLE;
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_PFTABLE;
 			if (!(conf->opts & BGPD_OPT_NOACTION) &&
 			    pftable_exists($2) != 0) {
 				yyerror("pftable name does not exist");
 				free($2);
 				YYERROR;
 			}
-			if (strlcpy($$.pftable, $2, sizeof($$.pftable)) >=
-			    sizeof($$.pftable)) {
+			if (strlcpy($$->action.pftable, $2,
+			    sizeof($$->action.pftable)) >=
+			    sizeof($$->action.pftable)) {
 				yyerror("pftable name too long");
 				free($2);
 				YYERROR;
@@ -1161,20 +1202,23 @@ filter_set_opt	: LOCALPREF number		{
 			free($2);
 		}
 		| COMMUNITY STRING		{
-			$$.flags = SET_COMMUNITY;
-			if (parsecommunity($2, &$$.community.as,
-			    &$$.community.type) == -1) {
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_COMMUNITY;
+			if (parsecommunity($2, &$$->action.community.as,
+			    &$$->action.community.type) == -1) {
 				free($2);
 				YYERROR;
 			}
 			free($2);
-			if ($$.community.as <= 0 || $$.community.as > 0xffff) {
+			if ($$->action.community.as <= 0 ||
+			    $$->action.community.as > 0xffff) {
 				yyerror("Invalid community");
 				YYERROR;
 			}
 			/* Don't allow setting of unknown well-known types */
-			if ($$.community.as == COMMUNITY_WELLKNOWN) {
-				switch ($$.community.type) {
+			if ($$->action.community.as == COMMUNITY_WELLKNOWN) {
+				switch ($$->action.community.type) {
 				case COMMUNITY_NO_EXPORT:
 				case COMMUNITY_NO_ADVERTISE:
 				case COMMUNITY_NO_EXPSUBCONFED:
@@ -1750,6 +1794,7 @@ alloc_peer(void)
 	p->conf.capabilities.mp_v4 = SAFI_UNICAST;
 	p->conf.capabilities.mp_v6 = SAFI_NONE;
 	p->conf.capabilities.refresh = 1;
+	SIMPLEQ_INIT(&p->conf.attrset);
 
 	return (p);
 }
@@ -1757,7 +1802,7 @@ alloc_peer(void)
 struct peer *
 new_peer(void)
 {
-	struct peer	*p;
+	struct peer		*p;
 
 	p = alloc_peer();
 
@@ -1770,6 +1815,8 @@ new_peer(void)
 		    sizeof(p->conf.descr)) >= sizeof(p->conf.descr))
 			fatalx("new_peer descr strlcpy");
 		p->conf.groupid = curgroup->conf.id;
+		SIMPLEQ_INIT(&p->conf.attrset);
+		copy_filterset(&curgroup->conf.attrset, &p->conf.attrset);
 	}
 	p->next = NULL;
 
@@ -1858,7 +1905,7 @@ get_id(struct peer *newpeer)
 
 int
 expand_rule(struct filter_rule *rule, struct filter_peers_l *peer,
-    struct filter_match_l *match, struct filter_set *set)
+    struct filter_match_l *match, struct filter_set_head *set)
 {
 	struct filter_rule	*r;
 	struct filter_peers_l	*p, *pnext;
@@ -1880,7 +1927,8 @@ expand_rule(struct filter_rule *rule, struct filter_peers_l *peer,
 				memcpy(r, rule, sizeof(struct filter_rule));
 				memcpy(&r->match, match,
 				    sizeof(struct filter_match));
-				memcpy(&r->set, set, sizeof(struct filter_set));
+				SIMPLEQ_INIT(&r->set);
+				copy_filterset(set, &r->set);
 
 				if (p != NULL)
 					memcpy(&r->peer, &p->p,
@@ -1990,30 +2038,49 @@ neighbor_consistent(struct peer *p)
 }
 
 int
-merge_filterset(struct filter_set *a, struct filter_set *b)
+merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 {
-	if (a->flags & b->flags) {
-		yyerror("redefining set parameters is not fluffy");
-		return (-1);
+	struct filter_set	*t;
+
+	SIMPLEQ_FOREACH(t, sh, entry) {
+		if (s->type != t->type)
+			continue;
+		
+		switch (s->type) {
+		case ACTION_SET_COMMUNITY:
+			if (s->action.community.as == t->action.community.as &&
+			    s->action.community.type ==
+			    t->action.community.type) {
+				yyerror("community is already set");
+				return (-1);
+			}
+			break;
+		case ACTION_SET_NEXTHOP:
+			if (s->action.nexthop.af != t->action.nexthop.af)
+				break;
+			/* FALLTHROUGH */
+		default:
+			yyerror("redefining set parameters is not fluffy");
+			return (-1);
+		}
 	}
-	a->flags |= b->flags;
-	if (b->flags & SET_LOCALPREF)
-		a->localpref = b->localpref;
-	if (b->flags & SET_MED)
-		a->med = b->med;
-	if (b->flags & SET_NEXTHOP)
-		memcpy(&a->nexthop, &b->nexthop,
-		    sizeof(a->nexthop));
-	if (b->flags & SET_PREPEND_SELF)
-		a->prepend_self = b->prepend_self;
-	if (b->flags & SET_PREPEND_PEER)
-		a->prepend_peer = b->prepend_peer;
-	if (b->flags & SET_PFTABLE)
-		strlcpy(a->pftable, b->pftable,
-		    sizeof(a->pftable));
-	if (b->flags & SET_COMMUNITY) {
-		a->community.as = b->community.as;
-		a->community.type = b->community.type;
-	}
+	SIMPLEQ_INSERT_TAIL(sh, s, entry);
 	return (0);
+}
+
+
+void
+copy_filterset(struct filter_set_head *source, struct filter_set_head *dest)
+{
+	struct filter_set	*s, *t;
+
+	if (source == NULL)
+		return;
+
+	SIMPLEQ_FOREACH(s, source, entry) {
+		if ((t = calloc(1, sizeof(struct filter_set))) == NULL)
+			fatal(NULL);
+		memcpy(t, s, sizeof(struct filter_set));
+		SIMPLEQ_INSERT_TAIL(dest, t, entry);
+	}
 }
