@@ -9,7 +9,7 @@ SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
 	multibyte.c putenv.c qsort.c radixsort.c rand.c random.c realpath.c \
 	setenv.c strtod.c strtol.c strtoll.c strtoul.c strtoull.c system.c \
 	tfind.c tsearch.c _rand48.c drand48.c erand48.c jrand48.c lcong48.c \
-	lrand48.c mrand48.c nrand48.c seed48.c srand48.c qabs.c qdiv.c
+	lrand48.c mrand48.c nrand48.c remque.c seed48.c srand48.c qabs.c qdiv.c
 
 .if   (${MACHINE_ARCH} == "m68k")
 SRCS+=	abs.S div.c labs.c ldiv.c
