@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re.c,v 1.11 2004/10/29 00:33:20 pvalchev Exp $	*/
+/*	$OpenBSD: if_re.c,v 1.12 2004/10/29 11:45:01 jsg Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -166,6 +166,7 @@ int redebug = 0;
 
 const struct pci_matchid re_devices[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169 },
+	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CGLAPCIGT },
 };
 
 int re_probe		(struct device *, void *, void *);
