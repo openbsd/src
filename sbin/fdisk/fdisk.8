@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.4 1996/09/25 11:24:11 deraadt Exp $
+.\"	$OpenBSD: fdisk.8,v 1.5 1996/09/27 15:27:15 deraadt Exp $
 .\"	$NetBSD: fdisk.8,v 1.8 1995/03/18 14:55:34 cgd Exp $
 .\"
 .Dd April 4, 1993
@@ -9,33 +9,46 @@
 .Nd DOS partition maintenance program
 .Sh SYNOPSIS
 .Nm
-.Op Fl aiu
+.Op Fl aium
+.Op f Ar mbrname
 .Op Ar device
 .Sh PROLOGUE
 In order for the BIOS to boot the kernel, certain conventions must be
 adhered to.
 Sector 0 of the disk must contain boot code, a MBR partition table,
 and a magic number.
-MBR partitions (also known as BIOS partitions) can be used to break the
-disk up into several pieces.
-The BIOS brings in sector 0, verifies the magic number, and begins
-executing the code at the first byte.
-This code is turn searches the MBR partition table for an `active'
-partition.
-If one is found, the boot block from that partition is loaded and replaces
-the original boot block.
-Under DOS, you could have one or more partitions with one active.
+These MBR partitions (also known as BIOS partitions) can be used to
+break the disk up into several pieces.
+The BIOS loads sector 0 into memory, verifies the magic number, and
+begins executing the code at the first byte.
+The normal DOS MBR boot code searches the MBR partition table for an
+`active' partition (indicated by a flag value of 0x80); if one is found,
+the boot block from that partition is loaded and replaces the original
+boot block.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl a
+To change the active partition.
+.It Fl i
+Initialize the MBR sector from other information.
+.It Fl u
+Update, or change, the MBR sector information.
+.It Fl m
+Force creation of a new MBR sector.
+.It Fl f Ar mbrname
+Specifies an alternate MBR file.
+.El
+.Pp
 The DOS
 .Nm
 program can be used to divide space on the disk into partitions and set
 one active.
-.Pp
-This program
+This 
 .Nm
-serves a similar purpose to the DOS program.
-When called with no special flags, it prints the sector 0 partition
-table of the specified device
-An example follows:
+program serves a similar purpose to the DOS program.
+When called with no special flags, it prints the MBR partition
+table of the specified device, ie.
 .Bd -literal
     # fdisk wd0
     Using device /dev/rwd0c:
@@ -46,17 +59,17 @@ An example follows:
         cylinders=769 heads=15 sectors/track=33
         sectors/cylinder=495 
     Warning: BIOS sector numbers start at 1 (not 0)
-    MBR Partition 0: sysid 165=0xa5 (OpenBSD/NetBSD/FreeBSD/386BSD)
-        start 495, size 380160 (185 MB), flag 0x00
+    MBR Partition 0: sysid 166=0xa6 (OpenBSD)
+        start 495, size 380160 (185 MB), flag 0x80
         beg: cylinder    1, head   0, sector  1
         end: cylinder  768, head  14, sector 33
     MBR Partition 1: sysid 6=0x06 (Primary 'big' DOS (> 32MB))
-        start 378180, size 2475 (1 MB), flag 0x80
+        start 380655, size 2475 (1 MB), flag 0x00
         beg: cylinder  764, head   0, sector  1
         end: cylinder  768, head  14, sector 33
     MBR Partition 2: <UNUSED>
-    MBR Partition 3: sysid 99=0x63 (ISC, System V/386, GNU HURD or Mach)
-        start 380656, size 224234 (109 MB), flag 0x00
+    MBR Partition 3: sysid 165=0xa5 (386BSD/FreeBSD/NetBSD)
+        start 383130, size 224234 (109 MB), flag 0x00
         beg: cylinder  769, head   0, sector  2
         end: cylinder  197, head  14, sector 33
 .Ed
@@ -69,18 +82,20 @@ The second partition overlaps the end of the first.
 is used to label the partition.
 .oS
 reserves the
-magic number 165 decimal (A5 in hex).
+magic number 166 decimal (A6 in hex).
+If no 166 partition is found, it will use an older 386BSD partition
+(with a magic number of 165).
 .It Em "start and size"
 fields provide the start address
 and size of a partition in sectors.
-.It Em "flag 80"
+.It Em "flag 0x80"
 specifies that this is the active partition.
 .It Em "cyl, sector and head"
 fields are used to specify the beginning address
 and end address for the partition.
 .It Em "Note:"
-these numbers are calculated using BIOS's understanding of the disk geometry
-and saved in the bootblock.
+these numbers are calculated using BIOS's understanding of the disk
+geometry and saved in the bootblock.
 .El
 .Pp
 The flags
@@ -88,10 +103,11 @@ The flags
 or
 .Fl u
 are used to indicate that the partition data is to be updated.
-The
+In this mode,
 .Nm
-program will enter a conversational mode.
-This mode is designed not to change any data unless you explicitly tell it to;
+will enter a conversational mode.
+This mode is designed not to change any data unless you explicitly
+tell it to;
 .Nm
 selects defaults for its questions to guarantee that behavior.
 .Pp
