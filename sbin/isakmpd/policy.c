@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.c,v 1.11 2000/04/07 22:50:02 niklas Exp $	*/
-/*	$EOM: policy.c,v 1.23 2000/04/07 22:44:25 angelos Exp $ */
+/*	$OpenBSD: policy.c,v 1.12 2000/05/02 14:35:27 niklas Exp $	*/
+/*	$EOM: policy.c,v 1.26 2000/05/01 19:52:50 niklas Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
@@ -75,10 +75,6 @@
 #include "ui.h"
 #include "util.h"
 #include "policy.h"
-
-#ifndef POLICY_FILE_DEFAULT
-#define POLICY_FILE_DEFAULT "/etc/isakmpd/isakmpd.policy"
-#endif /* POLICY_FILE_DEFAULT */
 
 #if defined (HAVE_DLOPEN) && !defined (USE_KEYNOTE) && 0
 
@@ -182,6 +178,8 @@ policy_callback (char *name)
   static char remote_id_addr_lower[64], *remote_id_proto, remote_id_port[32];
   static char remote_filter_port[32], local_filter_port[32];
   static char *remote_filter_proto, *local_filter_proto, *pfs, *initiator;
+  static char remote_filter_proto_num[3], local_filter_proto_num[3];
+  static char remote_id_proto_num[3];
 
   /* Allocated.  */
   static char *remote_filter = 0, *local_filter = 0, *remote_id = 0;
@@ -770,6 +768,15 @@ policy_callback (char *name)
 	case IPPROTO_UDP:
 	  remote_id_proto = "udp";
 	  break;
+
+	case IPPROTO_ETHERIP:
+	  remote_id_proto = "etherip";
+	  break;
+
+ 	default:
+	  sprintf (remote_id_proto_num, "%2d", id[1]);
+	  remote_id_proto = remote_id_proto_num;
+	  break;
 	}
 
       snprintf (remote_id_port, sizeof remote_id_port - 1, "%d",
@@ -936,6 +943,15 @@ policy_callback (char *name)
 
 	    case IPPROTO_UDP:
 	      remote_filter_proto = "udp";
+	      break;
+	
+	    case IPPROTO_ETHERIP:
+	      remote_filter_proto = "etherip";
+	      break;
+
+ 	    default:
+	      sprintf (remote_filter_proto_num, "%2d", id[1]);
+	      remote_filter_proto = remote_filter_proto_num;
 	      break;
 	    }
 
@@ -1106,6 +1122,15 @@ policy_callback (char *name)
 	    case IPPROTO_UDP:
 	      local_filter_proto = "udp";
 	      break;
+
+	    case IPPROTO_ETHERIP:
+	      local_filter_proto = "etherip";
+	      break;
+
+ 	    default:
+	      sprintf (local_filter_proto_num, "%2d", id[1]);
+	      local_filter_proto = local_filter_proto_num;
+	      break;
 	    }
 
 	  snprintf (local_filter_port, sizeof local_filter_port - 1,
@@ -1192,15 +1217,15 @@ policy_callback (char *name)
 
   if (strcmp (name, "GMTTimeOfDay") == 0)
     {
-	tt = time((time_t) NULL);
-	strftime (mytimeofday, 14, "%G%m%d%H%M%S", gmtime(&tt));
+	tt = time ((time_t) NULL);
+	strftime (mytimeofday, 14, "%G%m%d%H%M%S", gmtime (&tt));
 	return mytimeofday;
     }
 
   if (strcmp (name, "LocalTimeOfDay") == 0)
     {
-	tt = time((time_t) NULL);
-	strftime (mytimeofday, 14, "%G%m%d%H%M%S", localtime(&tt));
+	tt = time ((time_t) NULL);
+	strftime (mytimeofday, 14, "%G%m%d%H%M%S", localtime (&tt));
 	return mytimeofday;
     }
 
@@ -1354,7 +1379,7 @@ policy_callback (char *name)
   return "";
 
  bad:
-  policy_callback(KEYNOTE_CALLBACK_INITIALIZE);
+  policy_callback (KEYNOTE_CALLBACK_INITIALIZE);
   return "";
 }
 
