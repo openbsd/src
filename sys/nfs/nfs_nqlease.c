@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_nqlease.c,v 1.8 1997/04/18 10:02:36 deraadt Exp $	*/
+/*	$OpenBSD: nfs_nqlease.c,v 1.9 1997/04/18 10:13:23 deraadt Exp $	*/
 /*	$NetBSD: nfs_nqlease.c,v 1.14 1996/02/18 14:06:50 fvdl Exp $	*/
 
 /*
@@ -65,6 +65,7 @@
 #include <sys/buf.h>
 #include <sys/stat.h>
 #include <sys/protosw.h>
+#include <sys/namei.h>
 
 #include <netinet/in.h>
 #include <nfs/rpcv2.h>
