@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.21 2002/03/21 01:08:40 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.22 2002/03/28 18:34:01 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -67,7 +67,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.21 2002/03/21 01:08:40 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.22 2002/03/28 18:34:01 millert Exp $";
 #endif
 
 static void wi_getval(char *, struct wi_req *);
@@ -499,7 +499,7 @@ static struct wi_table wi_table[] = {
 
 static struct wi_table wi_crypt_table[] = {
         { WI_RID_ENCRYPTION, WI_BOOL, "WEP encryption:\t\t\t\t" },
-        { WI_RID_AUTH_CNTL, WI_WORDS,
+        { WI_RID_CNFAUTHMODE, WI_WORDS,
 	  "Authentication type \n(1=OpenSys, 2=Shared Key):\t\t" },
         { WI_RID_TX_CRYPT_KEY, WI_WORDS, "TX encryption key:\t\t\t" },
         { WI_RID_DEFLT_CRYPT_KEYS, WI_KEYSTRUCT, "Encryption keys:\t\t\t" },
@@ -692,7 +692,7 @@ static struct wi_func wi_opt[] = {
 	{ 'r', wi_setword, WI_RID_RTS_THRESH, NULL },
 	{ 's', wi_setstr, WI_RID_NODENAME, NULL },
 	{ 't', wi_setword, WI_RID_TX_RATE, NULL },
-	{ 'A', wi_setword, WI_RID_AUTH_CNTL, NULL },
+	{ 'A', wi_setword, WI_RID_CNFAUTHMODE, NULL },
 	{ 'M', wi_setword, WI_RID_MICROWAVE_OVEN, NULL },
 	{ 'P', wi_setword, WI_RID_PM_ENABLED, NULL },
 	{ 'R', wi_setword, WI_RID_ROAMING_MODE, NULL },
