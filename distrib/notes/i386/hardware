@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.169 2004/11/21 18:48:10 grange Exp $
+dnl	$OpenBSD: hardware,v 1.170 2004/12/01 01:46:45 pvalchev Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -617,6 +617,9 @@ Supported hardware {:-include-:}:
 		    Linksys EG1032v2 (1000baseT)
 		    Linksys EG1064v2 (1000baseT)
 		    SMC 9452TX (1000baseT)
+		VIA Networking VT6122 based PCI adapters, including:
+		    ZyXEL GN650-T 64-bit PCI Gigabit Ethernet NIC (ZX1701)
+		    ZyXEL GN670-T 32-bit PCI Gigabit Ethernet NIC (ZX1702)
 	ATM Adapters
 		Efficient Networks EN-155 and Adaptec ANA-590X ATM
 		interfaces [*]
