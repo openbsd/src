@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.10 2004/11/24 20:50:55 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.11 2004/11/24 20:57:25 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -2016,6 +2016,8 @@ iwi_stop(struct ifnet *ifp, int disable)
 	struct ieee80211com *ic = &sc->sc_ic;
 
 	iwi_stop_master(sc);
+	CSR_WRITE_4(sc, IWI_CSR_RST, IWI_RST_SW_RESET);
+
 	iwi_free_queues(sc);
 
 	ifp->if_timer = 0;
