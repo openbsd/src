@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.73 2002/01/11 01:25:23 nate Exp $
+.\"	$OpenBSD: sysctl.8,v 1.74 2002/01/12 00:53:09 ericj Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -188,6 +188,8 @@ privilege can change the value.
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.icmp.bmcastecho	integer	yes
 .It net.inet.icmp.errppslimit	integer	yes
+.It net.inet.icmp.rediraccept	integer	yes
+.It net.inet.icmp.redirtimeout	integer	yes
 .It net.inet.ipip.allow	integer	yes
 .It net.inet.etherip.allow	integer	yes
 .It net.inet.tcp.rfc1323	integer	yes
