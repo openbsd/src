@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.25 2004/01/29 08:48:45 mickey Exp $
+#	$OpenBSD: Makefile,v 1.26 2004/02/25 05:09:12 deraadt Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -39,7 +39,7 @@ CLEANFILES+=manual.c
 .ifdef NOMAN
 manual.c:
 	(echo 'char manpage[] = "\\'; \
-	echo "no manual"; \
+	echo "no manual\\"; \
 	echo '";' ) > manual.c
 .else
 manual.c:	fdisk.cat8

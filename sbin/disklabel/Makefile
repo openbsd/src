@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2004/01/28 17:45:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.32 2004/02/25 05:09:11 deraadt Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -14,7 +14,7 @@ CLEANFILES+=manual.c
 .ifdef NOMAN
 manual.c:
 	(echo 'char manpage[] = "\\'; \
-	echo "no manual"; \
+	echo "no manual\\"; \
 	echo '";' ) > manual.c
 .else
 manual.c:	disklabel.cat8
