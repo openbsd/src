@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.34 2001/06/29 20:38:16 angelos Exp $	*/
+/*	$OpenBSD: udp.c,v 1.35 2001/06/29 20:45:39 angelos Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -331,6 +331,23 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
   if (!(flags_ifr.ifr_flags & IFF_UP))
     return;
 
+  /* Set port */
+  switch (if_addr->sa_family)
+    {
+    case AF_INET:
+      ((struct sockaddr_in *)if_addr)->sin_port = 
+	htons((in_port_t)strtol (port, NULL, 10));
+      break;
+    case AF_INET6:
+      ((struct sockaddr_in6 *)if_addr)->sin6_port = 
+	htons((in_port_t)strtol (port, NULL, 10));
+      break;
+    default:
+      log_print ("udp_bind_if: unsupported protocol family %d",
+		 if_addr->sa_family);
+      break;
+    }
+
   /*
    * If we are explicit about what addresses we can listen to, be sure
    * to respect that option.
@@ -350,7 +367,7 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
 	      continue;
 	    }
 
-	  /* If found, take the easy way out.  */
+	  /* If found, take the easy way out. */
 	  if (memcmp (addr, if_addr, addr->sa_len) == 0)
 	    {
 	      free (addr);
@@ -370,22 +387,6 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
 	return;
     }
 
-  /* Set port */
-  switch (if_addr->sa_family)
-    {
-    case AF_INET:
-      ((struct sockaddr_in *)if_addr)->sin_port = 
-	htons((in_port_t)strtol (port, NULL, 10));
-      break;
-    case AF_INET6:
-      ((struct sockaddr_in6 *)if_addr)->sin6_port = 
-	htons((in_port_t)strtol (port, NULL, 10));
-      break;
-    default:
-      log_print ("udp_bind_if: unsupported protocol family %d",
-		 if_addr->sa_family);
-      break;
-    }
   t = udp_bind (if_addr);
   if (!t)
     {
