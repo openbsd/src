@@ -1,4 +1,4 @@
-/*      $OpenBSD: asm.h,v 1.1.1.1 1996/06/24 09:07:18 pefo Exp $	*/
+/*      $OpenBSD: asm.h,v 1.2 1996/07/18 17:00:09 pefo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,14 @@
 #define RCSID(x)
 
 #define _C_LABEL(x) x
+
+/*
+ * Define how to access unaligned data word
+ */
+#define LWLO    lwr
+#define LWHI    lwl
+#define	SWLO	swr
+#define	SWHI	swl
 
 /*
  * Define -pg profile entry code.
