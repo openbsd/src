@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.9 1995/07/19 19:58:51 brezak Exp $	*/
+/*	$NetBSD: pas.c,v 1.10 1995/11/10 05:05:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -89,9 +89,9 @@ struct pas_softc {
 	struct	isadev sc_id;		/* ISA device */
 	void	*sc_ih;			/* interrupt vectoring */
 
-	u_short sc_iobase;		/* PAS iobase */
-	u_short sc_irq;			/* PAS irq */
-	u_short sc_drq;			/* PAS drq */
+	int	sc_iobase;		/* PAS iobase */
+	int	sc_irq;			/* PAS irq */
+	int	sc_drq;			/* PAS drq */
 
 	int model;
 	int rev;
@@ -268,7 +268,7 @@ pasprobe(parent, self, aux)
 {
 	register struct pas_softc *sc = (void *)self;
 	register struct isa_attach_args *ia = aux;
-	register u_short iobase;
+	register int iobase;
 	u_char id, t;
 
 	/*
@@ -332,13 +332,11 @@ pasprobe(parent, self, aux)
 	}
 
         if (sc->model >= 0) {
-                int irq = ia->ia_irq;
-                if (irq == IRQUNK) {
+                if (ia->ia_irq == IRQUNK) {
                         printf("pas: sb emulation requires known irq\n");
                         return (0);
                 } 
-                irq = ia->ia_irq;
-                pasconf(sc->model, ia->ia_iobase, irq, 1);
+                pasconf(sc->model, ia->ia_iobase, ia->ia_irq, 1);
         } else {
                 DPRINTF(("pas: could not probe pas\n"));
                 return (0);
@@ -374,8 +372,7 @@ pasprobe(parent, self, aux)
 	} else
 #endif
 	if (!SB_IRQ_VALID(ia->ia_irq)) {
-		int irq = ia->ia_irq;
-		printf("pas: configured irq %d invalid\n", irq);
+		printf("pas: configured irq chan %d invalid\n", ia->ia_irq);
 		return 0;
 	}
 
@@ -398,7 +395,7 @@ pasforceintr(aux)
 {
 	static char dmabuf;
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 
 	/*
 	 * Set up a DMA read of one byte.
@@ -430,7 +427,7 @@ pasattach(parent, self, aux)
 {
 	register struct pas_softc *sc = (struct pas_softc *)self;
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-	register u_short iobase = ia->ia_iobase;
+	register int iobase = ia->ia_iobase;
 	int err;
 	
 	sc->sc_iobase = iobase;

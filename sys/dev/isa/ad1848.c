@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.6 1995/07/07 02:11:51 brezak Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.7 1995/11/10 04:30:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -291,7 +291,7 @@ int
 ad1848_probe(sc)
     struct ad1848_softc *sc;
 {
-    register u_short iobase = sc->sc_iobase;
+    register int iobase = sc->sc_iobase;
     u_char tmp, tmp1 = 0xff, tmp2 = 0xff;
     int i;
     
@@ -468,7 +468,7 @@ void
 ad1848_attach(sc)
     struct ad1848_softc *sc;
 {
-    register u_short iobase = sc->sc_iobase;
+    register int iobase = sc->sc_iobase;
     int i;
     struct ad1848_volume vol_mid = {150, 150};
     struct ad1848_volume vol_0   = {0, 0};
@@ -1506,7 +1506,7 @@ ad1848_dma_input(addr, p, cc, intr, arg)
     void *arg;
 {
     register struct ad1848_softc *sc = addr;
-    register u_short iobase;
+    register int iobase;
     register u_char reg;
     
     if (sc->sc_locked) {
@@ -1561,7 +1561,7 @@ ad1848_dma_output(addr, p, cc, intr, arg)
     void *arg;
 {
     register struct ad1848_softc *sc = addr;
-    register u_short iobase;
+    register int iobase;
     register u_char reg;
     
     if (sc->sc_locked) {

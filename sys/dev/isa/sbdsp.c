@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.13 1995/07/19 19:58:54 brezak Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.14 1995/11/10 05:01:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -113,7 +113,7 @@ int
 sbdsp_probe(sc)
 	struct sbdsp_softc *sc;
 {
-	register u_short iobase = sc->sc_iobase;
+	register int iobase = sc->sc_iobase;
 
 	if (sbdsp_reset(sc) < 0) {
 		DPRINTF(("sbdsp: couldn't reset card\n"));
@@ -132,7 +132,7 @@ void
 sbdsp_attach(sc)
 	struct sbdsp_softc *sc;
 {
-	register u_short iobase = sc->sc_iobase;
+	register int iobase = sc->sc_iobase;
 
 	sc->sc_locked = 0;
 
@@ -610,7 +610,7 @@ int
 sbdsp_reset(sc)
 	register struct sbdsp_softc *sc;
 {
-	register u_short iobase = sc->sc_iobase;
+	register int iobase = sc->sc_iobase;
 
 	/*
 	 * erase any memory of last transfer size.
@@ -635,7 +635,7 @@ sbdsp_reset(sc)
  * polling loop and wait until it can take the byte.
  */
 int
-sbdsp_wdsp(u_short iobase, int v)
+sbdsp_wdsp(int iobase, int v)
 {
 	register int i;
 
@@ -654,7 +654,7 @@ sbdsp_wdsp(u_short iobase, int v)
  * Read a byte from the DSP, using polling.
  */
 int
-sbdsp_rdsp(u_short iobase)
+sbdsp_rdsp(int iobase)
 {
 	register int i;
 
@@ -725,7 +725,7 @@ short
 sbversion(sc)
 	struct sbdsp_softc *sc;
 {
-	register u_short iobase = sc->sc_iobase;
+	register int iobase = sc->sc_iobase;
 	short v;
 
 	if (sbdsp_wdsp(iobase, SB_DSP_VERSION) < 0)
@@ -896,7 +896,7 @@ sbdsp_set_sr(sc, srp, isdac)
 	register int tc;
 	int mode;
 	int sr = *srp;
-	register u_short iobase;
+	register int iobase;
 
 	/*
 	 * A SBPro in stereo mode uses time constants at double the
@@ -940,8 +940,7 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	void *arg;
 {
 	register struct sbdsp_softc *sc = addr;
-	register u_short iobase;
-	u_int phys;
+	register int iobase;
 	
 #ifdef AUDIO_DEBUG
 	if (sbdspdebug > 1)
@@ -1024,7 +1023,7 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 	void *arg;
 {
 	register struct sbdsp_softc *sc = addr;
-	register u_short iobase;
+	register int iobase;
 	
 #ifdef AUDIO_DEBUG
 	if (sbdspdebug > 1)

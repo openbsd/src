@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.9 1995/08/12 22:37:58 mycroft Exp $	*/
+/*	$NetBSD: pss.c,v 1.10 1995/11/10 04:30:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -107,8 +107,8 @@ struct pss_softc {
 	struct	isadev sc_id;		/* ISA device */
 	void	*sc_ih;			/* interrupt vectoring */
 
-	u_short	sc_iobase;		/* I/O port base address */
-	u_short	sc_drq;			/* dma channel */
+	int	sc_iobase;		/* I/O port base address */
+	int	sc_drq;			/* dma channel */
 
 	struct	ad1848_softc *ad1848_sc;
 	
@@ -128,8 +128,8 @@ struct mpu_softc {
 	struct	isadev sc_id;		/* ISA device */
 	void	*sc_ih;			/* interrupt vectoring */
     
-	u_short	sc_iobase;		/* MIDI I/O port base address */
-	u_short	sc_irq;			/* MIDI interrupt */
+	int	sc_iobase;		/* MIDI I/O port base address */
+	int	sc_irq;			/* MIDI interrupt */
 };
 
 struct cd_softc {
@@ -137,8 +137,8 @@ struct cd_softc {
 	struct	isadev sc_id;		/* ISA device */
 	void	*sc_ih;			/* interrupt vectoring */
 
-	u_short	sc_iobase;		/* CD I/O port base address */
-	u_short	sc_irq;			/* CD interrupt */
+	int	sc_iobase;		/* CD I/O port base address */
+	int	sc_irq;			/* CD interrupt */
 };
 
 #ifdef AUDIO_DEBUG
@@ -263,7 +263,7 @@ void
 pss_dspwrite(struct pss_softc *sc, int data)
 {
     int i;
-    u_short pss_base = sc->sc_iobase;
+    int pss_base = sc->sc_iobase;
 
     /*
      * Note! the i<5000000 is an emergency exit. The dsp_command() is sometimes
@@ -414,7 +414,7 @@ pss_setdma(int dmaNum, int configAddress)
 static int
 pss_testirq(struct pss_softc *sc, int intNum)
 {
-    u_short iobase = sc->sc_iobase;
+    int iobase = sc->sc_iobase;
     int val;
     int ret;
     int i;
@@ -500,7 +500,7 @@ pss_testirq(struct pss_softc *sc, int intNum)
 int
 pss_testdma(struct pss_softc *sc, int dmaNum)
 {
-    u_short iobase = sc->sc_iobase;
+    int iobase = sc->sc_iobase;
     int val;
     int i,ret;
 
@@ -574,7 +574,7 @@ int
 pss_reset_dsp(struct pss_softc *sc)
 {
     u_long i;
-    u_short pss_base = sc->sc_iobase;
+    int pss_base = sc->sc_iobase;
 
     outw(pss_base+PSS_CONTROL, PSS_RESET);
 
@@ -601,7 +601,7 @@ int
 pss_download_dsp(struct pss_softc *sc, u_char *block, int size)
 {
     int i, val, count;
-    u_short pss_base = sc->sc_iobase;
+    int pss_base = sc->sc_iobase;
     
     DPRINTF(("pss: downloading boot code..."));
 
@@ -697,7 +697,7 @@ pssprobe(parent, self, aux)
 {
     struct pss_softc *sc = (void *)self;
     struct isa_attach_args *ia = aux;
-    u_short iobase = ia->ia_iobase;
+    int iobase = ia->ia_iobase;
     int i;
     
     if (!PSS_BASE_VALID(iobase)) {
@@ -706,7 +706,7 @@ pssprobe(parent, self, aux)
     }
 
     /* Need to probe for iobase when IOBASEUNK {0x220 0x240} */
-    if (iobase == (u_short)IOBASEUNK) {
+    if (iobase == IOBASEUNK) {
 
 	iobase = 0x220;
 	if ((inw(iobase+PSS_ID_VERS) & 0xff00) == 0x4500)
@@ -991,7 +991,7 @@ pssattach(parent, self, aux)
 {
     struct pss_softc *sc = (struct pss_softc *)self;
     struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-    u_short iobase = ia->ia_iobase;
+    int iobase = ia->ia_iobase;
     u_char vers;
     struct ad1848_volume vol = {150, 150};
     int err;
@@ -1030,7 +1030,7 @@ spattach(parent, self, aux)
 {
     struct ad1848_softc *sc = (struct ad1848_softc *)self;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
-    u_short iobase = cf->cf_iobase;
+    int iobase = cf->cf_iobase;
 
     sc->sc_iobase = iobase;
     sc->sc_drq = cf->cf_drq;
@@ -1059,7 +1059,7 @@ mpuattach(parent, self, aux)
 {
     struct mpu_softc *sc = (struct mpu_softc *)self;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
-    u_short iobase = cf->cf_iobase;
+    int iobase = cf->cf_iobase;
 
     sc->sc_iobase = iobase;
 
@@ -1083,7 +1083,7 @@ pcdattach(parent, self, aux)
 {
     struct cd_softc *sc = (struct cd_softc *)self;
     struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
-    u_short iobase = cf->cf_iobase;
+    int iobase = cf->cf_iobase;
     
     /*
      * The pss driver simply enables the cd interface. The CD

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.27 1995/07/19 19:58:53 brezak Exp $	*/
+/*	$NetBSD: sb.c,v 1.28 1995/11/10 05:01:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -149,9 +149,12 @@ sbprobe(parent, self, aux)
 {
 	register struct sbdsp_softc *sc = (void *)self;
 	register struct isa_attach_args *ia = aux;
-	register u_short iobase = ia->ia_iobase;
+	register int iobase = ia->ia_iobase;
+	static u_char drq_conf[4] = {
+		0x01, 0x02, -1, 0x08
+	};
 	static u_char irq_conf[11] = {
-	    -1, -1, 0x01, -1, -1, 0x02, -1, 0x04, -1, 0x01, 0x08
+		-1, -1, 0x01, -1, -1, 0x02, -1, 0x04, -1, 0x01, 0x08
 	};
 
 	if (!SB_BASE_VALID(ia->ia_iobase)) {
@@ -172,10 +175,8 @@ sbprobe(parent, self, aux)
 			printf("sb: configured dma chan %d invalid\n", ia->ia_drq);
 			return 0;
 		}
-		if (ISSB16CLASS(sc)) {
-			sbdsp_mix_write(sc, SBP_SET_DRQ, 
-					1 << ia->ia_drq);
-		}
+		if (ISSB16CLASS(sc))
+			sbdsp_mix_write(sc, SBP_SET_DRQ, drq_conf[ia->ia_drq]);
 	}
 	else {
 		if (!SB_DRQ_VALID(ia->ia_drq)) {
@@ -210,10 +211,8 @@ sbprobe(parent, self, aux)
 			printf("sb: configured irq %d invalid\n", ia->ia_irq);
 			return 0;
 		}
-		if (ISSB16CLASS(sc)) {
-			sbdsp_mix_write(sc, SBP_SET_IRQ, 
-					irq_conf[ia->ia_irq]);
-		}
+		if (ISSB16CLASS(sc))
+			sbdsp_mix_write(sc, SBP_SET_IRQ, irq_conf[ia->ia_irq]);
 	}
 	else {
 		if (!SB_IRQ_VALID(ia->ia_irq)) {
@@ -239,7 +238,7 @@ sbforceintr(aux)
 {
 	static char dmabuf;
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 
 	/*
 	 * Set up a DMA read of one byte.
@@ -271,7 +270,7 @@ sbattach(parent, self, aux)
 {
 	register struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-	register u_short iobase = ia->ia_iobase;
+	register int iobase = ia->ia_iobase;
 	int err;
 	
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,

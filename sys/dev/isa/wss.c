@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.6 1995/07/07 02:15:12 brezak Exp $	*/
+/*	$NetBSD: wss.c,v 1.7 1995/11/10 04:30:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -178,7 +178,7 @@ wssprobe(parent, self, aux)
 {
     register struct wss_softc *sc = (void *)self;
     register struct isa_attach_args *ia = aux;
-    register u_short iobase = ia->ia_iobase;
+    register int iobase = ia->ia_iobase;
     static u_char interrupt_bits[12] = {
 	-1, -1, -1, -1, -1, -1, -1, 0x08, -1, 0x10, 0x18, 0x20
     };
@@ -241,7 +241,7 @@ wssattach(parent, self, aux)
 {
     register struct wss_softc *sc = (struct wss_softc *)self;
     struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-    register u_short iobase = ia->ia_iobase;
+    register int iobase = ia->ia_iobase;
     int err;
     
     sc->sc_ad1848.sc_recdrq = ia->ia_drq;

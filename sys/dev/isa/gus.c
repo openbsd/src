@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.2 1995/07/24 05:54:52 cgd Exp $	*/
+/*	$NetBSD: gus.c,v 1.3 1995/11/10 04:30:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ken Hornstein.  All rights reserved.
@@ -165,10 +165,10 @@ struct gus_softc {
 	struct isadev sc_id;		/* ISA device */
 	void *sc_ih;			/* interrupt vector */
 
-	u_short sc_iobase;		/* I/O base address */
-	u_short sc_irq;			/* IRQ used */
-	u_short sc_drq;			/* DMA channel for play */
-	u_short sc_recdrq;		/* DMA channel for recording */
+	int sc_iobase;			/* I/O base address */
+	int sc_irq;			/* IRQ used */
+	int sc_drq;			/* DMA channel for play */
+	int sc_recdrq;			/* DMA channel for recording */
 
 	int sc_flags;			/* Various flags about the GUS */
 #define GUS_MIXER_INSTALLED	0x01	/* An ICS mixer is installed */
@@ -454,15 +454,22 @@ struct cfdriver guscd = {
  * registers.  A zero means that the referenced IRQ/DRQ is invalid
  */
 
-static int gus_irq_map[] = { 0, 0, 1, 3, 0, 2, 0, 4, 0, 1, 0, 5, 6, 0, 0, 7 };
-static int gus_drq_map[] = { 0, 1, 0, 2, 0, 3, 4, 5 };
+static int gus_irq_map[] = {
+	IRQUNK, IRQUNK, 1, 3, IRQUNK, 2, IRQUNK, 4, IRQUNK, 1, IRQUNK, 5, 6,
+	IRQUNK, IRQUNK, 7
+};
+static int gus_drq_map[] = {
+	DRQUNK, 1, DRQUNK, 2, DRQUNK, 3, 4, 5
+};
 
 /*
  * A list of valid base addresses for the GUS
  */
 
-static u_short gus_base_addrs[] = { 0x210, 0x220, 0x230, 0x240, 0x250, 0x260 };
-static int gus_addrs = sizeof(gus_base_addrs) / sizeof(u_short);
+static int gus_base_addrs[] = {
+	0x210, 0x220, 0x230, 0x240, 0x250, 0x260
+};
+static int gus_addrs = sizeof(gus_base_addrs) / sizeof(gus_base_addrs[0]);
 
 /*
  * Maximum frequency values of the GUS based on the number of currently active
@@ -654,7 +661,7 @@ gusprobe(parent, self, aux)
 	register struct isa_attach_args *ia = aux;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	register int iobase = ia->ia_iobase;
-	u_short recdrq = cf->cf_flags;
+	int recdrq = cf->cf_flags;
 
 	int i;
 	unsigned char s1, s2;
@@ -664,18 +671,18 @@ gusprobe(parent, self, aux)
 	 * valid for this card.
 	 */
 
-	if (! gus_irq_map[ia->ia_irq]) {
+	if (gus_irq_map[ia->ia_irq] == IRQUNK) {
 		printf("gus: invalid irq %d, card not probed\n", ia->ia_irq);
 		return(0);
 	}
 
-	if (! gus_drq_map[ia->ia_drq]) {
+	if (gus_drq_map[ia->ia_drq] == DRQUNK) {
 		printf("gus: invalid drq %d, card not probed\n", ia->ia_drq);
 		return(0);
 	}
 
 	if (recdrq != 0x00) {
-		if (recdrq > 7 || ! gus_drq_map[recdrq]) {
+		if (recdrq > 7 || gus_drq_map[recdrq] == DRQUNK) {
 		   printf("gus: invalid flag given for second DMA channel (0x%x), card not probed\n", recdrq);
 		   return(0);
 	        }
@@ -764,7 +771,7 @@ gusattach(parent, self, aux)
 {
 	register struct gus_softc *sc = (void *) self;
 	register struct isa_attach_args *ia = aux;
-	register u_short port = ia->ia_iobase;
+	register int port = ia->ia_iobase;
 	int		s,i;
 	register unsigned char	c,d,m;
 
@@ -1268,7 +1275,7 @@ gusintr(arg)
 {
 	register struct gus_softc *sc = arg;
 	unsigned char intr;
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	int retval = 0;
 
 	DPRINTF(("gusintr\n"));
@@ -1328,7 +1335,7 @@ gus_dmaout_timeout(arg)
      void *arg;
 {
     register struct gus_softc *sc = arg;
-    register u_short port = sc->sc_iobase;
+    register int port = sc->sc_iobase;
     int s;
 
     printf("%s: dmaout timeout\n", sc->sc_dev.dv_xname);
@@ -1356,7 +1363,7 @@ static int
 gus_dmaout_intr(sc)
 	struct gus_softc *sc;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 
 	/*
 	 * If we got a DMA transfer complete from the GUS DRAM, then deal
@@ -1376,7 +1383,7 @@ static void
 gus_dmaout_dointr(sc)
 	struct gus_softc *sc;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 
 	/* sc->sc_dmaoutcnt - 1 because DMA controller counts from zero?. */
 	isa_dmadone(B_WRITE,
@@ -1522,7 +1529,7 @@ static int
 gus_voice_intr(sc)
 	struct gus_softc *sc;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	int ignore = 0, voice, rval = 0;
 	unsigned long addr;
 	unsigned char intr, status;
@@ -1658,7 +1665,7 @@ gus_start_playing(sc, bufno)
 struct gus_softc *sc;
 int bufno;
 {
-    register u_short port = sc->sc_iobase;
+    register int port = sc->sc_iobase;
     /*
      * Start the voices playing, with buffer BUFNO.
      */
@@ -1737,7 +1744,7 @@ gus_continue_playing(sc, voice)
 register struct gus_softc *sc;
 int voice;
 {
-    register u_short port = sc->sc_iobase;
+    register int port = sc->sc_iobase;
 
     /*
      * stop this voice from interrupting while we work.
@@ -1837,7 +1844,7 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 	caddr_t buffaddr;
 {
 	register unsigned char c = (unsigned char) flags;
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	int s;
 
 	DMAPRINTF(("gusdmaout flags=%x scflags=%x\n", flags, sc->sc_flags));
@@ -1909,7 +1916,7 @@ gus_start_voice(sc, voice, intrs)
 	int voice;
 	int intrs;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	unsigned long start;
 	unsigned long current;
 	unsigned long end;
@@ -2005,7 +2012,7 @@ gus_stop_voice(sc, voice, intrs_too)
 	int voice;
 	int intrs_too;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 
 	sc->sc_voc[voice].voccntl |= GUSMASK_VOICE_STOPPED |
 		GUSMASK_STOP_VOICE;
@@ -2046,7 +2053,7 @@ gus_set_volume(sc, voice, volume)
 	struct gus_softc *sc;
 	int voice, volume;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	unsigned int gusvol;
 
 	gusvol = gus_log_volumes[volume < 512 ? volume : 511];
@@ -2388,7 +2395,7 @@ static inline void gus_set_voices(sc, voices)
 struct gus_softc *sc;
 int voices;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	/*
 	 * Select the active number of voices
 	 */
@@ -2483,7 +2490,7 @@ gus_set_samprate(sc, voice, freq)
 	struct gus_softc *sc;
 	int voice, freq;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	unsigned int fc;
 	unsigned long temp, f = (unsigned long) freq;
 
@@ -2550,7 +2557,7 @@ gus_set_recrate(sc, rate)
 	struct gus_softc *sc;
 	u_long rate;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	u_char realrate;
 	int s;
 	DPRINTF(("gus_set_recrate %lu\n", rate));
@@ -2652,7 +2659,7 @@ gus_set_endaddr(sc, voice, addr)
 	int voice;
 	unsigned long addr;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 
 	sc->sc_voc[voice].end_addr = addr;
 
@@ -2676,7 +2683,7 @@ gus_set_curaddr(sc, voice, addr)
 	int voice;
 	unsigned long addr;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 
 	sc->sc_voc[voice].current_addr = addr;
 
@@ -2701,7 +2708,7 @@ gus_get_curaddr(sc, voice)
 	struct gus_softc *sc;
 	int voice;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	unsigned long addr;
 
 	outb(port+GUS_VOICE_SELECT, (unsigned char) voice);
@@ -2800,7 +2807,7 @@ gusreset(sc, voices)
 	struct gus_softc *sc;
 	int voices;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	int i,s;
 
 	s = splgus();
@@ -2926,7 +2933,7 @@ static void
 gus_init_cs4231(sc)
 	struct gus_softc *sc;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	u_char ctrl;
 
 	ctrl = (port & 0xf0) >> 4;	/* set port address middle nibble */
@@ -3197,7 +3204,7 @@ gus_dma_input(addr, buf, size, callback, arg)
 	void *arg;
 {
 	register struct gus_softc *sc = addr;
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	register u_char dmac;
 	DMAPRINTF(("gus_dma_input called\n"));
     
@@ -3305,7 +3312,7 @@ gus_halt_out_dma(addr)
 	void * addr;
 {
 	register struct gus_softc *sc = addr;
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 
 	DMAPRINTF(("gus_halt_out_dma called\n"));
 	/*
@@ -3340,7 +3347,7 @@ gus_halt_in_dma(addr)
 	void * addr;
 {
 	register struct gus_softc *sc = addr;
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	DMAPRINTF(("gus_halt_in_dma called\n"));
 
 	/*
@@ -4455,7 +4462,7 @@ static void
 gus_init_ics2101(sc)
 	struct gus_softc *sc;
 {
-	register u_short port = sc->sc_iobase;
+	register int port = sc->sc_iobase;
 	register struct ics2101_softc *ic = &sc->sc_mixer;
 	sc->sc_mixer.sc_selio = port+GUS_MIXER_SELECT;
 	sc->sc_mixer.sc_dataio = port+GUS_MIXER_DATA;

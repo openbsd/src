@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.6 1995/05/08 22:02:24 brezak Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.7 1995/11/10 05:01:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -75,9 +75,9 @@ struct sbdsp_softc {
 	struct	isadev sc_id;		/* ISA device */
 	void	*sc_ih;			/* interrupt vectoring */
 
-	u_short	sc_iobase;		/* I/O port base address */
-	u_short sc_irq;			/* interrupt */
-	u_short sc_drq;			/* DMA */
+	int	sc_iobase;		/* I/O port base address */
+	int	sc_irq;			/* interrupt */
+	int	sc_drq;			/* DMA */
 
 	u_short	sc_open;		/* reference count of open calls */
 	u_short	sc_locked;		/* true when doing HS DMA  */
@@ -180,8 +180,8 @@ int	sbdsp_reset __P((struct sbdsp_softc *));
 void	sbdsp_spkron __P((struct sbdsp_softc *));
 void	sbdsp_spkroff __P((struct sbdsp_softc *));
 
-int	sbdsp_wdsp(u_short iobase, int v);
-int	sbdsp_rdsp(u_short iobase);
+int	sbdsp_wdsp(int iobase, int v);
+int	sbdsp_rdsp(int iobase);
 
 int	sbdsp_intr __P((void *));
 short	sbversion __P((struct sbdsp_softc *));
