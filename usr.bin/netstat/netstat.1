@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.30 2003/06/05 20:01:35 jmc Exp $
+.\"	$OpenBSD: netstat.1,v 1.31 2003/06/12 07:39:16 jmc Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Nm netstat
-.Op Fl bdgimnqrs
+.Op Fl bdgilmnqrstu
 .Op Fl f Ar address_family
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -54,9 +54,9 @@
 .Op Fl N Ar system
 .Op Fl w Ar wait
 .Nm netstat
-.Op Fl p Ar protocol
 .Op Fl M Ar core
 .Op Fl N Ar system
+.Op Fl p Ar protocol
 .Nm netstat
 .Op Fl s
 .Op Fl f Ar address_family
@@ -163,6 +163,14 @@ option (with the
 option) is present, show per-interface statistics on all interfaces
 for the specified
 .Ar address_family .
+.It Fl l
+With the
+.Fl g
+option, display wider fields for the IPv6 multicast routing table
+.Qq Origin
+and
+.Qq Group
+columns.
 .It Fl M Ar core
 Extract values associated with the name list from the specified core
 instead of the running kernel.
@@ -200,6 +208,14 @@ option is also specified, show routing statistics instead.
 .It Fl s
 Show per-protocol statistics.
 If this option is repeated, counters with a value of zero are suppressed.
+.It Fl t
+With the
+.Fl i
+option, display the current value of the watchdog timer function.
+.It Fl u
+Limit statistics or address control block reports to the
+.Dv AF_UNIX
+address family.
 .It Fl v
 Be verbose.
 Avoids truncation of long addresses.
