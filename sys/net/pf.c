@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.52 2001/06/26 15:35:41 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.53 2001/06/26 15:58:42 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1355,10 +1355,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m,
 	}
 
 	/* copy back packet headers if we performed NAT operations */
-	if (rewrite) {
-		m_copyback((*m), ipoff, sizeof(*h), (caddr_t)h);
+	if (rewrite)
 		m_copyback((*m), off, sizeof(*th), (caddr_t)th);
-	}
 
 	return (PF_PASS);
 }
@@ -1481,10 +1479,8 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m,
 	}
 
 	/* copy back packet headers if we performed NAT operations */
-	if (rewrite) {
-		m_copyback((*m), ipoff, sizeof(*h), (caddr_t)h);
+	if (rewrite)
 		m_copyback((*m), off, sizeof(*uh), (caddr_t)uh);
-	}
 
 	return (PF_PASS);
 }
@@ -1580,10 +1576,8 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
 	}
 
 	/* copy back packet headers if we performed NAT operations */
-	if (rewrite) {
-		m_copyback((*m), ipoff, sizeof(*h), (caddr_t)h);
+	if (rewrite)
 		m_copyback((*m), off, sizeof(*ih), (caddr_t)ih);
-	}
 
 	return (PF_PASS);
 }
@@ -1735,10 +1729,8 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m,
 		}
 
 		/* copy back packet headers if we performed NAT operations */
-		if (rewrite) {
-			m_copyback((*m), ipoff, sizeof(*h), (caddr_t)h);
+		if (rewrite)
 			m_copyback((*m), off, sizeof(*th), (caddr_t)th);
-		}
 
 		return (s);
 	}
@@ -1803,10 +1795,8 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf **m,
 		}
 
 		/* copy back packet headers if we performed NAT operations */
-		if (rewrite) {
-			m_copyback((*m), ipoff, sizeof(*h), (caddr_t)h);
+		if (rewrite)
 			m_copyback((*m), off, sizeof(*uh), (caddr_t)uh);
-		}
 
 		return (s);
 	}
@@ -1856,15 +1846,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
 				else
 					change_a(&h->ip_dst.s_addr, &h->ip_sum,
 					    s->lan.addr);
-				rewrite++;
 			}
-
-			/*
-			 * copy back packet headers if we performed NAT
-			 * operations
-			 */
-			if (rewrite)
-				m_copyback((*m), ipoff, sizeof(*h), (caddr_t)h);
 
 			return (s);
 		}
@@ -1964,7 +1946,6 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
 			 * operations
 			 */
 			if (rewrite) {
-				m_copyback((*m), ipoff, sizeof(*h), (caddr_t)h);
 				m_copyback((*m), off, sizeof(*ih), (caddr_t)ih);
 				m_copyback((*m), ipoff2, sizeof(h2),
 				    (caddr_t)&h2);
@@ -2020,7 +2001,6 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
 			 * operations
 			 */
 			if (rewrite) {
-				m_copyback((*m), ipoff, sizeof(*h), (caddr_t)h);
 				m_copyback((*m), off, sizeof(*ih), (caddr_t)ih);
 				m_copyback((*m), ipoff2, sizeof(h2),
 				    (caddr_t)&h2);
@@ -2080,7 +2060,7 @@ int
 pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 {
 	int action;
-	struct ip h;
+	struct ip *h;
 	int off;
 
 	if (!pf_status.running)
@@ -2098,26 +2078,26 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 		pf_last_purge = pftv.tv_sec;
 	}
 
-	if ((*m)->m_pkthdr.len < sizeof(h)) {
+	if ((*m)->m_pkthdr.len < sizeof(*h)) {
 		printf("pf: ip header too short\n");
 		action = PF_DROP;
 		goto done;
 	}
-	m_copydata((*m), 0, sizeof(h), (caddr_t)&h);
+	h = mtod(*m, struct ip *);
 
-	off = h.ip_hl << 2;
+	off = h->ip_hl << 2;
 
-	switch (h.ip_p) {
+	switch (h->ip_p) {
 
 	case IPPROTO_TCP: {
 		struct tcphdr th;
 
-		if (!pull_hdr(ifp, m, 0, off, &th, sizeof(th), &h, &action))
+		if (!pull_hdr(ifp, m, 0, off, &th, sizeof(th), h, &action))
 			goto done;
-		if (pf_test_state_tcp(direction, ifp, m, 0, off, &h, &th))
+		if (pf_test_state_tcp(direction, ifp, m, 0, off, h, &th))
 			action = PF_PASS;
 		else
-			action = pf_test_tcp(direction, ifp, m, 0, off, &h,
+			action = pf_test_tcp(direction, ifp, m, 0, off, h,
 			    &th);
 		break;
 	}
@@ -2125,12 +2105,12 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 	case IPPROTO_UDP: {
 		struct udphdr uh;
 
-		if (!pull_hdr(ifp, m, 0, off, &uh, sizeof(uh), &h, &action))
+		if (!pull_hdr(ifp, m, 0, off, &uh, sizeof(uh), h, &action))
 			goto done;
-		if (pf_test_state_udp(direction, ifp, m, 0, off, &h, &uh))
+		if (pf_test_state_udp(direction, ifp, m, 0, off, h, &uh))
 			action = PF_PASS;
 		else
-			action = pf_test_udp(direction, ifp, m, 0, off, &h,
+			action = pf_test_udp(direction, ifp, m, 0, off, h,
 			    &uh);
 		break;
 	}
@@ -2138,12 +2118,12 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 	case IPPROTO_ICMP: {
 		struct icmp ih;
 
-		if (!pull_hdr(ifp, m, 0, off, &ih, sizeof(ih), &h, &action))
+		if (!pull_hdr(ifp, m, 0, off, &ih, sizeof(ih), h, &action))
 			goto done;
-		if (pf_test_state_icmp(direction, ifp, m, 0, off, &h, &ih))
+		if (pf_test_state_icmp(direction, ifp, m, 0, off, h, &ih))
 			action = PF_PASS;
 		else
-			action = pf_test_icmp(direction, ifp, m, 0, off, &h,
+			action = pf_test_icmp(direction, ifp, m, 0, off, h,
 			    &ih);
 		break;
 	}
@@ -2155,7 +2135,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 
 done:
 	if (ifp == status_ifp) {
-		pf_status.bytes[direction] += h.ip_len;
+		pf_status.bytes[direction] += h->ip_len;
 		pf_status.packets[direction][action]++;
 	}
 	return (action);
