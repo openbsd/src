@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.27 2000/09/19 03:18:11 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.28 2000/09/19 08:38:40 angelos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -127,6 +127,16 @@ Allowed modifiers are:
 .Fl key ,
 and
 .Fl keyfile .
+.It group
+Group two SAs together.
+Allowed modifiers are:
+.Fl dst ,
+.Fl spi ,
+.Fl proto ,
+.Fl dst2 ,
+.Fl spi2 ,
+and
+.Fl proto2 .
 .It ip4
 Setup an SA which uses the IP-in-IP encapsulation protocol.
 This mode
@@ -268,6 +278,9 @@ For outgoing SAs,
 this field is used to fill in the source address when doing tunneling.
 .It Fl dst
 The destination IP address for the SA.
+.It Fl dst2
+The second IP address used by
+.Nm group .
 .It Fl proxy
 This IP address, if provided, is checked against the inner IP address when
 doing tunneling to a firewall, to prevent source spoofing attacks.
@@ -281,6 +294,9 @@ the incoming SA should be C.
 This option is not necessary for outgoing SAs.
 .It Fl spi
 The Security Parameter Index (SPI).
+.It Fl spi2
+The second SPI used by
+.Nm group .
 .It Fl tunnel
 This option has been deprecated.
 The arguments are ignored, and it otherwise has the same effect as the
@@ -410,6 +426,13 @@ and 4
 .Nm ( IPPROTO_IP ) .
 One can also specify the symbolic names "esp", "ah", and "ip4",
 case insensitive.
+.It Fl proto2
+The second security protocol used by
+.Nm group .
+It defaults to
+.Nm IPPROTO_AH ,
+otherwise takes the same values as
+.Fl proto .
 .It Fl addr
 The source address, source network mask, destination address and destination
 network mask against which packets need to match to use the specified
