@@ -1,6 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 1997/06/12 15:22:37 kstailey Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/08/18 20:30:59 kstailey Exp $
 
 PROG=	readlink
-NOMAN=
 
 .include <bsd.prog.mk>
