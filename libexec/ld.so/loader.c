@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.58 2003/05/30 03:14:12 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.59 2003/05/30 15:58:24 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -173,10 +173,12 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 			_dl_debug = NULL;
 			_dl_unsetenv("LD_DEBUG", envp);
 		}
+#if 0
 		if (_dl_norandom) {
 			_dl_norandom = NULL;
 			_dl_unsetenv("LD_NORANDOM", envp);
 		}
+#endif
 	}
 
 	_dl_progname = argv[0];
