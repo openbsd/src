@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.15 1999/07/16 00:44:49 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.16 1999/12/04 23:31:42 angelos Exp $	*/
 /*	$EOM: pf_key_v2.c,v 1.19 1999/07/16 00:29:11 niklas Exp $	*/
 
 /*
@@ -1008,11 +1008,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   ssa.sadb_sa_state = 0;
   ssa.sadb_sa_auth = 0;
   ssa.sadb_sa_encrypt = 0;
-  /*
-   * XXX The LOCALFLOW flag should only be set if this machine is part of the
-   * source subnet.
-   */
-  ssa.sadb_sa_flags = SADB_X_SAFLAGS_LOCALFLOW;
+  ssa.sadb_sa_flags = 0;
   if (!delete)
     ssa.sadb_sa_flags |= SADB_X_SAFLAGS_REPLACEFLOW;
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&ssa, 0) == -1)
