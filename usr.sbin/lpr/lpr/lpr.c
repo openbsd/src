@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.32 2003/03/27 23:45:14 millert Exp $ */
+/*	$OpenBSD: lpr.c,v 1.33 2003/05/19 00:33:23 pjanzen Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.32 2003/03/27 23:45:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.33 2003/05/19 00:33:23 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,6 @@ static const char rcsid[] = "$OpenBSD: lpr.c,v 1.32 2003/03/27 23:45:14 millert 
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <a.out.h>
 #include <signal.h>
 #include <syslog.h>
 #include <pwd.h>
@@ -580,7 +579,6 @@ cleanup(int signo)
 static int
 test(char *file)
 {
-	struct exec execb;
 	int fd;
 	char *cp;
 
@@ -604,13 +602,6 @@ test(char *file)
 		warnx("%s is an empty file", file);
 		goto bad;
  	}
-	if (read(fd, &execb, sizeof(execb)) == sizeof(execb) &&
-	    !N_BADMAG(execb)) {
-			warnx("%s is an executable program and is unprintable",
-				file);
-			(void)close(fd);
-			goto bad;
-	}
 	(void)close(fd);
 	if (rflag) {
 		if ((cp = strrchr(file, '/')) == NULL) {
