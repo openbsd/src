@@ -1,4 +1,4 @@
-#	$OpenBSD: WALDORF,v 1.18 1999/01/02 00:32:53 niklas Exp $
+#	$OpenBSD: WALDORF,v 1.19 1999/01/02 00:38:15 niklas Exp $
 #
 #	WALDORF -- a 486 kernel config Applitron use for some gateway
 #		   machines (waldorf and neuro).
@@ -92,16 +92,19 @@ isadma0	at isa?
 #pc0	at isa? port 0x60 irq 1		# generic PC console device
 vt0	at isa? port 0x60 irq 1
 
-com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
-#com3	at isa? port 0x2e8 irq 9
+pcppi0	at isa?
+sysbeep0	at pcppi?
+
+pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+pccom1	at isa? port 0x2f8 irq 3
+pccom2	at isa? port 0x3e8 irq 5
+#pccom3	at isa? port 0x2e8 irq 9
 #ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
-#com*	at ast? slave ? flags 1
+#pccom*	at ast? slave ? flags 1
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
-#com*	at boca? slave ?
+#pccom*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
-#com*	at rtfps? slave ?
+#pccom*	at rtfps? slave ?
 
 #cy0	at isa? ...
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: PETRA,v 1.15 1999/01/02 00:32:54 niklas Exp $
+#	$OpenBSD: PETRA,v 1.16 1999/01/02 00:38:16 niklas Exp $
 #
 #	PETRA -- everything that's currently supported with certain
 #		 changes for Applitron's fileserver petra, a 128 MB
@@ -74,6 +74,9 @@ isapnp0	at isa?
 
 #pc0	at isa? port 0x60 irq 1		# generic PC console device
 vt0	at isa? port 0x60 irq 1
+
+pcppi0	at isa?
+sysbeep0	at pcppi?
 
 pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 pccom1	at isa? port 0x2f8 irq 3

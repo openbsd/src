@@ -1,4 +1,4 @@
-#	$OpenBSD: OPRAH,v 1.22 1999/01/02 00:32:54 niklas Exp $
+#	$OpenBSD: OPRAH,v 1.23 1999/01/02 00:38:15 niklas Exp $
 #
 #	OPRAH -- Niklas Hallqvist's test machine
 #
@@ -84,8 +84,11 @@ isadma0	at isa?
 
 vt0	at isa? port 0x60 irq 1
 
-com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-com1	at isa? port 0x2f8 irq 3
+pcppi0	at isa?
+sysbeep0	at pcppi?
+
+pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+pccom1	at isa? port 0x2f8 irq 3
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
