@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.8 2001/07/26 17:37:38 chris Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.9 2001/08/22 17:42:24 beck Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -128,6 +128,9 @@ nat on fxp1 from 144.19.74/24 to any -> 204.92.77.100
 .Pp
 This longer example uses both a NAT and a redirection. Interface
 kue0 is the outside interface, and its external address is 157.161.48.183.
+Interface fxp0 is the inside interface, and we are running
+.Xr ftp-proxy 8
+listening for outbound ftp sessions captured to port 8081.
 .Bd -literal
 # NAT
 # translate outgoing packets' source addresses (any protocol)
@@ -144,6 +147,12 @@ rdr on kue0 proto tcp from any to 157.161.48.183/32 port 8080 \e
 	-> 10.1.2.151 port 22
 rdr on kue0 proto udp from any to 157.161.48.183/32 port 8080 \e
 	-> 10.1.2.151 port 53
+
+# RDR 
+# translate outgoing ftp control connections to send them to localhost
+# for proxying with ftp-proxy(8) running on port 8081
+rdr on fxp0 proto tcp from any to any port 21 -> 127.0.0.1 port 8081
+
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/nat.conf" -compact
@@ -158,6 +167,7 @@ rdr on kue0 proto udp from any to 157.161.48.183/32 port 8080 \e
 .Xr pf.conf 5 ,
 .Xr protocols 5 ,
 .Xr services 5 ,
+.Xr ftp-proxy 8 ,
 .Xr pfctl 8
 .Sh HISTORY
 The
