@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.7 2001/04/23 13:48:42 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.8 2001/06/24 18:28:10 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -740,7 +740,7 @@ scintr:
 					if ((siop_target->flags & TARF_SYNC)
 					    == 0) {
 						siop_target->status = TARST_OK;
-						siop_print_info(sc, target);
+						siop_print_info(xs->sc_link);
 						/* no table to flush here */
 						CALL_SCRIPT(Ent_msgin_ack);
 						return 1;
@@ -756,7 +756,7 @@ scintr:
 				} else if (msg == MSG_EXTENDED &&
 				    extmsg == MSG_EXT_SDTR) {
 					siop_target->status = TARST_OK;
-					siop_print_info(sc, target);
+					siop_print_info(xs->sc_link);
 					/* no table to flush here */
 					CALL_SCRIPT(Ent_msgin_ack);
 					return 1;
@@ -1390,7 +1390,7 @@ siop_scsicmd(xs)
 					}
 					else {
 						sc->targets[target]->status = TARST_OK;
-						siop_print_info(sc, target);
+						siop_print_info(xs->sc_link);
 					}
 				}
 				break;
