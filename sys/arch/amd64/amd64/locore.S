@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.11 2004/06/13 21:49:12 niklas Exp $	*/
+/*	$OpenBSD: locore.S,v 1.12 2004/06/21 22:35:47 niklas Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 2003/04/26 19:34:45 fvdl Exp $	*/
 
 /*
@@ -1036,8 +1036,8 @@ ENTRY(switch_exit)
 	call	*%rsi
 
 	/* Jump into cpu_switch() with the right state. */
-	movq	%r9, %r13
-	movq	$0, CPUVAR(CURPROC)
+	xorq	%r13, %r13
+	movq	%r13, CPUVAR(CURPROC)
 	jmp	switch_search
 
 /*
