@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termout.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: termout.c,v 1.1.1.1 1995/10/18 08:46:22 deraadt Exp $";
+static char rcsid[] = "$Id: termout.c,v 1.2 1995/11/13 04:59:23 deraadt Exp $";
 #endif /* not lint */
 
 #if defined(unix)
@@ -642,7 +642,7 @@ InitTerminal()
 #if	defined(unix)
 	char KSEbuffer[2050];
 	char *lotsofspace = KSEbuffer;
-	extern int abort();
+	extern void abort();
 	extern char *tgetstr();
 #endif	/* defined(unix) */
 
@@ -655,7 +655,7 @@ InitTerminal()
 	ClearArray(Terminal);
 	terminalCursorAddress = SetBufferAddress(0,0);
 #if defined(unix)
-	signal(SIGHUP, (void (*))abort);
+	signal(SIGHUP, abort);
 #endif
 
 	TryToSend = FastScreen;
