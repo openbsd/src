@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.8 2003/06/25 03:39:23 tedu Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.9 2003/06/25 03:44:49 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -84,14 +84,12 @@ static void only(struct dir *dp, int which);
 static void scanpr(struct dir *, int, char *, char *, char *, char *, char *);
 static int entcmp(const void *, const void *);
 
-
 void
 diffdir(char **argv)
 {
-	struct dir *d1, *d2;
 	struct dir *dir1, *dir2;
-	int i;
-	int cmp;
+	struct dir *d1, *d2;
+	int i, cmp;
 
 	if (opt == D_IFDEF) {
 		fprintf(stderr, "diff: can't specify -I with directories\n");
@@ -268,10 +266,9 @@ entcmp(const void *v1, const void *v2)
 static void
 compare(struct dir *dp)
 {
-	int i, j;
-	int f1, f2, fmt1, fmt2;
-	struct stat stb1, stb2;
 	char buf1[BUFSIZ], buf2[BUFSIZ];
+	int i, j, f1, f2, fmt1, fmt2;
+	struct stat stb1, stb2;
 
 	strcpy(efile1, dp->d_entry);
 	strcpy(efile2, dp->d_entry);
@@ -361,7 +358,8 @@ closem:
 static void
 calldiff(char *wantpr)
 {
-	int pid, lstatus, lstatus2, pv[2];
+	int lstatus, lstatus2, pv[2];
+	pid_t pid;
 
 	prargs[2] = wantpr;
 	fflush(stdout);
@@ -420,9 +418,8 @@ calldiff(char *wantpr)
 int
 ascii(int f)
 {
-	char buf[BUFSIZ];
+	char buf[BUFSIZ], *cp;
 	int cnt;
-	char *cp;
 
 	lseek(f, (off_t)0, SEEK_SET);
 	cnt = read(f, buf, BUFSIZ);

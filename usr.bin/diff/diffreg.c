@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.8 2003/06/25 03:42:00 tedu Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.9 2003/06/25 03:42:16 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -224,9 +224,9 @@ u_char cup2low[256] = {
 void
 diffreg(void)
 {
-	int i, j;
-	FILE *f1, *f2;
 	char buf1[BUFSIZ], buf2[BUFSIZ];
+	FILE *f1, *f2;
+	int i, j;
 
 	if (hflag) {
 		diffargv[0] = "diffh";
@@ -377,8 +377,7 @@ copytemp(void)
 char *
 splice(char *dir, char *file)
 {
-	char *tail;
-	char buf[BUFSIZ];
+	char *tail, buf[BUFSIZ];
 
 	if (!strcmp(file, "-")) {
 		fprintf(stderr, "diff: can't specify - with other arg directory\n");
@@ -413,6 +412,7 @@ static void
 prune(void)
 {
 	int i, j;
+
 	for (pref = 0; pref < len[0] && pref < len[1] &&
 	    file[0][pref + 1].value == file[1][pref + 1].value;
 	    pref++);
@@ -431,6 +431,7 @@ static void
 equiv(struct line *a, int n, struct line *b, int m, int *c)
 {
 	int i, j;
+
 	i = j = 1;
 	while (i <= n && j <= m) {
 		if (a[i].value < b[j].value)
@@ -457,10 +458,9 @@ equiv(struct line *a, int n, struct line *b, int m, int *c)
 static int
 stone(int *a, int n, int *b, int *c)
 {
-	int i, k, y;
-	int j, l;
-	int oldc, tc;
-	int oldl;
+	int i, k, y, j, l;
+	int oldc, tc, oldl;
+
 	k = 0;
 	c[0] = newcand(0, 0, 0);
 	for (i = 1; i <= n; i++) {
@@ -509,8 +509,8 @@ newcand(int x, int y, int pred)
 static int
 search(int *c, int k, int y)
 {
-	int i, j, l;
-	int t;
+	int i, j, l, t;
+
 	if (clist[c[k]].y < y)	/* quick look for typical case */
 		return (k + 1);
 	i = 0;
@@ -533,8 +533,9 @@ search(int *c, int k, int y)
 static void
 unravel(int p)
 {
-	int i;
 	struct cand *q;
+	int i;
+
 	for (i = 0; i <= len[0]; i++)
 		J[i] = i <= pref ? i :
 		    i > len[0] - suff ? i + len[1] - len[0] :
@@ -552,10 +553,8 @@ unravel(int p)
 static void
 check(void)
 {
-	int i, j;
-	int jackpot;
+	int i, j, jackpot, c, d;
 	long ctold, ctnew;
-	int c, d;
 
 	if ((input[0] = fopen(file1, "r")) == NULL) {
 		perror(file1);
@@ -644,19 +643,17 @@ check(void)
 	fclose(input[0]);
 	fclose(input[1]);
 	/*
-		if(jackpot)
-			fprintf(stderr, "jackpot\n");
-	*/
+	 * if (jackpot)
+	 *	fprintf(stderr, "jackpot\n");
+	 */
 }
 
+/* shellsort CACM #201 */
 static void
 sort(struct line *a, int n)
-{				/* shellsort CACM #201 */
-	struct line w;
-	int j, m = 0;		/* gcc */
-	struct line *ai;
-	struct line *aim;
-	int k;
+{
+	struct line *ai, *aim, w;
+	int j, m = 0, k;
 
 	if (n == 0)
 		return;
@@ -687,8 +684,7 @@ sort(struct line *a, int n)
 static void
 unsort(struct line *f, int l, int *b)
 {
-	int *a;
-	int i;
+	int *a, i;
 
 	a = talloc((l + 1) * sizeof(int));
 	for (i = 1; i <= l; i++)
@@ -712,9 +708,8 @@ skipline(int f)
 static void
 output(void)
 {
-	int m;
-	int i0, i1, j1;
-	int j0;
+	int m, i0, i1, j0, j1;
+
 	input[0] = fopen(file1, "r");
 	input[1] = fopen(file2, "r");
 	m = len[0];
@@ -872,19 +867,15 @@ static void
 range(int a, int b, char *separator)
 {
 	printf("%d", a > b ? b : a);
-	if (a < b) {
+	if (a < b)
 		printf("%s%d", separator, b);
-	}
 }
 
 static void
 fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 {
-	int i, j;
-	int c;
-	int col;
-	int nc;
 	int oneflag = (*ifdef1 != '\0') != (*ifdef2 != '\0');
+	int i, j, c, col, nc;
 
 	/*
 	 * When doing #ifdef's, copy down to current line
@@ -901,7 +892,8 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 		return;
 	if (opt == D_IFDEF) {
 		if (inifdef)
-			fprintf(stdout, "#else /* %s%s */\n", oneflag && oldfile == 1 ? "!" : "", ifdef2);
+			fprintf(stdout, "#else /* %s%s */\n",
+			    oneflag && oldfile == 1 ? "!" : "", ifdef2);
 		else {
 			if (oneflag) {
 				/* There was only one ifdef given */
@@ -955,10 +947,9 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 static int
 readhash(FILE *f)
 {
+	unsigned int shift;
+	int t, space;
 	long sum;
-	unsigned shift;
-	int t;
-	int space;
 
 	sum = 1;
 	space = 0;
@@ -1020,9 +1011,8 @@ readhash(FILE *f)
 static int
 asciifile(FILE *f)
 {
-	char buf[BUFSIZ];
+	char buf[BUFSIZ], *cp;
 	int cnt;
-	char *cp;
 
 	fseek(f, 0, 0);
 	cnt = fread(buf, 1, BUFSIZ, f);
@@ -1038,11 +1028,10 @@ asciifile(FILE *f)
 static void
 dump_context_vec(void)
 {
+	struct context_vec *cvp = context_vec_start;
+	int lowa, upb, lowc, upd, do_output;
 	int a, b, c, d;
 	char ch;
-	struct context_vec *cvp = context_vec_start;
-	int lowa, upb, lowc, upd;
-	int do_output;
 
 	if (cvp > context_vec_ptr)
 		return;
@@ -1085,7 +1074,8 @@ dump_context_vec(void)
 				fetch(ixold, lowa, b, input[0], "  ", 0);
 			else {
 				fetch(ixold, lowa, a - 1, input[0], "  ", 0);
-				fetch(ixold, a, b, input[0], ch == 'c' ? "! " : "- ", 0);
+				fetch(ixold, a, b, input[0],
+				    ch == 'c' ? "! " : "- ", 0);
 			}
 			lowa = b + 1;
 			cvp++;
@@ -1120,7 +1110,8 @@ dump_context_vec(void)
 				fetch(ixnew, lowc, d, input[1], "  ", 0);
 			else {
 				fetch(ixnew, lowc, c - 1, input[1], "  ", 0);
-				fetch(ixnew, c, d, input[1], ch == 'c' ? "! " : "+ ", 0);
+				fetch(ixnew, c, d, input[1],
+				    ch == 'c' ? "! " : "+ ", 0);
 			}
 			lowc = d + 1;
 			cvp++;
