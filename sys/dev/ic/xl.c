@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.3 2000/06/22 08:24:02 itojun Exp $	*/
+/*	$OpenBSD: xl.c,v 1.4 2000/06/29 14:07:03 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -673,6 +673,7 @@ allmulti:
 			goto allmulti;
 		}
 		h = xl_calchash(enm->enm_addrlo);
+		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_HASH|XL_HASH_SET|h);
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
@@ -1956,11 +1957,7 @@ void xl_init(xsc)
 	/*
 	 * Program the multicast filter, if necessary.
 	 */
-#if 0
 	if (sc->xl_type == XL_TYPE_905B)
-#else
-	if (0)	/* xl_setmulti_hash() does not work right */
-#endif
 		xl_setmulti_hash(sc);
 	else
 		xl_setmulti(sc);
@@ -2231,11 +2228,7 @@ xl_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-#if 0
 			if (sc->xl_type == XL_TYPE_905B)
-#else
-			if (0)	/* xl_setmulti_hash() does not work right */
-#endif
 				xl_setmulti_hash(sc);
 			else
 				xl_setmulti(sc);
