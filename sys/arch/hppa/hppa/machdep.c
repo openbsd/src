@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.78 2002/09/11 15:55:58 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.79 2002/09/11 16:01:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -946,6 +946,8 @@ boot(howto)
 	} else {
 		printf("rebooting...");
 		DELAY(1000000);
+		__asm __volatile(".export hppa_reset, entry\n\t"
+		    ".label hppa_reset");
 		__asm __volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_RESET), "r" (LBCAST_ADDR + iomod_command));
 	}
