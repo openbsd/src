@@ -1,4 +1,5 @@
-/* *	$OpenBSD: modstat.c,v 1.5 1996/08/05 11:11:41 mickey Exp $*/
+/*	$OpenBSD: modstat.c,v 1.6 1996/08/06 18:17:22 deraadt Exp $	*/
+
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
  * All rights reserved.
@@ -51,7 +52,7 @@ usage()
 {
 
 	fprintf(stderr,
-	    "usage: modstat [-i <module id>] [-n <module name>]\n");
+	    "usage: modstat [-i moduleid] [-n modulename]\n");
 	exit(1);
 }
 
@@ -76,8 +77,11 @@ dostat(devfd, modnum, modname)
 	sbuf.id = modnum;
 	sbuf.name = name;
 
-	if (modname != NULL)
+	if (modname != NULL) {
+		if (strlen(modname) >= sizeof(sbuf.name))
+			return 4;
 		strcpy(sbuf.name, modname);
+	}
 
 	if (ioctl(devfd, LMSTAT, &sbuf) == -1) {
 		switch (errno) {
@@ -137,10 +141,8 @@ main(argc, argv)
 		case 'n':
 			modname = optarg;
 			break;	/* name */
-		case '?':
-			usage();
 		default:
-			printf("default!\n");
+			usage();
 			break;
 		}
 	}
