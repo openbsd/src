@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 1999/08/28 00:24:01 niklas Exp $
+#	$OpenBSD: Makefile,v 1.37 2000/01/30 01:22:59 mickey Exp $
 #	$NetBSD: Makefile,v 1.20.4.1 1996/06/14 17:22:38 cgd Exp $
 
 SUBDIR=	csu libarch libc libc_r libcom_err libcompat libcurses libdes libedit \
@@ -11,10 +11,10 @@ SUBDIR=	csu libarch libc libc_r libcom_err libcompat libcurses libdes libedit \
 SUBDIR+=	libcurses++
 .endif
 
-# XXX Temporarily until i386 and pmax are able to use libkvm
+# XXX Temporarily until pmax is able to use libkvm
 .if	make(obj)
 SUBDIR+=	libkvm libkvm.old
-.elif	(${MACHINE} == "i386" || ${MACHINE} == "pmax")
+.elif	(${MACHINE} == "pmax")
 SUBDIR+=        libkvm.old
 .else
 SUBDIR+=        libkvm
