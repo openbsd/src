@@ -1,4 +1,4 @@
-.\"	$OpenBSD: connect.2,v 1.18 2004/04/15 17:16:33 millert Exp $
+.\"	$OpenBSD: connect.2,v 1.19 2004/10/05 11:19:41 henning Exp $
 .\"	$NetBSD: connect.2,v 1.8 1995/10/12 15:40:48 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -100,6 +100,8 @@ A TCP connection with a local broadcast, the all-ones or a
 multicast address as the peer was attempted.
 .It Bq Er ECONNREFUSED
 The attempt to connect was forcefully rejected.
+.It Bq Er EHOSTUNREACH
+The destination address specified an unreachable host.
 .It Bq Er EINTR
 A connect was interrupted before it succeeded
 by the delivery of a signal.
