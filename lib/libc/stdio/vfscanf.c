@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vfscanf.c,v 1.4 1997/07/25 20:30:13 mickey Exp $";
+static char rcsid[] = "$OpenBSD: vfscanf.c,v 1.5 1998/01/19 19:40:12 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -129,8 +129,13 @@ __svfscanf(fp, fmt0, ap)
 			return (nassigned);
 		if (isspace(c)) {
 			for (;;) {
-				if (fp->_r <= 0 && __srefill(fp))
+				if (fp->_r <= 0 && __srefill(fp)) {
+					while (isspace(*fmt))
+						fmt++;
+					if (*fmt == '%' && *(fmt + 1) == 'n')
+						break;
 					return (nassigned);
+				}
 				if (!isspace(*fp->_p))
 					break;
 				nread++, fp->_r--, fp->_p++;
