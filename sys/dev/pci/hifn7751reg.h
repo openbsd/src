@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.1 1999/02/19 02:52:20 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.2 1999/02/21 00:05:14 deraadt Exp $	*/
 
 /*
  * Invertex AEON driver
@@ -46,33 +46,33 @@
 /*
  *  Some configurable values for the driver
  */
-#define AEON_DESCRIPT_RING_SIZE  24
-#define AEON_MAX_DEVICES          4
+#define AEON_D_RSIZE	24
+#define AEON_MAX_DEVICES	4
 
 /*
  * The values below should multiple of 4 -- and be large enough to handle
  * any command the driver implements.
  */
-#define AEON_MAX_COMMAND_LENGTH 120
-#define AEON_MAX_RESULT_LENGTH   16
+#define AEON_MAX_COMMAND	120
+#define AEON_MAX_RESULT		16
 
 /*
- * aeon_descriptor_t
+ * aeon_desc_t
  *
  * Holds an individual descriptor for any of the rings.
  */
-typedef struct aeon_descriptor {
-	volatile u_int32_t length;  /* length and status bits */
-	volatile u_int32_t pointer;
-} aeon_descriptor_t;
+typedef struct aeon_desc {
+	volatile u_int32_t l;		/* length and status bits */
+	volatile u_int32_t p;
+} aeon_desc_t;
 
 /*
- * Masks for the "length" field of struct aeon_descriptor.
+ * Masks for the "length" field of struct aeon_desc.
  */
-#define AEON_DESCRIPT_MASK_DONE_IRQ (0x1 << 25)
-#define AEON_DESCRIPT_LAST          (0x1 << 29)
-#define AEON_DESCRIPT_JUMP          (0x1 << 30)
-#define AEON_DESCRIPT_VALID         (0x1 << 31)
+#define AEON_D_MASKDONEIRQ	(0x1 << 25)
+#define AEON_D_LAST		(0x1 << 29)
+#define AEON_D_JUMP		(0x1 << 30)
+#define AEON_D_VALID		(0x1 << 31)
 
 /*
  * aeon_callback_t 
@@ -89,22 +89,24 @@ struct aeon_dma {
 	 *  Descriptor rings.  We add +1 to the size to accomidate the
 	 *  jump descriptor.
 	 */
-	struct aeon_descriptor	command_ring[AEON_DESCRIPT_RING_SIZE + 1];
-	struct aeon_descriptor	source_ring[AEON_DESCRIPT_RING_SIZE + 1];
-	struct aeon_descriptor	dest_ring[AEON_DESCRIPT_RING_SIZE + 1];
-	struct aeon_descriptor	result_ring[AEON_DESCRIPT_RING_SIZE + 1];
+	struct aeon_desc	cmdr[AEON_D_RSIZE+1];
+	struct aeon_desc	srcr[AEON_D_RSIZE+1];
+	struct aeon_desc	dstr[AEON_D_RSIZE+1];
+	struct aeon_desc	resr[AEON_D_RSIZE+1];
 
-	aeon_command_t	*aeon_commands[AEON_DESCRIPT_RING_SIZE ];
+	struct aeon_command	*aeon_commands[AEON_D_RSIZE];
 
-	u_char	command_bufs[AEON_DESCRIPT_RING_SIZE][AEON_MAX_COMMAND_LENGTH];
-	u_char	result_bufs[AEON_DESCRIPT_RING_SIZE][AEON_MAX_RESULT_LENGTH];
+	u_char	command_bufs[AEON_D_RSIZE][AEON_MAX_COMMAND];
+	u_char	result_bufs[AEON_D_RSIZE][AEON_MAX_RESULT];
 
 	/*
 	 *  Our current positions for insertion and removal from the desriptor
 	 *  rings. 
 	 */
-	u_int32_t ring_pos;
-	u_int32_t wakeup_ring_pos;
+	int		cmdi, srci, dsti, resi;
+	volatile int	cmdu, srcu, dstu, resu;
+
+	u_int32_t wakeup_rpos;
 	volatile u_int32_t slots_in_use;
 };
 
@@ -114,15 +116,10 @@ struct aeon_dma {
 struct aeon_softc {
 	struct device	sc_dv;		/* generic device */
 	void *		sc_ih;		/* interrupt handler cookie */
-	u_int32_t is_dram_model;	/* 1=dram, 0=sram */
+	u_int32_t	sc_drammodel;	/* 1=dram, 0=sram */
 
-	/* Register set 0 */
-	bus_space_handle_t	sc_sh0;
-	bus_space_tag_t		sc_st0;
-
-	/* Register set 1 */
-	bus_space_handle_t	sc_sh1;
-	bus_space_tag_t		sc_st1;
+	bus_space_handle_t	sc_sh0, sc_sh1;
+	bus_space_tag_t		sc_st0, sc_st1;
 
 	struct aeon_dma *sc_dma;
 };
@@ -133,7 +130,7 @@ struct aeon_softc {
 #define AEON_INIT_1			0x04
 #define AEON_RAM_CONFIG			0x0c
 #define AEON_EXPAND			0x08
-#define AEON_ENCRYPTION_LEVEL		0x14
+#define AEON_CRYPTLEVEL		0x14
 #define AEON_INIT_3			0x10
 #define AEON_INIT_2			0x1c
 
@@ -145,12 +142,12 @@ struct aeon_softc {
 /*
  * Register offsets in register set 1
  */
-#define AEON_COMMAND_RING_ADDR		0x0c
-#define AEON_SOURCE_RING_ADDR		0x1c
-#define AEON_RESULT_RING_ADDR		0x2c
-#define AEON_DEST_RING_ADDR		0x3c
-#define	AEON_STATUS			0x40
-#define	AEON_INTERRUPT_ENABLE		0x44
+#define AEON_CMDR_ADDR		0x0c
+#define AEON_SRCR_ADDR		0x1c
+#define AEON_RESR_ADDR		0x2c
+#define AEON_DSTR_ADDR		0x3c
+#define	AEON_STATUS		0x40
+#define	AEON_IRQEN		0x44
 
 #define	AEON_DMA_CFG			0x48
 #define AEON_DMA_CFG_NOBOARDRESET	0x00000001
@@ -287,9 +284,9 @@ typedef struct aeon_command_buf_data {
 	aeon_base_command_t base_cmd;
 	aeon_mac_command_t mac_cmd;
 	aeon_crypt_command_t crypt_cmd;
-	const u_int8_t *mac_key;
-	const u_int8_t *crypt_key;
-	const u_int8_t *initial_vector;
+	const u_int8_t *mac;
+	const u_int8_t *ck;
+	const u_int8_t *iv;
 } aeon_command_buf_data_t;
 
 /*

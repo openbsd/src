@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeonvar.h,v 1.1 1999/02/19 02:52:20 deraadt Exp $	*/
+/*	$OpenBSD: aeonvar.h,v 1.2 1999/02/21 00:05:15 deraadt Exp $	*/
 
 /*
  *  Invertex AEON driver
@@ -191,21 +191,19 @@
  *  can be used by the callback routine if desired.
  */
 typedef struct aeon_command {
-	u_int flags;
+	u_int	flags;
 	volatile u_int result_status;
 
-	u_short session_num;
+	u_short	session_num;
 
 	/*
 	 *  You should be able to convert any of these arrays into pointers
 	 *  (if desired) without modifying code in aeon.c.
 	 */
-	u_char initial_vector[AEON_IV_LENGTH];
-	u_char crypt_key[AEON_MAX_CRYPT_KEY_LENGTH]; 
-	u_char mac_key[AEON_MAC_KEY_LENGTH]; 
+	u_char	*iv, *ck, *mac;
+	int	iv_len, ck_len, mac_len;
 
-	void *source_buf;
-	void *dest_buf;
+	struct mbuf *m;
 
 	u_short mac_header_skip;
 	u_short crypt_header_skip;
