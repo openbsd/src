@@ -102,7 +102,7 @@ movemt(i,j)
 	switch(monst=mitem[i][j])  /* for half speed monsters */
 		{
 		case TROGLODYTE:  case HOBGOBLIN:  case METAMORPH:  case XVART:
-		case INVISIBLESTALKER:  case ICELIZARD: if ((gtime & 1) == 1) return;
+		case INVISIBLESTALKER:  case ICELIZARD: if ((gltime & 1) == 1) return;
 		};
 
 	if (c[SCAREMONST]) /* choose destination randomly if scared */
@@ -237,7 +237,7 @@ mmove(aa,bb,cc,dd)
 			};
 
 	if (tmp == TROLL)  /* if a troll regenerate him */
-		if ((gtime & 1) == 0)
+		if ((gltime & 1) == 0)
 			if (monster[tmp].hitpoints > hitp[cc][dd])  hitp[cc][dd]++;
 
 	if (i==OTRAPARROW)	/* arrow hits monster */

@@ -25,7 +25,7 @@ regen()
 
 	if (d[STRENGTH]<3)	{ d[STRENGTH]=3; flag=1; }
 	if ((d[HASTESELF]==0) || ((d[HASTESELF] & 1) == 0))
-		gtime++;
+		gltime++;
 
 	if (d[HP] != d[HPMAX])
 		if (d[REGENCOUNTER]-- <= 0)		/*	regenerate hit points	*/

@@ -349,7 +349,7 @@ extern short iarg[MAXX][MAXY],ivenarg[],lasthx,lasthy,lastnum,lastpx,lastpy;
 extern short nobeep,oldx,oldy,playerx,playery,level;
 extern int dayplay,enable_scroll,srcount,yrepcount,userid,wisid,lfd,fd;
 extern uid_t uid, euid;
-extern long initialtime,outstanding_taxes,skill[],gtime,c[],cbak[];
+extern long initialtime,outstanding_taxes,skill[],gltime,c[],cbak[];
 extern unsigned long randx;
 extern struct cel *cell;
 extern struct monst monster[];

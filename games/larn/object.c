@@ -576,7 +576,7 @@ read_scroll(typ)
 
 	  case 6:	c[AGGRAVATE]+=800; return; /* aggravate monsters */
 
-	  case 7:	gtime += (i = rnd(1000) - 850); /* time warp */ 
+	  case 7:	gltime += (i = rnd(1000) - 850); /* time warp */ 
 				if (i>=0) lprintf("\nYou went forward in time by %d mobuls",(long)((i+99)/100));
 				else lprintf("\nYou went backward in time by %d mobuls",(long)(-(i+99)/100));
 				adjtime((long)i);	/* adjust time for time warping */
@@ -763,7 +763,7 @@ ohome()
 		iven[i]=0;	/* remove the potion of cure dianthroritis from inventory */
 		clear(); lprcat("Congratulations.  You found a potion of cure dianthroritis.\n");
 		lprcat("\nFrankly, No one thought you could do it.  Boy!  Did you surprise them!\n");
-		if (gtime>TIMELIMIT)
+		if (gltime>TIMELIMIT)
 			{
 			lprcat("\nThe doctor has the sad duty to inform you that your daughter died!\n");
 			lprcat("You didn't make it in time.  In your agony, you kill the doctor,\nyour wife, and yourself!  Too bad!\n");
@@ -784,7 +784,7 @@ ohome()
 		{
 		clear(); lprintf("Welcome home %s.  Latest word from the doctor is not good.\n",logname);
 
-		if (gtime>TIMELIMIT)
+		if (gltime>TIMELIMIT)
 			{
 			lprcat("\nThe doctor has the sad duty to inform you that your daughter died!\n");
 			lprcat("You didn't make it in time.  In your agony, you kill the doctor,\nyour wife, and yourself!  Too bad!\n");
@@ -792,7 +792,7 @@ ohome()
 			}
 
 		lprcat("\nThe diagnosis is confirmed as dianthroritis.  He guesses that\n");
-		lprintf("your daughter has only %d mobuls left in this world.  It's up to you,\n",(long)((TIMELIMIT-gtime+99)/100));
+		lprintf("your daughter has only %d mobuls left in this world.  It's up to you,\n",(long)((TIMELIMIT-gltime+99)/100));
 		lprintf("%s, to find the only hope for your daughter, the very rare\n",logname);
 		lprcat("potion of cure dianthroritis.  It is rumored that only deep in the\n");
 		lprcat("depths of the caves can this potion be found.\n\n\n");

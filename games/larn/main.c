@@ -273,7 +273,7 @@ qshowstr()
 		{  for (i=22; i<84; i++)
 			 for (j=0; j<=k; j++)  if (i==iven[j])  show3(j); k=0; }
 
-	lprintf("\nElapsed time is %d.  You have %d mobuls left",(long)((gtime+99)/100+1),(long)((TIMELIMIT-gtime)/100));
+	lprintf("\nElapsed time is %d.  You have %d mobuls left",(long)((gltime+99)/100+1),(long)((TIMELIMIT-gltime)/100));
 	more();		nosignal=sigsav;
 	}
 

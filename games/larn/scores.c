@@ -407,7 +407,7 @@ new1sub(score,i,whoo,taxes)
 		{
 		strcpy(p->who,whoo);  		p->score=score;
 		p->hardlev=c[HARDGAME];		p->suid=userid;
-		p->timeused=gtime/100;
+		p->timeused=gltime/100;
 		}
 	}
 

@@ -32,7 +32,7 @@ makeplayer()
 		}
 	playerx=rnd(MAXX-2);	playery=rnd(MAXY-2);
 	oldx=0;			oldy=25;
-	gtime=0;			/*	time clock starts at zero	*/
+	gltime=0;			/*	time clock starts at zero	*/
 	cbak[SPELLS] = -50;
 	for (i=0; i<6; i++)  c[i]=12; /* make the attributes, ie str, int, etc.	*/
 	recalc();
