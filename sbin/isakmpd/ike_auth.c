@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.17 1999/08/26 22:30:08 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.18 1999/09/29 04:45:01 deraadt Exp $	*/
 /*	$EOM: ike_auth.c,v 1.38 1999/08/21 22:20:41 angelos Exp $	*/
 
 /*
@@ -184,7 +184,11 @@ ike_auth_get_key (int type, char *id, size_t *keylen)
 	  return 0;
 	}
 
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+      rsakey = LC (PEM_read_bio_RSAPrivateKey, (keyh, NULL, NULL, NULL));
+#else
       rsakey = LC (PEM_read_bio_RSAPrivateKey, (keyh, NULL, NULL));
+#endif
       if (!rsakey)
 	{
 	  log_print ("ike_auth_get_key: PEM_read_bio_RSAPrivateKey failed");
