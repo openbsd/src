@@ -5,7 +5,7 @@
 #else
 #  define LDSO_IMAGE "/lib/ld.so"
 #  define LDSO_CONF  "/etc/ld.so.conf"
-#  define LDSO_CACHE "/var/run/ld.so.cache"
+#  define LDSO_CACHE "/etc/ld.so.cache"
 #endif
 
 #define LDD_ARGV0    "__LDD_ARGV0"
