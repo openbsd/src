@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.70 2002/08/22 22:04:42 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.71 2002/09/23 01:41:09 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -252,6 +252,7 @@ sys_execve(p, v, retval)
 	struct vmspace *vm = p->p_vmspace;
 	char **tmpfap;
 	extern struct emul emul_native;
+	struct exec_vmcmd *base_vc;
 
 	/*
 	 * Cheap solution to complicated problems.
@@ -406,11 +407,23 @@ sys_execve(p, v, retval)
 	if (pack.ep_vmcmds.evs_used == 0)
 		panic("execve: no vmcmds");
 #endif
+	base_vc = NULL;
 	for (i = 0; i < pack.ep_vmcmds.evs_used && !error; i++) {
 		struct exec_vmcmd *vcp;
 
 		vcp = &pack.ep_vmcmds.evs_cmds[i];
+
+		if (vcp->ev_flags & VMCMD_RELATIVE) {
+#ifdef DIAGNOSTIC
+			if (base_vc == NULL)
+				panic("sys_execve: RELATIVE without base");
+#endif
+			vcp->ev_addr += base_vc->ev_addr;
+		}
+
 		error = (*vcp->ev_proc)(p, vcp);
+		if (vcp->ev_flags & VMCMD_BASE)
+			base_vc = vcp;
 	}
 
 	/* free the vmspace-creation commands, and release their references */

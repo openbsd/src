@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.40 2002/09/18 22:07:50 drahn Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.41 2002/09/23 01:41:09 art Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -99,7 +99,7 @@ int ELFNAME(check_header)(Elf_Ehdr *, int);
 int ELFNAME(olf_check_header)(Elf_Ehdr *, int, u_int8_t *);
 int ELFNAME(read_from)(struct proc *, struct vnode *, u_long, caddr_t, int);
 void ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
-	Elf_Phdr *, Elf_Addr *, Elf_Addr *, int *);
+	Elf_Phdr *, Elf_Addr *, Elf_Addr *, int *, int);
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
@@ -240,7 +240,7 @@ os_ok:
  */
 void
 ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
-	Elf_Phdr *ph, Elf_Addr *addr, Elf_Addr *size, int *prot)
+	Elf_Phdr *ph, Elf_Addr *addr, Elf_Addr *size, int *prot, int flags)
 {
 	u_long uaddr, msize, psize, rm, rf;
 	long diff, offset;
@@ -250,11 +250,10 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	 */
 	if (*addr != ELFDEFNNAME(NO_ADDR)) {
 		if (ph->p_align > 1) {
-			*addr = ELF_ROUND(*addr, ph->p_align);
-			uaddr = ELF_TRUNC(ph->p_vaddr, ph->p_align);
+			*addr = ELF_TRUNC(*addr, ph->p_align);
+			diff = ph->p_vaddr - ELF_TRUNC(ph->p_vaddr, ph->p_align);
 		} else
-			uaddr = ph->p_vaddr;
-		diff = ph->p_vaddr - uaddr;
+			diff = 0;
 	} else {
 		*addr = uaddr = ph->p_vaddr;
 		if (ph->p_align > 1)
@@ -277,15 +276,16 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	 */
 	if (ph->p_flags & PF_W) {
 		psize = trunc_page(*size);
-		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp,
-		    offset, *prot);
+		if (psize > 0)
+			NEW_VMCMD2(vcset, vmcmd_map_pagedvn, psize, *addr, vp,
+			    offset, *prot, flags);
 		if (psize != *size) {
-			NEW_VMCMD(vcset, vmcmd_map_readvn, *size - psize,
-			    *addr + psize, vp, offset + psize, *prot);
+			NEW_VMCMD2(vcset, vmcmd_map_readvn, *size - psize,
+			    *addr + psize, vp, offset + psize, *prot, flags);
 		}
 	} else {
-		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp, offset,
-		    *prot);
+		NEW_VMCMD2(vcset, vmcmd_map_pagedvn, psize, *addr, vp, offset,
+		    *prot, flags);
 	}
 
 	/*
@@ -295,8 +295,8 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	rf = round_page(*addr + *size);
 
 	if (rm != rf) {
-		NEW_VMCMD(vcset, vmcmd_map_zero, rm - rf, rf, NULLVP, 0,
-		    *prot);
+		NEW_VMCMD2(vcset, vmcmd_map_zero, rm - rf, rf, NULLVP, 0,
+		    *prot, flags);
 		*size = msize;
 	}
 }
@@ -336,9 +336,10 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 	Elf_Phdr *ph = NULL;
 	u_long phsize;
 	char *bp = NULL;
-	Elf_Addr addr = *last;
+	Elf_Addr addr;
 	struct vnode *vp;
 	u_int8_t os;			/* Just a dummy in this routine */
+	Elf_Phdr *base_ph = NULL;
 
 	bp = path;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path, p);
@@ -381,15 +382,20 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 	for (i = 0; i < eh.e_phnum; i++) {
 		Elf_Addr size = 0;
 		int prot = 0;
-#if defined(__mips__)
-		if (*last == ELFDEFNNAME(NO_ADDR))
-			addr = ELFDEFNNAME(NO_ADDR);	/* GRRRRR!!!!! */
-#endif
+		int flags;
 
 		switch (ph[i].p_type) {
 		case PT_LOAD:
+			if (base_ph == NULL) {
+				flags = VMCMD_BASE;
+				addr = *last;
+				base_ph = &ph[i];
+			} else {
+				flags = VMCMD_RELATIVE;
+				addr = ph[i].p_vaddr - base_ph->p_vaddr;
+			}
 			ELFNAME(load_psection)(&epp->ep_vmcmds, nd.ni_vp,
-					&ph[i], &addr, &size, &prot);
+			    &ph[i], &addr, &size, &prot, flags);
 			/* If entry is within this section it must be text */
 			if (eh.e_entry >= ph[i].p_vaddr &&
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
@@ -546,7 +552,7 @@ native:
 			if (nload++ == 2)
 				goto bad;
 			ELFNAME(load_psection)(&epp->ep_vmcmds, epp->ep_vp,
-			    &ph[i], &addr, &size, &prot);
+			    &ph[i], &addr, &size, &prot, 0);
 			/*
 			 * Decide whether it's text or data by looking
 			 * at the entry point.
@@ -659,6 +665,7 @@ ELFNAME2(exec,fixup)(struct proc *p, struct exec_package *epp)
 	struct	elf_args *ap;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 	Elf_Addr	pos = epp->ep_interp_pos;
+	struct exec_vmcmd *base_vc;
 
 	if (epp->ep_interp == 0) {
 		return (0);
@@ -676,11 +683,21 @@ ELFNAME2(exec,fixup)(struct proc *p, struct exec_package *epp)
 	/*
 	 * We have to do this ourselves...
 	 */
+	base_vc = NULL;
 	for (i = 0; i < epp->ep_vmcmds.evs_used && !error; i++) {
 		struct exec_vmcmd *vcp;
-
 		vcp = &epp->ep_vmcmds.evs_cmds[i];
+
+		if (vcp->ev_flags & VMCMD_RELATIVE) {
+#ifdef DIAGNOSTIC
+			if (base_vc == NULL)
+				panic("sys_execve: RELATIVE without base");
+#endif
+			vcp->ev_addr += base_vc->ev_addr;
+		}
 		error = (*vcp->ev_proc)(p, vcp);
+		if (vcp->ev_flags & VMCMD_BASE)
+			base_vc = vcp;
 	}
 	kill_vmcmds(&epp->ep_vmcmds);
 
