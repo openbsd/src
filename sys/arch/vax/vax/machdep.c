@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.43 2001/11/07 01:18:00 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.44 2001/11/09 15:25:56 art Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -808,12 +808,6 @@ allocsys(v)
     if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
         bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
 
-    /* Allocate 1/2 as many swap buffer headers as file i/o buffers.  */
-    if (nswbuf == 0) {
-        nswbuf = (nbuf / 2) & ~1;   /* force even */
-        if (nswbuf > 256)
-            nswbuf = 256;       /* sanity */
-    }
     VALLOC(buf, struct buf, nbuf);
     return (v);
 }

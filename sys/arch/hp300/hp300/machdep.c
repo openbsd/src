@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.67 2001/11/07 01:18:00 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.68 2001/11/09 15:25:55 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -119,7 +119,6 @@ extern paddr_t avail_start, avail_end;
 /*
  * Declare these as initialized data so we can patch them.
  */
-int	nswbuf = 0;
 #ifdef	NBUF
 int	nbuf = NBUF;
 #else
@@ -440,11 +439,6 @@ allocsys(v)
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
 	}
 	valloc(buf, struct buf, nbuf);
 	return (v);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 2001/11/07 01:18:00 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 2001/11/09 15:25:55 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -106,7 +106,6 @@ extern struct user *proc0paddr;
 /*
  * Declare these as initialized data so we can patch them.
  */
-int	nswbuf = 0;
 #ifdef NBUF
 int	nbuf = NBUF;
 #else
@@ -655,11 +654,6 @@ allocsys(v)
 	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
 		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
 
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) & ~1;
-		if (nswbuf > 256)
-			nswbuf = 256;
-	}
 	valloc(buf, struct buf, nbuf);
 
 	return v;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.56 2001/11/07 01:18:00 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.57 2001/11/09 15:25:55 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
@@ -136,7 +136,6 @@ vm_map_t phys_map = NULL;
 /*
  * Declare these as initialized data so we can patch them.
  */
-int	nswbuf = 0;
 #ifdef	NBUF
 int	nbuf = NBUF;
 #else
@@ -393,11 +392,6 @@ again:
 			nbuf = 16;
 	}
 
-	if (nswbuf == 0) {
-		nswbuf = (nbuf * 3 / 4) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
 	valloc(buf, struct buf, nbuf);
 	/*
 	 * End of first pass, size has been calculated so allocate memory

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.181 2001/11/07 01:18:00 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.182 2001/11/09 15:25:55 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -207,7 +207,6 @@ char machine_arch[] = "i386";		/* machine == machine_arch */
 int	cpu_apmhalt = 0;	/* sysctl'd to 1 for halt -p hack */
 #endif
 
-int	nswbuf = 0;
 #ifdef	NBUF
 int	nbuf = NBUF;
 #else
@@ -515,11 +514,6 @@ allocsys(v)
 	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
 		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
 
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
 	valloc(buf, struct buf, nbuf);
 	return v;
 }
