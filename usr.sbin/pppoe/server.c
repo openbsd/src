@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.1.1.1 2000/06/18 07:30:41 jason Exp $	*/
+/*	$OpenBSD: server.c,v 1.2 2000/06/20 04:53:32 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -259,7 +259,6 @@ getpackets(bpffd, sysname, ea)
 				recv_padt(bpffd, ea, &eh, &ph, len, mpkt);
 				break;
 			default:
-				recv_debug(bpffd, ea, &eh, &ph, len, mpkt);
 			}
 		}
 		else if (eh.ether_type == ETHERTYPE_PPPOE) {
