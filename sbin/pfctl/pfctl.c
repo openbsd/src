@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.53 2002/02/27 18:11:45 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.54 2002/02/28 15:51:17 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -840,7 +840,8 @@ main(int argc, char *argv[])
 			break;
 		case 'm':
 			limitopt = optarg;
-			mode = O_RDWR;
+			if (strchr(limitopt, '=') != NULL)
+				mode = O_RDWR;
 			break;
 		case 'n':
 			opts |= PF_OPT_NOACTION;
@@ -862,7 +863,8 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			timeoutopt = optarg;
-			mode = O_RDWR;
+			if (strchr(timeoutopt, '=') != NULL)
+				mode = O_RDWR;
 			break;
 		case 'v':
 			opts |= PF_OPT_VERBOSE;
