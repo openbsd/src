@@ -13,7 +13,7 @@ Functions for reading the configuration file.
 
 */
 
-/* RCSID("$Id: readconf.h,v 1.1 1999/09/26 20:53:37 deraadt Exp $"); */
+/* RCSID("$Id: readconf.h,v 1.2 1999/09/29 00:10:16 deraadt Exp $"); */
 
 #ifndef READCONF_H
 #define READCONF_H
@@ -33,6 +33,7 @@ typedef struct
 {
   int forward_agent;		/* Forward authentication agent. */
   int forward_x11;		/* Forward X11 display. */
+  int gateway_ports;		/* Allow remote connects to forwarded ports. */
   int rhosts_authentication;	/* Try rhosts authentication. */
   int rhosts_rsa_authentication;/* Try rhosts with RSA authentication. */
   int rsa_authentication;	/* Try RSA authentication. */

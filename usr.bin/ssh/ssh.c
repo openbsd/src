@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.3 1999/09/28 07:57:42 deraadt Exp $");
+RCSID("$Id: ssh.c,v 1.4 1999/09/29 00:10:16 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -110,6 +110,7 @@ usage()
   fprintf(stderr, "or none.\n");
 
   fprintf(stderr, "  -p port     Connect to this port.  Server must be on the same port.\n");
+  fprintf(stderr, "  -g          Allow remote hosts to connect to forwarded ports.\n");
   fprintf(stderr, "  -L listen-port:host:port   Forward local port to remote address\n");
   fprintf(stderr, "  -R listen-port:host:port   Forward remote port to local address\n");
   fprintf(stderr, "              These cause %s to listen for connections on a port, and\n", av0);
@@ -288,6 +289,10 @@ main(int ac, char **av)
 
 	case 'X':
 	  options.forward_x11 = 1;
+	  break;
+
+	case 'g':
+	  options.gateway_ports = 1;
 	  break;
 
 	case 'a':

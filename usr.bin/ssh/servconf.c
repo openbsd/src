@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.2 1999/09/28 07:56:47 deraadt Exp $");
+RCSID("$Id: servconf.c,v 1.3 1999/09/29 00:10:16 deraadt Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -24,7 +24,7 @@ void initialize_server_options(ServerOptions *options)
 {
   memset(options, 0, sizeof(*options));
   options->port = -1;
-  options->listen_addr.s_addr = INADDR_ANY;
+  options->listen_addr.s_addr = htonl(INADDR_ANY);
   options->host_key_file = NULL;
   options->random_seed_file = NULL;
   options->server_key_bits = -1;

@@ -14,7 +14,7 @@ Functions for reading the configuration files.
 */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.2 1999/09/28 04:45:36 provos Exp $");
+RCSID("$Id: readconf.c,v 1.3 1999/09/29 00:10:16 deraadt Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -88,7 +88,7 @@ RCSID("$Id: readconf.c,v 1.2 1999/09/28 04:45:36 provos Exp $");
 
 typedef enum
 {
-  oForwardAgent, oForwardX11, oRhostsAuthentication,
+  oForwardAgent, oForwardX11, oGatewayPorts, oRhostsAuthentication,
   oPasswordAuthentication, oRSAAuthentication, oFallBackToRsh, oUseRsh,
 #ifdef KRB4
   oKerberosAuthentication,
@@ -116,6 +116,7 @@ static struct
 {
   { "forwardagent", oForwardAgent },
   { "forwardx11", oForwardX11 },
+  { "gatewayports", oGatewayPorts },
   { "rhostsauthentication", oRhostsAuthentication },
   { "passwordauthentication", oPasswordAuthentication },
   { "rsaauthentication", oRSAAuthentication },
@@ -253,6 +254,10 @@ void process_config_line(Options *options, const char *host,
       
     case oForwardX11:
       intptr = &options->forward_x11;
+      goto parse_flag;
+
+    case oGatewayPorts:
+      intptr = &options->gateway_ports;
       goto parse_flag;
       
     case oRhostsAuthentication:
@@ -558,6 +563,7 @@ void initialize_options(Options *options)
   memset(options, 'X', sizeof(*options));
   options->forward_agent = -1;
   options->forward_x11 = -1;
+  options->gateway_ports = -1;
   options->rhosts_authentication = -1;
   options->rsa_authentication = -1;
 #ifdef KRB4
@@ -605,6 +611,8 @@ void fill_default_options(Options *options)
     options->forward_agent = 1;
   if (options->forward_x11 == -1)
     options->forward_x11 = 1;
+  if (options->gateway_ports == -1)
+    options->gateway_ports = 0;
   if (options->rhosts_authentication == -1)
     options->rhosts_authentication = 1;
   if (options->rsa_authentication == -1)

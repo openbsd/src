@@ -16,7 +16,7 @@ arbitrary tcp/ip connections, and the authentication agent connection.
 */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.3 1999/09/28 07:56:47 deraadt Exp $");
+RCSID("$Id: channels.c,v 1.4 1999/09/29 00:10:16 deraadt Exp $");
 
 #ifndef HAVE_GETHOSTNAME
 #include <sys/utsname.h>
@@ -829,6 +829,7 @@ void channel_request_local_forwarding(int port, const char *host,
 {
   int ch, sock;
   struct sockaddr_in sin;
+  extern Options options;
 
   if (strlen(host) > sizeof(channels[0].path) - 1)
     packet_disconnect("Forward host name too long.");
@@ -841,7 +842,10 @@ void channel_request_local_forwarding(int port, const char *host,
   /* Initialize socket address. */
   memset(&sin, 0, sizeof(sin));
   sin.sin_family = AF_INET;
-  sin.sin_addr.s_addr = INADDR_ANY;
+  if (options.gateway_ports == 1)
+    sin.sin_addr.s_addr = htonl(INADDR_ANY);
+  else
+    sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   sin.sin_port = htons(port);
   
   /* Bind the socket to the address. */
@@ -1068,7 +1072,7 @@ char *x11_create_display_inet(int screen_number)
       port = 6000 + display_number;
       memset(&sin, 0, sizeof(sin));
       sin.sin_family = AF_INET;
-      sin.sin_addr.s_addr = INADDR_ANY;
+      sin.sin_addr.s_addr = htonl(INADDR_ANY);
       sin.sin_port = htons(port);
       
       sock = socket(AF_INET, SOCK_STREAM, 0);
