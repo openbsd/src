@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.101 2001/07/06 21:19:55 chris Exp $ */
+/*	$OpenBSD: pf.c,v 1.102 2001/07/06 22:09:00 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -187,12 +187,15 @@ int			 pf_test_icmp(int, struct ifnet *, struct mbuf *,
 			    int, int, struct ip *, struct icmp *);
 int			 pf_test_other(int, struct ifnet *, struct mbuf *,
 			    struct ip *);
-struct pf_state		*pf_test_state_tcp(int, struct ifnet *, struct mbuf *,
-			    int, int, struct ip *, struct tcphdr *);
-struct pf_state		*pf_test_state_udp(int, struct ifnet *, struct mbuf *,
-			    int, int, struct ip *, struct udphdr *);
-struct pf_state		*pf_test_state_icmp(int, struct ifnet *, struct mbuf *,
-			    int, int, struct ip *, struct icmp *);
+int			 pf_test_state_tcp(struct pf_state **, int,
+			    struct ifnet *, struct mbuf *, int, int,
+			    struct ip *, struct tcphdr *);
+int			 pf_test_state_udp(struct pf_state **, int,
+			    struct ifnet *, struct mbuf *, int, int,
+			    struct ip *, struct udphdr *);
+int			 pf_test_state_icmp(struct pf_state **, int,
+			    struct ifnet *, struct mbuf *, int, int,
+			    struct ip *, struct icmp *);
 void			*pf_pull_hdr(struct ifnet *, struct mbuf *, int, int,
 			    void *, int, struct ip *, u_short *, u_short *);
 int			 pflog_packet(struct mbuf *, int, u_short, u_short,
@@ -1563,6 +1566,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 	/* copy back packet headers if we performed NAT operations */
 	if (rewrite)
 		m_copyback(m, off, sizeof(*th), (caddr_t)th);
+
 	return (PF_PASS);
 }
 
@@ -1720,7 +1724,6 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 	u_int32_t baddr;
 	struct pf_rule *r, *rm = NULL;
 	u_short reason;
-	int rewrite = 0;
 
 	if (direction == PF_OUT) {
 		/* check outgoing packet for NAT */
@@ -1728,7 +1731,6 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		    NULL) {
 			baddr = h->ip_src.s_addr;
 			pf_change_a(&h->ip_src.s_addr, &h->ip_sum, nat->daddr);
-			rewrite++;
 		}
 	}
 
@@ -1832,13 +1834,18 @@ pf_test_other(int direction, struct ifnet *ifp, struct mbuf *m, struct ip *h)
 	return (PF_PASS);
 }
 
-struct pf_state *
-pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
-    int ipoff, int off, struct ip *h, struct tcphdr *th)
+int
+pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
+    struct mbuf *m, int ipoff, int off, struct ip *h, struct tcphdr *th)
 {
-	struct pf_state *s;
 	struct pf_tree_key key;
-	int rewrite = 0;
+	u_int16_t len = h->ip_len - off - (th->th_off << 2);
+	u_int16_t win = ntohs(th->th_win);
+	u_int32_t seq = ntohl(th->th_seq), ack = ntohl(th->th_ack);
+	u_int32_t end = seq + len + ((th->th_flags & TH_SYN) ? 1 : 0) +
+	    ((th->th_flags & TH_FIN) ? 1 : 0);
+	int ackskew;
+	struct pf_state_peer *src, *dst;
 
 	key.proto   = IPPROTO_TCP;
 	key.addr[0] = h->ip_src;
@@ -1846,157 +1853,146 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 	key.addr[1] = h->ip_dst;
 	key.port[1] = th->th_dport;
 
-	s = pf_find_state((direction == PF_IN) ? tree_ext_gwy : tree_lan_ext,
-	    &key);
-	if (s != NULL) {
-		u_int16_t len = h->ip_len - off - (th->th_off << 2);
-		u_int16_t win = ntohs(th->th_win);
-		u_int32_t seq = ntohl(th->th_seq), ack = ntohl(th->th_ack);
-		u_int32_t end = seq + len + ((th->th_flags & TH_SYN) ? 1 : 0) +
-		    ((th->th_flags & TH_FIN) ? 1 : 0);
-		int ackskew;
-		struct pf_state_peer *src, *dst;
+	*state = pf_find_state((direction == PF_IN) ? tree_ext_gwy :
+	    tree_lan_ext, &key);
+	if (*state == NULL)
+		return (PF_DROP);
 
-		if (direction == s->direction) {
-			src = &s->src;
-			dst = &s->dst;
-		} else {
-			src = &s->dst;
-			dst = &s->src;
-		}
+	if (direction == (*state)->direction) {
+		src = &(*state)->src;
+		dst = &(*state)->dst;
+	} else {
+		src = &(*state)->dst;
+		dst = &(*state)->src;
+	}
 
-		if (src->seqlo == 0) {
-			/* First packet from this end.  Set its state */
-			src->seqlo = end;
-			src->seqhi = end + 1;
-			src->max_win = 1;
-		}
+	if (src->seqlo == 0) {
+		/* First packet from this end.  Set its state */
+		src->seqlo = end;
+		src->seqhi = end + 1;
+		src->max_win = 1;
+	}
 
-		if ((th->th_flags & TH_ACK) == 0) {
-			/* Let it pass through the ack skew check */
-			ack = dst->seqlo;
-		} else if (ack == 0 &&
-			(th->th_flags & (TH_ACK|TH_RST)) == (TH_ACK|TH_RST)) {
-			/* broken tcp stacks do not set ack */
-			ack = dst->seqlo;
-		}
+	if ((th->th_flags & TH_ACK) == 0) {
+		/* Let it pass through the ack skew check */
+		ack = dst->seqlo;
+	} else if (ack == 0 &&
+	    (th->th_flags & (TH_ACK|TH_RST)) == (TH_ACK|TH_RST)) {
+		/* broken tcp stacks do not set ack */
+		ack = dst->seqlo;
+	}
 
-		if (seq == end) {
-			/* Ease sequencing restrictions on no data packets */
-			seq = src->seqlo;
-			end = seq;
-		}
+	if (seq == end) {
+		/* Ease sequencing restrictions on no data packets */
+		seq = src->seqlo;
+		end = seq;
+	}
 
-		ackskew = dst->seqlo - ack;
+	ackskew = dst->seqlo - ack;
 
 #define MAXACKWINDOW (0xffff + 1500)
-		if (SEQ_GEQ(src->seqhi, end) &&
-		    /* Last octet inside other's window space */
-		    SEQ_GEQ(seq, src->seqlo - dst->max_win) &&
-		    /* Retrans: not more than one window back */
-		    (ackskew >= -MAXACKWINDOW) &&
-		    /* Acking not more than one window back */
-		    (ackskew <= MAXACKWINDOW)) {
-		    /* Acking not more than one window forward */
+	if (SEQ_GEQ(src->seqhi, end) &&
+	    /* Last octet inside other's window space */
+	    SEQ_GEQ(seq, src->seqlo - dst->max_win) &&
+	    /* Retrans: not more than one window back */
+	    (ackskew >= -MAXACKWINDOW) &&
+	    /* Acking not more than one window back */
+	    (ackskew <= MAXACKWINDOW)) {
+	    /* Acking not more than one window forward */
 
-			if (ackskew < 0) {
-				/* The sequencing algorithm is exteremely lossy
-				 * when there is fragmentation since the full
-				 * packet length can not be determined.  So we
-				 * deduce how much data passed by what the
-				 * other endpoint ACKs.  Thanks Guido!
-				 * (Why MAXACKWINDOW is used)
-				 */
-				dst->seqlo = ack;
-			}
-
-			s->packets++;
-			s->bytes += len;
-
-			/* update max window */
-			if (src->max_win < win)
-				src->max_win = win;
-			/* syncronize sequencing */
-			if (SEQ_GT(end, src->seqlo))
-				src->seqlo = end;
-			/* slide the window of what the other end can send */
-			if (SEQ_GEQ(ack + win, dst->seqhi))
-				dst->seqhi = ack + MAX(win, 1);
-
-
-			/* update states */
-			if (th->th_flags & TH_SYN)
-				if (src->state < 1)
-					src->state = 1;
-			if (th->th_flags & TH_FIN)
-				if (src->state < 3)
-					src->state = 3;
-			if (th->th_flags & TH_ACK) {
-				if (dst->state == 1)
-					dst->state = 2;
-				else if (dst->state == 3)
-					dst->state = 4;
-			}
-			if (th->th_flags & TH_RST)
-				src->state = dst->state = 5;
-
-			/* update expire time */
-			if (src->state >= 4 && dst->state >= 4)
-				s->expire = pftv.tv_sec + 5;
-			else if (src->state >= 3 || dst->state >= 3)
-				s->expire = pftv.tv_sec + 300;
-			else if (src->state < 2 || dst->state < 2)
-				s->expire = pftv.tv_sec + 30;
-			else
-				s->expire = pftv.tv_sec + 24*60*60;
-
-			/* translate source/destination address, if needed */
-			if (s->lan.addr != s->gwy.addr ||
-			    s->lan.port != s->gwy.port) {
-				if (direction == PF_OUT)
-					pf_change_ap(&h->ip_src.s_addr,
-					    &th->th_sport, &h->ip_sum,
-					    &th->th_sum, s->gwy.addr,
-					    s->gwy.port);
-				else
-					pf_change_ap(&h->ip_dst.s_addr,
-					    &th->th_dport, &h->ip_sum,
-					    &th->th_sum, s->lan.addr,
-					    s->lan.port);
-				rewrite++;
-			}
-
-		} else {
-			/* XXX Remove these printfs before release */
-			printf("pf: BAD state: ");
-			pf_print_state(direction, s);
-			pf_print_flags(th->th_flags);
-			printf(" seq=%lu ack=%lu len=%u ", seq, ack, len);
-			printf("\n");
-			printf("State failure: %c %c %c %c\n",
-			    SEQ_GEQ(src->seqhi, end) ? ' ' : '1',
-			    SEQ_GEQ(seq, src->seqlo - dst->max_win) ? ' ': '2',
-			    (ackskew >= -MAXACKWINDOW) ? ' ' : '3',
-			    (ackskew <= MAXACKWINDOW) ? ' ' : '4');
-			s = NULL;
+		if (ackskew < 0) {
+			/* The sequencing algorithm is exteremely lossy
+			 * when there is fragmentation since the full
+			 * packet length can not be determined.  So we
+			 * deduce how much data passed by what the
+			 * other endpoint ACKs.  Thanks Guido!
+			 * (Why MAXACKWINDOW is used)
+			 */
+			dst->seqlo = ack;
 		}
 
-		/* copy back packet headers if we performed NAT operations */
-		if (rewrite)
-			m_copyback(m, off, sizeof(*th), (caddr_t)th);
+		(*state)->packets++;
+		(*state)->bytes += len;
 
-		return (s);
+		/* update max window */
+		if (src->max_win < win)
+			src->max_win = win;
+		/* syncronize sequencing */
+		if (SEQ_GT(end, src->seqlo))
+			src->seqlo = end;
+		/* slide the window of what the other end can send */
+		if (SEQ_GEQ(ack + win, dst->seqhi))
+			dst->seqhi = ack + MAX(win, 1);
+
+
+		/* update states */
+		if (th->th_flags & TH_SYN)
+			if (src->state < 1)
+				src->state = 1;
+		if (th->th_flags & TH_FIN)
+			if (src->state < 3)
+				src->state = 3;
+		if (th->th_flags & TH_ACK) {
+			if (dst->state == 1)
+				dst->state = 2;
+			else if (dst->state == 3)
+				dst->state = 4;
+		}
+		if (th->th_flags & TH_RST)
+			src->state = dst->state = 5;
+
+		/* update expire time */
+		if (src->state >= 4 && dst->state >= 4)
+			(*state)->expire = pftv.tv_sec + 5;
+		else if (src->state >= 3 && dst->state >= 3)
+			(*state)->expire = pftv.tv_sec + 300;
+		else if (src->state < 2 || dst->state < 2)
+			(*state)->expire = pftv.tv_sec + 30;
+		else
+			(*state)->expire = pftv.tv_sec + 24*60*60;
+
+		/* translate source/destination address, if needed */
+		if ((*state)->lan.addr != (*state)->gwy.addr ||
+		    (*state)->lan.port != (*state)->gwy.port) {
+			if (direction == PF_OUT)
+				pf_change_ap(&h->ip_src.s_addr,
+				    &th->th_sport, &h->ip_sum,
+				    &th->th_sum, (*state)->gwy.addr,
+				    (*state)->gwy.port);
+			else
+				pf_change_ap(&h->ip_dst.s_addr,
+				    &th->th_dport, &h->ip_sum,
+				    &th->th_sum, (*state)->lan.addr,
+				    (*state)->lan.port);
+			m_copyback(m, off, sizeof(*th), (caddr_t)th);
+		}
+
+		return (PF_PASS);
+
+	} else {
+		/* XXX Remove these printfs before release */
+		printf("pf: BAD state: ");
+		pf_print_state(direction, *state);
+		pf_print_flags(th->th_flags);
+		printf(" seq=%lu ack=%lu len=%u ", seq, ack, len);
+		printf("\n");
+		printf("State failure: %c %c %c %c\n",
+		    SEQ_GEQ(src->seqhi, end) ? ' ' : '1',
+		    SEQ_GEQ(seq, src->seqlo - dst->max_win) ? ' ': '2',
+		    (ackskew >= -MAXACKWINDOW) ? ' ' : '3',
+		    (ackskew <= MAXACKWINDOW) ? ' ' : '4');
+
+		return (PF_DROP);
 	}
-	return (NULL);
 }
 
-struct pf_state *
-pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf *m,
-    int ipoff, int off, struct ip *h, struct udphdr *uh)
+int
+pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
+    struct mbuf *m, int ipoff, int off, struct ip *h, struct udphdr *uh)
 {
-	struct pf_state *s;
+	u_int16_t len = h->ip_len - off - sizeof(*uh);
+	struct pf_state_peer *src, *dst;
 	struct pf_tree_key key;
-	int rewrite = 0;
 
 	key.proto   = IPPROTO_UDP;
 	key.addr[0] = h->ip_src;
@@ -2004,64 +2000,56 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 	key.addr[1] = h->ip_dst;
 	key.port[1] = uh->uh_dport;
 
-	s = pf_find_state((direction == PF_IN) ? tree_ext_gwy : tree_lan_ext,
-	    &key);
-	if (s != NULL) {
-		u_int16_t len = h->ip_len - off - sizeof(*uh);
+	(*state) = pf_find_state((direction == PF_IN) ? tree_ext_gwy :
+	    tree_lan_ext, &key);
+	if (*state == NULL)
+		return (PF_DROP);
 
-		struct pf_state_peer *src, *dst;
-		if (direction == s->direction) {
-			src = &s->src;
-			dst = &s->dst;
-		} else {
-			src = &s->dst;
-			dst = &s->src;
-		}
-
-		s->packets++;
-		s->bytes += len;
-
-		/* update states */
-		if (src->state < 1)
-			src->state = 1;
-		if (dst->state == 1)
-			dst->state = 2;
-
-		/* update expire time */
-		if (src->state == 2 && dst->state == 2)
-			s->expire = pftv.tv_sec + 60;
-		else
-			s->expire = pftv.tv_sec + 20;
-
-		/* translate source/destination address, if necessary */
-		if (s->lan.addr != s->gwy.addr ||
-		    s->lan.port != s->gwy.port) {
-			if (direction == PF_OUT)
-				pf_change_ap(&h->ip_src.s_addr, &uh->uh_sport,
-				    &h->ip_sum, &uh->uh_sum,
-				    s->gwy.addr, s->gwy.port);
-			else
-				pf_change_ap(&h->ip_dst.s_addr, &uh->uh_dport,
-				    &h->ip_sum, &uh->uh_sum,
-				    s->lan.addr, s->lan.port);
-			rewrite++;
-		}
-
-		/* copy back packet headers if we performed NAT operations */
-		if (rewrite)
-			m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
-
-		return (s);
+	if (direction == (*state)->direction) {
+		src = &(*state)->src;
+		dst = &(*state)->dst;
+	} else {
+		src = &(*state)->dst;
+		dst = &(*state)->src;
 	}
-	return (NULL);
+
+	(*state)->packets++;
+	(*state)->bytes += len;
+
+	/* update states */
+	if (src->state < 1)
+		src->state = 1;
+	if (dst->state == 1)
+		dst->state = 2;
+
+	/* update expire time */
+	if (src->state == 2 && dst->state == 2)
+		(*state)->expire = pftv.tv_sec + 60;
+	else
+		(*state)->expire = pftv.tv_sec + 20;
+
+	/* translate source/destination address, if necessary */
+	if ((*state)->lan.addr != (*state)->gwy.addr ||
+	    (*state)->lan.port != (*state)->gwy.port) {
+		if (direction == PF_OUT)
+			pf_change_ap(&h->ip_src.s_addr, &uh->uh_sport,
+			    &h->ip_sum, &uh->uh_sum,
+			    (*state)->gwy.addr, (*state)->gwy.port);
+		else
+			pf_change_ap(&h->ip_dst.s_addr, &uh->uh_dport,
+			    &h->ip_sum, &uh->uh_sum,
+			    (*state)->lan.addr, (*state)->lan.port);
+		m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
+	}
+
+	return (PF_PASS);
 }
 
-struct pf_state *
-pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
-    int ipoff, int off, struct ip *h, struct icmp *ih)
+int
+pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
+    struct mbuf *m, int ipoff, int off, struct ip *h, struct icmp *ih)
 {
 	u_int16_t len = h->ip_len - off - sizeof(*ih);
-	int rewrite = 0;
 
 	if (ih->icmp_type != ICMP_UNREACH &&
 	    ih->icmp_type != ICMP_SOURCEQUENCH &&
@@ -2073,7 +2061,6 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		 * ICMP query/reply message not related to a TCP/UDP packet.
 		 * Search for an ICMP state.
 		 */
-		struct pf_state *s;
 		struct pf_tree_key key;
 
 		key.proto   = IPPROTO_ICMP;
@@ -2082,26 +2069,26 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		key.addr[1] = h->ip_dst;
 		key.port[1] = ih->icmp_id;
 
-		s = pf_find_state((direction == PF_IN) ? tree_ext_gwy :
+		*state = pf_find_state((direction == PF_IN) ? tree_ext_gwy :
 		    tree_lan_ext, &key);
-		if (s != NULL) {
-			s->packets++;
-			s->bytes += len;
-			s->expire = pftv.tv_sec + 10;
+		if (*state == NULL)
+			return (PF_DROP);
 
-			/* translate source/destination address, if needed */
-			if (s->lan.addr != s->gwy.addr) {
-				if (direction == PF_OUT)
-					pf_change_a(&h->ip_src.s_addr,
-					    &h->ip_sum, s->gwy.addr);
-				else
-					pf_change_a(&h->ip_dst.s_addr,
-					    &h->ip_sum, s->lan.addr);
-			}
+		(*state)->packets++;
+		(*state)->bytes += len;
+		(*state)->expire = pftv.tv_sec + 10;
 
-			return (s);
+		/* translate source/destination address, if needed */
+		if ((*state)->lan.addr != (*state)->gwy.addr) {
+			if (direction == PF_OUT)
+				pf_change_a(&h->ip_src.s_addr,
+				    &h->ip_sum, (*state)->gwy.addr);
+			else
+				pf_change_a(&h->ip_dst.s_addr,
+				    &h->ip_sum, (*state)->lan.addr);
 		}
-		return (NULL);
+
+		return (PF_PASS);
 
 	} else {
 
@@ -2118,7 +2105,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		if (!pf_pull_hdr(ifp, m, 0, ipoff2, &h2, sizeof(h2), h,
 		    NULL, NULL)) {
 			printf("pf: ICMP error message too short (ip)\n");
-			return (NULL);
+			return (PF_DROP);
 		}
 
 		/* offset of protocol header that follows h2 */
@@ -2128,7 +2115,6 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		case IPPROTO_TCP: {
 			struct tcphdr th;
 			u_int32_t seq;
-			struct pf_state *s;
 			struct pf_tree_key key;
 			struct pf_state_peer *src, *dst;
 
@@ -2141,7 +2127,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			    &h2, NULL, NULL)) {
 				printf("pf: "
 				    "ICMP error message too short (tcp)\n");
-				return (NULL);
+				return (PF_DROP);
 			}
 			seq = ntohl(th.th_seq);
 
@@ -2151,64 +2137,60 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			key.addr[1] = h2.ip_src;
 			key.port[1] = th.th_sport;
 
-			s = pf_find_state((direction == PF_IN) ? tree_ext_gwy :
-			    tree_lan_ext, &key);
-			if (s == NULL)
-				return (NULL);
+			*state = pf_find_state((direction == PF_IN) ?
+			    tree_ext_gwy : tree_lan_ext, &key);
+			if (*state == NULL)
+				return (PF_DROP);
 
-			src = (direction == s->direction) ?  &s->dst : &s->src;
-			dst = (direction == s->direction) ?  &s->src : &s->dst;
+			src = (direction == (*state)->direction) ?
+			    &(*state)->dst : &(*state)->src;
+			dst = (direction == (*state)->direction) ?
+			    &(*state)->src : &(*state)->dst;
 
 			if (!SEQ_GEQ(src->seqhi, seq) ||
 			    !SEQ_GEQ(seq, src->seqlo - dst->max_win)) {
 
 				printf("pf: BAD ICMP state: ");
-				pf_print_state(direction, s);
+				pf_print_state(direction, *state);
 				printf(" seq=%lu\n", seq);
-				return (NULL);
+				return (PF_DROP);
 			}
 
-			if (s->lan.addr != s->gwy.addr ||
-			    s->lan.port != s->gwy.port) {
+			if ((*state)->lan.addr != (*state)->gwy.addr ||
+			    (*state)->lan.port != (*state)->gwy.port) {
 				if (direction == PF_IN) {
 					pf_change_icmp(&h2.ip_src.s_addr,
 					    &th.th_sport, &h->ip_dst.s_addr,
-					    s->lan.addr, s->lan.port,
-					    NULL, &h2.ip_sum,
-					    &ih->icmp_cksum, &h->ip_sum);
+					    (*state)->lan.addr,
+					    (*state)->lan.port, NULL,
+					    &h2.ip_sum, &ih->icmp_cksum,
+					    &h->ip_sum);
 				} else {
 					pf_change_icmp(&h2.ip_dst.s_addr,
 					    &th.th_dport, &h->ip_src.s_addr,
-					    s->gwy.addr, s->gwy.port,
-					    NULL, &h2.ip_sum,
-					    &ih->icmp_cksum, &h->ip_sum);
+					    (*state)->gwy.addr,
+					    (*state)->gwy.port, NULL,
+					    &h2.ip_sum, &ih->icmp_cksum,
+					    &h->ip_sum);
 				}
-				rewrite++;
-			}
-
-			/*
-			 * copy back packet headers if we performed NAT
-			 * operations
-			 */
-			if (rewrite) {
+				m_copyback(m, off, ICMP_MINLEN, (caddr_t)ih);
 				m_copyback(m, ipoff2, sizeof(h2),
 				    (caddr_t)&h2);
 				m_copyback(m, off2, 8,
 				    (caddr_t)&th);
 			}
 
-			return (s);
+			return (PF_PASS);
 			break;
 		}
 		case IPPROTO_UDP: {
 			struct udphdr uh;
-			struct pf_state *s;
 			struct pf_tree_key key;
 
 			if (!pf_pull_hdr(ifp, m, ipoff2, off2, &uh, sizeof(uh),
 			    &h2, NULL, NULL)) {
 				printf("pf: ICMP error message too short (udp)\n");
-				return (NULL);
+				return (PF_DROP);
 			}
 
 			key.proto   = IPPROTO_UDP;
@@ -2217,48 +2199,42 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			key.addr[1] = h2.ip_src;
 			key.port[1] = uh.uh_sport;
 
-			s = pf_find_state(direction == PF_IN ? tree_ext_gwy :
-			    tree_lan_ext, &key);
-			if (s == NULL)
-				return (NULL);
+			*state = pf_find_state(direction == PF_IN ?
+			    tree_ext_gwy : tree_lan_ext, &key);
+			if (*state == NULL)
+				return (PF_DROP);
 
-			if (s->lan.addr != s->gwy.addr ||
-			    s->lan.port != s->gwy.port) {
+			if ((*state)->lan.addr != (*state)->gwy.addr ||
+			    (*state)->lan.port != (*state)->gwy.port) {
 				if (direction == PF_IN) {
 					pf_change_icmp(&h2.ip_src.s_addr,
 					    &uh.uh_sport, &h->ip_dst.s_addr,
-					    s->lan.addr, s->lan.port,
-					    &uh.uh_sum, &h2.ip_sum,
-					    &ih->icmp_cksum, &h->ip_sum);
+					    (*state)->lan.addr,
+					    (*state)->lan.port, &uh.uh_sum,
+					    &h2.ip_sum, &ih->icmp_cksum,
+					    &h->ip_sum);
 				} else {
 					pf_change_icmp(&h2.ip_dst.s_addr,
 					    &uh.uh_dport, &h->ip_src.s_addr,
-					    s->gwy.addr, s->gwy.port,
-					    &uh.uh_sum, &h2.ip_sum,
-					    &ih->icmp_cksum, &h->ip_sum);
+					    (*state)->gwy.addr,
+					    (*state)->gwy.port, &uh.uh_sum,
+					    &h2.ip_sum, &ih->icmp_cksum,
+					    &h->ip_sum);
 				}
-				rewrite++;
-			}
-
-			/*
-			 * copy back packet headers if we performed NAT
-			 * operations
-			 */
-			if (rewrite) {
+				m_copyback(m, off, ICMP_MINLEN, (caddr_t)ih);
 				m_copyback(m, ipoff2, sizeof(h2),
 				    (caddr_t)&h2);
 				m_copyback(m, off2, sizeof(uh),
 				    (caddr_t)&uh);
 			}
 
-			return (s);
+			return (PF_PASS);
 			break;
 		}
 		default:
 			printf("pf: ICMP error message for bad proto\n");
-			return (NULL);
+			return (PF_DROP);
 		}
-		return (NULL);
 
 	}
 }
@@ -2762,12 +2738,12 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = action != PF_PASS;
 			goto done;
 		}
-		if ((s = pf_test_state_tcp(dir, ifp, m, 0, off, h, &th))) {
-			action = PF_PASS;
+		action = pf_test_state_tcp(&s, dir, ifp, m, 0, off, h , &th);
+		if (action == PF_PASS) {
 			r = s->rule;
 			log = s->log;
-		} else
-			action = pf_test_tcp(dir, ifp, m, 0, off, h, &th);
+		} else if (s == NULL)
+			action = pf_test_tcp(dir, ifp, m, 0, off, h , &th);
 		break;
 	}
 
@@ -2779,11 +2755,11 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = action != PF_PASS;
 			goto done;
 		}
-		if ((s = pf_test_state_udp(dir, ifp, m, 0, off, h, &uh))) {
-			action = PF_PASS;
+		action = pf_test_state_udp(&s, dir, ifp, m, 0, off, h, &uh);
+		if (action == PF_PASS) {
 			r = s->rule;
 			log = s->log;
-		} else
+		} else if (s == NULL)
 			action = pf_test_udp(dir, ifp, m, 0, off, h, &uh);
 		break;
 	}
@@ -2796,11 +2772,11 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = action != PF_PASS;
 			goto done;
 		}
-		if ((s = pf_test_state_icmp(dir, ifp, m, 0, off, h, &ih))) {
-			action = PF_PASS;
+		action = pf_test_state_icmp(&s, dir, ifp, m, 0, off, h, &ih);
+		if (action == PF_PASS) {
 			r = s->rule;
 			log = s->log;
-		} else
+		} else if (s == NULL)
 			action = pf_test_icmp(dir, ifp, m, 0, off, h, &ih);
 		break;
 	}
