@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_signal.c,v 1.1 1999/09/14 01:05:25 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_signal.c,v 1.2 1999/09/14 02:06:25 kstailey Exp $	*/
 
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
@@ -45,6 +45,8 @@
 
 /*
 
+missing:
+
 ;293	STD		{ int netbsd_sys___sigprocmask14(int how, \
 ;			    const sigset_t *set, \
 ;			    sigset_t *oset); }
@@ -81,10 +83,10 @@ openbsd_to_netbsd_sigaction(obsa, nbsa)
 	struct sigaction	*obsa;
 	struct netbsd_sigaction	*nbsa;
 {
-	memset(nbsa, 0, sizeof(nbsa));
+	memset(nbsa, 0, sizeof(struct netbsd_sigaction));
 	nbsa->netbsd_sa_handler = obsa->sa_handler;
-	memcpy(&nbsa->netbsd_sa_mask.__bits[0], &obsa->sa_mask,
-	       sizeof(sigset_t));
+	bcopy(&obsa->sa_mask, &nbsa->netbsd_sa_mask.__bits[0],
+		sizeof(sigset_t));
 	nbsa->netbsd_sa_flags = obsa->sa_flags;
 }
 
@@ -93,10 +95,10 @@ netbsd_to_openbsd_sigaction(nbsa, obsa)
 	struct netbsd_sigaction	*nbsa;
 	struct sigaction	*obsa;
 {
-	memset(nbsa, 0, sizeof(obsa));
+	memset(nbsa, 0, sizeof(struct sigaction));
 	obsa->sa_handler = nbsa->netbsd_sa_handler;
-	memcpy(&obsa->sa_mask, &nbsa->netbsd_sa_mask.__bits[0],
-	       sizeof(sigset_t));
+	bcopy(&nbsa->netbsd_sa_mask.__bits[0],&obsa->sa_mask,
+		sizeof(sigset_t));
 	obsa->sa_flags = nbsa->netbsd_sa_flags;
 }
 
@@ -137,7 +139,7 @@ netbsd_sys___sigaction14(p, v, retval)
 	} */ *uap = v;
 	struct sigaction vec;
 	register struct sigaction *sa;
-	struct netbsd_sigaction *nbsa;
+	struct netbsd_sigaction nbsa;
 	register struct sigacts *ps = p->p_sigacts;
 	register int signum;
 	int bit, error;
@@ -169,18 +171,18 @@ netbsd_sys___sigaction14(p, v, retval)
 		if ((sa->sa_mask & bit) == 0)
 			sa->sa_flags |= SA_NODEFER;
 		sa->sa_mask &= ~bit;
-		openbsd_to_netbsd_sigaction(sa, nbsa);
-		error = copyout((caddr_t)nbsa, (caddr_t)SCARG(uap, osa),
+		openbsd_to_netbsd_sigaction(sa, &nbsa);
+		error = copyout((caddr_t)&nbsa, (caddr_t)SCARG(uap, osa),
 				sizeof (struct netbsd_sigaction));
 		if (error)
 			return (error);
 	}
 	if (SCARG(uap, nsa)) {
-		error = copyin((caddr_t)SCARG(uap, nsa), (caddr_t)nbsa,
+		error = copyin((caddr_t)SCARG(uap, nsa), (caddr_t)&nbsa,
 			       sizeof (struct netbsd_sigaction));
 		if (error)
 			return (error);
-		netbsd_to_openbsd_sigaction(nbsa, sa);
+		netbsd_to_openbsd_sigaction(&nbsa, sa);
 		setsigvec(p, signum, sa);
 	}
 	return (0);
