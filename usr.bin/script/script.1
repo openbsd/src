@@ -1,4 +1,4 @@
-.\"	$OpenBSD: script.1,v 1.6 2000/03/10 20:17:51 aaron Exp $
+.\"	$OpenBSD: script.1,v 1.7 2000/03/23 17:01:35 ericj Exp $
 .\"	$NetBSD: script.1,v 1.3 1994/12/21 08:55:41 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -85,6 +85,11 @@ or control-D
 is not set) for the
 C-shell,
 .Xr csh 1 ) .
+.Nm
+will exit with the status of 0 unless any of its child 
+processes fail. In which case, 
+.Nm 
+will return 1.
 .Pp
 Certain interactive commands, such as
 .Xr vi 1 ,
