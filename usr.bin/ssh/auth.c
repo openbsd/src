@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.20 2001/03/17 17:27:59 markus Exp $");
+RCSID("$OpenBSD: auth.c,v 1.21 2001/03/19 17:07:23 markus Exp $");
 
 #include "xmalloc.h"
 #include "match.h"
@@ -50,7 +50,7 @@ int
 allowed_user(struct passwd * pw)
 {
 	struct stat st;
-	char *shell, *cp;
+	char *shell;
 	int i;
 
 	/* Shouldn't be called if pw is NULL, but better safe than sorry... */
@@ -62,15 +62,6 @@ allowed_user(struct passwd * pw)
 	 * legal, and means /bin/sh.
 	 */
 	shell = (pw->pw_shell[0] == '\0') ? _PATH_BSHELL : pw->pw_shell;
-
-	/* disallow anyone who does not have a standard shell */
-	setusershell();
-	while ((cp = getusershell()) != NULL)
-		if (strcmp(cp, shell) == 0)
-			break;
-	endusershell();
-	if (cp == NULL)
-		return 0;
 
 	/* deny if shell does not exists or is not executable */
 	if (stat(shell, &st) != 0)
