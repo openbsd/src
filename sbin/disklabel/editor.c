@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.75 2001/03/12 23:03:59 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.76 2001/05/19 05:10:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.75 2001/03/12 23:03:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.76 2001/05/19 05:10:46 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2495,7 +2495,6 @@ zero_partitions(lp, freep)
 
 	for (i = 0; i < MAXPARTITIONS; i++)
 		memset(&lp->d_partitions[i], 0, sizeof(struct partition));
-	lp->d_partitions[RAW_PART].p_offset = starting_sector;
-	lp->d_partitions[RAW_PART].p_size = ending_sector - starting_sector;
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	editor_countfree(lp, freep);
 }
