@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo.h,v 1.11 2002/03/14 01:27:07 millert Exp $	*/
+/*	$OpenBSD: fifo.h,v 1.12 2002/11/08 04:34:17 art Exp $	*/
 /*	$NetBSD: fifo.h,v 1.10 1996/02/09 22:40:15 christos Exp $	*/
 
 /*
@@ -82,6 +82,8 @@ int	fifo_advlock(void *);
 #define fifo_bwrite	nullop
 
 void 	fifo_printinfo(struct vnode *);
+
+int	fifo_vnoperate(void *);
 
 extern int (**fifo_vnodeop_p)(void *);
 
