@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2003/03/10 21:08:44 millert Exp $
+#	$OpenBSD: Makefile,v 1.22 2003/08/13 23:36:33 millert Exp $
 
 PROG=	sendmail
 
@@ -61,6 +61,12 @@ beforeinstall:
 	fi
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g wheel -m 444 \
 	    ${.CURDIR}/helpfile ${DESTDIR}/etc/mail/helpfile
+
+afterinstall:
+	cmp -s ${.CURDIR}/TUNING ${DESTDIR}${SHAREDIR}/sendmail/TUNING || \
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} \
+	    -m 444  ${.CURDIR}/TUNING ${DESTDIR}${SHAREDIR}/sendmail/TUNING ; \
+
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
