@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.61 2004/01/13 13:18:03 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.62 2004/01/13 13:34:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -44,7 +44,7 @@ int		 rde_update_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
 void		 init_attr_flags(struct attr_flags *);
 int		 rde_update_get_attr(struct rde_peer *, u_char *, u_int16_t,
 		     struct attr_flags *);
-void		 rde_update_err(u_int32_t, enum suberr_update);
+void		 rde_update_err(struct rde_peer *, enum suberr_update);
 void		 rde_update_log(const char *,
 		     const struct rde_peer *, const struct attr_flags *,
 		     const struct bgpd_addr *, u_int8_t);
@@ -336,14 +336,14 @@ rde_update_dispatch(struct imsg *imsg)
 	withdrawn_len = ntohs(len);
 	p += 2;
 	if (imsg->hdr.len < IMSG_HEADER_SIZE + 2 + withdrawn_len + 2) {
-		rde_update_err(peer->conf.id, ERR_UPD_ATTRLIST);
+		rde_update_err(peer, ERR_UPD_ATTRLIST);
 		return (-1);
 	}
 
 	while (withdrawn_len > 0) {
 		if ((pos = rde_update_get_prefix(p, withdrawn_len, &prefix,
 		    &prefixlen)) == -1) {
-			rde_update_err(peer->conf.id, ERR_UPD_ATTRLIST);
+			rde_update_err(peer, ERR_UPD_ATTRLIST);
 			return (-1);
 		}
 		p += pos;
@@ -357,7 +357,7 @@ rde_update_dispatch(struct imsg *imsg)
 	p += 2;
 	if (imsg->hdr.len <
 	    IMSG_HEADER_SIZE + 2 + withdrawn_len + 2 + attrpath_len) {
-		rde_update_err(peer->conf.id, ERR_UPD_ATTRLIST);
+		rde_update_err(peer, ERR_UPD_ATTRLIST);
 		return (-1);
 	}
 	nlri_len =
@@ -369,7 +369,7 @@ rde_update_dispatch(struct imsg *imsg)
 	while (attrpath_len > 0) {
 		if ((pos = rde_update_get_attr(peer, p, attrpath_len,
 		    &attrs)) < 0) {
-			rde_update_err(peer->conf.id, ERR_UPD_ATTRLIST);
+			rde_update_err(peer, ERR_UPD_ATTRLIST);
 			return (-1);
 		}
 		p += pos;
@@ -379,7 +379,7 @@ rde_update_dispatch(struct imsg *imsg)
 	while (nlri_len > 0) {
 		if ((pos = rde_update_get_prefix(p, nlri_len, &prefix,
 		    &prefixlen)) == -1) {
-			rde_update_err(peer->conf.id, ERR_UPD_ATTRLIST);
+			rde_update_err(peer, ERR_UPD_ATTRLIST);
 			return (-1);
 		}
 		p += pos;
@@ -529,14 +529,15 @@ rde_update_get_attr(struct rde_peer *peer, u_char *p, u_int16_t len,
 }
 
 void
-rde_update_err(u_int32_t peerid, enum suberr_update errorcode)
+rde_update_err(struct rde_peer *peer, enum suberr_update errorcode)
 {
 	u_int8_t	errcode;
 
 	errcode = errorcode;
-	if (imsg_compose(&ibuf_se, IMSG_UPDATE_ERR, peerid,
+	if (imsg_compose(&ibuf_se, IMSG_UPDATE_ERR, peer->conf.id,
 	    &errcode, sizeof(errcode)) == -1)
 		fatal("imsg_compose error");
+	peer->state = PEER_ERR;
 }
 
 void
@@ -808,6 +809,8 @@ peer_up(u_int32_t id, struct session_up *sup)
 		logit(LOG_CRIT, "peer_up: unknown peer id %d", id);
 		return;
 	}
+
+	ENSURE(peer->state == PEER_DOWN || peer->state == PEER_NONE);
 	peer->remote_bgpid = ntohl(sup->remote_bgpid);
 	memcpy(&peer->local_addr, &sup->local_addr, sizeof(peer->local_addr));
 	memcpy(&peer->remote_addr, &sup->remote_addr,

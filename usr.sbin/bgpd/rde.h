@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.17 2004/01/13 13:18:03 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.18 2004/01/13 13:34:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -40,7 +40,8 @@
 enum peer_state {
 	PEER_NONE,
 	PEER_DOWN,
-	PEER_UP
+	PEER_UP,
+	PEER_ERR	/* error occured going to PEER_DOWN state */
 };
 
 /*

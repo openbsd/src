@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.66 2004/01/11 22:01:13 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.67 2004/01/13 13:34:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -188,7 +188,8 @@ LIST_HEAD(mrt_head, mrt);
 
 /* error subcode for UPDATE; needed in SE and RDE */
 enum suberr_update {
-	ERR_UPD_ATTRLIST = 1,
+	ERR_UPD_UNSPECIFIC,
+	ERR_UPD_ATTRLIST,
 	ERR_UPD_UNKNWN_WK_ATTR,
 	ERR_UPD_MISSNG_WK_ATTR,
 	ERR_UPD_ATTRFLAGS,
