@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.8 1997/03/13 19:07:40 downsj Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.9 1997/04/06 07:55:04 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.8 1997/03/13 19:07:40 downsj Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.9 1997/04/06 07:55:04 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -362,7 +362,7 @@ hostalias(name)
 	if (_res.options & RES_NOALIASES)
 		return (NULL);
 	file = getenv("HOSTALIASES");
-	if (file == NULL || (fp = fopen(file, "r")) == NULL)
+	if (issetugid() != 0 || file == NULL || (fp = fopen(file, "r")) == NULL)
 		return (NULL);
 	setbuf(fp, NULL);
 	buf[sizeof(buf) - 1] = '\0';
