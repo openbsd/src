@@ -1,0 +1,197 @@
+.\" $OpenBSD: wsconsctl.8,v 1.1 2000/07/01 23:52:45 mickey Exp $
+.\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
+.\"
+.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Juergen Hannken-Illjes.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the NetBSD
+.\"	Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"/
+.Dd December 24, 1998
+.Dt WSCONSCTL 8
+.Os
+.Sh NAME
+.Nm wsconsctl
+.Nd get or set wscons state
+.Sh SYNOPSIS
+.Nm
+.Op Fl kdm
+.Op Fl f Ar file
+.Op Fl n
+.Fl a
+.Nm ""
+.Op Fl kdm
+.Op Fl f Ar file
+.Op Fl n
+.Ar name ...
+.Nm ""
+.Op Fl kdm
+.Op Fl f Ar file
+.Op Fl n
+.Fl w
+.Ar name=value ...
+.Nm ""
+.Op Fl kdm
+.Op Fl f Ar file
+.Op Fl n
+.Fl w
+.Ar name+=value ...
+.Sh DESCRIPTION
+The 
+.Nm
+command displays or sets various wscons system driver variables.
+If a list of variables is present on the command line, then
+.Nm
+prints the current value of those variables for the specified device.
+.Bl -tag -width Ds
+.It Fl a
+is used to specify all variables for the device.
+.It Fl w
+.Nm
+attempts to set or modify the specified variables to the given values.
+The value can be specified as either an absolute value, by using the
+.Ar =
+symbol
+or as a relative value, by using the
+.Ar +=
+symbol. See the
+.Ar EXAMPLES
+section for more details.
+.It Fl f Ar file
+is used to specify an alternative control device.
+.It Fl n
+suppresses the printing of the variable name in the output -
+only the value will appear.
+.It Fl k
+selects the keyboard portion of the device (this is the default).
+.It Fl d
+selects the display portion of the device.
+.It Fl m
+selects the mouse portion of the device.
+.El
+.Pp
+The
+.Nm
+utility can be used to view and modify aspects of the keyboard,
+display and mouse, using the standard, machine-independent
+workstation console device driver
+.Xr wscons 4 .
+.Pp
+The keyboard type can be modified, the keyboard bell's pitch,
+period and duration
+can be modified, 
+the
+.Ar typematic
+value can be changed, and the keyboard encoding can be modified
+to switch keys, should the user find a keyboard's default layout
+difficult to use.
+The keyboard types and other relevant definitions,
+can all be found in the
+.Ar /usr/include/dev/wscons/wsconsio.h
+file.
+.Pp
+The mouse types are defined in the
+.Ar /usr/include/dev/wscons/wsconsio.h
+file.
+.Pp
+The keyboard types, and the height, width,
+depth (bits per pixel), color map size, and colormap
+are defined in the
+.Ar /usr/include/dev/wscons/wsconsio.h
+file. There are also definitions relating to video
+control and cursor control, which are not applicable to
+all display types, and to text emulation and graphics
+(mapped) modes.
+.Pp
+There are currently keyboard encodings for the following
+countries: user-defined, US, German, Danish, Italian,
+French, British and Japanese.
+.Sh EXAMPLES
+The following are just a few examples of
+.Nm
+and its functionality.
+.Pp
+.Dl wsconsctl -w encoding=uk
+.Pp
+Sets a UK keyboard encoding.
+.Pp
+.Dl wsconsctl -w map+="keysym Caps_Lock = Control_L"
+.Pp
+Modifies the current keyboard encoding so that, when the
+.Ar Caps Lock
+key is pressed, the same encoding sequence as
+.Ar Left Control
+is sent.
+For a full list of keysyms, and keycodes, please refer
+to the
+.Ar /usr/include/dev/wscons/wsksymdef.h
+file.
+.Pp
+.Dl wsconsctl -w encoding=us.swapctrlcaps
+.Pp
+sets a US keyboard encoding, with the
+.Ar Caps Lock
+and
+.Ar Left Control
+keys swapped. The
+.Ar .swapctrlcaps
+encoding does not work for all national keyboard encodings.
+For most purposes, the ability to set the value returned
+by the
+.Ar Caps Lock
+key is enough - see the previous example for details.
+.Pp
+.Dl wsconsctl -w bell.pitch=1200
+.Pp
+Sets the bell pitch to be 1200, whilst
+.Pp
+.Dl wsconsctl -w bell.pitch+=200
+.Pp
+adds 200 to the current pitch of the bell.
+.Sh FILES
+.Bl -tag -width /dev/wsmouse0
+.It Pa /dev/wskbd0
+keyboard control device
+.It Pa /dev/wsmouse0
+mouse control device
+.It Pa /dev/ttyE0
+display control device
+.El
+.Sh SEE ALSO
+.Xr pckbd 4 ,
+.Xr wscons 4 ,
+.Xr wsconscfg 8 ,
+.Xr wsfontload 8
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 1.4 .
