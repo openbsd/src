@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212var.h,v 1.3 2005/03/10 08:30:56 reyk Exp $	*/
+/*	$OpenBSD: ar5212var.h,v 1.4 2005/03/20 04:21:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -233,7 +233,6 @@ struct ar5k_ar5212_ini {
 	{ AR5K_INI_FLAG_BOTH, 0x004c, 0x00000010 },			\
 	{ AR5K_INI_FLAG_BOTH, 0x0050, 0x00000000 },			\
 	{ AR5K_INI_FLAG_BOTH, 0x0054, 0x0000001f },			\
-	{ AR5K_INI_FLAG_BOTH, 0x0400, 0x0000000e },			\
 	{ AR5K_INI_FLAG_BOTH, 0x0800, 0x00000000 },			\
 	{ AR5K_INI_FLAG_BOTH, 0x0804, 0x00000000 },			\
 	{ AR5K_INI_FLAG_BOTH, 0x0808, 0x00000000 },			\
@@ -299,7 +298,6 @@ struct ar5k_ar5212_ini {
 	{ AR5K_INI_FLAG_BOTH, 0x8004, 0x00000000 },			\
 	{ AR5K_INI_FLAG_BOTH, 0x8008, 0x00000000 },			\
 	{ AR5K_INI_FLAG_BOTH, 0x800c, 0x00000000 },			\
-	{ AR5K_INI_FLAG_BOTH, 0x8014, 0x08400840 },			\
 	{ AR5K_INI_FLAG_BOTH, 0x8018, 0x00000000 },			\
 	{ AR5K_INI_FLAG_BOTH, 0x8020, 0x00000000 },			\
 	{ AR5K_INI_FLAG_BOTH, 0x8024, 0x00000000 },			\
@@ -695,7 +693,7 @@ struct ar5k_ar5212_ini_mode {
 	} },									\
 	{ 0x9860, AR5K_INI_FLAG_511X, {						\
 		{ 0, },								\
-		{ 0x00009d10, 0x00009d10, 0x00009d18, 0x00009d18, 0x00009d10 }	\
+		{ 0x00009d10, 0x00009d10, 0x00009d10, 0x00009d10, 0x00009d10 }	\
 	} },									\
 	{ 0x9864, AR5K_INI_FLAG_511X, {						\
 		{ 0, },								\

@@ -1,4 +1,4 @@
-/*     $OpenBSD: ar5210.c,v 1.15 2005/03/18 14:36:39 reyk Exp $        */
+/*     $OpenBSD: ar5210.c,v 1.16 2005/03/20 04:21:55 reyk Exp $        */
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1877,7 +1877,7 @@ u_int32_t
 ar5k_ar5210_getKeyCacheSize(hal)
 	struct ath_hal *hal;
 {
-	return (AR5K_AR5210_KEYTABLE_SIZE);
+	return (AR5K_AR5210_KEYCACHE_SIZE);
 }
 
 HAL_BOOL
@@ -1890,7 +1890,7 @@ ar5k_ar5210_resetKeyCacheEntry(hal, entry)
 	AR5K_ASSERT_ENTRY(entry, AR5K_AR5210_KEYTABLE_SIZE);
 
 	for (i = 0; i < AR5K_AR5210_KEYCACHE_SIZE; i++)
-		AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (i << 2), 0);
+		AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE_OFF(entry, i), 0);
 
 	return (AH_FALSE);
 }
@@ -1900,17 +1900,14 @@ ar5k_ar5210_isKeyCacheEntryValid(hal, entry)
 	struct ath_hal *hal;
 	u_int16_t entry;
 {
-	int offset;
-
 	AR5K_ASSERT_ENTRY(entry, AR5K_AR5210_KEYTABLE_SIZE);
 
 	/*
 	 * Check the validation flag at the end of the entry
 	 */
-	offset = (AR5K_AR5210_KEYCACHE_SIZE - 1) << 2;
-	if (AR5K_REG_READ(AR5K_AR5210_KEYTABLE(entry) + offset) &
+	if (AR5K_REG_READ(AR5K_AR5210_KEYTABLE_MAC1(entry)) &
 	    AR5K_AR5210_KEYTABLE_VALID)
-		return AH_TRUE;
+		return (AH_TRUE);
 
 	return (AH_FALSE);
 }
@@ -1923,26 +1920,36 @@ ar5k_ar5210_setKeyCacheEntry(hal, entry, keyval, mac, xor_notused)
 	const u_int8_t *mac;
 	int xor_notused;
 {
-	int elements = AR5K_AR5210_KEYCACHE_SIZE - 2;
+	int elements = AR5K_AR5210_KEYCACHE_SIZE - 2, i;
 	u_int32_t key_v[elements];
-	int i, offset = 0;
 
 	AR5K_ASSERT_ENTRY(entry, AR5K_AR5210_KEYTABLE_SIZE);
 
-	/*
-	 * Store the key type in the last field
-	 */
+	bzero(&key_v, sizeof(key_v));
+
 	switch (keyval->wk_len) {
 	case 5:
-		key_v[elements - 1] = AR5K_AR5210_KEYTABLE_TYPE_40;
+		bcopy(keyval->wk_key, &key_v[0], 4);
+		bcopy(keyval->wk_key + 4, &key_v[1], 1);
+		key_v[5] = AR5K_AR5210_KEYTABLE_TYPE_40;
 		break;
 
 	case 13:
-		key_v[elements - 1] = AR5K_AR5210_KEYTABLE_TYPE_104;
+		bcopy(keyval->wk_key, &key_v[0], 4);
+		bcopy(keyval->wk_key + 4, &key_v[1], 2);
+		bcopy(keyval->wk_key + 6, &key_v[2], 4);
+		bcopy(keyval->wk_key + 10, &key_v[3], 2);
+		bcopy(keyval->wk_key + 12, &key_v[4], 1);
+		key_v[5] = AR5K_AR5210_KEYTABLE_TYPE_104;
 		break;
 
 	case 16:
-		key_v[elements - 1] = AR5K_AR5210_KEYTABLE_TYPE_128;
+		bcopy(keyval->wk_key, &key_v[0], 4);
+		bcopy(keyval->wk_key + 4, &key_v[1], 2);
+		bcopy(keyval->wk_key + 6, &key_v[2], 4);
+		bcopy(keyval->wk_key + 10, &key_v[3], 2);
+		bcopy(keyval->wk_key + 12, &key_v[4], 4);
+		key_v[5] = AR5K_AR5210_KEYTABLE_TYPE_128;
 		break;
 
 	default:
@@ -1950,29 +1957,8 @@ ar5k_ar5210_setKeyCacheEntry(hal, entry, keyval, mac, xor_notused)
 		return (AH_FALSE);
 	}
 
-	/*
-	 * Write key cache entry
-	 */
-	for (i = 0; i < elements; i++) {
-		if (elements < 5) {
-			if (i % 2) {
-				key_v[i] = AR5K_LE_READ_2(keyval->wk_key +
-				    offset) & 0xffff;
-				offset += 2;
-			} else {
-				key_v[i] = AR5K_LE_READ_4(keyval->wk_key +
-				    offset);
-				offset += 4;
-			}
-
-			if (i == 4 && keyval->wk_len <= 13)
-				key_v[i] &= 0xff;
-		}
-
-		/* Write value */
-		AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (i << 2),
-		    key_v[i]);
-	}
+	for (i = 0; i < elements; i++)
+		AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE_OFF(entry, i), key_v[i]);
 
 	return (ar5k_ar5210_setKeyCacheEntryMac(hal, entry, mac));
 }
@@ -1984,27 +1970,22 @@ ar5k_ar5210_setKeyCacheEntryMac(hal, entry, mac)
 	const u_int8_t *mac;
 {
 	u_int32_t low_id, high_id;
-	int offset;
+	const u_int8_t *mac_v;
 
 	/*
 	 * Invalid entry (key table overflow)
 	 */
 	AR5K_ASSERT_ENTRY(entry, AR5K_AR5210_KEYTABLE_SIZE);
 
-	offset = AR5K_AR5210_KEYCACHE_SIZE - 2;
-	low_id = high_id = 0;
-
 	/* MAC may be NULL if it's a broadcast key */
-	if (mac != NULL) {
-		bcopy(mac, &low_id, 4);
-		bcopy(mac + 4, &high_id, 2);
-	}
+	mac_v = mac == NULL ? etherbroadcastaddr : mac;
 
-	high_id = 0x0000ffff & htole32(high_id);
+	bcopy(mac_v, &low_id, 4);
+	bcopy(mac_v + 4, &high_id, 2);
+	high_id |= AR5K_AR5210_KEYTABLE_VALID;
 
-	AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (offset++ << 2),
-	    htole32(low_id));
-	AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (offset << 2), high_id);
+	AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE_MAC0(entry), htole32(low_id));
+	AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE_MAC1(entry), htole32(high_id));
 
 	return (AH_TRUE);
 }

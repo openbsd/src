@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.19 2005/03/19 17:27:46 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.20 2005/03/20 04:21:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -459,8 +459,7 @@ ath_hal_init_channels(hal, channels, max_channels, channels_size, country, mode,
 	 * and mode. 5GHz...
 	 */
 	for (i = 0; (hal->ah_capabilities.cap_range.range_5ghz_max > 0) &&
-		 (i < (sizeof(ar5k_5ghz_channels) /
-		     sizeof(ar5k_5ghz_channels[0]))) &&
+		 (i < AR5K_ELEMENTS(ar5k_5ghz_channels)) &&
 		 (c < max_channels); i++) {
 		/* Check if channel is supported by the chipset */
 		if (ar5k_check_channel(hal,
@@ -479,7 +478,8 @@ ath_hal_init_channels(hal, channels, max_channels, channels_size, country, mode,
 		} else if (ar5k_5ghz_channels[i].rc_mode &
 		    IEEE80211_CHAN_OFDM) {
 			all_channels[c].c_channel_flags = CHANNEL_A;
-		}
+		} else
+			continue;
 
 		/* Write channel and increment counter */
 		all_channels[c++].channel = ar5k_5ghz_channels[i].rc_channel;
@@ -489,8 +489,7 @@ ath_hal_init_channels(hal, channels, max_channels, channels_size, country, mode,
 	 * ...and 2GHz.
 	 */
 	for (i = 0; (hal->ah_capabilities.cap_range.range_2ghz_max > 0) &&
-		 (i < (sizeof(ar5k_2ghz_channels) /
-		     sizeof(ar5k_2ghz_channels[0]))) &&
+		 (i < AR5K_ELEMENTS(ar5k_2ghz_channels)) &&
 		 (c < max_channels); i++) {
 		/* Check if channel is supported by the chipset */
 		if (ar5k_check_channel(hal,
