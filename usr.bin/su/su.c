@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.15 1996/10/26 03:19:31 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.16 1996/10/27 16:49:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.15 1996/10/26 03:19:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.16 1996/10/27 16:49:17 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -154,6 +154,8 @@ main(argc, argv)
 
 	if ((pwd = getpwnam(user)) == NULL)
 		errx(1, "unknown login %s", user);
+	if ((user = strdup(pwd->pw_name)) == NULL)
+		err(1, "can't allocate memory");
 
 	if (ruid) {
 #ifdef KERBEROS
