@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.10 2004/12/04 08:29:42 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.11 2004/12/04 23:36:15 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.10 2004/12/04 08:29:42 dlg Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.11 2004/12/04 23:36:15 dlg Exp $ */
 
 /************ 		driver options 		************/
 
@@ -591,6 +591,14 @@ struct atu_rxpkt {
  * The header we have to put in front of a TX packet before sending it to the
  * AT76c503
  */
+struct atu_tx_hdr {
+	u_int16_t			length;
+	u_int8_t			tx_rate;
+	u_int8_t			padding;
+	u_int8_t			reserved[4];
+};
+#define ATU_TX_HDRLEN sizeof(struct atu_tx_hdr)
+
 struct at76c503_tx_buffer {
 	u_int16_t			wlength;
 	u_int8_t			tx_rate;

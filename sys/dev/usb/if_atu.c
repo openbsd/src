@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.28 2004/12/04 08:29:41 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.29 2004/12/04 23:36:15 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -187,6 +187,8 @@ void	atu_print_a_bunch_of_debug_things(struct atu_softc *sc);
 int	atu_set_wepkey(struct atu_softc *sc, int nr, u_int8_t *key, int len);
 
 int atu_newstate(struct ieee80211com *, enum ieee80211_state, int);
+int atu_tx_start(struct atu_softc *, struct ieee80211_node *,
+    struct atu_chain *, struct mbuf *);
 /* XXX stolen from iwi */
 void atu_fix_channel(struct ieee80211com *, struct mbuf *);
 
@@ -2434,63 +2436,41 @@ atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct atu_softc	*sc = c->atu_sc;
 	struct ifnet		*ifp = &sc->sc_ic.ic_if;
 	usbd_status		err;
-	int s;
+	int			s;
 
-	s = splusb();
-
-	ifp->if_timer = 0;
-	c->atu_in_xfer = 0;
-
-	if (c->atu_mbuf != NULL) {
-		/* put it back on the tx_list */
-		sc->atu_cdata.atu_tx_inuse--;
-		SLIST_INSERT_HEAD(&sc->atu_cdata.atu_tx_free, c,
-		    atu_list);
-	} else {
-		/* put it back on the mgmt_list */
-		SLIST_INSERT_HEAD(&sc->atu_cdata.atu_mgmt_free, c,
-		    atu_list);
-	}
-	/*
-	 * turn off active flag if we're done transmitting.
-	 * we don't depend on the active flag anywhere. do we still need to
-	 * set it then?
-	 */
-	if (sc->atu_cdata.atu_tx_inuse == 0) {
-		ifp->if_flags &= ~IFF_OACTIVE;
-	}
-	DPRINTFN(25, ("%s: txeof me=%d  status=%d\n", USBDEVNAME(sc->atu_dev),
-	    c->atu_idx, status));
+	DPRINTFN(25, ("%s: atu_txeof status=%d\n", USBDEVNAME(sc->atu_dev),
+	    status));
 
 	if (status != USBD_NORMAL_COMPLETION) {
-		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
-			splx(s);
+		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
-		}
 
 		DPRINTF(("%s: usb error on tx: %s\n", USBDEVNAME(sc->atu_dev),
 		    usbd_errstr(status)));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(
-			    sc->atu_ep[ATU_ENDPT_TX]);
-		splx(s);
+			usbd_clear_endpoint_stall(sc->atu_ep[ATU_ENDPT_TX]);
 		return;
 	}
 
 	usbd_get_xfer_status(c->atu_xfer, NULL, NULL, NULL, &err);
 
-	if (c->atu_mbuf != NULL) {
-		m_freem(c->atu_mbuf);
-		c->atu_mbuf = NULL;
-		if (ifp->if_snd.ifq_head != NULL)
-			atu_start(ifp);
-	}
-
 	if (err)
 		ifp->if_oerrors++;
 	else
 		ifp->if_opackets++;
+
+	m_freem(c->atu_mbuf);
+	c->atu_mbuf = NULL;
+
+	s = splnet();
+	SLIST_INSERT_HEAD(&sc->atu_cdata.atu_tx_free, c, atu_list);
+	sc->atu_cdata.atu_tx_inuse--;
+	if (sc->atu_cdata.atu_tx_inuse == 0)
+		ifp->if_timer = 0;
+	ifp->if_flags &= ~IFF_OACTIVE;
 	splx(s);
+
+	atu_start(ifp);
 }
 
 #ifdef ATU_TX_PADDING
@@ -2541,107 +2521,178 @@ atu_encap(struct atu_softc *sc, struct mbuf *m, struct atu_chain *c)
 	return(0);
 }
 
+int
+atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
+    struct atu_chain *c, struct mbuf *m)
+{
+	struct ifnet		*ifp = &sc->sc_ic.ic_if;
+	int			len;
+	struct atu_tx_hdr	*h;
+	usbd_status		err;
+#ifdef ATU_TX_PADDING
+	u_int8_t		padding;
+#endif /* ATU_TX_PADDING */
+
+	DPRINTFN(25, ("%s: atu_tx_start\n", USBDEVNAME(sc->atu_dev)));
+
+	/* Don't try to send when we're shutting down the driver */
+	if (sc->atu_dying)
+		return(EIO);
+
+	/*
+	 * Copy the mbuf data into a contiguous buffer, leaving
+	 * enough room for the atmel headers
+	 */
+	len = m->m_pkthdr.len;
+
+	m_copydata(m, 0, m->m_pkthdr.len, c->atu_buf + ATU_TX_HDRLEN);
+
+	h = (struct atu_tx_hdr *)c->atu_buf;
+	memset(h, 0, ATU_TX_HDRLEN);
+	h->length = len;
+	h->tx_rate = 4; /* XXX rate = auto */
+	h->padding = 0;
+
+	len += ATU_TX_HDRLEN;
+#ifdef ATU_TX_PADDING
+/*
+	padding = atu_calculate_padding(len % 64);
+	len += padding;
+	pkt->AtHeader.padding = padding;
+*/
+#endif /* ATU_TX_PADDING */
+	c->atu_length = len;
+	c->atu_mbuf = m;
+
+	usbd_setup_xfer(c->atu_xfer, sc->atu_ep[ATU_ENDPT_TX],
+	    c, c->atu_buf, c->atu_length, USBD_NO_COPY, ATU_TX_TIMEOUT,
+	    atu_txeof);
+
+	/* Let's get this thing into the air! */
+	c->atu_in_xfer = 1;
+	err = usbd_transfer(c->atu_xfer);
+	if (err != USBD_IN_PROGRESS) {
+		atu_stop(ifp, 0);
+		return(EIO);
+	}
+
+	return (0);
+}
+
+
 void
 atu_start(struct ifnet *ifp)
 {
 	struct atu_softc	*sc = ifp->if_softc;
 	struct ieee80211com	*ic = &sc->sc_ic;
-	struct ieee80211_node	*ni;
-	struct mbuf		*m_head = NULL;
 	struct atu_cdata	*cd = &sc->atu_cdata;
-	struct atu_chain	*entry;
-	usbd_status		err;
-	int s;
+	struct ieee80211_node	*ni;
+	struct ieee80211_frame	*wh;
+	struct atu_chain	*c;
+	struct mbuf		*m = NULL;
+	int			s;
 
-	DPRINTFN(10, ("%s: atu_start: enter\n", USBDEVNAME(sc->atu_dev)));
+	DPRINTFN(25, ("%s: atu_start: enter\n", USBDEVNAME(sc->atu_dev)));
 
 	s = splnet();
 	if (ifp->if_flags & IFF_OACTIVE) {
+		DPRINTFN(30, ("%s: atu_start: IFF_OACTIVE\n",
+		    USBDEVNAME(sc->atu_dev)));
 		splx(s);
 		return;
 	}
 
-	entry = SLIST_FIRST(&sc->atu_cdata.atu_tx_free);
-	while (entry) {
-		if (entry == NULL) {
-			/* all transfers are in use at this moment */
-			splx(s);
-			return;
+	for (;;) {
+		/* grab a TX buffer */
+		s = splnet();
+		c = SLIST_FIRST(&cd->atu_tx_free);
+		if (c != NULL) {
+			SLIST_REMOVE_HEAD(&cd->atu_tx_free, atu_list);
+			cd->atu_tx_inuse++;
+			if (cd->atu_tx_inuse == ATU_TX_LIST_CNT)
+				ifp->if_flags |= IFF_OACTIVE;
 		}
-
-		IF_DEQUEUE(&ic->ic_mgtq, m_head);
-		if (m_head != NULL) {
-			DPRINTFN(10, ("%s: atu_start: mgmt\n",
+		splx(s);
+		if (c == NULL) {
+			DPRINTFN(10, ("%s: out of tx xfers\n",
 			    USBDEVNAME(sc->atu_dev)));
-
-			ni = (struct ieee80211_node *)m_head->m_pkthdr.rcvif;
-			m_head->m_pkthdr.rcvif = NULL;
-		} else {
-			DPRINTFN(10, ("%s: atu_start: data\n",
-			    USBDEVNAME(sc->atu_dev)));
-			if (ic->ic_state != IEEE80211_S_RUN) {
-				splx(s);
-				return;
-			}
-			IF_DEQUEUE(&ifp->if_snd, m_head);
-			if (m_head == NULL) {
-				/* no packets on queues */
-				splx(s);
-				return;
-			}
-			DPRINTFN(10, ("%s: atu_start: data\n",
-			    USBDEVNAME(sc->atu_dev)));
-
-			m_head = ieee80211_encap(ifp, m_head, &ni);
-			if (m_head == NULL) {
-				/* no packets on queues */
-				splx(s);
-				return;
-			}
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
 		}
-
-		SLIST_REMOVE_HEAD(&sc->atu_cdata.atu_tx_free, atu_list);
-
-		ifp->if_flags |= IFF_OACTIVE;
-		cd->atu_tx_inuse++;
-
-		DPRINTFN(25, ("%s: index:%d (inuse=%d)\n",
-		    USBDEVNAME(sc->atu_dev), entry->atu_idx,
-		    cd->atu_tx_inuse));
-
-		err = atu_encap(sc, m_head, entry);
-		if (err) {
-			DPRINTF(("%s: error encapsulating packet!\n",
-			    USBDEVNAME(sc->atu_dev)));
-			IF_PREPEND(&ifp->if_snd, m_head);
-			if (--cd->atu_tx_inuse == 0)
-				ifp->if_flags &= ~IFF_OACTIVE;
-			splx(s);
-			return;
-		}
-		err = atu_send_packet(sc, entry);
-		if (err) {
-			DPRINTF(("%s: error sending packet!\n",
-			    USBDEVNAME(sc->atu_dev)));
-			splx(s);
-			return;
-		}
-
-		if ((ni != NULL) && (ni != ic->ic_bss))
-			ieee80211_free_node(ic, ni);
-
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			BPF_MTAP(ifp, m_head);
-#endif
 
 		/*
-		 * Set a timeout in case the chip goes out to lunch.
+		 * Poll the management queue for frames, it has priority over
+		 * normal data frames.
 		 */
+		IF_DEQUEUE(&ic->ic_mgtq, m);
+		if (m == NULL) {
+			DPRINTFN(10, ("%s: atu_start: data packet\n",
+			    USBDEVNAME(sc->atu_dev)));
+			if (ic->ic_state != IEEE80211_S_RUN) {
+				DPRINTFN(25, ("%s: no data till running\n",
+				    USBDEVNAME(sc->atu_dev)));
+				/* put the xfer back on the list */
+				s = splnet();
+				SLIST_INSERT_HEAD(&cd->atu_tx_free, c,
+				    atu_list);
+				cd->atu_tx_inuse--;
+				splx(s);
+				break;
+			}
+
+			IF_DEQUEUE(&ifp->if_snd, m);
+			if (m == NULL) {
+				DPRINTFN(25, ("%s: nothing to send\n",
+				    USBDEVNAME(sc->atu_dev)));
+				s = splnet();
+				SLIST_INSERT_HEAD(&cd->atu_tx_free, c,
+				    atu_list);
+				cd->atu_tx_inuse--;
+				splx(s);
+				break;
+			}
+
+			/* XXX bpf listener goes here */
+
+			m = ieee80211_encap(ifp, m, &ni);
+			if (m == NULL)
+				goto bad;
+			wh = mtod(m, struct ieee80211_frame *);
+		} else {
+			DPRINTFN(25, ("%s: atu_start: mgmt packet\n",
+			    USBDEVNAME(sc->atu_dev)));
+
+			/*
+			 * Hack!  The referenced node pointer is in the
+			 * rcvif field of the packet header.  This is
+			 * placed there by ieee80211_mgmt_output because
+			 * we need to hold the reference with the frame
+			 * and there's no other way (other than packet
+			 * tags which we consider too expensive to use)
+			 * to pass it along.
+			 */
+			ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
+			m->m_pkthdr.rcvif = NULL;
+
+			wh = mtod(m, struct ieee80211_frame *);
+			/* sc->sc_stats.ast_tx_mgmt++; */
+		}
+
+		if (atu_tx_start(sc, ni, c, m)) {
+bad:
+			s = splnet();
+			SLIST_INSERT_HEAD(&cd->atu_tx_free, c,
+			    atu_list);
+			cd->atu_tx_inuse--;
+			splx(s);
+			/* ifp_if_oerrors++; */
+			if (ni != NULL && ni != ic->ic_bss)
+				/* reclaim node */
+				ieee80211_free_node(ic, ni);
+			continue;
+		}
 		ifp->if_timer = 5;
-		entry = SLIST_FIRST(&sc->atu_cdata.atu_tx_free);
 	}
-	splx(s);
 }
 
 int
