@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.207 2002/04/26 02:14:23 krw Exp $
+#	$OpenBSD: install.sub,v 1.208 2002/04/26 02:26:15 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -121,12 +121,11 @@ getresp() {
 
 # test the first argument against the remaining ones, return success on a match
 isin() {
-	local	_a=$1
+	local	_a=$1 _b
 
 	shift
-	while [ $# != 0 ]; do
-		if [ "$_a" = "$1" ]; then return 0; fi
-		shift
+	for _b; do
+		[ "$_a" = "$_b" ] && return 0
 	done
 	return 1
 }
@@ -134,31 +133,25 @@ isin() {
 # add first argument to list formed by the remaining arguments
 # adds to the tail if the element does not already exist
 addel() {
-	local	_a=$1 _seen=
+	local	_a=$1 _b _seen=false
 
 	shift
-	while [ $# != 0 ]; do
-		echo "$1"
-		if [ "$_a" = "$1" ]; then
-			_seen=yes
-		fi
-		shift
+	for _b; do
+		echo "$_b"
+		[ "$_a" = "$_b" ] && _seen=true
 	done
-	if [ -z "$_seen" ]; then
-		echo "$_a"
-	fi
+
+	$_seen || echo "$_a"
 }
 
-# remove first argument from list formed by the remaining arguments
+# remove all occurances of first argument from list formed by
+# the remaining arguments
 rmel() {
-	local	_a=$1
+	local	_a=$1 _b
 
 	shift
-	while [ $# != 0 ]; do
-		if [ "$_a" != "$1" ]; then
-			echo "$1"
-		fi
-		shift
+	for _b; do
+		[ "$_a" != "$_b" ] && echo "$_b"
 	done
 }
 
@@ -182,18 +175,9 @@ cutword () {
 
 # read a line of data, return last element. Equiv. of awk '{print $NF}'.
 cutlast () {
-	local _a _oifs=$IFS
-
-	# optional field separator
-	case $1 in
-	-t?*)	IFS=${1#-t}; shift;;
-	esac
-
 	read _a; set -- $_a
-	IFS=$_oifs
-	[ -z "$1" ] && return
-	while [ "$#" -gt 10 ]; do shift 10; done
-	eval echo \$$#
+	[ $# -gt 0 ] || return
+	eval echo \$\{$#\}
 }
 
 basename () {
@@ -227,19 +211,15 @@ get_ifdevs() {
 }
 
 bsort() {
-	local _l _a=$1
+	local _l _a=$1 _b
 
-	if [ $# == 0 ]; then
-		return
-	fi
-
-	if [ $# == 1 ]; then
-		echo $1; return
-	fi
+	case $# in
+	0) return;;
+	1) echo $1; return;;
+	esac
 
 	shift
-	while [ $# != 0 ]; do
-		local _b=$1
+	for _b; do
 		if [[ "$_a" != "$_b" ]] ; then
 			if [[ "$_a" > "$_b" ]] ; then
 				_l="$_a $_l"; _a=$_b
@@ -247,7 +227,6 @@ bsort() {
 				_l="$_b $_l"
 			fi
 		fi
-		shift
 	done
 
 	echo -n $_a
@@ -267,8 +246,7 @@ list_has_sets() {
 	local _list=$1 _f
 
 	shift
-	for _f in $*
-	do
+	for _f; do
 		if isin ${_f}${VERSION}.tar.gz $_list; then
 			return 0
 		fi
