@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.232 2000/03/28 00:02:08 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.234 2000/03/28 01:20:14 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -642,7 +642,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_ISA,
 	    0,
 	    "AMD",
-	    "756 PCI-to-ISA Bridge",
+	    "756 PCI-ISA",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_IDE,
@@ -3426,7 +3426,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597,
 	    0,
 	    "SIS",
-	    "5597 Host Bridge",
+	    "5597 Host",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5598,
@@ -3984,7 +3984,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_HB,
 	    0,
 	    "VIA",
-	    "VT8371 (Apollo 133) Host Bridge",
+	    "VT8371 (Apollo 133) Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C505,
@@ -4044,7 +4044,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_ISA,
 	    0,
 	    "VIA",
-	    "VT82C686A (Apollo 133) PCI-ISA Bridge",
+	    "VT82C686A (Apollo 133) PCI-ISA",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C691,
@@ -4104,19 +4104,19 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
 	    0,
 	    "VIA",
-	    "VT82C686A (Apollo 133) SMBus Controller",
+	    "VT82C686A (Apollo 133) SMBus",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AUD,
 	    0,
 	    "VIA",
-	    "VT82C686A (Apollo 133) AC-97 Audio Controller",
+	    "VT82C686A (Apollo 133) AC-97 Audio",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_PPB,
 	    0,
 	    "VIA",
-	    "VT8371 (Apollo 133) PCI-PCI Bridge",
+	    "VT8371 (Apollo 133) PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
