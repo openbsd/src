@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.33 1998/07/07 04:02:47 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.34 1998/07/08 03:27:17 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -53,6 +53,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 #				  files if not found locally and ${MASTER_SITES}/${PATCH_SITES}
 #				  (default:
 #				  ftp://ftp.openbsd.org/pub/OpenBSD/distfiles/${DIST_SUBDIR}/
+#				  ftp://ftp.openbsd.org/pub/OpenBSD/licensed/${DIST_SUBDIR}/
 #				  ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/${DIST_SUBDIR}/)
 # MASTER_SITE_OVERRIDE - If set, override the MASTER_SITES setting with this
 #				  value.
@@ -630,7 +631,8 @@ PATCH_SITES:=	${PATCH_SITES:S/%SUBDIR%/${PATCH_SITE_SUBDIR}/}
 # Two backup master sites, First one at ftp.openbsd.org
 #
 _MASTER_SITE_OPENBSD?=	\
-	ftp://ftp.openbsd.org/pub/OpenBSD/distfiles/${DIST_SUBDIR}/
+	ftp://ftp.openbsd.org/pub/OpenBSD/distfiles/${DIST_SUBDIR}/ \
+	ftp://ftp.openbsd.org/pub/OpenBSD/licensed/${DIST_SUBDIR}/
 
 # The second backup master site is ftp.freebsd.org
 #
