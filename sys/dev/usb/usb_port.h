@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.21 2001/01/28 09:43:42 aaron Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.22 2001/01/28 22:05:33 aaron Exp $ */
 /*	$NetBSD: usb_port.h,v 1.35 2000/09/23 04:32:23 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -71,6 +71,7 @@
 #define URIO_DEBUG 1
 #define UFTDI_DEBUG 1
 #define USCANNER_DEBUG 1
+#define USSCANNER_DEBUG 1
 #define Static
 #else
 #define Static static
@@ -198,6 +199,7 @@ __CONCAT(dname,_detach)(self, flags) \
 #define URIO_DEBUG 1
 #define UFTDI_DEBUG 1
 #define USCANNER_DEBUG 1
+#define USSCANNER_DEBUG 1
 #endif
 
 #define Static
