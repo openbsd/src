@@ -209,14 +209,18 @@ short other;
 	FILE *fp;
 	long s;
 	boolean pause = score_only;
+	extern gid_t gid, egid;
 
 	md_lock(1);
 
+	setegid(egid);
 	if ((fp = fopen(_PATH_SCOREFILE, "r+")) == NULL &&
 	    (fp = fopen(_PATH_SCOREFILE, "w+")) == NULL) {
+		setegid(gid);
 		message("cannot read/write/create score file", 0);
 		sf_error();
 	}
+	setegid(gid);
 	rewind(fp);
 	(void) xxx(1);
 

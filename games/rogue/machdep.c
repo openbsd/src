@@ -454,14 +454,18 @@ int status;
 md_lock(l)
 boolean l;
 {
+	extern gid_t gid, egid;
 	static int fd;
 	short tries;
 
 	if (l) {
+		setegid(egid);
 		if ((fd = open(_PATH_SCOREFILE, O_RDONLY)) < 1) {
+			setegid(gid);
 			message("cannot lock score file", 0);
 			return;
 		}
+		setegid(gid);
 		for (tries = 0; tries < 5; tries++)
 			if (!flock(fd, LOCK_EX|LOCK_NB))
 				return;

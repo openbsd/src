@@ -57,6 +57,7 @@ static char rcsid[] = "$NetBSD: init.c,v 1.4 1995/04/28 23:49:19 mycroft Exp $";
  */
 
 #include <stdio.h>
+#include <unistd.h>
 #include "rogue.h"
 
 char login_name[MAX_OPT_LEN];
@@ -72,6 +73,7 @@ boolean no_skull = 0;
 boolean passgo = 0;
 char *error_file = "rogue.esave";
 char *byebye_string = "Okay, bye bye!";
+gid_t gid, egid;
 
 extern char *fruit;
 extern char *save_file;
@@ -85,6 +87,9 @@ char *argv[];
 	char *pn;
 	int seed;
 
+	gid = getgid();
+	egid = getegid();
+	setegid(gid);
 	pn = md_gln();
 	if ((!pn) || (strlen(pn) >= MAX_OPT_LEN)) {
 		clean_up("Hey!  Who are you?");
