@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.10 2000/04/19 01:39:58 espie Exp $
+.\" $OpenBSD: ports.7,v 1.11 2000/07/14 18:13:43 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -57,6 +57,8 @@ For more information about using ports, see
 .Nm The OpenBSD Ports Mechanism
 (http://www.openbsd.org/ports.html).
 For information about creating new ports, see
+.\" .Xr porting 7
+.\" and
 .Nm Building an OpenBSD Port
 (http://www.openbsd.org/porting.html).
 Other excellent resources are the ports and porting sections of the
@@ -168,6 +170,15 @@ Defining
 to
 .Dv Yes
 will skip this step.
+Sometimes, distfiles change without warning.
+The main OpenBSD mirror should still hold a copy of old distfiles, indexed
+by checksum.
+Using
+.Bd -literal -offset indent
+	make checksum REFETCH=true
+.Ed
+
+will try to get a set of distfiles that match the recorded checksum.
 .It Ar depends
 Install
 .Pq or compile if only compilation is necessary
@@ -177,7 +188,9 @@ When called by the
 or
 .Ar fetch
 targets, this is run in scattered pieces as
-.Ar fetch-depends , lib-depends , build-depends , run-depends , misc-depends .
+.Ar fetch-depends , lib-depends , build-depends , run-depends 
+and
+.Ar misc-depends .
 Defining
 .Ev NO_DEPENDS
 to
@@ -238,6 +251,26 @@ See
 and
 .Ev PKGFILE .
 .El
+.Sh NETWORK CONFIGURATION
+The variables pertaining to network access have been marshalled into
+.Pa ${PORTSDIR}/template/network.conf.template .
+
+To customize that setup, copy that file into
+.Pa ${PORTSDIR}/db/network.conf
+and edit it.
+.Pp
+.Bl -tag -width MASTER_SITES
+.It Ev MASTER_SITE_OPENBSD
+If set to
+.Dv Yes ,
+include the master OpenBSD site when fetching files.
+.It Ev MASTER_SITE_FREEBSD
+If set to
+.Dv Yes ,
+include the master FreeBSD site when fetching files.
+.It Ev MASTER_SITE_OVERRIDE
+Go to this site first for all files.
+.El
 .Sh PORT VARIABLES
 These can be changed in the environment, or in
 .Pa /etc/mk.conf
@@ -251,14 +284,6 @@ instead of simply being defined, for uniformity and future compatibility.
 .Pp
 Variable names starting with _ are private to the ports infrastructure,
 should not be changed by the user, and are liable to change without notice.
-.Pp
-.Ss NETWORK CONFIGURATION
-The variables pertaining to network access have been marshalled into
-.Pa ${PORTSDIR}/template/network.conf.template .
-
-To customize that setup, copy that file into
-.Pa ${PORTSDIR}/db/network.conf
-and edit it.
 .Pp
 .Bl -tag -width MASTER_SITES
 .It Ev PORTSDIR
@@ -284,7 +309,7 @@ in
 Used only for the
 .Ar package
 target; the base directory for the packages tree, normally
-.Pa packages/
+.Pa packages/${ARCH}
 in
 .Ev PORTSDIR .
 If this directory exists, the package tree will be (partially) constructed.
@@ -309,16 +334,6 @@ Primary sites for distribution files if not found locally.
 .It Ev PATCH_SITES
 Primary location(s) for distribution patch files if not found
 locally.
-.It Ev MASTER_SITE_OPENBSD
-If set to
-.Dv Yes ,
-go to the master OpenBSD site for all files.
-.It Ev MASTER_SITE_FREEBSD
-If set to
-.Dv Yes ,
-go to the master FreeBSD site for all files.
-.It Ev MASTER_SITE_OVERRIDE
-Try going to this site for all files and patches, first.
 .It Ev CLEANDEPENDS
 If set to
 .Dv Yes ,
@@ -334,7 +349,7 @@ instead).
 .It Ev FETCH_CMD
 Command to use to fetch files.
 Normally
-.Xr fetch 1 .
+.Xr ftp 1 .
 .It Ev FORCE_PKG_REGISTER
 If set, overwrite any existing package registration on the system.
 .It Ev MOTIFLIB
@@ -346,6 +361,22 @@ If defined, only operate on a port if it requires interaction.
 .It Ev BATCH
 If defined, only operate on a port if it can be installed 100% automatically.
 .El
+.Sh USING A READ-ONLY PORTS TREE
+Select read-write partition(s) that can accommodate working directories, the
+distfiles repository, and the built packages.
+Set
+.Ev WRKOBJDIR ,
+.Ev PACKAGES
+and
+.Ev DISTDIR
+in
+.Pa /etc/mk.conf
+accordingly.
+do a
+.Li "cd /usr/ports && make obj"
+to create working directories stubs.
+.Pa /usr/ports
+may now be remounted read-only.
 .Sh FILES
 .Bl -tag -width /usr/ports/xxxxxxxx -compact
 .It Pa /usr/ports
@@ -367,7 +398,8 @@ Local network configuration (OpenBSD).
 .Xr pkg_add 1 ,
 .Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
-.Xr pkg_info 1
+.Xr pkg_info 1 ,
+.Xr packages 7
 .Pp
 The FreeBSD handbook.
 .Sh AUTHORS
