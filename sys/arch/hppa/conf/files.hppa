@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.41 2003/02/11 19:48:15 miod Exp $
+#	$OpenBSD: files.hppa,v 1.42 2003/02/12 21:46:00 miod Exp $
 #
 # hppa-specific configuration info
 
@@ -189,7 +189,7 @@ file	arch/hppa/gsc/com_harmony.c	com_harmony
 #attach	myri at pci
 #file	dev/pci/myri.c			myri
 
-device	gsckbc {}
+device	gsckbc { [slot = -1] }
 attach	gsckbc at gsc
 file	arch/hppa/gsc/gsckbc.c		gsckbc
 
