@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.6 2001/12/14 04:30:12 smurph Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.7 2001/12/14 08:55:45 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1079,21 +1079,6 @@ m8820x_cmmu_cpu_number()
 /*
  * Functions that actually modify CMMU registers.
  */
-void
-m8820x_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
-{
-	*(volatile unsigned *)(r + (char*)&REGS(cpu,data)) = x;
-}
-
-/*
- * cmmu_cpu_lock should be held when called if read
- * the CMMU_SCR or CMMU_SAR.
- */
-unsigned
-m8820x_cmmu_remote_get(unsigned cpu, unsigned r, unsigned data)
-{
-	return (*(volatile unsigned *)(r + (char*)&REGS(cpu,data)));
-}
 
 /* Needs no locking - read only registers */
 unsigned
