@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.9 1998/03/01 19:34:15 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.10 1999/02/05 04:14:19 angelos Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -797,7 +797,8 @@ unp_gc()
 		}
 	}
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
-		sorflush((struct socket *)(*fpp)->f_data);
+	        if ((*fpp)->f_type == DTYPE_SOCKET && (*fpp)->f_data != NULL)
+		        sorflush((struct socket *)(*fpp)->f_data);
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
 		(void) closef(*fpp, (struct proc *)0);
 	free((caddr_t)extra_ref, M_FILE);
