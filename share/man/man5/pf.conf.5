@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.201 2003/03/04 16:52:00 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.202 2003/03/04 18:03:09 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -381,7 +381,7 @@ option sets the default behaviour for the packet
 .Ar block
 action:
 .Pp
-.Bl -tag -width xxxxxx -compact
+.Bl -tag -width xxxx -compact
 .It Ar drop
 Packet is silently dropped.
 .It Ar return
@@ -505,7 +505,7 @@ sent out immediately.
 There are two
 .Ar schedulers
 currently supported.
-.Bl -tag -width proq
+.Bl -tag -width xxxx
 .It Ar cbq
 Class Based Queueing.
 .Ar Queues
@@ -718,7 +718,7 @@ to keep track of the original address for traffic associated with that state
 and correctly direct return traffic for that connection.
 .Pp
 Various types of translation are possible with pf:
-.Bl -tag -width xxxxx
+.Bl -tag -width xxxx
 .It Ar binat
 A
 .Ar binat
