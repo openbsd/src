@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_extern.h,v 1.11 2001/05/07 16:08:40 art Exp $	*/
-/*	$NetBSD: uvm_extern.h,v 1.29 1999/06/17 15:47:22 thorpej Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.12 2001/05/10 07:59:06 art Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.32 1999/07/02 23:20:58 thorpej Exp $	*/
 
 /*
  *
@@ -181,10 +181,12 @@ struct uvmexp {
 	/* swap */
 	int nswapdev;	/* number of configured swap devices in system */
 	int swpages;	/* number of PAGE_SIZE'ed swap pages */
+	int swpguniq;	/* number of swap pages in use, not also in RAM */
 	int swpginuse;	/* number of swap pages in use */
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
 	int nanon;	/* number total of anon's in system */
+	int nanonneeded;/* number of anons currently needed */
 	int nfreeanon;	/* number of free anon's */
 
 	/* stat counters */
@@ -324,7 +326,7 @@ void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
 int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,
 				struct uvm_object *, vaddr_t, uvm_flag_t));
 int			uvm_map_pageable __P((vm_map_t, vaddr_t, 
-				vaddr_t, boolean_t));
+				vaddr_t, boolean_t, boolean_t));
 int			uvm_map_pageable_all __P((vm_map_t, int, vsize_t));
 boolean_t		uvm_map_checkprot __P((vm_map_t, vaddr_t,
 				vaddr_t, vm_prot_t));
@@ -350,7 +352,7 @@ void			uvm_total __P((struct vmtotal *));
 /* uvm_mmap.c */
 int			uvm_mmap __P((vm_map_t, vaddr_t *, vsize_t,
 				vm_prot_t, vm_prot_t, int, 
-				caddr_t, vaddr_t));
+				caddr_t, vaddr_t, vsize_t));
 
 /* uvm_page.c */
 struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,

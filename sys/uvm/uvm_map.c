@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map.c,v 1.13 2001/05/07 16:08:40 art Exp $	*/
-/*	$NetBSD: uvm_map.c,v 1.58 1999/06/17 00:24:10 thorpej Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.14 2001/05/10 07:59:06 art Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.60 1999/07/01 20:07:05 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -186,22 +186,6 @@ static void		uvm_map_entry_unwire __P((vm_map_t, vm_map_entry_t));
 /*
  * local inlines
  */
-
-/* XXX Should not exist! */
-#define	vm_map_downgrade(map)						\
-	(void) lockmgr(&(map)->lock, LK_DOWNGRADE, NULL, curproc)
-
-/* XXX Should not exist! */
-#ifdef DIAGNOSTIC
-#define	vm_map_upgrade(map)						\
-do {									\
-	if (lockmgr(&(map)->lock, LK_UPGRADE, NULL, curproc) != 0)	\
-		panic("vm_map_upgrade: failed to upgrade lock");	\
-} while (0)
-#else
-#define	vm_map_upgrade(map)						\
-	(void) lockmgr(&(map)->lock, LK_UPGRADE, NULL, curproc)
-#endif /* DIAGNOSTIC */
 
 /*
  * uvm_mapent_alloc: allocate a map entry
@@ -1976,18 +1960,24 @@ uvm_map_advice(map, start, end, new_advice)
  *	for that, use uvm_fault_wire()/uvm_fault_unwire() (see uvm_vslock()).
  * => regions sepcified as not pageable require lock-down (wired) memory
  *	and page tables.
- * => map must not be locked.
+ * => map must never be read-locked
+ * => if islocked is TRUE, map is already write-locked
+ * => we always unlock the map, since we must downgrade to a read-lock
+ *	to call uvm_fault_wire()
  * => XXXCDC: check this and try and clean it up.
  */
 
 int
-uvm_map_pageable(map, start, end, new_pageable)
+uvm_map_pageable(map, start, end, new_pageable, islocked)
 	vm_map_t map;
 	vaddr_t start, end;
-	boolean_t new_pageable;
+	boolean_t new_pageable, islocked;
 {
 	vm_map_entry_t entry, start_entry, failed_entry;
 	int rv;
+#ifdef DIAGNOSTIC
+	u_int timestamp_save;
+#endif
 	UVMHIST_FUNC("uvm_map_pageable"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=0x%x,start=0x%x,end=0x%x,new_pageable=0x%x)",
 	map, start, end, new_pageable);
@@ -1997,7 +1987,8 @@ uvm_map_pageable(map, start, end, new_pageable)
 		panic("uvm_map_pageable: map %p not pageable", map);
 #endif
 
-	vm_map_lock(map);
+	if (islocked == FALSE)
+		vm_map_lock(map);
 	VM_MAP_RANGE_CHECK(map, start, end);
 
 	/* 
@@ -2130,6 +2121,10 @@ uvm_map_pageable(map, start, end, new_pageable)
 	 * Pass 2.
 	 */
 
+#ifdef DIAGNOSTIC
+	timestamp_save = map->timestamp;
+#endif
+	vm_map_busy(map);
 	vm_map_downgrade(map);
 
 	rv = 0;
@@ -2155,6 +2150,12 @@ uvm_map_pageable(map, start, end, new_pageable)
 		 * Get back to an exclusive (write) lock.
 		 */
 		vm_map_upgrade(map);
+		vm_map_unbusy(map);
+
+#ifdef DIAGNOSTIC
+		if (timestamp_save != map->timestamp)
+			panic("uvm_map_pageable: stale map");
+#endif
 
 		/*
 		 * first drop the wiring count on all the entries
@@ -2183,6 +2184,7 @@ uvm_map_pageable(map, start, end, new_pageable)
 	}
 
 	/* We are holding a read lock here. */
+	vm_map_unbusy(map);
 	vm_map_unlock_read(map);
 	
 	UVMHIST_LOG(maphist,"<- done (OK WIRE)",0,0,0,0);
@@ -2207,6 +2209,9 @@ uvm_map_pageable_all(map, flags, limit)
 	vm_map_entry_t entry, failed_entry;
 	vsize_t size;
 	int rv;
+#ifdef DIAGNOSTIC
+	u_int timestamp_save;
+#endif
 	UVMHIST_FUNC("uvm_map_pageable_all"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(map=0x%x,flags=0x%x)", map, flags, 0, 0);
 
@@ -2335,6 +2340,10 @@ uvm_map_pageable_all(map, flags, limit)
 	 * Pass 3.
 	 */
 
+#ifdef DIAGNOSTIC
+	timestamp_save = map->timestamp;
+#endif
+	vm_map_busy(map);
 	vm_map_downgrade(map);
 
 	rv = KERN_SUCCESS;
@@ -2359,6 +2368,12 @@ uvm_map_pageable_all(map, flags, limit)
 		 * Get back an exclusive (write) lock.
 		 */
 		vm_map_upgrade(map);
+		vm_map_unbusy(map);
+
+#ifdef DIAGNOSTIC
+		if (timestamp_save != map->timestamp)
+			panic("uvm_map_pageable_all: stale map");
+#endif
 
 		/*
 		 * first drop the wiring count on all the entries
@@ -2385,6 +2400,7 @@ uvm_map_pageable_all(map, flags, limit)
 	}
 
 	/* We are holding a read lock here. */
+	vm_map_unbusy(map);
 	vm_map_unlock_read(map);
 
 	UVMHIST_LOG(maphist,"<- done (OK WIRE)",0,0,0,0);
