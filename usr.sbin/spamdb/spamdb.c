@@ -1,3 +1,5 @@
+/*	$OpenBSD: spamdb.c,v 1.2 2004/02/26 08:18:56 deraadt Exp $	*/
+
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
  *
@@ -146,14 +148,14 @@ dbupdate(char *dbname, char *ip, int add)
 	}
 	db->sync(db, 0);
 	db->close(db);
+	db = NULL;
 	return (0);
  bad:
 	db->sync(db, 0);
 	db->close(db);
+	db = NULL;
 	return(-1);
 }
-
-
 
 int
 dblist(char *dbname)
@@ -207,21 +209,22 @@ dblist(char *dbname)
 	}
 	db->sync(db, 0);
 	db->close(db);
+	db = NULL;
 	return(0);
  bad:
 	db->sync(db, 0);
 	db->close(db);
+	db = NULL;
 	errx(1, "incorrect db format entry");
 	/* NOTREACHED */
 	return(-1);
 }
 
-
 static int
 usage(void)
 {
 	fprintf(stderr, "usage: spamdb [-a ip] [-d ip]\n");
-	exit(-1);
+	exit(1);
 }
 
 int

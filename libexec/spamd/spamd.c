@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.53 2004/02/26 07:28:55 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.54 2004/02/26 08:18:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -413,7 +413,8 @@ append_error_string(struct con *cp, size_t off, char *fmt, int af, void *ia)
 }
 
 char *
-loglists(struct con *cp) {
+loglists(struct con *cp)
+{
 	static char matchlists[80];
 	struct sdlist **matches;
 	int s = sizeof(matchlists) - 4;
@@ -475,8 +476,10 @@ build_reply(struct con *cp)
 	}
 bad:
 	/* Out of memory, or no match. give generic reply */
-	if (cp->obuf != NULL && cp->obufalloc)
+	if (cp->obuf != NULL && cp->obufalloc) {
 		free(cp->obuf);
+		cp->obuf = NULL;
+	}
 	if (cp->blacklists != NULL)
 		asprintf(&cp->obuf,
 		    "%s-Sorry %s\n"
@@ -687,10 +690,10 @@ nextstate(struct con *cp)
 					    cp->blacklists ? "BLACK" : "GREY",
 					    cp->addr, cp->mail,
 					    cp->rcpt);
-				if(debug)
-				  fprintf(stderr, "(%s) %s: %s -> %s\n",
-				    cp->blacklists ? "BLACK" : "GREY",
-				    cp->addr, cp->mail, cp->rcpt);
+				if (debug)
+					fprintf(stderr, "(%s) %s: %s -> %s\n",
+					    cp->blacklists ? "BLACK" : "GREY",
+					    cp->addr, cp->mail, cp->rcpt);
 				if (greylist && cp->blacklists == NULL) {
 					/* send this info to the greylister */
 					fprintf(grey, "IP:%s\nFR:%s\nTO:%s\n",

@@ -1,3 +1,5 @@
+/*	$OpenBSD: spamlogd.c,v 1.2 2004/02/26 08:18:56 deraadt Exp $	*/
+
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
  *
@@ -133,10 +135,12 @@ dbupdate(char *dbname, char *ip)
 	}
 	db->sync(db, 0);
 	db->close(db);
+	db = NULL;
 	return (0);
  bad:
 	db->sync(db, 0);
 	db->close(db);
+	db = NULL;
 	return(-1);
 }
 
@@ -144,7 +148,7 @@ static int
 usage(void)
 {
 	fprintf(stderr, "usage: spamlogd [-i netif]\n");
-	exit(-1);
+	exit(1);
 }
 
 char *targv[19] = {
@@ -165,6 +169,8 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "i:")) != -1) {
 		switch (ch) {
 		case 'i':
+			if (targv[17])	/* may only set once */
+				usage();
 			targv[15] = "and";
 			targv[16] = "on";
 			targv[17] = optarg;
@@ -197,6 +203,7 @@ main(int argc, char **argv)
 	}
 
 	/* parent */
+	close(p[1]);
 	f = fdopen(p[0], "r");
 	if (f == NULL)
 		err(1, "fdopen");

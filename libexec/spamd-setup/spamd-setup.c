@@ -1,4 +1,5 @@
-/*	$OpenBSD: spamd-setup.c,v 1.16 2004/01/21 08:07:41 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.17 2004/02/26 08:18:56 deraadt Exp $ */
+
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -265,6 +266,8 @@ open_child(char *file, char **argv)
 		return(-1);
 	switch (pid = fork()) {
 	case -1:
+		close(pdes[0]);
+		close(pdes[1]);
 		return(-1);
 	case 0:
 		/* child */
@@ -276,6 +279,7 @@ open_child(char *file, char **argv)
 		execvp(file, argv);
 		_exit(1);
 	}
+
 	/* parent */
 	close(pdes[1]);
 	return(pdes[0]);
@@ -641,6 +645,8 @@ configure_pf(struct cidr **blacklists)
 			return(-1);
 		switch (pid = fork()) {
 		case -1:
+			close(pdes[0]);
+			close(pdes[1]);
 			return(-1);
 		case 0:
 			/* child */
@@ -652,11 +658,14 @@ configure_pf(struct cidr **blacklists)
 			execvp(PATH_PFCTL, argv);
 			_exit(1);
 		}
+
 		/* parent */
 		close(pdes[0]);
 		pf = fdopen(pdes[1], "w");
-		if (pf == NULL)
+		if (pf == NULL) {
+			close(pdes[1]);
 			return(-1);
+		}
 	}
 	while (*blacklists != NULL) {
 		struct cidr *b = *blacklists;

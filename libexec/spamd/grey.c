@@ -1,3 +1,5 @@
+/*	$OpenBSD: grey.c,v 1.3 2004/02/26 08:18:56 deraadt Exp $	*/
+
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
  *
@@ -80,11 +82,14 @@ address_valid_v6(const char *a)
 	return (1);
 }
 
+static char *pargv[11]= {
+	"pfctl", "-p", "/dev/pf", "-q", "-t",
+	"spamd-white", "-T", "replace", "-f" "-", NULL
+};
+
 int
 configure_pf(char **addrs, int count)
 {
-	static char *argv[11]= {"pfctl", "-p", "/dev/pf", "-q", "-t",
-	    "spamd-white", "-T", "replace", "-f" "-", NULL};
 	FILE *pf = NULL;
 	int i, pdes[2];
 	pid_t pid;
@@ -96,7 +101,7 @@ configure_pf(char **addrs, int count)
 		return(-1);
 	if (asprintf(&fdpath, "/dev/fd/%d", pfdev) == -1)
 		return(-1);
-	argv[2] = fdpath;
+	pargv[2] = fdpath;
 	if (pipe(pdes) != 0) {
 		syslog_r(LOG_INFO, &sdata, "pipe failed (%m)");
 		free(fdpath);
@@ -106,6 +111,8 @@ configure_pf(char **addrs, int count)
 	case -1:
 		syslog_r(LOG_INFO, &sdata, "fork failed (%m)");
 		free(fdpath);
+		close(pdes[0]);
+		close(pdes[1]);
 		return(-1);
 	case 0:
 		/* child */
@@ -114,7 +121,7 @@ configure_pf(char **addrs, int count)
 			dup2(pdes[0], STDIN_FILENO);
 			close(pdes[0]);
 		}
-		execvp(PATH_PFCTL, argv);
+		execvp(PATH_PFCTL, pargv);
 		syslog_r(LOG_ERR, &sdata, "can't exec %s:%m", PATH_PFCTL);
 		_exit(1);
 	}
@@ -127,7 +134,7 @@ configure_pf(char **addrs, int count)
 		syslog_r(LOG_INFO, &sdata, "fdopen failed (%m)");
 		return(-1);
 	}
-	for (i = 0; i  < count; i++)
+	for (i = 0; i < count; i++)
 		if (addrs[i] != NULL) {
 			fprintf(pf, "%s/32\n", addrs[i]);
 			free(addrs[i]);
@@ -249,10 +256,12 @@ greyscan(char *dbname)
 	configure_pf(whitelist, whitecount);
 	db->sync(db, 0);
 	db->close(db);
+	db = NULL;
 	return(0);
  bad:
 	db->sync(db, 0);
 	db->close(db);
+	db = NULL;
 	return(-1);
 }
 
@@ -261,8 +270,10 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 {
 	char *key = NULL;
 	struct gdata gd;
-	time_t now = time(NULL);
+	time_t now;
 	int r;
+
+	now = time(NULL);
 
 	/* open with lock, find record, update, close, unlock */
 	memset(&btreeinfo, 0, sizeof(btreeinfo));
@@ -321,12 +332,14 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 		if (debug)
 			fprintf(stderr, "updated %s\n", key);
 	}
-	db->close(db);
 	free(key);
+	db->close(db);
+	db = NULL;
 	return(0);
  bad:
 	free(key);
 	db->close(db);
+	db = NULL;
 	return(-1);
 }
 
@@ -349,7 +362,7 @@ greyreader(void)
 		if (strlen(buf) < 4)
 			continue;
 
-		switch(state) {
+		switch (state) {
 		case 0:
 			if (strncmp(buf, "IP:", 3) != 0)
 				break;

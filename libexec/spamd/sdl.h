@@ -1,4 +1,5 @@
-/*	$OpenBSD: sdl.h,v 1.1 2003/03/02 19:22:00 beck Exp $ */
+/*	$OpenBSD: sdl.h,v 1.2 2004/02/26 08:18:56 deraadt Exp $ */
+
 /*
  * Copyright (c) 2003 Bob Beck, Kjell Wooding.  All rights reserved.
  *
@@ -30,11 +31,10 @@
 #include <sys/socket.h>
 #include <netinet/ip_ipsp.h>
 
-/* structs */
-
-struct sdlist { /* spamd source list */
-	char *tag; /* sdlist source name */
-	char *string; /* Format (451) string with no smtp code or \r\n */
+/* spamd source list */
+struct sdlist {
+	char *tag;	/* sdlist source name */
+	char *string;	/* Format (451) string with no smtp code or \r\n */
 	struct sdentry *addrs;
 	size_t naddrs;
 };
@@ -55,17 +55,15 @@ struct sdaddr {
 #define addr32	_sda.addr32
 };
 
-struct sdentry { /* spamd netblock (black) list */
+/* spamd netblock (black) list */
+struct sdentry {
 	struct sdaddr sda;
 	struct sdaddr sdm;
 };
 
 
-/* prototypes */
-
 extern int	sdl_add(char *, char *, char **, int);
-extern struct sdlist **
-sdl_lookup(struct sdlist *head, int af, void * src);
-
+extern struct sdlist **sdl_lookup(struct sdlist *head,
+	    int af, void * src);
 
 #endif	/* _SDL_H_ */

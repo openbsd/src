@@ -1,4 +1,8 @@
+/*	$OpenBSD: grey.h,v 1.2 2004/02/26 08:18:56 deraadt Exp $	*/
 
+/*
+ * Where is your damn copyright?
+ */
 #define MAX_MAIL 1024 /* how big an email address will we consider */
 #define PASSTIME (60 * 30) /* pass after first retry seen after 30 mins */
 #define GREYEXP (60 * 60 * 4) /* remove grey entries after 4 hours */
