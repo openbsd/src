@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.41 2004/04/12 22:14:30 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.42 2004/04/19 12:25:41 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.\" ssl(1)
+.\" OPENSSL
 .\"
 .Dd February 28, 2003
 .Dt OPENSSL 1
@@ -6139,14 +6139,14 @@ option should really exit if the server verification fails.
 .Sh SESS_ID
 .Nm openssl sess_id
 .Bk -words
-.Op Fl inform Ar DER | PEM
-.Op Fl outform Ar DER | PEM
-.Op Fl in Ar file
-.Op Fl out Ar file
-.Op Fl text
 .Op Fl cert
 .Op Fl noout
+.Op Fl text
 .Op Fl context Ar ID
+.Op Fl in Ar file
+.Op Fl inform Ar DER | PEM
+.Op Fl out Ar file
+.Op Fl outform Ar DER | PEM
 .Ek
 .Pp
 The
@@ -6160,6 +6160,24 @@ protocol to use properly, most users will not need to use it.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
+.It Fl cert
+If a certificate is present in the session,
+it will be output using this option;
+if the
+.Fl text
+option is also present, then it will be printed out in text form.
+.It Fl context Ar ID
+This option can set the session ID so the output session information uses the
+supplied
+.Ar ID .
+The
+.Ar ID
+can be any string of characters.
+This option won't normally be used.
+.It Fl in Ar file
+This specifies the input
+.Ar file
+to read session information from, or standard input by default.
 .It Fl inform Ar DER | PEM
 This specifies the input format.
 The
@@ -6171,58 +6189,41 @@ The
 .Ar PEM
 form is the default format: it consists of the DER
 format base64-encoded with additional header and footer lines.
-.It Fl outform Ar DER | PEM
-This specifies the output format; the options have the same meaning as the
-.Fl inform
-option.
-.It Fl in Ar file
-This specifies the input
-.Ar file
-to read session information from, or standard input by default.
+.It Fl noout
+This option prevents output of the encoded version of the session.
 .It Fl out Ar file
 This specifies the output
 .Ar file
 to write session information to, or standard
 output if this option is not specified.
+.It Fl outform Ar DER | PEM
+This specifies the output format; the options have the same meaning as the
+.Fl inform
+option.
 .It Fl text
 Prints out the various public or private key components in
 plain text in addition to the encoded version.
-.It Fl cert
-If a certificate is present in the session,
-it will be output using this option;
-if the
-.Fl text
-option is also present, then it will be printed out in text form.
-.It Fl noout
-This option prevents output of the encoded version of the session.
-.It Fl context Ar ID
-This option can set the session ID so the output session information uses the
-supplied
-.Ar ID .
-The
-.Ar ID
-can be any string of characters.
-This option won't normally be used.
 .El
 .Sh SESS_ID OUTPUT
 Typical output:
-.Bd -unfilled
-\& SSL-Session:
-\&     Protocol  : TLSv1
-\&     Cipher    : 0016
-\&     Session-ID: 871E62626C554CE95488823752CBD5F3673A3EF3DCE9C67BD916C809914B40ED
-\&     Session-ID-ctx: 01000000
-\&     Master-Key: A7CEFC571974BE02CAC305269DC59F76EA9F0B180CB6642697A68251F2D2BB57E51DBBB4C7885573192AE9AEE220FACD
-\&     Key-Arg   : None
-\&     Start Time: 948459261
-\&     Timeout   : 300 (sec)
-\&     Verify return code 0 (ok)
+.Bd -literal
+SSL-Session:
+    Protocol  : TLSv1
+    Cipher    : 0016
+    Session-ID: 871E62626C554CE95488823752CBD5F3673A3EF3DCE9C67BD916C809914B40ED
+    Session-ID-ctx: 01000000
+    Master-Key: A7CEFC571974BE02CAC305269DC59F76EA9F0B180CB6642697A68251F2D2BB57E51DBBB4C7885573192AE9AEE220FACD
+    Key-Arg   : None
+    Start Time: 948459261
+    Timeout   : 300 (sec)
+    Verify return code 0 (ok)
 .Ed
 .Pp
 These are described below in more detail.
-.Bl -tag -width "XXXX"
+.Pp
+.Bl -tag -width "Verify return code " -compact
 .It Ar Protocol
-This is the protocol in use: TLSv1, SSLv3 or SSLv2.
+This is the protocol in use: TLSv1, SSLv3, or SSLv2.
 .It Ar Cipher
 The cipher used is the actual raw SSL or TLS cipher code;
 see the SSL or TLS specifications for more information.
