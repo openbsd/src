@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit_43.c,v 1.4 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: kern_exit_43.c,v 1.5 2001/11/30 00:32:46 miod Exp $	*/
 /*	$NetBSD: kern_exit_43.c,v 1.3 1995/10/07 06:26:20 mycroft Exp $	*/
 
 /*
@@ -66,12 +66,12 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/psl.h>
 #include <compat/common/compat_util.h>
 
 #include <uvm/uvm_extern.h>
 #ifdef m68k
 #include <machine/frame.h>
+#include <machine/psl.h>
 #define GETPS(rp)	((struct frame *)(rp))->f_sr
 #else
 #define GETPS(rp)	(rp)[PS]
@@ -93,7 +93,7 @@ compat_43_sys_wait(p, v, retval)
 		syscallarg(struct rusage *) rusage;
 	} */ a;
 
-#ifdef PSL_ALLCC
+#ifdef m68k
 	if ((GETPS(p->p_md.md_regs) & PSL_ALLCC) != PSL_ALLCC) {
 		SCARG(&a, options) = 0;
 		SCARG(&a, rusage) = NULL;
