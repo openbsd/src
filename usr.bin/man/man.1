@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.19 2003/08/08 07:54:13 jmc Exp $
+.\"	$OpenBSD: man.1,v 1.20 2003/12/16 18:58:46 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -245,6 +245,11 @@ The current machine type may be overridden by setting the environment
 variable
 .Ev MACHINE
 to the name of a specific architecture.
+.It Ev MANPAGER
+Any non-null value of the environment variable
+.Ev MANPAGER
+will be used instead of the standard pagination program,
+.Xr more 1 .
 .It Ev MANPATH
 The standard search path used by
 .Nm
@@ -262,10 +267,9 @@ line in the
 .Nm
 configuration file.
 .It Ev PAGER
-Any non-null value of the environment variable
-.Ev PAGER
-will be used instead of the standard pagination program,
-.Xr more 1 .
+Specifies the pagination program to use when
+.Ev MANPAGER
+is not defined.
 .El
 .Sh FILES
 .Bl -tag -width /etc/man.conf -compact
