@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdirentries.2,v 1.17 2004/10/03 00:11:26 jmc Exp $
+.\"	$OpenBSD: getdirentries.2,v 1.18 2005/02/23 20:24:57 robert Exp $
 .\"	$NetBSD: getdirentries.2,v 1.7 1995/10/12 15:40:50 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -169,7 +169,7 @@ while ((nbytes = getdirentries(fd, buf, bufsize, &base)) > 0) {
 	cp = buf;
 	while (cp < ebuf) {
 		dp = (struct dirent *)cp;
-		printf("%\en", dp->d_name);
+		printf("%s\en", dp->d_name);
 		cp += dp->d_reclen;
 	}
 }
