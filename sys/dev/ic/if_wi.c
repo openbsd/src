@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.36 2002/04/01 18:55:05 markus Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.37 2002/04/01 20:38:36 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.36 2002/04/01 18:55:05 markus Exp $";
+	"$OpenBSD: if_wi.c,v 1.37 2002/04/01 20:38:36 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1206,8 +1206,10 @@ wi_ioctl(ifp, command, data)
 	case SIOCS80211NWKEY:
 	case SIOCS80211POWER:
 		error = suser(p->p_ucred, &p->p_acflag);
-		if (error)
+		if (error) {
+			splx(s);
 			return (error);
+		}
 	default:
 		break;
 	}
