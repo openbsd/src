@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.60 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.61 2002/05/31 02:39:25 angelos Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -426,11 +426,15 @@ in_pcbconnect(v, nam)
 	inp->inp_fport = sin->sin_port;
 	in_pcbrehash(inp);
 #ifdef IPSEC
-        /* XXX Find IPsec TDB */
-        return (0);
-#else
-	return (0);
+	{
+		int error; /* This is just ignored */
+
+		/* Cause an IPsec SA to be established. */
+		ipsp_spd_inp(NULL, AF_INET, 0, &error, IPSP_DIRECTION_OUT,
+		    NULL, inp, NULL);
+	}		
 #endif
+	return (0);
 }
 
 void
@@ -477,7 +481,7 @@ in_pcbdetach(v)
 #endif
 		ip_freemoptions(inp->inp_moptions);
 #ifdef IPSEC
-	/* XXX IPsec cleanup here */
+	/* IPsec cleanup here */
 	s = spltdb();
 	if (inp->inp_tdb_in)
 		TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in,
@@ -485,18 +489,12 @@ in_pcbdetach(v)
 	if (inp->inp_tdb_out)
 	        TAILQ_REMOVE(&inp->inp_tdb_out->tdb_inp_out, inp,
 			     inp_tdb_out_next);
-	if (inp->inp_ipsec_localid)
-		ipsp_reffree(inp->inp_ipsec_localid);
-	if (inp->inp_ipsec_remoteid)
-		ipsp_reffree(inp->inp_ipsec_remoteid);
-	if (inp->inp_ipsec_localcred)
-		ipsp_reffree(inp->inp_ipsec_localcred);
 	if (inp->inp_ipsec_remotecred)
 		ipsp_reffree(inp->inp_ipsec_remotecred);
-	if (inp->inp_ipsec_localauth)
-		ipsp_reffree(inp->inp_ipsec_localauth);
 	if (inp->inp_ipsec_remoteauth)
 		ipsp_reffree(inp->inp_ipsec_remoteauth);
+	if (inp->inp_ipo)
+		ipsec_delete_policy(inp->inp_ipo);
 	splx(s);
 #endif
 	s = splnet();

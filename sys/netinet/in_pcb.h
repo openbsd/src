@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.40 2002/03/14 03:16:11 millert Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.41 2002/05/31 02:39:25 angelos Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -137,11 +137,8 @@ struct inpcb {
 #define SR_WAIT           3             /* Waiting for SA */
 	TAILQ_ENTRY(inpcb) inp_tdb_in_next, inp_tdb_out_next;
 	struct tdb     *inp_tdb_in, *inp_tdb_out;
-	struct ipsec_ref *inp_ipsec_localid;
-	struct ipsec_ref *inp_ipsec_remoteid;
-	struct ipsec_ref *inp_ipsec_localcred;
+	struct ipsec_policy *inp_ipo;
 	struct ipsec_ref *inp_ipsec_remotecred;
-	struct ipsec_ref *inp_ipsec_localauth;
 	struct ipsec_ref *inp_ipsec_remoteauth;
 #define	inp_flowinfo	inp_hu.hu_ipv6.ip6_flow
 
