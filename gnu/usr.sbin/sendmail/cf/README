@@ -76,7 +76,7 @@ Let's examine a typical .mc file:
 
 	divert(-1)
 	#
-	# Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+	# Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
 	#	All rights reserved.
 	# Copyright (c) 1983 Eric P. Allman.  All rights reserved.
 	# Copyright (c) 1988, 1993
@@ -346,7 +346,10 @@ USENET_MAILER_PATH	[/usr/lib/news/inews] The name of the program
 			used to submit news.
 USENET_MAILER_FLAGS	[rsDFMmn] The mailer flags for the usenet mailer.
 USENET_MAILER_ARGS	[-m -h -n] The command line arguments for the
-			usenet mailer.
+			usenet mailer.  NOTE: Some versions of inews
+			(such as those shipped with newer versions of INN)
+			use different flags.  Double check the defaults
+			against the inews man page.
 USENET_MAILER_MAX	[100000] The maximum size of messages that will
 			be accepted by the usenet mailer.
 USENET_MAILER_QGRP	[undefined] The queue group for the usenet mailer.
@@ -406,6 +409,7 @@ POP_MAILER_PATH		[/usr/lib/mh/spop] The pathname of the POP mailer.
 POP_MAILER_FLAGS	[Penu] Flags added to POP mailer.  Flags lsDFMq
 			are always added.
 POP_MAILER_ARGS		[pop $u] The arguments passed to the POP mailer.
+POP_MAILER_QGRP		[undefined] The queue group for the pop mailer.
 PROCMAIL_MAILER_PATH	[/usr/local/bin/procmail] The path to the procmail
 			program.  This is also used by
 			FEATURE(`local_procmail').
@@ -419,15 +423,18 @@ PROCMAIL_MAILER_ARGS	[procmail -Y -m $h $f $u] The arguments passed to
 			instead.
 PROCMAIL_MAILER_MAX	[undefined] If set, the maximum size message that
 			will be accepted by the procmail mailer.
+PROCMAIL_MAILER_QGRP	[undefined] The queue group for the procmail mailer.
 MAIL11_MAILER_PATH	[/usr/etc/mail11] The path to the mail11 mailer.
 MAIL11_MAILER_FLAGS	[nsFx] Flags for the mail11 mailer.
 MAIL11_MAILER_ARGS	[mail11 $g $x $h $u] Arguments passed to the mail11
 			mailer.
+MAIL11_MAILER_QGRP	[undefined] The queue group for the mail11 mailer.
 PH_MAILER_PATH		[/usr/local/etc/phquery] The path to the phquery
 			program.
 PH_MAILER_FLAGS		[ehmu] Flags for the phquery mailer.  Flags nrDFM
 			are always set.
 PH_MAILER_ARGS		[phquery -- $u] -- arguments to the phquery mailer.
+PH_MAILER_QGRP		[undefined] The queue group for the ph mailer.
 CYRUS_MAILER_FLAGS	[Ah5@/:|] The flags used by the cyrus mailer.  The
 			flags lsDFMnPq are always included.
 CYRUS_MAILER_PATH	[/usr/cyrus/bin/deliver] The program used to deliver
@@ -438,6 +445,7 @@ CYRUS_MAILER_MAX	[undefined] If set, the maximum size message that
 			will be accepted by the cyrus mailer.
 CYRUS_MAILER_USER	[cyrus:mail] The user and group to become when
 			running the cyrus mailer.
+CYRUS_MAILER_QGRP	[undefined] The queue group for the cyrus mailer.
 CYRUS_BB_MAILER_FLAGS	[u] The flags used by the cyrusbb mailer.
 			The flags lsDFMnP are always included.
 CYRUS_BB_MAILER_ARGS	[deliver -e -m $u] The arguments passed
@@ -452,6 +460,7 @@ QPAGE_MAILER_ARGS	[qpage -l0 -m -P$u] The arguments passed
 			to deliver qpage mail.
 QPAGE_MAILER_MAX	[4096] If set, the maximum size message that
 			will be accepted by the qpage mailer.
+QPAGE_MAILER_QGRP	[undefined] The queue group for the qpage mailer.
 LOCAL_PROG_QGRP		[undefined] The queue group for the prog mailer.
 
 Note: to tweak Name_MAILER_FLAGS use the macro MODIFY_MAILER_FLAGS:
@@ -911,8 +920,8 @@ virtusertable	A domain-specific form of aliasing, allowing multiple
 
 			info@foo.com	foo-info
 			info@bar.com	bar-info
-			joe@bar.com	error:nouser No such user here
-			jax@bar.com	error:5.7.0:unavailable Address invalid
+			joe@bar.com	error:nouser 550 No such user here
+			jax@bar.com	error:5.7.0:550 Address invalid
 			@baz.org	jane@example.net
 
 		then mail addressed to info@foo.com will be sent to the
@@ -1233,10 +1242,14 @@ authinfo	Provide a separate map for client side authentication
 			hash /etc/mail/authinfo
 
 preserve_luser_host
-		Preserve the name of the recipient host if LUSER_RELAY
-		is used.  Without this option, the domain part of the
-		recipient address will be replaced by the host specified
-		as LUSER_RELAY.
+		Preserve the name of the recipient host if LUSER_RELAY is
+		used.  Without this option, the domain part of the
+		recipient address will be replaced by the host specified as
+		LUSER_RELAY.  This feature only works if the hostname is
+		passed to the mailer (see mailer triple in op.me).  Note
+		that in the default configuration the local mailer does not
+		receive the hostname, i.e., the mailer triple has an empty
+		hostname.
 
 preserve_local_plus_detail
 		Preserve the +detail portion of the address when passing
@@ -1247,9 +1260,9 @@ preserve_local_plus_detail
 		delivery agent in use supports +detail addressing.
 
 compat_check	Enable ruleset check_compat to look up pairs of addresses
-		sender<@>recipient in the access map.  Valid values for
-		the RHS include
-			DISCARD	silently discard message
+		with the Compat: tag --	Compat:sender<@>recipient -- in the
+		access map.  Valid values for the RHS include
+			DISCARD	silently discard recipient
 			TEMP:	return a temporary error
 			ERROR:	return a permanent error
 		In the last two cases, a 4xy/5xy SMTP reply code should
@@ -2078,6 +2091,13 @@ separate lines, e.g.,
 	IPv6:2002:c0a8:02c7
 	IPv6:2002:c0a8:51d2::23f4
 	host.mydomain.com
+	[UNIX:localhost]
+
+Notice: the last entry allows relaying for connections via a UNIX
+socket to the MTA/MSP.  This might be necessary if your configuration
+doesn't allow relaying by other means in that case, e.g., by having
+localhost.$m in class {R} (make sure $m is not just a top level
+domain).
 
 If you use
 
@@ -2267,7 +2287,7 @@ The value part of the map can contain:
 
 For example:
 
-	cyberspammer.com	ERROR:"550 We don't accept mail from spammers"
+	cyberspammer.com	ERROR:550 "We don't accept mail from spammers"
 	okay.cyberspammer.com	OK
 	sendmail.org		RELAY
 	128.32			RELAY
@@ -2849,16 +2869,20 @@ If the selected mechanism provides a security layer the number of
 bits used for the key of the symmetric cipher is stored in the
 macro ${auth_ssf}.
 
-
 If sendmail acts as client, it needs some information how to
 authenticate against another MTA.  This information can be provided
-by the ruleset authinfo or by the option AuthMechanisms.  The
+by the ruleset authinfo or by the option DefaultAuthInfo.  The
 authinfo ruleset looks up {server_name} using the tag AuthInfo: in
 the access map.  If no entry is found, {server_addr} is looked up
 in the same way and finally just the tag AuthInfo: to provide
 default values.
 
-The RHS for an Auth: entry in the access map should consists of a
+Notice: the default configuration file causes the option DefaultAuthInfo
+to fail since the ruleset authinfo is in the .cf file. If you really
+want to use DefaultAuthInfo (it is deprecated) then you have to
+remove the ruleset.
+
+The RHS for an AuthInfo: entry in the access map should consists of a
 list of tokens, each of which has the form: "TDstring" (including
 the quotes).  T is a tag which describes the item, D is a delimiter,
 either ':' for simple text or '=' for a base64 encoded string.
@@ -2878,8 +2902,8 @@ AuthInfo:more.dom "U:user" "P=c2VjcmV0"
 User or authentication id must exist as well as the password.  All
 other entries have default values.  If one of user or authentication
 id is missing, the existing value is used for the missing item.
-Realm defaults to $j and the list of mechanisms to those specified
-by AuthMechanisms.
+If "R:" is not specified, realm defaults to $j.  The list of mechanisms
+defaults to those specified by AuthMechanisms.
 
 Since this map contains sensitive information, either the access
 map must be unreadable by everyone but root (or the trusted user)
@@ -3085,7 +3109,7 @@ something like:
 	my.domain		esmtp:host.my.domain
 
 The RHS should always be a "mailer:host" pair.  The mailer is the
-configuration name of a mailer (that is, an {M} line in the
+configuration name of a mailer (that is, an M line in the
 sendmail.cf file).  The "host" will be the hostname passed to
 that mailer.  In domain-based matches (that is, those with leading
 dots) the "%1" may be used to interpolate the wildcarded part of
@@ -3787,7 +3811,8 @@ confDEF_AUTH_INFO	DefaultAuthInfo	[undefined] Name of file that contains
 					removed in future versions; it doesn't
 					work for the MSP since it can't read
 					the file.  Use the authinfo ruleset
-					instead.
+					instead.  See also the section SMTP
+					AUTHENTICATION.
 confAUTH_OPTIONS	AuthOptions	[undefined] If this option is 'A'
 					then the AUTH= parameter for the
 					MAIL FROM command is only issued
@@ -3856,8 +3881,12 @@ confSHARED_MEMORY_KEY	SharedMemoryKey [0] Key for shared memory.
 confFAST_SPLIT		FastSplit	[1] If set to a value greater than
 					zero, the initial MX lookups on
 					addresses is suppressed when they
-					are sorted which may result in faster
-					envelope splitting.
+					are sorted which may result in
+					faster envelope splitting.  If the
+					mail is submitted directly from the
+					command line, then the value also
+					limits the number of processes to
+					deliver the envelopes.
 confMAILBOX_DATABASE	MailboxDatabase	[pw] Type of lookup to find
 					information about local mailboxes.
 confDEQUOTE_OPTS	-		[empty] Additional options for the
@@ -3996,7 +4025,7 @@ FEATURE(`authinfo', `DATABASE_MAP_TYPE /etc/mail/msp-authinfo')
 
 /etc/mail/msp-authinfo should contain an entry like:
 
-	AuthInfo:127.0.0.1	"U:smmsp" "P:secret" "M:DIGEST-MD5"	
+	AuthInfo:127.0.0.1	"U:smmsp" "P:secret" "M:DIGEST-MD5"
 
 The file and the map created by makemap should be owned by smmsp,
 its group should be smmsp, and it should have mode 640.  The database
@@ -4122,7 +4151,6 @@ RULESETS (* means built in to sendmail)
   96	Bottom half of Ruleset 3 (ruleset 6 in old sendmail)
   97	Hook for recursive ruleset 0 call (ruleset 7 in old sendmail)
   98	Local part of ruleset 0 (ruleset 8 in old sendmail)
-  99	Guaranteed null (for debugging)
 
 
 MAILERS
@@ -4209,4 +4237,4 @@ M4 DIVERSIONS
    8	DNS based blacklists
    9	special local rulesets (1 and 2)
 
-$Revision: 1.10 $, Last updated $Date: 2001/10/01 17:18:28 $
+$Revision: 1.11 $, Last updated $Date: 2002/01/14 03:21:39 $

@@ -1,4 +1,4 @@
-# Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988
@@ -9,7 +9,7 @@
 # the sendmail distribution.
 #
 #
-#	$Sendmail: README,v 8.335 2001/09/24 23:52:12 ca Exp $
+#	$Sendmail: README,v 8.345 2002/01/09 18:04:30 ca Exp $
 #
 
 This directory contains the source files for sendmail(TM).
@@ -201,6 +201,8 @@ SYS5SIGNALS	Use System V signal semantics -- the signal handler
 		signal handler stays in force until an exec or an
 		explicit delete.  Implied by SYSTEM5.
 SYS5SETPGRP	Use System V setpgrp() semantics.  Implied by SYSTEM5.
+HASNICE		Define this to zero if you lack the nice(2) system call.
+HASRRESVPORT	Define this to zero if you lack the rresvport(3) system call.
 HASFCHMOD	Define this to one if you have the fchmod(2) system call.
 		This improves security.
 HASFCHOWN	Define this to one if you have the fchown(2) system call.
@@ -260,8 +262,6 @@ HASSETREGID	Define this if you have setregid(2) and it can be
 HASSETRESGID	Define this if you have setresgid(2) and it can be
 		used to set the saved gid.  Please run t_dropgid in
 		test/ if you are not sure whether the call works.
-SM_CONF_CANT_SETRGID	Define this if your OS does not have a system
-		call that can set the real gid for a set-group-ID program.
 HASLSTAT	Define this if you have symbolic links (and thus the
 		lstat(2) system call).  This improves security.  Unlike
 		most other options, this one is on by default, so you
@@ -463,13 +463,19 @@ SO_REUSEADDR_IS_BROKEN
 NEEDSGETIPNODE	Set this if your system supports IPv6 but doesn't include
 		the getipnodeby{name,addr}() functions.  Set automatically
 		for Linux's glibc.
-SM_CONF_STRL
-		By default this is on (1).  This uses the sendmail versions
-		of strlcpy and strlcat (called sm_strlcpy and sm_strlcat
-		respectively).  The program ../libsm/b-strl.c can be used
-		to determine performance of these functions if your OS
-		has these functions natively.
 PIPELINING	Support SMTP PIPELINING	(set by default).
+USING_NETSCAPE_LDAP
+		Set this if LDAPMAP is set and your LDAP libraries are from
+		(or are derived from) Netscape's implementation, which
+		requires that the return value of ldap_first_attribute()
+		and ldap_next_attribute() be ldap_memfree()'d.
+NEEDLINK	Set this if your system doesn't have a link() call.  It
+		will create a copy of the file instead of a hardlink.
+USE_ENVIRON	Set this to 1 to access process environment variables from
+		the external variable environ instead of the third
+		parameter of main().
+USE_DOUBLE_FORK By default this is on (1).  Set it to 0 to suppress the
+		extra fork() used to avoid intermediate zombies.
 
 
 +-----------------------+
@@ -779,6 +785,23 @@ ControlSocket permissions
 	owned directories which do not permit non-root to r/w/x through them.
 	The long term fix is for all kernels to upgrade to 4.4BSD semantics.
 
+HP MPE/iX
+	The MPE-specific code within sendmail emulates a set-user-id root
+	environment for the sendmail binary.  But there is no root uid 0 on
+	MPE, nor is there any support for set-user-id programs.  Even when
+	sendmail thinks it is running as uid 0, it will still have the file
+	access rights of the underlying non-zero uid, but because sendmail is
+	an MPE priv-mode program it will still be able to call setuid() to
+	successfully switch to a new uid.
+
+	MPE setgid() semantics don't quite work the way sendmail expects, so
+	special emulation is done here also.
+
+	This uid/gid emulation is enabled via the setuid/setgid file mode bits
+	which are not currently used by MPE.  Code in libsm/mpeix.c examines
+	these bits and enables emulation if they have been set, i.e.,
+	chmod u+s,g+s /SENDMAIL/CURRENT/SENDMAIL.
+
 SunOS 4.x (Solaris 1.x)
 	You may have to use -lresolv on SunOS.  However, beware that
 	this links in a new version of gethostbyname that does not
@@ -941,11 +964,19 @@ Solaris 7 (SunOS 5.7)
 
 Solaris 8 and later (SunOS 5.8 and later)
 	Solaris 8 and later can optionally install LDAP support.  If you
-	have installed the Entire Distribution meta-cluster cluster, you
-	can use the following in devtools/Site/site.SunOS.5.8.m4 (or other
+	have installed the Entire Distribution meta-cluster, you can use
+	the following in devtools/Site/site.SunOS.5.8.m4 (or other
 	appropriately versioned file) to enable LDAP:
 
 	APPENDDEF(`confMAPDEF', `-DLDAPMAP')
+	APPENDDEF(`confLIBS', `-lldap')
+
+Solaris 9 and later (SunOS 5.9 and later)
+	Solaris 9 and later have a revised LDAP library, libldap.so.5,
+	which is derived from a Netscape implementation, thus requiring
+	that USING_NETSCAPE_LDAP be defined in conjunction with LDAPMAP:
+
+	APPENDDEF(`confMAPDEF', `-DLDAPMAP -DUSING_NETSCAPE_LDAP')
 	APPENDDEF(`confLIBS', `-lldap')
 
 Solaris
@@ -1302,6 +1333,19 @@ AIX 4.X
 
 	gcc -Wl,-rpath /usr/lib -Wl,-rpath /lib -Wl,-rpath /usr/local/lib
 
+AIX 4.X	If the test program t-event (and most others) in libsm fails,
+	check your compiler settings.  It seems that the flags -qnoro or
+	-qnoroconst on some AIX versions trigger a compiler bug.  Check
+	your compiler settings or use cc instead of xlc.
+
+AIX 4.0-4.2, maybe some AIX 4.3 versions
+	The AIX m4 implements a different mechanism for ifdef which is
+	inconsistent with other versions of m4.  Therefore, it will not
+	work properly with the sendmail Build architecture or m4
+	configuration method.  To work around this problem, please use
+	GNU m4 from ftp://ftp.gnu.org/pub/gnu/.
+	The problem seems to be solved in AIX 4.3.3 at least.
+
 AIX 4.3.3
 	From: Valdis.Kletnieks@vt.edu
 	Date: Sun, 02 Jul 2000 03:58:02 -0400
@@ -1315,13 +1359,6 @@ AIX 4.3.3
 	1) Compile without -DNETINET6
 	2) Build against a real BIND 8.2.2 include/lib tree
 	3) Wait for IBM to fix it
-
-AIX 4.X
-	The AIX m4 implements a different mechanism for ifdef which is
-	inconsistent with other versions of m4.  Therefore, it will not
-	work properly with the sendmail Build architecture or m4
-	configuration method.  To work around this problem, please use
-	GNU m4 from ftp://ftp.gnu.org/pub/gnu/.
 
 AIX 3.x
 	This version of sendmail does not support MB, MG, and MR resource
@@ -1436,7 +1473,8 @@ UNICOS 8.0.3.4
 	running sendmail.  Reported by Jerry G. DeLapp <jgd@acl.lanl.gov>.
 
 Mac OS X (10.0.X)
-	From: Mike Zimmerman <zimmy@torrentnet.com>
+	From Mike Zimmerman <zimmy@torrentnet.com>:
+
 	From scratch here is what Darwin users need to do to the standard
 	10.0.0, 10.0.1 install to get sendmail working.
 	From http://www.macosx.com/forums/showthread.php?s=6dac0e9e1f3fd118a4870a8a9b559491&threadid=2242:
@@ -1449,6 +1487,28 @@ Mac OS X (10.0.X)
 	4. Edit /System/Library/StartupItems/Sendmail/Sendmail:
 	   Remove the "&" after the sendmail command:
 	   /usr/sbin/sendmail -bd -q1h
+
+	From Carsten Klapp <carsten.klapp@home.com>:
+
+	The easiest workaround is to remove the group-writable permission
+	for the root directory and the symbolic /etc inherits this
+	change. While this does fix sendmail, the unfortunate side-effect
+	is the OS X admin will no longer be able to manipulate icons in the
+	top level of the Startup disk unless logged into the GUI as the
+	superuser.
+
+	In applying the alternate workaround, care must be taken while
+	swapping the symlink /etc with the directory /private/etc. In all
+	likelihood any admin who is concerned with this sendmail error has
+	enough experience to not accidentally harm anything in the process.
+
+	a. Swap the /etc symlink with /private/etc (as superuser):
+	   rm /etc
+	   mv /private/etc /etc
+	   ln -s /etc /private/etc
+
+	b. Set / to group unwritable (as superuser):
+	   chmod g-w /
 
 GNU getopt
 	I'm told that GNU getopt has a problem in that it gets confused
@@ -1675,4 +1735,4 @@ util.c		Some general purpose routines used by sendmail.
 version.c	The version number and information about this
 		version of sendmail.
 
-(Version $Revision: 1.10 $, last update $Date: 2001/10/01 17:18:29 $ )
+(Version $Revision: 1.11 $, last update $Date: 2002/01/14 03:21:40 $ )

@@ -1,11 +1,11 @@
-# Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+# Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of
 # the sendmail distribution.
 #
-#	$Sendmail: README,v 1.13 2001/08/14 18:07:18 ca Exp $
+#	$Sendmail: README,v 1.20 2002/01/09 18:05:39 ca Exp $
 #
 
 Libsm is a library of generally useful C abstractions.
@@ -18,6 +18,10 @@ which reside in ../include/sm.
 The t-*.c files are regression tests.
 These tests are incomplete: we do not yet test all of the APIs,
 and we have not yet converted all tests to use the test harness.
+If a test fails read the explanation it generates.  Sometimes it
+is sufficient to change a compile time flag, which are also listed
+below.  If that does not help, check the sendmail/README files for
+problems on your OS.
 
 The b-*.c files are benchmarks that compare system routines with
 those provided by libsm. By default sendmail uses the routines
@@ -28,7 +32,6 @@ versions by running the programs with the option -d (by default
 the programs just issue an explanation when/how to use them).
 The programs are:
 
-b-strl.c	tests strlcpy() and strlcat().
 b-strcmp.c	tests strcasecmp().
 
 +----------------------+
@@ -65,12 +68,6 @@ SM_CONF_SYS_CDEFS_H
 
 SM_CONF_STDDEF_H
 	Set to 0 if the header file <stddef.h> does not exist.
-
-SM_CONF_STRL
-	Set to 1 if strlcpy/strlcat are available.
-	Then compile and run the benchmark program b-strl.
-	If the benchmark shows that the libsm-provided sm_strlcpy/sm_strlcat
-	are faster, then set SM_CONF_STRL back to 0 (the default).
 
 SM_CONF_SETITIMER
 	Set to 0 if the setitimer function is not available.
@@ -111,3 +108,19 @@ SM_CONF_BROKEN_STRTOD
 
 SM_CONF_GETOPT
 	Set to 1 if your operating system does not include getopt(3).
+
+SM_IO_MAX_BUF_FILE
+	Set this to a useful buffer size for regular files if stat(2)
+	does not return a value for st_blksize that is the
+	"optimal blocksize for I/O".
+
+SM_IO_MAX_BUF
+	Set this to a useful maximum buffer size for other than
+	regular files if stat(2) does not return a value for
+	st_blksize that is the "optimal blocksize for I/O".
+
+SM_IO_MIN_BUF
+	Set this to a useful minimum buffer size for other than
+	regular files if stat(2) does not return a value for
+	st_blksize that is the "optimal blocksize for I/O".
+

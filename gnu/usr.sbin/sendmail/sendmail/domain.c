@@ -14,9 +14,9 @@
 #include <sendmail.h>
 
 #if NAMED_BIND
-SM_RCSID("@(#)$Sendmail: domain.c,v 8.176 2001/09/22 17:52:42 gshapiro Exp $ (with name server)")
+SM_RCSID("@(#)$Sendmail: domain.c,v 8.177 2001/12/12 01:16:15 ca Exp $ (with name server)")
 #else /* NAMED_BIND */
-SM_RCSID("@(#)$Sendmail: domain.c,v 8.176 2001/09/22 17:52:42 gshapiro Exp $ (without name server)")
+SM_RCSID("@(#)$Sendmail: domain.c,v 8.177 2001/12/12 01:16:15 ca Exp $ (without name server)")
 #endif /* NAMED_BIND */
 
 #if NAMED_BIND
@@ -307,7 +307,7 @@ getmxrr(host, mxhosts, mxprefs, droplocalhost, rcode, tryfallback, pttl)
 			break;
 
 		  default:
-			syserr("getmxrr: res_search (%s) failed with impossible h_errno (%d)\n",
+			syserr("getmxrr: res_search (%s) failed with impossible h_errno (%d)",
 				host, h_errno);
 			*rcode = EX_OSERR;
 			break;

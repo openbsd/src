@@ -1,10 +1,165 @@
 			SENDMAIL RELEASE NOTES
-      $Sendmail: RELEASE_NOTES,v 8.1155 2001/09/30 01:07:23 ca Exp $
+      $Sendmail: RELEASE_NOTES,v 8.1218 2002/01/13 18:24:15 ca Exp $
 
 
 This listing shows the version of the sendmail binary, the version
 of the sendmail configuration files, the date of release, and a
 summary of the changes in that release.
+
+8.12.2/8.12.2	2002/01/13
+	Don't complain too much if stdin, stdout, or stderr are missing
+		at startup, only log an error message.
+	Fix potential problem if an unknown operation mode (character
+		following -b) has been specified.
+	Prevent purgestat from looping even if someone changes the
+		permissions or owner of hoststatus files.  Problem noted
+		by Kari Hurtta of the Finnish Meteorological Institute.
+	Properly record dropped connections in persistent host status.
+		Problem noted by Ulrich Windl of the Universitat
+		Regensburg.
+	Remove newlines from recipients read via sendmail -t to prevent
+		SMTP protocol errors when sending the RCPT command.
+		Problem noted by William D. Colburn of the New Mexico
+		Institute of Mining and Technology.
+	Only log milter body replacements once instead of for each body
+		chunk sent by a filter.  Problem noted by Kari Hurtta of
+		the Finnish Meteorological Institute.
+	In 8.12.0 and 8.12.1, the headers were mistakenly not included in
+		the message size calculation.  Problem noted by Kari Hurtta
+		of the Finnish Meteorological Institute.
+	Since 8.12 no longer forks at the SMTP MAIL command, the daemon
+		needs to collect children status to avoid zombie processes.
+		Problem noted by Chris Adams of HiWAAY Informations Services.
+	Shut down "nullserver" and ETRN-only connections after 25 bad
+		commands are issued.  This makes it consistent with normal
+		SMTP connections.
+	Avoid duplicate logging of milter rejections.  Problem noted by
+		William D. Colburn of the New Mexico Institute of Mining
+		and Technology.
+	Error and delay DSNs were being sent to postmaster instead of the
+		message sender if the sender had used a deprecated RFC822
+		source route.  Problem noted by Kari Hurtta of the Finnish
+		Meteorological Institute.
+	Fix FallbackMXhost behavior for temporary errors during address
+		parsing.  Problem noted by Jorg Bielak from Coastal Web
+		Online.
+	For systems on which stat(2) does not return a value for st_blksize
+		that is the "optimal blocksize for I/O" three new compile
+		time flags are available: SM_IO_MAX_BUF_FILE, SM_IO_MIN_BUF,
+		and SM_IO_MAX_BUF, which define an upper limit for
+		regular files, and a lower and upper limit for other file
+		types, respectively.
+	Fix a potential deadlock if two events are supposed to occur at
+		exactly the same time.  Problem noted by Valdis Kletnieks
+		of Virginia Tech.
+	Perform envelope splitting for aliases listed directly in the
+		alias file, not just for include/.forward files.
+		Problem noted by John Beck of Sun Microsystems.
+	Allow selection of queue group for mailq using -qGgroup.
+		Based on patch by John Beck of Sun Microsystems.
+	Make sure cached LDAP connections used my multiple maps in the same
+		process are closed.  Patch from Taso N. Devetzis.
+	If running as root, allow reading of class files in protected
+		directories.  Patch from Alexander Talos of the University
+		of Vienna.
+	Correct a few LDAP related memory leaks.  Patch from David Powell
+		of Sun Microsystems.
+	Allow specification of an empty realm via the authinfo ruleset.
+		This is necessary to interoperate as an SMTP AUTH client
+		with servers that do not support realms when using
+		CRAM-MD5.  Problem noted by Bjoern Voigt of TU Berlin.
+	Avoid a potential information leak if AUTH PLAIN is used and the
+		server gets stuck while processing that command.  Problem
+		noted by Chris Adams from HiWAAY Informations Services.
+	In addition to printing errors when parsing recipients during
+		command line invocations log them to make it simpler
+		to understand possible DSNs to postmaster.
+	Do not use FallbackMXhost on mailers which have the F=0 flag set.
+	Allow local mailers (F=l) to specify a host for TCP connections
+		instead of forcing localhost.
+	Obey ${DESTDIR} for installation of the client mail queue and
+		submit.cf.  Patch from Peter 'Luna' Runestig.
+	Re-enable support for -M option which was broken in 8.12.1.  Problem
+		noted by Neil Rickert of Northern Illinois University.
+	If a remote server violates the SMTP standard by unexpectedly
+		dropping the connection during an SMTP transaction, stop
+		sending commands.  This prevents bogus "Bad file number"
+		recipient status.  Problem noted by Allan E Johannesen of
+		Worcester Polytechnic Institute.
+	Do not use a size estimate of 100 for postmaster bounces, it's
+		almost always too small; do not guess the size at all.
+	New VENDOR_DEC for Compaq/DEC.  Requested by James Seagraves of
+		Compaq Computer Corp.
+	Fix DaemonPortOptions IPv6 address parsing such that ::1 works
+		properly.  Problem noted by Valdis Kletnieks of Virginia
+		Tech.
+	Portability:
+		Fix IPv6 network interface probing on HP-UX 11.X.  Based on
+			patch provided by HP.
+		Mac OS X (aka Darwin) has a broken setreuid() call, but a
+			working seteuid() call.  From Daniel J. Luke.
+		Use proper type for a 32-bit integer on SINIX.  From Ganu
+			Sachin of Siemens.
+		Set SM_IO_MIN_BUF (4K) and SM_IO_MAX_BUF (8K) for HP-UX.
+		Reduce optimization from +O3 to +O2 on HP-UX 11.  This
+			fixes a problem that caused additional bogus
+			characters to be written to the qf file.  Problem
+			noted by Tapani Tarvainen.
+		Set LDA_USE_LOCKF by default for UnixWare.  Problem noted
+			by Boyd Lynn Gerber.
+		Add support for HP MPE/iX.  See sendmail/README for port
+			information.  From Mark Bixby of Hewlett-Packard.
+		New portability defines HASNICE, HASRRESVPORT, USE_ENVIRON,
+			USE_DOUBLE_FORK, and NEEDLINK.  See sendmail/README
+			for more information.  From Mark Bixby of
+			Hewlett-Packard.
+		If an OS doesn't have a method of finding free disk space
+			(SFS_NONE), lie and say there is plenty of space.
+			From Mark Bixby of Hewlett-Packard.
+		Add support for AIX 5.1.  From Valdis Kletnieks of
+			Virginia Tech.
+		Fix man page location for NeXTSTEP.  From Hisanori Gogota
+			of the NTT/InterCommunication Center.
+		Do not assume that strerror() always returns a string.
+			Problem noted by John Beck of Sun Microsystems.
+	CONFIG: Add OSTYPE(freebsd5) for FreeBSD 5.X, which has removed
+		UUCP from the base operating system.  From Mark Murray of
+		FreeBSD Services, Ltd.
+	CONFIG: Add OSTYPE(mpeix) and a generic .mc file for HP MPE/iX
+		systems.  From Mark Bixby of Hewlett-Packard.
+	CONFIG: Add support for selecting a queue group for all mailers.
+		Based on proposal by Stephen L. Ulmer of the University of
+		Florida.
+	CONFIG: Fix error reporting for compat_check.m4.  Problem noted by
+		Altin Waldmann.
+	CONFIG: Do not override user selections for confRUN_AS_USER and
+		confTRUSTED_USER in FEATURE(msp).  From Mark Bixby of
+		Hewlett-Packard.
+	LIBMILTER: Fix bug that prevented the removal of a socket after
+		libmilter terminated.  Problem reported by Andrey V. Pevnev
+		of MSFU.
+	LIBMILTER: Fix configuration error that required libsm for linking.
+		Problem noted by Kari Hurtta of the Finnish Meteorological
+		Institute.
+	LIBMILTER: Portability fix for OpenUNIX.  Patch from Larry Rosenman.
+	LIBMILTER: Fix a theoretical memory leak and a possible attempt
+		to free memory twice.
+	LIBSM: Fix a potential segmentation violation in the I/O library.
+		Problem found and analyzed by John Beck and Tim Haley
+		of Sun Microsystems.
+	LIBSM: Do not clear the LDAP configuration information when
+		terminating the mailbox database connection in the LDAP
+		example code.  Problem noted by Nikos Voutsinas of the
+		University of Athens.
+	New Files:
+		cf/cf/generic-mpeix.cf
+		cf/cf/generic-mpeix.mc
+		cf/ostype/freebsd5.m4
+		cf/ostype/mpeix.m4
+		devtools/OS/AIX.5.1
+		devtools/OS/MPE-iX
+		include/sm/os/sm_os_mpeix.h
+		libsm/mpeix.c
 
 8.12.1/8.12.1	2001/10/01
 	SECURITY: Check whether dropping group privileges actually succeeded
@@ -616,7 +771,6 @@ summary of the changes in that release.
 		confBAD_RCPT_THROTTLE		BadRcptThrottle
 		confDIRECT_SUBMISSION_MODIFIERS	DirectSubmissionModifiers
 		confMAILBOX_DATABASE		MailboxDatabase
-		confMAIL_SUBMISSION_QUEUE	MailSubmissionQueue
 		confMAX_QUEUE_CHILDREN		MaxQueueChildren
 		confMAX_RUNNERS_PER_QUEUE	MaxRunnersPerQueue
 		confNICE_QUEUE_RUN		NiceQueueRun

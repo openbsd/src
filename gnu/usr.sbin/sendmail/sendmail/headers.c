@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: headers.c,v 8.265 2001/09/11 04:05:14 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: headers.c,v 8.266 2001/10/12 01:50:12 gshapiro Exp $")
 
 static size_t	fix_mime_header __P((char *));
 static int	priencode __P((char *));
@@ -698,8 +698,8 @@ eatheader(e, full, log)
 			int saveflags = e->e_flags;
 #endif /* 0 */
 
-			(void) sendtolist(h->h_value, NULLADDR,
-					  &e->e_sendqueue, 0, e);
+			(void) sendtolist(denlstring(h->h_value, true, false),
+					  NULLADDR, &e->e_sendqueue, 0, e);
 
 #if 0
 			/*

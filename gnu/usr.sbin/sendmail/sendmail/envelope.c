@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: envelope.c,v 8.274 2001/09/17 20:39:57 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: envelope.c,v 8.279 2001/12/10 19:56:04 ca Exp $")
 
 /*
 **  NEWENVELOPE -- fill in a new envelope
@@ -67,18 +67,18 @@ newenvelope(e, parent, rpool)
 	{
 		e->e_msgpriority = parent->e_msgsize;
 #if _FFR_QUARANTINE
-		if (parent->e_holdmsg == NULL)
+		if (parent->e_quarmsg == NULL)
 		{
-			e->e_holdmsg = NULL;
+			e->e_quarmsg = NULL;
 			macdefine(&e->e_macro, A_PERM,
-				  macid("{holdmsg}"), "");
+				  macid("{quarantine}"), "");
 		}
 		else
 		{
-			e->e_holdmsg = sm_rpool_strdup_x(rpool,
-							 parent->e_holdmsg);
+			e->e_quarmsg = sm_rpool_strdup_x(rpool,
+							 parent->e_quarmsg);
 			macdefine(&e->e_macro, A_PERM,
-				  macid("{holdmsg}"), e->e_holdmsg);
+				  macid("{quarantine}"), e->e_quarmsg);
 		}
 #endif /* _FFR_QUARANTINE */
 	}
@@ -125,7 +125,7 @@ dropenvelope(e, fulldrop, split)
 	bool fulldrop;
 	bool split;
 {
-	bool savedf = false;
+	bool panic = false;
 	bool queueit = false;
 	int msg_timeout = 0;
 	bool failure_return = false;
@@ -423,7 +423,7 @@ dropenvelope(e, fulldrop, split)
 	{
 		if (tTd(50, 8))
 			sm_dprintf("dropenvelope(%s): saving mail\n", id);
-		savedf = savemail(e, !bitset(EF_NO_BODY_RETN, e->e_flags));
+		panic = savemail(e, !bitset(EF_NO_BODY_RETN, e->e_flags));
 	}
 
 	/*
@@ -470,12 +470,24 @@ simpledrop:
 				e->e_id, queueit);
 			printenvflags(e);
 		}
-		if (!savedf)
+		if (!panic)
 			(void) xunlink(queuename(e, DATAFL_LETTER));
+#if _FFR_QUARANTINE
+		if (panic && QueueMode == QM_LOST)
+		{
+			/*
+			**  leave the Qf file behind as
+			**  the delivery attempt failed.
+			*/
+
+			/* EMPTY */
+		}
+		else
+#endif /* _FFR_QUARANTINE */
 		if (xunlink(queuename(e, ANYQFL_LETTER)) == 0)
 		{
 			/* add to available space in filesystem */
-			updfs(e, true, !savedf);
+			updfs(e, true, !panic);
 		}
 
 		if (e->e_ntries > 0 && LogLevel > 9)
@@ -501,7 +513,13 @@ simpledrop:
 
 			oldsib = e->e_sibling;
 			e->e_sibling = NULL;
-			(void) split_by_recipient(e);
+			if (!split_by_recipient(e) &&
+			    bitset(EF_FATALERRS, e->e_flags))
+			{
+				syserr("!dropenvelope(%s): cannot commit data file %s, uid=%d",
+					e->e_id, queuename(e, DATAFL_LETTER),
+					geteuid());
+			}
 			for (ee = e->e_sibling; ee != NULL; ee = ee->e_sibling)
 				queueup(ee, false, true);
 			queueup(e, false, true);
@@ -604,9 +622,8 @@ clearenvelope(e, fullclear, rpool)
 	e->e_message = NULL;
 #if _FFR_QUARANTINE
 	e->e_qfletter = '\0';
-	e->e_holdmsg = NULL;
-	macdefine(&e->e_macro, A_PERM,
-		  macid("{holdmsg}"), "");
+	e->e_quarmsg = NULL;
+	macdefine(&e->e_macro, A_PERM, macid("{quarantine}"), "");
 #endif /* _FFR_QUARANTINE */
 
 	/*
@@ -1088,7 +1105,7 @@ setsender(from, e, delimptr, delimchar, internal)
 			sm_syslog(LOG_NOTICE, e->e_id,
 				  "cannot prescan from (%s)",
 				  shortenstring(from, MAXSHORTSTR));
-		finis(true, ExitStat);
+		finis(true, true, ExitStat);
 	}
 	(void) REWRITE(pvp, 3, e);
 	(void) REWRITE(pvp, 1, e);
@@ -1177,6 +1194,8 @@ static struct eflags	EnvelopeFlags[] =
 	{ "DONT_MIME",		EF_DONT_MIME	},
 	{ "DISCARD",		EF_DISCARD	},
 	{ "TOOBIG",		EF_TOOBIG	},
+	{ "SPLIT",		EF_SPLIT	},
+	{ "UNSAFE",		EF_UNSAFE	},
 	{ NULL,			0		}
 };
 

@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: comm.c,v 8.46 2001/09/11 04:04:44 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: comm.c,v 8.48 2001/11/07 17:43:04 ca Exp $")
 
 #include "libmilter.h"
 #include <sm/errstring.h>
@@ -72,7 +72,9 @@ mi_rd_cmd(sd, timeout, cmd, rlen, name)
 			*cmd = SMFIC_SELECT;
 			return NULL;
 		}
-		if ((len = MI_SOCK_READ(sd, data + i, sizeof data - i)) < 0)
+
+		len = MI_SOCK_READ(sd, data + i, sizeof data - i);
+		if (MI_SOCK_READ_FAIL(len))
 		{
 			smi_log(SMI_LOG_ERR,
 				"%s, mi_rd_cmd: read returned %d: %s",
@@ -136,7 +138,8 @@ mi_rd_cmd(sd, timeout, cmd, rlen, name)
 			free(buf);
 			return NULL;
 		}
-		if ((len = MI_SOCK_READ(sd, buf + i, expl - i)) < 0)
+		len = MI_SOCK_READ(sd, buf + i, expl - i);
+		if (MI_SOCK_READ_FAIL(len))
 		{
 			smi_log(SMI_LOG_ERR,
 				"%s: mi_rd_cmd: read returned %d: %s",

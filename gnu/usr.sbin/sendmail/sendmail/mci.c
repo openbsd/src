@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: mci.c,v 8.200 2001/09/21 20:01:42 ca Exp $")
+SM_RCSID("@(#)$Sendmail: mci.c,v 8.202 2001/11/05 22:12:17 ca Exp $")
 
 #if NETINET || NETINET6
 # include <arpa/inet.h>
@@ -867,7 +867,6 @@ mci_read_persistent(fp, mci)
 	{
 		sm_dprintf("mci_read_persistent: fp=%lx, mci=",
 			   (unsigned long) fp);
-		mci_dump(mci, false);
 	}
 
 	SM_FREE_CLR(mci->mci_status);
@@ -916,6 +915,8 @@ mci_read_persistent(fp, mci)
 			break;
 
 		  case '.':		/* end of file */
+			if (tTd(56, 93))
+				mci_dump(mci, false);
 			return 0;
 
 		  default:
@@ -928,6 +929,8 @@ mci_read_persistent(fp, mci)
 		}
 	}
 	LineNumber = saveLineNumber;
+	if (tTd(56, 93))
+		sm_dprintf("incomplete (missing dot for EOF)\n");
 	if (ver < 0)
 		return -1;
 	return 0;
@@ -1313,11 +1316,17 @@ mci_purge_persistent(pathname, hostname)
 	if (hostname != NULL)
 	{
 		/* remove the file */
-		if (unlink(pathname) < 0)
+		ret = unlink(pathname);
+		if (ret < 0)
 		{
+			if (LogLevel > 8)
+				sm_syslog(LOG_ERR, NOQID,
+					  "mci_purge_persistent: failed to unlink %s: %s",
+					  pathname, sm_errstring(errno));
 			if (tTd(56, 2))
 				sm_dprintf("mci_purge_persistent: failed to unlink %s: %s\n",
 					pathname, sm_errstring(errno));
+			return ret;
 		}
 	}
 	else
@@ -1329,13 +1338,14 @@ mci_purge_persistent(pathname, hostname)
 		if (tTd(56, 1))
 			sm_dprintf("mci_purge_persistent: dpurge %s\n", pathname);
 
-		if (rmdir(pathname) < 0)
+		ret = rmdir(pathname);
+		if (ret < 0)
 		{
 			if (tTd(56, 2))
 				sm_dprintf("mci_purge_persistent: rmdir %s: %s\n",
 					pathname, sm_errstring(errno));
+			return ret;
 		}
-
 	}
 
 	return 0;

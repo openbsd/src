@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -14,7 +14,7 @@
 #include <sendmail.h>
 #include <sys/time.h>
 
-SM_RCSID("@(#)$Sendmail: deliver.c,v 8.907 2001/09/18 21:45:33 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: deliver.c,v 8.928 2002/01/10 03:23:29 gshapiro Exp $")
 
 #if HASSETUSERCONTEXT
 # include <login_cap.h>
@@ -88,7 +88,7 @@ sendall(e, mode)
 			logundelrcpts(e, "discarded", 9, true);
 		else if (LogLevel > 4)
 			sm_syslog(LOG_INFO, e->e_id, "discarded");
-		markstats(e, NULL, true);
+		markstats(e, NULL, STATS_REJECT);
 		return;
 	}
 
@@ -303,9 +303,10 @@ sendall(e, mode)
 				if (FallBackMX != NULL &&
 				    !wordinclass(FallBackMX, 'w') &&
 				    mode != SM_VERIFY &&
+				    !bitnset(M_NOMX, m->m_flags) &&
 				    strcmp(m->m_mailer, "[IPC]") == 0 &&
 				    m->m_argv[0] != NULL &&
-				    strcmp(m->m_argv[0], "TCP"))
+				    strcmp(m->m_argv[0], "TCP") == 0)
 				{
 					int len;
 					char *p;
@@ -355,12 +356,12 @@ sendall(e, mode)
 				expensive = true;
 			}
 #if _FFR_QUARANTINE
-			else if (QueueMode != QM_HELD &&
-				 e->e_holdmsg != NULL)
+			else if (QueueMode != QM_QUARANTINE &&
+				 e->e_quarmsg != NULL)
 			{
 				if (tTd(13, 30))
 					sm_dprintf("    ... quarantine: %s\n",
-						   e->e_holdmsg);
+						   e->e_quarmsg);
 				q->q_state = QS_QUEUEUP;
 				expensive = true;
 			}
@@ -413,6 +414,11 @@ sendall(e, mode)
 			ee->e_errormode = EM_MAIL;
 			ee->e_sibling = splitenv;
 			ee->e_statmsg = NULL;
+#if _FFR_QUARANTINE
+			if (e->e_quarmsg != NULL)
+				ee->e_quarmsg = sm_rpool_strdup_x(ee->e_rpool,
+								  e->e_quarmsg);
+#endif /* _FFR_QUARANTINE */
 			splitenv = ee;
 
 			for (q = e->e_sendqueue; q != NULL; q = q->q_next)
@@ -661,8 +667,10 @@ sendall(e, mode)
 			/* make sure the parent doesn't own the envelope */
 			e->e_id = NULL;
 
+#if USE_DOUBLE_FORK
 			/* catch intermediate zombie */
 			(void) waitfor(pid);
+#endif /* USE_DOUBLE_FORK */
 			return;
 		}
 
@@ -688,11 +696,13 @@ sendall(e, mode)
 
 		(void) sm_signal(SIGTERM, SIG_DFL);
 
+#if USE_DOUBLE_FORK
 		/* double fork to avoid zombies */
 		pid = fork();
 		if (pid > 0)
 			exit(EX_OK);
 		save_errno = errno;
+#endif /* USE_DOUBLE_FORK */
 
 		CurrentPid = getpid();
 
@@ -710,7 +720,7 @@ sendall(e, mode)
 #else /* HASFLOCK */
 			e->e_id = NULL;
 #endif /* HASFLOCK */
-			finis(true, ExitStat);
+			finis(true, true, ExitStat);
 		}
 
 		/* be sure to give error messages in child */
@@ -746,7 +756,7 @@ sendall(e, mode)
 		}
 		(void) dowork(e->e_qgrp, e->e_qdir, e->e_id,
 			      false, false, e);
-		finis(true, ExitStat);
+		finis(true, true, ExitStat);
 #endif /* HASFLOCK */
 	}
 
@@ -764,7 +774,7 @@ sendall(e, mode)
 
 	Verbose = oldverbose;
 	if (mode == SM_FORK)
-		finis(true, ExitStat);
+		finis(true, true, ExitStat);
 }
 
 static void
@@ -837,7 +847,13 @@ sendenvelope(e, mode)
 
 		oldsib = e->e_sibling;
 		e->e_sibling = NULL;
-		(void) split_by_recipient(e);
+		if (!split_by_recipient(e) &&
+		    bitset(EF_FATALERRS, e->e_flags))
+		{
+			if (OpMode == MD_SMTP || OpMode == MD_DAEMON)
+				e->e_flags |= EF_CLRQUEUE;
+			return;
+		}
 		for (ee = e->e_sibling; ee != NULL; ee = ee->e_sibling)
 			queueup(ee, false, true);
 
@@ -1250,6 +1266,9 @@ deliver(e, firstto)
 	bool anyok;			/* at least one address was OK */
 	SM_NONVOLATILE bool goodmxfound = false; /* at least one MX was OK */
 	bool ovr;
+#if _FFR_QUARANTINE
+	bool quarantine;
+#endif /* _FFR_QUARANTINE */
 	int strsize;
 	int rcptcount;
 	int ret;
@@ -1319,7 +1338,10 @@ deliver(e, firstto)
 	if (strlen(rpath) > MAXSHORTSTR)
 	{
 		rpath = shortenstring(rpath, MAXSHORTSTR);
-		syserr("remotename: huge return %s", rpath);
+
+		/* avoid bogus errno */
+		errno = 0;
+		syserr("remotename: huge return path %s", rpath);
 	}
 	rpath = sm_rpool_strdup_x(e->e_rpool, rpath);
 	macdefine(&e->e_macro, A_PERM, 'g', rpath);
@@ -1514,6 +1536,9 @@ deliver(e, firstto)
 		ovr = true;
 
 		/* do config file checking of compatibility */
+#if _FFR_QUARANTINE
+		quarantine = (e->e_quarmsg != NULL);
+#endif /* _FFR_QUARANTINE */
 		rcode = rscheck("check_compat", e->e_from.q_paddr, to->q_paddr,
 				e, true, true, 3, NULL, e->e_id);
 		if (rcode == EX_OK)
@@ -1532,6 +1557,20 @@ deliver(e, firstto)
 				     NULL, ctladdr, xstart, e, to);
 			continue;
 		}
+#if _FFR_QUARANTINE
+		if (!quarantine && e->e_quarmsg != NULL)
+		{
+			/*
+			**  check_compat or checkcompat() has tried
+			**  to quarantine but that isn't supported.
+			**  Revert the attempt.
+			*/
+
+			e->e_quarmsg = NULL;
+			macdefine(&e->e_macro, A_PERM,
+				  macid("{quarantine}"), "");
+		}
+#endif /* _FFR_QUARANTINE */
 		if (bitset(EF_DISCARD, e->e_flags))
 		{
 			if (tTd(10, 5))
@@ -1625,7 +1664,7 @@ deliver(e, firstto)
 				}
 			}
 			to->q_statdate = curtime();
-			markstats(e, to, false);
+			markstats(e, to, STATS_NORMAL);
 			continue;
 		}
 
@@ -2260,6 +2299,8 @@ tryhost:
 			struct stat stb;
 			extern int DtableSize;
 
+			CurrentPid = getpid();
+
 			/* clear the events to turn off SIGALRMs */
 			sm_clear_events();
 
@@ -2268,7 +2309,6 @@ tryhost:
 			RestartWorkGroup = false;
 			ShutdownRequest = NULL;
 			PendingSignal = 0;
-			CurrentPid = getpid();
 
 			if (e->e_lockfp != NULL)
 				(void) close(sm_io_getinfo(e->e_lockfp,
@@ -2308,9 +2348,11 @@ tryhost:
 			}
 # endif /* HASSETUSERCONTEXT */
 
+#if HASNICE
 			/* tweak niceness */
 			if (m->m_nice != 0)
 				(void) nice(m->m_nice);
+#endif /* HASNICE */
 
 			/* reset group id */
 			if (bitnset(M_SPECIFIC_UID, m->m_flags))
@@ -2386,7 +2428,9 @@ tryhost:
 				    new_gid != getegid())
 				{
 					/* Only root can change the gid */
-					syserr("openmailer: insufficient privileges to change gid");
+					syserr("openmailer: insufficient privileges to change gid, RunAsUid=%d, new_gid=%d, gid=%d, egid=%d",
+					       (int) RunAsUid, (int) new_gid,
+					       (int) getgid(), (int) getegid());
 					exit(EX_TEMPFAIL);
 				}
 
@@ -2462,7 +2506,8 @@ tryhost:
 				if (RunAsUid != 0 && new_euid != RunAsUid)
 				{
 					/* Only root can change the uid */
-					syserr("openmailer: insufficient privileges to change uid");
+					syserr("openmailer: insufficient privileges to change uid, new_euid=%d, RunAsUid=%d",
+					       (int) new_euid, (int) RunAsUid);
 					exit(EX_TEMPFAIL);
 				}
 
@@ -3057,6 +3102,37 @@ do_transfer:
 		mci_dump(mci, false);
 	}
 
+#if _FFR_CLIENT_SIZE
+	/*
+	**  See if we know the maximum size and
+	**  abort if the message is too big.
+	**
+	**  NOTE: _FFR_CLIENT_SIZE is untested.
+	*/
+
+	if (bitset(MCIF_SIZE, mci->mci_flags) &&
+	    mci->mci_maxsize > 0 &&
+	    e->e_msgsize > mci->mci_maxsize)
+	{
+		e->e_flags |= EF_NO_BODY_RETN;
+		if (bitnset(M_LOCALMAILER, m->m_flags))
+			e->e_status = "5.2.3";
+		else
+			e->e_status = "5.3.4";
+
+		usrerrenh(e->e_status,
+			  "552 Message is too large; %ld bytes max",
+			  mci->mci_maxsize);
+		rcode = EX_DATAERR;
+
+		/* Need an e_message for error */
+		(void) sm_snprintf(SmtpError, sizeof SmtpError,
+				   "Message is too large; %ld bytes max",
+				   mci->mci_maxsize);
+		goto give_up;
+	}
+#endif /* _FFR_CLIENT_SIZE */
+
 	if (mci->mci_state != MCIS_OPEN)
 	{
 		/* couldn't open the mailer */
@@ -3140,8 +3216,6 @@ do_transfer:
 					    e->e_id);
 				if (i != EX_OK)
 				{
-					/* avoid bogus error msg */
-					errno = 0;
 					markfailure(e, to, mci, i, false);
 					giveresponse(i, to->q_status,  m, mci,
 						     ctladdr, xstart, e, to);
@@ -3156,7 +3230,8 @@ do_transfer:
 
 				i = smtprcpt(to, m, mci, e, ctladdr, xstart);
 # if PIPELINING
-				if (bitset(MCIF_PIPELINED, mci->mci_flags))
+				if (i == EX_OK &&
+				    bitset(MCIF_PIPELINED, mci->mci_flags))
 				{
 					/*
 					**  Add new element to list of
@@ -3359,6 +3434,13 @@ do_transfer:
 	if (tobuf[0] != '\0')
 	{
 		giveresponse(rcode, NULL, m, mci, ctladdr, xstart, e, tochain);
+#if 0
+		/*
+		**  This code is disabled for now because I am not
+		**  sure that copying status from the first recipient
+		**  to all non-status'ed recipients is a good idea.
+		*/
+
 		if (tochain->q_message != NULL &&
 		    !bitnset(M_LMTP, m->m_flags) && rcode != EX_OK)
 		{
@@ -3372,9 +3454,10 @@ do_transfer:
 							tochain->q_message);
 			}
 		}
+#endif /* 0 */
 	}
 	if (anyok)
-		markstats(e, tochain, false);
+		markstats(e, tochain, STATS_NORMAL);
 	mci_store_persistent(mci);
 
 	/* Some recipients were tempfailed, try them on the next host */
@@ -3451,6 +3534,7 @@ markfailure(e, q, mci, rcode, ovr)
 	int rcode;
 	bool ovr;
 {
+	int save_errno = errno;
 	char *status = NULL;
 	char *rstatus = NULL;
 
@@ -3551,6 +3635,9 @@ markfailure(e, q, mci, rcode, ovr)
 	if (CurHostName != NULL && CurHostName[0] != '\0' &&
 	    mci != NULL && !bitset(M_LOCALMAILER, mci->mci_flags))
 		q->q_statmta = sm_rpool_strdup_x(e->e_rpool, CurHostName);
+
+	/* restore errno */
+	errno = save_errno;
 }
 /*
 **  ENDMAILER -- Wait for mailer to terminate.
@@ -4035,6 +4122,15 @@ logdelivery(m, mci, dsn, status, ctladdr, xstart, e)
 					   anynet_ntoa(&CurHostAddr));
 		}
 	}
+#if _FFR_QUARANTINE
+	else if (strcmp(status, "quarantined") == 0)
+	{
+		if (e->e_quarmsg != NULL)
+			(void) sm_snprintf(bp, SPACELEFT(buf, bp),
+					   ", quarantine=%s",
+					   shortenstring(e->e_quarmsg, 40));
+	}
+#endif /* _FFR_QUARANTINE */
 	else if (strcmp(status, "queued") != 0)
 	{
 		p = macvalue('h', e);
@@ -4173,6 +4269,15 @@ logdelivery(m, mci, dsn, status, ctladdr, xstart, e)
 					   " [%.100s]",
 					   anynet_ntoa(&CurHostAddr));
 	}
+#if _FFR_QUARANTINE
+	else if (strcmp(status, "quarantined") == 0)
+	{
+		if (e->e_quarmsg != NULL)
+			(void) sm_snprintf(bp, SPACELEFT(buf, bp),
+					   ", quarantine=%.100s",
+					   e->e_quarmsg);
+	}
+#endif /* _FFR_QUARANTINE */
 	else if (strcmp(status, "queued") != 0)
 	{
 		p = macvalue('h', e);
@@ -4873,6 +4978,7 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 		e->e_status = "5.6.3";
 		usrerrenh(e->e_status,
 			  "554 Cannot send 8-bit data to 7-bit destination");
+		errno = 0;
 		return EX_DATAERR;
 	}
 
@@ -5024,7 +5130,8 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 				if (RunAsUid != 0 && RealUid != RunAsUid)
 				{
 					/* Only root can change the uid */
-					syserr("mailfile: insufficient privileges to change uid");
+					syserr("mailfile: insufficient privileges to change uid, RunAsUid=%d, RealUid=%d",
+						(int) RunAsUid, (int) RealUid);
 					RETURN(EX_TEMPFAIL);
 				}
 			}
@@ -5061,7 +5168,9 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 				     RealGid != getegid()))
 				{
 					/* Only root can change the gid */
-					syserr("mailfile: insufficient privileges to change gid");
+					syserr("mailfile: insufficient privileges to change gid, RealGid=%d, RunAsUid=%d, gid=%d, egid=%d",
+					       (int) RealGid, (int) RunAsUid,
+					       (int) getgid(), (int) getegid());
 					RETURN(EX_TEMPFAIL);
 				}
 			}
@@ -5333,7 +5442,10 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 			return EX_SOFTWARE;
 		}
 		if (WIFEXITED(st))
+		{
+			errno = 0;
 			return (WEXITSTATUS(st));
+		}
 		else
 		{
 			syserr("mailfile: %s: child died on signal %d",
@@ -5407,7 +5519,8 @@ hostsignature(m, host)
 	*/
 
 	if (bitnset(M_LOCALMAILER, m->m_flags) &&
-	    strcmp(m->m_mailer, "[IPC]") != 0)
+	    strcmp(m->m_mailer, "[IPC]") != 0 &&
+	    !(m->m_argv[0] != NULL && strcmp(m->m_argv[0], "TCP") == 0))
 		return "localhost";
 
 	/*

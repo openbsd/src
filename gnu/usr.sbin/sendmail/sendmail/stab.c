@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: stab.c,v 8.84 2001/09/11 04:05:17 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: stab.c,v 8.86 2001/12/29 04:27:56 ca Exp $")
 
 /*
 **  STAB -- manage the symbol table
@@ -68,13 +68,13 @@ stab(name, type, op)
 	if (type == ST_MACRO || type == ST_RULESET)
 	{
 		while ((s = *ps) != NULL &&
-		       (s->s_type != type || strcmp(name, s->s_name)))
+		       (s->s_symtype != type || strcmp(name, s->s_name)))
 			ps = &s->s_next;
 	}
 	else
 	{
 		while ((s = *ps) != NULL &&
-		       (s->s_type != type || sm_strcasecmp(name, s->s_name)))
+		       (s->s_symtype != type || sm_strcasecmp(name, s->s_name)))
 			ps = &s->s_next;
 	}
 
@@ -93,7 +93,7 @@ stab(name, type, op)
 				long *lp = (long *) s->s_class;
 
 				sm_dprintf("type %d val %lx %lx %lx %lx\n",
-					s->s_type, lp[0], lp[1], lp[2], lp[3]);
+					s->s_symtype, lp[0], lp[1], lp[2], lp[3]);
 			}
 		}
 		return s;
@@ -200,8 +200,7 @@ stab(name, type, op)
 	s = (STAB *) sm_pmalloc_x(len);
 	memset((char *) s, '\0', len);
 	s->s_name = sm_pstrdup_x(name);
-	s->s_type = type;
-	s->s_len = len;
+	s->s_symtype = type;
 
 	/* link it in */
 	*ps = s;
@@ -238,7 +237,7 @@ stabapply(func, arg)
 		{
 			if (tTd(36, 90))
 				sm_dprintf("stabapply: trying %d/%s\n",
-					s->s_type, s->s_name);
+					s->s_symtype, s->s_name);
 			func(s, arg);
 		}
 	}
@@ -278,7 +277,7 @@ queueup_macros(class, qfp, e)
 			int m;
 			char *p;
 
-			if (s->s_type == ST_CLASS &&
+			if (s->s_symtype == ST_CLASS &&
 			    bitnset(bitidx(class), s->s_class) &&
 			    (m = macid(s->s_name)) != '\0' &&
 			    (p = macvalue(m, e)) != NULL)
@@ -317,7 +316,7 @@ copy_class(src, dst)
 	{
 		for (s = *shead; s != NULL; s = s->s_next)
 		{
-			if (s->s_type == ST_CLASS &&
+			if (s->s_symtype == ST_CLASS &&
 			    bitnset(src, s->s_class))
 				setbitn(dst, s->s_class);
 		}
@@ -366,7 +365,7 @@ rmexpstab()
 		s = SymTab[i];
 		while (s != NULL)
 		{
-			switch (s->s_type)
+			switch (s->s_symtype)
 			{
 			  case ST_HOSTSIG:
 				if (s->s_hostsig.hs_exp >= now)
@@ -381,7 +380,7 @@ rmexpstab()
 				break;
 
 			  default:
-				if (s->s_type >= ST_MCI)
+				if (s->s_symtype >= ST_MCI)
 				{
 					/* call mci_uncache? */
 					SM_STAB_FREE(s->s_mci.mci_status);
@@ -448,7 +447,7 @@ dumpstab()
 		while (s != NULL)
 		{
 			++total;
-			t = s->s_type;
+			t = s->s_symtype;
 			if (t > MAXSTTYPES - 1)
 				t = MAXSTTYPES - 1;
 			types[t]++;

@@ -20,7 +20,7 @@ SM_IDSTR(copyright,
 	The Regents of the University of California.  All rights reserved.\n\
      Copyright (c) 1983 Eric P. Allman.  All rights reserved.\n")
 
-SM_IDSTR(id, "@(#)$Sendmail: vacation.c,v 8.130 2001/09/18 21:45:35 gshapiro Exp $")
+SM_IDSTR(id, "@(#)$Sendmail: vacation.c,v 8.131 2001/12/12 00:02:42 gshapiro Exp $")
 
 
 #include <ctype.h>
@@ -118,7 +118,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	bool iflag, emptysender, exclude;
+	bool iflag, exclude;
 	bool runasuser = false;
 	bool lflag = false;
 	int mfail = 0, ufail = 0;
@@ -132,6 +132,7 @@ main(argc, argv)
 	char *msgfilename = NULL;
 	char *cfpath = NULL;
 	char *name;
+	char *returnaddr = NULL;
 	SMDB_USER_INFO user_info;
 	static char rnamebuf[MAXNAME];
 	extern int optind, opterr;
@@ -141,7 +142,7 @@ main(argc, argv)
 	extern int readheaders __P((void));
 	extern bool recent __P((void));
 	extern void setreply __P((char *, time_t));
-	extern void sendmessage __P((char *, char *, bool));
+	extern void sendmessage __P((char *, char *, char *));
 	extern void xclude __P((SM_FILE_T *));
 
 	/* Vars needed to link with smutil */
@@ -168,12 +169,16 @@ main(argc, argv)
 
 	opterr = 0;
 	iflag = false;
-	emptysender = false;
 	exclude = false;
 	interval = INTERVAL_UNDEF;
 	*From = '\0';
 
-#define OPTIONS		"a:C:df:Iilm:r:s:t:Uxz"
+
+#if _FFR_RETURN_ADDR
+# define OPTIONS	"a:C:df:Iilm:R:r:s:t:Uxz"
+#else /* _FFR_RETURN_ADDR */
+# define OPTIONS	"a:C:df:Iilm:r:s:t:Uxz"
+#endif /* _FFR_RETURN_ADDR */
 
 	while (mfail == 0 && ufail == 0 &&
 	       (ch = getopt(argc, argv, OPTIONS)) != -1)
@@ -217,6 +222,12 @@ main(argc, argv)
 			msgfilename = optarg;
 			break;
 
+#if _FFR_RETURN_ADDR
+		  case 'R':
+			returnaddr = optarg;
+			break;
+#endif /* _FFR_RETURN_ADDR */
+
 		  case 'r':
 			if (isascii(*optarg) && isdigit(*optarg))
 			{
@@ -244,7 +255,7 @@ main(argc, argv)
 			break;
 
 		  case 'z':
-			emptysender = true;
+			returnaddr = "<>";
 			break;
 
 		  case '?':
@@ -413,7 +424,7 @@ main(argc, argv)
 		(void) time(&now);
 		setreply(From, now);
 		(void) Db->smdb_close(Db);
-		sendmessage(name, msgfilename, emptysender);
+		sendmessage(name, msgfilename, returnaddr);
 	}
 	else
 		(void) Db->smdb_close(Db);
@@ -929,7 +940,7 @@ xclude(f)
 **	Parameters:
 **		myname -- user name.
 **		msgfn -- name of file with vacation message.
-**		emptysender -- use <> as sender address?
+**		sender -- use as sender address
 **
 **	Returns:
 **		nothing.
@@ -939,10 +950,10 @@ xclude(f)
 */
 
 void
-sendmessage(myname, msgfn, emptysender)
+sendmessage(myname, msgfn, sender)
 	char *myname;
 	char *msgfn;
-	bool emptysender;
+	char *sender;
 {
 	SM_FILE_T *mfp, *sfp;
 	int i;
@@ -968,8 +979,8 @@ sendmessage(myname, msgfn, emptysender)
 	pv[0] = "sendmail";
 	pv[1] = "-oi";
 	pv[2] = "-f";
-	if (emptysender)
-		pv[3] = "<>";
+	if (sender != NULL)
+		pv[3] = sender;
 	else
 		pv[3] = myname;
 	pv[4] = "--";
@@ -1017,9 +1028,17 @@ sendmessage(myname, msgfn, emptysender)
 void
 usage()
 {
+	char *retusage;
+
+#if _FFR_RETURN_ADDR
+	retusage = "[-R returnaddr] ";
+#else /* _FFR_RETURN_ADDR */
+	retusage = "";
+#endif /* _FFR_RETURN_ADDR */
+
 	msglog(LOG_NOTICE,
-	       "uid %u: usage: vacation [-a alias] [-C cfpath] [-d] [-f db] [-i] [-l] [-m msg] [-r interval] [-s sender] [-t time] [-U] [-x] [-z] login\n",
-	       getuid());
+	       "uid %u: usage: vacation [-a alias] [-C cfpath] [-d] [-f db] [-i] [-l] [-m msg] %s[-r interval] [-s sender] [-t time] [-U] [-x] [-z] login\n",
+	       getuid(), retusage);
 	exit(EX_USAGE);
 }
 

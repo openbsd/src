@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: daemon.c,v 8.595 2001/09/25 05:03:54 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: daemon.c,v 8.603 2001/12/31 19:46:38 gshapiro Exp $")
 
 #if defined(SOCK_STREAM) || defined(__GNU_LIBRARY__)
 # define USE_SOCK_STREAM	1
@@ -191,7 +191,7 @@ getrequests(e)
 			  "daemon could not open control socket %s: %s",
 			  ControlSocketName, sm_errstring(errno));
 
-	/* If there are any queue runners releated reapchild() co-ord's */
+	/* If there are any queue runners released reapchild() co-ord's */
 	(void) sm_signal(SIGCHLD, reapchild);
 
 	/* write the pid to file, command line args to syslog */
@@ -698,6 +698,9 @@ getrequests(e)
 			{
 				proc_list_clear();
 
+				/* clean up background delivery children */
+				(void) sm_signal(SIGCHLD, reapchild);
+
 				/* Add parent process as first child item */
 				proc_list_add(CurrentPid, "daemon child",
 					      PROC_DAEMON_CHILD, 0, -1);
@@ -771,7 +774,7 @@ getrequests(e)
 			{
 				syserr("cannot open SMTP server channel, fd=%d",
 					t);
-				finis(false, EX_OK);
+				finis(false, true, EX_OK);
 			}
 			sm_io_automode(inchannel, outchannel);
 
@@ -783,7 +786,7 @@ getrequests(e)
 			if (!xla_host_ok(RealHostName))
 			{
 				message("421 4.4.5 Too many SMTP sessions for this host");
-				finis(false, EX_OK);
+				finis(false, true, EX_OK);
 			}
 #endif /* XLA */
 			/* find out name for interface of connection */
@@ -1017,7 +1020,8 @@ opendaemonsocket(d, firsttime)
 			if (d->d_addr.sa.sa_family == AF_UNIX)
 			{
 				int rval;
-				long sff = SFF_SAFEDIRPATH|SFF_OPENASROOT|SFF_NOLINK|SFF_ROOTOK|SFF_EXECOK;
+				long sff = SFF_SAFEDIRPATH|SFF_OPENASROOT|SFF_NOLINK|SFF_ROOTOK|SFF_EXECOK|SFF_CREAT;
+
 				/* if not safe, don't use it */
 				rval = safefile(d->d_addr.sunix.sun_path,
 						RunAsUid, RunAsGid,
@@ -1502,15 +1506,7 @@ setsockaddroptions(p, d)
 				break;
 			}
 
-			/* if not safe, don't use it */
-			if (safefile(addr, RunAsUid, RunAsGid,
-				     RunAsUserName,
-				     SFF_SAFEDIRPATH|SFF_OPENASROOT|SFF_NOLINK|SFF_ROOTOK|SFF_EXECOK,
-				     S_IRUSR|S_IWUSR, NULL) != 0)
-			{
-				syserr("setsockaddroptions: unsafe domain socket");
-				break;
-			}
+			/* file safety check done in opendaemonsocket() */
 			(void) memset(&d->d_addr.sunix.sun_path, '\0',
 				      sizeof(d->d_addr.sunix.sun_path));
 			(void) sm_strlcpy((char *)&d->d_addr.sunix.sun_path,
@@ -1554,8 +1550,7 @@ setsockaddroptions(p, d)
 
 #if NETINET6
 		  case AF_INET6:
-			if (!isascii(*addr) || !isxdigit(*addr) ||
-			    anynet_pton(AF_INET6, addr,
+			if (anynet_pton(AF_INET6, addr,
 					&d->d_addr.sin6.sin6_addr) != 1)
 			{
 				register struct hostent *hp;
@@ -2360,6 +2355,7 @@ gothostent:
 		/* save for logging */
 		CurHostAddr = addr;
 
+#if HASRRESVPORT
 		if (bitnset(M_SECURE_PORT, mci->mci_mailer->m_flags))
 		{
 			int rport = IPPORT_RESERVED - 1;
@@ -2367,6 +2363,7 @@ gothostent:
 			s = rresvport(&rport);
 		}
 		else
+#endif /* HASRRESVPORT */
 		{
 			s = socket(addr.sa.sa_family, SOCK_STREAM, 0);
 		}
@@ -2824,6 +2821,7 @@ makeconnection_ds(mux_path, mci)
 void
 shutdown_daemon()
 {
+	int i;
 	char *reason;
 
 	sm_allsignals(true);
@@ -2842,7 +2840,42 @@ shutdown_daemon()
 	xla_all_end();
 #endif /* XLA */
 
-	finis(false, EX_OK);
+	for (i = 0; i < NDaemons; i++)
+	{
+		if (Daemons[i].d_socket >= 0)
+		{
+			(void) close(Daemons[i].d_socket);
+			Daemons[i].d_socket = -1;
+
+#if _FFR_DAEMON_NETUNIX
+# if NETUNIX
+			/* Remove named sockets */
+			if (Daemons[i].d_addr.sa.sa_family == AF_UNIX)
+			{
+				int rval;
+				long sff = SFF_SAFEDIRPATH|SFF_OPENASROOT|SFF_NOLINK|SFF_MUSTOWN|SFF_EXECOK|SFF_CREAT;
+
+				/* if not safe, don't use it */
+				rval = safefile(Daemons[i].d_addr.sunix.sun_path,
+						RunAsUid, RunAsGid,
+						RunAsUserName, sff,
+						S_IRUSR|S_IWUSR, NULL);
+				if (rval == 0 &&
+				    unlink(Daemons[i].d_addr.sunix.sun_path) < 0)
+				{
+					sm_syslog(LOG_WARNING, NOQID,
+						  "Could not remove daemon %s socket: %s: %s",
+						  Daemons[i].d_name,
+						  Daemons[i].d_addr.sunix.sun_path,
+						  sm_errstring(errno));
+				}
+			}
+# endif /* NETUNIX */
+#endif	/* _FFR_DAEMON_NETUNIX */
+		}
+	}
+
+	finis(false, true, EX_OK);
 }
 /*
 **  RESTART_DAEMON -- Performs a clean restart of the daemon
@@ -2889,7 +2922,7 @@ restart_daemon()
 		if (LogLevel > 3)
 			sm_syslog(LOG_INFO, NOQID,
 				  "could not restart: need full path");
-		finis(false, EX_OSFILE);
+		finis(false, true, EX_OSFILE);
 		/* NOTREACHED */
 	}
 	if (LogLevel > 3)
@@ -2915,7 +2948,7 @@ restart_daemon()
 			sm_syslog(LOG_ALERT, NOQID,
 				  "could not drop privileges: %s",
 				  sm_errstring(errno));
-		finis(false, EX_OSERR);
+		finis(false, true, EX_OSERR);
 		/* NOTREACHED */
 	}
 
@@ -2967,7 +3000,7 @@ restart_daemon()
 	if (LogLevel > 0)
 		sm_syslog(LOG_ALERT, NOQID, "could not exec %s: %s",
 			  SaveArgv[0], sm_errstring(errno));
-	finis(false, EX_OSFILE);
+	finis(false, true, EX_OSFILE);
 	/* NOTREACHED */
 }
 /*

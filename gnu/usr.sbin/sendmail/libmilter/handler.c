@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: handler.c,v 8.26 2001/09/11 04:04:45 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: handler.c,v 8.29 2001/11/15 00:17:15 msk Exp $")
 
 #include "libmilter.h"
 
@@ -43,7 +43,7 @@ mi_handle_session(ctx)
 	ret = mi_engine(ctx);
 	if (ValidSocket(ctx->ctx_sd))
 	{
-		(void) close(ctx->ctx_sd);
+		(void) closesocket(ctx->ctx_sd);
 		ctx->ctx_sd = INVALID_SOCKET;
 	}
 	if (ctx->ctx_reply != NULL)

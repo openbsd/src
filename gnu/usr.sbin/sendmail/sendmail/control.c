@@ -10,7 +10,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: control.c,v 8.115 2001/09/21 22:20:40 ca Exp $")
+SM_RCSID("@(#)$Sendmail: control.c,v 8.116 2001/12/13 21:51:38 gshapiro Exp $")
 
 /* values for cmd_code */
 #define CMDERROR	0	/* bad command */
@@ -369,7 +369,9 @@ control_command(sock, e)
 			**  precision (if bsize == 512)
 			*/
 
-			free = (long)((double) free * ((double) bsize / 1024));
+			if (free > 0)
+				free = (long)((double) free *
+					      ((double) bsize / 1024));
 
 			(void) sm_io_fprintf(s, SM_TIME_DEFAULT,
 					     "%d/%d/%ld/%d\r\n",

@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: engine.c,v 8.97 2001/09/11 04:04:44 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: engine.c,v 8.102 2001/12/13 17:10:00 ca Exp $")
 
 #include "libmilter.h"
 
@@ -172,6 +172,7 @@ static cmdfct cmds[] =
 #define _SMFIS_OPTIONS	22
 #define _SMFIS_NOREPLY	23
 #define _SMFIS_FAIL	(-1)
+#define _SMFIS_NONE	(-2)
 
 /*
 **  MI_ENGINE -- receive commands and process them
@@ -208,6 +209,7 @@ mi_engine(ctx)
 	fi_abort = ctx->ctx_smfi->xxfi_abort;
 	mi_clr_macros(ctx, 0);
 	fix_stm(ctx);
+	r = _SMFIS_NONE;
 	do
 	{
 		/* call abort only if in a mail transaction */
@@ -222,6 +224,18 @@ mi_engine(ctx)
 			ret = MI_FAILURE;
 			break;
 		}
+
+		/*
+		**  Notice: buf is allocated by mi_rd_cmd() and it will
+		**  usually be free()d after it has been used in f().
+		**  However, if the function returns _SMFIS_KEEP then buf
+		**  contains macros and will not be free()d.
+		**  Hence r must be set to _SMFIS_NONE if a new buf is
+		**  allocated to avoid problem with housekeeping, esp.
+		**  if the code "break"s out of the loop.
+		*/
+
+		r = _SMFIS_NONE;
 		if ((buf = mi_rd_cmd(sd, &timeout, &cmd, &len,
 				     ctx->ctx_smfi->xxfi_name)) == NULL &&
 		    cmd < SMFIC_VALIDCMD)
@@ -293,7 +307,11 @@ mi_engine(ctx)
 
 			curstate = ST_HELO;
 			if (!trans_ok(curstate, newstate))
+			{
+				free(buf);
+				buf = NULL;
 				continue;
+			}
 		}
 		arg.a_len = len;
 		arg.a_buf = buf;
@@ -354,7 +372,7 @@ mi_engine(ctx)
 	/* close must always be called */
 	if ((fi_close = ctx->ctx_smfi->xxfi_close) != NULL)
 		(void) (*fi_close)(ctx);
-	if (buf != NULL)
+	if (r != _SMFIS_KEEP && buf != NULL)
 		free(buf);
 	mi_clr_macros(ctx, 0);
 	return ret;
@@ -1116,7 +1134,11 @@ mi_sendok(ctx, flag)
 {
 	if (ctx == NULL || ctx->ctx_smfi == NULL)
 		return false;
+
+	/* did the milter request this operation? */
 	if (flag != 0 && !bitset(flag, ctx->ctx_smfi->xxfi_flags))
 		return false;
+
+	/* are we in the correct state? It must be "End of Message". */
 	return ctx->ctx_state == ST_ENDM;
 }

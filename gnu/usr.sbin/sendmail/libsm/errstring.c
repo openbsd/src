@@ -11,7 +11,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: errstring.c,v 1.11 2001/09/25 21:25:00 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: errstring.c,v 1.12 2001/10/03 16:09:32 ca Exp $")
 
 #include <errno.h>
 #include <stdio.h>	/* sys_errlist, on some platforms */
@@ -28,6 +28,11 @@ SM_RCSID("@(#)$Sendmail: errstring.c,v 1.11 2001/09/25 21:25:00 gshapiro Exp $")
 # include <lber.h>
 # include <ldap.h>			/* for LDAP error codes */
 #endif /* LDAPMAP */
+
+/*
+**  Notice: this file is used by libmilter. Please try to avoid
+**	using libsm specific functions.
+*/
 
 /*
 **  SM_ERRSTRING -- return string description of error code

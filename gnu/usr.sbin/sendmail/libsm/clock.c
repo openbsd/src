@@ -12,7 +12,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: clock.c,v 1.33 2001/09/11 04:04:47 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: clock.c,v 1.34 2001/11/05 18:33:20 ca Exp $")
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
@@ -117,7 +117,7 @@ sm_sigsafe_seteventm(intvl, func, arg)
 	     evp = &ev->ev_link)
 	{
 #if SM_CONF_SETITIMER
-		if (timercmp(&(ev->ev_time), &nowi, >))
+		if (timercmp(&(ev->ev_time), &nowi, >=))
 #else /* SM_CONF_SETITIMER */
 		if (ev->ev_time >= nowi)
 #endif /* SM_CONF_SETITIMER */
@@ -160,6 +160,8 @@ sm_sigsafe_seteventm(intvl, func, arg)
 	timersub(&SmEventQueue->ev_time, &now, &itime.it_value);
 	itime.it_interval.tv_sec = 0;
 	itime.it_interval.tv_usec = 0;
+	if (itime.it_value.tv_sec == 0 && itime.it_value.tv_usec == 0)
+		itime.it_value.tv_usec = 1000;
 	(void) setitimer(ITIMER_REAL, &itime, NULL);
 # else /* SM_CONF_SETITIMER */
 	intvl = SmEventQueue->ev_time - now;
@@ -377,7 +379,7 @@ sm_tick(sig)
 	while ((ev = SmEventQueue) != NULL &&
 	       (ev->ev_pid != mypid ||
 #if SM_CONF_SETITIMER
-		timercmp(&ev->ev_time, &now, <)
+		timercmp(&ev->ev_time, &now, <=)
 #else /* SM_CONF_SETITIMER */
 		ev->ev_time <= now
 #endif /* SM_CONF_SETITIMER */

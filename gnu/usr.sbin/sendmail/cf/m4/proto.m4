@@ -13,7 +13,7 @@ divert(-1)
 #
 divert(0)
 
-VERSIONID(`$Sendmail: proto.m4,v 8.624 2001/09/28 21:52:59 ca Exp $')
+VERSIONID(`$Sendmail: proto.m4,v 8.628 2001/12/28 19:02:40 ca Exp $')
 
 # level CF_LEVEL config file format
 V`'CF_LEVEL/ifdef(`VENDOR_NAME', `VENDOR_NAME', `Berkeley')
@@ -862,6 +862,11 @@ dnl but add a trailing dot to qualified hostnames so other rules will work
 dnl should we do this for every hostname: even unqualified?
 R$* CC $* $| $* < @ $+.$+ > $*	$: $3 < @ $4.$5 . > $6
 R$* CC $* $| $*			$: $3
+ifdef(`_FFR_NOCANONIFY_HEADERS', `dnl
+# do not canonify header addresses
+R$* $| $* < @ $* $~P > $*	$: $&{addr_type} $| $2 < @ $3 $4 > $5
+R$* h $* $| $* < @ $+.$+ > $*	$: $3 < @ $4.$5 . > $6
+R$* h $* $| $*			$: $3', `dnl')
 # pass to name server to make hostname canonical
 R$* $| $* < @ $* > $*		$: $2 < @ $[ $3 $] > $4')
 dnl remove {daemon_flags} for other cases
@@ -1515,6 +1520,9 @@ R<?> <[$+:$-]> <$+> <$- $-> <$*>	$: $>D <[$1]> <$3> <$4 $5> <$6>')
 dnl not found, but subdomain: try again
 dnl   1  2    3    4  5    6
 R<?> <$+.$+> <$+> <$- $-> <$*>	$@ $>D <$2> <$3> <$4 $5> <$6>
+ifdef(`_FFR_LOOKUPTAG_', `dnl lookup Tag:
+dnl   1    2      3    4
+R<?> <$+> <$+> <! $-> <$*>	$: < $(access $3`'_TAG_DELIM_ $: ? $) > <$1> <$2> <! $3> <$4>', `dnl')
 dnl not found, no subdomain: return <default> and <passthru>
 dnl   1    2    3  4    5
 R<?> <$+> <$+> <$- $-> <$*>	$@ <$2> <$5>
@@ -1683,6 +1691,8 @@ dnl workspace: <result-of-lookup> (<>|<{client_addr}>) | OK
 R<$={Accept}> <$*>	$@ $1				return value of lookup
 R<REJECT> <$*>		$#error ifdef(`confREJECT_MSG', `$: "confREJECT_MSG"', `$@ 5.7.1 $: "550 Access denied"')
 R<DISCARD> <$*>		$#discard $: discard
+ifdef(`_FFR_QUARANTINE',
+`R<QUARANTINE:$+> <$*>	$#error $@ quarantine $: $1', `dnl')
 dnl error tag
 R<ERROR:$-.$-.$-:$+> <$*>	$#error $@ $1.$2.$3 $: $4
 R<ERROR:$+> <$*>		$#error $: $1
@@ -1828,6 +1838,8 @@ R<PERM> $*		$#error $@ 5.1.8 $: "_CODE553 Domain of sender address " $&f " does 
 ifdef(`_ACCESS_TABLE_', `dnl
 R<$={Accept}> $*	$# $1		accept from access map
 R<DISCARD> $*		$#discard $: discard
+ifdef(`_FFR_QUARANTINE',
+`R<QUARANTINE:$+> $*	$#error $@ quarantine $: $1', `dnl')
 R<REJECT> $*		$#error ifdef(`confREJECT_MSG', `$: "confREJECT_MSG"', `$@ 5.7.1 $: "550 Access denied"')
 dnl error tag
 R<ERROR:$-.$-.$-:$+> $*		$#error $@ $1.$2.$3 $: $4
@@ -1965,6 +1977,8 @@ dnl maybe we should stop checks already here (if SPAM_xyx)?
 R<$={SpamTag}> <$*>	$: @ $2		mark address as no match')
 R<REJECT> $*		$#error $@ 5.2.1 $: confRCPTREJ_MSG
 R<DISCARD> $*		$#discard $: discard
+ifdef(`_FFR_QUARANTINE',
+`R<QUARANTINE:$+> $*	$#error $@ quarantine $: $1', `dnl')
 dnl error tag
 R<ERROR:$-.$-.$-:$+> $*		$#error $@ $1.$2.$3 $: $4
 R<ERROR:$+> $*		$#error $: $1

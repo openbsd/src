@@ -8,7 +8,7 @@
 */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: smdb.c,v 8.52 2001/09/11 04:04:52 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: smdb.c,v 8.53 2001/11/19 19:31:14 gshapiro Exp $")
 
 #include <fcntl.h>
 #include <stdlib.h>
@@ -198,7 +198,6 @@ smdb_open_database(database, db_name, mode, mode_mask, sff, type, user_info,
 	SMDB_USER_INFO *user_info;
 	SMDB_DBPARAMS *params;
 {
-	int result;
 	bool type_was_default = false;
 
 	if (type == SMDB_TYPE_DEFAULT)
@@ -220,6 +219,8 @@ smdb_open_database(database, db_name, mode, mode_mask, sff, type, user_info,
 	    (strncmp(type, SMDB_TYPE_BTREE, SMDB_TYPE_BTREE_LEN) == 0))
 	{
 #ifdef NEWDB
+		int result;
+
 		result = smdb_db_open(database, db_name, mode, mode_mask, sff,
 				      type, user_info, params);
 # ifdef NDBM
@@ -236,6 +237,8 @@ smdb_open_database(database, db_name, mode, mode_mask, sff, type, user_info,
 	if (strncmp(type, SMDB_TYPE_NDBM, SMDB_TYPE_NDBM_LEN) == 0)
 	{
 #ifdef NDBM
+		int result;
+
 		result = smdb_ndbm_open(database, db_name, mode, mode_mask,
 					sff, type, user_info, params);
 		return result;

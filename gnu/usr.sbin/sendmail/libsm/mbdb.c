@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2001-2002 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -8,7 +8,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: mbdb.c,v 1.23 2001/09/11 04:04:48 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: mbdb.c,v 1.28 2002/01/07 23:29:43 gshapiro Exp $")
 
 #include <sys/param.h>
 
@@ -510,7 +510,7 @@ mbdb_ldap_lookup(name, user)
 		return EX_TEMPFAIL;
 	}
 
-	/* Get results (all if MF_NOREWRITE, otherwise one by one) */
+	/* Get results */
 	ret = ldap_result(LDAPLMAP.ldap_ld, msgid, 1,
 			  (LDAPLMAP.ldap_timeout.tv_sec == 0 ? NULL :
 			   &(LDAPLMAP.ldap_timeout)),
@@ -567,7 +567,12 @@ mbdb_ldap_lookup(name, user)
 		{
 			errno = sm_ldap_geterrno(LDAPLMAP.ldap_ld);
 			if (errno == LDAP_SUCCESS)
+			{
+# if USING_NETSCAPE_LDAP
+				ldap_memfree(attr);
+# endif /* USING_NETSCAPE_LDAP */
 				continue;
+			}
 
 			/* Must be an error */
 			errno += E_LDAPBASE;
@@ -736,13 +741,6 @@ static void
 mbdb_ldap_terminate()
 {
 	sm_ldap_close(&LDAPLMAP);
-	if (LDAPLMAP.ldap_base != MBDB_DEFAULT_LDAP_BASEDN)
-	{
-		if (LDAPLMAP.ldap_host != MBDB_DEFAULT_LDAP_SERVER)
-			LDAPLMAP.ldap_host = NULL;
-		sm_free(LDAPLMAP.ldap_base);
-		LDAPLMAP.ldap_base = NULL;
-	}
 }
 # endif /* _LDAP_EXAMPLE_ */
 #endif /* LDAPMAP */

@@ -13,7 +13,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: put.c,v 1.26 2001/09/11 04:04:49 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: put.c,v 1.27 2001/12/19 05:19:35 ca Exp $")
 #include <string.h>
 #include <errno.h>
 #include <sm/io.h>
@@ -71,8 +71,10 @@ void
 sm_perror(s)
 	const char *s;
 {
+	int save_errno = errno;
+
 	if (s != NULL && *s != '\0')
 		(void) sm_io_fprintf(smioerr, SM_TIME_DEFAULT, "%s: ", s);
 	(void) sm_io_fprintf(smioerr, SM_TIME_DEFAULT, "%s\n",
-			     sm_errstring(errno));
+			     sm_errstring(save_errno));
 }

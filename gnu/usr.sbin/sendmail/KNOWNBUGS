@@ -3,7 +3,7 @@
 	     K N O W N   B U G S   I N   S E N D M A I L
 
 
-The following are bugs or deficiencies in sendmail that I am aware of
+The following are bugs or deficiencies in sendmail that we are aware of
 but which have not been fixed in the current release.  You probably
 want to get the most up to date version of this from ftp.sendmail.org
 in /pub/sendmail/KNOWNBUGS.  For descriptions of bugs that have been
@@ -34,7 +34,7 @@ This list is not guaranteed to be complete.
   restructuring of the code -- for example, almost no C library support
   could be used to handle strings.
 
-* Header checks are not called if header value is too long.
+* Header checks are not called if header value is too long or empty.
 
   If the value of a header is longer than 1250 (MAXNAME + MAXATOM - 6)
   characters or it contains a single word longer than 256 (MAXNAME)
@@ -46,13 +46,12 @@ This list is not guaranteed to be complete.
   Sometimes identical, duplicate error messages can be generated.  As
   near as I can tell, this is rare and relatively innocuous.
 
-* $c (hop count) macro improperly set.
+* Misleading error messages.
 
-  The $c macro is supposed to contain the current hop count, for use
-  when calling a mailer.  This macro is initialized too early, and
-  is always zero (or the value of the -c command line flag, if any).
-  This macro will probably be removed entirely in a future release;
-  I don't believe there are any mailers left that require it.
+  If an illegal address is specified on the command line together
+  with at least one valid address and PostmasterCopy is set, the
+  DSN does not contain the illegal address, but only the valid
+  address(es).
 
 * \231 considered harmful.
 
@@ -119,6 +118,14 @@ This list is not guaranteed to be complete.
   Sendmail makes no allowance for headers that it adds, nor does it
   account for the SMTP on-the-wire \r\n expansion.  It probably doesn't
   allow for 8->7 bit MIME conversions either.
+
+* Client ignores SIZE parameter.
+
+  When sendmail acts as client and the server specifies a limit
+  for the mail size, sendmail will ignore this and try to send the
+  mail anyway.  The server will usually reject the MAIL command
+  which specifies the size of the message and hence this problem
+  is not significant.
 
 * Paths to programs being executed and the mode of program files are
   not checked.  Essentially, the RunProgramInUnsafeDirPath and
@@ -209,4 +216,4 @@ This list is not guaranteed to be complete.
   the file.  This is unavoidable as sendmail must verify the file is safe
   to open before opening it.  A file can not be locked until it is open.
 
-$Revision: 1.5 $, Last updated $Date: 2001/09/11 19:02:47 $
+$Revision: 1.6 $, Last updated $Date: 2002/01/14 03:21:38 $

@@ -1,4 +1,4 @@
-.\" Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+.\" Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
 .\" Copyright (c) 1983, 1997 Eric P. Allman.  All rights reserved.
 .\" Copyright (c) 1985, 1990, 1993
@@ -9,9 +9,9 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: newaliases.1,v 8.17 2001/04/03 01:53:18 gshapiro Exp $
+.\"     $Sendmail: newaliases.1,v 8.19 2001/10/10 03:23:17 ca Exp $
 .\"
-.Dd April 3, 2001
+.Dd October 10, 2001
 .Dt NEWALIASES 8
 .Os
 .Sh NAME
@@ -33,6 +33,15 @@ is identical to
 The
 .Nm newaliases
 utility exits 0 on success, and >0 if an error occurs.
+.Pp
+Notice: do
+.Em not
+use
+.Xr makemap 8
+to create the aliases data base, because
+.Nm
+puts a special token into the data base that is required by
+.Xr sendmail 8 .
 .Sh FILES
 .Bl -tag -width /etc/mail/aliases -compact
 .It Pa /etc/mail/aliases
@@ -41,6 +50,7 @@ The mail aliases file
 .Sh SEE ALSO
 .Xr aliases 5 ,
 .Xr mailer.conf 5 ,
+.Xr makemap 8 ,
 .Xr sendmail 8
 .Sh HISTORY
 The

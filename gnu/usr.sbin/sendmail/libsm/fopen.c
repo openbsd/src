@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -13,7 +13,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: fopen.c,v 1.58 2001/09/11 04:04:48 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: fopen.c,v 1.60 2002/01/07 21:41:35 ca Exp $")
 #include <errno.h>
 #include <setjmp.h>
 #include <sys/time.h>
@@ -117,8 +117,9 @@ sm_io_open(type, timeout, info, flags, rpool)
 
 	if (ioflags == 0)
 	{
+		/* must give some indication/intent */
 		errno = EINVAL;
-		return NULL; /* must give some indication/intent */
+		return NULL;
 	}
 
 	if (timeout == SM_TIME_DEFAULT)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: usersmtp.c,v 8.423 2001/09/24 14:16:54 ca Exp $")
+SM_RCSID("@(#)$Sendmail: usersmtp.c,v 8.428 2002/01/08 00:56:23 ca Exp $")
 
 #include <sysexits.h>
 
@@ -245,17 +245,12 @@ tryhelo:
 	/* got a 421 error code during startup */
 
   tempfail1:
-	if (mci->mci_errno == 0)
-		mci->mci_errno = errno;
 	mci_setstat(mci, EX_TEMPFAIL, ENHSCN(enhsc, "4.4.2"), NULL);
 	if (mci->mci_state != MCIS_CLOSED)
 		smtpquit(m, mci, e);
 	return;
 
   tempfail2:
-	if (mci->mci_errno == 0)
-		mci->mci_errno = errno;
-
 	/* XXX should use code from other end iff ENHANCEDSTATUSCODES */
 	mci_setstat(mci, EX_TEMPFAIL, ENHSCN(enhsc, "4.5.0"),
 		    SmtpReplyBuffer);
@@ -264,7 +259,6 @@ tryhelo:
 	return;
 
   unavailable:
-	mci->mci_errno = errno;
 	mci_setstat(mci, EX_UNAVAILABLE, "5.5.0", SmtpReplyBuffer);
 	smtpquit(m, mci, e);
 	return;
@@ -1029,27 +1023,45 @@ getsimple(context, id, result, len)
 		/* XXX maybe other mechanisms too?! */
 		addrealm = (*sai)[SASL_MECH] != NULL &&
 			   sm_strcasecmp((*sai)[SASL_MECH], "CRAM-MD5") == 0;
+
+		/*
+		**  Add realm to authentication id unless authid contains
+		**  '@' (i.e., a realm) or the default realm is empty.
+		*/
+
 		if (addrealm && h != NULL && strchr(h, '@') == NULL)
 		{
+			/* has this been done before? */
 			if ((*sai)[SASL_ID_REALM] == NULL)
 			{
 				char *realm;
 
 				realm = (*sai)[SASL_DEFREALM];
-				l = strlen(h) + strlen(realm) + 2;
 
-				/* should use rpool, but how to get it? */
-				authid = sm_sasl_malloc(l);
-				if (authid != NULL)
-				{
-					(void) sm_snprintf(authid, l, "%s@%s",
-							   h, realm);
-					(*sai)[SASL_ID_REALM] = authid;
-				}
-				else
+				/* do not add an empty realm */
+				if (*realm == '\0')
 				{
 					authid = h;
 					(*sai)[SASL_ID_REALM] = NULL;
+				}
+				else
+				{
+					l = strlen(h) + strlen(realm) + 2;
+
+					/* should use rpool, but from where? */
+					authid = sm_sasl_malloc(l);
+					if (authid != NULL)
+					{
+						(void) sm_snprintf(authid, l,
+								  "%s@%s",
+								   h, realm);
+						(*sai)[SASL_ID_REALM] = authid;
+					}
+					else
+					{
+						authid = h;
+						(*sai)[SASL_ID_REALM] = NULL;
+					}
 				}
 			}
 			else
@@ -1655,8 +1667,7 @@ smtpauth(m, mci, e)
 #endif /* 0 */
 
 	/* set default value for realm */
-	if ((mci->mci_sai)[SASL_DEFREALM] == NULL ||
-	    *(mci->mci_sai)[SASL_DEFREALM] == '\0')
+	if ((mci->mci_sai)[SASL_DEFREALM] == NULL)
 		(mci->mci_sai)[SASL_DEFREALM] = sm_rpool_strdup_x(e->e_rpool,
 							macvalue('j', CurEnv));
 
@@ -1720,6 +1731,18 @@ smtpmailfrom(m, mci, e)
 	if (tTd(18, 2))
 		sm_dprintf("smtpmailfrom: CurHost=%s\n", CurHostName);
 	enhsc = NULL;
+
+	/*
+	**  Check if connection is gone, if so
+	**  it's a tempfail and we use mci_errno
+	**  for the reason.
+	*/
+
+	if (mci->mci_state == MCIS_CLOSED)
+	{
+		errno = mci->mci_errno;
+		return EX_TEMPFAIL;
+	}
 
 	/* set up appropriate options to include */
 	if (bitset(MCIF_SIZE, mci->mci_flags) && e->e_msgsize > 0)
@@ -1879,7 +1902,6 @@ smtpmailfrom(m, mci, e)
 	if (r < 0)
 	{
 		/* communications failure */
-		mci->mci_errno = errno;
 		mci_setstat(mci, EX_TEMPFAIL, "4.4.2", NULL);
 		smtpquit(m, mci, e);
 		return EX_TEMPFAIL;
@@ -1997,6 +2019,18 @@ smtprcpt(to, m, mci, e, ctladdr, xstart)
 	}
 #endif /* PIPELINING */
 
+	/*
+	**  Check if connection is gone, if so
+	**  it's a tempfail and we use mci_errno
+	**  for the reason.
+	*/
+
+	if (mci->mci_state == MCIS_CLOSED)
+	{
+		errno = mci->mci_errno;
+		return EX_TEMPFAIL;
+	}
+
 	optbuf[0] = '\0';
 	bufp = optbuf;
 
@@ -2104,10 +2138,24 @@ smtprcptstat(to, m, mci, e)
 	register ENVELOPE *e;
 {
 	int r;
+	int save_errno;
 	char *enhsc;
+
+	/*
+	**  Check if connection is gone, if so
+	**  it's a tempfail and we use mci_errno
+	**  for the reason.
+	*/
+
+	if (mci->mci_state == MCIS_CLOSED)
+	{
+		errno = mci->mci_errno;
+		return EX_TEMPFAIL;
+	}
 
 	enhsc = NULL;
 	r = reply(m, mci, e, TimeOuts.to_rcpt, NULL, &enhsc);
+	save_errno = errno;
 	to->q_rstatus = sm_rpool_strdup_x(e->e_rpool, SmtpReplyBuffer);
 	to->q_status = ENHSCN_RPOOL(enhsc, smtptodsn(r), e->e_rpool);
 	if (!bitnset(M_LMTP, m->m_flags))
@@ -2115,6 +2163,7 @@ smtprcptstat(to, m, mci, e)
 	if (r < 0 || REPLYTYPE(r) == 4)
 	{
 		mci->mci_retryrcpt = true;
+		errno = save_errno;
 		return EX_TEMPFAIL;
 	}
 	else if (REPLYTYPE(r) == 2)
@@ -2197,6 +2246,18 @@ smtpdata(m, mci, e, ctladdr, xstart)
 	time_t timeout;
 	char *enhsc;
 
+	/*
+	**  Check if connection is gone, if so
+	**  it's a tempfail and we use mci_errno
+	**  for the reason.
+	*/
+
+	if (mci->mci_state == MCIS_CLOSED)
+	{
+		errno = mci->mci_errno;
+		return EX_TEMPFAIL;
+	}
+
 	enhsc = NULL;
 
 	/*
@@ -2247,6 +2308,7 @@ smtpdata(m, mci, e, ctladdr, xstart)
 	if (r < 0 || REPLYTYPE(r) == 4)
 	{
 		smtpquit(m, mci, e);
+		errno = mci->mci_errno;
 		return EX_TEMPFAIL;
 	}
 	else if (REPLYTYPE(r) == 5)
@@ -2651,6 +2713,18 @@ smtprset(m, mci, e)
 	mci->mci_okrcpts = 0;
 #endif /* PIPELINING */
 
+	/*
+	**  Check if connection is gone, if so
+	**  it's a tempfail and we use mci_errno
+	**  for the reason.
+	*/
+
+	if (mci->mci_state == MCIS_CLOSED)
+	{
+		errno = mci->mci_errno;
+		return;
+	}
+
 	SmtpPhase = "client RSET";
 	smtpmessage("RSET", m, mci);
 	r = reply(m, mci, e, TimeOuts.to_rset, NULL, NULL);
@@ -2774,6 +2848,15 @@ reply(m, mci, e, timeout, pfunc, enhstat)
 		if (mci->mci_state == MCIS_CLOSED)
 			return SMTPCLOSING;
 
+		/* don't try to read from a non-existant fd */
+		if (mci->mci_in == NULL)
+		{
+			if (mci->mci_errno == 0)
+				mci->mci_errno = EBADF;
+			errno = mci->mci_errno;
+			return -1;
+		}
+
 		if (mci->mci_out != NULL)
 			(void) sm_io_flush(mci->mci_out, SM_TIME_DEFAULT);
 
@@ -2790,11 +2873,17 @@ reply(m, mci, e, timeout, pfunc, enhstat)
 			/* if the remote end closed early, fake an error */
 			errno = save_errno;
 			if (errno == 0)
+			{
+				(void) sm_snprintf(SmtpReplyBuffer,
+						   sizeof SmtpReplyBuffer,
+						   "421 4.4.1 Connection reset by %s",
+						   CURHOSTNAME);
 #ifdef ECONNRESET
 				errno = ECONNRESET;
 #else /* ECONNRESET */
 				errno = EPIPE;
 #endif /* ECONNRESET */
+			}
 
 			mci->mci_errno = errno;
 			oldholderrs = HoldErrs;

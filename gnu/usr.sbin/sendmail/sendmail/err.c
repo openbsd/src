@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: err.c,v 8.187 2001/09/11 04:05:14 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: err.c,v 8.189 2002/01/09 18:52:30 ca Exp $")
 
 #if LDAPMAP
 # include <lber.h>
@@ -981,6 +981,10 @@ sm_errstring(errnum)
 	char *dnsmsg;
 	char *bp;
 	static char buf[MAXLINE];
+#if HASSTRERROR
+	char *err;
+	char errbuf[30];
+#endif /* HASSTRERROR */
 #if !HASSTRERROR && !defined(ERRLIST_PREDEFINED)
 	extern char *sys_errlist[];
 	extern int sys_nerr;
@@ -999,7 +1003,14 @@ sm_errstring(errnum)
 	  case ECONNRESET:
 		bp = buf;
 #if HASSTRERROR
-		(void) sm_strlcpy(bp, strerror(errnum), SPACELEFT(buf, bp));
+		err = strerror(errnum);
+		if (err == NULL)
+		{
+			(void) sm_snprintf(errbuf, sizeof errbuf,
+					   "Error %d", errnum);
+			err = errbuf;
+		}
+		(void) sm_strlcpy(bp, err, SPACELEFT(buf, bp));
 #else /* HASSTRERROR */
 		if (errnum >= 0 && errnum < sys_nerr)
 			(void) sm_strlcpy(bp, sys_errlist[errnum],
@@ -1133,7 +1144,13 @@ sm_errstring(errnum)
 #endif /* LDAPMAP */
 
 #if HASSTRERROR
-	return strerror(errnum);
+	err = strerror(errnum);
+	if (err == NULL)
+	{
+		(void) sm_snprintf(buf, sizeof buf, "Error %d", errnum);
+		return buf;
+	}
+	return err;
 #else /* HASSTRERROR */
 	if (errnum > 0 && errnum < sys_nerr)
 		return sys_errlist[errnum];

@@ -10,7 +10,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: milter.c,v 8.180 2001/09/17 20:39:57 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: milter.c,v 8.185 2001/11/21 02:21:15 gshapiro Exp $")
 
 #if MILTER
 # include <libmilter/mfapi.h>
@@ -1803,6 +1803,7 @@ milter_send_command(m, command, data, sz, e, state)
 	char rcmd;
 	ssize_t rlen;
 	unsigned long skipflag;
+	char *action;
 	char *defresponse;
 	char *response;
 
@@ -1815,36 +1816,43 @@ milter_send_command(m, command, data, sz, e, state)
 	{
 	  case SMFIC_CONNECT:
 		skipflag = SMFIP_NOCONNECT;
+		action = "connect";
 		defresponse = "554 Command rejected";
 		break;
 
 	  case SMFIC_HELO:
 		skipflag = SMFIP_NOHELO;
+		action = "helo";
 		defresponse = "550 Command rejected";
 		break;
 
 	  case SMFIC_MAIL:
 		skipflag = SMFIP_NOMAIL;
+		action = "mail";
 		defresponse = "550 5.7.1 Command rejected";
 		break;
 
 	  case SMFIC_RCPT:
 		skipflag = SMFIP_NORCPT;
+		action = "rcpt";
 		defresponse = "550 5.7.1 Command rejected";
 		break;
 
 	  case SMFIC_HEADER:
 		skipflag = SMFIP_NOHDRS;
+		action = "header";
 		defresponse = "550 5.7.1 Command rejected";
 		break;
 
 	  case SMFIC_BODY:
 		skipflag = SMFIP_NOBODY;
+		action = "body";
 		defresponse = "554 5.7.1 Command rejected";
 		break;
 
 	  case SMFIC_EOH:
 		skipflag = SMFIP_NOEOH;
+		action = "eoh";
 		defresponse = "550 5.7.1 Command rejected";
 		break;
 
@@ -1858,6 +1866,7 @@ milter_send_command(m, command, data, sz, e, state)
 
 	  default:
 		skipflag = 0;
+		action = "default";
 		defresponse = "550 5.7.1 Command rejected";
 		break;
 	}
@@ -1893,14 +1902,30 @@ milter_send_command(m, command, data, sz, e, state)
 	{
 	  case SMFIR_REPLYCODE:
 		MILTER_CHECK_REPLYCODE(defresponse);
-		if (MilterLogLevel > 8)
-			sm_syslog(LOG_INFO, e->e_id, "milter=%s, reject=%s",
-				  m->mf_name, response);
-		/* FALLTHROUGH */
+		if (MilterLogLevel > 10)
+			sm_syslog(LOG_INFO, e->e_id, "milter=%s, action=%s, reject=%s",
+				  m->mf_name, action, response);
+		*state = rcmd;
+		break;
 
 	  case SMFIR_REJECT:
+		if (MilterLogLevel > 10)
+			sm_syslog(LOG_INFO, e->e_id, "milter=%s, action=%s, reject",
+				  m->mf_name, action);
+		*state = rcmd;
+		break;
+
 	  case SMFIR_DISCARD:
+		if (MilterLogLevel > 10)
+			sm_syslog(LOG_INFO, e->e_id, "milter=%s, action=%s, discard",
+				  m->mf_name, action);
+		*state = rcmd;
+		break;
+
 	  case SMFIR_TEMPFAIL:
+		if (MilterLogLevel > 10)
+			sm_syslog(LOG_INFO, e->e_id, "milter=%s, action=%s, tempfail",
+				  m->mf_name, action);
 		*state = rcmd;
 		break;
 
@@ -1911,23 +1936,26 @@ milter_send_command(m, command, data, sz, e, state)
 			m->mf_state = SMFS_CLOSABLE;
 		else
 			m->mf_state = SMFS_DONE;
-		if (MilterLogLevel > 8)
-			sm_syslog(LOG_INFO, e->e_id, "Milter (%s): accepted",
-				  m->mf_name);
+		if (MilterLogLevel > 10)
+			sm_syslog(LOG_INFO, e->e_id, "milter=%s, action=%s, accepted",
+				  m->mf_name, action);
 		break;
 
 	  case SMFIR_CONTINUE:
 		/* if MAIL command is ok, filter is in message state */
 		if (command == SMFIC_MAIL)
 			m->mf_state = SMFS_INMSG;
+		if (MilterLogLevel > 12)
+			sm_syslog(LOG_INFO, e->e_id, "milter=%s, action=%s, continue",
+				  m->mf_name, action);
 		break;
 
 	  default:
 		/* Invalid response to command */
 		if (MilterLogLevel > 0)
 			sm_syslog(LOG_ERR, e->e_id,
-				  "milter_send_command(%s): returned bogus response %c",
-				  m->mf_name, rcmd);
+				  "milter_send_command(%s): action=%s returned bogus response %c",
+				  m->mf_name, action, rcmd);
 		milter_error(m, e);
 		break;
 	}
@@ -2685,7 +2713,13 @@ milter_changeheader(response, rlen, e)
 
 	if (h != sysheader && h->h_value != NULL)
 	{
-		e->e_msgsize -= strlen(h->h_value);
+		size_t l;
+
+		l = strlen(h->h_value);
+		if (l > e->e_msgsize)
+			e->e_msgsize = 0;
+		else
+			e->e_msgsize -= l;
 		/* rpool, don't free: sm_free(h->h_value); XXX */
 	}
 
@@ -2693,7 +2727,15 @@ milter_changeheader(response, rlen, e)
 	{
 		/* Remove "Field: " from message size */
 		if (h != sysheader)
-			e->e_msgsize -= strlen(h->h_field) + 2;
+		{
+			size_t l;
+
+			l = strlen(h->h_field) + 2;
+			if (l > e->e_msgsize)
+				e->e_msgsize = 0;
+			else
+				e->e_msgsize -= l;
+		}
 		h->h_value = NULL;
 	}
 	else
@@ -2890,7 +2932,7 @@ milter_replbody(response, rlen, newfilter, e)
 			e->e_msgsize -= prevsize;
 	}
 
-	if (MilterLogLevel > 8)
+	if (newfilter && MilterLogLevel > 8)
 		sm_syslog(LOG_INFO, e->e_id, "Milter message: body replaced");
 
 	if (response == NULL)
@@ -2998,7 +3040,7 @@ milter_init(e, state)
 					   m->mf_sock < 0 ? "open" :
 							    "negotiate");
 			if (MilterLogLevel > 0)
-				sm_syslog(LOG_INFO, e->e_id,
+				sm_syslog(LOG_ERR, e->e_id,
 					  "Milter (%s): init failed to %s",
 					  m->mf_name,
 					  m->mf_sock < 0 ? "open" :
@@ -3132,7 +3174,7 @@ milter_connect(hostname, addr, e, state)
 
 	if (*state != SMFIR_CONTINUE)
 	{
-		if (MilterLogLevel > 7)
+		if (MilterLogLevel > 9)
 			sm_syslog(LOG_INFO, e->e_id, "Milter: connect, ending");
 		milter_quit(e);
 	}
@@ -3534,7 +3576,7 @@ milter_data(e, state)
 			{
 			  case SMFIR_REPLYCODE:
 				MILTER_CHECK_REPLYCODE("554 5.7.1 Command rejected");
-				if (MilterLogLevel > 8)
+				if (MilterLogLevel > 12)
 					sm_syslog(LOG_INFO, e->e_id, "milter=%s, reject=%s",
 						  m->mf_name, response);
 				*state = rcmd;
@@ -3542,8 +3584,25 @@ milter_data(e, state)
 				break;
 
 			  case SMFIR_REJECT: /* log msg at end of function */
+				if (MilterLogLevel > 12)
+					sm_syslog(LOG_INFO, e->e_id, "milter=%s, reject",
+						  m->mf_name);
+				*state = rcmd;
+				m->mf_state = SMFS_DONE;
+				break;
+
 			  case SMFIR_DISCARD:
+				if (MilterLogLevel > 12)
+					sm_syslog(LOG_INFO, e->e_id, "milter=%s, discard",
+						  m->mf_name);
+				*state = rcmd;
+				m->mf_state = SMFS_DONE;
+				break;
+
 			  case SMFIR_TEMPFAIL:
+				if (MilterLogLevel > 12)
+					sm_syslog(LOG_INFO, e->e_id, "milter=%s, tempfail",
+						  m->mf_name);
 				*state = rcmd;
 				m->mf_state = SMFS_DONE;
 				break;
@@ -3572,14 +3631,14 @@ milter_data(e, state)
 				}
 				if (response == NULL)
 					response = newstr("");
-				if (MilterLogLevel > 8)
+				if (MilterLogLevel > 3)
 					sm_syslog(LOG_INFO, e->e_id,
-						  "Milter: quarantine: %s",
-						  response);
-				e->e_holdmsg = sm_rpool_strdup_x(e->e_rpool,
+						  "milter=%s, quarantine=%s",
+						  m->mf_name, response);
+				e->e_quarmsg = sm_rpool_strdup_x(e->e_rpool,
 								 response);
 				macdefine(&e->e_macro, A_PERM,
-					  macid("{holdmsg}"), e->e_holdmsg);
+					  macid("{quarantine}"), e->e_quarmsg);
 				break;
 # endif /* _FFR_QUARANTINE */
 

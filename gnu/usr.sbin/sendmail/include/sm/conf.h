@@ -10,7 +10,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: conf.h,v 1.78 2001/09/23 03:13:09 ca Exp $
+ *	$Sendmail: conf.h,v 1.82 2001/12/20 16:14:48 ca Exp $
  */
 
 /*
@@ -49,6 +49,14 @@
 # ifndef HASLSTAT
 #  define HASLSTAT	1	/* has lstat(2) call */
 # endif /* ! HASLSTAT */
+
+# ifndef HASNICE
+#  define HASNICE	1	/* has nice(2) call */
+# endif /* ! HASNICE */
+
+# ifndef HASRRESVPORT
+#  define HASRRESVPORT	1	/* has rrsevport(3) call */
+# endif /* ! HASRRESVPORT */
 
 /**********************************************************************
 **  "Hard" compilation options.
@@ -195,11 +203,14 @@ extern void	hard_syslog();
 #  define LA_TYPE	LA_INT
 #  define FSHIFT	16
 #  define LA_AVENRUN	"avenrun"
-#  ifndef _AIX4
+#  if !defined(_AIX4) || _AIX4 < 40300
 #   ifndef __BIT_TYPES_DEFINED__
 #    define SM_INT32	int
 #   endif /* __BIT_TYPES_DEFINED__ */
-#  endif /* ! _AIX4 */
+#  endif /* !defined(_AIX4) || _AIX4 < 40300 */
+#  if !defined(_AIX4) || _AIX4 < 40200
+#   define SM_CONF_SYSLOG	0
+#  endif /* !defined(_AIX4) || _AIX4 < 40200 */
 # endif /* _AIX3 */
 
 
@@ -686,7 +697,8 @@ typedef int		pid_t;
 #  define HASSETSID	1	/* has the setsid(2) POSIX syscall */
 #  define HASINITGROUPS	1
 #  define HASSETVBUF	1
-#  define HASSETREUID	1
+#  define HASSETREUID	0
+#  define HASSETEUID	1
 #  define USESETEUID	1	/* has usable seteuid(2) call */
 #  define HASLSTAT	1
 #  define HASSETRLIMIT	1
@@ -1594,6 +1606,73 @@ typedef int		pid_t;
 # endif /* apollo */
 
 /*
+**  MPE-iX
+**
+**	Requires MPE 6.0 or greater.  See sendmail/README for more info.
+**
+**	From Mark Bixby <mark_bixby@hp.com> or <mark@bixby.org>.
+*/
+
+# ifdef MPE
+
+#  include <sys/sysmacros.h>
+#  include <fcntl.h>
+
+/* Sendmail stuff */
+#  define HASFCHOWN		0	/* lacks fchown() */
+#  define HASGETUSERSHELL	0	/* lacks getusershell() */
+#  ifdef HASNICE
+#   undef  HASNICE
+#  endif /* HASNICE */
+#  define HASNICE		0	/* lacks nice() */
+#  define HASRANDOM		0	/* lacks random() */
+#  ifdef HASRRESVPORT
+#   undef HASRRESVPORT
+#  endif /* HASRRESVPORT */
+#  define HASRRESVPORT		0	/* lacks rresvport() */
+#  define IP_SRCROUTE		0	/* lacks IP source routing fields */
+#  ifdef MATCHGECOS
+#   undef MATCHGECOS
+#  endif /* MATCHGECOS */
+#  define MATCHGECOS		0	/* lacks an initialized GECOS field */
+#  define NEEDFSYNC		1	/* use sendmail's fsync() */
+#  define NEEDLINK		1	/* use sendmail's link() */
+#  define NOFTRUNCATE		1	/* lacks ftruncate() */
+#  define SFS_TYPE		SFS_NONE /* can't determine disk space */
+#  define SM_CONF_SYSLOG	0	/* use sendmail decl of syslog() */
+#  define USE_DOUBLE_FORK	0	/* don't fork an intermediate zombie */
+#  define USE_ENVIRON		1	/* use environ instead of envp */
+
+/* Missing header stuff */
+#  define AF_UNSPEC		0
+#  define AF_MAX		AF_INET
+#  define IFF_LOOPBACK		0x8
+#  define IN_LOOPBACKNET	127
+#  define MAXNAMLEN		NAME_MAX
+#  define S_IEXEC		S_IXUSR
+#  define S_IREAD		S_IRUSR
+#  define S_IWRITE		S_IWUSR
+
+/* Present header stuff that needs to be missing */
+#  undef NGROUPS_MAX
+
+/* Shadow functions */
+#  define bind		sendmail_mpe_bind
+#  define _exit		sendmail_mpe__exit
+#  define exit		sendmail_mpe_exit
+#  define fcntl		sendmail_mpe_fcntl
+#  define getegid	sendmail_mpe_getegid
+#  define geteuid	sendmail_mpe_geteuid
+#  define getpwnam	sendmail_mpe_getpwnam
+#  define getpwuid	sendmail_mpe_getpwuid
+#  define setgid	sendmail_mpe_setgid
+#  define setuid	sendmail_mpe_setuid
+extern int		sendmail_mpe_fcntl __P((int, int, ...));
+extern struct passwd *	sendmail_mpe_getpwnam __P((const char *));
+extern struct passwd *	sendmail_mpe_getpwuid __P((uid_t));
+# endif /* MPE */
+
+/*
 **  System V Rel 5.x (a.k.a Unixware7 w/o BSD-Compatibility Libs ie. native)
 **
 **	Contributed by Paul Gampe <paulg@apnic.net>
@@ -2069,12 +2148,12 @@ typedef struct msgb		mblk_t;
 /*
 **  Siemens Nixdorf Informationssysteme AG SINIX
 **
-**	Contributed by Gerald Rinske <Gerald.Rinske@mch.sni.de>
-**	of Siemens Business Services VAS.
+**	Contributed by Gerald Rinske of Siemens Business Services VAS.
 */
 # ifdef sinix
 #  define HASRANDOM		0	/* has random(3) */
-#  define SYSLOG_BUFSIZE		1024
+#  define SYSLOG_BUFSIZE	1024
+#  define SM_INT32		int	/* 32bit integer */
 # endif /* sinix */
 
 /*
@@ -2293,6 +2372,14 @@ typedef struct msgb		mblk_t;
 # ifndef SECUREWARE
 #  define SECUREWARE	0	/* assume no SecureWare C2 auditing hooks */
 # endif /* ! SECUREWARE */
+
+# ifndef USE_DOUBLE_FORK
+#  define USE_DOUBLE_FORK	1	/* avoid intermediate zombies */
+# endif /* ! USE_DOUBLE_FORK */
+
+# ifndef USE_ENVIRON
+#  define USE_ENVIRON	0	/* use main() envp instead of extern environ */
+# endif /* ! USE_ENVIRON */
 
 # ifndef USE_SIGLONGJMP
 #  define USE_SIGLONGJMP	0	/* assume setjmp handles signals properly */

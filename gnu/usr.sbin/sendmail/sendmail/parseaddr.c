@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: parseaddr.c,v 8.344 2001/09/20 23:08:06 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: parseaddr.c,v 8.349 2001/12/12 02:50:22 gshapiro Exp $")
 
 static void	allocaddr __P((ADDRESS *, int, char *, ENVELOPE *));
 static int	callsubr __P((char**, int, ENVELOPE *));
@@ -803,7 +803,8 @@ prescan(addr, delim, pvpbuf, pvpbsize, delimptr, toktab)
 				if (isascii(c) && isprint(c))
 					usrerr("553 Illegal character %c", c);
 				else
-					usrerr("553 Illegal character 0x%02x", c);
+					usrerr("553 Illegal character 0x%02x",
+					       c & 0x0ff);
 			}
 			if (bitset(M, newstate))
 				c = NOCHAR;
@@ -2923,17 +2924,17 @@ rscheck(rwset, p1, p2, e, rmcomm, cnt, logl, host, logid)
 			if (pvp[4] == NULL ||
 			    (pvp[4][0] & 0377) != CANONUSER ||
 			    pvp[5] == NULL)
-				e->e_holdmsg = sm_rpool_strdup_x(e->e_rpool,
+				e->e_quarmsg = sm_rpool_strdup_x(e->e_rpool,
 								 rwset);
 			else
 			{
 				cataddr(&(pvp[5]), NULL, ubuf,
 					sizeof ubuf, ' ');
-				e->e_holdmsg = sm_rpool_strdup_x(e->e_rpool,
+				e->e_quarmsg = sm_rpool_strdup_x(e->e_rpool,
 								 ubuf);
 			}
 			macdefine(&e->e_macro, A_PERM,
-				  macid("{holdmsg}"), e->e_holdmsg);
+				  macid("{quarantine}"), e->e_quarmsg);
 			quarantine = true;
 		}
 #endif /* _FFR_QUARANTINE */
@@ -2952,7 +2953,7 @@ rscheck(rwset, p1, p2, e, rmcomm, cnt, logl, host, logid)
 			if (!logged)
 			{
 				if (cnt)
-					markstats(e, &a1, true);
+					markstats(e, &a1, STATS_REJECT);
 				logged = true;
 			}
 		}
@@ -3011,6 +3012,9 @@ rscheck(rwset, p1, p2, e, rmcomm, cnt, logl, host, logid)
 	SM_END_TRY
 
 	setstat(rstat);
+
+	/* rulesets don't set errno */
+	errno = 0;
 	if (rstat != EX_OK && QuickAbort)
 		sm_exc_raisenew_x(&EtypeQuickAbort, 2);
 	return rstat;

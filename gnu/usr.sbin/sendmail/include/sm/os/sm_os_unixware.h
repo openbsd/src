@@ -6,7 +6,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	$Sendmail: sm_os_unixware.h,v 1.5 2001/09/24 20:34:36 ca Exp $
+ *	$Sendmail: sm_os_unixware.h,v 1.7 2001/11/11 16:32:00 ca Exp $
  */
 
 #define SM_OS_NAME	"unixware"
@@ -26,8 +26,7 @@
 /* size_t seems to be signed */
 #define SM_CONF_BROKEN_SIZE_T	1
 
-/* can't set real gid */
-#ifndef SM_CONF_CANT_SETRGID
-# define SM_CONF_CANT_SETRGID	1
-#endif /* SM_CONF_CANT_SETRGID */
-
+/* don't use flock() in mail.local.c */
+#ifndef LDA_USE_LOCKF
+# define LDA_USE_LOCKF	1
+#endif /* LDA_USE_LOCKF */

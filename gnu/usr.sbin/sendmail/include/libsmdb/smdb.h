@@ -6,7 +6,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	$Sendmail: smdb.h,v 8.37 2001/09/11 03:08:28 gshapiro Exp $
+ *	$Sendmail: smdb.h,v 8.38 2001/11/19 19:30:03 gshapiro Exp $
  *
  */
 
@@ -17,12 +17,6 @@
 # include <sys/stat.h>
 # include <sm/gen.h>
 # include <sm/errstring.h>
-
-# ifndef NDBM
-#  ifndef NEWDB
-ERROR	NDBM or NEWDB must be defined.
-#  endif /* ! NEWDB */
-# endif /* ! NDBM */
 
 # ifdef NDBM
 #  include <ndbm.h>

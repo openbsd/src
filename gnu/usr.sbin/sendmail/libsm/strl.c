@@ -9,9 +9,14 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: strl.c,v 1.28 2001/09/11 04:04:49 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: strl.c,v 1.29 2001/10/03 16:09:32 ca Exp $")
 #include <sm/config.h>
 #include <sm/string.h>
+
+/*
+**  Notice: this file is used by libmilter. Please try to avoid
+**	using libsm specific functions.
+*/
 
 /*
 **  XXX the type of the length parameter has been changed

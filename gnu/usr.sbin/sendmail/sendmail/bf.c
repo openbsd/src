@@ -18,7 +18,7 @@
 */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: bf.c,v 8.47 2001/09/11 04:05:12 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: bf.c,v 8.48 2001/11/04 17:10:49 ca Exp $")
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -548,7 +548,11 @@ sm_bfwrite(fp, buf, nbytes)
 				**  write().
 				*/
 
-				if (!((errno == ENOSPC) || (errno == EDQUOT)))
+				if (!(errno == ENOSPC
+#ifdef EDQUOT
+				      || errno == EDQUOT
+#endif /* EDQUOT */
+				     ))
 					errno = EIO;
 
 				return -1;

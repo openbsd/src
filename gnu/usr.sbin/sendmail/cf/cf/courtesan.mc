@@ -4,7 +4,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: courtesan.mc,v 1.8 2001/12/04 02:23:56 millert Exp $')
+VERSIONID(`$OpenBSD: courtesan.mc,v 1.9 2002/01/14 03:21:39 millert Exp $')
 OSTYPE(openbsd)
 dnl
 dnl First, we override some default values
@@ -44,6 +44,7 @@ dnl
 dnl Spam blocking features
 FEATURE(access_db)dnl
 FEATURE(blacklist_recipients)dnl
+dnl FEATURE(dnsbl, `inputs.orbz.org', `Open spam relay - see http://www.orbz.org/sender.php')dnl
 dnl FEATURE(dnsbl, `rbl.maps.vix.com', `Rejected - see http://www.mail-abuse.org/rbl/')dnl
 dnl FEATURE(dnsbl, `dul.maps.vix.com', `Dialup - see http://www.mail-abuse.org/dul/')dnl
 dnl FEATURE(dnsbl, `relays.mail-abuse.org', `Open spam relay - see http://www.mail-abuse.org/rss/')dnl

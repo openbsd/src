@@ -6,7 +6,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.10 2002/01/11 00:38:39 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.11 2002/01/14 03:21:39 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -30,7 +30,7 @@ define(`confBIND_OPTS', `WorkAroundBrokenAAAA')dnl
 dnl
 dnl Keep host status on disk between sendmail runs in the .hoststat dir
 define(`confHOST_STATUS_DIRECTORY', `.hoststat')dnl
-define(`confTO_HOSTSTATUS', `1h')dnl
+define(`confTO_HOSTSTATUS', `30m')dnl
 dnl
 dnl Always use fully qualified domains
 FEATURE(always_add_domain)
@@ -60,6 +60,10 @@ define(`confSERVER_CERT', `CERT_DIR/mycert.pem')dnl
 define(`confSERVER_KEY', `CERT_DIR/mykey.pem')dnl
 define(`confCLIENT_CERT', `CERT_DIR/mycert.pem')dnl
 define(`confCLIENT_KEY', `CERT_DIR/mykey.pem')dnl
+dnl
+dnl Queue options for /var/spool/mqueue:
+dnl   Up to 7 simultaneous queue runners, max 20 recipients per envelope
+QUEUE_GROUP(`mqueue', `P=/var/spool/mqueue, R=7, r=20, F=f')
 dnl
 dnl Make mail appear to be from openbsd.org
 MASQUERADE_AS(openbsd.org)

@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.16 2002/01/09 23:41:13 lebel Exp $
+#	$OpenBSD: Makefile,v 1.17 2002/01/14 03:21:39 millert Exp $
 #
 #  Makefile for configuration files.
 #
-#	$Sendmail: Makefile,v 8.54 2001/08/20 15:16:48 gshapiro Exp $
+#	$Sendmail: Makefile,v 8.56 2001/12/13 23:56:37 gshapiro Exp $
 #
 
 #
@@ -149,6 +149,7 @@ M4FILES=\
 	${CFDIR}/ostype/domainos.m4 \
 	${CFDIR}/ostype/dynix3.2.m4 \
 	${CFDIR}/ostype/freebsd4.m4 \
+	${CFDIR}/ostype/freebsd5.m4 \
 	${CFDIR}/ostype/gnu.m4 \
 	${CFDIR}/ostype/hpux10.m4 \
 	${CFDIR}/ostype/hpux11.m4 \
@@ -160,6 +161,7 @@ M4FILES=\
 	${CFDIR}/ostype/linux.m4 \
 	${CFDIR}/ostype/maxion.m4 \
 	${CFDIR}/ostype/mklinux.m4 \
+	${CFDIR}/ostype/mpeix.m4 \
 	${CFDIR}/ostype/nextstep.m4 \
 	${CFDIR}/ostype/openbsd.m4 \
 	${CFDIR}/ostype/osf1.m4 \

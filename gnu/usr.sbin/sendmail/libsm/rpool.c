@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -8,7 +8,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: rpool.c,v 1.23 2001/09/11 04:04:49 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: rpool.c,v 1.24 2002/01/11 21:54:43 ca Exp $")
 
 /*
 **  resource pools
@@ -108,6 +108,14 @@ sm_rpool_allocblock(rpool, size)
 **
 **	Exceptions:
 **		F:sm_heap -- out of memory
+**
+**	Notice: XXX
+**		if size == 0 and the rpool is new (no memory
+**		allocated yet) NULL is returned!
+**		We could solve this by
+**		- wasting 1 byte (size < avail)
+**		- checking for rpool->sm_poolptr != NULL
+**		- not asking for 0 sized buffer
 */
 
 void *
@@ -196,6 +204,14 @@ sm_rpool_malloc_x(rpool, size)
 **
 **	Returns:
 **		Pointer to block, NULL on failure.
+**
+**	Notice: XXX
+**		if size == 0 and the rpool is new (no memory
+**		allocated yet) NULL is returned!
+**		We could solve this by
+**		- wasting 1 byte (size < avail)
+**		- checking for rpool->sm_poolptr != NULL
+**		- not asking for 0 sized buffer
 */
 
 void *

@@ -11,11 +11,11 @@ divert(-1)
 
 divert(0)
 ifdef(`_DNSBL_R_',`dnl',`dnl
-VERSIONID(`$Sendmail: dnsbl.m4,v 8.25 2001/09/18 21:47:39 ca Exp $')
+VERSIONID(`$Sendmail: dnsbl.m4,v 8.26 2001/11/12 16:04:14 ca Exp $')
 define(`_DNSBL_R_',`')
 LOCAL_CONFIG
 # map for DNS based blacklist lookups
-Kdnsbl host -T<TMP>')
+Kdnsbl host -T<TMP>ifdef(`DNSBL_MAP_OPT',` DNSBL_MAP_OPT')')
 divert(-1)
 define(`_DNSBL_SRV_', `ifelse(len(X`'_ARG_),`1',`blackholes.mail-abuse.org',_ARG_)')dnl
 define(`_DNSBL_MSG_', `ifelse(len(X`'_ARG2_),`1',`"550 Mail from " $`'&{client_addr} " refused by blackhole site '_DNSBL_SRV_`"',`_ARG2_')')dnl

@@ -51,6 +51,12 @@ Handle a piece of a message's body.
 <th valign="top" align=left>NOTES</th> 
 <td>
 <ul>
+<li>bodyp points to a sequence of bytes.
+It is <em>not</em> a C string (a sequence of characters that is terminated by '\0').
+Therefore, do not use the usual C string functions like strlen() on this byte block.
+Moreover, the byte sequence may contain '\0' characters inside the block.
+Hence even if a trailing '\0' is added, C string functions may still fail
+to work as expected.
 <li>Since message bodies can be very large, defining xxfi_body can
 significantly impact filter performance.
 <li>End-of-lines are represented as received from SMTP (normally CR/LF).
@@ -64,7 +70,7 @@ significantly impact filter performance.
 
 <hr size="1">
 <font size="-1">
-Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
 All rights reserved.
 <br>
 By using this file, you agree to the terms and conditions set

@@ -8,7 +8,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: shm.c,v 1.8 2001/09/11 04:04:49 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: shm.c,v 1.10 2001/12/14 00:22:58 ca Exp $")
 
 #if SM_CONF_SHM
 # include <stdlib.h>
@@ -54,8 +54,7 @@ sm_shmstart(key, size, shmflg, shmid, owner)
 	if (*shmid < 0)
 		goto error;
 
-	shmflg = SHM_RND;
-	shm = shmat(*shmid, (void *) 0, shmflg);
+	shm = shmat(*shmid, (void *) 0, 0);
 	if (shm == SM_SHM_NULL)
 		goto error;
 

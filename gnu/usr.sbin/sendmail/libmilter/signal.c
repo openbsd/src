@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: signal.c,v 8.27 2001/09/11 04:04:45 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: signal.c,v 8.35 2002/01/10 01:34:55 ca Exp $")
 
 #include "libmilter.h"
 
@@ -101,15 +101,15 @@ mi_signal_thread(name)
 	while (true)
 	{
 		sig = 0;
-#ifdef SOLARIS
+#if defined(SOLARIS) || defined(__svr5__)
 		if ((sig = sigwait(&set)) < 0)
-#else /* SOLARIS */
+#else /* defined(SOLARIS) || defined(__svr5__) */
 		if (sigwait(&set, &sig) != 0)
-#endif /* SOLARIS */
+#endif /* defined(SOLARIS) || defined(__svr5__) */
 		{
 			smi_log(SMI_LOG_ERR,
-				"%s: sigwait returned error: %s",
-				(char *)name, strerror(errno));
+				"%s: sigwait returned error: %d",
+				(char *)name, errno);
 			if (++errs > MAX_FAILS_T)
 			{
 				mi_stop_milters(MILTER_ABRT);
@@ -151,6 +151,7 @@ mi_spawn_signal_thread(name)
 	char *name;
 {
 	sthread_t tid;
+	int r;
 	sigset_t set;
 
 	/* Mask HUP and KILL signals */
@@ -165,11 +166,12 @@ mi_spawn_signal_thread(name)
 			"%s: Couldn't mask HUP and KILL signals", name);
 		return MI_FAILURE;
 	}
-	if (thread_create(&tid, mi_signal_thread,
-			  (void *)name) != MI_SUCCESS)
+	r = thread_create(&tid, mi_signal_thread, (void *)name);
+	if (r != 0)
 	{
 		smi_log(SMI_LOG_ERR,
-			"%s: Couldn't start signal thread", name);
+			"%s: Couldn't start signal thread: %d",
+			name, r);
 		return MI_FAILURE;
 	}
 	return MI_SUCCESS;

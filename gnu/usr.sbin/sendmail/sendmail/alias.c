@@ -13,15 +13,15 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: alias.c,v 8.206 2001/09/11 04:05:11 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: alias.c,v 8.211 2001/11/12 22:52:18 ca Exp $")
 
-# define SEPARATOR ':'
+#define SEPARATOR ':'
 # define ALIAS_SPEC_SEPARATORS	" ,/:"
 
 static MAP	*AliasFileMap = NULL;	/* the actual aliases.files map */
 static int	NAliasFileMaps;	/* the number of entries in AliasFileMap */
 
-static char	*aliaslookup __P((char *, int *));
+static char	*aliaslookup __P((char *, int *, char *));
 
 /*
 **  ALIAS -- Compute aliases.
@@ -86,11 +86,12 @@ alias(a, sendq, aliaslevel, e)
 	**  send spam of this type to owner- of the list
 	**  ----  to stop spam from going to mailing lists!
 	*/
+
 	if (e->e_sender != NULL && *e->e_sender == '\0')
 	{
 		/* Look for owner of alias */
 		(void) sm_strlcpyn(obuf, sizeof obuf, 2, "owner-", a->q_user);
-		if (aliaslookup(obuf, &status) != NULL)
+		if (aliaslookup(obuf, &status, a->q_host) != NULL)
 		{
 			if (LogLevel > 8)
 				syslog(LOG_WARNING,
@@ -101,7 +102,7 @@ alias(a, sendq, aliaslevel, e)
 	}
 #endif /* _FFR_REDIRECTEMPTY */
 
-	p = aliaslookup(a->q_user, &status);
+	p = aliaslookup(a->q_user, &status, a->q_host);
 	if (status == EX_TEMPFAIL || status == EX_UNAVAILABLE)
 	{
 		a->q_state = QS_QUEUEUP;
@@ -154,6 +155,7 @@ alias(a, sendq, aliaslevel, e)
 	a->q_flags |= QGOODUID|QALIAS;
 
 	(void) sendtolist(p, a, sendq, aliaslevel + 1, e);
+
 	if (bitset(QSELFREF, a->q_flags) && QS_IS_EXPANDED(a->q_state))
 		a->q_state = QS_OK;
 
@@ -166,7 +168,7 @@ alias(a, sendq, aliaslevel, e)
 		(void) sm_strlcpy(obuf, "owner-owner", sizeof obuf);
 	else
 		(void) sm_strlcpyn(obuf, sizeof obuf, 2, "owner-", a->q_user);
-	owner = aliaslookup(obuf, &status);
+	owner = aliaslookup(obuf, &status, a->q_host);
 	if (owner == NULL)
 		return;
 
@@ -189,6 +191,7 @@ alias(a, sendq, aliaslevel, e)
 **	Parameters:
 **		name -- the name to look up.
 **		pstat -- a pointer to a place to put the status.
+**		av -- argument for %1 expansion.
 **
 **	Returns:
 **		the value of name.
@@ -202,11 +205,16 @@ alias(a, sendq, aliaslevel, e)
 */
 
 static char *
-aliaslookup(name, pstat)
+aliaslookup(name, pstat, av)
 	char *name;
 	int *pstat;
+	char *av;
 {
 	static MAP *map = NULL;
+#if _FFR_ALIAS_DETAIL
+	int i;
+	char *argv[4];
+#endif /* _FFR_ALIAS_DETAIL */
 
 	if (map == NULL)
 	{
@@ -222,7 +230,19 @@ aliaslookup(name, pstat)
 	if (sm_strcasecmp(name, "postmaster") == 0)
 		name = "postmaster";
 
+#if _FFR_ALIAS_DETAIL
+	i = 0;
+	argv[i++] = name;
+	argv[i++] = av;
+
+	/* XXX '+' is hardwired here as delimiter! */
+	if (av != NULL && *av == '+')
+		argv[i++] = av + 1;
+	argv[i++] = NULL;
+	return (*map->map_class->map_lookup)(map, name, argv, pstat);
+#else /* _FFR_ALIAS_DETAIL */
 	return (*map->map_class->map_lookup)(map, name, NULL, pstat);
+#endif /* _FFR_ALIAS_DETAIL */
 }
 /*
 **  SETALIAS -- set up an alias map
@@ -386,13 +406,12 @@ aliaswait(map, ext, isopen)
 	{
 		auto int st;
 		unsigned int sleeptime = 2;
-		int loopcount = 0;
+		unsigned int loopcount = 0;	/* only used for debugging */
 		time_t toolong = curtime() + SafeAlias;
 
 		while (isopen &&
 		       map->map_class->map_lookup(map, "@", NULL, &st) == NULL)
 		{
-			loopcount++;
 			if (curtime() > toolong)
 			{
 				/* we timed out */
@@ -406,8 +425,11 @@ aliaswait(map, ext, isopen)
 			*/
 
 			if (tTd(27, 2))
-				sm_dprintf("aliaswait: sleeping for %u seconds (loopcount = %d)\n",
+			{
+				loopcount++;
+				sm_dprintf("aliaswait: sleeping for %u seconds (loopcount = %u)\n",
 					   sleeptime, loopcount);
+			}
 
 			map->map_mflags |= MF_CLOSING;
 			map->map_class->map_close(map);
@@ -577,9 +599,9 @@ rebuildaliases(map, automatic)
 	/* restore the old signals */
 	(void) sm_signal(SIGINT, oldsigint);
 	(void) sm_signal(SIGQUIT, oldsigquit);
-# ifdef SIGTSTP
+#ifdef SIGTSTP
 	(void) sm_signal(SIGTSTP, oldsigtstp);
-# endif /* SIGTSTP */
+#endif /* SIGTSTP */
 	return success;
 }
 /*

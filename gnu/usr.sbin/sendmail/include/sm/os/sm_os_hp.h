@@ -1,12 +1,12 @@
 /*
- * Copyright (c) 2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	$Sendmail: sm_os_hp.h,v 1.6 2000/12/05 19:00:47 dmoen Exp $
+ *	$Sendmail: sm_os_hp.h,v 1.8 2001/10/31 15:36:56 ca Exp $
  */
 
 /*
@@ -24,3 +24,11 @@
 #ifndef SM_CONF_MSG
 # define SM_CONF_MSG	1
 #endif /* SM_CONF_MSG */
+
+/* max/min buffer size of other than regular files */
+#ifndef SM_IO_MAX_BUF
+# define SM_IO_MAX_BUF	8192
+#endif /* SM_IO_MAX_BUF */
+#ifndef SM_IO_MIN_BUF
+# define SM_IO_MIN_BUF	4096
+#endif /* SM_IO_MIN_BUF */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: exc.c,v 1.45 2001/09/11 04:04:48 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: exc.c,v 1.47 2002/01/09 18:51:43 ca Exp $")
 
 /*
 **  exception handling
@@ -19,6 +19,7 @@ SM_RCSID("@(#)$Sendmail: exc.c,v 1.45 2001/09/11 04:04:48 gshapiro Exp $")
 #include <ctype.h>
 #include <string.h>
 
+#include <sm/errstring.h>
 #include <sm/exc.h>
 #include <sm/heap.h>
 #include <sm/string.h>
@@ -161,10 +162,10 @@ sm_etype_os_print(exc, stream)
 
 	if (sysargs)
 		sm_io_fprintf(stream, SM_TIME_DEFAULT, "%s: %s failed: %s",
-			sysargs, syscall, strerror(err));
+			      sysargs, syscall, sm_errstring(err));
 	else
 		sm_io_fprintf(stream, SM_TIME_DEFAULT, "%s failed: %s", syscall,
-			strerror(err));
+			      sm_errstring(err));
 }
 
 /*

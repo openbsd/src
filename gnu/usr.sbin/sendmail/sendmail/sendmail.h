@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -48,7 +48,7 @@
 
 #ifdef _DEFINE
 # ifndef lint
-SM_UNUSED(static char SmailId[]) = "@(#)$Sendmail: sendmail.h,v 8.883 2001/09/25 18:59:53 ca Exp $";
+SM_UNUSED(static char SmailId[]) = "@(#)$Sendmail: sendmail.h,v 8.902 2002/01/09 00:10:11 ca Exp $";
 # endif /* ! lint */
 #endif /* _DEFINE */
 
@@ -65,6 +65,7 @@ SM_UNUSED(static char SmailId[]) = "@(#)$Sendmail: sendmail.h,v 8.883 2001/09/25
 #include <sm/mbdb.h>
 #include <sm/errstring.h>
 #include <sm/sysexits.h>
+#include <sm/shm.h>
 
 #ifdef LOG
 # include <syslog.h>
@@ -857,7 +858,7 @@ struct envelope
 					 * readonly. NULL or allocated from
 					 * e_rpool. */
 #if _FFR_QUARANTINE
-	char		*e_holdmsg;	/* why envelope is quarantined */
+	char		*e_quarmsg;	/* why envelope is quarantined */
 	char		e_qfletter;	/* queue file letter on disk */
 #endif /* _FFR_QUARANTINE */
 	char		*e_msgboundary;	/* MIME-style message part boundary */
@@ -1173,14 +1174,14 @@ MAP
 #define MF_ALIASWAIT	0x00000800	/* alias map in aliaswait state */
 #define MF_IMPL_HASH	0x00001000	/* implicit: underlying hash database */
 #define MF_IMPL_NDBM	0x00002000	/* implicit: underlying NDBM database */
-#define MF_UNSAFEDB	0x00004000	/* this map is world writable */
+/* 0x00004000	*/
 #define MF_APPEND	0x00008000	/* append new entry on rebuild */
 #define MF_KEEPQUOTES	0x00010000	/* don't dequote key before lookup */
 #define MF_NODEFER	0x00020000	/* don't defer if map lookup fails */
 #define MF_REGEX_NOT	0x00040000	/* regular expression negation */
 #define MF_DEFER	0x00080000	/* don't lookup map in defer mode */
 #define MF_SINGLEMATCH	0x00100000	/* successful only if match one key */
-#define MF_NOREWRITE	0x00200000	/* don't rewrite result, return as-is */
+/*			0x00200000	   available for use */
 #define MF_FILECLASS	0x00400000	/* this is a file class map */
 #define MF_OPENBOGUS	0x00800000	/* open failed, don't call map_close */
 #define MF_CLOSING	0x01000000	/* map is being closed */
@@ -1322,7 +1323,7 @@ typedef struct ph_map_struct	PH_MAP_STRUCT;
 extern void	proc_list_add __P((pid_t, char *, int, int, int));
 extern void	proc_list_clear __P((void));
 extern void	proc_list_display __P((SM_FILE_T *, char *));
-extern int	proc_list_drop __P((pid_t, int *, int *));
+extern void	proc_list_drop __P((pid_t, int, int *));
 extern void	proc_list_probe __P((void));
 extern void	proc_list_set __P((pid_t, char *));
 extern void	proc_list_signal __P((int, int));
@@ -1334,8 +1335,7 @@ extern void	proc_list_signal __P((int, int));
 struct symtab
 {
 	char		*s_name;	/* name to be entered */
-	short		s_type;		/* general type (see below) */
-	short		s_len;		/* length of this entry */
+	short		s_symtype;	/* general type (see below) */
 	struct symtab	*s_next;	/* pointer to next in chain */
 	union
 	{
@@ -1682,6 +1682,7 @@ typedef SM_INT32	mi_int32;
 #define VENDOR_HP	3	/* Hewlett-Packard specific config syntax */
 #define VENDOR_IBM	4	/* IBM specific config syntax */
 #define VENDOR_SENDMAIL	5	/* Sendmail, Inc. specific config syntax */
+#define VENDOR_DEC	6	/* Compaq, DEC, Digital */
 
 /* prototypes for vendor-specific hook routines */
 extern void	vendor_daemon_setup __P((ENVELOPE *));
@@ -1809,7 +1810,7 @@ EXTERN unsigned long	TLS_Srv_Opts;	/* TLS server options */
 /* queue file names */
 #if _FFR_QUARANTINE
 # define ANYQFL_LETTER '?'
-# define HELDQF_LETTER 'h'
+# define QUARQF_LETTER 'h'
 #else /* _FFR_QUARANTINE */
 /* Before quarantining, ANYQF == NORMQF */
 # define ANYQFL_LETTER 'q'
@@ -1857,9 +1858,9 @@ EXTERN unsigned long	TLS_Srv_Opts;	/* TLS server options */
 
 #if _FFR_QUARANTINE
 /* QueueMode bits */
-# define QM_NORMAL		0x0001
-# define QM_HELD		0x0002
-# define QM_LOST		0x0004
+# define QM_NORMAL		' '
+# define QM_QUARANTINE		'Q'
+# define QM_LOST		'L'
 #endif /* _FFR_QUARANTINE */
 
 /* Queue Run Limitations */
@@ -1893,7 +1894,7 @@ EXTERN time_t	QueueMaxDelay;	/* maximum queue delay */
 #endif /* _FFR_QUEUEDELAY */
 EXTERN QUEUE_CHAR	*QueueLimitId;		/* limit queue run to id */
 #if _FFR_QUARANTINE
-EXTERN QUEUE_CHAR	*QueueLimitReason;	/* limit queue run to rcpt */
+EXTERN QUEUE_CHAR	*QueueLimitQuarantine;	/* limit queue run to quarantine reason */
 #endif /* _FFR_QUARANTINE */
 EXTERN QUEUE_CHAR	*QueueLimitRecipient;	/* limit queue run to rcpt */
 EXTERN QUEUE_CHAR	*QueueLimitSender;	/* limit queue run to sender */
@@ -1909,6 +1910,9 @@ extern void	loseqfile __P((ENVELOPE *, char *));
 extern int	name2qid __P((char *));
 extern char	*qid_printname __P((ENVELOPE *));
 extern char	*qid_printqueue __P((int, int));
+#if _FFR_QUARANTINE
+extern void	quarantine_queue __P((char *, int));
+#endif /* _FFR_QUARANTINE */
 extern char	*queuename __P((ENVELOPE *, int));
 extern void	queueup __P((ENVELOPE *, bool, bool));
 extern bool	runqueue __P((bool, bool, bool, bool));
@@ -1918,6 +1922,7 @@ extern void	setup_queues __P((bool));
 extern bool	setnewqueue __P((ENVELOPE *));
 extern bool	shouldqueue __P((long, time_t));
 extern void	sync_queue_time __P((void));
+extern int	print_single_queue __P((int, int));
 #if REQUIRES_DIR_FSYNC
 # define SYNC_DIR(path, panic) sync_dir(path, panic)
 extern void	sync_dir __P((char *, bool));
@@ -1997,6 +2002,7 @@ extern void	inittimeouts __P((char *, bool));
 
 /* variables */
 extern unsigned char	tTdvect[100];	/* trace vector */
+
 /*
 **  Miscellaneous information.
 */
@@ -2302,7 +2308,13 @@ extern int	mailfile __P((char *volatile, MAILER *volatile, ADDRESS *, volatile l
 extern void	sendall __P((ENVELOPE *, int));
 
 /* stats */
-extern void	markstats __P((ENVELOPE *, ADDRESS *, bool));
+#define STATS_NORMAL		'n'
+#if _FFR_QUARANTINE
+# define STATS_QUARANTINE	'q'
+#endif /* _FFR_QUARANTINE */
+#define STATS_REJECT		'r'
+
+extern void	markstats __P((ENVELOPE *, ADDRESS *, int));
 extern void	clearstats __P((void));
 extern void	poststats __P((char *));
 
@@ -2376,7 +2388,7 @@ extern char	*fgetfolded __P((char *, int, SM_FILE_T *));
 extern void	fill_fd __P((int, char *));
 extern char	*find_character __P((char *, int));
 extern int	finduser __P((char *, bool *, SM_MBDB_T *));
-extern void	finis __P((bool, volatile int));
+extern void	finis __P((bool, bool, volatile int));
 extern void	fixcrlf __P((char *, bool));
 extern long	freediskspace __P((char *, long *));
 #if NETINET6 && NEEDSGETIPNODE
@@ -2459,7 +2471,7 @@ extern pid_t	sm_wait __P((int *));
 extern bool	split_by_recipient __P((ENVELOPE *e));
 extern void	stop_sendmail __P((void));
 extern char	*str2prt __P((char *));
-extern bool	strcontainedin __P((char *, char *));
+extern bool	strcontainedin __P((bool, char *, char *));
 extern int	switch_map_find __P((char *, char *[], short []));
 extern bool	transienterror __P((int));
 #if _FFR_BESTMX_BETTER_TRUNCATION || _FFR_DNSMAP_MULTI

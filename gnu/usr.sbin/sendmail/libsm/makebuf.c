@@ -13,7 +13,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: makebuf.c,v 1.23 2001/09/11 04:04:48 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: makebuf.c,v 1.26 2001/10/31 16:04:08 ca Exp $")
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -110,6 +110,28 @@ sm_whatbuf(fp, bufsize, couldbetty)
 		*bufsize = SM_IO_BUFSIZ;
 		return SMNPT;
 	}
+
+#if SM_IO_MAX_BUF_FILE > 0
+	if (S_ISREG(st.st_mode) && st.st_blksize > SM_IO_MAX_BUF_FILE)
+		st.st_blksize = SM_IO_MAX_BUF_FILE;
+#endif /* SM_IO_MAX_BUF_FILE > 0 */
+
+#if SM_IO_MAX_BUF > 0 || SM_IO_MIN_BUF > 0
+	if (!S_ISREG(st.st_mode))
+	{
+# if SM_IO_MAX_BUF > 0
+		if (st.st_blksize > SM_IO_MAX_BUF)
+			st.st_blksize = SM_IO_MAX_BUF;
+#  if SM_IO_MIN_BUF > 0
+		else
+#  endif /* SM_IO_MIN_BUF > 0 */
+# endif /* SM_IO_MAX_BUF > 0 */
+# if SM_IO_MIN_BUF > 0
+		if (st.st_blksize < SM_IO_MIN_BUF)
+			st.st_blksize = SM_IO_MIN_BUF;
+# endif /* SM_IO_MIN_BUF > 0 */
+	}
+#endif /* SM_IO_MAX_BUF > 0 || SM_IO_MIN_BUF > 0 */
 
 	/*
 	**  Optimise fseek() only if it is a regular file.  (The test for

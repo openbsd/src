@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: queue.c,v 8.788 2001/09/30 16:32:47 ca Exp $")
+SM_RCSID("@(#)$Sendmail: queue.c,v 8.834 2002/01/08 23:04:58 ca Exp $")
 
 #include <dirent.h>
 
@@ -40,7 +40,10 @@ static time_t	queuedelay __P((ENVELOPE *));
 # define queuedelay(e)	MinQueueAge
 #define queuedelay_qfver_unsupported(qfver) ((qfver) == 5 || (qfver) == 7)
 #endif /* _FFR_QUEUEDELAY */
-
+#if _FFR_QUARANTINE
+static char	queue_letter __P((ENVELOPE *, int));
+static bool	quarantine_queue_item __P((int, int, ENVELOPE *, char *));
+#endif /* _FFR_QUARANTINE */
 
 /* Naming convention: qgrp: index of queue group, qg: QUEUEGROUP */
 
@@ -118,8 +121,7 @@ static int	multiqueue_cache __P((char *, int, QUEUEGRP *, int, unsigned int *));
 static int	gatherq __P((int, int, bool, bool *, bool *));
 static int	sortq __P((int));
 static void	printctladdr __P((ADDRESS *, SM_FILE_T *));
-static int	print_single_queue __P((int, int));
-static bool	readqf __P((ENVELOPE *));
+static bool	readqf __P((ENVELOPE *, bool));
 static void	restart_work_group __P((int));
 static void	runner_work __P((ENVELOPE *, int, bool, int, int));
 static void	schedule_queue_runs __P((bool, int));
@@ -276,7 +278,6 @@ hash_q(p, h)
 **	E	error recipient
 **	F	flag bits
 **	G	queue delay algorithm (_FFR_QUEUEDELAY)
-**	h	hold reason (_FFR_QUARANTINE)
 **	H	header
 **	I	data file's inode number
 **	K	time of last delivery attempt
@@ -284,6 +285,7 @@ hash_q(p, h)
 **	M	message (obsolete)
 **	N	number of delivery attempts
 **	P	message priority
+**	q	quarantine reason (_FFR_QUARANTINE)
 **	Q	original recipient (ORCPT=)
 **	r	final recipient (Final-Recipient: DSN field)
 **	R	recipient
@@ -320,7 +322,6 @@ queueup(e, announce, msync)
 	bool announce;
 	bool msync;
 {
-	char *qf;
 	register SM_FILE_T *tfp;
 	register HDR *h;
 	register ADDRESS *q;
@@ -330,8 +331,9 @@ queueup(e, announce, msync)
 	register char *p;
 	MAILER nullmailer;
 	MCI mcibuf;
+	char qf[MAXPATHLEN];
 	char tf[MAXPATHLEN];
-	char dfname[MAXPATHLEN];
+	char df[MAXPATHLEN];
 	char buf[MAXLINE];
 
 	/*
@@ -440,16 +442,17 @@ queueup(e, announce, msync)
 	**  If there is no data file yet, create one.
 	*/
 
-	(void) sm_strlcpy(dfname, queuename(e, DATAFL_LETTER), sizeof dfname);
+	(void) sm_strlcpy(df, queuename(e, DATAFL_LETTER), sizeof df);
 	if (bitset(EF_HAS_DF, e->e_flags))
 	{
 		if (e->e_dfp != NULL &&
 		    SuperSafe != SAFE_REALLY &&
 		    sm_io_setinfo(e->e_dfp, SM_BF_COMMIT, NULL) < 0 &&
 		    errno != EINVAL)
+		{
 			syserr("!queueup: cannot commit data file %s, uid=%d",
-				queuename(e, DATAFL_LETTER), geteuid());
-
+			       queuename(e, DATAFL_LETTER), geteuid());
+		}
 		if (e->e_dfp != NULL &&
 		    SuperSafe == SAFE_INTERACTIVE && msync)
 		{
@@ -462,10 +465,10 @@ queueup(e, announce, msync)
 			{
 				if (newid)
 					syserr("!552 Error writing data file %s",
-					       dfname);
+					       df);
 				else
 					syserr("!452 Error writing data file %s",
-					       dfname);
+					       df);
 			}
 		}
 	}
@@ -482,14 +485,14 @@ queueup(e, announce, msync)
 
 		if (bitset(S_IWGRP, QueueFileMode))
 			oldumask = umask(002);
-		dfd = open(dfname, O_WRONLY|O_CREAT|O_TRUNC, QueueFileMode);
+		dfd = open(df, O_WRONLY|O_CREAT|O_TRUNC, QueueFileMode);
 		if (bitset(S_IWGRP, QueueFileMode))
 			(void) umask(oldumask);
 		if (dfd < 0 || (dfp = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT,
 						 (void *) &dfd, SM_IO_WRONLY,
 						 NULL)) == NULL)
 			syserr("!queueup: cannot create data temp file %s, uid=%d",
-				dfname, geteuid());
+				df, geteuid());
 		if (fstat(dfd, &stbuf) < 0)
 			e->e_dfino = -1;
 		else
@@ -514,23 +517,23 @@ queueup(e, announce, msync)
 			{
 				if (newid)
 					syserr("!552 Error writing data file %s",
-					       dfname);
+					       df);
 				else
 					syserr("!452 Error writing data file %s",
-					       dfname);
+					       df);
 			}
 		}
 
 		if (sm_io_close(dfp, SM_TIME_DEFAULT) < 0)
 			syserr("!queueup: cannot save data temp file %s, uid=%d",
-				dfname, geteuid());
+				df, geteuid());
 		e->e_putbody = putbody;
 	}
 
 	/*
 	**  Output future work requests.
 	**	Priority and creation time should be first, since
-	**	they are required by orderq.
+	**	they are required by gatherq.
 	*/
 
 	/* output queue version number (must be first!) */
@@ -586,9 +589,9 @@ queueup(e, announce, msync)
 
 #if _FFR_QUARANTINE
 	/* quarantine reason */
-	if (e->e_holdmsg != NULL)
-		(void) sm_io_fprintf(tfp, SM_TIME_DEFAULT, "h%s\n",
-				     denlstring(e->e_holdmsg, true, false));
+	if (e->e_quarmsg != NULL)
+		(void) sm_io_fprintf(tfp, SM_TIME_DEFAULT, "q%s\n",
+				     denlstring(e->e_quarmsg, true, false));
 #endif /* _FFR_QUARANTINE */
 
 	/* message from envelope, if it exists */
@@ -681,11 +684,18 @@ queueup(e, announce, msync)
 				     denlstring(q->q_paddr, true, false));
 		if (announce)
 		{
+			char *tag = "queued";
+
+#if _FFR_QUARANTINE
+			if (e->e_quarmsg != NULL)
+				tag = "quarantined";
+#endif /* _FFR_QUARANTINE */
+
 			e->e_to = q->q_paddr;
-			message("queued");
+			message(tag);
 			if (LogLevel > 8)
 				logdelivery(q->q_mailer, NULL, q->q_status,
-					    "queued", NULL, (time_t) 0, e);
+					    tag, NULL, (time_t) 0, e);
 			e->e_to = NULL;
 		}
 		if (tTd(40, 1))
@@ -814,40 +824,46 @@ queueup(e, announce, msync)
 
 	if (!newid)
 	{
+#if _FFR_QUARANTINE
+		char new = queue_letter(e, ANYQFL_LETTER);
+#endif /* _FFR_QUARANTINE */
+
 		/* rename (locked) tf to be (locked) [qh]f */
-		qf = queuename(e, ANYQFL_LETTER);
+		(void) sm_strlcpy(qf, queuename(e, ANYQFL_LETTER),
+				  sizeof qf);
 		if (rename(tf, qf) < 0)
 			syserr("cannot rename(%s, %s), uid=%d",
 				tf, qf, geteuid());
-
 # if _FFR_QUARANTINE
-		/* Check if type has changed */
-		if (e->e_qfletter != '\0' &&
-		    e->e_qfletter != qf[0])
+		else
 		{
-			char new = qf[0];
+			/*
+			**  Check if type has changed and only
+			**  remove the old item if the rename above
+			**  succeeded.
+			*/
 
-			/* If it has changed, remove the old item */
-			if (tTd(40, 5))
+			if (e->e_qfletter != '\0' &&
+			    e->e_qfletter != new)
 			{
-				sm_dprintf("type changed from %c to %c\n",
-					   e->e_qfletter, new);
-				if (tTd(40, 101))
-					pause();
-			}
+				if (tTd(40, 5))
+				{
+					sm_dprintf("type changed from %c to %c\n",
+						   e->e_qfletter, new);
+				}
 
-			qf[0] = e->e_qfletter;
-			if (unlink(qf) < 0)
-			{
-				/* XXX: something more drastic? */
-				if (LogLevel > 0)
-					sm_syslog(LOG_ERR, e->e_id,
-						  "queueup: unlink(%s) failed: %s",
-						  qf, sm_errstring(errno));
+				if (unlink(queuename(e, e->e_qfletter)) < 0)
+				{
+					/* XXX: something more drastic? */
+					if (LogLevel > 0)
+						sm_syslog(LOG_ERR, e->e_id,
+							  "queueup: unlink(%s) failed: %s",
+							  queuename(e, e->e_qfletter),
+							  sm_errstring(errno));
+				}
 			}
-			qf[0] = new;
 		}
-		e->e_qfletter = qf[0];
+		e->e_qfletter = new;
 # endif /* _FFR_QUARANTINE */
 
 		/*
@@ -871,21 +887,24 @@ queueup(e, announce, msync)
 		if (e->e_lockfp != NULL)
 			(void) sm_io_close(e->e_lockfp, SM_TIME_DEFAULT);
 		e->e_lockfp = tfp;
+
+		/* save log info */
+		if (LogLevel > 79)
+			sm_syslog(LOG_DEBUG, e->e_id, "queueup %s", qf);
 	}
 	else
 	{
-		qf = tf;
+		/* save log info */
+		if (LogLevel > 79)
+			sm_syslog(LOG_DEBUG, e->e_id, "queueup %s", tf);
+
 #if _FFR_QUARANTINE
-		e->e_qfletter = qf[0];
+		e->e_qfletter = queue_letter(e, ANYQFL_LETTER);
 #endif /* _FFR_QUARANTINE */
 	}
 
 	errno = 0;
 	e->e_flags |= EF_INQUEUE;
-
-	/* save log info */
-	if (LogLevel > 79)
-		sm_syslog(LOG_DEBUG, e->e_id, "queueup %s", qf);
 
 	if (tTd(40, 1))
 		sm_dprintf("<<<<< done queueing %s <<<<<\n\n", e->e_id);
@@ -967,7 +986,7 @@ printctladdr(a, tfp)
 **
 **	This propagates the signal to the child processes that are queue
 **	runners. This is for a queue runner "cleanup". After all of the
-**	child queue runner processees are signaled (it should be SIGTERM
+**	child queue runner processes are signaled (it should be SIGTERM
 **	being the sig) then the old signal handler (Oldsh) is called
 **	to handle any cleanup set for this process (provided it is not
 **	SIG_DFL or SIG_IGN). The signal may not be handled immediately
@@ -1028,7 +1047,7 @@ runners_sigterm(sig)
 **
 **	This propagates the signal to the child processes that are queue
 **	runners. This is for a queue runner "cleanup". After all of the
-**	child queue runner processees are signaled (it should be SIGHUP
+**	child queue runner processes are signaled (it should be SIGHUP
 **	being the sig) then the old signal handler (Oldsh) is called to
 **	handle any cleanup set for this process (provided it is not SIG_DFL
 **	or SIG_IGN). The signal may not be handled immediately if the
@@ -1082,13 +1101,13 @@ runners_sighup(sig)
 **
 **	Parameters:
 **		wgrp -- the work group id to restart.
-**		reason -- why (signal?).
+**		reason -- why (signal?), -1 to turn off restart
 **
 **	Returns:
 **		none.
 **
 **	Side effects:
-**		Sets global RestartWorkGroup to true.
+**		May set global RestartWorkGroup to true.
 **
 **	NOTE:	THIS CAN BE CALLED FROM A SIGNAL HANDLER.  DO NOT ADD
 **		ANYTHING TO THIS ROUTINE UNLESS YOU KNOW WHAT YOU ARE
@@ -1104,7 +1123,8 @@ mark_work_group_restart(wgrp, reason)
 		return;
 
 	WorkGrp[wgrp].wg_restart = reason;
-	RestartWorkGroup = true;
+	if (reason >= 0)
+		RestartWorkGroup = true;
 }
 /*
 **  RESTART_MARKED_WORK_GROUPS -- restart work groups marked as needing restart
@@ -1304,7 +1324,7 @@ runqueue(forkflag, verbose, persistent, runall)
 	/* queue run has been started, don't do any more this time */
 	clrbitn(NumQueue, DoQueueRun);
 
-	/* more then one queue or more then one directory per queue */
+	/* more than one queue or more than one directory per queue */
 	if (!forkflag && !verbose &&
 	    (WorkGrp[0].wg_qgs[0]->qg_numqueues > 1 || NumWorkGroups > 1 ||
 	     WorkGrp[0].wg_numqgrp > 1))
@@ -1767,7 +1787,7 @@ run_work_group(wgrp, forkflag, verbose, persistent, runall)
 
 	if (QueueLimitId != NULL || QueueLimitSender != NULL ||
 #if _FFR_QUARANTINE
-	    QueueLimitReason != NULL ||
+	    QueueLimitQuarantine != NULL ||
 #endif /* _FFR_QUARANTINE */
 	    QueueLimitRecipient != NULL)
 	{
@@ -1805,7 +1825,7 @@ run_work_group(wgrp, forkflag, verbose, persistent, runall)
 		{
 			e->e_id = NULL;
 			if (forkflag)
-				finis(true, ExitStat);
+				finis(true, true, ExitStat);
 			return true; /* we're done */
 		}
 	}
@@ -1819,9 +1839,11 @@ run_work_group(wgrp, forkflag, verbose, persistent, runall)
 			WorkGrp[wgrp].wg_curqgrp, WorkGrp[wgrp].wg_numqgrp);
 #endif /* _FFR_QUEUE_SCHED_DBG */
 
+#if HASNICE
 	/* tweak niceness of queue runs */
 	if (Queue[qgrp]->qg_nice > 0)
 		(void) nice(Queue[qgrp]->qg_nice);
+#endif /* HASNICE */
 
 	/* XXX running queue group... */
 	sm_setproctitle(true, CurEnv, "running queue: %s",
@@ -1919,7 +1941,7 @@ run_work_group(wgrp, forkflag, verbose, persistent, runall)
 			}
 			else
 			{
-				/* Reset global flags */
+				/* child -- Reset global flags */
 				RestartRequest = NULL;
 				RestartWorkGroup = false;
 				ShutdownRequest = NULL;
@@ -1934,7 +1956,24 @@ run_work_group(wgrp, forkflag, verbose, persistent, runall)
 				*/
 
 				sm_exc_newthread(fatal_error);
-				if (MaxQueueChildren > 0)
+
+				/*
+				**  SMTP processes (whether -bd or -bs) set
+				**  SIGCHLD to reapchild to collect
+				**  children status.  However, at delivery
+				**  time, that status must be collected
+				**  by sm_wait() to be dealt with properly
+				**  (check success of delivery based
+				**  on status code, etc).  Therefore, if we
+				**  are an SMTP process, reset SIGCHLD
+				**  back to the default so reapchild
+				**  doesn't collect status before
+				**  sm_wait().
+				*/
+
+				if (OpMode == MD_SMTP ||
+				    OpMode == MD_DAEMON ||
+				    MaxQueueChildren > 0)
 				{
 					proc_list_clear();
 					sm_releasesignal(SIGCHLD);
@@ -1945,7 +1984,9 @@ run_work_group(wgrp, forkflag, verbose, persistent, runall)
 				QuickAbort = OnlyOneError = false;
 				runner_work(e, sequenceno, true,
 					    maxrunners, njobs);
-				finis(true, ExitStat); /* This child is done */
+
+				/* This child is done */
+				finis(true, true, ExitStat);
 				/* NOTREACHED */
 			}
 		}
@@ -1968,7 +2009,7 @@ run_work_group(wgrp, forkflag, verbose, persistent, runall)
 
 			while ((ret = sm_wait(&status)) <= 0)
 				continue;
-			(void) proc_list_drop(ret, NULL, NULL);
+			proc_list_drop(ret, status, NULL);
 		}
 	}
 	else
@@ -2060,7 +2101,7 @@ run_work_group(wgrp, forkflag, verbose, persistent, runall)
 		/*
 		**  Get the LA outside the WorkQ loop if necessary.
 		**  In a persistent queue runner the code is repeated over
-		**  and over but orderq() may ignore entries due to
+		**  and over but gatherq() may ignore entries due to
 		**  shouldqueue() (do we really have to do this twice?).
 		**  Hence the queue runners would just idle around when once
 		**  CurrentLA caused all entries in a queue to be ignored.
@@ -2081,7 +2122,7 @@ run_work_group(wgrp, forkflag, verbose, persistent, runall)
 	/* exit without the usual cleanup */
 	e->e_id = NULL;
 	if (forkflag)
-		finis(true, ExitStat);
+		finis(true, true, ExitStat);
 	/* NOTREACHED */
 	return true;
 }
@@ -2181,14 +2222,14 @@ runqueueevent(qgrp)
 **		prepares available work into WorkList
 */
 
-#define NEED_P		001	/* 'P': priority */
-#define NEED_T		002	/* 'T': time */
-#define NEED_R		004	/* 'R': recipient */
-#define NEED_S		010	/* 'S': sender */
-#define NEED_H		020	/* host */
+#define NEED_P		0001	/* 'P': priority */
+#define NEED_T		0002	/* 'T': time */
+#define NEED_R		0004	/* 'R': recipient */
+#define NEED_S		0010	/* 'S': sender */
+#define NEED_H		0020	/* host */
 #if _FFR_QUARANTINE
-# define HAS_HOLD	040	/* has an unexpected 'h' line */
-# define NEED_HOLD	100	/* 'h': reason */
+# define HAS_QUARANTINE		0040	/* has an unexpected 'q' line */
+# define NEED_QUARANTINE	0100	/* 'q': reason */
 #endif /* _FFR_QUARANTINE */
 
 static WORK	*WorkList = NULL;	/* list of unsort work */
@@ -2226,7 +2267,7 @@ gatherq(qgrp, qdir, doall, full, more)
 
 	if (tTd(41, 1))
 	{
-		sm_dprintf("orderq:\n");
+		sm_dprintf("gatherq:\n");
 
 		check = QueueLimitId;
 		while (check != NULL)
@@ -2256,12 +2297,12 @@ gatherq(qgrp, qdir, doall, full, more)
 		}
 
 #if _FFR_QUARANTINE
-		if (QueueMode == QM_HELD)
+		if (QueueMode == QM_QUARANTINE)
 		{
-			check = QueueLimitReason;
+			check = QueueLimitQuarantine;
 			while (check != NULL)
 			{
-				sm_dprintf("\tQueueLimitReason = %s%s\n",
+				sm_dprintf("\tQueueLimitQuarantine = %s%s\n",
 					   check->queue_negate ? "!" : "",
 					   check->queue_match);
 				check = check->queue_next;
@@ -2274,7 +2315,7 @@ gatherq(qgrp, qdir, doall, full, more)
 	f = opendir(qd);
 	if (f == NULL)
 	{
-		syserr("orderq: cannot open \"%s\"",
+		syserr("gatherq: cannot open \"%s\"",
 			qid_printqueue(qgrp, qdir));
 		if (full != NULL)
 			*full = WorkListCount >= MaxQueueRun && MaxQueueRun > 0;
@@ -2295,14 +2336,14 @@ gatherq(qgrp, qdir, doall, full, more)
 		struct stat sbuf;
 
 		if (tTd(41, 50))
-			sm_dprintf("orderq: checking %s..", d->d_name);
+			sm_dprintf("gatherq: checking %s..", d->d_name);
 
 		/* is this an interesting entry? */
 #if _FFR_QUARANTINE
 		if (!(((QueueMode == QM_NORMAL &&
 			d->d_name[0] == NORMQF_LETTER) ||
-		       (QueueMode == QM_HELD &&
-			d->d_name[0] == HELDQF_LETTER) ||
+		       (QueueMode == QM_QUARANTINE &&
+			d->d_name[0] == QUARQF_LETTER) ||
 		       (QueueMode == QM_LOST &&
 			d->d_name[0] == LOSEQF_LETTER)) &&
 		      d->d_name[1] == 'f'))
@@ -2321,11 +2362,11 @@ gatherq(qgrp, qdir, doall, full, more)
 		{
 			if (Verbose)
 				(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
-						     "orderq: %s too long, %d max characters\n",
+						     "gatherq: %s too long, %d max characters\n",
 						     d->d_name, MAXQFNAME);
 			if (LogLevel > 0)
 				sm_syslog(LOG_ALERT, NOQID,
-					  "orderq: %s too long, %d max characters",
+					  "gatherq: %s too long, %d max characters",
 					  d->d_name, MAXQFNAME);
 			continue;
 		}
@@ -2333,8 +2374,8 @@ gatherq(qgrp, qdir, doall, full, more)
 		check = QueueLimitId;
 		while (check != NULL)
 		{
-			if (strcontainedin(check->queue_match, d->d_name) !=
-			    check->queue_negate)
+			if (strcontainedin(true, check->queue_match,
+					   d->d_name) != check->queue_negate)
 				break;
 			else
 				check = check->queue_next;
@@ -2368,7 +2409,7 @@ gatherq(qgrp, qdir, doall, full, more)
 		{
 			if (errno != ENOENT)
 				sm_syslog(LOG_INFO, NOQID,
-					  "orderq: can't stat %s/%s",
+					  "gatherq: can't stat %s/%s",
 					  qid_printqueue(qgrp, qdir),
 					  d->d_name);
 			wn--;
@@ -2380,12 +2421,12 @@ gatherq(qgrp, qdir, doall, full, more)
 			if (!((d->d_name[0] == DATAFL_LETTER ||
 			       d->d_name[0] == NORMQF_LETTER ||
 #if _FFR_QUARANTINE
-			       d->d_name[0] == HELDQF_LETTER ||
+			       d->d_name[0] == QUARQF_LETTER ||
 			       d->d_name[0] == LOSEQF_LETTER ||
 #endif /* _FFR_QUARANTINE */
 			       d->d_name[0] == XSCRPT_LETTER) &&
 			      d->d_name[1] == 'f' && d->d_name[2] == '\0'))
-				syserr("orderq: %s/%s is not a regular file",
+				syserr("gatherq: %s/%s is not a regular file",
 				       qid_printqueue(qgrp, qdir), d->d_name);
 			wn--;
 			continue;
@@ -2396,7 +2437,7 @@ gatherq(qgrp, qdir, doall, full, more)
 		     QueueSortOrder == QSO_BYMODTIME ||
 		     QueueSortOrder == QSO_RANDOM) &&
 #if _FFR_QUARANTINE
-		    QueueLimitReason == NULL &&
+		    QueueLimitQuarantine == NULL &&
 #endif /* _FFR_QUARANTINE */
 		    QueueLimitSender == NULL &&
 		    QueueLimitRecipient == NULL)
@@ -2420,7 +2461,7 @@ gatherq(qgrp, qdir, doall, full, more)
 		{
 			/* this may be some random person sending hir msgs */
 			if (tTd(41, 2))
-				sm_dprintf("orderq: cannot open %s: %s\n",
+				sm_dprintf("gatherq: cannot open %s: %s\n",
 					d->d_name, sm_errstring(errno));
 			errno = 0;
 			wn--;
@@ -2460,8 +2501,8 @@ gatherq(qgrp, qdir, doall, full, more)
 		if (QueueLimitRecipient != NULL)
 			i |= NEED_R;
 #if _FFR_QUARANTINE
-		if (QueueLimitReason != NULL)
-			i |= NEED_HOLD;
+		if (QueueLimitQuarantine != NULL)
+			i |= NEED_QUARANTINE;
 #endif /* _FFR_QUARANTINE */
 		while (cf != NULL && i != 0 &&
 		       sm_io_fgets(cf, SM_TIME_DEFAULT, lbuf,
@@ -2498,27 +2539,28 @@ gatherq(qgrp, qdir, doall, full, more)
 				break;
 
 #if _FFR_QUARANTINE
-			  case 'h':
-				if (QueueMode != QM_HELD &&
+			  case 'q':
+				if (QueueMode != QM_QUARANTINE &&
 				    QueueMode != QM_LOST)
 				{
 					if (tTd(41, 49))
-						sm_dprintf("%s not marked as held but has an 'h' line\n",
+						sm_dprintf("%s not marked as quarantined but has a 'q' line\n",
 							   w->w_name);
-					i |= HAS_HOLD;
+					i |= HAS_QUARANTINE;
 				}
-				else if (QueueMode == QM_HELD)
+				else if (QueueMode == QM_QUARANTINE)
 				{
-					if (QueueLimitReason == NULL)
+					if (QueueLimitQuarantine == NULL)
 					{
-						i &= ~NEED_HOLD;
+						i &= ~NEED_QUARANTINE;
 						break;
 					}
 					p = &lbuf[1];
-					check = QueueLimitReason;
+					check = QueueLimitQuarantine;
 					while (check != NULL)
 					{
-						if (strcontainedin(check->queue_match,
+						if (strcontainedin(false,
+								   check->queue_match,
 								   p) !=
 						    check->queue_negate)
 							break;
@@ -2526,7 +2568,7 @@ gatherq(qgrp, qdir, doall, full, more)
 							check = check->queue_next;
 					}
 					if (check != NULL)
-						i &= ~NEED_HOLD;
+						i &= ~NEED_QUARANTINE;
 				}
 				break;
 #endif /* _FFR_QUARANTINE */
@@ -2560,7 +2602,8 @@ gatherq(qgrp, qdir, doall, full, more)
 				check = QueueLimitRecipient;
 				while (check != NULL)
 				{
-					if (strcontainedin(check->queue_match,
+					if (strcontainedin(true,
+							   check->queue_match,
 							   p) !=
 					    check->queue_negate)
 						break;
@@ -2575,7 +2618,8 @@ gatherq(qgrp, qdir, doall, full, more)
 				check = QueueLimitSender;
 				while (check != NULL)
 				{
-					if (strcontainedin(check->queue_match,
+					if (strcontainedin(true,
+							   check->queue_match,
 							   &lbuf[1]) !=
 					    check->queue_negate)
 						break;
@@ -2615,8 +2659,8 @@ gatherq(qgrp, qdir, doall, full, more)
 
 		if ((!doall && shouldqueue(w->w_pri, w->w_ctime)) ||
 #if _FFR_QUARANTINE
-		    bitset(HAS_HOLD, i) ||
-		    bitset(NEED_HOLD, i) ||
+		    bitset(HAS_QUARANTINE, i) ||
+		    bitset(NEED_QUARANTINE, i) ||
 #endif /* _FFR_QUARANTINE */
 		    bitset(NEED_R|NEED_S, i))
 		{
@@ -2771,7 +2815,7 @@ sortq(max)
 	{
 		/*
 		**  Sort randomly.
-		**	workcmpf5() retuns a random 1 or -1.
+		**	workcmpf5() returns a random 1 or -1.
 		**	As long as nobody does a verification pass over the
 		**	sorted list, we should be golden.
 		*/
@@ -3311,7 +3355,14 @@ dowork(qgrp, qdir, id, forkflag, requeueflag, e)
 			PendingSignal = 0;
 			CurrentPid = getpid();
 			sm_exc_newthread(fatal_error);
-			if (MaxQueueChildren > 0)
+
+			/*
+			**  See note above about SMTP processes and SIGCHLD.
+			*/
+
+			if (OpMode == MD_SMTP ||
+			    OpMode == MD_DAEMON ||
+			    MaxQueueChildren > 0)
 			{
 				proc_list_clear();
 				sm_releasesignal(SIGCHLD);
@@ -3373,14 +3424,14 @@ dowork(qgrp, qdir, id, forkflag, requeueflag, e)
 		e->e_header = NULL;
 
 		/* read the queue control file -- return if locked */
-		if (!readqf(e))
+		if (!readqf(e, false))
 		{
 			if (tTd(40, 4) && e->e_id != NULL)
 				sm_dprintf("readqf(%s) failed\n",
 					qid_printname(e));
 			e->e_id = NULL;
 			if (forkflag)
-				finis(false, EX_OK);
+				finis(false, true, EX_OK);
 			else
 			{
 				/* adding this frees 8 bytes */
@@ -3404,7 +3455,7 @@ dowork(qgrp, qdir, id, forkflag, requeueflag, e)
 
 		/* finish up and exit */
 		if (forkflag)
-			finis(true, ExitStat);
+			finis(true, true, ExitStat);
 		else
 		{
 			dropenvelope(e, true, false);
@@ -3490,7 +3541,14 @@ doworklist(el, forkflag, requeueflag)
 			PendingSignal = 0;
 			CurrentPid = getpid();
 			sm_exc_newthread(fatal_error);
-			if (MaxQueueChildren > 0)
+
+			/*
+			**  See note above about SMTP processes and SIGCHLD.
+			*/
+
+			if (OpMode == MD_SMTP ||
+			    OpMode == MD_DAEMON ||
+			    MaxQueueChildren > 0)
 			{
 				proc_list_clear();
 				sm_releasesignal(SIGCHLD);
@@ -3548,8 +3606,8 @@ doworklist(el, forkflag, requeueflag)
 		if (WILL_BE_QUEUED(ei->e_sendmode))
 			continue;
 #if _FFR_QUARANTINE
-		else if (QueueMode != QM_HELD &&
-			 ei->e_holdmsg != NULL)
+		else if (QueueMode != QM_QUARANTINE &&
+			 ei->e_quarmsg != NULL)
 			continue;
 #endif /* _FFR_QUARANTINE */
 
@@ -3569,7 +3627,7 @@ doworklist(el, forkflag, requeueflag)
 		CurEnv = &e;
 
 		/* read the queue control file -- return if locked */
-		if (readqf(&e))
+		if (readqf(&e, false))
 		{
 			e.e_flags |= EF_INQUEUE;
 			eatheader(&e, requeueflag, true);
@@ -3596,7 +3654,7 @@ doworklist(el, forkflag, requeueflag)
 
 	/* finish up and exit */
 	if (forkflag)
-		finis(true, ExitStat);
+		finis(true, true, ExitStat);
 	return 0;
 }
 /*
@@ -3604,6 +3662,7 @@ doworklist(el, forkflag, requeueflag)
 **
 **	Parameters:
 **		e -- the envelope of the job to run.
+**		openonly -- only open the qf (returned as e_lockfp)
 **
 **	Returns:
 **		true if it successfully read the queue file.
@@ -3614,8 +3673,9 @@ doworklist(el, forkflag, requeueflag)
 */
 
 static bool
-readqf(e)
+readqf(e, openonly)
 	register ENVELOPE *e;
+	bool openonly;
 {
 	register SM_FILE_T *qfp;
 	ADDRESS *ctladdr;
@@ -3781,7 +3841,8 @@ readqf(e)
 		if (tTd(40, 8))
 			sm_dprintf("readqf(%s): bogus file\n", qf);
 		e->e_flags |= EF_INQUEUE;
-		loseqfile(e, "bogus file uid/gid in mqueue");
+		if (!openonly)
+			loseqfile(e, "bogus file uid/gid in mqueue");
 		(void) sm_io_close(qfp, SM_TIME_DEFAULT);
 		RELEASE_QUEUE;
 		return false;
@@ -3790,7 +3851,7 @@ readqf(e)
 	if (st.st_size == 0)
 	{
 		/* must be a bogus file -- if also old, just remove it */
-		if (st.st_ctime + 10 * 60 < curtime())
+		if (!openonly && st.st_ctime + 10 * 60 < curtime())
 		{
 			(void) xunlink(queuename(e, DATAFL_LETTER));
 			(void) xunlink(queuename(e, ANYQFL_LETTER));
@@ -3812,12 +3873,27 @@ readqf(e)
 		return false;
 	}
 
+#if _FFR_TRUSTED_QF
+	/*
+	**  If we don't own the file mark it as unsafe.
+	**  However, allow TrustedUser to own it as well
+	**  in case TrustedUser manipulates the queue.
+	*/
+
+	if (st.st_uid != geteuid() && st.st_uid != TrustedUid)
+		e->e_flags |= EF_UNSAFE;
+#else /* _FFR_TRUSTED_QF */
 	/* If we don't own the file mark it as unsafe */
 	if (st.st_uid != geteuid())
 		e->e_flags |= EF_UNSAFE;
+#endif /* _FFR_TRUSTED_QF */
 
 	/* good file -- save this lock */
 	e->e_lockfp = qfp;
+
+	/* Just wanted the open file */
+	if (openonly)
+		return true;
 
 	/* do basic system initialization */
 	initsys(e);
@@ -3828,7 +3904,7 @@ readqf(e)
 	set_op_mode(MD_QUEUERUN);
 	ctladdr = NULL;
 #if _FFR_QUARANTINE
-	e->e_qfletter = qf[0];
+	e->e_qfletter = queue_letter(e, ANYQFL_LETTER);
 #endif /* _FFR_QUARANTINE */
 	e->e_dfqgrp = e->e_qgrp;
 	e->e_dfqdir = e->e_qdir;
@@ -3979,10 +4055,10 @@ readqf(e)
 #endif /* _FFR_QUEUEDELAY */
 
 #if _FFR_QUARANTINE
-		  case 'h':		/* hold message */
-			e->e_holdmsg = sm_rpool_strdup_x(e->e_rpool, &bp[1]);
+		  case 'q':		/* quarantine reason */
+			e->e_quarmsg = sm_rpool_strdup_x(e->e_rpool, &bp[1]);
 			macdefine(&e->e_macro, A_PERM,
-				  macid("{holdmsg}"), &bp[1]);
+				  macid("{quarantine}"), e->e_quarmsg);
 			break;
 #endif /* _FFR_QUARANTINE */
 
@@ -4207,6 +4283,15 @@ readqf(e)
 		return true;
 	}
 
+	/* Check to make sure we have a complete queue file read */
+	if (!nomore)
+	{
+		syserr("readqf: %s: incomplete queue file read", qf);
+		(void) sm_io_close(qfp, SM_TIME_DEFAULT);
+		RELEASE_QUEUE;
+		return false;
+	}
+
 	/* possibly set ${dsn_ret} macro */
 	if (bitset(EF_RET_PARAM, e->e_flags))
 	{
@@ -4263,7 +4348,7 @@ prtstr(s, ml)
 	char *s;
 	int ml;
 {
-	char c;
+	int c;
 
 	if (s == NULL)
 		return;
@@ -4414,13 +4499,13 @@ printqueue()
 **		qdir -- the queue directory.
 **
 **	Returns:
-**		none.
+**		number of requests in mail queue.
 **
 **	Side Effects:
 **		Prints a listing of the mail queue on the standard output.
 */
 
-static int
+int
 print_single_queue(qgrp, qdir)
 	int qgrp;
 	int qdir;
@@ -4528,7 +4613,7 @@ print_single_queue(qgrp, qdir)
 		int flags = 0;
 		int qfver;
 #if _FFR_QUARANTINE
-		char holdmsg[MAXLINE];
+		char quarmsg[MAXLINE];
 #endif /* _FFR_QUARANTINE */
 		char statmsg[MAXLINE];
 		char bodytype[MAXNAME + 1];
@@ -4576,7 +4661,7 @@ print_single_queue(qgrp, qdir)
 			e.e_qgrp = qgrp;
 			e.e_qdir = qdir;
 			dfsize = -1;
-			if (readqf(&e))
+			if (readqf(&e, false))
 			{
 				char *df = queuename(&e, DATAFL_LETTER);
 				if (stat(df, &st) >= 0)
@@ -4590,14 +4675,12 @@ print_single_queue(qgrp, qdir)
 			clearenvelope(&e, false, e.e_rpool);
 			sm_rpool_free(e.e_rpool);
 		}
-#if _FFR_QUARANTINE
-		if (QueueMode == QM_LOST)
-			(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT, "?");
-		else if (QueueMode == QM_HELD)
-			(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT, "!");
-#endif /* _FFR_QUARANTINE */
 		if (w->w_lock)
 			(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT, "*");
+#if _FFR_QUARANTINE
+		else if (QueueMode == QM_LOST)
+			(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT, "?");
+#endif /* _FFR_QUARANTINE */
 		else if (w->w_tooyoung)
 			(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT, "-");
 		else if (shouldqueue(w->w_pri, w->w_ctime))
@@ -4608,7 +4691,7 @@ print_single_queue(qgrp, qdir)
 		errno = 0;
 
 #if _FFR_QUARANTINE
-		holdmsg[0] = '\0';
+		quarmsg[0] = '\0';
 #endif /* _FFR_QUARANTINE */
 		statmsg[0] = bodytype[0] = '\0';
 		qfver = 0;
@@ -4635,11 +4718,11 @@ print_single_queue(qgrp, qdir)
 				break;
 
 #if _FFR_QUARANTINE
-			  case 'h':	/* hold message */
-				if ((i = strlen(&buf[1])) >= sizeof holdmsg)
-					i = sizeof holdmsg - 1;
-				memmove(holdmsg, &buf[1], i);
-				holdmsg[i] = '\0';
+			  case 'q':	/* quarantine reason */
+				if ((i = strlen(&buf[1])) >= sizeof quarmsg)
+					i = sizeof quarmsg - 1;
+				memmove(quarmsg, &buf[1], i);
+				quarmsg[i] = '\0';
 				break;
 #endif /* _FFR_QUARANTINE */
 
@@ -4673,14 +4756,14 @@ print_single_queue(qgrp, qdir)
 					prtstr(&buf[1], 39);
 				}
 #if _FFR_QUARANTINE
-				if (holdmsg[0] != '\0')
+				if (quarmsg[0] != '\0')
 				{
 					(void) sm_io_fprintf(smioout,
 							     SM_TIME_DEFAULT,
-							     "\n   ON HOLD: (%.*s)",
+							     "\n     QUARANTINE: %.*s",
 							     Verbose ? 100 : 60,
-							     holdmsg);
-					holdmsg[0] = '\0';
+							     quarmsg);
+					quarmsg[0] = '\0';
 				}
 #endif /* _FFR_QUARANTINE */
 				if (statmsg[0] != '\0' || bodytype[0] != '\0')
@@ -4764,6 +4847,57 @@ print_single_queue(qgrp, qdir)
 	}
 	return nrequests;
 }
+
+#if _FFR_QUARANTINE
+/*
+**  QUEUE_LETTER -- get the proper queue letter for the current QueueMode.
+**
+**	Parameters:
+**		e -- envelope to build it in/from.
+**		type -- the file type, used as the first character
+**			of the file name.
+**
+**	Returns:
+**		the letter to use
+*/
+
+static char
+queue_letter(e, type)
+	ENVELOPE *e;
+	int type;
+{
+	/* Change type according to QueueMode */
+	if (type == ANYQFL_LETTER)
+	{
+		if (e->e_quarmsg != NULL)
+			type = QUARQF_LETTER;
+		else
+		{
+			switch (QueueMode)
+			{
+			  case QM_NORMAL:
+				type = NORMQF_LETTER;
+				break;
+
+			  case QM_QUARANTINE:
+				type = QUARQF_LETTER;
+				break;
+
+			  case QM_LOST:
+				type = LOSEQF_LETTER;
+				break;
+
+			  default:
+				/* should never happen */
+				abort();
+				/* NOTREACHED */
+			}
+		}
+	}
+	return type;
+}
+#endif /* _FFR_QUARANTINE */
+
 /*
 **  QUEUENAME -- build a file name in the queue directory for this envelope.
 **
@@ -4796,34 +4930,7 @@ queuename(e, type)
 		assign_queueid(e);
 
 #if _FFR_QUARANTINE
-	/* Change type according to QueueMode */
-	if (type == ANYQFL_LETTER)
-	{
-		if (e->e_holdmsg != NULL)
-			type = HELDQF_LETTER;
-		else
-		{
-			switch (QueueMode)
-			{
-			  case QM_NORMAL:
-				type = NORMQF_LETTER;
-				break;
-
-			  case QM_HELD:
-				type = HELDQF_LETTER;
-				break;
-
-			  case QM_LOST:
-				type = LOSEQF_LETTER;
-				break;
-
-			  default:
-				/* should never happen */
-				abort();
-				/* NOTREACHED */
-			}
-		}
-	}
+	type = queue_letter(e, type);
 #endif /* _FFR_QUARANTINE */
 
 	/* begin of filename */
@@ -4832,7 +4939,7 @@ queuename(e, type)
 	pref[2] = '\0';
 
 	/* Assign a queue group/directory if needed */
-	if (type ==  XSCRPT_LETTER)
+	if (type == XSCRPT_LETTER)
 	{
 		/*
 		**  We don't want to call setnewqueue() if we are fetching
@@ -4892,7 +4999,7 @@ queuename(e, type)
 			break;
 
 #if _FFR_QUARANTINE
-		  case HELDQF_LETTER:
+		  case QUARQF_LETTER:
 #endif /* _FFR_QUARANTINE */
 		  case TEMPQF_LETTER:
 		  case NEWQFL_LETTER:
@@ -6725,6 +6832,15 @@ makequeue(line, qdef)
 		p = delimptr;
 	}
 
+#if !HASNICE
+	if (qg->qg_nice != NiceQueueRun)
+	{
+		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+				     "Q%s: Warning: N= set on system that doesn't support nice()\n",
+				     qg->qg_name);
+	}
+#endif /* !HASNICE */
+
 	/* do some rationality checking */
 	if (NumQueue >= MAXQUEUEGROUPS)
 	{
@@ -7073,7 +7189,7 @@ makeworkgroups()
 **
 **	Side Effects:
 **		On success, the new data file is created.
-**		On failure, EF_FATALERRS is set in new->e_flags.
+**		On fatal failure, EF_FATALERRS is set in old->e_flags.
 */
 
 static bool	dup_df __P((ENVELOPE *, ENVELOPE *));
@@ -7100,7 +7216,7 @@ dup_df(old, new)
 		if (r < 0 && errno != EINVAL)
 		{
 			syserr("@can't commit %s", opath);
-			new->e_flags |= EF_FATALERRS;
+			old->e_flags |= EF_FATALERRS;
 			return false;
 		}
 	}
@@ -7111,12 +7227,6 @@ dup_df(old, new)
 	**
 	**  Don't waste time attempting a hard link unless old and new
 	**  are on the same file system.
-	**
-	**  We unlink the new file if it previously existed.  This protects
-	**  us from abandoned data files left behind as a result of
-	**  a prior system crash.  The envelope ids of these old files
-	**  can conflict with the envelope ids we are generating right now
-	**  if the clock was set back.
 	*/
 
 	ofs = Queue[old->e_qgrp]->qg_qpaths[old->e_qdir].qp_fsysidx;
@@ -7129,21 +7239,7 @@ dup_df(old, new)
 			SYNC_DIR(npath, true);
 			return true;
 		}
-		if (errno == EEXIST)
-		{
-			if (unlink(npath) < 0)
-			{
-				syserr("@can't unlink %s", npath);
-				new->e_flags |= EF_FATALERRS;
-				return false;
-			}
-			if (link(opath, npath) == 0)
-			{
-				new->e_flags |= EF_HAS_DF;
-				SYNC_DIR(npath, true);
-				return true;
-			}
-		}
+		goto error;
 	}
 
 	/*
@@ -7161,23 +7257,12 @@ dup_df(old, new)
 		SYNC_DIR(npath, true);
 		return true;
 	}
-	if (errno == EEXIST)
-	{
-		if (unlink(npath) < 0)
-		{
-			syserr("@can't unlink %s", npath);
-			new->e_flags |= EF_FATALERRS;
-			return false;
-		}
-		if (link(opath, npath) == 0)
-		{
-			new->e_flags |= EF_HAS_DF;
-			SYNC_DIR(npath, true);
-			return true;
-		}
-	}
-	syserr("@can't link %s to %s", opath, npath);
-	new->e_flags |= EF_FATALERRS;
+
+  error:
+	if (LogLevel > 0)
+		sm_syslog(LOG_ERR, old->e_id,
+			  "dup_df: can't link %s to %s, error=%s, envelope splitting failed",
+			  opath, npath, sm_errstring(errno));
 	return false;
 }
 
@@ -7224,6 +7309,11 @@ split_env(e, sendqueue, qgrp, qdir)
 	ee->e_qdir = ee->e_dfqdir = qdir;
 	ee->e_errormode = EM_MAIL;
 	ee->e_statmsg = NULL;
+#if _FFR_QUARANTINE
+	if (e->e_quarmsg != NULL)
+		ee->e_quarmsg = sm_rpool_strdup_x(ee->e_rpool,
+						  e->e_quarmsg);
+#endif /* _FFR_QUARANTINE */
 
 	/*
 	**  XXX Not sure if this copying is necessary.
@@ -7263,8 +7353,7 @@ split_env(e, sendqueue, qgrp, qdir)
 **		additional envelopes, and the associated data files exist
 **		on disk.  But the queue files are not created.
 **
-**		On failure, e->e_flags & EF_FATALERRS is set.
-**		e->e_sibling is not changed.
+**		On failure, e->e_sibling is not changed.
 **		The order of recipients in e->e_sendqueue is permuted.
 **		Abandoned data files for additional envelopes that failed
 **		to be created may exist on disk.
@@ -7422,7 +7511,10 @@ split_across_queue_groups(e)
 
 	/* create data files for each additional envelope */
 	if (!dup_df(e, splits[0]))
+	{
+		i = 0;
 		goto failure;
+	}
 	for (i = 1; i < nsplits; ++i)
 	{
 		/* copy or link to the previous data file */
@@ -7441,7 +7533,13 @@ split_across_queue_groups(e)
 
 	/* failure: clean up */
   failure:
-	e->e_flags |= EF_FATALERRS;
+	if (i > 0)
+	{
+		int j;
+
+		for (j = 0; j < i; j++)
+			(void) unlink(queuename(splits[j], DATAFL_LETTER));
+	}
 	e->e_sendqueue = addrs[0];
 	for (i = 0; i < naddrs - 1; ++i)
 		addrs[i]->q_next = addrs[i + 1];
@@ -7573,6 +7671,14 @@ split_within_queue(e)
 		ee = split_env(e, addrs[i], e->e_qgrp, e->e_qdir);
 		if (!dup_df(e, ee))
 		{
+
+			ee = firstsibling;
+			while (ee != NULL)
+			{
+				(void) unlink(queuename(ee, DATAFL_LETTER));
+				ee = ee->e_sibling;
+			}
+
 			/* Error.  Restore e's sibling & recipient lists. */
 			e->e_sibling = firstsibling;
 			for (i = 0; i < nrcpt - 1; ++i)
@@ -7724,3 +7830,478 @@ split_by_recipient(e)
 		e->e_flags |= EF_SPLIT;
 	return split;
 }
+
+#if _FFR_QUARANTINE
+/*
+**  QUARANTINE_QUEUE_ITEM -- {un,}quarantine a single envelope
+**
+**	Add/remove quarantine reason and requeue appropriately.
+**
+**	Parameters:
+**		qgrp -- queue group for the item
+**		qdir -- queue directory in the given queue group
+**		e -- envelope information for the item
+**		reason -- quarantine reason, NULL means unquarantine.
+**
+**	Results:
+**		true if item changed, false otherwise
+**
+**	Side Effects:
+**		Changes quarantine tag in queue file and renames it.
+*/
+
+static bool
+quarantine_queue_item(qgrp, qdir, e, reason)
+	int qgrp;
+	int qdir;
+	ENVELOPE *e;
+	char *reason;
+{
+	bool dirty = false;
+	bool failing = false;
+	bool foundq = false;
+	bool finished = false;
+	int fd;
+	int flags;
+	int oldtype;
+	int newtype;
+	int save_errno;
+	MODE_T oldumask = 0;
+	SM_FILE_T *oldqfp, *tempqfp;
+	char *bp;
+	char oldqf[MAXPATHLEN];
+	char tempqf[MAXPATHLEN];
+	char newqf[MAXPATHLEN];
+	char buf[MAXLINE];
+
+	oldtype = queue_letter(e, ANYQFL_LETTER);
+	(void) sm_strlcpy(oldqf, queuename(e, ANYQFL_LETTER), sizeof oldqf);
+	(void) sm_strlcpy(tempqf, queuename(e, NEWQFL_LETTER), sizeof tempqf);
+
+	/*
+	**  Instead of duplicating all the open
+	**  and lock code here, tell readqf() to
+	**  do that work and return the open
+	**  file pointer in e_lockfp.  Note that
+	**  we must release the locks properly when
+	**  we are done.
+	*/
+
+	if (!readqf(e, true))
+	{
+		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+				     "Skipping %s\n", qid_printname(e));
+		return false;
+	}
+	oldqfp = e->e_lockfp;
+
+	/* open the new queue file */
+	flags = O_CREAT|O_WRONLY|O_EXCL;
+	if (bitset(S_IWGRP, QueueFileMode))
+		oldumask = umask(002);
+	fd = open(tempqf, flags, QueueFileMode);
+	if (bitset(S_IWGRP, QueueFileMode))
+		(void) umask(oldumask);
+	RELEASE_QUEUE;
+
+	if (fd < 0)
+	{
+		save_errno = errno;
+		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+				     "Skipping %s: Could not open %s: %s\n",
+				     qid_printname(e), tempqf,
+				     sm_errstring(save_errno));
+		(void) sm_io_close(oldqfp, SM_TIME_DEFAULT);
+		return false;
+	}
+	if (!lockfile(fd, tempqf, NULL, LOCK_EX|LOCK_NB))
+	{
+		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+				     "Skipping %s: Could not lock %s\n",
+				     qid_printname(e), tempqf);
+		(void) close(fd);
+		(void) sm_io_close(oldqfp, SM_TIME_DEFAULT);
+		return false;
+	}
+
+	tempqfp = sm_io_open(SmFtStdiofd, SM_TIME_DEFAULT, (void *) &fd,
+			     SM_IO_WRONLY, NULL);
+	if (tempqfp == NULL)
+	{
+		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+				     "Skipping %s: Could not lock %s\n",
+				     qid_printname(e), tempqf);
+		(void) close(fd);
+		(void) sm_io_close(oldqfp, SM_TIME_DEFAULT);
+		return false;
+	}
+
+	/* Copy the data over, changing the quarantine reason */
+	while ((bp = fgetfolded(buf, sizeof buf, oldqfp)) != NULL)
+	{
+		if (tTd(40, 4))
+			sm_dprintf("+++++ %s\n", bp);
+		switch (bp[0])
+		{
+		  case 'q':		/* quarantine reason */
+			foundq = true;
+			if (reason == NULL)
+			{
+				if (Verbose)
+				{
+					(void) sm_io_fprintf(smioout,
+							     SM_TIME_DEFAULT,
+							     "%s: Removed quarantine of \"%s\"\n",
+							     e->e_id, &bp[1]);
+				}
+				sm_syslog(LOG_INFO, e->e_id, "unquarantine");
+				dirty = true;
+				continue;
+			}
+			else if (strcmp(reason, &bp[1]) == 0)
+			{
+				if (Verbose)
+				{
+					(void) sm_io_fprintf(smioout,
+							     SM_TIME_DEFAULT,
+							     "%s: Already quarantined with \"%s\"\n",
+							     e->e_id, reason);
+				}
+				(void) sm_io_fprintf(tempqfp, SM_TIME_DEFAULT,
+						     "q%s\n", reason);
+			}
+			else
+			{
+				if (Verbose)
+				{
+					(void) sm_io_fprintf(smioout,
+							     SM_TIME_DEFAULT,
+							     "%s: Quarantine changed from \"%s\" to \"%s\"\n",
+							     e->e_id, &bp[1],
+							     reason);
+				}
+				(void) sm_io_fprintf(tempqfp, SM_TIME_DEFAULT,
+						     "q%s\n", reason);
+				sm_syslog(LOG_INFO, e->e_id, "quarantine=%s",
+					  reason);
+				dirty = true;
+			}
+			break;
+
+		  case 'R':
+			/*
+			**  If we are quarantining an unquarantined item,
+			**  need to put in a new 'q' line before it's
+			**  too late.
+			*/
+
+			if (!foundq && reason != NULL)
+			{
+				if (Verbose)
+				{
+					(void) sm_io_fprintf(smioout,
+							     SM_TIME_DEFAULT,
+							     "%s: Quarantined with \"%s\"\n",
+							     e->e_id, reason);
+				}
+				(void) sm_io_fprintf(tempqfp, SM_TIME_DEFAULT,
+						     "q%s\n", reason);
+				sm_syslog(LOG_INFO, e->e_id, "quarantine=%s",
+					  reason);
+				foundq = true;
+				dirty = true;
+			}
+
+			/* Copy the line to the new file */
+			(void) sm_io_fprintf(tempqfp, SM_TIME_DEFAULT,
+					     "%s\n", bp);
+			break;
+
+		  case '.':
+			finished = true;
+			/* FALLTHROUGH */
+
+		  default:
+			/* Copy the line to the new file */
+			(void) sm_io_fprintf(tempqfp, SM_TIME_DEFAULT,
+					     "%s\n", bp);
+			break;
+		}
+	}
+
+	/* Make sure we read the whole old file */
+	errno = sm_io_error(tempqfp);
+	if (errno != 0 && errno != SM_IO_EOF)
+	{
+		save_errno = errno;
+		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+				     "Skipping %s: Error reading %s: %s\n",
+				     qid_printname(e), oldqf,
+				     sm_errstring(save_errno));
+		failing = true;
+	}
+
+	if (!failing && !finished)
+	{
+		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+				     "Skipping %s: Incomplete file: %s\n",
+				     qid_printname(e), oldqf);
+		failing = true;
+	}
+
+	/* Check if we actually changed anything or we can just bail now */
+	if (!dirty)
+	{
+		/* pretend we failed, even though we technically didn't */
+		failing = true;
+	}
+
+	/* Make sure we wrote things out safely */
+	if (!failing &&
+	    (sm_io_flush(tempqfp, SM_TIME_DEFAULT) != 0 ||
+	     ((SuperSafe == SAFE_REALLY || SuperSafe == SAFE_INTERACTIVE) &&
+	      fsync(sm_io_getinfo(tempqfp, SM_IO_WHAT_FD, NULL)) < 0) ||
+	     ((errno = sm_io_error(tempqfp)) != 0)))
+	{
+		save_errno = errno;
+		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+				     "Skipping %s: Error writing %s: %s\n",
+				     qid_printname(e), tempqf,
+				     sm_errstring(save_errno));
+		failing = true;
+	}
+
+
+	/* Figure out the new filename */
+	newtype = (reason == NULL ? NORMQF_LETTER : QUARQF_LETTER);
+	if (oldtype == newtype)
+	{
+		/* going to rename tempqf to oldqf */
+		(void) sm_strlcpy(newqf, oldqf, sizeof newqf);
+	}
+	else
+	{
+		/* going to rename tempqf to new name based on newtype */
+		(void) sm_strlcpy(newqf, queuename(e, newtype), sizeof newqf);
+	}
+
+	save_errno = 0;
+
+	/* rename tempqf to newqf */
+	if (!failing &&
+	    rename(tempqf, newqf) < 0)
+		save_errno = (errno == 0) ? EINVAL : errno;
+
+	/* Check rename() success */
+	if (!failing && save_errno != 0)
+	{
+		sm_syslog(LOG_DEBUG, e->e_id,
+			  "quarantine_queue_item: rename(%s, %s): %s",
+			  tempqf, newqf, sm_errstring(save_errno));
+
+		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+				     "Error renaming %s to %s: %s\n",
+				     tempqf, newqf,
+				     sm_errstring(save_errno));
+		if (oldtype == newtype)
+		{
+			/*
+			**  Bail here since we don't know the state of
+			**  the filesystem and may need to keep tempqf
+			**  for the user to rescue us.
+			*/
+
+			RELEASE_QUEUE;
+			errno = save_errno;
+			syserr("!452 Error renaming control file %s", tempqf);
+			/* NOTREACHED */
+		}
+		else
+		{
+			/* remove new file (if rename() half completed) */
+			if (xunlink(newqf) < 0)
+			{
+				save_errno = errno;
+				(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+						     "Error removing %s: %s\n",
+						     newqf,
+						     sm_errstring(save_errno));
+			}
+
+			/* tempqf removed below */
+			failing = true;
+		}
+
+	}
+
+	/* If changing file types, need to remove old type */
+	if (!failing && oldtype != newtype)
+	{
+		if (xunlink(oldqf) < 0)
+		{
+			save_errno = errno;
+			(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+					     "Error removing %s: %s\n",
+					     oldqf, sm_errstring(save_errno));
+		}
+	}
+
+	/* see if anything above failed */
+	if (failing)
+	{
+		/* Something failed: remove new file, old file still there */
+		(void) xunlink(tempqf);
+	}
+
+	/*
+	**  fsync() after file operations to make sure metadata is
+	**  written to disk on filesystems in which renames are
+	**  not guaranteed.  It's ok if they fail, mail won't be lost.
+	*/
+
+	if (SuperSafe != SAFE_NO)
+	{
+		/* for soft-updates */
+		(void) fsync(sm_io_getinfo(tempqfp,
+					   SM_IO_WHAT_FD, NULL));
+
+		if (!failing)
+		{
+			/* for soft-updates */
+			(void) fsync(sm_io_getinfo(oldqfp,
+						   SM_IO_WHAT_FD, NULL));
+		}
+
+		/* for other odd filesystems */
+		SYNC_DIR(tempqf, false);
+	}
+
+	/* Close up shop */
+	RELEASE_QUEUE;
+	if (tempqfp != NULL)
+		(void) sm_io_close(tempqfp, SM_TIME_DEFAULT);
+	if (oldqfp != NULL)
+		(void) sm_io_close(oldqfp, SM_TIME_DEFAULT);
+
+	/* All went well */
+	return !failing;
+}
+
+/*
+**  QUARANTINE_QUEUE -- {un,}quarantine matching items in the queue
+**
+**	Read all matching queue items, add/remove quarantine
+**	reason, and requeue appropriately.
+**
+**	Parameters:
+**		reason -- quarantine reason, "." means unquarantine.
+**		qgrplimit -- limit to single queue group unless NOQGRP
+**
+**	Results:
+**		none.
+**
+**	Side Effects:
+**		Lots of changes to the queue.
+*/
+
+void
+quarantine_queue(reason, qgrplimit)
+	char *reason;
+	int qgrplimit;
+{
+	int changed = 0;
+	int qgrp;
+
+	/* Convert internal representation of unquarantine */
+	if (reason != NULL && reason[0] == '.' && reason[1] == '\0')
+		reason = NULL;
+
+	if (reason != NULL)
+	{
+		/* clean it */
+		reason = newstr(denlstring(reason, true, true));
+	}
+
+	for (qgrp = 0; qgrp < NumQueue && Queue[qgrp] != NULL; qgrp++)
+	{
+		int qdir;
+
+		if (qgrplimit != NOQGRP && qgrplimit != qgrp)
+			continue;
+
+		for (qdir = 0; qdir < Queue[qgrp]->qg_numqueues; qdir++)
+		{
+			int i;
+			int nrequests;
+
+			if (StopRequest)
+				stop_sendmail();
+
+			nrequests = gatherq(qgrp, qdir, true, NULL, NULL);
+
+			/* first see if there is anything */
+			if (nrequests <= 0)
+			{
+				if (Verbose)
+				{
+					(void) sm_io_fprintf(smioout,
+							     SM_TIME_DEFAULT, "%s: no matches\n",
+							     qid_printqueue(qgrp, qdir));
+				}
+				continue;
+			}
+
+			if (Verbose)
+			{
+				(void) sm_io_fprintf(smioout,
+						     SM_TIME_DEFAULT, "Processing %s:\n",
+						     qid_printqueue(qgrp, qdir));
+			}
+
+			for (i = 0; i < WorkListCount; i++)
+			{
+				ENVELOPE e;
+
+				if (StopRequest)
+					stop_sendmail();
+
+				/* setup envelope */
+				clearenvelope(&e, true, sm_rpool_new_x(NULL));
+				e.e_id = WorkList[i].w_name + 2;
+				e.e_qgrp = qgrp;
+				e.e_qdir = qdir;
+
+				if (tTd(70, 101))
+				{
+					sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+						      "Would do %s\n", e.e_id);
+					changed++;
+				}
+				else if (quarantine_queue_item(qgrp, qdir,
+							       &e, reason))
+					changed++;
+
+				/* clean up */
+				sm_rpool_free(e.e_rpool);
+				e.e_rpool = NULL;
+			}
+			if (WorkList != NULL)
+				sm_free(WorkList); /* XXX */
+			WorkList = NULL;
+			WorkListSize = 0;
+			WorkListCount = 0;
+		}
+	}
+	if (Verbose)
+	{
+		if (changed == 0)
+			(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+					     "No changes\n");
+		else
+			(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+					     "%d change%s\n",
+					     changed,
+					     changed == 1 ? "" : "s");
+	}
+}
+#endif /* _FFR_QUARANTINE */

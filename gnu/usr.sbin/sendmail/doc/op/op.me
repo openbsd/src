@@ -9,7 +9,7 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"	$Sendmail: op.me,v 8.575 2001/09/28 22:03:15 ca Exp $
+.\"	$Sendmail: op.me,v 8.592 2001/12/26 03:44:39 ca Exp $
 .\"
 .\" eqn op.me | pic | troff -me
 .\"
@@ -88,7 +88,7 @@ Sendmail, Inc.
 .de Ve
 Version \\$2
 ..
-.Ve $Revision: 1.10 $
+.Ve $Revision: 1.11 $
 .rm Ve
 .sp
 For Sendmail Version 8.12
@@ -309,43 +309,6 @@ program; for details see
 (This section is not yet complete.
 For now, see the file devtools/README for details.)
 See sendmail/README for various compilation flags that can be set.
-.sh 3 "Notes About Some Configuration Settings"
-.\"XXX
-.pp
-Not all configuration setting are critical to getting sendmail to run
-correctly. Note that "correctly" does not directly imply highest
-performance immediately.
-.pp
-.i Sendmail
-uses the functions
-.i strlcat \|(3)
-and
-.i strlcpy \|(3)
-which, at the time of writing, are not widely available.
-Further, for those systems where
-these functions are available they are new enough that performance
-tuning has not yet occurred.
-.i Sendmail
-includes in its sm library (aka
-.i libsm )
-these functions with an sm_ prefix. By default sendmail uses the
-.i libsm
-versions of these functions as performance tuning has occurred.
-A performance testing program
-.i libsm/b-strl.c
-can be used to evaluate which versions of the functions are faster:
-.i libsm
-or the system's
-.i libc .
-If you decide to use the
-.i libc
-versions then add
-.(b
--DSM_CONF_STRL=0
-.)b
-as compile time option, see
-.i $BUILDTOOLS/README
-for details.
 .sh 3 "Tweaking the Makefile"
 .pp
 .\" .b "XXX This should all be in the Site Configuration File section."
@@ -1208,6 +1171,12 @@ How to select either of these types is discussed in the appendix
 Persistent queue runners have the advantage that no new processes
 need to be spawned at certain intervals; they just sleep for
 a specified time after they finished a queue run.
+Another advantage of persistent queue runners is that only one process
+belonging to a workgroup (a workgroup is a set of queue groups)
+collects the data for a queue run
+and then multiple queue runner may go ahead using that data.
+This can significantly reduce the disk I/O necessary to read the
+queue files compared to starting multiple queue runners directly.
 Their disadvantage is that a new queue run is only started
 after all queue runners belonging to a group finished their tasks.
 In case one of the queue runners tries delivery to a slow recipient site
@@ -2968,6 +2937,11 @@ that are group writable
 on the grounds that they might have been tampered with
 by someone other than the owner;
 it will even refuse to read files in group writable directories.
+Also, sendmail will refuse to create a new aliases database in an
+unsafe directory.  You can get around this by manually creating the
+database file as a trusted user ahead of time and then rebuilding the
+aliases database with
+.b newaliases .
 .pp
 If you are
 .i quite
@@ -3089,6 +3063,7 @@ Allow
 files that are links in writable directories.
 .ip LinkedMapInWritableDir
 Allow map files that are links in writable directories.
+This includes alias database files.
 .ip LinkedServiceSwitchFileInWritableDir
 Allow the service switch file to be a link
 even if the directory is writable.
@@ -3100,6 +3075,7 @@ and
 .i dbm
 files)
 in unsafe directories.
+This includes alias database files.
 .ip NonRootSafeAddr
 Do not mark file and program deliveries as unsafe
 if sendmail is not running with root privileges.
@@ -3268,6 +3244,9 @@ when faced with a a broken nameservers that returns SERVFAIL
 (a temporary failure)
 on T_AAAA (IPv6) lookups
 during hostname canonification.
+Notice: it might be necessary to apply the same (or similar) options to
+.i submit.cf
+too.
 .pp
 Version level 1 configurations (see the section about
 Configuration Version Level)
@@ -4493,6 +4472,8 @@ The full name of the sender.
 The home directory of the recipient.
 .ip $_
 The validated sender address.
+See also
+.b ${client_resolve} .
 .ip ${addr_type}
 The type of the address which is currently being rewritten.
 This macro contains up to three characters, the first
@@ -4568,6 +4549,16 @@ FORGED	forward lookup doesn't match reverse lookup
 TEMP	temporary lookup failure
 .)b
 Defined in the SMTP server only.
+.i sendmail 
+performs a hostname lookup on the IP address of the connecting client.
+Next the IP addresses of that hostname are looked up.
+If the client IP address does not appear in that list,
+then the hostname is maybe forged.
+This is reflected as the value FORGED for
+.b ${client_resolve}
+and it also shows up in
+.b $_
+as "(may be forged)".
 .ip ${cn_issuer}
 The CN (common name) of the CA that signed the presented certificate
 (STARTTLS only).
@@ -5491,11 +5482,8 @@ This mailer wants a
 .q Full-Name:
 header line.
 .ip X
-This mailer want to use the hidden dot algorithm
-as specified in RFC821;
-basically,
-any line beginning with a dot
-will have an extra dot prepended
+This mailer wants to use the hidden dot algorithm as specified in RFC821;
+basically, any line beginning with a dot will have an extra dot prepended
 (to be stripped at the other end).
 This insures that lines in the message containing a dot
 will not terminate the message prematurely.
@@ -5510,7 +5498,10 @@ that is specifically designed for delivery to a local mailbox.
 .ip Z
 Apply DialDelay (if set) to this mailer.
 .ip 0
-Don't look up MX records for hosts sent via SMTP.
+Don't look up MX records for hosts sent via SMTP/LMTP.
+Do not apply
+.b FallbackMXhost
+either.
 .ip 1
 Don't send null characters ('\\0') to this mailer.
 .ip 2
@@ -5636,8 +5627,14 @@ M*include*, P=/dev/null, F=su, A=INCLUDE $u
 .pp
 Builtin pathnames are [FILE] and [IPC], the former is used for
 delivery to files, the latter for delivery via interprocess communication.
-For mailers that use [IPC] as pathname the argument vector
+For mailers that use [IPC] as pathname the argument vector (A=)
 must start with TCP or FILE for delivery via a TCP or a Unix domain socket.
+If TCP is used, the second argument must be the name of the host
+to contact.
+Optionally a third argument can be used to specify a port,
+the default is smtp (port 25).
+If FILE is used, the second argument must be the name of
+the Unix domain socket.
 .pp
 If the argument vector does not contain $u then
 .i sendmail
@@ -6062,6 +6059,8 @@ with intervening white space or commas.
 .ta 4n
 A	Use the AUTH= parameter for the MAIL FROM
 	command only when authentication succeeded.
+	This can be used as a workaround for broken
+	MTAs that do not implement RFC2554 correctly.
 a	protection from active (non-dictionary) attacks
 	during authentication exchange.
 c	require mechanisms which pass client credentials,
@@ -6684,7 +6683,7 @@ unless the name is surrounded by square brackets.
 This is intended to be used by sites with poor network connectivity.
 Messages which are undeliverable due to temporary address failures
 (e.g., DNS failure)
-also go to the FallbackMX host.
+also go to the FallbackMXhost.
 .ip FastSplit
 [no short name]
 If set to a value greater than zero (the default is one),
@@ -7160,9 +7159,9 @@ Second, it specifies the directory D which is the ancestor of all queue
 directories, and which sendmail uses as its current working directory.
 When sendmail dumps core, it leaves its core files in D.
 There are two cases.
-If \fIdir\fR ends with an asterisk (eg, \fI/var/spool/mqueue/q*\fR),
+If \fIdir\fR ends with an asterisk (eg, \fI/var/spool/mqueue/qd*\fR),
 then all of the directories or symbolic links to directories
-beginning with `q' in
+beginning with `qd' in
 .i /var/spool/mqueue
 will be used as queue directories of the default queue group,
 and
@@ -7301,16 +7300,9 @@ or
 .b \- )
 can be specified to work around some broken nameservers
 which return SERVFAIL (a temporary failure) on T_AAAA (IPv6) lookups.
-.b N.B.
-Prior to 8.7,
-this option indicated that the name server be responding
-in order to accept addresses.
-This has been replaced by checking to see
-if the
-.q dns
-method is listed in the service switch entry for the
-.q hosts
-service.
+Notice: it might be necessary to apply the same (or similar) options to
+.i submit.cf
+too.
 .ip RrtImpliesDsn
 [R]
 If this option is set, a
@@ -7570,7 +7562,7 @@ doubled in the code execution path for this mode.
 List of options for SMTP STARTTLS for the server
 consisting of single characters
 with intervening white space or commas.
-The flag ``v'' disables client verification, and hence
+The flag ``V'' disables client verification, and hence
 it is not possible to use a client certificate for relaying.
 Currently there are no other flags available.
 .ip TempFileMode=\fImode\fP
@@ -9155,9 +9147,6 @@ The maximum number of items in the user environment
 that will be passed to subordinate mailers.
 .ip "MAXMXHOSTS [100]"
 The maximum number of MX records we will accept for any single host.
-.ip "MAXALIASDB [12]"
-The maximum number of alias databases that can be open at any time.
-Note that there may also be an open file limit.
 .ip "MAXMAPSTACK [12]"
 The maximum number of maps that may be "stacked" in a
 .b sequence
@@ -9794,6 +9783,14 @@ can contain several certificates of CAs.
 The DNs of these certificates are sent
 to the client during the TLS handshake (as part of the
 CertificateRequest) as the list of acceptable CAs.
+However, do not list too many root CAs in that file, otherwise
+the TLS handshake may fail; e.g.,
+.(b
+error:14094417:SSL routines:SSL3_READ_BYTES:
+sslv3 alert illegal parameter:s3_pkt.c:964:SSL alert number 47
+.)b
+You should probably put only the CA cert into that file
+that signed your own cert(s), or at least only those you trust.
 The CACERTPath directory must contain the hashes of each CA certificate
 as filenames (or as links to them).
 Symbolic links can be generated with the following
@@ -10288,6 +10285,21 @@ during that session.
 Sometimes the xf file must be generated before a queue group has been selected;
 in this case,
 the xf file will be stored in a directory of the default queue group.
+.ip Qf
+A ``lost'' queue control file.
+.i sendmail
+renames a
+.b qf
+file to
+.b Qf
+if there is a severe (configuration) problem that cannot be solved without
+human intervention.
+Search the logfile for the queue file id to figure out what happened.
+After you resolved the problem, you can rename the
+.b Qf
+file to
+.b qf
+and send it again.
 .pp
 The
 .b qf
@@ -10544,7 +10556,7 @@ replace it with a blank sheet for double-sided output.
 .\".sz 10
 .\"Eric Allman
 .\".sp
-.\"Version $Revision: 1.10 $
+.\"Version $Revision: 1.11 $
 .\".ce 0
 .bp 3
 .ce

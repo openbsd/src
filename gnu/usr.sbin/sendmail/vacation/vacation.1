@@ -9,9 +9,9 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"	$Sendmail: vacation.1,v 8.25 2001/07/13 21:35:35 gshapiro Exp $
+.\"	$Sendmail: vacation.1,v 8.26 2001/11/21 04:21:35 gshapiro Exp $
 .\"
-.TH VACATION 1 "$Date: 2001/09/11 19:02:51 $"
+.TH VACATION 1 "$Date: 2002/01/14 03:21:41 $"
 .SH NAME
 vacation
 \- return ``I am not here'' indication
@@ -85,7 +85,9 @@ syslog(8).
 Use
 .I filename
 as name of the database instead of
-.IR ~/.vacation.db .
+.IR ~/.vacation.db
+or
+.IR ~/.vacation.{dir,pag} .
 Unless the
 .I filename
 starts with / it is relative to ~.
@@ -186,8 +188,12 @@ or
 line is included in the mail headers.
 The people who have sent you messages are maintained as a
 db(3)
+or
+dbm(3)
 database in the file
 .I .vacation.db
+or
+.I .vacation.{dir,pag}
 in your home directory.
 .PP
 .B Vacation
@@ -220,7 +226,10 @@ line automatically.
 .SH FILES
 .TP 1.8i
 ~/.vacation.db
-default database file
+default database file for db(3)
+.TP 1.8i
+~/.vacation.{dir,pag}
+default database file for dbm(3)
 .TP
 ~/.vacation.msg
 default message to send

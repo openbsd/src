@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: savemail.c,v 8.291 2001/09/11 04:05:16 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: savemail.c,v 8.297 2001/12/28 22:32:19 ca Exp $")
 
 static void	errbody __P((MCI *, ENVELOPE *, char *));
 static bool	pruneroute __P((char *));
@@ -32,7 +32,8 @@ static bool	pruneroute __P((char *));
 **			message; otherwise just send the header.
 **
 **	Returns:
-**		true if the data file should be preserved by dropenvelope()
+**		true if savemail panic'ed, (i.e., the data file should
+**		be preserved by dropenvelope())
 **
 **	Side Effects:
 **		Saves the letter, by writing or mailing it back to the
@@ -56,7 +57,7 @@ savemail(e, sendbody)
 	bool sendbody;
 {
 	register SM_FILE_T *fp;
-	bool savedf = false;
+	bool panic = false;
 	int state;
 	auto ADDRESS *q = NULL;
 	register char *p;
@@ -78,7 +79,7 @@ savemail(e, sendbody)
 	if (e->e_id == NULL)
 	{
 		/* can't return a message with no id */
-		return savedf;
+		return panic;
 	}
 
 	/*
@@ -94,7 +95,7 @@ savemail(e, sendbody)
 			      '\0', NULL, e, false) == NULL)
 		{
 			syserr("553 5.3.5 Cannot parse Postmaster!");
-			finis(true, EX_SOFTWARE);
+			finis(true, true, EX_SOFTWARE);
 		}
 	}
 	e->e_to = NULL;
@@ -134,10 +135,10 @@ savemail(e, sendbody)
 
 	  case EM_QUIET:
 		/* no need to return anything at all */
-		return savedf;
+		return panic;
 
 	  default:
-		syserr("554 5.3.0 savemail: bogus errormode x%x\n",
+		syserr("554 5.3.0 savemail: bogus errormode x%x",
 		       e->e_errormode);
 		state = ESM_MAIL;
 		break;
@@ -150,7 +151,7 @@ savemail(e, sendbody)
 		    bitset(EF_RESPONSE, e->e_parent->e_flags))
 		{
 			/* got an error sending a response -- can it */
-			return savedf;
+			return panic;
 		}
 		state = ESM_POSTMASTER;
 	}
@@ -250,17 +251,9 @@ savemail(e, sendbody)
 					break;
 				}
 
-				if (!DontPruneRoutes && pruneroute(from))
-				{
-					ADDRESS *a;
+				if (!DontPruneRoutes)
+					(void) pruneroute(from);
 
-					for (a = e->e_errorqueue; a != NULL;
-					     a = a->q_next)
-					{
-						if (sameaddr(a, &e->e_from))
-							a->q_state = QS_DUPLICATE;
-					}
-				}
 				(void) sendtolist(from, NULLADDR,
 						  &e->e_errorqueue, 0, e);
 			}
@@ -467,14 +460,14 @@ savemail(e, sendbody)
 		  case ESM_PANIC:
 			/* leave the locked queue & transcript files around */
 			loseqfile(e, "savemail panic");
-			savedf = true;
+			panic = true;
 			errno = 0;
 			syserr("554 savemail: cannot save rejected email anywhere");
 			state = ESM_DONE;
 			break;
 		}
 	}
-	return savedf;
+	return panic;
 }
 /*
 **  RETURNTOSENDER -- return a message to the sender with an error.
@@ -497,7 +490,7 @@ savemail(e, sendbody)
 */
 
 #define MAXRETURNS	6	/* max depth of returning messages */
-#define ERRORFUDGE	100	/* nominal size of error message text */
+#define ERRORFUDGE	1024	/* nominal size of error message text */
 
 int
 returntosender(msg, returnq, flags, e)
@@ -591,10 +584,10 @@ returntosender(msg, returnq, flags, e)
 	}
 
 	ee->e_sendqueue = returnq;
-	ee->e_msgsize = ERRORFUDGE;
+	ee->e_msgsize = 0;
 	if (bitset(RTSF_SEND_BODY, flags) &&
 	    !bitset(PRIV_NOBODYRETN, PrivacyFlags))
-		ee->e_msgsize += e->e_msgsize;
+		ee->e_msgsize = ERRORFUDGE + e->e_msgsize;
 	else
 		ee->e_flags |= EF_NO_BODY_RETN;
 
@@ -717,7 +710,7 @@ returntosender(msg, returnq, flags, e)
 	eatheader(ee, true, true);
 
 	/* mark statistics */
-	markstats(ee, NULLADDR, false);
+	markstats(ee, NULLADDR, STATS_NORMAL);
 
 	/* actually deliver the error message */
 	sendall(ee, SM_DELIVER);

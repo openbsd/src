@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: util.c,v 8.352 2001/09/26 14:56:58 ca Exp $")
+SM_RCSID("@(#)$Sendmail: util.c,v 8.357 2001/11/28 19:19:27 gshapiro Exp $")
 
 #include <sysexits.h>
 #include <sm/xtrap.h>
@@ -311,7 +311,7 @@ find_character(string, character)
 **
 **	Returns:
 **		BODYTYPE_* according to parameter
-**		
+**
 */
 
 int
@@ -1147,16 +1147,19 @@ xunlink(f)
 	char *f;
 {
 	register int i;
+	int save_errno;
 
 	if (LogLevel > 98)
 		sm_syslog(LOG_DEBUG, CurEnv->e_id, "unlink %s", f);
 
 	i = unlink(f);
+	save_errno = errno;
 	if (i < 0 && LogLevel > 97)
 		sm_syslog(LOG_DEBUG, CurEnv->e_id, "%s: unlink-fail %d",
 			  f, errno);
 	if (i >= 0)
 		SYNC_DIR(f, false);
+	errno = save_errno;
 	return i;
 }
 /*
@@ -1469,6 +1472,7 @@ bitzerop(map)
 **  STRCONTAINEDIN -- tell if one string is contained in another
 **
 **	Parameters:
+**		icase -- ignore case?
 **		a -- possible substring.
 **		b -- possible superstring.
 **
@@ -1478,7 +1482,8 @@ bitzerop(map)
 */
 
 bool
-strcontainedin(a, b)
+strcontainedin(icase, a, b)
+	bool icase;
 	register char *a;
 	register char *b;
 {
@@ -1489,14 +1494,25 @@ strcontainedin(a, b)
 	la = strlen(a);
 	lb = strlen(b);
 	c = *a;
-	if (isascii(c) && isupper(c))
+	if (icase && isascii(c) && isupper(c))
 		c = tolower(c);
 	for (; lb-- >= la; b++)
 	{
-		if (*b != c && isascii(*b) && isupper(*b) && tolower(*b) != c)
-			continue;
-		if (sm_strncasecmp(a, b, la) == 0)
-			return true;
+		if (icase)
+		{
+			if (*b != c &&
+			    isascii(*b) && isupper(*b) && tolower(*b) != c)
+				continue;
+			if (sm_strncasecmp(a, b, la) == 0)
+				return true;
+		}
+		else
+		{
+			if (*b != c)
+				continue;
+			if (strncmp(a, b, la) == 0)
+				return true;
+		}
 	}
 	return false;
 }
@@ -2292,6 +2308,13 @@ str2prt(s)
 				break;
 			  default:
 				(void) sm_snprintf(h, l, "%03o", (int) c);
+
+				/*
+				**  XXX since l is unsigned this may
+				**  wrap around if the calculation is screwed
+				**  up...
+				*/
+
 				l -= 2;
 				h += 3;
 				break;
@@ -2480,24 +2503,25 @@ proc_list_set(pid, task)
 **
 **	Parameters:
 **		pid -- pid to drop
-**		count -- pointer to number of processes (return).
+**		st -- process status
 **		other -- storage for proc_other (return).
 **
 **	Returns:
-**		type of process
+**		none.
 **
 **	Side Effects:
-**		May decrease CurChildren.
+**		May decrease CurChildren, CurRunners, or
+**		set RestartRequest or ShutdownRequest.
 **
 **	NOTE:	THIS CAN BE CALLED FROM A SIGNAL HANDLER.  DO NOT ADD
 **		ANYTHING TO THIS ROUTINE UNLESS YOU KNOW WHAT YOU ARE
 **		DOING.
 */
 
-int
-proc_list_drop(pid, count, other)
+void
+proc_list_drop(pid, st, other)
 	pid_t pid;
-	int *count;
+	int st;
 	int *other;
 {
 	int i;
@@ -2509,8 +2533,6 @@ proc_list_drop(pid, count, other)
 		{
 			ProcListVec[i].proc_pid = NO_PID;
 			type = ProcListVec[i].proc_type;
-			if (count != NULL)
-				*count = ProcListVec[i].proc_count;
 			if (other != NULL)
 				*other = ProcListVec[i].proc_other;
 			break;
@@ -2520,7 +2542,22 @@ proc_list_drop(pid, count, other)
 		CurChildren--;
 
 
-	return type;
+	if (type == PROC_CONTROL && WIFEXITED(st))
+	{
+		/* if so, see if we need to restart or shutdown */
+		if (WEXITSTATUS(st) == EX_RESTART)
+			RestartRequest = "control socket";
+		else if (WEXITSTATUS(st) == EX_SHUTDOWN)
+			ShutdownRequest = "control socket";
+	}
+	else if (type == PROC_QUEUE_CHILD && !WIFSTOPPED(st) &&
+		 ProcListVec[i].proc_other > -1)
+	{
+		/* restart this persistent runner */
+		mark_work_group_restart(ProcListVec[i].proc_other, st);
+	}
+	else if (type == PROC_QUEUE)
+		CurRunners -= ProcListVec[i].proc_count;
 }
 /*
 **  PROC_LIST_CLEAR -- clear the process list

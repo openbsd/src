@@ -15,7 +15,7 @@
 #include <sm/io.h>
 #include <sm/errstring.h>
 
-SM_RCSID("@(#)$Sendmail: safefile.c,v 8.118 2001/09/18 21:45:27 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: safefile.c,v 8.121 2001/10/11 21:46:13 gshapiro Exp $")
 
 
 /*
@@ -206,6 +206,7 @@ safefile(fn, uid, gid, user, flags, mode, st)
 		{
 			int md = S_IWRITE|S_IEXEC;
 
+			ret = 0;
 			if (stbuf.st_uid == uid)
 				/* EMPTY */
 				;
@@ -237,9 +238,10 @@ safefile(fn, uid, gid, user, flags, mode, st)
 					md >>= 3;
 			}
 			if ((stbuf.st_mode & md) != md)
-				errno = EACCES;
+				ret = errno = EACCES;
 		}
-		ret = errno;
+		else
+			ret = errno;
 		if (tTd(44, 4))
 			sm_dprintf("\t[final dir %s uid %d mode %lo] %s\n",
 				dir, (int) stbuf.st_uid,

@@ -20,7 +20,7 @@ SM_IDSTR(copyright,
      Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n")
 
-SM_IDSTR(id, "@(#)$Sendmail: makemap.c,v 8.173 2001/09/26 22:18:21 ca Exp $")
+SM_IDSTR(id, "@(#)$Sendmail: makemap.c,v 8.175 2001/12/28 22:44:01 ca Exp $")
 
 
 #include <sys/types.h>
@@ -56,9 +56,13 @@ static void
 usage(progname)
 	char *progname;
 {
+	/* XXX break the usage output into multiple lines? it's too long */
 	sm_io_fprintf(smioerr, SM_TIME_DEFAULT,
 		"Usage: %s [-C cffile] [-N] [-c cachesize] [-d] [-e] [-f] [-l] [-o] [-r] [-s] [-t delimiter] [-u] [-v] type mapname\n",
 		progname);
+#if _FFR_COMMENT_CHAR
+	/* add -D comment-char */
+#endif /* _FFR_COMMENT_CHAR */
 	exit(EX_USAGE);
 }
 
@@ -77,6 +81,7 @@ main(argc, argv)
 	bool foldcase = true;
 	bool unmake = false;
 	char sep = '\0';
+	char comment = '#';
 	int exitstat;
 	int opt;
 	char *typename = NULL;
@@ -127,8 +132,7 @@ main(argc, argv)
 	(void) sm_strlcpy(user_info.smdbu_name, RunAsUserName,
 		       SMDB_MAX_USER_NAME_LEN);
 
-
-#define OPTIONS		"C:Nc:t:deflorsuv"
+#define OPTIONS		"C:D:Nc:deflorst:uv"
 	while ((opt = getopt(argc, argv, OPTIONS)) != -1)
 	{
 		switch (opt)
@@ -156,6 +160,12 @@ main(argc, argv)
 		  case 'f':
 			foldcase = false;
 			break;
+
+#if _FFR_COMMENT_CHAR
+		  case 'D':
+			comment = *optarg;
+			break;
+#endif /* _FFR_COMMENT_CHAR */
 
 		  case 'l':
 			smdb_print_available_types();
@@ -402,7 +412,7 @@ main(argc, argv)
 				continue;
 			}
 
-			if (ibuf[0] == '\0' || ibuf[0] == '#')
+			if (ibuf[0] == '\0' || ibuf[0] == comment)
 				continue;
 			if (sep == '\0' && isascii(ibuf[0]) && isspace(ibuf[0]))
 			{

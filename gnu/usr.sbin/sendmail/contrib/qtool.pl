@@ -1,9 +1,9 @@
 #!/usr/bin/env perl
 ##
-## Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
-##       All rights reserved.
+## Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+##	All rights reserved.
 ##
-## $Sendmail: qtool.pl,v 8.20 2000/12/05 16:10:07 dmoen Exp $
+## $Sendmail: qtool.pl,v 8.26 2001/11/21 19:26:17 gshapiro Exp $
 ##
 use strict;
 use File::Basename;
@@ -43,7 +43,7 @@ use Getopt::Std;
 ##	queue message. This lets you check for any value in the message
 ##	headers or the control file. Here's an example:
 ##
-##      ./qtool.pl -e '$msg->{num_delivery_attempts} >= 2' /q1 /q2
+##	./qtool.pl -e '$msg{num_delivery_attempts} >= 2' /q1 /q2
 ##
 ##	This would move any queue files whose number of delivery attempts
 ##	is greater than or equal to 2 from the queue 'q2' to the queue 'q1'.
@@ -61,9 +61,10 @@ my $source;
 my $result;
 my $action;
 my $new_condition;
+my $qprefix;
 my $conditions = new Compound();
 
-Getopt::Std::getopts('bC:de:s:', \%opts);
+Getopt::Std::getopts('bC:de:Qs:', \%opts);
 
 sub move_action
 {
@@ -111,6 +112,15 @@ if (defined $opts{e})
 {
 	$new_condition = new Eval($opts{e});
 	$conditions->add($new_condition);
+}
+
+if (defined $opts{Q})
+{
+	$qprefix = "hf";
+}
+else
+{
+	$qprefix = "qf";
 }
 
 if ($action == \&move_action)
@@ -188,14 +198,18 @@ while (($source_name, $source) = each(%sources))
 
 sub usage
 {
-	print("Usage: $0 [options] directory source ...\n");
-	print("       $0 [-d|-b] source ...\n");
-	print("options:\n");
-	print("    -b                   Bounce the messages specified by source.\n");
-	print("    -C configfile	Specify sendmail config file.\n");
-	print("    -d                   Delete the messages specified by source.\n");
-	print("    -e [perl expression] Move only messages for which perl expression returns true.\n");
-	print("    -s [seconds]         Move only messages whose qf file is older than seconds.\n");
+	print("Usage:\t$0 [options] directory source ...\n");
+	print("\t$0 [-Q][-d|-b] source ...\n");
+	print("Options:\n");
+	print("\t-b\t\tBounce the messages specified by source.\n");
+	print("\t-C configfile\tSpecify sendmail config file.\n");
+	print("\t-d\t\tDelete the messages specified by source.\n");
+	print("\t-e [perl expression]\n");
+	print("\t\t\tMove only messages for which perl expression\n");
+	print("\t\t\treturns true.\n");
+	print("\t-Q\t\tOperate on quarantined files.\n");
+	print("\t-s [seconds]\tMove only messages whose queue file is older\n");
+	print("\t\t\tthan seconds.\n");
 }
 
 ##
@@ -236,10 +250,10 @@ sub add_source
 	$data_dir_name = $source_dir_name;
 
 	$source_prefix = substr($source_base_name, 0, 2);
-	if (!-d $source_name && $source_prefix ne 'qf' && 
+	if (!-d $source_name && $source_prefix ne $qprefix && 
 	    $source_prefix ne 'df')
 	{
-		$source_base_name = "qf$source_base_name";
+		$source_base_name = "$qprefix$source_base_name";
 		$source_name = File::Spec->catfile("$source_dir_name", 
 						   "$source_base_name");
 	}
@@ -248,7 +262,7 @@ sub add_source
 	if (!-e $source_name)
 	{
 		$source_name = File::Spec->catfile("$source_dir_name", "qf",
-						   "qf$source_id");
+						   "$qprefix$source_id");
 		if (!-e $source_name)
 		{
 			return "'$source_name' does not exist";
@@ -413,7 +427,7 @@ sub initialize
 	my $queue_dir = shift;
 	$self->{id} = shift;
 
-	$self->{file_name} = $queue_dir . '/qf' . $self->{id};
+	$self->{file_name} = $queue_dir . '/' . $qprefix . $self->{id};
 	$self->{headers} = {};
 }
 
@@ -442,6 +456,7 @@ sub parse
 		'E' => 'error_recipient',
 		'F' => 'flags',
 		'H' => 'parse_header',
+		'G' => 'queue_delay',
 		'I' => 'inode_number',
 		'K' => 'next_delivery_time',
 		'L' => 'content-length',
@@ -450,11 +465,14 @@ sub parse
 		'P' => 'priority',
 		'Q' => 'original_recipient',
 		'R' => 'recipient',
+		'q' => 'quarantine_reason',
+		'r' => 'final_recipient',
 		'S' => 'sender',
 		'T' => 'creation_time',
 		'V' => 'version',
-		'X' => 'charset',
+		'Y' => 'current_delay',
 		'Z' => 'envid',
+		'!' => 'deliver_by',
 		'$' => 'macro'
 	);
 	my $line;
@@ -525,7 +543,7 @@ sub parse_header
 	 	if (ref($headers->{$last_header}) eq 'ARRAY')
 		{
 			$headers->{$last_header}[-1] = 
-				$headers->{$last_header}[-1] .  $line;
+				$headers->{$last_header}[-1] . $line;
 		}
 		else
 		{
@@ -825,7 +843,7 @@ sub move
 		$df_dest = $destination;
 	}
 
-	if (-e File::Spec->catfile($qf_dest, "qf$self->{id}"))
+	if (-e File::Spec->catfile($qf_dest, "$qprefix$self->{id}"))
 	{
 		$result = "There is already a queued message with id '$self->{id}' in '$destination'";
 	}
@@ -929,7 +947,8 @@ sub initialize
 ## READ - Loads the queue with all of the objects that reside in it.
 ##
 ##	This reads the queue's directory and creates QueuedMessage objects
-## 	for every file in the queue that starts with 'qf'.
+## 	for every file in the queue that starts with 'qf' or 'hf'
+##	(depending on the -Q option).
 ##
 
 sub read
@@ -965,7 +984,7 @@ sub read
 		return "Unable to open directory '$control_dir'";
 	}
 
-	@control_files = grep { /^qf.*/ && -f "$control_dir/$_" } readdir(QUEUE_DIR);
+	@control_files = grep { /^$qprefix.*/ && -f "$control_dir/$_" } readdir(QUEUE_DIR);
 	closedir(QUEUE_DIR);
 	foreach $file_name (@control_files)
 	{

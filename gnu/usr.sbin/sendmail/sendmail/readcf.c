@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: readcf.c,v 8.587 2001/09/22 20:48:35 ca Exp $")
+SM_RCSID("@(#)$Sendmail: readcf.c,v 8.594 2001/12/14 00:43:17 gshapiro Exp $")
 
 #if NETINET || NETINET6
 # include <arpa/inet.h>
@@ -115,19 +115,19 @@ readcf(cfname, safe, e)
 	if (cf == NULL)
 	{
 		syserr("cannot open");
-		finis(false, EX_OSFILE);
+		finis(false, true, EX_OSFILE);
 	}
 
 	if (fstat(sm_io_getinfo(cf, SM_IO_WHAT_FD, NULL), &statb) < 0)
 	{
 		syserr("cannot fstat");
-		finis(false, EX_OSFILE);
+		finis(false, true, EX_OSFILE);
 	}
 
 	if (!S_ISREG(statb.st_mode))
 	{
 		syserr("not a plain file");
-		finis(false, EX_OSFILE);
+		finis(false, true, EX_OSFILE);
 	}
 
 	if (OpMode != MD_TEST && bitset(S_IWGRP|S_IWOTH, statb.st_mode))
@@ -613,7 +613,7 @@ readcf(cfname, safe, e)
 	if (sm_io_error(cf))
 	{
 		syserr("I/O read error");
-		finis(false, EX_OSFILE);
+		finis(false, true, EX_OSFILE);
 	}
 	(void) sm_io_close(cf, SM_TIME_DEFAULT);
 	FileName = NULL;
@@ -977,6 +977,8 @@ fileclass(class, filename, fmt, safe, optional)
 			sff |= SFF_NOWLINK;
 		if (safe)
 			sff |= SFF_OPENASROOT;
+		else if (RealUid == 0)
+			sff |= SFF_ROOTOK;
 		if (DontLockReadFiles)
 			sff |= SFF_NOLOCK;
 		f = safefopen(filename, O_RDONLY, 0, sff);
@@ -1344,6 +1346,24 @@ makemailer(line)
 		p = delimptr;
 	}
 
+#if !HASRRESVPORT
+	if (bitnset(M_SECURE_PORT, m->m_flags))
+	{
+		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+				     "M%s: Warning: F=%c set on system that doesn't support rresvport()\n",
+				     m->m_name, M_SECURE_PORT);
+	}
+#endif /* !HASRRESVPORT */
+
+#if !HASNICE
+	if (m->m_nice != 0)
+	{
+		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+				     "M%s: Warning: N= set on system that doesn't support nice()\n",
+				     m->m_name);
+	}
+#endif /* !HASNICE */
+
 	/* do some rationality checking */
 	if (m->m_argv == NULL)
 	{
@@ -1376,8 +1396,7 @@ makemailer(line)
 
 	if (strcmp(m->m_mailer, "[TCP]") == 0)
 	{
-		syserr("M%s: P=[TCP] must be replaced by P=[IPC]\n",
-		       m->m_name);
+		syserr("M%s: P=[TCP] must be replaced by P=[IPC]", m->m_name);
 		return;
 	}
 
@@ -1838,6 +1857,9 @@ static struct optioninfo
 	{ "TempFileMode",		'F',		OI_NONE	},
 	{ "SaveFromLine",		'f',		OI_NONE	},
 	{ "MatchGECOS",			'G',		OI_NONE	},
+
+	/* no long name, just here to avoid problems in setoption */
+	{ "",				'g',		OI_NONE	},
 	{ "HelpFile",			'H',		OI_NONE	},
 	{ "MaxHopCount",		'h',		OI_NONE	},
 	{ "ResolverOptions",		'I',		OI_NONE	},
@@ -1849,6 +1871,9 @@ static struct optioninfo
 	{ "UseErrorsTo",		'l',		OI_NONE	},
 	{ "LogLevel",			'L',		OI_SAFE	},
 	{ "MeToo",			'm',		OI_SAFE	},
+
+	/* no long name, just here to avoid problems in setoption */
+	{ "",				'M',		OI_NONE	},
 	{ "CheckAliases",		'n',		OI_NONE	},
 	{ "OldStyleHeaders",		'o',		OI_SAFE	},
 	{ "DaemonPortOptions",		'O',		OI_NONE	},
@@ -2255,7 +2280,7 @@ setoption(opt, val, safe, sticky, e)
 
 		  default:
 			syserr("Unknown 8-bit mode %c", *val);
-			finis(false, EX_USAGE);
+			finis(false, true, EX_USAGE);
 		}
 #else /* MIME8TO7 */
 		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
@@ -2323,7 +2348,7 @@ setoption(opt, val, safe, sticky, e)
 
 		  default:
 			syserr("Unknown delivery mode %c", *val);
-			finis(false, EX_USAGE);
+			finis(false, true, EX_USAGE);
 		}
 		break;
 
@@ -2611,7 +2636,11 @@ setoption(opt, val, safe, sticky, e)
 	  case 'u':		/* set default uid */
 		for (p = val; *p != '\0'; p++)
 		{
+#if _FFR_DOTTED_USERNAMES
+			if (*p == '/' || *p == ':')
+#else /* _FFR_DOTTED_USERNAMES */
 			if (*p == '.' || *p == '/' || *p == ':')
+#endif /* _FFR_DOTTED_USERNAMES */
 			{
 				*p++ = '\0';
 				break;
@@ -2848,6 +2877,10 @@ setoption(opt, val, safe, sticky, e)
 		break;
 
 	  case O_NICEQUEUERUN:		/* nice queue runs */
+#if !HASNICE
+		(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
+				     "Warning: NiceQueueRun set on system that doesn't support nice()\n");
+#endif /* !HASNICE */
 
 		/* XXX do we want to check the range? > 0 ? */
 		NiceQueueRun = atoi(val);
@@ -2943,7 +2976,11 @@ setoption(opt, val, safe, sticky, e)
 	  case O_RUNASUSER:	/* run bulk of code as this user */
 		for (p = val; *p != '\0'; p++)
 		{
+#if _FFR_DOTTED_USERNAMES
+			if (*p == '/' || *p == ':')
+#else /* _FFR_DOTTED_USERNAMES */
 			if (*p == '.' || *p == '/' || *p == ':')
+#endif /* _FFR_DOTTED_USERNAMES */
 			{
 				*p++ = '\0';
 				break;
@@ -3127,11 +3164,11 @@ setoption(opt, val, safe, sticky, e)
 		break;
 
 	  case O_TRUSTUSER:
-# if !HASFCHOWN
+# if !HASFCHOWN && !defined(_FFR_DROP_TRUSTUSER_WARNING)
 		if (!UseMSP)
 			(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT,
 					     "readcf: option TrustedUser may cause problems on systems\n        which do not support fchown() if UseMSP is not set.\n");
-# endif /* !HASFCHOWN */
+# endif /* !HASFCHOWN && !defined(_FFR_DROP_TRUSTUSER_WARNING) */
 		if (isascii(*val) && isdigit(*val))
 			TrustedUid = atoi(val);
 		else

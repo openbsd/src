@@ -6,7 +6,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	$Sendmail: sm_os_linux.h,v 1.11 2001/03/15 22:39:43 ca Exp $
+ *	$Sendmail: sm_os_linux.h,v 1.12 2001/10/05 01:52:41 ca Exp $
  */
 
 /*
@@ -14,6 +14,9 @@
 */
 
 #define SM_OS_NAME	"linux"
+
+/* to get version number */
+#include <linux/version.h>
 
 # if !defined(KERNEL_VERSION)	/* not defined in 2.0.x kernel series */
 #  define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))

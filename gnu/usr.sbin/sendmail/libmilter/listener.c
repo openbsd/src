@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 1999-2001 Sendmail, Inc. and its suppliers.
+ *  Copyright (c) 1999-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: listener.c,v 8.75 2001/09/11 04:04:45 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: listener.c,v 8.81 2002/01/08 23:14:23 ca Exp $")
 
 /*
 **  listener.c -- threaded network listener
@@ -56,7 +56,7 @@ mi_milteropen(conn, backlog, socksize, family, name)
 {
 	socket_t sock;
 	int sockopt = 1;
-	size_t len = -1;
+	size_t len = 0;
 	char *p;
 	char *colon;
 	char *at;
@@ -386,7 +386,7 @@ mi_milteropen(conn, backlog, socksize, family, name)
 		smi_log(SMI_LOG_ERR,
 			"%s: Unable to setsockopt: %s", name,
 			sm_errstring(errno));
-		(void) close(sock);
+		(void) closesocket(sock);
 		return INVALID_SOCKET;
 	}
 
@@ -395,7 +395,7 @@ mi_milteropen(conn, backlog, socksize, family, name)
 		smi_log(SMI_LOG_ERR,
 			"%s: Unable to bind to port %s: %s",
 			name, conn, sm_errstring(errno));
-		(void) close(sock);
+		(void) closesocket(sock);
 		return INVALID_SOCKET;
 	}
 
@@ -404,7 +404,7 @@ mi_milteropen(conn, backlog, socksize, family, name)
 		smi_log(SMI_LOG_ERR,
 			"%s: listen call failed: %s", name,
 			sm_errstring(errno));
-		(void) close(sock);
+		(void) closesocket(sock);
 		return INVALID_SOCKET;
 	}
 
@@ -415,6 +415,7 @@ mi_milteropen(conn, backlog, socksize, family, name)
 		**  Set global variable sockpath so the UNIX socket can be
 		**  unlink()ed at exit.
 		*/
+
 		sockpath = (char *) malloc(len);
 		if (sockpath != NULL)
 			(void) sm_strlcpy(sockpath, colon, len);
@@ -423,7 +424,7 @@ mi_milteropen(conn, backlog, socksize, family, name)
 			smi_log(SMI_LOG_ERR,
 				"%s: can't malloc(%d) for sockpath: %s",
 				name, len, sm_errstring(errno));
-			(void) close(sock);
+			(void) closesocket(sock);
 			return INVALID_SOCKET;
 		}
 	}
@@ -470,21 +471,23 @@ mi_closener()
 	if (ValidSocket(listenfd))
 	{
 #if NETUNIX
-		bool removable = false;
+		bool removable;
 		struct stat sockinfo;
 		struct stat fileinfo;
 
-		if (sockpath != NULL &&
-		    fstat(listenfd, &sockinfo) == 0 &&
-		    (S_ISFIFO(sockinfo.st_mode)
+		removable = sockpath != NULL &&
+#if _FFR_MILTER_ROOT_UNSAFE 
+			    geteuid() != 0 &&
+#endif /* _FFR_MILTER_ROOT_UNSAFE */
+			    fstat(listenfd, &sockinfo) == 0 &&
+			    (S_ISFIFO(sockinfo.st_mode)
 # ifdef S_ISSOCK
-		     || !S_ISSOCK(sockinfo.st_mode)
+			     || S_ISSOCK(sockinfo.st_mode)
 # endif /* S_ISSOCK */
-		     ))
-			removable = true;
+			    );
 #endif /* NETUNIX */
 
-		(void) close(listenfd);
+		(void) closesocket(listenfd);
 		listenfd = INVALID_SOCKET;
 
 #if NETUNIX
@@ -493,8 +496,13 @@ mi_closener()
 		{
 			if (removable &&
 			    stat(sockpath, &fileinfo) == 0 &&
-			    fileinfo.st_dev == sockinfo.st_dev &&
-			    fileinfo.st_ino == sockinfo.st_ino &&
+			    ((fileinfo.st_dev == sockinfo.st_dev &&
+			      fileinfo.st_ino == sockinfo.st_ino)
+# ifdef S_ISSOCK
+			     || S_ISSOCK(fileinfo.st_mode)
+# endif /* S_ISSOCK */
+			    )
+			    &&
 			    (S_ISFIFO(fileinfo.st_mode)
 # ifdef S_ISSOCK
 			     || S_ISSOCK(fileinfo.st_mode)
@@ -692,7 +700,7 @@ mi_listener(conn, dbg, smfi, timeout, backlog)
 # endif /* BSD4_4_SOCKADDR */
 		     cliaddr.sa.sa_family != family))
 		{
-			(void) close(connfd);
+			(void) closesocket(connfd);
 			connfd = INVALID_SOCKET;
 			save_errno = EINVAL;
 		}
@@ -725,7 +733,7 @@ mi_listener(conn, dbg, smfi, timeout, backlog)
 		}
 		if ((ctx = (SMFICTX_PTR) malloc(sizeof *ctx)) == NULL)
 		{
-			(void) close(connfd);
+			(void) closesocket(connfd);
 			mcnt++;
 			smi_log(SMI_LOG_ERR, "%s: malloc(ctx) failed (%s), %s",
 				smfi->xxfi_name, sm_errstring(save_errno),
@@ -775,7 +783,7 @@ mi_listener(conn, dbg, smfi, timeout, backlog)
 				smfi->xxfi_name,  r,
 				tcnt >= MAX_FAILS_T ? "abort" : "try again");
 			MI_SLEEP(tcnt);
-			(void) close(connfd);
+			(void) closesocket(connfd);
 			free(ctx);
 			if (tcnt >= MAX_FAILS_T)
 			{

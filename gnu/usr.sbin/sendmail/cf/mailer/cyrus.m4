@@ -1,6 +1,6 @@
 PUSHDIVERT(-1)
 #
-# Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 #
 # By using this file, you agree to the terms and conditions set
@@ -41,6 +41,7 @@ ifdef(`CYRUS_MAILER_ARGS',, `define(`CYRUS_MAILER_ARGS', `deliver -e -m $h -- $u
 ifdef(`CYRUS_MAILER_USER',, `define(`CYRUS_MAILER_USER', `cyrus:mail')')
 _DEFIFNOT(`CYRUS_BB_MAILER_FLAGS', `u')
 ifdef(`CYRUS_BB_MAILER_ARGS',, `define(`CYRUS_BB_MAILER_ARGS', `deliver -e -m $u')')
+define(`_CYRUS_QGRP', `ifelse(defn(`CYRUS_MAILER_QGRP'),`',`', ` Q=CYRUS_MAILER_QGRP,')')dnl
 
 POPDIVERT
 
@@ -48,12 +49,12 @@ POPDIVERT
 ###   Cyrus Mailer specification               ###
 ##################################################
 
-VERSIONID(`$Sendmail: cyrus.m4,v 8.22 2000/09/02 17:46:43 ca Exp $ (Carnegie Mellon)')
+VERSIONID(`$Sendmail: cyrus.m4,v 8.23 2001/11/12 23:11:34 ca Exp $ (Carnegie Mellon)')
 
 Mcyrus,		P=CYRUS_MAILER_PATH, F=_MODMF_(CONCAT(`lsDFMnPq', CYRUS_MAILER_FLAGS), `CYRUS'), S=EnvFromL, R=EnvToL/HdrToL,
-		ifdef(`CYRUS_MAILER_MAX', `M=CYRUS_MAILER_MAX, ')U=CYRUS_MAILER_USER, T=DNS/RFC822/X-Unix,
+		ifdef(`CYRUS_MAILER_MAX', `M=CYRUS_MAILER_MAX, ')U=CYRUS_MAILER_USER, T=DNS/RFC822/X-Unix,_CYRUS_QGRP
 		A=CYRUS_MAILER_ARGS
 
 Mcyrusbb,	P=CYRUS_MAILER_PATH, F=_MODMF_(CONCAT(`lsDFMnP', CYRUS_BB_MAILER_FLAGS), `CYRUS'), S=EnvFromL, R=EnvToL/HdrToL,
-		ifdef(`CYRUS_MAILER_MAX', `M=CYRUS_MAILER_MAX, ')U=CYRUS_MAILER_USER, T=DNS/RFC822/X-Unix,
+		ifdef(`CYRUS_MAILER_MAX', `M=CYRUS_MAILER_MAX, ')U=CYRUS_MAILER_USER, T=DNS/RFC822/X-Unix,_CYRUS_QGRP
 		A=CYRUS_BB_MAILER_ARGS

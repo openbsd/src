@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -16,7 +16,7 @@
 # include <libmilter/mfdef.h>
 #endif /* MILTER */
 
-SM_RCSID("@(#)$Sendmail: srvrsmtp.c,v 8.795 2001/09/25 19:57:10 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: srvrsmtp.c,v 8.814 2002/01/08 00:56:22 ca Exp $")
 
 #if SASL || STARTTLS
 # include <sys/time.h>
@@ -197,8 +197,9 @@ static SM_DEBUG_T DebugLeakSmtp = SM_DEBUG_INITIALIZER("leak_smtp",
 typedef struct
 {
 	bool	sm_gotmail;	/* mail command received */
-	unsigned int sm_nrcpts;	/* number of RCPT commands */
+	unsigned int sm_nrcpts;	/* number of successful RCPT commands */
 #if _FFR_ADAPTIVE_EOL
+WARNING: do NOT use this FFR, it is most likely broken
 	bool	sm_crlf;	/* input in CRLF form? */
 #endif /* _FFR_ADAPTIVE_EOL */
 	bool	sm_discard;
@@ -207,7 +208,7 @@ typedef struct
 	bool	sm_milterlist;	/* any filters in the list? */
 #endif /* MILTER */
 #if _FFR_QUARANTINE
-	char	*sm_holdmsg;	/* carry quarantining across messages */
+	char	*sm_quarmsg;	/* carry quarantining across messages */
 #endif /* _FFR_QUARANTINE */
 } SMTP_T;
 
@@ -353,7 +354,6 @@ smtp(nullserver, d_flags, e)
 	volatile unsigned int n_etrn = 0;	/* count of ETRN */
 	volatile unsigned int n_noop = 0;	/* count of NOOP/VERB/etc */
 	volatile unsigned int n_helo = 0;	/* count of HELO/EHLO */
-	volatile unsigned int delay = 1;	/* timeout for bad commands */
 	bool ok;
 #if _FFR_ADAPTIVE_EOL
 	volatile bool first;
@@ -497,6 +497,8 @@ smtp(nullserver, d_flags, e)
 	}
 
 	hostname = macvalue('j', e);
+
+
 #if SASL
 	sasl_ok = bitset(SRV_OFFER_AUTH, features);
 	n_mechs = 0;
@@ -609,12 +611,18 @@ smtp(nullserver, d_flags, e)
 		switch (state)
 		{
 		  case SMFIR_REJECT:
+			if (MilterLogLevel > 3)
+				sm_syslog(LOG_INFO, e->e_id,
+					  "Milter: inititalization failed, rejecting commands");
 			greetcode = "554";
 			nullserver = "Command rejected";
 			smtp.sm_milterize = false;
 			break;
 
 		  case SMFIR_TEMPFAIL:
+			if (MilterLogLevel > 3)
+				sm_syslog(LOG_INFO, e->e_id,
+					  "Milter: inititalization failed, temp failing commands");
 			tempfail = true;
 			smtp.sm_milterize = false;
 			break;
@@ -633,17 +641,28 @@ smtp(nullserver, d_flags, e)
 		{
 		  case SMFIR_REPLYCODE:	/* REPLYCODE shouldn't happen */
 		  case SMFIR_REJECT:
+			if (MilterLogLevel > 3)
+				sm_syslog(LOG_INFO, e->e_id,
+					  "Milter: connect: host=%s, addr=%s, rejecting commands",
+					  peerhostname,
+					  anynet_ntoa(&RealHostAddr));
 			greetcode = "554";
 			nullserver = "Command rejected";
 			smtp.sm_milterize = false;
 			break;
 
 		  case SMFIR_TEMPFAIL:
+			if (MilterLogLevel > 3)
+				sm_syslog(LOG_INFO, e->e_id,
+					  "Milter: connect: host=%s, addr=%s, temp failing commands",
+					  peerhostname,
+					  anynet_ntoa(&RealHostAddr));
 			tempfail = true;
 			smtp.sm_milterize = false;
 			break;
 		}
 		if (response != NULL)
+
 			sm_free(response); /* XXX */
 	}
 #endif /* MILTER */
@@ -703,10 +722,10 @@ smtp(nullserver, d_flags, e)
 
 #if _FFR_QUARANTINE
 	/* If quarantining by a connect/ehlo action, save between messages */
-	if (e->e_holdmsg == NULL)
-		smtp.sm_holdmsg = NULL;
+	if (e->e_quarmsg == NULL)
+		smtp.sm_quarmsg = NULL;
 	else
-		smtp.sm_holdmsg = newstr(e->e_holdmsg);
+		smtp.sm_quarmsg = newstr(e->e_quarmsg);
 #endif /* _FFR_QUARANTINE */
 
 	/* sendinghost's storage must outlive the current envelope */
@@ -1005,14 +1024,6 @@ smtp(nullserver, d_flags, e)
 		if (LogLevel > 14)
 			sm_syslog(LOG_INFO, e->e_id, "<-- %s", inp);
 
-		if (e->e_id == NULL)
-			sm_setproctitle(true, e, "%s: %.80s",
-					CurSmtpClient, inp);
-		else
-			sm_setproctitle(true, e, "%s %s: %.80s",
-					qid_printname(e),
-					CurSmtpClient, inp);
-
 		/* break off command */
 		for (p = inp; isascii(*p) && isspace(*p); p++)
 			continue;
@@ -1039,12 +1050,31 @@ smtp(nullserver, d_flags, e)
 		/* check whether a "non-null" command has been used */
 		switch (c->cmd_code)
 		{
+#if SASL
+		  case CMDAUTH:
+			/* avoid information leak; take first two words? */
+			q = "AUTH";
+			break;
+#endif /* SASL */
+
 		  case CMDMAIL:
 		  case CMDEXPN:
 		  case CMDVRFY:
 		  case CMDETRN:
 			lognullconnection = false;
+			/* FALLTHROUGH */
+		  default:
+			q = inp;
+			break;
 		}
+
+		if (e->e_id == NULL)
+			sm_setproctitle(true, e, "%s: %.80s",
+					CurSmtpClient, q);
+		else
+			sm_setproctitle(true, e, "%s %s: %.80s",
+					qid_printname(e),
+					CurSmtpClient, q);
 
 		/*
 		**  Process command.
@@ -1075,12 +1105,15 @@ smtp(nullserver, d_flags, e)
 			  default:
 #if MAXBADCOMMANDS > 0
 				/* theoretically this could overflow */
-				if (++n_badcmds > MAXBADCOMMANDS)
+				if (nullserver != NULL &&
+				    ++n_badcmds > MAXBADCOMMANDS)
 				{
-					delay *= 2;
-					if (delay >= MAXTIMEOUT)
-						delay = MAXTIMEOUT;
-					(void) sleep(delay);
+					message("421 4.7.0 %s Too many bad commands; closing connection",
+						MyHostName);
+
+					/* arrange to ignore send list */
+					e->e_sendqueue = NULL;
+					goto doquit;
 				}
 #endif /* MAXBADCOMMANDS > 0 */
 				if (nullserver != NULL)
@@ -1598,19 +1631,19 @@ smtp(nullserver, d_flags, e)
 
 #if _FFR_QUARANTINE
 				/* restore connection quarantining */
-				if (smtp.sm_holdmsg == NULL)
+				if (smtp.sm_quarmsg == NULL)
 				{
-					e->e_holdmsg = NULL;
+					e->e_quarmsg = NULL;
 					macdefine(&e->e_macro, A_PERM,
-						  macid("{holdmsg}"), "");
+						  macid("{quarantine}"), "");
 				}
 				else
 				{
-					e->e_holdmsg = sm_rpool_strdup_x(e->e_rpool,
-									 smtp.sm_holdmsg);
+					e->e_quarmsg = sm_rpool_strdup_x(e->e_rpool,
+									 smtp.sm_quarmsg);
 					macdefine(&e->e_macro, A_PERM,
-						  macid("{holdmsg}"),
-						  e->e_holdmsg);
+						  macid("{quarantine}"),
+						  e->e_quarmsg);
 				}
 #endif /* _FFR_QUARANTINE */
 			}
@@ -1626,16 +1659,28 @@ smtp(nullserver, d_flags, e)
 				switch (state)
 				{
 				  case SMFIR_REPLYCODE:
+					if (MilterLogLevel > 3)
+						sm_syslog(LOG_INFO, e->e_id,
+							  "Milter: helo=%s, reject=%s",
+							  p, response);
 					nullserver = newstr(response);
 					smtp.sm_milterize = false;
 					break;
 
 				  case SMFIR_REJECT:
+					if (MilterLogLevel > 3)
+						sm_syslog(LOG_INFO, e->e_id,
+							  "Milter: helo=%s, reject=Command rejected",
+							  p);
 					nullserver = "Command rejected";
 					smtp.sm_milterize = false;
 					break;
 
 				  case SMFIR_TEMPFAIL:
+					if (MilterLogLevel > 3)
+						sm_syslog(LOG_INFO, e->e_id,
+							  "Milter: helo=%s, reject=%s",
+							  p, MSG_TEMPFAIL);
 					tempfail = true;
 					smtp.sm_milterize = false;
 					break;
@@ -1649,9 +1694,9 @@ smtp(nullserver, d_flags, e)
 				**  save between messages
 				*/
 
-				if (smtp.sm_holdmsg == NULL &&
-				    e->e_holdmsg != NULL)
-					smtp.sm_holdmsg = newstr(e->e_holdmsg);
+				if (smtp.sm_quarmsg == NULL &&
+				    e->e_quarmsg != NULL)
+					smtp.sm_quarmsg = newstr(e->e_quarmsg);
 #endif /* _FFR_QUARANTINE */
 			}
 #endif /* MILTER */
@@ -1915,6 +1960,26 @@ smtp(nullserver, d_flags, e)
 			args[argno] = NULL;
 			if (Errors > 0)
 				sm_exc_raisenew_x(&EtypeQuickAbort, 1);
+
+#if SASL
+# if _FFR_AUTH_PASSING
+			/* set the default AUTH= if the sender didn't */
+			if (e->e_auth_param == NULL)
+			{
+				/* XXX only do this for an MSA? */
+				e->e_auth_param = macvalue(macid("{auth_authen}"),
+							   e);
+				if (e->e_auth_param == NULL)
+					e->e_auth_param = "<>";
+
+				/*
+				**  XXX should we invoke Strust_auth now?
+				**  authorizing as the client that just
+				**  authenticated, so we'll trust implicitly
+				*/
+			}
+# endif /* _FFR_AUTH_PASSING */
+#endif /* SASL */
 
 			/* do config file checking of the sender */
 			macdefine(&e->e_macro, A_PERM,
@@ -2242,18 +2307,18 @@ smtp(nullserver, d_flags, e)
 			CLEAR_STATE(cmdbuf);
 #if _FFR_QUARANTINE
 			/* restore connection quarantining */
-			if (smtp.sm_holdmsg == NULL)
+			if (smtp.sm_quarmsg == NULL)
 			{
-				e->e_holdmsg = NULL;
+				e->e_quarmsg = NULL;
 				macdefine(&e->e_macro, A_PERM,
-					  macid("{holdmsg}"), "");
+					  macid("{quarantine}"), "");
 			}
 			else
 			{
-				e->e_holdmsg = sm_rpool_strdup_x(e->e_rpool,
-								 smtp.sm_holdmsg);
+				e->e_quarmsg = sm_rpool_strdup_x(e->e_rpool,
+								 smtp.sm_quarmsg);
 				macdefine(&e->e_macro, A_PERM,
-					  macid("{holdmsg}"), e->e_holdmsg);
+					  macid("{quarantine}"), e->e_quarmsg);
 			}
 #endif /* _FFR_QUARANTINE */
 			break;
@@ -2542,7 +2607,7 @@ doquit:
 #if PROFILING
 			return;
 #endif /* PROFILING */
-			finis(true, ExitStat);
+			finis(true, true, ExitStat);
 			/* NOTREACHED */
 
 		  case CMDVERB:		/* set verbose mode */
@@ -2733,24 +2798,35 @@ smtp_data(smtp, e)
 		switch (state)
 		{
 		  case SMFIR_REPLYCODE:
+			if (MilterLogLevel > 3)
+				sm_syslog(LOG_INFO, e->e_id,
+					  "Milter: data, reject=%s",
+					  response);
 			milteraccept = false;
 			usrerr(response);
 			break;
 
 		  case SMFIR_REJECT:
 			milteraccept = false;
-			if (MilterLogLevel > 8)
+			if (MilterLogLevel > 3)
 				sm_syslog(LOG_INFO, e->e_id,
-					  "Milter: reject, message data");
+					  "Milter: data, reject=554 5.7.1 Command rejected");
 			usrerr("554 5.7.1 Command rejected");
 			break;
 
 		  case SMFIR_DISCARD:
+			if (MilterLogLevel > 3)
+				sm_syslog(LOG_INFO, e->e_id,
+					  "Milter: data, discard");
 			milteraccept = false;
 			e->e_flags |= EF_DISCARD;
 			break;
 
 		  case SMFIR_TEMPFAIL:
+			if (MilterLogLevel > 3)
+				sm_syslog(LOG_INFO, e->e_id,
+					  "Milter: data, reject=%s",
+					  MSG_TEMPFAIL);
 			milteraccept = false;
 			usrerr(MSG_TEMPFAIL);
 			break;
@@ -2772,6 +2848,12 @@ smtp_data(smtp, e)
 	}
 #endif /* MILTER */
 
+#if _FFR_QUARANTINE
+	/* Check if quarantining stats should be updated */
+	if (e->e_quarmsg != NULL)
+		markstats(e, NULL, STATS_QUARANTINE);
+#endif /* _FFR_QUARANTINE */
+
 	/*
 	**  If a header/body check (header checks or milter)
 	**  set EF_DISCARD, don't queueup the message --
@@ -2783,13 +2865,12 @@ smtp_data(smtp, e)
 		doublequeue = false;
 
 	aborting = Errors > 0;
-	if (!aborting)
-	{
+	if (!aborting &&
 #if _FFR_QUARANTINE
-		if (QueueMode == QM_HELD || e->e_holdmsg == NULL)
+	    (QueueMode == QM_QUARANTINE || e->e_quarmsg == NULL) &&
 #endif /* _FFR_QUARANTINE */
-			aborting = !split_by_recipient(e);
-	}
+	    !split_by_recipient(e))
+		aborting = bitset(EF_FATALERRS, e->e_flags);
 
 	if (aborting)
 	{
@@ -2854,14 +2935,6 @@ smtp_data(smtp, e)
 			/* make sure it is in the queue */
 			queueup(ee, false, true);
 		}
-#if _FFR_QUARANTINE
-		else if (QueueMode != QM_HELD &&
-			 ee->e_holdmsg != NULL)
-		{
-			/* make sure it is in the queue */
-			queueup(ee, false, true);
-		}
-#endif /* _FFR_QUARANTINE */
 		else
 		{
 			/* send to all recipients */
@@ -2889,8 +2962,8 @@ smtp_data(smtp, e)
 				continue;
 			}
 #if _FFR_QUARANTINE
-			else if (QueueMode != QM_HELD &&
-				 ee->e_holdmsg != NULL)
+			else if (QueueMode != QM_QUARANTINE &&
+				 ee->e_quarmsg != NULL)
 			{
 				ee->e_sendmode = SM_QUEUE;
 				continue;
@@ -2942,8 +3015,8 @@ smtp_data(smtp, e)
 		{
 #if _FFR_QUARANTINE
 			if (!doublequeue &&
-			    QueueMode != QM_HELD &&
-			    ee->e_holdmsg != NULL)
+			    QueueMode != QM_QUARANTINE &&
+			    ee->e_quarmsg != NULL)
 			{
 				dropenvelope(ee, true, false);
 				continue;
@@ -2968,16 +3041,16 @@ smtp_data(smtp, e)
 
 #if _FFR_QUARANTINE
 	/* restore connection quarantining */
-	if (smtp->sm_holdmsg == NULL)
+	if (smtp->sm_quarmsg == NULL)
 	{
-		e->e_holdmsg = NULL;
-		macdefine(&e->e_macro, A_PERM, macid("{holdmsg}"), "");
+		e->e_quarmsg = NULL;
+		macdefine(&e->e_macro, A_PERM, macid("{quarantine}"), "");
 	}
 	else
 	{
-		e->e_holdmsg = sm_rpool_strdup_x(e->e_rpool, smtp->sm_holdmsg);
+		e->e_quarmsg = sm_rpool_strdup_x(e->e_rpool, smtp->sm_quarmsg);
 		macdefine(&e->e_macro, A_PERM,
-			  macid("{holdmsg}"), e->e_holdmsg);
+			  macid("{quarantine}"), e->e_quarmsg);
 	}
 #endif /* _FFR_QUARANTINE */
 }
@@ -3231,10 +3304,16 @@ mail_esmtp_args(kp, vp, e)
 			/* NOTREACHED */
 		}
 		macdefine(&e->e_macro, A_TEMP, macid("{msg_size}"), vp);
+		errno = 0;
 		e->e_msgsize = strtol(vp, (char **) NULL, 10);
 		if (e->e_msgsize == LONG_MAX && errno == ERANGE)
 		{
 			usrerr("552 5.2.3 Message size exceeds maximum value");
+			/* NOTREACHED */
+		}
+		if (e->e_msgsize < 0)
+		{
+			usrerr("552 5.2.3 Message size invalid");
 			/* NOTREACHED */
 		}
 	}
@@ -3376,6 +3455,10 @@ mail_esmtp_args(kp, vp, e)
 
 			/* not trusted */
 			e->e_auth_param = "<>";
+# if _FFR_AUTH_PASSING
+			macdefine(&BlankEnvelope.e_macro, A_PERM,
+				  macid("{auth_author}"), NULL);
+# endif /* _FFR_AUTH_PASSING */
 		}
 		else
 		{
@@ -3409,6 +3492,7 @@ mail_esmtp_args(kp, vp, e)
 			usrerr("501 5.5.2 BY= requires a value");
 			/* NOTREACHED */
 		}
+		errno = 0;
 		e->e_deliver_by = strtol(vp, &s, 10);
 		if (e->e_deliver_by == LONG_MIN ||
 		    e->e_deliver_by == LONG_MAX ||
@@ -3660,7 +3744,12 @@ saslmechs(conn, mechlist)
 		*mechlist = intersect(AuthMechanisms, *mechlist, NULL);
 	}
 	else
+	{
 		*mechlist = NULL;	/* be paranoid... */
+		if (result == SASL_OK && LogLevel > 9)
+			sm_syslog(LOG_WARNING, NOQID,
+				  "AUTH warning: no mechanisms");
+	}
 	return num;
 }
 /*

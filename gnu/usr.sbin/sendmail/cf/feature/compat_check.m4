@@ -9,7 +9,7 @@ divert(-1)
 #
 #
 divert(0)
-VERSIONID(`$Sendmail: compat_check.m4,v 1.2 2001/03/13 13:41:39 ca Exp $')
+VERSIONID(`$Sendmail: compat_check.m4,v 1.3 2001/11/21 18:40:06 ca Exp $')
 divert(-1)
 ifdef(`_ACCESS_TABLE_', `',
 `errprint(`FEATURE(`compat_check') requires FEATURE(`access_db')
@@ -27,7 +27,7 @@ R$* $| $*		$@ ok
 # it must be one of the following... anything else will be allowed..
 dnl for consistency with the other two even though discard does not take an
 dnl reply code
-R< DISCARD:$* >	$#discard $: "$1 - discarded by check_compat"
-R< DISCARD $* >	$#discard $: "$1 - discarded by check_compat"
-R< TEMP:$* >	$#error $@ TEMPFAIL $: "$1 error from check_compat. try again later"
-R< ERROR:$* >	$#error $@ UNAVAILABLE $: "$1 error from check_compat"
+R< DISCARD:$* >	$#discard $: $1 " - discarded by check_compat"
+R< DISCARD $* >	$#discard $: $1 " - discarded by check_compat"
+R< TEMP:$* >	$#error $@ TEMPFAIL $: $1 " error from check_compat. Try again later"
+R< ERROR:$* >	$#error $@ UNAVAILABLE $: $1 " error from check_compat"

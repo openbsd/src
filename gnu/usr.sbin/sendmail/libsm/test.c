@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -8,7 +8,7 @@
  */
 
 #include <sm/gen.h>
-SM_IDSTR(Id, "@(#)$Sendmail: test.c,v 1.14 2001/09/11 04:04:49 gshapiro Exp $")
+SM_IDSTR(Id, "@(#)$Sendmail: test.c,v 1.16 2002/01/08 17:54:40 ca Exp $")
 
 /*
 **  Abstractions for writing libsm test programs.
@@ -16,8 +16,8 @@ SM_IDSTR(Id, "@(#)$Sendmail: test.c,v 1.14 2001/09/11 04:04:49 gshapiro Exp $")
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <sm/debug.h>
-#include <sm/io.h>
 #include <sm/test.h>
 
 extern char *optarg;
@@ -80,14 +80,13 @@ sm_test_begin(argc, argv, testname)
 			sm_debug_addsettings_x(optarg);
 			break;
 		  case 'h':
-			(void) sm_io_fprintf(smioout, SM_TIME_DEFAULT, Help,
-				argv[0], testname);
+			(void) fprintf(stdout, Help, argv[0], testname);
 			exit(0);
 		  default:
-			(void) sm_io_fprintf(smioerr, SM_TIME_DEFAULT,
-				"Unknown command line option -%c\n", optopt);
-			(void) sm_io_fprintf(smioerr, SM_TIME_DEFAULT,  Usage,
-				argv[0], argv[0]);
+			(void) fprintf(stderr,
+					"Unknown command line option -%c\n",
+					optopt);
+			(void) fprintf(stderr, Usage, argv[0], argv[0]);
 			exit(1);
 		}
 	}
@@ -115,21 +114,19 @@ sm_test(success, expr, filename, lineno)
 {
 	++SmTestIndex;
 	if (SmTestVerbose)
-		(void) sm_io_fprintf(smioerr, SM_TIME_DEFAULT,  "%d..",
-			SmTestIndex);
+		(void) fprintf(stderr, "%d..", SmTestIndex);
 	if (!success)
 	{
 		++SmTestNumErrors;
 		if (!SmTestVerbose)
-			(void) sm_io_fprintf(smioerr, SM_TIME_DEFAULT,
-				 "%d..", SmTestIndex);
-		(void) sm_io_fprintf(smioerr, SM_TIME_DEFAULT,
-			"bad! %s:%d %s\n", filename, lineno, expr);
+			(void) fprintf(stderr, "%d..", SmTestIndex);
+		(void) fprintf(stderr, "bad! %s:%d %s\n", filename, lineno,
+				expr);
 	}
 	else
 	{
 		if (SmTestVerbose)
-			(void) sm_io_fprintf(smioerr, SM_TIME_DEFAULT,  "ok\n");
+			(void) fprintf(stderr, "ok\n");
 	}
 	return success;
 }
@@ -147,14 +144,12 @@ sm_test(success, expr, filename, lineno)
 int
 sm_test_end()
 {
-	(void) sm_io_fprintf(smioerr, SM_TIME_DEFAULT,
-		"%d of %d tests completed successfully\n",
-		SmTestIndex - SmTestNumErrors, SmTestIndex);
+	(void) fprintf(stderr, "%d of %d tests completed successfully\n",
+			SmTestIndex - SmTestNumErrors, SmTestIndex);
 	if (SmTestNumErrors != 0)
-		(void) sm_io_fprintf(smioerr, SM_TIME_DEFAULT,
-			"*** %d error%s in test! ***\n",
-			SmTestNumErrors,
-			SmTestNumErrors > 1 ? "s" : "");
+		(void) fprintf(stderr, "*** %d error%s in test! ***\n",
+				SmTestNumErrors,
+				SmTestNumErrors > 1 ? "s" : "");
 
 	return SmTestNumErrors;
 }

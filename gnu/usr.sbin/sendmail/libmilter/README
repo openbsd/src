@@ -15,6 +15,22 @@ your devtools/Site/site.config.m4 file:
 
 	APPENDDEF(`conf_sendmail_ENVDEF', `-DMILTER')
 
++----------------+
+| SECURITY HINTS |
++----------------+
+
+Note: we strongly recommend not to run any milter as root.  Libmilter
+does not need root access to communicate with sendmail.  It is a
+good security practice to run a program only with root privileges
+if really necessary.  A milter should probably check first whether
+it runs as root and refuse to start in that case.  There is a
+compile time option _FFR_MILTER_ROOT_UNSAFE which keeps libmilter
+from unlinking a socket when running as root.  It is recommended
+to turn on this option:
+
+	APPENDDEF(`conf_libmilter_ENVDEF', `-D_FFR_MILTER_ROOT_UNSAFE ')
+
+
 +-------------------+
 | BUILDING A FILTER |
 +-------------------+
@@ -71,7 +87,7 @@ IPv4 socket on port 3333 of localhost.  The current flags (F=) are:
 	T		Temporary fail connection if filter unavailable
 
 If neither F=R nor F=T is specified, the message is passed through sendmail
-as if the filter were not present.
+in case of filter errors as if the failing filters were not present.
 
 Finally, you can override the default timeouts used by sendmail when
 talking to the filters using the T= equate.  There are four fields inside
@@ -441,4 +457,4 @@ main(argc, argv)
 
 /* eof */
 
-$Revision: 1.8 $, Last updated $Date: 2001/09/11 19:02:49 $
+$Revision: 1.9 $, Last updated $Date: 2002/01/14 03:21:40 $

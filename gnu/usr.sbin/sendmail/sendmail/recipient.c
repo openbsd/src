@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: recipient.c,v 8.325 2001/09/11 04:05:16 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: recipient.c,v 8.327 2001/11/20 13:59:53 ca Exp $")
 
 static void	includetimeout __P((void));
 static ADDRESS	*self_reference __P((ADDRESS *));
@@ -151,9 +151,6 @@ sortbysignature(xx, yy)
 **
 **	Returns:
 **		The number of addresses actually on the list.
-**
-**	Side Effects:
-**		none.
 */
 
 /* q_flags bits inherited from ctladdr */
@@ -785,6 +782,9 @@ recipient(new, sendq, aliaslevel, e)
 		*pq = new;
 	}
 
+	/* added a new address: clear split flag */
+	e->e_flags &= ~EF_SPLIT;
+
 	/*
 	**  Alias the name and handle special mailer types.
 	*/
@@ -1399,7 +1399,6 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 	register char *p;
 	bool safechown = false;
 	volatile bool safedir = false;
-	bool oldsplit;
 	struct stat st;
 	char buf[MAXLINE];
 
@@ -1784,8 +1783,6 @@ resetuid:
 	LineNumber = 0;
 	ctladdr->q_flags &= ~QSELFREF;
 	nincludes = 0;
-	oldsplit = bitset(EF_SPLIT, e->e_flags);
-	e->e_flags &= ~EF_SPLIT;
 	while (sm_io_fgets(fp, SM_TIME_DEFAULT, buf, sizeof buf) != NULL &&
 	       !maxreached)
 	{
@@ -1833,7 +1830,7 @@ resetuid:
 			ctladdr->q_state = QS_DONTSEND;
 #endif /* 0 */
 
-			syserr("Attempt to forward to more then %d addresses (in %s)!",
+			syserr("Attempt to forward to more than %d addresses (in %s)!",
 				MaxForwardEntries,fname);
 			maxreached = true;
 		}
@@ -1850,10 +1847,6 @@ resetuid:
 		}
 		ctladdr->q_state = QS_DONTSEND;
 	}
-
-	/* if nothing included: restore old split flag */
-	if (nincludes <= 0 && oldsplit)
-		e->e_flags |= EF_SPLIT;
 
 	(void) sm_io_close(fp, SM_TIME_DEFAULT);
 	FileName = oldfilename;

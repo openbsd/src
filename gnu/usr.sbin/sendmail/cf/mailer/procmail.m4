@@ -1,6 +1,6 @@
 PUSHDIVERT(-1)
 #
-# Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1983 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988, 1993
@@ -19,6 +19,7 @@ ifdef(`PROCMAIL_MAILER_PATH',,
 _DEFIFNOT(`PROCMAIL_MAILER_FLAGS', `SPhnu9')
 ifdef(`PROCMAIL_MAILER_ARGS',,
 	`define(`PROCMAIL_MAILER_ARGS', `procmail -Y -m $h $f $u')')
+define(`_PROCMAIL_QGRP', `ifelse(defn(`PROCMAIL_MAILER_QGRP'),`',`', ` Q=PROCMAIL_MAILER_QGRP,')')dnl
 
 POPDIVERT
 
@@ -26,8 +27,8 @@ POPDIVERT
 ###   PROCMAIL Mailer specification   ###
 ##################*****##################
 
-VERSIONID(`$Sendmail: procmail.m4,v 8.21 2000/09/02 17:46:43 ca Exp $')
+VERSIONID(`$Sendmail: procmail.m4,v 8.22 2001/11/12 23:11:34 ca Exp $')
 
 Mprocmail,	P=PROCMAIL_MAILER_PATH, F=_MODMF_(CONCAT(`DFM', PROCMAIL_MAILER_FLAGS), `PROCMAIL'), S=EnvFromSMTP/HdrFromSMTP, R=EnvToSMTP/HdrFromSMTP,
-		ifdef(`PROCMAIL_MAILER_MAX', `M=PROCMAIL_MAILER_MAX, ')T=DNS/RFC822/X-Unix,
+		ifdef(`PROCMAIL_MAILER_MAX', `M=PROCMAIL_MAILER_MAX, ')T=DNS/RFC822/X-Unix,_PROCMAIL_QGRP
 		A=PROCMAIL_MAILER_ARGS

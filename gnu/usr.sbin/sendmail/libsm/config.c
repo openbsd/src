@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: config.c,v 1.23 2001/09/24 20:44:07 ca Exp $")
+SM_RCSID("@(#)$Sendmail: config.c,v 1.26 2001/12/14 00:26:18 ca Exp $")
 
 #include <stdlib.h>
 #include <sm/heap.h>
@@ -173,9 +173,6 @@ char *SmCompileOptions[] =
 #if SM_CONF_BROKEN_STRTOD
 	"SM_CONF_BROKEN_STRTOD",
 #endif /* SM_CONF_BROKEN_STRTOD */
-#if SM_CONF_CANT_SETRGID
-	"SM_CONF_CANT_SETRGID",
-#endif /* SM_CONF_CANT_SETRGID */
 #if SM_CONF_GETOPT
 	"SM_CONF_GETOPT",
 #endif /* SM_CONF_GETOPT */

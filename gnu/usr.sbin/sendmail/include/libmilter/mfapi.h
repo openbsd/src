@@ -7,7 +7,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: mfapi.h,v 8.32 2001/09/13 20:38:40 ca Exp $
+ *	$Sendmail: mfapi.h,v 8.35 2001/10/09 19:05:24 gshapiro Exp $
  */
 
 /*
@@ -305,6 +305,15 @@ LIBMILTER_API char * smfi_getsymval __P((SMFICTX *, char *));
 */
 
 LIBMILTER_API int smfi_setreply __P((SMFICTX *, char *, char *, char *));
+
+#if _FFR_MULTILINE
+/*
+**  Alternatively, smfi_setmlreply can be called if a multi-line SMTP reply
+**  is needed.
+*/
+
+LIBMILTER_API int smfi_setmlreply __P((SMFICTX *, const char *, const char *, ...));
+#endif /* _FFR_MULTILINE */
 
 /*
 **  Set the specific reply code to be used in response to the active

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2001 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 2000-2002 Sendmail, Inc. and its suppliers.
  *      All rights reserved.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -13,7 +13,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: findfp.c,v 1.60 2001/09/11 04:04:48 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: findfp.c,v 1.62 2002/01/11 16:33:03 ca Exp $")
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/param.h>
@@ -110,6 +110,7 @@ struct sm_glue smglue = { &smuglue, 3, SmIoF };
 */
 
 static struct sm_glue *sm_moreglue_x __P((int));
+static SM_FILE_T empty;
 
 static struct sm_glue *
 sm_moreglue_x(n)
@@ -117,7 +118,6 @@ sm_moreglue_x(n)
 {
 	register struct sm_glue *g;
 	register SM_FILE_T *p;
-	static SM_FILE_T empty;
 
 	g = (struct sm_glue *) sm_pmalloc_x(sizeof(*g) + ALIGNBYTES +
 					    n * sizeof(SM_FILE_T));
@@ -126,11 +126,7 @@ sm_moreglue_x(n)
 	g->gl_niobs = n;
 	g->gl_iobs = p;
 	while (--n >= 0)
-	{
 		*p++ = empty;
-		p->f_type = NULL;
-		p->sm_magic = NULL;
-	}
 	return g;
 }
 
@@ -255,6 +251,10 @@ sm_init()
 {
 	if (Sm_IO_DidInit)	/* paranoia */
 		return;
+
+	/* more paranoia: initialize pointers in a static variable */
+	empty.f_type = NULL;
+	empty.sm_magic = NULL;
 
 	/* make sure we clean up on exit */
 	atexit(sm_cleanup);		/* conservative */
