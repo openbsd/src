@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.29 2000/09/19 19:01:31 angelos Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.41 2000/06/20 03:35:01 itojun Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.30 2000/10/07 06:57:56 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.46 2000/10/07 06:46:55 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -1879,17 +1879,20 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   srcaddr = (struct sockaddr *)(src + 1);
 
   switch (dstaddr->sa_family)
-  {
-      case AF_INET:
-         LOG_DBG ((LOG_SYSDEP, 20, "pf_key_v2_acquire: dst=%s sproto %d",
-                   inet_ntop(AF_INET, &((struct sockaddr_in *)dstaddr)->sin_addr, adbuf, 16), msg->sadb_msg_satype));
-         break;
+    {
+    case AF_INET:
+      LOG_DBG ((LOG_SYSDEP, 20, "pf_key_v2_acquire: dst=%s sproto %d",
+		inet_ntop(AF_INET, &((struct sockaddr_in *)dstaddr)->sin_addr,
+			  adbuf, 16), msg->sadb_msg_satype));
+      break;
 
-      case AF_INET6:
-         LOG_DBG ((LOG_SYSDEP, 20, "pf_key_v2_acquire: dst=%s sproto %d",
-                   inet_ntop(AF_INET6, &((struct sockaddr_in6 *)dstaddr)->sin6_addr, adbuf, 16), msg->sadb_msg_satype));
-         break;
-  }
+    case AF_INET6:
+      LOG_DBG ((LOG_SYSDEP, 20, "pf_key_v2_acquire: dst=%s sproto %d",
+		inet_ntop(AF_INET6
+			  , &((struct sockaddr_in6 *)dstaddr)->sin6_addr,
+			  adbuf, 16), msg->sadb_msg_satype));
+      break;
+    }
 
   /* XXX Only support one proposal for now */
   /* XXX Finish it */
