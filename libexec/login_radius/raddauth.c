@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.17 2004/09/11 03:19:08 millert Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.18 2005/03/02 21:51:17 cloder Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -133,7 +133,7 @@ in_addr_t get_ipaddr(char *);
 in_addr_t gethost(void);
 int rad_recv(char *, char *, u_char *);
 void parse_challenge(auth_hdr_t *, char *, char *);
-void rad_request(pid_t, char *, char *, int, char *, char *);
+void rad_request(u_char, char *, char *, int, char *, char *);
 void getsecret(void);
 
 /*
@@ -144,7 +144,7 @@ int
 raddauth(char *username, char *class, char *style, char *challenge,
     char *password, char **emsg)
 {
-	volatile pid_t req_id;
+	volatile u_char req_id;
 	char * volatile userstyle, * volatile passwd, * volatile pwstate;
 	volatile int auth_port;
 	char vector[AUTH_VECTOR_LEN+1], _pwstate[1024], *p, *v;
@@ -230,7 +230,7 @@ raddauth(char *username, char *class, char *style, char *challenge,
 	sin.sin_addr.s_addr = INADDR_ANY;
 	sin.sin_port = svp->s_port;
 
-	req_id = getpid();
+	req_id = (u_char) arc4random();
 	auth_port = ttyslot();
 	if (auth_port == 0)
 		auth_port = (int)getppid();
@@ -328,7 +328,7 @@ retry:
  * Build a radius authentication digest and submit it to the radius server
  */
 void
-rad_request(pid_t id, char *name, char *password, int port, char *vector,
+rad_request(u_char id, char *name, char *password, int port, char *vector,
     char *state)
 {
 	auth_hdr_t auth;
