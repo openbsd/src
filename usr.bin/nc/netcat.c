@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.58 2003/06/10 22:20:48 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.59 2003/06/26 21:59:11 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -76,7 +76,7 @@ int timeout = -1;
 int family = AF_UNSPEC;
 char *portlist[PORT_MAX];
 
-ssize_t	atomicio(ssize_t (*)(), int, void *, size_t);
+ssize_t	atomicio(ssize_t (*)(int, void *, size_t), int, void *, size_t);
 void	atelnet(int, unsigned char *, unsigned int);
 void	build_ports(char *);
 void	help(void);
@@ -569,7 +569,9 @@ readwrite(int nfd)
 			} else {
 				if (tflag)
 					atelnet(nfd, buf, n);
-				if ((ret = atomicio(write, lfd, buf, n)) != n)
+				if ((ret = atomicio(
+				    (ssize_t (*)(int, void *, size_t))write,
+				    lfd, buf, n)) != n)
 					return;
 			}
 		}
@@ -582,7 +584,9 @@ readwrite(int nfd)
 				pfd[1].fd = -1;
 				pfd[1].events = 0;
 			} else {
-				if((ret = atomicio(write, nfd, buf, n)) != n)
+				if((ret = atomicio(
+				    (ssize_t (*)(int, void *, size_t))write,
+				    nfd, buf, n)) != n)
 					return;
 			}
 		}
@@ -614,7 +618,9 @@ atelnet(int nfd, unsigned char *buf, unsigned int size)
 			p++;
 			obuf[2] = *p;
 			obuf[3] = '\0';
-			if ((ret = atomicio(write , nfd, obuf, 3)) != 3)
+			if ((ret = atomicio(
+			    (ssize_t (*)(int, void *, size_t))write,
+			    nfd, obuf, 3)) != 3)
 				warnx("Write Error!");
 			obuf[0] = '\0';
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.72 2003/06/17 21:56:25 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.73 2003/06/26 21:59:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -71,7 +71,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.72 2003/06/17 21:56:25 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.73 2003/06/26 21:59:10 deraadt Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -179,7 +179,8 @@ void child_killer(int);
 void run_command(char *);
 void send_signal(char *, int);
 char *lstat_log(char *, size_t, int);
-int stat_suffix(char *, size_t, char *, struct stat *, int (*)());
+int stat_suffix(char *, size_t, char *, struct stat *,
+    int (*)(const char *, struct stat *));
 time_t parse8601(char *);
 time_t parseDWM(char *);
 
@@ -1085,7 +1086,8 @@ child_killer(int signo)
 }
 
 int
-stat_suffix(char *file, size_t size, char *suffix, struct stat *sp, int (*func)())
+stat_suffix(char *file, size_t size, char *suffix, struct stat *sp,
+    int (*func)(const char *, struct stat *))
 {
 	size_t n;
 

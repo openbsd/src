@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.37 2003/06/12 07:39:16 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.38 2003/06/26 21:59:11 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.37 2003/06/12 07:39:16 jmc Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.38 2003/06/26 21:59:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,12 +179,12 @@ struct nlist nl[] = {
 };
 
 struct protox {
-	u_char	pr_index;		/* index into nlist of cb head */
-	u_char	pr_sindex;		/* index into nlist of stat block */
-	u_char	pr_wanted;		/* 1 if wanted, 0 otherwise */
-	void	(*pr_cblocks)();	/* control blocks printing routine */
-	void	(*pr_stats)();		/* statistics printing routine */
-	char	*pr_name;		/* well-known name */
+	u_char	pr_index;			/* index into nlist of cb head */
+	u_char	pr_sindex;			/* index into nlist of stat block */
+	u_char	pr_wanted;			/* 1 if wanted, 0 otherwise */
+	void	(*pr_cblocks)(u_long, char *);	/* control blocks printing routine */
+	void	(*pr_stats)(u_long, char *);	/* statistics printing routine */
+	char	*pr_name;			/* well-known name */
 } protox[] = {
 	{ N_TCBTABLE,	N_TCPSTAT,	1,	protopr,
 	  tcp_stats,	"tcp" },
@@ -545,7 +545,7 @@ main(int argc, char *argv[])
 static void
 printproto(struct protox *tp, char *name)
 {
-	void (*pr)();
+	void (*pr)(u_long, char *);
 	u_char i;
 
 	if (sflag) {

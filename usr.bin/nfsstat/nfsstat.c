@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.19 2003/06/10 22:20:49 deraadt Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.20 2003/06/26 21:59:10 deraadt Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.19 2003/06/10 22:20:49 deraadt Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.20 2003/06/26 21:59:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -347,7 +347,7 @@ sidewaysintpr(u_int interval, u_int display)
 	struct nfsstats nfsstats, lastst;
 	int hdrcnt;
 	sigset_t emptyset;
-	void catchalarm();
+	void catchalarm(int);
 
 	(void)signal(SIGALRM, catchalarm);
 	signalled = 0;
@@ -409,7 +409,7 @@ printhdr(void)
  * Sets a flag to not wait for the alarm.
  */
 void
-catchalarm(void)
+catchalarm(int signo)
 {
 	signalled = 1;
 }

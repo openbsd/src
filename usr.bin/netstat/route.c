@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.53 2003/06/03 02:56:13 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.54 2003/06/26 21:59:11 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.53 2003/06/03 02:56:13 millert Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.54 2003/06/26 21:59:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,9 +127,9 @@ int	NewTree = 0;
 
 static struct sockaddr *kgetsa(struct sockaddr *);
 static void p_tree(struct radix_node *);
-static void p_rtnode();
+static void p_rtnode(void);
 static void p_rtflags(u_char);
-static void ntreestuff();
+static void ntreestuff(void);
 static void np_rtentry(struct rt_msghdr *);
 static void p_sockaddr(struct sockaddr *, struct sockaddr *, int, int);
 static void p_flags(int, char *);

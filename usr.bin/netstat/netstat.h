@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.24 2003/06/25 21:18:55 deraadt Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.25 2003/06/26 21:59:11 deraadt Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ void	iso_protopr(u_long, char *);
 void	iso_protopr1(u_long, int);
 void	tp_protopr(u_long, char *);
 void	tp_inproto(u_long);
-void	tp_stats(caddr_t, caddr_t);
+void	tp_stats(u_long, char *);
 
 void	mroutepr(u_long, u_long, u_long, u_long);
 void	mrt_stats(u_long, u_long);

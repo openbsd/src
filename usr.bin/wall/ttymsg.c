@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.12 2003/06/03 02:56:22 millert Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.13 2003/06/26 21:59:10 deraadt Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #endif
-static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.12 2003/06/03 02:56:22 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.13 2003/06/26 21:59:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,6 +49,8 @@ static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.12 2003/06/03 02:56:22 mille
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+
+char *ttymsg(struct iovec *, int, char *, int);
 
 /*
  * Display the contents of a uio structure on a terminal.  Used by wall(1),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.c,v 1.12 2003/06/03 02:56:13 millert Exp $	*/
+/*	$OpenBSD: iso.c,v 1.13 2003/06/26 21:59:11 deraadt Exp $	*/
 /*	$NetBSD: iso.c,v 1.12 1995/10/03 21:42:38 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: iso.c,v 1.12 2003/06/03 02:56:13 millert Exp $";
+static char *rcsid = "$OpenBSD: iso.c,v 1.13 2003/06/26 21:59:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -519,7 +519,7 @@ x25_protopr(u_long off, char *name)
 struct	tp_stat tp_stat;
 
 void
-tp_stats(caddr_t off, char *name)
+tp_stats(u_long off, char *name)
 {
 	if (off == 0) {
 		printf("TP not configured\n\n");
