@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.20 2001/06/03 04:30:47 angelos Exp $	*/
+/*	$OpenBSD: ps.c,v 1.21 2001/06/03 04:48:15 angelos Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.20 2001/06/03 04:30:47 angelos Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.21 2001/06/03 04:48:15 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ main(argc, argv)
 	dev_t ttydev;
 	pid_t pid;
 	uid_t uid;
-	int all, ch, flag, i, fmt, lineno, nentries, mib[4], mibcnt;
+	int all, ch, flag, i, fmt, lineno, nentries, mib[4], mibcnt, nproc;
 	int prtheader, wflag, kflag, what, xflg;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 	size_t size;
@@ -335,15 +335,17 @@ main(argc, argv)
 	}
 	else {
 		mib[0] = CTL_KERN;
-		mib[1] = KERN_PROC;
-		size = 0;
-		if (sysctl(mib, mibcnt, NULL, &size, NULL, 0) < 0)
-			err(1, "could not get kern.proc size");
-		size *= 2;
+		mib[1] = KERN_NPROCS;
+		size = sizeof (nproc);
+		if (sysctl(mib, 2, &nproc, &size, NULL, 0) < 0)
+			err(1, "could not get kern.nproc");
+		/* Allocate more memory than is needed, just in case */
+		size = (5 * nproc * sizeof(struct kinfo_proc)) / 4;
 		kp = calloc(size, sizeof(char));
 		if (kp == NULL)
 			err(1,
 			    "failed to allocated memory for proc structures");
+		mib[1] = KERN_PROC;
 		if (sysctl(mib, mibcnt, kp, &size, NULL, 0) < 0)
 			err(1, "could not read kern.proc");
 		nentries = size / sizeof(struct kinfo_proc);
