@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.117 2004/04/28 02:43:09 pb Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.118 2004/05/03 07:51:59 kjc Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -706,7 +706,7 @@ pf_commit_altq(u_int32_t ticket)
 			error = altq_pfattach(altq);
 			if (error == 0 && pf_altq_running)
 				error = pf_enable_altq(altq);
-			if (error == 0) {
+			if (error != 0) {
 				splx(s);
 				return (error);
 			}
