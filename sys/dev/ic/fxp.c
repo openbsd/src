@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.25 2001/08/25 14:55:14 jason Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.26 2001/08/27 22:06:52 jason Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -686,7 +686,7 @@ fxp_start(ifp)
 			bpf_mtap(ifp->if_bpf, m0);
 #endif
 
-		FXP_MBUF_SYNC(sc, txs->tx_map, BUS_DMASYNC_PREREAD);
+		FXP_MBUF_SYNC(sc, txs->tx_map, BUS_DMASYNC_PREWRITE);
 
 		txc = txs->tx_cb;
 		txc->tbd_number = txs->tx_map->dm_nsegs;
@@ -778,7 +778,7 @@ fxp_intr(arg)
 			    (txs->tx_cb->cb_status & FXP_CB_STATUS_C)) {
 				if (txs->tx_mbuf != NULL) {
 					FXP_MBUF_SYNC(sc, txs->tx_map,
-					    BUS_DMASYNC_POSTREAD);
+					    BUS_DMASYNC_POSTWRITE);
 					bus_dmamap_unload(sc->sc_dmat,
 					    txs->tx_map);
 					m_freem(txs->tx_mbuf);
