@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpd.c,v 1.8 1998/12/20 21:16:49 millert Exp $";
+static char rcsid[] = "$Id: bootpd.c,v 1.9 2001/01/16 23:34:41 deraadt Exp $";
 #endif
 
 /*
@@ -576,6 +576,8 @@ PRIVATE void
 catcher(sig)
 	int sig;
 {
+    int save_errno = errno;
+
 	if (sig == SIGHUP)
 		do_readtab = 1;
 	if (sig == SIGUSR1)
@@ -585,6 +587,7 @@ catcher(sig)
 	/* XXX - Should just do it the POSIX way (sigaction). */
 	signal(sig, catcher);
 #endif
+    save_errno = errno;
 }
 
 
