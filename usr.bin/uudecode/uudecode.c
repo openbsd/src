@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.4 1998/05/11 01:19:05 deraadt Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.5 1998/05/29 21:07:22 deraadt Exp $	*/
 /*	$NetBSD: uudecode.c,v 1.6 1994/11/17 07:40:43 jtc Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: uudecode.c,v 1.4 1998/05/11 01:19:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uudecode.c,v 1.5 1998/05/29 21:07:22 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -115,7 +115,7 @@ decode()
 			return(1);
 		}
 	} while (strncmp(buf, "begin ", 6));
-	(void)sscanf(buf, "begin %o %1023s", &mode, buf);
+	(void)sscanf(buf, "begin %o %1023[^\n\r]", &mode, buf);
 
 	/* handle ~user/file format */
 	if (buf[0] == '~') {
