@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.32 1997/08/20 03:46:31 millert Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.33 1997/10/06 20:53:03 mickey Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -2329,7 +2329,7 @@ edintr(arg)
 #ifdef ED_DEBUG
 					printf("%s: receive error %x\n",
 					    sc->sc_dev.dv_xname,
-					    NIC_GET(nicbase, ED_P0_RSR));
+					    NIC_GET(iot,ioh,nicbase,ED_P0_RSR));
 #endif
 				}
 
