@@ -29,9 +29,9 @@ main(int argc, char *argv[])
 	output("atu-intersil-ext", atuwi_fw_intersil_ext,
 	    sizeof atuwi_fw_intersil_ext);
 
-	output("atu-rfmd2958-int", atuwi_fw_rfmd2958_smc_int,
+	output("atu-rfmd2958smc-int", atuwi_fw_rfmd2958_smc_int,
 	    sizeof atuwi_fw_rfmd2958_smc_int);
-	output("atu-rfmd2958-ext", atuwi_fw_rfmd2958_smc_ext,
+	output("atu-rfmd2958smc-ext", atuwi_fw_rfmd2958_smc_ext,
 	    sizeof atuwi_fw_rfmd2958_smc_ext);
 
 	output("atu-rfmd2958-int", atuwi_fw_rfmd2958_int,
