@@ -1,4 +1,4 @@
-/*	$OpenBSD: getline.c,v 1.14 2003/06/02 19:38:24 millert Exp $ */
+/*	$OpenBSD: getline.c,v 1.15 2003/06/28 01:04:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 1985, 1988 Regents of the University of California.
@@ -46,6 +46,8 @@
 #include <unistd.h>
 
 #include "util.h"
+
+int		refill_buffer(struct csiob *iobp);
 
 /*
  * Refill the io buffer if we KNOW that data is available

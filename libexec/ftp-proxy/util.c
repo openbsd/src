@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2003/04/27 12:47:03 tdeval Exp $ */
+/*	$OpenBSD: util.c,v 1.16 2003/06/28 01:04:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -58,6 +58,8 @@
 
 int Debug_Level;
 int Use_Rdns;
+
+void		debuglog(int debug_level, const char *fmt, ...);
 
 void
 debuglog(int debug_level, const char *fmt, ...)

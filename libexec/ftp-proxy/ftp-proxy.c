@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.30 2003/06/23 17:22:29 deraadt Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.31 2003/06/28 01:04:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -160,8 +160,13 @@ typedef enum {
 
 connection_mode_t connection_mode;
 
-extern void debuglog(int debug_level, const char *fmt, ...);
-
+extern void	debuglog(int debug_level, const char *fmt, ...);
+double		wallclock_time(void);
+void		show_xfer_stats(void);
+void		log_control_command (char *cmd, int client);
+int		new_dataconn(int server);
+void		do_client_cmd(struct csiob *client, struct csiob *server);
+void		do_server_reply(struct csiob *server, struct csiob *client);
 static void
 usage(void)
 {

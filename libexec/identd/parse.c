@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.36 2002/11/25 11:08:18 mpech Exp $	*/
+/*	$OpenBSD: parse.c,v 1.37 2003/06/28 01:05:21 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -32,6 +32,7 @@
 int check_noident(char *);
 ssize_t timed_read(int, void *, size_t, time_t);
 ssize_t timed_write(int, const void *, size_t, time_t);
+int getuserident(char *homedir, char *buf, int len);
 void gentoken(char *, int);
 
 /*

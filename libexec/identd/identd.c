@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.34 2003/06/07 18:31:17 henning Exp $	*/
+/*	$OpenBSD: identd.c,v 1.35 2003/06/28 01:05:21 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -56,6 +56,9 @@ const  char *charset_sep = "";
 char   *charset_name = "";
 
 static pid_t child_pid;
+
+void		usage(void);
+char *		gethost(struct sockaddr_storage *ss);
 
 void
 usage(void)
