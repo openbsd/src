@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.39 1998/07/16 07:06:05 millert Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.40 1998/07/21 07:16:37 downsj Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1465,7 +1465,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.39 1998/07/16 07:06:05 millert Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.40 1998/07/21 07:16:37 downsj Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3497,8 +3497,13 @@ static ncr_chip ncr_chip_table[] = {
  {NCR_875_ID, 0x02,	"ncr 53c875 fast20 wide scsi",		7, 16, 5,
  FE_WIDE|FE_ULTRA|FE_DBLR|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
  ,
+#ifdef NCR_NARROW_875J
+ {NCR_875_ID2, 0x00,	"ncr 53c875j fast20 scsi",		4,  8, 5,
+ FE_ULTRA|FE_DBLR|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
+#else
  {NCR_875_ID2, 0x00,	"ncr 53c875j fast20 wide scsi",		7, 16, 5,
  FE_WIDE|FE_ULTRA|FE_DBLR|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
+#endif
  ,
  {NCR_885_ID, 0x00,	"ncr 53c885 fast20 wide scsi",		7, 16, 5,
  FE_WIDE|FE_ULTRA|FE_DBLR|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
