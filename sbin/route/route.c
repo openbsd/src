@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.50 2002/06/10 21:19:24 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.51 2002/10/17 20:38:03 jason Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.50 2002/06/10 21:19:24 itojun Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.51 2002/10/17 20:38:03 jason Exp $";
 #endif
 #endif /* not lint */
 
@@ -735,7 +735,8 @@ newroute(argc, argv)
 				forcenet++;
 				break;
 			case K_PREFIXLEN:
-				argc--;
+				if (!--argc)
+					usage(1+*argv);
 				prefixlen(*++argv);
 				break;
 			case K_MTU:
