@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.276 2003/01/04 17:40:51 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.277 2003/01/05 22:14:23 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1513,9 +1513,9 @@ address		: '(' STRING ')'		{
 				err(1, "address: calloc");
 			$$->af = 0;
 			set_ipmask($$, 128);
-			$$->addr.addr_dyn = (struct pf_addr_dyn *)1;
-			strlcpy($$->addr.addr.pfa.ifname, $2,
-			    sizeof($$->addr.addr.pfa.ifname));
+			$$->addr.type = PF_ADDR_DYNIFTL;
+			strlcpy($$->addr.v.ifname, $2,
+			    sizeof($$->addr.v.ifname));
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -2219,10 +2219,10 @@ natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 					}
 				} else {
 					if ((nat.af == AF_INET &&
-					    unmask(&$7->host->addr.mask,
+					    unmask(&$7->host->addr.v.a.mask,
 					    nat.af) == 32) ||
 					    (nat.af == AF_INET6 &&
-					    unmask(&$7->host->addr.mask,
+					    unmask(&$7->host->addr.v.a.mask,
 					    nat.af) == 128)) {
 						nat.rpool.opts = PF_POOL_NONE;
 					} else {
@@ -2282,7 +2282,7 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 					yyerror("multiple binat ip addresses");
 					YYERROR;
 				}
-				if ($7->addr.addr_dyn != NULL) {
+				if ($7->addr.type == PF_ADDR_DYNIFTL) {
 					if (!binat.af) {
 						yyerror("address family (inet/"
 						    "inet6) undefined");
@@ -2295,10 +2295,12 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 					YYERROR;
 				}
 				binat.af = $7->af;
-				memcpy(&binat.src.addr.addr, &$7->addr.addr,
-				    sizeof(binat.src.addr.addr));
-				memcpy(&binat.src.addr.mask, &$7->addr.mask,
-				    sizeof(binat.src.addr.mask));
+				memcpy(&binat.src.addr.v.a.addr,
+				    &$7->addr.v.a.addr,
+				    sizeof(binat.src.addr.v.a.addr));
+				memcpy(&binat.src.addr.v.a.mask,
+				    &$7->addr.v.a.mask,
+				    sizeof(binat.src.addr.v.a.mask));
 				free($7);
 			}
 			if ($9 != NULL) {
@@ -2306,7 +2308,7 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 					yyerror("multiple binat ip addresses");
 					YYERROR;
 				}
-				if ($9->addr.addr_dyn != NULL) {
+				if ($9->addr.type == PF_ADDR_DYNIFTL) {
 					if (!binat.af) {
 						yyerror("address family (inet/"
 						    "inet6) undefined");
@@ -2319,10 +2321,12 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 					YYERROR;
 				}
 				binat.af = $9->af;
-				memcpy(&binat.dst.addr.addr, &$9->addr.addr,
-				    sizeof(binat.dst.addr.addr));
-				memcpy(&binat.dst.addr.mask, &$9->addr.mask,
-				    sizeof(binat.dst.addr.mask));
+				memcpy(&binat.dst.addr.v.a.addr,
+				    &$9->addr.v.a.addr,
+				    sizeof(binat.dst.addr.v.a.addr));
+				memcpy(&binat.dst.addr.v.a.mask,
+				    &$9->addr.v.a.mask,
+				    sizeof(binat.dst.addr.v.a.mask));
 				binat.dst.not = $9->not;
 				free($9);
 			}
@@ -2349,9 +2353,9 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 					YYERROR;
 				}
 
-				if (!PF_AZERO(&binat.src.addr.mask, binat.af) &&
-				    !PF_AEQ(&binat.src.addr.mask,
-				    &$10->host->addr.mask, binat.af)) {
+				if (!PF_AZERO(&binat.src.addr.v.a.mask, binat.af) &&
+				    !PF_AEQ(&binat.src.addr.v.a.mask,
+				    &$10->host->addr.v.a.mask, binat.af)) {
 					yyerror("'binat' source mask and "
 					    "redirect mask must be the same");
 					YYERROR;
@@ -2392,19 +2396,23 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport
 			rdr.af = $4;
 
 			if ($7 != NULL) {
-				memcpy(&rdr.src.addr.addr, &$7->addr.addr,
-				    sizeof(rdr.src.addr.addr));
-				memcpy(&rdr.src.addr.mask, &$7->addr.mask,
-				    sizeof(rdr.src.addr.mask));
+				memcpy(&rdr.src.addr.v.a.addr,
+				    &$7->addr.v.a.addr,
+				    sizeof(rdr.src.addr.v.a.addr));
+				memcpy(&rdr.src.addr.v.a.mask,
+				    &$7->addr.v.a.mask,
+				    sizeof(rdr.src.addr.v.a.mask));
 				rdr.src.not = $7->not;
 				if (!rdr.af && !$7->ifindex)
 					rdr.af = $7->af;
 			}
 			if ($9 != NULL) {
-				memcpy(&rdr.dst.addr.addr, &$9->addr.addr,
-				    sizeof(rdr.dst.addr.addr));
-				memcpy(&rdr.dst.addr.mask, &$9->addr.mask,
-				    sizeof(rdr.dst.addr.mask));
+				memcpy(&rdr.dst.addr.v.a.addr,
+				    &$9->addr.v.a.addr,
+				    sizeof(rdr.dst.addr.v.a.addr));
+				memcpy(&rdr.dst.addr.v.a.mask,
+				    &$9->addr.v.a.mask,
+				    sizeof(rdr.dst.addr.v.a.mask));
 				rdr.dst.not = $9->not;
 				if (!rdr.af && !$9->ifindex)
 					rdr.af = $9->af;
@@ -2453,10 +2461,10 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport
 					}
 				} else {
 					if ((rdr.af == AF_INET &&
-					    unmask(&$11->host->addr.mask,
+					    unmask(&$11->host->addr.v.a.mask,
 					    rdr.af) == 32) ||
 					    (rdr.af == AF_INET6 &&
-					    unmask(&$11->host->addr.mask,
+					    unmask(&$11->host->addr.v.a.mask,
 					    rdr.af) == 128)) {
 						rdr.rpool.opts = PF_POOL_NONE;
 					} else {
@@ -2668,8 +2676,8 @@ rule_consistent(struct pf_rule *r)
 		yyerror("allow-opts can only be specified for pass rules");
 		problems++;
 	}
-	if (!r->af && (r->src.addr.addr_dyn != NULL ||
-	    r->dst.addr.addr_dyn != NULL)) {
+	if (!r->af && (r->src.addr.type == PF_ADDR_DYNIFTL ||
+	    r->dst.addr.type == PF_ADDR_DYNIFTL)) {
 		yyerror("dynamic addresses require address family "
 		    "(inet/inet6)");
 		problems++;
@@ -2698,7 +2706,7 @@ nat_consistent(struct pf_rule *r)
 
 	if (!r->af) {
 		TAILQ_FOREACH(pa, &r->rpool.list, entries) {
-			if (pa->addr.addr.addr_dyn != NULL) {
+			if (pa->addr.addr.type == PF_ADDR_DYNIFTL) {
 				yyerror("dynamic addresses require "
 				    "address family (inet/inet6)");
 				problems++;
@@ -2721,14 +2729,14 @@ rdr_consistent(struct pf_rule *r)
 		problems++;
 	}
 	if (!r->af) {
-		if (r->src.addr.addr_dyn != NULL ||
-		    r->dst.addr.addr_dyn != NULL) {
+		if (r->src.addr.type == PF_ADDR_DYNIFTL ||
+		    r->dst.addr.type == PF_ADDR_DYNIFTL) {
 			yyerror("dynamic addresses require address family "
 			    "(inet/inet6)");
 			problems++;
 		} else {
 			TAILQ_FOREACH(pa, &r->rpool.list, entries) {
-				if (pa->addr.addr.addr_dyn != NULL) {
+				if (pa->addr.addr.type == PF_ADDR_DYNIFTL) {
 					yyerror("dynamic addresses require "
 					    "address family (inet/inet6)");
 					problems++;
@@ -2807,23 +2815,23 @@ expand_label_addr(const char *name, char *label, sa_family_t af,
 
 		if (h->not)
 			strlcat(tmp, "! ", PF_RULE_LABEL_SIZE);
-		if (h->addr.addr_dyn != NULL) {
+		if (h->addr.type == PF_ADDR_DYNIFTL) {
 			strlcat(tmp, "(", PF_RULE_LABEL_SIZE);
-			strlcat(tmp, h->addr.addr.pfa.ifname,
+			strlcat(tmp, h->addr.v.ifname,
 			    PF_RULE_LABEL_SIZE);
 			strlcat(tmp, ")", PF_RULE_LABEL_SIZE);
-		} else if (!af || (PF_AZERO(&h->addr.addr, af) &&
-		    PF_AZERO(&h->addr.mask, af)))
+		} else if (!af || (PF_AZERO(&h->addr.v.a.addr, af) &&
+		    PF_AZERO(&h->addr.v.a.mask, af)))
 			strlcat(tmp, "any", PF_RULE_LABEL_SIZE);
 		else {
 			char	a[48];
 			int	bits;
 
-			if (inet_ntop(af, &h->addr.addr, a,
+			if (inet_ntop(af, &h->addr.v.a.addr, a,
 			    sizeof(a)) == NULL)
 				strlcat(a, "?", sizeof(a));
 			strlcat(tmp, a, PF_RULE_LABEL_SIZE);
-			bits = unmask(&h->addr.mask, af);
+			bits = unmask(&h->addr.v.a.mask, af);
 			a[0] = 0;
 			if ((af == AF_INET && bits < 32) ||
 			    (af == AF_INET6 && bits < 128))
@@ -3784,7 +3792,7 @@ set_ipmask(struct node_host *h, u_int8_t b)
 	struct pf_addr	*m, *n;
 	int		 i, j = 0;
 
-	m = &h->addr.mask;
+	m = &h->addr.v.a.mask;
 
 	for (i = 0; i < 4; i++)
 		m->addr32[i] = 0;
@@ -3799,7 +3807,7 @@ set_ipmask(struct node_host *h, u_int8_t b)
 		m->addr32[j] = htonl(m->addr32[j]);
 
 	/* Mask off bits of the address that will never be used. */
-	n = &h->addr.addr;
+	n = &h->addr.v.a.addr;
 	for (i = 0; i < 4; i++)
 		n->addr32[i] = n->addr32[i] & m->addr32[i];
 }
@@ -3868,7 +3876,6 @@ ifa_load(void)
 		if (n == NULL)
 			err(1, "address: calloc");
 		n->af = ifa->ifa_addr->sa_family;
-		n->addr.addr_dyn = NULL;
 		n->ifa_flags = ifa->ifa_flags;
 #ifdef __KAME__
 		if (n->af == AF_INET6 &&
@@ -3886,10 +3893,10 @@ ifa_load(void)
 #endif
 		n->ifindex = 0;
 		if (n->af == AF_INET) {
-			memcpy(&n->addr.addr, &((struct sockaddr_in *)
+			memcpy(&n->addr.v.a.addr, &((struct sockaddr_in *)
 			    ifa->ifa_addr)->sin_addr.s_addr,
 			    sizeof(struct in_addr));
-			memcpy(&n->addr.mask, &((struct sockaddr_in *)
+			memcpy(&n->addr.v.a.mask, &((struct sockaddr_in *)
 			    ifa->ifa_netmask)->sin_addr.s_addr,
 			    sizeof(struct in_addr));
 			if (ifa->ifa_broadaddr != NULL)
@@ -3897,10 +3904,10 @@ ifa_load(void)
 				    ifa->ifa_broadaddr)->sin_addr.s_addr,
 				    sizeof(struct in_addr));
 		} else if (n->af == AF_INET6) {
-			memcpy(&n->addr.addr, &((struct sockaddr_in6 *)
+			memcpy(&n->addr.v.a.addr, &((struct sockaddr_in6 *)
 			    ifa->ifa_addr)->sin6_addr.s6_addr,
 			    sizeof(struct in6_addr));
-			memcpy(&n->addr.mask, &((struct sockaddr_in6 *)
+			memcpy(&n->addr.v.a.mask, &((struct sockaddr_in6 *)
 			    ifa->ifa_netmask)->sin6_addr.s6_addr,
 			    sizeof(struct in6_addr));
 			if (ifa->ifa_broadaddr != NULL)
@@ -3966,20 +3973,20 @@ ifa_lookup(char *ifa_name, enum pfctl_iflookup_mode mode)
 		if (n == NULL)
 			err(1, "address: calloc");
 		n->af = p->af;
-		n->addr.addr_dyn = NULL;
-		if (mode == PFCTL_IFLOOKUP_BCAST) {
-				memcpy(&n->addr.addr, &p->bcast,
-				    sizeof(struct pf_addr));
-		} else
-			memcpy(&n->addr.addr, &p->addr.addr,
+		if (mode == PFCTL_IFLOOKUP_BCAST)
+			memcpy(&n->addr.v.a.addr, &p->bcast,
+			    sizeof(struct pf_addr));
+		else
+			memcpy(&n->addr.v.a.addr, &p->addr.v.a.addr,
 			    sizeof(struct pf_addr));
 		if (mode == PFCTL_IFLOOKUP_NET)
-			set_ipmask(n, unmask(&p->addr.mask, n->af));
+			set_ipmask(n, unmask(&p->addr.v.a.mask, n->af));
 		else {
 			if (n->af == AF_INET) {
 				if (p->ifa_flags & IFF_LOOPBACK &&
 				    p->ifa_flags & IFF_LINK1)
-					memcpy(&n->addr.mask, &p->addr.mask,
+					memcpy(&n->addr.v.a.mask,
+					    &p->addr.v.a.mask,
 					    sizeof(struct pf_addr));
 				else
 					set_ipmask(n, 32);
@@ -4098,8 +4105,7 @@ host(char *s, int mask)
 			err(1, "address: calloc");
 		h->ifname = NULL;
 		h->af = AF_INET;
-		h->addr.addr_dyn = NULL;
-		h->addr.addr.addr32[0] = ina.s_addr;
+		h->addr.v.a.addr.addr32[0] = ina.s_addr;
 		set_ipmask(h, bits);
 		h->next = NULL;
 		h->tail = h;
@@ -4118,10 +4124,9 @@ host(char *s, int mask)
 			err(1, "address: calloc");
 		n->ifname = NULL;
 		n->af = AF_INET6;
-		n->addr.addr_dyn = NULL;
-		memcpy(&n->addr.addr,
+		memcpy(&n->addr.v.a.addr,
 		    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
-		    sizeof(n->addr.addr));
+		    sizeof(n->addr.v.a.addr));
 		n->ifindex = ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
 		set_ipmask(n, v6mask);
 		freeaddrinfo(res);
@@ -4148,14 +4153,13 @@ host(char *s, int mask)
 			err(1, "address: calloc");
 		n->ifname = NULL;
 		n->af = res->ai_family;
-		n->addr.addr_dyn = NULL;
 		if (res->ai_family == AF_INET) {
-			memcpy(&n->addr.addr,
+			memcpy(&n->addr.v.a.addr,
 			    &((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr,
 			    sizeof(struct in_addr));
 			set_ipmask(n, v4mask);
 		} else {
-			memcpy(&n->addr.addr,
+			memcpy(&n->addr.v.a.addr,
 			    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr.s6_addr,
 			    sizeof(struct in6_addr));
 			n->ifindex =

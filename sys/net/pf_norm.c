@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.48 2003/01/04 17:40:51 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.49 2003/01/05 22:14:23 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -811,13 +811,15 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != h->ip_p)
 			r = r->skip[PF_SKIP_PROTO].ptr;
-		else if (!PF_AZERO(&r->src.addr.mask, AF_INET) &&
-		    !PF_MATCHA(r->src.not, &r->src.addr.addr, &r->src.addr.mask,
-		    (struct pf_addr *)&h->ip_src.s_addr, AF_INET))
+		else if (!PF_AZERO(&r->src.addr.v.a.mask, AF_INET) &&
+		    !PF_MATCHA(r->src.not, &r->src.addr.v.a.addr,
+		    &r->src.addr.v.a.mask, (struct pf_addr *)&h->ip_src.s_addr,
+		    AF_INET))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
-		else if (!PF_AZERO(&r->dst.addr.mask, AF_INET) &&
-		    !PF_MATCHA(r->dst.not, &r->dst.addr.addr, &r->dst.addr.mask,
-		    (struct pf_addr *)&h->ip_dst.s_addr, AF_INET))
+		else if (!PF_AZERO(&r->dst.addr.v.a.mask, AF_INET) &&
+		    !PF_MATCHA(r->dst.not, &r->dst.addr.v.a.addr,
+		    &r->dst.addr.v.a.mask, (struct pf_addr *)&h->ip_dst.s_addr,
+		    AF_INET))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else
 			break;
@@ -1018,9 +1020,9 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 		    pf_routable(pd->src, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->src.addr.type != PF_ADDR_NOROUTE &&
-		    !PF_AZERO(&r->src.addr.mask, af) &&
-		    !PF_MATCHA(r->src.not, &r->src.addr.addr, &r->src.addr.mask,
-			    pd->src, af))
+		    !PF_AZERO(&r->src.addr.v.a.mask, af) &&
+		    !PF_MATCHA(r->src.not, &r->src.addr.v.a.addr,
+		    &r->src.addr.v.a.mask, pd->src, af))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 			    r->src.port[0], r->src.port[1], th->th_sport))
@@ -1029,9 +1031,9 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 		    pf_routable(pd->dst, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (!r->dst.addr.type != PF_ADDR_NOROUTE &&
-		    !PF_AZERO(&r->dst.addr.mask, af) &&
-		    !PF_MATCHA(r->dst.not, &r->dst.addr.addr, &r->dst.addr.mask,
-			    pd->dst, af))
+		    !PF_AZERO(&r->dst.addr.v.a.mask, af) &&
+		    !PF_MATCHA(r->dst.not, &r->dst.addr.v.a.addr,
+		    &r->dst.addr.v.a.mask, pd->dst, af))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 			    r->dst.port[0], r->dst.port[1], th->th_dport))

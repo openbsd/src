@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.11 2003/01/03 19:31:43 deraadt Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.12 2003/01/05 22:14:23 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1139,9 +1139,9 @@ pfr_wrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap,
 	SHA1Final(hash.pfrh_sha1, &sha1);
 
 	bzero(&w, sizeof(w));
-	bcopy(&hash, &w.addr, sizeof(w.addr));
-	w.mask.addr32[0] = PF_TABLE_MASK;
-	w.mask.addr32[1] = hash.pfrh_int32[4];
+	bcopy(&hash, &w.v.a.addr, sizeof(w.v.a.addr));
+	w.v.a.mask.addr32[0] = PF_TABLE_MASK;
+	w.v.a.mask.addr32[1] = hash.pfrh_int32[4];
 	if (copyout(&w, wrap, sizeof(*wrap)))
 		return (EFAULT);
 
@@ -1161,12 +1161,12 @@ pfr_unwrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap, int flags)
 	if (copyin(wrap, &w, sizeof(w)))
 		return (EFAULT);
 
-	if (w.mask.addr32[0] != PF_TABLE_MASK || w.mask.addr32[2] ||
-	    w.mask.addr32[3])
+	if (w.v.a.mask.addr32[0] != PF_TABLE_MASK || w.v.a.mask.addr32[2] ||
+	    w.v.a.mask.addr32[3])
 		return (EINVAL);
 
-	bcopy(&w.addr, &hash, 16);
-	hash.pfrh_int32[4] = w.mask.addr32[1];
+	bcopy(&w.v.a.addr, &hash, 16);
+	hash.pfrh_int32[4] = w.v.a.mask.addr32[1];
 	kt = pfr_lookup_hash(&hash);
 	if (kt == NULL)
 		return (ENOENT);

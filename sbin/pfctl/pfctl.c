@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.122 2003/01/04 00:01:34 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.123 2003/01/05 22:14:23 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -326,7 +326,8 @@ pfctl_kill_states(int dev, int opts)
 	killed = sources = dests = 0;
 
 	memset(&psk, 0, sizeof(psk));
-	memset(&psk.psk_src.addr.mask, 0xff, sizeof(psk.psk_src.addr.mask));
+	memset(&psk.psk_src.addr.v.a.mask, 0xff,
+	    sizeof(psk.psk_src.addr.v.a.mask));
 	memset(&last_src, 0xff, sizeof(last_src));
 	memset(&last_dst, 0xff, sizeof(last_dst));
 
@@ -346,10 +347,10 @@ pfctl_kill_states(int dev, int opts)
 		sources++;
 
 		if (psk.psk_af == AF_INET)
-			psk.psk_src.addr.addr.v4 =
+			psk.psk_src.addr.v.a.addr.v4 =
 			    ((struct sockaddr_in *)resp[0]->ai_addr)->sin_addr;
 		else if (psk.psk_af == AF_INET6)
-			psk.psk_src.addr.addr.v6 =
+			psk.psk_src.addr.v.a.addr.v6 =
 			    ((struct sockaddr_in6 *)resp[0]->ai_addr)->
 			    sin6_addr;
 		else
@@ -357,8 +358,8 @@ pfctl_kill_states(int dev, int opts)
 
 		if (state_killers > 1) {
 			dests = 0;
-			memset(&psk.psk_dst.addr.mask, 0xff,
-			    sizeof(psk.psk_dst.addr.mask));
+			memset(&psk.psk_dst.addr.v.a.mask, 0xff,
+			    sizeof(psk.psk_dst.addr.v.a.mask));
 			memset(&last_dst, 0xff, sizeof(last_dst));
 			if ((ret_ga = getaddrinfo(state_kill[1], NULL, NULL,
 			    &res[1]))) {
@@ -380,11 +381,11 @@ pfctl_kill_states(int dev, int opts)
 				dests++;
 
 				if (psk.psk_af == AF_INET)
-					psk.psk_dst.addr.addr.v4 =
+					psk.psk_dst.addr.v.a.addr.v4 =
 					    ((struct sockaddr_in *)resp[1]->
 					    ai_addr)->sin_addr;
 				else if (psk.psk_af == AF_INET6)
-					psk.psk_dst.addr.addr.v6 =
+					psk.psk_dst.addr.v.a.addr.v6 =
 					    ((struct sockaddr_in6 *)resp[1]->
 					    ai_addr)->sin6_addr;
 				else

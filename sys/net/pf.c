@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.297 2003/01/04 17:40:51 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.298 2003/01/05 22:14:23 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -510,31 +510,30 @@ pf_purge_expired_states(void)
 int
 pf_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 {
-	if (aw->addr_dyn == NULL)
+	if (aw->type != PF_ADDR_DYNIFTL)
 		return (0);
-	aw->addr_dyn = pool_get(&pf_addr_pl, PR_NOWAIT);
-	if (aw->addr_dyn == NULL)
+	aw->p.dyn = pool_get(&pf_addr_pl, PR_NOWAIT);
+	if (aw->p.dyn == NULL)
 		return (1);
-	bcopy(aw->addr.pfa.ifname, aw->addr_dyn->ifname,
-	    sizeof(aw->addr_dyn->ifname));
-	aw->addr_dyn->ifp = ifunit(aw->addr_dyn->ifname);
-	if (aw->addr_dyn->ifp == NULL) {
-		pool_put(&pf_addr_pl, aw->addr_dyn);
-		aw->addr_dyn = NULL;
-		return (1);
-	}
-	aw->addr_dyn->addr = &aw->addr;
-	aw->addr_dyn->af = af;
-	aw->addr_dyn->undefined = 1;
-	aw->addr_dyn->hook_cookie = hook_establish(
-	    aw->addr_dyn->ifp->if_addrhooks, 1,
-	    pf_dynaddr_update, aw->addr_dyn);
-	if (aw->addr_dyn->hook_cookie == NULL) {
-		pool_put(&pf_addr_pl, aw->addr_dyn);
-		aw->addr_dyn = NULL;
+	bcopy(aw->v.ifname, aw->p.dyn->ifname, sizeof(aw->p.dyn->ifname));
+	aw->p.dyn->ifp = ifunit(aw->p.dyn->ifname);
+	if (aw->p.dyn->ifp == NULL) {
+		pool_put(&pf_addr_pl, aw->p.dyn);
+		aw->p.dyn = NULL;
 		return (1);
 	}
-	pf_dynaddr_update(aw->addr_dyn);
+	aw->p.dyn->addr = &aw->v.a.addr;
+	aw->p.dyn->af = af;
+	aw->p.dyn->undefined = 1;
+	aw->p.dyn->hook_cookie = hook_establish(
+	    aw->p.dyn->ifp->if_addrhooks, 1,
+	    pf_dynaddr_update, aw->p.dyn);
+	if (aw->p.dyn->hook_cookie == NULL) {
+		pool_put(&pf_addr_pl, aw->p.dyn);
+		aw->p.dyn = NULL;
+		return (1);
+	}
+	pf_dynaddr_update(aw->p.dyn);
 	return (0);
 }
 
@@ -586,22 +585,21 @@ pf_dynaddr_update(void *p)
 void
 pf_dynaddr_remove(struct pf_addr_wrap *aw)
 {
-	if (aw->addr_dyn == NULL)
+	if (aw->type != PF_ADDR_DYNIFTL || aw->p.dyn == NULL)
 		return;
-	hook_disestablish(aw->addr_dyn->ifp->if_addrhooks,
-	    aw->addr_dyn->hook_cookie);
-	pool_put(&pf_addr_pl, aw->addr_dyn);
-	aw->addr_dyn = NULL;
+	hook_disestablish(aw->p.dyn->ifp->if_addrhooks,
+	    aw->p.dyn->hook_cookie);
+	pool_put(&pf_addr_pl, aw->p.dyn);
+	aw->p.dyn = NULL;
 }
 
 void
 pf_dynaddr_copyout(struct pf_addr_wrap *aw)
 {
-	if (aw->addr_dyn == NULL)
+	if (aw->type != PF_ADDR_DYNIFTL || aw->p.dyn == NULL)
 		return;
-	bcopy(aw->addr_dyn->ifname, aw->addr.pfa.ifname,
-	    sizeof(aw->addr.pfa.ifname));
-	aw->addr_dyn = (struct pf_addr_dyn *)1;
+	bcopy(aw->p.dyn->ifname, aw->v.ifname, sizeof(aw->v.ifname));
+	aw->p.dyn = (struct pf_addr_dyn *)1;
 }
 
 void
@@ -751,25 +749,25 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 			PF_SET_SKIP_STEPS(PF_SKIP_AF);
 		if (cur->proto != prev->proto)
 			PF_SET_SKIP_STEPS(PF_SKIP_PROTO);
-		if (cur->src.addr.addr_dyn != NULL ||
-		    prev->src.addr.addr_dyn != NULL ||
+		if (cur->src.addr.type == PF_ADDR_DYNIFTL ||
+		    prev->src.addr.type == PF_ADDR_DYNIFTL ||
 		    cur->src.not !=  prev->src.not ||
 		    (cur->src.addr.type == PF_ADDR_NOROUTE) != 
 		    (prev->src.addr.type == PF_ADDR_NOROUTE) ||
-		    !PF_AEQ(&cur->src.addr.addr, &prev->src.addr.addr, 0) ||
-		    !PF_AEQ(&cur->src.addr.mask, &prev->src.addr.mask, 0))
+		    !PF_AEQ(&cur->src.addr.v.a.addr, &prev->src.addr.v.a.addr, 0) ||
+		    !PF_AEQ(&cur->src.addr.v.a.mask, &prev->src.addr.v.a.mask, 0))
 			PF_SET_SKIP_STEPS(PF_SKIP_SRC_ADDR);
 		if (cur->src.port[0] != prev->src.port[0] ||
 		    cur->src.port[1] != prev->src.port[1] ||
 		    cur->src.port_op != prev->src.port_op)
 			PF_SET_SKIP_STEPS(PF_SKIP_SRC_PORT);
-		if (cur->dst.addr.addr_dyn != NULL ||
-		    prev->dst.addr.addr_dyn != NULL ||
+		if (cur->dst.addr.type == PF_ADDR_DYNIFTL ||
+		    prev->dst.addr.type == PF_ADDR_DYNIFTL ||
 		    cur->dst.not !=  prev->dst.not ||
 		    (cur->dst.addr.type == PF_ADDR_NOROUTE) !=
 		    (prev->dst.addr.type == PF_ADDR_NOROUTE) ||
-		    !PF_AEQ(&cur->dst.addr.addr, &prev->dst.addr.addr, 0) ||
-		    !PF_AEQ(&cur->dst.addr.mask, &prev->dst.addr.mask, 0))
+		    !PF_AEQ(&cur->dst.addr.v.a.addr, &prev->dst.addr.v.a.addr, 0) ||
+		    !PF_AEQ(&cur->dst.addr.v.a.mask, &prev->dst.addr.v.a.mask, 0))
 			PF_SET_SKIP_STEPS(PF_SKIP_DST_ADDR);
 		if (cur->dst.port[0] != prev->dst.port[0] ||
 		    cur->dst.port[1] != prev->dst.port[1] ||
@@ -1410,11 +1408,11 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
 {
 	unsigned char		 hash[16];
 	struct pf_pooladdr	*cur = rpool->cur;
-	struct pf_addr		*raddr = &rpool->cur->addr.addr.addr;
-	struct pf_addr		*rmask = &rpool->cur->addr.addr.mask;
+	struct pf_addr		*raddr = &rpool->cur->addr.addr.v.a.addr;
+	struct pf_addr		*rmask = &rpool->cur->addr.addr.v.a.mask;
 
-	if (cur->addr.addr.addr_dyn != NULL &&
-	    cur->addr.addr.addr_dyn->undefined)
+	if (cur->addr.addr.type == PF_ADDR_DYNIFTL &&
+	    cur->addr.addr.p.dyn->undefined)
 		return (1);
 
 	switch (rpool->opts & PF_POOL_TYPEMASK) {
@@ -1464,16 +1462,16 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
 		PF_POOLMASK(naddr, raddr, rmask, (struct pf_addr *)&hash, af);
 		break;
 	case PF_POOL_ROUNDROBIN:
-		if (pf_match_addr(0, &cur->addr.addr.addr, &cur->addr.addr.mask,
-		    &rpool->counter, af)) {
+		if (pf_match_addr(0, &cur->addr.addr.v.a.addr,
+		    &cur->addr.addr.v.a.mask, &rpool->counter, af)) {
 			PF_ACPY(naddr, &rpool->counter, af);
 			PF_AINC(&rpool->counter, af);
 		} else {
 			if ((rpool->cur =
 			    TAILQ_NEXT(rpool->cur, entries)) == NULL)
 				rpool->cur = TAILQ_FIRST(&rpool->list);
-			PF_ACPY(naddr, &cur->addr.addr.addr, af);
-			PF_ACPY(&rpool->counter, &cur->addr.addr.addr, af);
+			PF_ACPY(naddr, &cur->addr.addr.v.a.addr, af);
+			PF_ACPY(&rpool->counter, &cur->addr.addr.v.a.addr, af);
 			PF_AINC(&rpool->counter, af);
 		}
 		break;
@@ -1609,17 +1607,17 @@ pf_match_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != proto)
 			r = r->skip[PF_SKIP_PROTO].ptr;
-		else if (src != NULL && !PF_AZERO(&src->addr.mask, af) &&
+		else if (src != NULL && !PF_AZERO(&src->addr.v.a.mask, af) &&
 		    !PF_MATCHA(src->not,
-		    &src->addr.addr, &src->addr.mask, saddr, af))
+		    &src->addr.v.a.addr, &src->addr.v.a.mask, saddr, af))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (src != NULL && src->port_op &&
 		    !pf_match_port(src->port_op, src->port[0],
 		    src->port[1], sport))
 			r = r->skip[PF_SKIP_SRC_PORT].ptr;
-		else if (!PF_AZERO(&r->dst.addr.mask, af) &&
+		else if (!PF_AZERO(&r->dst.addr.v.a.mask, af) &&
 		    !PF_MATCHA(r->dst.not,
-		    &r->dst.addr.addr, &r->dst.addr.mask, daddr, af))
+		    &r->dst.addr.v.a.addr, &r->dst.addr.v.a.mask, daddr, af))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], dport))
@@ -1685,28 +1683,29 @@ pf_get_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 		case PF_BINAT:
 			switch (direction) {
 			case PF_OUT:
-				if (r->rpool.cur->addr.addr.addr_dyn != NULL &&
-				    r->rpool.cur->addr.addr.addr_dyn->undefined)
+				if (r->rpool.cur->addr.addr.type ==
+				    PF_ADDR_DYNIFTL &&
+				    r->rpool.cur->addr.addr.p.dyn->undefined)
 					return (NULL);
 				else
 					PF_POOLMASK(naddr,
-					    &r->rpool.cur->addr.addr.addr,
-					    &r->rpool.cur->addr.addr.mask,
+					    &r->rpool.cur->addr.addr.v.a.addr,
+					    &r->rpool.cur->addr.addr.v.a.mask,
 					    saddr, af);
 				break;
 			case PF_IN:
-				if (r->src.addr.addr_dyn != NULL &&
-				    r->src.addr.addr_dyn->undefined)
+				if (r->src.addr.type == PF_ADDR_DYNIFTL &&
+				    r->src.addr.p.dyn->undefined)
 					return (NULL);
 				else
-					PF_POOLMASK(naddr, &r->src.addr.addr,
-					    &r->src.addr.mask, saddr, af);
+					PF_POOLMASK(naddr, &r->src.addr.v.a.addr,
+					    &r->src.addr.v.a.mask, saddr, af);
 				break;
 			}
 			break;
 		case PF_RDR: {
 			if (pf_map_addr(r->af, &r->rpool,
-			    &r->src.addr.addr, naddr, NULL))
+			    &r->src.addr.v.a.addr, naddr, NULL))
 				return (NULL);
 
 			if (r->dst.port_op == PF_OP_RRG) {
@@ -1841,8 +1840,9 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    pf_routable(saddr, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->src.addr.type != PF_ADDR_NOROUTE &&
-		    !PF_AZERO(&r->src.addr.mask, af) && !PF_MATCHA(r->src.not,
-		    &r->src.addr.addr, &r->src.addr.mask, saddr, af))
+		    !PF_AZERO(&r->src.addr.v.a.mask, af) &&
+		    !PF_MATCHA(r->src.not, &r->src.addr.v.a.addr,
+		    &r->src.addr.v.a.mask, saddr, af))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 		    r->src.port[0], r->src.port[1], th->th_sport))
@@ -1851,8 +1851,9 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    pf_routable(daddr, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->dst.addr.type != PF_ADDR_NOROUTE &&
-		    !PF_AZERO(&r->dst.addr.mask, af) && !PF_MATCHA(r->dst.not,
-		    &r->dst.addr.addr, &r->dst.addr.mask, daddr, af))
+		    !PF_AZERO(&r->dst.addr.v.a.mask, af) &&
+		    !PF_MATCHA(r->dst.not, &r->dst.addr.v.a.addr,
+		    &r->dst.addr.v.a.mask, daddr, af))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], th->th_dport))
@@ -2096,8 +2097,9 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    pf_routable(saddr, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->src.addr.type != PF_ADDR_NOROUTE &&
-		    !PF_AZERO(&r->src.addr.mask, af) && !PF_MATCHA(r->src.not,
-		    &r->src.addr.addr, &r->src.addr.mask, saddr, af))
+		    !PF_AZERO(&r->src.addr.v.a.mask, af) &&
+		    !PF_MATCHA(r->src.not, &r->src.addr.v.a.addr,
+		    &r->src.addr.v.a.mask, saddr, af))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 		    r->src.port[0], r->src.port[1], uh->uh_sport))
@@ -2106,8 +2108,9 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    pf_routable(daddr, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->dst.addr.type != PF_ADDR_NOROUTE &&
-		    !PF_AZERO(&r->dst.addr.mask, af) && !PF_MATCHA(r->dst.not,
-		    &r->dst.addr.addr, &r->dst.addr.mask, daddr, af))
+		    !PF_AZERO(&r->dst.addr.v.a.mask, af) &&
+		    !PF_MATCHA(r->dst.not, &r->dst.addr.v.a.addr,
+		    &r->dst.addr.v.a.mask, daddr, af))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], uh->uh_dport))
@@ -2375,15 +2378,17 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    pf_routable(saddr, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->src.addr.type != PF_ADDR_NOROUTE &&
-		    !PF_AZERO(&r->src.addr.mask, af) && !PF_MATCHA(r->src.not,
-		    &r->src.addr.addr, &r->src.addr.mask, saddr, af))
+		    !PF_AZERO(&r->src.addr.v.a.mask, af) &&
+		    !PF_MATCHA(r->src.not, &r->src.addr.v.a.addr,
+		    &r->src.addr.v.a.mask, saddr, af))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->dst.addr.type == PF_ADDR_NOROUTE &&
 		    pf_routable(daddr, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->dst.addr.type != PF_ADDR_NOROUTE &&
-		    !PF_AZERO(&r->dst.addr.mask, af) && !PF_MATCHA(r->dst.not,
-		    &r->dst.addr.addr, &r->dst.addr.mask, daddr, af))
+		    !PF_AZERO(&r->dst.addr.v.a.mask, af) &&
+		    !PF_MATCHA(r->dst.not, &r->dst.addr.v.a.addr,
+		    &r->dst.addr.v.a.mask, daddr, af))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->type && r->type != icmptype + 1)
 			r = TAILQ_NEXT(r, entries);
@@ -2580,15 +2585,17 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    pf_routable(pd->src, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->src.addr.type != PF_ADDR_NOROUTE &&
-		    !PF_AZERO(&r->src.addr.mask, af) && !PF_MATCHA(r->src.not,
-		    &r->src.addr.addr, &r->src.addr.mask, pd->src, af))
+		    !PF_AZERO(&r->src.addr.v.a.mask, af) &&
+		    !PF_MATCHA(r->src.not, &r->src.addr.v.a.addr,
+		    &r->src.addr.v.a.mask, pd->src, af))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->dst.addr.type == PF_ADDR_NOROUTE &&
 		    pf_routable(pd->dst, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->src.addr.type != PF_ADDR_NOROUTE &&
-		    !PF_AZERO(&r->dst.addr.mask, af) && !PF_MATCHA(r->dst.not,
-		    &r->dst.addr.addr, &r->dst.addr.mask, pd->dst, af))
+		    !PF_AZERO(&r->dst.addr.v.a.mask, af) &&
+		    !PF_MATCHA(r->dst.not, &r->dst.addr.v.a.addr,
+		    &r->dst.addr.v.a.mask, pd->dst, af))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->tos && !(r->tos & pd->tos))
 			r = TAILQ_NEXT(r, entries);
@@ -2727,15 +2734,17 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    pf_routable(pd->src, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->src.addr.type != PF_ADDR_NOROUTE &&
-		    !PF_AZERO(&r->src.addr.mask, af) && !PF_MATCHA(r->src.not,
-		    &r->src.addr.addr, &r->src.addr.mask, pd->src, af))
+		    !PF_AZERO(&r->src.addr.v.a.mask, af) &&
+		    !PF_MATCHA(r->src.not, &r->src.addr.v.a.addr,
+		    &r->src.addr.v.a.mask, pd->src, af))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->dst.addr.type == PF_ADDR_NOROUTE &&
 		    pf_routable(pd->dst, af))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->src.addr.type != PF_ADDR_NOROUTE &&
-		    !PF_AZERO(&r->dst.addr.mask, af) && !PF_MATCHA(r->dst.not,
-		    &r->dst.addr.addr, &r->dst.addr.mask, pd->dst, af))
+		    !PF_AZERO(&r->dst.addr.v.a.mask, af) &&
+		    !PF_MATCHA(r->dst.not, &r->dst.addr.v.a.addr,
+		    &r->dst.addr.v.a.mask, pd->dst, af))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->tos && !(r->tos & pd->tos))
 			r = TAILQ_NEXT(r, entries);
@@ -4167,13 +4176,13 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	}
 
 done:
-	if (r != NULL &&  r->src.addr.mask.addr32[0] == PF_TABLE_MASK)
-		pfr_update_stats(&r->src.addr.addr, &r->src.addr.mask,
+	if (r != NULL &&  r->src.addr.v.a.mask.addr32[0] == PF_TABLE_MASK)
+		pfr_update_stats(&r->src.addr.v.a.addr, &r->src.addr.v.a.mask,
 		    (r->direction == dir) ? pd.src : pd.dst,
 		    pd.af, pd.tot_len, dir == PF_OUT,
 		    r->action == PF_PASS, r->src.not);
-	if (r != NULL && r->dst.addr.mask.addr32[0] == PF_TABLE_MASK)
-		pfr_update_stats(&r->dst.addr.addr, &r->dst.addr.mask,
+	if (r != NULL && r->dst.addr.v.a.mask.addr32[0] == PF_TABLE_MASK)
+		pfr_update_stats(&r->dst.addr.v.a.addr, &r->dst.addr.v.a.mask,
 		    (r->direction == dir) ? pd.dst : pd.src,
 		    pd.af, pd.tot_len, dir == PF_OUT,
 		    r->action == PF_PASS, r->dst.not);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.126 2003/01/04 17:40:51 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.127 2003/01/05 22:14:23 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -354,17 +354,17 @@ print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
 {
 	if (src->addr.type != PF_ADDR_NOROUTE &&
 	    dst->addr.type != PF_ADDR_NOROUTE &&
-	    PF_AZERO(&src->addr.addr, AF_INET6) &&
-	    PF_AZERO(&src->addr.mask, AF_INET6) &&
-	    !src->port_op && PF_AZERO(&dst->addr.addr, AF_INET6) &&
-	    PF_AZERO(&dst->addr.mask, AF_INET6) && !dst->port_op)
+	    PF_AZERO(&src->addr.v.a.addr, AF_INET6) &&
+	    PF_AZERO(&src->addr.v.a.mask, AF_INET6) &&
+	    !src->port_op && PF_AZERO(&dst->addr.v.a.addr, AF_INET6) &&
+	    PF_AZERO(&dst->addr.v.a.mask, AF_INET6) && !dst->port_op)
 		printf("all ");
 	else {
 		printf("from ");
 		if (src->addr.type == PF_ADDR_NOROUTE)
 			printf("no-route ");
-		else if (PF_AZERO(&src->addr.addr, AF_INET6) &&
-		    PF_AZERO(&src->addr.mask, AF_INET6))
+		else if (PF_AZERO(&src->addr.v.a.addr, AF_INET6) &&
+		    PF_AZERO(&src->addr.v.a.mask, AF_INET6))
 			printf("any ");
 		else {
 			if (src->not)
@@ -380,8 +380,8 @@ print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
 		printf("to ");
 		if (dst->addr.type == PF_ADDR_NOROUTE)
 			printf("no-route ");
-		else if (PF_AZERO(&dst->addr.addr, AF_INET6) &&
-		    PF_AZERO(&dst->addr.mask, AF_INET6))
+		else if (PF_AZERO(&dst->addr.v.a.addr, AF_INET6) &&
+		    PF_AZERO(&dst->addr.v.a.mask, AF_INET6))
 			printf("any ");
 		else {
 			if (dst->not)
@@ -438,7 +438,7 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 			print_addr(&pooladdr->addr.addr, af);
 			break;
 		case PF_PASS:
-			if (PF_AZERO(&pooladdr->addr.addr.addr, af))
+			if (PF_AZERO(&pooladdr->addr.addr.v.a.addr, af))
 				printf("%s", pooladdr->ifname);
 			else {
 				printf("(%s ", pooladdr->ifname);
@@ -568,15 +568,15 @@ print_binat(struct pf_rule *b, int verbose)
 			printf("proto %u ", b->proto);
 	}
 	printf("from ");
-	if (!PF_AZERO(&b->src.addr.addr, b->af) ||
-	    !PF_AZERO(&b->src.addr.mask, b->af)) {
+	if (!PF_AZERO(&b->src.addr.v.a.addr, b->af) ||
+	    !PF_AZERO(&b->src.addr.v.a.mask, b->af)) {
 		print_addr(&b->src.addr, b->af);
 		printf(" ");
 	} else
 		printf("any ");
 	printf("to ");
-	if (!PF_AZERO(&b->dst.addr.addr, b->af) ||
-	    !PF_AZERO(&b->dst.addr.mask, b->af)) {
+	if (!PF_AZERO(&b->dst.addr.v.a.addr, b->af) ||
+	    !PF_AZERO(&b->dst.addr.v.a.mask, b->af)) {
 		if (b->dst.not)
 			printf("! ");
 		print_addr(&b->dst.addr, b->af);
@@ -623,8 +623,8 @@ print_rdr(struct pf_rule *r, int verbose)
 			printf("proto %u ", r->proto);
 	}
 	printf("from ");
-	if (!PF_AZERO(&r->src.addr.addr, r->af) ||
-	    !PF_AZERO(&r->src.addr.mask, r->af)) {
+	if (!PF_AZERO(&r->src.addr.v.a.addr, r->af) ||
+	    !PF_AZERO(&r->src.addr.v.a.mask, r->af)) {
 		if (r->src.not)
 			printf("! ");
 		print_addr(&r->src.addr, r->af);
@@ -632,8 +632,8 @@ print_rdr(struct pf_rule *r, int verbose)
 	} else
 		printf("any ");
 	printf("to ");
-	if (!PF_AZERO(&r->dst.addr.addr, r->af) ||
-	    !PF_AZERO(&r->dst.addr.mask, r->af)) {
+	if (!PF_AZERO(&r->dst.addr.v.a.addr, r->af) ||
+	    !PF_AZERO(&r->dst.addr.v.a.mask, r->af)) {
 		if (r->dst.not)
 			printf("! ");
 		print_addr(&r->dst.addr, r->af);

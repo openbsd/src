@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.42 2003/01/04 00:33:49 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.43 2003/01/05 22:14:23 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -896,10 +896,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			st = n->state;
 			if ((!psk->psk_af || st->af == psk->psk_af) &&
 			    (!psk->psk_proto || psk->psk_proto == st->proto) &&
-			    PF_MATCHA(psk->psk_src.not, &psk->psk_src.addr.addr,
-			    &psk->psk_src.addr.mask, &st->lan.addr, st->af) &&
-			    PF_MATCHA(psk->psk_dst.not, &psk->psk_dst.addr.addr,
-			    &psk->psk_dst.addr.mask, &st->ext.addr, st->af) &&
+			    PF_MATCHA(psk->psk_src.not, &psk->psk_src.addr.v.a.addr,
+			    &psk->psk_src.addr.v.a.mask, &st->lan.addr, st->af) &&
+			    PF_MATCHA(psk->psk_dst.not, &psk->psk_dst.addr.v.a.addr,
+			    &psk->psk_dst.addr.v.a.mask, &st->ext.addr, st->af) &&
 			    (psk->psk_src.port_op == 0 ||
 			    pf_match_port(psk->psk_src.port_op,
 			    psk->psk_src.port[0], psk->psk_src.port[1],
@@ -1625,7 +1625,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 		pool->cur = TAILQ_FIRST(&pool->list);
-		PF_ACPY(&pool->counter, &pool->cur->addr.addr.addr, pca->af);
+		PF_ACPY(&pool->counter, &pool->cur->addr.addr.v.a.addr, pca->af);
 		splx(s);
 		break;
 	}

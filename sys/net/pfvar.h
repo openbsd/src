@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.126 2003/01/04 17:40:50 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.127 2003/01/05 22:14:23 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -74,7 +74,6 @@ struct pf_addr {
 		u_int8_t		addr8[16];
 		u_int16_t		addr16[8];
 		u_int32_t		addr32[4];
-		char			ifname[IFNAMSIZ];
 	} pfa;		    /* 128-bit address */
 #define v4	pfa.v4
 #define v6	pfa.v6
@@ -83,10 +82,21 @@ struct pf_addr {
 #define addr32	pfa.addr32
 };
 
+#define	PF_TABLE_NAME_SIZE	 32
+
 struct pf_addr_wrap {
-	struct pf_addr		 addr;
-	struct pf_addr		 mask;
-	struct pf_addr_dyn	*addr_dyn;
+	union {
+		struct {
+			struct pf_addr		 addr;
+			struct pf_addr		 mask;
+		}			 a;
+		char			 ifname[IFNAMSIZ];
+		char			 tblname[PF_TABLE_NAME_SIZE];
+	}			 v;
+	union {
+		struct pf_addr_dyn	*dyn;
+		struct pfr_ktable	*tbl;
+	}			 p;
 	u_int8_t		 type;		/* PF_ADDR_* */
 };
 
@@ -443,7 +453,6 @@ struct pf_anchor {
 TAILQ_HEAD(pf_anchorqueue, pf_anchor);
 
 #define	PF_TABLE_MASK		0xCAFEBABE
-#define	PF_TABLE_NAME_SIZE	128
 
 struct pfr_table {
 	char			 pfrt_name[PF_TABLE_NAME_SIZE];

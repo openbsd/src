@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.16 2003/01/04 00:01:34 deraadt Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.17 2003/01/05 22:14:23 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -62,25 +62,25 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af)
 {
 	char buf[48];
 
-	if (addr->mask.addr32[0] == PF_TABLE_MASK) {
+	if (addr->v.a.mask.addr32[0] == PF_TABLE_MASK) {
 		struct pfr_table tbl = { "?" };
 
 		if (pfr_unwrap_table(&tbl, addr, 0))
-			printf("<0x%08X>", addr->addr.addr32[0]);
+			printf("<0x%08X>", addr->v.a.addr.addr32[0]);
 		else
 			printf("<%s>", tbl.pfrt_name);
 		return;
 	}
-	if (addr->addr_dyn != NULL)
-		printf("(%s)", addr->addr.pfa.ifname);
+	if (addr->type == PF_ADDR_DYNIFTL)
+		printf("(%s)", addr->v.ifname);
 	else {
-		if (inet_ntop(af, &addr->addr, buf, sizeof(buf)) == NULL)
+		if (inet_ntop(af, &addr->v.a.addr, buf, sizeof(buf)) == NULL)
 			printf("?");
 		else
 			printf("%s", buf);
 	}
-	if (! PF_AZERO(&addr->mask, af)) {
-		int bits = unmask(&addr->mask, af);
+	if (! PF_AZERO(&addr->v.a.mask, af)) {
+		int bits = unmask(&addr->v.a.mask, af);
 
 		if (bits != (af == AF_INET ? 32 : 128))
 			printf("/%d", bits);
@@ -130,9 +130,9 @@ print_host(struct pf_state_host *h, sa_family_t af, int opts)
 	else {
 		struct pf_addr_wrap aw;
 
-		aw.addr = h->addr;
-		memset(&aw.mask, 0xff, sizeof(aw.mask));
-		aw.addr_dyn = NULL;
+		memset(&aw, 0, sizeof(aw));
+		aw.v.a.addr = h->addr;
+		memset(&aw.v.a.mask, 0xff, sizeof(aw.v.a.mask));
 		print_addr(&aw, af);
 	}
 

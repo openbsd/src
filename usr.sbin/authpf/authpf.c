@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.41 2003/01/01 02:28:26 dhartmei Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.42 2003/01/05 22:14:23 dhartmei Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -643,15 +643,17 @@ authpf_kill_states()
 	inet_pton(AF_INET, ipsrc, &target);
 
 	/* Kill all states from ipsrc */
-	psk.psk_src.addr.addr.v4 = target;
-	memset(&psk.psk_src.addr.mask, 0xff, sizeof(psk.psk_src.addr.mask));
+	psk.psk_src.addr.v.a.addr.v4 = target;
+	memset(&psk.psk_src.addr.v.a.mask, 0xff,
+	    sizeof(psk.psk_src.addr.v.a.mask));
 	if (ioctl(dev, DIOCKILLSTATES, &psk))
 		syslog(LOG_ERR, "DIOCKILLSTATES failed (%m)");
 
 	/* Kill all states to ipsrc */
 	memset(&psk.psk_src, 0, sizeof(psk.psk_src));
-	psk.psk_dst.addr.addr.v4 = target;
-	memset(&psk.psk_dst.addr.mask, 0xff, sizeof(psk.psk_dst.addr.mask));
+	psk.psk_dst.addr.v.a.addr.v4 = target;
+	memset(&psk.psk_dst.addr.v.a.mask, 0xff,
+	    sizeof(psk.psk_dst.addr.v.a.mask));
 	if (ioctl(dev, DIOCKILLSTATES, &psk))
 		syslog(LOG_ERR, "DIOCKILLSTATES failed (%m)");
 }
