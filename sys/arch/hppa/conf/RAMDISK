@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.17 2003/04/07 16:52:02 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.18 2003/08/14 19:54:15 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -97,6 +97,8 @@ com1	at gsc2 offset 0x2000 irq 6	# on wax
 com0	at gsc0 offset 0x23000 irq 5	# on asp
 com1	at gsc0 offset 0x22000 irq 6
 com2	at gsc0 offset 0x0 irq 13	# only on asp0 w/o audio (off ?)
+com2	at gsc0 offset 0x4040 irq 13	# gecko's fax/voice/modems
+com3	at gsc0 offset 0x4060 irq 13
 
 lpt0	at gsc? irq 7	# both com and lpt are on WD16C552
 ie0	at gsc0 irq 8	# 82C596DX/CA ether
