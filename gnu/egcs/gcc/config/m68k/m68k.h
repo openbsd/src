@@ -341,11 +341,6 @@ extern int target_flags;
 /* This defines the register which is used to hold the offset table for PIC. */
 #define PIC_OFFSET_TABLE_REGNUM 13
 
-/* Used to output a (use pic_offset_table_rtx) so that we 
-   always save/restore a5 in functions that use PIC relocation
-   at *any* time during the compilation process. */
-#define FINALIZE_PIC finalize_pic()
-
 #ifndef SUPPORT_SUN_FPA
 
 /* 1 for registers that have pervasive standard uses
@@ -446,8 +441,17 @@ extern int target_flags;
        if (TEST_HARD_REG_BIT (x, i)) 		\
 	fixed_regs[i] = call_used_regs[i] = 1; 	\
     } 						\
+  if (flag_pic)					\
+    fixed_regs[PIC_OFFSET_TABLE_REGNUM]		\
+      = call_used_regs[PIC_OFFSET_TABLE_REGNUM] = 1;\
 }
-
+#else
+#define CONDITIONAL_REGISTER_USAGE \
+{ 						\
+  if (flag_pic)					\
+    fixed_regs[PIC_OFFSET_TABLE_REGNUM]		\
+      = call_used_regs[PIC_OFFSET_TABLE_REGNUM] = 1;\
+}
 #endif /* defined SUPPORT_SUN_FPA */
 
 /* Return number of consecutive hard regs needed starting at reg REGNO
