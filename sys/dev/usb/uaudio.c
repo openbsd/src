@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.16 2003/05/19 05:27:00 nate Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.17 2003/05/19 18:38:42 miod Exp $ */
 /*	$NetBSD: uaudio.c,v 1.67 2003/05/03 18:11:41 wiz Exp $	*/
 
 /*
@@ -628,7 +628,7 @@ uaudio_mixer_alias_ctl(struct uaudio_softc *sc, struct mixerctl *mc,
 		     const char *name)
 {
 	/* XXX mark as alias? */
-	strcpy(mc->ctlname, name);
+	strlcpy(mc->ctlname, name, sizeof mc->ctlname);
 	uaudio_mixer_add_ctl(sc, mc);
 }
 
@@ -1415,19 +1415,20 @@ uaudio_query_devinfo(void *addr, mixer_devinfo_t *mi)
 		mi->type = AUDIO_MIXER_CLASS;
 		mi->mixer_class = UAC_OUTPUT;
 		mi->next = mi->prev = AUDIO_MIXER_LAST;
-		strcpy(mi->label.name, AudioCoutputs);
+		strlcpy(mi->label.name, AudioCoutputs, sizeof mi->label.name);
 		return (0);
 	case UAC_INPUT:
 		mi->type = AUDIO_MIXER_CLASS;
 		mi->mixer_class = UAC_INPUT;
 		mi->next = mi->prev = AUDIO_MIXER_LAST;
-		strcpy(mi->label.name, AudioCinputs);
+		strlcpy(mi->label.name, AudioCinputs, sizeof mi->label.name);
 		return (0);
 	case UAC_EQUAL:
 		mi->type = AUDIO_MIXER_CLASS;
 		mi->mixer_class = UAC_EQUAL;
 		mi->next = mi->prev = AUDIO_MIXER_LAST;
-		strcpy(mi->label.name, AudioCequalization);
+		strlcpy(mi->label.name, AudioCequalization,
+		    sizeof mi->label.name);
 		return (0);
 	default:
 		break;
