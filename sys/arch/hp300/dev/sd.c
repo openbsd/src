@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.16 1998/04/30 04:55:46 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.17 1998/05/02 05:04:44 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -377,6 +377,7 @@ sdgetcapacity(sc, dev)
 		    sc->sc_dev.dv_xname, sc->sc_blks, sc->sc_blksize,
 		    sc->sc_bshift);
 #endif
+	sc->sc_heads = sc->sc_cyls = 0;
 	sdgetgeom(sc);
 	return (0);
 }
@@ -435,12 +436,14 @@ sdgetinfo(dev)
 			sc->sc_blksize = DEV_BSIZE;
 
 		/* Fill in info from disk geometry if it exists. */
-		if (sc->sc_format_pid >= 0 && sc->sc_blks > 0 &&
-		    sc->sc_heads > 0 && sc->sc_cyls > 0) {
-			lp->d_secperunit = sc->sc_blks >> sc->sc_bshift;
+		lp->d_secperunit = sc->sc_blks >> sc->sc_bshift;
+		if (lp->d_secperunit > 0 && sc->sc_heads > 0 && sc->sc_cyls > 0) {
 			lp->d_ntracks = sc->sc_heads;
 			lp->d_ncylinders = sc->sc_cyls;
-			lp->d_nsectors = lp->d_secperunit / (lp->d_ntracks * lp->d_ncylinders);
+			lp->d_nsectors = lp->d_secperunit /
+			    (lp->d_ntracks * lp->d_ncylinders);
+			if (lp->d_nsectors < 1)
+				lp->d_nsectors = 1;	/* must be >= 1 */
 		} else {
 			lp->d_ntracks = 20;
 			lp->d_ncylinders = 1;
@@ -473,8 +476,12 @@ sdgetinfo(dev)
 		lp->d_sbsize = SBSIZE;
 
 		lp->d_partitions[RAW_PART].p_offset = 0;
-		lp->d_partitions[RAW_PART].p_size =
-		    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+		if (lp->d_secperunit > 0)
+			lp->d_partitions[RAW_PART].p_size =
+			    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+		else
+			lp->d_partitions[RAW_PART].p_size =
+			    roundup(LABELSECTOR+1, btodb(sc->sc_blksize));
 		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 		lp->d_npartitions = RAW_PART + 1;
 
