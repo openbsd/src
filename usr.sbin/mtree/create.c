@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.18 2002/03/14 17:01:16 millert Exp $	*/
+/*	$OpenBSD: create.c,v 1.19 2003/04/30 21:45:41 vincent Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: create.c,v 1.18 2002/03/14 17:01:16 millert Exp $";
+static const char rcsid[] = "$OpenBSD: create.c,v 1.19 2003/04/30 21:45:41 vincent Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,11 +146,13 @@ statf(indent, p)
 	u_int32_t len, val;
 	int fd, offset;
 	char *name, *escaped_name;
+	size_t esc_len;
 
-	escaped_name = malloc(p->fts_namelen * 4  +  1);
+	esc_len = p->fts_namelen * 4 + 1;
+	escaped_name = malloc(esc_len);
 	if (escaped_name == NULL)
 		error("statf: %s", strerror(errno));
-	strvis(escaped_name, p->fts_name, VIS_WHITE | VIS_OCTAL);
+ 	strnvis(escaped_name, p->fts_name, esc_len, VIS_WHITE | VIS_OCTAL);
 
 	if (iflag || S_ISDIR(p->fts_statp->st_mode))
 		offset = printf("%*s%s", indent, "", escaped_name);
@@ -237,10 +239,11 @@ statf(indent, p)
 	if (keys & F_SLINK &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE)) {
 		name = rlink(p->fts_accpath);
-		escaped_name = malloc(strlen(name) * 4  +  1);
+		esc_len = strlen(name) * 4 + 1;
+		escaped_name = malloc(esc_len);
 		if (escaped_name == NULL)
 			error("statf: %s", strerror(errno));
-		strvis(escaped_name, name, VIS_WHITE | VIS_OCTAL);
+		strnvis(escaped_name, name, esc_len, VIS_WHITE | VIS_OCTAL);
 		output(indent, &offset, "link=%s", escaped_name);
 		free(escaped_name);
 	}
