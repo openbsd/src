@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.25 2005/03/11 20:19:11 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.26 2005/03/11 20:22:57 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -874,9 +874,8 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			/* abort TSF synchronization */
 			RAL_WRITE(sc, RAL_CSR14, 0);
 
-			/* turn activity led off */
-			if (sc->led_mode != RAL_LED_MODE_SINGLE)
-				ral_update_led(sc, 0, 0);
+			/* turn association led off */
+			ral_update_led(sc, 0, 0);
 
 			sc->sc_newstate(ic, nstate, arg);
 			break;
@@ -908,8 +907,8 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			ral_enable_tsf_sync(sc);
 		}
 
-		if (sc->led_mode != RAL_LED_MODE_SINGLE)
-			ral_update_led(sc, 1, 0);
+		/* turn assocation led on */
+		ral_update_led(sc, 1, 0);
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			timeout_add(&sc->rssadapt_ch, hz / 10);
