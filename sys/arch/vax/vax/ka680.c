@@ -1,6 +1,7 @@
-/*	$OpenBSD: ka680.c,v 1.9 2002/07/21 09:17:14 hugh Exp $	*/
+/*	$OpenBSD: ka680.c,v 1.10 2002/09/21 13:42:43 hugh Exp $	*/
 /*	$NetBSD: ka680.c,v 1.3 2001/01/28 21:01:53 ragge Exp $	*/
 /*
+ * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
@@ -57,8 +58,6 @@ static void	ka680_hardmem(void *);
 static void	ka680_steal_pages(void);
 static void	ka680_memerr(void);
 static int	ka680_mchk(caddr_t);
-static void	ka680_halt(void);
-static void	ka680_reboot(int);
  
 /*
  * KA680-specific IPRs. KA680 has the funny habit to control all caches
@@ -96,10 +95,9 @@ struct cpu_dep ka680_calls = {
 	generic_clkwrite,
 	24,	 /* ~VUPS */
 	2,	/* SCB pages */
-	ka680_halt,
-	ka680_reboot,
+	generic_halt,
+	generic_reboot,
 };
-
 
 void
 ka680_conf()
@@ -111,6 +109,8 @@ ka680_conf()
 	volatile int *hej = (void *)mfpr(PR_ISP);
 	*hej = *hej;
 	hej[-1] = hej[-1];
+
+	cpmbx = (struct cpmbx *)vax_map_physmem(0x20140400, 1);
 
 	switch(vax_boardtype) {
 	case VAX_BTYP_1301:
@@ -288,16 +288,3 @@ ka680_mchk(caddr_t addr)
 	panic("Machine check");
 	return 0;
 }
-
-static void
-ka680_halt()
-{
-	asm("halt");
-}
-
-static void
-ka680_reboot(int arg)
-{
-	asm("halt");
-}
-

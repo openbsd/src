@@ -1,6 +1,7 @@
-/*	$OpenBSD: ka53.c,v 1.4 2001/08/25 13:33:37 hugh Exp $	*/
+/*	$OpenBSD: ka53.c,v 1.5 2002/09/21 13:42:43 hugh Exp $	*/
 /*	$NetBSD: ka53.c,v 1.2 2000/06/04 02:19:27 matt Exp $	*/
 /*
+ * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
@@ -45,13 +46,10 @@
 static void    ka53_conf(void);
 static void    ka53_memerr(void);
 static int     ka53_mchk(caddr_t);
-static void    ka53_halt(void);
-static void    ka53_reboot(int);
 static void    ka53_softmem(void *);
 static void    ka53_hardmem(void *);
 static void    ka53_steal_pages(void);
 static void    ka53_cache_enable(void);
-static void    ka53_halt(void);
 
 /* 
  * Declaration of 680-specific calls.
@@ -65,10 +63,9 @@ struct cpu_dep ka53_calls = {
 	generic_clkwrite,
 	32,	 /* ~VUPS */
 	2,	/* SCB pages */
-	ka53_halt,
-	ka53_reboot,
+	generic_halt,
+	generic_reboot,
 };
-
 
 void
 ka53_conf()
@@ -80,6 +77,8 @@ ka53_conf()
 
 	/* This vector (qbus related?) comes out of nowhere, ignore it for now */
 	scb_vecalloc(0x0, (void *)nullop, NULL, SCB_ISTACK, NULL);
+
+	cpmbx = (struct cpmbx *)vax_map_physmem(0x20140400, 1);
 
 	switch((vax_siedata >> 8) & 0xFF) {
 	case VAX_STYP_50:
@@ -235,16 +234,4 @@ ka53_steal_pages()
 
 	/* Turn on caches (to speed up execution a bit) */
 	ka53_cache_enable();
-}
-
-static void
-ka53_halt()
-{
-	asm("halt");
-}
-
-static void
-ka53_reboot(int arg)
-{
-	asm("halt");
 }

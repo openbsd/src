@@ -1,7 +1,8 @@
-/* $OpenBSD: machdep.c,v 1.60 2002/07/20 19:24:57 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.61 2002/09/21 13:42:43 hugh Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
+ * Copyright (c) 2002, Hugh Graham.
  * Copyright (c) 2002, Miodrag Vallat.
  * Copyright (c) 1994, 1996, 1998 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1993 Adam Glass
@@ -157,6 +158,7 @@ char		cpu_model[100];
 int		physmem;
 int		dumpsize = 0;
 int		cold = 1; /* coldstart */
+struct cpmbx	*cpmbx;
 
 /*
  * XXX some storage space must be allocated statically because of
@@ -974,4 +976,28 @@ skip_operand(ib, size)
 	}
 
 	return ib;
+}
+
+void
+generic_halt()
+{
+	if (cpmbx->user_halt != UHALT_DEFAULT) {
+		if (cpmbx->mbox_halt != 0)
+			cpmbx->mbox_halt = 0;	/* let console override */
+	} else if (cpmbx->mbox_halt != MHALT_HALT)
+		cpmbx->mbox_halt = MHALT_HALT;	/* the os decides */
+
+	asm("halt");
+}
+
+void
+generic_reboot(int arg)
+{
+	if (cpmbx->user_halt != UHALT_DEFAULT) {
+		if (cpmbx->mbox_halt != 0)
+			cpmbx->mbox_halt = 0;
+	} else if (cpmbx->mbox_halt != MHALT_REBOOT)
+		cpmbx->mbox_halt = MHALT_REBOOT;
+
+	asm("halt");
 }

@@ -1,6 +1,7 @@
-/*	$OpenBSD: uvax.h,v 1.4 2000/04/26 03:08:43 bjc Exp $ */
+/*	$OpenBSD: uvax.h,v 1.5 2002/09/21 13:42:43 hugh Exp $ */
 /*	$NetBSD: uvax.h,v 1.5 1999/02/02 18:37:22 ragge Exp $ */
 /*
+ * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
@@ -83,5 +84,37 @@ struct vs_cpu {
 #define	PARCTL_DMA	0x1000000
 #define	PARCTL_CPEN	2
 #define	PARCTL_DPEN	1
+
+/*
+ * Console Mailbox layout common to several models.
+ */
+
+struct cpmbx {
+	unsigned int mbox_halt:2;	/* mailbox halt action */
+	unsigned int mbox_bip:1;	/* bootstrap in progress */
+	unsigned int mbox_rip:1;	/* restart in progress */
+	unsigned int mbox_lang:4;	/* language info */
+	unsigned int terminal:8;	/* terminal info */
+	unsigned int keyboard:8;	/* keyboard info */
+	unsigned int user_four:4;	/* unknown */
+	unsigned int user_halt:3;	/* user halt action */
+	unsigned int user_one:1;	/* unknown */
+};
+
+extern struct cpmbx *cpmbx;
+
+void	generic_halt(void);
+void	generic_reboot(int);
+
+#define	MHALT_RESTART_REBOOT	0
+#define	MHALT_RESTART		1
+#define	MHALT_REBOOT		2
+#define	MHALT_HALT		3
+
+#define	UHALT_DEFAULT		0
+#define	UHALT_RESTART		1
+#define	UHALT_REBOOT		2
+#define	UHALT_HALT		3
+#define	UHALT_RESTART_REBOOT	4
 
 #endif
