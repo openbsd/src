@@ -1,4 +1,4 @@
-.\"      $OpenBSD: ipnat.1,v 1.11 1998/02/19 01:58:46 gene Exp $
+.\"      $OpenBSD: ipnat.1,v 1.12 1998/03/22 05:31:08 johns Exp $
 .\"
 .\" Manual page, using -mandoc macros
 .\"
@@ -56,12 +56,12 @@ script:
 /sbin/ipf -E
 .Ed
 .Pp
-To translate addresses from the interal 192.168.1.0/8 network
+To translate addresses from the internal 192.168.1.0/8 network
 .Pa /etc/ipnat.rules 
 should look like this:
 .Bd -literal
-map ppp0 192.168.1.0/8 -> ppp0/32 portmap tcp/udp 10000:20000
-map ppp0 192.168.1.0/8 -> ppp0/32
+map ppp0 192.168.1.0/8 -> 0/32 portmap tcp/udp 10000:20000
+map ppp0 192.168.1.0/8 -> 0/32
 .Ed
 .Sh FILES
 .Pa /usr/share/ipf
