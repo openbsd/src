@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.99 2002/08/05 19:02:19 mickey Exp $
+#	$OpenBSD: files.i386,v 1.100 2002/11/07 22:03:22 mickey Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -287,7 +287,7 @@ attach	pcic at isapnp with pcic_isapnp
 file	dev/isa/i82365_isapnp.c	pcic_isapnp
 
 # Code common to ISA and ISAPnP attachments
-file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp
+file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp | pcic_pci
 
 # Databook TCIC/2 pcmcia/isa bridge
 device	tcic: pcmciabus
