@@ -1,0 +1,10 @@
+# Host: PowerPC, running Linux
+
+XM_FILE= xm-obsd.h
+XDEPFILES= ser-tcp.o
+XM_CLIBS=
+
+NAT_FILE= nm-obsd.h
+NATDEPFILES= obsdsolib.o corelow.o core-aout.o core-regset.o # infptrace.o inftarg.o fork-child.o
+
+#GDBSERVER_DEPFILES= low-linux.o
