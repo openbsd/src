@@ -1,4 +1,4 @@
-#	$OpenBSD: M187,v 1.19 2001/12/22 18:22:38 smurph Exp $
+#	$OpenBSD: M187,v 1.20 2003/01/04 16:20:30 miod Exp $
 
 machine mvme88k
 
@@ -31,9 +31,9 @@ nvram0	at pcctwo0 offset 0xc0000
 ie0	at pcctwo0 offset 0x46000 ipl 1
 ssh0	at pcctwo0 offset 0x47000 ipl 2
 cl0	at pcctwo0 offset 0x45000 ipl 3
-#lptwo0	at pcctwo0 addr 0xfff45000 ipl 1 size
-#memc0	at pcctwo0 addr 0xfff43000
-#memc1	at pcctwo0 addr 0xfff43100
+#lptwo0	at pcctwo0 addr 0x45000 ipl 1 size
+memc0	at pcctwo0 addr 0x43000
+memc1	at pcctwo0 addr 0x43100
 
 # ------------------------------ vme0 devices --------------------------
 vmes0	at vme0
