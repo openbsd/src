@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.7 1998/09/14 03:54:35 rahnds Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.8 1999/08/10 23:10:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -39,6 +39,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/disklabel.h>
+#include <sys/dkio.h>
 #include <machine/param.h>
 #include "disk.h"
 #include "misc.h"
@@ -179,5 +180,6 @@ MBR_write(fd, where, buf)
 	len = write(fd, buf, DEV_BSIZE);
 	if (len != DEV_BSIZE)
 		return (len);
+	(void) ioctl(fd, DIOCRLDINFO, 0);
 	return (0);
 }
