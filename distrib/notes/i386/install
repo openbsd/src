@@ -29,7 +29,9 @@ getting OpenBSD installed on your hard disk.  If any question has a
 default answer, it will be displayed in brackets ("[]") after the
 question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
-process again from scratch.
+process again from scratch.  If, at any point, the kernel panics
+with "ffs_valloc" your inst floppy is probably corrupted.  You
+should make a new inst floppy or fsck your existing one (if you can).
 
 	Boot your machine using of the appropriate kernel-copy floppy.
 	When presented with the boot prompt (the prompt begins with
