@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: modem.c,v 1.8 1998/01/10 01:55:16 brian Exp $
+ * $Id: modem.c,v 1.9 1998/01/20 22:46:29 brian Exp $
  *
  *  TODO:
  */
@@ -266,7 +266,7 @@ ModemTimeout(void *data)
 	 * carrier.
 	 */
 	if (mode & MODE_DEDICATED)
-	  PacketMode();
+	  PacketMode(VarOpenMode);
       } else {
         LogPrintf(LogDEBUG, "ModemTimeout: online -> offline\n");
 	reconnect(RECON_TRUE);

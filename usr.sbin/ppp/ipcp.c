@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipcp.c,v 1.11 1998/01/18 20:47:20 brian Exp $
+ * $Id: ipcp.c,v 1.12 1998/01/20 22:46:25 brian Exp $
  *
  *	TODO:
  *		o More RFC1772 backwoard compatibility
@@ -84,13 +84,14 @@ struct fsm IpcpFsm = {
   "IPCP",
   PROTO_IPCP,
   IPCP_MAXCODE,
-  OPEN_ACTIVE,
+  0,
   ST_INITIAL,
   0, 0, 0,
 
   0,
-  {0, 0, 0, NULL, NULL, NULL},
-  {0, 0, 0, NULL, NULL, NULL},
+  {0, 0, 0, NULL, NULL, NULL},	/* FSM timer */
+  {0, 0, 0, NULL, NULL, NULL},	/* Open timer */
+  {0, 0, 0, NULL, NULL, NULL},	/* Stopped timer */
   LogIPCP,
 
   IpcpLayerUp,
