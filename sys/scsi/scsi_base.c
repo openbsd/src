@@ -693,7 +693,7 @@ scsi_interpret_sense(xs)
 		case 0x8:	/* BLANK CHECK */
 			error = 0;
 			break;
-		case 0xa:	/* COMMAND ABORTED */
+		case 0xb:	/* COMMAND ABORTED */
 			error = ERESTART;
 			break;
 		case 0xd:	/* VOLUME OVERFLOW */
@@ -718,9 +718,12 @@ scsi_interpret_sense(xs)
 					printf(", requested size: %d (decimal)",
 					    info);
 					break;
-				case 0xa:	/* COMMAND ABORTED */
-					printf(", cmd %x, attempting retry",
-						xs->cmd->opcode);
+				case 0xb:	/* COMMAND ABORTED */
+					if (xs->retries)
+						printf(", retrying");
+					printf(", cmd 0x%x, info 0x%x",
+						xs->cmd->opcode, info);
+					break;
 				default:
 					printf(", info = %d (decimal)", info);
 				}
