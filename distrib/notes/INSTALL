@@ -9,20 +9,23 @@ OpenBSD is a Berkeley Networking Release 2 (Net/2) and 4.4BSD-Lite
 which runs on many architectures and is being ported to more.
 
 Continuing the multi-platform tradition, OpenBSD has added ports to
-mvme68k, powerpc and arc machines.  Kernel interfaces have continued to
-be refined, and now several subsystems and device drivers are shared
-among the different ports.  You can look for this trend to continue.
+mvme68k, powerpc and arc machines.  Kernel interfaces have continued
+to be refined, and now several subsystems and device drivers are
+shared among the different ports.  You can look for this trend to
+continue.
 
-Security of the system as a whole has been significantly
-improved.  Source code for all critical system components has been
-checked for remote-access, local-access, denial-of-service, data
-destruction, or information-gathering problems.
+Security of the system as a whole has been significantly improved.
+Source code for all critical system components has been checked for
+remote-access, local-access, denial-of-service, data destruction, or
+information-gathering problems.  Tools like ipf, ipnat, and nc have
+been added to the tree because security conscious people often need
+them.
 
-OpenBSD 2.1 has significantly enhanced the binary emulation subsystem 
+OpenBSD 2.1 has significantly enhanced the binary emulation subsystem
 (which includes iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris and Ultrix
-compatibility) and several kernel subsystems have been generalized
-to support this more readily.  The binary emulation strategy is 
-aimed at making the emulation as accurate as possible.
+compatibility) and several kernel subsystems have been generalized to
+support this more readily.  The binary emulation strategy is aimed at
+making the emulation as accurate as possible.
 
 Cryptography components are part of OpenBSD.  OpenBSD is from Canada,
 and export of these pieces (such as kerberosIV) to the world is not
@@ -31,10 +34,10 @@ has entered US.  Because of this, take care NOT to get the distrib-
 ution from an FTP server in the US if you are outside of Canada and
 the US.
 
-Many new user programs have been added in OpenBSD 2.1, as well, bringing
-it closer to our goal of supplying a complete and modern UN*X-like
-environment.  Tools like perl and ksh are standard, as are numerous
-other useful tools.
+Many new user programs have been added in OpenBSD 2.1, as well,
+bringing it closer to our goal of supplying a complete and modern
+UN*X-like environment.  Tools like perl and ksh are standard, as are
+numerous other useful tools.
 
 #include "whatis"
 
