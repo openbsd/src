@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.60 2002/06/25 00:38:54 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.61 2002/06/28 19:07:03 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -103,7 +103,7 @@ int
 ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 {
 #define IPSEC_ISTAT(x,y,z) (sproto == IPPROTO_ESP ? (x)++ : \
-			    IPPROTO_AH ? (y)++ : (z)++)
+			    sproto == IPPROTO_AH ? (y)++ : (z)++)
 
 	union sockaddr_union dst_address;
 	struct timeval tv;
