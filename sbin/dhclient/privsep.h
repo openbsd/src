@@ -1,3 +1,5 @@
+/*	$OpenBSD: privsep.h,v 1.2 2004/05/04 18:51:18 henning Exp $ */
+
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
  *
