@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.11 1996/10/19 13:26:01 mickey Exp $	*/
+/*	$OpenBSD: tty.c,v 1.12 1996/11/04 03:28:07 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1345,6 +1345,8 @@ sleep:
 		error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
 		    carrier ? ttyin : ttopen, slp);
 		splx(s);
+		if (cc[VMIN] == 0 && error == EWOULDBLOCK)
+			return (0);
 		if (error && error != EWOULDBLOCK)
 			return (error);
 		goto loop;
