@@ -39,14 +39,14 @@ static char rcsid[] = "$NetBSD: s_modf.c,v 1.8 1995/05/10 20:47:55 jtc Exp $";
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $Id: modf.c,v 1.1.1.1 1996/12/21 20:42:22 rahnds Exp $
+ * $Id: modf.c,v 1.2 1997/01/02 03:12:07 rahnds Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
 #define _MATH_PRIVATE_H_
 
-#include <machine/endian.h>
 #include <sys/types.h>
+#include <machine/endian.h>
 
 /* The original fdlibm code used statements like:
 	n0 = ((*(int*)&one)>>29)^1;		* index of high word *
