@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.128 2003/01/14 21:58:12 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.129 2003/01/17 14:01:43 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -460,7 +460,7 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 		if (p1 != PF_NAT_PROXY_PORT_LOW ||
 		    p2 != PF_NAT_PROXY_PORT_HIGH) {
 			if (p1 == p2)
-			printf(" port %u", p1);
+				printf(" port %u", p1);
 			else
 				printf(" port %u:%u", p1, p2);
 		}
