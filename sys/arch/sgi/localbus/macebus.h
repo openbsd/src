@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.h,v 1.5 2005/01/02 19:30:56 kettenis Exp $	*/
+/*	$OpenBSD: macebus.h,v 1.6 2005/01/24 20:44:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -84,6 +84,7 @@
 #define	MACE_ISA_OFFS		(MACE_IO_OFFS+0x00010000)
 
 #define MACE_ISA_RING_BASE	0x0000
+#define  MACE_ISA_RING_ALIGN	0x00010000
 #define	MACE_ISA_MISC_REG	0x0008	/* Various status and controls */
 #define	MACE_ISA_INT_STAT	0x0010
 #define	MACE_ISA_INT_MASK	0x0018

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.4 2005/01/24 20:40:16 kettenis Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.5 2005/01/24 20:44:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -1100,7 +1100,7 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (bus_dmamem_alloc(sc->sc_dmat, 4 * MAVB_ISA_RING_SIZE,
-	    sizeof (u_int64_t), 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    MACE_ISA_RING_ALIGN, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf(": can't allocate ring buffer\n");
 		return;
 	}
