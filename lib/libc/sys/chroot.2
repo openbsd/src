@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.2,v 1.12 2004/01/24 16:17:50 jmc Exp $
+.\"	$OpenBSD: chroot.2,v 1.13 2005/01/01 00:07:14 millert Exp $
 .\"	$NetBSD: chroot.2,v 1.7 1995/02/27 12:32:12 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -71,6 +71,20 @@ Upon successful completion, a value of 0 is returned.
 Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate an error.
+.Sh EXAMPLES
+The following example changes the root directory to
+.Va newroot ,
+sets the current directory to the new root, and drops any
+setuid privileges.
+.Bd -literal -offset indent
+#include <err.h>
+#include <unistd.h>
+
+if (chroot(newroot) != 0 || chdir("/") != 0)
+	err(1, "%s", newroot);
+seteuid(getuid());
+setuid(getuid());
+.Ed
 .Sh ERRORS
 .Fn chroot
 will fail and the root directory will be unchanged if:
