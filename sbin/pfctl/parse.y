@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.101 2002/06/16 23:22:18 aaron Exp $	*/
+/*	$OpenBSD: parse.y,v 1.102 2002/06/18 20:07:58 frantzen Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1102,6 +1102,10 @@ state_opt_item	: MAXIMUM NUMBER		{
 			    strcmp(pf_timeouts[i].name, $1); ++i);
 			if (!pf_timeouts[i].name) {
 				yyerror("illegal timeout name %s", $1);
+				YYERROR;
+			}
+			if (strchr(pf_timeouts[i].name, '.') == NULL) {
+				yyerror("illegal state timeout %s", $1);
 				YYERROR;
 			}
 			if ($2 < 0) {
