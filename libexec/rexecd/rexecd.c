@@ -1,4 +1,4 @@
-/*	$OpenBSD: rexecd.c,v 1.19 2002/02/16 21:27:30 millert Exp $	*/
+/*	$OpenBSD: rexecd.c,v 1.20 2002/03/16 18:44:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$OpenBSD: rexecd.c,v 1.19 2002/02/16 21:27:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: rexecd.c,v 1.20 2002/03/16 18:44:48 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,7 +73,6 @@ void error();
 char	*remote;
 char	*envinit[1];
 extern char **environ;
-login_cap_t *lc;
 
 struct	sockaddr_in asin = { AF_INET };
 
@@ -108,6 +107,10 @@ main(argc, argv)
 	hp = gethostbyaddr((char *) &from.sin_addr, sizeof(from.sin_addr),
 	    from.sin_family);
 	remote = strdup(hp ? hp->h_name : inet_ntoa(from.sin_addr));
+	if (remote == NULL) {
+		(void)fprintf(stderr, "rexecd: strdup: %s\n", strerror(errno));
+		exit(1);
+	}
 
 	doit(0, &from);
 	exit(0);
@@ -128,6 +131,8 @@ doit(f, fromp)
 	char buf[BUFSIZ], sig;
 	int one = 1;
 	int maxfd;
+	login_cap_t *lc;
+	auth_session_t *as;
 
 	(void) signal(SIGINT, SIG_DFL);
 	(void) signal(SIGQUIT, SIG_DFL);
@@ -166,6 +171,11 @@ doit(f, fromp)
 	lc = login_getclass(pwd->pw_class);
 	if (lc == NULL) {
 		error("Login class incorrect.\n");
+		exit(1);
+	}
+	as = auth_open();
+	if (as == NULL || auth_setpwd(as, pwd) != 0) {
+		error("Unable to allocate memory.\n");
 		exit(1);
 	}
 	endpwent();
@@ -274,7 +284,7 @@ doit(f, fromp)
 		err(1, "unable to setup environment");
 	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETALL))
 		err(1, "unable to set user context");
-	if (auth_approval(NULL, lc, pwd->pw_name, "rexec") <= 0)
+	if (auth_approval(as, lc, pwd->pw_name, "rexec") <= 0)
 		err(1, "approval failure");
 
 	cp = strrchr(pwd->pw_shell, '/');
