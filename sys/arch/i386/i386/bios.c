@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.38 2000/10/25 19:13:11 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.39 2001/01/21 20:23:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Michael Shalayeff
@@ -322,7 +322,7 @@ bios32_service(service, e, ei)
 	extern int gdt_get_slot __P((void));
 
 	u_long pa, endpa;
-	vm_offset_t va;
+	vaddr_t va, sva;
 	u_int32_t base, count, off, ent;
 	int slot;
 
@@ -346,9 +346,9 @@ bios32_service(service, e, ei)
 	endpa = i386_round_page(BIOS32_END);
 
 #if defined(UVM)
-	va = uvm_km_valloc(kernel_map, endpa);
+	sva = va = uvm_km_valloc(kernel_map, endpa);
 #else
-	va = kmem_alloc_pageable(kernel_map, endpa);
+	sva = va = kmem_alloc_pageable(kernel_map, endpa);
 #endif
 	if (va == 0)
 		return (0);
@@ -359,10 +359,19 @@ bios32_service(service, e, ei)
 
 	for (pa = i386_trunc_page(BIOS32_START),
 	     va += i386_trunc_page(BIOS32_START);
-	     pa < endpa; pa += NBPG, va += NBPG)
+	     pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE,
 		    VM_PROT_READ | VM_PROT_WRITE);
+
+		/* for all you, broken hearted */
+		if (pa >= i386_trunc_page(base)) {
+			pmap_enter(pmap_kernel(), sva, pa,
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			    VM_PROT_READ | VM_PROT_WRITE);
+			sva += NBPG;
+		}
+	}
 
 	e->segment = GSEL(slot, SEL_KPL);
 	e->offset = (vaddr_t)ent;
