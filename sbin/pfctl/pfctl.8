@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.2 2001/06/25 19:07:22 smart Exp $
+.\" $OpenBSD: pfctl.8,v 1.3 2001/06/25 19:32:19 ian Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -42,6 +42,44 @@ The
 utility communicates with the packet filter system using the
 ioctl interface described in
 .Xr pf 4 .
+.Pp
+Packet filtering lets you restrict packets entering or leaving
+your host; packets can be specified in a variety of ways including
+by protocol, by port number, and by address.
+Network Address Translation lets you map a series of internal
+host IP numbers to a single external address.
+The NAT code also has provision for redirecting a
+range of connections to a different host and/or port number.
+Taken together this provides a powerful basic firewall mechanism.
+.Pp
+The
+.Nm
+command is normally invoked automatically at system initialization
+time to start and load the packet filter,
+but can also be used when the filter or translation rules change.
+.Pp
+To use
+.Nm
+successfully, you must:
+.Bl -enum
+.It
+Be running a kernel with
+.Xr pf 8
+configured in (the GENERIC kernel qualifies);
+.It
+Have written a rules and/or nat file;
+.It
+If you are forwarding packets (using NAT), have enabled 
+.Li net.inet.ip.forwarding=1
+in the file
+.Pa /etc/sysctl.conf ,
+and rebooted since enabling it.
+.El
+.Pp
+For this mechanism to be started when the system reboots,
+you should enable IPF and IPNAT in 
+.Pa /etc/rc.conf
+as well.
 .Pp
 The
 .Nm
