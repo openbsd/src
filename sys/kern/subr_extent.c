@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.6 1999/01/11 01:28:10 niklas Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.7 1999/02/17 13:15:46 fgsch Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -639,6 +639,13 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 		newstart = EXTENT_ALIGN((last->er_end + 1), alignment);
 
 	for (; rp != NULL; rp = rp->er_link.le_next) {
+		/*
+		 * Check from the current starting point to the
+		 * end of the subregion.
+		 */
+		if (LE_OV(newstart, size, subend) == 0)
+			goto fail;
+
 		/*
 		 * Check the chunk before "rp".  Note that our
 		 * comparison is safe from overflow conditions.
