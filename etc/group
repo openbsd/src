@@ -42,6 +42,7 @@ _pflogd:*:74:
 _bgpd:*:75:
 _tcpdump:*:76:
 _dhcp:*:77:
+_mopd:*:78:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:
