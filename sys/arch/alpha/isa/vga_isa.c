@@ -76,6 +76,11 @@ vga_isa_match(parent, match, aux)
 {
 	struct isa_attach_args *ia = aux;
 	int rv;
+	static int matched;
+
+	/* There can be only one.  */
+	if (matched)
+		return (0);
 
 	/* If values are hardwired to something that they can't be, punt. */
 	if (ia->ia_iobase != IOBASEUNK || /* ia->ia_iosize != 0 || XXX isa.c */
@@ -84,16 +89,14 @@ vga_isa_match(parent, match, aux)
 	    ia->ia_irq != IRQUNK || ia->ia_drq != DRQUNK)
 		return (0);
 
-	if (vga_isa_console_tag)
-		return (1);
-
-	rv = vga_common_probe(ia->ia_iot, ia->ia_memt);
+	rv = vga_isa_console_tag || vga_common_probe(ia->ia_iot, ia->ia_memt);
 
 	if (rv) {
 		ia->ia_iobase = 0x3b0;
 		ia->ia_iosize = 0x30;
 		ia->ia_maddr = 0xb8000;
 		ia->ia_msize = 0x8000;
+		matched = 1;
 	}
 	return (rv);
 }
