@@ -1804,8 +1804,6 @@
 ./usr/share/man/cat8/login_activ.0
 ./usr/share/man/cat8/login_chpass.0
 ./usr/share/man/cat8/login_crypto.0
-./usr/share/man/cat8/login_krb4-or-pwd.0
-./usr/share/man/cat8/login_krb4.0
 ./usr/share/man/cat8/login_krb5-or-pwd.0
 ./usr/share/man/cat8/login_krb5.0
 ./usr/share/man/cat8/login_lchpass.0

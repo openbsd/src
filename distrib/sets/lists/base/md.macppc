@@ -37,9 +37,9 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd3.3/2.95.3/specs
 ./usr/lib/lib45.so.2.0
 ./usr/lib/libacl.so.6.0
-./usr/lib/libasn1.so.3.0
+./usr/lib/libasn1.so.3.1
 ./usr/lib/libc.so.30.0
-./usr/lib/libcrypto.so.9.0
+./usr/lib/libcrypto.so.10.0
 ./usr/lib/libcurses++.so.2.0
 ./usr/lib/libcurses.so.9.0
 ./usr/lib/libdes.so.8.0
@@ -52,7 +52,7 @@
 ./usr/lib/libkafs.so.11.0
 ./usr/lib/libkdb.so.7.0
 ./usr/lib/libkrb.so.11.0
-./usr/lib/libkrb5.so.5.0
+./usr/lib/libkrb5.so.5.1
 ./usr/lib/libkvm.so.7.0
 ./usr/lib/libm.so.1.0
 ./usr/lib/libmenu.so.2.0
@@ -68,7 +68,7 @@
 ./usr/lib/libreadline.so.1.0
 ./usr/lib/libsectok.so.5.0
 ./usr/lib/libskey.so.4.0
-./usr/lib/libssl.so.7.0
+./usr/lib/libssl.so.8.0
 ./usr/lib/libstdc++.so.31.0
 ./usr/lib/libtermcap.so.9.0
 ./usr/lib/libtermlib.so.9.0
@@ -1503,6 +1503,9 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/fifofs/fifo.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/genfs
+./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/genfs/layer.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/genfs/layer_extern.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/kernfs
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/kernfs/kernfs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/nullfs

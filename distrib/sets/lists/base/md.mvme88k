@@ -589,6 +589,9 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/ieee.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/machine
+./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/genfs
+./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/genfs/layer.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/genfs/layer_extern.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_gre.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_ieee80211.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_pflog.ph
