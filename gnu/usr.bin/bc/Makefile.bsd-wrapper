@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1998/07/05 07:30:02 downsj Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 1998/08/28 18:21:10 kstailey Exp $
 
 SUBDIR=bcwrap
 
@@ -45,6 +45,7 @@ install: maninstall
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
+	cd ${.CURDIR}/bcwrap && ${MAKE} clean
 
 depend:
 	# Nothing here so far...
