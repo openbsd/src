@@ -1,4 +1,4 @@
-/*	$NetBSD: grfconfig.c,v 1.3 1996/02/11 16:34:23 neil Exp $	*/
+/*	$NetBSD: grfconfig.c,v 1.4 1996/05/19 09:02:44 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -131,7 +131,8 @@ main(ac, av)
 				gv->mode_descr[0] = 0;
 				if (ioctl(grffd, GRFIOCSETMON, (char *) gv) < 0)
 					printf("grfconfig: bad monitor "
-					    "definition.\n");
+					    "definition for mode #%d.\n",
+					    gv->mode_num);
 			} else {
 				printf("grfconfig: bad line in mode "
 				    "definition file.\n");
