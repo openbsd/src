@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.35 1998/02/07 20:51:50 deraadt Exp $
+#	$OpenBSD: netstart,v 1.36 1998/02/23 20:47:35 niklas Exp $
 
 # /etc/myname contains my symbolic name
 #
@@ -101,4 +101,3 @@ fi
 
 # default multicast route
 route add -net 224.0.0.0 -interface $hostname
-
