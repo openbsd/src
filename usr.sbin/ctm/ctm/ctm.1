@@ -10,7 +10,7 @@
 .\"
 .\" CTM and ctm(1) by <phk@login.dknet.dk>
 .\"
-.\" $Id: ctm.1,v 1.3 1998/11/08 00:21:28 aaron Exp $
+.\" $Id: ctm.1,v 1.4 1999/03/01 05:53:58 aaron Exp $
 .\"
 .Dd Mar 25, 1995
 .Os
@@ -19,53 +19,55 @@
 .Nm ctm
 .Nd source code mirror program
 .Sh SYNOPSIS
-.Nm ctm
+.Nm
 .Op Fl cFpPquv
 .Op Fl b Ar basedir
 .Op Fl T Ar tmpdir
 .Op Fl V Ar level
 .Ar file Op Ar ...
 .Sh DESCRIPTION
-.Nm ctm
+.Nm
 was originally
 .Dq Cvs Through eMail ,
-but now instead it seems more fitting to call it
+but now it seems more fitting to call it
 .Dq Current Through eMail .
-
-.Nm ctm
+.Pp
+.Nm
 is now meant to be the definitive way to make and apply a delta between
 two versions of a directory tree.
-
-There are two parts to this, making the delta and applying it.  These are two
-entirely different things.
-
+.Pp
+There are two parts to this: making the delta and applying it.  These are two
+entirely different things. The
+.Nm
+command is only used to apply deltas.
+.Pp
 .Ss Usage
 To apply a CTM delta, you pass it to the
-.Nm ctm
+.Nm
 command.  You can pass a CTM delta on stdin, or you can give the
 filename as an argument.  If you do the latter, you make life a lot
 easier for yourself, since the program can accept gzip'ed files and
 since it will not have to make a temporary copy of your file.  You can
 specify multiple deltas at one time, they will be proccessed one at a
-time.  Deltas that are already applied will be ignored.
+time.  Deltas that have already been applied will be ignored.
 .Pp
 The
-.Nm ctm
-command runs in a number of passes.  It will process the entire
+.Nm
+command runs in three passes.  It will process the entire
 input file in each pass, before commencing with the next pass.
 .Pp
-Before working on a file
-.Ar name
-.Nm ctm
+Before working on the file
+.Ar file ,
+.Nm
 first checks for the existence of the file
-.Ar name.ctm .
+.Ar file.ctm .
 If this file exists,
-.Nm ctm
+.Nm
 works on it instead.
 .Pp
 Pass 1 will validate that the input file is OK.  The syntax, the data
 and the global MD5 checksum will be checked.  If any of these fail,
-.Nm ctm
+.Nm
 will never be able to do anything with the file, so it will simply
 reject it.
 .Pp
@@ -75,7 +77,7 @@ should/should not exist and by checking the MD5 checksums of files.
 .Pp
 Pass 3 will actually apply the delta.
 .Pp
-.Nm ctm
+.Nm
 will extract the file hierarchy below its working directory.  Absolute
 filenames or filenames containing references through
 .Dq \&.
@@ -103,7 +105,7 @@ Tell us less.
 Put temporary files under
 .Ar tmpdir .
 .It Fl u
-Set modification time of created and modified files to the CTM delta
+Set the modification time of created and modified files to the CTM delta's
 creation time.
 .It Fl v
 Tell us more.
@@ -115,7 +117,7 @@ is the level of verbosity.
 .Sh ENVIRONMENT
 .Ev TMPDIR,
 if set to a pathname, will cause
-.Nm ctm
+.Nm
 to use that pathname
 as the location of temporary file.
 See
@@ -146,10 +148,10 @@ options.
 .Xr ctm_rmail 1 ,
 .Xr ctm 5
 .Sh HISTORY
-Initial trials ran during the FreeBSD 1.1.5, and many bugs and 
+Initial trials ran during FreeBSD 1.1.5, and many bugs and 
 methods were hashed out.
 The
-.Nm ctm
+.Nm
 command appeared in FreeBSD 2.1.
 .Sh AUTHORS
 The CTM system has been designed and implemented by
