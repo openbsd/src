@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.24 1999/10/29 02:10:01 angelos Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.25 1999/12/06 00:43:20 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -68,6 +68,7 @@ struct espstat
     u_int32_t	esps_noxform;
     u_int32_t	esps_badilen;
     u_int32_t   esps_wrap;	/* Replay counter wrapped around */
+    u_int32_t   esps_badenc;	/* Bad encryption detected */
     u_int32_t	esps_badauth;	/* Only valid for transforms with auth */
     u_int32_t   esps_replay;	/* Possible packet replay detected */
     u_int32_t	esps_input;	/* Input ESP packets */
