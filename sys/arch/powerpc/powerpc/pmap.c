@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.56 2002/01/23 00:39:47 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.57 2002/01/25 03:55:23 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -408,6 +408,7 @@ pte_spill(addr)
 	struct pte_ovfl *po;
 	pte_t ps;
 	pte_t *pt;
+	vm_offset_t va;
 
 	asm ("mfsrin %0,%1" : "=r"(sr) : "r"(addr));
 	idx = pteidx(sr, addr);
@@ -431,7 +432,12 @@ pte_spill(addr)
 			pt->pte_hi &= ~PTE_VALID;
 			ps = *pt;
 			asm volatile ("sync");
-			tlbie(addr);
+			/* calculate the va of the address being removed */
+			va = ((pt->pte_hi & PTE_API) << ADDR_API_SHFT) |
+			    ((((pt->pte_hi >> PTE_VSID_SHFT) & SR_VSID)
+				^(idx ^ ((pt->pte_hi & PTE_HID) ? 0x3ff : 0)))
+				    & 0x3ff) << PAGE_SHIFT;
+			tlbie(va);
 			tlbsync();
 			*pt = po->po_pte;
 			asm volatile ("sync");
