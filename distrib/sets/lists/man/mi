@@ -1926,6 +1926,7 @@
 ./usr/share/man/cat8/badsect.0
 ./usr/share/man/cat8/bgpctl.0
 ./usr/share/man/cat8/bgpd.0
+./usr/share/man/cat8/bioctl.0
 ./usr/share/man/cat8/boot_config.0
 ./usr/share/man/cat8/bootparamd.0
 ./usr/share/man/cat8/bos.0
@@ -2130,6 +2131,7 @@
 ./usr/share/man/cat8/mount_null.0
 ./usr/share/man/cat8/mount_portal.0
 ./usr/share/man/cat8/mount_procfs.0
+./usr/share/man/cat8/mount_udf.0
 ./usr/share/man/cat8/mount_umap.0
 ./usr/share/man/cat8/mount_union.0
 ./usr/share/man/cat8/mount_xfs.0
@@ -2264,12 +2266,15 @@
 ./usr/share/man/cat8/spamlogd.0
 ./usr/share/man/cat8/sparc
 ./usr/share/man/cat8/sparc/MAKEDEV.0
+./usr/share/man/cat8/sparc/apm.0
+./usr/share/man/cat8/sparc/apmd.0
 ./usr/share/man/cat8/sparc/boot_sparc.0
 ./usr/share/man/cat8/sparc/eeprom.0
 ./usr/share/man/cat8/sparc/installboot.0
 ./usr/share/man/cat8/sparc/kbd.0
 ./usr/share/man/cat8/sparc/wsconscfg.0
 ./usr/share/man/cat8/sparc/wsconsctl.0
+./usr/share/man/cat8/sparc/zzz.0
 ./usr/share/man/cat8/sparc64
 ./usr/share/man/cat8/sparc64/MAKEDEV.0
 ./usr/share/man/cat8/sparc64/boot_sparc64.0

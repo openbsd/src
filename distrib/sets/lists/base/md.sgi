@@ -69,7 +69,7 @@
 ./usr/lib/gcc-lib/mips64-unknown-openbsd3.7/3.3.5/include
 ./usr/lib/gcc-lib/mips64-unknown-openbsd3.7/3.3.5/specs
 ./usr/lib/libasn1.so.15.0
-./usr/lib/libc.so.34.2
+./usr/lib/libc.so.35.0
 ./usr/lib/libcom_err.so.15.0
 ./usr/lib/libcrypto.so.11.0
 ./usr/lib/libcurses++.so.3.0
@@ -98,7 +98,7 @@
 ./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libssl.so.9.0
-./usr/lib/libstdc++.so.34.0
+./usr/lib/libstdc++.so.35.0
 ./usr/lib/libtermcap.so.10.0
 ./usr/lib/libtermlib.so.10.0
 ./usr/lib/libusbhid.so.3.0
@@ -1526,6 +1526,11 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/isofs/cd9660/cd9660_rrip.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/isofs/cd9660/iso.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/isofs/cd9660/iso_rrip.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/isofs/udf
+./usr/libdata/perl5/site_perl/mips64-openbsd/isofs/udf/ecma167-udf.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/isofs/udf/osta.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/isofs/udf/udf.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/isofs/udf/udf_extern.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/asn1-common.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/kerberosV/asn1_err.ph

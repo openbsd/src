@@ -864,6 +864,11 @@
 ./usr/include/isofs/cd9660/cd9660_rrip.h
 ./usr/include/isofs/cd9660/iso.h
 ./usr/include/isofs/cd9660/iso_rrip.h
+./usr/include/isofs/udf
+./usr/include/isofs/udf/ecma167-udf.h
+./usr/include/isofs/udf/osta.h
+./usr/include/isofs/udf/udf.h
+./usr/include/isofs/udf/udf_extern.h
 ./usr/include/kerberosV
 ./usr/include/kerberosV/asn1-common.h
 ./usr/include/kerberosV/asn1_err.h
@@ -4552,6 +4557,7 @@
 ./usr/share/man/cat3/stdio.0
 ./usr/share/man/cat3/store.0
 ./usr/share/man/cat3/strcasecmp.0
+./usr/share/man/cat3/strcasestr.0
 ./usr/share/man/cat3/strcat.0
 ./usr/share/man/cat3/strchr.0
 ./usr/share/man/cat3/strcmp.0

@@ -27,7 +27,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.7/2.95.3/include
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.7/2.95.3/specs
 ./usr/lib/libasn1.so.15.0
-./usr/lib/libc.so.34.2
+./usr/lib/libc.so.35.0
 ./usr/lib/libcom_err.so.15.0
 ./usr/lib/libcrypto.so.11.0
 ./usr/lib/libcurses++.so.3.0
@@ -1465,6 +1465,11 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/isofs/cd9660/cd9660_rrip.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/isofs/cd9660/iso.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/isofs/cd9660/iso_rrip.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/isofs/udf
+./usr/libdata/perl5/site_perl/m68k-openbsd/isofs/udf/ecma167-udf.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/isofs/udf/osta.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/isofs/udf/udf.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/isofs/udf/udf_extern.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/kerberosV
 ./usr/libdata/perl5/site_perl/m68k-openbsd/kerberosV/asn1-common.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/kerberosV/asn1_err.ph

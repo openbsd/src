@@ -902,6 +902,11 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/isofs/cd9660/cd9660_rrip.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/isofs/cd9660/iso.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/isofs/cd9660/iso_rrip.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/isofs/udf
+./usr/libdata/perl5/site_perl/vax-openbsd/isofs/udf/ecma167-udf.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/isofs/udf/osta.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/isofs/udf/udf.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/isofs/udf/udf_extern.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/asn1-common.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/asn1_err.ph

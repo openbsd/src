@@ -78,6 +78,7 @@
 ./sbin
 ./sbin/atactl
 ./sbin/badsect
+./sbin/bioctl
 ./sbin/brconfig
 ./sbin/ccdconfig
 ./sbin/chown
@@ -118,6 +119,7 @@
 ./sbin/mount_null
 ./sbin/mount_portal
 ./sbin/mount_procfs
+./sbin/mount_udf
 ./sbin/mount_umap
 ./sbin/mount_union
 ./sbin/mount_xfs
