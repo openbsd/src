@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.30 2003/09/02 18:50:06 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.31 2003/12/17 20:58:39 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,13 @@ input line is passed to a per-display command interpreter.
 This allows each display to have certain display-specific commands.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "refresh-interval"
+.It Fl w Ar wait
+Specifies the screen refresh time interval in seconds.
+This option is overridden by
+.Ar refresh-interval ,
+if given.
+The default interval is 5 seconds.
 .It Ar display
 The
 .Ar display
@@ -100,10 +106,11 @@ The
 .Ar refresh-interval
 specifies the screen refresh time interval in seconds.
 This is provided for backwards compatibility, and overrides the
-.Ar refresh-interval
-specified with the
+.Ar wait
+interval specified with the
 .Fl w
 flag.
+The default interval is 5 seconds.
 .El
 .Pp
 Certain characters cause immediate action by
