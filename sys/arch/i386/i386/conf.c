@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.30 1996/11/23 21:45:48 kstailey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.31 1997/02/06 10:02:54 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ bdev_decl(scd);
 #include "ccd.h"
 #include "rd.h"
 bdev_decl(rd);
-/* no cdev for rd */
+cdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -237,6 +237,7 @@ struct cdevsw	cdevsw[] =
 	cdev_gen_ipf(NIPF,ipl),         /* 44 ip filtering */
 	cdev_random_init(1,random),	/* 45 random data source */
 	cdev_uk_init(NPCTR,pctr),	/* 46: pentium performance counters */
+	cdev_disk_init(NRD,rd),		/* 47: ram disk driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -325,7 +326,7 @@ static int chrtoblktbl[] = {
 	/* 44 */	NODEV,
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
-	/* 47 */	NODEV,
+	/* 47 */	17,
 	/* 48 */	NODEV,
 	/* 49 */	NODEV,
 };
