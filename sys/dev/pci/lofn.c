@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.17 2002/05/09 21:43:17 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.18 2002/05/10 15:25:39 jason Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Jason L. Wright (jason@thought.net)
@@ -437,7 +437,11 @@ lofn_modexp_start(sc, q)
 		ip += 4;
 
 		WRITE_REG(sc, LOFN_REL_INSTR + ip,
-		    LOFN_INSTR2(OP_DONE, OP_CODE_SR, 3, 3, nshift));
+		    LOFN_INSTR2(0, OP_CODE_SR, 3, 3, nshift));
+		ip += 4;
+
+		WRITE_REG(sc, LOFN_REL_INSTR + ip,
+		    LOFN_INSTR2(OP_DONE, OP_CODE_TAG, 3, 3, bits));
 		ip += 4;
 	}
 
@@ -463,10 +467,23 @@ lofn_modexp_finish(sc, q)
 	struct lofn_q *q;
 {
 	struct cryptkop *krp = q->q_krp;
+	int reglen, crplen;
 
 	lofn_read_reg(sc, 3, &sc->sc_tmp);
-	bcopy(sc->sc_tmp.b, krp->krp_param[LOFN_MODEXP_PAR_C].crp_p,
-	    (krp->krp_param[LOFN_MODEXP_PAR_C].crp_nbits + 7) / 8);
+
+	reglen = ((READ_REG(sc, LOFN_LENADDR(LOFN_WIN_2, 3)) & LOFN_LENMASK) +
+	    7) / 8;
+	crplen = (krp->krp_param[LOFN_MODEXP_PAR_C].crp_nbits + 7) / 8;
+
+	if (crplen <= reglen)
+		bcopy(sc->sc_tmp.b, krp->krp_param[LOFN_MODEXP_PAR_C].crp_p,
+		    reglen);
+	else {
+		bcopy(sc->sc_tmp.b, krp->krp_param[LOFN_MODEXP_PAR_C].crp_p,
+		    reglen);
+		bzero(krp->krp_param[LOFN_MODEXP_PAR_C].crp_p + reglen,
+		    crplen - reglen);
+	}
 	bzero(&sc->sc_tmp, sizeof(sc->sc_tmp));
 	lofn_zero_reg(sc, 0);
 	lofn_zero_reg(sc, 1);
