@@ -1,4 +1,5 @@
-/*	$KAME: udp6_output.c,v 1.14 2000/06/13 10:31:23 itojun Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.3 2001/02/16 08:19:32 itojun Exp $	*/
+/*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -119,11 +120,11 @@
 
 int
 udp6_output(in6p, m, addr6, control)
-	register struct in6pcb *in6p;
-	register struct mbuf *m;
+	struct in6pcb *in6p;
+	struct mbuf *m;
 	struct mbuf *addr6, *control;
 {
-	register u_int32_t ulen = m->m_pkthdr.len;
+	u_int32_t ulen = m->m_pkthdr.len;
 	u_int32_t plen = sizeof(struct udphdr) + ulen;
 	struct ip6_hdr *ip6;
 	struct udphdr *udp6;
@@ -188,7 +189,8 @@ udp6_output(in6p, m, addr6, control)
 			goto release;
 		}
 
-		if (1) {	/* we don't support IPv4 mapped address */
+		if (1)	/* we don't support IPv4 mapped address */
+		{
 			laddr = in6_selectsrc(sin6, in6p->in6p_outputopts,
 					      in6p->in6p_moptions,
 					      &in6p->in6p_route,
@@ -213,7 +215,8 @@ udp6_output(in6p, m, addr6, control)
 		fport = in6p->in6p_fport;
 	}
 
-	if (1) {	/* we don't support IPv4 mapped address */
+	if (1)	/* we don't support IPv4 mapped address */
+	{
 		af = AF_INET6;
 		hlen = sizeof(struct ip6_hdr);
 	} else {
