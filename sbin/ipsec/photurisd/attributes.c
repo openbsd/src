@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: attributes.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
+static char rcsid[] = "$Id: attributes.c,v 1.2 1997/07/19 12:07:40 provos Exp $";
 #endif
 
 #define _ATTRIBUTES_C_
@@ -48,6 +48,36 @@ static char rcsid[] = "$Id: attributes.c,v 1.1.1.1 1997/07/18 22:48:50 provos Ex
 #include "attributes.h"
 
 static struct attribute_list *attribob = NULL;
+
+int
+isinattrib(u_int8_t *attributes, u_int16_t attribsize, u_int8_t attribute)
+{
+     while(attribsize>0) {
+	  if(*attributes==attribute)
+	       return 1;
+	  if(attribsize - (*(attributes+1)+2) > attribsize) 
+	       return 0;
+
+	  attribsize -= *(attributes+1)+2;
+	  attributes += *(attributes+1)+2;
+     }
+     return 0;
+}
+
+int 
+isattribsubset(u_int8_t *set, u_int16_t setsize, 
+	       u_int8_t *subset, u_int16_t subsetsize)
+{
+     while(subsetsize>0) {
+	  if (!isinattrib(set, setsize, *subset))
+	       return 0;
+	  if (subsetsize - (*(subset+1)+2) > subsetsize)
+	       return 0;
+	  subsetsize -= *(subset+1)+2;
+	  subset += *(subset+1)+2;
+     }
+     return 1;
+}
 
 int
 attrib_insert(struct attribute_list *ob)

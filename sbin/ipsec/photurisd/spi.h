@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: spi.h,v 1.1.1.1 1997/07/18 22:48:49 provos Exp $ */
+/* $Id: spi.h,v 1.2 1997/07/19 12:07:58 provos Exp $ */
 /*
  * spi.h: 
  * security paramter index creation.
@@ -63,8 +63,6 @@ struct spiob {
      time_t lifetime;                  /* Lifetime for the SPI */
 };
 
-EXTERN int isinattrib(u_int8_t *attributes, u_int16_t attribsize, 
-		      u_int8_t attribute);
 EXTERN time_t getspilifetime(struct stateob *st);
 EXTERN int make_spi(struct stateob *st, char *local_address,
 		    u_int8_t *SPI, time_t *lifetime, 

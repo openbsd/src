@@ -30,20 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * $Header: /home/cvs/src/sbin/ipsec/photurisd/Attic/api.h,v 1.1.1.1 1997/07/18 22:48:48 provos Exp $
- *
- * $Author: provos $
- *
- * $Log: api.h,v $
- * Revision 1.1.1.1  1997/07/18 22:48:48  provos
- * initial import of the photuris keymanagement daemon
- *
- * Revision 1.1  1997/05/22 17:36:07  provos
- * Initial revision
- *
- */
-
 #ifndef _API_H_
 #define _API_H_
 

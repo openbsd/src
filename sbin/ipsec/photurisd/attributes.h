@@ -75,6 +75,10 @@ struct attribute_list {
      u_int16_t attribsize;
 };
 
+EXTERN int isinattrib(u_int8_t *attributes, u_int16_t attribsize, 
+		      u_int8_t attribute);
+EXTERN int isattribsubset(u_int8_t *set, u_int16_t setsize, 
+			  u_int8_t *subset, u_int16_t subsetsize);
 EXTERN struct attribute_list *attrib_new(void);
 EXTERN int attrib_insert(struct attribute_list *);
 EXTERN int attrib_unlink(struct attribute_list *);

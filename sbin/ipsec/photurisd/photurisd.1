@@ -1,4 +1,4 @@
-.\" $OpenBSD: photurisd.1,v 1.2 1997/07/18 22:59:07 provos Exp $
+.\" $OpenBSD: photurisd.1,v 1.3 1997/07/19 12:07:52 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -29,9 +29,9 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd April 15, 1997
+.Dd July 18, 1997
 .Dt PHOTURISD 1
-.Os OpenBSD 2.1
+.Os
 .Sh NAME
 .Nm photurisd
 .Nd IPSec key management daemon
@@ -70,7 +70,7 @@ The
 option specifies the directory in wich
 .Nm photurisd
 looks for its startup files. The default is
-.Pa /etc/photuris/
+.Pa /etc/photuris/ .
 .El
 .Pp
 The file
@@ -93,7 +93,6 @@ Finally the file
 contains parameters for exchanges which are created during
 startup.
 .Pp
-.Sh EXAMPLE
 The keywords 
 .Nm dst ,
 .Nm port ,
@@ -130,11 +129,23 @@ secrets are taken from the users secret file.
 .Pp
 Exchanges are separated by newlines.
 .Pp
-Example:
+.Sh EXAMPLE
+A sample photuris.startup entry:
 .Pp
-	dst=134.100.106.2 port=468 options=auth
+.Bl -item -width foo -compact
+.It
+dst=134.100.106.2 port=468 options=auth
+.It	
+tsrc=134.100.104.0/255.255.255.255
+.It	
+tdst=134.100.106.0/255.255.255.255
+.El
 .Pp
-	tsrc=134.100.104.0/255.255.255.255
-.Pp
-	tdst=134.100.106.0/255.255.255.255
-.Pp
+.Sh SEE ALSO
+.Xr startkey 1 .
+.Sh HISTORY
+The photuris keymanagement protocol is described in the internet draft
+.Nm draft-simpson-photuris .
+This implementation appeared in 
+.Bx Open
+2.1.

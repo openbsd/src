@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_identity_response.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
+static char rcsid[] = "$Id: handle_identity_response.c,v 1.2 1997/07/19 12:07:47 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -87,24 +87,12 @@ handle_identity_response(u_char *packet, int size, char *address,
 	tmp = size - IDENTITY_MESSAGE_MIN;
 	if (packet_decrypt(st, IDENTITY_MESSAGE_CHOICE(header), &tmp) == -1) {
 	     log_error(0, "packet_decrypt() in handle_identity_response()");
-	     packet_size = PACKET_BUFFER_SIZE;
-	     photuris_error_message(st, packet_buffer, &packet_size,
-				    header->icookie, header->rcookie,
-				    0, VERIFICATION_FAILURE);
-	     send_packet();
-	     return -1;
+	     goto verification_failed;
 	}
 
 	/* Verify message */
-	if (!(i = get_identity_verification_size(st, IDENTITY_MESSAGE_CHOICE(header)))) {
-	     packet_size = PACKET_BUFFER_SIZE;
-	     photuris_error_message(st, packet_buffer, &packet_size,
-				    header->icookie, header->rcookie,
-				    0, VERIFICATION_FAILURE);
-	     send_packet();
-
-	     return -1;
-	}
+	if (!(i = get_identity_verification_size(st, IDENTITY_MESSAGE_CHOICE(header))))
+	     goto verification_failed;
 	
 	asize = IDENTITY_MESSAGE_MIN;
 
@@ -125,17 +113,18 @@ handle_identity_response(u_char *packet, int size, char *address,
 
 	if (asize != size) {
 	     log_error(0, "wrong packet size in handle_identity_response()");
-	     return -1;
+	     return 0;
+	}
+
+	if (!isattribsubset(st->oSPIoattrib,st->oSPIoattribsize,
+			    attributes, attribsize)) {
+	     log_error(0, "attributes are not a subset in handle_identity_response()");
+	     return 0;
 	}
 
 	if (i > sizeof(signature)) {
 	     log_error(0, "verification too long in handle_identity_response()");
-	     packet_size = PACKET_BUFFER_SIZE;
-	     photuris_error_message(st, packet_buffer, &packet_size,
-				    header->icookie, header->rcookie,
-				    0, VERIFICATION_FAILURE);
-	     send_packet();
-	     return -1;
+	     goto verification_failed;
 	}
 
 	bcopy(p, signature, i);
@@ -145,7 +134,7 @@ handle_identity_response(u_char *packet, int size, char *address,
 	if (st->uSPIidentver == NULL) {
 	     if((st->uSPIidentver = calloc(i, sizeof(u_int8_t))) == NULL) { 
 		  log_error(1, "calloc() in handle_identity_response()"); 
-		  return -1; 
+		  goto verification_failed;
 	     }
 	     bcopy(signature, st->uSPIidentver, i);
 	     st->uSPIidentversize = i;
@@ -155,7 +144,7 @@ handle_identity_response(u_char *packet, int size, char *address,
 	if (st->uSPIidentchoice == NULL) {
 	     if((st->uSPIidentchoice = calloc(p[1]+2, sizeof(u_int8_t))) == NULL) {
 		  log_error(1, "calloc() in handle_identity_response()");
-		  return -1;
+		  goto verification_failed;
 	     }
 	     bcopy(p, st->uSPIidentchoice, p[1]+2);
 	     st->uSPIidentchoicesize = p[1]+2;
@@ -165,7 +154,7 @@ handle_identity_response(u_char *packet, int size, char *address,
 	if (st->uSPIident == NULL) {
 	     if((st->uSPIident = calloc(varpre2octets(p), sizeof(u_int8_t))) == NULL) {
 		  log_error(1, "calloc() in handle_identity_response()"); 
-		  return -1; 
+		  goto verification_failed;
 	     }
 	     bcopy(p, st->uSPIident, varpre2octets(p));
 	}
@@ -173,7 +162,7 @@ handle_identity_response(u_char *packet, int size, char *address,
 	if (st->uSPIattrib == NULL) {
 	     if((st->uSPIattrib = calloc(attribsize, sizeof(u_int8_t))) == NULL) {
 		  log_error(1, "calloc() in handle_identity_response()");
-		  return -1;
+		  goto verification_failed;
 	     }
 	     bcopy(attributes, st->uSPIattrib, attribsize);
 	     st->uSPIattribsize = attribsize;
@@ -181,7 +170,7 @@ handle_identity_response(u_char *packet, int size, char *address,
 
 	if (get_secrets(st, ID_REMOTE) == -1) {
 	     log_error(0, "get_secrets() in in handle_identity_response()");
-	     return -1;
+	     goto verification_failed;
 	}
 
 	if (!verify_identity_verification(st, signature, packet, size)) {
@@ -200,7 +189,7 @@ handle_identity_response(u_char *packet, int size, char *address,
 	     /* Clean up secrets */
 	     free(st->uSPIsecret);
 	     st->uSPIsecret = NULL; st->uSPIsecretsize = 0;
-
+	verification_failed:
 	     log_error(0, "verification failed in handle_identity_response()");
 	     packet_size = PACKET_BUFFER_SIZE;
 	     photuris_error_message(st, packet_buffer, &packet_size,

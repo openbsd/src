@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_spi_update.c,v 1.1.1.1 1997/07/18 22:48:51 provos Exp $";
+static char rcsid[] = "$Id: handle_spi_update.c,v 1.2 1997/07/19 12:07:50 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -92,24 +92,12 @@ handle_spi_update(u_char *packet, int size, char *address,
 	tmp = size - SPI_UPDATE_MIN;
 	if (packet_decrypt(st, SPI_UPDATE_VERIFICATION(header), &tmp) == -1) {
 	     log_error(0, "packet_decrypt() in handle_spi_update()");
-	     packet_size = PACKET_BUFFER_SIZE;
-	     photuris_error_message(st, packet_buffer, &packet_size,
-				    header->icookie, header->rcookie,
-				    0, VERIFICATION_FAILURE);
-	     send_packet();
-	     return -1;
+	     goto verification_failed;
 	}
 
 	/* Verify message */
-	if (!(i = get_validity_verification_size(st))) {
-	     packet_size = PACKET_BUFFER_SIZE;
-	     photuris_error_message(st, packet_buffer, &packet_size,
-				    header->icookie, header->rcookie,
-				    0, VERIFICATION_FAILURE);
-	     send_packet();
-
-	     return -1;
-	}
+	if (!(i = get_validity_verification_size(st)))
+	     goto verification_failed;
 	
 	asize = SPI_UPDATE_MIN + i;
 
@@ -125,23 +113,25 @@ handle_spi_update(u_char *packet, int size, char *address,
 
 	if (asize != size) {
 	     log_error(0, "wrong packet size in handle_spi_update()");
-	     return -1;
+	     return 0;
+	}
+
+	if (!isattribsubset(st->oSPIoattrib,st->oSPIoattribsize,
+			    attributes, attribsize)) {
+	     log_error(0, "attributes are not a subset in handle_spi_update()");
+	     return 0;
 	}
 
 	if (i > sizeof(signature)) {
 	     log_error(0, "verification too long in handle_spi_update()");
-	     packet_size = PACKET_BUFFER_SIZE;
-	     photuris_error_message(st, packet_buffer, &packet_size,
-				    header->icookie, header->rcookie,
-				    0, VERIFICATION_FAILURE);
-	     send_packet();
-	     return -1;
+	     goto verification_failed;
 	}
 
 	bcopy(p, signature, i);
 	bzero(p, i);
 
 	if (!verify_validity_verification(st, signature, packet, size)) {
+	verification_failed:
 	     log_error(0, "verification failed in handle_spi_update()");
 	     packet_size = PACKET_BUFFER_SIZE;
 	     photuris_error_message(st, packet_buffer, &packet_size,

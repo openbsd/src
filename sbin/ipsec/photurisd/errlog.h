@@ -30,20 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * $Header: /home/cvs/src/sbin/ipsec/photurisd/Attic/errlog.h,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $
- *
- * $Author: provos $
- *
- * $Log: errlog.h,v $
- * Revision 1.1.1.1  1997/07/18 22:48:50  provos
- * initial import of the photuris keymanagement daemon
- *
- * Revision 1.1  1997/05/22 17:36:07  provos
- * Initial revision
- *
- */
-
 #ifdef _ERRLOG_C_
 
 #if __STDC__
