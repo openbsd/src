@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.58 2002/06/06 02:15:27 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.59 2002/06/06 15:40:09 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -463,29 +463,28 @@ report_spi (FILE *fd, const u_int8_t *buf, size_t sz, int index)
   char s[SBUFSZ];
   int i, j;
 
-  {
-    for (i = j = 0; i < sz;)
-      {
-	snprintf (s + j, SBUFSZ - j, "%02x", buf[i++]);
-	j += 2;
-	if (i % 4 == 0)
-	  {
-	    if (i % 32 == 0)
-	      {
-		s[j] = '\0';
-		fprintf(fd, "%s", s);
-		j = 0;
-	      }
-	    else
-	      s[j++] = ' ';
-	  }
-      }
-      if (j)
+  for (i = j = 0; i < sz;)
+    {
+      snprintf (s + j, SBUFSZ - j, "%02x", buf[i++]);
+      j += 2;
+      if (i % 4 == 0)
 	{
-	  s[j] = '\0';
-	  fprintf(fd, "SPI %d: %s\n", index, s);
+	  if (i % 32 == 0)
+	    {
+	      s[j] = '\0';
+	      fprintf (fd, "%s", s);
+	      j = 0;
+	    }
+	  else
+	    s[j++] = ' ';
 	}
-  }
+    }
+
+  if (j)
+    {
+      s[j] = '\0';
+      fprintf (fd, "SPI %d: %s\n", index, s);
+    }
 }
 
 
@@ -505,90 +504,93 @@ report_proto (FILE *fd, struct proto *proto)
     case IPSEC_PROTO_IPSEC_ESP:
       keylen = ipsec_esp_enckeylength (proto);
       hashlen = ipsec_esp_authkeylength (proto);
-      fprintf(fd, "Transform: IPsec ESP\n");
-      fprintf(fd, "Encryption key length: %d\n", keylen);
-      fprintf(fd, "Authentication key length: %d\n", hashlen);
+      fprintf (fd, "Transform: IPsec ESP\n");
+      fprintf (fd, "Encryption key length: %d\n", keylen);
+      fprintf (fd, "Authentication key length: %d\n", hashlen);
 
+      fprintf (fd, "Encryption algorithm: ");
       switch (proto->id)
 	{
 	case IPSEC_ESP_DES:
 	case IPSEC_ESP_DES_IV32:
 	case IPSEC_ESP_DES_IV64:
-	  fprintf(fd, "Encryption algorithm: DES\n");
+	  fprintf (fd, "DES\n");
 	  break;
 
 	case IPSEC_ESP_3DES:
-	  fprintf(fd, "Encryption algorithm: 3DES\n");
+	  fprintf (fd, "3DES\n");
 	  break;
 
 	case IPSEC_ESP_AES:
-	  fprintf(fd, "Encryption algorithm: Rijndael-128/AES\n");
+	  fprintf (fd, "Rijndael-128/AES\n");
 	  break;
 
 	case IPSEC_ESP_CAST:
-	  fprintf(fd, "Encryption algorithm: Cast-128\n");
+	  fprintf (fd, "Cast-128\n");
 	  break;
 
 	case IPSEC_ESP_BLOWFISH:
-	  fprintf(fd, "Encryption algorithm: Blowfish\n");
+	  fprintf (fd, "Blowfish\n");
 	  break;
 
 	default:
-	  fprintf(fd, "Unknown encryption algorithm %d\n", proto->id);
+	  fprintf (fd, "unknown (%d)\n", proto->id);
 	}
 
+      fprintf (fd, "Authentication algorithm: ");
       switch (iproto->auth)
 	{
 	case IPSEC_AUTH_HMAC_MD5:
-	  fprintf(fd, "Authentication algorithm: HMAC-MD5\n");
+	  fprintf (fd, "HMAC-MD5\n");
 	  break;
 
 	case IPSEC_AUTH_HMAC_SHA:
-	  fprintf(fd, "Authentication algorithm: HMAC-SHA1\n");
+	  fprintf (fd, "HMAC-SHA1\n");
 	  break;
 
         case IPSEC_AUTH_HMAC_RIPEMD:
-	  fprintf(fd, "Authentication algorithm: HMAC-RIPEMD-160\n");
+	  fprintf (fd, "HMAC-RIPEMD-160\n");
 	  break;
 
 	case IPSEC_AUTH_DES_MAC:
 	case IPSEC_AUTH_KPDK:
 	  /* XXX We should be supporting KPDK */
-	  fprintf(fd, "Unknown authentication algorithm: %d", iproto->auth); 
+	  fprintf (fd, "unknown (%d)", iproto->auth); 
 	  break;
 
 	default:
-	  fprintf(fd, "Authentication algorithm not used.\n");
+	  fprintf (fd, "none\n");
 	}
       break;
 
     case IPSEC_PROTO_IPSEC_AH:
       hashlen = ipsec_ah_keylength (proto);
-      fprintf(fd, "Transform: IPsec AH\n");
-      fprintf(fd, "Encryption not used.\n");
-      fprintf(fd, "Authentication key length: %d\n", hashlen);
+      fprintf (fd, "Transform: IPsec AH\n");
+      fprintf (fd, "Encryption not used.\n");
+      fprintf (fd, "Authentication key length: %d\n", hashlen);
 
+      fprintf (fd, "Authentication algorithm: ");
       switch (proto->id)
 	{
 	case IPSEC_AH_MD5:
-	  fprintf(fd, "Authentication algorithm: HMAC-MD5\n");
+	  fprintf (fd, "HMAC-MD5\n");
 	  break;
 
 	case IPSEC_AH_SHA:
-	  fprintf(fd, "Authentication algorithm: HMAC-SHA1\n");
+	  fprintf (fd, "HMAC-SHA1\n");
 	  break;
 
 	case IPSEC_AH_RIPEMD:
-	  fprintf(fd, "Authentication algorithm: HMAC-RIPEMD-160\n");
+	  fprintf (fd, "HMAC-RIPEMD-160\n");
 	  break;
 
 	default:
-	  fprintf(fd, "Unknown authentication algorithm: %d\n", proto->id);
+	  fprintf (fd, "unknown (%d)", proto->id);
 	}
       break;
 
     default:
-      fprintf(fd, "report_proto: invalid proto %d\n", proto->proto);
+      fprintf (fd, "report_proto: invalid proto %d\n", proto->proto);
     }
 }
 
@@ -615,30 +617,30 @@ sa_dump_all (FILE *fd, struct sa *sa)
   int i;
 
   /* SA name and phase. */
-  fprintf(fd, "SA name: %s", sa->name ? sa->name : "<unnamed>");
-  fprintf(fd, " (Phase %d)\n", sa->phase);
+  fprintf (fd, "SA name: %s", sa->name ? sa->name : "<unnamed>");
+  fprintf (fd, " (Phase %d)\n", sa->phase);
 
   /* Source and destination IPs. */
-  fprintf(fd, sa->transport == NULL ? "<no transport>" :
-      sa->transport->vtbl->decode_ids (sa->transport));
-  fprintf(fd, "\n");
+  fprintf (fd, sa->transport == NULL ? "<no transport>" :
+	   sa->transport->vtbl->decode_ids (sa->transport));
+  fprintf (fd, "\n");
 
   /* Transform information. */
   for (proto = TAILQ_FIRST (&sa->protos); proto;
-      proto = TAILQ_NEXT (proto, link))
+       proto = TAILQ_NEXT (proto, link))
     {
       /* SPI values. */
       for (i = 0; i < 2; i++)
 	if (proto->spi[i])
-	  report_spi(fd, proto->spi[i], proto->spi_sz[i], i);
+	  report_spi (fd, proto->spi[i], proto->spi_sz[i], i);
 	else
-	  fprintf(fd, "SPI %d not defined.", i);
+	  fprintf (fd, "SPI %d not defined.", i);
 
-        /* Proto values. */
-	report_proto(fd, proto);
+      /* Proto values. */
+      report_proto (fd, proto);
 
-	/* SA separator. */
-	fprintf(fd, "\n");
+      /* SA separator. */
+      fprintf (fd, "\n");
     }
 }
 
@@ -651,18 +653,18 @@ sa_report_all (void)
   struct sa *sa;
 
   /* Open SA_FILE. */
-  fd = fopen(SA_FILE, "w");
+  fd = fopen (SA_FILE, "w");
 
   /* Start sa_config_report. */
   for (i = 0; i <= bucket_mask; i++)
     for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
       if (sa->phase == 1)
-	fprintf(fd, "SA name: none (phase 1)\n\n");
+	fprintf (fd, "SA name: none (phase 1)\n\n");
       else
 	sa_dump_all (fd, sa);
 
   /* End sa_config_report. */
-  fclose(fd);
+  fclose (fd);
 }
 
 /* Free the protocol structure pointed to by PROTO.  */
