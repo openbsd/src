@@ -425,6 +425,9 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/zconf.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/zlib.ph
 ./usr/lib/scrt0.o
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcivar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/keynote.ph
@@ -432,6 +435,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_ieee80211.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_sppp.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_token.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/ataio.ph
@@ -447,7 +451,3 @@
 ./usr/mipsel-unknown-openbsd2.7/bin
 ./usr/mipsel-unknown-openbsd2.7/lib
 ./usr/mipsel-unknown-openbsd2.7/lib/ldscripts
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/urio.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcivar.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/net/if_vlan_var.ph

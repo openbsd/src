@@ -331,6 +331,9 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/db.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dbm.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/des.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/cmpcireg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/cmpcivar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dirent.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/elf_abi.ph
@@ -445,6 +448,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_tun.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_types.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/net_osdep.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/netisr.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/net/pfkeyv2.ph
@@ -666,7 +670,3 @@
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/urio.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/cmpcireg.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/cmpcivar.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/net/if_vlan_var.ph

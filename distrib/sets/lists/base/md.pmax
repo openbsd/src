@@ -358,6 +358,9 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/db.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dbm.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/des.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcivar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dirent.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dlfcn.ph
@@ -478,6 +481,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_tun.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/if_types.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/netisr.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/pfkeyv2.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/net/ppp-comp.ph
@@ -700,7 +704,3 @@
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/urio.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcivar.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/net/if_vlan_var.ph

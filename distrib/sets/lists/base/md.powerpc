@@ -717,8 +717,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/raidframe/rf_optnames.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/raidframe/rf_paritylog.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/raidframe/rf_paritylogDiskMgr.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/raidframe/rf_parityloggingdags.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/raidframe/rf_paritylogging.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/raidframe/rf_parityloggingdags.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/raidframe/rf_parityscan.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/raidframe/rf_pq.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/raidframe/rf_pqdeg.ph

@@ -545,6 +545,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/cs4231reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/cyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/dc21040reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/dcreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/dp8390reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/dp8390var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/dp857xreg.ph
@@ -554,6 +555,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/elink3reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/elink3var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/espreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/fxpreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/fxpvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/gdtreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/gdtvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/hayespreg.ph
@@ -695,14 +698,13 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/brktree_reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcireg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/hifn7751var.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/dcreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_devar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/fxpreg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/fxpvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_levar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_lmc_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/if_lmcioctl.ph
@@ -863,6 +865,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ucomvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uhcireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/uhcivar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/usb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/usb_mem.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/usb_port.ph
@@ -1127,6 +1130,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_tun.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_types.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/net_osdep.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/netisr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/pfkeyv2.ph
@@ -1694,7 +1698,3 @@
 ./usr/share/keymaps/amiga/fr.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/urio.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcireg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcivar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_vlan_var.ph

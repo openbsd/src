@@ -658,6 +658,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/brktree_reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcireg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/hifn7751reg.ph
@@ -1132,6 +1134,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_token.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_tun.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_types.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_vlan_var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/net_osdep.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/netisr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/pfkeyv2.ph
@@ -1688,6 +1691,3 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/zlib.ph
 ./usr/libexec/ld.so
 ./usr/local/libdata/perl5/site_perl/m68k-openbsd
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcireg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcivar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_vlan_var.ph
