@@ -285,6 +285,9 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 
 	  if (sadb_sa->sadb_sa_auth > SADB_AALG_MAX)
 	    return EINVAL;
+
+	  if (sadb_sa->sadb_sa_replay > 32)
+	    return EINVAL;
 	}
 	break;
       case SADB_EXT_X_PROTOCOL:
