@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.61 2001/06/22 14:28:58 deraadt Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.62 2001/06/23 06:24:23 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -792,6 +792,22 @@ bridge_output(ifp, m, sa, rt)
 			return (0);
 		}
 #endif /* IPSEC */
+
+		/* Catch packets that needs TCP/UDP/IP hardware checksumming */
+		if (m->m_pkthdr.csum & M_IPV4_CSUM_OUT) {
+			/* XXX Compute IP checksum */
+			m->m_pkthdr.csum &= ~M_IPV4_CSUM_OUT; /* Clear */
+		}
+
+		if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT) {
+			/* XXX Compute TCP checksum */
+			m->m_pkthdr.csum &= ~M_TCPV4_CSUM_OUT; /* Clear */
+		}
+
+		if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT) {
+			/* XXX Compute UDP checksum */
+			m->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
+		}
 
 		LIST_FOREACH(p, &sc->sc_iflist, next) {
 			dst_if = p->ifp;
