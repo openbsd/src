@@ -1,6 +1,11 @@
+/*
+** This file is in the public domain, so clarified as of
+** Feb 14, 2003 by Arthur David Olson (arthur_david_olson@nih.gov).
+*/
+
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)ialloc.c	8.29";
-static char rcsid[] = "$OpenBSD: ialloc.c,v 1.6 2001/10/30 16:53:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ialloc.c,v 1.7 2003/02/14 18:24:53 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*LINTLIBRARY*/

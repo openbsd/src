@@ -1,6 +1,11 @@
+/*
+** This file is in the public domain, so clarified as of
+** Feb 14, 2003 by Arthur David Olson (arthur_david_olson@nih.gov).
+*/
+
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)zic.c	7.107";
-static char rcsid[] = "$OpenBSD: zic.c,v 1.16 2002/04/04 19:12:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: zic.c,v 1.17 2003/02/14 18:24:53 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
