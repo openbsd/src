@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.38 2000/05/04 02:23:16 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.39 2000/06/02 22:36:44 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -1047,8 +1047,7 @@ hifn_intr(arg)
 			macbuf += 12;
 		}
 
-		/* position is done, notify producer with callback */
-		cmd->dest_ready_callback(sc, cmd, macbuf);
+		hifn_callback(sc, cmd, macbuf);
 	
 		if (++dma->resk == HIFN_D_RES_RSIZE)
 			dma->resk = 0;
@@ -1326,7 +1325,6 @@ hifn_process(crp)
 	if (sc->sc_sessions[session].hs_flags == 1)
 		sc->sc_sessions[session].hs_flags = 2;
 
-	cmd->dest_ready_callback = hifn_callback;
 	cmd->private_data = (u_long)crp;
 	cmd->session_num = session;
 	cmd->softc = sc;

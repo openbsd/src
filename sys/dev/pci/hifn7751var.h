@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.17 2000/05/08 17:21:46 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.18 2000/06/02 22:36:45 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -160,16 +160,6 @@
  *  the dest_length does not have to be exact, values larger than required
  *  are fine.
  *
- *  dest_ready_callback
- *  -------------------
- *  Callback routine called from HIFN's interrupt handler.  The routine
- *  must be quick and non-blocking.  The callback routine is passed a
- *  pointer to the same hifn_command_t structure used to initiate the
- *  command.
- *
- *  If this value is null, the hifn_crypto() routine will block until the
- *  dest data is ready.
- *
  *  private_data
  *  ------------
  *  An unsigned long quantity (i.e. large enough to hold a pointer), that
@@ -200,7 +190,6 @@ typedef struct hifn_command {
 	u_short mac_header_skip, mac_process_len;
 	u_short crypt_header_skip, crypt_process_len;
 
-	void (*dest_ready_callback)(struct hifn_softc *, struct hifn_command *, u_int8_t *);
 	u_long private_data;
 	struct hifn_softc *softc;
 } hifn_command_t;
