@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchgen.c,v 1.5 1996/09/27 06:06:58 etheisen Exp $	*/
+/*	$OpenBSD: crunchgen.c,v 1.6 1996/09/28 04:30:39 etheisen Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -524,7 +524,7 @@ void fillin_program(prog_t *p)
         for (i = 0; mf_name[i] != NULL; i++) {
             sprintf(path, "%s/%s", p->srcdir, mf_name[i]);
             if (is_nonempty_file(path)) {
-		p->mf_name = strdup(mf_name[i]);
+		p->mf_name = mf_name[i];
                 fillin_program_objs(p, path);
                 break;
             }
