@@ -1,4 +1,4 @@
-/*	$OpenBSD: comreg.h,v 1.6 1996/12/10 22:28:30 deraadt Exp $	*/
+/*	$OpenBSD: comreg.h,v 1.7 1997/10/15 14:04:18 pefo Exp $	*/
 /*	$NetBSD: comreg.h,v 1.8 1996/02/05 23:01:50 scottr Exp $	*/
 
 /*-
@@ -38,7 +38,9 @@
 
 #include <dev/ic/ns16550reg.h>
 
+#ifndef COM_FREQ		/* allow to be set externally */
 #define	COM_FREQ	1843200	/* 16-bit baud rate divisor */
+#endif
 #define	COM_TOLERANCE	30	/* baud rate tolerance, in 0.1% units */
 
 /* interrupt enable register */
