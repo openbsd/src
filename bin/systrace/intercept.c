@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.8 2002/06/28 00:26:29 deraadt Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.9 2002/07/07 23:14:43 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -603,8 +603,11 @@ intercept_child_info(pid_t opid, pid_t npid)
 	inpid = intercept_getpid(npid);
 
 	inpid->policynr = ipid->policynr;
-	if (ipid->name != NULL)
+	if (ipid->name != NULL) {
 		inpid->name = strdup(ipid->name);
+		if (inpid->name == NULL)
+			err(1, "%s:%d: strdup", __func__, __LINE__);
+	}
 
 	/* XXX - keeps track of emulation */
 	intercept.clonepid(ipid, inpid);
