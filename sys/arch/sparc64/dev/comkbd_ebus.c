@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.15 2005/03/06 23:23:10 miod Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.16 2005/04/05 14:11:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -274,8 +274,7 @@ comkbd_attach(parent, self, aux)
 		COM_WRITE(sc, com_ier, sc->sc_ier);
 		COM_READ(sc, com_iir);
 		COM_WRITE(sc, com_mcr, MCR_IENABLE | MCR_DTR | MCR_RTS);
-	} else
-		printf("\n");
+	}
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 }
