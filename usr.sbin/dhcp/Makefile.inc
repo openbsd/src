@@ -41,7 +41,11 @@ CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes \
 	-DCLIENT_PATH=${CLIENT_PATH} -Wall -Werror
 
 COMMONDIR0!=	cd ${.CURDIR}/../common; pwd
+.if exists(${COMMONDIR0}/${__objdir})
 COMMONDIR=	${COMMONDIR0}/${__objdir}
+.else
+COMMONDIR=	${COMMONDIR0}
+.endif
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
