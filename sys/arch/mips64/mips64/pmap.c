@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.13 2004/09/23 12:38:28 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.14 2004/09/27 17:40:24 pefo Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -48,13 +48,6 @@
 #include <uvm/uvm.h>
 
 extern void mem_zero_page(vaddr_t);
-
-/* flags for pv_entry */
-#define	PV_UNCACHED	0x0001		/* Page is mapped unchached */
-#define	PV_CACHED	0x0002		/* Page has been cached */
-#define	PV_ATTR_MOD	0x0004
-#define	PV_ATTR_REF	0x0008
-#define	PV_PRESERVE (PV_UNCACHED|PV_CACHED|PV_ATTR_MOD|PV_ATTR_REF)
 
 struct pool pmap_pmap_pool;
 struct pool pmap_pv_pool;
@@ -1285,10 +1278,8 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, u_int *npte)
 			 * to be mapped uncached.
 			 */
 			if (((pv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
-#ifdef PMAPDEBUG
 				printf("pmap_enter: VAC for pa %p, %p !=  %p\n",
 				    VM_PAGE_TO_PHYS(pg), npv->pv_va, va);
-#endif
 				pmap_page_cache(pg, PV_UNCACHED);
 				Mips_SyncCache();
 				*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;

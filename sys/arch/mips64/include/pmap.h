@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.5 2004/09/23 08:42:38 pefo Exp $ */
+/*      $OpenBSD: pmap.h,v 1.6 2004/09/27 17:40:24 pefo Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -89,6 +89,14 @@ typedef struct pmap {
 } *pmap_t;
 
 #ifdef	_KERNEL
+
+/* flags for pv_entry */
+#define	PV_UNCACHED	0x0001		/* Page is mapped unchached */
+#define	PV_CACHED	0x0002		/* Page has been cached */
+#define	PV_ATTR_MOD	0x0004
+#define	PV_ATTR_REF	0x0008
+#define	PV_PRESERVE (PV_UNCACHED|PV_CACHED|PV_ATTR_MOD|PV_ATTR_REF)
+
 extern	struct pmap kernel_pmap_store;
 
 #define pmap_resident_count(pmap)       ((pmap)->pm_stats.resident_count)
@@ -107,6 +115,7 @@ int	pmap_is_page_ro( pmap_t, vaddr_t, int);
 void	pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cache);
 void	pmap_prefer(vaddr_t, vaddr_t *);
 void	pmap_set_modify(vm_page_t);
+void	pmap_page_cache(vm_page_t, int);
 
 #define pmap_proc_iflush(p,va,len)	/* nothing yet (handled in trap now) */
 #define pmap_unuse_final(p)		/* nothing yet */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: busdma.c,v 1.5 2004/09/17 19:28:05 miod Exp $ */
+/*	$OpenBSD: busdma.c,v 1.6 2004/09/27 17:40:24 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -35,6 +35,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <mips64/archtype.h>
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
@@ -498,12 +499,10 @@ _dmamem_map(t, segs, nsegs, size, kvap, flags)
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 			segs[curseg].ds_vaddr = va;
-#if 0
-			if (flags & BUS_DMAMEM_NOSYNC)
-				pmap_changebit(addr, PG_N, ~0);
-			else
-				pmap_changebit(addr, 0, ~PG_N);
-#endif
+
+			if (flags & BUS_DMA_COHERENT &&
+			    sys_config.system_type == SGI_O2) 
+				pmap_page_cache(PHYS_TO_VM_PAGE(addr - t->dma_offs), PV_UNCACHED);
 		}
 	}
 
