@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.54 1999/12/31 04:32:53 itojun Exp $
+#	$OpenBSD: netstart,v 1.55 2000/01/02 04:38:17 todd Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -66,7 +66,7 @@ for hn in /etc/hostname.*; do
     # Interface names must be alphanumeric only.  We check to avoid
     # configuring backup or temp files, and to catch the "*" case.
     if ! isalphanumeric "$if"; then
-        continue
+	continue
     fi
     ifconfig $if > /dev/null 2>&1
     if [ "$?" != "0" ]; then
@@ -74,42 +74,74 @@ for hn in /etc/hostname.*; do
     fi
 
     # Now parse the hostname.* file
-    {
-        read af name mask bcaddr extras
-
+    while :; do
+	if [ "$cmd2" ]; then
+	    # we are carrying over from the 'read dt dtaddr' last time
+	    set -- $cmd2
+	    af="$1" name="$2" mask="$3" bcaddr="$4" ext1="$5" ext2="$6"
+	    cmd2=
+	else
+	    # read the next line or exit the while loop
+	    read af name mask bcaddr ext1 ext2 || break
+	fi
+	# skip comments
+	[ "${af#*#}" = "${af}" ] || continue
 	# $af can be either "dhcp", "up" or an address family.
 	case "$af" in
 	"bridge")
 	    cmd="echo ${hn}: bridges now supported via bridgename.* files"
 	    ;;
 	"dhcp")
-	    ifconfig $if $name $mask $bcaddr $extras down
+	    ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
 	    cmd="dhclient $if"
 	    ;;
 	"up")
 	    # The only one of these guaranteed to be set is $if
 	    # the remaining ones exist so that media controls work
-	    cmd="ifconfig $if $name $mask $bcaddr $extras up"
- 	    ;;
- 	*)
-            read dt dtaddr
-	    if [ ! -n "$name" ]; then
-		echo "/etc/hostname.$if: invalid network configuration file"
-		continue
-	    fi
-
-	    cmd="ifconfig $if $af $name "
-	    if [ "${dt}" = "dest" ]; then cmd="$cmd $dtaddr"; fi
-	    if [ -n "$mask" ]; then cmd="$cmd netmask $mask"; fi
-	    if [ -n "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
-		cmd="$cmd broadcast $bcaddr";
-	    fi
-	    cmd="$cmd $extras";
+	    cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
 	    ;;
+	*)
+	    read dt dtaddr
+	    if [ "$name"  = "alias" ]; then
+		# perform a 'shift' of sorts
+		alias=$name
+		name=$mask
+		mask=$bcaddr
+		bcaddr=$ext1
+		ext1=$ext2
+		ext2=
+	    fi
+	    cmd="ifconfig $if $af $alias $name "
+	    case $dt in
+	    dest)
+		cmd="$cmd $dtaddr"
+		;;
+	    [a-z]*)
+		cmd2="$dt $dtaddr"
+		;;
+	     esac
+	     if [ ! -n "$name" ]; then
+		    echo "/etc/hostname.$if: invalid network configuration file"
+		return
+	     fi
+	     case $af in
+	     inet)
+		[ "$mask" ] && cmd="$cmd netmask $mask"
+		if [ "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
+		    cmd="$cmd broadcast $bcaddr"
+		fi
+		[ "$alias" ] && rtcmd="; route -n add -host $name 127.0.0.1"
+	     ;;
+	     inet6) [ "$mask" ] && cmd="$cmd prefixlen $mask"
+		cmd="$cmd $bcaddr"
+		;;
+	     *) cmd="$cmd $mask $bcaddr"
+	     esac
+	     cmd="$cmd $ext1 $ext2$rtcmd" rtcmd=
+	     ;;
 	esac
-
 	eval "$cmd"
-    } < /etc/hostname.$if
+    done < /etc/hostname.$if
 done
 for bn in /etc/bridgename.*; do
     # Strip off /etc/bridgename. prefix
