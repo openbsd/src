@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.31 1999/12/23 16:17:05 angelos Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.32 2000/04/20 07:47:11 angelos Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -289,6 +289,7 @@ char *hostname;
 
 int nprobes = 3;
 int max_ttl = IPDEFTTL;
+int min_ttl = 1;
 u_short ident;
 u_short port = 32768+666;	/* start udp dest port # for probe packets */
 u_char	proto = IPPROTO_UDP;
@@ -329,17 +330,19 @@ main(argc, argv)
 	lsrr = 0;
 	on = 1;
 	seq = tos = 0;
-	while ((ch = getopt(argc, argv, "dDIg:m:np:q:rs:t:w:vlP:c")) != -1)
+	while ((ch = getopt(argc, argv, "dDIg:b:m:np:q:rs:t:w:vlP:c")) != -1)
 		switch (ch) {
-		case 'I':
-			proto = IPPROTO_ICMP;
-			break;
-		case 'd':
-			options |= SO_DEBUG;
+		case 'b':
+			min_ttl = atoi(optarg);
+			if (min_ttl < 1 || min_ttl > max_ttl)
+				errx(1, "min ttl must be 1 to %d.", max_ttl);
 			break;
 		case 'c':
 		        incflag = 0;
 		        break;
+		case 'd':
+			options |= SO_DEBUG;
+			break;
 		case 'D':
 			dump = 1;
 			break;
@@ -356,13 +359,17 @@ main(argc, argv)
 				lsrrlen = 4;
 			lsrrlen += 4;
 			break;
+		case 'I':
+			proto = IPPROTO_ICMP;
+			break;
 		case 'l':
 			ttl_flag++;
 			break;
 		case 'm':
 			max_ttl = atoi(optarg);
-			if (max_ttl < 1 || max_ttl > MAXTTL)
-				errx(1, "max ttl must be 1 to %d.", MAXTTL);
+			if (max_ttl < min_ttl || max_ttl > MAXTTL)
+				errx(1, "max ttl must be %d to %d.", min_ttl,
+				     MAXTTL);
 			break;
 		case 'n':
 			nflag++;
@@ -530,7 +537,10 @@ main(argc, argv)
 	Fprintf(stderr, ", %d hops max, %d byte packets\n", max_ttl, datalen);
 	(void) fflush(stderr);
 
-	for (ttl = 1; ttl <= max_ttl; ++ttl) {
+	if (min_ttl > 1)
+		Printf("Skipping %d intermediate hops\n", min_ttl - 1);
+
+	for (ttl = min_ttl; ttl <= max_ttl; ++ttl) {
 		in_addr_t lastaddr = 0;
 		int got_there = 0;
 		int unreachable = 0;
@@ -994,6 +1004,6 @@ usage()
 	(void)fprintf(stderr,
 "usage: traceroute [-dDInrvc] [-g gateway_addr] ... [-m max_ttl] [-p port#]\n\t\
 [-P proto] [-q nqueries] [-s src_addr] [-t tos]\n\t\
-[-w wait] host [data size]\n");
+[-w wait] [-b min_ttl] host [data size]\n");
 	exit(1);
 }

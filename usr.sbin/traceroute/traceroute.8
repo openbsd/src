@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.20 2000/04/15 02:15:21 aaron Exp $
+.\"	$OpenBSD: traceroute.8,v 1.21 2000/04/20 07:47:11 angelos Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -45,6 +45,7 @@
 .Nd print the route packets take to network host
 .Sh SYNOPSIS
 .Nm traceroute
+.Op Fl b Ar min_ttl
 .Op Fl c
 .Op Fl d
 .Op Fl D
@@ -83,6 +84,11 @@ name.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl b Ar min_ttl
+Set the first time-to-live used in outgoing probe packets. The effect is that
+the first min_ttl - 1 hosts will be skipped in the output of
+.Nm
+The default value is 1 (skip no hosts).
 .It Fl d
 Turn on socket-level debugging.
 .It Fl D
