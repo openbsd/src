@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.104 2002/06/30 21:45:25 deraadt Exp $
+.\"	$OpenBSD: options.4,v 1.105 2002/07/10 18:30:22 danh Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -1027,10 +1027,6 @@ panic.
 These options set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available RAM.
-.It Cd option NTP
-Modify the scheduler code to add hooks necessary for running an NTP daemon.
-.Em ntpd
-is available as part of the port collection.
 .It Cd option APM_NOPRINT
 This option is supported on the i386 architecture.
 When enabled kernel messages regarding the status of the automatic power
@@ -1094,7 +1090,6 @@ and/or
 .Xr quotaon 8 ,
 .Xr rpc.rquotad 8 ,
 .Xr sysctl 8 ,
-.Xr xntpd 8 ,
 .Xr altq 9
 .Sh HISTORY
 The
