@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpemu.S,v 1.11 2004/04/21 07:36:03 mickey Exp $	*/
+/*	$OpenBSD: fpemu.S,v 1.12 2004/06/02 18:31:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -195,34 +195,15 @@ $fpemu0c_1
 	comib,=,n 3, r31, $fpemu0c_1_3
 
 $fpemu0c_1_0	/* fcnvff */
-#define	sgl_to_quad_fcnvff	invalid_fcnvff
-#define	dbl_to_quad_fcnvff	invalid_fcnvff
-#define	quad_to_sgl_fcnvff	invalid_fcnvff
-#define	quad_to_dbl_fcnvff	invalid_fcnvff
 	FP_TABLE3(fcnvff, invalid, dbl_to_sgl, invalid, quad_to_sgl, sgl_to_dbl, invalid, invalid, quad_to_dbl, invalid, invalid, invalid, invalid, sgl_to_quad, dbl_to_quad, invalid, invalid)
 
 $fpemu0c_1_1	/* fcnvxf */
-#define	sgl_to_quad_fcnvxf	invalid_fcnvxf
-#define	dbl_to_quad_fcnvxf	invalid_fcnvxf
-#define	quad_to_sgl_fcnvxf	invalid_fcnvxf
-#define	quad_to_dbl_fcnvxf	invalid_fcnvxf
-#define	quad_to_quad_fcnvxf	invalid_fcnvxf
 	FP_TABLE3(fcnvxf, sgl_to_sgl, dbl_to_sgl, invalid, quad_to_sgl, sgl_to_dbl, dbl_to_dbl, invalid, quad_to_dbl, invalid, invalid, invalid, invalid, sgl_to_quad, dbl_to_quad, invalid, quad_to_quad)
 
 $fpemu0c_1_2	/* fcnvfx */
-#define	sgl_to_quad_fcnvfx	invalid_fcnvfx
-#define	dbl_to_quad_fcnvfx	invalid_fcnvfx
-#define	quad_to_sgl_fcnvfx	invalid_fcnvfx
-#define	quad_to_dbl_fcnvfx	invalid_fcnvfx
-#define	quad_to_quad_fcnvfx	invalid_fcnvfx
 	FP_TABLE3(fcnvfx, sgl_to_sgl, dbl_to_sgl, invalid, quad_to_sgl, sgl_to_dbl, dbl_to_dbl, invalid, quad_to_dbl, invalid, invalid, invalid, invalid, sgl_to_quad, dbl_to_quad, invalid, quad_to_quad)
 
 $fpemu0c_1_3	/* fcnvfxt */
-#define	sgl_to_quad_fcnvfxt	invalid_fcnvfxt
-#define	dbl_to_quad_fcnvfxt	invalid_fcnvfxt
-#define	quad_to_sgl_fcnvfxt	invalid_fcnvfxt
-#define	quad_to_dbl_fcnvfxt	invalid_fcnvfxt
-#define	quad_to_quad_fcnvfxt	invalid_fcnvfxt
 	FP_TABLE3(fcnvfxt, sgl_to_sgl, dbl_to_sgl, invalid, quad_to_sgl, sgl_to_dbl, dbl_to_dbl, invalid, quad_to_dbl, invalid, invalid, invalid, invalid, sgl_to_quad, dbl_to_quad, invalid, quad_to_quad)
 
 $fpemu0c_2
@@ -311,9 +292,28 @@ $fpemu_exit
 invalid_fsqrt
 invalid_frnd
 invalid_fcnvff
+sgl_to_quad_fcnvff
+dbl_to_quad_fcnvff
+quad_to_sgl_fcnvff
+quad_to_dbl_fcnvff
 invalid_fcnvxf
+sgl_to_quad_fcnvxf
+dbl_to_quad_fcnvxf
+quad_to_sgl_fcnvxf
+quad_to_dbl_fcnvxf
+quad_to_quad_fcnvxf
 invalid_fcnvfx
+sgl_to_quad_fcnvfx
+dbl_to_quad_fcnvfx
+quad_to_sgl_fcnvfx
+quad_to_dbl_fcnvfx
+quad_to_quad_fcnvfx
 invalid_fcnvfxt
+sgl_to_quad_fcnvfxt
+dbl_to_quad_fcnvfxt
+quad_to_sgl_fcnvfxt
+quad_to_dbl_fcnvfxt
+quad_to_quad_fcnvfxt
 invalid_fcmp
 invalid_fadd
 invalid_fsub
