@@ -1,7 +1,8 @@
+# $OpenBSD: Makefile,v 1.3 2000/10/12 01:41:20 brad Exp $
 
-CPPFLAGS +=	-pthread
+DEBUG =		-ggdb
+CFLAGS +=	-Wall
 LDFLAGS +=	-pthread
-CFLAGS +=	-O -ggdb
 METRICS =	null once_overhead self_overhead mutex_nocont mutex_cont\
 		cond_nowait cond_timed
 MKDEP =		-p
@@ -9,8 +10,7 @@ SRCS =		${METRICS:=.c}
 CLEANFILES +=	${METRICS}
 
 all: ${METRICS}
-	@${SUDO} nice -n -19 ${SHELL} -c \
-	 'ulimit -d 65536; for m in ${METRICS}; do $$m || exit; done'
-
+	@${SUDO} /usr/bin/nice -n -19 sh -c \
+	 'ulimit -d 65536; for m in ${METRICS}; do ${.OBJDIR}/$$m || exit; done'
 
 .include <bsd.prog.mk>
