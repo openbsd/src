@@ -1,7 +1,7 @@
-/*	$OpenBSD: pdc.c,v 1.12 2000/03/23 20:14:08 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.13 2001/01/22 22:57:31 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2000 Michael Shalayeff
+ * Copyright (c) 1998-2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,7 +72,7 @@ struct cfdriver pdc_cd = {
 void pdcstart __P((struct tty *tp));
 void pdctimeout __P((void *v));
 int pdcparam __P((struct tty *tp, struct termios *));
-int pdccnlookc __P((dev_t dev, char *cp));
+int pdccnlookc __P((dev_t dev, int *cp));
 
 void
 pdc_init()
@@ -88,11 +88,9 @@ pdc_init()
 	/* XXX should we reset the console/kbd here?
 	   well, /boot did that for us anyway */
 	if ((err = pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
-			    pdcret, pz_cons->pz_hpa,
-			    IODC_IO, cn_iodc, IODC_MAXSIZE)) < 0 ||
+	      pdcret, pz_cons->pz_hpa, IODC_IO, cn_iodc, IODC_MAXSIZE)) < 0 ||
 	    (err = pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
-			    pdcret, pz_kbd->pz_hpa,
-			    IODC_IO, kbd_iodc, IODC_MAXSIZE)) < 0) {
+	      pdcret, pz_kbd->pz_hpa, IODC_IO, kbd_iodc, IODC_MAXSIZE)) < 0) {
 #ifdef DEBUG
 		printf("pdc_init: failed reading IODC (%d)\n", err);
 #endif
@@ -155,7 +153,7 @@ pdcopen(dev, flag, mode, p)
 
 	s = spltty();
 
-	if (!sc->sc_tty)
+	if (sc->sc_tty)
 		tp = sc->sc_tty;
 	else
 		tty_attach(tp = sc->sc_tty = ttymalloc());
@@ -178,6 +176,7 @@ pdcopen(dev, flag, mode, p)
 		splx(s);
 		return EBUSY;
 	}
+	tp->t_state |= TS_CARR_ON;
 
 	splx(s);
 
@@ -224,7 +223,7 @@ pdcread(dev, uio, flag)
 	tp = sc->sc_tty;
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
- 
+
 int
 pdcwrite(dev, uio, flag)
 	dev_t dev;
@@ -241,7 +240,7 @@ pdcwrite(dev, uio, flag)
 	tp = sc->sc_tty;
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
- 
+
 int
 pdcioctl(dev, cmd, data, flag, p)
 	dev_t dev;
@@ -324,7 +323,7 @@ pdctimeout(v)
 {
 	struct pdc_softc *sc = v;
 	struct tty *tp = sc->sc_tty;
-	u_char c;
+	int c;
 
 	while (pdccnlookc(tp->t_dev, &c)) {
 		if (tp->t_state & TS_ISOPEN)
@@ -366,13 +365,12 @@ pdccninit(cn)
 int
 pdccnlookc(dev, cp)
 	dev_t dev;
-	char *cp;
+	int *cp;
 {
 	int err, l;
 
 	err = pdc_call(pdc_kbdiodc, 0, pz_kbd->pz_hpa, IODC_IO_CONSIN,
-	    pz_kbd->pz_spa, pz_kbd->pz_layers, pdcret, 0,
-	    pdc_consbuf, 1, 0);
+	    pz_kbd->pz_spa, pz_kbd->pz_layers, pdcret, 0, pdc_consbuf, 1, 0);
 
 	l = pdcret[0];
 	*cp = pdc_consbuf[0];
@@ -388,7 +386,7 @@ int
 pdccngetc(dev)
 	dev_t dev;
 {
-	char c;
+	int c;
 
 	if (!pdc)
 		return 0;
@@ -408,8 +406,8 @@ pdccnputc(dev, c)
 
 	*pdc_consbuf = c;
 	if ((err = pdc_call(pdc_cniodc, 0, pz_cons->pz_hpa, IODC_IO_CONSOUT,
-			    pz_cons->pz_spa, pz_cons->pz_layers,
-			    pdcret, 0, pdc_consbuf, 1, 0)) < 0) {
+	    pz_cons->pz_spa, pz_cons->pz_layers,
+	    pdcret, 0, pdc_consbuf, 1, 0)) < 0) {
 #ifdef DEBUG
 		printf("pdccnputc: output error: %d\n", err);
 #endif
