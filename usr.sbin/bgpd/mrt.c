@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.42 2004/08/11 09:37:11 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.43 2004/08/11 16:48:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -85,7 +85,7 @@ static int		mrt_open(struct mrt *, time_t);
 
 int
 mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
-    struct peer_config *peer, struct bgpd_config *bgp)
+    struct peer *peer, struct bgpd_config *bgp)
 {
 	struct buf	*buf;
 	u_int16_t	 len;
@@ -104,20 +104,24 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 	}
 
 	DUMP_SHORT(buf, bgp->as);
-	DUMP_SHORT(buf, peer->remote_as);
+	DUMP_SHORT(buf, peer->conf.remote_as);
 	DUMP_SHORT(buf, /* ifindex */ 0);
-	switch (peer->local_addr.af) {
+	switch (peer->sa_local.ss_family) {
 	case AF_INET:
 		DUMP_SHORT(buf, AFI_IPv4);
-		DUMP_NLONG(buf, peer->local_addr.v4.s_addr);
-		DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
+		DUMP_NLONG(buf,
+		    ((struct sockaddr_in *)&peer->sa_local)->sin_addr.s_addr);
+		DUMP_NLONG(buf,
+		    ((struct sockaddr_in *)&peer->sa_remote)->sin_addr.s_addr);
 		break;
 	case AF_INET6:
 		DUMP_SHORT(buf, AFI_IPv6);
-		if (buf_add(buf, &peer->local_addr.v6,
-		    sizeof(peer->local_addr.v6)) == -1 ||
-		    buf_add(buf, &peer->remote_addr.v6,
-		    sizeof(peer->remote_addr.v6)) == -1) {
+		if (buf_add(buf,
+		    &((struct sockaddr_in6 *)&peer->sa_local)->sin6_addr,
+		    sizeof(struct in6_addr)) == -1 ||
+		    buf_add(buf,
+		    &((struct sockaddr_in6 *)&peer->sa_remote)->sin6_addr,
+		    sizeof(struct in6_addr)) == -1) {
 			log_warnx("mrt_dump_bgp_msg: buf_add error");
 			buf_free(buf);
 			return (-1);
@@ -139,7 +143,7 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 
 int
 mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
-    struct peer_config *peer, struct bgpd_config *bgp)
+    struct peer *peer, struct bgpd_config *bgp)
 {
 	struct buf	*buf;
 	u_int16_t	 len;
@@ -158,20 +162,24 @@ mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
 	}
 
 	DUMP_SHORT(buf, bgp->as);
-	DUMP_SHORT(buf, peer->remote_as);
+	DUMP_SHORT(buf, peer->conf.remote_as);
 	DUMP_SHORT(buf, /* ifindex */ 0);
-	switch (peer->local_addr.af) {
+	switch (peer->sa_local.ss_family) {
 	case AF_INET:
 		DUMP_SHORT(buf, AFI_IPv4);
-		DUMP_NLONG(buf, peer->local_addr.v4.s_addr);
-		DUMP_NLONG(buf, peer->remote_addr.v4.s_addr);
+		DUMP_NLONG(buf,
+		    ((struct sockaddr_in *)&peer->sa_local)->sin_addr.s_addr);
+		DUMP_NLONG(buf,
+		    ((struct sockaddr_in *)&peer->sa_remote)->sin_addr.s_addr);
 		break;
 	case AF_INET6:
 		DUMP_SHORT(buf, AFI_IPv6);
-		if (buf_add(buf, &peer->local_addr.v6,
-		    sizeof(peer->local_addr.v6)) == -1 ||
-		    buf_add(buf, &peer->remote_addr.v6,
-		    sizeof(peer->remote_addr.v6)) == -1) {
+		if (buf_add(buf,
+		    &((struct sockaddr_in6 *)&peer->sa_local)->sin6_addr,
+		    sizeof(struct in6_addr)) == -1 ||
+		    buf_add(buf,
+		    &((struct sockaddr_in6 *)&peer->sa_remote)->sin6_addr,
+		    sizeof(struct in6_addr)) == -1) {
 			log_warnx("mrt_dump_bgp_msg: buf_add error");
 			buf_free(buf);
 			return (-1);

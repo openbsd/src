@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.13 2004/07/28 16:00:02 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.14 2004/08/11 16:48:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -272,14 +272,15 @@ struct mrt_config {
 #define	MRT2MC(x)	((struct mrt_config *)(x))
 #define	MRT_MAX_TIMEOUT	7200
 
+struct peer;
 struct prefix;
 struct pt_entry;
 
 /* prototypes */
 int		 mrt_dump_bgp_msg(struct mrt *, void *, u_int16_t,
-		     struct peer_config *, struct bgpd_config *);
+		     struct peer *, struct bgpd_config *);
 int		 mrt_dump_state(struct mrt *, u_int16_t, u_int16_t,
-		     struct peer_config *, struct bgpd_config *);
+		     struct peer *, struct bgpd_config *);
 void		 mrt_clear_seq(void);
 void		 mrt_dump_upcall(struct pt_entry *, void *);
 int		 mrt_write(struct mrt *);
