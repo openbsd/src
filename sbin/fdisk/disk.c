@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.6 1997/10/19 23:30:46 deraadt Exp $	*/
+/*	$OpenBSD: disk.c,v 1.7 1997/10/22 23:41:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -108,20 +108,19 @@ DISK_getlabelmetrics(name)
 }
 
 #ifdef CPU_BIOS
-/* Routine to go after sysctl info for BIOS
+/*
+ * Routine to go after sysctl info for BIOS
  * geometry.  This should only really work on PC
  * type machines.  There is still a problem with
  * correlating the BIOS drive to the BSD drive.
- *
- * XXX - Somebody fix this!
  */
 DISK_metrics *
 DISK_getbiosmetrics(name)
 	char *name;
 {
-	DISK_metrics *bm = NULL;
+	DISK_metrics *bm;
+	bios_diskinfo_t di;
 	int biosdev;
-	u_int biosgeo;
 	int mib[4], size;
 
 	/* Get BIOS metrics */
@@ -135,20 +134,20 @@ DISK_getbiosmetrics(name)
 		return (NULL);
 	}
 
-	mib[2] = BIOS_GEOMETRY;
-	size = sizeof(biosgeo);
+	mib[2] = BIOS_DISKINFO;
+	mib[3] = biosdev;
+	size = sizeof(di);
 
-	if (sysctl(mib, 3, &biosgeo, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 4, &di, &size, NULL, 0) < 0) {
 		warn("sysctl");
 		return (NULL);
 	}
 
-	bm = malloc(sizeof(DISK_metrics));
-	bm->cylinders = BIOSNTRACKS(biosgeo);
-	bm->heads = BIOSNHEADS(biosgeo);
-	bm->sectors = BIOSNSECTS(biosgeo);
-	bm->size = BIOSNTRACKS(biosgeo) * BIOSNHEADS(biosgeo) *
-	    BIOSNSECTS(biosgeo);
+	bm = malloc(sizeof(di));
+	bm->cylinders = di.bios_cylinders;
+	bm->heads = di.bios_heads;
+	bm->sectors = di.bios_sectors;
+	bm->size = di.bios_cylinders * di.bios_heads * di.bios_sectors;
 	return (bm);
 }
 #else
