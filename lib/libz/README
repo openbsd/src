@@ -1,4 +1,4 @@
-zlib 1.0.3 is a general purpose data compression library.  All the code
+zlib 1.0.4 is a general purpose data compression library.  All the code
 is reentrant (thread safe).  The data format used by the zlib library
 is described by RFCs (Request for Comments) 1950 to 1952 in the files 
 ftp://ds.internic.net/rfc/rfc1950.txt (zlib format), rfc1951.txt (deflate
@@ -20,16 +20,14 @@ Questions about zlib should be sent to <zlib@quest.jpl.nasa.gov> or,
 if this fails, to the addresses given below in the Copyright section.
 The zlib home page is http://quest.jpl.nasa.gov/zlib/
 
-The changes made in version 1.0.3 are documented in the file ChangeLog.
-The main changes since 1.0.2 are:
+The changes made in version 1.0.4 are documented in the file ChangeLog.
+The main changes since 1.0.3 are:
 
-- use z_streamp instead of z_stream *, which is now a far pointer in MSDOS
-  small and medium models; this makes the library incompatible with previous
-  versions for these models. (No effect in large model or on other systems.)
-- return OK instead of BUF_ERROR if previous deflate call returned with
-  avail_out as zero but there is nothing to do
-- as usual, a few more changes to deal with peculiarities of Mac and MSDOS
-  compilers
+- In very rare conditions, deflate(s, Z_FINISH) could fail to produce an EOF
+  bit, so the decompressor could decompress all the correct data but went
+  on to attempt decompressing extra garbage data. This affected minigzip too.
+- zlibVersion and gzerror return const char* (needed for DLL)
+- port to RISCOS (no fdopen, no multiple dots, no unlink, no fileno)
 
 
 A Perl interface to zlib written by Paul Marquess <pmarquess@bfsec.bt.co.uk>
@@ -55,7 +53,10 @@ Notes for some targets:
 - To build a Windows DLL version, include in a DLL project zlib.def, zlib.rc
   and all .c files except example.c and minigzip.c; compile with -DZLIB_DLL
   For help on building a zlib DLL, contact Alessandro Iacopetti
-  <iaco@cicladi.unial.it>
+  <iaco@email.alessandria.alpcom.it>  http://lisa.unial.it/iaco ,
+  or contact Brad Clarke <bclarke@cyberus.ca>.
+
+- gzdopen is not supported on RISCOS
 
 
 Acknowledgments:

@@ -1,5 +1,5 @@
 /* zlib.h -- interface of the 'zlib' general purpose compression library
-  version 1.0.3, Jul 2nd, 1996.
+  version 1.0.4, Jul 24th, 1996.
 
   Copyright (C) 1995-1996 Jean-loup Gailly and Mark Adler
 
@@ -37,7 +37,7 @@ extern "C" {
 
 #include "zconf.h"
 
-#define ZLIB_VERSION "1.0.3"
+#define ZLIB_VERSION "1.0.4"
 
 /* 
      The 'zlib' compression library provides in-memory compression and
@@ -168,7 +168,7 @@ typedef z_stream FAR *z_streamp;
 
                         /* basic functions */
 
-extern char EXPORT *zlibVersion OF((void));
+extern const char * EXPORT zlibVersion OF((void));
 /* The application can compare zlibVersion and ZLIB_VERSION for consistency.
    If the first character differs, the library code actually used is
    not compatible with the zlib.h header file used by the application.
@@ -241,8 +241,8 @@ extern int EXPORT deflate OF((z_streamp strm, int flush));
   parameter and more output space (updated avail_out), until the flush is
   complete (deflate returns with non-zero avail_out).
 
-    If the parameter flush is set to Z_FINISH, all pending input is processed,
-  all pending output is flushed and deflate returns with Z_STREAM_END if there
+    If the parameter flush is set to Z_FINISH, pending input is processed,
+  pending output is flushed and deflate returns with Z_STREAM_END if there
   was enough output space; if deflate returns with Z_OK, this function must be
   called again with Z_FINISH and more output space (updated avail_out) but no
   more input data, until it returns with Z_STREAM_END or an error. After
@@ -692,7 +692,7 @@ extern int EXPORT    gzclose OF((gzFile file));
    error number (see function gzerror below).
 */
 
-extern char EXPORT  *gzerror OF((gzFile file, int *errnum));
+extern const char * EXPORT gzerror OF((gzFile file, int *errnum));
 /*
      Returns the error message for the last error which occurred on the
    given compressed file. errnum is set to zlib error number. If an
@@ -700,11 +700,6 @@ extern char EXPORT  *gzerror OF((gzFile file, int *errnum));
    errnum is set to Z_ERRNO and the application may consult errno
    to get the exact error code.
 */
-
-/* ===========================================================================
-     Returns true (1) if file is zipped, else returns false (0).              
-*/
-extern int  gz_iszipped OF((gzFile file));
 
                         /* checksum functions */
 

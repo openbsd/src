@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* $Id: gzio.c,v 1.2 1996/10/27 00:29:33 millert Exp $ */
+/* $Id: gzio.c,v 1.3 1997/01/19 17:11:23 millert Exp $ */
 
 #include <stdio.h>
 
@@ -496,7 +496,7 @@ int gzclose (file)
    errnum is set to Z_ERRNO and the application may consult errno
    to get the exact error code.
 */
-char*  gzerror (file, errnum)
+const char*  gzerror (file, errnum)
     gzFile file;
     int *errnum;
 {
@@ -505,30 +505,19 @@ char*  gzerror (file, errnum)
 
     if (s == NULL) {
         *errnum = Z_STREAM_ERROR;
-        return ERR_MSG(Z_STREAM_ERROR);
+        return (const char*)ERR_MSG(Z_STREAM_ERROR);
     }
     *errnum = s->z_err;
-    if (*errnum == Z_OK) return (char*)"";
+    if (*errnum == Z_OK) return (const char*)"";
 
     m =  (char*)(*errnum == Z_ERRNO ? zstrerror(errno) : s->stream.msg);
 
-    if (m == NULL || *m == '\0') m = ERR_MSG(s->z_err);
+    if (m == NULL || *m == '\0') m = (char*)ERR_MSG(s->z_err);
 
     TRYFREE(s->msg);
     s->msg = (char*)ALLOC(strlen(s->path) + strlen(m) + 3);
     strcpy(s->msg, s->path);
     strcat(s->msg, ": ");
     strcat(s->msg, m);
-    return s->msg;
-}
-
-/* ===========================================================================
-     Returns true (1) if file is zipped, else returns false (0).
-*/
-int  gz_iszipped (file)
-    gzFile file;
-{
-    gz_stream *s = (gz_stream*)file;
-
-    return(!(s->transparent));
+    return (const char*)s->msg;
 }
