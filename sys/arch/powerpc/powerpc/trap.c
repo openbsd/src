@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2000/11/10 18:15:42 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2001/01/25 03:02:43 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -312,6 +312,7 @@ syscall_bad:
 					error = p->p_emul->e_errno[error];
 				frame->fixreg[0] = error;
 				frame->fixreg[FIRSTARG] = error;
+				frame->fixreg[FIRSTARG + 1] = rval[1];
 				frame->cr |= 0x10000000;
 				break;
 			}
