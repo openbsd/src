@@ -1,5 +1,5 @@
 # Pod::Man -- Convert POD data to formatted *roff input.
-# $Id: Man.pm,v 1.4 2000/04/24 01:20:36 millert Exp $
+# $Id: Man.pm,v 1.5 2000/04/24 02:33:20 millert Exp $
 #
 # Copyright 1999, 2000 by Russ Allbery <rra@stanford.edu>
 #
@@ -38,7 +38,7 @@ use vars qw(@ISA %ESCAPES $PREAMBLE $VERSION);
 # Perl core and too many things could munge CVS magic revision strings.
 # This number should ideally be the same as the CVS revision in podlators,
 # however.
-$VERSION = 1.02;
+$VERSION = 1.04;
 
 
 ############################################################################
@@ -550,25 +550,11 @@ sub sequence {
         return bless \ "$tmp", 'Pod::Man::String';
     }
 
-    # C<> needs to fix hyphens and underscores but can't apply guesswork and
-    # can't just apply those fixes to the entire string, since then it might
-    # mess up the results of guesswork on substrings.  So we do this
-    # somewhat roundabout way of handling it.
-    if ($command eq 'C') {
-        my @children = map {
-            my $block = $_;
-	    if (ref $block) {
-		$block;
-	    } else {
-		$block =~ s/-/\\-/g;
-		$block =~ s/__/_\\|_/g;
-		bless \ "$block", 'Pod::Man::String';
-            }
-        } $seq->parse_tree ()->children;
-    }
-
-    # C<>, L<>, X<>, and E<> don't apply guesswork to their contents.
-    local $_ = $self->collapse ($seq->parse_tree, $command =~ /^[CELX]$/);
+    # C<>, L<>, X<>, and E<> don't apply guesswork to their contents.  C<>
+    # needs some additional special handling.
+    my $literal = ($command =~ /^[CELX]$/);
+    $literal++ if $command eq 'C';
+    local $_ = $self->collapse ($seq->parse_tree, $literal);
 
     # Handle E<> escapes.
     if ($command eq 'E') {
@@ -845,8 +831,10 @@ sub parse {
 # text (not call guesswork on it), and returns the concatenation of all of
 # the text strings in that parse tree.  If the literal flag isn't true,
 # guesswork() will be called on all plain scalars in the parse tree.
-# Assumes that everything in the parse tree is either a scalar or a
-# reference to a scalar.
+# Otherwise, just escape backslashes in the normal case.  If collapse is
+# being called on a C<> sequence, literal is set to 2, and we do some
+# additional cleanup.  Assumes that everything in the parse tree is either a
+# scalar or a reference to a scalar.
 sub collapse {
     my ($self, $ptree, $literal) = @_;
     if ($literal) {
@@ -855,6 +843,8 @@ sub collapse {
                 $$_;
             } else {
                 s/\\/\\e/g;
+                s/-/\\-/g    if $literal > 1;
+                s/__/_\\|_/g if $literal > 1;
                 $_;
             }
         } $ptree->children);
