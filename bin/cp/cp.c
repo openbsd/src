@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.10 1997/09/20 17:34:34 millert Exp $	*/
+/*	$OpenBSD: cp.c,v 1.11 1997/11/08 23:17:11 todd Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -17,7 +17,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.10 1997/09/20 17:34:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.11 1997/11/08 23:17:11 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -294,7 +294,7 @@ copy(argv, type, fts_options)
 			 * is the case where the target exists.
 			 *
 			 * Also, check for "..".  This is for correct path
-			 * concatentation for paths ending in "..", e.g.
+			 * concatenation for paths ending in "..", e.g.
 			 *	cp -R .. /tmp
 			 * Paths ending in ".." are changed to ".".  This is
 			 * tricky, but seems the easiest way to fix the problem.
@@ -387,7 +387,7 @@ copy(argv, type, fts_options)
 			}
 			/*
 			 * If not -p and directory didn't exist, set it to be
-			 * the same as the from directory, umodified by the 
+			 * the same as the from directory, unmodified by the 
 			 * umask; arguably wrong, but it's been that way 
 			 * forever.
 			 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.9 1997/09/01 18:29:19 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.10 1997/11/08 23:17:12 todd Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -14,7 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.9 1997/09/01 18:29:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.10 1997/11/08 23:17:12 todd Exp $";
 #endif
 #endif /* not lint */
 
