@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.18 2001/03/28 04:11:34 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.19 2001/05/07 18:48:31 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1985,8 +1985,7 @@ int ti_encap(sc, m_head, txidx)
 	struct ifvlan		*ifv = NULL;
 
 	if ((m_head->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
-	    m_head->m_pkthdr.rcvif != NULL &&
-	    m_head->m_pkthdr.rcvif->if_type == IFT_8021_VLAN)
+	    m_head->m_pkthdr.rcvif != NULL)
 		ifv = m_head->m_pkthdr.rcvif->if_softc;
 #endif
 
