@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.5 2001/06/24 23:44:00 art Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.6 2001/06/25 00:02:54 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -154,20 +154,6 @@ struct pfioc {
 #define DIOCGETSTATES	_IOWR('D', 10, struct pfioc)
 #define DIOCSETSTATUSIF _IOWR('D', 11, struct pfioc)
 #define DIOCGETSTATUS	_IOWR('D', 12, struct pfioc)
-
-/*
- * ioctl errors
- */
-
-enum error_msg {
-	NO_ERROR=0,
-	ERROR_INVALID_OP=100,
-	ERROR_ALREADY_RUNNING,
-	ERROR_NOT_RUNNING,
-	ERROR_INVALID_PARAMETERS,
-	ERROR_MALLOC,
-	MAX_ERROR_NUM
-};
 
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.17 2001/06/24 23:56:32 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.18 2001/06/25 00:02:54 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -518,13 +518,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	if ((cmd != DIOCSTART) && (cmd != DIOCSTOP) && (cmd != DIOCCLRSTATES)) {
 		ub = (struct pfioc *)addr;
 		if (ub == NULL)
-			return ERROR_INVALID_PARAMETERS;
+			return EINVAL;
 		kb = malloc(ub->size, M_DEVBUF, M_NOWAIT);
 		if (kb == NULL)
-			return ERROR_MALLOC;
+			return ENOMEM;
 		if (copyin(ub->buffer, kb, ub->size)) {
 			free(kb, M_DEVBUF);
-			return ERROR_INVALID_PARAMETERS;
+			return EIO;
 		}
 	}
 
@@ -540,7 +540,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCSTART:
 		if (status.running)
-			error = ERROR_ALREADY_RUNNING;
+			error = EINVAL;
 		else {
 			u_int32_t states = status.states;
 			bzero(&status, sizeof(struct status));
@@ -553,7 +553,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCSTOP:
 		if (!status.running)
-			error = ERROR_NOT_RUNNING;
+			error = EINVAL;
 		else {
 			status.running = 0;
 			printf("packetfilter: stopped\n");
@@ -573,7 +573,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 			rule = pool_get(&pf_rule_pl, PR_NOWAIT);
 			if (rule == NULL) {
-				error = ERROR_MALLOC;
+				error = ENOMEM;
 				goto done;
 			}
 			bcopy(rules + n, rule, sizeof(struct rule));
@@ -582,7 +582,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				rule->ifp = ifunit(rule->ifname);
 				if (rule->ifp == NULL) {
 					pool_put(&pf_rule_pl, rule);
-					error = ERROR_INVALID_PARAMETERS;
+					error = EINVAL;
 					goto done;
 				}
 			}
@@ -623,14 +623,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 			nat = pool_get(&pf_nat_pl, PR_NOWAIT);
 			if (nat == NULL) {
-				error = ERROR_MALLOC;
+				error = ENOMEM;
 				goto done;
 			}
 			bcopy(nats + n, nat, sizeof(struct nat));
 			nat->ifp = ifunit(nat->ifname);
 			if (nat->ifp == NULL) {
 				pool_put(&pf_nat_pl, nat);
-				error = ERROR_INVALID_PARAMETERS;
+				error = EINVAL;
 				goto done;
 			}
 			nat->next = nathead;
@@ -666,14 +666,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 			rdr = pool_get(&pf_rdr_pl, PR_NOWAIT);
 			if (rdr == NULL) {
-				error = ERROR_MALLOC;
+				error = ENOMEM;
 				goto done;
 			}
 			bcopy(rdrs + n, rdr, sizeof(struct rdr));
 			rdr->ifp = ifunit(rdr->ifname);
 			if (rdr->ifp == NULL) {
 				pool_put(&pf_rdr_pl, rdr);
-				error = ERROR_INVALID_PARAMETERS;
+				error = EINVAL;
 				goto done;
 			}
 			rdr->next = rdrhead;
@@ -728,7 +728,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		char *ifname = (char *)kb;
 		struct ifnet *ifp = ifunit(ifname);
 		if (ifp == NULL)
-			error = ERROR_INVALID_PARAMETERS;
+			error = EINVAL;
 		else
 			status_ifp = ifp;
 		break;
@@ -749,7 +749,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	default:
-		error = ERROR_INVALID_OP;
+		error = ENODEV;
 		break;
 	}
 
@@ -757,7 +757,7 @@ done:
 	splx(s);
 	if (kb != NULL) {
 		if (copyout(kb, ub->buffer, ub->size))
-			error = ERROR_INVALID_PARAMETERS;
+			error = EIO;
 		free(kb, M_DEVBUF);
 	}
 	return error;

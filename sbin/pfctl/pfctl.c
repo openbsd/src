@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.5 2001/06/24 23:44:07 art Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.6 2001/06/25 00:02:55 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -51,23 +51,10 @@ static void	 usage(char *);
 static char	*load_file(char *, size_t *);
 int		 main(int, char *[]);
 
-static char *errormsg[] = {
-	"invalid operation",		/* ERROR_INVALID_OP */
-	"packetfilter is running",	/* ERROR_ALREADY_RUNNING */
-	"packetfilter not running",	/* ERROR_NOT_RUNNING */
-	"invalid parameters",		/* ERROR_INVALID_PARAMETERS */
-	"memory allocation failed"	/* ERROR_MALLOC */
-};
-
 static void
 printerror(char *s)
 {
-	char *msg;
-	if ((errno >= 100) && (errno < MAX_ERROR_NUM))
-		msg = errormsg[errno-100];
-	else
-		msg = strerror(errno);
-	fprintf(stderr, "ERROR: %s: %s\n", s, msg);
+	fprintf(stderr, "ERROR: %s: %s\n", s, strerror(errno));
 	return;
 }
 
