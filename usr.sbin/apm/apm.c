@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.10 2005/03/29 16:25:20 miod Exp $	*/
+/*	$OpenBSD: apm.c,v 1.11 2005/03/30 20:00:55 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -80,13 +80,12 @@ send_command(int fd, struct apm_command *cmd, struct apm_reply *reply)
 	if (send(fd, cmd, sizeof(*cmd), 0) == sizeof(*cmd)) {
 		if (recv(fd, reply, sizeof(*reply), 0) != sizeof(*reply)) {
 			warn("invalid reply from APM daemon");
-		return (1);
+			return (1);
 		}
 	} else {
 		warn("invalid send to APM daemon");
 		return (1);
 	}
-
 	return 0;
 }
 
@@ -131,7 +130,6 @@ open_socket(const char *sockname)
 		errno = errr;
 		err(1, "cannot open connection to APM daemon");
 	}
-
 	return sock;
 }
 
@@ -198,7 +196,6 @@ main(int argc, char *argv[])
 			doac = TRUE;
 			action = GETSTATUS;
 			break;
-		case '?':
 		default:
 			usage();
 		}
