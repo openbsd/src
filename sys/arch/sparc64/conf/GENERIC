@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.112 2004/12/19 16:09:18 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.113 2004/12/28 23:04:46 brad Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -262,6 +262,7 @@ exphy*	at mii?				# 3Com internal PHYs
 brgphy*	at mii?				# Broadcom PHYs
 nsphy*	at mii?				# NS and compatible PHYs
 qsphy*	at mii?				# Quality Semi QS6612 PHYs
+sqphy*	at mii?				# Seeq 8x220 PHYs
 dcphy*	at mii?				# Digital clone PHYs
 amphy*	at mii?				# AMD AM79c873 PHYs
 iophy*	at mii?				# Intel 82553 PHYs
