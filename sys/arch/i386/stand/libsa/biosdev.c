@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.29 1997/09/02 22:42:25 weingart Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.30 1997/09/02 23:06:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -66,7 +66,7 @@ biosdinfo(int dev)
 			  "movb %%cl, %b1; andb $0x3f, %b1"
 			  : "=a" (f), "=d" (rv)
 			  : "0" (0x800), "1" (dev) : "%ecx", "cc");
-	return (f & 0xff)? 0x0118 : rv;
+	return (f & 0xff)? 0 : rv;
 }
 
 /*
@@ -230,6 +230,8 @@ biosopen(struct open_file *f, ...)
 
 	BIOS_vars.bios_dev = bd->biosdev;
 	bd->dinfo = biosdinfo(bd->biosdev);
+	if (!bd->dinfo)
+		bd->dinfo = 0x0118; /* fake geometry */
 	/* pass c: geometry for floppy */
 	BIOS_vars.bios_geometry = (bd->biosdev & 0x80)? bd->dinfo
 		: biosdinfo(0x80);
