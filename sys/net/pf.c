@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.337 2003/04/11 14:40:57 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.338 2003/04/25 17:41:25 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1550,7 +1550,6 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_pool *rpool,
 {
 	struct pf_tree_node	key;
 	struct pf_addr		init_addr;
-	int			step;
 	u_int16_t		cut;
 
 	bzero(&init_addr, sizeof(init_addr));
@@ -1589,30 +1588,26 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_pool *rpool,
 				return (0);
 			}
 		} else {
-			if (low < high) {
-				step = 1;
-				cut = arc4random() % (1 + high - low) + low;
-			} else {
-				step = -1;
-				cut = arc4random() % (1 + low - high) + high;
+			if (low > high) {
+				u_int16_t tmp;
+
+				tmp = low;
+				low = high;
+				high = tmp;
 			}
-
-			*nport = cut - step;
-			do {
-				*nport += step;
+			/* low < high */
+			cut = arc4random() % (1 + high - low) + low;
+			/* low <= cut <= high */
+			for (*nport = cut; *nport <= high; ++(*nport)) {
 				key.port[1] = htons(*nport);
 				if (pf_find_state(&tree_ext_gwy, &key) == NULL)
 					return (0);
-			} while (*nport != low && *nport != high);
-
-			step = -step;
-			*nport = cut;
-			do {
-				*nport += step;
+			}
+			for (*nport = cut - 1; *nport >= low; --(*nport)) {
 				key.port[1] = htons(*nport);
 				if (pf_find_state(&tree_ext_gwy, &key) == NULL)
 					return (0);
-			} while (*nport != low && *nport != high);
+			}
 		}
 
 		switch (rpool->opts & PF_POOL_TYPEMASK) {
