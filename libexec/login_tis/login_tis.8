@@ -1,0 +1,153 @@
+.\" $OpenBSD: login_tis.8,v 1.1 2004/09/28 15:02:01 millert Exp $
+.\"
+.\" Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd August 3, 2004
+.Dt LOGIN_TIS 8
+.Os
+.Sh NAME
+.Nm login_tis
+.Nd provide TIS Firewall Toolkit authentication type
+.Sh SYNOPSIS
+.Nm login_tis
+.Op Fl s Ar service
+.Op Fl v Ar fd=number
+.Ar user
+.Op Ar class
+.Sh DESCRIPTION
+The
+.Nm
+utility is called by
+.Xr login 1 ,
+.Xr su 1 ,
+.Xr ftpd 8 ,
+and others to authenticate the
+.Ar user
+via the
+.Tn TIS
+.Dq Firewall Toolkit
+authentication server
+.Pq Em authsrv ,
+optionally using
+.Tn DES
+encryption.
+.Pp
+The
+.Ar service
+argument specifies which protocol to use with the
+invoking program.
+The allowed protocols are
+.Em login ,
+.Em challenge ,
+and
+.Em response .
+The default protocol is
+.Em login .
+.Pp
+The
+.Ar fd
+argument is used to specify the number of an open file descriptor
+connected to
+.Em authsrv .
+This allows a persistent connection to be used for separate
+.Em challenge
+and
+.Em response
+authentication.
+.Pp
+The
+.Ar user
+argument is the login name of the user to be authenticated.
+.Pp
+The
+.Ar class
+argument is the login class of the user to be authenticated
+and is used to look up
+.Pa /etc/login.conf
+variables (see below).
+It is also sent to
+.Em authsrv
+for logging purposed.
+If no
+.Ar class
+argument is specified the class will be obtained from the password database.
+.Pp
+.Nm
+will connect to 
+.Em authsrv
+and, depending on the desired protocol,
+will do one of three things:
+.Bl -tag -width challenge
+.It login
+Present
+.Ar user
+with a challenge, accept a response and report back to the
+invoking program whether or not the authentication was successful.
+.It challenge
+Return a challenge for
+.Ar user
+if the user's entry in
+.Em authsrv
+specifies a challenge/response style of authentication.
+.It response
+Send a response to
+.Em authsrv
+and report back to the invoking program whether or not the server accepted it.
+.El
+.Sh LOGIN.CONF VARIABLES
+The
+.Nm
+utility uses the following TIS-specific
+.Pa /etc/login.conf
+variables:
+.Bl -tag -width tis-server-alt
+.It tis-keyfile
+Path to a file containing a
+.Tn DES
+key string to be used for encrypting communications end to end with
+.Em authsrv .
+This file must not be readable or writable by users other than root.
+If no
+.Ar tis-keyfile
+is specified, communication with
+.Em authsrv
+will be sent in clear text.
+.It tis-port
+Symbolic name listed in
+.Xr services 5
+or port number on which
+.Em authsrv
+listens.
+Defaults to port 7777.
+.It tis-server
+Hostname or IP address of the
+.Tn TIS
+.Em authsrv
+daemon to connect to.
+Defaults to
+.Dq localhost .
+.It tis-server-alt
+Alternate server to use when the primary is not reachable.
+.It tis-timeout
+Number of seconds to wait for a response from
+.Em authsrv .
+Defaults to 15 seconds.
+.El
+.Sh SEE ALSO
+.Xr login 1 ,
+.Xr login.conf 5 ,
+.Xr services 5 ,
+.Xr login_radius 8 ,
+.Xr ftpd 8
