@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dbopen.3,v 1.20 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: dbopen.3,v 1.21 2003/07/07 14:43:18 jmc Exp $
 .\"	$NetBSD: dbopen.3,v 1.6 1995/02/27 13:23:25 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -140,38 +140,24 @@ on error.
 The DB structure is defined in the
 .Aq Pa db.h
 include file, and contains at least the following fields:
-.Pp
-.Bl -item -compact
+.Bd -literal
 typedef struct {
-.It
-.Bl -item -compact -inset -offset indent
-.It
-DBTYPE type;
-.It
-int (*close)(const DB *db);
-.It
-int (*del)(const DB *db, const DBT *key, u_int flags);
-.It
-int (*fd)(const DB *db);
-.It
-int (*get)(const DB *db, DBT *key, DBT *data, u_int flags);
-.It
-int (*put)(const DB *db, DBT *key, const DBT *data, u_int flags);
-.It
-int (*sync)(const DB *db, u_int flags);
-.It
-int (*seq)(const DB *db, DBT *key, DBT *data, u_int flags);
-.El
-.It
+	DBTYPE type;
+	int (*close)(const DB *db);
+	int (*del)(const DB *db, const DBT *key, u_int flags);
+	int (*fd)(const DB *db);
+	int (*get)(const DB *db, DBT *key, DBT *data, u_int flags);
+	int (*put)(const DB *db, DBT *key, const DBT *data, u_int flags);
+	int (*sync)(const DB *db, u_int flags);
+	int (*seq)(const DB *db, DBT *key, DBT *data, u_int flags);
 } DB;
-.El
+.Ed
 .Pp
 These elements describe a database type and a set of functions performing
 various actions.
 These functions take a pointer to a structure as returned by
 .Fn dbopen dbopen ,
 and sometimes one or more pointers to key/data structures and a flag value.
-.Pp
 .Bl -tag -width XXXXX -offset indent
 .It Fa type
 The type of the underlying access method (and file format).

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hash.3,v 1.12 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: hash.3,v 1.13 2003/07/07 14:43:18 jmc Exp $
 .\"	$NetBSD: hash.3,v 1.6 1996/05/03 21:26:50 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -57,27 +57,16 @@ The access method specific data structure provided to
 is defined in the
 .Aq Pa db.h
 include file as follows:
-.Pp
-.Bl -item -compact
+.Bd -literal -offset indent
 typedef struct {
-.It
-.Bl -item -compact -inset -offset indent
-.It
-u_int bsize;
-.It
-u_int ffactor;
-.It
-u_int nelem;
-.It
-u_int cachesize;
-.It
-u_int32_t (*hash)(const void *, size_t);
-.It
-int lorder;
-.El
-.It
+	u_int bsize;
+	u_int ffactor;
+	u_int nelem;
+	u_int cachesize;
+	u_int32_t (*hash)(const void *, size_t);
+	int lorder;
 } HASHINFO;
-.El
+.Ed
 .Pp
 The elements of this structure are as follows:
 .Bl -tag -width XXXXXX -offset indent

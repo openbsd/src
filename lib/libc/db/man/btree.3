@@ -1,4 +1,4 @@
-.\"	$OpenBSD: btree.3,v 1.16 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: btree.3,v 1.17 2003/07/07 14:43:18 jmc Exp $
 .\"	$NetBSD: btree.3,v 1.6 1996/05/03 21:26:48 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -58,31 +58,18 @@ The btree access method specific data structure provided to
 is defined in the
 .Aq Pa db.h
 include file as follows:
-.Pp
-.Bl -item -compact
+.Bd -literal -offset indent
 typedef struct {
-.It
-.Bl -item -compact -inset -offset indent
-.It
-u_long flags;
-.It
-u_int cachesize;
-.It
-int maxkeypage;
-.It
-int minkeypage;
-.It
-u_int psize;
-.It
-int (*compare)(const DBT *key1, const DBT *key2);
-.It
-size_t (*prefix)(const DBT *key1, const DBT *key2);
-.It
-int lorder;
-.El
-.It
+	u_long flags;
+	u_int cachesize;
+	int maxkeypage;
+	int minkeypage;
+	u_int psize;
+	int (*compare)(const DBT *key1, const DBT *key2);
+	size_t (*prefix)(const DBT *key1, const DBT *key2);
+	int lorder;
 } BTREEINFO;
-.El
+.Ed
 .Pp
 The elements of this structure are as follows:
 .Bl -tag -width "XXXXXX"
