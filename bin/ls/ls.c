@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.17 2002/03/12 01:05:15 millert Exp $	*/
+/*	$OpenBSD: ls.c,v 1.18 2003/04/02 19:43:52 deraadt Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.17 2002/03/12 01:05:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.18 2003/04/02 19:43:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -503,21 +503,21 @@ display(p, list)
 					flen = 0;
 
 				if ((np = malloc(sizeof(NAMES) +
-				    ulen + glen + flen + 3)) == NULL)
+				    ulen + 1 + glen + 1 + flen + 1)) == NULL)
 					err(1, NULL);
 
 				np->user = &np->data[0];
-				(void)strcpy(np->user, user);
+				(void)strlcpy(np->user, user, ulen + 1);
 				np->group = &np->data[ulen + 1];
-				(void)strcpy(np->group, group);
+				(void)strlcpy(np->group, group, glen + 1);
 
 				if (S_ISCHR(sp->st_mode) ||
 				    S_ISBLK(sp->st_mode))
 					bcfile = 1;
 
 				if (f_flags) {
-					np->flags = &np->data[ulen + glen + 2];
-				  	(void)strcpy(np->flags, flags);
+					np->flags = &np->data[ulen + 1 + glen + 1];
+				  	(void)strlcpy(np->flags, flags, flen + 1);
 					if (*flags != '-')
 						free(flags);
 				}
