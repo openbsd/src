@@ -1,4 +1,4 @@
-/* 	$OpenBSD: modload.c,v 1.40 2003/04/15 08:06:31 deraadt Exp $	*/
+/* 	$OpenBSD: modload.c,v 1.41 2003/08/06 20:37:25 millert Exp $	*/
 /*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ static int
 verify_entry(const char *entry, char *filename)
 {
 	struct	nlist	names[2];
-	int n, len;
+	int n;
 	char *s;
 
 	memset(names, 0, sizeof(names));
@@ -167,6 +167,7 @@ verify_entry(const char *entry, char *filename)
 	n = nlist(filename, names);
 	if (n == -1)
 		err(1, "nlist %s", filename);
+	free(s);
 	return n;
 }
 
