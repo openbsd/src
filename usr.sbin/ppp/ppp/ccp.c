@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ccp.c,v 1.16 2000/11/07 23:32:04 brian Exp $
+ * $OpenBSD: ccp.c,v 1.17 2000/11/22 02:13:08 brian Exp $
  *
  *	TODO:
  *		o Support other compression protocols
@@ -210,7 +210,7 @@ ccp_Init(struct ccp *ccp, struct bundle *bundle, struct link *l,
   ccp->cfg.neg[CCP_NEG_DEFLATE24] = 0;
 #ifdef HAVE_DES
   ccp->cfg.mppe.keybits = 128;
-  ccp->cfg.neg[CCP_NEG_MPPE] = 0;
+  ccp->cfg.neg[CCP_NEG_MPPE] = NEG_ENABLED|NEG_ACCEPTED;
 #endif
 
   ccp_Setup(ccp);
