@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.49 2001/09/05 12:42:31 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.50 2001/09/06 18:05:46 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -151,6 +151,18 @@ struct pf_nat {
 	u_int8_t	 ifnot;
 };
 
+struct pf_binat {
+	char		 ifname[IFNAMSIZ];
+	struct ifnet	*ifp;
+	TAILQ_ENTRY(pf_binat)	entries;
+	u_int32_t	 saddr;
+	u_int32_t	 daddr;
+	u_int32_t	 dmask;
+	u_int32_t	 raddr;
+	u_int8_t	 proto;
+	u_int8_t	 dnot;
+};
+
 struct pf_rdr {
 	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
@@ -279,6 +291,18 @@ struct pfioc_natlook {
 	u_int8_t	 direction;
 };
 
+struct pfioc_binat {
+	u_int32_t	 ticket;
+	u_int32_t	 nr;
+	struct pf_binat	 binat;
+};
+
+struct pfioc_changebinat {
+	u_int32_t	 action;
+	struct pf_binat	 oldbinat;
+	struct pf_binat	 newbinat;
+};
+
 struct pfioc_rdr {
 	u_int32_t	 ticket;
 	u_int32_t	 nr;
@@ -349,6 +373,12 @@ struct pfioc_tm {
 #define DIOCCHANGERDR	_IOWR('D', 28, struct pfioc_changerdr)
 #define DIOCSETTIMEOUT	_IOWR('D', 29, struct pfioc_tm)
 #define DIOCGETTIMEOUT	_IOWR('D', 30, struct pfioc_tm)
+#define DIOCBEGINBINATS	_IOWR('D', 31, u_int32_t)
+#define DIOCADDBINAT	_IOWR('D', 32, struct pfioc_binat)
+#define DIOCCOMMITBINATS _IOWR('D', 33, u_int32_t)
+#define DIOCGETBINATS	_IOWR('D', 34, struct pfioc_binat)
+#define DIOCGETBINAT	_IOWR('D', 35, struct pfioc_binat)
+#define DIOCCHANGEBINAT	_IOWR('D', 36, struct pfioc_changebinat)
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.9 2001/08/22 17:42:24 beck Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.10 2001/09/06 18:05:46 jasoni Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -57,10 +57,13 @@ to another host and optionally a different port.
 .Sh GRAMMAR
 Syntax for filter rules in BNF:
 .Bd -literal
-rule      = nat_rule | rdr_rule
+rule      = nat_rule | binat_rule | rdr_rule
 
 nat_rule  = "nat" "on" [ "!" ] ifname [ protospec ] "from" ipspec
             "to" ipspec "->" address
+
+binat_rule = "binat" "on" ifname [ protospec ] "from" ipspec
+             "to" ipspec "->" address
 
 rdr_rule  = "rdr" "on" [ "!" ] ifname [ protospec ] "from" ipspec
             "to" ipspec portspec "->" address portspec
@@ -124,6 +127,14 @@ In the example below, fxp1 is the outside interface; the machine sits between a
 fake internal 144.19.74.* network, and a routable external IP of 204.92.77.100:
 .Bd -literal
 nat on fxp1 from 144.19.74/24 to any -> 204.92.77.100
+.Ed
+.Pp
+In the example below, fxp0 is the outside interface; a 1:1
+bidirectional map is created between the private address 192.168.1.5
+and the routable external address 204.92.77.113.  (Thus, incoming
+traffic to 204.92.77.113 is mapped to the internal address 192.168.1.5.)
+.Bd -literal
+binat on fxp0 from 192.168.1.5/32 to any -> 204.92.77.113
 .Ed
 .Pp
 This longer example uses both a NAT and a redirection. Interface

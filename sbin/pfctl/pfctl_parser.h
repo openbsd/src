@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.8 2001/08/23 04:10:51 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.9 2001/09/06 18:05:46 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -38,11 +38,13 @@ struct pfctl {
 	int opts;
 	struct pfioc_rule *prule;
 	struct pfioc_nat *pnat;
+	struct pfioc_binat *pbinat;
 	struct pfioc_rdr *prdr;
 };
 
 int	 pfctl_add_rule(struct pfctl *, struct pf_rule *);
 int	 pfctl_add_nat(struct pfctl *, struct pf_nat *);
+int	 pfctl_add_binat(struct pfctl *, struct pf_binat *);
 int	 pfctl_add_rdr(struct pfctl *, struct pf_rdr *);
 
 int	 parse_rules(FILE *, struct pfctl *);
@@ -51,6 +53,7 @@ int	 parse_flags(char *);
 
 void	 print_rule(struct pf_rule *);
 void	 print_nat(struct pf_nat *);
+void	 print_binat(struct pf_binat *);
 void	 print_rdr(struct pf_rdr *);
 void	 print_state(struct pf_state *);
 void	 print_status(struct pf_status *);

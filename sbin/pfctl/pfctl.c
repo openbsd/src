@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.38 2001/08/28 00:02:43 frantzen Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.39 2001/09/06 18:05:46 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -170,12 +170,17 @@ int
 pfctl_clear_nat(int dev, int opts)
 {
 	struct pfioc_nat pn;
+	struct pfioc_binat pb;
 	struct pfioc_rdr pr;
 
 	if (ioctl(dev, DIOCBEGINNATS, &pn.ticket))
 		err(1, "DIOCBEGINNATS");
 	else if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket))
 		err(1, "DIOCCOMMITNATS");
+	if (ioctl(dev, DIOCBEGINBINATS, &pb.ticket))
+		err(1, "DIOCBEGINBINATS");
+	else if (ioctl(dev, DIOCCOMMITBINATS, &pb.ticket))
+		err(1, "DIOCCOMMITBINATS");
 	else if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket))
 		err(1, "DIOCBEGINRDRS");
 	else if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket))
@@ -226,6 +231,7 @@ pfctl_show_nat(int dev)
 {
 	struct pfioc_nat pn;
 	struct pfioc_rdr pr;
+	struct pfioc_binat pb;
 	u_int32_t mnr, nr;
 
 	if (ioctl(dev, DIOCGETNATS, &pn)) {
@@ -253,6 +259,19 @@ pfctl_show_nat(int dev)
 			return (-1);
 		}
 		print_rdr(&pr.rdr);
+	}
+	if (ioctl(dev, DIOCGETBINATS, &pb)) {
+		warnx("DIOCGETBINATS");
+		return (-1);
+	}
+	mnr = pb.nr;
+	for (nr = 0; nr < mnr; ++nr) {
+		pb.nr = nr;
+		if (ioctl(dev, DIOCGETBINAT, &pb)) {
+			warnx("DIOCGETBINAT");
+			return (-1);
+		}
+		print_binat(&pb.binat);
 	}
 	return (0);
 }
@@ -339,6 +358,19 @@ pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
 }
 
 int
+pfctl_add_binat(struct pfctl *pf, struct pf_binat *b)
+{
+	memcpy(&pf->pbinat->binat, b, sizeof(pf->pbinat->binat));
+	if ((pf->opts & PF_OPT_NOACTION) == 0) {
+		if (ioctl(pf->dev, DIOCADDBINAT, pf->pbinat))
+			err(1, "DIOCADDBINAT");
+	}
+	if (pf->opts & PF_OPT_VERBOSE)
+		print_binat(&pf->pbinat->binat);
+	return 0;
+}
+
+int
 pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
 {
 	memcpy(&pf->prdr->rdr, r, sizeof(pf->prdr->rdr));
@@ -395,6 +427,7 @@ pfctl_nat(int dev, char *filename, int opts)
 {
 	FILE *fin;
 	struct pfioc_nat	pn;
+	struct pfioc_binat	pb;
 	struct pfioc_rdr	pr;
 	struct pfctl		pf;
 
@@ -413,11 +446,14 @@ pfctl_nat(int dev, char *filename, int opts)
 			err(1, "DIOCBEGINNATS");
 		if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket))
 			err(1, "DIOCBEGINRDRS");
+		if (ioctl(dev, DIOCBEGINBINATS, &pb.ticket))
+			err(1, "DIOCBEGINBINATS");
 	}
 	/* fill in callback data */
 	pf.dev = dev;
 	pf.opts = opts;
 	pf.pnat = &pn;
+	pf.pbinat = &pb;
 	pf.prdr = &pr;
 	if (parse_nat(fin, &pf) < 0)
 		errx(1, "syntax error in file: nat rules not loaded");
@@ -426,10 +462,13 @@ pfctl_nat(int dev, char *filename, int opts)
 			err(1, "DIOCCOMMITNATS");
 		if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket))
 			err(1, "DIOCCOMMITRDRS");
+		if (ioctl(dev, DIOCCOMMITBINATS, &pb.ticket))
+			err(1, "DIOCCOMMITBINATS");
 #if 0
 		if ((opts & PF_OPT_QUIET) == 0) {
 			printf("%u nat entries loaded\n", n);
 			printf("%u rdr entries loaded\n", r);
+			printf("%u binat entries loaded\n", b);
 		}
 #endif
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.28 2001/09/04 13:47:51 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.29 2001/09/06 18:05:46 jasoni Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -140,7 +140,7 @@ typedef struct {
 
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP PROTO ALL ANY ICMPTYPE CODE KEEP MODULATE STATE
-%token	PORT RDR NAT ARROW NODF MINTTL ERROR
+%token	PORT RDR NAT ARROW NODF MINTTL ERROR BINAT
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
@@ -160,6 +160,7 @@ ruleset		: /* empty */
 		| ruleset '\n'
 		| ruleset pfrule '\n'
 		| ruleset natrule '\n'
+		| ruleset binatrule '\n'
 		| ruleset rdrrule '\n'
 		| ruleset varset '\n'
 		| ruleset error '\n'		{ errors++; }
@@ -550,6 +551,44 @@ natrule		: NAT interface proto FROM ipspec TO ipspec ARROW address
 		}
 		;
 
+binatrule	: BINAT interface proto FROM ipspec TO ipspec ARROW address
+		{
+			struct pf_binat binat;
+
+			if (!natmode) {
+				yyerror("binat rule not permitted in filter mode");
+				YYERROR;
+			}
+			memset(&binat, 0, sizeof(binat));
+
+			if ($2 != NULL) {
+				memcpy(binat.ifname, $2->ifname,
+				    sizeof(binat.ifname));
+			}
+			if ($3 != NULL) {
+				binat.proto = $3->proto;
+				free($3);
+			}
+			if ($5 != NULL) {
+				binat.saddr = $5->addr;
+				free($5);
+			}
+			if ($7 != NULL) {
+				binat.daddr = $7->addr;
+				binat.dmask = $7->mask;
+				binat.dnot  = $7->not;
+				free($7);
+			}
+
+			if ($9 == NULL) {
+				yyerror("binat rule requires redirection address");
+				YYERROR;
+			}
+			binat.raddr = $9->addr;
+			free($9);
+			pfctl_add_binat(pf, &binat);
+		}
+
 rdrrule		: RDR interface proto FROM ipspec TO ipspec dport ARROW address rport
 		{
 			struct pf_rdr rdr;
@@ -819,6 +858,7 @@ lookup(char *s)
 	} keywords[] = {
 		{ "all",	ALL},
 		{ "any",	ANY},
+		{ "binat",	BINAT},
 		{ "block",	BLOCK},
 		{ "code",	CODE},
 		{ "flags",	FLAGS},

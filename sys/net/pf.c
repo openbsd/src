@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.146 2001/09/05 19:12:59 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.147 2001/09/06 18:05:46 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -90,12 +90,15 @@ LIST_HEAD(pf_port_list, pf_port_node);
  */
 
 TAILQ_HEAD(pf_natqueue, pf_nat)		pf_nats[2];
+TAILQ_HEAD(pf_binatqueue, pf_binat)	pf_binats[2];
 TAILQ_HEAD(pf_rdrqueue, pf_rdr)		pf_rdrs[2];
 struct pf_rulequeue	 pf_rules[2];
 struct pf_rulequeue	*pf_rules_active;
 struct pf_rulequeue	*pf_rules_inactive;
 struct pf_natqueue	*pf_nats_active;
 struct pf_natqueue	*pf_nats_inactive;
+struct pf_binatqueue	*pf_binats_active;
+struct pf_binatqueue	*pf_binats_inactive;
 struct pf_rdrqueue	*pf_rdrs_active;
 struct pf_rdrqueue	*pf_rdrs_inactive;
 struct pf_tree_node	*tree_lan_ext, *tree_ext_gwy;
@@ -108,6 +111,8 @@ u_int32_t		 ticket_rules_active;
 u_int32_t		 ticket_rules_inactive;
 u_int32_t		 ticket_nats_active;
 u_int32_t		 ticket_nats_inactive;
+u_int32_t		 ticket_binats_active;
+u_int32_t		 ticket_binats_inactive;
 u_int32_t		 ticket_rdrs_active;
 u_int32_t		 ticket_rdrs_inactive;
 struct pf_port_list	 pf_tcp_ports;
@@ -142,13 +147,15 @@ int			*pftm_timeouts[PFTM_MAX] = { &pftm_tcp_first_packet,
 
 
 struct pool		 pf_tree_pl, pf_rule_pl, pf_nat_pl, pf_sport_pl;
-struct pool		 pf_rdr_pl, pf_state_pl;
+struct pool		 pf_rdr_pl, pf_state_pl, pf_binat_pl;
 
 int			 pf_tree_key_compare(struct pf_tree_key *,
 			    struct pf_tree_key *);
 int			 pf_compare_rules(struct pf_rule *,
 			    struct pf_rule *);
 int			 pf_compare_nats(struct pf_nat *, struct pf_nat *);
+int			 pf_compare_binats(struct pf_binat *, 
+			    struct pf_binat *);
 int			 pf_compare_rdrs(struct pf_rdr *, struct pf_rdr *);
 void			 pf_tree_rotate_left(struct pf_tree_node **);
 void			 pf_tree_rotate_right(struct pf_tree_node **);
@@ -182,6 +189,8 @@ void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t);
 u_int16_t		 pf_map_port_range(struct pf_rdr *, u_int16_t);
 struct pf_nat		*pf_get_nat(struct ifnet *, u_int8_t, u_int32_t,
 			    u_int32_t);
+struct pf_binat		*pf_get_binat(int direction, struct ifnet *, u_int8_t, 
+			    u_int32_t, u_int32_t);
 struct pf_rdr		*pf_get_rdr(struct ifnet *, u_int8_t, u_int32_t,
 			    u_int32_t, u_int16_t);
 int			 pf_test_tcp(int, struct ifnet *, struct mbuf *,
@@ -294,6 +303,21 @@ pf_compare_nats(struct pf_nat *a, struct pf_nat *b)
 	    a->snot != b->snot ||
 	    a->dnot != b->dnot ||
 	    a->ifnot != b->ifnot)
+		return (1);
+	if (strcmp(a->ifname, b->ifname))
+		return (1);
+	return (0);
+}
+
+int
+pf_compare_binats(struct pf_binat *a, struct pf_binat *b)
+{
+	if (a->saddr != b->saddr ||
+	    a->daddr != b->daddr ||
+	    a->dmask != b->dmask ||
+	    a->raddr != b->raddr ||
+	    a->proto != b->proto ||
+	    a->dnot != b->dnot)
 		return (1);
 	if (strcmp(a->ifname, b->ifname))
 		return (1);
@@ -758,6 +782,8 @@ pfattach(int num)
 	    0, NULL, NULL, 0);
 	pool_init(&pf_nat_pl, sizeof(struct pf_nat), 0, 0, 0, "pfnatpl",
 	    0, NULL, NULL, 0);
+	pool_init(&pf_binat_pl, sizeof(struct pf_binat), 0, 0, 0, "pfbinatpl",
+	    0, NULL, NULL, 0);
 	pool_init(&pf_rdr_pl, sizeof(struct pf_rdr), 0, 0, 0, "pfrdrpl",
 	    0, NULL, NULL, 0);
 	pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl",
@@ -769,12 +795,16 @@ pfattach(int num)
 	TAILQ_INIT(&pf_rules[1]);
 	TAILQ_INIT(&pf_nats[0]);
 	TAILQ_INIT(&pf_nats[1]);
+	TAILQ_INIT(&pf_binats[0]);
+	TAILQ_INIT(&pf_binats[1]);
 	TAILQ_INIT(&pf_rdrs[0]);
 	TAILQ_INIT(&pf_rdrs[1]);
 	pf_rules_active = &pf_rules[0];
 	pf_rules_inactive = &pf_rules[1];
 	pf_nats_active = &pf_nats[0];
 	pf_nats_inactive = &pf_nats[1];
+	pf_binats_active = &pf_binats[0];
+	pf_binats_inactive = &pf_binats[1];
 	pf_rdrs_active = &pf_rdrs[0];
 	pf_rdrs_inactive = &pf_rdrs[1];
 
@@ -819,6 +849,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCBEGINNATS:
 		case DIOCADDNAT:
 		case DIOCCOMMITNATS:
+		case DIOCBEGINBINATS:
+		case DIOCADDBINAT:
+		case DIOCCOMMITBINATS:
 		case DIOCBEGINRDRS:
 		case DIOCADDRDR:
 		case DIOCCOMMITRDRS:
@@ -1218,6 +1251,178 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 		ticket_nats_active++;
+		splx(s);
+		break;
+	}
+
+	case DIOCBEGINBINATS: {
+		u_int32_t *ticket = (u_int32_t *)addr;
+		struct pf_binat *binat;
+
+		while ((binat = TAILQ_FIRST(pf_binats_inactive)) != NULL) {
+			TAILQ_REMOVE(pf_binats_inactive, binat, entries);
+			pool_put(&pf_binat_pl, binat);
+		}
+		*ticket = ++ticket_binats_inactive;
+		break;
+	}
+
+	case DIOCADDBINAT: {
+		struct pfioc_binat *pb = (struct pfioc_binat *)addr;
+		struct pf_binat *binat;
+
+		if (pb->ticket != ticket_binats_inactive) {
+			error = EBUSY;
+			break;
+		}
+		binat = pool_get(&pf_binat_pl, PR_NOWAIT);
+		if (binat == NULL) {
+			error = ENOMEM;
+			break;
+		}
+		bcopy(&pb->binat, binat, sizeof(struct pf_binat));
+		if (binat->ifname[0]) {
+			binat->ifp = ifunit(binat->ifname);
+			if (binat->ifp == NULL) {
+				pool_put(&pf_binat_pl, binat);
+				error = EINVAL;
+				break;
+			}
+		} else
+			binat->ifp = NULL;
+		TAILQ_INSERT_TAIL(pf_binats_inactive, binat, entries);
+		break;
+	}
+
+	case DIOCCOMMITBINATS: {
+		u_int32_t *ticket = (u_int32_t *)addr;
+		struct pf_binatqueue *old_binats;
+		struct pf_binat *binat;
+
+		if (*ticket != ticket_binats_inactive) {
+			error = EBUSY;
+			break;
+		}
+
+		/* Swap binats, keep the old. */
+		s = splsoftnet();
+		old_binats = pf_binats_active;
+		pf_binats_active = pf_binats_inactive;
+		pf_binats_inactive = old_binats;
+		ticket_binats_active = ticket_binats_inactive;
+		splx(s);
+
+		/* Purge the old binat list */
+		while ((binat = TAILQ_FIRST(old_binats)) != NULL) {
+			TAILQ_REMOVE(old_binats, binat, entries);
+			pool_put(&pf_binat_pl, binat);
+		}
+		break;
+	}
+
+	case DIOCGETBINATS: {
+		struct pfioc_binat *pb = (struct pfioc_binat *)addr;
+		struct pf_binat *binat;
+
+		pb->nr = 0;
+		s = splsoftnet();
+		TAILQ_FOREACH(binat, pf_binats_active, entries)
+			pb->nr++;
+		pb->ticket = ticket_binats_active;
+		splx(s);
+		break;
+	}
+
+	case DIOCGETBINAT: {
+		struct pfioc_binat *pb = (struct pfioc_binat *)addr;
+		struct pf_binat *binat;
+		u_int32_t nr;
+
+		if (pb->ticket != ticket_binats_active) {
+			error = EBUSY;
+			break;
+		}
+		nr = 0;
+		s = splsoftnet();
+		binat = TAILQ_FIRST(pf_binats_active);
+		while ((binat != NULL) && (nr < pb->nr)) {
+			binat = TAILQ_NEXT(binat, entries);
+			nr++;
+		}
+		if (binat == NULL) {
+			error = EBUSY;
+			splx(s);
+			break;
+		}
+		bcopy(binat, &pb->binat, sizeof(struct pf_binat));
+		splx(s);
+		break;
+	}
+
+	case DIOCCHANGEBINAT: {
+		struct pfioc_changebinat *pcn = (struct pfioc_changebinat *)addr;
+		struct pf_binat *oldbinat = NULL, *newbinat = NULL;
+
+		if (pcn->action < PF_CHANGE_ADD_HEAD ||
+		    pcn->action > PF_CHANGE_REMOVE) {
+			error = EINVAL;
+			break;
+		}
+
+		if (pcn->action != PF_CHANGE_REMOVE) {
+			newbinat = pool_get(&pf_binat_pl, PR_NOWAIT);
+			if (newbinat == NULL) {
+				error = ENOMEM;
+				break;
+			}
+			bcopy(&pcn->newbinat, newbinat, 
+			    sizeof(struct pf_binat));
+			newbinat->ifp = NULL;
+			if (newbinat->ifname[0]) {
+				newbinat->ifp = ifunit(newbinat->ifname);
+				if (newbinat->ifp == NULL) {
+					pool_put(&pf_binat_pl, newbinat);
+					error = EINVAL;
+					break;
+				}
+			}
+		}
+
+		s = splsoftnet();
+
+		if (pcn->action == PF_CHANGE_ADD_HEAD)
+			oldbinat = TAILQ_FIRST(pf_binats_active);
+		else if (pcn->action == PF_CHANGE_ADD_TAIL)
+			oldbinat = TAILQ_LAST(pf_binats_active, pf_binatqueue);
+		else {
+			oldbinat = TAILQ_FIRST(pf_binats_active);
+			while ((oldbinat != NULL) && pf_compare_binats(oldbinat,
+			    &pcn->oldbinat))
+				oldbinat = TAILQ_NEXT(oldbinat, entries);
+			if (oldbinat == NULL) {
+				error = EINVAL;
+				splx(s);
+				break;
+			}
+		}
+
+		if (pcn->action == PF_CHANGE_REMOVE) {
+			TAILQ_REMOVE(pf_binats_active, oldbinat, entries);
+			pool_put(&pf_binat_pl, oldbinat);
+		} else {
+			if (oldbinat == NULL)
+				TAILQ_INSERT_TAIL(pf_binats_active, newbinat,
+				    entries);
+			else if (pcn->action == PF_CHANGE_ADD_HEAD ||
+			    pcn->action == PF_CHANGE_ADD_BEFORE)
+				TAILQ_INSERT_BEFORE(oldbinat, newbinat, 
+				    entries);
+			else
+				TAILQ_INSERT_AFTER(pf_binats_active, oldbinat,
+				     newbinat, entries);
+		}
+
+		ticket_binats_active++;
 		splx(s);
 		break;
 	}
@@ -1959,6 +2164,30 @@ pf_get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t saddr, u_int32_t daddr)
 	return (nm);
 }
 
+struct pf_binat *
+pf_get_binat(int direction, struct ifnet *ifp, u_int8_t proto,
+    u_int32_t saddr, u_int32_t daddr)
+{
+	struct pf_binat *b, *bm = NULL;
+
+	b = TAILQ_FIRST(pf_binats_active);
+	while (b && bm == NULL) {
+		if (direction == PF_OUT && b->ifp == ifp &&
+		    (!b->proto || b->proto == proto) &&
+		    pf_match_addr(0, b->saddr, 0xffffffff, saddr) &&
+		    pf_match_addr(b->dnot, b->daddr, b->dmask, daddr))
+			bm = b;
+                else if (direction == PF_IN && b->ifp == ifp &&
+		    (!b->proto || b->proto == proto) &&
+		    pf_match_addr(0, b->raddr, 0xffffffff, saddr) &&
+		    pf_match_addr(b->dnot, b->daddr, b->dmask, daddr))
+			bm = b;
+		else
+			b = TAILQ_NEXT(b, entries);
+	}
+	return (bm);
+}
+
 struct pf_rdr *
 pf_get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t saddr, u_int32_t daddr,
     u_int16_t dport)
@@ -1999,6 +2228,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
     int ipoff, int off, struct ip *h, struct tcphdr *th)
 {
 	struct pf_nat *nat = NULL;
+	struct pf_binat *binat = NULL;
 	struct pf_rdr *rdr = NULL;
 	u_int32_t baddr;
 	u_int16_t bport, nport = 0;
@@ -2007,8 +2237,18 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 	int rewrite = 0, error;
 
 	if (direction == PF_OUT) {
+		/* check outgoing packet for BINAT */
+		if ((binat = pf_get_binat(PF_OUT, ifp, IPPROTO_TCP,
+		    h->ip_src.s_addr, h->ip_dst.s_addr)) != NULL) {
+			baddr = h->ip_src.s_addr;
+			bport = th->th_sport;
+			pf_change_ap(&h->ip_src.s_addr, &th->th_sport,
+			    &h->ip_sum, &th->th_sum, binat->raddr, 
+			    th->th_sport, 0);
+			rewrite++;
+		}
 		/* check outgoing packet for NAT */
-		if ((nat = pf_get_nat(ifp, IPPROTO_TCP,
+		else if ((nat = pf_get_nat(ifp, IPPROTO_TCP,
 		    h->ip_src.s_addr, h->ip_dst.s_addr)) != NULL) {
 			baddr = h->ip_src.s_addr;
 			bport = th->th_sport;
@@ -2034,6 +2274,16 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 			pf_change_ap(&h->ip_dst.s_addr, &th->th_dport,
 			    &h->ip_sum, &th->th_sum, rdr->raddr, nport, 0);
+			rewrite++;
+		}
+		/* check incoming packet for BINAT */
+		if ((binat = pf_get_binat(PF_IN, ifp, IPPROTO_TCP,
+		    h->ip_dst.s_addr, h->ip_dst.s_addr)) != NULL) {
+			baddr = h->ip_dst.s_addr;
+			bport = th->th_dport;
+			pf_change_ap(&h->ip_dst.s_addr, &th->th_dport,
+			    &h->ip_sum, &th->th_sum, binat->saddr,
+			    th->th_dport, 0);
 			rewrite++;
 		}
 	}
@@ -2108,7 +2358,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		}
 	}
 
-	if (((rm != NULL) && rm->keep_state) || nat != NULL || rdr != NULL) {
+	if (((rm != NULL) && rm->keep_state) || nat != NULL || binat != NULL || rdr != NULL) {
 		/* create new state */
 		u_int16_t len;
 		struct pf_state *s;
@@ -2130,7 +2380,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			s->gwy.port = th->th_sport;		/* sport */
 			s->ext.addr = h->ip_dst.s_addr;
 			s->ext.port = th->th_dport;
-			if (nat != NULL) {
+			if (nat != NULL || binat != NULL) {
 				s->lan.addr = baddr;
 				s->lan.port = bport;
 			} else {
@@ -2142,7 +2392,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			s->lan.port = th->th_dport;
 			s->ext.addr = h->ip_src.s_addr;
 			s->ext.port = th->th_sport;
-			if (rdr != NULL) {
+			if (binat != NULL || rdr != NULL) {
 				s->gwy.addr = baddr;
 				s->gwy.port = bport;
 			} else {
@@ -2193,6 +2443,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
     int ipoff, int off, struct ip *h, struct udphdr *uh)
 {
 	struct pf_nat *nat = NULL;
+	struct pf_binat *binat = NULL;
 	struct pf_rdr *rdr = NULL;
 	u_int32_t baddr;
 	u_int16_t bport, nport = 0;
@@ -2201,8 +2452,18 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 	int rewrite = 0, error;
 
 	if (direction == PF_OUT) {
+		/* check outgoing packet for BINAT */
+		if ((binat = pf_get_binat(PF_OUT, ifp, IPPROTO_UDP,
+		    h->ip_src.s_addr, h->ip_dst.s_addr)) != NULL) {
+			baddr = h->ip_src.s_addr;
+			bport = uh->uh_sport;
+			pf_change_ap(&h->ip_src.s_addr, &uh->uh_sport,
+			    &h->ip_sum, &uh->uh_sum, binat->raddr, 
+			    uh->uh_sport, 1);
+			rewrite++;
+		}
 		/* check outgoing packet for NAT */
-		if ((nat = pf_get_nat(ifp, IPPROTO_UDP,
+		else if ((nat = pf_get_nat(ifp, IPPROTO_UDP,
 		    h->ip_src.s_addr, h->ip_dst.s_addr)) != NULL) {
 			baddr = h->ip_src.s_addr;
 			bport = uh->uh_sport;
@@ -2230,6 +2491,16 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			    &h->ip_sum, &uh->uh_sum, rdr->raddr,
 			    nport, 1);
 
+			rewrite++;
+		}
+		/* check incoming packet for BINAT */
+		if ((binat = pf_get_binat(PF_IN, ifp, IPPROTO_UDP,
+		    h->ip_dst.s_addr, h->ip_dst.s_addr)) != NULL) {
+			baddr = h->ip_dst.s_addr;
+			bport = uh->uh_dport;
+			pf_change_ap(&h->ip_dst.s_addr, &uh->uh_dport,
+			    &h->ip_sum, &uh->uh_sum, binat->saddr,
+			    uh->uh_dport, 1);
 			rewrite++;
 		}
 	}
@@ -2298,7 +2569,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		}
 	}
 
-	if ((rm != NULL && rm->keep_state) || nat != NULL || rdr != NULL) {
+	if ((rm != NULL && rm->keep_state) || nat != NULL || binat != NULL || rdr != NULL) {
 		/* create new state */
 		u_int16_t len;
 		struct pf_state *s;
@@ -2320,7 +2591,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			s->gwy.port = uh->uh_sport;
 			s->ext.addr = h->ip_dst.s_addr;
 			s->ext.port = uh->uh_dport;
-			if (nat != NULL) {
+			if (nat != NULL || binat != NULL) {
 				s->lan.addr = baddr;
 				s->lan.port = bport;
 			} else {
@@ -2332,7 +2603,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			s->lan.port = uh->uh_dport;
 			s->ext.addr = h->ip_src.s_addr;
 			s->ext.port = uh->uh_sport;
-			if (rdr != NULL) {
+			if (binat != NULL || rdr != NULL) {
 				s->gwy.addr = baddr;
 				s->gwy.port = bport;
 			} else {
@@ -2369,16 +2640,32 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
     int ipoff, int off, struct ip *h, struct icmp *ih)
 {
 	struct pf_nat *nat = NULL;
+	struct pf_binat *binat = NULL;
 	u_int32_t baddr;
 	struct pf_rule *r, *rm = NULL;
 	u_short reason;
 
 	if (direction == PF_OUT) {
+		/* check outgoing packet for BINAT */
+		if ((binat = pf_get_binat(PF_OUT, ifp, IPPROTO_ICMP,
+		    h->ip_src.s_addr, h->ip_dst.s_addr)) != NULL) {
+			baddr = h->ip_src.s_addr;
+			pf_change_a(&h->ip_src.s_addr, &h->ip_sum, 
+			    binat->raddr, 0);
+		}
 		/* check outgoing packet for NAT */
-		if ((nat = pf_get_nat(ifp, IPPROTO_ICMP,
+		else if ((nat = pf_get_nat(ifp, IPPROTO_ICMP,
 		    h->ip_src.s_addr, h->ip_dst.s_addr)) != NULL) {
 			baddr = h->ip_src.s_addr;
 			pf_change_a(&h->ip_src.s_addr, &h->ip_sum, nat->raddr, 0);
+		}
+	} else {
+		/* check incoming packet for BINAT */
+		if ((binat = pf_get_binat(PF_IN, ifp, IPPROTO_ICMP,
+		    h->ip_dst.s_addr, h->ip_src.s_addr)) != NULL) {
+			baddr = h->ip_dst.s_addr;
+			pf_change_a(&h->ip_dst.s_addr, &h->ip_sum,
+			    binat->saddr, 0);
 		}
 	}
 
@@ -2426,7 +2713,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			return (PF_DROP);
 	}
 
-	if ((rm != NULL && rm->keep_state) || nat != NULL) {
+	if ((rm != NULL && rm->keep_state) || nat != NULL || binat != NULL) {
 		/* create new state */
 		u_int16_t len;
 		u_int16_t id;
@@ -2447,7 +2734,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			s->gwy.port = id;
 			s->ext.addr = h->ip_dst.s_addr;
 			s->ext.port = id;
-			if (nat != NULL)
+			if (nat != NULL || binat != NULL)
 				s->lan.addr = baddr;
 			else
 				s->lan.addr = s->gwy.addr;
@@ -2457,7 +2744,10 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			s->lan.port = id;
 			s->ext.addr = h->ip_src.s_addr;
 			s->ext.port = id;
-			s->gwy.addr = s->lan.addr;
+			if (binat != NULL)
+				s->gwy.addr = baddr;
+			else
+				s->gwy.addr = s->lan.addr;
 			s->gwy.port = id;
 		}
 		s->src.seqlo = 0;

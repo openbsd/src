@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.46 2001/09/02 15:15:31 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.47 2001/09/06 18:05:46 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -287,6 +287,45 @@ print_nat(struct pf_nat *n)
 		printf("proto icmp");
 		break;
 	}
+	printf("\n");
+}
+
+void
+print_binat(struct pf_binat *b)
+{
+	printf("@binat ");
+	if (b->ifname[0]) {
+		printf("on ");
+		printf("%s ", b->ifname);
+	}
+	switch (b->proto) {
+	case IPPROTO_TCP:
+		printf("proto tcp ");
+		break;
+	case IPPROTO_UDP:
+		printf("proto udp ");
+		break;
+	case IPPROTO_ICMP:
+		printf("proto icmp ");
+		break;
+	}
+	printf("from ");
+	print_addr(b->saddr);
+	printf(" ");
+	printf("to ");
+	if (b->daddr || b->dmask) {
+		if (b->dnot)
+			printf("! ");
+		print_addr(b->daddr);
+		if (b->dmask != 0xFFFFFFFF) {
+			printf("/");
+			print_addr(b->dmask);
+		}
+		printf(" ");
+	} else
+		printf("any ");
+ 	printf("-> ");
+	print_addr(b->raddr);
 	printf("\n");
 }
 
