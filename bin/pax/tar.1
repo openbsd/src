@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.27 2000/11/09 23:47:17 aaron Exp $
+.\"	$OpenBSD: tar.1,v 1.28 2000/11/09 23:58:56 aaron Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -219,17 +219,7 @@ The options
 .Op Fl 014578
 can be used to select one of the compiled-in backup devices,
 .Pa /dev/rstN .
-.Sh FILES
-.Bl -tag -width "/dev/rst0"
-.It Pa /dev/rst0
-default archive name
-.El
-.Sh SEE ALSO
-.Xr cpio 1 ,
-.Xr pax 1
-.Sh AUTHOR
-Keith Muller at the University of California, San Diego.
-.Sh ERRORS
+.Sh DIAGNOSTICS
 .Nm
 will exit with one of the following values:
 .Bl -tag -width 2n
@@ -267,3 +257,13 @@ or error,
 .Nm
 may have only partially created the archive which may violate the
 specific archive format specification.
+.Sh FILES
+.Bl -tag -width "/dev/rst0"
+.It Pa /dev/rst0
+default archive name
+.El
+.Sh SEE ALSO
+.Xr cpio 1 ,
+.Xr pax 1
+.Sh AUTHORS
+Keith Muller at the University of California, San Diego.

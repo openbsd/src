@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pax.1,v 1.24 2000/11/09 23:47:17 aaron Exp $
+.\"	$OpenBSD: pax.1,v 1.25 2000/11/09 23:58:55 aaron Exp $
 .\"	$NetBSD: pax.1,v 1.3 1995/03/21 09:07:37 cgd Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
@@ -1097,42 +1097,7 @@ Update (and list) only those files in the destination directory
 which are older (less recent inode change or file modification times) than
 files with the same name found in the source file tree
 .Pa home .
-.Sh STANDARDS
-The
-.Nm
-utility is a superset of the
-.St -p1003.2
-standard.
-The options
-.Fl B ,
-.Fl D ,
-.Fl E ,
-.Fl G ,
-.Fl H ,
-.Fl L ,
-.Fl P ,
-.Fl T ,
-.Fl U ,
-.Fl Y ,
-.Fl Z ,
-the archive formats
-.Ar bcpio ,
-.Ar sv4cpio ,
-.Ar sv4crc ,
-.Ar tar ,
-and the flawed archive handling during
-.Ar list
-and
-.Ar read
-operations are extensions to the
-.Tn POSIX
-standard.
-.Sh SEE ALSO
-.Xr cpio 1 ,
-.Xr tar 1
-.Sh AUTHOR
-Keith Muller at the University of California, San Diego.
-.Sh ERRORS
+.Sh DIAGNOSTICS
 .Nm
 will exit with one of the following values:
 .Bl -tag -width 2n
@@ -1177,3 +1142,38 @@ a diagnostic message is written to standard error
 and when
 .Nm
 completes it will exit with a non-zero exit status.
+.Sh SEE ALSO
+.Xr cpio 1 ,
+.Xr tar 1
+.Sh AUTHORS
+Keith Muller at the University of California, San Diego.
+.Sh STANDARDS
+The
+.Nm
+utility is a superset of the
+.St -p1003.2
+standard.
+The options
+.Fl B ,
+.Fl D ,
+.Fl E ,
+.Fl G ,
+.Fl H ,
+.Fl L ,
+.Fl P ,
+.Fl T ,
+.Fl U ,
+.Fl Y ,
+.Fl Z ,
+the archive formats
+.Ar bcpio ,
+.Ar sv4cpio ,
+.Ar sv4crc ,
+.Ar tar ,
+and the flawed archive handling during
+.Ar list
+and
+.Ar read
+operations are extensions to the
+.Tn POSIX
+standard.

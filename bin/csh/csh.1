@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.39 2000/11/09 23:47:16 aaron Exp $
+.\"	$OpenBSD: csh.1,v 1.40 2000/11/09 23:58:54 aaron Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -2657,13 +2657,16 @@ otherwise this signal is passed on to children from the state in the
 shell's parent.
 Interrupts are not allowed when a login shell is reading the file
 .Pa \&.logout .
-.Sh AUTHOR
-William Joy.
-Job control and directory stack features first implemented by J.E. Kulp of
-IIASA, Laxenburg, Austria,
-with different syntax than that used now.
-File name completion code written by Ken Greer, HP Labs.
-Eight-bit implementation Christos S. Zoulas, Cornell University.
+.Sh LIMITATIONS
+Word lengths \-
+Words can be no longer than 1024 characters.
+The number of arguments to a command that involves filename expansion
+is limited to 1/6th the number of characters allowed in an argument list.
+Command substitutions may substitute no more characters than are
+allowed in an argument list.
+To detect looping, the shell restricts the number of
+.Ic alias
+substitutions on a single line to 20.
 .Sh FILES
 .Bl -tag -width /etc/passwd -compact
 .It Pa ~/.cshrc
@@ -2684,16 +2687,6 @@ temporary file for
 source of home directories for
 .Dq ~name
 .El
-.Sh LIMITATIONS
-Word lengths \-
-Words can be no longer than 1024 characters.
-The number of arguments to a command that involves filename expansion
-is limited to 1/6th the number of characters allowed in an argument list.
-Command substitutions may substitute no more characters than are
-allowed in an argument list.
-To detect looping, the shell restricts the number of
-.Ic alias
-substitutions on a single line to 20.
 .Sh SEE ALSO
 .Xr sh 1 ,
 .Xr access 2 ,
@@ -2710,6 +2703,13 @@ substitutions on a single line to 20.
 .Xr environ 7
 .Pp
 .Em 'An introduction to the C shell'
+.Sh AUTHORS
+William Joy.
+Job control and directory stack features first implemented by J.E. Kulp of
+IIASA, Laxenburg, Austria,
+with different syntax than that used now.
+File name completion code written by Ken Greer, HP Labs.
+Eight-bit implementation Christos S. Zoulas, Cornell University.
 .Sh HISTORY
 .Nm
 appeared in
