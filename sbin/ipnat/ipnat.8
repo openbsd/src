@@ -56,7 +56,8 @@ and blank lines are ignored as
 .Nm
 parses the file. Entries may be separated by spaces or tabs. Each rule must
 begin with either
-.Em map
+.Em map ,
+.Em bimap ,
 or
 .Em rdr .
 .Pp
@@ -135,6 +136,11 @@ map ppp0 10.0.0.0/8 -> 209.1.2.0/24
 .Ed
 .Pp
 That will cut the number down from ~16,000,000 addresses short to only 527,566.
+.Pp
+.Em bimap
+is not documented, because kjell@openbsd.org and aaron@openbsd.org
+have not gotten around to documenting it.
+You can mail them and express your distaste... especially to kjell!
 .Pp
 .Em rdr
 tells the NAT how to redirect incoming packets. It is useful if one wishes to
