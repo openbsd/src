@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fxp.4,v 1.26 2003/12/23 05:48:29 jmc Exp $
+.\"	$OpenBSD: fxp.4,v 1.27 2004/08/19 01:04:42 mickey Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -40,7 +40,8 @@
 The
 .Nm
 device driver supports the Intel EtherExpress 100 family of Ethernet cards
-based on the i82557, i82558, i82559 and i82562 chipsets.
+based on the various revisions of i82557, i82558, i82559,
+i82550, i82551 and i82562 chipsets.
 These come in several different varieties, including dual-port cards, and
 as built-in Ethernet solutions on certain motherboards.
 This includes, among others, the following models:
@@ -65,9 +66,10 @@ Intel PRO/100 M
 .El
 .Pp
 Other models of Intel network cards are supported by the
-.Xr ie 4
-and
+.Xr ie 4 ,
 .Xr iy 4
+and
+.Xr em 4
 drivers.
 This list is not exhaustive.
 In particular, the
@@ -116,6 +118,7 @@ the network connection (cable).
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr cardbus 4 ,
+.Xr em 4 ,
 .Xr icsphy 4 ,
 .Xr ie 4 ,
 .Xr ifmedia 4 ,
