@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_state.c,v 1.7 1997/02/11 22:23:28 kstailey Exp $	*/
+/*	$OpenBSD: ip_state.c,v 1.8 1997/06/09 15:50:57 kstailey Exp $	*/
 /*
  * (C)opyright 1995 by Darren Reed.
  *
@@ -246,7 +246,13 @@ fr_tcpstate(is, fin, ip, tcp, sport
 	 */
 	seq = ntohl(tcp->th_seq);
 	ack = ntohl(tcp->th_ack);
-	if (sport == is->is_sport) {
+
+	source = (sport == is->is_sport);
+
+	if (!(tcp->th_flags & TH_ACK))	/* Pretend an ack was sent */
+		ack = source ? is->is_ack : is->is_seq;
+
+	if (source) {
 		seqskew = seq - is->is_seq;
 		ackskew = ack - is->is_ack;
 	} else {
@@ -272,7 +278,7 @@ fr_tcpstate(is, fin, ip, tcp, sport
 	 * window size of the connection, store these values and match
 	 * the packet.
 	 */
-	if ((source = (sport == is->is_sport))) {
+	if (source) {
 		swin = is->is_swin;
 		dwin = is->is_dwin;
 	} else {
