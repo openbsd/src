@@ -702,7 +702,7 @@ epget(sc, totlen)
 	bus_io_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *top, **mp, *m;
-	int len;
+	int len, pad;
 	int sh;
 
 	m = sc->mb[sc->next_mb];
@@ -722,7 +722,9 @@ epget(sc, totlen)
 	}
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
-	len = MHLEN;
+	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
+	m->m_data += pad;
+	len = MHLEN - pad;
 	top = 0;
 	mp = &top;
 
@@ -749,7 +751,7 @@ epget(sc, totlen)
 			}
 			len = MLEN;
 		}
-		if (totlen >= MINCLSIZE) {
+		if (top && totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if (m->m_flags & M_EXT)
 				len = MCLBYTES;
