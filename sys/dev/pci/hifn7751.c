@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.48 2000/10/13 04:34:13 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.49 2000/10/23 21:22:42 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -330,6 +330,11 @@ hifn_reset_board(sc)
 	 */
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_MSTRESET |
 	    HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
+
+	/*
+	 * Wait another millisecond for the board to un-reset.
+	 */
+	DELAY(1000);
 }
 
 u_int32_t
