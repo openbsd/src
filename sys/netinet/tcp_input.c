@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.138 2004/01/06 17:38:12 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.139 2004/01/07 09:08:54 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -446,15 +446,6 @@ tcp_input(struct mbuf *m, ...)
 			return;
 		}
 #endif /* DIAGNOSTIC */
-		if (iphlen > sizeof(struct ip6_hdr)) {
-#if 0 /*XXX*/
-			ipv6_stripoptions(m, iphlen);
-			iphlen = sizeof(struct ip6_hdr);
-#else
-			m_freem(m);
-			return;
-#endif
-		}
 		break;
 #endif
 	default:
@@ -793,34 +784,39 @@ findpcb:
 				 */
 #ifdef INET6
 				/*
-				 * If deprecated address is forbidden,
-				 * we do not accept SYN to deprecated interface
-				 * address to prevent any new inbound connection from
-				 * getting established.  So drop the SYN packet.
-				 * When we do not accept SYN, we send a TCP RST,
-				 * with deprecated source address (instead of dropping
-				 * it).  We compromise it as it is much better for peer
-				 * to send a RST, and RST will be the final packet
-				 * for the exchange.
+				 * If deprecated address is forbidden, we do
+				 * not accept SYN to deprecated interface
+				 * address to prevent any new inbound
+				 * connection from getting established.
+				 * When we do not accept SYN, we send a TCP
+				 * RST, with deprecated source address (instead
+				 * of dropping it).  We compromise it as it is
+				 * much better for peer to send a RST, and
+				 * RST will be the final packet for the
+				 * exchange.
 				 *
-				 * If we do not forbid deprecated addresses, we accept
-				 * the SYN packet.  RFC2462 does not suggest dropping
-				 * SYN in this case.
-				 * If we decipher RFC2462 5.5.4, it says like this:
+				 * If we do not forbid deprecated addresses, we
+				 * accept the SYN packet.  RFC2462 does not
+				 * suggest dropping SYN in this case.
+				 * If we decipher RFC2462 5.5.4, it says like
+				 * this:
 				 * 1. use of deprecated addr with existing
-				 *    communication is okay - "SHOULD continue to be
-				 *    used"
+				 *    communication is okay - "SHOULD continue
+				 *    to be used"
 				 * 2. use of it with new communication:
-				 *   (2a) "SHOULD NOT be used if alternate address
-				 *        with sufficient scope is available"
-				 *   (2b) nothing mentioned otherwise.
-				 * Here we fall into (2b) case as we have no choice in
-				 * our source address selection - we must obey the peer.
+				 *   (2a) "SHOULD NOT be used if alternate
+				 *        address with sufficient scope is
+				 *        available"
+				 *   (2b) nothing mentioned otherwise. 
+				 * Here we fall into (2b) case as we have no
+				 * choice in our source address selection - we
+				 * must obey the peer.
 				 *
-				 * The wording in RFC2462 is confusing, and there are
-				 * multiple description text for deprecated address
-				 * handling - worse, they are not exactly the same.
-				 * I believe 5.5.4 is the best one, so we follow 5.5.4.
+				 * The wording in RFC2462 is confusing, and
+				 * there are multiple description text for
+				 * deprecated address handling - worse, they
+				 * are not exactly the same.  I believe 5.5.4
+				 * is the best one, so we follow 5.5.4.
 				 */
 				if (ip6 && !ip6_use_deprecated) {
 					struct in6_ifaddr *ia6;
@@ -3510,12 +3506,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 #ifdef INET6
 	/*
 	 * inp still has the OLD in_pcb stuff, set the
-	 * v6-related flags on the new guy, too.   This is
-	 * done particularly for the case where an AF_INET6
-	 * socket is bound only to a port, and a v4 connection
-	 * comes in on that port.
-	 * we also copy the flowinfo from the original pcb
-	 * to the new one.
+	 * v6-related flags on the new guy, too.
 	 */
 	{
 	  int flags = inp->inp_flags;
@@ -3537,15 +3528,6 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 #ifdef INET6
 	case AF_INET6:
 		inp->inp_laddr6 = ((struct sockaddr_in6 *)dst)->sin6_addr;
-
-		/*inp->inp_options = ip6_srcroute();*/ /* soon. */
-		/*
-		 * still need to tweak outbound options
-		 * processing to include this mbuf in
-		 * the right place and put the correct
-		 * NextHdr values in the right places.
-		 * XXX  rja
-		 */
 		break;
 #endif /* INET6 */
 	case AF_INET:
@@ -4116,7 +4098,7 @@ syn_cache_respond(sc, m)
 		ip6->ip6_vfc |= IPV6_VERSION;
 		ip6->ip6_plen = htons(tlen - hlen);
 		/* ip6_hlim will be initialized afterwards */
-		/* XXX flowlabel? */
+		/* leave flowlabel = 0, it is legal and require no state mgmt */
 		break;
 #endif
 	}
