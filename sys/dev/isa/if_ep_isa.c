@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isa.c,v 1.11 1998/02/26 00:11:28 deraadt Exp $	*/
+/*	$OpenBSD: if_ep_isa.c,v 1.12 1998/02/26 06:44:04 deraadt Exp $	*/
 /*	$NetBSD: if_ep_isa.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ struct cfattach ep_isa_ca = {
 	sizeof(struct ep_softc), ep_isa_probe, ep_isa_attach
 };
 
-static	void epaddcard __P((int, int, int));
+static	void epaddcard __P((int, int, int, u_short));
 
 /*
  * This keeps track of which ISAs have been through an ep probe sequence.
@@ -108,12 +108,14 @@ static struct epcard {
 	int	iobase;
 	int	irq;
 	char	available;
+	u_short	model;
 } epcards[MAXEPCARDS];
 static int nepcards;
 
 static void
-epaddcard(bus, iobase, irq)
+epaddcard(bus, iobase, irq, model)
 	int bus, iobase, irq;
+	u_short model;
 {
 
 	if (nepcards >= MAXEPCARDS)
@@ -122,6 +124,7 @@ epaddcard(bus, iobase, irq)
 	epcards[nepcards].iobase = iobase;
 	epcards[nepcards].irq = (irq == 2) ? 9 : irq;
 	epcards[nepcards].available = 1;
+	epcards[nepcards].model = model;
 	nepcards++;
 }
 
@@ -139,7 +142,7 @@ ep_isa_probe(parent, match, aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
-	bus_space_handle_t ioh;
+	bus_space_handle_t ioh, ioh2;
 	int slot, iobase, irq, i;
 	u_int16_t vendor, model;
 	struct ep_isa_done_probe *er;
@@ -203,7 +206,6 @@ ep_isa_probe(parent, match, aux)
 
 		irq = epreadeeprom(iot, ioh, EEPROM_RESOURCE_CFG);
 		irq >>= 12;
-		epaddcard(bus, iobase, irq);
 
 		/* so card will not respond to contention again */
 		bus_space_write_1(iot, ioh, 0, TAG_ADAPTER + 1);
@@ -215,6 +217,24 @@ ep_isa_probe(parent, match, aux)
 		 * we have checked for irq/drq collisions?
 		 */
 		bus_space_write_1(iot, ioh, 0, ACTIVATE_ADAPTER_TO_CONFIG);
+		/*
+		 * Don't attach a 3c509 in PnP mode.
+		 */
+		if ((model & 0xfff0) == PROD_ID_3C509) {
+			if (bus_space_map(iot, iobase, 1, 0, &ioh2)) {
+				printf(
+				"ep_isa_probe: can't map Etherlink iobase\n");
+				return 0;
+			}
+			if (bus_space_read_2(iot, ioh2, EP_W0_EEPROM_COMMAND)
+			    & EEPROM_TST_MODE) {
+				printf(
+				 "3COM 3C509 Ethernet card in PnP mode\n");
+				continue;
+			}
+			bus_space_unmap(iot, ioh2, 1);
+		}
+		epaddcard(bus, iobase, irq, model);
 	}
 	/* XXX should we sort by ethernet address? */
 
@@ -243,6 +263,7 @@ good:
 	ia->ia_irq = epcards[i].irq;
 	ia->ia_iosize = 0x10;
 	ia->ia_msize = 0;
+	ia->ia_aux = (void *)(long)(epcards[i].model);
 	return 1;
 }
 
@@ -267,7 +288,7 @@ ep_isa_attach(parent, self, aux)
 
 	chipset = (int)(long)ia->ia_aux;
 	if ((chipset & 0xfff0) == PROD_ID_3C509) {
-		printf(": 3Com 3C509 Ethernet\n");
+		printf(": 3Com 3C509 Ethernet");
 		epconfig(sc, EP_CHIPSET_3C509);
 	} else {
 		/*
