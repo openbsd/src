@@ -104,6 +104,10 @@ include <machine/reg.h>
 
 #include <sparc64/sparc64/cpuvar.h>
 
+ifdef COMPAT_NETBSD
+include <compat/netbsd/netbsd_syscall.h>
+endif
+
 ifdef notyet
 include <sparc64/dev/zsreg.h>
 include <sparc64/dev/zsvar.h>
@@ -274,3 +278,9 @@ define	DBR_OUT		offsetof(struct db_regs, dbr_out)
 define	DBR_LOCAL	offsetof(struct db_regs, dbr_local)
 define	DBR_IN		offsetof(struct db_regs, dbr_in)
 endif
+
+ifdef COMPAT_NETBSD
+define	NETBSD_SYS___sigreturn14	NETBSD_SYS___sigreturn14
+define	NETBSD_SYS_exit			NETBSD_SYS_exit
+endif
+
