@@ -1,15 +1,15 @@
 Installation is supported from several media types, including:
 	AmigaDOS HD partitions
 	Tape
-	NFS partitions
+	NFS
 	FTP
-	OpenBSD partitions, if doing an upgrade.
+	Net- or OpenBSD partitions, if such are available
 
-The install or upgrade miniroot filesystem needs to be transferred
-to the OpenBSD swap partition.  This can be done from AmigaDOS in
-the case of a new install or upgrade, or from OpenBSD when doing an
-upgrade.  See the "Preparing your System for OpenBSD Installation"
-section for details.
+The miniroot filesystem needs to be transferred to the OpenBSD
+swap partition.  This can be done from AmigaDOS in the case of
+a new install or upgrade, or from OpenBSD when doing an
+upgrade.  See the "Preparing your System for OpenBSD
+Installation" section for details.
 
 The steps necessary to prepare the distribution sets
 for installation depend on which method of installation
@@ -20,7 +20,7 @@ To prepare for installing via an AmigaDOS partition:
 	To install OpenBSD from an AmigaDOS partition, you need to
 	get the OpenBSD distribution sets you wish to install
 	on your system on to an AmigaDOS partition.  All of the
-	set_name.xx pieces can be placed in a single directory
+	set_name.tar.gz pieces can be placed in a single directory
 	instead of separate ones for each distribution set.  This
 	will also simplify the installation work later on.
 
@@ -51,14 +51,7 @@ To prepare for installing via a tape:
 	Once you have done this, you can proceed to the next
 	step in the installation process, preparing your hard disk.
 
-To prepare for installing via an NFS partition:
-
-	NOTE: this method of installation is recommended
-	      only for those already familiar with using
-	      the BSD network-manipulation commands and
-	      interfaces.  If you aren't, this documentation
-	      should help, but is not intended to be
-	      all-encompassing.
+To prepare for installing via NFS:
 
 	Place the OpenBSD software you wish to install into
 	a directory on an NFS server, and make that directory
@@ -75,13 +68,6 @@ To prepare for installing via an NFS partition:
 	step in the installation process, preparing your hard disk.
 
 To prepare for installing via FTP:
-
-	NOTE: this method of installation is recommended
-	      only for those already familiar with using
-	      the BSD network-manipulation commands and
-	      interfaces.  If you aren't, this documentation
-	      should help, but is not intended to be
-	      all-encompassing.
 
 	The preparations for this method of installation
 	are easy: all you have to do is make sure that

@@ -81,11 +81,9 @@ Preparing you hard disk with HDToolBox:
 
 Transferring the miniroot filesystem:
 
-	The OpenBSD/amiga installation or upgrade now uses a "miniroot"
+	The OpenBSD/amiga installation or upgrade uses a "miniroot"
 	fileystem which is installed on the partition used by OpenBSD
-	for swapping.  This removes the requirement of using a floppy
-	disk for the filesystem used by the installation/upgrade
-	process.  It also allows more utilities to be present on the
+	for swapping.  This allows more utilities to be present on the
 	filesystem than would be available when using an 880K floppy
 	disk.
 
