@@ -1,7 +1,7 @@
-#	$OpenBSD: install.sub,v 1.286 2003/01/25 15:46:52 krw Exp $
+#	$OpenBSD: install.sub,v 1.287 2003/01/26 15:53:13 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
-# Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
+# Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -97,13 +97,13 @@ set_term() {
 welcome() {
 	cat << __EOT
 
-Welcome to the OpenBSD/${ARCH} ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} program.
+Welcome to the $OBSD $MODE program.
 
-This program will help you ${MODE} OpenBSD in a simple and rational way. At
+This program will help you $MODE OpenBSD in a simple and rational way. At
 any prompt except password prompts you can run a shell command by typing
 '!foo', or escape to a shell by typing '!'. Default answers are shown in []'s
 and are selected by pressing RETURN. At any time you can exit this program by
-pressing Control-C and then RETURN, but quitting during an ${MODE} can leave
+pressing Control-C and then RETURN, but quitting during an $MODE can leave
 your system in an inconsistent state.
 
 __EOT
@@ -482,27 +482,61 @@ addhostent() {
 	echo "$1 $2" >> /tmp/hosts
 }
 
-# Show selection list and get user response to give question
-# in global _resp.
+# Show list of available sets and let the user select which sets to install.
 #
-# $1 = full list to display
-# $2 = list of already selected elements
-# $3 = question to ask user
-do_selection_list() {
-	local _next _elem
+# $1 = available sets
+# $2 = already selected sets
+#
+# Set $resp to list of selected sets.
+select_sets() {
+	local _avail=$1 _selected=$2 _next _f _action
 
-	for _elem in $1; do
-		if isin $_elem $2; then
-			echo -n "	[X] "
-		else
-			echo -n "	[ ] "
-			: ${_next:=$_elem}
-		fi
-		echo $_elem
+	while : ; do
+		cat << __EOT
+
+The following sets are available. Enter a filename, 'all' to select
+all the sets, or 'done'. You may de-select a set by prepending a '-'
+to its name.
+
+__EOT
+		_next=
+		for _f in $_avail; do
+			if isin $_f $_selected; then
+				echo "	[X] $_f"
+			else
+				echo "	[ ] $_f"
+				: ${_next:=$_f}
+			fi
+		done
+		: ${_next:=done}
+
+		ask "\nFile name? (or 'done')" "$_next"
+
+		case $resp in
+		""|+|-) continue
+			;;
+		done)	break
+			;;
+		-*)	_action=rmel
+			;;
+		*)	_action=addel
+			;;
+		esac
+
+		resp=${resp#+|-}
+		[[ $resp == all ]] && resp=*
+
+		for _f in $_avail; do
+			eval "case $_f in
+			$resp)
+				_selected=\`$_action $_f \$_selected\`
+				;;
+			esac"
+		done
+
 	done
-	: ${_next:=done}
 
-	ask "\n$3 (or 'done')" "$_next"
+	resp=$_selected
 }
 
 configure_all_interfaces() {
@@ -804,111 +838,56 @@ enable_network() {
 	return 0
 }
 
-# Do globbing on the selection and parse +/-. Update the global
-# GET_FILES appropriately.
-#
-# $1 = user's selection (e.g. 'x*', or '-games*')
-# $2 = list of sets available from current source
-glob_selection() {
-	local _selection=$1 _sets=$2 _action _f
+# Install a user-selected subset of the files in $2 from the source
+# named in $1. Display an error message for failed installs so the
+# user will know to try again.
+install_files () {
+	local _src=$1 _files=$2 _f _sets _get_sets
 
-	# Change +/- into add/remove, but ignore bare '+' or '-'
-	_action=addel
-	case $_selection in
-	""|+|-)	return
-		;;
-	+*)	_selection=${_selection#?}
-		;;
-	-*)	_selection=${_selection#?}
-		_action=rmel
-		;;
-	esac
-
-	[ "$_selection" = "all" ] && _selection=*
-
-	set -o noglob
-	for _f in $_sets; do
-		eval "case $_f in
-		$_selection)
-			GET_FILES=\`$_action $_f \$GET_FILES\`
-			;;
-		esac"
-	done
-	set +o noglob
-}
-
-# Set GET_FILES to the list of sets requested by the user.
-# $1 = list of files available in source directory or url.
-# $2 = source directory or url
-get_get_files () {
-	local _files=$1 _src=$2 _sets _f
-
-	GET_FILES=
-
-	for _f in $THESETS ; do
-		if isin $_f $_files ; then
-			_sets="$_sets $_f"
-			isin $_f $DEFAULTSETS && GET_FILES="$GET_FILES $_f"
-		fi
+	# Initialize _sets to the list of sets found in _src, and initialize
+	# _get_sets to the intersection of _sets and DEFAULTSETS. 
+	#
+	# Sets will be installed in the order given in THESETS to ensure proper
+	# installation.  So, to minimize user confusion display the sets in the
+	# order in which they will be installed.
+	for _f in $THESETS; do
+		isin $_f $_files || continue;
+		_sets=$(addel $_f $_sets)
+		isin $_f $DEFAULTSETS && _get_sets=$(addel $_f $_get_sets)
 	done
 
-	if [ -z "$_sets" ]; then
+	if [[ -z $_sets ]]; then
 		cat << __EOT
-No OpenBSD ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} sets were found in
+No $OBSD sets were found at
 
-    '${_src}'
+    '$_src'
 
-Valid set names would be:
+Set names are: $THESETS
 __EOT
-		for _f in $THESETS ; do
-			echo "   $_f"
-		done
 		return
 	fi
 
-	# Allow the user to select/de-select additional sets
-	while : ; do
-		cat << __EOT
+	select_sets "$_sets" "$_get_sets"
 
-The following sets are available. Enter a filename, 'all' to select
-all the sets, or 'done'. You may de-select a set by prepending a '-'
-to its name.
+	[[ -n $resp ]] || return
+	_get_sets=$resp
 
-__EOT
-		do_selection_list "$_sets" "$GET_FILES" "File Name?"
-
-		[ "$resp" = "done" ] && break
-
-		glob_selection "$resp" "$_sets"
-	done
-}
-
-# Install the list of files in the global GET_FILES from the source
-# named in $1. Display an error message for failed installs so the
-# user will know to try again.
-install_get_files () {
-	local _f _src=$1
-
-	# User may have selected no files
-	[[ -n $GET_FILES ]] || return
-
-	ask "Ready to ${MODE} sets?" y
+	ask "Ready to $MODE sets?" y
 	case $resp in
 	n*|N*)	return ;;
 	esac
 
-	echo
 	for _f in $THESETS ; do
-		isin $_f $GET_FILES || continue
-		echo "Getting ${_f} ..."
+		isin $_f $_get_sets || continue
+		echo "Getting $_f ..."
 		case $_f in
-		*.tgz)	ftp ${_ftp_active} -o - -V -m "${_src}/${_f}" | tar zxpf - -C /mnt
+		*.tgz)	ftp $_ftp_active -o - -V -m "$_src/$_f" | tar zxpf - -C /mnt
 			;;
-		*)	ftp ${_ftp_active} -o "/mnt/${_f}" -V -m "${_src}/${_f}"
+		*)	ftp $_ftp_active -o "/mnt/$_f" -V -m "$_src/$_f"
 			;;
 		esac
 		if [ $? -ne 0 ]; then
-			echo "'${_f}' did not install correctly."
+			echo "'$_f' did not install correctly."
 		else
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
 		fi
@@ -955,18 +934,18 @@ install_url() {
 	: ${_proxy_host:=none}
 
 	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" "$_proxy_host"
-	if [ "$resp" = "none" ]; then
+	if [[ $resp == none ]]; then
 		unset _proxy_host ftp_proxy http_proxy
 	else
 		_proxy_host=$resp
-		export ftp_proxy=${_proxy_host}
-		export http_proxy=${_proxy_host}
+		export ftp_proxy=$_proxy_host
+		export http_proxy=$_proxy_host
 	fi
 
 	# Provide a list of possible servers
 	: ${_ftp_getlist:=y}
 
-	ask "Do you want to see a list of potential ${_url_type} servers?" "$_ftp_getlist"
+	ask "Do you want to see a list of potential $_url_type servers?" "$_ftp_getlist"
 	case $resp in
 	n*|N*)	_ftp_getlist=n
 		;;
@@ -974,14 +953,16 @@ install_url() {
 		_ftp_getlist=y
 		# ftp.openbsd.org == 129.128.5.191 and will remain at
 		# that address for the forseeable future.
-		ftp ${_ftp_active} -V -a -o /tmp/ftplist ftp://129.128.5.191/pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/ftplist > /dev/null
+		ftp ${_ftp_active} -V -a -o /tmp/ftplist ftp://129.128.5.191/$FTPDIR/ftplist > /dev/null
 		grep "^${_url_type}:" /tmp/ftplist | cat -n | less -XE
 		;;
 	esac
 
+	: ${_ftp_server_dir:=pub/OpenBSD/$SETDIR}
+
 	# Get server IP address or hostname
 	resp=
-	while [ -z "$resp" ] ; do
+	while [[ -z $resp ]] ; do
 		if [ ! -f /tmp/ftplist ]; then
 			eval ask \"Server IP address, or hostname?\" \"\$_${_url_type}_server_ip\"
 			continue;
@@ -1001,14 +982,12 @@ install_url() {
 				echo "There is no ${resp}th line in the list."
 			else
 				tline=`grep "^${_url_type}:" /tmp/ftplist | sed -ne "${resp}p"`
+				echo "Using	$tline"
 				url=`echo $tline | sed -e "s/^${_url_type}:\/\///" |
 					cutword -t' ' 1 | cutword -t' ' 1`
 				host=`echo $url | cutword -t/ 1`
-				path=`echo $url | sed -e "s/^${host}\///"`
-				path=${path}/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}
 				eval _${_url_type}_server_ip=$host
-				eval _${_url_type}_server_dir=$path
-				echo "Using	$tline"
+				eval _${_url_type}_server_dir=$(echo $url | sed -e "s/^${host}\///")/$SETDIR
 			fi
 
 			# Always do it again, just to double check
@@ -1024,7 +1003,7 @@ install_url() {
 	# Some older servers lie about their support for passive mode ftp, so
 	# ask the user if it worth trying passive mode to the chosen server.
 	# Irrelevant if using a proxy.
-	if [ "$_url_type" = "ftp" -a -z "$ftp_proxy" ]; then
+	if [[ $_url_type == ftp && -z $ftp_proxy ]]; then
 		case $_ftp_active in
 		-A)	resp=n ;;
 		*)	resp=y ;;
@@ -1038,15 +1017,10 @@ install_url() {
 	fi
 
 	# Get server directory
-	if [ "$_url_type" = "ftp" -a -z "$_ftp_server_dir" ] ; then
-		# Default ftp dir
-		_ftp_server_dir=pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}
-	fi
-
 	eval ask_until \"Server directory?\" \"\$_${_url_type}_server_dir\"
 	eval _${_url_type}_server_dir=$resp
 
-	if [ "$_url_type" = "ftp" ]; then
+	if [[ $_url_type == ftp ]]; then
 		# Get login name, setting IFS to nothing so trailing or
 		# embedded blanks are preserved!
 		_oifs=$IFS
@@ -1056,9 +1030,9 @@ install_url() {
 
 		# Get password unless anonymous
 		_ftp_server_password=root@`hostname`
-		if [ "$_ftp_server_login" != "anonymous" ]; then
+		if [[ $_ftp_server_login != anonymous ]]; then
 			resp=
-			while [ -z "$resp" ] ; do
+			while [[ -z $resp ]] ; do
 				askpass "Password? (will not echo)"
 			done
 			_ftp_server_password=$resp
@@ -1067,7 +1041,7 @@ install_url() {
 	fi
 
 	# Build up the base url since it is so nasty...
-	if [ "$_url_type" = "ftp" -a "$_ftp_server_login" != "anonymous" ]; then
+	if [[ $_url_type == ftp && $_ftp_server_login != anonymous ]]; then
 		_url_login=`encode_for_url "$_ftp_server_login"`
 		_url_pass=`encode_for_url "$_ftp_server_password"`
 		_url_base=ftp://${_url_login}:${_url_pass}@${_ftp_server_ip}/${_ftp_server_dir}
@@ -1076,8 +1050,7 @@ install_url() {
 	fi
 
 	# Get list of files from the server.
-	# XXX - check for nil $_file_list and deal
-	if [ "$_url_type" = "ftp" -a -z "$ftp_proxy" ] ; then
+	if [[ $_url_type == ftp && -z $ftp_proxy ]] ; then
 		_file_list=`ftp_list_files "$_ftp_server_ip" "$_ftp_server_login" "$_ftp_server_password" "$_ftp_server_dir"`
 		ftp_error "Login failed." "$_file_list" && return
 		ftp_error "No such file or directory." "$_file_list" && return
@@ -1087,9 +1060,7 @@ install_url() {
 		_file_list=`ftp -o - -V "${_url_base}/index.txt" | sed 's///'`
 	fi
 
-	get_get_files "$_file_list" "`eval echo \\$_${_url_type}_server_dir`"
-
-	install_get_files "$_url_base"
+	install_files "$_url_base" "$_file_list"
 }
 
 # $1 - mount point directory is relative to
@@ -1113,9 +1084,7 @@ install_mounted_fs() {
 		esac
 	done
 
-	get_get_files "`ls -l $_dir`" "$_dir"
-
-	install_get_files "file:$_dir"
+	install_files "file://$_dir" "`ls -l $_dir`" 
 }
 
 install_cdrom() {
@@ -1195,7 +1164,7 @@ __EOT
 		return
 	fi
 
-	install_mounted_fs /mnt2 "${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
+	install_mounted_fs /mnt2 "$SETDIR"
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
@@ -1796,10 +1765,13 @@ __EOT
 
 ROOTDISK=
 ROOTDEV=
+
 VERSION=32
-VERSION_MAJOR=$(( $VERSION / 10 ))
-VERSION_MINOR=$(( $VERSION % 10 ))
-export VERSION VERSION_MAJOR VERSION_MINOR
+
+VNAME="$(( $VERSION / 10 )).$(( $VERSION % 10 ))"
+SETDIR="$VNAME/$ARCH"
+FTPDIR="pub/OpenBSD/$VNAME"
+OBSD="OpenBSD/$ARCH $VNAME" 
 
 # Extract and save one boot's worth of dmesg
 dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' > /var/run/dmesg.boot
@@ -1823,9 +1795,6 @@ for _set in base etc misc comp man game xbase xshare xfont xserv site ; do
 	isin $_set xbase xshare xfont xserv site && continue
 	DEFAULTSETS="$DEFAULTSETS ${_set}${VERSION}.tgz"
 done
-
-# Global variable using during sets installation
-GET_FILES=
 
 # decide upon an editor
 if [ -z "$EDITOR" ] ; then
