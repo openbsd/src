@@ -1,6 +1,32 @@
-/*	$OpenBSD: getopt_long.c,v 1.4 2002/12/05 22:26:04 millert Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.5 2002/12/06 16:03:29 millert Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
+/*
+ * Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+ * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +64,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getopt_long.c,v 1.4 2002/12/05 22:26:04 millert Exp $";
+static char *rcsid = "$OpenBSD: getopt_long.c,v 1.5 2002/12/06 16:03:29 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -70,7 +96,7 @@ char    *optarg;		/* argument associated with option */
 
 static int getopt_internal(int, char * const *, const char *,
 			   const struct option *, int *, int);
-static int parse_long_options(int, char * const *, const char *,
+static int parse_long_options(char * const *, const char *,
 			      const struct option *, int *, int);
 static int gcd(int, int);
 static void permute_args(int, int, int, char * const *);
@@ -103,7 +129,7 @@ gcd(int a, int b)
 		b = c;
 		c = a % b;
 	}
-	   
+
 	return (b);
 }
 
@@ -147,11 +173,11 @@ permute_args(int panonopt_start, int panonopt_end, int opt_end,
 /*
  * parse_long_options --
  *	Parse long options in argc/argv argument vector.
- *  Returns -2 if long_only is set and the current option could be a short
+ *  Returns -1 if long_only is set and the current option could be a short
  *	(single character) option instead.
  */
 static int
-parse_long_options(int nargc, char * const *nargv, const char *options,
+parse_long_options(char * const *nargv, const char *options,
 	const struct option *long_options, int *idx, int long_only)
 {
 	char *current_argv, *has_equal;
@@ -249,7 +275,7 @@ parse_long_options(int nargc, char * const *nargv, const char *options,
 	} else {			/* unknown option */
 		if (long_only) {
 			--optind;
-			return (-2);
+			return (-1);
 		}
 		if (PRINT_ERROR)
 			warnx(illoptstring, current_argv);
@@ -261,7 +287,7 @@ parse_long_options(int nargc, char * const *nargv, const char *options,
 	if (long_options[match].flag) {
 		*long_options[match].flag = long_options[match].val;
 		return (0);
-	} else 
+	} else
 		return (long_options[match].val);
 }
 
@@ -275,6 +301,7 @@ getopt_internal(int nargc, char * const *nargv, const char *options,
 {
 	char *oli;				/* option letter list index */
 	int optchar;
+	int long_only;
 	static int posixly_correct = -1;
 
 	optarg = NULL;
@@ -328,7 +355,7 @@ start:
 			place = EMSG;
 			if (flags & FLAG_ALLARGS) {
 				/*
-				 * GNU extension: 
+				 * GNU extension:
 				 * return non-option as argument to option 1
 				 */
 				optarg = nargv[optind++];
@@ -373,31 +400,37 @@ start:
 			return (-1);
 		}
 		place++;
+	}
 
-		/* Check long options if we have any */
-		if (long_options != NULL) {
-			int long_only = 0;
-
-			if (*place == '-' ||
-			    (long_only = (flags & FLAG_LONGONLY))) {
-				if (!long_only)
-					place++;
-				optchar = parse_long_options(nargc, nargv,
-				    options, long_options, idx, long_only);
-				if (optchar != -2) {
-					place = EMSG;
-					return (optchar);
-				}
+	/* Check long options if we have any */
+	long_only = 0;
+	if (long_options != NULL) {
+		if (*place == '-' ||
+		    (long_only = (flags & FLAG_LONGONLY))) {
+			if (!long_only)
+				place++;
+			optchar = parse_long_options(nargv, options,
+			    long_options, idx, long_only);
+			if (optchar != -1) {
+				place = EMSG;
+				return (optchar);
 			}
 		}
 	}
 	if ((optchar = (int)*place++) == (int)':' ||
 	    (oli = strchr(options, optchar)) == NULL) {
 		/* option letter unknown or ':' */
-		if (!*place)
+		if (PRINT_ERROR) {
+			if (long_only)
+				warnx(illoptstring, place - 1);
+			else
+				warnx(illoptchar, optchar);
+		}
+		if (!*place || long_only) {
 			++optind;
-		if (PRINT_ERROR)
-			warnx(illoptchar, optchar);
+			if (*place)
+				place = EMSG;
+		}
 		optopt = optchar;
 		return (BADCH);
 	}
@@ -413,8 +446,8 @@ start:
 			return (BADARG);
 		} else				/* white space */
 			place = nargv[optind];
-		optchar = parse_long_options(nargc, nargv, options,
-		    long_options, idx, 0);
+		optchar = parse_long_options(nargv, options, long_options,
+		    idx, 0);
 		place = EMSG;
 		return (optchar);
 	}
