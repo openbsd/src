@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.14 2003/02/20 20:38:08 millert Exp $	*/
+/*	$OpenBSD: env.c,v 1.15 2003/02/21 16:47:29 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: env.c,v 1.14 2003/02/20 20:38:08 millert Exp $";
+static char const rcsid[] = "$OpenBSD: env.c,v 1.15 2003/02/21 16:47:29 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -114,6 +114,18 @@ env_set(char **envp, char *envstr) {
 	return (p);
 }
 
+/* The following states are used by load_env(), traversed in order: */
+enum env_state {
+	NAMEI,		/* First char of NAME, may be quote */
+	NAME,		/* Subsequent chars of NAME */
+	EQ1,		/* After end of name, looking for '=' sign */
+	EQ2,		/* After '=', skipping whitespace */
+	VALUEI,		/* First char of VALUE, may be quote */
+	VALUE,		/* Subsequent chars of VALUE */
+	FINI,		/* All done, skipping trailing whitespace */
+	ERROR,		/* Error */
+};
+
 /* return	ERR = end of file
  *		FALSE = not an env setting (file was repositioned)
  *		TRUE = was an env setting
@@ -122,8 +134,9 @@ int
 load_env(char *envstr, FILE *f) {
 	long filepos;
 	int fileline;
+	enum env_state state;
 	char name[MAX_ENVSTR], val[MAX_ENVSTR];
-	int fields;
+	char quotechar, *c, *str;
 
 	filepos = ftell(f);
 	fileline = LineNumber;
@@ -133,40 +146,89 @@ load_env(char *envstr, FILE *f) {
 
 	Debug(DPARS, ("load_env, read <%s>\n", envstr))
 
-	name[0] = val[0] = '\0';
-	fields = sscanf(envstr, "%[^ =] = %[^\n#]", name, val);
-	if (fields != 2) {
-		Debug(DPARS, ("load_env, not 2 fields (%d)\n", fields))
+	bzero(name, sizeof name);
+	bzero(val, sizeof val);
+	str = name;
+	state = NAMEI;
+	quotechar = '\0';
+	c = envstr;
+	while (state != ERROR && *c) {
+		switch (state) {
+		case NAMEI:
+		case VALUEI:
+			if (*c == '\'' || *c == '"')
+				quotechar = *c++;
+			state++;
+			/* FALLTHROUGH */
+		case NAME:
+		case VALUE:
+			if (quotechar) {
+				if (*c == quotechar) {
+					state++;
+					c++;
+					break;
+				}
+				if (state == NAME && *c == '=') {
+					state = ERROR;
+					break;
+				}
+			} else {
+				if (state == NAME) {
+					if (isspace((unsigned char)*c)) {
+						c++;
+						state++;
+						break;
+					}
+					if (*c == '=') {
+						state++;
+						break;
+					}
+				}
+			}
+			*str++ = *c++;
+			break;
+
+		case EQ1:
+			if (*c == '=') {
+				state++;
+				str = val;
+				quotechar = '\0';
+			} else {
+				if (!isspace((unsigned char)*c))
+					state = ERROR;
+			}
+			c++;
+			break;
+		case EQ2:
+		case FINI:
+			if (isspace((unsigned char)*c))
+				c++;
+			else
+				state++;
+			break;
+		}
+	}
+	if (state != FINI && !(state == VALUE && !quotechar)) {
+		Debug(DPARS, ("load_env, not an env var, state = %d\n", state))
 		fseek(f, filepos, 0);
 		Set_LineNum(fileline);
 		return (FALSE);
 	}
-
-	/*
-	 * 2 fields from scanf; looks like an env setting.
-	 */
-
-	/*
-	 * process value string
-	 */
-	/*local*/{
-		int	len = strdtb(val);
-
-		if (len >= 2) {
-			if (val[0] == '\'' || val[0] == '"') {
-				if (val[len-1] == val[0]) {
-					val[len-1] = '\0';
-					memmove(val, val+1, len);
-				}
-			}
-		}
+	if (state == VALUE) {
+		/* End of unquoted value: trim trailing whitespace */
+		c = val + strlen(val);
+		while (c > val && isspace((unsigned char)c[-1]))
+			*(--c) = '\0';
 	}
+
+	/* 2 fields from parser; looks like an env setting */
 
 	/*
 	 * This can't overflow because get_string() limited the size of the
-	 * name and val fields.  Still, it doesn't hurt...
+	 * name and val fields.  Still, it doesn't hurt to be careful...
 	 */
-	(void) snprintf(envstr, MAX_ENVSTR, "%s=%s", name, val);
+	if (!glue_strings(envstr, MAX_ENVSTR, name, val, '='))
+		return (FALSE);
 	Debug(DPARS, ("load_env, <%s> <%s> -> <%s>\n", name, val, envstr))
 	return (TRUE);
 }
