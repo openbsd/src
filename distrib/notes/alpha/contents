@@ -1,6 +1,13 @@
 TopPart
 
 OpenBSDfloppy
+				This floppy image has no support for 264-based
+				MACHINE computers (XP1000, DS10, DS20...).
+
+		floppyB{:--:}OSrev.fs	The MACHINE boot and installation floppy;
+				see below.
+				This floppy image supports the 264-based MACHINE
+				computers, but no other models.
 
 OpenBSDdistsets
 
@@ -12,9 +19,9 @@ OpenBSDfloppydesc
 
 DistributionDescription(ten)
 
-OpenBSDbase(49.9M,133.6M)
+OpenBSDbase(shared,49.9M,133.6M)
 
-OpenBSDcomp(18.0M,65.6M)
+OpenBSDcomp(shared,18.0M,65.6M)
 
 OpenBSDetc(160.6K,720.0K)
 
