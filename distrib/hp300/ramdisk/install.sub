@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.4 1997/04/21 07:32:12 downsj Exp $
+#	$OpenBSD: install.sub,v 1.5 1997/10/01 22:16:10 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #	OpenBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=""				# filled in below
-VERSION=2.1				# filled in automatically (see list)
+VERSION=2.2				# filled in automatically (see list)
 export VERSION
 
 ALLSETS="base comp etc games man misc text"	# default install sets
