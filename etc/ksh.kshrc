@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.3 1998/03/22 03:39:10 marc Exp $
+#	$OpenBSD: ksh.kshrc,v 1.4 1999/11/20 04:11:11 millert Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh 
@@ -60,7 +60,6 @@ case "$-" in
 
 	alias ls='ls -CF'
 	alias h='fc -l | more'
-	_cd() { "cd" $*; }
 	# the PD ksh is not 100% compatible
 	case "$KSH_VERSION" in
 	*PD*)	# PD ksh
@@ -110,7 +109,7 @@ case "$-" in
 		alias istripe='ilabel "$USER@$HOST ($tty)"'
 
 		wftp () { ilabel "ftp $*"; "ftp" $*; eval istripe; }
-		wcd () { _cd $*; eval stripe; }
+		wcd () { \cd "$@"; eval stripe; }
 		wtelnet ()
 		{
 			"telnet" "$@"
