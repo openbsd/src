@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.31 2004/02/16 19:01:02 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.32 2004/02/20 19:13:08 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -18,8 +18,8 @@ dnl OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl *** sparc64 specific definitions
 dnl
-__devitem(s64_tzs, tty[a-z]*, Zilog 8530 Serial Port)dnl
-__devitem(s64_czs, cua[a-z]*, Zilog 8530 Serial Port)dnl
+__devitem(s64_tzs, tty[a-z]*, Zilog 8530 serial port,zs)dnl
+__devitem(s64_czs, cua[a-z]*, Zilog 8530 serial port,zs)dnl
 _mkdev(s64_tzs, {-tty[a-z]-}, {-u=${i#tty*}
 	case $u in
 	a) n=0 ;;

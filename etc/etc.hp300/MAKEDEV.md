@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.18 2004/02/17 11:18:06 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.19 2004/02/20 19:13:08 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -41,7 +41,7 @@ _mkdev(st_hp300, ct*|mt*|st*,
 		echo bad unit for tape in: $1
 		;;
 	esac-})dnl
-__devitem(st_hp300, st*, Exabyte tape)dnl
+__devitem(st_hp300, st*, Exabyte tape,st)dnl
 __devitem(grf, grf*, Raw interface to HP300 graphics devices)dnl
 dnl
 dnl

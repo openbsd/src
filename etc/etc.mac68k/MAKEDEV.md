@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.15 2004/02/16 19:01:01 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.16 2004/02/20 19:13:08 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -19,7 +19,7 @@ dnl
 dnl
 dnl *** mac68k specific defintions
 dnl
-__devitem(ttye, ttye*, ITE bitmapped consoles)dnl
+__devitem(ttye, ttye*, ITE bitmapped consoles,ite)dnl
 dnl
 _TITLE(make)
 _DEV(all)

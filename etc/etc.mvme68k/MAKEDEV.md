@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.12 2004/02/16 19:01:02 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.13 2004/02/20 19:13:08 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -19,8 +19,8 @@ dnl
 dnl
 dnl *** mvme68k-specific devices
 dnl
-__devitem(mvme_tzs, ttya-d, On-board serial ports)dnl
-__devitem(mvme_czs, cuaa-d, On-board call-up devices)dnl
+__devitem(mvme_tzs, ttya-d, On-board serial ports,zs)dnl
+__devitem(mvme_czs, cuaa-d, On-board call-up devices,zs)dnl
 _mkdev(mvme_tzs, {-tty[a-z]-}, {-u=${i#tty*}
 	case $u in
 	a) n=0 ;;
@@ -56,7 +56,7 @@ _mkdev(cl, {-tty0*-}, {-u=${i#tty0*}
 		;;
 	*) echo unknown tty device $i ;;
 	esac-})dnl
-__devitem(ttyw, ttyw*, WG CL-CD2400 serial ports)dnl
+__devitem(ttyw, ttyw*, WG CL-CD2400 serial ports,nothing)dnl
 _mkdev(ttyw, {-ttyw*-}, {-u=${i#ttyw*}
 	case $u in
 	0|1|2|3)
@@ -65,7 +65,7 @@ _mkdev(ttyw, {-ttyw*-}, {-u=${i#ttyw*}
 		;;
 	*) echo unknown tty device $i ;;
 	esac-})dnl
-__devitem(lp, par0, On-board printer port)dnl
+__devitem(lp, par0, On-board printer port,nothing)dnl
 _mkdev(lp, {-lp*-}, {-u=${i#lp*}
 	case $u in
 	0) M par$u c major_lp_c $u 600;;

@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.17 2004/02/17 11:18:08 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.18 2004/02/20 19:13:08 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -23,7 +23,7 @@ __devitem(hd, hd*, {-HDC9224 disks-})dnl
 __devitem(dhu, dhu*, UNIBUS DHU11)dnl
 __devitem(dmz, dmz*, UNIBUS DMZ32)dnl
 __devitem(dmf, dmf*, UNIBUS DMF32)dnl
-__devitem(dh, dh*, {-UNIBUS DH11 and emulations (e.g. Able dmax, Emulex CS-11)-})dnl
+__devitem(dh, dh*, {-UNIBUS DH11 and emulations (e.g. Able dmax{-,-} Emulex CS-11)-})dnl
 __devitem(vt, vt*, {-console-})dnl
 __devitem(dz, dz*, UNIBUS DZ11 and DZ32)dnl
 __devitem(dl, dl*, UNIBUS DL11)dnl
@@ -112,6 +112,7 @@ _DEV(hk, 11, 3)
 _DEV(hd, 58, 19)
 _DEV(hp, 4, 0)
 _DEV(ra, 9, 9)
+_DEV(raid, 73, 25)
 _DEV(rb, 23, 11)
 _DEV(rd, 62, 23)
 _DEV(rl, 32, 14)
@@ -145,7 +146,6 @@ _DEV(bpf, 56)
 _DEV(fdesc, 53)
 _DEV(lkm, 28)
 _DEV(pf, 42)
-_DEV(raid, 73, 25)
 _DEV(rnd, 67)
 _DEV(ses, 124)
 _DEV(ss, 64)

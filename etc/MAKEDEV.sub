@@ -1,4 +1,4 @@
-dnl	$OpenBSD: MAKEDEV.sub,v 1.11 2004/02/16 18:58:53 miod Exp $
+dnl	$OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp $
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -66,8 +66,8 @@ dnl store a version string for 'this' file
 dnl
 dnl vers ( uniqueidstring, versionstring, subdir )
 dnl
-dnl example1: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.11 2004/02/16 18:58:53 miod Exp $-})
-dnl example2: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.11 2004/02/16 18:58:53 miod Exp $-}, etc.MACHINE)
+dnl example1: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp $-})
+dnl example2: vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp $-}, etc.MACHINE)
 dnl
 dnl if subdir is defined, prepend it to the filename in the version string
 dnl
@@ -78,7 +78,7 @@ define({-vers-},
 dnl
 dnl Version info for this file:
 dnl
-vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.11 2004/02/16 18:58:53 miod Exp $-})dnl
+vers(__file__, {-$OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp $-})dnl
 dnl
 dnl
 define({-_addsubdir-},
@@ -202,7 +202,7 @@ define({-ifdev-}, {-ifelse($1__DEV, Y, {-$2-})-})dnl
 dnl
 define({-_MKDEV-}, {-$1_mkdev-})dnl
 define({-_TITLE-}, {-$1_title-})dnl
-define({-__devitem-}, {-define($1_dev, {-_devitem($2, $3)-})$4-})dnl
+define({-__devitem-}, {-define($1_dev, {-_devitem($2, $3)-})-})dnl
 define({-__devtitle-}, {-define($1_title, {-_devtitle($2)-})-})dnl
 dnl
 dnl Beginning and ending of case entries, just incase we change in the
