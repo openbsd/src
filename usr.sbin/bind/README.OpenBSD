@@ -1,4 +1,4 @@
-$OpenBSD: README.OpenBSD,v 1.2 2003/02/26 12:39:10 jakob Exp $
+$OpenBSD: README.OpenBSD,v 1.3 2003/02/26 12:52:26 jakob Exp $
 
 - arc4random() support (integrated in 9.3.0-snapshot)
 - call tzset before chroot
@@ -11,4 +11,5 @@ $OpenBSD: README.OpenBSD,v 1.2 2003/02/26 12:39:10 jakob Exp $
 - chroot to /var/named by default
 - setuid to user named by default
 - write pid-file before chroot
-- Listen to IPv6 interfaces by default
+- add nslookup(8) manpage
+- listen to IPv6 interfaces by default
