@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.21 2000/12/14 13:26:26 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.22 2000/12/27 18:21:11 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -46,6 +46,11 @@ Conversion methods are outlined here.
 This is an incomplete draft; some variables and targets are not yet documented.
 .Sh TARGETS
 .Bl -tag -width do-configure
+.It Ar addsum
+Complete the ${CHECKSUM_FILE} record of checksums with files that have been
+added since
+.Ar makesum .
+Complain if anything does not match.
 .It Ar build , Ar all
 Default target.
 Build the port.
@@ -59,6 +64,19 @@ Debugging version of the
 .Ar patch
 target that simulates invoking
 .Xr patch 1 .
+.It Ar checksum
+Check distribution archives and distribution patches control sum against
+the results recorded in ${CHECKSUM_FILE},
+using the cryptographic signature utilities listed in ${PREFERRED_CIPHERS}.
+Normally ${ALLFILES}
+are checksummed, unless
+.Ev IGNOREFILES
+is set to a list of files to ignore.
+Invoking
+.Ar checksum
+with REFETCH=true
+will try to fetch a version of with mismatched checksums off the OpenBSD
+main archive site.
 .It Ar configure
 Configure the port.
 Might be a void operation.
@@ -113,10 +131,8 @@ The ports framework uses
 (aliased to
 .Pa ${FULLDISTDIR} )
 to cache the ports distribution files and patch files.
-Note that
-.Ar fetch
-can be invoked by mirroring scripts, in which case it will also
-retrieve
+Note that this framework is also used by mirroring scripts,
+which will also retrieve
 .Ev SUPDISTFILES ,
 to fill with supplementary distribution files which are not needed for
 every configuration.
@@ -133,7 +149,11 @@ See
 .Ev MASTER_SITES9 ,
 .Ev PATCH_FILES ,
 .Ev SUPDISTFILES ,
-.Ar refetch .
+.Ev REFETCH .
+.It Ar makesum
+Create the ${CHECKSUM_FILE} list of recorded checksums by running the
+cryptographic fingerprints sha1, md5 and rmd160 on ${ALLFILES} minus
+${IGNOREFILES}.
 .It Ar patch
 Apply distribution and
 .Ox
@@ -167,15 +187,6 @@ exists, the files described under
 .Ev PATCH_LIST
 will be applied under
 .Ev WRKDIST .
-.It Ar refetch
-Try grabbing a version of the distfiles with the correct checksum off
-the main
-.Ox
-mirror, if
-.Ar fetch
-+
-.Ar checksum
-failed.
 .It Ar show
 Invoked with VARNAME=name, show the contents of VARNAME.
 Mostly used from recursive makes, or to know the contents of another
@@ -224,6 +235,10 @@ is set relative to ${PORTSDIR}.
 Build dependencies are checked at the beginning of the extract stage.
 .It Ev BZIP2
 Name of the bzip2 binary.
+.It Ev CATEGORIES
+List of descriptive categories into which this port fails. Mandatory. See
+.Ar link-categories ,
+.Ar unlink-categories .
 .It Ev CDROM_PACKAGES
 Base location where packages suitable for a CDROM (see
 PERMIT_PACKAGE_CDROM) will be placed
@@ -245,9 +260,11 @@ Many ports ignore it.
 See also
 .Ev COPTS .
 .It Ev CHECKSUM_FILE
-Location for this port checksums, used at
-.Ar checksum
-stage.
+Location for this port checksums, used by
+.Ar addsum ,
+.Ar checksum ,
+and
+.Ar makesum .
 Defaults to ${FILESDIR}/md5.
 .It Ev CLEANDEPENDS
 If set to
@@ -341,6 +358,11 @@ appended to select a different
 .Ev MASTER_SITES .
 See also
 .Ev SUPDISTFILES .
+.It Ev DISTNAME
+Name used to identify the port. See
+.Ev DISTFILES
+and
+.Ev PKGNAME .
 .It Ev DISTORIG
 Suffix used by
 .Ar distpatch
@@ -444,6 +466,9 @@ PERMIT_PACKAGE_FTP) will be placed
 .It Ev GMAKE
 Location of the gnu make binary, if needed.
 Defaults to gmake.
+.It Ev IGNOREFILES
+Set to the list of files that cannot be checksummed. For used by ports
+fetching dynamically generated archives that can't be checksummed.
 .It Ev LIB_DEPENDS
 Libraries this port depends upon.
 Similar to BUILD_DEPENDS, except that
@@ -620,6 +645,12 @@ The first cipher that matches in ${CHECKSUM_FILE} is verified.
 Base directory for the current port installation.
 Usually ${LOCALBASE}, though some ports may elect a location under /var,
 and some multi-package ports may install under several locations.
+.It Ev REFETCH
+If set to true,
+.Ar checksum
+will analyze ${CHECKSUM_FILE}, and try retrieving files with the correct
+checksum off ftp.openbsd.org, in the directory
+.Pa /pub/OpenBSD/distfiles/$cipher/$value/$file .
 .It Ev RUN_DEPENDS
 Specification of ports this port needs installed to be functional.
 Same format as BUILD_DEPENDS.
@@ -815,18 +846,10 @@ Set
 to nothing and override
 .Ar post-extract
 instead.
-.It Ar fetch-list
-Use the more powerful
-.Ar mirror-maker
-and
-.Ar fetch-makefile
-targets instead.
-.It Ar mirror-distfiles
-Use the more powerful
-.Ar mirror-maker
-and
-.Ar fetch-makefile
-targets instead.
+.It Ar fetch-all , Ar fetch-list , Ar mirror-distfiles
+See
+.Xr mirroring-ports 7
+for more efficient and flexible ways to build mirrors.
 .El
 .Sh OBSOLETE VARIABLES
 .Bl -tag -width MASTER_SITES
