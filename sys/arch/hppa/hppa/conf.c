@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.21 2002/07/10 22:08:47 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.22 2002/10/01 21:03:30 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -52,6 +52,7 @@
 #include "cd.h"
 #include "ch.h"
 #include "ss.h"
+#include "ses.h"
 #include "uk.h"
 #if 0
 #include "fd.h"
@@ -87,12 +88,14 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
 	dev_init(c,n,tty), ttselect /* ttpoll */, dev_init(c,n,mmap) }
 
+#include "audio.h"
 #include "pty.h"
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
 
+#include "inet.h"
 #include "bpfilter.h"
 #include "tun.h"
 
@@ -152,12 +155,15 @@ struct cdevsw   cdevsw[] =
 #endif
 	cdev_altq_init(NALTQ,altq),	/* 33: ALTQ control interface */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 34: system call tracing */
-	cdev_lkm_dummy(),		/* 35 */
-	cdev_lkm_dummy(),		/* 36 */
-	cdev_lkm_dummy(),		/* 37 */
-	cdev_lkm_dummy(),		/* 38 */
-	cdev_lkm_dummy(),		/* 39 */
-	cdev_lkm_dummy(),		/* 40 */
+	cdev_audio_init(NAUDIO,audio),	/* 35: /dev/audio */
+	cdev_crypto_init(NCRYPTO,crypto), /* 36: /dev/crypto */
+	cdev_ses_init(NSES,ses),	/* 37: SCSI SES/SAF-TE */
+	cdev_lkm_dummy(),
+	cdev_lkm_dummy(),
+	cdev_lkm_dummy(),
+	cdev_lkm_dummy(),
+	cdev_lkm_dummy(),
+	cdev_lkm_dummy(),
 };
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
