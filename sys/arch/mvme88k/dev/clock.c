@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.26 2003/10/11 22:06:50 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.27 2003/12/12 21:51:29 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -591,7 +591,7 @@ delay(int us)
 	 * If we can't use a real timer, use a tight loop.
 	 */
 	{
-		volatile int c = 3 * us;	/* XXX not accurate! */
+		volatile int c = (25 * us) / 3;	/* XXX not accurate! */
 		while (--c > 0)
 			;
 	}
