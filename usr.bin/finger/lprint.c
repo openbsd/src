@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprint.c,v 1.2 1996/06/26 05:33:17 deraadt Exp $	*/
+/*	$OpenBSD: lprint.c,v 1.3 1996/08/27 22:38:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lprint.c	5.13 (Berkeley) 10/31/90";*/
-static char rcsid[] = "$OpenBSD: lprint.c,v 1.2 1996/06/26 05:33:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lprint.c,v 1.3 1996/08/27 22:38:23 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -50,6 +50,7 @@ static char rcsid[] = "$OpenBSD: lprint.c,v 1.2 1996/06/26 05:33:17 deraadt Exp 
 #include <string.h>
 #include <ctype.h>
 #include <paths.h>
+#include <vis.h>
 #include "finger.h"
 
 #define	LINE_LEN	80
@@ -280,19 +281,10 @@ show_text(directory, file_name, header)
 vputc(ch)
 	register int ch;
 {
-	int meta;
+	char visout[4], *s2;
 
-	if (!isascii(ch)) {
-		(void)putchar('M');
-		(void)putchar('-');
-		ch = toascii(ch);
-		meta = 1;
-	} else
-		meta = 0;
-	if (isprint(ch) || !meta && (ch == ' ' || ch == '\t' || ch == '\n'))
-		(void)putchar(ch);
-	else {
-		(void)putchar('^');
-		(void)putchar(ch == '\177' ? '?' : ch | 0100);
-	}
+	ch = toascii(ch);
+	vis(visout, ch, VIS_SAFE|VIS_NOSLASH, 0);
+	for (s2 = visout; *s2; s2++)
+		(void)putchar(*s2);
 }
