@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.44 2001/08/25 22:22:26 niklas Exp $
+#	$OpenBSD: Makefile,v 1.45 2002/03/05 00:10:56 deraadt Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -161,6 +161,7 @@ SRCS+=		dyn.c
 
 .ifdef USE_KEYNOTE
 USE_LIBCRYPTO=	yes
+USE_LIBDES=	yes
 LDADD+=		-lkeynote -lm
 DPADD+=		${LIBKEYNOTE} ${LIBM}
 CFLAGS+=	-DUSE_KEYNOTE
@@ -175,6 +176,12 @@ CFLAGS+=	-DUSE_RAWKEY
 CFLAGS+=	-DUSE_LIBCRYPTO
 LDADD+=		-lcrypto
 DPADD+=		${LIBCRYPTO}
+.endif
+
+.ifdef USE_LIBDES
+CFLAGS+=	-DUSE_LIBDES
+LDADD+=		-ldes
+DPADD+=		${LIBDES}
 .endif
 
 SRCS+=		${IPSEC_SRCS} ${X509} ${POLICY} ${EC} ${AGGRESSIVE} ${DNSSEC} \
