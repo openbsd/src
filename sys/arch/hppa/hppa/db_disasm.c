@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.2 1999/02/15 21:13:38 mickey Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.3 1999/06/21 01:12:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -48,17 +48,9 @@
  * unasm.c -- HP_PA Instruction Printer
  */
 
-#define TRUE (-1)
-#define FALSE (0)
-
-#define NSYM 0
-#define DSYM 1
-#define ISYM DSYM
-#define PSYM 3
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <vm/vm_param.h>
+#include <vm/vm.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
@@ -66,29 +58,6 @@
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
 
-#define psymoff(val,typ,str) (db_printsym((db_addr_t)val, DB_STGY_ANY))
-#define printf db_printf
-
-/*
- *  Header: /n/schirf/u/baford/CVS/mach4-parisc/kernel_unused/parisc/kdb/unasm.c,v 1.5 1994/07/21 22:32:05 mike Exp
- *
- *  Spectrum Simulator Datatype Definitions
- *  Dan Magenheimer - 4/5/82
- *  Computer Research Center, Hewlett-Packard Labs
- */
-
-typedef	int		VOID, BOOL, WORD;
-typedef	char		*TEXT;
-
-#define		FAST		register
-
-#define		EXPORT
-#define		IMPORT		extern
-
-#undef		NULL
-#define		NULL		0
-#define		NO		0
-#define		YES		1
 
 /* IMPORTANT NOTE:
  *  All modules using this header may assume that the datatype "int" is a
@@ -98,8 +67,8 @@ typedef	char		*TEXT;
 
 /* Spectrum Architecturally Defined Datatypes */
 struct doubleword {
-	WORD	wd0;
-	WORD	wd1;
+	int	wd0;
+	int	wd1;
 };
 
 struct quadword {
@@ -125,10 +94,10 @@ typedef	unsigned int	FLAGS;
 
 /* struct for entry in unwind table */
 struct ute {
-	WORD	word1;
-	WORD	word2;
-	WORD	word3;
-	WORD	word4;
+	int	word1;
+	int	word2;
+	int	word3;
+	int	word4;
 };
 /*
  *  Header: /n/schirf/u/baford/CVS/mach4-parisc/kernel_unused/parisc/kdb/unasm.c,v 1.5 1994/07/21 22:32:05 mike Exp
@@ -174,9 +143,9 @@ struct ute {
  * Revision 1.1.1.2  91/03/30  09:20:34  brezak
  * 	Initial version.
  * 
-;Revision 1.1  88/07/11  14:05:15  14:05:15  ren (Bob Naas)
-;Initial revision
-;
+ * Revision 1.1  88/07/11  14:05:15  14:05:15  ren (Bob Naas)
+ * 	Initial revision
+ *
  * Revision 5.2  87/07/02  14:45:57  14:45:57  kent (Kent McMullen)
  * added constants to support addDasm and addDCond added to ssDID.c
  * 
@@ -267,7 +236,6 @@ struct ute {
 #else
 #define	BITFLR
 #endif
-
 
 /*###########################  Macros  ######################################*/
 
@@ -800,7 +768,7 @@ struct inst {
 	u_int	count;		/* frequency counter for analysis */
 	char	mnem[8];	/* ascii mnemonic */
 				/* disassembly function */
-	BOOL	(*dasmfcn)(const struct inst *, OFS, WORD);
+	int	(*dasmfcn)(const struct inst *, OFS, int);
 };
 
 
@@ -933,52 +901,48 @@ struct majoropcode {
 /*##################### Globals - Imports ##################################*/
 
 /* Disassembly functions */
-/* Any instr disassembly replacement routines must be IMPORTed here */
-
-static BOOL fcoprDasm __P((WORD w, u_int op1, u_int));
-static TEXT edDCond __P((FAST u_int cond));
-static TEXT edDCond __P((FAST u_int cond));
-static TEXT unitDCond __P((FAST u_int cond));
-static TEXT addDCond __P((FAST u_int cond));
-static TEXT subDCond __P((FAST u_int cond));
-static BOOL blDasm __P((const struct inst *i, OFS ofs, WORD w));
-static BOOL ldDasm __P((const struct inst *, OFS, WORD));
-static BOOL stDasm __P((const struct inst *i, OFS, WORD));
-static BOOL addDasm __P((const struct inst *i, OFS, WORD));
-static BOOL unitDasm __P((const struct inst *i, OFS, WORD));
-static BOOL iaDasm __P((const struct inst *i, OFS, WORD));
-static BOOL shdDasm __P((const struct inst *i, OFS, WORD));
-static BOOL extrDasm __P((const struct inst *i, OFS, WORD));
-static BOOL vextrDasm __P((const struct inst *i, OFS, WORD));
-static BOOL depDasm __P((const struct inst *i, OFS, WORD));
-static BOOL vdepDasm __P((const struct inst *i, OFS, WORD));
-static BOOL depiDasm __P((const struct inst *i, OFS, WORD));
-static BOOL vdepiDasm __P((const struct inst *i, OFS, WORD));
-static BOOL limmDasm __P((const struct inst *i, OFS, WORD));
-static BOOL brkDasm __P((const struct inst *i, OFS, WORD));
-static BOOL lpkDasm __P((const struct inst *i, OFS, WORD));
-static BOOL fmpyaddDasm __P((const struct inst *i, OFS, WORD));
-static BOOL fmpysubDasm __P((const struct inst *i, OFS, WORD));
-static BOOL floatDasm __P((const struct inst *i, OFS, WORD));
-static BOOL coprDasm __P((const struct inst *i, OFS, WORD));
-static BOOL diagDasm __P((const struct inst *i, OFS, WORD));
-static BOOL scDasm __P((const struct inst *i, OFS, WORD));
-static BOOL mmgtDasm __P((const struct inst *i, OFS, WORD));
-static BOOL ldxDasm __P((const struct inst *i, OFS, WORD));
-static BOOL stsDasm __P((const struct inst *i, OFS, WORD));
-static BOOL stbysDasm __P((const struct inst *i, OFS, WORD));
-static BOOL brDasm __P((const struct inst *i, OFS, WORD));
-static BOOL bvDasm __P((const struct inst *i, OFS, WORD));
-static BOOL beDasm __P((const struct inst *i, OFS, WORD));
-static BOOL cbDasm __P((const struct inst *i,OFS ofs, WORD));
-static BOOL cbiDasm __P((const struct inst *i,OFS ofs, WORD));
-static BOOL bbDasm __P((const struct inst *i,OFS ofs, WORD));
-static BOOL ariDasm __P((const struct inst *i, OFS, WORD));
+int fcoprDasm __P((int w, u_int op1, u_int));
+char *edDCond __P((u_int cond));
+char *unitDCond __P((u_int cond));
+char *addDCond __P((u_int cond));
+char *subDCond __P((u_int cond));
+int blDasm __P((const struct inst *i, OFS ofs, int w));
+int ldDasm __P((const struct inst *, OFS, int));
+int stDasm __P((const struct inst *i, OFS, int));
+int addDasm __P((const struct inst *i, OFS, int));
+int unitDasm __P((const struct inst *i, OFS, int));
+int iaDasm __P((const struct inst *i, OFS, int));
+int shdDasm __P((const struct inst *i, OFS, int));
+int extrDasm __P((const struct inst *i, OFS, int));
+int vextrDasm __P((const struct inst *i, OFS, int));
+int depDasm __P((const struct inst *i, OFS, int));
+int vdepDasm __P((const struct inst *i, OFS, int));
+int depiDasm __P((const struct inst *i, OFS, int));
+int vdepiDasm __P((const struct inst *i, OFS, int));
+int limmDasm __P((const struct inst *i, OFS, int));
+int brkDasm __P((const struct inst *i, OFS, int));
+int lpkDasm __P((const struct inst *i, OFS, int));
+int fmpyaddDasm __P((const struct inst *i, OFS, int));
+int fmpysubDasm __P((const struct inst *i, OFS, int));
+int floatDasm __P((const struct inst *i, OFS, int));
+int coprDasm __P((const struct inst *i, OFS, int));
+int diagDasm __P((const struct inst *i, OFS, int));
+int scDasm __P((const struct inst *i, OFS, int));
+int mmgtDasm __P((const struct inst *i, OFS, int));
+int ldxDasm __P((const struct inst *i, OFS, int));
+int stsDasm __P((const struct inst *i, OFS, int));
+int stbysDasm __P((const struct inst *i, OFS, int));
+int brDasm __P((const struct inst *i, OFS, int));
+int bvDasm __P((const struct inst *i, OFS, int));
+int beDasm __P((const struct inst *i, OFS, int));
+int cbDasm __P((const struct inst *i,OFS ofs, int));
+int cbiDasm __P((const struct inst *i,OFS ofs, int));
+int bbDasm __P((const struct inst *i,OFS ofs, int));
+int ariDasm __P((const struct inst *i, OFS, int));
 
 /*##################### Globals - Exports ##################################*/
 /*##################### Local Variables ####################################*/
 
-/*static	WORD	w;	* temp for saving passed instruction */
 static	const char	fcoprUndef[] = "copr\t(rsvd or undef.)";
 static	const char	fmtStrTbl[][5] = { "sgl", "dbl", "sgl", "quad" };
 static	const char	condStrTbl[][7] = {
@@ -1279,8 +1243,8 @@ int
 iExInit(void)
 {
 	static int unasm_initted = 0;
-	FAST const struct inst *i;
-	FAST const struct majoropcode *m;
+	register const struct inst *i;
+	register struct majoropcode *m;
 	u_int	shft, mask;
 
 	if (unasm_initted)
@@ -1302,26 +1266,28 @@ iExInit(void)
 		mask = (1 << i->extbl) - 1;
 		if (m->extshft || m->extmask) {
 			if (m->extshft != shft || m->extmask != mask) {
-				printf("%s - Bad instruction initialization!!\n", i->mnem);
-				return(NO);
+				db_printf("%s - Bad instruction initialization!\n", i->mnem);
+				return (0);
 			}
 		} else {
-			((struct majoropcode *)m)->extshft = shft;
-			((struct majoropcode *)m)->extmask = mask;
+			m->extshft = shft;
+			m->extmask = mask;
 		}
 	}
 
 	/*
 	 * Lastly, fill in all legal subops with the appropriate info.
 	 */
-	for (i = &instrs[0]; *i->mnem; i++)
+	for (i = &instrs[0]; *i->mnem; i++) {
+		m = &majopcs[i->majopc];
 		if (m->maxsubop == 1)
-			majopcs[i->majopc].subops = (const struct inst **)i;
+			m->subops = (const struct inst **)i;
 		else
-			majopcs[i->majopc].subops[i->opcext] = i;
+			m->subops[i->opcext] = i;
+	}
 
 	unasm_initted++;
-	return(YES);
+	return (1);
 }
 
 
@@ -1333,137 +1299,137 @@ iExInit(void)
 /**************************************/
 
 /* Add instructions */
-static BOOL
+int
 addDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	printf(addDCond(Cond4(w)));
-	printf("\t%%r%d,%%r%d,%%r%d",Rsa(w),Rsb(w),Rtc(w));
-	return(YES);
+	db_printf("%s\t%%r%d,%%r%d,%%r%d",addDCond(Cond4(w)),
+		Rsa(w),Rsb(w),Rtc(w));
+	return (1);
 }
 
 /* Unit instructions */
-static BOOL
+int
 unitDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	printf(unitDCond(Cond4(w)));
+	db_printf(unitDCond(Cond4(w)));
 	if (Match("dcor") || Match("idcor"))
-		printf("\t%%r%d,%%r%d",Rsb(w),Rtc(w));
+		db_printf("\t%%r%d,%%r%d",Rsb(w),Rtc(w));
 	else
-		printf("\t%%r%d,%%r%d,%%r%d",Rsa(w),Rsb(w),Rtc(w));
-	return(YES);
+		db_printf("\t%%r%d,%%r%d,%%r%d",Rsa(w),Rsb(w),Rtc(w));
+	return (1);
 }
 
 /* Immediate Arithmetic instructions */
-static BOOL
+int
 iaDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
 	if (Match("addi"))
-		printf("%s\t%d,%%r%d,%%r%d",
+		db_printf("%s\t%d,%%r%d,%%r%d",
 		       addDCond(Cond4(w)),Im11(w),Rsb(w),Rta(w));
 	else
-		printf("%s\t%d,%%r%d,%%r%d",
+		db_printf("%s\t%d,%%r%d,%%r%d",
 		       subDCond(Cond4(w)),Im11(w),Rsb(w),Rta(w));
-	return(YES);
+	return (1);
 }
 
 /* Shift double instructions */
-static BOOL
+int
 shdDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
 	if (Match("vshd"))
-		printf("%s\t%%r%d,%%r%d,%%r%d",
+		db_printf("%s\t%%r%d,%%r%d,%%r%d",
 		       edDCond(Cond(w)), Rsa(w),Rsb(w),Rtc(w));
 	else
-		printf("%s\t%%r%d,%%r%d,%d,%%r%d",
+		db_printf("%s\t%%r%d,%%r%d,%d,%%r%d",
 		       edDCond(Cond(w)),Rsa(w),Rsb(w),31-Imd5(w),Rtc(w));
-	return(YES);
+	return (1);
 }
 
 /* Extract instructions */
-static BOOL
+int
 extrDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	printf("%s\t%%r%d,%d,%d,%%r%d",
+	db_printf("%s\t%%r%d,%d,%d,%%r%d",
 	       edDCond(Cond(w)),Rsb(w),Imd5(w),32 - Rsc(w),Rta(w));
-	return(YES);
+	return (1);
 }
 
 
 /* Variable extract instructions */
-static BOOL
+int
 vextrDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	printf("%s\t%%r%d,%d,%%r%d",
+	db_printf("%s\t%%r%d,%d,%%r%d",
 	       edDCond(Cond(w)),Rsb(w),32 - Rsc(w),Rta(w));
-	return(YES);
+	return (1);
 }
 
 
 /* Deposit instructions */
-static BOOL
+int
 depDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	printf("%s\t%%r%d,%d,%d,%%r%d",
+	db_printf("%s\t%%r%d,%d,%d,%%r%d",
 	       edDCond(Cond(w)),Rsa(w),31 - Imd5(w),32 - Rsc(w),Rtb(w));
-	return(YES);
+	return (1);
 }
 
 
 /* Variable deposit instructions */
-static BOOL
+int
 vdepDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	printf("%s\t%%r%d,%d,%%r%d",
+	db_printf("%s\t%%r%d,%d,%%r%d",
 	       edDCond(Cond(w)),Rsa(w),32 - Rsc(w),Rtb(w));
-	return(YES);
+	return (1);
 }
 
 
 /* Deposit Immediate instructions */
-static BOOL
+int
 depiDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	printf("%s\t%d,%d,%d,%%r%d",
+	db_printf("%s\t%d,%d,%d,%%r%d",
 	       edDCond(Cond(w)),Ima5(w),31 - Imd5(w),32 - Imc5A(w),Rtb(w));
-	return(YES);
+	return (1);
 }
 
 /* Variable Deposit Immediate instructions */
-static BOOL
+int
 vdepiDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	printf("%s\t%d,%d,%%r%d",edDCond(Cond(w)),Ima5(w),32-Imc5A(w),Rtb(w));
-	return(YES);
+	db_printf("%s\t%d,%d,%%r%d",edDCond(Cond(w)),Ima5(w),32-Imc5A(w),Rtb(w));
+	return (1);
 }
 
 /*---------------------------------------------------------------------------
@@ -1471,9 +1437,9 @@ vdepiDasm(i, ofs, w)
  *  ascii description of the passed numeric condition.
  *---------------------------------------------------------------------------*/
 
-static TEXT
+char *
 subDCond(cond)
-	FAST u_int cond;
+	u_int cond;
 {
 	switch(cond) {
 	case EQZ:	return(",=");
@@ -1503,9 +1469,9 @@ subDCond(cond)
  *  ascii description of the passed numeric condition.
  *---------------------------------------------------------------------------*/
 
-static TEXT
+char *
 addDCond(cond)
-	FAST u_int cond;
+	u_int cond;
 {
 	switch(cond) {
 	case EQZ:	return(",=");
@@ -1529,9 +1495,9 @@ addDCond(cond)
 	}
 }
 
-static TEXT
+char *
 unitDCond(cond)
-	FAST u_int cond;
+	u_int cond;
 {
 	switch(cond) {
 	case SHC:	return(",shc");
@@ -1551,9 +1517,9 @@ unitDCond(cond)
 	}
 }
 
-static TEXT
+char *
 edDCond(cond)
-	FAST u_int cond;
+	u_int cond;
 {
 	switch(cond) {
 	case XOD:	return(",od");
@@ -1577,408 +1543,403 @@ edDCond(cond)
 
 
 /* Load [modify] instructions */
-static BOOL
+int
 ldDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	FAST u_int d = Disp(w);
+	register u_int d = Disp(w);
 
 	if (Rsb(w) == 0 && Match("ldo")) {
-		printf("ldi\t%D,%%r%d",d,Rta(w));
-		return(YES);
+		db_printf("ldi\t%D,%%r%d",d,Rta(w));
+		return (1);
 	}
 	if (d < 2048)
-		printf("%s\tR'%X",i->mnem,d);
+		db_printf("%s\tR'%X",i->mnem,d);
 	else
-		printf("%s\t%D",i->mnem,d);
+		db_printf("%s\t%D",i->mnem,d);
 	if (Dss(w))
-		printf("(%%sr%d,%%r%d),%%r%d",Dss(w),Rsb(w),Rta(w));
+		db_printf("(%%sr%d,%%r%d),%%r%d",Dss(w),Rsb(w),Rta(w));
 	else
-		printf("(%%r%d),%%r%d",Rsb(w),Rta(w));
-	return(YES);
+		db_printf("(%%r%d),%%r%d",Rsb(w),Rta(w));
+	return (1);
 }
 
 /* Store [modify] instructions */
-static BOOL
+int
 stDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	FAST u_int d = Disp(w);
+	register u_int d = Disp(w);
 
-	printf("\t%%r%d,",Rta(w));
+	db_printf("\t%%r%d,",Rta(w));
 	if (d < 2048)
-		printf("R'%X",d);
+		db_printf("R'%X",d);
 	else
-		printf("%D",d);
+		db_printf("%D",d);
 	if (Dss(w))
-		printf("(%%sr%d,%%r%d)",Dss(w),Rsb(w));
+		db_printf("(%%sr%d,%%r%d)",Dss(w),Rsb(w));
 	else
-		printf("(%%r%d)",Rsb(w));
-	return(YES);
+		db_printf("(%%r%d)",Rsb(w));
+	return (1);
 }
 
 /* Load indexed instructions */
-static BOOL
+int
 ldxDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
+	register const char *p;
+
 	if (ShortDisp(w)) {
-		printf("s");
+		db_printf("s");
 		if (Modify(w))
-			printf(",m%s", ModBefore(w)? "b": "a");
-	}
-	else {
-		printf("x");
+			db_printf(",m%s", ModBefore(w)? "b": "a");
+	} else {
+		db_printf("x");
 		if (Modify(w))
-			printf(",%sm", IndxShft(w)? "s":"");
+			db_printf(",%sm", IndxShft(w)? "s":"");
 	}
 	switch (CacheCtrl(w)) {
-	case NOACTION:	break;
-	case STACKREF:	printf(",c"); break;
-	case SEQPASS:	printf(",q"); break;
-	case PREFETCH:	printf(",p"); break;
+	case NOACTION:	p = "";   break;
+	case STACKREF:	p = ",c"; break;
+	case SEQPASS:	p = ",q"; break;
+	case PREFETCH:	p = ",p"; break;
 	}
 	if (ShortDisp(w))
-		printf("\t%d",Ima5(w));
+		db_printf("%s\t%d", p, Ima5(w));
 	else
-		printf("\t%%r%d",Rsa(w));
+		db_printf("%s\t%%r%d", p, Rsa(w));
+
 	if (Dss(w))
-		printf("(%%sr%d,%%r%d),%%r%d",Dss(w),Rsb(w),Rtc(w));
+		db_printf("(%%sr%d,%%r%d),%%r%d",Dss(w),Rsb(w),Rtc(w));
 	else
-		printf("(%%r%d),%%r%d",Rsb(w),Rtc(w));
-	return(YES);
+		db_printf("(%%r%d),%%r%d",Rsb(w),Rtc(w));
+	return (1);
 }
 
 /* Store short displacement instructions */
-static BOOL
+int
 stsDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
+	register const char *p;
 	if (Modify(w))
-		printf(",m%s", ModBefore(w)? "b":"a");
+		db_printf(",m%s", ModBefore(w)? "b":"a");
 
 	switch (CacheCtrl(w)) {
-	case NOACTION:	break;
-	case STACKREF:	printf(",c"); break;
-	case SEQPASS:	printf(",q"); break;
-	case PREFETCH:	printf(",p"); break;
+	case NOACTION:	p = "";   break;
+	case STACKREF:	p = ",c"; break;
+	case SEQPASS:	p = ",q"; break;
+	case PREFETCH:	p = ",p"; break;
 	}
-	printf("\t%%r%d,",Rta(w));
+	db_printf("%s\t%%r%d,", p, Rta(w));
 	if (Dss(w))
-		printf("%d(%%sr%d,%%r%d)",Imc5(w),Dss(w),Rsb(w));
+		db_printf("%d(%%sr%d,%%r%d)",Imc5(w),Dss(w),Rsb(w));
 	else
-		printf("%d(%%r%d)",Imc5(w),Rsb(w));
-	return(YES);
+		db_printf("%d(%%r%d)",Imc5(w),Rsb(w));
+	return (1);
 }
 
 /* Store Bytes Instruction */
-static BOOL
+int
 stbysDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	if (ModBefore(w))
-		printf(",e");
-	else
-		printf(",b");
+	register const char *p;
+	db_printf(ModBefore(w)? ",e":",b");
 	if (Modify(w))
-		printf(",m");
+		db_printf(",m");
 	switch (CacheCtrl(w)) {
-	case NOACTION:	break;
-	case STACKREF:	printf(",f"); break;
-	case SEQPASS:	printf(",r"); break;
-	case PREFETCH:	printf(",z"); break;
+	case NOACTION:	p = "";   break;
+	case STACKREF:	p = ",f"; break;
+	case SEQPASS:	p = ",r"; break;
+	case PREFETCH:	p = ",z"; break;
 	}
-	printf("\t%%r%d,",Rta(w));
+	db_printf("%s\t%%r%d,", p, Rta(w));
 	if (Dss(w))
-		printf("%d(%%sr%d,%%r%d)",Imc5(w),Dss(w),Rsb(w));
+		db_printf("%d(%%sr%d,%%r%d)",Imc5(w),Dss(w),Rsb(w));
 	else
-		printf("%d(%%r%d)",Imc5(w),Rsb(w));
-	return(YES);
+		db_printf("%d(%%r%d)",Imc5(w),Rsb(w));
+	return (1);
 }
 
 /* Long Immediate instructions */
-static BOOL
+int
 limmDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	printf("\tL'%X,%%r%d", Im21(w), Rtb(w));
-	return(YES);
+	db_printf("\tL'%X,%%r%d", Im21(w), Rtb(w));
+	return (1);
 }
 
 
 /* Branch and Link instruction(s) (Branch, too!!) */
-static BOOL
+int
 blDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	FAST OFS tgtofs = ofs + 8 + Bdisp(w);
-	FAST u_int link = Rtb(w);
+	register OFS tgtofs = ofs + 8 + Bdisp(w);
+	register u_int link = Rtb(w);
 
 	if (link && !Match("gate"))
-		printf("l");
+		db_printf("l");
 	if (Nu(w))
-		printf(",n");
-	printf("\t");
-	psymoff(tgtofs, ISYM, "");
-	if (link || Match("gate")) printf(",%%r%d",link);
-	return(YES);
+		db_printf(",n");
+	db_printf("\t");
+
+	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY);
+
+	if (link || Match("gate"))
+		db_printf(",%%r%d",link);
+
+	return (1);
 }
 
 /* Branch Register instruction */
-static BOOL
+int
 brDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	if (Nu(w))
-		printf(",n");
-	printf("\t%%r%d,%%r%d",Rsa(w),Rtb(w));
-	return(YES);
+	db_printf("%s\t%%r%d,%%r%d", Nu(w)?",n":"", Rsa(w), Rtb(w));
+	return (1);
 }
 
 /* Dispatch instructions */
-static BOOL
+int
 bvDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	if (Nu(w))
-		printf(",n");
-	printf("\t%%r%d(%%r%d)",Rsa(w),Rsb(w));
-	return(YES);
+	db_printf("%s\t%%r%d(%%r%d)", Nu(w)?",n":"", Rsa(w), Rsb(w));
+	return (1);
 }
 
 /* Branch External instructions */
-static BOOL
+int
 beDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	FAST u_int d = Bdisp(w);
+	register u_int d = Bdisp(w);
+	register const char *p;
 
-	if (Nu(w))
-		printf(",n");
+	p =  Nu(w)? ",n":"";
 	if (d < 2048)
-		printf("\tR'%X(%%sr%d,%%r%d)",d,Sr(w),Rsb(w));
+		db_printf("%s\tR'%X(%%sr%d,%%r%d)", p, d, Sr(w), Rsb(w));
 	else
-		printf("\t%D(%%sr%d,%%r%d)",d,Sr(w),Rsb(w));
-	return(YES);
+		db_printf("%s\t%D(%%sr%d,%%r%d)", p, d, Sr(w), Rsb(w));
+	return (1);
 }
 
 
 /* Compare/Add and Branch instructions */
-static BOOL
+int
 cbDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	FAST OFS tgtofs = ofs + 8 + Cbdisp(w);
+	register OFS tgtofs = ofs + 8 + Cbdisp(w);
 
 	if (Match("movb"))
-		printf(edDCond(Cond(w)));
+		db_printf(edDCond(Cond(w)));
 	else if (Match("addb"))
-		printf(addDCond(Cond(w) << 1));
+		db_printf(addDCond(Cond(w) << 1));
 	else
-		printf(subDCond(Cond(w) << 1));
-	if (Nu(w))
-		printf(",n");
-	printf("\t%%r%d,%%r%d,",Rsa(w),Rsb(w));
-	psymoff(tgtofs, ISYM, "");
-	return(YES);
+		db_printf(subDCond(Cond(w) << 1));
+	db_printf("%s\t%%r%d,%%r%d,", Nu(w)?",n":"", Rsa(w), Rsb(w));
+	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY);
+	return (1);
 }
 
 /* Compare/Add and Branch Immediate instructions */
-static BOOL
+int
 cbiDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	FAST OFS tgtofs = ofs + 8 + Cbdisp(w);
+	register OFS tgtofs = ofs + 8 + Cbdisp(w);
 
 	if (Match("movib"))
-		printf(edDCond(Cond(w)));
+		db_printf(edDCond(Cond(w)));
 	else if (Match("addib"))
-		printf(addDCond(Cond(w) << 1));
+		db_printf(addDCond(Cond(w) << 1));
 	else
-		printf(subDCond(Cond(w) << 1));
-	if (Nu(w))
-		printf(",n");
-	printf("\t%d,%%r%d,",Ima5(w),Rsb(w));
-	psymoff(tgtofs, ISYM, "");
-	return(YES);
+		db_printf(subDCond(Cond(w) << 1));
+	db_printf("%s\t%d,%%r%d,", Nu(w)? ",n":"", Ima5(w), Rsb(w));
+	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY);
+	return (1);
 }
 
 /* Branch on Bit instructions */
-static BOOL
+int
 bbDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	FAST OFS tgtofs = ofs + 8 + Cbdisp(w);
+	register OFS tgtofs = ofs + 8 + Cbdisp(w);
+	register const char *p;
 
-	printf(edDCond(Cond(w)));
-	if (Nu(w))
-		printf(",n");
+	db_printf(edDCond(Cond(w)));
+	p = Nu(w)? ",n":"";
 	if (Match("bvb"))
-		printf("\t%%r%d,",Rta(w));
+		db_printf("%s\t%%r%d,", p, Rta(w));
 	else
-		printf("\t%%r%d,%d,",Rsa(w),Imb5(w));
-	psymoff(tgtofs, ISYM, "");
-	return(YES);
+		db_printf("%s\t%%r%d,%d,", p, Rsa(w), Imb5(w));
+	db_printsym((db_addr_t)tgtofs, DB_STGY_ANY);
+	return (1);
 }
 
 /* Arithmetic instructions */
-static BOOL
+int
 ariDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
 	if (Match("or") && Rsb(w) == 0 && Cond4(w) == NEV) {
 		if (Rsa(w) == 0 && Rtc(w) == 0)
-			printf("nop");
+			db_printf("nop");
 		else
-			printf("copy\t%%r%d,%%r%d",Rsa(w),Rtc(w));
-		return(YES);
-	}
-	printf(i->mnem);
-	printf(subDCond(Cond4(w)));
-	printf("\t%%r%d,%%r%d,%%r%d",Rsa(w),Rsb(w),Rtc(w));
-	return(YES);
+			db_printf("copy\t%%r%d,%%r%d",Rsa(w),Rtc(w));
+	} else
+		db_printf("%s%s\t%%r%d,%%r%d,%%r%d", i->mnem,
+			  subDCond(Cond4(w)), Rsa(w),Rsb(w),Rtc(w));
+	return(1);
 }
 
 /* System control operations */
-static BOOL
+int
 scDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
 	if (Match("mtctl")) {
 		if (Rtb(w) == 11)
-			printf("mtsar\t%%r%d",Rsa(w));
+			db_printf("mtsar\t%%r%d",Rsa(w));
 		else
-			printf("mtctl\t%%r%d,%%cr%d",Rsa(w),Rtb(w));
-		return(YES);
+			db_printf("mtctl\t%%r%d,%%cr%d",Rsa(w),Rtb(w));
+		return (1);
 	}
-	printf(i->mnem);
+	db_printf(i->mnem);
 	if (Match("ssm") || Match("rsm"))
-		printf("\t%d,%%r%d",Ima5A(w),Rtc(w));
-	else if (Match("mtsm")) printf("\t%%r%d",Rsa(w));
-	else if (Match("ldprid")) printf("\t%%r%d",Rtc(w));
-	else if (Match("mtsp")) printf("\t%%r%d,%%sr%d",Rsa(w),Sr(w));
-	else if (Match("mfsp")) printf("\t%%sr%d,%%r%d",Sr(w),Rtc(w));
-	else if (Match("mfctl")) printf("\t%%cr%d,%%r%d",Rsb(w),Rtc(w));
+		db_printf("\t%d,%%r%d",Ima5A(w),Rtc(w));
+	else if (Match("mtsm")) db_printf("\t%%r%d",Rsa(w));
+	else if (Match("ldprid")) db_printf("\t%%r%d",Rtc(w));
+	else if (Match("mtsp")) db_printf("\t%%r%d,%%sr%d",Rsa(w),Sr(w));
+	else if (Match("mfsp")) db_printf("\t%%sr%d,%%r%d",Sr(w),Rtc(w));
+	else if (Match("mfctl")) db_printf("\t%%cr%d,%%r%d",Rsb(w),Rtc(w));
 	else if (Match("ldsid")) {
 		if (Dss(w))
-			printf("\t(%%sr%d,%%r%d),%%r%d",Dss(w),Rsb(w),Rtc(w));
+			db_printf("\t(%%sr%d,%%r%d),%%r%d",Dss(w),Rsb(w),Rtc(w));
 		else
-			printf("\t(%%r%d),%%r%d",Rsb(w),Rtc(w));
+			db_printf("\t(%%r%d),%%r%d",Rsb(w),Rtc(w));
 	} else {
-		printf("?????");
-		return(NO);
+		db_printf("?????");
+		return (0);
 	}
-	return(YES);
+	return (1);
 }
 
 /* Instruction cache/tlb control instructions */
-static BOOL
+int
 mmgtDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
 	if (Match("probe")) {
 		if (ProbeI(w)) {
 			if (Dss(w))
-				printf("i\t(%%sr%d,%%r%d),%d,%%r%d",
+				db_printf("i\t(%%sr%d,%%r%d),%d,%%r%d",
 				       Dss(w),Rsb(w),Rsa(w),Rtc(w));
 			else
-				printf("i\t(%%r%d),%d,%%r%d",
+				db_printf("i\t(%%r%d),%d,%%r%d",
 				       Rsb(w),Rsa(w),Rtc(w));
 		} else {
 			if (Dss(w))
-				printf("\t(%%sr%d,%%r%d),%%r%d,%%r%d",
+				db_printf("\t(%%sr%d,%%r%d),%%r%d,%%r%d",
 				       Dss(w),Rsb(w),Rsa(w),Rtc(w));
 			else
-				printf("\t(%%r%d),%%r%d,%%r%d",
+				db_printf("\t(%%r%d),%%r%d,%%r%d",
 				       Rsb(w),Rsa(w),Rtc(w));
 		}
 	}
 	else if (Match("lha") || Match("lpa")) {
 		if (Modify(w))
-			printf(",m");
+			db_printf(",m");
 		if (Dss(w))
-			printf("\t%%r%d(%%sr%d,%%r%d),%%r%d",
+			db_printf("\t%%r%d(%%sr%d,%%r%d),%%r%d",
 			       Rsa(w),Dss(w),Rsb(w),Rtc(w));
 		else
-			printf("\t%%r%d(%%r%d),%%r%d",Rsa(w),Rsb(w),Rtc(w));
+			db_printf("\t%%r%d(%%r%d),%%r%d",Rsa(w),Rsb(w),Rtc(w));
 	}
 	else if (Match("pdtlb") || Match("pdc") || Match("fdc")) {
-		if (Modify(w)) printf(",m");
+		if (Modify(w)) db_printf(",m");
 		if (Dss(w))
-			printf("\t%%r%d(%%sr%d,%%r%d)",Rsa(w),Dss(w),Rsb(w));
+			db_printf("\t%%r%d(%%sr%d,%%r%d)",Rsa(w),Dss(w),Rsb(w));
 		else
-			printf("\t%%r%d(%%r%d)",Rsa(w),Rsb(w));
+			db_printf("\t%%r%d(%%r%d)",Rsa(w),Rsb(w));
 	}
 	else if (Match("pitlb") || Match("fic")) {
 		if (Modify(w))
-			printf(",m");
-		printf("\t%%r%d(%%sr%d,%%r%d)",Rsa(w),Sr(w),Rsb(w));
+			db_printf(",m");
+		db_printf("\t%%r%d(%%sr%d,%%r%d)",Rsa(w),Sr(w),Rsb(w));
 	}
 	else if (Match("idtlb")) {
 		if (Dss(w))
-			printf("\t%%r%d,(%%sr%d,%%r%d)",Rsa(w),Dss(w),Rsb(w));
+			db_printf("\t%%r%d,(%%sr%d,%%r%d)",Rsa(w),Dss(w),Rsb(w));
 		else
-			printf("\t%%r%d,(%%r%d)",Rsa(w),Rsb(w));
+			db_printf("\t%%r%d,(%%r%d)",Rsa(w),Rsb(w));
 	}
 	else if (Match("iitlb"))
-		printf("\t%%r%d,(%%sr%d,%%r%d)",Rsa(w),Sr(w),Rsb(w));
+		db_printf("\t%%r%d,(%%sr%d,%%r%d)",Rsa(w),Sr(w),Rsb(w));
 	else {
-		printf("?????");
-		return(NO);
+		db_printf("?????");
+		return (0);
 	}
-	return(YES);
+	return(1);
 }
 
 /* break instruction */
-static BOOL
+int
 brkDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	printf("\t%d,%d",Bi1(w),Bi2(w));
-	return(YES);
+	db_printf("\t%d,%d",Bi1(w),Bi2(w));
+	return (1);
 }
 
-static BOOL
+int
 floatDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	FAST u_int op1, r1, fmt, t;
+	register u_int op1, r1, fmt, t;
 	u_int op2, r2, dfmt;
 	char *p;
 
@@ -2010,13 +1971,13 @@ floatDasm(i, ofs, w)
 				p = "cmp";
 				break;
 			default:
-				printf(fcoprUndef);
-				return(NO);
+				db_printf(fcoprUndef);
+				return(0);
 			}
-			printf("%s,%s",p,fmtStrTbl[fmt]);
-			printf(",%s\t%%f%s,%%f%s",
+			db_printf("%s,%s",p,fmtStrTbl[fmt]);
+			db_printf(",%s\t%%f%s,%%f%s",
 			       condStrTbl[op2], ST(r1), ST(r2));
-			return(YES);
+			return (1);
 		}
 		/*
 		 * get target register (class 3)
@@ -2031,10 +1992,10 @@ floatDasm(i, ofs, w)
 		case 2: p = (Fpi(w)) ? "mpyi" : "mpy"; break;
 		case 3: p = "div"; break;
 		case 4: p = "rem"; break;
-		default: printf(fcoprUndef); return(NO);
+		default: db_printf(fcoprUndef); return (0);
 		}
-		printf("%s,%s", p, fmtStrTbl[fmt]);
-		printf("\t%%f%s,%%f%s,%%f%s",ST(r1),ST(r2),ST(t));
+		db_printf("%s,%s", p, fmtStrTbl[fmt]);
+		db_printf("\t%%f%s,%%f%s,%%f%s",ST(r1),ST(r2),ST(t));
 	} else if (op1 & 1) {			/* class 1 */
 		dfmt = (op1 >> 4) & 3;
 #define DT(r) ((dfmt & 1)? fdreg[(r)]:fsreg[(r)])
@@ -2052,8 +2013,8 @@ floatDasm(i, ofs, w)
 		case 2: p = "fx"; break;
 		case 3: p = "fxt"; break;
 		}
-		printf("%s,%s", p, fmtStrTbl[fmt]);
-		printf(",%s\t%%f%s,%%f%s",fmtStrTbl[dfmt],ST(r1),DT(t));
+		db_printf("%s,%s", p, fmtStrTbl[fmt]);
+		db_printf(",%s\t%%f%s,%%f%s",fmtStrTbl[dfmt],ST(r1),DT(t));
 	} else {				/* class 0 */
 		/*
 		 * get target register
@@ -2068,34 +2029,35 @@ floatDasm(i, ofs, w)
 		case 3: p = "abs"; break;
 		case 4: p = "sqrt"; break;
 		case 5: p = "rnd"; break;
-		default: printf(fcoprUndef); return(NO);
+		default: db_printf(fcoprUndef); return (0);
 		}
-		printf("%s,%s",p,fmtStrTbl[fmt]);
-		printf("\t%%f%s,%%f%s",ST(r1),ST(t));
+		db_printf("%s,%s",p,fmtStrTbl[fmt]);
+		db_printf("\t%%f%s,%%f%s",ST(r1),ST(t));
 	}
-	return(YES);
+	return (1);
 }
 
-BOOL
+int
 fcoprDasm(w, op1, op2)
-	WORD w;
+	int w;
 	u_int op1, op2;
 {
-	FAST u_int r1, r2, t, fmt, dfmt;
-	FAST char *p;
+	register u_int r1, r2, t, fmt, dfmt;
+	register char *p;
 
 	if (AstNu(w) && op1 == ((1<<4) | 2)) {
 		if (op2 == 0 || op2 == 1 || op2 == 2) {
-			printf("ftest");
+			db_printf("ftest");
 			if (op2 == 1)
-				printf(",acc");
+				db_printf(",acc");
 			else if (op2 == 2)
-				printf(",rej");
-			return(YES);
+				db_printf(",rej");
+			return (1);
 		}
-		return(NO);
+		return (0);
 	} else if (0 == op1 && 0 == op2) {
-		printf("fcopr identify"); return(YES);
+		db_printf("fcopr identify");
+		return (1);
 	}
 	switch(op1 & 3) {
 	    case 0:
@@ -2107,10 +2069,10 @@ fcoprDasm(w, op1, op2)
 		case 3: p = "abs"; break;
 		case 4: p = "sqrt"; break;
 		case 5: p = "rnd"; break;
-		default: printf(fcoprUndef); return(NO);
+		default: db_printf(fcoprUndef); return(0);
 		}
-		printf("f%s,%s\t%%fr%d,%%fr%d", p, fmtStrTbl[fmt], r1, t);
-		return(YES);
+		db_printf("f%s,%s\t%%fr%d,%%fr%d", p, fmtStrTbl[fmt], r1, t);
+		break;
 	    case 1:
 		/* Opclass 1: 1 source, 1 destination conversions */
 		r1 = (op1 >> 12) & 0x1f; t = op2;
@@ -2121,20 +2083,20 @@ fcoprDasm(w, op1, op2)
 		case 2: p = "fx"; break;
 		case 3: p = "fxt"; break;
 		}
-		printf("fcnv%s,%s,%s\t%%fr%d,%%fr%d",
+		db_printf("fcnv%s,%s,%s\t%%fr%d,%%fr%d",
 		       p, fmtStrTbl[fmt], fmtStrTbl[dfmt], r1, t);
-		return(YES);
+		break;
 	    case 2:
 		/* Opclass 2: 2 sources, no destination */
 		r1 = (op1 >> 12) & 0x1f; r2 = (op1 >> 7) & 0x1f;
 		fmt = (op1 >> 2) & 3;
 		switch((op1 >> 4) & 7) {
 		case 0: p = "fcmp"; break;
-		default: printf(fcoprUndef); return(NO);
+		default: db_printf(fcoprUndef); return (0);
 		}
-		printf("%s,%s,%s\t%%fr%d,%%fr%d",
+		db_printf("%s,%s,%s\t%%fr%d,%%fr%d",
 		       p,fmtStrTbl[fmt],condStrTbl[op2],r1,r2);
-		return(YES);
+		break;
 	    case 3:
 		/* Opclass 3: 2 sources, 1 destination */
 		r1 = (op1 >> 12) & 0x1f; r2 = (op1 >> 7) & 0x1f; t = op2;
@@ -2145,61 +2107,74 @@ fcoprDasm(w, op1, op2)
 		case 2: p = "mpy"; break;
 		case 3: p = "div"; break;
 		case 4: p = "rem"; break;
-		default: printf(fcoprUndef); return(NO);
+		default: db_printf(fcoprUndef); return (0);
 		}
-		printf("f%s,%s\t%%fr%d,%%fr%d,%%fr%d",
+		db_printf("f%s,%s\t%%fr%d,%%fr%d,%%fr%d",
 		       p, fmtStrTbl[fmt], r1, r2, t);
-		return(YES);
-	    default: printf(fcoprUndef); return(NO);
+		break;
+	    default:
+		    db_printf(fcoprUndef);
+		    return(0);
 	}
-	return(YES);
+	return (1);
 }
 
-static BOOL
+int
 coprDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	FAST u_int uid = Uid(w);
-	FAST BOOL load = NO;
-	FAST char *pfx = uid > 1 ? "c" : "f";
-	FAST BOOL dreg;
+	register u_int uid = Uid(w);
+	register int load = 0;
+	register char *pfx = uid > 1 ? "c" : "f";
+	register int dreg;
 
 	if (Match("copr")) {
 		if (uid) {
-			printf("copr,%d,0x%x",uid,CoprExt(w));
+			db_printf("copr,%d,0x%x",uid,CoprExt(w));
 			if (AstNu(w))
-				printf(",n");
-			return(YES);
+				db_printf(",n");
+			return (1);
 		}
 		return fcoprDasm(w, CoprExt1(w),CoprExt2(w));
 	}
-	if (Match("cldd")) { dreg = YES; load = YES; printf("%sldd",pfx); }
-	else if (Match("cldw")) { load = YES; printf("%sldw",pfx); }
-	else if (Match("cstd")) { dreg = YES; printf("%sstd",pfx); }
-	else if (Match("cstw")) printf("%sstw",pfx);
-	else { printf("copr???"); return(NO); }
+	if (Match("cldd")) {
+		dreg = 1; 
+		load = 1;
+		db_printf("%sldd",pfx);
+	} else if (Match("cldw")) {
+		load = 1;
+		db_printf("%sldw",pfx);
+	} else if (Match("cstd")) {
+		dreg = 1;
+		db_printf("%sstd",pfx);
+	} else if (Match("cstw"))
+		db_printf("%sstw",pfx);
+	else {
+		db_printf("copr???");
+		return (0);
+	}
 	if (ShortDisp(w)) {
-		printf("s");
+		db_printf("s");
 		if (AstNu(w))
-			printf(",m%s", ModBefore(w)?"b":"a");
+			db_printf(",m%s", ModBefore(w)?"b":"a");
 	}
 	else {
-		printf("x");
+		db_printf("x");
 		if (AstNu(w))
-			printf(",%sm", IndxShft(w)?"s":"");
+			db_printf(",%sm", IndxShft(w)?"s":"");
 		else if (IndxShft(w))
-			printf(",s");
+			db_printf(",s");
 	}
 	switch (CacheCtrl(w)) {
 	case NOACTION:	break;
-	case STACKREF:	printf(",c"); break;
-	case SEQPASS:	printf(",q"); break;
-	case PREFETCH:	printf(",p"); break;
+	case STACKREF:	db_printf(",c"); break;
+	case SEQPASS:	db_printf(",q"); break;
+	case PREFETCH:	db_printf(",p"); break;
 	}
 	if (load) {
-		FAST const char *p;
+		register const char *p;
 
 		if (dreg)
 			p = fdreg[(Rtc(w)<<1)+(uid&1)];
@@ -2207,15 +2182,15 @@ coprDasm(i, ofs, w)
 			p = fsreg[(Rtc(w)<<1)+(uid&1)];
 
 		if (ShortDisp(w))
-			printf("\t%d",Ima5(w));
+			db_printf("\t%d",Ima5(w));
 		else
-			printf("\t%%r%d",Rsa(w));
+			db_printf("\t%%r%d",Rsa(w));
 		if (Dss(w))
-			printf("(%%sr%d,%%r%d),%%f%s", Dss(w),Rsb(w), p);
+			db_printf("(%%sr%d,%%r%d),%%f%s", Dss(w),Rsb(w), p);
 		else
-			printf("(%%r%d),%%f%s",Rsb(w), p);
+			db_printf("(%%r%d),%%f%s",Rsb(w), p);
 	} else {
-		FAST const char *p;
+		register const char *p;
 
 		if (dreg)
 			p = fdreg[(Rsc(w)<<1)+(uid&1)];
@@ -2223,22 +2198,22 @@ coprDasm(i, ofs, w)
 			p = fsreg[(Rsc(w)<<1)+(uid&1)];
 
 		if (ShortDisp(w))
-			printf("\t%%f%s,%d", p, Ima5(w));
+			db_printf("\t%%f%s,%d", p, Ima5(w));
 		else
-			printf("\t%%f%s,%%r%d", p, Rta(w));
+			db_printf("\t%%f%s,%%r%d", p, Rta(w));
 		if (Dss(w))
-			printf("(%%sr%d,%%r%d)",Dss(w),Rsb(w));
+			db_printf("(%%sr%d,%%r%d)",Dss(w),Rsb(w));
 		else
-			printf("(%%r%d)",Rsb(w));
+			db_printf("(%%r%d)",Rsb(w));
 	}
-	return(YES);
+	return (1);
 }
 
-static BOOL
+int
 lpkDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
 	/*
 	 * Floating point STore Quad
@@ -2246,78 +2221,76 @@ lpkDasm(i, ofs, w)
 	 */
 	if (ShortDisp(w)) {
 		if (Modify(w))
-			printf(",m%s", ModBefore(w)?"b":"a");
+			db_printf(",m%s", ModBefore(w)?"b":"a");
 	} else {
 		if (Modify(w))
-			printf(",%sm", IndxShft(w)? "s":"");
+			db_printf(",%sm", IndxShft(w)? "s":"");
 		else if (IndxShft(w))
-			printf(",s");
+			db_printf(",s");
 	}
 	switch (CacheCtrl(w)) {
 	case NOACTION:	break;
-	case STACKREF:	printf(",c"); break;
-	case SEQPASS:	printf(",q"); break;
-	case PREFETCH:	printf(",p"); break;
+	case STACKREF:	db_printf(",c"); break;
+	case SEQPASS:	db_printf(",q"); break;
+	case PREFETCH:	db_printf(",p"); break;
 	}
 	if (ShortDisp(w))
-		printf("\t%%fr%d,%d",Rsc(w),Ima5(w));
+		db_printf("\t%%fr%d,%d",Rsc(w),Ima5(w));
 	else
-		printf("\t%%fr%d,%%r%d",Rsc(w),Rta(w));
+		db_printf("\t%%fr%d,%%r%d",Rsc(w),Rta(w));
 	if (Dss(w))
-		printf("(%%sr%d,%%r%d)",Dss(w),Rsb(w));
+		db_printf("(%%sr%d,%%r%d)",Dss(w),Rsb(w));
 	else
-		printf("(%%r%d)",Rsb(w));
-	return(YES);
+		db_printf("(%%r%d)",Rsb(w));
+	return (1);
 }
 
-static BOOL
+int
 diagDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	if (0x0b0 == BitfR(w,19,8,_b198)) {	/* mtcpu */
-		printf("mtcpu\t%%r%d,%%dr%d", Rsa(w), Rtb(w));
-		return(YES);
+	if (0x0b0 == BitfR(w,19,8,_b198))	/* mtcpu */
+		db_printf("mtcpu\t%%r%d,%%dr%d", Rsa(w), Rtb(w));
+	else if (0x0d0 == BitfR(w,19,8,_b198))	/* mfcpu */
+		db_printf("mfcpu\t%%dr%d,%%r%d", Rsb(w), Rta(w));
+	else {
+		db_printf(i->mnem);
+		if (Match("diag"))
+			db_printf("\t0x%X",w & 0x03ffffff);
+		else {
+			db_printf("?????");
+			return (0);
+		}
 	}
-	if (0x0d0 == BitfR(w,19,8,_b198)) {	/* mfcpu */
-		printf("mfcpu\t%%dr%d,%%r%d", Rsb(w), Rta(w));
-		return(YES);
-	}
-
-	printf(i->mnem);
-	if (Match("diag")) {
-		printf("\t0x%X",w & 0x03ffffff);
-		return(YES);
-	}
-	printf("?????");
-	return(NO);
+	return (1);
 }
 
-static BOOL
+int
 fmpysubDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
 	if (SinglePrec(w))
-		printf("SUB,SGL\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
+		db_printf("SUB,SGL\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
 		       fsreg[Ms1(w)], fsreg[Ms2(w)], fsreg[Mt(w)],
 		       fsreg[As(w)], fsreg[Ad(w)]);
 	else
-		printf("SUB,DBL\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
+		db_printf("SUB,DBL\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
 		       fdreg[Ms1(w)], fdreg[Ms2(w)], fdreg[Mt(w)],
 		       fdreg[As(w)], fdreg[Ad(w)]);
-	return(YES);
+	return (1);
 }
 
-static BOOL
+int
 fmpyaddDasm(i, ofs, w)
 	const struct inst *i;
 	OFS ofs;
-	WORD w;
+	int w;
 {
-	FAST const char
+	register const char
 		*ms1 = SinglePrec(w) ? fsreg[Ms1(w)] : fdreg[Ms1(w)],
 		*ms2 = SinglePrec(w) ? fsreg[Ms2(w)] : fdreg[Ms2(w)],
 		*mt  = SinglePrec(w) ? fsreg[Mt(w)]  : fdreg[Mt(w)],
@@ -2325,15 +2298,15 @@ fmpyaddDasm(i, ofs, w)
 		*ad  = SinglePrec(w) ? fsreg[Ad(w)]  : fdreg[Ad(w)];
 
 	if (Rsd(w) == 0)
-		printf("\t%%fcfxt,%s,%%f%s,%%f%s,%%f%s",
+		db_printf("\t%%fcfxt,%s,%%f%s,%%f%s,%%f%s",
 		       ((SinglePrec(w)) ? "sgl" : "dbl"),
 		       ms1, ms2, mt, ad);
 	else
-		printf("add%s\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
+		db_printf("add%s\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
 		       ((SinglePrec(w)) ? "sgl" : "dbl"),
 		       ms1, ms2, mt, as, ad);
 
-	return(YES);
+	return (1);
 }
 
 vm_offset_t
@@ -2341,10 +2314,10 @@ db_disasm(loc, flag)
 	vm_offset_t loc;
 	boolean_t flag;
 {
-	FAST const struct inst *i;
-	FAST const struct majoropcode *m;
-	FAST u_int ext;
-	WORD instruct = *(WORD*)loc;
+	register const struct inst *i;
+	register const struct majoropcode *m;
+	register u_int ext;
+	int instruct = *(int *)loc;
 	OFS ofs = 0;
 
 	iExInit();
@@ -2354,23 +2327,21 @@ db_disasm(loc, flag)
 	if (ext <= m->maxsubop) {
 		/* special hack for majopcs table layout */
 		if (m->maxsubop == 1)
-			i = m->subops[ext];
+			i = (const struct inst *)m->subops;
 		else
 			i = m->subops[ext];
 
-		if (i->dasmfcn == coprDasm || i->dasmfcn == diagDasm ||
-		    i->dasmfcn == ariDasm || i->dasmfcn == scDasm ||
-		    i->dasmfcn == ldDasm)
+		if (i->dasmfcn != coprDasm && i->dasmfcn != diagDasm &&
+		    i->dasmfcn != ariDasm && i->dasmfcn != scDasm &&
+		    i->dasmfcn != ldDasm)
+			db_printf(i->mnem);
+		if (i->dasmfcn)
 			(*i->dasmfcn)(i, ofs, instruct);
-		else {
-			printf(i->mnem);
-			if (i->dasmfcn)
-				(*i->dasmfcn)(i, ofs, instruct);
-			else if (i->mnem[0] == '?')
-				db_printf(illeg.mnem);
-		}
+		else if (i->mnem[0] == '?')
+			db_printf(illeg.mnem);
 	} else
 		db_printf(illeg.mnem);
 
+	db_printf("\n");
 	return (loc + sizeof(instruct));
 }
