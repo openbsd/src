@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.15 2000/04/12 21:47:55 aaron Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.16 2000/10/23 22:23:34 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -329,23 +329,6 @@ Format is the same as that used by the
 command (well, considering that it's later handed off to it, that's
 no surprise).
 Use without an arg to set back to default (extraction) permissions.
-.It Cm @option Ar option
-Set internal package options, the only two currently supported ones
-being
-.Ar extract-in-place ,
-which tells the
-.Nm pkg_add
-command not to extract the package's tarball
-into a staging area but rather directly into the target
-hierarchy (this is typically meant to be used only by distributions
-or other special package types), and
-.Ar preserve ,
-which tells
-.Nm pkg_add
-to move any existing files out of the way,
-preserving the previous contents (which are also resurrected on
-.Nm pkg_delete ,
-so caveat emptor).
 .It Cm @owner Ar user
 Set default ownership for all subsequently extracted files to
 .Ar user .
