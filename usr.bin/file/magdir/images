@@ -125,6 +125,9 @@
 #
 0	beshort		0xffd8		JPEG image data
 >6	string		JFIF		\b, JFIF standard
+# Contributed by wizdumb@leet.org
+>24	string	Photoshop	\b, Made in Adobe Photoshop
+
 # HSI is Handmade Software's proprietary JPEG encoding scheme
 0	string		hsi1		JPEG image data, HSI proprietary
 
