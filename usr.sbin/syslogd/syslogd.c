@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.61 2003/05/17 17:49:28 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.62 2003/05/17 19:44:06 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.61 2003/05/17 17:49:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.62 2003/05/17 19:44:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -846,7 +846,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 			continue;
 		/* must use strncpy since ut_* may not be NUL terminated */
 		strncpy(line, ut.ut_line, sizeof(line) - 1);
-		line[sizeof(line) - 1];
+		line[sizeof(line) - 1] = '\0';
 		if (f->f_type == F_WALL) {
 			if ((p = ttymsg(iov, 6, line, TTYMSGTIME)) != NULL) {
 				errno = 0;	/* already in msg */
