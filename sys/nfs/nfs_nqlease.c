@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_nqlease.c,v 1.14 1999/02/06 23:07:40 millert Exp $	*/
+/*	$OpenBSD: nfs_nqlease.c,v 1.15 2001/02/24 19:07:11 csapuntz Exp $	*/
 /*	$NetBSD: nfs_nqlease.c,v 1.14 1996/02/18 14:06:50 fvdl Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 		return (error);
 	*frev = vattr.va_filerev;
 	s = splsoftclock();
-	tlp = vp->v_lease;
+	tlp = 0;
 	if ((flags & ND_CHECK) == 0)
 		nfsstats.srvnqnfs_getleases++;
 	if (tlp == 0) {
@@ -200,7 +200,6 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 				  fh.fh_fid.fid_len - sizeof (int32_t))) {
 				/* Found it */
 				lp->lc_vp = vp;
-				vp->v_lease = lp;
 				tlp = lp;
 				break;
 			}
@@ -299,7 +298,6 @@ doreply:
 	if(!lpp)
 		panic("nfs_nqlease.c: Phoney lpp");
 	LIST_INSERT_HEAD(lpp, lp, lc_hash);
-	vp->v_lease = lp;
 	s = splsoftclock();
 	nqsrv_instimeq(lp, *duration);
 	splx(s);
@@ -635,13 +633,6 @@ nqnfs_serverd()
 		    } else {
 			CIRCLEQ_REMOVE(&nqtimerhead, lp, lc_timer);
 			LIST_REMOVE(lp, lc_hash);
-			/*
-			 * This soft reference may no longer be valid, but
-			 * no harm done. The worst case is if the vnode was
-			 * recycled and has another valid lease reference,
-			 * which is dereferenced prematurely.
-			 */
-			lp->lc_vp->v_lease = (struct nqlease *)0;
 			lph = &lp->lc_host;
 			lphnext = lp->lc_morehosts;
 			olphnext = (struct nqm *)0;

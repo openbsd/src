@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.30 2001/02/23 14:52:50 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.31 2001/02/24 19:07:08 csapuntz Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -338,7 +338,7 @@ bwrite(bp)
 	 */
 	if (wasdelayed) {
 		--numdirtybufs;
-		reassignbuf(bp, bp->b_vp);
+		reassignbuf(bp);
 	} else
 		curproc->p_stats->p_ru.ru_oublock++;
 	
@@ -393,7 +393,7 @@ bdwrite(bp)
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
 		s = splbio();
-		reassignbuf(bp, bp->b_vp);
+		reassignbuf(bp);
 		++numdirtybufs;
 		splx(s);
 		curproc->p_stats->p_ru.ru_oublock++;	/* XXX */
@@ -433,7 +433,7 @@ buf_dirty(bp)
 {
 	if (ISSET(bp->b_flags, B_DELWRI) == 0) {
 		SET(bp->b_flags, B_DELWRI);
-		reassignbuf(bp, bp->b_vp);
+		reassignbuf(bp);
 		++numdirtybufs;
 	}
 }
@@ -447,7 +447,7 @@ buf_undirty(bp)
 {
 	if (ISSET(bp->b_flags, B_DELWRI)) {
 		CLR(bp->b_flags, B_DELWRI);
-		reassignbuf(bp, bp->b_vp);
+		reassignbuf(bp);
 		--numdirtybufs;
 	}
 }
@@ -506,7 +506,7 @@ brelse(bp)
 		}
 
 		if (bp->b_vp) {
-			reassignbuf(bp, bp->b_vp);
+			reassignbuf(bp);
 			brelvp(bp);
 		}
 		if (bp->b_bufsize <= 0)
@@ -895,8 +895,10 @@ biodone(bp)
 	if (LIST_FIRST(&bp->b_dep) != NULL)
 		buf_complete(bp);
 
-	if (!ISSET(bp->b_flags, B_READ))	/* wake up reader */
-		vwakeup(bp);
+	if (!ISSET(bp->b_flags, B_READ)) {
+		CLR(bp->b_flags, B_WRITEINPROG);
+		vwakeup(bp->b_vp);
+	}
 
 	if (ISSET(bp->b_flags, B_CALL)) {	/* if necessary, call out */
 		CLR(bp->b_flags, B_CALL);	/* but note callout done */

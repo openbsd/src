@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.28 2001/02/23 14:52:51 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.29 2001/02/24 19:07:11 csapuntz Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2816,23 +2816,19 @@ loop:
 		goto again;
 	}
 	if (waitfor == MNT_WAIT) {
+ loop2:
 	        s = splbio();
-		while (vp->v_numoutput) {
-			vp->v_flag |= VBWAIT;
-			error = tsleep((caddr_t)&vp->v_numoutput,
-				slpflag | (PRIBIO + 1), "nfsfsync", slptimeo);
-			if (error) {
-                            splx(s);
-			    if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
+		error = vwaitforio(vp, slpflag, "nfs_fsync", slptimeo);
+		splx(s);
+		if (error) {
+			if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
 				return (EINTR);
-			    if (slpflag == PCATCH) {
+			if (slpflag == PCATCH) {
 				slpflag = 0;
 				slptimeo = 2 * hz;
-			    }
-			    s = splbio();
 			}
+			goto loop2;
 		}
-		splx(s);
 			
 		if (vp->v_dirtyblkhd.lh_first && commit) {
 #if 0

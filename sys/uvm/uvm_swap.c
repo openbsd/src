@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.22 2001/01/29 02:07:49 niklas Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.23 2001/02/24 19:07:12 csapuntz Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.27 1999/03/30 16:07:47 chs Exp $	*/
 
 /*
@@ -1323,7 +1323,6 @@ swstrategy(bp)
 	struct buf *bp;
 {
 	struct swapdev *sdp;
-	struct vnode *vp;
 	int s, pageno, bn;
 	UVMHIST_FUNC("swstrategy"); UVMHIST_CALLED(pdhist);
 
@@ -1372,32 +1371,10 @@ swstrategy(bp)
 		 * on the swapdev (sdp).
 		 */
 		s = splbio();
-		bp->b_blkno = bn;		/* swapdev block number */
-		vp = sdp->swd_vp;		/* swapdev vnode pointer */
-		bp->b_dev = sdp->swd_dev;	/* swapdev dev_t */
-		VHOLD(vp);			/* "hold" swapdev vp for i/o */
+		buf_replacevnode(bp, sdp->swd_vp);
 
-		/*
-		 * if we are doing a write, we have to redirect the i/o on
-		 * drum's v_numoutput counter to the swapdevs.
-		 */
-		if ((bp->b_flags & B_READ) == 0) {
-			vwakeup(bp);	/* kills one 'v_numoutput' on drum */
-			vp->v_numoutput++;	/* put it on swapdev */
-		}
-
-		/* 
-		 * dissassocate buffer with /dev/drum vnode 
-		 * [could be null if buf was from physio]
-		 */
-		if (bp->b_vp != NULLVP)
-			brelvp(bp);
-
-		/* 
-		 * finally plug in swapdev vnode and start I/O
-		 */
-		bp->b_vp = vp;
-		splx(s);
+		bp->b_blkno = bn;
+      		splx(s);
 		VOP_STRATEGY(bp);
 		return;
 #ifdef SWAP_TO_FILES
@@ -2089,13 +2066,9 @@ uvm_swap_io(pps, startslot, npages, flags)
 	bp->b_blkno = startblk;
 	LIST_INIT(&bp->b_dep);
 	s = splbio();
-	VHOLD(swapdev_vp);
-	bp->b_vp = swapdev_vp;
+	bp->b_vp = NULL;
+	buf_replacevnode(bp, swapdev_vp);
 	splx(s);
-	/* XXXCDC: isn't swapdev_vp always a VCHR? */
-	/* XXXMRG: probably -- this is obviously something inherited... */
-	if (swapdev_vp->v_type == VBLK)
-		bp->b_dev = swapdev_vp->v_rdev;
 	bp->b_bcount = npages << PAGE_SHIFT;
 
 	/* 
@@ -2105,9 +2078,6 @@ uvm_swap_io(pps, startslot, npages, flags)
 	if ((bp->b_flags & B_READ) == 0) {
 		bp->b_dirtyoff = 0;
 		bp->b_dirtyend = npages << PAGE_SHIFT;
-		s = splbio();
-		swapdev_vp->v_numoutput++;
-		splx(s);
 #ifdef UVM_SWAP_ENCRYPT
 		/* mark the pages in the drum for decryption */
 		if (swap_encrypt_initalized)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.13 2001/02/23 14:52:51 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.14 2001/02/24 19:07:09 csapuntz Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -4796,13 +4796,13 @@ drain_output(vp, islocked)
 	struct vnode *vp;
 	int islocked;
 {
-
+	
 	if (!islocked)
 		ACQUIRE_LOCK(&lk);
 	while (vp->v_numoutput) {
-		vp->v_flag |= VBWAIT;
+		vp->v_bioflag |= VBIOWAIT;
 		FREE_LOCK_INTERLOCKED(&lk);
-		tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1, "drainvp", 0);
+		tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1, "drain_output", 0);
 		ACQUIRE_LOCK_INTERLOCKED(&lk);
 	}
 	if (!islocked)
