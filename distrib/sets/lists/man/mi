@@ -1766,6 +1766,7 @@
 ./usr/share/man/cat8/alpha/wsmoused.0
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amd64
+./usr/share/man/cat8/amd64/MAKEDEV.0
 ./usr/share/man/cat8/amd64/biosboot.0
 ./usr/share/man/cat8/amd64/boot.0
 ./usr/share/man/cat8/amd64/boot.conf.0
@@ -1795,6 +1796,7 @@
 ./usr/share/man/cat8/bos.0
 ./usr/share/man/cat8/brconfig.0
 ./usr/share/man/cat8/cats
+./usr/share/man/cat8/cats/MAKEDEV.0
 ./usr/share/man/cat8/cats/boot_cats.0
 ./usr/share/man/cat8/cats/fdisk.0
 ./usr/share/man/cat8/cats/kbd.0
