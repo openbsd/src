@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.51 1998/07/07 18:33:10 mickey Exp $
+#	$OpenBSD: Makefile,v 1.52 1998/07/24 19:33:51 millert Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ SUBDIR= apply apropos arch asa at aucat audioctl awk banner basename bdes biff \
 	printf quota rdist rdistd readlink renice rev rlogin rpcgen rpcinfo rs \
 	rsh rup ruptime rusers rwall rwho \
 	script sed shar showmount skey skeyaudit skeyinfo skeyinit soelim sort \
-	split su sup systat tail talk tcopy tee telnet tftp time \
+	split su sup systat tail talk tcopy tee telnet tftp tic time \
 	tip tn3270 top touch tput tr true tset tsort tty ul uname unexpand \
 	unifdef uniq units unvis users uudecode uuencode \
 	vacation vgrind vi vis vmstat w wall wc what whatis \
