@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.681 2003/10/16 18:03:20 grange Exp 
+ *		OpenBSD: pcidevs,v 1.682 2003/10/19 10:42:14 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2298,6 +2298,7 @@
 #define	PCI_PRODUCT_VIATECH_VT8633_AGP	0xb091		/* VT8633 PCI-AGP */
 #define	PCI_PRODUCT_VIATECH_VT8366_AGP	0xb099		/* VT8366 PCI-AGP */
 #define	PCI_PRODUCT_VIATECH_VT8235_AGP	0xb168		/* VT8235 PCI-AGP */
+#define	PCI_PRODUCT_VIATECH_VT8377_AGP	0xb198		/* VT8377 PCI-AGP */
 
 /* Vortex Computer Systems products */
 #define	PCI_PRODUCT_VORTEX_GDT_60x0	0x0000		/* GDT6000/6020/6050 */
