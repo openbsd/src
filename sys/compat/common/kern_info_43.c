@@ -1,7 +1,5 @@
-/*	$Id: kern_info_43.c,v 1.4 1996/02/26 23:26:52 niklas Exp $ */
-
-/*	$OpenBSD: kern_info_43.c,v 1.4 1996/02/26 23:26:52 niklas Exp $	*/
-/*	$NetBSD: kern_info_43.c,v 1.4 1996/02/04 02:02:22 christos Exp $	*/
+/*	$OpenBSD: kern_info_43.c,v 1.5 1996/03/03 05:26:23 mickey Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.5 1996/02/04 02:02:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -97,10 +95,11 @@ compat_43_sys_gethostname(p, v, retval)
 		syscallarg(u_int) len;
 	} */ *uap = v;
 	int name;
+	size_t sz;
 
 	name = KERN_HOSTNAME;
-	return (kern_sysctl(&name, 1, SCARG(uap, hostname), &SCARG(uap, len),
-			    0, 0, p));
+	sz = SCARG(uap, len);
+	return (kern_sysctl(&name, 1, SCARG(uap, hostname), &sz, 0, 0, p));
 }
 
 #define	KINFO_PROC		(0<<8)

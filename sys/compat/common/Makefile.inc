@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1996/02/26 23:26:49 niklas Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1996/03/03 05:26:22 mickey Exp $
 #	$NetBSD: Makefile.inc,v 1.3 1996/02/02 20:34:44 mycroft Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
@@ -12,7 +12,7 @@ COMPATLIB_PROF=	${COMPATDST}/libcompat_p.a
 
 COMPATMAKE= \
 	cd ${COMPATDST} && ${MAKE} -f ${COMPATREL}${COMPATDIR}/Makefile \
-	    CC="${CC}" CFLAGS="${CFLAGS}" \
+	    CC="${CC}" CFLAGS="${CFLAGS:S/-I./-I${COMPATREL}./g}" \
 	    LD="${LD}" \
 	    COMPATCPPFLAGS="${CPPFLAGS}" \
 	    COMPATREL="${COMPATREL}" \
