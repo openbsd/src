@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.40 2002/01/02 22:23:25 miod Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.41 2002/01/28 11:53:48 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -647,8 +647,8 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 		/* XXXCDC: need some sort of lockout for this case */
 		paddr_t paddr;
 		npages = end - start;  /* # of pages */
-		pgs = malloc(sizeof(struct vm_page) * npages,
-		    M_VMPAGE, M_NOWAIT);
+		pgs = (vm_page *)uvm_km_alloc(kernel_map,
+		    sizeof(struct vm_page) * npages);
 		if (pgs == NULL) {
 			printf("uvm_page_physload: can not malloc vm_page "
 			    "structs for segment\n");
