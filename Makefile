@@ -1,9 +1,27 @@
-#	$OpenBSD: Makefile,v 1.15 1997/02/28 23:22:07 niklas Exp $
+#	$OpenBSD: Makefile,v 1.16 1997/04/18 06:47:08 deraadt Exp $
 #	$NetBSD: Makefile,v 1.25 1995/10/09 02:11:28 thorpej Exp $
 
-.include <bsd.own.mk>	# for NOMAN, if it's there.
+#
+# For more information on building in tricky environments, please see
+# the list of possible environment variables described in
+# /usr/share/mk/bsd.README.
+# 
+# Building recommendations:
+# 
+# 1) If at all possible, put this source tree in /usr/src.  If /usr/src
+# must be a symbolic link, setenv BSDSRCDIR to point to the real location.
+#
+# 2) It is also recommended that you compile with objects outside the
+# source tree. To do this, ensure /usr/obj exists or points to some
+# area of disk of sufficient size.  Then do "cd /usr/src; make obj".
+# This will make a symbolic link called "obj" in each directory, as
+# well as populate the /usr/obj properly with directories for the
+# objects.
+#
+# 3) If you are reasonably sure that things will compile OK, use the
+# "make build" target supplied here. Good luck.
 
-# NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
+.include <bsd.own.mk>	# for NOMAN, if it's there.
 
 SUBDIR+= lib include bin libexec sbin usr.bin usr.sbin share games
 SUBDIR+= gnu
