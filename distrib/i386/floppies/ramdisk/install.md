@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.12 1997/08/30 17:43:40 millert Exp $
+#	$OpenBSD: install.md,v 1.13 1997/09/06 03:53:58 millert Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -47,8 +47,8 @@ md_set_term() {
 	if [ ! -z "$TERM" ]; then
 		return
 	fi
-	echo -n "Specify terminal type [vt220]: "
-	getresp "vt220"
+	echo -n "Specify terminal type [pcvt25]: "
+	getresp "pcvt25"
 	TERM="$resp"
 	export TERM
 }
