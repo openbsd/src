@@ -4,6 +4,7 @@
  * usage: ldconfig [-DvnNX] dir ...
  *        ldconfig -l [-Dv] lib ...
  *        ldconfig -p
+ *        ldconfig -r
  *        -D: debug mode, don't update links
  *        -v: verbose mode, print things as we go
  *        -n: don't process standard directories
@@ -11,6 +12,7 @@
  *        -X: don't update the library links
  *        -l: library mode, manually link libraries
  *        -p: print the current library cache
+ *        -r: print the current library cache in a another format
  *        -P: add path before open. used by install scripts.
  *        dir ...: directories to process
  *        lib ...: libraries to link
@@ -64,6 +66,7 @@ char *Ppath = "";
 
 char *cachefile = LDSO_CACHE;	/* default cache file */
 void cache_print(void);
+void cache_print_alt(void);
 void cache_dolib(char *dir, char *so, char *lib, int);
 void cache_rmlib(char *dir, char *so);
 void cache_write(void);
@@ -384,7 +387,7 @@ int main(int argc, char **argv)
     prog = argv[0];
     opterr = 0;
 
-    while ((c = getopt(argc, argv, "DvnNXlpf:P:m:")) != EOF)
+    while ((c = getopt(argc, argv, "DvnNXlprf:P:m:")) != EOF)
 	switch (c)
 	{
 	case 'D':
@@ -416,6 +419,9 @@ int main(int argc, char **argv)
 	case 'p':
 	    printcache = 1;	/* print cache */
 	    break;
+	case 'r':
+	    printcache = 2;	/* print cache */
+	    break;
 	case 'P':
 	    Pswitch = 1;	/* add path before names. INSTALL */
 	    Ppath = optarg;
@@ -424,6 +430,7 @@ int main(int argc, char **argv)
 	    fprintf(stderr, "usage: %s [-DvnNX] dir ...\n", prog);
 	    fprintf(stderr, "       %s -l [-Dv] lib ...\n", prog);
 	    fprintf(stderr, "       %s -p\n", prog);
+	    fprintf(stderr, "       %s -r\n", prog);
 	    exit(EXIT_FATAL);
 	    break;
 
@@ -441,7 +448,11 @@ int main(int argc, char **argv)
     if (printcache)
     {
 	/* print the cache -- don't you trust me? */
-	cache_print();
+	if (printcache == 1) {
+	    cache_print();
+	} else {
+	    cache_print_alt();
+	}
 	exit(EXIT_OK);
     }
     else if (libmode)
@@ -672,6 +683,72 @@ void cache_print(void)
 	libent[fd].flags == LIB_DLL ? "DLL" : "ELF",
 	strs + libent[fd].sooffset, 
 	strs + libent[fd].liboffset);
+    }
+
+    munmap (c,st.st_size);
+}
+
+void cache_print_alt(void)
+{
+    caddr_t c;
+    struct stat st;
+    int fd = 0;
+    char *strs;
+    header_t *header;
+    libentry_t *libent;
+
+    if (stat(cachefile, &st) || (fd = open(cachefile, O_RDONLY))<0)
+	error("can't read %s (%s)", cachefile, strerror(errno));
+    if ((c = mmap(0,st.st_size, PROT_READ, MAP_SHARED ,fd, 0)) == (caddr_t)-1)
+	error("can't map %s (%s)", cachefile, strerror(errno));
+    close(fd);
+
+    if (memcmp(((header_t *)c)->magic, LDSO_CACHE_MAGIC, LDSO_CACHE_MAGIC_LEN))
+	error("%s cache corrupt", cachefile);
+
+    if (memcmp(((header_t *)c)->version, LDSO_CACHE_VER, LDSO_CACHE_VER_LEN))
+	error("wrong cache version - expected %s", LDSO_CACHE_VER);
+
+    header = (header_t *)c;
+    libent = (libentry_t *)(c + sizeof (header_t));
+    strs = (char *)&libent[header->nlibs];
+
+    printf("%d libs found in cache `%s' (version %s)\n",
+	    header->nlibs, cachefile, LDSO_CACHE_VER);
+
+    for (fd = 0; fd < header->nlibs; fd++)
+    {
+	int i = 0, j = 0, k = 0;
+	char *c,*d = NULL;
+
+	for (c = strs + libent[fd].liboffset; *c != '\0'; c++)
+	{
+	    if (*c == '/') d = c;
+	}
+	
+	if (d != NULL) {
+		d = d + 4;
+		for (c = d; *c != '\0'; c++)
+		{
+		    if (*c == '.') {
+			if ((j != 0) && (k == 0)) {
+			    k = i;
+			} 
+			if ((j == 0) && (c[1] == 's') && (c[2] == 'o')) {
+			    j = i;
+			}
+		    }
+		    i++;
+		}
+		printf("\t%2d:-l%*.*s%s => %s\n", fd + 1,
+		j, j, d,
+		d + k,
+		strs + libent[fd].liboffset);	
+	} else {
+		printf("\t%2d:-l%s => %s\n", fd + 1,
+		strs + libent[fd].sooffset,
+		strs + libent[fd].liboffset);
+	}
     }
 
     munmap (c,st.st_size);
