@@ -1,4 +1,4 @@
-/*	$OpenBSD: mntopts.h,v 1.6 2000/06/17 18:27:07 niklas Exp $	*/
+/*	$OpenBSD: mntopts.h,v 1.7 2001/04/04 20:19:00 gluk Exp $	*/
 /*	$NetBSD: mntopts.h,v 1.3 1995/03/18 14:56:59 cgd Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@ struct mntopt {
 #define MOPT_UNION		{ "union",	0, MNT_UNION }
 #define MOPT_USERQUOTA		{ "userquota",	0, 0 }
 #define MOPT_GROUPQUOTA		{ "groupquota",	0, 0 }
+#define MOPT_SOFTDEP		{ "softdep",	0, MNT_SOFTDEP }
 
 /* Control flags. */
 #define MOPT_FORCE		{ "force",	0, MNT_FORCE }

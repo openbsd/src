@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.20 2001/03/08 10:56:47 art Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.21 2001/04/04 20:19:03 gluk Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -1091,14 +1091,12 @@ softdep_mount(devvp, mp, fs, cred)
 	struct buf *bp;
 	int error, cyl;
 
-	mp->mnt_flag &= ~MNT_ASYNC;
-	mp->mnt_flag |= MNT_SOFTDEP;
 	/*
 	 * When doing soft updates, the counters in the
 	 * superblock may have gotten out of sync, so we have
 	 * to scan the cylinder groups and recalculate them.
 	 */
-	if (fs->fs_clean != 0)
+	if ((fs->fs_flags & FS_UNCLEAN) == 0)
 		return (0);
 	bzero(&cstotal, sizeof cstotal);
 	for (cyl = 0; cyl < fs->fs_ncg; cyl++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.34 2001/03/22 00:20:54 art Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.35 2001/04/04 20:19:04 gluk Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -157,6 +157,23 @@ ffs_mount(mp, path, data, ndp, p)
 	error = copyin(data, &args, sizeof (struct ufs_args));
 	if (error)
 		return (error);
+
+#ifndef FFS_SOFTUPDATES
+	if (mp->mnt_flag & MNT_SOFTDEP) {
+		printf("WARNING: soft updates isn't compiled in\n");
+		mp->mnt_flag &= ~MNT_SOFTDEP;
+	}
+#endif
+
+	/*
+	 * Soft updates is incompatible with "async",
+	 * so if we are doing softupdates stop the user
+	 * from setting the async flag.
+	 */
+	if ((mp->mnt_flag & (MNT_SOFTDEP | MNT_ASYNC)) ==
+	    (MNT_SOFTDEP | MNT_ASYNC)) {
+		return (EINVAL);
+	}
 	/*
 	 * If updating, check whether changing from read-only to
 	 * read/write; if there is no device name, that's all we do.
@@ -172,12 +189,47 @@ ffs_mount(mp, path, data, ndp, p)
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
-			if (mp->mnt_flag & MNT_SOFTDEP)
+			if (fs->fs_flags & FS_DOSOFTDEP) {
 				error = softdep_flushfiles(mp, flags, p);
-			else
+				mp->mnt_flag &= ~MNT_SOFTDEP;
+			} else
 				error = ffs_flushfiles(mp, flags, p);
 			ronly = 1;
 		}
+
+		/*
+		 * Flush soft dependencies if disabling it via an update
+		 * mount. This may leave some items to be processed,
+		 * so don't do this yet XXX.
+		 */
+		if ((fs->fs_flags & FS_DOSOFTDEP) &&
+		    !(mp->mnt_flag & MNT_SOFTDEP) &&
+		    !(mp->mnt_flag & MNT_RDONLY) && fs->fs_ronly == 0) {
+#if 0
+			flags = WRITECLOSE;
+			if (mp->mnt_flag & MNT_FORCE)
+				flags |= FORCECLOSE;
+			error = softdep_flushfiles(mp, flags, p);
+#elif FFS_SOFTUPDATES
+			mp->mnt_flag |= MNT_SOFTDEP;
+#endif
+		}
+		/*
+		 * When upgrading to a softdep mount, we must first flush
+		 * all vnodes. (not done yet -- see above)
+		 */
+		if (!(fs->fs_flags & FS_DOSOFTDEP) &&
+		    (mp->mnt_flag & MNT_SOFTDEP) && fs->fs_ronly == 0) {
+#if 0
+			flags = WRITECLOSE;
+			if (mp->mnt_flag & MNT_FORCE)
+				flags |= FORCECLOSE;
+			error = ffs_flushfiles(mp, flags, p);
+#else
+			mp->mnt_flag &= ~MNT_SOFTDEP;
+#endif
+		}
+
 		if (!error && (mp->mnt_flag & MNT_RELOAD))
 			error = ffs_reload(mp, ndp->ni_cnd.cn_cred, p);
 		if (error)
@@ -198,6 +250,19 @@ ffs_mount(mp, path, data, ndp, p)
 			}
 
 			if (fs->fs_clean == 0) {
+#if 0
+				/*
+				 * It is safe mount unclean file system
+				 * if it was previously mounted with softdep
+				 * but we may loss space and must
+				 * sometimes run fsck manually.
+				 */
+				if (fs->fs_flags & FS_DOSOFTDEP)
+					printf(
+"WARNING: %s was not properly unmounted\n",
+					    fs->fs_fsmnt);
+				else
+#endif
 				if (mp->mnt_flag & MNT_FORCE) {
 					printf(
 "WARNING: %s was not properly unmounted\n",
@@ -220,17 +285,6 @@ ffs_mount(mp, path, data, ndp, p)
 
 			ronly = 0;
 		}
-		/*
-		 * Soft updates is incompatible with "async",
-		 * so if we are doing softupdates stop the user
-		 * from setting the async flag in an update.
-		 * Softdep_mount() clears it in an initial mount
-		 * or ro->rw remount.
-		 */
-		if (mp->mnt_flag & MNT_SOFTDEP) {
-			mp->mnt_flag &= ~MNT_ASYNC;
-		}
-
 		if (args.fspec == 0) {
 			/*
 			 * Process export requests.
@@ -343,8 +397,6 @@ ffs_mount(mp, path, data, ndp, p)
 	(void)VFS_STATFS(mp, &mp->mnt_stat, p);
 
 success:
-	if ((mp->mnt_flag & MNT_SOFTDEP))
-		mp->mnt_flag &= ~MNT_ASYNC;
 	if (path && (mp->mnt_flag & MNT_UPDATE)) {
 		/* Update clean flag after changing read-onlyness. */
 		fs = ump->um_fs;
@@ -352,8 +404,14 @@ success:
 			fs->fs_ronly = ronly;
 			fs->fs_clean = ronly &&
 			    (fs->fs_flags & FS_UNCLEAN) == 0 ? 1 : 0;
-			ffs_sbupdate(ump, MNT_WAIT);
 		}
+		if (!ronly) {
+			if (mp->mnt_flag & MNT_SOFTDEP)
+				fs->fs_flags |= FS_DOSOFTDEP;
+			else
+				fs->fs_flags &= ~FS_DOSOFTDEP;
+		}
+		ffs_sbupdate(ump, MNT_WAIT);
 	}
 	return (0);
 
@@ -452,8 +510,6 @@ ffs_reload(mountp, cred, p)
 	}
 	if ((fs->fs_flags & FS_DOSOFTDEP))
 		(void) softdep_mount(devvp, mountp, fs, cred);
-	else
-		mountp->mnt_flag &= ~MNT_SOFTDEP;
 	/*
 	 * We no longer know anything about clusters per cylinder group.
 	 */
@@ -572,6 +628,19 @@ ffs_mountfs(devvp, mp, p)
 	fs->fs_flags &= ~FS_UNCLEAN;
 	if (fs->fs_clean == 0) {
 		fs->fs_flags |= FS_UNCLEAN;
+#if 0
+		/*
+		 * It is safe mount unclean file system
+		 * if it was previously mounted with softdep
+		 * but we may loss space and must
+		 * sometimes run fsck manually.
+		 */
+		if (fs->fs_flags & FS_DOSOFTDEP)
+			printf(
+"WARNING: %s was not properly unmounted\n",
+			    fs->fs_fsmnt);
+		else
+#endif
 		if (ronly || (mp->mnt_flag & MNT_FORCE)) {
 			printf(
 "WARNING: %s was not properly unmounted\n",
@@ -600,10 +669,6 @@ ffs_mountfs(devvp, mp, p)
 	bp = NULL;
 	fs = ump->um_fs;
 	fs->fs_ronly = ronly;
-	if (ronly == 0) {
-		fs->fs_fmod = 1;
-		fs->fs_clean = 0;
-	}
 	size = fs->fs_cssize;
 	blks = howmany(size, fs->fs_fsize);
 	if (fs->fs_contigsumsize > 0)
@@ -680,7 +745,12 @@ ffs_mountfs(devvp, mp, p)
 			free(base, M_UFSMNT);
 			goto out;
 		}
+		fs->fs_fmod = 1;
 		fs->fs_clean = 0;
+		if (mp->mnt_flag & MNT_SOFTDEP)
+			fs->fs_flags |= FS_DOSOFTDEP;
+		else
+			fs->fs_flags &= ~FS_DOSOFTDEP;
 		(void) ffs_sbupdate(ump, MNT_WAIT);
 	}
 	return (0);
@@ -742,16 +812,16 @@ ffs_unmount(mp, mntflags, p)
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	if (mp->mnt_flag & MNT_SOFTDEP) {
-		if ((error = softdep_flushfiles(mp, flags, p)) != 0)
-			return (error);
-	} else {
-		if ((error = ffs_flushfiles(mp, flags, p)) != 0)
-			return (error);
-	}
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
+	if (fs->fs_flags & FS_DOSOFTDEP)
+		error = softdep_flushfiles(mp, flags, p);
+	else
+		error = ffs_flushfiles(mp, flags, p);
+	if (error != 0)
+		return (error);
+
 	if (fs->fs_ronly == 0) {
 		fs->fs_clean = (fs->fs_flags & FS_UNCLEAN) ? 0 : 1;
 		error = ffs_sbupdate(ump, MNT_WAIT);
@@ -881,6 +951,7 @@ ffs_sync(mp, waitfor, cred, p)
 		printf("fs = %s\n", fs->fs_fsmnt);
 		panic("update: rofs mod");
 	}
+
 	/*
 	 * Write back each (modified) inode.
 	 */
@@ -1078,10 +1149,10 @@ retry:
 	 * Ensure that uid and gid are correct. This is a temporary
 	 * fix until fsck has been changed to do the update.
 	 */
-	if (fs->fs_inodefmt < FS_44INODEFMT) {		/* XXX */
-		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;		/* XXX */
-		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;		/* XXX */
-	}						/* XXX */
+	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
+		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;	/* XXX */
+		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;	/* XXX */
+	}							/* XXX */
 
 	*vpp = vp;
 	return (0);
