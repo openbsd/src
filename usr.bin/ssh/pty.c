@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: pty.c,v 1.18 2000/12/13 06:36:05 deraadt Exp $");
+RCSID("$OpenBSD: pty.c,v 1.19 2000/12/20 20:00:34 markus Exp $");
 
 #include <util.h>
 #include "pty.h"
@@ -211,12 +211,8 @@ pty_make_controlling_tty(int *ttyfd, const char *ttyname)
 	/* Make it our controlling tty. */
 #ifdef TIOCSCTTY
 	debug("Setting controlling tty using TIOCSCTTY.");
-	/*
-	 * We ignore errors from this, because HPSUX defines TIOCSCTTY, but
-	 * returns EINVAL with these arguments, and there is absolutely no
-	 * documentation.
-	 */
-	ioctl(*ttyfd, TIOCSCTTY, NULL);
+	if (ioctl(*ttyfd, TIOCSCTTY, NULL) < 0)
+		error("ioctl(TIOCSCTTY): %.100s", strerror(errno));
 #endif /* TIOCSCTTY */
 	fd = open(ttyname, O_RDWR);
 	if (fd < 0)
