@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.2 1996/05/02 06:44:47 niklas Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.3 1996/08/04 01:15:15 niklas Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.14 1996/04/21 21:13:23 veego Exp $	*/
 
 /*
@@ -61,8 +61,8 @@
  */
 
 /* Sun settings. Still hope, that I might get sun3 binaries to work... */
-#define	USRTEXT		0x2000
-#define	USRSTACK	0x0E000000
+#define	USRTEXT		(vm_offset_t)0x2000
+#define	USRSTACK	(vm_offset_t)0x0E000000
 #define	LOWPAGES	btoc(USRTEXT)
 #define KUSER_AREA	(-UPAGES*NBPG)
 /*
