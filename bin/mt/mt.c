@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.17 1997/04/16 04:19:07 millert Exp $	*/
+/*	$OpenBSD: mt.c,v 1.18 1998/07/16 22:31:14 deraadt Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mt.c,v 1.17 1997/04/16 04:19:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.18 1998/07/16 22:31:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -234,7 +234,8 @@ struct tape_desc {
 #ifdef tahoe
 	{ MT_ISCY,	"cipher",	CYS_BITS,	CYCW_BITS },
 #endif
-	{ 0x7,		"SCSI",		"76543210",	"76543210" },
+#define SCSI_DS_BITS	"\20\5WriteProtect\2Mounted"
+	{ 0x7,		"SCSI",		SCSI_DS_BITS,	"76543210" },
 	{ 0 }
 };
 
@@ -287,7 +288,7 @@ printreg(s, v, bits)
 	if (!bits)
 		return;
 	bits++;
-	if (v && bits) {
+	if (v && *bits) {
 		putchar('<');
 		while ((i = *bits++)) {
 			if (v & (1 << (i-1))) {
