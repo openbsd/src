@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.51 1998/05/15 14:25:44 deraadt Exp $
+$OpenBSD: pcidevs,v 1.52 1998/05/16 00:44:34 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -663,14 +663,15 @@ product	COMPAQ QVISION_V0	0x3032	QVision
 product	COMPAQ QVISION_1280P	0x3033	QVision 1280/p
 product	COMPAQ QVISION_V2	0x3034	QVision
 product COMPAQ TRIFLEX4		0x4000	Triflex Host-PCI Bridge
+product COMPAQ USB		0x7020	USB Controller
 product COMPAQ N100TX		0xae32	Netelligent 10/100 TX
 product COMPAQ N10T		0xae34	Netelligent 10 T
 product COMPAQ IntNF3P		0xae35	Integrated NetFlex 3/P
 product COMPAQ IntPL100TX	0xae43	ProLiant Integrated Netelligent 10/100 TX
 product COMPAQ DPNet100TX	0xae40	Dual Port Netelligent 10/100 TX
 product COMPAQ DP4000		0xb011	Deskpro 4000 5233MMX
-product COMPAQ NF3P_BNC		0xf150	NetFlex 3/P w/ BNC
 product COMPAQ NF3P		0xf130	NetFlex 3/P
+product COMPAQ NF3P_BNC		0xf150	NetFlex 3/P w/ BNC
 
 /* Compex */
 product COMPEX COMPEXE		0x1401	Compex Ethernet
