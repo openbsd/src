@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.16 2001/02/06 00:22:21 mickey Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.17 2001/02/06 03:34:59 mickey Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -156,6 +156,7 @@ loopattach(n)
 		MALLOC(ifp, struct ifnet *, sizeof(*ifp), M_DEVBUF, M_NOWAIT);
 		if (ifp == NULL)
 			return;
+		bzero(ifp, sizeof(struct ifnet));
 		if (i == 0)
 			lo0ifp = ifp;
 		sprintf(ifp->if_xname, "lo%d", i);
