@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.44 2000/07/28 19:59:11 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.45 2000/08/13 21:17:38 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -907,8 +907,8 @@ hifn_crypto(sc, cmd)
 	    dma->srcu+cmd->src_npa > HIFN_D_SRC_RSIZE ||
 	    dma->dstu+cmd->dst_npa > HIFN_D_DST_RSIZE ||
 	    dma->resu+1 > HIFN_D_RES_RSIZE) {
-			splx(s);
-			return (HIFN_CRYPTO_RINGS_FULL);
+		splx(s);
+		return (HIFN_CRYPTO_RINGS_FULL);
 	}
 
 	if (dma->cmdi == HIFN_D_CMD_RSIZE) {
