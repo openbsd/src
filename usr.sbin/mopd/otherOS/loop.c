@@ -1,4 +1,4 @@
-/*	$OpenBSD: loop.c,v 1.5 2003/12/01 00:56:51 avsm Exp $ */
+/*	$OpenBSD: loop.c,v 1.6 2003/12/16 19:27:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: loop.c,v 1.5 2003/12/01 00:56:51 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: loop.c,v 1.6 2003/12/16 19:27:20 deraadt Exp $";
 #endif
 
 #include "os.h"
@@ -157,7 +157,7 @@ Loop()
 		listeners = fds;
 		if (select(maxfd + 1, &listeners, (fd_set *) 0,
 			(fd_set *) 0, (struct timeval *) 0) < 0) {
-			fprintf(stderr, "select: %s");
+			fprintf(stderr, "select: %s", strerror(errno));
 			exit(0);
 		}
 		for (ii = iflist; ii; ii = ii->next) {
