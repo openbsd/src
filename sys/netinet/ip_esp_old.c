@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.26 1999/01/11 22:52:10 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.27 1999/02/12 00:46:11 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -94,7 +94,7 @@ struct esp_xform esp_old_xform[] = {
        des1_encrypt,
        des1_decrypt 
      },
-     { ALG_ENC_3DES, "Tripple DES (3DES)",
+     { ALG_ENC_3DES, "Triple DES (3DES)",
        ESP_3DES_BLKS, ESP_3DES_IVS,
        24, 24, 8 | 4,
        des3_encrypt,
