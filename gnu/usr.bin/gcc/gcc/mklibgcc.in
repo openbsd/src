@@ -63,10 +63,10 @@ make_compile='$(MAKE) GCC_FOR_TARGET="$(GCC_FOR_TARGET)" \
 	  LANGUAGES="$(LANGUAGES)"'
 
 # Dependencies for libgcc2.c
-libgcc2_c_dep='stmp-dirs $(srcdir)/libgcc2.c $(CONFIG_H) $(MACHMODE_H) longlong.h gbl-ctors.h config.status stmp-int-hdrs tsystem.h'" $LIB2ADDEHDEP"
+libgcc2_c_dep='$(srcdir)/libgcc2.c $(CONFIG_H) $(MACHMODE_H) longlong.h gbl-ctors.h config.status stmp-int-hdrs tsystem.h'" $LIB2ADDEHDEP"
 
 # Dependencies for fp-bit.c
-fpbit_c_dep='stmp-dirs config.status tsystem.h'
+fpbit_c_dep='config.status tsystem.h'
 
 #
 # Build libgcc1 components.
@@ -80,7 +80,7 @@ for name in $LIB1ASMFUNCS; do
     flags=`echo ${ml} | sed -e 's/^[^;]*;//' -e 's/@/ -/g'`;
     out="libgcc/${dir}/${name}${objext}"
 
-    echo ${out}: stmp-dirs '$(srcdir)/config/$(LIB1ASMSRC)'
+    echo ${out}: '$(srcdir)/config/$(LIB1ASMSRC)'
     echo "	$gcc_compile" $flags -DL$name -xassembler-with-cpp \
 	  -c '$(srcdir)/config/$(LIB1ASMSRC)' -o $out
 
@@ -203,7 +203,7 @@ for file in $LIB2ADD; do
       flags="$flags -xassembler-with-cpp"
     fi
 
-    echo $out: stmp-dirs $file
+    echo $out: $file
     echo "	$gcc_compile" $flags -c $file -o $out
   done
   libgcc2_objs="$libgcc2_objs ${oname}${objext}"
@@ -221,7 +221,7 @@ for file in $LIB2ADDEH; do
       flags="$flags -xassembler-with-cpp"
     fi
 
-    echo $out: stmp-dirs $file
+    echo $out: $file
     echo "	$gcc_compile" $flags -fexceptions -c $file -o $out
   done
   if [ "$SHLIB_LINK" ]; then
@@ -243,7 +243,7 @@ for file in $LIB2ADD_ST; do
       flags="$flags -xassembler-with-cpp"
     fi
 
-    echo $out: stmp-dirs $file
+    echo $out: $file
     echo "	$gcc_compile" $flags -c $file -o $out
   done
   libgcc2_st_objs="$libgcc2_st_objs ${oname}${objext}"
@@ -302,7 +302,7 @@ for ml in $MULTILIBS; do
     for o in $libgcc_objs $libgcc_st_objs; do
       # .oS objects will have all non-local symbol definitions .hidden
       oS=`echo ${o} | sed s~${objext}'$~.oS~g'`
-      echo "${oS}: stmp-dirs ${o}"
+      echo "${oS}: ${o}"
       echo '	@$(NM_FOR_TARGET) '${SHLIB_NM_FLAGS} ${o}' | $(AWK) '\''NF == 3 { print "\t.hidden", $$3 }'\'' | $(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) '${flags}' -r -nostdinc -nostdlib -o $@ '${o}' -xassembler -'
       libgcc_a_objs="${libgcc_a_objs} ${oS}"
     done
@@ -315,7 +315,7 @@ for ml in $MULTILIBS; do
   # dependency is required; the directory containing the archive must
   # exist before the archive itself can be created.
   echo ""
-  echo "${dir}/libgcc.a: stmp-dirs $libgcc_a_objs"
+  echo "${dir}/libgcc.a: $libgcc_a_objs"
   echo "	-rm -rf ${dir}/libgcc.a"
   echo '	$(AR_CREATE_FOR_TARGET)' ${dir}/libgcc.a $libgcc_a_objs
   echo '	if $(RANLIB_TEST_FOR_TARGET) ; then' \\
@@ -325,7 +325,7 @@ for ml in $MULTILIBS; do
   if [ "$SHLIB_LINK" ]; then
 
     echo ""
-    echo "${dir}/libgcc_eh.a: stmp-dirs $libgcc_eh_objs"
+    echo "${dir}/libgcc_eh.a: $libgcc_eh_objs"
     echo "	-rm -rf ${dir}/libgcc_eh.a"
     echo '	$(AR_CREATE_FOR_TARGET)' ${dir}/libgcc_eh.a $libgcc_eh_objs
     echo '	if $(RANLIB_TEST_FOR_TARGET) ; then' \\
@@ -441,7 +441,7 @@ for f in $EXTRA_MULTILIB_PARTS; do
     *) targ=$out ;;
     esac
 
-    echo $out: stmp-dirs
+    echo $out: 
     echo "	$make_compile" \\
     echo '	  LIBGCC2_CFLAGS="$(LIBGCC2_CFLAGS)' $flags '" ' \\
     echo '	  MULTILIB_CFLAGS="'$flags'"' T=$t $targ
