@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.66 2001/08/18 19:34:33 brian Exp $
+ * $OpenBSD: command.c,v 1.67 2001/08/18 19:41:09 brian Exp $
  */
 
 #include <sys/param.h>
@@ -250,14 +250,17 @@ HelpCommand(struct cmdargs const *arg)
 static int
 IdentCommand(struct cmdargs const *arg)
 {
-  int f, max, pos;
+  int f, max, n, pos;
 
   *arg->cx->physical->link.lcp.cfg.ident = '\0';
   max = sizeof arg->cx->physical->link.lcp.cfg.ident;
 
-  for (pos = 0, f = arg->argn; f < arg->argc && pos < max; f++)
-    pos += snprintf(arg->cx->physical->link.lcp.cfg.ident + pos, max - pos,
-                    "%s%s", f == arg->argn ? "" : " ", arg->argv[f]);
+  for (pos = 0, f = arg->argn; f < arg->argc && pos < max; f++) {
+    n = snprintf(arg->cx->physical->link.lcp.cfg.ident + pos, max - pos,
+                 "%s%s", f == arg->argn ? "" : " ", arg->argv[f]);
+    if (n == -1 || (pos += n) >= max)
+      break;
+  }
 
   return 0;
 }
