@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.10 2004/04/15 08:34:20 jmc Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.11 2004/04/15 23:20:42 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -40,6 +40,7 @@
  */
 
 #include "dhcpd.h"
+#include "pwd.h"
 
 void usage(void);
 
@@ -63,6 +64,7 @@ main(int argc, char *argv[])
 	int		 ch, status;
 	int		 cftest = 0, quiet = 0, daemonize = 1;
 	struct servent	*ent;
+	struct passwd	*pw;
 	extern char *__progname;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
@@ -146,9 +148,22 @@ main(int argc, char *argv[])
 	discover_interfaces(DISCOVER_SERVER);
 	icmp_startup(1, lease_pinged);
 
+	if ((pw = getpwnam("_dhcp")) == NULL)
+		error("%m");
+
 	log_perror = 0;
 	if (daemonize)
 		daemon(0, 0);
+
+	if (chroot(_PATH_VAREMPTY) == -1)
+		error("chroot %s: %m", _PATH_VAREMPTY);
+	if (chdir("/") == -1)
+		error("chdir(\"/\"): %m");
+	if (setgroups(1, &pw->pw_gid) ||
+	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
+	    seteuid(pw->pw_uid) || setuid(pw->pw_uid))
+		error("can't drop privileges: %m");
+	endpwent();
 
 	bootp_packet_handler = do_packet;
 	dispatch();
