@@ -1,4 +1,4 @@
-/*	$OpenBSD: fils.c,v 1.21 2000/08/10 05:50:27 kjell Exp $	*/
+/*	$OpenBSD: fils.c,v 1.22 2000/11/14 18:56:31 aaron Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -82,7 +82,7 @@ static void Usage(name)
 char *name;
 {
 	fprintf(stderr,
-	    "usage: %s [-aAfhIinosv] [-d device] [-M core]\n", 
+	    "usage: %s [-aAfghIinosv] [-d device] [-M core]\n", 
 		name);
 	exit(1);
 }
