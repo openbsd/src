@@ -1,4 +1,4 @@
-For the i386, OpenBSD 1.1 brings greatly improved performance,
+For the i386, OpenBSD 2.0 brings greatly improved performance,
 stability, and device support. Emulation for several UN*X and UN*X
 like operating systems, including Linux and FreeBSD, has been added.
 Many new PCI devices are supported, such as cards based on the AMD
@@ -8,6 +8,3 @@ and the Adaptec AIC7870 SCSI host adapter chip.  Some drivers such as
 on the i386 port.  Though still not known to be entirely stable, the
 "ncr" driver for 53c8xx-series SCSI adapters has had substantial bugs
 and performance issues resolved.
-
-OpenBSD 1.1 on i386 is also fully backward compatible with old OpenBSD
-i386 binaries, so you don't need to recompile all your local programs.

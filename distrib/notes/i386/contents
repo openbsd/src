@@ -1,25 +1,22 @@
-The i386-specific portion of the OpenBSD 1.1 release is found in the
+The i386-specific portion of the OpenBSD 2.0 release is found in the
 "i386" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../OpenBSD-1.1/i386/
-			INSTALL		Installation notes; this file.
+.../2.0/i386/
+		INSTALL		Installation notes; this file.
 
-			binary/		i386 binary distribution sets;
-					see below.
+		bins/		i386 binary distribution sets;
+				see below.
 
-			floppies/	i386 boot and installation
-					floppies; see below.
+		floppies/	i386 boot and installation
+				floppies; see below.
 
-			security/	i386 security distribution;
-					see below;
-
-			utils/		Miscellaneous i386
-					installation utilities; see
-					installation section, below.
+		utils/		Miscellaneous i386
+				installation utilities; see
+				installation section, below.
 
 There are four i386 floppy images to be found in the "i386/floppy"
-subdirectory of the OpenBSD 1.1 distribution.  Two of them are bootable
+subdirectory of the OpenBSD 2.0 distribution.  Two of them are bootable
 kernel-copy floppies, one is an installation floppy, and one is an
 upgrade floppy.  They are all described in more detail below.  There
 are gzipped versions of each available, for easier downloading.  (The
@@ -35,16 +32,6 @@ Bootable Kernel-copy floppies:
 	and confirm that you want to have the kernel copied to your
 	disk.
 
-	There are two different kernel copy floppy images,
-        "kcadp11.fs", and "kcoth11.fs".  They are identical except
-        that the kcadp floppy has the drivers for the supported Adaptec SCSI
-        controllers -- the Adaptec 1520, 1522, 1540, 1542, 1740, 1742, 1744,
-        and 2940 SCSI host adapters and the AIC6x60 and AIC7870 chips on 
-	motherboards or other brands of SCSI controllers -- and does not
-        contain the drivers for any other SCSI host adapters, which
-        are in the kernel on the kcoth floppy.  (The kernels on the install
-        disks are otherwise identical.)
-
         Please note that because of space considerations the kernel
         copy floppies no longer contain drivers that are not needed
         during installation -- in particular, no drivers needed to run
@@ -52,40 +39,33 @@ Bootable Kernel-copy floppies:
         recommended that you configure a custom kernel following
         installation.
 
-        For those that cannot configure a custom kernel, two "generic"
-        kernel images, named "bsd-adp.gz" and "bsd-oth.gz", have
-        been placed in the binaries directory. These are identical
-        except that "bsd-adp.gz" contains support for Adaptec SCSI
-        controllers, but no other SCSI controllers, and
-        "bsd-oth.gz" contains support only for SCSI controllers
-        other than the Adaptec. (These are similar in nature to the
-        kernels on the kernel copy floppies but with additional device
-        support.) It is strongly encouraged that you build a custom
+        For those that cannot configure a custom kernel, a "generic"
+        kernel image, named "bsd.gz" has been placed in the binaries
+	directory.  It is strongly encouraged that you build a custom
         kernel for your installation rather than use a prebuilt generic
         kernel.
-        
 
 Installation floppy:
 
 	This disk contains the software necessary to prepare your hard
 	drive for OpenBSD and install the OpenBSD distribution. It is
 	not bootable, and must be used in conjunction with one of the
-	kernel-copy floppies.  This floppy is named "inst-11.fs".
+	kernel-copy floppies.  This floppy is named "inst-20.fs".
 
 Upgrade floppy:
 
 	This disk contains the software to be used in upgrading the
 	system from a previous version of OpenBSD.  It is not bootable,
 	and must be used in conjunction with one of the kernel-copy
-	floppies.  This floppy is named "upgr11.fs"
+	floppies.  This floppy is named "upgr20.fs"
 
 The OpenBSD/i386 binary distribution sets contain the binaries which
-comprise the OpenBSD 1.1 release for the i386.  There are seven binary
-distribution sets, and the "security" distribution set.  The binary
-distribution sets can be found in subdirectories of the "i386/binary"
-subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
+comprise the OpenBSD 2.0 release for the i386.  There are seven binary
+distribution sets.  The binary distribution sets can be found in
+subdirectories of the "i386/bins" subdirectory of the OpenBSD 2.0
+distribution tree, and are as follows:
 
-	base11	The OpenBSD/i386 1.1 base binary distribution.  You
+	base20	The OpenBSD/i386 2.0 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -93,7 +73,7 @@ subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
 		everything described below.
 		[ 7.5M gzipped, 19.5M uncompressed ]
 
-	comp11	The OpenBSD/i386 Compiler tools.  All of the tools
+	comp20	The OpenBSD/i386 Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -104,7 +84,7 @@ subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
 		call and library manual pages.
 		[ 4.9M gzipped, 15.0M uncompressed ]
 
-	etc11	This distribution set contains the system
+	etc20	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -113,38 +93,25 @@ subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 63K gzipped, 338K uncompressed ]
 
-	games11	This set includes the games and their manual pages.
+	games20	This set includes the games and their manual pages.
 		[ 2.8M gzipped, 6.9M uncompressed ]
 
-	man11	This set includes all of the manual pages for the
+	man20	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 0.8M gzipped, 3.4M uncompressed ]
 
-	misc11	This set includes the system dictionaries (which are
+	misc20	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 1.9M gzipped, 6.6M uncompressed ]
 
-	text11	This set includes OpenBSD's text processing tools,
+	text20	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 0.8M gzipped, 2.9M uncompressed ]
-
-The i386 security distribution set is named "secr11" and can be found
-in the "i386/security" subdirectory of the OpenBSD 1.1 distribution
-tree.  It contains crypt.c (the source file for the DES encryption
-algorithm) and the binaries which depend on it, as well as the "bdes"
-DES encryption program.  You do not need this distribution set to use
-encrypted passwords in your password file; the "base11" distribution
-includes a crypt library which can perform only the decryption function.
-The "secr11" distribution set can be found only on those sites which
-carry the complete OpenBSD distribution and which can legally obtain it.
-(Remember, because of United States law, this distribution set may not be
-exported to locations outside of the United States and Canada.)
-	[ 154K gzipped, 358K uncompressed ]
 
 The i386 binary distribution sets are distributed in the same form as
 the source distribution sets; catted together, the members of a set

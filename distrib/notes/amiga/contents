@@ -1,23 +1,19 @@
-The amiga-specific portion of the OpenBSD 1.1 release is found in the
+The amiga-specific portion of the OpenBSD 2.0 release is found in the
 "amiga" subdirectory of the distribution.  That subdirectory is layed
 out as follows:
 
-.../OpenBSD-1.1/amiga/
-			binary/		amiga binary distribution sets;
-					see below.
+.../2.0/amiga/
+		bins/		amiga binary distribution sets;
+				see below.
+		miniroot/	amiga installation and upgrade
+				file system images; see below.
 
-			miniroot/	amiga installation and upgrade
-					file system images; see below.
-
-			security/	amiga security distribution;
-					see below;
-
-			utils/		Miscellaneous amiga
-					installation utilities; see
-					installation section, below.
+		utils/		Miscellaneous amiga
+				installation utilities; see
+				installation section, below.
 
 There are two amiga file system images to be found in the "amiga/miniroot"
-subdirectory of the OpenBSD 1.1 distribution.  One of them is a upgrade
+subdirectory of the OpenBSD 2.0 distribution.  One of them is a upgrade
 image and one is an installation image. They are described in more
 detail below.  There are gzipped versions of each available, for easier
 downloading.  (The gzipped version have the ".gz" extension added to
@@ -34,7 +30,7 @@ Installation file system:
 	NFS file system or ftp.  You can also load distribution sets from
 	a SCSI tape or from one of your existing AmigaDOS partitions.
 
-	This file is named "inst-11.fs".
+	This file is named "inst-20.fs".
 
 
 Upgrade file system:
@@ -50,15 +46,15 @@ Upgrade file system:
 	one of your existing AmigaDOS partitions, or from an existing
 	OpenBSD partition.
 
-	This file is named "upgr-11.fs".
+	This file is named "upgr-20.fs".
 
 The OpenBSD/amiga binary distribution sets contain the binaries which
-comprise the OpenBSD 1.1 release for the amiga.  There are seven binary
-distribution sets, and the "security" distribution set.  The binary
-distribution sets can be found in subdirectories of the "amiga/binary"
-subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
+comprise the OpenBSD 2.0 release for the amiga.  There are seven binary
+distribution sets.  The binary distribution sets can be found in
+subdirectories of the "amiga/bins" subdirectory of the OpenBSD 2.0
+distribution tree, and are as follows:
 
-	base11	The OpenBSD/amiga 1.1 base binary distribution.  You
+	base20	The OpenBSD/amiga 2.0 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -66,7 +62,7 @@ subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
 		everything described below.
 		[ 7M gzipped, 20M uncompressed ]
 
-	comp11	The OpenBSD/amiga Compiler tools.  All of the tools
+	comp20	The OpenBSD/amiga Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -77,7 +73,7 @@ subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
 		call and library manual pages.
 		[ 5M gzipped, 15M uncompressed ]
 
-	etc11	This distribution set contains the system
+	etc20	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -86,34 +82,25 @@ subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 60K gzipped, 340K uncompressed ]
 
-	games11	This set includes the games and their manual pages.
+	games20	This set includes the games and their manual pages.
 		[ 3M gzipped, 7M uncompressed ]
 
-	man11	This set includes all of the manual pages for the
+	man20	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 850K gzipped, 3M uncompressed ]
 
-	misc11	This set includes the system dictionaries (which are
+	misc20	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 2M gzipped, 7M uncompressed ]
 
-	text11	This set includes OpenBSD's text processing tools,
+	text20	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 784K gzipped, 3M uncompressed ]
-
-The amiga security distribution set is named "secr11" and can be found
-in the "amiga/security" subdirectory of the OpenBSD 1.1 distribution
-tree.  It contains crypt.c (the source file for the DES encryption
-algorithm) and the binaries which depend on it.  It can only be found
-on those sites which carry the complete OpenBSD distribution and that
-can legally obtain it.  (Remember, because of United States law, this
-distribution set may not be exported to locations outside of the
-United States and Canada.)  [ 128K gzipped, 307K uncompressed ]
 
 The amiga binary distribution sets are distributed in the same form as
 the source distribution sets; catted together, the members of a set

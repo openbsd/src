@@ -3,7 +3,7 @@ The sun3-specific portion of the OpenBSD 1.1 release is found in the
 "sun3" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../OpenBSD-1.1/sun3/
+.../2.0/sun3/
 			INSTALL.txt	Installation notes; this file.
 
 			install/	Boot programs, a GENERIC kernel,

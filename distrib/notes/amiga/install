@@ -315,7 +315,7 @@ on how to use these somewhat non-intuitive editors.
 
 You should also put a copy of the bsd kernel in your root partition.
 This can be done easily by mounting the AmigaDOS partition containing
-the kernel you used to start OpenBSD and copying the "netbsd" file to
+the kernel you used to start OpenBSD and copying the "bsd" file to
 the root:
 	mount -r -t ados /dev/sd0d /mnt
 	cp /mnt/bsd /

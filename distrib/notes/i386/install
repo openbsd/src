@@ -56,7 +56,7 @@ process again from scratch.
 
 	Once you have reached that prompt, remove the kernel-copy
 	floppy from the floppy drive.  Make sure that the installation
-	disk (the "inst-11" floppy) is writable, insert it into the
+	disk (the "inst-20" floppy) is writable, insert it into the
 	floppy drive, and hit any key.
 
 	You will then be presented with the OpenBSD kernel boot
@@ -223,12 +223,12 @@ process again from scratch.
 
 		Run the "Extract" command once for each distribution
 		set you wish to install.  For instance, if you wish to
-		install the "base11" distribution set, followed by the
-		"man11" distribution set, and finally the "etc11"
+		install the "base20" distribution set, followed by the
+		"man20" distribution set, and finally the "etc20"
 		distribution set, use the commands:
-			Extract base11
-			Extract man11
-			Extract etc11
+			Extract base20
+			Extract man20
+			Extract etc20
 
 		For each extraction, it will ask you if the extraction
 		should be verbose.  If you reply affirmatively, it
@@ -283,9 +283,9 @@ process again from scratch.
 		hitting return at the prompt.
 
 		Use the "Extract" command to extract the distribution
-		set.  For instance, if you're extracting the "base11"
+		set.  For instance, if you're extracting the "base20"
 		set, use the command:
-			Extract base11
+			Extract base20
 		You will be asked if you wish the extraction to be
 		verbose.  If you reply affirmatively, the name of each
 		file being extracted will be printed.
@@ -403,7 +403,7 @@ process again from scratch.
 	Once you have finished extracting all of the distribution sets
 	that you wish to install, and are back at the "#" prompt, you
 	are ready to configure your system.  The configuration utility
-	expects that you have installed the "base11" and "etc11"
+	expects that you have installed the "base20" and "etc20"
 	distribution sets.  If you have not, you will not be able to
 	run it successfully (nor will you have a functional system, in
 	any case).  To configure your newly-installed OpenBSD system,
@@ -415,8 +415,8 @@ process again from scratch.
 Kernel Installation:
 
 	Enter "halt" at the prompt to halt the system.  When the
-	system is halted, remove the "inst-11" floppy from the floppy
-	drive, and replace it with the OpenBSD 1.1 kernel-copy floppy
+	system is halted, remove the "inst-20" floppy from the floppy
+	drive, and replace it with the OpenBSD 2.0 kernel-copy floppy
 	that you previously booted from.  Reboot with that floppy.
 	with that floppy.
 
@@ -445,13 +445,13 @@ Kernel Installation:
 	Once the system is halted, remove the kernel-copy floppy from
 	the floppy disk drive, and hit any key to reboot.
 
-Congratulations, you have successfully installed OpenBSD 1.1.  When you
+Congratulations, you have successfully installed OpenBSD 2.0.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
 protect it and the "root" account with good passwords.
 
-Some of the files in the OpenBSD 1.1 distribution might need to be
+Some of the files in the OpenBSD 2.0 distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified, as well.  If you are unfamiliar with

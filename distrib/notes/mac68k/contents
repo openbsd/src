@@ -1,28 +1,24 @@
-The mac68k-specific portion of the OpenBSD 1.1 release is found in the
+The mac68k-specific portion of the OpenBSD 2.0 release is found in the
 "mac68k" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../OpenBSD-1.1/mac68k/
-			binary/		mac68k binary distribution sets;
-					see below.
-
-			security/	mac68k security distribution;
-					see below.
-
-			utils/		The mac68k installation utilities.
+.../2.0/mac68k/
+		bins/	mac68k binary distribution sets;
+			see below.
+		inst/	The mac68k installation utilities.
 
 The OpenBSD/mac68k binary distribution sets contain the binaries which
-comprise the OpenBSD 1.1 release for the mac68k.  There are eight binary
+comprise the OpenBSD 2.0 release for the mac68k.  There are eight binary
 distribution sets, and the "security" distribution set.  The binary
-distribution sets can be found in subdirectories of the "mac68k/binary"
-subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
+distribution sets can be found in subdirectories of the "mac68k/bins"
+subdirectory of the OpenBSD 2.0 distribution tree, and are as follows:
 
-	bsd10	The OpenBSD/mac68k 1.1 kernel binary.  You MUST
+	bsd20	The OpenBSD/mac68k 2.0 kernel binary.  You MUST
 		install this file.  It is the kernel that you need
 		to boot the system.
 		[ 307K gzipped, 610K uncompressed ]
 
-	base11	The OpenBSD/mac68k 1.1 base binary distribution.  You
+	base20	The OpenBSD/mac68k 2.0 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -30,7 +26,7 @@ subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
 		everything described below.
 		[ 6.2M gzipped, 18.4M uncompressed ]
 
-	comp11	The OpenBSD/mac68k Compiler tools.  All of the tools
+	comp20	The OpenBSD/mac68k Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -41,7 +37,7 @@ subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
 		call and library manual pages.
 		[ 4.0M gzipped, 12.7M uncompressed ]
 
-	etc11	This distribution set contains the system
+	etc20	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -50,34 +46,25 @@ subdirectory of the OpenBSD 1.1 distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 50K gzipped, 280K uncompressed ]
 
-	games11	This set includes the games and their manual pages.
+	games20	This set includes the games and their manual pages.
 		[ 1.0M gzipped, 3.0M uncompressed ]
 
-	man11	This set includes all of the manual pages for the
+	man20	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 0.7M gzipped, 2.8M uncompressed ]
 
-	misc11	This set includes the system dictionaries (which are
+	misc20	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 1.6M gzipped, 5.7M uncompressed ]
 
-	text11	This set includes OpenBSD's text processing tools,
+	text20	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 0.8M gzipped, 2.9M uncompressed ]
-
-The mac68k security distribution set is named "secr11" and can be found
-in the "mac68k/security" subdirectory of the OpenBSD 1.1 distribution
-tree.  It contains the crypt libraries (for the DES encryption algorithm)
-and the binaries which depend on it.  It can only be found on those sites
-which carry the complete OpenBSD distribution and that can legally obtain
-it.  (Remember, because of United States law, this distribution set may
-not be exported to locations outside of the United States and Canada.)
-[ 109K gzipped, 260K uncompressed ]
 
 The mac68k binary distribution sets are distributed in the same form as
 the source distribution sets; catted together, the members of a set

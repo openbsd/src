@@ -2,15 +2,11 @@ The sparc-specific portion of the OpenBSD RELEASE release is found in the
 "sparc" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../OpenBSD-RELEASE/sparc/
-			binary/		sparc binary distribution sets;
-					see below.
-
-			security/	sparc security distribution;
-					see below;
-
-			install/	Base GENERIC kernels, tools,
-					and installation script.
+.../2.0/sparc/
+		bins/	sparc binary distribution sets;
+			see below.
+		inst/	Base GENERIC kernels, tools,
+			and installation script.
 
 The OpenBSD/sparc binary distribution sets contain the binaries which
 comprise the OpenBSD RELEASE release for the sparc.  There are seven binary
@@ -18,7 +14,7 @@ distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in subdirectories of the "sparc/binary"
 subdirectory of the OpenBSD RELEASE distribution tree, and are as follows:
 
-	base11	The OpenBSD/sparc RELEASE base binary distribution.  You
+	base20	The OpenBSD/sparc RELEASE base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -26,8 +22,8 @@ subdirectory of the OpenBSD RELEASE distribution tree, and are as follows:
 		everything described below.
 		[ 8.0M gzipped, 24.4M uncompressed ]
 
-	comp11	The OpenBSD/sparc Compiler tools.  All of the tools
-		relating to C, C++, and FORTRAN (yes, there are two!).
+	comp20	The OpenBSD/sparc Compiler tools.  All of the tools
+		relating to C, C++, and FORTRAN.
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
 		and the various system libraries (except the shared
@@ -37,7 +33,7 @@ subdirectory of the OpenBSD RELEASE distribution tree, and are as follows:
 		call and library manual pages.
 		[ 5.4M gzipped, 17.6M uncompressed ]
 
-	etc11	This distribution set contains the system
+	etc20	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -46,34 +42,25 @@ subdirectory of the OpenBSD RELEASE distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 62K gzipped, 338K uncompressed ]
 
-	games11	This set includes the games and their manual pages.
+	games20	This set includes the games and their manual pages.
 		[ 2.9M gzipped, 7.4M uncompressed ]
 
-	man11	This set includes all of the manual pages for the
+	man20	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 0.8M gzipped, 3.3M uncompressed ]
 
-	misc11	This set includes the system dictionaries (which are
+	misc20	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 1.9M gzipped, 6.6M uncompressed ]
 
-	text11	This set includes OpenBSD's text processing tools,
+	text20	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 0.8M gzipped, 3.1M uncompressed ]
-
-The sparc security distribution set is named "secr11" and can be found
-in the "sparc/security" subdirectory of the OpenBSD RELEASE distribution
-tree.  It contains crypt.c (the source file for the DES encryption
-algorithm) and the binaries which depend on it.  It can only be found
-on those sites which carry the complete OpenBSD distribution and that
-can legally obtain it.  (Remember, because of United States law, this
-distribution set may not be exported to locations outside of the
-United States and Canada.)  [ 127K gzipped, 337K uncompressed ]
 
 The sparc binary distribution sets are distributed in the same form as
 the source distribution sets; catted together, the members of a set

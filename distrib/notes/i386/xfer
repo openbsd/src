@@ -4,6 +4,7 @@ Installation is supported from several media types, including:
 	Tape
 	Remote NFS partition
 	FTP
+	rsh & restore
 
 No matter which installation medium you choose, you'll need to have
 two floppy disks (either 1.2M or 1.44 will work, though both should be
@@ -11,11 +12,6 @@ the same type).  On the first, you'll put the kernel-copy image that's
 appropriate for your system.  On the second, you'll put the install or
 upgrade floppy image, depending on whether you're installing OpenBSD
 for the first time, or upgrading a previous installation.
-
-If you are using an Adaptec SCSI host adapter, you need the kcadp11.fs
-kernel-copy image.  If you're using any other SCSI host adapter,
-you'll need the kcoth11.fs image.  If you're using a non-SCSI disk
-controller, either kernel-copy disk image will work for you.
 
 If you are using a UN*X-like system to write the floppy images to
 disks, you should use the "dd" command to copy the file system images
@@ -90,14 +86,14 @@ following:
 	(If you can't figure it out, ask your system administrator.)
 	In the above example, "<dist_directories>" are the
 	distribution sets' directories, for the distribution sets you
-	wish to place on the tape.  For instance, to put the "base11"
-	and "etc11" distributions on tape (in order to do the absolute
+	wish to place on the tape.  For instance, to put the "base20"
+	and "etc20" distributions on tape (in order to do the absolute
 	minimum installation to a new disk), you would do the
 	following:
 
-		cd .../OpenBSD-1.1		# the top of the tree
-		cd i386/binary
-		tar cf <tape_device> base11 etc11
+		cd .../1.2		# the top of the tree
+		cd i386/
+		tar cf <tape_device> base20 etc20
 
 	(Note that you still need to fill in "<tape_device>" in the
 	example.)
@@ -173,7 +169,7 @@ following:
 	Place the distribution sets you wish to upgrade somewhere in
 	your current file system tree.  At a bare minimum, you must
 	upgrade the "base" binary distribution, and so must put the
-	"base11" set somewhere in your file system.  If you wish,
+	"base20" set somewhere in your file system.  If you wish,
 	you can do the other sets, as well, but you should NOT upgrade
 	the "etc" distribution; the "etc" distribution contains system
 	configuration files that you should review and update by hand.
