@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.17 1998/07/24 17:40:43 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.18 1998/08/06 18:08:09 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -246,15 +246,17 @@ prompt will exit the editor.  At prompts that request a size, '*'
 may be entered to indicate the rest of the available space.
 The editor commands are as follows:
 .Bl -tag -width "p [unit] "
-.It ?
-Display help message with all available commands.  There is (simple)
+.It ? Op command
+Display help message with all available commands.  You may specify a
+.Em command
+for which to get more detailed help.  There is also (simple)
 context-sensitive help available at most prompts.
 .It M
 Display this manual page.
 .It u
-Undo (or redo) last change.  Undo will reset the disklabel to the
-state before the last command that modified it.
-.\" bad sentence!
+Undo (or redo) last change.  Entering
+.Em u
+once will undo your last change.  Entering it again will restore the change.
 .It p Op unit
 Print the current disk label.  If a
 .Em unit
@@ -262,9 +264,9 @@ is given, the size and offsets are displayed in terms of the
 specified unit.
 .It e
 Edit drive parameters.  This option is used to set the following
-parameters:  bytes/sector, sectors/track, tracks/cylinder,
-sectors/cylinder, number of cylinders, total sectors on the disk,
-rpm, disk type, and a descriptive label string.
+parameters:  sectors/track, tracks/cylinder, sectors/cylinder,
+number of cylinders on the disk, total sectors on the disk, rpm,
+interleave, disk type, and a descriptive label string.
 .It b
 Set OpenBSD disk boundaries.  This option tells
 .Nm disklabel
@@ -272,9 +274,9 @@ which parts of the disk it is allowed to modify.  This option is
 probably only useful for ports with fdisk partition tables where the
 ending sector in the MBR is incorrect.  The user may enter '*' at
 the ``Size'' prompt to indicate the entire size of the disk (minus
-the starting sector).  This is useful for large disks where the
-fdisk partition table is incapable of storing the real size.
-.\" What is this limit?  [somewhere between 8 and 9 gig]
+the starting sector).  This is useful for disks larger than 8
+gigabytes where the fdisk partition table is incapable of storing
+the real size.
 .It r
 Recalculate free space.  This option should really not be necessary
 under normal circumstances.
@@ -289,7 +291,7 @@ in terms of the aforementioned units and may also be prefixed with
 \'+' or '-' to change the size by a relative amount.
 .It d Op part
 Delete an existing partition.  If no partition is specified, the
-user will be prompted for one.
+user will be prompted for one.  You may not delete the ``c'' partition.
 .It m Op part
 Modify parameters for an existing partition.  If no partition is
 specified, the user will be prompted for one.  This option allows
