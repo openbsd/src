@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 1999/09/03 18:38:04 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.36 1999/09/06 07:13:39 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5111,13 +5111,13 @@ out:
 #if defined(SUN4) || defined(SUN4C)
 
 void
-pmap_enter4_4c(pm, va, pa, prot, wired, access_prot)
+pmap_enter4_4c(pm, va, pa, prot, wired, access_type)
 	struct pmap *pm;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
 	int wired;
-	vm_prot_t access_prot;
+	vm_prot_t access_type;
 {
 	struct pvlist *pv;
 	int pteproto, ctx;
@@ -5479,13 +5479,13 @@ printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa entry\n",
  */
 
 void
-pmap_enter4m(pm, va, pa, prot, wired, access_prot)
+pmap_enter4m(pm, va, pa, prot, wired, access_type)
 	struct pmap *pm;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
 	int wired;
-	vm_prot_t access_prot;
+	vm_prot_t access_type;
 {
 	struct pvlist *pv;
 	int pteproto, ctx;
