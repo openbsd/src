@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.27 2002/11/19 18:40:17 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.28 2003/01/12 06:55:04 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1230,6 +1230,9 @@ vr_encap(sc, c, m_head)
 		 * ourselves.
 		 */
 		if (m_head->m_len < VR_MIN_FRAMELEN) {
+			/* data field should be padded with octets of zero */
+			bzero(&m_new->m_data[m_head->m_len],
+			    VR_MIN_FRAMELEN-m_head->m_len);
 			m_new->m_pkthdr.len += VR_MIN_FRAMELEN - m_new->m_len;
 			m_new->m_len = m_new->m_pkthdr.len;
 		}
