@@ -1,3 +1,4 @@
+/*	$OpenBSD: conf.c,v 1.18 2000/08/19 18:43:30 maja Exp $	*/
 /*	$NetBSD: conf.c,v 1.23 1996/09/07 12:40:38 mycroft Exp $	*/
 
 /*
@@ -113,7 +114,7 @@ cdev_decl(mm);
 cdev_decl(dtop);
 #include "dz_ioasic.h"
 #include "dz_ds.h"
-cdev_decl(dc);
+cdev_decl(dz);
 #include "scc.h"
 cdev_decl(scc);
 cdev_decl(rz);
@@ -181,7 +182,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 13: color frame buffer */
 	cdev_notdef(),			/* 14: maxine color frame buffer */
 	cdev_tty_init(NDTOP,dtop),	/* 15: desktop bus interface */
-	cdev_tty_init(NDZ,dc),		/* 16: dc7085 serial interface */
+	cdev_tty_init(NDZ,dz),		/* 16: dc7085 serial interface */
 	cdev_tty_init(NSCC,scc),	/* 17: scc 82530 serial interface */
 	cdev_notdef(),			/* 18: mono frame buffer */
         cdev_notdef(),		        /* 19: mt */

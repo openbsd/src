@@ -1,3 +1,4 @@
+#	$OpenBSD: files.pmax,v 1.13 2000/08/19 18:43:30 maja Exp $
 #	$NetBSD: files.pmax,v 1.36 1996/10/13 05:28:48 jonathan Exp $
 # DECstation-specific configuration info
 
@@ -113,11 +114,11 @@ file	arch/pmax/dev/led.c		led needs-count
 # DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
 # For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an  ASIC.
 device dz
-file	arch/pmax/dev/dc.c		dz
+file	arch/pmax/dev/dz.c		dz
 attach dz at ioasic with dz_ioasic
-file	arch/pmax/dev/dc_ioasic.c	dz_ioasic | dz_ds needs-flag # TTTTT ugly
+file	arch/pmax/dev/dz_ioasic.c	dz_ioasic | dz_ds needs-flag # TTTTT ugly
 attach dz at mainbus with dz_ds
-file	arch/pmax/dev/dc_ds.c		dz_ds	needs-flag
+file	arch/pmax/dev/dz_ds.c		dz_ds	needs-flag
 
 
 # The "desktop bus" on the MAXINE (5k/25). What is it, anyway? ADB?

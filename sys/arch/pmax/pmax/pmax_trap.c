@@ -1,3 +1,4 @@
+/*	$OpenBSD: pmax_trap.c,v 1.8 2000/08/19 18:43:31 maja Exp $	*/
 /*	$NetBSD: pmax_trap.c,v 1.44 1997/05/31 20:33:35 mhitch Exp $	*/
 
 /*
@@ -181,7 +182,7 @@ int leintr __P((void *));
 int siiintr __P((void *));
 #endif
 #if NDZ_DS > 0
-int dcintr __P((void *));
+int dzintr __P((void *));
 #endif
 
 /*
@@ -238,7 +239,7 @@ kn01_intr(mask, pc, statusReg, causeReg)
 
 #if NDZ_DS > 0
 	if (mask & MIPS_INT_MASK_2) {
-		dcintr(dz_cd.cd_devs[0]);
+		dzintr(dz_cd.cd_devs[0]);
 		intrcnt[SERIAL0_INTR]++;
 	}
 #endif /* NDZ_DS */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: fb.c,v 1.7 2000/08/19 18:43:30 maja Exp $	*/
 /*	$NetBSD: fb.c,v 1.19 1997/05/24 08:19:50 jonathan Exp $	*/
 
 /*-
@@ -125,7 +126,7 @@ extern void fbScreenInit __P (( struct fbinfo *fi));
 
 #if (NDZ_DS > 0) || (NDZ_IOASIC > 0)
 #include <machine/dc7085cons.h>
-#include <pmax/dev/dcvar.h>
+#include <pmax/dev/dzvar.h>
 #endif
 
 #if NDTOP > 0
@@ -275,7 +276,7 @@ tb_kbdmouseconfig(fi)
 #if (NDZ_DS > 0) || (NDZ_IOASIC > 0)
 	case DS_PMAX:
 	case DS_3MAX:
-		fi->fi_glasstty->KBDPutc = dcPutc;
+		fi->fi_glasstty->KBDPutc = dzPutc;
 		fi->fi_glasstty->kbddev = makedev(DCDEV, DCKBD_PORT);
 		break;
 #endif	/* NDZ_DS || NDZ_IOASIC */

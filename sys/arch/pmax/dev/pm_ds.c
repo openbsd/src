@@ -1,3 +1,4 @@
+/*	$OpenBSD: pm_ds.c,v 1.5 2000/08/19 18:43:30 maja Exp $	*/
 /*	$NetBSD: pm_ds.c,v 1.4 1997/05/24 08:19:52 jonathan Exp $	*/
 
 /*
@@ -83,7 +84,7 @@ extern struct pmax_fbtty pmfb;
  * we hardcode an entry point.
  * XXX
  */
-void dcPutc	__P((dev_t, int));		/* XXX */
+void dzPutc	__P((dev_t, int));		/* XXX */
 
 
 /*
@@ -197,7 +198,7 @@ pminit(fi, unit, cold_console_flag)
 	/*
 	 * set putc/getc entry point
 	 */
-	fi->fi_glasstty->KBDPutc = dcPutc;	/* XXX */
+	fi->fi_glasstty->KBDPutc = dzPutc;	/* XXX */
 	fi->fi_glasstty->kbddev = makedev(DCDEV, DCKBD_PORT);
 
 	/* call back-end to initialize hardware and attach to rcons */

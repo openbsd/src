@@ -1,3 +1,4 @@
+/*	$OpenBSD: cpu_cons.c,v 1.7 2000/08/19 18:43:31 maja Exp $	*/
 /*	$NetBSD: cpu_cons.c,v 1.17 1997/05/24 08:19:48 jonathan Exp $	*/
 
 /*
@@ -90,9 +91,9 @@
 
 #if (NDZ_DS > 0) || (NDZ_IOASIC > 0)
 #include <machine/dc7085cons.h>
-#include <pmax/dev/dc_cons.h>
-#include <pmax/dev/dc_ds_cons.h>
-#include <pmax/dev/dc_ioasic_cons.h>
+#include <pmax/dev/dz_cons.h>
+#include <pmax/dev/dz_ds_cons.h>
+#include <pmax/dev/dz_ioasic_cons.h>
 #endif
 
 #if NDTOP > 0
@@ -237,7 +238,7 @@ consinit()
 			cd.cn_pri = CN_INTERNAL;
 			cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
 			cd.cn_getc = LKgetc;
-			lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
+			lk_divert(dzGetc, makedev(DCDEV, DCKBD_PORT));
 			cd.cn_putc = rcons_vputc;	/*XXX*/
 			return;
 		}
@@ -266,7 +267,7 @@ consinit()
 		if (kbd == 7) {
 			cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
 			cd.cn_getc = LKgetc;
-			lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
+			lk_divert(dzGetc, makedev(DCDEV, DCKBD_PORT));
 		} else
 #endif /* NDZ_IOASIC */
 			goto remcons;
@@ -322,7 +323,7 @@ remcons:
 			cd.cn_dev = makedev(DCDEV, DCCOMM_PORT);
 		else
 			cd.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
-		dc_ds_consinit(cd.cn_dev);
+		dz_ds_consinit(cd.cn_dev);
 		return;
 #endif /* NDZ_DS */
 		break;
@@ -330,7 +331,7 @@ remcons:
 	case DS_3MAX:
 #if (NDZ_IOASIC > 0)
 		cd.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
-		dc_ioasic_consinit(cd.cn_dev);
+		dz_ioasic_consinit(cd.cn_dev);
 		return;
 #endif /* NDZ */
 		break;
