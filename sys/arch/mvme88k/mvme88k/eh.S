@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.36 2003/09/05 20:28:36 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.37 2003/09/06 15:07:43 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -250,19 +250,7 @@ ASLOCAL(Lbadcpupanic)
 
 	align 8
 
-#define	OFF_VEC		0
-#define	OFF_EPSR	4
-#define	OFF_EXIP	8
-#define	OFF_ENIP	12
-#define	OFF_DSR		16
-#define	OFF_DLAR	20
-#define	OFF_DPAR	24
-#define	OFF_ISR		28
-#define	OFF_ILAR	32
-#define	OFF_IPAR	36
-#define	OFF_TMP		40
-
-
+#ifdef M88110
 #define SAVE_CTX \
 	stcr	r31, SRX			; \
 	or.u	r31, r0,  hi16(_ASM_LABEL(save_frame))	; \
@@ -316,6 +304,7 @@ ASLOCAL(Lbadcpupanic)
 	ld	r1 , r31, GENREG_OFF(1)		; \
 	ld.d	r2 , r31, GENREG_OFF(2)		; \
 	ld	r31, r31, GENREG_OFF(31)
+#endif
 
 /*
  *
@@ -469,6 +458,13 @@ ASGLOBAL(eh_debug)
 	ldcr	r4, SR1					; \
 	CALL(_C_LABEL(MY_info_done), r31, r4)		; \
 2:	br	_ASM_LABEL(return_from_exception_handler)
+#define DONE2(DebugNumber) \
+	or.u	r2, r0, hi16(_ASM_LABEL(eh_debug))	; \
+	ld	r3, r2, lo16(_ASM_LABEL(eh_debug))	; \
+	bb0	DebugNumber, r3, 2f			; \
+	ldcr	r4, SR1					; \
+	CALL(_C_LABEL(MY_info_done), r31, r4)		; \
+2:	br	_ASM_LABEL(m88110_return_code)
 #else
 /*
  * If not debugging, then no debug-prep to do.
@@ -477,6 +473,8 @@ ASGLOBAL(eh_debug)
 #define	PREP_DEBUG(bit, name)
 #define	DONE(num) \
 	br	_ASM_LABEL(return_from_exception_handler)
+#define	DONE2(num) \
+	br	_ASM_LABEL(m88110_return_code)
 #endif	/* EH_DEBUG */
 
 #ifdef M88100
@@ -493,7 +491,6 @@ GLOBAL(unknown_handler)
 /* interrupt exception handler */
 GLOBAL(interrupt_handler)
 	PREP("interrupt", 1, DEBUG_INTERRUPT_BIT, No_SSBR_Stuff, No_Precheck)
-	/* interrupt_func is set in mvme_bootstrap() */
 	CALL(_C_LABEL(m88100_trap), T_INT, r30)
 	DONE(DEBUG_INTERRUPT_BIT)
 
@@ -509,6 +506,7 @@ GLOBAL(instruction_access_handler)
  */
 GLOBAL(data_exception_handler)
 	PREP("data", 3, DEBUG_DATA_BIT, No_SSBR_Stuff, Data_Precheck)
+	/* No need to call m88100_trap(T_DATAFLT) as PREP will do this for us */
 	DONE(DEBUG_DATA_BIT)
 
 /* misaligned access exception handler */
@@ -538,10 +536,7 @@ GLOBAL(privilege_handler)
 	CALL(_C_LABEL(m88100_trap), T_PRIVINFLT, r30)
 	DONE(DEBUG_PRIVILEGE_BIT)
 
-/*
- * I'm not sure what the trap(T_BNDFLT,...) does, but it doesn't send
- * a signal to the process...
- */
+/* bounds checking exception handler */
 GLOBAL(bounds_handler)
 	PREP("bounds", 7, DEBUG_BOUNDS_BIT, Clear_SSBR_Dest, No_Precheck)
 	CALL(_C_LABEL(m88100_trap), T_BNDFLT, r30)
@@ -636,7 +631,7 @@ GLOBAL(trace)
 	DONE(DEBUG_TRACE_BIT)
 
 GLOBAL(entry)
-	PREP("unknown", 132, DEBUG_UNKNOWN_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP("unknown", 132, DEBUG_KDB_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88100_trap), T_UNKNOWNFLT, r30)
 	DONE(DEBUG_KDB_BIT)
 #endif
@@ -1289,11 +1284,13 @@ ASLOCAL(have_pcb)
 	 * Save Pbus fault status register from data and inst CMMU.
 	 */
 #ifdef MVME188
+#if defined(MVME187) || defined(MVME197)
 	/* check if it's a mvme188 */
 	or.u	TMP,  r0,   hi16(_C_LABEL(brdtyp))
 	ld	TMP2, TMP,  lo16(_C_LABEL(brdtyp))
 	cmp	TMP,  TMP2, BRD_188
 	bb1	ne,   TMP,  5f
+#endif
 
 	extu	TMP,  FLAGS, FLAG_CPU_FIELD_WIDTH<0>	/* TMP = cpu# */
 	cmp	TMP2, TMP, 0x0				/* CPU0 ? */
@@ -1344,6 +1341,7 @@ ASLOCAL(have_pcb)
 	br	_ASM_LABEL(pfsr_done)
 5:
 #endif   /* MVME188 */
+#if defined(MVME187) || defined(MVME197)
 	/* it's a single processor SBC */
 	or.u	TMP,  r0,   hi16(SBC_CMMU_I)
 	ld	TMP2, TMP,  lo16(SBC_CMMU_I) + 0x108
@@ -1351,6 +1349,7 @@ ASLOCAL(have_pcb)
 	or.u	TMP,  r0,   hi16(SBC_CMMU_D)
 	ld	TMP2, TMP,  lo16(SBC_CMMU_D) + 0x108
 	st	TMP2, r31,  REG_OFF(EF_DPFSR)
+#endif
 
 ASLOCAL(pfsr_done)
 	ldcr	TMP,  SSBR
@@ -1683,7 +1682,6 @@ ASLOCAL(setup_phase_two)
 	RESTORE_TMP3	/* done with extra temp regs */
 
 	/* Get the current PSR and modify for the rte to enable the FPU */
-#if 1
 	ldcr	TMP,  PSR
 	clr	TMP,  TMP,  1<PSR_FPU_DISABLE_BIT>	/* enable the FPU */
 	clr	TMP,  TMP,  1<PSR_SHADOW_FREEZE_BIT>	/* and shadowing */
@@ -1695,18 +1693,6 @@ ASLOCAL(setup_phase_two)
 	stcr	TMP,  SNIP	/* jump to here fpu_enable */
 	addu	TMP,  TMP,  4
 	stcr	TMP,  SFIP	/* and then continue after that */
-#else
-	ldcr	TMP,  PSR
-	or.u	TMP,  TMP,  0x8000	/* set supervisor mode */
-	and	TMP,  TMP,  0xfff7	/* also enable shadowing */
-	stcr	TMP,  EPSR
-	stcr	r0,   SXIP	/* clear valid bit */
-	stcr	r0,   SNIP	/* clear valid bit */
-	or.u	TMP,  r0,   hi16(_ASM_LABEL(fpu_enable))
-	or	TMP,  TMP,  lo16(_ASM_LABEL(fpu_enable))
-	or	TMP,  TMP,  0x2	/* set the VALID_BIT and clear Exception bit */
-	stcr	TMP,  SFIP	/* jump to here fpu_enable */
-#endif
 
 	set	FLAGS, FLAGS, 1<FLAG_ENABLING_FPU>
 	xcr	FLAGS, FLAGS, SR1
@@ -1835,17 +1821,19 @@ ASLOCAL(fpu_enable)
 	or.u	r31,  r0,   hi16(_ASM_LABEL(kstack))
 	ld	r31,  r31,  lo16(_ASM_LABEL(kstack))
 	addu	r31,  r31,  USIZE	/* point at proper end */
+#ifdef INTSTACK
 	br	3f
 1:
-#ifdef INTSTACK
 	ld	r3,   r31,  REG_OFF(EF_VECTOR)
 	cmp	r3,   r3,   1	/* is interrupt ? */
 	bb0	eq,   r3,   3f	/* no, we will stay on kern stack */
 	or.u	r31,  r0,   hi16(_ASM_LABEL(intstack_end))
 	or	r31,  r31,  lo16(_ASM_LABEL(intstack_end))
+3:
+#else
+1:
 #endif
 
-3:
 	/*
 	 * here - r30 holds a pointer to the exception frame.
 	 * r31 is a pointer to the kernel stack/interrupt stack.
@@ -1859,6 +1847,11 @@ ASLOCAL(fpu_enable)
 	ld	r2,   r30,  REG_OFF(EF_VECTOR)
 	bcnd.n	eq0,  r2,   8f			/* is error */
 	 ld	r14,  r30,  REG_OFF(EF_RET)
+
+	/*
+	 * Do not process possible data exceptions here if this is an interrupt.
+	 * Instead, the interrupt handler will take care of this by itself.
+	 */
 	cmp	r3,   r2,   1			/* is an interrupt? */
 	bb1.n	eq,   r3,   8f			/* skip if so */
 
@@ -1871,8 +1864,8 @@ ASLOCAL(fpu_enable)
 
 	/* service any outstanding data pipeline stuff */
 
-	ld	r3,   r30,  REG_OFF(EF_DMT0)
-	bb0	DMT_VALID_BIT, r3, 8f
+	 ld	r3,   r30,  REG_OFF(EF_DMT0)
+	bb0	DMT_VALID_BIT, r3, 7f
 
 	/*
 	 * r30 can be clobbered by calls. So stuff its value into a preserved
@@ -1882,8 +1875,9 @@ ASLOCAL(fpu_enable)
 	CALL(_C_LABEL(m88100_trap), T_DATAFLT, r15)
 	or	r30,  r0,   r15
 
+7:
 	/* enable interrupts */
-	 ldcr	r2,   PSR
+	ldcr	r2,   PSR
 	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r2,   PSR
 	FLUSH_PIPELINE
@@ -1924,41 +1918,43 @@ ENTRY(proc_do_uret)
 	ld	r3,r2,P_ADDR		/* p->p_addr */
 	addu	r3,r3,PCB_USER_STATE	/* p->p_addr.u_pcb.user_state */
 	st	r3,r31,0		/* put it on the stack */
-	br	_ASM_LABEL(return_from_exception_handler)
+#if defined(M88100) && defined(M88110)
+#ifdef M88110
+	or.u	r2, r0, hi16(_C_LABEL(cputyp))
+	ld	r3, r2, lo16(_C_LABEL(cputyp))
+	cmp	r2, r3, CPU_88110
+	bb1	eq, r2, _ASM_LABEL(m88110_return_code)
+	/* br	_ASM_LABEL(return_from_exception_handler) */
+#endif
+#endif
 
-ASLOCAL(return_from_exception_handler)
 	/*
 	 * Regs r1-r30 are free. R31 is pointing at the word
 	 * on the kernel stack where our pointer to the exception frame
 	 * it stored. Reload it now.
 	 *
-	 * At this point, if EF_DMT0 is not zero, then
+	 * At this point, if EF_DMT0 is not zero on MC88100, then
 	 * this must have been an interrupt where the fault didn't
 	 * get corrected above.  We'll do that now.
 	 *
 	 * We load it into r14 since it is preserved across function
 	 * calls, and we may have to call some routines from within here.
 	 *
-	 * control is transfered here from obvious places in this file
-	 * and thread_bootstrap in luna88k/locore.c.
-	 *
+	 * Control is transfered here from obvious places in this file.
 	 */
-#ifdef M88110
-	or.u	r2, r0, hi16(_C_LABEL(cputyp))
-	ld	r3, r2, lo16(_C_LABEL(cputyp))
-	cmp	r2, r3, CPU_88110
-	bb1	eq, r2, _ASM_LABEL(m88110_return_code)
-#endif
+
 #ifdef M88100
+ASLOCAL(return_from_exception_handler)
+	/*
+	 * if there happens to be a data fault that hasn't been serviced yet,
+	 * go off and service that...
+	 */
+
 #define	FPTR	r14
 	ld	FPTR, r31, 0	/* grab exception frame pointer */
 	ld	r3, FPTR, REG_OFF(EF_DMT0)
 	bb0	DMT_VALID_BIT, r3, _ASM_LABEL(check_ast)
 
-	/*
-	 * if there happens to be a data fault that hasn't been serviced yet,
-	 * go off and service that...
-	 */
 	CALL(_C_LABEL(m88100_trap), T_DATAFLT, r30)
 	br	_ASM_LABEL(check_ast)
 #endif /* M88100 */
@@ -1968,9 +1964,9 @@ ASLOCAL(m88110_return_code)
 #define	FPTR	r14
 	ld	FPTR, r31, 0	/* grab exception frame pointer */
 
+#if 0
 	/*
 	 * If it's the interrupt exception, enable interrupt.
-	 * If it's the data access exception, take care of it.
 	 */
 
 	/*
@@ -1991,22 +1987,7 @@ ASLOCAL(m88110_return_code)
 	stcr	r2, PSR
 	FLUSH_PIPELINE
 1:
-	br	2f	/* temp XXX smurph */
-	ld	r2, FPTR, REG_OFF(EF_VECTOR)
-	cmp	r2, r2, 3	/* Is it a data access exception? */
-	bb1	ne, r2, 2f	/* If not, skip */
-
-	/*
-	 * if there happens to be a data fault that hasn't been serviced yet,
-	 * go off and service that...
-	 */
-	CALL(_C_LABEL(m88110_trap), T_DATAFLT, r30)
-
-	/* clear the dsr word in the E.F. */
-	st	r0, FPTR, REG_OFF(EF_DSR)
-	st	r0, FPTR, REG_OFF(EF_DLAR)
-	st	r0, FPTR, REG_OFF(EF_DPAR)
-2:
+#endif
 #endif /* M88110 */
 
 /*
@@ -2154,19 +2135,19 @@ ASLOCAL(no_ast)
 GLOBAL(m88110_unknown_handler)
 	PREP2("unknown", 0, DEBUG_UNKNOWN_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
-	DONE(DEBUG_UNKNOWN_BIT)
+	DONE2(DEBUG_UNKNOWN_BIT)
 
 /* interrupt exception handler */
 GLOBAL(m88110_interrupt_handler)
 	PREP2("interrupt", 1, DEBUG_INTERRUPT_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_INT, r30)
-	DONE(DEBUG_INTERRUPT_BIT)
+	DONE2(DEBUG_INTERRUPT_BIT)
 
 /* instruction access exception handler */
 GLOBAL(m88110_instruction_access_handler)
 	PREP2("inst", 2, DEBUG_INSTRUCTION_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_INSTFLT, r30)
-	DONE(DEBUG_INSTRUCTION_BIT)
+	DONE2(DEBUG_INSTRUCTION_BIT)
 /*
  * data access exception handler --
  *  See badaddr() below for info about Data_Precheck.
@@ -2174,25 +2155,25 @@ GLOBAL(m88110_instruction_access_handler)
 GLOBAL(m88110_data_exception_handler)
 	PREP2("data", 3, DEBUG_DATA_BIT, No_SSBR_Stuff, M88110_Data_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_DATAFLT, r30)
-	DONE(DEBUG_DATA_BIT)
+	DONE2(DEBUG_DATA_BIT)
 
 /* misaligned access exception handler */
 GLOBAL(m88110_misaligned_handler)
 	PREP2("misalign", 4, DEBUG_MISALIGN_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_MISALGNFLT, r30)
-	DONE(DEBUG_MISALIGN_BIT)
+	DONE2(DEBUG_MISALIGN_BIT)
 
 /* unimplemented opcode exception handler */
 GLOBAL(m88110_unimplemented_handler)
 	PREP2("unimp", 5, DEBUG_UNIMPLEMENTED_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_ILLFLT, r30)
-	DONE(DEBUG_UNIMPLEMENTED_BIT)
+	DONE2(DEBUG_UNIMPLEMENTED_BIT)
 
 /* privilege exception handler */
 GLOBAL(m88110_privilege_handler)
 	PREP2("privilege", 6, DEBUG_PRIVILEGE_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_PRIVINFLT, r30)
-	DONE(DEBUG_PRIVILEGE_BIT)
+	DONE2(DEBUG_PRIVILEGE_BIT)
 
 /*
  * I'm not sure what the trap(T_BNDFLT,...) does, but it doesn't send
@@ -2201,114 +2182,114 @@ GLOBAL(m88110_privilege_handler)
 GLOBAL(m88110_bounds_handler)
 	PREP2("bounds", 7, DEBUG_BOUNDS_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_BNDFLT, r30)
-	DONE(DEBUG_BOUNDS_BIT)
+	DONE2(DEBUG_BOUNDS_BIT)
 
 /* integer divide-by-zero exception handler */
 GLOBAL(m88110_divide_handler)
 	PREP2("divide", 8, DEBUG_DIVIDE_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_ZERODIV, r30)
-	DONE(DEBUG_DIVIDE_BIT)
+	DONE2(DEBUG_DIVIDE_BIT)
 
 /* integer overflow exception handler */
 GLOBAL(m88110_overflow_handler)
 	PREP2("overflow", 9, DEBUG_OVERFLOW_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_OVFFLT, r30)
-	DONE(DEBUG_OVERFLOW_BIT)
+	DONE2(DEBUG_OVERFLOW_BIT)
 
 /* Floating-point precise handler */
 GLOBAL(m88110_fp_precise_handler)
 	PREP2("FPU precise", 114, DEBUG_FPp_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_ASM_LABEL(m88110_Xfp_precise), r0, r30)
-	DONE(DEBUG_FPp_BIT)
+	DONE2(DEBUG_FPp_BIT)
 
 /* MVME197 non-maskable interrupt handler (ABORT button) */
 GLOBAL(m88110_nonmaskable)
 	PREP2("MVME197 non-mask", 11, DEBUG_NON_MASK_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_NON_MASK, r30)
-	DONE(DEBUG_NON_MASK_BIT)
+	DONE2(DEBUG_NON_MASK_BIT)
 
 /* MVME197 data MMU read miss handler */
 GLOBAL(m88110_data_read_miss)
 	PREP2("MVME197 read miss", 12, DEBUG_197_READ_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_197_READ, r30)
-	DONE(DEBUG_197_READ_BIT)
+	DONE2(DEBUG_197_READ_BIT)
 
 /* MVME197 data MMU write miss handler */
 GLOBAL(m88110_data_write_miss)
 	PREP2("MVME197 write miss", 13, DEBUG_197_WRITE_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_197_WRITE, r30)
-	DONE(DEBUG_197_WRITE_BIT)
+	DONE2(DEBUG_197_WRITE_BIT)
 
 /* MVME197 inst MMU ATC miss handler */
 GLOBAL(m88110_inst_atc_miss)
 	PREP2("MVME197 inst miss", 14, DEBUG_197_INST_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_197_INST, r30)
-	DONE(DEBUG_197_INST_BIT)
+	DONE2(DEBUG_197_INST_BIT)
 
 /* All standard system calls.  */
 GLOBAL(m88110_syscall_handler)
 	PREP2("syscall", 128, DEBUG_SYSCALL_BIT, No_SSBR_Stuff, No_Precheck)
 	ld	r13, r30, GENREG_OFF(13)
 	CALL(_C_LABEL(m88110_syscall), r13, r30)
-	DONE(DEBUG_SYSCALL_BIT)
+	DONE2(DEBUG_SYSCALL_BIT)
 
 /* trap 496 comes here */
 GLOBAL(m88110_bugtrap)
 	PREP2("bugsyscall", 496, DEBUG_BUGCALL_BIT, No_SSBR_Stuff, No_Precheck)
 	ld	r9,  r30, GENREG_OFF(9)
 	CALL(_C_LABEL(bugsyscall), r9, r30)
-	DONE(DEBUG_BUGCALL_BIT)
+	DONE2(DEBUG_BUGCALL_BIT)
 
 GLOBAL(m88110_sigsys)
 	PREP2("sigsys", 501, DEBUG_SIGSYS_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_SIGSYS, r30)
-	DONE(DEBUG_SIGSYS_BIT)
+	DONE2(DEBUG_SIGSYS_BIT)
 
 GLOBAL(m88110_sigtrap)
 	PREP2("sigtrap", 510, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_SIGTRAP, r30)
-	DONE(DEBUG_SIGTRAP_BIT)
+	DONE2(DEBUG_SIGTRAP_BIT)
 
 GLOBAL(m88110_stepbpt)
 	PREP2("stepbpt", 504, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_STEPBPT, r30)
-	DONE(DEBUG_SIGTRAP_BIT)
+	DONE2(DEBUG_SIGTRAP_BIT)
 
 GLOBAL(m88110_userbpt)
 	PREP2("userbpt", 511, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_USERBPT, r30)
-	DONE(DEBUG_SIGTRAP_BIT)
+	DONE2(DEBUG_SIGTRAP_BIT)
 
 #ifdef DDB
 GLOBAL(m88110_break)
 	PREP2("break", 130, DEBUG_BREAK_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_KDB_BREAK, r30)
-	DONE(DEBUG_BREAK_BIT)
+	DONE2(DEBUG_BREAK_BIT)
 
 GLOBAL(m88110_trace)
 	PREP2("trace", 131, DEBUG_TRACE_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_KDB_TRACE, r30)
-	DONE(DEBUG_TRACE_BIT)
+	DONE2(DEBUG_TRACE_BIT)
 
 GLOBAL(m88110_entry)
 	PREP2("kdb", 132, DEBUG_KDB_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_KDB_ENTRY, r30)
-	DONE(DEBUG_KDB_BIT)
+	DONE2(DEBUG_KDB_BIT)
 #else
 GLOBAL(m88110_break)
 	PREP2("break", 130, DEBUG_BREAK_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
-	DONE(DEBUG_BREAK_BIT)
+	DONE2(DEBUG_BREAK_BIT)
 
 GLOBAL(m88110_trace)
 	PREP2("trace", 131, DEBUG_TRACE_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
-	DONE(DEBUG_TRACE_BIT)
+	DONE2(DEBUG_TRACE_BIT)
 
 GLOBAL(m88110_entry)
-	PREP2("unknown", 132, DEBUG_UNKNOWN_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("unknown", 132, DEBUG_KDB_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
-	DONE(DEBUG_KDB_BIT)
+	DONE2(DEBUG_KDB_BIT)
 #endif
 
 /*
@@ -2867,17 +2848,20 @@ ASLOCAL(m88110_fpu_enable)
 	or.u	r31,  r0,   hi16(_ASM_LABEL(kstack))
 	ld	r31,  r31,  lo16(_ASM_LABEL(kstack))
 	addu	r31,  r31,  USIZE		/* point at proper end */
+#ifdef INTSTACK
 	br	3f
 1:
-#ifdef INTSTACK
 	ld	r3,   r31,  REG_OFF(EF_VECTOR)
 	cmp	r3,   r3,   1	/* is interrupt ? */
 	bb0	eq,   r3,   3f	/* no, we will stay on kern stack */
 	or.u	r31,  r0,   hi16(_ASM_LABEL(intstack_end))
 	or	r31,  r31,  lo16(_ASM_LABEL(intstack_end))
+3:
+#else
+1:
 #endif
 
-3:	/*
+	/*
 	 * here - r30 holds a pointer to the exception frame.
 	 * r31 is a pointer to the kernel stack/interrupt stack.
 	 */
@@ -2902,36 +2886,13 @@ ASLOCAL(m88110_fpu_enable)
 #endif
 
 	/* enable interrupts */
-	 ldcr	r2,   PSR
+	ldcr	r2,   PSR
 	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r2,   PSR
 	FLUSH_PIPELINE
-#if 1 /* XXX test */
-	br	8f
-#else
-	/* service any outstanding data pipeline stuff
-	   - check dsr... anything outstanding? */
 
-	ld	r3,   r30,  REG_OFF(EF_DSR)
-	cmp	r3,   r3,   0
-	bb1	eq,   r3,   8f
-
-/*
- * r30 can be clobbered by calls. So stuff its value into a
- * preserved register, say r15. R14 is in use (see return_to_... below).
- */
-	or	r15,  r0,   r30
-	CALL(_C_LABEL(m88110_trap), T_DATAFLT, r15)
-
-	/* restore it... */
-	or	r30,  r0,   r15
-
-	/* clear the dsr word in the E.F */
-	st	r0,   r30,  REG_OFF(EF_DSR)
-
-#endif
 8:
-	jmp	r14 /* loaded above */
+	jmp	r14		/* loaded above */
 
 	data
 	.align 8
