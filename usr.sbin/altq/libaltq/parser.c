@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.6 2002/02/15 03:31:15 deraadt Exp $	*/
+/*	$OpenBSD: parser.c,v 1.7 2002/02/20 10:52:23 kjc Exp $	*/
 /*	$KAME: parser.c,v 1.13 2002/02/12 10:14:01 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2002
@@ -41,6 +41,7 @@
 #include <errno.h>
 #include <syslog.h>
 #include <netdb.h>
+#include <err.h>
 
 #include <altq/altq.h>
 #include <altq/altq_cdnr.h>
@@ -55,7 +56,6 @@ static int qdisc_class_parser(const char *, const char *, const char *,
 			      const char *, int, char **);
 static int next_word(char **, char *);
 
-static int do_cmd(int, char *);
 static int get_ifname(char **, char **);
 static int get_addr(char **, struct in_addr *, struct in_addr *);
 static int get_port(const char *, u_int16_t *);
@@ -121,6 +121,7 @@ struct cmd_tab {
  * execute the command.
  * returns 1 if OK, 0 if error or EOF.
  */
+int
 do_command(FILE *fp)
 {
 	char	cmd_line[MAX_LINE], cmd[MAX_WORD], *cp;
@@ -260,7 +261,7 @@ int
 qcmd_config(void)
 {
 	FILE	*fp;
-	int	i, rval;
+	int	rval;
 
 	if (if_namelist != NULL)
 		if_freenameindex(if_namelist);
@@ -275,6 +276,7 @@ qcmd_config(void)
 		return (QOPERR_INVAL);
 	}
 	line_no = 0;
+	rval = 1;
 	while (rval)
 		rval = do_command(fp);
 
@@ -496,7 +498,7 @@ class_parser(char *cmdbuf)
 	char	*clname = class_name;
 	char	*parent = NULL;
 	char	*argv[MAX_ARGS], *ap;
-	int	argc, rval;
+	int	argc;
 
 	/* get scheduling class */
 	if (!next_word(&cp, qdisc_name)) {
