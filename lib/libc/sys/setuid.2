@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setuid.2,v 1.3 1998/07/06 18:28:31 deraadt Exp $
+.\"	$OpenBSD: setuid.2,v 1.4 1998/12/31 09:25:31 deraadt Exp $
 .\"	$NetBSD: setuid.2,v 1.3 1995/02/27 12:37:06 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -98,7 +98,7 @@ in this way, the effective user ID of a set-user-ID executable
 may be toggled by switching to the real user ID, then re-enabled
 by reverting to the set-user-ID value.
 Similarly, the effective group ID may be set to the value
-of the real group ID or the saved set-user-ID.
+of the real group ID or the saved set-group-ID.
 .Pp
 .Sh RETURN VALUES
 Upon success, these functions return 0;
