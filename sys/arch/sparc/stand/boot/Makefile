@@ -1,15 +1,37 @@
 #	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
 
+S=	${.CURDIR}/../../../..
 R=	..
 .PATH:	${.CURDIR}/${R}
 PROG=	boot
-SRCS=	srt0.S boot.c promdev.c dvma.c net.c netif_sun.c conf.c version.c
+SRCS=	srt0.S boot.c promdev.c dvma.c bootnet.c netif_sun.c conf.c version.c
 INSTALL_STRIP=
 NOMAN=	1
 BINDIR=	/usr/mdec
-LIBS!=	cd ${.CURDIR}/${R}; ${MAKE} libdep
 
-${PROG}:${OBJS} ${LIBS}
+# include "library" defines and make rules
+KERN_AS=	library
+KERNDST=	${.CURDIR}/${__objdir}
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
+Z_AS=		library
+ZDST=		${.CURDIR}/${__objdir}
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ=		${ZLIB}
+
+SA_AS=		library
+SADST=		${.CURDIR}/${__objdir}
+SAREL=
+SA_ZLIB=	yes
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA=		${SALIB}
+
+LIBS=	${LIBSA} ${LIBKERN} ${LIBSA} ${LIBZ}
+
+# ${PROG} overloads the normal rule in bsd.prog.mk
+
+${PROG}:	${OBJS} ${LIBS}
 	${LD} -N -T ${RELOC} -e start ${OBJS} ${LIBS}
 	# convert to Sun magic
 	@size a.out
