@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.12 1996/10/21 19:31:04 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.13 1996/10/21 19:33:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.12 1996/10/21 19:31:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.13 1996/10/21 19:33:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -427,7 +427,7 @@ koktologin(name, realm, toname)
 	register AUTH_DAT *kdata;
 	AUTH_DAT kdata_st;
 
-	memset((void *)&kdata_st, 0, sizeof(*kdata_st));
+	memset((void *)&kdata_st, 0, sizeof(kdata_st));
 	kdata = &kdata_st;
 
 	(void)strncpy(kdata->pname, name, sizeof(kdata->pname) - 1);
@@ -435,7 +435,7 @@ koktologin(name, realm, toname)
 
 	(void)strncpy(kdata->pinst,
 	    ((strcmp(toname, "root") == 0) ? "root" : ""), sizeof(kdata->pinst) - 1);
-	kdata->pinst[sizeof(kdata->pinst) -1] '\0';
+	kdata->pinst[sizeof(kdata->pinst) -1] = '\0';
 
 	(void)strncpy(kdata->prealm, realm, sizeof(kdata->prealm) - 1);
 	kdata->prealm[sizeof(kdata->prealm) -1] = '\0';
