@@ -1,4 +1,4 @@
-/* $OpenBSD: pxa2x0_pcic.c,v 1.2 2005/01/04 05:37:43 drahn Exp $ */
+/* $OpenBSD: pxa2x0_pcic.c,v 1.3 2005/01/04 23:48:31 drahn Exp $ */
 /*
  * Copyright (c) Dale Rahn <drahn@openbsd.org>
  *
@@ -31,6 +31,8 @@
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciachip.h>
+
+#include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 #include <arm/xscale/pxapcicvar.h>
@@ -74,7 +76,7 @@ void	pxapcic_detach_card(struct pxapcic_socket *h, int flags);
 int pxapcic_intr_detect(void *arg);
 
 /* DONT CONFIGURE CF slot 1 for now */
-#define NUM_CF_CARDS 1
+#define NUM_CF_CARDS 2
 
 struct cfattach pxapcic_ca = {
 	sizeof(struct pxapcic_softc), pxapcic_match, pxapcic_attach
@@ -312,7 +314,7 @@ pxapcic_set_power(struct pxapcic_socket *so, int arg)
 int
 pxapcic_match(struct device *parent, void *v, void *aux)
 {
-        return (0);
+        return (1);
 }     
 
 void   
@@ -412,8 +414,6 @@ pxapcic_create_event_thread(void *arg)
 	u_int16_t csr;
 
 	csr = bus_space_read_2(sc->sc_iot, sock->scooph, SCOOP_REG_CSR);
-	printf("%s%d: create event, csr %d\n", sc->sc_dev.dv_xname, 
-	    sock->socket, csr);
 
 	/* if there's a card there, then attach it  */
 
@@ -430,9 +430,7 @@ pxapcic_create_event_thread(void *arg)
 		printf("%s: unable to create event thread for %s\n",
 		     sc->sc_dev.dv_xname,  sock->socket ? "1" : "0");
 	}
-	/*
 	config_pending_decr();
-	*/
 }
 
 int
@@ -496,23 +494,6 @@ pxapcic_attach(struct device *parent, struct device *self, void *aux)
 		}
 		so->scooph = scooph;
 
-		{
-		u_int16_t val;
-		/* probe */
-		val = bus_space_read_2(iot, scooph, SCOOP_REG_IMR);
-		printf("scoop%d: IMR %x\n", i, val);
-		val = bus_space_read_2(iot, scooph, SCOOP_REG_MCR);
-		printf("scoop%d: MCR %x\n", i, val);
-		val = bus_space_read_2(iot, scooph, SCOOP_REG_CDR);
-		printf("scoop%d: CDR %x\n", i, val);
-		val = bus_space_read_2(iot, scooph, SCOOP_REG_CPR);
-		printf("scoop%d: CPR %x\n", i, val);
-		val = bus_space_read_2(iot, scooph, SCOOP_REG_IRM);
-		printf("scoop%d: IRM %x\n", i, val);
-		val = bus_space_read_2(iot, scooph, SCOOP_REG_ISR);
-		printf("scoop%d: ISR %x\n", i, val);
-		}
-
 		bus_space_write_2(iot, scooph, SCOOP_REG_IMR, 0x00c0);
 
 		/* setup */
@@ -525,7 +506,7 @@ pxapcic_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_write_2(iot, scooph, SCOOP_REG_IMR, 0x0000);
 
 		bus_space_write_2(iot, scooph, SCOOP_REG_CPR,
-		    SCP_CPR_PWR|SCP_CPR_3V);
+		    SCP_CPR_PWR|SCP_CPR_5V); /* 5 V for 3000? */
 	
 
 		paa.paa_busname = "pcmcia";
@@ -558,9 +539,7 @@ pxapcic_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX c3000 */
 	so = &sc->sc_socket[0];
 	pxa2x0_gpio_set_function(105, GPIO_IN); /* GPIO_CF_IRQ  */
-	pxa2x0_gpio_set_function(106, GPIO_IN); /* GPIO_CF2_IRQ */
 	pxa2x0_gpio_set_function(94, GPIO_IN); /* GPIO_CF_CD */
-	pxa2x0_gpio_set_function(93, GPIO_IN); /* GPIO_CF2_CD */
 
 	sc->sc_socket[0].irq = pxa2x0_gpio_intr_establish(94 /*???*/,
 	    IST_EDGE_FALLING, IPL_BIO /* XXX */, pxapcic_intr_detect,
@@ -570,10 +549,12 @@ pxapcic_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_IMR, 0x00ce);
 	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_MCR, 0x0111);
 
-	/*
 	config_pending_incr();
-	*/
 	kthread_create_deferred(pxapcic_create_event_thread, so);
+
+#if NUM_CF_CARDS > 1
+	pxa2x0_gpio_set_function(106, GPIO_IN); /* GPIO_CF2_IRQ */
+	pxa2x0_gpio_set_function(93, GPIO_IN); /* GPIO_CF2_CD */
 
 	so = &sc->sc_socket[1];
 	sc->sc_socket[1].irq = pxa2x0_gpio_intr_establish(93 /*???*/,
@@ -584,10 +565,9 @@ pxapcic_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_IMR, 0x00ce);
 	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_MCR, 0x0111);
 
-	/*
 	config_pending_incr();
-	*/
 	kthread_create_deferred(pxapcic_create_event_thread, so);
+#endif /* NUM_CF_CARDS > 1 */
 #endif
 
 }
