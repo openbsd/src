@@ -1,11 +1,11 @@
-/*	$OpenBSD: gsckbdmap.c,v 1.6 2004/07/21 16:24:27 mickey Exp $	*/
+/*	$OpenBSD: gsckbdmap.c,v 1.7 2004/07/26 14:06:12 miod Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
  */
-/*	OpenBSD: wskbdmap_mfii.c,v 1.24 2004/07/09 19:07:45 miod Exp  */
+/*	OpenBSD: wskbdmap_mfii.c,v 1.25 2004/07/26 14:05:59 miod Exp  */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -468,7 +468,7 @@ static const keysym_t gsckbd_keydesc_be[] = {
     KC(38),	KS_quotedbl,	KS_3,	KS_numbersign,
     KC(37),	KS_apostrophe,	KS_4,
     KC(46),	KS_parenleft,	KS_5,
-    KC(54),	KS_currency,	KS_6,	KS_asciicircum,
+    KC(54),	KS_section,	KS_6,	KS_asciicircum,
     KC(61),	KS_egrave,	KS_7,
     KC(62),	KS_exclam,	KS_8,
     KC(70),	KS_ccedilla,	KS_9,	KS_braceleft,
@@ -481,8 +481,8 @@ static const keysym_t gsckbd_keydesc_be[] = {
     KC(91),	KS_dollar,	KS_asterisk,	KS_bracketright,
     KC(28),	KS_q,
     KC(76),	KS_m,
-    KC(82),	KS_ugrave,	KS_percent,	KS_section,
-    KC(14),	KS_twosuperior,
+    KC(82),	KS_ugrave,	KS_percent,	KS_acute,
+    KC(14),	KS_twosuperior,	KS_threesuperior,
     KC(93),	KS_mu,	KS_sterling,	KS_grave,
     KC(26),	KS_w,
     KC(58),	KS_comma,	KS_question,
