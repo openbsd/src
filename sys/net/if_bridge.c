@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.11 1999/06/30 00:00:29 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.12 1999/07/24 19:11:13 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -449,7 +449,7 @@ bridge_bifconf(sc, bifc)
 {
 	struct bridge_iflist *p;
 	u_int32_t total, i;
-	int error;
+	int error = 0;
 	struct ifbreq breq;
 
 	p = LIST_FIRST(&sc->sc_iflist);
@@ -459,32 +459,31 @@ bridge_bifconf(sc, bifc)
 	}
 
 	if (bifc->ifbic_len == 0) {
-		bifc->ifbic_len = total * sizeof(struct ifbreq);
-		return (0);
+		i = total;
+		goto done;
 	}
 
 	p = LIST_FIRST(&sc->sc_iflist);
 	i = 0;
-	while (p != NULL && bifc->ifbic_len > sizeof(breq)) {
+	while (p != NULL && bifc->ifbic_len > i * sizeof(breq)) {
 		strncpy(breq.ifbr_name, sc->sc_if.if_xname,
-		    sizeof(breq.ifbr_name));
+		    sizeof(breq.ifbr_name)-1);
 		breq.ifbr_name[sizeof(breq.ifbr_name) - 1] = '\0';
 		strncpy(breq.ifbr_ifsname, p->ifp->if_xname,
-		    sizeof(breq.ifbr_ifsname));
+		    sizeof(breq.ifbr_ifsname)-1);
 		breq.ifbr_ifsname[sizeof(breq.ifbr_ifsname) - 1] = '\0';
 		breq.ifbr_ifsflags = p->bif_flags;
 		error = copyout((caddr_t)&breq,
 		    (caddr_t)(bifc->ifbic_req + i), sizeof(breq));
-		if (error) {
-			bifc->ifbic_len = i * sizeof(breq);
-			return (error);
-		}
+		if (error)
+			goto done;
 		p = LIST_NEXT(p, next);
 		i++;
 		bifc->ifbic_len -= sizeof(breq);
 	}
+done:
 	bifc->ifbic_len = i * sizeof(breq);
-	return (0);
+	return (error);
 }
 
 void
@@ -992,24 +991,18 @@ bridge_rtupdate(sc, ea, ifp, setflags, flags)
 	int s, dir;
 
 	s = splhigh();
-	if (sc->sc_rts == NULL) {
-		splx(s);
-		return (NULL);
-	}
+	if (sc->sc_rts == NULL)
+		goto done;
 
 	h = bridge_hash(ea);
 	p = LIST_FIRST(&sc->sc_rts[h]);
 	if (p == NULL) {
-		if (sc->sc_brtcnt >= sc->sc_brtmax) {
-			splx(s);
-			return (NULL);
-		}
+		if (sc->sc_brtcnt >= sc->sc_brtmax)
+			goto done;
 		p = (struct bridge_rtnode *)malloc(
 		    sizeof(struct bridge_rtnode), M_DEVBUF, M_NOWAIT);
-		if (p == NULL) {
-			splx(s);
-			return (NULL);
-		}
+		if (p == NULL)
+			goto done;
 
 		bcopy(ea, &p->brt_addr, sizeof(p->brt_addr));
 		p->brt_if = ifp;
@@ -1022,8 +1015,7 @@ bridge_rtupdate(sc, ea, ifp, setflags, flags)
 
 		LIST_INSERT_HEAD(&sc->sc_rts[h], p, brt_next);
 		sc->sc_brtcnt++;
-		splx(s);
-		return (ifp);
+		goto want;
 	}
 
 	do {
@@ -1039,21 +1031,17 @@ bridge_rtupdate(sc, ea, ifp, setflags, flags)
 
 			if (q->brt_if == ifp)
 				q->brt_age = 1;
-			splx(s);
-			return (q->brt_if);
+			ifp = q->brt_if;
+			goto want;
 		}
 
 		if (dir > 0) {
-			if (sc->sc_brtcnt >= sc->sc_brtmax) {
-				splx(s);
-				return (NULL);
-			}
+			if (sc->sc_brtcnt >= sc->sc_brtmax)
+				goto done;
 			p = (struct bridge_rtnode *)malloc(
 			    sizeof(struct bridge_rtnode), M_DEVBUF, M_NOWAIT);
-			if (p == NULL) {
-				splx(s);
-				return (NULL);
-			}
+			if (p == NULL)
+				goto done;
 
 			bcopy(ea, &p->brt_addr, sizeof(p->brt_addr));
 			p->brt_if = ifp;
@@ -1066,21 +1054,16 @@ bridge_rtupdate(sc, ea, ifp, setflags, flags)
 
 			LIST_INSERT_BEFORE(q, p, brt_next);
 			sc->sc_brtcnt++;
-			splx(s);
-			return (ifp);
+			goto want;
 		}
 
 		if (p == NULL) {
-			if (sc->sc_brtcnt >= sc->sc_brtmax) {
-				splx(s);
-				return (NULL);
-			}
+			if (sc->sc_brtcnt >= sc->sc_brtmax)
+				goto done;
 			p = (struct bridge_rtnode *)malloc(
 			    sizeof(struct bridge_rtnode), M_DEVBUF, M_NOWAIT);
-			if (p == NULL) {
-				splx(s);
-				return (NULL);
-			}
+			if (p == NULL)
+				goto done;
 
 			bcopy(ea, &p->brt_addr, sizeof(p->brt_addr));
 			p->brt_if = ifp;
@@ -1092,13 +1075,15 @@ bridge_rtupdate(sc, ea, ifp, setflags, flags)
 				p->brt_flags = IFBAF_DYNAMIC;
 			LIST_INSERT_AFTER(q, p, brt_next);
 			sc->sc_brtcnt++;
-			splx(s);
-			return (ifp);
+			goto want;
 		}
 	} while (p != NULL);
 
+done:
+	ifp = NULL;
+want:
 	splx(s);
-	return (NULL);
+	return (ifp);
 }
 
 struct ifnet *
@@ -1115,10 +1100,8 @@ bridge_rtlookup(sc, ea)
 	 */
 	s = splhigh();
 
-	if (sc->sc_rts == NULL) {
-		splx(s);
-		return (NULL);
-	}
+	if (sc->sc_rts == NULL)
+		goto fail;
 
 	h = bridge_hash(ea);
 	p = LIST_FIRST(&sc->sc_rts[h]);
@@ -1128,14 +1111,11 @@ bridge_rtlookup(sc, ea)
 			splx(s);
 			return (p->brt_if);
 		}
-
-		if (dir > 0) {
-			splx(s);
-			return (NULL);
-		}
-
+		if (dir > 0)
+			goto fail;
 		p = LIST_NEXT(p, brt_next);
 	}
+fail:
 	splx(s);
 	return (NULL);
 }
@@ -1188,18 +1168,14 @@ bridge_rttrim(sc)
 	int s, i;
 
 	s = splhigh();
-	if (sc->sc_rts == NULL) {
-		splx(s);
-		return;
-	}
+	if (sc->sc_rts == NULL)
+		goto done;
 
 	/*
 	 * Make sure we have to trim the address table
 	 */
-	if (sc->sc_brtcnt <= sc->sc_brtmax) {
-		splx(s);
-		return;
-	}
+	if (sc->sc_brtcnt <= sc->sc_brtmax)
+		goto done;
 
 	/*
 	 * Force an aging cycle, this might trim enough addresses.
@@ -1208,10 +1184,8 @@ bridge_rttrim(sc)
 	bridge_rtage(sc);
 	s = splhigh();
 
-	if (sc->sc_brtcnt <= sc->sc_brtmax) {
-		splx(s);
-		return;
-	}
+	if (sc->sc_brtcnt <= sc->sc_brtmax)
+		goto done;
 
 	for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
 		n = LIST_FIRST(&sc->sc_rts[i]);
@@ -1222,13 +1196,12 @@ bridge_rttrim(sc)
 				sc->sc_brtcnt--;
 				free(n, M_DEVBUF);
 				n = p;
-				if (sc->sc_brtcnt <= sc->sc_brtmax) {
-					splx(s);
-					return;
-				}
+				if (sc->sc_brtcnt <= sc->sc_brtmax)
+					goto done;
 			}
 		}
 	}
+done:
 	splx(s);
 }
 
@@ -1389,34 +1362,22 @@ bridge_rtfind(sc, baconf)
 	struct bridge_softc *sc;
 	struct ifbaconf *baconf;
 {
-	int i, s, error;
-	u_int32_t cnt;
+	int i, s, error = 0;
+	u_int32_t cnt = 0;
 	struct bridge_rtnode *n;
 	struct ifbareq bareq;
 
 	s = splhigh();
 
-	if (sc->sc_rts == NULL) {
-		baconf->ifbac_len = 0;
-		splx(s);
-		return (0);
-	}
-
-	if (baconf->ifbac_len == 0) {
-		baconf->ifbac_len = sc->sc_brtcnt * sizeof(struct ifbareq);
-		splx(s);
-		return (0);
-	}
+	if (sc->sc_rts == NULL || baconf->ifbac_len == 0)
+		goto done;
 
 	for (i = 0, cnt = 0; i < BRIDGE_RTABLE_SIZE; i++) {
 		n = LIST_FIRST(&sc->sc_rts[i]);
 		while (n != NULL) {
-			if (baconf->ifbac_len < sizeof(struct ifbareq)) {
-				baconf->ifbac_len = cnt *
-				    sizeof(struct ifbareq);
-				splx(s);
-				return (0);
-			}
+			if (baconf->ifbac_len <
+			    (cnt + 1) * sizeof(struct ifbareq))
+				goto done;
 			bcopy(sc->sc_if.if_xname, bareq.ifba_name,
 			    sizeof(bareq.ifba_name));
 			bcopy(n->brt_if->if_xname, bareq.ifba_ifsname,
@@ -1427,20 +1388,16 @@ bridge_rtfind(sc, baconf)
 			bareq.ifba_flags = n->brt_flags;
 			error = copyout((caddr_t)&bareq,
 		    	    (caddr_t)(baconf->ifbac_req + cnt), sizeof(bareq));
-			if (error) {
-				baconf->ifbac_len = cnt *
-				    sizeof(struct ifbareq);
-				splx(s);
-				return (error);
-			}
+			if (error)
+				goto done;
 			n = LIST_NEXT(n, brt_next);
 			cnt++;
 		}
 	}
-
+done:
 	baconf->ifbac_len = cnt * sizeof(struct ifbareq);
 	splx(s);
-	return (0);
+	return (error);
 }
 
 #if defined(INET) && (defined(IPFILTER) || defined(IPFILTER_LKM))
