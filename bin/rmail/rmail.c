@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.17 2003/07/29 00:24:16 deraadt Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.18 2003/09/24 21:11:46 deraadt Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.17 2003/07/29 00:24:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.18 2003/09/24 21:11:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -203,10 +203,14 @@ main(int argc, char *argv[])
 					err(EX_TEMPFAIL, NULL);
 			}
 			if (fplen + len + 2 > fptlen) {
-				fptlen += MAX(fplen + len + 2, 256);
-				if ((from_path =
-				    realloc(from_path, fptlen)) == NULL)
+				size_t newfptlen = fptlen +
+				    MAX(fplen + len + 2, 256);
+				char *np;
+
+				if ((np = realloc(from_path, newfptlen)) == NULL)
 					err(EX_TEMPFAIL, NULL);
+				from_path = np;
+				fptlen = newfptlen;
 			}
 			memmove(from_path + fplen, p, len);
 			fplen += len;
