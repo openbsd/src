@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.13 2002/10/04 20:05:12 mickey Exp $       */
+/*      $OpenBSD: neo.c,v 1.14 2003/02/21 10:01:27 tedu Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -424,10 +424,9 @@ int
 neo_intr(void *p)
 {
 	struct neo_softc *sc = (struct neo_softc *)p;
-	int status, x, active;
+	int status, x;
 	int rv = 0;
 
-	active = (sc->pintr || sc->rintr);
 	status = nm_rd(sc, NM_INT_REG, sc->irsz);
 
 	if (status & sc->playint) {
