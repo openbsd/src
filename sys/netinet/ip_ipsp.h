@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.90 2001/05/27 03:48:15 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.91 2001/05/27 05:17:07 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -593,7 +593,6 @@ extern struct ipsec_acquire *ipsp_pending_acquire(union sockaddr_union *);
 extern struct ipsec_acquire *ipsec_get_acquire(u_int32_t);
 extern void ipsp_delete_acquire(struct ipsec_acquire *);
 extern void ipsp_clear_acquire(struct tdb *);
-extern void *ipsp_copy_ident(void *);
 extern int ipsp_is_unspecified(union sockaddr_union);
 extern void ipsp_reffree(struct ipsec_ref *);
 #endif /* _KERNEL */
