@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.5 2004/09/10 08:58:27 pefo Exp $ */
+/*	$OpenBSD: context.S,v 1.6 2004/09/10 09:32:13 pefo Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -336,14 +336,14 @@ sw1:
 ctx1:
 	mtc0	zero, COP_0_TLB_INDEX
 	dmtc0	v0, COP_0_TLB_HI
-	lw	ta4, 0(t1)
-	lw	ta5, 4(t1)
-	dsll	ta4, ta4, 34
-	dsrl	ta4, ta4, 34
-	dsll	ta5, ta5, 34
-	dsrl	ta5, ta5, 34
-	dmtc0	ta4, COP_0_TLB_LO0
-	dmtc0	ta5, COP_0_TLB_LO1
+	lw	ta0, 0(t1)
+	lw	ta1, 4(t1)
+	dsll	ta0, ta0, 34
+	dsrl	ta0, ta0, 34
+	dsll	ta1, ta1, 34
+	dsrl	ta1, ta1, 34
+	dmtc0	ta0, COP_0_TLB_LO0
+	dmtc0	ta1, COP_0_TLB_LO1
 	nop
 	PTR_ADDU v0, 2*NBPG
 	nop
@@ -352,14 +352,14 @@ ctx1:
 
 #if (UPAGES != 2)
 	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
-	lw	ta4, 8(t1)
-	lw	ta5, 12(t1)
-	dsll	ta4, ta4, 34
-	dsrl	ta4, ta4, 34
+	lw	ta0, 8(t1)
+	lw	ta1, 12(t1)
+	dsll	ta0, ta0, 34
+	dsrl	ta0, ta0, 34
 	tlbp
 	nop
-	dsll	ta5, ta5, 34
-	dsrl	ta5, ta5, 34
+	dsll	ta1, ta1, 34
+	dsrl	ta1, ta1, 34
 	mfc0	t0, COP_0_TLB_INDEX
 	nop
 	bltz	t0, ctx2			# not in tlb
@@ -380,8 +380,8 @@ ctx1:
 ctx2:
 	mtc0	t2, COP_0_TLB_INDEX
 	dmtc0	v0, COP_0_TLB_HI
-	dmtc0	ta4, COP_0_TLB_LO0
-	dmtc0	ta5, COP_0_TLB_LO1
+	dmtc0	ta0, COP_0_TLB_LO0
+	dmtc0	ta1, COP_0_TLB_LO1
 	nop
 	nop
 	nop

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.6 2004/09/10 08:58:27 pefo Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.7 2004/09/10 09:32:13 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -162,7 +162,7 @@
  *	primary cache associativity.
  *
  * Allocation:
- *	ta4, ta5 ta6 used to hold I and D set size and Alias mask.
+ *	ta0, ta1 ta2 used to hold I and D set size and Alias mask.
  *
  *----------------------------------------------------------------------------
  */
@@ -174,7 +174,7 @@ LEAF(Mips5k_ConfigCache, 0)
 	srl	t1, v0, 9			# Get I cache size.
 	and	t1, 3
 	li	t2, 4096
-	sllv	ta4, t2, t1			# ta4 = Initial I set size.
+	sllv	ta0, t2, t1			# ta0 = Initial I set size.
 
 	and	t2, v0, 0x20
 	srl	t2, t2, 1			# Get I cache line size.
@@ -184,15 +184,15 @@ LEAF(Mips5k_ConfigCache, 0)
 	srl	t1, v0, 6			# Get D cache size.
 	and	t1, 3
 	li	t2, 4096			# Fixed page size.
-	sllv	ta5, t2, t1
+	sllv	ta1, t2, t1
 
 	and	t2, v0, 0x10
 	addu	t2, t2, 16			# Get D cache line size.
 	sw	t2, CpuPrimaryDataCacheLSize
 
 	li	t2, CTYPE_2WAY			# Assume two way cache
-	li	ta6, 0				# Secondary size 0.
-	li	ta7, 0				# Tertiary size 0.
+	li	ta2, 0				# Secondary size 0.
+	li	ta3, 0				# Tertiary size 0.
 
 	and	v1, 0xff00			# Recognize CPU's with
 	li	t1, (MIPS_R4600 << 8)		# N way L1 caches only.
@@ -217,7 +217,7 @@ LEAF(Mips5k_ConfigCache, 0)
 Conf5K:					# R5000 type, check for L2 cache
 	and	t1, v0, CF_5_SC
 	bnez	t1, ConfResult			# not enabled
-	li	ta6, 0				# set size to 0.
+	li	ta2, 0				# set size to 0.
 
 	li	t3, CF_5_SS
 	and	t1, t3, v0
@@ -227,12 +227,12 @@ Conf5K:					# R5000 type, check for L2 cache
 	or	t2, CTYPE_HAS_XL2		# External L2 present.
 	li	t3, CF_5_SE			# Set SE in conf
 	or	v0, t3				# Update config register
-	li	ta6, 512*1024			# 512k per 'click'.
-	sll	ta6, t1
+	li	ta2, 512*1024			# 512k per 'click'.
+	sll	ta2, t1
 
 	mtc0	v0, COP_0_CONFIG		# Enable L2 cache
 	LA	t0, KSEG0_BASE
-	PTR_ADDU t1, t0, ta6
+	PTR_ADDU t1, t0, ta2
 1:
 	cache	InvalidateSecondaryPage, 0(t0)
 	PTR_ADDU t0, 128*32
@@ -247,7 +247,7 @@ Conf5K:					# R5000 type, check for L2 cache
 Conf52K:					# R5200 type, check for L2 cache
 	and	t1, v0, CF_52_SC
 	bnez	t1, ConfResult			# not present
-	li	ta6, 0				# set size to 0.
+	li	ta2, 0				# set size to 0.
 
 	li	t3, CF_52_SS
 	and	t1, t3, v0
@@ -257,16 +257,16 @@ Conf52K:					# R5200 type, check for L2 cache
 	or	t2, CTYPE_HAS_XL2		# External L2 present.
 	li	t3, CF_5_SE			# Set SE in conf
 	or	v0, t3				# Update config register
-	li	ta6, 512*1024			# 512k per 'click'.
+	li	ta2, 512*1024			# 512k per 'click'.
 	lw	t3, CpuExternalCacheOn		# Check if disabled
 	bnez	t3, ConfResult			# No use it.
-	sll	ta6, t1
+	sll	ta2, t1
 
 	and	t2, ~CTYPE_HAS_XL2
 	li	t1, ~CF_52_SE			# Clear SE in conf
 	and	v0, t1				# Update config register
 	b	ConfResult
-	li	ta6, 0				# L2 cache disabled
+	li	ta2, 0				# L2 cache disabled
 
 
 #---- RM7K -----------------------------
@@ -274,11 +274,11 @@ Conf7K:					# RM7000, check for L2 and L3 cache
 	li	t2, CTYPE_4WAY			# 4-way cache
 	and	t1, v0, CF_7_TC
 	bnez	t1, Conf7KL2			# No L3 cache if set
-	li	ta7, 0				# Set size = 0
+	li	ta3, 0				# Set size = 0
 
-	lw	ta7, CpuTertiaryCacheSize
+	lw	ta3, CpuTertiaryCacheSize
 	and	t2, ~CTYPE_HAS_XL3
-	beqz	ta7, Conf7KL2			# No L3 cache present
+	beqz	ta3, Conf7KL2			# No L3 cache present
 	nop
 
 	or	t2, CTYPE_HAS_XL3
@@ -289,17 +289,17 @@ Conf7K:					# RM7000, check for L2 and L3 cache
 	and	v0, ~CF_7_TE			# Clear TE in conf
 	mtc0	v0, COP_0_CONFIG		# establish any new config
 	NOP10
-	li	ta7, 0				# L3 cache disabled
+	li	ta3, 0				# L3 cache disabled
 
 Conf7KL2:
 	and	t1, v0, CF_7_SC			# check for L2 cache
 	bnez	t1, ConfResult
-	li	ta6, 0				# No L2?
+	li	ta2, 0				# No L2?
 
 	or	t2, CTYPE_HAS_IL2		# L2 is on chip
 	lw	t3, CpuOnboardCacheOn		# Check if disabled
 	bnez	t3, ConfResult			# No, use it
-	li	ta6, 256*1024			# size = 256k
+	li	ta2, 256*1024			# size = 256k
 
 /* Sync on chip L2 */
 
@@ -317,11 +317,11 @@ Conf7KL2:
 	mtc0	v0, COP_0_CONFIG		# establish any new config
 	NOP10
 	b	ConfResult
-	li	ta6, 0				# L2 cache disabled
+	li	ta2, 0				# L2 cache disabled
 
 /*
- * Get here with t2 = Cache type, ta4 = L1 I size, ta5 = L1 D size.
- * ta6 = secondary size, ta7 = tertiary size.
+ * Get here with t2 = Cache type, ta0 = L1 I size, ta1 = L1 D size.
+ * ta2 = secondary size, ta3 = tertiary size.
  */
 ConfResult:
 	sw	v0, CpuConfigRegister
@@ -332,21 +332,21 @@ ConfResult:
 	sw	t2, CpuNWayCache
 	srl	t2, 1				# get div shift for set size.
 
-	sw	ta6, CpuSecondaryCacheSize
-	sw	ta7, CpuTertiaryCacheSize
+	sw	ta2, CpuSecondaryCacheSize
+	sw	ta3, CpuTertiaryCacheSize
 
-	addu	t1, ta4, -1			# Use icache for alias mask
+	addu	t1, ta0, -1			# Use icache for alias mask
 	srl	t1, t2				# Some cpus have different
 	and	t1, ~(NBPG - 1)			# i and d cache sizes...
 	sw	t1, CpuCacheAliasMask
 
-	sw	ta4, CpuPrimaryInstCacheSize	# store cache size.
-	srl	ta4, t2				# calculate set size.
-	sw	ta4, CpuPrimaryInstSetSize
+	sw	ta0, CpuPrimaryInstCacheSize	# store cache size.
+	srl	ta0, t2				# calculate set size.
+	sw	ta0, CpuPrimaryInstSetSize
 
-	sw	ta5, CpuPrimaryDataCacheSize	# store cache size.
-	srl	ta5, t2				# calculate set size.
-	sw	ta5, CpuPrimaryDataSetSize
+	sw	ta1, CpuPrimaryDataCacheSize	# store cache size.
+	srl	ta1, t2				# calculate set size.
+	sw	ta1, CpuPrimaryDataSetSize
 
 	and	v0, 0xfffffff8
 	or	v0, 0x00000003			# set cachable writeback kseg0
@@ -424,11 +424,11 @@ LEAF(Mips5k_SyncCache, 0)
 
 3:
 	LA	t3, KSEG0_BASE
-	lw	ta4, CpuSecondaryCacheSize
+	lw	ta0, CpuSecondaryCacheSize
 10:
 	cache	IndexWBInvalidate_S, 0(t3)
-	PTR_SUBU ta4, 32				# Fixed cache line size.
-	bgtz	ta4, 10b
+	PTR_SUBU ta0, 32				# Fixed cache line size.
+	bgtz	ta0, 10b
 	PTR_ADDU t3, 32
 
 /* Do off chip L2 if present */
@@ -440,11 +440,11 @@ LEAF(Mips5k_SyncCache, 0)
 
 	mtc0    zero, COP_0_TAG_LO
 	LA	t3, KSEG0_BASE
-	lw	ta4, CpuSecondaryCacheSize
+	lw	ta0, CpuSecondaryCacheSize
 21:
 	cache	InvalidateSecondaryPage, 0(t3)
-	PTR_SUBU ta4, 4096			# Fixed cache page size.
-	bgtz	ta4, 21b
+	PTR_SUBU ta0, 4096			# Fixed cache page size.
+	bgtz	ta0, 21b
 	PTR_ADDU t3, 4096
 
 /* Do off chip L3 if present */
@@ -456,11 +456,11 @@ LEAF(Mips5k_SyncCache, 0)
 
 	mtc0    zero, COP_0_TAG_LO
 	LA	t3, KSEG0_BASE
-	lw	ta4, CpuTertiaryCacheSize
+	lw	ta0, CpuTertiaryCacheSize
 31:
 	cache	InvalidatePage_T, 0(t3)
-	PTR_SUBU ta4, 4096			# Fixed cache page size.
-	bgtz	ta4, 31b
+	PTR_SUBU ta0, 4096			# Fixed cache page size.
+	bgtz	ta0, 31b
 	PTR_ADDU t3, 4096
 
 99:

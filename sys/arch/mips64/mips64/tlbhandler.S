@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.5 2004/09/10 08:58:27 pefo Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.6 2004/09/10 09:32:13 pefo Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -382,7 +382,7 @@ LEAF(tlb_write_indexed, 0)
 	ITLBNOPFIX
 	lw	a2, 8(a1)
 	lw	a3, 12(a1)
-	dmfc0	ta4, COP_0_TLB_HI		# Save the current PID.
+	dmfc0	ta0, COP_0_TLB_HI		# Save the current PID.
 
 	dmtc0	a2, COP_0_TLB_LO0		# Set up entry low0.
 	dmtc0	a3, COP_0_TLB_LO1		# Set up entry low1.
@@ -401,7 +401,7 @@ LEAF(tlb_write_indexed, 0)
 	nop
 	nop
 
-	dmtc0	ta4, COP_0_TLB_HI		# Restore the PID.
+	dmtc0	ta0, COP_0_TLB_HI		# Restore the PID.
 	nop
 	dmtc0	zero, COP_0_TLB_PG_MASK	# Default mask value.
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
@@ -419,30 +419,30 @@ LEAF(tlb_flush, 0)
 	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
 	ITLBNOPFIX
-	mfc0	ta5, COP_0_TLB_WIRED
+	mfc0	ta1, COP_0_TLB_WIRED
 	LA	v0, KSEG0_BASE		# invalid address
-	dmfc0	ta4, COP_0_TLB_HI	# Save the PID
+	dmfc0	ta0, COP_0_TLB_HI	# Save the PID
 
 	dmtc0	v0, COP_0_TLB_HI	# Mark entry high as invalid
 	dmtc0	zero, COP_0_TLB_LO0	# Zero out low entry0.
 	dmtc0	zero, COP_0_TLB_LO1	# Zero out low entry1.
 	mtc0	zero, COP_0_TLB_PG_MASK	# Zero out mask entry.
 /*
- * Align the starting value (ta5) and the upper bound (a0).
+ * Align the starting value (ta1) and the upper bound (a0).
  */
 1:
-	mtc0	ta5, COP_0_TLB_INDEX	# Set the index register.
-	addu	ta5, ta5, 1		# Increment index.
+	mtc0	ta1, COP_0_TLB_INDEX	# Set the index register.
+	addu	ta1, ta1, 1		# Increment index.
 	nop
 	nop
 	nop
 	tlbwi				# Write the TLB entry.
 	nop
 	nop
-	bne	ta5, a0, 1b
+	bne	ta1, a0, 1b
 	nop
 
-	dmtc0	ta4, COP_0_TLB_HI	# Restore the PID
+	dmtc0	ta0, COP_0_TLB_HI	# Restore the PID
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
 	ITLBNOPFIX
 	j	ra
@@ -458,7 +458,7 @@ LEAF(tlb_flush_addr, 0)
 	ITLBNOPFIX
 	li	v0, (PG_HVPN | PG_ASID)
 	and	a0, a0, v0		# Make shure valid hi value.
-	dmfc0	ta4, COP_0_TLB_HI	# Get current PID
+	dmfc0	ta0, COP_0_TLB_HI	# Get current PID
 	dmtc0	a0, COP_0_TLB_HI	# look for addr & PID
 	nop
 	nop
@@ -468,11 +468,11 @@ LEAF(tlb_flush_addr, 0)
 	nop
 	nop				# Delay for effect
 	nop
-	LA	ta5, KSEG0_BASE		# Load invalid entry.
+	LA	ta1, KSEG0_BASE		# Load invalid entry.
 	mfc0	v0, COP_0_TLB_INDEX	# See what we got
 	bltz	v0, 1f			# index < 0 => !found
 	nop
-	dmtc0	ta5, COP_0_TLB_HI	# Mark entry high as invalid
+	dmtc0	ta1, COP_0_TLB_HI	# Mark entry high as invalid
 
 	dmtc0	zero, COP_0_TLB_LO0	# Zero out low entry.
 	dmtc0	zero, COP_0_TLB_LO1	# Zero out low entry.
@@ -486,7 +486,7 @@ LEAF(tlb_flush_addr, 0)
 	nop
 	nop
 1:
-	dmtc0	ta4, COP_0_TLB_HI	# restore PID
+	dmtc0	ta0, COP_0_TLB_HI	# restore PID
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
 	ITLBNOPFIX
 	j	ra
@@ -500,10 +500,10 @@ LEAF(tlb_update, 0)
 	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
 	ITLBNOPFIX
-	and	ta5, a0, 0x1000		# ta5 = Even/Odd flag
+	and	ta1, a0, 0x1000		# ta1 = Even/Odd flag
 	li	v0, (PG_HVPN | PG_ASID)
 	and	a0, a0, v0
-	dmfc0	ta4, COP_0_TLB_HI	# Save current PID
+	dmfc0	ta0, COP_0_TLB_HI	# Save current PID
 	dmtc0	a0, COP_0_TLB_HI	# Init high reg
 	and	a2, a1, PG_G		# Copy global bit
 	nop
@@ -512,7 +512,7 @@ LEAF(tlb_update, 0)
 	tlbp				# Probe for the entry.
 	dsll	a1, a1, 34
 	dsrl	a1, a1, 34
-	bne	ta5, zero, 2f		# Decide even odd
+	bne	ta1, zero, 2f		# Decide even odd
 	mfc0	v0, COP_0_TLB_INDEX	# See what we got
 # EVEN
 	bltz	v0, 1f			# index < 0 => !found
@@ -576,7 +576,7 @@ LEAF(tlb_update, 0)
 4:					# Make shure pipeline
 	nop				# advances before we
 	nop				# uses the tlb.
-	dmtc0	ta4, COP_0_TLB_HI	# restore PID
+	dmtc0	ta0, COP_0_TLB_HI	# restore PID
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
 	ITLBNOPFIX
 	j	ra
@@ -601,21 +601,21 @@ LEAF(tlb_read, 0)
 	nop
 	nop
 	nop
-	mfc0	ta4, COP_0_TLB_PG_MASK	# fetch the hi entry
-	dmfc0	ta5, COP_0_TLB_HI	# fetch the hi entry
-	dmfc0	ta6, COP_0_TLB_LO0	# See what we got
-	dmfc0	ta7, COP_0_TLB_LO1	# See what we got
+	mfc0	ta0, COP_0_TLB_PG_MASK	# fetch the hi entry
+	dmfc0	ta1, COP_0_TLB_HI	# fetch the hi entry
+	dmfc0	ta2, COP_0_TLB_LO0	# See what we got
+	dmfc0	ta3, COP_0_TLB_LO1	# See what we got
 	dmtc0	v0, COP_0_TLB_HI	# restore PID
 	nop
 	nop
 	nop				# wait for PID active
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
 	ITLBNOPFIX
-	sw	ta4, 0(a1)
-	sw	ta5, 4(a1)
-	sw	ta6, 8(a1)
+	sw	ta0, 0(a1)
+	sw	ta1, 4(a1)
+	sw	ta2, 8(a1)
 	j	ra
-	sw	ta7, 12(a1)
+	sw	ta3, 12(a1)
 END(tlb_read)
 
 /*---------------------------------------------------------------- tlb_get_pid
