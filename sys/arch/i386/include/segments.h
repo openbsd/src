@@ -130,7 +130,7 @@ struct region_descriptor {
 extern union descriptor gdt[], ldt[];
 extern struct gate_descriptor idt[];
 
-void setgate __P((struct gate_descriptor *, void *, int, int, int));
+void setgate __P((struct gate_descriptor *, void *, int, int, int, int));
 void setregion __P((struct region_descriptor *, void *, size_t));
 void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
     int, int));
@@ -217,10 +217,11 @@ void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
 #define	GLDT_SEL	3	/* Default LDT descriptor */
 #define	GUCODE_SEL	4	/* User code descriptor */
 #define	GUDATA_SEL	5	/* User data descriptor */
-#define	GAPM32CODE_SEL	6
-#define	GAPM16CODE_SEL	7
-#define	GAPMDATA_SEL	8
-#define	NGDT		9
+#define	GAPM32CODE_SEL	6	/* 32 bit APM code descriptor */
+#define	GAPM16CODE_SEL	7	/* 16 bit APM code descriptor */
+#define	GAPMDATA_SEL	8	/* APM data descriptor */
+#define	GICODE_SEL	9	/* Interrupt code descriptor (same as Kernel code) */
+#define	NGDT		10
 
 /*
  * Entries in the Local Descriptor Table (LDT)

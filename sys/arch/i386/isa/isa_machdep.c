@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.19 1997/01/04 14:05:50 niklas Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.20 1997/04/17 03:44:52 tholo Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.14 1996/05/12 23:06:18 mycroft Exp $	*/
 
 /*-
@@ -84,7 +84,7 @@ isa_defaultirq()
 	/* icu vectors */
 	for (i = 0; i < ICU_LEN; i++)
 		setgate(&idt[ICU_OFFSET + i], IDTVEC(intr)[i], 0, SDT_SYS386IGT,
-		    SEL_KPL);
+		    SEL_KPL, GICODE_SEL);
   
 	/* initialize 8259's */
 	outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */

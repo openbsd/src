@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.13 1997/02/08 23:36:58 tholo Exp $	*/
+/*	$OpenBSD: npx.c,v 1.14 1997/04/17 03:44:52 tholo Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -269,8 +269,8 @@ npxprobe(parent, match, aux)
 	disable_intr();
 	save_idt_npxintr = idt[irq];
 	save_idt_npxtrap = idt[16];
-	setgate(&idt[irq], probeintr, 0, SDT_SYS386IGT, SEL_KPL);
-	setgate(&idt[16], probetrap, 0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[irq], probeintr, 0, SDT_SYS386IGT, SEL_KPL, GICODE_SEL);
+	setgate(&idt[16], probetrap, 0, SDT_SYS386TGT, SEL_KPL, GCODE_SEL);
 	save_imen = imen;
 	imen = ~((1 << IRQ_SLAVE) | (1 << ia->ia_irq));
 	SET_ICUS();
