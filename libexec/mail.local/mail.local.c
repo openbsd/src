@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.1.1.1 1995/10/18 08:43:19 deraadt Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.2 1996/07/19 07:35:18 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -120,6 +120,7 @@ main(argc, argv)
 	exit(eval);
 }
 
+int
 store(from)
 	char *from;
 {
@@ -163,14 +164,15 @@ store(from)
 	return(fd);
 }
 
+int
 deliver(fd, name, lockfile)
 	int fd;
 	char *name;
 	int lockfile;
 {
-	struct stat sb;
+	struct stat sb, fsb;
 	struct passwd *pw;
-	int created, mbfd, nr, nw, off, rval=0, lfd=-1;
+	int mbfd=-1, nr, nw, off, rval=1, lfd=-1;
 	char biffmsg[100], buf[8*1024], path[MAXPATHLEN], lpath[MAXPATHLEN];
 	off_t curoff;
 
@@ -185,35 +187,74 @@ deliver(fd, name, lockfile)
 
 	(void)sprintf(path, "%s/%s", _PATH_MAILDIR, name);
 
-	if(lockfile) {
+	if (lockfile) {
 		(void)sprintf(lpath, "%s/%s.lock", _PATH_MAILDIR, name);
 
-		if((lfd = open(lpath, O_CREAT|O_WRONLY|O_EXCL,
+		if ((lfd = open(lpath, O_CREAT|O_WRONLY|O_EXCL,
 		    S_IRUSR|S_IWUSR)) < 0) {
 			err(NOTFATAL, "%s: %s", lpath, strerror(errno));
 			return(1);
 		}
 	}
 
-	if (!(created = lstat(path, &sb)) &&
-	    (sb.st_nlink != 1 || S_ISLNK(sb.st_mode))) {
-		err(NOTFATAL, "%s: linked file", path);
-		return(1);
-	}
-	if((mbfd = open(path, O_APPEND|O_WRONLY|O_EXLOCK,
-	    S_IRUSR|S_IWUSR)) < 0) {
+	/* after this point, always exit via bad to remove lockfile */
+retry:
+	if (lstat(path, &sb)) {
+		if (errno != ENOENT) {
+			err(NOTFATAL, "%s: %s", path, strerror(errno));
+			goto bad;
+		}
 		if ((mbfd = open(path, O_APPEND|O_CREAT|O_WRONLY|O_EXLOCK,
+		     S_IRUSR|S_IWUSR)) < 0) {
+			if (errno == EEXIST) {
+				/* file appeared since lstat */
+				goto retry;
+			} else {
+				err(NOTFATAL, "%s: %s", path, strerror(errno));
+				goto bad;
+			}
+		}
+		/*
+		 * Set the owner and group.  Historically, binmail repeated
+		 * this at each mail delivery.  We no longer do this, assuming
+		 * that if the ownership or permissions were changed there
+		 * was a reason for doing so.
+		 */
+		if (fchown(mbfd, pw->pw_uid, pw->pw_gid) < 0) {
+			err(NOTFATAL, "chown %u:%u: %s",
+			    pw->pw_uid, pw->pw_gid, name);
+			goto bad;
+		}
+	} else {
+		if (sb.st_nlink != 1 || S_ISLNK(sb.st_mode)) {
+			err(NOTFATAL, "%s: linked file", path);
+			goto bad;
+		}
+		if ((mbfd = open(path, O_APPEND|O_WRONLY|O_EXLOCK,
 		    S_IRUSR|S_IWUSR)) < 0) {
-		err(NOTFATAL, "%s: %s", path, strerror(errno));
-		return(1);
-	}
+			err(NOTFATAL, "%s: %s", path, strerror(errno));
+			goto bad;
+		}
+		if (fstat(mbfd, &fsb)) {
+			/* relating error to path may be bad style */
+			err(NOTFATAL, "%s: %s", path, strerror(errno));
+			goto bad;
+		}
+		if (sb.st_dev != fsb.st_dev || sb.st_ino != fsb.st_ino) {
+			err(NOTFATAL, "%s: changed after open", path);
+			goto bad;
+		}
+		/* paranoia? */
+		if (fsb.st_nlink != 1 || S_ISLNK(fsb.st_mode)) {
+			err(NOTFATAL, "%s: linked file", path);
+			goto bad;
+		}
 	}
 
 	curoff = lseek(mbfd, 0, SEEK_END);
 	(void)sprintf(biffmsg, "%s@%qd\n", name, curoff);
 	if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
 		err(FATAL, "temporary file: %s", strerror(errno));
-		rval = 1;
 		goto bad;
 	}
 
@@ -221,32 +262,27 @@ deliver(fd, name, lockfile)
 		for (off = 0; off < nr;  off += nw)
 			if ((nw = write(mbfd, buf + off, nr - off)) < 0) {
 				err(NOTFATAL, "%s: %s", path, strerror(errno));
-				goto trunc;
+				(void)ftruncate(mbfd, curoff);
+				goto bad;
 			}
-	if (nr < 0) {
+
+	if (nr == 0) {
+		rval = 0;
+	} else {
 		err(FATAL, "temporary file: %s", strerror(errno));
-trunc:		(void)ftruncate(mbfd, curoff);
-		rval = 1;
+		(void)ftruncate(mbfd, curoff);
 	}
 
-	/*
-	 * Set the owner and group.  Historically, binmail repeated this at
-	 * each mail delivery.  We no longer do this, assuming that if the
-	 * ownership or permissions were changed there was a reason for doing
-	 * so.
-	 */
 bad:
-	if(lockfile) {
-		if(lfd >= 0) {
-			unlink(lpath);
-			close(lfd);
-		}
+	if (lfd != -1) {
+		unlink(lpath);
+		close(lfd);
 	}
-	if (created) 
-		(void)fchown(mbfd, pw->pw_uid, pw->pw_gid);
 
-	(void)fsync(mbfd);		/* Don't wait for update. */
-	(void)close(mbfd);		/* Implicit unlock. */
+	if (mbfd != -1) {
+		(void)fsync(mbfd);		/* Don't wait for update. */
+		(void)close(mbfd);		/* Implicit unlock. */
+	}
 
 	if (!rval)
 		notifybiff(biffmsg);
