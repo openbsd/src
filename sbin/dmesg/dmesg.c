@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.10 2001/06/22 22:06:23 mickey Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.11 2001/06/22 23:24:25 deraadt Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: dmesg.c,v 1.10 2001/06/22 22:06:23 mickey Exp $";
+static char rcsid[] = "$OpenBSD: dmesg.c,v 1.11 2001/06/22 23:24:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,6 +129,7 @@ main(argc, argv)
 		memcpy(&cur, bufdata, sizeof(cur));
 		bufdata = ((struct msgbuf *)bufdata)->msg_bufc;
 	} else {
+#ifndef NOKVM
 		struct msgbuf *bufp;
 		kvm_t *kd;
 
@@ -157,6 +158,7 @@ main(argc, argv)
 		    cur.msg_bufs) != cur.msg_bufs)
 			errx(1, "kvm_read: %s", kvm_geterr(kd));
 		kvm_close(kd);
+#endif
 	}
 
 	if (cur.msg_bufx >= cur.msg_bufs)
