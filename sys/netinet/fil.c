@@ -1,4 +1,4 @@
-/*       $OpenBSD: fil.c,v 1.14 1999/02/05 05:58:49 deraadt Exp $       */
+/*       $OpenBSD: fil.c,v 1.15 1999/02/19 20:52:22 kjell Exp $       */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: fil.c,v 1.14 1999/02/05 05:58:49 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: fil.c,v 1.15 1999/02/19 20:52:22 kjell Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -611,9 +611,9 @@ int out;
 			case IPPROTO_UDP:
 				plen = sizeof(udphdr_t);
 				break;
-			/* 96 - enough for complete ICMP error IP header */
 			case IPPROTO_ICMP:
-				plen = 76 + sizeof(struct icmp);
+			/* need enough for complete ICMP error IP header */
+				plen = ICMPERR_MAXPKTLEN - sizeof(ip_t);
 				break;
 			}
 		up = MIN(hlen + plen, ip->ip_len);
@@ -1137,7 +1137,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * $Id: fil.c,v 1.14 1999/02/05 05:58:49 deraadt Exp $
+ * $Id: fil.c,v 1.15 1999/02/19 20:52:22 kjell Exp $
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
