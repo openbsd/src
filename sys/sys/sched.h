@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.6 2004/06/13 21:49:28 niklas Exp $	*/
+/*	$OpenBSD: sched.h,v 1.7 2004/06/20 06:47:31 art Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -80,7 +80,38 @@
  * Posix defines a <sched.h> which may want to include <sys/sched.h>
  */
 
+/*
+ * CPU states.
+ * XXX Not really scheduler state, but no other good place to put
+ * it right now, and it really is per-CPU.
+ */
+#define CP_USER		0
+#define CP_NICE		1
+#define CP_SYS		2
+#define CP_INTR		3
+#define CP_IDLE		4
+#define CPUSTATES	5
+
 #ifdef	_KERNEL
+
+/*
+ * Per-CPU scheduler state.
+ */
+struct schedstate_percpu {
+	struct timeval spc_runtime;	/* time curproc started running */
+	__volatile int spc_schedflags;	/* flags; see below */
+	u_int spc_schedticks;		/* ticks for schedclock() */
+	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
+	u_char spc_curpriority;		/* usrpri of curproc */
+	int spc_rrticks;		/* ticks until roundrobin() */
+	int spc_pscnt;			/* prof/stat counter */
+	int spc_psdiv;			/* prof/stat divisor */	
+};
+
+/* spc_flags */
+#define SPCF_SEENRR             0x0001  /* process has seen roundrobin() */
+#define SPCF_SHOULDYIELD        0x0002  /* process should yield the CPU */
+#define SPCF_SWITCHCLEAR        (SPCF_SEENRR|SPCF_SHOULDYIELD)
 
 #define	PPQ	(128 / NQS)		/* priorities per queue */
 #define NICE_WEIGHT 2			/* priorities per nice level */
@@ -89,36 +120,22 @@
 extern int schedhz;			/* ideally: 16 */
 extern int rrticks_init;		/* ticks per roundrobin() */
 
-#ifdef	_SYS_PROC_H_
+struct proc;
 void schedclock(struct proc *);
 #ifdef __HAVE_CPUINFO
+struct cpu_info;
 void roundrobin(struct cpu_info *);
 #endif
-static __inline void scheduler_fork_hook(
-	struct proc *parent, struct proc *child);
-static __inline void scheduler_wait_hook(
-	struct proc *parent, struct proc *child);
 
 /* Inherit the parent's scheduler history */
-
-static __inline void
-scheduler_fork_hook(parent, child)
-	struct proc *parent, *child;
-{
-	child->p_estcpu = parent->p_estcpu;
-}
+#define scheduler_fork_hook(parent, child) do {				\
+	(child)->p_estcpu = (parent)->p_estcpu;				\
+} while (0)
 
 /* Chargeback parents for the sins of their children.  */
-
-static __inline void
-scheduler_wait_hook(parent, child)
-	struct proc *parent, *child;
-{
-	/* XXX just return if parent == init?? */
-
-	parent->p_estcpu = ESTCPULIM(parent->p_estcpu + child->p_estcpu);
-}
-#endif	/* _SYS_PROC_H_ */
+#define scheduler_wait_hook(parent, child) do {				\
+	(parent)->p_estcpu = ESTCPULIM((parent)->p_estcpu + (child)->p_estcpu);\
+} while (0)
 
 #ifndef splsched
 #define splsched() splhigh()
