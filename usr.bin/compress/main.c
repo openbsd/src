@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2003/06/22 15:22:43 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2003/06/22 22:17:46 deraadt Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.25 2003/06/22 15:22:43 deraadt Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.26 2003/06/22 22:17:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -614,7 +614,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-cdfghlnLOqrStvV] [-b <bits>] [-[0-9]] [file ...]\n",
+	    "usage: %s [-cdfgOqrtvV] [-b bits] [-S suffix] [-[1-9]] [file ...]\n",
 	    __progname);
 	exit(1);
 }
