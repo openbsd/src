@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.3 1995/07/07 01:43:35 brezak Exp $	*/
+/*	$NetBSD: audioio.h,v 1.4 1996/02/17 02:28:56 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -73,6 +73,7 @@ struct audio_info {
 	u_int	mode;		/* current device mode */
 #define AUMODE_PLAY	0x01
 #define AUMODE_RECORD	0x02
+#define AUMODE_PLAY_ALL	0x04	/* play all samples--no real-time correction */
 };
 typedef struct audio_info audio_info_t;
 
@@ -121,6 +122,7 @@ typedef struct audio_encoding {
 #define AUDIO_GETENC	_IOWR('A', 28, struct audio_encoding)
 #define AUDIO_GETFD	_IOR('A', 29, int)
 #define AUDIO_SETFD	_IOWR('A', 30, int)
+#define AUDIO_PERROR	_IOR('A', 31, int)
 
 /* 
  * Mixer device
