@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.3 1996/03/03 12:11:39 niklas Exp $	*/
+/*	$OpenBSD: errno.h,v 1.4 1996/07/25 05:44:10 downsj Exp $	*/
 /*	$NetBSD: errno.h,v 1.10 1996/01/20 01:33:53 jtc Exp $	*/
 
 /*
@@ -44,7 +44,9 @@
 #ifndef _KERNEL
 extern int errno;			/* global error number */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && !defined(__SYS_ERRLIST)
+#define __SYS_ERRLIST
+
 extern int sys_nerr;
 extern const char *const sys_errlist[];
 #endif
