@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.91 2002/05/28 02:14:29 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.92 2002/06/07 20:59:44 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.90 2002/05/28 02:14:09 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.91 2002/06/07 20:59:19 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -70,6 +70,7 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_SYMBOL2	0x014d	/* Symbol */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent */
+#define	PCMCIA_VENDOR_GEMPLUS	0x0157	/* Gemplus */
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
 #define	PCMCIA_VENDOR_ERICSSON	0x016b	/* Ericsson */
 #define	PCMCIA_VENDOR_PSION	0x016c	/* Psion */
@@ -231,6 +232,10 @@
 #define	PCMCIA_PRODUCT_FUJITSU_LA10S	0x1003
 #define	PCMCIA_CIS_FUJITSU_LA501	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_FUJITSU_LA501	0x2000
+
+/* Gemplus */
+#define	PCMCIA_CIS_GEMPLUS_GPR400	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_GEMPLUS_GPR400	0x3004
  
 /* Greycell */
 #define	PCMCIA_CIS_GREYCELL_GCS2000	{ NULL, NULL, NULL, NULL }
