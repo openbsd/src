@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.1 1996/05/05 12:23:14 mickey Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.2 1996/05/07 12:34:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -71,6 +71,10 @@ db_randomsym(lenp)
 
 		/* choose random symbol from the table */
 	q = db_qualify(X_db_isym(stab, db_random(X_db_nsyms(stab))),stab->name);
+
+		/* don't show symtab name if there are less than 3 of 'em */
+	if (db_nsymtabs < 3)
+		while(*p++ != ':');
 
 		/* strlen(q) && ignoring underscores and colons */
 	for ((*lenp) = 0, p = q; *p; p++)
