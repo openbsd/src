@@ -41,13 +41,6 @@
 
 #include <stdio.h>
 
-/*
- * The following #defines and #includes are present for backward
- * compatibility only.  They should not be used in future code.
- *
- * START BACKWARD COMPATIBILITY ONLY.
- */
-#ifndef _CURSES_PRIVATE
 #define	bool	char
 
 #ifndef TRUE
@@ -57,6 +50,13 @@
 #define	FALSE	(0)
 #endif
 
+/*
+ * The following #defines and #includes are present for backward
+ * compatibility only.  They should not be used in future code.
+ *
+ * START BACKWARD COMPATIBILITY ONLY.
+ */
+#ifndef _CURSES_PRIVATE
 #define	_puts(s)	tputs(s, 0, __cputchar)
 #define	_putchar(c)	__cputchar(c)
 
