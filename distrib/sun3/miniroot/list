@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.9 2002/04/30 01:31:20 deraadt Exp $
+#	$OpenBSD: list,v 1.10 2002/04/30 04:05:49 deraadt Exp $
 
 # Sun3 extras
 LINK	instbin				sbin/disklabel
@@ -6,7 +6,6 @@ LINK	instbin				sbin/dmesg
 LINK	instbin				sbin/dhclient
 LINK	instbin				usr/bin/cksum usr/bin/sum
 LINK	instbin				usr/bin/grep usr/bin/egrep usr/bin/fgrep
-LINK	instbin				usr/bin/tset usr/bin/reset
 LINK	instbin				usr/bin/less usr/bin/more
 LINK	instbin				usr/sbin/installboot
 SPECIAL /bin/rm instbin

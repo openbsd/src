@@ -1,10 +1,9 @@
-#	$OpenBSD: list,v 1.16 2002/04/30 01:31:20 deraadt Exp $
+#	$OpenBSD: list,v 1.17 2002/04/30 04:05:49 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
 LINK	instbin				sbin/disklabel
 LINK	instbin				usr/bin/grep usr/bin/egrep usr/bin/fgrep
-LINK	instbin				usr/bin/tset usr/bin/reset
 LINK	instbin				usr/bin/less usr/bin/more
 LINK	instbin				usr/sbin/installboot
 SPECIAL /bin/rm instbin

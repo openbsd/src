@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.14 2002/04/30 01:31:19 deraadt Exp $
+#	$OpenBSD: list,v 1.15 2002/04/30 04:05:49 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Amiga extra's
@@ -6,7 +6,6 @@ LINK	instbin				sbin/disklabel
 LINK	instbin				sbin/mount_msdos
 LINK	instbin				usr/bin/cksum usr/bin/sum
 LINK	instbin				usr/bin/grep usr/bin/egrep usr/bin/fgrep
-LINK	instbin				usr/bin/tset usr/bin/reset
 LINK	instbin				usr/bin/less usr/bin/more
 
 # Minimize use of MFS
