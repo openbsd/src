@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.82 2004/05/05 15:16:27 jcs Exp $
+$OpenBSD: usbdevs,v 1.83 2004/05/08 23:53:21 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -805,6 +805,7 @@ product HP P1100		0x3102	Photosmart P1100
 product HP2 C500		0x6002	PhotoSmart C500
 
 /* IBM Corporation */
+product IBM OPTTRAVELMOUSE	0x3107	Optical Travel Mouse
 product IBM USBCDROMDRIVE	0x4427	USB CD-ROM Drive
 
 /* Iiyama products */
