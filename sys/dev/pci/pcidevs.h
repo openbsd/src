@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.28 1998/02/15 01:49:22 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.29 1998/02/23 23:55:23 millert Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -650,6 +650,7 @@
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
+#define	PCI_PRODUCT_CONTAQ_SIO	0xc693		/* CY82C693U PCI-ISA Bridge (System I/O) */
 
 /* Corollary Products */
 #define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* C-Bus II-PCI Bridge */

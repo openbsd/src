@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.28 1998/02/15 01:49:22 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.29 1998/02/23 23:55:23 millert Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -559,6 +559,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Contaq Microsystems",
 	    "82C599 PCI-VLB Bridge",
+	},
+	{
+	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_SIO,
+	    0,
+	    "Contaq Microsystems",
+	    "CY82C693U PCI-ISA Bridge (System I/O)",
 	},
 	{
 	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CBUSII_PCIB,
