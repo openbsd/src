@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setmode.3,v 1.6 1999/05/20 14:50:35 aaron Exp $
+.\"	$OpenBSD: setmode.3,v 1.7 2000/01/22 02:30:41 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -92,7 +92,9 @@ returns.
 The
 .Fn setmode
 function
-may fail and set errno for any of the errors specified for the library
+may fail and set
+.Va errno
+for any of the errors specified for the library
 routine
 .Xr malloc 3 .
 .Sh SEE ALSO
