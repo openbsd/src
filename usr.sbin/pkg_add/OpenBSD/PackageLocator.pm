@@ -1,4 +1,4 @@
-# $OpenBSD: PackageLocator.pm,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.2 2003/10/19 18:41:56 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -192,6 +192,8 @@ if (defined $ENV{PKG_PATH}) {
 		$i =~ m|/$| or $i.='/';
 		unshift @pkgpath, OpenBSD::PackageLocation->new($i);
 	}
+} else {
+	@pkgpath=(OpenBSD::PackageLocation->new("./"));
 }
 
 sub find
