@@ -1,5 +1,6 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.7 1996/01/05 17:12:39 cgd Exp $
+#	$OpenBSD: MAKEDEV,v 1.4 1996/03/28 18:24:36 niklas Exp $
+#	$NetBSD: MAKEDEV,v 1.8 1996/03/11 19:21:37 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -55,6 +56,10 @@
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 #
+# Printers:
+#	lpt*	stock lp
+#	lpa*	interruptless lp
+#
 # Special purpose devices:
 #	ch*	SCSI media changer
 #	bpf*	packet filter
@@ -77,7 +82,8 @@ all)
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
 	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
-	sh MAKEDEV mmclock kbd mouse local
+	sh MAKEDEV mmclock kbd mouse lpa0 lpt0
+	sh MAKEDEV local
 	;;
 
 std)
@@ -267,6 +273,17 @@ mouse)
 	rm -f mouse
 	mknod mouse c 30 0
 	chmod 666 mouse
+	;;
+
+lpt*|lpa*)
+	unit=`expr $i : '...\(.*\)'`
+	case $i in
+	lpt*) name=lpt; flags=0;;
+	lpa*) name=lpa; flags=128;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit c 31 `expr $unit + $flags`
+	chown root.wheel $name$unit
 	;;
 
 local)

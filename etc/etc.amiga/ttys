@@ -1,5 +1,6 @@
 #
-#	$NetBSD: ttys,v 1.11 1995/10/09 02:25:46 chopps Exp $
+#	$OpenBSD: ttys,v 1.2 1996/03/28 18:24:38 niklas Exp $
+#	$NetBSD: ttys,v 1.12 1996/03/02 13:58:06 veego Exp $
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
@@ -13,6 +14,7 @@ ttye1	"/usr/libexec/getty Pc"		vt220	on secure 	# retina
 ttye2	"/usr/libexec/getty Pc"		vt220	on secure 	# retina
 ttye3	"/usr/libexec/getty Pc"		vt220	on secure 	# cirrus logic
 ttye4	"/usr/libexec/getty Pc"		vt220	on secure 	# a2410
+ttye5	"/usr/libexec/getty Pc"		vt220	on secure 	# CyberVision64
 tty00	"/usr/libexec/getty std.9600"	unknown off secure	# int. serial.
 ttyp0	none			network
 ttyp1	none			network

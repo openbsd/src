@@ -1,3 +1,5 @@
+#	$OpenBSD: services,v 1.3 1996/03/28 18:24:34 niklas Exp $
+#	$NetBSD: services,v 1.17 1996/02/25 02:19:56 ghudson Exp $
 #
 # Network services, Internet style
 #
@@ -8,7 +10,6 @@
 # are included, only the more common ones.
 #
 #	from: @(#)services	5.8 (Berkeley) 5/9/91
-#	$Id: services,v 1.2 1995/12/17 18:39:05 tholo Exp $
 #
 tcpmux		1/tcp		# TCP port service multiplexer
 echo		7/tcp
@@ -171,8 +172,10 @@ kshell		544/tcp		krcmd	# Kerberos `rsh'
 kerberos-adm	749/tcp			# Kerberos `kadmin' (v5)
 kerberos	750/udp		kdc	# Kerberos (server) udp
 kerberos	750/tcp		kdc	# Kerberos (server) tcp
-krbupdate	760/tcp		kreg	# Kerberos registration
-kpasswd		761/tcp		kpwd	# Kerberos `passwd'
+kerberos-master	751/udp			# Kerberos admin server udp
+kerberos-master	751/tcp			# Kerberos admin server tcp
+krbupdate	760/tcp		kreg	# BSD Kerberos registration
+kpasswd		761/tcp		kpwd	# BSD Kerberos `passwd'
 eklogin		2105/tcp		# Kerberos encrypted `rlogin'
 #
 # Unofficial but necessary (for NetBSD) services

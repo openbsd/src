@@ -1,5 +1,8 @@
 #!/bin/sh -
 #
+#	$OpenBSD: MAKEDEV,v 1.6 1996/03/28 18:24:39 niklas Exp $
+#	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
+#
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
 #
@@ -32,7 +35,6 @@
 # SUCH DAMAGE.
 #
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
-#	$Id: MAKEDEV,v 1.5 1996/02/17 21:33:17 niklas Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
