@@ -1,4 +1,4 @@
-/*	$OpenBSD: break.c,v 1.4 2002/07/22 01:20:50 art Exp $	*/
+/*	$OpenBSD: break.c,v 1.5 2002/07/31 02:34:30 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -189,7 +189,7 @@ bkpt_check(struct pstate *ps)
 		err(1, "bkpt_check: Can't allocate stack space.");
 
 	if (md_getregs(ps, rg))
-		err(1, "bkpt_check: Can't get registers.");
+		err(1, "bkpt_check: Can't get registers");
 
 	pc = rg[md_def.pcoff];
 	pc -= BREAKPOINT_DECR_PC;
