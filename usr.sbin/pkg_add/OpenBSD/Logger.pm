@@ -1,4 +1,4 @@
-# $OpenBSD: Logger.pm,v 1.1 2003/11/04 17:54:21 espie Exp $
+# $OpenBSD: Logger.pm,v 1.2 2004/02/25 21:56:12 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -33,6 +33,7 @@ use File::Temp;
 my $log_handle;
 my $log_base;
 my $log_name;
+my @annotations=();
 
 sub log_as($)
 {
@@ -53,9 +54,18 @@ sub logfile()
 	return $log_handle;
 }
 
+sub annotate
+{
+	push(@annotations, @_);
+}
+
 sub log(@)
 {
 	my $fh = logfile();
+	if (@annotations > 0) {
+		print $fh @annotations;
+		@annotations = ();
+	}
 	print $fh @_;
 }
 

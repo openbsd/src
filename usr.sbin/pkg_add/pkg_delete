@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.22 2004/01/28 22:12:01 espie Exp $
+# $OpenBSD: pkg_delete,v 1.23 2004/02/25 21:56:12 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -83,6 +83,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 	my $name = $self->fullname();
+	my $realname = $state->{destdir}.$name;
 
 	if ($state->{verbose} or $state->{not}) {
 		print "dirrm: $name\n";
@@ -101,10 +102,10 @@ sub delete
 	}
 	elsif (@$entry == 1) {
 		if ($entry->[0] eq $state->{pkgname}) {
-			if (!rmdir $name) {
-			    print "Error deleting directory $name\n";
+			if (!rmdir $realname) {
+			    print "Error deleting directory $realname\n";
 			    $self->log_pkgname($state);
-			    OpenBSD::Logger::log "rmdir $name\n";
+			    OpenBSD::Logger::log "rmdir $state->{destdirname}$name\n";
 			}
 			$state->{dirrms}->{$name} = undef;
 		} else {
@@ -137,41 +138,42 @@ sub delete
 {
 	my ($self, $state) = @_;
 	my $name = $self->fullname();
-	if (-l $name) {
+	my $realname = $state->{destdir}.$name;
+	if (-l $realname) {
 		if ($state->{verbose} or $state->{not}) {
-			print "deleting symlink: $name\n";
+			print "deleting symlink: $realname\n";
 		}
 	} else {
 		unless ($self->{nochecksum} or $state->{quick}) {
 			if (!defined $self->{md5}) {
 				print "Problem: $name does not have an md5 checksum\n";
-				print "NOT deleting: $name\n";
+				print "NOT deleting: $realname\n";
 				$self->log_pkgname($state);
-				OpenBSD::Logger::log "rm $name\n";
+				OpenBSD::Logger::log "rm $state->{destdirname}$name\n";
 				return;
 			}
-			if (! -f $name) {
-				print "File $name does not exist\n";
+			if (! -f $realname) {
+				print "File $realname does not exist\n";
 				return;
 			}
-			my $md5 = OpenBSD::md5::fromfile($name);
+			my $md5 = OpenBSD::md5::fromfile($realname);
 			if ($md5 ne $self->{md5}) {
 				print "Problem: md5 doesn't match for $name\n";
-				print "NOT deleting: $name\n";
+				print "NOT deleting: $realname\n";
 				$self->log_pkgname($state);
-				OpenBSD::Logger::log "rm $name #MD5\n";
+				OpenBSD::Logger::log "rm $state->{destdirname}$name #MD5\n";
 				return;
 			}
 		}
 		if ($state->{verbose} or $state->{not}) {
-			print "deleting: $name\n";
+			print "deleting: $realname\n";
 		}
 	}
 	return if $state->{not};
-	if (!unlink $name) {
-		print "problem deleting $name\n";
+	if (!unlink $realname) {
+		print "Problem deleting $realname\n";
 		$self->log_pkgname($state);
-		OpenBSD::Logger::log "rm $name\n";
+		OpenBSD::Logger::log "rm $state->{destdirname}$name\n";
 	}
 }
 
@@ -181,17 +183,23 @@ sub delete
 	my ($self, $state) = @_;
 	return unless $state->{extra};
 	my $name = $self->fullname();
+	my $realname = $state->{destdir}.$name;
 	if ($self->{name} =~ m|/$|) {
 		if ($state->{verbose} or $state->{not}) {
-			print "deleting extra directory: $name\n";
-		}
-		rmdir($name) unless $state->{not};
-	} else {
-		if ($state->{verbose} or $state->{not}) {
-			print "deleting extra file: $name\n";
+			print "deleting extra directory: $realname\n";
 		}
 		return if $state->{not};
-		unlink($name) or print "problem deleting $name\n";
+		return unless -e $realname;
+		rmdir($realname) or 
+		    print "problem deleting extra directory $realname\n";
+	} else {
+		if ($state->{verbose} or $state->{not}) {
+			print "deleting extra file: $realname\n";
+		}
+		return if $state->{not};
+		return unless -e $realname;
+		unlink($realname) or 
+		    print "problem deleting extra file $realname\n";
 	}
 }
 
@@ -248,7 +256,7 @@ sub delete
 
 package main;
 
-our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_f, $opt_q, $opt_p, $opt_c, $opt_L);
+our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_f, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B);
 
 sub remove_packing_info
 {
@@ -314,7 +322,13 @@ sub delete_package
 	remove_packing_info($dir) unless $opt_n;
 }
 
-getopts('vcDdnf:qpS:L:');
+getopts('vcDdnf:qpS:L:B:');
+$opt_B = $ENV{'PKG_DESTDIR'} unless defined $opt_B;
+$opt_B = '' unless defined $opt_B;
+if ($opt_B ne '') {
+	$opt_B.='/' unless $opt_B =~ m/\/$/;
+}
+$ENV{'PKG_DESTDIR'} = $opt_B;
 
 $opt_L = '/usr/local' unless defined $opt_L;
 
@@ -410,6 +424,14 @@ if (keys(%extra_rm) != 0) {
 
 if ($bad) {
 	exit(1);
+}
+
+$state->{destdir} = $opt_B;
+if ($opt_B eq '') {
+    $state->{destdirname} = '';
+} else {
+    OpenBSD::Logger::annotate("PKG_DESTDIR=\"$opt_B\"; export PKG_DESTDIR\n");
+    $state->{destdirname} = '${PKG_DESTDIR}';
 }
 
 # and finally, handle the removal

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.6 2004/01/27 15:34:31 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.7 2004/02/25 21:56:12 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -26,6 +26,7 @@
 .Sh SYNOPSIS
 .Nm pkg_delete
 .Op Fl cDnqv
+.Op Fl B Ar pkg-destdir
 .Op Fl f Ar keys
 .Ar pkgname Op Ar ...
 .Sh DESCRIPTION
@@ -51,7 +52,11 @@ see
 can be omitted, unless the resulting specification is ambiguous.
 .Pp
 The options are as follows:
-.Bl -tag -width keyword
+.Bl -tag -width BB-pkg-destdir
+.It Fl B Ar pkg-destdir
+Set
+.Ar pkg-destdir
+as the prefix to prepend to any object deleted.
 .It Fl v
 Turn on verbose output.
 .It Fl D
@@ -138,6 +143,23 @@ Passing the keyword
 lets you potentially write only one program/script that handles all
 aspects of installation and deletion.
 .Pp
+.Sh ENVIRONMENT
+.Bl -tag -width PKG_DESTDIR
+.It Ev PKG_DBDIR
+Where to look for installed packages instead of
+.Pa /var/db/pkg .
+.It Ev PKG_DESTDIR
+Value for
+.Ar pkg-destdir ,
+if no
+.Fl B
+option is specified;
+value passed to any
+.Cm DEINSTALL
+or
+.Cm REQUIRE
+script invoked from the package.
+.El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_create 1 ,
