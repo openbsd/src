@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.34 2004/04/25 22:02:55 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.35 2004/05/08 18:21:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -375,13 +375,12 @@ log_notification(const struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 void
 log_conn_attempt(const struct peer *peer, struct sockaddr *sa)
 {
-	char *p,  buf[NI_MAXHOST];
+	char		*p;
+	const char	*b;
 
 	if (peer == NULL) {	/* connection from non-peer, drop */
-		if (getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0,
-		    NI_NUMERICHOST))
-			strlcpy(buf, "(unknown)", sizeof(buf));
-		logit(LOG_INFO, "connection from non-peer %s refused", buf);
+		b = log_sockaddr(sa);
+		logit(LOG_INFO, "connection from non-peer %s refused", b);
 	} else {
 		p = log_fmt_peer(&peer->conf);
 		logit(LOG_INFO, "Connection attempt from %s while session is "
@@ -397,6 +396,17 @@ log_addr(const struct bgpd_addr *addr)
 
 	if (inet_ntop(addr->af, &addr->ba, buf, sizeof(buf)) == NULL)
 		return ("?");
+	else
+		return (buf);
+}
+
+const char *
+log_sockaddr(struct sockaddr *sa)
+{
+	static char	buf[NI_MAXHOST];
+
+	if (getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0, NI_NUMERICHOST))
+		return ("(unknown)");
 	else
 		return (buf);
 }
