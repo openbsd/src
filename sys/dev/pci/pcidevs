@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.594 2003/02/05 22:09:26 mickey Exp $
+	$OpenBSD: pcidevs,v 1.595 2003/02/06 22:00:59 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -909,6 +909,8 @@ product ATI MACH64_GW		0x4757	Mach64 GW
 product ATI MACH64_GX		0x4758	Mach64 GX
 product ATI MACH64_GY		0x4759	Mach64 GY
 product ATI MACH64_GZ		0x475a	Mach64 GZ
+product ATI RV250		0x4966	Radeon 9000
+product ATI RV250_S		0x496e	Radeon 9000 Sec
 product ATI MACH64_LB		0x4c42	Mach64 LB
 product ATI MACH64_LD		0x4c44	Mach64 LD
 product ATI RAGE128_LE		0x4c45	Rage128 LE
@@ -927,7 +929,7 @@ product ATI RADEON_M6LZ		0x4c5a	Radeon Mobility M6 LZ
 product ATI RAGE128_MF		0x4d46	Rage 128 Mobility MF
 product ATI RAGE128_ML		0x4d4c	Rage 128 Mobility ML
 product ATI R300		0x4e44	Radeon 9500/9700
-product ATI R300_S		0x4e64	Radeon 9500/9700 - Secondary
+product ATI R300_S		0x4e64	Radeon 9500/9700 Sec
 product ATI RAGE128_PD		0x5044	Rage 128 Pro PD
 product ATI RAGE_FURY		0x5046	Rage Fury
 product ATI RAGE128_PK		0x5052	Rage 128 PK
@@ -1884,9 +1886,9 @@ product NVIDIA GEFORCE4MX440	0x0171	GeForce4 MX 440
 product NVIDIA GEFORCE4MX420	0x0172	GeForce4 MX 420
 product NVIDIA GEFORCE4440GO	0x0174	GeForce4 440 Go
 product NVIDIA GEFORCE4420GO	0x0175	GeForce4 420 Go
-product NVIDIA GEFORCE4420GOM32	0x0176	GeForce4 420 Go M32
+product NVIDIA GEFORCE4420GOM32	0x0176	GeForce4 420 Go 32M
 product NVIDIA QUADRO4500XGL	0x0178	Quadro4 500XGL
-product NVIDIA GEFORCE4440GOM64	0x0179	GeForce4 440 Go M32
+product NVIDIA GEFORCE4440GOM64	0x0179	GeForce4 440 Go 32M
 product NVIDIA QUADRO4200	0x017a	Quadro4 200/400NVS
 product NVIDIA QUADRO4550XGL	0x017b	Quadro4 550XGL
 product NVIDIA QUADRO4500GOGL	0x017c	Quadro4 GoGL
