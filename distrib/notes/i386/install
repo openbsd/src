@@ -110,8 +110,8 @@ process again from scratch.
 	is usually in partition 'b'.  If you have DOS or Linux
 	partitions defined on the disk, these will usually show up
 	as partition 'h', 'i' and so on.  It is recommended that
-	you create separate partitions for /usr and /var, and if
-	you have room for it, one for /home.  For help in the
+	you create separate partitions for /usr, /tmp, and /var, and
+	if you have room for it, one for /home.  For help in the
 	disk label editor, enter '?' or 'M' to view the manual
 	page (see the info on the ``-E'' flag).
 
@@ -373,7 +373,7 @@ process again from scratch.
 	using, all the device nodes needed by the installed system will
 	be created for you and the file systems will be unmounted.  For
 	this to work properly, it is expected that you have installed
-	at least the "base23" and "etc23" distribution sets.
+	at least the "base23", "etc23", and "bsd" distribution sets.
 
 
 Congratulations, you have successfully installed OpenBSD 2.3.  When you

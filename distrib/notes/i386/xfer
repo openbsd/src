@@ -13,7 +13,7 @@ a floppy disk (1.44Mb required).
 
 If you are using a UN*X-like system to write the floppy image to
 disk, you should use the "dd" command to copy the file system image
-(floppy.fs) directly to the raw floppy disks.  It is suggested that
+(floppy23.fs) directly to the raw floppy disks.  It is suggested that
 you read the dd(1) manual page or ask your system administrator to
 determine the correct set of arguments to use; it will be slightly
 different from system to system, and a comprehensive list of the
@@ -22,7 +22,7 @@ possibilities is beyond the scope of this document.
 If you are using DOS to write the floppy image to disk, you should
 use the "rawrite" utility, provided in the "i386/inst" directory of
 the OpenBSD distribution.  It will write the file system image
-(floppy.fs) to a disk.
+(floppy23.fs) to a disk.
 
 Note that when installing, the floppy can be write-protected (i.e.
 read-only).
@@ -47,14 +47,14 @@ following:
 	(If you can't figure it out, ask your system administrator.)
 	In the above example, "<dist_directories>" are the
 	distribution sets' directories, for the distribution sets you
-	wish to place on the tape.  For instance, to put the "base23"
-	and "etc23" distributions on tape (in order to do the absolute
-	minimum installation to a new disk), you would do the
+	wish to place on the tape.  For instance, to put the "base23",
+	"etc23", and "bsd" distributions on tape (in order to do the
+	absolute minimum installation to a new disk), you would do the
 	following:
 
-		cd .../1.2		# the top of the tree
+		cd .../2.3		# the top of the tree
 		cd i386/
-		tar cf <tape_device> base23 etc23
+		tar cf <tape_device> base23 etc23 bsd
 
 	(Note that you still need to fill in "<tape_device>" in the
 	example.)
