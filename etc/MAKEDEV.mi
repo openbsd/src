@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.61 2003/10/11 03:32:15 tedu Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.62 2003/10/14 17:58:23 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -466,9 +466,11 @@ __devtitle(termp, Terminal multiplexers)dnl
 __devitem(dca, dca*, HP200/300 single port serial interface)dnl
 __devitem(dcm, dcm*, HP200/300 4 port serial mux interface)dnl
 __devitem(apci, apci*, HP400 4 port serial mux interface)dnl
-__devitem({-com-}, {-tty0*-}, NS16x50 serial ports)dnl
-_mkdev(com, {-tty0*-}, {-M tty$U c major_com_c $U 660 dialer uucp
-	M cua$U c major_com_c Add($U, 128) 660 dialer uucp-})dnl
+__devitem({-com-}, {-tty[0-7][0-9a-f]-}, NS16x50 serial ports)dnl
+_mkdev(com, {-tty[0-7][0-9a-f]-}, {-U=${i#tty*}
+	o=$(hextod $U)
+	M tty$U c major_com_c $o 660 dialer uucp
+	M cua$U c major_com_c Add($o, 128) 660 dialer uucp-})dnl
 __devitem(ttyc, ttyc*, Cyclades serial ports)dnl
 __devitem(tzs, tty[a-z]*, Zilog 8530 Serial Port)dnl
 _mkdev(tzs, {-tty[a-z]-}, {-u=${i#tty*}
@@ -672,15 +674,24 @@ hex()
 	esac
 }
 
-trunc()
+h2d()
 {
-	# XXX pdksh can't seem to deal with locally scoped variables
-	# in ${foo#$bar} expansions
-	arg1="{-$-}1"
-	arg2="{-$-}2"
-	case {-$-}3 in
-	l)   echo ${arg2#$arg1} ;;
-	r|*) echo ${arg1#$arg2} ;;
+	local s="$1"
+	local f=${s%*[0-9a-f]} n=${s#[0-9a-f]*}
+
+	echo $(($(_h2d $f)*16+ $(_h2d $n) ))
+}
+
+_h2d()
+{
+	case $1 in
+	[0-9]) echo -n $1;;
+	a) echo -n 10;;
+	b) echo -n 11;;
+	c) echo -n 12;;
+	d) echo -n 13;;
+	e) echo -n 14;;
+	f) echo -n 15;;
 	esac
 }
 
