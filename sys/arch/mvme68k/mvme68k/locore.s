@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.12 1997/02/03 15:04:57 deraadt Exp $ */
+/*	$OpenBSD: locore.s,v 1.13 1997/02/08 10:50:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -107,6 +107,8 @@ tmpstk:
 	.globl	_edata
 	.globl	_etext,_end
 	.globl	start
+	.globl	_kernel_text
+_kernel_text:
 start:
 	movw	#PSL_HIGHIPL,sr		| no interrupts
 	movl	#0,a5			| RAM starts at 0
