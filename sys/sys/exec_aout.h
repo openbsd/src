@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.h,v 1.7 1997/03/03 21:18:23 rahnds Exp $	*/
+/*	$OpenBSD: exec_aout.h,v 1.8 1997/03/16 02:54:19 downsj Exp $	*/
 /*	$NetBSD: exec_aout.h,v 1.15 1996/05/18 17:20:54 christos Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ struct exec {
 #define	MID_SUN010	1	/* sun 68010/68020 binary */
 #define	MID_SUN020	2	/* sun 68020-only binary */
 #define	MID_PC386	100	/* 386 PC binary. (so quoth BFD) */
-#define	MID_HP200	200	/* hp200 (68010) BSD binary */
+#define MID_ROMPAOS	104	/* old IBM RT */
 #define	MID_I386	134	/* i386 BSD binary */
 #define	MID_M68K	135	/* m68k BSD binary with 8K page sizes */
 #define	MID_M68K4K	136	/* DO NOT USE: m68k BSD binary with 4K page sizes */
@@ -76,8 +76,10 @@ struct exec {
 #define	MID_ALPHA	141	/* Alpha BSD binary */
 #define	MID_MIPS	142	/* big-endian MIPS */
 #define	MID_ARM6	143	/* ARM6 */
-#define	MID_HP300	300	/* hp300 (68020+68881) BSD binary */
+#define MID_ROMP	149	/* IBM RT */
 #define MID_M88K        151     /* m88k BSD binary */ 
+#define	MID_HP200	200	/* hp200 (68010) BSD binary */
+#define	MID_HP300	300	/* hp300 (68020+68881) BSD binary */
 #define	MID_HPUX	0x20C	/* hp200/300 HP-UX binary */
 #define	MID_HPUX800     0x20B   /* hp800 HP-UX binary */
 
