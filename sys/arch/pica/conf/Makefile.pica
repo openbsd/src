@@ -81,7 +81,7 @@ NORMAL_S_C=	${AS}  ${COPTS} ${PARAM} $< -o $@
 
 SYSTEM_OBJ=	locore.o fp.o ${OBJS} param.o ioconf.o ${LIBKERN} \
 		${LIBCOMPAT}
-#SYSTEM_DEP=	Makefile symbols.sort ${SYSTEM_OBJ} ${LIBKERN}
+#
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	rm -f $@
 SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
@@ -92,16 +92,10 @@ SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 			'$${SYSTEM_OBJ}' vers.o; \
 		${LD} $$strip -N -o $@ -e start -Ttext 80080000 \
 			${SYSTEM_OBJ} vers.o
-#SYSTEM_LD_TAIL= @echo rearranging symbols;\
-#		symorder symbols.sort $@;\
-#SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
-#		[ X${DEBUG} = X-g ] && { \
-#		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-#		echo strip -d $@; strip -d $@; } || true
-SYSTEM_LD_TAIL=	mv $@ ${@}.elf; \
-		elf2aout ${@}.elf $@; \
-		chmod 755 $@; \
-		elf2ecoff ${@}.elf ${@}.ecoff
+#
+SYSTEM_LD_TAIL=	chmod 755 $@; \
+		elf2ecoff ${@} ${@}.ecoff; \
+		size $@
 
 %LOAD
 
