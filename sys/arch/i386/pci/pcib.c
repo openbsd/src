@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcib.c,v 1.11 2004/02/19 21:35:56 grange Exp $	*/
+/*	$OpenBSD: pcib.c,v 1.12 2004/02/19 21:38:44 grange Exp $	*/
 /*	$NetBSD: pcib.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*-
@@ -249,7 +249,7 @@ ichss_setperf(int level)
 	ostate = state;
 
 	/* Only two states are available */
-	if (level < 50)
+	if (level <= 50)
 		state |= ICH_PM_SS_STATE_LOW;
 	else
 		state &= ~ICH_PM_SS_STATE_LOW;
