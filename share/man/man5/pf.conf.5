@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.200 2003/03/04 16:50:01 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.201 2003/03/04 16:52:00 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1901,7 +1901,7 @@ option         = set ( [ timeout ( timeout | { timeout-list } ) ] |
                  [ optimization [ default | normal
                  | high-latency | satellite
                  | aggressive | conservative ] ]
-                 [ limit ( limit | { limit-list } ) ] |
+                 [ limit limit-list ] |
                  [ loginterface ( interface-name | none ) ] |
                  [ block-policy ( drop | return ) ] |
                  [ require-order ( yes | no ) ] )
@@ -2025,8 +2025,8 @@ timeout        = ( tcp.first | tcp.opening | tcp.established
                  seconds
 seconds        = number
 
-limit-list     = limit [ [ , ] limit-list ]
-limit          = ( states | frags ) number
+limit-list     = limit-item [ [ , ] limit-list ]
+limit-item     = ( states | frags ) number
 
 pooltype       = ( bitmask | random
                  | source-hash [ ( hex-key | string-key ) ]
