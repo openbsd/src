@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.27 2002/05/30 19:09:05 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.28 2002/09/06 19:04:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.27 2002/05/30 19:09:05 deraadt Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.28 2002/09/06 19:04:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -310,7 +310,7 @@ __elf_knlist(fd, db, ksyms)
 	FILE *fp;
 	int usemalloc = 0;
 
-	if ((fp = fdopen(fd, "r")) < 0)
+	if ((fp = fdopen(fd, "r")) == NULL)
 		err(1, "%s", kfile);
 
 	if (fseek(fp, (off_t)0, SEEK_SET) == -1 ||
