@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.20 1999/07/14 15:05:27 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.21 1999/07/15 20:35:33 millert Exp $	*/
 
 /*
  * execute command tree
@@ -1383,7 +1383,7 @@ iosetup(iop, tp)
 		return -1;
 	}
 	/* Do not save if it has already been redirected (i.e. "cat >x >y"). */
-	if (e->savefd[iop->unit] == 0)
+	if (e->savefd[iop->unit] == 0) {
 		/* If these are the same, it means unit was previously closed */
 		if (u == iop->unit)
 			e->savefd[iop->unit] = -1;
@@ -1395,6 +1395,7 @@ iosetup(iop, tp)
 			 * dup2 below and dup2 in restfd() failing).
 			 */
 			e->savefd[iop->unit] = savefd(iop->unit, 1);
+	}
 
 	if (do_close)
 		close(iop->unit);
