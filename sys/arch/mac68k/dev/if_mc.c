@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.9 2004/12/15 06:48:23 martin Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.10 2005/01/04 03:47:53 brad Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.24 2004/10/30 18:08:34 thorpej Exp $	*/
 
 /*-
@@ -266,7 +266,6 @@ mcioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly. But remember UP flag!
 			 */
-			mcreset(sc);
 			if (ifp->if_flags & IFF_RUNNING)
 				mcreset(sc);
 			err = 0;
