@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.11 2002/11/23 09:33:54 deraadt Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.12 2002/11/29 18:24:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -150,7 +150,7 @@ print_state(struct pf_state *s, int opts)
 {
 	struct pf_state_peer *src, *dst;
 	struct protoent *p;
-	u_int8_t hrs, min, sec;
+	int min, sec;
 
 	if (s->direction == PF_OUT) {
 		src = &s->src;
@@ -212,14 +212,12 @@ print_state(struct pf_state *s, int opts)
 		s->creation /= 60;
 		min = s->creation % 60;
 		s->creation /= 60;
-		hrs = s->creation;
-		printf("   age %.2u:%.2u:%.2u", hrs, min, sec);
+		printf("   age %.2u:%.2u:%.2u", s->creation, min, sec);
 		sec = s->expire % 60;
 		s->expire /= 60;
 		min = s->expire % 60;
 		s->expire /= 60;
-		hrs = s->expire;
-		printf(", expires in %.2u:%.2u:%.2u", hrs, min, sec);
+		printf(", expires in %.2u:%.2u:%.2u", s->expire, min, sec);
 		printf(", %u pkts, %u bytes", s->packets, s->bytes);
 		if (s->rule.nr != USHRT_MAX)
 			printf(", rule %u", s->rule.nr);
