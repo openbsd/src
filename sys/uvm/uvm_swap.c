@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.35 2001/08/31 15:26:18 mickey Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.36 2001/09/05 19:22:23 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.37 2000/05/19 03:45:04 thorpej Exp $	*/
 
 /*
@@ -1219,7 +1219,7 @@ swread(dev, uio, ioflag)
 {
 	UVMHIST_FUNC("swread"); UVMHIST_CALLED(pdhist);
 
-	UVMHIST_LOG(pdhist, "  dev=%x offset=%qx", dev, uio->uio_offset, 0, 0);
+	UVMHIST_LOG(pdhist, "  dev=%x offset=%llx", dev, uio->uio_offset, 0, 0);
 	return (physio(swstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
@@ -1235,7 +1235,7 @@ swwrite(dev, uio, ioflag)
 {
 	UVMHIST_FUNC("swwrite"); UVMHIST_CALLED(pdhist);
 
-	UVMHIST_LOG(pdhist, "  dev=%x offset=%qx", dev, uio->uio_offset, 0, 0);
+	UVMHIST_LOG(pdhist, "  dev=%x offset=%llx", dev, uio->uio_offset, 0, 0);
 	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.4 2001/07/28 17:03:50 gluk Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.5 2001/09/05 19:22:23 deraadt Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -712,7 +712,7 @@ lf_print(tag, lock)
 		printf("proc %d", ((struct proc *)(lock->lf_id))->p_pid);
 	else
 		printf("id %p", lock->lf_id);
-	printf(" %s, start %qx, end %qx",
+	printf(" %s, start %llx, end %llx",
 		lock->lf_type == F_RDLCK ? "shared" :
 		lock->lf_type == F_WRLCK ? "exclusive" :
 		lock->lf_type == F_UNLCK ? "unlock" :
@@ -740,7 +740,7 @@ lf_printlist(tag, lock)
 			printf("proc %d", ((struct proc*)(lf->lf_id))->p_pid);
 		else
 			printf("id %p", lf->lf_id);
-		printf(" %s, start %qx, end %qx",
+		printf(" %s, start %llx, end %llx",
 			lf->lf_type == F_RDLCK ? "shared" :
 			lf->lf_type == F_WRLCK ? "exclusive" :
 			lf->lf_type == F_UNLCK ? "unlock" :

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.36 2001/07/26 20:24:47 millert Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.37 2001/09/05 19:22:23 deraadt Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1823,7 +1823,7 @@ ufs_print(v)
 		major(ip->i_dev), minor(ip->i_dev));
 	printf(" flags 0x%x, effnlink %d, nlink %d\n",
 	       ip->i_flag, ip->i_effnlink, ip->i_ffs_nlink);
-	printf("\tmode 0%o, owner %d, group %d, size %qd",
+	printf("\tmode 0%o, owner %d, group %d, size %lld",
 	       ip->i_ffs_mode, ip->i_ffs_uid, ip->i_ffs_gid, ip->i_ffs_size);
 
 #ifdef FIFO

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.141 2001/08/08 15:07:04 jjbg Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.142 2001/09/05 19:22:23 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -880,7 +880,7 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer)
 		l += sprintf(buffer + l, "\n");
 
 	if (tdb->tdb_mtu && tdb->tdb_mtutimeout > time.tv_sec)
-		l += sprintf(buffer + l, "\tMTU: %d, expires in %qu seconds\n",
+		l += sprintf(buffer + l, "\tMTU: %d, expires in %llu seconds\n",
 		    tdb->tdb_mtu, tdb->tdb_mtutimeout - time.tv_sec);
 
 	if (tdb->tdb_local_cred)
@@ -921,7 +921,7 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer)
 		l += sprintf(buffer + l, ">\n");
 	}
 
-	l += sprintf(buffer + l, "\tCrypto ID: %qu\n", tdb->tdb_cryptoid);
+	l += sprintf(buffer + l, "\tCrypto ID: %llu\n", tdb->tdb_cryptoid);
 
 	if (tdb->tdb_xform)
 		l += sprintf(buffer + l, "\txform = <%s>\n",
@@ -949,39 +949,39 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer)
 		    ipsp_address(tdb->tdb_inext->tdb_dst),
 		    tdb->tdb_inext->tdb_sproto);
 
-	l += sprintf(buffer + l, "\t%qu bytes processed by this SA\n",
+	l += sprintf(buffer + l, "\t%llu bytes processed by this SA\n",
 	    tdb->tdb_cur_bytes);
 
 	if (tdb->tdb_last_used)
-		l += sprintf(buffer + l, "\tLast used %qu seconds ago\n",
+		l += sprintf(buffer + l, "\tLast used %llu seconds ago\n",
 		    time.tv_sec - tdb->tdb_last_used);
 
 	if (tdb->tdb_last_marked)
 		l += sprintf(buffer + l,
-		    "\tLast marked/unmarked %qu seconds ago\n",
+		    "\tLast marked/unmarked %llu seconds ago\n",
 		    time.tv_sec - tdb->tdb_last_marked);
 
 	l += sprintf(buffer + l, "\tExpirations:\n");
 
 	if (tdb->tdb_flags & TDBF_TIMER)
 		l += sprintf(buffer + l,
-		    "\t\tHard expiration(1) in %qu seconds\n",
+		    "\t\tHard expiration(1) in %llu seconds\n",
 		    tdb->tdb_established + tdb->tdb_exp_timeout - time.tv_sec);
 
 	if (tdb->tdb_flags & TDBF_SOFT_TIMER)
 		l += sprintf(buffer + l,
-		    "\t\tSoft expiration(1) in %qu seconds\n",
+		    "\t\tSoft expiration(1) in %llu seconds\n",
 		    tdb->tdb_established + tdb->tdb_soft_timeout -
 		    time.tv_sec);
 
 	if (tdb->tdb_flags & TDBF_BYTES)
 		l += sprintf(buffer + l,
-		    "\t\tHard expiration after %qu bytes\n",
+		    "\t\tHard expiration after %llu bytes\n",
 		    tdb->tdb_exp_bytes);
 
 	if (tdb->tdb_flags & TDBF_SOFT_BYTES)
 		l += sprintf(buffer + l,
-		    "\t\tSoft expiration after %qu bytes\n",
+		    "\t\tSoft expiration after %llu bytes\n",
 		    tdb->tdb_soft_bytes);
 
 	if (tdb->tdb_flags & TDBF_ALLOCATIONS)
@@ -997,12 +997,12 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer)
 	if (tdb->tdb_flags & TDBF_FIRSTUSE) {
 		if (tdb->tdb_first_use)
 			l += sprintf(buffer + l,
-			    "\t\tHard expiration(2) in %qu seconds\n",
+			    "\t\tHard expiration(2) in %llu seconds\n",
 			    (tdb->tdb_first_use + tdb->tdb_exp_first_use) -
 			    time.tv_sec);
 		else
 			l += sprintf(buffer + l,
-			    "\t\tHard expiration in %qu seconds "
+			    "\t\tHard expiration in %llu seconds "
 			    "after first use\n",
 			    tdb->tdb_exp_first_use);
 	}
@@ -1010,12 +1010,12 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer)
 	if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) {
 		if (tdb->tdb_first_use)
 			l += sprintf(buffer + l,
-			    "\t\tSoft expiration(2) in %qu seconds\n",
+			    "\t\tSoft expiration(2) in %llu seconds\n",
 			    (tdb->tdb_first_use + tdb->tdb_soft_first_use) -
 			    time.tv_sec);
 		else
 			l += sprintf(buffer + l,
-			    "\t\tSoft expiration in %qu seconds "
+			    "\t\tSoft expiration in %llu seconds "
 			    "after first use\n", tdb->tdb_soft_first_use);
 	}
 
