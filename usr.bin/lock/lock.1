@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lock.1,v 1.5 1998/11/11 23:01:44 aaron Exp $
+.\"	$OpenBSD: lock.1,v 1.6 1999/06/05 01:21:31 aaron Exp $
 .\"	$NetBSD: lock.1,v 1.4 1994/12/22 01:16:21 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -46,7 +46,7 @@
 .Op Fl p
 .Op Fl t Ar timeout
 .Sh DESCRIPTION
-.Nm lock
+.Nm
 requests a password from the user, reads it again for verification
 and then will normally not relinquish the terminal until the password is
 repeated.
@@ -66,7 +66,7 @@ to unlock the terminal. To do this the user should enter "s/key"
 at the unlock "Key:" prompt. The user will then be issued an S/Key
 challange to which they may respond with a six-word S/Key one-time
 password.
-.It Fl t Ar timeout 
+.It Fl t Ar timeout
 The time limit (default 15 minutes) is changed to
 .Ar timeout
 minutes.
@@ -75,6 +75,6 @@ minutes.
 .Xr skey 1
 .Sh HISTORY
 The
-.Nm lock
+.Nm
 command appeared in
 .Bx 3.0 .

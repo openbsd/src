@@ -1,4 +1,4 @@
-.\"	$OpenBSD: who.1,v 1.6 1998/11/11 23:01:51 aaron Exp $
+.\"	$OpenBSD: who.1,v 1.7 1999/06/05 01:21:50 aaron Exp $
 .\"	$NetBSD: who.1,v 1.5 1994/12/07 04:28:47 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -43,12 +43,12 @@
 .Sh SYNOPSIS
 .Nm who
 .Op Fl mTu
-.Op Ar file 
+.Op Ar file
 .Nm who
 .Ar am i
 .Sh DESCRIPTION
-The 
-.Nm who
+The
+.Nm
 utility displays a list of all users currently logged on, showing for
 each user the login name, tty name, the date and time of login, and
 hostname if not local.
@@ -59,7 +59,7 @@ Available options:
 Only print information about the current terminal.  This is the
 .Tn POSIX
 way of saying
-.Nm who 
+.Nm
 .Ar am i .
 .It Fl q
 (Quick.) List only the names and the number of users currently
@@ -67,9 +67,9 @@ logged on. When this option is used, all other options are ignored.
 .It Fl T
 Print a character after the user name indicating the state of the
 terminal line:
-.Sq + 
+.Sq +
 if the terminal is writable;
-.Sq - 
+.Sq \-
 if it is not;
 and
 .Sq ?
@@ -79,10 +79,10 @@ Print the idle time for each user.
 .It Fl H
 Write column headings above the regular output.
 .It Ar \&am I
-Returns the invoker's real user name. 
+Returns the invoker's real user name.
 .It Ar file
 By default,
-.Nm who
+.Nm
 gathers information from the file
 .Pa /var/run/utmp .
 An alternate

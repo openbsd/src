@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vgrind.1,v 1.3 1998/10/30 00:24:42 aaron Exp $
+.\"	$OpenBSD: vgrind.1,v 1.4 1999/06/05 01:21:46 aaron Exp $
 .\"	$NetBSD: vgrind.1,v 1.4 1994/11/17 08:28:04 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -36,13 +36,13 @@
 .\"
 .Dd June 6, 1993
 .Dt VGRIND 1
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm vgrind
 .Nd grind nice listings of programs
 .Sh SYNOPSIS
 .Nm vgrind
-.Op Fl 
+.Op Fl
 .Op Fl W
 .Op Fl d Ar file
 .Op Fl f
@@ -54,23 +54,23 @@
 .Op Fl x
 .Ar name Ar ...
 .Sh DESCRIPTION
-.Nm vgrind
-formats the program sources which are arguments 
+.Nm
+formats the program sources which are arguments
 in a nice style using
 .Xr troff 1 .
 Comments are placed in italics, keywords in bold face,
 and the name of the current function is listed down the margin of each
 page as it is encountered.
 .Pp
-.Nm vgrind
+.Nm
 runs in two basic modes, filter mode (see the
 .Fl f
-option) or regular mode.  In filter mode 
-.Nm vgrind
+option) or regular mode.  In filter mode
+.Nm
 acts as a filter in a manner similar to
 .Xr tbl 1 .
 The standard input is passed directly to the standard output except
-for lines bracketed by the 
+for lines bracketed by the
 .Em troff-like
 macros:
 .Bl -tag -width Ds
@@ -81,26 +81,26 @@ ends processing
 .El
 .Pp
 These lines are formatted as described above.  The output from this
-filter can be passed to 
+filter can be passed to
 .Xr troff 1
-for output.  There need be no particular ordering with 
+for output.  There need be no particular ordering with
 .Xr eqn 1
 or
 .Xr tbl 1 .
 .Pp
-In regular mode 
-.Nm vgrind
-accepts input files, processes them, and passes them to 
+In regular mode
+.Nm
+accepts input files, processes them, and passes them to
 .Xr troff 1
-for output.  
+for output.
 .Pp
-In both modes 
-.Nm vgrind
+In both modes
+.Nm
 passes any lines beginning with a decimal point without conversion.
 .Pp
 The options are:
 .Bl -tag -width Ar
-.It Fl 
+.It Fl
 Forces input to be taken from standard input (default if
 .Fl f
 is specified).
@@ -150,15 +150,17 @@ Similar to the same option in
 .Xr troff 1
 causing formatted text to go to the standard output
 .It Fl x
-Outputs the index file in a ``pretty'' format. 
-The index file itself is produced whenever 
-.Nm vgrind
-is run with a file called 
+Outputs the index file in a
+.Dq pretty
+format.
+The index file itself is produced whenever
+.Nm
+is run with a file called
 .Pa index
 in the current directory.
 The index of function
-definitions can then be run off by giving 
-.Nm vgrind
+definitions can then be run off by giving
+.Nm
 the
 .Fl x
 option and the file
@@ -184,7 +186,7 @@ language descriptions
 .Sh BUGS
 vfontedpr assumes that a certain programming style is followed:
 .Pp
-For 
+For
 .Tn C
 \- function names can be preceded on a line only by spaces, tabs, or an
 asterisk.  The parenthesized arguments must also be on the same line.
@@ -206,10 +208,10 @@ name comment mechanisms will fail.
 .Pp
 More generally, arbitrary formatting styles for programs mostly look bad.
 The use of spaces to align source code fails miserably; if you plan to
-.Nm vgrind
+.Nm
 your program you should use tabs.  This is somewhat inevitable since the
 font used by
-.Nm vgrind
+.Nm
 is variable width.
 .Pp
 The mechanism of

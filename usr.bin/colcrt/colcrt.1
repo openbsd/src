@@ -1,4 +1,4 @@
-.\"	$OpenBSD: colcrt.1,v 1.3 1998/09/23 04:32:37 aaron Exp $
+.\"	$OpenBSD: colcrt.1,v 1.4 1999/06/05 01:21:21 aaron Exp $
 .\"	$NetBSD: colcrt.1,v 1.3 1995/03/26 05:30:59 glass Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -36,7 +36,7 @@
 .\"
 .Dd June 30, 1993
 .Dt COLCRT 1
-.Os BSD 3
+.Os
 .Sh NAME
 .Nm colcrt
 .Nd filter nroff output for CRT previewing
@@ -50,7 +50,8 @@
 provides virtual half-line and reverse line feed sequences
 for terminals without such capability, and on which overstriking
 is destructive.
-Half-line characters and underlining (changed to dashing `\-')
+Half-line characters and underlining (changed to dashing
+.Sq - )
 are placed on new lines in between the normal output lines.
 .Pp
 Available options:
@@ -94,11 +95,11 @@ Can't back up more than 102 lines.
 .Pp
 General overstriking is lost;
 as a special case
-.Ql \&|
+.Ql |
 overstruck with
-.Ql \-
+.Ql -
 or underline becomes
-.Ql \&+ .
+.Ql + .
 .Pp
 Lines are trimmed to 132 characters.
 .Pp
@@ -107,5 +108,5 @@ in documents which are already double-spaced.
 .Sh HISTORY
 The
 .Nm
-command appeared in 
+command appeared in
 .Bx 3.0 .

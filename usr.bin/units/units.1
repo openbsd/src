@@ -1,4 +1,4 @@
-.\" $OpenBSD: units.1,v 1.7 1998/12/16 02:38:50 aaron Exp $
+.\" $OpenBSD: units.1,v 1.8 1999/06/05 01:21:45 aaron Exp $
 .\" converted to new format by deraadt@openbsd.org
 .Dd July 14, 1993
 .Dt UNITS 1
@@ -11,16 +11,16 @@
 .Op Fl f Ar filename
 .Op Fl q
 .Op Fl v
-.Ar from-unit 
+.Ar from-unit
 .Ar to-unit
 .Sh ARGUMENTS
 .Bl -tag -width Ds
 .It Fl f Ar filename
 Specifies the name of the units data file to load.
-.It Fl q 
+.It Fl q
 Suppresses prompting of the user for units and the display of statistics
 about the number of units loaded.
-.It Fl v 
+.It Fl v
 Prints the version number.
 .It Ar from-unit Ar to-unit
 Allows a single unit conversion to be done directly from the command
@@ -28,7 +28,7 @@ line.  No prompting will occur.  The units program will print out
 only the result of this single conversion.
 .El
 .Sh DESCRIPTION
-The units program converts quantities expression in various scales to 
+The units program converts quantities expression in various scales to
 their equivalents in other scales.  The units program can only
 handle multiplicative scale changes.  It cannot convert Centigrade
 to Fahrenheit, for example.  It works interactively by prompting
@@ -46,19 +46,29 @@ the user for input:
             / 3785.4118
 .fi
 .Pp
-Powers of units can be specified using the '^' character as shown in
-the example, or by simple concatenation: 'cm3' is equivalent to 'cm^3'.
+Powers of units can be specified using the
+.Ql ^
+character as shown in
+the example, or by simple concatenation:
+.Dq cm3
+is equivalent to
+.Dq cm^3 .
 Multiplication of units can be specified by using spaces, a dash or
-an asterisk.  Division of units is indicated by the slash ('/').  
-Note that multiplication has a higher precedence than division, 
-so 'm/s/s' is the same as 'm/s^2' or 'm/s s'.
+an asterisk.  Division of units is indicated by the slash
+.Pq Ql / .
+Note that multiplication has a higher precedence than division, so
+.Dq m/s/s
+is the same as
+.Dq m/s^2
+or
+.Dq m/s s .
 If the user enters incompatible unit types, the units program will
 print a message indicating that the units are not conformable and
 it will display the reduced form for each unit:
 .Pp
 .nf
     You have: ergs/hour
-    You want: fathoms kg^2 / day 
+    You want: fathoms kg^2 / day
     conformability error
             2.7777778e-11 kg m^2 / sec^3
             2.1166667e-05 kg^2 m / sec
@@ -94,20 +104,24 @@ US counterparts are prefixed with 'br', and currency is prefixed with
 its country name: 'belgiumfranc', 'britainpound'.  When searching for
 a unit, if the specified string does not appear exactly as a unit
 name, then the units program will try to remove a trailing 's' or
-a trailing 'es' and check again for a match.  
+a trailing 'es' and check again for a match.
 .Pp
 All of these definitions can be read in the standard units file, or you
 can supply your own file.  A unit is specified on a single line by
 giving its name and an equivalence.  One should be careful to define
 new units in terms of old ones so that a reduction leads to the
-primitive units which are marked with '!' characters.  
+primitive units which are marked with
+.Ql !
+characters.
 The units program will not detect infinite loops that could be caused
 by careless unit definitions.
 .Pp
-Prefixes are defined in the same way as standard units, but with 
-a trailing dash at the end of the prefix name.  
+Prefixes are defined in the same way as standard units, but with
+a trailing dash at the end of the prefix name.
 .Sh BUGS
-The effect of including a '/' in a prefix is surprising.
+The effect of including a
+.Ql /
+in a prefix is surprising.
 .Pp
 Exponents entered by the user can be only one digit.
 You can work around this by multiplying several terms.
@@ -121,7 +135,7 @@ of the units converted and on the length of the data file.
 .Pp
 The program should use a hash table to store units so that
 it doesn't take so long to load the units list and check
-for duplication.  
+for duplication.
 .Sh FILES
 /usr/share/misc/units.lib - the standard units library
 .Sh AUTHOR

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: logname.1,v 1.5 1998/09/26 19:55:01 aaron Exp $
+.\"	$OpenBSD: logname.1,v 1.6 1999/06/05 01:21:32 aaron Exp $
 .\"	$NetBSD: logname.1,v 1.5 1995/07/25 18:31:12 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 .\"
 .Dd June, 9, 1993
 .Dt LOGNAME 1
-.Os BSD 4.4
+.Os
 .Sh NAME
 .Nm logname
 .Nd display user's login name
@@ -47,12 +47,12 @@
 .Nm logname
 .Sh DESCRIPTION
 The
-.Nm logname
+.Nm
 utility writes the user's login name to standard output followed by
 a newline.
 .Pp
 The
-.Nm logname
+.Nm
 utility explicitly ignores the
 .Ev LOGNAME
 and
@@ -61,7 +61,7 @@ environment variables
 because the environment cannot be trusted.
 .Pp
 The
-.Nm logname
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr who 1 ,
@@ -69,8 +69,8 @@ utility exits 0 on success or >0 if an error occurred.
 .Xr getlogin 2
 .Sh STANDARDS
 The
-.Nm logname
-utility conforms to 
+.Nm
+utility conforms to
 .St -p1003.2-92 .
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xstr.1,v 1.4 1999/03/11 01:35:07 pjanzen Exp $
+.\"	$OpenBSD: xstr.1,v 1.5 1999/06/05 01:21:52 aaron Exp $
 .\"	$NetBSD: xstr.1,v 1.4 1994/11/26 09:25:22 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@
 .\"
 .Dd December 30, 1993
 .Dt XSTR 1
-.Os BSD 3
+.Os
 .Sh NAME
 .Nm xstr
 .Nd "extract strings from C programs to implement shared strings"
@@ -44,10 +44,10 @@
 .Nm xstr
 .Op Fl c
 .Op Fl l Ar array
-.Op Fl 
+.Op Fl
 .Op Ar file
 .Sh DESCRIPTION
-.Nm xstr
+.Nm
 maintains a file
 .Pa strings
 into which strings in component parts of a large program are hashed.
@@ -58,10 +58,10 @@ are also read-only.
 Available options:
 .Bl -tag -width Ds
 .It Fl
-.Nm xstr
+.Nm
 reads from the standard input.
 .It Fl c
-.Nm xstr
+.Nm
 will extract the strings from the C source
 .Ar file
 or the standard input
@@ -70,7 +70,7 @@ replacing
 string references by expressions of the form (&xstr[number])
 for some number.
 An appropriate declaration of
-.Nm xstr
+.Nm
 is prepended to the file.
 The resulting C text is placed in the file
 .Pa x.c ,
@@ -88,7 +88,7 @@ strings.  The default array name is xstr.
 After all components of a large program have been compiled a file
 .Pa xs.c
 declaring the common
-.Nm xstr
+.Nm
 space can be created by a command of the form
 .Bd -literal -offset indent
 xstr
@@ -101,7 +101,7 @@ of the program.
 If possible, the array can be made read-only (shared) saving
 space and swap overhead.
 .Pp
-.Nm xstr
+.Nm
 can also be used on a single file.
 A command
 .Bd -literal -offset indent
@@ -117,12 +117,12 @@ as before, without using or affecting any
 file in the same directory.
 .Pp
 It may be useful to run
-.Nm xstr
+.Nm
 after the C preprocessor if any macro definitions yield strings
 or if there is conditional code which contains strings
 which may not, in fact, be needed.
 An appropriate command sequence for running
-.Nm xstr
+.Nm
 after the C preprocessor is:
 .Pp
 .Bd -literal -offset indent -compact
@@ -131,7 +131,7 @@ cc \-c x.c
 mv x.o name.o
 .Ed
 .Pp
-.Nm xstr
+.Nm
 does not touch the file
 .Pa strings
 unless new items are added, so that
@@ -156,7 +156,7 @@ temporary file when `xstr name' doesn't touch
 .Sh BUGS
 If a string is a suffix of another string in the data base,
 but the shorter string is seen first by
-.Nm xstr
+.Nm
 both strings will be placed in the data base, when just
 placing the longer one there will do.
 .Sh HISTORY

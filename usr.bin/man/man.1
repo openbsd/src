@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.8 1998/09/26 19:55:06 aaron Exp $
+.\"	$OpenBSD: man.1,v 1.9 1999/06/05 01:21:33 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@
 .Fl f Ar filename
 .Sh DESCRIPTION
 The
-.Nm man
+.Nm
 utility
 displays the
 .Bx
@@ -93,7 +93,7 @@ and
 combination.
 (Normally, only the first manual page found is displayed.)
 .It Fl C Ar file
-Use the specified 
+Use the specified
 .Ar file
 instead of the default configuration file.
 This permits users to configure their own manual environment.
@@ -111,24 +111,30 @@ Display only the
 lines of the requested manual pages.
 .It Fl M Ar path
 Override the list of standard directories which
-.Nm man
+.Nm
 searches for manual pages.
 The supplied
 .Ar path
-must be a colon (``:'') separated list of directories.
+must be a colon
+.Pq Ql \&:
+separated list of directories.
 This search path may also be set using the environment variable
 .Ev MANPATH .
 The subdirectories to be searched, and their search order,
-is specified by the ``_subdir'' line in the
-.Nm man
+is specified by the
+.Dq _subdir
+line in the
+.Nm
 configuration file.
 .It Fl m Ar path
 Augment the list of standard directories which
-.Nm man
+.Nm
 searches for manual pages.
 The supplied
 .Ar path
-must be a colon (``:'') separated list of directories.
+must be a colon
+.Pq Ql \&:
+separated list of directories.
 These directories will be searched before the standard directories or
 the directories specified using the
 .Fl M
@@ -136,20 +142,24 @@ option or the
 .Ev MANPATH
 environment variable.
 The subdirectories to be searched, and their search order,
-is specified by the ``_subdir'' line in the
-.Nm man
+is specified by the
+.Dq _subdir
+line in the
+.Nm
 configuration file.
 .It Fl s Ar section
 Another way of specifying the section, for compatibility with
-.Nm man
+.Nm
 on other operating systems.
 .It Fl S Ar subsection
 Specifies the machine-dependent subsection.  This overrides the
 .Ev MACHINE
-environment variable.  See the ``ENVIRONMENT'' section below.
+environment variable.  See the
+.Sx ENVIRONMENT
+section below.
 .It Fl w
 List the pathnames of the manual pages which
-.Nm man
+.Nm
 would display for the specified
 .Ar section
 and
@@ -166,10 +176,10 @@ works.
 The optional
 .Ar section
 argument restricts the directories that
-.Nm man
+.Nm
 will search.
 The
-.Nm man
+.Nm
 configuration file (see
 .Xr man.conf 5 )
 specifies the possible
@@ -177,13 +187,13 @@ specifies the possible
 values that are currently available.
 If only a single argument is specified or if the first argument is
 not a valid section,
-.Nm man
+.Nm
 assumes that the argument is the name of a manual page to be displayed.
 .Sh ENVIRONMENT
 .Bl -tag -width MANPATHX
 .It Ev MACHINE
 As some manual pages are intended only for specific architectures,
-.Nm man
+.Nm
 searches any subdirectories,
 with the same name as the current architecture,
 in every directory which it searches.
@@ -194,15 +204,19 @@ variable
 to the name of a specific architecture.
 .It Ev MANPATH
 The standard search path used by
-.Nm man
+.Nm
 may be overridden by specifying a path in the
 .Ev MANPATH
 environment
 variable.
-The format of the path is a colon (``:'') separated list of directories.
+The format of the path is a colon
+.Pq Ql \&:
+separated list of directories.
 The subdirectories to be searched as well as their search order
-is specified by the ``_subdir'' line in the
-.Nm man
+is specified by the
+.Dq _subdir
+line in the
+.Nm
 configuration file.
 .It Ev PAGER
 Any value of the environment variable

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdep.1,v 1.3 1998/09/26 19:55:08 aaron Exp $
+.\"	$OpenBSD: mkdep.1,v 1.4 1999/06/05 01:21:34 aaron Exp $
 .\"	$NetBSD: mkdep.1,v 1.3 1994/12/23 07:34:56 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -36,7 +36,7 @@
 .\"
 .Dd June 6, 1993
 .Dt MKDEP 1
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm mkdep
 .Nd construct Makefile dependency list
@@ -47,10 +47,11 @@
 .Op Ar flags
 .Ar file Op Ar ...
 .Sh DESCRIPTION
-.Nm mkdep
+.Nm
 takes a set of flags for the C compiler and a list
 of C source files as arguments and constructs a set of include
-file dependencies which are written into the file ``.depend''.
+file dependencies which are written into the file
+.Pa .depend .
 An example of its use in a Makefile might be:
 .Bd -literal -offset indent
 CFLAGS= -O -I../include
@@ -71,12 +72,13 @@ so that multiple
 .Nm mkdep Ns 's
 may be run from a single Makefile.
 .It Fl f Ar file
-Write the include file dependencies to 
+Write the include file dependencies to
 .Ar file ,
-instead of the default ``.depend''.
+instead of the default
+.Pa .depend .
 .It Fl p
 Cause
-.Nm mkdep
+.Nm
 to produce dependencies of the form:
 .Bd -literal -offset indent
 program: program.c
@@ -101,6 +103,6 @@ file containing list of dependencies
 .El
 .Sh HISTORY
 The
-.Nm mkdep
+.Nm
 command appeared in
 .Bx 4.3 Tahoe .

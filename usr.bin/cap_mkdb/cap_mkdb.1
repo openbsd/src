@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cap_mkdb.1,v 1.7 1999/03/05 04:47:45 tholo Exp $
+.\"	$OpenBSD: cap_mkdb.1,v 1.8 1999/06/05 01:21:20 aaron Exp $
 .\"	$NetBSD: cap_mkdb.1,v 1.4 1995/03/26 03:59:36 glass Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -50,9 +50,9 @@
 .Op Ar file2 ...
 .Pp
 .Sh DESCRIPTION
-.Nm cap_mkdb 
+.Nm
 builds a hashed database out of the
-.Xr getcap 3 
+.Xr getcap 3
 or
 .Xr terminfo 5
 logical database constructed by the concatenation of the specified
@@ -60,13 +60,15 @@ files.
 .Pp
 The database is named by the basename of the first file argument and
 the string
-.Dq .db .  
+.Dq .db .
 The
 .Xr getcap 3
 routines can access the database in this form much more quickly
 than they can the original text file(s).
 .Pp
-The ``tc'' capabilities of the records are expanded before the
+The
+.Dq tc
+capabilities of the records are expanded before the
 record is stored into the database.
 .Pp
 The options are as follows:
@@ -90,7 +92,9 @@ the record (not including the trailing colon
 with a data
 field consisting of a special byte followed by the rest of the record.
 The special byte is either a 0 or 1, where a 0 means that the record
-is okay, and a 1 means that there was a ``tc'' capability in the record
+is okay, and a 1 means that there was a
+.Dq tc
+capability in the record
 that couldn't be expanded.
 .Pp
 The second type is a key which consists of one of the names from the
@@ -105,7 +109,7 @@ pair of the first type which has the real data associated with the
 name.
 .Sh RETURN VALUE
 The
-.Nm cap_mkdb 
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr dbopen 3 ,

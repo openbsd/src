@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ar.1,v 1.4 1998/09/23 04:32:34 aaron Exp $
+.\"	$OpenBSD: ar.1,v 1.5 1999/06/05 01:21:17 aaron Exp $
 .\"	$NetBSD: ar.1,v 1.7 1995/08/18 15:05:11 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -38,23 +38,23 @@
 .\"	@(#)ar.1	8.1 (Berkeley) 6/29/93
 .\"
 .Dd June 29, 1993
-.Dt AR 1 
+.Dt AR 1
 .Os
 .Sh NAME
-.Nm ar 
+.Nm ar
 .Nd create and maintain library archives
 .Sh SYNOPSIS
 .Nm ar
-.Fl d 
-.Op Fl \Tv 
+.Fl d
+.Op Fl \Tv
 .Ar archive file ...
 .Nm ar
 .Fl m
-.Op Fl \Tv 
+.Op Fl \Tv
 .Ar archive file ...
 .Nm ar
 .Fl m
-.Op Fl abiTv 
+.Op Fl abiTv
 .Ar position archive file ...
 .Nm ar
 .Fl p
@@ -85,13 +85,15 @@
 .Op Ar file ...
 .Sh DESCRIPTION
 The
-.Nm ar
+.Nm
 utility creates and maintains groups of files combined into an archive.
 Once an archive has been created, new files can be added and existing
 files can be extracted, deleted, or replaced.
 .Pp
 Files are named in the archive by a single component, i.e., if a file
-referenced by a path containing a slash (`/') is archived it will be
+referenced by a path containing a slash
+.Pq Ql /
+is archived it will be
 named by the last component of that path.
 When matching paths listed on the command line against file names stored
 in the archive, only the last component of the path will be compared.
@@ -99,12 +101,14 @@ in the archive, only the last component of the path will be compared.
 All informational and error messages use the path listed on the command
 line, if any was specified, otherwise the name in the archive is used.
 If multiple files in the archive have the same name, and paths are listed
-on the command line to ``select'' archive files for an operation, only the
+on the command line to
+.Dq select
+archive files for an operation, only the
 .Em first
 file with a matching name will be selected.
 .Pp
 The normal use of
-.Nm ar
+.Nm
 is for the creation and maintenance of libraries suitable for use with
 the loader (see
 .Xr ld 1 )
@@ -112,9 +116,9 @@ although it is not restricted to this purpose.
 The options are as follows:
 .Bl -tag -width indent
 .It Fl a
-A positioning modifier used with the options 
-.Fl r 
-and 
+A positioning modifier used with the options
+.Fl r
+and
 .Fl m .
 The files are entered or moved
 .Em after
@@ -123,8 +127,8 @@ the archive member
 which must be specified.
 .It Fl b
 A positioning modifier used with the options
-.Fl r 
-and 
+.Fl r
+and
 .Fl m .
 The files are entered or moved
 .Em before
@@ -134,25 +138,25 @@ which must be specified.
 .It Fl c
 Whenever an archive is created, an informational message to that effect
 is written to standard error.
-If the 
+If the
 .Fl c
 option is specified,
-.Nm ar
+.Nm
 creates the archive silently.
 .It Fl C
 Prevent extracted files from replacing like-named files in the file system.
 .It Fl d
 Delete the specified archive files.
 .It Fl i
-Identical to the 
+Identical to the
 .Fl b
 option.
 .It Fl m
 Move the specified archive files within the archive.
-If one of the options 
-.Fl a , 
-.Fl b 
-or 
+If one of the options
+.Fl a ,
+.Fl b
+or
 .Fl i
 are specified, the files are moved before or after the
 .Ar position
@@ -171,7 +175,7 @@ are written in the order they appear in the archive.
 .It Fl q
 (Quickly) append the specified files to the archive.
 If the archive does not exist a new archive file is created.
-Much faster than the 
+Much faster than the
 .Fl r
 option, when creating a large archive
 piece-by-piece, as no checking is done to see if the files already
@@ -181,10 +185,10 @@ Replace or add the specified files to the archive.
 If the archive does not exist a new archive file is created.
 Files that replace existing files do not change the order of the files
 within the archive.
-New files are appended to the archive unless one of the options 
+New files are appended to the archive unless one of the options
 .Fl a ,
 .Fl b
-or 
+or
 .Fl i
 is specified.
 .It Fl T
@@ -206,58 +210,73 @@ each on a separate line.
 If no files are specified, all files in the archive are listed.
 .It Fl u
 Update files.
-When used with the 
+When used with the
 .Fl r
 option, files in the archive will be replaced
 only if the disk file has a newer modification time than the file in
 the archive.
-When used with the 
+When used with the
 .Fl x
 option, files in the archive will be extracted
 only if the archive file has a newer modification time than the file
 on disk.
 .It Fl v
 Provide verbose output.
-When used with the 
-.Fl d , 
-.Fl m , 
-.Fl q 
-or 
+When used with the
+.Fl d ,
+.Fl m ,
+.Fl q
+or
 .Fl x
 options,
-.Nm ar
+.Nm
 gives a file-by-file description of the archive modification.
 This description consists of three, white-space separated fields: the
-option letter, a dash (`-') and the file name.
-When used with the 
+option letter, a dash
+.Pq Ql -
+and the file name.
+When used with the
 .Fl r
 option,
-.Nm ar
-displays the description as above, but the initial letter is an ``a'' if
-the file is added to the archive and an ``r'' if the file replaces a file
+.Nm
+displays the description as above, but the initial letter is an
+.Sq a
+if
+the file is added to the archive and an
+.Sq r
+if the file replaces a file
 already in the archive.
 .Pp
-When used with the 
-.Fl p 
+When used with the
+.Fl p
 option,
 the name of each printed file is written to the standard output before
 the contents of the file, preceded by a single newline character, and
-followed by two newline characters, enclosed in less-than (`<') and
-greater-than (`>') characters.
+followed by two newline characters, enclosed in less-than
+.Pq Ql <
+and
+greater-than
+.Pq Ql >
+characters.
 .Pp
-When used with the 
+When used with the
 .Fl t
 option,
-.Nm ar
-displays an ``ls -l'' style listing of information about the members of
+.Nm
+displays an
+.Dq ls -l
+style listing of information about the members of
 the archive.
 This listing consists of eight, white-space separated fields:
 the file permissions (see
 .Xr strmode 3 ),
-the decimal user and group ID's, separated by a single slash (`/'),
+the decimal user and group IDs, separated by a single slash
+.Pq Ql / ,
 the file size (in bytes), the file modification time (in the
 .Xr date 1
-format ``%b %e %H:%M %Y''), and the name of the file.
+format
+.Dq %b %e %H:%M %Y ) ,
+and the name of the file.
 .It Fl x
 Extract the specified archive members into the files named by the command
 line arguments.
@@ -267,7 +286,7 @@ the current directory.
 If the file does not exist, it is created; if it does exist, the owner
 and group will be unchanged.
 The file access and modification times are the time of the extraction
-(but see the 
+(but see the
 .Fl o
 option).
 The file permissions will be set to those of the file when it was entered
@@ -276,7 +295,7 @@ extracted file or the super-user.
 .El
 .Pp
 The
-.Nm ar
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh ENVIRONMENT
 .Bl -tag -width indent -compact
@@ -292,18 +311,18 @@ temporary file names
 .El
 .Sh COMPATIBILITY
 By default,
-.Nm ar
+.Nm
 writes archives that may be incompatible with historic archives, as
 the format used for storing archive members with names longer than
 fifteen characters has changed.
 This implementation of
-.Nm ar
+.Nm
 is backward compatible with previous versions of
-.Nm ar
-in that it can read and write (using the 
+.Nm
+in that it can read and write (using the
 .Fl T
 option) historic archives.
-The 
+The
 .Fl T
 option is provided for compatibility only, and will be deleted
 in a future release.
@@ -312,12 +331,12 @@ See
 for more information.
 .Sh STANDARDS
 The
-.Nm ar
-utility is expected to offer a superset of the 
+.Nm
+utility is expected to offer a superset of the
 .St -p1003.2
 functionality.
 .Sh SEE ALSO
-.Xr ld 1 , 
+.Xr ld 1 ,
 .Xr ranlib 1 ,
 .Xr strmode 3 ,
 .Xr ar 5

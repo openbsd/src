@@ -1,4 +1,4 @@
-.\"	$OpenBSD: login.1,v 1.8 1999/04/20 23:05:41 pjanzen Exp $
+.\"	$OpenBSD: login.1,v 1.9 1999/06/05 01:21:32 aaron Exp $
 .\"	$NetBSD: login.1,v 1.7 1995/08/31 22:52:33 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -36,7 +36,7 @@
 .\"
 .Dd May 5, 1994
 .Dt LOGIN 1
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm login
 .Nd log into the computer
@@ -47,12 +47,12 @@
 .Op Ar user
 .Sh DESCRIPTION
 The
-.Nm login
+.Nm
 utility logs users (and pseudo-users) into the computer system.
 .Pp
 If no user is specified, or if a user is specified and authentication
 of the user fails,
-.Nm login
+.Nm
 prompts for a user name.
 Authentication of users is done via passwords.
 Alternately, the user can enter the password "s/key", in which case
@@ -79,7 +79,7 @@ It is used by various daemons such as
 This option may only be used by the super-user.
 .It Fl p
 By default,
-.Nm login
+.Nm
 discards any previous environment.
 The
 .Fl p
@@ -89,7 +89,7 @@ option disables this behavior.
 If the file
 .Pa /etc/nologin
 exists,
-.Nm login
+.Nm
 displays its contents to the user and exits.
 This is used by
 .Xr shutdown  8
@@ -98,18 +98,18 @@ to prevent users from logging in when the system is about to go down.
 If the file
 .Pa /etc/fbtab
 exists,
-.Nm login
+.Nm
 changes the protection and ownership of certain devices specified in this
 file.
 .Pp
 If the file                                                           
 .Pa /var/log/failedlogin
 exists,                                                                   
-.Nm login                                                                  
+.Nm
 will record failed login attempts in this file.
 .Pp
 Immediately after logging a user in,
-.Nm login
+.Nm
 displays the system copyright notice, the date and time the user last
 logged in, the date and time of the last unsuccessful login (if the file
 .Pa /var/log/failedlogin
@@ -119,14 +119,14 @@ If the file
 exists in the user's home directory, all of these messages are suppressed.
 This is to simplify logins for non-human users, such as
 .Xr uucp 1 .
-.Nm login
+.Nm
 then records an entry in the
 .Xr wtmp 5
 and
 .Xr utmp 5
 files and executes the user's command interpreter.
 .Pp
-.Nm login
+.Nm
 enters information into the environment (see
 .Xr environ 7 )
 specifying the user's home directory
@@ -146,7 +146,7 @@ The standard shells,
 and
 .Xr sh 1 ,
 do not fork before executing the
-.Nm login
+.Nm
 utility.
 .Sh FILES
 .Bl -tag -width /var/log/failedlogin -compact
@@ -180,6 +180,6 @@ makes login quieter
 .Xr environ 7
 .Sh HISTORY
 A
-.Nm login
+.Nm
 utility appeared in
 .At v6 .

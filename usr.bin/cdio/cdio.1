@@ -1,7 +1,7 @@
-.\" $OpenBSD: cdio.1,v 1.13 1998/09/23 04:32:36 aaron Exp $
+.\" $OpenBSD: cdio.1,v 1.14 1999/06/05 01:21:20 aaron Exp $
 .Dd July 3, 1995
 .Dt CDIO 1
-.Os OpenBSD 2.0
+.Os
 .Sh NAME
 .Nm cdio
 .Nd compact disc control utility
@@ -13,20 +13,24 @@
 .Op Ar command args ...
 .Sh DESCRIPTION
 The
-.Nm cdio
+.Nm
 program controls audio features of a CD drive. The
 .Ar device
 is a name such
-as ``cd0'', ``acd0'', or ``mcd0''. 
+as
+.Dq cd0 ,
+.Dq acd0 ,
+or
+.Dq mcd0 .
 .Pp
 If a
 .Ar device
-is not specified, the environment variable 
+is not specified, the environment variable
 .Ev DISC
 will be used to find the CD device.
 .Pp
 If no command is given,
-.Nm cdio
+.Nm
 enters an interactive mode, reading commands from the standard input.
 .Pp
 The following options are available:
@@ -53,24 +57,24 @@ need be specified. The word
 may be omitted.
 .Bl -tag -width Cm
 .It Cm play Ar first_track Op Ar last_track
-Play from track 
-.Nm first_track
+Play from track
+.Ar first_track
 to track
-.Nm last_track. 
+.Ar last_track .
 The first track has number 1 and may be omitted in all cases.
 .It Cm play Ar start_m:start_s.start_f Op Ar end_m:end_s.end_f
 Play from the absolute address
-(MSF) defined by 
+(MSF) defined by
 .Ar start_m
-in minutes, 
+in minutes,
 .Ar start_s,
-in seconds and 
+in seconds and
 .Ar start_f
 (frame number) to the absolute address defined by
 .Ar end_m
-in minutes, 
+in minutes,
 .Ar end_s,
-in seconds and 
+in seconds and
 .Ar end_f
 (frame number). Minutes are in the range 0-99. Seconds are in the range 0-59.
 Frame numbers are in the range 0-74.
@@ -90,7 +94,7 @@ Play the previous track. If we're at the first track, restart.
 Replay the current track again.
 .It Cm resume
 Resume playing. Used after the
-.Nm pause
+.Cm pause
 command.
 .It Cm stop
 Stop the disc.
@@ -99,11 +103,11 @@ Eject the disc.
 .It Cm close
 Inject the disc.
 .It Cm volume Ar left_channel Ar right_channel
-Set the volume of the left channel to 
+Set the volume of the left channel to
 .Ar left_channel
-and the volume of the right channel to 
-.Ar right_channel . 
-Allowed values are in the range 0-255. 
+and the volume of the right channel to
+.Ar right_channel .
+Allowed values are in the range 0-255.
 .It Cm volume Ar mute
 Turn the sound off.
 .It Cm volume Ar mono
@@ -134,7 +138,7 @@ the current CD device.  This is the equivalent of quitting
 .Nm
 and restarting with a different device.
 .It Cm reset
-Perform the hardware reset of the device.
+Perform a hardware reset of the device.
 .It Cm set Ar msf
 Set minute-second-frame ioctl mode (default).
 .It Cm set Ar lba
@@ -153,7 +157,7 @@ Andrey A.\ Chernov,
 Serge V.\ Vakulenko
 .Sh HISTORY
 The
-.Nm cdio
+.Nm
 command is based on
 .Nm cdcontrol ,
 which first appeared in FreeBSD 2.1.

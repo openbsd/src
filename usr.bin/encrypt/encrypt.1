@@ -1,4 +1,4 @@
-.\"	$OpenBSD: encrypt.1,v 1.10 1999/05/20 00:05:39 alex Exp $
+.\"	$OpenBSD: encrypt.1,v 1.11 1999/06/05 01:21:23 aaron Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .Dd May 18, 1999
 .Dt ENCRYPT 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm encrypt
 .Nd encrypt passwords from the command line or standard input
@@ -76,7 +76,7 @@ was given as a command line option, the default will be looked up from
 For MD5 and Blowfish a new random salt is automatically generated for each
 password.
 .Pp
-Specifying the 
+Specifying the
 .Ar string
 on the command line should be discouraged; using the
 standard input is more secure.
@@ -95,5 +95,5 @@ first appeared in
 .Pp
 A
 .Nm makekey
-command appeared in 
+command appeared in
 .At v7 .

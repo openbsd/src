@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.9 1999/03/21 04:04:41 alex Exp $
+.\" $OpenBSD: at.1,v 1.10 1999/06/05 01:21:17 aaron Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
 .Dt AT 1
@@ -132,7 +132,7 @@ An
 .Nm at
 or
 .Nm batch
-command invoked from a 
+command invoked from a
 .Xr su 1
 shell will retain the current user ID.
 The user will be mailed standard error and standard output from his
@@ -140,7 +140,7 @@ commands, if any. Mail will be sent using the command
 .Xr sendmail 8 .
 If
 .Nm at
-is executed from a 
+is executed from a
 .Xr su 1
 shell, the owner of the login shell will receive the mail.
 .Pp
@@ -166,7 +166,7 @@ to use
 If neither exists, only the superuser is allowed use of
 .Nm at .
 .Pp
-An empty 
+An empty
 .Pa /var/at/at.deny
 means that every user is allowed use these commands.
 This is the default configuration.
@@ -179,7 +179,7 @@ Uses the specified queue.
 A queue designation consists of a single letter.  Valid queue designations
 range from
 .Nm a
-to 
+to
 .Nm z
 and
 .Nm A
@@ -248,7 +248,7 @@ job-creation lock file
 If the file
 .Pa /var/run/utmp
 is not available or corrupted, or if the user is not logged on at the
-time 
+time
 .Nm at
 is invoked, the mail is sent to the user ID found
 in the environment variable

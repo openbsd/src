@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.4 1999/06/01 22:13:43 aaron Exp $
+.\"	$OpenBSD: sort.1,v 1.5 1999/06/05 01:21:40 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -202,7 +202,7 @@ The default record separator is newline.
 .It Fl k Ar field1[,field2]
 Designates the starting position,
 .Ar field1 ,
-and optional ending position, 
+and optional ending position,
 .Ar field2 ,
 of a key field.
 The
@@ -298,10 +298,10 @@ character (including separators) of the
 field.
 A missing
 .Em \&.n
-indicates the last character of the 
+indicates the last character of the
 .Em m Ns th
 field;
-.Em m 
+.Em m
 = \&0
 designates the end of a line.
 Thus the option
@@ -314,7 +314,7 @@ when
 is omitted,
 .Fl k Ar v.x,w
 is synonymous with
-.Cm \(pl Ns Ar v-\&1.x-\&1 
+.Cm \(pl Ns Ar v-\&1.x-\&1
 .Fl Ns Ar w+1.0 .
 The obsolescent
 .Cm \(pl Ns Ar pos1

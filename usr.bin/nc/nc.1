@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nc.1,v 1.5 1998/09/28 06:57:35 millert Exp $
+.\"	$OpenBSD: nc.1,v 1.6 1999/06/05 01:21:34 aaron Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -39,14 +39,14 @@
 .Op Fl i Ar interval
 .Op Fl lnrtuvz
 .Op Fl o Ar filename
-.Op Fl p Ar source port 
+.Op Fl p Ar source port
 .Op Fl s Ar ip address
-.Op Fl w Ar timeout 
+.Op Fl w Ar timeout
 .Op Ar hostname
 .Op Ar port[s...]
 .Sh DESCRIPTION
 The
-.Nm nc
+.Nm
 (or
 .Nm netcat )
 utility is used for just about anything under the sun
@@ -54,11 +54,11 @@ involving TCP or UDP.  It can open TCP connections, send UDP packets,
 listen on arbitrary TCP and UDP ports, do port scanning, and source
 routing.  Unlike
 .Xr telnet 1 ,
-.Nm nc
+.Nm
 scripts nicely, and separates error messages onto standard error instead
-of sending them to standard output, as 
-.Xr telnet 1  
-does with some.  
+of sending them to standard output, as
+.Xr telnet 1
+does with some.
 .Pp
 Destination ports can be single integers, names as listed in
 .Xr services 5 ,
@@ -66,7 +66,7 @@ or ranges.  Ranges are in the form nn-mm, and several separate ports and/or
 ranges may be specified on the command line.
 .Pp
 Common uses include:
-.Bl -bullet 
+.Bl -bullet
 .It
 simple TCP proxies
 .It
@@ -84,7 +84,7 @@ The options are as follows:
 .It Fl e Ar command
 Execute the specified command, using data from the network for stdin,
 and sending stdout and stderr to the network.  This option is only present if
-.Nm nc
+.Nm
 was compiled with the GAPING_SECURITY_HOLE compile time option, since it
 allows users to make arbitrary programs available to anyone on the network.
 .It Fl g Ar intermediate-host
@@ -98,7 +98,7 @@ Specifies a delay time interval between lines of text sent and received.
 Also causes a delay time between connections to multiple ports.
 .It Fl l
 Is used to specify that
-.Nm nc
+.Nm
 should listen for an incoming connection, rather than initiate a
 connection to a remote host.  Any hostname/IP address and port arguments
 restrict the source of inbound connections to only that address and
@@ -112,7 +112,7 @@ Each line begins with ``<'' or ``>''.  ``<'' means "from the net" and ``>''
 means "to the net".
 .It Fl p Ar port
 Specifies the source port
-.Nm nc
+.Nm
 should use, subject to privilege restrictions and availability.
 .It Fl r
 Specifies that source and/or destination ports should be chosen semi-randomly
@@ -125,37 +125,37 @@ On some platforms, this can be used for UDP spoofing by using
 to bring up a dummy interface with the desired source IP address.
 .It Fl t
 Causes
-.Nm nc
+.Nm
 to send RFC854 DON'T and WON'T responses to RFC854 DO
 and WILL requests.  This makes it possible to use
-.Nm nc
+.Nm
 to script telnet sessions.  The presence of this option can be
 enabled or disabled as a compile-time option.
 .It Fl u
-Use UDP instead of TCP. 
+Use UDP instead of TCP.
 On most platforms,
-.Nm nc
+.Nm
 will behave as if a connection is established until it receives an
 ICMP packet indicating that there is no program listening to what it
 sends.
 .It Fl v
 Verbose.  Cause
-.Nm nc
+.Nm
 to display connection information.  Using
 .Fl v
 more than once will cause
-.Nm nc
+.Nm
 to become even more verbose.
 .It Fl w Ar timeout
 Specifies the number of seconds
-.Nm nc
+.Nm
 should wait before deciding that
 an attempt to establish a connection is hopeless.
 Also used to specify how long to wait for more network data after standard
 input closes.
 .It Fl z
 Specifies that
-.Nm nc
+.Nm
 should just scan for listening
 daemons, without sending any data to them.  Diagnostic messages about refused
 connections will not be
@@ -191,7 +191,7 @@ diagnostic messages on stderr.
 .It Li "nc -v -z example.host 20-30"
 Attempt to open TCP connections to ports 20 through 30 of
 example.host, and report which ones
-.Nm nc
+.Nm
 was able to connect to.
 .It Li "nc -v -u -z -w 3 example.host 20-30"
 Send UDP packets to ports 20-30 of example.host, and report which ones

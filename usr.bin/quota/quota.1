@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quota.1,v 1.6 1998/11/11 23:01:46 aaron Exp $
+.\"	$OpenBSD: quota.1,v 1.7 1999/06/05 01:21:37 aaron Exp $
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -37,7 +37,7 @@
 .\"
 .Dd June 6, 1993
 .Dt QUOTA 1
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm quota
 .Nd display disk usage and limits
@@ -62,7 +62,7 @@ By default only the user quotas are printed.
 Options:
 .Bl -tag -width Ds
 .It Fl g
-Print group quotas for the group 
+Print group quotas for the group
 of which the user is a member.
 The optional
 .Fl u

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfsstat.1,v 1.5 1998/09/27 16:57:48 aaron Exp $
+.\"	$OpenBSD: nfsstat.1,v 1.6 1999/06/05 01:21:35 aaron Exp $
 .\"	$NetBSD: nfsstat.1,v 1.8 1996/03/03 17:21:28 thorpej Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -36,7 +36,7 @@
 .\"
 .Dd June 6, 1993
 .Dt NFSSTAT 1
-.Os BSD 4.4
+.Os
 .Sh NAME
 .Nm nfsstat
 .Nd display
@@ -50,7 +50,7 @@ statistics
 .Op Fl s
 .Op Fl c
 .Sh DESCRIPTION
-.Nm nfsstat
+.Nm
 displays statistics kept about
 .Tn NFS
 client and server activity.
@@ -89,9 +89,9 @@ default memory file
 .Xr systat 1 ,
 .Xr iostat 8 ,
 .Xr pstat 8 ,
-.Xr vmstat 8 
+.Xr vmstat 8
 .Sh HISTORY
 The
-.Nm nfsstat
+.Nm
 command appeared in
 .Bx 4.4 .

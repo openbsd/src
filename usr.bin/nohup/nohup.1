@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nohup.1,v 1.4 1998/11/04 22:36:40 aaron Exp $
+.\"	$OpenBSD: nohup.1,v 1.5 1999/06/05 01:21:35 aaron Exp $
 .\"	$NetBSD: nohup.1,v 1.5 1995/08/31 23:35:24 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -56,7 +56,7 @@ with
 its arguments
 and at this time sets the signal
 .Dv SIGHUP
-to be ignored. 
+to be ignored.
 If the standard output is a terminal, the standard output is
 appended to the file
 .Pa nohup.out
@@ -80,7 +80,7 @@ to create the file.
 The
 .Nm nohup
 utility shall exit with one of the following values:
-.Bl -tag -width Ds 
+.Bl -tag -width Ds
 .It 126
 The
 .Ar utility
@@ -88,13 +88,13 @@ was found but could not be invoked.
 .It 127
 The
 .Ar utility
-could not be found or an error occurred in 
+could not be found or an error occurred in
 .Nm nohup .
 .El
 .Pp
-Otherwise, the exit status of 
+Otherwise, the exit status of
 .Nm nohup
-shall be that of 
+shall be that of
 .Ar utility .
 .Sh SEE ALSO
 .Xr signal 3

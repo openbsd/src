@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.7 1998/07/24 20:49:04 deraadt Exp $
+.\"	$OpenBSD: rdist.1,v 1.8 1999/06/05 01:21:37 aaron Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -40,49 +40,49 @@
 rdist \- remote file distribution client program
 .SH SYNOPSIS
 .B rdist
-[ 
+[
 .B \-DFn
 ]
-[ 
-.B \-A 
+[
+.B \-A
 .I num
-] 
-[ 
-.B \-a 
-.I num 
 ]
-[ 
-.B \-d 
-.I var=value 
-] 
-[ 
+[
+.B \-a
+.I num
+]
+[
+.B \-d
+.I var=value
+]
+[
 .B \-l
 .I <local logopts>
-] 
-[ 
+]
+[
 .B \-L
 .I <remote logopts>
-] 
-[ 
-.B \-f 
-.I distfile 
-] 
-[ 
-.B \-M 
-.I maxproc
-] 
-[ 
-.B \-m 
-.I host 
 ]
-[ 
+[
+.B \-f
+.I distfile
+]
+[
+.B \-M
+.I maxproc
+]
+[
+.B \-m
+.I host
+]
+[
 .B \-o
 .I distopts
 ]
-[ 
-.B \-t 
-.I timeout 
-] 
+[
+.B \-t
+.I timeout
+]
 [
 .B \-p
 .I <rdistd-path>
@@ -91,14 +91,14 @@ rdist \- remote file distribution client program
 .B \-P
 .I <rsh-path>
 ]
-[ 
+[
 .I name ...
 ]
 .PP
 .B rdist
 .B \-DFn
-.B -c 
-.I name ... 
+.B -c
+.I name ...
 .I [login@]host[:dest]
 .PP
 .B rdist
@@ -108,7 +108,7 @@ rdist \- remote file distribution client program
 .B \-V
 .SH DESCRIPTION
 .I Rdist
-is a program to maintain identical copies of files over multiple hosts. 
+is a program to maintain identical copies of files over multiple hosts.
 It preserves the owner, group, mode, and mtime of files if possible and
 can update programs that are executing.
 .I Rdist
@@ -158,11 +158,11 @@ which used this option to put
 into server mode.
 If
 .I rdist
-is started with the 
+is started with the
 .B \-Server
 command line option, it will attempt to exec (run) the old version of
 .I rdist.
-This option will only work if 
+This option will only work if
 .I rdist
 was compiled with the location of the old rdist
 (usually either
@@ -174,7 +174,7 @@ and that program is available at run time.
 .I Rdist
 can use either the
 .I rcmd(3)
-function call or the 
+function call or the
 .I rsh(1c),
 remote shell, command to access each target host.
 The method used is selected at compile-time.
@@ -183,7 +183,7 @@ If the
 method is used and
 the target host is the string
 .B localhost
-and 
+and
 the remote user name is the same as the local user name,
 .I rdist
 will run the command
@@ -204,7 +204,7 @@ run will run the command
 .RE
 .sp
 .fi
-where 
+where
 .I host
 is the name of the target host,
 .I remuser
@@ -213,16 +213,16 @@ is the name of the user to make the connection as and,
 is the rdist server command on the target host as shown below.
 .PP
 If the
-.I rcmd(3) 
+.I rcmd(3)
 method is used, then
 .I rdist
 makes the connection to the target host itself and runs
-the 
+the
 .I rdistd
 server program as shown below.
 The default, and preferred method, is to use
 .I rsh(1c)
-to make the connection to target hosts.  This allows 
+to make the connection to target hosts.  This allows
 .I rdist
 to be run without being setuid to ``root''.
 .PP
@@ -248,7 +248,7 @@ if the
 .I \-p
 option was specified.
 If no
-.B \-p 
+.B \-p
 option is included,
 or the
 .I <rdistd path>
@@ -256,7 +256,7 @@ is a simple filename,
 .I rdistd
 or
 .I <rdistd path>
-must be somewhere in the 
+must be somewhere in the
 .B $PATH
 of the user running
 .B rdist
@@ -265,13 +265,13 @@ on the remote (target) host.
 .TP
 .B "\-A \fInum\fR"
 Set the minimum number of free files (inodes) on a filesystem that must exist
-for 
+for
 .I rdist
 to update or install a file.
 .TP
 .B "\-a \fInum\fR"
 Set the minimum amount of free space (in bytes) on a filesystem that must exist
-for 
+for
 .I rdist
 to update or install a file.
 .TP
@@ -291,7 +291,7 @@ can be the empty string, one name, or a list of names surrounded by
 parentheses and separated by tabs and/or spaces.
 .TP
 .B \-F
-Do not fork any child 
+Do not fork any child
 .I rdist
 processes.
 All clients are updated sequentially.
@@ -299,7 +299,7 @@ All clients are updated sequentially.
 .B "\-f \fIdistfile\fR"
 Set the name of the distfile to use to be
 .I distfile .
-If 
+If
 .I distfile
 is specified as
 ``\-'' (dash)
@@ -307,7 +307,7 @@ then read from standard input (stdin).
 .TP
 .B "\-l \fIlogopts\fR"
 Set local logging options.
-See the section 
+See the section
 .B "MESSAGE LOGGING"
 for details on the syntax for
 .I logopts.
@@ -318,7 +318,7 @@ Set remote logging options.
 is the same as for local logging
 except the values are passed to the remote
 server (\fIrdistd\fR).
-See the section 
+See the section
 .B "MESSAGE LOGGING"
 for details on the syntax for
 .I logopts.
@@ -360,24 +360,24 @@ name.  Normally, only the last component of a name is used when renaming files.
 This will preserve the directory structure of the files being
 copied instead of flattening the directory structure. For example,
 rdisting a list of files such as
-.I /path/dir1/f1 
+.I /path/dir1/f1
 and
-.I /path/dir2/f2 
-to 
-.I /tmp/dir 
+.I /path/dir2/f2
+to
+.I /tmp/dir
 would create
-files 
-.I /tmp/dir/path/dir1/f1 
-and 
-.I /tmp/dir/path/dir2/f2 
-instead of 
-.I /tmp/dir/dir1/f1 
-and 
+files
+.I /tmp/dir/path/dir1/f1
+and
+.I /tmp/dir/path/dir2/f2
+instead of
+.I /tmp/dir/dir1/f1
+and
 .I /tmp/dir/dir2/f2.
 .IP \fBnoexec\fR
-Automatically exclude executable files that are in 
+Automatically exclude executable files that are in
 .I a.out(5)
-format from being checked or updated. 
+format from being checked or updated.
 .IP \fByounger\fR
 Younger mode. Files are normally updated if their
 .I mtime
@@ -435,7 +435,7 @@ Do not check file and directory permission modes.
 The permission mode is only set when the file is updated.
 .IP \fBnodescend\fR
 Do not descend into a directory.
-Normally 
+Normally
 .I rdist
 will recursively check directories.
 If this option is enabled, then any files listed in the
@@ -465,19 +465,19 @@ only be enabled for targets likely to contain sparse files.
 Set the path where the rdistd server is searched for on the target host.
 .TP
 .B "\-P \fI<rsh-path>\fR"
-Set the path to the 
+Set the path to the
 .I rsh(1c)
 command.
 The
 .I rsh-path
 may be a colon separated list of possible pathnames.
 In this case, the first component of the path to exist is used.
-i.e. 
+i.e.
 .B "/usr/ucb/rsh:/usr/bin/remsh",
 .B /usr/bsd/rsh.
 .TP
 .B "\-t \fItimeout\fR"
-Set the timeout period (in seconds) for waiting for responses from the remote 
+Set the timeout period (in seconds) for waiting for responses from the remote
 .I rdist
 server.
 The default is 900 seconds.
@@ -490,13 +490,13 @@ uses a collection of predefined message
 .B facilities
 that each contain a list of message
 .B types
-specifying which types of messages to send to that 
+specifying which types of messages to send to that
 .I facility.
 The local client (\fIrdist\fR) and the remote server (\fIrdistd\fR) each
 maintain
 their own copy of what types of messages to log to what facilities.
 .LP
-The 
+The
 .B \-l
 .I logopts
 option to
@@ -504,7 +504,7 @@ option to
 tells
 .I rdist
 what logging options to use locally.
-The 
+The
 .B \-L
 .I logopts
 option to
@@ -528,12 +528,12 @@ The valid facility names are:
 .IP \fBstdout\fR
 Messages to standard output.
 .IP \fBfile\fR
-Log to a file.  To specify the file name, use the format 
+Log to a file.  To specify the file name, use the format
 ``\fBfile=\fIfilename\fB=\fItypes\fR''.
 e.g.
 .B "``file=/tmp/rdist.log=all,debug''.
 .IP \fBsyslog\fR
-Use the 
+Use the
 .I syslogd(8)
 facility.
 .IP \fBnotify\fR
@@ -543,7 +543,7 @@ Use the internal
 facility.
 This facility is used in conjunction with the
 .B notify
-keyword in a 
+keyword in a
 .I distfile
 to specify what messages are mailed to the
 .B notify
@@ -551,12 +551,12 @@ address.
 .RE
 .LP
 .I types
-should be a comma separated list of message types.  Each message type 
+should be a comma separated list of message types.  Each message type
 specified enables that message level.  This is unlike the
 .I syslog(3)
 system facility which uses an ascending order scheme.
 The following
-are the valid 
+are the valid
 .I types:
 .RS
 .IP \fBchange\fR
@@ -594,7 +594,7 @@ Here is a sample command line option:
 .fi
 This entry will set local message logging to have all but debug
 messages sent to standard output, change and notice messages will
-be sent to 
+be sent to
 .I syslog(3),
 and all messages will be written to the file
 .B /tmp/rdist.log.
@@ -754,7 +754,7 @@ command is used to specify
 commands that are to be executed on the
 remote host after the file in \fIname list\fP is updated or installed.
 If the \fIname list\fP is omitted then the shell commands will be executed
-for every file updated or installed.  
+for every file updated or installed.
 .I String
 starts and ends with `"' and can cross multiple lines in
 .I distfile.
@@ -765,7 +765,7 @@ The
 .I special
 command can be used to rebuild private databases, etc.
 after a program has been updated.
-The following environment variables are set for each 
+The following environment variables are set for each
 .I special
 command:
 .IP \fBFILE\fR
@@ -781,7 +781,7 @@ command is similar to the
 .I special
 command, except it is executed only when the entire command is completed
 instead of after each file is updated.
-The list of files is placed in the environment variable 
+The list of files is placed in the environment variable
 .B $FILES.
 Each file name in
 .B $FILES
@@ -830,7 +830,7 @@ ${FILES} :: stamp.cory
 .fi
 .SH ENVIRONMENT
 .IP TMPDIR
-Name of temporary directory to use.  Default is 
+Name of temporary directory to use.  Default is
 .B /tmp.
 .IP RSH
 Name of the default remote shell program to use.  Default is
@@ -851,8 +851,8 @@ $TMPDIR/rdist*	\- temporary file for update lists
 .SH NOTES
 .LP
 If the basename of a file  (the last component in the pathname)
-is ".", then 
-.B rdist 
+is ".", then
+.B rdist
 assumes the remote (destination) name is a directory.
 i.e.
 .B /tmp/.
@@ -876,7 +876,7 @@ facility.
 aborts on files which have a negative mtime (before Jan 1, 1970).
 .PP
 If a hardlinked file is listed more than once in the same target,
-then 
-.I rdist 
+then
+.I rdist
 will report missing links.
 Only one instance of a link should be listed in each target.

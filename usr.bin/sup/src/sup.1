@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sup.1,v 1.6 1999/05/12 13:26:52 aaron Exp $
+.\"	$OpenBSD: sup.1,v 1.7 1999/06/05 01:21:41 aaron Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -8,7 +8,7 @@
 .\" notice and this permission notice appear in all copies of the
 .\" software, derivative works or modified versions, and any portions
 .\" thereof, and that both notices appear in supporting documentation.
-.\" 
+.\"
 .\" CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
 .\" CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
 .\" ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
@@ -25,6 +25,13 @@
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .\" HISTORY
 .\" $Log: sup.1,v $
+.\" Revision 1.7  1999/06/05 01:21:41  aaron
+.\" - remove trailing white space
+.\" - remove arguments from .Os macros
+.\" - remove arguments from .Nm macros, where appropriate
+.\" - some more Dq/Sq/Ql insanity
+.\" - still lots to do in the usr.bin tree... :/
+.\"
 .\" Revision 1.6  1999/05/12 13:26:52  aaron
 .\" grammar police: do not hyphenate compound words that act as adjectives if the
 .\" first word ends in -ly
@@ -60,25 +67,25 @@
 .\"
 .\" Revision 1.4  92/08/11  12:08:40  mrt
 .\" 	.TP
-.\" 	Add description of releases and use-rel-suffix 
+.\" 	Add description of releases and use-rel-suffix
 .\" 	[92/07/31            mrt]
-.\" 
+.\"
 .\" Revision 1.3  92/02/08  18:24:31  mja
 .\" 	Added description of -k and -K switches and "keep" option.
 .\" 	[92/01/17            vdelvecc]
-.\" 
+.\"
 .\" 10-May-86  Glenn Marcy (gm0w) at Carnegie-Mellon University
 .\" 	Replaced reference to /usr/cmu with /usr/cs.
-.\" 
+.\"
 .\" 29-Mar-86  Glenn Marcy (gm0w) at Carnegie-Mellon University
 .\" 	Updated manual entry to version 5.14 of sup.
-.\" 
+.\"
 .\" 14-Jan-86  Glenn Marcy (gm0w) at Carnegie-Mellon University
 .\" 	Updated manual entry to version 5.7 of sup.
-.\" 
+.\"
 .\" 04-Apr-85  Steven Shafer (sas) at Carnegie-Mellon University
 .\" 	Created.
-.\" 
+.\"
 .TH SUP 1 02/08/92
 .CM 4
 .SH "NAME"
@@ -109,7 +116,7 @@ In both of these cases, it only makes sense to sup one release of the
 collections. Releases have also been used in private or external sups to
 provide subsets of collections where it makes sense to pick up several
 of the releases. For example the Mach 3.0 kernel sources has a default
-release of machine independent sources and separate releases of 
+release of machine independent sources and separate releases of
 machine dependent sources for each supported platform.
 
 In performing an upgrade, the file server constructs a list of
@@ -184,7 +191,7 @@ flag should be sufficient.
 .B -b
 If the
 .B -b
-flag if given, or the 
+flag if given, or the
 .B backup
 supfile
 option is specified, the contents of regular files
@@ -202,14 +209,14 @@ will create a copy of the current version of a file immediately
 before a new copy is received from the file server; the copy is
 given the same name as the original file but is put into a directory
 called
-.B 
+.B
 BACKUP
 within the directory containing the original file.
 For example,
-.B 
+.B
 /usr/sas/src/foo.c
 would have a backup copy called
-.B 
+.B
 /usr/sas/src/BACKUP/foo.c.
 There is no provision for automatically maintaining multiple old
 versions of files; you would have to do this yourself.
@@ -226,7 +233,7 @@ supfile option.
 .B -d
 Files that are no longer in the collection on the
 repository will be deleted if present on the local
-machine and were put there by a previous sup.  
+machine and were put there by a previous sup.
 This may also be specified in a supfile with the
 .B delete
 option.
@@ -319,7 +326,7 @@ printed by
 will normally only upgrade files that have
 changed on the repository since the last time an
 upgrade was performed. That is, if the file in the
-repository is newer than the date stored in the 
+repository is newer than the date stored in the
 .I when
 file on the client.  The
 .B -o
@@ -342,13 +349,13 @@ supfile option.
 .TP
 .B -z
 Normally sup transfers files directly without any
-other processing, but with the 
+other processing, but with the
 .B -z
 flag, or the
 .B compress
-supfile option, sup will compress the file 
+supfile option, sup will compress the file
 before sending it across the network and
-uncompress it and restore all the correct 
+uncompress it and restore all the correct
 file attributes at the receiving end.
 .TP
 .B -Z
@@ -447,8 +454,8 @@ If a collection contains multiple releases, you need to specify which
 release you want. You can only specify one release per line, so
 if you want multiple releases from the same collections, you will need
 to specify the collection more than once. In this case, you should use
-the 
-.I use-rel-suffix 
+the
+.I use-rel-suffix
 ption in the supfile
 to keep the last and when files for the two releases separate.
 .TP
@@ -462,7 +469,7 @@ directory.
 Each collection may also have an associated
 .I prefix directory
 which is used instead of the base directory to specify in what
-directory files within the collection will be placed. 
+directory files within the collection will be placed.
 .TP
 .BI host= hostname
 .br
@@ -526,7 +533,7 @@ anonymous account.
 .TP
 .BI notify= address
 If you use the
-.B 
+.B
 -m
 option to receive log messages by mail, you can have the mail
 sent to different user, possibly on another host, than the user
@@ -566,7 +573,7 @@ As described above under the
 flag.
 .TP
 .B use-rel-suffix
-Causes the release name to be used as a suffix to the 
+Causes the release name to be used as a suffix to the
 .I last
 and
 .I when
@@ -627,9 +634,9 @@ can be used to grant access to all hosts on the local
 network. The host name may be a  numeric network address
 or a network name. If a crypt appears on the same line as
 the host name, that crypt will be used for that host. Otherwise,
-the crypt appearing in the 
+the crypt appearing in the
 .I crypt
-file, if any will be used. 
+file, if any will be used.
 .TP
 .B crypt
 If you wish to use the
@@ -650,7 +657,7 @@ file collection, in a format described below.
 .B releases
 This file describes any releases that the collection may have. Each
 line starts with the release name and then may specify any of the following
-files: 
+files:
 .I prefix=<dirname>
 to use a different parent directory for the files in this release.
 .I list=<listname>
@@ -783,7 +790,7 @@ and will be replaced by the name of the file that was upgraded.
 For example, if you say
 \fBexecute ranlib %s (libc.a)\fR,
 then whenever libc.a is upgraded, the client machine will execute
-.B 
+.B
 ranlib libc.a.
 As described above, the client must invoke
 .I sup

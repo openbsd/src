@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gprof.1,v 1.10 1998/11/18 02:11:15 aaron Exp $
+.\"	$OpenBSD: gprof.1,v 1.11 1999/06/05 01:21:27 aaron Exp $
 .\"	$NetBSD: gprof.1,v 1.6 1995/11/21 22:24:55 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -36,7 +36,7 @@
 .\"
 .Dd June 6, 1993
 .Dt GPROF 1
-.Os BSD 4.2
+.Os
 .Sh NAME
 .Nm gprof
 .Nd display call graph profile data
@@ -121,10 +121,10 @@ Find a minimal set of arcs that can be broken to eliminate all cycles with
 .Ar count
 or more members.
 Caution: the algorithm used to break cycles is exponential,
-so using this option may cause 
+so using this option may cause
 .Nm gprof
 to run for a very long time.
-.It Fl e Ar name 
+.It Fl e Ar name
 Suppresses the printing of the graph profile entry for routine
 .Ar name
 and all its descendants
@@ -137,7 +137,7 @@ Only one
 may be given with each
 .Fl e
 option.
-.It Fl E Ar name 
+.It Fl E Ar name
 Suppresses the printing of the graph profile entry for routine
 .Ar name
 (and its descendants) as
@@ -151,7 +151,7 @@ above, and also excludes the time spent in
 .Fl E
 .Ar mcleanup
 is the default.)
-.It Fl f Ar name 
+.It Fl f Ar name
 Prints the graph profile entry of only the specified routine
 .Ar name
 and its descendants.
@@ -163,7 +163,7 @@ Only one
 may be given with each
 .Fl f
 option.
-.It Fl F Ar name 
+.It Fl F Ar name
 Prints the graph profile entry of only the routine
 .Ar name
 and its descendants (as
@@ -185,7 +185,7 @@ overrides
 the
 .Fl E
 option.
-.It Fl k Ar fromname Ar toname 
+.It Fl k Ar fromname Ar toname
 Will delete any arcs from routine
 .Ar fromname
 to routine

@@ -1,4 +1,4 @@
-.\" $OpenBSD: lndir.1,v 1.7 1998/09/26 19:54:58 aaron Exp $
+.\" $OpenBSD: lndir.1,v 1.8 1999/06/05 01:21:31 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .\" $XConsortium: lndir.man /main/9 1995/12/15 14:00:35 gildea $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
-.\" 
+.\"
 .\" Permission is hereby granted, free of charge, to any person obtaining
 .\" a copy of this software and associated documentation files (the
 .\" "Software"), to deal in the Software without restriction, including
@@ -41,10 +41,10 @@
 .\" distribute, sublicense, and/or sell copies of the Software, and to
 .\" permit persons to whom the Software is furnished to do so, subject to
 .\" the following conditions:
-.\" 
+.\"
 .\" The above copyright notice and this permission notice shall be
 .\" included in all copies or substantial portions of the Software.
-.\" 
+.\"
 .\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 .\" EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 .\" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -52,15 +52,15 @@
 .\" OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 .\" ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 .\" OTHER DEALINGS IN THE SOFTWARE.
-.\" 
+.\"
 .\" Except as contained in this notice, the name of the X Consortium shall
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.\" 
+.\"
 .Dd June 21, 1997
 .Dt LNDIR 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm lndir
 .Nd create a shadow directory of symbolic links to another directory tree
@@ -74,13 +74,13 @@
 .Sh DESCRIPTION
 The
 .Nm lndir
-program makes a shadow copy 
-.Ar todir 
+program makes a shadow copy
+.Ar todir
 of a directory tree
-.Ar fromdir, 
+.Ar fromdir,
 except that the shadow is not
 populated with real files but instead with symbolic links pointing at
-the real files in the 
+the real files in the
 .Ar fromdir
 directory tree.  This is usually useful for maintaining source code for
 different machine architectures.  You create a shadow directory
@@ -90,7 +90,7 @@ the object files will be in the shadow directory, while the
 source files in the shadow directory are just symlinks to the real
 files.
 .Pp
-This scheme has the advantage that if you update the source, you need not 
+This scheme has the advantage that if you update the source, you need not
 propagate the change to the other architectures by hand, since all
 source in all shadow directories are symlinks to the real thing: just cd
 to the shadow directory and recompile away.
@@ -102,7 +102,7 @@ argument is optional and defaults to the current directory.  The
 argument may be relative (e.g., ../src) and is relative to
 .Ar todir
 (not the current directory).
-.Pp 
+.Pp
 .\" CVS.adm is used by the Concurrent Versions System.
 Note that RCS, SCCS, CVS and CVS.adm directories are not shadowed, in
 addition to any specified on the command line with
@@ -117,13 +117,13 @@ checked that they have the correct link.
 Deleting files is a more painful problem; the symlinks will
 just point into never never land.
 .Pp
-If a file in 
+If a file in
 .Ar fromdir
-is a symbolic link, 
+is a symbolic link,
 .Nm lndir
-will make the same link in 
+will make the same link in
 .Ar todir
-rather than making a link back to the (symbolic link) entry in 
+rather than making a link back to the (symbolic link) entry in
 .Ar fromdir .
 The
 .Fl i
@@ -132,7 +132,7 @@ flag changes this behavior.
 .Bl -tag -width XxXXXXXXXXXXXX
 .It Fl e Ar exceptfile
 Add the specified file to the list of excluded files/directories.  This is
-effective in all directories searched by 
+effective in all directories searched by
 .Nm lndir .
 This option may be specified as many times as needed.
 .It Fl s
@@ -140,11 +140,11 @@ Suppresses status messages normally output as
 .Nm lndir
 descends into each subdirectory.
 .It Fl i
-Causes the program to not treat symbolic links in 
+Causes the program to not treat symbolic links in
 .Ar fromdir
-specially.  The link created in 
+specially.  The link created in
 .Ar todir
-will point back to the corresponding (symbolic link) file in 
+will point back to the corresponding (symbolic link) file in
 .Ar fromdir .
 If the link is to a directory, this is almost certainly the wrong thing.
 .Pp
@@ -154,7 +154,7 @@ had in X11R6.  Its use is not recommended.
 .El
 .Sh DIAGNOSTICS
 The program displays the name of each subdirectory it enters, followed
-by a colon.  The 
+by a colon.  The
 .Fl s
 option suppresses these messages.
 .Pp

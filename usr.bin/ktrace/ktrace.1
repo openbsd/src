@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.6 1998/09/26 19:54:56 aaron Exp $
+.\"	$OpenBSD: ktrace.1,v 1.7 1999/06/05 01:21:28 aaron Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -34,7 +34,7 @@
 .\"
 .Dd June 6, 1993
 .Dt KTRACE 1
-.Os BSD 4.4
+.Os
 .Sh NAME
 .Nm ktrace
 .Nd enable kernel process tracing
@@ -85,23 +85,23 @@ Clear the trace points associated with the specified file or processes.
 .It Fl d
 Descendants; perform the operation for all current children of the
 designated processes.
-.It Fl f Ar file 
+.It Fl f Ar file
 Log trace records to
 .Ar file
 instead of
 .Pa ktrace.out .
-.It Fl g Ar pgid 
+.It Fl g Ar pgid
 Enable (disable) tracing on all processes in the process group (only one
 .Fl g
 flag is permitted).
 .It Fl i
 Inherit; pass the trace flags to all future children of the designated
 processes.
-.It Fl p Ar pid 
+.It Fl p Ar pid
 Enable (disable) tracing on the indicated process ID (only one
 .Fl p
 flag is permitted).
-.It Fl t Ar trstr 
+.It Fl t Ar trstr
 The string argument represents the kernel trace points, one per letter.
 The following table equates the letters with the tracepoints:
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.10 1998/09/26 19:54:46 aaron Exp $
+.\"	$OpenBSD: fstat.1,v 1.11 1999/06/05 01:21:25 aaron Exp $
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -34,7 +34,7 @@
 .\"
 .Dd February 25, 1994
 .Dt FSTAT 1
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm fstat
 .Nd file status
@@ -188,7 +188,7 @@ For TCP, it is the address of the tcpcb, and for UDP, the inpcb (socket pcb).
 For Unix domain sockets, it's the address of the socket pcb and the address
 of the connected pcb (if connected).
 Otherwise the protocol number and address of the socket itself are printed.
-The attempt is to make enough information available to 
+The attempt is to make enough information available to
 permit further analysis without duplicating
 .Xr netstat 1 .
 .Pp

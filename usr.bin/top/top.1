@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.9 1999/05/16 19:58:04 alex Exp $
+.\"	$OpenBSD: top.1,v 1.10 1999/06/05 01:21:44 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .\"
 .Dd August 14, 1997
 .Dt TOP 1
-.Os OpenBSD
+.Os
 .Sh NAME
 .Nm top
 .Nd display and update information about the top CPU processes
@@ -60,10 +60,10 @@ processes will be displayed instead of the default.
 makes a distinction between terminals that support advanced capabilities
 and those that do not.  This
 distinction affects the choice of defaults for certain options.  In the
-remainder of this document, an 
+remainder of this document, an
 .Em intelligent
 terminal is one that supports cursor addressing, clear screen, and clear
-to end of line.  Conversely, a 
+to end of line.  Conversely, a
 .Em dumb
 terminal is one that does not support such features.  If the output of
 .Nm
@@ -94,7 +94,7 @@ intelligent terminal.
 Do not display idle processes.
 By default, top displays both active and idle processes.
 .It Fl n
-Use 
+Use
 .Em non-interactive
 mode.  This is identical to
 .Em batch
@@ -176,9 +176,9 @@ and
 are actually toggles.  A second specification of any of these options
 will negate the first.  Thus a user who has the environment variable
 .Ev TOP
-set to 
+set to
 .Dq -I
-may use the command 
+may use the command
 .Dq top -I
 to see idle processes.
 .Sh INTERACTIVE MODE
@@ -197,7 +197,7 @@ is between displays; that is, while it is waiting for
 seconds to elapse.  If this is the case, the command will be
 processed and the display will be updated immediately thereafter
 (reflecting any changes that the command may have specified).  This
-happens even if the command was incorrect.  If a key is pressed while 
+happens even if the command was incorrect.  If a key is pressed while
 .Nm
 is in the middle of updating the display, it will finish the update and
 then process the command.  Some commands require additional information,

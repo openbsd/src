@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.11 1999/05/16 19:58:00 alex Exp $
+.\"	$OpenBSD: systat.1,v 1.12 1999/06/05 01:21:42 aaron Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -36,7 +36,7 @@
 .\"
 .Dd December 30, 1993
 .Dt SYSTAT 1
-.Os BSD 4.3
+.Os
 .Sh NAME
 .Nm systat
 .Nd display system statistics on a crt
@@ -189,7 +189,7 @@ display; the minimum unambiguous prefix may be supplied.
 .Bl -tag -width Fl -compact
 .It Cm numbers
 Show the disk
-.Tn I/O 
+.Tn I/O
 statistics in numeric form.  Values are
 displayed in numeric columns which scroll downward.
 .It Cm bars
@@ -201,11 +201,11 @@ Toggle the display of time in disk activity (the default is to
 not display time).
 .El
 .It Ic swap
-Show information about swap space usage on all the 
+Show information about swap space usage on all the
 swap areas compiled into the kernel.
 The first column is the device name of the partition.
 The next column is the total space available in the partition.
-The 
+The
 .Ar Used
 column indicates the total blocks used so far;
 the graph shows the percentage of space in use on each partition.
@@ -249,7 +249,7 @@ a bar graph showing the amount of
 system (shown as `='), user (shown as `>'),
 nice (shown as `-'), and idle time (shown as ` ').
 .Pp
-To the right of the Proc display are statistics about 
+To the right of the Proc display are statistics about
 Context switches (`Csw'), Traps (`Trp'), Syscalls (`Sys'),
 Interrupts (`Int'), Soft interrupts (`Sof'), and Faults (`Flt')
 which have occurred during the last refresh interval.

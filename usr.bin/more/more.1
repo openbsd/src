@@ -1,4 +1,4 @@
-.\"	$OpenBSD: more.1,v 1.7 1996/10/14 15:23:53 etheisen Exp $
+.\"	$OpenBSD: more.1,v 1.8 1999/06/05 01:21:34 aaron Exp $
 .\" Copyright (c) 1980 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -45,7 +45,7 @@ more, page \- file perusal filter for crt viewing
 .B \-\fIn\fP
 ]
 [
-.B +\fIlinenumber\fP 
+.B +\fIlinenumber\fP
 ]
 [
 .B +/\fIpattern\fP
@@ -72,10 +72,10 @@ will use instead of the default.
 .TP
 .B \-c
 .I More
-will draw each page by beginning at the top of the screen and erasing 
+will draw each page by beginning at the top of the screen and erasing
 each line just before it draws on it.
-This avoids scrolling the screen, making it easier to read while 
-.I more 
+This avoids scrolling the screen, making it easier to read while
+.I more
 is writing.
 This option will be ignored if the terminal does not have the ability
 to clear to the end of a line.
@@ -261,7 +261,7 @@ same as b
 .IP "q or Q"
 Exit from
 .I more.
-.PP 
+.PP
 .IP =
 Display the current line number.
 .PP
@@ -299,7 +299,7 @@ If no search has been performed in the current file, this command
 goes back to the beginning of the file.
 .PP
 .IP !command
-invoke a shell with \fIcommand\|\fP. 
+invoke a shell with \fIcommand\|\fP.
 The characters `%' and `!' in "command" are replaced with the
 current file name and the previous shell command respectively.
 If there is no current file name, `%' is not expanded.
@@ -325,7 +325,7 @@ is not reading from a file, the bell is rung and nothing else happens.
 display the current file name and line number.
 .PP
 .IP ":q or :Q"
-exit from 
+exit from
 .I more
 (same as q or Q).
 .PP

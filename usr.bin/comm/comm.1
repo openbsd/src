@@ -1,4 +1,4 @@
-.\"	$OpenBSD: comm.1,v 1.4 1999/02/17 03:35:49 deraadt Exp $
+.\"	$OpenBSD: comm.1,v 1.5 1999/06/05 01:21:22 aaron Exp $
 .\"	$NetBSD: comm.1,v 1.4 1995/03/26 09:25:50 glass Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -49,7 +49,7 @@
 .Ar file1 file2
 .Sh DESCRIPTION
 The
-.Nm comm
+.Nm
 utility reads
 .Ar file1
 and
@@ -82,7 +82,7 @@ For example, if column number two is being suppressed, lines printed
 in column number one will not have any tabs preceding them, and lines
 printed in column number three will have one.
 .Pp
-.Nm comm
+.Nm
 assumes that the files are lexically sorted; all characters
 participate in line comparisons.
 .\" .Sh ENVIRONMENT
@@ -95,7 +95,7 @@ participate in line comparisons.
 .\" .El
 .Sh DIAGNOSTICS
 The
-.Nm comm
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr cmp 1 ,
@@ -104,6 +104,6 @@ utility exits 0 on success or >0 if an error occurred.
 .Xr uniq 1
 .Sh STANDARDS
 The
-.Nm comm
-utility conforms to 
+.Nm
+utility conforms to
 .St -p1003.2-92 .

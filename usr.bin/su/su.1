@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.7 1998/09/27 16:57:54 aaron Exp $
+.\"	$OpenBSD: su.1,v 1.8 1999/06/05 01:21:41 aaron Exp $
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -43,7 +43,7 @@
 .Op Fl Kflm
 .Op Ar login Op Ar "shell arguments"
 .Sh DESCRIPTION
-.Nm su
+.Nm
 requests the Kerberos password for
 .Ar login
 (or for
@@ -54,12 +54,12 @@ A shell is then executed, and any additional
 .Ar "shell arguments"
 after the login name
 are passed to the shell.
-.Nm su
+.Nm
 will resort to the local password file to find the password for
 .Ar login
 if there is a Kerberos error or if Kerberos is not installed.
 If
-.Nm su
+.Nm
 is executed by root, no password is requested and a shell
 with the appropriate user ID is executed; no additional Kerberos tickets
 are obtained.
@@ -122,7 +122,7 @@ is set to
 .Ev TERM
 is imported from your current environment.
 The invoked shell is the target login's, and
-.Nm su
+.Nm
 will change directory to the target login's home directory.
 .It Fl m
 Leave the environment unmodified.
@@ -132,7 +132,7 @@ shell (as defined by
 .Xr getusershell 3 )
 and the caller's real UID is
 non-zero,
-.Nm su
+.Nm
 will fail.
 .El
 .Pp
@@ -142,22 +142,22 @@ and
 .Fl m
 options are mutually exclusive; the last one specified
 overrides any previous ones.
-.Pp                                                                     
-If the optional                                                              
+.Pp
+If the optional
 .Ar "shell arguments"
-are provided on the command line, they are passed to the login shell of 
+are provided on the command line, they are passed to the login shell of
 the target login.  This allows it to pass arbitrary commands via
-the                                                                        
-.Fl c                                                                 
+the
+.Fl c
 option as understood by most shells.  Note that
-.Fl c                                                                
+.Fl c
 usually expects a single argument only; you have to quote it when
-passing multiple words.                               
+passing multiple words.
 .Pp
 If group 0 (normally
 .Dq wheel )
 has users listed then only those users can
-.Nm su
+.Nm
 to
 .Dq root .
 It is not sufficient to change a user's
@@ -169,7 +169,7 @@ group; they must explicitly be listed in
 If no one is in the
 .Dq wheel
 group, it is ignored, and anyone who knows the root password is permitted to
-.Nm su
+.Nm
 to
 .Dq root .
 .Pp
@@ -177,23 +177,23 @@ By default (unless the prompt is reset by a startup file) the super-user
 prompt is set to
 .Dq Sy \&#
 to remind one of its awesome power.
-.Sh EXAMPLES                                   
-.Bl -tag -width 5n -compact                                          
-.It Li "su bin -c makewhatis"                                        
-Runs the command                                      
-.Li makewhatis                                                                  
-as user                                        
-.Li bin .                                                
-You will be asked for bin's password unless your real UID is 0.            
+.Sh EXAMPLES
+.Bl -tag -width 5n -compact
+.It Li "su bin -c makewhatis"
+Runs the command
+.Li makewhatis
+as user
+.Li bin .
+You will be asked for bin's password unless your real UID is 0.
 .Pp
 .It Li "su bin -c 'makewhatis /usr/local/man'"
-Same as above, but the target command consists of more than a              
-single word.                                                                
+Same as above, but the target command consists of more than a
+single word.
 .Pp
-.It Li "su -l foo"                                                             
-Pretend a login for user                                                       
-.Li foo .                                                                      
-.El                                                                            
+.It Li "su -l foo"
+Pretend a login for user
+.Li foo .
+.El
 .Sh SEE ALSO
 .Xr csh 1 ,
 .Xr kerberos 1 ,
@@ -218,7 +218,7 @@ Provides terminal type which may be retained for the substituted
 user ID.
 .It Ev LOGNAME
 The user ID is always the effective ID (the target user ID) after an
-.Nm su
+.Nm
 unless the user ID is 0 (root).
 .It Ev USER
 Same as

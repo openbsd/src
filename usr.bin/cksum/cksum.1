@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.7 1998/09/23 04:32:37 aaron Exp $
+.\"	$OpenBSD: cksum.1,v 1.8 1999/06/05 01:21:21 aaron Exp $
 .\"	$NetBSD: cksum.1,v 1.8 1995/09/02 05:45:15 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 .\"
 .Dd April 28, 1995
 .Dt CKSUM 1
-.Os BSD 4.4
+.Os
 .Sh NAME
 .Nm cksum
 .Nd display file checksums and block counts
@@ -75,7 +75,7 @@ Use historic algorithms instead of the (superior) default one.
 .Pp
 Algorithm 1 is the algorithm used by historic
 .Bx
-systems as the 
+systems as the
 .Xr sum 1
 algorithm and by historic
 .At V
@@ -159,8 +159,8 @@ and
 utilities exit 0 on success or >0 if an error occurred.
 .Sh WARNING
 Do not use
-.Nm sum 
-or 
+.Nm sum
+or
 .Nm cksum
 to detect hostile binary modifications.  An attacker
 can trivially produce backdoored daemons which have the same CRC as the

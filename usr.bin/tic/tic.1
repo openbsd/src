@@ -1,4 +1,4 @@
-.\" $OpenBSD: tic.1,v 1.6 1999/03/11 21:08:09 millert Exp $
+.\" $OpenBSD: tic.1,v 1.7 1999/06/05 01:21:43 aaron Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -118,10 +118,10 @@ Force source translation to terminfo format
 using the long C variable names listed in <\fBterm.h\fR>
 .TP
 \fB-N\fR
-Disable smart defaults.  
-Normally, when translating from termcap to terminfo, the compiler makes 
+Disable smart defaults.
+Normally, when translating from termcap to terminfo, the compiler makes
 a number of assumptions about the defaults of string capabilities
-\fBreset1_string\fR, \fBcarriage_return\fR, \fBcursor_left\fR, 
+\fBreset1_string\fR, \fBcarriage_return\fR, \fBcursor_left\fR,
 \fBcursor_down\fR, \fBscroll_forward\fR, \fBtab\fR, \fBnewline\fR,
 \fBkey_backspace\fR, \fBkey_left\fR, and \fBkey_down\fR, then attempts
 to use obsolete termcap capabilities to deduce correct values.  It also

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: window.1,v 1.6 1999/05/12 21:58:32 aaron Exp $
+.\"	$OpenBSD: window.1,v 1.7 1999/06/05 01:21:51 aaron Exp $
 .\"	$NetBSD: window.1,v 1.3 1995/09/28 10:35:05 tls Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -39,7 +39,7 @@
 .\"
 .Dd December 30, 1993
 .Dt WINDOW 1
-.Os BSD 4.3
+.Os
 .Sh NAME
 .Nm window
 .Nd window environment
@@ -51,7 +51,7 @@
 .Op Fl e Ar escape-char
 .Op Fl c Ar command
 .Sh DESCRIPTION
-.Nm window
+.Nm
 implements a window environment on
 .Tn ASCII
 terminals.
@@ -68,7 +68,7 @@ input from the keyboard, but all windows can simultaneously send output
 to the display.
 .Pp
 When
-.Nm window
+.Nm
 starts up, the commands (see long commands below)
 contained in the file
 .Pa .windowrc
@@ -89,17 +89,17 @@ Ignore
 .Pa .windowrc
 and create the two default
 windows instead.
-.It Fl e Ar escape-char 
+.It Fl e Ar escape-char
 Set the escape character to
-.Ar escape-char  .
-.Ar Escape-char
+.Ar escape-char .
+.Ar escape-char
 can be a single character, or in the form
 .Ic ^X
 where
 .Ar X
 is any character, meaning
-.No control\- Ns Ar X  . 
-.It Fl c Ar command 
+.No control\- Ns Ar X  .
+.It Fl c Ar command
 Execute the string
 .Ar command
 as a long command (see below)
@@ -107,7 +107,7 @@ before doing anything else.
 .El
 .Pp
 Windows can overlap and are framed as necessary.  Each window
-is named by one of the digits ``1'' to ``9''.  This one-character
+is named by one of the digits 1\-9.  This one-character
 identifier, as well as a user definable label string, are displayed
 with the window on the top edge of its frame.  A window can be
 designated to be in the
@@ -160,7 +160,7 @@ uses
 this information to redraw its display.
 .Ss Operation
 During normal execution,
-.Nm window
+.Nm
 can be in one of two states:
 conversation mode and command mode.  In conversation mode, the
 terminal's real cursor is placed at the cursor position of a particular
@@ -170,13 +170,13 @@ on top of all other windows, except those in foreground.  In addition,
 it is set apart by highlighting its identifier and label in reverse video.
 .Pp
 Typing
-.Nm window Ns 's 
+.Nm window Ns 's
 escape character (normally
 .Ic ^P )
 in conversation
 mode switches it into command mode.  In command mode, the top line of
 the terminal screen becomes the command prompt window, and
-.Nm window
+.Nm
 interprets input from the keyboard as commands to manipulate windows.
 .Pp
 There are two types of commands: short commands are usually one or two
@@ -189,11 +189,11 @@ below).
 .Ss Short Commands
 Below,
 .Ar \&#
-represents one of the digits ``1'' to ``9''
+represents one of the digits 1\-9
 corresponding to the windows 1 to 9.
 .Ic ^X
 means
-.No control\- Ns Ar X  , 
+.No control\- Ns Ar X ,
 where
 .Ar X
 is any character.  In particular,
@@ -209,7 +209,7 @@ Select window
 .Ar #
 as the current window
 and return to conversation mode.
-.It Ic \&% Ns Ar # 
+.It Ic \&% Ns Ar #
 Select window
 .Ar #
 but stay in command mode.
@@ -226,7 +226,7 @@ current window.  Thus, typing two
 .Ic ^P Ns 's
 in conversation
 mode sends one to the current window.  If the
-.Nm window
+.Nm
 escape is changed to some other character, that
 character takes the place of
 .Ic ^P
@@ -237,18 +237,28 @@ List a short summary of commands.
 Refresh the screen.
 .It Ic q
 Exit
-.Nm window  .
+.Nm window .
 Confirmation is requested.
 .It Ic ^Z
 Suspend
-.Nm window  .
+.Nm window .
 .It Ic w
 Create a new window.  The user is prompted for the positions
 of the upper left and lower right corners of the window.
-The cursor is placed on the screen and the keys ``h'', ``j'',
-``k'', and ``l''
+The cursor is placed on the screen and the keys
+.Sq h ,
+.Sq j ,
+.Sq k ,
+and
+.Sq l
 move the cursor left, down, up, and right, respectively.
-The keys ``H'', ``J'', ``K'', and ``L'' move the cursor to the respective
+The keys
+.Sq H ,
+.Sq J ,
+.Sq K ,
+and
+.Sq L
+move the cursor to the respective
 limits of the screen.  Typing a number before the movement keys
 repeats the movement that number of times.  Return enters the cursor position
 as the upper left corner of the window.  The lower right corner
@@ -265,7 +275,7 @@ is used (see
 command below).
 .Pp
 Only fully visible windows can be created this way.
-.It Ic c Ns Ar # 
+.It Ic c Ns Ar #
 Close window
 .Ar # .
 The process in the window is sent
@@ -274,7 +284,7 @@ the hangup signal (see
 .Xr Csh 1
 should
 handle this signal correctly and cause no problems.
-.It Ic m Ns Ar # 
+.It Ic m Ns Ar #
 Move window
 .Ar #
 to another location.  A box in the shape
@@ -284,11 +294,11 @@ those for the
 .Ic w
 command are used to position the box.  The
 window can be moved partially off-screen.
-.It Ic M Ns Ar # 
+.It Ic M Ns Ar #
 Move window
 .Ar #
 to its previous position.
-.It Ic s Ns Ar # 
+.It Ic s Ns Ar #
 Change the size of window
 .Ar # .
 The user is prompted
@@ -299,7 +309,7 @@ keys used in
 and
 .Ic m
 are used to enter the position.
-.It Ic S Ns Ar # 
+.It Ic S Ns Ar #
 Change window
 .Ar #
 to its previous size.
@@ -347,29 +357,49 @@ similar to that of C.  Numeric and string expressions and variables
 are supported, as well as conditional statements.
 .Pp
 There are two data types: string and number.  A string is a sequence
-of letters or digits beginning with a letter.  ``_'' and ``.'' are
-considered letters.  Alternately, non-alphanumeric characters can
-be included in strings by quoting them in ``"'' or escaping them
-with ``\\''.  In addition, the ``\\'' sequences of C are supported,
-both inside and outside quotes (e.g., ``\\n'' is a new line,
-``\\r'' a carriage return).  For example, these are legal strings:
+of letters or digits beginning with a letter.
+.Ql _
+and
+.Ql \&.
+are considered letters.  Alternately, non-alphanumeric characters can
+be included in strings by quoting them in
+.Ql \&"
+or escaping them with
+.Ql \e .
+In addition, the
+.Ql \e
+sequences of C are supported,
+both inside and outside quotes (e.g.,
+.Ql \en
+is a newline,
+.Ql \er
+a carriage return).  For example, these are legal strings:
 abcde01234, "&#$^*&#", ab"$#"cd, ab\\$\\#cd, "/usr/ucb/window".
 .Pp
 A number is an integer value in one of three forms:
-a decimal number, an octal number preceded by ``0'',
-or a hexadecimal number preceded by ``0x'' or ``0X''.  The natural
+a decimal number, an octal number preceded by
+.Sq 0 ,
+or a hexadecimal number preceded by
+.Sq 0x
+or
+.Sq 0X .
+The natural
 machine integer size is used (i.e., the signed integer type
 of the C compiler).  As in C, a non-zero number represents
 a boolean true.
 .Pp
-The character ``#'' begins a comment which terminates at the
-end of the line.
+The character
+.Ql #
+begins a comment which terminates at the end of the line.
 .Pp
 A statement is either a conditional or an expression.  Expression
-statements are terminated with a new line or ``;''.  To continue
-an expression on the next line, terminate the first line with ``\\''.
+statements are terminated with a new line or
+.Ql \&; .
+To continue
+an expression on the next line, terminate the first line with
+.Ql \e .
 .Ss Conditional Statement
-.Nm window
+.Nm
 has a single control structure:
 the fully bracketed if statement in the form
 .Pp
@@ -396,7 +426,7 @@ be repeated any number of times.
 must be numeric.
 .Ss Expressions
 Expressions in
-.Nm window
+.Nm
 are similar to those in the
 C language, with most C operators supported on numeric
 operands.  In addition, some are overloaded to operate on strings.
@@ -417,12 +447,12 @@ The operators in order of increasing precedence:
 .Aq Va expr2
 .Xc
 Assignment.  The variable of name
-.Aq Va expr1 , 
+.Aq Va expr1 ,
 which must be string valued,
 is assigned the result of
-.Aq Va expr2 . 
+.Aq Va expr2 .
 Returns the value of
-.Aq Va expr2 . 
+.Aq Va expr2 .
 .It Xo
 .Aq Va expr1
 .Ic ?
@@ -431,19 +461,19 @@ Returns the value of
 .Aq Va expr3
 .Xc
 Returns the value of
-.Aq Va expr2 
+.Aq Va expr2
 if
-.Aq Va expr1 
+.Aq Va expr1
 evaluates true
 (non-zero numeric value); returns the value of
-.Aq Va expr3 
+.Aq Va expr3
 otherwise.  Only
 one of
-.Aq Va expr2 
+.Aq Va expr2
 and
-.Aq Va expr3 
+.Aq Va expr3
 is evaluated.
-.Aq Va Expr1 
+.Aq Va Expr1
 must
 be numeric.
 .It Xo
@@ -453,9 +483,9 @@ be numeric.
 .Xc
 Logical or.  Numeric values only.  Short circuit evaluation is supported
 (i.e., if
-.Aq Va expr1 
+.Aq Va expr1
 evaluates true, then
-.Aq Va expr2 
+.Aq Va expr2
 is not evaluated).
 .It Xo
 .Aq Va expr1
@@ -538,7 +568,9 @@ in place of its value).
 .Ic -
 .Aq Va expr2
 .Xc
-Addition and subtraction on numbers.  For ``+'', if one
+Addition and subtraction on numbers.  For
+.Ql + ,
+if one
 argument is a string, then the other is converted to a string,
 and the result is the concatenation of the two strings.
 .It Xo
@@ -561,7 +593,9 @@ Multiplication, division, modulo.  Numbers only.
 .Ic \&$? Ns Aq Va expr
 .Xc
 The first three are unary minus, bitwise complement and logical complement
-on numbers only.  The operator, ``$'', takes
+on numbers only.  The operator,
+.Ql $ ,
+takes
 .Aq Va expr
 and returns
 the value of the variable of that name.  If
@@ -570,7 +604,8 @@ is numeric
 with value
 .Ar n
 and it appears within an alias macro (see below),
-then it refers to the nth argument of the alias invocation.  ``$?''
+then it refers to the nth argument of the alias invocation.
+.Ql $?
 tests for the existence of the variable
 .Aq Va expr ,
 and returns 1
@@ -582,7 +617,7 @@ Function call.
 .Aq Va Expr
 must be a string that is the unique
 prefix of the name of a built-in
-.Nm window
+.Nm
 function
 or the full name of a user defined alias macro.  In the case of a built-in
 function,
@@ -605,8 +640,9 @@ Only the first argument form is valid for user defined aliases.  Aliases
 are defined using the
 .Ic alias
 built-in function (see below).  Arguments
-are accessed via a variant of the variable mechanism (see ``$'' operator
-above).
+are accessed via a variant of the variable mechanism (see the
+.Ql $
+operator above).
 .Pp
 Most functions return value, but some are used for side effect
 only and so must be used as statements.  When a function or an alias is used
@@ -643,7 +679,7 @@ listed.  Otherwise,
 .Aq Ar string
 is defined as an alias,
 with expansion
-.Aq Ar string\-list > . 
+.Aq Ar string\-list > .
 The previous definition of
 .Aq Ar string ,
 if any, is returned.  Default for
@@ -696,7 +732,7 @@ Set the default value of the
 .Ar smooth
 argument
 to the command
-.Nm window
+.Nm
 (see below).  The argument
 is a boolean flag (one of
 .Ar on  ,
@@ -716,7 +752,7 @@ The initial value is 1 (true).
 Write the list of strings,
 .Aq Ar string-list ,
 to
-.Nm window  ,
+.Nm window ,
 separated
 by spaces and terminated with a new line.  The strings are only
 displayed in the window, the processes in the window are not
@@ -738,30 +774,30 @@ meaning
 .No control\- Ns Ar X .
 .It Xo
 .Ic foreground Ns ( Bq Ar window ,
-.Bq Ar flag ) 
+.Bq Ar flag )
 .Xc
 Move
-.Nm window
+.Nm
 in or out of foreground.
 .Ar Flag
 is a boolean value.  The old foreground flag
 is returned.  Default for
-.Nm window
+.Nm
 is the current window,
 default for
 .Ar flag
 is no change.
 .It Xo
 .Ic label Ns ( Bq Ar window ,
-.Bq Ar label ) 
+.Bq Ar label )
 .Xc
 Set the label of
-.Nm window
+.Nm
 to
 .Ar label  .
 Returns the old
 label as a string.  Default for
-.Nm window
+.Nm
 is the current
 window, default for
 .Ar label
@@ -772,7 +808,7 @@ No arguments.  List the identifiers and labels of all windows.  No
 value is returned.
 .It Ic select Ns Pq Bq Ar window
 Make
-.Nm window
+.Nm
 the current window.  The previous current window
 is returned.  Default is no change.
 .It Ic source Ns Pq Ar filename
@@ -814,12 +850,12 @@ No arguments.  List all variables.  No value is returned.
 .Bq Ar ncol ,
 .Bq Ar nline ,
 .Bq Ar label ,
-.Bq Ar pty , 
+.Bq Ar pty ,
 .Bq Ar frame ,
 .Bq Ar mapnl ,
 .Bq Ar keepopen ,
 .Bq Ar smooth ,
-.Bq Ar shell ) . 
+.Bq Ar shell ) .
 .Xc
 Open a window with upper left corner at
 .Ar row  ,
@@ -871,7 +907,7 @@ command (see above).
 is a list of strings that will be used as the shell
 program to place in the window (default is the program specified
 by
-.Ar default_shell  ,
+.Ar default_shell ,
 see above).  The created window's identifier
 is returned as a number.
 .It Xo
@@ -881,7 +917,7 @@ is returned as a number.
 Send the list of strings,
 .Aq Ar string-list ,
 to
-.Nm window  ,
+.Nm window ,
 separated
 by spaces but not terminated with a new line.  The strings are actually
 given to the window as input.  No value is returned.  Default
@@ -890,7 +926,7 @@ is the current window.
 .Ss Predefined Variables
 These variables are for information only.  Redefining them does
 not affect the internal operation of
-.Nm window  .
+.Nm window .
 .Bl -tag -width modes
 .It Ar baud
 The baud rate as a number between 50 and 38400.
@@ -927,7 +963,7 @@ field of the terminal's
 .Ev TERMCAP
 entry, is used.
 .Sh ENVIRONMENT
-.Nm window
+.Nm
 utilizes these environment variables:
 .Ev HOME ,
 .Ev SHELL ,
@@ -938,12 +974,12 @@ utilizes these environment variables:
 .Bl -tag -width /dev/[pt]ty[pq]? -compact
 .It Pa ~/.windowrc
 startup command file
-.It Pa /dev/[pt]ty[pq]? 
+.It Pa /dev/[pt]ty[pq]?
 pseudo-terminal devices
 .El
 .Sh HISTORY
 The
-.Nm window
+.Nm
 command appeared in
 .Bx 4.3 .
 .Sh DIAGNOSTICS

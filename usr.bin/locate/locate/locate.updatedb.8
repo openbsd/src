@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.updatedb.8,v 1.7 1999/05/23 14:11:30 aaron Exp $
+.\"	$OpenBSD: locate.updatedb.8,v 1.8 1999/06/05 01:21:31 aaron Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
@@ -61,7 +61,9 @@ The available options are as follows:
 Sets the directory temporary files are stored in.
 .It Fl -fcodes
 Use the named file as the find codes database.  If the file
-name ``-'' is given, the database will be sent to standard output.
+name
+.Ql \-
+is given, the database will be sent to standard output.
 .It Fl -searchpaths
 Sets the list of directories to be put in the database.
 .It Fl -prunepaths

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patch.1,v 1.3 1998/11/25 00:30:25 espie Exp $	-*- nroff -*-
+.\"	$OpenBSD: patch.1,v 1.4 1999/06/05 01:21:36 aaron Exp $	-*- nroff -*-
 .rn '' }`
 .de Sh
 .br
@@ -460,7 +460,7 @@ patches out of order without some warning.
 Second, make sure you've specified the filenames right, either in a
 context diff header, or with an Index: line.
 If you are patching something in a subdirectory, be sure to tell the patch
-user to specify a 
+user to specify a
 .B \-p
 switch as needed.
 Third, you can create a file by sending out a diff that compares a
@@ -511,7 +511,7 @@ swapped code, but that would take an extra pass.
 Check patch mode (
 .BR -C )
 will fail if you try to check several patches in succession that build on
-each other.  The whole code of 
+each other.  The whole code of
 .I patch
 would have to be restructured to keep temporary files around so that it can
 handle this situation.

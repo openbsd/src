@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.18 1999/05/16 21:53:31 espie Exp $
+.\"	$OpenBSD: make.1,v 1.19 1999/06/05 01:21:33 aaron Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 .Nm make
 .Nd maintain program dependencies
 .Sh SYNOPSIS
-.Nm 
+.Nm make
 .Op Fl BPSeiknqrst
 .Op Fl D Ar variable
 .Op Fl d Ar flags
@@ -52,10 +52,10 @@
 .Op Fl m Ar directory
 .Ek
 .Op Fl V Ar variable
-.Op Ar variable=value
+.Op Ar variable Ns No = Ns Ar value
 .Op Ar target ...
 .Sh DESCRIPTION
-.Nm make
+.Nm
 is a program designed to simplify the maintenance of other programs.
 Its input is a list of specifications as to the files upon which programs
 and other files depend.
@@ -74,7 +74,7 @@ exists, it is read (see
 .Pp
 This manual page is intended as a reference document only.
 For a more thorough introduction to
-.Nm make
+.Nm
 and makefiles, please refer to
 .%T "Make \- A Tutorial" .
 .Pp
@@ -92,7 +92,7 @@ Define
 to be 1, in the global context.
 .It Fl d Ar flags
 Turn on debugging, and specify which portions of
-.Nm make
+.Nm
 are to print debugging information.
 .Ar flags
 is one or more of the following:
@@ -137,7 +137,7 @@ and
 If
 .Ar makefile
 is
-.Ql Fl ,
+.Ql \- ,
 standard input is read.
 Multiple makefiles may be specified, and are read in the order specified.
 .It Fl I Ar directory
@@ -148,11 +148,11 @@ option) is automatically included as part of this list.
 .It Fl i
 Ignore non-zero exit of shell commands in the makefile.
 Equivalent to specifying
-.Ql Fl
+.Ql \-
 before each command line in the makefile.
 .It Fl j Ar max_jobs
 Specify the maximum number of jobs that
-.Nm make
+.Nm
 may have running at any one time. Turns compatibility mode off, unless the
 .Ar B
 flag is also specified.
@@ -172,9 +172,9 @@ option).
 Display the commands that would have been executed, but do not actually
 execute them.
 .It Fl P
-Collate the output of a given job and display it only when the job finishes, 
-instead of mixing the output of parallel jobs together.  
-This option has no effect unless 
+Collate the output of a given job and display it only when the job finishes,
+instead of mixing the output of parallel jobs together.
+This option has no effect unless
 .Fl j
 is used too.
 .It Fl q
@@ -224,7 +224,9 @@ line are compressed into a single space.
 .Sh FILE DEPENDENCY SPECIFICATIONS
 Dependency lines consist of one or more targets, an operator, and zero
 or more sources.
-This creates a relationship where the targets ``depend'' on the sources
+This creates a relationship where the targets
+.Dq depend
+on the sources
 and are usually created from them.
 The exact relationship between the target and the source is determined
 by the operator that separates them.
@@ -236,7 +238,7 @@ those of any of its sources.
 Sources for a target accumulate over dependency lines when this operator
 is used.
 The target is removed if
-.Nm make
+.Nm
 is interrupted.
 .It Ic \&!
 Targets are always re-created, but not until all sources have been
@@ -244,7 +246,7 @@ examined and re-created as necessary.
 Sources for a target accumulate over dependency lines when this operator
 is used.
 The target is removed if
-.Nm make
+.Nm
 is interrupted.
 .It Ic \&::
 If no sources are specified, the target is always re-created.
@@ -253,7 +255,7 @@ been modified more recently than the target.
 Sources for a target do not accumulate over dependency lines when this
 operator is used.
 The target will not be removed if
-.Nm make
+.Nm
 is interrupted.
 .El
 .Pp
@@ -299,7 +301,7 @@ A
 causes any non-zero exit status of the command line to be ignored.
 .Sh VARIABLE ASSIGNMENTS
 Variables in
-.Nm make
+.Nm
 are much like variables in the shell, and, by tradition,
 consist of all upper-case letters.
 The five operators that can be used to assign values to variables are as
@@ -368,7 +370,9 @@ The name of the archive file; also known as
 .Ql Va \&! .
 .It Va .IMPSRC
 The name/path of the source from which the target is to be transformed
-(the ``implied'' source); also known as
+(the
+.Dq implied
+source); also known as
 .Ql Va \&< .
 .It Va .MEMBER
 The name of the archive member; also known as
@@ -421,8 +425,8 @@ and
 .El
 .Pp
 In addition,
-.Nm make
-sets or knows about the following internal variables, or environment 
+.Nm
+sets or knows about the following internal variables, or environment
 variables:
 .Bl -tag -width MAKEFLAGS
 .It Va \&$
@@ -434,50 +438,52 @@ expands to a single dollar
 sign.
 .It Va .MAKE
 The name that
-.Nm make
+.Nm
 was executed with
 .Pq Va argv Ns Op 0 .
 .It Va .CURDIR
 A path to the directory where
-.Nm make
+.Nm
 was executed.
 .It Va .OBJDIR
 A path to the directory where the targets are built.
 At startup,
-.Nm make
+.Nm
 searches for an alternate directory to place target files -- it
 will attempt to change into this special directory.
-First, if 
-.Ev MAKEOBJDIRPREFIX 
-is defined, 
-.Nm make 
+First, if
+.Ev MAKEOBJDIRPREFIX
+is defined,
+.Nm
 prepends its contents to the current directory name and tries for
 the resulting directory. If that fails,
-.Nm make
+.Nm
 remains in the current directory.
-If 
+If
 .Ev MAKEOBJDIRPREFIX
 is not defined,
-.Nm make 
+.Nm
 checks
-.Ev MAKEOBJDIR 
-and tries to change into that directory.  Should that fail, 
-.Nm make
-remains in the current directory.  If 
+.Ev MAKEOBJDIR
+and tries to change into that directory.  Should that fail,
+.Nm
+remains in the current directory.  If
 .Ev MAKEOBJDIR
 is not defined, it tries to change into the directory named
 .Pa obj.${MACHINE}
-(see 
-.Va MACHINE 
-variable). If it still has found no special directory, 
-.Nm make 
+(see
+.Va MACHINE
+variable). If it still has found no special directory,
+.Nm
 next tries the directory named
 .Pa obj .
 If this fails,
-.Nm make
-tries to prepend /usr/obj to the current directory name.
+.Nm
+tries to prepend
+.Pa /usr/obj
+to the current directory name.
 Finally, if none of these directories are available
-.Nm make
+.Nm
 will settle for and use the current directory.
 .It Va .MAKEFLAGS
 The environment variable
@@ -485,26 +491,26 @@ The environment variable
 may contain anything that
 may be specified on
 .Nm make Ns 's
-command line. Its contents are stored in 
+command line. Its contents are stored in
 .Nm make Ns 's
-.Va .MAKEFLAGS 
+.Va .MAKEFLAGS
 variable.
 Anything specified on
 .Nm make Ns 's
 command line is appended to the
 .Va .MAKEFLAGS
 variable which is then
-entered into the environment as 
+entered into the environment as
 .Ev MAKEFLAGS
 for all programs which
-.Nm make
+.Nm
 executes.
 .It Va MFLAGS
-A shorter synonym for 
+A shorter synonym for
 .Va .MAKEFLAGS .
 .It Ev PWD
 Alternate path to the current directory.
-.Nm make
+.Nm
 normally sets
 .Ql Va .CURDIR
 to the canonical path given by
@@ -512,7 +518,7 @@ to the canonical path given by
 However, if the environment variable
 .Ev PWD
 is set and gives a path to the current directory, then
-.Nm make
+.Nm
 sets
 .Ql Va .CURDIR
 to the value of
@@ -522,38 +528,40 @@ instead.
 is always set to the value of
 .Ql Va .OBJDIR
 for all programs which
-.Nm make
+.Nm
 executes.
 .It Va .TARGETS
-List of targets 
-.Nm make 
+List of targets
+.Nm
 is currently building.
 .It Va .INCLUDES
-See 
+See
 .Ic .INCLUDES
 special target
 .It Va .LIBS
-See 
+See
 .Ic .LIBS
 special target
 .It Va MACHINE
-Name of the machine architecture 
-.Nm make 
+Name of the machine architecture
+.Nm
 is running on, obtained from the
 .Ev MACHINE
-environment variable, or through 
+environment variable, or through
 .Xr uname 2
 if not defined.
 .It Va MACHINE_ARCH
 Name of the machine architecture
-.Nm make
+.Nm
 was compiled for, obtained from the
-.Ev MACHINE_ARCH 
+.Ev MACHINE_ARCH
 environment variable, or defined at compilation time.
 .El
 .Pp
 Variable expansion may be modified to select or modify each word of the
-variable (where a ``word'' is whitespace delimited sequence of characters).
+variable (where a
+.Dq word
+is whitespace delimited sequence of characters).
 The general format of a variable expansion is as follows:
 .Pp
 .Dl {variable[:modifier[:...]]}
@@ -816,7 +824,7 @@ of higher precedence than
 .El
 .Pp
 As in C,
-.Nm make
+.Nm
 will only evaluate a conditional as far as is necessary to determine
 its value.
 Parentheses may be used to change the order of evaluation.
@@ -871,21 +879,26 @@ If no relational operator is given, it is assumed that the expanded
 variable is being compared against 0.
 .Pp
 When
-.Nm make
+.Nm
 is evaluating one of these conditional expressions, and it encounters
-a word it doesn't recognize, either the ``make'' or ``defined''
+a word it doesn't recognize, either the
+.Dq make
+or
+.Dq defined
 expression is applied to it, depending on the form of the conditional.
 If the form is
 .Ql Ic .ifdef
 or
 .Ql Ic .ifndef ,
-the ``defined'' expression
-is applied.
+the
+.Dq defined
+expression is applied.
 Similarly, if the form is
 .Ql Ic .ifmake
 or
 .Ql Ic .ifnmake ,
-the ``make''
+the
+.Dq make
 expression is applied.
 .Pp
 If the conditional evaluates to true the parsing of the makefile continues
@@ -933,7 +946,7 @@ Ignore any errors from the commands associated with this target, exactly
 as if they all were preceded by a dash
 .Pq Ql \- .
 .It Ic .MADE
-Mark all sources of this target as being up-to-date. 
+Mark all sources of this target as being up-to-date.
 .It Ic .MAKE
 Execute the commands associated with this target even if the
 .Fl n
@@ -944,18 +957,18 @@ Normally used to mark recursive
 .Nm make Ns 's .
 .It Ic .NOTMAIN
 Normally
-.Nm make
+.Nm
 selects the first target it encounters as the default target to be built
 if no target was specified.
 This source prevents this target from being selected.
 .It Ic .OPTIONAL
 If a target is marked with this attribute and
-.Nm make
+.Nm
 can't figure out how to create it, it will ignore this fact and assume
 the file isn't needed or already exists.
 .It Ic .PRECIOUS
 When
-.Nm make
+.Nm
 is interrupted, it removes any partially made targets.
 This source prevents the target from being removed.
 .It Ic .SILENT
@@ -994,7 +1007,7 @@ This is sort of a
 .Ic .USE
 rule for any target (that was used only as a
 source) that
-.Nm make
+.Nm
 can't figure out any other way to create.
 Only the shell script is used.
 The
@@ -1019,31 +1032,31 @@ file. The suffix must have already been declared with
 .Ic .SUFFIXES ,
 any suffix so declared will have the directories on its search path (see
 .Ic .PATH )
-placed in the 
+placed in the
 .Va .INCLUDES
-special variable, each preceded by a 
-.Fl I 
+special variable, each preceded by a
+.Fl I
 flag.
 .It Ic .INTERRUPT
 If
-.Nm make
+.Nm
 is interrupted, the commands for this target will be executed.
 .It Ic .LIBS
-This does for libraries what 
-.Ic .INCLUDES 
+This does for libraries what
+.Ic .INCLUDES
 does for include files, except that the flag used is
 .Fl L .
 .It Ic .MAIN
 If no target is specified when
-.Nm make
+.Nm
 is invoked, this target will be built. This is always set, either
-explicitly, or implicitly when 
-.Nm make
+explicitly, or implicitly when
+.Nm
 selects the default target, to give the user a way to refer to the default
 target on the command line.
 .It Ic .MAKEFLAGS
 This target provides a way to specify flags for
-.Nm make
+.Nm
 when the makefile is used.
 The flags are as if typed to the shell, though the
 .Fl f
@@ -1071,8 +1084,8 @@ deleted.
 .It Ic .PATH\fIsuffix\fR
 The sources are directories which are to be searched for suffixed files
 not found in the current directory.
-.Nm make
-first searches the suffixed search path, before reverting to the default 
+.Nm
+first searches the suffixed search path, before reverting to the default
 path if the file is not found there.
 .It Ic .PHONY
 Apply the
@@ -1100,24 +1113,24 @@ Each source specifies a suffix to
 .Nm make .
 If no sources are specified, any previous specified suffices are deleted.
 .Sh COMPATIBILITY
-Older versions of 
-.Nm make
-used 
+Older versions of
+.Nm
+used
 .Ev MAKE
-instead of 
+instead of
 .Ev MAKEFLAGS .
 This was removed for POSIX compatibility.
-The internal variable 
+The internal variable
 .Va MAKE
 is set to the same value as
 .Va .MAKE ,
 support for this may be removed in the future.
 .Pp
-Most of the more esoteric features of 
-.Nm make
+Most of the more esoteric features of
+.Nm
 should probably be avoided for greater compatibility.
 .Sh ENVIRONMENT
-.Nm make
+.Nm
 uses the following environment variables, if they exist:
 .Ev MACHINE ,
 .Ev MACHINE_ARCH ,
@@ -1141,25 +1154,25 @@ system makefile
 .It Pa /usr/share/mk
 system makefile directory
 .IT Pa /usr/obj
-default 
+default
 .Ev MAKEOBJDIRPREFIX directory.
 .El
 .Sh BUGS
 The determination of
 .Va .OBJDIR
-is contorted to the point of absurdity.  
+is contorted to the point of absurdity.
 .Pp
 In the presence of several
 .Ic .MAIN
 special targets,
-.Nm make
+.Nm
 silently ignores all but the first.
 .Pp
 .Va .TARGETS
 is not set to the default target when
-.Nm make
+.Nm
 is invoked without a target name and no
-.Ic MAIN 
+.Ic MAIN
 special target exists.
 .Pp
 The evaluation of
@@ -1184,6 +1197,6 @@ won't work, and should be rewritten the other way around.
 .Xr mkdep 1
 .Sh HISTORY
 A
-.Nm make
+.Nm
 command appeared in
 .At v7 .
