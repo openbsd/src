@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.27 2001/08/11 12:05:00 dhartmei Exp $
+.\" $OpenBSD: pfctl.8,v 1.28 2001/08/19 18:30:58 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -117,6 +117,12 @@ Show filter parameters. Modifier names may be abbreviated.
 Show the currently loaded NAT rules.
 .It Fl s Ar rules
 Show the currently loaded packet filter rules.
+When used together with -v, the per-rule statistics (number of evaluations,
+number of packets) are also shown. Note that the 'skip step' optimization
+done automatically by the kernel will skip evaluation of rules where
+redundant. Packets passed statefully are counted in the rule that created
+the state (even though the rule isn't evaluated more than once for the
+entire connection).
 .It Fl s Ar state
 Show the contents of the state table.
 .It Fl s Ar info
@@ -125,7 +131,7 @@ Show filter information (statistics and counters).
 Show all of the above.
 .El
 .It Fl v
-Show rules as they are parsed.
+Produce more verbose output.
 .It Fl x Ar level
 Set the debug level to one of the following.
 Level names may be abbreviated:
