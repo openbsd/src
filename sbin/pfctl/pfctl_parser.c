@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.42 2001/08/18 14:05:56 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.43 2001/08/19 17:03:00 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -37,6 +37,8 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#define TCPSTATES
+#include <netinet/tcp_fsm.h>
 #include <net/pfvar.h>
 #include <arpa/inet.h>
 
@@ -423,12 +425,15 @@ print_state(struct pf_state *s)
 	print_host(&s->ext);
 	printf("\n");
 
-	printf("\t%u:%u  ", src->state, dst->state);
 	if (s->proto == IPPROTO_TCP) {
+		printf("   %s:%s  ", tcpstates[src->state],
+			tcpstates[dst->state]);
 		print_seq(src);
 		printf("    ");
 		print_seq(dst);
 		printf("\n");
+	} else {
+		printf("   %u:%u  ", src->state, dst->state);
 	}
 
 	sec = s->creation % 60;
@@ -436,7 +441,7 @@ print_state(struct pf_state *s)
 	min = s->creation % 60;
 	s->creation /= 60;
 	hrs = s->creation;
-	printf("\tage %.2u:%.2u:%.2u", hrs, min, sec);
+	printf("   age %.2u:%.2u:%.2u", hrs, min, sec);
 	sec = s->expire % 60;
 	s->expire /= 60;
 	min = s->expire % 60;

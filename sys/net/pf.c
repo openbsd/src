@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.126 2001/08/19 01:53:26 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.127 2001/08/19 17:03:00 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -53,6 +53,7 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
+#include <netinet/tcp_fsm.h>
 #include <netinet/tcp_seq.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
@@ -1919,8 +1920,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		s->dst.seqlo = 0;	/* Haven't seen these yet */
 		s->dst.seqhi = 1;
 		s->dst.max_win = 1;
-		s->src.state = 1;
-		s->dst.state = 0;
+		s->src.state = TCPS_SYN_SENT;
+		s->dst.state = TCPS_CLOSED;
 		s->creation = pftv.tv_sec;
 		s->expire = pftv.tv_sec + 60;
 		s->packets = 1;
@@ -2308,17 +2309,18 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	if (src->seqlo == 0) {
 		/* First packet from this end.  Set its state */
 		src->seqlo = end;
-		src->max_win = 1;
-		if (src->state < 1)
-			src->state = 1;
+		if (src->state < TCPS_SYN_SENT)
+			src->state = TCPS_SYN_SENT;
 
 		/*
 		 * May need to slide the window (seqhi may have been set by
 		 * the crappy stack check or if we picked up the connection
 		 * after establishment)
 		 */
-		if (SEQ_GEQ(end + MAX(1, dst->max_win), dst->seqhi))
-			dst->seqhi = end + dst->max_win;
+		if (SEQ_GEQ(seq + MAX(1, dst->max_win), src->seqhi))
+			src->seqhi = seq + MAX(1, dst->max_win);
+		if (win > src->max_win)
+			src->max_win = win;
 	}
 
 	if ((th->th_flags & TH_ACK) == 0) {
@@ -2338,7 +2340,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 	ackskew = dst->seqlo - ack;
 
-#define MAXACKWINDOW (0xffff + 1500)
+#define MAXACKWINDOW (0xffff + 1500)	/* 1500 is an arbitrary fudge factor */
 	if (SEQ_GEQ(src->seqhi, end) &&
 	    /* Last octet inside other's window space */
 	    SEQ_GEQ(seq, src->seqlo - dst->max_win) &&
@@ -2364,33 +2366,36 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 		/* update states */
 		if (th->th_flags & TH_SYN)
-			if (src->state < 1)
-				src->state = 1;
+			if (src->state < TCPS_SYN_SENT)
+				src->state = TCPS_SYN_SENT;
 		if (th->th_flags & TH_FIN)
-			if (src->state < 3)
-				src->state = 3;
+			if (src->state < TCPS_CLOSING)
+				src->state = TCPS_CLOSING;
 		if (th->th_flags & TH_ACK) {
-			if (dst->state == 1)
-				dst->state = 2;
-			else if (dst->state == 3)
-				dst->state = 4;
+			if (dst->state == TCPS_SYN_SENT)
+				dst->state = TCPS_ESTABLISHED;
+			else if (dst->state == TCPS_CLOSING)
+				dst->state = TCPS_FIN_WAIT_2;
 		}
 		if (th->th_flags & TH_RST)
-			src->state = dst->state = 5;
+			src->state = dst->state = TCPS_TIME_WAIT;
 
 		/* update expire time */
-		if (src->state >= 4 && dst->state >= 4)
+		if (src->state >= TCPS_FIN_WAIT_2 ||
+		    dst->state >= TCPS_FIN_WAIT_2)
 			(*state)->expire = pftv.tv_sec + 5;
-		else if (src->state >= 3 && dst->state >= 3)
+		else if (src->state >= TCPS_CLOSING &&
+		    dst->state >= TCPS_CLOSING)
 			(*state)->expire = pftv.tv_sec + 300;
-		else if (src->state < 2 || dst->state < 2)
+		else if (src->state < TCPS_ESTABLISHED ||
+		    dst->state < TCPS_ESTABLISHED)
 			(*state)->expire = pftv.tv_sec + 30;
 		else
 			(*state)->expire = pftv.tv_sec + 24*60*60;
 
 		/* Fall through to PASS packet */
 
-	} else if (dst->state < 1 &&
+	} else if (dst->state < TCPS_SYN_SENT &&
 	    SEQ_GEQ(src->seqhi + MAXACKWINDOW, end) &&
 	    /* Within a window forward of the originating packet */
 	    SEQ_GEQ(src->seqlo - MAXACKWINDOW, seq)) {
@@ -2429,10 +2434,10 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		 */
 
 		if (th->th_flags & TH_FIN)
-			if (src->state < 3)
-				src->state = 3;
+			if (src->state < TCPS_CLOSING)
+				src->state = TCPS_CLOSING;
 		if (th->th_flags & TH_RST)
-			src->state = dst->state = 5;
+			src->state = dst->state = TCPS_TIME_WAIT;
 
 		/* Fall through to PASS packet */
 
