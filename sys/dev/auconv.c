@@ -1,4 +1,4 @@
-/*	$OpenBSD: auconv.c,v 1.5 2002/05/06 02:34:57 nate Exp $ */
+/*	$OpenBSD: auconv.c,v 1.6 2003/06/27 00:23:43 jason Exp $ */
 /*	$NetBSD: auconv.c,v 1.3 1999/11/01 18:12:19 augustss Exp $	*/
 
 /*
@@ -40,10 +40,7 @@
 #include <dev/auconv.h>
 
 void
-change_sign8(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign8(void *v, u_char *p, int cc)
 {
 	while (--cc >= 0) {
 		*p ^= 0x80;
@@ -52,10 +49,7 @@ change_sign8(v, p, cc)
 }
 
 void
-change_sign16_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign16_le(void *v, u_char *p, int cc)
 {
 	while ((cc -= 2) >= 0) {
 		p[1] ^= 0x80;
@@ -64,10 +58,7 @@ change_sign16_le(v, p, cc)
 }
 
 void
-change_sign16_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign16_be(void *v, u_char *p, int cc)
 {
 	while ((cc -= 2) >= 0) {
 		p[0] ^= 0x80;
@@ -76,10 +67,7 @@ change_sign16_be(v, p, cc)
 }
 
 void
-swap_bytes(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+swap_bytes(void *v, u_char *p, int cc)
 {
 	u_char t;
 
@@ -92,10 +80,7 @@ swap_bytes(v, p, cc)
 }
 
 void
-swap_bytes_change_sign16_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+swap_bytes_change_sign16_le(void *v, u_char *p, int cc)
 {
 	u_char t;
 
@@ -108,10 +93,7 @@ swap_bytes_change_sign16_le(v, p, cc)
 }
 
 void
-swap_bytes_change_sign16_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+swap_bytes_change_sign16_be(void *v, u_char *p, int cc)
 {
 	u_char t;
 
@@ -124,28 +106,19 @@ swap_bytes_change_sign16_be(v, p, cc)
 }
 
 void
-change_sign16_swap_bytes_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign16_swap_bytes_le(void *v, u_char *p, int cc)
 {
 	swap_bytes_change_sign16_be(v, p, cc);
 }
 
 void
-change_sign16_swap_bytes_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign16_swap_bytes_be(void *v, u_char *p, int cc)
 {
 	swap_bytes_change_sign16_le(v, p, cc);
 }
 
 void
-linear8_to_linear16_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+linear8_to_linear16_le(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -159,10 +132,7 @@ linear8_to_linear16_le(v, p, cc)
 }
 
 void
-linear8_to_linear16_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+linear8_to_linear16_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -176,10 +146,7 @@ linear8_to_linear16_be(v, p, cc)
 }
 
 void
-linear16_to_linear8_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+linear16_to_linear8_le(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -190,10 +157,7 @@ linear16_to_linear8_le(v, p, cc)
 }
 
 void
-linear16_to_linear8_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+linear16_to_linear8_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -204,10 +168,7 @@ linear16_to_linear8_be(v, p, cc)
 }
 
 void
-ulinear8_to_linear16_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+ulinear8_to_linear16_le(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -221,10 +182,7 @@ ulinear8_to_linear16_le(v, p, cc)
 }
 
 void
-ulinear8_to_linear16_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+ulinear8_to_linear16_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -263,10 +221,7 @@ linear16_to_ulinear8_be(void *v, u_char *p, int cc)
  * just expand mono to stereo, no other conversions
  */
 void
-noswap_bytes_mts(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+noswap_bytes_mts(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -283,10 +238,7 @@ noswap_bytes_mts(v, p, cc)
  * same as swap_bytes(), just expand mono to stereo
  */
 void
-swap_bytes_mts(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+swap_bytes_mts(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -303,10 +255,7 @@ swap_bytes_mts(v, p, cc)
  * same as linear8_to_linear16_le(), plus expand mono to stereo
  */
 void
-linear8_to_linear16_le_mts(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+linear8_to_linear16_le_mts(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -323,10 +272,7 @@ linear8_to_linear16_le_mts(v, p, cc)
  * same as linear8_to_linear16_be(), plus expand mono to stereo
  */
 void
-linear8_to_linear16_be_mts(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+linear8_to_linear16_be_mts(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -343,10 +289,7 @@ linear8_to_linear16_be_mts(v, p, cc)
  * same as ulinear8_to_linear16_le(), plus expand mono to stereo
  */
 void
-ulinear8_to_linear16_le_mts(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+ulinear8_to_linear16_le_mts(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -363,10 +306,7 @@ ulinear8_to_linear16_le_mts(v, p, cc)
  * same as ulinear8_to_linear16_be(), plus expand mono to stereo
  */
 void
-ulinear8_to_linear16_be_mts(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+ulinear8_to_linear16_be_mts(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -383,10 +323,7 @@ ulinear8_to_linear16_be_mts(v, p, cc)
  * same as change_sign16_le(), plus expand mono to stereo
  */
 void
-change_sign16_le_mts(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign16_le_mts(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -403,10 +340,7 @@ change_sign16_le_mts(v, p, cc)
  * same as change_sign16_be(), plus expand mono to stereo
  */
 void
-change_sign16_be_mts(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign16_be_mts(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -423,10 +357,7 @@ change_sign16_be_mts(v, p, cc)
  *  same as change_sign16_swap_bytes_le(), plus expand mono to stereo
  */
 void
-change_sign16_swap_bytes_le_mts(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign16_swap_bytes_le_mts(void *v, u_char *p, int cc)
 {
 	change_sign16_be_mts(v, p, cc);
 }
@@ -435,10 +366,7 @@ change_sign16_swap_bytes_le_mts(v, p, cc)
  * same as change_sign16_swap_bytes_be(), plus expand mono to stereo
  */
 void
-change_sign16_swap_bytes_be_mts(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign16_swap_bytes_be_mts(void *v, u_char *p, int cc)
 {
 	change_sign16_le_mts(v, p, cc);
 }
