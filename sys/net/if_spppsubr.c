@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.26 2004/12/10 14:35:30 naddy Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.27 2005/03/23 00:11:40 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1844,20 +1844,21 @@ sppp_cp_change_state(const struct cp *cp, struct sppp *sp, int newstate)
 		    sppp_state_name(newstate));
 	sp->state[cp->protoidx] = newstate;
 
-	UNTIMEOUT(cp->TO, (void *)sp, sp->ch[cp->protoidx]);
 	switch (newstate) {
 	case STATE_INITIAL:
 	case STATE_STARTING:
 	case STATE_CLOSED:
 	case STATE_STOPPED:
 	case STATE_OPENED:
+		UNTIMEOUT(cp->TO, (void *)sp, sp->ch[cp->protoidx]);
 		break;
 	case STATE_CLOSING:
 	case STATE_STOPPING:
 	case STATE_REQ_SENT:
 	case STATE_ACK_RCVD:
 	case STATE_ACK_SENT:
- 		sppp_increasing_timeout (cp, sp);
+		if (!timeout_pending(&sp->ch[cp->protoidx]))
+			sppp_increasing_timeout (cp, sp);
 		break;
 	}
 }
