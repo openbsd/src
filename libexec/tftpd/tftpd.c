@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.20 2001/12/07 17:09:00 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.21 2002/02/01 06:05:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.20 2001/12/07 17:09:00 deraadt Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.21 2002/02/01 06:05:22 itojun Exp $: tftpd.c,v 1.6 1997/02/16 23:49:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -75,7 +75,7 @@ static char rcsid[] = "$OpenBSD: tftpd.c,v 1.20 2001/12/07 17:09:00 deraadt Exp 
 #define	TIMEOUT		5
 
 extern	char *__progname;
-struct	sockaddr_in s_in = { AF_INET };
+struct	sockaddr_storage s_in;
 int	peer;
 int	rexmtval = TIMEOUT;
 int	maxtimeout = 5*TIMEOUT;
@@ -83,7 +83,7 @@ int	maxtimeout = 5*TIMEOUT;
 #define	PKTSIZE	SEGSIZE+4
 char	buf[PKTSIZE];
 char	ackbuf[PKTSIZE];
-struct	sockaddr_in from;
+struct	sockaddr_storage from;
 int	fromlen;
 
 int	ndirs;
@@ -256,21 +256,22 @@ main(argc, argv)
 	} else if (pid != 0)
 		exit(0);
 
-	from.sin_len = sizeof(struct sockaddr_in);
-	from.sin_family = AF_INET;
 	alarm(0);
 	close(fd);
 	close(1);
-	peer = socket(AF_INET, SOCK_DGRAM, 0);
+	peer = socket(from.ss_family, SOCK_DGRAM, 0);
 	if (peer < 0) {
 		syslog(LOG_ERR, "socket: %m");
 		exit(1);
 	}
-	if (bind(peer, (struct sockaddr *)&s_in, sizeof (s_in)) < 0) {
+	memset(&s_in, 0, sizeof(s_in));
+	s_in.ss_family = from.ss_family;
+	s_in.ss_len = from.ss_len;
+	if (bind(peer, (struct sockaddr *)&s_in, s_in.ss_len) < 0) {
 		syslog(LOG_ERR, "bind: %m");
 		exit(1);
 	}
-	if (connect(peer, (struct sockaddr *)&from, sizeof(from)) < 0) {
+	if (connect(peer, (struct sockaddr *)&from, from.ss_len) < 0) {
 		syslog(LOG_ERR, "connect: %m");
 		exit(1);
 	}
