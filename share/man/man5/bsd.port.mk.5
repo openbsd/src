@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.49 2001/09/16 15:27:16 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.50 2001/09/27 10:37:20 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -778,6 +778,13 @@ Defaults to -p0 .
 .It Ev PATCH_LIST
 Wildcard pattern of patches to select under ${PATCHDIR} (default: patch-*).
 Note that filenames ending in .orig, or ~ are never applied.
+Note that 
+.Ev PATCH_LIST
+can hold absolute pathnames, for instance to share patches among similar
+ports:
+.Bd -literal
+PATCH_LIST=${PORTSDIR}/x11/kde/libs2/patches/p-* patch-*
+.Ed
 .It Ev PATCH_STRIP
 Patch option used to strip directory levels while applying port's patches.
 Defaults to -p0 .
