@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.32 2000/02/08 12:50:25 itojun Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.33 2000/03/28 14:30:51 jason Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -1115,9 +1115,10 @@ main(int argc, char **argv)
     }
     
     /* Sanity checks */
-    if ((mode & (ESP_NEW | ESP_OLD)) && enc == 0)
+    if ((mode & (ESP_NEW | ESP_OLD)) && enc == 0 && auth == 0)
     {
-	fprintf(stderr, "%s: no encryption algorithm specified\n",  argv[0]);
+	fprintf(stderr, "%s: no encryption or authentication algorithm "
+		"specified\n",  argv[0]);
 	exit(1);
     }
 
@@ -1128,7 +1129,7 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    if (((mode & (ESP_NEW | ESP_OLD)) && keyp == NULL) ||
+    if (((mode & (ESP_NEW | ESP_OLD)) && enc && keyp == NULL) ||
         ((mode & (AH_NEW | AH_OLD)) && authp == NULL))
     {
 	fprintf(stderr, "%s: no key material specified\n", argv[0]);
