@@ -1,4 +1,4 @@
-/* $OpenBSD: getrrsetbyname.c,v 1.3 2001/08/07 10:16:00 deraadt Exp $ */
+/* $OpenBSD: getrrsetbyname.c,v 1.4 2001/08/16 18:16:43 ho Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.
@@ -253,20 +253,26 @@ freerrset(struct rrsetinfo *rrset)
 	if (rrset == NULL)
 		return;
 
-	for (i = 0; i < rrset->rri_nrdatas; i++) {
-		if (rrset->rri_rdatas[i].rdi_data == NULL)
-			break;
-		free(rrset->rri_rdatas[i].rdi_data);
+	if (rrset->rri_rdatas) {
+		for (i = 0; i < rrset->rri_nrdatas; i++) {
+			if (rrset->rri_rdatas[i].rdi_data == NULL)
+				break;
+			free(rrset->rri_rdatas[i].rdi_data);
+		}
+		free(rrset->rri_rdatas);
 	}
-	free(rrset->rri_rdatas);
 
-	for (i = 0; i < rrset->rri_nsigs; i++) {
-		if (rrset->rri_sigs[i].rdi_data == NULL)
-			break;
-		free(rrset->rri_sigs[i].rdi_data);
+	if (rrset->rri_sigs) {
+		for (i = 0; i < rrset->rri_nsigs; i++) {
+			if (rrset->rri_sigs[i].rdi_data == NULL)
+				break;
+			free(rrset->rri_sigs[i].rdi_data);
+		}
+		free(rrset->rri_sigs);
 	}
-	free(rrset->rri_sigs);
-	free(rrset->rri_name);
+
+	if (rrset->rri_name)
+		free(rrset->rri_name);
 	free(rrset);
 }
 
@@ -280,7 +286,7 @@ parse_dns_response(const char *answer, int size)
 	const char *cp;
 
 	/* allocate memory for the response */
-	resp = malloc(sizeof(*resp));
+	resp = calloc(1, sizeof(*resp));
 	if (resp == NULL)
 		return (NULL);
 
@@ -453,7 +459,8 @@ free_dns_query(struct dns_query *p)
 	if (p == NULL)
 		return;
 
-	free(p->name);
+	if (p->name)
+		free(p->name);
 	free_dns_query(p->next);
 	free(p);
 }
@@ -464,8 +471,10 @@ free_dns_rr(struct dns_rr *p)
 	if (p == NULL)
 		return;
 
-	free(p->name);
-	free(p->rdata);
+	if (p->name)
+		free(p->name);
+	if (p->rdata)
+		free(p->rdata);
 	free_dns_rr(p->next);
 	free(p);
 }
