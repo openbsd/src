@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.89 2002/08/09 20:26:45 jsyn Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.90 2002/08/30 16:21:43 gluk Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -465,6 +465,14 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20269,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdc202xx_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20271,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdc202xx_chip_map,
+	},
+	{ PCI_PRODUCT_PROMISE_PDC20276,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  pdc202xx_chip_map,
 	}
@@ -3732,11 +3740,19 @@ hpt_pci_intr(arg)
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20267  ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20268  ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20268R ||	\
-	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20269)
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20269  ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20271  ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20276)
 #define PDC_IS_268(sc)							\
 	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20268 ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20268R ||	\
-	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20269)
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20269  ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20271  ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20276)
+#define PDC_IS_269(sc)							\
+	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20269 ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20271  ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20276)
 
 void
 pdc202xx_chip_map(sc, pa)
@@ -3780,7 +3796,9 @@ pdc202xx_chip_map(sc, pa)
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	if (PDC_IS_265(sc))
+	if (PDC_IS_269(sc))
+		sc->sc_wdcdev.UDMA_cap = 6;
+	else if (PDC_IS_265(sc))
 		sc->sc_wdcdev.UDMA_cap = 5;
 	else if (PDC_IS_262(sc))
 		sc->sc_wdcdev.UDMA_cap = 4;
