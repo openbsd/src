@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.8 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.9 2001/09/04 14:17:51 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -558,6 +558,26 @@ void nge_miibus_statchg(dev)
 		    (NGE_TXCFG_IGN_HBEAT|NGE_TXCFG_IGN_CARR));
 		NGE_CLRBIT(sc, NGE_RX_CFG, NGE_RXCFG_RX_FDX);
 	}
+
+	switch (IFM_SUBTYPE(sc->nge_mii.mii_media_active)) {
+	case IFM_1000_TX:  /* Gigabit using GMII interface */
+		NGE_SETBIT(sc, NGE_CFG, NGE_CFG_MODE_1000);
+		NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_TBI_EN);
+		break;
+		
+	case IFM_1000_SX:  /* Gigabit using TBI interface */
+	case IFM_1000_CX:
+	case IFM_1000_LX:
+		NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_MODE_1000);
+		NGE_SETBIT(sc, NGE_CFG, NGE_CFG_TBI_EN);
+		break;
+		
+	default: /* Default to MII interface */
+		NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_MODE_1000|
+			   NGE_CFG_TBI_EN);
+		break;
+	}
+
 }
 
 u_int32_t nge_crc(sc, addr)
@@ -1470,25 +1490,6 @@ int nge_intr(arg)
 
 		if (status & NGE_ISR_PHY_INTR) {
 			sc->nge_link = 0;
-			switch (sc->nge_mii.mii_media_active & 0x1F) {
-			case IFM_1000_TX:  /* Gigabit using GMII interface */
-			  NGE_SETBIT(sc, NGE_CFG, NGE_CFG_MODE_1000);
-			  NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_TBI_EN);
-			  break;
-
-			case IFM_1000_SX:  /* Gigabit using TBI interface */
-			case IFM_1000_CX:
-			case IFM_1000_LX:
-			  NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_MODE_1000);
-			  NGE_SETBIT(sc, NGE_CFG, NGE_CFG_TBI_EN);
-			  break;
-
-			default: /* Default to MII interface */
-			  NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_MODE_1000|
-				     NGE_CFG_TBI_EN);
-			  break;
-			}
-
 			nge_tick(sc);
 		}
 	}
