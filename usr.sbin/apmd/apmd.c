@@ -153,10 +153,11 @@ bind_socket(const char *sockname)
     s_un.sun_len = SUN_LEN(&s_un);
     /* remove it if present, we're moving in */
     (void) remove(sockname);
+    umask (077);
     if (bind(sock, (struct sockaddr *)&s_un, s_un.sun_len) == -1)
 	err(1, "cannot connect to APM socket");
     if (chmod(sockname, 0660) == -1 || chown(sockname, 0, 0) == -1)
-	err(1, "cannot set socket mode/owner/group to 666/0/0");
+	err(1, "cannot set socket mode/owner/group to 660/0/0");
     listen(sock, 1);
     socketname = strdup(sockname);
     atexit(sockunlink);
