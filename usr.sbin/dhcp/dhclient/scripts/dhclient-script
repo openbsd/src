@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.16 2004/01/09 07:49:07 deraadt Exp $
+# $OpenBSD: dhclient-script,v 1.17 2004/01/11 03:24:40 deraadt Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -117,6 +117,9 @@ add_new_resolv_conf() {
 		# is a symbolic link, take care to preserve the link and write
 		# the new data in the correct location.
 
+		if [ -f /etc/resolv.conf ]; then
+			cat /etc/resolv.conf > /etc/resolv.conf.save
+		fi
 		cat /etc/resolv.conf.std > /etc/resolv.conf
 		rm -f /etc/resolv.conf.std
 
@@ -188,7 +191,9 @@ EXPIRE|FAIL)
 	fi
 	# XXX Why add alias we just deleted above?
 	add_new_alias
-	# XXX Delete resolv.conf as no longer relevant?
+	if [ -f /etc/resolv.conf.save ]; then
+		cat /etc/resolv.conf.save > /etc/resolv.conf
+	fi
 	;;
 
 TIMEOUT)
