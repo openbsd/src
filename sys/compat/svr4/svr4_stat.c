@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.14 1999/07/02 19:16:32 deraadt Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.15 1999/07/14 23:15:50 deraadt Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -403,13 +403,13 @@ svr4_sys_uname(p, v, retval)
 
 	bzero(&sut, sizeof(sut));
 
-	strncpy(sut.sysname, ostype, sizeof(sut.sysname));
+	strncpy(sut.sysname, ostype, sizeof(sut.sysname)-1);
 	sut.sysname[sizeof(sut.sysname) - 1] = '\0';
 
-	strncpy(sut.nodename, hostname, sizeof(sut.nodename));
+	strncpy(sut.nodename, hostname, sizeof(sut.nodename)-1);
 	sut.nodename[sizeof(sut.nodename) - 1] = '\0';
 
-	strncpy(sut.release, osrelease, sizeof(sut.release));
+	strncpy(sut.release, osrelease, sizeof(sut.release)-1);
 	sut.release[sizeof(sut.release) - 1] = '\0';
 
 	dp = sut.version;
@@ -424,7 +424,7 @@ svr4_sys_uname(p, v, retval)
 		*dp++ = *cp;
 	*dp = '\0';
 
-	strncpy(sut.machine, machine, sizeof(sut.machine));
+	strncpy(sut.machine, machine, sizeof(sut.machine)-1);
 	sut.machine[sizeof(sut.machine) - 1] = '\0';
 
 	return copyout((caddr_t) &sut, (caddr_t) SCARG(uap, name),
@@ -444,6 +444,9 @@ svr4_sys_systeminfo(p, v, retval)
 	long len;
 	extern char ostype[], hostname[], osrelease[],
 		    version[], machine[], domainname[];
+#ifdef __sparc__
+	extern char cpu_class[];
+#endif
 
 	u_int rlen = SCARG(uap, len);
 
@@ -485,7 +488,11 @@ svr4_sys_systeminfo(p, v, retval)
 		break;
 
 	case SVR4_SI_PLATFORM:
+#ifdef __sparc__
+		str = cpu_class;
+#else
 		str = machine;
+#endif
 		break;
 
 	case SVR4_SI_KERB_REALM:

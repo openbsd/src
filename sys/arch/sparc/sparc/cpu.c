@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.17 1999/03/03 21:58:28 jason Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.18 1999/07/14 23:15:49 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -75,6 +75,7 @@
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+char	*cpu_class = "sun4";
 char	cpu_model[130];
 char	cpu_hotfix[40];
 extern char mainbus_model[];		/* from autoconf.c */
@@ -192,6 +193,21 @@ cpu_attach(parent, self, aux)
 		bcopy(&sc->dv, &cpuinfo, sizeof(sc->dv));
 		bcopy(&cpuinfo, sc, sizeof(cpuinfo));
 	}
+
+#if defined(SUN4C) || defined(SUN4M)
+	switch (cputyp) {
+#if defined(SUN4C)
+	case CPU_SUN4C:
+		cpu_class = "sun4c";
+		break;
+#endif /* defined(SUN4C) */
+#if defined(SUN4M)
+	case CPU_SUN4M:
+		cpu_class = "sun4m";
+		break;
+#endif /* defined(SUN4M) */
+	}
+#endif /* defined(SUN4C) || defined(SUN4M) */
 
 	getcpuinfo(sc, node);
 
