@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.7 1997/08/01 05:58:56 millert Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.8 1997/08/16 02:00:49 millert Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ loop:
 	/*
 	 * otherwise lock the vp list while we call getnewvnode
 	 * since that can block.
-	 */ 
+	 */
 	if (pfsvplock & PROCFS_LOCKED) {
 		pfsvplock |= PROCFS_WANT;
 		sleep((caddr_t) &pfsvplock, PINOD);

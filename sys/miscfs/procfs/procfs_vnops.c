@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.4 1997/08/01 05:58:57 millert Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.5 1997/08/16 02:00:50 millert Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -217,15 +217,21 @@ procfs_open(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
+	struct proc *p1 = ap->a_p;
+	struct proc *p2;
+	int error;
+
+	if ((p2 = PFIND(pfs->pfs_pid)) == 0)
+		return (ENOENT);	/* was ESRCH, jsp */
 
 	switch (pfs->pfs_type) {
 	case Pmem:
-		if (PFIND(pfs->pfs_pid) == 0)
-			return (ENOENT);	/* was ESRCH, jsp */
-
 		if (((pfs->pfs_flags & FWRITE) && (ap->a_mode & O_EXCL)) ||
 		    ((pfs->pfs_flags & O_EXCL) && (ap->a_mode & FWRITE)))
 			return (EBUSY);
+
+		if ((error = procfs_checkioperm(p1, p2)) != 0)
+			return (error);
 
 		if (ap->a_mode & FWRITE)
 			pfs->pfs_flags = ap->a_mode & (FWRITE|O_EXCL);
@@ -427,15 +433,15 @@ procfs_print(v)
 }
 
 int
-procfs_link(v) 
+procfs_link(v)
 	void *v;
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
-		struct vnode *a_vp;  
+		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
- 
+
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
@@ -452,7 +458,7 @@ procfs_symlink(v)
 		struct vattr *a_vap;
 		char *a_target;
 	} */ *ap = v;
-  
+
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);

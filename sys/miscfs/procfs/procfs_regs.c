@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_regs.c,v 1.2 1996/06/21 12:49:55 mickey Exp $	*/
+/*	$OpenBSD: procfs_regs.c,v 1.3 1997/08/16 02:00:49 millert Exp $	*/
 /*	$NetBSD: procfs_regs.c,v 1.9 1995/08/13 09:06:07 mycroft Exp $	*/
 
 /*
@@ -62,6 +62,9 @@ procfs_doregs(curp, p, pfs, uio)
 	struct reg r;
 	char *kv;
 	int kl;
+
+	if ((error = procfs_checkioperm(curp, p)) != 0)
+		return (error);
 
 	kl = sizeof(r);
 	kv = (char *) &r;

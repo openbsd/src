@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_mem.c,v 1.4 1997/01/22 04:15:17 tholo Exp $	*/
+/*	$OpenBSD: procfs_mem.c,v 1.5 1997/08/16 02:00:49 millert Exp $	*/
 /*	$NetBSD: procfs_mem.c,v 1.8 1996/02/09 22:40:50 christos Exp $	*/
 
 /*
@@ -57,6 +57,8 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
+#define	ISSET(t, f)	((t) & (f))
+
 static int procfs_rwmem __P((struct proc *, struct uio *));
 
 static int
@@ -109,7 +111,7 @@ procfs_rwmem(p, uio)
 		 * The map we want...
 		 */
 		map = &p->p_vmspace->vm_map;
-  
+
 		/*
 		 * Check the permissions for the area we're interested
 		 * in.
@@ -211,9 +213,13 @@ procfs_domem(curp, p, pfs, uio)
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
+	int error;
 
 	if (uio->uio_resid == 0)
 		return (0);
+
+	if ((error = procfs_checkioperm(curp, p)) != 0)
+		return (error);
 
 	return (procfs_rwmem(p, uio));
 }
@@ -237,6 +243,34 @@ procfs_findtextvp(p)
 	return (p->p_textvp);
 }
 
+/*
+ * You cannot attach to a process's mem/regs if:
+ *
+ *	(1) it's not owned by you, or the last exec
+ *	    gave us setuid/setgid privs (unless
+ *	    you're root), or...
+ *
+ *	(2) ...it's init, which controls the security level
+ *	    of the entire system, and the system was not
+ *	    compiled with permanently insecure mode turned
+ *	    on.
+ */
+int
+procfs_checkioperm(t, p)
+	struct proc *t, *p;
+{
+	int error;
+
+	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+	    ISSET(t->p_flag, P_SUGID)) &&
+	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+
+	if ((t->p_pid == 1) && (securelevel > -1))
+		return (EPERM);
+
+	return (0);
+}
 
 #ifdef probably_never
 /*
@@ -288,7 +322,8 @@ procfs_findtextvp(p)
 			pager = object->pager;
 			printf("procfs: pager = %x\n", pager);
 			if (pager)
-				printf("procfs: found pager, type = %d\n", pager->pg_type);
+				printf("procfs: found pager, type = %d\n",
+				    pager->pg_type);
 			if (pager && pager->pg_type == PG_VNODE) {
 				struct vnode *vp;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_ctl.c,v 1.5 1996/10/14 09:27:54 deraadt Exp $	*/
+/*	$OpenBSD: procfs_ctl.c,v 1.6 1997/08/16 02:00:48 millert Exp $	*/
 /*	$NetBSD: procfs_ctl.c,v 1.14 1996/02/09 22:40:48 christos Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
 #define TRACE_WAIT_P(curp, p) \
 	((p)->p_stat == SSTOP && \
 	 (p)->p_pptr == (curp) && \
-	 ((p)->p_flag & P_TRACED))
+	 ISSET((p)->p_flag, P_TRACED))
 
 #define PROCFS_CTL_ATTACH	1
 #define PROCFS_CTL_DETACH	2
@@ -120,30 +120,16 @@ procfs_control(curp, p, op)
 	 * by the calling process.
 	 */
 	if (op == PROCFS_CTL_ATTACH) {
-		/* can't trace yourself! */
+		/* Can't trace yourself! */
 		if (p->p_pid == curp->p_pid)
 			return (EINVAL);
 
-		/* check whether already being traced */
-		if (p->p_flag & P_TRACED)
+		/* Check whether already being traced. */
+		if (ISSET(p->p_flag, P_TRACED))
 			return (EBUSY);
 
-		/*
-		 * it's not owned by you, or the last exec gave us
-		 * setuid/setgid privs (unless you're root),
-		 */
-		if ((p->p_cred->p_ruid != curp->p_cred->p_ruid ||
-			ISSET(p->p_flag, P_SUGID)) &&
-		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = procfs_checkioperm(curp, p)) != 0)
 			return (error);
-
-		/*
-		 * ...it's init, which controls the security level
-		 * -1 -- permanently insecure
-		 *  0 -- insecure/single-user
-		 */
-		if ((p->p_pid) == 1 && (securelevel > -1))
-			return (EPERM);
 
 		/*
 		 * Go ahead and set the trace flag.
@@ -198,11 +184,11 @@ procfs_control(curp, p, op)
 	 */
 	case PROCFS_CTL_DETACH:
 		/* if not being traced, then this is a painless no-op */
-		if ((p->p_flag & P_TRACED) == 0)
+		if (!ISSET(p->p_flag, P_TRACED))
 			return (0);
 
 		/* not being traced any more */
-		p->p_flag &= ~P_TRACED;
+		CLR(p->p_flag, P_TRACED);
 
 		/* give process back to original parent */
 		if (p->p_oppid != p->p_pptr->p_pid) {
@@ -214,7 +200,7 @@ procfs_control(curp, p, op)
 		}
 
 		p->p_oppid = 0;
-		p->p_flag &= ~P_WAITED;	/* XXX ? */
+		CLR(p->p_flag, P_WAITED); /* XXX ? */
 		wakeup((caddr_t) curp);	/* XXX for CTL_WAIT below ? */
 
 		break;
@@ -244,10 +230,10 @@ procfs_control(curp, p, op)
 	 */
 	case PROCFS_CTL_WAIT:
 		error = 0;
-		if (p->p_flag & P_TRACED) {
+		if (ISSET(p->p_flag, P_TRACED)) {
 			while (error == 0 &&
 					(p->p_stat != SSTOP) &&
-					(p->p_flag & P_TRACED) &&
+					ISSET(p->p_flag, P_TRACED) &&
 					(p->p_pptr == curp)) {
 				error = tsleep((caddr_t) p,
 						PWAIT|PCATCH, "procfsx", 0);
