@@ -1,4 +1,4 @@
-/*	$OpenBSD: rogue.h,v 1.3 1998/08/22 08:55:43 pjanzen Exp $	*/
+/*	$OpenBSD: rogue.h,v 1.4 2001/08/10 18:17:56 pjanzen Exp $	*/
 /*	$NetBSD: rogue.h,v 1.4 1995/04/24 12:25:04 cgd Exp $	*/
 
 /*
@@ -437,54 +437,7 @@ struct rogue_time {
 	short second;	/* 0 - 59 */
 };
 
-#ifdef CURSES
-struct _win_st {
-	short _cury, _curx;
-	short _maxy, _maxx;
-};
-
-typedef struct _win_st WINDOW;
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-extern int LINES, COLS;
-extern WINDOW *curscr;
-extern char *CL;
-
-void	initscr __P((void));
-void	endwin __P((void));
-void	move __P((short, short));
-void	mvaddstr __P((short, short, char *));
-void	addstr __P((char *));
-void	addch __P((int));
-void	mvaddch __P((short, short, int));
-void	refresh __P((void));
-void	wrefresh __P((WINDOW *scr));
-int	mvinch __P((short, short));
-void	clear __P((void));
-void	clrtoeol __P((void));
-void	standout __P((void));
-void	standend __P((void));
-void	crmode __P((void));
-void	noecho __P((void));
-void	nonl __P((void));
-void	clear_buffers __P((void));
-void	put_char_at __P((short, short, int));
-void	put_cursor __P((short, short));
-void	put_st_char __P((int));
-void	get_term_info __P((void));
-boolean	tc_tname __P((FILE *, char *, char *));
-void	tc_gtdata __P((FILE *, char *));
-void	tc_gets __P((char *, char **));
-void	tc_gnum __P((char *, int *));
-void	tstp __P((void));
-void	tc_cmget __P((void));
-
-#else
 #include <curses.h>
-#endif
 
 /*
  * external routine declarations.
