@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.4 2003/09/08 21:49:12 mickey Exp $	*/
+/*	$OpenBSD: reg.h,v 1.5 2005/02/17 18:07:35 jfb Exp $	*/
 /*	$NetBSD: reg.h,v 1.14 1995/10/11 04:20:24 mycroft Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@
 /*
  * Registers accessible to ptrace(2) syscall for debugger
  * The machine-dependent code for PT_{SET,GET}REGS needs to
- * use whichver order, defined above, is correct, so that it
+ * use whichever order, defined above, is correct, so that it
  * is all invisible to the user.
  */
 struct reg {

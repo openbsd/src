@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.31 2004/03/02 05:46:01 tedu Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.32 2005/02/17 18:07:37 jfb Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -299,7 +299,7 @@ ffs_reclaim(v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		sturct proc *a_p;
+		struct proc *a_p;
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	int error;

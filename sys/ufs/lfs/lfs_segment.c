@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_segment.c,v 1.12 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: lfs_segment.c,v 1.13 2005/02/17 18:07:37 jfb Exp $	*/
 /*	$NetBSD: lfs_segment.c,v 1.4 1996/02/09 22:28:54 christos Exp $	*/
 
 /*
@@ -861,7 +861,7 @@ lfs_writeseg(fs, sp)
 	 * written.  To avoid this problem, we allocate memory in chunks, copy
 	 * the buffers into the chunk and write the chunk.  MAXPHYS is the
 	 * largest size I/O devices can handle.
-	 * When the data is copied to the chunk, turn off the the B_LOCKED bit
+	 * When the data is copied to the chunk, turn off the B_LOCKED bit
 	 * and brelse the buffer (which will move them to the LRU list).  Add
 	 * the B_CALL flag to the buffer header so we can count I/O's for the
 	 * checkpoints and so we can release the allocated memory.

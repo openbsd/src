@@ -139,8 +139,8 @@ typedef int vop_t (void *);
 
 /*
  * This is compat code for older vfs that have a 
- * vget that only take a integer (really boolean) argument
- * that the the returned vnode will be returned locked
+ * vget that only takes an integer (really boolean) argument
+ * that the returned vnode will be returned locked
  */
 
 #ifdef LK_EXCLUSIVE

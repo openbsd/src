@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.5 2004/11/16 14:39:14 brad Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.6 2005/02/17 18:07:36 jfb Exp $ */
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
  */
@@ -3564,7 +3564,7 @@ em_read_eeprom(struct em_hw *hw,
  * hw - Struct containing variables accessed by shared code
  *
  * Reads the first 64 16 bit words of the EEPROM and sums the values read.
- * If the the sum of the 64 16 bit words is 0xBABA, the EEPROM's checksum is
+ * If the sum of the 64 16 bit words is 0xBABA, the EEPROM's checksum is
  * valid.
  *****************************************************************************/
 int32_t

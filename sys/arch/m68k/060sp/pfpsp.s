@@ -1,5 +1,5 @@
 #
-# $OpenBSD: pfpsp.s,v 1.6 2004/01/09 21:16:06 deraadt Exp $
+# $OpenBSD: pfpsp.s,v 1.7 2005/02/17 18:07:36 jfb Exp $
 # $NetBSD: pfpsp.s,v 1.2 1996/05/15 19:49:12 is Exp $
 #
 
@@ -2954,7 +2954,7 @@ iea_fmovm_trace:
 # The FPU is disabled and so we should really have taken the "Line
 # F Emulator" exception. So, here we create an 8-word stack frame
 # from our 4-word stack frame. This means we must calculate the length
-# the faulting instruction to get the "next PC". This is trivial for
+# of the faulting instruction to get the "next PC". This is trivial for
 # immediate operands but requires some extra work for fmovm dynamic
 # which can use most addressing modes.
 iea_disabled:

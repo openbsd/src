@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.5 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: uha.c,v 1.6 2005/02/17 18:07:36 jfb Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -451,7 +451,7 @@ uha_scsi_cmd(xs)
 				while (datalen && thisphys == nextphys) {
 					/*
 					 * This page is contiguous (physically)
-					 * with the the last, just extend the
+					 * with the last, just extend the
 					 * length
 					 */
 					/* how far to the end of the page */

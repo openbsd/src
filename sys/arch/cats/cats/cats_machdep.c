@@ -1,4 +1,4 @@
-/*	$OpenBSD: cats_machdep.c,v 1.10 2005/01/21 16:22:34 miod Exp $	*/
+/*	$OpenBSD: cats_machdep.c,v 1.11 2005/02/17 18:07:37 jfb Exp $	*/
 /*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ initarm(bootargs)
 #endif
 
 	/*
-	 * Now we start consturction of the L1 page table
+	 * Now we start construction of the L1 page table
 	 * We start by mapping the L2 page tables into the L1.
 	 * This means that we can replace L1 mappings later on if necessary
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.59 2004/09/18 22:01:18 tedu Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.60 2005/02/17 18:07:37 jfb Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1697,7 +1697,7 @@ ufs_lock(v)
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
 		int a_flags;
-		sturct proc *a_p;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 

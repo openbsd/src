@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.30 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.31 2005/02/17 18:07:36 jfb Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1164,7 +1164,7 @@ nge_alloc_jumbo_mem(sc)
 	/*
 	 * Now divide it up into 9K pieces and save the addresses
 	 * in an array. Note that we play an evil trick here by using
-	 * the first few bytes in the buffer to hold the the address
+	 * the first few bytes in the buffer to hold the address
 	 * of the softc structure for this interface. This is because
 	 * nge_jfree() needs it, but it is called by the mbuf management
 	 * code which will not pass it to us explicitly.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.19 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: wds.c,v 1.20 2005/02/17 18:07:36 jfb Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -1156,7 +1156,7 @@ wds_scsi_cmd(xs)
 				while (datalen && thisphys == nextphys) {
 					/*
 					 * This page is contiguous (physically)
-					 * with the the last, just extend the
+					 * with the last, just extend the
 					 * length
 					 */
 					/* check it fits on the ISA bus */

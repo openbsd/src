@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.50 2004/06/21 23:50:37 tholo Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.51 2005/02/17 18:07:36 jfb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -64,7 +64,7 @@ int ipsec_acquire_pool_initialized = 0;
 /*
  * Lookup at the SPD based on the headers contained on the mbuf. The second
  * argument indicates what protocol family the header at the beginning of
- * the mbuf is. hlen is the the offset of the transport protocol header
+ * the mbuf is. hlen is the offset of the transport protocol header
  * in the mbuf.
  *
  * Return combinations (of return value and in *error):

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.19 2004/12/26 21:22:11 miod Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.20 2005/02/17 18:07:36 jfb Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -1058,7 +1058,7 @@ ahb_scsi_cmd(xs)
 				while (datalen && thisphys == nextphys) {
 					/*
 					 * This page is contiguous (physically)
-					 * with the the last, just extend the
+					 * with the last, just extend the
 					 * length
 					 */
 					/* how far to the end of the page */
