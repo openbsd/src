@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.4 2004/09/15 00:05:29 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.5 2005/02/02 18:57:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,7 +32,7 @@ void	buf_enqueue(struct msgbuf *, struct buf *);
 void	buf_dequeue(struct msgbuf *, struct buf *);
 
 struct buf *
-buf_open(ssize_t len)
+buf_open(size_t len)
 {
 	struct buf	*buf;
 
@@ -48,7 +48,7 @@ buf_open(ssize_t len)
 }
 
 int
-buf_add(struct buf *buf, void *data, ssize_t len)
+buf_add(struct buf *buf, void *data, size_t len)
 {
 	if (buf->wpos + len > buf->size)
 		return (-1);
@@ -127,7 +127,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
 	    buf = next) {
 		next = TAILQ_NEXT(buf, entries);
-		if (n >= buf->size - buf->rpos) {
+		if (buf->rpos + n >= buf->size) {
 			n -= buf->size - buf->rpos;
 			buf_dequeue(msgbuf, buf);
 		} else {

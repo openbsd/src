@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.51 2005/01/28 12:37:20 dtucker Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.52 2005/02/02 18:57:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -128,9 +128,9 @@ struct ntpd_conf {
 struct buf {
 	TAILQ_ENTRY(buf)	 entries;
 	u_char			*buf;
-	ssize_t			 size;
-	ssize_t			 wpos;
-	ssize_t			 rpos;
+	size_t			 size;
+	size_t			 wpos;
+	size_t			 rpos;
 };
 
 struct msgbuf {
@@ -189,8 +189,8 @@ void		 fatalx(const char *);
 const char *	 log_sockaddr(struct sockaddr *);
 
 /* buffer.c */
-struct buf	*buf_open(ssize_t);
-int		 buf_add(struct buf *, void *, ssize_t);
+struct buf	*buf_open(size_t);
+int		 buf_add(struct buf *, void *, size_t);
 int		 buf_close(struct msgbuf *, struct buf *);
 void		 buf_free(struct buf *);
 void		 msgbuf_init(struct msgbuf *);
