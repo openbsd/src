@@ -2046,6 +2046,7 @@ of device
 .BR grops (@MAN1EXT@),
 .BR grodvi (@MAN1EXT@),
 .BR grotty (@MAN1EXT@),
+.BR deroff (@MAN1EXT@),
 .BR groff_font (@MAN5EXT@),
 .BR groff_out (@MAN5EXT@),
 .BR groff_char (@MAN7EXT@)
