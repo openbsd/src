@@ -102,7 +102,7 @@ begin again from scratch.
 		type:
 			
 			mkdir /mnt/ados
-			mount_ados /dev/sd0d /mnt/ados
+			mount_ados -o ro /dev/sd0d /mnt/ados
 
 		You can use `disklabel sd0' to find out what types
 		of partitions are on the disk `sd0'.

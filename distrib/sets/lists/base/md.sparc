@@ -17,7 +17,6 @@
 ./usr/mdec/bootxx
 ./usr/mdec/boot
 ./usr/mdec/binstall
-./usr/bin/fdeject
 ./usr/sbin/eeprom
 ./usr/sbin/installboot
 ./usr/sbin/screenblank

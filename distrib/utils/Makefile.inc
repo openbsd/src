@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2.4.1 1995/11/21 21:26:41 gwr Exp $
+# $NetBSD: Makefile.inc,v 1.3 1995/11/21 21:17:19 gwr Exp $
 # utils one might want in a crunched binary
 
 BSDSRCDIR?=	/usr/src

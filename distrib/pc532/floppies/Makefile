@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1.2.1 1995/10/31 06:49:34 phil Exp $
+#	$NetBSD: Makefile,v 1.2 1995/11/28 23:58:45 jtc Exp $
 
 SUBDIR= inst # upgr
 

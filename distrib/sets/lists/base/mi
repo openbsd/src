@@ -716,6 +716,8 @@
 ./usr/share/nls/Pig/libc.cat
 ./usr/share/nls/de
 ./usr/share/nls/de/libc.cat
+./usr/share/nls/es
+./usr/share/nls/es/libc.cat
 ./usr/share/nls/fr
 ./usr/share/nls/fr/libc.cat
 ./usr/share/skel

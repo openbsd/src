@@ -3,7 +3,9 @@ via the console terminal and using the downloading parts of the
 ROM monitor.  As such, usually another computer has the distribution
 on disk and is connected via a serial line to your pc532's console
 port.  A terminal connected to the attached host computer is used
-to access the pc532 console via a terminal program.  
+to access the pc532 console via a terminal program.  The source for
+a program called download is part of this distribution.  Download
+sends data to the ROM monitor over the serial line.
 
 You may need to find and read the documentation about the ROM monitor
 download command and other low level comands.

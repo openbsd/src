@@ -1,4 +1,4 @@
-#	$Id: list,v 1.2 1995/11/06 21:53:54 deraadt Exp $
+#	$Id: list,v 1.3 1995/12/14 07:00:36 deraadt Exp $
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV

@@ -1,4 +1,4 @@
-NetBSD/pc532 1.0 runs on a PC532 computer.  It supports a subset of the
+NetBSD/pc532 1.1 runs on a PC532 computer.  It supports a subset of the
 "standard" hardware to date.  This is defined as:
 
 	4 - 32 Megs of memory
@@ -7,6 +7,7 @@ NetBSD/pc532 1.0 runs on a PC532 computer.  It supports a subset of the
 		Most SCSI disks work (fixed and floppy)
 		A few SCSI tapes work
 		Some SCSI CD-ROM drives work
+	The Matthias Pfaller Parallel Port.
 
 NetBSD/pc532 currently expects the ROM monitor to be the "autoboot
 monitor" of Oct/Nov 1991.  It includes support to set up auto booting

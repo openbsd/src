@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.2.2.2 1995/11/16 22:30:55 pk Exp $
+#	$NetBSD: install.sh,v 1.7 1995/11/16 22:29:46 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.

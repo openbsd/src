@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1.2.1 1995/11/14 01:36:10 thorpej Exp $
+#	$NetBSD: list,v 1.2 1995/11/14 01:40:42 thorpej Exp $
 
 # copy the kernel
 COPY	${CURDIR}/../../../../sys/arch/hp300/compile/GENERIC/netbsd	netbsd

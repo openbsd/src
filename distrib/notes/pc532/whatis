@@ -9,6 +9,3 @@ For the pc532 port, there are a few known problems.  They include:
 
   d) The disk driver is polled, not interrupt driven.
 
-  e) kernel support for debugging is not working correctly.
-
-  f) shared libraries are not used yet.

@@ -5,28 +5,11 @@ Installation is supported from several media types, including:
 	FTP
 	NetBSD partitions, if doing an upgrade.
 
->>> Transfering install/upgrade file system image to swap partition
-No matter what you do, however, you'll need to have one disk handy,
-on which you will put the install floppy image.
-
-All the images are available from the directory "amiga/floppies",
->>>                                                    ^^^^^^^^
-under the root of the NetBSD tree at your favorite archive site.
-
-If you are using NetBSD/amiga to make the floppies, you should use
-the command dd(1) to write the raw floppy images (.fs files) to
-the disk. To write onto fd0 use:
-
-	dd if=inst-11.fs of=/dev/rfd0a bs=11b
-
-If you are using AmigaDOS to make the floppies, you should
-use the rawwrite utility, provided in the directory
-"amiga/utilities" in the distribution.  To write the image to
-the floppy in df0 use (from cli):
-
-	rawwrite 0 inst-11.fs
->>> fix above to document file system transfer to swap paritition
->>> using xstreamtodev
+The install or upgrade miniroot filesystem needs to be transferred
+to the NetBSD swap partition.  This can be done from AmigaDOS in
+the case of a new install or upgrade, or from NetBSD when doing an
+upgrade.  See the "Preparing your System for NetBSD Installation"
+section for details.
 
 The steps necessary to prepare the distribution sets
 for installation depend on which method of installation
