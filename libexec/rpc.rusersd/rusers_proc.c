@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers_proc.c,v 1.19 2003/07/10 00:04:28 david Exp $	*/
+/*	$OpenBSD: rusers_proc.c,v 1.20 2004/04/28 15:18:57 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.19 2003/07/10 00:04:28 david Exp $";
+static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.20 2004/04/28 15:18:57 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -132,6 +132,7 @@ rusers_num_svc(void *arg, struct svc_req *rqstp)
 	lseek(fd, 0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
+		close(fd);
 		syslog(LOG_ERR, "%m");
 		return (0);
 	}
@@ -164,6 +165,7 @@ do_names_3(int all)
 	lseek(fd, 0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
+		close(fd);
 		syslog(LOG_ERR, "%m");
 		return (NULL);
 	}
@@ -227,6 +229,7 @@ do_names_2(int all)
 	lseek(fd, 0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
+		close(fd);
 		syslog(LOG_ERR, "%m");
 		return (NULL);
 	}
@@ -290,6 +293,7 @@ do_names_1(int all)
 	lseek(fd, 0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
+		close(fd);
 		syslog(LOG_ERR, "%m");
 		return (NULL);
 	}
