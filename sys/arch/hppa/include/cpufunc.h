@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.14 2000/02/09 05:10:10 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.15 2000/03/29 23:11:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -259,7 +259,6 @@ void ptlball __P((void));
 int btlb_insert __P((pa_space_t space, vaddr_t va, paddr_t pa,
 		     vsize_t *lenp, u_int prot));
 hppa_hpa_t cpu_gethpa __P((int n));
-void heartbeat __P((int on));
 #endif
 
 #endif /* _MACHINE_CPUFUNC_H_ */

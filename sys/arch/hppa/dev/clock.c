@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 2000/02/09 05:51:21 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.9 2000/03/29 23:11:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -72,13 +72,6 @@ clock_intr (v)
 	void *v;
 {
 	struct trapframe *frame = v;
-#ifdef USELEDS
-	static u_int hbcnt = 0;
-
-	if (!(hbcnt % (hz / 8)) && ((hbcnt / (hz / 8)) & 7) < 4)
-		ledctl(0, 0, PALED_HEARTBEAT);
-	hbcnt++;
-#endif
 
 	/* printf ("clock int 0x%x @ 0x%x for %p\n", t,
 	   frame->tf_iioq_head, curproc); */
