@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.2 1998/07/04 07:07:21 deraadt Exp $	*/
+/*	$OpenBSD: qec.c,v 1.3 1998/07/05 06:50:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt.  All rights reserved.
@@ -78,7 +78,6 @@ qecattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-#if defined(SUN4C) || defined(SUN4M)
 	register struct confargs *ca = aux;
 	struct qec_softc *sc = (void *)self;
 	int node;
@@ -86,17 +85,15 @@ qecattach(parent, self, aux)
 	char *name;
 	int sbusburst;
 
-	if (ca->ca_ra.ra_vaddr == NULL || ca->ca_ra.ra_nvaddrs == 0)
-		ca->ca_ra.ra_vaddr =
-		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len);
-
 	/*
-	 * This device's "register space" is just a buffer where the
-	 * Lance ring-buffers can be stored. Note the buffer's location
-	 * and size, so the sub-drivers can pick them up.
+	 * The first IO space is the QEC registers, the second IO
+	 * space is the QEC (64K we hope) ram buffer
 	 */
-	sc->sc_buffer = (caddr_t)ca->ca_ra.ra_vaddr;
-	sc->sc_bufsiz = ca->ca_ra.ra_len;
+	sc->sc_regs = mapiodev(&ca->ca_ra.ra_reg[0], 0,
+	    sizeof(struct qecregs));
+	sc->sc_buffer = mapiodev(&ca->ca_ra.ra_reg[1], 0,
+	    ca->ca_ra.ra_reg[1].rr_len);
+	sc->sc_bufsiz = ca->ca_ra.ra_reg[1].rr_len;
 
 	/*
 	 * Get transfer burst size from PROM
@@ -113,7 +110,7 @@ qecattach(parent, self, aux)
 	/* Clamp at parent's burst sizes */
 	sc->sc_burst &= sbusburst;
 
-	printf(": %dK memory\n", sc->sc_bufsiz / 1024);
+	printf(": %dK memory", sc->sc_bufsiz / 1024);
 
 	node = sc->sc_node = ca->ca_ra.ra_node;
 
@@ -126,6 +123,8 @@ qecattach(parent, self, aux)
 	else
 		oca.ca_ra.ra_bp = NULL;
 
+	printf("\n");
+
 	/* search through children */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		name = getpropstring(node, "name");
@@ -136,5 +135,4 @@ qecattach(parent, self, aux)
 		oca.ca_bustype = BUS_SBUS;
 		(void) config_found(&sc->sc_dev, (void *)&oca, qecprint);
 	}
-#endif /* SUN4C || SUN4M */
 }
