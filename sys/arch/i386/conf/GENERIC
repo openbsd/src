@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.298 2002/05/09 15:06:29 nate Exp $
+#	$OpenBSD: GENERIC,v 1.299 2002/05/15 21:39:50 jason Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -476,6 +476,8 @@ joy*	at isapnp?
 
 # crypto support
 hifn*	at pci? dev ? function ?	# Hi/fn 7751 crypto card
+lofn*	at pci? dev ? function ?	# Hi/fn 6500 crypto card
+nofn*	at pci? dev ? function ?	# Hi/fn 7814/7851/7854 crypto card
 ubsec*	at pci? dev ? function ?	# Bluesteel Networks 5xxx crypto card
 #ises*	at pci? dev ? function ?	# Pijnenburg PCC-ISES
 
