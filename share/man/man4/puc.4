@@ -1,4 +1,4 @@
-.\"	$OpenBSD: puc.4,v 1.1 2000/05/18 17:06:47 millert Exp $
+.\"	$OpenBSD: puc.4,v 1.2 2000/07/05 13:56:36 aaron Exp $
 .\"	$NetBSD: puc.4,v 1.7 1999/07/03 05:55:23 cgd Exp $
 .\"
 .\" Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -71,7 +71,7 @@ The driver currently supports the following cards:
 .It Tn "VScom PCI-800 (8 port serial, probably OEM)"
 .El
 .Pp
-The driver does not support the cards:
+The driver does not support these cards:
 .Pp
 .Bl -tag -width -offset indent -compact
 .It Tn "Dolphin Peripherals 4006 (single parallel)"
@@ -87,7 +87,7 @@ locator is used to identify the port (starting from 0) on the
 communications card that a subdevice is supposed to attach to.
 Typically, the numbering of ports is explained in a card's
 hardware documentation, and the port numbers used by the driver
-are the same as (or one off from, e.g. the manual uses ports
+are the same as (or one off from, e.g., the manual uses ports
 numbered starting from 1) those described in the documentation.
 .Sh SEE ALSO
 .Xr com 4 ,
@@ -96,8 +96,11 @@ numbered starting from 1) those described in the documentation.
 .Sh HISTORY
 The
 .Nm
-driver appeared in
+driver first appeared in
 .Nx 1.4 .
+.Ox
+support was added in
+.Ox 2.7 .
 .Sh AUTHOR
 The
 .Nm
@@ -105,18 +108,18 @@ driver was written by Chris Demetriou.
 .Sh BUGS
 The current design of this driver keeps any
 .Nm com
-ports on these cards from easily being used as console.  Of
-course, because boards with those are PCI boards, they also suffer
+ports on these cards from easily being used as console.
+Of course, because boards with those are PCI boards, they also suffer
 from dynamic address assignment, which also means that they
 can't easily be used as console.
 .Pp
 Some of cards supported by this driver have jumper-selectable
 .Nm com
-port clock multipliers, which are unsupported by this
-driver.  Those can be easily accommodated with driver flags, or by
+port clock multipliers, which are unsupported by this driver.
+Those can be easily accommodated with driver flags, or by
 using a properly scaled baud rate when talking to the card.
 .Pp
-Some of the cards supported by this driver, e.g. the VScom PCI-800,
+Some of the cards supported by this driver, e.g., the VScom PCI-800,
 have software-selectable
 .Nm com
 port clock multipliers, which are unsupported by this driver.
@@ -125,8 +128,8 @@ a properly scaled baud rate when talking to the card.
 .Pp
 Some ports use an
 .Nm lpt
-driver other than the machine-independent driver.  Those ports
-will not be able to use
+driver other than the machine-independent driver.
+Those ports will not be able to use
 .Nm lpt
 ports attached to
 .Nm
