@@ -1,4 +1,4 @@
-/*	$OpenBSD: cats_machdep.c,v 1.4 2004/02/12 04:21:58 drahn Exp $	*/
+/*	$OpenBSD: cats_machdep.c,v 1.5 2004/02/12 04:33:54 drahn Exp $	*/
 /*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
 
 /*
@@ -719,6 +719,14 @@ debugledaddr = (void*)(DC21285_PCI_IO_VBASE+DEBUG_LED_OFFSET);
 #ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");
 #endif
+
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif 
+	}
 
 	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL);
 
