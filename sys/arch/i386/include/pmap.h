@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.28 2002/09/12 12:56:16 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.29 2002/11/24 19:54:54 pb Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -39,10 +39,6 @@
 
 #ifndef	_I386_PMAP_H_
 #define	_I386_PMAP_H_
-
-#if defined(_KERNEL) && !defined(_LKM) && defined(__NetBSD__)
-#include "opt_user_ldt.h"
-#endif
 
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
