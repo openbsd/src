@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      @(#)ffs_vfsops.c        8.14 (Berkeley) 11/28/94
+ *	@(#)ffs_vfsops.c	8.14 (Berkeley) 11/28/94
  */
 
 #include <sys/param.h>
@@ -89,7 +89,7 @@ e2fs_df(rfd, file, sfsp)
 	ncg = howmany(sblock.e2fs_bcount - sblock.e2fs_first_dblock,
 		sblock.e2fs_bpg);
 	ngdb = howmany(ncg, sfsp->f_bsize / sizeof(struct ext2_gd));
-        overhead_per_group = 1 /* super block */ +
+	overhead_per_group = 1 /* super block */ +
 					ngdb +
 					1 /* block bitmap */ +
 					1 /* inode bitmap */ +

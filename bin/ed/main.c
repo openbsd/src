@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1997/07/08 19:30:27 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1997/07/23 14:42:33 kstailey Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 1997/07/08 19:30:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 1997/07/23 14:42:33 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,7 @@ top:
 		    (status = exec_command()) >= 0)
 			if (!status || (status &&
 			    (status = display_lines(current_addr, current_addr,
-			        status)) >= 0))
+				status)) >= 0))
 				continue;
 		switch (status) {
 		case EOF:

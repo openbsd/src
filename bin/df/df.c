@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.16 1997/06/16 04:37:49 denny Exp $	*/
+/*	$OpenBSD: df.c,v 1.17 1997/07/23 14:41:03 kstailey Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.16 1997/06/16 04:37:49 denny Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.17 1997/07/23 14:41:03 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ main(argc, argv)
 
 	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
 	if (mntsize == 0)
-	        err(1, "retrieving information on mounted file systems");
+		err(1, "retrieving information on mounted file systems");
 
 	if (!*argv) {
 		mntsize = regetmntinfo(&mntbuf, mntsize);
@@ -149,13 +149,13 @@ main(argc, argv)
 			 * implement nflag here.
 			 */
 			if (!statfs(mntpt, &mntbuf[mntsize]))
-			        if (lflag && (mntbuf[mntsize].f_flags & MNT_LOCAL) == 0)
-			                warnx("%s is not a local file system",
+				if (lflag && (mntbuf[mntsize].f_flags & MNT_LOCAL) == 0)
+					warnx("%s is not a local file system",
 					    *argv);
-			        else if (!selected(mntbuf[mntsize].f_fstypename))
-			                warnx("%s mounted as a %s file system",
+				else if (!selected(mntbuf[mntsize].f_fstypename))
+					warnx("%s mounted as a %s file system",
 					    *argv, mntbuf[mntsize].f_fstypename);
-			        else
+				else
 					++mntsize;
 			else
 				warn("%s", *argv);

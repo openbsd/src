@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      @(#)lfs_vfsops.c        8.20 (Berkeley) 6/10/95
+ *	@(#)lfs_vfsops.c	8.20 (Berkeley) 6/10/95
  */
 
 #include <sys/param.h>

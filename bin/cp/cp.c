@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.6 1997/01/15 23:40:20 millert Exp $	*/
+/*	$OpenBSD: cp.c,v 1.7 1997/07/23 14:32:37 kstailey Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.6 1997/01/15 23:40:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.7 1997/07/23 14:32:37 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,8 +84,8 @@ static char rcsid[] = "$OpenBSD: cp.c,v 1.6 1997/01/15 23:40:20 millert Exp $";
 #include "extern.h"
 
 #define	STRIP_TRAILING_SLASH(p) {					\
-        while ((p).p_end > (p).p_path + 1 && (p).p_end[-1] == '/')	\
-                *--(p).p_end = 0;					\
+	while ((p).p_end > (p).p_path + 1 && (p).p_end[-1] == '/')	\
+		*--(p).p_end = 0;					\
 }
 
 PATH_T to = { to.p_path, "" };
@@ -184,11 +184,11 @@ main(argc, argv)
 		errx(1, "%s: name too long", target);
 	(void)strcpy(to.p_path, target);
 	to.p_end = to.p_path + strlen(to.p_path);
-        if (to.p_path == to.p_end) {
+	if (to.p_path == to.p_end) {
 		*to.p_end++ = '.';
 		*to.p_end = 0;
 	}
-        STRIP_TRAILING_SLASH(to);
+	STRIP_TRAILING_SLASH(to);
 	to.target_end = to.p_end;
 
 	/* Set end of argument list for fts(3). */
@@ -281,8 +281,8 @@ copy(argv, type, fts_options)
 
 		/*
 		 * If we are in case (2) or (3) above, we need to append the 
-                 * source name to the target name.  
-                 */
+		 * source name to the target name.  
+		 */
 		if (type != FILE_TO_FILE) {
 			/*
 			 * Need to remember the roots of traversals to create
@@ -388,8 +388,8 @@ copy(argv, type, fts_options)
 			/*
 			 * If not -p and directory didn't exist, set it to be
 			 * the same as the from directory, umodified by the 
-                         * umask; arguably wrong, but it's been that way 
-                         * forever.
+			 * umask; arguably wrong, but it's been that way 
+			 * forever.
 			 */
 			if (pflag && setfile(curr->fts_statp, 0))
 				rval = 1;

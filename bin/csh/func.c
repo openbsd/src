@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.4 1997/06/18 18:39:38 kstailey Exp $       */
+/*    $OpenBSD: func.c,v 1.5 1997/07/23 14:36:50 kstailey Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: func.c,v 1.4 1997/06/18 18:39:38 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.5 1997/07/23 14:36:50 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -1407,7 +1407,7 @@ retry:
 	    old = signal(SIGTTIN, SIG_DFL);
 	    (void) kill(0, SIGTTIN);
 	    (void) signal(SIGTTIN, old);
-          goto retry;
+	  goto retry;
 	}
 	(void) setpgid(0, shpgrp);
 	(void) tcsetpgrp(FSHTTY, shpgrp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.2 1996/06/23 14:19:18 deraadt Exp $	*/
+/*	$OpenBSD: dol.c,v 1.3 1997/07/23 14:36:49 kstailey Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dol.c,v 1.2 1996/06/23 14:19:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dol.c,v 1.3 1997/07/23 14:36:49 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -758,7 +758,7 @@ setDolp(cp)
 		dolmcnt--;
 	    else
 		break;
-        } else {
+	} else {
 	    int didmod = 0;
 
 	    do {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.5 1996/12/14 12:17:59 mickey Exp $	*/
+/*	$OpenBSD: expr.c,v 1.6 1997/07/23 14:44:21 kstailey Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -27,19 +27,19 @@ struct val {
 	} type;
 
 	union {
-		char           *s;
-		int             i;
+		char	       *s;
+		int		i;
 	} u;
 };
 
 enum token	token;
 struct val     *tokval;
-char          **av;
+char	      **av;
 
 
 struct val *
 make_int(i)
-	int             i;
+	int		i;
 {
 	struct val     *vp;
 
@@ -55,7 +55,7 @@ make_int(i)
 
 struct val *
 make_str(s)
-	char           *s;
+	char	       *s;
 {
 	struct val     *vp;
 
@@ -84,9 +84,9 @@ is_integer(vp, r)
 	struct val     *vp;
 	int	       *r;
 {
-	char           *s;
-	int             neg;
-	int             i;
+	char	       *s;
+	int		neg;
+	int		i;
 
 	if (vp->type == integer) {
 		*r = vp->u.i;
@@ -127,7 +127,7 @@ int
 to_integer(vp)
 	struct val     *vp;
 {
-	int             r;
+	int		r;
 
 	if (vp->type == integer)
 		return 1;
@@ -148,7 +148,7 @@ void
 to_string(vp)
 	struct val     *vp;
 {
-	char           *tmp;
+	char	       *tmp;
 
 	if (vp->type == string)
 		return;
@@ -177,7 +177,7 @@ is_zero_or_null(vp)
 void
 nexttoken()
 {
-	char           *p;
+	char	       *p;
 
 	if ((p = *av) == NULL) {
 		token = EOI;
@@ -188,7 +188,7 @@ nexttoken()
 	if (p[0] != '\0') {
 		if (p[1] == '\0') {
 			const char     *x = "|&=<>+-*/%:()";
-			char           *i;	/* index */
+			char	       *i;	/* index */
 
 			if ((i = strchr(x, *p)) != NULL) {
 				token = i - x;
@@ -250,10 +250,10 @@ eval6()
 struct val *
 eval5()
 {
-	regex_t         rp;
-	regmatch_t      rm[2];
-	char            errbuf[256];
-	int             eval;
+	regex_t		rp;
+	regmatch_t	rm[2];
+	char		errbuf[256];
+	int		eval;
 	struct val     *l, *r;
 	struct val     *v;
 
@@ -370,7 +370,7 @@ eval2()
 {
 	struct val     *l, *r;
 	enum token	op;
-	int             v = 0, li, ri;
+	int		v = 0, li, ri;
 
 	l = eval3();
 	while ((op = token) == EQ || op == NE || op == LT || op == GT || op == LE || op == GE) {
@@ -484,8 +484,8 @@ eval0()
 
 int
 main(argc, argv)
-	int             argc;
-	char          **argv;
+	int		argc;
+	char	      **argv;
 {
 	struct val     *vp;
 
