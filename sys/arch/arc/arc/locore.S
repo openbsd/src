@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.11 1997/04/10 16:29:06 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.12 1997/04/19 17:19:43 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.11 1997/04/10 16:29:06 pefo Exp $
+ *	$Id: locore.S,v 1.12 1997/04/19 17:19:43 pefo Exp $
  */
 
 /*
@@ -78,8 +78,8 @@
 #define START_FRAME	((4 * 4) + 4 + 4)
 
 	.globl	start
-	.globl	_C_LABEL(kernel_start)
-	_C_LABEL(kernel_start) = start
+	.globl	kernel_start
+kernel_start = start
 start:
 	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
 	mtc0	zero, COP_0_CAUSE_REG	# Clear soft interrupts
@@ -266,6 +266,21 @@ LEAF(fillw)
 	jr	ra
 	nop
 END(fillw)
+
+/*
+ * Optimized memory zero code.
+ * mem_zero_page(addr);
+ */
+LEAF(mem_zero_page)
+	li	v0, NBPG
+1:
+	subu	v0, 8
+	sd	zero, 0(a0)
+	bne	zero, v0, 1b
+	addu	a0, 8
+	jr	ra
+	nop
+END(mem_zero_page)
 
 /*
  *	Block I/O routines mainly used by I/O drivers.
@@ -1545,7 +1560,7 @@ END(MachUserIntr)
 NLEAF(MachTLBInvalidException)
 	.set	noat
 	dmfc0	k0, COP_0_BAD_VADDR	# get the fault address
-	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
+	li	k1, (VM_MIN_KERNEL_ADDRESS)	# compute index
 	subu	k0, k0, k1
 	lw	k1, Sysmapsize			# index within range?
 	srl	k0, k0, PGSHIFT
@@ -1633,7 +1648,7 @@ END(MachTLBInvalidException)
 NLEAF(MachTLBMissException)
 	.set	noat
 	dmfc0	k0, COP_0_BAD_VADDR	# get the fault address
-	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
+	li	k1, (VM_MIN_KERNEL_ADDRESS)	# compute index
 	subu	k0, k0, k1
 	lw	k1, Sysmapsize			# index within range?
 	srl	k0, k0, PGSHIFT

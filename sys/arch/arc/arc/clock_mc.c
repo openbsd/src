@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_mc.c,v 1.6 1997/03/23 11:34:27 pefo Exp $	*/
+/*	$OpenBSD: clock_mc.c,v 1.7 1997/04/19 17:19:40 pefo Exp $	*/
 /*	$NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp $	*/
 
 /*
@@ -111,9 +111,6 @@ mcclock_attach(parent, self, aux)
 	void *aux;
 {
 	struct clock_softc *csc = (struct clock_softc *)self;
-
-	register volatile struct chiptime *c;
-	struct confargs *ca = aux;
 
 	printf(": mc146818 or compatible");
 
@@ -246,7 +243,7 @@ mc_write_pica(csc, reg, datum)
 	struct clock_softc *csc;
 	u_int reg, datum;
 {
-	int i,as;
+	int as;
 
 	as = in32(PICA_SYS_ISA_AS) & 0x80;
 	out32(PICA_SYS_ISA_AS, as | reg);

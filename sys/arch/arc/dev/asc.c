@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.4 1996/11/23 21:45:29 kstailey Exp $	*/
+/*	$OpenBSD: asc.c,v 1.5 1997/04/19 17:19:50 pefo Exp $	*/
 /*	$NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp $	*/
 
 /*-
@@ -190,8 +190,9 @@ int	asc_to_scsi_period[] = {
 /*
  * Internal forward declarations.
  */
-static void asc_reset();
-static void asc_startcmd();
+struct asc_softc;
+static void asc_reset __P((struct asc_softc *, asc_regmap_t *));
+static void asc_startcmd __P((struct asc_softc *, int));
 
 #ifdef DEBUG
 int	asc_debug = 1;
@@ -225,7 +226,8 @@ struct asc_log {
  */
 typedef struct script {
 	int		condition;	/* expected state at interrupt time */
-	int		(*action)();	/* extra operations */
+	int		(*action)(struct asc_softc *, int, int, int);
+					/* extra operations */
 	int		command;	/* command to the chip */
 	struct script	*next;		/* index into asc_scripts for next state */
 } script_t;
@@ -233,22 +235,38 @@ typedef struct script {
 /* Matching on the condition value */
 #define	SCRIPT_MATCH(ir, csr)		((ir) | (((csr) & 0x67) << 8))
 
+
 /* forward decls of script actions */
-static int script_nop();		/* when nothing needed */
-static int asc_end();			/* all come to an end */
-static int asc_get_status();		/* get status from target */
-static int asc_dma_in();		/* start reading data from target */
-static int asc_last_dma_in();		/* cleanup after all data is read */
-static int asc_resume_in();		/* resume data in after a message */
-static int asc_resume_dma_in();		/* resume DMA after a disconnect */
-static int asc_dma_out();		/* send data to target via dma */
-static int asc_last_dma_out();		/* cleanup after all data is written */
-static int asc_resume_out();		/* resume data out after a message */
-static int asc_resume_dma_out();	/* resume DMA after a disconnect */
-static int asc_sendsync();		/* negotiate sync xfer */
-static int asc_replysync();		/* negotiate sync xfer */
-static int asc_msg_in();		/* process a message byte */
-static int asc_disconnect();		/* process an expected disconnect */
+	/* when nothing needed */
+static int script_nop __P((struct asc_softc *, int, int, int));
+	/* all come to an end */
+static int asc_end __P((struct asc_softc *, int, int, int));
+	/* get status from target */
+static int asc_get_status __P((struct asc_softc *, int, int, int));
+	/* start reading data from target */
+static int asc_dma_in __P((struct asc_softc *, int, int, int));
+	/* cleanup after all data is read */
+static int asc_last_dma_in __P((struct asc_softc *, int, int, int));
+	/* resume data in after a message */
+static int asc_resume_in __P((struct asc_softc *, int, int, int));
+	/* resume DMA after a disconnect */
+static int asc_resume_dma_in __P((struct asc_softc *, int, int, int));
+	/* send data to target via dma */
+static int asc_dma_out __P((struct asc_softc *, int, int, int));
+	/* cleanup after all data is written */
+static int asc_last_dma_out __P((struct asc_softc *, int, int, int));
+	/* resume data out after a message */
+static int asc_resume_out __P((struct asc_softc *, int, int, int));
+	/* resume DMA after a disconnect */
+static int asc_resume_dma_out __P((struct asc_softc *, int, int, int));
+	/* negotiate sync xfer */
+static int asc_sendsync __P((struct asc_softc *, int, int, int));
+	/* negotiate sync xfer */
+static int asc_replysync __P((struct asc_softc *, int, int, int));
+	/* process a message byte */
+static int asc_msg_in __P((struct asc_softc *, int, int, int));
+	/* process an expected disconnect */
+static int asc_disconnect __P((struct asc_softc *, int, int, int));
 
 /* Define the index into asc_scripts for various state transitions */
 #define	SCRIPT_DATA_IN		0
@@ -471,9 +489,9 @@ struct scsi_device asc_dev = {
 /*XXX*/	NULL,		/* Use default 'done' routine */
 };
 
-static int	asc_probe();
-static void	asc_start();
-static int	asc_intr();
+static int asc_intr __P((void *));
+static int asc_poll __P((struct asc_softc *, int));
+static void asc_DumpLog __P((char *));
 
 /*
  * Match driver based on name
@@ -484,7 +502,6 @@ ascmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
 	if(!BUS_MATCHNAME(ca, "asc"))
@@ -633,7 +650,6 @@ asc_scsi_cmd(xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	struct asc_softc *asc = sc_link->adapter_softc;
-	State *state = &asc->st[sc_link->target];
 
 	int flags, s;
 
@@ -643,7 +659,7 @@ asc_scsi_cmd(xs)
 	 *  Flush caches for any data buffer
 	 */
 	if(xs->datalen != 0) {
-		R4K_HitFlushDCache(xs->data, xs->datalen);
+		R4K_HitFlushDCache((vm_offset_t)xs->data, xs->datalen);
 	}
 	/*
 	 *  The hack on the next few lines are to avoid buffers
@@ -902,7 +918,7 @@ asc_intr(sc)
 	ss = regs->asc_ss;
 
 	if ((status & ASC_CSR_INT) == 0) /* Make shure it's a real interrupt */
-		 return;
+		 return(0);
 
 	ir = regs->asc_intr;	/* this resets the previous two */
 	scpt = asc->script;
@@ -1022,8 +1038,6 @@ printf("asc_intr: fifo flush %d len %d fifo %x\n", fifo, len, regs->asc_fifo);
 				len += fifo; /* Bytes dma'ed but not sent */
 			}
 			else if (state->flags & DMA_IN) {
-				u_char *cp;
-
 				printf("asc_intr: IN: dmalen %d len %d fifo %d\n",
 					state->dmalen, len, fifo); /* XXX */
 			}
@@ -1150,7 +1164,7 @@ printf("asc_intr: fifo flush %d len %d fifo %x\n", fifo, len, regs->asc_fifo);
 			asc->st[i].flags = 0;
 		}
 		asc->target = -1;
-		return;
+		return(1);
 	}
 
 	/* check for command errors */
@@ -1190,7 +1204,7 @@ printf("asc_intr: fifo flush %d len %d fifo %x\n", fifo, len, regs->asc_fifo);
 				}
 				asc->cmd[asc->target]->error = XS_DRIVER_STUFFUP;
 				asc_end(asc, status, ss, ir);
-				return;
+				return(1);
 			}
 			/* FALLTHROUGH */
 
@@ -1211,7 +1225,7 @@ printf("asc_intr: fifo flush %d len %d fifo %x\n", fifo, len, regs->asc_fifo);
 			state->flags |= DISCONN;
 			regs->asc_cmd = ASC_CMD_ENABLE_SEL;
 			readback(regs->asc_cmd);
-			return;
+			return(1);
 		}
 	}
 
@@ -1265,17 +1279,14 @@ done:
 	 * dispatcher (which we are returning to) will catch it
 	 * before returning to the interrupted code.
 	 */
-	return;
+	return(1);
 
 abort:
 #ifdef DEBUG
 	asc_DumpLog("asc_intr");
 #endif
-#if 0
 	panic("asc_intr");
-#else
-	boot(4); /* XXX */
-#endif
+	return(1);
 }
 
 /*
@@ -1286,8 +1297,8 @@ abort:
 /* ARGSUSED */
 static int
 script_nop(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
 	return (1);
 }
@@ -1344,8 +1355,8 @@ asc_get_status(asc, status, ss, ir)
 /* ARGSUSED */
 static int
 asc_end(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
 	struct scsi_xfer *scsicmd;
 	struct scsi_link *sc_link;
@@ -2026,10 +2037,10 @@ done:
 /* ARGSUSED */
 static int
 asc_disconnect(asc, status, ss, ir)
-	register asc_softc_t asc;
-	register int status, ss, ir;
+	asc_softc_t asc;
+	int status, ss, ir;
 {
-	register State *state = &asc->st[asc->target];
+	State *state = &asc->st[asc->target];
 
 #ifdef DIAGNOSTIC
 	if (!(state->flags & DISCONN)) {
@@ -2046,6 +2057,7 @@ asc_disconnect(asc, status, ss, ir)
 /*
  * Dump the log buffer.
  */
+static void
 asc_DumpLog(str)
 	char *str;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.8 1997/03/12 19:16:46 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.9 1997/04/19 17:19:46 pefo Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.8 1997/03/12 19:16:46 pefo Exp $
+ *      $Id: pmap.c,v 1.9 1997/04/19 17:19:46 pefo Exp $
  */
 
 /*
@@ -79,8 +79,8 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
 
-#include <machine/cpu.h>
 #include <machine/pte.h>
+#include <machine/cpu.h>
 #include <machine/memconf.h>
 
 #include <arc/dti/desktech.h>
@@ -109,7 +109,8 @@ typedef struct pv_entry {
 #define	PG_WIRED	0x80000000
 
 pv_entry_t	pv_table;	/* array of entries, one per page */
-int	pmap_remove_pv();
+
+void mem_zero_page __P((vm_offset_t));
 
 #ifdef MACHINE_NONCONTIG
 static	vm_offset_t	avail_next;
@@ -205,7 +206,6 @@ pmap_bootstrap(firstaddr)
 	vm_offset_t start = firstaddr;
 	extern int physmem;
 
-/*XXX*/	char pbuf[100];
 
 #define	valloc(name, type, num) \
 	    (name) = (type *)firstaddr; firstaddr = (vm_offset_t)((name)+(num))
@@ -284,9 +284,6 @@ pmap_bootstrap(firstaddr)
 		pseg->first_page = nextpage;
 		nextpage += (pseg->end - pseg->start) / NBPG;
 		avail_remaining += (pseg->end - pseg->start) / NBPG;
-#if 0
-/*XXX*/	sprintf(pbuf,"segment = %d start 0x%x end 0x%x avail %d page %d\n", i, pseg->start, pseg->end, avail_remaining, nextpage); printf(pbuf);
-#endif
 		pseg++;
 	}
 
@@ -337,7 +334,7 @@ pmap_bootstrap_alloc(size)
 	size = round_page(size);
 	avail_start += size;
 
-	blkclr((caddr_t)val, size);
+	bzero((caddr_t)val, size);
 	return ((void *)val);
 }
 
@@ -483,7 +480,6 @@ pmap_pinit(pmap)
 	} else {
 		register struct segtab *stp;
 		vm_page_t mem;
-		void pmap_zero_page();
 
 		do {
 			mem = vm_page_alloc1();
@@ -492,6 +488,7 @@ pmap_pinit(pmap)
 			}			/* XXX Deadlock situations? */
 		} while (mem == NULL);
 
+		/* Do zero via cached if No L2 or Snooping L2 */
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap->pm_segtab = stp = (struct segtab *)
 			PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
@@ -584,7 +581,7 @@ pmap_release(pmap)
 					panic("pmap_release: segmap not empty");
 			}
 #endif
-			R4K_HitFlushDCache(pte, PAGE_SIZE);
+			R4K_HitFlushDCache((vm_offset_t)pte, PAGE_SIZE);
 			vm_page_free1(
 				PHYS_TO_VM_PAGE(CACHED_TO_PHYS(pte)));
 			pmap->pm_segtab->seg_tab[i] = NULL;
@@ -630,7 +627,6 @@ pmap_remove(pmap, sva, eva)
 	register vm_offset_t nssva;
 	register pt_entry_t *pte;
 	unsigned entry;
-	int flush;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
@@ -740,7 +736,7 @@ pmap_page_protect(pa, prot)
 
 #ifdef DEBUG
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
-	    prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE))
+	    ((prot == VM_PROT_NONE) && (pmapdebug & PDB_REMOVE)))
 		printf("pmap_page_protect(%x, %x)\n", pa, prot);
 #endif
 	if (!IS_VM_PHYSADDR(pa))
@@ -895,6 +891,32 @@ pmap_is_page_ro(pmap, va, entry)
 }
 
 /*
+ *	Return page mapping status.
+ */
+int
+pmap_is_pa_mapped(pa)
+	vm_offset_t pa;
+{
+	pv_entry_t pv;
+
+	pv = pa_to_pvh(pa);
+	return(pv->pv_pmap != NULL);
+}
+
+/*
+ *	Return page mapping status.
+ */
+vm_offset_t
+pmap_pa_to_va(pa)
+	vm_offset_t pa;
+{
+	pv_entry_t pv;
+
+	pv = pa_to_pvh(pa);
+	return(pv->pv_va);
+}
+
+/*
  *	pmap_page_cache:
  *
  *	Change all mappings of a page to cached/uncached.
@@ -902,12 +924,12 @@ pmap_is_page_ro(pmap, va, entry)
 void
 pmap_page_cache(pa,mode)
 	vm_offset_t pa;
+	int mode;
 {
-	register pv_entry_t pv;
-	register pt_entry_t *pte;
-	register vm_offset_t va;
-	register unsigned entry;
-	register unsigned newmode;
+	pv_entry_t pv;
+	pt_entry_t *pte;
+	unsigned entry;
+	unsigned newmode;
 	int s;
 
 #ifdef DEBUG
@@ -935,7 +957,7 @@ pmap_page_cache(pa,mode)
 			}
 		}
 		else {
-			if (pte = pmap_segmap(pv->pv_pmap, pv->pv_va)) {
+			if ((pte = pmap_segmap(pv->pv_pmap, pv->pv_va))) {
 				pte += (pv->pv_va >> PGSHIFT) & (NPTEPG - 1);
 				entry = pte->pt_entry;
 				if (entry & PG_V) {
@@ -975,7 +997,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 {
 	register pt_entry_t *pte;
 	register u_int npte;
-	register int i, j;
+	register int i;
 	vm_page_t mem;
 
 #ifdef DEBUG
@@ -1177,7 +1199,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		/*
 		 * Update the same virtual address entry.
 		 */
-		j = R4K_TLBUpdate(va, npte);
+		R4K_TLBUpdate(va, npte);
 		pte->pt_entry = npte;
 		return;
 	}
@@ -1190,6 +1212,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 			}			/* XXX Deadlock situations? */
 		} while (mem == NULL);
 
+		/* Do zero via cached if No L2 or Snooping L2 */
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap_segmap(pmap, va) = pte = (pt_entry_t *)
 			PHYS_TO_CACHED(VM_PAGE_TO_PHYS(mem));
@@ -1235,7 +1258,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	}
 	pte->pt_entry = npte;
 	if (pmap->pm_tlbgen == tlbpid_gen)
-		j = R4K_TLBUpdate(va | (pmap->pm_tlbpid <<
+		R4K_TLBUpdate(va | (pmap->pm_tlbpid <<
 			VMTLB_PID_SHIFT), npte);
 }
 
@@ -1254,7 +1277,6 @@ pmap_change_wiring(pmap, va, wired)
 {
 	register pt_entry_t *pte;
 	u_int p;
-	register int i;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_WIRING))
@@ -1405,25 +1427,26 @@ void
 pmap_zero_page(phys)
 	vm_offset_t phys;
 {
-	register int *p, *end;
+	register vm_offset_t p;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%x)\n", phys);
 #endif
-/*XXX FIXME Not very sophisticated */
-	R4K_FlushCache();
-	p = (int *)PHYS_TO_CACHED(phys);
-	end = p + PAGE_SIZE / sizeof(int);
-	do {
-		p[0] = 0;
-		p[1] = 0;
-		p[2] = 0;
-		p[3] = 0;
-		p += 4;
-	} while (p != end);
-/*XXX FIXME Not very sophisticated */
-	R4K_FlushCache();
+	if(l2cache_is_snooping && !pmap_is_pa_mapped(phys)) {
+		mem_zero_page((vm_offset_t)PHYS_TO_UNCACHED(phys));
+	}
+	else if(!pmap_is_pa_mapped(phys)) {
+		p = (vm_offset_t)PHYS_TO_CACHED(phys);
+		mem_zero_page(p);
+		R4K_HitFlushDCache(p, PAGE_SIZE);
+	}
+	else { /* Page is mapped or non snooping */
+		R4K_FlushDCache((vm_offset_t)PHYS_TO_CACHED(pmap_pa_to_va(phys) & CpuCacheAliasMask), PAGE_SIZE);
+		p = (vm_offset_t)PHYS_TO_CACHED(phys);
+		mem_zero_page(p);
+		R4K_HitFlushDCache(p, PAGE_SIZE);
+	}
 }
 
 /*
@@ -1587,10 +1610,10 @@ pmap_phys_address(ppn)
  */
 int
 pmap_alloc_tlbpid(p)
-	register struct proc *p;
+	struct proc *p;
 {
-	register pmap_t pmap;
-	register int id;
+	pmap_t pmap;
+	int id;
 
 	pmap = &p->p_vmspace->vm_pmap;
 	if (pmap->pm_tlbgen != tlbpid_gen) {

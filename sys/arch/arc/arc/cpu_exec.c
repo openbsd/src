@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_exec.c,v 1.3 1997/03/23 11:34:28 pefo Exp $	*/
+/*	$OpenBSD: cpu_exec.c,v 1.4 1997/04/19 17:19:41 pefo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,10 @@
 #include <sys/exec_ecoff.h>
 #include <machine/reg.h>
 
+#if defined(_KERN_DO_ECOFF)
+void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
+				u_long, register_t *));
+#endif
 /*
  * cpu_exec_aout_makecmds():
  *	cpu-dependent a.out format hook for execve().

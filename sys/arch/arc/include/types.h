@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.1.1.1 1996/06/24 09:07:18 pefo Exp $	*/
+/*	$OpenBSD: types.h,v 1.2 1997/04/19 17:19:59 pefo Exp $	*/
 /*	$NetBSD: types.h,v 1.10 1995/07/06 03:39:43 cgd Exp $	*/
 
 /*-
@@ -75,7 +75,6 @@ typedef	unsigned long long	u_int64_t;
 
 typedef int32_t			register_t;
 
-#define	__BDEVSW_DUMP_OLD_TYPE
 #define	__SWAP_BROKEN
 #define __FORK_BRAINDAMAGE
 

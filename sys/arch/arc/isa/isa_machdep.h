@@ -1,4 +1,4 @@
-/*      $OpenBSD: isa_machdep.h,v 1.4 1997/04/10 16:29:27 pefo Exp $  */
+/*      $OpenBSD: isa_machdep.h,v 1.5 1997/04/19 17:20:00 pefo Exp $  */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -63,6 +63,10 @@ struct arc_isa_bus {
     (*(c)->ic_intr_establish)((c)->ic_data, (i), (t), (l), (f), (a), (w))
 #define isa_intr_disestablish(c, h)                                     \
     (*(c)->ic_intr_disestablish)((c)->ic_data, (h))
+
+void sysbeepstop __P((void *));
+void sysbeep __P((int, int));
+
 
 /*
  *	Interrupt control struct used to control the ICU setup.

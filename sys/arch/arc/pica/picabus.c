@@ -1,4 +1,4 @@
-/*	$OpenBSD: picabus.c,v 1.5 1996/11/23 21:45:35 kstailey Exp $	*/
+/*	$OpenBSD: picabus.c,v 1.6 1997/04/19 17:20:04 pefo Exp $	*/
 /*	$NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp $	*/
 
 /*
@@ -30,14 +30,20 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/device.h>
 
+#include <machine/intr.h>
+#include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/autoconf.h>
 
 #include <arc/pica/pica.h>
 #include <arc/arc/arctype.h>
+#include <arc/dev/dma.h>
 
 struct pica_softc {
 	struct	device sc_dv;
@@ -252,14 +258,10 @@ void
 pica_intr_disestablish(ca)
 	struct confargs *ca;
 {
-	struct pica_softc *sc = pica_cd.cd_devs[0];
-
 	int slot;
 
 	slot = ca->ca_slot;
-	if(slot = 0) {		/* Slot 0 is special, clock */
-	}
-	else {
+	if(slot != 0)		 {	/* Slot 0 is special, clock */
 		local_int_mask &= ~int_table[slot].int_mask;
 		int_table[slot].int_mask = 0;
 		int_table[slot].int_hand = pica_intrnull;

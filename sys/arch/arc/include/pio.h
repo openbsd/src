@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.2 1996/07/30 20:24:27 pefo Exp $	*/
+/*	$OpenBSD: pio.h,v 1.3 1997/04/19 17:19:58 pefo Exp $	*/
 
 /*
  * Copyright (c) 1995 Per Fogelstrom.  All rights reserved.
@@ -29,6 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ARC_PIO_H_
+#define _ARC_PIO_H_
 /*
  * I/O macros.
  */
@@ -44,3 +46,11 @@
 #define	inl(a)		(*(volatile unsigned int*)(a))
 #define	in32(a)		inl(a)
 
+void insb __P((u_int8_t *, u_int8_t *,int));
+void insw __P((u_int16_t *, u_int16_t *,int));
+void insl __P((u_int32_t *, u_int32_t *,int));
+void outsb __P((u_int8_t *, const u_int8_t *,int));
+void outsw __P((u_int16_t *, const u_int16_t *,int));
+void outsl __P((u_int32_t *, const u_int32_t *,int));
+
+#endif /*_ARC_PIO_H_*/

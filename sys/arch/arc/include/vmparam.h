@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.2 1996/07/30 20:24:30 pefo Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.3 1997/04/19 17:19:59 pefo Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -227,3 +227,7 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+
+struct vm_map;
+
+vm_offset_t  kmem_alloc_upage __P((struct vm_map *, vm_size_t));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.10 1997/04/11 21:18:02 maja Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.11 1997/04/19 17:20:01 pefo Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -88,12 +88,15 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/autoconf.h>
@@ -135,7 +138,8 @@ void	*isabr_intr_establish __P((isa_chipset_tag_t, int, int, int,
 			int (*)(void *), void *, char *));
 void	isabr_intr_disestablish __P((isa_chipset_tag_t, void*));
 int	isabr_iointr __P((unsigned int, struct clockframe *));
-void	isabr_initicu();
+void	isabr_initicu __P((void));
+void	intr_calculatemasks __P((void));
 
 extern int cputype;
 
@@ -146,7 +150,6 @@ isabrmatch(parent, cfdata, aux)
 	void *cfdata;
 	void *aux;
 {
-	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
 
         /* Make sure that we're looking for a ISABR. */

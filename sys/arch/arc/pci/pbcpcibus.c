@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbcpcibus.c,v 1.3 1997/04/10 16:29:31 pefo Exp $ */
+/*	$OpenBSD: pbcpcibus.c,v 1.4 1997/04/19 17:20:02 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -45,6 +45,7 @@
 #include <vm/vm.h>
 
 #include <machine/autoconf.h>
+#include <machine/pte.h>
 #include <machine/cpu.h>
 
 #include <dev/pci/pcireg.h>
@@ -77,8 +78,6 @@ void     *pbc_intr_establish __P((void *, pci_intr_handle_t,
 void     pbc_intr_disestablish __P((void *, void *));
 int      pbc_ether_hw_addr __P((u_int8_t *));
 
-extern void *algor_pci_intr_establish();
-
 struct cfattach pbcpcibr_ca = {
         sizeof(struct pcibr_softc), pbcpcibrmatch, pbcpcibrattach,
 };
@@ -96,7 +95,6 @@ pbcpcibrmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
 	/* Make sure that we're looking for a PCI bridge. */
@@ -173,15 +171,17 @@ pbcpcibrprint(aux, pnp)
  */
 
 vm_offset_t
-vtophys(va)
-	vm_offset_t va;
+vtophys(p)
+	void *p;
 {
 	vm_offset_t pa;
+	vm_offset_t va;
 
-	if(va >= UADDR) {	/* Stupid driver have buffer on stack!! */
-		va = (va & ~UADDR) + (vm_offset_t)(curproc->p_addr);
+	va = (vm_offset_t)p;
+	if(va >= UADDR) {	/* Stupid driver have buf on stack!! */
+		va = (vm_offset_t)curproc->p_addr + (va & ~UADDR);
 	}
-	if(va < VM_MIN_KERNEL_ADDRESS) {
+	if((vm_offset_t)va < VM_MIN_KERNEL_ADDRESS) {
 		pa = CACHED_TO_PHYS(va);
 	}
 	else {
@@ -343,7 +343,6 @@ pbc_intr_map(lcv, bustag, buspin, line, ihp)
 	struct pcibr_config *lcp = lcv;
 	pci_chipset_tag_t pc = &lcp->lc_pc;
 	int device, pirq;
-	u_int8_t pirqline;
 
         if (buspin == 0) {
                 /* No IRQ used. */
@@ -392,7 +391,6 @@ pbc_intr_string(lcv, ih)
 	pci_intr_handle_t ih;
 {
 	static char str[16];
-	struct pcibr_config *lcp = lcv;
 
 	sprintf(str, "pciirq%d", ih);
 	return(str);
@@ -407,8 +405,6 @@ pbc_intr_establish(lcv, ih, level, func, arg, name)
 	void *arg;
 	char *name;
 {
-	struct pcibr_config *lcp = lcv;
-
 	return algor_pci_intr_establish(ih, level, func, arg, name);
 }
 
@@ -416,7 +412,5 @@ void
 pbc_intr_disestablish(lcv, cookie)
 	void *lcv, *cookie;
 {
-	struct pcibr_config *lcp = lcv;
-
 	algor_pci_intr_disestablish(cookie);
 }

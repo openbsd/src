@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.4 1997/03/12 19:16:38 pefo Exp $	*/
+/*	$OpenBSD: clock.c,v 1.5 1997/04/19 17:19:39 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: clock.c 1.18 91/01/21
  *
  *	from: @(#)clock.c	8.1 (Berkeley) 6/10/93
- *      $Id: clock.c,v 1.4 1997/03/12 19:16:38 pefo Exp $
+ *      $Id: clock.c,v 1.5 1997/04/19 17:19:39 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -80,6 +80,7 @@ struct cfattach clock_algor_ca = {
 };
 
 void	mcclock_attach __P((struct device *, struct device *, void *));
+int	clockintr __P((void *));
 
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
@@ -242,7 +243,7 @@ inittodr(base)
 	struct clock_softc *csc = (struct clock_softc *)clock_cd.cd_devs[0];
 	register int days, yr;
 	long deltat;
-	int badbase, s;
+	int badbase;
 
 	if (base < 5*SECYR) {
 		printf("WARNING: preposterous time in file system");
@@ -311,7 +312,6 @@ resettodr()
 	struct tod_time c;
 	struct clock_softc *csc = (struct clock_softc *)clock_cd.cd_devs[0];
 	register int t, t2;
-	int s;
 
 	if(!csc->sc_initted)
 		return;

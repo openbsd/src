@@ -1,4 +1,4 @@
-/*	$OpenBSD: algor.h,v 1.2 1997/03/23 11:34:25 pefo Exp $ */
+/*	$OpenBSD: algor.h,v 1.3 1997/04/19 17:19:36 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -107,6 +107,9 @@ struct algor_int_desc {
         int             spl_mask;       /* Spl mask for interrupt */
 };
 
-int     algor_intrnull __P((void *));
+int algor_intrnull __P((void *));
+void *algor_pci_intr_establish __P((int, int, intr_handler_t, void *, void *));
+void algor_pci_intr_disestablish __P((void *));
+
 
 #endif	/* _ALGOR_H_ */

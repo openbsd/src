@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 1997/04/10 16:29:24 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 1997/04/19 17:19:56 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -408,7 +408,33 @@ u_int	CpuPrimaryDataCacheLSize;
 u_int	CpuPrimaryInstCacheLSize;
 u_int	CpuCacheAliasMask;
 u_int	CpuTwoWayCache;
+int	l2cache_is_snooping;
 extern	struct intr_tab intr_tab[];
+
+struct tlb;
+struct user;
+
+int	R4K_ConfigCache __P((void));
+void	R4K_SetWIRED __P((int));
+void	R4K_SetPID __P((int));
+void	R4K_FlushCache __P((void));
+void	R4K_FlushDCache __P((vm_offset_t, int));
+void	R4K_HitFlushDCache __P((vm_offset_t, int));
+void	R4K_FlushICache __P((vm_offset_t, int));
+void	R4K_TLBFlush __P((int));
+void	R4K_TLBFlushAddr __P((vm_offset_t));
+void	R4K_TLBWriteIndexed __P((int, struct tlb *));
+void	R4K_TLBUpdate __P((vm_offset_t, unsigned));
+void	R4K_TLBRead __P((int, struct tlb *));
+void	wbflush __P((void));
+void	savectx __P((struct user *, int));
+int	copykstack __P((struct user *));
+void	switch_exit __P((void));
+void	MachSaveCurFPState __P((struct proc *));
+#ifdef DEBUG
+void	mdbpanic __P((void));
+#endif
+
 #endif
 
 /*

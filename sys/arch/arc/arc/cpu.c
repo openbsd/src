@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.7 1997/04/10 16:29:04 pefo Exp $ */
+/*	$OpenBSD: cpu.c,v 1.8 1997/04/19 17:19:41 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -33,8 +33,12 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/device.h>
 
+#include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
@@ -50,15 +54,12 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL, NULL, 0
 };
 
-static int	cpuprint __P((void *, const char *pnp));
-
 static int
 cpumatch(parent, cfdata, aux)
 	struct device *parent;
 	void *cfdata;
 	void *aux;
 {
-	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
 
 	/* make sure that we're looking for a CPU. */
@@ -74,8 +75,6 @@ cpuattach(parent, dev, aux)
 	struct device *dev;
 	void *aux;
 {
-        struct pcs *p;
-	int needcomma, needrev, i;
 
 	printf(": ");
 
@@ -199,5 +198,10 @@ cpuattach(parent, dev, aux)
 		printf(" Two way set associative.\n");
 	else
 		printf(" Direct mapped.\n");
+
+	if(l2cache_is_snooping)
+		printf("No L2 cache or Snooping L2 cache.\n");
+	else
+		printf("No Snooping L2 cache!.\n");
 }
 

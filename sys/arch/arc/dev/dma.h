@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.h,v 1.2 1996/07/30 20:24:21 pefo Exp $	*/
+/*	$OpenBSD: dma.h,v 1.3 1997/04/19 17:19:51 pefo Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * All rights reserved.
@@ -143,3 +143,15 @@ typedef struct dma_softc {
 #define	DMA_INTR(r)		((r->intr)(r))
 #define	DMA_DRAIN(r)
 #define	DMA_END(r)		((r->end)(r))
+
+void picaDmaInit __P((void));
+void picaDmaTLBAlloc __P((dma_softc_t *));
+void picaDmaTLBFree __P((dma_softc_t *));
+void picaDmaTLBMap __P((dma_softc_t *));
+void picaDmaMap __P((struct dma_softc *, char *, size_t, int));
+void picaDmaStart __P((struct dma_softc *, char *, size_t, int));
+void picaDmaFlush __P((struct dma_softc *, char *, size_t, int));
+void asc_dma_init __P((struct dma_softc *));
+void fdc_dma_init __P((struct dma_softc *));
+void sn_dma_init __P((struct dma_softc *, int));
+

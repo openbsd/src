@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 1997/04/10 16:29:08 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 1997/04/19 17:19:44 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.24 1997/04/10 16:29:08 pefo Exp $
+ *      $Id: machdep.c,v 1.25 1997/04/19 17:19:44 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -74,14 +74,17 @@
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
+#ifdef MFS
+#include <ufs/mfs/mfs_extern.h>
+#endif
 
 #include <vm/vm_kern.h>
 
+#include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
-#include <machine/pte.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/memconf.h>
@@ -98,6 +101,10 @@
 
 extern struct consdev *cn_tab;
 extern char kernel_start[];
+extern void makebootdev __P((char *));
+extern void stacktrace __P((void));
+extern void configure __P((void));
+extern void pmap_bootstrap __P((vm_offset_t));
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = "arc";	/* cpu "architecture" */
@@ -122,6 +129,7 @@ int	bufpages = 0;
 int	msgbufmapped = 0;	/* set when safe to use msgbuf */
 int	physmem;		/* max supported memory, changes to actual */
 int	cpucfg;			/* Value of processor config register */
+int	l2cache_is_snooping;	/* Set if L2 cache snoops uncached writes */
 int	cputype;		/* Mother board type */
 int	num_tlbentries = 48;	/* Size of the CPU tlb */
 int	ncpu = 1;		/* At least one cpu in the system */
@@ -133,21 +141,26 @@ char	eth_hw_addr[6];		/* HW ether addr not stored elsewhere */
 
 struct mem_descriptor mem_layout[MAXMEMSEGS];
 
-extern	int Mach_spl0(), Mach_spl1(), Mach_spl2(), Mach_spl3();
-extern	int Mach_spl4(), Mach_spl5(), splhigh();
-int	(*Mach_splnet)() = splhigh;
-int	(*Mach_splbio)() = splhigh;
-int	(*Mach_splimp)() = splhigh;
-int	(*Mach_spltty)() = splhigh;
-int	(*Mach_splclock)() = splhigh;
-int	(*Mach_splstatclock)() = splhigh;
+extern	int Mach_spl0 __P((void)), Mach_spl1 __P((void)), Mach_spl2 __P((void));
+extern	int Mach_spl3 __P((void)), Mach_spl4 __P((void)), Mach_spl5 __P((void));
+int	(*Mach_splnet)(void) = splhigh;
+int	(*Mach_splbio)(void) = splhigh;
+int	(*Mach_splimp)(void) = splhigh;
+int	(*Mach_spltty)(void) = splhigh;
+int	(*Mach_splclock)(void) = splhigh;
+int	(*Mach_splstatclock)(void) = splhigh;
 
-static void tlb_init_pica();
-static void tlb_init_tyne();
-static int get_simm_size(int *fadr, int max);
-static char *getenv(char *env);
-static void get_eth_hw_addr(char *);
-static int atoi(char *s, int b);
+void mips_init __P((int, char *[], char *[]));	
+void initcpu __P((void));
+void dumpsys __P((void));
+void dumpconf __P((void));
+
+static void tlb_init_pica __P((void));
+static void tlb_init_tyne __P((void));
+static int get_simm_size __P((int *, int));
+static char *getenv __P((char *env));
+static void get_eth_hw_addr __P((char *));
+static int atoi __P((char *, int));
 
 
 /*
@@ -165,6 +178,7 @@ struct	proc nullproc;		/* for use by swtch_exit() */
  * Reset mapping and set up mapping to hardware and init "wired" reg.
  * Return the first page address following the system.
  */
+void
 mips_init(argc, argv, envv)
 	int argc;
 	char *argv[];
@@ -371,7 +385,7 @@ mips_init(argc, argv, envv)
 	/*
 	 * Init mapping for u page(s) for proc[0], pm_tlbpid 1.
 	 */
-	sysend = (caddr_t)((int)sysend + 3 & -4);
+	sysend = (caddr_t)(((int)sysend + 3) & -4);
 	start = sysend;
 	curproc->p_addr = proc0paddr = (struct user *)sysend;
 	curproc->p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
@@ -387,7 +401,7 @@ mips_init(argc, argv, envv)
 		firstaddr += NBPG * 2;
 	}
 	sysend += UPAGES * NBPG;
-	sysend = (caddr_t)((int)sysend+3 & -4);
+	sysend = (caddr_t)(((int)sysend + 3) & -4);
 	R4K_SetPID(1);
 
 	/*
@@ -423,6 +437,14 @@ mips_init(argc, argv, envv)
 	 * Clear out the I and D caches.
 	 */
 	R4K_FlushCache();
+
+	i = *(volatile u_int32_t *)0x80000300;	/* Read and cache */
+	R4K_FlushCache();			/* Flush */
+	*(volatile u_int32_t *)0xa0000300 = ~i;	/* Write uncached */
+	l2cache_is_snooping = (~i == *(volatile u_int32_t *)0x80000300);
+	*(volatile u_int32_t *)0x80000300 = i;	/* Write uncached */
+	R4K_FlushCache();			/* Flush */
+
 
 	/*
 	 * Initialize error message buffer.
@@ -713,7 +735,6 @@ void
 cpu_startup()
 {
 	register unsigned i;
-	register caddr_t v;
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
@@ -829,6 +850,7 @@ cpu_startup()
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -876,7 +898,7 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
 	p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall req */
 	p->p_md.md_regs[PS] = PSL_USERSET;
-	p->p_md.md_flags & ~MDP_FPUSED;
+	p->p_md.md_flags &= ~MDP_FPUSED;
 	if (machFPCurProcPtr == p)
 		machFPCurProcPtr = (struct proc *)0;
 	p->p_md.md_ss_addr = 0;
@@ -946,7 +968,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
-	    (sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+	    ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid)))
 		printf("sendsig(%d): sig %d ssp %x usp %x scp %x\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc);
 #endif
@@ -1011,7 +1033,7 @@ bail:
 	regs[RA] = (int)PS_STRINGS - (esigcode - sigcode);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
-	    (sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+	    ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid)))
 		printf("sendsig(%d): sig %d returns\n",
 		       p->p_pid, sig);
 #endif
@@ -1028,6 +1050,7 @@ bail:
  * a machine fault.
  */
 /* ARGSUSED */
+int
 sys_sigreturn(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -1138,6 +1161,7 @@ int	dumpmag = (int)0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
+void
 dumpconf()
 {
 	int nblks;
@@ -1163,9 +1187,9 @@ dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
+void
 dumpsys()
 {
-	int error;
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
@@ -1179,8 +1203,9 @@ dumpsys()
 	if (dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
-	printf("dump ");
-	switch (error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	printf("dump not yet implemented");
+#if 0 /* XXX HAVE TO FIX XXX */
+	switch (error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, dumplo,)) {
 
 	case ENXIO:
 		printf("device bad\n");
@@ -1205,6 +1230,7 @@ dumpsys()
 	case 0:
 		printf("succeeded\n");
 	}
+#endif
 }
 
 /*
@@ -1238,6 +1264,7 @@ microtime(tvp)
 	splx(s);
 }
 
+void
 initcpu()
 {
 

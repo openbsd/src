@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.3 1996/08/26 11:11:59 pefo Exp $	*/
+/*	$OpenBSD: dma.c,v 1.4 1997/04/19 17:19:51 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rz.c	8.1 (Berkeley) 7/29/93
- *      $Id: dma.c,v 1.3 1996/08/26 11:11:59 pefo Exp $
+ *      $Id: dma.c,v 1.4 1997/04/19 17:19:51 pefo Exp $
  */
 
 /*
@@ -52,9 +52,9 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
+#include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
-#include <machine/pte.h>
 #include <machine/pio.h>
 
 #include <scsi/scsi_all.h>
@@ -70,6 +70,7 @@ extern vm_map_t phys_map;
 
 dma_pte_t *free_dma_pte;	/* Pointer to free dma pte list */
 dma_pte_t *first_dma_pte;	/* Pointer to first dma pte */
+
 
 /*
  *  Initialize the dma mapping register area and pool.
@@ -182,6 +183,7 @@ picaDmaTLBFree(dma_softc_t *dma)
  *  the dma control structure and invalidate dma TLB cache.
  */
 
+void
 picaDmaTLBMap(dma_softc_t *sc)
 {
 	vm_offset_t pa;
@@ -221,7 +223,6 @@ picaDmaStart(sc, addr, size, datain)
 	size_t  size;
 	int     datain;
 {
-	int mode;
 	pDmaReg regs = sc->dma_reg;
 
 	/* Halt DMA */
@@ -328,8 +329,6 @@ picaDmaEnd(dma_softc_t *sc)
 void
 picaDmaNull(dma_softc_t *sc)
 {
-	pDmaReg regs = sc->dma_reg;
-
 	printf("picaDmaNull called\n");
 }
 
@@ -338,14 +337,15 @@ picaDmaNull(dma_softc_t *sc)
  *	Called from asc to set up dma
  */
 void
-asc_dma_init(dma_softc_t *sc)
+asc_dma_init(sc)
+	dma_softc_t *sc;
 {
 	sc->reset = picaDmaReset;
 	sc->enintr = picaDmaNull;
 	sc->start = picaDmaStart;
 	sc->map = picaDmaMap;
-	sc->isintr = (int(*)())picaDmaNull;
-	sc->intr = (int(*)())picaDmaNull;
+	sc->isintr = (int(*)(struct dma_softc *))picaDmaNull;
+	sc->intr = (int(*)(struct dma_softc *))picaDmaNull;
 	sc->end = picaDmaEnd;
 
 	sc->dma_reg = (pDmaReg)R4030_SYS_DMA0_REGS;
@@ -364,8 +364,8 @@ fdc_dma_init(dma_softc_t *sc)
 	sc->enintr = picaDmaNull;
 	sc->start = picaDmaStart;
 	sc->map = picaDmaMap;
-	sc->isintr = (int(*)())picaDmaNull;
-	sc->intr = (int(*)())picaDmaNull;
+	sc->isintr = (int(*)(struct dma_softc *))picaDmaNull;
+	sc->intr = (int(*)(struct dma_softc *))picaDmaNull;
 	sc->end = picaDmaEnd;
 
 	sc->dma_reg = (pDmaReg)R4030_SYS_DMA1_REGS;
@@ -384,9 +384,9 @@ sn_dma_init(dma_softc_t *sc, int pages)
 	sc->enintr = picaDmaNull;
 	sc->start = picaDmaFlush;
 	sc->map = picaDmaMap;
-	sc->isintr = (int(*)())picaDmaNull;
-	sc->intr = (int(*)())picaDmaNull;
-	sc->end = (int(*)())picaDmaNull;
+	sc->isintr = (int(*)(struct dma_softc *))picaDmaNull;
+	sc->intr = (int(*)(struct dma_softc *))picaDmaNull;
+	sc->end = (int(*)(struct dma_softc *))picaDmaNull;
 
 	sc->dma_reg = (pDmaReg)NULL;
 	sc->pte_size = pages;

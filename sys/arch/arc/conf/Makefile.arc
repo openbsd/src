@@ -1,17 +1,17 @@
-#	$OpenBSD: Makefile.arc,v 1.6 1996/09/24 20:04:45 pefo Exp $
+#	$OpenBSD: Makefile.arc,v 1.7 1997/04/19 17:19:49 pefo Exp $
 
 #	@(#)Makefile.arc	8.2 (Berkeley) 2/16/94
 #
 # Makefile for 4.4 BSD
 #
 # This makefile is constructed from a machine description:
-#	config machineid
+#	config ``machineid''
 # Most changes should be made in the machine description
-#	/sys/arch/MACHINE/conf/``machineid''
+#	/sys/arch/arc/conf/``machineid''
 # after which you should do
-#	 config machineid
+#	 config ``machineid''
 # Machine generic makefile changes should be made in
-#	/sys/arch/MACHINE/conf/Makefile.``machinetype''
+#	/sys/arch/arc/conf/Makefile.``machinetype''
 # after which config should be rerun for all machines of that type.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
@@ -23,6 +23,7 @@
 
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
+
 AS?=	as
 CC?=	cc
 CPP?=	cpp
@@ -36,7 +37,10 @@ ARC=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Darc
-CFLAGS=		${DEBUG} -O2 -Werror -mno-abicalls -mips2 -mcpu=r4000
+CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
+		-Wno-format
+
+CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} -mno-abicalls -mips2 -mcpu=r4000
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 
 ### find out what to use for libkern
@@ -110,7 +114,7 @@ newvers:
 
 clean::
 	rm -f eddep bsd bsd.gdb bsd.ecoff tags *.o locore.i [a-z]*.s \
-	    Errs errs linterrs makelinks genassym
+	    Errs errs linterrs makelinks 
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
@@ -138,14 +142,12 @@ uipc_domain.o uipc_proto.o vfs_conf.o: Makefile
 if_tun.o if_loop.o if_ethersubr.o: Makefile
 in_proto.o: Makefile
 
-assym.h: genassym
-	./genassym >assym.h
 
-genassym: genassym.o
-	${HOSTCC} -o $@ genassym.o
+assym.h: $S/kern/genassym.sh ${ARC}/arc/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	    ${PARAM} < ${ARC}/arc/genassym.cf > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
 
-genassym.o: ${ARC}/arc/genassym.c
-	${HOSTCC} ${INCLUDES} ${IDENT} -D_KERNEL -Darc -c $<
 
 links:
 	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 1997/04/13 11:53:26 pefo Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 1997/04/19 17:19:39 pefo Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.7 1997/04/13 11:53:26 pefo Exp $
+ *      $Id: autoconf.c,v 1.8 1997/04/19 17:19:39 pefo Exp $
  */
 
 /*
@@ -64,6 +64,14 @@
 
 struct  device *parsedisk __P((char *, int, int, dev_t *));
 void    setroot __P((void));
+void	configure __P((void));
+void	swapconf __P((void));
+extern void	dumpconf __P((void));
+static int findblkmajor __P((struct device *));
+static struct device * getdisk __P((char *, int, int, dev_t *));
+struct device * getdevunit __P((char *, int));
+void makebootdev __P((char *cp));
+int getpno __P((char **));
 
 /*
  * The following several variables are related to
@@ -79,6 +87,7 @@ struct device *bootdv = NULL;
  *  Configure all devices found that we know about.
  *  This is done at boot time.
  */
+void
 configure()
 {
 	(void)splhigh();	/* To be really sure.. */
@@ -94,6 +103,7 @@ configure()
 /*
  * Configure swap space and related parameters.
  */
+void
 swapconf()
 {
 	register struct swdevt *swp;
@@ -171,7 +181,7 @@ parsedisk(str, len, defpart, devp)
 {
 	register struct device *dv;
 	register char *cp, c;
-	int majdev, mindev, part;
+	int majdev, part;
 
 	if (len == 0)
 		return (NULL);
@@ -461,6 +471,7 @@ makebootdev(cp)
 	sprintf(bootdev, "%s%d%c", dp->dev, ctrl*16 + unit, 'a' + part);
 }
 
+int
 getpno(cp)
 	char **cp;
 {

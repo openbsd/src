@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.5 1997/03/12 19:16:44 pefo Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.6 1997/04/19 17:19:45 pefo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -85,7 +85,7 @@ mbattach(parent, self, aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
-	extern int cputype, ncpus;
+	extern int cputype;
 
 	printf("\n");
 

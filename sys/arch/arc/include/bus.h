@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.12 1997/04/10 16:29:22 pefo Exp $	*/
+/*	$OpenBSD: bus.h,v 1.13 1997/04/19 17:19:56 pefo Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -33,6 +33,8 @@
 
 #ifndef _ARC_BUS_H_
 #define _ARC_BUS_H_
+
+#include <machine/pio.h>
 
 #ifdef __STDC__
 #define CAT(a,b)	a##b
@@ -83,15 +85,15 @@ bus_space_read(4,32)
 #define	bus_space_read_8	!!! bus_space_read_8 unimplemented !!!
 
 #define bus_space_read_multi_1(t, h, o, a, c) do {			      \
-		insb((h) + (o), (a), (c));				      \
+		insb((u_int8_t *)((h) + (o)), (a), (c));		      \
 	} while(0)
 
 #define bus_space_read_multi_2(t, h, o, a, c) do {			      \
-		insw((h) + (o), (a), (c));				      \
+		insw((u_int16_t *)((h) + (o)), (a), (c));		      \
 	} while(0)
 
 #define bus_space_read_multi_4(t, h, o, a, c) do {			      \
-		insl((h) + (o), (a), (c));				      \
+		insl((u_int32_t *)((h) + (o)), (a), (c));		      \
 	} while(0)
 
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 not implemented !!!
@@ -112,15 +114,15 @@ bus_space_write(4,32)
 
 
 #define bus_space_write_multi_1(t, h, o, a, c) do {			      \
-		outsb((h) + (o), (a), (c));				      \
+		outsb((u_int8_t *)((h) + (o)), (a), (c));		      \
 	} while(0)
 
 #define bus_space_write_multi_2(t, h, o, a, c) do {			      \
-		outsw((h) + (o), (a), (c));				      \
+		outsw((u_int16_t *)((h) + (o)), (a), (c));		      \
 	} while(0)
 
 #define bus_space_write_multi_4(t, h, o, a, c) do {			      \
-		outsl((h) + (o), (a), (c));				      \
+		outsl((u_int32_t *)((h) + (o)), (a), (c));		      \
 	} while(0)
 
 #define	bus_space_write_multi_8	!!! bus_space_write_multi_8 not implemented !!!

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.2 1996/09/14 15:58:12 pefo Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.3 1997/04/19 17:19:38 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -289,9 +289,9 @@ typedef struct arc_calls
 		char *,			/* Variable */
 		char *);		/* Value */
 
-	arc_status_t (*get_file_info)();	/* GetFileInformation 33 */
+	arc_status_t (*get_file_info)(void);	/* GetFileInformation 33 */
 
-	arc_status_t (*set_file_info)();	/* SetFileInformation 34 */
+	arc_status_t (*set_file_info)(void);	/* SetFileInformation 34 */
 
 	void (*flush_all_caches)(void);	/* FlushAllCaches 35 */
 
@@ -328,4 +328,11 @@ typedef struct arc_param_blk
 #define ArcBiosBase ((arc_param_blk_t *) 0x80001000)
 #define ArcBios (ArcBiosBase->firmware_vect)
 
-extern void arcbios_ident(void);
+
+int bios_getchar __P((void));
+void bios_putchar __P((char));
+void bios_putstring __P((char *));
+void bios_ident __P((void));
+void bios_display_info __P((int *, int *, int *, int *));
+
+

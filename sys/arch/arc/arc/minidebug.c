@@ -1,4 +1,4 @@
-/*	$OpenBSD: minidebug.c,v 1.4 1997/03/12 19:16:45 pefo Exp $	*/
+/*	$OpenBSD: minidebug.c,v 1.5 1997/04/19 17:19:46 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,20 +35,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: minidebug.c,v 1.4 1997/03/12 19:16:45 pefo Exp $
+ *      $Id: minidebug.c,v 1.5 1997/04/19 17:19:46 pefo Exp $
  */
 
 /*
  * Define machine dependent primitives for mdb.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <dev/cons.h>
 #include <machine/pte.h>
 #include <vm/vm_prot.h>
 #undef SP
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/pcb.h>
+#include <machine/intr.h>
 #include <machine/trap.h>
 #include <machine/mips_opcode.h>
 
@@ -57,7 +61,6 @@
 #define FALSE 0
 #endif
 
-void arc_dump_tlb(int, int);
 
 static char *op_name[64] = {
 /* 0 */	"spec",	"bcond","j",	"jal",	"beq",	"bne",	"blez",	"bgtz",
@@ -133,7 +136,22 @@ static char *c0_reg[32] = {
 	"c0r24","c0r25","ecc","cacheerr","taglo","taghi","errepc","c0r31"
 };
 
+extern u_int mdbpeek __P((int));
+extern void mdbpoke __P((int, int));
+extern void trapDump __P((char *));
+extern void stacktrace __P((void));
+extern u_int MachEmulateBranch __P((int *, int, int, u_int));
 extern char *trap_type[];
+extern int num_tlbentries;
+static void arc_dump_tlb __P((int,int));
+static void prt_break __P((void));
+static int mdbprintins __P((int, int));
+static void mdbsetsstep __P((void));
+static int mdbclrsstep __P((int));
+static void print_regs __P((void));
+static void break_insert __P((void));
+static void break_restore __P((void));
+static int break_find __P((int));
 
 struct pcb mdbpcb;
 int mdbmkfault;
@@ -147,7 +165,8 @@ struct brk {
 /*
  * Mini debugger for kernel.
  */
-int gethex(u_int *val, u_int dotval)
+static int
+gethex(u_int *val, u_int dotval)
 {
 	u_int c;
 
@@ -179,6 +198,7 @@ int gethex(u_int *val, u_int dotval)
 	return(c);
 }
 
+static
 void dump(u_int *addr, u_int size)
 {
 	int	cnt;
@@ -193,7 +213,8 @@ void dump(u_int *addr, u_int size)
 	}
 }
 
-void print_regs()
+static void
+print_regs()
 {
 	printf("\n");
 	printf("T0-7 %08x %08x %08x %08x %08x %08x %08x %08x\n",
@@ -219,7 +240,8 @@ void print_regs()
 		mdbpcb.pcb_regs[RA],mdbpcb.pcb_regs[SR]);
 }
 
-set_break(va)
+void
+set_break(int va)
 {
 	int i;
 
@@ -234,7 +256,8 @@ set_break(va)
 	printf(" Break table full!!");
 }
 
-del_break(va)
+void
+del_break(int va)
 {
 	int i;
 
@@ -248,6 +271,7 @@ del_break(va)
 	printf(" Break to remove not found!!");
 }
 
+static void
 break_insert()
 {
 	int i;
@@ -262,6 +286,7 @@ break_insert()
 	}
 }
 
+static void
 break_restore()
 {
 	int i;
@@ -275,7 +300,9 @@ break_restore()
 	}
 }
 
+static int
 break_find(va)
+	int va;
 {
 	int i;
 
@@ -287,6 +314,7 @@ break_find(va)
 	return(-1);
 }
 
+void
 prt_break()
 {
 	int i;
@@ -298,7 +326,9 @@ prt_break()
 		}
 	}
 }
-mdb(causeReg, vadr, p, kernelmode)
+
+int
+mdb(int causeReg, int vadr, int p, int kernelmode)
 {
 	int c;
 	int newaddr;
@@ -353,7 +383,8 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 	ssandrun = 0;
 	break_restore();
 
-	while(c = cngetc()) {
+	while(1) {
+		c = cngetc();
 		switch(c) {
 		case 'T':
 			trapDump("Debugger");
@@ -527,7 +558,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			switch(c) {
 			case 't':
 				printf("tlb");
-				R4K_TLBFlush();
+				R4K_TLBFlush(num_tlbentries);
 				break;
 
 			case 'c':
@@ -548,11 +579,11 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 u_int mdb_ss_addr;
 u_int mdb_ss_instr;
 
+static void
 mdbsetsstep()
 {
 	register u_int va;
 	register int *locr0 = mdbpcb.pcb_regs;
-	int i;
 
 	/* compute next address after current location */
 	if(mdbpeek(locr0[PC]) != 0) {
@@ -571,15 +602,15 @@ mdbsetsstep()
 	if ((int)va < 0) {
 		/* kernel address */
 		mdb_ss_instr = mdbpeek(va);
-		mdbpoke((caddr_t)va, BREAK_SSTEP);
+		mdbpoke(va, BREAK_SSTEP);
 		R4K_FlushDCache(va,4);
 		R4K_FlushICache(va,4);
 		return;
 	}
 }
 
-mdbclrsstep(cr)
-	int cr;
+static int
+mdbclrsstep(int cr)
 {
 	register u_int pc, va;
 	u_int instr;
@@ -601,7 +632,7 @@ mdbclrsstep(cr)
 
 	if ((int)va < 0) {
 		/* kernel address */
-		mdbpoke((caddr_t)va, mdb_ss_instr);
+		mdbpoke(va, mdb_ss_instr);
 		R4K_FlushDCache(va,4);
 		R4K_FlushICache(va,4);
 		mdb_ss_addr = 0;
@@ -613,29 +644,10 @@ mdbclrsstep(cr)
 	return(FALSE);
 }
 
-void
-mdbreadc(lp)
-	char *lp;
-{
-	int c;
-
-	c = cngetc();
-	if (c == '\r')
-		c = '\n';
-	*lp = c;
-}
-
-void
-mdbwrite(lp, len)
-	char *lp;
-	int len;
-{
-	while (len-- > 0)
-		cnputc(*lp++);
-}
 
 /* ARGSUSED */
-mdbprintins(ins, mdbdot)
+static int
+mdbprintins(int ins, int mdbdot)
 {
 	InstFmt i;
 	int delay = 0;
@@ -906,187 +918,12 @@ mdbprintins(ins, mdbdot)
 	return(delay);
 }
 
-#define MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
-
-#if 0
-/*
- * Print a stack backtrace.
- */
-void
-mdbstacktrace(printlocals)
-	int printlocals;
-{
-	u_int pc, sp, ra, va, subr;
-	int a0, a1, a2, a3;
-	u_int instr, mask;
-	InstFmt i;
-	int more, stksize;
-	extern MachKernGenException();
-	extern MachUserGenException();
-	extern MachKernIntr();
-	extern MachUserIntr();
-	extern setsoftclock();
-
-	/* get initial values from the exception frame */
-	sp = mdbpcb.pcb_regs[SP];
-	pc = mdbpcb.pcb_regs[PC];
-	ra = mdbpcb.pcb_regs[RA];
-	a0 = mdbpcb.pcb_regs[A0];
-	a1 = mdbpcb.pcb_regs[A1];
-	a2 = mdbpcb.pcb_regs[A2];
-	a3 = mdbpcb.pcb_regs[A3];
-
-loop:
-	/* check for current PC in the kernel interrupt handler code */
-	if (pc >= (u_int)MachKernIntr && pc < (u_int)MachUserIntr) {
-		/* NOTE: the offsets depend on the code in locore.s */
-		printf("interupt\n");
-		a0 = mdbchkget(sp + 36, DSP);
-		a1 = mdbchkget(sp + 40, DSP);
-		a2 = mdbchkget(sp + 44, DSP);
-		a3 = mdbchkget(sp + 48, DSP);
-		pc = mdbchkget(sp + 20, DSP);
-		ra = mdbchkget(sp + 92, DSP);
-		sp = mdbchkget(sp + 100, DSP);
-	}
-
-	/* check for current PC in the exception handler code */
-	if (pc >= 0x80000000 && pc < (u_int)setsoftclock) {
-		ra = 0;
-		subr = 0;
-		goto done;
-	}
-	/*
-	 * Find the beginning of the current subroutine by scanning backwards
-	 * from the current PC for the end of the previous subroutine.
-	 */
-	va = pc - sizeof(int);
-	while ((instr = mdbchkget(va, ISP)) != MIPS_JR_RA)
-		va -= sizeof(int);
-	va += 2 * sizeof(int);	/* skip back over branch & delay slot */
-	/* skip over nulls which might separate .o files */
-	while ((instr = mdbchkget(va, ISP)) == 0)
-		va += sizeof(int);
-	subr = va;
-
-	/* scan forwards to find stack size and any saved registers */
-	stksize = 0;
-	more = 3;
-	mask = 0;
-	for (; more; va += sizeof(int), more = (more == 3) ? 3 : more - 1) {
-		/* stop if hit our current position */
-		if (va >= pc)
-			break;
-		instr = mdbchkget(va, ISP);
-		i.word = instr;
-		switch (i.JType.op) {
-		case OP_SPECIAL:
-			switch (i.RType.func) {
-			case OP_JR:
-			case OP_JALR:
-				more = 2; /* stop after next instruction */
-				break;
-
-			case OP_SYSCALL:
-			case OP_BREAK:
-				more = 1; /* stop now */
-			};
-			break;
-
-		case OP_BCOND:
-		case OP_J:
-		case OP_JAL:
-		case OP_BEQ:
-		case OP_BNE:
-		case OP_BLEZ:
-		case OP_BGTZ:
-			more = 2; /* stop after next instruction */
-			break;
-
-		case OP_COP0:
-		case OP_COP1:
-		case OP_COP2:
-		case OP_COP3:
-			switch (i.RType.rs) {
-			case OP_BCx:
-			case OP_BCy:
-				more = 2; /* stop after next instruction */
-			};
-			break;
-
-		case OP_SW:
-			/* look for saved registers on the stack */
-			if (i.IType.rs != 29)
-				break;
-			/* only restore the first one */
-			if (mask & (1 << i.IType.rt))
-				break;
-			mask |= 1 << i.IType.rt;
-			switch (i.IType.rt) {
-			case 4: /* a0 */
-				a0 = mdbchkget(sp + (short)i.IType.imm, DSP);
-				break;
-
-			case 5: /* a1 */
-				a1 = mdbchkget(sp + (short)i.IType.imm, DSP);
-				break;
-
-			case 6: /* a2 */
-				a2 = mdbchkget(sp + (short)i.IType.imm, DSP);
-				break;
-
-			case 7: /* a3 */
-				a3 = mdbchkget(sp + (short)i.IType.imm, DSP);
-				break;
-
-			case 31: /* ra */
-				ra = mdbchkget(sp + (short)i.IType.imm, DSP);
-			}
-			break;
-
-		case OP_ADDI:
-		case OP_ADDIU:
-			/* look for stack pointer adjustment */
-			if (i.IType.rs != 29 && i.IType.rt != 29)
-				break;
-			stksize = (short)i.IType.imm;
-		}
-	}
-
-done:
-	printf("%x+%x ", subr, pc - subr); /* XXX */
-	printf("(%x,%x,%x,%x)\n", a0, a1, a2, a3);
-
-	if (ra) {
-		pc = ra;
-		sp -= stksize;
-		goto loop;
-	}
-}
-#endif
-
-/*
- * Very simple memory allocator for mdb.
- */
-char *
-mdbmalloc(size)
-	int size;
-{
-	static char buffer[4096];
-	static char *bufp = buffer;
-	char *p;
-
-	/* round size up to sizeof(int) */
-	size = (size + sizeof(int) - 1) & ~(sizeof(int) - 1);
-	p = bufp;
-	bufp = p + size;
-	return (p);
-}
 
 /*
  *	Dump TLB contents.
  */
-void arc_dump_tlb(int first,int last)
+static void
+arc_dump_tlb(int first,int last)
 {
 	int tlbno;
 	struct tlb tlb;

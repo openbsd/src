@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.6 1997/03/23 11:34:26 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.7 1997/04/19 17:19:38 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996 Per Fogelstrom.  All rights reserved.
@@ -28,8 +28,10 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <lib/libkern/libkern.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/memconf.h>
@@ -41,6 +43,16 @@ arc_param_blk_t *bios_base = (arc_param_blk_t *) 0x80001000;
 
 extern int	cputype;		/* Mother board type */
 extern int	physmem;		/* Total physical memory size */
+
+int Bios_Read __P((int, char *, int, int *));
+int Bios_Write __P((int, char *, int, int *));
+arc_mem_t *Bios_GetMemoryDescriptor __P((arc_mem_t *));
+arc_sid_t *Bios_GetSystemId __P((void));
+arc_config_t *Bios_GetChild __P((arc_config_t *));
+arc_dsp_stat_t *Bios_GetDisplayStatus __P((int));
+
+static void bios_configure_memory __P((void));
+static int get_cpu_type __P((void));
 
 char buf[100];	/*XXX*/
 arc_dsp_stat_t	displayinfo;		/* Save area for display status info. */
@@ -117,16 +129,18 @@ ARC_Call(Bios_GetDisplayStatus,		0x90);
  *	Simple getchar/putchar interface.
  */
 
+int
 bios_getchar()
 {
 	char buf[4];
 	int  cnt;
 
-	if(Bios_Read(0, &buf, 1, &cnt) != 0)
+	if(Bios_Read(0, &buf[0], 1, &cnt) != 0)
 		return(-1);
 	return(buf[0] & 255);
 }
 
+void
 bios_putchar(c)
 char c;
 {
@@ -144,11 +158,10 @@ char c;
 		buf[0] = c;
 		cnt = 1;
 	}
-	if(Bios_Write(1, &buf, cnt, &cnt) != 0)
-		return(-1);
-	return(0);
+	Bios_Write(1, &buf[0], cnt, &cnt);
 }
 
+void
 bios_putstring(s)
 char *s;
 {
@@ -165,6 +178,7 @@ char *s;
  *
  * Concatenate obvious adjecent segments.
  */
+static void
 bios_configure_memory()
 {
 	arc_mem_t *descr = 0;
@@ -237,7 +251,7 @@ bios_configure_memory()
 /*
  * Find out system type.
  */
-int
+static int
 get_cpu_type()
 {
 	arc_config_t	*cf;

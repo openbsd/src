@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.2 1996/07/16 07:46:18 pefo Exp $ */
+/*      $OpenBSD: pmap.h,v 1.3 1997/04/19 17:19:58 pefo Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -103,6 +103,17 @@ extern	struct pmap kernel_pmap_store;
 #define pmap_kernel() (&kernel_pmap_store)
 
 #define PMAP_PREFER(pa, va)             pmap_prefer((pa), (va))
+
+void pmap_prefer __P((vm_offset_t, vm_offset_t *));
+
+void pmap_bootstrap __P((vm_offset_t));
+void pmap_zero_page __P((vm_offset_t));
+int pmap_is_page_ro __P(( pmap_t, vm_offset_t, int));
+int pmap_alloc_tlbpid __P((struct proc *));
+int pmap_remove_pv __P((pmap_t, vm_offset_t, vm_offset_t));
+int pmap_is_pa_mapped __P((vm_offset_t));
+vm_offset_t pmap_pa_to_va __P((vm_offset_t));
+void pmap_page_cache __P((vm_offset_t, int));;
 
 #endif	/* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 1997/03/23 11:34:27 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.14 1997/04/19 17:19:40 pefo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.13 1997/03/23 11:34:27 pefo Exp $
+ *      $Id: conf.c,v 1.14 1997/04/19 17:19:40 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -216,6 +216,7 @@ dev_t	swapdev = makedev(1, 0);
  *
  * A minimal stub routine can always return 0.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -232,6 +233,7 @@ iskmemdev(dev)
 /*
  * Returns true if def is /dev/zero
  */
+int
 iszerodev(dev)
 	dev_t dev;
 {
@@ -309,6 +311,7 @@ static int chrtoblktbl[MAXDEV] =  {
  *
  * A minimal stub routine can always return NODEV.
  */
+dev_t
 chrtoblk(dev)
 	dev_t dev;
 {

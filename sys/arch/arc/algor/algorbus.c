@@ -1,4 +1,4 @@
-/*	$OpenBSD: algorbus.c,v 1.2 1997/03/23 11:34:26 pefo Exp $ */
+/*	$OpenBSD: algorbus.c,v 1.3 1997/04/19 17:19:37 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -33,8 +33,12 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/device.h>
 
+#include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
@@ -265,6 +269,7 @@ algor_intr_establish(ca, handler, arg)
 
 void *
 algor_pci_intr_establish(ih, level, handler, arg, name)
+	int ih;
 	int level;
 	intr_handler_t handler;
 	void *arg;
@@ -282,7 +287,7 @@ algor_pci_intr_establish(ih, level, handler, arg, name)
 	}
 
 	imask = (0x1000 << ih);
-	route = (0x30000 << ih+ih);
+	route = (0x30000 << (ih+ih));
 
 	slot = NUM_INT_SLOTS;
 	while(slot > 0) {
@@ -316,8 +321,6 @@ void
 algor_intr_disestablish(ca)
 	struct confargs *ca;
 {
-	struct algor_softc *sc = algor_cd.cd_devs[0];
-
 	int slot;
 
 	slot = ca->ca_slot;
@@ -325,9 +328,7 @@ algor_intr_disestablish(ca)
 	outb(P4032_IMR, p4032_imask);
 	outb(P4032_PCIIMR, p4032_imask >> 8);
 
-	if(slot = 0) {		/* Slot 0 is special, clock */
-	}
-	else {
+	if(slot != 0) {		/* Slot 0 is special, clock */
 		int_table[slot].int_mask = 0;
 		int_table[slot].int_hand = algor_intrnull;
 		int_table[slot].param = (void *)NULL;
@@ -395,8 +396,6 @@ algor_clkintr(mask, cf)
 	unsigned mask;
 	struct clockframe *cf;
 {
-	int temp;
-
 	/* Ack clock interrupt */
 	outb(P4032_CLOCK, MC_REGC);
 	(void) inb(P4032_CLOCK + 4);

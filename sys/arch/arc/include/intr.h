@@ -58,6 +58,16 @@
 
 #ifndef _LOCORE
 
+void setsoftclock __P((void));
+void clearsoftclock __P((void));
+int  splsoftclock __P((void));
+void setsoftnet   __P((void));
+void clearsoftnet __P((void));
+int  splsoftnet   __P((void));
+
+struct clockframe;
+void set_intr __P((int, int(*)(u_int, struct clockframe *), int));
+
 volatile int cpl, ipending, astpending;
 int imask[7];
 
@@ -140,7 +150,6 @@ spllower(ncpl)
 #define	splhigh()	splraise(-1)
 #define	spl0()		spllower(0)
 
-#endif
 /*
  * Software interrupt registration
  *
@@ -158,6 +167,7 @@ softintr(mask)
 #define	setsoftclock()	softintr(1 << SIR_CLOCK)
 #define	setsoftnet()	softintr(1 << SIR_NET)
 #define	setsofttty()	softintr(1 << SIR_TTY)
+#endif
 
 #endif /* _LOCORE */
 
