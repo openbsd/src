@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.c,v 1.7 1999/09/25 15:52:20 pjanzen Exp $	*/
+/*	$OpenBSD: mille.c,v 1.8 2000/04/07 05:03:15 pjanzen Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: mille.c,v 1.7 1999/09/25 15:52:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: mille.c,v 1.8 2000/04/07 05:03:15 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,11 +94,6 @@ main(ac, av)
 	stdscr = Board = newwin(BOARD_Y, BOARD_X, 0, 0);
 	Score = newwin(SCORE_Y, SCORE_X, 0, 40);
 	Miles = newwin(MILES_Y, MILES_X, 17, 0);
-#ifdef attron
-	idlok(Board, TRUE);
-	idlok(Score, TRUE);
-	idlok(Miles, TRUE);
-#endif
 	leaveok(Score, TRUE);
 	leaveok(Miles, TRUE);
 	clearok(curscr, TRUE);
