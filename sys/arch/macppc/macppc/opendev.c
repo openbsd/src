@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.7 2003/10/16 05:03:22 deraadt Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.8 2004/01/07 22:45:59 brad Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -32,9 +32,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
-
+#include <sys/stdarg.h>
 #include <machine/psl.h>
-#include <machine/stdarg.h>
 
 #include <dev/ofw/openfirm.h>
 #include <lib/libkern/libkern.h>
