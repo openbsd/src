@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.145 2004/07/20 10:31:21 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.146 2004/08/03 08:05:05 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1401,6 +1401,10 @@ Wipe ${WRKBUILD} to start anew, but skipping the extract/patch stage.
 Set to
 .Sq flavored
 if distinct flavors of the port may share a common source tree.
+.It Ev SHARED_ONLY
+Set to
+.Sq Yes
+if port can only be built on architectures with shared libraries.
 .It Ev SUBPACKAGE
 Set to the sub package suffix when building a package in a multi-package port.
 Read-only.
