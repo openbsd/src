@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: config.sh.OpenBSD,v 1.2 1996/08/20 08:21:52 downsj Exp $
+# $OpenBSD: config.sh.OpenBSD,v 1.3 1996/08/20 18:01:36 downsj Exp $
 #
 # This file was produced by running the Configure script. It holds all the
 # definitions figured out by Configure. Should you modify one of these values,
@@ -100,7 +100,7 @@ d_cuserid='undef'
 d_dbl_dig='define'
 d_difftime='define'
 d_dirnamlen='define'
-if [ $_dynaload ]; then
+if [ $_dynaload -ne 0 ]; then
 	d_dlerror='define'
 	d_dlopen='define'
 	d_dlsymun='define'
@@ -258,13 +258,13 @@ db_hashtype='u_int32_t'
 db_prefixtype='size_t'
 defvoidused='15'
 direntrytype='struct dirent'
-if [ $_dynaload ]; then
+if [ $_dynaload -ne 0 ]; then
 	dlext='so'
 	dlsrc='dl_dlopen.xs'
 	dynamic_ext='DB_File Fcntl FileHandle POSIX SDBM_File Safe Socket'
 else
 	dlext=''
-	dlsrc=''
+	dlsrc='dl_none.xs'
 	dynamic_ext=''
 fi
 eagain='EAGAIN'
@@ -299,7 +299,11 @@ i_db='define'
 i_dbm='undef'
 i_dirent='define'
 i_dld='undef'
-i_dlfcn='define'
+if [ $_dynaload -ne 0 ]; then
+	i_dlfcn='define'
+else
+	i_dlfcn='undef'
+fi
 i_fcntl='undef'
 i_float='define'
 i_gdbm='undef'
@@ -490,7 +494,7 @@ troff=''
 uidtype='uid_t'
 uname='uname'
 uniq='uniq'
-if [ $_dynaload ]; then
+if [ $_dynaload -ne 0 ]; then
 	usedl='define'
 else
 	usedl='undef'
