@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.14 2000/02/20 23:03:55 ericj Exp $	*/
+/*	$OpenBSD: cp.c,v 1.15 2001/06/06 16:06:33 millert Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.14 2000/02/20 23:03:55 ericj Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.15 2001/06/06 16:06:33 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -301,11 +301,9 @@ copy(argv, type, fts_options)
 			    curr->fts_path, strerror(curr->fts_errno));
 			rval = 1;
 			continue;
-		case FTS_DC:			/* Warn, continue. */
+		case FTS_DC:
 			warnx("%s: directory causes a cycle", curr->fts_path);
 			rval = 1;
-			continue;
-		case FTS_DP:			/* Ignore, continue. */
 			continue;
 		}
 
@@ -365,6 +363,25 @@ copy(argv, type, fts_options)
 		if (stat(to.p_path, &to_stat) == -1)
 			dne = 1;
 		else {
+			/*
+			 * For -p mode, we need to reset the directory
+			 * times in the post-order pass since the times
+			 * will have been changed when we added files to
+			 * the directory in the pre-order pass.
+			 */
+			if (curr->fts_info == FTS_DP) {
+				if (pflag && S_ISDIR(to_stat.st_mode)) {
+					struct timeval tv[2];
+
+					TIMESPEC_TO_TIMEVAL(&tv[0],
+					    &curr->fts_statp->st_atimespec);
+					TIMESPEC_TO_TIMEVAL(&tv[1],
+					    &curr->fts_statp->st_mtimespec);
+					if (utimes(to.p_path, tv))
+						warn("utimes: %s", to.p_path);
+				}
+				continue;
+			}
 			if (to_stat.st_dev == curr->fts_statp->st_dev &&
 			    to_stat.st_ino == curr->fts_statp->st_ino) {
 				warnx("%s and %s are identical (not copied).",
