@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2000/02/25 16:35:26 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2000/03/01 08:52:45 deraadt Exp $
 
 LIB	= roken
 
@@ -31,52 +31,19 @@ SRCS=	base64.c		\
 	net_write.c		\
 	parse_time.c		\
 	parse_units.c		\
-	parse_units.h		\
 	resolve.c		\
 	roken_gethostby.c	\
-	signal.c		\
 	simple_exec.c		\
-	snprintf.c		\
 	tm2time.c		\
 	verify.c		\
-	warnerr.c		\
-	xdbm.h			\
-	chown.c			\
-	err.c			\
-	err.h			\
-	errx.c			\
-	fchown.c		\
-	fnmatch.c		\
-	fnmatch.h		\
-	getdtablesize.c		\
-	getopt.c		\
-	glob.h			\
-	inet_aton.c		\
-	initgroups.c		\
-	iruserok.c		\
-	lstat.c			\
-	memmove.c		\
-	readv.c			\
-	recvmsg.c		\
-	sendmsg.c		\
-	setegid.c		\
-	seteuid.c		\
-	strerror.c		\
-	strftime.c		\
 	strlwr.c		\
 	strndup.c		\
 	strnlen.c		\
 	strtok_r.c		\
 	strupr.c		\
-	verr.c			\
-	verrx.c			\
-	vwarn.c			\
-	vwarnx.c		\
-	warn.c			\
-	warnx.c			\
-	writev.c		\
 	print_version.c		\
-	socket.c
+	socket.c		\
+	warnerr.c
 
 # These files have been omitted from kth-rkb:
 # putenv.c, setenv.c, unsetenv.c, daemon.c, flock.c, getegid.c, getgid.c,
