@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.6 1997/04/14 19:09:10 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.7 1997/04/15 08:00:44 deraadt Exp $	*/
 
 	.file	"bootbios.S"
 
@@ -12,11 +12,24 @@
 #define data32  .byte 0x66
 
 /* Better use 32, 48 does not seem to compile */
+#define	BLKCNT	28		/* Max without colliding with the partition table */
+#if 0
+#ifdef	DEBUG
 #define	BLKCNT	32
+#else
+#define	BLKCNT	48
+#endif
+#endif
 
 #define BOOTSEG		0x07c0	/* boot loaded here */
 #define BOOTSTACK	0xfffc	/* stack starts here */
 #define ZMAGIC		0x0b01	/* ZMAGIC */
+
+/*
+ * Partition table values
+ */
+BOOTABLE=	0x80	# value of boot_ind, means bootable partition
+OPENBSDPART=	0xA6	# OpenBSD partition type
 
 #ifdef DEBUG
 #define DBGMSG(msg)		\
@@ -291,7 +304,20 @@ _block_table:
 _block_count:
 	.byte	BLKCNT	/* entries in _block_table */
 
-	. = 0x200 - 4
+	. = 446
+	.globl	_partitions
+	/* throw in a partition in case we are block0 as well */
+	/* flag, head, sec, cyl, typ, ehead, esect, ecyl, start, len */
+_partitions:
+	.byte   BOOTABLE, 0, 1, 0,OPENBSDPART, 255, 255, 255
+	.long   0,50000
+	.byte   0,0,0,0,0,0,0,0
+	.long   0,0
+	.byte   0,0,0,0,0,0,0,0
+	.long   0,0
+	.byte   0,0,0,0,0,0,0,0
+	.long   0,0
+	
+	. = 0x200 - 2
 	/* a little signature */
-	.ascii	"boot"
-
+	.word	0xaa55
