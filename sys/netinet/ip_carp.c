@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.5 2003/10/20 06:57:29 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.6 2003/10/22 14:56:54 markus Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -124,9 +124,9 @@ struct carp_if {
 #define	CARP_LOG1(sc,s,a) if (carp_opts[CARPCTL_LOG])			\
 	log(LOG_INFO, "%s: " s "\n", (sc)->sc_ac.ac_if.if_xname, (a));
 
-void	carp_sha1_generate (struct carp_softc *, u_int32_t *,
+void	carp_hmac_generate (struct carp_softc *, u_int32_t *,
 	    unsigned char *);
-int	carp_sha1_verify (struct carp_softc *, u_int32_t *,
+int	carp_hmac_verify (struct carp_softc *, u_int32_t *,
 	    unsigned char *);
 void	carpattach (int);
 void	carpdetach (struct carp_softc *);
@@ -146,21 +146,37 @@ carp_cksum(struct mbuf *m, int len)
 	return in_cksum(m, len);
 }
 
+#define CARP_HMAC_PAD	64
+
 void
-carp_sha1_generate(struct carp_softc *sc, u_int32_t counter[2], unsigned char md[20])
+carp_hmac_generate(struct carp_softc *sc, u_int32_t counter[2],
+    unsigned char md[20])
 {
-	/* XXX this should probably use the crypto framework */
 	SHA1_CTX sha1ctx;
 	u_int8_t version = CARP_VERSION, type = CARP_ADVERTISEMENT;
 	u_int8_t vhid = sc->sc_vhid & 0xff;
 	struct ifaddr *ifa;
 
-	SHA1Init(&sha1ctx);
+	unsigned char ipad[CARP_HMAC_PAD], opad[CARP_HMAC_PAD];
+	int i;
 
+	/* pad keys */
+	/* XXX precompute ipad/opad and store in sc */
+	bzero(ipad, CARP_HMAC_PAD);
+	bzero(opad, CARP_HMAC_PAD);
+	bcopy(sc->sc_key, ipad, sizeof(sc->sc_key));
+	bcopy(sc->sc_key, opad, sizeof(sc->sc_key));
+	for (i = 0; i < CARP_HMAC_PAD; i++) {
+		ipad[i] ^= 0x36;
+		opad[i] ^= 0x5c;
+	}
+
+	/* inner hash */
+	SHA1Init(&sha1ctx);
+	SHA1Update(&sha1ctx, ipad, CARP_HMAC_PAD);
 	SHA1Update(&sha1ctx, (void *)&version, sizeof(version));
 	SHA1Update(&sha1ctx, (void *)&type, sizeof(type));
 	SHA1Update(&sha1ctx, (void *)&vhid, sizeof(vhid));
-	SHA1Update(&sha1ctx, (void *)&sc->sc_key, sizeof(sc->sc_key));
 	TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			SHA1Update(&sha1ctx,
@@ -168,16 +184,22 @@ carp_sha1_generate(struct carp_softc *sc, u_int32_t counter[2], unsigned char md
 			    sizeof(u_int32_t));
 	}
 	SHA1Update(&sha1ctx, (void *)counter, sizeof(sc->sc_counter));
+	SHA1Final(md, &sha1ctx);
 
+	/* outer hash */
+	SHA1Init(&sha1ctx);
+	SHA1Update(&sha1ctx, opad, CARP_HMAC_PAD);
+	SHA1Update(&sha1ctx, md, sizeof(md));
 	SHA1Final(md, &sha1ctx);
 }
 
 int
-carp_sha1_verify(struct carp_softc *sc, u_int32_t counter[2],  unsigned char md[20])
+carp_hmac_verify(struct carp_softc *sc, u_int32_t counter[2],
+    unsigned char md[20])
 {
 	unsigned char md2[20];
 
-	carp_sha1_generate(sc, counter, md2);
+	carp_hmac_generate(sc, counter, md2);
 
 	return (bcmp(md, md2, sizeof(md2)));
 }
@@ -324,7 +346,7 @@ carp_input(struct mbuf *m, ...)
 	len -= iplen;
 
 	/* verify the hash */
-	if (carp_sha1_verify(sc, ch->carp_counter, ch->carp_md)) {
+	if (carp_hmac_verify(sc, ch->carp_counter, ch->carp_md)) {
 		carpstats.carps_badauth++;
 		sc->sc_ac.ac_if.if_ierrors++;
 		CARP_LOG("incorrect hash", 0);
@@ -565,7 +587,7 @@ carp_send_ad(void *v)
 	ch->carp_counter[0] = htonl((sc->sc_counter>>32)&0xffffffff);
 	ch->carp_counter[1] = htonl(sc->sc_counter&0xffffffff);
 
-	carp_sha1_generate(sc, ch->carp_counter, ch->carp_md);
+	carp_hmac_generate(sc, ch->carp_counter, ch->carp_md);
 
 	m->m_data += sizeof(*ip);
 	ch->carp_cksum = carp_cksum(m, len - sizeof(*ip));
