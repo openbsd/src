@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.58 2003/01/09 20:48:56 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.59 2003/01/22 18:16:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -155,17 +155,17 @@ trap(type, frame)
 	    trapnum == T_EXCEPTION || trapnum == T_EMULATION) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
-		vftype = VM_PROT_EXECUTE;
+		vftype = UVM_PROT_EXEC;
 	} else {
 		va = frame->tf_ior;
 		space = frame->tf_isr;
 		/* what is the vftype for the T_ITLBMISSNA ??? XXX */
 		if (va == frame->tf_iioq_head)
-			vftype = VM_PROT_EXECUTE;
+			vftype = UVM_PROT_EXEC;
 		else if (inst_store(opcode))
-			vftype = VM_PROT_WRITE;
+			vftype = UVM_PROT_WRITE;
 		else
-			vftype = VM_PROT_READ;
+			vftype = UVM_PROT_READ;
 	}
 
 	if (frame->tf_flags & TFF_LAST)

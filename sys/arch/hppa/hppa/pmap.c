@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.92 2003/01/22 16:59:45 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.93 2003/01/22 18:16:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -450,14 +450,14 @@ pmap_bootstrap(vstart)
 
 	uvm_setpagesize();
 
-	hppa_prot[VM_PROT_NONE | VM_PROT_NONE  | VM_PROT_NONE]    =TLB_AR_NA;
-	hppa_prot[VM_PROT_READ | VM_PROT_NONE  | VM_PROT_NONE]    =TLB_AR_R;
-	hppa_prot[VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_NONE]    =TLB_AR_RW;
-	hppa_prot[VM_PROT_READ | VM_PROT_WRITE | VM_PROT_NONE]    =TLB_AR_RW;
-	hppa_prot[VM_PROT_NONE | VM_PROT_NONE  | VM_PROT_EXECUTE] =TLB_AR_RX;
-	hppa_prot[VM_PROT_READ | VM_PROT_NONE  | VM_PROT_EXECUTE] =TLB_AR_RX;
-	hppa_prot[VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_EXECUTE] =TLB_AR_RWX;
-	hppa_prot[VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE] =TLB_AR_RWX;
+	hppa_prot[UVM_PROT_NONE]  = TLB_AR_NA;
+	hppa_prot[UVM_PROT_READ]  = TLB_AR_R;
+	hppa_prot[UVM_PROT_WRITE] = TLB_AR_RW;
+	hppa_prot[UVM_PROT_RW]    = TLB_AR_RW;
+	hppa_prot[UVM_PROT_EXEC]  = TLB_AR_RX;
+	hppa_prot[UVM_PROT_RX]    = TLB_AR_RX;
+	hppa_prot[UVM_PROT_WX]    = TLB_AR_RWX;
+	hppa_prot[UVM_PROT_RWX]   = TLB_AR_RWX;
 
 	/*
 	 * Initialize kernel pmap

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.26 2002/11/07 19:22:56 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.27 2003/01/22 18:16:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -132,8 +132,8 @@ pmap_prot(struct pmap *pmap, int prot)
 static __inline void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	if ((prot & VM_PROT_WRITE) == 0) {
-		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE))
+	if ((prot & UVM_PROT_WRITE) == 0) {
+		if (prot & (UVM_PROT_RX))
 			pmap_changebit(pg, 0, PTE_PROT(TLB_WRITE));
 		else
 			pmap_page_remove(pg);
@@ -143,8 +143,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 static __inline void
 pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
-	if ((prot & VM_PROT_WRITE) == 0) {
-		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE))
+	if ((prot & UVM_PROT_WRITE) == 0) {
+		if (prot & (UVM_PROT_RX))
 			pmap_write_protect(pmap, sva, eva, prot);
 		else
 			pmap_remove(pmap, sva, eva);
