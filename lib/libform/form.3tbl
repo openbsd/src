@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: form.3tbl,v 1.4 1999/01/22 03:30:52 millert Exp $
+.\" $OpenBSD: form.3tbl,v 1.5 1999/07/11 14:14:03 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: form.3x,v 1.11 1998/11/29 01:05:34 Rick.Ohnemus Exp $
+.\" $From: form.3x,v 1.13 1999/07/10 21:53:03 tom Exp $
 .TH form 3 ""
 .SH NAME
 \fBform\fR - curses extension for programming forms
@@ -51,7 +51,8 @@ these functions.  To use the \fBform\fR library, link with the options
 .SS Current Default Values for Field Attributes
 
 The \fBform\fR library maintains a default value for field attributes.  You
-can get or set this default by calling the appropriate \fBget_\fR or \fBset_\fR
+can get or set this default by calling the appropriate \fBset_\fR
+or retrieval
 routine with a \fBNULL\fR field pointer.  Changing this default with a
 \fBset_\fR function affects future field creations, but does not change the
 rendering of fields already created.

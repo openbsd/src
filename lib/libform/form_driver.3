@@ -1,4 +1,4 @@
-.\" $OpenBSD: form_driver.3,v 1.6 1998/07/24 02:37:01 millert Exp $
+.\" $OpenBSD: form_driver.3,v 1.7 1999/07/11 14:14:03 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.'" $From: form_driver.3x,v 1.6 1998/03/11 21:12:53 juergen Exp $
+.'" $From: form_driver.3x,v 1.7 1999/07/10 23:13:18 tom Exp $
 .TH form_driver 3 ""
 .SH NAME
 \fBform_driver\fR - command-processing loop of the form system
@@ -225,7 +225,7 @@ in the current position in the current field.  If it is one of the forms
 requests listed above, that request is executed.
 .PP
 If the second argument is neither printable ASCII nor one of the above
-pre-defined form requests, the drive assumes it is an application-specific
+pre-defined form requests, the driver assumes it is an application-specific
 command and returns \fBE_UNKNOWN_COMMAND\fR.  Application-defined commands
 should be defined relative to \fBMAX_COMMAND\fR, the maximum value of these
 pre-defined requests.
