@@ -80,23 +80,23 @@ $(GCJ)-cross$(exeext): $(GCJ)$(exeext)
 
 po-generated: $(srcdir)/java/parse.c $(srcdir)/java/parse-scan.c
 
-$(srcdir)/java/parse.c: $(srcdir)/java/parse.y
-	$(BISON) -t --name-prefix=java_ $(BISONFLAGS) \
-	    -o p$$$$.c $(srcdir)/java/parse.y && \
-	mv -f p$$$$.c $(srcdir)/java/parse.c
+#$(srcdir)/java/parse.c: $(srcdir)/java/parse.y
+#	$(BISON) -t --name-prefix=java_ $(BISONFLAGS) \
+#	    -o p$$$$.c $(srcdir)/java/parse.y && \
+#	mv -f p$$$$.c $(srcdir)/java/parse.c
 
-$(srcdir)/java/parse-scan.c:  $(srcdir)/java/parse-scan.y
-	$(BISON) -t $(BISONFLAGS) -o ps$$$$.c $(srcdir)/java/parse-scan.y && \
-	mv -f ps$$$$.c $(srcdir)/java/parse-scan.c
+#$(srcdir)/java/parse-scan.c:  $(srcdir)/java/parse-scan.y
+#	$(BISON) -t $(BISONFLAGS) -o ps$$$$.c $(srcdir)/java/parse-scan.y && \
+#	mv -f ps$$$$.c $(srcdir)/java/parse-scan.c
 
-$(srcdir)/java/keyword.h: $(srcdir)/java/keyword.gperf
-	(cd $(srcdir)/java || exit 1; \
-	gperf -L C -C -F ', 0' -p -t -j1 -i 1 -g -o -N java_keyword -k1,4,$$ \
-		keyword.gperf > k$$$$.h || { \
-	echo "Please update gperf from ftp://ftp.gnu.org/pub/gnu/gperf/" >&2; \
-	rm -f k$$$$.h; \
-	exit 1; } ; \
-	mv -f k$$$$.h keyword.h)
+#$(srcdir)/java/keyword.h: $(srcdir)/java/keyword.gperf
+#	(cd $(srcdir)/java || exit 1; \
+#	gperf -L C -C -F ', 0' -p -t -j1 -i 1 -g -o -N java_keyword -k1,4,$$ \
+#		keyword.gperf > k$$$$.h || { \
+#	echo "Please update gperf from ftp://ftp.gnu.org/pub/gnu/gperf/" >&2; \
+#	rm -f k$$$$.h; \
+#	exit 1; } ; \
+#	mv -f k$$$$.h keyword.h)
 
 gt-java-class.h gt-java-constants.h gt-java-decl.h : s-gtype ; @true
 gt-java-expr.h gt-java-jcf-parse.h gt-java-jcf-write.h : s-gtype ; @true
@@ -156,10 +156,10 @@ java.rest.encap:
 
 java.info: $(srcdir)/java/gcj.info
 java.dvi: java/gcj.dvi
-java.generated-manpages: $(srcdir)/java/gcj.1 $(srcdir)/java/gcjh.1 \
-	$(srcdir)/java/jv-scan.1 $(srcdir)/java/jcf-dump.1 \
-	$(srcdir)/java/gij.1 $(srcdir)/java/jv-convert.1 \
-	$(srcdir)/java/rmic.1 $(srcdir)/java/rmiregistry.1
+java.generated-manpages: java/gcj.1 java/gcjh.1 \
+	java/jv-scan.1 java/jcf-dump.1 \
+	java/gij.1 java/jv-convert.1 \
+	java/rmic.1 java/rmiregistry.1
 
 # Install hooks:
 # jc1, gcj, jvgenmain, and gcjh are installed elsewhere as part
@@ -238,12 +238,12 @@ java.distclean:
 java.extraclean:
 java.maintainer-clean:
 	-rm -f java/parse.c java/parse-scan.c java/parse.output java/y.tab.c
-	-rm -f $(srcdir)/java/gcj.1 $(srcdir)/java/gcjh.1
-	-rm -f $(srcdir)/java/jv-scan.1 $(srcdir)/java/jcf-dump.1
-	-rm -f $(srcdir)/java/gij.1
-	-rm -f $(srcdir)/java/jv-convert.1
-	-rm -f $(srcdir)/java/rmic.1
-	-rm -f $(srcdir)/java/rmiregistry.1
+	-rm -f java/gcj.1 java/gcjh.1
+	-rm -f java/jv-scan.1 java/jcf-dump.1
+	-rm -f java/gij.1
+	-rm -f java/jv-convert.1
+	-rm -f java/rmic.1
+	-rm -f java/rmiregistry.1
 #
 # Stage hooks:
 # The main makefile has already created stage?/java.
@@ -351,59 +351,59 @@ java/gcj.dvi: $(srcdir)/java/gcj.texi $(srcdir)/doc/include/fdl.texi \
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	cd java && $(TEXI2DVI) -I $$s/doc/include $$s/java/gcj.texi
 
-$(srcdir)/java/gcj.1: $(srcdir)/java/gcj.texi
+java/gcj.1: $(srcdir)/java/gcj.texi
 	-$(TEXI2POD) -D gcj < $(srcdir)/java/gcj.texi > java/gcj.pod
 	-($(POD2MAN) --section=1 java/gcj.pod > java/gcj.1.T$$$$ && \
-		mv -f java/gcj.1.T$$$$ $(srcdir)/java/gcj.1) || \
+		mv -f java/gcj.1.T$$$$ java/gcj.1) || \
 		(rm -f java/gcj.1.T$$$$ && exit 1)
 	-rm -f java/gcj.pod
 
-$(srcdir)/java/gcjh.1: $(srcdir)/java/gcj.texi
+java/gcjh.1: $(srcdir)/java/gcj.texi
 	-$(TEXI2POD) -D gcjh < $(srcdir)/java/gcj.texi > java/gcjh.pod
 	-($(POD2MAN) --section=1 java/gcjh.pod > java/gcjh.1.T$$$$ && \
-		mv -f java/gcjh.1.T$$$$ $(srcdir)/java/gcjh.1) || \
+		mv -f java/gcjh.1.T$$$$ java/gcjh.1) || \
 		(rm -f java/gcjh.1.T$$$$ && exit 1)
 	-rm -f java/gcjh.pod
 
-$(srcdir)/java/jv-scan.1: $(srcdir)/java/gcj.texi
+java/jv-scan.1: $(srcdir)/java/gcj.texi
 	-$(TEXI2POD) -D jv-scan < $(srcdir)/java/gcj.texi > java/jv-scan.pod
 	-($(POD2MAN) --section=1 java/jv-scan.pod > java/jv-scan.1.T$$$$ && \
-		mv -f java/jv-scan.1.T$$$$ $(srcdir)/java/jv-scan.1) || \
+		mv -f java/jv-scan.1.T$$$$ java/jv-scan.1) || \
 		(rm -f java/jv-scan.1.T$$$$ && exit 1)
 	-rm -f java/jv-scan.pod
 
-$(srcdir)/java/jcf-dump.1: $(srcdir)/java/gcj.texi
+java/jcf-dump.1: $(srcdir)/java/gcj.texi
 	-$(TEXI2POD) -D jcf-dump < $(srcdir)/java/gcj.texi > java/jcf-dump.pod
 	-($(POD2MAN) --section=1 java/jcf-dump.pod > java/jcf-dump.1.T$$$$ && \
-		mv -f java/jcf-dump.1.T$$$$ $(srcdir)/java/jcf-dump.1) || \
+		mv -f java/jcf-dump.1.T$$$$ java/jcf-dump.1) || \
 		(rm -f java/jcf-dump.1.T$$$$ && exit 1)
 	-rm -f java/jcf-dump.pod
 
-$(srcdir)/java/gij.1: $(srcdir)/java/gcj.texi
+java/gij.1: $(srcdir)/java/gcj.texi
 	-$(TEXI2POD) -D gij < $(srcdir)/java/gcj.texi > java/gij.pod
 	-($(POD2MAN) --section=1 java/gij.pod > java/gij.1.T$$$$ && \
-		mv -f java/gij.1.T$$$$ $(srcdir)/java/gij.1) || \
+		mv -f java/gij.1.T$$$$ java/gij.1) || \
 		(rm -f java/gij.1.T$$$$ && exit 1)
 	-rm -f java/gij.pod
 
-$(srcdir)/java/jv-convert.1: $(srcdir)/java/gcj.texi
+java/jv-convert.1: $(srcdir)/java/gcj.texi
 	-$(TEXI2POD) -D jv-convert < $(srcdir)/java/gcj.texi > java/jv-convert.pod
 	-($(POD2MAN) --section=1 java/jv-convert.pod > java/jv-convert.1.T$$$$ && \
-		mv -f java/jv-convert.1.T$$$$ $(srcdir)/java/jv-convert.1) || \
+		mv -f java/jv-convert.1.T$$$$ java/jv-convert.1) || \
 		(rm -f java/jv-convert.1.T$$$$ && exit 1)
 	-rm -f java/jv-convert.pod
 
-$(srcdir)/java/rmic.1: $(srcdir)/java/gcj.texi
+java/rmic.1: $(srcdir)/java/gcj.texi
 	-$(TEXI2POD) -D rmic < $(srcdir)/java/gcj.texi > java/rmic.pod
 	-($(POD2MAN) --section=1 java/rmic.pod > java/rmic.1.T$$$$ && \
-		mv -f java/rmic.1.T$$$$ $(srcdir)/java/rmic.1) || \
+		mv -f java/rmic.1.T$$$$ java/rmic.1) || \
 		(rm -f java/rmic.1.T$$$$ && exit 1)
 	-rm -f java/rmic.pod
 
-$(srcdir)/java/rmiregistry.1: $(srcdir)/java/gcj.texi
+java/rmiregistry.1: $(srcdir)/java/gcj.texi
 	-$(TEXI2POD) -D rmiregistry < $(srcdir)/java/gcj.texi > java/rmiregistry.pod
 	-($(POD2MAN) --section=1 java/rmiregistry.pod > java/rmiregistry.1.T$$$$ && \
-		mv -f java/rmiregistry.1.T$$$$ $(srcdir)/java/rmiregistry.1) || \
+		mv -f java/rmiregistry.1.T$$$$ java/rmiregistry.1) || \
 		(rm -f java/rmiregistry.1.T$$$$ && exit 1)
 	-rm -f java/rmiregistry.pod
 
@@ -412,32 +412,32 @@ java.install-man: installdirs $(GENERATED_JAVA_MANPAGES)
 	-if [ -f $(GCJ)$(exeext) ]; then \
 	  if [ -f $(GCJ)-cross$(exeext) ]; then \
 	    rm -f $(DESTDIR)$(man1dir)/$(JAVA_CROSS_NAME)$(man1ext); \
-	    $(INSTALL_DATA) $(srcdir)/java/gcj.1 $(DESTDIR)$(man1dir)/$(JAVA_CROSS_NAME)$(man1ext); \
+	    $(INSTALL_DATA) java/gcj.1 $(DESTDIR)$(man1dir)/$(JAVA_CROSS_NAME)$(man1ext); \
 	    chmod a-x $(DESTDIR)$(man1dir)/$(JAVA_CROSS_NAME)$(man1ext); \
 	  else \
 	    rm -f $(DESTDIR)$(man1dir)/$(JAVA_INSTALL_NAME)$(man1ext); \
-	    $(INSTALL_DATA) $(srcdir)/java/gcj.1 $(DESTDIR)$(man1dir)/$(JAVA_INSTALL_NAME)$(man1ext); \
+	    $(INSTALL_DATA) java/gcj.1 $(DESTDIR)$(man1dir)/$(JAVA_INSTALL_NAME)$(man1ext); \
 	    chmod a-x $(DESTDIR)$(man1dir)/$(JAVA_INSTALL_NAME)$(man1ext); \
 	  fi ; \
 	fi
 	-rm -f $(DESTDIR)$(man1dir)/gcjh$(man1ext)
-	-$(INSTALL_DATA) $(srcdir)/java/gcjh.1 $(DESTDIR)$(man1dir)/gcjh$(man1ext)
+	-$(INSTALL_DATA) java/gcjh.1 $(DESTDIR)$(man1dir)/gcjh$(man1ext)
 	-chmod a-x $(DESTDIR)$(man1dir)/gcjh$(man1ext)
 	-rm -f $(DESTDIR)$(man1dir)/jv-scan$(man1ext)
-	-$(INSTALL_DATA) $(srcdir)/java/jv-scan.1 $(DESTDIR)$(man1dir)/jv-scan$(man1ext)
+	-$(INSTALL_DATA) java/jv-scan.1 $(DESTDIR)$(man1dir)/jv-scan$(man1ext)
 	-chmod a-x $(DESTDIR)$(man1dir)/jv-scan$(man1ext)
 	-rm -f $(DESTDIR)$(man1dir)/jcf-dump$(man1ext)
-	-$(INSTALL_DATA) $(srcdir)/java/jcf-dump.1 $(DESTDIR)$(man1dir)/jcf-dump$(man1ext)
+	-$(INSTALL_DATA) java/jcf-dump.1 $(DESTDIR)$(man1dir)/jcf-dump$(man1ext)
 	-chmod a-x $(DESTDIR)$(man1dir)/jcf-dump$(man1ext)
 	-rm -f $(DESTDIR)$(man1dir)/gij$(man1ext)
-	-$(INSTALL_DATA) $(srcdir)/java/gij.1 $(DESTDIR)$(man1dir)/gij$(man1ext)
+	-$(INSTALL_DATA) java/gij.1 $(DESTDIR)$(man1dir)/gij$(man1ext)
 	-chmod a-x $(DESTDIR)$(man1dir)/gij$(man1ext)
 	-rm -f $(DESTDIR)$(man1dir)/jv-convert$(man1ext)
-	-$(INSTALL_DATA) $(srcdir)/java/jv-convert.1 $(DESTDIR)$(man1dir)/jv-convert$(man1ext)
+	-$(INSTALL_DATA) java/jv-convert.1 $(DESTDIR)$(man1dir)/jv-convert$(man1ext)
 	-chmod a-x $(DESTDIR)$(man1dir)/jv-convert$(man1ext)
 	-rm -f $(DESTDIR)$(man1dir)/rmic$(man1ext)
-	-$(INSTALL_DATA) $(srcdir)/java/rmic.1 $(DESTDIR)$(man1dir)/rmic$(man1ext)
+	-$(INSTALL_DATA) java/rmic.1 $(DESTDIR)$(man1dir)/rmic$(man1ext)
 	-chmod a-x $(DESTDIR)$(man1dir)/rmic$(man1ext)
 	-rm -f $(DESTDIR)$(man1dir)/rmiregistry$(man1ext)
-	-$(INSTALL_DATA) $(srcdir)/java/rmiregistry.1 $(DESTDIR)$(man1dir)/rmiregistry$(man1ext)
+	-$(INSTALL_DATA) java/rmiregistry.1 $(DESTDIR)$(man1dir)/rmiregistry$(man1ext)
 	-chmod a-x $(DESTDIR)$(man1dir)/rmiregistry$(man1ext)
