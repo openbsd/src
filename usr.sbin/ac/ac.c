@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ac.c,v 1.4 1997/06/02 09:44:51 deraadt Exp $";
+static char rcsid[] = "$Id: ac.c,v 1.5 1997/08/01 07:33:57 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -504,7 +504,7 @@ ac(fp)
 			 */
 			if (*usr.ut_name) {
 				if (strncmp(usr.ut_line, "tty", 3) != 0 ||
-				    strchr("pqrstuvwxyzPQRST", usr.ut_line[3]) == 0 ||
+				    strchr("pqrstuvwxyzPQRST", usr.ut_line[3]) != 0 ||
 				    *usr.ut_host != '\0')
 					head = log_in(head, &usr);
 			} else
