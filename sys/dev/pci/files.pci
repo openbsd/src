@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.100 2001/03/29 14:20:46 aaron Exp $
+#	$OpenBSD: files.pci,v 1.101 2001/04/08 02:16:52 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -228,6 +228,11 @@ file	dev/pci/if_vr.c			vr
 device	tl: ether, ifnet, mii, ifmedia
 attach	tl at pci
 file	dev/pci/if_tl.c			tl
+
+# 3Com 3c990
+device	txp: ether, ifnet, mii, ifmedia
+attach	txp at pci
+file	dev/pci/if_txp.c		txp
 
 # S3 SonicVibes (S3 617)
 device	sv: audio, auconv, mulaw
