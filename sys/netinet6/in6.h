@@ -1,4 +1,4 @@
-/* $OpenBSD: in6.h,v 1.10 2000/02/09 07:37:15 itojun Exp $ */
+/* $OpenBSD: in6.h,v 1.11 2000/02/19 17:31:40 deraadt Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -141,9 +141,9 @@ struct in6_addr {
 #define SIN6_LEN
 #endif
 struct sockaddr_in6 {
-	u_char		sin6_len;	/* length of this struct(sa_family_t)*/
-	u_char		sin6_family;	/* AF_INET6 (sa_family_t) */
-	u_int16_t	sin6_port;	/* Transport layer port # (in_port_t)*/
+	u_int8_t	sin6_len;	/* length of this struct(sa_family_t)*/
+	sa_family_t	sin6_family;	/* AF_INET6 (sa_family_t) */
+	in_port_t	sin6_port;	/* Transport layer port # (in_port_t)*/
 	u_int32_t	sin6_flowinfo;	/* IP6 flow information */
 	struct in6_addr	sin6_addr;	/* IP6 address */
 	u_int32_t	sin6_scope_id;	/* intface scope id */
