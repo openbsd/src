@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.4 2001/12/01 23:27:24 miod Exp $
+#	$OpenBSD: Makefile,v 1.5 2001/12/01 23:43:48 miod Exp $
 
 .if ${MACHINE} == "sparc" || ${MACHINE} == "sun3"
 PROG=	screenblank
 
-LDADD+=	-lm -lutil
-DPADD+=	${LIBM} ${LIBUTIL}
+DPADD=	${LIBM}
+LDADD=	-lm
 .else
 NOPROG=yes
 .endif

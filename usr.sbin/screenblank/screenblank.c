@@ -1,4 +1,4 @@
-/*	$OpenBSD: screenblank.c,v 1.9 2001/12/01 23:27:24 miod Exp $	*/
+/*	$OpenBSD: screenblank.c,v 1.10 2001/12/01 23:43:48 miod Exp $	*/
 /*	$NetBSD: screenblank.c,v 1.2 1996/02/28 01:18:34 thorpej Exp $	*/
 
 /*-
@@ -77,6 +77,7 @@ extern	char *__progname;
 static	void add_dev __P((char *, int));
 static	void change_state __P((int, int));
 static	void cvt_arg __P((char *, struct timeval *));
+static	void logpid __P((void));
 static	void sighandler __P((int));
 static	void usage __P((void));
 
@@ -168,7 +169,7 @@ main(argc, argv)
 	/* Detach. */
 	if (daemon(0, 0))
 		err(1, "daemon");
-	pidfile(NULL);
+	logpid();
 
 	/* Start the state machine. */
 	for (;;) {
@@ -246,7 +247,8 @@ sighandler(sig)
 	int sig;
 {
 
-	/* Re-enable the framebuffer before exit. */
+	/* Kill the pid file and re-enable the framebuffer before exit. */
+	(void)unlink(_PATH_SCREENBLANKPID);
 	change_state(FBVIDEO_ON, 1);
 	_exit(0);
 }
@@ -308,6 +310,17 @@ cvt_arg(arg, tvp)
 
 	tvp->tv_sec = (long)seconds;
 	tvp->tv_usec = (long)((seconds - tvp->tv_sec) * 1000000);
+}
+
+static void
+logpid()
+{
+	FILE *fp;
+
+	if ((fp = fopen(_PATH_SCREENBLANKPID, "w")) != NULL) {
+		fprintf(fp, "%u\n", getpid());
+		(void)fclose(fp);
+	}
 }
 
 static void
