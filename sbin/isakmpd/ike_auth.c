@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.16 1999/07/18 09:33:33 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.33 1999/07/18 09:25:33 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.17 1999/08/26 22:30:08 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.38 1999/08/21 22:20:41 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -35,15 +35,17 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
+/* #define OBTAIN_KEY 1 */
+
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <ssl/evp.h>
-#include <ssl/pem.h>
-#include <ssl/x509.h>
+#if defined(OBTAIN_KEY)
+#include <unistd.h>
+#endif /* OBTAIN_KEY */
 
 #include "sysdep.h"
 
@@ -57,6 +59,7 @@
 #include "ike_auth.h"
 #include "ipsec.h"
 #include "ipsec_doi.h"
+#include "libcrypto.h"
 #include "log.h"
 #include "message.h"
 #include "prf.h"
@@ -72,7 +75,9 @@ static int rsa_sig_decode_hash (struct message *);
 static int pre_shared_encode_hash (struct message *);
 static int rsa_sig_encode_hash (struct message *);
 
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
 static int ike_auth_hash (struct exchange *, u_int8_t *);
+#endif
 
 static struct ike_auth ike_auth[] = {
   {
@@ -116,9 +121,11 @@ static void *
 ike_auth_get_key (int type, char *id, size_t *keylen)
 {
   char *key, *buf;
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
   char *keyfile;
   BIO *keyh;
   RSA *rsakey;
+#endif
 
   switch (type)
     {
@@ -154,32 +161,40 @@ ike_auth_get_key (int type, char *id, size_t *keylen)
       break;
 
     case IKE_AUTH_RSA_SIG:
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
+#ifdef HAVE_DLOPEN
+      if (!libcrypto)
+	return 0;
+#endif
+
       keyfile = conf_get_str ("X509-certificates", "Private-key");
 
-      if ((keyh = BIO_new (BIO_s_file ())) == NULL)
+      if ((keyh = LC (BIO_new, (LC (BIO_s_file, ())))) == NULL)
 	{
-	  log_print ("ike_auth_get_key: BIO_new() failed");
+	  log_print ("ike_auth_get_key: "
+		     "BIO_new (BIO_s_file ()) failed");
 	  return 0;
 	}
-      if (BIO_read_filename (keyh, keyfile) == -1)
+      if (LC (BIO_read_filename, (keyh, keyfile)) == -1)
 	{
-	  log_print ("ike_auth_get_key: BIO_read_filename(%s) failed",
+	  log_print ("ike_auth_get_key: "
+		     "BIO_read_filename (keyh, \"%s\") failed",
 		     keyfile);
-	  BIO_free (keyh);
+	  LC (BIO_free, (keyh));
 	  return 0;
 	}
 
-      rsakey = PEM_read_bio_RSAPrivateKey (keyh, NULL, NULL);
+      rsakey = LC (PEM_read_bio_RSAPrivateKey, (keyh, NULL, NULL));
       if (!rsakey)
 	{
-	  log_print ("ike_auth_get_key: PEM_read_bio_RSAPrivateKey failed",
-		     keyfile);
-	  BIO_free (keyh);
+	  log_print ("ike_auth_get_key: PEM_read_bio_RSAPrivateKey failed");
+	  LC (BIO_free, (keyh));
 	  return 0;
 	}
 
-      BIO_free (keyh);
+      LC (BIO_free, (keyh));
       return rsakey;
+#endif
 
     default:
       log_print ("ike_auth_get_key: unknown key type %d", type);
@@ -199,10 +214,132 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
   u_int8_t *buf = 0;
   size_t keylen;
 
+#if defined (OBTAIN_KEY)
+  struct sockaddr_in sin;
+  u_int32_t idlen;
+  int sock;
+#else /* OBTAIN_KEY */
+  in_addr_t addr;
+#endif /* OBTAIN_KEY */
+
   /* Get the pre-shared key for our peer.  */
   key = ike_auth_get_key (IKE_AUTH_PRE_SHARED, exchange->name, &keylen);
+
+#if !defined (OBTAIN_KEY)
   if (!key)
-    return 0;
+  {
+      /* If we're the responder and have the initiator's ID (which is the
+	 case in Aggressive mode), try to find the preshared key in the
+	 section of the initiator's Phase I ID. This allows us to do mobile
+	 user support with preshared keys. */
+      if ((exchange->initiator == 0) && exchange->id_i)
+        {
+	    switch (exchange->id_i[0])
+	      {
+	      case IPSEC_ID_IPV4_ADDR:
+		  buf = calloc (16, sizeof (char));
+		  if (!buf)
+		    log_fatal ("pre_shared_gen_skeyid: failed to allocate 16 bytes for ID");
+		  addr = ntohl (decode_32 (exchange->id_i +
+					   ISAKMP_ID_DATA_OFF -
+					   ISAKMP_GEN_SZ));
+		  inet_ntop (AF_INET, &addr, buf, 16);
+		  break;
+		  
+	      case IPSEC_ID_FQDN:
+	      case IPSEC_ID_USER_FQDN:
+		  buf = calloc (exchange->id_i_len - ISAKMP_ID_DATA_OFF +
+				ISAKMP_GEN_SZ + 1, sizeof (char));
+		  if (!buf)
+		    log_fatal ("pre_shared_gen_skeyid: failed to allocate %d bytes for ID", exchange->id_i_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1);
+		  memcpy (buf, exchange->id_i + ISAKMP_ID_DATA_OFF -
+			  ISAKMP_GEN_SZ, exchange->id_i_len -
+			  ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ);
+		  break;
+
+		  /* XXX Support more ID types ? */
+	      default:
+		  return 0;
+	      }
+
+	    key = ike_auth_get_key (IKE_AUTH_PRE_SHARED, buf, &keylen);
+	    free (buf);
+	    if (!key)
+	      return 0;
+	}
+      else
+	return 0;
+  }
+#else /* OBTAIN_KEY */
+  /* If we didn't find the key in the config file, we can try to
+   * find it based on ID, or (if that fails) we can try to fetch it
+   * from a remote server.
+   */
+  /* XXX Experimental */
+
+  if (!key)
+    {
+	sock = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (sock == -1)
+	  return 0;
+
+	sin.sin_addr.s_addr = inet_addr ("158.130.6.141"); /* XXX */
+	sin.sin_port = ntohs (3456); /* XXX */
+	sin.sin_family = AF_INET;
+	sin.sin_len = sizeof (sin);
+
+	if (connect (sock, (struct sockaddr *) &sin, sizeof (sin)) == -1)
+	  {
+	      close (sock);
+	      return 0;
+	  }
+
+	idlen = htonl (exchange->id_i_len - ISAKMP_ID_DATA_OFF +
+		       ISAKMP_GEN_SZ);
+
+	printf ("%d [%s]\n", exchange->id_i[0],
+		exchange->id_i + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ);
+
+	/* Simple protocol; write type (1 byte), size (4 bytes, big endian),
+	   id data */
+	if ((write (sock, exchange->id_i, 1) == -1) ||
+	    (write (sock, &idlen, sizeof (idlen)) == -1) ||
+	    (write (sock, exchange->id_i + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
+		    exchange->id_i_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ) ==
+	     -1))
+	  {
+	      close (sock);
+	      return 0;
+	  }
+
+	/* Read response; size (4 bytes, big endian), passphrase */
+	/* XXX This should really be some sort of asynchronous operation... */
+	/* XXXXXX This should be protected XXXXXXX */
+	if (read (sock, &keylen, sizeof (idlen)) == -1)
+	  {
+	      close (sock);
+	      return 0;
+	  }
+
+	keylen = ntohl (keylen);
+	key = malloc (keylen);
+	if (!key)
+	  {
+	      log_error ("pre_shared_gen_skeyid: malloc (%d) failed", keylen);
+	      close (sock);
+	      return 0;
+	  }
+
+	if (read (sock, key, keylen) == -1)
+	  {
+	      free (key);
+	      close (sock);
+	      return 0;
+	  }
+	
+	close (sock);
+    }
+#endif /* OBTAIN_KEY */
 
   /* Store the secret key for later policy processing */
   exchange->recv_cert = malloc (keylen);
@@ -211,9 +348,10 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
       log_error ("pre_shared_gen_skeyid: malloc (%d) failed", keylen);
       return 0;
     }
+  memcpy (exchange->recv_cert, key, keylen);
   exchange->recv_certlen = keylen;
   exchange->recv_certtype = ISAKMP_CERTENC_NONE;
-
+  
   prf = prf_alloc (ie->prf_type, ie->hash->type, key, keylen);
   if (buf)
     free (buf);
@@ -359,6 +497,7 @@ pre_shared_decode_hash (struct message *msg)
 static int
 rsa_sig_decode_hash (struct message *msg)
 {
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
   struct cert_handler *handler;
   struct exchange *exchange = msg->exchange;
   struct ipsec_exch *ie = exchange->data;
@@ -369,9 +508,9 @@ rsa_sig_decode_hash (struct message *msg)
   RSA *key;
   size_t hashsize = ie->hash->hashsize;
   char header[80];
+  int len;
   int initiator = exchange->initiator;
   u_int8_t **hash_p, *id_cert, *id;
-  int len;
   u_int32_t id_cert_len;
   size_t id_len;
   int found = 0;
@@ -514,15 +653,15 @@ rsa_sig_decode_hash (struct message *msg)
   if (!p)
     {
       log_print ("rsa_sig_decode_hash: missing signature payload");
-      RSA_free (key);
+      LC (RSA_free, (key));
       return -1;
     }
 
   /* Check that the sig is of the correct size.  */
   len = GET_ISAKMP_GEN_LENGTH (p->p) - ISAKMP_SIG_SZ;
-  if (len != RSA_size (key))
+  if (len != LC (RSA_size, (key)))
     {
-      RSA_free (key);
+      LC (RSA_free, (key));
       log_print ("rsa_sig_decode_hash: "
 		 "SIG payload length does not match public key");
       return -1;
@@ -531,21 +670,21 @@ rsa_sig_decode_hash (struct message *msg)
   *hash_p = malloc (len);
   if (!*hash_p)
     {
-      RSA_free (key);
+      LC (RSA_free, (key));
       log_error ("rsa_sig_decode_hash: malloc (%d) failed", len);
       return -1;
     }
 
-  len = RSA_public_decrypt (len, p->p + ISAKMP_SIG_DATA_OFF, *hash_p, key,
-			    RSA_PKCS1_PADDING);
+  len = LC (RSA_public_decrypt, (len, p->p + ISAKMP_SIG_DATA_OFF, *hash_p, key,
+				 RSA_PKCS1_PADDING));
   if (len == -1)
     {
-      RSA_free (key);
+      LC (RSA_free, (key));
       log_print ("rsa_sig_decode_hash: RSA_public_decrypt () failed");
       return -1;
     }
 
-  RSA_free (key);
+  LC (RSA_free, (key));
   
   if (len != hashsize)
     {
@@ -561,11 +700,15 @@ rsa_sig_decode_hash (struct message *msg)
   p->flags |= PL_MARK;
 
   return 0;
+#else
+  return -1;
+#endif /* USE_LIBCRYPTO || HAVE_DLOPEN */
 }
 
 static int
 pre_shared_encode_hash (struct message *msg)
 {
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
   struct exchange *exchange = msg->exchange;
   struct ipsec_exch *ie = exchange->data;
   size_t hashsize = ie->hash->hashsize;
@@ -583,14 +726,17 @@ pre_shared_encode_hash (struct message *msg)
   snprintf (header, 80, "pre_shared_encode_hash: HASH_%c",
 	    initiator ? 'I' : 'R');
   log_debug_buf (LOG_MISC, 80, header, buf + ISAKMP_HASH_DATA_OFF, hashsize);
-
   return 0;
+#else
+  return -1;
+#endif
 }
 
 /* Encrypt the HASH into a SIG type.  */
 static int
 rsa_sig_encode_hash (struct message *msg)
 {
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
   struct exchange *exchange = msg->exchange;
   struct ipsec_exch *ie = exchange->data;
   size_t hashsize = ie->hash->hashsize;
@@ -650,38 +796,40 @@ rsa_sig_encode_hash (struct message *msg)
   if (!buf)
     {
       log_error ("rsa_sig_encode_hash: malloc (%d) failed", hashsize);
-      RSA_free (key);
+      LC (RSA_free, (key));
       return -1;
     }
   
   if (ike_auth_hash (exchange, buf) == -1)
     {
       free (buf);
-      RSA_free (key);
+      LC (RSA_free, (key));
       return -1;
     }
     
   snprintf (header, 80, "rsa_sig_encode_hash: HASH_%c", initiator ? 'I' : 'R');
   log_debug_buf (LOG_MISC, 80, header, buf, hashsize);
 
-  data = malloc (RSA_size (key));
+  data = malloc (LC (RSA_size, (key)));
   if (!data)
     {
-      log_error ("rsa_sig_encode_hash: malloc (%d) failed", RSA_size (key));
-      RSA_free (key);
+      log_error ("rsa_sig_encode_hash: malloc (%d) failed",
+		 LC (RSA_size, (key)));
+      LC (RSA_free, (key));
       return -1;
     }
 
-  datalen = RSA_private_encrypt (hashsize, buf, data, key, RSA_PKCS1_PADDING);
+  datalen
+    = LC (RSA_private_encrypt, (hashsize, buf, data, key, RSA_PKCS1_PADDING));
   if (datalen == -1)
     {
       log_error ("rsa_sig_encode_hash: RSA_private_encrypt () failed");
       free (buf);
-      RSA_free (key);
+      LC (RSA_free, (key));
       return -1;
     }
 
-  RSA_free (key);
+  LC (RSA_free, (key));
   free (buf);
 
   buf = realloc (data, ISAKMP_SIG_SZ + datalen);
@@ -702,10 +850,13 @@ rsa_sig_encode_hash (struct message *msg)
       free (buf);
       return -1;
     }
-
   return 0;
+#else 
+  return -1;
+#endif /* USE_LIBCRYPTO || HAVE_DLOPEN */
 }
 
+#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
 int
 ike_auth_hash (struct exchange *exchange, u_int8_t *buf)
 {
@@ -743,3 +894,4 @@ ike_auth_hash (struct exchange *exchange, u_int8_t *buf)
 
   return 0;
 }
+#endif
