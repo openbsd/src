@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.23 2002/12/18 16:10:27 markus Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.24 2003/05/30 21:16:50 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -739,12 +739,12 @@ int
 bridge_timeout(int s, char *brdg, char *arg)
 {
 	struct ifbrparam bp;
-	u_int32_t newtime;
+	int newtime;
 	char *endptr;
 
 	errno = 0;
-	newtime = strtoul(arg, &endptr, 0);
-	if (arg[0] == '\0' || endptr[0] != '\0' ||
+	newtime = strtol(arg, &endptr, 0);
+	if (arg[0] == '\0' || endptr[0] != '\0' || newtime < 0 ||
 	    (errno == ERANGE && newtime == ULONG_MAX)) {
 		printf("invalid arg for timeout: %s\n", arg);
 		return (EX_USAGE);
