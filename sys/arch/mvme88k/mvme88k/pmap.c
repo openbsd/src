@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.79 2003/09/29 13:05:56 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.80 2003/09/29 20:29:04 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -615,12 +615,10 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 	if ((pmap_con_dbg & (CD_CACHE | CD_NORM)) == (CD_CACHE | CD_NORM)) {
 		printf("(pmap_cache_ctrl: %x) pmap %x, va %x, mode %x\n", curproc, pmap, s, mode);
 	}
-#endif /* DEBUG */
 
-#ifdef DIAGNOSTIC
 	if (pmap == PMAP_NULL)
 		panic("pmap_cache_ctrl: pmap is NULL");
-#endif
+#endif /* DEBUG */
 
 	PMAP_LOCK(pmap, spl);
 
@@ -695,8 +693,8 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
  * reflect this allocation. This space is mapped in virtual memory
  * immediately following the kernel code/data map.
  *
- *    A pair of virtual pages are reserved for debugging and IO
- * purposes. They are arbitrarily mapped when needed. They are used,
+ *    A pair of virtual pages per cpu are reserved for debugging and
+ * IO purposes. They are arbitrarily mapped when needed. They are used,
  * for example, by pmap_copy_page and pmap_zero_page.
  *
  * For m88k, we have to map BUG memory also. This is a read only
@@ -1069,15 +1067,6 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
  *	Initialize the pmap module. It is called by vm_init, to initialize
  *	any structures that the pmap system needs to map virtual memory.
  *
- * Parameters:
- *	phys_start	physical address of first available page
- *			(was last set by pmap_bootstrap)
- *	phys_end	physical address of last available page
- *
- * Extern/Globals
- *	pmap_phys_start
- *	pmap_phys_end
- *
  * Calls:
  *	pool_init
  *
@@ -1202,15 +1191,10 @@ pmap_create(void)
 	}
 #endif
 
-#ifdef MVME188
-	if (brdtyp == BRD_188) {
-		/*
-		 * memory for page tables should be CACHE DISABLED on MVME188
-		 */
-		pmap_cache_ctrl(kernel_pmap,
-		    (vaddr_t)segdt, (vaddr_t)segdt + s, CACHE_INH);
-	}
-#endif
+	/* memory for page tables should be CACHE DISABLED */
+	pmap_cache_ctrl(kernel_pmap,
+	    (vaddr_t)segdt, (vaddr_t)segdt + s, CACHE_INH);
+
 	/*
 	 * Initialize SDT_ENTRIES.
 	 */
@@ -1857,14 +1841,9 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 	if (pmap_extract(kernel_pmap, pdt_vaddr, &pdt_paddr) == FALSE)
 		panic("pmap_expand: pmap_extract failed");
 
-#ifdef MVME188
-	if (brdtyp == BRD_188) {
-		/*
-		 * the pages for page tables should be CACHE DISABLED on MVME188
-		 */
-		pmap_cache_ctrl(kernel_pmap, pdt_vaddr, pdt_vaddr+PAGE_SIZE, CACHE_INH);
-	}
-#endif
+	/* memory for page tables should be CACHE DISABLED */
+	pmap_cache_ctrl(kernel_pmap,
+	    pdt_vaddr, pdt_vaddr + PAGE_SIZE, CACHE_INH);
 
 	PMAP_LOCK(pmap, spl);
 
