@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.10 1996/11/05 18:23:49 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.11 1996/11/09 06:39:41 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.10 1996/11/05 18:23:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.11 1996/11/09 06:39:41 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -58,6 +58,7 @@ static char rcsid[] = "$OpenBSD: login.c,v 1.10 1996/11/05 18:23:49 deraadt Exp 
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/file.h>
+#include <sys/wait.h>
 
 #include <err.h>
 #include <errno.h>
@@ -84,6 +85,7 @@ void	 getloginname __P((void));
 void	 motd __P((void));
 int	 rootterm __P((char *));
 void	 sigint __P((int));
+void	 sighup __P((int));
 void	 sleepexit __P((int));
 char	*stypeof __P((char *));
 void	 timedout __P((int));
@@ -135,6 +137,7 @@ main(argc, argv)
 	(void)alarm(timeout);
 	(void)signal(SIGQUIT, SIG_IGN);
 	(void)signal(SIGINT, SIG_IGN);
+	(void)signal(SIGHUP, sighup);
 	(void)setpriority(PRIO_PROCESS, 0, 0);
 
 	openlog("login", LOG_ODELAY, LOG_AUTH);
@@ -374,6 +377,7 @@ main(argc, argv)
 			    ctime(&pwd->pw_expire));
 
 	/* Nothing else left to fail -- really log in. */
+	(void)signal(SIGHUP, SIG_DFL);
 	memset((void *)&utmp, 0, sizeof(utmp));
 	(void)time(&utmp.ut_time);
 	(void)strncpy(utmp.ut_name, username, sizeof(utmp.ut_name));
@@ -688,4 +692,14 @@ sleepexit(eval)
 {
 	(void)sleep(5);
 	exit(eval);
+}
+
+void
+sighup(signum)
+	int signum;
+{
+	if (username)
+		badlogin(username);
+
+	exit(W_EXITCODE(0, signum));
 }
