@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.121 2002/12/05 22:40:41 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.122 2002/12/06 22:03:26 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1521,8 +1521,8 @@ ubsec_rng(vsc)
 	mcr->mcr_opktbuf.pb_next = 0;
 
 	ctx->rbp_len = htole16(sizeof(struct ubsec_ctx_rngbypass));
-	ctx->rbp_op = htole16(UBS_CTXOP_RNGBYPASS);
-	rng->rng_q.q_type = UBS_CTXOP_RNGBYPASS;
+	ctx->rbp_op = htole16(UBS_CTXOP_RNGSHA1);
+	rng->rng_q.q_type = UBS_CTXOP_RNGSHA1;
 
 	bus_dmamap_sync(sc->sc_dmat, rng->rng_buf.dma_map, 0,
 	    rng->rng_buf.dma_map->dm_mapsize, BUS_DMASYNC_PREREAD);
