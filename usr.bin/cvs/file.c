@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.11 2004/07/29 17:31:23 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.12 2004/07/29 17:51:06 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -380,7 +380,6 @@ cvs_file_getspec(char **fspec, int fsn, int flags)
 	for (i = 1; i < fsn; i++) {
 		for (c = 0; ; c++) {
 			if (common[c] != fspec[i][c]) {
-				printf("backtracking!\n");
 				/* go back to last dir */
 				while ((c > 0) && (common[--c] != '/'))
 					common[c] = '\0';
@@ -388,7 +387,6 @@ cvs_file_getspec(char **fspec, int fsn, int flags)
 			}
 		}
 	}
-	printf("common part = `%s'\n", common);
 	if (*common == '\0')
 		strlcpy(common, ".", sizeof(common));
 
