@@ -1,4 +1,4 @@
-.\"	$OpenBSD: motd.5,v 1.5 2000/10/26 00:37:05 aaron Exp $
+.\"	$OpenBSD: motd.5,v 1.6 2002/02/20 22:28:37 millert Exp $
 .\"	$NetBSD: motd.5,v 1.2 1994/12/28 18:58:53 glass Exp $
 .\"
 .\" This file is in the public domain.
@@ -16,15 +16,16 @@ file is normally displayed by
 .Xr login 1
 after a user has logged in but before the shell is run.
 It is generally used for important system-wide announcements.
-During system startup, a line containing the kernel version string is
-prepended to this file.
+During system startup, a line containing the kernel version string
+replaces all lines up to (but not including) the first blank line of
+this file.
 .Pp
 Individual users may suppress the display of this file by creating a file named
 .Pa .hushlogin
 in their home directories.
 .Sh EXAMPLES
 .Bd -literal
-OpenBSD 1.2 (GENERIC) #3: Fri Jun 28 22:47:57 MDT 1996
+OpenBSD 3.0 (GENERIC) #5: Sat Jan 26 20:13:07 MST 2002
 
 Make sure you have a .forward file...
 
