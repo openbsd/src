@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.16 2004/07/05 02:13:44 henning Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.17 2004/08/03 14:46:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "bgpd.h"
-#include "ensure.h"
 #include "rde.h"
 
 /*
@@ -35,10 +34,11 @@
  * pt_get:    get a prefix/prefixlen entry. While pt_lookup searches for the
  *            best matching prefix pt_get only finds the prefix/prefixlen
  *            entry. The speed of pt_get is important for the bgp updates.
+ * pt_getaddr: convert the address into a struct bgpd_addr.
  * pt_lookup: lookup a IP in the prefix table. Manly for "show ip bgp".
  * pt_empty:  returns true if there is no bgp prefix linked to the pt_entry.
  * pt_init:   initialize prefix table.
- * pt_alloc:  allocate a pt_entry. Internal function.
+ * pt_alloc?: allocate a AF specific pt_entry. Internal function.
  * pt_free:   free a pt_entry. Internal function.
  */
 
@@ -159,7 +159,6 @@ pt_add(struct bgpd_addr *prefix, int prefixlen)
 	struct pt_entry6	*p6;
 	in_addr_t		 addr_hbo;
 
-	ENSURE(pt_get(prefix, prefixlen) == NULL);
 	PT_STAT(pt_add);
 
 	switch (prefix->af) {
@@ -201,8 +200,10 @@ pt_add(struct bgpd_addr *prefix, int prefixlen)
 void
 pt_remove(struct pt_entry *pte)
 {
-	ENSURE(pt_empty(pte));
 	PT_STAT(pt_remove);
+
+	if (!pt_empty(pte))
+		fatalx("pt_remove: entry not empty");
 
 	switch (pte->af) {
 	case AF_INET:
@@ -268,7 +269,8 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 	const struct pt_entry6	*a6, *b6;
 	int			 i;
 
-	ENSURE(a->af == b->af);
+	if (a->af != b->af)
+		fatalx("king bula sez: comapring pears with apples"); 
 
 	switch (a->af) {
 	case AF_INET:
