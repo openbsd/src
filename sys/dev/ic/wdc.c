@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.67 2003/10/17 08:14:09 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.68 2003/10/19 21:33:20 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -107,14 +107,14 @@ int   __wdccommand_intr(struct channel_softc *, struct wdc_xfer *, int);
 int   wdprint(void *, const char *);
 void  wdc_kill_pending(struct channel_softc *);
 
-#define DEBUG_INTR   0x01
-#define DEBUG_XFERS  0x02
-#define DEBUG_STATUS 0x04
-#define DEBUG_FUNCS  0x08
-#define DEBUG_PROBE  0x10
+#define DEBUG_INTR    0x01
+#define DEBUG_XFERS   0x02
+#define DEBUG_STATUS  0x04
+#define DEBUG_FUNCS   0x08
+#define DEBUG_PROBE   0x10
 #define DEBUG_STATUSX 0x20
-#define DEBUG_SDRIVE 0x40
-#define DEBUG_DETACH 0x80
+#define DEBUG_SDRIVE  0x40
+#define DEBUG_DETACH  0x80
 
 #ifdef WDCDEBUG
 #ifndef WDCDEBUG_MASK
@@ -173,7 +173,8 @@ wdc_log(struct channel_softc *chp, enum wdcevent_type type,
 
 	if (wdc_head < 0 || wdc_head > wdc_size ||
 	    wdc_tail < 0 || wdc_tail > wdc_size) {
-		printf ("wdc_log: wdc_head %x wdc_tail %x\n", wdc_head, wdc_tail);
+		printf ("wdc_log: wdc_head %x wdc_tail %x\n", wdc_head,
+		    wdc_tail);
 		return;
 	}
 
@@ -222,14 +223,15 @@ char *wdc_get_log(unsigned int *, unsigned int *);
 char *
 wdc_get_log(unsigned int * size, unsigned int *left)
 {
-        int  bytes = (wdc_head - wdc_tail);
-        char *retbuf;
-        int  ot, c1, c2;
+	int  bytes = (wdc_head - wdc_tail);
+	char *retbuf;
+	int  ot, c1, c2;
 
 	if (left != NULL)
 		*left = 0;
 
-        if (bytes < 0) bytes += wdc_size;
+	if (bytes < 0)
+		bytes += wdc_size;
 	if (bytes > *size) {
 		if (left != NULL) {
 			*left = bytes - *size;
@@ -245,13 +247,14 @@ wdc_get_log(unsigned int * size, unsigned int *left)
 
 	if (wdc_head < 0 || wdc_head > wdc_size ||
 	    wdc_tail < 0 || wdc_tail > wdc_size) {
-		printf ("wdc_log: wdc_head %x wdc_tail %x\n", wdc_head, wdc_tail);
+		printf ("wdc_log: wdc_head %x wdc_tail %x\n", wdc_head,
+		    wdc_tail);
 		*size = 0;
 		*left = 0;
 		return (NULL);
 	}
 
-        retbuf = malloc(bytes, M_TEMP, M_NOWAIT);
+	retbuf = malloc(bytes, M_TEMP, M_NOWAIT);
 	if (retbuf == NULL) {
 		*size = 0;
 		*left = bytes;
@@ -260,21 +263,21 @@ wdc_get_log(unsigned int * size, unsigned int *left)
 
 	*size = bytes;
 
-        ot = wdc_tail;
-        wdc_tail += bytes;
-        if (wdc_tail > wdc_size) {
-                wdc_tail -= wdc_size;
-                c2 = wdc_tail;
-                c1 = bytes - wdc_tail;
-        } else {
-                c1 = bytes;
-                c2 = 0;
-        }
+	ot = wdc_tail;
+	wdc_tail += bytes;
+	if (wdc_tail > wdc_size) {
+		wdc_tail -= wdc_size;
+		c2 = wdc_tail;
+		c1 = bytes - wdc_tail;
+	} else {
+		c1 = bytes;
+		c2 = 0;
+	}
 
-        memcpy(retbuf, &wdc_log_buf[ot], c1);
-        memcpy(&retbuf[c1], &wdc_log_buf[0], c2);
+	memcpy(retbuf, &wdc_log_buf[ot], c1);
+	memcpy(&retbuf[c1], &wdc_log_buf[0], c2);
 
-        return (retbuf);
+	return (retbuf);
 }
 
 
@@ -433,16 +436,16 @@ atapi_print(aux, pnp)
 
 void
 wdc_disable_intr(chp)
-        struct channel_softc *chp;
+	struct channel_softc *chp;
 {
-        CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_IDS);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_IDS);
 }
 
 void
 wdc_enable_intr(chp)
-        struct channel_softc *chp;
+	struct channel_softc *chp;
 {
-        CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
 }
 
 void
@@ -546,7 +549,7 @@ wdc_ata_present(chp, drive)
 	time_to_done = wdc_wait_for_status(chp,
 	    (WDCS_DRDY | WDCS_DSC | WDCS_DRQ),
 	    (WDCS_DRDY | WDCS_DSC), 1000);
-      	if (time_to_done == -1) {
+	if (time_to_done == -1) {
 		if (retry_cnt == 0 && chp->ch_status == 0x00) {
 			/* At least one flash card needs to be kicked */
 			wdccommandshort(chp, drive, WDCC_CHECK_PWR);
@@ -581,13 +584,13 @@ wdc_ata_present(chp, drive)
 	CHP_WRITE_REG(chp, wdr_cyl_lo, 0xaa);
 	CHP_WRITE_REG(chp, wdr_cyl_hi, 0x55);
 	CHP_WRITE_REG(chp, wdr_seccnt, 0xff);
-       	DELAY(10);
+	DELAY(10);
 
 	if (CHP_READ_REG(chp, wdr_cyl_lo) != 0xaa &&
 	    CHP_READ_REG(chp, wdr_cyl_hi) != 0x55) {
 		WDCDEBUG_PRINT(("%s:%d:%d: register writability failed\n",
-		  chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-	          chp->channel, drive), DEBUG_PROBE);
+		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
+		    chp->channel, drive), DEBUG_PROBE);
 		return 0;
 	}
 
@@ -686,7 +689,7 @@ wdcprobe(chp)
 		WDCDEBUG_PRINT(("%s:%d:%d: after reset, st=0x%x, sc=0x%x"
 		    " sn=0x%x cl=0x%x ch=0x%x\n",
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-	    	    chp->channel, drive, st0, sc, sn, cl, ch), DEBUG_PROBE);
+		    chp->channel, drive, st0, sc, sn, cl, ch), DEBUG_PROBE);
 		/*
 		 * This is a simplification of the test in the ATAPI
 		 * spec since not all drives seem to set the other regs
@@ -999,7 +1002,7 @@ wdcintr(arg)
 		chp->ch_flags &= ~WDCF_DMA_WAIT;
 	}
 	chp->ch_flags &= ~WDCF_IRQ_WAIT;
-        ret = xfer->c_intr(chp, xfer, 1);
+	ret = xfer->c_intr(chp, xfer, 1);
 	if (ret == 0)	/* irq was not for us, still waiting for irq */
 		chp->ch_flags |= WDCF_IRQ_WAIT;
 	return (ret);
@@ -1048,7 +1051,7 @@ wdcreset(chp, verb)
 		printf("\n");
 	}
 
-	return  (drv_mask1 != drv_mask2) ? 1 : 0;
+	return (drv_mask1 != drv_mask2) ? 1 : 0;
 }
 
 int
@@ -1177,7 +1180,7 @@ wdc_dmawait(chp, xfer, timeout)
 	int timeout;
 {
 	int time;
-	for (time = 0;  time < timeout * 1000 / WDCDELAY; time++) {
+	for (time = 0; time < timeout * 1000 / WDCDELAY; time++) {
 		chp->wdc->dma_status =
 		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
 		    chp->channel, xfer->drive, 0);
@@ -1283,7 +1286,7 @@ wdc_probe_caps(drvp, params)
 		drvp->PIO_mode = 3;
 
 	WDCDEBUG_PRINT(("wdc_probe_caps: wdc_cap 0x%x cf_flags 0x%x\n",
-		    wdc->cap, cf_flags), DEBUG_PROBE);
+	    wdc->cap, cf_flags), DEBUG_PROBE);
 
 	valid_mode_found = 0;
 
@@ -1347,7 +1350,7 @@ wdc_probe_caps(drvp, params)
 				continue;
 			}
 
-                        /*
+			/*
 			 * See if mode is accepted.
 			 * If the controller can't set its PIO mode,
 			 * assume the BIOS set it up correctly
@@ -1490,7 +1493,7 @@ wdc_output_bytes(drvp, bytes, buflen)
 	if (len > 0) {
 		roundlen = (len + 1) & ~0x1;
 
-	        CHP_WRITE_RAW_MULTI_2(chp,
+		CHP_WRITE_RAW_MULTI_2(chp,
 		    (void *)((u_int8_t *)bytes + off), roundlen);
 	}
 
@@ -1726,8 +1729,8 @@ __wdccommand_start(chp, xfer)
 	 * the bus is free
 	 */
 	if (wdc_c->r_command != ATAPI_SOFT_RESET) {
-		if (wdcwait(chp, wdc_c->r_st_bmask | WDCS_DRQ, wdc_c->r_st_bmask,
-		    wdc_c->timeout) != 0) {
+		if (wdcwait(chp, wdc_c->r_st_bmask | WDCS_DRQ,
+		    wdc_c->r_st_bmask, wdc_c->timeout) != 0) {
 			goto timeout;
 		}
 	} else
@@ -1787,7 +1790,7 @@ __wdccommand_intr(chp, xfer, irq)
 	WDCDEBUG_PRINT(("__wdccommand_intr %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_INTR);
 	if (wdcwait(chp, wdc_c->r_st_pmask, wdc_c->r_st_pmask,
-	     (irq == 0)  ? wdc_c->timeout : 0)) {
+	    (irq == 0) ? wdc_c->timeout : 0)) {
 		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
 			return 0; /* IRQ was not for us */
 		wdc_c->flags |= AT_TIMEOU;
@@ -1795,8 +1798,8 @@ __wdccommand_intr(chp, xfer, irq)
 		WDCDEBUG_PRINT(("__wdccommand_intr returned\n"), DEBUG_INTR);
 		return 1;
 	}
-        if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
-                chp->wdc->irqack(chp);
+	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+		chp->wdc->irqack(chp);
 
 	if ((wdc_c->flags & AT_READ) && (chp->ch_status & WDCS_DRQ)) {
 		wdc_input_bytes(drvp, data, bcount);
@@ -1815,7 +1818,8 @@ __wdccommand_done(chp, xfer)
 	struct wdc_command *wdc_c = xfer->cmd;
 
 	WDCDEBUG_PRINT(("__wdccommand_done %s:%d:%d %02x\n",
-	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive, chp->ch_status), DEBUG_FUNCS);
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
+	    chp->ch_status), DEBUG_FUNCS);
 	if (chp->ch_status & WDCS_DWF)
 		wdc_c->flags |= AT_DF;
 	if (chp->ch_status & WDCS_ERR) {
