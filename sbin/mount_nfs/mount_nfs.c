@@ -161,7 +161,7 @@ main(argc, argv)
 #ifdef KERBEROS
 	last_ruid = -1;
 	if (krb_get_lrealm(realm, 0) != KSUCCESS)
-	    (void)strcpy(realm, KRB_REALM);
+	    (void)strcpy(realm, "[not set]");
 #endif
 	retrycnt = DEF_RETRY;
 
