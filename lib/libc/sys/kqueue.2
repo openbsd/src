@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.18 2004/09/23 03:32:16 brad Exp $
+.\"	$OpenBSD: kqueue.2,v 1.19 2004/09/23 06:54:54 brad Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -242,7 +242,7 @@ and specifying the new low water mark in
 .Va data .
 On return,
 .Va data
-contains the number of bytes of protocol data available to read.
+contains the number of bytes in the socket buffer.
 .Pp
 If the read direction of the socket has shutdown, then the filter
 also sets
@@ -282,6 +282,13 @@ This may be cleared by passing in
 .Dv EV_CLEAR ,
 at which point the filter will resume waiting for data to become
 available before returning.
+.It "BPF devices"
+Returns when the BPF buffer is full, the BPF timeout has expired, or
+when the BPF has
+.Dq immediate mode
+enabled and there is any data to read;
+.Va data
+contains the number of bytes available.
 .El
 .It Dv EVFILT_WRITE
 Takes a descriptor as the identifier, and returns whenever
@@ -294,7 +301,7 @@ The filter will set
 when the reader disconnects, and for the FIFO case,
 this may be cleared by use of
 .Dv EV_CLEAR .
-Note that this filter is not supported for vnodes.
+Note that this filter is not supported for vnodes or BPF devices.
 .Pp
 For sockets, the low water mark and socket error handling is
 identical to the
