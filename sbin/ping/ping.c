@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.18 1997/06/01 21:19:08 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.19 1997/06/01 21:35:55 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.18 1997/06/01 21:19:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.19 1997/06/01 21:35:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -915,7 +915,7 @@ pr_icmph(icp)
 		case ICMP_UNREACH_NEEDFRAG:
 			if (icp->icmp_nextmtu != 0)
 				(void)printf("frag needed and DF set (MTU %d)\n",
-					icp->icmp_nextmtu);
+					ntohs(icp->icmp_nextmtu));
 			else 
 				(void)printf("frag needed and DF set\n");
 			break;
@@ -990,8 +990,8 @@ pr_icmph(icp)
 			(void)printf("Redirect, Unknown Code: %d", icp->icmp_code);
 			break;
 		}
-		(void)printf("(New addr: 0x%08lx)\n",
-		    (u_long)icp->icmp_gwaddr.s_addr);
+		(void)printf("(New addr: %s)\n",
+		    inet_ntoa(icp->icmp_gwaddr));
 #ifndef icmp_data
 		pr_retip(&icp->icmp_ip);
 #else
@@ -1006,7 +1006,7 @@ pr_icmph(icp)
 		/* RFC1256 */
 		(void)printf("Router Discovery Advertisement\n");
 		(void)printf("(%d entries, lifetime %d seconds)\n",
-		    icp->icmp_num_addrs, icp->icmp_lifetime);
+		    icp->icmp_num_addrs, ntohs(icp->icmp_lifetime));
 		break;
 	case ICMP_ROUTERSOLICIT:
 		/* RFC1256 */
@@ -1036,11 +1036,11 @@ pr_icmph(icp)
 		case ICMP_PARAMPROB_OPTABSENT:
 			(void)printf(
 			    "Parameter problem, required option absent: pointer = 0x%02x\n",
-			    icp->icmp_hun.ih_pptr);
+			    ntohs(icp->icmp_hun.ih_pptr));
 			break;
 		default:
 			(void)printf("Parameter problem: pointer = 0x%02x\n",
-			    icp->icmp_hun.ih_pptr);
+			    ntohs(icp->icmp_hun.ih_pptr));
 			break;
 		}
 #ifndef icmp_data
@@ -1072,7 +1072,8 @@ pr_icmph(icp)
 #endif
 #ifdef ICMP_MASKREPLY
 	case ICMP_MASKREPLY:
-		(void)printf("Address Mask Reply (Mask 0x%04x)\n", icp->icmp_mask);
+		(void)printf("Address Mask Reply (Mask 0x%08x)\n",
+		    ntohl(icp->icmp_mask));
 		break;
 #endif
 	default:
