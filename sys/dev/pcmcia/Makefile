@@ -1,10 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 1998/09/11 10:47:13 fgsch Exp $
-#	$NetBSD: Makefile,v 1.2 1998/07/19 17:28:15 christos Exp $
+#	$OpenBSD: Makefile,v 1.2 1998/09/14 19:20:54 deraadt Exp $
+#	$NetBSD: Makefile.pcmciadevs,v 1.1 1998/07/19 17:28:15 christos Exp $
 
-# use 'make -f Makefile.pcmciadevs' to make pcmciadevs.h and pcmciadevs_data.h
+AWK=	awk
 
-INCSDIR= /usr/include/dev/pcmcia
-
-INCS=	pcmciachip.h pcmciareg.h pcmciavar.h
-
-.include <bsd.kinc.mk>
+pcmciadevs.h pcmciadevs_data.h: pcmciadevs devlist2h.awk
+	/bin/rm -f pcmciadevs.h pcmciadevs_data.h
+	${AWK} -f devlist2h.awk pcmciadevs
