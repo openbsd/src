@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.480 2005/03/06 02:40:08 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.481 2005/03/06 19:11:36 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1393,14 +1393,15 @@ hfscopts_item	: LINKSHARE bandwidth				{
 			hfsc_opts.linkshare.m2 = $2;
 			hfsc_opts.linkshare.used = 1;
 		}
-		| LINKSHARE '(' bandwidth number bandwidth ')'	{
+		| LINKSHARE '(' bandwidth comma number comma bandwidth ')'
+		    {
 			if (hfsc_opts.linkshare.used) {
 				yyerror("linkshare already specified");
 				YYERROR;
 			}
 			hfsc_opts.linkshare.m1 = $3;
-			hfsc_opts.linkshare.d = $4;
-			hfsc_opts.linkshare.m2 = $5;
+			hfsc_opts.linkshare.d = $5;
+			hfsc_opts.linkshare.m2 = $7;
 			hfsc_opts.linkshare.used = 1;
 		}
 		| REALTIME bandwidth				{
@@ -1411,14 +1412,15 @@ hfscopts_item	: LINKSHARE bandwidth				{
 			hfsc_opts.realtime.m2 = $2;
 			hfsc_opts.realtime.used = 1;
 		}
-		| REALTIME '(' bandwidth number bandwidth ')'	{
+		| REALTIME '(' bandwidth comma number comma bandwidth ')'
+		    {
 			if (hfsc_opts.realtime.used) {
 				yyerror("realtime already specified");
 				YYERROR;
 			}
 			hfsc_opts.realtime.m1 = $3;
-			hfsc_opts.realtime.d = $4;
-			hfsc_opts.realtime.m2 = $5;
+			hfsc_opts.realtime.d = $5;
+			hfsc_opts.realtime.m2 = $7;
 			hfsc_opts.realtime.used = 1;
 		}
 		| UPPERLIMIT bandwidth				{
@@ -1429,14 +1431,15 @@ hfscopts_item	: LINKSHARE bandwidth				{
 			hfsc_opts.upperlimit.m2 = $2;
 			hfsc_opts.upperlimit.used = 1;
 		}
-		| UPPERLIMIT '(' bandwidth number bandwidth ')'	{
+		| UPPERLIMIT '(' bandwidth comma number comma bandwidth ')'
+		    {
 			if (hfsc_opts.upperlimit.used) {
 				yyerror("upperlimit already specified");
 				YYERROR;
 			}
 			hfsc_opts.upperlimit.m1 = $3;
-			hfsc_opts.upperlimit.d = $4;
-			hfsc_opts.upperlimit.m2 = $5;
+			hfsc_opts.upperlimit.d = $5;
+			hfsc_opts.upperlimit.m2 = $7;
 			hfsc_opts.upperlimit.used = 1;
 		}
 		| STRING	{
