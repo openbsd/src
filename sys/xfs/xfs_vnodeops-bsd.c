@@ -710,10 +710,8 @@ xfs_symlink(struct vop_symlink_args * ap)
 
     if (error == 0) {
 	error = xfs_lookup_common(dvp, cnp, vpp);
-#if (!defined(__FreeBSD__) || __FreeBSD_version < 400012) && (!defined(__NetBSD__) || __NetBSD_Version__ < 105240000) && (!defined(__OpenBSD__) || OpenBSD <= 200211)
 	if (error == 0)
 	    vput (*vpp);
-#endif
     }
     cleanup_cnp (cnp, error);
 #if !defined(__FreeBSD__)
