@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.21 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.22 2004/12/06 23:40:43 hshoexer Exp $	*/
 /*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
 
 /*-
@@ -154,7 +154,7 @@ gdt_init()
 	bcopy(bootstrap_gdt, gdt, NGDT * sizeof(union descriptor));
 	ci->ci_gdt = gdt;
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
-	    SDT_MEMRWA, SEL_KPL, 1, 1);
+	    SDT_MEMRWA, SEL_KPL, 0, 0);
 
 	gdt_init_cpu(ci);
 }
@@ -175,7 +175,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 	bzero(ci->ci_gdt, min_len);
 	bcopy(gdt, ci->ci_gdt, gdt_count * sizeof(union descriptor));
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
-	    SDT_MEMRWA, SEL_KPL, 1, 1);
+	    SDT_MEMRWA, SEL_KPL, 0, 0);
 }
 #endif	/* MULTIPROCESSOR */
 
