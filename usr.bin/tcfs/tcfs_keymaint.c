@@ -10,14 +10,15 @@
  *	Base utility set v0.1
  */
 
-#include <ctype.h>
-#include <pwd.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/ucred.h>
 #include <blf.h>
+#include <ctype.h>
+#include <pwd.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <miscfs/tcfs/tcfs.h>
 #include <miscfs/tcfs/tcfs_cmd.h>
@@ -57,10 +58,10 @@ tcfs_callfunction(char *filesystem, struct tcfs_args *arg)
 int 
 tcfs_decrypt_key (char *pwd, u_char *t, u_char *tk, int tklen)
 {
-	int i = 0, len;
-	char pass[_PASSWORD_LEN], *cypher;
+	char pass[_PASSWORD_LEN];
 	char tcfskey[2*KEYSIZE], iv[8];
 	blf_ctx ctx;
+	int len;
 
 	if (!tk)
 		return 0;
@@ -97,7 +98,6 @@ tcfs_decrypt_key (char *pwd, u_char *t, u_char *tk, int tklen)
 int 
 tcfs_encrypt_key (char *pw, u_char *key, int klen, u_char *ek, int eklen)
 {
-	int i = 0;
 	char pass[_PASSWORD_LEN], iv[8];
 	blf_ctx ctx;
 	int res;

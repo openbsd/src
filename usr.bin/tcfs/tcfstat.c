@@ -10,15 +10,17 @@
  *	Base utility set v0.1
  */
 
-#include <stdio.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/wait.h>
 #include <des.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <miscfs/tcfs/tcfs.h>
+#include "tcfslib.h"
 
 char *stat_usage= "usage: tcfstat [-p mount-point | fs-label]";
 

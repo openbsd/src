@@ -10,17 +10,19 @@
  *	Base utility set v0.1
  */
 
-#include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>
-#include <pwd.h>
-#include <unistd.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/wait.h>
+#include <ctype.h>
 #include <des.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <miscfs/tcfs/tcfs.h>
+#include "tcfslib.h"
 
 char *cmd_def="/bin/sh";
 char *run_usage = "usage: tcfsrun [-p mount-point | -f fs-label] [cmd] [args...]";
@@ -28,11 +30,11 @@ char *run_usage = "usage: tcfsrun [-p mount-point | -f fs-label] [cmd] [args...]
 int
 run_main(int argc, char *argv[], char *envp[])
 {
-	char *key, *fs, *cmd, x;
-	char *args, fspath[MAXPATHLEN], cmdname[MAXPATHLEN];
+	char *key, *cmd, x;
+	char fspath[MAXPATHLEN], cmdname[MAXPATHLEN];
 	uid_t uid;
 	pid_t pid;
-	int es,i = 1;
+	int es;
 	int havefspath = 0,havecmd = 0;
 
 	uid = getuid();

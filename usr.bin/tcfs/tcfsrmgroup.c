@@ -10,8 +10,9 @@
  *	Base utility set v0.1
  */
 
-#include <stdio.h>
 #include <grp.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include <miscfs/tcfs/tcfs.h>
 #include "tcfslib.h"

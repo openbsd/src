@@ -11,9 +11,11 @@
  */
 
 
-#include <stdio.h>
-#include <unistd.h>
 #include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <miscfs/tcfs/tcfs.h>
 #include "tcfslib.h"
@@ -31,7 +33,7 @@ rmuser_main (int argn, char *argv[])
 {
 	int have_user = FALSE;
 	int be_verbose = FALSE;
-	char *user, *passwd;
+	char *user;
 	tcfspwdb *user_info;
 	int val;
 

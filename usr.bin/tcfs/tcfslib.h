@@ -14,21 +14,29 @@
 #include "tcfsdefines.h"
 #include "tcfspwdb.h"
 
-extern int tcfspwdbr_new (tcfspwdb **p);
-extern int tcfspwdbr_edit (tcfspwdb **p, int i, ...);
-extern int tcfspwdbr_read (tcfspwdb *p, int i, ...);
-extern void tcfspwdbr_dispose (tcfspwdb *p);
-extern int tcfsgpwdbr_new (tcfsgpwdb **p);
-extern int tcfsgpwdbr_edit (tcfsgpwdb **p, int i, ...);
-extern int tcfsgpwdbr_read (tcfsgpwdb *p, int i, ...);
-extern void tcfsgpwdbr_dispose (tcfsgpwdb *p);
-extern int tcfs_chgpwd (char *u, char *o, char *p);
-extern int tcfs_group_chgpwd (char *u, gid_t gid, char *o, char *p);
-extern int tcfs_chgpassword (char *u, char *o, char *p);
-extern int tcfs_decrypt_key (char *pwd, u_char *t, u_char *tk, int tklen);
-extern int tcfs_encrypt_key (char *pwd, u_char *key, int klen, u_char *ek, int eklen);
-extern char *tcfs_decode (char *t, int *l);
-extern char *tcfs_encode (char *t, int l);
-extern char *gentcfskey (void);
+extern int	tcfspwdbr_new __P((tcfspwdb **));
+extern int	tcfspwdbr_edit __P((tcfspwdb **, int, ...));
+extern int	tcfspwdbr_read __P((tcfspwdb *, int, ...));
+extern void	tcfspwdbr_dispose __P((tcfspwdb *));
+extern int	tcfsgpwdbr_new __P((tcfsgpwdb **));
+extern int	tcfsgpwdbr_edit __P((tcfsgpwdb **, int, ...));
+extern int	tcfsgpwdbr_read __P((tcfsgpwdb *, int, ...));
+extern void	tcfsgpwdbr_dispose __P((tcfsgpwdb *));
+extern int	tcfs_chgpwd __P((char *, char *, char *));
+extern int	tcfs_group_chgpwd __P((char *, gid_t, char *, char *));
+extern int	tcfs_chgpassword __P((char *, char *, char *));
+extern int	tcfs_decrypt_key __P((char *, u_char *, u_char *, int));
+extern int	tcfs_encrypt_key __P((char *, u_char *, int, u_char *, int));
+extern char    *tcfs_decode __P((char *, int *));
+extern char    *tcfs_encode __P((char *, int ));
+extern char    *gentcfskey __P((void));
 
+extern int	tcfs_getstatus __P((char *, struct tcfs_status *));
+extern int	tcfs_getfspath __P((char *, char *));
 
+extern int	tcfs_proc_enable __P((char *, uid_t, pid_t, char *));
+extern int	tcfs_proc_disable __P((char *, uid_t, pid_t));
+extern int	tcfs_user_enable __P((char *, uid_t, u_char *));
+extern int	tcfs_user_disable __P((char *, uid_t));
+extern int	tcfs_group_enable __P((char *, uid_t, gid_t, int, char *));
+extern int	tcfs_group_disable __P((char *, uid_t, gid_t));

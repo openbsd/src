@@ -11,6 +11,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <strings.h>
 
 #include <miscfs/tcfs/tcfs.h>

@@ -83,7 +83,7 @@ gencoeff (void)
 unsigned char *
 gengrpkey (char *login)
 {
-	int l, x1, i, j, k=0;
+	int x1, i, j, k=0;
 	unsigned int x;
 
 	unsigned char *res = NULL;
@@ -164,7 +164,7 @@ gengrpkey (char *login)
 int 
 addgroup_main (int argn, char *argv[])
 {
-	int index, val;
+	int val;
 	gid_t gid;
 	int have_gid = FALSE, have_members = FALSE, have_threshold = FALSE;
 	int be_verbose = FALSE;

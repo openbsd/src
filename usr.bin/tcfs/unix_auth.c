@@ -10,12 +10,13 @@
  *	Base utility set v0.1
  */
 
-#include <stdio.h>
-#include <unistd.h>
 #include <sys/param.h>
 #include <limits.h>
-#include <string.h>
 #include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <miscfs/tcfs/tcfs.h>
 #include "tcfslib.h"

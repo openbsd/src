@@ -32,5 +32,3 @@ typedef struct {
 } tcfs_flags;
 
 #endif /* _TCFSDEFINES_H_ */
-
-

@@ -10,14 +10,16 @@
  *	Base utility set v0.1
  */
 
-#include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>
-#include <pwd.h>
-#include <unistd.h>
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <ctype.h>
 #include <des.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <miscfs/tcfs/tcfs.h>
 #include "tcfslib.h"
@@ -32,14 +34,12 @@ char *rmkey_usage=
 int
 rmkey_main(int argc, char *argv[])
 {
-	char *fs;
 	uid_t uid;
 	gid_t gid;
 	int es;
 	char x;
 	char fslabel[MAXPATHLEN], fspath[MAXPATHLEN];
 	int havempname = FALSE, havefsname = FALSE, isgroupkey = FALSE;
-	int havefs = FALSE;
 	int havename = FALSE, havefspath = FALSE;
 
 	while ((x = getopt(argc,argv,"f:p:g:")) != EOF) {

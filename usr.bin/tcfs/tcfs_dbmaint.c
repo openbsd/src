@@ -123,7 +123,6 @@ int
 tcfspwdbr_read (tcfspwdb *t, int flags,...)
 {
 	va_list argv;
-	int r;
 	char *d;
 
 	va_start (argv, flags);
@@ -148,7 +147,6 @@ int
 tcfsgpwdbr_read (tcfsgpwdb *t, int flags,...)
 {
 	va_list argv;
-	int r; 
 	char *d;
 
 	va_start (argv, flags);
@@ -228,7 +226,7 @@ tcfs_ggetpwnam (char *user, gid_t gid, tcfsgpwdb **dest)
 {
 	DB *pdb;
 	DBT srchkey, r;
-	char *key, *buf;
+	char *key;
 	int res;
 
 	if (!*dest)
@@ -305,8 +303,7 @@ tcfs_gputpwnam (char *user, tcfsgpwdb *src, int flags)
 	DB *pdb;
 	static DBT srchkey, d;
 	int open_flag = 0;
-	char *key, *buf;
-	char *tmp;
+	char *key;
 
 	open_flag = O_RDWR|O_EXCL;
 	if (access (TCFSGPWDB, F_OK) < 0)
@@ -386,7 +383,7 @@ tcfs_rmgroup (gid_t gid)
 int
 tcfs_group_chgpwd (char *user, gid_t gid, char *old, char *new)
 {
-	tcfsgpwdb *group_info;
+	tcfsgpwdb *group_info = NULL;
 	unsigned char *key;
 
 	key = (unsigned char *)calloc(UUGKEYSIZE + 1, sizeof (char));
@@ -438,7 +435,7 @@ tcfs_chgpwd (char *user, char *old, char *new)
 int
 tcfs_chgpassword (char *user, char *old, char *new)
 {
-	int error1=0, error2=0;
+	int error1=0;
 	DB *gpdb;
 	DBT found, key;
 	unsigned char *ckey;

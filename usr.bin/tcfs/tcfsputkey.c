@@ -10,15 +10,16 @@
  *	Base utility set v0.1
  */
 
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/param.h>
-#include <ctype.h>
-#include <pwd.h>
-#include <unistd.h>
-#include <sys/param.h>
 #include <sys/mount.h>
+#include <ctype.h>
 #include <des.h>
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <miscfs/tcfs/tcfs.h>
 #include "tcfslib.h"
@@ -33,7 +34,7 @@ char *putkey_usage=
 int
 putkey_main(int argc, char *argv[])
 {
-	u_char *key,*fs,*user,*password,*tcfskey;
+	u_char *user,*password,*tcfskey;
 	uid_t uid;
 	gid_t gid;
 	int es, treshold;
@@ -43,7 +44,6 @@ putkey_main(int argc, char *argv[])
 	char fslabel[MAXPATHLEN], fspath[MAXPATHLEN];
 	int def = TRUE, havempname = FALSE, havefsname = FALSE;
 	int isgroupkey = FALSE;
-	int havefs = FALSE;
 	int havename = FALSE, havefspath = FALSE, havekey = FALSE;
 
 	while ((x = getopt(argc,argv,"kf:p:g:")) != EOF) {
