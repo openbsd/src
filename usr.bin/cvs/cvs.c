@@ -1,5 +1,5 @@
 #define DEBUG
-/*	$OpenBSD: cvs.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.2 2004/07/14 03:33:09 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -371,6 +371,8 @@ main(int argc, char **argv)
 
 	/* setup signal handlers */
 	signal(SIGCHLD, sigchld_hdlr);
+
+	cvs_file_init();
 
 	if (readrc)
 		cvs_readrc();
