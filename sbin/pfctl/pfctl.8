@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.109 2004/02/27 10:42:00 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.110 2004/03/20 09:31:42 david Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -291,11 +291,6 @@ Show the current pool memory hard limits.
 Show the list of tables.
 .It Fl s Ar osfp
 Show the list of operating system fingerprints.
-Can be used in combination with
-.Fl o Ar file
-to list the fingerprints in a
-.Xr pf.os 5
-file.
 .It Fl s Ar Interfaces
 Show the list of interfaces and interface drivers available to PF.
 When used together with a double
