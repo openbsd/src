@@ -31,7 +31,7 @@
  *
  * Private thread definitions for the uthread kernel.
  *
- * $OpenBSD: pthread_private.h,v 1.10 1999/01/10 22:32:23 d Exp $
+ * $OpenBSD: pthread_private.h,v 1.11 1999/01/18 00:00:32 d Exp $
  *
  */
 
@@ -50,7 +50,9 @@
 #include <sys/time.h>
 #include <sched.h>
 #include <spinlock.h>
+#ifndef _NO_UTHREAD_MACHDEP
 #include "uthread_machdep.h"
+#endif
 
 /*
  * Kernel fatal error handler macro.
@@ -196,6 +198,10 @@ struct pthread_attr {
 #define PTHREAD_MAX_PRIORITY			126
 #define PTHREAD_MIN_PRIORITY			0
 #define _POSIX_THREAD_ATTR_STACKSIZE
+
+#define PTHREAD_ATFORK_PREPARE			0
+#define PTHREAD_ATFORK_PARENT			1
+#define PTHREAD_ATFORK_CHILD			2
 
 /*
  * Clock resolution in nanoseconds.
@@ -349,17 +355,17 @@ struct pthread {
 	 */
 	struct  sigcontext saved_sigcontext;
 
-	/* 
-	 * Saved jump buffer used in call to longjmp by _thread_kern_sched
-	 * if sig_saved is FALSE.
-	 */
-	jmp_buf	saved_jmp_buf;
-
 	/*
 	 * TRUE if the last state saved was a signal context. FALSE if the
 	 * last state saved was a jump buffer.
 	 */
 	int	sig_saved;
+
+	/*
+	 * Cancelability state.
+	 */
+	int	cancelstate;
+	int	canceltype;
 
 	/*
 	 * Current signal mask and pending signals.
@@ -441,8 +447,10 @@ struct pthread {
 	int		signo;
 
 	/* Miscellaneous data. */
-	char		flags;
-#define PTHREAD_EXITING		0x0100
+	int		flags;
+#define PTHREAD_EXITING		(0x0100)
+#define PTHREAD_CANCELLING	(0x0200)	/* thread has been cancelled */
+#define PTHREAD_AT_CANCEL_POINT	(0x0400)	/* thread at cancel point */
 	char		pthread_priority;
 	void		*ret;
 	const void	**specific_data;
@@ -453,8 +461,16 @@ struct pthread {
 	const char		*fname;	/* Ptr to source file name  */
 	int			lineno;	/* Source line number.      */
 
+	/* 
+	 * Saved jump buffer used in call to longjmp by _thread_kern_sched
+	 * if sig_saved is FALSE.
+	 */
+	_machdep_jmp_buf	saved_jmp_buf;
+
+#ifndef _UTHREAD_MACHDEP
 	/* Machine dependent information */
 	struct _machdep_struct	_machdep;
+#endif
 };
 
 /*
@@ -577,6 +593,10 @@ int     _thread_fd_table_init(int fd);
 struct pthread *_thread_queue_get(struct pthread_queue *);
 struct pthread *_thread_queue_deq(struct pthread_queue *);
 pthread_addr_t _thread_gc(pthread_addr_t);
+void	_thread_enter_cancellation_point(void);
+void	_thread_leave_cancellation_point(void);
+void	_thread_cancellation_point(void);
+void	_thread_atfork(int);
 
 /* #include <signal.h> */
 #ifdef _USER_SIGNAL_H
@@ -760,6 +780,9 @@ pid_t   _thread_sys_wait4(pid_t, int *, int, struct rusage *);
 #ifdef _SYS_POLL_H_
 int	_thread_sys_poll(struct pollfd[], int, int);
 #endif
+
+/* #include <sys/mman.h> */
+int	_thread_sys_msync(void *, size_t, int);
 
 __END_DECLS
 

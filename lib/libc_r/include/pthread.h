@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $OpenBSD: pthread.h,v 1.4 1998/12/21 07:30:25 d Exp $
+ * $OpenBSD: pthread.h,v 1.5 1999/01/18 00:00:31 d Exp $
  *
  */
 #ifndef _PTHREAD_H_
@@ -89,6 +89,15 @@
  */
 #define PTHREAD_PROCESS_PRIVATE     0
 #define PTHREAD_PROCESS_SHARED      1	
+
+/*
+ * Flags for cancelling threads
+ */
+#define PTHREAD_CANCEL_ENABLE		0
+#define PTHREAD_CANCEL_DISABLE		1
+#define PTHREAD_CANCEL_DEFERRED		0
+#define PTHREAD_CANCEL_ASYNCHRONOUS	1
+#define PTHREAD_CANCELED		((void *) 1)
 
 /*
  * Forward structure definitions.
@@ -174,24 +183,26 @@ enum pthread_mutextype {
  * Thread function prototype definitions:
  */
 __BEGIN_DECLS
+int		pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
 int		pthread_attr_destroy __P((pthread_attr_t *));
-int		pthread_attr_getinheritsched __P((pthread_attr_t *, int *));
-int		pthread_attr_getschedparam __P((pthread_attr_t *,
+int		pthread_attr_getinheritsched __P((const pthread_attr_t *, int *));
+int		pthread_attr_getschedparam __P((const pthread_attr_t *,
 			struct sched_param *));
-int		pthread_attr_getschedpolicy __P((pthread_attr_t *, int *));
-int		pthread_attr_getscope __P((pthread_attr_t *, int *));
+int		pthread_attr_getschedpolicy __P((const pthread_attr_t *, int *));
+int		pthread_attr_getscope __P((const pthread_attr_t *, int *));
 int		pthread_attr_getstacksize __P((pthread_attr_t *, size_t *));
 int		pthread_attr_getstackaddr __P((pthread_attr_t *, void **));
 int		pthread_attr_getdetachstate __P((pthread_attr_t *, int *));
 int		pthread_attr_init __P((pthread_attr_t *));
 int		pthread_attr_setinheritsched __P((pthread_attr_t *, int));
 int		pthread_attr_setschedparam __P((pthread_attr_t *,
-			struct sched_param *));
+			const struct sched_param *));
 int		pthread_attr_setschedpolicy __P((pthread_attr_t *, int));
 int		pthread_attr_setscope __P((pthread_attr_t *, int));
 int		pthread_attr_setstacksize __P((pthread_attr_t *, size_t));
 int		pthread_attr_setstackaddr __P((pthread_attr_t *, void *));
 int		pthread_attr_setdetachstate __P((pthread_attr_t *, int));
+int		pthread_cancel __P((pthread_t));
 void		pthread_cleanup_pop __P((int execute));
 void		pthread_cleanup_push __P((void (*routine) (void *),
 			void *routine_arg));
@@ -264,14 +275,14 @@ int		pthread_setcancelstate __P((int, int *));
 int		pthread_setcanceltype __P((int, int *));
 int		pthread_setspecific __P((pthread_key_t, const void *));
 int		pthread_sigmask __P((int, const sigset_t *, sigset_t *));
-int		pthread_testcancel __P((void));
+void		pthread_testcancel __P((void));
 
 
 int		pthread_getprio __P((pthread_t));
 int		pthread_setprio __P((pthread_t, int));
 void		pthread_yield __P((void));
 int		pthread_setschedparam __P((pthread_t pthread, int policy,
-			struct sched_param * param));
+			const struct sched_param * param));
 int		pthread_getschedparam __P((pthread_t pthread, int *policy,
 			struct sched_param * param));
 int		pthread_attr_setfloatstate __P((pthread_attr_t *, int));
@@ -284,11 +295,7 @@ int		pthread_attr_setcleanup __P((pthread_attr_t *,
 /*
  * Single Unix Specification v2 (UNIX98) also wants these:
  */
-#define PTHREAD_CANCEL_ASYNCHRONOUS
-#define PTHREAD_CANCEL_ENABLE
-#define PTHREAD_CANCEL_DEFERRED
-#define PTHREAD_CANCEL_DISABLE
-#define PTHREAD_CANCELED
+
 #define PTHREAD_PRIO_INHERIT
 #define PTHREAD_PRIO_NONE
 #define PTHREAD_PRIO_PROTECT

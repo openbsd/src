@@ -1,5 +1,5 @@
-#	$Id: Makefile.inc,v 1.5 1999/01/08 05:42:18 d Exp $
-#	$OpenBSD: Makefile.inc,v 1.5 1999/01/08 05:42:18 d Exp $
+#	$Id: Makefile.inc,v 1.6 1999/01/18 00:00:32 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 1999/01/18 00:00:32 d Exp $
 
 # uthread sources
 .PATH: ${.CURDIR}/uthread
@@ -8,17 +8,21 @@ CFLAGS += -I${.CURDIR}/arch/${MACHINE_ARCH}
 
 SRCS+= \
 	uthread_accept.c \
+	uthread_atfork.c \
 	uthread_attr_destroy.c \
 	uthread_attr_init.c \
 	uthread_attr_getdetachstate.c \
 	uthread_attr_getstackaddr.c \
 	uthread_attr_getstacksize.c \
+	uthread_attr_priosched.c \
 	uthread_attr_setcreatesuspend_np.c \
 	uthread_attr_setdetachstate.c \
 	uthread_attr_setstackaddr.c \
 	uthread_attr_setstacksize.c \
 	uthread_autoinit.c \
 	uthread_bind.c \
+	uthread_fchflags.c \
+	uthread_cancel.c \
 	uthread_clean.c \
 	uthread_close.c \
 	uthread_cond.c \
@@ -60,6 +64,7 @@ SRCS+= \
 	uthread_listen.c \
 	uthread_mattr_init.c \
 	uthread_mattr_kind_np.c \
+	uthread_msync.c \
 	uthread_multi_np.c \
 	uthread_mutex.c \
 	uthread_mutexattr_destroy.c \
