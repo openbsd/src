@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.44 1998/08/07 00:06:00 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.45 1998/10/11 20:49:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.44 1998/08/07 00:06:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.45 1998/10/11 20:49:17 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1243,27 +1243,25 @@ getuint(lp, partno, prompt, helpstring, oval, maxval, flags)
 		}
 	}
 	if ((flags & DO_ROUNDING) && rval < UINT_MAX) {
-		u_int32_t cyls;
-		/* XXX - should use maxsize and round down if too big */
-#ifdef CYLCHECK
-		/* Always round to nearest cylinder, regardless of units */
-		cyls = (u_int32_t)((rval / (double)lp->d_secpercyl) + 0.5);
-		if (rval != cyls * lp->d_secpercyl) {
-			rval = cyls * lp->d_secpercyl;
-			printf("Rounding to nearest cylinder: %u\n", rval);
-		}
-#else
+#ifndef CYLCHECK
 		/* Round to nearest cylinder unless given in sectors */
-		if (mult != 1) {
+		if (mult != 1)
+#endif
+		{
+			u_int32_t cyls;
+
+			/* If we round up past the end, round down instead */
 			cyls = (u_int32_t)((rval / (double)lp->d_secpercyl)
 			    + 0.5);
+			if (cyls * lp->d_secpercyl > maxval)
+				cyls--;
+
 			if (rval != cyls * lp->d_secpercyl) {
 				rval = cyls * lp->d_secpercyl;
 				printf("Rounding to nearest cylinder: %u\n",
 				    rval);
 			}
 		}
-#endif
 	}
 
 	return(rval);
