@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.7 2003/11/03 11:04:21 espie Exp $
+# $OpenBSD: pkg_delete,v 1.8 2003/11/03 11:05:55 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -156,7 +156,7 @@ sub delete
 	my ($self, $state) = @_;
 	return unless $state->{extra};
 	my $name = $self->fullname();
-	if ($name =~ s|/$||) {
+	if ($self->{name} =~ m|/$|) {
 		if ($state->{verbose} or $state->{not}) {
 			print "deleting extra directory: $name\n";
 		}
