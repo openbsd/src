@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.56 2002/09/19 21:22:59 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.57 2002/09/21 23:19:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -86,7 +86,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.56 2002/09/19 21:22:59 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.57 2002/09/21 23:19:43 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -190,6 +190,8 @@ FILE *openmail(void);
 void child_killer(int);
 void run_command(char *);
 void send_signal(char *, int);
+char *lstat_log(char *, size_t, int);
+int stat_suffix(char *, size_t, char *, struct stat *, int (*)());
 
 int
 main(int argc, char **argv)
@@ -701,10 +703,8 @@ void
 dotrim(struct conf_entry *ent)
 {
 	char    file1[MAXPATHLEN], file2[MAXPATHLEN];
-	char    zfile1[MAXPATHLEN], zfile2[MAXPATHLEN];
-	char    oldlog[MAXPATHLEN];
+	char    oldlog[MAXPATHLEN], *suffix;
 	int     fd;
-	struct  stat sb;
 	int	numdays = ent->numlogs;
 
 	/* Is there a separate backup dir? */
@@ -716,42 +716,43 @@ dotrim(struct conf_entry *ent)
 
 	/* Remove oldest log (may not exist) */
 	(void)snprintf(file1, sizeof(file1), "%s.%d", oldlog, numdays);
-	(void)snprintf(zfile1, sizeof(zfile1), "%s.%d%s", oldlog, numdays,
+	(void)snprintf(file2, sizeof(file2), "%s.%d%s", oldlog, numdays,
 	    COMPRESS_POSTFIX);
 
 	if (noaction) {
-		printf("\trm -f %s %s\n", file1, zfile1);
+		printf("\trm -f %s %s\n", file1, file2);
 	} else {
 		(void)unlink(file1);
-		(void)unlink(zfile1);
+		(void)unlink(file2);
 	}
 
 	/* Move down log files */
 	while (numdays--) {
-		(void)strlcpy(file2, file1, sizeof(file2));
+		/*
+		 * If both the compressed archive or the non-compressed archive
+		 * exist, we one or the other based on the CE_COMPACT flag.
+		 */
 		(void)snprintf(file1, sizeof(file1), "%s.%d", oldlog, numdays);
-		(void)strlcpy(zfile1, file1, sizeof(zfile1));
-		(void)strlcpy(zfile2, file2, sizeof(zfile2));
-		if (lstat(file1, &sb)) {
-			(void)strlcat(zfile1, COMPRESS_POSTFIX, sizeof(zfile1));
-			(void)strlcat(zfile2, COMPRESS_POSTFIX, sizeof(zfile2));
-			if (lstat(zfile1, &sb))
-				continue;
-		}
+		suffix = lstat_log(file1, sizeof(file1), ent->flags);
+		if (suffix == NULL)
+			continue;
+		(void)snprintf(file2, sizeof(file2), "%s.%d%s", oldlog,
+		    numdays + 1, suffix);
+
 		if (noaction) {
-			printf("\tmv %s %s\n", zfile1, zfile2);
-			printf("\tchmod %o %s\n", ent->permissions, zfile2);
+			printf("\tmv %s %s\n", file1, file2);
+			printf("\tchmod %o %s\n", ent->permissions, file2);
 			if (ent->uid != (uid_t)-1 || ent->gid != (gid_t)-1)
 				printf("\tchown %u:%u %s\n",
-				    ent->uid, ent->gid, zfile2);
+				    ent->uid, ent->gid, file2);
 		} else {
-			if (rename(zfile1, zfile2))
-				warn("can't mv %s to %s", zfile1, zfile2);
-			if (chmod(zfile2, ent->permissions))
-				warn("can't chmod %s", zfile2);
+			if (rename(file1, file2))
+				warn("can't mv %s to %s", file1, file2);
+			if (chmod(file2, ent->permissions))
+				warn("can't chmod %s", file2);
 			if (ent->uid != (uid_t)-1 || ent->gid != (gid_t)-1)
-				if (chown(zfile2, ent->uid, ent->gid))
-					warn("can't chown %s", zfile2);
+				if (chown(file2, ent->uid, ent->gid))
+					warn("can't chown %s", file2);
 		}
 	}
 	if (!noaction && !(ent->flags & CE_BINARY))
@@ -780,6 +781,7 @@ dotrim(struct conf_entry *ent)
 		else if (unlink(ent->log))
 			warn("can't rm %s", ent->log);
 	} else {
+		(void)snprintf(file1, sizeof(file1), "%s.0", oldlog);
 		if (noaction)
 			printf("\tmv %s to %s\n", ent->log, file1);
 		else if (rename(ent->log, file1))
@@ -855,18 +857,22 @@ int
 age_old_log(struct conf_entry *ent)
 {
 	struct stat sb;
-	char tmp[MAXPATHLEN];
+	char file[MAXPATHLEN];
 
 	if (ent->backdir != NULL)
-		snprintf(tmp, sizeof(tmp), "%s/%s.0", ent->backdir, ent->logbase);
-	else {
-		strlcpy(tmp, ent->log, sizeof(tmp));
-		strlcat(tmp, ".0", sizeof(tmp));
+		(void)snprintf(file, sizeof(file), "%s/%s.0", ent->backdir,
+		    ent->logbase);
+	else
+		(void)snprintf(file, sizeof(file), "%s.0", ent->log);
+	if (ent->flags & CE_COMPACT) {
+		if (stat_suffix(file, sizeof(file), COMPRESS_POSTFIX, &sb,
+		    stat) < 0 && stat(file, &sb) < 0)
+			return (-1);
+	} else {
+		if (stat(file, &sb) < 0 && stat_suffix(file, sizeof(file),
+		    COMPRESS_POSTFIX, &sb, stat) < 0)
+			return (-1);
 	}
-	if (ent->flags & CE_COMPACT)
-		strlcat(tmp, COMPRESS_POSTFIX, sizeof(tmp));
-	if (stat(tmp, &sb) < 0)
-		return (-1);
 	return ((int)(timenow - sb.st_mtime + 1800) / 3600);
 }
 
@@ -1025,4 +1031,40 @@ child_killer(int signo)
 	while (waitpid(-1, &status, WNOHANG) > 0)
 		;
 	errno = save_errno;
+}
+
+int
+stat_suffix(char *file, size_t size, char *suffix, struct stat *sp, int (*func)())
+{
+	size_t n;
+
+	n = strlcat(file, suffix, size);
+	if (n < size && func(file, sp) == 0)
+		return (0);
+	file[n - strlen(suffix)] = '\0';
+	return (-1);
+}
+
+/*
+ * lstat() a log, possibily appending a suffix; order is based on flags.
+ * Returns the suffix appended (may be empty string) or NULL if no file.
+ */
+char *
+lstat_log(char *file, size_t size, int flags)
+{
+	struct stat sb;
+
+	if (flags & CE_COMPACT) {
+		if (stat_suffix(file, size, COMPRESS_POSTFIX, &sb, lstat) == 0)
+			return (COMPRESS_POSTFIX);
+		if (lstat(file, &sb) == 0)
+			return ("");
+	} else {
+		if (lstat(file, &sb) == 0)
+			return ("");
+		if (stat_suffix(file, size, COMPRESS_POSTFIX, &sb, lstat) == 0)
+			return (COMPRESS_POSTFIX);
+
+	}
+	return (NULL);
 }
