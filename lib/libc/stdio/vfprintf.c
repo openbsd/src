@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.8 1998/08/14 21:39:42 deraadt Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.9 1999/08/22 17:06:35 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -221,7 +221,7 @@ vfprintf(fp, fmt0, ap)
 	/*
 	 * BEWARE, these `goto error' on error, and PAD uses `n'.
 	 */
-#define	PRINT(ptr, len) { \
+#define	PRINT(ptr, len) do { \
 	iovp->iov_base = (ptr); \
 	iovp->iov_len = (len); \
 	uio.uio_resid += (len); \
@@ -231,8 +231,8 @@ vfprintf(fp, fmt0, ap)
 			goto error; \
 		iovp = iov; \
 	} \
-}
-#define	PAD(howmany, with) { \
+} while (0)
+#define	PAD(howmany, with) do { \
 	if ((n = (howmany)) > 0) { \
 		while (n > PADSIZE) { \
 			PRINT(with, PADSIZE); \
@@ -240,13 +240,13 @@ vfprintf(fp, fmt0, ap)
 		} \
 		PRINT(with, n); \
 	} \
-}
-#define	FLUSH() { \
+} while (0)
+#define	FLUSH() do { \
 	if (uio.uio_resid && __sprint(fp, &uio)) \
 		goto error; \
 	uio.uio_iovcnt = 0; \
 	iovp = iov; \
-}
+} while (0)
 
 	/*
 	 * To extend shorts properly, we need both signed and unsigned
