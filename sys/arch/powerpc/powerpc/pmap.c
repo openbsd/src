@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.57 2002/01/25 03:55:23 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.58 2002/01/25 04:04:55 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -1565,6 +1565,11 @@ ptemodify(pa, mask, val)
 	int i, s;
 	char * pattr;
 	boolean_t ret;
+	u_int32_t pte_hi;
+	int found;
+	vaddr_t va;
+	sr_t sr;
+	struct pmap *pm;
 
 	ret = ptebits(pa, mask);
 	
@@ -1584,9 +1589,14 @@ ptemodify(pa, mask, val)
 
 	s = splimp();
 	for (; pv; pv = pv->pv_next) {
+		va = pv->pv_va;
+		pm = pv->pv_pmap;
+		sr = ptesr(pm->pm_sr, va);
+		pte_hi = ((sr & SR_VSID) << PTE_VSID_SHFT)
+		    | ((va & ADDR_PIDX) >> ADDR_API_SHFT);
+		found = 0;
 		for (ptp = ptable + pv->pv_idx * 8, i = 8; --i >= 0; ptp++)
-			if ((ptp->pte_hi & PTE_VALID)
-			    && (ptp->pte_lo & PTE_RPGN) == pa) {
+			if ((pte_hi | PTE_VALID) == ptp->pte_hi) {
 				ptp->pte_hi &= ~PTE_VALID;
 				asm volatile ("sync");
 				tlbie(pv->pv_va);
@@ -1595,10 +1605,14 @@ ptemodify(pa, mask, val)
 				ptp->pte_lo |= val;
 				asm volatile ("sync");
 				ptp->pte_hi |= PTE_VALID;
+				found = 1;
+				break;
 			}
-		for (ptp = ptable + (pv->pv_idx ^ ptab_mask) * 8, i = 8; --i >= 0; ptp++)
-			if ((ptp->pte_hi & PTE_VALID)
-			    && (ptp->pte_lo & PTE_RPGN) == pa) {
+		if (found)
+			continue;
+		for (ptp = ptable + (pv->pv_idx ^ ptab_mask) * 8, i = 8;
+		    --i >= 0; ptp++) {
+			if ((pte_hi | PTE_VALID | PTE_HID) == ptp->pte_hi) {
 				ptp->pte_hi &= ~PTE_VALID;
 				asm volatile ("sync");
 				tlbie(pv->pv_va);
@@ -1607,12 +1621,18 @@ ptemodify(pa, mask, val)
 				ptp->pte_lo |= val;
 				asm volatile ("sync");
 				ptp->pte_hi |= PTE_VALID;
+				found = 1;
 			}
-		for (po = potable[pv->pv_idx].lh_first; po; po = po->po_list.le_next)
-			if ((po->po_pte.pte_lo & PTE_RPGN) == pa) {
+		}
+		if (found)
+			continue;
+		for (po = potable[pv->pv_idx].lh_first;
+		    po; po = po->po_list.le_next) {
+			if (pte_hi == po->po_pte.pte_hi) {
 				po->po_pte.pte_lo &= ~mask;
 				po->po_pte.pte_lo |= val;
 			}
+		}
 	}
 	splx(s);
 
