@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.6 1998/08/22 18:31:55 rahnds Exp $	*/
+/*	$OpenBSD: locore.S,v 1.7 1998/08/25 07:55:19 pefo Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1228,12 +1228,13 @@ _C_LABEL(ipkdbsbyte):
 _C_LABEL(setfault):
 	mflr	0
 	mfcr	12
+	mfmsr	2
 	lis	4,_C_LABEL(curpcb)@ha
 	lwz	4,_C_LABEL(curpcb)@l(4)
 	stw	3,PCB_FAULT(4)
 	stw	0,0(3)
-	stw	1,4(3)
-	stw	2,8(3)
+	stw	2,4(3)
+	stw	1,8(3)
 	stmw	12,12(3)
 	xor	3,3,3
 	blr
