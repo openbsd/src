@@ -943,8 +943,8 @@ struct client_lease *packet_to_lease (packet)
 			free_client_lease (lease);
 			return (struct client_lease *)0;
 		} 
-		memcpy(lease->filename, packet->raw->sname, DHCP_SNAME_LEN);
-		lease->filename[DHCP_SNAME_LEN]='\0';
+		memcpy(lease->server_name, packet->raw->sname, DHCP_SNAME_LEN);
+		lease->server_name[DHCP_SNAME_LEN]='\0';
 		if (! res_hnok (lease->server_name) ) {
 			warn ("Bogus server name %s",  lease->server_name );
 			free_client_lease (lease);
