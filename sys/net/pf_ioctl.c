@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.61 2003/05/12 00:02:32 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.62 2003/05/12 01:25:31 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -929,7 +929,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		s = splsoftnet();
 		RB_FOREACH(n, pf_state_tree, &tree_ext_gwy)
-			n->state->expire = 0;
+			n->state->timeout = PFTM_PURGE;
 		pf_purge_expired_states();
 		pf_status.states = 0;
 		splx(s);
@@ -963,7 +963,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    pf_match_port(psk->psk_dst.port_op,
 			    psk->psk_dst.port[0], psk->psk_dst.port[1],
 			    st->ext.port))) {
-				st->expire = 0;
+				st->timeout = PFTM_PURGE;
 				killed++;
 			}
 		}
@@ -977,6 +977,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
 		struct pf_state		*state;
 
+		if (ps->state.timeout >= PFTM_MAX &&
+		    ps->state.timeout != PFTM_UNTIL_PACKET) {
+			error = EINVAL;
+			break;
+		}
 		state = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (state == NULL) {
 			error = ENOMEM;
@@ -989,7 +994,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		state->anchor.ptr = NULL;
 		state->rt_ifp = NULL;
 		state->creation = time.tv_sec;
-		state->expire += state->creation;
 		state->packets = 0;
 		state->bytes = 0;
 		if (pf_insert_state(state)) {
@@ -1004,7 +1008,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
 		struct pf_tree_node	*n;
 		u_int32_t		 nr;
-		int			 secs;
 
 		nr = 0;
 		s = splsoftnet();
@@ -1025,12 +1028,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		ps->state.anchor.nr = (n->state->anchor.ptr == NULL) ?
 		    -1 : n->state->anchor.ptr->nr;
 		splx(s);
-		secs = time.tv_sec;
-		ps->state.creation = secs - ps->state.creation;
-		if (ps->state.expire <= (unsigned)secs)
-			ps->state.expire = 0;
+		ps->state.expire = pf_state_expires(n->state);
+		if (ps->state.expire > time.tv_sec)
+			ps->state.expire -= time.tv_sec;
 		else
-			ps->state.expire -= secs;
+			ps->state.expire = 0;
 		break;
 	}
 
@@ -1065,10 +1067,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			pstore.anchor.nr = (n->state->anchor.ptr == NULL) ?
 			    -1 : n->state->anchor.ptr->nr;
 			pstore.creation = secs - pstore.creation;
-			if (pstore.expire <= (unsigned)secs)
-				pstore.expire = 0;
-			else
+			pstore.expire = pf_state_expires(n->state);
+			if (pstore.expire > secs)
 				pstore.expire -= secs;
+			else
+				pstore.expire = 0;
 			error = copyout(&pstore, p, sizeof(*p));
 			if (error) {
 				splx(s);

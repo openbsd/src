@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.151 2003/04/25 19:44:57 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.152 2003/05/12 01:25:31 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -190,6 +190,8 @@ const struct pf_timeout pf_timeouts[] = {
 	{ "other.multiple",	PFTM_OTHER_MULTIPLE },
 	{ "frag",		PFTM_FRAG },
 	{ "interval",		PFTM_INTERVAL },
+	{ "adaptive.start",	PFTM_ADAPTIVE_START },
+	{ "adaptive.end",	PFTM_ADAPTIVE_END },
 	{ NULL,			0 }
 };
 

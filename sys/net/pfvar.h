@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.143 2003/05/11 20:44:03 frantzen Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.144 2003/05/12 01:25:31 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -56,7 +56,9 @@ enum	{ PFTM_TCP_FIRST_PACKET, PFTM_TCP_OPENING, PFTM_TCP_ESTABLISHED,
 	  PFTM_UDP_FIRST_PACKET, PFTM_UDP_SINGLE, PFTM_UDP_MULTIPLE,
 	  PFTM_ICMP_FIRST_PACKET, PFTM_ICMP_ERROR_REPLY,
 	  PFTM_OTHER_FIRST_PACKET, PFTM_OTHER_SINGLE,
-	  PFTM_OTHER_MULTIPLE, PFTM_FRAG, PFTM_INTERVAL, PFTM_MAX };
+	  PFTM_OTHER_MULTIPLE, PFTM_FRAG, PFTM_INTERVAL,
+	  PFTM_ADAPTIVE_START, PFTM_ADAPTIVE_END, PFTM_MAX,
+	  PFTM_PURGE, PFTM_UNTIL_PACKET };
 enum	{ PF_NOPFROUTE, PF_FASTROUTE, PF_ROUTETO, PF_DUPTO, PF_REPLYTO };
 enum	{ PF_LIMIT_STATES, PF_LIMIT_FRAGS, PF_LIMIT_MAX };
 #define PF_POOL_IDMASK		0x0f
@@ -442,7 +444,8 @@ struct pf_state {
 	u_int8_t	 direction;
 	u_int8_t	 log;
 	u_int8_t	 allow_opts;
-	u_int8_t	 pad[3];
+	u_int8_t	 timeout;
+	u_int8_t	 pad[2];
 };
 
 struct pf_tree_node {
@@ -1026,6 +1029,8 @@ int	pf_normalize_tcp_init(struct mbuf *, struct pf_pdesc *, struct tcphdr *,
 	    struct pf_state_peer *, struct pf_state_peer *);
 int	pf_normalize_tcp_stateful(struct mbuf *, struct pf_pdesc *, u_short *,
 	    struct tcphdr *, struct pf_state_peer *, struct pf_state_peer *);
+u_int32_t
+	pf_state_expires(const struct pf_state *);
 void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af);
 void	pfr_initialize(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.345 2003/05/11 20:44:03 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.346 2003/05/12 01:25:31 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -235,9 +235,6 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
 	(s)->lan.addr.addr32[3] != (s)->gwy.addr.addr32[3])) || \
 	(s)->lan.port != (s)->gwy.port
 
-#define TIMEOUT(r,i) \
-	((r)->timeout[(i)] ? (r)->timeout[(i)] : pf_default_rule.timeout[(i)])
-
 static __inline int pf_state_compare(struct pf_tree_node *,
 			struct pf_tree_node *);
 
@@ -437,6 +434,42 @@ pf_purge_timeout(void *arg)
 	timeout_add(to, pf_default_rule.timeout[PFTM_INTERVAL] * hz);
 }
 
+u_int32_t
+pf_state_expires(const struct pf_state *state)
+{
+	u_int32_t	timeout;
+	u_int32_t	start;
+	u_int32_t	end;
+	u_int32_t	states;
+
+	/* handle all PFTM_* > PFTM_MAX here */
+	if (state->timeout == PFTM_PURGE)
+		return (time.tv_sec);
+	if (state->timeout == PFTM_UNTIL_PACKET)
+		return (0);
+	KASSERT(state->timeout < PFTM_MAX);
+	timeout = state->rule.ptr->timeout[state->timeout];
+	if (!timeout)
+		timeout = pf_default_rule.timeout[state->timeout];
+	start = state->rule.ptr->timeout[PFTM_ADAPTIVE_START];
+	if (start) {
+		end = state->rule.ptr->timeout[PFTM_ADAPTIVE_END];
+		states = state->rule.ptr->states;
+	} else {
+		start = pf_default_rule.timeout[PFTM_ADAPTIVE_START];
+		end = pf_default_rule.timeout[PFTM_ADAPTIVE_END];
+		states = pf_status.states;
+	}
+	if (end && states > start && start < end) {
+		if (states < end)
+			return (state->expire + timeout * (end - states) /
+			    (end - start));
+		else
+			return (time.tv_sec);
+	}
+	return (state->expire + timeout);
+}
+
 void
 pf_purge_expired_states(void)
 {
@@ -446,7 +479,7 @@ pf_purge_expired_states(void)
 	for (cur = RB_MIN(pf_state_tree, &tree_ext_gwy); cur; cur = next) {
 		next = RB_NEXT(pf_state_tree, &tree_ext_gwy, cur);
 
-		if (cur->state->expire <= (unsigned)time.tv_sec) {
+		if (pf_state_expires(cur->state) <= time.tv_sec) {
 			RB_REMOVE(pf_state_tree, &tree_ext_gwy, cur);
 
 			/* Need this key's peer (in the other tree) */
@@ -2122,7 +2155,8 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->src.state = TCPS_SYN_SENT;
 		s->dst.state = TCPS_CLOSED;
 		s->creation = time.tv_sec;
-		s->expire = s->creation + TIMEOUT(r, PFTM_TCP_FIRST_PACKET);
+		s->expire = time.tv_sec;
+		s->timeout = PFTM_TCP_FIRST_PACKET;
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 
@@ -2349,7 +2383,8 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->dst.max_win = 0;
 		s->dst.state = PFUDPS_NO_TRAFFIC;
 		s->creation = time.tv_sec;
-		s->expire = s->creation + TIMEOUT(r, PFTM_UDP_FIRST_PACKET);
+		s->expire = time.tv_sec;
+		s->timeout = PFTM_UDP_FIRST_PACKET;
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		if (pf_insert_state(s)) {
@@ -2583,7 +2618,8 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->dst.max_win = 0;
 		s->dst.state = 0;
 		s->creation = time.tv_sec;
-		s->expire = s->creation + TIMEOUT(r, PFTM_ICMP_FIRST_PACKET);
+		s->expire = time.tv_sec;
+		s->timeout = PFTM_ICMP_FIRST_PACKET;
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		if (pf_insert_state(s)) {
@@ -2800,7 +2836,8 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->dst.max_win = 0;
 		s->dst.state = PFOTHERS_NO_TRAFFIC;
 		s->creation = time.tv_sec;
-		s->expire = s->creation + TIMEOUT(r, PFTM_OTHER_FIRST_PACKET);
+		s->expire = time.tv_sec;
+		s->timeout = PFTM_OTHER_FIRST_PACKET;
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		if (pf_insert_state(s)) {
@@ -3050,25 +3087,21 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			src->state = dst->state = TCPS_TIME_WAIT;
 
 		/* update expire time */
+		(*state)->expire = time.tv_sec;
 		if (src->state >= TCPS_FIN_WAIT_2 &&
 		    dst->state >= TCPS_FIN_WAIT_2)
-			(*state)->expire = time.tv_sec +
-			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_CLOSED);
+			(*state)->timeout = PFTM_TCP_CLOSED;
 		else if (src->state >= TCPS_FIN_WAIT_2 ||
 		    dst->state >= TCPS_FIN_WAIT_2)
-			(*state)->expire = time.tv_sec +
-			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_FIN_WAIT);
+			(*state)->timeout = PFTM_TCP_FIN_WAIT;
 		else if (src->state < TCPS_ESTABLISHED ||
 		    dst->state < TCPS_ESTABLISHED)
-			(*state)->expire = time.tv_sec +
-			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_OPENING);
+			(*state)->timeout = PFTM_TCP_OPENING;
 		else if (src->state >= TCPS_CLOSING ||
 		    dst->state >= TCPS_CLOSING)
-			(*state)->expire = time.tv_sec +
-			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_CLOSING);
+			(*state)->timeout = PFTM_TCP_CLOSING;
 		else
-			(*state)->expire = time.tv_sec +
-			    TIMEOUT((*state)->rule.ptr, PFTM_TCP_ESTABLISHED);
+			(*state)->timeout = PFTM_TCP_ESTABLISHED;
 
 		/* Fall through to PASS packet */
 
@@ -3236,12 +3269,11 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 		dst->state = PFUDPS_MULTIPLE;
 
 	/* update expire time */
+	(*state)->expire = time.tv_sec;
 	if (src->state == PFUDPS_MULTIPLE && dst->state == PFUDPS_MULTIPLE)
-		(*state)->expire = time.tv_sec +
-		    TIMEOUT((*state)->rule.ptr, PFTM_UDP_MULTIPLE);
+		(*state)->timeout = PFTM_UDP_MULTIPLE;
 	else
-		(*state)->expire = time.tv_sec +
-		    TIMEOUT((*state)->rule.ptr, PFTM_UDP_SINGLE);
+		(*state)->timeout = PFTM_UDP_SINGLE;
 
 	/* translate source/destination address, if necessary */
 	if (STATE_TRANSLATE(*state)) {
@@ -3327,8 +3359,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 		(*state)->packets++;
 		(*state)->bytes += pd->tot_len;
-		(*state)->expire = time.tv_sec +
-		    TIMEOUT((*state)->rule.ptr, PFTM_ICMP_ERROR_REPLY);
+		(*state)->expire = time.tv_sec;
+		(*state)->timeout = PFTM_ICMP_ERROR_REPLY;
 
 		/* translate source/destination address, if needed */
 		if (PF_ANEQ(&(*state)->lan.addr, &(*state)->gwy.addr, pd->af)) {
@@ -3822,12 +3854,11 @@ pf_test_state_other(struct pf_state **state, int direction, struct ifnet *ifp,
 		dst->state = PFOTHERS_MULTIPLE;
 
 	/* update expire time */
+	(*state)->expire = time.tv_sec;
 	if (src->state == PFOTHERS_MULTIPLE && dst->state == PFOTHERS_MULTIPLE)
-		(*state)->expire = time.tv_sec +
-		    TIMEOUT((*state)->rule.ptr, PFTM_OTHER_MULTIPLE);
+		(*state)->timeout = PFTM_OTHER_MULTIPLE;
 	else
-		(*state)->expire = time.tv_sec +
-		    TIMEOUT((*state)->rule.ptr, PFTM_OTHER_SINGLE);
+		(*state)->timeout = PFTM_OTHER_SINGLE;
 
 	/* translate source/destination address, if necessary */
 	if (STATE_TRANSLATE(*state)) {

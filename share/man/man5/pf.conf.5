@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.234 2003/05/11 20:46:11 frantzen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.235 2003/05/12 01:25:32 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -290,11 +290,37 @@ Other protocols are handled similarly to UDP:
 .It Ar other.multiple
 .El
 .Pp
+Timeout values can be reduced adaptively as the number of state table
+entries grows.
+.Pp
+.Bl -tag -width xxxx -compact
+.It Ar adaptive.start
+When the number of state entries exceeds this value, adaptive scaling
+begins.
+All timeout values are scaled linearly with factor
+(adaptive.end - number of states) / (adaptive.end - adaptive.start).
+.It Ar adaptive.end
+When reaching this number of state entries, all timeout values become
+zero, effectively purging all state entries immediately.
+This value is used to define the scale factor, it should not actually
+be reached (set a lower state limit, see below).
+.El
+.Pp
+These values can be defined both globally and for each rule.
+When used on a per-rule basis, the values relate to the number of
+states created by the rule, otherwise to the total number of
+states.
+.Pp
 For example:
 .Bd -literal -offset indent
-set timeout tcp.established 3600
-set timeout { tcp.opening 30, tcp.closing 900 }
+set timeout tcp.first 120
+set timeout tcp.established 86400
+set timeout { adaptive.start 6000, adaptive.end 12000 }
+set limit states 10000
 .Ed
+.Pp
+With 10500 state table entries, the timeout values are scaled to 25%
+(tcp.first 30, tcp.established 21600).
 .Pp
 .It Ar set loginterface
 Enable collection of packet and byte count statistics for the given interface.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.170 2003/05/10 00:45:24 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.171 2003/05/12 01:25:31 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -795,7 +795,12 @@ pfctl_show_timeouts(int dev)
 		pt.timeout = pf_timeouts[i].timeout;
 		if (ioctl(dev, DIOCGETTIMEOUT, &pt))
 			err(1, "DIOCGETTIMEOUT");
-		printf("%-20s %10ds\n", pf_timeouts[i].name, pt.seconds);
+		printf("%-20s %10d", pf_timeouts[i].name, pt.seconds);
+		if (i >= PFTM_ADAPTIVE_START && i <= PFTM_ADAPTIVE_END)
+			printf(" states");
+		else
+			printf("s");
+		printf("\n");
 	}
 	return (0);
 
