@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.48 2001/09/25 20:36:44 niklas Exp $
+#	$OpenBSD: Makefile.inc,v 1.49 2002/02/17 23:40:58 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -11,7 +11,7 @@ CFLAGS+=	-D_NO_WEAK_ALIASES
 .endif
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S \
+SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S rfork.S \
 	sbrk.S sigpending.S sigprocmask.S sigreturn.S \
 	sigsuspend.S syscall.S
 
