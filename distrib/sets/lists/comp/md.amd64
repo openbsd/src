@@ -1,9 +1,7 @@
 ./usr/bin/addr2line
 ./usr/bin/gasp
 ./usr/bin/objcopy
-./usr/bin/protoize
 ./usr/bin/readelf
-./usr/bin/unprotoize
 ./usr/include/amd64
 ./usr/include/amd64/ansi.h
 ./usr/include/amd64/apicvar.h
@@ -301,5 +299,3 @@
 ./usr/libdata/ldscripts/elf_x86_64.xs
 ./usr/libdata/ldscripts/elf_x86_64.xu
 ./usr/libdata/ldscripts/elf_x86_64.xz
-./usr/share/man/cat1/protoize.0
-./usr/share/man/cat1/unprotoize.0
