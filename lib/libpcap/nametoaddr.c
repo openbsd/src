@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.10 2004/01/27 06:58:03 tedu Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.11 2005/03/28 06:19:58 tedu Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -349,10 +349,6 @@ pcap_ether_hostton(const char *name)
 }
 #else
 
-#if !defined(sgi) && !defined(__NetBSD__)
-extern int ether_hostton(char *, struct ether_addr *);
-#endif
-
 /* Use the os supplied routines */
 u_char *
 pcap_ether_hostton(const char *name)
@@ -361,7 +357,7 @@ pcap_ether_hostton(const char *name)
 	u_char a[6];
 
 	ap = NULL;
-	if (ether_hostton((char *)name, (struct ether_addr *)a) == 0) {
+	if (ether_hostton(name, (struct ether_addr *)a) == 0) {
 		ap = (u_char *)malloc(6);
 		if (ap != NULL)
 			memcpy((char *)ap, (char *)a, 6);

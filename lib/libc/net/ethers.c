@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.18 2005/03/25 13:24:11 otto Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.19 2005/03/28 06:19:58 tedu Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -23,7 +23,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ethers.c,v 1.18 2005/03/25 13:24:11 otto Exp $";
+static char rcsid[] = "$OpenBSD: ethers.c,v 1.19 2005/03/28 06:19:58 tedu Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ static char rcsid[] = "$OpenBSD: ethers.c,v 1.18 2005/03/25 13:24:11 otto Exp $"
 #define _PATH_ETHERS	"/etc/ethers"
 #endif
 
-static char * _ether_aton(char *, struct ether_addr *);
+static char * _ether_aton(const char *, struct ether_addr *);
 
 char *
 ether_ntoa(struct ether_addr *e)
@@ -62,7 +62,7 @@ ether_ntoa(struct ether_addr *e)
 }
 
 static char *
-_ether_aton(char *s, struct ether_addr *e)
+_ether_aton(const char *s, struct ether_addr *e)
 {
 	int i;
 	long l;
@@ -87,7 +87,7 @@ _ether_aton(char *s, struct ether_addr *e)
 }
 
 struct ether_addr *
-ether_aton(char *s)
+ether_aton(const char *s)
 {
 	static struct ether_addr n;
 
@@ -157,7 +157,7 @@ ether_ntohost(char *hostname, struct ether_addr *e)
 }
 
 int
-ether_hostton(char *hostname, struct ether_addr *e)
+ether_hostton(const char *hostname, struct ether_addr *e)
 {
 	FILE *f;
 	char buf[BUFSIZ+1], *p;
@@ -210,7 +210,7 @@ ether_hostton(char *hostname, struct ether_addr *e)
 }
 
 int
-ether_line(char *line, struct ether_addr *e, char *hostname)
+ether_line(const char *line, struct ether_addr *e, char *hostname)
 {
 	char *p;
 	size_t n;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdethers.c,v 1.11 2003/07/18 22:58:56 david Exp $ */
+/*	$OpenBSD: stdethers.c,v 1.12 2005/03/28 06:19:58 tedu Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: stdethers.c,v 1.11 2003/07/18 22:58:56 david Exp $";
+static const char rcsid[] = "$OpenBSD: stdethers.c,v 1.12 2005/03/28 06:19:58 tedu Exp $";
 #endif
 
 #include <sys/types.h>
@@ -39,9 +39,6 @@ static const char rcsid[] = "$OpenBSD: stdethers.c,v 1.11 2003/07/18 22:58:56 da
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
-extern int   ether_line(char *, struct ether_addr *, char *);
-extern char *ether_ntoa(struct ether_addr *);
 
 #ifndef NTOA_FIX
 #define	NTOA(x) (char *)ether_ntoa(x)
