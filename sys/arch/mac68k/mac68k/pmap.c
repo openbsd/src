@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2001/06/24 04:20:44 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.24 2001/06/27 04:02:05 beck Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 1999/04/22 04:24:53 chs Exp $	*/
 
 /*
@@ -2359,12 +2359,6 @@ pmap_enter_ptpage(pmap, va)
 		}
 #endif
 		pmap_extract(pmap_kernel(), va, &ptpa);
-		/*
-		 * Mark the page clean now to avoid its pageout (and
-		 * hence creation of a pager) between now and when it
-		 * is wired; i.e. while it is on a paging queue.
-		 */
-		PHYS_TO_VM_PAGE(ptpa)->flags |= PG_CLEAN;
 #if !defined (UVM)
 #ifdef DEBUG
 		PHYS_TO_VM_PAGE(ptpa)->flags |= PG_PTPAGE;
