@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.3 2000/12/12 22:30:01 markus Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.4 2000/12/13 23:26:53 markus Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -321,9 +321,9 @@ conalloc(char *iname, char *oname)
 	} while ((s = tcpconnect(name)) < 0);
 
 	if (s >= maxfd)
-		fatal("conalloc: fdno %d too high\n", s);
+		fatal("conalloc: fdno %d too high", s);
 	if (fdcon[s].c_status)
-		fatal("conalloc: attempt to reuse fdno %d\n", s);
+		fatal("conalloc: attempt to reuse fdno %d", s);
 
 	fdcon[s].c_fd = s;
 	fdcon[s].c_status = CS_CON;
@@ -347,7 +347,7 @@ confree(int s)
 {
 	close(s);
 	if (s >= maxfd || fdcon[s].c_status == CS_UNUSED)
-		fatal("confree: attempt to free bad fdno %d\n", s);
+		fatal("confree: attempt to free bad fdno %d", s);
 	free(fdcon[s].c_namebase);
 	free(fdcon[s].c_output_name);
 	if (fdcon[s].c_status == CS_KEYS)
@@ -447,7 +447,7 @@ conread(int s)
 			return;
 			break;
 		default:
-			fatal("conread: invalid status %d\n", c->c_status);
+			fatal("conread: invalid status %d", c->c_status);
 			break;
 		}
 
@@ -540,7 +540,7 @@ nexthost(int argc, char **argv)
 static void
 usage(void)
 {
-	fatal("usage: %s [-t timeout] { [--] host | -f file } ...\n", __progname);
+	fatal("usage: %s [-t timeout] { [--] host | -f file } ...", __progname);
 	return;
 }
 
@@ -571,11 +571,11 @@ main(int argc, char **argv)
 
 	maxfd = fdlim_get(1);
 	if (maxfd < 0)
-		fatal("%s: fdlim_get: bad value\n", __progname);
+		fatal("%s: fdlim_get: bad value", __progname);
 	if (maxfd > MAXMAXFD)
 		maxfd = MAXMAXFD;
 	if (maxcon <= 0)
-		fatal("%s: not enough file descriptors\n", __progname);
+		fatal("%s: not enough file descriptors", __progname);
 	if (maxfd > fdlim_get(0))
 		fdlim_set(maxfd);
 	fdcon = xmalloc(maxfd * sizeof(con));
