@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.18 2004/10/31 06:59:25 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.19 2004/12/12 22:41:31 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -432,7 +432,7 @@ brgphy_reset(struct mii_softc *sc)
 	 * PHY subdriver.
 	 */
 	if (strncmp(ifp->if_xname, "bge", 3) == 0 &&
-	    (bge_sc->bge_asicrev == BGE_ASICREV_BCM5700 ||
+	    (BGE_ASICREV(bge_sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
 	    bge_sc->bge_chipid == BGE_CHIPID_BCM5705_A1 ||
 	    bge_sc->bge_chipid == BGE_CHIPID_BCM5705_A2))
 		return;
