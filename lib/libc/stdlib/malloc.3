@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.8 1998/04/28 07:36:47 deraadt Exp $
+.\"	$OpenBSD: malloc.3,v 1.9 1998/08/15 20:32:02 deraadt Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -106,7 +106,7 @@ to the size specified by
 The contents of the object are unchanged up to the lesser
 of the new and old sizes.
 If the new size is larger, the value of the newly allocated portion
-of the object is indeterminate.
+of the object is indeterminate and uninitialized.
 If
 .Fa ptr
 is a null pointer, the
@@ -124,6 +124,30 @@ is zero and
 .Fa ptr
 is not a null pointer, the object it points to is freed and a new zero size
 object is returned.
+.Pp
+When using
+.Fn realloc
+one must be careful to avoid the following idiom:
+.Pp
+.Bd -literal -offset indent
+if ((p = realloc(p, nsize)) == NULL)
+	return NULL;
+.Ed
+.Pp
+In most cases, this will result in a leak of memory.
+As stated earlier, a return value of
+.Fa NULL
+indicates that the old object still remains allocated.
+Better code looks like this:
+.Bd -literal -offset indent
+if ((p2 = realloc(p, nsize)) == NULL) {
+	if (p)
+		free(p);
+	p = NULL;
+	return NULL;
+}
+p = p2;
+.Ed
 .Pp
 Malloc will first look for a symbolic link called
 .Pa /etc/malloc.conf
