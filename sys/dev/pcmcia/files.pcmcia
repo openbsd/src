@@ -1,33 +1,50 @@
-#	$OpenBSD: files.pcmcia,v 1.8 1997/08/20 17:09:10 angelos Exp $
-#	$Id: files.pcmcia,v 1.8 1997/08/20 17:09:10 angelos Exp $
+#	$OpenBSD: files.pcmcia,v 1.9 1998/09/11 10:47:14 fgsch Exp $
+#	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
 
-# XXX Does this comment hold?
-# ports should define their own "device pcmcia" line (like the one below,
-# but with the correct bus attachment).
+device	pcmcia {[function = -1], [irq = -1]}
+file	dev/pcmcia/pcmcia.c			pcmcia
+file	dev/pcmcia/pcmcia_cis.c			pcmcia
 
-#
-# needs all the parameters available on isa, so devices can attach here.
-#
+# device declaration in sys/conf/files
+attach	pcmcia at pcic
 
-device pcmcia  {[port = -1], [size = 0],
-		[iomem = -1], [iosiz = 0],
-		[irq = -1], [drq = -1], [slot = -1]}
-attach pcmcia at pcmciabus
-
-file	dev/pcmcia/pcmcia.c		pcmcia	needs-flag
-file	dev/pcmcia/pcmcia_conf.c	pcmcia
-
-# 8250/16[45]50-based "com" ports
-attach	com at pcmcia with com_pcmcia
-file	dev/pcmcia/com_pcmcia.c		com_pcmcia
-
-# 3Com 3c589 Ethernet controllers
+# 3Com 3c589 Ethernet and 3c562 multifunction Ethernet controllers
 # device declaration in sys/conf/files
 attach	ep at pcmcia with ep_pcmcia
-file	dev/pcmcia/if_ep_pcmcia.c	ep_pcmcia
+file	dev/pcmcia/if_ep_pcmcia.c		ep_pcmcia
 
-#attach 	wlp at pcmcia with wlp_pcmcia
-#file   	dev/pcmcia/if_wlp_pcmcia.c	wlp_pcmcia
+# National Semiconductor DS8390/WD83C690-based boards
+# (NE[12]000, and clones)
+#attach	ne at pcmcia with ne_pcmcia
+#file	dev/pcmcia/if_ne_pcmcia.c		ne_pcmcia
+
+# Adaptec APA-1460 SCSI Host Adapter
+attach	aic at pcmcia with aic_pcmcia
+file	dev/pcmcia/aic_pcmcia.c			aic_pcmcia
+
+attach	pccom at pcmcia with com_pcmcia
+file	dev/pcmcia/com_pcmcia.c			com_pcmcia
+
+# Digital RoamAbout / Lucent WaveLAN PCMCIA card
+#device	wl: arp, ether, ifnet
+#attach	wl at pcmcia with wl_pcmcia
+#file	dev/pcmcia/if_wl_pcmcia.c		wl_pcmcia
+
+# PCMCIA IDE controller
+#attach	wdc at pcmcia with wdc_pcmcia
+#file	dev/pcmcia/wdc_pcmcia.c			wdc_pcmcia
+
+# SMC91Cxx Ethernet Controllers (i.e. Megahertz X-Jack)
+attach	sm at pcmcia with sm_pcmcia
+file	dev/pcmcia/if_sm_pcmcia.c		sm_pcmcia
+
+# MB8696x Ethernet Controllers (i.e. TDK LAK CD021BX)
+#attach	mbe at pcmcia with mbe_pcmcia
+#file	dev/pcmcia/if_mbe_pcmcia.c		mbe_pcmcia
+
+# PCMCIA Floppy controller
+#attach	fdc at pcmcia with fdc_pcmcia
+#file	dev/pcmcia/fdc_pcmcia.c			fdc_pcmcia

@@ -1,0 +1,129 @@
+	$OpenBSD: pcmciadevs,v 1.1 1998/09/11 10:47:15 fgsch Exp $
+/* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
+
+/*
+ * Copyright (c) 1998, Christos Zoulas
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christos Zoulas
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * List of known PCMCIA vendors
+ */
+
+vendor NEWMEDIA			0x0057	NewMedia Corporation
+vendor IBM			0x00a4	IBM Corporation
+vendor 3COM			0x0101	3Com Corporation
+vendor MEGAHERTZ		0x0102	Megahertz Corporation
+vendor SOCKET			0x0104	Socket Communications
+vendor TDK			0x0105	TDK Corporation
+vendor SMC			0x0108	Standard Microsystems Corporation
+vendor MOTOROLA			0x0109	Motorola Corporation
+vendor USROBOTICS		0x0115	US Robotics Corporation
+vendor MEGAHERTZ2		0x0128	Megahertz Corporation
+vendor ADAPTEC			0x012f	Adaptec Corporation
+vendor LINKSYS			0x0149	Linksys Corporation
+vendor SIMPLETECH		0x014d	Simple Technology
+vendor DAYNA			0x0194	Dayna Corporation
+vendor IODATA			0x01bf	I-O DATA
+
+/*
+ * List of known products.  Grouped by vendor.
+ */
+/* Adaptec Products */
+product ADAPTEC APA1460_1	0x0001 Adaptec APA-1460/A SCSI Host Adapter
+product ADAPTEC APA1460_2	0x0002 Adaptec APA-1460/B SCSI Host Adapter
+
+/* 3COM Products */
+product 3COM 3C562		0x0562 3Com 3c562 33.6 Modem/10Mbps Ethernet
+product 3COM 3C589		0x0589 3Com 3c589 10Mbps Ethernet
+product 3COM 3C574		0x0574 3Com 3c574-TX 10/100Mbps Ethernet
+
+/* Dayna Products */
+product DAYNA COMMUNICARD_E	0x002d Dayna CommuniCard E
+
+/* Motorola Products */
+product MOTOROLA POWER144	0x0105 Motorola Power 14.4 Modem
+product MOTOROLA PM100C		0x0302 Motorola Personal Messenger 100C CDPD Modem
+product MOTOROLA MONTANA_33.6	0x0505 Motorola Montana 33.6 Fax/Modem
+
+/* IBM Products */
+product IBM INFOMOVER		0x0002 National Semiconductor InfoMover
+product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
+
+/* I-O DATA */
+product IODATA PCLAT		0x2216 I-O DATA PCLA/T
+
+/* Linksys corporation */
+product LINKSYS ECARD		0x0265 Linksys EthernetCard
+product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
+product LINKSYS TRUST_COMBO_ECARD 0x021b Trust (Linksys) Combo EthernetCard
+
+/* Megahertz Products */
+product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288 Modem
+product MEGAHERTZ2 XJEM1144	0x0101 Megahertz XJEM1144 Ethernet
+product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK Ethernet
+
+/* US Robotics Products */
+product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4 Modem
+
+/* Simple Technology Products */
+product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
+
+/* Socket Communications Products */
+product SOCKET PAGECARD		0x0003 Socket Communications PageCard
+product SOCKET DUAL_RS232	0x0012 Socket Communications Dual RS232
+
+/* TDK Products */
+product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
+product TDK DFL9610		0x0d0a TDK DFL9610 Ethernet & Digital Cellular
+
+/* NewMedia Products */
+product NEWMEDIA BASICS		0x0019 NewMedia BASICS Ethernet
+
+/* Standard Microsystems Corporation Products */
+product SMC 8016		0x0105 SMC 8016 EtherCard
+
+/* Cards we know only by their cis */
+vendor PREMAX			-1 	Premax
+vendor PLANET			-1 	Planet
+vendor DLINK			-1 	D-Link
+vendor RPTI			-1 	RPTI
+vendor ACCTON			-1 	ACCTON
+vendor YEDATA			-1 	Y-E DATA
+vendor DIGITAL			-1 	Digital Equipment Corporation
+
+product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
+product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
+product PLANET SMARTCOM2000	{ "PCMCIA", "UE2212", NULL, NULL } Planet SmartCOM 2000
+product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL } D-Link DE-650
+product DLINK DE660		{ "D-Link", "DE-660", NULL, NULL } D-Link DE-660
+product RPTI EP401		{ "RPTI", "EP401&spEthernet&spNE2000&spCompatible", NULL, NULL } RPTI EP401
+product ACCTON EN2212		{ "ACCTON", "EN2212", NULL, NULL } Accton EN2212
+product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL } Y-E DATA External FDD
+product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL } DEC DEPCM-BA

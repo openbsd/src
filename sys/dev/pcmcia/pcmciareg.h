@@ -1,136 +1,247 @@
-/*	$OpenBSD: pcmciareg.h,v 1.2 1997/11/07 08:07:35 niklas Exp $	*/
-/*
- * This file was apparently first written by Stefan Grefen, although it
- * contained no copyright notice at the time.
- */
-#ifndef __PCMCIAREG_H__
-#define __PCMCIAREG_H__
+/*	$OpenBSD: pcmciareg.h,v 1.3 1998/09/11 10:47:15 fgsch Exp $	*/
+/*	$NetBSD: pcmciareg.h,v 1.6 1998/08/13 15:00:02 nathanw Exp $	*/
 
 /*
- * Configuration Registers
+ * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
  *
- * These are the registers required by Release 2.0 of the standard
- * (Section 4.15)
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Marc Horowitz.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Offsets for register ordering */
-#define PCMCIA_COR	0x00	/* Configuration and Option Register */
-#define PCMCIA_CCSR	0x02	/* Card Configuration and Status Register */
-#define PCMCIA_PIR	0x04	/* Pin Replacement Register */
-#define PCMCIA_SCR	0x06	/* Socket and Copy Register */
+/* most of this is from the PCMCIA PC Card Standard, Release 2.1 */
 
-/* Now register bits, ordered by reg # */
-
-/* For Configuration and Option Register (PCMCIA_COR) */
-#define PCMCIA_MEMIO	0x01	/* Use I/O Space */
-#define PCMCIA_CNFG	0x0e	/* I/O decoding configuration */
-#define PCMCIA_CNFGMASK 0x3f	/* Use template */
-#define PCMCIA_LVLREQ	0x40	/* Generate level mode interrupts */
-#define PCMCIA_SRESET	0x80	/* Reset Card */
-
-/* For Card Configuration and Status Register (PCMCIA_CCSR) */
-#define PCMCIA_INTR		0x02	/* Interrupt Pending */
-#define PCMCIA_POWER_DOWN	0x04
-#define PCMCIA_AUDIO_ENA	0x08
-#define PCMCIA_IOIS8		0x20
-#define PCMCIA_SIGCHG_ENA	0x40
-#define PCMCIA_CHANGED		0x80
-
-/* Pin Replacement Register (PCMCIA_PIR) */
-#define PCMCIA_WP_STATUS	   0x01
-#define PCMCIA_READY_STATUS	   0x02
-#define PCMCIA_BVD2_STATUS	   0x04
-#define PCMCIA_BVD1_STATUS	   0x08
-#define PCMCIA_WP_EVENT		   0x10
-#define PCMCIA_READY_EVENT	   0x20
-#define PCMCIA_BVD2_EVENT	   0x40
-#define PCMCIA_BVD1_EVENT	   0x80
-
-
-/* For Socket and Copy Register (PCMCIA_SCR) */
-#define PCMCIA_SOCKNUM	0x0f	/* Which socket I'm sitting in */
-#define PCMCIA_COPNUM	0x70	/* Which instance I am. */
+/* Note: the weird indenting here is to make the constants more
+   readable.  Please don't normalize it.  --marc */
 
 /*
- * CIS Tuple defines
+ * CIS Tuples */
+
+/* Layer 1 Basic Compatibility Tuples */
+#define	PCMCIA_CISTPL_NULL			0x00
+#define	PCMCIA_CISTPL_DEVICE			0x01
+#define	PCMCIA_DTYPE_MASK				0xF0
+#define	PCMCIA_DTYPE_NULL					0x00
+#define	PCMCIA_DTYPE_ROM					0x10
+#define	PCMCIA_DTYPE_OTPROM					0x20
+#define	PCMCIA_DTYPE_EPROM					0x30
+#define	PCMCIA_DTYPE_EEPROM					0x40
+#define	PCMCIA_DTYPE_FLASH					0x50
+#define	PCMCIA_DTYPE_SRAM					0x60
+#define	PCMCIA_DTYPE_DRAM					0x70
+#define	PCMCIA_DTYPE_FUNCSPEC					0xD0
+#define	PCMCIA_DTYPE_EXTEND					0xE0
+#define	PCMCIA_DSPEED_MASK				0x07
+#define	PCMCIA_DSPEED_NULL					0x00
+#define	PCMCIA_DSPEED_250NS					0x01
+#define	PCMCIA_DSPEED_200NS					0x02
+#define	PCMCIA_DSPEED_150NS					0x03
+#define	PCMCIA_DSPEED_100NS					0x04
+#define	PCMCIA_DSPEED_EXT					0x07
+
+/*
+ * the 2.1 docs have 0x02-0x07 as reserved, but the linux drivers list the
+ * follwing tuple code values.  I have at least one card (3com 3c562
+ * lan+modem) which has a code 0x06 tuple, so I'm going to assume that these
+ * are for real
  */
-#define CIS_MAXSIZE	512
 
-/* Define tuple types */
-#define CIS_NULL	0x00	/* null tuple */
-#define CIS_DEVICE	0x01	/* Device descriptor, common mem */
-#define CIS_DEVICE_A	0x17	/* Device descriptor, attribute mem */
-#define		CIS_DEVICE_TYPE		0xf0	/* type mask */
-#define		CIS_DEVICE_TYPE_SHIFT	4	/* type offset */
-#define		CIS_DEVICE_WPS		0x08	/* WPS mask */
-#define		CIS_DEVICE_SPEED	0x07	/* speed mask */
-#define		CIS_DEVICE_ADDRS	0xf8	/* # addr units */
-#define		CIS_DEVICE_ADDRS_SHIFT	3	/* # addr units offset */
-#define		CIS_DEVICE_SIZE		0x07
-#define CIS_CSUM	0x10	/* Checksum field */
-#define CIS_NOLINK	0x14	/* No Link */
-#define CIS_VER1	0x15	/* Level 1 Version/Product info */
-#define CIS_CFG_INFO	0x1a	/* Configuration info map */
-#define		TPCC_RASZ		0x03	/* size of regaddr */
-#define		TPCC_RASZ_SHIFT		0
-#define		TPCC_RMSZ		0x3c	/* size of regmask */
-#define		TPCC_RMSZ_SHIFT		2
-#define		TPCC_LAST		0x3f	/* last con entry idx */
-#define		TPCC_LAST_SHIFT		0
-#define CIS_CFG_ENT	0x1b	/* Configuration info entry */
-#define		TPCE_INDX_ENTRY		0x3f	/* config entry # */
-#define		TPCE_INDX_DEF		0x40	/* default bit */
-#define		TPCE_INDX_INT		0x80	/* interface bit */
-#define		TPCE_IF_TYPE		0x0f	/* interface type */
-#define		TPCE_IF_BVD		0x10	/* BVD active bit */
-#define		TPCE_IF_WP		0x20	/* WP active bit */
-#define		TPCE_IF_RDYBSY		0x40	/* RdyBsy active bit */
-#define		TPCE_IF_MWAIT		0x80	/* Wait Sig req. bit */
-#define		TPCE_FS_PWR		0x03	/* Power */
-#define			TPCE_FS_PWR_VCC		0x01	/* Vcc struct */
-#define			TPCE_FS_PWR_VPP		0x02	/* Vpp struct */
-#define		TPCE_FS_TD		0x04	/* Timing */
-#define			TPCE_FS_TD_WAIT		0x03	/* wait scale */
-#define			TPCE_FS_TD_RDY		0x1c	/* rdy/bsy scale */
-#define			TPCE_FS_TD_RDY_SHIFT	2
-#define			TPCE_FS_TD_RSV		0xe0	/* reserved scale */
-#define			TPCE_FS_TD_RSV_SHIFT	5
-#define		TPCE_FS_IO		0x08	/* I/O Space */
-#define			TPCE_FS_IO_LINES	0x1f	/* IO addr lines */
-#define			TPCE_FS_IO_BUS8		0x20	/* bus 8 bit */
-#define			TPCE_FS_IO_BUS16	0x40	/* bus 16 bit */
-#define			TPCE_FS_IO_RANGE	0x80	/* range bit */
-#define			TPCE_FS_IO_LEN		0xc0	/* block len size */
-#define			TPCE_FS_IO_LEN_SHIFT	6
-#define			TPCE_FS_IO_SIZE		0x30	/* block size size */
-#define			TPCE_FS_IO_SIZE_SHIFT	4
-#define			TPCE_FS_IO_NUM		0x0f	/* # of blocks */
-#define		TPCE_FS_IRQ		0x10	/* IRQ */
-#define			TPCE_FS_IRQ_SHARE	0x80	/* int sharing */
-#define			TPCE_FS_IRQ_PULSE	0x40	/* pulse request */
-#define			TPCE_FS_IRQ_LEVEL	0x20	/* level-trig int */
-#define			TPCE_FS_IRQ_MASK	0x10	/* irq mask bit */
-#define			TPCE_FS_IRQ_IRQN	0x0f	/* irqn mask */
-#define			TPCE_FS_IRQ_VEND	0x08	/* vendor sig */
-#define			TPCE_FS_IRQ_BERR	0x04	/* bus error */
-#define			TPCE_FS_IRQ_IOCK	0x02	/* io check */
-#define			TPCE_FS_IRQ_NMI		0x01	/* nmi */
-#define		TPCE_FS_MEM		0x60	/* Mem Space */
-#define		TPCE_FS_MEM_SHIFT	5
-#define			TPCE_FS_MEM_HOST	0x80
-#define			TPCE_FS_MEM_ADDR	0x60
-#define			TPCE_FS_MEM_ADDR_SHIFT	5
-#define			TPCE_FS_MEM_LEN		0x18
-#define			TPCE_FS_MEM_LEN_SHIFT	3
-#define			TPCE_FS_MEM_WINS	0x07
-#define		TPCE_FS_MISC		0x80	/* Misc */
-#define CIS_MFG		0x20	/* Manufacturer's ID */
-#define CIS_FUNC	0x21	/* Function ID */
-#define CIS_FUNE	0x22	/* Function Extension */
-#define CIS_DRIVER	0x77	/* Driver ID */
-#define CIS_END		0xff	/* Last Entry */
+#define	PCMCIA_CISTPL_LONGLINK_CB		0x02
+#define	PCMCIA_CISTPL_INDIRECT		0x03
+#define	PCMCIA_CISTPL_CONFIG_CB			0x04
+#define	PCMCIA_CISTPL_CFTABLE_ENTRY_CB		0x05
+#define	PCMCIA_CISTPL_LONGLINK_MFC		0x06
+#define	PCMCIA_MFC_MEM_ATTR				0x00
+#define	PCMCIA_MFC_MEM_COMMON				0x01
+#define	PCMCIA_CISTPL_BAR			0x07
+#define	PCMCIA_CISTPL_PWR_MGMNT			0x08
 
-#define splpcmcia spltty
-#define IPL_PCMCIA IPL_TTY
+#define	PCMCIA_CISTPL_CHECKSUM			0x10
+#define	PCMCIA_CISTPL_LONGLINK_A		0x11
+#define	PCMCIA_CISTPL_LONGLINK_C		0x12
+#define	PCMCIA_CISTPL_LINKTARGET		0x13
+#define	PCMCIA_CISTPL_NO_LINK			0x14
+#define	PCMCIA_CISTPL_VERS_1			0x15
+#define	PCMCIA_CISTPL_ALTSTR			0x16
+#define	PCMCIA_CISTPL_DEVICE_A			0x17
+#define	PCMCIA_CISTPL_JEDEC_C			0x18
+#define	PCMCIA_CISTPL_JEDEC_A			0x19
+#define	PCMCIA_CISTPL_CONFIG			0x1A
+#define	PCMCIA_TPCC_RASZ_MASK				0x03
+#define	PCMCIA_TPCC_RASZ_SHIFT				0
+#define	PCMCIA_TPCC_RMSZ_MASK				0x3C
+#define	PCMCIA_TPCC_RMSZ_SHIFT				2
+#define	PCMCIA_TPCC_RFSZ_MASK				0xC0
+#define	PCMCIA_TPCC_RFSZ_SHIFT				6
+#define	PCMCIA_CISTPL_CFTABLE_ENTRY		0x1B
+#define	PCMCIA_TPCE_INDX_INTFACE			0x80
+#define	PCMCIA_TPCE_INDX_DEFAULT			0x40
+#define	PCMCIA_TPCE_INDX_NUM_MASK			0x3F
+#define	PCMCIA_TPCE_IF_MWAIT				0x80
+#define	PCMCIA_TPCE_IF_RDYBSY				0x40
+#define	PCMCIA_TPCE_IF_WP				0x20
+#define	PCMCIA_TPCE_IF_BVD				0x10
+#define	PCMCIA_TPCE_IF_IFTYPE				0x0F
+#define	PCMCIA_IFTYPE_MEMORY					0
+#define	PCMCIA_IFTYPE_IO					1
+#define	PCMCIA_TPCE_FS_MISC				0x80
+#define	PCMCIA_TPCE_FS_MEMSPACE_MASK			0x60
+#define	PCMCIA_TPCE_FS_MEMSPACE_NONE				0x00
+#define	PCMCIA_TPCE_FS_MEMSPACE_LENGTH				0x20
+#define	PCMCIA_TPCE_FS_MEMSPACE_LENGTHADDR			0x40
+#define	PCMCIA_TPCE_FS_MEMSPACE_TABLE				0x60
+#define	PCMCIA_TPCE_FS_IRQ				0x10
+#define	PCMCIA_TPCE_FS_IOSPACE				0x08
+#define	PCMCIA_TPCE_FS_TIMING				0x04
+#define	PCMCIA_TPCE_FS_POWER_MASK			0x03
+#define	PCMCIA_TPCE_FS_POWER_NONE				0x00
+#define	PCMCIA_TPCE_FS_POWER_VCC				0x01
+#define	PCMCIA_TPCE_FS_POWER_VCCVPP1				0x02
+#define	PCMCIA_TPCE_FS_POWER_VCCVPP1VPP2			0x03
+#define	PCMCIA_TPCE_TD_RESERVED_MASK			0xE0
+#define	PCMCIA_TPCE_TD_RDYBSY_MASK			0x1C
+#define	PCMCIA_TPCE_TD_WAIT_MASK			0x03
+#define	PCMCIA_TPCE_IO_HASRANGE				0x80
+#define	PCMCIA_TPCE_IO_BUSWIDTH_16BIT			0x40
+#define	PCMCIA_TPCE_IO_BUSWIDTH_8BIT			0x20
+#define	PCMCIA_TPCE_IO_IOADDRLINES_MASK			0x1F
+#define	PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_MASK		0xC0
+#define	PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_NONE			0x00
+#define	PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_ONE			0x40
+#define	PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_TWO			0x80
+#define	PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_FOUR			0xC0
+#define	PCMCIA_TPCE_IO_RANGE_ADDRSIZE_MASK		0x30
+#define	PCMCIA_TPCE_IO_RANGE_ADDRSIZE_NONE			0x00
+#define	PCMCIA_TPCE_IO_RANGE_ADDRSIZE_ONE			0x10
+#define	PCMCIA_TPCE_IO_RANGE_ADDRSIZE_TWO			0x20
+#define	PCMCIA_TPCE_IO_RANGE_ADDRSIZE_FOUR			0x30
+#define	PCMCIA_TPCE_IO_RANGE_COUNT			0x0F
+#define	PCMCIA_TPCE_IR_SHARE				0x80
+#define	PCMCIA_TPCE_IR_PULSE				0x40
+#define	PCMCIA_TPCE_IR_LEVEL				0x20
+#define	PCMCIA_TPCE_IR_HASMASK				0x10
+#define	PCMCIA_TPCE_IR_IRQ				0x0F
+#define	PCMCIA_TPCE_MS_HOSTADDR				0x80
+#define	PCMCIA_TPCE_MS_CARDADDR_SIZE_MASK		0x60
+#define	PCMCIA_TPCE_MS_CARDADDR_SIZE_SHIFT		5
+#define	PCMCIA_TPCE_MS_LENGTH_SIZE_MASK			0x18
+#define	PCMCIA_TPCE_MS_LENGTH_SIZE_SHIFT		3
+#define	PCMCIA_TPCE_MS_COUNT				0x07
+#define	PCMCIA_TPCE_MI_EXT				0x80
+#define	PCMCIA_TPCE_MI_RESERVED				0x40
+#define	PCMCIA_TPCE_MI_PWRDOWN				0x20
+#define	PCMCIA_TPCE_MI_READONLY				0x10
+#define	PCMCIA_TPCE_MI_AUDIO				0x08
+#define	PCMCIA_TPCE_MI_MAXTWINS				0x07
+#define	PCMCIA_CISTPL_DEVICE_OC			0x1C
+#define	PCMCIA_CISTPL_DEVICE_OA			0x1D
+#define	PCMCIA_CISTPL_DEVICE_GEO		0x1E
+#define	PCMCIA_CISTPL_DEVICE_GEO_A		0x1F
+#define	PCMCIA_CISTPL_MANFID			0x20
+#define	PCMCIA_CISTPL_FUNCID			0x21
+#define	PCMCIA_FUNCTION_UNSPEC		-1
+#define	PCMCIA_FUNCTION_MULTIFUNCTION	0
+#define	PCMCIA_FUNCTION_MEMORY		1
+#define	PCMCIA_FUNCTION_SERIAL		2
+#define	PCMCIA_FUNCTION_PARALLEL	3
+#define	PCMCIA_FUNCTION_DISK		4
+#define	PCMCIA_FUNCTION_VIDEO		5
+#define	PCMCIA_FUNCTION_NETWORK		6
+#define	PCMCIA_FUNCTION_AIMS		7
+#define	PCMCIA_FUNCTION_SCSI		8
+#define	PCMCIA_FUNCTION_SECURITY	9
+#define	PCMCIA_FUNCTION_INSTRUMENT	10
+#define	PCMCIA_CISTPL_FUNCE			0x22
+#define	PCMCIA_TPLFE_TYPE_LAN_TECH			0x01
+#define	PCMCIA_TPLFE_TYPE_LAN_SPEED			0x02
+#define	PCMCIA_TPLFE_TYPE_LAN_MEDIA			0x03
+#define	PCMCIA_TPLFE_TYPE_LAN_NID			0x04
+#define	PCMCIA_TPLFE_TYPE_LAN_CONN			0x05
+#define	PCMCIA_CISTPL_END			0xFF
 
-#endif /* __PCMCIAREG_H__ */
+/* Layer 2 Data Recording Format Tuples */
+
+#define	PCMCIA_CISTPL_SWIL			0x23
+/* #define	PCMCIA_CISTPL_RESERVED		0x24-0x3F */
+#define	PCMCIA_CISTPL_VERS_2			0x40
+#define	PCMCIA_CISTPL_FORMAT			0x41
+#define	PCMCIA_CISTPL_GEOMETRY			0x42
+#define	PCMCIA_CISTPL_BYTEORDER			0x43
+#define	PCMCIA_CISTPL_DATE			0x44
+#define	PCMCIA_CISTPL_BATTERY			0x45
+#define	PCMCIA_CISTPL_FORAMT_A			0x47
+
+/* Layer 3 Data Organization Tuples */
+
+#define	PCMCIA_CISTPL_ORG			0x46
+/* #define	PCMCIA_CISTPL_RESERVED		0x47-0x7F */
+
+/* Layer 4 System-Specific Standard Tuples */
+
+/* #define	PCMCIA_CISTPL_RESERVED		0x80-0x8F */
+#define	PCMCIA_CISTPL_SPCL			0x90
+/* #define	PCMCIA_CISTPL_RESERVED		0x90-0xFE */
+
+/*
+ * Card Configuration Registers
+ */
+
+#define	PCMCIA_CCR_OPTION			0x00
+#define	PCMCIA_CCR_OPTION_SRESET			0x80
+#define	PCMCIA_CCR_OPTION_LEVIREQ			0x40
+#define	PCMCIA_CCR_OPTION_CFINDEX			0x3F
+#define	PCMCIA_CCR_OPTION_IREQ_ENABLE			0x04
+#define	PCMCIA_CCR_OPTION_ADDR_DECODE			0x02
+#define	PCMCIA_CCR_OPTION_FUNC_ENABLE			0x01
+#define	PCMCIA_CCR_STATUS			0x02
+#define	PCMCIA_CCR_STATUS_PINCHANGED			0x80
+#define	PCMCIA_CCR_STATUS_SIGCHG			0x40
+#define	PCMCIA_CCR_STATUS_IOIS8				0x20
+#define	PCMCIA_CCR_STATUS_RESERVED1			0x10
+#define	PCMCIA_CCR_STATUS_AUDIO				0x08
+#define	PCMCIA_CCR_STATUS_PWRDWN			0x04
+#define	PCMCIA_CCR_STATUS_INTR				0x02
+#define	PCMCIA_CCR_STATUS_INTRACK			0x01
+#define	PCMCIA_CCR_PIN				0x04
+#define	PCMCIA_CCR_PIN_CBVD1				0x80
+#define	PCMCIA_CCR_PIN_CBVD2				0x40
+#define	PCMCIA_CCR_PIN_CRDYBSY				0x20
+#define	PCMCIA_CCR_PIN_CWPROT				0x10
+#define	PCMCIA_CCR_PIN_RBVD1				0x08
+#define	PCMCIA_CCR_PIN_RBVD2				0x04
+#define	PCMCIA_CCR_PIN_RRDYBSY				0x02
+#define	PCMCIA_CCR_PIN_RWPROT				0x01
+#define	PCMCIA_CCR_SOCKETCOPY			0x06
+#define	PCMCIA_CCR_SOCKETCOPY_RESERVED			0x80
+#define	PCMCIA_CCR_SOCKETCOPY_COPY_MASK			0x70
+#define	PCMCIA_CCR_SOCKETCOPY_COPY_SHIFT		4
+#define	PCMCIA_CCR_SOCKETCOPY_SOCKET_MASK		0x0F
+#define PCMCIA_CCR_EXTSTATUS			0x08
+#define	PCMCIA_CCR_IOBASE0			0x0A
+#define	PCMCIA_CCR_IOBASE1			0x0C
+#define	PCMCIA_CCR_IOBASE2			0x0E
+#define	PCMCIA_CCR_IOBASE3			0x10
+#define	PCMCIA_CCR_IOSIZE			0x12
+
+#define	PCMCIA_CCR_SIZE				0x14

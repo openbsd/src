@@ -1,19 +1,20 @@
-/*	$OpenBSD: pcmciavar.h,v 1.5 1997/11/07 08:07:36 niklas Exp $	*/
+/*	$OpenBSD: pcmciavar.h,v 1.6 1998/09/11 10:47:15 fgsch Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.5 1998/07/19 17:28:17 christos Exp $	*/
+
 /*
- * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
- * Copyright (c) 1993, 1994 Stefan Grefen.  All rights reserved.
+ * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following dipclaimer.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles Hannum.
+ *	This product includes software developed by Marc Horowitz.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -27,304 +28,236 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
- /* derived from scsicconf.[ch] writenn by Julian Elischer et al */
 
-#ifndef	_PCMCIA_PCMCIAVAR_H_
-#define _PCMCIA_PCMCIAVAR_H_ 1
-
+#include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/select.h>
-#include <machine/cpu.h>
+
 #include <machine/bus.h>
 
-/*
- * The following documentation tries to describe the relationship between the
- * various structures defined in this file:
- *
- * each adapter type has a pcmcia_adapter struct. This describes the adapter and
- *    identifies routines that can be called to use the adapter.
- * each device type has a pcmcia_device struct. This describes the device and
- *    identifies routines that can be called to use the device.
- * each existing device position (pcmciabus + port)
- *    can be described by a pcmcia_link struct.
- *    Only port positions that actually have devices, have a pcmcia_link
- *    structure assigned. so in effect each device has pcmcia_link struct.
- *    The pcmcia_link structure contains information identifying both the
- *    device driver and the adapter driver for that port on that pcmcia bus,
- *    and can be said to 'link' the two.
- * each individual pcmcia bus has an array that points to all the pcmcia_link
- *    structs associated with that pcmcia bus. Slots with no device have
- *    a NULL pointer.
- * each individual device also knows the address of it's own pcmcia_link
- *    structure.
- *
- *				-------------
- *
- * The key to all this is the pcmcia_link structure which associates all the 
- * other structures with each other in the correct configuration.  The
- * pcmcia_link is the connecting information that allows each part of the 
- * pcmcia system to find the associated other parts.
- */
-
-
-struct pcmcia_link;
-struct pcmcia_conf;
-struct pcmcia_adapter;
+#include <dev/pcmcia/pcmciachip.h>
 
 /*
- * These entrypoints are called by the high-end drivers to get services from
- * whatever low-end drivers they are attached to each adapter type has one of
- * these statically allocated.
+ * Contains information about mapped/allocated i/o spaces.
  */
-struct pcmcia_funcs {
-/* 4 map io range */
-	int (*pcmcia_map_io) __P((struct pcmcia_link *, u_int, u_int, int));
-/* 8 map memory window */
-	int (*pcmcia_map_mem) __P((struct pcmcia_link *, bus_space_tag_t,
-				   caddr_t, u_int, u_int, int));
-/*12 map interrupt */
-	int (*pcmcia_map_intr) __P((struct pcmcia_link *, int, int));
-/*16 power on/off etc */
-	int (*pcmcia_service) __P((struct pcmcia_link *, int, void *, int));
+struct pcmcia_io_handle {
+	bus_space_tag_t iot;		/* bus space tag (from chipset) */
+	bus_space_handle_t ioh;		/* mapped space handle */
+	bus_addr_t      addr;		/* resulting address in bus space */
+	bus_size_t      size;		/* size of i/o space */
+	int             flags;		/* misc. information */
 };
 
-struct pcmciabus_link {			/* Link back to the bus we are on */
-	/* Bus specific configure    */
-	int (*bus_config) __P((struct pcmcia_link *, struct device *,
-			       struct pcmcia_conf *, struct cfdata *));
-	/* Bus specific unconfigure  */
-	int (*bus_unconfig) __P((struct pcmcia_link *));
-	/* Bus specific probe */
-	int (*bus_probe) __P((struct device *, void *,
-			       void *, struct pcmcia_link *));
-	/* Bus specific search	     */
-	int (*bus_search) __P((struct device *, void *, cfprint_t));
-	/* initialize scratch        */
-	int (*bus_init) __P((struct device *, struct cfdata *,
-			     void *, struct pcmcia_adapter *, int));
-};
-#define PCMCIA_BUS_INIT(a,b,c,d,e,f) \
-	((*(a)->bus_link->bus_init)((b),(c),(d),(e),(f)))
-#define PCMCIA_BUS_SEARCH(a,b,c,d) \
-	((*(a)->bus_link->bus_search)((b),(c),(d)))
-#define PCMCIA_BUS_PROBE(a,b,c,d,e) \
-	((*(a)->bus_link->bus_probe)((b),(c),(d),(e)))
-#define PCMCIA_BUS_CONFIG(a,b,c,d,e) \
-	((*(a)->bus_link->bus_config)((b),(c),(d),(e)))
-#define PCMCIA_BUS_UNCONFIG(a,b) \
-	((*(a)->bus_link->bus_unconfig)((b)))
-
+#define	PCMCIA_IO_ALLOCATED	0x01	/* i/o space was allocated */
 
 /*
- * One of these goes at the front of each chip controller's softc, right
- * after the struct device.
+ * Contains information about allocated memory space.
  */
-struct pcmcia_adapter {
-	struct pcmcia_funcs *chip_link;
-	struct pcmciabus_link *bus_link;
-	bus_space_tag_t pa_memt;	/* mem access handle */
-        void *adapter_softc;
-	caddr_t scratch_mem;		/* pointer to scratch window */
-	int scratch_memsiz;		/* size of scratch window    */
-	bus_space_handle_t scratch_memh;/* bus memory handle */
-	int scratch_inuse;		/* window in use             */
-	int nslots;			/* # of slots controlled */
+struct pcmcia_mem_handle {
+	bus_space_tag_t memt;		/* bus space tag (from chipset) */
+	bus_space_handle_t memh;	/* mapped space handle */
+	bus_addr_t      addr;		/* resulting address in bus space */
+	bus_size_t      size;		/* size of mem space */
+	pcmcia_mem_handle_t mhandle;	/* opaque memory handle */
+	bus_size_t      realsize;	/* how much we really allocated */
 };
 
-#define PCMCIA_MAP_ATTR		0x0100 /* for memory only */
-#define PCMCIA_MAP_8		0x0100 /* for io only */
-#define PCMCIA_MAP_16		0x0200
-#define PCMCIA_UNMAP		0x0400
-#define PCMCIA_PHYSICAL_ADDR    0x0800
-#define PCMCIA_UNMAP_ALL	0x0c00
-#define PCMCIA_FIXED_WIN    	0x1000
-#define PCMCIA_LAST_WIN	        0x0010
-#define PCMCIA_FIRST_WIN	0x0020
-#define PCMCIA_ANY_WIN		0x0030
+/* pcmcia itself */
 
-#define	PCMCIA_OP_RESET	    	0x0000
-#define	PCMCIA_OP_POWER  	0x0001
-#define	PCMCIA_OP_STATUS  	0x0002
-#define	PCMCIA_OP_GETREGS  	0x0003
-#define	PCMCIA_OP_WAIT  	0x0004
+#define PCMCIA_CFE_MWAIT_REQUIRED	0x0001
+#define PCMCIA_CFE_RDYBSY_ACTIVE	0x0002
+#define PCMCIA_CFE_WP_ACTIVE		0x0004
+#define PCMCIA_CFE_BVD_ACTIVE		0x0008
+#define PCMCIA_CFE_IO8			0x0010
+#define PCMCIA_CFE_IO16			0x0020
+#define PCMCIA_CFE_IRQSHARE		0x0040
+#define PCMCIA_CFE_IRQPULSE		0x0080
+#define PCMCIA_CFE_IRQLEVEL		0x0100
+#define PCMCIA_CFE_POWERDOWN		0x0200
+#define PCMCIA_CFE_READONLY		0x0400
+#define PCMCIA_CFE_AUDIO		0x0800
 
-#define PCMCIA_POWER_ON		0x0001
-#define PCMCIA_POWER_5V		0x0002
-#define PCMCIA_POWER_3V		0x0004
-#define PCMCIA_POWER_AUTO	0x0008
+struct pcmcia_config_entry {
+	int		number;
+	u_int32_t	flags;
+	int		iftype;
+	int		num_iospace;
 
-#define PCMCIA_CARD_PRESENT     0x0001
-#define PCMCIA_BATTERY		0x0002
-#define PCMCIA_WRITE_PROT	0x0004
-#define PCMCIA_READY		0x0008
-#define PCMCIA_POWER		0x0010
-#define PCMCIA_POWER_PP		0x0020
-#define PCMCIA_CARD_IS_MAPPED   0x1000
-#define PCMCIA_CARD_INUSE       0x2000
-
-
-/*
- * This structure describes the connection between an adapter driver and
- * a device driver, and is used by each to call services provided by
- * the other, and to allow generic pcmcia glue code to call these services
- * as well.
- */
-struct pcmcia_link {
-       	u_char	pcmciabus;		/* the Nth pcmciabus */
-       	u_char	slot;			/* slot of this dev */
-       	u_char	flags;			
-#define CARD_IS_MAPPED         0x01
-#define PCMCIA_ATTACH          0x02
-#define PCMCIA_REATTACH        0x04
-#define PCMCIA_SLOT_INUSE      0x08
-#define PCMCIA_ATTACH_TYPE     (PCMCIA_ATTACH|PCMCIA_REATTACH)
-#define PCMCIA_SLOT_EVENT	0x80
-#define PCMCIA_SLOT_OPEN	0x40
-        u_char	opennings;
-
-	u_char    iowin;
-	u_char    memwin;
-	u_char    intr;
-	u_char    dummy;
-       	struct	pcmcia_adapter *adapter;	/* adapter entry points etc. */
-       	struct	pcmciadevs *device;	/* device entry points etc. */
-	struct pcmciabus_softc *bus;	/* parent pcmcia bus */
-	struct device *devp;		/* pointer to configured device */
-       	void	*fordriver;		/* for private use by the driver */
-	struct selinfo	pcmcialink_sel;	/* for select users */
+	/*
+	 * The card will only decode this mask in any case, so we can
+	 * do dynamic allocation with this in mind, in case the suggestions
+	 * below are no good.
+	 */
+	u_long		iomask;
+	struct {
+		u_long	length;
+		u_long	start;
+	} iospace[4];		/* XXX this could be as high as 16 */
+	u_int16_t	irqmask;
+	int		num_memspace;
+	struct {
+		u_long	length;
+		u_long	cardaddr;
+		u_long	hostaddr;
+	} memspace[2];		/* XXX this could be as high as 8 */
+	int		maxtwins;
+	SIMPLEQ_ENTRY(pcmcia_config_entry) cfe_list;
 };
 
-/*
- * One of these is allocated and filled in for each pcmcia bus.
- * it holds pointers to allow the pcmcia bus to get to the driver
- * it also has a template entry which is the prototype struct
- * supplied by the adapter driver, this is used to initialise
- * the others, before they have the rest of the fields filled in
- */
-struct pcmciabus_softc {
-	struct device sc_dev;
-	bus_space_tag_t sc_iot;
-	bus_space_tag_t sc_memt;
-	struct pcmcia_link *sc_link[4];	/* up to 4 slots per bus */
-	struct pcmcia_adapter *sc_driver;
+struct pcmcia_function {
+	/* read off the card */
+	int		number;
+	int		function;
+	int		last_config_index;
+	u_long		ccr_base;
+	u_long		ccr_mask;
+	SIMPLEQ_HEAD(, pcmcia_config_entry) cfe_head;
+	SIMPLEQ_ENTRY(pcmcia_function) pf_list;
+	/* run-time state */
+	struct pcmcia_softc *sc;
+	struct pcmcia_config_entry *cfe;
+	struct pcmcia_mem_handle pf_pcmh;
+#define	pf_ccrt		pf_pcmh.memt
+#define	pf_ccrh		pf_pcmh.memh
+#define	pf_ccr_mhandle	pf_pcmh.mhandle
+#define	pf_ccr_realsize	pf_pcmh.realsize
+	bus_addr_t	pf_ccr_offset;
+	int		pf_ccr_window;
+	long		pf_mfc_iobase;
+	long		pf_mfc_iomax;
+	int		(*ih_fct) __P((void *));
+	void		*ih_arg;
+	int		ih_ipl;
+	int		pf_flags;
 };
 
-struct pcmcia_conf {
-    int irq_share:1; 
-    int irq_level:1; /* 1 level */
-    int irq_pulse:1; /* 1  pulse */
-    int irq_vend:1;
-    int irq_iock:1;
-    int irq_berr:1;
-    int irq_nmi:1;
-    int iocard:1;
-    u_char iowin;
-    u_char memwin;
-    u_char irq_num;
-    u_char cfgtype;
-#define CFGENTRYID     0x20
-#define CFGENTRYMASK   (CFGENTRYID|(CFGENTRYID-1))
-#define DOSRESET       0x40
-    int cfg_regmask;
-    int irq_mask;
-    int cfg_off;
-    struct iowin {
-	int start;
-	int len;
-	int flags;
-    }io[4];
-    struct memwin {
-	int start; 
-	int caddr;
-	int len;
-	int flags;
-    }mem[4];
-    char driver_name[8][4]; /* up to four different functions on a card */
-    int  unitid;
-    int  cfgid;
+/* pf_flags */
+#define	PFF_ENABLED	0x0001		/* function is enabled */
+
+struct pcmcia_card {
+	int		cis1_major;
+	int		cis1_minor;
+	/* XXX waste of space? */
+	char		cis1_info_buf[256];
+	char		*cis1_info[4];
+	/*
+	 * Use int32_t for manufacturer and product so that they can
+	 * hold the id value found in card CIS and special value that
+	 * indicates no id was found.
+	 */
+	int32_t		manufacturer;
+#define	PCMCIA_VENDOR_INVALID	-1
+	int32_t		product;
+#define	PCMCIA_PRODUCT_INVALID		-1
+	u_int16_t	error;
+#define	PCMCIA_CIS_INVALID		{ NULL, NULL, NULL, NULL }
+	SIMPLEQ_HEAD(, pcmcia_function) pf_head;
 };
 
-struct pcmcia_device {
-    char *name;
-    int (*pcmcia_config) __P((struct pcmcia_link *, struct device *,
-			      struct pcmcia_conf *, struct cfdata *));
-    int (*pcmcia_probe) __P((struct device *, void *,
-			     void *, struct pcmcia_link *));
-    int (*pcmcia_insert) __P((struct pcmcia_link *, struct device *,
-			      struct cfdata *));
-    int	(*pcmcia_remove) __P((struct pcmcia_link *, struct device *));
+struct pcmcia_softc {
+	struct device	dev;
+
+	/* this stuff is for the socket */
+	pcmcia_chipset_tag_t pct;
+	pcmcia_chipset_handle_t pch;
+
+	/* this stuff is for the card */
+	struct pcmcia_card card;
+	void		*ih;
+	int		sc_enabled_count;	/* how many functions are
+						   enabled */
+
+	/*
+	 * These are passed down from the PCMCIA chip, and exist only
+	 * so that cards with Very Special address allocation needs
+	 * know what range they should be dealing with.
+	 */
+	bus_addr_t iobase;		/* start i/o space allocation here */
+	bus_size_t iosize;		/* size of the i/o space range */
 };
 
-#define MAX_CIS_NAMELEN	64		/* version info string len */
-
-struct pcmcia_cardinfo {
-    char manufacturer[MAX_CIS_NAMELEN];
-    char model[MAX_CIS_NAMELEN];
-    char add_info1[MAX_CIS_NAMELEN];
-    char add_info2[MAX_CIS_NAMELEN];
-};
-
-struct pcmciadevs {
-        char *devname;
-        int flags;              /* 1 show my comparisons during boot(debug) */
-#define PC_SHOWME       0x01
-        char *manufacturer;
-        char *model;
-        char *add_inf1;
-        char *add_inf2;
-        void *param;
-        struct pcmcia_device *dev;
-};
-
-/*
- * PCMCIA driver attach arguments
- */
 struct pcmcia_attach_args {
-	struct pcmcia_cardinfo *paa_cardinfo; /* card that we're looking at */
-	struct pcmcia_link *paa_link;	/* this nexus */
-	int paa_bestmatch;		/* best match so far */
-	int paa_matchonly;		/* only do matches, don't attach */
-	void	*paa_aux;		/* driver specific */
+	int32_t manufacturer;
+	int32_t product;
+	struct pcmcia_card *card;
+	struct pcmcia_function *pf;
 };
 
-struct pcmciabus_attach_args {
-	bus_space_tag_t pba_iot;
-	bus_space_tag_t pba_memt;
-	bus_space_tag_t pba_memh;
-	int	pba_maddr;
-	int	pba_msize;
-	void	*pba_aux;		/* driver specific */
+struct pcmcia_tuple {
+	unsigned int	code;
+	unsigned int	length;
+	u_long		mult;
+	bus_addr_t	ptr;
+	bus_space_tag_t	memt;
+	bus_space_handle_t memh;
 };
 
-#ifdef _KERNEL
-extern int pcmcia_add_device __P((struct pcmciadevs *));
-extern int pcmcia_get_cf __P((struct pcmcia_link *, u_char *, int, int,
-			      struct pcmcia_conf *));
-extern int pcmcia_targmatch __P((struct device *, struct cfdata *, void *));
-#endif
+void	pcmcia_read_cis __P((struct pcmcia_softc *));
+void	pcmcia_print_cis __P((struct pcmcia_softc *));
+int	pcmcia_scan_cis __P((struct device * dev,
+	    int (*) (struct pcmcia_tuple *, void *), void *));
 
-/* in pcmcia_conf.c, available for user space too: */
-extern int pcmcia_get_cisver1 __P((struct pcmcia_link *, u_char *, int,
-				   char *, char *, char *, char *));
-void parse_cfent  __P((u_char *, int, int, struct pcmcia_conf *));
-void read_cfg_info __P((u_char *, int, struct pcmcia_conf *));
-void pcmcia_getstr __P((char *buf, u_char **, u_char *));
-extern int   pcmcia_configure __P((struct device *, void *, void *));
-extern int   pcmcia_register __P((void *, struct pcmciabus_link *,
-				  struct pcmcia_funcs *, int));
-extern int pcmcia_read_cis __P((struct pcmcia_link *, u_char *, int, int));
-extern int pcmcia_strcmp __P((const char *, const char *, int, const char *));
-extern int pcmcia_matchvalue __P((const struct pcmcia_cardinfo *,
-				  struct pcmciadevs *));
-extern int pcmcia_bestvalue __P((struct pcmcia_cardinfo *,
-				 struct pcmciadevs *,
-				 int,
-				 struct pcmciadevs **));
-extern int pcmcia_slave_match __P((struct device *,
-				   void *,
-				   void *aux,
-				   struct pcmciadevs *,
-				   int));
-#endif /* _PCMCIA_PCMCIAVAR_H_ */
+#define	pcmcia_cis_read_1(tuple, idx0)					\
+	(bus_space_read_1((tuple)->memt, (tuple)->memh, (tuple)->mult*(idx0)))
+
+#define	pcmcia_tuple_read_1(tuple, idx1)				\
+	(pcmcia_cis_read_1((tuple), ((tuple)->ptr+(2+(idx1)))))
+
+#define	pcmcia_tuple_read_2(tuple, idx2)				\
+	(pcmcia_tuple_read_1((tuple), (idx2)) | 			\
+	 (pcmcia_tuple_read_1((tuple), (idx2)+1)<<8))
+
+#define	pcmcia_tuple_read_3(tuple, idx3)				\
+	(pcmcia_tuple_read_1((tuple), (idx3)) |				\
+	 (pcmcia_tuple_read_1((tuple), (idx3)+1)<<8) |			\
+	 (pcmcia_tuple_read_1((tuple), (idx3)+2)<<16))
+
+#define	pcmcia_tuple_read_4(tuple, idx4)				\
+	(pcmcia_tuple_read_1((tuple), (idx4)) |				\
+	 (pcmcia_tuple_read_1((tuple), (idx4)+1)<<8) |			\
+	 (pcmcia_tuple_read_1((tuple), (idx4)+2)<<16) |			\
+	 (pcmcia_tuple_read_1((tuple), (idx4)+3)<<24))
+
+#define	pcmcia_tuple_read_n(tuple, n, idxn)				\
+	(((n)==1)?pcmcia_tuple_read_1((tuple), (idxn)) :		\
+	 (((n)==2)?pcmcia_tuple_read_2((tuple), (idxn)) :		\
+	  (((n)==3)?pcmcia_tuple_read_3((tuple), (idxn)) :		\
+	   /* n == 4 */ pcmcia_tuple_read_4((tuple), (idxn)))))
+
+#define	PCMCIA_SPACE_MEMORY	1
+#define	PCMCIA_SPACE_IO		2
+
+int	pcmcia_ccr_read __P((struct pcmcia_function *, int));
+void	pcmcia_ccr_write __P((struct pcmcia_function *, int, int));
+
+#define	pcmcia_mfc(sc)	((sc)->card.pf_head.sqh_first &&		\
+			 (sc)->card.pf_head.sqh_first->pf_list.sqe_next)
+
+void	pcmcia_function_init __P((struct pcmcia_function *,
+	    struct pcmcia_config_entry *));
+int	pcmcia_function_enable __P((struct pcmcia_function *));
+void	pcmcia_function_disable __P((struct pcmcia_function *));
+
+#define	pcmcia_io_alloc(pf, start, size, align, pciop)			\
+	(pcmcia_chip_io_alloc((pf)->sc->pct, pf->sc->pch, (start),	\
+	 (size), (align), (pciop)))
+
+int	pcmcia_io_map __P((struct pcmcia_function *, int, bus_addr_t,
+	    bus_size_t, struct pcmcia_io_handle *, int *));
+
+#define pcmcia_mem_alloc(pf, size, pcmhp)				\
+	(pcmcia_chip_mem_alloc((pf)->sc->pct, (pf)->sc->pch, (size), (pcmhp)))
+
+#define pcmcia_mem_free(pf, pcmhp)					\
+	(pcmcia_chip_mem_free((pf)->sc->pct, (pf)->sc->pch, (pcmhp)))
+
+#define pcmcia_mem_map(pf, kind, card_addr, size, pcmhp, offsetp, windowp) \
+	(pcmcia_chip_mem_map((pf)->sc->pct, (pf)->sc->pch, (kind),	\
+	 (card_addr), (size), (pcmhp), (offsetp), (windowp)))
+
+#define	pcmcia_mem_unmap(pf, window)					\
+	(pcmcia_chip_mem_unmap((pf)->sc->pct, (pf)->sc->pch, (window)))
+
+void	*pcmcia_intr_establish __P((struct pcmcia_function *, int,
+	    int (*) (void *), void *));
+void 	pcmcia_intr_disestablish __P((struct pcmcia_function *, void *));
