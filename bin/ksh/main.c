@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.15 1999/06/15 01:18:35 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 1999/07/15 20:39:40 millert Exp $	*/
 
 /*
- * startup, main loop, enviroments and error handling
+ * startup, main loop, environments and error handling
  */
 
 #define	EXTERN				/* define EXTERNs in sh.h */
@@ -119,7 +119,7 @@ main(argc, argv)
 
 	ainit(&aperm);		/* initialize permanent Area */
 
-	/* set up base enviroment */
+	/* set up base environment */
 	memset(&env, 0, sizeof(env));
 	env.type = E_NONE;
 	ainit(&env.area);
@@ -210,7 +210,13 @@ main(argc, argv)
 	    || !strcmp(kshname, "sh") || !strcmp(kshname, "-sh"))
 		Flag(FSH) = 1;
 
-	/* import enviroment */
+	/* Set edit mode to emacs by default, may be overridden
+	 * by the environment or the user. */
+#if defined(EDIT) && defined(EMACS)
+	change_flag(FEMACS, OF_SPECIAL, 1);
+#endif /* EDIT && EMACS */
+
+	/* import environment */
 	if (environ != NULL)
 		for (wp = environ; *wp != NULL; wp++)
 			typeset(*wp, IMPORT|EXPORT, 0, 0, 0);

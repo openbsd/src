@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.9 1999/06/15 01:18:36 millert Exp $	*/
+/*	$OpenBSD: sh.h,v 1.10 1999/07/15 20:39:40 millert Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -410,18 +410,18 @@ EXTERN	Area	aperm;		/* permanent object space */
  * parsing & execution environment
  */
 EXTERN	struct env {
-	short	type;			/* enviroment type - see below */
+	short	type;			/* environment type - see below */
 	short	flags;			/* EF_* */
 	Area	area;			/* temporary allocation area */
 	struct	block *loc;		/* local variables and functions */
 	short  *savefd;			/* original redirected fd's */
-	struct	env *oenv;		/* link to previous enviroment */
+	struct	env *oenv;		/* link to previous environment */
 	ksh_jmp_buf jbuf;		/* long jump back to env creator */
 	struct temp *temps;		/* temp files */
 } *e;
 
 /* struct env.type values */
-#define	E_NONE	0		/* dummy enviroment */
+#define	E_NONE	0		/* dummy environment */
 #define	E_PARSE	1		/* parsing command # */
 #define	E_FUNC	2		/* executing function # */
 #define	E_INCL	3		/* including a file via . # */
