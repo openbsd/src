@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.10 2002/02/17 19:42:40 millert Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.11 2002/03/08 17:22:24 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -403,9 +403,10 @@ tcp_trace(act, ostate, atp, tp, ti, req)
 		register int i;
 
 		for (i = 0; i < TCPT_NTIMERS; i++) {
-			if (tp->t_timer[i] == 0)
+			if (timeout_pending(&tp->t_timer[i]))
 				continue;
-			printf("%s%s=%d", cp, tcptimers[i], tp->t_timer[i]);
+			printf("%s%s=%d", cp, tcptimers[i],
+			    tp->t_timer[i].to_time);
 			if (i == TCPT_REXMT)
 				printf(" (t_rxtshft=%d)", tp->t_rxtshift);
 			cp = ", ";
