@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.25 2001/07/01 23:04:45 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.26 2001/07/04 21:10:43 wilfried Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -90,7 +90,17 @@ struct icmptypeent icmp_type[] = {
 	{ "inforeq",	ICMP_IREQ },
 	{ "inforep",	ICMP_IREQREPLY },
 	{ "maskreq",	ICMP_MASKREQ },
-	{ "maskrep",	ICMP_MASKREPLY }
+	{ "maskrep",	ICMP_MASKREPLY },
+	{ "trace",	ICMP_TRACEROUTE },
+	{ "dataconv",	ICMP_DATACONVERR },
+	{ "mobredir",	ICMP_MOBILE_REDIRECT },
+	{ "ipv6-where",	ICMP_IPV6_WHEREAREYOU },
+	{ "ipv6-here",	ICMP_IPV6_IAMHERE },
+	{ "mobregreq",	ICMP_MOBILE_REGREQUEST },
+	{ "mobregrep",	ICMP_MOBILE_REGREPLY },
+	{ "skip",	ICMP_SKIP },
+	{ "photuris",	ICMP_PHOTURIS }
+
 };
 
 struct icmpcodeent icmp_code[] = {
@@ -114,11 +124,16 @@ struct icmpcodeent icmp_code[] = {
 	{ "redir-host",		ICMP_REDIRECT,	ICMP_REDIRECT_HOST },
 	{ "redir-tos-net",	ICMP_REDIRECT,	ICMP_REDIRECT_TOSNET },
 	{ "redir-tos-host",	ICMP_REDIRECT,	ICMP_REDIRECT_TOSHOST },
+	{ "normal-adv",		ICMP_ROUTERADVERT, ICMP_ROUTERADVERT_NORMAL },
+	{ "common-adv",		ICMP_ROUTERADVERT, ICMP_ROUTERADVERT_NOROUTE_COMMON },
 	{ "transit",		ICMP_TIMXCEED,	ICMP_TIMXCEED_INTRANS },
 	{ "reassemb",		ICMP_TIMXCEED,	ICMP_TIMXCEED_REASS },
 	{ "badhead",		ICMP_PARAMPROB,	ICMP_PARAMPROB_ERRATPTR },
 	{ "optmiss",		ICMP_PARAMPROB,	ICMP_PARAMPROB_OPTABSENT },
-	{ "badlen",		ICMP_PARAMPROB,	ICMP_PARAMPROB_LENGTH }
+	{ "badlen",		ICMP_PARAMPROB,	ICMP_PARAMPROB_LENGTH },
+	{ "unknown-ind",	ICMP_PHOTURIS,	ICMP_PHOTURIS_UNKNOWN_INDEX },
+	{ "auth-fail",		ICMP_PHOTURIS,	ICMP_PHOTURIS_AUTH_FAILED },
+	{ "decrypt-fail",	ICMP_PHOTURIS,	ICMP_PHOTURIS_DECRYPT_FAILED }
 };
 
 int
