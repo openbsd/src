@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmtphy.c,v 1.9 2004/09/27 18:25:48 brad Exp $	*/
+/*	$OpenBSD: bmtphy.c,v 1.10 2005/01/24 01:58:02 brad Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -73,10 +73,19 @@ bmtphymatch(struct device *parent, void *match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM4401)
+		return (10);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5201)
 		return (10);
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5214)
+		return (10);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5221)
+		return (10);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5222)
 		return (10);
 
 	return (0);
@@ -90,10 +99,16 @@ bmtphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_data *mii = ma->mii_data;
 	char *model;
 
-	if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5201)
+	if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM4401)
+		model = MII_STR_BROADCOM_BCM4401;
+	else if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5201)
 		model = MII_STR_BROADCOM_BCM5201;
+	else if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5214)
+		model = MII_STR_BROADCOM_BCM5214;
 	else if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5221)
 		model = MII_STR_BROADCOM_BCM5221;
+	else if (MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5222)
+		model = MII_STR_BROADCOM_BCM5222;
 
 	printf(": %s, rev. %d\n", model, MII_REV(ma->mii_id2));
 
@@ -105,6 +120,10 @@ bmtphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);
+
+	/*
+	 * XXX Check AUX_STS_FX_MODE to set MIIF_HAVE_FIBER?
+	 */
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
