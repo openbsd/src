@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.7 1999/07/09 13:35:47 aaron Exp $
+.\"	$OpenBSD: scsi.4,v 1.8 1999/08/24 01:20:21 csapuntz Exp $
 .\"
 .Dd August 4, 1996
 .Dt SCSI 4
@@ -97,7 +97,8 @@ any, they will be attached to the appropriate drivers. The search can be
 narrowed to a specific bus, target or lun. The new device may or may not
 be related to the device on which the ioctl was performed.
 .It Dv SCIOCIDENTIFY
-Ask the driver what its bus, target and lun are.
+Ask the driver what its bus, target and lun are. In addition, the device
+type, ATAPI or SCSI, is returned.
 .It Dv SCIOCDECONFIG
 Ask the device to disappear. This may not happen if the device is in use.
 .El

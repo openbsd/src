@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiio.h,v 1.4 1996/07/12 08:57:59 pefo Exp $	*/
+/*	$OpenBSD: scsiio.h,v 1.5 1999/08/24 01:20:21 csapuntz Exp $	*/
 /*	$NetBSD: scsiio.h,v 1.3 1994/06/29 06:45:09 cgd Exp $	*/
 
 #ifndef _SYS_SCSIIO_H_
@@ -49,17 +49,28 @@ typedef struct	scsireq {
 #define SC_DB_DMA	0x00000008	/* show DMA segments etc	*/
 #define SCIOCDEBUG	_IOW('Q', 2, int)	/* from 0 to 15 */
 
-struct	scsi_addr {
+struct	oscsi_addr {
 	int	scbus;		/* -1 if wildcard */
 	int	target;		/* -1 if wildcard */
 	int	lun;		/* -1 if wildcard */
 } ;
 
-#define SCIOCREPROBE	_IOW('Q', 3, struct scsi_addr) /* look for new devs */
-#define SCIOCIDENTIFY	_IOR('Q', 4, struct scsi_addr) /* where are you? */
+struct scsi_addr {
+	int     type;
+#define TYPE_SCSI 0
+#define TYPE_ATAPI 1
+	int	scbus;		/* -1 if wildcard */
+	int	target;		/* -1 if wildcard */
+	int	lun;		/* -1 if wildcard */
+};
+
+#define OSCIOCREPROBE	_IOW('Q', 3, struct oscsi_addr) /* look for new devs */
+#define OSCIOCIDENTIFY  _IOR('Q', 4, struct oscsi_addr) 
 #define SCIOCDECONFIG	_IO('Q', 5)	/* please dissappear */
 #define SCIOCRECONFIG	_IO('Q', 6)	/* please check again */
 #define SCIOCRESET	_IO('Q', 7)	/* reset the device */
 #define	SCIOCREASSIGN	_IOW('Q', 8, int)	/* reassign block */
+#define SCIOCIDENTIFY	_IOR('Q', 9, struct scsi_addr) 
+#define SCIOCREPROBE    _IOW('Q', 10, struct scsi_addr)
 
 #endif /* _SYS_SCSIIO_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.9 1997/09/01 19:11:46 niklas Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.10 1999/08/24 01:20:22 csapuntz Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -347,6 +347,11 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 			sc_link->flags |= SDEV_DB4;
 		return 0;
 	}
+	case OSCIOCREPROBE: {
+		struct oscsi_addr *sca = (struct oscsi_addr *)addr;
+
+		return scsi_probe_busses(sca->scbus, sca->target, sca->lun);
+	}
 	case SCIOCREPROBE: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
 
@@ -383,9 +388,19 @@ scsi_do_safeioctl(sc_link, dev, cmd, addr, flag, p)
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_safeioctl(0x%lx)\n", cmd));
 
 	switch(cmd) {
+	case OSCIOCIDENTIFY: {
+		struct oscsi_addr *sca = (struct oscsi_addr *)addr;
+
+		sca->scbus = sc_link->scsibus;
+		sca->target = sc_link->target;
+		sca->lun = sc_link->lun;
+		return 0;
+	}
 	case SCIOCIDENTIFY: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
 
+		sca->type = (sc_link->flags & SDEV_ATAPI) 
+			? TYPE_ATAPI : TYPE_SCSI;
 		sca->scbus = sc_link->scsibus;
 		sca->target = sc_link->target;
 		sca->lun = sc_link->lun;
@@ -394,6 +409,7 @@ scsi_do_safeioctl(sc_link, dev, cmd, addr, flag, p)
 	case SCIOCCOMMAND:
 	case SCIOCDEBUG:
 	case SCIOCREPROBE:
+	case OSCIOCREPROBE:
 	case SCIOCRESET:
 		return EBADF;
 	case SCIOCRECONFIG:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.39 1999/08/10 23:09:49 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.40 1999/08/24 01:20:22 csapuntz Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -184,7 +184,8 @@ sdattach(parent, self, aux)
 
 	dk_establish(&sd->sc_dk, &sd->sc_dev);
 
-	if (sc_link->flags & SDEV_ATAPI) {
+	if (sc_link->flags & SDEV_ATAPI &&
+	    (sc_link->flags & SDEV_REMOVABLE)) {
 		sd->sc_ops = &sd_atapibus_ops;
 	} else {
 		sd->sc_ops = &sd_scsibus_ops;
@@ -772,6 +773,7 @@ sdioctl(dev, cmd, addr, flag, p)
 		case DIOCLOCK:
 		case DIOCEJECT:
 		case SCIOCIDENTIFY:
+		case OSCIOCIDENTIFY:
 		case SCIOCCOMMAND:
 		case SCIOCDEBUG:
 			if (part == RAW_PART)
