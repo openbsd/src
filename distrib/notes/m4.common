@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.41 2003/02/15 21:38:21 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.42 2003/03/05 00:32:33 miod Exp $
 dnl
 dnl a simple MACHINE->MACHINE_ARCH converter.
 define(`MACHINE_ARCH',
@@ -214,6 +214,11 @@ define({:-OpenBSDrd-:},
 				filesystem contains the installation tools.
 				Used for simple installation from a pre-
 				existing system.-:})dnl
+dnl
+define({:-OpenBSDcd-:},
+{:-		cd{:--:}OSrev.iso	A miniroot filesystem image suitable to be used
+				as a bootable CD image; otherwise similar
+				to the bsd.rd image above.-:})dnl
 dnl
 define({:-OpenBSDminiroot-:},
 {:-		miniroot{:--:}OSrev.fs	A miniroot filesystem image to be used

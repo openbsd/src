@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.23 2002/10/07 19:32:00 miod Exp $
+dnl	$OpenBSD: contents,v 1.24 2003/03/05 00:32:36 miod Exp $
 TopPart
 
 OpenBSDminiroot
@@ -32,6 +32,8 @@ OpenBSDdistsets
 OpenBSDbsd
 
 OpenBSDrd
+
+OpenBSDcd
 
 		installboot	The OpenBSD/MACHINE boot loader installation
 				program

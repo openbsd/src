@@ -1,3 +1,4 @@
+dnl	$OpenBSD: contents,v 1.10 2003/03/05 00:32:36 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -6,8 +7,7 @@ OpenBSDbsd
 
 OpenBSDrd
 
-		cd{:--:}OSrev.fs The standard MACHINE boot and installation
-				CD image; see below.
+OpenBSDcd
 
 DistributionDescription(ten)
 
