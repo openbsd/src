@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapiconf.c,v 1.19 1997/11/05 01:57:42 deraadt Exp $	*/
+/*	$OpenBSD: atapiconf.c,v 1.20 1997/11/10 15:23:03 flipk Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -114,6 +114,9 @@ struct atapi_quirk_inquiry_pattern atapi_quirk_inquiry_patterns[] = {
 	/* Sanyo 6x */
 	{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
 	 "SANYO CRD-256P", "1.02", AQUIRK_NOCAPACITY},
+	/* Another Sanyo 4x */
+	{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
+	 "CD-ROM  CDR-S1", "1.70",AQUIRK_NOCAPACITY},
 	/* Acer Notelight 370 */
 	{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
 	 "UJDCD8730", "1.14", AQUIRK_NODOORLOCK},
