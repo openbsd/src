@@ -11,10 +11,11 @@ BINMODE?=555
 .endif
 
 BINDIR=	/usr/bin
-LDADD=	-lcrypto -lutil -lz
-DPADD=	${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
 MAN=	ssh-keygen.1
 
 SRCS=	ssh-keygen.c log-client.c
 
 .include <bsd.prog.mk>
+
+LDADD+=	-lcrypto -lutil -lz
+DPADD+=	${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}

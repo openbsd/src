@@ -11,10 +11,11 @@ BINMODE?=555
 .endif
 
 BINDIR=	/usr/bin
-LDADD=	-lcrypto -lutil -lz
-DPADD=	${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
 MAN=	ssh-agent.1
 
 SRCS=	ssh-agent.c log-client.c
 
 .include <bsd.prog.mk>
+
+LDADD+=	-lcrypto -lutil -lz
+DPADD+=	${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
