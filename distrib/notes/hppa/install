@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.1 2002/12/19 01:00:13 miod Exp $
+dnl	$OpenBSD: install,v 1.2 2003/01/04 00:18:06 miod Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install intially
 
 At the moment, the only way to install OpenBSD is to use a diskless setup.
@@ -107,7 +107,7 @@ A few configuration files in <root>/etc need to be edited:
 		  server:/export/root/client       /     nfs  rw 0 0
 		  server:/export/exec/MACHINE.OpenBSD /usr  nfs  rw 0 0
 		Be sure to add the server swap space, such as:
-		  server:/export/swap/client /swap swap sw,nfsmntpt=/swap 0 0
+		  server:/export/swap/client none swap sw,nfsmntpt=/swap 0 0
 		after creating the `<root>/swap' directory.
 	hostname.if (likely, hostname.ie0)
 		Configuration of the host adapter, check hostname.if(5)
@@ -123,7 +123,7 @@ A few configuration files in <root>/etc need to be edited:
 		Name server configuration, check resolv.conf(5) for the
 		syntax.
 
-Now you must populate the the `/dev' directory for your client. After
+Now you must populate the `/dev' directory for your client. After
 changing your working directory to `<root>/dev', run the MAKEDEV script.
 Depending on your host operating system, you may get error messages about
 unknown users and groups. These errors are inconsequential for the purpose

@@ -1,3 +1,4 @@
+dnl	$OpenBSD: xfer,v 1.3 2003/01/04 00:18:08 miod Exp $
 Installation is supported from several media types, including:
 	NFS partitions
 	FTP
@@ -16,7 +17,7 @@ To prepare for installing via an NFS partition:
 	/etc/exports file of the NFS server and resetting
 	mountd, acts which will require superuser privileges.
 	Note the numeric IP address of the NFS server and of
-	the router closest to the the new OpenBSD machine,
+	the router closest to the new OpenBSD machine,
 	if the NFS server is not on a network which is
 	directly attached to the OpenBSD machine.
 
