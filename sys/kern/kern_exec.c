@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.75 2002/12/11 00:08:08 miod Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.76 2003/03/09 01:27:50 millert Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -453,11 +453,15 @@ sys_execve(p, v, retval)
 	}
 
 	/*
-	 * If process does execve() while it has euid/uid or egid/gid
-	 * which are mismatched, it remains P_SUGIDEXEC.
+	 * If process does execve() while it has a mismatched real,
+	 * effective, or saved uid/gid, we set P_SUGIDEXEC.
 	 */
-	if (p->p_ucred->cr_uid == p->p_cred->p_ruid &&
-	    p->p_ucred->cr_gid == p->p_cred->p_rgid)
+	if (p->p_ucred->cr_uid != p->p_cred->p_ruid ||
+	    p->p_ucred->cr_uid != p->p_cred->p_svuid ||
+	    p->p_ucred->cr_gid != p->p_cred->p_rgid ||
+	    p->p_ucred->cr_gid != p->p_cred->p_svgid)
+		p->p_flag |= P_SUGIDEXEC;
+	else
 		p->p_flag &= ~P_SUGIDEXEC;
 
 	/*
