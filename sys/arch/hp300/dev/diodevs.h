@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: diodevs,v 1.2 1997/02/03 04:47:18 downsj Exp 
+ *	OpenBSD: diodevs,v 1.4 2003/03/21 16:18:29 miod Exp 
  */
 
 /*-
@@ -104,8 +104,8 @@
 #define	DIO_DEVICE_SECID_TOPCAT	0x02
 #define	DIO_DEVICE_DESC_TOPCAT	"98544/98545/98547 (\"topcat\") display"
 
-#define	DIO_DEVICE_SECID_RENASSIANCE	0x04
-#define	DIO_DEVICE_DESC_RENASSIANCE	"98720/98721 (\"renassiance\") display"
+#define	DIO_DEVICE_SECID_RENAISSANCE	0x04
+#define	DIO_DEVICE_DESC_RENAISSANCE	"98720/98721 (\"renaissance\") display"
 
 #define	DIO_DEVICE_SECID_LRCATSEYE	0x05
 #define	DIO_DEVICE_DESC_LRCATSEYE	"low-res catseye display"

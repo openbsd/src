@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: diodevs,v 1.2 1997/02/03 04:47:18 downsj Exp 
+ *	OpenBSD: diodevs,v 1.4 2003/03/21 16:18:29 miod Exp 
  */
 
 /*-
@@ -112,7 +112,7 @@ struct dio_devdesc dio_devdescs[] = {
 	{ 0x39,	0,	DIO_DEVICE_DESC_FRAMEBUFFER },
 	{ 0x39,	0x01,	DIO_DEVICE_DESC_GATORBOX },
 	{ 0x39,	0x02,	DIO_DEVICE_DESC_TOPCAT },
-	{ 0x39,	0x04,	DIO_DEVICE_DESC_RENASSIANCE },
+	{ 0x39,	0x04,	DIO_DEVICE_DESC_RENAISSANCE },
 	{ 0x39,	0x05,	DIO_DEVICE_DESC_LRCATSEYE },
 	{ 0x39,	0x06,	DIO_DEVICE_DESC_HRCCATSEYE },
 	{ 0x39,	0x07,	DIO_DEVICE_DESC_HRMCATSEYE },
