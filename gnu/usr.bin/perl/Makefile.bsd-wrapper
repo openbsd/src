@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.48 2002/04/30 18:38:58 espie Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.49 2002/10/04 18:07:30 mickey Exp $
 #
 # Build wrapper for Perl 5.6.1
 #
@@ -337,7 +337,7 @@ SRCS=	gv.c toke.c perly.c op.c regcomp.c dump.c util.c mg.c hv.c av.c run.c \
 	utf8.c taint.c deb.c universal.c xsutils.c globals.c perl.c perlio.c \
 	perlapi.c
 
-CFLAGS+= -DPERL_CORE -DPERL_RANDOM_DEVICE=\"/dev/arandom\" -I.
+CPPFLAGS+= -DPERL_CORE -DPERL_RANDOM_DEVICE=\"/dev/arandom\" -I.
 
 .if defined (INSTALL_STRIP) && ${INSTALL_STRIP} == "-s"
 INST_PROG='/usr/bin/install -cs'
@@ -353,10 +353,10 @@ GENERATED=	config.sh config.h cflags makeaperl makedepend makedir \
 
 CLEANFILES=	config.sh Policy.sh ${MANALL} ${PSALL} ${MANSRCALL}
 
-.BEGIN:
-	@/usr/bin/arch -s >/dev/null || \
-	    { echo Error: you need to update /usr/bin/arch; exit 1; }
-	@if [ ${.CURDIR} != ${.OBJDIR} ]; then ${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}; fi
+.if !exists(${.OBJDIR}/config.over)
+${.OBJDIR}/config.over: ${.CURDIR}/config.over
+	${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}
+.endif
 
 all:	perl.build man.build
 
@@ -367,7 +367,7 @@ beforedepend:	config.sh config.h
 perl.build:	perl.lib
 	cd ${.OBJDIR} && exec ${MAKE}
 
-config.sh:	config.over
+config.sh:	${.OBJDIR}/config.over
 	cd ${.OBJDIR} && PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	 exec /bin/sh Configure -Dopenbsd_distribution=defined ${THREADED} -dsE
 
@@ -407,6 +407,34 @@ x2p/cflags:
 # Never try to regenerate perly.c or perly.h
 perly.c perly.h: perly.y
 	-@true
+
+# these dump the core on toke
+.if ${MACHINE} == "hppa"
+
+toke.o: ${.CURDIR}/toke.c
+	@echo "${COMPILE.c} ${.IMPSRC} -O0 -o ${.TARGET}"
+	@${COMPILE.c} ${.IMPSRC} -O0 -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+toke.go: ${.CURDIR}/toke.c
+	@echo "${COMPILE.c} -g ${.IMPSRC} -O0 -o ${.TARGET}"
+	@${COMPILE.c} -g ${.IMPSRC} -O0 -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+toke.po: ${.CURDIR}/toke.c
+	@echo "${COMPILE.c} -p ${.IMPSRC} -O0 -o ${.TARGET}"
+	@${COMPILE.c} -p ${.IMPSRC} -O0 -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+toke.so: ${.CURDIR}/toke.c
+	@echo "${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O0 -o ${.TARGET}"
+	@${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O0 -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+.endif
 
 .ifdef NOMAN
 maninstall:
