@@ -1,4 +1,4 @@
-.\" $OpenBSD: ahd.4,v 1.9 2004/10/15 13:51:51 robert Exp $
+.\" $OpenBSD: ahd.4,v 1.10 2004/12/27 21:34:41 krw Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -39,15 +39,20 @@
 .Cd "ahd* at pci?"
 .Cd "scsibus* at ahd?"
 .Sh DESCRIPTION
-This driver provides access to the
+.Nm
+provides access to the
 .Tn SCSI
 bus(es) connected to Adaptec
 .Tn AIC79xx
 host adapter chips.
 .Pp
-Driver features include support for narrow and wide buses,
-fast, ultra, ultra2, ultra160, and ultra320 synchronous transfers,
-packetized transfers, tagged queuing, 512 SCBs, and target mode.
+.Nm
+supports narrow and wide buses; synchronous and
+asynchronous operation; fast, ultra, ultra2, ultra160, and ultra320 
+(packetized) transfers; tagged queuing and 512 SCBs.
+.Pp
+.Nm
+does not support target mode operation.
 .Pp
 The
 .Nm
@@ -84,12 +89,6 @@ To compile in debugging code:
 .Bd -ragged -offset indent
 .Cd option AHD_DEBUG
 .Cd option AHD_DEBUG_OPTS=<bitmask of options>
-.Cd option AHD_REG_PRETTY_PRINT
-.Ed
-.Pp
-To configure one or more controllers to assume the target role:
-.Bd -ragged -offset indent
-.Cd option AHD_TMODE_ENABLE=<bitmask of units>
 .Ed
 .Pp
 The
@@ -116,22 +115,6 @@ Logically OR the following bits together:
 0x1000	Show S/G list information
 0x2000	Enable extra diagnostic code in the firmware
 .El
-.Pp
-The
-.Dv AHD_REG_PRETTY_PRINT
-option compiles in support for human-readable bit definitions for each register
-that is printed by the debugging code.
-However, it also bloats the compiled
-size of the driver by approximately 215KB.
-.Pp
-Individual controllers may be configured to operate in the target role
-through the
-.Dv AHD_TMODE_ENABLE
-configuration option.
-The value assigned to this option should be a bitmap
-of all units where target mode is desired.
-For example, a value of 0x25 would enable target mode on units 0, 2, and 5.
-Note that target mode is only supported for ultra160 speeds and below.
 .Pp
 Per target configuration performed in the
 .Tn SCSI-Select
@@ -171,9 +154,3 @@ and the firmware running on the aic79xx chips was written by
 .An Justin T. Gibbs .
 .Pp
 OpenBSD port by Milos Urbanek, Kenneth R. Westerback & Marco Peereboom.
-.Sh BUGS
-The current generation of 79xx chips do not support target mode in Ultra320
-mode.
-In this driver all target mode code has been commented out.
-.Pp
-Currently there are issues with drives that run slower than U320 speeds.

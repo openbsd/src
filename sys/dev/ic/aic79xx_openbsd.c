@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.17 2004/12/24 22:17:56 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.18 2004/12/27 21:34:42 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -361,7 +361,7 @@ ahd_action(struct scsi_xfer *xs)
 
 	quirks = xs->sc_link->quirks;
 
-	if ((quirks & SDEV_NOTAGS) == 0 || 
+	if ((quirks & SDEV_NOTAGS) != 0 || 
 	    (tinfo->curr.ppr_options & MSG_EXT_PPR_PROT_IUS) != 0)
 		col_idx = AHD_NEVER_COL_IDX;
 	else
@@ -470,14 +470,6 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 
 	if ((tstate->tagenable & mask) != 0)
 		scb->hscb->control |= TAG_ENB;
-
-	/* disable tags and disconection to work around overlapped commands 
-	 * for non U320 devices
-	 */
-	if ((tinfo->curr.ppr_options & MSG_EXT_PPR_PROT_IUS) == 0) {
-		scb->hscb->control &= ~TAG_ENB;
-		scb->hscb->control &= ~DISCENB;
-	}
 
 	if ((tinfo->curr.ppr_options & MSG_EXT_PPR_PROT_IUS) != 0) {
 		scb->flags |= SCB_PACKETIZED;
