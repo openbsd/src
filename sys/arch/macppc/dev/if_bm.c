@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.10 2002/08/22 04:41:57 drahn Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.11 2002/09/06 01:20:28 drahn Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -464,7 +464,7 @@ bmac_init(sc)
 	data = sc->sc_txbuf;
 	eh = (struct ether_header *)data;
 
-	bzero(data, sizeof(eh) + ETHERMIN);
+	bzero(data, sizeof(*eh) + ETHERMIN);
 	bcopy(sc->sc_enaddr, eh->ether_dhost, ETHER_ADDR_LEN);
 	bcopy(sc->sc_enaddr, eh->ether_shost, ETHER_ADDR_LEN);
 	bmac_transmit_packet(sc, sc->sc_txbuf_pa, sizeof(eh) + ETHERMIN);
