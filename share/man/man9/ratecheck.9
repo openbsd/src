@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ratecheck.9,v 1.3 2000/10/12 18:06:02 aaron Exp $
+.\"	$OpenBSD: ratecheck.9,v 1.4 2000/12/21 17:26:34 aaron Exp $
 .\"	$NetBSD: ratecheck.9,v 1.1.2.1 2000/02/18 20:26:43 he Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -92,8 +92,8 @@ struct timeval drv_lasterr2time;   /* time of last err2 message */
 long drv_err2count;                /* # of err2 errs since last msg */
 
 /*
- * the following variable will often be global or shared by all
- * instances of a driver.  It should be initalized, so it can be
+ * The following variable will often be global or shared by all
+ * instances of a driver.  It should be initialized, so it can be
  * patched.  Allowing it to be set via an option might be nice,
  * but could lead to an insane proliferation of options.
  */
