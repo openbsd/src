@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.51 2002/02/11 19:42:11 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.52 2002/02/11 21:29:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -1376,7 +1376,7 @@ $tlb_gottalook_t
 	 */
 	ldw	HPT_ENTRY(r24),r24
 $hash_loop_t
-	comb,=,n r0, r24, $tlbiflpa
+	comb,=,n r0, r24, TLABEL(all)
 	ldw	PV_VA(r24),r25
 	ldw	PV_SPACE(r24),r17
 	comb,<>,n r9,r25,$hash_loop_t
@@ -1497,8 +1497,20 @@ $hash_loop_tlbd_l
 	/* Set the dirty bit for this physical page. */
 	ldw	PV_TLBPAGE(r16), r17
 	ldw	PV_TLBPROT(r16), r25
-	b	$tlb_inshpt_l
 	depi	1, TLB_DIRTY_POS, 1, r25
+	depi	1, TLB_REF_POS, 1, r25
+	stw	r25, PV_TLBPROT(r16)
+	VTAG	/* (r8,r9) -> r16 */
+
+	stw	r16, HPT_TAG(r24)
+	stw	r25, HPT_TLBPROT(r24)
+	stw	r17, HPT_TLBPAGE(r24)
+
+	.word	0x04111440	; idtlbaf	r17
+	.word	0x04191400	; idtlbpf	r25
+	nop ! nop
+	rfir
+	nop
 
 	.align	8
 $itlb_l
@@ -1522,7 +1534,7 @@ $dtlb_l
 	 */
 	ldw	HPT_ENTRY(r24), r16
 $hash_loop_l
-	comb,=,n r0, r16, $tlbiflpa
+	comb,=,n r0, r16, TLABEL(all)
 	ldw	PV_VA(r16), r25
 	ldw	PV_SPACE(r16), r17
 	comb,<>,n r9, r25, $hash_loop_l
@@ -1533,13 +1545,12 @@ $hash_loop_l
 	/* Now set things up to enter the real mapping that we want */
 	ldw	PV_TLBPAGE(r16), r17
 	ldw	PV_TLBPROT(r16), r25
-	depi	1, TLB_REF_POS, 1, r25
 
 	/*
 	 * Load the HPT cache with the miss information for the next time.
 	 * The HPT entry address was saved by the HPTENT
 	 */
-$tlb_inshpt_l
+	depi	1, TLB_REF_POS, 1, r25
 	stw	r25, PV_TLBPROT(r16)
 	VTAG	/* (r8,r9) -> r16 */
 
@@ -1561,59 +1572,6 @@ $tlb_itlb_l
 	rfir
 	nop
 #endif /* HP7100LC_CPU */
-
-	.export $tlbiflpa, entry
-$tlbiflpa
-	ldi	T_DTLBMISSNA, r16
-	mfctl	iir, r17
-	comb,<>,n r1, r16, TLABEL(all)
-	extru	r17, 5, 6, r16
-	ldi	0x4d, r25
-	comib,<>,n 1, r16, TLABEL(all)
-	extru	r17, 25, 8, r16
-	comb,<>,n r25, r16, TLABEL(all)
-
-	/* ok, this is a miss in LPA */
-	mfctl	ipsw, r16
-	depi	1, PSW_N_POS, 1, r16
-	depi	0, 26, 27, r17
-	mtctl	r16, ipsw
-
-	ldi	$tlbiflpa_zr, r25
-	bv	r17(r25)
-$tlbiflpa_zr
-	copy	r0, r0	!	rfir
-	copy	r0, r1	!	rfir
-	copy	r0, r2	!	rfir
-	copy	r0, r3	!	rfir
-	copy	r0, r4	!	rfir
-	copy	r0, r5	!	rfir
-	copy	r0, r6	!	rfir
-	copy	r0, r7	!	rfir
-	copy	r0, r8	!	rfir
-	copy	r0, r9	!	rfir
-	copy	r0, r10	!	rfir
-	copy	r0, r11	!	rfir
-	copy	r0, r12	!	rfir
-	copy	r0, r13	!	rfir
-	copy	r0, r14	!	rfir
-	copy	r0, r15	!	rfir
-	copy	r0, r16	!	rfir
-	copy	r0, r17	!	rfir
-	copy	r0, r18	!	rfir
-	copy	r0, r19	!	rfir
-	copy	r0, r20	!	rfir
-	copy	r0, r21	!	rfir
-	copy	r0, r22	!	rfir
-	copy	r0, r23	!	rfir
-	copy	r0, r24	!	rfir
-	copy	r0, r25	!	rfir
-	copy	r0, r26	!	rfir
-	copy	r0, r27	!	rfir
-	copy	r0, r28	!	rfir
-	copy	r0, r29	!	rfir
-	copy	r0, r30	!	rfir
-	copy	r0, r31	!	rfir
 
 	.export	$tlb_missend, entry
 $tlb_missend
