@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.29 2002/06/06 16:07:26 mickey Exp $
+#	$OpenBSD: inter.phone,v 1.30 2002/06/06 22:34:11 fgsch Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -9797,8 +9797,20 @@
 299:2:Godthaab:Greenland (Kalaallit Nunaat)
 299:50:Thule:Greenland (Kalaallit Nunaat)
 350:::Gibraltar
-351:1:Lisbon:Portugal
-351:2:Porto:Portugal
+351:21:Lisbon:Portugal
+351:22:Porto:Portugal
+351:234:Aveiro:Portugal
+351:284:Beja:Portugal
+351:253:Braga:Portugal
+351:239:Coimbra:Portugal
+351:289:Faro:Portugal
+351:271:Guarda:Portugal
+351:244:Leiria:Portugal
+351:245:Portalegre:Portugal
+351:243:Santarem:Portugal
+351:251:Viana do Castelo:Portugal
+351:291:Funchal:Portugal (Madeira)
+351:296:Ponta Delgada:Portugal (Azores)
 352:::Luxembourg
 353:1:Dublin:Ireland, Rep. of
 353:21:Cork:Ireland, Rep. of
