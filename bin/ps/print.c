@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.12 1997/11/06 15:59:56 kstailey Exp $	*/
+/*	$OpenBSD: print.c,v 1.13 1997/11/30 05:41:23 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.12 1997/11/06 15:59:56 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.13 1997/11/30 05:41:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -174,9 +174,12 @@ logname(k, ve)
 	VAR *v;
 
 	v = ve->var;
-	if (KI_EPROC(k)->e_login[0])
-		(void)printf("%-*s", v->width, KI_EPROC(k)->e_login);
-	else
+	if (KI_EPROC(k)->e_login[0]) {
+		int n = min(v->width, MAXLOGNAME);
+		(void)printf("%-*.*s", n, n, KI_EPROC(k)->e_login);
+		if (v->width > n)
+			(void)printf("%*s", v->width - n, "");
+	} else
 		(void)printf("%-*s", v->width, "-");
 }
 
@@ -429,10 +432,14 @@ wchan(k, ve)
 
 	v = ve->var;
 	if (KI_PROC(k)->p_wchan) {
-		if (KI_PROC(k)->p_wmesg)
-			(void)printf("%-*.*s", v->width, v->width,
-				      KI_EPROC(k)->e_wmesg);
-		else
+		int n;
+
+		if (KI_PROC(k)->p_wmesg) {
+			n = min(v->width, WMESGLEN);
+			(void)printf("%-*.*s", n, n, KI_EPROC(k)->e_wmesg);
+			if (v->width > n)
+				(void)printf("%*s", v->width - n, "");
+		} else
 			(void)printf("%-*lx", v->width,
 			    (long)KI_PROC(k)->p_wchan &~ KERNBASE);
 	} else
