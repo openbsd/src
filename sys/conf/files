@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.147 2000/01/11 01:48:33 fgsch Exp $
+#	$OpenBSD: files,v 1.148 2000/01/11 17:58:50 peter Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -250,7 +250,6 @@ file dev/raidframe/rf_aselect.c         raid                    needs-flag
 file dev/raidframe/rf_callback.c        raid                    needs-flag
 file dev/raidframe/rf_chaindecluster.c  raid                    needs-flag
 file dev/raidframe/rf_copyback.c        raid                    needs-flag
-file dev/raidframe/rf_cpuutil.c         raid                    needs-flag
 file dev/raidframe/rf_cvscan.c          raid                    needs-flag
 file dev/raidframe/rf_dagdegrd.c        raid                    needs-flag
 file dev/raidframe/rf_dagdegwr.c        raid                    needs-flag
