@@ -1,4 +1,4 @@
-/*	$OpenBSD: slattach.c,v 1.7 2001/01/15 20:03:32 deraadt Exp $	*/
+/*	$OpenBSD: slattach.c,v 1.8 2001/01/17 19:28:05 deraadt Exp $	*/
 /*	$NetBSD: slattach.c,v 1.17 1996/05/19 21:57:39 jonathan Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: slattach.c,v 1.7 2001/01/15 20:03:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slattach.c,v 1.8 2001/01/17 19:28:05 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,8 @@ void	usage __P((void));
 int ttydisc __P((char *));
 
 void handler __P((int));
+
+sig_atomic_t dying;
 
 int
 main(argc, argv)
@@ -175,24 +177,27 @@ main(argc, argv)
 	}
 
 	sigemptyset(&sigset);
-	for (;;)
+	for (;;) {
 		sigsuspend(&sigset);
+		if (dying) {
+			/*  delete the pid file.  */
+			if (pidfilename[0] != 0) {
+				if (unlink(pidfilename) < 0 && errno != ENOENT)
+					syslog(LOG_WARNING,
+					    "unable to delete pid file: %m");
+			}
+		
+			/* terminate gracefully */
+			exit(0);
+		}
+	}
 }
 
 void
 handler(useless)
 int useless;
 {
-
-	/*  delete the pid file.  */
-	if (pidfilename[0] != 0) {
-		if (unlink(pidfilename) < 0 && errno != ENOENT) 
-			syslog(LOG_WARNING, "unable to delete pid file: %m");
-		pidfilename[0] = 0;
-	}
-
-	/* terminate gracefully */
-	_exit(0);
+	dying = 1;
 }
 
 
