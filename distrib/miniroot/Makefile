@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2002/08/05 15:25:43 art Exp $
+#	$OpenBSD: Makefile,v 1.26 2003/07/22 17:15:12 brad Exp $
 
 REV=		${OSrev}
 
@@ -22,7 +22,7 @@ IMAGE?=		miniroot${REV}.fs
 IMAGESIZE?=	10240 # 5MB in 512 byte blocks
 NEWFSOPTS?=
 NEWFS_WILL_FAIL?=false
-.if ${ELF_TOOLCHAIN} == "yes"
+.if ${ELF_TOOLCHAIN:L} == "yes"
 CRUNCHGENOPTS?=-E
 .else
 CRUNCHGENOPTS?=

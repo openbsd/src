@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2002/06/05 18:02:27 fgsch Exp $
+#	$OpenBSD: Makefile,v 1.8 2003/07/22 17:15:13 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,7 @@ ELF_TOOLCHAIN=no
 .endif
 .endif
 
-.if (${ELF_TOOLCHAIN} == "yes")
+.if (${ELF_TOOLCHAIN:L} == "yes")
 SRCS+=elf_syms.c
 CPPFLAGS+=-DPMDB_ELF
 .else

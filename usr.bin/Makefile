@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.83 2003/07/14 02:21:37 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.84 2003/07/22 17:15:13 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -28,7 +28,7 @@ SUBDIR= apply apropos arch asa asn1_compile at aucat audioctl awk banner \
 SUBDIR+=ypcat ypmatch ypwhich
 .endif
 
-.if (${ELF_TOOLCHAIN} != "yes")
+.if (${ELF_TOOLCHAIN:L} == "no")
 SUBDIR+= ar nm ranlib size strip strings
 .endif
 

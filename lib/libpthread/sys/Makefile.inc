@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.10 2003/01/20 18:12:11 marc Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 2003/07/22 17:15:12 brad Exp $
 
 .PATH:	 ${SRCDIR}/sys ${SRCDIR}/arch/${MACHINE_ARCH}
 
@@ -12,7 +12,7 @@ SRCS+=	uthread_machdep_asm.S
 SRCS+=	uthread_machdep.c
 .endif
 
-.if (${LIB} == "c_r") && (${ELF_TOOLCHAIN} == "no")
+.if (${LIB} == "c_r") && (${ELF_TOOLCHAIN:L} == "no")
 
 #
 # All syscalls are renamed as _thread_sys_{syscall}.

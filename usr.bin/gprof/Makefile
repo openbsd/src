@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2002/05/08 16:46:35 art Exp $
+#	$OpenBSD: Makefile,v 1.14 2003/07/22 17:15:13 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ SRCS=	gprof.c arcs.c dfn.c lookup.c machine.c hertz.c \
 CFLAGS+= -I${.CURDIR} -I.
 
 # XXX - need support for multiple archs.
-.if (${ELF_TOOLCHAIN} == "yes")
+.if (${ELF_TOOLCHAIN:L} == "yes")
 SRCS+=elf.c
 .else
 SRCS+=aout.c

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2002/08/05 15:25:43 art Exp $
+#	$OpenBSD: Makefile,v 1.25 2003/07/22 17:15:12 brad Exp $
 
 REV=		${OSrev}
 
@@ -21,7 +21,7 @@ REALIMAGE!=	echo /tmp/image.${PID}
 IMAGE?=		ramdisk${REV}.fs
 IMAGESIZE?=	8192 # 4MB in 512 byte blocks
 NEWFS_WILL_FAIL?=false
-.if ${ELF_TOOLCHAIN} == "yes"
+.if ${ELF_TOOLCHAIN:L} == "yes"
 RDSETROOT?=	elfrdsetroot
 CRUNCHGENOPTS?=-E
 .else

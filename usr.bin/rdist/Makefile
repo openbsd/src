@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2003/05/06 22:10:11 millert Exp $
+#	$OpenBSD: Makefile,v 1.14 2003/07/22 17:15:13 brad Exp $
 
 
 PROG=	rdist
@@ -9,7 +9,7 @@ CLEANFILES+=gram.c y.tab.h
 
 .include <bsd.prog.mk>
 
-.if ${ELF_TOOLCHAIN} == "yes"
+.if ${ELF_TOOLCHAIN:L} == "yes"
 CFLAGS+=-DEXE_TYPE=EXE_ELF
 .endif
 
