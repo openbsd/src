@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.315 2005/01/07 02:03:17 pascoe Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.316 2005/02/24 21:14:11 grange Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1151,6 +1151,7 @@ cyrix3_cpu_setup(cpu_device, model, step)
 {
 #if defined(I686_CPU)
 	u_int64_t msreg;
+	u_int32_t regs[4];
 	unsigned int val;
 #if !defined(SMALL_KERNEL)
 	extern void (*pagezero)(void *, size_t);
@@ -1163,8 +1164,8 @@ cyrix3_cpu_setup(cpu_device, model, step)
 	case 6: /* C3 Samuel 1 */
 	case 7: /* C3 Samuel 2 or C3 Ezra */
 	case 8: /* C3 Ezra-T */
-		__asm __volatile("cpuid"
-		    : "=d" (val) : "a" (0x80000001) : "ebx", "ecx");
+		cpuid(0x80000001, regs);
+		val = regs[3];
 		if (val & (1U << 31)) {
 			cpu_feature |= CPUID_3DNOW;
 		} else {
@@ -1190,11 +1191,11 @@ cyrix3_cpu_setup(cpu_device, model, step)
 		 * Bit 6 of MSR 0x110B set to 1 (the default), which will
 		 * show up as bit 3 set here.
 		 */
-		__asm __volatile("cpuid" /* Check for RNG */
-		    : "=a" (val) : "a" (0xC0000000) : "cc");
+		cpuid(0xC0000000, regs); /* Check for RNG */
+		val = regs[0];
 		if (val >= 0xC0000001) {
-			__asm __volatile("cpuid"
-			    : "=d" (val) : "a" (0xC0000001) : "cc");
+			cpuid(0xC0000001, regs);
+			val = regs[3];
 		} else
 			val = 0;
 
