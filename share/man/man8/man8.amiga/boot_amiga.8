@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_amiga.8,v 1.4 2002/02/13 10:48:56 deraadt Exp $
+.\"	$OpenBSD: boot_amiga.8,v 1.5 2002/07/04 17:36:17 miod Exp $
 .\"	$NetBSD: boot_Amiga.8,v 1.1 1995/07/02 02:09:52 briggs Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -63,7 +63,7 @@ The proper way to shut the system down is with the
 command.
 .Pp
 If the system crashes, it will enter the kernel debugger,
-.Xr ddb 8 ,
+.Xr ddb 4 ,
 if it is configured in the kernel.
 If the debugger is not present
 or has exited, the system will attempt a dump to the
@@ -117,7 +117,7 @@ file system.
 system kernel
 .El
 .Sh SEE ALSO
+.Xr ddb 4 ,
 .Xr ttys 5 ,
-.Xr ddb 8 ,
 .Xr savecore 8 ,
 .Xr shutdown 8
