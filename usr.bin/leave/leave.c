@@ -1,4 +1,4 @@
-/*	$OpenBSD: leave.c,v 1.10 2003/06/10 22:20:47 deraadt Exp $	*/
+/*	$OpenBSD: leave.c,v 1.11 2004/02/02 09:36:12 otto Exp $	*/
 /*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1980, 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -40,18 +40,24 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)leave.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: leave.c,v 1.10 2003/06/10 22:20:47 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: leave.c,v 1.11 2004/02/02 09:36:12 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-void	usage(void);
-void	doalarm(u_int secs);
+static __dead void	usage(void);
+static void		doalarm(u_int secs);
+
+#define SECOND  1
+#define MINUTE  (SECOND * 60)
+#define	FIVEMIN	(5 * MINUTE)
+#define HOUR    (MINUTE * 60)
 
 /*
  * leave [[+]hhmm]
@@ -68,12 +74,14 @@ main(int argc, char *argv[])
 	char c, *cp;
 	struct tm *t;
 	time_t now;
-	int plusnow;
+	int plusnow = 0, twentyfour;
 	char buf[50];
+	
+	if (setlinebuf(stdout) != 0)
+		errx(1, "Cannot set stdout to line buffered.");
 
 	if (argc < 2) {
-#define	MSG1	"When do you have to leave? "
-		(void)write(STDOUT_FILENO, MSG1, sizeof(MSG1) - 1);
+		(void)fputs("When do you have to leave? ", stdout);
 		cp = fgets(buf, sizeof(buf), stdin);
 		if (cp == NULL || *cp == '\n')
 			exit(0);
@@ -85,10 +93,6 @@ main(int argc, char *argv[])
 	if (*cp == '+') {
 		plusnow = 1;
 		++cp;
-	} else {
-		plusnow = 0;
-		(void)time(&now);
-		t = localtime(&now);
 	}
 
 	for (hours = 0; (c = *cp) && c != '\n'; ++cp) {
@@ -98,80 +102,83 @@ main(int argc, char *argv[])
 	}
 	minutes = hours % 100;
 	hours /= 100;
+	/* determine 24 hours mode */
+	twentyfour = hours > 12;
 
 	if (minutes < 0 || minutes > 59)
 		usage();
 	if (plusnow)
-		secs = hours * 60 * 60 + minutes * 60;
+		secs = (hours * HOUR) + (minutes * MINUTE);
 	else {
 		if (hours > 23)
 			usage();
-		if (t->tm_hour > hours || 
+		(void)time(&now);
+		t = localtime(&now);
+		while (t->tm_hour > hours || 
 		    (t->tm_hour == hours && t->tm_min >= minutes)) {
-			/* determine 24 hours mode */
-		    	if (hours >= 13)
+			if (twentyfour)
 				hours += 24;
 			else
 				hours += 12;
 		}
 
-		secs = (hours - t->tm_hour) * 60 * 60;
-		secs += (minutes - t->tm_min) * 60;
+		secs = (hours - t->tm_hour) * HOUR;
+		secs += (minutes - t->tm_min) * MINUTE;
 	}
 	doalarm(secs);
 	exit(0);
 }
 
-void
+static void
 doalarm(u_int secs)
 {
 	int bother;
 	time_t daytime;
 	pid_t pid;
 
-	if ((pid = fork())) {
+	switch (pid = fork()) {
+	case 0:
+		break;
+	case -1:
+		err(1, "Fork failed");
+		/* NOTREACHED */
+	default:
 		(void)time(&daytime);
 		daytime += secs;
 		printf("Alarm set for %.16s. (pid %ld)\n",
 		    ctime(&daytime), (long)pid);
 		exit(0);
 	}
-	sleep((u_int)2);		/* let parent print set message */
+	sleep(2);			/* let parent print set message */
 
 	/*
 	 * if write fails, we've lost the terminal through someone else
 	 * causing a vhangup by logging in.
 	 */
-#define	FIVEMIN	(5 * 60)
-#define	MSG2	"\07\07You have to leave in 5 minutes.\n"
 	if (secs >= FIVEMIN) {
 		sleep(secs - FIVEMIN);
-		if (write(STDOUT_FILENO, MSG2, sizeof(MSG2) - 1) != sizeof(MSG2) - 1)
+		if (puts("\a\aYou have to leave in 5 minutes.") == EOF)
 			exit(0);
 		secs = FIVEMIN;
 	}
 
-#define	ONEMIN	(60)
-#define	MSG3	"\07\07Just one more minute!\n"
-	if (secs >= ONEMIN) {
-		sleep(secs - ONEMIN);
-		if (write(STDOUT_FILENO, MSG3, sizeof(MSG3) - 1) != sizeof(MSG3) - 1)
+	if (secs >= MINUTE) {
+		sleep(secs - MINUTE);
+		if (puts("\a\aJust one more minute!") == EOF)
 			exit(0);
 	}
 
-#define	MSG4	"\07\07Time to leave!\n"
 	for (bother = 10; bother--;) {
-		sleep((u_int)ONEMIN);
-		if (write(STDOUT_FILENO, MSG4, sizeof(MSG4) - 1) != sizeof(MSG4) - 1)
+		sleep(MINUTE);
+		if (puts("\a\aTime to leave!") == EOF)
 			exit(0);
 	}
 
-#define	MSG5	"\07\07That was the last time I'll tell you.  Bye.\n"
-	(void)write(STDOUT_FILENO, MSG5, sizeof(MSG5) - 1);
+	puts("\a\aThat was the last time I'll tell you.  Bye.");
 	exit(0);
 }
 
-void
+static __dead void
 usage(void)
 {
 	fprintf(stderr, "usage: leave [[+]hhmm]\n");
