@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.3 2004/07/14 05:16:04 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.4 2004/07/25 18:50:30 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -87,6 +87,7 @@ mode_t  cvs_lastmode = 0;
 
 static int  cvs_resp_validreq  (int, char *);
 static int  cvs_resp_cksum     (int, char *);
+static int  cvs_resp_modtime   (int, char *);
 static int  cvs_resp_m         (int, char *);
 static int  cvs_resp_ok        (int, char *);
 static int  cvs_resp_error     (int, char *);
@@ -179,6 +180,7 @@ struct cvs_resp {
 	{ CVS_RESP_NEWENTRY,   "New-entry",              cvs_resp_newentry },
 	{ CVS_RESP_CHECKEDIN,  "Checked-in",             cvs_resp_newentry },
 	{ CVS_RESP_MODE,       "Mode",                   cvs_resp_mode     },
+	{ CVS_RESP_MODTIME,    "Mod-time",               cvs_resp_modtime  },
 };
 
 
@@ -477,7 +479,7 @@ cvs_resp_validreq(int type, char *line)
 /*
  * cvs_resp_m()
  *
- * Handler for the `M', `F' and `E' responses.
+ * Handler for the `M', 'MT', `F' and `E' responses.
  */
 
 static int
@@ -498,6 +500,7 @@ cvs_resp_m(int type, char *line)
 		stream = stderr;
 		break;
 	case CVS_RESP_MT:
+		break;
 	case CVS_RESP_MBINARY:
 		cvs_log(LP_WARN, "MT and Mbinary not supported in client yet");
 		break;
@@ -628,6 +631,21 @@ cvs_resp_cksum(int type, char *line)
 		return (-1);
 	}
 
+	return (0);
+}
+
+
+/*
+ * cvs_resp_modtime()
+ *
+ * Handler for the `Mod-time' file update modifying response.  The timestamp
+ * given is used to set the last modification time on the next file that
+ * will be received.
+ */
+
+static int
+cvs_resp_modtime(int type, char *line)
+{
 	return (0);
 }
 
