@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.19 2003/04/17 03:40:45 drahn Exp $
+#	$OpenBSD: Makefile,v 1.20 2003/06/26 17:55:42 drahn Exp $
 
 SUBDIR=ldconfig ldd
 VPATH=${.CURDIR}/../../lib/libc/string:${.CURDIR}/../../sys/lib/libsa
 
-NOMAN=
 SRCS=	ldasm.S loader.c resolve.c dlfcn.c dl_printf.c rtld_machine.c
 SRCS+=	util.c sod.c strsep.c strtol.c dir.c
 .if (${MACHINE_ARCH} == "i386")
