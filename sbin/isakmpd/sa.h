@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.h,v 1.21 2001/04/24 07:27:37 niklas Exp $	*/
+/*	$OpenBSD: sa.h,v 1.22 2001/05/31 20:23:17 angelos Exp $	*/
 /*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
@@ -146,11 +146,22 @@ struct sa {
   /* Policy session ID, where applicable, copied over from the exchange */
   int policy_id;
 
-  /* Certs or other information from Phase 1 */  
-  int recv_certtype, recv_certlen, recv_certid;
-  void *recv_cert;
-  void *recv_key; /* Key used to authenticate, in KeyNote */
-    
+  /* Used only by KeyNote, to store the key used to authenticate Phase 1 */
+  char *keynote_key; /* printable format */
+
+  /*
+   * Certs or other information from Phase 1; these are copied from the
+   * exchange, so look at exchange.h for an explanation of their use.
+   */  
+  int recv_certtype, recv_keytype;
+  void *recv_cert; /* Certificate received from peer, native format */
+  void *recv_key; /* Key peer used to authenticate, native format */
+
+  /* Certs or other information we used to authenticate to the peer, Phase 1 */
+  int sent_certtype, sent_keytype;
+  void *sent_cert; /* Certificate (to be) sent to peer, native format */
+  void *sent_key; /* Key we'll use to authenticate to peer, native format */
+
   /* DOI-specific opaque data.  */
   void *data;
 
