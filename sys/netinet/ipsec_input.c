@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.26 2000/06/18 19:05:50 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.27 2000/06/18 19:10:50 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -334,7 +334,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 		((tdbp->tdb_proxy.sa.sa_family != AF_INET6) &&
 		 (tdbp->tdb_proxy.sa.sa_family != 0)))
 	    {
-		DPRINTF(("ipsec_common_input_cb(): inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", ip6_sprintf(ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi)));
+		DPRINTF(("ipsec_common_input_cb(): inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", ip6_sprintf(&ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi)));
 		m_freem(m);
 		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
 		return EACCES;
@@ -419,7 +419,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 		((tdbp->tdb_proxy.sa.sa_family != AF_INET6) &&
 		 (tdbp->tdb_proxy.sa.sa_family != 0)))
 	    {
-		DPRINTF(("ipsec_common_input_cb(): inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", ip6_sprintf(ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi)));
+		DPRINTF(("ipsec_common_input_cb(): inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", ip6_sprintf(&ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi)));
 		m_freem(m);
 		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
 		return EACCES;
