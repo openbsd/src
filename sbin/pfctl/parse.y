@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.169 2002/10/16 09:00:06 mpech Exp $	*/
+/*	$OpenBSD: parse.y,v 1.170 2002/10/17 10:48:57 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -719,22 +719,33 @@ proto_list	: proto_item			{ $$ = $1; }
 		;
 
 proto_item	: STRING			{
-			struct protoent *p;
+			u_int8_t pr;
 			u_long ulval;
 
-			if (atoul($1, &ulval) == 0)
-				p = getprotobynumber(ulval);
-			else
-				p = getprotobyname($1);
+			if (atoul($1, &ulval) == 0) {
+				if (ulval > 255) {
+					yyerror("protocol outside range");
+					YYERROR;
+				}
+				pr = (u_int8_t)ulval;
+			} else {
+				struct protoent *p;
 
-			if (p == NULL) {
-				yyerror("unknown protocol %s", $1);
+				p = getprotobyname($1);
+				if (p == NULL) {
+					yyerror("unknown protocol %s", $1);
+					YYERROR;
+				}
+				pr = p->p_proto;
+			}
+			if (pr == 0) {
+				yyerror("proto 0 cannot be used");
 				YYERROR;
 			}
 			$$ = malloc(sizeof(struct node_proto));
 			if ($$ == NULL)
 				err(1, "proto_item: malloc");
-			$$->proto = p->p_proto;
+			$$->proto = pr;
 			$$->next = NULL;
 			$$->tail = $$;
 		}
