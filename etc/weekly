@@ -9,6 +9,12 @@ export PATH
 host=`hostname -s`
 echo "Subject: $host weekly run output"
 
+if [ -f /etc/weekly.local ];then
+	echo ""
+	echo "Running weekly.local:"
+	. /etc/weekly.local
+fi
+
 #echo ""
 #echo "Removing old .o files:"
 #find /usr/src -name '*.o' -atime +21 -print -a -exec rm -f {} \;

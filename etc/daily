@@ -6,6 +6,12 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local
 host=`hostname -s`
 echo "Subject: $host daily run output"
 
+if [ -f /etc/daily.local ];then
+	echo ""
+	echo "Running daily.local:"
+	. /etc/daily.local
+fi
+
 echo ""
 echo "Removing scratch and junk files:"
 if [ -d /tmp -a ! -h /tmp ]; then

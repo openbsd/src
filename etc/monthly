@@ -6,6 +6,14 @@
 host=`hostname -s`
 echo "Subject: $host monthly run output"
 
+if [ -f /etc/monthly.local ];then
+	echo ""
+	echo "Running monthly.local:"
+	. /etc/monthly.local
+else
+	echo "Nothing to do!"
+fi
+
 # echo ""
 # echo "Doing login accounting:"
 # ac -p | sort -nr +1
@@ -17,5 +25,4 @@ echo "Subject: $host monthly run output"
 #	aculog
 #	cron
 
-echo "Nothing to do!"
 #echo "."
