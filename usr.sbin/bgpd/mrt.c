@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: mrt.c,v 1.2 2003/12/19 01:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -174,7 +174,8 @@ void
 mrt_dump_upcall(struct pt_entry *pt, int fd, int *wait, void *arg)
 {
 	struct prefix	*p;
-	u_int32_t	 id = (u_int32_t)(u_long)arg;
+	u_int32_t	*idp = arg;
+	u_int32_t	 id = *idp;
 
 	/*
 	 * dump all prefixes even the inactive ones. That is the way zebra

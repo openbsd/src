@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.5 2003/12/19 01:13:34 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.6 2003/12/19 01:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -172,7 +172,7 @@ rde_dispatch_imsg(int fd, int idx)
 {
 	struct imsg		 imsg;
 	struct peer_config	*pconf;
-	struct rde_peer 	*p;
+	struct rde_peer	*p;
 	u_int32_t		 rid;
 	int			 reconf;
 
@@ -210,7 +210,7 @@ rde_dispatch_imsg(int fd, int idx)
 			if (nconf == NULL)
 				fatal("got IMSG_RECONF_DONE but no config", 0);
 			/* Just remove deleted peers, new peers need no action
- 			 * and merged peers neither. If the SE needs to drop
+			 * and merged peers neither. If the SE needs to drop
 			 * the current session and reopen a new one we get a
 			 * DOWN/UP request.  We tag the deleted peers and
 			 * remove them in peer_down.
@@ -248,7 +248,7 @@ rde_dispatch_imsg(int fd, int idx)
 			if (idx != PFD_PIPE_MAIN)
 				fatal("mrt request not from parent", 0);
 			pt_dump(mrt_dump_upcall, fd, &main_queued_writes,
-			    (void *)imsg.hdr.peerid);
+			    &imsg.hdr.peerid);
 			/* FALLTHROUGH */
 		case IMSG_MRT_END:
 			if (idx != PFD_PIPE_MAIN)
@@ -584,7 +584,7 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 
 	LIST_INSERT_HEAD(head, peer, hash_l);
 	LIST_INSERT_HEAD(&peerlist, peer, peer_l);
-	
+
 	return (peer);
 }
 
@@ -593,10 +593,10 @@ peer_remove(struct rde_peer *peer)
 {
 	ENSURE(peer_get(peer->conf.id) != NULL);
 	ENSURE(LIST_EMPTY(&peer->path_h));
-	
+
 	LIST_REMOVE(peer, hash_l);
 	LIST_REMOVE(peer, peer_l);
-	
+
 	free(peer);
 }
 

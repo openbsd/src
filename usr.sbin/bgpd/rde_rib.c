@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.2 2003/12/19 01:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -21,6 +21,7 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "bgpd.h"
 #include "ensure.h"
@@ -79,15 +80,16 @@ struct rib_stats {
 int
 attr_equal(struct attr_flags *a, struct attr_flags *b)
 {
-	if (a->origin != b->origin) return 0;
-	if (aspath_equal(a->aspath, b->aspath) == 0) return 0;
 	/* astags not yet used */
-	if (a->nexthop.s_addr != b->nexthop.s_addr) return 0;
-	if (a->med != b->med) return 0;
-	if (a->lpref != b->lpref) return 0;
-	if (a->aggr_atm != b->aggr_atm) return 0;
-	if (a->aggr_as != b->aggr_as) return 0;
-	if (a->aggr_ip.s_addr != b->aggr_ip.s_addr) return 0;
+	if (a->origin != b->origin ||
+	    aspath_equal(a->aspath, b->aspath) == 0 ||
+	    a->nexthop.s_addr != b->nexthop.s_addr ||
+	    a->med != b->med ||
+	    a->lpref != b->lpref ||
+	    a->aggr_atm != b->aggr_atm ||
+	    a->aggr_as != b->aggr_as ||
+	    a->aggr_ip.s_addr != b->aggr_ip.s_addr)
+		return 0;
 	return 1;
 }
 
@@ -111,7 +113,7 @@ attr_length(struct attr_flags *attr)
 
 	alen = 4 /* origin */ + 7 /* nexthop */ + 7 /* lpref */;
 	plen = aspath_length(attr->aspath);
-	alen += 2 + plen + (plen>255?2:1);
+	alen += 2 + plen + (plen > 255 ? 2 : 1);
 	if (attr->med != 0)
 		alen += 7;
 	if (attr->aggr_atm == 1)
@@ -397,7 +399,7 @@ path_update(struct rde_peer *peer, struct attr_flags *attrs,
 	} else {
 		if (attr_equal(&asp->flags, attrs) == 0) {
 			if ((p = prefix_get(asp,
-					    prefix, prefixlen)) == NULL) {
+			    prefix, prefixlen)) == NULL) {
 				asp = path_add(peer, attrs);
 				pte = prefix_add(asp, prefix, prefixlen);
 			} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.2 2003/12/18 22:22:22 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.3 2003/12/19 01:15:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com> and
@@ -135,11 +135,11 @@ struct attr_flags {
 	struct aspath			*aspath;
 	struct astags			*astags;
 	struct in_addr			 nexthop;
-	u_int32_t			 med;	/* multi exit disc */
-	u_int32_t			 lpref;	/* local pref */
-	u_int8_t			 aggr_atm; /* atomic aggregate */
-	u_int16_t			 aggr_as;  /* aggregator as */
-	struct in_addr			 aggr_ip;  /* aggregator ip */
+	u_int32_t			 med;		/* multi exit disc */
+	u_int32_t			 lpref;		/* local pref */
+	u_int8_t			 aggr_atm;	/* atomic aggregate */
+	u_int16_t			 aggr_as;	/* aggregator as */
+	struct in_addr			 aggr_ip;	/* aggregator ip */
 };
 
 enum nexthop_state {
