@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.107 2001/03/04 20:34:00 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.108 2001/03/13 01:23:18 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -888,6 +888,7 @@ tdb_delete(struct tdb *tdbp, int expflags)
     {
 	TAILQ_REMOVE(&tdbp->tdb_policy_head, ipo, ipo_tdb_next);
 	ipo->ipo_tdb = NULL;
+	ipo->ipo_last_searched = 0; /* Force a re-search */
     }
 
     /* Remove us from the expiration lists.  */
