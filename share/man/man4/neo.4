@@ -1,4 +1,4 @@
-.\" $OpenBSD: sv.4,v 1.5 2000/04/13 06:46:13 deraadt Exp $
+.\" $OpenBSD: neo.4,v 1.1 2000/04/13 06:46:13 deraadt Exp $
 .\" Copyright (c) 1998 Constantine Paul Sapuntzakis
 .\" All rights reserved
 .\"
@@ -32,39 +32,22 @@
 .Dt SV 4
 .Os
 .Sh NAME
-.Nm sv
-.Nd S3 SonicVibes device driver
+.Nm neo
+.Nd NeoMagic 256AV/ZX audio driver
 .Sh SYNOPSIS
-.Cd "sv* at pci? dev ? function ?"
+.Cd "neo* at pci? dev ? function ?"
 .Cd "audio* at sv?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for S3 SonicVibes (S3-617) chipset-based
-cards. Disabling the SRS 3-D spatial feature of the chip is
-recommended for higher quality audio. This can be done in software
-by issuing the
-.Bd -literal -offset indent
-mixerctl -w outputs.spatial=off
-
-.Ed
-command.
-.Pp
-.Sh BUGS
-The "FM" DAC, wavetable synth, and MIDI port are not
-supported. Recording at a rate different from playback is supported by
-the chip but not the driver. The mixer does not allow control of reverb,
-digital loopback, or 3-D SRS features. The chip does not support exact
-record speeds (it seems) of 11025hz, 22050hz, and so on, used by
-Windows audio. Usually, the actual record is rate is around +/- 50hz of
-the specified.
+driver provides support for Neomagic MagicMedia 256AV and 256ZX
+audio chips found in many laptops, and perhaps on some PCI cards.
+cards.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr mixer 4
 .Sh HISTORY
-This driver is based on the eap driver by Lennart Augustsson.
 The
 .Nm
 device driver appeared in
-.Nx 2.6 .
- 
+.Ox 2.7 .
