@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.294 2004/04/04 19:40:43 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.295 2004/04/24 23:22:54 cedric Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1508,6 +1508,15 @@ by specifying the
 operator before the
 .Ar tagged
 keyword.
+.It Ar probability <number>
+A probability attribute can be attached to a rule, with a value set between
+0 and 1, bounds not included.
+In that case, the rule will be honoured using the given probability value
+only.
+For example, the following rule will drop 20% of incoming ICMP packets:
+.Bd -literal -offset indent
+block in proto icmp probability 20%
+.Ed
 .El
 .Sh ROUTING
 If a packet matches a rule with a route option set, the packet filter will

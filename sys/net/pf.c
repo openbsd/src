@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.435 2004/04/17 00:13:36 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.436 2004/04/24 23:22:54 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2504,6 +2504,8 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    !pf_match_gid(r->gid.op, r->gid.gid[0], r->gid.gid[1],
 		    gid))
 			r = TAILQ_NEXT(r, entries);
+		else if (r->prob && r->prob <= arc4random())
+			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag && !pf_match_tag(m, r, nr, &pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
@@ -2860,6 +2862,8 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    !pf_match_gid(r->gid.op, r->gid.gid[0], r->gid.gid[1],
 		    gid))
 			r = TAILQ_NEXT(r, entries);
+		else if (r->prob && r->prob <= arc4random())
+			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag && !pf_match_tag(m, r, nr, &pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
@@ -3165,6 +3169,8 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
+		else if (r->prob && r->prob <= arc4random())
+			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag && !pf_match_tag(m, r, nr, &pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
@@ -3402,6 +3408,8 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
+		else if (r->prob && r->prob <= arc4random())
+			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag && !pf_match_tag(m, r, nr, &pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
@@ -3604,6 +3612,8 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 		else if (r->src.port_op || r->dst.port_op ||
 		    r->flagset || r->type || r->code ||
 		    r->os_fingerprint != PF_OSFP_ANY)
+			r = TAILQ_NEXT(r, entries);
+		else if (r->prob && r->prob <= arc4random())
 			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag && !pf_match_tag(m, r, NULL, &pftag, &tag))
 			r = TAILQ_NEXT(r, entries);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.187 2004/03/22 04:54:18 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.188 2004/04/24 23:22:54 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -491,6 +491,7 @@ struct pf_rule {
 	u_int32_t		 pqid;
 	u_int32_t		 rt_listid;
 	u_int32_t		 nr;
+	u_int32_t		 prob;
 
 	u_int16_t		 return_icmp;
 	u_int16_t		 return_icmp6;

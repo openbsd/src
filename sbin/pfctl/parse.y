@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.451 2004/04/22 08:34:30 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.452 2004/04/24 23:22:54 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -49,6 +49,7 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 #include <err.h>
 #include <limits.h>
 #include <pwd.h>
@@ -175,6 +176,7 @@ struct filter_opts {
 	} flags;
 	struct node_icmp	*icmpspec;
 	u_int32_t		 tos;
+	u_int32_t		 prob;
 	struct {
 		int			 action;
 		struct node_state_opt	*options;
@@ -398,7 +400,7 @@ typedef struct {
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
 %token	REQUIREORDER SYNPROXY FINGERPRINTS NOSYNC DEBUG HOSTID
 %token	ANTISPOOF FOR
-%token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
+%token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT PROBABILITY
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
 %token	QUEUE PRIORITY QLIMIT
 %token	LOAD
@@ -603,6 +605,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 			PREPARE_ANCHOR_RULE(r, $2);
 			r.direction = $3;
 			r.af = $5;
+			r.prob = $8.prob;
 
 			if ($8.match_tag)
 				if (strlcpy(r.match_tagname, $8.match_tag,
@@ -1508,6 +1511,7 @@ pfrule		: action dir logquick interface route af proto fromto
 			r.direction = $2;
 			r.log = $3.log;
 			r.quick = $3.quick;
+			r.prob = $9.prob;
 
 			r.af = $6;
 			if ($9.tag)
@@ -1820,6 +1824,26 @@ filter_opt	: USER uids {
 		| not TAGGED string			{
 			filter_opts.match_tag = $3;
 			filter_opts.match_tag_not = $1;
+		}
+		| PROBABILITY STRING			{
+			char	*e;
+			double	 p = strtod($2, &e);
+
+			if (*e == '%') {
+				p *= 0.01;
+				e++;
+			}
+			if (*e) {
+				yyerror("invalid probability: %s", $2);
+				YYERROR;
+			}
+			p = floor(p * (UINT_MAX+1.0) + 0.5);
+			if (p < 1.0 || p >= (UINT_MAX+1.0)) {
+				yyerror("invalid probability: %s", $2);
+				YYERROR;
+			}
+			filter_opts.prob = (u_int32_t)p;
+			free($2);
 		}
 		;
 
@@ -4395,6 +4419,7 @@ lookup(char *s)
 		{ "port",		PORT},
 		{ "priority",		PRIORITY},
 		{ "priq",		PRIQ},
+		{ "probability",	PROBABILITY},
 		{ "proto",		PROTO},
 		{ "qlimit",		QLIMIT},
 		{ "queue",		QUEUE},
