@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.29 1999/01/11 05:11:58 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.30 1999/03/17 22:56:24 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1950,7 +1950,7 @@ gotswap:
 		rootdev = nrootdev;
 		dumpdev = nswapdev;
 		swdevt[0].sw_dev = nswapdev;
-		swdevt[1].sw_dev = NODEV;
+		/* swdevt[1].sw_dev = NODEV; */
 
 	} else if (mountroot == NULL) {
 
@@ -1976,7 +1976,7 @@ gotswap:
 			nswapdev = dumpdev = NODEV;
 		}
 		swdevt[0].sw_dev = nswapdev;
-		swdevt[1].sw_dev = NODEV;
+		/* swdevt[1].sw_dev = NODEV; */
 
 	} else {
 
