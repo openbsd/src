@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2001/06/23 00:20:06 hin Exp $
+# $OpenBSD: Makefile,v 1.5 2003/04/07 21:29:45 hin Exp $
 
 LIB=	kadm5clnt
 
@@ -12,6 +12,7 @@ includes:	kadm5_err.h
 SRCS=	admin.h         \
 	chpass_c.c      \
 	common_glue.c   \
+	client_glue.c	\
 	create_c.c      \
 	delete_c.c      \
 	destroy_c.c     \
