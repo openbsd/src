@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.8 2001/06/22 23:52:35 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.9 2001/06/25 08:06:04 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -42,11 +42,12 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.8 2001/06/22 23:52:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.9 2001/06/25 08:06:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/uio.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -63,30 +64,41 @@ void
 summary()
 {
 	time_t secs;
-	char buf[100];
+	char buf[4][100];
+	struct iovec iov[4];
+	int i = 0;
 
 	(void)time(&secs);
 	if ((secs -= st.start) == 0)
 		secs = 1;
 	/* Use snprintf(3) so that we don't reenter stdio(3). */
-	(void)snprintf(buf, sizeof(buf),
+	(void)snprintf(buf[0], sizeof(buf[0]),
 	    "%u+%u records in\n%u+%u records out\n",
 	    st.in_full, st.in_part, st.out_full, st.out_part);
-	(void)write(STDERR_FILENO, buf, strlen(buf));
+	iov[i].iov_base = buf[0];
+	iov[i++].iov_len = strlen(buf[0]);
+
 	if (st.swab) {
-		(void)snprintf(buf, sizeof(buf), "%u odd length swab %s\n",
+		(void)snprintf(buf[1], sizeof(buf[1]),
+		    "%u odd length swab %s\n",
 		     st.swab, (st.swab == 1) ? "block" : "blocks");
-		(void)write(STDERR_FILENO, buf, strlen(buf));
+		iov[i].iov_base = buf[1];
+		iov[i++].iov_len = strlen(buf[1]);
 	}
 	if (st.trunc) {
-		(void)snprintf(buf, sizeof(buf), "%u truncated %s\n",
+		(void)snprintf(buf[2], sizeof(buf[2]),
+		    "%u truncated %s\n",
 		     st.trunc, (st.trunc == 1) ? "block" : "blocks");
-		(void)write(STDERR_FILENO, buf, strlen(buf));
+		iov[i].iov_base = buf[2];
+		iov[i++].iov_len = strlen(buf[2]);
 	}
-	(void)snprintf(buf, sizeof(buf),
+	(void)snprintf(buf[3], sizeof(buf[3]),
 	    "%qd bytes transferred in %ld secs (%qd bytes/sec)\n",
 	    st.bytes, (long)secs, st.bytes / secs);
-	(void)write(STDERR_FILENO, buf, strlen(buf));
+	iov[i].iov_base = buf[3];
+	iov[i++].iov_len = strlen(buf[3]);
+
+	(void)writev(STDERR_FILENO, iov, i);
 }
 
 /* ARGSUSED */
@@ -106,5 +118,6 @@ terminate(notused)
 	int notused;
 {
 
+	summary();
 	_exit(0);
 }
