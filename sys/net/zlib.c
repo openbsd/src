@@ -4567,6 +4567,7 @@ z_stream *z;
 
 char *zlib_version = ZLIB_VERSION;
 
+#ifndef NO_DEFLATE
 char *z_errmsg[] = {
 "stream end",          /* Z_STREAM_END    1 */
 "",                    /* Z_OK            0 */
@@ -4576,7 +4577,7 @@ char *z_errmsg[] = {
 "insufficient memory", /* Z_MEM_ERROR    (-4) */
 "buffer error",        /* Z_BUF_ERROR    (-5) */
 ""};
-
+#endif /* NO_DEFLATE */
 
 /*+++++*/
 /* adler32.c -- compute the Adler-32 checksum of a data stream
