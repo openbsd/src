@@ -87,7 +87,7 @@ smallcpy:
 	addu	a0, a0, 1
 	sb	v1, 0(a1)
 	bne	a0, a3, 1b
-	addu	a1, a1, 1	# MMU BUG ? can't do -1(a1) at 0x80000000!!
+	addu	a1, a1, 1	# MMU BUG ? can not do -1(a1) at 0x80000000!!
 2:
 	j	ra
 	nop
