@@ -1,4 +1,4 @@
-/*	$OpenBSD: lasi.c,v 1.11 2002/12/18 23:52:45 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.12 2003/04/08 20:37:39 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -148,6 +148,8 @@ lasiattach(parent, self, aux)
 			  IOMOD_HPASIZE, 0, &ioh)) {
 #ifdef DEBUG
 		printf("lasiattach: can't map IO space\n");
+#else
+		printf("\n");
 #endif
 		return;
 	}

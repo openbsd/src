@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.9 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.10 2003/04/08 20:37:39 miod Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -265,6 +265,8 @@ mg_intr_establish(void *v, int irq, int type, int pri,
 #ifdef DEBUG
 		printf("%s: bad interrupt level (%d)\n", sc->sc_dev.dv_xname,
 		    type);
+#else
+		printf("\n");
 #endif
 		return NULL;
 	}
@@ -274,6 +276,8 @@ mg_intr_establish(void *v, int irq, int type, int pri,
 #ifdef DEBUG
 		printf("%s: irq %d already established\n", sc->sc_dev.dv_xname,
 		    irq);
+#else
+		printf("\n");
 #endif
 		return NULL;
 	}

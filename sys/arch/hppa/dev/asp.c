@@ -1,4 +1,4 @@
-/*	$OpenBSD: asp.c,v 1.10 2003/02/18 09:40:40 miod Exp $	*/
+/*	$OpenBSD: asp.c,v 1.11 2003/04/08 20:37:39 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -170,6 +170,8 @@ aspattach(parent, self, aux)
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh)) {
 #ifdef DEBUG
 		printf("aspattach: can't map IO space\n");
+#else
+		printf("\n");
 #endif
 		return;
 	}
