@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radlib_private.h,v 1.2 2000/08/13 22:05:48 brian Exp $
+ *	$OpenBSD: radlib_private.h,v 1.3 2002/05/16 01:13:39 brian Exp $
  */
 
 #ifndef RADLIB_PRIVATE_H
@@ -33,6 +33,7 @@
 #include <netinet/in.h>
 
 #include "radlib.h"
+#include "radlib_vs.h"
 
 /* Handle types */
 #define RADIUS_AUTH		0   /* RADIUS authentication, default */
@@ -87,6 +88,13 @@ struct rad_handle {
 	int		 try;		/* How many requests we've sent */
 	int		 srv;		/* Server number we did last */
 	int		 type;		/* Handle type */
+};
+
+struct vendor_attribute {
+	u_int32_t vendor_value;
+	u_char attrib_type;
+	u_char attrib_len;
+	u_char attrib_data[1];
 };
 
 #endif

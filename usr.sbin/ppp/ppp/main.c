@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: main.c,v 1.31 2002/03/31 02:38:49 brian Exp $
+ * $OpenBSD: main.c,v 1.32 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -43,7 +43,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
 #include <termios.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -72,7 +71,6 @@
 #include "throughput.h"
 #include "slcompress.h"
 #include "ncpaddr.h"
-#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "descriptor.h"
@@ -186,7 +184,7 @@ RestartServer(int signo)
 static void
 Usage(void)
 {
-  fprintf(stderr, "Usage: ppp [-auto | -foreground | -background | -direct |"
+  fprintf(stderr, "usage: ppp [-auto | -foreground | -background | -direct |"
           " -dedicated | -ddial | -interactive]"
 #ifndef NOALIAS
           " [-nat]"

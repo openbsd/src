@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: auth.c,v 1.17 2002/03/31 02:38:49 brian Exp $
+ * $OpenBSD: auth.c,v 1.18 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -53,7 +53,6 @@
 #include "lqr.h"
 #include "hdlc.h"
 #include "ncpaddr.h"
-#include "ip.h"
 #include "ipcp.h"
 #include "auth.h"
 #include "systems.h"
@@ -170,7 +169,8 @@ auth_Select(struct bundle *bundle, const char *name)
   }
 
 #ifndef NORADIUS
-  if (bundle->radius.valid && bundle->radius.ip.s_addr != INADDR_NONE) {
+  if (bundle->radius.valid && bundle->radius.ip.s_addr != INADDR_NONE &&
+	bundle->radius.ip.s_addr != RADIUS_INADDR_POOL) {
     /* We've got a radius IP - it overrides everything */
     if (!ipcp_UseHisIPaddr(bundle, bundle->radius.ip))
       return 0;

@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: slcompress.c,v 1.13 2001/08/19 23:22:18 brian Exp $
+ * $OpenBSD: slcompress.c,v 1.14 2002/05/16 01:13:39 brian Exp $
  *
  *	Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
  *	- Initial distribution.
@@ -50,7 +50,6 @@
 #include "lqr.h"
 #include "hdlc.h"
 #include "ncpaddr.h"
-#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "lcp.h"

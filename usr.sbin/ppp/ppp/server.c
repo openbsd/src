@@ -23,14 +23,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: server.c,v 1.14 2002/01/16 14:13:06 brian Exp $
+ *	$OpenBSD: server.c,v 1.15 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <sys/un.h>
 
 #include <errno.h>
@@ -43,7 +42,6 @@
 #include "log.h"
 #include "descriptor.h"
 #include "server.h"
-#include "id.h"
 #include "prompt.h"
 #include "ncpaddr.h"
 #include "probe.h"

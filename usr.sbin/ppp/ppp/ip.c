@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ip.c,v 1.34 2001/08/19 23:22:17 brian Exp $
+ * $OpenBSD: ip.c,v 1.35 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -40,13 +40,11 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
-#include <arpa/inet.h>
 #include <sys/un.h>
 
 #include <errno.h>
 #include <netdb.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>

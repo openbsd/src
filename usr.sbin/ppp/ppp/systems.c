@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: systems.c,v 1.17 2001/06/13 21:33:42 brian Exp $
+ * $OpenBSD: systems.c,v 1.18 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -36,7 +36,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
-#include <unistd.h>
 
 #include "defs.h"
 #include "command.h"
@@ -186,7 +185,7 @@ DecodeCtrlCommand(char *line, char *arg)
   if (!strncasecmp(line, "include", 7) && issep(line[7])) {
     end = InterpretArg(line+8, arg);
     if (*end && *end != '#')
-      log_Printf(LogWARN, "Usage: !include filename\n");
+      log_Printf(LogWARN, "usage: !include filename\n");
     else
       return CTRL_INCLUDE;
   }

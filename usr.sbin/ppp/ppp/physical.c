@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.c,v 1.33 2002/03/31 02:38:49 brian Exp $
+ *  $OpenBSD: physical.c,v 1.34 2002/05/16 01:13:39 brian Exp $
  *
  */
 
@@ -30,9 +30,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
-#ifdef NOSUID
-#include <signal.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,7 +68,6 @@
 #include "iplist.h"
 #include "slcompress.h"
 #include "ncpaddr.h"
-#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "descriptor.h"
@@ -1113,4 +1109,13 @@ physical_SetAsyncParams(struct physical *p, u_int32_t mymap, u_int32_t hismap)
     return (*p->handler->setasyncparams)(p, mymap, hismap);
 
   async_SetLinkParams(&p->async, mymap, hismap);
+}
+
+int
+physical_Slot(struct physical *p)
+{
+  if (p->handler && p->handler->slot)
+    return (*p->handler->slot)(p);
+
+  return -1;
 }

@@ -25,12 +25,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: filter.c,v 1.20 2001/08/19 23:22:17 brian Exp $
+ * $OpenBSD: filter.c,v 1.21 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -39,7 +38,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <termios.h>
 
 #include "layer.h"
@@ -58,7 +57,6 @@
 #include "link.h"
 #include "slcompress.h"
 #include "ncpaddr.h"
-#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "descriptor.h"

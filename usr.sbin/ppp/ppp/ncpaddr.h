@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $OpenBSD: ncpaddr.h,v 1.3 2002/05/16 01:13:39 brian Exp $
  */
 
 /*

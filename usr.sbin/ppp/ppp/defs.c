@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: defs.c,v 1.23 2002/03/31 02:38:49 brian Exp $
+ *	$OpenBSD: defs.c,v 1.24 2002/05/16 01:13:39 brian Exp $
  */
 
 
@@ -40,7 +40,6 @@
 #include <stdlib.h>
 #include <string.h>
 #if defined(__FreeBSD__) && !defined(NOKLDLOAD)
-#include <sys/linker.h>
 #include <sys/module.h>
 #endif
 #include <termios.h>
@@ -420,19 +419,25 @@ Concatinate(char *buf, size_t sz, int argc, const char *const *argv)
   }
 }
 
-void
+int
 loadmodules(int how, const char *module, ...)
 {
+  int loaded = 0;
 #if defined(__FreeBSD__) && !defined(NOKLDLOAD)
   va_list ap;
 
   va_start(ap, module);
   while (module != NULL) {
-    if (modfind(module) == -1 && ID0kldload(module) == -1 &&
-        how == LOAD_VERBOSLY)
-      log_Printf(LogWARN, "%s: Cannot load module\n", module);
+    if (modfind(module) == -1) {
+      if (ID0kldload(module) == -1) {
+        if (how == LOAD_VERBOSLY)
+          log_Printf(LogWARN, "%s: Cannot load module\n", module);
+      } else
+        loaded++;
+    }
     module = va_arg(ap, const char *);
   }
   va_end(ap);
 #endif
+  return loaded;
 }

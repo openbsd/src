@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: auth.h,v 1.8 2001/06/13 21:33:40 brian Exp $
+ * $OpenBSD: auth.h,v 1.9 2002/05/16 01:13:39 brian Exp $
  */
 
 struct physical;
@@ -52,8 +52,8 @@ struct authinfo {
   } cfg;
 };
 
-#define auth_Failure(a) (*a->fn.failure)(a);
-#define auth_Success(a) (*a->fn.success)(a);
+#define auth_Failure(a) (*(a)->fn.failure)(a)
+#define auth_Success(a) (*(a)->fn.success)(a)
 
 extern const char *Auth2Nam(u_short, u_char);
 extern void auth_Init(struct authinfo *, struct physical *,

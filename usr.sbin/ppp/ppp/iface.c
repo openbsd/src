@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: iface.c,v 1.23 2002/03/31 02:38:49 brian Exp $
+ *	$OpenBSD: iface.c,v 1.24 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -35,7 +35,6 @@
 #include <net/if_var.h>
 #endif
 #include <net/route.h>
-#include <arpa/inet.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
@@ -68,7 +67,6 @@
 #include "slcompress.h"
 #include "descriptor.h"
 #include "ncpaddr.h"
-#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "lcp.h"

@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.h,v 1.12 2002/03/31 02:38:49 brian Exp $
+ * $OpenBSD: lcp.h,v 1.13 2002/05/16 01:13:39 brian Exp $
  */
 
 /* callback::opmask values */
@@ -122,20 +122,6 @@ struct lcp {
 #define	TY_MRRU		17	/* Max Reconstructed Receive Unit (MP) */
 #define	TY_SHORTSEQ	18	/* Want short seqs (12bit) please (see mp.h) */
 #define	TY_ENDDISC	19	/* Endpoint discriminator */
-
-#define MAX_LCP_OPT_LEN 20
-struct lcp_opt {
-  u_char id;
-  u_char len;
-  u_char data[MAX_LCP_OPT_LEN-2];
-};
-
-#define INC_LCP_OPT(ty, length, o)                    \
-  do {                                                \
-    (o)->id = (ty);                                   \
-    (o)->len = (length);                              \
-    (o) = (struct lcp_opt *)((char *)(o) + (length)); \
-  } while (0)
 
 struct mbuf;
 struct link;

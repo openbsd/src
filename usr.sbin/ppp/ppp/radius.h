@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.h,v 1.6 2001/04/01 22:41:23 brian Exp $
+ *	$OpenBSD: radius.h,v 1.7 2002/05/16 01:13:39 brian Exp $
  */
 
 struct radius {
@@ -39,7 +39,11 @@ struct radius {
   struct in_addr ip;            /* FRAMED IP */
   struct in_addr mask;          /* FRAMED Netmask */
   unsigned long mtu;            /* FRAMED MTU */
+  unsigned long sessiontime;    /* Session-Timeout */
+  char *filterid;		/* FRAMED Filter Id */
   struct sticky_route *routes;  /* FRAMED Routes */
+  char *repstr;			/* Reply-Message */
+  char *errstr;			/* Error-Message */
   struct {
     char file[PATH_MAX];	/* Radius config file */
   } cfg;
@@ -76,3 +80,6 @@ extern void radius_Account(struct radius *, struct radacct *,
 #define RAD_START	1
 #define RAD_STOP	2
 #endif
+
+/* Get address from NAS pool */
+#define RADIUS_INADDR_POOL	htonl(0xfffffffe)	/* 255.255.255.254 */

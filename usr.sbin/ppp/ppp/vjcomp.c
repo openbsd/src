@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: vjcomp.c,v 1.15 2002/01/24 23:01:19 millert Exp $
+ * $OpenBSD: vjcomp.c,v 1.16 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -52,7 +52,6 @@
 #include "iplist.h"
 #include "throughput.h"
 #include "ncpaddr.h"
-#include "ip.h"
 #include "ipcp.h"
 #include "lcp.h"
 #include "ccp.h"

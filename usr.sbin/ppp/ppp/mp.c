@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: mp.c,v 1.29 2002/05/14 01:38:46 brian Exp $
+ *	$OpenBSD: mp.c,v 1.30 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -62,7 +62,6 @@
 #include "lqr.h"
 #include "hdlc.h"
 #include "ncpaddr.h"
-#include "ip.h"
 #include "ipcp.h"
 #include "auth.h"
 #include "lcp.h"

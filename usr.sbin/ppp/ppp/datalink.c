@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: datalink.c,v 1.40 2002/03/31 02:38:49 brian Exp $
+ *	$OpenBSD: datalink.c,v 1.41 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -58,7 +58,6 @@
 #include "iplist.h"
 #include "slcompress.h"
 #include "ncpaddr.h"
-#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "mp.h"

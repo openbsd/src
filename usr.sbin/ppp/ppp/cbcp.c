@@ -23,11 +23,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: cbcp.c,v 1.14 2000/07/19 11:06:31 brian Exp $
+ *	$OpenBSD: cbcp.c,v 1.15 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
 
+#ifdef __FreeBSD__
+#include <netinet/in.h>
+#endif
 #include <sys/un.h>
 
 #include <string.h>
@@ -560,7 +563,7 @@ cbcp_CheckResponse(struct cbcp *cbcp, struct cbcp_data *data)
         }
         return CBCP_ACTION_DOWN;
     }
-    log_Printf(LogPHASE, "Internal CBCP error - agreed on %d ??!?\n",
+    log_Printf(LogPHASE, "Internal CBCP error - agreed on %d !\n",
                (int)cbcp->fsm.type);
     return CBCP_ACTION_DOWN;
   } else if (data->type == CBCP_NONUM && cbcp->fsm.type == CBCP_CLIENTNUM) {

@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap.c,v 1.31 2002/03/31 02:38:49 brian Exp $
+ * $OpenBSD: chap.c,v 1.32 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -68,7 +68,6 @@
 #include "iplist.h"
 #include "slcompress.h"
 #include "ncpaddr.h"
-#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "ccp.h"
@@ -544,7 +543,9 @@ chap_Challenge(struct authinfo *authp)
 static void
 chap_Success(struct authinfo *authp)
 {
+  struct bundle *bundle = authp->physical->dl->bundle;
   const char *msg;
+
   datalink_GotAuthname(authp->physical->dl, authp->in.name);
 #ifndef NODES
   if (authp->physical->link.lcp.want_authtype == 0x81) {
@@ -552,13 +553,18 @@ chap_Success(struct authinfo *authp)
     MPPE_MasterKeyValid = 1;		/* XXX Global ! */
   } else
 #endif
+#ifndef NORADIUS
+  if (*bundle->radius.cfg.file && bundle->radius.repstr)
+    msg = bundle->radius.repstr;
+  else
+#endif
     msg = "Welcome!!";
 
   ChapOutput(authp->physical, CHAP_SUCCESS, authp->id, msg, strlen(msg),
              NULL);
 
   authp->physical->link.lcp.auth_ineed = 0;
-  if (Enabled(authp->physical->dl->bundle, OPT_UTMP))
+  if (Enabled(bundle, OPT_UTMP))
     physical_Login(authp->physical, authp->in.name);
 
   if (authp->physical->link.lcp.auth_iwait == 0)
@@ -573,13 +579,21 @@ static void
 chap_Failure(struct authinfo *authp)
 {
 #ifndef NODES
-  char buf[1024];
+  char buf[1024], *ptr;
 #endif
   const char *msg;
 
+#ifndef NORADIUS
+  struct bundle *bundle = authp->physical->link.lcp.fsm.bundle;
+  if (*bundle->radius.cfg.file && bundle->radius.errstr)
+    msg = bundle->radius.errstr;
+  else
+#endif
 #ifndef NODES
-  if (authp->physical->link.lcp.want_authtype == 0x81) {
-    char *ptr;
+  if (authp->physical->link.lcp.want_authtype == 0x80) {
+    sprintf(buf, "E=691 R=1 M=Invalid!");
+    msg = buf;
+  } else if (authp->physical->link.lcp.want_authtype == 0x81) {
     int i;
 
     ptr = buf;

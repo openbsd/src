@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.h,v 1.23 2001/11/23 11:17:03 brian Exp $
+ *	$OpenBSD: bundle.h,v 1.24 2002/05/16 01:13:39 brian Exp $
  */
 
 #define	PHASE_DEAD		0	/* Link is dead */
@@ -127,6 +127,13 @@ struct bundle {
     time_t done;
   } idle;
 
+#ifndef NORADIUS
+  struct {
+    struct pppTimer timer;
+    time_t done;
+  } session;
+#endif
+
   struct {
     int fd;                   /* write status here */
   } notify;
@@ -162,6 +169,11 @@ extern void bundle_SetIdleTimer(struct bundle *, int, int);
 extern void bundle_StopIdleTimer(struct bundle *);
 extern int bundle_IsDead(struct bundle *);
 extern struct datalink *bundle2datalink(struct bundle *, const char *);
+
+#ifndef NORADIUS
+extern void bundle_StartSessionTimer(struct bundle *, unsigned secs);
+extern void bundle_StopSessionTimer(struct bundle *);
+#endif
 
 extern void bundle_RegisterDescriptor(struct bundle *, struct fdescriptor *);
 extern void bundle_UnRegisterDescriptor(struct bundle *, struct fdescriptor *);

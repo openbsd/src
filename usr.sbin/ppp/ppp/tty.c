@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: tty.c,v 1.17 2002/03/31 02:38:49 brian Exp $
+ *	$OpenBSD: tty.c,v 1.18 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -40,6 +40,7 @@
 #include <sysexits.h>
 #include <sys/uio.h>
 #include <termios.h>
+#include <ttyent.h>
 #include <unistd.h>
 #ifndef NONETGRAPH
 #include <netgraph.h>
@@ -259,6 +260,13 @@ LoadLineDiscipline(struct physical *p)
   struct ngm_mkpeer ngm;
   struct ngm_connect ngc;
   int ldisc, cs, ds, hot, speed;
+
+  /*
+   * Don't use the netgraph line discipline for now.  Using it works, but
+   * carrier cannot be detected via TIOCMGET and the device doesn't become
+   * selectable with 0 bytes to read when carrier is lost :(
+   */
+  return 0;
 
   reply = (struct ng_mesg *)rbuf;
   info = (struct nodeinfo *)reply->data;
@@ -546,6 +554,23 @@ tty_OpenInfo(struct physical *p)
   return buf;
 }
 
+static int
+tty_Slot(struct physical *p)
+{
+  struct ttyent *ttyp;
+  int slot;
+
+  setttyent();
+  for (slot = 1; (ttyp = getttyent()); ++slot)
+    if (!strcmp(ttyp->ty_name, p->name.base)) {
+      endttyent();
+      return slot;
+    }
+
+  endttyent();
+  return -1;
+}
+
 static void
 tty_device2iov(struct device *d, struct iovec *iov, int *niov,
                int maxiov, int *auxfd, int *nauxfd)
@@ -591,7 +616,8 @@ static struct device basettydevice = {
   tty_Write,
   tty_device2iov,
   tty_Speed,
-  tty_OpenInfo
+  tty_OpenInfo,
+  tty_Slot
 };
 
 struct device *

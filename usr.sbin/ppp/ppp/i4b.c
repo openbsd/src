@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: i4b.c,v 1.7 2002/03/31 02:38:49 brian Exp $
+ *	$OpenBSD: i4b.c,v 1.8 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -32,6 +32,7 @@
 #if defined(__OpenBSD__) || defined(__NetBSD__)
 #include <sys/ioctl.h>
 #endif
+#include <sys/stat.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -274,6 +275,17 @@ i4b_OpenInfo(struct physical *p)
   return buf;
 }
 
+static int
+i4b_Slot(struct physical *p)
+{
+  struct stat st;
+
+  if (fstat(p->fd, &st) == 0)
+    return minor(st.st_rdev);
+
+  return -1;
+}
+
 static void
 i4b_device2iov(struct device *d, struct iovec *iov, int *niov,
                int maxiov, int *auxfd, int *nauxfd)
@@ -312,7 +324,8 @@ static struct device basei4bdevice = {
   NULL,
   i4b_device2iov,
   i4b_Speed,
-  i4b_OpenInfo
+  i4b_OpenInfo,
+  i4b_Slot
 };
 
 struct device *

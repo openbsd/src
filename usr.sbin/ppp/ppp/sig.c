@@ -23,10 +23,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: sig.c,v 1.5 2001/08/21 04:09:20 brian Exp $
+ *	$OpenBSD: sig.c,v 1.6 2002/05/16 01:13:39 brian Exp $
  */
-
-#include <sys/types.h>
 
 #include <signal.h>
 

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap_ms.c,v 1.10 2001/08/10 17:43:40 brian Exp $
+ * $OpenBSD: chap_ms.c,v 1.11 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <ctype.h>
@@ -36,7 +36,11 @@
 #else
 #include <sys/types.h>
 #include <stdlib.h>
+#ifdef __NetBSD__
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <openssl/sha.h>
 #endif
 #include <md4.h>

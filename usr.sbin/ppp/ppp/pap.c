@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: pap.c,v 1.17 2001/08/19 23:22:18 brian Exp $
+ * $OpenBSD: pap.c,v 1.18 2002/05/16 01:13:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -60,7 +60,6 @@
 #include "iplist.h"
 #include "slcompress.h"
 #include "ncpaddr.h"
-#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "mp.h"
@@ -143,10 +142,17 @@ SendPapCode(struct authinfo *authp, int code, const char *message)
 static void
 pap_Success(struct authinfo *authp)
 {
+  struct bundle *bundle = authp->physical->dl->bundle;
+
   datalink_GotAuthname(authp->physical->dl, authp->in.name);
-  SendPapCode(authp, PAP_ACK, "Greetings!!");
+#ifndef NORADIUS
+  if (*bundle->radius.cfg.file && bundle->radius.repstr)
+    SendPapCode(authp, PAP_ACK, bundle->radius.repstr);
+  else
+#endif
+    SendPapCode(authp, PAP_ACK, "Greetings!!");
   authp->physical->link.lcp.auth_ineed = 0;
-  if (Enabled(authp->physical->dl->bundle, OPT_UTMP))
+  if (Enabled(bundle, OPT_UTMP))
     physical_Login(authp->physical, authp->in.name);
 
   if (authp->physical->link.lcp.auth_iwait == 0)
