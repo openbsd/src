@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.74 2005/02/09 12:35:20 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.75 2005/03/14 12:26:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -59,6 +59,7 @@ int		 show_fib_msg(struct imsg *);
 void		 show_nexthop_head(void);
 int		 show_nexthop_msg(struct imsg *);
 void		 show_interface_head(void);
+int		 ift2ifm(int);
 const char *	 get_media_descr(int);
 const char *	 get_linkstate(int, int);
 void		 print_baudrate(u_long);
@@ -669,19 +670,37 @@ show_fib_msg(struct imsg *imsg)
 void
 show_nexthop_head(void)
 {
-	printf("%-20s %s\n", "Nexthop", "State");
+	printf("%-20s %-10s\n", "Nexthop", "State");
 }
 
 int
 show_nexthop_msg(struct imsg *imsg)
 {
 	struct ctl_show_nexthop	*p;
+	int			 ifms_type;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEXTHOP:
 		p = imsg->data;
-		printf("%-20s %s\n", inet_ntoa(p->addr.v4),
+		printf("%-20s %-10s", inet_ntoa(p->addr.v4),
 		    p->valid ? "valid" : "invalid");
+		if (p->kif.ifname[0]) {
+			printf("%-8s", p->kif.ifname);
+			if (p->kif.flags & IFF_UP) {
+				printf("UP");
+				ifms_type = ift2ifm(p->kif.media_type);
+				if (ifms_type != 0)
+					printf(", %s, %s",
+					    get_media_descr(ifms_type),
+					    get_linkstate(ifms_type,
+					    p->kif.link_state));
+				if (p->kif.baudrate) {
+					printf(", ");
+					print_baudrate(p->kif.baudrate);
+				}
+			}
+		}
+		printf("\n");
 		break;
 	case IMSG_CTL_END:
 		return (1);
@@ -706,6 +725,23 @@ const struct ifmedia_status_description
 		ifm_status_descriptions[] = IFM_STATUS_DESCRIPTIONS;
 const struct ifmedia_description
 		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
+
+int
+ift2ifm(int media_type)
+{
+	switch (media_type) {
+	case IFT_ETHER:
+		return (IFM_ETHER);
+	case IFT_FDDI:
+		return (IFM_FDDI);
+	case IFT_ISO88025:
+		return (IFM_TOKEN);
+	case IFT_CARP:
+		return (IFM_CARP);
+	default:
+		return (0);
+	}
+}
 
 const char *
 get_media_descr(int media_type)
@@ -752,7 +788,6 @@ print_baudrate(u_long baudrate)
 		printf("%lu Bit/s", baudrate);
 }
 
-
 int
 show_interface_msg(struct imsg *imsg)
 {
@@ -765,25 +800,8 @@ show_interface_msg(struct imsg *imsg)
 		printf("%-15s", k->ifname);
 		printf("%-15s", k->nh_reachable ? "ok" : "invalid");
 		printf("%-15s", k->flags & IFF_UP ? "UP" : "");
-		switch (k->media_type) {
-		case IFT_ETHER:
-			ifms_type = IFM_ETHER;
-			break;
-		case IFT_FDDI:
-			ifms_type = IFM_FDDI;
-			break;
-		case IFT_ISO88025:
-			ifms_type = IFM_TOKEN;
-			break;
-		case IFT_CARP:
-			ifms_type = IFM_CARP;
-			break;
-		default:
-			ifms_type = 0;
-			break;
-		}
 
-		if (ifms_type)
+		if ((ifms_type = ift2ifm(k->media_type)) != 0)
 			printf("%s, %s", get_media_descr(ifms_type),
 			    get_linkstate(ifms_type, k->link_state));
 		else if (k->link_state == LINK_STATE_UNKNOWN)
