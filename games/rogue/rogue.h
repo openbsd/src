@@ -1,4 +1,4 @@
-/*	$OpenBSD: rogue.h,v 1.8 2002/07/18 07:13:57 pjanzen Exp $	*/
+/*	$OpenBSD: rogue.h,v 1.9 2002/07/26 19:56:07 pjanzen Exp $	*/
 /*	$NetBSD: rogue.h,v 1.4 1995/04/24 12:25:04 cgd Exp $	*/
 
 /*
@@ -553,7 +553,6 @@ void	gr_wand(object *);
 void	gr_weapon(object *, int);
 void	hallucinate(void);
 boolean	has_amulet(void);
-boolean	has_been_touched(struct rogue_time *, struct rogue_time *);
 void	heal(void);
 void	hide_boxed_passage(short, short, short, short, short);
 void	hold_monster(void);
@@ -654,14 +653,10 @@ void	put_stairs(void);
 void	quaff(void);
 void	quit(boolean);
 int	r_index(char *, int, boolean);
-void	r_read(FILE *, char *, size_t);
-void	r_write(FILE *, char *, size_t);
 void	rand_around(short, short *, short *);
 int	rand_percent(int);
 void	rand_place(object *);
-void	read_pack(object *, FILE *, boolean);
 void	read_scroll(void);
-void	read_string(char *, size_t, FILE *);
 void	recursive_deadend(short, short *, short, short);
 boolean	reg_move(void);
 void	relight(void);
@@ -677,9 +672,6 @@ void	rogue_hit(object *, boolean);
 int	rogue_is_around(short, short);
 long	rrandom(void);
 void	rust(object *);
-void	rw_dungeon(FILE *, boolean);
-void	rw_id(struct id *, FILE *, int, boolean);
-void	rw_rooms(FILE *, boolean);
 void	s_con_mon(object *);
 int	same_col(int, int);
 int	same_row(int, int);
@@ -734,8 +726,6 @@ void	wear(void);
 void	wield(void);
 void	win(void);
 void	wizardize(void);
-void	write_pack(object *, FILE *);
-void	write_string(char *, FILE *);
 long	xxx(boolean);
 void	xxxx(char *, short);
 void	zap_monster(object *, unsigned short);
