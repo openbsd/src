@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.1 2003/10/31 03:54:34 drahn Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.2 2003/11/14 20:09:20 drahn Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -43,9 +43,6 @@ static int (*openfirmware)(void *);
 
 static void setup(void);
 
-#ifdef XCOFF_GLUE
-asm (".text; .globl _entry; _entry: .long _start,0,0");
-#endif
 asm("
 	.text
 	.globl	bat_init
@@ -83,9 +80,7 @@ _start(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 {
 	extern char etext[];
 
-#ifdef	FIRMWORKSBUGS
 	syncicache((void *)RELOC, etext - (char *)RELOC);
-#endif
 	bat_init();
 	openfirmware = openfirm;	/* Save entry to Open Firmware */
 #if 0
@@ -95,32 +90,6 @@ _start(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 	main(arg, argl);
 	exit();
 }
-
-#if 0
-void handle_decr_intr();
-__asm (	"	.globl handle_decr_intr\n"
-	"	.type handle_decr_intr@function\n"
-	"handle_decr_intr:\n"
-	"	rfi\n");
-
-
-patch_dec_intr()
-{
-	int time;
-	unsigned int *decr_intr = (unsigned int *)0x900;
-	unsigned int br_instr;
-
-	/* this hack is to prevent unexected Decrementer Exceptions
-	 * when Apple openfirmware enables interrupts
-	 */
-	time = 0x40000000;
-	asm("mtdec %0" :: "r"(time));
-
-	/* we assume that handle_decr_intr is in the first 128 Meg */
-	br_instr = (18 << 23) | (unsigned int)handle_decr_intr;
-	*decr_intr = br_instr;
-}
-#endif
 
 __dead void
 _rtt()
@@ -368,16 +337,6 @@ OF_claim(void *virt, u_int size, u_int align)
 		1,
 	};
 
-/*
-#ifdef	FIRMWORKSBUGS
-*/
-#if 0
-	/*
-	 * Bug with Firmworks OFW
-	 */
-	if (virt)
-		return virt;
-#endif
 	args.virt = virt;
 	args.size = size;
 	args.align = align;
