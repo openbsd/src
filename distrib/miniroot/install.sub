@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.39 1997/09/25 05:16:43 millert Exp $
+#	$OpenBSD: install.sub,v 1.40 1997/10/03 20:26:35 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1147,10 +1147,10 @@ __mount_a_disk_1
 	    sed -n -e '/^  .:/{s/^  \(.\).*/\1/;H;}' \
 		-e '${g;s/\n//g;s/^/[/;s/$/]/p;}'`
 	_def_partition=`echo $_likely_partition_range | \
-	    sed -n 's/^\[\(.\)\]/\1/p'`
+	    sed -n 's/^\[\(.\).*\]/\1/p'`
 	if [ -z "$_def_partition" ]; then
 		_def_partition=`echo $_partition_range | \
-		    sed -n 's/^\[\(.\)\]/\1/p'`
+		    sed -n 's/^\[\(.\).*\]/\1/p'`
 		if [ -z "$_def_partition" ]; then
 			echo "There are no usable partitions on that disk"
 			return 0
