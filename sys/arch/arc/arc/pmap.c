@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 1997/04/19 17:19:46 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 1997/05/01 15:16:46 pefo Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.9 1997/04/19 17:19:46 pefo Exp $
+ *      $Id: pmap.c,v 1.10 1997/05/01 15:16:46 pefo Exp $
  */
 
 /*
@@ -200,11 +200,14 @@ void
 pmap_bootstrap(firstaddr)
 	vm_offset_t firstaddr;
 {
-	register int i, n, nextpage;
-	register pt_entry_t *spte;
-	struct physseg *pseg;
+	int i;
+	pt_entry_t *spte;
 	vm_offset_t start = firstaddr;
 	extern int physmem;
+#ifdef MACHINE_NONCONTIG
+	struct physseg *pseg;
+	int n, nextpage;
+#endif
 
 
 #define	valloc(name, type, num) \
