@@ -193,8 +193,8 @@ sys_ntp_adjtime(p, v, retval)
 	 * the assumption the superuser should know what it is doing.
 	 */
 	modes = ntv.modes;
-	if (!suser(p->p_ucred, &p->p_acflag) && modes != 0)
-		return;
+	if (modes && (error = suser(p->p_ucred, &p->p_acflag)))
+		return (error);
 	s = splclock();
 	if (modes & MOD_FREQUENCY)
 #ifdef PPS_SYNC
