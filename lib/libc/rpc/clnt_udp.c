@@ -176,7 +176,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 			rpc_createerr.cf_error.re_errno = errno;
 			goto fooy;
 		}
-		/* attempt to bind to prov port */
+		/* attempt to bind to priv port */
 		(void)bindresvport(*sockp, (struct sockaddr_in *)0);
 		/* the sockets rpc controls are non-blocking */
 		(void)ioctl(*sockp, FIONBIO, (char *) &dontblock);
