@@ -1,4 +1,4 @@
-.\"	$OpenBSD: jot.1,v 1.10 2003/06/10 09:12:10 jmc Exp $
+.\"	$OpenBSD: jot.1,v 1.11 2003/12/15 23:24:20 jmc Exp $
 .\"	$NetBSD: jot.1,v 1.2 1994/11/14 20:27:36 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -38,44 +38,29 @@
 .Nd print sequential or random data
 .Sh SYNOPSIS
 .Nm jot
+.Bk -words
 .Op Fl cnr
 .Op Fl b Ar word
-.Op Fl w Ar word
-.Op Fl s Ar string
 .Op Fl p Ar precision
+.Op Fl s Ar string
+.Op Fl w Ar word
 .Oo Ar reps Oo Ar begin Oo Ar end
 .Oo Ar s Oc Oc Oc Oc
+.Ek
 .Sh DESCRIPTION
 .Nm
 is used to print out increasing, decreasing, random,
 or redundant data, usually numbers, one per line.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
-.It Fl r
-Generate random data instead of sequential data, the default.
+.Bl -tag -width "-p precision"
 .It Fl b Ar word
 Just print
 .Ar word
 repetitively.
-.It Fl w Ar word
-Print
-.Ar word
-with the generated data appended to it.
-Octal, hexadecimal, exponential, ASCII, zero-padded,
-and right-adjusted representations
-are possible by using the appropriate
-.Xr printf 3
-conversion specification inside
-.Ar word ,
-in which case the data is inserted rather than appended.
 .It Fl c
 This is an abbreviation for
 .Fl w Ic %c .
-.It Fl s Ar string
-Print data separated by
-.Ar string .
-Normally, newlines separate data.
 .It Fl n
 Do not print the final newline normally appended to the output.
 .It Fl p Ar precision
@@ -94,10 +79,30 @@ option is overridden by whatever appears in a
 .Xr printf 3
 conversion following
 .Fl w .
+.It Fl r
+Generate random data.
+By default,
+.Nm
+generates sequential data.
+.It Fl s Ar string
+Print data separated by
+.Ar string .
+Normally, newlines separate data.
+.It Fl w Ar word
+Print
+.Ar word
+with the generated data appended to it.
+Octal, hexadecimal, exponential, ASCII, zero-padded,
+and right-adjusted representations
+are possible by using the appropriate
+.Xr printf 3
+conversion specification inside
+.Ar word ,
+in which case the data is inserted rather than appended.
 .El
 .Pp
 The last four arguments indicate, respectively,
-the number of data, the lower bound, the upper bound,
+the maximum number of data, the lower bound, the upper bound,
 and the step size or, for random data, the seed.
 While at least one of them must appear,
 any of the other three may be omitted, and
@@ -138,54 +143,51 @@ derives in part from
 .Xr iota ,
 a function in APL.
 .Sh EXAMPLES
-The command
+Print 21 evenly spaced numbers increasing from \-1 to 1:
 .Pp
 .Dl $ jot 21 \-1 1.00
 .Pp
-prints 21 evenly spaced numbers increasing from \-1 to 1.
-The ASCII character set is generated with
+Generate the ASCII character set:
 .Pp
 .Dl $ jot \-c 128 0
 .Pp
-and the strings xaa through xaz with
+Generate the strings xaa through xaz:
 .Pp
 .Dl $ jot \-w xa%c 26 a
 .Pp
-while 20 random 8-letter strings are produced with
+Generate 20 random 8-letter strings:
 .Pp
 .Dl "$ jot \-r \-c 160 a z | rs \-g 0 8"
 .Pp
 Infinitely many
 .Xr yes 1 's
-may be obtained through
+may be obtained through:
 .Pp
 .Dl $ jot \-b yes 0
 .Pp
-and thirty
+Thirty
 .Xr ed 1
-substitution commands applying to lines 2, 7, 12, etc. is
-the result of
+substitution commands applying to lines 2, 7, 12, etc. is the result of:
 .Pp
 .Dl $ jot \-w %ds/old/new/ 30 2 \- 5
 .Pp
 The stuttering sequence 9, 9, 8, 8, 7, etc. can be
-produced by suitable choice of precision and step size,
-as in
+produced by suitable choice of precision and step size:
 .Pp
-.Dl $ jot 0 9 \- \-.5
+.Dl $ jot 20 9 0 \-.475
 .Pp
-and a file containing exactly 1024 bytes is created with
+Create a file containing exactly 1024 bytes:
 .Pp
 .Dl $ jot \-b x 512 > block
 .Pp
-Finally, to set tabs four spaces apart starting
-from column 10 and ending in column 132, use
+To set tabs four spaces apart starting
+from column 10 and ending in column 132, use:
 .Pp
-.Dl $ expand \-\`jot \-s, \- 10 132 4\`
+.Dl $ expand \-`jot \-s, \- 10 132 4`
 .Pp
-and to print all lines 80 characters or longer,
+To print all lines 80 characters or longer:
 .Pp
-.Dl $ grep \`jot \-s \&"\&" \-b . 80\`
+.Dl $ grep `jot \-s \&"\&" \-b . 80`
 .Sh SEE ALSO
 .Xr ed 1 ,
 .Xr expand 1 ,

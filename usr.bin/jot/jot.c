@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.13 2003/06/10 22:20:47 deraadt Exp $	*/
+/*	$OpenBSD: jot.c,v 1.14 2003/12/15 23:24:20 jmc Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: jot.c,v 1.13 2003/06/10 22:20:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: jot.c,v 1.14 2003/12/15 23:24:20 jmc Exp $";
 #endif /* not lint */
 
 /*
@@ -306,8 +306,9 @@ putdata(double x, long notlast)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: jot [-cnr] [-b word] [-w word] "
-	    "[-s string] [-p precision] [reps [begin [end [s]]]]\n");
+	(void)fprintf(stderr, "usage: jot [-cnr] [-b word] [-p precision] "
+	    "[-s string] [-w word]\n"
+	    "	   [reps [begin [end [s]]]]\n");
 	exit(1);
 }
 
