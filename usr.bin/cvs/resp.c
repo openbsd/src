@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.17 2004/12/13 17:09:01 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.18 2004/12/13 22:53:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -584,7 +584,7 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 		ep->ce_mtime = time(&(ep->ce_mtime));
 
 	if ((type == CVS_RESP_UPDEXIST) || (type == CVS_RESP_UPDATED) ||
-	    (type == CVS_RESP_MERGED)) {
+	    (type == CVS_RESP_MERGED) || (type == CVS_RESP_CREATED)) {
 		if (cvs_ent_remove(entfile, ep->ce_name) < 0)
 			cvs_log(LP_WARN, "failed to remove entry for `%s'",
 			    ep->ce_name);
