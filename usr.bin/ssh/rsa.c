@@ -35,7 +35,7 @@ Description of the RSA algorithm can be found e.g. from the following sources:
 */
 
 #include "includes.h"
-RCSID("$Id: rsa.c,v 1.6 1999/11/02 19:42:36 markus Exp $");
+RCSID("$Id: rsa.c,v 1.7 1999/11/05 07:09:07 markus Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -128,6 +128,8 @@ rsa_public_encrypt(BIGNUM *out, BIGNUM *in, RSA* key)
 
   BN_bin2bn(outbuf, len, out);
 
+  memset(outbuf, 0, len);
+  memset(inbuf, 0, len);
   xfree(outbuf);
   xfree(inbuf);
 }
@@ -151,6 +153,8 @@ rsa_private_decrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 
   BN_bin2bn(outbuf, len, out);
 
+  memset(outbuf, 0, len);
+  memset(inbuf, 0, len);
   xfree(outbuf);
   xfree(inbuf);
 }
