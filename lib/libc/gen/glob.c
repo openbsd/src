@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.11 2001/03/28 06:33:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.12 2001/03/28 07:44:59 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -131,7 +131,7 @@ typedef char Char;
 
 
 static int	 compare __P((const void *, const void *));
-static void	 g_Ctoc __P((const Char *, char *));
+static int	 g_Ctoc __P((const Char *, char *, char *));
 static int	 g_lstat __P((Char *, struct stat *, glob_t *));
 static DIR	*g_opendir __P((Char *, glob_t *));
 static Char	*g_strchr __P((Char *, int));
@@ -593,10 +593,11 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob, limitp)
 	if ((dirp = g_opendir(pathbuf, pglob)) == NULL) {
 		/* TODO: don't call for ENOENT or ENOTDIR? */
 		if (pglob->gl_errfunc) {
-			g_Ctoc(pathbuf, buf);
+			if (g_Ctoc(pathbuf, buf, buf+sizeof(buf)))
+				return(GLOB_ABORTED);
 			if (pglob->gl_errfunc(buf, errno) ||
 			    pglob->gl_flags & GLOB_ERR)
-				return (GLOB_ABORTED);
+				return(GLOB_ABORTED);
 		}
 		return(0);
 	}
@@ -685,7 +686,10 @@ globextend(path, pglob, limitp)
 	len = (size_t)(p - path);
 	*limitp += len;
 	if ((copy = malloc(len)) != NULL) {
-		g_Ctoc(path, copy);
+		if (g_Ctoc(path, copy, copy+len)) {
+			free(copy);
+			return(GLOB_NOSPACE);
+		}
 		pathv[pglob->gl_offs + pglob->gl_pathc++] = copy;
 	}
 	pathv[pglob->gl_offs + pglob->gl_pathc] = NULL;
@@ -720,7 +724,8 @@ match(name, pat, patend)
 			do
 			    if (match(name, pat, patend))
 				    return(1);
-			while (*name++ != EOS);
+			while (*name++ != EOS)
+				;
 			return(0);
 		case M_ONE:
 			if (*name++ == EOS)
@@ -778,8 +783,10 @@ g_opendir(str, pglob)
 
 	if (!*str)
 		strcpy(buf, ".");
-	else
-		g_Ctoc(str, buf);
+	else {
+		if (g_Ctoc(str, buf, buf+sizeof(buf)))
+			return(NULL);
+	}
 
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		return((*pglob->gl_opendir)(buf));
@@ -795,7 +802,8 @@ g_lstat(fn, sb, pglob)
 {
 	char buf[MAXPATHLEN];
 
-	g_Ctoc(fn, buf);
+	if (g_Ctoc(fn, buf, buf+sizeof(buf)))
+		return(-1);
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		return((*pglob->gl_lstat)(buf, sb));
 	return(lstat(buf, sb));
@@ -809,7 +817,8 @@ g_stat(fn, sb, pglob)
 {
 	char buf[MAXPATHLEN];
 
-	g_Ctoc(fn, buf);
+	if (g_Ctoc(fn, buf, buf+sizeof(buf)))
+		return(-1);
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		return((*pglob->gl_stat)(buf, sb));
 	return(stat(buf, sb));
@@ -827,15 +836,18 @@ g_strchr(str, ch)
 	return (NULL);
 }
 
-static void
-g_Ctoc(str, buf)
+static int
+g_Ctoc(str, buf, ebuf)
 	register const Char *str;
-	char *buf;
+	char *buf, *ebuf;
 {
 	register char *dc;
 
-	for (dc = buf; (*dc++ = *str++) != EOS;)
+	for (dc = buf; dc < ebuf && (*dc++ = *str++) != EOS;)
 		continue;
+	if (dc >= ebuf)
+		return (1);
+	return (0);
 }
 
 #ifdef DEBUG
