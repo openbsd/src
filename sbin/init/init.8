@@ -1,4 +1,4 @@
-.\"	$OpenBSD: init.8,v 1.16 1999/05/23 14:11:15 aaron Exp $
+.\"	$OpenBSD: init.8,v 1.17 1999/05/31 17:43:22 millert Exp $
 .\"	$NetBSD: init.8,v 1.6 1995/03/18 14:56:31 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -77,9 +77,9 @@ If the
 .Ar console
 entry in the
 .Xr ttys 5
-file is marked
-.Dq insecure ,
-then
+file does not contain the
+.Dq secure
+flag, then
 .Nm
 will require that the super-user password be
 entered before the system will start a single-user shell.
