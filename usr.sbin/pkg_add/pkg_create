@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.4 2003/11/04 18:11:42 espie Exp $
+# $OpenBSD: pkg_create,v 1.5 2003/11/22 11:59:19 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -84,9 +84,17 @@ sub compute_checksum
 {
 	my ($self, $base) = @_;
 	my $fname = $self->fullname();
-	return if -l "$base/$fname";
-	$self->{md5} = OpenBSD::md5::fromfile("$base/$fname");
-	$self->{size} = (stat "$base/$fname")[7];
+	if (-l "$base/$fname") {
+		return if $base eq '/' or $base eq '';
+		my $value = readlink "$base/$fname";
+		if ($value =~ m/^\Q$base/) {
+			print STDERR "Error in package: symlink $base/$fname refers to $value\n";
+			$main::errors++;
+		}
+	} else {
+		$self->{md5} = OpenBSD::md5::fromfile("$base/$fname");
+		$self->{size} = (stat "$base/$fname")[7];
+	}
 }
 
 sub makesum
@@ -103,23 +111,22 @@ sub avert_duplicates
 {
 	my ($self) = @_;
 	my $allfiles = {};
-	my $duplicates = 0;
 	for my $item (@{$self->{items}}) {
-		if ($item->IsFile()) {
+		if ($item->IsFile() || $item->isa("OpenBSD::PackingElement::DirRm")) {
 			my $n = $item->fullname();
 			if (defined $allfiles->{$n}) {
 				print STDERR "Error in packing-list: duplicate file $n\n";
-				$duplicates++;
+				$main::errors++;
 			}
 			$allfiles->{$n} = 1;
-		}
-	}
-	if ($duplicates) {
-		exit(1);
+		} 
 	}
 }
 
+
 package main;
+
+our $errors = 0;
 
 our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, $opt_D,
 	$opt_S, $opt_m, $opt_h, $opt_s, $opt_O, $opt_P, $opt_C);
@@ -204,6 +211,10 @@ $plist->fromfile($dir.CONTENTS) or die "Can't open packing list";
 my $base = $opt_S || '/';
 $plist->makesum($base);
 $plist->avert_duplicates();
+if ($errors) {
+	exit(1);
+}
+
 my @cmd = $plist->archive_cmd($dir, $base);
 
 if (defined $opt_i) {
