@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.8 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: yds.c,v 1.9 2001/12/07 17:08:35 deraadt Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -68,6 +68,11 @@
 
 #include <dev/pci/ydsreg.h>
 #include <dev/pci/ydsvar.h>
+
+#ifdef AUDIO_DEBUG
+#include <uvm/uvm_extern.h>    /* for vtophys */
+#include <uvm/uvm_pmap.h>      /* for vtophys */
+#endif
 
 /* Debug */
 #undef YDS_USE_REC_SLOT
@@ -697,13 +702,9 @@ yds_attach(parent, self, aux)
 	sc->sc_id = pa->pa_id;
 	sc->sc_flags = yds_get_dstype(sc->sc_id);
 #ifdef AUDIO_DEBUG
-	if (ydsdebug) {
-		char bits[80];
-
-		printf("%s: chip has %s\n", sc->sc_dev.dv_xname,
-		       bitmask_snprintf(sc->sc_flags, YDS_CAP_BITS, bits,
-					sizeof(bits)));
-	}
+	if (ydsdebug)
+		printf("%s: chip has %b\n", sc->sc_dev.dv_xname,
+			YDS_CAP_BITS, sc->sc_flags);
 #endif
 
 	/* Disable legacy mode */
