@@ -64,4 +64,6 @@ extern	int	kmemcpy __P((char *, void *, int));
 
 #define	KMCPY(a,b,c)	kmemcpy((char *)(a), (void *)(b), (int)(c))
 
+#ifndef OPT_RAW
 #define	OPT_RAW	0x80000
+#endif
