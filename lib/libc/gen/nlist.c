@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.29 1998/09/07 03:23:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.30 1998/09/08 15:13:31 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -205,7 +205,7 @@ __ecoff_fdnlist(fd, list)
 	/* Read in the string table. */
 	if (Seek(fd, symhdr.cbSsExtOffset, SEEK_SET) == -1)
 		BAD;
-#ifdef alpha
+#ifdef __alpha__
 	strsize = symhdr.estrMax;
 #else
 	strsize = symhdr.sh_estrmax;
