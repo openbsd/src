@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.1 2001/09/01 15:55:17 drahn Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.2 2001/12/18 17:33:34 drahn Exp $	*/
 /*	$NetBSD: pchb.c,v 1.4 2000/01/25 07:19:11 tsubai Exp $	*/
 
 /*-
@@ -80,6 +80,9 @@ pchbmatch(parent, cf, aux)
 		case PCI_PRODUCT_APPLE_PANGEA_PCI1:
 		case PCI_PRODUCT_APPLE_PANGEA_PCI2:
 		case PCI_PRODUCT_APPLE_PANGEA_AGP:
+		case PCI_PRODUCT_APPLE_UNINORTH2:
+		case PCI_PRODUCT_APPLE_UNINORTH2ETH:
+		case PCI_PRODUCT_APPLE_UNINORTH2AGP:
 			return (1);
 		}
 		break;
