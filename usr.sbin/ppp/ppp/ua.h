@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ua.h,v 1.1 1998/09/04 18:27:47 brian Exp $
+ *	$Id: ua.h,v 1.2 1998/09/15 17:21:58 brian Exp $
  */
 
 #ifdef __i386__		/* Do any other archs not care about alignment ? */
@@ -65,9 +65,9 @@
 
 #  define ua_ntohs(src, tgt)				\
     do {						\
-      u_int32_t __nh;					\
-      __nh = ((u_int32_t)*(u_char *)(src) << 8) |	\
-          (u_int32_t)*((u_char *)(src) + 1);		\
+      u_int16_t __nh;					\
+      __nh = ((u_int16_t)*(u_char *)(src) << 8) |	\
+          (u_int16_t)*((u_char *)(src) + 1);		\
       memcpy((tgt), &__nh, sizeof __nh);		\
     } while (0)
 
