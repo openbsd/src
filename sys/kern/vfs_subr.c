@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.103 2004/08/04 20:36:27 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.104 2004/12/09 22:36:40 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -87,10 +87,10 @@ int suid_clear = 1;		/* 1 => clear SUID / SGID on owner change */
 	(bp)->b_vnbufs.le_next = NOLIST;				\
 }
 
-struct freelst vnode_hold_list;   /* list of vnodes referencing buffers */
-struct freelst vnode_free_list;   /* vnode free list */
+struct freelst vnode_hold_list;	/* list of vnodes referencing buffers */
+struct freelst vnode_free_list;	/* vnode free list */
 
-struct mntlist mountlist;			/* mounted filesystem list */
+struct mntlist mountlist;	/* mounted filesystem list */
 struct simplelock mountlist_slock;
 static struct simplelock mntid_slock;
 struct simplelock mntvnode_slock;
@@ -152,7 +152,6 @@ vntblinit()
  *  - no flags means that we should sleep on the mountpoint and then
  *     fail.
  */
-
 int
 vfs_busy(struct mount *mp, int flags, struct simplelock *interlkp,
     struct proc *p)
@@ -205,7 +204,6 @@ vfs_isbusy(struct mount *mp)
  *
  * Devname is usually updated by mount(8) after booting.
  */
-
 int
 vfs_rootmountalloc(fstypename, devname, mpp)
 	char *fstypename;
@@ -244,7 +242,7 @@ vfs_rootmountalloc(fstypename, devname, mpp)
  * has not been preselected, walk through the list of known filesystems
  * trying those that have mountroot routines, and try them until one
  * works or we have tried them all.
-  */
+ */
 int
 vfs_mountroot()
 {
@@ -481,10 +479,10 @@ insmntque(vp, mp)
 	register struct mount *mp;
 {
 	simple_lock(&mntvnode_slock);
+
 	/*
 	 * Delete from old mount point vnode list, if on one.
 	 */
-
 	if (vp->v_mount != NULL)
 		LIST_REMOVE(vp, v_mntvnodes);
 	/*
@@ -492,6 +490,7 @@ insmntque(vp, mp)
 	 */
 	if ((vp->v_mount = mp) != NULL)
 		LIST_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
+
 	simple_unlock(&mntvnode_slock);
 }
 
@@ -1030,7 +1029,7 @@ vclean(vp, flags, p)
 	VOP_LOCK(vp, LK_DRAIN | LK_INTERLOCK, p);
 
 	/*
-	 * clean out any VM data associated with the vnode.
+	 * Clean out any VM data associated with the vnode.
 	 */
 	uvm_vnp_terminate(vp);
 	/*
@@ -1091,8 +1090,6 @@ vclean(vp, flags, p)
 		wakeup(vp);
 	}
 }
-
-
 
 /*
  * Recycle an unused vnode to the front of the free list.
@@ -1421,7 +1418,6 @@ vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	}
 	return (EOPNOTSUPP);
 }
-
 
 int kinfo_vdebug = 1;
 int kinfo_vgetfailed;
