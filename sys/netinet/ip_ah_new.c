@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.35 1999/12/15 07:07:59 itojun Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.36 2000/01/09 23:42:37 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1053,7 +1053,7 @@ ah_new_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 	default:
 	    DPRINTF(("ah_new_output(): unsupported protocol family %d in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
-	    ahstat.ahs_hdrops++;
+	    ahstat.ahs_nopf++;
 	    m_freem(m);
 	    return EPFNOSUPPORT;
     }

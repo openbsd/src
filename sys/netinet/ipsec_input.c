@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.7 2000/01/08 01:59:25 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.8 2000/01/09 23:42:37 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -63,6 +63,8 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_var.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 
 #ifdef INET6
 #include <netinet6/in6.h>
@@ -105,7 +107,9 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 					                     "esp6_input()") :\
                                             (af == AF_INET ? "ah_input()" :\
                                                              "ah6_input()"))
-    union sockaddr_union sunion;
+    union sockaddr_union src_address, dst_address, src2, dst2;
+    caddr_t sport = 0, dport = 0;
+    struct flow *flow;
     struct tdb *tdbp;
     struct mbuf *m;
     u_int32_t spi;
@@ -153,34 +157,46 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
      * IP packet ready to go through input processing.
      */
 
-    bzero(&sunion, sizeof(sunion));
-    sunion.sin.sin_family = af;
+    bzero(&dst_address, sizeof(dst_address));
+    dst_address.sa.sa_family = af;
 
-#ifdef INET
-    if (af == AF_INET)
+    switch (af)
     {
-	sunion.sin.sin_len = sizeof(struct sockaddr_in);
-	m_copydata(m, offsetof(struct ip, ip_dst), sizeof(struct in_addr),
-		   (unsigned char *) &(sunion.sin.sin_addr));
-    }
+#ifdef INET
+	case AF_INET:
+	    dst_address.sin.sin_len = sizeof(struct sockaddr_in);
+	    sport = (caddr_t) &src_address.sin.sin_port;
+	    dport = (caddr_t) &dst_address.sin.sin_port;
+	    m_copydata(m, offsetof(struct ip, ip_dst), sizeof(struct in_addr),
+		       (caddr_t) &(dst_address.sin.sin_addr));
+	    break;
 #endif /* INET */
 
 #ifdef INET6
-    if (af == AF_INET6)
-    {
-	sunion.sin6.sin6_len = sizeof(struct sockaddr_in6);
-	m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
-		   sizeof(struct in6_addr),
-		   (unsigned char *) &(sunion.sin6.sin6_addr));
-    }
+	case AF_INET6:
+	    dst_address.sin6.sin6_len = sizeof(struct sockaddr_in6);
+	    sport = (caddr_t) &src_address.sin6.sin6_port;
+	    dport = (caddr_t) &dst_address.sin6.sin6_port;
+	    m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
+		       sizeof(struct in6_addr),
+		       (caddr_t) &(dst_address.sin6.sin6_addr));
+	    break;
 #endif /* INET6 */
 
+	default:
+	    DPRINTF(("%s: unsupported protocol family %d\n", IPSEC_NAME, af));
+	    m_freem(m);
+	    *m0 = NULL;
+	    IPSEC_ISTAT(espstat.esps_nopf, ahstat.ahs_nopf);
+	    return EPFNOSUPPORT;
+    }
+
     s = spltdb();
-    tdbp = gettdb(spi, &sunion, sproto);
+    tdbp = gettdb(spi, &dst_address, sproto);
     if (tdbp == NULL)
     {
 	DPRINTF(("%s: could not find SA for packet to %s, spi %08x\n",
-		 IPSEC_NAME, ipsp_address(sunion), ntohl(spi)));
+		 IPSEC_NAME, ipsp_address(dst_address), ntohl(spi)));
 	m_freem(m);
 	*m0 = NULL;
 	IPSEC_ISTAT(espstat.esps_notdb, ahstat.ahs_notdb);
@@ -190,7 +206,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
     if (tdbp->tdb_flags & TDBF_INVALID)
     {
 	DPRINTF(("%s: attempted to use invalid SA %s/%08x\n",
-		 IPSEC_NAME, ipsp_address(sunion), ntohl(spi)));
+		 IPSEC_NAME, ipsp_address(dst_address), ntohl(spi)));
 	m_freem(m);
 	*m0 = NULL;
 	IPSEC_ISTAT(espstat.esps_invalid, ahstat.ahs_invalid);
@@ -200,7 +216,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
     if (tdbp->tdb_xform == NULL)
     {
 	DPRINTF(("%s: attempted to use uninitialized SA %s/%08x\n",
-		 IPSEC_NAME, ipsp_address(sunion), ntohl(spi)));
+		 IPSEC_NAME, ipsp_address(dst_address), ntohl(spi)));
 	m_freem(m);
 	*m0 = NULL;
 	IPSEC_ISTAT(espstat.esps_noxform, ahstat.ahs_noxform);
@@ -259,13 +275,13 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 	    if (((tdbp->tdb_proxy.sa.sa_family == AF_INET) &&
 		 (tdbp->tdb_proxy.sin.sin_addr.s_addr != INADDR_ANY) &&
 		 (ipn.ip_src.s_addr != tdbp->tdb_proxy.sin.sin_addr.s_addr)) ||
-		((tdbp->tdb_proxy.sa.sa_family != AF_INET6) &&
+		((tdbp->tdb_proxy.sa.sa_family != AF_INET) &&
 		 (tdbp->tdb_proxy.sa.sa_family != 0)))
 	    {
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet_ntoa4(ipn.ip_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
-		m_free(m);
+		m_freem(m);
 	    	*m0 = NULL;
-                IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+                IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
 		return EACCES;
 	    }
 	}
@@ -290,9 +306,9 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 		 (tdbp->tdb_proxy.sa.sa_family != 0)))
 	    {
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet6_ntoa4(ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
-		m_free(m);
+		m_freem(m);
 	    	*m0 = NULL;
-		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
 		return EACCES;
 	    }
 	}
@@ -309,8 +325,8 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 	     (tdbp->tdb_src.sa.sa_family != 0)))
 	{
 	    DPRINTF(("%s: source address %s doesn't correspond to expected source %s, SA %s/%08x\n", IPSEC_NAME, inet_ntoa4(ip->ip_src), ipsp_address(tdbp->tdb_src), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
-	    m_free(m);
-	    IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+	    m_freem(m);
+	    IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
 	    *m0 = NULL;
 	    return EACCES;
 	}
@@ -354,8 +370,8 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 		 (tdbp->tdb_proxy.sa.sa_family != 0)))
 	    {
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet_ntoa4(ipn.ip_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
-		m_free(m);
-		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+		m_freem(m);
+		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
 	    	*m0 = NULL;
 		return EACCES;
 	    }
@@ -380,9 +396,9 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 		 (tdbp->tdb_proxy.sa.sa_family != 0)))
 	    {
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet6_ntoa4(ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
-		m_free(m);
+		m_freem(m);
 	    	*m0 = NULL;
-		IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
 		return EACCES;
 	    }
 	}
@@ -398,14 +414,88 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 	    ((tdbp->tdb_src.sa.sa_family != AF_INET6) &&
 	     (tdbp->tdb_src.sa.sa_family != 0)))
 	{
-	    DPRINTF(("%s: source address %s doesn't correspond to expected source %s, SA %s/%08x\n", IPSEC_NAME, inet6_ntoa4(ip6->ip6_src), ipsp_address(tdbp->tdb_src), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
-	    m_free(m);
+	    DPRINTF(("%s: packet %s to %s does not match any ACL entries, SA %s/%08x\n", IPSEC_NAME, ipsp_address(src_address), ipsp_address(dst_address), ipsp_address(tdbp->tdb_src), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+	    m_freem(m);
 	    *m0 = NULL;
-	    IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+	    IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
 	    return EACCES;
 	}
     }
 #endif /* INET6 */
+
+    /* Access control */
+    if (ipsec_acl)
+    {
+	bzero(&src_address, sizeof(dst_address));
+	src_address.sa.sa_family = af;
+	src_address.sa.sa_len = dst_address.sa.sa_len;
+
+#ifdef INET
+	if (af == AF_INET)
+	  m_copydata(m, offsetof(struct ip, ip_src), sizeof(struct in_addr),
+		     (caddr_t) &(src_address.sin.sin_addr));
+#endif /* INET */
+
+#ifdef INET6
+	if (af == AF_INET6)
+	  m_copydata(m, offsetof(struct ip6_hdr, ip6_src),
+		     sizeof(struct in6_addr),
+		     (caddr_t) &(src_address.sin6.sin6_addr));
+#endif /* INET6 */
+
+	/* Save transport layer source/destination ports, if any */
+	switch (prot)
+	{
+	    case IPPROTO_TCP:
+		m_copydata(m, skip + offsetof(struct tcphdr, th_sport),
+			   sizeof(u_int16_t), (caddr_t) sport);
+		m_copydata(m, skip + offsetof(struct tcphdr, th_dport),
+			   sizeof(u_int16_t), (caddr_t) dport);
+		break;
+
+	    case IPPROTO_UDP:
+		m_copydata(m, skip + offsetof(struct udphdr, uh_sport),
+			   sizeof(u_int16_t), (caddr_t) sport);
+		m_copydata(m, skip + offsetof(struct udphdr, uh_dport),
+			   sizeof(u_int16_t), (caddr_t) dport);
+		break;
+
+	    default:
+		/* Nothing needed */
+	}
+
+	for (flow = tdbp->tdb_access; flow; flow = flow->flow_next)
+	{
+	    /* Match for address family */
+	    if (flow->flow_src.sa.sa_family != af)
+	      continue;
+
+	    /* Match for transport protocol */
+	    if (flow->flow_proto != prot)
+	      continue;
+
+	    /* Netmask handling */
+	    rt_maskedcopy(&src_address.sa, &src2.sa, &flow->flow_srcmask.sa);
+	    rt_maskedcopy(&dst_address.sa, &dst2.sa, &flow->flow_dstmask.sa);
+
+	    /* Check addresses */
+	    if (bcmp(&src2, &flow->flow_src, src2.sa.sa_len) ||
+		bcmp(&dst2, &flow->flow_dst, dst2.sa.sa_len))
+	      continue;
+
+	    break; /* success! */
+	}
+
+	if (flow == NULL)
+	{
+	    /* Failed to match any entry in the ACL */
+		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet6_ntoa4(ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+		m_freem(m);
+	    	*m0 = NULL;
+		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
+		return EACCES;
+	}
+    }
 
     if (prot == IPPROTO_TCP || prot == IPPROTO_UDP)
     {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.21 1999/12/31 22:19:42 itojun Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.22 2000/01/09 23:42:37 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -54,6 +54,7 @@ struct ah_old
 struct ahstat
 {
     u_int32_t	ahs_hdrops;	/* packet shorter than header shows */
+    u_int32_t   ahs_nopf;      /* Protocol family not supported */
     u_int32_t	ahs_notdb;
     u_int32_t	ahs_badkcr;
     u_int32_t	ahs_badauth;

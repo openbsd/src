@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.28 1999/12/31 22:19:43 itojun Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.29 2000/01/09 23:42:37 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -62,6 +62,7 @@ struct esp_new
 struct espstat
 {
     u_int32_t	esps_hdrops;	/* packet shorter than header shows */
+    u_int32_t	esps_nopf;	/* Protocol family not supported */
     u_int32_t	esps_notdb;
     u_int32_t	esps_badkcr;
     u_int32_t	esps_qfull;
