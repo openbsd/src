@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.42 2002/05/29 07:54:59 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.43 2002/05/29 13:56:37 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -1289,7 +1289,6 @@ nd6_ioctl(cmd, data, ifp)
 		ndi->ndi.flags = ND_IFINFO(ifp)->flags;
 		ndi->ndi.recalctm = ND_IFINFO(ifp)->recalctm;
 		ndi->ndi.chlim = ND_IFINFO(ifp)->chlim;
-		ndi->ndi.receivedra = ND_IFINFO(ifp)->receivedra;
 		break;
 	case SIOCGIFINFO_IN6:
 		ndi->ndi = *ND_IFINFO(ifp);
