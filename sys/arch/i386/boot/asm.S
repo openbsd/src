@@ -52,10 +52,11 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <machine/asm.h>
+#define _LOCORE
+#include <machine/specialreg.h>
+#undef _LOCORE
 #define	addr32	.byte 0x67
 #define	data32	.byte 0x66
-
-CR0_PE		=	0x1
 
 	.data
 	.globl	_ourseg
