@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.23 1997/07/29 19:31:45 downsj Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.24 1997/10/20 20:56:12 pefo Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -2392,6 +2392,7 @@ tulip_srom_decode(
     } else {
 	unsigned length, type;
 	tulip_media_t gp_media = TULIP_MEDIA_UNKNOWN;
+
 	if (sc->tulip_features & TULIP_HAVE_GPR)
 	    sc->tulip_gpinit = *dp++;
 	blocks = *dp++;
@@ -2705,7 +2706,12 @@ tulip_read_macaddr(
 	     
 	    sc->tulip_boardsw = &tulip_21140_eb_boardsw;
 	}
+#ifdef powerpc
+/*XXX This should be fixed in some other way. Right now we need someting. */
+	pci_ether_hw_addr(sc->tulip_pc, (u_char *)(&sc->tulip_rombuf));
+#else
 	tulip_srom_read(sc);
+#endif
 	if (tulip_srom_crcok(sc->tulip_rombuf)) {
 	    /*
 	     * SROM CRC is valid therefore it must be in the
@@ -2995,7 +3001,7 @@ tulip_addr_filter(
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 		    hash = tulip_mchash(enm->enm_addrlo);
-		    sp[hash >> 4] |= 1 << (hash & 0xF);
+		    sp[hash >> 4] |= FILT_SWAP(1 << (hash & 0xF));
 		} else {
 		    sc->tulip_flags |= TULIP_ALLMULTI;
 		    sc->tulip_flags &= ~(TULIP_WANTHASHONLY|TULIP_WANTHASHPERFECT);
@@ -3009,14 +3015,14 @@ tulip_addr_filter(
 	 */
 	if ((sc->tulip_flags & TULIP_ALLMULTI) == 0) {
 	    hash = tulip_mchash(etherbroadcastaddr);
-	    sp[hash >> 4] |= 1 << (hash & 0xF);
+	    sp[hash >> 4] |= FILT_SWAP(1 << (hash & 0xF));
 	    if (sc->tulip_flags & TULIP_WANTHASHONLY) {
 		hash = tulip_mchash(sc->tulip_enaddr);
-		sp[hash >> 4] |= 1 << (hash & 0xF);
+		sp[hash >> 4] |= FILT_SWAP(1 << (hash & 0xF));
 	    } else {
-		sp[39] = ((u_int16_t *) sc->tulip_enaddr)[0]; 
-		sp[40] = ((u_int16_t *) sc->tulip_enaddr)[1]; 
-		sp[41] = ((u_int16_t *) sc->tulip_enaddr)[2];
+		sp[39] = FILT_SWAP(((u_int16_t *) sc->tulip_enaddr)[0]);
+		sp[40] = FILT_SWAP(((u_int16_t *) sc->tulip_enaddr)[1]);
+		sp[41] = FILT_SWAP(((u_int16_t *) sc->tulip_enaddr)[2]);
 	    }
 	}
     }
@@ -3030,9 +3036,9 @@ tulip_addr_filter(
 	    ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
 	    for (; enm != NULL; idx++) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
-		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[0]; 
-		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[1]; 
-		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[2];
+		    *sp++ = FILT_SWAP(((u_int16_t *) enm->enm_addrlo)[0]);
+		    *sp++ = FILT_SWAP(((u_int16_t *) enm->enm_addrlo)[1]);
+		    *sp++ = FILT_SWAP(((u_int16_t *) enm->enm_addrlo)[2]);
 		} else {
 		    sc->tulip_flags |= TULIP_ALLMULTI;
 		    break;
@@ -3043,17 +3049,17 @@ tulip_addr_filter(
 	     * Add the broadcast address.
 	     */
 	    idx++;
-	    *sp++ = 0xFFFF;
-	    *sp++ = 0xFFFF;
-	    *sp++ = 0xFFFF;
+	    *sp++ = FILT_SWAP(0xffff);
+	    *sp++ = FILT_SWAP(0xffff);
+	    *sp++ = FILT_SWAP(0xffff);
 	}
 	/*
 	 * Pad the rest with our hardware address
 	 */
 	for (; idx < 16; idx++) {
-	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[0]; 
-	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[1]; 
-	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[2];
+	    *sp++ = FILT_SWAP(((u_int16_t *) sc->tulip_enaddr)[0]);
+	    *sp++ = FILT_SWAP(((u_int16_t *) sc->tulip_enaddr)[1]);
+	    *sp++ = FILT_SWAP(((u_int16_t *) sc->tulip_enaddr)[2]);
 	}
     }
 #if defined(IFF_ALLMULTI)
@@ -3098,7 +3104,7 @@ tulip_reset(
 		    (1 << (TULIP_BURSTSIZE(sc->tulip_unit) + 8))
 		    |TULIP_BUSMODE_CACHE_ALIGN8
 		    |TULIP_BUSMODE_READMULTIPLE
-		    |(BYTE_ORDER != LITTLE_ENDIAN ? TULIP_BUSMODE_BIGENDIAN : 0));
+		    |(BYTE_ORDER != LITTLE_ENDIAN ? (TULIP_BUSMODE_DESC_BIGENDIAN/*|TULIP_BUSMODE_BIGENDIAN*/) : 0));
 
     sc->tulip_txtimer = 0;
     sc->tulip_txq.ifq_maxlen = TULIP_TXDESCS;

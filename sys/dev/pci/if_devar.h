@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.2 1997/07/29 19:31:47 downsj Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.3 1997/10/20 20:56:14 pefo Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -83,6 +83,24 @@ typedef volatile u_int32_t *tulip_csrptr_t;
 #endif /* __NetBSD__ */
 
 #endif /* TULIP_IOMAPPED */
+
+/*
+ *  Swap macro to access certain data types.
+ */
+#if BYTE_ORDER == BIG_ENDIAN
+__inline__ static u_int32_t
+FILT_SWAP(x)
+    u_int32_t x;
+{
+	u_int32_t s;
+
+	s = x;
+	s = s << 16;
+	return s;
+}
+#else
+#define FILT_SWAP(x)	(x)
+#endif
 
 /*
  * This structure contains "pointers" for the registers on
