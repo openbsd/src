@@ -637,7 +637,11 @@ terminal_prep_terminal ()
 
 #if defined (HAVE_TERMIOS_H) || defined (HAVE_TERMIO_H)
   ttybuff.c_iflag &= (~ISTRIP & ~INLCR & ~IGNCR & ~ICRNL & ~IXON);
+#if defined(OCRNL)
   ttybuff.c_oflag &= (~ONLCR & ~OCRNL);
+#else
+  ttybuff.c_oflag &= ~ONLCR;
+#endif
   ttybuff.c_lflag &= (~ICANON & ~ECHO);
 
   ttybuff.c_cc[VMIN] = 1;
