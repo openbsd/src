@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.5 1997/03/07 11:25:37 provos Exp $
+.\" 	$OpenBSD: mdX.3,v 1.6 1997/06/05 21:12:47 provos Exp $
 .\"
 .Dd October 9, 1996
 .Dt MDX 3
@@ -129,10 +129,11 @@ This code is derived directly from these implementations by Poul-Henning Kamp
 Phk ristede runen.
 .Sh HISTORY
 These functions appeared in
-.Em FreeBSD-2.0 .
+.Em OpenBSD-2.0 .
 .Sh BUGS
-Hans Dobbertin has found a collision in the compress function of MD5 and
-recommends using SHA or RIPEMD-160 instead.
+Hans Dobbertin has shown collisions for the full version of MD4 and
+found a collision in the compress function of MD5. The use of SHA or 
+RIPEMD-160 is recommended instead.
 .Pp
 MD2 has only been licensed for use in Privacy Enhanced Mail.
 Use MD4 or MD5 if that isn't what you're doing.
