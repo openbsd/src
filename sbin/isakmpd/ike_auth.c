@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.56 2001/08/16 13:49:50 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.57 2001/08/16 16:51:57 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -1192,7 +1192,7 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
   char filename[FILENAME_MAX];
   char *rdir, *base, *addrstr = 0;
   struct stat st;
-  FILE *fp;
+  BIO *bio;
 
   if (type != IKE_AUTH_RSA_SIG) /* XXX More types? */
     {
@@ -1265,16 +1265,23 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
   /* If the file does not exist, fail silently.  */
   if (stat (filename, &st) == 0)
     {
-      fp = fopen (filename, "r");
-      if (!fp)
+      bio = LC (BIO_new, (LC (BIO_s_file, ())));
+      if (!bio)
 	{
-	  log_error ("get_raw_key_from_file: could not open \"%s\"", filename);
+	  log_error ("get_raw_key_from_file: could not initialize BIO");
+	  goto out;
+	}
+      if (LC (BIO_read_filename, (bio, filename)) <= 0)
+	{
+	  LOG_DBG((LOG_NEGOTIATION, 50, "get_raw_key_from_file: "
+		   "BIO_read_filename(bio, \"%s\") failed", filename));
+	  LC (BIO_free, (bio));
 	  goto out;
 	}
       LOG_DBG((LOG_NEGOTIATION, 80, "get_raw_key_from_file: reading file %s",
 	       filename));
-      *rsa = LC (PEM_read_RSAPublicKey, (fp, NULL, NULL, NULL));
-      fclose (fp);
+      *rsa = LC (PEM_read_bio_RSA_PUBKEY, (bio, NULL, NULL, NULL));
+      LC (BIO_free, (bio));
     }
   else
     LOG_DBG((LOG_NEGOTIATION, 50, "get_raw_key_from_file: file %s not found",
