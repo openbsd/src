@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.52 2004/08/24 03:13:46 jaredy Exp $
+.\"	$OpenBSD: pf.4,v 1.53 2004/12/10 03:29:02 jaredy Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -333,6 +333,7 @@ Get the internal packet filter statistics.
 .Bd -literal
 struct pf_status {
 	u_int64_t	counters[PFRES_MAX];
+	u_int64_t	lcounters[LCNT_MAX];
 	u_int64_t	fcounters[FCNT_MAX];
 	u_int64_t	scounters[SCNT_MAX];
 	u_int64_t	pcounters[2][2][3];
