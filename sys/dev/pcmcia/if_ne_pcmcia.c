@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.63 2002/11/10 18:52:02 mickey Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.64 2002/11/20 15:01:13 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -418,6 +418,10 @@ const struct ne2000dev {
     { PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA411,
       PCMCIA_CIS_NETGEAR_FA411,
       0, -1, { 0x00, 0x40, 0xf4 } },
+
+    { PCMCIA_VENDOR_BELKIN, PCMCIA_PRODUCT_BELKIN_F5D5020,
+      PCMCIA_CIS_BELKIN_F5D5020,
+      0, -1, { 0x00, 0x30, 0xbd } },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device

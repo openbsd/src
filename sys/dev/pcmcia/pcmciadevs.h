@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.98 2002/11/10 18:52:32 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.99 2002/11/20 15:01:13 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.96 2002/11/10 18:52:02 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.97 2002/11/20 14:58:53 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -81,6 +81,7 @@
 #define	PCMCIA_VENDOR_RAYTHEON	0x01a6	/* Raytheon */
 #define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+#define	PCMCIA_VENDOR_BELKIN	0x01bf	/* Belkin */
 #define	PCMCIA_VENDOR_FARALLON	0x0200	/* Farallon Communications */
 #define	PCMCIA_VENDOR_TELECOMDEVICE	0x021b	/* Telecom Device */
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
@@ -169,6 +170,10 @@
 #define	PCMCIA_PRODUCT_BAY_SURFER_PRO	0x0806
 #define	PCMCIA_CIS_BAY_STACK_660	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_BAY_STACK_660	0x0807
+
+/* Belkin */
+#define	PCMCIA_CIS_BELKIN_F5D5020	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_BELKIN_F5D5020	0x2328
 
 /* BreezeCOM */
 #define	PCMCIA_CIS_BREEZECOM_BREEZENET	{ NULL, NULL, NULL, NULL }
