@@ -1,10 +1,12 @@
-#	$OpenBSD: RAMDISK,v 1.8 1997/07/03 07:24:17 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.9 1997/09/05 09:33:30 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #       Install kernels no longer support X.
 #
 
 machine		i386		# architecture, used by config; REQUIRED
+
+option		SCSIVERBOSE=0
 
 option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
@@ -163,4 +165,4 @@ pseudo-device	loop	1		# network loopback
 pseudo-device	sl	1		# CSLIP
 pseudo-device	ppp	1		# PPP
 #pseudo-device	pty	16		# pseudo-terminals
-pseudo-device	rd	1		# ramdisk (don't remove ;)
+pseudo-device	rd	1		# ramdisk
