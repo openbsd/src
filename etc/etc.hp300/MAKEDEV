@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.14 1997/02/16 10:40:50 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.15 1997/04/21 08:18:02 downsj Exp $
 #	$NetBSD: MAKEDEV,v 1.12 1995/11/05 23:50:22 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -81,8 +81,8 @@ all)
 	;;
 
 raminst)
-	sh MAKEDEV std fd ct0 ct1 st0 st1 hd0 hd1 hd2
-	sh MAKEDEV sd0 sd1 sd2 rd0 rd1 pty0
+	sh MAKEDEV std fd ct0 ct1 st0 st1 hd0 hd1 hd2 hd3 hd4
+	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 rd0 rd1 pty0
 	sh MAKEDEV hil grf0 ite0 dca0 dcm0 dcm1
 	sh MAKEDEV bpf0 bpf1 tun0 tun1 lkm random
 	;;
