@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.76 2003/03/21 15:13:26 markus Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.77 2003/05/10 21:13:41 jmc Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -112,7 +112,7 @@ Unless explicitly stated with -GRP1, 2 or 5, transforms and PFS suites
 use DH group 2. There are currently no predefined ESP+AH Quick Mode suites.
 .Pp
 The predefinitions include some default values for the special
-sections "General", "Keynote", "X509-certificates", and 
+sections "General", "Keynote", "X509-certificates", and
 "Default-phase-1-configuration".
 These default values are presented in the example below.
 .Pp
@@ -169,7 +169,7 @@ If left unspecified, QM-ESP-3DES-SHA-PFS-SUITE is used as the default.
 .It Em Check-interval
 The interval between watchdog checks of connections we want up at all times.
 .It Em Exchange-max-time
-How many seconds should an exchange maximally take to setup before we
+How many seconds should an exchange maximally take to set up before we
 give up.
 .It Em Listen-on
 A list of IP-addresses OK to listen on.
@@ -196,7 +196,7 @@ How many times should a message be retransmitted before giving up.
 If this tag is defined, whatever the value is, some semantics of
 .Nm
 are changed so that multiple instances can run on top of one SADB
-and setup SAs with each other.
+and set up SAs with each other.
 Specifically this means replay
 protection will not be asked for, and errors that can occur when
 updating an SA with its parameters a 2nd time will be ignored.

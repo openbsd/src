@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.50 2003/04/27 11:17:14 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.51 2003/05/10 21:13:41 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -232,7 +232,7 @@ In order to use public key based authentication, there has to be an
 infrastructure managing the key signing.
 Either there is an already existing PKI
 .Nm
-should take part in, or there will be a need to setup one.
+should take part in, or there will be a need to set one up.
 In the former case, what is needed to be done varies depending on the
 actual Certificate Authority used, and is therefore not covered here,
 other than mentioning that
@@ -381,7 +381,7 @@ Update the running
 configuration atomically. 'set' sets a configuration value consisting
 of a section, tag and value triplet. 'set' will fail if the
 configuration already contains a section with the named tag, use
-the 'force' option to change this behaviour. 'rm' removes a tag in a 
+the 'force' option to change this behaviour. 'rm' removes a tag in a
 section. 'rms' removes an entire section.
 .Pp
 .It Ic "d <cookies> <msgid>"
