@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs.h,v 1.6 1997/11/06 05:58:35 csapuntz Exp $	*/
+/*	$OpenBSD: kernfs.h,v 1.7 1998/12/28 05:51:38 millert Exp $	*/
 /*	$NetBSD: kernfs.h,v 1.10 1996/02/09 22:40:21 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ struct kernfs_node {
 	    eopnotsupp)
 #define kernfs_vptofh ((int (*) __P((struct vnode *, struct fid *)))eopnotsupp)
 #define kernfs_sync ((int (*) __P((struct mount *, int, struct ucred *, \
-				   struct proc *)))eopnotsupp)
+				   struct proc *)))nullop)
 
 extern int (**kernfs_vnodeop_p) __P((void *));
 extern struct vfsops kernfs_vfsops;
