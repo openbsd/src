@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.13 2001/08/17 14:25:26 espie Exp $	*/
+/*	$OpenBSD: nm.c,v 1.14 2001/08/17 16:29:33 espie Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: nm.c,v 1.13 2001/08/17 14:25:26 espie Exp $";
+static char rcsid[] = "$OpenBSD: nm.c,v 1.14 2001/08/17 16:29:33 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: nm.c,v 1.13 2001/08/17 14:25:26 espie Exp $";
 #include <unistd.h>
 #include <err.h>
 #include <ctype.h>
+#include <link.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -80,6 +81,9 @@ int fname __P((const void *, const void *));
 int rname __P((const void *, const void *));
 int value __P((const void *, const void *));
 int (*sfunc) __P((const void *, const void *)) = fname;
+char *otherstring __P((struct nlist *));
+char *typestring __P((unsigned int));
+char typeletter __P((unsigned int));
 
 
 /* some macros for symbol type (nlist.n_type) handling */
@@ -483,8 +487,6 @@ print_symbol(objname, sym)
 	const char *objname;
 	struct nlist *sym;
 {
-	char *typestring(), typeletter(), *otherstring();
-
 	if (print_file_each_line)
 		(void)printf("%s:", objname);
 
@@ -507,7 +509,7 @@ print_symbol(objname, sym)
 			    sym->n_desc&0xffff, typestring(sym->n_type));
 		else if (show_extensions)
 			(void)printf(" %c%2s ", typeletter(sym->n_type),
-			    otherstring(sym->n_other));
+			    otherstring(sym));
 		else
 			(void)printf(" %c ", typeletter(sym->n_type));
 	}
@@ -519,28 +521,20 @@ print_symbol(objname, sym)
 		(void)puts(symname(sym));
 }
 
-#define AUX_OBJECT 1
-#define AUX_FUNC 2
-#define BIND_WEAK 2
-
 char *
-otherstring(other)
-	u_char other;
+otherstring(sym)
+	struct nlist *sym;
 {
 	static char buf[3];
 	char *result;
-	u_char bindtype;
-	u_char aux;
 
 	result = buf;
 
-	bindtype = other >> 4;
-	aux = other & 0x0f;
-	if (bindtype == BIND_WEAK)
+	if (N_BIND(sym) == BIND_WEAK)
 		*result++ = 'w';
-	if (aux == AUX_OBJECT)
+	if (N_AUX(sym) == AUX_OBJECT)
 		*result++ = 'o';
-	else if (aux == AUX_FUNC)
+	else if (N_AUX(sym) == AUX_FUNC)
 		*result++ = 'f';
 	*result++ = 0;
 	return buf;
@@ -552,7 +546,7 @@ otherstring(other)
  */
 char *
 typestring(type)
-	register u_char type;
+	unsigned int type;
 {
 	switch(type) {
 	case N_BCOMM:
@@ -607,7 +601,7 @@ typestring(type)
  */
 char
 typeletter(type)
-	u_char type;
+	unsigned int type;
 {
 	switch(SYMBOL_TYPE(type)) {
 	case N_ABS:
