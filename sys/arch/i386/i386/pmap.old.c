@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.30 1999/07/02 12:25:50 niklas Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.31 1999/08/25 09:13:53 ho Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -301,6 +301,7 @@ pmap_bootstrap(virtual_start)
 	 */
 	virtual_avail = reserve_dumppages(virtual_avail);
 
+#if !defined(UVM)
 	/* flawed, no mappings?? */
 	if (ctob(physmem) > 31*1024*1024 && MAXKPDE != NKPDE) {
 		vm_offset_t p;
@@ -313,6 +314,7 @@ pmap_bootstrap(virtual_start)
 			PTD[KPTDI+i] = (pd_entry_t)p |
 			    PG_V | PG_KW;
 	}
+#endif
 
 	/*                       
 	 * we must call vm_page_physload() after we are done playing
