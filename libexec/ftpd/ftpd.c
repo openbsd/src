@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.53 1999/02/26 00:15:54 art Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.54 1999/04/29 21:38:43 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1388,11 +1388,19 @@ receive_data(instr, outstr)
 
 	case TYPE_I:
 	case TYPE_L:
-		while ((cnt = read(fileno(instr), buf, sizeof(buf))) > 0) {
-			if (write(fileno(outstr), buf, cnt) != cnt)
-				goto file_err;
-			byte_count += cnt;
-		}
+		signal (SIGALRM, lostconn);
+
+		do {
+			(void) alarm ((unsigned) timeout);
+			cnt = read(fileno(instr), buf, sizeof(buf));
+			(void) alarm (0);
+
+			if (cnt > 0) {
+				if (write(fileno(outstr), buf, cnt) != cnt)
+					goto file_err;
+				byte_count += cnt;
+			}
+		} while (cnt > 0);
 		if (cnt < 0)
 			goto data_err;
 		transflag = 0;
