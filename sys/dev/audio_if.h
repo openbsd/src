@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.21 2003/01/25 06:14:33 jason Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.22 2003/03/28 09:47:21 jmc Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ struct mixer_ctrl;
 
 struct audio_params {
 	u_long	sample_rate;			/* sample rate */
-	u_int	encoding;			/* e.g. ulaw, linear, etc */
+	u_int	encoding;			/* mu-law, linear, etc */
 	u_int	precision;			/* bits/sample */
 	u_int	channels;			/* mono(1), stereo(2) */
 	/* Software en/decode functions, set if SW coding required by HW */
@@ -58,7 +58,7 @@ struct audio_params {
 	int	factor;				/* coding space change */
 };
 
-/* The default audio mode: 8 kHz mono ulaw */
+/* The default audio mode: 8 kHz mono mu-law */
 extern struct audio_params audio_default;
 
 struct audio_hw_if {

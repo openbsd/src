@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.29 2003/03/14 10:07:35 jmc Exp $
+.\"	$OpenBSD: audio.4,v 1.30 2003/03/28 09:47:20 jmc Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ while it is in use.
 When
 .Pa /dev/audio
 is opened, it automatically directs the underlying driver to manipulate
-monaural 8-bit mulaw samples.
+monaural 8-bit mu-law samples.
 In addition, if it is opened read-only
 (write-only) the device is set to half-duplex record (play) mode with
 recording (playing) unpaused and playing (recording) paused.
@@ -368,9 +368,9 @@ property is set.
 The encoding parameter can have the following values:
 .Bl -tag -width indent -compact
 .It Dv AUDIO_ENCODING_ULAW
-mulaw encoding, 8 bits/sample
+mu-law encoding, 8 bits/sample
 .It Dv AUDIO_ENCODING_ALAW
-alaw encoding, 8 bits/sample
+A-law encoding, 8 bits/sample
 .It Dv AUDIO_ENCODING_SLINEAR
 two's complement signed linear encoding with the platform byte order
 .It Dv AUDIO_ENCODING_ULINEAR

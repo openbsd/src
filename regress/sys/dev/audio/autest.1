@@ -1,4 +1,4 @@
-.\"	$OpenBSD: autest.1,v 1.3 2003/02/04 07:58:19 jason Exp $
+.\"	$OpenBSD: autest.1,v 1.4 2003/03/28 09:47:21 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -57,14 +57,14 @@ The tone should sound almost identical in each of the formats.
 can produce tones in any of the following formats and will skip other
 formats if supported by the device:
 .Bl -tag -width XXXXXXXXXX
-.It Cm mulaw
-8bit U-Law companded
-.It Cm alaw
-8bit A-Law companded
+.It Cm mu-law
+8bit mu-law companded
+.It Cm A-law
+8bit A-law companded
 .It Cm adpcm
 4 bit adaptive differential pulse code modulation
 .It Cm ulinear
-8 bit unsigned linear.
+8 bit unsigned linear
 .It Cm ulinear_le
 16 bit unsigned linear little endian
 .It Cm ulinear_be
