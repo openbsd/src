@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.distribution,v 1.4 1999/05/31 20:09:58 angelos Exp $
+# $OpenBSD: Makefile.distribution,v 1.5 1999/06/25 20:34:02 angelos Exp $
 #
 # The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 #
@@ -46,7 +46,7 @@ NROFFFLAGS = -mandoc
 
 # SSLeay/OpenSSL pointers
 SSLINC = -I/usr/local/include -I/usr/local/ssl/include \
-	 -I/usr/local/openssl/include
+	 -I/usr/local/openssl/include -I/usr/local/ssl/include/openssl
 SSLLIB = -L/usr/lib -L/usr/local/lib -L/usr/local/ssl/lib \
 	 -L/usr/local/openssl/lib -L/usr/local/openssl/ -lcrypto
 
