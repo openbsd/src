@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.20 2000/05/19 17:07:05 maja Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.21 2000/07/06 00:59:01 todd Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -1228,13 +1228,11 @@ userconf_parse(cmd)
 void
 user_config()
 {
-	char prompt[] = "UKC> ";
-
 	userconf_init();
 	printf("User Kernel Config\n");
 
 	while (1) {
-		printf(prompt);
+		printf("UKC> ");
 		if (getsn(userconf_cmdbuf, sizeof(userconf_cmdbuf)) > 0 &&
 		    userconf_parse(userconf_cmdbuf))
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.40 2000/06/29 03:22:31 aaron Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.41 2000/07/06 00:59:01 todd Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -476,7 +476,7 @@ ep_isa_probemedia(sc)
 			ifmedia_add(ifm, epm->epm_ifmedia, epm->epm_ifdata, 0);
 			if (conn)
 				printf("/");
-			printf(epm->epm_name);
+			printf("%s", epm->epm_name);
 			conn |= epm->epm_conn;
 		}
 	}
@@ -539,7 +539,7 @@ ep_vortex_probemedia(sc)
 		if ((reset_options & epm->epm_eeprom_data) != 0) {
 			if (conn)
 				printf("/");
-			printf(epm->epm_name);
+			printf("%s", epm->epm_name);
 			conn |= epm->epm_conn;
 			ifmedia_add(ifm, epm->epm_ifmedia, epm->epm_ifdata, 0);
 		}

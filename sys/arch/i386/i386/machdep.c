@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.134 2000/06/16 21:47:11 provos Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.135 2000/07/06 00:59:00 todd Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -321,7 +321,7 @@ cpu_startup()
 		    VM_PROT_READ|VM_PROT_WRITE);
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
-	printf(version);
+	printf("%s", version);
 	startrtclock();
 	
 	identifycpu();
