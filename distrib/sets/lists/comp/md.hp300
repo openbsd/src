@@ -5,6 +5,7 @@
 ./usr/include/dlfcn.h
 ./usr/include/link.h
 ./usr/include/m68k/ansi.h
+./usr/include/m68k/spinlock.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h
 ./usr/include/m68k/cacheops.h
