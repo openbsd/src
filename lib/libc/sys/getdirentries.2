@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdirentries.2,v 1.10 2001/07/31 05:45:33 art Exp $
+.\"	$OpenBSD: getdirentries.2,v 1.11 2002/08/06 18:45:03 aaron Exp $
 .\"	$NetBSD: getdirentries.2,v 1.7 1995/10/12 15:40:50 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -105,7 +105,7 @@ structure to the next structure, if any.
 .Pp
 Invalid entries with
 .Fa d_fileno
-set to 0, may be returned among regular entries.
+set to 0 may be returned among regular entries.
 .Pp
 The actual number of bytes transferred is returned.
 The current position pointer associated with
