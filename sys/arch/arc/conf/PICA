@@ -16,7 +16,7 @@ options		DEVPAGER		# device pager (mapped devices)
 options		DIAGNOSTIC		# extra kernel debugging checks
 options		DEBUG			# extra kernel debugging support
 options		"COMPAT_43"		# compatibility with 4.3BSD binaries
-#options	KTRACE			# system call tracing support
+options		KTRACE			# system call tracing support
 options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 #options	KGDB			# support for kernel gdb
 #options	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
