@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/08/02 20:34:43 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 2001/08/26 03:23:44 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 1995/10/10 01:19:24 mycroft Exp $
 
 SYS=	../..
@@ -7,8 +7,4 @@ OBJS=	freebsd_sysent.c freebsd_syscalls.c \
 	freebsd_syscall.h freebsd_syscallargs.h
 
 ${OBJS}: ${DEP}
-	-mv -f freebsd_sysent.c freebsd_sysent.c.bak
-	-mv -f freebsd_syscalls.c freebsd_syscalls.c.bak
-	-mv -f freebsd_syscall.h freebsd_syscall.h.bak
-	-mv -f freebsd_syscallargs.h freebsd_syscallargs.h.bak
 	sh ${SYS}/kern/makesyscalls.sh syscalls.conf syscalls.master
