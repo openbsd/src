@@ -24,7 +24,6 @@
 ./usr/bin/yacc
 ./usr/include/a.out.h
 ./usr/include/ar.h
-./usr/include/skey.h
 ./usr/include/arpa/ftp.h
 ./usr/include/arpa/inet.h
 ./usr/include/arpa/nameser.h
@@ -748,7 +747,9 @@
 ./usr/include/search.h
 ./usr/include/setjmp.h
 ./usr/include/sgtty.h
+./usr/include/sha1.h
 ./usr/include/signal.h
+./usr/include/skey.h
 ./usr/include/ss
 ./usr/include/ss/ss.h
 ./usr/include/ss/ss_err.h
@@ -1014,6 +1015,7 @@
 ./usr/share/lkm/vfs/README
 ./usr/share/lkm/vfs/module/Makefile
 ./usr/share/lkm/vfs/module/kernfsmod.c
+./usr/share/man/cat1/ar.0
 ./usr/share/man/cat1/as.0
 ./usr/share/man/cat1/asa.0
 ./usr/share/man/cat1/c++.0
@@ -1028,7 +1030,6 @@
 ./usr/share/man/cat1/lint.0
 ./usr/share/man/cat1/lorder.0
 ./usr/share/man/cat1/mkstr.0
-./usr/share/man/cat1/ar.0
 ./usr/share/man/cat1/ranlib.0
 ./usr/share/man/cat1/rpcgen.0
 ./usr/share/man/cat1/strip.0
@@ -2123,4 +2124,3 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
-./usr/include/sha1.h
