@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.22 2003/07/14 18:56:12 drahn Exp $ */
+/*	$OpenBSD: intr.h,v 1.23 2003/07/14 19:23:52 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -66,7 +66,7 @@ int  splsoftnet(void);
 void do_pending_int(void);
 
 
-volatile extern int cpl, ipending, astpending, tickspending;
+volatile extern int cpl, ipending, astpending;
 extern int imask[7];
 
 /* SPL asserts */
