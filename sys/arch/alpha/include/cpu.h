@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.10 2001/01/20 21:24:05 art Exp $ */
+/* $OpenBSD: cpu.h,v 1.11 2001/02/12 11:12:35 art Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -329,8 +329,6 @@ struct proc;
 struct reg;
 struct rpb;
 struct trapframe;
-
-int	badaddr(void *, size_t);
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_CPU_H_ */
