@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.7 1998/12/28 17:26:44 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.8 1998/12/29 22:27:48 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -92,7 +92,7 @@ device	eba: eisabus
 attach	eba at mainbus
 file	arch/hppa/dev/eba.c		eba
 
-device	sti: raster, wsconsdev
+device	sti: wsconsdev
 attach	sti at mainbus
 file	arch/hppa/dev/sti.c		sti
 
