@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.39 2001/07/09 20:28:00 aaron Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.40 2001/07/17 16:12:51 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -414,6 +414,17 @@ Used to display
 .Sq ===> Configuring for foo
 and similar informative messages.
 Override to turn off, for instance.
+.It Ev ERRORS
+List of errors found while parsing the port's Makefile.
+Display the errors before making any target, and if any error starts with
+.Qq Fatal: ,
+do not make anything.
+For instance:
+.Bd -literal -indent
+\&.if !defined(COMMENT)
+ERRORS+="Fatal: Missing comment"
+\&.endif
+.Ed
 .It Ev EXTRACT_CASES
 In the normal extraction stage (when
 .Ev EXTRACT_ONLY
