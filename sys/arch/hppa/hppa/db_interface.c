@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.8 1999/09/10 19:56:25 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.9 1999/11/16 17:08:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -39,6 +39,7 @@
 
 #include <machine/db_machdep.h>
 #include <machine/frame.h>
+#include <machine/cpufunc.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
@@ -52,7 +53,6 @@
 #include <dev/cons.h>
 
 void kdbprinttrap __P((int, int));
-
 
 extern label_t *db_recover;
 extern int db_active;
@@ -157,6 +157,10 @@ db_write_bytes(addr, size, data)
 
 	while (size--)
 		*dst++ = *data++;
+
+	/* unfortunately ddb does not provide any hooks for these */
+	ficache(HPPA_SID_KERNEL, (vaddr_t)data, size);
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)data, size);
 }
 
 
