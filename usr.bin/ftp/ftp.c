@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.26 1998/05/13 08:59:07 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.27 1998/05/13 10:42:35 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.26 1998/05/13 08:59:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.27 1998/05/13 10:42:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,8 @@ hookup(host, port)
 	hisctladdr.sin_port = port;
 	while (connect(s, (struct sockaddr *)&hisctladdr,
 			sizeof(hisctladdr)) < 0) {
+		if (errno == EINTR)
+			continue;
 		if (hp && hp->h_addr_list[1]) {
 			int oerrno = errno;
 			char *ia;
@@ -130,7 +132,8 @@ hookup(host, port)
 			hp->h_addr_list++;
 			memcpy(&hisctladdr.sin_addr, hp->h_addr_list[0],
 			    (size_t)hp->h_length);
-			fprintf(ttyout, "Trying %s...\n", inet_ntoa(hisctladdr.sin_addr));
+			fprintf(ttyout, "Trying %s...\n",
+			    inet_ntoa(hisctladdr.sin_addr));
 			(void)close(s);
 			s = socket(hisctladdr.sin_family, SOCK_STREAM, 0);
 			if (s < 0) {
@@ -1146,8 +1149,10 @@ reinit:
 		p[0] = p0 & 0xff;
 		p[1] = p1 & 0xff;
 
-		if (connect(data, (struct sockaddr *)&data_addr,
+		while (connect(data, (struct sockaddr *)&data_addr,
 			    sizeof(data_addr)) < 0) {
+			if (errno == EINTR)
+				continue;
 			warn("connect");
 			goto bad;
 		}
