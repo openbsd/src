@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.46 2002/06/22 02:13:10 deraadt Exp $
+ * $OpenBSD: skeylogin.c,v 1.47 2002/11/16 22:31:55 millert Exp $
  */
 
 #include <sys/param.h>
@@ -64,8 +64,10 @@ skeychallenge(mp, name, ss)
 		return (0);
 
 	case 1:		/* User not found */
-		(void)fclose(mp->keyfile);
-		mp->keyfile = NULL;
+		if (mp->keyfile) {
+			(void)fclose(mp->keyfile);
+			mp->keyfile = NULL;
+		}
 		/* FALLTHROUGH */
 
 	default:	/* File error */
