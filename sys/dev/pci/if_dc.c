@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc.c,v 1.3 1999/12/14 16:13:05 jason Exp $	*/
+/*	$OpenBSD: if_dc.c,v 1.4 1999/12/15 17:36:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -157,6 +157,7 @@
  * Various supported device vendors/types and their names.
  */
 struct dc_type dc_devs[] = {
+#if 0
 	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142 },
 	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9100 },
 	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102 },
@@ -166,8 +167,11 @@ struct dc_type dc_devs[] = {
 	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713 },
 	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98715 },
 	{ PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_98713 },
+#endif
 	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNIC },
+#if 0
 	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNICII },
+#endif
 	{ 0, 0 }
 };
 
