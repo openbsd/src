@@ -1,4 +1,4 @@
-/*	$OpenBSD: copyinstr.c,v 1.4 2000/01/14 05:42:17 rahnds Exp $	*/
+/*	$OpenBSD: copyinstr.c,v 1.5 2001/06/24 05:01:36 drahn Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -32,23 +32,25 @@
  */
 #include <sys/param.h>
 #include <sys/errno.h>
+#include <sys/systm.h>
 
 /*
  * Emulate copyinstr.
  */
 int
 copyinstr(udaddr, kaddr, len, done)
-	void *udaddr;
+	const void *udaddr;
 	void *kaddr;
 	size_t len;
 	size_t *done;
 {
 	int c;
+	void *uaddr = (void *)udaddr;
 	u_char *kp = kaddr;
 	int l;
 	
 	for (l = 0; len-- > 0; l++) {
-		if ((c = fubyte(udaddr++)) < 0) {
+		if ((c = fubyte(uaddr++)) < 0) {
 			*done = l;
 			return EFAULT;
 		}
