@@ -1,0 +1,185 @@
+#	$OpenBSD: genassym.cf,v 1.1 1997/04/18 17:29:51 gene Exp $
+#	$NetBSD: genassym.cf,v 1.1 1997/04/15 06:11:40 scottr Exp $
+
+#
+# Copyright (c) 1990 The Regents of the University of California.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by the University of
+#	California, Berkeley and its contributors.
+# 4. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)genassym.c	7.8 (Berkeley) 5/7/91
+#
+
+include	<sys/param.h>
+include	<sys/buf.h>
+include	<sys/proc.h>
+include	<sys/mbuf.h>
+include	<sys/msgbuf.h>
+include	<sys/syscall.h>
+include	<sys/systm.h>
+include	<sys/types.h>
+include	<sys/user.h>
+
+include	<vm/vm.h>
+
+include	<machine/cpu.h>
+include	<machine/trap.h>
+include	<machine/psl.h>
+include	<machine/reg.h>
+include	<machine/pte.h>
+
+define	P_FORW			offsetof(struct proc, p_forw)
+define	P_BACK			offsetof(struct proc, p_back)
+define	P_VMSPACE		offsetof(struct proc, p_vmspace)
+define	P_ADDR			offsetof(struct proc, p_addr)
+define	P_MD			offsetof(struct proc, p_md)
+define	P_PID			offsetof(struct proc, p_pid)
+define	P_PRIORITY		offsetof(struct proc, p_priority)
+define	P_STAT			offsetof(struct proc, p_stat)
+define	P_WCHAN 		offsetof(struct proc, p_wchan)
+define	P_FLAG			offsetof(struct proc, p_flag)
+define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
+define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
+define	SSLEEP			SSLEEP
+define	SRUN			SRUN
+
+define	MD_REGS 		offsetof(struct mdproc, md_regs)
+
+define	PM_STCHG		offsetof(struct pmap, pm_stchanged)
+
+define	VM_PMAP 		offsetof(struct vmspace, vm_pmap)
+define	V_SWTCH 		offsetof(struct vmmeter, v_swtch)
+define	V_TRAP			offsetof(struct vmmeter, v_trap)
+define	V_SYSCALL		offsetof(struct vmmeter, v_syscall)
+define	V_INTR			offsetof(struct vmmeter, v_intr)
+define	V_SOFT			offsetof(struct vmmeter, v_soft)
+
+define	UPAGES			UPAGES
+define	USPACE			USPACE
+define	P1PAGES 		P1PAGES
+define	CLSIZE			CLSIZE
+define	NBPG			NBPG
+define	NPTEPG			NPTEPG
+define	PGSHIFT 		PGSHIFT
+define	SYSPTSIZE		SYSPTSIZE
+define	USRPTSIZE		USRPTSIZE
+define	USRIOSIZE		USRIOSIZE
+define	USRSTACK		USRSTACK
+
+define	MSGBUFPTECNT		btoc(sizeof (struct msgbuf))
+define	NMBCLUSTERS		NMBCLUSTERS
+define	MCLBYTES		MCLBYTES
+define	NKMEMCLUSTERS		NKMEMCLUSTERS
+
+quote	#ifdef SYSVSHM
+define	SHMMAXPGS		SHMMAXPGS
+quote	#endif
+
+define	U_PROF			offsetof(struct user, u_stats.p_prof)
+define	U_PROFSCALE		offsetof(struct user, u_stats.p_prof.pr_scale)
+define	RU_MINFLT		offsetof(struct rusage, ru_minflt)
+
+define	T_BUSERR		T_BUSERR
+define	T_ADDRERR		T_ADDRERR
+define	T_ILLINST		T_ILLINST
+define	T_ZERODIV		T_ZERODIV
+define	T_CHKINST		T_CHKINST
+define	T_TRAPVINST		T_TRAPVINST
+define	T_PRIVINST		T_PRIVINST
+define	T_TRACE 		T_TRACE
+define	T_MMUFLT		T_MMUFLT
+define	T_SSIR			T_SSIR
+define	T_FMTERR		T_FMTERR
+define	T_COPERR		T_COPERR
+define	T_FPERR 		T_FPERR
+define	T_ASTFLT		T_ASTFLT
+define	T_TRAP15		T_TRAP15
+define	T_FPEMULI		T_FPEMULI
+define	T_FPEMULD		T_FPEMULD
+
+define	PSL_S			PSL_S
+define	PSL_IPL7		PSL_IPL7
+define	PSL_LOWIPL		PSL_LOWIPL
+define	PSL_HIGHIPL		PSL_HIGHIPL
+define	PSL_USER		PSL_USER
+define	SPL1			(PSL_S | PSL_IPL1)
+define	SPL2			(PSL_S | PSL_IPL2)
+define	SPL3			(PSL_S | PSL_IPL3)
+define	SPL4			(PSL_S | PSL_IPL4)
+define	SPL5			(PSL_S | PSL_IPL5)
+define	SPL6			(PSL_S | PSL_IPL6)
+
+define	FC_USERD		FC_USERD
+define	FC_SUPERD		FC_SUPERD
+
+define	CACHE_ON		CACHE_ON
+define	CACHE_OFF		CACHE_OFF
+define	CACHE_CLR		CACHE_CLR
+define	CACHE40_ON		CACHE40_ON
+define	CACHE40_OFF		CACHE40_OFF
+define	IC_CLEAR		IC_CLEAR
+define	DC_CLEAR		DC_CLEAR
+
+define	PG_FRAME		PG_FRAME
+
+define	SIZEOF_PCB		sizeof(struct pcb)
+define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
+define	PCB_PS			offsetof(struct pcb, pcb_ps)
+define	PCB_USTP		offsetof(struct pcb, pcb_ustp)
+define	PCB_USP 		offsetof(struct pcb, pcb_usp)
+define	PCB_REGS		offsetof(struct pcb, pcb_regs)
+define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
+define	PCB_TRCB		5
+
+define	FR_SP			offsetof(struct frame, f_regs[15])
+define	FR_HW			offsetof(struct frame, f_sr)
+define	FR_ADJ			offsetof(struct frame, f_stackadj)
+
+define	B_READ			B_READ
+
+define	ENOENT			ENOENT
+define	EFAULT			EFAULT
+define	ENAMETOOLONG		ENAMETOOLONG
+
+define	SYS_exit		SYS_exit
+define	SYS_execve		SYS_execve
+define	SYS_sigreturn		SYS_sigreturn
+
+define	CPU_68020		CPU_68020
+define	CPU_68030		CPU_68030
+define	CPU_68040		CPU_68040
+
+define	MMU_68851		MMU_68851
+define	MMU_68030		MMU_68030
+define	MMU_68040		MMU_68040
+
+define	FPU_68881		FPU_68881
+define	FPU_68882		FPU_68882
+define	FPU_68040		FPU_68040

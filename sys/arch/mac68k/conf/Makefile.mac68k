@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.mac68k,v 1.12 1997/01/24 01:35:25 briggs Exp $
-#	$NetBSD: Makefile.mac68k,v 1.47 1997/01/13 07:06:51 scottr Exp $
+#	$OpenBSD: Makefile.mac68k,v 1.13 1997/04/18 17:29:50 gene Exp $
+#	$NetBSD: Makefile.mac68k,v 1.53 1997/04/15 06:11:38 scottr Exp $
 
 # Makefile for NetBSD
 #
@@ -106,14 +106,10 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-	${CC} -o $@ genassym.o
-
-genassym.o: ${MAC68K}/mac68k/genassym.c
-	${HOSTED_C_C}
+assym.h: $S/kern/genassym.sh ${MAC68K}/mac68k/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${MAC68K}/mac68k/genassym.cf > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -132,7 +128,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 clean::
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
@@ -158,7 +154,10 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MAC68K}/mac68k/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${MAC68K}/mac68k/genassym.c
+	-if test -n "${SFILES}"; then \
+		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
+	fi
+
 
 
 # depend on root or device configuration
