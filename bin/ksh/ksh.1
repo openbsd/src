@@ -1,5 +1,5 @@
 '\" t
-.\"	$OpenBSD: ksh.1,v 1.5 1998/03/18 03:04:54 marc Exp $
+.\"	$OpenBSD: ksh.1,v 1.6 1998/03/27 20:20:41 deraadt Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -2058,9 +2058,7 @@ afB ltw(2.8i).
 \fIstr\fP has non-zero length.  Note that there is the potential
 for problems if \fIstr\fP turns out to be an operator (\fIe.g.\fP, \fB-r\fP)
 - it is generally better to use a test like
-.RS
 \fB[ X"\fP\fIstr\fP\fB" != X ]\fP
-.RE
 instead (double quotes are used in case \fIstr\fP contains spaces or file
 globing characters).
 T}
