@@ -1,4 +1,4 @@
-/*	$OpenBSD: riscbus.c,v 1.2 1997/02/23 21:59:31 pefo Exp $ */
+/*	$OpenBSD: riscbus.c,v 1.3 1997/08/24 12:01:14 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -113,7 +113,7 @@ struct riscbus_dev wgrisc9100_cpu[] = {
 	   INT_MASK_5,	riscbus_intrnull, (void *)RISC_COM2, },
 	{{ "com",       6, 0, },
 	   INT_MASK_5,	riscbus_intrnull, (void *)RISC_COM3, },
-	{{ "flash",     7, 0, },
+	{{ "fl",     7, 0, },
 	   0, NULL, (void *)NULL, },
 	{{ NULL,       -1, NULL, },
 	   0, NULL, (void *)NULL, },

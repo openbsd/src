@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.3 1997/02/23 21:59:24 pefo Exp $
+#	$OpenBSD: GENERIC,v 1.4 1997/08/24 12:01:12 pefo Exp $
 #
 #	Generic configuration file for Willowglen RISC-PC 9100
 #
@@ -53,7 +53,7 @@ options 	INET		# Internet protocols
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC  # X.25
-options 	IPFILTER        # IP packet filter for security
+#options 	IPFILTER        # IP packet filter for security
 
 #options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	MULTICAST	# Multicast support
@@ -85,7 +85,7 @@ com3		at riscbus?
 asc0		at riscbus?
 scsibus* 	at asc?
 
-flash0		at riscbus?
+fl0		at riscbus?
 
 #
 #	ISA Bus.
@@ -97,7 +97,7 @@ com4	at isa? port 0x3e8 irq 4
 com5	at isa? port 0x2e8 irq 3
 
 ep0	at isa? port ? irq ?           # 3C509 ethernet cards
-#ed0	at isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC, 3C503, and NE[12]000
+ed0	at isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC, 3C503, and NE[12]000
 #ed1	at isa? port 0x250 iomem 0xd8000 irq 9  #   ethernet cards
 #ed2	at isa? port 0x300 iomem 0xcc000 irq 10 #
 

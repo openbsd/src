@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 1997/02/23 21:59:33 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.3 1997/08/24 12:01:15 pefo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.2 1997/02/23 21:59:33 pefo Exp $
+ *      $Id: conf.c,v 1.3 1997/08/24 12:01:15 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -69,8 +69,8 @@ bdev_decl(fd);
 bdev_decl(wd);
 #include "acd.h"
 bdev_decl(acd);
-#include "flash.h"
-bdev_decl(flash);
+#include "fl.h"
+bdev_decl(fl);
 
 struct bdevsw	bdevsw[] =
 {
@@ -84,7 +84,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 7: Floppy disk driver */
 	bdev_notdef(),			/* 8:  */
 	bdev_notdef(),			/* 9:  */
-	bdev_disk_init(NFLASH,flash),	/* 10: Flash ram disk driver */
+	bdev_disk_init(NFL,fl),		/* 10: Flash ram disk driver */
 	bdev_notdef(),			/* 11:  */
 	bdev_notdef(),			/* 12:  */
 	bdev_notdef(),			/* 13:  */
@@ -129,7 +129,7 @@ cdev_decl(cd);
 cdev_decl(uk);
 cdev_decl(wd);
 cdev_decl(acd);
-cdev_decl(flash);
+cdev_decl(fl);
 
 
 /* open, close, read, ioctl */
@@ -164,7 +164,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NACD,acd),	/* 19: ATAPI CD-ROM */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
-	cdev_disk_init(NFLASH,flash),	/* 22: Flash memory driver */
+	cdev_disk_init(NFL,fl),		/* 22: Flash memory driver */
 	cdev_notdef(),			/* 23: */
 	cdev_notdef(),			/* 24: */
 	cdev_notdef(),			/* 25: */
@@ -250,7 +250,7 @@ static int chrtoblktbl[MAXDEV] =  {
 	/* 19 */	5,
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
-	/* 22 */	NODEV,
+	/* 22 */	10,
 	/* 23 */	NODEV,
 	/* 24 */	NODEV,
 	/* 25 */	NODEV,

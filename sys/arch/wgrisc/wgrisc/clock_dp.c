@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_dp.c,v 1.1.1.1 1997/02/06 16:02:47 pefo Exp $	*/
+/*	$OpenBSD: clock_dp.c,v 1.2 1997/08/24 12:01:14 pefo Exp $	*/
 /*	$NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp $	*/
 
 /*
@@ -224,4 +224,67 @@ dp_read_riscbus(csc, reg)
 	int i;
 	i = inb(((struct dpclockdata *)csc->sc_data)->dp_addr + reg);
 	return(i);
+}
+
+#define WWDELAY 50
+#define WDELAY() \
+{\
+   register int i; \
+   wbflush(); \
+   for (i = WWDELAY; i != 0; i--) continue; \
+}
+
+/*----------------------------------------------------------------------
+ *	Read non-volatile ram part of clock chip.
+ *	-----------------------------------------
+ *
+ *	First byte is located in page 0, and read first
+ * 	then page 1 is switched in and the rest is read.
+ ----------------------------------------------------------------------*/
+unsigned char *ReadNVram(unsigned char *ptr)
+{
+	volatile unsigned char *clockram = (volatile unsigned char *)RISC_RTC;
+	unsigned char  main_stat_save;
+	int	       count;
+
+	main_stat_save = inb(clockram + MAIN_STATUS);
+	WDELAY();	
+	outb(clockram + MAIN_STATUS, 0);
+	WDELAY();
+	*ptr++ = inb(clockram + RAM_1E);
+	WDELAY();
+	outb(clockram + MAIN_STATUS, 0x80);
+	WDELAY();
+	for(count=1; count < 32; count++) {
+		WDELAY();
+		*ptr++ = inb(clockram + count);
+	}
+	WDELAY();
+	outb(clockram + MAIN_STATUS, main_stat_save & 0xc0);
+	return(0);
+}
+
+/*----------------------------------------------------------------------*
+ *	Write non-volatile ram part of clock chip.
+ *	------------------------------------------
+ *
+ *	First byte is located in page 0, and written first
+ * 	then page 1 is switched in and the rest is written.
+ *----------------------------------------------------------------------*/
+unsigned char *WriteNVram(unsigned char *ptr)
+{
+	volatile unsigned char *clockram = (volatile unsigned char *)RISC_RTC;
+	unsigned char  main_stat_save;
+	int	       count;
+
+	main_stat_save = inb(clockram+MAIN_STATUS);
+	WDELAY();
+	outb(clockram + MAIN_STATUS, 0);
+	outb(clockram + RAM_1E, *ptr++);
+	outb(clockram + MAIN_STATUS, 0x80);
+	for(count=1; count < 32; count++) {
+		outb(clockram + count, *ptr++);
+	}
+	outb(clockram + MAIN_STATUS, main_stat_save & 0xc0);
+	return 0;
 }

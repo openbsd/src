@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 1997/05/11 16:26:08 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 1997/08/24 12:01:15 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.3 1997/05/11 16:26:08 pefo Exp $
+ *      $Id: machdep.c,v 1.4 1997/08/24 12:01:15 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -164,10 +164,19 @@ mips_init(argc, argv, code)
 	caddr_t start;
 	struct tlb tlb;
 	extern char _ftext[], edata[], end[];
+	int realmemsize;
+	char nvdata[32];
 
 	/* clear the BSS segment in OpenBSD code */
 	sysend = (caddr_t)mips_round_page(end);
 	bzero(edata, sysend - edata);
+
+	/* Extract this from BBRAM environment variable */
+	ReadNVram(&nvdata);
+	realmemsize = nvdata[2];
+	if (realmemsize > 36 || realmemsize < 8) {
+	    realmemsize = 36;
+	}
 
 	/* Initialize the CPU type */
 	cputype = WGRISC9100;
@@ -177,9 +186,36 @@ mips_init(argc, argv, code)
 	mem_layout[1].mem_size = 0x400000 - (int)(CACHED_TO_PHYS(sysend));
 	physmem = 4096 * 1024;
 
-	mem_layout[2].mem_start = 0x400000;
-	mem_layout[2].mem_size = 0x800000;
-	physmem += 8192 * 1024;
+	switch (realmemsize) {
+	default:
+	case 8:       /* 8 MB  (0 MB simm) */
+ 	    mem_layout[2].mem_start = 0x400000;
+	    mem_layout[2].mem_size =  0x400000;
+	    physmem += 4096 * 1024;
+	    break;
+	case 12:       /* 12 MB  (4 MB simm) */
+ 	    mem_layout[2].mem_start = 0x400000;
+	    mem_layout[2].mem_size =  0x800000;
+	    physmem += 8192 * 1024;
+	    break;
+	case 20:       /* 20 MB (16MB SIMM + 0 in onboard Bank2) */
+ 	    mem_layout[2].mem_start =0x1000000;
+	    mem_layout[2].mem_size = 0x1000000;
+	    physmem += 16 * 1024 * 1024;
+	    break;
+	case 24:       /* 24 MB (16MB SIMM + 4 in onboard Bank2) */
+ 	    mem_layout[2].mem_start = 0x400000;
+	    mem_layout[2].mem_size =  0x400000;
+ 	    mem_layout[3].mem_start =0x1000000;
+	    mem_layout[3].mem_size = 0x1000000;
+	    physmem += 20 * 1024 * 1024;
+	    break;
+        case 36:       /* 36 MB (32MB SIMM and ignore bank2 onboard) */
+ 	    mem_layout[2].mem_start = 0x400000;
+	    mem_layout[2].mem_size = 0x2000000;
+	    physmem += 32768 * 1024;
+	    break;
+	}
 
 	switch (cputype) {
 	case WGRISC9100:
