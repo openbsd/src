@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.1 2005/02/22 22:33:01 jfb Exp $	*/
+/*	$OpenBSD: child.c,v 1.2 2005/02/22 22:36:09 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -55,7 +55,6 @@
 #include "log.h"
 #include "cvs.h"
 #include "cvsd.h"
-#include "cvspr.h"
 
 
 
@@ -68,9 +67,8 @@ volatile sig_atomic_t cvsd_running = 1;
 
 static int    cvsd_privfd = -1;
 static char   cvsd_root[MAXPATHLEN];
-static char  *cvsd_motd;
-static uid_t  cvsd_uid = -1;
-static gid_t  cvsd_gid = -1;
+static uid_t  cvsd_uid = 0;
+static gid_t  cvsd_gid = 0;
 
 
 /* session info */
@@ -242,30 +240,4 @@ cvsd_child_getreq(struct cvsd_req *reqp)
 	}
 
 	return ((int)ret);
-}
-
-
-/*
- * cvsd_child_reqhdlr()
- *
- */
-int
-cvsd_child_reqhdlr(struct cvsp_req *req)
-{
-	int ret;
-
-	switch (req->req_code) {
-	case CVSP_REQ_MOTD:
-		ret = cvs_proto_sendresp(cvsd_sess_fd, CVSP_RESP_DONE,
-		    cvsd_motd, strlen(cvsd_motd) + 1);
-		break;
-	case CVSP_REQ_VERSION:
-	case CVSP_REQ_GETMSG:
-	case CVSP_REQ_SETMSG:
-	default:
-		ret = cvs_proto_sendresp(cvsd_sess_fd, CVSP_RESP_INVREQ,
-		    req->req_seq, NULL, 0);
-	}
-
-	return (ret);
 }
