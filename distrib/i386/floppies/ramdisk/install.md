@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.22 1997/10/17 12:30:09 deraadt Exp $
+#	$OpenBSD: install.md,v 1.23 1997/10/17 12:37:31 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -249,9 +249,9 @@ md_congrats() {
 	fi
 	cat << __congratulations_1
 
-CONGRATULATIONS!  You have successfully $what OpenBSD!  To boot the installed
-system, enter halt at the command prompt. Once the system has halted, reset
-the machine and boot from the disk.
+CONGRATULATIONS!  You have successfully $what OpenBSD!  To boot the
+installed system, enter halt at the command prompt. Once the system has
+halted, reset the machine and boot from the disk.
 
 __congratulations_1
 }
