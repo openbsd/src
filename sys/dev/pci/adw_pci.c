@@ -1,5 +1,5 @@
-/*	$OpenBSD: adw_pci.c,v 1.5 2000/04/29 21:14:51 krw Exp $ */
-/* $NetBSD: adw_pci.c,v 1.4 2000/02/04 13:16:22 dante Exp $	*/
+/*	$OpenBSD: adw_pci.c,v 1.6 2000/06/28 23:49:31 krw Exp $ */
+/* $NetBSD: adw_pci.c,v 1.7 2000/05/26 15:13:46 dante Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -39,12 +39,13 @@
  * Device probe and attach routines for the following
  * Advanced Systems Inc. SCSI controllers:
  *
- *     ABP-940UW       - Bus-Master PCI Ultra-Wide  (240 CDB)
- *     ABP-940UW (68)  - Bus-Master PCI Ultra-Wide  (240 CDB)
- *     ABP-940UWD      - Bus-Master PCI Ultra-Wide  (240 CDB)
- *     ABP-970UW       - Bus-Master PCI Ultra-Wide  (240 CDB)
- *     ASB-3940UW      - Bus-Master PCI Ultra-Wide  (240 CDB)
- *     ASB-3940U2W-00  - Bus-Master PCI Ultra2-Wide (240 CDB)
+ *      ABP-940UW	- Bus-Master PCI Ultra-Wide (253 CDB)
+ *	ABP-940UW (68)	- Bus-Master PCI Ultra-Wide (253 CDB)
+ *	ABP-940UWD	- Bus-Master PCI Ultra-Wide (253 CDB)
+ *	ABP-970UW	- Bus-Master PCI Ultra-Wide (253 CDB)
+ *	ASB-3940UW	- Bus-Master PCI Ultra-Wide (253 CDB)
+ *	ASB-3940U2W-00	- Bus-Master PCI Ultra2-Wide (253 CDB)
+ *	ASB-3940U3W-00	- Bus-Master PCI Ultra3-Wide (253 CDB)
  */
 
 #include <sys/types.h>
@@ -54,6 +55,7 @@
 #include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -66,6 +68,7 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/ic/adwlib.h>
+#include <dev/ic/adwmcode.h>
 #include <dev/ic/adw.h>
 
 /******************************************************************************/
@@ -74,8 +77,8 @@
 
 /******************************************************************************/
 
-int adw_pci_match __P((struct device *, void *, void *));
-void adw_pci_attach __P((struct device *, struct device *, void *));
+static int adw_pci_match __P((struct device *, void *, void *));
+static void adw_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach adw_pci_ca =
 {
@@ -88,18 +91,19 @@ struct cfattach adw_pci_ca =
  * If we find one, note it's address (slot) and call
  * the actual probe routine to check it out.
  */
-int
+static int
 adw_pci_match(parent, match, aux)
 	struct device  *parent;
-	void           *match, *aux;
+	void           *match;
+	void           *aux;
 {
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADVSYS)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_ADVSYS_WIDE:
-			return (1);
 		case PCI_PRODUCT_ADVSYS_U2W:
+		case PCI_PRODUCT_ADVSYS_U3W:
 			return (1);
 		}
 
@@ -107,7 +111,7 @@ adw_pci_match(parent, match, aux)
 }
 
 
-void
+static void
 adw_pci_attach(parent, self, aux)
 	struct device  *parent, *self;
 	void           *aux;
@@ -126,11 +130,15 @@ adw_pci_attach(parent, self, aux)
 	 */
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_ADVSYS_WIDE:
-		sc->chip_type = ADV_CHIP_ASC3550;
+		sc->chip_type = ADW_CHIP_ASC3550;
 		break;
 
 	case PCI_PRODUCT_ADVSYS_U2W:
-		sc->chip_type = ADV_CHIP_ASC38C0800;
+		sc->chip_type = ADW_CHIP_ASC38C0800;
+		break;
+
+	case PCI_PRODUCT_ADVSYS_U3W:
+		sc->chip_type = ADW_CHIP_ASC38C1600;
 		break;
 
 	default:
@@ -143,37 +151,11 @@ adw_pci_attach(parent, self, aux)
 	 * Make sure IO/MEM/MASTER are enabled
 	 */
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	if ((command & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-			PCI_COMMAND_MASTER_ENABLE)) !=
-	    (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	     PCI_COMMAND_MASTER_ENABLE)) {
-		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		 command | (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-			    PCI_COMMAND_MASTER_ENABLE));
-	}
+	command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+			PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
-	/*
-	 * Latency timer settings.
-	 */
-	{
-		u_int32_t       bhlcr;
-
-		bhlcr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
-
-		if( ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_WIDE) ||
-		     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_U2W)) &&
-		     (PCI_LATTIMER(bhlcr) < 0x20)) {
-			bhlcr &= 0xFFFF00FFUL;
-			bhlcr |= 0x00002000UL;
-			pci_conf_write(pa->pa_pc, pa->pa_tag,
-				       PCI_BHLC_REG, bhlcr);
-		}
-	}
-
-
-	if (((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_WIDE) ||
-	     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_U2W)) &&
-	     (command & PCI_COMMAND_PARITY_ENABLE) == 0) {
+	if ( (command & PCI_COMMAND_PARITY_ENABLE) == 0) {
 		sc->cfg.control_flag |= CONTROL_FLAG_IGNORE_PERR;
 	}
 	/*
@@ -192,8 +174,10 @@ adw_pci_attach(parent, self, aux)
 	/*
 	 * Initialize the board
 	 */
-	if (adw_init(sc))
-		panic("adw_pci_attach: adw_init failed");
+	if (adw_init(sc)) {
+		printf("%s: adw_init failed", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	/*
 	 * Map Interrupt line
