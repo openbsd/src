@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.14 2002/06/09 05:47:27 todd Exp $
+.\"	$OpenBSD: systrace.1,v 1.15 2002/06/10 19:18:48 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -41,6 +41,7 @@
 .Op Fl aAitU
 .Op Fl g Ar gui
 .Op Fl f Ar file
+.Op Fl p Ar pid
 .Ar command ...
 .Sh DESCRIPTION
 The
@@ -75,6 +76,13 @@ The policies specified in
 are added to the policies that
 .Nm
 knows about.
+.It Fl p Ar pid
+Specifies the pid of a process that
+.Nm
+should attach to.
+The full path name of the corresponding binary has to be specified
+as
+.Ar command .
 .El
 .Pp
 .Sh POLICY
