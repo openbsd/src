@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.25 2002/07/11 12:57:41 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.26 2002/07/12 12:26:29 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -70,9 +70,7 @@ make_output(char *output, size_t outlen, char *binname, pid_t pid,
 {
 	struct intercept_translate *tl;
 	char *p, *line;
-	int size, dorepl;
-
-	dorepl = tl != NULL && repl != NULL;
+	int size;
 
 	snprintf(output, outlen,
 	    "%s, pid: %d(%d), policy: %s, filters: %d, syscall: %s-%s(%d)",
@@ -82,7 +80,7 @@ make_output(char *output, size_t outlen, char *binname, pid_t pid,
 	p = output + strlen(output);
 	size = outlen - strlen(output);
 
-	if (dorepl)
+	if (repl != NULL)
 		intercept_replace_init(repl);
 	TAILQ_FOREACH(tl, tls, next) {
 		if (!tl->trans_valid)
@@ -95,7 +93,7 @@ make_output(char *output, size_t outlen, char *binname, pid_t pid,
 		p = output + strlen(output);
 		size = sizeof(output) - strlen(output);
 
-		if (dorepl && tl->trans_size)
+		if (repl != NULL && tl->trans_size)
 			intercept_replace_add(repl, tl->off,
 			    tl->trans_data, tl->trans_size);
 	}
@@ -193,7 +191,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 		action = ICPOLICY_NEVER;
 	}
  replace:
-	if (action != ICPOLICY_NEVER) {
+	if (action < ICPOLICY_NEVER) {
 		/* If we can not rewrite the arguments, system call fails */
 		if (intercept_replace(fd, pid, &repl) == -1)
 			action = ICPOLICY_NEVER;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.h,v 1.5 2002/07/09 20:46:18 provos Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.6 2002/07/12 12:26:29 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -64,7 +64,7 @@ struct intercept_system {
 #define ICPOLICY_ASK	0
 #define ICPOLICY_PERMIT	-1
 #define ICPOLICY_KILL	-2
-#define ICPOLICY_NEVER	1
+#define ICPOLICY_NEVER	1	/* overloaded with errno values > 1 */
 
 #define ICFLAGS_RESULT	1
 

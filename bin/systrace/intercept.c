@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.14 2002/07/10 13:46:13 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.15 2002/07/12 12:26:29 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/tree.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
