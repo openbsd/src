@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2004/10/08 17:52:08 mcbride Exp $ */
+/*	$OpenBSD: conf.c,v 1.7 2004/12/13 16:18:02 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,17 +50,12 @@
  */
 
 #include "vnd.h"
-bdev_decl(vnd);
-bdev_decl(sw);
 #include "sd.h"
-bdev_decl(sd);
 #include "cd.h"
-bdev_decl(cd);
 #include "wd.h"
 bdev_decl(wd);
 #include "ccd.h"
 #include "rd.h"
-bdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -94,53 +89,28 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
 
-/* open, close, write, ioctl */
-#define	cdev_spkr_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
-
-cdev_decl(cn);
-cdev_decl(sw);
-cdev_decl(ctty);
-cdev_decl(random);
 #define mmread mmrw
 #define mmwrite mmrw
 dev_type_read(mmrw);
 cdev_decl(mm);
 #include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
 cdev_decl(fd);
 #include "st.h"
-cdev_decl(st);
-cdev_decl(vnd);
-cdev_decl(rd);
 #include "bpfilter.h"
-cdev_decl(bpf);
+#include "tun.h"
 #include "com.h"
 cdev_decl(com);
 #include "lpt.h"
 cdev_decl(lpt);
-cdev_decl(sd);
-cdev_decl(cd);
 #include "ch.h"
 #include "ss.h"
 #include "uk.h"
-cdev_decl(uk);
 cdev_decl(wd);
-cdev_decl(acd);
 #ifdef XFS
 #include <xfs/nxfs.h>
 cdev_decl(xfs_dev);
 #endif
 #include "ksyms.h"
-cdev_decl(ksyms);
 
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -169,15 +139,15 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NST,st),		/* 10: SCSI tape */
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: berkeley packet filter */
-	cdev_notdef(),			/* 13: */
+	cdev_bpftun_init(NTUN,tun),	/* 13: network tunnel */
 	cdev_notdef(),			/* 14: */
 	cdev_notdef(),			/* 15: */
 	cdev_lpt_init(NLPT,lpt),	/* 16: Parallel printer interface */
 	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */
 	cdev_disk_init(NWD,wd),		/* 18: ST506/ESDI/IDE disk */
 	cdev_notdef(),			/* 19: */
-	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
-	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
+	cdev_notdef(),			/* 20: */
+	cdev_notdef(),			/* 21: */
 	cdev_disk_init(NRD,rd),		/* 22: ramdisk device */
 	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
 	cdev_notdef(),			/* 24: */
