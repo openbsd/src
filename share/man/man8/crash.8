@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crash.8,v 1.20 2004/02/01 12:21:16 jmc Exp $
+.\"	$OpenBSD: crash.8,v 1.21 2004/08/13 22:07:14 kettenis Exp $
 .\"
 .\" Copyright (c) 1980, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -160,17 +160,16 @@ you should run
 loading in the images with the following commands:
 .Bd -literal -offset indent
 # gdb
-GNU gdb 4.16.1
-Copyright 1996 Free Software Foundation, Inc.
+GNU gdb 6.1
+Copyright 2004 Free Software Foundation, Inc.
 GDB is free software, covered by the GNU General Public License, and you are
 welcome to change it and/or distribute copies of it under certain conditions.
 Type "show copying" to see the conditions.
-There is absolutely no warranty for GDB.
-Type "show warranty" for details.
-This GDB was configured as "i386-unknown-openbsd2.8".
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "i386-unknown-openbsd3.5".
 (gdb) file /var/crash/bsd.0
 Reading symbols from /var/crash/bsd.0...(no debugging symbols found)...done.
-(gdb) target kcore /var/crash/bsd.0.core
+(gdb) target kvm /var/crash/bsd.0.core
 .Ed
 .Pp
 After this, you can use the
