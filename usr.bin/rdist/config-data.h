@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
+ * Copyright (c) 1993 Michael A. Cooper
+ * Copyright (c) 1993 Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,16 +33,61 @@
  */
 
 /*
- * $Id: pathnames.h,v 1.2 1996/02/03 12:12:35 dm Exp $
- * @(#)pathnames.h	5.4 (Berkeley) 8/27/90
+ * $Id: config-data.h,v 1.1 1996/02/03 12:12:14 dm Exp $
+ * @(#)configdata.h
  */
 
-#include "config.h"
+#ifndef __configdata_h__
+#define __configdata_h__
 
-#if	!defined(_RDIST_TMP)
-#	define _RDIST_TMP	"rdistXXXXXX"		/* Temporary file */
-#endif	/* _RDIST_TMP */
+/*
+ * Configuration data
+ */
 
-#if	!defined(_PATH_RDISTD)
-#	define _PATH_RDISTD	"rdistd"		/* Rdist server */
-#endif	/* _PATH_RDISTD */
+/*
+ * Define the read and write values for the file descriptor array
+ * used by pipe().
+ */
+#define PIPE_READ		0
+#define PIPE_WRITE		1
+
+/*
+ * Directory information
+ */
+#if	DIR_TYPE == DIR_DIRECT
+#include 	<sys/dir.h>
+typedef 	struct direct		DIRENTRY;
+#define 	D_NAMLEN(p)		((p)->d_namlen)
+#endif	/* DIR_DIRECT */
+
+#if	DIR_TYPE == DIR_DIRENT
+#include 	<dirent.h>
+typedef 	struct dirent		DIRENTRY;
+#define 	D_NAMLEN(p)		(strlen((p)->d_name))
+#endif	/* DIR_DIRENT */
+
+/*
+ * Set a default buffering type.
+ */
+#if	!defined(SETBUF_TYPE)
+#define 	SETBUF_TYPE		SETBUF_SETLINEBUF
+#endif	/* SETBUF_TYPE */
+
+/*
+ * Set a default get socket pair type.
+ */
+#if	!defined(SOCKPAIR_TYPE)
+#define 	SOCKPAIR_TYPE		SOCKPAIR_SOCKETPAIR
+#endif	/* SOCKPAIR_TYPE */
+
+/*
+ * Set default write(2) return and amount types.
+ */
+#if	!defined(WRITE_RETURN_T)
+#define		WRITE_RETURN_T		int	/* What write() returns */
+#endif	/* WRITE_RETURN_T */
+#if	!defined(WRITE_AMT_T)
+#define		WRITE_AMT_T		int	/* Amount to write */
+#endif	/* WRITE_AMT_T */
+
+#endif	/* __configdata_h__ */

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,19 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)pathnames.h	8.1 (Berkeley) 6/9/93
+ *	$Id: pathnames.h,v 1.1 1996/02/03 12:12:02 dm Exp $
  */
 
-/*
- * $Id: pathnames.h,v 1.2 1996/02/03 12:12:35 dm Exp $
- * @(#)pathnames.h	5.4 (Berkeley) 8/27/90
- */
+#include <paths.h>
 
-#include "config.h"
-
-#if	!defined(_RDIST_TMP)
-#	define _RDIST_TMP	"rdistXXXXXX"		/* Temporary file */
-#endif	/* _RDIST_TMP */
-
-#if	!defined(_PATH_RDISTD)
-#	define _PATH_RDISTD	"rdistd"		/* Rdist server */
-#endif	/* _PATH_RDISTD */
+#define	_PATH_RDIST	"rdist"

@@ -1,6 +1,8 @@
+#ifndef __DEFS_H__
+#define __DEFS_H__
 /*
- * Copyright (c) 1983, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1983 Regents of the University of California.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,98 +31,261 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)defs.h	8.1 (Berkeley) 6/9/93
- *	$Id: defs.h,v 1.1.1.1 1995/10/18 08:45:58 deraadt Exp $
  */
 
-#include <sys/param.h>
-#include <sys/dir.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/file.h>
+/*
+ * $Id: defs.h,v 1.2 1996/02/03 12:12:18 dm Exp $
+ * @(#)defs.h      5.2 (Berkeley) 3/20/86
+ */
 
-#include <netinet/in.h>
-
+/*
+ * POSIX settings
+ */
+#if	defined(_POSIX_SOURCE)
+#include <unistd.h>
+#include <stdlib.h>
+#endif	/* _POSIX_SOURCE */
+#include <stdio.h>
+#include <ctype.h>
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
+#include <syslog.h>
+#include <setjmp.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/file.h>
+#include <sys/time.h>
+#include <sys/stat.h>
+
+#include "version.h"
+#include "config-def.h"
+#include "config.h"
+#include "config-data.h"
 #include "pathnames.h"
+#include "types.h"
+
+#if	!defined(yacc)
+/* #include "y.tab.h" */
+#endif	/* yacc */
+
+#include <signal.h>
 
 /*
- * The version number should be changed whenever the protocol changes.
+ * This belongs in os-svr4.h but many SVR4 OS's
+ * define SVR4 externel to Rdist so we put this
+ * check here.
  */
-#define VERSION	 3
+#if	defined(SVR4)
+#define NEED_FCNTL_H
+#define NEED_UNISTD_H
+#define NEED_NETDB_H
+#endif	/* defined(SVR4) */
 
-	/* defines for yacc */
-#define EQUAL	1
-#define LP	2
-#define RP	3
-#define SM	4
-#define ARROW	5
-#define COLON	6
-#define DCOLON	7
-#define NAME	8
-#define STRING	9
-#define INSTALL	10
-#define NOTIFY	11
-#define EXCEPT	12
-#define PATTERN	13
-#define SPECIAL	14
-#define OPTION	15
+#if	defined(NEED_NETDB_H)
+#include <netdb.h>
+#endif	/* NEED_NETDB_H */
+#if	defined(NEED_FCNTL_H)
+#include <fcntl.h>
+#endif	/* NEED_FCNTL_H */
+#if	defined(NEED_LIMITS_H)
+#include <limits.h>
+#endif	/* NEED_LIMITS_H */
+#if	defined(NEED_UNISTD_H)
+#include <unistd.h>
+#endif	/* NEED_UNISTD_H */
+#if	defined(NEED_STRING_H)
+#include <string.h>
+#endif	/* NEED_STRING_H */
+
+#if defined(ARG_TYPE)
+#if	ARG_TYPE == ARG_STDARG
+#include <stdarg.h>
+#endif
+#if	ARG_TYPE == ARG_VARARGS
+#include <varargs.h>
+#endif
+#endif	/* ARG_TYPE */
+
+	/* boolean truth */
+#ifndef TRUE
+#define TRUE		1
+#endif
+#ifndef FALSE
+#define FALSE		0
+#endif
+
+	/* file modes */
+#ifndef S_IXUSR
+#define S_IXUSR		0000100
+#endif
+#ifndef S_IXGRP
+#define S_IXGRP		0000010
+#endif
+#ifndef S_IXOTH
+#define S_IXOTH		0000001
+#endif
 
 	/* lexical definitions */
-#define	QUOTE 	0200		/* used internally for quoted characters */
-#define	TRIM	0177		/* Mask to strip quote bit */
+#define	QUOTECHAR	160	/* quote next character */
 
 	/* table sizes */
 #define HASHSIZE	1021
-#define INMAX	3500
-
-	/* option flags */
-#define VERIFY	0x1
-#define WHOLE	0x2
-#define YOUNGER	0x4
-#define COMPARE	0x8
-#define REMOVE	0x10
-#define FOLLOW	0x20
-#define IGNLNKS	0x40
+#define INMAX		3500
 
 	/* expand type definitions */
-#define E_VARS	0x1
-#define E_SHELL	0x2
-#define E_TILDE	0x4
-#define E_ALL	0x7
+#define E_VARS		0x1
+#define E_SHELL		0x2
+#define E_TILDE		0x4
+#define E_ALL		0x7
 
 	/* actions for lookup() */
-#define LOOKUP	0
-#define INSERT	1
-#define REPLACE	2
+#define LOOKUP		0
+#define INSERT		1
+#define REPLACE		2
 
-#define ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+	/* Bit flag test macros */
+#define IS_ON(b,f)	(b > 0 && (b & f))
+#define IS_OFF(b,f)	!(IS_ON(b,f))
+#define FLAG_ON(b,f)	b |= f
+#define FLAG_OFF(b,f)	b &= ~(f)
 
-#define ALLOC(x) (struct x *) malloc(sizeof(struct x))
+/*
+ * POSIX systems should already have S_* defined.
+ */
+#ifndef S_ISDIR
+#define S_ISDIR(m) 	(((m) & S_IFMT) == S_IFDIR)
+#endif
+#ifndef S_ISREG
+#define S_ISREG(m) 	(((m) & S_IFMT) == S_IFREG)
+#endif
+#ifndef S_ISLNK
+#define S_ISLNK(m) 	(((m) & S_IFMT) == S_IFLNK)
+#endif
 
-struct namelist {	/* for making lists of strings */
+#define ALLOC(x) 	(struct x *) xmalloc(sizeof(struct x))
+#define A(s)		((s) ? s : "<null>")
+
+/*
+ * Environment variable names
+ */
+#define E_FILES		"FILES"			/* List of files */
+#define E_LOCFILE	"FILE"			/* Local Filename  */
+#define E_REMFILE	"REMFILE"		/* Remote Filename */
+#define E_BASEFILE	"BASEFILE"		/* basename of Remote File */
+
+/*
+ * Suffix to use when saving files
+ */
+#ifndef SAVE_SUFFIX
+#define SAVE_SUFFIX	".OLD"
+#endif
+
+/*
+ * Get system error string
+ */
+#define SYSERR 		strerror(errno)
+
+#define COMMENT_CHAR	'#'		/* Config file comment char */
+#define CNULL		'\0'		/* NULL character */
+
+/*
+ * These are the top level protocol commands.
+ */
+#define C_NONE		'='		/* No command - pass cleanly */
+#define C_ERRMSG	'\1'		/* Log an error message */
+#define C_FERRMSG	'\2'		/* Log a fatal error message */
+#define C_NOTEMSG	'\3'		/* Log a note message */
+#define C_LOGMSG	'\4'		/* Log a message */
+#define C_ACK		'\5'		/* Acknowledge */
+#define C_SETCONFIG	'c'		/* Set configuration parameters */
+#define C_DIRTARGET	'T'		/* Set target directory name */
+#define C_TARGET	't'		/* Set target file name */
+#define C_RECVREG	'R'		/* Receive a regular file */
+#define C_RECVDIR	'D'		/* Receive a directory */
+#define C_RECVSYMLINK	'K'		/* Receive a symbolic link */
+#define C_RECVHARDLINK	'k'		/* Receive a hard link */
+#define C_END		'E'		/* Indicate end of recieve/send */
+#define C_CLEAN		'C'		/* Clean up */
+#define C_QUERY		'Q'		/* Query without checking */
+#define C_SPECIAL	'S'		/* Execute special command */
+#define C_CMDSPECIAL	's'		/* Execute cmd special command */
+#define C_CHMOD		'M'		/* Chmod a file */
+
+#define	ack() 		(void) sendcmd(C_ACK, (char *)NULL)
+#define	err() 		(void) sendcmd(C_ERRMSG, (char *)NULL)
+
+/*
+ * Session startup commands.
+ */
+#define S_VERSION	'V'		/* Version number */
+#define S_REMOTEUSER	'R'		/* Remote user name */
+#define S_LOCALUSER	'L'		/* Local user name */
+#define S_END		'E'		/* End of session startup commands */
+
+/*
+ * These are the commands for "set config".
+ */
+#define SC_FREESPACE	's'		/* Set min free space */
+#define SC_FREEFILES	'f'		/* Set min free files */
+#define SC_HOSTNAME	'H'		/* Set client hostname */
+#define SC_LOGGING	'L'		/* Set logging options */
+
+/*
+ * Query commands
+ */
+#define QC_ONNFS	'F'		/* File exists & is on a NFS */
+#define QC_ONRO		'O'		/* File exists & is on a readonly fs */
+#define QC_NO		'N'		/* File does not exist */
+#define QC_SYM		'l'		/* File exists & is a symlink */
+#define QC_YES		'Y'		/* File does exist */
+
+/*
+ * Clean commands
+ */
+#define CC_QUERY	'Q'		/* Query if file should be rm'ed */
+#define CC_END		'E'		/* End of cleaning */
+#define CC_YES		'Y'		/* File doesn't exist - remove */
+#define CC_NO		'N'		/* File does exist - don't remove */
+
+/*
+ * Run Command commands
+ */
+#define RC_FILE		'F'		/* Name of a target file */
+#define RC_COMMAND	'C'		/* Command to run */
+
+/*
+ * Name list
+ */
+struct namelist {		/* for making lists of strings */
 	char	*n_name;
 	struct	namelist *n_next;
 };
 
+/*
+ * Sub command structure
+ */
 struct subcmd {
 	short	sc_type;	/* type - INSTALL,NOTIFY,EXCEPT,SPECIAL */
-	short	sc_options;
+	opt_t	sc_options;
 	char	*sc_name;
 	struct	namelist *sc_args;
 	struct	subcmd *sc_next;
 };
 
+/*
+ * Cmd flags
+ */
+#define CMD_ASSIGNED	0x01	/* This entry has been assigned */
+#define CMD_CONNFAILED	0x02	/* Connection failed */
+#define CMD_NOCHKNFS	0x04	/* Disable NFS checks */
+
+/*
+ * General command structure
+ */
 struct cmd {
 	int	c_type;		/* type - ARROW,DCOLON */
+	int	c_flags;	/* flags - CMD_USED,CMD_FAILED */
 	char	*c_name;	/* hostname or time stamp file name */
 	char	*c_label;	/* label for partial update */
 	struct	namelist *c_files;
@@ -128,54 +293,121 @@ struct cmd {
 	struct	cmd *c_next;
 };
 
+/*
+ * Hard link buffer information
+ */
 struct linkbuf {
 	ino_t	inum;
 	dev_t	devnum;
 	int	count;
 	char	pathname[BUFSIZ];
+	char	src[BUFSIZ];
 	char	target[BUFSIZ];
 	struct	linkbuf *nextp;
 };
 
-extern int debug;		/* debugging flag */
-extern int nflag;		/* NOP flag, don't execute commands */
-extern int qflag;		/* Quiet. don't print messages */
-extern int options;		/* global options */
+extern char	       *optarg;		/* Option argument */
+extern char	       *path_remsh;	/* Remote shell command */
+extern char 		buf[];		/* General purpose buffer */
+extern char 		host[];		/* Host name of master copy */
+extern char 	       *currenthost;	/* Name of current host */
+extern char 	       *progname;	/* Name of this program */
+extern char 	      **realargv;	/* Real argv */
+extern int		optind;		/* Option index into argv */
+extern int 		contimedout;	/* Connection timed out */
+extern int 		debug;		/* Debugging flag */
+extern opt_t 		defoptions;	/* Default install options */
+extern int 		do_fork;	/* Should we do fork()'ing */
+extern int 		errno;		/* System error number */
+extern int 		isserver;	/* Acting as remote server */
+extern int 		nerrs;		/* Number of errors seen */
+extern int 		nflag;		/* NOP flag, don't execute commands */
+extern opt_t 		options;	/* Global options */
+extern int 		proto_version;	/* Protocol version number */
+extern int 		realargc;	/* Real argc */
+extern int		rem_r;		/* Remote file descriptor, reading */
+extern int 		rem_w;		/* Remote file descriptor, writing */
+extern int 		rtimeout;	/* Response time out in seconds */
+extern UID_T 		userid;		/* User ID of rdist user */
+extern jmp_buf 		finish_jmpbuf;	/* Setjmp buffer for finish() */
+extern struct group    *gr;	/* pointer to static area used by getgrent */
+extern struct linkbuf  *ihead;	/* list of files with more than one link */
+extern struct passwd   *pw;	/* pointer to static area used by getpwent */
+#ifdef USE_STATDB
+extern int 		dostatdb;
+extern int 		juststatdb;
+#endif /* USE_STATDB */
 
-extern int nerrs;		/* number of errors seen */
-extern int rem;			/* remote file descriptor */
-extern int iamremote;		/* acting as remote server */
-extern char tempfile[];		/* file name for logging changes */
-extern struct linkbuf *ihead;	/* list of files with more than one link */
-extern struct passwd *pw;	/* pointer to static area used by getpwent */
-extern struct group *gr;	/* pointer to static area used by getgrent */
-extern char host[];		/* host name of master copy */
-extern char buf[];		/* general purpose buffer */
+/*
+ * System function declarations
+ */
+char 			       *hasmntopt();
+char			       *strchr();
+char		 	       *strdup();
+char		 	       *strrchr();
+char 			       *strtok();
 
-int	 any __P((int, char *));
-char	*colon __P((char *));
-void	 cleanup __P((int));
-void	 define __P((char *));
-void	 docmds __P((char **, int, char **));
-void	 error __P((const char *, ...));
-int	 except __P((char *));
-struct namelist *
-	 expand __P((struct namelist *, int));
-char	*exptilde __P((char [], char *));
-void	 fatal __P((const char *, ...));
-int	 inlist __P((struct namelist *, char *));
-void	 insert __P((char *,
-	    struct namelist *, struct namelist *, struct subcmd *));
-void	 install __P((char *, char *, int, int));
-void	 log __P((FILE *, const char *, ...));
-struct namelist *
-	 lookup __P((char *, int, struct namelist *));
-void	 lostconn __P((int));
-struct namelist *
-	 makenl __P((char *));
-struct subcmd *
-	 makesubcmd __P((int));
-void	 prnames __P((struct namelist *));
-void	 server __P((void));
-void	 yyerror __P((char *));
-int	 yyparse __P((void));
+/*
+ * Our own declarations.
+ */
+char			       *exptilde();
+char			       *makestr();
+char	       		       *xcalloc();
+char	       		       *xmalloc();
+char	       		       *xrealloc();
+extern char		       *xbasename();
+extern char		       *getdistoptlist();
+extern char		       *getgroupname();
+extern char		       *getnlstr();
+extern char		       *getnotifyfile();
+extern char		       *getondistoptlist();
+extern char		       *getusername();
+extern char		       *getversion();
+extern char		       *msgparseopts();
+extern char		       *searchpath();
+extern int			any();
+extern int			init();
+extern int			install();
+extern int			isexec();
+extern int			parsedistopts();
+extern int			remline();
+extern int			setfiletime();
+extern int			spawn();
+extern struct subcmd 	       *makesubcmd();
+extern void			checkhostname();
+extern void			cleanup();
+extern void			complain();
+extern void			docmds();
+extern void			finish();
+extern void			log();
+extern void			logmsg();
+extern void			lostconn();
+extern void			markassigned();
+extern void			msgprusage();
+extern void			note();
+extern void			runcmdspecial();
+extern void			runcommand();
+extern void			server();
+extern void			setprogname();
+extern void			sighandler();
+extern void			waitup();
+struct namelist		       *expand();
+struct namelist		       *lookup();
+struct namelist		       *makenl();
+extern WRITE_RETURN_T		xwrite();
+
+#if	defined(ARG_TYPE) && ARG_TYPE == ARG_STDARG
+extern void			debugmsg(int, char *, ...);
+extern void			error(char *, ...);
+extern void			fatalerr(char *, ...);
+extern void			message(int, char *, ...);
+extern void			setproctitle(char *fmt, ...);
+#else
+extern void			debugmsg();
+extern void			error();
+extern void			fatalerr();
+extern void			message();
+extern void			setproctitle();
+#endif
+
+#endif	/* __DEFS_H__ */

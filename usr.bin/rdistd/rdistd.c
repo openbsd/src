@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
+ * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,17 +31,83 @@
  * SUCH DAMAGE.
  */
 
+#ifndef lint
+static char RCSid[] = 
+"$Id: rdistd.c,v 1.1 1996/02/03 12:13:02 dm Exp $";
+
+static char sccsid[] = "@(#)rdistd.c";
+
+static char copyright[] =
+"@(#) Copyright (c) 1983 Regents of the University of California.\n\
+ All rights reserved.\n";
+#endif /* not lint */
+
+
+#include "defs.h"
+
 /*
- * $Id: pathnames.h,v 1.2 1996/02/03 12:12:35 dm Exp $
- * @(#)pathnames.h	5.4 (Berkeley) 8/27/90
+ * Print usage message
  */
+static void usage()
+{
+	fprintf(stderr, "usage: %s -S [ -DV ]\n", progname);
+	exit(1);
+}
 
-#include "config.h"
+char	localmsglist[] = "syslog=ferror";
 
-#if	!defined(_RDIST_TMP)
-#	define _RDIST_TMP	"rdistXXXXXX"		/* Temporary file */
-#endif	/* _RDIST_TMP */
+/*
+ * The Beginning
+ */
+main(argc, argv, envp)
+	int argc;
+	char **argv;
+	char **envp;
+{
+	char *cp;
+	int c;
 
-#if	!defined(_PATH_RDISTD)
-#	define _PATH_RDISTD	"rdistd"		/* Rdist server */
-#endif	/* _PATH_RDISTD */
+	if (init(argc, argv, envp) < 0)
+		exit(1);
+
+	while ((c = getopt(argc, argv, "SDV")) != -1)
+		switch (c) {
+		case 'S':
+			isserver++;
+			break;
+
+		case 'D':
+			debug++;
+			break;
+
+		case 'V':
+			printf("%s\n", getversion());
+			exit(0);
+
+		case '?':
+		default:
+			error("Bad command line option.");
+			usage();
+		}
+
+	if (!isserver) {
+		error("Use the -S option to run this program in server mode.");
+		exit(1);
+	}
+
+	/* Use stdin and stdout for remote descriptors */
+	rem_r = fileno(stdin);
+	rem_w = fileno(stdout);
+
+	/* Set logging */
+	if (cp = msgparseopts(localmsglist, TRUE))
+		fatalerr("Bad message logging option (%s): %s", 
+			 localmsglist, cp);
+
+	/*
+	 * Main processing function
+	 */
+	server();
+
+	exit(nerrs != 0);
+}

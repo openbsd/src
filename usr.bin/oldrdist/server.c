@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: server.c,v 1.2 1995/12/15 08:58:45 deraadt Exp $";
+static char *rcsid = "$Id: server.c,v 1.1 1996/02/03 12:12:03 dm Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>

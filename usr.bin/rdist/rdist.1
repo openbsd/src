@@ -1,5 +1,6 @@
-.\" Copyright (c) 1985, 1990, 1993
-.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Copyright (c) 1983 Regents of the University of California.
+.\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,385 +30,843 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)rdist.1	8.2 (Berkeley) 12/30/93
-.\"	$Id: rdist.1,v 1.1.1.1 1995/10/18 08:45:59 deraadt Exp $
+.\"	$Id: rdist.1,v 1.2 1996/02/03 12:12:37 dm Exp $
+.\"	@(#)rdist.1	6.6 (Berkeley) 5/13/86
 .\"
-.Dd December 30, 1993
-.Dt RDIST 1
-.Os BSD 4.3
-.Sh NAME
-.Nm rdist
-.Nd remote file distribution program
-.Sh SYNOPSIS
-.Nm rdist
-.Op Fl nqbRhivwy
-.Op Fl f Ar distfile
-.Op Fl d Ar var=value
-.Op Fl m Ar host
-.Op Ar name ...
-.Nm rdist
-.Op Fl nqbRhivwy
-.Fl c
-.Ar name ...
-.Oo login@ Oc Ns Ar host Ns Op :dest
-.Sh DESCRIPTION
-.Nm Rdist
-is a program to maintain identical copies of files over multiple hosts.
+.TH RDIST 1 "March 14, 1994"
+.UC 6
+.SH NAME
+rdist \- remote file distribution client program
+.SH SYNOPSIS
+.B rdist
+[ 
+.B \-DFn
+]
+[ 
+.B \-A 
+.I num
+] 
+[ 
+.B \-a 
+.I num 
+]
+[ 
+.B \-d 
+.I var=value 
+] 
+[ 
+.B \-l
+.I <local logopts>
+] 
+[ 
+.B \-L
+.I <remote logopts>
+] 
+[ 
+.B \-f 
+.I distfile 
+] 
+[ 
+.B \-M 
+.I maxproc
+] 
+[ 
+.B \-m 
+.I host 
+]
+[ 
+.B \-o
+.I distopts
+]
+[ 
+.B \-t 
+.I timeout 
+] 
+[
+.B \-p
+.I <rdistd-path>
+]
+[
+.B \-P
+.I <rsh-path>
+]
+[ 
+.I name ...
+]
+.PP
+.B rdist
+.B \-DFn
+.B -c 
+.I name ... 
+.I [login@]host[:dest]
+.PP
+.B rdist
+.B \-Server
+.PP
+.B rdist
+.B \-V
+.SH DESCRIPTION
+.I Rdist
+is a program to maintain identical copies of files over multiple hosts. 
 It preserves the owner, group, mode, and mtime of files if possible and
 can update programs that are executing.
-.Nm Rdist
+.I Rdist
 reads commands from
-.Ar distfile
+.I distfile
 to direct the updating of files and/or directories.
-.Pp
-Options specific to the first SYNOPSIS form:
-.Pp
-.Bl -tag -width indent
-.It Fl
 If
-.Ar distfile
-is
-.Sq Fl ,
-the standard input is used.
-.It Fl f Ar distfile
-Use the specified
-.Ar distfile.
-.El
-.Pp
-If either the
-.Fl f
-or
-.Sq Fl
-option is not specified, the program looks first for
-.Dq Pa distfile ,
-then
-.Dq Pa Distfile
-to use as the input.
+.I distfile
+is `\-', the standard input is used.
+If no
+.B \-f
+option is present, the program looks first for `distfile',
+then `Distfile' to use as the input.
 If no names are specified on the command line,
-.Nm rdist
+.I rdist
 will update all of the files and directories listed in
-.Ar distfile  .
+.IR distfile .
 Otherwise, the argument is taken to be the name of a file to be updated
 or the label of a command to execute. If label and file names conflict,
 it is assumed to be a label.
 These may be used together to update specific files
 using specific commands.
-.Pp
-Options specific to the second SYNOPSIS form:
-.Pp
-.Bl -tag -width Fl c
-.It Fl c
-Forces
-.Nm rdist
-to interpret the remaining arguments as a small
-.Ar distfile  .
-.Pp
-The equivalent distfile is as follows.
-.Pp
-.Bd -filled -offset indent -compact
-.Pq Ar name ...
-.Li ->
-.Op Ar login@
-.Ar host
-.Bd -filled -offset indent -compact
-.Li install
-.Op Ar dest ;
-.Ed
-.Ed
-.El
-.Pp
-Options common to both forms:
-.Pp
-.Bl -tag -width Ic
-.It Fl b
-Binary comparison. Perform a binary comparison and update files if they differ
-rather than comparing dates and sizes.
-.It Fl d Ar var=value
-Define
-.Ar var
-to have
-.Ar value  .
+.PP
 The
-.Fl d
+.B \-c
+option forces
+.I rdist
+to interpret the remaining arguments as a small
+.IR distfile .
+The equivalent distfile is as follows.
+.nf
+
+.ti +.5i
+( \fIname\fP ... ) -> [\fIlogin\fP@]\fIhost\fP
+.ti +1i
+install	[\fIdest\fP] ;
+
+.fi
+.PP
+The
+.B \-Server
+option is recognized to provide partial backward compatible support
+for older versions of
+.I rdist
+which used this option to put
+.I rdist
+into server mode.
+If
+.I rdist
+is started with the 
+.B \-Server
+command line option, it will attempt to exec (run) the old version of
+.I rdist.
+This option will only work if 
+.I rdist
+was compiled with the location of the old rdist
+(usually either
+.I /usr/ucb/oldrdist
+or
+.I /usr/old/rdist)
+and that program is available at run time.
+.PP
+.I Rdist
+can use either the
+.I rcmd(3)
+function call or the 
+.I rsh(1c),
+remote shell, command to access each target host.
+The method used is selected at compile-time.
+If the
+.I rsh(1c)
+method is used and
+the target host is the string
+.B localhost
+and 
+the remote user name is the same as the local user name,
+.I rdist
+will run the command
+.nf
+.sp
+.RS
+.B "/bin/sh -c rdistd -S"
+.RE
+.sp
+.fi
+Otherwise
+.I rdist
+run will run the command
+.nf
+.sp
+.RS
+\fBrsh \fIhost\fB -l \fIremuser \fBrdistd -S\fR
+.RE
+.sp
+.fi
+where 
+.I host
+is the name of the target host,
+.I remuser
+is the name of the user to make the connection as and,
+.I rdistd
+is the rdist server command on the target host as shown below.
+.PP
+If the
+.I rcmd(3) 
+method is used, then
+.I rdist
+makes the connection to the target host itself and runs
+the 
+.I rdistd
+server program as shown below.
+The default, and preferred method, is to use
+.I rsh(1c)
+to make the connection to target hosts.  This allows 
+.I rdist
+to be run without being setuid to ``root''.
+.PP
+On each target host
+.I Rdist
+will attempt to run the command
+.nf
+.sp
+.RS
+.I "rdistd -S"
+.RE
+.sp
+.fi
+or
+.nf
+.sp
+.RS
+.I "<rdistd path> -S"
+.RE
+.sp
+.fi
+if the
+.I \-p
+option was specified.
+If no
+.B \-p 
+option is included,
+or the
+.I <rdistd path>
+is a simple filename,
+.I rdistd
+or
+.I <rdistd path>
+must be somewhere in the 
+.B $PATH
+of the user running
+.B rdist
+on the remote (target) host.
+.SH OPTIONS
+.TP
+.B "\-A \fInum\fR"
+Set the minimum number of free files (inodes) on a filesystem that must exist
+for 
+.I rdist
+to update or install a file.
+.TP
+.B "\-a \fInum\fR"
+Set the minimum amount of free space (in bytes) on a filesystem that must exist
+for 
+.I rdist
+to update or install a file.
+.TP
+.B \-D
+Enable copious debugging messages.
+.TP
+.B "\-d \fIvar=value\fR"
+Define
+.I var
+to have
+.IR value .
+This
 option is used to define or override variable definitions in the
-.Ar distfile  .
-.Ar Value
+.IR distfile .
+.I Value
 can be the empty string, one name, or a list of names surrounded by
 parentheses and separated by tabs and/or spaces.
-.It Fl h
-Follow symbolic links. Copy the file that the link points to rather than the
-link itself.
-.It Fl i
-Ignore unresolved links.
-.Nm Rdist
-will normally try to maintain the link structure of files being transferred
-and warn the user if all the links cannot be found.
-.It Fl m Ar host
+.TP
+.B \-F
+Do not fork any child 
+.I rdist
+processes.
+All clients are updated sequentially.
+.TP
+.B "\-f \fIdistfile\fR"
+Set the name of the distfile to use to be
+.I distfile .
+If 
+.I distfile
+is specified as
+``\-'' (dash)
+then read from standard input (stdin).
+.TP
+.B "\-l \fIlogopts\fR"
+Set local logging options.
+See the section 
+.B "MESSAGE LOGGING"
+for details on the syntax for
+.I logopts.
+.TP
+.B "\-L \fIlogopts\fR"
+Set remote logging options.
+.I logopts
+is the same as for local logging
+except the values are passed to the remote
+server (\fIrdistd\fR).
+See the section 
+.B "MESSAGE LOGGING"
+for details on the syntax for
+.I logopts.
+.TP
+.B "\-M \fInum\fR"
+Set the maximum number of simultaneously
+running child
+.I rdist
+processes to
+.I num.
+The default is 4.
+.TP
+.B "\-m \fImachine\fR"
 Limit which machines are to be updated. Multiple
-.Fl m
+.B \-m
 arguments can be given to limit updates to a subset of the hosts listed in the
-.Ar distfile  .
-.It Fl n
+.IR distfile .
+.TP
+.B \-n
 Print the commands without executing them. This option is
 useful for debugging
-.Ar distfile  .
-.It Fl q
-Quiet mode. Files that are being modified are normally
-printed on standard output. The
-.Fl q
-option suppresses this.
-.It Fl R
-Remove extraneous files. If a directory is being updated, any files that exist
-on the remote host that do not exist in the master directory are removed.
-This is useful for maintaining truly identical copies of directories.
-.It Fl v
+.IR distfile .
+.TP
+.B "\-o\fIdistopts\fR"
+Specify the dist options to enable.
+.I distopts
+is a comma separated list of options which are listed below.
+The valid values for
+.I distopts
+are:
+.RS
+.IP \fBverify\fR
 Verify that the files are up to date on all the hosts. Any files
 that are out of date will be displayed but no files will be changed
 nor any mail sent.
-.It Fl w
+.IP \fBwhole\fR
 Whole mode. The whole file name is appended to the destination directory
-name. Normally, only the last component of a name is used when renaming files.
+name.  Normally, only the last component of a name is used when renaming files.
 This will preserve the directory structure of the files being
 copied instead of flattening the directory structure. For example,
-renaming a list of files such as ( dir1/f1 dir2/f2 ) to dir3 would create
-files dir3/dir1/f1 and dir3/dir2/f2 instead of dir3/f1 and dir3/f2.
-.It Fl y
-Younger mode. Files are normally updated if their
-.Ar mtime
+rdisting a list of files such as
+.I /path/dir1/f1 
 and
-.Ar size
+.I /path/dir2/f2 
+to 
+.I /tmp/dir 
+would create
+files 
+.I /tmp/dir/path/dir1/f1 
+and 
+.I /tmp/dir/path/dir2/f2 
+instead of 
+.I /tmp/dir/dir1/f1 
+and 
+.I /tmp/dir/dir2/f2.
+.IP \fBnoexec\fR
+Automatically exclude executable files that are in 
+.I a.out(5)
+format from being checked or updated. 
+.IP \fByounger\fR
+Younger mode. Files are normally updated if their
+.I mtime
+and
+.I size
 (see
-.Xr stat  2  )
-disagree. The
-.Fl y
+.IR stat (2))
+disagree. This
 option causes
-.Nm rdist
+.I rdist
 not to update files that are younger than the master copy.
 This can be used
 to prevent newer copies on other hosts from being replaced.
 A warning message is printed for files which are newer than the master copy.
-.El
-.Pp
-.Ar Distfile
+.IP \fBcompare\fR
+Binary comparison. Perform a binary comparison and update files if they differ
+rather than comparing dates and sizes.
+.IP \fBfollow\fR
+Follow symbolic links. Copy the file that the link points to rather than the
+link itself.
+.IP \fBignlnks\fR
+Ignore unresolved links.
+.I Rdist
+will normally try to maintain the link structure of files being transferred
+and warn the user if all the links cannot be found.
+.IP \fBchknfs\fR
+Do not check or update files on target host that
+reside on NFS filesystems.
+.IP \fBchkreadonly\fR
+Enable check on target host
+to see if a file resides on a read-only filesystem.
+If a file does, then no checking or updating of the file is attempted.
+.IP \fBchksym\fR
+If the target on the remote host is a symbolic link, but is not on the
+master host, the remote target will be left a symbolic link.
+This behavior is generally considered a bug in the original version of
+.I rdist,
+but is present to allow compatibility with older versions.
+.IP \fBquiet\fR
+Quiet mode. Files that are being modified are normally
+printed on standard output. This
+option suppresses this.
+.IP \fBremove\fR
+Remove extraneous files. If a directory is being updated, any files that exist
+on the remote host that do not exist in the master directory are removed.
+This is useful for maintaining truly identical copies of directories.
+.IP \fBnochkowner\fR
+Do not check user ownership of files that already exist.
+The file ownership is only set when the file is updated.
+.IP \fBnochkgroup\fR
+Do not check group ownership of files that already exist.
+The file ownership is only set when the file is updated.
+.IP \fBnochkmode\fR
+Do not check file and directory permission modes.
+The permission mode is only set when the file is updated.
+.IP \fBnodescend\fR
+Do not descend into a directory.
+Normally 
+.I rdist
+will recursively check directories.
+If this option is enabled, then any files listed in the
+file list in the distfile that are directories are not recursively scanned.
+Only the existence, ownership, and mode of the directory are checked.
+.IP \fBnumchkgroup\fR
+Use the numeric group id (gid) to check group ownership instead of
+the group name.
+.IP \fBnumchkowner\fR
+Use the numeric user id (uid) to check user ownership instead of
+the user name.
+.IP \fBsavetargets\fR
+Save files that are updated instead of removing them.
+Any target file that is updates is first rename from
+.B file
+to
+.B file.OLD.
+.RE
+.TP
+.B "\-p \fI<rdistd-path>\fR"
+Set the path where the rdistd server is searched for on the target host.
+.TP
+.B "\-P \fI<rsh-path>\fR"
+Set the path to the 
+.I rsh(1c)
+command.
+The
+.I rsh-path
+may be a colon seperated list of possible pathnames.
+In this case, the first component of the path to exist is used.
+i.e. 
+.B "/usr/ucb/rsh:/usr/bin/remsh",
+.B /usr/bsd/rsh.
+.TP
+.B "\-t \fItimeout\fR"
+Set the timeout period (in seconds) for waiting for responses from the remote 
+.I rdist
+server.
+The default is 900 seconds.
+.TP
+.B \-V
+Print version information and exit.
+.SH "MESSAGE LOGGING"
+.I Rdist
+uses a collection of predefined message
+.B facilities
+that each contain a list of message
+.B types
+specifying which types of messages to send to that 
+.I facility.
+The local client (\fIrdist\fR) and the remote server (\fIrdistd\fR) each
+maintain
+their own copy of what types of messages to log to what facilities.
+.LP
+The 
+.B \-l
+.I logopts
+option to
+.I rdist
+tells
+.I rdist
+what logging options to use locally.
+The 
+.B \-L
+.I logopts
+option to
+.I rdist
+tells
+.I rdist
+what logging options to pass to the remote
+.I rdistd
+server.
+.LP
+The form of
+.I logopts
+should be of form
+.sp
+.RS
+\fIfacility\fB=\fItypes\fB:\fIfacility\fB=\fItypes...
+.RE
+.sp
+The valid facility names are:
+.RS
+.IP \fBstdout\fR
+Messages to standard output.
+.IP \fBfile\fR
+Log to a file.  To specify the file name, use the format 
+``\fBfile=\fIfilename\fB=\fItypes\fR''.
+e.g.
+.B "``file=/tmp/rdist.log=all,debug''.
+.IP \fBsyslog\fR
+Use the 
+.I syslogd(8)
+facility.
+.IP \fBnotify\fR
+Use the internal
+.I rdist
+.B notify
+facility.
+This facility is used in conjunction with the
+.B notify
+keyword in a 
+.I distfile
+to specify what messages are mailed to the
+.B notify
+address.
+.RE
+.LP
+.I types
+should be a comma separated list of message types.  Each message type 
+specified enables that message level.  This is unlike the
+.I syslog(3)
+system facility which uses an ascending order scheme.
+The following
+are the valid 
+.I types:
+.RS
+.IP \fBchange\fR
+Things that change.
+This includes files that are installed or updated in some way.
+.IP \fBinfo\fR
+General information.
+.IP \fBnotice\fR
+General info about things that change.
+This includes things like making directories which are needed in order
+to install a specific target, but which are not explicitly specified in
+the
+.I distfile.
+.IP \fBnerror\fR
+Normal errors that are not fatal.
+.IP \fBferror\fR
+Fatal errors.
+.IP \fBwarning\fR
+Warnings about errors which are not as serious as
+.B nerror
+type messages.
+.IP \fBdebug\fR
+Debugging information.
+.IP \fBall\fR
+All but debug messages.
+.RE
+.LP
+Here is a sample command line option:
+.nf
+.sp
+.RS
+\-l stdout=all:syslog=change,notice:file=/tmp/rdist.log=all
+.RE
+.sp
+.fi
+This entry will set local message logging to have all but debug
+messages sent to standard output, change and notice messages will
+be sent to 
+.I syslog(3),
+and all messages will be written to the file
+.B /tmp/rdist.log.
+.SH DISTFILES
+.PP
+The
+.I distfile
 contains a sequence of entries that specify the files
 to be copied, the destination hosts, and what operations to perform
 to do the updating. Each entry has one of the following formats.
-.Pp
-.Bd -literal -offset indent -compact
+.nf
+
+.RS
 <variable name> `=' <name list>
-[label:]<source list> `\->' <destination list> <command list>
-[label:]<source list> `::' <time_stamp file> <command list>
-.Ed
-.Pp
+[ label: ] <source list> `\->' <destination list> <command list>
+[ label: ] <source list> `::' <time_stamp file> <command list>
+.RE
+
+.fi
 The first format is used for defining variables.
 The second format is used for distributing files to other hosts.
 The third format is used for making lists of files that have been changed
 since some given date.
-The
-.Ar source list
-specifies a
+The \fIsource list\fP specifies a
 list of files and/or directories on the local host which are to be used
 as the master copy for distribution.
-The
-.Ar destination list
-is the list of hosts to which these files are to be
+The \fIdestination list\fP is the list of hosts to which these files are to be
 copied.  Each file in the source list is added to a list of changes
 if the file is out of date on the host which is being updated (second format) or
 the file is newer than the time stamp file (third format).
-.Pp
+.PP
 Labels are optional. They are used to identify a command for partial updates.
-.Pp
+.PP
 Newlines, tabs, and blanks are only used as separators and are
 otherwise ignored. Comments begin with `#' and end with a newline.
-.Pp
+.PP
 Variables to be expanded begin with `$' followed by one character or
 a name enclosed in curly braces (see the examples at the end).
-.Pp
+.PP
 The source and destination lists have the following format:
-.Bd -literal -offset indent
+.nf
+
+.ti +.5i
 <name>
-.Ed
 or
-.Bd -literal -offset indent -compact
+.ti +.5i
 `(' <zero or more names separated by white-space> `)'
-.Ed
-.Pp
+
+.fi
+These simple lists can be modified by using one level of set addition,
+subtraction, or intersection like this:
+.nf
+
+.ti +.5i
+list '-' list
+or
+.ti +.5i
+list '+' list
+or
+.ti +.5i
+list '&' list
+
+.fi
+If additional modifications are needed (e.g., ``all servers and client
+machines except for the OSF/1 machines'') then the list will have
+to be explicitly constructed in steps using "temporary" variables.
+.PP
 The shell meta-characters `[', `]', `{', `}', `*', and `?'
 are recognized and expanded (on the local host only) in the same way as
-.Xr csh  1  .
+.IR csh (1).
 They can be escaped with a backslash.
 The `~' character is also expanded in the same way as
-.Xr csh 1
+.IR csh
 but is expanded separately on the local and destination hosts.
 When the
-.Fl w
+.B \-o\fIwhole\fR
 option is used with a file name that begins with `~', everything except the
 home directory is appended to the destination name.
 File names which do not begin with `/' or `~' use the destination user's
 home directory as the root directory for the rest of the file name.
-.Pp
+.PP
 The command list consists of zero or more commands of the following
 format.
-.Bd -ragged -offset indent -compact
-.Bl -column except_patx pattern\ listx
-.It `install'	<options>	opt_dest_name `;'
-.It `notify'	<name list>	`;'
-.It `except'	<name list>	`;'
-.It `except_pat'	<pattern list>	`;'
-.It `special'	<name list>	string `;'
-.El
-.Ed
-.Pp
+.nf
+
+.RS
+.ta \w'cmdspecial    'u +\w'name list    'u
+`install'	<options>	opt_dest_name `;'
+`notify'	<name list>	`;'
+`except'	<name list>	`;'
+`except_pat'	<pattern list>	`;'
+`special'	<name list>	string `;'
+`cmdspecial'	<name list>	string `;'
+.RE
+
+.fi
+.PP
 The
-.Ic install
+.I install
 command is used to copy out of date files and/or directories.
 Each source file is copied to each host in the destination list.
 Directories are recursively copied in the same way.
-.Ar Opt_dest_name
+.I Opt_dest_name
 is an optional parameter to rename files.
 If no
-.Ic install
+.I install
 command appears in the command list or
 the destination name is not specified,
 the source file name is used.
 Directories in the path name will be created if they
 do not exist on the remote host.
-To help prevent disasters, a non-empty directory on a target host will
-never be replaced with a regular file or a symbolic link.
-However, under the `\-R' option a non-empty directory will be removed
-if the corresponding filename is completely absent on the master host.
 The
-.Ar options
-are `\-R', `\-h', `\-i', `\-v', `\-w', `\-y', and `\-b'
-and have the same semantics as
-options on the command line except they only apply to the files
+\fB\-o \fIdistopts\fR
+option
+as specified above under
+.B OPTIONS,
+has the same semantics as
+on the command line except they only apply to the files
 in the source list.
 The login name used on the destination host is the same as the local host
 unless the destination name is of the format ``login@host".
-.Pp
+.PP
 The
-.Ic notify
+.I notify
 command is used to mail the list of files updated (and any errors
 that may have occurred) to the listed names.
 If no `@' appears in the name, the destination host is appended to
 the name
 (e.g., name1@host, name2@host, ...).
-.Pp
+.PP
 The
-.Ic except
+.I except
 command is used to update all of the files in the source list
-.Ic except
-for the files listed in
-.Ar name list  .
+.B except
+for the files listed in \fIname list\fP.
 This is usually used to copy everything in a directory except certain files.
-.Pp
+.PP
 The
-.Ic except_pat
+.I except_pat
 command is like the
-.Ic except
-command except that
-.Ar pattern list
-is a list of regular expressions
+.I except
+command except that \fIpattern list\fP is a list of regular expressions
 (see
-.Xr ed  1
+.IR ed (1)
 for details).
 If one of the patterns matches some string within a file name, that file will
 be ignored.
 Note that since `\e' is a quote character, it must be doubled to become
-part of the regular expression.  Variables are expanded in
-.Ar pattern list
+part of the regular expression.  Variables are expanded in \fIpattern list\fP
 but not shell file pattern matching characters.  To include a `$', it
 must be escaped with `\e'.
-.Pp
+.PP
 The
-.Ic special
+.I special
 command is used to specify
-.Xr sh  1
+.IR sh (1)
 commands that are to be executed on the
-remote host after the file in
-.Ar name list
-is updated or installed.
-If the
-.Ar name list
-is omitted then the shell commands will be executed
-for every file updated or installed.  The shell variable `FILE' is set
-to the current filename before executing the commands in
-.Ar string  .
-.Ar String
+remote host after the file in \fIname list\fP is updated or installed.
+If the \fIname list\fP is omitted then the shell commands will be executed
+for every file updated or installed.  
+.I String
 starts and ends with `"' and can cross multiple lines in
-.Ar distfile .
+.I distfile.
 Multiple commands to the shell should be separated by `;'.
 Commands are executed in the user's home directory on the host
 being updated.
 The
-.Ar special
+.I special
 command can be used to rebuild private databases, etc.
 after a program has been updated.
-.Pp
-The following is a small example:
-.Bd -literal -offset indent
-HOSTS = ( matisse root@arpa )
+The following environment variables are set for each 
+.I special
+command:
+.IP \fBFILE\fR
+The full pathname of the local file that was just updated.
+.IP \fBREMFILE\fR
+The full pathname of the remote file that was just updated.
+.IP \fBBASEFILE\fR
+The basename of the remote file that was just updated.
+.PP
+The
+.I cmdspecial
+command is similar to the
+.I special
+command, except it is executed only when the entire command is completed
+instead of after each file is updated.
+The list of files is placed in the environment variable 
+.B $FILES.
+Each file name in
+.B $FILES
+is separated by a `:' (colon).
+.PP
+If a hostname ends in a ``+'' (plus sign), then the plus
+is stripped off and NFS checks are disabled.
+This is equivalent to disabling the
+.B \-o\fIchknfs\fR
+option just for this one host.
+.PP
+The following is a small example.
+.nf
+
+.RS
+HOSTS = ( matisse root@arpa)
 
 FILES = ( /bin /lib /usr/bin /usr/games
-\t/usr/include/{*.h,{stand,sys,vax*,pascal,machine}/*.h}
-\t/usr/lib /usr/man/man? /usr/ucb /usr/local/rdist )
+	/usr/include/{*.h,{stand,sys,vax*,pascal,machine}/*.h}
+	/usr/lib /usr/man/man? /usr/ucb /usr/local/rdist )
 
 EXLIB = ( Mail.rc aliases aliases.dir aliases.pag crontab dshrc
-\tsendmail.cf sendmail.fc sendmail.hf sendmail.st uucp vfont )
+	sendmail.cf sendmail.fc sendmail.hf sendmail.st uucp vfont )
 
 ${FILES} -> ${HOSTS}
-\tinstall -R ;
-\texcept /usr/lib/${EXLIB} ;
-\texcept /usr/games/lib ;
-\tspecial /usr/lib/sendmail "/usr/lib/sendmail -bz" ;
+	install -oremove,chknfs ;
+	except /usr/lib/${EXLIB} ;
+	except /usr/games/lib ;
+	special /usr/lib/sendmail "/usr/lib/sendmail -bz" ;
 
 srcs:
 /usr/src/bin -> arpa
-\texcept_pat ( \e\e.o\e$ /SCCS\e$ ) ;
+	except_pat ( \e\e.o\e$ /SCCS\e$ ) ;
 
 IMAGEN = (ips dviimp catdvi)
 
 imagen:
 /usr/local/${IMAGEN} -> arpa
-\tinstall /usr/local/lib ;
-\tnotify ralph ;
+	install /usr/local/lib ;
+	notify ralph ;
 
 ${FILES} :: stamp.cory
-\tnotify root@cory ;
-.Ed
-.Sh FILES
-.Bl -tag -width /tmp/rdist* -compact
-.It Pa distfile
-input command file
-.It Pa /tmp/rdist*
-temporary file for update lists
-.El
-.Sh SEE ALSO
-.Xr sh 1 ,
-.Xr csh 1 ,
-.Xr stat 2
-.Sh HISTORY
-The
-.Nm rdist
-command appeared in
-.Bx 4.3 .
-.Sh DIAGNOSTICS
-A complaint about mismatch of rdist version numbers may really stem
-from some problem with starting your shell, e.g., you are in too many groups.
-.Sh BUGS
-Source files must reside on the local host where
-.Nm rdist
-is executed.
-.Pp
-There is no easy way to have a special command executed after all files
-in a directory have been updated.
-.Pp
+	notify root@cory ;
+.RE
+
+.fi
+.SH ENVIRONMENT
+.IP TMPDIR
+Name of temporary directory to use.  Default is 
+.B /tmp.
+.SH FILES
+.nf
+.ta \w'/tmp/rdist*    'u
+distfile	\- input command file
+$TMPDIR/rdist*	\- temporary file for update lists
+.fi
+.SH "SEE ALSO"
+.B sh(1),
+.B csh(1),
+.B stat(2),
+.B rsh(1c),
+.B rcmd(3)
+.SH DIAGNOSTICS
+.SH NOTES
+.LP
+If the basename of a file  (the last component in the pathname)
+is ".", then 
+.B rdist 
+assumes the remote (destination) name is a directory.
+i.e.
+.B /tmp/.
+means that
+.B /tmp
+should be a directory on the remote host.
+.LP
+The following options are still recognized for backwards compatibility:
+.sp
+.RS
+\-v \-N \-O \-q \-b \-r \-R \-s \-w \-y \-h \-i \-x
+.RE
+.sp
+.SH BUGS
+Source files must reside on the local host where rdist is executed.
+.PP
 Variable expansion only works for name lists; there should be a general macro
 facility.
-.Pp
-.Nm Rdist
+.PP
+.I Rdist
 aborts on files which have a negative mtime (before Jan 1, 1970).
-.Pp
-There should be a `force' option to allow replacement of non-empty directories
-by regular files or symlinks.  A means of updating file modes and owners
-of otherwise identical files is also needed.
+.PP
+If a hardlinked file is listed more than once in the same target,
+then 
+.I rdist 
+will report missing links.
+Only one instance of a link should be listed in each target.
