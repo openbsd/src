@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.225 2001/09/19 13:28:43 art Exp $
+#	$OpenBSD: files,v 1.226 2001/09/21 00:01:19 art Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -219,13 +219,17 @@ file	dev/ic/ax88190.c	ax88190
 device	ie: ether, ifnet, ifmedia
 file	dev/ic/i82596.c		ie & (ie_pci | ie_eisa | ie_gsc)
 
+# Sun GEM Ethernet controllers
+device	gem: ether, ifnet, ifmedia, mii
+file	dev/ic/gem.c		gem
+
 # TROPIC Token-Ring controller
 device	tr: ether, token, ifnet
 file	dev/ic/tropic.c		tr
 
 # 8250/16[45]50-based "com" ports
 device	com: tty
-file	dev/ic/com.c		com & (com_isa | com_isapnp | com_commulti | com_pcmcia | com_pica | com_algor | com_gsc | com_puc) needs-flag
+file	dev/ic/com.c		com & (com_isa | com_isapnp | com_commulti | com_pcmcia | com_pica | com_algor | com_gsc | com_puc | com_ebus) needs-flag
 
 # PC-like keyboard controller
 device	pckbc { [slot = -1] }

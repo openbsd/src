@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.113 2001/09/05 20:53:02 nate Exp $
+#	$OpenBSD: files.pci,v 1.114 2001/09/21 00:01:20 art Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -276,6 +276,10 @@ file	dev/pci/if_ti.c			ti
 # NE2000-compatible PCI Ethernet cards
 attach	ne at pci with ne_pci: rtl80x9
 file	dev/pci/if_ne_pci.c		ne_pci
+
+# Sun GEM ethernet
+attach	gem at pci with gem_pci
+file	dev/pci/if_gem_pci.c		gem_pci
 
 # Hi/fn 6500
 device	lofn: crypto
