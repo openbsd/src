@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.29 2001/07/03 03:34:42 beck Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.30 2001/07/06 08:26:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -179,10 +179,10 @@ struct pf_rdr {
 }
 
 struct pf_status {
-	quad_t		counters[PFRES_MAX];
-	quad_t		fcounters[FCNT_MAX];
-	quad_t		pcounters[2][3];
-	quad_t		bcounters[2];
+	u_int64_t	counters[PFRES_MAX];
+	u_int64_t	fcounters[FCNT_MAX];
+	u_int64_t	pcounters[2][3];
+	u_int64_t	bcounters[2];
 	u_int32_t	running;
 	u_int32_t	states;
 	u_int32_t	since;
