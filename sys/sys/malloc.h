@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.20 1999/02/15 22:50:25 niklas Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.21 1999/02/26 01:57:58 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -145,11 +145,17 @@
 #define	M_DIRREM	90	/* Directory entry deleted */
 #define M_VMPBUCKET	91	/* VM page buckets */
 #define M_VMSWAP	92	/* VM swap structures */
+
 #define M_DISCQ		93	/* IPv6 discq */
 #define M_FRAGQ		94	/* IPv6 fragq */
 #define M_SECA		95	/* Sec Assoc */
 #define M_I6IFP		96	/* IPv6 if info */
+
 #define	M_RAIDFRAME	97	/* Raidframe data */
+
+#define M_UVMAMAP	98	/* UVM amap and realted */
+#define M_UVMAOBJ	99	/* UVM aobj and realted */
+#define M_POOL		100	/* Pool memory */
 
 #define	M_TEMP		127	/* misc temporary data buffers */
 #define M_LAST          128     /* Must be last type + 1 */
@@ -254,7 +260,10 @@
 	"Sec Assoc",	/* 95 M_SECA */ \
 	"IPv6 if info",	/* 96 M_I6IFP */ \
 	"RaidFrame data", /* 97 M_RAIDFRAME */ \
-	NULL, NULL, NULL, NULL, \
+	"UVM amap",	/* 93 M_UVMAMAP */ \
+	"UVM aobj",	/* 94 M_UVMAOBJ */ \
+	"pool",		/* 95 M_POOL */ \
+	NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
