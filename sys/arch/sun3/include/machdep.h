@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.6 1997/02/14 23:50:17 kstailey Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.7 1997/04/05 20:22:02 kstailey Exp $	*/
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
@@ -65,7 +65,7 @@ struct pmap;
 
 extern int cache_size;
 extern int cold;
-extern int fpu_type;
+extern int fputype;
 
 extern label_t *nofault;
 
