@@ -2190,7 +2190,8 @@ push_frame_in_operand (insn, orig, push_size, boundary)
       else if (GET_CODE (XEXP (x, 0)) == REG
 	       && GET_CODE (XEXP (x, 1)) == REG
 	       && fp_equiv[REGNO (XEXP (x, 1))])
-	if (reg_renumber[REGNO (XEXP (x, 0))] > 0)
+	if (REGNO (XEXP (x, 0)) <= LAST_VIRTUAL_REGISTER
+	    || reg_renumber[REGNO (XEXP (x, 0))] > 0)
 	  fp_equiv[REGNO (XEXP (x, 0))] = fp_equiv[REGNO (XEXP (x, 1))];
       break;
 
