@@ -47,7 +47,7 @@ proc libstdc++-v3-init { args } {
     global ld_library_path
     global tool_root_dir
 
-    set blddir [lookfor_file [get_multilibs] libstdc++-v3]
+    set blddir [lookfor_file [get_multilibs] libstdc++]
 
     # By default, we assume we want to run program images.
     global dg-do-what-default
