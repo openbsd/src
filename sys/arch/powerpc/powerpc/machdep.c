@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 1999/11/09 00:20:42 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 1999/11/09 04:38:17 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -346,6 +346,7 @@ where = 3;
 #endif
 #endif
 
+	/*
 	 * Figure out ethernet address.
 	 */
 	(void)power4e_get_eth_addr();
