@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.22 2002/03/07 17:07:10 fgsch Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.23 2002/06/03 09:28:07 deraadt Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -147,8 +147,6 @@ char			**environ;
 char			*__progname = us;
 int			errno;
 
-static uid_t		uid, euid;
-static gid_t		gid, egid;
 static int		careful;
 static int		anon_fd = -1;
 
@@ -262,11 +260,8 @@ rtld(version, crtp, dp)
 	/* Setup out (private) environ variable */
 	environ = crtp->crt_ep;
 
-	/* Get user and group identifiers */
-	uid = getuid(); euid = geteuid();
-	gid = getgid(); egid = getegid();
-
-	careful = (uid != euid) || (gid != egid);
+	if (issetugid())
+		careful = 1;
 
 	if (careful) {
 		unsetenv("LD_LIBRARY_PATH");
