@@ -1,4 +1,4 @@
-# $OpenBSD: dot.cshrc,v 1.12 2004/05/10 16:04:07 peter Exp $
+# $OpenBSD: dot.cshrc,v 1.13 2005/02/13 00:56:13 krw Exp $
 #
 # csh initialization
 
@@ -7,9 +7,6 @@ alias mail Mail
 set history=1000
 set path=(/sbin /usr/sbin /bin /usr/bin /usr/X11R6/bin /usr/local/sbin /usr/local/bin)
 set filec
-
-# directory stuff: cdpath/cd/back
-set cdpath=(/sys /sys/arch /usr/src/{bin,sbin,usr.{bin,sbin},pgrm,lib,libexec,share,contrib,local,devel,games,old,gnu,gnu/{lib,usr.bin,usr.sbin,libexec}})
 
 setenv BLOCKSIZE 1k
 
