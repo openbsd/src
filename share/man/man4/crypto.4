@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.4,v 1.1 2001/05/13 15:59:13 deraadt Exp $
+.\"	$OpenBSD: crypto.4,v 1.2 2001/05/14 09:02:54 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Theo de Raadt
 .\" All rights reserved.
@@ -55,7 +55,9 @@ device is created.
 .Pp
 The following
 .Xr ioctl 2
-calls apply only to pseudo terminals:
+calls apply only to the
+.Nm crypto
+devices:
 .Bl -tag -width CIOCGSESSION
 .It Dv CIOCGSESSION
 Setup a new crypto session for a new type of operation.
@@ -70,6 +72,9 @@ Perform a crypto operation against a previously setup session.
 crypto access device
 .El
 .Sh SEE ALSO
+.Xr hifn 4 ,
+.Xr ises 4 ,
+.Xr ubsec 4 ,
 .Xr crypto 9
 .Sh HISTORY
 The
