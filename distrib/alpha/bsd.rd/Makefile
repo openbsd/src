@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile,v 1.22 2001/01/23 20:54:40 art Exp $
+#	$OpenBSD: Makefile,v 1.1 2001/01/29 21:25:46 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		ramdisk${REV}.fs
 CRUNCHCONF?=    ${TOP}/ramdisk/${CBIN}.conf
-BASE=		ramdisk
 
 MOUNT_POINT=	/mnt
 
@@ -21,9 +20,7 @@ GZIP?=		gzip
 GZIPFLAGS?=	-9f
 INSTALLBOOT?=	/usr/mdec/installboot -v
 
-FLOPPY?=	floppy${REV}.fs
-FLOPPYBLKS?=	2880
-FLOPPYTYPE?=	floppy3
+RAMDISK=	RAMDISKBIG
 BOOT?=		/usr/mdec/boot
 BOOTXX?=	/usr/mdec/bootxx
 
@@ -31,7 +28,7 @@ RDSETROOT=	elfrdsetroot
 
 .include "${TOP}/inst-common/Makefile.inc"
 
-all: ${CBIN} ${FLOPPY}
+all: ${CBIN} bsd.rd
 	@echo "all done"
 
 DISKTYPE=       rdroot
@@ -42,43 +39,20 @@ NEWFSARGS=	-t ffs -m 0 -o space
 NEWFSARGS_RD=	-i 8192 -c 80
 NEWFSARGS_FD=	-i 524288 -c 80
 
-${FLOPPY}:	bsd.gz
-	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYBLKS}
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w -r ${VND} ${FLOPPYTYPE}
-	newfs ${NEWFSARGS} ${NEWFSARGS_FD} -s ${FLOPPYBLKS} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	cp ${BOOT} ${MOUNT_POINT}
-	cp bsd.gz ${MOUNT_POINT}/bsd
-	${INSTALLBOOT} ${MOUNT_POINT}/boot ${BOOTXX} ${VND_CRDEV}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	@cmp ${BOOT} ${MOUNT_POINT}/boot || echo "Warning! /boot corrupted!!!"
-	@cmp bsd.gz ${MOUNT_POINT}/bsd || echo "Warning! /bsd corrupted!!!"
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-	if test `env BLOCKSIZE=512 du -s ${REALIMAGE} | cut -f1` -eq ${FLOPPYBLKS}; then \
-	    mv ${REALIMAGE} ${FLOPPY} ; \
-	else \
-	    dd if=${REALIMAGE} of=${FLOPPY} count=${FLOPPYBLKS} ; \
-	    rm -f ${REALIMAGE} ; \
-	fi
-
-bsd.gz:	bsd.rd
-	objcopy -Sg -R .comment bsd.rd bsd.strip
+bsd.rd:	bsd.rd_unz
+	objcopy -Sg -R .comment bsd.rd_unz bsd.strip
 	${STRIP} bsd.strip
-	${GZIP} -c ${GZIPFLAGS} bsd.strip > bsd.gz
+	${GZIP} -c ${GZIPFLAGS} bsd.strip > bsd.rd
 
-bsd.rd: bsd ${IMAGE} ${RDSETROOT}
-	cp bsd bsd.rd
-	${.OBJDIR}/${RDSETROOT} bsd.rd < ${IMAGE}
+bsd.rd_unz: bsd ${IMAGE} ${RDSETROOT}
+	cp bsd bsd.rd_unz
+	${.OBJDIR}/${RDSETROOT} bsd.rd_unz < ${IMAGE}
 
 bsd:
-	cd ${.CURDIR}/../../../sys/arch/alpha/conf && config RAMDISK
-	cd ${.CURDIR}/../../../sys/arch/alpha/compile/RAMDISK && \
+	cd ${.CURDIR}/../../../sys/arch/alpha/conf && config ${RAMDISK}
+	cd ${.CURDIR}/../../../sys/arch/alpha/compile/${RAMDISK} && \
 	    make depend && make clean && COPTS=-Os make
-	cp ${.CURDIR}/../../../sys/arch/alpha/compile/RAMDISK/bsd bsd
+	cp ${.CURDIR}/../../../sys/arch/alpha/compile/${RAMDISK}/bsd bsd
 
 ${IMAGE}:	do_prep do_mount do_files do_umount
 	mv -f ${REALIMAGE} ${IMAGE}
@@ -110,4 +84,4 @@ unconfig:
 	-vnconfig -u ${VND}
 
 beforeinstall:
-	cp ${FLOPPY} bsd.rd ${DESTDIR}/snapshot
+	cp bsd.rd ${DESTDIR}/snapshot
