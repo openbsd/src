@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.10 2000/06/18 17:31:14 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.11 2000/06/19 03:43:17 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.112 2000/06/18 01:50:39 itojun Exp $	*/
 
 /*
@@ -89,7 +89,19 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 
-#undef IPSEC
+#ifdef IPSEC
+#include <netinet/ip_ah.h>
+#include <netinet/ip_esp.h>
+#include <netinet/udp.h>
+#include <netinet/tcp.h>
+#include <net/pfkeyv2.h>
+
+extern u_int8_t get_sa_require  __P((struct inpcb *));
+
+extern int ipsec_auth_default_level;
+extern int ipsec_esp_trans_default_level;
+extern int ipsec_esp_network_default_level;
+#endif /* IPSEC */
 
 #include "loop.h"
 
@@ -149,9 +161,8 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	struct in6_addr finaldst;
 	struct route_in6 *ro_pmtu = NULL;
 	int hdrsplit = 0;
-	int needipsec = 0;
-#ifdef IPSEC
 	u_int8_t sproto = 0;
+#ifdef IPSEC
 	union sockaddr_union sdst;
 	u_int32_t sspi;
 	u_int8_t sa_require = 0, sa_have = 0;
@@ -190,67 +201,104 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	}
 
 #ifdef IPSEC
+	/* Disallow nested IPsec for now */
+	if (flags & IPV6_ENCAPSULATED)
+		goto done_spd;
+
+	/*
+	 * splnet is chosen over spltdb because we are not allowed to
+	 * lower the level, and udp6_output calls us in splnet(). XXX check
+	 */
 	s = splnet();
 
 	/*
-	 * If the higher-level protocol has cached the SA to use, we
-	 * can avoid the routing lookup if the source address is zero.
+	 * Check if there was an outgoing SA bound to the flow
+	 * from a transport protocol.
 	 */
-	if (inp != NULL && inp->inp_tdb != NULL &&
-	    ip->ip_src.s_addr == INADDR_ANY &&
-	    tdb->tdb_dst.sa.sa_family == AF_INET &&
-	    tdb->tdb_dst.sin.sin_addr.s_addr != AF_INET) {
-	        ip->ip_src.s_addr = tdb->tdb_dst.sin.sin_addr.s_addr;
-		splx(s);
-		goto skip_routing;
+	ip6 = mtod(m, struct ip6_hdr *);
+	if (inp && inp->inp_tdb &&
+	    inp->inp_tdb->tdb_dst.sa.sa_family == AF_INET6 &&
+	    IN6_ARE_ADDR_EQUAL(&inp->inp_tdb->tdb_dst.sin6.sin6_addr,
+		  &ip6->ip6_dst)) {
+	        tdb = inp->inp_tdb;
+	} else {
+	        tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
+	            &error);
 	}
 
-	splx(s);
-#endif /* IPSEC */
+	if (tdb == NULL) {
+	        splx(s);
 
-#ifdef IPSEC
-	/* get a security policy for this packet */
-	if (so == NULL)
-		sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND, 0, &error);
-	else
-		sp = ipsec6_getpolicybysock(m, IPSEC_DIR_OUTBOUND, so, &error);
+		if (error == 0) {
+		        /*
+			 * No IPsec processing required, we'll just send the
+			 * packet out.
+			 */
+		        sproto = 0;
 
-	if (sp == NULL) {
-		ipsec6stat.out_inval++;
-		goto bad;
-	}
+			/* Fall through to routing/multicast handling */
+		} else {
+		        /*
+			 * -EINVAL is used to indicate that the packet should
+			 * be silently dropped, typically because we've asked
+			 * key management for an SA.
+			 */
+		        if (error == -EINVAL) /* Should silently drop packet */
+				error = 0;
 
-	error = 0;
-
-	/* check policy */
-	switch (sp->policy) {
-	case IPSEC_POLICY_DISCARD:
-		/*
-		 * This packet is just discarded.
-		 */
-		ipsec6stat.out_polvio++;
-		goto bad;
-
-	case IPSEC_POLICY_BYPASS:
-	case IPSEC_POLICY_NONE:
-		/* no need to do IPsec. */
-		needipsec = 0;
-		break;
-	
-	case IPSEC_POLICY_IPSEC:
-		if (sp->req == NULL) {
-			/* XXX should be panic ? */
-			printf("ip6_output: No IPsec request specified.\n");
-			error = EINVAL;
-			goto bad;
+			goto freehdrs;
 		}
-		needipsec = 1;
-		break;
+	} else {
+	        /* We need to do IPsec */
+	        bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
+		sspi = tdb->tdb_spi;
+		sproto = tdb->tdb_sproto;
 
-	case IPSEC_POLICY_ENTRUST:
-	default:
-		printf("ip6_output: Invalid policy found. %d\n", sp->policy);
+		/*
+		 * If the socket has set the bypass flags and SA destination
+		 * matches the IP destination, skip IPsec. This allows
+		 * IKE packets to travel through IPsec tunnels.
+		 */
+		if (inp != NULL && 
+		    inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS &&
+		    inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS &&
+		    inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS &&
+		    sdst.sa.sa_family == AF_INET6 &&
+		    IN6_ARE_ADDR_EQUAL(&sdst.sin6.sin6_addr, &ip6->ip6_dst)) {
+		        splx(s);
+		        sproto = 0; /* mark as no-IPsec-needed */
+			goto done_spd;
+		}
+
+		/* What are the socket (or default) security requirements ? */
+		if (inp == NULL)
+		        sa_require = get_sa_require(NULL);
+		else
+		        sa_require = inp->inp_secrequire;
+
+		/*
+		 * Now we check if this tdb has all the transforms which
+		 * are required by the socket or our default policy.
+		 */
+		SPI_CHAIN_ATTRIB(sa_have, tdb_onext, tdb);
+		splx(s);
+		if (sa_require & ~sa_have) {
+			error = EHOSTUNREACH;
+			goto freehdrs;
+		}
+
+#if 1
+		/* if we have any extension header, we cannot perform IPsec */
+		if (exthdrs.ip6e_hbh || exthdrs.ip6e_dest1 ||
+		    exthdrs.ip6e_rthdr || exthdrs.ip6e_dest2) {
+			error = EHOSTUNREACH;
+			goto freehdrs;
+		}
+#endif
 	}
+
+	/* Fall through to the routing/multicast handling code */
+ done_spd:
 #endif /* IPSEC */
 
 	/*
@@ -269,7 +317,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	 * If we need IPsec, or there is at least one extension header,
 	 * separate IP6 header from the payload.
 	 */
-	if ((needipsec || optlen) && !hdrsplit) {
+	if ((sproto || optlen) && !hdrsplit) {
 		if ((error = ip6_splithdr(m, &exthdrs)) != 0) {
 			m = NULL;
 			goto freehdrs;
@@ -1636,7 +1684,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 
 				case IP_ESP_TRANS_LEVEL:
 					optval =
-					    np->inp_seclevel[SL_ESP_TRANS];
+					    inp->inp_seclevel[SL_ESP_TRANS];
 					break;
 
 				case IP_ESP_NETWORK_LEVEL:

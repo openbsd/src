@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.95 2000/06/18 19:48:54 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.96 2000/06/19 03:43:15 itojun Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1777,10 +1777,15 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	    if (af == AF_INET6)
 	    {
 		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == 0)
-		  return ENOBUFS;
+		    return ENOBUFS;
 
+		if (m->m_pkthdr.len - sizeof(*ip6) > IPV6_MAXPACKET) {
+		    /* no jumbogram support */
+		    m_freem(m);
+		    return ENXIO;	/*?*/
+		}
 		ip6 = mtod(m, struct ip6_hdr *);
-		ip6->ip6_plen = htons(m->m_pkthdr.len);
+		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
 	    }
 #endif /* INET6 */
 
@@ -1874,8 +1879,17 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	    /* Fix the header length, for AH processing */
 	    if (tdb->tdb_dst.sa.sa_family == AF_INET6)
 	    {
+		if (m->m_pkthdr.len < sizeof(*ip6)) {
+		    m_freem(m);
+		    return ENXIO;
+		}
+		if (m->m_pkthdr.len - sizeof(*ip6) > IPV6_MAXPACKET) {
+		    /* no jumbogram support */
+		    m_freem(m);
+		    return ENXIO;	/*?*/
+		}
 		ip6 = mtod(m, struct ip6_hdr *);
-		ip6->ip6_plen = htons(m->m_pkthdr.len);
+		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
 	    }
 	    break;
 #endif /* INET6 */
@@ -1910,12 +1924,11 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 
 #ifdef INET6
 	case AF_INET6:
-	    ip6 = mtod(m, struct ip6_hdr *);
-	    NTOHS(ip6->ip6_plen);
-
-	    /* XXX ip6_output() has to honor those two flags... */
-	    return ip6_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT,
-			      NULL, NULL);
+	    /*
+	     * we don't need massage, IPv6 header fields are always in
+	     * net endian
+	     */
+	    return ip6_output(m, NULL, NULL, IPV6_ENCAPSULATED, NULL, NULL);
 #endif /* INET6 */
     }
 
@@ -2084,6 +2097,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error)
 	    sunion.sin.sin_family = AF_INET;
 	    sunion.sin.sin_len = sizeof(struct sockaddr_in);
 	    sunion.sin.sin_addr = gw->sen_ipsp_dst;
+	    tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, &sunion,
+					gw->sen_ipsp_sproto);
 	    break;
 #endif /* INET */
 
@@ -2099,6 +2114,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error)
 	    sunion.sin6.sin6_family = AF_INET6;
 	    sunion.sin6.sin6_len = sizeof(struct sockaddr_in6);
 	    sunion.sin6.sin6_addr = gw->sen_ipsp6_dst;
+	    tdb = (struct tdb *) gettdb(gw->sen_ipsp6_spi, &sunion,
+					gw->sen_ipsp6_sproto);
 	    break;
 #endif /* INET6 */
 
@@ -2114,8 +2131,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error)
      * and then pass it, along with the packet and the gw,
      * to the appropriate transformation.
      */
-    tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, &sunion,
-				gw->sen_ipsp_sproto);
+    /* tdb lookup is found up there */
 
     /* Bypass the SA acquisition if that is what we want. */
     if (tdb && tdb->tdb_satype == SADB_X_SATYPE_BYPASS)
