@@ -79,3 +79,5 @@ cdev_decl(xy);
 
 bdev_decl(sw);
 cdev_decl(sw);
+
+cdev_decl(random);
