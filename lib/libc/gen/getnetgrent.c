@@ -1,3 +1,6 @@
+/*	$OpenBSD: getnetgrent.c,v 1.4 1997/02/02 23:27:52 millert Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.11 1997/01/17 07:26:19 lukem Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -30,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.3 1996/08/19 08:23:49 tholo Exp $";
+static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.4 1997/02/02 23:27:52 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -42,7 +45,11 @@ static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.3 1996/08/19 08:23:49 tholo Ex
 #include <err.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stringlist.h>
 #include <db.h>
+#ifdef YP
+#include <rpcsvc/ypclnt.h>
+#endif
 
 #define _NG_STAR(s)	(((s) == NULL || *(s) == '\0') ? _ngstar : s)
 #define _NG_EMPTY(s)	((s) == NULL ? "" : s)
@@ -54,101 +61,19 @@ static struct netgroup *_nghead = (struct netgroup *)NULL;
 static struct netgroup *_nglist = (struct netgroup *)NULL;
 static DB *_ng_db;
 
-/*
- * Simple string list
- */
-struct stringlist {
-	char		**sl_str;
-	size_t		  sl_max;
-	size_t		  sl_cur;
-};
-
 static int		getstring __P((char **, int, char **));
 static struct netgroup	*getnetgroup __P((char **));
 static int		 lookup __P((const char *, char *, char **, int));
-static void		 addgroup __P((char *, struct stringlist *, char *));
+static void		 addgroup __P((char *, StringList *, char *));
 static int		 in_check __P((const char *, const char *,
 				       const char *, struct netgroup *));
-static int		 in_find __P((char *, struct stringlist *,
+static int		 in_find __P((char *, StringList *,
 				      char *, const char *,
 				      const char *, const char *));
 static char		*in_lookup1 __P((const char *, const char *,
 					 const char *, int));
 static int		 in_lookup __P((const char *, const char *,
 				        const char *, const char *, int));
-
-/*
- * _ng_sl_init(): Initialize a string list
- */
-struct stringlist *
-_ng_sl_init()
-{
-	struct stringlist *sl = malloc(sizeof(struct stringlist));
-	if (sl == NULL)
-		_err(1, _ngoomem);
-
-	sl->sl_cur = 0;
-	sl->sl_max = 20;
-	sl->sl_str = malloc(sl->sl_max * sizeof(char *));
-	if (sl->sl_str == NULL)
-		_err(1, _ngoomem);
-	return sl;
-}
-
-
-/*
- * _ng_sl_add(): Add an item to the string list
- */
-void
-_ng_sl_add(sl, name)
-	struct stringlist	*sl;
-	char			*name;
-{
-	if (sl->sl_cur == sl->sl_max - 1) {
-		sl->sl_max += 20;
-		sl->sl_str = realloc(sl->sl_str, sl->sl_max * sizeof(char *));
-		if (sl->sl_str == NULL)
-			_err(1, _ngoomem);
-	}
-	sl->sl_str[sl->sl_cur++] = name;
-}
-
-
-/*
- * _ng_sl_free(): Free a stringlist
- */
-void
-_ng_sl_free(sl, all)
-	struct stringlist	*sl;
-	int			 all;
-{
-	size_t	i;
-
-	if (all)
-		for (i = 0; i < sl->sl_cur; i++)
-			free(sl->sl_str[i]);
-	free(sl->sl_str);
-	free(sl);
-}
-
-
-/*
- * sl_find(): Find a name in the string list
- */
-char *
-_ng_sl_find(sl, name)
-	struct stringlist	*sl;
-	char			*name;
-{
-	size_t	i;
-
-	for (i = 0; i < sl->sl_cur; i++)
-		if (strcmp(sl->sl_str[i], name) == 0)
-			return sl->sl_str[i];
-
-	return NULL;
-}
-
 
 /*
  * getstring(): Get a string delimited by the character, skipping leading and
@@ -367,9 +292,9 @@ _ng_parse(p, name, ng)
  */
 static void
 addgroup(ypdom, sl, grp)
-	char			*ypdom;
-	struct stringlist	*sl;
-	char			*grp;
+	char		*ypdom;
+	StringList	*sl;
+	char		*grp;
 {
 	char		*line, *p;
 	struct netgroup	*ng;
@@ -379,12 +304,12 @@ addgroup(ypdom, sl, grp)
 	(void) fprintf(stderr, "addgroup(%s)\n", grp);
 #endif
 	/* check for cycles */
-	if (_ng_sl_find(sl, grp) != NULL) {
+	if (sl_find(sl, grp) != NULL) {
 		free(grp);
 		_warnx("netgroup: Cycle in group `%s'", grp);
 		return;
 	}
-	_ng_sl_add(sl, grp);
+	sl_add(sl, grp);
 
 	/* Lookup this netgroup */
 	if (!lookup(ypdom, grp, &line, _NG_KEYBYNAME))
@@ -453,12 +378,12 @@ in_check(host, user, domain, ng)
  */
 static int
 in_find(ypdom, sl, grp, host, user, domain)
-	char			*ypdom;
-	struct stringlist	*sl;
-	char			*grp;
-	const char		*host;
-	const char		*user;
-	const char		*domain;
+	char		*ypdom;
+	StringList	*sl;
+	char		*grp;
+	const char	*host;
+	const char	*user;
+	const char	*domain;
 {
 	char		*line, *p;
 	int		 i;
@@ -469,12 +394,12 @@ in_find(ypdom, sl, grp, host, user, domain)
 	(void) fprintf(stderr, "in_find(%s)\n", grp);
 #endif
 	/* check for cycles */
-	if (_ng_sl_find(sl, grp) != NULL) {
+	if (sl_find(sl, grp) != NULL) {
 		free(grp);
 		_warnx("netgroup: Cycle in group `%s'", grp);
 		return 0;
 	}
-	_ng_sl_add(sl, grp);
+	sl_add(sl, grp);
 
 	/* Lookup this netgroup */
 	if (!lookup(ypdom, grp, &line, _NG_KEYBYNAME))
@@ -649,11 +574,11 @@ void
 setnetgrent(ng)
 	const char	*ng;
 {
-	struct stringlist	*sl = _ng_sl_init();
+	StringList	*sl = sl_init();
 #ifdef YP
-	char			*line;
+	char		*line;
 #endif
-	char			*ng_copy, *ypdom = NULL;
+	char		*ng_copy, *ypdom = NULL;
 
 	/* Cleanup any previous storage */
 	if (_nghead != NULL)
@@ -677,7 +602,7 @@ setnetgrent(ng)
 		_err(1, _ngoomem);
 	addgroup(ypdom, sl, ng_copy);
 	_nghead = _nglist;
-	_ng_sl_free(sl, 1);
+	sl_free(sl, 1);
 }
 
 
@@ -709,7 +634,7 @@ innetgr(grp, host, user, domain)
 	char	*line;
 #endif
 	int	 found;
-	struct stringlist *sl;
+	StringList *sl;
 
 	if (_ng_db == NULL)
 		_ng_db = dbopen(_PATH_NETGROUP_DB, O_RDONLY, 0, DB_HASH, NULL);
@@ -740,9 +665,9 @@ innetgr(grp, host, user, domain)
 		return 0;
 
 	/* Too bad need the slow recursive way */
-	sl = _ng_sl_init();
+	sl = sl_init();
 	found = in_find(ypdom, sl, strdup(grp), host, user, domain);
-	_ng_sl_free(sl, 1);
+	sl_free(sl, 1);
 
 	return found;
 }
