@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: progressmeter.c,v 1.10 2003/07/29 18:26:46 markus Exp $");
+RCSID("$OpenBSD: progressmeter.c,v 1.11 2003/07/30 07:44:14 markus Exp $");
 
 #include "progressmeter.h"
 #include "atomicio.h"
@@ -69,9 +69,9 @@ format_size(char *buf, int size, off_t bytes)
 	static const char unit[] = " KMGT";
 	int i;
 
-	for (i = 0; bytes > 10240 && unit[i] != 'T'; i++)
+	for (i = 0; bytes >= 10000 && unit[i] != 'T'; i++)
 		bytes /= 1024;
-	snprintf(buf, size, "%6lld%c%s",
+	snprintf(buf, size, "%4lld%c%s",
 	    (long long) bytes,
 	    unit[i],
 	    i ? "B" : " ");
@@ -114,11 +114,9 @@ refresh_progress_meter(void)
 	} else
 		bytes_per_second = cur_speed;
 
-memset(buf, 'a', sizeof(buf));
-
 	/* filename */
 	buf[0] = '\0';
-	file_len = win_size - 36;
+	file_len = win_size - 34;
 	if (file_len > 0) {
 		len = snprintf(buf, file_len, "\r%s", file);
 		for (i = len;  i < file_len; i++ )
