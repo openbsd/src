@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.19 2000/03/16 22:11:03 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.20 2000/06/06 20:18:20 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -59,6 +59,12 @@ struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
 char *memname[] = INITKMEMNAMES;
+#endif
+
+#ifdef MALLOC_DEBUG
+extern int debug_malloc __P((unsigned long, int, int, void **));
+extern int debug_free __P((void *, int));
+extern void debug_malloc_init __P((void));
 #endif
 
 #ifdef DIAGNOSTIC
@@ -124,6 +130,12 @@ malloc(size, type, flags)
 	if (((unsigned long)type) > M_LAST)
 		panic("malloc - bogus type");
 #endif
+
+#ifdef MALLOC_DEBUG
+	if (debug_malloc(size, type, flags, (void **)&va))
+		return ((void *) va);
+#endif
+
 	indx = BUCKETINDX(size);
 	kbp = &bucket[indx];
 	s = splimp();
@@ -319,6 +331,11 @@ free(addr, type)
 	register struct kmemstats *ksp = &kmemstats[type];
 #endif
 
+#ifdef MALLOC_DEBUG
+	if (debug_free(addr, type))
+		return;
+#endif
+
 	kup = btokup(addr);
 	size = 1 << kup->ku_indx;
 	kbp = &bucket[kup->ku_indx];
@@ -457,4 +474,8 @@ kmeminit()
 	for (indx = 0; indx < M_LAST; indx++)
 		kmemstats[indx].ks_limit = npg * PAGE_SIZE * 6 / 10;
 #endif
+#ifdef MALLOC_DEBUG
+	debug_malloc_init();
+#endif
 }
+

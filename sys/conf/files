@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.165 2000/05/30 19:34:20 mickey Exp $
+#	$OpenBSD: files,v 1.166 2000/06/06 20:18:20 art Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -365,6 +365,7 @@ file kern/kern_lock.c
 file kern/kern_lkm.c			lkm
 file kern/kern_ntptime.c
 file kern/kern_malloc.c
+file kern/kern_malloc_debug.c		malloc_debug
 file kern/kern_physio.c
 file kern/kern_proc.c
 file kern/kern_prot.c
