@@ -25,11 +25,11 @@
 @titlepage
 @title KTH-KRB
 @subtitle Kerberos 4 from KTH
-@subtitle For release 0.10.
+@subtitle Modified for OpenBSD
 @subtitle 1999
 @author Johan Danielsson
 @author Assar Westerlund
-@author last updated $KTH: 1999/12/02 16:58:35 $
+@author minor changes for OpenBSD by Hans Insulander
 
 @def@copynext{@vskip 20pt plus 1fil@penalty-1000}
 @def@copyrightstart{}
