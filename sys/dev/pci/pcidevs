@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.831 2005/02/05 01:44:37 jsg Exp $
+$OpenBSD: pcidevs,v 1.832 2005/02/07 19:11:54 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1254,8 +1254,9 @@ product INTEL EESISA		0x0008	EES ISA
 product INTEL 21145		0x0039	21145
 product INTEL 80303		0x0309	80303 IOP
 product INTEL 80312		0x030d	80312 I/O Companion
-product INTEL E7710_PXH_HUB_A	0x0329	PCIE-PCIX Bridge Hub A
-product INTEL E7710_PXH_HUB_B	0x032a	PCIE-PCIX Bridge Hub B
+product INTEL 6700PXH_A		0x0329	PCIE-PCIE
+product INTEL 6700PXH_B		0x032a	PCIE-PCIE
+product INTEL 6702PXH		0x032c	PCIE-PCIE
 product INTEL IOP331_C0		0x0330	IOP331 Channel 0
 product INTEL IOP331_C1		0x0332	IOP331 Channel 1
 product INTEL PCEB		0x0482	82375EB EISA
