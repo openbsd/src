@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.7 1999/03/31 00:50:21 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.70 1999/03/30 21:40:48 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.8 1999/03/31 14:28:34 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.71 1999/03/31 14:18:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -775,7 +775,7 @@ post_quick_mode (struct message *msg)
 
 	      /*
 	       * We need to roundup the length of the key material buffer
-	       * to a multiple of the PRF´s blocksize as it is generated
+	       * to a multiple of the PRF's blocksize as it is generated
 	       * in chunks of that blocksize.
 	       */
 	      iproto->keymat[i]
