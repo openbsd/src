@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.5 1999/03/31 23:48:19 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.5 1999/03/31 23:34:21 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.6 1999/04/05 20:59:22 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.9 1999/04/05 20:36:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -1275,7 +1275,7 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 }
 
 static void
-pf_key_v2_stayalive (void *vconn)
+pf_key_v2_stayalive (void *vconn, int fail)
 {
   char *conn = vconn;
   struct sa *sa;
@@ -1307,23 +1307,32 @@ pf_key_v2_checker (void *vconn)
 }
 
 /*
- * Establish a keying route that will generate ACQUIRE messages on use.
+ * Establish a connection CONN that should be available from now,
+ * XXX Should establish a keying route that will generate ACQUIRE messages on
+ * use.
  * XXX This is not really belonging in the PF_KEYv2 glue, it should be moved
  * to sysdep.c
  */
 int
-pf_key_v2_route (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
-		 in_addr_t rmask, u_int32_t spi, in_addr_t dst, char *conn)
+pf_key_v2_connection (char *conn)
 {
   struct timeval now;
+  char *conn_copy;
 
   /*
    * As we do not have ACQUIRE notifications just yet, we actually establish
    * the connection as soon as possible.
    */
   gettimeofday (&now, 0);
-  if (!timer_add_event ("pf_key_v2_checker", pf_key_v2_checker, conn, &now))
-    log_print ("pf_key_v2_route: could not add timer event");
+  conn_copy = strdup (conn);
+  if (!conn_copy)
+    {
+      log_error ("pf_key_v2_connection: strdup(\"%s\") failed", conn);
+      return -1;
+    }
+  if (!timer_add_event ("pf_key_v2_checker", pf_key_v2_checker, conn_copy,
+			&now))
+    log_print ("pf_key_v2_connection: could not add timer event");
   return 0;
 }
 
@@ -1389,8 +1398,8 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
       if (!exchange_lookup_by_name (sa->name, 2))
 	{
 	  sa_reference (sa);
-	  exchange_establish (sa->name, (void (*) (void *))sa_mark_replaced,
-			      sa);
+	  exchange_establish (sa->name,
+			      (void (*) (void *, int))sa_mark_replaced, sa);
 	}
     }
 
