@@ -1,3 +1,3 @@
-For the MACHINE, OpenBSD OSREV is a the first release of the Macintosh
-support.  This port is reasonably reliable but not yet optimized,
-and is currently improving.  Additional driver support will be added.
+For MACHINE, OpenBSD OSREV adds support for more machines, PowerBook G3,
+PowerBook G4, iBooks and newer iMac systems. System stability is greatly
+improved. Sharing of disks between OpenBSD/MACHINE and MacOS is now supported.
