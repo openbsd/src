@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.58 2001/10/03 11:34:38 art Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.59 2001/11/30 07:59:17 itojun Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -301,13 +301,8 @@ ether_output(ifp, m0, dst, rt0)
 #endif
 #ifdef INET6
 	case AF_INET6:
-#ifndef OLDIP6OUTPUT
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst))
 			return(0); /* it must be impossible, but... */
-#else
-		if (!nd6_resolve(ifp, rt, m, dst, (u_char *)edst))
-			return(0);	/* if not yet resolves */
-#endif
 		etype = htons(ETHERTYPE_IPV6);
 		break;
 #endif

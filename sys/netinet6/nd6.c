@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.37 2001/06/29 16:10:36 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.38 2001/11/30 07:59:17 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -931,101 +931,6 @@ nd6_nud_hint(rt, dst6, force)
 			nd_ifinfo[rt->rt_ifp->if_index].reachable;
 }
 
-#ifdef OLDIP6OUTPUT
-/*
- * Resolve an IP6 address into an ethernet address. If success,
- * desten is filled in. If there is no entry in ndptab,
- * set one up and multicast a solicitation for the IP6 address.
- * Hold onto this mbuf and resend it once the address
- * is finally resolved. A return value of 1 indicates
- * that desten has been filled in and the packet should be sent
- * normally; a 0 return indicates that the packet has been
- * taken over here, either now or for later transmission.
- */
-int
-nd6_resolve(ifp, rt, m, dst, desten)
-	struct ifnet *ifp;
-	struct rtentry *rt;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	u_char *desten;
-{
-	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)NULL;
-	struct sockaddr_dl *sdl;
-	long time_second = time.tv_sec;
-
-	if (m->m_flags & M_MCAST) {
-		switch (ifp->if_type) {
-		case IFT_ETHER:
-		case IFT_FDDI:			
-			ETHER_MAP_IPV6_MULTICAST(&SIN6(dst)->sin6_addr,
-						 desten);
-			return(1);
-			break;
-		case IFT_ARCNET:
-			*desten = 0;
-			return(1);
-		default:
-			m_freem(m);
-			return(0);
-		}
-	}
-	if (rt && (rt->rt_flags & RTF_LLINFO) != 0)
-		ln = (struct llinfo_nd6 *)rt->rt_llinfo;
-	else {
-		if ((rt = nd6_lookup(&(SIN6(dst)->sin6_addr), 1, ifp)) != NULL)
-			ln = (struct llinfo_nd6 *)rt->rt_llinfo;
-	}
-	if (!ln || !rt) {
-		log(LOG_DEBUG, "nd6_resolve: can't allocate llinfo for %s\n",
-			ip6_sprintf(&(SIN6(dst)->sin6_addr)));
-		m_freem(m);
-		return(0);
-	}
-	sdl = SDL(rt->rt_gateway);
-	/*
-	 * Ckeck the address family and length is valid, the address
-	 * is resolved; otherwise, try to resolve.
-	 */
-	if (ln->ln_state >= ND6_LLINFO_REACHABLE
-	   && sdl->sdl_family == AF_LINK
-	   && sdl->sdl_alen != 0) {
-		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
-		if (ln->ln_state == ND6_LLINFO_STALE) {
-			ln->ln_asked = 0;
-			ln->ln_state = ND6_LLINFO_DELAY;
-			ln->ln_expire = time_second + nd6_delay;
-		}
-		return(1);
-	}
-	/*
-	 * There is an ndp entry, but no ethernet address
-	 * response yet. Replace the held mbuf with this
-	 * latest one.
-	 *
-	 * XXX Does the code conform to rate-limiting rule?
-	 * (RFC 2461 7.2.2)
-	 */
-	if (ln->ln_state == ND6_LLINFO_NOSTATE)
-		ln->ln_state = ND6_LLINFO_INCOMPLETE;
-	if (ln->ln_hold)
-		m_freem(ln->ln_hold);
-	ln->ln_hold = m;
-	if (ln->ln_expire) {
-		if (ln->ln_asked < nd6_mmaxtries &&
-		    ln->ln_expire < time_second) {
-			ln->ln_asked++;
-			ln->ln_expire = time_second +
-				nd_ifinfo[ifp->if_index].retrans / 1000;
-			nd6_ns_output(ifp, NULL, &(SIN6(dst)->sin6_addr),
-				ln, 0);
-		}
-	}
-	/* do not free mbuf here, it is queued into llinfo_nd6 */
-	return(0);
-}
-#endif /* OLDIP6OUTPUT */
-
 void
 nd6_rtrequest(req, rt, info)
 	int	req;
@@ -1659,13 +1564,6 @@ fail:
 			ln->ln_expire = time_second + nd6_gctimer;
 
 			if (ln->ln_hold) {
-#ifdef OLDIP6OUTPUT
-				ln->ln_asked = 0;
-				ln->ln_state = ND6_LLINFO_DELAY;
-				ln->ln_expire = time_second + nd6_delay;
-				(*ifp->if_output)(ifp, ln->ln_hold,
-						  rt_key(rt), rt);
-#else
 				/*
 				 * we assume ifp is not a p2p here, so just
 				 * set the 2nd argument as the 1st one.
@@ -1673,7 +1571,6 @@ fail:
 				nd6_output(ifp, ifp, ln->ln_hold,
 					   (struct sockaddr_in6 *)rt_key(rt),
 					   rt);
-#endif
 				ln->ln_hold = NULL;
 			}
 		} else if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {

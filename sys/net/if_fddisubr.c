@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.25 2001/06/27 06:07:40 kjc Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.26 2001/11/30 07:59:17 itojun Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -205,13 +205,8 @@ fddi_output(ifp, m0, dst, rt0)
 #endif
 #ifdef INET6
 	case AF_INET6:
-#ifdef OLDIP6OUTPUT
-		if (!nd6_resolve(ifp, rt, m, dst, edst))
-			return (0);	/* if not yet resolved */
-#else
 		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst))
-			return 0;
-#endif
+			return (0);	/* if not yet resolved */
 		type = htons(ETHERTYPE_IPV6);
 		break;
 #endif

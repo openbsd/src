@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.54 2001/11/28 10:48:13 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.55 2001/11/30 07:59:17 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -912,12 +912,7 @@ skip_ipsec2:;
 #endif
 	    )
 	{
-#ifdef OLDIP6OUTPUT
-		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
-					  ro->ro_rt);
-#else
 		error = nd6_output(ifp, origifp, m, dst, ro->ro_rt);
-#endif
 		goto done;
 	} else if (mtu < IPV6_MMTU) {
 		/*
@@ -1033,13 +1028,7 @@ sendorfree:
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
 		if (error == 0) {
-#ifdef OLDIP6OUTPUT
-			error = (*ifp->if_output)(ifp, m,
-						  (struct sockaddr *)dst,
-						  ro->ro_rt);
-#else
 			error = nd6_output(ifp, origifp, m, dst, ro->ro_rt);
-#endif
 		} else
 			m_freem(m);
 	}
