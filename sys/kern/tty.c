@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.51 2002/03/14 01:27:05 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.52 2002/06/11 05:06:18 art Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1386,11 +1386,12 @@ nullmodem(tp, flag)
  * call at spltty().
  */
 void
-ttypend(tp)
-	register struct tty *tp;
+ttypend(struct tty *tp)
 {
 	struct clist tq;
-	register int c;
+	int c;
+
+	splassert(IPL_TTY);
 
 	CLR(tp->t_lflag, PENDIN);
 	SET(tp->t_state, TS_TYPEN);
@@ -1602,10 +1603,11 @@ out:
 
 /* Call at spltty */
 void
-ttyunblock(tp)
-	struct tty *tp;
+ttyunblock(struct tty *tp)
 {
 	u_char *cc = tp->t_cc;
+
+	splassert(IPL_TTY);
 
 	if (ISSET(tp->t_state, TS_TBLOCK)) {
 		if (ISSET(tp->t_iflag, IXOFF) &&
