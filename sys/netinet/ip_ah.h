@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.10 1997/11/04 09:10:59 provos Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.11 1997/11/24 19:14:11 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -34,6 +34,7 @@
 
 #include <sys/md5k.h>
 #include <netinet/ip_sha1.h>
+#include <netinet/ip_rmd160.h>
 
 struct ah_hash {
     int type;
@@ -59,6 +60,7 @@ struct ah_old
 /* Authenticator lengths */
 #define AH_MD5_ALEN		16
 #define AH_SHA1_ALEN		20
+#define AH_RMD160_ALEN		20
 
 #define AH_ALEN_MAX		AH_SHA1_ALEN 	/* Keep this updated */
 
@@ -121,11 +123,13 @@ struct ah_new_xdata
     {
         MD5_CTX         amx_MD5_ictx;       /* Internal key+padding */
         SHA1_CTX	amx_SHA1_ictx;
+	RMD160_CTX      amx_RMD160_ictx;
     } amx_ictx;
     union 
     {
         MD5_CTX         amx_MD5_octx;       /* External key+padding */
 	SHA1_CTX        amx_SHA1_octx;
+	RMD160_CTX      amx_RMD160_octx;
     } amx_octx;
 };
 
@@ -133,9 +137,8 @@ struct ah_new_xdata
 #define amx_md5_octx	amx_octx.amx_MD5_octx
 #define amx_sha1_ictx	amx_ictx.amx_SHA1_ictx
 #define amx_sha1_octx	amx_octx.amx_SHA1_octx
-
-#define AHMD5_ALEN      16		/* Size of MD5 digest */
-#define AHSHA1_ALEN     20		/* Size of SHA-1 digest */
+#define amx_rmd160_ictx	amx_ictx.amx_RMD160_ictx
+#define amx_rmd160_octx	amx_octx.amx_RMD160_octx
 
 struct ah_old_xdata
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.15 1997/11/04 09:11:17 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.16 1997/11/24 19:14:15 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -130,6 +130,7 @@ struct xformsw
 /* Supported key hash algorithms */
 #define ALG_AUTH_MD5	1
 #define ALG_AUTH_SHA1	2
+#define ALG_AUTH_RMD160 3
 
 /* Supported encryption algorithms */
 #define ALG_ENC_DES	1

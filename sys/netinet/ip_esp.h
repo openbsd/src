@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.15 1997/11/18 00:12:14 provos Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.16 1997/11/24 19:14:13 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -37,6 +37,7 @@
 #endif
 
 #include <netinet/ip_sha1.h>
+#include <netinet/ip_rmd160.h>
 #include <netinet/ip_blf.h>
 #include <netinet/ip_cast.h>
 
@@ -189,13 +190,15 @@ struct esp_new_xdata
     }Xu;
     union
     {
-  	MD5_CTX	 edx_MD5_ictx;
-        SHA1_CTX edx_SHA1_ictx;
+	MD5_CTX    edx_MD5_ictx;
+	SHA1_CTX   edx_SHA1_ictx;
+        RMD160_CTX edx_RMD160_ictx;
     } edx_ictx;
     union 
     {
-    	MD5_CTX	 edx_MD5_octx;
-	SHA1_CTX edx_SHA1_octx;
+    	MD5_CTX	   edx_MD5_octx;
+	SHA1_CTX   edx_SHA1_octx;
+        RMD160_CTX edx_RMD160_octx;
     } edx_octx;
 };
 
@@ -205,6 +208,8 @@ struct esp_new_xdata
 #define edx_md5_octx	edx_octx.edx_MD5_octx
 #define edx_sha1_ictx	edx_ictx.edx_SHA1_ictx
 #define edx_sha1_octx	edx_octx.edx_SHA1_octx
+#define edx_rmd160_ictx	edx_ictx.edx_RMD160_ictx
+#define edx_rmd160_octx	edx_octx.edx_RMD160_octx
 
 #define ESP_OLD_FLENGTH		12
 #define ESP_NEW_FLENGTH         16

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.13 1997/11/18 09:09:43 deraadt Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.14 1997/11/24 19:14:12 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -81,6 +81,13 @@ struct ah_hash ah_new_hash[] = {
        (void (*)(void *)) SHA1Init, 
        (void (*)(void *, u_int8_t *, u_int16_t)) SHA1Update, 
        (void (*)(u_int8_t *, void *)) SHA1Final 
+     },
+     { ALG_AUTH_RMD160, "HMAC-RIPEMD-160-96",
+       AH_RMD160_ALEN,
+       sizeof(RMD160_CTX),
+       (void (*)(void *)) RMD160Init, 
+       (void (*)(void *, u_int8_t *, u_int16_t)) RMD160Update, 
+       (void (*)(u_int8_t *, void *)) RMD160Final 
      }
 };
 
@@ -271,6 +278,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     union {
 	 MD5_CTX md5ctx; 
 	 SHA1_CTX sha1ctx;
+	 RMD160_CTX rmd160ctx;
     } ctx;
     u_int8_t optval;
     u_char buffer[40];
@@ -557,6 +565,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     union {
 	 MD5_CTX md5ctx;
 	 SHA1_CTX sha1ctx;
+	 RMD160_CTX rmd160ctx;
     } ctx;
     int ilen, ohlen;
     u_int8_t optval;
