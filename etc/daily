@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.14 1996/12/07 18:46:46 millert Exp $
+#	$OpenBSD: daily,v 1.15 1996/12/15 19:11:54 millert Exp $
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local
 host=`hostname -s`
@@ -70,8 +70,6 @@ if egrep -q '\.core$' $TMP; then
     #egrep -v '\.core$' $TMP
 fi
 
-rm -f $TMP
-
 msgs -c
 
 if [ -f /etc/news.expire ]; then
@@ -105,7 +103,6 @@ if [ -d /var/spool/uucp -a -f /etc/uuclean.daily ]; then
 fi
 
 echo ""
-echo ""
 echo "Checking subsystem status:"
 echo ""
 echo "disks:"
@@ -114,15 +111,20 @@ echo ""
 dump W
 echo ""
 
-
-echo ""
-echo "mail:"
-mailq
+mailq > $TMP
+if ! grep -q "^Mail queue is empty$" $TMP; then
+	echo ""
+	echo "mail:"
+	cat $TMP
+fi
 
 if [ -d /var/spool/uucp ]; then
-	echo ""
-	echo "uucp:"
-	uustat -a
+	uustat -a > $TMP
+	if [ -s $TMP ]; then
+		echo ""
+		echo "uucp:"
+		cat $TMP
+	fi
 fi
 
 echo ""
@@ -130,7 +132,8 @@ echo "network:"
 netstat -i
 echo ""
 
-if [ -d /var/rwho ]; then
+t=/var/rwho/*
+if [ "$t" != '/var/rwho/*' ]; then
 	ruptime
 fi
 
