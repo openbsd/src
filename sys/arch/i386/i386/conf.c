@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.54 1999/07/30 19:05:09 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.55 1999/07/30 19:13:48 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NSCD,scd),	/* 15: Sony CD-ROM */
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
 	bdev_disk_init(NRD,rd),		/* 17: ram disk driver */
-	bdev_notdef,			/* 18 */
+	bdev_notdef(),			/* 18 */
 	bdev_disk_init(NRAID,raid),	/* 19: RAIDframe disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
