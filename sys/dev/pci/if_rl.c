@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.4 1998/11/18 20:11:32 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.5 1998/11/18 21:42:08 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -596,7 +596,7 @@ static void rl_reset(sc)
 			break;
 	}
 	if (i == RL_TIMEOUT)
-		printf("rl%d: reset never completed!\n", sc->rl_unit);
+		printf("%s: reset never completed!\n", sc->sc_dev.dv_xname);
 
         return;
 }
@@ -725,8 +725,9 @@ static void rl_rxeof(sc)
 			m = m_devget(rxbufpos, wrap, 0, ifp, NULL);
 			if (m == NULL) {
 				ifp->if_ierrors++;
-				printf("rl%d: out of mbufs, tried to "
-					"copy %d bytes\n", sc->rl_unit, wrap);
+				printf("%s: out of mbufs, tried to "
+					"copy %d bytes\n",
+					sc->sc_dev.dv_xname, wrap);
 			}
 			else
 				m_copyback(m, wrap, total_len - wrap,
@@ -736,8 +737,9 @@ static void rl_rxeof(sc)
 			m = m_devget(rxbufpos, total_len, 0, ifp, NULL);
 			if (m == NULL) {
 				ifp->if_ierrors++;
-				printf("rl%d: out of mbufs, tried to "
-				"copy %d bytes\n", sc->rl_unit, total_len);
+				printf("%s: out of mbufs, tried to "
+				"copy %d bytes\n",
+				sc->sc_dev.dv_xname, total_len);
 			}
 			cur_rx += total_len + 4;
 		}
@@ -964,15 +966,16 @@ static int rl_encap(sc, c, m_head)
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			printf("rl%d: no memory for tx list", sc->rl_unit);
+			printf("%s: no memory for tx list",
+					sc->sc_dev.dv_xname);
 			return(1);
 		}
 		if (m_head->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
 				m_freem(m_new);
-				printf("rl%d: no memory for tx list",
-						sc->rl_unit);
+				printf("%s: no memory for tx list",
+						sc->sc_dev.dv_xname);
 				return(1);
 			}
 		}
@@ -1232,7 +1235,7 @@ static void rl_watchdog(ifp)
 
 	sc = ifp->if_softc;
 
-	printf("rl%d: watchdog timeout\n", sc->rl_unit);
+	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 	rl_txeoc(sc);
 	rl_txeof(sc);
@@ -1321,8 +1324,6 @@ rl_attach(parent, self, aux)
 	caddr_t kva;
 	u_int32_t command;
 	u_int16_t rl_did;
-
-	sc->rl_unit = sc->sc_dev.dv_unit;
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
@@ -1414,18 +1415,18 @@ rl_attach(parent, self, aux)
 	}
 	sc->sc_dma_mapsize = RL_RXBUFLEN + 16;
 	if (bus_dmamap_create(sc->sc_dmat, RL_RXBUFLEN + 16, 1,
-	    RL_RXBUFLEN + 16, 0, BUS_DMA_NOWAIT, &sc->sc_dma_prog)) {
+	    RL_RXBUFLEN + 16, 0, BUS_DMA_NOWAIT, &sc->sc_dma_mem)) {
 		printf("\n%s: cannot create dma map\n");
 		bus_dmamem_unmap(sc->sc_dmat, kva, RL_RXBUFLEN + 16);
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return;
 	}
-	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dma_prog, kva,
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dma_mem, kva,
 	    RL_RXBUFLEN + 16, NULL, BUS_DMA_NOWAIT)) {
 		printf("%s: cannot load dma map\n");
 		bus_dmamem_unmap(sc->sc_dmat, kva, RL_RXBUFLEN + 16);
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dma_prog);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dma_mem);
 	}
 	sc->rl_cdata.rl_rx_buf = (caddr_t) kva;
 	bzero(sc->rl_cdata.rl_rx_buf, RL_RXBUFLEN + 16);
@@ -1511,7 +1512,7 @@ rl_mii_read(self, phy, reg)
 
 	bzero((char *)&frame, sizeof(frame));
 
-	frame.mii_phyaddr = sc->rl_phy_addr;
+	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
 	rl_mii_readreg(sc, &frame);
 

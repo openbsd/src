@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rlreg.h,v 1.2 1998/11/18 20:11:33 jason Exp $	*/
+/*	$OpenBSD: if_rlreg.h,v 1.3 1998/11/18 21:42:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -331,25 +331,16 @@ struct rl_mii_frame {
 #define RL_8139			2
 
 struct rl_softc {
-	struct device		sc_dev;
-	void *			sc_ih;
+	struct device		sc_dev;		/* us, as a device */
+	void *			sc_ih;		/* interrupt vectoring */
 	bus_space_tag_t		sc_st;
 	bus_space_handle_t	sc_sh;
 	bus_dma_tag_t		sc_dmat;
-	bus_dmamap_t		sc_dma_prog;
-	bus_dmamap_t		sc_dma_oprog;
 	bus_dmamap_t		sc_dma_mem;
 	size_t			sc_dma_mapsize;
 	struct arpcom		arpcom;		/* interface info */
 	struct mii_data		sc_mii;		/* MII information */
-	struct rl_type		*rl_pinfo;	/* phy info */
-	u_int8_t		rl_unit;	/* interface number */
 	u_int8_t		rl_type;
-	u_int8_t		rl_phy_addr;	/* PHY address */
-	u_int8_t		rl_tx_pend;	/* TX pending */
-	u_int8_t		rl_want_auto;
-	u_int8_t		rl_autoneg;
-	u_int8_t		rl_stats_no_timeout;
 	struct rl_chain_data	rl_cdata;
 };
 
