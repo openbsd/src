@@ -1469,7 +1469,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/cpu.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/db_machdep.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/disklabel.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/dlfcn.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/elf_abi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/exec.ph
