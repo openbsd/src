@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_writev.c,v 1.8 2004/01/01 08:19:33 brad Exp $	*/
+/*	$OpenBSD: uthread_writev.c,v 1.9 2004/11/30 00:14:51 pat Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -68,6 +68,7 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 		    malloc(iovcnt * sizeof(struct iovec))) == NULL) {
 			/* Insufficient memory: */
 			errno = ENOMEM;
+			_thread_leave_cancellation_point();
 			return (-1);
 		}
 	}
@@ -85,6 +86,9 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 			/* File is not open for write: */
 			errno = EBADF;
 			_FD_UNLOCK(fd, FD_WRITE);
+			if (p_iov != liov)
+				free(p_iov);
+			_thread_leave_cancellation_point();
 			return (-1);
 		}
 
@@ -211,7 +215,7 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 				/* Return the number of bytes written: */
 				ret = num;
 		}
-		_FD_UNLOCK(fd, FD_RDWR);
+		_FD_UNLOCK(fd, FD_WRITE);
 	}
 
 	/* If memory was allocated for the array, free it: */

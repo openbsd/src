@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_poll.c,v 1.10 2004/01/19 17:53:38 millert Exp $	*/
+/*	$OpenBSD: uthread_poll.c,v 1.11 2004/11/30 00:14:51 pat Exp $	*/
 /*
  * Copyright (c) 1999 Daniel Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -73,6 +73,7 @@ poll(struct pollfd fds[], nfds_t nfds, int timeout)
 	} else if (timeout < 0) {
 		/* a timeout less than zero but not == INFTIM is invalid */
 		errno = EINVAL;
+		_thread_leave_cancellation_point();
 		return (-1);
 	}
 
