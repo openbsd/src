@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.12 1996/09/05 23:07:00 dm Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.13 1996/09/05 23:14:00 dm Exp $	*/
 /*	$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $	*/
 
 /**************************************************************************
@@ -5979,9 +5979,18 @@ void ncr_int_sir (ncb_p np)
 		/*
 		**	Check against controller limits.
 		*/
-		fak = (4ul * per - 1) / np->ns_sync - 3;
-		if (ofs && (fak>7))   {chg = 1; ofs = 0;}
-		if (!ofs) fak=7;
+		if (ofs != 0) {
+			fak = (4ul * per - 1) / np->ns_sync - 3;
+			if (fak>7) {
+				chg = 1;
+				ofs = 0;
+			}
+		}
+		if (ofs == 0) {
+			fak = 7;
+			per = 0;
+			tp->minsync = 0;
+		}
 
 		if (DEBUG_FLAGS & DEBUG_NEGO) {
 			PRINT_ADDR(cp->xfer);
