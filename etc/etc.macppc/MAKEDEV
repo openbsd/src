@@ -78,7 +78,6 @@
 #	uk*	SCSI Unknown device
 #	ss*	SCSI scanners
 #	xfs*	XFS filesystem devices
-#	altq/	ALTQ control interface
 #	iop*	I2O controller device
 #	pf*	Packet Filter
 #	crypto	hardware crypto access driver
@@ -263,14 +262,6 @@ pf*)
 
 iop*)
 	M iop$U c 73 $U 660
-	;;
-
-altq)
-	RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c 72 $U 644
-		U=$(($U+1))
-	done
 	;;
 
 xfs*)
@@ -463,7 +454,7 @@ all)
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0
 	R local wscons pci iop0 iop1 usbs tuner0 radio0 audio0 uk0
-	R random lkm tty00 tty01 tty02 tty03 apm crypto pf altq
+	R random lkm tty00 tty01 tty02 tty03 apm crypto pf
 	R systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1
 	R fd
 	;;

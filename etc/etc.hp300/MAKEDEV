@@ -66,7 +66,6 @@
 #	lkm	loadable kernel modules interface
 #	*random	inkernel random data source
 #	xfs*	XFS filesystem devices
-#	altq/	ALTQ control interface
 #	systrace*	system call tracing device
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -300,14 +299,6 @@ systrace)
 	M systrace c 50 0 644
 	;;
 
-altq)
-	RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c 52 $U 644
-		U=$(($U+1))
-	done
-	;;
-
 xfs*)
 	M xfs$U c 51 $U 600
 	;;
@@ -403,7 +394,7 @@ all)
 	R st1 hil grf0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1
 	R sd2 sd3 sd4 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 local ppi0
-	R apci0 random lkm pf altq systrace std fd
+	R apci0 random lkm pf systrace std fd
 	;;
 
 sd*|hd*|ccd*)

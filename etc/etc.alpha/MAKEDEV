@@ -73,7 +73,6 @@
 #	ch*	SCSI media changer
 #	pf*	Packet Filter
 #	bpf*	Berkeley Packet Filter
-#	altq/	ALTQ control interface
 #	iop*	I2O controller device
 #	pci	PCI bus device
 #	usbs	make USB devices
@@ -327,14 +326,6 @@ iop*)
 	M iop$U c 54 $U 660
 	;;
 
-altq)
-	RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c 53 $U 644
-		U=$(($U+1))
-	done
-	;;
-
 bpf*)
 	M bpf$U c 11 $U 600
 	;;
@@ -501,7 +492,7 @@ all)
 	R rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 music0 speaker
 	R audio0 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 mmclock lkm
 	R tty00 tty01 tty02 tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5
-	R ttyc6 ttyc7 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5 pf altq
+	R ttyc6 ttyc7 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5 pf
 	R systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1
 	R fd
 	;;

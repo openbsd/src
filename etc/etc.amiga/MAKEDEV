@@ -77,7 +77,6 @@
 #	audio*	audio device
 #	xfs*	XFS filesystem devices
 #	ch*	SCSI media changer
-#	altq/	ALTQ control interface
 #	fd	makes fd/* for the fdescfs
 #	systrace*	system call tracing device
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -303,14 +302,6 @@ fd)
 	MKlist="$MKlist;chmod 555 fd"
 	;;
 
-altq)
-	RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c 52 $U 644
-		U=$(($U+1))
-	done
-	;;
-
 ch*)
 	M ch$U c 40 $U 660 operator
 	;;
@@ -451,7 +442,7 @@ all)
 	R grf3 grf4 grf5 grf6 audio0 uk0 random joy0 joy1 lpa0 lpa1
 	R lpa2 lpt0 lpt1 lpt2 lkm ttye0 ttye1 ttye2 ttye3 ttye4 ttye5
 	R ttye6 tty00 tty01 tty02 tty03 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4
-	R ttyA0 ttyA1 pf altq systrace fd0 fd1 fd2 fd3 wd0 wd1 wd2 wd3
+	R ttyA0 ttyA1 pf systrace fd0 fd1 fd2 fd3 wd0 wd1 wd2 wd3
 	R std st0 st1 fd
 	;;
 

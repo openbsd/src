@@ -68,7 +68,6 @@
 #	openprom	
 #	bpf*	Berkeley Packet Filter
 #	pf*	Packet Filter
-#	altq/	ALTQ control interface
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	*random	inkernel random data source
@@ -289,14 +288,6 @@ lkm)
 	M lkm c 112 0 640 kmem
 	;;
 
-altq)
-	RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c 125 $U 644
-		U=$(($U+1))
-	done
-	;;
-
 pf*)
 	M pf c 59 0 600
 	;;
@@ -481,7 +472,7 @@ all)
 	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 fd1
 	R fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E
 	R fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 cuaa cuab cuac cuad
-	R ttya ttyb ttyc ttyd wscons audio0 uk0 random lkm pf altq
+	R ttya ttyb ttyc ttyd wscons audio0 uk0 random lkm pf
 	R systrace xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std st0 st1
 	R fd
 	;;

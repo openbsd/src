@@ -64,7 +64,6 @@
 #	ss*	SCSI scanners
 #	fd	makes fd/* for the fdescfs
 #	xfs*	XFS filesystem devices
-#	altq/	ALTQ control interface
 #	systrace*	system call tracing device
 # XXX - Keep /usr/etc so SunOS can find chown
 test -d /usr/etc && PATH=$PATH:/usr/etc
@@ -219,14 +218,6 @@ systrace)
 	M systrace c 86 0 644
 	;;
 
-altq)
-	RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c 85 $U 644
-		U=$(($U+1))
-	done
-	;;
-
 xfs*)
 	M xfs$U c 51 $U 600
 	;;
@@ -344,7 +335,7 @@ all)
 	R cd0 cd1 rd0 xy0 xy1 xy2 xy3 tun0 tun1 tun2 tun3 bpf0 bpf1
 	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0
 	R ss0 ss1 local cgfour0 cgtwo0 bwtwo0 uk0 random ttya ttyb
-	R ttyc ttyd pf altq systrace xd0 xd1 xd2 xd3 std st0 st1 fd
+	R ttyc ttyd pf systrace xd0 xd1 xd2 xd3 std st0 st1 fd
 	;;
 
 xd*|xy*|sd*|ccd*)

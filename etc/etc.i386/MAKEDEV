@@ -83,7 +83,6 @@
 #	bpf*	Berkeley Packet Filter
 #	speaker	pc speaker
 #	lkm	loadable kernel modules interface
-#	altq/	ALTQ control interface
 #	audio*	audio device
 #	rmidi*	raw midi devices
 #	music*	midi devices
@@ -362,14 +361,6 @@ audio*)
 	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"
 	;;
 
-altq)
-	RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c 74 $U 644
-		U=$(($U+1))
-	done
-	;;
-
 lkm)
 	M lkm c 28 0 640 kmem
 	;;
@@ -576,7 +567,7 @@ all)
 	R tuner0 radio0 music0 speaker audio0 wdt0 wt0 uk0 random joy0
 	R joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02
 	R tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 apm
-	R crypto pf altq pctr systrace wd0 wd1 wd2 wd3 raid0 raid1
+	R crypto pf pctr systrace wd0 wd1 wd2 wd3 raid0 raid1
 	R raid2 raid3 std st0 st1 fd mcd0
 	;;
 

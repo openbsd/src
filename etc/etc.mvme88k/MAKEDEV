@@ -58,7 +58,6 @@
 #	pf*	Packet Filter
 #	lkm	loadable kernel modules interface
 #	*random	inkernel random data source
-#	altq/	ALTQ control interface
 #	xfs*	XFS filesystem devices
 #	sram0	static memory access
 #	nvram0	non-volatile memory access
@@ -219,14 +218,6 @@ xfs*)
 	M xfs$U c 51 $U 600
 	;;
 
-altq)
-	RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c 52 $U 644
-		U=$(($U+1))
-	done
-	;;
-
 *random)
 	n=0
 	for pre in " " s u p a
@@ -353,7 +344,7 @@ all)
 	R vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1
 	R tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	R pty0 pty1 pty2 xfs0 vmel0 vmes0 nvram0 sram0 random lkm pf
-	R altq systrace std st0 st1 fd
+	R systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)

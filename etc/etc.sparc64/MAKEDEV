@@ -85,7 +85,6 @@
 #	uk*	SCSI Unknown device
 #	audio*	audio device
 #	pf*	Packet Filter
-#	altq/	ALTQ control interface
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
 #	lkm	loadable kernel modules interface
@@ -316,14 +315,6 @@ tun*)
 
 bpf*)
 	M bpf$U c 105 $U 600
-	;;
-
-altq)
-	RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c 74 $U 644
-		U=$(($U+1))
-	done
 	;;
 
 pf*)
@@ -569,7 +560,7 @@ all)
 	R fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 ccd0 ccd1 ccd2
 	R ccd3 wscons pci usbs audio0 uk0 random lpa0 lpa1 lpa2 lpt0
 	R lpt1 lpt2 lkm tty00 tty01 tty02 tty03 ttyh0 ttyh1 crypto pf
-	R altq systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std
+	R systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std
 	R st0 st1 fd
 	;;
 

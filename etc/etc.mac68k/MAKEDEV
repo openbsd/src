@@ -58,7 +58,6 @@
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
 #	pf*	Packet Filter
-#	altq/	ALTQ control interface
 #	lkm	loadable kernel modules interface
 #	*random	inkernel random data source
 #	uk*	SCSI Unknown device
@@ -278,14 +277,6 @@ lkm)
 	M lkm c 25 0 640 kmem
 	;;
 
-altq)
-	RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c 52 $U 644
-		U=$(($U+1))
-	done
-	;;
-
 pf*)
 	M pf c 35 0 600
 	;;
@@ -363,7 +354,7 @@ all)
 	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2
 	R xfs0 ss0 ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R local grf0 grf1 grf2 grf3 adb asc0 uk0 random lkm ttye0
-	R tty00 tty01 pf altq systrace std st0 st1 fd
+	R tty00 tty01 pf systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)
