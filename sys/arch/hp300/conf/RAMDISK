@@ -1,6 +1,6 @@
-#	$OpenBSD: MINIROOT,v 1.3 1997/02/16 17:54:38 downsj Exp $
+#	$OpenBSD: RAMDISK,v 1.1 1997/02/23 01:19:08 downsj Exp $
 #
-# Ram disk kernel for the miniroot.
+# Ram disk kernel.
 #
 
 machine hp300 m68k
