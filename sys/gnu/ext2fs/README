@@ -1,9 +1,0 @@
-The file `README.ext2fs' is from the Lites; `COPYRIGHT.INFO' is from
-FreeBSD.
-
-OpenBSD's version of the ext2fs is based on Lites and FreeBSD, but doesn't
-preserve support for those operating systems; doing so would've imposed
-far too much of an #ifdef farm upon the code.
-
-Right now, I wouldn't try using this.  It's still being worked on, and
-several things are potentially very broken.
