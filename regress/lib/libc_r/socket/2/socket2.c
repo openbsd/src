@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket2.c,v 1.2 2001/09/20 16:43:16 todd Exp $	*/
+/*	$OpenBSD: socket2.c,v 1.3 2002/01/02 16:15:32 fgsch Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -127,10 +127,12 @@ sock_accept(arg)
 	CHECKr(pthread_mutex_lock(&waiter_mutex));
 	CHECKr(pthread_create(&wthread, NULL, waiter, NULL));
 
+	sprintf(buf, "%d", port);
+
 	CHECKe(pid = fork());
 	switch(pid) {
 	case 0:
-		execl("socket2a", "socket2a", "fork okay", (char *)NULL);
+		execl("socket2a", "socket2a", "fork okay", buf, (char *)NULL);
 		DIE(errno, "execl");
 	default:
 		break;

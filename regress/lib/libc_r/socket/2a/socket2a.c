@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket2a.c,v 1.2 2001/09/20 16:43:16 todd Exp $	*/
+/*	$OpenBSD: socket2a.c,v 1.3 2002/01/02 16:15:32 fgsch Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -65,7 +65,7 @@ sock_connect(arg)
 	int fd;
 	short port;
 
-	port = 3276;
+	port = atoi(arg);
  	a_sout.sin_family = AF_INET;
  	a_sout.sin_port = htons(port);
 	a_sout.sin_addr.s_addr = htonl(INADDR_LOOPBACK); /* loopback */
@@ -101,13 +101,13 @@ main(argc, argv)
 {
 	pthread_t thread;
 
-	if (argv[1] && (!strcmp(argv[1], "fork okay"))) {
+	if (argc == 3 && (!strcmp(argv[1], "fork okay"))) {
 		sleep(1);
 		setbuf(stdout, NULL);
 		setbuf(stderr, NULL);
 
 		CHECKr(pthread_create(&thread, NULL, sock_connect, 
-		    (void *)0xdeadbeaf));
+		    (void *)argv[2]));
 		CHECKr(pthread_join(thread, NULL));
 		SUCCEED;
 	} else {
