@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.19 1997/03/27 11:52:07 niklas Exp $
+#	$OpenBSD: Makefile.amiga,v 1.20 1997/03/27 15:50:12 niklas Exp $
 #	$NetBSD: Makefile.amiga,v 1.52 1996/12/01 12:10:07 veego Exp $
 
 # Makefile for OpenBSD
@@ -129,7 +129,7 @@ LINKFLAGS+=	-S
 %LOAD
 
 assym.h: $S/kern/genassym.sh ${AMIGA}/amiga/genassym.cf
-	sh $S/kern/genassym.sh ${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
 	    ${PARAM} < ${AMIGA}/amiga/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
