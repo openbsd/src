@@ -1,0 +1,53 @@
+.\" $OpenBSD: deroff.1,v 1.1 1997/03/08 01:29:08 kstailey Exp $ -*- nroff -*-
+.\" $DebianId: deroff.1,v 1.1 1996/12/27 23:21:22 david Rel david $
+.TH DEROFF 1 "December 23, 1996" "Debian" "User's Reference Manual"
+.SH NAME
+deroff \- remove roff and preprocessor constructs
+.SH SYNOPSIS
+.B deroff 
+[-w] 
+.RI { file(s) }
+.PP
+.SH DESCRIPTION
+.B deroff
+reads in the named files (or stdin if none are given) and strips out 
+.B troff 
+constructs and macros. The preprocessor
+.RB ( eqn ", " tbl ", " pic ", " grap ", and "vgrind )
+sections are removed entirely.
+The resulting output, suitable for spelling, is sent to stdout.
+.PP
+.SH OPTIONS
+.TP
+.I \-w
+output a word-by-word list, delimited by newlines.
+.PP
+.SH SEE ALSO
+.BR troff (1),
+.BR eqn (1),
+.BR pic (1),
+.BR grap (1) ,
+.BR vgrind (1) .
+.PP
+.SH BUGS
+.B deroff
+is not a full 
+.BR troff (1)
+interpreter; in particular it doesn't know how to expand macros and how to
+treat 
+.IR m[mse] "'s"
+registers.
+.br
+Macros are assumed to end with 
+.I .. 
+and are simply skipped.
+.br
+.B deroff
+can be fooled with circular 
+.IR ".nx " requests.
+The
+.IR ".so " request
+deepness is limited.
+.PP
+.SH AUTHOR
+David Frey <david@eos.lugs.ch>
