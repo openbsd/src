@@ -1,0 +1,230 @@
+.\" $OpenBSD: tbl.1,v 1.1 2003/03/01 11:21:06 espie Exp $
+.\"
+.\" Copyright (c) 2003 Marc Espie
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE DEVELOPERS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 25, 2003
+.Dt TBL 1
+.Os
+.Sh NAME
+.Nm tbl
+.Nd format tables for troff
+.Sh SYNOPSIS
+.Nm tbl
+.Op Fl Cv
+.Op Ar files ...
+.Sh DESCRIPTION
+.Nm
+is a preprocessor for
+.Xr troff
+which is used to format tables.
+These tables are composed from columns that can be independently justified,
+headings may be placed over single columns or groups of columns,
+and horizontal or vertical lines may be added as desired.
+.Pp
+.Nm
+preprocesses the input
+.Ar files ,
+(or standard input if no file is specified)
+and prints its result to standard output.
+.Pp
+Each table is preceded by a
+.Sq .TS
+(table start) command, and followed by a
+.Sq .TE
+(table end) command.
+.Nm
+does not touch the reminder of the text.
+The actual
+.Sq .TS
+and
+.Sq .TE
+lines are copied verbatim as well, so that further page layout macros
+may use these to place the resulting tables.
+.Pp
+The format of
+.Nm
+input is as follows:
+.Bd -literal
+    text
+    \&.TS
+    table specification
+    \&.TE
+    further text
+    \&.TS
+    table specification
+    \&.TE
+    more text
+    \&...
+.Ed
+.Pp
+And a table specification is as follows:
+.Bd -literal
+    \&.TS
+    table options ;
+    table format .
+    data
+    ...
+    \&.TE
+.Ed
+.Pp
+Each table is formatted independently, and thus must contain a full
+separate specification.
+The
+.Sq table options
+affect the entire table.
+Alternately, the
+.Sq table format
+can be changed in the middle of a table,
+which yields the following template:
+.Bd -literal
+    \&.TS
+    table options ;
+    table format .
+    table data
+    \&...
+    \&.T&
+    table format .
+    more data
+    \&...
+    \&.TE
+.Ed
+.Pp
+.Ss TABLE OPTIONS
+Options affecting the whole table may appear on a single line,
+immediately following the
+.Sq .TS
+line.
+The option names may be separated by spaces, tabulations, or commas,
+and must end in a semicolon.
+Available options are:
+.Bl -tag -width linesize(n)
+.It allbox
+put a box around each item in the table.
+.It box
+put a box around the whole table.
+.It center
+center the table, instead of the default left-adjust.
+.It delim(ab)
+use 
+.Ar a 
+and 
+.Ar b 
+as
+.Xr eqn 1
+delimiters.
+.It doublebox
+put a double box around the whole table.
+.It expand
+make the table as wide as the current line length.
+.It linesize(n)
+set lines and rules in 
+.Ar n 
+point type.
+.It tab(n)
+use 
+.Ar n 
+spaces instead of a tabulation to separate items.
+.El
+.Ss TABLE FORMAT
+Each line in the format section corresponds to a single line of the table,
+except for the last line which corresponds to all remaining lines up to the 
+next
+.Sq .T& ,
+if present.
+Each column is represented by one letter from the following list, along
+with modifiers.
+Good style mandates separating specifications for each column with spaces
+or tabs.
+.Bl -tag -width l or L
+.It l or L
+left-adjusted column entry.
+.It c or C
+centered column entry.
+.It r or R
+right-adjusted colum entry.
+.It n or N
+numerical column entry, to be aligned with other numerical entries so that
+unit digits match up.
+.It a or A
+alphabetic subcolumn.
+Corresponding entries are left-aligned, and set so that the widest is centered
+within the column.
+.It s or S
+spanned heading.
+.It ^
+vertically spanned heading.
+.El
+.Ss TABLE DATA
+.Sh GNU DIFFERENCES
+The version of
+.Nm
+shipping with
+.Ox
+is part of 
+.Xr groff 1 , 
+and features a few differences from classical
+.Ux
+.Nm .
+.Pp
+For instance, the output of GNU
+.Nm
+cannot be processed with
+.Ux
+.Xr troff 1 ,
+but must be processed with GNU
+.Xr troff 1 .
+.Pp
+Normally,
+.Nm
+makes use of diversions to attempt to prevent bad breaks in the table.
+This can interact with some macro packages' use of diversions, for instance
+with footnotes.
+The
+.Ar nokeep
+option
+can be used to tell
+.Nm
+not to try.
+.Pp
+The
+.Ar decimalpoint (c)
+option changes the character used as a decimal point instead of the default
+period.
+.Pp
+The
+.Ar f
+format modifier can be used with a long font name enclosed in parenthesis.
+.Pp
+A
+.Ar d
+format modifier has been added, meaning that a vertically spanning entry
+should be aligned at the bottom.
+.Pp
+There are no arrbitrary limits on the number of columns or the number of
+text blocks in a table.
+.Sh SEE ALSO
+.Xr eqn 1 ,
+.Xr nroff 1
+
