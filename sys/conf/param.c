@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.10 2000/03/27 13:56:10 mickey Exp $	*/
+/*	$OpenBSD: param.c,v 1.11 2001/05/05 20:56:57 art Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
 #define	SHMMIN	1
 #define	SHMMNI	32			/* <= SHMMMNI in shm.h */
 #define	SHMSEG	8
-#define	SHMALL	(SHMMAXPGS/CLSIZE)
+#define	SHMALL	(SHMMAXPGS)
 
 struct	shminfo shminfo = {
 	SHMMAX,

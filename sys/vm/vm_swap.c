@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_swap.c,v 1.15 2001/03/09 03:13:48 deraadt Exp $	*/
+/*	$OpenBSD: vm_swap.c,v 1.16 2001/05/05 20:57:04 art Exp $	*/
 /*	$NetBSD: vm_swap.c,v 1.64 1998/11/08 19:45:17 mycroft Exp $	*/
 
 /*
@@ -597,8 +597,8 @@ swap_on(p, sdp)
 	 * boot blocks.
 	 */
 	if (vp->v_type == VBLK) {
-		size = (int)(nblks - ctod(CLSIZE));
-		addr = (long)ctod(CLSIZE);
+		size = (int)(nblks - ctod(1));
+		addr = (long)ctod(1);
 	} else {
 		size = (int)nblks;
 		addr = (long)0;
@@ -885,7 +885,7 @@ swstrategy(bp)
 	case VBLK:
 		s = splbio();
 		buf_replacevnode(bp, sdp->swd_vp);
-		bp->b_blkno = bn + ctod(CLSIZE);
+		bp->b_blkno = bn + ctod(1);
 		splx(s);
 		VOP_STRATEGY(bp);
 		return;

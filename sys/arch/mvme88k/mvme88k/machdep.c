@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.32 2001/04/29 19:00:03 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.33 2001/05/05 20:56:47 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -675,7 +675,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -700,7 +700,7 @@ cpu_startup()
 		 * but has no physical memory allocated for it.
 		 */
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base+1 : base);
+		curbufsize = PAGE_SIZE * (i < residual ? base+1 : base);
 		/* this faults in the required physical pages */
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
@@ -759,9 +759,9 @@ cpu_startup()
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
 	 * we use the more space efficient malloc in place of kmem_alloc.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
+	mclrefcnt = (char *)malloc(NMBCLUSTERS+PAGE_SIZE/MCLBYTES,
 				   M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
+	bzero(mclrefcnt, NMBCLUSTERS+PAGE_SIZE/MCLBYTES);
 #if defined(UVM)
 	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 				 VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
@@ -782,7 +782,7 @@ cpu_startup()
 	    ptoa(cnt.v_free_count)/NBPG);
 #endif
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,
-	    bufpages * CLBYTES);
+	    bufpages * PAGE_SIZE);
 
 #if 0 /* #ifdef MFS */
 	/*
@@ -876,10 +876,10 @@ allocsys(v)
 	 */
 	if (bufpages == 0) {
 		if (physmem < btoc(2 * 1024 * 1024))
-			bufpages = physmem / (10 * CLSIZE);
+			bufpages = physmem / 10;
 		else
 			bufpages = (btoc(2 * 1024 * 1024) + physmem) *
-			    BUFCACHEPERCENT / (100 * CLSIZE);
+			    BUFCACHEPERCENT / 100;
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
@@ -894,8 +894,8 @@ allocsys(v)
 		    MAXBSIZE * 7 / 10;
 
 	/* More buffer pages than fits into the buffers is senseless.  */
-	if (bufpages > nbuf * MAXBSIZE / CLBYTES)
-		bufpages = nbuf * MAXBSIZE / CLBYTES;
+	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
+		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
 
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;  /* force even */
@@ -1318,11 +1318,11 @@ dumpconf()
 			dumplo = nblks - btodb(ctob(physmem));
 	}
 	/*
-	 * Don't dump on the first CLBYTES (why CLBYTES?)
+	 * Don't dump on the first block
 	 * in case the dump device includes a disk label.
 	 */
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
+	if (dumplo < btodb(PAGE_SIZE))
+		dumplo = btodb(PAGE_SIZE);
 }
 
 /*

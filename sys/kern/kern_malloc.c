@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.25 2001/04/06 14:37:50 angelos Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.26 2001/05/05 20:57:00 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -160,10 +160,10 @@ malloc(size, type, flags)
 	if (kbp->kb_next == NULL) {
 		kbp->kb_last = NULL;
 		if (size > MAXALLOCSAVE)
-			allocsize = clrnd(round_page(size));
+			allocsize = round_page(size);
 		else
 			allocsize = 1 << indx;
-		npg = clrnd(btoc(allocsize));
+		npg = btoc(allocsize);
 #if defined(UVM)
 		va = (caddr_t) uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
 				(vsize_t)ctob(npg), 
@@ -348,8 +348,8 @@ free(addr, type)
 	 * Check for returns of data that do not point to the
 	 * beginning of the allocation.
 	 */
-	if (size > PAGE_SIZE * CLSIZE)
-		alloc = addrmask[BUCKETINDX(PAGE_SIZE * CLSIZE)];
+	if (size > PAGE_SIZE)
+		alloc = addrmask[BUCKETINDX(PAGE_SIZE)];
 	else
 		alloc = addrmask[kup->ku_indx];
 	if (((u_long)addr & alloc) != 0)
@@ -444,7 +444,7 @@ kmeminit()
 #if	(MAXALLOCSAVE > MINALLOCSIZE * 32768)
 		ERROR!_kmeminit:_MAXALLOCSAVE_too_big
 #endif
-#if	(MAXALLOCSAVE < CLBYTES)
+#if	(MAXALLOCSAVE < PAGE_SIZE)
 		ERROR!_kmeminit:_MAXALLOCSAVE_too_small
 #endif
 
@@ -468,10 +468,10 @@ kmeminit()
 #endif
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
-		if (1 << indx >= CLBYTES)
+		if (1 << indx >= PAGE_SIZE)
 			bucket[indx].kb_elmpercl = 1;
 		else
-			bucket[indx].kb_elmpercl = CLBYTES / (1 << indx);
+			bucket[indx].kb_elmpercl = PAGE_SIZE / (1 << indx);
 		bucket[indx].kb_highwat = 5 * bucket[indx].kb_elmpercl;
 	}
 	for (indx = 0; indx < M_LAST; indx++)

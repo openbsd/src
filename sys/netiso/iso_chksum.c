@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_chksum.c,v 1.4 1996/05/01 14:06:28 deraadt Exp $	*/
+/*	$OpenBSD: iso_chksum.c,v 1.5 2001/05/05 20:57:01 art Exp $	*/
 /*	$NetBSD: iso_chksum.c,v 1.8 1996/04/22 01:43:45 christos Exp $	*/
 
 /*-
@@ -206,7 +206,7 @@ iso_gen_csum(m, n, l)
 #endif
 
 	while (i < l) {
-		len = min(m->m_len, CLBYTES);
+		len = min(m->m_len, PAGE_SIZE);
 		/* RAH: don't cksum more than l bytes */
 		len = min(len, l - i);
 

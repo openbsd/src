@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.11 2000/02/22 19:27:43 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.12 2001/05/05 20:56:33 art Exp $	*/
 /*	$NetBSD: param.h,v 1.35 1997/07/10 08:22:36 veego Exp $	*/
 
 /*
@@ -69,10 +69,10 @@
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
+ * Size of kernel malloc arena in logical pages
  */
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(3072 * 1024 / CLBYTES)
+#define	NKMEMCLUSTERS	(3072 * 1024 / PAGE_SIZE)
 #endif
 
 #define MSGBUFSIZE	8192

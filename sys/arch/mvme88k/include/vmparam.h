@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.9 2001/03/07 23:37:17 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.10 2001/05/05 20:56:46 art Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -175,8 +175,8 @@
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+#define VM_KMEM_SIZE		(NKMEMCLUSTERS*PAGE_SIZE)
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /*
  *	Conversion between MACHINE pages and VM pages

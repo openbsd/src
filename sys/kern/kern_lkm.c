@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.28 2001/02/10 10:42:35 niklas Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.29 2001/05/05 20:57:00 art Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -557,7 +557,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		statp->offset	= curp->private.lkm_any->lkm_offset;
 		statp->type	= curp->private.lkm_any->lkm_type;
 		statp->area	= curp->area;
-		statp->size	= curp->size / CLBYTES;
+		statp->size	= curp->size / PAGE_SIZE;
 		statp->private	= (unsigned long)curp->private.lkm_any;
 		statp->ver	= curp->private.lkm_any->lkm_ver;
 		copyoutstr(curp->private.lkm_any->lkm_name, 

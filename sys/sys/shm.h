@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.8 1999/06/23 09:44:28 art Exp $	*/
+/*	$OpenBSD: shm.h,v 1.9 2001/05/05 20:57:02 art Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 
 #define	SHM_RDONLY	010000	/* Attach read-only (else read-write) */
 #define	SHM_RND		020000	/* Round attach address to SHMLBA */
-#define	SHMLBA		CLBYTES	/* Segment low boundry address multiple */
+#define	SHMLBA		PAGE_SIZE /* Segment low boundry address multiple */
 
 /* "official" access mode definitions; somewhat braindead since you have
    to specify (SHM_* >> 3) for group and (SHM_* >> 6) for world permissions */

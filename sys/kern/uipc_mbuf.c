@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.26 2001/04/05 10:52:45 art Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.27 2001/05/05 20:57:00 art Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ mbinit()
 	int s;
 
 	s = splimp();
-	if (m_clalloc(max(4096 / CLBYTES, 1), M_DONTWAIT) == 0)
+	if (m_clalloc(max(4096 / PAGE_SIZE, 1), M_DONTWAIT) == 0)
 		goto bad;
 	splx(s);
 	return;
@@ -105,7 +105,7 @@ m_clalloc(ncl, nowait)
 	register int i;
 	int npg, s;
 
-	npg = ncl * CLSIZE;
+	npg = ncl;
 #if defined(UVM)
 	p = (caddr_t)uvm_km_kmemalloc(mb_map, uvmexp.mb_object, ctob(npg),
 	    nowait ? 0 : UVM_KMF_NOWAIT);
@@ -124,7 +124,7 @@ m_clalloc(ncl, nowait)
 		m_reclaim();
 		return (mclfree != NULL);
 	}
-	ncl = ncl * CLBYTES / MCLBYTES;
+	ncl = ncl * PAGE_SIZE / MCLBYTES;
 	for (i = 0; i < ncl; i++) {
 		((union mcluster *)p)->mcl_next = mclfree;
 		mclfree = (union mcluster *)p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.22 2001/01/15 23:23:58 jason Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.23 2001/05/05 20:56:53 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -81,8 +81,12 @@ pagemove(from, to, size)
 {
 	register paddr_t pa;
 
-	if (size & CLOFSET || (int)from & CLOFSET || (int)to & CLOFSET)
+#ifdef DEBUG
+	if ((size & PAGE_MASK) != 0 ||
+	    ((vaddr_t)from & PAGE_MASK) != 0 ||
+	    ((vaddr_t)to & PAGE_MASK) != 0)
 		panic("pagemove 1");
+#endif
 	while (size > 0) {
 		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
 		if (pa == 0)

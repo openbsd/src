@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.13 2001/02/16 13:48:43 espie Exp $	*/
+/*	$OpenBSD: fd.c,v 1.14 2001/05/05 20:56:33 art Exp $	*/
 /*	$NetBSD: fd.c,v 1.36 1996/12/23 09:09:59 veego Exp $	*/
 
 /*
@@ -911,10 +911,10 @@ fdsetdisklabel(sc, lp)
 	 * make sure selected partition is within bounds
 	 * XXX on the second check, its to handle a bug in
 	 * XXX the cluster routines as they require mutliples
-	 * XXX of CLBYTES currently
+	 * XXX of PAGE_SIZE currently
 	 */
 	if ((pp->p_offset + pp->p_size >= lp->d_secperunit) ||
-	    (pp->p_frag * pp->p_fsize % CLBYTES))
+	    (pp->p_frag * pp->p_fsize % PAGE_SIZE))
 		return(EINVAL);
 done:
 	bcopy(lp, clp, sizeof(struct disklabel));

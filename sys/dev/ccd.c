@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.41 1999/11/26 16:46:17 art Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.42 2001/05/05 20:56:58 art Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -222,7 +222,7 @@ getccdbuf()
 
 	cbp = malloc(sizeof (struct ccdbuf), M_DEVBUF, M_WAITOK);
 	bzero(cbp, sizeof (struct ccdbuf));
-	cbp->cb_sg = malloc(sizeof (struct ccdseg) * MAXBSIZE / CLBYTES,
+	cbp->cb_sg = malloc(sizeof (struct ccdseg) * MAXBSIZE >> PAGE_SHIFT,
 	    M_DEVBUF, M_WAITOK);
 	return (cbp);
 }
@@ -777,14 +777,14 @@ ccdstart(cs, bp)
 	    M_WAITOK);
 	bzero(cbpp, 2 * cs->sc_nccdisks * sizeof(struct ccdbuf *));
 	addr = bp->b_data;
-	old_io = old_io || ((vaddr_t)addr & CLOFSET); /* XXX !claligned */
+	old_io = old_io || ((vaddr_t)addr & PAGE_MASK);
 	for (bcount = bp->b_bcount; bcount > 0; bcount -= rcount) {
 		rcount = ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io);
 		
 		/*
 		 * This is the old, slower, but less restrictive, mode of
 		 * operation.  It allows interleaves which are not multiples
-		 * of CLBYTES and mirroring.
+		 * of PAGE_SIZE and mirroring.
 		 */
 		if (old_io) {
 			if ((cbpp[0]->cb_buf.b_flags & B_READ) == 0)
@@ -989,9 +989,8 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 			printf("ccdbuffer: sg %d (%p/%x) off %x\n",
 			    cbp->cb_sgcnt, addr, bcount, old_bcount);
 #endif
-		pagemove(addr, nbp->b_data + old_bcount,
-		    clrnd(round_page(bcount)));
-		nbp->b_bufsize += clrnd(round_page(bcount));
+		pagemove(addr, nbp->b_data + old_bcount, round_page(bcount));
+		nbp->b_bufsize += round_page(bcount);
 		cbp->cb_sg[cbp->cb_sgcnt].cs_sgaddr = addr;
 		cbp->cb_sg[cbp->cb_sgcnt].cs_sglen = bcount;
 		cbp->cb_sgcnt++;
@@ -1087,7 +1086,7 @@ ccdiodone(vbp)
 				    cbp->cb_sg[i].cs_sglen, off);
 #endif
 			pagemove(vbp->b_data + off, cbp->cb_sg[i].cs_sgaddr,
-			    clrnd(round_page(cbp->cb_sg[i].cs_sglen)));
+			    round_page(cbp->cb_sg[i].cs_sglen));
 			off += cbp->cb_sg[i].cs_sglen;
 		}
 
@@ -1226,7 +1225,7 @@ ccdioctl(dev, cmd, data, flag, p)
 		 * must use the old I/O code (by design), as must mirror
 		 * setups (until implemented in the new code).
 		 */
-		if (ccio->ccio_ileave % (CLBYTES / DEV_BSIZE) != 0 ||
+		if (ccio->ccio_ileave % (PAGE_SIZE / DEV_BSIZE) != 0 ||
 		    (ccd.ccd_flags & CCDF_MIRROR))
 			ccd.ccd_flags |= CCDF_OLD;
 

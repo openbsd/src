@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.10 2000/12/28 22:21:46 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.11 2001/05/05 20:56:48 art Exp $	*/
 /*	$NetBSD: param.h,v 1.18 1997/02/26 01:45:41 jonathan Exp $	*/
 
 /*
@@ -68,10 +68,6 @@
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#define	CLSIZE		1
-#define	CLSIZELOG2	0
-
-/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 

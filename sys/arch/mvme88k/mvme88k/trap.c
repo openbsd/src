@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 2001/03/12 23:00:40 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 2001/05/05 20:56:47 art Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -517,7 +517,7 @@ outtahere:
 
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
 			if (result == KERN_SUCCESS) {
-				nss = clrnd(btoc(USRSTACK - va));/* XXX check this */
+				nss = btoc(USRSTACK - va);/* XXX check this */
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (result == KERN_PROTECTION_FAILURE)
@@ -1082,7 +1082,7 @@ trap2(unsigned type, struct m88100_saved_state *frame)
 
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
 			if (result == KERN_SUCCESS) {
-				nss = clrnd(btoc(USRSTACK - va));/* XXX check this */
+				nss = btoc(USRSTACK - va);/* XXX check this */
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (result == KERN_PROTECTION_FAILURE)

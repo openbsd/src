@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.21 2000/07/14 14:24:54 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.22 2001/05/05 20:56:53 art Exp $	*/
 /*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
@@ -73,7 +73,7 @@
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * MCLBYTES must be no larger than the software page size, and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
@@ -93,10 +93,10 @@
 #define MSGBUFSIZE	(NBPG >> 1)
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
+ * Size of kernel malloc arena in logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(2048*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(2048*1024/PAGE_SIZE)
 #endif
 
 /*

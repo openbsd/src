@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc.c,v 1.6 2000/04/27 00:32:09 chris Exp $ */
+/*	$OpenBSD: if_lmc.c,v 1.7 2001/05/05 20:56:59 art Exp $ */
 /*	$NetBSD: if_lmc.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -1045,7 +1045,7 @@ lmc_txput(lmc_softc_t * const sc, struct mbuf *m)
 	do {
 		int len = m0->m_len;
 		caddr_t addr = mtod(m0, caddr_t);
-		unsigned clsize = CLBYTES - (((u_long) addr) & (CLBYTES-1));
+		unsigned clsize = PAGE_SIZE - (((u_long) addr) & PAGE_MASK);
 
 		while (len > 0) {
 			unsigned slen = min(len, clsize);
@@ -1110,7 +1110,7 @@ lmc_txput(lmc_softc_t * const sc, struct mbuf *m)
 			if (partial)
 				continue;
 #endif
-			clsize = CLBYTES;
+			clsize = PAGE_SIZE;
 		}
 	} while ((m0 = m0->m_next) != NULL);
 

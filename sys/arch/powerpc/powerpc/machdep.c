@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.57 2001/05/02 06:02:45 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.58 2001/05/05 20:56:51 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -506,7 +506,7 @@ cpu_startup()
 		struct vm_page *pg;
 		
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
+		curbufsize = PAGE_SIZE * (i < residual ? base + 1 : base);
 #ifdef UVM
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -552,9 +552,9 @@ cpu_startup()
 	/*
 	 * Allocate mbuf pool.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS + CLBYTES/MCLBYTES, M_MBUF,
+	mclrefcnt = (char *)malloc(NMBCLUSTERS + PAGE_SIZE/MCLBYTES, M_MBUF,
 	    M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS + CLBYTES/MCLBYTES);
+	bzero(mclrefcnt, NMBCLUSTERS + PAGE_SIZE/MCLBYTES);
 #ifdef UVM
 	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
@@ -574,7 +574,7 @@ cpu_startup()
 	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 #endif
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,
-	    bufpages * CLBYTES);
+	    bufpages * PAGE_SIZE);
 	
 	
 	/*
@@ -623,7 +623,7 @@ allocsys(v)
 	 * Decide on buffer space to use.
 	 */
 	if (bufpages == 0)
-		bufpages = physmem * BUFCACHEPERCENT / (100 * CLSIZE);
+		bufpages = physmem * BUFCACHEPERCENT / 100;
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -636,8 +636,8 @@ allocsys(v)
 		    MAXBSIZE * 7 / 10;
 
 	/* More buffer pages than fits into the buffers is senseless.  */
-	if (bufpages > nbuf * MAXBSIZE / CLBYTES)
-		bufpages = nbuf * MAXBSIZE / CLBYTES;
+	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
+		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
 
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) & ~1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.27 2001/04/01 06:13:40 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.28 2001/05/05 20:56:37 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -348,7 +348,7 @@ trap(type, frame)
 		 */
 		if (va >= (vaddr_t)vm->vm_maxsaddr + vm->vm_ssize) {
 			if (ret == KERN_SUCCESS) {
-				vsize_t nss = clrnd(btoc(va - USRSTACK + NBPG));
+				vsize_t nss = btoc(va - USRSTACK + NBPG);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (ret == KERN_PROTECTION_FAILURE)

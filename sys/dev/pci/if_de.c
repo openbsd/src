@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.44 2001/02/03 06:10:17 mickey Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.45 2001/05/05 20:56:58 art Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -4153,7 +4153,7 @@ tulip_txput(
     do {
 	int len = m0->m_len;
 	caddr_t addr = mtod(m0, caddr_t);
-	unsigned clsize = CLBYTES - (((u_long) addr) & (CLBYTES-1));
+	unsigned clsize = PAGE_SIZE - (((u_long) addr) & PAGE_MASK);
 
 	while (len > 0) {
 	    unsigned slen = min(len, clsize);
@@ -4226,7 +4226,7 @@ tulip_txput(
 	    if (partial)
 		continue;
 #endif
-	    clsize = CLBYTES;
+	    clsize = PAGE_SIZE;
 	}
     } while ((m0 = m0->m_next) != NULL);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.67 2000/04/11 02:44:28 pjanzen Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.68 2001/05/05 20:56:41 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -130,7 +130,7 @@
 
 void netintr __P((void));
 
-#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
+#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
 #include <vm/vm_map.h>
@@ -387,9 +387,9 @@ again:
 	 */
 	if (bufpages == 0) {
 		if (physmem < btoc(2 * 1024 * 1024))
-			bufpages = physmem / 10 / CLSIZE;
+			bufpages = physmem / 10;
 		else
-			bufpages = (btoc(2 * 1024 * 1024) + physmem) / 20 / CLSIZE;
+			bufpages = (btoc(2 * 1024 * 1024) + physmem) / 20;
 	}
 	bufpages = min(NKMEMCLUSTERS * 2 / 5, bufpages);
 
@@ -451,7 +451,7 @@ again:
 		 * but has no physical memory allocated for it.
 		 */
 		curbuf = (vm_offset_t) buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
+		curbufsize = PAGE_SIZE * (i < residual ? base + 1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
@@ -472,9 +472,9 @@ again:
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
 	 * we use the more space efficient malloc in place of kmem_alloc.
 	 */
-	mclrefcnt = (char *) malloc(NMBCLUSTERS + CLBYTES / MCLBYTES,
+	mclrefcnt = (char *) malloc(NMBCLUSTERS + PAGE_SIZE / MCLBYTES,
 	    M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS + CLBYTES / MCLBYTES);
+	bzero(mclrefcnt, NMBCLUSTERS + PAGE_SIZE / MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *) & mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE);
 
@@ -485,7 +485,7 @@ again:
 
 	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
-	    nbuf, bufpages * CLBYTES);
+	    nbuf, bufpages * PAGE_SIZE);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -731,7 +731,7 @@ long	dumplo = 0;		/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first CLBYTES of disk space in
+ * Dumps always skip the first block of disk space in
  * case there might be a disk label stored there.  If there
  * is extra space, put dump at the end to reduce the chance
  * that swapping trashes it.
@@ -764,7 +764,7 @@ dumpconf()
 
 	/*
 	 * Check to see if we will fit.  Note we always skip the
-	 * first CLBYTES in case there is a disk label there.
+	 * first block in case there is a disk label there.
 	 */
 	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
 		dumpsize = 0;

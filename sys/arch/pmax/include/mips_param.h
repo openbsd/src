@@ -22,10 +22,10 @@
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
+ * Size of kernel malloc arena in logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(6*1024*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(6*1024*1024/PAGE_SIZE)
 #endif
 
 /* pages ("clicks") (4096 bytes) to disk blocks */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 2000/10/27 00:16:20 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 2001/05/05 20:56:54 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ allocsys(v)
 	if (bufpages == 0) {
 		/* We always have more than 2MB of memory. */
 		bufpages = (btoc(2 * 1024 * 1024) + physmem) *
-		    BUFCACHEPERCENT / (100 * CLSIZE);
+		    BUFCACHEPERCENT / 100;
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
@@ -233,8 +233,8 @@ allocsys(v)
 			MAXBSIZE * 7 / 10;
 	
 	/* More buffer pages than fits into the buffers is senseless.  */
-	if (bufpages > nbuf * MAXBSIZE / CLBYTES)
-		bufpages = nbuf * MAXBSIZE / CLBYTES;
+	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
+		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
 		if (nswbuf > 256)
@@ -316,7 +316,7 @@ cpu_startup()
 		 * but has no physical memory allocated for it.
 		 */
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base+1 : base);
+		curbufsize = PAGE_SIZE * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
@@ -339,9 +339,9 @@ cpu_startup()
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
 	 * we use the more space efficient malloc in place of kmem_alloc.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
+	mclrefcnt = (char *)malloc(NMBCLUSTERS+PAGE_SIZE/MCLBYTES,
 				   M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
+	bzero(mclrefcnt, NMBCLUSTERS+PAGE_SIZE/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 
@@ -352,7 +352,7 @@ cpu_startup()
 
 	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
-		   nbuf, bufpages * CLBYTES);
+		   nbuf, bufpages * PAGE_SIZE);
 
 	/*
 	 * Allocate a virtual page (for use by /dev/mem)
@@ -646,7 +646,7 @@ vm_offset_t dumppage_pa;
 
 /*
  * This is called by cpu_startup to set dumplo, dumpsize.
- * Dumps always skip the first CLBYTES of disk space
+ * Dumps always skip the first block of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.

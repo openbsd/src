@@ -254,8 +254,10 @@ pagemove(from, to, size)
 {
 	register pt_entry_t *fpte, *tpte;
 
-	if (size % CLBYTES)
+#ifdef DIAGNOSTIC
+	if ((size & PAGE_MASK) != 0)
 		panic("pagemove");
+#endif
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
 	while (size > 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 2001/04/17 04:30:46 aaron Exp $ */
+/*	$OpenBSD: machdep.c,v 1.37 2001/05/05 20:56:45 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -114,7 +114,7 @@
 #include <dev/cons.h>
 #include <net/netisr.h>
 
-#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
+#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <vm/vm_kern.h>
 
 /* the following is used externally (sysctl_hw) */
@@ -320,7 +320,7 @@ cpu_startup()
 	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
-		bufpages = physmem / 20 / CLSIZE;
+		bufpages = physmem / 20;
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -342,7 +342,7 @@ cpu_startup()
 		if (firstaddr == 0)
 			panic("startup: no room for tables");
 #ifdef BUFFERS_UNMANAGED
-		buffermem = (caddr_t) kmem_alloc(kernel_map, bufpages*CLBYTES);
+		buffermem = (caddr_t) kmem_alloc(kernel_map, bufpages*PAGE_SIZE);
 		if (buffermem == 0)
 			panic("startup: no room for buffers");
 #endif
@@ -378,7 +378,7 @@ cpu_startup()
 		 * but has no physical memory allocated for it.
 		 */
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base+1 : base);
+		curbufsize = PAGE_SIZE * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
@@ -398,9 +398,9 @@ cpu_startup()
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
 	 * we use the more space efficient malloc in place of kmem_alloc.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
-										M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
+	mclrefcnt = (char *)malloc(NMBCLUSTERS+PAGE_SIZE/MCLBYTES,
+				   M_MBUF, M_NOWAIT);
+	bzero(mclrefcnt, NMBCLUSTERS+PAGE_SIZE/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 								  VM_MBUF_SIZE, FALSE);
 	/*
@@ -413,7 +413,7 @@ cpu_startup()
 #endif
 	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
-			 nbuf, bufpages * CLBYTES);
+			 nbuf, bufpages * PAGE_SIZE);
 #ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
@@ -753,7 +753,7 @@ long  dumplo = 0;		/* blocks */
 
 /*
  * This is called by configure to set dumplo and dumpsize.
- * Dumps always skip the first CLBYTES of disk space
+ * Dumps always skip the first block of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -780,7 +780,7 @@ dumpconf()
 	 */
 	dumpsize = physmem + 1;
 
-	/* Always skip the first CLBYTES, in case there is a label there. */
+	/* Always skip the first block, in case there is a label there. */
 	if (dumplo < ctod(1))
 		dumplo = ctod(1);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_unix.c,v 1.9 1998/07/28 00:13:21 millert Exp $	*/
+/*	$OpenBSD: vm_unix.c,v 1.10 2001/05/05 20:57:04 art Exp $	*/
 /*	$NetBSD: vm_unix.c,v 1.19 1996/02/10 00:08:14 christos Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ grow(p, sp)
 	/*
 	 * Really need to check vs limit and increment stack size if ok.
 	 */
-	si = clrnd(btoc(USRSTACK-sp) - vm->vm_ssize);
+	si = btoc(USRSTACK-sp) - vm->vm_ssize;
 	if (vm->vm_ssize + si > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 		return (0);
 	vm->vm_ssize += si;

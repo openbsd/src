@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.27 2001/04/05 20:39:40 deraadt Exp $ */
+/*	$OpenBSD: trap.c,v 1.28 2001/05/05 20:56:45 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -619,7 +619,7 @@ copyfault:
 					if (rv == KERN_SUCCESS) {
 						unsigned nss;
 
-						nss = clrnd(btoc(USRSTACK-(unsigned)va));
+						nss = btoc(USRSTACK-(unsigned)va);
 						if (nss > vm->vm_ssize)
 							vm->vm_ssize = nss;
 					} else if (rv == KERN_PROTECTION_FAILURE)

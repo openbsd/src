@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.7 2001/01/31 22:39:42 jason Exp $ */
+/*	$OpenBSD: mem.c,v 1.8 2001/05/05 20:56:47 art Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -164,9 +164,9 @@ mmrw(dev, uio, flags)
 				if (uio->uio_rw == UIO_READ) {
 					if (zeropage == NULL) {
 						zeropage = (caddr_t)
-						    malloc(CLBYTES, M_TEMP,
+						    malloc(PAGE_SIZE, M_TEMP,
 						    M_WAITOK);
-						bzero(zeropage, CLBYTES);
+						bzero(zeropage, PAGE_SIZE);
 					}
 					c = min(c, NBPG - (int)v);
 					v = (vm_offset_t)zeropage;
@@ -193,10 +193,10 @@ mmrw(dev, uio, flags)
 			}
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
-				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+				bzero(zeropage, PAGE_SIZE);
 			}
-			c = min(iov->iov_len, CLBYTES);
+			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
 			continue;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.20 2001/04/05 20:39:41 deraadt Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.21 2001/05/05 20:56:45 art Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -169,7 +169,7 @@ pagemove(from, to, size)
 	register vm_offset_t pa;
 
 #ifdef DEBUG
-	if (size & CLOFSET)
+	if ((size & PAGE_MASK) != 0)
 		panic("pagemove");
 #endif
 	while (size > 0) {

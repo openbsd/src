@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.11 2001/03/22 23:50:53 mickey Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.12 2001/05/05 20:56:37 art Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -74,7 +74,7 @@
 #define	DMMAX	4096			/* largest potential swap allocation */
 
 #ifndef USRIOSIZE
-#define	USRIOSIZE	((2*HPPA_PGALIAS)/CLBYTES)	/* 2mb */
+#define	USRIOSIZE	((2*HPPA_PGALIAS)/PAGE_SIZE)	/* 2mb */
 #endif
 
 /*
@@ -84,11 +84,6 @@
 #ifndef SHMMAXPGS
 #define SHMMAXPGS	((1024*1024*10)/NBPG)	/* 10mb */
 #endif
-
-/*
- * The size of the clock loop.
- */
-#define	LOOPPAGES	(maxfree - firstfree)
 
 /*
  * The time for a process to be blocked before being very swappable.
@@ -126,8 +121,8 @@
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+#define VM_KMEM_SIZE		(NKMEMCLUSTERS*PAGE_SIZE)
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 #define	VM_PHYSSEG_MAX	8	/* this many physmem segments */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.11 2001/02/20 19:39:42 mickey Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.12 2001/05/05 20:56:59 art Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -890,7 +890,6 @@ static tulip_softc_t *tulips[TULIP_MAX_DEVICES];
 #define	tulip_intrfunc_t	void
 #define	TULIP_VOID_INTRFUNC
 #define	IFF_NOTRAILERS		0
-#define	CLBYTES			PAGE_SIZE
 #if 0
 #define	TULIP_KVATOPHYS(sc, va)	kvtop(va)
 #endif

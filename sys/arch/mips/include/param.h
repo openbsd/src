@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.2 1999/01/27 04:46:05 imp Exp $ */
+/*      $OpenBSD: param.h,v 1.3 2001/05/05 20:56:42 art Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,10 +84,6 @@
 /* XXX Maxphys temporary changed to 32K while SCSI driver is fixed. */
 #define	MAXPHYS		(32 * 1024)	/* max raw I/O transfer size */
 
-#define	CLSIZE		1
-#define	CLSIZELOG2	0
-
-/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
@@ -103,7 +99,7 @@
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * MCLBYTES must be no larger than the software page size, and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
@@ -121,10 +117,10 @@
 #endif
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
+ * Size of kernel malloc arena in logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(4096*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(4096*1024/PAGE_SIZE)
 #endif
 
 /* pages ("clicks") (4096 bytes) to disk blocks */

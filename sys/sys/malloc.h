@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.38 2001/05/02 00:47:53 angelos Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.39 2001/05/05 20:57:02 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -387,7 +387,7 @@ struct kmembuckets {
  */
 #define	kmemxtob(alloc)	(kmembase + (alloc) * NBPG)
 #define	btokmemx(addr)	(((caddr_t)(addr) - kmembase) / NBPG)
-#define	btokup(addr)	(&kmemusage[((caddr_t)(addr) - kmembase) >> CLSHIFT])
+#define	btokup(addr)	(&kmemusage[((caddr_t)(addr) - kmembase) >> PAGE_SHIFT])
 
 /*
  * Macro versions for the usual cases of malloc/free

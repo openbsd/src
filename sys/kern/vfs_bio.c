@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.37 2001/04/06 19:10:49 gluk Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.38 2001/05/05 20:57:01 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -194,9 +194,9 @@ bufinit()
 		bp->b_data = buffers + i * MAXBSIZE;
 		LIST_INIT(&bp->b_dep);
 		if (i < residual)
-			bp->b_bufsize = (base + 1) * CLBYTES;
+			bp->b_bufsize = (base + 1) * PAGE_SIZE;
 		else
-			bp->b_bufsize = base * CLBYTES;
+			bp->b_bufsize = base * PAGE_SIZE;
 		bp->b_flags = B_INVAL;
 		if (bp->b_bufsize) {
 			dp = &bufqueues[BQ_AGE];
@@ -767,7 +767,7 @@ allocbuf(bp, size)
 	vsize_t		desired_size;
 	int		s;
 
-	desired_size = clrnd(round_page(size));
+	desired_size = round_page(size);
 	if (desired_size > MAXBSIZE)
 		panic("allocbuf: buffer larger than MAXBSIZE requested");
 
@@ -1041,24 +1041,24 @@ vfs_bufstats()
 	int s, i, j, count;
 	register struct buf *bp;
 	register struct bqueues *dp;
-	int counts[MAXBSIZE/CLBYTES+1];
+	int counts[MAXBSIZE/PAGE_SIZE+1];
 	int totals[BQUEUES];
 	static char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE", "EMPTY" };
 
 	s = splbio();
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
 		count = 0;
-		for (j = 0; j <= MAXBSIZE/CLBYTES; j++)
+		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
 			counts[j] = 0;
 		for (bp = dp->tqh_first; bp; bp = bp->b_freelist.tqe_next) {
-			counts[bp->b_bufsize/CLBYTES]++;
+			counts[bp->b_bufsize/PAGE_SIZE]++;
 			count++;
 		}
 		totals[i] = count;
 		printf("%s: total-%d", bname[i], count);
-		for (j = 0; j <= MAXBSIZE/CLBYTES; j++)
+		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
 			if (counts[j] != 0)
-				printf(", %d-%d", j * CLBYTES, counts[j]);
+				printf(", %d-%d", j * PAGE_SIZE, counts[j]);
 		printf("\n");
 	}
 	if (totals[BQ_EMPTY] != numemptybufs)

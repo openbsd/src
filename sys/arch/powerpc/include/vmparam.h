@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.8 2001/03/29 18:52:19 drahn Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.9 2001/05/05 20:56:50 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #ifndef MACHINE_VMPARAM_H
 #define MACHINE_VMPARAM_H
 
-#define	USRTEXT		CLBYTES
+#define	USRTEXT		PAGE_SIZE
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 #ifndef	MAXTSIZ
@@ -106,9 +106,9 @@ extern vm_offset_t ppc_kvm_size;
 
 #define	MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
 
-#define	VM_KMEM_SIZE		(NKMEMCLUSTERS * CLBYTES)
-#define	VM_MBUF_SIZE		(NMBCLUSTERS * CLBYTES)
-#define	VM_PHYS_SIZE		(USRIOSIZE * CLBYTES)
+#define	VM_KMEM_SIZE		(NKMEMCLUSTERS * PAGE_SIZE)
+#define	VM_MBUF_SIZE		(NMBCLUSTERS * PAGE_SIZE)
+#define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
 
 struct pmap_physseg {
 	struct pv_entry *pvent;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2000/05/28 02:23:30 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.42 2001/05/05 20:56:32 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
@@ -77,7 +77,7 @@
 #include <sys/sem.h>
 #endif
 #include <net/netisr.h>
-#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
+#define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
 #include <vm/vm_map.h>
@@ -394,10 +394,9 @@ again:
 	 */
   	if (bufpages == 0) {
 		if (physmem < btoc(2 * 1024 * 1024))
-			bufpages = physmem / (10 * CLSIZE);
+			bufpages = physmem / (10);
 		else
-			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-			    (20 * CLSIZE);
+			bufpages = (btoc(2 * 1024 * 1024) + physmem) / 20;
 	}
 
 	if (nbuf == 0) {
@@ -475,7 +474,7 @@ again:
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -504,7 +503,7 @@ again:
 		 * but has no physical memory allocated for it.
 		 */
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base+1 : base);
+		curbufsize = PAGE_SIZE * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 #endif
@@ -537,9 +536,9 @@ again:
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
 	 * we use the more space efficient malloc in place of kmem_alloc.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS + CLBYTES / MCLBYTES, M_MBUF,
+	mclrefcnt = (char *)malloc(NMBCLUSTERS + PAGE_SIZE / MCLBYTES, M_MBUF,
 	    M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
+	bzero(mclrefcnt, NMBCLUSTERS+PAGE_SIZE/MCLBYTES);
 #if defined(UVM)
 	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 				 VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
@@ -563,7 +562,7 @@ again:
 	    ptoa(cnt.v_free_count)/NBPG);
 #endif
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,
-	    bufpages * CLBYTES);
+	    bufpages * PAGE_SIZE);
 	
 	/*
 	 * display memory configuration passed from loadbsd
@@ -902,11 +901,11 @@ dumpconf()
 	}
 	--dumplo;	/* XXX assume header fits in one block */
 	/*
-	 * Don't dump on the first CLBYTES (why CLBYTES?)
+	 * Don't dump on the first PAGE_SIZE
 	 * in case the dump device includes a disk label.
 	 */
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
+	if (dumplo < btodb(PAGE_SIZE))
+		dumplo = btodb(PAGE_SIZE);
 }
 
 /*

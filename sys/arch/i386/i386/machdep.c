@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.156 2001/04/30 13:23:11 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.157 2001/05/05 20:56:38 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -200,11 +200,11 @@ extern struct proc *npxproc;
 #define ISADMA_LIMIT	(16 * 1024 * 1024)	/* XXX wrong place */
 #ifdef UVM
 #define ALLOC_PGS(sz, limit, pgs) \
-    uvm_pglistalloc((sz), 0, (limit), CLBYTES, 0, &(pgs), 1, 0)
+    uvm_pglistalloc((sz), 0, (limit), PAGE_SIZE, 0, &(pgs), 1, 0)
 #define FREE_PGS(pgs) uvm_pglistfree(&(pgs))
 #else
 #define ALLOC_PGS(sz, limit, pgs) \
-    vm_page_alloc_memory((sz), 0, (limit), CLBYTES, 0, &(pgs), 1, 0)
+    vm_page_alloc_memory((sz), 0, (limit), PAGE_SIZE, 0, &(pgs), 1, 0)
 #define FREE_PGS(pgs) vm_page_free_memory(&(pgs))
 #endif
 
@@ -427,9 +427,9 @@ cpu_startup()
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
 	 * we use the more space efficient malloc in place of kmem_alloc.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES, M_MBUF,
+	mclrefcnt = (char *)malloc(NMBCLUSTERS+PAGE_SIZE/MCLBYTES, M_MBUF,
 	    M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
+	bzero(mclrefcnt, NMBCLUSTERS+PAGE_SIZE/MCLBYTES);
 #if defined(UVM)
 	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
@@ -451,7 +451,7 @@ cpu_startup()
 	    ptoa(cnt.v_free_count)/1024);
 #endif
 	printf("using %d buffers containing %u bytes (%uK) of memory\n",
-		nbuf, bufpages * CLBYTES, bufpages * CLBYTES / 1024);
+		nbuf, bufpages * PAGE_SIZE, bufpages * PAGE_SIZE / 1024);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -549,10 +549,10 @@ allocsys(v)
 	 */
 	if (bufpages == 0) {
 		if (physmem < btoc(2 * 1024 * 1024))
-			bufpages = physmem / (10 * CLSIZE);
+			bufpages = physmem / 10;
 		else
 			bufpages = (btoc(2 * 1024 * 1024) + physmem) *
-			    BUFCACHEPERCENT / (100 * CLSIZE);
+			    BUFCACHEPERCENT / 100;
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
@@ -567,8 +567,8 @@ allocsys(v)
 		    MAXBSIZE * 7 / 10;
 
 	/* More buffer pages than fits into the buffers is senseless.  */
-	if (bufpages > nbuf * MAXBSIZE / CLBYTES)
-		bufpages = nbuf * MAXBSIZE / CLBYTES;
+	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
+		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
 
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
@@ -611,9 +611,9 @@ setup_buffers(maxaddr)
 
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE / CLBYTES) {
+	if (base >= MAXBSIZE / PAGE_SIZE) {
 		/* don't want to alloc more physical mem than needed */
-		base = MAXBSIZE / CLBYTES;
+		base = MAXBSIZE / PAGE_SIZE;
 		residual = 0;
 	}
 
@@ -652,8 +652,8 @@ setup_buffers(maxaddr)
 		 * bounce all buffer I/O.
 		 */
 		for (left = bufpages; left > 0; left -= chunk) {
-			chunk = min(left, CHUNKSZ / CLBYTES);
-			if (ALLOC_PGS(chunk * CLBYTES, ISADMA_LIMIT, pgs))
+			chunk = min(left, CHUNKSZ / PAGE_SIZE);
+			if (ALLOC_PGS(chunk * PAGE_SIZE, ISADMA_LIMIT, pgs))
 				break;
 		}
 	}
@@ -661,7 +661,7 @@ setup_buffers(maxaddr)
 	/*
 	 * If we need more pages for the buffer cache, get them from anywhere.
 	 */
-	if (left > 0 && ALLOC_PGS(left * CLBYTES, avail_end, pgs))
+	if (left > 0 && ALLOC_PGS(left * PAGE_SIZE, avail_end, pgs))
 		panic("cannot get physical memory for buffer cache");
 
 	/*
@@ -681,7 +681,7 @@ setup_buffers(maxaddr)
 		 * but has no physical memory allocated for it.
 		 */
 		addr = (vm_offset_t)buffers + i * MAXBSIZE;
-		for (size = CLBYTES * (i < residual ? base + 1 : base);
+		for (size = PAGE_SIZE * (i < residual ? base + 1 : base);
 		    size > 0; size -= NBPG, addr += NBPG) {
 			pmap_enter(pmap_kernel(), addr, pg->phys_addr,
 			    VM_PROT_READ|VM_PROT_WRITE, TRUE,
@@ -1737,7 +1737,7 @@ haltsys:
 
 /*
  * This is called by configure to set dumplo and dumpsize.
- * Dumps always skip the first CLBYTES of disk space
+ * Dumps always skip the first block of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -1759,7 +1759,7 @@ dumpconf()
 	if (nblks <= ctod(1))
 		return;
 
-	/* Always skip the first CLBYTES, in case there is a label there. */
+	/* Always skip the first block, in case there is a label there. */
 	if (dumplo < ctod(1))
 		dumplo = ctod(1);
 

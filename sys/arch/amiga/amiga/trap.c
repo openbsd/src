@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 2000/11/10 18:15:35 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 2001/05/05 20:56:32 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	 */
 	nss = 0;
 	if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr) {
-		nss = clrnd(btoc(USRSTACK - (unsigned)va));
+		nss = btoc(USRSTACK - (unsigned)va);
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
 			rv = KERN_FAILURE;
 			goto nogo;
@@ -485,7 +485,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	 */
 	if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
-			nss = clrnd(btoc(USRSTACK-(unsigned)va));
+			nss = btoc(USRSTACK-(unsigned)va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)

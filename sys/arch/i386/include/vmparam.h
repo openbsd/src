@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.16 2001/03/22 23:36:52 niklas Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.17 2001/05/05 20:56:39 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -56,7 +56,7 @@
  * Immediately after the user structure is the page table map, and then
  * kernal address space.
  */
-#define	USRTEXT		CLBYTES
+#define	USRTEXT		PAGE_SIZE
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 /*
@@ -145,8 +145,8 @@
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
-#define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
-#define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+#define VM_KMEM_SIZE		(NKMEMCLUSTERS*PAGE_SIZE)
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 #define	MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
 
