@@ -183,7 +183,7 @@ struct mips_set_options
    that we must set the isa and mips16 fields to -1 to indicate that
    they have not been initialized.  */
 
-static struct mips_set_options mips_opts = { -1, -1 };
+static struct mips_set_options mips_opts = { -1, -1, 0, 0, 0, 0, 0, 0 };
 
 /* These variables are filled in with the masks of registers used.
    The object format code reads them and puts them in the appropriate
@@ -407,7 +407,7 @@ static struct mips_cl_insn prev_prev_insn;
 
 /* If we don't want information for prev_insn or prev_prev_insn, we
    point the insn_mo field at this dummy integer.  */
-static const struct mips_opcode dummy_opcode = { 0 };
+static const struct mips_opcode dummy_opcode = { NULL, NULL, 0, 0, 0, 0 };
 
 /* Non-zero if prev_insn is valid.  */
 static int prev_insn_valid;
@@ -756,7 +756,7 @@ static const pseudo_typeS mips_pseudo_table[] =
   {"stabn", s_mips_stab, 'n'},
   {"text", s_change_sec, 't'},
   {"word", s_cons, 2},
-  { 0 },
+  { NULL, NULL, 0 },
 };
 
 static const pseudo_typeS mips_nonecoff_pseudo_table[] = {
@@ -773,7 +773,7 @@ static const pseudo_typeS mips_nonecoff_pseudo_table[] = {
   {"loc", s_ignore, 0},
   {"mask", s_mips_mask, 'R'},
   {"verstamp", s_ignore, 0},
-  { 0 },
+  { NULL, NULL, 0 },
 };
 
 extern void pop_insert PARAMS ((const pseudo_typeS *));
@@ -2660,7 +2660,7 @@ macro_build (place, counter, ep, name, fmt, va_alist)
 static void
 mips16_macro_build (place, counter, ep, name, fmt, args)
      char *place;
-     int *counter;
+     int *counter ATTRIBUTE_UNUSED;
      expressionS *ep;
      const char *name;
      const char *fmt;
@@ -9363,7 +9363,7 @@ md_pcrel_from (fixP)
 
 void
 cons_fix_new_mips (frag, where, nbytes, exp)
-     fragS *frag;
+     fragS *frag ATTRIBUTE_UNUSED;
      int where;
      unsigned int nbytes;
      expressionS *exp;
@@ -9940,7 +9940,7 @@ mips_align (to, fill, label)
 
 static void
 s_align (x)
-     int x;
+     int x ATTRIBUTE_UNUSED;
 {
   register int temp;
   register long temp_fill;
@@ -10134,7 +10134,7 @@ s_float_cons (type)
 
 static void
 s_mips_globl (x)
-     int x;
+     int x ATTRIBUTE_UNUSED;
 {
   char *name;
   int c;
@@ -10175,7 +10175,7 @@ s_mips_globl (x)
 
 static void
 s_option (x)
-     int x;
+     int x ATTRIBUTE_UNUSED;
 {
   char *opt;
   char c;
@@ -10228,7 +10228,7 @@ static struct mips_option_stack *mips_opts_stack;
 
 static void
 s_mipsset (x)
-     int x;
+     int x ATTRIBUTE_UNUSED;
 {
   char *name = input_line_pointer, ch;
 
@@ -10364,7 +10364,7 @@ s_mipsset (x)
 
 static void
 s_abicalls (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   mips_pic = SVR4_PIC;
   if (USE_GLOBAL_POINTER_OPT)
@@ -10389,7 +10389,7 @@ s_abicalls (ignore)
 
 static void
 s_cpload (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   expressionS ex;
   int icnt = 0;
@@ -10429,7 +10429,7 @@ s_cpload (ignore)
 
 static void
 s_cprestore (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   expressionS ex;
   int icnt = 0;
@@ -10462,7 +10462,7 @@ s_cprestore (ignore)
 
 static void
 s_gpword (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   symbolS *label;
   expressionS ex;
@@ -10502,7 +10502,7 @@ s_gpword (ignore)
 
 static void
 s_cpadd (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   int icnt = 0;
   int reg;
@@ -10536,7 +10536,7 @@ s_cpadd (ignore)
 
 static void
 s_insn (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   if (mips_opts.mips16)
     mips16_mark_labels ();
@@ -10565,7 +10565,7 @@ s_mips_stab (type)
 
 static void
 s_mips_weakext (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   char *name;
   int c;
@@ -11078,7 +11078,7 @@ mips_fix_adjustable (fixp)
 
 arelent **
 tc_gen_reloc (section, fixp)
-     asection *section;
+     asection *section ATTRIBUTE_UNUSED;
      fixS *fixp;
 {
   static arelent *retval[4];
@@ -11319,7 +11319,7 @@ mips_relax_frag (fragp, stretch)
 
 void
 md_convert_frag (abfd, asec, fragp)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      segT asec;
      fragS *fragp;
 {
@@ -11579,7 +11579,7 @@ int
 mips_do_align (n, fill, len, max)
      int n;
      const char *fill;
-     int len;
+     int len ATTRIBUTE_UNUSED;
      int max;
 {
   if (fill == NULL
@@ -11671,7 +11671,7 @@ get_number ()
 
 static void
 s_file (x)
-     int x;
+     int x ATTRIBUTE_UNUSED;
 {
   int line;
 
@@ -11684,7 +11684,7 @@ s_file (x)
 
 static void
 s_mips_end (x)
-     int x;
+     int x ATTRIBUTE_UNUSED;
 {
   symbolS *p;
   int maybe_text;
