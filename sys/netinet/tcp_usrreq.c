@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.25 1998/06/26 18:07:30 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.26 1998/06/27 02:09:46 angelos Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -197,6 +197,13 @@ tcp_usrreq(so, req, m, nam, control)
 	 */
 	case PRU_CONNECT:
 		sin = mtod(nam, struct sockaddr_in *);
+
+		/* Disallow connects to a multicast address */
+		if (IN_MULTICAST(sin->sin_addr.s_addr))
+		{
+			error = EINVAL;
+			break;
+		}
 
 		/* Trying to connect to some broadcast address */
 		if (in_broadcast(sin->sin_addr, NULL)) {
