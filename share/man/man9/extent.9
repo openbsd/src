@@ -1,4 +1,4 @@
-.\"	$OpenBSD: extent.9,v 1.5 2000/11/10 20:02:20 todd Exp $
+.\"	$OpenBSD: extent.9,v 1.6 2001/10/05 05:07:47 millert Exp $
 .\"	$NetBSD: extent.9,v 1.15 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -55,9 +55,20 @@
 .Ft void
 .Fn extent_destroy "struct extent *ex"
 .Ft int
-.Fn extent_alloc "struct extent *ex" "u_long size" "u_long alignment" "u_long boundary" "int flags" "u_long *result"
+.Fn extent_alloc "struct extent *ex" "u_long size" "u_long alignment" "u_long skew" "u_long boundary" "int flags" "u_long *result"
 .Ft int
-.Fn extent_alloc_subregion "struct extent *ex" "u_long substart" "u_long subend" "u_long size" "u_long alignment" "u_long boundary" "u_long flags" "u_long *result"
+.\" too many arguments for a single .Fn
+.Fo extent_alloc_subregion
+.Fa "struct extent *ex"
+.Fa "u_long substart"
+.Fa "u_long subend"
+.Fa "u_long size"
+.Fa "u_long alignment"
+.Fa "u_long skew"
+.Fa "u_long boundary"
+.Fa "int flags"
+.Fa "u_long *result"
+.Fc
 .Ft int
 .Fn extent_alloc_region "struct extent *ex" "u_long start" "u_long size" "int flags"
 .Ft int
@@ -181,6 +192,20 @@ If no alignment is necessary, the value
 .Dv EX_NOALIGN
 should be specified.
 If
+.Fa skew
+is non-zero, it modifies the requested alignment result in the following way:
+the value
+.Po Fa result
+\& -
+.Fa skew
+.Pc
+is aligned to
+.Fa alignment
+boundaries.
+.Fa skew
+must be a smaller number than
+.Fa alignment .
+If
 .Fa boundary
 is not
 .Dv EX_NOBOUNDARY ,
@@ -196,7 +221,8 @@ boundary line, but the end of the region will not touch nor cross a
 boundary line.
 A
 .Fa boundary
-argument smaller than the size of the request is invalid.
+argument smaller than the sum of the requested skew and the size of
+the request is invalid.
 Upon successful completion,
 .Fa *result
 will contain the start of the allocated region.
