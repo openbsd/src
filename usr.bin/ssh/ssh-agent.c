@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh-agent.c,v 1.41 2000/11/30 18:33:05 markus Exp $	*/
+/*	$OpenBSD: ssh-agent.c,v 1.42 2000/12/09 14:06:54 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-agent.c,v 1.41 2000/11/30 18:33:05 markus Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.42 2000/12/09 14:06:54 markus Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -673,6 +673,7 @@ main(int ac, char **av)
 	struct rlimit rlim;
 	pid_t pid;
 	char *shell, *format, *pidstr, pidstrbuf[1 + 3 * sizeof pid];
+	extern int optind;                                                          
 
 	while ((ch = getopt(ac, av, "cks")) != -1) {
 		switch (ch) {
