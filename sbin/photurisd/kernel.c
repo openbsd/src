@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.10 2000/12/11 21:21:18 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.11 2000/12/11 21:37:46 provos Exp $";
 #endif
 
 #include <time.h>
@@ -292,8 +292,9 @@ kernel_xf_read(int sd, char *buffer, int blen, int seq)
 		      ));
 	      
      if (sres->sadb_msg_errno) {
-	  log_print("kernel_xf_read: PFKEYV2 result: %s",
-		    strerror(sres->sadb_msg_errno));
+	  LOG_DBG((LOG_KERNEL, 40, "kernel_xf_read: PFKEYV2 result: %s",
+		    strerror(sres->sadb_msg_errno)));
+	  errno = sres->sadb_msg_errno;
 	  return (0);
      }
 
@@ -835,7 +836,7 @@ kernel_delete_spi(char *address, u_int32_t spi, int proto)
 
      LOG_DBG((LOG_KERNEL, 30, "kernel_delete_spi: %08x", spi));
 
-     if (!KERNEL_XF_SET(sa.sadb_msg_len * 8)) {
+     if (!KERNEL_XF_SET(sa.sadb_msg_len * 8) && errno != ESRCH) {
 	  log_error("kernel_xf_set() in kernel_delete_spi()");
 	  return (-1);
      }
