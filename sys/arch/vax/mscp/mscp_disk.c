@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.7 2000/04/27 03:14:46 bjc Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.8 2001/07/04 05:12:57 csapuntz Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.21 1999/06/06 19:16:18 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -317,7 +317,7 @@ rastrategy(bp)
 	 * Make sure this is a reasonable drive to use.
 	 */
 	unit = DISKUNIT(bp->b_dev);
-	if (unit > ra_cd.cd_ndevs || (ra = ra_cd.cd_devs[unit]) == NULL) {
+	if (unit >= ra_cd.cd_ndevs || (ra = ra_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
@@ -685,7 +685,7 @@ rxstrategy(bp)
 	 * Make sure this is a reasonable drive to use.
 	 */
 	unit = DISKUNIT(bp->b_dev);
-	if (unit > rx_cd.cd_ndevs || (rx = rx_cd.cd_devs[unit]) == NULL) {
+	if (unit >= rx_cd.cd_ndevs || (rx = rx_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
