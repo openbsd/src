@@ -1,4 +1,4 @@
-.\"	$OpenBSD: addcom.4,v 1.5 2003/08/31 19:53:42 jmc Exp $
+.\"	$OpenBSD: addcom.4,v 1.6 2004/09/30 19:59:23 mickey Exp $
 .\"
 .\" Copyright (c) 2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -33,9 +33,9 @@
 .Nd multiplexing serial communications interface
 .Sh SYNOPSIS
 .Cd "addcom0 at isa? port 0x108 irq 5"
-.Cd "com* at addcom? slave ?"
+.Cd "com* at addcom?"
 or
-.Cd "pccom* at addcom? slave ?"
+.Cd "pccom* at addcom?"
 .Sh DESCRIPTION
 The
 .Nm

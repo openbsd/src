@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.101 2004/08/17 23:49:16 jaredy Exp $
+.\"	$OpenBSD: pci.4,v 1.102 2004/09/30 19:59:25 mickey Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -46,7 +46,7 @@
 .Cd "pci* at tsp?"
 .Pp
 .Cd "# amd64, i386"
-.Cd "pci* at mainbus0 bus ?"
+.Cd "pci* at mainbus0"
 .Pp
 .Cd "# cats"
 .Cd "pci0 at footbridge?"
@@ -62,8 +62,8 @@
 .Cd "pci* at schizo?"
 .Pp
 .Cd "# all architectures"
-.Cd "pci* at pchb? bus ?"
-.Cd "pci* at ppb? bus ?"
+.Cd "pci* at pchb?"
+.Cd "pci* at ppb?"
 .Sh DESCRIPTION
 The system includes a machine-independent
 .Tn PCI

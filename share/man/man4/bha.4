@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bha.4,v 1.5 2004/02/10 13:25:35 jmc Exp $
+.\"	$OpenBSD: bha.4,v 1.6 2004/09/30 19:59:24 mickey Exp $
 .\"	$NetBSD: bha.4,v 1.10 1999/12/17 16:23:21 abs Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
@@ -30,10 +30,10 @@
 .Nm bha
 .Nd Buslogic SCSI adapter driver
 .Sh SYNOPSIS
-.Cd "bha0 at isa? port 0x330 irq ? drq ?"
-.Cd "bha1 at isa? port 0x334 irq ? drq ?"
-.\" .Cd "bha* at eisa? slot ?"
-.Cd "bha* at pci? dev ? function ?"
+.Cd "bha0 at isa? port 0x330"
+.Cd "bha1 at isa? port 0x334"
+.\" .Cd "bha* at eisa?"
+.Cd "bha* at pci?"
 .Cd "scsibus* at bha?"
 .Sh HARDWARE
 The

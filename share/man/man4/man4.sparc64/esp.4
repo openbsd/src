@@ -1,4 +1,4 @@
-.\"	$OpenBSD: esp.4,v 1.5 2003/05/01 18:44:39 jmc Exp $
+.\"	$OpenBSD: esp.4,v 1.6 2004/09/30 19:59:28 mickey Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -11,9 +11,9 @@
 .Nm esp
 .Nd ESP NCR 53c94 on-board or SBus SCSI controller
 .Sh SYNOPSIS
-.Cd "dma* at sbus? slot ? offset ?             " Pq "SBus SCSI"
-.Cd "esp* at dma? flags 0x0000                 " Pq "two flavours"
-.Cd "esp* at sbus? slot ? offset ? flags 0x0000" Pq "depending on model"
+.Cd "dma* at sbus?              " Pq "SBus SCSI"
+.Cd "esp* at dma? flags 0x0000  " Pq "two flavours"
+.Cd "esp* at sbus? flags 0x0000 " Pq "depending on model"
 .Cd "scsibus* at esp?"
 .Sh DESCRIPTION
 The

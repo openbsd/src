@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdc.4,v 1.9 2004/03/21 19:50:44 miod Exp $
+.\"	$OpenBSD: fdc.4,v 1.10 2004/09/30 19:59:24 mickey Exp $
 .\"	$NetBSD: fdc.4,v 1.6 1996/03/22 01:55:14 andrew Exp $
 .\"
 .\" Copyright (c) 1996 Andrew C. Wheadon
@@ -39,7 +39,7 @@
 .Nd NEC765 compatible floppy disk driver
 .Sh SYNOPSIS
 .Cd "fdc0 at isa? port 0x3f0 irq 6 drq 2"
-.Cd "fd* at fdc? drive ? flags 0x00"
+.Cd "fd* at fdc? flags 0x00"
 .Sh DESCRIPTION
 The
 .Nm
@@ -106,4 +106,4 @@ in the
 driver probes for a missing second floppy drive.
 In this case you should try recompiling the kernel
 replacing the relevant line with
-.Cd "fd0 at fdc? drive ?" .
+.Cd "fd0 at fdc?" .

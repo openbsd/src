@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cgsix.4,v 1.28 2004/02/29 21:44:07 miod Exp $
+.\"	$OpenBSD: cgsix.4,v 1.29 2004/09/30 19:59:27 mickey Exp $
 .\"	$NetBSD: cgsix.4,v 1.4 1998/06/11 08:32:20 fair Exp $
 .\"
 .\" Copyright 1994
@@ -41,9 +41,9 @@
 .Nm cgsix
 .Nd accelerated 8-bit color frame buffer
 .Sh SYNOPSIS
-.Cd "cgsix* at sbus? slot ? offset ?" Pq "sun4c and sun4m"
-.Cd "cgsix0 at obio0 addr 0xfb000000 level 4" Pq sun4/300 P4
-.Cd "cgsix0 at obio0 addr 0x0b000000 level 4" Pq sun4/100 P4
+.Cd "cgsix* at sbus?                        " Pq "sun4c and sun4m"
+.Cd "cgsix0 at obio0 addr 0xfb000000 level 4" Pq "sun4/300 P4"
+.Cd "cgsix0 at obio0 addr 0x0b000000 level 4" Pq "sun4/100 P4"
 .Cd "wsdisplay* at cgsix?"
 .Sh DESCRIPTION
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.10 2004/09/23 18:02:59 jason Exp $
+.\"	$OpenBSD: zs.4,v 1.11 2004/09/30 19:59:28 mickey Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The OpenBSD Project
 .\" All rights reserved.
@@ -12,10 +12,10 @@
 .Nd Zilog 8530 (ZSCC) serial communications driver
 .Sh SYNOPSIS
 .Cd "zs* at fhc?"
-.Cd "zs* at sbus? slot ? offset ?"
-.Cd "zstty* at zs? channel ?"
-.Cd "zskbd* at zs? channel ?"
-.Cd "wskbd* at zskbd? console ?"
+.Cd "zs* at sbus?"
+.Cd "zstty* at zs?"
+.Cd "zskbd* at zs?"
+.Cd "wskbd* at zskbd?"
 .Cd "option SUNKBD_LAYOUT=XXX"
 .Cd "option SUNKBD5_LAYOUT=XXX"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: asc.4,v 1.2 2003/03/07 09:34:59 jmc Exp $
+.\"	$OpenBSD: asc.4,v 1.3 2004/09/30 19:59:26 mickey Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -11,9 +11,9 @@
 .Nm asc
 .Nd NCR 53c[f]94 on-board or TURBOchannel SCSI controller
 .Sh SYNOPSIS
-.Cd "tcds* at tc? slot ? offset ?" Pq " TURBOchannel PMAZ cards"
-.Cd "asc* at tcds? chip ?"
-.Cd "asc* at tc? slot ? offset ?" Pq "on-board SCSI"
+.Cd "tcds* at tc?" Pq " TURBOchannel PMAZ cards"
+.Cd "asc* at tcds?"
+.Cd "asc* at tc?" Pq "on-board SCSI"
 .Cd "scsibus* at asc?"
 .Sh DESCRIPTION
 The

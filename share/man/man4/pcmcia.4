@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.36 2004/08/15 22:52:40 jmc Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.37 2004/09/30 19:59:25 mickey Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,23 +44,23 @@
 .Cd "pcic1   at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000"
 .Cd "pcic2   at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000"
 .Cd "pcic*   at isapnp?"
-.Cd "pcic*   at pci? dev? function ?"
-.Cd "pcmcia* at pcic? controller ? socket ?"
+.Cd "pcic*   at pci? dev?"
+.Cd "pcmcia* at pcic?"
 .Pp
 .Cd "# i386"
 .Cd "tcic0   at isa? port 0x240 iomem 0xd0000 iosiz 0x10000"
-.Cd "pcmcia* at tcic? controller ? socket ?"
+.Cd "pcmcia* at tcic?"
 .Pp
 .Cd "# sparc"
-.Cd "tslot*  at sbus? slot ? offset ?"
-.Cd "pcmcia* at tslot? socket ?"
+.Cd "tslot*  at sbus?"
+.Cd "pcmcia* at tslot?"
 .Pp
 .Cd "# sparc/sparc64"
-.Cd "stp*    at sbus? slot ? offset ?"
-.Cd "pcmcia* at stp? socket ?"
+.Cd "stp*    at sbus?"
+.Cd "pcmcia* at stp?"
 .Pp
 .Cd "# all architectures"
-.Cd "cbb*      at pci? dev? function ?"
+.Cd "cbb*      at pci?"
 .Cd "cardslot* at cbb? flags 0x0000"
 .Cd "pcmcia*   at cardslot?"
 .Sh DESCRIPTION

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahc.4,v 1.31 2004/07/05 21:21:21 miod Exp $
+.\"	$OpenBSD: ahc.4,v 1.32 2004/09/30 19:59:24 mickey Exp $
 .\"	$NetBSD: ahc.4,v 1.1.2.1 1996/08/25 17:22:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996
@@ -35,13 +35,13 @@
 .Nd Adaptec VL/EISA/PCI SCSI host adapter driver
 .Sh SYNOPSIS
 For VL cards:
-.Cd "ahc0	at isa? port ? irq ?"
+.Cd "ahc0	at isa?"
 .Pp
 For EISA cards:
-.Cd "ahc*	at eisa? slot ?"
+.Cd "ahc*	at eisa?"
 .Pp
 For PCI cards:
-.Cd "ahc*	at pci? dev ? function ?"
+.Cd "ahc*	at pci?"
 .Pp
 For SCSI buses:
 .Cd "scsibus* at ahc?"

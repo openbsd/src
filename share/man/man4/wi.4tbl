@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.53 2004/09/30 14:45:55 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.54 2004/09/30 19:59:26 mickey Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -40,7 +40,7 @@
 .Nd WaveLAN/IEEE, PRISM 2-3 and Spectrum24 802.11DS wireless network driver
 .Sh SYNOPSIS
 .Cd "# all architectures"
-.Cd "wi* at pci? dev ? function ?"
+.Cd "wi* at pci?"
 .Cd "wi* at pcmcia? function ?"
 .Cd "wi* at uhub? port ?"
 .Pp

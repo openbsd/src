@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atapiscsi.4,v 1.9 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: atapiscsi.4,v 1.10 2004/09/30 19:59:24 mickey Exp $
 .\"
 .\" Copyright (c) 1999 Constantine Sapuntzakis.
 .\"
@@ -33,8 +33,8 @@
 .Nm atapiscsi
 .Nd ATAPI<->SCSI adapter
 .Sh SYNOPSIS
-.Cd "atapiscsi* at wdc? channel ? flags 0x0000"
-.Cd "atapiscsi* at pciide? channel ? flags 0x0000"
+.Cd "atapiscsi* at wdc? flags 0x0000"
+.Cd "atapiscsi* at pciide? flags 0x0000"
 .Cd "scsibus* at atapiscsi?"
 .Sh DESCRIPTION
 The

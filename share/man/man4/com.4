@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.17 2004/05/25 09:42:55 jmc Exp $
+.\"	$OpenBSD: com.4,v 1.18 2004/09/30 19:59:24 mickey Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -49,14 +49,14 @@
 .Cd "pccom2 at isa? port 0x3e8 irq 5"
 .Cd "pccom3 at isa? port 0x2e8 irq 9"
 .Cd "pccom* at isapnp?"
-.Cd "pccom* at pcmcia? function ?"
-.Cd "pccom* at puc? port ?"
+.Cd "pccom* at pcmcia?"
+.Cd "pccom* at puc?"
 .Pp
-.Cd "pccom* at addcom? slave ?"
-.Cd "pccom* at ast? slave ?"
-.Cd "pccom* at boca? slave ?"
-.Cd "pccom* at hsq? slave ?"
-.Cd "pccom* at rtfps? slave ?"
+.Cd "pccom* at addcom?"
+.Cd "pccom* at ast?"
+.Cd "pccom* at boca?"
+.Cd "pccom* at hsq?"
+.Cd "pccom* at rtfps?"
 .Pp
 .Cd "# alpha and amd64"
 .Cd "com0 at isa? port 0x3f8 irq 4"
@@ -66,7 +66,7 @@
 .Cd "com0 at gsc? offset 0x5000 irq 5"
 .Cd "com0 at gsc? offset 0x23000 irq 5"
 .Cd "com1 at gsc? offset 0x22000 irq 6"
-.Cd "com2 at gsc? offset ? irq 13"
+.Cd "com2 at gsc? irq 13"
 .Cd "com1 at dino? irq 11"
 .Pp
 .Cd "# sparc64"

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raid.4,v 1.26 2003/04/01 11:15:12 jmc Exp $
+.\"	$OpenBSD: raid.4,v 1.27 2004/09/30 19:59:25 mickey Exp $
 .\"     $NetBSD: raid.4,v 1.20 2001/09/22 16:03:58 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -211,13 +211,13 @@ This is true for all types of drives, including IDE, HP-IB, etc.
 For normal SCSI drives, for example, the following can be used
 to fix the device addresses:
 .Bd -unfilled -offset indent
-sd0     at scsibus0 target 0 lun ?      # SCSI disk drives
-sd1     at scsibus0 target 1 lun ?      # SCSI disk drives
-sd2     at scsibus0 target 2 lun ?      # SCSI disk drives
-sd3     at scsibus0 target 3 lun ?      # SCSI disk drives
-sd4     at scsibus0 target 4 lun ?      # SCSI disk drives
-sd5     at scsibus0 target 5 lun ?      # SCSI disk drives
-sd6     at scsibus0 target 6 lun ?      # SCSI disk drives
+sd0     at scsibus0 target 0       # SCSI disk drives
+sd1     at scsibus0 target 1       # SCSI disk drives
+sd2     at scsibus0 target 2       # SCSI disk drives
+sd3     at scsibus0 target 3       # SCSI disk drives
+sd4     at scsibus0 target 4       # SCSI disk drives
+sd5     at scsibus0 target 5       # SCSI disk drives
+sd6     at scsibus0 target 6       # SCSI disk drives
 .Ed
 .Pp
 See

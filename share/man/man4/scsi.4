@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.17 2004/03/22 20:31:36 miod Exp $
+.\"	$OpenBSD: scsi.4,v 1.18 2004/09/30 19:59:25 mickey Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -34,14 +34,14 @@
 .Sh SYNOPSIS
 .Cd "scsibus at ..."
 .Pp
-.Cd "cd* at scsibus? target ? lun ?"
-.Cd "ch* at scsibus? target ? lun ?"
-.Cd "sd* at scsibus? target ? lun ?"
-.Cd "st* at scsibus? target ? lun ?"
-.Cd "ss* at scsibus? target ? lun ?"
-.Cd "uk* at scsibus? target ? lun ?"
+.Cd "cd* at scsibus?"
+.Cd "ch* at scsibus?"
+.Cd "sd* at scsibus?"
+.Cd "st* at scsibus?"
+.Cd "ss* at scsibus?"
+.Cd "uk* at scsibus?"
 .Pp
-.Cd "ses* at scsibus? target ? lun ?"
+.Cd "ses* at scsibus?"
 .Sh DESCRIPTION
 The
 .Em SCSI
@@ -60,7 +60,7 @@ The option SCSIDEBUG enables the debug ioctl.
 .Pp
 All devices and the SCSI busses support boot time allocation so that
 an upper number of devices and controllers does not need to be configured;
-.Cd "sd* at scsibus? target ? lun ?"
+.Cd "sd* at scsibus?"
 will suffice for any number of disk drivers.
 .Pp
 The devices are either
@@ -71,7 +71,7 @@ so that they appear as the next available unused unit.
 .Pp
 To configure a driver in the kernel without wiring down the device use a
 config line similar to
-.Cd "ch* at scsibus? target ? lun ?"
+.Cd "ch* at scsibus?"
 to include the changer driver.
 .Pp
 To wire down a unit use a config line similar to
@@ -91,7 +91,7 @@ When there is a mixture of wired down and counted devices then the
 counting begins with the first non-wired down unit for a particular
 type.
 That is, if a disk is wired down as
-.Cd "disk sd1 at scsibus? target ? lun ?" ,
+.Cd "disk sd1 at scsibus?" ,
 then the first non-wired disk shall come on line as
 .Em sd2 .
 .Sh IOCTLS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.33 2004/07/20 20:39:38 miod Exp $
+.\"	$OpenBSD: usb.4,v 1.34 2004/09/30 19:59:26 mickey Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,14 +42,14 @@
 .Nm usb
 .Nd introduction to Universal Serial Bus support
 .Sh SYNOPSIS
-.Cd "ehci*   at pci? dev ? function ?"
-.Cd "uhci*   at pci? dev ? function ?"
-.Cd "ohci*   at pci? dev ? function ?"
+.Cd "ehci*   at pci?"
+.Cd "uhci*   at pci?"
+.Cd "ohci*   at pci?"
 .Cd "usb*    at ehci? flags 0x00"
 .Cd "usb*    at uhci? flags 0x00"
 .Cd "usb*    at ohci? flags 0x00"
 .Cd "uhub*   at usb?"
-.Cd "uhub*   at uhub? port ? configuration ? interface ? vendor ?"
+.Cd "uhub*   at uhub?"
 .Pp
 .Fd "#include <dev/usb/usb.h>"
 .Fd "#include <dev/usb/usbhid.h>"

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iop.4,v 1.10 2004/06/07 13:51:58 jmc Exp $
+.\"	$OpenBSD: iop.4,v 1.11 2004/09/30 19:59:24 mickey Exp $
 .\"	$NetBSD: iop.4,v 1.7 2001/03/20 13:09:19 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,9 +43,9 @@
 .Nd
 .Tn I2O (RAID) adapter driver
 .Sh SYNOPSIS
-.Cd "iop* at pci? dev ? function ?"
-.Cd "iopsp* at iop? tid ?"
-.Cd "ioprbs* at iop? tid ?"
+.Cd "iop* at pci?"
+.Cd "iopsp* at iop?"
+.Cd "ioprbs* at iop?"
 .Cd "scsibus* at iopsp?"
 .Cd "scsibus* at ioprbs?"
 .Cd "option I2OVERBOSE"

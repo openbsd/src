@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ast.4,v 1.9 2003/08/31 19:53:42 jmc Exp $
+.\"	$OpenBSD: ast.4,v 1.10 2004/09/30 19:59:24 mickey Exp $
 .\"	$NetBSD: ast.4,v 1.7 1996/03/16 00:07:07 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -43,9 +43,9 @@
 .Sh SYNOPSIS
 .Cd "ast0 at isa? port 0x1a0 irq 5"
 .Cd "ast1 at isa? port 0x2a0 irq 6"
-.Cd "com* at ast? slave ?"
+.Cd "com* at ast?"
 or
-.Cd "pccom* at ast? slave ?"
+.Cd "pccom* at ast?"
 .Sh DESCRIPTION
 The
 .Nm

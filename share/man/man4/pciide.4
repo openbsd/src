@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.40 2004/09/15 17:53:54 grange Exp $
+.\"	$OpenBSD: pciide.4,v 1.41 2004/09/30 19:59:25 mickey Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -38,14 +38,14 @@
 .Nm pciide
 .Nd PCI IDE controller driver
 .Sh SYNOPSIS
-.Cd "pciide* at pci ? dev ? function ? flags 0x0000"
+.Cd "pciide* at pci? flags 0x0000"
 .Pp
 .Cd "option PCIIDE_AMD756_ENABLEDMA"
 .Cd "option PCIIDE_CMD064x_DISABLE"
 .Cd "option PCIIDE_CMD0646U_ENABLEUDMA"
 .Pp
-.Cd "atapiscsi* at pciide? channel ? flags 0x0000"
-.Cd "wd* at pciide? channel ? drive ? flags 0x0000"
+.Cd "atapiscsi* at pciide? flags 0x0000"
+.Cd "wd* at pciide? flags 0x0000"
 .Sh DESCRIPTION
 The
 .Nm

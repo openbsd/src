@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nhpib.4,v 1.3 2004/02/10 13:23:31 jmc Exp $
+.\"	$OpenBSD: nhpib.4,v 1.4 2004/09/30 19:59:26 mickey Exp $
 .\"     $NetBSD: hpib.4,v 1.2 2002/01/15 01:35:44 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,14 +42,14 @@
 .Nm nhpib
 .Nd built-in and 98625 HP-IB interfaces
 .Sh SYNOPSIS
-.Cd "nhpib*	at dio? scode ?"
+.Cd "nhpib*	at dio?"
 .Cd "hpibbus*	at nhpib?"
-.Cd "fhpib*	at dio? scode ?"
+.Cd "fhpib*	at dio?"
 .Cd "hpibbus*	at fhpib?"
 .Pp
-.Cd "hd*  at hpibbus? slave ? punit ?   " Pq "disks"
-.Cd "ct*  at hpibbus? slave ? punit ?   " Pq "cartridge tapes"
-.Cd "mt*  at hpibbus? slave ? punit ?   " Pq "9-track tapes"
+.Cd "hd*  at hpibbus?                   " Pq "disks"
+.Cd "ct*  at hpibbus?                   " Pq "cartridge tapes"
+.Cd "mt*  at hpibbus?                   " Pq "9-track tapes"
 .Cd "ppi0 at hpibbus? slave 5 punit 0   " Pq "plotter"
 .Sh DESCRIPTION
 The

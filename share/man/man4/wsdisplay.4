@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsdisplay.4,v 1.28 2004/03/22 20:31:07 miod Exp $
+.\" $OpenBSD: wsdisplay.4,v 1.29 2004/09/30 19:59:26 mickey Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
@@ -32,41 +32,41 @@
 .Nm wsdisplay
 .Nd generic display device support in wscons
 .Sh SYNOPSIS
-.\".Cd wsdisplay* at ega? console ?
+.\".Cd wsdisplay* at ega?
 .\"(EGA display on ISA)
-.Cd "wsdisplay* at vga? console ?"
+.Cd "wsdisplay* at vga?"
 (VGA textmode display on ISA or PCI)
-.Cd "wsdisplay* at pcdisplay? console ?"
+.Cd "wsdisplay* at pcdisplay?"
 (generic PC (ISA) display)
-.Cd "wsdisplay* at vgafb? console ?"
+.Cd "wsdisplay* at vgafb?"
 (VGA graphics display on PCI, as found on macppc and sparc64 platforms)
-.Cd "wsdisplay* at tga? console ?"
+.Cd "wsdisplay* at tga?"
 (DEC TGA display, alpha only)
-.\" .Cd wsdisplay* at nextdisplay? console ?
+.\" .Cd wsdisplay* at nextdisplay?
 .\" (NeXT display)
-.Cd "wsdisplay* at sti? console ?"
+.Cd "wsdisplay* at sti?"
 (HP CRX and Visualize series framebuffers)
-.Cd "wsdisplay* at agten? console ?"
-.Cd "wsdisplay* at bwtwo? console ?"
-.Cd "wsdisplay* at cgtwo? console ?"
-.Cd "wsdisplay* at cgthree? console ?"
-.Cd "wsdisplay* at cgfour? console ?"
-.Cd "wsdisplay* at cgsix? console ?"
-.Cd "wsdisplay* at cgeight? console ?"
-.Cd "wsdisplay* at cgtwelve? console ?"
-.Cd "wsdisplay* at cgfourteen? console ?"
-.Cd "wsdisplay* at mgx? console ?"
-.Cd "wsdisplay* at pninek? console ?"
-.Cd "wsdisplay* at pnozz? console ?"
-.Cd "wsdisplay* at rfx? console ?"
-.Cd "wsdisplay* at tcx? console ?"
-.Cd "wsdisplay* at tvtwo? console ?"
-.Cd "wsdisplay* at vigra? console ?"
-.Cd "wsdisplay* at zx? console ?"
+.Cd "wsdisplay* at agten?"
+.Cd "wsdisplay* at bwtwo?"
+.Cd "wsdisplay* at cgtwo?"
+.Cd "wsdisplay* at cgthree?"
+.Cd "wsdisplay* at cgfour?"
+.Cd "wsdisplay* at cgsix?"
+.Cd "wsdisplay* at cgeight?"
+.Cd "wsdisplay* at cgtwelve?"
+.Cd "wsdisplay* at cgfourteen?"
+.Cd "wsdisplay* at mgx?"
+.Cd "wsdisplay* at pninek?"
+.Cd "wsdisplay* at pnozz?"
+.Cd "wsdisplay* at rfx?"
+.Cd "wsdisplay* at tcx?"
+.Cd "wsdisplay* at tvtwo?"
+.Cd "wsdisplay* at vigra?"
+.Cd "wsdisplay* at zx?"
 (sparc and/or sparc64 framebuffers)
-.Cd "wsdisplay* at creator? console ?"
+.Cd "wsdisplay* at creator?"
 (sparc64 framebuffers)
-.Cd "wsdisplay0 at smg? console ?"
+.Cd "wsdisplay0 at smg?"
 (VAXstation small monochrome display)
 .Cd "option WSDISPLAY_DEFAULTSCREENS=N"
 .Sh DESCRIPTION

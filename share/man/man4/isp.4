@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isp.4,v 1.16 2004/03/21 19:50:44 miod Exp $
+.\"	$OpenBSD: isp.4,v 1.17 2004/09/30 19:59:24 mickey Exp $
 .\"
 .\" Copyright (c) 1998, 1999
 .\" 	Matthew Jacob, for NASA/Ames Research Center
@@ -33,9 +33,9 @@
 .Nm isp
 .Nd Qlogic based SCSI or FibreChannel SCSI Host Adapters
 .Sh SYNOPSIS
-.Cd "isp* at pci? dev ? function ?" Pq PCI
-.Cd "isp* at sbus? slot ? offset ?" Pq SBus
-.Cd "scsibus* at isp?"
+.Cd "isp* at pci?     " Pq PCI
+.Cd "isp* at sbus?    " Pq SBus
+.Cd "scsibus* at isp? "
 .Cd "option ISP_COMPILE_FW"
 .Sh DESCRIPTION
 This driver provides access to a

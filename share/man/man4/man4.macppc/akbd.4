@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: akbd.4,v 1.7 2004/03/02 21:15:48 claudio Exp $
+.\"	$OpenBSD: akbd.4,v 1.8 2004/09/30 19:59:27 mickey Exp $
 .\"	$NetBSD: adb.4,v 1.1 1997/07/18 02:13:42 ender Exp $
 .\"
 .Dd July 17, 1997
@@ -40,7 +40,7 @@
 .Nd Apple Keyboard Device
 .Sh SYNOPSIS
 .Cd "akbd* at adb?"
-.Cd "wskbd* at akbd? console ? mux 1"
+.Cd "wskbd* at akbd? mux 1"
 .Cd "option AKBD_LAYOUT=XXX"
 .Sh DESCRIPTION
 This driver supports ADB keyboards within the

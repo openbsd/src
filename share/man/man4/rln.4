@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rln.4,v 1.19 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: rln.4,v 1.20 2004/09/30 19:59:25 mickey Exp $
 .\"
 .\" David Leonard <d@openbsd.org>, 1999. Public Domain.
 .\"
@@ -17,9 +17,9 @@
 .Nm rln
 .Nd device driver for RangeLAN2-based wireless network cards
 .Sh SYNOPSIS
-.Cd "rln0 at isa? port 0x270 irq ? flags 0x00"
+.Cd "rln0 at isa? port 0x270 flags 0x00"
 .\" .Cd "rln* at isapnp? flags 0x00"
-.Cd "rln* at pcmcia? function ? flags 0x00"
+.Cd "rln* at pcmcia? flags 0x00"
 .Sh DESCRIPTION
 The
 .Nm

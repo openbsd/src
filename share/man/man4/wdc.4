@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wdc.4,v 1.13 2004/03/22 20:31:36 miod Exp $
+.\"	$OpenBSD: wdc.4,v 1.14 2004/09/30 19:59:26 mickey Exp $
 .\"	$NetBSD: wdc.4,v 1.4 1999/05/19 14:44:02 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -48,10 +48,10 @@
 .Cd "wdc* at kauaiata?"
 .Pp
 .Cd "# all architectures"
-.Cd "wdc* at pcmcia? function ?"
+.Cd "wdc* at pcmcia?"
 .Pp
-.Cd "atapiscsi* at wdc?* channel ? flags 0x0000"
-.Cd "wd* at wdc? drive ? flags 0x0000"
+.Cd "atapiscsi* at wdc?* flags 0x0000"
+.Cd "wd* at wdc? flags 0x0000"
 .Sh DESCRIPTION
 The
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.15 2003/07/09 13:26:20 jmc Exp $
+.\"	$OpenBSD: zs.4,v 1.16 2004/09/30 19:59:27 mickey Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The OpenBSD Project
 .\" All rights reserved.
@@ -20,9 +20,9 @@
 .Cd "zs1 at obio0 addr 0xf0000000 level 12" Pq sun4/[23]00
 .Cd "zs1 at obio0 addr 0x00000000 level 12" Pq sun4/100
 .Cd "zs2 at obio0 addr 0xe0000000 level 12" Pq sun4/300
-.Cd "zstty* at zs? channel ?"
-.Cd "zskbd* at zs? channel ?"
-.Cd "wskbd* at zskbd? console ?"
+.Cd "zstty* at zs?"
+.Cd "zskbd* at zs?"
+.Cd "wskbd* at zskbd?"
 .Cd "option SUNKBD_LAYOUT=XXX"
 .Cd "option SUNKBD5_LAYOUT=XXX"
 .Sh DESCRIPTION

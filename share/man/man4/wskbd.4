@@ -1,4 +1,4 @@
-.\" $OpenBSD: wskbd.4,v 1.13 2004/03/22 20:31:36 miod Exp $
+.\" $OpenBSD: wskbd.4,v 1.14 2004/09/30 19:59:26 mickey Exp $
 .\" $NetBSD: wskbd.4,v 1.5 2000/03/20 11:51:59 pk Exp $
 .\"
 .\" Copyright (c) 1999
@@ -32,17 +32,17 @@
 .Nm wskbd
 .Nd generic keyboard support in wscons
 .Sh SYNOPSIS
-.Cd "wskbd* at pckbd? console ? mux 1"
-.Cd "wskbd* at gsckbd? console ? mux 1" Pq hppa
+.Cd "wskbd* at pckbd? mux 1"
+.Cd "wskbd* at gsckbd? mux 1" Pq hppa
 (PS/2 keyboard)
-.Cd "wskbd* at ukbd? console ? mux 1"
+.Cd "wskbd* at ukbd? mux 1"
 (USB keyboard)
-.Cd "wskbd* at akbd? console ? mux 1"
+.Cd "wskbd* at akbd? mux 1"
 (Apple ADB keyboard)
-.Cd "wskbd* at comkbd? console ? mux 1"
-.Cd "wskbd* at zskbd? console ? mux 1"
+.Cd "wskbd* at comkbd? mux 1"
+.Cd "wskbd* at zskbd? mux 1"
 (Sun serial keyboard)
-.Cd "wskbd* at hilkbd? console ? mux 1"
+.Cd "wskbd* at hilkbd? mux 1"
 (HIL keyboard)
 .Sh DESCRIPTION
 The
