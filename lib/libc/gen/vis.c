@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vis.c,v 1.10 2002/07/01 11:28:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vis.c,v 1.11 2003/05/14 05:16:43 pjanzen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,8 +47,9 @@ static char rcsid[] = "$OpenBSD: vis.c,v 1.10 2002/07/01 11:28:06 deraadt Exp $"
 				((flag & VIS_SP) == 0 && (c) == ' ') ||	     \
 				((flag & VIS_TAB) == 0 && (c) == '\t') ||    \
 				((flag & VIS_NL) == 0 && (c) == '\n') ||     \
-				((flag & VIS_SAFE) &&			     \
-				((c) == '\b' || (c) == '\007' || (c) == '\r')))
+				((flag & VIS_SAFE) && ((c) == '\b' ||	     \
+				(c) == '\007' || (c) == '\r' ||		     \
+				isgraph((u_char)(c)))))
 
 /*
  * vis - visually encode characters
