@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.24 2000/11/09 23:00:52 deraadt Exp $
+.\"	$OpenBSD: rpc.3,v 1.25 2000/12/21 21:11:31 deraadt Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -38,6 +38,7 @@
 .Nm svc_getcaller ,
 .Nm svc_getreq ,
 .Nm svc_getreqset ,
+.Nm svc_getreqset2 ,
 .Nm svc_register ,
 .Nm svc_sendreply ,
 .Nm svc_unregister ,
@@ -136,6 +137,8 @@
 .Fn svc_getcaller "SVCXPRT *xprt"
 .Ft int
 .Fn svc_getreqset "fd_set *rdfds"
+.Ft int
+.Fn svc_getreqset2 "fd_set *rdfds, int width"
 .Ft int
 .Fn svc_getreq "int rdfds"
 .Ft int
@@ -867,6 +870,29 @@ The routine returns when all sockets associated with the
 value of
 .Fa rdfds
 have been serviced.
+.Pp
+.Fn svc_getreqset2
+is a non-standard routine which is only of interest if a service
+implementor does not call
+.Fn svc_run ,
+but instead implements custom asynchronous event processing.
+It is called when the
+.Xr select 2
+system call has determined that an
+.Tn RPC
+request has arrived on some
+.Tn RPC
+.Fa socket(s) ;
+.Fa rdfds
+is the resultant read file descriptor bit mask.
+The routine returns when all sockets associated with the
+value of
+.Fa rdfds
+have been serviced.
+This interface is non-portable, but provided for applications which
+need to deal with large fd_set sizes.
+.Tn RPC
+internals use it.
 .Pp
 .Fn svc_getreq
 is similar to
