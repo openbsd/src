@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.1 1998/06/23 19:45:19 mickey Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.2 2001/03/27 09:24:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -32,7 +32,10 @@
 
 #define	_C_LABEL(x)	_STRING(x)
 
-#define	__indr_references(sym,msg)	/* nothing */
-#define	__warn_references(sym,msg)	/* nothing */
+#if 0
+#define	__weak_alias(alias,sym)
+#define	__indr_reference(sym,msg)
+#define	__warn_references(sym,msg)
+#endif
 
 #endif /* !_MACHINE_CDEFS_H_ */
