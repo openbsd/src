@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.8 1998/08/08 03:53:30 csapuntz Exp $
+#	$OpenBSD: vnode_if.src,v 1.9 1998/12/05 16:54:02 csapuntz Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -52,6 +52,14 @@
 # X: locked if not nil.
 #
 
+
+#
+#% islocked	vp	= = =
+#
+vop_islocked {
+	IN struct vnode *vp;
+};
+
 #
 #% lookup	dvp	L ? ?
 #% lookup	vpp	- L -
@@ -86,7 +94,7 @@ vop_lookup {
 #
 
 vop_create {
-	IN WILLRELE struct vnode *dvp;
+	IN SHOULDBELOCKED WILLRELE struct vnode *dvp;
 	OUT struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;
@@ -98,14 +106,14 @@ vop_create {
 #
 
 vop_mknod {
-	IN WILLRELE struct vnode *dvp;
+	IN SHOULDBELOCKED WILLRELE struct vnode *dvp;
 	OUT WILLRELE struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;
 };
 
 #
-#% open		vp	L L L
+#% open		vp	= = =
 #
 
 vop_open {
@@ -131,7 +139,7 @@ vop_close {
 #
 
 vop_access {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	IN int mode;
 	IN struct ucred *cred;
 	IN struct proc *p;
@@ -154,7 +162,7 @@ vop_getattr {
 #
 
 vop_setattr {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	IN struct vattr *vap;
 	IN struct ucred *cred;
 	IN struct proc *p;
@@ -165,7 +173,7 @@ vop_setattr {
 #
 
 vop_read {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	INOUT struct uio *uio;
 	IN int ioflag;
 	IN struct ucred *cred;
@@ -176,7 +184,7 @@ vop_read {
 #
 
 vop_write {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	INOUT struct uio *uio;
 	IN int ioflag;
 	IN struct ucred *cred;
@@ -240,7 +248,7 @@ vop_mmap {
 #% fsync	vp	L L L
 #
 vop_fsync {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	IN struct ucred *cred;
 	IN int waitfor;
 	IN struct proc *p;
@@ -263,8 +271,8 @@ vop_seek {
 #
 
 vop_remove {
-	IN WILLRELE struct vnode *dvp;
-	IN WILLRELE struct vnode *vp;
+	IN SHOULDBELOCKED WILLRELE struct vnode *dvp;
+	IN SHOULDBELOCKED WILLRELE struct vnode *vp;
 	IN struct componentname *cnp;
 };
 
@@ -273,7 +281,7 @@ vop_remove {
 #% link		tdvp	L U U
 #
 vop_link {
-	IN WILLRELE struct vnode *dvp;
+	IN SHOULDBELOCKED WILLRELE struct vnode *dvp;
 	IN struct vnode *vp;
 	IN struct componentname *cnp;
 };
@@ -289,7 +297,7 @@ vop_rename {
 	IN WILLRELE struct vnode *fdvp;
 	IN WILLRELE struct vnode *fvp;
 	IN struct componentname *fcnp;
-	IN WILLRELE struct vnode *tdvp;
+	IN SHOULDBELOCKED WILLRELE struct vnode *tdvp;
 	IN WILLRELE struct vnode *tvp;
 	IN struct componentname *tcnp;
 };
@@ -300,7 +308,7 @@ vop_rename {
 #
 
 vop_mkdir {
-	IN WILLRELE struct vnode *dvp;
+	IN SHOULDBELOCKED WILLRELE struct vnode *dvp;
 	OUT struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;
@@ -312,8 +320,8 @@ vop_mkdir {
 #
 
 vop_rmdir {
-	IN WILLRELE struct vnode *dvp;
-	IN WILLRELE struct vnode *vp;
+	IN SHOULDBELOCKED WILLRELE struct vnode *dvp;
+	IN SHOULDBELOCKED WILLRELE struct vnode *vp;
 	IN struct componentname *cnp;
 };
 
@@ -327,7 +335,7 @@ vop_rmdir {
 #
 
 vop_symlink {
-	IN WILLRELE struct vnode *dvp;
+	IN SHOULDBELOCKED WILLRELE struct vnode *dvp;
 	OUT WILLRELE struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;
@@ -339,7 +347,7 @@ vop_symlink {
 #
 
 vop_readdir {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	INOUT struct uio *uio;
 	IN struct ucred *cred;
 	INOUT int *eofflag;
@@ -351,7 +359,7 @@ vop_readdir {
 #% readlink	vp	L L L
 #
 vop_readlink {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	INOUT struct uio *uio;
 	IN struct ucred *cred;
 };
@@ -369,7 +377,7 @@ vop_abortop {
 #% inactive	vp	L U U
 #
 vop_inactive {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	IN struct proc *p;
 };
 
@@ -408,7 +416,7 @@ vop_unlock {
 #
 
 vop_bmap {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	IN daddr_t bn;
 	OUT struct vnode **vpp;
 	IN daddr_t *bnp;
@@ -428,14 +436,6 @@ vop_bmap {
 vop_print {
 	IN struct vnode *vp;
 };
-
-#
-#% islocked	vp	= = =
-#
-vop_islocked {
-	IN struct vnode *vp;
-};
-
 #
 #% pathconf	vp	L L L
 #
@@ -460,7 +460,7 @@ vop_advlock {
 #% blkatoff	vp	L L L
 #
 vop_blkatoff {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	IN off_t offset;
 	OUT char **res;
 	OUT struct buf **bpp;
@@ -470,7 +470,7 @@ vop_blkatoff {
 #% valloc	pvp	L L L
 #
 vop_valloc {
-	IN struct vnode *pvp;
+	IN SHOULDBELOCKED struct vnode *pvp;
 	IN int mode;
 	IN struct ucred *cred;
 	OUT struct vnode **vpp;
@@ -480,7 +480,7 @@ vop_valloc {
 #% balloc       vp      L L L
 #
 vop_balloc {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	IN off_t startoffset;
 	IN int size;
 	IN struct ucred *cred;
@@ -492,7 +492,7 @@ vop_balloc {
 #% reallocblks	vp	L L L
 #
 vop_reallocblks {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	IN struct cluster_save *buflist;
 };
 
@@ -501,7 +501,7 @@ vop_reallocblks {
 #
 
 vop_vfree {
-	IN struct vnode *pvp;
+	IN SHOULDBELOCKED struct vnode *pvp;
 	IN ino_t ino;
 	IN int mode;
 };
@@ -511,7 +511,7 @@ vop_vfree {
 #
 
 vop_truncate {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	IN off_t length;
 	IN int flags;
 	IN struct ucred *cred;
@@ -523,7 +523,7 @@ vop_truncate {
 #
 
 vop_update {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	IN struct timespec *access;
 	IN struct timespec *modify;
 	IN int waitfor;
@@ -536,7 +536,7 @@ vop_update {
 #
 
 vop_whiteout {
-	IN struct vnode *dvp;
+	IN SHOULDBELOCKED struct vnode *dvp;
 	IN struct componentname *cnp;
 	IN int flags;
 };
