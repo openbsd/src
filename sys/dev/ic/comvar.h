@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.7 1997/01/29 17:56:35 niklas Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.8 1997/03/06 07:06:45 tholo Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ struct com_softc {
 #define	COM_SW_CLOCAL	0x02
 #define	COM_SW_CRTSCTS	0x04
 #define	COM_SW_MDMBUF	0x08
+#define	COM_SW_PPS	0x10
 	u_char sc_msr, sc_mcr, sc_lcr, sc_ier;
 	u_char sc_dtr;
 

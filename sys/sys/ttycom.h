@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttycom.h,v 1.4 1996/09/09 23:35:17 downsj Exp $	*/
+/*	$OpenBSD: ttycom.h,v 1.5 1997/03/06 07:06:47 tholo Exp $	*/
 /*	$NetBSD: ttycom.h,v 1.4 1996/05/19 17:17:53 jonathan Exp $	*/
 
 /*-
@@ -128,6 +128,7 @@ struct winsize {
 #define		TIOCFLAG_CLOCAL		0x02	/* set clocal on open */
 #define		TIOCFLAG_CRTSCTS	0x04	/* set crtscts on open */
 #define		TIOCFLAG_MDMBUF		0x08	/* set mdmbuf on open */
+#define		TIOCFLAG_PPS		0x10	/* call hardpps on carrier up */
 
 /* Backwards compatibility */
 #define	TIOCMODG	TIOCMGET
