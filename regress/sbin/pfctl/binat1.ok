@@ -1,0 +1,8 @@
+@binat on fxp0 from 192.168.1.1 to any -> 10.0.0.1
+@binat on fxp0 proto tcp from 192.168.1.2 to any -> 10.0.0.2
+@binat on fxp0 proto udp from 192.168.1.3 to any -> 10.0.0.3
+@binat on fxp0 proto icmp from 192.168.1.4 to any -> 10.0.0.4
+@binat on fxp0 from 192.168.1.5 to 172.16.1.1 -> 10.0.0.5
+@binat on fxp0 from 192.168.1.6 to 172.16.1.2 -> 10.0.0.6
+@binat on fxp0 from 192.168.1.7 to 172.16.2.0/255.255.255.0 -> 10.0.0.7
+@binat on fxp0 from 192.168.1.8 to ! 172.17.0.0/255.255.0.0 -> 10.0.0.8
