@@ -1,4 +1,4 @@
-/*	$OpenBSD: scm.c,v 1.7 1997/10/11 23:34:20 beck Exp $	*/
+/*	$OpenBSD: scm.c,v 1.8 1997/10/12 20:29:55 beck Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -250,7 +250,7 @@ int lock_host_file(char *lockdir) {
   }
   free(dd);
   if ((fd = open(lpath, O_CREAT | O_WRONLY, 0600)) < 0) {
-    syslog(LOG_ERR, "Couldn't open/create lock file %s!", lpath);
+    syslog(LOG_ERR, "Couldn't open/create lock file %s (%m)", lpath);
     free(lpath);
     return(-1);
   }
@@ -265,9 +265,16 @@ int lock_host_file(char *lockdir) {
       close(fd);
       return(-1);
     }
+  if (ftruncate(fd, 0) < 0) {
+    syslog(LOG_ERR, "Couldn't ftruncate fd %d for lock file %s (%m)",
+	   fd, lpath);
+    free(lpath);
+    close(fd);
+    return(-1);
+  }
   f=fdopen(fd,"w");
   if (f == NULL) {
-    syslog(LOG_ERR, "Couldn't fopen fd %d for lock file %s!", fd, lpath);
+    syslog(LOG_ERR, "Couldn't fopen fd %d for lock file %s (%m)", fd, lpath);
     free(lpath);
     close(fd);
     return(-1);
