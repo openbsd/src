@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: calloc.c,v 1.2 1996/08/19 08:33:27 tholo Exp $";
+static char *rcsid = "$OpenBSD: calloc.c,v 1.3 1996/08/20 17:42:33 downsj Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -46,7 +46,8 @@ calloc(num, size)
 	register void *p;
 
 	size *= num;
-	if (p = malloc(size))
+	p = malloc(size);
+	if (p)
 		memset(p, '\0', size);
 	return(p);
 }
