@@ -1,4 +1,5 @@
-/*	$OpenBSD: trap.c,v 1.14 1998/03/01 16:55:00 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 1998/03/01 18:58:30 niklas Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +40,6 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.14 1998/03/01 16:55:00 niklas Exp $
  */
 
 #include "ppp.h"
@@ -204,7 +204,7 @@ struct {
 
 int cpu_int_mask;	/* External cpu interrupt mask */
 
-#ifdef DEBUG
+#ifdef MDB
 #define TRAPSIZE	10
 struct trapdebug {		/* trap history buffer for debugging */
 	u_int	status;
@@ -217,9 +217,9 @@ struct trapdebug {		/* trap history buffer for debugging */
 } trapdebug[TRAPSIZE], *trp = trapdebug;
 
 void trapDump __P((char *));
-#endif	/* DEBUG */
+#endif	/* MDB */
 
-#ifdef DEBUG	/* stack trace code, also useful for DDB one day */
+#ifdef MDB	/* stack trace code, also useful for DDB one day */
 void stacktrace __P((int, int, int, int));
 void logstacktrace __P((int, int, int, int));
 
@@ -228,7 +228,7 @@ extern void idle __P((void));
 extern void MipsTLBMiss __P((void));
 extern u_int mdbpeek __P((int));
 extern int mdb __P((u_int, u_int, struct proc *, int));
-#endif	/* DEBUG */
+#endif	/* MDB */
 
 extern const struct callback *callv;
 extern u_long intrcnt[];
@@ -268,7 +268,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	int typ = 0;
 	union sigval sv;
 
-#ifdef DEBUG
+#ifdef MDB
 	trp->status = statusReg;
 	trp->cause = causeReg;
 	trp->vadr = vadr;
@@ -598,7 +598,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 		rval[0] = 0;
 		rval[1] = locr0[V1];
-#ifdef DEBUG
+#ifdef MDB
 		if (trp == trapdebug)
 			trapdebug[TRAPSIZE - 1].code = code;
 		else
@@ -611,7 +611,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		 */
 		p = curproc;
 		locr0 = p->p_md.md_regs;
-#ifdef DEBUG
+#ifdef MDB
 		{ int s;
 		s = splhigh();
 		trp->status = statusReg;
@@ -723,7 +723,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		goto out;
 
 	case T_FPE:
-#ifdef DEBUG
+#ifdef MDB
 		trapDump("fpintr");
 #else
 		printf("FPU Trap: PC %x CR %x SR %x\n",
@@ -751,7 +751,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 	default:
 	err:
-#ifdef DEBUG
+#ifdef MDB
 	    {
 		extern struct pcb mdbpcb;
 
@@ -787,7 +787,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			return (mdbpcb.pcb_regs[PC]);
 	    }
 #else
-#ifdef DEBUG
+#ifdef MDB
 		stacktrace();
 		trapDump("trap");
 #endif
@@ -859,7 +859,7 @@ interrupt(statusReg, causeReg, pc, what, args)
 	struct clockframe cf;
 
 	cnt.v_trap++;
-#ifdef DEBUG
+#ifdef MDB
 	trp->status = statusReg;
 	trp->cause = causeReg;
 	trp->vadr = 0;
@@ -1032,7 +1032,7 @@ softintr(statusReg, pc)
 	curpriority = p->p_priority;
 }
 
-#ifdef DEBUG
+#ifdef MDB
 void
 trapDump(msg)
 	char *msg;
@@ -1310,7 +1310,7 @@ cpu_singlestep(p)
 	return (0);
 }
 
-#ifdef DEBUG
+#ifdef MDB
 #define MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
 
 /* forward */
@@ -1601,4 +1601,4 @@ fn_name(unsigned addr)
 	return (buf);
 }
 
-#endif /* DEBUG */
+#endif /* MDB */

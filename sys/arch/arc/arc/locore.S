@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.14 1998/01/29 14:54:48 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.15 1998/03/01 18:58:26 niklas Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.14 1998/01/29 14:54:48 pefo Exp $
+ *	$Id: locore.S,v 1.15 1998/03/01 18:58:26 niklas Exp $
  */
 
 /*
@@ -175,7 +175,7 @@ onfault_table:
 	.word	fswberr
 #define FSWINTRBERR	4
 	.word	fswintrberr
-#ifdef DEBUG
+#ifdef MDB
 #define MDBERR		5
 	.word	mdberr
 #endif
@@ -1056,7 +1056,7 @@ SlowFault:
 
 NNON_LEAF(MipsKernGenException, KERN_EXC_FRAME_SIZE, ra)
 	.set	noat
-#ifdef DEBUG
+#ifdef MDB
 	la	k0, mdbpcb			# save registers for mdb
 	sw	s0, (S0 * 4)(k0)
 	sw	s1, (S1 * 4)(k0)
@@ -2983,7 +2983,7 @@ LEAF(R4K_InvalidateDCache)
 	nop
 END(R4K_InvalidateDCache)
 
-#ifdef DEBUG
+#ifdef MDB
 /*
  * Read a long and return it.
  * Note: addresses can be unaligned!
@@ -3117,16 +3117,16 @@ LEAF(mdbpanic)
 	j	ra
 	nop
 END(mdbpanic)
-#endif /* DEBUG */
+#endif /* MDB */
 
-#ifdef DEBUG
+#ifdef MDB
 LEAF(cpu_getregs)
 	sw	sp, 0(a0)
 	sw	ra, 4(a0)
 	j	ra
 	sw	s8, 8(a0)
 END(cpu_getregs)
-#endif /* DEBUG */
+#endif /* MDB */
 
 /*
  * Interrupt counters for vmstat.
