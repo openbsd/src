@@ -1,4 +1,4 @@
-/* $Id: todos_atr.c,v 1.6 2001/07/02 20:07:09 rees Exp $ */
+/* $Id: todos_atr.c,v 1.7 2001/07/17 16:57:41 rees Exp $ */
 
 /*
 copyright 1997, 1999, 2000
@@ -171,6 +171,9 @@ todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
     int hiproto = 0;
 
     if (flags & SCRFORCE) {
+	/* drain and ignore any atr bytes returned by the card */
+	while (scgetc(ttyn, atr, BYTETIME) == SCEOK)
+	    ;
 	len = sizeof dummyatr;
 	memcpy(atr, dummyatr, len);
 	param->t = 0;
