@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.44 2003/08/11 22:21:15 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.45 2003/10/31 04:03:15 drahn Exp $
 dnl
 dnl a simple MACHINE->MACHINE_ARCH converter.
 define(`MACHINE_ARCH',
@@ -11,6 +11,7 @@ MACHINE,macppc,powerpc,
 MACHINE,mvme68k,m68k,
 MACHINE,mvme88k,m88k,
 MACHINE,mvmeppc,powerpc,
+MACHINE,pegasos,powerpc,
 MACHINE,sun3,m68k,
 MACHINE)')dnl
 dnl simulate an include path with a macro 'includeit'.
