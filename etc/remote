@@ -1,4 +1,4 @@
-#	$OpenBSD: remote,v 1.9 2003/03/20 01:43:31 david Exp $
+#	$OpenBSD: remote,v 1.10 2004/04/10 09:07:30 jmc Exp $
 #	from: @(#)remote	8.1 (Berkeley) 6/10/93
 #
 # remote -- remote host description database
@@ -38,8 +38,8 @@
 #          various general pieces can be assembled into one
 #          system description.
 #       b) Only the first capability with the same name is
-#          used. So capabilitites included a with :tc=XXX: can
-#          be overridden by assigning them a value before
+#          used. So capabilities with :tc=XXX: can be
+#          overridden by assigning them a value before
 #          including them. e.g. ":oe=^Z:" in doshost below.
 #
 # See cgetcap(3) for details on capability databases.
