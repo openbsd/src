@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.9 1999/12/16 16:52:11 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.10 1999/12/16 16:58:15 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cond.c,v 1.9 1999/12/16 16:52:11 espie Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.10 1999/12/16 16:58:15 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ typedef enum {
  * last two fields are stored in condInvert and condDefProc, respectively.
  */
 static void CondPushBack __P((Token));
-static size_t CondGetArg __P((char **, char **, char *, Boolean));
+static Boolean CondGetArg __P((char **, char **, size_t *, char *, Boolean));
 static Boolean CondDoDefined __P((size_t, char *));
 static int CondStrMatch __P((ClientData, ClientData));
 static Boolean CondDoMake __P((size_t, char *));
@@ -170,23 +170,22 @@ CondPushBack (t)
  *	Find the argument of a built-in function.
  *
  * Results:
- *	The length of the argument and the address of the argument.
+ *	TRUE if evaluation went okay
  *
  * Side Effects:
- *	The pointer is set to point to the closing parenthesis of the
- *	function call.
- *
+ *	The line pointer is set to point to the closing parenthesis of the
+ *	function call. The argument and argument length are filled.
  *-----------------------------------------------------------------------
  */
-static size_t
-CondGetArg(linePtr, argPtr, func, parens)
+static Boolean
+CondGetArg(linePtr, argPtr, argLen, func, parens)
     char    	  **linePtr;
     char    	  **argPtr;
+    size_t    	  *argLen;
     char    	  *func;
     Boolean 	  parens;   	/* TRUE if arg should be bounded by parens */
 {
     register char *cp;
-    size_t    	  argLen;
     register Buffer buf;
 
     cp = *linePtr;
@@ -207,7 +206,7 @@ CondGetArg(linePtr, argPtr, func, parens)
 	 * the word 'make' or 'defined' at the beginning of a symbol...
 	 */
 	*argPtr = cp;
-	return (0);
+	return FALSE;
     }
 
     while (*cp == ' ' || *cp == '\t') {
@@ -245,10 +244,8 @@ CondGetArg(linePtr, argPtr, func, parens)
 	}
     }
 
-    /* XXX */
-    Buf_AddChar(buf, '\0');
     *argPtr = Buf_Retrieve(buf);
-    argLen = Buf_Size(buf);
+    *argLen = Buf_Size(buf);
     Buf_Destroy(buf, FALSE);
 
     while (*cp == ' ' || *cp == '\t') {
@@ -257,7 +254,7 @@ CondGetArg(linePtr, argPtr, func, parens)
     if (parens && *cp != ')') {
 	Parse_Error (PARSE_WARNING, "Missing closing parenthesis for %s()",
 		     func);
-	return (0);
+	return FALSE;
     } else if (parens) {
 	/*
 	 * Advance pointer past close parenthesis.
@@ -266,7 +263,7 @@ CondGetArg(linePtr, argPtr, func, parens)
     }
 
     *linePtr = cp;
-    return (argLen);
+    return TRUE;
 }
 
 /*-
@@ -672,6 +669,8 @@ do_string_compare:
 		    if (rhs == condExpr) {
 		    	if (!qt && *cp == ')')
 			    condExpr = cp;
+			else if (*cp == '\0')
+			    condExpr = cp;
 			else
 			    condExpr = cp + 1;
 		    }
@@ -773,11 +772,11 @@ error:
 		     */
 		    evalProc = CondDoDefined;
 		    condExpr += 7;
-		    arglen = CondGetArg (&condExpr, &arg, "defined", TRUE);
-		    if (arglen == 0) {
-			condExpr -= 7;
-			goto use_default;
-		    }
+		    if (!CondGetArg(&condExpr, &arg, &arglen, 
+		    	"defined", TRUE)) {
+			    condExpr -= 7;
+			    goto use_default;
+ 		    }
 		} else if (strncmp (condExpr, "make", 4) == 0) {
 		    /*
 		     * Use CondDoMake to evaluate the argument and
@@ -786,11 +785,11 @@ error:
 		     */
 		    evalProc = CondDoMake;
 		    condExpr += 4;
-		    arglen = CondGetArg (&condExpr, &arg, "make", TRUE);
-		    if (arglen == 0) {
-			condExpr -= 4;
-			goto use_default;
-		    }
+		    if (!CondGetArg(&condExpr, &arg, &arglen, 
+		    	"make", TRUE)) {
+			    condExpr -= 4;
+			    goto use_default;
+ 		    }
 		} else if (strncmp (condExpr, "exists", 6) == 0) {
 		    /*
 		     * Use CondDoExists to evaluate the argument and
@@ -799,10 +798,10 @@ error:
 		     */
 		    evalProc = CondDoExists;
 		    condExpr += 6;
-		    arglen = CondGetArg(&condExpr, &arg, "exists", TRUE);
-		    if (arglen == 0) {
-			condExpr -= 6;
-			goto use_default;
+		    if (!CondGetArg(&condExpr, &arg, &arglen,
+		    	"exists", TRUE)) {
+			    condExpr -= 6;
+			    goto use_default;
 		    }
 		} else if (strncmp(condExpr, "empty", 5) == 0) {
 		    /*
@@ -857,10 +856,10 @@ error:
 		     */
 		    evalProc = CondDoTarget;
 		    condExpr += 6;
-		    arglen = CondGetArg(&condExpr, &arg, "target", TRUE);
-		    if (arglen == 0) {
-			condExpr -= 6;
-			goto use_default;
+		    if (!CondGetArg(&condExpr, &arg, &arglen, 
+		    	"target", TRUE)) {
+			    condExpr -= 6;
+			    goto use_default;
 		    }
 		} else {
 		    /*
@@ -873,7 +872,8 @@ error:
 		use_default:
 		    invert = condInvert;
 		    evalProc = condDefProc;
-		    arglen = CondGetArg(&condExpr, &arg, "", FALSE);
+		    /* XXX should we ignore problems now ? */
+		    CondGetArg(&condExpr, &arg, &arglen, "", FALSE);
 		}
 
 		/*
