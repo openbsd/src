@@ -1,6 +1,8 @@
+/*	$OpenBSD: strlen.c,v 1.4 2001/07/29 21:15:23 millert Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,10 +34,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strlen.c,v 1.3 1996/08/19 08:34:19 tholo Exp $";
+static char *rcsid = "$OpenBSD: strlen.c,v 1.4 2001/07/29 21:15:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
@@ -45,9 +47,10 @@ size_t
 strlen(str)
 	const char *str;
 {
-	register const char *s;
+	const char *s;
 
-	for (s = str; *s; ++s);
-	return(s - str);
+	for (s = str; *s; ++s)
+		;
+	return (s - str);
 }
 
