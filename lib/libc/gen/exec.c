@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: exec.c,v 1.3 1996/08/19 08:22:40 tholo Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.4 1996/10/27 23:02:23 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -186,6 +186,14 @@ execvp(name, argv)
 	register char *p;
 	int eacces = 0, etxtbsy = 0;
 	char *bp, *cur, *path, buf[MAXPATHLEN];
+
+	/*
+	 * Do not allow null name
+	 */
+	if (name == NULL || *name == '\0') {
+		errno = ENOENT;
+		return (-1);
+	}
 
 	/* If it's an absolute or relative path name, it's easy. */
 	if (strchr(name, '/')) {
