@@ -40,7 +40,7 @@ This is a list of things that still need to be done:
   straightforward.
 
 * Keep a handle on how netbsd are going with their kernel threads
-  [argumnet is that obsd is not multi-processor, so user threads will
+  [argument is that openbsd is not multi-processor, so user threads will
    retain stability and still give reasonable performance. talked to mwp@]
 
 * Look into how asynchronous I/O can help us. In particular, the
@@ -75,6 +75,7 @@ This is a list of things that still need to be done:
 		- net/mrtd
 		- devel/glib [yes]
 		- www/squid
+		- devel/sdl [yes]
 
 * Some ideas:
   + http://www.cs.wustl.edu/~schmidt/locking-patterns.ps.gz
@@ -88,4 +89,4 @@ This is a list of things that still need to be done:
 
 * Clean up the way that signals are delivered to threads. Yuk.
 
-$OpenBSD: TODO,v 1.11 2000/02/10 12:28:56 d Exp $
+$OpenBSD: TODO,v 1.12 2001/08/18 21:01:03 pvalchev Exp $
