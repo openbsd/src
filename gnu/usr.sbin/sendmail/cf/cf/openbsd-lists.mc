@@ -6,7 +6,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.9 2002/01/05 23:35:50 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.10 2002/01/11 00:38:39 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -21,6 +21,8 @@ dnl Override some default values
 define(`confPRIVACY_FLAGS', `authwarnings, nobodyreturn')dnl
 define(`confTRY_NULL_MX_LIST', `True')dnl
 define(`confMAX_HOP', `30')dnl
+define(`confQUEUE_LA', `12')dnl
+define(`confREFUSE_LA', `20')dnl
 dnl
 dnl Some broken nameservers will return SERVFAIL (a temporary failure)
 dnl on T_AAAA (IPv6) lookups.
@@ -41,6 +43,14 @@ define(`confTO_QUEUEWARN', `1d')dnl
 dnl
 dnl Wait 4 days before giving up and bouncing the message
 define(`confTO_QUEUERETURN', `4d')dnl
+dnl
+dnl Shared memory key used to stash disk usage stats so they
+dnl don't have to be checked by each sendmail process.
+define(`confSHARED_MEMORY_KEY', `666666')dnl
+dnl
+dnl Keep up to 4 cached connections around to speed up delivery to
+dnl recipients on the same host.
+define(`confMCI_CACHE_SIZE', `4')dnl
 dnl
 dnl SSL certificate paths
 define(`CERT_DIR', `MAIL_SETTINGS_DIR`'certs')dnl
@@ -71,8 +81,11 @@ FEATURE(`no_default_msa')dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
 dnl
-dnl Take note of the 'C' flag (nocanonify) for the MSA connections.
-dnl We use this to speed up mail injections via majordomo.
+dnl In addition to the normal MTA and MSA sockets, we also run a localhost-only
+dnl connection on port 24 with hostname canonification disabled.  This is used
+dnl to speed up mail injection via majordomo.
+DAEMON_OPTIONS(`Family=inet, address=127.0.0.1, Port=24, Name=NCMSA, M=EC')dnl
+DAEMON_OPTIONS(`Family=inet6, address=::1, Port=24, Name=NCMSA6, M=O, M=EC')dnl
 DAEMON_OPTIONS(`Family=inet, address=0.0.0.0, Name=MTA')dnl
 DAEMON_OPTIONS(`Family=inet6, address=::, Name=MTA6, M=O')dnl
 DAEMON_OPTIONS(`Family=inet, address=0.0.0.0, Port=587, Name=MSA, M=EC')dnl
