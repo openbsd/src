@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.29 2001/05/24 04:12:04 angelos Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.30 2001/06/29 20:16:22 mickey Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -131,6 +131,7 @@ struct wsscreen *wsscreen_attach __P((struct wsdisplay_softc *, int,
 	const char *, const struct wsscreen_descr *, void *, int, int, long));
 void wsscreen_detach __P((struct wsscreen *));
 int wsdisplay_addscreen __P((struct wsdisplay_softc *, int, const char *, const char *));
+int wsdisplay_getscreen __P((struct wsdisplay_softc *, struct wsdisplay_addscreendata *));
 void wsdisplay_shutdownhook __P((void *));
 void wsdisplay_addscreen_print __P((struct wsdisplay_softc *, int, int));
 void wsdisplay_closescreen __P((struct wsdisplay_softc *, struct wsscreen *));
@@ -217,10 +218,10 @@ int wsdisplayparam __P((struct tty *, struct termios *));
 #define	WSSCREEN_HAS_EMULATOR(scr)	((scr)->scr_dconf->wsemul != NULL)
 #define	WSSCREEN_HAS_TTY(scr)		((scr)->scr_tty != NULL)
 
-void wsdisplay_common_attach __P((struct wsdisplay_softc *sc, int console,
-				  const struct wsscreen_list *,
-				  const struct wsdisplay_accessops *accessops,
-				  void *accesscookie));
+void wsdisplay_common_attach __P((struct wsdisplay_softc *sc,
+	    int console, const struct wsscreen_list *,
+	    const struct wsdisplay_accessops *accessops,
+	    void *accesscookie));
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 int wsdisplay_update_rawkbd __P((struct wsdisplay_softc *, struct wsscreen *));
@@ -428,6 +429,30 @@ wsdisplay_addscreen(sc, idx, screentype, emul)
 	splx(s);
 
 	allocate_copybuffer(sc); /* enlarge the copy buffer is necessary */
+	return (0);
+}
+
+int
+wsdisplay_getscreen(sc, sd)
+	struct wsdisplay_softc *sc;
+	struct wsdisplay_addscreendata *sd;
+{
+	struct wsscreen *scr;
+
+	if (sd->idx < 0 && sc->sc_focus)
+		sd->idx = sc->sc_focusidx;
+
+	if (sd->idx < 0 || sd->idx >= WSDISPLAY_MAXSCREEN)
+		return (EINVAL);
+
+	scr = sc->sc_scr[sd->idx];
+	if (scr == NULL)
+		return (ENXIO);
+
+	strncpy(sd->screentype, scr->scr_dconf->scrdata->name,
+	    WSSCREEN_NAME_SIZE);
+	strncpy(sd->emul, scr->scr_dconf->wsemul->name, WSEMUL_NAME_SIZE);
+
 	return (0);
 }
 
@@ -1144,6 +1169,12 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 #define d ((struct wsdisplay_delscreendata *)data)
 		return (wsdisplay_delscreen(sc, d->idx, d->flags));
 #undef d
+	case WSDISPLAYIO_GETSCREEN:
+#define d ((struct wsdisplay_addscreendata *)data)
+		return (wsdisplay_getscreen(sc, d));
+#undef d
+	case WSDISPLAYIO_SETSCREEN:
+		return (wsdisplay_switch((void *)sc, *(int *)data, 1));
 	case WSDISPLAYIO_LDFONT:
 #define d ((struct wsdisplay_font *)data)
 		if (!sc->sc_accessops->load_font)

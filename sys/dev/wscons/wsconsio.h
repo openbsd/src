@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.10 2001/05/08 22:28:43 mickey Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.11 2001/06/29 20:16:22 mickey Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -349,14 +349,17 @@ struct wsdisplay_addscreendata {
 	char screentype[WSSCREEN_NAME_SIZE];
 	char emul[WSEMUL_NAME_SIZE];
 };
-#define WSDISPLAYIO_ADDSCREEN _IOW('W', 82, struct wsdisplay_addscreendata)
+#define WSDISPLAYIO_ADDSCREEN	_IOW('W', 83, struct wsdisplay_addscreendata)
 
 struct wsdisplay_delscreendata {
 	int idx; /* screen index */
 	int flags;
 #define WSDISPLAY_DELSCR_FORCE 1
 };
-#define WSDISPLAYIO_DELSCREEN _IOW('W', 83, struct wsdisplay_delscreendata)
+#define WSDISPLAYIO_DELSCREEN	_IOW('W', 84, struct wsdisplay_delscreendata)
+
+#define WSDISPLAYIO_GETSCREEN	_IOR('W', 85, struct wsdisplay_addscreendata)
+#define	WSDISPLAYIO_SETSCREEN	_IOR('W', 86, u_int)
 
 /* Display information: number of bytes per row, may be same as pixels */
 #define	WSDISPLAYIO_LINEBYTES	_IOR('W', 95, u_int)
@@ -369,10 +372,10 @@ struct wsdisplay_kbddata {
 #define _O_WSDISPLAY_KBD_DEL 1
 	int idx;
 };
-#define _O_WSDISPLAYIO_SETKEYBOARD _IOWR('W', 81, struct wsdisplay_kbddata)
+#define _O_WSDISPLAYIO_SETKEYBOARD _IOWR('W', 87, struct wsdisplay_kbddata)
 
 /* Mouse console support */
-#define WSDISPLAYIO_WSMOUSED	_IOW('W', 82, struct wscons_event)
+#define WSDISPLAYIO_WSMOUSED	_IOW('W', 88, struct wscons_event)
 
 /* Misc control.  Not applicable to all display types. */
 struct wsdisplay_param {
@@ -383,8 +386,8 @@ struct wsdisplay_param {
         int min, max, curval;
         int reserved[4];
 };
-#define	WSDISPLAYIO_GETPARAM	_IOWR('W', 82, struct wsdisplay_param)
-#define	WSDISPLAYIO_SETPARAM	_IOWR('W', 83, struct wsdisplay_param)
+#define	WSDISPLAYIO_GETPARAM	_IOWR('W', 89, struct wsdisplay_param)
+#define	WSDISPLAYIO_SETPARAM	_IOWR('W', 90, struct wsdisplay_param)
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */
