@@ -174,6 +174,8 @@
 ./usr/include/dev/ic/anreg.h
 ./usr/include/dev/ic/anvar.h
 ./usr/include/dev/ic/apcdmareg.h
+./usr/include/dev/ic/atwreg.h
+./usr/include/dev/ic/atwvar.h
 ./usr/include/dev/ic/awireg.h
 ./usr/include/dev/ic/awivar.h
 ./usr/include/dev/ic/ax88190reg.h
@@ -289,6 +291,7 @@
 ./usr/include/dev/ic/pdqvar.h
 ./usr/include/dev/ic/pt2254a.h
 ./usr/include/dev/ic/ramdac.h
+./usr/include/dev/ic/rf3000reg.h
 ./usr/include/dev/ic/rln.h
 ./usr/include/dev/ic/rlncmd.h
 ./usr/include/dev/ic/rlnreg.h
@@ -297,6 +300,7 @@
 ./usr/include/dev/ic/rtl80x9var.h
 ./usr/include/dev/ic/rtl81x9reg.h
 ./usr/include/dev/ic/s3_617.h
+./usr/include/dev/ic/si4136reg.h
 ./usr/include/dev/ic/siopreg.h
 ./usr/include/dev/ic/siopvar.h
 ./usr/include/dev/ic/siopvar_common.h

@@ -1058,6 +1058,7 @@
 ./usr/share/man/cat4/ast.0
 ./usr/share/man/cat4/atalk.0
 ./usr/share/man/cat4/atapiscsi.0
+./usr/share/man/cat4/atw.0
 ./usr/share/man/cat4/audio.0
 ./usr/share/man/cat4/aue.0
 ./usr/share/man/cat4/auich.0
@@ -1931,6 +1932,7 @@
 ./usr/share/man/cat8/i386/boot.0
 ./usr/share/man/cat8/i386/boot.conf.0
 ./usr/share/man/cat8/i386/boot_i386.0
+./usr/share/man/cat8/i386/cdboot.0
 ./usr/share/man/cat8/i386/fdisk.0
 ./usr/share/man/cat8/i386/gpioctl.0
 ./usr/share/man/cat8/i386/hotplugd.0

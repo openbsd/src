@@ -826,6 +826,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/anreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/anvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/apcdmareg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/atwreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/atwvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/awireg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/awivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ax88190reg.ph
@@ -941,6 +943,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/pdqvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/pt2254a.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ramdac.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rf3000reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rln.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rlncmd.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rlnreg.ph
@@ -949,6 +952,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtl80x9var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rtl81x9reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/s3_617.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/si4136reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/siopreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/siopvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/siopvar_common.ph
