@@ -163,7 +163,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 69: /dev/audio */
 	cdev_notdef(),			/* 70: open prom */
 	cdev_notdef(),			/* 71: (sg?) */
-	cdev_init_random(1,random),	/* 72: randomness source */
+	cdev_random_init(1,random),	/* 72: randomness source */
 	cdev_uk_init(NUK,uk),		/* 73: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 74: SCSI scanner */
 };
