@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.20 2003/03/13 15:59:22 deraadt Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.21 2003/07/06 22:55:32 avsm Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -138,12 +138,14 @@ main(argc, argv)
 		switch(ch) {
 		case 'a':
 			action = RAIDFRAME_ADD_HOT_SPARE;
-			strlcpy(component, optarg, PATH_MAX);
+			if (strlcpy(component, optarg, sizeof component) >= sizeof(component))
+				errx(1, "-a arg too long");	
 			num_options++;
 			break;
 		case 'A':
 			action = RAIDFRAME_SET_AUTOCONFIG;
-			strlcpy(autoconf, optarg, sizeof(autoconf));
+			if (strlcpy(autoconf, optarg, sizeof(autoconf)) >= sizeof(autoconf))
+				errx(1, "-A arg too long");
 			num_options++;
 			break;
 		case 'B':
@@ -152,31 +154,38 @@ main(argc, argv)
 			break;
 		case 'c':
 			action = RAIDFRAME_CONFIGURE;
-			strlcpy(config_filename, optarg, PATH_MAX);
+			if (strlcpy(config_filename, optarg, sizeof config_filename) >=
+			      sizeof(config_filename))
+				errx(1, "-c arg too long");
 			force = 0;
 			num_options++;
 			break;
 		case 'C':
-			strlcpy(config_filename, optarg, PATH_MAX);
+			if (strlcpy(config_filename, optarg, sizeof config_filename) >=
+			      sizeof(config_filename))
+				errx(1, "-C arg too long");
 			action = RAIDFRAME_CONFIGURE;
 			force = 1;
 			num_options++;
 			break;
 		case 'f':
 			action = RAIDFRAME_FAIL_DISK;
-			strlcpy(component, optarg, PATH_MAX);
+			if (strlcpy(component, optarg, sizeof component) >= sizeof(component))
+				errx(1, "-f arg too long");
 			do_recon = 0;
 			num_options++;
 			break;
 		case 'F':
 			action = RAIDFRAME_FAIL_DISK;
-			strlcpy(component, optarg, PATH_MAX);
+			if (strlcpy(component, optarg, sizeof component) >= sizeof(component))
+				errx(1, "-F arg too long");
 			do_recon = 1;
 			num_options++;
 			break;
 		case 'g':
 			action = RAIDFRAME_GET_COMPONENT_LABEL;
-			strlcpy(component, optarg, PATH_MAX);
+			if (strlcpy(component, optarg, sizeof component) >= sizeof(component))
+				errx(1, "-g arg too long");
 			num_options++;
 			break;
 		case 'G':
@@ -195,16 +204,19 @@ main(argc, argv)
 			break;
 		case 'l':
 			action = RAIDFRAME_SET_COMPONENT_LABEL;
-			strlcpy(component, optarg, PATH_MAX);
+			if (strlcpy(component, optarg, sizeof component) >= sizeof(component))
+				errx(1, "-l arg too long");
 			num_options++;
 			break;
 		case 'r':
 			action = RAIDFRAME_REMOVE_HOT_SPARE;
-			strlcpy(component, optarg, PATH_MAX);
+			if (strlcpy(component, optarg, sizeof component) >= sizeof(component))
+				errx(1, "-r arg too long");
 			num_options++;
 			break;
 		case 'R':
-			strlcpy(component, optarg, PATH_MAX);
+			if (strlcpy(component, optarg, sizeof component) >= sizeof(component))
+				errx(1, "-R arg too long");
 			action = RAIDFRAME_REBUILD_IN_PLACE;
 			num_options++;
 			break;
@@ -241,7 +253,8 @@ main(argc, argv)
 	if ((num_options > 1) || (argc == NULL))
 		usage();
 
-	strlcpy(name, argv[0], PATH_MAX);
+	if (strlcpy(name, argv[0], sizeof name) >= sizeof(name))
+		errx(1, "device name too long");
 
 	if ((nfd = open_device(&fds, name)) < 1) {
 		/* No configured raid device */
