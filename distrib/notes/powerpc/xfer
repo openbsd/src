@@ -20,7 +20,7 @@ different from system to system, and a comprehensive list of the
 possibilities is beyond the scope of this document.
 
 If you are using DOS to write the floppy image to disk, you should
-use the "rawrite" utility, provided in the "powerpc/inst" directory of
+use the "rawrite" utility, provided in the "2.3/tools" directory of
 the OpenBSD distribution.  It will write the file system image
 (floppy.fs) to a disk.
 

@@ -40,7 +40,7 @@ If you have a floppy drive on your alpha:
 
 	If you are using a DOS PC to write the floppy image to
 	disk, you should use the "rawrite" utility, provided in
-	the "i386/inst" directory of the OpenBSD distribution.  It
+	the "2.3/tools" directory of the OpenBSD distribution.  It
 	will write the file system image (floppy{:--:}OSrev.fs) to a disk.
 	You can boot it using "boot dva0".
 
