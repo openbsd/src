@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_page.h,v 1.14 2001/07/05 07:32:54 art Exp $	*/
+/*	$OpenBSD: vm_page.h,v 1.15 2001/07/25 14:47:58 art Exp $	*/
 /*	$NetBSD: vm_page.h,v 1.24 1998/02/10 14:09:03 mrg Exp $	*/
 
 /* 
@@ -195,10 +195,10 @@ struct vm_page {
  * vm_physmemseg: describes one segment of physical memory
  */
 struct vm_physseg {
-	vaddr_t start;			/* PF# of first page in segment */
-	vaddr_t end;			/* (PF# of last page in segment) + 1 */
-	vaddr_t avail_start;		/* PF# of first free page in segment */
-	vaddr_t avail_end;		/* (PF# of last free page in segment) +1  */
+	paddr_t start;			/* PF# of first page in segment */
+	paddr_t end;			/* (PF# of last page in segment) + 1 */
+	paddr_t avail_start;		/* PF# of first free page in segment */
+	paddr_t avail_end;		/* (PF# of last free page in segment) +1  */
 	int	free_list;		/* which free list they belong on */
 	struct	vm_page *pgs;		/* vm_page structures (from start) */
 	struct	vm_page *lastpg;	/* vm_page structure for end */

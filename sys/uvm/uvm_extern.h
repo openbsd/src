@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_extern.h,v 1.13 2001/06/23 19:24:33 smart Exp $	*/
-/*	$NetBSD: uvm_extern.h,v 1.34 1999/07/22 22:58:38 thorpej Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.14 2001/07/25 14:47:59 art Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.35 1999/12/30 16:09:47 eeh Exp $	*/
 
 /*
  *
@@ -335,7 +335,7 @@ void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
 int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,
 				struct uvm_object *, vaddr_t, uvm_flag_t));
 int			uvm_map_pageable __P((vm_map_t, vaddr_t, 
-				vaddr_t, boolean_t, boolean_t));
+				vaddr_t, boolean_t, int));
 int			uvm_map_pageable_all __P((vm_map_t, int, vsize_t));
 boolean_t		uvm_map_checkprot __P((vm_map_t, vaddr_t,
 				vaddr_t, vm_prot_t));
@@ -374,8 +374,8 @@ vaddr_t			uvm_pagealloc_contig __P((vaddr_t, vaddr_t,
 void			uvm_pagerealloc __P((struct vm_page *, 
 					     struct uvm_object *, vaddr_t));
 /* Actually, uvm_page_physload takes PF#s which need their own type */
-void			uvm_page_physload __P((vaddr_t, vaddr_t,
-					       vaddr_t, vaddr_t, int));
+void			uvm_page_physload __P((paddr_t, paddr_t,
+					       paddr_t, paddr_t, int));
 void			uvm_setpagesize __P((void));
 
 /* uvm_pdaemon.c */
