@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.165 2003/12/05 16:55:40 henning Exp $
+# $OpenBSD: Makefile,v 1.166 2003/12/06 15:35:38 sturm Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -29,6 +29,7 @@ PFALTQ=1 2 3 4 5 6 7 8 9 10 11 12 13 14
 PFTABLE=1 2 3 4 5 6 7 8 9 10 11 12 13
 PFOPT=1 2 3 4 5
 
+.ifmake !obj && !clean && !cleandir
 .BEGIN:
 	-${SUDO} ifconfig lo1000000 create
 	-${SUDO} ifconfig tun1000000 create
@@ -39,6 +40,7 @@ PFOPT=1 2 3 4 5
 # destroy on tun does not work yet
 #	${SUDO} ifconfig tun1000000 destroy
 #	${SUDO} ifconfig tun1000001 destroy
+.endif
 
 .for n in ${PFFAIL}
 PFAIL_TARGETS+=pfail${n}
