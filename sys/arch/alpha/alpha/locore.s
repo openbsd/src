@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.10 1999/09/26 11:07:32 kstailey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.11 1999/11/13 21:33:44 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.27 1996/12/03 19:54:16 cgd Exp $	*/
 
 /*
@@ -858,7 +858,9 @@ LEAF(copystr, 4)
 	LDGP(pv)
 
 	mov	a2, t0			/* t0 = i = len */
-	beq	a2, Lcopystr2		/* if (len == 0), bail out */
+	bne	a2, Lcopystr1		/* if (len != 0), proceed */
+	ldiq	t1, 1			/* else bail */
+	br	zero, Lcopystr2
 
 Lcopystr1:
 	ldq_u	t1, 0(a0)		/* t1 = *from */
@@ -882,7 +884,7 @@ Lcopystr2:
 Lcopystr3:
 	beq	t1, Lcopystr4		/* *from == '\0'; leave quietly */
 
-	ldiq	v0, ENAMETOOLONG		/* *from != '\0'; error. */
+	ldiq	v0, ENAMETOOLONG	/* *from != '\0'; error. */
 	RET
 
 Lcopystr4:
