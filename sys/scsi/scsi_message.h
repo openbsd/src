@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_message.h,v 1.2 1996/10/31 01:09:24 niklas Exp $	*/
+/*	$OpenBSD: scsi_message.h,v 1.3 1996/11/28 13:17:53 niklas Exp $	*/
 
 /* Messages (1 byte) */		     /* I/T (M)andatory or (O)ptional */
 #define MSG_CMDCOMPLETE		0x00 /* M/M */
@@ -26,10 +26,14 @@
 #define MSG_ORDERED_Q_TAG	0x22 /* O/O */
 #define MSG_IGN_WIDE_RESIDUE	0x23 /* O/O */
 
-/* Identify message */
-#define MSG_IDENTIFY(lun, disc)	(((disc) ? 0xc0 : 0x80) | (lun))
-#define MSG_ISIDENTIFY(m)	((m) & 0x80)
+/* Identify message */		     /* M/M */	
+#define MSG_IDENTIFYFLAG	0x80 
+#define MSG_IDENTIFY(lun, disc)	(((disc) ? 0xc0 : MSG_IDENTIFYFLAG) | (lun))
+#define MSG_ISIDENTIFY(m)	((m) & MSG_IDENTIFYFLAG)
 
-/* Extended messages (opcode) */
+/* Extended messages (opcode and length) */
 #define MSG_EXT_SDTR		0x01
-#define	MSG_EXT_WDTR		0x03
+#define MSG_EXT_SDTR_LEN	0x03
+
+#define MSG_EXT_WDTR		0x03
+#define MSG_EXT_WDTR_LEN	0x02
