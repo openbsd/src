@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.120 2001/05/30 10:56:46 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.121 2001/05/30 11:15:37 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -817,6 +817,12 @@ tdb_delete(struct tdb *tdbp)
     {
 	ipsp_reffree(tdbp->tdb_local_auth);
 	tdbp->tdb_local_auth = NULL;
+    }
+
+    if (tdbp->tdb_remote_auth)
+    {
+	ipsp_reffree(tdbp->tdb_remote_auth);
+	tdbp->tdb_remote_auth = NULL;
     }
 
     if (tdbp->tdb_srcid)
