@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.13 1995/03/18 14:55:49 cgd Exp $	*/
+/*	$NetBSD: pass1.c,v 1.14 1996/01/18 21:55:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: pass1.c,v 1.13 1995/03/18 14:55:49 cgd Exp $";
+static char rcsid[] = "$NetBSD: pass1.c,v 1.14 1996/01/18 21:55:27 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,14 +72,17 @@ pass1()
 	 */
 	for (c = 0; c < sblock.fs_ncg; c++) {
 		cgd = cgdmin(&sblock, c);
-		if (c == 0) {
+		if (c == 0)
 			i = cgbase(&sblock, c);
-			cgd += howmany(sblock.fs_cssize, sblock.fs_fsize);
-		} else
+		else
 			i = cgsblock(&sblock, c);
 		for (; i < cgd; i++)
 			setbmap(i);
 	}
+	i = sblock.fs_csaddr;
+	cgd = i + howmany(sblock.fs_cssize, sblock.fs_fsize);
+	for (; i < cgd; i++)
+		setbmap(i);
 	/*
 	 * Find all allocated blocks.
 	 */
