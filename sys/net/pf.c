@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.429 2004/03/09 21:44:40 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.430 2004/03/11 10:15:26 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -629,7 +629,6 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *state)
 				printf(" (from sync)");
 			printf("\n");
 		}
-		pf_src_tree_remove_state(state);
 		return (-1);
 	}
 
@@ -650,7 +649,6 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *state)
 			printf("\n");
 		}
 		RB_REMOVE(pf_state_tree_lan_ext, &kif->pfik_lan_ext, state);
-		pf_src_tree_remove_state(state);
 		return (-1);
 	}
 
@@ -778,6 +776,7 @@ pf_src_tree_remove_state(struct pf_state *s)
 			s->nat_src_node->expire = time.tv_sec + timeout;
 		}
 	}
+	s->src_node = s->nat_src_node = NULL;
 }
 
 void
