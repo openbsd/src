@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.11 2000/04/07 21:05:05 mjacob Exp $	*/
+/*	$OpenBSD: param.h,v 1.12 2001/04/02 23:24:12 niklas Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1996/03/04 05:04:26 cgd Exp $	*/
 
 /*-
@@ -97,6 +97,12 @@
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	2*NBPG		/* default message buffer size */
+#endif
+
+#if !defined(PMAP_NEW) && !defined(PMAP_OLD)
+#define PMAP_NEW
+#elif defined(PMAP_NEW) && defined(PMAP_OLD)
+#error Both PMAP_NEW and PMAP_OLD cannot be defined concurrently
 #endif
 
 /*
