@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.8 1997/08/08 21:21:38 niklas Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.9 2001/03/24 10:22:48 ho Exp $	*/
 /*	$NetBSD: kbd.c,v 1.14 1997/07/17 01:17:45 jtk Exp $	*/
 
 /*
@@ -71,6 +71,7 @@
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/poll.h>
+#include <sys/timeout.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
@@ -144,6 +145,7 @@ struct kbd_softc {
 	int k_repeat_step;  	/* inter-char delay */
 	int	k_repeatsym;		/* repeating symbol */
 	int	k_repeating;		/* we've called timeout() */
+	struct	timeout k_repeat_tmo;	/* for kbd_timeout() */
 	struct	kbd_state k_state;	/* ASCII translation state */
 
 	/*
@@ -272,6 +274,9 @@ kbd_attach(parent, self, aux)
 	k->k_magic1 = KBD_L1;
 	k->k_magic2 = KBD_A;
 
+	/* Initialize timeout structure */
+	timeout_set(&k->k_repeat_tmo, kbd_repeat, k);
+
 	/* Now attach the (kd) pseudo-driver. */
 	kd_init(kbd_unit);
 }
@@ -317,7 +322,7 @@ kbdopen(dev, flags, mode, p)
 
 	if (k->k_repeating) {
 		k->k_repeating = 0;
-		untimeout(kbd_repeat, k);
+		timeout_del(&k->k_repeat_tmo);
 	}
 
 	return (0);
@@ -830,7 +835,7 @@ kbd_repeat(void *arg)
 
 	if (k->k_repeating && k->k_repeatsym >= 0) {
 		kbd_input_keysym(k, k->k_repeatsym);
-		timeout(kbd_repeat, k, k->k_repeat_step);
+		timeout_add(&k->kbd_repeat_tmo, k->k_repeat_step);
 	}
 	splx(s);
 }
@@ -900,7 +905,7 @@ kbd_input_raw(k, c)
 		/* Any input stops auto-repeat (i.e. key release). */
 		if (k->k_repeating) {
 			k->k_repeating = 0;
-			untimeout(kbd_repeat, k);
+			timeout_del(&k->kbd_repeat_tmo);
 		}
 
 		/* Translate this code to a keysym */
@@ -916,7 +921,7 @@ kbd_input_raw(k, c)
 		/* Setup for auto-repeat after initial delay. */
 		k->k_repeating = 1;
 		k->k_repeatsym = keysym;
-		timeout(kbd_repeat, k, k->k_repeat_start);
+		timeout_add(&k->k_repeat_tmo, k->k_repeat_start);
 		return;
 	}
 
