@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2001/09/10 23:03:20 jason Exp $
+#	$OpenBSD: Makefile,v 1.12 2001/09/10 23:31:34 drahn Exp $
 
 TARGET_MACHINE_ARCH?=	${MACHINE_ARCH}
 
@@ -14,9 +14,11 @@ SRCS=	gprof.c arcs.c dfn.c lookup.c machine.c hertz.c \
 CFLAGS+= -I${.CURDIR} -I.
 .endif
 
+.if defined(PROG)
 beforedepend:
 	ln -sf ${.CURDIR}/${TARGET_MACHINE_ARCH}.h machine.h
 	ln -sf ${.CURDIR}/${TARGET_MACHINE_ARCH}.c machine.c
+.endif # defined (PROG)
 
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
