@@ -1,8 +1,8 @@
-/*	$OpenBSD: sysdep.c,v 1.3 1999/03/24 14:40:46 niklas Exp $	*/
-/*	$EOM: sysdep.c,v 1.3 1999/03/24 11:06:26 niklas Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.4 1999/04/05 20:57:35 niklas Exp $	*/
+/*	$EOM: sysdep.c,v 1.6 1999/04/05 18:27:42 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -119,80 +119,18 @@ sysdep_conf_init_hook ()
 {
   struct conf_list *conns;
   struct conf_list_node *conn;
-  char *conf, *doi_str, *local_id, *remote_id, *peer, *address;
-  struct in_addr laddr, lmask, raddr, rmask, gwaddr;
-  int lid, rid;
 
   conns = conf_get_list ("Phase 2", "Connections");
-  for (conn = TAILQ_FIRST (&conns->fields); conn;
-       conn = TAILQ_NEXT (conn, link))
+  if (conns)
     {
-      /* Figure out the DOI.  We only handle IPsec so far.  */
-      conf = conf_get_str (conn->field, "Configuration");
-      if (!conf)
+      for (conn = TAILQ_FIRST (&conns->fields); conn;
+	   conn = TAILQ_NEXT (conn, link))
 	{
-	  log_print ("sysdep_conf_init_hook: "
-		     "No \"Configuration\" specified for %s",
-		     conn->field);
-	  continue;
+	  if (KEY_API(connection) (conn->field))
+	    /* XXX What else?  */
+	    continue;
 	}
-      doi_str = conf_get_str (conf, "DOI");
-      if (!doi_str)
-	{
-	  log_print ("sysdep_conf_init_hook: No DOI specified for %s", conf);
-	  continue;
-	}
-      if (strcasecmp (doi_str, "IPSEC") != 0)
-	{
-	  log_print ("sysdep_conf_init_hook: DOI \"%s\" unsupported", doi_str);
-	  continue;
-	}
-
-      local_id = conf_get_str (conn->field, "Local-ID");
-      remote_id = conf_get_str (conn->field, "Remote-ID");
-
-      /*
-       * At the moment I only do on-demand keying for modes with client IDs.
-       */
-      if (!local_id || !remote_id)
-	{
-	  log_print ("sysdep_conf_init_hook: "
-		     "Both Local-ID and Remote-ID required for %s",
-		     conn->field);
-	  continue;
-	}
-
-      if (ipsec_get_id (local_id, &lid, &laddr, &lmask))
-	continue;
-      if (ipsec_get_id (remote_id, &rid, &raddr, &rmask))
-	continue;
-
-      peer = conf_get_str (conn->field, "ISAKMP-peer");
-      if (!peer)
-	{
-	  log_print ("sysdep_conf_init_hook: "
-		     "section %s has no \"ISAKMP-peer\" tag", conn->field);
-	  continue;
-	}
-      address = conf_get_str (peer, "Address");
-      if (!address)
-	{
-	  log_print ("sysdep_conf_init_hook: "
-		     "section %s has no \"Address\" tag", peer);
-	  continue;
-	}
-      if (!inet_aton (address, &gwaddr))
-	{
-	  log_print ("sysdep_conf_init_hook: invalid adress %s in section %s",
-		     address, peer);
-	  continue;
-	}
-
-      /* XXX The special SPI below needs to be symbolic.  */
-      if (KEY_API(route) (laddr.s_addr, lmask.s_addr, raddr.s_addr,
-			  rmask.s_addr, 1, gwaddr.s_addr, conn->field))
-	/* XXX What else?  */
-	continue;
+      conf_free_list (conns);
     }
 }
 
