@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.c,v 1.29 1999/12/17 06:17:08 kjell Exp $ */
+/* $OpenBSD: parse.c,v 1.30 1999/12/28 08:30:31 kjell Exp $ */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -42,7 +42,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: parse.c,v 1.29 1999/12/17 06:17:08 kjell Exp $";
+static const char rcsid[] = "@(#)$Id: parse.c,v 1.30 1999/12/28 08:30:31 kjell Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -135,6 +135,11 @@ int     linenum;
 			fil.fr_flags |= FR_RETICMP;
 		if (fil.fr_flags & FR_RETICMP) {
 			cpp++;
+			if (!*(cpp+1)) {
+				fprintf(stderr, "%d: missing icmp code\n",
+					linenum);
+				return NULL;
+			}
 			i = 11;
 			if ((strlen(*cpp) > i) && (*(*cpp + i) != '('))
 				i = 19;
@@ -185,7 +190,11 @@ int     linenum;
 
 			fac = 0;
 			pri = 0;
-			cpp++;
+			if (!*++cpp) {
+				fprintf(stderr, "%d: %s\n", linenum,
+					"missing identifier after level");
+				return NULL;
+			}
 			s = index(*cpp, '.');
 			if (s) {
 				*s++ = '\0';
@@ -219,7 +228,10 @@ int     linenum;
 		fprintf(stderr, "%d: unknown keyword (%s)\n", linenum, *cpp);
 		return NULL;
 	}
-	cpp++;
+	if (!*++cpp) {
+		fprintf(stderr, "%d: missing 'in'/'out' keyword\n", linenum);
+		return NULL;
+	}
 
 	if (!strcasecmp("in", *cpp))
 		fil.fr_flags |= FR_INQUE;
@@ -236,29 +248,31 @@ int     linenum;
 				linenum);
 			return NULL;
 		}
-	} else {
-		fprintf(stderr, "%d: missing 'in'/'out' keyword (%s)\n",
-			linenum, *cpp);
+	}
+	if (!*++cpp) {
+		fprintf(stderr, "%d: missing source specification\n", linenum);
 		return NULL;
 	}
-	if (!*++cpp)
-		return NULL;
 
 	if (!strcasecmp("log", *cpp)) {
-		cpp++;
+		if (!*++cpp) {
+			fprintf(stderr, "%d: missing source specification\n", 
+				linenum);
+			return NULL;
+		}
 		if (fil.fr_flags & FR_PASS)
 			fil.fr_flags |= FR_LOGP;
 		else if (fil.fr_flags & FR_BLOCK)
 			fil.fr_flags |= FR_LOGB;
-		if (!strcasecmp(*cpp, "body")) {
+		if (*cpp && !strcasecmp(*cpp, "body")) {
 			fil.fr_flags |= FR_LOGBODY;
 			cpp++;
 		}
-		if (!strcasecmp(*cpp, "first")) {
+		if (*cpp && !strcasecmp(*cpp, "first")) {
 			fil.fr_flags |= FR_LOGFIRST;
 			cpp++;
 		}
-		if (!strcasecmp(*cpp, "or-block")) {
+		if (*cpp && !strcasecmp(*cpp, "or-block")) {
 			if (!(fil.fr_flags & FR_PASS)) {
 				fprintf(stderr,
 					"%d: or-block must be used with pass\n",
@@ -268,13 +282,17 @@ int     linenum;
 			fil.fr_flags |= FR_LOGORBLOCK;
 			cpp++;
 		}
-		if (!strcasecmp(*cpp, "level")) {
+		if (*cpp && !strcasecmp(*cpp, "level")) {
 			int fac, pri;
 			char *s;
 
 			fac = 0;
 			pri = 0;
-			cpp++;
+			if (!*++cpp) {
+				fprintf(stderr, "%d: %s\n", linenum,
+					"missing identifier after level");
+				return NULL;
+			}
 			s = index(*cpp, '.');
 			if (s) {
 				*s++ = '\0';
@@ -303,7 +321,7 @@ int     linenum;
 		}
 	}
 
-	if (!strcasecmp("quick", *cpp)) {
+	if (*cpp && !strcasecmp("quick", *cpp)) {
 		cpp++;
 		fil.fr_flags |= FR_QUICK;
 	}
@@ -335,12 +353,12 @@ int     linenum;
 					return NULL;
 				cpp++;
 			}
-			if (!strcasecmp(*cpp, "to") && *(cpp + 1)) {
+			if (*cpp && !strcasecmp(*cpp, "to") && *(cpp + 1)) {
 				cpp++;
 				if (to_interface(&fil.fr_tif, *cpp, linenum))
 					return NULL;
 				cpp++;
-			} else if (!strcasecmp(*cpp, "fastroute")) {
+			} else if (*cpp && !strcasecmp(*cpp, "fastroute")) {
 				if (!(fil.fr_flags & FR_INQUE)) {
 					fprintf(stderr,
 						"can only use %s with 'in'\n",
