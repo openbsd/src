@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.44 2002/07/10 22:08:47 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.45 2002/12/05 02:49:55 kjc Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -129,8 +129,6 @@ cdev_decl(xfs_dev);
 cdev_decl(pci);
 #endif
 
-#include <altq/altqconf.h>
-
 #include "systrace.h"
 
 struct cdevsw	cdevsw[] =
@@ -196,7 +194,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),
 #endif
-	cdev_altq_init(NALTQ, altq),	/* 53: ALTQ control interface */
+	cdev_notdef(),			/* 53: ALTQ (deprecated) */
 	cdev_iop_init(NIOP, iop),	/* 54: I2O IOP control interface */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 2002/10/01 21:03:30 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.23 2002/12/05 02:49:55 kjc Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -109,8 +109,6 @@ cdev_decl(com);
 
 #include "pf.h"
 
-#include <altq/altqconf.h>
-
 #include "systrace.h"
 
 struct cdevsw   cdevsw[] =
@@ -153,7 +151,7 @@ struct cdevsw   cdevsw[] =
 #else
 	cdev_notdef(),			/* 32 */
 #endif
-	cdev_altq_init(NALTQ,altq),	/* 33: ALTQ control interface */
+	cdev_notdef(),			/* 33: ALTQ (deprecated) */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 34: system call tracing */
 	cdev_audio_init(NAUDIO,audio),	/* 35: /dev/audio */
 	cdev_crypto_init(NCRYPTO,crypto), /* 36: /dev/crypto */

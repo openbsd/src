@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.100 2002/11/08 19:00:37 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.101 2002/12/05 02:49:55 kjc Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -205,8 +205,6 @@ cdev_decl(pci);
 
 #include "pf.h"
 
-#include <altq/altqconf.h>
-
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -307,7 +305,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),
 #endif
 	cdev_pf_init(NPF,pf),		/* 73: packet filter */
-	cdev_altq_init(NALTQ,altq),	/* 74: ALTQ control interface */
+	cdev_notdef(),			/* 74: ALTQ (deprecated) */
 	cdev_iop_init(NIOP,iop),	/* 75: I2O IOP control interface */
 	cdev_radio_init(NRADIO, radio), /* 76: generic radio I/O */
 	cdev_usbdev_init(NUSCANNER,uscanner),	/* 77: USB scanners */

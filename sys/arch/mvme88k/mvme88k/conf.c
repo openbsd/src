@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 2002/07/10 22:08:47 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.24 2002/12/05 02:49:55 kjc Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -103,8 +103,6 @@ cdev_decl(lptwo);
 
 #include "pf.h"
 
-#include <altq/altqconf.h>
-
 #include "systrace.h"
 
 struct bdevsw	bdevsw[] =
@@ -204,7 +202,6 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),                   /* 51 */
 #endif
-	cdev_altq_init(NALTQ,altq),	 /* 52: ALTQ control interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

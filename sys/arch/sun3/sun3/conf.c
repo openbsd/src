@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 2002/05/16 21:11:18 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.33 2002/12/05 02:49:55 kjc Exp $	*/
 /*	$NetBSD: conf.c,v 1.51 1996/11/04 16:16:09 gwr Exp $	*/
 
 /*-
@@ -111,8 +111,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 #include "pf.h"
 
-#include <altq/altqconf.h>
-
 #include "systrace.h"
 
 struct cdevsw	cdevsw[] =
@@ -206,7 +204,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 82 */
 	cdev_ch_init(NCH,ch),		/* 83: SCSI autochanger */
 	cdev_ses_init(NSES,ses),	/* 84: SCSI SES or SAF-TE device */
-	cdev_altq_init(NALTQ,altq),	/* 85: ALTQ control interface */
+	cdev_notdef(),			/* 85: ALTQ (deprecated) */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 86: system call tracing */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 2002/06/19 02:52:24 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.33 2002/12/05 02:49:55 kjc Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -115,8 +115,6 @@ cdev_decl(pci);
 #include "uscanner.h"
 
 #include "pf.h"
-
-#include <altq/altqconf.h>
 
 #ifdef XFS
 #include <xfs/nxfs.h>
@@ -243,7 +241,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NMTTY,mtty),	/* 71: magma serial ports */
 	cdev_gen_init(NMBPP,mbpp),	/* 72: magma parallel ports */
 	cdev_pf_init(NPF,pf),		/* 73: packet filter */
-	cdev_altq_init(NALTQ,altq),	/* 74: ALTQ control interface */
+	cdev_notdef(),			/* 74: ALTQ (deprecated) */
 	cdev_crypto_init(NCRYPTO,crypto), /* 75: /dev/crypto */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 76 *: Kernel symbols device */
 	cdev_tty_init(NSABTTY,sabtty),	/* 77: sab82532 serial ports */
