@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.699 2003/12/17 16:49:29 jason Exp $
+$OpenBSD: pcidevs,v 1.700 2003/12/17 17:25:22 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -161,6 +161,7 @@ vendor	COROLLARY	0x118c	Corrollary
 vendor	ACARD		0x1191	Acard
 vendor	ZEINET		0x1193	Zeinet
 vendor	OMEGA		0x119b	Omega Micro
+vendor	MARVELL		0x11ab	Marvell
 vendor	LITEON		0x11ad	Lite-On
 vendor	V3		0x11b0	V3 Semiconductor
 vendor	PINNACLE	0x11bd	Pinnacle Systems
@@ -1470,6 +1471,9 @@ product MADGE COLLAGE155	0x1001	Collage 155 ATM
 
 /* Martin-Marietta */
 product MARTINMARIETTA I740	0x00d1	i740 PCI
+
+/* Marvell products */
+product MARVELL SK_V2		0x4320	SKv2
 
 /* Matrox products */
 product MATROX ATLAS		0x0518	MGA PX2085 (Atlas)
