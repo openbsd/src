@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.4 1996/04/21 22:18:59 deraadt Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.5 1996/08/04 01:27:45 niklas Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -262,7 +262,7 @@ db_search_cmd(daddr, have_addr, dcount, modif)
 	int		size;
 	db_expr_t	value;
 	db_expr_t	mask;
-	unsigned int	count;
+	db_expr_t	count;
 
 	t = db_read_token();
 	if (t == tSLASH) {
@@ -312,7 +312,7 @@ db_search_cmd(daddr, have_addr, dcount, modif)
 		}
 	} else {
 		db_unread_token(t);
-		count = -1;		/* effectively forever */
+		count = -1;		/* forever */
 	}
 	db_skip_to_eol();
 
@@ -326,9 +326,10 @@ db_search(addr, size, value, mask, count)
 	int		size;
 	db_expr_t	value;
 	db_expr_t	mask;
-	unsigned int	count;
+	db_expr_t	count;
 {
-	while (count-- != 0) {
+	/* Negative counts means forever.  */
+	while (count < 0 || count-- != 0) {
 		db_prev = addr;
 		if ((db_get_value(addr, size, FALSE) & mask) == value)
 			break;

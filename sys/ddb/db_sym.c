@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sym.c,v 1.11 1996/05/31 10:37:25 niklas Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.12 1996/08/04 01:27:46 niklas Exp $	*/
 /*	$NetBSD: db_sym.c,v 1.12 1996/02/05 01:57:15 christos Exp $	*/
 
 /* 
@@ -263,8 +263,8 @@ db_search_symbol( val, strategy, offp)
 	db_expr_t		*offp;
 {
 	register
-	unsigned int	diff;
-	unsigned int	newdiff;
+	db_expr_t	diff;
+	db_expr_t	newdiff;
 	db_symtab_t	st;
 	db_sym_t	ret = DB_SYM_NULL, sym;
 
@@ -326,7 +326,7 @@ db_symbol_values(sym, namep, valuep)
  * add support for symbols in loadable driver modules.
  */
 extern char end[];
-unsigned int	db_lastsym = (unsigned long)end;
+unsigned long	db_lastsym = (unsigned long)end;
 db_expr_t db_maxoff = 0x10000000;
 
 
