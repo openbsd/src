@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 1998/07/08 22:14:15 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 1998/08/01 05:36:18 angelos Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.14 1998/07/08 22:14:15 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.15 1998/08/01 05:36:18 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,9 +173,9 @@ struct protox {
 	{ -1,		N_IGMPSTAT,	1,	0,
 	  igmp_stats,	"igmp" },
 	{ -1,		N_AHSTAT,	1,	0,
-	  ah_stats,	"sipp-ah" },
+	  ah_stats,	"ah" },
 	{ -1,		N_ESPSTAT,	1,	0,
-	  esp_stats,	"sipp-esp" },
+	  esp_stats,	"esp" },
 	{ -1,		N_IP4STAT,	1,	0,
 	  ip4_stats,	"ipencap" },
 	{ -1,		-1,		0,	0,
