@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.102 2001/12/07 10:38:11 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.103 2001/12/07 10:39:46 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3292,66 +3292,6 @@ mmu_install_tables(sc)
 #endif
 }
 
-/*
- * Allocate per-CPU page tables.
- * Note: this routine is called in the context of the boot CPU
- * during autoconfig.
- */
-void
-pmap_alloc_cpu(sc)
-	struct cpu_softc *sc;
-{
-	caddr_t cpustore;
-	int *ctxtable;
-	int *regtable;
-	int *segtable;
-	int *pagtable;
-	int vr, vs, vpg;
-	struct regmap *rp;
-	struct segmap *sp;
-
-	/* Allocate properly aligned and physically contiguous memory here */
-	cpustore = 0;
-	ctxtable = 0;
-	regtable = 0;
-	segtable = 0;
-	pagtable = 0;
-
-	vr = VA_VREG(CPUINFO_VA);
-	vs = VA_VSEG(CPUINFO_VA);
-	vpg = VA_VPG(CPUINFO_VA);
-	rp = &pmap_kernel()->pm_regmap[vr];
-	sp = &rp->rg_segmap[vs];
-
-	/*
-	 * Copy page tables, then modify entry for CPUINFO_VA so that
-	 * it points at the per-CPU pages.
-	 */
-	bcopy(cpuinfo.L1_ptps, regtable, SRMMU_L1SIZE * sizeof(int));
-	regtable[vr] =
-		(VA2PA((caddr_t)segtable) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
-
-	bcopy(rp->rg_seg_ptps, segtable, SRMMU_L2SIZE * sizeof(int));
-	segtable[vs] =
-		(VA2PA((caddr_t)pagtable) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
-
-	bcopy(sp->sg_pte, pagtable, SRMMU_L3SIZE * sizeof(int));
-	pagtable[vpg] =
-		(VA2PA((caddr_t)cpustore) >> SRMMU_PPNPASHIFT) |
-		(SRMMU_TEPTE | PPROT_RWX_RWX | SRMMU_PG_C);
-
-	/* Install L1 table in context 0 */
-	ctxtable[0] = ((u_int)regtable >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
-
-	sc->ctx_tbl = ctxtable;
-	sc->L1_ptps = regtable;
-
-#if 0
-	if ((sc->flags & CPUFLG_CACHEPAGETABLES) == 0) {
-		kvm_uncache((caddr_t)0, 1);
-	}
-#endif
-}
 #endif /* defined sun4m */
 
 

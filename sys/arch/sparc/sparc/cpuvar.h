@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.5 2001/12/05 14:40:48 art Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.6 2001/12/07 10:39:47 art Exp $	*/
 /*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
 
 /*
@@ -283,7 +283,6 @@ struct cpu_softc {
  */
 void getcpuinfo __P((struct cpu_softc *sc, int node));
 void mmu_install_tables __P((struct cpu_softc *));
-void pmap_alloc_cpu __P((struct cpu_softc *));
 
 #define cpuinfo	(*(struct cpu_softc *)CPUINFO_VA)
 #endif	/* _SPARC_CPUVAR_H */
