@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.66 2003/07/09 22:11:08 itojun Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.67 2003/07/10 04:20:59 itojun Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1049,7 +1049,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		r->packets++;
 
 	/* Check for illegal packets */
-	if (sizeof(struct ip6_hdr) + IPV6_MAXPACKET >= m->m_pkthdr.len)
+	if (sizeof(struct ip6_hdr) + IPV6_MAXPACKET < m->m_pkthdr.len)
 		goto drop;
 
 	off = sizeof(struct ip6_hdr);
