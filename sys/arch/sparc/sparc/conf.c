@@ -66,6 +66,7 @@
 #include "sd.h"
 #include "st.h"
 #include "cd.h"
+#include "rd.h"
 
 #include "zs.h"
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
@@ -96,7 +97,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 14 */
 	bdev_notdef(),			/* 15 */
 	bdev_disk_init(NFD,fd),		/* 16: floppy disk */
-	bdev_notdef(),			/* 17 */
+	bdev_disk_init(NRD,rd),		/* 17: ram disk driver */
 	bdev_disk_init(NCD,cd),		/* 18: SCSI CD-ROM */
 	bdev_lkm_dummy(),		/* 19 */
 	bdev_lkm_dummy(),		/* 20 */
@@ -215,7 +216,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 103 */
 	cdev_notdef(),			/* 104 */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 105: packet filter */
-	cdev_notdef(),			/* 106 */
+	cdev_disk_init(NRD,rd),		/* 106: ram disk driver */
 	cdev_notdef(),			/* 107 */
 	cdev_notdef(),			/* 108 */
 	cdev_notdef(),			/* 109 */
@@ -376,7 +377,7 @@ static int chrtoblktbl[] = {
 	/*103 */	NODEV,
 	/*104 */	NODEV,
 	/*105 */	NODEV,
-	/*106 */	NODEV,
+	/*106 */	17,
 	/*107 */	NODEV,
 	/*108 */	NODEV,
 	/*109 */	NODEV,

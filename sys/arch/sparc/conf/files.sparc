@@ -81,6 +81,12 @@ major { sd = 7 }
 major { vnd = 8 }
 major { cd = 18 }
 
+# RAM Disk for install floppy
+pseudo-device rd
+file dev/ramdisk.c			rd needs-flag
+file arch/sparc/sparc/rd_root.c		ramdisk_hooks
+major	{rd = 17}
+
 device dma {}
 attach dma at sbus, obio
 device ledma {}
