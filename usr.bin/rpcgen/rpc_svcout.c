@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.16 2003/06/01 15:53:36 deraadt Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.17 2003/06/11 23:31:51 deraadt Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -361,11 +361,11 @@ write_program(def, storage)
 
 		if (Cflag) {
 			fprintf(fout, "(struct svc_req *%s, ", RQSTP);
-			fprintf(fout, "register SVCXPRT *%s)\n", TRANSP);
+			fprintf(fout, "SVCXPRT *%s)\n", TRANSP);
 		} else {
 			fprintf(fout, "(%s, %s)\n", RQSTP, TRANSP);
-			fprintf(fout, "	struct svc_req *%s;\n", RQSTP);
-			fprintf(fout, "	register SVCXPRT *%s;\n", TRANSP);
+			fprintf(fout, "    struct svc_req *%s;\n", RQSTP);
+			fprintf(fout, "    SVCXPRT *%s;\n", TRANSP);
 		}
 		fprintf(fout, "{\n");
 
@@ -515,7 +515,7 @@ static void
 write_inetmost(infile)
 	char *infile;
 {
-	fprintf(fout, "\tregister SVCXPRT *%s;\n", TRANSP);
+	fprintf(fout, "\tSVCXPRT *%s;\n", TRANSP);
 	fprintf(fout, "\tint sock;\n");
 	fprintf(fout, "\tint proto;\n");
 	fprintf(fout, "\tstruct sockaddr_in saddr;\n");
