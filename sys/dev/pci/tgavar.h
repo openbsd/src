@@ -1,4 +1,4 @@
-/* $OpenBSD: tgavar.h,v 1.3 2000/10/14 18:04:07 aaron Exp $ */
+/* $OpenBSD: tgavar.h,v 1.4 2001/03/18 04:37:21 nate Exp $ */
 /* $NetBSD: tgavar.h,v 1.8 2000/04/02 19:01:11 nathanw Exp $ */
 
 /*
@@ -30,9 +30,10 @@
 
 #include <dev/ic/ramdac.h>
 #include <dev/pci/tgareg.h>
-#include <dev/rcons/raster.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wscons_raster.h>
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 
 struct tga_devconfig;
 struct fbcmap;
@@ -40,95 +41,126 @@ struct fbcursor;
 struct fbcurpos;
 
 struct tga_conf {
-        char            *tgac_name;                /* name for this board type */
+	char	    *tgac_name;		/* name for this board type */
 
-        struct ramdac_funcs *(*ramdac_funcs) __P((void));
+	struct ramdac_funcs *(*ramdac_funcs) __P((void));
 
-        int            tgac_phys_depth;        /* physical frame buffer depth */
-        vsize_t   tgac_cspace_size;        /* core space size */
-        vsize_t   tgac_vvbr_units;        /* what '1' in the VVBR means */
+	int	    tgac_phys_depth;	/* physical frame buffer depth */
+	vsize_t   tgac_cspace_size;	/* core space size */
+	vsize_t   tgac_vvbr_units;	/* what '1' in the VVBR means */
 
-        int            tgac_ndbuf;                /* number of display buffers */
-        vaddr_t tgac_dbuf[2];        /* display buffer offsets/addresses */
-        vsize_t   tgac_dbufsz[2];        /* display buffer sizes */
+	int	    tgac_ndbuf;		/* number of display buffers */
+	vaddr_t tgac_dbuf[2];	/* display buffer offsets/addresses */
+	vsize_t   tgac_dbufsz[2];	/* display buffer sizes */
 
-        int            tgac_nbbuf;                /* number of display buffers */
-        vaddr_t tgac_bbuf[2];        /* back buffer offsets/addresses */
-        vsize_t   tgac_bbufsz[2];        /* back buffer sizes */
+	int	    tgac_nbbuf;		/* number of display buffers */
+	vaddr_t tgac_bbuf[2];	/* back buffer offsets/addresses */
+	vsize_t   tgac_bbufsz[2];	/* back buffer sizes */
 };
 
 struct tga_devconfig {
-        bus_space_tag_t dc_memt;
-	pci_chipset_tag_t dc_pc;
-        pcitag_t            dc_pcitag;        /* PCI tag */
-        bus_addr_t         dc_pcipaddr;        /* PCI phys addr. */
+	bus_space_tag_t dc_memt;
+	bus_space_handle_t dc_memh;
 
-	tga_reg_t   *dc_regs;                /* registers; XXX: need aliases */
-        int            dc_tga_type;        /* the device type; see below */
-        int            dc_tga2;                /* True if it is a TGA2 */
-        const struct tga_conf *dc_tgaconf; /* device buffer configuration */
+	pcitag_t   	 dc_pcitag;	/* PCI tag */
+	bus_addr_t	 dc_pcipaddr;	/* PCI phys addr. */
 
-        struct ramdac_funcs
-                    *dc_ramdac_funcs;        /* The RAMDAC functions */
-        struct ramdac_cookie
-                    *dc_ramdac_cookie;        /* the RAMDAC type; see above */
+	bus_space_handle_t dc_regs;	/* registers; XXX: need aliases */
 
-        vaddr_t dc_vaddr;                /* memory space virtual base address */
-        paddr_t dc_paddr;                /* memory space physical base address */
+	int	    dc_tga_type;	/* the device type; see below */
+	int	    dc_tga2;		/* True if it is a TGA2 */
+	const struct tga_conf *dc_tgaconf; /* device buffer configuration */
 
-        int            dc_wid;                /* width of frame buffer */
-        int            dc_ht;                /* height of frame buffer */
-        int            dc_rowbytes;        /* bytes in a FB scan line */
+	struct ramdac_funcs
+		    *dc_ramdac_funcs;	/* The RAMDAC functions */
+	struct ramdac_cookie
+		    *dc_ramdac_cookie;	/* the RAMDAC type; see above */
 
-        vaddr_t dc_videobase;        /* base of flat frame buffer */
+	vaddr_t dc_vaddr;		/* memory space virtual base address */
+	paddr_t dc_paddr;		/* memory space physical base address */
 
-        struct raster        dc_raster;        /* raster description */
-        struct rcons        dc_rcons;        /* raster blitter control info */
+	int	    dc_wid;		/* width of frame buffer */
+	int	    dc_ht;		/* height of frame buffer */
+	int	    dc_rowbytes;	/* bytes in a FB scan line */
 
-        int            dc_blanked;                /* currently had video disabled */
-        void            *dc_ramdac_private; /* RAMDAC private storage */
+	vaddr_t dc_videobase;	/* base of flat frame buffer */
 
-        void            (*dc_ramdac_intr) __P((void *));
-        int                dc_intrenabled; /* can we depend on interrupts yet? */
+	struct rasops_info dc_rinfo;	/* raster display data */
+
+	int	    dc_blanked;		/* currently had video disabled */
+	void	    *dc_ramdac_private; /* RAMDAC private storage */
+
+	void	    (*dc_ramdac_intr) __P((void *));
+	int		dc_intrenabled; /* can we depend on interrupts yet? */
 };
-        
+	
 struct tga_softc {
-        struct        device sc_dev;
+	struct	device sc_dev;
 
-        struct        tga_devconfig *sc_dc;        /* device configuration */
-        void        *sc_intr;                /* interrupt handler info */
-        /* XXX should record intr fns/arg */
+	struct	tga_devconfig *sc_dc;	/* device configuration */
+	void	*sc_intr;		/* interrupt handler info */
+	/* XXX should record intr fns/arg */
 
-        int nscreens;
+	int nscreens;
 };
 
-#define TGA_TYPE_T8_01                0        /* 8bpp, 1MB */
-#define TGA_TYPE_T8_02                1        /* 8bpp, 2MB */
-#define TGA_TYPE_T8_22                2        /* 8bpp, 4MB */
-#define TGA_TYPE_T8_44                3        /* 8bpp, 8MB */
-#define TGA_TYPE_T32_04                4        /* 32bpp, 4MB */
-#define TGA_TYPE_T32_08                5        /* 32bpp, 8MB */
-#define TGA_TYPE_T32_88                6        /* 32bpp, 16MB */
-#define TGA_TYPE_UNKNOWN        7        /* unknown */
+#define	TGA_TYPE_T8_01		0	/* 8bpp, 1MB */
+#define	TGA_TYPE_T8_02		1	/* 8bpp, 2MB */
+#define	TGA_TYPE_T8_22		2	/* 8bpp, 4MB */
+#define	TGA_TYPE_T8_44		3	/* 8bpp, 8MB */
+#define	TGA_TYPE_T32_04		4	/* 32bpp, 4MB */
+#define	TGA_TYPE_T32_08		5	/* 32bpp, 8MB */
+#define	TGA_TYPE_T32_88		6	/* 32bpp, 16MB */
+#define	TGA_TYPE_UNKNOWN	7	/* unknown */
 
-#define DEVICE_IS_TGA(class, id)                                        \
-            (((PCI_VENDOR(id) == PCI_VENDOR_DEC &&                        \
-               PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21030) ||                \
-               PCI_PRODUCT(id) == PCI_PRODUCT_DEC_PBXGB) ? 10 : 0)
+#define	DEVICE_IS_TGA(class, id)					\
+	    (((PCI_VENDOR(id) == PCI_VENDOR_DEC &&			\
+	       PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21030) ||		\
+	       PCI_PRODUCT(id) == PCI_PRODUCT_DEC_PBXGB) ? 10 : 0)
 
 int tga_cnattach __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
-                      int, int, int));
+		      int, int, int));
 
-int     tga_identify __P((tga_reg_t *));
+int	tga_identify __P((struct tga_devconfig *));
 const struct tga_conf *tga_getconf __P((int));
 
 int     tga_builtin_set_cursor __P((struct tga_devconfig *,
-            struct wsdisplay_cursor *));
+	    struct wsdisplay_cursor *));
 int     tga_builtin_get_cursor __P((struct tga_devconfig *,
-            struct wsdisplay_cursor *));
+	    struct wsdisplay_cursor *));
 int     tga_builtin_set_curpos __P((struct tga_devconfig *,
-            struct wsdisplay_curpos *));
+	    struct wsdisplay_curpos *));
 int     tga_builtin_get_curpos __P((struct tga_devconfig *,
-            struct wsdisplay_curpos *));
+	    struct wsdisplay_curpos *));
 int     tga_builtin_get_curmax __P((struct tga_devconfig *,
-            struct wsdisplay_curpos *));
+	    struct wsdisplay_curpos *));
+
+/* Read a TGA register */
+#define TGARREG(dc,reg) (bus_space_read_4((dc)->dc_memt, (dc)->dc_regs, \
+	(reg) << 2))
+
+/* Write a TGA register */
+#define TGAWREG(dc,reg,val) bus_space_write_4((dc)->dc_memt, (dc)->dc_regs, \
+	(reg) << 2, (val))
+
+/* Write a TGA register at an alternate aliased location */
+#define TGAWALREG(dc,reg,alias,val) bus_space_write_4( \
+	(dc)->dc_memt, (dc)->dc_regs, \
+	((alias) * TGA_CREGS_ALIAS) + ((reg) << 2), \
+	(val))
+
+/* Insert a write barrier */
+#define TGAREGWB(dc,reg, nregs) bus_space_barrier( \
+	(dc)->dc_memt, (dc)->dc_regs, \
+	((reg) << 2), 4 * (nregs), BUS_SPACE_BARRIER_WRITE)
+
+/* Insert a read barrier */
+#define TGAREGRB(dc,reg, nregs) bus_space_barrier( \
+	(dc)->dc_memt, (dc)->dc_regs, \
+	((reg) << 2), 4 * (nregs), BUS_SPACE_BARRIER_READ)
+
+/* Insert a read/write barrier */
+#define TGAREGRWB(dc,reg, nregs) bus_space_barrier( \
+	(dc)->dc_memt, (dc)->dc_regs, \
+	((reg) << 2), 4 * (nregs), \
+	BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)

@@ -1,4 +1,4 @@
-/* $OpenBSD: tgareg.h,v 1.3 2000/10/14 18:04:07 aaron Exp $ */
+/* $OpenBSD: tgareg.h,v 1.4 2001/03/18 04:37:21 nate Exp $ */
 /* $NetBSD: tgareg.h,v 1.3 2000/03/04 10:28:00 elric Exp $ */
 
 /*
@@ -46,6 +46,8 @@
 #define	TGA_MEM_ALTROM	0x0000000	/* 0MB -- Alternate ROM space */
 #define TGA2_MEM_EXTDEV	0x0000000	/* 0MB -- External Device Access */
 #define	TGA_MEM_CREGS	0x0100000	/* 1MB -- Core Registers */
+#define TGA_CREGS_SIZE	0x0100000 	/* Core registers occupy 1MB */
+#define TGA_CREGS_ALIAS	0x0000400	/* Register copies every 1kB */
 
 #define TGA2_MEM_CLOCK	0x0060000	/* TGA2 Clock access */
 #define TGA2_MEM_RAMDAC	0x0080000	/* TGA2 RAMDAC access */

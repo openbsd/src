@@ -1,5 +1,5 @@
-/* $OpenBSD: tga_conf.c,v 1.3 2000/10/14 18:04:07 aaron Exp $ */
-/* $NetBSD: tga_conf.c,v 1.4 2000/04/02 18:59:32 nathanw Exp $ */
+/* $OpenBSD: tga_conf.c,v 1.4 2001/03/18 04:37:21 nate Exp $ */
+/* $NetBSD: tga_conf.c,v 1.3 2000/03/12 05:32:29 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -39,148 +39,153 @@
 #include <dev/ic/bt463var.h>
 
 #undef KB
-#define KB              * 1024
+#define KB		* 1024
 #undef MB
-#define MB                * 1024 * 1024
+#define	MB		* 1024 * 1024
 
 static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
-        /* TGA_TYPE_T8_01 */
-        {
-                "T8-01",
-                bt485_funcs,
-                8,
-                4 MB,
-                2 KB,
-                1,        {  2 MB,     0 },        { 1 MB,    0 },
-                0,        {     0,     0 },        {    0,    0 },
-        },
-        /* TGA_TYPE_T8_02 */
-        {
-                "T8-02",
-                bt485_funcs,
-                8,
-                4 MB,
-                4 KB,
-                1,        {  2 MB,     0 },        { 2 MB,    0 },
-                0,        {     0,     0 },        {    0,    0 },
-        },
-        /* TGA_TYPE_T8_22 */
-        {
-                "T8-22",
-                bt485_funcs,
-                8,
-                8 MB,
-                4 KB,
-                1,        {  4 MB,     0 },        { 2 MB,    0 },
-                1,        {  6 MB,     0 },        { 2 MB,    0 },
-        },
-        /* TGA_TYPE_T8_44 */
-        {
-                "T8-44",
-                bt485_funcs,
-                8,
-                16 MB,
-                4 KB,
-                2,        {  8 MB, 12 MB },        { 2 MB, 2 MB },
-                2,        { 10 MB, 14 MB },        { 2 MB, 2 MB },
-        },
-        /* TGA_TYPE_T32_04 */
-        {
-                "T32-04",
-                bt463_funcs,
-                32,
-                16 MB,
-                8 KB,
-                1,        {  8 MB,     0 },        { 4 MB,    0 },
-                0,        {     0,     0 },        {    0,    0 },
-        },
-        /* TGA_TYPE_T32_08 */
-        {
-                "T32-08",
-                bt463_funcs,
-                32,
-                16 MB,
-                16 KB,
-                1,        {  8 MB,    0 },        { 8 MB,    0 },
-                0,        {     0,    0 },        {    0,    0 },
-        },
-        /* TGA_TYPE_T32_88 */
-        {
-                "T32-88",
-                bt463_funcs,
-                32,
-                32 MB,
-                16 KB,
-                1,        { 16 MB,    0 },        { 8 MB,    0 },
-                1,        { 24 MB,    0 },        { 8 MB,    0 },
-        },
+	/* TGA_TYPE_T8_01 */
+	{
+		"T8-01",
+		bt485_funcs,
+		8,
+		4 MB,
+		2 KB,
+		1,	{  2 MB,     0 },	{ 1 MB,    0 },
+		0,	{     0,     0 },	{    0,    0 },
+	},
+	/* TGA_TYPE_T8_02 */
+	{
+		"T8-02",
+		bt485_funcs,
+		8,
+		4 MB,
+		4 KB,
+		1,	{  2 MB,     0 },	{ 2 MB,    0 },
+		0,	{     0,     0 },	{    0,    0 },
+	},
+	/* TGA_TYPE_T8_22 */
+	{
+		"T8-22",
+		bt485_funcs,
+		8,
+		8 MB,
+		4 KB,
+		1,	{  4 MB,     0 },	{ 2 MB,    0 },
+		1,	{  6 MB,     0 },	{ 2 MB,    0 },
+	},
+	/* TGA_TYPE_T8_44 */
+	{
+		"T8-44",
+		bt485_funcs,
+		8,
+		16 MB,
+		4 KB,
+		2,	{  8 MB, 12 MB },	{ 2 MB, 2 MB },
+		2,	{ 10 MB, 14 MB },	{ 2 MB, 2 MB },
+	},
+	/* TGA_TYPE_T32_04 */
+	{
+		"T32-04",
+		bt463_funcs,
+		32,
+		16 MB,
+		8 KB,
+		1,	{  8 MB,     0 },	{ 4 MB,    0 },
+		0,	{     0,     0 },	{    0,    0 },
+	},
+	/* TGA_TYPE_T32_08 */
+	{
+		"T32-08",
+		bt463_funcs,
+		32,
+		16 MB,
+		16 KB,
+		1,	{  8 MB,    0 },	{ 8 MB,    0 },
+		0,	{     0,    0 },	{    0,    0 },
+	},
+	/* TGA_TYPE_T32_88 */
+	{
+		"T32-88",
+		bt463_funcs,
+		32,
+		32 MB,
+		16 KB,
+		1,	{ 16 MB,    0 },	{ 8 MB,    0 },
+		1,	{ 24 MB,    0 },	{ 8 MB,    0 },
+	},
 };
 
 #undef KB
 #undef MB
 
 int
-tga_identify(regs)
-	tga_reg_t *regs;
+tga_identify(dc)
+	struct tga_devconfig *dc;
 {
-        int type;
-        int deep, addrmask, wide;
+	int type;
+	int gder;
+	int deep, addrmask, wide;
 
-	deep = (regs[TGA_REG_GDER] & 0x1) != 0;                /* XXX */
-	addrmask = ((regs[TGA_REG_GDER] >> 2) & 0x7);        /* XXX */
-	wide = (regs[TGA_REG_GDER] & 0x200) == 0;        /* XXX */
+	gder = TGARREG(dc, TGA_REG_GDER);
 
-        type = TGA_TYPE_UNKNOWN;
+	deep = (gder & 0x1) != 0; /* XXX */
+	addrmask = (gder >> 2) & 0x7; /* XXX */
+	wide = (gder & 0x200) == 0; /* XXX */
 
-        if (!deep) {
-                /* 8bpp frame buffer */
 
-                if (addrmask == 0x0) {
-                        /* 4MB core map; T8-01 or T8-02 */
+	type = TGA_TYPE_UNKNOWN;
 
-                        if (!wide)
-                                type = TGA_TYPE_T8_01;
-                        else
-                                type = TGA_TYPE_T8_02;
-                } else if (addrmask == 0x1) {
-                        /* 8MB core map; T8-22 */
+	if (!deep) {
+		/* 8bpp frame buffer */
 
-                        if (wide)                        /* sanity */
-                                type = TGA_TYPE_T8_22;
-                } else if (addrmask == 0x3) {
-                        /* 16MB core map; T8-44 */
+		if (addrmask == 0x0) {
+			/* 4MB core map; T8-01 or T8-02 */
 
-                        if (wide)                        /* sanity */
-                                type = TGA_TYPE_T8_44;
-                }
-        } else {
-                /* 32bpp frame buffer */
+			if (!wide)
+				type = TGA_TYPE_T8_01;
+			else
+				type = TGA_TYPE_T8_02;
+		} else if (addrmask == 0x1) {
+			/* 8MB core map; T8-22 */
 
-                if (addrmask == 0x3) {
-                        /* 16MB core map; T32-04 or T32-08 */
+			if (wide)			/* sanity */
+				type = TGA_TYPE_T8_22;
+		} else if (addrmask == 0x3) {
+			/* 16MB core map; T8-44 */
 
-                        if (!wide)
-                                type = TGA_TYPE_T32_04;
-                        else
-                                type = TGA_TYPE_T32_08;
-                } else if (addrmask == 0x7) {
-                        /* 32MB core map; T32-88 */
+			if (wide)			/* sanity */
+				type = TGA_TYPE_T8_44;
+		}
+	} else {
+		/* 32bpp frame buffer */
 
-                        if (wide)                        /* sanity */
-                                type = TGA_TYPE_T32_88;
-                }
-        }
+		if (addrmask == 0x3) {
+			/* 16MB core map; T32-04 or T32-08 */
 
-        return (type);
+			if (!wide)
+				type = TGA_TYPE_T32_04;
+			else
+				type = TGA_TYPE_T32_08;
+		} else if (addrmask == 0x7) {
+			/* 32MB core map; T32-88 */
+
+			if (wide)			/* sanity */
+				type = TGA_TYPE_T32_88;
+		}
+	}
+
+	return (type);
 }
 
 const struct tga_conf *
 tga_getconf(type)
-        int type;
+	int type;
 {
 
-        if (type >= 0 && type < TGA_TYPE_UNKNOWN)
-                return &tga_configs[type];
+	if (type >= 0 && type < TGA_TYPE_UNKNOWN)
+		return &tga_configs[type];
 
-        return (NULL);
+	return (NULL);
 }
+
