@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.363 2003/06/10 22:05:03 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.364 2003/06/14 07:23:15 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3309,7 +3309,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	    /* Retrans: not more than one window back */
 	    (ackskew >= -MAXACKWINDOW) &&
 	    /* Acking not more than one reassembled fragment backwards */
-	    (ackskew <= (MAXACKWINDOW << dws))) {
+	    (ackskew <= (MAXACKWINDOW << sws))) {
 	    /* Acking not more than one window forward */
 
 		(*state)->packets++;
@@ -3458,7 +3458,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			    SEQ_GEQ(seq, src->seqlo - (dst->max_win << dws)) ?
 			    ' ': '2',
 			    (ackskew >= -MAXACKWINDOW) ? ' ' : '3',
-			    (ackskew <= MAXACKWINDOW) ? ' ' : '4',
+			    (ackskew <= (MAXACKWINDOW << sws)) ? ' ' : '4',
 			    SEQ_GEQ(src->seqhi + MAXACKWINDOW, end) ?' ' :'5',
 			    SEQ_GEQ(seq, src->seqlo - MAXACKWINDOW) ?' ' :'6');
 		}
