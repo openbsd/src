@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.6 2002/12/07 19:15:59 millert Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.7 2002/12/07 19:48:32 millert Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getopt_long.c,v 1.6 2002/12/07 19:15:59 millert Exp $";
+static char *rcsid = "$OpenBSD: getopt_long.c,v 1.7 2002/12/07 19:48:32 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -408,7 +408,7 @@ start:
 		short_too = 0;
 		if (*place == '-')
 			place++;		/* --foo long option */
-		else if (*place != ':' && strchr(options, optchar) != NULL)
+		else if (*place != ':' && strchr(options, *place) != NULL)
 			short_too = 1;		/* could be short option too */
 
 		optchar = parse_long_options(nargv, options, long_options,
