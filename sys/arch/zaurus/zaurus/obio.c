@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.2 2005/01/02 19:43:07 drahn Exp $	*/
+/*	$OpenBSD: obio.c,v 1.3 2005/01/02 21:42:07 drahn Exp $	*/
 /*	$NetBSD: obio.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -216,9 +216,7 @@ void
 obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct obio_softc *sc = (struct obio_softc*)self;
-	int system_id, baseboard_id, expansion_id, processor_card_id;
 	struct pxaip_attach_args *sa = (struct pxaip_attach_args *)aux;
-	char *processor_card_name;
 	int i;
 	
 
@@ -229,24 +227,7 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: can't map FPGA registers\n", self->dv_xname);
 	}
 
-	system_id = bus_space_read_4(sc->sc_iot, sc->sc_obioreg_ioh,
-	    LUBBOCK_SYSTEMID);
-
-	baseboard_id = (system_id>>8) & 0x0f;
-	expansion_id = (system_id>>4) & 0x0f;
-	processor_card_id = system_id & 0x0f;
-
-	switch (processor_card_id) {
-	case 0: processor_card_name = "Cotulla"; break;
-	case 1: processor_card_name = "Sabinal"; break;
-	default: processor_card_name = "(unknown)";
-	}
-
-	printf(" : baseboard=%d (%s), expansion card=%d, processor card=%d (%s)\n",
-	       baseboard_id,
-	       baseboard_id==8 ? "DBPXA250(lubbock)" : "(unknown)",
-	       expansion_id,
-	       processor_card_id, processor_card_name );
+	printf("\n");
 
 	/*
 	 *  Mask all interrupts.
