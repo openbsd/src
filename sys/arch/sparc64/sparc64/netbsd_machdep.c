@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_machdep.c,v 1.3 2002/06/15 17:23:31 art Exp $	*/
+/*	$OpenBSD: netbsd_machdep.c,v 1.4 2002/07/20 19:24:57 art Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -146,8 +146,6 @@ netbsd_sendsig(catcher, sig, mask, code, type, val)
 	struct rwindow *oldsp, *newsp;
 	struct netbsd_sigframe sf, *fp;
 	int onstack;
-	extern char netbsd_sigcode[], netbsd_esigcode[];
-#define	szsigcode	(netbsd_esigcode - netbsd_sigcode)
 
 	tf = p->p_md.md_tf;
 	oldsp = (struct rwindow *)(u_long)(tf->tf_out[6] + STACK_OFFSET);
@@ -215,7 +213,7 @@ netbsd_sendsig(catcher, sig, mask, code, type, val)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-	addr = (vaddr_t)PS_STRINGS - szsigcode;
+	addr = p->p_sigcode;
 	tf->tf_global[1] = (vaddr_t)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;

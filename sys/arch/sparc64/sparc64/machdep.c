@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.46 2002/07/10 20:30:15 jsyn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.47 2002/07/20 19:24:57 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -625,8 +625,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct rwindow *oldsp, *newsp;
 	struct sigframe sf;
 	int onstack;
-	extern char sigcode[], esigcode[];
-#define	szsigcode	(esigcode - sigcode)
 
 	tf = p->p_md.md_tf;
 	oldsp = (struct rwindow *)(u_long)(tf->tf_out[6] + STACK_OFFSET);
@@ -710,7 +708,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-	addr = (vaddr_t)PS_STRINGS - szsigcode;
+	addr = p->p_sigcode;
 	tf->tf_global[1] = (vaddr_t)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;

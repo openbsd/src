@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.61 2002/07/03 21:19:08 miod Exp $	*/
+/*	$OpenBSD: proc.h,v 1.62 2002/07/20 19:24:57 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -77,6 +77,7 @@ struct	pgrp {
  */
 struct exec_package;
 struct ps_strings;
+struct uvm_object;
 union sigval;
 
 struct	emul {
@@ -98,6 +99,7 @@ struct	emul {
 	int	(*e_fixup)(struct proc *, struct exec_package *);
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
+	struct uvm_object *e_sigobject;	/* shared sigcode object */
 };
 
 /*
@@ -196,6 +198,7 @@ struct	proc {
 	char	p_comm[MAXCOMLEN+1];
 
 	struct 	pgrp *p_pgrp;	/* Pointer to process group. */
+	vaddr_t	p_sigcode;	/* user pointer to the signal code. */
 
 /* End area that is copied on creation. */
 #define	p_endcopy	p_addr

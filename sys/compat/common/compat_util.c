@@ -1,4 +1,4 @@
-/* 	$OpenBSD: compat_util.c,v 1.8 2000/10/16 20:10:50 jasoni Exp $	*/
+/* 	$OpenBSD: compat_util.c,v 1.9 2002/07/20 19:24:57 art Exp $	*/
 /* 	$NetBSD: compat_util.c,v 1.4 1996/03/14 19:31:45 christos Exp $	*/
 
 /*
@@ -205,9 +205,7 @@ caddr_t
 stackgap_init(e) 
         struct emul *e;
 {
-#define szsigcode ((caddr_t)(e->e_esigcode - e->e_sigcode))
         return STACKGAPBASE;
-#undef szsigcode
 }
  
 void *          
@@ -217,13 +215,10 @@ stackgap_alloc(sgp, sz)
 {
 	void *n = (void *) *sgp;
 	caddr_t nsgp;
-	struct proc *p = curproc;		/* XXX */
-	struct emul *e = p->p_emul;
-	int sigsize = e->e_esigcode - e->e_sigcode;
 	
 	sz = ALIGN(sz);
 	nsgp = *sgp + sz;
-	if (nsgp > ((caddr_t)PS_STRINGS - sigsize))
+	if (nsgp > ((caddr_t)PS_STRINGS))
 		return NULL;
 	*sgp = nsgp;
 	return n;

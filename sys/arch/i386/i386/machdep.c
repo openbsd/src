@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.211 2002/07/19 17:30:50 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.212 2002/07/20 19:24:56 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1467,7 +1467,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int oonstack;
-	extern char sigcode[], esigcode[];
 
 	/* 
 	 * Build the argument list for the signal handler.
@@ -1554,7 +1553,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	__asm("movw %w0,%%fs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	tf->tf_eip = p->p_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;

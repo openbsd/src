@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.67 2002/05/02 00:36:04 millert Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.68 2002/07/20 19:24:57 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -64,6 +64,11 @@
 #include <machine/reg.h>
 
 #include <dev/rndvar.h>
+
+/*
+ * Map the shared signal code.
+ */
+int exec_sigcode_map(struct proc *, struct emul *);
 
 /*
  * stackgap_random specifies if the stackgap should have a random size added
@@ -246,7 +251,6 @@ sys_execve(p, v, retval)
 	struct ps_strings arginfo;
 	struct vmspace *vm = p->p_vmspace;
 	char **tmpfap;
-	int szsigcode;
 	extern struct emul emul_native;
 
 	/*
@@ -365,15 +369,12 @@ sys_execve(p, v, retval)
 
 	dp = (char *)ALIGN(dp);
 
-	szsigcode = pack.ep_emul->e_esigcode - pack.ep_emul->e_sigcode;
-
 	sgap = STACKGAPLEN;
 	if (stackgap_random != 0)
 		sgap += (arc4random() * ALIGNBYTES) & (stackgap_random - 1);
 	/* Now check if args & environ fit into new stack */
 	len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
-	    sizeof(long) + dp + sgap + szsigcode +
-	    sizeof(struct ps_strings)) - argp;
+	    sizeof(long) + dp + sgap + sizeof(struct ps_strings)) - argp;
 
 	len = ALIGN(len);	/* make the stack "safely" aligned */
 
@@ -424,8 +425,8 @@ sys_execve(p, v, retval)
 	arginfo.ps_nenvstr = envc;
 
 #ifdef MACHINE_STACK_GROWS_UP
-	stack = (char *)USRSTACK + sizeof(arginfo) + szsigcode;
-	slen = len - sizeof(arginfo) - szsigcode;
+	stack = (char *)USRSTACK + sizeof(arginfo);
+	slen = len - sizeof(arginfo);
 #else
 	stack = (char *)(USRSTACK - len);
 #endif
@@ -436,17 +437,6 @@ sys_execve(p, v, retval)
 	/* copy out the process's ps_strings structure */
 	if (copyout(&arginfo, (char *)PS_STRINGS, sizeof(arginfo)))
 		goto exec_abort;
-
-	/* copy out the process's signal trampoline code */
-#ifdef MACHINE_STACK_GROWS_UP
-	if (szsigcode && copyout((char *)pack.ep_emul->e_sigcode,
-	    ((char *)PS_STRINGS) + sizeof(arginfo), szsigcode))
-		goto exec_abort;
-#else
-	if (szsigcode && copyout((char *)pack.ep_emul->e_sigcode,
-	    ((char *)PS_STRINGS) - szsigcode, szsigcode))
-		goto exec_abort;
-#endif
 
 	stopprofclock(p);	/* stop profiling */
 	fdcloseexec(p);		/* handle close on exec */
@@ -607,6 +597,10 @@ sys_execve(p, v, retval)
 	(*pack.ep_emul->e_setregs)(p, &pack, (u_long)stack, retval);
 #endif
 
+	/* map the process's signal trampoline code */
+	if (exec_sigcode_map(p, pack.ep_emul))
+		goto exec_abort;
+
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
 
@@ -707,4 +701,53 @@ copyargs(pack, arginfo, stack, argp)
 		return (NULL);
 
 	return (cpp);
+}
+
+int
+exec_sigcode_map(struct proc *p, struct emul *e)
+{
+	vsize_t sz;
+
+	sz = (vaddr_t)e->e_esigcode - (vaddr_t)e->e_sigcode;
+
+	/*
+	 * If we don't have a sigobject for this emulation, create one.
+	 *
+	 * sigobject is an anonymous memory object (just like SYSV shared
+	 * memory) that we keep a permanent reference to and that we map
+	 * in all processes that need this sigcode. The creation is simple,
+	 * we create an object, add a permanent reference to it, map it in
+	 * kernel space, copy out the sigcode to it and unmap it.
+	 * The we map it with PROT_READ|PROT_EXEC into the process just
+	 * the way sys_mmap would map it.
+	 */
+	if (e->e_sigobject == NULL) {
+		vaddr_t va;
+		int r;
+
+		e->e_sigobject = uao_create(sz, 0);
+		uao_reference(e->e_sigobject);	/* permanent reference */
+
+		va = vm_map_min(kernel_map);	/* hint */
+		if ((r = uvm_map(kernel_map, &va, round_page(sz), e->e_sigobject,
+		    0, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0)))) {
+			printf("kernel mapping failed %d\n", r);
+			return (ENOMEM);
+		}
+		memcpy((void *)va, e->e_sigcode, sz);
+		uvm_unmap(kernel_map, va, va + round_page(sz));
+	}
+
+	/* Just a hint to uvm_mmap where to put it. */
+	p->p_sigcode = round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
+	uao_reference(e->e_sigobject);
+	if (uvm_map(&p->p_vmspace->vm_map, &p->p_sigcode, round_page(sz),
+	    e->e_sigobject, 0, 0, UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX,
+	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) {
+		printf("user mapping failed\n");
+		return (ENOMEM);
+	}
+
+	return (0);
 }

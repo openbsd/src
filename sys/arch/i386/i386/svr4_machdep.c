@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.15 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.16 2002/07/20 19:24:56 art Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -325,7 +325,6 @@ svr4_sendsig(catcher, sig, mask, code, type, val)
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int oonstack;
-	extern char svr4_esigcode[], svr4_sigcode[];
 
 	tf = p->p_md.md_regs;
 	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
@@ -378,8 +377,7 @@ svr4_sendsig(catcher, sig, mask, code, type, val)
 	 */
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)(((char *)PS_STRINGS) -
-	     (svr4_esigcode - svr4_sigcode));
+	tf->tf_eip = p->p_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_fs.c,v 1.10 2002/07/12 14:02:23 art Exp $	*/
+/*	$OpenBSD: ultrix_fs.c,v 1.11 2002/07/20 19:24:57 art Exp $	*/
 /*	$NetBSD: ultrix_fs.c,v 1.4 1996/04/07 17:23:06 jonathan Exp $	*/
 
 /*
@@ -331,13 +331,11 @@ ultrix_sys_mount(p, v, retval)
 
 	int error;
 	int otype = SCARG(uap, type);
-	extern char sigcode[], esigcode[];
 	char fsname[MFSNAMELEN];
 	char * fstype;
 	struct sys_mount_args nuap;
-
-#define	szsigcode	(esigcode - sigcode)
-	caddr_t usp = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
+	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t usp = stackgap_alloc(&sg, 1024 /* XXX */);
 
 	bzero(&nuap, sizeof(nuap));
 	SCARG(&nuap, flags) = 0;

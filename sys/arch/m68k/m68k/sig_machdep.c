@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.9 2002/06/04 00:09:08 deraadt Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.10 2002/07/20 19:24:56 art Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
 
 /*
@@ -145,7 +145,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	register struct sigacts *psp = p->p_sigacts;
 	register short ft;
 	int oonstack, fsize;
-	extern char sigcode[], esigcode[];
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
@@ -276,7 +275,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	/*
 	 * Signal trampoline code is at base of user stack.
 	 */
-	frame->f_pc = (int)PS_STRINGS - (esigcode - sigcode);
+	frame->f_pc = p->p_sigcode;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d returns\n",

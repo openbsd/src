@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.59 2002/05/16 07:37:44 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.60 2002/07/20 19:24:57 art Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -439,7 +439,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct	trapframe *syscf;
 	struct	sigcontext *sigctx, gsigctx;
 	struct	trampframe *trampf, gtrampf;
-	extern	char sigcode[], esigcode[];
 	unsigned	cursp;
 	int	onstack;
 
@@ -490,7 +489,7 @@ printf("sendsig: signal %x  catcher %x\n", sig, catcher);
 	    copyout(&gsigctx, sigctx, sizeof(gsigctx)))
 		sigexit(p, SIGILL);
 
-	syscf->pc = (unsigned) (((char *) PS_STRINGS) - (esigcode - sigcode));
+	syscf->pc = p->p_sigcode;
 	syscf->psl = PSL_U | PSL_PREVU;
 	syscf->ap = (unsigned) sigctx-8;
 	syscf->sp = cursp;

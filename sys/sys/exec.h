@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.15 2002/07/19 01:06:18 jason Exp $	*/
+/*	$OpenBSD: exec.h,v 1.16 2002/07/20 19:24:57 art Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -85,10 +85,10 @@ struct ps_strings {
 #endif
 #ifdef MACHINE_STACK_GROWS_UP
 #define	STACKGAPBASE_UNALIGNED	\
-	((caddr_t)PS_STRINGS + sizeof(struct ps_strings) + (u_long)szsigcode)
+	((caddr_t)PS_STRINGS + sizeof(struct ps_strings))
 #else
 #define	STACKGAPBASE_UNALIGNED	\
-	((caddr_t)PS_STRINGS - szsigcode - STACKGAPLEN)
+	((caddr_t)PS_STRINGS - STACKGAPLEN)
 #endif
 #define	STACKGAPBASE		\
 	((caddr_t)ALIGN(STACKGAPBASE_UNALIGNED))

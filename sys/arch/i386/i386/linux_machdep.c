@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.22 2002/04/19 21:28:58 jasoni Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.23 2002/07/20 19:24:56 art Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -116,7 +116,6 @@ linux_sendsig(catcher, sig, mask, code, type, val)
 	struct linux_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int oonstack;
-	extern char linux_sigcode[], linux_esigcode[];
 
 	tf = p->p_md.md_regs;
 	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
@@ -184,8 +183,7 @@ linux_sendsig(catcher, sig, mask, code, type, val)
 	 */
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)(((char *)PS_STRINGS) -
-	     (linux_esigcode - linux_sigcode));
+	tf->tf_eip = p->p_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;

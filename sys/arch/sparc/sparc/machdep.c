@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.83 2002/06/14 04:16:06 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.84 2002/07/20 19:24:56 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -525,8 +525,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct trapframe *tf;
 	int caddr, oonstack, oldsp, newsp;
 	struct sigframe sf;
-	extern char sigcode[], esigcode[];
-#define	szsigcode	(esigcode - sigcode)
 #ifdef COMPAT_SUNOS
 	extern struct emul emul_sunos;
 #endif
@@ -624,7 +622,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	} else
 #endif
 	{
-		caddr = (int)PS_STRINGS - szsigcode;
+		caddr = p->p_sigcode;
 		tf->tf_global[1] = (int)catcher;
 	}
 	tf->tf_pc = caddr;
