@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.11 1995/10/07 06:28:00 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.14 1995/12/26 10:06:15 jonathan Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -46,7 +46,7 @@
 5	STD		{ int ultrix_sys_open(char *path, int flags, \
 			    int mode); }
 6	NOARGS		{ int sys_close(int fd); }
-7	UNIMPL		old_wait
+7	NOARGS		{ int compat_43_sys_wait(void); } owait
 8	NOARGS		{ int compat_43_sys_creat(char *path, int mode); }
 9	NOARGS		{ int sys_link(char *path, char *link); }
 10	NOARGS		{ int sys_unlink(char *path); }
@@ -61,7 +61,8 @@
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
 20	NOARGS		{ pid_t sys_getpid(void); }
-21	OBSOL		mount
+21	STD		{ int ultrix_sys_mount(char *special, char *dir, \
+			     int rdonly, int type, caddr_t data); }
 22	OBSOL		sysV_unmount
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
@@ -97,7 +98,7 @@
 51	NOARGS		{ int sys_acct(char *path); }
 52	UNIMPL
 53	UNIMPL		syslock
-54	NOARGS		{ int sys_ioctl(int fd, u_long com, caddr_t data); }
+54	STD		{ int ultrix_sys_ioctl(int fd, u_long com, caddr_t data); }
 55	NOARGS		{ int sys_reboot(int opt); }
 56	UNIMPL		v7 mpxchan
 57	NOARGS		{ int sys_symlink(char *path, char *link); }
@@ -145,7 +146,7 @@
 90	NOARGS		{ int sys_dup2(u_int from, u_int to); }
 91	UNIMPL		getdopt
 92	NOARGS		{ int sys_fcntl(int fd, int cmd, void *arg); }
-93	NOARGS		{ int sys_select(u_int nd, fd_set *in, fd_set *ou, \
+93	STD		{ int ultrix_sys_select(u_int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
 95	NOARGS		{ int sys_fsync(int fd); }
@@ -260,7 +261,8 @@
 168	STD		{ int ultrix_sys_quotactl(int cmd, char *special, \
 			    int uid, caddr_t addr); }
 169	STD		{ int ultrix_sys_exportfs(char *path, char *ex); }
-170	UNIMPL		mount
+170	UNIMPL		{ int ultrix_sys_mount(char *special, char *dir, \
+			     int rdonly, int type, caddr_t data); }
 171	UNIMPL	4 hdwconf
 172	UNIMPL		msgctl
 173	UNIMPL		msgget
@@ -275,7 +277,9 @@
 182	UNIMPL	0 lockf
 183	STD		{ int ultrix_sys_ustat(int dev, \
 			    struct ultrix_ustat *buf); }
-184	UNIMPL		getmnt
+184	STD		{ int ultrix_sys_getmnt(int *start, \
+				struct ultrix_fs_data *buf, \
+				int bufsize, int mode, char *path); }
 185	UNIMPL	 	notdef
 186	UNIMPL	 	notdef
 187	STD		{ int ultrix_sys_sigpending(int *mask); }

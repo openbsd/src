@@ -12,6 +12,7 @@
 #define	ULTRIX_SYS_write	4
 #define	ULTRIX_SYS_open	5
 #define	ULTRIX_SYS_close	6
+#define	ULTRIX_SYS_owait	7
 #define	ULTRIX_SYS_creat	8
 #define	ULTRIX_SYS_link	9
 #define	ULTRIX_SYS_unlink	10
@@ -25,7 +26,7 @@
 				/* 18 is obsolete stat */
 #define	ULTRIX_SYS_lseek	19
 #define	ULTRIX_SYS_getpid	20
-				/* 21 is obsolete mount */
+#define	ULTRIX_SYS_mount	21
 				/* 22 is obsolete sysV_unmount */
 #define	ULTRIX_SYS_setuid	23
 #define	ULTRIX_SYS_getuid	24
@@ -148,6 +149,7 @@
 #define	ULTRIX_SYS_exportfs	169
 #define	ULTRIX_SYS_uname	179
 #define	ULTRIX_SYS_ustat	183
+#define	ULTRIX_SYS_getmnt	184
 #define	ULTRIX_SYS_sigpending	187
 #define	ULTRIX_SYS_setsid	188
 #define	ULTRIX_SYS_waitpid	189

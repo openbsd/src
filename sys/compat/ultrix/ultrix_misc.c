@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.16.2.1 1995/10/18 06:46:14 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.18 1995/12/26 04:23:14 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -191,6 +191,43 @@ ultrix_sys_execv(p, v, retval)
 	SCARG(&ouap, envp) = NULL;
 
 	return (sys_execve(p, &ouap, retval));
+}
+
+ultrix_sys_select(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_select_args *uap = v;
+	struct timeval atv, *tvp;
+	int error;
+
+	/* Limit number of FDs selected on to the native maximum */
+
+	if (SCARG(uap, nd) > FD_SETSIZE)
+		SCARG(uap, nd) = FD_SETSIZE;
+
+	/* Check for negative timeval */
+	if (SCARG(uap, tv)) {
+		error = copyin((caddr_t)SCARG(uap, tv), (caddr_t)&atv,
+			       sizeof(atv));
+		if (error)
+			goto done;
+#ifdef DEBUG
+		/* Ultrix clients sometimes give negative timeouts? */
+		if (atv.tv_sec < 0 || atv.tv_usec < 0)
+			printf("ultrix select( %d, %d)\n",
+			       atv.tv_sec, atv.tv_usec);
+		/*tvp = (timeval *)STACKGAPBASE;*/
+#endif
+
+	}
+	error = sys_select(p, (void*) uap, retval);
+	if (error == EINVAL)
+		printf("ultrix select: bad args?\n");
+
+done:
+	return error;
 }
 
 #if defined(NFSCLIENT)

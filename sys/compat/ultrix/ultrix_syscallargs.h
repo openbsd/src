@@ -24,6 +24,20 @@ struct ultrix_sys_mknod_args {
 	syscallarg(int) dev;
 };
 
+struct ultrix_sys_mount_args {
+	syscallarg(char *) special;
+	syscallarg(char *) dir;
+	syscallarg(int) rdonly;
+	syscallarg(int) type;
+	syscallarg(caddr_t) data;
+};
+
+struct ultrix_sys_ioctl_args {
+	syscallarg(int) fd;
+	syscallarg(u_long) com;
+	syscallarg(caddr_t) data;
+};
+
 struct ultrix_sys_mmap_args {
 	syscallarg(caddr_t) addr;
 	syscallarg(size_t) len;
@@ -42,6 +56,14 @@ struct ultrix_sys_wait3_args {
 	syscallarg(int *) status;
 	syscallarg(int) options;
 	syscallarg(struct rusage *) rusage;
+};
+
+struct ultrix_sys_select_args {
+	syscallarg(u_int) nd;
+	syscallarg(fd_set *) in;
+	syscallarg(fd_set *) ou;
+	syscallarg(fd_set *) ex;
+	syscallarg(struct timeval *) tv;
 };
 
 struct ultrix_sys_setsockopt_args {
@@ -91,6 +113,14 @@ struct ultrix_sys_ustat_args {
 	syscallarg(struct ultrix_ustat *) buf;
 };
 
+struct ultrix_sys_getmnt_args {
+	syscallarg(int *) start;
+	syscallarg(struct ultrix_fs_data *) buf;
+	syscallarg(int) bufsize;
+	syscallarg(int) mode;
+	syscallarg(char *) path;
+};
+
 struct ultrix_sys_sigpending_args {
 	syscallarg(int *) mask;
 };
@@ -128,6 +158,7 @@ int	sys_read	__P((struct proc *, void *, register_t *));
 int	sys_write	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_open	__P((struct proc *, void *, register_t *));
 int	sys_close	__P((struct proc *, void *, register_t *));
+int	compat_43_sys_wait	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_creat	__P((struct proc *, void *, register_t *));
 int	sys_link	__P((struct proc *, void *, register_t *));
 int	sys_unlink	__P((struct proc *, void *, register_t *));
@@ -139,6 +170,7 @@ int	sys_chown	__P((struct proc *, void *, register_t *));
 int	sys_obreak	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_lseek	__P((struct proc *, void *, register_t *));
 int	sys_getpid	__P((struct proc *, void *, register_t *));
+int	ultrix_sys_mount	__P((struct proc *, void *, register_t *));
 int	sys_setuid	__P((struct proc *, void *, register_t *));
 int	sys_getuid	__P((struct proc *, void *, register_t *));
 int	sys_access	__P((struct proc *, void *, register_t *));
@@ -151,7 +183,7 @@ int	sys_pipe	__P((struct proc *, void *, register_t *));
 int	sys_profil	__P((struct proc *, void *, register_t *));
 int	sys_getgid	__P((struct proc *, void *, register_t *));
 int	sys_acct	__P((struct proc *, void *, register_t *));
-int	sys_ioctl	__P((struct proc *, void *, register_t *));
+int	ultrix_sys_ioctl	__P((struct proc *, void *, register_t *));
 int	sys_reboot	__P((struct proc *, void *, register_t *));
 int	sys_symlink	__P((struct proc *, void *, register_t *));
 int	sys_readlink	__P((struct proc *, void *, register_t *));
@@ -183,7 +215,7 @@ int	compat_43_sys_sethostname	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_getdtablesize	__P((struct proc *, void *, register_t *));
 int	sys_dup2	__P((struct proc *, void *, register_t *));
 int	sys_fcntl	__P((struct proc *, void *, register_t *));
-int	sys_select	__P((struct proc *, void *, register_t *));
+int	ultrix_sys_select	__P((struct proc *, void *, register_t *));
 int	sys_fsync	__P((struct proc *, void *, register_t *));
 int	sys_setpriority	__P((struct proc *, void *, register_t *));
 int	sys_socket	__P((struct proc *, void *, register_t *));
@@ -250,6 +282,7 @@ int	ultrix_sys_quotactl	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_exportfs	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_uname	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_ustat	__P((struct proc *, void *, register_t *));
+int	ultrix_sys_getmnt	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_sigpending	__P((struct proc *, void *, register_t *));
 int	sys_setsid	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_waitpid	__P((struct proc *, void *, register_t *));
