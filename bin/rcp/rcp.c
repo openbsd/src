@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.31 2002/07/04 04:26:40 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.32 2003/01/10 10:29:35 djm Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -731,7 +731,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			wrerr = YES;
 			wrerrno = j >= 0 ? EIO : errno;
 		}
-		if (ftruncate(ofd, size)) {
+		if (wrerr == NO && ftruncate(ofd, size) != 0) {
 			run_err("%s: truncate: %s", np, strerror(errno));
 			wrerr = DISPLAYED;
 		}
