@@ -345,6 +345,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "M3309 MPEG Accelerator",
 	},
 	{
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981,
+	    0,
+	    "ADMtek",
+	    "AL981",
+	},
+	{
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985,
+	    0,
+	    "ADMtek",
+	    "AN985",
+	},
+	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7810,
 	    0,
 	    "Adaptec",
@@ -6672,6 +6684,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DIAMOND2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Diamond Multimedia (2nd ID)",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ADMTEK, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "ADMtek",
 	    NULL,
 	},
 	{

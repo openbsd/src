@@ -510,6 +510,7 @@
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_STB2	0x12d2		/* NVidia/SGS-Thomson */
 #define	PCI_VENDOR_DIAMOND2	0x12eb		/* Diamond Multimedia (2nd ID) */
+#define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	PCI_VENDOR_SIIG	0x131f		/* SIIG */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corp */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
@@ -617,6 +618,10 @@
 #define	PCI_PRODUCT_ALI_M5243	0x5243		/* M5243 AGP/PCI-PCI */
 #define	PCI_PRODUCT_ALI_M7101	0x7101		/* M7101 Power Management */
 #define	PCI_PRODUCT_ALI_M3309	0x3309		/* M3309 MPEG Accelerator */
+
+/* ADMtek products */
+#define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* AL981 */
+#define	PCI_PRODUCT_ADMTEK_AN985	0x0985		/* AN985 */
 
 /* Adaptec products */
 #define	PCI_PRODUCT_ADP_AIC7810	0x1078		/* AIC-7810 */
