@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.3 2004/04/20 03:52:36 deraadt Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.4 2004/04/20 04:19:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -76,55 +76,15 @@
 #define	LOCAL_PORT	68
 #define	REMOTE_PORT	67
 
-struct option_data {
-	int		 len;
-	u_int8_t	*data;
-};
-
-struct string_list {
-	struct string_list	*next;
-	char			*string;
-};
-
 struct iaddr {
 	int len;
 	unsigned char iabuf[16];
-};
-
-struct iaddrlist {
-	struct iaddrlist *next;
-	struct iaddr addr;
-};
-
-struct packet {
-	struct dhcp_packet	*raw;
-	int			 packet_length;
-	int			 packet_type;
-	int			 options_valid;
-	int			 client_port;
-	struct iaddr		 client_addr;
-	struct interface_info	*interface;
-	struct hardware		*haddr;
-	struct option_data	 options[256];
-	int			 got_requested_address;
 };
 
 struct hardware {
 	u_int8_t htype;
 	u_int8_t hlen;
 	u_int8_t haddr[16];
-};
-
-struct client_lease {
-	struct client_lease	*next;
-	time_t			 expiry, renewal, rebind;
-	struct iaddr		 address;
-	char			*server_name;
-	char			*filename;
-	struct string_list	*medium;
-	unsigned int		 is_static : 1;
-	unsigned int		 is_bootp : 1;
-	struct option_data	 options[256];
 };
 
 /* Possible states in which the client can be. */
@@ -138,55 +98,6 @@ enum dhcp_state {
 	S_REBINDING
 };
 
-struct client_config {
-	struct option_data	defaults[256];
-	enum {
-		ACTION_DEFAULT,
-		ACTION_SUPERSEDE,
-		ACTION_PREPEND,
-		ACTION_APPEND
-	} default_actions[256];
-
-	struct option_data	 send_options[256];
-	u_int8_t		 required_options[256];
-	u_int8_t		 requested_options[256];
-	int			 requested_option_count;
-	time_t			 timeout;
-	time_t			 initial_interval;
-	time_t			 retry_interval;
-	time_t			 select_interval;
-	time_t			 reboot_timeout;
-	time_t			 backoff_cutoff;
-	struct string_list	*media;
-	char			*script_name;
-	enum { IGNORE, ACCEPT, PREFER }
-				 bootp_policy;
-	struct string_list	*medium;
-	struct iaddrlist	*reject_list;
-};
-
-struct client_state {
-	struct client_lease	 *active;
-	struct client_lease	 *new;
-	struct client_lease	 *offered_leases;
-	struct client_lease	 *leases;
-	struct client_lease	 *alias;
-	enum dhcp_state		  state;
-	struct iaddr		  destination;
-	u_int32_t		  xid;
-	u_int16_t		  secs;
-	time_t			  first_sending;
-	time_t			  interval;
-	struct string_list	 *medium;
-	struct dhcp_packet	  packet;
-	int			  packet_length;
-	struct iaddr		  requested_address;
-	struct client_config	 *config;
-	char			**scriptEnv;
-	int			  scriptEnvsize;
-	struct string_list	 *env;
-	int			  envc;
-};
 
 struct interface_info {
 	struct interface_info	*next;
@@ -200,7 +111,6 @@ struct interface_info {
 	size_t			 rbuf_offset;
 	size_t			 rbuf_len;
 	struct ifreq		*ifp;
-	struct client_state	*client;
 	int			 noifmedia;
 	int			 errors;
 	int			 dead;
@@ -219,20 +129,6 @@ struct protocol {
 	int fd;
 	void (*handler)(struct protocol *);
 	void *local;
-};
-
-#define DEFAULT_HASH_SIZE 97
-
-struct hash_bucket {
-	struct hash_bucket *next;
-	unsigned char *name;
-	int len;
-	unsigned char *value;
-};
-
-struct hash_table {
-	int hash_count;
-	struct hash_bucket *buckets[DEFAULT_HASH_SIZE];
 };
 
 /* Default path to dhcpd config file. */
@@ -255,7 +151,7 @@ int if_register_bpf(struct interface_info *);
 void if_register_send(struct interface_info *);
 void if_register_receive(struct interface_info *);
 ssize_t send_packet(struct interface_info *,
-    struct packet *, struct dhcp_packet *, size_t, struct in_addr,
+    struct dhcp_packet *, size_t, struct in_addr,
     struct sockaddr_in *, struct hardware *);
 ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
     struct sockaddr_in *, struct hardware *);
@@ -264,7 +160,6 @@ ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
 extern void (*bootp_packet_handler)(struct interface_info *,
     struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
 void discover_interfaces(struct interface_info *);
-void reinitialize_interfaces(void);
 void dispatch(void);
 void got_one(struct protocol *);
 void add_timeout(time_t, void (*)(void *), void *);

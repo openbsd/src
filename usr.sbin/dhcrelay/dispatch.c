@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.1 2004/04/12 21:10:28 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.2 2004/04/20 04:19:00 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -51,6 +51,7 @@ struct protocol *protocols;
 struct timeout *timeouts;
 static struct timeout *free_timeouts;
 static int interfaces_invalidated;
+
 void (*bootp_packet_handler)(struct interface_info *,
     struct dhcp_packet *, int, unsigned int,
     struct iaddr, struct hardware *);
@@ -89,6 +90,7 @@ discover_interfaces(struct interface_info *iface)
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
 			struct sockaddr_dl *foo =
 			    (struct sockaddr_dl *)ifa->ifa_addr;
+
 			iface->index = foo->sdl_index;
 			iface->hw_address.hlen = foo->sdl_alen;
 			iface->hw_address.htype = HTYPE_ETHER; /* XXX */
@@ -102,6 +104,7 @@ discover_interfaces(struct interface_info *iface)
 				continue;
 			if (!iface->ifp) {
 				int len = IFNAMSIZ + ifa->ifa_addr->sa_len;
+
 				if ((tif = malloc(len)) == NULL)
 					error("no space to remember ifp");
 				strlcpy(tif->ifr_name, ifa->ifa_name, IFNAMSIZ);
@@ -122,14 +125,7 @@ discover_interfaces(struct interface_info *iface)
 	if_register_receive(iface);
 	if_register_send(iface);
 	add_protocol(iface->name, iface->rfdesc, got_one, iface);
-
 	freeifaddrs(ifap);
-}
-
-void
-reinitialize_interfaces(void)
-{
-	interfaces_invalidated = 1;
 }
 
 /*
@@ -161,9 +157,9 @@ dispatch(void)
 		 */
 another:
 		if (timeouts) {
-			struct timeout *t;
 			if (timeouts->when <= cur_time) {
-				t = timeouts;
+				struct timeout *t = timeouts;
+
 				timeouts = timeouts->next;
 				(*(t->func))(t->what);
 				t->next = free_timeouts;
@@ -189,6 +185,7 @@ another:
 
 		for (l = protocols; l; l = l->next) {
 			struct interface_info *ip = l->local;
+
 			if (ip && (l->handler != got_one || !ip->dead)) {
 				fds[i].fd = l->fd;
 				fds[i].events = POLLIN;
@@ -218,8 +215,8 @@ another:
 
 		i = 0;
 		for (l = protocols; l; l = l->next) {
-			struct interface_info *ip;
-			ip = l->local;
+			struct interface_info *ip = l->local;
+
 			if ((fds[i].revents & POLLIN)) {
 				fds[i].revents = 0;
 				if (ip && (l->handler != got_one ||

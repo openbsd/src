@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.15 2004/04/20 03:52:36 deraadt Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.16 2004/04/20 04:19:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -212,7 +212,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		memcpy(hto.haddr, packet->chaddr, hto.hlen);
 		hto.htype = packet->htype;
 
-		if (send_packet(interfaces, NULL, packet, length,
+		if (send_packet(interfaces, packet, length,
 		    interfaces->primary_address, &to, &hto) != -1)
 			debug("forwarded BOOTREPLY for %s to %s",
 			    print_hw_addr(packet->htype, packet->hlen,
@@ -236,7 +236,7 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 	/* Otherwise, it's a BOOTREQUEST, so forward it to all the
 	   servers. */
 	for (sp = servers; sp; sp = sp->next) {
-		if (send_packet(interfaces, NULL, packet, length,
+		if (send_packet(interfaces, packet, length,
 		    ip->primary_address, &sp->to, NULL) != -1) {
 			debug("forwarded BOOTREQUEST for %s to %s",
 			    print_hw_addr(packet->htype, packet->hlen,
