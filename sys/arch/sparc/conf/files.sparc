@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.42 2002/07/09 15:27:59 jason Exp $
+#	$OpenBSD: files.sparc,v 1.43 2002/08/12 10:44:03 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -61,9 +61,10 @@ device memreg
 attach memreg at mainbus, obio
 file	arch/sparc/sparc/memreg.c
 
-device zs
+device zs { channel = -1 }
 attach zs at mainbus, obio
-file	arch/sparc/dev/zs.c			zs needs-count
+file	arch/sparc/dev/zs.c			zs needs-flag
+file	arch/sparc/dev/z8530sc.c		zs
 
 device fdc {}
 attach fdc at mainbus, obio
@@ -76,6 +77,22 @@ device xbox {}
 device sbus { slot = -1, offset = -1 }
 attach sbus at mainbus, iommu, sbus, xbox
 file	arch/sparc/dev/sbus.c			sbus
+
+#
+# Console (zs) related stuff
+#
+
+device zstty: tty
+attach zstty at zs
+file	arch/sparc/dev/z8530tty.c		zstty needs-flag
+file	arch/sparc/dev/zs_kgdb.c		kgdb
+
+define sunkbd
+file	dev/sun/sunkbd.c			sunkbd
+
+device zskbd: tty, wskbddev, sunkbd
+attach zskbd at zs
+file	arch/sparc/dev/z8530kbd.c		zskbd needs-flag
 
 #
 # Media Independent Interface (mii)
@@ -130,47 +147,57 @@ device audiocs: audio, auconv
 attach audiocs at sbus
 file	arch/sparc/dev/cs4231.c		audiocs
 
-# Brooktree DAC attribute
-define bt_dac
+# Framebuffers
 
-device bwtwo
-attach bwtwo at sbus, obio, vmes, vmel
-file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
+file	arch/sparc/dev/fb.c
 
-device cgtwo
-attach cgtwo at sbus, obio, vmes
-file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
-device cgthree: bt_dac
-attach cgthree at sbus
-file	arch/sparc/dev/cgthree.c	cgthree needs-flag
-
-device cgfour: bt_dac
-attach cgfour at obio
-file	arch/sparc/dev/cgfour.c		cgfour needs-flag
-
-device cgsix: bt_dac
-attach cgsix at sbus, obio
-file	arch/sparc/dev/cgsix.c		cgsix needs-flag
-
-device cgeight: bt_dac
-attach cgeight at obio
-file	arch/sparc/dev/cgeight.c	cgeight needs-flag
-
-device tcx: bt_dac
-attach tcx at sbus
-file	arch/sparc/dev/tcx.c		tcx needs-flag
-
-device cgfourteen
-attach cgfourteen at obio
-file	arch/sparc/dev/cgfourteen.c	cgfourteen needs-flag
-
+define	bt_dac
 file	arch/sparc/dev/bt_subr.c	bt_dac
 
+device	bwtwo: wsemuldisplaydev, rasops1, wsemul_sun
+attach	bwtwo at sbus, obio, vmes, vmel
+file	arch/sparc/dev/bwtwo.c		bwtwo
+
+device	cgtwo: wsemuldisplaydev, rasops8, wsemul_sun
+attach	cgtwo at sbus, obio, vmes
+file	arch/sparc/dev/cgtwo.c		cgtwo
+
+device	cgthree: wsemuldisplaydev, rasops8, wsemul_sun, bt_dac
+attach	cgthree at sbus
+file	arch/sparc/dev/cgthree.c	cgthree
+
+device	cgfour: wsemuldisplaydev, rasops8, wsemul_sun, bt_dac
+attach	cgfour at obio
+file	arch/sparc/dev/cgfour.c		cgfour
+
+device	cgsix: wsemuldisplaydev, rasops8, wsemul_sun, bt_dac
+attach	cgsix at sbus, obio
+file	arch/sparc/dev/cgsix.c		cgsix
+
+device	cgeight: wsemuldisplaydev, rasops24, wsemul_sun, bt_dac
+attach	cgeight at obio
+file	arch/sparc/dev/cgeight.c	cgeight
+
+device	cgfourteen: wsemuldisplaydev, rasops8, rasops32, wsemul_sun
+attach	cgfourteen at obio
+file	arch/sparc/dev/cgfourteen.c	cgfourteen
+
+device	cgtwelve: wsemuldisplaydev, rasops32, wsemul_sun
+attach	cgtwelve at sbus
+file	arch/sparc/dev/cgtwelve.c	cgtwelve
+
 # Onboard Weitek p9100 found on Tadpole 3GS/3GX
-device pnozz
-attach pnozz at sbus: bt_dac
-file	arch/sparc/dev/p9100.c		pnozz needs-flag
+device	pnozz: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, wsemul_sun, bt_dac
+attach	pnozz at sbus
+file	arch/sparc/dev/p9100.c		pnozz
+
+device	tcx: wsemuldisplaydev, rasops8, rasops32, wsemul_sun, bt_dac
+attach	tcx at sbus
+file	arch/sparc/dev/tcx.c		tcx
 
 # device definition in sys/conf/files
 attach le at sbus, ledma, lebuffer, obio
@@ -209,17 +236,11 @@ file	arch/sparc/dev/si.c		si | sw
 attach	isp at sbus with isp_sbus
 file	arch/sparc/dev/isp_sbus.c	isp_sbus
 
-pseudo-device	kbd
-
 #
-# Generic Sun stuff
+# Generic Sparc stuff
 #
-include "../../../dev/sun/files.sun"
 
-file	arch/sparc/dev/cons.c
-file	arch/sparc/dev/fb.c
-file	arch/sparc/dev/ms.c
-file	arch/sparc/dev/kbd.c		kbd	needs-flag
+file	dev/cons.c
 
 file	arch/sparc/fpu/fpu.c
 file	arch/sparc/fpu/fpu_add.c
@@ -261,11 +282,6 @@ file	kludge_for_in_proto.c		hy needs-flag
 file	arch/sparc/sparc/db_interface.c	ddb | kgdb
 file	arch/sparc/sparc/db_trace.c	ddb
 file	arch/sparc/sparc/db_disasm.c	ddb
-
-#
-# Raster Console
-#
-include "../../../dev/rcons/files.rcons"
 
 #
 # Compatibility modules

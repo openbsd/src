@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.52 2001/07/21 20:47:54 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.53 2002/08/12 10:44:03 miod Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -20,7 +20,6 @@ option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 #option		KGDBRATE=38400	# baud rate
 
 # Options for SPARCstation hardware
-option		RASTERCONSOLE	# fast rasterop console
 option		COMPAT_SUNOS	# compatibility with SunOS binaries
 option		COMPAT_SVR4	# compatibility with SVR4 binaries
 
@@ -97,6 +96,10 @@ zs1	at obio0					# sun4m
 zs1	at obio0 addr 0xf0000000 level 12 flags 0x103	# sun4/200 and sun4/300
 zs1	at obio0 addr 0x00000000 level 12 flags 0x103	# sun4/100
 zs2	at obio0 addr 0xe0000000 level 12 flags 0x103	# sun4/300
+
+zstty* at zs? channel ?
+zskbd* at zs? channel ?
+wskbd* at zskbd? console ?
 
 # Magma serial/parallel port devices
 magma*	at sbus? slot ? offset ?			# magma serial cards
@@ -219,48 +222,55 @@ si0	at vmes0 addr 0xff200000 level 3 vect 0x40
 sw0	at obio0 addr 0x0a000000 level 3
 
 # Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
-# systems.  If your sun4 system has a cgfour installed in the P4 slot,
-# the P4 entries for "bwtwo" will attach to the overlay plane of the
-# "cgfour".
+# systems.
 bwtwo0	at sbus0 slot ? offset ?		# sun4c on-board
 bwtwo*	at sbus? slot ? offset ?		# sun4c and sun4m
 bwtwo0	at obio0 addr 0xfd000000 level 4	# sun4/200
 bwtwo0	at obio0 addr 0xfb300000 level 4	# sun4/300 in P4 slot
 bwtwo0	at obio0 addr 0x0b300000 level 4	# sun4/100 in P4 slot
+wsdisplay* at bwtwo?
 
-# Sun "cgtwo" VME color framebuffer
+# Sun "cgtwo" VME color framebuffer.
 cgtwo0	at vmes0 addr 0xff400000 level 4 vect 0xa8
+wsdisplay* at cgtwo?
 
-# Sun "cgthree" Sbus color framebuffer
-cgthree0 at sbus? slot ? offset ?
+# Sun "cgthree" Sbus color framebuffer.
 cgthree* at sbus? slot ? offset ?
-#cgthree0 at obio? slot ? offset ?		# sun4m
-#cgthree* at obio? slot ? offset ?		# sun4m
+wsdisplay* at cgthree?
 
-# Sun "cgfour" color framebuffer with overlay plane.  See above comment
-# regarding overlay plane.
+# Sun "cgfour" color framebuffer.
 cgfour0	at obio0 addr 0xfb300000 level 4	# sun4/300 P4
 cgfour0	at obio0 addr 0x0b300000 level 4	# sun4/100 P4
+wsdisplay* at cgfour?
 
 # Sun "cgsix" accelerated color framebuffer.
 cgsix0	at sbus? slot ? offset ?
 cgsix*	at sbus? slot ? offset ?
 cgsix0	at obio0 addr 0xfb000000 level 4	# sun4/300 P4
 cgsix0	at obio0 addr 0x0b000000 level 4	# sun4/100 P4
+wsdisplay* at cgsix?
 
-# Sun "cgeight" 24-bit framebuffer
+# Sun "cgeight" 24-bit framebuffer.
 cgeight0 at obio0 addr 0xfb300000 level 4	# sun4/300 P4
 cgeight0 at obio0 addr 0x0b300000 level 4	# sun4/100 P4
+wsdisplay* at cgeight?
 
 # Sun "tcx" accelerated color framebuffer.
-tcx0	at sbus? slot ? offset ?
 tcx*	at sbus? slot ? offset ?
+wsdisplay* at tcx?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen0	at obio0			# sun4m
+wsdisplay* at cgfourteen?
+
+# Sun "cgtwelve" (GS) accelerated 24-bit framebuffer.
+cgtwelve*	at sbus? slot ? offset ?
+wsdisplay* at cgtwelve?
 
 # Weitek p9100 found on Tadpole 3GS/3GX
 pnozz0	at sbus? slot ? offset ?
+wsdisplay* at pnozz?
+
 # Microcontroller found on Tadpole
 tctrl0	at obio0
 
@@ -292,5 +302,4 @@ fd*	at fdc0					# the drive itself
 #fvme*	at fga0					# FORCE CPU-5V
 #daadio*	at fvme? addr 0x0 level 1 vect 0x1f	# Matrix MD-DAADIO board
 
-pseudo-device	kbd		# Sun keyboard
 #pseudo-device	strip	1	# radio clock

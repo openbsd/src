@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_subr.c,v 1.7 2002/08/02 16:13:07 millert Exp $	*/
+/*	$OpenBSD: bt_subr.c,v 1.8 2002/08/12 10:44:03 miod Exp $	*/
 /*	$NetBSD: bt_subr.c,v 1.5 1996/03/14 19:44:32 christos Exp $ */
 
 /*
@@ -52,69 +52,104 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/fbio.h>
+#include <dev/wscons/wsconsio.h>
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
 
 /*
  * Common code for dealing with Brooktree video DACs.
- * (Contains some software-only code as well, since the colormap
- * ioctls are shared between the cgthree and cgsix drivers.)
  */
 
-/*
- * Implement an FBIOGETCMAP-like ioctl.
- */
 int
-bt_getcmap(p, cm, cmsize)
-	register struct fbcmap *p;
-	union bt_cmap *cm;
-	int cmsize;
+bt_getcmap(bcm, rcm)
+	union bt_cmap *bcm;
+	struct wsdisplay_cmap *rcm;
 {
-	register u_int i, start, count;
-	register u_char *cp;
+	u_int index = rcm->index, count = rcm->count, i;
+	int error;
 
-	start = p->index;
-	count = p->count;
-	if (start >= cmsize || count > cmsize - start)
+	if (index >= 256 || count > 256 - index)
 		return (EINVAL);
-	if (!uvm_useracc(p->red, count, B_WRITE) ||
-	    !uvm_useracc(p->green, count, B_WRITE) ||
-	    !uvm_useracc(p->blue, count, B_WRITE))
-		return (EFAULT);
-	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
-		p->red[i] = cp[0];
-		p->green[i] = cp[1];
-		p->blue[i] = cp[2];
+	for (i = 0; i < count; i++) {
+		if ((error = copyout(&bcm->cm_map[index + i][0],
+		    &rcm->red[i], 1)) != 0)
+			return (error);
+		if ((error = copyout(&bcm->cm_map[index + i][1],
+		    &rcm->green[i], 1)) != 0)
+			return (error);
+		if ((error = copyout(&bcm->cm_map[index + i][2],
+		    &rcm->blue[i], 1)) != 0)
+			return (error);
 	}
 	return (0);
 }
 
-/*
- * Implement the software portion of an FBIOPUTCMAP-like ioctl.
- */
 int
-bt_putcmap(p, cm, cmsize)
-	register struct fbcmap *p;
-	union bt_cmap *cm;
-	int cmsize;
+bt_putcmap(bcm, rcm)
+	union bt_cmap *bcm;
+	struct wsdisplay_cmap *rcm;
 {
-	register u_int i, start, count;
-	register u_char *cp;
+	u_int index = rcm->index, count = rcm->count, i;
+	int error;
 
-	start = p->index;
-	count = p->count;
-	if (start >= cmsize || count > cmsize - start)
+	if (index >= 256 || count > 256 - index)
 		return (EINVAL);
-	if (!uvm_useracc(p->red, count, B_READ) ||
-	    !uvm_useracc(p->green, count, B_READ) ||
-	    !uvm_useracc(p->blue, count, B_READ))
-		return (EFAULT);
-	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
-		cp[0] = p->red[i];
-		cp[1] = p->green[i];
-		cp[2] = p->blue[i];
+	for (i = 0; i < count; i++) {
+		if ((error = copyin(&rcm->red[i],
+		    &bcm->cm_map[index + i][0], 1)) != 0)
+			return (error);
+		if ((error = copyin(&rcm->green[i],
+		    &bcm->cm_map[index + i][1], 1)) != 0)
+			return (error);
+		if ((error = copyin(&rcm->blue[i],
+		    &bcm->cm_map[index + i][2], 1)) != 0)
+			return (error);
 	}
 	return (0);
+}
+
+void
+bt_loadcmap(cm, bt, start, ncolors, cgsix)
+	union bt_cmap *cm;
+	volatile struct bt_regs *bt;
+	u_int start, ncolors;
+	int cgsix;
+{
+	u_int *ip, i;
+	int count;
+
+	ip = &cm->cm_chip[BT_D4M3(start)];	/* start/4 * 3 */
+	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
+
+	if (cgsix) {
+		/* hardware that makes one want to pound boards with hammers */
+		bt->bt_addr = BT_D4M4(start) << 24;
+		while (--count >= 0) {
+			i = *ip++;
+			bt->bt_cmap = i;
+			bt->bt_cmap = i << 8;
+			bt->bt_cmap = i << 16;
+			bt->bt_cmap = i << 24;
+		}
+	} else {
+		bt->bt_addr = BT_D4M4(start);
+		while (--count >= 0)
+			bt->bt_cmap = *ip++;
+	}
+}
+
+void
+bt_setcolor(cm, bt, index, r, g, b, cgsix)
+	union bt_cmap *cm;
+	volatile struct bt_regs *bt;
+	u_int index;
+	u_int8_t r, g, b;
+	int cgsix;
+{
+
+	cm->cm_map[index][0] = r;
+	cm->cm_map[index][1] = g;
+	cm->cm_map[index][2] = b;
+	bt_loadcmap(cm, bt, index, 1, cgsix);
 }

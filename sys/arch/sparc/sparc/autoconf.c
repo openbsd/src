@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.52 2002/04/26 17:08:36 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.53 2002/08/12 10:44:04 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -245,9 +245,7 @@ bootstrap()
 	pmap_bootstrap(cpuinfo.mmu_ncontext,
 		       cpuinfo.mmu_nregion,
 		       cpuinfo.mmu_nsegment);
-#ifdef KGDB
-	zs_kgdb_init();		/* XXX */
-#endif
+	/* Moved zs_kgdb_init() to zs.c:consinit() */
 #ifdef DDB
 	db_machine_init();
 	ddb_init();
@@ -473,7 +471,7 @@ bootpath_build()
 #elif DDB
 			Debugger();
 #else
-			printf("kernel not compiled with KGDB\n");
+			printf("kernel has no debugger\n");
 #endif
 			break;
 
@@ -1649,7 +1647,6 @@ node_has_property(node, prop)	/* returns 1 if node has given property */
 	return ((*promvec->pv_nodeops->no_proplen)(node, (caddr_t)prop) != -1);
 }
 
-#ifdef RASTERCONSOLE
 /* Pass a string to the FORTH PROM to be interpreted */
 void
 rominterpret(s)
@@ -1689,7 +1686,6 @@ romgetcursoraddr(rowp, colp)
 	rominterpret(buf);
 	return (*rowp == NULL || *colp == NULL);
 }
-#endif
 
 void
 romhalt()

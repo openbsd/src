@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.33 2002/07/09 15:27:59 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.34 2002/08/12 10:44:04 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -71,17 +71,9 @@
 #include "cd.h"
 #include "rd.h"
 
-#include "zs.h"
-#include "kbd.h"
+#include "zstty.h"
+
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
-#include "bwtwo.h"
-#include "cgtwo.h"
-#include "cgthree.h"
-#include "cgfour.h"
-#include "cgsix.h"
-#include "cgeight.h"
-#include "tcx.h"
-#include "cgfourteen.h"
 #include "xd.h"
 #include "xy.h"
 #include "bpp.h"
@@ -91,6 +83,11 @@
 #include "flash.h"
 #include "fga.h"
 #include "daadio.h"
+
+#include "wsdisplay.h"
+#include "wskbd.h"
+#include "wsmouse.h"
+#include "wsmux.h"
 
 #ifdef XFS
 #include <xfs/nxfs.h>
@@ -149,8 +146,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NXY,xy),		/* 9: SMD disk */
 	cdev_notdef(),			/* 10 */
 	cdev_notdef(),			/* 11 */
-	cdev_tty_init(NZS,zs),		/* 12: zs serial */
-	cdev_gen_init(1,ms),		/* 13: /dev/mouse */
+	cdev_tty_init(NZSTTY,zs),	/* 12: zs serial */
+	cdev_notdef(),			/* 13: was /dev/mouse */
 	cdev_notdef(),			/* 14 */
 	cdev_notdef(),			/* 15: sun /dev/winNNN */
 	cdev_log_init(1,log),		/* 16: /dev/klog */
@@ -159,20 +156,16 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 19: SCSI autochanger */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
-	cdev_fb_init(1,fb),		/* 22: /dev/fb indirect driver */
+	cdev_notdef(),			/* 22: was /dev/fb */
 	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 24: file descriptor pseudo-device */
 	cdev_notdef(),			/* 25 */
 	cdev_notdef(),			/* 26 */
-	cdev_fb_init(NBWTWO,bwtwo),	/* 27: /dev/bwtwo */
+	cdev_notdef(),			/* 27: was /dev/bwtwo */
 	cdev_notdef(),			/* 28 */
-#if	NKBD > 0
-	cdev_gen_init(1,kbd),		/* 29: /dev/kbd */
-#else
-	cdev_notdef(),			/* 29 */
-#endif
+	cdev_notdef(),			/* 29: was /dev/kbd */
 	cdev_notdef(),			/* 30 */
-	cdev_fb_init(NCGTWO,cgtwo),	/* 31: /dev/cgtwo */
+	cdev_notdef(),			/* 31: was /dev/cgtwo */
 	cdev_notdef(),			/* 32: should be /dev/gpone */
 	cdev_notdef(),			/* 33 */
 	cdev_notdef(),			/* 34 */
@@ -180,7 +173,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 36 */
 	cdev_notdef(),			/* 37 */
 	cdev_notdef(),			/* 38 */
-	cdev_fb_init(NCGFOUR,cgfour),	/* 39: /dev/cgfour */
+	cdev_notdef(),			/* 39: was /dev/cgfour */
 	cdev_notdef(),			/* 40 */
 	cdev_notdef(),			/* 41 */
 	cdev_disk_init(NXD,xd),		/* 42: SMD disk */
@@ -200,7 +193,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 52 */
 	cdev_notdef(),			/* 53 */
 	cdev_disk_init(NFD,fd),		/* 54: floppy disk */
-	cdev_fb_init(NCGTHREE,cgthree),	/* 55: /dev/cgthree */
+	cdev_notdef(),			/* 55: was /dev/cgthree */
 	cdev_notdef(),			/* 56 */
 	cdev_notdef(),			/* 57 */
 	cdev_disk_init(NCD,cd),		/* 58: SCSI CD-ROM */
@@ -209,10 +202,10 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 61 */
 	cdev_notdef(),			/* 62 */
 	cdev_notdef(),			/* 63 */
-	cdev_fb_init(NCGEIGHT,cgeight),	/* 64: /dev/cgeight */
+	cdev_notdef(),			/* 64: was /dev/cgeight */
 	cdev_notdef(),			/* 65 */
 	cdev_notdef(),			/* 66 */
-	cdev_fb_init(NCGSIX,cgsix),	/* 67: /dev/cgsix */
+	cdev_notdef(),			/* 67: was /dev/cgsix */
 	cdev_notdef(),			/* 68 */
 	cdev_gen_init(NAUDIO,audio),	/* 69: /dev/audio */
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
@@ -223,10 +216,11 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 75 */
 	cdev_notdef(),			/* 76 */
 	cdev_notdef(),			/* 77 */
-	cdev_notdef(),			/* 78 */
-	cdev_notdef(),			/* 79 */
-	cdev_notdef(),			/* 80 */
-	cdev_notdef(),			/* 81 */
+	cdev_wsdisplay_init(NWSDISPLAY,	/* 78: frame buffers, etc. */
+	    wsdisplay),
+	cdev_mouse_init(NWSKBD, wskbd),	/* 79: keyboards */
+	cdev_mouse_init(NWSMOUSE, wsmouse), /* 80: mice */
+	cdev_mouse_init(NWSMUX, wsmux),	/* 81: ws multiplexer */
 	cdev_notdef(),			/* 82 */
 	cdev_notdef(),			/* 83 */
 	cdev_notdef(),			/* 84 */
@@ -244,7 +238,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 96 */
 	cdev_daadio_init(NDAADIO,daadio), /* 97: daadio */
 	cdev_fga_init(NFGA,fga),	/* 98: fga */
-	cdev_fb_init(NCGFOURTEEN,cgfourteen), /* 99: /dev/cgfourteen */
+	cdev_notdef(),			/* 99: was /dev/cgfourteen */
 	cdev_tty_init(NMTTY,mtty),	/* 100: magma */
 	cdev_gen_init(NMBPP,mbpp),	/* 101: magma */
 	cdev_tty_init(NSTTY,stty),	/* 102: spif */
@@ -254,7 +248,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRD,rd),		/* 106: ram disk driver */
 	cdev_scf_init(NSCF,scf),	/* 107: sysconfig regs */
 	cdev_flash_init(NFLASH,flash),	/* 108: flash memory */
-	cdev_fb_init(NTCX,tcx),		/* 109: /dev/tcx */
+	cdev_notdef(),			/* 109: was /dev/tcx */
 	cdev_disk_init(NVND,vnd),	/* 110: vnode disk driver */
 	cdev_bpftun_init(NTUN,tun),	/* 111: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 112: loadable module driver */

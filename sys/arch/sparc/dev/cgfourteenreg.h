@@ -1,8 +1,8 @@
-/*	$OpenBSD: cgfourteenreg.h,v 1.1 1997/08/08 08:24:49 downsj Exp $	*/
+/*	$OpenBSD: cgfourteenreg.h,v 1.2 2002/08/12 10:44:03 miod Exp $	*/
 /*	$NetBSD: cgfourteenreg.h,v 1.1 1996/09/30 22:41:02 abrown Exp $ */
 
 /*
- * Copyright (c) 1996 
+ * Copyright (c) 1996
  *	The President and Fellows of Harvard College. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ struct cg14ctl {
 	volatile u_int8_t	ctl_mctl;	/* main control register */
 #define CG14_MCTL_ENABLEINTR	0x80		/* interrupts */
 #define CG14_MCTL_ENABLEVID	0x40		/* enable video */
-#define CG14_MCTL_PIXMODE_MASK	0x30		      
+#define CG14_MCTL_PIXMODE_MASK	0x30
 #define		CG14_MCTL_PIXMODE_8	0x00	/* data is 16 8-bit pixels */
 #define		CG14_MCTL_PIXMODE_16	0x20	/* data is 8 16-bit pixels */
 #define		CG14_MCTL_PIXMODE_32	0x30	/* data is 4 32-bit pixels */
@@ -120,4 +120,33 @@ struct cg14clut {
 	volatile u_int32_t	clut_lutd[CG14_CLUT_SIZE];	/* ??? */
 	volatile u_int32_t	clut_lutinc[CG14_CLUT_SIZE];	/* autoincr */
 	volatile u_int32_t	clut_lutincd[CG14_CLUT_SIZE];
+};
+
+/*
+ * Layout of cg14 hardware colormap
+ */
+union cg14cmap {
+	u_char  	cm_map[256][4];	/* 256 R/G/B/A entries (B is high)*/
+	u_int32_t   	cm_chip[256];	/* the way the chip gets loaded */
+};
+
+/*
+ * cg14 hardware cursor colormap
+ */
+union cg14cursor_cmap {		/* colormap, like bt_cmap, but tiny */
+	u_char		cm_map[2][4];	/* 2 R/G/B/A entries */
+	u_int32_t	cm_chip[2];	/* 2 chip equivalents */
+};
+
+/*
+ * cg14 hardware cursor status
+ */
+struct cg14_cursor {		/* cg14 hardware cursor status */
+	short	cc_enable;		/* cursor is enabled */
+	struct	wsdisplay_curpos cc_pos;	/* position */
+	struct	wsdisplay_curpos cc_hot;	/* hot-spot */
+	struct	wsdisplay_curpos cc_size;	/* size of mask & image fields */
+	u_int	cc_eplane[32];		/* enable plane */
+	u_int	cc_cplane[32];		/* color plane */
+	union	cg14cursor_cmap cc_color; /* cursor colormap */
 };

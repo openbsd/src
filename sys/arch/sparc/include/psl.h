@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.14 2002/07/23 14:00:38 art Exp $	*/
+/*	$OpenBSD: psl.h,v 1.15 2002/08/12 10:44:04 miod Exp $	*/
 /*	$NetBSD: psl.h,v 1.12 1997/03/10 21:49:11 pk Exp $ */
 
 /*
@@ -89,6 +89,7 @@
 #define IPL_TTY		6		/* tty soft interrupts */
 #define IPL_NET		7		/* network hardware at 7 or below */
 #define IPL_VM		7		/* max(BIO, NET, TTY) */
+#define	IPL_FB		9		/* framebuffer interrupts */
 #define	IPL_CLOCK	10		/* hardclock() */
 #define IPL_FD		11		/* hard floppy interrupts. */
 #define IPL_ZS		12		/* zs interrupts */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: btvar.h,v 1.3 2002/03/14 01:26:42 millert Exp $	*/
+/*	$OpenBSD: btvar.h,v 1.4 2002/08/12 10:44:03 miod Exp $	*/
 /*	$NetBSD: btvar.h,v 1.2 1994/11/20 20:51:56 deraadt Exp $ */
 
 /*
@@ -62,8 +62,12 @@ union bt_cmap {
 /*
  * Routines in bt_subr.c.
  */
-int	bt_getcmap(struct fbcmap *, union bt_cmap *, int);
-int	bt_putcmap(struct fbcmap *, union bt_cmap *, int);
+int	bt_getcmap(union bt_cmap *, struct wsdisplay_cmap *);
+int	bt_putcmap(union bt_cmap *, struct wsdisplay_cmap *);
+void	bt_loadcmap(union bt_cmap *, volatile struct bt_regs *,
+    u_int, u_int, int);
+void	bt_setcolor(union bt_cmap *, volatile struct bt_regs *,
+    u_int, u_int8_t, u_int8_t, u_int8_t, int);
 
 /*
  * Compute (x / 4) * 3 and (x / 4) * 4.  These are used in turning

@@ -1,5 +1,5 @@
-/*	$OpenBSD: vuid_event.h,v 1.2 1997/08/08 08:26:55 downsj Exp $	*/
-/*	$NetBSD: vuid_event.h,v 1.2 1994/11/20 20:53:39 deraadt Exp $ */
+/*	$OpenBSD: z8530var.h,v 1.1 2002/08/12 10:44:04 miod Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.1 1997/10/18 00:01:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,47 +42,44 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vuid_event.h	8.1 (Berkeley) 6/11/93
+ *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
-/*
- * The following is a minimal emulation of Sun's `Firm_event' structures
- * and related operations necessary to make X11 happy (i.e., make it
- * compile, and make old X11 binaries run).
- */
-typedef struct firm_event {
-	u_short	id;		/* key or MS_* or LOC_[XY]_DELTA */
-	u_short	pad;		/* unused, at least by X11 */
-	int	value;		/* VKEY_{UP,DOWN} or locator delta */
-	struct	timeval time;
-} Firm_event;
+#include <sparc/dev/z8530sc.h>
+
+struct zsc_softc {
+	struct	device zsc_dev;		/* required first: base device */
+	struct	zs_chanstate zsc_cs[2];	/* channel A and B soft state */
+	/* Machine-dependent part follows... */
+	struct	evcnt zsc_intrcnt;		/* count interrupts */
+};
 
 /*
- * Special `id' fields.  These weird numbers simply match the old binaries.
- * Others are in 0..0x7f and are keyboard key numbers (keyboard dependent!).
+ * Functions to read and write individual registers in a channel.
+ * The ZS chip requires a 1.6 uSec. recovery time between accesses.
+ * On the SparcStation the recovery time is handled in hardware.
+ * On the older Sun4 machine it isn't, and software must do it.
+ *
+ * However, it *is* a problem on some Sun4m's (i.e. the SS20) (XXX: why?).
+ * Thus we leave in the delay (done in the functions below).
+ * XXX: (ABB) Think about this more.
+ *
+ * The functions below could be macros instead if we are concerned
+ * about the function call overhead where ZS_DELAY does nothing.
  */
-#define	MS_LEFT		0x7f20	/* left mouse button */
-#define	MS_MIDDLE	0x7f21	/* middle mouse button */
-#define	MS_RIGHT	0x7f22	/* right mouse button */
-#define	LOC_X_DELTA	0x7f80	/* mouse delta-X */
-#define	LOC_Y_DELTA	0x7f81	/* mouse delta-Y */
-#define	LOC_X_ABSOLUTE	0x7f82	/* X compat, unsupported */
-#define	LOC_Y_ABSOLUTE	0x7f83	/* X compat, unsupported */
 
-/*
- * Special `value' fields.  These apply to keys and mouse buttons.  The
- * value of a mouse delta is the delta.  Note that positive deltas are
- * left and up (not left and down as you might expect).
- */
-#define	VKEY_UP		0	/* key or button went up */
-#define	VKEY_DOWN	1	/* key or button went down */
+u_char zs_read_reg(struct zs_chanstate *cs, u_char reg);
+u_char zs_read_csr(struct zs_chanstate *cs);
+u_char zs_read_data(struct zs_chanstate *cs);
 
-/*
- * The following ioctls are clearly intended to take things in and out
- * of `firm event' mode.  Since we always run in this mode (as far as
- * /dev/kbd and /dev/mouse are concerned, anyway), we always claim to
- * be in this mode and reject anything else.
- */
-#define	VUIDSFORMAT	_IOW('v', 1, int)
-#define	VUIDGFORMAT	_IOR('v', 2, int)
-#define	VUID_FIRM_EVENT	1	/* the only format we support */
+void  zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val);
+void  zs_write_csr(struct zs_chanstate *cs, u_char val);
+void  zs_write_data(struct zs_chanstate *cs, u_char val);
+
+/* The sparc has splzs() in psl.h */
+
+/* We want to call it "zs" instead of "zsc" (sigh). */
+#ifndef ZSCCF_CHANNEL
+#define ZSCCF_CHANNEL 0
+#define ZSCCF_CHANNEL_DEFAULT -1
+#endif

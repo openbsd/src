@@ -1,4 +1,4 @@
-/*	$OpenBSD: fbvar.h,v 1.5 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: fbvar.h,v 1.6 2002/08/12 10:44:04 miod Exp $	*/
 /*	$NetBSD: fbvar.h,v 1.9 1997/07/07 23:31:30 pk Exp $ */
 
 /*
@@ -46,60 +46,47 @@
  */
 
 /*
- * Frame buffer variables.  All frame buffer drivers must provide the
- * following in order to participate.
+ * Frame buffer device flags.
+ *
+ * XXX add flags to run 24 bit framebuffers in 8 bit mode if possible?
  */
 
-#ifdef RASTERCONSOLE
-#include <dev/rcons/rcons.h>
-#endif
-
-struct fbdriver {
-	/* device unblank function (force kernel output to display) */
-	void	(*fbd_unblank)(struct device *);
-	int	(*fbd_open)(dev_t, int, int, struct proc *);
-	int	(*fbd_close)(dev_t, int, int, struct proc *);
-	int	(*fbd_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
-	paddr_t	(*fbd_mmap)(dev_t, off_t, int);
-#ifdef notyet
-	void	(*fbd_wrrop)();		/* `write region' rasterop */
-	void	(*fbd_cprop)();		/* `copy region' rasterop */
-	void	(*fbd_clrop)();		/* `clear region' rasterop */
-#endif
-};
-
-struct fbdevice {
-	int	fb_major;		/* XXX */
-	struct	fbtype fb_type;		/* what it says */
-	caddr_t	fb_pixels;		/* display RAM */
-	int	fb_linebytes;		/* bytes per display line */
-
-	struct	fbdriver *fb_driver;	/* pointer to driver */
-	struct	device *fb_device;	/* parameter for fbd_unblank */
-
-	int	fb_flags;		/* misc. flags */
-#define	FB_FORCE	0x00000001	/* force device into /dev/fb */
 #define	FB_PFOUR	0x00010000	/* indicates fb is a pfour fb */
-#define FB_USERMASK	(FB_FORCE)	/* flags that the user can set */
+#define FB_USERMASK	(0)		/* flags that the user can set */
 
-	volatile u_int32_t *fb_pfour;	/* pointer to pfour register */
+/*
+ * Common frame buffer variables.
+ * All framebuffer softc structures must start with such a structure.
+ */
+struct sunfb {
+	struct	device sf_dev;		/* base device */
 
-#ifdef RASTERCONSOLE
-	/* Raster console emulator state */
-	struct	rconsole fb_rcons;
-#endif
+	int	sf_width;
+	int	sf_height;
+	int	sf_depth;
+	int	sf_linebytes;
+
+	int	sf_fbsize;		/* sf_height * sf_linebytes */
+
+	int	sf_flags;
+	volatile u_int32_t* sf_pfour;	/* P4 register when applicable */
+
+	struct	rasops_info sf_ro;
 };
 
-void	fb_attach(struct fbdevice *, int);
-void	fb_setsize(struct fbdevice *, int, int, int, int, int);
-#ifdef RASTERCONSOLE
-void	fbrcons_init(struct fbdevice *);
-int	fbrcons_rows(void);
-int	fbrcons_cols(void);
-#endif
+/*
+ * Selected framebuffer node on OBP systems if k/d console.
+ */
+extern int fbnode;
+
+void	fb_setsize(struct sunfb*, int, int, int, int, int);
+void	fbwscons_init(struct sunfb *, int);
+void	fbwscons_console_init(struct sunfb *, struct wsscreen_descr *, int,
+    void (*)(void *, u_int, u_int8_t, u_int8_t, u_int8_t),
+    void (*)(void *, u_int, u_int));
 
 #if defined(SUN4)
 int	fb_pfour_id(void *);
-int	fb_pfour_get_video(struct fbdevice *);
-void	fb_pfour_set_video(struct fbdevice *, int);
+int	fb_pfour_get_video(struct sunfb *);
+void	fb_pfour_set_video(struct sunfb *, int);
 #endif

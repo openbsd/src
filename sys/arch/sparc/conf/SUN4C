@@ -1,4 +1,4 @@
-# 	$OpenBSD: SUN4C,v 1.31 2001/06/27 05:46:27 art Exp $
+# 	$OpenBSD: SUN4C,v 1.32 2002/08/12 10:44:03 miod Exp $
 # 	$NetBSD: GENERIC,v 1.19 1995/10/08 11:45:39 pk Exp $
 
 machine		sparc
@@ -14,7 +14,6 @@ option		TIMEZONE=0, DST=0
 option		KTRACE			# system call tracing support
 #option		KGDB			# support for kernel gdb
 #option		KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
-option		RASTERCONSOLE		# fast rasterop console
 option		SYSVMSG,SYSVSEM,SYSVSHM
 
 # Filesystem options
@@ -86,6 +85,10 @@ zs1	at mainbus0
 #zs1	at obio0 addr 0x00000000 level 12 flags 0x103	# 4/100
 #zs2	at obio0 addr 0xe0000000 level 12 flags 0x103
 
+zstty* at zs? channel ?
+zskbd* at zs? channel ?
+wskbd* at zskbd? console ?
+
 # Magma serial/parallel port devices
 magma*	at sbus? slot ? offset ?			# magma serial cards
 mtty*	at magma?
@@ -151,23 +154,20 @@ be*	at qec?
 #si1	at vmes0 addr 0xff204000 level 2 vect 0x41
 #sw0	at obio0 addr 0x0a000000 level 2
 
-bwtwo0	at sbus? slot ? offset ?
+bwtwo0	at sbus0 slot ? offset ?
 bwtwo*	at sbus? slot ? offset ?
 #bwtwo0	at obio0 addr 0xfd000000 level 4	# 4/260
 #bwtwo0	at obio0 addr 0xfb300000 level 4	# 4/{300/400} ??
 #cgtwo0	at vmes0 addr 0xff400000 level 4 vect 0xa8
 #cgnine0 at vmel0 addr 0x08000000 level 4
-cgthree0 at sbus? slot ? offset ?
 cgthree* at sbus? slot ? offset ?
-cgsix0 at sbus? slot ? offset ?
 cgsix* at sbus? slot ? offset ?
+cgtwelve* at sbus? slot ? offset ?
 
-#pfour0	at obio0 addr 0xfb000000
-#pfour0	at obio0 addr 0x0b000000                        # 4/100
-#bwtwo0	at pfour0
-#cgfour0 at pfour0
-#cgeight0 at pfour0
-#cgsix0	at pfour0
+wsdisplay* at bwtwo?
+wsdisplay* at cgthree?
+wsdisplay* at cgsix?
+wsdisplay* at cgtwelve?
 
 scsibus* at esp?
 #scsibus* at si?
@@ -186,7 +186,6 @@ fd*	at fdc0
 pseudo-device	loop
 pseudo-device	pty	32
 pseudo-device	sl	2
-pseudo-device	kbd
 pseudo-device	ppp	2
 pseudo-device	tun	4
 pseudo-device	vnd	3

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbdreg.h,v 1.2 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: sunkbdreg.h,v 1.3 2002/08/12 10:43:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -46,7 +46,7 @@
 #define	SKBD_CMD_LAYOUT		0x0f
 
 /* keyboard responses (kbd->host) */
-#define	SKBD_RSP_RESET_OK	0x04	/* normal reset status */
+#define	SKBD_RSP_RESET_OK	0x04	/* normal reset status for type 4/5/6 */
 #define	SKBD_RSP_IDLE		0x7f	/* no keys down */
 #define	SKBD_RSP_LAYOUT		0xfe	/* layout follows */
 #define	SKBD_RSP_RESET		0xff	/* reset status follows */
@@ -60,3 +60,7 @@
 #define	SKBD_STATE_LAYOUT	1
 #define	SKBD_STATE_GETKEY	2
 
+/* keyboard types */
+#define	KB_SUN2		2		/* type 2 keyboard */
+#define	KB_SUN3		3		/* type 3 keyboard */
+#define	KB_SUN4		4		/* type 4/5/6 keyboard */

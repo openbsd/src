@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.16 2002/06/14 04:16:06 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.17 2002/08/12 10:44:04 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -213,11 +213,8 @@ void	kill_user_windows(struct proc *);
 int	rwindow_save(struct proc *);
 /* amd7930intr.s */
 void	amd7930_trap(void);
-/* cons.c */
-int	cnrom(void);
-/* zs.c */
-void zsconsole(struct tty *, int, int, int (**)(struct tty *, int));
 #ifdef KGDB
+/* zs_kgdb.c */
 void zs_kgdb_init(void);
 #endif
 /* fb.c */

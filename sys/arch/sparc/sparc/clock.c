@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.17 2002/03/14 03:16:00 millert Exp $	*/
+/*	$OpenBSD: clock.c,v 1.18 2002/08/12 10:44:04 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -692,7 +692,6 @@ clockintr(cap)
 {
 	volatile int discard;
 	int s;
-	extern int rom_console_input;
 
 	/*
 	 * Protect the clearing of the clock interrupt.  If we don't
@@ -727,8 +726,6 @@ forward:
 	splx(s);
 
 	hardclock((struct clockframe *)cap);
-	if (rom_console_input && cnrom())
-		setsoftint();
 
 	return (1);
 }
