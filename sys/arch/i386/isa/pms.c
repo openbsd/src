@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.20 1998/06/29 02:13:00 downsj Exp $	*/
+/*	$OpenBSD: pms.c,v 1.21 1998/08/07 20:34:27 deraadt Exp $	*/
 /*	$NetBSD: pms.c,v 1.29 1996/05/12 23:12:42 mycroft Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@
 
 /* controller commands */
 #define	PMS_INT_ENABLE	0x47	/* enable controller interrupts */
-#define	PMS_INT_DISABLE	0x65	/* disable controller interrupts */
+#define	PMS_INT_DISABLE	0x45	/* disable controller interrupts */
 #define	PMS_AUX_ENABLE	0xa8	/* enable auxiliary port */
 #define	PMS_AUX_DISABLE	0xa7	/* disable auxiliary port */
 #define	PMS_AUX_TEST	0xa9	/* test auxiliary port */
