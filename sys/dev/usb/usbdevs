@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.50 2002/07/12 12:02:00 todd Exp $
+$OpenBSD: usbdevs,v 1.51 2002/07/24 23:58:17 nate Exp $
 /* $NetBSD: usbdevs,v 1.257 2002/06/20 09:20:36 augustss Exp $ */
 
 /*
@@ -660,6 +660,7 @@ product FTDI SERIAL_8U100AX	0x8372	Serial converter
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
 
 /* Genesys Logic products */
+product GENESYS GENELINK	0x05e3	GeneLink Host-Host Bridge
 product GENESYS GL641USB	0x0700	GL641USB CompactFlash
 
 /* Gravis products */
@@ -890,6 +891,7 @@ product LOGITECH UN58A		0xc030	iFeel Mouse
 product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
 product LOGITECH WMJOY		0xc281	WingMan Force joystick
 product LOGITECH WMFFGP		0xc293	WingMan Formula Force GP (GT-Force)
+Product LOGITECH ITOUCH		0xc303	iTouch Keyboard
 product LOGITECH BB13		0xc401	USB-PS/2 Trackball
 product LOGITECH BB18		0xc404	TrackMan Wheel
 product LOGITECH RK53		0xc501	Cordless mouse
