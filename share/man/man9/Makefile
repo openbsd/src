@@ -1,16 +1,18 @@
-#	$OpenBSD: Makefile,v 1.84 2004/11/22 04:32:38 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.85 2004/11/28 02:29:16 deraadt Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	altq.9 audio.9 autoconf.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
 	copy.9 crypto.9 ctxsw.9 disk.9 disklabel.9 \
-	dohooks.9 dopowerhooks.9 doshutdownhooks.9 dostartuphooks.9 \
+	dohooks.9 dopowerhooks.9 \
+	domountroothooks.9 doshutdownhooks.9 dostartuphooks.9 \
 	evcount.9 extattr.9 file.9 \
 	fork1.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
 	hardclock.9 hook_establish.9 hz.9 hzto.9 iic.9 intro.9 inittodr.9 \
 	kern.9 knote.9 kthread.9 ktrace.9 loadfirmware.9 lock.9 log.9 \
-	malloc.9 mbuf.9 mbuf_tags.9 md5.9 microtime.9 namei.9 \
+	malloc.9 mbuf.9 mbuf_tags.9 md5.9 microtime.9 \
+	mountroothook_establish.9 namei.9 \
 	panic.9 pfind.9 physio.9 pmap.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
 	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 \
@@ -177,6 +179,7 @@ MLINKS+=printf.9 snprintf.9 printf.9 vsnprintf.9 printf.9 vprintf.9 \
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
 MLINKS+=rasops.9 rasops_init.9 rasops.9 rasops_reconfig.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
+MLINKS+=mountroothook_establish.9 mountroothook_disestablish.9
 MLINKS+=sleep.9 tsleep.9 sleep.9 wakeup.9
 MLINKS+=spl.9 spl0.9 spl.9 splassert.9 spl.9 splbio.9 spl.9 splclock.9 \
 	spl.9 splhigh.9 spl.9 splimp.9 spl.9 spllowersoftclock.9 \

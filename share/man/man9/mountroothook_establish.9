@@ -1,6 +1,7 @@
-.\"	$OpenBSD: hook_establish.9,v 1.7 2004/11/28 02:29:16 deraadt Exp $
+.\"	$OpenBSD: mountroothook_establish.9,v 1.1 2004/11/28 02:29:16 deraadt Exp $
+.\"	$NetBSD: mountroothook_establish.9,v 1.1 1995/11/25 21:24:52 perry Exp $
 .\"
-.\" Copyright (c) 2001 Niklas Hallqvist.
+.\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -11,6 +12,10 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Christopher G. Demetriou
+.\"      for the NetBSD Project.
 .\" 3. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
 .\"
@@ -25,37 +30,28 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 27, 2001
-.Dt HOOK_ESTABLISH 9
+.Dd November 13, 1995
+.Dt MOUNTROOTHOOK_ESTABLISH 9
 .Os
 .Sh NAME
-.Nm hook_establish ,
-.Nm hook_disestablish
-.Nd add or remove a hook from a specified list
+.Nm mountroothook_establish ,
+.Nm mountroothook_disestablish
+.Nd add or remove a mountroot hook
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/systm.h>
 .Ft void *
-.Fn hook_establish "struct hook_desc_head *head" "int tail" "void (*fn)(void *)" "void *arg"
+.Fn mountroothook_establish "void (*fn)(void *)" "void *arg"
 .Ft void
-.Fn hook_disestablish "struct hook_desc_head *head" "void *cookie"
+.Fn mountroothook_disestablish "void *cookie"
 .Sh DESCRIPTION
 The
-.Fn hook_establish
+.Fn mountroothook_establish
 function adds
 .Fa fn
 to the list of hooks invoked by
-.Xr dohooks 9 .
-If
-.Fa tail
-is non-zero, the hook is added to the tail of the list
-denoted by the TAILQ_HEAD pointer
-.Fa head ,
-otherwise to the front.
-The
-.Xr dohooks 9
-function will at its invocation call each hook from the front of this
-list.
+.Xr domountroothooks 9
+at mountroot.
 When invoked, the hook function
 .Fa fn
 will be passed
@@ -63,31 +59,42 @@ will be passed
 as its only argument.
 .Pp
 The
-.Fn hook_disestablish
+.Fn mountroothook_disestablish
 function removes the hook described by the opaque pointer
 .Fa cookie
-from the list of hooks denoted by the TAILQ_HEAD pointer
-.Fa head .
+from the list of hooks to be invoked at mountroot.
 If
 .Fa cookie
 is invalid, the result of
-.Fn hook_disestablish
+.Fn mountroothook_disestablish
 is undefined.
 .Pp
-The startup-, mountroot, and shutdownhooks systems use this API for their
-implementation.
+Mountroot hooks should be used to perform one-time activities
+that must happen immediately after the root filesystem has been
+mounted by the kernel, but before
+.Xr init 8
+has been started.
+.Pp
+Mountroot hooks are, like startup hooks, implemented via the more general
+.Xr dohooks 9
+API.
 .Sh RETURN VALUES
 If successful,
-.Fn hook_establish
+.Fn mountroothook_establish
 returns an opaque pointer describing the newly established
-hook.
+mountroot hook.
 Otherwise, it returns
 .Dv NULL .
+.Sh EXAMPLES
+It may be appropriate to use a mountroot hook to
+split the attach function of a device driver.
+Once the root filesystem is mounted, the hook will be called
+and it is safe to use
+.Xr loadfirmware 9
+to get the firmware out of the filesystem.
 .Sh SEE ALSO
 .Xr dohooks 9 ,
-.Xr doshutdownhooks 9 ,
-.Xr dostartuphooks 9 ,
-.Xr shutdownhook_establish 9 ,
-.Xr startuphook_establish 9 ,
-.Xr mountroothook_establish 9
-
+.Xr domountroothooks 9 ,
+.Xr dostartuphooks 9
+.Sh BUGS
+The names are clumsy, at best.

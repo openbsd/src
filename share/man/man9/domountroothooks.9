@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hook_establish.9,v 1.7 2004/11/28 02:29:16 deraadt Exp $
+.\"	$OpenBSD: domountroothooks.9,v 1.1 2004/11/28 02:29:16 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Niklas Hallqvist.
 .\" All rights reserved.
@@ -26,68 +26,46 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd July 27, 2001
-.Dt HOOK_ESTABLISH 9
+.Dt DOMOUNTROOTHOOKS 9
 .Os
 .Sh NAME
-.Nm hook_establish ,
-.Nm hook_disestablish
-.Nd add or remove a hook from a specified list
+.Nm domountroothooks
+.Nd run all mountroot hooks
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/systm.h>
-.Ft void *
-.Fn hook_establish "struct hook_desc_head *head" "int tail" "void (*fn)(void *)" "void *arg"
 .Ft void
-.Fn hook_disestablish "struct hook_desc_head *head" "void *cookie"
+.Fn domountroothooks "void"
 .Sh DESCRIPTION
 The
-.Fn hook_establish
-function adds
-.Fa fn
-to the list of hooks invoked by
-.Xr dohooks 9 .
-If
-.Fa tail
-is non-zero, the hook is added to the tail of the list
-denoted by the TAILQ_HEAD pointer
-.Fa head ,
-otherwise to the front.
+.Fn domountroothooks
+function invokes all mountroot hooks established using the
+.Xr mountroothook_establish 9
+function.
+Mountroot hooks are called in order, i.e.,
+the mountroot hook established first will be called first.
+.Pp
+This function is called from
+.Fn main
+with interrupts turned on.
+It is called immediately before the system configures its root and swap
+devices, but fully after all normal autoconfiguration.
+This can be used to let device subsystems needing delayed configuration (e.g.,
+due to very long initialization times) still provide the root device.
 The
+I2O system, implemented by the
+.Xr iop 4
+and
+.Xr ioprbs 4
+drivers, is a good example.
+.Pp
+Mountroot hooks are, like shutdown hooks, implemented via the more general
 .Xr dohooks 9
-function will at its invocation call each hook from the front of this
-list.
-When invoked, the hook function
-.Fa fn
-will be passed
-.Fa arg
-as its only argument.
-.Pp
-The
-.Fn hook_disestablish
-function removes the hook described by the opaque pointer
-.Fa cookie
-from the list of hooks denoted by the TAILQ_HEAD pointer
-.Fa head .
-If
-.Fa cookie
-is invalid, the result of
-.Fn hook_disestablish
-is undefined.
-.Pp
-The startup-, mountroot, and shutdownhooks systems use this API for their
-implementation.
-.Sh RETURN VALUES
-If successful,
-.Fn hook_establish
-returns an opaque pointer describing the newly established
-hook.
-Otherwise, it returns
-.Dv NULL .
+API.
 .Sh SEE ALSO
+.Xr iop 4 ,
+.Xr ioprbs 4 ,
 .Xr dohooks 9 ,
 .Xr doshutdownhooks 9 ,
-.Xr dostartuphooks 9 ,
-.Xr shutdownhook_establish 9 ,
-.Xr startuphook_establish 9 ,
+.Xr domountroothooks 9 ,
 .Xr mountroothook_establish 9
-
