@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.1 1998/09/22 06:13:42 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.2 1998/09/23 18:46:29 deraadt Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -92,26 +92,24 @@ struct cfattach ne_pci_ca = {
 struct ne_pci_compatdev {
 	pci_vendor_id_t vendor;
 	pci_product_id_t product;
-	char *name;
 };
 
 struct ne_pci_compatdev ne_pci_compatdevs[] = {
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029, "Realtek 8029" },
-	{ PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F, "Winbond 89C940F" },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
-		"VIA Technologies VT86C926" },
-	{ PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34, "Surecom NE-34" },
-	{ PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_NV5000, "NetVin 5000" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029 },
+	{ PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926 },
+	{ PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34 },
+	{ PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_NV5000 },
 	/* XXX The following entries need sanity checking in pcidevs */
-	{ PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_COMPEXE, "Compex" },
-	{ PCI_VENDOR_WINBOND2, PCI_PRODUCT_WINBOND2_W89C940, "Winbond 89C940" },
-	{ PCI_VENDOR_KTI, PCI_PRODUCT_KTI_KTIE, "KTI" },
-	{ 0, 0, NULL },
+	{ PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_COMPEXE },
+	{ PCI_VENDOR_WINBOND2, PCI_PRODUCT_WINBOND2_W89C940 },
+	{ PCI_VENDOR_KTI, PCI_PRODUCT_KTI_KTIE },
+	{ 0, 0 },
 };
 
-char *ne_pci_lookup __P((pcireg_t));
+int ne_pci_lookup __P((pcireg_t));
 
-char *
+int
 ne_pci_lookup(id)
 	pcireg_t id;
 {
@@ -120,10 +118,9 @@ ne_pci_lookup(id)
 	for (nc = ne_pci_compatdevs; nc->vendor != 0; nc++) {
 		if (PCI_VENDOR(id) == nc->vendor &&
 		    PCI_PRODUCT(id) == nc->product)
-			return (nc->name);
+			return (1);
 	}
-
-	return (NULL);
+	return (0);
 }
 
 /*
@@ -139,7 +136,7 @@ ne_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (ne_pci_lookup(pa->pa_id) != NULL)
+	if (ne_pci_lookup(pa->pa_id) != 0)
 		return (1);
 
 	return (0);
@@ -163,34 +160,26 @@ ne_pci_attach(parent, self, aux)
 	bus_space_handle_t nich;
 	bus_space_tag_t asict;
 	bus_space_handle_t asich;
-	const char *typestr = NULL, *intrstr;
+	const char *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
-
-	typestr = ne_pci_lookup(pa->pa_id);
-	if (typestr == NULL) {
-		printf(": unknown model?!\n");
-		return;
-	}
-
-	printf(": %s Ethernet\n", typestr);
 
 #ifdef __NetBSD__
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &nict, &nich, NULL, NULL)) {
-		printf("%s: can't map i/o space\n", dsc->sc_dev.dv_xname);
+		printf(": can't map i/o space\n");
 		return;
 	}
 #else
-	if (pci_io_find(pa, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
-		printf("%s: can't find I/O base\n", dsc->sc_dev.dv_xname);
+	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
+		printf(": can't find I/O base\n");
 		return;
 	}
 
 	nict = pa->pa_iot;
 
 	if (bus_space_map(nict, iobase, iosize, 0, &nich)) {
-		printf("%s: can't map I/O space\n", dsc->sc_dev.dv_xname);
+		printf(": can't map I/O space\n");
 		return;
 	}
 #endif
@@ -198,7 +187,7 @@ ne_pci_attach(parent, self, aux)
 	asict = nict;
 	if (bus_space_subregion(nict, nich, NE2000_ASIC_OFFSET,
 	    NE2000_ASIC_NPORTS, &asich)) {
-		printf("%s: can't subregion i/o space\n", dsc->sc_dev.dv_xname);
+		printf(": can't subregion i/o space\n");
 		return;
 	}
 
@@ -216,6 +205,8 @@ ne_pci_attach(parent, self, aux)
 
 	/* This interface is always enabled. */
 	dsc->sc_enabled = 1;
+
+	printf("\n");
 
 	/*
 	 * Do generic NE2000 attach.  This will read the station address
@@ -240,5 +231,5 @@ ne_pci_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", dsc->sc_dev.dv_xname, intrstr);
+	printf("%s: %s\n", dsc->sc_dev.dv_xname, intrstr);
 }
