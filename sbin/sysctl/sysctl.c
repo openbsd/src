@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.86 2003/01/21 16:59:23 markus Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.87 2003/04/07 23:10:46 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.86 2003/01/21 16:59:23 markus Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.87 2003/04/07 23:10:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1046,7 +1046,7 @@ vfsinit(void)
 			vfsvars[cnt].size = NFS_MAXID;
 		}
 		vfs_typenums[cnt] = vfc.vfc_typenum;
-		strcat(&names[loc], vfc.vfc_name);
+		strlcat(&names[loc], vfc.vfc_name, sizeof names - loc);
 		vfsname[cnt].ctl_name = &names[loc];
 		vfsname[cnt].ctl_type = CTLTYPE_NODE;
 		size = strlen(vfc.vfc_name) + 1;
