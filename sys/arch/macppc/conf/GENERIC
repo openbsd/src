@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.38 2002/12/04 17:32:30 nate Exp $g
+#	$OpenBSD: GENERIC,v 1.39 2002/12/13 03:02:12 tdeval Exp $g
 #
 # PPC GENERIC config file
 #
@@ -105,10 +105,21 @@ gpio*		at gpio?			# GPIO, PMU interrupt router.
 aed*		at adb?				# ADB Event Device
 akbd*		at adb?				# ADB keyboard
 
-fwohci*		at pci? dev ? function ?	# FireWire on ohci
+# FireWire Controllers
+#fwohci*	at pci? dev ? function ?	# PCI FireWire adapter
+#fwohci*	at cardbus? dev ? function ?	# CardBus FireWire adapter
+
 #fw*		at fwbus?			# IPv4/v6 over FireWire
-fwnode*		at fwbus? idhi ? idlo ?
-#fwscsi*	at fwnode?
+#fwnode*	at fwbus? idhi ? idlo ?
+
+#fwscsi*	at fwnode?			# SCSI over FireWire
+#scsibus* at fwscsi?
+
+#option	FWOHCI_DEBUG
+#option	FWNODE_DEBUG
+#option	P1212_DEBUG
+#option	SBP2_DEBUG
+#option	FWSCSI_DEBUG
 
 wskbd*		at akbd? console ? mux 1
 ams*		at adb?				# ADB mouse

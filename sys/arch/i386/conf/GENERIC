@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.326 2002/12/10 23:37:03 miod Exp $
+#	$OpenBSD: GENERIC,v 1.327 2002/12/13 03:02:07 tdeval Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -131,6 +131,21 @@ scsibus* at usscanner?
 #udsbr*	at uhub? port ?			# D-Link DSB-R100 radio
 #radio*	at udsbr?
 ugen*	at uhub? port ? configuration ? # USB Generic driver
+
+# FireWire Controllers
+#fwohci*	at pci? dev ? function ?	# PCI FireWire adapter
+#fwohci*	at cardbus? dev ? function ?	# CardBus FireWire adapter
+
+#fwnode*	at fwbus? idhi ? idlo ?
+
+#fwscsi*	at fwnode?			# SCSI over FireWire
+#scsibus* at fwscsi?
+
+#option	FWOHCI_DEBUG
+#option	FWNODE_DEBUG
+#option	P1212_DEBUG
+#option	SBP2_DEBUG
+#option	FWSCSI_DEBUG
 
 puc*	at pci?				# PCI "universal" communication device
 
