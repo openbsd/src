@@ -185,10 +185,10 @@ md_welcome_banner() {
 {
 	if [ "$MODE" = "install" ]; then
 		echo ""
-		echo "Welcome to the NetBSD/sparc ${VERSION} installation program."
+		echo "Welcome to the OpenBSD/sparc ${VERSION} installation program."
 		cat << \__welcome_banner_1
 
-This program is designed to help you put NetBSD on your disk,
+This program is designed to help you put OpenBSD on your disk,
 in a simple and rational way.  You'll be asked several questions,
 and it would probably be useful to have your disk's hardware
 manual, the installation notes, and a calculator handy.
@@ -196,10 +196,10 @@ __welcome_banner_1
 
 	else
 		echo ""
-		echo "Welcome to the NetBSD/sparc ${VERSION} upgrade program."
+		echo "Welcome to the OpenBSD/sparc ${VERSION} upgrade program."
 		cat << \__welcome_banner_2
 
-This program is designed to help you upgrade your NetBSD system in a
+This program is designed to help you upgrade your OpenBSD system in a
 simple and rational way.
 
 As a reminder, installing the `etc' binary set is NOT recommended.
@@ -243,7 +243,7 @@ md_congrats() {
 	fi
 	cat << __congratulations_1
 
-CONGRATULATIONS!  You have successfully $what NetBSD!
+CONGRATULATIONS!  You have successfully $what OpenBSD!
 To boot the installed system, enter halt at the command prompt. Once the
 system has halted, reset the machine and boot from the disk.
 
