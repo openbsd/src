@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.17 2003/06/06 19:42:47 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.18 2003/06/12 19:09:43 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -29,8 +29,6 @@
 /*
  * color display (p9100) driver.  Based on cgthree.c and the NetBSD
  * p9100 driver.
- *
- * Does not handle interrupts, even though they can occur.
  */
 
 #include <sys/param.h>
@@ -73,8 +71,9 @@ struct p9100_softc {
 	struct	p9100_cmd *sc_cmd;	/* command registers (dac, etc) */
 	struct	p9100_ctl *sc_ctl;	/* control registers (draw engine) */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
-	u_int32_t	sc_junk;	/* throwaway value */
+	struct	intrhand sc_ih;
 	int	sc_nscreens;
+	u_int32_t	sc_junk;	/* throwaway value */
 };
 
 struct wsscreen_descr p9100_stdscreen = {
@@ -90,16 +89,19 @@ struct wsscreen_list p9100_screenlist = {
 	    p9100_scrlist
 };
 
-int p9100_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int p9100_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void p9100_free_screen(void *, void *);
-int p9100_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
-paddr_t p9100_mmap(void *, off_t, int);
-void p9100_loadcmap(struct p9100_softc *, u_int, u_int);
-void p9100_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-void p9100_burner(void *, u_int, u_int);
+int	p9100_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	p9100_alloc_screen(void *, const struct wsscreen_descr *, void **,
+	    int *, int *, long *);
+void	p9100_free_screen(void *, void *);
+int	p9100_show_screen(void *, void *, int, void (*cb)(void *, int, int),
+	    void *);
+paddr_t	p9100_mmap(void *, off_t, int);
+static __inline__ void p9100_loadcmap_deferred(struct p9100_softc *,
+    u_int, u_int);
+void	p9100_loadcmap_immediate(struct p9100_softc *, u_int, u_int);
+void	p9100_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
+void	p9100_burner(void *, u_int, u_int);
+int	p9100_intr(void *);
 
 struct wsdisplay_accessops p9100_accessops = {
 	p9100_ioctl,
@@ -150,6 +152,14 @@ struct p9100_ctl {
 #define	SCR_PIXEL_32BPP		0x14000000
 		volatile u_int32_t	ir;		/* interrupt reg */
 		volatile u_int32_t	ier;		/* interrupt enable */
+#define	IER_MASTER_ENABLE	0x00000080
+#define	IER_MASTER_INTERRUPT	0x00000040
+#define	IER_VBLANK_ENABLE	0x00000020
+#define	IER_VBLANK_INTERRUPT	0x00000010
+#define	IER_PICK_ENABLE		0x00000008
+#define	IER_PICK_INTERRUPT	0x00000004
+#define	IER_IDLE_ENABLE		0x00000002
+#define	IER_IDLE_INTERRUPT	0x00000001
 		volatile u_int32_t	arbr;		/* alt read bank reg */
 		volatile u_int32_t	awbr;		/* alt write bank reg */
 		volatile u_int32_t	unused1[58];
@@ -314,6 +324,14 @@ p9100attach(parent, self, args)
 	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height,
 	    sc->sc_sunfb.sf_depth);
 
+	sc->sc_ih.ih_fun = p9100_intr;
+	sc->sc_ih.ih_arg = sc;
+	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB);
+
+	/* Disable frame buffer interrupts */
+	P9100_SELECT_SCR(sc);
+	sc->sc_ctl->ctl_scr.ier = IER_MASTER_ENABLE | 0;
+
 	/*
 	 * If the framebuffer width is under 1024x768, we will switch from the
 	 * PROM font to the more adequate 8x16 font here.
@@ -402,7 +420,7 @@ p9100_ioctl(v, cmd, data, flags, p)
 		error = bt_putcmap(&sc->sc_cmap, cm);
 		if (error)
 			return (error);
-		p9100_loadcmap(sc, cm->index, cm->count);
+		p9100_loadcmap_deferred(sc, cm->index, cm->count);
 		break;
 
 #if NTCTRL > 0
@@ -537,11 +555,11 @@ p9100_setcolor(v, index, r, g, b)
 	bcm->cm_map[index][0] = r;
 	bcm->cm_map[index][1] = g;
 	bcm->cm_map[index][2] = b;
-	p9100_loadcmap(sc, index, 1);
+	p9100_loadcmap_immediate(sc, index, 1);
 }
 
 void
-p9100_loadcmap(sc, start, ncolors)
+p9100_loadcmap_immediate(sc, start, ncolors)
 	struct p9100_softc *sc;
 	u_int start, ncolors;
 {
@@ -556,6 +574,16 @@ p9100_loadcmap(sc, start, ncolors)
 		sc->sc_ctl->ctl_dac.paldata = (*p) << 16;
 		P9100_FLUSH_DAC(sc);
 	}
+}
+
+static __inline__ void
+p9100_loadcmap_deferred(struct p9100_softc *sc, u_int start, u_int ncolors)
+{
+
+	/* Schedule an interrupt for next retrace */
+	P9100_SELECT_SCR(sc);
+	sc->sc_ctl->ctl_scr.ier = IER_MASTER_ENABLE | IER_MASTER_INTERRUPT |
+	    IER_VBLANK_ENABLE | IER_VBLANK_INTERRUPT;
 }
 
 void
@@ -580,4 +608,22 @@ p9100_burner(v, on, flags)
 	tadpole_set_video(on);
 #endif
 	splx(s);
+}
+
+int
+p9100_intr(void *v)
+{
+	struct p9100_softc *sc = v;
+
+	if (sc->sc_ctl->ctl_scr.ir & IER_VBLANK_INTERRUPT) {
+		p9100_loadcmap_immediate(sc, 0, 256);
+
+		/* Disable further interrupts now */
+		/* P9100_SELECT_SCR(sc); */
+		sc->sc_ctl->ctl_scr.ier = IER_MASTER_ENABLE | 0;
+
+		return (1);
+	}
+
+	return (0);
 }
