@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.42 2001/05/11 15:30:14 art Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.43 2001/10/30 17:01:07 tdeval Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -63,28 +63,8 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.42 2001/05/11 15:30:14 art Exp $";
  *
  */
 
-#if defined(__i386__) && defined(__FreeBSD__)
-#   define malloc_pageshift		12U
-#   define malloc_minsize		16U
-#endif /* __i386__ && __FreeBSD__ */
-
-#if defined(__sparc__) && !defined(__OpenBSD__)
-#   define malloc_pageshift		12U
-#   define malloc_minsize		16U
-#   define MAP_ANON			(0)
-#   define USE_DEV_ZERO
-#   define MADV_FREE			MADV_DONTNEED
-#endif /* __sparc__ */
-
-/* Insert your combination here... */
-#if defined(__FOOCPU__) && defined(__BAROS__)
-#   define malloc_pageshift		12U
-#   define malloc_minsize		16U
-#endif /* __FOOCPU__ && __BAROS__ */
-
-#if defined(__OpenBSD__) && !defined(__sparc__)
-#   define	malloc_pageshift	(PGSHIFT)
-#   define	malloc_minsize		16U
+#if defined(__OpenBSD__) && defined(__sparc__)
+#   define    malloc_pageshift	13U
 #endif /* __OpenBSD__ */
 
 #ifdef _THREAD_SAFE
@@ -164,7 +144,7 @@ struct pgfree {
 #define MALLOC_MAGIC	((struct pginfo*) 4)
 
 #ifndef malloc_pageshift
-#define malloc_pageshift		12U
+#define malloc_pageshift		(PGSHIFT)
 #endif
 
 #ifndef malloc_minsize
@@ -730,7 +710,13 @@ malloc_make_chunks(bits)
 	(((malloc_pagesize >> bits)+MALLOC_BITS-1) / MALLOC_BITS);
 
     /* Don't waste more than two chunks on this */
-    if ((1UL<<(bits)) <= l+l) {
+    /*
+     * If we are to allocate a memory protected page for the malloc(0)
+     * case (when bits=0), it must be from a different page than the
+     * pginfo page.
+     * --> Treat it like the big chunk alloc, get a second data page.
+     */
+    if (bits != 0 && (1UL<<(bits)) <= l+l) {
 	bp = (struct  pginfo *)pp;
     } else {
 	bp = (struct  pginfo *)imalloc(l);
@@ -744,6 +730,16 @@ malloc_make_chunks(bits)
     bp->shift = bits;
     bp->total = bp->free = malloc_pagesize >> bits;
     bp->page = pp;
+
+    /* memory protect the page allocated in the malloc(0) case */
+    if (bits == 0) {
+	k = mprotect(pp, malloc_pagesize, PROT_NONE);
+	if (k < 0) {
+	    ifree(pp);
+	    ifree(bp);
+	    return 0;
+	}
+    }
 
     /* set all valid bits in the bitmap */
     k = bp->total;
@@ -792,14 +788,19 @@ malloc_bytes(size)
     u_long *lp;
 
     /* Don't bother with anything less than this */
-    if (size < malloc_minsize)
+    /* unless we have a malloc(0) requests */
+    if (size != 0 && size < malloc_minsize)
 	size = malloc_minsize;
 
     /* Find the right bucket */
-    j = 1;
-    i = size-1;
-    while (i >>= 1)
-	j++;
+    if (size == 0)
+	j=0;
+    else {
+	j = 1;
+	i = size-1;
+	while (i >>= 1)
+	    j++;
+    }
 
     /* If it's empty, make a page more of that size chunks */
     if (!page_dir[j] && !malloc_make_chunks(j))
@@ -830,7 +831,7 @@ malloc_bytes(size)
     k += (lp-bp->bits)*MALLOC_BITS;
     k <<= bp->shift;
 
-    if (malloc_junk)
+    if (malloc_junk && bp->shift != 0)
 	memset((char *)bp->page + k, SOME_JUNK, bp->size);
 
     return (u_char *)bp->page + k;
@@ -955,10 +956,13 @@ irealloc(ptr, size)
 
     if (p) {
 	/* copy the lesser of the two sizes, and free the old one */
-	if (osize < size)
-	    memcpy(p, ptr, osize);
-	else
-	    memcpy(p, ptr, size);
+	/* Don't move from/to 0 sized region !!! */
+	if (osize != 1 && size != 0) {
+	    if (osize < size)
+		memcpy(p, ptr, osize);
+	    else
+		memcpy(p, ptr, size);
+	}
 	ifree(ptr);
     } 
     return p;
@@ -1127,7 +1131,7 @@ free_bytes(ptr, index, info)
 	return;
     }
 
-    if (malloc_junk)
+    if (malloc_junk && info->shift != 0)
 	memset(ptr, SOME_JUNK, info->size);
 
     info->bits[i/MALLOC_BITS] |= 1UL<<(i%MALLOC_BITS);
@@ -1163,6 +1167,13 @@ free_bytes(ptr, index, info)
 
     /* Free the page & the info structure if need be */
     page_dir[ptr2index(info->page)] = MALLOC_FIRST;
+
+    /* If the page was mprotected, unprotect it before releasing it */
+    if (info->shift == 0) {
+	mprotect(info->page, malloc_pagesize, PROT_READ|PROT_WRITE);
+	/* Do we have to care if mprotect succeeds here ? */
+    }
+
     vp = info->page;		/* Order is important ! */
     if(vp != (void*)info) 
 	ifree(info);
