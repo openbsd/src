@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.124 2002/09/11 03:27:03 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.125 2003/02/14 17:54:46 dhartmei Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1232,9 +1232,9 @@ findpcb:
 				(void) m_free(am);
 				goto drop;
 			}
-			(void) m_free(am);
 			break;
 		}
+		(void) m_free(am);
 		tp->t_template = tcp_template(tp);
 		if (tp->t_template == 0) {
 			tp = tcp_drop(tp, ENOBUFS);
