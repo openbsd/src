@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc.c,v 1.10 2000/02/15 02:28:14 jason Exp $	*/
+/*	$OpenBSD: if_dc.c,v 1.11 2000/03/17 01:27:13 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_dc.c,v 1.5 2000/01/12 22:24:05 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_dc.c,v 1.8 2000/03/09 19:28:19 rwatson Exp $
  */
 
 /*
@@ -701,9 +701,10 @@ int dc_miibus_readreg(self, phy, reg)
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
-	DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
+	phy_reg = CSR_READ_4(sc, DC_NETCFG);
+	CSR_WRITE_4(sc, DC_NETCFG, phy_reg & ~DC_NETCFG_PORTSEL);
 	dc_mii_readreg(sc, &frame);
-	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
+	CSR_WRITE_4(sc, DC_NETCFG, phy_reg);
 
 	return(frame.mii_data);
 }
@@ -769,24 +770,32 @@ void dc_miibus_writereg(self, phy, reg, data)
 	frame.mii_regaddr = reg;
 	frame.mii_data = data;
 
-	DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
+	phy_reg = CSR_READ_4(sc, DC_NETCFG);
+	CSR_WRITE_4(sc, DC_NETCFG, phy_reg & ~DC_NETCFG_PORTSEL);
 	dc_mii_writereg(sc, &frame);
-	DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
+	CSR_WRITE_4(sc, DC_NETCFG, phy_reg);
 
 	return;
 }
 
 void dc_miibus_statchg(self)
-	struct device		*self;
+	struct device *self;
 {
-	struct dc_softc		*sc = (struct dc_softc *)self;
-	struct mii_data		*mii;
+	struct dc_softc *sc = (struct dc_softc *)self;
+	struct mii_data *mii;
+	struct ifmedia *ifm;
 
 	if (DC_IS_ADMTEK(sc))
 		return;
 	mii = &sc->sc_mii;
-	dc_setcfg(sc, mii->mii_media_active);
-	sc->dc_if_media = mii->mii_media_active;
+	ifm = &mii->mii_media;
+	if (DC_IS_DAVICOM(sc) && IFM_SUBTYPE(ifm->ifm_media) == IFM_HPNA_1) {
+		dc_setcfg(sc, ifm->ifm_media);
+		sc->dc_if_media = ifm->ifm_media;
+	} else {
+		dc_setcfg(sc, mii->mii_media_active);
+		sc->dc_if_media = mii->mii_media_active;
+	}
 
 	return;
 }
@@ -1110,7 +1119,8 @@ void dc_setcfg(sc, media)
 			if (sc->dc_type == DC_TYPE_98713)
 				DC_SETBIT(sc, DC_NETCFG, (DC_NETCFG_PCS|
 				    DC_NETCFG_SCRAMBLER));
-			DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
+			if (!DC_IS_DAVICOM(sc))
+				DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
 			DC_CLRBIT(sc, DC_10BTCTRL, 0xFFFF);
 		} else {
 			if (DC_IS_PNIC(sc)) {
@@ -1132,7 +1142,8 @@ void dc_setcfg(sc, media)
 			    DC_NETCFG_PORTSEL|DC_NETCFG_SCRAMBLER));
 			if (sc->dc_type == DC_TYPE_98713)
 				DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PCS);
-			DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
+			if (!DC_IS_DAVICOM(sc))
+				DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
 			DC_CLRBIT(sc, DC_10BTCTRL, 0xFFFF);
 		} else {
 			if (DC_IS_PNIC(sc)) {
@@ -1143,6 +1154,20 @@ void dc_setcfg(sc, media)
 			DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
 			DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_SCRAMBLER);
 			DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PCS);
+		}
+	}
+
+	/*
+	 * If this is a Davicom DM9102A card with a DM9801 HomePNA
+	 * PHY and we want HomePNA mode, set the portsel bit to turn
+	 * on the external MII port.
+	 */
+	if (DC_IS_DAVICOM(sc)) {
+		if (IFM_SUBTYPE(media) == IFM_HPNA_1) {
+			DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
+			sc->dc_link = 1;
+		} else {
+			DC_CLRBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
 		}
 	}
 
@@ -1455,7 +1480,11 @@ void dc_attach(parent, self, aux)
 	}
 
 	/* Save the cache line size. */
-	sc->dc_cachesize = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFLT) & 0xFF;
+	if (DC_IS_DAVICOM(sc))
+		sc->dc_cachesize = 0;
+	else
+		sc->dc_cachesize = pci_conf_read(pc, pa->pa_tag,
+		    DC_PCI_CFLT) & 0xFF;
 
 	/* Reset the adapter. */
 	dc_reset(sc);
@@ -1576,6 +1605,9 @@ void dc_attach(parent, self, aux)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+
+	if (DC_IS_DAVICOM(sc) && revision >= DC_REVISION_DM9102A)
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_HPNA_1,0,NULL);
 
 	/* if (error && DC_IS_INTEL(sc)) {
 		sc->dc_pmode = DC_PMODE_SYM;
@@ -2137,15 +2169,15 @@ int dc_intr(arg)
 	if (!(ifp->if_flags & IFF_UP)) {
 		if (CSR_READ_4(sc, DC_ISR) & DC_INTRS)
 			dc_stop(sc);
-		return claimed;
+		return (claimed);
 	}
-
-	claimed = 1;
 
 	/* Disable interrupts. */
 	CSR_WRITE_4(sc, DC_IMR, 0x00000000);
 
 	while((status = CSR_READ_4(sc, DC_ISR)) & DC_INTRS) {
+
+		claimed = 1;
 
 		CSR_WRITE_4(sc, DC_ISR, status);
 		if ((status & DC_INTRS) == 0) {
@@ -2219,7 +2251,7 @@ int dc_intr(arg)
 	if (ifp->if_snd.ifq_head != NULL)
 		dc_start(ifp);
 
-	return claimed;
+	return (claimed);
 }
 
 /*
@@ -2406,7 +2438,7 @@ void dc_init(xsc)
 	/*
 	 * Set cache alignment and burst length.
 	 */
-	if (DC_IS_ASIX(sc))
+	if (DC_IS_ASIX(sc) || DC_IS_DAVICOM(sc))
 		CSR_WRITE_4(sc, DC_BUSCTL, 0);
 	else
 		CSR_WRITE_4(sc, DC_BUSCTL, DC_BUSCTL_MRME|DC_BUSCTL_MRLE);
@@ -2528,11 +2560,19 @@ int dc_ifmedia_upd(ifp)
 {
 	struct dc_softc		*sc;
 	struct mii_data		*mii;
+	struct ifmedia *ifm;
 
 	sc = ifp->if_softc;
 	mii = &sc->sc_mii;
 	mii_mediachg(mii);
-	sc->dc_link = 0;
+
+	ifm = &mii->mii_media;
+
+	if (DC_IS_DAVICOM(sc) &&
+	    IFM_SUBTYPE(ifm->ifm_media) == IFM_HPNA_1)
+		dc_setcfg(sc, ifm->ifm_media);
+	else
+		sc->dc_link = 0;
 
 	return(0);
 }
@@ -2546,10 +2586,19 @@ void dc_ifmedia_sts(ifp, ifmr)
 {
 	struct dc_softc		*sc;
 	struct mii_data		*mii;
+	struct ifmedia		*ifm;
 
 	sc = ifp->if_softc;
 	mii = &sc->sc_mii;
 	mii_pollstat(mii);
+	ifm = &mii->mii_media;
+	if (DC_IS_DAVICOM(sc)) {
+		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_HPNA_1) {
+			ifmr->ifm_active = ifm->ifm_media;
+			ifmr->ifm_status = 0;
+			return;
+		}
+	}
 	ifmr->ifm_active = mii->mii_media_active;
 	ifmr->ifm_status = mii->mii_media_status;
 

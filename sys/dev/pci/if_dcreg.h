@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dcreg.h,v 1.4 2000/01/09 01:20:35 jason Exp $ */
+/*	$OpenBSD: if_dcreg.h,v 1.5 2000/03/17 01:27:14 aaron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_dcreg.h,v 1.2 1999/12/13 21:45:12 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_dcreg.h,v 1.3 2000/01/19 19:03:08 wpaul Exp $
  */
 
 /*
@@ -708,6 +708,13 @@ struct dc_softc {
  */
 #define DC_REVISION_88140	0x00
 #define DC_REVISION_88141	0x10
+
+/*
+ * The DMA9102A has the same PCI device ID as the DM9102,
+ * but a higher revision code.
+ */
+#define DC_REVISION_DM9102	0x10
+#define DC_REVISION_DM9102A	0x30
 
 /*
  * PCI low memory base and low I/O base register, and
