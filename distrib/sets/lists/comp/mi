@@ -183,7 +183,6 @@
 ./usr/include/dev/pci/if_sfreg.h
 ./usr/include/dev/pci/pucvar.h
 ./usr/include/netinet/ip_ether.h
-./usr/include/sys/dvdio.h
 ./usr/include/dev/isa/if_ecreg.h
 ./usr/include/dev/isa/if_edreg.h
 ./usr/include/dev/isa/if_egreg.h
