@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdformat.c,v 1.7 1998/07/13 22:35:52 deraadt Exp $	*/
+/*	$OpenBSD: fdformat.c,v 1.8 1998/08/13 05:36:56 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
@@ -153,7 +153,7 @@ usage ()
 	printf("\t-S #\tspecify sector size, 0=128, 1=256, 2=512 bytes\n");
 	printf("\t-F #\tspecify fill byte\n");
 	printf("\t-t #\tnumber of steps per track\n");
-	exit(1);
+	exit(2);
 }
 
 static int
