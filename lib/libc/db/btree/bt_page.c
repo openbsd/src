@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: bt_page.c,v 1.3 1996/08/19 08:20:10 tholo Exp $";
+static char rcsid[] = "$OpenBSD: bt_page.c,v 1.4 1997/11/13 06:35:06 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -65,6 +65,7 @@ __bt_free(t, h)
 	h->prevpg = P_INVALID;
 	h->nextpg = t->bt_free;
 	t->bt_free = h->pgno;
+	F_SET(t, B_METADIRTY);
 
 	/* Make sure the page gets written back. */
 	return (mpool_put(t->bt_mp, h, MPOOL_DIRTY));
@@ -92,6 +93,7 @@ __bt_new(t, npg)
 	    (h = mpool_get(t->bt_mp, t->bt_free, 0)) != NULL) {
 		*npg = t->bt_free;
 		t->bt_free = h->nextpg;
+		F_SET(t, B_METADIRTY);
 		return (h);
 	}
 	return (mpool_new(t->bt_mp, npg));
