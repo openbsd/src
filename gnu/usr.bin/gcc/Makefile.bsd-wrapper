@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.37 2003/11/29 13:29:55 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.38 2003/11/29 14:21:57 espie Exp $
 
 #MAN=		cccp.1 gcc.1 gcc-local.1 protoize.1 gcov.1
 MAN=		gcc.1 cpp.1 gcov.1
@@ -147,8 +147,8 @@ clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
 	-rm -f ${CLEANFILES}
 
-depend:
-	# Nothing here so far...
+depend: config.status
+	exec ${MAKE} ${MAKE_FLAGS} generated-manpages
 
 lint:
 	# Nothing here so far...
