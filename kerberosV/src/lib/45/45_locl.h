@@ -49,4 +49,12 @@
 #include <krb.h>
 #include <prot.h>
 
+/*
+ * This really shouldn't be here, but the public kerberosIV include files
+ * doesn'nt declare it, so what can we do?
+ */
+void
+encrypt_ktext (KTEXT, des_cblock *, int);
+
+
 #endif /* __45_LOCL_H__ */

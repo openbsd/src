@@ -37,6 +37,7 @@
 #define __IPROP_H__
 
 #include "kadm5_locl.h"
+#include <kerberosV/krb5-private.h>
 #include <getarg.h>
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
