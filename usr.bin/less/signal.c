@@ -245,7 +245,7 @@ psignals()
 		if (lnloop)
 		{
 			lnloop = 0;
-			if (linenums == 2)
+			if (linenums == OPT_ONPLUS)
 				screen_trashed = 1;
 			linenums = 0;
 			error("Line numbers turned off", NULL_PARG);
