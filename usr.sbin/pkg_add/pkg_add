@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.103 2004/11/11 12:13:57 espie Exp $
+# $OpenBSD: pkg_add,v 1.104 2004/11/11 12:17:25 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -31,7 +31,6 @@ use OpenBSD::Getopt;
 use OpenBSD::Error;
 use OpenBSD::ProgressMeter;
 use OpenBSD::Add;
-use File::Copy;
 
 our %forced = ();
 

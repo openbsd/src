@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.12 2004/11/11 12:13:57 espie Exp $
+# $OpenBSD: Add.pm,v 1.13 2004/11/11 12:17:25 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -20,6 +20,7 @@ use warnings;
 package OpenBSD::Add;
 use OpenBSD::Error;
 use OpenBSD::PackageInfo;
+use File::Copy;
 
 sub manpages_index
 {
