@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.5 2004/08/10 19:16:18 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.6 2004/08/11 17:06:14 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -73,8 +73,6 @@
 #include <machine/regnum.h>
 
 #include <machine/rm7000.h>
-
-#include <sys/exec_ecoff.h>
 
 #include <dev/cons.h>
 
