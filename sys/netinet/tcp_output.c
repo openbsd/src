@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.30 2000/02/21 21:42:13 provos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.31 2000/09/05 21:57:41 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -127,7 +127,17 @@ register struct tcpcb *tp;
 		return 0;
 	p = tp->snd_holes;
 	while (p) {
+#ifndef TCP_FACK
 		if (p->dups >= tcprexmtthresh && SEQ_LT(p->rxmit, p->end)) {
+#else
+		/* In FACK, if p->dups is less than tcprexmtthresh, but
+		 * snd_fack advances more than tcprextmtthresh * tp->t_maxseg,
+		 * tcp_input() will try fast retransmit. This forces output.
+		 */
+		if ((p->dups >= tcprexmtthresh ||
+		     tp->t_dupacks == tcprexmtthresh) &&
+		    SEQ_LT(p->rxmit, p->end)) {
+#endif /* TCP_FACK */
 			if (SEQ_LT(p->rxmit, tp->snd_una)) {/* old SACK hole */
 				p = p->next;
 				continue;
@@ -235,6 +245,15 @@ again:
 		tcp_sack_adjust(tp);
 #endif
 	off = tp->snd_nxt - tp->snd_una;
+#if defined(TCP_SACK) && defined(TCP_FACK)
+	/* Normally, sendable data is limited by off < tp->snd_cwnd.
+	 * But in FACK, sendable data is limited by snd_awnd < snd_cwnd,
+	 * regardless of offset.
+	 */
+	if (!tp->sack_disable && (tp->t_dupacks > tcprexmtthresh))
+		win = tp->snd_wnd;
+	else
+#endif
 	win = ulmin(tp->snd_wnd, tp->snd_cwnd);
 
 	flags = tcp_outflags[tp->t_state];
@@ -248,7 +267,8 @@ again:
 	 * now, and we previously incremented snd_cwnd in tcp_input().
 	 */
 	if (!tp->sack_disable && !sendalot) {
-		if ((p = tcp_sack_output(tp))) {
+		if (tp->t_dupacks >= tcprexmtthresh &&
+		    (p = tcp_sack_output(tp))) {
 			off = p->rxmit - tp->snd_una;
 			sack_rxmit = 1;
 #if 0

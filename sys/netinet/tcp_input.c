@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.68 2000/07/27 04:05:26 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.69 2000/09/05 21:57:41 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1563,9 +1563,7 @@ trimthenstep6:
 						 * False fast retx after 
 						 * timeout.  Do not cut window.
 						 */
-						tp->snd_cwnd += tp->t_maxseg;
 						tp->t_dupacks = 0;
-						(void) tcp_output(tp); 
 						goto drop;
 					}
 #endif
@@ -1581,13 +1579,13 @@ trimthenstep6:
 						tp->t_rtt = 0;
 						tcpstat.tcps_sndrexmitfast++;
 #if defined(TCP_SACK) && defined(TCP_FACK) 
+						tp->t_dupacks = tcprexmtthresh;
 						(void) tcp_output(tp);
 						/*
 						 * During FR, snd_cwnd is held
 						 * constant for FACK.
 						 */
 						tp->snd_cwnd = tp->snd_ssthresh;
-						tp->t_dupacks = tcprexmtthresh;
 #else
 						/* 
 						 * tcp_output() will send
@@ -1663,7 +1661,7 @@ trimthenstep6:
 					    th->th_ack) < tp->snd_ssthresh)
 						tp->snd_cwnd = 
 						   tcp_seq_subtract(tp->snd_max,
-					           th->th_ack) + tp->t_maxseg;
+					           th->th_ack);
 					tp->t_dupacks = 0;
 #if defined(TCP_SACK) && defined(TCP_FACK)
 					if (SEQ_GT(th->th_ack, tp->snd_fack))
@@ -1680,7 +1678,7 @@ trimthenstep6:
 			  	    tp->snd_ssthresh)
 					tp->snd_cwnd = 
 					    tcp_seq_subtract(tp->snd_max,
-					    th->th_ack) + tp->t_maxseg;
+					    th->th_ack);
 				tp->t_dupacks = 0;
 			}
 		}
@@ -1739,7 +1737,7 @@ trimthenstep6:
 		if (cw > tp->snd_ssthresh)
 			incr = incr * incr / cw;
 #if defined (TCP_SACK)
-		if (SEQ_GEQ(th->th_ack, tp->snd_last)) 
+		if (tp->t_dupacks < tcprexmtthresh)
 #endif
 		tp->snd_cwnd = min(cw + incr, TCP_MAXWIN<<tp->snd_scale);
 		}
@@ -1759,8 +1757,14 @@ trimthenstep6:
 		if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 			tp->snd_nxt = tp->snd_una;
 #if defined (TCP_SACK) && defined (TCP_FACK)
-		if (SEQ_GT(tp->snd_una, tp->snd_fack))
+		if (SEQ_GT(tp->snd_una, tp->snd_fack)) {
 			tp->snd_fack = tp->snd_una;
+			/* Update snd_awnd for partial ACK
+			 * without any SACK blocks.
+			 */
+			tp->snd_awnd = tcp_seq_subtract(tp->snd_nxt,
+				tp->snd_fack) + tp->retran_data;
+		}
 #endif
 
 		switch (tp->t_state) {
@@ -2546,6 +2550,8 @@ tcp_del_sackholes(tp, th)
 				tp->snd_numholes--;
 			} else if (SEQ_LT(cur->start, lastack)) {
 				cur->start = lastack;
+				if (SEQ_LT(cur->rxmit, cur->start))
+					cur->rxmit = cur->start;
 				break;
 			} else
 				break;
@@ -2588,7 +2594,11 @@ tcp_sack_partialack(tp, th)
 		 * fact that tp->snd_una has not been updated yet.  In FACK
 		 * hold snd_cwnd constant during fast recovery.
 		 */
-		tp->snd_cwnd -= (th->th_ack - tp->snd_una - tp->t_maxseg);
+		if (tp->snd_cwnd > (th->th_ack - tp->snd_una)) {
+			tp->snd_cwnd -= th->th_ack - tp->snd_una;
+			tp->snd_cwnd += tp->t_maxseg;
+		} else
+			tp->snd_cwnd = tp->t_maxseg;
 #endif
 		return 1;
 	}
