@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.223 2000/03/05 21:42:00 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.224 2000/03/20 07:33:07 rahnds Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -670,6 +670,15 @@
 
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* PCI */
+#define	PCI_PRODUCT_APPLE_GC	0x0002		/* PCI */
+#define	PCI_PRODUCT_APPLE_OHARE	0x0007		/* PCI */
+#define	PCI_PRODUCT_APPLE_HEATHROW	0x0010		/* MACIO */
+#define	PCI_PRODUCT_APPLE_PADDINGTON	0x0017		/* MACIO */
+#define	PCI_PRODUCT_APPLE_UNINORTHETH	0x001e		/* PCI */
+#define	PCI_PRODUCT_APPLE_UNINORTH	0x001f		/* PCI */
+#define	PCI_PRODUCT_APPLE_UNINORTHAGP	0x0020		/* AGP */
+#define	PCI_PRODUCT_APPLE_GMAC	0x0021		/* GMAC */
+#define	PCI_PRODUCT_APPLE_KEYLARGO	0x0022		/* MACIO */
 
 /* AMD products */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE */
@@ -684,9 +693,6 @@
 #define	PCI_PRODUCT_AMD_PBC756_IDE	0x7409		/* 756 IDE */
 #define	PCI_PRODUCT_AMD_PBC756_PMC	0x740B		/* 756 Power Management */
 #define	PCI_PRODUCT_AMD_PBC756_USB	0x740C		/* 756 USB Host */
-
-/* Apple products */
-#define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* PCI */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_1000PV	0xa091		/* 1000PV */
@@ -1560,6 +1566,10 @@
 
 /* Winbond Electronics products (PCI products set 2) */
 #define	PCI_PRODUCT_WINBOND2_W89C940	0x1980		/* Linksys EtherPCI */
+
+/* Motorola products */
+#define	PCI_PRODUCT_MOT_MPC105	0x0001		/* MPC105 PPC PCI bridge */
+#define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 PPC PCI bridge */
 
 /* Yamaha products */
 #define	PCI_PRODUCT_YAMAHA_YMF724E_V	0x0004		/* 724 Audio */
