@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.74 2004/11/16 14:26:21 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.75 2004/11/28 02:10:59 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2229,9 +2229,6 @@ dc_txeof(sc)
 
 	ifp = &sc->sc_arpcom.ac_if;
 
-	/* Clear the timeout timer. */
-	ifp->if_timer = 0;
-
 	/*
 	 * Go through our tx list and free mbufs for those
 	 * frames that have been transmitted.
@@ -2253,7 +2250,6 @@ dc_txeof(sc)
 
 		if (!(cur_tx->dc_ctl & htole32(DC_TXCTL_LASTFRAG)) ||
 		    cur_tx->dc_ctl & htole32(DC_TXCTL_SETUP)) {
-			sc->dc_cdata.dc_tx_cnt--;
 			if (cur_tx->dc_ctl & htole32(DC_TXCTL_SETUP)) {
 				/*
 				 * Yes, the PNIC is so brain damaged
@@ -2270,6 +2266,7 @@ dc_txeof(sc)
 				}
 				sc->dc_cdata.dc_tx_chain[idx].sd_mbuf = NULL;
 			}
+			sc->dc_cdata.dc_tx_cnt--;
 			DC_INC(idx, DC_TX_LIST_CNT);
 			continue;
 		}
@@ -2331,9 +2328,12 @@ dc_txeof(sc)
 		DC_INC(idx, DC_TX_LIST_CNT);
 	}
 
-	sc->dc_cdata.dc_tx_cons = idx;
-	if (cur_tx != NULL)
+	if (idx != sc->dc_cdata.dc_tx_cons) {
+		/* some buffers have been freed */
+		sc->dc_cdata.dc_tx_cons = idx;
 		ifp->if_flags &= ~IFF_OACTIVE;
+	}
+	ifp->if_timer = (sc->dc_cdata.dc_tx_cnt == 0) ? 0 : 5;
 }
 
 void
