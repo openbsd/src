@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.36 2002/02/05 04:26:06 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.37 2002/02/06 19:28:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -31,7 +31,7 @@
  */
 
 /* #define INTRDEBUG */
-#define TRAPDEBUG
+/* #define TRAPDEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,9 +320,21 @@ trap(type, frame)
 			goto dead_end;
 		}
 
+#ifdef TRAPDEBUG
+		if (space == -1) {
+			extern int pmapdebug;
+			pmapdebug = 0xffffff;
+		}
+#endif
+
 		ret = uvm_fault(map, va, 0, vftype);
 
 #ifdef TRAPDEBUG
+		if (space == -1) {
+			extern int pmapdebug;
+			pmapdebug = 0;
+		}
+
 		printf("uvm_fault(%p, %x, %d, %d)=%d\n",
 		    map, va, 0, vftype, ret);
 #endif
@@ -565,12 +577,18 @@ void
 cpu_intr(frame)
 	struct trapframe *frame;
 {
-	u_int32_t eirr;
+	u_int32_t eirr = 0, r;
 	register struct cpu_intr_vector *iv;
 	register int bit;
 
 	do {
-		mfctl(CR_EIRR, eirr);
+		mfctl(CR_EIRR, r);
+		eirr |= r;
+#ifdef INTRDEBUG
+		if (eirr & 0x7fffffff)
+			db_printf ("cpu_intr: 0x%08x & 0x%08x\n",
+			    eirr, frame->tf_eiem);
+#endif
 		eirr &= frame->tf_eiem;
 		bit = ffs(eirr) - 1;
 		if (bit >= 0) {
