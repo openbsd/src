@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_print.c,v 1.3 2001/01/22 18:01:53 millert Exp $	*/
+/*	$OpenBSD: lib_print.c,v 1.4 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -62,15 +62,16 @@ mcprint(char *data, int len)
 	offsize = strlen(prtr_off);
     }
 
-    if ((mybuf = typeMalloc(char, onsize + len + offsize + 1)) == (char *) 0) {
+    res = onsize + len + offsize + 1;
+    if ((mybuf = typeMalloc(char, res)) == (char *) 0) {
 	errno = ENOMEM;
 	return (ERR);
     }
 
-    (void) strcpy(mybuf, switchon);
+    (void) strlcpy(mybuf, switchon, res);
     memcpy(mybuf + onsize, data, len);
     if (offsize)
-	(void) strcpy(mybuf + onsize + len, prtr_off);
+	(void) strlcpy(mybuf + onsize + len, prtr_off, res - onsize - len);
 
     /*
      * We're relying on the atomicity of UNIX writes here.  The

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tgoto.c,v 1.3 2003/03/17 19:16:59 millert Exp $	*/
+/*	$OpenBSD: lib_tgoto.c,v 1.4 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 2000 Free Software Foundation, Inc.                        *
@@ -77,6 +77,7 @@ tgoto_internal(const char *string, int x, int y)
     int param[3];
     size_t used = 0;
     size_t need = 10;
+    size_t copied;
     int *value = param;
     bool need_BC = FALSE;
 
@@ -175,8 +176,11 @@ tgoto_internal(const char *string, int x, int y)
 	string++;
     }
     if (need_BC) {
-	strcpy(result + used, BC);
-	used += strlen(BC);
+	copied = strlcpy(result + used, BC, length - used);
+	if (copied < length - used)
+	    used += copied;
+	else
+	    used += length - used - 1;
     }
     result[used] = '\0';
     return result;

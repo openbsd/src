@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tracebits.c,v 1.8 2001/01/22 18:01:58 millert Exp $	*/
+/*	$OpenBSD: lib_tracebits.c,v 1.9 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -66,21 +66,21 @@ typedef struct {
 } BITNAMES;
 
 static void
-lookup_bits(char *buf, const BITNAMES * table, const char *label, unsigned int val)
+lookup_bits(char *buf, size_t bufsize, const BITNAMES * table, const char *label, unsigned int val)
 {
     const BITNAMES *sp;
 
-    (void) strcat(buf, label);
-    (void) strcat(buf, ": {");
+    (void) strlcat(buf, label, bufsize);
+    (void) strlcat(buf, ": {", bufsize);
     for (sp = table; sp->name; sp++)
 	if (sp->val != 0
 	    && (val & sp->val) == sp->val) {
-	    (void) strcat(buf, sp->name);
-	    (void) strcat(buf, ", ");
+	    (void) strlcat(buf, sp->name, bufsize);
+	    (void) strlcat(buf, ", ", bufsize);
 	}
     if (buf[strlen(buf) - 2] == ',')
 	buf[strlen(buf) - 2] = '\0';
-    (void) strcat(buf, "} ");
+    (void) strlcat(buf, "} ", bufsize);
 }
 
 NCURSES_EXPORT(char *)
@@ -88,6 +88,7 @@ _nc_tracebits(void)
 /* describe the state of the terminal control bits exactly */
 {
     char *buf;
+    size_t bufsize;
 
 #ifdef TERMIOS
     static const BITNAMES iflags[] =
@@ -138,21 +139,18 @@ _nc_tracebits(void)
 #define ALLLOCAL	(ECHO|ECHONL|ICANON|ISIG|NOFLSH|TOSTOP|IEXTEN)
     };
 
-    buf = _nc_trace_buf(0,
-			8 + sizeof(iflags) +
-			8 + sizeof(oflags) +
-			8 + sizeof(cflags) +
-			8 + sizeof(lflags) +
-			8);
+    bufsize = 8 + sizeof(iflags) + 8 + sizeof(oflags) + 8 + sizeof(cflags) +
+	      8 + sizeof(lflags) + 8;
+    buf = _nc_trace_buf(0, bufsize);
 
     if (cur_term->Nttyb.c_iflag & ALLIN)
-	lookup_bits(buf, iflags, "iflags", cur_term->Nttyb.c_iflag);
+	lookup_bits(buf, bufsize, iflags, "iflags", cur_term->Nttyb.c_iflag);
 
     if (cur_term->Nttyb.c_oflag & ALLOUT)
-	lookup_bits(buf, oflags, "oflags", cur_term->Nttyb.c_oflag);
+	lookup_bits(buf, bufsize, oflags, "oflags", cur_term->Nttyb.c_oflag);
 
     if (cur_term->Nttyb.c_cflag & ALLCTRL)
-	lookup_bits(buf, cflags, "cflags", cur_term->Nttyb.c_cflag);
+	lookup_bits(buf, bufsize, cflags, "cflags", cur_term->Nttyb.c_cflag);
 
 #if defined(CS5) && defined(CS8)
     {
@@ -189,12 +187,12 @@ _nc_tracebits(void)
 		}
 	    }
 	}
-	strcat(buf, result);
+	strlcat(buf, result, bufsize);
     }
 #endif
 
     if (cur_term->Nttyb.c_lflag & ALLLOCAL)
-	lookup_bits(buf, lflags, "lflags", cur_term->Nttyb.c_lflag);
+	lookup_bits(buf, bufsize, lflags, "lflags", cur_term->Nttyb.c_lflag);
 
 #else
     /* reference: ttcompat(4M) on SunOS 4.1 */
@@ -234,7 +232,7 @@ _nc_tracebits(void)
 			8 + sizeof(cflags));
 
     if (cur_term->Nttyb.sg_flags & ALLCTRL) {
-	lookup_bits(buf, cflags, "cflags", cur_term->Nttyb.sg_flags);
+	lookup_bits(buf, bufsize, cflags, "cflags", cur_term->Nttyb.sg_flags);
     }
 #endif
     return (buf);

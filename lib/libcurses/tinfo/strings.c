@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.c,v 1.2 2001/01/22 18:01:57 millert Exp $	*/
+/*	$OpenBSD: strings.c,v 1.3 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 2000 Free Software Foundation, Inc.                        *
@@ -113,7 +113,7 @@ _nc_safe_strcat(string_desc * dst, const char *src)
 
 	if (len < dst->s_size) {
 	    if (dst->s_tail != 0) {
-		strcpy(dst->s_tail, src);
+		strlcpy(dst->s_tail, src, dst->s_size);
 		dst->s_tail += len;
 	    }
 	    dst->s_size -= len;
@@ -134,7 +134,7 @@ _nc_safe_strcpy(string_desc * dst, const char *src)
 
 	if (len < dst->s_size) {
 	    if (dst->s_head != 0) {
-		strcpy(dst->s_head, src);
+		strlcpy(dst->s_head, src, dst->s_size);
 		dst->s_tail = dst->s_head + len;
 	    }
 	    dst->s_size -= len;

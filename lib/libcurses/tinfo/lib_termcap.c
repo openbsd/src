@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_termcap.c,v 1.8 2001/01/22 18:01:53 millert Exp $	*/
+/*	$OpenBSD: lib_termcap.c,v 1.9 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -187,7 +187,7 @@ tgetstr
 		if (area != 0
 		    && *area != 0
 		    && VALID_STRING(tp->Strings[i])) {
-		    (void) strcpy(*area, tp->Strings[i]);
+		    (void) strlcpy(*area, tp->Strings[i], 1024);
 		    *area += strlen(*area) + 1;
 		}
 		returnPtr(tp->Strings[i]);

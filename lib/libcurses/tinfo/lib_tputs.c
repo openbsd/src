@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tputs.c,v 1.10 2003/03/17 19:16:59 millert Exp $	*/
+/*	$OpenBSD: lib_tputs.c,v 1.11 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -194,7 +194,7 @@ tputs
 
     if (_nc_tracing & TRACE_TPUTS) {
 	if (outc == _nc_outch)
-	    (void) strcpy(addrbuf, "_nc_outch");
+	    (void) strlcpy(addrbuf, "_nc_outch", sizeof(addrbuf));
 	else
 	    (void) snprintf(addrbuf, sizeof(addrbuf), "%p", outc);
 	if (_nc_tputs_trace) {

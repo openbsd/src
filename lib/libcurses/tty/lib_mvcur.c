@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mvcur.c,v 1.10 2001/01/22 18:02:00 millert Exp $	*/
+/*	$OpenBSD: lib_mvcur.c,v 1.11 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -964,7 +964,7 @@ roll(int n)
 int
 main(int argc GCC_UNUSED, char *argv[]GCC_UNUSED)
 {
-    (void) strcpy(tname, termname());
+    (void) strlcpy(tname, termname(), sizeof(tname));
     load_term();
     _nc_setupscreen(lines, columns, stdout);
     baudrate();
@@ -1029,7 +1029,7 @@ main(int argc GCC_UNUSED, char *argv[]GCC_UNUSED)
 							     before.tv_sec)
 			   * 1000000));
 	} else if (buf[0] == 'r') {
-	    (void) strcpy(tname, termname());
+	    (void) strlcpy(tname, termname(), sizeof(tname));
 	    load_term();
 	} else if (sscanf(buf, "l %s", tname) == 1) {
 	    load_term();

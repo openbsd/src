@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_error.c,v 1.4 2001/01/22 18:05:43 millert Exp $	*/
+/*	$OpenBSD: comp_error.c,v 1.5 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -62,15 +62,16 @@ _nc_set_source(const char *const name)
 NCURSES_EXPORT(void)
 _nc_set_type(const char *const name)
 {
-    termtype[0] = '\0';
     if (name)
-	strncat(termtype, name, sizeof(termtype) - 1);
+	strlcpy(termtype, name, sizeof(termtype));
+    else
+    	termtype[0] = '\0';
 }
 
 NCURSES_EXPORT(void)
 _nc_get_type(char *name)
 {
-    strcpy(name, termtype);
+    strlcpy(name, termtype, MAX_NAME_SIZE + 1);
 }
 
 static inline void

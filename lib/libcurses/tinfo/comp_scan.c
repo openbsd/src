@@ -766,7 +766,7 @@ next_char(void)
 		    }
 		} else {
 		    if (used != 0)
-			strcat(result, "\n");
+			strlcat(result, "\n", allocated);
 		}
 		if ((bufptr = bufstart) != 0) {
 		    used = strlen(bufptr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_hash.c,v 1.5 2003/03/17 19:16:59 millert Exp $	*/
+/*	$OpenBSD: comp_hash.c,v 1.6 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -309,7 +309,8 @@ int main(int argc, char **argv)
 				 root_name,
 				(long) (hash_table[n] - name_table));
 		} else {
-			strcpy(buffer, "0");
+			buffer[0] = '0';
+			buffer[1] = '\0';
 		}
 		printf("\t%s,\n", buffer);
 	}

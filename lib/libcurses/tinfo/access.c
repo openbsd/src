@@ -57,14 +57,14 @@ _nc_access(const char *path, int mode)
 	if ((mode & W_OK) != 0
 	    && errno == ENOENT
 	    && strlen(path) < PATH_MAX) {
-	    char head[PATH_MAX];
-	    char *leaf = _nc_basename(strcpy(head, path));
+	    char *leaf, head[PATH_MAX];
 
-	    if (leaf == 0)
+	    strlcpy(head, path, sizeof(head));
+	    if ((leaf = _nc_basename(head)) == 0)
 		leaf = head;
 	    *leaf = '\0';
 	    if (head == leaf)
-		(void) strcpy(head, ".");
+		(void) strlcpy(head, ".", sizeof(head));
 
 	    return access(head, R_OK | W_OK | X_OK);
 	}

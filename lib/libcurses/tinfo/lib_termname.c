@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_termname.c,v 1.3 2001/01/22 18:01:53 millert Exp $	*/
+/*	$OpenBSD: lib_termname.c,v 1.4 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -42,8 +42,7 @@ termname(void)
     T(("termname() called"));
 
     if (name != 0) {
-	ret[0] = '\0';
-	(void) strncat(ret, name, sizeof(ret) - 1);
+	(void) strlcpy(ret, name, sizeof(ret));
 	name = ret;
     }
     return name;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: write_entry.c,v 1.11 2003/03/17 19:16:59 millert Exp $	*/
+/*	$OpenBSD: write_entry.c,v 1.12 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -90,9 +90,8 @@ make_directory(const char *path)
     const char *destination = _nc_tic_dir(0);
 
     if (path == destination || *path == '/') {
-	if (strlen(path) + 1 > sizeof(fullpath))
+	if (strlcpy(fullpath, path, sizeof(fullpath)) >= sizeof(fullpath))
 	    return (-1);
-	(void) strcpy(fullpath, path);
     } else {
 	if (strlen(destination) + strlen(path) + 2 > sizeof(fullpath))
 	    return (-1);
@@ -224,7 +223,7 @@ _nc_write_entry(TERMTYPE * const tp)
 	start_time = 0;
     }
 
-    (void) strcpy(name_list, tp->term_names);
+    (void) strlcpy(name_list, tp->term_names, sizeof(name_list));
     DEBUG(7, ("Name list = '%s'", name_list));
 
     first_name = name_list;
@@ -310,9 +309,8 @@ _nc_write_entry(TERMTYPE * const tp)
 	{
 	    int code;
 #if USE_SYMLINKS
-	    strcpy(symlinkname, "../");
-	    strncat(symlinkname, filename, sizeof(symlinkname) - 4);
-	    symlinkname[sizeof(symlinkname) - 1] = '\0';
+	    strlcpy(symlinkname, "../", sizeof(symlinkname));
+	    strlcat(symlinkname, filename, sizeof(symlinkname));
 #endif /* USE_SYMLINKS */
 #if HAVE_REMOVE
 	    code = remove(linkname);

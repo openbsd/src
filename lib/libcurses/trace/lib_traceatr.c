@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_traceatr.c,v 1.4 2003/03/17 19:16:59 millert Exp $	*/
+/*	$OpenBSD: lib_traceatr.c,v 1.5 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -89,13 +89,14 @@ _traceattr2(int bufnum, attr_t newmode)
     unsigned save_nc_tracing = _nc_tracing;
     _nc_tracing = 0;
 
-    strcpy(tmp++, "{");
+    *tmp++ = '{';
+    *tmp = '\0';
 
     for (n = 0; n < SIZEOF(names); n++) {
 	if ((newmode & names[n].val) != 0) {
 	    if (buf[1] != '\0')
-		strcat(tmp, "|");
-	    strcat(tmp, names[n].name);
+		strlcat(tmp, "|", BUFSIZ - (tmp - buf));
+	    strlcat(tmp, names[n].name, BUFSIZ - (tmp - buf));
 	    tmp += strlen(tmp);
 
 	    if (names[n].val == A_COLOR) {
@@ -116,12 +117,13 @@ _traceattr2(int bufnum, attr_t newmode)
     }
     if (AttrOf(newmode) == A_NORMAL) {
 	if (buf[1] != '\0')
-	    strcat(tmp, "|");
-	strcat(tmp, "A_NORMAL");
+	    strlcat(tmp, "|", BUFSIZ - (tmp - buf));
+	strlcat(tmp, "A_NORMAL", BUFSIZ - (tmp - buf));
     }
 
     _nc_tracing = save_nc_tracing;
-    return (strcat(buf, "}"));
+    strlcat(buf, "}", BUFSIZ);
+    return (buf);
 }
 
 NCURSES_EXPORT(char *)
@@ -144,7 +146,8 @@ _tracechtype2(int bufnum, chtype ch)
     char *buf = _nc_trace_buf(bufnum, BUFSIZ);
     char *found = 0;
 
-    strcpy(buf, "{");
+    buf[0] = '{';
+    buf[1] = '\0';
     if (ch & A_ALTCHARSET) {
 	char *cp;
 	static const struct {
@@ -201,7 +204,7 @@ _tracechtype2(int bufnum, chtype ch)
 	    ch = TextOf(*found);
 	    for (sp = names; sp->val; sp++)
 		if (sp->val == ch) {
-		    (void) strcat(buf, sp->name);
+		    (void) strlcat(buf, sp->name, BUFSIZ);
 		    ch &= ~A_ALTCHARSET;
 		    break;
 		}
@@ -209,13 +212,13 @@ _tracechtype2(int bufnum, chtype ch)
     }
 
     if (found == 0)
-	(void) strcat(buf, _tracechar(TextOf(ch)));
+	(void) strlcat(buf, _tracechar(TextOf(ch)), BUFSIZ);
 
     if (AttrOf(ch) != A_NORMAL)
 	(void) snprintf(buf + strlen(buf), BUFSIZ - strlen(buf), " | %s",
 		_traceattr2(bufnum + 20, AttrOf(ch)));
 
-    strcat(buf, "}");
+    strlcat(buf, "}", BUFSIZ);
     return (buf);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_parse.c,v 1.10 2001/01/22 18:01:51 millert Exp $	*/
+/*	$OpenBSD: comp_parse.c,v 1.11 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -132,9 +132,10 @@ force_bar(char *dst, char *src, size_t siz)
 	size_t len;
 
 	len = strlcpy(dst, src, siz);
-	if (len >= siz - 2)
-	    len = siz - 2;;
-	(void) strcpy(dst + len, "|");
+	if (len > siz - 2)
+	    len = siz - 2;
+	dst[len++] = '|';
+	dst[len] = '\0';
 	src = dst;
     }
     return src;

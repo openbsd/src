@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc_entry.c,v 1.4 2001/01/22 18:01:50 millert Exp $	*/
+/*	$OpenBSD: alloc_entry.c,v 1.5 2003/03/18 16:55:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -109,10 +109,10 @@ _nc_save_str(const char *const string)
 /* save a copy of string in the string buffer */
 {
     size_t old_next_free = next_free;
-    size_t len = strlen(string) + 1;
+    size_t len;
 
-    if (next_free + len < MAX_STRTAB) {
-	strcpy(&stringbuf[next_free], string);
+    len = strlcpy(stringbuf + next_free, string, sizeof(stringbuf) - next_free);
+    if (++len < sizeof(stringbuf) - next_free) {
 	DEBUG(7, ("Saved string %s", _nc_visbuf(string)));
 	DEBUG(7, ("at location %d", (int) next_free));
 	next_free += len;
@@ -183,17 +183,21 @@ _nc_wrap_entry(ENTRY * const ep, bool copy_strings)
 #if NCURSES_XNAMES
     if (!copy_strings) {
 	if ((n = NUM_EXT_NAMES(tp)) != 0) {
-	    unsigned length = 0;
+	    size_t copied, length, strtabsize = 0;
 	    for (i = 0; i < n; i++) {
-		length += strlen(tp->ext_Names[i]) + 1;
+		strtabsize += strlen(tp->ext_Names[i]) + 1;
 		offsets[i] = tp->ext_Names[i] - stringbuf;
 	    }
-	    if ((tp->ext_str_table = typeMalloc(char, length)) == 0)
+	    if ((tp->ext_str_table = typeMalloc(char, strtabsize)) == 0)
 		  _nc_err_abort("Out of memory");
 	    for (i = 0, length = 0; i < n; i++) {
 		tp->ext_Names[i] = tp->ext_str_table + length;
-		strcpy(tp->ext_Names[i], stringbuf + offsets[i]);
-		length += strlen(tp->ext_Names[i]) + 1;
+		copied = strlcpy(tp->ext_Names[i], stringbuf + offsets[i],
+		    strtabsize) + 1;
+		if (copied > strtabsize)
+		    _nc_err_abort("Buffer overflow");
+		length += copied;
+		strtabsize -= copied;
 	    }
 	}
     }

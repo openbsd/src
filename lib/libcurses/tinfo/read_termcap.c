@@ -157,7 +157,7 @@ _nc_cgetset(const char *ent)
 	return (-1);
     }
     gottoprec = 0;
-    (void) strcpy(toprec, ent);
+    (void) strlcpy(toprec, ent, topreclen + 1);
     return (0);
 }
 
@@ -290,7 +290,7 @@ _nc_getent(
 	    errno = ENOMEM;
 	    return (TC_SYS_ERR);
 	}
-	(void) strcpy(record, toprec);
+	(void) strlcpy(record, toprec, topreclen + BFRAG);
 	rp = record + topreclen + 1;
 	r_end = rp + BFRAG;
 	current = in_array;
@@ -1017,7 +1017,7 @@ _nc_read_termcap_entry
 	if (use_terminfo_vars() && (h = getenv("HOME")) != NULL && *h != '\0'
 	    && (strlen(h) + sizeof(PRIVATE_CAP)) < PATH_MAX) {
 	    /* user's .termcap, if any, should override it */
-	    (void) strcpy(envhome, h);
+	    (void) strlcpy(envhome, h, sizeof(envhome));
 	    (void) snprintf(pathbuf, sizeof(pathbuf), PRIVATE_CAP, envhome);
 	    ADD_TC(pathbuf, filecount);
 	}
