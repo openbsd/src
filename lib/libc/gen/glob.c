@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.15 2001/04/02 02:30:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.16 2001/04/05 18:36:12 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -241,7 +241,7 @@ globexp2(ptr, pattern, pglob, rv)
 
 	/* copy part up to the brace */
 	for (lm = patbuf, pm = pattern; pm != ptr; *lm++ = *pm++)
-		continue;
+		;
 	*lm = EOS;
 	ls = lm;
 
@@ -250,7 +250,7 @@ globexp2(ptr, pattern, pglob, rv)
 		if (*pe == LBRACKET) {
 			/* Ignore everything between [] */
 			for (pm = pe++; *pe != RBRACKET && *pe != EOS; pe++)
-				continue;
+				;
 			if (*pe == EOS) {
 				/*
 				 * We could not find a matching RBRACKET.
@@ -277,7 +277,7 @@ globexp2(ptr, pattern, pglob, rv)
 		case LBRACKET:
 			/* Ignore everything between [] */
 			for (pl = pm++; *pm != RBRACKET && *pm != EOS; pm++)
-				continue;
+				;
 			if (*pm == EOS) {
 				/*
 				 * We could not find a matching RBRACKET.
@@ -303,13 +303,14 @@ globexp2(ptr, pattern, pglob, rv)
 			else {
 				/* Append the current string */
 				for (lm = ls; (pl < pm); *lm++ = *pl++)
-					continue;
+					;
+
 				/*
 				 * Append the rest of the pattern after the
 				 * closing brace
 				 */
-				for (pl = pe + 1; (*lm++ = *pl++) != EOS;)
-					continue;
+				for (pl = pe + 1; (*lm++ = *pl++) != EOS; )
+					;
 
 				/* Expand the current pattern */
 #ifdef DEBUG
@@ -354,9 +355,14 @@ globtilde(pattern, patbuf, patbuf_len, pglob)
 	eb = &patbuf[patbuf_len - 1];
 	for (p = pattern + 1, h = (char *) patbuf;
 	    h < (char *)eb && *p && *p != SLASH; *h++ = *p++)
-		continue;
+		;
 
 	*h = EOS;
+
+#if 0
+	if (h == (char *)eb)
+		return what;
+#endif
 
 	if (((char *) patbuf)[0] == EOS) {
 		/*
@@ -381,11 +387,11 @@ globtilde(pattern, patbuf, patbuf_len, pglob)
 
 	/* Copy the home directory */
 	for (b = patbuf; b < eb && *h; *b++ = *h++)
-		continue;
+		;
 
 	/* Append the rest of the pattern */
 	while (b < eb && (*b++ = *p++) != EOS)
-		continue;
+		;
 	*b = EOS;
 
 	return patbuf;
@@ -706,7 +712,7 @@ globextend(path, pglob, limitp)
 	pglob->gl_pathv = pathv;
 
 	for (p = path; *p++;)
-		continue;
+		;
 	len = (size_t)(p - path);
 	*limitp += len;
 	if ((copy = malloc(len)) != NULL) {
