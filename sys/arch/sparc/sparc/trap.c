@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.24 2000/06/08 22:25:22 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.25 2000/07/04 10:52:28 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -217,7 +217,7 @@ userret(p, pc, oticks)
 	int pc;
 	u_quad_t oticks;
 {
-	int sig;
+	int sig, s;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
@@ -239,11 +239,11 @@ userret(p, pc, oticks)
 		 * but before we switched, we might not be on the queue
 		 * indicated by our priority.
 		 */
-		(void) splstatclock();
+		s = splstatclock();
 		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 		mi_switch();
-		(void) spl0();
+		splx(s);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
