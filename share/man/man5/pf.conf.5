@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.68 2002/07/30 08:55:12 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.69 2002/07/30 08:56:07 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -867,7 +867,7 @@ rules are evaluated independently.
 Hence, their relative position in the rule set is not relevant,
 and packets can't be blocked before normalization.
 .Sh FRAGMENT HANDLING
-IP datagrams (packets) can have a size of up to 65335 bytes.
+IP datagrams (packets) can have a size of up to 65535 bytes.
 Most network links, however, have a maximum transmission unit (MTU)
 that is significantly lower (1500 bytes is common).
 When an IP packet's size exceeds the MTU of the interface it has to
