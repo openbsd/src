@@ -51,6 +51,7 @@ struct keytab keywords[] = {
 	{"x25", K_X25},
 	{"xns", K_XNS},
 	{"xresolve", K_XRESOLVE},
+	{"encap", K_ENCAP}, 
 	{0, 0}
 };
 

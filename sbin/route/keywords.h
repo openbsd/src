@@ -53,3 +53,4 @@ struct keytab {
 #define	K_X25	43
 #define	K_XNS	44
 #define	K_XRESOLVE	45
+#define K_ENCAP	46
