@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.115 2005/03/28 15:03:33 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.116 2005/03/30 11:23:15 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -235,11 +235,9 @@ main(int argc, char *argv[])
 		TAILQ_REMOVE(rules_l, r, entry);
 		free(r);
 	}
-
-	while ((la = TAILQ_FIRST(conf.listen_addrs)) != NULL) {
-		TAILQ_REMOVE(conf.listen_addrs, la, entry);
+	TAILQ_FOREACH(la, conf.listen_addrs, entry) {
 		close(la->fd);
-		free(la);
+		la->fd = -1;
 	}
 
 	mrt_reconfigure(&mrt_l);
@@ -335,6 +333,11 @@ main(int argc, char *argv[])
 	while ((m = LIST_FIRST(&mrt_l)) != NULL) {
 		LIST_REMOVE(m, entry);
 		free(m);
+	}
+	while ((la = TAILQ_FIRST(conf.listen_addrs)) != NULL) {
+		TAILQ_REMOVE(conf.listen_addrs, la, entry);
+		close(la->fd);
+		free(la);
 	}
 
 	free(rules_l);
@@ -450,15 +453,12 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		TAILQ_REMOVE(rules_l, r, entry);
 		free(r);
 	}
-	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
+	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
 		if (imsg_compose(ibuf_se, IMSG_RECONF_LISTENER, 0, 0, la->fd,
 		    la, sizeof(struct listen_addr)) == -1)
 			return (-1);
-		TAILQ_REMOVE(conf->listen_addrs, la, entry);
-		free(la);
+		la->fd = -1;
 	}
-	free(conf->listen_addrs);
-	conf->listen_addrs = NULL;
 
 	if (imsg_compose(ibuf_se, IMSG_RECONF_DONE, 0, 0, -1, NULL, 0) == -1 ||
 	    imsg_compose(ibuf_rde, IMSG_RECONF_DONE, 0, 0, -1, NULL, 0) == -1)

@@ -1,7 +1,7 @@
-/*	$OpenBSD: config.c,v 1.44 2005/03/28 14:19:56 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.45 2005/03/30 11:23:15 henning Exp $ */
 
 /*
- * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -39,7 +39,11 @@ int
 merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
     struct peer *peer_l, struct listen_addrs *listen_addrs)
 {
-	struct listen_addr			*la;
+	struct listen_addr			*nla, *ola, *next;
+
+	/*
+	 * merge the freshly parsed conf into the running xconf
+	 */
 
 	/* preserve cmd line opts */
 	conf->opts = xconf->opts;
@@ -58,17 +62,66 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 	if ((conf->flags & BGPD_FLAG_REFLECTOR) && conf->clusterid == 0)
 		conf->clusterid = conf->bgpid;
 
-	if (xconf->listen_addrs != NULL) {
-		while ((la = TAILQ_FIRST(xconf->listen_addrs)) != NULL) {
-			TAILQ_REMOVE(xconf->listen_addrs, la, entry);
-			free(la);
-		}
-		free(xconf->listen_addrs);
-	}
-
+	conf->listen_addrs = xconf->listen_addrs;
 	memcpy(xconf, conf, sizeof(struct bgpd_config));
 
-	xconf->listen_addrs = listen_addrs;
+	if (conf->listen_addrs == NULL) {
+		/* there is no old conf, just copy new one over */
+		xconf->listen_addrs = listen_addrs;
+		TAILQ_FOREACH(nla, xconf->listen_addrs, entry)
+			nla->reconf = RECONF_REINIT;
+
+	} else {
+		/* 
+		 * merge new listeners:
+		 * -flag all existing ones as to be deleted
+		 * -those that are in both new and old: flag to keep
+		 * -new ones get inserted and flagged as to reinit
+		 * -remove all that are still flagged for deletion
+		 */
+
+		TAILQ_FOREACH(nla, xconf->listen_addrs, entry)
+			nla->reconf = RECONF_DELETE;
+
+		/* no new listeners? preserve default ones */
+		if (TAILQ_EMPTY(listen_addrs))
+			TAILQ_FOREACH(ola, xconf->listen_addrs, entry)
+				if (ola->flags & DEFAULT_LISTENER)
+					ola->reconf = RECONF_KEEP;
+
+		for (nla = TAILQ_FIRST(listen_addrs); nla != NULL; nla = next) {
+			next = TAILQ_NEXT(nla, entry);
+
+			TAILQ_FOREACH(ola, xconf->listen_addrs, entry)
+				if (!memcmp(&nla->sa, &ola->sa,
+				    sizeof(nla->sa)))
+					break;
+
+			if (ola == NULL) {
+				/* new listener, copy over */
+				TAILQ_REMOVE(listen_addrs, nla, entry);
+				TAILQ_INSERT_TAIL(xconf->listen_addrs,
+				    nla, entry);
+				nla->reconf = RECONF_REINIT;
+			} else		/* exists, just flag */
+				ola->reconf = RECONF_KEEP;
+		}
+
+		for (nla = TAILQ_FIRST(xconf->listen_addrs); nla != NULL;
+		    nla = next) {
+			next = TAILQ_NEXT(nla, entry);
+			if (nla->reconf == RECONF_DELETE) {
+				TAILQ_REMOVE(xconf->listen_addrs, nla, entry);
+				free(nla);
+			}
+		}
+
+		while ((ola = TAILQ_FIRST(listen_addrs)) != NULL) {
+			TAILQ_REMOVE(listen_addrs, ola, entry);
+			free(ola);
+		}
+		free(listen_addrs);
+	}
 
 	return (0);
 }
@@ -218,6 +271,7 @@ prepare_listeners(struct bgpd_config *conf)
 			fatal("setup_listeners calloc");
 		la->fd = -1;
 		la->flags = DEFAULT_LISTENER;
+		la->reconf = RECONF_REINIT;
 		la->sa.ss_len = sizeof(struct sockaddr_in);
 		((struct sockaddr_in *)&la->sa)->sin_family = AF_INET;
 		((struct sockaddr_in *)&la->sa)->sin_addr.s_addr =
@@ -229,6 +283,7 @@ prepare_listeners(struct bgpd_config *conf)
 			fatal("setup_listeners calloc");
 		la->fd = -1;
 		la->flags = DEFAULT_LISTENER;
+		la->reconf = RECONF_REINIT;
 		la->sa.ss_len = sizeof(struct sockaddr_in6);
 		((struct sockaddr_in6 *)&la->sa)->sin6_family = AF_INET6;
 		((struct sockaddr_in6 *)&la->sa)->sin6_port = htons(BGP_PORT);
@@ -237,6 +292,9 @@ prepare_listeners(struct bgpd_config *conf)
 
 	for (la = TAILQ_FIRST(conf->listen_addrs); la != NULL; la = next) {
 		next = TAILQ_NEXT(la, entry);
+		if (la->reconf != RECONF_REINIT)
+			continue;
+
 		if ((la->fd = socket(la->sa.ss_family, SOCK_STREAM,
 		    IPPROTO_TCP)) == -1) {
 			if (la->flags & DEFAULT_LISTENER && (errno ==
@@ -249,7 +307,7 @@ prepare_listeners(struct bgpd_config *conf)
 		}
 
 		opt = 1;
-		if (setsockopt(la->fd, SOL_SOCKET, SO_REUSEPORT,
+		if (setsockopt(la->fd, SOL_SOCKET, SO_REUSEADDR,
 		    &opt, sizeof(opt)) == -1)
 			fatal("setsockopt SO_REUSEPORT");
 

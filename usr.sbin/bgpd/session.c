@@ -1,7 +1,7 @@
-/*	$OpenBSD: session.c,v 1.215 2005/03/28 15:16:46 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.216 2005/03/30 11:23:15 henning Exp $ */
 
 /*
- * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -2109,17 +2109,20 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("reconf request not from parent");
 			nla = imsg.data;
-			TAILQ_FOREACH(la, conf->listen_addrs, entry) {
+			TAILQ_FOREACH(la, conf->listen_addrs, entry)
 				if (!la_cmp(la, nla))
 					break;
-			}
-
-			if ((nla->fd = imsg_get_fd(ibuf)) == -1)
-				log_warnx("expected to receive fd for %s "
-				    "but didn't receive any",
-				    log_sockaddr((struct sockaddr *)&la->sa));
 
 			if (la == NULL) {
+				if (nla->reconf != RECONF_REINIT)
+					fatal("king bula sez: expected REINIT");
+
+				if ((nla->fd = imsg_get_fd(ibuf)) == -1)
+					log_warnx("expected to receive fd for "
+					    "%s but didn't receive any",
+					    log_sockaddr((struct sockaddr *)
+					    &la->sa));
+
 				la = calloc(1, sizeof(struct listen_addr));
 				if (la == NULL)
 					fatal(NULL);
@@ -2130,9 +2133,11 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				TAILQ_INSERT_TAIL(nconf->listen_addrs, la,
 				    entry);
 			} else {
+				if (nla->reconf != RECONF_KEEP)
+					fatal("king bula sez: expected KEEP");
 				la->reconf = RECONF_KEEP;
-				close(nla->fd);
 			}
+
 			break;
 		case IMSG_RECONF_DONE:
 			if (idx != PFD_PIPE_MAIN)
@@ -2155,12 +2160,6 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				if (p->conf.reconf_action == RECONF_NONE &&
 				    !p->conf.cloned)
 					p->conf.reconf_action = RECONF_DELETE;
-
-			/* if there are no new listeners, keep default ones */
-			if (TAILQ_EMPTY(nconf->listen_addrs))
-				TAILQ_FOREACH(la, conf->listen_addrs, entry)
-					if (la->flags & DEFAULT_LISTENER)
-						la->reconf = RECONF_KEEP;
 
 			/* delete old listeners */
 			for (la = TAILQ_FIRST(conf->listen_addrs); la != NULL;
