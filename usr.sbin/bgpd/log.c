@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.42 2004/11/18 14:30:10 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.43 2005/03/26 18:49:34 tedu Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -276,19 +276,19 @@ log_notification(const struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 	p = log_fmt_peer(&peer->conf);
 	switch (errcode) {
 	case ERR_HEADER:
-		if (subcode > sizeof(suberr_header_names)/sizeof(char *))
+		if (subcode >= sizeof(suberr_header_names)/sizeof(char *))
 			uk = 1;
 		else
 			suberrname = suberr_header_names[subcode];
 		break;
 	case ERR_OPEN:
-		if (subcode > sizeof(suberr_open_names)/sizeof(char *))
+		if (subcode >= sizeof(suberr_open_names)/sizeof(char *))
 			uk = 1;
 		else
 			suberrname = suberr_open_names[subcode];
 		break;
 	case ERR_UPDATE:
-		if (subcode > sizeof(suberr_update_names)/sizeof(char *))
+		if (subcode >= sizeof(suberr_update_names)/sizeof(char *))
 			uk = 1;
 		else
 			suberrname = suberr_update_names[subcode];
