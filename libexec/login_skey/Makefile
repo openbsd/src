@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2000/12/12 02:35:18 millert Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/05/16 03:51:23 millert Exp $
 
 PROG=	login_skey
 MAN=	login_skey.8
@@ -8,7 +8,7 @@ CFLAGS+=-Wall
 
 BINOWN=	root
 BINGRP=	auth
-BINMODE=4555
+BINMODE=2555
 BINDIR=	/usr/libexec/auth
 
 .include <bsd.prog.mk>
