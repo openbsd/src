@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.17 2001/03/31 20:07:56 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.18 2001/11/14 21:36:37 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -157,14 +157,14 @@ main(argc, argv)
 		fprintf(stderr, "rwhod: udp/who: unknown service\n");
 		exit(1);
 	}
-	if (!debug)
-		daemon(1, 0);
-
 	if (chdir(_PATH_RWHODIR) < 0) {
 		(void)fprintf(stderr, "rwhod: %s: %s\n",
 		    _PATH_RWHODIR, strerror(errno));
 		exit(1);
 	}
+	if (!debug)
+		daemon(1, 0);
+
 	(void) signal(SIGHUP, hup);
 	openlog("rwhod", LOG_PID, LOG_DAEMON);
 	/*
