@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.12 2001/10/09 15:07:20 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.13 2002/02/18 22:48:03 mickey Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -67,11 +67,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0
@@ -1028,6 +1023,11 @@ hme_ioctl(ifp, cmd, data)
 
 	s = splnet();
 
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return (error);
+	}
+
 	switch (cmd) {
 
 	case SIOCSIFADDR:
@@ -1039,23 +1039,6 @@ hme_ioctl(ifp, cmd, data)
 			hme_init(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				memcpy(LLADDR(ifp->if_sadl),
-				    ina->x_host.c_host, sizeof(sc->sc_enaddr));
-			}	
-			/* Set new address. */
-			hme_init(sc);
-			break;
-		    }
 #endif
 		default:
 			hme_init(sc);
@@ -1113,7 +1096,7 @@ hme_ioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 
