@@ -1,0 +1,75 @@
+.\"	$OpenBSD: syslogc.8,v 1.1 2004/01/04 08:30:21 djm Exp $
+.\"
+.\" Copyright (c) 2004 Damien Miller
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.Dd November 2, 2003
+.Dt SYSLOGC 8
+.Os
+.Sh NAME
+.Nm syslogc
+.Nd collect messages from syslog memory buffer
+.Sh SYNOPSIS
+.Nm syslogc
+.Op Fl Ccq
+.Op Fl s Ar reporting_socket
+.Ar logname
+.Nm syslogc
+.Op Fl Cc
+.Ar logname
+.Nm syslogc
+.Fl q
+.Sh DESCRIPTION
+.Nm
+collects messages from the
+.Xr syslogd 8
+memory buffer specified by the
+.Ar logname
+argument.
+.Pp
+For
+.Nm
+to work,
+.Xr syslogd 8
+must be configured with one or more memory buffer logs (see
+.Xr syslog.conf 5
+for details) and have a reporting socket location specified on the
+commandline (using the
+.Fl s
+option to
+.Xr syslogd 8 ) .
+.Pp
+By default,
+.Nm
+will query the specified log and return it to standard output.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl C
+Request that the log buffer be cleared without reading it.
+.It Fl c
+Request that the log buffer be cleared once it has been read.
+.It Fl q
+Request a list of available logs.
+.It Fl s Ar reporting_socket
+Specify alternate reporting socket location (the default is
+.Pa /var/run/syslogd.sock ) .
+.El
+.Sh SEE ALSO
+.Xr syslog 3 ,
+.Xr syslog.conf 5
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Ox 3.5 .
