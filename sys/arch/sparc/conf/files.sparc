@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.35 1999/11/08 15:36:10 mickey Exp $
+#	$OpenBSD: files.sparc,v 1.36 2000/06/12 06:10:45 fgsch Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -121,7 +121,6 @@ device hme: ifnet, ether, mii, ifmedia
 attach hme at sbus
 file	arch/sparc/dev/hme.c		hme
 
-device esp: scsi, ncr53c9x
 attach esp at sbus, dma, obio
 file	arch/sparc/dev/esp.c		esp
 

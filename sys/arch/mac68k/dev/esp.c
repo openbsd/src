@@ -111,10 +111,6 @@ struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch, espattach
 };
 
-struct cfdriver esp_cd = {
-	NULL, "esp", DV_DULL
-};
-
 struct scsi_adapter esp_switch = {
 	ncr53c9x_scsi_cmd,
 	minphys,		/* no max at this level; handled by DMA code */

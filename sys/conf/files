@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.166 2000/06/06 20:18:20 art Exp $
+#	$OpenBSD: files,v 1.167 2000/06/12 06:10:43 fgsch Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -40,7 +40,6 @@ define	token
 # of device drivers.
 define	ncr5380sbc	# NCR 5380 SCSI Bus Controller
 define	ncr53c7xx	# NCR 53c7xx SCSI Bus Controller
-define	ncr53c9x	# NCR 53c9x or Emulex ESP SCSI Controller
 define	pdq		# DEC FDDI chipset
 define	dp8390nic	# 8390-family Ethernet controllers
 define	rtl80x9		# RealTek 8019/8029 NE2000-compatible
@@ -99,6 +98,11 @@ file	dev/ic/isp_openbsd.c		isp
 # UltraStor SCSI controllers
 device	uha: scsi
 file	dev/ic/uha.c		uha
+
+# NCR 53c9x or Emulex ESP SCSI Controller
+define	ncr53c9x
+device	esp: scsi, ncr53c9x
+file	dev/ic/ncr53c9x.c	ncr53c9x
 
 # 3Com Etherlink-III Ethernet controller
 device	ep: ether, ifnet, ifmedia, mii
@@ -265,7 +269,6 @@ file dev/audio.c			audio 			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/ic/ncr5380sbc.c		ncr5380sbc
 file dev/ic/ncr53c7xx.c			ncr53c7xx
-file dev/ic/ncr53c9x.c			ncr53c9x
 file dev/ic/pdq.c			pdq
 file dev/ic/pdq_ifsubr.c		pdq
 file dev/ic/dp8390.c			dp8390nic

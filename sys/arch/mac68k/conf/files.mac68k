@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.20 1999/11/08 15:36:08 mickey Exp $
+#	$OpenBSD: files.mac68k,v 1.21 2000/06/12 06:10:47 fgsch Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -82,7 +82,6 @@ attach	sbc at obio_scsi5380 with sbc_obio
 file	arch/mac68k/dev/sbc_obio.c	sbc_obio
 file	arch/mac68k/dev/sbc.c		sbc
 
-device	esp: scsi, ncr53c9x
 attach	esp at obio_norm
 file	arch/mac68k/dev/esp.c		esp
 
