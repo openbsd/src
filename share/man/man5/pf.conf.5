@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.186 2003/02/18 22:06:49 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.187 2003/02/21 16:59:29 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1903,7 +1903,7 @@ schedulers     = ( cbq-def | priq-def )
 
 action         = pass | block [ return ] | scrub
 return         = drop | return | return-rst [ ( ttl number ) ]
-                 | return-icmp [ ( icmpcode [, icmp6cde ] ) ]
+                 | return-icmp [ ( icmpcode [, icmp6code ] ) ]
                  | return-icmp6 [ ( icmp6code ) ]
 icmpcode       = ( icmp-code-name | icmp-code-number )
 icmp6code      = ( icmp6-code-name | icmp6-code-number )
