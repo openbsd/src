@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.11 1997/07/31 20:15:08 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.12 1997/08/01 21:06:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -35,7 +35,6 @@
 	.file "gidt.S"
 
 #include <machine/asm.h>
-#include <machine/psl.h>
 #define _LOCORE
 #include <machine/trap.h>
 #include <debug_md.h>
