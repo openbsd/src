@@ -1,4 +1,4 @@
-/*	$OpenBSD: viaenv.c,v 1.1 2003/04/25 21:46:44 grange Exp $	*/
+/*	$OpenBSD: viaenv.c,v 1.2 2003/10/16 18:38:40 grange Exp $	*/
 /*	$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $	*/
 
 /*
@@ -94,7 +94,8 @@ viaenv_match(struct device *parent, void *match, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT82C686A_SMB)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT82C686A_SMB ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT8231_PWR))
 		return (1);
 
 	return (0);
