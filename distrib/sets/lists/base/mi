@@ -501,6 +501,7 @@
 ./usr/lib/perl5/ExtUtils/testlib.pm
 ./usr/lib/perl5/ExtUtils/typemap
 ./usr/lib/perl5/ExtUtils/xsubpp
+./usr/lib/perl5/ExtUtils/xsubpp.cat1
 ./usr/lib/perl5/File
 ./usr/lib/perl5/File/Basename.pm
 ./usr/lib/perl5/File/CheckTree.pm
