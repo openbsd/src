@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute6.8,v 1.4 2000/04/20 07:49:47 angelos Exp $
+.\"	$OpenBSD: traceroute6.8,v 1.5 2000/04/20 17:43:46 angelos Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl dlnrv
-.Op Fl b Ar minhops
+.Op Fl f Ar firsthop
 .Op Fl m Ar hoplimit
 .Op Fl p Ar port
 .Op Fl q Ar probes
@@ -53,7 +53,7 @@
 .Bl -tag -width Ds
 .It Fl d
 Debug mode.
-.It Fl b Ar minhops
+.It Fl f Ar firsthop
 Specify how many hops to skip in trace.
 .It Fl m Ar hoplimit
 Specify maximum hoplimit.
