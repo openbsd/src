@@ -1,5 +1,5 @@
-/*	$OpenBSD: siop_common.c,v 1.14 2002/09/16 00:53:12 krw Exp $ */
-/*	$NetBSD: siop_common.c,v 1.30 2002/08/29 18:23:52 bouyer Exp $	*/
+/*	$OpenBSD: siop_common.c,v 1.15 2002/10/09 23:43:11 krw Exp $ */
+/*	$NetBSD: siop_common.c,v 1.31 2002/09/27 15:37:18 provos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -134,7 +134,7 @@ siop_common_attach(sc)
 			sc->st_minsync = scf_period[i].period;
 	}
 	if (sc->st_maxsync == 255 || sc->st_minsync == 0)
-		panic("siop: can't find my sync parameters\n");
+		panic("siop: can't find my sync parameters");
 	for (i = 0; i < sizeof(dt_scf_period) / sizeof(dt_scf_period[0]); i++) {
 		if (sc->clock_period != dt_scf_period[i].clock)
 			continue;
@@ -144,7 +144,7 @@ siop_common_attach(sc)
 			sc->dt_minsync = dt_scf_period[i].period;
 	}
 	if (sc->dt_maxsync == 255 || sc->dt_minsync == 0)
-		panic("siop: can't find my sync parameters\n");
+		panic("siop: can't find my sync parameters");
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.15 2002/09/04 22:08:06 fgsch Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.16 2002/10/09 23:43:11 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -984,7 +984,7 @@ ncr53c9x_sched(sc)
 			}
 #ifdef DIAGNOSTIC
 			if (i == 256)
-				panic("ncr53c9x_sched: tag alloc failure\n");
+				panic("ncr53c9x_sched: tag alloc failure");
 #endif
 
 			/* Save where to start next time. */
@@ -1160,7 +1160,7 @@ ncr53c9x_dequeue(sc, ecb)
 	li = TINFO_LUN(ti, lun);
 #ifdef DIAGNOSTIC
 	if ((!li) || (li->lun != lun))
-		panic("ncr53c9x_dequeue: lun %qx for ecb %p does not exist\n",
+		panic("ncr53c9x_dequeue: lun %qx for ecb %p does not exist",
 		    (long long)lun, ecb);
 #endif
 	if (li->untagged == ecb) {
@@ -1171,7 +1171,7 @@ ncr53c9x_dequeue(sc, ecb)
 #ifdef DIAGNOSTIC
 		if (li->queued[ecb->tag[1]] && (li->queued[ecb->tag[1]] != ecb))
 			panic("ncr53c9x_dequeue: slot %d for lun %qx has %p "
-			    "instead of ecb %p\n", ecb->tag[1],
+			    "instead of ecb %p", ecb->tag[1],
 			    (long long)lun,
 			    li->queued[ecb->tag[1]], ecb);
 #endif
@@ -1229,7 +1229,7 @@ ncr53c9x_rdfifo(struct ncr53c9x_softc *sc, int how)
 		buf = sc->sc_imess + sc->sc_imlen;
 		break;
 	default:
-		panic("ncr53c9x_rdfifo: bad flag\n");
+		panic("ncr53c9x_rdfifo: bad flag");
 		break;
 	}
 

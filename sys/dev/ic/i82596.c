@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.12 2002/09/23 06:11:50 mickey Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.13 2002/10/09 23:43:11 krw Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1537,7 +1537,7 @@ i82596_setup_bufs(sc)
 	sc->nframes = n / r;
 
 	if (sc->nframes <= 0)
-		panic("ie: bogus buffer calc\n");
+		panic("ie: bogus buffer calc");
 
 	sc->nrxbuf = sc->nframes * B_PER_F;
 

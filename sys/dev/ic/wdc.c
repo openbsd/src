@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.52 2002/07/02 15:26:19 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.53 2002/10/09 23:43:11 krw Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -910,7 +910,7 @@ wdcstart(chp)
 	}
 #ifdef DIAGNOSTIC
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0)
-		panic("wdcstart: channel waiting for irq\n");
+		panic("wdcstart: channel waiting for irq");
 #endif
 	if (chp->wdc->cap & WDC_CAPABILITY_HWLOCK)
 		if (!(chp->wdc->claim_hw)(chp, 0))
@@ -1599,7 +1599,7 @@ wdc_exec_command(drvp, wdc_c)
 #ifdef DIAGNOSTIC
 	if ((wdc_c->flags & AT_POLL) != 0 &&
 	    (wdc_c->flags & AT_DONE) == 0)
-		panic("wdc_exec_command: polled command not done\n");
+		panic("wdc_exec_command: polled command not done");
 #endif
 	if (wdc_c->flags & AT_DONE) {
 		ret = WDC_COMPLETE;

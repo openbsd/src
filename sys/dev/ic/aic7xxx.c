@@ -28,10 +28,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx.c,v 1.41 2002/07/05 05:41:03 smurph Exp $
+ * $Id: aic7xxx.c,v 1.42 2002/10/09 23:43:10 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.80 2001/12/16 17:38:30 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.41 2002/07/05 05:41:03 smurph Exp $
+ * $OpenBSD: aic7xxx.c,v 1.42 2002/10/09 23:43:10 krw Exp $
  */
 
 #ifdef __OpenBSD__
@@ -722,7 +722,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			if (devinfo.role == ROLE_INITIATOR) {
 				if (scb == NULL)
 					panic("HOST_MSG_LOOP with "
-					      "invalid SCB %x\n", scb_index);
+					      "invalid SCB %x", scb_index);
 
 				if (bus_phase == P_MESGOUT)
 					ahc_setup_initiator_msgout(ahc,
@@ -2256,7 +2256,7 @@ ahc_build_transfer_msg(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 
 	if (!dowide && !dosync && !doppr) {
 		panic("ahc_intr: AWAITING_MSG for negotiation, "
-		      "but no negotiation needed\n");	
+		      "but no negotiation needed");	
 	}
 
 	use_ppr = (tinfo->curr.transport_version >= 3) || doppr;
@@ -5106,7 +5106,7 @@ ahc_search_qinfifo(struct ahc_softc *ahc, int target, char channel,
 		if (scb == NULL) {
 			printf("qinpos = %d, SCB index = %d\n",
 				qinpos, ahc->qinfifo[qinpos]);
-			panic("Loop 1\n");
+			panic("Loop 1");
 		}
 
 		if (ahc_match_scb(ahc, scb, target, channel, lun, tag, role)) {
@@ -5172,7 +5172,7 @@ ahc_search_qinfifo(struct ahc_softc *ahc, int target, char channel,
 		if (scb == NULL) {
 			printf("found = %d, qinstart = %d, qinfifionext = %d\n",
 				found, qinstart, ahc->qinfifonext);
-			panic("First/Second Qinfifo fixup\n");
+			panic("First/Second Qinfifo fixup");
 		}
 		/*
 		 * ahc_swap_with_next_hscb forces our next pointer to
@@ -5218,7 +5218,7 @@ ahc_search_qinfifo(struct ahc_softc *ahc, int target, char channel,
 		if (scb == NULL) {
 			printf("scb_index = %d, next = %d\n",
 				scb_index, next);
-			panic("Waiting List traversal\n");
+			panic("Waiting List traversal");
 		}
 		if (ahc_match_scb(ahc, scb, target, channel,
 				  lun, SCB_LIST_NULL, role)) {
@@ -5844,7 +5844,7 @@ ahc_calc_residual(struct scb *scb)
 		/* Case 4 */
 		return;
 	} else if ((resid_sgptr & ~SG_PTR_MASK) != 0) {
-		panic("Bogus resid sgptr value 0x%x\n", resid_sgptr);
+		panic("Bogus resid sgptr value 0x%x", resid_sgptr);
 	} else {
 		struct ahc_dma_seg *sg;
 
@@ -6209,7 +6209,7 @@ ahc_download_instr(struct ahc_softc *ahc, u_int instrptr, uint8_t *dconsts)
 			 * (AND with an immediate of FF).
 			 */
 			if (fmt1_ins->immediate != 1)
-				panic("%s: BMOV not supported\n",
+				panic("%s: BMOV not supported",
 				      ahc_name(ahc));
 			fmt1_ins->opcode = AIC_OP_AND;
 			fmt1_ins->immediate = 0xff;
@@ -6769,7 +6769,7 @@ ahc_update_scsiid(struct ahc_softc *ahc, u_int targid_mask)
 	u_int scsiid;
 
 	if ((ahc->features & AHC_MULTI_TID) == 0)
-		panic("ahc_update_scsiid called on non-multitid unit\n");
+		panic("ahc_update_scsiid called on non-multitid unit");
 
 	/*
 	 * Since we will rely on the the TARGID mask
