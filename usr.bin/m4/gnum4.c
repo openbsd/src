@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.25 2003/06/30 22:13:32 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.26 2003/11/17 17:12:10 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -212,9 +212,7 @@ addchars(const char *c, size_t n)
 			bufsize = 1024;
 		else
 			bufsize *= 2;
-		buffer = realloc(buffer, bufsize);
-		if (buffer == NULL)
-			errx(1, "out of memory");
+		buffer = xrealloc(buffer, bufsize, NULL);
 	}
 	memcpy(buffer+current, c, n);
 	current += n;
@@ -228,9 +226,7 @@ addchar(int c)
 			bufsize = 1024;
 		else
 			bufsize *= 2;
-		buffer = realloc(buffer, bufsize);
-		if (buffer == NULL)
-			errx(1, "out of memory");
+		buffer = xrealloc(buffer, bufsize, NULL);
 	}
 	buffer[current++] = c;
 }
@@ -251,7 +247,8 @@ exit_regerror(int er, regex_t *re)
 	char 	*errbuf;
 
 	errlen = regerror(er, re, NULL, 0);
-	errbuf = xalloc(errlen);
+	errbuf = xalloc(errlen, 
+	    "malloc in regerror: %lu", (unsigned long)errlen);
 	regerror(er, re, errbuf, errlen);
 	errx(1, "%s at line %lu: regular expression error: %s", 
 	    CURRENT_NAME, CURRENT_LINE, errbuf);
@@ -458,7 +455,7 @@ dopatsubst(const char *argv[], int argc)
 		if (error != 0)
 			exit_regerror(error, &re);
 		
-		pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1));
+		pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1), NULL);
 		do_subst(argv[2], &re, 
 		    argc > 4 && argv[4] != NULL ? argv[4] : "", pmatch);
 		free(pmatch);
@@ -483,7 +480,7 @@ doregexp(const char *argv[], int argc)
 	if (error != 0)
 		exit_regerror(error, &re);
 	
-	pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1));
+	pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1), NULL);
 	if (argv[4] == NULL || argc == 4)
 		do_regexpindex(argv[2], &re, pmatch);
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.38 2003/06/30 22:13:32 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.39 2003/11/17 17:12:10 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -99,7 +99,8 @@ extern void	pbnum(int);
 extern void	pbunsigned(unsigned long);
 extern void	pbstr(const char *);
 extern void	putback(int);
-extern void	*xalloc(size_t);
+extern void	*xalloc(size_t, const char *fmt, ...);
+extern void	*xrealloc(void *, size_t, const char *fmt, ...);
 extern char	*xstrdup(const char *);
 extern void	usage(void);
 extern void	resizedivs(int);

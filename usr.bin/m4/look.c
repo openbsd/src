@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.15 2003/06/30 22:13:32 espie Exp $	*/
+/*	$OpenBSD: look.c,v 1.16 2003/11/17 17:12:10 espie Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@ hash_alloc(s, u)
 	size_t s;
 	void *u 	UNUSED;
 {
-	void *storage = xalloc(s);
+	void *storage = xalloc(s, "hash alloc");
 	if (storage)
 		memset(storage, 0, s);
 	return storage;
@@ -90,7 +90,7 @@ element_alloc(s, u)
 	size_t s;
 	void *u 	UNUSED;
 {
-	return xalloc(s);
+	return xalloc(s, "element alloc");
 }
 
 void
@@ -167,7 +167,7 @@ macro_define(const char *name, const char *defn)
 		if (n->d->defn != null)
 			free(n->d->defn);
 	} else {
-		n->d = xalloc(sizeof(struct macro_definition));
+		n->d = xalloc(sizeof(struct macro_definition), NULL);
 		n->d->next = NULL;
 	}
 	setup_definition(n->d, defn, name);
@@ -180,7 +180,7 @@ macro_pushdef(const char *name, const char *defn)
 	struct macro_definition *d;
 	
 	n = create_entry(name);
-	d = xalloc(sizeof(struct macro_definition));
+	d = xalloc(sizeof(struct macro_definition), NULL);
 	d->next = n->d;
 	n->d = d;
 	setup_definition(n->d, defn, name);
@@ -237,7 +237,7 @@ setup_builtin(const char *name, unsigned int type)
 
 	n = create_entry(name);
 	n->builtin_type = type;
-	n->d = xalloc(sizeof(struct macro_definition));
+	n->d = xalloc(sizeof(struct macro_definition), NULL);
 	n->d->defn = xstrdup(name);
 	n->d->type = type;
 	n->d->next = NULL;

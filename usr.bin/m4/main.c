@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.63 2003/06/30 22:13:32 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.64 2003/11/17 17:12:10 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.63 2003/06/30 22:13:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.64 2003/11/17 17:12:10 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -191,8 +191,8 @@ main(int argc, char *argv[])
 	initspaces();
 	STACKMAX = INITSTACKMAX;
 
-	mstack = (stae *)xalloc(sizeof(stae) * STACKMAX);
-	sstack = (char *)xalloc(STACKMAX);
+	mstack = (stae *)xalloc(sizeof(stae) * STACKMAX, NULL);
+	sstack = (char *)xalloc(STACKMAX, NULL);
 
 	maxout = 0;
 	outfile = NULL;
@@ -623,10 +623,11 @@ dump_stack(struct position *t, int lev)
 static void 
 enlarge_stack(void)
 {
-	STACKMAX *= 2;
-	mstack = realloc(mstack, sizeof(stae) * STACKMAX);
-	sstack = realloc(sstack, STACKMAX);
-	if (mstack == NULL || sstack == NULL)
-		errx(1, "Evaluation stack overflow (%lu)", 
-		    (unsigned long)STACKMAX);
+	STACKMAX += STACKMAX/2;
+	mstack = xrealloc(mstack, sizeof(stae) * STACKMAX, 
+	    "Evaluation stack overflow (%lu)", 
+	    (unsigned long)STACKMAX);
+	sstack = xrealloc(sstack, STACKMAX,
+	    "Evaluation stack overflow (%lu)", 
+	    (unsigned long)STACKMAX);
 }

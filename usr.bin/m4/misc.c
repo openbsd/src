@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.29 2003/06/03 02:56:10 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.30 2003/11/17 17:12:10 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.29 2003/06/03 02:56:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.30 2003/11/17 17:12:10 espie Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -147,10 +148,10 @@ initspaces()
 {
 	int i;
 
-	strspace = xalloc(strsize+1);
+	strspace = xalloc(strsize+1, NULL);
 	ep = strspace;
 	endest = strspace+strsize;
-	buf = (char *)xalloc(bufsize);
+	buf = (char *)xalloc(bufsize, NULL);
 	bufbase = buf;
 	bp = buf;
 	endpbb = buf + bufsize;
@@ -185,10 +186,8 @@ enlarge_bufspace()
 	char *newbuf;
 	int i;
 
-	bufsize *= 2;
-	newbuf = realloc(buf, bufsize);
-	if (!newbuf)
-		errx(1, "too many characters pushed back");
+	bufsize += bufsize/2;
+	newbuf = xrealloc(buf, bufsize, "too many characters pushed back");
 	for (i = 0; i < MAXINP; i++)
 		bbase[i] = (bbase[i]-buf)+newbuf;
 	bp = (bp-buf)+newbuf;
@@ -254,21 +253,49 @@ resizedivs(int n)
 {
 	int i;
 
-	outfile = (FILE **)realloc(outfile, sizeof(FILE *) * n);
-	if (outfile == NULL)
-		    errx(1, "too many diverts %d", n);
+	outfile = (FILE **)xrealloc(outfile, sizeof(FILE *) * n, 
+	    "too many diverts %d", n);
 	for (i = maxout; i < n; i++)
 		outfile[i] = NULL;
 	maxout = n;
 }
 
 void *
-xalloc(size_t n)
+xalloc(size_t n, const char *fmt, ...)
 {
-	char *p = malloc(n);
+	void *p = malloc(n);
 
-	if (p == NULL)
-		err(1, "malloc");
+	if (p == NULL) {
+		if (fmt == NULL)
+			err(1, "malloc");
+		else {
+			va_list va;
+			
+			va_start(va, fmt);
+			verr(1, fmt, va);
+			va_end(va);
+		}
+	}
+	return p;
+}
+
+void *
+xrealloc(void *old, size_t n, const char *fmt, ...)
+{
+	char *p = realloc(old, n);
+
+	if (p == NULL) {
+		free(old);
+		if (fmt == NULL)
+			err(1, "realloc");
+		else {
+			va_list va;
+
+			va_start(va, fmt);
+			verr(1, fmt, va);
+			va_end(va);
+	    	}
+	}
 	return p;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.50 2003/06/30 21:47:21 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.51 2003/11/17 17:12:10 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.50 2003/06/30 21:47:21 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.51 2003/11/17 17:12:10 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -386,7 +386,7 @@ expand_builtin(const char *argv[], int argc, int td)
 		if (argc > 3) {
 			char *temp;
 
-			temp = xalloc(strlen(argv[2])+1);
+			temp = xalloc(strlen(argv[2])+1, NULL);
 			if (argc > 4)
 				map(temp, argv[2], argv[3], argv[4]);
 			else
