@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.104 2003/01/14 20:52:10 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.105 2003/01/15 01:36:10 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -155,7 +155,6 @@ pciide_pci_write(pc, pa, reg, val)
 
 struct pciide_softc {
 	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
-#define sc_xname sc_wdcdev.sc_dev.dv_xname
 	pci_chipset_tag_t	sc_pc;		/* PCI registers info */
 	pcitag_t		sc_tag;
 	void			*sc_pci_ih;	/* PCI interrupt handle */
