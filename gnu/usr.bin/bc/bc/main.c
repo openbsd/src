@@ -325,6 +325,6 @@ void
 use_quit (sig)
      int sig;
 {
-  printf ("\n(interrupt) use quit to exit.\n");
+  write (1, "\n(interrupt) use quit to exit.\n", 31);
   signal (SIGINT, use_quit);
 }

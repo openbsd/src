@@ -41,8 +41,6 @@ stop_execution (sig)
      int sig;
 {
   had_sigint = TRUE;
-  printf ("\n");
-  rt_error ("interrupted execution");
 }
 
 
@@ -87,10 +85,11 @@ execute ()
   if (interactive)
     {
       signal (SIGINT, stop_execution);
-      had_sigint = FALSE;
     }
    
-  while (pc.pc_addr < functions[pc.pc_func].f_code_size && !runtime_error)
+  had_sigint = FALSE;
+  while (pc.pc_addr < functions[pc.pc_func].f_code_size
+	 && !runtime_error && !had_sigint)
     {
       inst = byte(&pc);
 
@@ -543,7 +542,7 @@ execute ()
     {
       signal (SIGINT, use_quit);
       if (had_sigint)
-	printf ("Interruption completed.\n");
+	printf ("\ninterrupted execution.\n");
     }
 }
 
