@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.98 2005/02/22 21:44:55 moritz Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.99 2005/04/06 00:04:53 cloder Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -171,9 +171,10 @@ Thus
 only takes care of the SA establishment.
 .It Em Check-interval
 The interval between watchdog checks of connections we want up at all
-times.
+times, in seconds.
+The default value is 60 seconds.
 .It Em DPD-check-interval
-The interval between RFC 3706 (Dead Peer Detection) messages.
+The interval between RFC 3706 (Dead Peer Detection) messages, in seconds.
 The default value is 0 (zero), which means DPD is disabled.
 .It Em Exchange-max-time
 How many seconds should an exchange maximally take to set up before we
