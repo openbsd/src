@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.58 2004/10/20 11:38:57 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.59 2004/10/23 09:43:16 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -939,7 +939,7 @@ sub run
 
 	main::ensure_ldconfig($state);
 	print $self->keyword(), " ", $self->{expanded}, "\n" if $state->{beverbose};
-	System('/bin/sh', '-c', $self->{expanded}) unless $state->{not};
+	$state->system('/bin/sh', '-c', $self->{expanded}) unless $state->{not};
 }
 
 package OpenBSD::PackingElement::Exec;
@@ -1135,7 +1135,7 @@ sub run
 	print $self->beautify(), " script: $dir$name $pkgname ", join(' ', @args), "\n" if $state->{beverbose};
 	return if $not;
 	chmod 0755, $dir.$name;
-	return if System($dir.$name, $pkgname, @args) == 0;
+	return if $state->system($dir.$name, $pkgname, @args) == 0;
 	Fatal $self->beautify()." script borked";
 }
 

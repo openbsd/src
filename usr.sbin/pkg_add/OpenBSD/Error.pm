@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.4 2004/10/23 09:27:48 espie Exp $
+# $OpenBSD: Error.pm,v 1.5 2004/10/23 09:43:16 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -113,4 +113,20 @@ sub delayed_output
 	}
 }
 
+sub system
+{
+	my $state = shift;
+	if (open(my $grab, "-|", @_)) {
+		local $_;
+		while (<$grab>) {
+			$state->print($_);
+		}
+		if (!close $grab) {
+		    $state->print("system(", join(", ", @_), ") failed: $! $?\n");
+		}
+		return $?;
+	} else {
+		    $state->print("system(", join(", ", @_), ") was not run: $! $?\n");
+	}
+}
 1;
