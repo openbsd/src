@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.38 2003/09/24 01:14:48 deraadt Exp $
+.\"	$OpenBSD: spamd.8,v 1.39 2003/09/25 09:07:33 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -30,6 +30,7 @@
 .Nd spam deferral daemon
 .Sh SYNOPSIS
 .Nm spamd
+.Bk -words
 .Op Fl 45d
 .Op Fl c Ar maxcon
 .Op Fl n Ar name
@@ -37,6 +38,7 @@
 .Op Fl r Ar reply
 .Op Fl s Ar secs
 .Op Fl w Ar window
+.Ek
 .Sh DESCRIPTION
 .Nm
 is a fake
@@ -49,7 +51,6 @@ it will attempt to waste the time and resources of the spam sender.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.Pp
 .It Fl 4
 Return error code 450 to the spammer (default).
 .It Fl 5
@@ -120,9 +121,9 @@ rules used for this purpose are described in
 The rules can be loaded into a
 .Em table
 to simplify handling.
-.Bd -literal
-    table <spamd> persist
-    rdr inet proto tcp from <spamd> to any port smtp -> 127.0.0.1 port 8025
+.Bd -literal -offset 4n
+table <spamd> persist
+rdr inet proto tcp from <spamd> to any port smtp -> 127.0.0.1 port 8025
 .Ed
 .Pp
 Any addresses in table
@@ -133,8 +134,8 @@ running on port 8025.
 Addresses can be loaded into the
 .Em table ,
 like:
-.Bd -literal
-    # pfctl -q -t spamd -T replace -f /usr/local/share/spammers
+.Bd -literal -offset 4n
+# pfctl -q -t spamd -T replace -f /usr/local/share/spammers
 .Ed
 .Pp
 .Xr spamd-setup 8
@@ -168,8 +169,8 @@ Configuration of spamd is done by connecting to the configuration
 socket, and sending blacklist information, one blacklist per line.
 Each blacklist consists of a name, a message to reject mail
 with, and addresses in CIDR format, all separated by semicolons (;):
-.Bd -literal
-      tag;"rejection message";aaa.bbb.ccc.ddd/mm;aaa.bbb.ccc.ddd/mm
+.Bd -literal -offset indent
+tag;"rejection message";aaa.bbb.ccc.ddd/mm;aaa.bbb.ccc.ddd/mm
 .Ed
 .Pp
 The rejection message must be inside double quotes.
@@ -195,7 +196,7 @@ err, warn, info and debug.
 The following
 .Xr syslog.conf 5
 section can be used to log connection details to a dedicated file:
-.Bd -literal
+.Bd -literal -offset indent
 !spamd
 daemon.err;daemon.warn;daemon.info	/var/log/spamd
 .Ed
