@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.6 2005/02/22 21:53:03 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.7 2005/03/08 23:29:06 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -32,7 +32,7 @@ struct scoop_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	u_int16_t sc_gpwr;
+	u_int16_t sc_gpwr;	/* GPIO state before suspend */
 };
 
 int	scoopmatch(struct device *, void *, void *);
@@ -165,28 +165,6 @@ scoop_led_set(int led, int on)
 	}
 }
 
-int	scoop_leds(void);
-int
-scoop_leds(void)
-{
-	int leds = 0;
-
-	if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL) {
-
-		if (scoop_gpio_pin_read(scoop_cd.cd_devs[0],
-		    SCOOP0_LED_GREEN))
-			leds |= SCOOP_LED_GREEN;
-
-		/* XXX */
-		if (scoop_cd.cd_ndevs > 1 &&
-		    scoop_gpio_pin_read(scoop_cd.cd_devs[0],
-		    SCOOP0_LED_ORANGE_C3000))
-			leds |= SCOOP_LED_ORANGE;
-	}
-
-	return leds;
-}
-
 void
 scoop_battery_temp_adc(int enable)
 {
@@ -241,18 +219,11 @@ scoop_check_mcr(void)
 	}
 }
 
-void	scoop_suspend(void);
-void	scoop_resume(void);
-int	led_state;
-
 void
 scoop_suspend(void)
 {
 	struct scoop_softc *sc;
 	u_int32_t rv;
-
-	led_state = scoop_leds();
-	scoop_led_set(SCOOP_LED_GREEN | SCOOP_LED_ORANGE, 0);
 
 	if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL) {
 		sc = scoop_cd.cd_devs[0];
@@ -260,8 +231,9 @@ scoop_suspend(void)
 		    SCOOP_GPWR);
 		/* C3000 */
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
-		    sc->sc_gpwr & ~(SCOOP0_MUTE_L | SCOOP0_MUTE_R |
-		    SCOOP0_JK_A_C3000 | SCOOP0_ADC_TEMP_ON_C3000));
+		    sc->sc_gpwr & ~((1<<SCOOP0_MUTE_L) | (1<<SCOOP0_MUTE_R) |
+		    (1<<SCOOP0_JK_A_C3000) | (1<<SCOOP0_ADC_TEMP_ON_C3000) |
+		    (1<<SCOOP0_LED_GREEN)));
 	}
 
 	/* C3000 */
@@ -270,12 +242,13 @@ scoop_suspend(void)
 		sc->sc_gpwr = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 		    SCOOP_GPWR);
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
-		    sc->sc_gpwr & ~(SCOOP1_RESERVED_4 | SCOOP1_RESERVED_5 |
-		    SCOOP1_RESERVED_6 | SCOOP1_BACKLIGHT_CONT |
-		    SCOOP1_BACKLIGHT_ON | SCOOP1_MIC_BIAS));
+		    sc->sc_gpwr & ~((1<<SCOOP1_RESERVED_4) |
+		    (1<<SCOOP1_RESERVED_5) | (1<<SCOOP1_RESERVED_6) |
+		    (1<<SCOOP1_BACKLIGHT_CONT) | (1<<SCOOP1_BACKLIGHT_ON) |
+		    (1<<SCOOP1_MIC_BIAS)));
 		rv = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR);
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
-		    rv | (SCOOP1_IR_ON | SCOOP1_RESERVED_3));
+		    rv | ((1<<SCOOP1_IR_ON) | (1<<SCOOP1_RESERVED_3)));
 	}
 }
 
@@ -295,6 +268,4 @@ scoop_resume(void)
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
 		    sc->sc_gpwr);
 	}
-
-	scoop_led_set(led_state, 1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoopreg.h,v 1.5 2005/01/31 02:22:16 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoopreg.h,v 1.6 2005/03/08 23:29:06 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -20,17 +20,17 @@
 #define SCOOP1_BASE	0x08800040
 #define SCOOP_SIZE	0x2c
 
-#define SCOOP_MCR	0x00
-#define SCOOP_CDR	0x04
-#define SCOOP_CSR	0x08
-#define SCOOP_CPR	0x0c
-#define SCOOP_CCR	0x10
-#define SCOOP_IRR	0x14
+#define SCOOP_MCR	0x00		/* (R/W) */
+#define SCOOP_CDR	0x04		/* (R?/W) */
+#define SCOOP_CSR	0x08		/* card status register (R) */
+#define SCOOP_CPR	0x0c		/* card power register (R/W) */
+#define SCOOP_CCR	0x10		/* card configuration reg.? (R/W) */
+#define SCOOP_IRR	0x14		/* XXX for pcic: bit 0x4 role is? */
 #define SCOOP_IRM	0x14
-#define SCOOP_IMR	0x18
+#define SCOOP_IMR	0x18		/* (R/W) */
 #define SCOOP_ISR	0x1c
-#define SCOOP_GPCR	0x20
-#define SCOOP_GPWR	0x24
+#define SCOOP_GPCR	0x20		/* GPIO pin direction (R/W) */
+#define SCOOP_GPWR	0x24		/* GPIO pin output level (R/W) */
 #define SCOOP_GPRR	0x28
 
 /* GPIO bits */
