@@ -1770,6 +1770,8 @@
 ./usr/sbin/dhcpd
 ./usr/sbin/dhcrelay
 ./usr/sbin/dig
+./usr/sbin/dnssec-keygen
+./usr/sbin/dnssec-signzone
 ./usr/sbin/editmap
 ./usr/sbin/edquota
 ./usr/sbin/extattrctl

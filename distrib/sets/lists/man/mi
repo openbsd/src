@@ -364,6 +364,7 @@
 ./usr/share/man/cat1/nm.0
 ./usr/share/man/cat1/nohup.0
 ./usr/share/man/cat1/nroff.0
+./usr/share/man/cat1/nslookup.0
 ./usr/share/man/cat1/od.0
 ./usr/share/man/cat1/oldrdist.0
 ./usr/share/man/cat1/olf2elf.0
@@ -2083,7 +2084,6 @@
 ./usr/share/man/cat8/newsyslog.0
 ./usr/share/man/cat8/nfsd.0
 ./usr/share/man/cat8/nologin.0
-./usr/share/man/cat8/nslookup.0
 ./usr/share/man/cat8/nsupdate.0
 ./usr/share/man/cat8/ntalkd.0
 ./usr/share/man/cat8/ntpd.0
@@ -2461,3 +2461,8 @@
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
+./usr/share/man/cat4/sparc/timer.0
+./usr/share/man/cat4/sparc64/timer.0
+./usr/share/man/cat5/named.conf.0
+./usr/share/man/cat8/dnssec-keygen.0
+./usr/share/man/cat8/dnssec-signzone.0
