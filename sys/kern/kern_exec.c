@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.88 2004/07/07 07:31:40 marius Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.89 2004/08/01 06:25:54 mickey Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -437,8 +437,8 @@ sys_execve(p, v, retval)
 	arginfo.ps_nenvstr = envc;
 
 #ifdef MACHINE_STACK_GROWS_UP
-	stack = (char *)USRSTACK + sizeof(arginfo);
-	slen = len - sizeof(arginfo);
+	stack = (char *)USRSTACK + STACKGAPLEN;
+	slen = len - STACKGAPLEN;
 #else
 	stack = (char *)(USRSTACK - len);
 #endif
