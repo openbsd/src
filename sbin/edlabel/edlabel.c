@@ -31,7 +31,7 @@
  */
 
 #include <sys/types.h>
-#include <sys/ioccom.h>
+#include <sys/ioctl.h>
 #include <sys/disklabel.h>
 
 #include <fcntl.h>
