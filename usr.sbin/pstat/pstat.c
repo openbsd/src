@@ -1,5 +1,5 @@
-/*	$OpenBSD: pstat.c,v 1.3 1996/03/25 15:56:06 niklas Exp $	*/
-/*	$NetBSD: pstat.c,v 1.17 1996/02/21 02:27:57 cgd Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.4 1996/05/05 16:15:48 deraadt Exp $	*/
+/*	$NetBSD: pstat.c,v 1.19 1996/05/02 00:13:19 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,9 +43,9 @@ static char copyright[] =
 #ifndef lint
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
-from: static char *rcsid = "$NetBSD: pstat.c,v 1.17 1996/02/21 02:27:57 cgd Exp $";
+from: static char *rcsid = "$NetBSD: pstat.c,v 1.19 1996/05/02 00:13:19 cgd Exp $";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.3 1996/03/25 15:56:06 niklas Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.4 1996/05/05 16:15:48 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -408,6 +408,8 @@ vnode_print(avnode, vp)
 		*fp++ = 'T';
 	if (flag & VSYSTEM)
 		*fp++ = 'S';
+	if (flag & VISTTY)
+		*fp++ = 'I';
 	if (flag & VXLOCK)
 		*fp++ = 'L';
 	if (flag & VXWANT)
@@ -616,6 +618,11 @@ mount_print(mp)
 			flags &= ~MNT_QUOTA;
 			comma = ",";
 		}
+		if (flags & MNT_ROOTFS) {
+			(void)printf("%srootfs", comma);
+			flags &= ~MNT_ROOTFS;
+			comma = ",";
+		}
 		/* filesystem control flags */
 		if (flags & MNT_UPDATE) {
 			(void)printf("%supdate", comma);
@@ -706,10 +713,10 @@ kinfo_vnodes(avnodes)
 	bp = vbuf;
 	evbuf = vbuf + (numvnodes + 20) * (VPTRSZ + VNODESZ);
 	KGET(V_MOUNTLIST, mountlist);
-	for (num = 0, mp = mountlist.cqh_first; ; mp = mp->mnt_list.cqe_next) {
+	for (num = 0, mp = mountlist.cqh_first; ; mp = mount.mnt_list.cqe_next) {
 		KGET2(mp, &mount, sizeof(mount), "mount entry");
 		for (vp = mount.mnt_vnodelist.lh_first;
-		    vp != NULL; vp = vp->v_mntvnodes.le_next) {
+		    vp != NULL; vp = vnode.v_mntvnodes.le_next) {
 			KGET2(vp, &vnode, sizeof(vnode), "vnode");
 			if ((bp + VPTRSZ + VNODESZ) > evbuf)
 				/* XXX - should realloc */
