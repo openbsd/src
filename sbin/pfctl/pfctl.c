@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.233 2005/03/06 02:40:08 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.234 2005/03/07 13:52:50 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1069,8 +1069,11 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 	if ((altqsupport && (pf.loadopt & PFCTL_FLAG_ALTQ) != 0))
 		if (check_commit_altq(dev, opts) != 0)
 			ERRX("errors in altq config");
-	if (fin != stdin)
+
+	if (fin != stdin) {
 		fclose(fin);
+		fin = NULL;
+	}
 
 	/* process "load anchor" directives */
 	if (!anchorname[0])
@@ -1092,8 +1095,11 @@ _error:
 			if (pfctl_trans(dev, t, DIOCXROLLBACK, 0))
 				err(1, "DIOCXROLLBACK");
 		exit(1);
-	} else			/* sub ruleset */
+	} else {		/* sub ruleset */
+		if (fin != NULL && fin != stdin)
+			fclose(fin);
 		return (-1);
+	}
 
 #undef ERR
 #undef ERRX
