@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.26 2001/05/19 20:55:32 provos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.27 2001/05/20 08:31:12 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/malloc.h>
 #endif
 #include <sys/pool.h>
+#include <sys/queue.h>
 
 extern void *ipsp_copy_ident(void *);
 
@@ -56,6 +57,13 @@ extern void *ipsp_copy_ident(void *);
 
 #define	MINCLSIZE	(MHLEN + 1)	/* smallest amount to put in cluster */
 #define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
+
+/* Packet tags structure */
+struct m_tag {
+	TAILQ_ENTRY(m_tag)	m_tag_link;	/* List of packet tags */
+	int			m_tag_id;	/* Tag ID */
+	int			m_tag_len;	/* Length of data */
+};
 
 /*
  * Macros for type conversion
@@ -77,7 +85,7 @@ struct m_hdr {
 struct	pkthdr {
 	struct	ifnet *rcvif;		/* rcv interface */
 	int	len;			/* total packet length */
-	void	*tdbi;			/* pointer to struct tdb_ident */
+	TAILQ_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
 };
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
@@ -219,7 +227,7 @@ struct mbuf *_sk_mget(int, int);
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
 		(m)->m_data = (m)->m_pktdat; \
 		(m)->m_flags = M_PKTHDR; \
- 		(m)->m_pkthdr.tdbi = NULL; \
+		TAILQ_INIT(&(m)->m_pkthdr.tags); \
 	} else \
 		(m) = m_retryhdr((how), (type)); \
 } while (/* CONSTCOND */ 0)
@@ -381,10 +389,8 @@ void _sk_mclget(struct mbuf *, int);
 #define	MFREE(m, n) \
 	MBUFLOCK( \
 		mbstat.m_mtypes[(m)->m_type]--; \
-		if (((m)->m_flags & M_PKTHDR) && ((m)->m_pkthdr.tdbi)) { \
-			free((m)->m_pkthdr.tdbi, M_TEMP); \
-			(m)->m_pkthdr.tdbi = NULL; \
-		} \
+		if ((m)->m_flags & M_PKTHDR) \
+			m_tag_delete_chain((m), NULL); \
 		if ((m)->m_flags & M_EXT) { \
 			_MEXTREMOVE((m)); \
 		} \
@@ -399,23 +405,14 @@ void _sk_mclget(struct mbuf *, int);
 	(to)->m_pkthdr = (from)->m_pkthdr; \
 }
 
-#ifdef IPSEC
 /*
  * Duplicate just m_pkthdr from from to to.
- * XXX Deal with a generic packet attribute framework.
- * XXX When that happens, we only need one version of the macro.
  */
 #define M_DUP_HDR(to, from) { \
 	M_COPY_HDR((to), (from)); \
-	if ((from)->m_pkthdr.tdbi) { \
-		(to)->m_pkthdr.tdbi = ipsp_copy_ident((from)->m_pkthdr.tdbi); \
-	} \
+	TAILQ_INIT(&(to)->m_pkthdr.tags); \
+	m_tag_copy_chain((to), (from)); \
 }
-#else /* IPSEC */
-#define M_DUP_HDR(to, from) { \
-	M_COPY_HDR((to), (from)); \
-}
-#endif /* IPSEC */
 
 /*
  * Duplicate mbuf pkthdr from from to to.
@@ -557,6 +554,27 @@ void	m_zero __P((struct mbuf *));
 int	m_apply __P((struct mbuf *, int, int,
 			int (*)(caddr_t, caddr_t, unsigned int), caddr_t));
 void	mbinit __P((void));
+
+/* Packet tag routines */
+struct m_tag *m_tag_get __P((int, int, int));
+void	m_tag_free __P((struct m_tag *));
+void	m_tag_prepend __P((struct mbuf *, struct m_tag *));
+void	m_tag_append __P((struct mbuf *, struct m_tag *));
+void	m_tag_unlink __P((struct mbuf *, struct m_tag *));
+void	m_tag_delete __P((struct mbuf *, struct m_tag *));
+void	m_tag_delete_chain __P((struct mbuf *, struct m_tag *));
+struct m_tag *m_tag_find __P((struct mbuf *, int, struct m_tag *));
+struct m_tag *m_tag_copy __P((struct m_tag *));
+int	m_tag_copy_chain __P((struct mbuf *, struct mbuf *));
+
+/* Packet tag types */
+#define	PACKET_TAG_NONE			0
+#define	PACKET_TAG_IPSEC_DONE		1
+#define	PACKET_TAG_IPSEC_NEEDED		2
+#define	PACKET_TAG_IPV4_CSUM_DONE	3
+#define	PACKET_TAG_IPV4_CSUM_NEEDED	4
+#define	PACKET_TAG_TCP_CSUM_DONE	5
+#define	PACKET_TAG_TCP_CSUM_NEEDED	6
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */
