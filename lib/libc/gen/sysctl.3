@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.132 2004/02/10 20:56:19 millert Exp $
+.\"	$OpenBSD: sysctl.3,v 1.133 2004/02/11 19:25:15 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -838,27 +838,17 @@ The changeable column shows whether a process with appropriate
 privileges may change the value.
 .Bl -column "KERN_TTY_TKRAWCCXXX" "int64_tXX" -offset indent
 .It Sy Third level name	Type	Changeable
+.It Dv KERN_TTY_INFO No "	struct itty	no"
+.It Dv KERN_TTY_NPTYS No "	integer	no"
+.It Dv KERN_TTY_MAXPTYS No "	integer	yes"
 .It Dv KERN_TTY_TKCANCC No "	int64_t	no"
 .It Dv KERN_TTY_TKNIN No "	int64_t	no"
 .It Dv KERN_TTY_TKNOUT No "	int64_t	no"
 .It Dv KERN_TTY_TKRAWCC No "	int64_t	no"
-.It Dv KERN_TTY_INFO No "	struct itty	no"
-.It Dv KERN_TTY_MAXPTYS No "	integer	yes"
-.It Dv KERN_TTY_NPTYS No "	integer	no"
 .El
 .Pp
 The variables are as follows:
 .Bl -tag -width "123456"
-.It Dv KERN_TTY_TKCANCC
-Returns the number of input characters in canonical mode.
-.It Dv KERN_TTY_TKNIN
-Returns the number of input characters from a
-.Xr tty 4 .
-.It Dv KERN_TTY_TKNOUT
-Returns the number of output characters on a
-.Xr tty 4 .
-.It Dv KERN_TTY_TKRAWCC
-Returns the number of input characters in raw mode.
 .It Dv KERN_TTY_INFO
 Returns an array of
 .Li struct itty
@@ -871,8 +861,18 @@ This is the upper bound on
 .Dv KERN_TTY_NPTYS .
 .It Dv KERN_TTY_NPTYS
 The current number of
-.Xr pty 4    
+.Xr pty 4
 devices allocated by the kernel.
+.It Dv KERN_TTY_TKCANCC
+Returns the number of input characters in canonical mode.
+.It Dv KERN_TTY_TKNIN
+Returns the number of input characters from a
+.Xr tty 4 .
+.It Dv KERN_TTY_TKNOUT
+Returns the number of output characters on a
+.Xr tty 4 .
+.It Dv KERN_TTY_TKRAWCC
+Returns the number of input characters in raw mode.
 .El
 .It Dv KERN_TTYCOUNT
 Number of available
