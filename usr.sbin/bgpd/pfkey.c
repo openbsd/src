@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.8 2004/01/28 17:57:08 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.9 2004/01/28 19:04:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -253,6 +253,8 @@ pfkey_reply(int sd, u_int32_t *spip)
 	}
 	if (read(sd, data, len) != len) {
 		log_warn("pfkey read");
+		bzero(data, len);
+		free(data);
 		return (-1);
 	}
 	msg = (struct sadb_msg *)data;
@@ -267,7 +269,7 @@ pfkey_reply(int sd, u_int32_t *spip)
 			break;
 		}
 	}
-	memset(data, len, 0);
+	bzero(data, len);
 	free(data);
 	return (0);
 }
