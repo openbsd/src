@@ -1,4 +1,4 @@
-/*	$OpenBSD: microtime.s,v 1.4 1996/03/19 21:09:20 mickey Exp $	*/
+/*	$OpenBSD: microtime.s,v 1.5 1996/04/28 21:11:19 tholo Exp $	*/
 /*	$NetBSD: microtime.s,v 1.16 1995/04/17 12:06:47 cgd Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@
 #ifndef HZ
 ENTRY(microtime)
 
-#ifdef I586_CPU
+#if defined(I586_CPU) && defined(NTP)
 	movl	_pentium_mhz, %ecx
 	testl	%ecx, %ecx
 	jne	pentium_microtime
@@ -138,7 +138,7 @@ common_microtime:
 
 	ret
 
-#ifdef I586_CPU
+#if defined(I586_CPU) && defined(NTP)
 	.align	2, 0x90
 pentium_microtime:
 	cli
