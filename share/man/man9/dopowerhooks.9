@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dopowerhooks.9,v 1.3 2003/04/23 22:07:41 tedu Exp $
+.\"	$OpenBSD: dopowerhooks.9,v 1.4 2003/08/29 19:46:29 tedu Exp $
 .\"
 .\" Copyright (c) 2000 Aaron Campbell
 .\" All rights reserved.
@@ -32,6 +32,8 @@
 .Nm dopowerhooks
 .Nd run all power hooks
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/systm.h>
 .Ft void
 .Fn dopowerhooks "int why"
 .Sh DESCRIPTION

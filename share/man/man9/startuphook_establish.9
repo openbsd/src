@@ -1,4 +1,4 @@
-.\"	$OpenBSD: startuphook_establish.9,v 1.3 2003/03/06 04:03:40 david Exp $
+.\"	$OpenBSD: startuphook_establish.9,v 1.4 2003/08/29 19:46:29 tedu Exp $
 .\"
 .\" Copyright (c) 1995 Niklas Hallqvist.
 .\" All rights reserved.
@@ -33,6 +33,8 @@
 .Nm startuphook_disestablish
 .Nd add or remove a startup hook
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/systm.h>
 .Ft void *
 .Fn startuphook_establish "void (*fn)(void *)" "void *arg"
 .Ft void

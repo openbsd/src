@@ -1,4 +1,4 @@
-.\"	$OpenBSD: powerhook_establish.9,v 1.4 2003/04/23 22:07:41 tedu Exp $
+.\"	$OpenBSD: powerhook_establish.9,v 1.5 2003/08/29 19:46:29 tedu Exp $
 .\"
 .\" Copyright (c) 2000 Aaron Campbell
 .\" All rights reserved.
@@ -33,6 +33,8 @@
 .Nm powerhook_disestablish
 .Nd add or remove a power hook
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/systm.h>
 .Ft void *
 .Fn powerhook_establish "void (*fn)(int, void *)" "void *arg"
 .Ft void

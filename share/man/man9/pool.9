@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.24 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: pool.9,v 1.25 2003/08/29 19:46:29 tedu Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 .Nm pool_setlowat
 .Nd resource-pool manager
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <sys/pool.h>
 .Ft void
 .Fo pool_init

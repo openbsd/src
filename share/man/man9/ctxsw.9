@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctxsw.9,v 1.9 2003/05/12 14:43:37 jmc Exp $
+.\"	$OpenBSD: ctxsw.9,v 1.10 2003/08/29 19:46:29 tedu Exp $
 .\"	$NetBSD: ctxsw.9,v 1.9 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 .Nm cpu_switch
 .Nd switch to another process context
 .Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <sys/proc.h>
 .Ft void
 .Fn mi_switch "void"
 .Ft void

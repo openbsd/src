@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdownhook_establish.9,v 1.13 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: shutdownhook_establish.9,v 1.14 2003/08/29 19:46:29 tedu Exp $
 .\"	$NetBSD: shutdownhook_establish.9,v 1.1 1995/11/25 21:24:52 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -38,6 +38,8 @@
 .Nm shutdownhook_disestablish
 .Nd add or remove a shutdown hook
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/systm.h>
 .Ft void *
 .Fn shutdownhook_establish "void (*fn)(void *)" "void *arg"
 .Ft void
