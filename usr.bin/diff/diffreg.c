@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.10 2003/06/25 03:46:45 deraadt Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.11 2003/06/25 03:50:27 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -299,7 +299,7 @@ diffreg(void)
 	}
 notsame:
 	/*
-	 *	Files certainly differ at this point; set status accordingly
+	 * Files certainly differ at this point; set status accordingly
 	 */
 	status = 1;
 	if (!asciifile(f1) || !asciifile(f2)) {
@@ -415,10 +415,12 @@ prune(void)
 
 	for (pref = 0; pref < len[0] && pref < len[1] &&
 	    file[0][pref + 1].value == file[1][pref + 1].value;
-	    pref++);
+	    pref++)
+		;
 	for (suff = 0; suff < len[0] - pref && suff < len[1] - pref &&
 	    file[0][len[0] - suff].value == file[1][len[1] - suff].value;
-	    suff++);
+	    suff++)
+		;
 	for (j = 0; j < 2; j++) {
 		sfile[j] = file[j] + pref;
 		slen[j] = len[j] - pref - suff;
@@ -538,8 +540,7 @@ unravel(int p)
 
 	for (i = 0; i <= len[0]; i++)
 		J[i] = i <= pref ? i :
-		    i > len[0] - suff ? i + len[1] - len[0] :
-		    0;
+		    i > len[0] - suff ? i + len[1] - len[0] : 0;
 	for (q = clist + p; q->y != 0; q = clist + q->pred)
 		J[q->x + pref] = q->y + pref;
 }
@@ -920,7 +921,8 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 			if (c == '\t' && tflag)
 				do
 					putchar(' ');
-				while (++col & 7);
+				while (++col & 7)
+					;
 			else {
 				putchar(c);
 				col++;
