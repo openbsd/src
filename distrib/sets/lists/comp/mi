@@ -3753,7 +3753,7 @@
 ./usr/share/man/cat3/k_afs_cell_of_file.0
 ./usr/share/man/cat3/k_hasafs.0
 ./usr/share/man/cat3/k_pioctl.0
-./usr/share/man/cat3/k_sepag.0
+./usr/share/man/cat3/k_setpag.0
 ./usr/share/man/cat3/k_unlog.0
 ./usr/share/man/cat3/krb_afslog.0
 ./usr/share/man/cat3/krb_afslog_uid.0
