@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dump.8,v 1.30 2003/04/08 11:06:01 jmc Exp $
+.\"	$OpenBSD: dump.8,v 1.31 2003/04/09 04:17:21 jmc Exp $
 .\"	$NetBSD: dump.8,v 1.17 1997/06/05 11:15:06 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -96,6 +96,14 @@ In the latter case, certain restrictions are placed on the backup:
 is ignored, the only dump level that is supported is
 .Fl 0 ,
 and all of the files must reside on the same filesystem.
+.Pp
+Rewinding or ejecting tape features after a close operation on
+a tape device depend on the name of the tape unit device used.
+See the
+.Fl f
+option and
+.Xr st 4
+for more information.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
