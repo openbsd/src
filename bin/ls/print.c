@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.21 2003/09/24 20:36:36 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.22 2003/09/26 00:48:44 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.21 2003/09/24 20:36:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.22 2003/09/26 00:48:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,8 +179,7 @@ printcol(DISPLAY *dp)
 
 		if ((a = realloc(array, dp->entries * sizeof(FTSENT *))) ==
 		    NULL) {
-			if (array)
-				free(array);
+			free(array);
 			array = NULL;
 			dp->entries = 0;
 			lastentries = -1;

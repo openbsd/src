@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2003/07/28 06:05:35 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.14 2003/09/26 00:48:44 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.2 1995/03/21 08:19:08 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: util.c,v 1.13 2003/07/28 06:05:35 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.14 2003/09/26 00:48:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,8 +144,7 @@ allocbuf(BUF *bp, int fd, int blksize)
 	if (bp->cnt >= size)
 		return (bp);
 	if ((p = realloc(bp->buf, size)) == NULL) {
-		if (bp->buf)
-			free(bp->buf);
+		free(bp->buf);
 		bp->buf = NULL;
 		bp->cnt = 0;
 		run_err("%s", strerror(errno));
