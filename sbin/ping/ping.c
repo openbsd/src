@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.66 2004/04/07 14:09:35 aaron Exp $	*/
+/*	$OpenBSD: ping.c,v 1.67 2004/05/03 20:55:46 millert Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.66 2004/04/07 14:09:35 aaron Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.67 2004/05/03 20:55:46 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -179,8 +179,6 @@ void pr_retip(struct ip *);
 quad_t qsqrt(quad_t);
 void pr_iph(struct ip *);
 void usage(void);
-static unsigned long strtonum(const char *, unsigned long, unsigned long,
-    const char *);
 
 int
 main(int argc, char *argv[])
@@ -201,6 +199,7 @@ main(int argc, char *argv[])
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
 #endif
 	fd_set *fdmaskp;
+	const char *errstr;
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(1, "socket");
@@ -214,8 +213,11 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "DI:LRS:c:dfi:l:np:qrs:T:t:vw:")) != -1)
 		switch(ch) {
 		case 'c':
-			npackets = strtonum(optarg, 1, INT_MAX,
-			    "number of packets to transmit");
+			npackets = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1,
+				    "number of packets to transmit is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'D':
 			options |= F_HDRINCL;
@@ -263,7 +265,10 @@ main(int argc, char *argv[])
 		case 'l':
 			if (getuid())
 				errx(1, "%s", strerror(EPERM));
-			preload = strtonum(optarg, 1, INT_MAX, "preload value");
+			preload = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "preload value is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'n':
 			options |= F_NUMERIC;
@@ -282,22 +287,31 @@ main(int argc, char *argv[])
 			options |= F_SO_DONTROUTE;
 			break;
 		case 's':		/* size of packet to send */
-			datalen = strtonum(optarg, 0, MAXPAYLOAD,
-			    "packet size");
+			datalen = strtonum(optarg, 0, MAXPAYLOAD, &errstr);
+			if (errstr)
+				errx(1, "packet size is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'T':
 			options |= F_HDRINCL;
-			tos = strtonum(optarg, 0, 0xff, "tos value");
+			tos = strtonum(optarg, 0, 0xff, &errstr);
+			if (errstr)
+				errx(1, "tos value is %s: %s", errstr, optarg);
 			break;
 		case 't':
 			options |= F_TTL;
-			ttl = strtonum(optarg, 1, 255, "ttl value");
+			ttl = strtonum(optarg, 1, 255, &errstr);
+			if (errstr)
+				errx(1, "ttl value is %s: %s", errstr, optarg);
 			break;
 		case 'v':
 			options |= F_VERBOSE;
 			break;
 		case 'w':
-			maxwait = strtonum(optarg, 1, INT_MAX, "maxwait value");
+			maxwait = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "maxwait value is %s: %s",
+				    errstr, optarg);
 			break;
 		default:
 			usage();
@@ -1322,25 +1336,3 @@ usage(void)
 	    "\t[-w maxwait] host\n");
 	exit(1);
 }
-
-static unsigned long
-strtonum(const char *numstring, unsigned long minval, unsigned long maxval,
-    const char *errstring)
-{
-	char *ep;
-	unsigned long lval;
-
-	errno = 0;
-	lval = strtoul(numstring, &ep, 10);
-	if (numstring[0] == '\0' || *ep != '\0')
-		errx(1, "bad %s: %s", errstring, numstring);
-	if (errno == ERANGE && lval == ULONG_MAX)
-		errx(1, "bad %s: %s", errstring, numstring);
-	if (lval < minval)
-		errx(1, "%s too small: %s", errstring, numstring);
-	if (lval > maxval)
-		errx(1, "%s too large: %s", errstring, numstring);
-
-	return (lval);
-}
-
