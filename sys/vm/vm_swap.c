@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_swap.c,v 1.7 1997/11/13 18:35:40 deraadt Exp $	*/
+/*	$OpenBSD: vm_swap.c,v 1.8 1997/12/02 16:55:52 csapuntz Exp $	*/
 /*	$NetBSD: vm_swap.c,v 1.32 1996/02/05 01:54:09 christos Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ void
 swstrategy(bp)
 	register struct buf *bp;
 {
-	int sz, off, seg, index;
+	int s, sz, off, seg, index;
 	register struct swdevt *sp;
 	struct vnode *vp;
 
@@ -244,6 +244,7 @@ swstrategy(bp)
 	if ((bp->b_dev = sp->sw_dev) == NODEV && sp->sw_vp->v_type != VREG)
 		panic("swstrategy");
 	VHOLD(sp->sw_vp);
+	s = splbio();
 	if ((bp->b_flags & B_READ) == 0) {
 		if ((vp = bp->b_vp) != NULL) {
 			vp->v_numoutput--;
@@ -256,6 +257,7 @@ swstrategy(bp)
 	}
 	if (bp->b_vp != NULL)
 		brelvp(bp);
+	splx(s);
 	bp->b_vp = sp->sw_vp;
 	VOP_STRATEGY(bp);
 }
