@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.569 2002/12/08 23:51:35 grange Exp $
+	$OpenBSD: pcidevs,v 1.570 2002/12/10 23:50:03 miod Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1175,6 +1175,7 @@ product DEC PBXGB		0x000d	TGA2
 product DEC DEFPA		0x000f	DEFPA
 product DEC 21041		0x0014	21041
 product DEC DGLPB		0x0016	DGLPB (OPPO)
+product DEC ZLXPL2		0x0017	ZLXP-L2 (Pixelvision)
 product DEC 21142		0x0019	21142/3
 /* Farallon apparently used DEC's vendor ID by mistake */
 product DEC PN9000SX		0x001a	Farallon PN9000SX
