@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.45 2002/07/25 02:26:17 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.46 2002/08/13 07:00:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -358,6 +358,9 @@ trap(type, frame)
 					frame->tf_iioq_tail = 4 +
 					    (frame->tf_iioq_head =
 						pcbp->pcb_onfault);
+#ifdef DDB
+					frame->tf_iir = 0;
+#endif
 					break;
 				}
 #if 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.13 2002/07/24 20:17:03 mickey Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.14 2002/08/13 07:00:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -2335,7 +2335,7 @@ db_disasm(loc, flag)
 	OFS ofs = 0;
 
 	iExInit();
-	if (loc == ddb_regs.tf_iioq_head)
+	if (loc == ddb_regs.tf_iioq_head && ddb_regs.tf_iir)
 		instruct = ddb_regs.tf_iir;
 	else if (USERMODE(loc)) {
 		if (copyin((caddr_t)(loc &~ HPPA_PC_PRIV_MASK),
