@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.76 2003/12/08 09:09:03 markus Exp $	*/
+/*	$OpenBSD: if.c,v 1.77 2003/12/10 03:30:21 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -144,7 +144,8 @@ ifinit()
 	if_slowtimo(&if_slowtim);
 }
 
-int if_index = 0;
+static int if_index = 0;
+int if_indexlim = 0;
 struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
 struct ifnet_head ifnet;
@@ -159,7 +160,6 @@ if_attachsetup(ifp)
 	struct ifnet *ifp;
 {
 	struct ifaddr *ifa;
-	static int if_indexlim = 8;
 	int wrapped = 0;
 
 	if (ifindex2ifnet == 0)
@@ -202,6 +202,8 @@ if_attachsetup(ifp)
 		caddr_t q;
 		
 		oldlim = if_indexlim;
+		if (if_indexlim == 0)
+			if_indexlim = 8;
 		while (if_index >= if_indexlim)
 			if_indexlim <<= 1;
 
@@ -805,9 +807,10 @@ ifa_ifwithnet(addr)
 	char *addr_data = addr->sa_data, *cplim;
 
 	if (af == AF_LINK) {
-	    register struct sockaddr_dl *sdl = (struct sockaddr_dl *)addr;
-	    if (sdl->sdl_index && sdl->sdl_index <= if_index)
-		return (ifnet_addrs[sdl->sdl_index]);
+		register struct sockaddr_dl *sdl = (struct sockaddr_dl *)addr;
+		if (sdl->sdl_index && sdl->sdl_index < if_indexlim &&
+		    ifindex2ifnet[sdl->sdl_index])
+			return (ifnet_addrs[sdl->sdl_index]);
 	}
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {

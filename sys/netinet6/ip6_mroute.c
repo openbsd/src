@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.40 2003/07/08 10:23:32 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.41 2003/12/10 03:30:21 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -599,9 +599,11 @@ add_m6if(mifcp)
 	mifp = mif6table + mifcp->mif6c_mifi;
 	if (mifp->m6_ifp)
 		return EADDRINUSE; /* XXX: is it appropriate? */
-	if (mifcp->mif6c_pifi == 0 || mifcp->mif6c_pifi > if_index)
+	if (mifcp->mif6c_pifi == 0 || mifcp->mif6c_pifi >= if_indexlim)
 		return ENXIO;
 	ifp = ifindex2ifnet[mifcp->mif6c_pifi];
+	if (!ifp)
+		return ENXIO;
 
 	if (mifcp->mif6c_flags & MIFF_REGISTER) {
 		if (reg_mif_num == (mifi_t)-1) {

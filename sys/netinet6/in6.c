@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.51 2003/06/24 07:47:54 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.52 2003/12/10 03:30:21 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -284,9 +284,11 @@ in6_ifindex2scopeid(idx)
 	struct ifaddr *ifa;
 	struct sockaddr_in6 *sin6;
 
-	if (idx < 0 || if_index < idx)
+	if (idx < 0 || if_indexlim <= idx)
 		return -1;
 	ifp = ifindex2ifnet[idx];
+	if (!ifp)
+		return -1;
 
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
 	{

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.15 2003/06/02 23:28:15 millert Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.16 2003/12/10 03:30:21 itojun Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -155,7 +155,8 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 		 * somewhere...
 		 */
 		if (dstsock->sin6_scope_id < 0 ||
-		    if_index < dstsock->sin6_scope_id) {
+		    if_indexlim <= dstsock->sin6_scope_id ||
+		    !ifindex2ifnet[dstsock->sin6_scope_id]) {
 			*errorp = ENXIO; /* XXX: better error? */
 			return (0);
 		}
@@ -370,7 +371,8 @@ in6_embedscope(in6, sin6, in6p, ifpp)
 			in6->s6_addr16[1] = htons(ifp->if_index);
 		} else if (scopeid) {
 			/* boundary check */
-			if (scopeid < 0 || if_index < scopeid)
+			if (scopeid < 0 || if_indexlim <= scopeid ||
+			    !ifindex2ifnet[scopeid])
 				return ENXIO;  /* XXX EINVAL? */
 			ifp = ifindex2ifnet[scopeid];
 			/*XXX assignment to 16bit from 32bit variable */
@@ -416,7 +418,8 @@ in6_recoverscope(sin6, in6, ifp)
 		scopeid = ntohs(sin6->sin6_addr.s6_addr16[1]);
 		if (scopeid) {
 			/* sanity check */
-			if (scopeid < 0 || if_index < scopeid)
+			if (scopeid < 0 || if_indexlim <= scopeid ||
+			    !ifindex2ifnet[scopeid])
 				return ENXIO;
 			if (ifp && ifp->if_index != scopeid)
 				return ENXIO;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.79 2003/11/07 22:32:47 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.80 2003/12/10 03:30:21 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -551,10 +551,10 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		 * (this may happen when we are sending a packet to one of
 		 *  our own addresses.)
 		 */
-		if (opt && opt->ip6po_pktinfo
-		 && opt->ip6po_pktinfo->ipi6_ifindex) {
-			if (!(ifp->if_flags & IFF_LOOPBACK)
-			 && ifp->if_index != opt->ip6po_pktinfo->ipi6_ifindex) {
+		if (opt && opt->ip6po_pktinfo &&
+		    opt->ip6po_pktinfo->ipi6_ifindex) {
+			if (!(ifp->if_flags & IFF_LOOPBACK) &&
+			    ifp->if_index != opt->ip6po_pktinfo->ipi6_ifindex) {
 				ip6stat.ip6s_noroute++;
 				in6_ifstat_inc(ifp, ifs6_out_discard);
 				error = EHOSTUNREACH;
@@ -1770,7 +1770,8 @@ ip6_setmoptions(optname, im6op, m)
 			break;
 		}
 		bcopy(mtod(m, u_int *), &ifindex, sizeof(ifindex));
-		if (ifindex < 0 || if_index < ifindex) {
+		if (ifindex < 0 || if_indexlim <= ifindex ||
+		    !ifindex2ifnet[ifindex]) {
 			error = ENXIO;	/* XXX EINVAL? */
 			break;
 		}
@@ -1849,7 +1850,8 @@ ip6_setmoptions(optname, im6op, m)
 		 * If the interface is specified, validate it.
 		 */
 		if (mreq->ipv6mr_interface < 0 ||
-		    if_index < mreq->ipv6mr_interface) {
+		    if_indexlim <= mreq->ipv6mr_interface ||
+		    !ifindex2ifnet[mreq->ipv6mr_interface]) {
 			error = ENXIO;	/* XXX EINVAL? */
 			break;
 		}
@@ -1948,8 +1950,9 @@ ip6_setmoptions(optname, im6op, m)
 		 * If an interface address was specified, get a pointer
 		 * to its ifnet structure.
 		 */
-		if (mreq->ipv6mr_interface < 0
-		 || if_index < mreq->ipv6mr_interface) {
+		if (mreq->ipv6mr_interface < 0 ||
+		    if_indexlim <= mreq->ipv6mr_interface ||
+		    !ifindex2ifnet[mreq->ipv6mr_interface]) {
 			error = ENXIO;	/* XXX EINVAL? */
 			break;
 		}
@@ -2114,8 +2117,12 @@ ip6_setpktoptions(control, opt, priv)
 				opt->ip6po_pktinfo->ipi6_addr.s6_addr16[1] =
 					htons(opt->ip6po_pktinfo->ipi6_ifindex);
 
-			if (opt->ip6po_pktinfo->ipi6_ifindex > if_index ||
+			if (opt->ip6po_pktinfo->ipi6_ifindex >= if_indexlim ||
 			    opt->ip6po_pktinfo->ipi6_ifindex < 0) {
+				return (ENXIO);
+			}
+			if (opt->ip6po_pktinfo->ipi6_ifindex > 0 &&
+			    !ifindex2ifnet[opt->ip6po_pktinfo->ipi6_ifindex]) {
 				return (ENXIO);
 			}
 
