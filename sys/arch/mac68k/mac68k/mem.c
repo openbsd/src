@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.6 1999/04/23 05:18:07 downsj Exp $	*/
+/*	$OpenBSD: mem.c,v 1.7 1999/04/24 06:39:41 downsj Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 1996/05/05 06:18:41 briggs Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ mmmmap(dev, off, prot)
 	 */
 	for (seg = 0; seg < numranges; seg++) {
 		if (((u_long)off >= low[seg]) && ((u_long)off <= high[seg]))
-			return (mac68k_btop(off));
+			return (m68k_btop(off));
 	}
 	return (-1);
 }

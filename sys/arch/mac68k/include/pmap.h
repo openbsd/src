@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.7 1998/03/07 07:27:45 gene Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.8 1999/04/24 06:39:40 downsj Exp $	*/
 /*	$NetBSD: pmap.h,v 1.14 1997/02/02 18:19:55 scottr Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ typedef struct pmap	*pmap_t;
  */
 #define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
 	if ((pmapp)->pm_stchanged) { \
-		(pcbp)->pcb_ustp = mac68k_btop((vm_offset_t)(pmapp)->pm_stpa); \
+		(pcbp)->pcb_ustp = m68k_btop((vm_offset_t)(pmapp)->pm_stpa); \
 		if (iscurproc) \
 			loadustp((pcbp)->pcb_ustp); \
 		(pmapp)->pm_stchanged = FALSE; \

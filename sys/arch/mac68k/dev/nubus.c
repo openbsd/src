@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.c,v 1.12 1997/04/24 02:10:15 gene Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.13 1999/04/24 06:39:40 downsj Exp $	*/
 /*	$NetBSD: nubus.c,v 1.35 1997/04/22 20:20:32 scottr Exp $	*/
 
 /*
@@ -814,7 +814,7 @@ nubus_mapin(paddr, sz)
 	off = paddr & PGOFSET;
 	pa = paddr - off;
 	sz += off;
-	sz = mac68k_round_page(sz);
+	sz = m68k_round_page(sz);
 
 	/* Get some kernel virtual address space. */
 	va = kmem_alloc_wait(kernel_map, sz);

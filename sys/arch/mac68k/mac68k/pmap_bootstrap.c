@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.11 1999/04/23 05:15:28 downsj Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.12 1999/04/24 06:39:41 downsj Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.30 1997/01/07 07:44:01 scottr Exp $	*/
 
 /* 
@@ -83,7 +83,7 @@ extern int		nbnumranges;
 extern u_long	nbphys[];
 extern u_long	nblog[];
 extern   signed long	nblen[];
-#define VIDMAPSIZE	btoc(mac68k_round_page(vidlen))
+#define VIDMAPSIZE	btoc(m68k_round_page(vidlen))
 extern u_int32_t	mac68k_vidlog;
 extern u_int32_t	mac68k_vidphys;
 extern u_int32_t	videoaddr;
@@ -338,8 +338,8 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * Validate PTEs for kernel text (RO)
 	 */
-	pte = &(PA2VA(kptpa, u_int *))[mac68k_btop(KERNBASE)];
-	epte = &pte[mac68k_btop(mac68k_trunc_page(&etext))];
+	pte = &(PA2VA(kptpa, u_int *))[m68k_btop(KERNBASE)];
+	epte = &pte[m68k_btop(m68k_trunc_page(&etext))];
 #if defined(KGDB) || defined(DDB)
 	protopte = firstpa | PG_RW | PG_V;	/* XXX RW for now */
 #else
@@ -354,7 +354,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * by us so far (nextpa - firstpa bytes), and pages for proc0
 	 * u-area and page table allocated below (RW).
 	 */
-	epte = &(PA2VA(kptpa, u_int *))[mac68k_btop(nextpa - firstpa)];
+	epte = &(PA2VA(kptpa, u_int *))[m68k_btop(nextpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	/*
 	 * Enable copy-back caching of data pages
@@ -413,17 +413,17 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Sysmap: kernel page table (as mapped through Sysptmap)
 	 * Immediately follows `nptpages' of static kernel page table.
 	 */
-	Sysmap = (pt_entry_t *)mac68k_ptob(nptpages * NPTEPG);
+	Sysmap = (pt_entry_t *)m68k_ptob(nptpages * NPTEPG);
 
-	IOBase = (u_long)mac68k_ptob(nptpages*NPTEPG -
+	IOBase = (u_long)m68k_ptob(nptpages*NPTEPG -
 			(IIOMAPSIZE + ROMMAPSIZE + VIDMAPSIZE));
 
-	ROMBase = (char *)mac68k_ptob(nptpages*NPTEPG -
+	ROMBase = (char *)m68k_ptob(nptpages*NPTEPG -
 					(ROMMAPSIZE + VIDMAPSIZE));
 
 	if (vidlen) {
 		newvideoaddr = (u_int32_t)
-				mac68k_ptob(nptpages*NPTEPG - VIDMAPSIZE)
+				m68k_ptob(nptpages*NPTEPG - VIDMAPSIZE)
 				+ (mac68k_vidphys & PGOFSET);
 		if (mac68k_vidlog)
 			mac68k_vidlog = newvideoaddr;
@@ -450,7 +450,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * VM data structures are now initialized, set up data for
 	 * the pmap module.
 	 */
-	avail_next = avail_start = mac68k_round_page(nextpa);
+	avail_next = avail_start = m68k_round_page(nextpa);
 	avail_remaining = 0;
 	avail_range = -1;
 	for (i = 0; i < numranges; i++) {
@@ -461,9 +461,9 @@ pmap_bootstrap(nextpa, firstpa)
 			avail_remaining += (high[i] - low[i]);
 		}
 	}
-	physmem = mac68k_btop(avail_remaining + nextpa - firstpa);
-	avail_remaining -= mac68k_round_page(sizeof(struct msgbuf));
-	high[numranges - 1] -= mac68k_round_page(sizeof(struct msgbuf));
+	physmem = m68k_btop(avail_remaining + nextpa - firstpa);
+	avail_remaining -= m68k_round_page(sizeof(struct msgbuf));
+	high[numranges - 1] -= m68k_round_page(sizeof(struct msgbuf));
 
 	/* XXX -- this doesn't look correct to me. */
 	while (high[numranges - 1] < low[numranges - 1]) {
@@ -471,11 +471,11 @@ pmap_bootstrap(nextpa, firstpa)
 		high[numranges - 1] -= low[numranges] - high[numranges];
 	}
 
-	avail_remaining = mac68k_trunc_page(avail_remaining);
+	avail_remaining = m68k_trunc_page(avail_remaining);
 	avail_end = avail_start + avail_remaining;
-	avail_remaining = mac68k_btop(avail_remaining);
+	avail_remaining = m68k_btop(avail_remaining);
 
-	mem_size = mac68k_ptob(physmem);
+	mem_size = m68k_ptob(physmem);
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
@@ -592,7 +592,7 @@ bootstrap_mac68k(tc)
 	if (boothowto & RB_MINIROOT) {
 		int	v;
 		boothowto |= RB_DFLTROOT;
-		nextpa = mac68k_round_page(nextpa);
+		nextpa = m68k_round_page(nextpa);
 		if ((v = mfs_initminiroot((caddr_t) nextpa-load_addr)) == 0) {
 			printf("Error loading miniroot.\n");
 		}

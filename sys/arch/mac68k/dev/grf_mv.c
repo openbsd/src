@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.16 1997/05/03 02:30:29 briggs Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.17 1999/04/24 06:39:40 downsj Exp $	*/
 /*	$NetBSD: grf_mv.c,v 1.24 1997/05/03 02:29:54 briggs Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ grfmv_attach(parent, self, aux)
 	gm = &sc->curr_mode;
 	gm->mode_id = mode;
 	gm->fbbase = (caddr_t)(sc->sc_slot.virtual_base +
-				mac68k_trunc_page(image.offset));
+				m68k_trunc_page(image.offset));
 	gm->fboff = image.offset & PGOFSET;
 	gm->rowbytes = image.rowbytes;
 	gm->width = image.right - image.left;
