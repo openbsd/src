@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.4 2002/03/05 19:11:23 miod Exp $	*/
+/*	$OpenBSD: limits.h,v 1.5 2002/04/20 22:25:29 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1992-1994, The University of Utah and
@@ -63,11 +63,6 @@
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	6		/* Allow 31 bit UTF2 */
-
-
-#ifdef _KERNEL
-#define	CLK_TCK		60		/* ticks per second */
-#endif
 
 /*
  * According to ANSI (section 2.2.4.2), the values below must be usable by
