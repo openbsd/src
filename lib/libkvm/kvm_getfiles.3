@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getfiles.3,v 1.8 2000/04/15 02:15:28 aaron Exp $
+.\"	$OpenBSD: kvm_getfiles.3,v 1.9 2003/06/02 09:56:20 jmc Exp $
 .\"	$NetBSD: kvm_getfiles.3,v 1.3 1996/03/18 22:33:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -77,8 +77,6 @@ Data should be copied out if it needs to be saved.
 will return
 .Dv NULL
 on failure.
-.Sh BUGS
-This routine does not belong in the kvm interface.
 .Sh SEE ALSO
 .Xr kvm 3 ,
 .Xr kvm_close 3 ,
@@ -88,3 +86,5 @@ This routine does not belong in the kvm interface.
 .Xr kvm_openfiles 3 ,
 .Xr kvm_read 3 ,
 .Xr kvm_write 3
+.Sh BUGS
+This routine does not belong in the kvm interface.

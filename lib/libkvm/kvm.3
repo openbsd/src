@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm.3,v 1.4 2003/05/16 08:55:04 jmc Exp $
+.\"	$OpenBSD: kvm.3,v 1.5 2003/06/02 09:56:20 jmc Exp $
 .\"	$NetBSD: kvm.3,v 1.2 1996/03/18 22:33:11 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 .Nd kernel memory interface
 .Sh DESCRIPTION
 The
-.Xr kvm 3
+.Nm kvm
 library provides a uniform interface for accessing kernel virtual memory
 images, including live systems and crash dumps.
 Access to live systems is via
@@ -60,7 +60,24 @@ be gathered.
 .Pp
 .Fn kvm_open
 is first called to obtain a descriptor for all subsequent calls.
-.Sh COMPATIBILITY
+.Sh FILES
+.Bl -tag -width /dev/mem -compact
+.It Pa /dev/mem
+interface to physical memory
+.El
+.Sh SEE ALSO
+.Xr kvm_close 3 ,
+.Xr kvm_getargv 3 ,
+.Xr kvm_getenvv 3 ,
+.Xr kvm_geterr 3 ,
+.Xr kvm_getloadavg 3 ,
+.Xr kvm_getprocs 3 ,
+.Xr kvm_nlist 3 ,
+.Xr kvm_open 3 ,
+.Xr kvm_openfiles 3 ,
+.Xr kvm_read 3 ,
+.Xr kvm_write 3
+.Sh STANDARDS
 The kvm interface was first introduced in SunOS.
 A considerable
 number of programs have been developed that use this interface,
@@ -93,20 +110,3 @@ routine,
 to return (not print out) the error message
 corresponding to the most recent error condition on the
 given descriptor.
-.Sh FILES
-.Bl -tag -width /dev/mem -compact
-.It Pa /dev/mem
-interface to physical memory
-.El
-.Sh SEE ALSO
-.Xr kvm_close 3 ,
-.Xr kvm_getargv 3 ,
-.Xr kvm_getenvv 3 ,
-.Xr kvm_geterr 3 ,
-.Xr kvm_getloadavg 3 ,
-.Xr kvm_getprocs 3 ,
-.Xr kvm_nlist 3 ,
-.Xr kvm_open 3 ,
-.Xr kvm_openfiles 3 ,
-.Xr kvm_read 3 ,
-.Xr kvm_write 3

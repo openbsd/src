@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getprocs.3,v 1.8 2001/05/05 00:28:36 angelos Exp $
+.\"	$OpenBSD: kvm_getprocs.3,v 1.9 2003/06/02 09:56:20 jmc Exp $
 .\"	$NetBSD: kvm_getprocs.3,v 1.3 1996/05/20 16:58:03 mrg Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -159,8 +159,6 @@ and
 all return
 .Dv NULL
 on failure.
-.Sh BUGS
-These routines do not belong in the kvm interface.
 .Sh SEE ALSO
 .Xr kvm 3 ,
 .Xr kvm_close 3 ,
@@ -170,3 +168,5 @@ These routines do not belong in the kvm interface.
 .Xr kvm_openfiles 3 ,
 .Xr kvm_read 3 ,
 .Xr kvm_write 3
+.Sh BUGS
+These routines do not belong in the kvm interface.
