@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.9 2003/06/02 23:36:52 millert Exp $	*/
+/*	$OpenBSD: am.h,v 1.10 2003/06/17 18:00:24 millert Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -262,7 +262,7 @@ extern char	*inet_dquad(char *, size_t, u_int32_t);
 extern void	 init_map(am_node *, char *);
 extern void	 insert_am(am_node *, am_node *);
 extern void	 ins_que(qelem *, qelem *);
-extern int	 islocalnet(u_int32_t);
+extern int	 islocalnet(in_addr_t);
 extern int	 make_nfs_auth(void);
 extern void	 make_root_node(void);
 extern int	 make_rpc_packet(char *, int, u_long, struct rpc_msg *,

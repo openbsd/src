@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wire.c	8.1 (Berkeley) 6/6/93
- *	$Id: wire.c,v 1.11 2003/06/02 23:36:51 millert Exp $
+ *	$Id: wire.c,v 1.12 2003/06/17 18:00:24 millert Exp $
  */
 
 /*
@@ -45,12 +45,14 @@
  *
  * Derived from original by Paul Anderson (23/4/90)
  * Updates from Dirk Grunwald (11/11/91)
+ * Modified to use getifaddrs() by Todd C. Miller (6/14/2003)
  */
 
 #include "am.h"
 
-#include <unistd.h>
-#include <sys/ioctl.h>
+#include <ifaddrs.h>
+#include <netdb.h>
+#include <net/if.h>
 
 #define NO_SUBNET "notknown"
 
@@ -60,128 +62,56 @@
 typedef struct addrlist addrlist;
 struct addrlist {
 	addrlist *ip_next;
-	u_int32_t ip_addr;
-	u_int32_t ip_mask;
+	in_addr_t ip_addr;
+	in_addr_t ip_mask;
 };
 static addrlist *localnets = 0;
-
-#ifdef SIOCGIFFLAGS
-#ifdef STELLIX
-#include <sys/sema.h>
-#endif /* STELLIX */
-#include <net/if.h>
-#include <netdb.h>
-
-#if defined(IFF_LOCAL_LOOPBACK) && !defined(IFF_LOOPBACK)
-#define IFF_LOOPBACK IFF_LOCAL_LOOPBACK
-#endif
-
-#define GFBUFLEN 1024
-#define clist (ifc.ifc_ifcu.ifcu_req)
-#define count (ifc.ifc_len/sizeof(struct ifreq))
 
 char *
 getwire(void)
 {
+	struct ifaddrs *ifa, *ifaddrs;
 	struct hostent *hp;
 	struct netent *np;
-	struct ifconf ifc;
-	struct ifreq *ifr, ifrpool;
-	caddr_t cp, cplim;
-	u_int32_t address, netmask, subnet;
-	char buf[GFBUFLEN], *s;
-	int sk = -1;
-	char *netname = 0;
+	addrlist *al;
+	char *s, *netname = NULL;
 
-	/*
-	 * Get suitable socket
-	 */
-	if ((sk = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-		goto out;
+	if (getifaddrs(&ifaddrs))
+		return strdup(NO_SUBNET);
 
-	/*
-	 * Fill in ifconf details
-	 */
-	ifc.ifc_len = sizeof buf;
-	ifc.ifc_buf = buf;
-
-	/*
-	 * Get network interface configurations
-	 */
-	if (ioctl(sk, SIOCGIFCONF, (caddr_t) &ifc) < 0)
-		goto out;
-
-	/*
-	 * Upper bound on array
-	 */
-	cplim = buf + ifc.ifc_len;
-
-	/*
-	 * This is some magic to cope with both "traditional" and the
-	 * new 4.4BSD-style struct sockaddrs.  The new structure has
-	 * variable length and a size field to support longer addresses.
-	 * AF_LINK is a new definition for 4.4BSD.
-	 */
-#ifdef AF_LINK
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#define size(ifr) (max((ifr)->ifr_addr.sa_len, sizeof((ifr)->ifr_addr)) + sizeof(ifr->ifr_name))
-#else
-#define size(ifr) sizeof(*ifr)
-#endif
-	/*
-	 * Scan the list looking for a suitable interface
-	 */
-	for (cp = buf; cp < cplim; cp += size(ifr)) {
-		addrlist *al;
-		memcpy(&ifrpool, cp, sizeof(ifrpool));
-		ifr = &ifrpool;
-
-		if (ifr->ifr_addr.sa_family != AF_INET)
-			continue;
-		else
-			address = ((struct sockaddr_in *) &ifr->ifr_addr)->sin_addr.s_addr;
-
+	for (ifa = ifaddrs; ifa != NULL; ifa = ifa -> ifa_next) {
 		/*
-		 * Get interface flags
+		 * Ignore non-AF_INET interfaces as well as any that
+		 * are down or loopback.
 		 */
-		if (ioctl(sk, SIOCGIFFLAGS, (caddr_t) ifr) < 0)
+		if (ifa->ifa_addr == NULL ||
+		    ifa->ifa_addr->sa_family != AF_INET ||
+		    !(ifa->ifa_flags & IFF_UP) ||
+		    (ifa->ifa_flags & IFF_LOOPBACK))
 			continue;
-
-		/*
-		 * If the interface is a loopback, or its not running
-		 * then ignore it.
-		 */
-		if ((ifr->ifr_flags & IFF_LOOPBACK) != 0)
-			continue;
-		if ((ifr->ifr_flags & IFF_RUNNING) == 0)
-			continue;
-
-		/*
-		 * Get the netmask of this interface
-		 */
-		((struct sockaddr_in *)&ifr->ifr_addr)->sin_addr.s_addr = address;
-		if (ioctl(sk, SIOCGIFNETMASK, (caddr_t) ifr) < 0)
-			continue;
-
-		netmask = ((struct sockaddr_in *) &ifr->ifr_addr)->sin_addr.s_addr;
-
+		
 		/*
 		 * Add interface to local network list
 		 */
 		al = ALLOC(addrlist);
-		al->ip_addr = address;
-		al->ip_mask = netmask;
+		al->ip_addr =
+		    ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
+		al->ip_mask =
+		    ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
 		al->ip_next = localnets;
 		localnets = al;
 
-		if (netname == 0) {
-			u_int32_t net;
-			u_int32_t mask;
-			u_int32_t subnetshift;
+		if (netname == NULL) {
+			in_addr_t net;
+			in_addr_t mask;
+			in_addr_t subnet;
+			in_addr_t subnetshift;
+			char dq[20];
+
 			/*
 			 * Figure out the subnet's network address
 			 */
-			subnet = address & netmask;
+			subnet = al->ip_addr & al->ip_mask;
 
 #ifdef IN_CLASSA
 			subnet = ntohl(subnet);
@@ -218,7 +148,6 @@ getwire(void)
 			 * then the host database,
 			 * and finally just make a dotted quad.
 			 */
-
 			np = getnetbyaddr(net, AF_INET);
 #else
 			/* This is probably very wrong. */
@@ -227,40 +156,26 @@ getwire(void)
 			if (np)
 				s = np->n_name;
 			else {
-				subnet = address & netmask;
+				subnet = al->ip_addr & al->ip_mask;
 				hp = gethostbyaddr((char *) &subnet, 4, AF_INET);
 				if (hp)
 					s = hp->h_name;
 				else
-					s = inet_dquad(buf, sizeof(buf), subnet);
+					s = inet_dquad(dq, sizeof(dq), subnet);
 			}
 			netname = strdup(s);
 		}
 	}
-
-out:
-	if (sk >= 0)
-		(void) close(sk);
-	if (netname)
-		return netname;
-	return strdup(NO_SUBNET);
+	freeifaddrs(ifaddrs);
+	return (netname ? netname : strdup(NO_SUBNET));
 }
-
-#else
-
-char *
-getwire(void)
-{
-	return strdup(NO_SUBNET);
-}
-#endif /* SIOCGIFFLAGS */
 
 /*
  * Determine whether a network is on a local network
  * (addr) is in network byte order.
  */
 int
-islocalnet(u_int32_t addr)
+islocalnet(in_addr_t addr)
 {
 	addrlist *al;
 
