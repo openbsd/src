@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.15 1996/10/24 23:25:08 downsj Exp $
+#	$OpenBSD: GANDALF,v 1.16 1996/10/28 00:43:36 tholo Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -52,7 +52,7 @@ option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 option		LKM		# loadable kernel modules
 
 option		FFS		# UFS
-#option		QUOTA		# UFS quotas
+option		QUOTA		# UFS quotas
 #option		LFS		# log-structured file system
 option		MFS		# memory file system
 
@@ -78,7 +78,6 @@ option		INET		# IP + ICMP + TCP + UDP
 #option		EON		# OSI tunneling over IP
 #option		CCITT,LLC,HDLC	# X.25
 option		"NMBCLUSTERS=1024"
-option		"TCP_DO_RFC1323=0"
 
 config		bsd	root on sd0a swap on sd0b and sd1b dumps on sd0b
 
