@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.41 2001/05/29 01:19:37 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.42 2001/06/05 11:10:12 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -114,7 +114,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 
     if (m == 0)
     {
-	DPRINTF(("%s: NULL packet received\n"));
+	DPRINTF(("ipsec_common_input(): NULL packet received\n"));
         IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
         return EINVAL;
     }
@@ -131,6 +131,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
     {
         m_freem(m);
         IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
+	DPRINTF(("ipsec_common_input(): packet too small\n"));
         return EINVAL;
     }
 
@@ -466,6 +467,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 	if (mtag == NULL)
 	{
 	    m_freem(m);
+	    DPRINTF(("ipsec_common_input_cb(): failed to get tag\n"));
 	    IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
 	    return ENOMEM;
 	}

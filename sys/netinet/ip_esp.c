@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.63 2001/06/01 00:09:23 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.64 2001/06/05 11:10:10 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -849,6 +849,8 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
         if (n == NULL)
         {
+	    DPRINTF(("esp_output(): bad mbuf chain, SA %s/%08x\n",
+		     ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	    espstat.esps_hdrops++;
 	    m_freem(m);
 	    return ENOBUFS;
