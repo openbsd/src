@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.20 2003/08/11 10:08:04 mickey Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.21 2004/05/05 23:52:10 tedu Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -214,6 +214,8 @@ procfs_rw(v)
 	/* Do not permit games to be played with init(8) */
 	if (p->p_pid == 1 && securelevel > 0 && uio->uio_rw == UIO_WRITE)
 		return (EPERM);
+	if (uio->uio_offset < 0)
+		return (EINVAL);
 
 	switch (pfs->pfs_type) {
 	case Pnote:

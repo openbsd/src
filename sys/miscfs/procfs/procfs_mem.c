@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_mem.c,v 1.20 2003/08/15 20:32:19 tedu Exp $	*/
+/*	$OpenBSD: procfs_mem.c,v 1.21 2004/05/05 23:52:10 tedu Exp $	*/
 /*	$NetBSD: procfs_mem.c,v 1.8 1996/02/09 22:40:50 christos Exp $	*/
 
 /*
@@ -121,4 +121,3 @@ procfs_checkioperm(p, t)
 
 	return (0);
 }
-

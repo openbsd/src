@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_status.c,v 1.7 2004/03/03 06:28:12 tedu Exp $	*/
+/*	$OpenBSD: procfs_status.c,v 1.8 2004/05/05 23:52:10 tedu Exp $	*/
 /*	$NetBSD: procfs_status.c,v 1.11 1996/03/16 23:52:50 christos Exp $	*/
 
 /*
@@ -165,16 +165,16 @@ procfs_dostatus(curp, p, pfs, uio)
 
 	len = procfs_stat_gen(p, NULL, 0);
 	ps = malloc(len, M_TEMP, M_WAITOK);
-	(void) procfs_stat_gen(p, ps, len);
+	len = procfs_stat_gen(p, ps, len);
 
-	len -= uio->uio_offset;
-	len = imin(len, uio->uio_resid);
-	if (len <= 0)
+	if (len <= uio->uio_offset)
 		error = 0;
-	else
+	else {
+		len -= uio->uio_offset;
+		len = imin(len, uio->uio_resid);
 		error = uiomove(ps + uio->uio_offset, len, uio);
+	}
 
 	free(ps, M_TEMP);
 	return (error);
 }
-
