@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2001/09/11 17:35:46 jason Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2003/11/24 17:12:55 espie Exp $
 
-SUBDIR+= libiberty libio libstdc++ libf2c libobjc
+SUBDIR+= libio libf2c libstdc++ libobjc
 
 # just so that the main directory will have a subdir, which simplifies
 # libf2c/libobjc build 

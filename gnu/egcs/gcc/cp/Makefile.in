@@ -102,6 +102,7 @@ tmake_file=@dep_tmake_file@
 # Directory where sources are, from where we are.
 srcdir = @srcdir@
 VPATH = @srcdir@
+LIBIBERTY_INCLUDES=$(srcdir)/../../include
 
 # Additional system libraries to link with.
 CLIB=
@@ -262,14 +263,14 @@ decl2.o : decl2.c $(CONFIG_H) $(CXX_TREE_H) $(srcdir)/../flags.h \
   lex.h decl.h $(EXPR_H) $(srcdir)/../except.h \
   $(srcdir)/../output.h $(srcdir)/../except.h $(srcdir)/../system.h \
   $(srcdir)/../toplev.h $(srcdir)/../dwarf2out.h $(srcdir)/../dwarfout.h \
-  $(srcdir)/../../include/splay-tree.h $(srcdir)/../varray.h
+  $(LIBIBERTY_INCLUDES)/splay-tree.h $(srcdir)/../varray.h
 typeck2.o : typeck2.c $(CONFIG_H) $(CXX_TREE_H) $(srcdir)/../flags.h \
   $(srcdir)/../system.h $(srcdir)/../toplev.h
 typeck.o : typeck.c $(CONFIG_H) $(CXX_TREE_H) $(srcdir)/../flags.h $(RTL_H) \
   $(EXPR_H) $(srcdir)/../system.h $(srcdir)/../toplev.h
 class.o : class.c $(CONFIG_H) $(CXX_TREE_H) $(srcdir)/../flags.h \
   $(srcdir)/../system.h $(srcdir)/../toplev.h \
-  $(srcdir)/../../include/splay-tree.h
+  $(LIBIBERTY_INCLUDES)/splay-tree.h
 call.o : call.c $(CONFIG_H) $(CXX_TREE_H) $(srcdir)/../flags.h \
   $(srcdir)/../system.h $(srcdir)/../toplev.h
 friend.o : friend.c $(CONFIG_H) $(CXX_TREE_H) $(srcdir)/../flags.h $(RTL_H) \

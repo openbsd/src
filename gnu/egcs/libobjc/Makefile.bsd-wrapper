@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2001/11/22 20:37:18 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2003/11/24 17:12:55 espie Exp $
 
 LIB=		objc
 
-#CXXFLAGS+=	-fno-implicit-templates
-#CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/stl -I$(.CURDIR)/../libio -I$(IO_OBJDIR)
+LIBIBERTY_INCLUDES=${.CURDIR}/../../lib/libiberty/include
 #LDADD+=		-lm
 
 EGCS_DIR= $(.CURDIR)/..
@@ -19,7 +18,7 @@ EGCS_OBJDIR!=	if [ -d $(EGCS_DIR)/$(OBJDIR) ]; then \
 		fi
 
 CPPFLAGS+= -I. -I$(.CURDIR) -I$(.CURDIR)/objc  -I$(.CURDIR)/../gcc \
--I$(.CURDIR)/../gcc/config  -I$(EGCS_OBJDIR)/gcc -I$(.CURDIR)/../include \
+-I$(.CURDIR)/../gcc/config  -I$(EGCS_OBJDIR)/gcc -I$(LIBIBERTY_INCLUDES) \
 -DIN_GCC
 
 SRCS=archive.c class.c encoding.c gc.c hash.c init.c linking.m misc.c \

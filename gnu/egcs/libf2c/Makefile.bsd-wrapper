@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2002/05/30 20:46:04 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2003/11/24 17:12:55 espie Exp $
 
+LIBIBERTY_INCLUDES=$(.CURDIR)/../../lib/libiberty/include
 EGCS_DIR= $(.CURDIR)/..
 .if defined(OBJMACHINE)
 OBJDIR=	obj.${MACHINE}
@@ -37,7 +38,7 @@ U77_SRCS = gerror_.c perror_.c ierrno_.c itime_.c time_.c \
 DEFS=-DAllow_TYQUAD -DSTDC_HEADERS=1 -D_POSIX_SOURCE=1 -DHAVE_TEMPNAM=1 \
 -DNON_ANSI_RW_MODES=1 -DNO_EOF_CHAR_CHECK=1 -DSkip_f2c_Undefs=1 \
 -DRETSIGTYPE=void -DIEEE_drem=1 -DHAVE_CONFIG_H \
--IlibU77 -I${.CURDIR}/libI77 -I${.OBJDIR} -I${.CURDIR}
+-I${LIBIBERTY_INCLUDES} -IlibU77 -I${.CURDIR}/libI77 -I${.OBJDIR} -I${.CURDIR}
 
 MISC =	F77_aloc.c s_rnge.c abort_.c getarg_.c iargc_.c\
 	getenv_.c signal_.c s_stop.c s_paus.c system_.c cabs.c\
@@ -138,6 +139,7 @@ config.status: Makefile.in configure
 		make -f Makefile.bsd-wrapper config.status tree-check.h 
 	# fake g771 existence
 	cd $(EGCS_OBJDIR)/gcc && touch f771
+	CPPFLAGS="$(CFLAGS)" \
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	r=$(EGCS_OBJDIR) \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \

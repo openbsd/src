@@ -29,6 +29,7 @@
 
 # Directory where sources are, from where we are.
 srcdir = @srcdir@
+LIBIBERTY_INCLUDES=$(srcdir)/../include
 VPATH = @srcdir@
 
 # Variables that exist for you to override.
@@ -762,7 +763,7 @@ RTL_BASE_H = rtl.h rtl.def machmode.h machmode.def
 RTL_H = $(RTL_BASE_H) genrtl.h
 TREE_H = tree.h real.h tree.def machmode.h machmode.def tree-check.h
 BASIC_BLOCK_H = basic-block.h bitmap.h sbitmap.h
-DEMANGLE_H = $(srcdir)/../include/demangle.h
+DEMANGLE_H = $(LIBIBERTY_INCLUDES)/demangle.h
 RECOG_H = recog.h
 EXPR_H = expr.h insn-codes.h
 REGS_H = regs.h varray.h machmode.h machmode.def
@@ -1368,7 +1369,7 @@ collect2$(exeext): $(COLLECT2_OBJS) $(LIBDEPS)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ $(COLLECT2_OBJS) $(LIBS)
 
 collect2.o : collect2.c $(CONFIG_H) system.h gstab.h intl.h \
-	$(srcdir)/../include/obstack.h $(DEMANGLE_H) collect2.h
+	$(LIBIBERTY_INCLUDES)/obstack.h $(DEMANGLE_H) collect2.h
 	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES)  \
 	-DTARGET_MACHINE=\"$(target_alias)\" $(MAYBE_USE_COLLECT2) \
 	-c `echo $(srcdir)/collect2.c | sed 's,^\./,,'`
@@ -1503,7 +1504,7 @@ dbxout.o : dbxout.c $(CONFIG_H) system.h $(TREE_H) $(RTL_H) flags.h $(REGS_H) \
    toplev.h
 sdbout.o : sdbout.c $(CONFIG_H) system.h $(TREE_H) $(RTL_H) flags.h except.h \
    function.h $(EXPR_H) output.h hard-reg-set.h $(REGS_H) defaults.h real.h \
-   insn-config.h $(srcdir)/../include/obstack.h xcoffout.h c-pragma.h \
+   insn-config.h $(LIBIBERTY_INCLUDES)/obstack.h xcoffout.h c-pragma.h \
    sdbout.h toplev.h
 dwarfout.o : dwarfout.c $(CONFIG_H) system.h $(TREE_H) $(RTL_H) dwarf.h \
    flags.h insn-config.h reload.h output.h defaults.h toplev.h dwarfout.h
@@ -1514,7 +1515,7 @@ xcoffout.o : xcoffout.c $(CONFIG_H) system.h $(TREE_H) $(RTL_H) xcoffout.h \
    flags.h toplev.h output.h dbxout.h
 emit-rtl.o : emit-rtl.c $(CONFIG_H) system.h $(RTL_H) $(TREE_H) flags.h \
    except.h function.h $(REGS_H) insn-config.h $(RECOG_H) real.h \
-   $(EXPR_H) $(srcdir)/../include/obstack.h hard-reg-set.h bitmap.h toplev.h
+   $(EXPR_H) $(LIBIBERTY_INCLUDES)/obstack.h hard-reg-set.h bitmap.h toplev.h
 real.o : real.c $(CONFIG_H) system.h $(TREE_H) toplev.h
 getpwd.o : getpwd.c $(CONFIG_H) system.h
 
@@ -1530,7 +1531,7 @@ stupid.o : stupid.c $(CONFIG_H) system.h $(RTL_H) $(REGS_H) hard-reg-set.h \
 
 cse.o : cse.c $(CONFIG_H) system.h $(RTL_H) $(REGS_H) hard-reg-set.h flags.h \
    real.h insn-config.h $(RECOG_H) $(EXPR_H) toplev.h output.h \
-   $(srcdir)/../include/hashtab.h
+   $(LIBIBERTY_INCLUDES)/hashtab.h
 gcse.o : gcse.c $(CONFIG_H) system.h $(RTL_H) $(REGS_H) hard-reg-set.h \
    flags.h real.h insn-config.h $(RECOG_H) $(EXPR_H) $(BASIC_BLOCK_H) \
    output.h toplev.h
@@ -2026,7 +2027,7 @@ protoize$(exeext): protoize.o $(PROTO_OBJS) $(LIBDEPS)
 unprotoize$(exeext): unprotoize.o $(PROTO_OBJS) $(LIBDEPS)
 	$(CC) $(ALL_CFLAGS) $(LDFLAGS) -o $@ unprotoize.o $(PROTO_OBJS) $(LIBS)
 
-protoize.o: protoize.c $(srcdir)/../include/getopt.h $(CONFIG_H) system.h \
+protoize.o: protoize.c $(LIBIBERTY_INCLUDES)/getopt.h $(CONFIG_H) system.h \
    Makefile
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
           -DGCC_INCLUDE_DIR=\"$(libsubdir)/include\" \
@@ -2037,7 +2038,7 @@ protoize.o: protoize.c $(srcdir)/../include/getopt.h $(CONFIG_H) system.h \
 	  -DSTD_PROTO_DIR=\"$(libsubdir)\" \
 	  $(srcdir)/protoize.c
 
-unprotoize.o: unprotoize.c protoize.c $(srcdir)/../include/getopt.h \
+unprotoize.o: unprotoize.c protoize.c $(LIBIBERTY_INCLUDES)/getopt.h \
    $(CONFIG_H) system.h Makefile
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
           -DGCC_INCLUDE_DIR=\"$(libsubdir)/include\" \
@@ -2229,7 +2230,7 @@ fix-header: fix-header.o scan-decls.o scan.o xsys-protos.h $(HOST_LIBDEPS) \
 	$(HOST_CC) $(HOST_CFLAGS) $(HOST_LDFLAGS) -o $@ fix-header.o \
 	   scan-decls.o scan.o libcpp.a $(HOST_LIBS)
 
-fix-header.o: fix-header.c $(srcdir)/../include/obstack.h scan.h \
+fix-header.o: fix-header.c $(LIBIBERTY_INCLUDES)/obstack.h scan.h \
 	xsys-protos.h $(build_xm_file) system.h cpplib.h cpphash.h
 	$(HOST_CC) -c $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(INCLUDES) $(srcdir)/fix-header.c
 
