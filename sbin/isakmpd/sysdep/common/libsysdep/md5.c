@@ -1,3 +1,5 @@
+/*	$OpenBSD: md5.c,v 1.2 2001/01/28 22:38:48 niklas Exp $	*/
+
 /*
  * The rest of the code is derived from MD5C.C by RSADSI. Minor cosmetic
  * changes to accomodate it in the kernel by ji.

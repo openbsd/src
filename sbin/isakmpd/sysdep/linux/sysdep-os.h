@@ -1,4 +1,4 @@
-/*	$Id: sysdep-os.h,v 1.3 2001/01/26 11:34:04 niklas Exp $	*/
+/*	$OpenBSD: sysdep-os.h,v 1.4 2001/01/28 22:38:49 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.

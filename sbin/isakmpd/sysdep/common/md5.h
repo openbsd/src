@@ -1,3 +1,5 @@
+/*	$OpenBSD: md5.h,v 1.2 2001/01/28 22:38:47 niklas Exp $	*/
+
 /* GLOBAL.H - RSAREF types and constants
  */
 
