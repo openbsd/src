@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.1 2005/02/27 08:21:15 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.2 2005/03/02 16:17:04 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -287,7 +287,7 @@ spf_calc(struct area *area)
 
 	start_spf_timer(rdeconf);
 
-	return ;
+	return;
 }
 
 void
@@ -313,18 +313,20 @@ calc_next_hop(struct vertex *dst, struct vertex *parent)
 	if (parent == spf_root) {
 		switch (dst->type) {
 		case LSA_TYPE_ROUTER:
-			/* XXX */
-			log_debug("calc_next_hop: router not handled");
-			break;
+			for (i = 0; i < lsa_num_links(dst); i++) {
+				rtr_link = get_rtr_link(dst, i);
+				if (rtr_link->type != LINK_TYPE_POINTTOPOINT &&
+				    rtr_link->id != parent->ls_id)
+					continue;
+				dst->nexthop.s_addr = rtr_link->data;
+			}			
+			return;
 		case LSA_TYPE_NETWORK:
-			/* XXX */
-			log_debug("calc_next_hop: net not handled");
-			break;
+			/* XXX TODO */
+			return;
 		default:
 			fatalx("calc_next_hop: invalid dst type");
 		}
-
-		return ;
 	}
 
 	/* case 2 */
@@ -338,12 +340,12 @@ calc_next_hop(struct vertex *dst, struct vertex *parent)
 				dst->nexthop.s_addr = rtr_link->data;
 		}
 
-		return ;
+		return;
 	}
 	/* case 3 */
 	dst->nexthop = parent->nexthop;
 
-	return ;
+	return;
 }
 
 /* candidate list */
@@ -367,7 +369,7 @@ cand_list_add(struct vertex *v)
 	}
 	TAILQ_INSERT_TAIL(&cand_list, v, cand);
 
-	return ;
+	return;
 }
 
 void
