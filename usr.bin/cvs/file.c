@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.42 2004/12/08 19:54:11 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.43 2004/12/13 19:38:22 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -530,7 +530,7 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 	int ret, fd;
 	u_int ndirs;
 	long base;
-	void *dp, *ep;
+	u_char *dp, *ep;
 	char fbuf[2048], pbuf[MAXPATHLEN], fpath[MAXPATHLEN];
 	struct dirent *ent;
 	CVSFILE *cfp;
