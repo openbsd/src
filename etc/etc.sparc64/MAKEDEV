@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.1 2002/01/04 09:25:35 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.1 2002/01/04 09:25:35 todd Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.2 2002/01/04 15:59:52 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.2 2002/01/04 15:59:16 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.1 2002/01/04 09:25:35 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.26 2002/01/04 09:37:30 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.27 2002/01/04 16:00:23 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -64,7 +64,16 @@
 # Pseudo terminals:
 #	tty*	set of 16 slave psuedo terminals
 #	pty*	set of 16 master pseudo terminals
+# USB devices:
+#	usb*	Bus control devices used by usbd for attach/detach
+#	uhid*	Generic HID devices
+#	ugen*	Generic device
+#	ulpt*	Printer devices
+#	urio*	Diamond Multimedia Rio 500
+#	utty*	Serial ports
+#	uscanner*	Scanners
 # Special purpose devices:
+#	usbs	make USB devices
 #	ses*	SES/SAF-TE SCSI devices
 #	fd	makes fd/* for the fdescfs
 #	xfs*	XFS filesystem devices
@@ -290,6 +299,44 @@ ses*)
 	M ses$U c 4 $U 640 operator
 	;;
 
+usbs)
+	R usb0 usb1 urio uscanner0 uhid0 uhid1 uhid2 uhid3
+	R ulpt0 ulpt1 ugen0 ugen1 utty0 utty1
+	;;
+
+uscanner*)
+	M uscanner$U c 96 $U 660
+	;;
+
+utty*)
+	M utty$U c 95 $U 660
+	;;
+
+urio*)
+	M urio$U c 94 $U 660
+	;;
+
+ulpt*)
+	M ulpt$U c 93 $U 660
+	;;
+
+ugen*)
+	n=$(($U*16))
+	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+	do
+		M ugen$U.$j c 92 $(($n+$j)) 660
+	done
+	;;
+
+uhid*)
+	M uhid$U c 91 $U 660
+	;;
+
+usb*)
+	[ "$i" = "usb" ] && u= || u=$U
+	M usb$u c 90 $U 660
+	;;
+
 pty*)
 	case $U in
 	0) off=0 name=p;;
@@ -439,7 +486,7 @@ all)
 	R fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H ttya ttyb ttyc ttyd
 	R cuaa cuab cuac cuad lkm random ses0 uk0 uk1 ss0 ss1
-	R tty00 tty01 tty02 tty03 xfs0 audio0
+	R tty00 tty01 tty02 tty03 xfs0 audio0 usbs
 	;;
 
 sd*|ccd*|raid*|wd*)
