@@ -30,11 +30,11 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)asinh.3	6.4 (Berkeley) 5/6/91
-.\"	$Id: asinh.3,v 1.2 1995/10/28 00:56:47 deraadt Exp $
+.\"	$Id: asinh.3,v 1.3 1997/04/05 04:18:46 tholo Exp $
 .\"
 .Dd May 6, 1991
 .Dt ASINH 3
-.Os BSD 4.3
+.Os 
 .Sh NAME
 .Nm asinh
 .Nd inverse hyperbolic sine function
@@ -59,16 +59,12 @@ and
 .Fn asinhf
 functions return the inverse hyperbolic sine of
 .Ar x .
-.Sh RETURN VALUES
-Exceptional cases are handled by 
-.Xr matherr 3 .
 .Sh SEE ALSO
 .Xr acosh 3 ,
 .Xr atanh 3 ,
 .Xr exp 3 ,
 .Xr infnan 3 ,
-.Xr math 3 ,
-.Xr matherr 3
+.Xr math 3
 .Sh HISTORY
 The
 .Fn asinh

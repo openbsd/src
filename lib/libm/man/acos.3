@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)acos.3	5.1 (Berkeley) 5/2/91
-.\"	$Id: acos.3,v 1.2 1995/10/28 00:56:45 deraadt Exp $
+.\"	$Id: acos.3,v 1.3 1997/04/05 04:18:45 tholo Exp $
 .\"
 .Dd May 2, 1991
 .Dt ACOS 3
@@ -54,8 +54,13 @@ functions compute the principal value of the arc cosine of
 in the range
 .Bq 0 , \*(Pi .
 .Sh RETURN VALUES
-Exceptional cases are handled by
-.Xr matherr 3 .
+If |x|>1,
+.Fn acos "x"
+and
+.Fn acosf "x"
+sets the global variable
+.Va errno
+to EDOM.
 .Sh SEE ALSO
 .Xr sin 3 ,
 .Xr cos 3 ,
@@ -66,5 +71,4 @@ Exceptional cases are handled by
 .Xr sinh 3 ,
 .Xr cosh 3 ,
 .Xr tanh 3 ,
-.Xr math 3 ,
-.Xr matherr 3
+.Xr math 3 
