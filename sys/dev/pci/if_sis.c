@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.22 2002/03/14 01:26:59 millert Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.23 2002/03/25 20:28:06 mickey Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -820,7 +820,8 @@ void sis_attach(parent, self, aux)
 			    0x9, 6);
 		else
 #endif
-		if (command == SIS_REV_630EA1)
+		if (command == SIS_REV_630EA1 ||
+		    command == SIS_REV_630ET)
 			sis_read_630ea1_enaddr(sc, pa);
 		else
 			sis_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,

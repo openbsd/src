@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.8 2002/02/08 04:43:24 chris Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.9 2002/03/25 20:28:06 mickey Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -370,6 +370,7 @@ struct sis_ring_data {
 #define SIS_REV_630E		0x0081
 #define SIS_REV_630S		0x0082
 #define SIS_REV_630EA1		0x0083
+#define	SIS_REV_630ET		0x0084
 
 struct sis_type {
 	u_int16_t		sis_vid;
