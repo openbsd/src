@@ -56,6 +56,8 @@ options		NULLFS		# Loopback filesystem
 options		FIFO		# FIFO operations on vnodes (Recommended)
 options		ADOSFS		# AmigaDOS file system
 options		"CD9660"	# ISO 9660 file system, with Rock Ridge
+options		UNION           # union file system
+options		UMAPFS          # uid/gid remapping filesystem
 #options	PORTAL		# Portal filesystem
 #options	MSDOSFS		# MS-DOS filesystem
 

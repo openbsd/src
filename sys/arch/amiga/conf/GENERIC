@@ -1,4 +1,4 @@
-#	$Id: GENERIC,v 1.3 1996/01/14 12:21:35 niklas Exp $
+#	$Id: GENERIC,v 1.4 1996/01/31 22:42:36 niklas Exp $
 
 #
 # GENERIC AMIGA
@@ -56,6 +56,8 @@ options		NULLFS		# Loopback filesystem
 options		FIFO		# FIFO operations on vnodes (Recommended)
 options		ADOSFS		# AmigaDOS file system
 options		"CD9660"	# ISO 9660 file system, with Rock Ridge
+options		UNION           # union file system
+options		UMAPFS          # uid/gid remapping filesystem
 #options	PORTAL		# Portal filesystem
 #options	MSDOSFS		# MS-DOS filesystem
 
