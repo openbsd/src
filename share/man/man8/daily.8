@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.1 2003/07/28 20:55:59 jmc Exp $
+.\"	$OpenBSD: daily.8,v 1.2 2003/09/06 22:07:35 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -197,9 +197,12 @@ if it exists.
 .Sh ENVIRONMENT
 .Bl -tag -width "CHECKFILESYSTEMS" -compact
 .It Ev CALENDAR
-Determines whether to run calendar.
+Determines whether to run
+.Xr calendar 1 .
 .It Ev CHECKFILESYSTEMS
-Determines whether to run fsck with the no-write flag.
+Determines whether to run
+.Xr fsck 8
+with the no-write flag.
 .It Ev ROOTBACKUP
 Determines whether to make a backup of the root file system.
 .El
