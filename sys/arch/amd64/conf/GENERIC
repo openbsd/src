@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.49 2005/01/06 21:32:56 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.50 2005/01/07 22:51:43 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -115,7 +115,7 @@ ukbd*	at uhidev?		# USB keyboard
 wskbd*	at ukbd? mux 1
 uhid*	at uhidev?		# USB generic HID support
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
-#atu*	at uhub?		# Atmel AT76c50x based 802.11b
+atu*	at uhub?		# Atmel AT76c50x based 802.11b
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
@@ -168,8 +168,8 @@ wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
 wsmouse*	at pmsi? mux 0
 
-#pcppi0		at isa?
-#sysbeep0	at pcppi?
+pcppi0		at isa?
+sysbeep0	at pcppi?
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
