@@ -571,8 +571,7 @@
 ./usr/mdec/binstall
 ./usr/mdec/boot
 ./usr/mdec/bootxx
-./usr/mdec/zboot
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
-./usr/sbin/installboot
 ./usr/sbin/screenblank
+./usr/mdec/installboot
