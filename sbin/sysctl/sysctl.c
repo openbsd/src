@@ -66,6 +66,7 @@ static char *rcsid = "$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $"
 #include <netinet/tcp.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <ddb/db_var.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -82,6 +83,7 @@ struct ctlname debugname[CTL_DEBUG_MAXID];
 #ifdef CTL_MACHDEP_NAMES
 struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
 #endif
+struct ctlname ddbname[] = CTL_DDB_NAMES;
 char names[BUFSIZ];
 
 struct list {
@@ -103,6 +105,7 @@ struct list secondlevel[] = {
 	{ 0, 0 },			/* CTL_MACHDEP */
 #endif
 	{ username, USER_MAXID },	/* CTL_USER_NAMES */
+	{ ddbname, DBCTL_MAXID },	/* CTL_DDB_NAMES */
 };
 
 int	Aflag, aflag, nflag, wflag;
@@ -326,6 +329,7 @@ parse(string, flags)
 
 	case CTL_FS:
 	case CTL_USER:
+	case CTL_DDB:
 		break;
 
 	default:
