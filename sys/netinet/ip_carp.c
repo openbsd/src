@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.101 2005/03/01 19:04:56 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.102 2005/03/05 13:33:49 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1565,7 +1565,7 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 {
 	struct ifnet *ifp = sc->sc_carpdev;
 	struct in_ifaddr *ia, *ia_if;
-	int own, error = 0;
+	int error = 0;
 
 	if (sin->sin_addr.s_addr == 0) {
 		if (!(sc->sc_if.if_flags & IFF_UP))
@@ -1577,7 +1577,7 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 	}
 
 	/* we have to do this by hand to ensure we don't match on ourselves */
-	ia_if = NULL; own = 0;
+	ia_if = NULL;
 	for (ia = TAILQ_FIRST(&in_ifaddr); ia;
 	    ia = TAILQ_NEXT(ia, ia_list)) {
 
@@ -1589,8 +1589,6 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 		    ia->ia_subnet) {
 			if (!ia_if)
 				ia_if = ia;
-			if (sin->sin_addr.s_addr == ia->ia_addr.sin_addr.s_addr)
-				own++;
 		}
 	}
 
@@ -1617,8 +1615,6 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 	if (sc->sc_carpdev != NULL)
 		sc->sc_if.if_flags |= IFF_UP;
 
-	if (own)
-		sc->sc_advskew = 0;
 	carp_set_state(sc, INIT);
 
 	/*
@@ -1660,7 +1656,7 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 {
 	struct ifnet *ifp = sc->sc_carpdev;
 	struct in6_ifaddr *ia, *ia_if;
-	int own, error = 0;
+	int error = 0;
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 		if (!(sc->sc_if.if_flags & IFF_UP))
@@ -1672,7 +1668,7 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 	}
 
 	/* we have to do this by hand to ensure we don't match on ourselves */
-	ia_if = NULL; own = 0;
+	ia_if = NULL;
 	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
 		int i;
 
@@ -1690,9 +1686,6 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 		    (i == 4)) {
 			if (!ia_if)
 				ia_if = ia;
-			if (IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr,
-			    &ia->ia_addr.sin6_addr))
-				own++;
 		}
 	}
 
