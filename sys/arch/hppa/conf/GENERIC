@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.39 2003/09/29 20:23:51 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.40 2003/10/05 16:36:22 mickey Exp $
 
 # Machine architecture; required by config(8)
 machine		hppa
@@ -52,8 +52,6 @@ sti1	at mainbus0 disable irq 12
 sti1	at phantomas0 disable irq 12
 
 #medusa* at mainbus? irq 4	# FDDI
-#siop*	at mainbus? irq 3	# NCR 53C720 (Fast/Wide Diff)
-#scsibus* at siop?
 
 # internal i/o space
 gsc0	at asp?			# Snakes, old 715, old 725, 735/755
@@ -86,45 +84,42 @@ com2	at gsc0 offset 0x0 irq 13	# only on asp0 w/o audio (off ?)
 com2	at gsc0 offset 0x4040 irq 13	# gecko's fax/voice/modems
 com3	at gsc0 offset 0x4060 irq 13
 
-lpt0	at gsc? irq 7	# both com and lpt are on WD16C552
-ie0	at gsc0 irq 8	# 82C596DX/CA ether
+lpt0	at gsc? irq 7			# both com and lpt are on WD16C552
+ie0	at gsc0 irq 8			# 82C596DX/CA ether
 ie1	at gsc1 irq 8
-#tms*	at gsc? irq 10	# TMS380C26 Network Controller (802.3 or 802.5)
-osiop*	at gsc? irq 9	# NCR 53C700/710 (Narrow SE)
+#ie*	at eisa? slot ?
+#ie*	at isa? port 0x360 iomem 0xd0000 irq 7
+#ie*	at isa? port 0x300 irq 10
+#ie*	at pci? dev ? function ?
+#tms*	at gsc? irq 10			# TMS380C26 Network Controller
+osiop*	at gsc? irq 9			# NCR 53C700/710 (Narrow SE)
+#osiop* at eisa? slot ?
 scsibus* at osiop?
-harmony* at gsc? irq 13	# Audio Type 2 (CS4215/AD1849)
+harmony* at gsc? irq 13			# Audio Type 2 (CS4215/AD1849)
 audio*	at harmony?
 gsckbc*	at gsc? irq 26
-gsckbd*	at gsckbc?	# PS/2 keyboard
-pms*	at gsckbc?	# PS/2 mouse
-#fdc*	at gsc?		# PC floppy controller (WD37C65C)
-#option	FD_DEBUG
+gsckbd*	at gsckbc?			# PS/2 keyboard
+pms*	at gsckbc?			# PS/2 mouse
 
 # EISA devices
-#sh*	at eisa? slot ?	# Interphase Seahawk 4811 EISA/FDDI board
-#ep*	at eisa? slot ?
-#ie*	at eisa? slot ?
+#sh*	at eisa? slot ?			# Interphase Seahawk 4811 EISA/FDDI
+#ep*	at eisa? slot ?			# 3C579 ethernet
+#ep*	at pci? dev ? function ?	# 3c59x ethernets
+#ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
+#scsibus* at aha?
+#ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
+ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
+scsibus* at ahc?
 #option	BHADEBUG
 #bha*	at eisa? slot ?
 #scsibus* at bha?
 
-# ISA devices
-#vga*	at isa?
-#fdc*	at isa? port 0x3f0 irq 6 drq 2
-#wdc0	at isa? port 0x1f0 irq 14
-#wdc1	at isa? port 0x170 irq 15
-#ie*	at isa? port 0x360 iomem 0xd0000 irq 7
-#ie*	at isa? port 0x300 irq 10
-
 ppb*	at pci? dev ? function ?
 pci*	at ppb?
 
-#pciide*	at pci ? dev ? function ? flags 0x0000
-
+#siop*	at mainbus? irq 3		# NCR 53C720 (Fast/Wide Diff)
 siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(new)
 scsibus* at siop?
-ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
-scsibus* at ahc?
 
 #fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
@@ -134,7 +129,6 @@ dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
 #fxp*	at pci? dev ? function ?	# EtherExpress 10/100B ethernet
 #txp*	at pci? dev ? function ?	# 3com 3CR990
 #ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
-#ep*	at pci? dev ? function ?	# 3Com 3c59x
 #an*	at pci? dev ? function ?	# Cisco/Aironet 802.11DS
 #wi*	at pci? dev ? function ?	# WaveLAN IEEE 802.11DS
 
@@ -165,7 +159,14 @@ wskbd*		at hilkbd? mux 1
 wsmouse*	at pms? mux 0
 wsmouse*	at hilms? mux 0
 
+#fdc*	at gsc?		# PC floppy controller (WD37C65C)
+#fdc*	at isa? port 0x3f0 irq 6 drq 2
+#option	FD_DEBUG
 #fd*	at fdc?	drive ?	# floppy drives
+
+#pciide*	at pci ? dev ? function ? flags 0x0000
+#wdc0	at isa? port 0x1f0 irq 14
+#wdc1	at isa? port 0x170 irq 15
 #wd*	at wdc? channel ? drive ? flags 0x0000
 #wd*	at pciide? channel ? drive ? flags 0x0000
 #atapiscsi* at pciide? channel ?
