@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.13 2000/01/16 10:54:58 jakob Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.14 2000/01/16 11:20:14 jakob Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -196,6 +196,7 @@ extern void ns_print(const u_char *, u_int);
 extern void ntp_print(const u_char *, u_int);
 extern void null_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 extern void ospf_print(const u_char *, u_int, const u_char *);
+extern void mobile_print(const u_char *, u_int);
 extern void pim_print(const u_char *, u_int);
 extern void ppp_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
 extern void raw_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
