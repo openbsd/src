@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.168 2004/05/06 14:41:05 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.169 2004/05/08 11:22:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -386,12 +386,13 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 			nfds -= session_dispatch_msg(&pfd[j], peer_l[j]);
 
 		for (; nfds > 0 && j < i; j++)
-			nfds -= control_dispatch_msg(&pfd[j], j);
+			nfds -= control_dispatch_msg(&pfd[j]);
 	}
 
 	while ((p = peers) != NULL) {
 		peers = p->next;
 		bgp_fsm(p, EVNT_STOP);
+		pfkey_remove(p);
 		free(p);
 	}
 
@@ -452,7 +453,8 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			/* init write buffer */
 			msgbuf_init(&peer->wbuf);
 
-			/* init pfkey */
+			/* init pfkey - remove old if any, load new ones */
+			pfkey_remove(peer);
 			if (pfkey_establish(peer) == -1) {
 				log_peer_warnx(&peer->conf,
 				    "pfkey setup failed");
@@ -723,7 +725,6 @@ change_state(struct peer *peer, enum session_state state,
 		msgbuf_clear(&peer->wbuf);
 		free(peer->rbuf);
 		peer->rbuf = NULL;
-		pfkey_remove(peer);
 		if (peer->state == STATE_ESTABLISHED)
 			session_down(peer);
 		if (event != EVNT_STOP && !peer->conf.cloned) {

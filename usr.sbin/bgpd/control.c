@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.29 2004/04/29 19:56:04 deraadt Exp $ */
+/*	$OpenBSD: control.c,v 1.30 2004/05/08 11:22:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -174,7 +174,7 @@ control_close(int fd)
 }
 
 int
-control_dispatch_msg(struct pollfd *pfd, int i)
+control_dispatch_msg(struct pollfd *pfd)
 {
 	struct imsg		 imsg;
 	struct ctl_conn		*c;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.50 2004/04/28 17:42:27 deraadt Exp $ */
+/*	$OpenBSD: session.h,v 1.51 2004/05/08 11:22:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -210,7 +210,7 @@ int	 rde_main(struct bgpd_config *, struct network_head *,
 /* control.c */
 int	control_listen(void);
 void	control_shutdown(void);
-int	control_dispatch_msg(struct pollfd *, int);
+int	control_dispatch_msg(struct pollfd *);
 void	control_accept(int);
 void	control_close(int);
 
