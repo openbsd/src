@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1996/08/22 20:33:22 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1996/09/16 16:38:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: main.c,v 1.5 1996/08/22 20:33:22 millert Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.6 1996/09/16 16:38:28 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -53,7 +53,7 @@ static char *rcsid = "$OpenBSD: main.c,v 1.5 1996/08/22 20:33:22 millert Exp $";
  */
 
 char	*distfile = NULL;
-#define _RDIST_TMP	"/rdistXXXXXX"
+#define _RDIST_TMP	"rdistXXXXXX"
 char	tempfile[sizeof _PATH_TMP + sizeof _RDIST_TMP + 1];
 char	*tempname;
 
