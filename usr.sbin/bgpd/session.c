@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.139 2004/03/20 23:17:35 david Exp $ */
+/*	$OpenBSD: session.c,v 1.140 2004/04/13 22:53:29 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1624,7 +1624,9 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 	u_int16_t	 len;
 	u_int8_t	 capa_code;
 	u_int8_t	 capa_len;
-	void		*capa_val;
+	u_char		*capa_val;
+	u_int16_t	 mp_afi;
+	u_int8_t	 mp_safi;
 
 	len = dlen;
 	while (len > 0) {
@@ -1646,6 +1648,26 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 			capa_val = NULL;
 
 		switch (capa_code) {
+		case CAPA_MP:			/* RFC 2858 */
+			if (capa_len != 4)
+				return (-1);
+			memcpy(&mp_afi, capa_val, sizeof(mp_afi));
+			memcpy(&mp_safi, capa_val + 3, sizeof(mp_safi));
+			switch (mp_afi) {
+			case AFI_IPv4:
+				if (mp_safi < 1 || mp_safi > 3)
+					return (-1);
+				peer->capa.mp_v4 = mp_safi;
+				break;
+			case AFI_IPv6:
+				if (mp_safi < 1 || mp_safi > 3)
+					return (-1);
+				peer->capa.mp_v6 = mp_safi;
+				break;
+			default:			/* ignore */
+				break;
+			}
+			break;
 		default:
 			break;
 		}
