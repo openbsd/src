@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.21 2003/01/21 22:23:49 dhartmei Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.22 2003/03/08 16:06:03 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -33,24 +33,14 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
-#include <netinet/icmp6.h>
 #define TCPSTATES
 #include <netinet/tcp_fsm.h>
 #include <net/pfvar.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <netdb.h>
-#include <stdarg.h>
-#include <errno.h>
-#include <err.h>
 
 #include "pfctl_parser.h"
 #include "pfctl.h"
