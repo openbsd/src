@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 1997/01/15 23:43:20 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1998/03/12 04:57:35 art Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -40,27 +40,14 @@ static char copyright[] =
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
-static char rcsid[] = "$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $";
-#else
-static char rcsid[] = "$OpenBSD: main.c,v 1.4 1997/01/15 23:43:20 millert Exp $";
-#endif
-#endif /* not lint */
-
-#include <sys/types.h>
-
-#include "ring.h"
-#include "externs.h"
-#include "defines.h"
+#include "telnet_locl.h"
 
 /* These values need to be the same as defined in libtelnet/kerberos5.c */
 /* Either define them in both places, or put in some common header file. */
 #define OPTS_FORWARD_CREDS	0x00000002
 #define OPTS_FORWARDABLE_CREDS	0x00000001
 
-#if 0
+#if KRB5
 #define FORWARD
 #endif
 
@@ -104,7 +91,12 @@ usage()
 #else
 	    "[-r] ",
 #endif
+#ifdef ENCRYPTION
+	    "[-x] [host-name [port]]"
+#else
+
 	    "[host-name [port]]"
+#endif
 	);
 	exit(1);
 }
@@ -121,19 +113,16 @@ main(argc, argv)
 	extern char *optarg;
 	extern int optind;
 	int ch;
-	char *user, *alias, *strrchr();
+	char *user, *alias;
 #ifdef	FORWARD
 	extern int forward_flags;
 #endif	/* FORWARD */
 
 	tninit();		/* Clear out things */
-#if	defined(CRAY) && !defined(__STDC__)
-	_setlist_init();	/* Work around compiler bug */
-#endif
 
 	TerminalSaveState();
 
-	if (prompt = strrchr(argv[0], '/'))
+	if ((prompt = strrchr(argv[0], '/')))
 		++prompt;
 	else
 		prompt = argv[0];
@@ -141,13 +130,30 @@ main(argc, argv)
 	user = alias = NULL;
 
 	rlogin = (strncmp(prompt, "rlog", 4) == 0) ? '~' : _POSIX_VDISABLE;
+
+	/* 
+	 * if AUTHENTICATION and ENCRYPTION is set autologin will be
+	 * set to true after the getopt switch; unless the -K option is
+	 * passed 
+	 */
 	autologin = -1;
 
-	while ((ch = getopt(argc, argv, "8EKLS:X:ab:cde:fFk:l:n:rt:x")) != -1) {
+	while ((ch = getopt(argc, argv, "78DEKLS:X:ab:cde:fFk:l:n:rt:x")) != -1) {
 		switch(ch) {
 		case '8':
 			eight = 3;	/* binary output and input */
 			break;
+		case '7':
+			eight = 0;
+			break;
+		case 'D': {
+			/* sometimes we don't want a mangled display */
+			char *p;
+			if((p = getenv("DISPLAY")))
+				env_define("DISPLAY", (unsigned char*)p);
+			break;
+		}
+
 		case 'E':
 			rlogin = escape = _POSIX_VDISABLE;
 			break;
@@ -227,7 +233,8 @@ main(argc, argv)
 		case 'k':
 #if defined(AUTHENTICATION) && defined(KRB4)
 		    {
-			extern char *dest_realm, dst_realm_buf[], dst_realm_sz;
+			extern char *dest_realm, dst_realm_buf[];
+			extern int dst_realm_sz;
 			dest_realm = dst_realm_buf;
 			(void)strncpy(dest_realm, optarg, dst_realm_sz);
 		    }
@@ -238,7 +245,12 @@ main(argc, argv)
 #endif
 			break;
 		case 'l':
-			autologin = 1;
+			if(autologin == 0){
+				fprintf(stderr, "%s: Warning: -K ignored\n", 
+					prompt);
+				autologin = -1;
+                 }
+
 			user = optarg;
 			break;
 		case 'b':
@@ -274,9 +286,15 @@ main(argc, argv)
 #endif
 			break;
 		case 'x':
+#ifdef ENCRYPTION
+			encrypt_auto(1);
+			decrypt_auto(1);
+			EncryptVerbose(1);
+#else
 			fprintf(stderr,
 			    "%s: Warning: -x ignored, no ENCRYPT support.\n",
 								prompt);
+#endif
 			break;
 		case '?':
 		default:
@@ -284,6 +302,17 @@ main(argc, argv)
 			/* NOTREACHED */
 		}
 	}
+
+	if (autologin == -1) {          /* esc@magic.fi; force  */
+#if defined(AUTHENTICATION)
+		autologin = 1;
+#endif
+#if defined(ENCRYPTION)
+		encrypt_auto(1);
+		decrypt_auto(1);
+#endif
+	}
+
 	if (autologin == -1)
 		autologin = (rlogin == _POSIX_VDISABLE) ? 0 : 1;
 

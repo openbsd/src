@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.9 1997/12/25 00:29:26 deraadt Exp $
+.\"	$OpenBSD: telnet.1,v 1.10 1998/03/12 04:57:42 art Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -201,9 +201,7 @@ unless modified by the
 .Fl e
 option.
 .It Fl x
-Turns on encryption of the data stream if possible.  This
-option is not available outside of the United States and
-Canada.
+Turns on encryption of the data stream if possible.
 .It Ar host
 Indicates the official name, an alias, or the Internet address
 of a remote host.
@@ -353,11 +351,7 @@ values (see below).
 The encrypt command manipulates the information sent through the
 .Dv TELNET ENCRYPT
 option.
-.Pp
-Note:  Because of export controls, the
-.Dv TELNET ENCRYPT
-option is not supported outside of the United States and Canada.
-.Pp
+..Pp
 Valid arguments for the encrypt command are as follows:
 .Bl -tag -width Ar
 .It Ic disable Ar type Ic [input|output]
@@ -1138,9 +1132,6 @@ stream does not start automatically.  The autoencrypt
 output (input) stream should be enabled as soon as
 possible.
 .Pp
-Note:  Because of export controls, the
-.Dv TELNET ENCRYPT
-option is not supported outside the United States and Canada.
 .It Ic autologin
 If the remote side supports the
 .Dv TELNET AUTHENTICATION
@@ -1327,8 +1318,6 @@ toggle is
 prints out a message each time encryption is enabled or
 disabled.  The initial value for this toggle is
 .Dv FALSE.
-Note:  Because of export controls, data encryption
-is not supported outside of the United States and Canada.
 .It Ic \&?
 Displays the legal
 .Ic toggle

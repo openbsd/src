@@ -1,4 +1,4 @@
-/*	$OpenBSD: defines.h,v 1.2 1996/03/27 19:33:00 niklas Exp $	*/
+/*	$OpenBSD: defines.h,v 1.3 1998/03/12 04:57:30 art Exp $	*/
 /*	$NetBSD: defines.h,v 1.5 1996/02/28 21:03:55 thorpej Exp $	*/
 
 /*
@@ -62,3 +62,7 @@
 #define	MODE_COMMAND_LINE(m)	((m)==-1)
 
 #define	CONTROL(x)	((x)&0x1f)		/* CTRL(x) is not portable */
+
+#define MODE_OUT8      0x8000 /* binary mode sans -opost */
+
+

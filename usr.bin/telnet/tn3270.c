@@ -1,4 +1,4 @@
-/*	$OpenBSD: tn3270.c,v 1.2 1996/03/27 19:33:12 niklas Exp $	*/
+/*	$OpenBSD: tn3270.c,v 1.3 1998/03/12 04:57:46 art Exp $	*/
 /*	$NetBSD: tn3270.c,v 1.5 1996/02/28 21:04:18 thorpej Exp $	*/
 
 /*
@@ -34,24 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
-static char rcsid[] = "$NetBSD: tn3270.c,v 1.5 1996/02/28 21:04:18 thorpej Exp $";
-#else
-static char rcsid[] = "$OpenBSD: tn3270.c,v 1.2 1996/03/27 19:33:12 niklas Exp $";
-#endif
-#endif /* not lint */
-
-#include <sys/types.h>
-#include <arpa/telnet.h>
-
-#include "general.h"
-
-#include "defines.h"
-#include "ring.h"
-#include "externs.h"
-#include "fdset.h"
+#include "telnet_locl.h"
 
 #if	defined(TN3270)
 

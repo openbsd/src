@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.4 1996/12/11 17:14:22 robin Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.5 1998/03/12 04:57:40 art Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -34,47 +34,12 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
-static char rcsid[] = "$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $";
-#else
-static char rcsid[] = "$OpenBSD: sys_bsd.c,v 1.4 1996/12/11 17:14:22 robin Exp $";
-#endif
-#endif /* not lint */
+#include "telnet_locl.h"
 
 /*
  * The following routines try to encapsulate what is system dependent
  * (at least between 4.x and dos) which is used in telnet.c.
  */
-
-
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <signal.h>
-#include <errno.h>
-#include <arpa/telnet.h>
-#include <unistd.h>
-
-#include "ring.h"
-
-#include "fdset.h"
-
-#include "defines.h"
-#include "externs.h"
-#include "types.h"
-
-#if	defined(CRAY) || (defined(USE_TERMIO) && !defined(SYSV_TERMIO))
-#define	SIG_FUNC_RET	void
-#else
-#define	SIG_FUNC_RET	int
-#endif
-
-#ifdef	SIGINFO
-extern SIG_FUNC_RET ayt_status();
-#endif
 
 int
 	tout,			/* Output file descriptor */
@@ -91,8 +56,8 @@ int	olmode = 0;
 # define old_tc ottyb
 
 #else	/* USE_TERMIO */
-struct	termio old_tc = { 0 };
-extern struct termio new_tc;
+struct	termios old_tc = { 0 };
+extern struct termios new_tc;
 
 # ifndef	TCSANOW
 #  ifdef TCSETS
@@ -391,6 +356,12 @@ TerminalRestoreState()
  *		local/no signal mapping
  */
 
+#ifdef SIGTSTP
+static void susp();
+#endif /* SIGTSTP */
+#ifdef SIGINFO
+static void ayt();
+#endif
 
     void
 TerminalNewMode(f)
@@ -403,7 +374,7 @@ TerminalNewMode(f)
     struct sgttyb sb;
     int lmode;
 #else	/* USE_TERMIO */
-    struct termio tmp_tc;
+    struct termios tmp_tc;
 #endif	/* USE_TERMIO */
     int onoff;
     int old;
@@ -603,10 +574,14 @@ TerminalNewMode(f)
 		tmp_tc.c_iflag &= ~ISTRIP;
 	else
 		tmp_tc.c_iflag |= ISTRIP;
-	if (f & MODE_OUTBIN) {
+	if ((f & MODE_OUTBIN) || (f & MODE_OUT8)) {
 		tmp_tc.c_cflag &= ~(CSIZE|PARENB);
 		tmp_tc.c_cflag |= CS8;
-		tmp_tc.c_oflag &= ~OPOST;
+		if(f & MODE_OUTBIN)
+			tmp_tc.c_oflag &= ~OPOST;
+		else
+			tmp_tc.c_oflag |= OPOST;
+
 	} else {
 		tmp_tc.c_cflag &= ~(CSIZE|PARENB);
 		tmp_tc.c_cflag |= old_tc.c_cflag & (CSIZE|PARENB);
@@ -617,13 +592,6 @@ TerminalNewMode(f)
     }
 
     if (f != -1) {
-#ifdef	SIGTSTP
-	SIG_FUNC_RET susp();
-#endif	/* SIGTSTP */
-#ifdef	SIGINFO
-	SIG_FUNC_RET ayt();
-#endif
-
 #ifdef	SIGTSTP
 	(void) signal(SIGTSTP, susp);
 #endif	/* SIGTSTP */
@@ -670,9 +638,9 @@ TerminalNewMode(f)
 #endif
     } else {
 #ifdef	SIGINFO
-	SIG_FUNC_RET ayt_status();
+	void ayt_status();
 
-	(void) signal(SIGINFO, ayt_status);
+	(void) signal(SIGINFO, (void (*)(int))ayt_status);
 #endif
 #ifdef	SIGTSTP
 	(void) signal(SIGTSTP, SIG_DFL);
@@ -868,7 +836,7 @@ NetSetPgrp(fd)
  */
 
     /* ARGSUSED */
-    SIG_FUNC_RET
+    void
 deadpeer(sig)
     int sig;
 {
@@ -877,7 +845,7 @@ deadpeer(sig)
 }
 
     /* ARGSUSED */
-    SIG_FUNC_RET
+    void
 intr(sig)
     int sig;
 {
@@ -890,7 +858,7 @@ intr(sig)
 }
 
     /* ARGSUSED */
-    SIG_FUNC_RET
+    void
 intr2(sig)
     int sig;
 {
@@ -907,7 +875,7 @@ intr2(sig)
 
 #ifdef	SIGTSTP
     /* ARGSUSED */
-    SIG_FUNC_RET
+    void
 susp(sig)
     int sig;
 {
@@ -920,7 +888,7 @@ susp(sig)
 
 #ifdef	SIGWINCH
     /* ARGSUSED */
-    SIG_FUNC_RET
+    void
 sendwin(sig)
     int sig;
 {
@@ -932,7 +900,7 @@ sendwin(sig)
 
 #ifdef	SIGINFO
     /* ARGSUSED */
-    SIG_FUNC_RET
+    void
 ayt(sig)
     int sig;
 {
@@ -1197,19 +1165,14 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 	if (c < 0 && errno == EWOULDBLOCK) {
 	    c = 0;
 	} else {
-	    if (c < 0) {
-		return -1;
-	    }
-	    if (c == 0) {
+	    /* EOF detection for line mode!!!! */
+	    if ((c == 0) && MODE_LOCAL_CHARS(globalmode) && isatty(tin)) {
 		/* must be an EOF... */
-		if (MODE_LOCAL_CHARS(globalmode) && isatty(tin)) {
-		    *ttyiring.supply = termEofChar;
-		    c = 1;
-		} else {
-		    clienteof = 1;
-		    shutdown(net, 1);
-		    return 0;
-		}
+		*ttyiring.supply = termEofChar;
+		c = 1;
+	    }
+	    if (c <= 0) {
+		return -1;
 	    }
 	    if (termdata) {
 		Dump('<', ttyiring.supply, c);

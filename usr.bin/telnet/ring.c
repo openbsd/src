@@ -1,4 +1,4 @@
-/*	$OpenBSD: ring.c,v 1.2 1996/03/27 19:33:05 niklas Exp $	*/
+/*	$OpenBSD: ring.c,v 1.3 1998/03/12 04:57:38 art Exp $	*/
 /*	$NetBSD: ring.c,v 1.7 1996/02/28 21:04:07 thorpej Exp $	*/
 
 /*
@@ -34,14 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)ring.c	8.2 (Berkeley) 5/30/95";
-static char rcsid[] = "$NetBSD: ring.c,v 1.7 1996/02/28 21:04:07 thorpej Exp $";
-#else
-static char rcsid[] = "$OpenBSD: ring.c,v 1.2 1996/03/27 19:33:05 niklas Exp $";
-#endif
-#endif /* not lint */
+#include "telnet_locl.h"
 
 /*
  * This defines a structure for a ring buffer.
@@ -53,26 +46,6 @@ static char rcsid[] = "$OpenBSD: ring.c,v 1.2 1996/03/27 19:33:05 niklas Exp $";
  *]]]
  *
  */
-
-#include	<stdio.h>
-#ifndef NO_STRING_H
-#include	<string.h>
-#endif
-#include	<strings.h>
-#include	<errno.h>
-
-#ifdef	size_t
-#undef	size_t
-#endif
-
-#include	<sys/types.h>
-#ifndef	FILIO_H
-#include	<sys/ioctl.h>
-#endif
-#include	<sys/socket.h>
-
-#include	"ring.h"
-#include	"general.h"
 
 /* Internal macros */
 
@@ -124,6 +97,9 @@ Ring *ring;
 
     ring->top = ring->bottom+ring->size;
 
+#if    defined(ENCRYPTION)
+    ring->clearto = 0;
+#endif
 
     return 1;
 }
@@ -194,6 +170,15 @@ ring_consumed(ring, count)
 		(ring_subtract(ring, ring->mark, ring->consume) < count)) {
 	ring->mark = 0;
     }
+#if    defined(ENCRYPTION)
+    if (ring->consume < ring->clearto &&
+               ring->clearto <= ring->consume + count)
+	ring->clearto = 0;
+    else if (ring->consume + count > ring->top &&
+               ring->bottom <= ring->clearto &&
+               ring->bottom + ((ring->consume + count) - ring->top))
+	ring->clearto = 0;
+#endif
     ring->consume = ring_increment(ring, ring->consume, count);
     ring->consumetime = ++ring_clock;
     /*
@@ -322,6 +307,39 @@ ring_consume_data(ring, buffer, count)
 	count -= i;
 	buffer += i;
     }
+}
+#endif
+
+#if    defined(ENCRYPTION)
+void
+ring_encrypt(Ring *ring, void (*encryptor)())
+{
+    unsigned char *s, *c;
+
+    if (ring_empty(ring) || ring->clearto == ring->supply)
+	return;
+
+    if (!(c = ring->clearto))
+	c = ring->consume;
+
+    s = ring->supply;
+    
+    if (s <= c) {
+	(*encryptor)(c, ring->top - c);
+	(*encryptor)(ring->bottom, s - ring->bottom);
+    } else
+	(*encryptor)(c, s - c);
+    
+    ring->clearto = ring->supply;
+}
+
+void
+ring_clearto(Ring *ring)
+{
+    if (!ring_empty(ring))
+	ring->clearto = ring->supply;
+    else
+	ring->clearto = 0;
 }
 #endif
 

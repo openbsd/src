@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.2 1996/03/27 19:33:11 niklas Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.3 1998/03/12 04:57:45 art Exp $	*/
 /*	$NetBSD: terminal.c,v 1.5 1996/02/28 21:04:17 thorpej Exp $	*/
 
 /*
@@ -34,22 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)terminal.c	8.2 (Berkeley) 2/16/95";
-static char rcsid[] = "$NetBSD: terminal.c,v 1.5 1996/02/28 21:04:17 thorpej Exp $";
-#else
-static char rcsid[] = "$OpenBSD: terminal.c,v 1.2 1996/03/27 19:33:11 niklas Exp $";
-#endif
-#endif /* not lint */
-
-#include <arpa/telnet.h>
-#include <sys/types.h>
-
-#include "ring.h"
-
-#include "externs.h"
-#include "types.h"
+#include "telnet_locl.h"
 
 Ring		ttyoring, ttyiring;
 unsigned char	ttyobuf[2*BUFSIZ], ttyibuf[BUFSIZ];
@@ -132,7 +117,7 @@ ttyflush(drop)
 	    TerminalFlushOutput();
 	    /* we leave 'n' alone! */
 	} else {
-	    n = TerminalWrite(ttyoring.consume, n);
+	    n = TerminalWrite((char *)ttyoring.consume, n);
 	}
     }
     if (n > 0) {
@@ -188,9 +173,11 @@ getconnmode()
     if (localflow)
 	mode |= MODE_FLOW;
 
-    if (my_want_state_is_will(TELOPT_BINARY))
+    if ((eight & 1) || my_want_state_is_will(TELOPT_BINARY))
 	mode |= MODE_INBIN;
 
+    if (eight & 2)
+	mode |= MODE_OUT8;
     if (his_want_state_is_will(TELOPT_BINARY))
 	mode |= MODE_OUTBIN;
 
@@ -215,11 +202,28 @@ setconnmode(force)
     int force;
 {
     register int newmode;
+#ifdef ENCRYPTION
+    static int enc_passwd = 0;
+#endif
 
     newmode = getconnmode()|(force?MODE_FORCE:0);
 
     TerminalNewMode(newmode);
 
+#ifdef  ENCRYPTION
+    if ((newmode & (MODE_ECHO|MODE_EDIT)) == MODE_EDIT) {
+	if (my_want_state_is_will(TELOPT_ENCRYPT)
+	    && (enc_passwd == 0) && !encrypt_output) {
+	    encrypt_request_start(0, 0);
+	    enc_passwd = 1;
+	}
+    } else {
+	if (enc_passwd) {
+	    encrypt_request_end();
+	    enc_passwd = 0;
+	}
+    }
+#endif
 
 }
 

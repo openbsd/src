@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.4 1998/02/16 04:59:04 jason Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.5 1998/03/12 04:57:47 art Exp $	*/
 /*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
 
 /*
@@ -34,34 +34,11 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
-static char rcsid[] = "$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $";
-#else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.4 1998/02/16 04:59:04 jason Exp $";
-#endif
-#endif /* not lint */
-
 #define	TELOPTS
 #define	TELCMDS
 #define	SLC_NAMES
-#include <arpa/telnet.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <ctype.h>
 
-#include "general.h"
-
-#include "fdset.h"
-
-#include "ring.h"
-
-#include "defines.h"
-
-#include "externs.h"
+#include "telnet_locl.h"
 
 FILE	*NetTrace = 0;		/* Not in bss, since needs to stay */
 int	prettydump;
@@ -98,7 +75,7 @@ SetSockOpt(fd, level, option, yesno)
 {
 #ifndef	NOT43
     return setsockopt(fd, level, option,
-				(char *)&yesno, sizeof yesno);
+				(void *)&yesno, sizeof yesno);
 #else	/* NOT43 */
     if (yesno == 0) {		/* Can't do that in 4.2! */
 	fprintf(stderr, "Error: attempt to turn off an option 0x%x.\n",
@@ -494,6 +471,77 @@ printsub(direction, pointer, length)
 	    break;
 #endif
 
+#if    defined(ENCRYPTION)
+	case TELOPT_ENCRYPT:
+	    fprintf(NetTrace, "ENCRYPT");
+	    if (length < 2) {
+		fprintf(NetTrace, " (empty suboption?)");
+		break;
+	    }
+	    switch (pointer[1]) {
+	    case ENCRYPT_START:
+		fprintf(NetTrace, " START");
+		break;
+		
+	    case ENCRYPT_END:
+		fprintf(NetTrace, " END");
+		break;
+		
+	    case ENCRYPT_REQSTART:
+		fprintf(NetTrace, " REQUEST-START");
+		break;
+
+	    case ENCRYPT_REQEND:
+		fprintf(NetTrace, " REQUEST-END");
+		break;
+		
+	    case ENCRYPT_IS:
+	    case ENCRYPT_REPLY:
+		fprintf(NetTrace, " %s ", (pointer[1] == ENCRYPT_IS) ?
+			"IS" : "REPLY");
+		if (length < 3) {
+		    fprintf(NetTrace, " (partial suboption?)");
+		    break;
+		}
+		if (ENCTYPE_NAME_OK(pointer[2]))
+		    fprintf(NetTrace, "%s ", ENCTYPE_NAME(pointer[2]));
+		else
+		    fprintf(NetTrace, " %d (unknown)", pointer[2]);
+		
+		encrypt_printsub(&pointer[1], length - 1, buf, sizeof(buf));
+		fprintf(NetTrace, "%s", buf);
+		break;
+		
+	    case ENCRYPT_SUPPORT:
+		i = 2;
+		fprintf(NetTrace, " SUPPORT ");
+		while (i < length) {
+		    if (ENCTYPE_NAME_OK(pointer[i]))
+			fprintf(NetTrace, "%s ", ENCTYPE_NAME(pointer[i]));
+		    else
+			fprintf(NetTrace, "%d ", pointer[i]);
+		    i++;
+		}
+		break;
+		
+	    case ENCRYPT_ENC_KEYID:
+		fprintf(NetTrace, " ENC_KEYID ");
+		goto encommon;
+		
+	    case ENCRYPT_DEC_KEYID:
+		fprintf(NetTrace, " DEC_KEYID ");
+		goto encommon;
+		
+	    default:
+		fprintf(NetTrace, " %d (unknown)", pointer[1]);
+	    encommon:
+		for (i = 2; i < length; i++)
+		    fprintf(NetTrace, " %d", pointer[i]);
+		break;
+	    }
+	    break;
+#endif
+
 
 	case TELOPT_LINEMODE:
 	    fprintf(NetTrace, "LINEMODE ");
@@ -573,12 +621,13 @@ printsub(direction, pointer, length)
 		}
 		{
 		    char tbuf[64];
-		    sprintf(tbuf, "%s%s%s%s%s",
-			pointer[2]&MODE_EDIT ? "|EDIT" : "",
-			pointer[2]&MODE_TRAPSIG ? "|TRAPSIG" : "",
-			pointer[2]&MODE_SOFT_TAB ? "|SOFT_TAB" : "",
-			pointer[2]&MODE_LIT_ECHO ? "|LIT_ECHO" : "",
-			pointer[2]&MODE_ACK ? "|ACK" : "");
+		    snprintf(tbuf, sizeof(tbuf),
+			     "%s%s%s%s%s",
+			     pointer[2]&MODE_EDIT ? "|EDIT" : "",
+			     pointer[2]&MODE_TRAPSIG ? "|TRAPSIG" : "",
+			     pointer[2]&MODE_SOFT_TAB ? "|SOFT_TAB" : "",
+			     pointer[2]&MODE_LIT_ECHO ? "|LIT_ECHO" : "",
+			     pointer[2]&MODE_ACK ? "|ACK" : "");
 		    fprintf(NetTrace, "%s", tbuf[1] ? &tbuf[1] : "0");
 		}
 		if (pointer[2]&~(MODE_MASK))
@@ -807,23 +856,24 @@ printsub(direction, pointer, length)
 EmptyTerminal()
 {
 #if	defined(unix)
-    fd_set	o;
+    fd_set	outs;
 
-    FD_ZERO(&o);
+    FD_ZERO(&outs);
 #endif	/* defined(unix) */
 
     if (TTYBYTES() == 0) {
 #if	defined(unix)
-	FD_SET(tout, &o);
-	(void) select(tout+1, (fd_set *) 0, &o, (fd_set *) 0,
+	FD_SET(tout, &outs);
+	(void) select(tout+1, (fd_set *) 0, &outs, (fd_set *) 0,
 			(struct timeval *) 0);	/* wait for TTLOWAT */
 #endif	/* defined(unix) */
     } else {
 	while (TTYBYTES()) {
 	    (void) ttyflush(0);
 #if	defined(unix)
-	    FD_SET(tout, &o);
-	    (void) select(tout+1, (fd_set *) 0, &o, (fd_set *) 0,
+	    ttyflush(0);
+	    FD_SET(tout, &outs);
+	    (void) select(tout+1, (fd_set *) 0, &outs, (fd_set *) 0,
 				(struct timeval *) 0);	/* wait for TTLOWAT */
 #endif	/* defined(unix) */
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: network.c,v 1.4 1997/12/16 22:07:38 deraadt Exp $	*/
+/*	$OpenBSD: network.c,v 1.5 1998/03/12 04:57:36 art Exp $	*/
 /*	$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp $	*/
 
 /*
@@ -34,28 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)network.c	8.2 (Berkeley) 12/15/93";
-static char rcsid[] = "$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp $";
-#else
-static char rcsid[] = "$OpenBSD: network.c,v 1.4 1997/12/16 22:07:38 deraadt Exp $";
-#endif
-#endif /* not lint */
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <errno.h>
-
-#include <arpa/telnet.h>
-
-#include "ring.h"
-
-#include "defines.h"
-#include "externs.h"
-#include "fdset.h"
+#include "telnet_locl.h"
 
 Ring		netoring, netiring;
 unsigned char	netobuf[2*BUFSIZ], netibuf[BUFSIZ];
@@ -110,7 +89,7 @@ stilloob()
 	free(fdsp);
 	return 1;
     } else {
-	free(fdsp);
+   	free(fdsp);
 	return 0;
     }
 }
@@ -144,6 +123,10 @@ netflush()
 {
     register int n, n1;
 
+#if    defined(ENCRYPTION)
+    if (encrypt_output)
+	ring_encrypt(&netoring, encrypt_output);
+#endif
     if ((n1 = n = ring_full_consecutive(&netoring)) > 0) {
 	if (!ring_at_mark(&netoring)) {
 	    n = send(net, (char *)netoring.consume, n, 0); /* normal write */
