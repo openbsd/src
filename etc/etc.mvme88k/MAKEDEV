@@ -120,11 +120,10 @@ ss*)
 	chmod 640 $name$unit n$name$unit
 	;;
 
-ccd*|sd*|vnd*)
+ccd*|sd*)
 	case $i in
 	ccd*) name=ccd;	unit=${i#ccd};	blk=5;	chr=17;;
 	sd*) name=sd;	unit=${i#sd};	blk=4;	chr=8;;
-	vnd*) name=vnd;	unit=${i#vnd};	blk=6;	chr=19;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
@@ -145,6 +144,37 @@ ccd*|sd*|vnd*)
 	mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
+	;;
+
+vnd*)
+	umask 2 ; unit=${i#vnd}
+	for name in vnd svnd; do
+		blk=6; chr=19;
+		case $name in
+		vnd)	off=0;;
+		svnd)	off=128;;
+		esac
+		rm -f $name$unit? r$name$unit?
+		mknod ${name}${unit}a	b $blk $(($unit * 8 + $off + 0))
+		mknod ${name}${unit}b	b $blk $(($unit * 8 + $off + 1))
+		mknod ${name}${unit}c	b $blk $(($unit * 8 + $off + 2))
+		mknod ${name}${unit}d	b $blk $(($unit * 8 + $off + 3))
+		mknod ${name}${unit}e	b $blk $(($unit * 8 + $off + 4))
+		mknod ${name}${unit}f	b $blk $(($unit * 8 + $off + 5))
+		mknod ${name}${unit}g	b $blk $(($unit * 8 + $off + 6))
+		mknod ${name}${unit}h	b $blk $(($unit * 8 + $off + 7))
+		mknod r${name}${unit}a	c $chr $(($unit * 8 + $off + 0))
+		mknod r${name}${unit}b	c $chr $(($unit * 8 + $off + 1))
+		mknod r${name}${unit}c	c $chr $(($unit * 8 + $off + 2))
+		mknod r${name}${unit}d	c $chr $(($unit * 8 + $off + 3))
+		mknod r${name}${unit}e	c $chr $(($unit * 8 + $off + 4))
+		mknod r${name}${unit}f	c $chr $(($unit * 8 + $off + 5))
+		mknod r${name}${unit}g	c $chr $(($unit * 8 + $off + 6))
+		mknod r${name}${unit}h	c $chr $(($unit * 8 + $off + 7))
+		chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
+	done
+	umask 77
 	;;
 
 pty*)

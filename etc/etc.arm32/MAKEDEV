@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.8 1997/05/13 05:34:50 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.9 1997/05/14 15:41:09 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.3 1996/04/26 20:10:24 mark Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -142,12 +142,11 @@ fd)
 	chmod 666 fd/*
 	;;
 
-fd*|sd*|vnd*|wd*|ccd*)
+fd*|sd*|wd*|ccd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
 	fd*) name=fd; blk=17; chr=17;;
 	sd*) name=sd; blk=24; chr=24;;
-	vnd*) name=vnd; blk=19; chr=19;;
 	wd*) name=wd; blk=16; chr=16;;
 	ccd*) name=ccd; blk=21; chr=21;;
 	esac
@@ -170,6 +169,37 @@ fd*|sd*|vnd*|wd*|ccd*)
 	mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
 	chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 	chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
+	umask 77
+	;;
+
+vnd*)
+	umask 2 ; unit=`expr $i : 'vnd\(.*\)'`
+	for name in vnd svnd; do
+		blk=19; chr=19;
+		case $name in
+		vnd)	off=0;;
+		svnd)	off=128;;
+		esac
+		rm -f $name$unit? r$name$unit?
+		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + $off + 0`
+		mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + $off + 1`
+		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + $off + 2`
+		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + $off + 3`
+		mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + $off + 4`
+		mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + $off + 5`
+		mknod ${name}${unit}g	b $blk `expr $unit '*' 8 + $off + 6`
+		mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + $off + 7`
+		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + $off + 0`
+		mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + $off + 1`
+		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + $off + 2`
+		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + $off + 3`
+		mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + $off + 4`
+		mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + $off + 5`
+		mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + $off + 6`
+		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + $off + 7`
+		chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
+	done
 	umask 77
 	;;
 

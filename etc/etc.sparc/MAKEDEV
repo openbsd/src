@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.27 1997/05/14 00:11:07 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.28 1997/05/14 15:41:21 niklas Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -319,7 +319,7 @@ fd*)
 	umask 77
 	;;
 
-ccd*|sd*|xd*|xy*|cd*|vnd*)
+ccd*|sd*|xd*|xy*|cd*)
 	umask 2
 	unit=`unt $i`
 	if [ 0$unit -gt 15 ]
@@ -333,7 +333,6 @@ ccd*|sd*|xd*|xy*|cd*|vnd*)
 	xd*) name=xd; blk=10; chr=42;;
 	xy*) name=xy; blk=3; chr=9;;
 	cd*)  name=cd; blk=18; chr=58;;
-	vnd*) name=vnd; blk=8; chr=110;;
 	*) echo bad unit for disk in: $i;;
 	esac
 	if [ "$unit" = "" ]
@@ -357,6 +356,44 @@ ccd*|sd*|xd*|xy*|cd*|vnd*)
 	chown root.operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
 	umask 77
+	;;
+
+vnd*)
+	umask 2
+	unit=`unt $i`
+	if [ 0$unit -gt 15 ]
+	then
+		echo bad disk unit: $i - $unit
+		exit 127
+	fi
+	blk=8; chr=110;
+	for name in vnd svnd; do
+		case $name in
+		vnd) off=0;;
+		svnd) off=128;;
+		esac
+		if [ "$unit" = "" ]
+		then
+			n=0
+			while [ $n -lt 32 ]
+			do
+				sh ${this} $name$n
+				n=`add $n 1`
+			done
+		fi
+		rm -f $name$unit? r$name$unit?
+		minor=`mult $unit 16`
+		minor=`add $minor $off`
+		for slice in a b c d e f g h i j k l m n o p
+		do
+			dev=$name$unit$slice
+			mknod $dev b $blk $minor
+			mknod r$dev c $chr $minor
+			minor=`add $minor 1`
+		done
+		chown root.operator $name$unit? r$name$unit?
+		chmod 640 $name$unit? r$name$unit?
+	done
 	umask 77
 	;;
 
