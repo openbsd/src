@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.18 1999/08/16 16:51:19 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.19 1999/08/25 21:56:52 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -211,8 +211,8 @@ struct ne2000dev {
       PCMCIA_CIS_SMC_EZCARD,
       0, 0x01c0, { 0x00, 0xe0, 0x29 } },
 
-    { PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_LA_PCM,
-      PCMCIA_CIS_COREGA_LA_PCM,
+    { PCMCIA_VENDOR_ALLIEDTELESIS, PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM,
+      PCMCIA_CIS_ALLIEDTELESIS_LA_PCM,
       0, 0x0ff0, { 0x00, 0x00, 0xf4 } },
 
 #if 0
