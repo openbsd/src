@@ -1,4 +1,4 @@
-/*     $OpenBSD: ipf.c,v 1.14 1999/02/07 00:55:16 deraadt Exp $      */
+/*     $OpenBSD: ipf.c,v 1.15 1999/02/08 06:23:26 millert Exp $      */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -45,7 +45,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipf.c,v 1.14 1999/02/07 00:55:16 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: ipf.c,v 1.15 1999/02/08 06:23:26 millert Exp $";
 #endif
 
 static	void	frsync __P((void));
@@ -94,6 +94,7 @@ char *argv[];
 			usage();
 
 	optreset = 1;
+	optind = 1;
 	while ((c = getopt(argc, argv, OPTS)) != -1) {
 		switch (c)
 		{
