@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.32 2004/12/05 19:54:03 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.33 2004/12/05 20:00:38 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -231,8 +231,9 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
-	ic->ic_caps =  IEEE80211_C_IBSS | IEEE80211_C_MONITOR |
-	    IEEE80211_C_PMGT | IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
+	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_MONITOR |
+	    IEEE80211_C_PMGT | IEEE80211_C_TXPMGT | IEEE80211_C_WEP |
+	    IEEE80211_C_SHPREAMBLE;
 
 	/* read MAC address from EEPROM */
 	val = ipw_read_prom_word(sc, IPW_EEPROM_MAC + 0);
@@ -651,7 +652,8 @@ ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ipw_softc *sc = ic->ic_softc;
 	struct ieee80211_node *ni = ic->ic_bss;
-	u_int32_t val, len;
+	u_int32_t len;
+	u_int8_t val;
 
 	switch (nstate) {
 	case IEEE80211_S_RUN:
@@ -1058,21 +1060,21 @@ ipw_intr(void *arg)
 
 	DPRINTFN(8, ("INTR!0x%08x\n", r));
 
-	if (r & IPW_INTR_RX_TRANSFER)
-		ipw_rx_intr(sc);
-
-	if (r & IPW_INTR_TX_TRANSFER)
-		ipw_tx_intr(sc);
+	if (r & (IPW_INTR_FATAL_ERROR | IPW_INTR_PARITY_ERROR)) {
+		printf("%s: fatal error\n", sc->sc_dev.dv_xname);
+		ipw_stop(&sc->sc_ic.ic_if, 1);
+	}
 
 	if (r & IPW_INTR_FW_INIT_DONE) {
 		if (!(r & (IPW_INTR_FATAL_ERROR | IPW_INTR_PARITY_ERROR)))
 			wakeup(sc);
 	}
 
-	if (r & (IPW_INTR_FATAL_ERROR | IPW_INTR_PARITY_ERROR)) {
-		printf("%s: fatal error\n", sc->sc_dev.dv_xname);
-		ipw_stop(&sc->sc_ic.ic_if, 1);
-	}
+	if (r & IPW_INTR_RX_TRANSFER)
+		ipw_rx_intr(sc);
+
+	if (r & IPW_INTR_TX_TRANSFER)
+		ipw_tx_intr(sc);
 
 	/* Acknowledge interrupts */
 	CSR_WRITE_4(sc, IPW_CSR_INTR, r);
