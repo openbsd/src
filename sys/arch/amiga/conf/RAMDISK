@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.1 1997/05/13 16:07:23 niklas Exp $
+#	$OpenBSD: RAMDISK,v 1.2 1997/05/18 13:18:27 niklas Exp $
 
 #
 # A ramdisk kernel
@@ -7,7 +7,7 @@
 include "arch/amiga/conf/std.amiga"
 include "conf/GENERIC"
 
-maxusers	8
+maxusers	4
 
 #
 # mainboards to support (in addition to Amiga)
@@ -33,7 +33,7 @@ option		ADOSFS		# AmigaDOS file system
 #
 # Compatability options for various existing systems
 #
-option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
+#option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
 #option		COMPAT_HPUX	# HP300 compatability
 
 #
@@ -98,7 +98,7 @@ option		GRF_AGA		# AGA Chip Set
 #option		RH_HARDWARECURSOR
 
 # Options for the ramdisk.
-option		MINIROOTSIZE=4096
+option		MINIROOTSIZE=3584
 option		RAMDISK_HOOKS
 
 config		bsd root rd0 swap rd0
@@ -127,10 +127,10 @@ ite4		at grf4			# terminal emulators for grf's
 ite5		at grf5			# terminal emulators for grf's
 ite6		at grf6			# terminal emulators for grf's
 
-msc0		at zbus0		# A2232 MSC multiport serial.
-mfc0		at zbus0		# MultiFaceCard I/O board
-mfcs0		at mfc0 unit 0		# MFC serial
-mfcs1		at mfc0 unit 1		# MFC serial
+#msc0		at zbus0		# A2232 MSC multiport serial.
+#mfc0		at zbus0		# MultiFaceCard I/O board
+#mfcs0		at mfc0 unit 0		# MFC serial
+#mfcs1		at mfc0 unit 1		# MFC serial
 #mfcp0		at mfc0 unit 0		# MFC parallel [not available yet]
 #mfc1		at zbus0		# MultiFaceCard 2nd I/O board
 #mfcs2		at mfc1 unit 0
@@ -190,9 +190,9 @@ scsibus*	at drsc0
 sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cd's
-ss*	at scsibus? target ? lun ?	# scsi scanners
-ch*	at scsibus? target ? lun ?	# scsi autochangers
-uk*	at scsibus? target ? lun ?	# scsi unknown
+#ss*	at scsibus? target ? lun ?	# scsi scanners
+#ch*	at scsibus? target ? lun ?	# scsi autochangers
+#uk*	at scsibus? target ? lun ?	# scsi unknown
 
 ggbus*	at zbus0			# Goldengate bridge
 isa*	at ggbus?
@@ -202,26 +202,26 @@ isa*	at cross?
 
 #isapnp0	at isa?
 
-com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
-com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
+#com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
+#com1	at isa? port 0x2f8 irq 3
+#com2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
-com4	at isa? port 0x0f0 irq 11	# Crosslink builtin ports
-com5	at isa? port 0x0f8 irq 10
-ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
-com*	at ast? slave ?
-boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
-com*	at boca? slave ?
-rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
-com*	at rtfps? slave ?
+#com4	at isa? port 0x0f0 irq 11	# Crosslink builtin ports
+#com5	at isa? port 0x0f8 irq 10
+#ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
+#com*	at ast? slave ?
+#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
+#com*	at boca? slave ?
+#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
+#com*	at rtfps? slave ?
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines
 # options CY_HW_RTS
 # cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
 
-lpt0	at isa? port 0x378 irq 7	# Standard PC parallel ports
-lpt1	at isa? port 0x278
-lpt2	at isa? port 0x3bc
+#lpt0	at isa? port 0x378 irq 7	# Standard PC parallel ports
+#lpt1	at isa? port 0x278
+#lpt2	at isa? port 0x3bc
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 #wdc1	at isa? port 0x170 irq ?
@@ -237,5 +237,5 @@ isaed2	at isa? port 0x300 iomem 0xcc000 irq 10
 
 fd*	at fdc0 unit ?
 
-pseudo-device	view	10		# views
-pseudo-device	rd	2		# ramdisk
+pseudo-device	view	1		# views
+pseudo-device	rd	1		# ramdisk
