@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.52 2003/09/26 19:04:30 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.53 2003/10/02 10:20:12 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -347,7 +347,7 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 				 * dmt1 & dmt2.  Mark dmt0 so that
 				 * data_access_emulation skips it.  XXX smurph
 				 */
-				frame->dmt0 = DMT_SKIP;
+				frame->dmt0 |= DMT_SKIP;
 				data_access_emulation((unsigned *)frame);
 				frame->dpfsr = 0;
 				frame->dmt0 = 0;
@@ -359,7 +359,6 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 			 * The fault was resolved. Call data_access_emulation 
 			 * to drain the data unit pipe line and reset dmt0 
 			 * so that trap won't get called again. 
-			 * For inst faults, back up the pipe line.
 			 */
 			data_access_emulation((unsigned *)frame);
 			frame->dpfsr = 0;
@@ -373,8 +372,7 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 				 * We could resolve the fault. Call
 				 * data_access_emulation to drain the data
 				 * unit pipe line and reset dmt0 so that trap
-				 * won't get called again. For inst faults,
-				 * back up the pipe line.
+				 * won't get called again.
 				 */
 				data_access_emulation((unsigned *)frame);
 				frame->dpfsr = 0;
@@ -404,7 +402,7 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 		 * transactions in dmt1 & dmt2.  Mark dmt0 so that 
 		 * data_access_emulation skips it. XXX smurph
 		 */
-		frame->dmt0 = DMT_SKIP;
+		frame->dmt0 |= DMT_SKIP;
 		data_access_emulation((unsigned *)frame);
 		frame->dpfsr = 0;
 		frame->dmt0 = 0;
@@ -1445,9 +1443,6 @@ m88110_syscall(register_t code, struct m88100_saved_state *tf)
 
 	switch (error) {
 	case 0:
-#ifdef DEBUG
-		printf("syscall success!\n");
-#endif
 		/*
 		 * If fork succeeded and we are the child, our stack
 		 * has moved and the pointer tf is no longer valid,
@@ -1464,9 +1459,6 @@ m88110_syscall(register_t code, struct m88100_saved_state *tf)
 		tf->exip &= ~3;
 		break;
 	case ERESTART:
-#ifdef DEBUG
-		printf("syscall restart!\n");
-#endif
 		/*
 		 * Reexecute the trap.
 		 * exip is already at the trap instruction, so
@@ -1475,18 +1467,11 @@ m88110_syscall(register_t code, struct m88100_saved_state *tf)
 		tf->epsr &= ~PSR_C;
 		break;
 	case EJUSTRETURN:
-#ifdef DEBUG
-		printf("syscall just return!\n");
-#endif
 		tf->epsr &= ~PSR_C;
 		tf->exip += 4;
 		tf->exip &= ~3;
 		break;
 	default:
-#ifdef DEBUG
-		printf("syscall error %d!\n", error);
-#endif
-		/* error != ERESTART && error != EJUSTRETURN*/
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		tf->r[2] = error;

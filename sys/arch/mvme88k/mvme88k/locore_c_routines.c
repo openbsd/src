@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.35 2003/09/28 22:14:35 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.36 2003/10/02 10:20:12 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -157,13 +157,13 @@ data_access_emulation(unsigned *eframe)
 	unsigned v, reg;
 
 	dmtx = eframe[EF_DMT0];
-	if (!ISSET(dmtx, DMT_VALID) && !ISSET(dmtx, DMT_SKIP))
+	if (!ISSET(dmtx, DMT_VALID))
 		return;
    
 	for (x = 0; x < 3; x++) {
 		dmtx = eframe[EF_DMT0 + x * 3];
 
-		if (!ISSET(dmtx, DMT_VALID) && !ISSET(dmtx, DMT_SKIP))
+		if (!ISSET(dmtx, DMT_VALID) || ISSET(dmtx, DMT_SKIP))
 			continue;
 
 		dmdx = eframe[EF_DMD0 + x * 3];
