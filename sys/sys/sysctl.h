@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.47 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.48 2002/03/14 19:42:54 mickey Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -430,8 +430,8 @@ int sysctl_rdquad(void *, size_t *, void *, int64_t);
 int sysctl_string(void *, size_t *, void *, size_t, char *, int);
 int sysctl_tstring(void *, size_t *, void *, size_t, char *, int);
 int sysctl__string(void *, size_t *, void *, size_t, char *, int, int);
-int sysctl_rdstring(void *, size_t *, void *, char *);
-int sysctl_rdstruct(void *, size_t *, void *, void *, int);
+int sysctl_rdstring(void *, size_t *, void *, const char *);
+int sysctl_rdstruct(void *, size_t *, void *, const void *, int);
 int sysctl_struct(void *, size_t *, void *, size_t, void *, int);
 int sysctl_file(char *, size_t *);
 int sysctl_doproc(int *, u_int, char *, size_t *);
@@ -441,8 +441,6 @@ int sysctl_dumpentry(struct radix_node *, void *);
 int sysctl_iflist(int, struct walkarg *);
 int sysctl_rtable(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_clockrate(char *, size_t *);
-int sysctl_rdstring(void *, size_t *, void *, char *);
-int sysctl_rdstruct(void *, size_t *, void *, void *, int);
 int sysctl_vnode(char *, size_t *, struct proc *);
 int sysctl_ntptime(char *, size_t *);
 #ifdef GPROF

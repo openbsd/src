@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.62 2002/03/01 02:52:51 provos Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.63 2002/03/14 19:42:54 mickey Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -241,7 +241,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	int error, level, inthostid, oldsgap;
-	extern char ostype[], osrelease[], osversion[], version[];
+	extern char ostype[], osrelease[], osversion[];
 	extern int somaxconn, sominconn;
 	extern int usermount, nosuidcoredump;
 	extern long cp_time[CPUSTATES];
@@ -714,7 +714,7 @@ sysctl_rdstring(oldp, oldlenp, newp, str)
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
-	char *str;
+	const char *str;
 {
 	int len, error = 0;
 
@@ -765,7 +765,8 @@ int
 sysctl_rdstruct(oldp, oldlenp, newp, sp, len)
 	void *oldp;
 	size_t *oldlenp;
-	void *newp, *sp;
+	void *newp;
+	const void *sp;
 	int len;
 {
 	int error = 0;
