@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtok.3,v 1.16 2003/06/02 20:18:38 millert Exp $
+.\"	$OpenBSD: strtok.3,v 1.17 2004/01/20 06:06:48 millert Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRTOK 3
@@ -104,9 +104,9 @@ int i = 0;
 snprintf(s, sizeof(s), "cat dog horse cow");
 
 for ((p = strtok_r(s, " ", &last)); p;
-    (p = strtok_r(NULL, " ", &last)), i++) {
+    (p = strtok_r(NULL, " ", &last))) {
 	if (i < MAXTOKENS - 1)
-		tokens[i] = p;
+		tokens[i++] = p;
 }
 tokens[i] = NULL;
 .Ed
