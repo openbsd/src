@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.17 2003/12/22 15:11:45 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.18 2003/12/22 15:22:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -41,6 +41,7 @@ int	reconfigure(char *, struct bgpd_config *, struct mrt_config *);
 int	dispatch_imsg(struct imsgbuf *, int, struct mrt_config *);
 
 int			mrtfd = -1;
+int			rfd = -1;
 volatile sig_atomic_t	mrtdump = 0;
 volatile sig_atomic_t	quit = 0;
 volatile sig_atomic_t	reconfig = 0;
@@ -191,6 +192,7 @@ main(int argc, char *argv[])
 
 	imsg_init(&ibuf_se, pipe_m2s[0]);
 	imsg_init(&ibuf_rde, pipe_m2r[0]);
+	rfd = kroute_init();
 
 	while (quit == 0) {
 		pfd[PFD_PIPE_SESSION].fd = ibuf_se.sock;
@@ -330,6 +332,23 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 					fatal("buf_close error", 0);
 				break;
 			}
+			break;
+		case IMSG_KROUTE_ADD:
+			if (idx != PFD_PIPE_ROUTE)
+				fatal("route request not from RDE", 0);
+			if (kroute_add(rfd, imsg.data))
+				fatal("kroute bytes left", 0);
+			break;
+		case IMSG_KROUTE_CHANGE:
+			if (idx != PFD_PIPE_ROUTE)
+				fatal("route request not from RDE", 0);
+			if (kroute_change(rfd, imsg.data))
+				fatal("kroute bytes left", 0);
+		case IMSG_KROUTE_DELETE:
+			if (idx != PFD_PIPE_ROUTE)
+				fatal("route request not from RDE", 0);
+			if (kroute_delete(rfd, imsg.data))
+				fatal("kroute bytes left", 0);
 			break;
 		default:
 			break;

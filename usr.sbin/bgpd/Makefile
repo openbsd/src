@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.5 2003/12/22 00:10:33 henning Exp $
+#	$OpenBSD: Makefile,v 1.6 2003/12/22 15:22:13 henning Exp $
 
 PROG=	bgpd
 SRCS=	bgpd.c buffer.c session.c log.c parse.y config.c imsg.c \
-	rde.c rde_rib.c rde_decide.c rde_prefix.c mrt.c
+	rde.c rde_rib.c rde_decide.c rde_prefix.c mrt.c kroute.c
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CLFAGS+= -Wmissing-declarations -Wredundant-decls

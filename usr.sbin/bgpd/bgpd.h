@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.12 2003/12/22 15:07:05 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.13 2003/12/22 15:22:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -207,7 +207,10 @@ enum imsg_type {
 	IMSG_SESSION_DOWN,
 	IMSG_MRT_REQ,
 	IMSG_MRT_MSG,
-	IMSG_MRT_END
+	IMSG_MRT_END,
+	IMSG_KROUTE_ADD,
+	IMSG_KROUTE_CHANGE,
+	IMSG_KROUTE_DELETE
 };
 
 struct imsg_hdr {
@@ -234,6 +237,12 @@ enum suberr_update {
 	ERR_UPD_OPTATTR,
 	ERR_UPD_NETWORK,
 	ERR_UPD_ASPATH
+};
+
+struct kroute {
+	in_addr_t	prefix;
+	u_int8_t	prefixlen;
+	in_addr_t	nexthop;
 };
 
 /* prototypes */
@@ -283,5 +292,11 @@ int	 rde_main(struct bgpd_config *, int[2], int[2]);
 
 /* mrt.c */
 int	 mrt_mergeconfig(struct mrt_config *, struct mrt_config *);
+
+/* kroute.c */
+int	kroute_init(void);
+int	kroute_add(int, struct kroute *);
+int	kroute_change(int, struct kroute *);
+int	kroute_delete(int, struct kroute *);
 
 #endif /* __BGPD_H__ */
