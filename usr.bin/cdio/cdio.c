@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.10 1998/07/09 19:09:59 csapuntz Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.11 1998/07/09 20:10:26 csapuntz Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -97,7 +97,7 @@ struct cmdtab {
 { 0, }
 };
 
-struct cd_toc_entry     toc_buffer[100];
+struct cd_toc_entry     *toc_buffer;
 
 char		*cdname;
 int             fd = -1;
@@ -1004,6 +1004,18 @@ int read_toc_entrys (len)
 	int len;
 {
 	struct ioc_read_toc_entry t;
+
+	if (toc_buffer) {
+	  free(toc_buffer);
+	  toc_buffer = 0;
+	}
+
+	toc_buffer = malloc (len);
+
+	if (!toc_buffer) {
+	  errno = ENOMEM;
+	  return (-1);
+	}
 
 	t.address_format = msf ? CD_MSF_FORMAT : CD_LBA_FORMAT;
 	t.starting_track = 0;
