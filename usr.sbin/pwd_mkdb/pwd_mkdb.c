@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.25 2001/08/16 18:22:04 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.26 2001/09/17 14:30:39 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.25 2001/08/16 18:22:04 millert Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.26 2001/09/17 14:30:39 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -201,8 +201,9 @@ main(argc, argv)
 			char *p = (char *)data.data;
 			/* Skip to uid field */
 			while (*p++ != '\0')
-				while (*p++ != '\0')
-					;
+				;
+			while (*p++ != '\0')
+				;
 			memcpy(&olduid, p, sizeof(olduid));
 		} else
 			olduid = UID_MAX;
