@@ -180,7 +180,7 @@ struct ifnet multicast_register_if;
 static mifi_t nummifs = 0;
 static mifi_t reg_mif_num = (mifi_t)-1;
 
-static struct pim6stat pim6stat;
+struct pim6stat pim6stat;
 static int pim6;
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pim6_var.h,v 1.6 2002/09/23 23:02:08 itojun Exp $	*/
+/*	$OpenBSD: pim6_var.h,v 1.7 2004/11/10 03:38:52 mcbride Exp $	*/
 /*	$KAME: pim6_var.h,v 1.8 2000/06/06 08:07:43 jinmei Exp $	*/
 
 /*
@@ -52,6 +52,7 @@ struct pim6stat {
 };
 
 #if (defined(KERNEL)) || (defined(_KERNEL))
+extern struct pim6stat pim6stat;
 int pim6_input(struct mbuf **, int *, int);
 #endif /* KERNEL */
 
