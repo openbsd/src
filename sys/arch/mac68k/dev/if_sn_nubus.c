@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn_nubus.c,v 1.9 1997/04/14 00:45:41 briggs Exp $	*/
+/*	$OpenBSD: if_sn_nubus.c,v 1.10 1997/04/22 13:37:56 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -179,8 +179,9 @@ sn_nubus_attach(parent, self, aux)
                 sc->snr_dcr = DCR_SYNC | DCR_WAIT0 | DCR_DW32 |
 			DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
-		printf(": attachment incomplete.\n");
-                return;
+		offset = 0;
+		success = 0;
+		printf(": unknown card: attachment incomplete.\n");
         }
 
 	if (!success) {

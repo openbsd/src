@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn_obio.c,v 1.12 1997/04/13 14:14:52 briggs Exp $	*/
+/*	$OpenBSD: if_sn_obio.c,v 1.13 1997/04/22 13:37:56 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -120,7 +120,7 @@ sn_obio_attach(parent, self, aux)
 	}
 
 	if (sn_obio_getaddr(sc)) {
-		printf("Failed to get MAC address.  Trying kludge.\n");
+		printf(": Failed to get MAC address.  Trying kludge.\n");
 		if (sn_obio_getaddr_kludge(sc)) {
 			printf("Kludge failed, too.  Attachment failed.\n");
 			bus_space_unmap(sc->sc_regt, sc->sc_regh, SN_REGSIZE);
