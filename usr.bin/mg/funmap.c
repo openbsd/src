@@ -90,11 +90,6 @@ static struct funmap functnames[] = {
 #endif /* !NO_STARTUP */
 	{swapmark, "exchange-point-and-mark",},
 	{extend, "execute-extended-command",},
-	{NULL, "extra prefix 1",},
-	{NULL, "extra prefix 2",},
-	{NULL, "extra prefix 3",},
-	{NULL, "extra prefix 4",},
-	{NULL, "extra prefix 5",},
 	{fillpara, "fill-paragraph",},
 	{filevisit, "find-file",},
 	{poptofile, "find-file-other-window",},
