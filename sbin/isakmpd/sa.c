@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.73 2003/07/25 08:31:16 markus Exp $	*/
+/*	$OpenBSD: sa.c,v 1.74 2004/01/06 00:22:48 hshoexer Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -947,7 +947,7 @@ sa_teardown_all (void)
   int i;
   struct sa *sa;
 
-  LOG_DBG((LOG_MISC, 70, "sa_teardown_all.a"));
+  LOG_DBG((LOG_MISC, 70, "sa_teardown_all:"));
   /* Get Phase 2 SAs. */
   for (i = 0; i <= bucket_mask; i++)
     for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))

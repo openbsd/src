@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.59 2003/09/02 18:15:55 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.60 2004/01/06 00:22:48 hshoexer Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -190,15 +190,16 @@ conf_set_now (char *section, char *tag, char *value, int override,
   else if (conf_get_str (section, tag))
     {
       if (!is_default)
-	log_print ("conf_set: duplicate tag [%s]:%s, ignoring...\n", section,
-		   tag);
+	log_print ("conf_set_now: duplicate tag [%s]:%s, ignoring...\n",
+		   section, tag);
       return 1;
     }
 
   node = calloc (1, sizeof *node);
   if (!node)
     {
-      log_error ("conf_set: calloc (1, %lu) failed", (unsigned long)sizeof *node);
+      log_error ("conf_set_now: calloc (1, %lu) failed", (unsigned long)sizeof
+		 * node);
       return 1;
     }
   node->section = strdup (section);
@@ -207,7 +208,7 @@ conf_set_now (char *section, char *tag, char *value, int override,
   node->is_default = is_default;
 
   LIST_INSERT_HEAD (&conf_bindings[conf_hash (section)], node, link);
-  LOG_DBG ((LOG_MISC, 95, "conf_set: [%s]:%s->%s", node->section, node->tag,
+  LOG_DBG ((LOG_MISC, 95, "conf_set_now: [%s]:%s->%s", node->section, node->tag,
 	    node->value));
   return 0;
 }
