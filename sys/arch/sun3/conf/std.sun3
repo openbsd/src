@@ -1,4 +1,4 @@
-#	$NetBSD: std.sun3,v 1.14 1996/01/24 22:39:56 gwr Exp $
+#	$NetBSD: std.sun3,v 1.15 1996/03/26 15:16:02 gwr Exp $
 
 # Standard information for sun3's.
 machine	sun3 m68k
@@ -6,14 +6,10 @@ machine	sun3 m68k
 # The root node:
 mainbus0 at root
 
-# control space hack...
-obctl0 at mainbus?
-fpu0 at mainbus?
-
-# main memory
-obmem0 at mainbus?
 # device space
 obio0  at mainbus?
+# main memory
+obmem0 at mainbus?
 # VME D16 space
 vmes0 at mainbus?
 # VME D32 space
@@ -21,19 +17,13 @@ vmel0 at mainbus?
 
 # Devices that should be present in any Sun3 kernel.
 
-# OBCTL
-idprom0 at obctl? addr ?
-
 # OBIO
-eeprom0 at obio? addr ?
-clock0 at obio? addr ?
-
-# Console (zs) stuff
 zsc0 at obio? addr ?
 zsc1 at obio? addr ?
-kbd0 at zsc0 channel 0
-ms0  at zsc0 channel 1
-zstty* at zsc? channel ?
+eeprom0 at obio? addr ?
+clock0 at obio? addr ?
+memerr0 at obio? addr ?
+intreg0 at obio? addr ?
 
 # Standard defines
 

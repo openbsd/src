@@ -1,14 +1,14 @@
-#	$NetBSD: GENERIC,v 1.27 1996/03/26 15:15:50 gwr Exp $
+#	$NetBSD: FOUR_TTYS,v 1.1 1996/03/26 15:14:27 gwr Exp $
 
 #
-# GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
-# Supports root on: ie0, le0, sd*, ...
+# FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
+# like GENERIC but both zs chips are used as ttys
 #
 
 include "std.sun3"
 
 # Machines to be supported by this kernel
-options		GENERIC
+options 	GENERIC
 options 	FPU_EMULATE
 options 	HAVECACHE		# Sun3/260 VAC
 
@@ -16,9 +16,9 @@ options 	HAVECACHE		# Sun3/260 VAC
 maxusers	4
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
-options		KTRACE				# system call tracing support
-#makeoptions	DEBUG="-g"			# symbols for kgdb + nm
+options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+options 	KTRACE				# system call tracing support
+#makeoptions DEBUG="-g"			# symbols for kgdb + nm
 options 	DDB
 
 # Filesystem options
@@ -26,16 +26,16 @@ options 	NFSSERVER			# nfs server support
 options 	NFSCLIENT			# nfs client support
 options 	FFS				# ufs file system
 #
-options		CD9660		# ISO 9660 + Rock Ridge file system
+options 	CD9660		# ISO 9660 + Rock Ridge file system
 options 	FDESC		# /dev/fd/*
-options		FIFO		# FIFOs; RECOMMENDED
-options		KERNFS		# /kern
-options		NULLFS		# loopback file system
+options 	FIFO		# FIFOs; RECOMMENDED
+options 	KERNFS		# /kern
+options 	NULLFS		# loopback file system
 options 	PROCFS		# /proc
 options 	UNION		# union file system
 
 # Networking options
-options		INET				# IP prototol stack support
+options 	INET				# IP prototol stack support
 # XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
 options 	NFS_BOOT_RWSIZE=1024
 
@@ -63,9 +63,14 @@ config		bsd swap generic
 #
 zstty0 at zsc1 channel 0	# ttya
 zstty1 at zsc1 channel 1	# ttyb
-
-kbd0   at zsc0 channel 0	# keyboard
-ms0    at zsc0 channel 1	# mouse
+#
+# Note that by ommitting "kdb0" and "ms0" one can build
+# a kernel that operates four plain serial lines, where
+# two of them are data-leads-only ports wired up using
+# a custom cable on the keyboard connector.
+#
+zstty2 at zsc0 channel 0	# ttyc
+zstty3 at zsc0 channel 1	# ttyd
 
 #
 # Network devices

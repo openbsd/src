@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.11 1995/11/17 23:31:11 gwr Exp $
+#	$NetBSD: DISKLESS,v 1.12 1996/03/26 15:15:46 gwr Exp $
 
 #
 # DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -40,18 +40,28 @@ options 	NFS_BOOT_RWSIZE=1024
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 #options 	COMPAT_09	# NetBSD 0.9,
 options 	COMPAT_10	# NetBSD 1.0,
+options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_43	# and 4.3BSD
 options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+options 	UCONSOLE	# Allow non-root TIOCCONS
 
 # Sun3-specific debugging options
-#options 	CONTEXT_DEBUG
 #options 	PMAP_DEBUG
 #options 	VMFAULT_TRACE
 #options 	SYSCALL_DEBUG
 #options 	EXEC_DEBUG
 #options 	DIAGNOSTIC
 
-config		netbsd root on nfs swap on nfs
+config		bsd root on nfs swap on nfs
+
+#
+# Serial ports
+#
+zstty0 at zsc1 channel 0	# ttya
+zstty1 at zsc1 channel 1	# ttyb
+
+kbd0   at zsc0 channel 0	# keyboard
+ms0    at zsc0 channel 1	# mouse
 
 #
 # Network devices
@@ -69,7 +79,7 @@ le0 at obio0 addr ? level ?
 #
 
 # The default cgfour address depends on the machine:
-# 3/60: obio 0xFF200000 .. 0xFF9fffff
+# 3/60: obmem 0xFF200000 .. 0xFF9fffff
 # 3/110: different? (not tested)
 cgfour0 at obmem0 addr ?
 
@@ -80,8 +90,8 @@ cgfour0 at obmem0 addr ?
 # cgeight0 at obmem0 addr ?
 
 # The default bwtwo address depends on the machine:
-# 3/50: obio   0x100000
-# else: obio 0xff000000
+# 3/50: obmem   0x100000
+# else: obmem 0xff000000
 bwtwo0 at obmem0 addr ?
 # 3/60 P4 color frame buffer overlay plane, or P4 monochrome frame buffer
 #bwtwo1 at obmem0 addr 0xff300000

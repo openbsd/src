@@ -1,8 +1,8 @@
-#	$NetBSD: SMD_TEST,v 1.1 1995/10/30 20:58:04 gwr Exp $
+#	$NetBSD: SMD_TEST,v 1.2 1996/03/26 15:15:57 gwr Exp $
 
 #
-# GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
-# Supports root on: ie0, le0, sd*, ...
+# SMD_TEST - for Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
+# Like GENERIC, but includes the SMD disk drivers (xd, xy)
 #
 
 include "std.sun3"
@@ -36,18 +36,19 @@ options 	UNION		# union file system
 
 # Networking options
 options		INET				# IP prototol stack support
-# XXX - Work-around for slow SunOS/Sun3 servers (sigh...)
+# XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
 options 	NFS_BOOT_RWSIZE=1024
 
 # Compatability options
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
-options 	COMPAT_09	# NetBSD 0.9,
+#options 	COMPAT_09	# NetBSD 0.9,
 options 	COMPAT_10	# NetBSD 1.0,
+options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_43	# and 4.3BSD
 options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+options 	UCONSOLE	# Allow non-root TIOCCONS
 
 # Sun3-specific debugging options
-#options 	CONTEXT_DEBUG
 #options 	PMAP_DEBUG
 #options 	VMFAULT_TRACE
 #options 	SYSCALL_DEBUG
@@ -55,25 +56,104 @@ options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 options 	DIAGNOSTIC
 #options 	SCSIDEBUG
 
-config		netbsd swap generic
+config		bsd swap generic
 
-# Devices
+#
+# Serial ports
+#
+zstty0 at zsc1 channel 0	# ttya
+zstty1 at zsc1 channel 1	# ttyb
 
-bwtwo0 at obmem0 addr ?
-cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xA8
-cgfour0 at obmem0 addr ?
+kbd0   at zsc0 channel 0	# keyboard
+ms0    at zsc0 channel 1	# mouse
 
+#
+# Network devices
+#
+
+# Intel Ethernet (onboard, or VME)
 ie0 at obio0 addr ? level ?
 ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
 
+# Lance Ethernet (only onboard)
 le0 at obio0 addr ? level ?
 
+#
+# Disk and tape devices
+#
+
+# Sun3 "si" SCSI controller (NCR 5380)
+si0 at obio0 addr ? level ?
+si0 at vmes0 addr 0xff200000 level 2 vect 0x40
+si1 at vmes0 addr 0xff204000 level 2 vect 0x41
+
+# Xylogics 7053 controllers
 xdc0 at vmel0 addr 0xffffee80 level 2 vect 0x44
+xdc1 at vmel0 addr 0xffffee90 level 2 vect 0x45
 xd* at xdc? drive ?
 
+# Xylogics 450/451 controllers
 xyc0 at vmes0 addr 0xffffee40 level 2 vect 0x48
+xyc1 at vmes0 addr 0xffffee48 level 2 vect 0x49
 xy* at xyc? drive ?
 
+# Xylogics 472 tape controllers?
+
+#
+# Frame buffer devices
+#
+
+# The default cgfour address depends on the machine:
+# 3/60: obmem 0xFF200000 .. 0xFF9fffff
+# 3/110: different? (not tested)
+cgfour0 at obmem0 addr ?
+
+# 3/60 P4 accelerated 8-bit color frame buffer
+# cgsix0 at obmem0 addr ?
+
+# 3/60 P4 24-bit color frame buffer
+# cgeight0 at obmem0 addr ?
+
+# The default bwtwo address depends on the machine:
+# 3/50: obmem   0x100000
+# else: obmem 0xff000000
+bwtwo0 at obmem0 addr ?
+# 3/60 P4 color frame buffer overlay plane, or P4 monochrome frame buffer
+#bwtwo1 at obmem0 addr 0xff300000
+# 3/60 plug-in color frame buffer overlay plane
+#bwtwo1 at obmem0 addr 0xff400000
+
+# Sun-3 color board, or CG5 8-bit VME frame buffer.
+cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xA8
+
+# Support for the CG9 24-bit VME frame buffer.
+# cgnine0 at vmel0 addr 0x08000000
+
+#
+# SCSI infrastructure
+#
+scsibus* at scsi?
+
+# Sun compatible scsi device mappings
+sd0 at scsibus? target 0 lun 0
+sd1 at scsibus? target 0 lun 1
+sd2 at scsibus? target 1 lun 0
+sd3 at scsibus? target 1 lun 1
+sd* at scsibus? target ? lun ?
+
+st0 at scsibus? target 4 lun 0
+st1 at scsibus? target 5 lun 0
+st* at scsibus? target ? lun ?
+
+cd0 at scsibus? target 6 lun 0
+cd* at scsibus? target ? lun ?
+
+#ch* at scsibus? target ? lun ?
+
+# RAM-disk drivers
+pseudo-device	rd	2
+
+# Misc.
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter
 pseudo-device	sl	2		# CSLIP

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile.sun3,v 1.35 1995/11/17 23:31:14 gwr Exp $
+#	$NetBSD: Makefile.sun3,v 1.43 1996/02/29 20:57:38 cgd Exp $
 
-#
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
@@ -19,23 +18,25 @@
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
 
-# DEBUG is set to -g by config if debugging is requested (config -g).
-DEBUG?=-O
-# PROF is set to -pg by config if profiling is requested (config -p).
-AS=	as
-CC=	cc
-CPP=	cpp
-LD=	ld
-TOUCH=	touch -f -c
+# DEBUG is set to -g if debugging.
+# PROF is set to -pg if profiling.
+
+AS?=	as
+CC?=	cc
+CPP?=	cpp
+LD?=	ld
+STRIP?=	strip -d
+TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
 SUN3=	../..
 
-INCLUDES= -I. -I../.. -I$S/arch -I$S/sys -I$S
-COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dsun3
-# We do NOT want accidental FP instructions in the kernel.
-CFLAGS= -Werror -msoft-float ${DEBUG} ${COPTS}
+INCLUDES=	-I. -I$S/arch -I$S
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dsun3
+CFLAGS=		${DEBUG} -O2 -Werror -msoft-float
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+LINKFLAGS=	-N -Ttext 0E004000 -e start
 
 # What to use for libkern:
 .include "$S/lib/libkern/Makefile.inc"
@@ -58,118 +59,115 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
 # is marked as config-dependent.
 
-NORMAL_C=	${CC} ${CFLAGS} ${PROF} -c $<
-NORMAL_C_C=	${CC} ${CFLAGS} ${PROF} ${PARAM} -c $<
+NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-DRIVER_C=	${CC} ${CFLAGS} ${PROF} -c $<
-DRIVER_C_C=	${CC} ${CFLAGS} ${PROF} ${PARAM} -c $<
+DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-PROFILE_C=	${CC} ${COPTS} -S $<; \
-		ex - $*.s < ${GPROF.EX}; \
-		${AS} -o $@ $*.s; \
-		rm -f $*.s
-
-NORMAL_S=	${CPP} ${COPTS} $< | ${AS} -o $@
-NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | ${AS} -o $@
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 %OBJS
 
 %CFILES
+
+%SFILES
 
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxx.o
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
+SYSTEM_OBJ=	locore.o \
+		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
+SYSTEM_LD_HEAD=	@rm -f $@
+SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
+SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+
+DEBUG?=
 .if ${DEBUG} == "-g"
-LDX=-X
-.else
-LDX=-S
-.endif
-SYSTEM_OBJ=	locore.o vnode_if.o ${OBJS} param.o ioconf.o
-SYSTEM_DEP=	Makefile ${SYSTEM_OBJ} ${LIBKERN} ${LIBCOMPAT}
-SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
-SYSTEM_LD=	-@echo ${LD} ${LDX} -n -N -e start -T 0E004000 -o $@ \
-		    '$${SYSTEM_OBJ}' vers.o ${LIBKERN} ${LIBCOMPAT}; \
-		${LD} ${LDX} -n -N -e start -T 0E004000 -o $@ \
-		    ${SYSTEM_OBJ} vers.o ${LIBKERN} ${LIBCOMPAT}
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
-		[ X${DEBUG} = X-g ] && { \
+LINKFLAGS+=	-X
+SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo strip -d $@; strip -d $@; } || true
+		echo ${STRIP} $@; ${STRIP} $@
+.else
+LINKFLAGS+=	-S
+.endif
 
 %LOAD
 
-newvers:
-	sh $S/conf/newvers.sh
-	${CC} $(CFLAGS) -c vers.c
+assym.h: genassym
+	./genassym >assym.h
 
-clean::
-	rm -f eddep netbsd* tags *.o locore.i [a-z]*.s \
-		Errs errs linterrs makelinks vnode_if.[ch] genassym
+genassym: genassym.o
+	${CC} -o $@ genassym.o
 
-lint: /tmp param.c
-	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
-	    ${SUN3}/sun3/Locore.c ${CFILES} ${SUN3}/sun3/swapgeneric.c \
-	    ioconf.c param.c | \
-	    grep -v 'struct/union .* never defined' | \
-	    grep -v 'possible pointer alignment problem'
-
-locore.o: assym.s ${SUN3}/sun3/locore.s ${SUN3}/include/asm.h \
-	  ${SUN3}/include/trap.h $S/arch/m68k/include/trap.h
-	${CPP} -DLOCORE ${COPTS} ${SUN3}/sun3/locore.s | ${AS} -o locore.o
-
-# depends on root or device configuration
-autoconf.o conf.o : Makefile
-
-# depends on the supported CPU types
-locore.o sun3_startup.o pmap.o trap.o : Makefile
-
-# depends on network or filesystem configuration
-uipc_domain.o uipc_proto.o vfs_conf.o kern_xxx.o : Makefile
-if_tun.o if_loop.o if_ethersubr.o: Makefile
-in_proto.o: Makefile
-
-# depend on maxusers
-assym.s: Makefile
-
-assym.s: genassym
-	./genassym >assym.s
-
-genassym:
-	${CC} ${INCLUDES} ${IDENT} ${PARAM} -Dmc68020 -Dsun3 \
-	    -o genassym ${SUN3}/sun3/genassym.c
-
-depend: assym.s ioconf.c param.c vnode_if.c
-	mkdep ${COPTS} ${CFILES} ioconf.c param.c vnode_if.c
-	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${SUN3}/sun3/genassym.c
-
-links:
-	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
-	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
-	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
-	  sort -u | comm -23 - dontlink | \
-	  sed 's,../.*/\(.*.o\),rm -f \1;ln -s ../GENERIC/\1 \1,' > makelinks
-	sh makelinks && rm -f dontlink
-
-tags:
-	@echo "see $S/kern/Makefile for tags"
-
-ioconf.o: ioconf.c
-	${CC} ${CFLAGS} -c ioconf.c
+genassym.o: ${SUN3}/sun3/genassym.c
+	${NORMAL_C_C}
 
 param.c: $S/conf/param.c
 	rm -f param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${CC} ${CFLAGS} ${PARAM} -c param.c
+	${NORMAL_C_C}
 
-vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
-	sh $S/conf/newvers.sh ${KERN_IDENT} ${IDENT}
-	${CC} ${CFLAGS} -c vers.c
+ioconf.o: ioconf.c
+	${NORMAL_C}
 
-vnode_if.c vnode_if.h : $S/kern/vnode_if.sh $S/kern/vnode_if.src
-	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
+newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+	sh $S/conf/newvers.sh
+	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+
+
+clean::
+	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
+	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+
+lint:
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	    ${SUN3}/sun3/Locore.c ${CFILES} ${SUN3}/sun3/swapgeneric.c \
+	    ioconf.c param.c | \
+	    grep -v 'static function .* unused'
+
+tags:
+	@echo "see $S/kern/Makefile for tags"
+
+links:
+	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
+	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
+	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
+	  sort -u | comm -23 - dontlink | \
+	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
+	sh makelinks && rm -f dontlink
+
+SRCS=	${SUN3}/sun3/locore.s \
+	param.c ioconf.c ${CFILES} ${SFILES}
+depend: .depend
+.depend: ${SRCS} assym.h param.c
+	mkdep ${AFLAGS} ${CPPFLAGS} ${SUN3}/sun3/locore.s
+	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${SUN3}/sun3/genassym.c
+
+
+# depend on root or device configuration
+autoconf.o conf.o: Makefile
+
+# depend on network or filesystem configuration 
+uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on maxusers
+genassym.o machdep.o: Makefile
+
+# depend on CPU configuration 
+db_machdep.o dvma.o machdep.o pmap.o sun3_startup.o vm_machdep.o: Makefile
+
+
+locore.o: ${SUN3}/sun3/locore.s assym.h
+	${NORMAL_S}
 
 %RULES
