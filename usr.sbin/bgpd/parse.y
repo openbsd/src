@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.83 2004/04/26 07:58:04 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.84 2004/04/26 08:51:10 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -681,6 +681,7 @@ encspec		: /* nada */	{
 				$$.enc_key[i] = strtoul(s, NULL, 16);
 			}
 			free($2);
+			$$.enc_key_len = strlen($2) / 2;
 		}
 		;
 
