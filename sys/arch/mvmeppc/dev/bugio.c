@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.6 2004/01/25 22:13:36 miod Exp $	*/
+/*	$OpenBSD: bugio.c,v 1.7 2004/11/15 11:01:35 miod Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -43,7 +43,7 @@ register_t bugsprg3;
 
 /* Invoke the BUG */
 #define MVMEPROM_CALL(x)	\
-	__asm__ __volatile__ ( __CONCAT("addi %r10,%r0,",__STRING(x)) ); \
+	__asm__ __volatile__ ("addi %r10,%r0," __STRING(x)); \
 	__asm__ __volatile__ ("sc");
 
 void
