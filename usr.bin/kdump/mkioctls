@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.5 1999/12/28 06:02:34 angelos Exp $
+#	$OpenBSD: mkioctls,v 1.6 2001/08/18 00:48:57 espie Exp $
 
 #
 # Copyright (c) 1994
@@ -52,9 +52,9 @@ BEGIN {
 	print "#define COMPAT_43"
 	print "#include <sys/ioctl.h>"
 	print ""
-	print "char *"
+	print "const char *"
 	print "ioctlname(val)"
-	print "\tlong val;"
+	print "\tunsigned long val;"
 	print "{"
 	print ""
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.11 2001/07/12 05:17:12 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.12 2001/08/18 00:48:57 espie Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.11 2001/07/12 05:17:12 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.12 2001/08/18 00:48:57 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,6 +65,7 @@ static char *rcsid = "$OpenBSD: kdump.c,v 1.11 2001/07/12 05:17:12 deraadt Exp $
 #include <vis.h>
 
 #include "ktrace.h"
+#include "extern.h"
 
 int timestamp, decimal, fancy = 1, tail, maxdata;
 char *tracefile = DEF_TRACEFILE;
@@ -144,13 +145,25 @@ static char *ptrace_ops[] = {
 	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",
 };
 
+static int fread_tail __P((void *, int, int));
+static void dumpheader __P((struct ktr_header *));
+static void ktrcsw __P((struct ktr_csw *));
+static void ktremul __P((char *, int));
+static void ktrgenio __P((struct ktr_genio *, int));
+static void ktrnamei __P((const char *, int));
+static void ktrpsig __P((struct ktr_psig *));
+static void ktrsyscall __P((struct ktr_syscall *));
+static void ktrsysret __P((struct ktr_sysret *));
+static void setemul __P((const char *));
+static void usage __P((void));
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
 	int ch, ktrlen, size;
-	register void *m;
+	void *m;
 	int trpoints = ALL_POINTS;
 
 	current = &emulations[0];	/* native */
@@ -238,11 +251,12 @@ main(argc, argv)
 		if (tail)
 			(void)fflush(stdout);
 	}
+	exit(0);
 }
 
-int
+static int
 fread_tail(buf, size, num)
-	char *buf;
+	void *buf;
 	int num, size;
 {
 	int i;
@@ -254,7 +268,7 @@ fread_tail(buf, size, num)
 	return (i);
 }
 
-void
+static void
 dumpheader(kth)
 	struct ktr_header *kth;
 {
@@ -301,7 +315,7 @@ dumpheader(kth)
 	(void)printf("%s  ", type);
 }
 
-void
+static void
 ioctldecode(cmd)
 	u_long cmd;
 {
@@ -321,13 +335,12 @@ ioctldecode(cmd)
 		printf(")");
 }
 
-void
+static void
 ktrsyscall(ktr)
-	register struct ktr_syscall *ktr;
+	struct ktr_syscall *ktr;
 {
-	register argsize = ktr->ktr_argsize;
-	register register_t *ap;
-	char *ioctlname();
+	int argsize = ktr->ktr_argsize;
+	register_t *ap;
 
 	if (ktr->ktr_code >= current->nsysnames || ktr->ktr_code < 0)
 		(void)printf("[%d]", ktr->ktr_code);
@@ -338,7 +351,7 @@ ktrsyscall(ktr)
 		char c = '(';
 		if (fancy) {
 			if (ktr->ktr_code == SYS_ioctl) {
-				char *cp;
+				const char *cp;
 				if (decimal)
 					(void)printf("(%ld", (long)*ap);
 				else
@@ -377,12 +390,13 @@ ktrsyscall(ktr)
 	(void)putchar('\n');
 }
 
+static void
 ktrsysret(ktr)
 	struct ktr_sysret *ktr;
 {
-	register int ret = ktr->ktr_retval;
-	register int error = ktr->ktr_error;
-	register int code = ktr->ktr_code;
+	int ret = ktr->ktr_retval;
+	int error = ktr->ktr_error;
+	int code = ktr->ktr_code;
 
 	if (code >= current->nsysnames || code < 0)
 		(void)printf("[%d] ", code);
@@ -412,14 +426,18 @@ ktrsysret(ktr)
 	(void)putchar('\n');
 }
 
+static void
 ktrnamei(cp, len) 
-	char *cp;
+	const char *cp;
+	int len;
 {
 	(void)printf("\"%.*s\"\n", len, cp);
 }
 
+static void
 ktremul(cp, len) 
 	char *cp;
+	int len;
 {
 	char name[1024];
 
@@ -433,16 +451,18 @@ ktremul(cp, len)
 	setemul(name);
 }
 
+static void
 ktrgenio(ktr, len)
 	struct ktr_genio *ktr;
+	int len;
 {
-	register int datalen = len - sizeof (struct ktr_genio);
-	register char *dp = (char *)ktr + sizeof (struct ktr_genio);
-	register char *cp;
-	register int col = 0;
-	register width;
+	int datalen = len - sizeof (struct ktr_genio);
+	char *dp = (char *)ktr + sizeof (struct ktr_genio);
+	char *cp;
+	int col = 0;
+	int width;
 	char visbuf[5];
-	static screenwidth = 0;
+	static int screenwidth = 0;
 
 	if (screenwidth == 0) {
 		struct winsize ws;
@@ -495,7 +515,7 @@ ktrgenio(ktr, len)
 	(void)printf("\"\n");
 }
 
-void
+static void
 ktrpsig(psig)
 	struct ktr_psig *psig;
 {
@@ -507,7 +527,7 @@ ktrpsig(psig)
 		    (u_long)psig->action, psig->mask, psig->code);
 }
 
-void
+static void
 ktrcsw(cs)
 	struct ktr_csw *cs;
 {
@@ -515,7 +535,7 @@ ktrcsw(cs)
 	    cs->user ? "user" : "kernel");
 }
 
-void
+static void
 usage()
 {
 
@@ -524,9 +544,9 @@ usage()
 	exit(1);
 }
 
-void
+static void
 setemul(name)
-	char *name;
+	const char *name;
 {
 	int i;
 	for (i = 0; emulations[i].name != NULL; i++)

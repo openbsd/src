@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.3 2001/07/12 05:17:13 deraadt Exp $	*/
+/*	$OpenBSD: subr.c,v 1.4 2001/08/18 00:48:57 espie Exp $	*/
 /*	$NetBSD: subr.c,v 1.6 1995/08/31 23:01:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: subr.c,v 1.3 2001/07/12 05:17:13 deraadt Exp $";
+static char *rcsid = "$OpenBSD: subr.c,v 1.4 2001/08/18 00:48:57 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -51,10 +51,11 @@ static char *rcsid = "$OpenBSD: subr.c,v 1.3 2001/07/12 05:17:13 deraadt Exp $";
 #include <stdio.h>
 
 #include "ktrace.h"
+#include "extern.h"
 
 int
 getpoints(s)
-	char *s;
+	const char *s;
 {
 	int facs = 0;
 
