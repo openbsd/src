@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.125 1999/08/04 13:10:54 peter Exp $
+#	$OpenBSD: files,v 1.126 1999/08/13 05:35:14 fgsch Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -147,6 +147,15 @@ define	eisabus { }			# EISA attachment
 define	pcibus {[bus = -1]}		# PCI attachment
 define	pcmciabus { }			# PCMCIA attachment
 define	tcbus { }			# TurboChannel attachment
+define	usbus { }			# USB attachment
+
+# UHCI USB controller
+device	uhci: usbus
+file	dev/usb/uhci.c			uhci	needs-flag
+
+# OHCI USB controller
+device	ohci: usbus
+file	dev/usb/ohci.c			ohci	needs-flag
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk
