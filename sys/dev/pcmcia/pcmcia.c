@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.17 1999/07/01 13:48:07 niklas Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.18 1999/07/30 17:13:51 deraadt Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -248,8 +248,17 @@ pcmcia_print(arg, pnp)
 			printf("\"");
 		if (i)
 			printf(" ");
-		printf("(manufacturer 0x%x, product 0x%x)", card->manufacturer,
-		       card->product);
+		if (card->manufacturer != -1 && card->product != -1) {
+			printf("(");
+			if (card->manufacturer != -1)
+				printf("manufacturer 0x%lx%s",
+				    card->manufacturer,
+				    card->product == -1 ? "" : ", ");
+			if (card->product != -1)
+				printf("product 0x%lx%s",
+				    card->product);
+			printf(")");
+		}
 	}
 	printf(" function %d", pa->pf->number);
 
