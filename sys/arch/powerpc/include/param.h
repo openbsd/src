@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.16 2001/07/06 02:07:43 provos Exp $	*/
+/*	$OpenBSD: param.h,v 1.17 2001/07/09 02:14:05 mickey Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -136,6 +136,8 @@
 #define	KERNEL_SEGMENT	(0xfffff0 + KERNEL_SR)
 #define	EMPTY_SEGMENT	0xfffff0
 #define	USER_ADDR	((void *)(USER_SR << ADDR_SR_SHFT))
+
+#define	__COMPAT_OLD_TIMEOUTS
 
 /*
  * Some system constants

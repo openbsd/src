@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.5 2001/07/01 04:34:24 drahn Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.6 2001/07/09 02:14:05 mickey Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -6,6 +6,9 @@
 
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
+
+int ddb_trap_glue __P((struct trapframe *frame)); /* called from locore */
+
 void
 Debugger()
 {

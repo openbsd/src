@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.10 2001/06/29 06:07:09 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.11 2001/07/09 02:14:05 mickey Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -96,6 +96,8 @@ int ptebits(paddr_t pa, int bit);
 #define	pmap_is_modified(pa)	 (ptebits((pa), PTE_CHG))
 #define	pmap_is_referenced(pa) (ptebits((pa), PTE_REF))
 #define	pmap_unwire(pm, va)
+/* XXX */
+void pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot);
 #endif
 
 #define	pmap_phys_address(x)		(x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.15 2001/06/26 05:17:04 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.16 2001/07/09 02:14:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -317,6 +317,8 @@ bus_space_read_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
 void
 bus_space_read_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_addr_t ba, u_int8_t *dst, bus_size_t size);
+#define	bus_space_read_raw_multi_8 \
+    !!! bus_space_read_raw_multi_8 not implemented !!!
 
 void
 bus_space_write_raw_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
@@ -327,11 +329,31 @@ bus_space_write_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
 void
 bus_space_write_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_addr_t ba, const u_int8_t *src, bus_size_t size);
-
-#define	bus_space_read_raw_multi_8 \
-    !!! bus_space_read_raw_multi_8 not implemented !!!
-
 #define	bus_space_write_raw_multi_8 \
+    !!! bus_space_write_raw_multi_8 not implemented !!!
+
+void
+bus_space_set_region_1 __P((void *v, bus_space_handle_t h, bus_size_t o,
+    u_int8_t val, bus_size_t c));
+void
+bus_space_set_region_2 __P((void *v, bus_space_handle_t h, bus_size_t o,
+    u_int16_t val, bus_size_t c));
+void
+bus_space_set_region_4 __P((void *v, bus_space_handle_t h, bus_size_t o,
+    u_int32_t val, bus_size_t c));
+#define	bus_space_set_region_8 \
+    !!! bus_space_write_raw_multi_8 not implemented !!!
+
+void
+bus_space_copy_1 __P((void *v, bus_space_handle_t h1, bus_space_handle_t h2,
+    bus_size_t o1, bus_size_t o2, bus_size_t c));
+void
+bus_space_copy_2 __P((void *v, bus_space_handle_t h1, bus_space_handle_t h2,
+    bus_size_t o1, bus_size_t o2, bus_size_t c));
+void
+bus_space_copy_4 __P((void *v, bus_space_handle_t h1, bus_space_handle_t h2,
+    bus_size_t o1, bus_size_t o2, bus_size_t c));
+#define	bus_space_copy_8 \
     !!! bus_space_write_raw_multi_8 not implemented !!!
 
 /*

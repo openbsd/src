@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.9 2001/06/26 18:19:43 drahn Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.10 2001/07/09 02:14:05 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -103,7 +103,7 @@ void ofrootfound(void);
 
 typedef int mac_intr_handle_t;
 typedef void     *(intr_establish_t) __P((void *, mac_intr_handle_t,
-            int, int, int (*func)(void *), void *, char *));
+    int, int, int (*func)(void *), void *, char *));
 typedef void     (intr_disestablish_t) __P((void *, void *));
 
 intr_establish_t mac_intr_establish;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.19 2001/06/29 06:07:09 drahn Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.20 2001/07/09 02:14:06 mickey Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/pcb.h>
+#include <machine/fpu.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -207,13 +208,13 @@ cpu_coredump(p, vp, cred, chdr)
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	if (error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
+	if ((error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 			    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-			    IO_NODELOCKED|IO_UNIT, cred, NULL, p))
+			    IO_NODELOCKED|IO_UNIT, cred, NULL, p)))
 		return error;
-	if (error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof md_core,
-			    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-			    IO_NODELOCKED|IO_UNIT, cred, NULL, p))
+	if ((error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof md_core,
+			    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
+			    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p)))
 		return error;
 
 	chdr->c_nseg++;

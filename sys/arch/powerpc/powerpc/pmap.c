@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.34 2001/06/27 06:19:54 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.35 2001/07/09 02:14:05 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -276,7 +276,6 @@ void pmap_remove_pv(struct pmap *pm, int pteidx, vm_offset_t va,
 pte_t * pte_find(struct pmap *pm, vm_offset_t va);
 
 /* XXX */
-void pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot);
 void pmap_kenter_pgs(vaddr_t va, struct vm_page **pgs, int npgs);
 void pmap_kremove(vaddr_t va, vsize_t len);
 void addbatmap(u_int32_t vaddr, u_int32_t raddr, u_int32_t wimg);
