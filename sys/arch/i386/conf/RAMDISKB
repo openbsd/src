@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.11 2000/01/06 03:08:28 jason Exp $
+#	$OpenBSD: RAMDISKB,v 1.12 2000/01/09 01:42:26 jason Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -228,6 +228,7 @@ nsphy*	at mii? phy ?				# NS and compatible PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
 #mtdphy*	at mii? phy ?			# Myson MTD972 PHYs
+dcphy*	at mii? phy ?				# Digital Clone PHYs
 ukphy*	at mii? phy ?				# "unknown" PHYs
 
 pseudo-device	loop	1		# network loopback
