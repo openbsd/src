@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.5 2001/08/18 18:31:21 deraadt Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.6 2001/08/18 18:56:39 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -347,7 +347,8 @@ rad_request(pid_t id, char *name, char *password, int port, char *vector,
 	*ptr++ = PW_PASSWORD;
 	*ptr++ = p * AUTH_VECTOR_LEN + 2;
 
-	strlcpy(pass_buf, password, AUTH_PASS_LEN);	/* must zero fill */
+	memset(pass_buf, 0, sizeof(pass_buf));		/* must zero fill */
+	strlcpy(pass_buf, password, sizeof(pass_buf));	
 
 	/* Calculate the md5 digest */
 	secretlen = strlen(auth_secret);
