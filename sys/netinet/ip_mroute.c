@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.31 2003/06/02 23:28:14 millert Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.32 2003/07/09 03:23:26 itojun Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -740,6 +740,8 @@ vif_delete(ifp)
 {
 	int i;
 	struct vif *vifp;
+	struct mfc *rt;
+	struct rtdetq *rte;
 
 	for (i = 0; i < numvifs; i++) {
 		vifp = &viftable[i];
@@ -751,6 +753,15 @@ vif_delete(ifp)
 		if (viftable[i - 1].v_lcl_addr.s_addr != 0)
 			break;
 	numvifs = i;
+
+	for (i = 0; i < MFCTBLSIZ; i++) {
+		LIST_FOREACH(rt, &mfchashtbl[i], mfc_hash) {
+			for (rte = rt->mfc_stall; rte; rte = rte->next) {
+				if (rte->ifp == ifp)
+					rte->ifp = NULL;
+			}
+		}
+	}
 }
 
 static void
@@ -850,11 +861,13 @@ add_mfc(m)
 			/* free packets Qed at the end of this entry */
 			for (rte = rt->mfc_stall; rte != NULL; rte = nrte) {
 				nrte = rte->next;
+				if (rte->ifp) {
 #ifdef RSVP_ISI
-				ip_mdq(rte->m, rte->ifp, rt, -1);
+					ip_mdq(rte->m, rte->ifp, rt, -1);
 #else
-				ip_mdq(rte->m, rte->ifp, rt);
+					ip_mdq(rte->m, rte->ifp, rt);
 #endif /* RSVP_ISI */
+				}
 				m_freem(rte->m);
 #ifdef UPCALL_TIMING
 				collate(&rte->t);
