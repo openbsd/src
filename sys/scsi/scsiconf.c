@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.23 1997/01/18 12:24:25 niklas Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.24 1997/02/24 20:14:40 jkatz Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -413,6 +413,10 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
 	 "CALIPER ", "CP150           ", ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
+	 "DEC     ", "TZ30            ", ""},     SDEV_NOLUNS},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "DEC     ", "TK50            ", ""},     SDEV_NOLUNS},
+	{{T_SEQUENTIAL, T_REMOV,
 	 "EXABYTE ", "EXB-8200        ", ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "SONY    ", "SDT-2000        ", "2.09"}, SDEV_NOLUNS},
@@ -602,6 +606,15 @@ scsi_probedev(scsi, target, lun)
 			inqbuf.unused[len++] = '\0';
 		while (len < 3 + 28)
 			inqbuf.unused[len++] = ' ';
+		if (inqbuf.additional_length == 0) {
+			if (inqbuf.dev_qual2 == 0xb0) {
+				strncpy(inqbuf.unused+3, "DEC", 3);
+				strncpy(inqbuf.unused+11, "TZ30", 4);
+			} else if (inqbuf.dev_qual2 == 0xd0) {
+				strncpy(inqbuf.unused+3, "DEC", 3);
+				strncpy(inqbuf.unused+11, "TK50", 4);
+			}
+		}
 	}
 
 	finger = (struct scsi_quirk_inquiry_pattern *)scsi_inqmatch(&inqbuf,
