@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.51 2005/02/17 18:28:05 reyk Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.52 2005/02/24 23:10:48 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1772,11 +1772,15 @@ atu_start(struct ifnet *ifp)
 
 	DPRINTFN(25, ("%s: atu_start: enter\n", USBDEVNAME(sc->atu_dev)));
 
-	s = splnet();
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) != (IFF_RUNNING|IFF_UP)) {
+		DPRINTFN(30, ("%s: atu_start: not running or up\n",
+		    USBDEVNAME(sc->atu_dev)));
+		return;
+	}
+
 	if (ifp->if_flags & IFF_OACTIVE) {
 		DPRINTFN(30, ("%s: atu_start: IFF_OACTIVE\n",
 		    USBDEVNAME(sc->atu_dev)));
-		splx(s);
 		return;
 	}
 
@@ -1818,7 +1822,7 @@ atu_start(struct ifnet *ifp)
 				break;
 			}
 
-			IF_DEQUEUE(&ifp->if_snd, m);
+			IFQ_DEQUEUE(&ifp->if_snd, m);
 			if (m == NULL) {
 				DPRINTFN(25, ("%s: nothing to send\n",
 				    USBDEVNAME(sc->atu_dev)));
@@ -2176,6 +2180,9 @@ atu_watchdog(struct ifnet *ifp)
 	DPRINTF(("%s: atu_watchdog\n", USBDEVNAME(sc->atu_dev)));
 
 	ifp->if_timer = 0;
+
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) != (IFF_RUNNING|IFF_UP))
+		return;
 
 	if (sc->sc_state != ATU_S_OK)
 		return;
