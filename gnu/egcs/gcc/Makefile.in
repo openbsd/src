@@ -1248,6 +1248,11 @@ stmp-multilib-sub:
 	then (cd tmpcopy; $(AR_FOR_TARGET) x ../$(LIBGCC1)); \
 	else true; \
 	fi
+# Some versions of ar (specifically the one in RISC/os 5.x), create an
+# unwritable table of contents file, and then print an error message when
+# the second ar command tries to overwrite this file.  To avoid the error
+# message from ar, we make sure all files are writable.
+	-(cd tmpcopy; chmod +w * > /dev/null 2>&1)
 	(cd tmpcopy; $(AR_FOR_TARGET) x ../$(LIBGCC2))
 	(cd tmpcopy; $(AR_FOR_TARGET) $(AR_FLAGS_FOR_TARGET) ../tmplibgcc.a *$(objext))
 	rm -rf libgcc2.a tmpcopy
@@ -1478,7 +1483,7 @@ stmt.o : stmt.c $(CONFIG_H) system.h $(RTL_H) $(TREE_H) flags.h function.h  \
    loop.h $(RECOG_H) toplev.h output.h varray.h
 except.o : except.c $(CONFIG_H) system.h $(RTL_H) $(TREE_H) flags.h \
    function.h insn-flags.h $(EXPR_H) $(REGS_H) hard-reg-set.h \
-   insn-config.h $(RECOG_H) output.h except.h toplev.h
+   insn-config.h $(RECOG_H) output.h except.h toplev.h intl.h
 expr.o : expr.c $(CONFIG_H) system.h $(RTL_H) $(TREE_H) flags.h function.h \
    $(REGS_H) insn-flags.h insn-codes.h $(EXPR_H) insn-config.h $(RECOG_H) \
    output.h typeclass.h hard-reg-set.h toplev.h hard-reg-set.h except.h
