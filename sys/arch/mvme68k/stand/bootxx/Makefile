@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.4 1999/09/26 18:09:04 smurph Exp $
+#	$OpenBSD: Makefile,v 1.5 1999/09/27 03:04:07 smurph Exp $
 
-RELOC=0xAF0000 
+RELOC=0x1F0000 
 
 S=	${.CURDIR}/../../../..
 DEFS= 
