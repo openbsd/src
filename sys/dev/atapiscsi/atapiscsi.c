@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.68 2004/01/09 21:32:23 brad Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.69 2004/01/14 02:00:41 krw Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -248,9 +248,9 @@ atapiscsi_attach(parent, self, aux)
 	as->sc_adapterlink.adapter_buswidth = 2;
 	as->sc_adapterlink.adapter = &atapiscsi_switch;
 	as->sc_adapterlink.device = &atapiscsi_dev;
+	as->sc_adapterlink.luns = 1;
 	as->sc_adapterlink.openings = 1;
 	as->sc_adapterlink.flags = SDEV_ATAPI;
-	as->sc_adapterlink.quirks = SDEV_NOLUNS;
 
 	strncpy(drvp->drive_name, as->sc_dev.dv_xname,
 	    sizeof(drvp->drive_name) - 1);

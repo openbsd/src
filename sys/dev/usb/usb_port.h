@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.46 2003/12/15 23:36:14 cedric Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.47 2004/01/14 02:00:41 krw Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -238,8 +238,6 @@ int __CONCAT(dname,_detach)(struct device *self, int flags)
 #define UMASS_ATAPISTR		"atapiscsi"
 
 /* periph_quirks */
-#define	PQUIRK_FORCELUNS	SDEV_FORCELUNS	/* prehistoric device groks
-						   LUNs */
 #define	PQUIRK_NOMODESENSE	SDEV_NOMODESENSE/* device doesn't do MODE SENSE
 						   properly */
 #define	PQUIRK_NOTUR		ADEV_NOTUR	/* no TEST UNIT READY */

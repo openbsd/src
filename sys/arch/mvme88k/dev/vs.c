@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.25 2004/01/02 23:38:37 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.26 2004/01/14 02:00:41 krw Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -136,6 +136,7 @@ vsattach(parent, self, auxp)
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &vs_scsiswitch;
 	sc->sc_link.device = &vs_scsidev;
+	sc->sc_link.luns = 1;
 	sc->sc_link.openings = roundup(NUM_IOPB, 8) / 8;
 
 	sc->sc_ih_n.ih_fn = vs_nintr;
@@ -283,7 +284,6 @@ vs_scsicmd(xs)
 	M328_IOPB *iopb;
 	M328_CMD *m328_cmd;
 
-	slp->quirks |= SDEV_NOLUNS;
 	flags = xs->flags;
 
 #ifdef SDEBUG

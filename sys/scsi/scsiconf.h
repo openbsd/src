@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.39 2003/05/18 16:06:35 mickey Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.40 2004/01/14 02:00:41 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -175,8 +175,6 @@ struct scsi_link {
 #define	SDEV_NOSYNC		0x0002	/* does not grok SDTR */
 #define	SDEV_NOWIDE		0x0004	/* does not grok WDTR */
 #define	SDEV_NOTAGS		0x0008	/* lies about having tagged queueing */
-#define	SDEV_NOLUNS		0x0010	/* does not grok LUNs */
-#define	SDEV_FORCELUNS		0x0020	/* prehistoric drive/ctlr groks LUNs */
 #define	SDEV_NOMODESENSE	0x0040	/* removable media/optical drives */
 #define	SDEV_NOSTARTUNIT	0x0080	/* do not issue start unit requests in sd.c */
 #define	SDEV_NOSYNCCACHE	0x0100	/* no SYNCHRONIZE_CACHE */
@@ -221,7 +219,6 @@ struct scsibus_softc {
 	struct device sc_dev;
 	struct scsi_link *adapter_link;		/* prototype supplied by adapter */
 	struct scsi_link ***sc_link;
-	u_int16_t moreluns;
 	u_int16_t sc_buswidth;
 };
 

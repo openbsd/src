@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.5 2002/04/27 23:21:05 miod Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.6 2004/01/14 02:00:41 krw Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -115,6 +115,7 @@ vsattach(parent, self, auxp)
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &vs_scsiswitch;
 	sc->sc_link.device = &vs_scsidev;
+	sc->sc_link.luns = 1;
 	sc->sc_link.openings = 1;
 
 	sc->sc_ih_n.ih_fn = vs_nintr;
