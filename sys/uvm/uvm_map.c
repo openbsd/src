@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map.c,v 1.29 2001/11/07 02:55:50 art Exp $	*/
-/*	$NetBSD: uvm_map.c,v 1.85 2000/11/25 06:27:59 chs Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.30 2001/11/09 03:32:23 art Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -3265,15 +3265,15 @@ uvm_object_printit(uobj, full, pr)
 	}
 } 
 
-const char page_flagbits[] =
-	"\20\4CLEAN\5BUSY\6WANTED\7TABLED\12FAKE\13FILLED\14DIRTY\15RELEASED"
-	"\16FAULTING\17CLEANCHK";
-const char page_pqflagbits[] =
-	"\20\1FREE\2INACTIVE\3ACTIVE\4LAUNDRY\5ANON\6AOBJ";
-
 /*
  * uvm_page_printit: actually print the page
  */
+
+static const char page_flagbits[] =
+	"\20\1BUSY\2WANTED\3TABLED\4CLEAN\5CLEANCHK\6RELEASED\7FAKE\10RDONLY"
+	"\11ZERO\15PAGER1";
+static const char page_pqflagbits[] =
+	"\20\1FREE\2INACTIVE\3ACTIVE\4LAUNDRY\5ANON\6AOBJ";
 
 void
 uvm_page_printit(pg, full, pr)
@@ -3292,8 +3292,8 @@ uvm_page_printit(pg, full, pr)
 	snprintf(pqbuf, sizeof(pqbuf), "%b", pg->pqflags, page_pqflagbits);
 	(*pr)("  flags=%s, pqflags=%s, vers=%d, wire_count=%d, pa=0x%lx\n",
 	    pgbuf, pqbuf, pg->version, pg->wire_count, (long)pg->phys_addr);
-	(*pr)("  uobject=%p, uanon=%p, offset=0x%lx loan_count=%d\n", 
-	    pg->uobject, pg->uanon, pg->offset, pg->loan_count);
+	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx loan_count=%d\n",
+	    pg->uobject, pg->uanon, (long long)pg->offset, pg->loan_count);
 #if defined(UVM_PAGE_TRKOWN)
 	if (pg->flags & PG_BUSY)
 		(*pr)("  owning process = %d, tag=%s\n",

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page_i.h,v 1.8 2001/08/11 10:57:22 art Exp $	*/
-/*	$NetBSD: uvm_page_i.h,v 1.13 2000/05/08 23:11:53 thorpej Exp $	*/
+/*	$OpenBSD: uvm_page_i.h,v 1.9 2001/11/09 03:32:23 art Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.14 2000/11/27 07:47:42 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,16 +134,14 @@ uvm_pagelookup(obj, off)
 
 	s = splimp();
 	simple_lock(&uvm.hashlock);
-	for (pg = buck->tqh_first ; pg != NULL ; pg = pg->hashq.tqe_next) {
+	TAILQ_FOREACH(pg, buck, hashq) {
 		if (pg->uobject == obj && pg->offset == off) {
-			simple_unlock(&uvm.hashlock);
-			splx(s);
-			return(pg);
+			break;
 		}
 	}
 	simple_unlock(&uvm.hashlock);
 	splx(s);
-	return(NULL);
+	return(pg);
 }
 
 /*
@@ -156,7 +154,6 @@ PAGE_INLINE void
 uvm_pagewire(pg)
 	struct vm_page *pg;
 {
-
 	if (pg->wire_count == 0) {
 		if (pg->pqflags & PQ_ACTIVE) {
 			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
@@ -187,7 +184,6 @@ PAGE_INLINE void
 uvm_pageunwire(pg)
 	struct vm_page *pg;
 {
-
 	pg->wire_count--;
 	if (pg->wire_count == 0) {
 		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
@@ -215,11 +211,7 @@ uvm_pagedeactivate(pg)
 		uvmexp.active--;
 	}
 	if ((pg->pqflags & PQ_INACTIVE) == 0) {
-#ifdef DIAGNOSTIC 
-		if (__predict_false(pg->wire_count))
-			panic("uvm_pagedeactivate: caller did not check "
-			    "wire count");
-#endif
+		KASSERT(pg->wire_count == 0);
 		if (pg->pqflags & PQ_SWAPBACKED)
 			TAILQ_INSERT_TAIL(&uvm.page_inactive_swp, pg, pageq);
 		else
@@ -257,7 +249,7 @@ uvm_pageactivate(pg)
 		 * can put it at tail.  if it wasn't active, then mark
 		 * it active and bump active count
 		 */
-		if (pg->pqflags & PQ_ACTIVE) 
+		if (pg->pqflags & PQ_ACTIVE)
 			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
 		else {
 			pg->pqflags |= PQ_ACTIVE;
@@ -311,10 +303,7 @@ uvm_page_lookup_freelist(pg)
 	int lcv;
 
 	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
-#ifdef DIAGNOSTIC
-	if (__predict_false(lcv == -1))
-		panic("uvm_page_lookup_freelist: unable to locate physseg");
-#endif
+	KASSERT(lcv != -1);
 	return (vm_physmem[lcv].free_list);
 }
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_km.c,v 1.20 2001/11/07 02:55:50 art Exp $	*/
-/*	$NetBSD: uvm_km.c,v 1.40 2000/11/24 07:07:27 chs Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.21 2001/11/09 03:32:23 art Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.41 2000/11/27 04:36:40 nisimura Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -731,6 +731,15 @@ uvm_km_valloc(map, size)
 	vm_map_t map;
 	vsize_t size;
 {
+	return(uvm_km_valloc_align(map, size, 0));
+}
+
+vaddr_t
+uvm_km_valloc_align(map, size, align)
+	vm_map_t map;
+	vsize_t size;
+	vsize_t align;
+{
 	vaddr_t kva;
 	UVMHIST_FUNC("uvm_km_valloc"); UVMHIST_CALLED(maphist);
 
@@ -745,7 +754,7 @@ uvm_km_valloc(map, size)
 	 */
 
 	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
-	    UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
+	    UVM_UNKNOWN_OFFSET, align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 					    UVM_INH_NONE, UVM_ADV_RANDOM,
 					    0)) != KERN_SUCCESS)) {
 		UVMHIST_LOG(maphist, "<- done (no VM)", 0,0,0,0);

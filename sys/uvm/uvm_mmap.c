@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.25 2001/11/07 02:55:50 art Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.26 2001/11/09 03:32:23 art Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.45 2000/11/24 23:30:01 soren Exp $	*/
 
 /*
@@ -263,26 +263,6 @@ sys_mincore(p, v, retval)
 	return (error);
 }
 
-#if 0
-/*
- * munmapfd: unmap file descriptor
- *
- * XXX: is this acutally a useful function?   could it be useful?
- */
-
-void
-munmapfd(p, fd)
-	struct proc *p;
-	int fd;
-{
-
-	/*
-	 * XXX should vm_deallocate any regions mapped to this file
-	 */
-	p->p_fd->fd_ofileflags[fd] &= ~UF_MAPPED;
-}
-#endif
-
 /*
  * sys_mmap: mmap system call.
  *
@@ -376,7 +356,9 @@ sys_mmap(p, v, retval)
 		 * not fixed: make sure we skip over the largest possible heap.
 		 * we will refine our guess later (e.g. to account for VAC, etc)
 		 */
-		if (addr < round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ))
+
+		if (addr < round_page((vaddr_t)p->p_vmspace->vm_daddr +
+		    MAXDSIZ))
 			addr = round_page((vaddr_t)p->p_vmspace->vm_daddr +
 			    MAXDSIZ);
 	}
