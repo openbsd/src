@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.28 2001/01/23 16:47:47 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.29 2001/01/30 04:46:25 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -106,7 +106,6 @@ int	hme_eint	__P((struct hme_softc *, u_int32_t));
 void	hme_reset_rx	__P((struct hme_softc *));
 void	hme_reset_tx	__P((struct hme_softc *));
 
-struct mbuf *	hme_get __P((struct hme_softc *, int, int));
 void		hme_read __P((struct hme_softc *, int, int));
 int		hme_put __P((struct hme_softc *, int, struct mbuf *));
 
@@ -803,59 +802,6 @@ hmeintr(v)
 	return (r);
 }
 
-struct mbuf *
-hme_get(sc, idx, totlen)
-	struct hme_softc *sc;
-	int idx, totlen;
-{
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct mbuf *m;
-	struct mbuf *top, **mp;
-	int len, pad, boff = 0;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return NULL;
-	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = totlen;
-	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
-	len = MHLEN;
-	if (totlen >= MINCLSIZE) {
-		MCLGET(m, M_DONTWAIT);
-		if (m->m_flags & M_EXT)
-			len = MCLBYTES;
-	}
-	m->m_data += pad;
-	len -= pad;
-	top = NULL;
-	mp = &top;
-
-	while (totlen > 0) {
-		if (top) {
-			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL) {
-				m_freem(top);
-				return NULL;
-			}
-			len = MLEN;
-		}
-		if (top && totlen >= MINCLSIZE) {
-			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				len = MCLBYTES;
-		}
-		m->m_len = len = min(totlen, len);
-		bcopy(&sc->sc_bufs->rx_buf[idx][boff + HME_RX_OFFSET],
-		    mtod(m, caddr_t), len);
-		boff += len;
-		totlen -= len;
-		*mp = m;
-		mp = &m->m_next;
-	}
-
-	return top;
-}
-
 int
 hme_put(sc, idx, m)
 	struct hme_softc *sc;
@@ -897,11 +843,13 @@ hme_read(sc, idx, len)
 	}
 
 	/* Pull packet off interface. */
-	m = hme_get(sc, idx, len);
+	m = m_devget(&sc->sc_bufs->rx_buf[idx][0], len + HME_RX_OFFSET, 0,
+	    &sc->sc_arpcom.ac_if, NULL);
 	if (m == NULL) {
 		ifp->if_ierrors++;
 		return;
 	}
+	m_adj(m, HME_RX_OFFSET);
 
 	ifp->if_ipackets++;
 
