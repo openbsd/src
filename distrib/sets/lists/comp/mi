@@ -1648,6 +1648,7 @@
 ./usr/share/man/cat3/betoh16.0
 ./usr/share/man/cat3/betoh32.0
 ./usr/share/man/cat3/bindresvport.0
+./usr/share/man/cat3/bindresvport_af.0
 ./usr/share/man/cat3/bit_alloc.0
 ./usr/share/man/cat3/bit_clear.0
 ./usr/share/man/cat3/bit_decl.0
@@ -2708,6 +2709,7 @@
 ./usr/share/man/cat3/rpc_createerr.0
 ./usr/share/man/cat3/rpcauth.0
 ./usr/share/man/cat3/rresvport.0
+./usr/share/man/cat3/rresvport_af.0
 ./usr/share/man/cat3/ruserok.0
 ./usr/share/man/cat3/savetty.0
 ./usr/share/man/cat3/scalb.0
