@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.96 2004/01/07 19:34:03 millert Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.97 2004/01/07 21:30:59 markus Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -487,9 +487,11 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #endif
 	case KERN_INTRCNT:
 		return (sysctl_intrcnt(name + 1, namelen - 1, oldp, oldlenp));
+#ifndef SMALL_KERNEL
 	case KERN_WATCHDOG:
 		return (sysctl_wdog(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
+#endif
 	case KERN_EMUL:
 		return (sysctl_emul(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
