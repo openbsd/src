@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.33 1997/12/20 23:19:30 deraadt Exp $
+#	$OpenBSD: netstart,v 1.34 1997/12/21 01:17:21 deraadt Exp $
 
 # /etc/myname contains my symbolic name
 #
@@ -31,7 +31,7 @@ else
 	nat=NO
 fi
 
-if [ X"${iproute}" = X"YES" ]; then
+if [ X"${ipforward}" = X"YES" ]; then
 	sysctl -w net.inet.ip.forwarding=1
 fi
 
