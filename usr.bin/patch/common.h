@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.17 2003/07/22 17:18:49 otto Exp $	*/
+/*	$OpenBSD: common.h,v 1.18 2003/07/22 21:50:21 millert Exp $	*/
 
 #define DEBUGGING
 
@@ -63,7 +63,6 @@ EXT bool ok_to_create_file INIT(FALSE);
 EXT char       *bestguess INIT(NULL);	/* guess at correct filename */
 
 EXT char       *outname INIT(NULL);
-EXT char        rejname[128];
 
 EXT char       *origprae INIT(NULL);
 
