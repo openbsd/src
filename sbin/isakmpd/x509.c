@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.78 2002/12/03 16:08:13 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.79 2003/04/09 15:46:48 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -949,7 +949,7 @@ x509_crl_init (void)
 
   if (!x509_read_crls_from_dir (x509_cas, dirname))
     {
-      log_print ("x509_crl_init: x509_read_from_dir failed");
+      LOG_DBG ((LOG_MISC, 10, "x509_crl_init: x509_read_from_dir failed"));
       return 0;
     }
 #else
