@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_extern.h,v 1.2 1996/02/27 07:13:24 niklas Exp $	*/
+/*	$OpenBSD: lfs_extern.h,v 1.3 1996/07/01 07:41:51 downsj Exp $	*/
 /*	$NetBSD: lfs_extern.h,v 1.5 1996/02/12 15:20:12 christos Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs_extern.h	8.3 (Berkeley) 6/16/94
+ *	@(#)lfs_extern.h	8.6 (Berkeley) 5/8/95
  */
 
 struct fid;
@@ -52,17 +52,19 @@ struct lfs;
 struct segment;
 struct ucred;
 
+#include <ufs/ufs/dinode.h>
+
 __BEGIN_DECLS
 /* lfs_alloc.c */
 int lfs_vcreate __P((struct mount *, ino_t, struct vnode **));
 
 
 /* lfs_balloc.c */
-int lfs_balloc __P((struct vnode *, u_long, daddr_t, struct buf **));
+int lfs_balloc __P((struct vnode *, int, u_long, ufs_daddr_t, struct buf **));
 
 /* lfs_bio.c */
 void lfs_flush __P((void));
-int lfs_check __P((struct vnode *, daddr_t));
+int lfs_check __P((struct vnode *, ufs_daddr_t));
 
 /* lfs_cksum.c */
 u_long cksum __P((void *, size_t));
@@ -94,10 +96,10 @@ int lfs_match_data __P((struct lfs *, struct buf *));
 int lfs_match_indir __P((struct lfs *, struct buf *));
 int lfs_match_dindir __P((struct lfs *, struct buf *));
 int lfs_match_tindir __P((struct lfs *, struct buf *));
-struct buf *lfs_newbuf __P((struct vnode *, daddr_t, size_t));
+struct buf *lfs_newbuf __P((struct vnode *, ufs_daddr_t, size_t));
 void lfs_callback __P((struct buf *));
 void lfs_supercallback __P((struct buf *));
-void lfs_shellsort __P((struct buf **, daddr_t *, int));
+void lfs_shellsort __P((struct buf **, ufs_daddr_t *, int));
 int lfs_vref __P((struct vnode *));
 void lfs_vunref __P((struct vnode *));
 
@@ -106,7 +108,7 @@ void lfs_seglock __P((struct lfs *, unsigned long));
 void lfs_segunlock __P((struct lfs *));
 
 /* lfs_syscalls.c */
-int lfs_fastvget __P((struct mount *, ino_t, daddr_t, struct vnode **, struct dinode *));
+int lfs_fastvget __P((struct mount *, ino_t, ufs_daddr_t, struct vnode **, struct dinode *));
 struct buf *lfs_fakebuf __P((struct vnode *, int, size_t, caddr_t));
 
 /* lfs_vfsops.c */

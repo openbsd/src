@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_subr.c,v 1.2 1996/02/27 07:13:27 niklas Exp $	*/
+/*	$OpenBSD: lfs_subr.c,v 1.3 1996/07/01 07:41:53 downsj Exp $	*/
 /*	$NetBSD: lfs_subr.c,v 1.3 1996/02/09 22:28:55 christos Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs_subr.c	8.2 (Berkeley) 9/21/93
+ *	@(#)lfs_subr.c	8.4 (Berkeley) 5/8/95
  */
 
 #include <sys/param.h>
@@ -68,13 +68,13 @@ lfs_blkatoff(v)
 	register struct lfs *fs;
 	struct inode *ip;
 	struct buf *bp;
-	daddr_t lbn;
+	ufs_daddr_t lbn;
 	int bsize, error;
 
 	ip = VTOI(ap->a_vp);
 	fs = ip->i_lfs;
 	lbn = lblkno(fs, ap->a_offset);
-	bsize = blksize(fs);
+	bsize = blksize(fs, ip, lbn);
 
 	*ap->a_bpp = NULL;
 	if ((error = bread(ap->a_vp, lbn, bsize, NOCRED, &bp)) != 0) {
@@ -114,7 +114,8 @@ lfs_seglock(fs, flags)
 
 	sp = fs->lfs_sp = malloc(sizeof(struct segment), M_SEGMENT, M_WAITOK);
 	sp->bpp = malloc(((LFS_SUMMARY_SIZE - sizeof(SEGSUM)) /
-	    sizeof(daddr_t) + 1) * sizeof(struct buf *), M_SEGMENT, M_WAITOK);
+	    sizeof(ufs_daddr_t) + 1) * sizeof(struct buf *),
+	    M_SEGMENT, M_WAITOK);
 	sp->seg_flags = flags;
 	sp->vp = NULL;
 	(void) lfs_initseg(fs);

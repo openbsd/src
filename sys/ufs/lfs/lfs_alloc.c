@@ -1,8 +1,8 @@
-/*	$OpenBSD: lfs_alloc.c,v 1.4 1996/04/21 22:32:39 deraadt Exp $	*/
+/*	$OpenBSD: lfs_alloc.c,v 1.5 1996/07/01 07:41:47 downsj Exp $	*/
 /*	$NetBSD: lfs_alloc.c,v 1.4 1996/03/25 12:53:37 pk Exp $	*/
 
 /*
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs_alloc.c	8.4 (Berkeley) 1/4/94
+ *	@(#)lfs_alloc.c	8.7 (Berkeley) 5/14/95
  */
 
 #include <sys/param.h>
@@ -75,7 +75,7 @@ lfs_valloc(v)
 	struct ifile *ifp;
 	struct inode *ip;
 	struct vnode *vp;
-	daddr_t blkno;
+	ufs_daddr_t blkno;
 	ino_t new_ino;
 	u_long i, max;
 	int error;
@@ -102,7 +102,7 @@ lfs_valloc(v)
 		vp = fs->lfs_ivnode;
 		ip = VTOI(vp);
 		blkno = lblkno(fs, ip->i_size);
-		lfs_balloc(vp, fs->lfs_bsize, blkno, &bp);
+		lfs_balloc(vp, 0, fs->lfs_bsize, blkno, &bp);
 		ip->i_size += fs->lfs_bsize;
 		vnode_pager_setsize(vp, (u_long)ip->i_size);
 		vnode_pager_uncache(vp);
@@ -189,8 +189,6 @@ lfs_vcreate(mp, ino, vpp)
 	ip->i_flag = IN_MODIFIED;
 	ip->i_dev = ump->um_dev;
 	ip->i_number = ip->i_din.di_inumber = ino;
-ip->i_din.di_spare[0] = 0xdeadbeef;
-ip->i_din.di_spare[1] = 0xdeadbeef;
 	ip->i_lfs = ump->um_lfs;
 #ifdef QUOTA
 	for (i = 0; i < MAXQUOTAS; i++)
@@ -221,7 +219,7 @@ lfs_vfree(v)
 	struct ifile *ifp;
 	struct inode *ip;
 	struct lfs *fs;
-	daddr_t old_iaddr;
+	ufs_daddr_t old_iaddr;
 	ino_t ino;
 
 	/* Get the inode number and file system. */

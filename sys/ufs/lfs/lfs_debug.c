@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_debug.c,v 1.3 1996/04/21 22:32:42 deraadt Exp $	*/
+/*	$OpenBSD: lfs_debug.c,v 1.4 1996/07/01 07:41:50 downsj Exp $	*/
 /*	$NetBSD: lfs_debug.c,v 1.4 1996/03/17 02:16:28 christos Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ lfs_dump_super(lfsp)
 {
 	int i;
 
-	(void)printf("%s%x\t%s%x\t%s%d\t%s%d\n",
+	(void)printf("%s%lx\t%s%lx\t%s%d\t%s%d\n",
 		"magic    ", lfsp->lfs_magic,
 		"version  ", lfsp->lfs_version,
 		"size     ", lfsp->lfs_size,
@@ -77,19 +77,19 @@ lfs_dump_super(lfsp)
 		"cleansz  ", lfsp->lfs_cleansz,
 		"segtabsz ", lfsp->lfs_segtabsz);
 
-	(void)printf("%s%x\t%s%d\t%s%x\t%s%d\n",
+	(void)printf("%s%lx\t%s%d\t%s%lx\t%s%d\n",
 		"segmask  ", lfsp->lfs_segmask,
 		"segshift ", lfsp->lfs_segshift,
 		"bmask    ", lfsp->lfs_bmask,
 		"bshift   ", lfsp->lfs_bshift);
 
-	(void)printf("%s%x\t%s%d\t%s%x\t%s%d\n",
+	(void)printf("%s%lx\t%s%d\t%s%lx\t%s%d\n",
 		"ffmask   ", lfsp->lfs_ffmask,
 		"ffshift  ", lfsp->lfs_ffshift,
 		"fbmask   ", lfsp->lfs_fbmask,
 		"fbshift  ", lfsp->lfs_fbshift);
 
-	(void)printf("%s%d\t%s%d\t%s%x\t%s%qx\n",
+	(void)printf("%s%d\t%s%d\t%s%lx\t%s%qx\n",
 		"sushift  ", lfsp->lfs_sushift,
 		"fsbtodb  ", lfsp->lfs_fsbtodb,
 		"cksum    ", lfsp->lfs_cksum,
@@ -97,22 +97,22 @@ lfs_dump_super(lfsp)
 
 	(void)printf("Superblock disk addresses:");
 	for (i = 0; i < LFS_MAXNUMSB; i++)
-		(void)printf(" %x", lfsp->lfs_sboffs[i]);
+		(void)printf(" %lx", lfsp->lfs_sboffs[i]);
 	(void)printf("\n");
 
 	(void)printf("Checkpoint Info\n");
-	(void)printf("%s%d\t%s%x\t%s%d\n",
+	(void)printf("%s%d\t%s%lx\t%s%d\n",
 		"free     ", lfsp->lfs_free,
 		"idaddr   ", lfsp->lfs_idaddr,
 		"ifile    ", lfsp->lfs_ifile);
-	(void)printf("%s%x\t%s%d\t%s%x\t%s%x\t%s%x\t%s%x\n",
+	(void)printf("%s%lx\t%s%d\t%s%lx\t%s%lx\t%s%lx\t%s%lx\n",
 		"bfree    ", lfsp->lfs_bfree,
 		"nfiles   ", lfsp->lfs_nfiles,
 		"lastseg  ", lfsp->lfs_lastseg,
 		"nextseg  ", lfsp->lfs_nextseg,
 		"curseg   ", lfsp->lfs_curseg,
 		"offset   ", lfsp->lfs_offset);
-	(void)printf("tstamp   %x\n", lfsp->lfs_tstamp);
+	(void)printf("tstamp   %lx\n", lfsp->lfs_tstamp);
 }
 
 void
@@ -127,15 +127,15 @@ lfs_dump_dinode(dip)
 		"uid   ", dip->di_uid,
 		"gid   ", dip->di_gid,
 		"size  ", dip->di_size);
-	(void)printf("inum  %d\n", dip->di_inumber);
+	(void)printf("inum  %ld\n", dip->di_inumber);
 	(void)printf("Direct Addresses\n");
 	for (i = 0; i < NDADDR; i++) {
-		(void)printf("\t%x", dip->di_db[i]);
+		(void)printf("\t%lx", dip->di_db[i]);
 		if ((i % 6) == 5)
 			(void)printf("\n");
 	}
 	for (i = 0; i < NIADDR; i++)
-		(void)printf("\t%x", dip->di_ib[i]);
+		(void)printf("\t%lx", dip->di_ib[i]);
 	(void)printf("\n");
 }
 #endif /* DEBUG */

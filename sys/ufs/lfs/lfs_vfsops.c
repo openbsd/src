@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_vfsops.c,v 1.5 1996/06/27 06:42:07 downsj Exp $	*/
+/*	$OpenBSD: lfs_vfsops.c,v 1.6 1996/07/01 07:41:55 downsj Exp $	*/
 /*	$NetBSD: lfs_vfsops.c,v 1.11 1996/03/25 12:53:35 pk Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs_vfsops.c	8.10 (Berkeley) 11/21/94
+ *	@(#)lfs_vfsops.c	8.20 (Berkeley) 6/10/95
  */
 
 #include <sys/param.h>
@@ -425,11 +425,17 @@ lfs_statfs(mp, sbp, p)
 	sbp->f_type = 0;
 	sbp->f_bsize = fs->lfs_bsize;
 	sbp->f_iosize = fs->lfs_bsize;
-	sbp->f_blocks = dbtofsb(fs,fs->lfs_dsize);
-	sbp->f_bfree = dbtofsb(fs, fs->lfs_bfree);
-	sbp->f_bavail = (fs->lfs_dsize * (100 - fs->lfs_minfree) / 100) -
-		(fs->lfs_dsize - fs->lfs_bfree);
-	sbp->f_bavail = dbtofsb(fs, sbp->f_bavail);
+	sbp->f_blocks = dbtofrags(fs,fs->lfs_dsize);
+	sbp->f_bfree = dbtofrags(fs, fs->lfs_bfree);
+	/*
+	 * To compute the available space.  Subtract the minimum free
+	 * from the total number of blocks in the file system.  Set avail
+	 * to the smaller of this number and fs->lfs_bfree.
+	 */
+	sbp->f_bavail = fs->lfs_dsize * (100 - fs->lfs_minfree) / 100;
+	sbp->f_bavail =
+	    sbp->f_bavail > fs->lfs_bfree ? fs->lfs_bfree : sbp->f_bavail;
+	sbp->f_bavail = dbtofrags(fs, sbp->f_bavail);
 	sbp->f_files = fs->lfs_nfiles;
 	sbp->f_ffree = sbp->f_bfree * INOPB(fs);
 	if (sbp != &mp->mnt_stat) {
@@ -481,7 +487,7 @@ lfs_vget(mp, ino, vpp)
 	struct ifile *ifp;
 	struct vnode *vp;
 	struct ufsmount *ump;
-	daddr_t daddr;
+	ufs_daddr_t daddr;
 	dev_t dev;
 	int error;
 
@@ -611,4 +617,13 @@ lfs_vptofh(vp, fhp)
 	ufhp->ufid_ino = ip->i_number;
 	ufhp->ufid_gen = ip->i_gen;
 	return (0);
+}
+
+/*
+ * Initialize the filesystem, most work done by ufs_init.
+ */
+void
+lfs_init()
+{
+	ufs_init();
 }

@@ -1,8 +1,8 @@
-/*	$OpenBSD: lfs_vnops.c,v 1.3 1996/05/22 11:47:20 deraadt Exp $	*/
+/*	$OpenBSD: lfs_vnops.c,v 1.4 1996/07/01 07:41:56 downsj Exp $	*/
 /*	$NetBSD: lfs_vnops.c,v 1.11 1996/05/11 18:27:41 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1986, 1989, 1991, 1993
+ * Copyright (c) 1986, 1989, 1991, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs_vnops.c	8.8 (Berkeley) 8/10/94
+ *	@(#)lfs_vnops.c	8.13 (Berkeley) 6/10/95
  */
 
 #include <sys/param.h>

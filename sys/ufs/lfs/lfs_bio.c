@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_bio.c,v 1.3 1996/06/14 04:39:13 tholo Exp $	*/
+/*	$OpenBSD: lfs_bio.c,v 1.4 1996/07/01 07:41:49 downsj Exp $	*/
 /*	$NetBSD: lfs_bio.c,v 1.5 1996/02/09 22:28:49 christos Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs_bio.c	8.4 (Berkeley) 12/30/93
+ *	@(#)lfs_bio.c	8.10 (Berkeley) 6/10/95
  */
 
 #include <sys/param.h>
@@ -82,7 +82,7 @@ lfs_bwrite(v)
 	register struct buf *bp = ap->a_bp;
 	struct lfs *fs;
 	struct inode *ip;
-	int error, s;
+	int db, error, s;
 
 	/*
 	 * Set the delayed write flag and use reassignbuf to move the buffer
@@ -100,10 +100,12 @@ lfs_bwrite(v)
 	 */
 	if (!(bp->b_flags & B_LOCKED)) {
 		fs = VFSTOUFS(bp->b_vp->v_mount)->um_lfs;
-		while (!LFS_FITS(fs, fsbtodb(fs, 1)) && !IS_IFILE(bp) &&
+		db = fragstodb(fs, numfrags(fs, bp->b_bcount));
+		while (!LFS_FITS(fs, db) && !IS_IFILE(bp) &&
 		    bp->b_lblkno > 0) {
 			/* Out of space, need cleaner to run */
 			wakeup(&lfs_allclean_wakeup);
+			wakeup(&fs->lfs_nextseg);
 			error = tsleep(&fs->lfs_avail, PCATCH | PUSER,
 				       "cleaner", NULL);
 			if (error) {
@@ -115,7 +117,7 @@ lfs_bwrite(v)
 		if (!(ip->i_flag & IN_MODIFIED))
 			++fs->lfs_uinodes;
 		ip->i_flag |= IN_CHANGE | IN_MODIFIED | IN_UPDATE;
-		fs->lfs_avail -= fsbtodb(fs, 1);
+		fs->lfs_avail -= db;
 		++locked_queue_count;
 		bp->b_flags |= B_DELWRI | B_LOCKED;
 		TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
@@ -176,7 +178,7 @@ lfs_flush()
 int
 lfs_check(vp, blkno)
 	struct vnode *vp;
-	daddr_t blkno;
+	ufs_daddr_t blkno;
 {
 	int error;
 
