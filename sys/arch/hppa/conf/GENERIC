@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.26 2003/02/15 23:50:00 miod Exp $
+#	$OpenBSD: GENERIC,v 1.27 2003/02/17 23:07:40 miod Exp $
 #
 # Diskless kernel config
 #
@@ -95,7 +95,7 @@ harmony* at gsc? irq 13	# Audio Type 2 (CS4215/AD1849)
 audio*	at harmony?
 gsckbc*	at gsc? irq 26
 gsckbd*	at gsckbc?	# PS/2 keyboard
-#gscms*	at gsckbc?	# PS/2 mouse
+pms*	at gsckbc?	# PS/2 mouse
 #fdc*	at gsc?		# PC floppy controller (WD37C65C)
 #option	FD_DEBUG
 
@@ -120,7 +120,7 @@ gsckbd*	at gsckbc?	# PS/2 keyboard
 wsdisplay*	at sti?
 wskbd*		at gsckbd? mux 1
 wskbd*		at hilkbd? mux 1
-#wsmouse*	at gscms? mux 0
+wsmouse*	at pms? mux 0
 wsmouse*	at hilms? mux 0
 
 #fd*	at fdc?	drive ?	# floppy drives

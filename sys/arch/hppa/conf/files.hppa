@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.43 2003/02/12 22:17:18 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.44 2003/02/17 23:07:40 miod Exp $
 #
 # hppa-specific configuration info
 
@@ -203,18 +203,19 @@ file	arch/hppa/gsc/com_harmony.c	com_harmony
 #attach	myri at pci
 #file	dev/pci/myri.c			myri
 
-device	gsckbc { [slot = -1] }
+# PS/2 input ports
+#device	gsckbc { [slot = -1] }
 attach	gsckbc at gsc
 file	arch/hppa/gsc/gsckbc.c		gsckbc
 
+# PS/2 keyboard
 device	gsckbd: wskbddev
 attach	gsckbd at gsckbc
 file	arch/hppa/gsc/gsckbd.c		gsckbd	needs-flag
 file	arch/hppa/gsc/gsckbdmap.c	gsckbd
 
-#device	gscms: wsmousedev
-#attach	gscms at gsckbc
-#file	arch/hppa/gsc/gscms.c		gscms	needs-flag
+# PS/2 mouse
+include	"dev/pckbc/files.pckbc"
 
 #
 # Compatibility

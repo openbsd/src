@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.267 2003/01/21 16:59:23 markus Exp $
+#	$OpenBSD: files,v 1.268 2003/02/17 23:07:43 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -250,6 +250,9 @@ file	dev/ic/com.c		com & (com_isa | com_isapnp | com_commulti | com_pcmcia | com
 # PC-like keyboard controller
 device	pckbc { [slot = -1] }
 file	dev/ic/pckbc.c		pckbc needs-flag
+
+# HPPA PS/2 input ports (forward definition)
+device	gsckbc { [slot = -1] }
 
 # OPL2/OPL3 FM synth driver
 device	opl: midibus, midisyn
