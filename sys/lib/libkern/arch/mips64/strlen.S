@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlen.S,v 1.3 2004/09/09 15:41:18 pefo Exp $	*/
+/*	$OpenBSD: strlen.S,v 1.4 2004/10/08 14:42:09 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -38,12 +38,12 @@
  */
 LEAF(strlen, 0)
 	.set	noreorder
-	addu	v1, a0, 1
+	PTR_ADDU v1, a0, 1
 1:
 	lb	v0, 0(a0)		# get byte from string
-	addu	a0, a0, 1		# increment pointer
+	PTR_ADDU a0, a0, 1		# increment pointer
 	bne	v0, zero, 1b		# continue if not end
 	nop
 	j	ra
-	 subu	v0, a0, v1		# compute length - 1 for '\0' char
+	PTR_SUBU v0, a0, v1		# compute length - 1 for '\0' char
 END(strlen)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcmp.S,v 1.3 2004/09/09 15:41:18 pefo Exp $	*/
+/*	$OpenBSD: strcmp.S,v 1.4 2004/10/08 14:42:09 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -49,13 +49,13 @@ LEAF(strcmp, 0)
 	lbu	t0, 1(a0)		# unroll loop
 	lbu	t1, 1(a1)
 	beq	t0, zero, LessOrEq	# end of first string?
-	addu	a0, a0, 2
+	PTR_ADDU a0, a0, 2
 	beq	t0, t1, 1b
-	addu	a1, a1, 2
+	PTR_ADDU a1, a1, 2
 NotEq:
 	j	ra
-	 subu	v0, t0, t1
+	PTR_SUBU v0, t0, t1
 LessOrEq:
 	j	ra
-	 subu	v0, zero, t1
+	PTR_SUBU v0, zero, t1
 END(strcmp)
