@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.19 2004/04/19 18:29:17 jmc Exp $
+.\"	$OpenBSD: flex.1,v 1.20 2005/02/08 09:12:16 pvalchev Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -173,7 +173,9 @@ marks the beginning of the rules.
 .Pp
 Here's another simple example:
 .Bd -literal -offset indent
+%{
 int num_lines = 0, num_chars = 0;
+%}
 
 %%
 \en      ++num_lines; ++num_chars;
