@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.11 2000/11/08 21:27:08 ericj Exp $ */
+/* $OpenBSD: db_interface.c,v 1.12 2001/03/04 19:19:43 niklas Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -228,7 +228,9 @@ void
 db_machine_init()
 {
 
+#if 0
 	db_machine_commands_install(db_machine_cmds);
+#endif
 }
 
 /*
@@ -532,4 +534,32 @@ db_branch_taken(ins, pc, regs)
 	}
 
 	return (newpc);
+}
+
+/*
+ * Validate an address for use as a breakpoint.  We cannot let some
+ * addresses have breakpoints as the ddb code itself uses that codepath.
+ * Recursion and kernel stack space exhaustion will follow.
+ */
+int
+db_valid_breakpoint(addr)
+	db_addr_t addr;
+{
+	char *name;
+	db_expr_t offset;
+
+	db_find_sym_and_offset(addr, &name, &offset);
+	if (name && strcmp(name, "alpha_pal_swpipl") == 0)
+		return (0);
+	return (1);
+}
+
+db_addr_t
+next_instr_address(pc, branch)
+	db_addr_t pc;
+	int branch;
+{
+	if (!branch)
+		return (pc + sizeof(int));
+	return (branch_taken(*(u_int *)pc, pc, getreg_val, DDB_REGS));
 }

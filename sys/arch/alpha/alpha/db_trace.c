@@ -1,16 +1,8 @@
-/* $OpenBSD: db_trace.c,v 1.6 2000/11/08 19:16:58 ericj Exp $ */
-/* $NetBSD: db_trace.c,v 1.6 2000/05/26 03:34:24 jhawk Exp $ */
+/*	$OpenBSD: db_trace.c,v 1.7 2001/03/04 19:19:42 niklas Exp $	*/
 
-/*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Ross Harvey.
+/*
+ * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
+ * Copyright (c) 1997 Theo de Raadt.  All rights reserverd.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -22,352 +14,305 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *	This product includes software developed by Niklas Hallqvist and
+ *	Theo de Raadt.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/user.h>
+
+#include <vm/vm.h>
+
 #include <machine/db_machdep.h>
+#include <machine/frame.h>
 
-#include <alpha/alpha/db_instruction.h>
-
-#include <ddb/db_sym.h> 
 #include <ddb/db_access.h>
-#include <ddb/db_variables.h>
+#include <ddb/db_command.h>
 #include <ddb/db_output.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_variables.h>
+#include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
 
-/*
- * Information about the `standard' Alpha function prologue.
- */
-struct prologue_info {
-	int	pi_reg_offset[32]; /* offset of registers in stack frame */
-	u_int32_t pi_regmask;	   /* which registers are in frame */
-	int	pi_frame_size;	   /* frame size */
+extern int	etext;
+
+struct opcode opcode[] = {
+	{ OPC_PAL, "call_pal", 0 },	/* 00 */
+	{ OPC_RES, "opc01", 0 },	/* 01 */
+	{ OPC_RES, "opc02", 0 },	/* 02 */
+	{ OPC_RES, "opc03", 0 },	/* 03 */
+	{ OPC_RES, "opc04", 0 },	/* 04 */
+	{ OPC_RES, "opc05", 0 },	/* 05 */
+	{ OPC_RES, "opc06", 0 },	/* 06 */
+	{ OPC_RES, "opc07", 0 },	/* 07 */
+	{ OPC_MEM, "lda", 1 },		/* 08 */
+	{ OPC_MEM, "ldah", 1 },		/* 09 */
+	{ OPC_RES, "opc0a", 0 },	/* 0A */
+	{ OPC_MEM, "ldq_u", 1 },	/* 0B */
+	{ OPC_RES, "opc0c", 0 },	/* 0C */
+	{ OPC_RES, "opc0d", 0 },	/* 0D */
+	{ OPC_RES, "opc0e", 0 },	/* 0E */
+	{ OPC_MEM, "stq_u", 1 },	/* 0F */
+	{ OPC_OP, "inta", 0 },		/* 10 */
+	{ OPC_OP, "intl", 0 },		/* 11 */
+	{ OPC_OP, "ints", 0 },		/* 12 */
+	{ OPC_OP, "intm", 0 },		/* 13 */
+	{ OPC_RES, "opc14", 0 },	/* 14 */
+	{ OPC_OP, "fltv", 1 },		/* 15 */
+	{ OPC_OP, "flti", 1 },		/* 16 */
+	{ OPC_OP, "fltl", 1 },		/* 17 */
+	{ OPC_MEM, "misc", 0 },		/* 18 */
+	{ OPC_PAL, "pal19", 0 },	/* 19 */
+	{ OPC_MEM, "jsr", 0 },		/* 1A */
+	{ OPC_PAL, "pal1b", 0 },	/* 1B */
+	{ OPC_RES, "opc1c", 0 },	/* 1C */
+	{ OPC_PAL, "pal1d", 0 },	/* 1D */
+	{ OPC_PAL, "pal1e", 0 },	/* 1E */
+	{ OPC_PAL, "pal1f", 0 },	/* 1F */
+	{ OPC_MEM, "ldf", 1 },		/* 20 */
+	{ OPC_MEM, "ldg", 1 },		/* 21 */
+	{ OPC_MEM, "lds", 1 },		/* 22 */
+	{ OPC_MEM, "ldt", 1 },		/* 23 */
+	{ OPC_MEM, "stf", 1 },		/* 24 */
+	{ OPC_MEM, "stg", 1 },		/* 25 */
+	{ OPC_MEM, "sts", 1 },		/* 26 */
+	{ OPC_MEM, "stt", 1 },		/* 27 */
+	{ OPC_MEM, "ldl", 1 },		/* 28 */
+	{ OPC_MEM, "ldq", 1 },		/* 29 */
+	{ OPC_MEM, "ldl_l", 1 },	/* 2A */
+	{ OPC_MEM, "ldq_l", 1 },	/* 2B */
+	{ OPC_MEM, "stl", 1 },		/* 2C */
+	{ OPC_MEM, "stq", 1 },		/* 2D */
+	{ OPC_MEM, "stl_c", 1 },	/* 2E */
+	{ OPC_MEM, "stq_c", 1 },	/* 2F */
+	{ OPC_BR, "br", 1 },		/* 30 */
+	{ OPC_BR, "fbeq", 1 },		/* 31 */
+	{ OPC_BR, "fblt", 1 },		/* 32 */
+	{ OPC_BR, "fble", 1 },		/* 33 */
+	{ OPC_BR, "bsr", 1 },		/* 34 */
+	{ OPC_BR, "fbne", 1 },		/* 35 */
+	{ OPC_BR, "fbge", 1 },		/* 36 */
+	{ OPC_BR, "fbgt", 1 },		/* 37 */
+	{ OPC_BR, "blbc", 1 },		/* 38 */
+	{ OPC_BR, "beq", 1 },		/* 39 */
+	{ OPC_BR, "blt", 1 },		/* 3A */
+	{ OPC_BR, "ble", 1 },		/* 3B */
+	{ OPC_BR, "blbs", 1 },		/* 3C */
+	{ OPC_BR, "bne", 1 },		/* 3D */
+	{ OPC_BR, "bge", 1 },		/* 3E */
+	{ OPC_BR, "bgt", 1 },		/* 3F */
 };
 
+static __inline int sext __P((u_int));
+static __inline int rega __P((u_int));
+static __inline int regb __P((u_int));
+static __inline int regc __P((u_int));
+static __inline int disp __P((u_int));
+
+static __inline int
+sext(x)
+	u_int x;
+{
+	return ((x & 0x8000) ? -(-x & 0xffff) : (x & 0xffff));
+}
+
+static __inline int
+rega(x)
+	u_int x;
+{
+	return ((x >> 21) & 0x1f);
+}
+
+static __inline int
+regb(x)
+	u_int x;
+{
+	return ((x >> 16) & 0x1f);
+}
+
+static __inline int
+regc(x)
+	u_int x;
+{
+	return (x & 0x1f);
+}
+
+static __inline int
+disp(x)
+	u_int x;
+{
+	return (sext(x & 0xffff));
+}
+
 /*
- * We use several symbols to take special action:
+ * XXX There are a couple of problems with this code:
  *
- *	Trap vectors, which use a different (fixed-size) stack frame:
+ *	The argument list printout code is likely to get confused.
  *
- *		XentArith
- *		XentIF
- *		XentInt
- *		XentMM
- *		XentSys
- *		XentUna
+ *	It relies on the conventions of gcc code generation.
+ *
+ *	It uses heuristics to calculate the framesize, and might get it wrong.
+ *
+ *	It doesn't yet use the framepointer if available.
+ *
+ *	The address argument can only be used for pointing at trapframes
+ *	since a frame pointer of its own serves no good on the alpha,
+ *	you need a pc value too.
+ *
+ *	The heuristics used for tracing through a trap relies on having
+ *	symbols available.
  */
-
-static struct special_symbol {
-	void (*ss_val) __P((void));
-	const char *ss_note;
-} special_symbols[] = {
-	{ (void (*)(void))&XentArith,	"arithmetic trap" },
-	{ (void (*)(void))&XentIF,	"instruction fault" },
-	{ (void (*)(void))&XentInt,	"interrupt" },
-	{ (void (*)(void))&XentMM,	"memory management fault" },
-	{ (void (*)(void))&XentSys,	"syscall" },
-	{ (void (*)(void))&XentUna,	"unaligned access fault" },
-	{ (void (*)(void))&XentRestart,	"console restart" },
-	{ NULL }
-};
-
-static void decode_prologue __P((db_addr_t, db_addr_t, struct prologue_info *,
-    int (*)(const char *, ...)));
-static void decode_syscall __P((int, struct proc *,
-    int (*)(const char *, ...)));
-static int sym_is_trapsymbol __P((void *));
-
 void
 db_stack_trace_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	boolean_t have_addr;
-	db_expr_t count;
-	char *modif;
+	db_expr_t       addr;
+	int             have_addr;
+	db_expr_t       count;
+	char            *modif;
 {
-	db_addr_t callpc, frame, symval;
-	struct prologue_info pi;
-	void *symval_f;
-	db_expr_t diff;
-	db_sym_t sym;
-	int i;
-	u_long tfps;
-	char *symname;
-	struct pcb *pcbp;
-	char c, *cp = modif;
-	struct trapframe *tf;
-	boolean_t ra_from_tf;
-	boolean_t ra_from_pcb;
-	u_long last_ipl = ~0L;
-	struct proc *p = NULL;
-	boolean_t trace_thread = FALSE;
-	boolean_t have_trapframe = FALSE;
+	u_long		*frame;
+	int		i, framesize;
+	db_addr_t	pc, ra;
+	u_int		inst;
+	char		*name;
+	db_expr_t	offset;
+	db_regs_t	*regs;
+	u_long		*slot[32];
 
-	while ((c = *cp++) != 0)
-		trace_thread |= c == 't';
+	bzero(slot, sizeof(slot));
+	if (count == -1)
+		count = 65535;
 
-	if (!have_addr) {
-		p = curproc;
-		addr = DDB_REGS->tf_regs[FRAME_SP] - FRAME_SIZE * 8;
-		tf = (struct trapframe *)addr;
-		have_trapframe = 1;
-	} else {
-		if (trace_thread) {
-			db_printf("trace: pid %d ", (int)addr);
-			p = pfind(addr);
-			if (p == NULL) {
-				db_printf("not found\n");
-				return;
-			}	
-			if ((p->p_flag & P_INMEM) == 0) {
-				db_printf("swapped out\n");
-				return;
-			}
-			pcbp = &p->p_addr->u_pcb;
-			addr = (db_expr_t)pcbp->pcb_hw.apcb_ksp;
-			callpc = pcbp->pcb_context[7];
-			db_printf("at 0x%lx\n", addr);
-		} else {
-			db_printf("alpha trace requires known PC =eject=\n");
-			return;
+	regs = have_addr ? (db_regs_t *)addr : DDB_REGS;
+trapframe:
+	/* remember where various registers are stored */
+	for (i = 0; i < 31; i++)
+		slot[i] = &regs->tf_regs[0] +
+		    ((u_long *)db_regs[i].valuep - &ddb_regs.tf_regs[0]);
+	frame = (u_long *)regs->tf_regs[FRAME_SP];
+	pc = (db_addr_t)regs->tf_regs[FRAME_PC];
+	ra = (db_addr_t)regs->tf_regs[FRAME_RA];
+
+	while (count-- && pc >= (db_addr_t)KERNBASE && pc < (db_addr_t)&etext) {
+		db_find_sym_and_offset(pc, &name, &offset);
+		if (!name) {
+			name = "?";
+			/* Limit the search for procedure start */
+			offset = 65536;
 		}
-		frame = addr;
-	}
+		db_printf("%s(", name);
 
-	while (count--) {
-		if (have_trapframe) {
-			frame = (db_addr_t)tf + FRAME_SIZE * 8;
-			callpc = tf->tf_regs[FRAME_PC];
-			ra_from_tf = TRUE;
-			have_trapframe = 0;
-		}
-		sym = db_search_symbol(callpc, DB_STGY_ANY, &diff);
-		if (sym == DB_SYM_NULL)
-			break;
+		framesize = 0;
+		for (i = sizeof (int); i <= offset; i += sizeof (int)) {
+			inst = *(u_int *)(pc - i);
+	
+			/*
+			 * If by chance we don't have any symbols we have to
+			 * get out somehow anyway.  Check for the preceding
+			 * procedure return in that case.
+			 */
+			if (name[0] == '?' && inst_return(inst))
+				break;
 
-		db_symbol_values(sym, &symname, (db_expr_t *)&symval);
-		symval_f = (void *)symval;
-
-		if (callpc < symval) {
-			db_printf("symbol botch: callpc 0x%lx < "
-			    "func 0x%lx (%s)\n", callpc, symval, symname);
-			return;
+			/*
+			 * Disassemble to get the needed info for the frame.
+			 */
+			if ((inst & 0xffff0000) == 0x23de0000)
+				/* lda sp,n(sp) */
+				framesize -= disp(inst) / sizeof (u_long);
+			else if ((inst & 0xfc1f0000) == 0xb41e0000)
+				/* stq X,n(sp) */
+				slot[rega(inst)] =
+				    frame + disp(inst) / sizeof (u_long);
+			else if ((inst & 0xfc000fe0) == 0x44000400 &&
+			    rega(inst) == regb(inst)) {
+				/* bis X,X,Y (aka mov X,Y) */
+				/* zero is hardwired */
+				if (rega(inst) != 31)
+					slot[rega(inst)] = slot[regc(inst)];
+				slot[regc(inst)] = 0;
+				/*
+				 * XXX In here we might special case a frame
+				 * pointer setup, i.e. mov sp, fp.
+				 */
+			} else if (inst_load(inst))
+				/* clobbers a register */
+				slot[rega(inst)] = 0;
+			else if (opcode[inst >> 26].opc_fmt == OPC_OP)
+				/* clobbers a register */
+				slot[regc(inst)] = 0;
+			/*
+			 * XXX Recognize more reg clobbering instructions and
+			 * set slot[reg] = 0 then too.
+			 */
 		}
 
 		/*
-		 * XXX Printing out arguments is Hard.  We'd have to
-		 * keep lots of state as we traverse the frame, figuring
-		 * out where the arguments to the function are stored
-		 * on the stack.
-		 *
-		 * Even worse, they may be stored to the stack _after_
-		 * being modified in place; arguments are passed in
-		 * registers.
-		 *
-		 * So, in order for this to work reliably, we pretty much
-		 * have to have a kernel built with `cc -g':
-		 *
-		 *	- The debugging symbols would tell us where the
-		 *	  arguments are, how many there are, if there were
-		 *	  any passed on the stack, etc.
-		 *
-		 *	- Presumably, the compiler would be careful to
-		 *	  store the argument registers on the stack before
-		 *	  modifying the registers, so that a debugger could
-		 *	  know what those values were upon procedure entry.
-		 *
-		 * Because of this, we don't bother.  We've got most of the
-		 * benefit of back tracking without the arguments, and we
-		 * could get the arguments if we use a remote source-level
-		 * debugger (for serious debugging).
+		 * Try to print the 6 quads that might hold the args.
+		 * We print 6 of them even if there are fewer, cause we don't
+		 * know the number.  Maybe we could skip the last ones
+		 * that never got used.  If we cannot know the value, print
+		 * a question mark.
 		 */
-		db_printf("%s() at ", symname);
-		db_printsym(callpc, DB_STGY_PROC);
+		for (i = 0; i < 6; i++) {
+			if (i > 0)
+				db_printf(", ");
+			if (slot[16 + i])
+				db_printf("%lx", *slot[16 + i]);
+			else
+				db_printf("?");
+		}
+
+#if 0
+		/*
+		 * XXX This will go eventually when I trust the argument
+		 * printout heuristics.
+		 *
+		 * Print the stack frame contents.
+		 */
+		db_printf(") [%p: ", frame);
+		if (framesize > 1) {
+			for (i = 0; i < framesize - 1; i++)
+				db_printf("%lx, ", frame[i]);
+			db_printf("%lx", frame[i]);
+		}
+		db_printf("] at ");
+#else
+		db_printf(") at ");
+#endif
+		db_printsym(pc, DB_STGY_PROC);
 		db_printf("\n");
 
 		/*
-		 * If we are in a trap vector, frame points to a
-		 * trapframe.
+		 * If we are looking at a Xent* routine we are in a trap
+		 * context.
 		 */
-		if (sym_is_trapsymbol(symval_f)) {
-			tf = (struct trapframe *)frame;
-
-			for (i = 0; special_symbols[i].ss_val != NULL; ++i)
-				if (symval_f == special_symbols[i].ss_val)
-					db_printf("--- %s",
-					    special_symbols[i].ss_note);
-
-			tfps = tf->tf_regs[FRAME_PS];
-			if (symval_f == &XentSys)
-				decode_syscall(tf->tf_regs[FRAME_V0], p, db_printf);
-			if ((tfps & ALPHA_PSL_IPL_MASK) != last_ipl) {
-				last_ipl = tfps & ALPHA_PSL_IPL_MASK;
-				if (symval_f != &XentSys)
-					db_printf(" (from ipl %ld)", last_ipl);
-			}
-			db_printf(" ---\n");
-			if (tfps & ALPHA_PSL_USERMODE) {
-				db_printf("--- user mode ---\n");
-				break;	/* Terminate search.  */
-			}
-			have_trapframe = 1;
-			continue;
+		if (strncmp(name, "Xent", sizeof("Xent") - 1) == 0) {
+			regs = (db_regs_t *)frame;
+			goto trapframe;
 		}
 
-		/*
-		 * This is a bit trickier; we must decode the function
-		 * prologue to find the saved RA.
-		 *
-		 * XXX How does this interact w/ alloca()?!
-		 */
-		decode_prologue(callpc, symval, &pi, db_printf);
-		if ((pi.pi_regmask & (1 << 26)) == 0) {
-			/*
-			 * No saved RA found.  We might have RA from
-			 * the trap frame, however (e.g trap occurred
-			 * in a leaf call).  If not, we've found the
-			 * root of the call graph.
-			 */
-			if (ra_from_tf)
-				callpc = tf->tf_regs[FRAME_RA];
-			else {
-				db_printf("--- root of call graph ---\n");
-				break;
-			}
-		} else
-			callpc = *(u_long *)(frame + pi.pi_reg_offset[26]);
-		ra_from_tf = ra_from_pcb = FALSE;
-#if 0
-		/*
-		 * The call was actually made at RA - 4; the PC is
-		 * updated before being stored in RA.
-		 */
-		callpc -= 4;
-#endif
-		frame += pi.pi_frame_size;
+		/* Look for the return address if recorded.  */
+		if (slot[26])
+			ra = *(db_addr_t *)slot[26];
+		else
+			break;
+
+		/* Advance to the next frame.  */
+		frame += framesize;
+		pc = ra;
 	}
-}
-
-/*
- * Decode the function prologue for the function we're in, and note
- * which registers are stored where, and how large the stack frame is.
- */
-static void
-decode_prologue(callpc, func, pi, pr)
-	db_addr_t callpc, func;
-	struct prologue_info *pi;
-	int (*pr) __P((const char *, ...));
-{
-	long signed_immediate;
-	alpha_instruction ins;
-	db_expr_t pc;
-
-	pi->pi_regmask = 0;
-	pi->pi_frame_size = 0;
-
-#define	CHECK_FRAMESIZE							\
-do {									\
-	if (pi->pi_frame_size != 0) {					\
-		(*pr)("frame size botch: adjust register offsets?\n"); \
-	}								\
-} while (0)
-
-	for (pc = func; pc < callpc; pc += sizeof(alpha_instruction)) {
-		ins.bits = *(unsigned int *)pc;
-
-		if (ins.mem_format.opcode == op_lda &&
-		    ins.mem_format.ra == 30 &&
-		    ins.mem_format.rb == 30) {
-			/*
-			 * GCC 2.7-style stack adjust:
-			 *
-			 *	lda	sp, -64(sp)
-			 */
-			signed_immediate = (long)ins.mem_format.displacement;
-#if 1
-			if (signed_immediate > 0)
-				(*pr)("prologue botch: displacement %ld\n",
-				    signed_immediate);
-#endif
-			CHECK_FRAMESIZE;
-			pi->pi_frame_size += -signed_immediate;
-		} else if (ins.operate_lit_format.opcode == op_arit &&
-			   ins.operate_lit_format.function == op_subq &&
-			   ins.operate_lit_format.ra == 30 &&
-			   ins.operate_lit_format.rc == 30) {
-			/*
-			 * EGCS-style stack adjust:
-			 *
-			 *	subq	sp, 64, sp
-			 */
-			CHECK_FRAMESIZE;
-			pi->pi_frame_size += ins.operate_lit_format.literal;
-		} else if (ins.mem_format.opcode == op_stq &&
-			   ins.mem_format.rb == 30 &&
-			   ins.mem_format.ra != 31) {
-			/* Store of (non-zero) register onto the stack. */
-			signed_immediate = (long)ins.mem_format.displacement;
-			pi->pi_regmask |= 1 << ins.mem_format.ra;
-			pi->pi_reg_offset[ins.mem_format.ra] = signed_immediate;
-		}
-	}
-}
-
-static int
-sym_is_trapsymbol(v)
-	void *v;
-{
-	int i;
-
-	for (i = 0; special_symbols[i].ss_val != NULL; ++i)
-		if (v == special_symbols[i].ss_val)
-			return 1;
-	return 0;
-}
-
-static void
-decode_syscall(number, p, pr)
-	int number;
-	struct proc *p;
-	int (*pr) __P((const char *, ...));
-{
-	db_sym_t sym;
-	db_expr_t diff;
-	char *symname, *ename;
-	int (*f) __P((struct proc *, void *, register_t *));
-
-	(*pr)(" (%d", number); /* ) */
-	if (!p)
-		goto out;
-	if (0 <= number && number < p->p_emul->e_nsysent) {
-		ename = p->p_emul->e_name;
-		f = p->p_emul->e_sysent[number].sy_call;
-		sym = db_search_symbol((db_addr_t)f, DB_STGY_ANY, &diff);
-		if (sym == DB_SYM_NULL || diff != 0)
-			goto out;
-		db_symbol_values(sym, &symname, NULL);
-		(*pr)(", %s.%s", ename, symname);
-	}
-out:
-	(*pr)(")");
-	return;
 }
