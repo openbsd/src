@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.23 2002/07/25 02:18:11 nate Exp $	*/
+/*	$OpenBSD: usb.c,v 1.24 2003/06/27 16:57:14 nate Exp $	*/
 /*	$NetBSD: usb.c,v 1.53 2001/01/23 17:04:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -513,6 +513,61 @@ usbpoll(dev_t dev, int events, struct proc *p)
 	} else {
 		return (ENXIO);
 	}
+}
+
+Static void filt_usbrdetach(struct knote *);
+Static int filt_usbread(struct knote *, long);
+int usbkqfilter(dev_t, struct knote *);
+
+Static void
+filt_usbrdetach(struct knote *kn)
+{
+	int s;
+
+	s = splusb();
+	SLIST_REMOVE(&usb_selevent.sel_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+Static int
+filt_usbread(struct knote *kn, long hint)
+{
+
+	if (usb_nevents == 0)
+		return (0);
+
+	kn->kn_data = sizeof(struct usb_event);
+	return (1);
+}
+
+Static struct filterops usbread_filtops =
+	{ 1, NULL, filt_usbrdetach, filt_usbread };
+
+int
+usbkqfilter(dev_t dev, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		if (minor(dev) != USB_DEV_MINOR)
+			return (1);
+		klist = &usb_selevent.sel_klist;
+		kn->kn_fop = &usbread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = NULL;
+
+	s = splusb();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
 
 /* Explore device tree from the root. */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhid.c,v 1.25 2003/05/19 04:17:53 nate Exp $ */
-/*	$NetBSD: uhid.c,v 1.55 2002/10/23 09:14:00 jdolecek Exp $	*/
+/*	$OpenBSD: uhid.c,v 1.26 2003/06/27 16:57:14 nate Exp $ */
+/*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -563,4 +563,70 @@ uhidpoll(dev_t dev, int events, usb_proc_ptr p)
 
 	splx(s);
 	return (revents);
+}
+
+Static void filt_uhidrdetach(struct knote *);
+Static int filt_uhidread(struct knote *, long);
+int uhidkqfilter(dev_t, struct knote *);
+
+Static void
+filt_uhidrdetach(struct knote *kn)
+{
+	struct uhid_softc *sc = (void *)kn->kn_hook;
+	int s;
+
+	s = splusb();
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+Static int
+filt_uhidread(struct knote *kn, long hint)
+{
+	struct uhid_softc *sc = (void *)kn->kn_hook;
+
+	kn->kn_data = sc->sc_q.c_cc;
+	return (kn->kn_data > 0);
+}
+
+Static struct filterops uhidread_filtops =
+	{ 1, NULL, filt_uhidrdetach, filt_uhidread };
+
+Static struct filterops uhid_seltrue_filtops =
+	{ 1, NULL, filt_uhidrdetach, filt_seltrue };
+
+int
+uhidkqfilter(dev_t dev, struct knote *kn)
+{
+	struct uhid_softc *sc;
+	struct klist *klist;
+	int s;
+
+	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+
+	if (sc->sc_dying)
+		return (EIO);
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.sel_klist;
+		kn->kn_fop = &uhidread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sc->sc_rsel.sel_klist;
+		kn->kn_fop = &uhid_seltrue_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *)sc;
+
+	s = splusb();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }

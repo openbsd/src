@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.41 2003/05/17 06:07:57 nate Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.42 2003/06/27 16:57:14 nate Exp $ */
 /*	$NetBSD: usb_port.h,v 1.44 2001/05/14 20:35:29 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -246,6 +246,8 @@ __CONCAT(dname,_detach)(self, flags) \
 #define le32toh(x) letoh32(x)
 #define le16toh(x) letoh16(x)
 #endif
+
+#define sel_klist si_note
 
 #define usb_kthread_create1	kthread_create
 #define usb_kthread_create	kthread_create_deferred

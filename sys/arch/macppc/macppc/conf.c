@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 2003/05/14 00:20:37 tedu Exp $ */
+/*	$OpenBSD: conf.c,v 1.23 2003/06/27 16:57:14 nate Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -217,7 +217,7 @@ struct cdevsw cdevsw[] = {
 	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
 	cdev_usbdev_init(NUGEN,ugen),	/* 63: USB generic driver */
 	cdev_ulpt_init(NULPT,ulpt),	/* 64: USB printers */
-	cdev_usbdev_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
+	cdev_urio_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
 	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
 	cdev_wsdisplay_init(NWSDISPLAY,	/* 67: frame buffers, etc. */
 		wsdisplay),

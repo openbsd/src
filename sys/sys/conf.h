@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.70 2003/06/14 23:14:30 mickey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.71 2003/06/27 16:57:14 nate Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -408,10 +408,17 @@ void	randomattach(void);
 	(dev_type_mmap((*))) enodev }
 
 /* open, close, read, write, ioctl, select, nokqfilter */
-#define	cdev_usbdev_init(c,n) { \
+#define	cdev_urio_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev }
+
+/* open, close, read, write, ioctl, select, kqfilter */
+#define	cdev_usbdev_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev, D_KQFILTER, \
+	dev_init(c,n,kqfilter) }
 
 /* open, close, init */
 #define cdev_pci_init(c,n) { \
