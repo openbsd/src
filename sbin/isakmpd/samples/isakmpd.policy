@@ -1,0 +1,4 @@
+KeyNote-Version: 2
+Comment: This policy essentially accepts everything
+Authorizer: "POLICY"
+Conditions: app_domain == "IPsec policy" -> "true";
