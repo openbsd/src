@@ -131,14 +131,14 @@ void icmp_echoreply (protocol)
 	struct icmp *icfrom;
 	struct sockaddr_in from;
 	u_int8_t icbuf [1500];
-	int status;
-	int len;
+	int status, len;
+	socklen_t salen;
 	struct iaddr ia;
 	void (*handler) PROTO ((struct iaddr, u_int8_t *, int));
 
-	len = sizeof from;
+	salen = sizeof from;
 	status = recvfrom (protocol -> fd, (char *)icbuf, sizeof icbuf, 0,
-			  (struct sockaddr *)&from, &len);
+			  (struct sockaddr *)&from, &salen);
 	if (status < 0) {
 		warn ("icmp_echoreply: %m");
 		return;

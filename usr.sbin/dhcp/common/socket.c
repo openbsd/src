@@ -142,7 +142,7 @@ void fallback_discard (protocol)
 {
 	char buf [1540];
 	struct sockaddr_in from;
-	int flen = sizeof from;
+	socklen_t flen = sizeof from;
 	int status;
 	struct interface_info *interface = protocol -> local;
 

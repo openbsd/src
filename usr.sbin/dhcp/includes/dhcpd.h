@@ -300,7 +300,7 @@ struct client_config {
 					   otherwise default. */
 		ACTION_SUPERSEDE,	/* Always use default. */
 		ACTION_PREPEND,		/* Prepend default to server. */
-		ACTION_APPEND,		/* Append default to server. */
+		ACTION_APPEND		/* Append default to server. */
 	} default_actions [256];
 
 	struct option_data send_options [256]; /* Send these to server. */
@@ -513,7 +513,7 @@ extern char *path_dhcpd_conf;
 extern char *path_dhcpd_db;
 extern char *path_dhcpd_pid;
 
-int main PROTO ((int, char **, char **));
+int main PROTO ((int, char **));
 void cleanup PROTO ((void));
 void lease_pinged PROTO ((struct iaddr, u_int8_t *, int));
 void lease_ping_timeout PROTO ((void *));

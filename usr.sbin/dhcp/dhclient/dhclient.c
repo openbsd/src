@@ -117,9 +117,9 @@ static int res_hnok(const char *dn);
 
 char *option_as_string (unsigned int code, unsigned char *data, int len);
 
-int main (argc, argv, envp)
+int main (argc, argv)
 	int argc;
-	char **argv, **envp;
+	char **argv;
 {
 	int i, fd;
 	struct servent *ent;

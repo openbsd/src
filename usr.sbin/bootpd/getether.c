@@ -33,7 +33,8 @@
 #include <net/if.h>				/* struct ifdevea */
 
 getether(ifname, eap)
-	char *ifname, *eap;
+	char *ifname;
+	u_char *eap;
 {
 	int rc = -1;
 	int fd;

@@ -76,9 +76,9 @@ static char message [] = "Internet Software Consortium DHCP Relay Agent";
 static char contrib [] = "Please contribute if you find this software useful.";
 static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html";
 
-int main (argc, argv, envp)
+int main (argc, argv)
 	int argc;
-	char **argv, **envp;
+	char **argv;
 {
 	int i;
 	struct servent *ent;

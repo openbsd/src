@@ -73,7 +73,7 @@ unsigned char *packetp;
 unsigned char *snapend;
 int snaplen;
 
-extern int getether(char *ifname, char *eap);
+extern int getether(char *ifname, u_char *eap);
 extern int send_request(int s);
 /*
  * IP port numbers for client and server obtained from /etc/services
@@ -129,7 +129,8 @@ main(argc, argv)
 	char *vendor_file = NULL;
 	char *bp_file = NULL;
 	int s;				/* Socket file descriptor */
-	int n, tolen, fromlen, recvcnt;
+	int n, tolen, recvcnt;
+	socklen_t fromlen;
 	int use_hwa = 0;
 	int32 vend_magic;
 	int32 xid;
