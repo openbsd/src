@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.51 2001/11/21 10:01:43 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.52 2002/01/25 13:46:22 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -73,7 +73,6 @@
 #if 0
 static void sa_resize (void);
 #endif
-static void sa_dump (char *, struct sa *);
 static void sa_soft_expire (void *);
 static void sa_hard_expire (void *);
 
@@ -406,34 +405,33 @@ sa_create (struct exchange *exchange, struct transport *t)
  * Dump the internal state of SA to the report channel, with HEADER
  * prepended to each line.
  */
-static void
-sa_dump (char *header, struct sa *sa)
+void
+sa_dump (int cls, int level, char *header, struct sa *sa)
 {
   struct proto *proto;
   char spi_header[80];
   int i;
 
-  LOG_DBG ((LOG_REPORT, 0, "%s: %p %s phase %d doi %d flags 0x%x",
-	    header, sa, sa->name ? sa->name : "<unnamed>", sa->phase,
-	    sa->doi->id, sa->flags));
-  LOG_DBG ((LOG_REPORT, 0,
-	    "%s: icookie %08x%08x rcookie %08x%08x", header,
+  LOG_DBG ((cls, level, "%s: %p %s phase %d doi %d flags 0x%x", header, sa,
+	    sa->name ? sa->name : "<unnamed>", sa->phase, sa->doi->id,
+	    sa->flags));
+  LOG_DBG ((cls, level, "%s: icookie %08x%08x rcookie %08x%08x", header,
 	    decode_32 (sa->cookies), decode_32 (sa->cookies + 4),
 	    decode_32 (sa->cookies + 8), decode_32 (sa->cookies + 12)));
-  LOG_DBG ((LOG_REPORT, 0, "%s: msgid %08x refcnt %d", header,
+  LOG_DBG ((cls, level, "%s: msgid %08x refcnt %d", header,
 	    decode_32 (sa->message_id), sa->refcnt));
-  LOG_DBG ((LOG_REPORT, 0, "%s: life secs %llu kb %llu", header,
-	    sa->seconds, sa->kilobytes));
+  LOG_DBG ((cls, level, "%s: life secs %llu kb %llu", header, sa->seconds,
+	    sa->kilobytes));
   for (proto = TAILQ_FIRST (&sa->protos); proto;
        proto = TAILQ_NEXT (proto, link))
     {
-      LOG_DBG ((LOG_REPORT, 0,
-		"%s: suite %d proto %d", header, proto->no, proto->proto));
-      LOG_DBG ((LOG_REPORT, 0,
+      LOG_DBG ((cls, level, "%s: suite %d proto %d", header, proto->no,
+		proto->proto));
+      LOG_DBG ((cls, level, 
 		"%s: spi_sz[0] %d spi[0] %p spi_sz[1] %d spi[1] %p", header,
 		proto->spi_sz[0], proto->spi[0], proto->spi_sz[1],
 		proto->spi[1]));
-      LOG_DBG ((LOG_REPORT, 0, "%s: %s, %s", header,
+      LOG_DBG ((cls, level, "%s: %s, %s", header,
 		!sa->doi ? "<nodoi>"
 		: sa->doi->decode_ids ("initiator id: %s, responder id: %s",
 				     sa->id_i, sa->id_i_len,
@@ -444,7 +442,7 @@ sa_dump (char *header, struct sa *sa)
 	if (proto->spi[i])
 	  {
 	    snprintf (spi_header, 80, "%s: spi[%d]", header, i);
-	    LOG_DBG_BUF ((LOG_REPORT, 0, spi_header, proto->spi[i],
+	    LOG_DBG_BUF ((cls, level, spi_header, proto->spi[i],
 			  proto->spi_sz[i]));
 	  }
     }
@@ -459,7 +457,7 @@ sa_report (void)
 
   for (i = 0; i <= bucket_mask; i++)
     for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
-      sa_dump ("sa_report", sa);
+      sa_dump (LOG_REPORT, 0, "sa_report", sa);
 }
 
 /* Free the protocol structure pointed to by PROTO.  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.h,v 1.24 2001/06/27 00:48:21 angelos Exp $	*/
+/*	$OpenBSD: sa.h,v 1.25 2002/01/25 13:46:22 ho Exp $	*/
 /*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
@@ -228,5 +228,6 @@ extern void sa_reference (struct sa *);
 extern void sa_release (struct sa *);
 extern void sa_remove (struct sa *);
 extern void sa_report (void);
+extern void sa_dump (int, int, char *, struct sa *);
 extern int sa_setup_expirations (struct sa *);
 #endif /* _SA_H_ */
