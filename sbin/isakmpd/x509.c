@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.46 2001/03/27 16:50:35 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.47 2001/04/03 13:59:12 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -545,7 +545,6 @@ x509_generate_kn (X509 *cert)
 	      return 0;
 	    }
 
-	  free (x509_policy_asserts);
 	  x509_policy_asserts = new_asserts;
 	}
 
