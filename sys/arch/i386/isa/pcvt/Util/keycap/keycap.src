@@ -620,6 +620,20 @@ tg:\
 us|usa|United States mapping:\
 	:de:
 
+# The following entries can be used for keyboards that have the
+# control key in the wrong location.
+#
+#	ctl:	makes the capslock key a second control key, leaving the
+#		control key alone
+#
+#	swap:	swaps the function of the capslock and control keys.
+#
+ctl:usa-ctl|Capslock -> Control mapping:\
+	:t1#30:
+
+swap:usa-swap|Swap capslok and control keys:\
+	:t1#30:ca#58:
+
 # Simple Cyrillic KOI8-R keymap
 # Left Alt is AltGr
 # caps letters can't be printed ( yet )
