@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.15 1999/12/30 18:00:42 provos Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.16 2000/06/25 15:35:42 pjanzen Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -168,7 +168,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.15 1999/12/30 18:00:42 provos Exp $";
+  "$OpenBSD: fmt.c,v 1.16 2000/06/25 15:35:42 pjanzen Exp $";
 static const char copyright[] =
   "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
 #endif /* not lint */
@@ -284,7 +284,8 @@ main(int argc, char *argv[]) {
 
   /* 1. Grok parameters. */
 
-  while ((ch = getopt(argc, argv, "cd:hl:mpst:")) != -1) switch(ch) {
+  while ((ch = getopt(argc, argv, "0123456789cd:hl:mpst:w:")) != -1)
+  switch(ch) {
     case 'c':
       centerP = 1;
       continue;
@@ -308,23 +309,44 @@ main(int argc, char *argv[]) {
     case 't':
       tab_width = get_positive(optarg, "tab width must be positive", 1);
       continue;
+    case 'w':
+      goal_length = get_positive(optarg, "width must be positive", 1);
+      max_length = goal_length;
+      continue;
+    case '0': case '1': case '2': case '3': case '4': case '5':
+    case '6': case '7': case '8': case '9':
+    /* XXX  this is not a stylistically approved use of getopt() */
+      if (goal_length==0) {
+        char *p;
+        p = argv[optind - 1];
+        if (p[0] == '-' && p[1] == ch && !p[2])
+             goal_length = get_positive(++p, "width must be nonzero", 1);
+        else
+             goal_length = get_positive(argv[optind]+1,
+                 "width must be nonzero", 1);
+        max_length = goal_length;
+      }
+      continue;
     case 'h': default:
       fprintf(stderr,
-"Usage:   fmt [-cmps] [-d chars] [-l num] [-t num] [goal [maximum]] [file...]\n"
+"Usage:   fmt [-cmps] [-d chars] [-l num] [-t num]\n"
+"             [-w width | -width | goal [maximum]] [file ...]\n"
 "Options: -c     " CENTER " each line instead of formatting\n"
 "         -d <chars> double-space after <chars> at line end\n"
 "         -l <n> turn each <n> spaces at start of line into a tab\n"
 "         -m     try to make sure mail header lines stay separate\n"
 "         -p     allow indented paragraphs\n"
 "         -s     coalesce whitespace inside lines\n"
-"         -t <n> have tabs every <n> columns\n");
+"         -t <n> have tabs every <n> columns\n"
+"         -w <n> set maximum width to <n>\n"
+"         goal   set target width to goal\n");
       exit(ch=='h' ? 0 : EX_USAGE);
   }
   argc -= optind; argv += optind;
 
   /* [ goal [ maximum ] ] */
 
-  if (argc>0
+  if (argc>0 && goal_length==0
       && (goal_length=get_positive(*argv,"goal length must be positive", 0))
          != 0) {
     --argc; ++argv;
