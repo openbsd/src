@@ -1,4 +1,4 @@
-.\"	$OpenBSD: date.1,v 1.10 1998/05/13 10:33:18 deraadt Exp $
+.\"	$OpenBSD: date.1,v 1.11 1998/06/09 07:14:13 deraadt Exp $
 .\"	$NetBSD: date.1,v 1.12 1996/03/12 04:32:37 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -216,21 +216,6 @@ between
 and
 .Xr timed 8
 fails.
-.Sh BUGS
-The system attempts to keep the date in a format closely compatible
-with
-.Tn VMS .
-.Tn VMS ,
-however, uses local time (rather than
-.Tn GMT )
-and does not understand daylight-savings time.
-Thus, if you use both
-.Tn UNIX
-and
-.Tn VMS ,
-.Tn VMS
-will be running on
-.Tn GMT .
 .Sh STANDARDS
 The
 .Nm date
