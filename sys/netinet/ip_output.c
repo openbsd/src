@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.151 2003/01/31 17:27:03 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.152 2003/03/14 18:28:12 jason Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -66,10 +66,6 @@
 
 #if NPF > 0
 #include <net/pfvar.h>
-#endif
-
-#ifdef vax
-#include <machine/mtpr.h>
 #endif
 
 #ifdef IPSEC
@@ -1493,10 +1489,9 @@ ip_pcbopts(pcbopt, m)
 		return (0);
 	}
 
-#ifndef	vax
 	if (m->m_len % sizeof(int32_t))
 		goto bad;
-#endif
+
 	/*
 	 * IP first-hop destination address will be stored before
 	 * actual options; move other options back
