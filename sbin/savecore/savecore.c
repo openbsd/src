@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.21 2000/09/18 03:45:27 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.22 2000/10/25 23:37:38 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.21 2000/09/18 03:45:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.22 2000/10/25 23:37:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -294,8 +294,10 @@ kmem_setup()
 		}
 	hdrsz = kvm_dump_mkheader(kd_dump, (off_t)dumplo);
 	if (hdrsz == -1) {
-		syslog(LOG_ERR, "%s: kvm_dump_mkheader: %s", dump_sys,
-			kvm_geterr(kd_dump));
+		if(verbose)
+			syslog(LOG_ERR, "%s: kvm_dump_mkheader: %s", dump_sys,
+				kvm_geterr(kd_dump));
+		syslog(LOG_WARNING, "no core dump");
 		exit(1);
 	}
 	dumplo += hdrsz;

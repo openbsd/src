@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.18 2000/10/23 06:59:42 aaron Exp $ */
+/*	$OpenBSD: kvm.c,v 1.19 2000/10/25 23:37:38 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.18 2000/10/23 06:59:42 aaron Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.19 2000/10/25 23:37:38 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -340,7 +340,7 @@ failed:
  *    kcore_hdr_t kcore_hdr;
  *    kcore_seg_t cpu_hdr;
  *    (opaque)    cpu_data; (size is cpu_hdr.c_size)
- *	  kcore_seg_t mem_hdr;
+ *    kcore_seg_t mem_hdr;
  *    (memory)    mem_data; (size is mem_hdr.c_size)
  *    
  * Note: khdr is padded to khdr.c_hdrsize;
@@ -385,6 +385,8 @@ _kvm_get_header(kd)
 	 * should do a to "goto fail" to deallocate things.
 	 */
 	kd->kcore_hdr = _kvm_malloc(kd, sizeof(kcore_hdr));
+	if (kd->kcore_hdr == NULL)
+		goto fail;
 	memcpy(kd->kcore_hdr, &kcore_hdr, sizeof(kcore_hdr));
 	offset = kcore_hdr.c_hdrsize;
 
@@ -443,13 +445,14 @@ fail:
 		kd->cpu_dsize = 0;
 	}
 
+	return (-1);
 }
 
 /*
  * The format while on the dump device is: (new format)
  *    kcore_seg_t cpu_hdr;
  *    (opaque)    cpu_data; (size is cpu_hdr.c_size)
- *	  kcore_seg_t mem_hdr;
+ *    kcore_seg_t mem_hdr;
  *    (memory)    mem_data; (size is mem_hdr.c_size)
  */
 int
@@ -480,7 +483,7 @@ off_t	dump_off;
 	if ((CORE_GETMAGIC(cpu_hdr) != KCORE_MAGIC)
 		|| (CORE_GETMID(cpu_hdr) != MID_MACHINE)) {
 		_kvm_err(kd, 0, "invalid magic in cpu_hdr");
-		return (0);
+		return (-1);
 	}
 	hdr_size = ALIGN(sizeof(cpu_hdr));
 
@@ -513,10 +516,8 @@ off_t	dump_off;
 	 * Create a kcore_hdr.
 	 */
 	kd->kcore_hdr = _kvm_malloc(kd, sizeof(kcore_hdr_t));
-	if (kd->kcore_hdr == NULL) {
-		_kvm_err(kd, 0, "missing header");
+	if (kd->kcore_hdr == NULL)
 		goto fail;
-	}
 
 	kd->kcore_hdr->c_hdrsize    = ALIGN(sizeof(kcore_hdr_t));
 	kd->kcore_hdr->c_seghdrsize = ALIGN(sizeof(kcore_seg_t));
@@ -703,7 +704,7 @@ kvm_close(kd)
 		free((void *)kd->argv);
 	free((void *)kd);
 
-	return (0);
+	return (error);
 }
 
 /*
