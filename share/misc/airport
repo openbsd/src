@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.7 2001/07/14 04:45:01 pvalchev Exp $
+#	$OpenBSD: airport,v 1.8 2002/05/16 07:03:47 matthieu Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -55,6 +55,7 @@ BPT:Beaumont, Texas, USA
 BRE:Bremen,Germany
 BRN:Bern,Switzerland
 BRU:Brussel,Belgium
+BSL:Basel/Mulhouse Euroairport,Switzerland
 BTR:Baton Rouge, Louisiana, USA
 BTV:Burlington International, Vermont, USA
 BUD:Budapest,Hungary
@@ -103,6 +104,7 @@ DUS:Dusseldorf, Germany
 EAP:Euro Airport Basel Mulhouse Freiburg,Switzerland/France/Germany
 EDI:Edimburgh,Scotland,United Kingdom
 ELP:El Paso International, El Paso, Texas, USA
+ETZ:Metz Nancy Lorraine, France
 EWR:Newark International, New Jersey, USA
 EYW:Key West International, Florida, USA
 EZE:Buenos Aires, Argentina
@@ -201,7 +203,7 @@ LRS:Leros, Greece
 LUG:Lugano, Switzerland
 LUX:Luxemburg, Luxemburg
 LXS:Lemnos, Greece
-LYS:Lyon, France
+LYS:Lyon Saint-Exupery, France
 MAD:Madrid, Spain
 MAN:Manchester, UK
 MBJ:Montego Bay, Jamaica
@@ -220,6 +222,7 @@ MIA:Miami International, Florida, USA
 MIL:All Airports around Milano, Italy
 MKC:Kansas City Downtown, Missouri, USA
 MKE:Milwaukee General Mitchell International, Wisconsin, USA
+MLH:Mulhouse/Basel Euroairport, France
 MLI:Moline Quad City, Alabama, USA
 MNI:Montserrat, Leeward Islands
 MNL:Manila, Philippines
