@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: exec.c,v 1.9 1999/09/16 19:05:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.10 2000/01/29 19:52:26 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -53,41 +53,6 @@ static char rcsid[] = "$OpenBSD: exec.c,v 1.9 1999/09/16 19:05:58 deraadt Exp $"
 
 extern char **environ;
 
-static char **
-buildargv(ap, arg, envpp)
-	va_list ap;
-	const char *arg;
-	char ***envpp;
-{
-	register char **argv, **nargv;
-	register int memsize, off;
-
-	argv = NULL;
-	for (off = memsize = 0;; ++off) {
-		if (off >= memsize) {
-			memsize += 50;	/* Starts out at 0. */
-			memsize *= 2;	/* Ramp up fast. */
-			nargv = realloc(argv, memsize * sizeof(char *));
-			if (nargv == NULL) {
-				if (argv)
-					free(argv);
-				return (NULL);
-			}
-			argv = nargv;
-			if (off == 0) {
-				argv[0] = (char *)arg;
-				off = 1;
-			}
-		}
-		if (!(argv[off] = va_arg(ap, char *)))
-			break;
-	}
-	/* Get environment pointer if user supposed to provide one. */
-	if (envpp)
-		*envpp = va_arg(ap, char **);
-	return (argv);
-}
-
 int
 #ifdef __STDC__
 execl(const char *name, const char *arg, ...)
@@ -99,21 +64,34 @@ execl(name, arg, va_alist)
 #endif
 {
 	va_list ap;
-	int sverrno;
 	char **argv;
+	int n;
 
 #ifdef __STDC__
 	va_start(ap, arg);
 #else
 	va_start(ap);
 #endif
-	if ((argv = buildargv(ap, arg, NULL)))
-		(void)execve(name, argv, environ);
+	n = 1;
+	while (va_arg(ap, char *) != NULL)
+		n++;
 	va_end(ap);
-	sverrno = errno;
-	free(argv);
-	errno = sverrno;
-	return (-1);
+	argv = alloca((n + 1) * sizeof(*argv));
+	if (argv == NULL) {
+		errno = ENOMEM;
+		return (-1);
+	}
+#ifdef __STDC__
+	va_start(ap, arg);
+#else
+	va_start(ap);
+#endif
+	n = 1;
+	argv[0] = (char *)arg;
+	while ((argv[n] = va_arg(ap, char *)) != NULL)
+		n++;
+	va_end(ap);
+	return (execve(name, argv, environ));
 }
 
 int
@@ -128,31 +106,34 @@ execle(name, arg, va_alist)
 {
 	va_list ap;
 	char **argv, **envp;
-	int i;
+	int n;
 
 #ifdef __STDC__
 	va_start(ap, arg);
 #else
 	va_start(ap);
 #endif
-	for (i = 1; va_arg(ap, char *) != NULL; i++)
-		;
+	n = 1;
+	while (va_arg(ap, char *) != NULL)
+		n++;
 	va_end(ap);
-
-	argv = alloca (i * sizeof (char *));
-
-#if __STDC__
+	argv = alloca((n + 1) * sizeof(*argv));
+	if (argv == NULL) {
+		errno = ENOMEM;
+		return (-1);
+	}
+#ifdef __STDC__
 	va_start(ap, arg);
 #else
 	va_start(ap);
 #endif
-	argv[0] = (char *) arg;
-	for (i = 1; (argv[i] = (char *) va_arg(ap, char *)) != NULL; i++)
-		;
-	envp = (char **) va_arg(ap, char **);
+	n = 1;
+	argv[0] = (char *)arg;
+	while ((argv[n] = va_arg(ap, char *)) != NULL)
+		n++;
+	envp = va_arg(ap, char **);
 	va_end(ap);
-
-	return execve(name, argv, envp);
+	return (execve(name, argv, envp));
 }
 
 int
@@ -166,21 +147,34 @@ execlp(name, arg, va_alist)
 #endif
 {
 	va_list ap;
-	int sverrno;
 	char **argv;
+	int n;
 
 #ifdef __STDC__
 	va_start(ap, arg);
 #else
 	va_start(ap);
 #endif
-	if ((argv = buildargv(ap, arg, NULL)))
-		(void)execvp(name, argv);
+	n = 1;
+	while (va_arg(ap, char *) != NULL)
+		n++;
 	va_end(ap);
-	sverrno = errno;
-	free(argv);
-	errno = sverrno;
-	return (-1);
+	argv = alloca((n + 1) * sizeof(*argv));
+	if (argv == NULL) {
+		errno = ENOMEM;
+		return (-1);
+	}
+#ifdef __STDC__
+	va_start(ap, arg);
+#else
+	va_start(ap);
+#endif
+	n = 1;
+	argv[0] = (char *)arg;
+	while ((argv[n] = va_arg(ap, char *)) != NULL)
+		n++;
+	va_end(ap);
+	return (execvp(name, argv));
 }
 
 int
@@ -222,8 +216,13 @@ execvp(name, argv)
 	/* Get the path we're searching. */
 	if (!(path = getenv("PATH")))
 		path = _PATH_DEFPATH;
-	cur = path = strdup(path);
-
+	cur = alloca(strlen(path) + 1);
+	if (cur == NULL) {
+		errno = ENOMEM;
+		return (-1);
+	}
+	strcpy(cur, path);
+	path = cur;
 	while ((p = strsep(&cur, ":"))) {
 		/*
 		 * It's a SHELL path -- double, leading and trailing colons
@@ -260,27 +259,35 @@ execvp(name, argv)
 
 retry:		(void)execve(bp, argv, environ);
 		switch(errno) {
-		case EACCES:
-			eacces = 1;
-			break;
+		case E2BIG:
+			goto done;
+		case ELOOP:
+		case ENAMETOOLONG:
 		case ENOENT:
 			break;
 		case ENOEXEC:
 			for (cnt = 0; argv[cnt]; ++cnt)
 				;
-			memp = malloc((cnt + 2) * sizeof(char *));
+			memp = alloca((cnt + 2) * sizeof(char *));
 			if (memp == NULL)
 				goto done;
 			memp[0] = "sh";
 			memp[1] = bp;
 			bcopy(argv + 1, memp + 2, cnt * sizeof(char *));
 			(void)execve(_PATH_BSHELL, memp, environ);
-			free(memp);
 			goto done;
+		case ENOMEM:
+			goto done;
+		case ENOTDIR:
+			break;
 		case ETXTBSY:
-			if (etxtbsy < 3)
-				(void)sleep(++etxtbsy);
-			goto retry;
+			/*
+			 * We used to retry here, but sh(1) doesn't.
+			 */
+			goto done;
+		case EACCES:
+			eacces = 1;
+			break;
 		default:
 			goto done;
 		}
@@ -289,7 +296,6 @@ retry:		(void)execve(bp, argv, environ);
 		errno = EACCES;
 	else if (!errno)
 		errno = ENOENT;
-done:	if (path)
-		free(path);
+done:
 	return (-1);
 }
