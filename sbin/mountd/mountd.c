@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.51 2002/07/18 08:41:05 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.52 2002/07/18 08:46:18 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -1396,7 +1396,7 @@ get_host(char *cp, struct grouplist *grp, struct grouplist *tgrp)
 	if ((hp = gethostbyname(cp)) == NULL) {
 		if (isdigit(*cp)) {
 			if (inet_aton(cp, &saddr) == 0) {
-				syslog(LOG_ERR, "inet_addr failed for %s", cp);
+				syslog(LOG_ERR, "inet_aton failed for %s", cp);
 				return (1);
 			}
 			if ((hp = gethostbyaddr((caddr_t)&saddr.s_addr,
