@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.103 2004/01/28 23:14:21 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.104 2004/01/29 20:38:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -740,7 +740,7 @@ session_accept(int listenfd)
 int
 session_connect(struct peer *peer)
 {
-	int			 n;
+	int			 n, opt = 1;
 	struct sockaddr		*sa;
 
 	/*
@@ -757,6 +757,14 @@ session_connect(struct peer *peer)
 		bgp_fsm(peer, EVNT_CON_OPENFAIL);
 		return (-1);
 	}
+
+	if (peer->conf.tcp_md5_key[0])
+		if (setsockopt(peer->sock, IPPROTO_TCP, TCP_SIGNATURE_ENABLE,
+		    &opt, sizeof(opt)) == -1) {
+			log_peer_warn(&peer->conf, "setsockopt md5sig");
+			bgp_fsm(peer, EVNT_CON_OPENFAIL);
+			return (-1);
+		}
 
 	peer->wbuf.sock = peer->sock;
 
