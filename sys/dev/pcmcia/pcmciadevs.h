@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.111 2004/01/24 23:30:35 deraadt Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.112 2004/04/06 21:08:42 millert Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.109 2004/01/24 23:30:26 deraadt Exp 
+ *		OpenBSD: pcmciadevs,v 1.110 2004/04/06 21:08:25 millert Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -92,6 +92,7 @@
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
 #define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
+#define	PCMCIA_VENDOR_MICROSOFT	0x02d2	/* Microsoft */
 #define	PCMCIA_VENDOR_NWN	0x0602	/* No Wires Needed */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
@@ -341,6 +342,10 @@
 /* Melco */
 #define	PCMCIA_CIS_MELCO_LPC3_TX	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MELCO_LPC3_TX	0xc1ab
+
+/* Microsoft */
+#define	PCMCIA_CIS_MICROSOFT_MN520	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_MICROSOFT_MN520	0x0001
 
 /* Motorola */
 #define	PCMCIA_CIS_MOTOROLA_POWER144	{ NULL, NULL, NULL, NULL }
