@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.38 2004/07/07 01:29:14 deraadt Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.39 2004/08/03 00:50:30 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -81,9 +81,13 @@ scsibus* at umass?
 #uaudio* at uhub? port ? configuration ?
 
 # USB Ethernet adapters
-aue*	at uhub? port ?			# ADMtek AN986 Pegasus based adapters
-cue*	at uhub? port ?			# CATC USB-EL1201A based adapters
-kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based adapters
+aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
+axe*	at uhub? port ?			# ASIX Electronics AX88172 USB Ethernet
+cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
+kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
+upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
+url*	at uhub? port ?			# Realtek RTL8150L based adapters
+wi*	at uhub? port ?			# WaveLAN IEEE 802.11DS
 
 # Diamond Multimedia Rio 500
 #urio*	at uhub? port ?
