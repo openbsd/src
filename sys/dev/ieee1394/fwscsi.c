@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwscsi.c,v 1.9 2002/12/30 11:52:21 tdeval Exp $	*/
+/*	$OpenBSD: fwscsi.c,v 1.10 2003/01/13 01:55:46 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -123,6 +123,13 @@ typedef struct fwscsi_status {
 	u_int16_t	orb_offset_hi;
 	u_int32_t	orb_offset_lo;
 	u_int8_t	scsi_status;
+#define	FWSCSI_SCSI_STATUS	0x3F
+#define	FWSCSI_STATUS_FMT_MASK	0xC0
+#define	FWSCSI_STATUS_FMT_SHIFT	6
+#define	FWSCSI_SFMT_CURRENT	0x00
+#define	FWSCSI_SFMT_DEFERRED	0x40
+#define	FWSCSI_SFMT_FUTURE	0x80
+#define	FWSCSI_SFMT_VENDOR	0xC0
 	u_int8_t	sense_key;
 #define	FWSCSI_INFO_VALID	0x80
 #define	FWSCSI_MEI		0x70
@@ -523,7 +530,7 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 	}
 #endif	/* FWSCSI_DEBUG */
 
-	s = splbio();
+	//s = splbio();
 
 	/* Always reset xs->stimeout, lest we timeout_del() with trash. */
 	timeout_set(&xs->stimeout, fwscsi_command_timeout, (void *)xs);
@@ -538,6 +545,7 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x25; /* LOGIC UNIT NOT SUPPORTED */
 		xs->sense.error_code = 0x70;
+		s = splbio();
 		scsi_done(xs);
 		splx(s);
 		return (COMPLETE);
@@ -550,7 +558,7 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 		    sc->sc_dev.dv_xname, xs->sc_link->target,
 		    xs->sc_link->lun);
 		xs->error = XS_DRIVER_STUFFUP;
-		splx(s);
+		//splx(s);
 		return (TRY_AGAIN_LATER);
 	}
 	MPRINTF("malloc(1394DATA)", cmd_orb);
@@ -587,7 +595,7 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 			xs->error = XS_DRIVER_STUFFUP;
 			free(cmd_orb, M_1394DATA);
 			MPRINTF("free(1394DATA)", cmd_orb);
-			splx(s);
+			//splx(s);
 			return (TRY_AGAIN_LATER);
 		}
 		bzero(data_elm, sizeof(*data_elm));
@@ -604,7 +612,7 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 			MPRINTF("FREE(1394CTL)", data_elm);
 			free(cmd_orb, M_1394DATA);
 			MPRINTF("free(1394DATA)", cmd_orb);
-			splx(s);
+			//splx(s);
 			return (TRY_AGAIN_LATER);
 		}
 		bzero(data_ab, sizeof(*data_ab));
@@ -668,7 +676,7 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 	sbp2_command_add(fwsc, sc->sc_lun, cmd_orb, 8, xs->data,
 	    fwscsi_command_wait, (void *)xs);
 
-	splx(s);
+	//splx(s);
 	return (SUCCESSFULLY_QUEUED);
 }
 
@@ -723,16 +731,17 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 	splx(s);
 	status = (struct fwscsi_status *)notification->status;
 
-	DPRINTF(("%s: origin=0x%08x csr=0x%016qx", __func__,
-	    (u_int32_t)orb,
-	    ((u_int64_t)(ntohs(status->orb_offset_hi)) << 32) +
-	    ntohl(status->orb_offset_lo)));
 #ifdef	FWSCSI_DEBUG
-	for (i = 0; i < sizeof(*status); i++) {
-		DPRINTFN(2, ("%s %02.2x", (i % 16)?"":"\n   ",
-		    ((u_int8_t *)status)[i]));
+	if (status != NULL) {
+		DPRINTF(("origin=0x%08x csr=0x%012qx\n", (u_int32_t)orb,
+		     ((u_int64_t)(ntohs(status->orb_offset_hi)) << 32) +
+		      ntohl(status->orb_offset_lo)));
+		for (i = 0; fwscsidebug > 2 && i < sizeof(*status); i++) {
+			DPRINTFN(2, ("%s %02.2x", i?(i % 16)?"":"\n   ":"   ",
+			     ((u_int8_t *)status)[i]));
+		}
+		DPRINTFN(2, ("\n"));
 	}
-	DPRINTFN(2, ("\n"));
 #endif	/* FWSCSI_DEBUG */
 
 	cmd_orb = (struct sbp2_command_orb *)(xs->cmd);
@@ -764,69 +773,150 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 		data_elm = NULL;	/* XXX */
 	}
 
-	if (status != NULL &&
-	    ((status->flags & SBP2_STATUS_RESPONSE_MASK) ==
-	        SBP2_STATUS_RESP_REQ_COMPLETE ||
-	     (status->flags & SBP2_STATUS_RESPONSE_MASK) ==
-	        SBP2_STATUS_RESP_VENDOR) &&
-	    status->status != 0) {
-		DPRINTF(("%s: sbp_status 0x%02x, scsi_status 0x%02x --> XS_SENSE\n",
-		    __func__, status->status, status->scsi_status));
-		xs->error = XS_SENSE;
-		xs->status = status->scsi_status & 0x3F;
-		xs->sense.error_code = 0x70;
-		xs->sense.flags = (status->sense_key & FWSCSI_SENSE_KEY) |
-		    ((status->sense_key & FWSCSI_MEI) << 1);
-		if (status->sense_key & FWSCSI_INFO_VALID) {
-			tmp = ntohl(status->information);
-			bcopy(&tmp, &xs->sense.info, sizeof(u_int32_t));
-			xs->sense.error_code |= 0x80;
-		}
-		xs->sense.add_sense_code = status->sense_code;
-		xs->sense.add_sense_code_qual = status->sense_qual;
-		tmp = ntohl(status->sense_key_info);
-		bcopy(&tmp, &xs->sense.fru, sizeof(u_int32_t));
-		tmp = ntohl(status->cmd_spec_info);
-		bcopy(&tmp, &xs->sense.cmd_spec_info, sizeof(u_int32_t));
-		tmp = ntohl(status->vendor_info[0]);
-		bcopy(&tmp, &xs->sense.extra_bytes[0], sizeof(u_int32_t));
-		tmp = ntohl(status->vendor_info[1]);
-		bcopy(&tmp, &xs->sense.extra_bytes[4], sizeof(u_int32_t));
-	} else if (status != NULL &&
-	    ((status->flags & SBP2_STATUS_RESPONSE_MASK) ==
-	        SBP2_STATUS_RESP_TRANS_FAILURE ||
-	     (status->flags & SBP2_STATUS_RESPONSE_MASK) ==
-	        SBP2_STATUS_RESP_ILLEGAL_REQ)) {
+	if (status != NULL) {
+		switch (status->flags & SBP2_STATUS_RESPONSE_MASK) {
 
-		DPRINTF(("%s: device error (flags 0x%02x, status 0x%02x) --> XS_SENSE\n",
-		    __func__, status->flags, status->status));
-		xs->error = XS_SENSE;
-		xs->status = SCSI_CHECK;
-		xs->flags |= ITSDONE;
-		if ((status->flags & SBP2_STATUS_RESPONSE_MASK) ==
-		    SBP2_STATUS_RESP_TRANS_FAILURE) {
-			xs->sense.flags = SKEY_HARDWARE_ERROR;
-			xs->sense.add_sense_code = status->status;
-		} else {
-			xs->sense.flags = SKEY_ILLEGAL_REQUEST;
-			xs->sense.add_sense_code = 0x0;
+		case SBP2_STATUS_RESP_REQ_COMPLETE:
+
+			switch (status->status) {
+
+			case SBP2_STATUS_NONE:
+			case SBP2_STATUS_DUMMY_ORB_COMPLETE:
+				error_str = "NOERROR";
+				xs->error = XS_NOERROR;
+				break;
+
+			case SBP2_STATUS_UNSUPPORTED_TYPE:
+			case SBP2_STATUS_UNSUPPORTED_SPEED:
+			case SBP2_STATUS_UNSUPPORTED_PGSIZ:
+			case SBP2_STATUS_UNSUPPORTED_LUN:
+			case SBP2_STATUS_MAX_PAYLOAD_SMALL:
+			case SBP2_STATUS_INVALID_LOGINID:
+			case SBP2_STATUS_UNSPECIFIED:
+				/*
+				 * These should really be handled at the
+				 * SBP2 level for retry/correction.
+				 */
+				error_str = "DRIVER_STUFFUP";
+				xs->error = XS_DRIVER_STUFFUP;
+				status->flags = 1;	/* Exit from here. */
+				break;
+
+			case SBP2_STATUS_ACCESS_DENIED:
+			case SBP2_STATUS_RESOURCE_UNAVAIL:
+			case SBP2_STATUS_FUNCTION_REJECTED:
+			case SBP2_STATUS_REQUEST_ABORTED:
+			default:
+				error_str = "SENSE";
+				xs->error = XS_SENSE;
+				break;
+			}
+			DPRINTFN(1, ("sbp_status 0x%02x, scsi_status 0x%02x"
+			    " --> XS_%s\n", status->status,
+			    status->scsi_status, error_str));
+
+			if ((status->flags & SBP2_STATUS_LEN_MASK) == 1)
+				break;
+
+			/* Construct the sense info from the returned data. */
+			xs->status = status->scsi_status & FWSCSI_SCSI_STATUS;
+			xs->sense.error_code = SSD_ERRCODE_VALID | 0x70 |
+			    (status->scsi_status >> FWSCSI_STATUS_FMT_SHIFT);
+			xs->sense.flags =
+			    (status->sense_key & FWSCSI_SENSE_KEY) |
+			    ((status->sense_key & FWSCSI_MEI) << 1);
+			if (status->sense_key & FWSCSI_INFO_VALID) {
+				tmp = ntohl(status->information);
+				bcopy(&tmp, &xs->sense.info, sizeof(u_int32_t));
+				//xs->sense.error_code |= 0x80;
+			}
+			xs->sense.add_sense_code = status->sense_code;
+			xs->sense.add_sense_code_qual = status->sense_qual;
+			tmp = ntohl(status->sense_key_info);
+			bcopy(&tmp, &xs->sense.fru, sizeof(u_int32_t));
+			tmp = ntohl(status->cmd_spec_info);
+			bcopy(&tmp, &xs->sense.cmd_spec_info,
+			    sizeof(u_int32_t));
+			tmp = ntohl(status->vendor_info[0]);
+			bcopy(&tmp, &xs->sense.extra_bytes[0],
+			    sizeof(u_int32_t));
+			tmp = ntohl(status->vendor_info[1]);
+			bcopy(&tmp, &xs->sense.extra_bytes[4],
+			    sizeof(u_int32_t));
+
+			break;
+
+		case SBP2_STATUS_RESP_TRANS_FAILURE:
+
+			switch (status->status & SBP2_STATUS_OBJECT_MASK) {
+
+			case SBP2_STATUS_OBJECT_ORB:
+			case SBP2_STATUS_OBJECT_DATA_BUF:
+			case SBP2_STATUS_OBJECT_PAGE_TABLE:
+			case SBP2_STATUS_OBJECT_UNSPECIFIED:
+			default:
+				break;
+			}
+
+			switch (status->status & SBP2_STATUS_SERIAL_MASK) {
+
+			case SBP2_STATUS_SERIAL_ACK_MISSING:
+				error_str = "NOERROR";
+				xs->error = XS_NOERROR;
+				break;
+
+			case SBP2_STATUS_SERIAL_TIMEOUT:
+				error_str = "TIMEOUT";
+				xs->error = XS_TIMEOUT;
+				break;
+
+			case SBP2_STATUS_SERIAL_ACK_BUSY_X:
+			case SBP2_STATUS_SERIAL_ACK_BUSY_A:
+			case SBP2_STATUS_SERIAL_ACK_BUSY_B:
+				error_str = "BUSY";
+				xs->error = XS_BUSY;
+				break;
+
+			case SBP2_STATUS_SERIAL_TARDY_RETRY:
+				error_str = "SELTIMEOUT";
+				xs->error = XS_SELTIMEOUT;
+				break;
+
+			case SBP2_STATUS_SERIAL_CONFLICT:
+			case SBP2_STATUS_SERIAL_DATA:
+			case SBP2_STATUS_SERIAL_TYPE:
+			case SBP2_STATUS_SERIAL_ADDRESS:
+			default:
+				error_str = "SENSE";
+				xs->error = XS_SENSE;
+				xs->status = SCSI_CHECK;
+				//xs->flags |= ITSDONE;
+				xs->sense.flags = SKEY_HARDWARE_ERROR;
+				xs->sense.add_sense_code = status->status;
+				break;
+			}
+			DPRINTFN(1, ("device error (flags 0x%02x, status 0x%02x)"
+			    " --> XS_%s\n", status->flags, status->status,
+			    error_str));
+
+			break;
+
+		case SBP2_STATUS_RESP_ILLEGAL_REQ:
+		case SBP2_STATUS_RESP_VENDOR:
+		default:
+			break;
 		}
 
+		DPRINTF(("%s: Free status(0x%08x)\n", __func__,
+		    (u_int32_t)status));
 		FREE(status, M_1394DATA);
 		MPRINTF("FREE(1394DATA)", status);
 		status = NULL;	/* XXX */
-		sbp2_command_del(fwsc, sc->sc_lun, cmd_orb);
-		free(cmd_orb, M_1394DATA);
-		MPRINTF("free(1394DATA)", cmd_orb);
-		cmd_orb = NULL;	/* XXX */
-
-		s = splbio();
-		scsi_done(xs);
-		splx(s);
-
-		return;
+	} else {
+		/* Probably bad to be here... */
 	}
 
+#if 0
 	/*
 	 * Now, if we've come here with no error code, i.e. we've kept the
 	 * initial XS_NOERROR, and the status code signals that we should
@@ -845,16 +935,9 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 		} else {
 			error_str = "NOERROR";
 		}
-		DPRINTF((" --> XS_%s\n", error_str));
+		DPRINTFN(1, (" --> XS_%s\n", error_str));
 	}
-
-	if (status != NULL) {
-		DPRINTF(("%s: Free status(0x%08x)\n", __func__,
-		    (u_int32_t)status));
-		FREE(status, M_1394DATA);
-		MPRINTF("FREE(1394DATA)", status);
-		status = NULL;	/* XXX */
-	}
+#endif
 
 	if (cmd_orb != NULL) {
 		DPRINTF(("%s: Nullify orb(0x%08x)\n", __func__,
@@ -867,7 +950,7 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 	}
 
 	xs->flags |= ITSDONE;
-	xs->resid = 0;
+	//xs->resid = 0;
 
 	s = splbio();
 	scsi_done(xs);
