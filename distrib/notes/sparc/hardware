@@ -38,6 +38,10 @@ Supported devices {:-include-:}:
 	serial ports: 
 		ttya and ttyb (can be used as console if needed),
                 ttyc and ttyd (Sun 4/300 only)
+		SBus magma serial port cards, including:
+			4Sp, 8Sp, 12Sp, 16Sp, LC2+1Sp, 2+1Sp,
+			4+1Sp, and 8+2Sp.
+		SBus Serial Parallel Interface (SUNW,spif)
 
 	ethernet: 
 		on-board AMD Lance ethernet ("le0"), 
