@@ -1,4 +1,4 @@
-/*	$OpenBSD: viaenv.c,v 1.3 2004/01/12 14:10:53 grange Exp $	*/
+/*	$OpenBSD: viaenv.c,v 1.4 2004/09/26 12:36:56 grange Exp $	*/
 /*	$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $	*/
 
 /*
@@ -42,6 +42,10 @@
 #include <sys/queue.h>
 #include <sys/sensors.h>
 #include <sys/timeout.h>
+#ifdef __HAVE_TIMECOUNTER
+#include <sys/timetc.h>
+#endif
+
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
@@ -61,6 +65,7 @@ struct viaenv_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_space_handle_t sc_pm_ioh;
 
 	int     sc_fan_div[2];	/* fan RPM divisor */
 
@@ -75,6 +80,19 @@ int  val_to_rpm(unsigned int, int);
 long val_to_uV(unsigned int, int);
 void viaenv_refresh_sensor_data(struct viaenv_softc *);
 void viaenv_refresh(void *);
+
+#ifdef __HAVE_TIMECOUNTER
+u_int viaenv_get_timecount(struct timecounter *tc);
+
+struct timecounter viaenv_timecounter = {
+	viaenv_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0xffffff,		/* counter_mask */
+	3579545,		/* frequency */
+	"VIAPM",		/* name */
+	1000			/* quality */
+};
+#endif	/* __HAVE_TIMECOUNTER */
 
 struct cfattach viaenv_ca = {
 	sizeof(struct viaenv_softc),
@@ -195,6 +213,13 @@ val_to_uV(unsigned int val, int index)
 #define VIAENV_TLOW	0x49	/* temperature low order value */
 #define VIAENV_TIRQ	0x4b	/* temperature interrupt configuration */
 
+#define VIAENV_GENCFG	0x40	/* general configuration */
+#define VIAENV_GENCFG_TMR32	(1 << 11)	/* 32-bit PM timer */
+#define VIAENV_GENCFG_PMEN	(1 << 15)	/* enable PM I/O space */
+#define VIAENV_PMBASE	0x48	/* power management I/O space base */
+#define VIAENV_PMSIZE	128	/* power management I/O space size */
+#define VIAENV_PM_TMR	0x08	/* PM timer */
+
 void
 viaenv_refresh_sensor_data(struct viaenv_softc *sc)
 {
@@ -258,6 +283,35 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 		printf(": failed to map i/o\n");
 		return;
 	}
+
+#ifdef __HAVE_TIMECOUNTER
+	/* Check if power management I/O space is enabled */
+	control = pci_conf_read(pa->pa_pc, pa->pa_tag, VIAENV_GENCFG);
+	if ((control & VIAENV_GENCFG_PMEN) == 0) {
+		printf(": PM disabled");
+		goto nopm;
+	}
+
+	/* Map power management I/O space */
+	iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, VIAENV_PMBASE);
+	if (bus_space_map(sc->sc_iot, PCI_MAPREG_IO_ADDR(iobase),
+	    VIAENV_PMSIZE, 0, &sc->sc_pm_ioh)) {
+		printf(": failed to map PM I/O space");
+		goto nopm;
+	}
+
+	/* Check for 32-bit PM timer */
+	if (control & VIAENV_GENCFG_TMR32) {
+		printf(": 32-bit PM timer");
+		viaenv_timecounter.tc_counter_mask = 0xffffffff;
+	}
+
+	/* Register new timecounter */
+	viaenv_timecounter.tc_priv = sc;
+	tc_init(&viaenv_timecounter);
+nopm:
+#endif	/* __HAVE_TIMECOUNTER */
+
 	printf("\n");
 
 	/* Initialize sensors */
@@ -339,3 +393,23 @@ viaenv_refresh(void *arg)
 	viaenv_refresh_sensor_data(sc);
 	timeout_add(&viaenv_timeout, (15 * hz) / 10);
 }
+
+#ifdef __HAVE_TIMECOUNTER
+u_int
+viaenv_get_timecount(struct timecounter *tc)
+{
+	struct viaenv_softc *sc = tc->tc_priv;
+	u_int u1, u2, u3;
+
+	u2 = bus_space_read_4(sc->sc_iot, sc->sc_pm_ioh, VIAENV_PM_TMR);
+	u3 = bus_space_read_4(sc->sc_iot, sc->sc_pm_ioh, VIAENV_PM_TMR);
+	do {
+		u1 = u2;
+		u2 = u3;
+		u3 = bus_space_read_4(sc->sc_iot, sc->sc_pm_ioh,
+		    VIAENV_PM_TMR);
+	} while (u1 > u2 || u2 > u3);
+
+	return (u2);
+}
+#endif	/* __HAVE_TIMECOUNTER */
