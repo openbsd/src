@@ -1,0 +1,156 @@
+.\"
+.\" Copyright (c) 2001 Vladimir Popov
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+.\" ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 16, 2001
+.Dt RADIOCTL 1
+.Os
+.Sh NAME
+.Nm radioctl
+.Nd control radio tuners
+.Sh SYNOPSIS
+.Nm radioctl
+.Op Fl f Ar file
+.Op Fl n
+.Fl a
+.Nm radioctl
+.Op Fl f Ar file
+.Op Fl n
+.Ar name
+.Nm radioctl
+.Op Fl f Ar file
+.Op Fl n
+.Fl w
+.Ar name=value
+.Sh DESCRIPTION
+The
+.Nm
+command displays or sets various variables that affect the radio tuner
+behavior. If a variable is present on the command line,
+.Nm
+prints the current value of this variable for the specified device.
+By default,
+.Nm
+operates on the
+.Pa /dev/radio
+device.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl a
+Print all device variables and their current values.
+.It Fl w Ar name=value
+Attempt to set the specified variable
+.Ar name
+to
+.Ar value .
+.It Fl f Ar file
+Specify an alternative radio tuner device.
+.It Fl n
+Suppress printing of the variable name.
+.El
+.Pp
+Values may be specified in either absolute or relative forms.
+The relative form is indicated by a prefix of
+.Ql +
+or
+.Ql -
+to denote an increase or decrease, respectively.
+.Pp
+The exact set of controls that can be manipulated depends on
+the tuner.
+The general format (in both getting and setting a value) is
+.Pp
+.Va name = value
+.Pp
+The
+.Va name
+indicates what part of the tuner the control affects.
+.Pp
+Write only controls:
+.Bl -tag -width search
+.It search
+Only for cards that allow hardware search. Can be
+.Ql up
+or
+.Ql down .
+.El
+.Pp
+Read-write controls:
+.Bl -tag -width volume
+.It frequency
+Float value from 87.5 to 108.0.
+.It volume
+Integer value from 0 to 255.
+.It mute
+Mutes the card (volume is not affected),
+.Ql on
+or
+.Ql off .
+.It mono
+Forces card output to mono,
+.Ql on
+or
+.Ql off .
+Only for cards that allow forced mono.
+.It reference
+Reference frequency. Can be 25 kHz, 50 kHz and 100 kHz. Not all cards allow
+to change the reference frequency.
+.It sensitivity
+Station locking sensitivity. Can be 5 mkV, 10 mkV, 30 mkV and 150 mkV. Not all
+cards allow to change the station locking sensitivity.
+.El
+.Pp
+All the remaining controls (signal, stereo and card capabilities) are read-only
+and can be viewed using option
+.Fl a .
+.Sh EXAMPLES
+The command
+.Pp
+.Dl "radioctl -a"
+.Pp
+can produce
+.Bd -literal
+volume=255
+frequency=106.30MHz
+mute=off
+reference=50kHz
+signal=on
+stereo=on
+card capabilities:
+        manageable mono/stereo
+.Ed
+.Sh ENVIRONMENT
+The following environment variable affects the execution of
+.Nm radioctl :
+.Bl -tag -width RADIODEVICE
+.It Ev RADIODEVICE
+The radio tuner device to use.
+.El
+.Sh FILES
+.Bl -tag -width /dev/radio
+.It Pa /dev/radio
+radio tuner device
+.El
+.Sh SEE ALSO
+.Xr radio 4
