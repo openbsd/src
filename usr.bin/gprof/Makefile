@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/10/04 19:16:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/12/08 14:32:25 downsj Exp $
 #	$NetBSD: Makefile,v 1.14 1995/04/19 07:24:08 cgd Exp $
 
 .if (${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "mips")
@@ -11,7 +11,7 @@ CFLAGS+= -D${MACHINE_ARCH}
 .endif
 
 beforeinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ${.CURDIR}/gprof.flat ${.CURDIR}/gprof.callg \
 	    ${DESTDIR}/usr/share/misc
 

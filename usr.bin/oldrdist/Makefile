@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1996/08/22 20:33:14 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/12/08 14:32:31 downsj Exp $
 
 PROG=	rdist
 CFLAGS+=-I${.CURDIR}
@@ -10,7 +10,7 @@ CLEANFILES=y.tab.h
 MAN=	oldrdist.1
 
 realinstall:
-	install ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		${PROG} ${DESTDIR}${BINDIR}/oldrdist
 
 .include <bsd.prog.mk>

@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:41:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/12/08 14:32:36 downsj Exp $
 
 MAN=	true.1
 
 beforeinstall:
-	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		${.CURDIR}/true.sh ${DESTDIR}${BINDIR}/true
 
 .include <bsd.prog.mk>

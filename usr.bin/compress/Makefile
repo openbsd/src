@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:32:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/12/08 14:32:20 downsj Exp $
 #	$NetBSD: Makefile,v 1.6 1995/03/26 09:44:29 glass Exp $
 
 PROG=	compress
@@ -8,7 +8,7 @@ MLINKS= compress.1 uncompress.1
 #MLINKS+=compress.1 zcat.1
 
 #afterinstall:
-#	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+#	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 #	    ${.CURDIR}/zcat.sh ${DESTDIR}/usr/bin/zcat
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:44:29 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/12/08 14:32:41 downsj Exp $
 #	$NetBSD: Makefile,v 1.2 1995/07/03 21:25:14 cgd Exp $
 
 .PATH:	${.CURDIR}/../lint1
@@ -10,7 +10,7 @@ MAN=	lint.1
 CFLAGS+=-I${.CURDIR}/../lint1
 
 realinstall:
-	install ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${PROG} ${DESTDIR}${BINDIR}/lint
 
 
