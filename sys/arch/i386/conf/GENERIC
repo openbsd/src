@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.220 2001/01/11 23:38:57 espie Exp $
+#	$OpenBSD: GENERIC,v 1.221 2001/01/13 19:53:50 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -344,6 +344,7 @@ neo*	at pci? dev ? function ?		# NeoMagic 256AV/ZX
 cmpci*	at pci? dev ? function ?		# C-Media CMI8338/8738
 auich*	at pci? dev ? function ?		# i82801 ICH AC'97 audio
 clcs*	at pci? dev ? function ?		# CS4280 CrystalClear audio
+clct*	at pci? dev ? function ?		# CS4281 CrystalClear audio
 fms*	at pci? dev ? function ?		# Forte Media FM801
 auvia*	at pci? dev ? function ?		# VIA VT82C686A
 maestro* at pci? dev ? function ?		# ESS Maestro PCI
@@ -387,6 +388,7 @@ audio*  at sv?
 audio*	at neo?
 audio*	at cmpci?
 audio*	at clcs?
+audio*	at clct?
 audio*	at auich?
 audio*	at fms?
 audio*	at auvia?

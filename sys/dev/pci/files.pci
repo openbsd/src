@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.89 2001/01/11 23:36:38 espie Exp $
+#	$OpenBSD: files.pci,v 1.90 2001/01/13 19:53:50 aaron Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -89,6 +89,11 @@ file	dev/pci/auich.c			auich
 device	clcs: audio, auconv, mulaw, ac97
 attach	clcs at pci
 file	dev/pci/cs4280.c		clcs
+
+# CS4281 CrystalClear Audio
+device	clct: audio, auconv, mulaw, ac97
+attach	clct at pci
+file	dev/pci/cs4281.c		clct
 
 # ESS Maestro
 device maestro: audio, auconv, mulaw, ac97
