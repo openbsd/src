@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.120 1999/08/04 23:38:24 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.121 1999/08/05 01:07:29 niklas Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -234,6 +234,7 @@ eso*	at pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
 sv*	at pci? dev ? function ?		# S3 SonicVibes (S3 617)
 sb0	at isa? port 0x220 irq 7 drq 1		# SoundBlaster
 sb*	at isapnp?
+ess*	at isapnp?				# ESS Tech ES188[78], ES888
 wss0	at isa? port 0x530 irq 10 drq 0		# Windows Sound System
 wss*	at isapnp?
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
@@ -245,6 +246,7 @@ mpu*	at isapnp?
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at eso?
 opl*	at sb?
+opl*	at ess?
 
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker
@@ -261,6 +263,7 @@ audio*  at sb?
 audio*  at gus?
 audio*  at pas?
 audio*  at sp?
+audio*	at ess?
 audio*  at wss?
 audio*  at ym?
 audio*  at eap?
