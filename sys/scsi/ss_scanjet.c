@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.17 1997/03/11 03:40:50 kstailey Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.18 1997/03/11 12:06:49 kstailey Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -122,12 +122,16 @@ scanjet_attach(ss, sa)
 	/* now install special handlers */
 	ss->special = scanjet_special;
 
-	error = scanjet_set_window(ss, SCSI_POLL);/* XXX needed? */
-
+	/* 
+	 * fill in the rest of the scan_io struct by calling
+	 * set_window and compute_sizes routines
+	 */
+	error = scanjet_set_window(ss, SCSI_POLL);
 	if (error) {
 		printf(" set_window failed\n");
 		return;
 	}
+
 	error = scanjet_compute_sizes(ss, SCSI_POLL);
 	if (error) {
 		printf(" compute_sizes failed\n");

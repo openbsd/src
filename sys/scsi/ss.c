@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.27 1997/03/11 04:00:15 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.28 1997/03/11 12:06:48 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -333,6 +333,8 @@ ss_identify_scanner(ss, inqbuf)
 	} else {
 		printf("\n%s: generic scanner\n", ss->sc_dev.dv_xname);
 		ss->sio.scan_scanner_type = GENERIC_SCSI2;
+		/* XXX fill in the rest of the scan_io struct by
+                   calling compute_sizes routine */
 	}
 }
 
