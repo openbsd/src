@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.43 2004/12/19 20:03:09 espie Exp $
+# $OpenBSD: Update.pm,v 1.44 2004/12/19 20:25:17 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -239,6 +239,9 @@ sub can_do
 	$state->{okay} = 1;
 	$state->{libs_to_check} = [];
 	my $plist = OpenBSD::PackingList->from_installation($toreplace);
+	if (!defined $plist) {
+		Fatal "Couldn't find packing-list for $toreplace\n";
+	}
 	$plist->visit('can_update', 0, $state);
 	if ($state->{okay} == 0) {
 		Warn "Old package ", $plist->pkgname(), " contains unsafe operations\n";
