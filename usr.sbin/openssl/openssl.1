@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.33 2004/01/28 20:09:23 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.34 2004/02/01 15:45:28 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -4224,10 +4224,10 @@ $ openssl -in keycerts.pem -export -name "My PKCS#12 file" \e
 .\"
 .Sh RAND
 .Cm openssl rand
-.Op Fl out Ar file
-.Op Fl rand Ar file ...
 .Op Fl base64
 .Op Fl engine Ar id
+.Op Fl out Ar file
+.Op Fl rand Ar file ...
 .Ar num
 .Pp
 The
@@ -4254,16 +4254,6 @@ seeding was obtained from these sources.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl out Ar file
-Write to
-.Ar file
-instead of standard output.
-.It Fl rand Ar file ...
-Use specified file or files, or EGD socket (see
-.Xr RAND_egd 3 )
-for seeding the random number generator.
-Multiple files can be specified separated by a
-.Sq \&: .
 .It Fl base64
 Perform
 .Em base64
@@ -4276,6 +4266,16 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
+.It Fl out Ar file
+Write to
+.Ar file
+instead of standard output.
+.It Fl rand Ar file ...
+Use specified file or files, or EGD socket (see
+.Xr RAND_egd 3 )
+for seeding the random number generator.
+Multiple files can be specified separated by a
+.Sq \&: .
 .El
 .\"
 .\" REQ
