@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.83 2004/02/05 22:56:10 millert Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.84 2004/03/12 09:32:55 tedu Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -272,6 +272,7 @@ sys_execve(p, v, retval)
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
 	pack.ep_ndp = &nid;
+	pack.ep_interp = NULL;
 	pack.ep_emul_arg = NULL;
 	VMCMDSET_INIT(&pack.ep_vmcmds);
 	pack.ep_vap = &attr;
@@ -584,7 +585,7 @@ sys_execve(p, v, retval)
 
 	/* map the process's signal trampoline code */
 	if (exec_sigcode_map(p, pack.ep_emul))
-		goto exec_abort;
+		goto free_pack_abort;
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
@@ -630,6 +631,10 @@ bad:
 		pack.ep_flags &= ~EXEC_HASFD;
 		(void) fdrelease(p, pack.ep_fd);
 	}
+	if (pack.ep_interp != NULL)
+		FREE(pack.ep_interp, M_TEMP);
+	if (pack.ep_emul_arg != NULL)
+		FREE(pack.ep_emul_arg, M_TEMP);
 	/* close and put the exec'd file */
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
@@ -648,7 +653,9 @@ exec_abort:
 	 */
 	uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
-	if (pack.ep_emul_arg)
+	if (pack.ep_interp != NULL)
+		FREE(pack.ep_interp, M_TEMP);
+	if (pack.ep_emul_arg != NULL)
 		FREE(pack.ep_emul_arg, M_TEMP);
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 	vn_close(pack.ep_vp, FREAD, cred, p);
