@@ -294,6 +294,75 @@ to
 .Pa master
 and editing it and creating other maps as needed.
 Alternatively, you can get your maps with YP.
+.Sh INSTALLING SHARED CRYPTO LIBRARIES WITH RSA INCLUDED
+Two OpenBSD libraries (
+.Pa libssl
+and 
+.Pa libcrypto
+, based on OpenSSL) implement many
+cryptographic functions which are used by OpenBSD programs like 
+.Xr ssh 1 ,
+.Xr httpd 8 ,
+and
+.Xr isakmpd 8 .
+Due to patent licensing reasons, those libraries may not be included
+on the CD -- instead the base distribution contains libraries which have had
+the troublesome code removed -- the programs listed above will not be fully
+functional as a result.  Libraries which _include_ the troublesome routines
+are available and can be FTP installed, as long as you meet the following
+(legal) criteria:
+.Ss Outside the USA, no restrictions apply
+since the RSA algorithm patent by RSA inc. only applies in the United States
+so you can use the free
+.Pa ssl26.tgz
+package. System install scripts on machine architectures that support
+shared libraries will offer to let you install this package when you
+are installing your system.
+To see if you have it installed, type
+.Bl -tag -width pkg_add
+.It pkg_info ssl26
+.El
+.Pp
+If the
+.Pa ssl26
+package is not installed, 
+.Xr pkg_info 8 
+will display a message that it can't find package `ssl26'. If you did
+not install the package when you installed your system, 
+You can install it with a 
+.Xr pkg_add 8
+command similar to: 
+.Bl -tag -width pkg_add
+.It pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/<a>/ssl26.tgz
+.El
+
+replacing <a> with your machine architechture, e.g. i386.
+.Ss Inside the USA, non-commercial use of RSAREF is permitted.
+Non-commercial entities in the USA may install the
+.Pa sslUSA26.tgz
+package, which uses RSAREF. You install this with a 
+.Xr pkg_add 8
+command similar to: 
+.Bl -tag -width pkg_add
+.It pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/<a>/sslUSA26.tgz
+.El
+replacing <a> with your machine architechture, e.g. i386.
+.Ss Commercial entities in the USA are left in the cold.
+While unfortunate, this is due to the way RSA inc. licences their patent
+in the USA. (This is how the USA crypto export policy feels to the
+rest of the world).
+.Ss Shared Library Support is Required.
+These packages update your system by installing shared libraries in
+.Pa /usr/local/lib. 
+This only works if your machine architecture supports shared libraries.
+the
+.Pa ssl26
+and 
+.Pa sslUSA26
+packages are only available for machines which support shared libraries.
+If your architecture does not support shared libraries and you wish it
+did, consider donating hardware, cash, or quality time to the project
+to assist developers in supporting your platform better.
 .Sh CHANGING /ETC FILES
 The system should be usable now, but you may wish to do more customizing,
 such as adding users, etc.  Many of the following sections may be skipped
