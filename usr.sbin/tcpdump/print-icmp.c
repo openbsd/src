@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp.c,v 1.16 2004/08/10 19:54:18 markus Exp $	*/
+/*	$OpenBSD: print-icmp.c,v 1.17 2004/10/17 05:47:17 otto Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-icmp.c,v 1.16 2004/08/10 19:54:18 markus Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-icmp.c,v 1.17 2004/10/17 05:47:17 otto Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -170,14 +170,14 @@ struct id_rdiscovery {
 };
 
 void
-icmp_print(register const u_char *bp, register const u_char *bp2)
+icmp_print(const u_char *bp, const u_char *bp2)
 {
-	register const struct icmp *dp;
-	register const struct ip *ip;
-	register const char *str, *fmt;
-	register const struct ip *oip;
-	register const struct udphdr *ouh;
-	register u_int hlen, dport, mtu;
+	const struct icmp *dp;
+	const struct ip *ip;
+	const char *str, *fmt;
+	const struct ip *oip;
+	const struct udphdr *ouh;
+	u_int hlen, dport, mtu;
 	char buf[MAXHOSTNAMELEN+256];
 	char buf2[MAXHOSTNAMELEN+256];
 
@@ -190,20 +190,23 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 		ipaddr_string(&ip->ip_dst));
 
 	TCHECK(dp->icmp_code);
-	switch (dp->icmp_type) {
+	if (qflag) 
+		(void) snprintf(buf, sizeof buf, "%u %u", dp->icmp_type,
+		    dp->icmp_code);
+	else switch (dp->icmp_type) {
 
 	case ICMP_ECHOREPLY:
 	case ICMP_ECHO:
 		if (vflag) {
 			TCHECK(dp->icmp_seq);
 			(void)snprintf(buf, sizeof buf,
-				       "echo %s (id:%04x seq:%d)",
+				       "echo %s (id:%04x seq:%u)",
 				       (dp->icmp_type == ICMP_ECHO)?
 				       "request": "reply",
 				       ntohs(dp->icmp_id),
 				       ntohs(dp->icmp_seq));
 		} else
-			str = tok2str(icmp2str, "type-#%d", dp->icmp_type);
+			str = tok2str(icmp2str, "type-#%u", dp->icmp_type);
 		break;
 
 	case ICMP_UNREACH:
@@ -213,7 +216,7 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 		case ICMP_UNREACH_PROTOCOL:
 			TCHECK(dp->icmp_ip.ip_p);
 			(void)snprintf(buf, sizeof buf,
-				       "%s protocol %d unreachable",
+				       "%s protocol %u unreachable",
 				       ipaddr_string(&dp->icmp_ip.ip_dst),
 				       dp->icmp_ip.ip_p);
 			break;
@@ -242,7 +245,7 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 
 			default:
 				(void)snprintf(buf, sizeof buf,
-					"%s protocol %d port %d unreachable",
+					"%s protocol %u port %u unreachable",
 					ipaddr_string(&oip->ip_dst),
 					oip->ip_p, dport);
 				break;
@@ -251,13 +254,13 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 
 		case ICMP_UNREACH_NEEDFRAG:
 			{
-			register const struct mtu_discovery *mp;
+			const struct mtu_discovery *mp;
 
 			mp = (struct mtu_discovery *)&dp->icmp_void;
                         mtu = EXTRACT_16BITS(&mp->nexthopmtu);
                         if (mtu)
 			    (void)snprintf(buf, sizeof buf,
-				"%s unreachable - need to frag (mtu %d)",
+				"%s unreachable - need to frag (mtu %u)",
 				ipaddr_string(&dp->icmp_ip.ip_dst), mtu);
                         else
 			    (void)snprintf(buf, sizeof buf,
@@ -267,7 +270,7 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 			break;
 
 		default:
-			fmt = tok2str(unreach2str, "#%d %%s unreachable",
+			fmt = tok2str(unreach2str, "#%u %%s unreachable",
 			    dp->icmp_code);
 			(void)snprintf(buf, sizeof buf, fmt,
 			    ipaddr_string(&dp->icmp_ip.ip_dst));
@@ -277,7 +280,7 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 
 	case ICMP_REDIRECT:
 		TCHECK(dp->icmp_ip.ip_dst);
-		fmt = tok2str(type2str, "redirect-#%d %%s to net %%s",
+		fmt = tok2str(type2str, "redirect-#%u %%s to net %%s",
 		    dp->icmp_code);
 		(void)snprintf(buf, sizeof buf, fmt,
 		    ipaddr_string(&dp->icmp_ip.ip_dst),
@@ -286,8 +289,8 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 
 	case ICMP_ROUTERADVERT:
 		{
-		register const struct ih_rdiscovery *ihp;
-		register const struct id_rdiscovery *idp;
+		const struct ih_rdiscovery *ihp;
+		const struct id_rdiscovery *idp;
 		u_int lifetime, num, size;
 
 		(void)strlcpy(buf, "router advertisement", sizeof(buf));
@@ -308,12 +311,12 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 		strlcat(buf, buf2, sizeof(buf));
 
 		num = ihp->ird_addrnum;
-		(void)snprintf(buf2, sizeof(buf2), " %d:", num);
+		(void)snprintf(buf2, sizeof(buf2), " %u:", num);
 		strlcat(buf, buf2, sizeof(buf));
 
 		size = ihp->ird_addrsiz;
 		if (size != 2) {
-			(void)snprintf(buf2, sizeof(buf2), " [size %d]", size);
+			(void)snprintf(buf2, sizeof(buf2), " [size %u]", size);
 			strlcat(buf, buf2, sizeof(buf));
 			break;
 		}
@@ -342,7 +345,7 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 
 		default:
 			(void)snprintf(buf, sizeof buf,
-				"time exceeded-#%d", dp->icmp_code);
+				"time exceeded-#%u", dp->icmp_code);
 			break;
 		}
 		break;
@@ -353,12 +356,12 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 			str = "requested option absent";
 			break;
 		case ICMP_PARAMPROB_LENGTH:
-			snprintf(buf, sizeof buf, "bad length %d", dp->icmp_pptr);
+			snprintf(buf, sizeof buf, "bad length %u", dp->icmp_pptr);
 			break;
 		default:
 			TCHECK(dp->icmp_pptr);
 			(void)snprintf(buf, sizeof buf,
-				"parameter problem - octet %d",
+				"parameter problem - octet %u",
 				dp->icmp_pptr);
 			break;
 		}
@@ -371,7 +374,7 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 		break;
 
 	default:
-		str = tok2str(icmp2str, "type-#%d", dp->icmp_type);
+		str = tok2str(icmp2str, "type-#%u", dp->icmp_type);
 		break;
 	}
         (void)printf("icmp: %s", str);
