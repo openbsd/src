@@ -1,5 +1,5 @@
-/*	$OpenBSD: mii_physubr.c,v 1.8 2001/05/03 12:31:43 aaron Exp $	*/
-/*	$NetBSD: mii_physubr.c,v 1.16 2000/03/15 20:34:43 thorpej Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.9 2001/06/08 02:16:41 nate Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,14 +59,17 @@
 
 /*
  * Media to register setting conversion table.  Order matters.
+ * XXX 802.3 doesn't specify ANAR or ANLPAR bits for 1000base.
  */
 const struct mii_media mii_media_table[] = {
 	{ BMCR_ISO,		ANAR_CSMA },		/* None */
-	{ 0,			ANAR_CSMA|ANAR_10 },	/* 10baseT */
-	{ BMCR_FDX,		ANAR_CSMA|ANAR_10_FD },	/* 10baseT-FDX */
+	{ BMCR_S10,		ANAR_CSMA|ANAR_10 },	/* 10baseT */
+	{ BMCR_S10|BMCR_FDX,	ANAR_CSMA|ANAR_10_FD },	/* 10baseT-FDX */
 	{ BMCR_S100,		ANAR_CSMA|ANAR_T4 },	/* 100baseT4 */
 	{ BMCR_S100,		ANAR_CSMA|ANAR_TX },	/* 100baseTX */
 	{ BMCR_S100|BMCR_FDX,	ANAR_CSMA|ANAR_TX_FD },	/* 100baseTX-FDX */
+	{ BMCR_S1000,		ANAR_CSMA },		/* 1000base */
+	{ BMCR_S1000|BMCR_FDX,	ANAR_CSMA },		/* 1000base-FDX */
 };
 
 void	mii_phy_auto_timeout __P((void *));
@@ -88,7 +91,6 @@ mii_phy_setmedia(sc)
 	/*
 	 * Table index is stored in the media entry.
 	 */
-
 #ifdef DIAGNOSTIC
 	if (ife->ifm_data < 0 || ife->ifm_data >= MII_NMEDIA)
 		panic("mii_phy_setmedia");
@@ -312,7 +314,7 @@ mii_phy_statusmsg(sc)
 	}
 
 	if (announce) {
-		s = splimp();	/* XXX Should be splnet() */
+		s = splnet();
 		rt_ifmsg(ifp);
 		splx(s);
 	}
@@ -338,11 +340,6 @@ mii_phy_add_media(sc)
 	if (sc->mii_capabilities & BMSR_10THDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, sc->mii_inst),
 		    MII_MEDIA_10_T);
-#if 0
-		if ((sc->mii_flags & MIIF_NOLOOP) == 0)
-			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_LOOP,
-			    sc->mii_inst), MII_MEDIA_10_T);
-#endif
 	}
 	if (sc->mii_capabilities & BMSR_10TFDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, sc->mii_inst),
@@ -351,11 +348,6 @@ mii_phy_add_media(sc)
 	if (sc->mii_capabilities & BMSR_100TXHDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, sc->mii_inst),
 		    MII_MEDIA_100_TX);
-#if 0
-		if ((sc->mii_flags & MIIF_NOLOOP) == 0)
-			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP,
-			    sc->mii_inst), MII_MEDIA_100_TX);
-#endif
 	}
 	if (sc->mii_capabilities & BMSR_100TXFDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, sc->mii_inst),
@@ -364,12 +356,30 @@ mii_phy_add_media(sc)
 	if (sc->mii_capabilities & BMSR_100T4) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, 0, sc->mii_inst),
 		    MII_MEDIA_100_T4);
-#if 0
-		if ((sc->mii_flags & MIIF_NOLOOP) == 0)
-			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, IFM_LOOP,
-			    sc->mii_inst), MII_MEDIA_100_T4);
-#endif
 	}
+	if (sc->mii_extcapabilities & EXTSR_MEDIAMASK) {
+		/*
+		 * XXX Right now only handle 1000SX and 1000TX.  Need
+		 * XXX to hnalde 1000LX and 1000CX some how.
+		 */
+		if (sc->mii_extcapabilities & EXTSR_1000XHDX) {
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, 0,
+			    sc->mii_inst), MII_MEDIA_1000);
+		}
+		if (sc->mii_extcapabilities & EXTSR_1000XFDX) {
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_SX, IFM_FDX,
+			    sc->mii_inst), MII_MEDIA_1000_FDX);
+		}
+		if (sc->mii_extcapabilities & EXTSR_1000THDX) {
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, 0,
+			    sc->mii_inst), MII_MEDIA_1000);
+		}
+		if (sc->mii_extcapabilities & EXTSR_1000TFDX) {
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, IFM_FDX,
+			    sc->mii_inst), MII_MEDIA_1000_FDX);
+		}
+	}
+	
 	if (sc->mii_capabilities & BMSR_ANEG) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst),
 		    MII_NMEDIA);	/* intentionally invalid index */
@@ -419,4 +429,37 @@ mii_phy_detach(self, flags)
 	mii_phy_delete_media(sc);
 
 	return (0);
+}
+
+/*
+ * Given an ifmedia word, return the corresponding ANAR value.
+ */
+int
+mii_anar(media)
+	int media;
+{
+	int rv;
+
+	switch (media & (IFM_TMASK|IFM_NMASK|IFM_FDX)) {
+	case IFM_ETHER|IFM_10_T:
+		rv = ANAR_10|ANAR_CSMA;
+		break;
+	case IFM_ETHER|IFM_10_T|IFM_FDX:
+		rv = ANAR_10_FD|ANAR_CSMA;
+		break;
+	case IFM_ETHER|IFM_100_TX:
+		rv = ANAR_TX|ANAR_CSMA;
+		break;
+	case IFM_ETHER|IFM_100_TX|IFM_FDX:
+		rv = ANAR_TX_FD|ANAR_CSMA;
+		break;
+	case IFM_ETHER|IFM_100_T4:
+		rv = ANAR_T4|ANAR_CSMA;
+		break;
+	default:
+		rv = 0;
+		break;
+	}
+
+	return (rv);
 }

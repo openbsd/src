@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.9 2001/05/03 12:31:43 aaron Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.10 2001/06/08 02:16:41 nate Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -138,6 +138,7 @@ struct mii_softc {
 
 	int mii_flags;			/* misc. flags; see below */
 	int mii_capabilities;		/* capabilities from BMSR */
+	int mii_extcapabilities;	/* extended capabilities */
 	int mii_ticks;			/* MII_TICK counter */
 
 #if defined(__NetBSD__)
@@ -195,7 +196,9 @@ struct mii_media {
 #define	MII_MEDIA_100_T4	3
 #define	MII_MEDIA_100_TX	4
 #define	MII_MEDIA_100_TX_FDX	5
-#define	MII_NMEDIA		6
+#define MII_MEDIA_1000		6
+#define MII_MEDIA_1000_FDX	7
+#define	MII_NMEDIA		8
 
 #ifdef _KERNEL
 
@@ -237,6 +240,8 @@ void	mii_phy_update __P((struct mii_softc *, int));
 void	mii_phy_statusmsg __P((struct mii_softc *));
 
 void	ukphy_status __P((struct mii_softc *));
+
+int	mii_anar __P((int));
 #endif /* _KERNEL */
 
 #endif /* _DEV_MII_MIIVAR_H_ */
